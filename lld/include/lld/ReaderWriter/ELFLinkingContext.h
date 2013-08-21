@@ -150,11 +150,9 @@ public:
   /// \brief Disallow dynamic libraries during linking
   virtual void setNoAllowDynamicLibraries() { _noAllowDynamicLibraries = true; }
 
-  void appendSearchPath(StringRef dirPath) {
-    _inputSearchPaths.push_back(dirPath);
-  }
-  /// Searches directories then calls appendInputFile()
-  bool appendLibrary(StringRef libName);
+  /// Searches directories for a match on the input File
+  StringRef searchLibrary(StringRef libName,
+                          const std::vector<StringRef> &searchPath) const;
 
 private:
   ELFLinkingContext() LLVM_DELETED_FUNCTION;
@@ -178,7 +176,7 @@ protected:
   bool _noAllowDynamicLibraries;
   OutputMagic _outputMagic;
   StringRefVector _inputSearchPaths;
-  llvm::BumpPtrAllocator _extraStrings;
+  mutable llvm::BumpPtrAllocator _alloc;
   std::unique_ptr<Reader> _elfReader;
   std::unique_ptr<Writer> _writer;
   std::unique_ptr<Reader> _linkerScriptReader;

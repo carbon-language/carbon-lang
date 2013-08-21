@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 //
-// This file contains all the structs and constants needed to write a 
+// This file contains all the structs and constants needed to write a
 // mach-o final linked image.  The names of the structs and constants
 // are the same as in the darwin native header <mach-o/loader.h> so
 // they will be familiar to anyone who has used that header.
@@ -25,9 +25,9 @@ namespace lld {
 namespace mach_o {
 
 
-enum { 
+enum {
   MH_MAGIC    = 0xfeedface,
-  MH_MAGIC_64 = 0xfeedfacf 
+  MH_MAGIC_64 = 0xfeedfacf
 };
 
 enum {
@@ -62,24 +62,24 @@ enum {
 //
 class mach_header {
 public:
-  uint32_t    magic;  
+  uint32_t    magic;
   uint32_t    cputype;
-  uint32_t    cpusubtype;  
-  uint32_t    filetype;  
-  uint32_t    ncmds;    
-  uint32_t    sizeofcmds;  
-  uint32_t    flags;  
-  uint32_t    reserved;  
- 
+  uint32_t    cpusubtype;
+  uint32_t    filetype;
+  uint32_t    ncmds;
+  uint32_t    sizeofcmds;
+  uint32_t    flags;
+  uint32_t    reserved;
+
   uint64_t size() {
     return (magic == 0xfeedfacf) ? 32 : 28;
   }
-  
+
   void copyTo(uint8_t *to, bool swap=false) {
     ::memcpy(to, (char*)&magic, this->size());
   }
- 
-  void recordLoadCommand(const class load_command *lc);    
+
+  void recordLoadCommand(const class load_command *lc);
 };
 
 
@@ -101,14 +101,14 @@ class load_command {
 public:
   const uint32_t  cmd;        // type of load command
   const uint32_t  cmdsize;    // length of load command including this header
-  
+
   load_command(uint32_t cmdNumber, uint32_t sz, bool is64, bool align=false)
     : cmd(cmdNumber), cmdsize(pointerAlign(sz, is64, align)) {
   }
-  
+
   virtual ~load_command() {
   }
-  
+
   virtual void copyTo(uint8_t *to, bool swap=false) = 0;
 private:
   // Load commands must be pointer-size aligned. Most load commands are
@@ -168,7 +168,7 @@ enum {
   S_NON_LAZY_SYMBOL_POINTERS= 0x00000006,
   S_LAZY_SYMBOL_POINTERS    = 0x00000007,
   S_SYMBOL_STUBS            = 0x00000008,
-  
+
   // Other bits in section.flags
   S_ATTR_PURE_INSTRUCTIONS  = 0x80000000,
   S_ATTR_SOME_INSTRUCTIONS  = 0x00000400
@@ -177,32 +177,32 @@ enum {
 
 // section record for 32-bit architectures
 struct section {
-  char      sectname[16];  
-  char      segname[16];  
-  uint32_t  addr;  
-  uint32_t  size;    
-  uint32_t  offset;  
-  uint32_t  align;    
-  uint32_t  reloff;  
-  uint32_t  nreloc;    
-  uint32_t  flags;    
+  char      sectname[16];
+  char      segname[16];
+  uint32_t  addr;
+  uint32_t  size;
+  uint32_t  offset;
+  uint32_t  align;
+  uint32_t  reloff;
+  uint32_t  nreloc;
+  uint32_t  flags;
   uint32_t  reserved1;
-  uint32_t  reserved2;  
+  uint32_t  reserved2;
 };
 
 // section record for 64-bit architectures
 struct section_64 {
-  char      sectname[16];  
-  char      segname[16];  
-  uint64_t  addr;  
-  uint64_t  size;    
-  uint32_t  offset;  
-  uint32_t  align;    
-  uint32_t  reloff;  
-  uint32_t  nreloc;    
-  uint32_t  flags;    
+  char      sectname[16];
+  char      segname[16];
+  uint64_t  addr;
+  uint64_t  size;
+  uint32_t  offset;
+  uint32_t  align;
+  uint32_t  reloff;
+  uint32_t  nreloc;
+  uint32_t  flags;
   uint32_t  reserved1;
-  uint32_t  reserved2;  
+  uint32_t  reserved2;
   uint32_t  reserved3;
 };
 
@@ -210,35 +210,35 @@ struct section_64 {
 //
 // A segment load command has a fixed set of fields followed by an 'nsect'
 // array of section records.  The in-memory object uses a pointer to
-// a dynamically allocated array of sections.  
+// a dynamically allocated array of sections.
 //
 class segment_command : public load_command {
 public:
-  char      segname[16];  
-  uint64_t  vmaddr;    
-  uint64_t  vmsize;    
-  uint64_t  fileoff;  
-  uint64_t  filesize;  
-  uint32_t  maxprot;  
-  uint32_t  initprot;  
-  uint32_t  nsects;    
-  uint32_t  flags;  
+  char      segname[16];
+  uint64_t  vmaddr;
+  uint64_t  vmsize;
+  uint64_t  fileoff;
+  uint64_t  filesize;
+  uint32_t  maxprot;
+  uint32_t  initprot;
+  uint32_t  nsects;
+  uint32_t  flags;
   section_64 *sections;
-  
+
   segment_command(unsigned sectCount, bool is64)
-    : load_command((is64 ? LC_SEGMENT_64 : LC_SEGMENT), 
+    : load_command((is64 ? LC_SEGMENT_64 : LC_SEGMENT),
                    (is64 ? (72 + sectCount*80) : (56 + sectCount*68)),
                    is64),
-     vmaddr(0), vmsize(0), fileoff(0), filesize(0), 
+     vmaddr(0), vmsize(0), fileoff(0), filesize(0),
       maxprot(0), initprot(0), nsects(sectCount), flags(0) {
     sections = new section_64[sectCount];
     this->nsects = sectCount;
   }
-  
+
   ~segment_command() {
     delete sections;
   }
-  
+
   void copyTo(uint8_t *to, bool swap) {
     if ( swap ) {
       assert(0 && "non-native endianness not supported yet");
@@ -284,8 +284,8 @@ private:
     ::memcpy(&to[offset], &value32, sizeof(uint32_t));
   }
 
-  bool is64() { 
-    return (cmd == LC_SEGMENT_64); 
+  bool is64() {
+    return (cmd == LC_SEGMENT_64);
   }
 };
 
@@ -303,8 +303,8 @@ public:
 private:
   StringRef _name;
 public:
-  dylinker_command(StringRef path, bool is64) 
-    : load_command(LC_LOAD_DYLINKER,12 + path.size(), is64, true), 
+  dylinker_command(StringRef path, bool is64)
+    : load_command(LC_LOAD_DYLINKER,12 + path.size(), is64, true),
        name_offset(12), _name(path) {
   }
 
@@ -330,48 +330,48 @@ public:
 //
 class symtab_command : public load_command {
 public:
-  uint32_t  symoff;  
-  uint32_t  nsyms;  
-  uint32_t  stroff;  
-  uint32_t  strsize;  
+  uint32_t  symoff;
+  uint32_t  nsyms;
+  uint32_t  stroff;
+  uint32_t  strsize;
 
-  symtab_command(bool is64) 
-    : load_command(LC_SYMTAB, 24, is64), 
+  symtab_command(bool is64)
+    : load_command(LC_SYMTAB, 24, is64),
       symoff(0), nsyms(0), stroff(0), strsize(0) {
   }
-  
+
   virtual void copyTo(uint8_t *to, bool swap=false) {
     if ( swap ) {
       assert(0 && "non-native endianness not supported yet");
     }
     else {
-      // in-memory matches on-disk, so copy fields 
+      // in-memory matches on-disk, so copy fields
       ::memcpy(to, (uint8_t*)&cmd, 24);
     }
   }
-  
+
 };
 
 
 //
 // The entry_point_command load command holds the offset to the function
-// _main in a dynamic executable.  
+// _main in a dynamic executable.
 //
 class entry_point_command : public load_command {
 public:
-  uint64_t  entryoff;  
-  uint64_t  stacksize; 
+  uint64_t  entryoff;
+  uint64_t  stacksize;
 
-  entry_point_command(bool is64) 
+  entry_point_command(bool is64)
     : load_command(LC_MAIN, 24, is64), entryoff(0), stacksize(0) {
   }
-  
+
   virtual void copyTo(uint8_t *to, bool swap=false) {
     if ( swap ) {
       assert(0 && "non-native endianness not supported yet");
     }
     else {
-      // in-memory matches on-disk, so copy fields 
+      // in-memory matches on-disk, so copy fields
       ::memcpy(to, (uint8_t*)&cmd, 24);
     }
   }
@@ -391,7 +391,7 @@ private:
   uint8_t   *_registerArray;
 
 public:
-  thread_command(uint32_t cpuType, bool is64) 
+  thread_command(uint32_t cpuType, bool is64)
     : load_command(LC_UNIXTHREAD, 16+registersBufferSize(cpuType), is64),
       fields_count(registersBufferSize(cpuType)/4), _cpuType(cpuType) {
     switch ( cpuType ) {
@@ -411,19 +411,19 @@ public:
                                     ::calloc(registersBufferSize(cpuType), 1));
     assert(_registerArray);
   }
-  
+
   virtual void copyTo(uint8_t *to, bool swap=false) {
     if ( swap ) {
       assert(0 && "non-native endianness not supported yet");
     }
     else {
-      // in-memory matches on-disk, so copy fixed fields 
+      // in-memory matches on-disk, so copy fixed fields
       ::memcpy(to, (uint8_t*)&cmd, 16);
       // that register array
       ::memcpy(&to[16], _registerArray, registersBufferSize(_cpuType));
     }
   }
-  
+
   void setPC(uint64_t pc) {
     uint32_t *regs32 = reinterpret_cast<uint32_t*>(_registerArray);
     uint64_t *regs64 = reinterpret_cast<uint64_t*>(_registerArray);
@@ -441,9 +441,9 @@ public:
         assert(0 && "unsupported cpu type");
     }
   }
-  
+
   virtual ~thread_command() {
-    ::free(_registerArray); 
+    ::free(_registerArray);
   }
 
 private:
@@ -459,9 +459,9 @@ private:
     assert(0 && "unsupported cpu type");
     return 0;
   }
-    
-    
-  
+
+
+
 };
 
 
@@ -475,19 +475,19 @@ private:
 struct dylib_command : public load_command {
   uint32_t  name_offset;
   uint32_t  timestamp;
-  uint32_t  current_version;    
+  uint32_t  current_version;
   uint32_t  compatibility_version;
-private:  
+private:
   StringRef _loadPath;
 public:
-  
-  dylib_command(StringRef path, bool is64) 
-    : load_command(LC_LOAD_DYLIB, 24 + path.size(), is64, true), 
-      name_offset(24), timestamp(0), 
+
+  dylib_command(StringRef path, bool is64)
+    : load_command(LC_LOAD_DYLIB, 24 + path.size(), is64, true),
+      name_offset(24), timestamp(0),
       current_version(0x10000), compatibility_version(0x10000),
       _loadPath(path) {
   }
-  
+
   virtual void copyTo(uint8_t *to, bool swap=false) {
     if ( swap ) {
       assert(0 && "non-native endianness not supported yet");
@@ -508,30 +508,30 @@ public:
 // of information needed by dyld to prepare the image for execution.
 //
 struct dyld_info_command : public load_command {
-  uint32_t   rebase_off;  
-  uint32_t   rebase_size;  
-  uint32_t   bind_off;  
-  uint32_t   bind_size;  
-  uint32_t   weak_bind_off;  
-  uint32_t   weak_bind_size; 
+  uint32_t   rebase_off;
+  uint32_t   rebase_size;
+  uint32_t   bind_off;
+  uint32_t   bind_size;
+  uint32_t   weak_bind_off;
+  uint32_t   weak_bind_size;
   uint32_t   lazy_bind_off;
-  uint32_t   lazy_bind_size; 
-  uint32_t   export_off;  
-  uint32_t   export_size;  
+  uint32_t   lazy_bind_size;
+  uint32_t   export_off;
+  uint32_t   export_size;
 
-  dyld_info_command(bool is64) 
-    : load_command(LC_DYLD_INFO_ONLY, 48, is64), 
+  dyld_info_command(bool is64)
+    : load_command(LC_DYLD_INFO_ONLY, 48, is64),
         rebase_off(0), rebase_size(0),
-        bind_off(0), bind_size(0), weak_bind_off(0), weak_bind_size(0), 
+        bind_off(0), bind_size(0), weak_bind_off(0), weak_bind_size(0),
         lazy_bind_off(0), lazy_bind_size(0), export_off(0), export_size(0) {
    }
-  
+
   virtual void copyTo(uint8_t *to, bool swap=false) {
     if ( swap ) {
       assert(0 && "non-native endianness not supported yet");
     }
     else {
-      // in-memory matches on-disk, so copy fields 
+      // in-memory matches on-disk, so copy fields
       ::memcpy(to, (uint8_t*)&cmd, 48);
     }
   }
@@ -585,23 +585,23 @@ enum {
 
 class nlist {
 public:
-  uint32_t  n_strx; 
-  uint8_t   n_type; 
-  uint8_t   n_sect;   
-  uint16_t  n_desc;   
-  uint64_t  n_value;    
-  
+  uint32_t  n_strx;
+  uint8_t   n_type;
+  uint8_t   n_sect;
+  uint16_t  n_desc;
+  uint64_t  n_value;
+
   static unsigned size(bool is64) {
     return (is64 ? 16 : 12);
   }
-  
+
   void copyTo(uint8_t *to, bool is64, bool swap=false) {
     if ( swap ) {
       assert(0 && "non-native endianness not supported yet");
     }
     else {
       if ( is64 ) {
-        // in-memory matches on-disk, so just copy whole struct 
+        // in-memory matches on-disk, so just copy whole struct
         ::memcpy(to, (uint8_t*)&n_strx, 16);
       }
       else {

@@ -30,11 +30,14 @@ protected:
   std::string &errorMessage() { return  _errorMessage; }
 
   // Convenience method for getting number of input files.
-  int inputFileCount() { return linkingContext()->inputFiles().size(); }
+  int inputFileCount() { return linkingContext()->inputGraph().numFiles(); }
 
   // Convenience method for getting i'th input files name.
   std::string inputFile(unsigned index) {
-    return linkingContext()->inputFiles()[index].getPath().str();
+    const InputElement &inputElement = linkingContext()->inputGraph()[index];
+    if (inputElement.kind() == InputElement::Kind::File)
+      return (llvm::dyn_cast<FileNode>(&inputElement))->path(*linkingContext());
+    assert(0 && "not handling other types of input files");
   }
 
   // For unit tests to call driver with various command lines.

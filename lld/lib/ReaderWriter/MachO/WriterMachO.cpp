@@ -31,12 +31,12 @@
 #include "lld/Core/Reference.h"
 #include "lld/Core/SharedLibraryAtom.h"
 #include "lld/ReaderWriter/MachOLinkingContext.h"
+#include "lld/ReaderWriter/MachOFormat.hpp"
 
 #include <vector>
 #include <map>
 #include <string.h>
 
-#include "MachOFormat.hpp"
 #include "ReferenceKinds.h"
 #include "ExecutableAtoms.hpp"
 
@@ -568,8 +568,9 @@ void SectionChunk::write(uint8_t *chunkBuffer) {
       if ( ref->target() != nullptr )
         targetAddress = _writer.addressOfAtom(ref->target());
       uint64_t fixupAddress = _writer.addressOfAtom(atomInfo.atom) + offset;
-      _writer.kindHandler().applyFixup(ref->kind(), ref->addend(), 
-                            &atomContent[offset], fixupAddress, targetAddress);
+      _writer.kindHandler().applyFixup(ref->kind(), ref->addend(),
+                                       &atomContent[offset], fixupAddress,
+                                       targetAddress);
     }
   }
 }

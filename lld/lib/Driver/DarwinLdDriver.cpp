@@ -14,9 +14,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "lld/Driver/Driver.h"
+#include "lld/Driver/DarwinInputGraph.h"
 #include "lld/ReaderWriter/MachOLinkingContext.h"
-#include "../ReaderWriter/MachO/MachOFormat.hpp"
-
+#include "lld/ReaderWriter/MachOFormat.hpp"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Triple.h"
@@ -71,31 +71,35 @@ public:
 
 namespace lld {
 
-bool DarwinLdDriver::linkMachO(int argc, const char *argv[], 
-                                                    raw_ostream &diagnostics) {
-  MachOLinkingContext info;
-  if (parse(argc, argv, info, diagnostics))
+std::unique_ptr<lld::LinkerInput>
+MachOFileNode::createLinkerInput(const LinkingContext &ctx) {
+  return std::unique_ptr<LinkerInput>(new LinkerInput(path(ctx)));
+}
+
+bool DarwinLdDriver::linkMachO(int argc, const char *argv[],
+                               raw_ostream &diagnostics) {
+  MachOLinkingContext ctx;
+  if (parse(argc, argv, ctx, diagnostics))
     return true;
-  if ( info.doNothing() )
+  if (ctx.doNothing())
     return false;
-    
-  return link(info, diagnostics);
+
+  return link(ctx, diagnostics);
 }
 
 bool DarwinLdDriver::parse(int argc, const char *argv[],
-                           MachOLinkingContext &info,
-                           raw_ostream &diagnostics) {
+                           MachOLinkingContext &ctx, raw_ostream &diagnostics) {
   // Parse command line options using DarwinOptions.td
   std::unique_ptr<llvm::opt::InputArgList> parsedArgs;
   DarwinLdOptTable table;
   unsigned missingIndex;
   unsigned missingCount;
-  parsedArgs.reset(table.ParseArgs(&argv[1], &argv[argc], 
-                                                missingIndex, missingCount));
+  parsedArgs.reset(
+      table.ParseArgs(&argv[1], &argv[argc], missingIndex, missingCount));
   if (missingCount) {
-    diagnostics  << "error: missing arg value for '"
-                 << parsedArgs->getArgString(missingIndex)
-                 << "' expected " << missingCount << " argument(s).\n";
+    diagnostics << "error: missing arg value for '"
+                << parsedArgs->getArgString(missingIndex) << "' expected "
+                << missingCount << " argument(s).\n";
     return true;
   }
 
@@ -104,52 +108,52 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
     diagnostics  << "warning: ignoring unknown argument: "
                  << (*it)->getAsString(*parsedArgs) << "\n";
   }
-  
+
   // Figure out output kind ( -dylib, -r, -bundle, -preload, or -static )
   if ( llvm::opt::Arg *kind = parsedArgs->getLastArg(OPT_dylib, OPT_relocatable,
                                       OPT_bundle, OPT_static, OPT_preload)) {
     switch (kind->getOption().getID()) {
     case OPT_dylib:
-      info.setOutputFileType(mach_o::MH_DYLIB);
-      info.setGlobalsAreDeadStripRoots(true);
+      ctx.setOutputFileType(mach_o::MH_DYLIB);
+      ctx.setGlobalsAreDeadStripRoots(true);
       break;
     case OPT_relocatable:
-      info.setPrintRemainingUndefines(false);
-      info.setAllowRemainingUndefines(true);
-      info.setOutputFileType(mach_o::MH_OBJECT);
+      ctx.setPrintRemainingUndefines(false);
+      ctx.setAllowRemainingUndefines(true);
+      ctx.setOutputFileType(mach_o::MH_OBJECT);
       break;
     case OPT_bundle:
-      info.setOutputFileType(mach_o::MH_BUNDLE);
+      ctx.setOutputFileType(mach_o::MH_BUNDLE);
       break;
     case OPT_static:
-      info.setOutputFileType(mach_o::MH_EXECUTE);
+      ctx.setOutputFileType(mach_o::MH_EXECUTE);
       break;
     case OPT_preload:
-       info.setOutputFileType(mach_o::MH_PRELOAD);
+      ctx.setOutputFileType(mach_o::MH_PRELOAD);
       break;
     }
   }
-  
+
   // Handle -e xxx
   if (llvm::opt::Arg *entry = parsedArgs->getLastArg(OPT_entry))
-    info.setEntrySymbolName(entry->getValue());
+    ctx.setEntrySymbolName(entry->getValue());
 
   // Handle -o xxx
   if (llvm::opt::Arg *outpath = parsedArgs->getLastArg(OPT_output))
-    info.setOutputPath(outpath->getValue());
-    
+    ctx.setOutputPath(outpath->getValue());
+
   // Handle -dead_strip
   if (parsedArgs->getLastArg(OPT_dead_strip))
-    info.setDeadStripping(true);
-  
+    ctx.setDeadStripping(true);
+
   // Handle -all_load
   if (parsedArgs->getLastArg(OPT_all_load))
-    info.setForceLoadAllArchives(true);
-  
+    ctx.setForceLoadAllArchives(true);
+
   // Handle -arch xxx
   if (llvm::opt::Arg *archStr = parsedArgs->getLastArg(OPT_arch)) {
-    info.setArch(MachOLinkingContext::archFromName(archStr->getValue()));
-    if (info.arch() == MachOLinkingContext::arch_unknown) {
+    ctx.setArch(MachOLinkingContext::archFromName(archStr->getValue()));
+    if (ctx.arch() == MachOLinkingContext::arch_unknown) {
       diagnostics << "error: unknown arch named '" << archStr->getValue()
                   << "'\n";
       return true;
@@ -163,20 +167,20 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
                                                OPT_ios_simulator_version_min)) {
     switch (minOS->getOption().getID()) {
     case OPT_macosx_version_min:
-      if (info.setOS(MachOLinkingContext::OS::macOSX, minOS->getValue())) {
+      if (ctx.setOS(MachOLinkingContext::OS::macOSX, minOS->getValue())) {
         diagnostics << "error: malformed macosx_version_min value\n";
         return true;
       }
       break;
     case OPT_ios_version_min:
-      if (info.setOS(MachOLinkingContext::OS::iOS, minOS->getValue())) {
+      if (ctx.setOS(MachOLinkingContext::OS::iOS, minOS->getValue())) {
         diagnostics << "error: malformed ios_version_min value\n";
         return true;
       }
       break;
     case OPT_ios_simulator_version_min:
-      if (info.setOS(MachOLinkingContext::OS::iOS_simulator,
-                     minOS->getValue())) {
+      if (ctx.setOS(MachOLinkingContext::OS::iOS_simulator,
+                    minOS->getValue())) {
         diagnostics << "error: malformed ios_simulator_version_min value\n";
         return true;
       }
@@ -185,33 +189,31 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
   }
   else {
     // No min-os version on command line, check environment variables
-  
   }
-  
+
+  std::unique_ptr<InputGraph> inputGraph(new InputGraph());
+
   // Handle input files
   for (llvm::opt::arg_iterator it = parsedArgs->filtered_begin(OPT_INPUT),
                                ie = parsedArgs->filtered_end();
                               it != ie; ++it) {
-    info.appendInputFile((*it)->getValue());
-  }
-  
-  // Handle -help
-  if (parsedArgs->getLastArg(OPT_help)) {
-    table.PrintHelp(llvm::outs(), argv[0], "LLVM Darwin Linker", false);
-    // If only -help on command line, don't try to do any linking
-    if ( argc == 2 ) {
-      info.setDoNothing(true);
-      return false;
-    }
+    inputGraph->addInputElement(std::unique_ptr<InputElement>(
+        new MachOFileNode(ctx, (*it)->getValue())));
   }
 
+  if (!inputGraph->numFiles()) {
+    diagnostics << "No input files\n";
+    return true;
+  }
+
+  ctx.setInputGraph(std::move(inputGraph));
+
   // Validate the combination of options used.
-  if (info.validate(diagnostics))
+  if (ctx.validate(diagnostics))
     return true;
 
   return false;
 }
-
 
 } // namespace lld
 

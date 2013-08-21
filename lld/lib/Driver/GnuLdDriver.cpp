@@ -14,7 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "lld/Driver/Driver.h"
-#include "lld/ReaderWriter/ELFLinkingContext.h"
+#include "lld/Driver/GnuLDInputGraph.h"
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/STLExtras.h"
@@ -71,10 +71,20 @@ public:
 
 } // namespace
 
+std::unique_ptr<lld::LinkerInput>
+ELFFileNode::createLinkerInput(const LinkingContext &ctx) {
+  std::unique_ptr<LinkerInput> inputFile(new LinkerInput(path(ctx)));
+  inputFile->setAsNeeded(_asNeeded);
+  inputFile->setForceLoad(_isWholeArchive);
+  return std::move(inputFile);
+}
 
+StringRef ELFFileNode::path(const LinkingContext &) const {
+  return _elfLinkingContext.searchLibrary(_path, _libraryPaths);
+}
 
 bool GnuLdDriver::linkELF(int argc, const char *argv[],
-                                                  raw_ostream &diagnostics) {
+                          raw_ostream &diagnostics) {
   std::unique_ptr<ELFLinkingContext> options;
   bool error = parse(argc, argv, options, diagnostics);
   if (error)
@@ -93,6 +103,7 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
   GnuLdOptTable table;
   unsigned missingIndex;
   unsigned missingCount;
+
   parsedArgs.reset(
       table.ParseArgs(&argv[1], &argv[argc], missingIndex, missingCount));
   if (missingCount) {
@@ -100,13 +111,6 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
                 << parsedArgs->getArgString(missingIndex) << "' expected "
                 << missingCount << " argument(s).\n";
     return true;
-  }
-
-  for (auto it = parsedArgs->filtered_begin(OPT_UNKNOWN),
-            ie = parsedArgs->filtered_end(); it != ie; ++it) {
-    diagnostics << "warning: ignoring unknown argument: " << (*it)->getAsString(
-                                                                 *parsedArgs)
-                << "\n";
   }
 
   // Handle --help
@@ -121,154 +125,181 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
     triple = llvm::Triple(trip->getValue());
   else
     triple = getDefaultTarget(argv[0]);
-  std::unique_ptr<ELFLinkingContext> options(ELFLinkingContext::create(triple));
+  std::unique_ptr<ELFLinkingContext> ctx(ELFLinkingContext::create(triple));
 
-  if (!options) {
+  if (!ctx) {
     diagnostics << "unknown target triple\n";
     return true;
   }
 
-  // Handle -e xxx
-  if (llvm::opt::Arg *entry = parsedArgs->getLastArg(OPT_entry))
-    options->setEntrySymbolName(entry->getValue());
+  std::unique_ptr<InputGraph> inputGraph(new InputGraph());
+  std::stack<InputElement *> controlNodeStack;
 
-  // Handle -emit-yaml
-  if (parsedArgs->getLastArg(OPT_emit_yaml))
-    options->setOutputYAML(true);
+  // Positional options for an Input File
+  std::vector<StringRef> searchPath;
+  bool isWholeArchive = false;
+  bool asNeeded = false;
+  bool _outputOptionSet = false;
 
-  // Handle -o xxx
-  if (llvm::opt::Arg *output = parsedArgs->getLastArg(OPT_output))
-    options->setOutputPath(output->getValue());
-  else if (options->outputYAML())
-    options->setOutputPath("-"); // yaml writes to stdout by default
-  else
-    options->setOutputPath("a.out");
+  // Create a dynamic executable by default
+  ctx->setOutputFileType(llvm::ELF::ET_EXEC);
+  ctx->setIsStaticExecutable(false);
+  ctx->setAllowShlibUndefines(false);
+  ctx->setUseShlibUndefines(true);
 
-  // Handle -r, -shared, or -static
-  if (llvm::opt::Arg *kind =
-          parsedArgs->getLastArg(OPT_relocatable, OPT_shared, OPT_static)) {
-    switch (kind->getOption().getID()) {
-    case OPT_relocatable:
-      options->setOutputFileType(llvm::ELF::ET_REL);
-      options->setPrintRemainingUndefines(false);
-      options->setAllowRemainingUndefines(true);
+  // Set the output file to be a.out
+  ctx->setOutputPath("a.out");
+
+  // Process all the arguments and create Input Elements
+  for (auto inputArg : *parsedArgs) {
+    switch (inputArg->getOption().getID()) {
+    case OPT_mllvm:
+      ctx->appendLLVMOption(inputArg->getValue());
       break;
-    case OPT_shared:
-      options->setOutputFileType(llvm::ELF::ET_DYN);
-      options->setAllowShlibUndefines(true);
-      options->setUseShlibUndefines(false);
+    case OPT_relocatable:
+      ctx->setOutputFileType(llvm::ELF::ET_REL);
+      ctx->setPrintRemainingUndefines(false);
+      ctx->setAllowRemainingUndefines(true);
       break;
     case OPT_static:
-      options->setOutputFileType(llvm::ELF::ET_EXEC);
-      options->setIsStaticExecutable(true);
+      ctx->setOutputFileType(llvm::ELF::ET_EXEC);
+      ctx->setIsStaticExecutable(true);
       break;
-    }
-  } else {
-    options->setOutputFileType(llvm::ELF::ET_EXEC);
-    options->setIsStaticExecutable(false);
-    options->setAllowShlibUndefines(false);
-    options->setUseShlibUndefines(true);
-  }
+    case OPT_shared:
+      ctx->setOutputFileType(llvm::ELF::ET_DYN);
+      ctx->setAllowShlibUndefines(true);
+      ctx->setUseShlibUndefines(false);
+      break;
+    case OPT_entry:
+      ctx->setEntrySymbolName(inputArg->getValue());
+      break;
 
-  // Handle --noinhibit-exec
-  if (parsedArgs->getLastArg(OPT_noinhibit_exec))
-    options->setAllowRemainingUndefines(true);
+    case OPT_output:
+      _outputOptionSet = true;
+      ctx->setOutputPath(inputArg->getValue());
+      break;
 
-  // Handle --force-load
-  if (parsedArgs->getLastArg(OPT_force_load))
-    options->setForceLoadAllArchives(true);
+    case OPT_noinhibit_exec:
+      ctx->setAllowRemainingUndefines(true);
+      break;
 
-  // Handle --merge-strings
-  if (parsedArgs->getLastArg(OPT_merge_strings))
-    options->setMergeCommonStrings(true);
+    case OPT_merge_strings:
+      ctx->setMergeCommonStrings(true);
+      break;
 
-  // Handle -t
-  if (parsedArgs->getLastArg(OPT_t))
-    options->setLogInputFiles(true);
+    case OPT_all_load:
+      ctx->setForceLoadAllArchives(true);
+      break;
 
-  // Handle --no-allow-shlib-undefined
-  if (parsedArgs->getLastArg(OPT_no_allow_shlib_undefs))
-    options->setAllowShlibUndefines(false);
+    case OPT_t:
+      ctx->setLogInputFiles(true);
+      break;
 
-  // Handle --allow-shlib-undefined
-  if (parsedArgs->getLastArg(OPT_allow_shlib_undefs))
-    options->setAllowShlibUndefines(true);
+    case OPT_no_allow_shlib_undefs:
+      ctx->setAllowShlibUndefines(false);
+      break;
 
-  // Handle --use-shlib-undefs
-  if (parsedArgs->getLastArg(OPT_use_shlib_undefs))
-    options->setUseShlibUndefines(true);
+    case OPT_allow_shlib_undefs:
+      ctx->setAllowShlibUndefines(true);
+      break;
 
-  // Handle --dynamic-linker
-  if (llvm::opt::Arg *dynamicLinker =
-          parsedArgs->getLastArg(OPT_dynamic_linker))
-    options->setInterpreter(dynamicLinker->getValue());
+    case OPT_use_shlib_undefs:
+      ctx->setUseShlibUndefines(true);
+      break;
 
-  // Handle NMAGIC
-  if (parsedArgs->getLastArg(OPT_nmagic))
-    options->setOutputMagic(ELFLinkingContext::OutputMagic::NMAGIC);
+    case OPT_dynamic_linker:
+      ctx->setInterpreter(inputArg->getValue());
+      break;
 
-  // Handle OMAGIC
-  if (parsedArgs->getLastArg(OPT_omagic))
-    options->setOutputMagic(ELFLinkingContext::OutputMagic::OMAGIC);
+    case OPT_nmagic:
+      ctx->setOutputMagic(ELFLinkingContext::OutputMagic::NMAGIC);
+      ctx->setIsStaticExecutable(true);
+      break;
 
-  // Handle --no-omagic
-  if (parsedArgs->getLastArg(OPT_no_omagic)) {
-    options->setOutputMagic(ELFLinkingContext::OutputMagic::DEFAULT);
-    options->setNoAllowDynamicLibraries();
-  }
+    case OPT_omagic:
+      ctx->setOutputMagic(ELFLinkingContext::OutputMagic::OMAGIC);
+      ctx->setIsStaticExecutable(true);
+      break;
 
-  // If either of the options NMAGIC/OMAGIC have been set, make the executable
-  // static
-  if (!options->allowLinkWithDynamicLibraries())
-    options->setIsStaticExecutable(true);
+    case OPT_no_omagic:
+      ctx->setOutputMagic(ELFLinkingContext::OutputMagic::DEFAULT);
+      ctx->setNoAllowDynamicLibraries();
+      break;
 
-  // Handle -u, --undefined option
-  for (llvm::opt::arg_iterator it = parsedArgs->filtered_begin(OPT_u),
-                               ie = parsedArgs->filtered_end();
-       it != ie; ++it) {
-    options->addInitialUndefinedSymbol((*it)->getValue());
-  }
+    case OPT_u:
+      ctx->addInitialUndefinedSymbol(inputArg->getValue());
+      break;
 
-  // Handle -Lxxx
-  for (llvm::opt::arg_iterator it = parsedArgs->filtered_begin(OPT_L),
-                               ie = parsedArgs->filtered_end();
-       it != ie; ++it) {
-    options->appendSearchPath((*it)->getValue());
-  }
+    case OPT_emit_yaml:
+      if (!_outputOptionSet)
+        ctx->setOutputPath("-");
+      ctx->setOutputYAML(true);
+      break;
 
-  // Copy mllvm
-  for (llvm::opt::arg_iterator it = parsedArgs->filtered_begin(OPT_mllvm),
-                               ie = parsedArgs->filtered_end();
-       it != ie; ++it) {
-    options->appendLLVMOption((*it)->getValue());
-  }
+    case OPT_no_whole_archive:
+      isWholeArchive = false;
+      break;
+    case OPT_whole_archive:
+      isWholeArchive = true;
+      break;
+    case OPT_as_needed:
+      asNeeded = true;
+      break;
+    case OPT_no_as_needed:
+      asNeeded = false;
+      break;
+    case OPT_L:
+      searchPath.push_back(inputArg->getValue());
+      break;
 
-  // Handle input files (full paths and -lxxx)
-  for (llvm::opt::arg_iterator
-           it = parsedArgs->filtered_begin(OPT_INPUT, OPT_l),
-           ie = parsedArgs->filtered_end();
-       it != ie; ++it) {
-    switch ((*it)->getOption().getID()) {
+    case OPT_start_group: {
+      std::unique_ptr<InputElement> controlStart(new ELFGroup(*ctx));
+      controlNodeStack.push(controlStart.get());
+      (llvm::dyn_cast<ControlNode>)(controlNodeStack.top())
+          ->processControlEnter();
+      inputGraph->addInputElement(std::move(controlStart));
+    } break;
+
+    case OPT_end_group:
+      (llvm::dyn_cast<ControlNode>)(controlNodeStack.top())
+          ->processControlExit();
+      controlNodeStack.pop();
+      return false;
+
     case OPT_INPUT:
-      options->appendInputFile((*it)->getValue());
-      break;
-    case OPT_l:
-      if (options->appendLibrary((*it)->getValue())) {
-        diagnostics << "Failed to find library for " << (*it)->getValue()
-                    << "\n";
-        return true;
-      }
-      break;
+    case OPT_l: {
+      std::unique_ptr<InputElement> inputFile =
+          std::move(std::unique_ptr<InputElement>(
+              new ELFFileNode(*ctx, inputArg->getValue(), isWholeArchive,
+                              asNeeded, searchPath)));
+      if (controlNodeStack.empty())
+        inputGraph->addInputElement(std::move(inputFile));
+      else
+        (llvm::dyn_cast<ControlNode>)(controlNodeStack.top())
+            ->processInputElement(std::move(inputFile));
+    } break;
+
     default:
-      llvm_unreachable("input option type not handled");
-    }
+      break;
+    } // end switch on option ID
+  }   // end for
+
+  if (!inputGraph->numFiles()) {
+    diagnostics << "No input files\n";
+    return true;
   }
+
+  if (ctx->outputYAML())
+    inputGraph->dump(diagnostics);
 
   // Validate the combination of options used.
-  if (options->validate(diagnostics))
+  if (ctx->validate(diagnostics))
     return true;
 
-  context.swap(options);
+  ctx->setInputGraph(std::move(inputGraph));
+
+  context.swap(ctx);
+
   return false;
 }
 

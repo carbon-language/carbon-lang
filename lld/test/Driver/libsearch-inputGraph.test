@@ -1,0 +1,34 @@
+RUN: lld -flavor gnu -L%p/../elf/Inputs -lfnarchive -emit-yaml 2> %t.err
+RUN: FileCheck %s < %t.err
+RUN: lld -flavor gnu -L%p/../elf/Inputs --whole-archive -lfnarchive -emit-yaml 2> %t1.err
+RUN: FileCheck %s -check-prefix="WHOLEARCHIVE" < %t1.err
+RUN: lld -flavor gnu -L%p/../elf/Inputs --whole-archive --as-needed -lfnarchive -emit-yaml 2> %t2.err
+RUN: FileCheck %s -check-prefix="ASNEEDED" < %t2.err
+
+CHECK: Name    : {{[^ ]+}}elf/Inputs{{[\\/]}}libfnarchive.a
+CHECK: Type    : ELF File
+CHECK: Ordinal : -1
+CHECK: Attributes :
+CHECK:   - wholeArchive : false
+CHECK:   - asNeeded : false
+CHECK:   contextPath :
+CHECK:     - {{[^ ]+}}elf/Inputs
+
+WHOLEARCHIVE: Name    : {{[^ ]+}}elf/Inputs{{[\\/]}}libfnarchive.a
+WHOLEARCHIVE: Type    : ELF File
+WHOLEARCHIVE: Ordinal : -1
+WHOLEARCHIVE: Attributes :
+WHOLEARCHIVE:   - wholeArchive : true
+WHOLEARCHIVE:   - asNeeded : false
+WHOLEARCHIVE:   contextPath :
+WHOLEARCHIVE:     - {{[^ ]+}}elf/Inputs
+
+ASNEEDED: Name    : {{[^ ]+}}elf/Inputs{{[\\/]}}libfnarchive.a
+ASNEEDED: Type    : ELF File
+ASNEEDED: Ordinal : -1
+ASNEEDED: Attributes :
+ASNEEDED:   - wholeArchive : true
+ASNEEDED:   - asNeeded : true
+ASNEEDED:   contextPath :
+ASNEEDED:     - {{[^ ]+}}elf/Inputs
+

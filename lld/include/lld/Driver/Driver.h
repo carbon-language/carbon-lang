@@ -18,6 +18,7 @@
 #define LLD_DRIVER_DRIVER_H
 
 #include "lld/Core/LLVM.h"
+#include "lld/Driver/InputGraph.h"
 
 #include "llvm/ADT/Triple.h"
 #include "llvm/Support/raw_ostream.h"
@@ -36,14 +37,13 @@ class ELFLinkingContext;
 class Driver {
 protected:
 
-  /// Performs link using specified options.
+  /// Performs link using specified options
   static bool link(const LinkingContext &context,
                    raw_ostream &diagnostics = llvm::errs());
 
 private:
   Driver() LLVM_DELETED_FUNCTION;
 };
-
 
 /// Driver for "universal" lld tool which can mimic any linker command line
 /// parsing once it figures out which command line flavor to use.
@@ -132,9 +132,6 @@ public:
 private:
   CoreDriver() LLVM_DELETED_FUNCTION;
 };
-
-
-
 
 } // end namespace lld
 

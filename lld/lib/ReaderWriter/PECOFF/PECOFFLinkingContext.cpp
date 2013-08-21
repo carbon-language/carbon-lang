@@ -25,13 +25,7 @@
 
 namespace lld {
 
-namespace {
-bool containDirectoryName(StringRef path) {
-  SmallString<128> smallStr = StringRef(path);
-  llvm::sys::path::remove_filename(smallStr);
-  return !smallStr.str().empty();
-}
-} // anonymous namespace
+namespace {} // anonymous namespace
 
 error_code PECOFFLinkingContext::parseFile(
     std::unique_ptr<MemoryBuffer> &mb,
@@ -40,11 +34,6 @@ error_code PECOFFLinkingContext::parseFile(
 }
 
 bool PECOFFLinkingContext::validateImpl(raw_ostream &diagnostics) {
-  if (_inputFiles.empty()) {
-    diagnostics << "No input files\n";
-    return true;
-  }
-
   if (_stackReserve < _stackCommit) {
     diagnostics << "Invalid stack size: reserve size must be equal to or "
                 << "greater than commit size, but got " << _stackCommit
@@ -73,45 +62,20 @@ void PECOFFLinkingContext::addImplicitFiles(InputFiles &files) const {
   files.appendFile(*linkerFile);
 }
 
-/// Append the given file to the input file list. The file must be an object
-/// file or an import library file.
-void PECOFFLinkingContext::appendInputFileOrLibrary(std::string path) {
-  StringRef ext = llvm::sys::path::extension(path);
-  // This is an import library file. Look for the library file in the search
-  // paths, unless the path contains a directory name.
-  if (ext.equals_lower(".lib")) {
-    if (containDirectoryName(path)) {
-      appendInputFile(path);
-      return;
-    }
-    appendLibraryFile(path);
-    return;
-  }
-  // This is an object file otherwise. Add ".obj" extension if the given path
-  // name has no file extension.
-  if (ext.empty())
-    path.append(".obj");
-  appendInputFile(allocateString(path));
-}
-
 /// Try to find the input library file from the search paths and append it to
 /// the input file list. Returns true if the library file is found.
-void PECOFFLinkingContext::appendLibraryFile(StringRef filename) {
+StringRef PECOFFLinkingContext::searchLibraryFile(StringRef filename) const {
   // Current directory always takes precedence over the search paths.
-  if (llvm::sys::fs::exists(filename)) {
-    appendInputFile(filename);
-    return;
-  }
+  if (llvm::sys::path::is_absolute(filename) || llvm::sys::fs::exists(filename))
+    return filename;
   // Iterate over the search paths.
   for (StringRef dir : _inputSearchPaths) {
     SmallString<128> path = dir;
     llvm::sys::path::append(path, filename);
-    if (llvm::sys::fs::exists(path.str())) {
-      appendInputFile(allocateString(path.str()));
-      return;
-    }
+    if (llvm::sys::fs::exists(path.str()))
+      return (*(new (_alloc) std::string(path.str())));
   }
-  appendInputFile(filename);
+  return filename;
 }
 
 Writer &PECOFFLinkingContext::writer() const { return *_writer; }

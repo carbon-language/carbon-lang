@@ -45,15 +45,16 @@ class LinkerInput {
   LinkerInput(const LinkerInput &) LLVM_DELETED_FUNCTION;
 
 public:
-  explicit LinkerInput(StringRef file) : _file(file) {}
+  explicit LinkerInput(StringRef file)
+      : _file(file), _isForceLoad(false), _asNeeded(false) {}
 
   explicit LinkerInput(std::unique_ptr<llvm::MemoryBuffer> buffer)
-      : _buffer(std::move(buffer)), _file(_buffer->getBufferIdentifier()) {
-  }
+      : _buffer(std::move(buffer)), _file(_buffer->getBufferIdentifier()),
+        _isForceLoad(false), _asNeeded(false) {}
 
   LinkerInput(LinkerInput &&other)
-      : _buffer(std::move(other._buffer)), _file(std::move(other._file)) {
-  }
+      : _buffer(std::move(other._buffer)), _file(std::move(other._file)),
+        _isForceLoad(other.isForceLoad()), _asNeeded(other.asNeeded()) {}
 
   LinkerInput &operator=(LinkerInput &&rhs) {
     _buffer = std::move(rhs._buffer);
@@ -81,12 +82,25 @@ public:
     return std::move(_buffer);
   }
 
+  /// \brief forceLoad is a positional option which when set, requires all
+  /// members in an archive to be force loaded
+  void setForceLoad(bool forceLoad) { _isForceLoad = forceLoad; }
+
+  bool isForceLoad() const { return _isForceLoad; }
+
+  /// \brief asneeded is a positional option which when set for a file
+  /// makes the file to be needed at runtime only if its resolving
+  /// undefined symbols
+  void setAsNeeded(bool asNeeded) { _asNeeded = asNeeded; }
+
+  bool asNeeded() const { return _asNeeded; }
+
 private:
   mutable std::unique_ptr<llvm::MemoryBuffer> _buffer;
   std::string _file;
+  bool _isForceLoad : 1;
+  bool _asNeeded : 1;
 };
-
-
 
 } // namespace lld
 

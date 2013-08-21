@@ -8,10 +8,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "lld/ReaderWriter/MachOLinkingContext.h"
+#include "lld/ReaderWriter/MachOFormat.hpp"
 #include "GOTPass.hpp"
 #include "StubsPass.hpp"
 #include "ReferenceKinds.h"
-#include "MachOFormat.hpp"
 
 #include "lld/Core/PassManager.h"
 #include "lld/ReaderWriter/Reader.h"
@@ -205,11 +205,6 @@ bool MachOLinkingContext::addUnixThreadLoadCommand() const {
 }
 
 bool MachOLinkingContext::validateImpl(raw_ostream &diagnostics) {
-  if (_inputFiles.empty()) {
-    diagnostics << "no object files specified\n";
-    return true;
-  }
-
   if ((_outputFileType == mach_o::MH_EXECUTE) && _entrySymbolName.empty()) {
     if (_outputFileTypeStatic) {
       _entrySymbolName = "start";

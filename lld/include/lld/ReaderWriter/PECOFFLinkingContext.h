@@ -37,6 +37,9 @@ public:
     int minorVersion;
   };
 
+  /// \brief Casting support
+  static inline bool classof(const LinkingContext *info) { return true; }
+
   virtual error_code
   parseFile(std::unique_ptr<MemoryBuffer> &mb,
             std::vector<std::unique_ptr<File> > &result) const;
@@ -56,8 +59,7 @@ public:
     return _inputSearchPaths;
   }
 
-  void appendInputFileOrLibrary(std::string path);
-  void appendLibraryFile(StringRef path);
+  StringRef searchLibraryFile(StringRef path) const;
 
   void setBaseAddress(uint64_t addr) { _baseAddress = addr; }
   uint64_t getBaseAddress() const { return _baseAddress; }
@@ -93,11 +95,17 @@ public:
   virtual ErrorOr<Reference::Kind> relocKindFromString(StringRef str) const;
   virtual ErrorOr<std::string> stringFromRelocKind(Reference::Kind kind) const;
 
-  StringRef allocateString(const StringRef &ref) {
+  StringRef allocateString(StringRef ref) {
     char *x = _alloc.Allocate<char>(ref.size() + 1);
     memcpy(x, ref.data(), ref.size());
     x[ref.size()] = '\0';
     return x;
+  }
+
+  virtual bool hasInputGraph() {
+    if (_inputGraph)
+      return true;
+    return false;
   }
 
 private:

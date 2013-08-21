@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "lld/Driver/Driver.h"
+#include "lld/Driver/CoreInputGraph.h"
 #include "lld/ReaderWriter/CoreLinkingContext.h"
 #include "lld/ReaderWriter/Reader.h"
 
@@ -61,103 +62,105 @@ public:
   CoreOptTable() : OptTable(infoTable, llvm::array_lengthof(infoTable)){}
 };
 
-
-
 } // namespace anonymous
 
 
 namespace lld {
 
+std::unique_ptr<lld::LinkerInput>
+COREFileNode::createLinkerInput(const LinkingContext &info) {
+  return std::unique_ptr<LinkerInput>(new LinkerInput(path(info)));
+}
+
 bool CoreDriver::link(int argc, const char *argv[], raw_ostream &diagnostics) {
   CoreLinkingContext info;
   if (parse(argc, argv, info))
     return true;
-  
+
   return Driver::link(info);
 }
 
-bool CoreDriver::parse(int argc, const char *argv[], CoreLinkingContext &info,
+bool CoreDriver::parse(int argc, const char *argv[], CoreLinkingContext &ctx,
                        raw_ostream &diagnostics) {
   // Parse command line options using CoreOptions.td
   std::unique_ptr<llvm::opt::InputArgList> parsedArgs;
   CoreOptTable table;
   unsigned missingIndex;
   unsigned missingCount;
-  parsedArgs.reset(table.ParseArgs(&argv[1], &argv[argc], 
-                                                missingIndex, missingCount));
+  parsedArgs.reset(
+      table.ParseArgs(&argv[1], &argv[argc], missingIndex, missingCount));
   if (missingCount) {
-    diagnostics  << "error: missing arg value for '"
-                 << parsedArgs->getArgString(missingIndex)
-                 << "' expected " << missingCount << " argument(s).\n";
+    diagnostics << "error: missing arg value for '"
+                << parsedArgs->getArgString(missingIndex) << "' expected "
+                << missingCount << " argument(s).\n";
     return true;
   }
 
-  for (auto it = parsedArgs->filtered_begin(OPT_UNKNOWN),
-            ie = parsedArgs->filtered_end(); it != ie; ++it) {
-    diagnostics  << "warning: ignoring unknown argument: "
-                 << (*it)->getAsString(*parsedArgs) << "\n";
-  }
-  
-  // Copy mllvm
-  for (llvm::opt::arg_iterator it = parsedArgs->filtered_begin(OPT_mllvm),
-                               ie = parsedArgs->filtered_end();
-       it != ie; ++it) {
-    info.appendLLVMOption((*it)->getValue());
-  }
-  
-  // Handle -e xxx
-  if (llvm::opt::Arg *entry = parsedArgs->getLastArg(OPT_entry))
-    info.setEntrySymbolName(entry->getValue());
-    
-  // Handle -o xxx
-  if (llvm::opt::Arg *outpath = parsedArgs->getLastArg(OPT_output))
-    info.setOutputPath(outpath->getValue());
-  else
-    info.setOutputPath("-");
-    
-  // Handle --dead_strip
-  if (parsedArgs->getLastArg(OPT_dead_strip))
-    info.setDeadStripping(true);
-  else
-    info.setDeadStripping(false);
- 
-  // Handle --keep-globals
-  if (parsedArgs->getLastArg(OPT_keep_globals))
-    info.setGlobalsAreDeadStripRoots(true);
-  else
-    info.setGlobalsAreDeadStripRoots(false);
-  
-  // Handle --undefines-are-errors
-  if (parsedArgs->getLastArg(OPT_undefines_are_errors)) {
-    info.setPrintRemainingUndefines(true);
-    info.setAllowRemainingUndefines(false);
-  }
-  else {
-    info.setPrintRemainingUndefines(false);
-    info.setAllowRemainingUndefines(true);
+  std::unique_ptr<InputGraph> inputGraph(new InputGraph());
+
+  // Set default options
+  ctx.setOutputPath("-");
+  ctx.setDeadStripping(false);
+  ctx.setGlobalsAreDeadStripRoots(false);
+  ctx.setPrintRemainingUndefines(false);
+  ctx.setAllowRemainingUndefines(true);
+  ctx.setSearchArchivesToOverrideTentativeDefinitions(false);
+
+  // Process all the arguments and create Input Elements
+  for (auto inputArg : *parsedArgs) {
+    switch (inputArg->getOption().getID()) {
+    case OPT_mllvm:
+      ctx.appendLLVMOption(inputArg->getValue());
+      break;
+
+    case OPT_entry:
+      ctx.setEntrySymbolName(inputArg->getValue());
+      break;
+
+    case OPT_output:
+      ctx.setOutputPath(inputArg->getValue());
+      break;
+
+    case OPT_dead_strip:
+      ctx.setDeadStripping(true);
+      break;
+
+    case OPT_keep_globals:
+      ctx.setGlobalsAreDeadStripRoots(true);
+      break;
+
+    case OPT_undefines_are_errors:
+      ctx.setPrintRemainingUndefines(true);
+      ctx.setAllowRemainingUndefines(false);
+      break;
+
+    case OPT_commons_search_archives:
+      ctx.setSearchArchivesToOverrideTentativeDefinitions(true);
+      break;
+
+    case OPT_add_pass:
+      ctx.addPassNamed(inputArg->getValue());
+      break;
+
+    case OPT_INPUT: {
+      inputGraph->addInputElement(std::unique_ptr<InputElement>(
+          new COREFileNode(ctx, inputArg->getValue())));
+    } break;
+
+    default:
+      break;
+    }
   }
 
-  // Handle --commons-search-archives
-  if (parsedArgs->getLastArg(OPT_commons_search_archives))
-    info.setSearchArchivesToOverrideTentativeDefinitions(true);
-  else
-    info.setSearchArchivesToOverrideTentativeDefinitions(false);
-  
-  // Handle --add-pass xxx option
-  for (llvm::opt::arg_iterator it = parsedArgs->filtered_begin(OPT_add_pass),
-                               ie = parsedArgs->filtered_end();
-                              it != ie; ++it) {
-    info.addPassNamed((*it)->getValue());
+  if (!inputGraph->numFiles()) {
+    diagnostics << "No input files\n";
+    return true;
   }
 
-  // Handle input files
-  for (llvm::opt::arg_iterator it = parsedArgs->filtered_begin(OPT_INPUT),
-                               ie = parsedArgs->filtered_end();
-                              it != ie; ++it) {
-    info.appendInputFile((*it)->getValue());
-  }
-  
-  return false;
+  ctx.setInputGraph(std::move(inputGraph));
+
+  // Validate the combination of options used.
+  return ctx.validate(diagnostics);
 }
 
 } // namespace lld

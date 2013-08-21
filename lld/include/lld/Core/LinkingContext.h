@@ -15,6 +15,7 @@
 #include "lld/Core/range.h"
 #include "lld/Core/Reference.h"
 
+#include "lld/Driver/InputGraph.h"
 #include "lld/Driver/LinkerInput.h"
 #include "lld/ReaderWriter/Reader.h"
 
@@ -33,6 +34,7 @@ class PassManager;
 class File;
 class Writer;
 class InputFiles;
+class InputGraph;
 
 /// \brief The LinkingContext class encapsulates "what and how" to link.
 ///
@@ -173,7 +175,7 @@ public:
   const std::vector<LinkerInput> &inputFiles() const { return _inputFiles; }
   /// @}
 
-  /// \name Methods used by Drivers to configure LinkingContext
+  /// \name Methods used by Drivers to configure TargetInfo
   /// @{
   void setOutputPath(StringRef str) { _outputPath = str; }
   void setEntrySymbolName(StringRef name) { _entrySymbolName = name; }
@@ -207,6 +209,10 @@ public:
     _inputFiles.emplace_back(LinkerInput(std::move(buffer)));
   }
   void appendLLVMOption(const char *opt) { _llvmOptions.push_back(opt); }
+  virtual void setInputGraph(std::unique_ptr<InputGraph> inputGraph) {
+    _inputGraph = std::move(inputGraph);
+  }
+  virtual InputGraph &inputGraph() const { return *_inputGraph; }
 
   /// This method adds undefined symbols specified by the -u option to the
   /// to the list of undefined symbols known to the linker. This option
@@ -324,6 +330,7 @@ protected:
   std::vector<const char *> _llvmOptions;
   std::unique_ptr<Reader> _yamlReader;
   StringRefVector _initialUndefinedSymbols;
+  std::unique_ptr<InputGraph> _inputGraph;
 
 private:
   /// Validate the subclass bits. Only called by validate.

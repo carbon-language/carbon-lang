@@ -87,7 +87,7 @@ error_code ReaderLinkerScript::parseFile(
   const LinkerScript *ls = (*lsf)->getScript();
   result.push_back(std::move(*lsf));
   for (const auto &c : ls->_commands) {
-    if (auto group = dyn_cast<Group>(c))
+    if (auto group = dyn_cast<lld::script::Group>(c))
       for (const auto &path : group->getPaths()) {
         if (error_code ec = _context.readFile(path._path, result))
           return ec;

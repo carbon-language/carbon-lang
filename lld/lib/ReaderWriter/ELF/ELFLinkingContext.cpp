@@ -64,11 +64,6 @@ bool ELFLinkingContext::validateImpl(raw_ostream &diagnostics) {
     _entrySymbolName = "_start";
   }
 
-  if (_inputFiles.empty()) {
-    diagnostics << "No input files\n";
-    return true;
-  }
-
   _elfReader = createReaderELF(*this);
   _linkerScriptReader.reset(new ReaderLinkerScript(*this));
   _writer = _outputYAML ? createWriterYAML(*this) : createWriterELF(*this);
@@ -131,10 +126,11 @@ ELFLinkingContext::create(llvm::Triple triple) {
   }
 }
 
-bool ELFLinkingContext::appendLibrary(StringRef libName) {
+StringRef ELFLinkingContext::searchLibrary(
+    StringRef libName, const std::vector<StringRef> &searchPath) const {
   bool foundFile = false;
   StringRef pathref;
-  for (StringRef dir : _inputSearchPaths) {
+  for (StringRef dir : searchPath) {
     // Search for dynamic library
     if (!_isStaticExecutable) {
       SmallString<128> dynlibPath;
@@ -155,15 +151,10 @@ bool ELFLinkingContext::appendLibrary(StringRef libName) {
         foundFile = true;
       }
     }
-    if (foundFile) {
-      unsigned pathlen = pathref.size();
-      char *x = _extraStrings.Allocate<char>(pathlen);
-      memcpy(x, pathref.data(), pathlen);
-      appendInputFile(StringRef(x, pathlen));
-      return false;
-    }
+    if (foundFile)
+      return (*(new (_alloc) std::string(pathref.str())));
   }
-  return true;
+  return libName;
 }
 
 } // end namespace lld

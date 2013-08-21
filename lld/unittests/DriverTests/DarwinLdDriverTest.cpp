@@ -15,7 +15,7 @@
 #include "DriverTest.h"
 
 #include "lld/ReaderWriter/MachOLinkingContext.h"
-#include "../../lib/ReaderWriter/MachO/MachOFormat.hpp"
+#include "lld/ReaderWriter/MachOFormat.hpp"
 
 using namespace llvm;
 using namespace lld;

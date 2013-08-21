@@ -17,14 +17,15 @@
 #include <sstream>
 #include <map>
 
+#include "lld/Driver/Driver.h"
+#include "lld/Driver/WinLinkInputGraph.h"
+#include "lld/ReaderWriter/PECOFFLinkingContext.h"
+
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Option/Arg.h"
 #include "llvm/Option/Option.h"
 #include "llvm/Support/Path.h"
-
-#include "lld/Driver/Driver.h"
-#include "lld/ReaderWriter/PECOFFLinkingContext.h"
 
 namespace lld {
 
@@ -62,135 +63,6 @@ public:
   WinLinkOptTable() : OptTable(infoTable, llvm::array_lengthof(infoTable)){}
 };
 
-// Displays error message if the given version does not match with
-// /^\d+$/.
-bool checkNumber(StringRef version, const char *errorMessage,
-                 raw_ostream &diagnostics) {
-  if (version.str().find_first_not_of("0123456789") != std::string::npos
-      || version.empty()) {
-    diagnostics << "error: " << errorMessage << version << "\n";
-    return false;
-  }
-  return true;
-}
-
-// Parse an argument for /base, /stack or /heap. The expected string
-// is "<integer>[,<integer>]".
-bool parseMemoryOption(const StringRef &arg, raw_ostream &diagnostics,
-                       uint64_t &reserve, uint64_t &commit) {
-  StringRef reserveStr, commitStr;
-  llvm::tie(reserveStr, commitStr) = arg.split(',');
-  if (!checkNumber(reserveStr, "invalid size: ", diagnostics))
-    return false;
-  reserve = atoi(reserveStr.str().c_str());
-  if (!commitStr.empty()) {
-    if (!checkNumber(commitStr, "invalid size: ", diagnostics))
-      return false;
-    commit = atoi(commitStr.str().c_str());
-  }
-  return true;
-}
-
-// Parse /base command line option. The argument for the parameter is in the
-// form of "<address>[:<size>]".
-bool parseBaseOption(PECOFFLinkingContext &context, const StringRef &arg,
-                     raw_ostream &diagnostics) {
-  // Size should be set to SizeOfImage field in the COFF header, and if it's
-  // smaller than the actual size, the linker should warn about that. Currently
-  // we just ignore the value of size parameter.
-  uint64_t addr, size;
-  if (!parseMemoryOption(arg, diagnostics, addr, size))
-    return false;
-  // It's an error if the base address is not multiple of 64K.
-  if (addr & 0xffff) {
-    diagnostics << "Base address have to be multiple of 64K, but got "
-                << addr << "\n";
-    return false;
-  }
-  context.setBaseAddress(addr);
-  return true;
-}
-
-// Parse /stack command line option
-bool parseStackOption(PECOFFLinkingContext &context, const StringRef &arg,
-                      raw_ostream &diagnostics) {
-  uint64_t reserve;
-  uint64_t commit = context.getStackCommit();
-  if (!parseMemoryOption(arg, diagnostics, reserve, commit))
-    return false;
-  context.setStackReserve(reserve);
-  context.setStackCommit(commit);
-  return true;
-}
-
-// Parse /heap command line option.
-bool parseHeapOption(PECOFFLinkingContext &context, const StringRef &arg,
-                     raw_ostream &diagnostics) {
-  uint64_t reserve;
-  uint64_t commit = context.getHeapCommit();
-  if (!parseMemoryOption(arg, diagnostics, reserve, commit))
-    return false;
-  context.setHeapReserve(reserve);
-  context.setHeapCommit(commit);
-  return true;
-}
-
-// Returns subsystem type for the given string.
-llvm::COFF::WindowsSubsystem stringToWinSubsystem(StringRef str) {
-  std::string arg(str.lower());
-  return llvm::StringSwitch<llvm::COFF::WindowsSubsystem>(arg)
-      .Case("windows", llvm::COFF::IMAGE_SUBSYSTEM_WINDOWS_GUI)
-      .Case("console", llvm::COFF::IMAGE_SUBSYSTEM_WINDOWS_CUI)
-      .Default(llvm::COFF::IMAGE_SUBSYSTEM_UNKNOWN);
-}
-
-bool parseMinOSVersion(PECOFFLinkingContext &context,
-                       const StringRef &osVersion, raw_ostream &diagnostics) {
-  StringRef majorVersion, minorVersion;
-  llvm::tie(majorVersion, minorVersion) = osVersion.split('.');
-  if (minorVersion.empty())
-    minorVersion = "0";
-  if (!checkNumber(majorVersion, "invalid OS major version: ", diagnostics))
-    return false;
-  if (!checkNumber(minorVersion, "invalid OS minor version: ", diagnostics))
-    return false;
-  PECOFFLinkingContext::OSVersion minOSVersion(
-      atoi(majorVersion.str().c_str()), atoi(minorVersion.str().c_str()));
-  context.setMinOSVersion(minOSVersion);
-  return true;
-}
-
-// Parse /subsystem command line option. The form of /subsystem is
-// "subsystem_name[,majorOSVersion[.minorOSVersion]]".
-bool parseSubsystemOption(PECOFFLinkingContext &context, std::string arg,
-                          raw_ostream &diagnostics) {
-  StringRef subsystemStr, osVersionStr;
-  llvm::tie(subsystemStr, osVersionStr) = StringRef(arg).split(',');
-
-  // Parse optional OS version if exists.
-  if (!osVersionStr.empty())
-    if (!parseMinOSVersion(context, osVersionStr, diagnostics))
-      return false;
-
-  // Parse subsystem name.
-  llvm::COFF::WindowsSubsystem subsystem = stringToWinSubsystem(subsystemStr);
-  if (subsystem == llvm::COFF::IMAGE_SUBSYSTEM_UNKNOWN) {
-    diagnostics << "error: unknown subsystem name: " << subsystemStr << "\n";
-    return false;
-  }
-  context.setSubsystem(subsystem);
-  return true;
-}
-
-// Replace a file extension with ".exe". If the given file has no
-// extension, just add ".exe".
-StringRef getDefaultOutputFileName(PECOFFLinkingContext &context,
-                                   StringRef path) {
-  SmallString<128> smallStr = path;
-  llvm::sys::path::replace_extension(smallStr, ".exe");
-  return context.allocateString(smallStr.str());
-}
-
 // Split the given string with spaces.
 std::vector<std::string> splitArgList(std::string str) {
   std::stringstream stream(str);
@@ -210,6 +82,26 @@ std::vector<StringRef> splitPathList(StringRef str) {
   return std::move(ret);
 }
 
+// Parse an argument for /base, /stack or /heap. The expected string
+// is "<integer>[,<integer>]".
+bool parseMemoryOption(StringRef arg, uint64_t &reserve, uint64_t &commit) {
+  StringRef reserveStr, commitStr;
+  llvm::tie(reserveStr, commitStr) = arg.split(',');
+  if (reserveStr.getAsInteger(0, reserve))
+    return true;
+  if (!commitStr.empty() && (commitStr.getAsInteger(0, commit)))
+    return true;
+  return false;
+}
+
+// Returns subsystem type for the given string.
+llvm::COFF::WindowsSubsystem stringToWinSubsystem(StringRef str) {
+  return llvm::StringSwitch<llvm::COFF::WindowsSubsystem>(str.lower())
+      .Case("windows", llvm::COFF::IMAGE_SUBSYSTEM_WINDOWS_GUI)
+      .Case("console", llvm::COFF::IMAGE_SUBSYSTEM_WINDOWS_CUI)
+      .Default(llvm::COFF::IMAGE_SUBSYSTEM_UNKNOWN);
+}
+
 // Handle /failifmatch option.
 bool handleFailIfMismatchOption(StringRef option,
                                 std::map<StringRef, StringRef> &mustMatch,
@@ -218,26 +110,16 @@ bool handleFailIfMismatchOption(StringRef option,
   llvm::tie(key, value) = option.split('=');
   if (key.empty() || value.empty()) {
     diagnostics << "error: malformed /failifmatch option: " << option << "\n";
-    return false;
+    return true;
   }
   auto it = mustMatch.find(key);
   if (it != mustMatch.end() && it->second != value) {
     diagnostics << "error: mismatch detected: '" << it->second << "' and '"
                 << value << "' for key '" << key << "'\n";
-    return false;
+    return true;
   }
   mustMatch[key] = value;
-  return true;
-}
-
-// Add ".lib" extension if the path does not already have the extension to mimic
-// link.exe behavior.
-StringRef canonicalizeImportLibraryPath(PECOFFLinkingContext &context,
-                                        StringRef path) {
-  std::string s(path.lower());
-  if (StringRef(s).endswith(".lib"))
-    return path;
-  return context.allocateString(std::string(path).append(".lib"));
+  return false;
 }
 
 // Process "LINK" environment variable. If defined, the value of the variable
@@ -299,6 +181,29 @@ std::unique_ptr<llvm::opt::InputArgList> parseArgs(int argc, const char *argv[],
 
 } // namespace
 
+std::unique_ptr<lld::LinkerInput>
+PECOFFFileNode::createLinkerInput(const LinkingContext &ctx) {
+  return std::unique_ptr<LinkerInput>(new LinkerInput(path(ctx)));
+}
+
+std::unique_ptr<lld::LinkerInput>
+PECOFFLibraryNode::createLinkerInput(const LinkingContext &ctx) {
+  return std::unique_ptr<LinkerInput>(new LinkerInput(path(ctx)));
+}
+
+StringRef PECOFFFileNode::path(const LinkingContext &) const {
+  if (_path.endswith(".lib"))
+    return _ctx.searchLibraryFile(_path);
+  if (llvm::sys::path::extension(_path).empty())
+    return (_path.str() + ".obj");
+  return _path;
+}
+
+StringRef PECOFFLibraryNode::path(const LinkingContext &) const {
+  if (!_path.endswith(".lib"))
+    return _ctx.searchLibraryFile(_path.str() + ".lib");
+  return _ctx.searchLibraryFile(_path);
+}
 
 bool WinLinkDriver::linkPECOFF(int argc, const char *argv[],
                                raw_ostream &diagnostics) {
@@ -311,13 +216,18 @@ bool WinLinkDriver::linkPECOFF(int argc, const char *argv[],
 }
 
 bool WinLinkDriver::parse(int argc, const char *argv[],
-                          PECOFFLinkingContext &context,
-                          raw_ostream &diagnostics) {
+                          PECOFFLinkingContext &ctx, raw_ostream &diagnostics) {
+  std::map<StringRef, StringRef> failIfMismatchMap;
   // Parse the options.
   std::unique_ptr<llvm::opt::InputArgList> parsedArgs = parseArgs(
       argc, argv, diagnostics);
   if (!parsedArgs)
     return true;
+
+  if (!ctx.hasInputGraph())
+    ctx.setInputGraph(std::unique_ptr<InputGraph>(new InputGraph()));
+
+  InputGraph &inputGraph = ctx.inputGraph();
 
   // handle /help
   if (parsedArgs->getLastArg(OPT_help)) {
@@ -325,75 +235,6 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
     table.PrintHelp(llvm::outs(), argv[0], "LLVM Linker", false);
     return true;
   }
-
-  // Copy -mllvm
-  for (llvm::opt::arg_iterator it = parsedArgs->filtered_begin(OPT_mllvm),
-                               ie = parsedArgs->filtered_end();
-       it != ie; ++it) {
-    context.appendLLVMOption((*it)->getValue());
-  }
-
-  // handle /base
-  if (llvm::opt::Arg *arg = parsedArgs->getLastArg(OPT_base))
-    if (!parseBaseOption(context, arg->getValue(), diagnostics))
-      return true;
-
-  // handle /stack
-  if (llvm::opt::Arg *arg = parsedArgs->getLastArg(OPT_stack))
-    if (!parseStackOption(context, arg->getValue(), diagnostics))
-      return true;
-
-  // handle /heap
-  if (llvm::opt::Arg *arg = parsedArgs->getLastArg(OPT_heap))
-    if (!parseHeapOption(context, arg->getValue(), diagnostics))
-      return true;
-
-  // handle /subsystem
-  if (llvm::opt::Arg *arg = parsedArgs->getLastArg(OPT_subsystem))
-    if (!parseSubsystemOption(context, arg->getValue(), diagnostics))
-      return true;
-
-  // handle /entry
-  if (llvm::opt::Arg *arg = parsedArgs->getLastArg(OPT_entry))
-    context.setEntrySymbolName(arg->getValue());
-
-  // handle /libpath
-  for (llvm::opt::arg_iterator it = parsedArgs->filtered_begin(OPT_libpath),
-                               ie = parsedArgs->filtered_end();
-       it != ie; ++it) {
-    context.appendInputSearchPath((*it)->getValue());
-  }
-
-  // handle /force
-  if (parsedArgs->getLastArg(OPT_force))
-    context.setAllowRemainingUndefines(true);
-
-  // handle /nxcompat:no
-  if (parsedArgs->getLastArg(OPT_no_nxcompat))
-    context.setNxCompat(false);
-
-  // handle /largeaddressaware
-  if (parsedArgs->getLastArg(OPT_largeaddressaware))
-    context.setLargeAddressAware(true);
-
-  // handle /fixed
-  if (parsedArgs->getLastArg(OPT_fixed))
-    context.setBaseRelocationEnabled(false);
-
-  // handle /tsaware:no
-  if (parsedArgs->getLastArg(OPT_no_tsaware))
-    context.setTerminalServerAware(false);
-
-  // handle /include
-  for (llvm::opt::arg_iterator it = parsedArgs->filtered_begin(OPT_incl),
-                               ie = parsedArgs->filtered_end();
-       it != ie; ++it) {
-    context.addInitialUndefinedSymbol((*it)->getValue());
-  }
-
-  // handle /out
-  if (llvm::opt::Arg *outpath = parsedArgs->getLastArg(OPT_out))
-    context.setOutputPath(outpath->getValue());
 
   // handle /defaultlib
   std::vector<StringRef> defaultLibs;
@@ -403,29 +244,143 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
     defaultLibs.push_back((*it)->getValue());
   }
 
-  // Handle /failifmismatch. /failifmismatch is the hidden linker option behind
-  // the scenes of "detect_mismatch" pragma. If the compiler finds "#pragma
-  // detect_mismatch(name, value)", it outputs "/failifmismatch:name=value" to
-  // the .drectve section of the resultant object file. The linker raises an
-  // error if conflicting /failmismatch options are given. Conflicting options
-  // are the options with the same key but with different values.
-  //
-  // This feature is used to prevent inconsistent object files from linking.
-  std::map<StringRef, StringRef> mustMatch;
-  for (llvm::opt::arg_iterator
-           it = parsedArgs->filtered_begin(OPT_failifmismatch),
-           ie = parsedArgs->filtered_end();
-       it != ie; ++it) {
-    if (!handleFailIfMismatchOption((*it)->getValue(), mustMatch, diagnostics))
-      return true;
-  }
+  // Process all the arguments and create Input Elements
+  for (auto inputArg : *parsedArgs) {
+    switch (inputArg->getOption().getID()) {
+    case OPT_mllvm:
+      ctx.appendLLVMOption(inputArg->getValue());
+      break;
 
-  // Add input files
-  std::vector<StringRef> inputPaths;
-  for (llvm::opt::arg_iterator it = parsedArgs->filtered_begin(OPT_INPUT),
-                               ie = parsedArgs->filtered_end();
-       it != ie; ++it) {
-    inputPaths.push_back((*it)->getValue());
+    case OPT_base:
+      // Parse /base command line option. The argument for the parameter is in
+      // the
+      // form of "<address>[:<size>]".
+      uint64_t addr, size;
+      // Size should be set to SizeOfImage field in the COFF header, and if
+      // it's smaller than the actual size, the linker should warn about that.
+      // Currently we just ignore the value of size parameter.
+      if (parseMemoryOption(inputArg->getValue(), addr, size))
+        return true;
+      // It's an error if the base address is not multiple of 64K.
+      // TODO: move this to validation of LinkingContext
+      if (addr & 0xffff) {
+        diagnostics << "Base address have to be multiple of 64K, but got "
+                    << addr << "\n";
+        return true;
+      }
+      ctx.setBaseAddress(addr);
+      break;
+    case OPT_stack: {
+      // Parse /stack command line option
+      uint64_t reserve;
+      uint64_t commit = ctx.getStackCommit();
+      if (parseMemoryOption(inputArg->getValue(), reserve, commit))
+        return true;
+      ctx.setStackReserve(reserve);
+      ctx.setStackCommit(commit);
+    } break;
+    case OPT_heap: {
+      // Parse /heap command line option
+      uint64_t reserve;
+      uint64_t commit = ctx.getHeapCommit();
+      if (parseMemoryOption(inputArg->getValue(), reserve, commit))
+        return true;
+      ctx.setHeapReserve(reserve);
+      ctx.setHeapCommit(commit);
+    } break;
+    case OPT_subsystem: {
+      // Parse /subsystem command line option. The form of /subsystem is
+      // "subsystem_name[,majorOSVersion[.minorOSVersion]]".
+      StringRef subsystemStr, osVersion;
+      llvm::tie(subsystemStr, osVersion) =
+          StringRef(inputArg->getValue()).split(',');
+      if (!osVersion.empty()) {
+        StringRef majorVersion, minorVersion;
+        llvm::tie(majorVersion, minorVersion) = osVersion.split('.');
+        if (minorVersion.empty())
+          minorVersion = "0";
+        int32_t major, minor;
+        if (majorVersion.getAsInteger(0, major))
+          return true;
+        if (minorVersion.getAsInteger(0, minor))
+          return true;
+        ctx.setMinOSVersion(PECOFFLinkingContext::OSVersion(major, minor));
+      }
+      // Parse subsystem name.
+      llvm::COFF::WindowsSubsystem subsystem =
+          stringToWinSubsystem(subsystemStr);
+      if (subsystem == llvm::COFF::IMAGE_SUBSYSTEM_UNKNOWN) {
+        diagnostics << "error: unknown subsystem name: " << subsystemStr
+                    << "\n";
+        return true;
+      }
+      ctx.setSubsystem(subsystem);
+    } break;
+
+    case OPT_failifmismatch:
+      if (handleFailIfMismatchOption(inputArg->getValue(), failIfMismatchMap,
+                                     diagnostics))
+        return true;
+      break;
+
+    case OPT_entry:
+      // handle /entry
+      ctx.setEntrySymbolName(inputArg->getValue());
+      break;
+
+    case OPT_libpath:
+      // handle /libpath
+      ctx.appendInputSearchPath(inputArg->getValue());
+      break;
+
+    case OPT_force:
+      // handle /force
+      ctx.setAllowRemainingUndefines(true);
+      break;
+
+    case OPT_no_nxcompat:
+      // handle /nxcompat:no
+      ctx.setNxCompat(false);
+      break;
+
+    case OPT_largeaddressaware:
+      // handle /largeaddressaware
+      ctx.setLargeAddressAware(true);
+      break;
+
+    case OPT_fixed:
+      // handle /fixed
+      ctx.setBaseRelocationEnabled(false);
+      break;
+
+    case OPT_tsaware:
+      // handle /tsaware
+      ctx.setTerminalServerAware(true);
+      break;
+
+    case OPT_no_tsaware:
+      // handle /tsaware:no
+      ctx.setTerminalServerAware(false);
+      break;
+
+    case OPT_incl:
+      // handle /incl
+      ctx.addInitialUndefinedSymbol(inputArg->getValue());
+      break;
+
+    case OPT_out:
+      // handle /out
+      ctx.setOutputPath(inputArg->getValue());
+      break;
+
+    case OPT_INPUT: {
+      inputGraph.addInputElement(std::unique_ptr<InputElement>(
+          new PECOFFFileNode(ctx, inputArg->getValue())));
+    } break;
+
+    default:
+      break;
+    }
   }
 
   // Arguments after "--" are interpreted as filenames even if they
@@ -433,27 +388,33 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
   // but useful for us to test lld on Unix.
   if (llvm::opt::Arg *dashdash = parsedArgs->getLastArg(OPT_DASH_DASH)) {
     for (const StringRef value : dashdash->getValues())
-      inputPaths.push_back(value);
+      inputGraph.addInputElement(
+          std::unique_ptr<InputElement>(new PECOFFFileNode(ctx, value)));
   }
 
-  // Add input files specified via the command line.
-  for (const StringRef path : inputPaths)
-    context.appendInputFileOrLibrary(path);
+  // Add ".lib" extension if the path does not already have the extension to
+  // mimic link.exe behavior.
+  for (auto defaultLibPath : defaultLibs)
+    inputGraph.addInputElement(std::unique_ptr<InputElement>(
+        new PECOFFLibraryNode(ctx, defaultLibPath)));
 
-  // Add the library files specified by /defaultlib option. The files
-  // specified by the option should have lower precedence than the other files
-  // added above, which is important for link.exe compatibility.
-  for (const StringRef path : defaultLibs)
-    context.appendLibraryFile(canonicalizeImportLibraryPath(context, path));
+  if (!inputGraph.numFiles()) {
+    diagnostics << "No input files\n";
+    return true;
+  }
 
   // If /out option was not specified, the default output file name is
   // constructed by replacing an extension of the first input file
   // with ".exe".
-  if (context.outputPath().empty() && !inputPaths.empty())
-    context.setOutputPath(getDefaultOutputFileName(context, inputPaths[0]));
+  if (ctx.outputPath().empty()) {
+    SmallString<128> firstInputFilePath =
+        (llvm::dyn_cast<FileNode>(&((inputGraph)[0])))->path(ctx);
+    (llvm::sys::path::replace_extension(firstInputFilePath, ".exe"));
+    ctx.setOutputPath(firstInputFilePath.str());
+  }
 
   // Validate the combination of options used.
-  return context.validate(diagnostics);
+  return ctx.validate(diagnostics);
 }
 
 } // namespace lld

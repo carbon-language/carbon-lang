@@ -40,21 +40,31 @@ bool Driver::link(const LinkingContext &context, raw_ostream &diagnostics) {
     args[numArgs + 1] = 0;
     llvm::cl::ParseCommandLineOptions(numArgs + 1, args);
   }
+  InputGraph &inputGraph = context.inputGraph();
+  if (!inputGraph.numFiles())
+    return true;
 
   // Read inputs
   ScopedTask readTask(getDefaultDomain(), "Read Args");
-  std::vector<std::vector<std::unique_ptr<File>> > files(
-      context.inputFiles().size());
+  std::vector<std::vector<std::unique_ptr<File> > > files(
+      inputGraph.numFiles());
   size_t index = 0;
   std::atomic<bool> fail(false);
   TaskGroup tg;
-  for (const auto &input : context.inputFiles()) {
+  std::vector<std::unique_ptr<LinkerInput> > linkerInputs;
+  for (auto &ie : inputGraph) {
+    if (ie->kind() == InputElement::Kind::File) {
+      FileNode *fileNode = (llvm::dyn_cast<FileNode>)(ie.get());
+      linkerInputs.push_back(std::move(fileNode->createLinkerInput(context)));
+    }
+  }
+  for (const auto &input : linkerInputs) {
     if (context.logInputFiles())
-      llvm::outs() << input.getPath() << "\n";
+      llvm::outs() << input->getPath() << "\n";
 
     tg.spawn([ &, index]{
-      if (error_code ec = context.readFile(input.getPath(), files[index])) {
-        diagnostics << "Failed to read file: " << input.getPath() << ": "
+      if (error_code ec = context.readFile(input->getPath(), files[index])) {
+        diagnostics << "Failed to read file: " << input->getPath() << ": "
                     << ec.message() << "\n";
         fail = true;
         return;

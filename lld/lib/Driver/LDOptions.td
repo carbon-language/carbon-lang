@@ -80,8 +80,18 @@ def undefined : Separate<["--"], "undefined">, Alias<u>;
 def u_equal : Joined<["-"], "u=">, Alias<u>;
 def undefined_equal : Joined<["--"], "undefined=">, Alias<u>;
 
+def as_needed : Flag<["--"], "as-needed">,
+    HelpText<"This option affects ELF DT_NEEDED tags for dynamic libraries mentioned on the command line">;
+def no_as_needed : Flag<["--"], "no-as-needed">,
+    HelpText<"This option restores the default behavior of adding DT_NEEDED entries">;
+
 // extensions
 def emit_yaml : Flag<["-"], "emit-yaml">, 
     HelpText<"Write YAML instead of ELF">;
-def force_load : Flag<["--"], "force-load">,
-    HelpText<"Force load of all members in all static libraries">;
+def whole_archive: Flag<["--"], "whole-archive">,
+    HelpText<"Force load of all members in a static library">;
+def no_whole_archive: Flag<["--"], "no-whole-archive">,
+    HelpText<"Restores the default behavior of loading archive members">;
+
+def all_load : Flag<["-"], "all_load">,
+        HelpText<"Forces all members of all static libraries to be loaded">;

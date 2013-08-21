@@ -9,6 +9,7 @@ tablegen(LLVM WinLinkOptions.inc -gen-opt-parser-defs)
 add_public_tablegen_target(DriverOptionsTableGen)
 
 add_lld_library(lldDriver
+  InputGraph.cpp
   CoreDriver.cpp
   DarwinLdDriver.cpp
   Driver.cpp

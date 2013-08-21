@@ -23,6 +23,9 @@
 #include <vector>
 
 namespace lld {
+
+class LinkingContext;
+
 /// Every Atom is owned by some File. A common scenario is for a single
 /// object file (.o) to be parsed by some reader and produce a single
 /// File object that represents the content of that object file.
