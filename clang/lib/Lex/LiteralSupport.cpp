@@ -978,7 +978,7 @@ CharLiteralParser::CharLiteralParser(const char *begin, const char *end,
   uint32_t largest_character_for_kind;
   if (tok::wide_char_constant == Kind) {
     largest_character_for_kind =
-        0xFFFFFFFFu >> (32-PP.getTargetInfo().getWCharWidth());
+        0xFFFFFFFFu >> (32 - PP.getTargetInfo().getWCharWidth());
   } else if (tok::utf16_char_constant == Kind) {
     largest_character_for_kind = 0xFFFF;
   } else if (tok::utf32_char_constant == Kind) {
@@ -1009,7 +1009,13 @@ CharLiteralParser::CharLiteralParser(const char *begin, const char *end,
         unsigned Msg = diag::err_bad_character_encoding;
         if (NoErrorOnBadEncoding)
           Msg = diag::warn_bad_character_encoding;
-        PP.Diag(Loc, Msg);
+        std::string escaped = llvm::utohexstr(static_cast<uint8_t>(*start));
+        FullSourceLoc SourceLoc(Loc, PP.getSourceManager());
+        PP.Diag(Loc, Msg) << FixItHint::CreateReplacement(
+                                 MakeCharSourceRange(PP.getLangOpts(),
+                                                     SourceLoc, TokBegin, start,
+                                                     start + 1),
+                                 "\\x" + escaped);
         if (NoErrorOnBadEncoding) {
           start = tmp_in_start;
           buffer_begin = tmp_out_start;
@@ -1047,7 +1053,7 @@ CharLiteralParser::CharLiteralParser(const char *begin, const char *end,
     unsigned CharWidth = getCharWidth(Kind, PP.getTargetInfo());
     uint64_t result =
       ProcessCharEscape(TokBegin, begin, end, HadError,
-                        FullSourceLoc(Loc,PP.getSourceManager()),
+                        FullSourceLoc(Loc, PP.getSourceManager()),
                         CharWidth, &PP.getDiagnostics(), PP.getLangOpts());
     *buffer_begin++ = result;
   }
