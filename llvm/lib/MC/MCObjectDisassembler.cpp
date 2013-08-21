@@ -27,7 +27,6 @@
 #include "llvm/Support/StringRefMemoryObject.h"
 #include "llvm/Support/raw_ostream.h"
 #include <map>
-#include <vector>
 
 using namespace llvm;
 using namespace object;
@@ -60,6 +59,11 @@ ArrayRef<uint64_t> MCObjectDisassembler::getStaticInitFunctions() {
 
 ArrayRef<uint64_t> MCObjectDisassembler::getStaticExitFunctions() {
   return ArrayRef<uint64_t>();
+}
+
+MemoryObject *MCObjectDisassembler::getRegionFor(uint64_t Addr) {
+  // FIXME: Keep track of object sections.
+  return FallbackRegion.get();
 }
 
 uint64_t MCObjectDisassembler::getEffectiveLoadAddr(uint64_t Addr) {
@@ -156,6 +160,7 @@ namespace {
     MCBasicBlock *BB;
     BBInfoSetTy Succs;
     BBInfoSetTy Preds;
+    MCObjectDisassembler::AddressSetTy SuccAddrs;
 
     BBInfo() : Atom(0), BB(0) {}
 
@@ -166,10 +171,14 @@ namespace {
   };
 }
 
+static void RemoveDupsFromAddressVector(MCObjectDisassembler::AddressSetTy &V) {
+  std::sort(V.begin(), V.end());
+  V.erase(std::unique(V.begin(), V.end()), V.end());
+}
+
 void MCObjectDisassembler::buildCFG(MCModule *Module) {
   typedef std::map<uint64_t, BBInfo> BBInfoByAddrTy;
   BBInfoByAddrTy BBInfos;
-  typedef std::vector<uint64_t> AddressSetTy;
   AddressSetTy Splits;
   AddressSetTy Calls;
 
@@ -213,11 +222,8 @@ void MCObjectDisassembler::buildCFG(MCModule *Module) {
     }
   }
 
-  std::sort(Splits.begin(), Splits.end());
-  Splits.erase(std::unique(Splits.begin(), Splits.end()), Splits.end());
-
-  std::sort(Calls.begin(), Calls.end());
-  Calls.erase(std::unique(Calls.begin(), Calls.end()), Calls.end());
+  RemoveDupsFromAddressVector(Splits);
+  RemoveDupsFromAddressVector(Calls);
 
   // Split text atoms into basic block atoms.
   for (AddressSetTy::const_iterator SI = Splits.begin(), SE = Splits.end();
@@ -294,6 +300,199 @@ void MCObjectDisassembler::buildCFG(MCModule *Module) {
           MCBB->addPredecessor((*PI)->BB);
     }
   }
+}
+
+// Basic idea of the disassembly + discovery:
+//
+// start with the wanted address, insert it in the worklist
+// while worklist not empty, take next address in the worklist:
+// - check if atom exists there
+//   - if middle of atom:
+//     - split basic blocks referencing the atom
+//     - look for an already encountered BBInfo (using a map<atom, bbinfo>)
+//       - if there is, split it (new one, fallthrough, move succs, etc..)
+//   - if start of atom: nothing else to do
+//   - if no atom: create new atom and new bbinfo
+// - look at the last instruction in the atom, add succs to worklist
+// for all elements in the worklist:
+// - create basic block, update preds/succs, etc..
+//
+MCBasicBlock *MCObjectDisassembler::getBBAt(MCModule *Module, MCFunction *MCFN,
+                                            uint64_t BBBeginAddr,
+                                            AddressSetTy &CallTargets,
+                                            AddressSetTy &TailCallTargets) {
+  typedef std::map<uint64_t, BBInfo> BBInfoByAddrTy;
+  typedef SmallSetVector<uint64_t, 16> AddrWorklistTy;
+  BBInfoByAddrTy BBInfos;
+  AddrWorklistTy Worklist;
+
+  Worklist.insert(BBBeginAddr);
+  for (size_t wi = 0; wi < Worklist.size(); ++wi) {
+    const uint64_t BeginAddr = Worklist[wi];
+    BBInfo *BBI = &BBInfos[BeginAddr];
+
+    MCTextAtom *&TA = BBI->Atom;
+    assert(!TA && "Discovered basic block already has an associated atom!");
+
+    // Look for an atom at BeginAddr.
+    if (MCAtom *A = Module->findAtomContaining(BeginAddr)) {
+      // FIXME: We don't care about mixed atoms, see above.
+      TA = cast<MCTextAtom>(A);
+
+      // The found atom doesn't begin at BeginAddr, we have to split it.
+      if (TA->getBeginAddr() != BeginAddr) {
+        // FIXME: Handle overlapping atoms: middle-starting instructions, etc..
+        MCTextAtom *NewTA = TA->split(BeginAddr);
+
+        // Look for an already encountered basic block that needs splitting
+        BBInfoByAddrTy::iterator It = BBInfos.find(TA->getBeginAddr());
+        if (It != BBInfos.end() && It->second.Atom) {
+          BBI->SuccAddrs = It->second.SuccAddrs;
+          It->second.SuccAddrs.clear();
+          It->second.SuccAddrs.push_back(BeginAddr);
+        }
+        TA = NewTA;
+      }
+      BBI->Atom = TA;
+    } else {
+      // If we didn't find an atom, then we have to disassemble to create one!
+
+      MemoryObject *Region = getRegionFor(BeginAddr);
+      if (!Region)
+        llvm_unreachable(("Couldn't find suitable region for disassembly at " +
+                          utostr(BeginAddr)).c_str());
+
+      uint64_t InstSize;
+      uint64_t EndAddr = Region->getBase() + Region->getExtent();
+
+      // We want to stop before the next atom and have a fallthrough to it.
+      if (MCTextAtom *NextAtom =
+              cast_or_null<MCTextAtom>(Module->findFirstAtomAfter(BeginAddr)))
+        EndAddr = std::min(EndAddr, NextAtom->getBeginAddr());
+
+      for (uint64_t Addr = BeginAddr; Addr < EndAddr; Addr += InstSize) {
+        MCInst Inst;
+        if (Dis.getInstruction(Inst, InstSize, *Region, Addr, nulls(),
+                               nulls())) {
+          if (!TA)
+            TA = Module->createTextAtom(Addr, Addr);
+          TA->addInst(Inst, InstSize);
+        } else {
+          // We don't care about splitting mixed atoms either.
+          llvm_unreachable("Couldn't disassemble instruction in atom.");
+        }
+
+        uint64_t BranchTarget;
+        if (MIA.evaluateBranch(Inst, Addr, InstSize, BranchTarget)) {
+          if (MIA.isCall(Inst))
+            CallTargets.push_back(BranchTarget);
+        }
+
+        if (MIA.isTerminator(Inst))
+          break;
+      }
+      BBI->Atom = TA;
+    }
+
+    assert(TA && "Couldn't disassemble atom, none was created!");
+    assert(TA->begin() != TA->end() && "Empty atom!");
+
+    MemoryObject *Region = getRegionFor(TA->getBeginAddr());
+    assert(Region && "Couldn't find region for already disassembled code!");
+    uint64_t EndRegion = Region->getBase() + Region->getExtent();
+
+    // Now we have a basic block atom, add successors.
+    // Add the fallthrough block.
+    if ((MIA.isConditionalBranch(TA->back().Inst) ||
+         !MIA.isTerminator(TA->back().Inst)) &&
+        (TA->getEndAddr() + 1 < EndRegion)) {
+      BBI->SuccAddrs.push_back(TA->getEndAddr() + 1);
+      Worklist.insert(TA->getEndAddr() + 1);
+    }
+
+    // If the terminator is a branch, add the target block.
+    if (MIA.isBranch(TA->back().Inst)) {
+      uint64_t BranchTarget;
+      if (MIA.evaluateBranch(TA->back().Inst, TA->back().Address,
+                             TA->back().Size, BranchTarget)) {
+        StringRef ExtFnName;
+        if (MOS)
+          ExtFnName =
+              MOS->findExternalFunctionAt(getOriginalLoadAddr(BranchTarget));
+        if (!ExtFnName.empty()) {
+          TailCallTargets.push_back(BranchTarget);
+          CallTargets.push_back(BranchTarget);
+        } else {
+          BBI->SuccAddrs.push_back(BranchTarget);
+          Worklist.insert(BranchTarget);
+        }
+      }
+    }
+  }
+
+  for (size_t wi = 0, we = Worklist.size(); wi != we; ++wi) {
+    const uint64_t BeginAddr = Worklist[wi];
+    BBInfo *BBI = &BBInfos[BeginAddr];
+
+    assert(BBI->Atom && "Found a basic block without an associated atom!");
+
+    // Look for a basic block at BeginAddr.
+    BBI->BB = MCFN->find(BeginAddr);
+    if (BBI->BB) {
+      // FIXME: check that the succs/preds are the same
+      continue;
+    }
+    // If there was none, we have to create one from the atom.
+    BBI->BB = &MCFN->createBlock(*BBI->Atom);
+  }
+
+  for (size_t wi = 0, we = Worklist.size(); wi != we; ++wi) {
+    const uint64_t BeginAddr = Worklist[wi];
+    BBInfo *BBI = &BBInfos[BeginAddr];
+    MCBasicBlock *BB = BBI->BB;
+
+    RemoveDupsFromAddressVector(BBI->SuccAddrs);
+    for (AddressSetTy::const_iterator SI = BBI->SuccAddrs.begin(),
+         SE = BBI->SuccAddrs.end();
+         SE != SE; ++SI) {
+      MCBasicBlock *Succ = BBInfos[*SI].BB;
+      BB->addSuccessor(Succ);
+      Succ->addPredecessor(BB);
+    }
+  }
+
+  assert(BBInfos[Worklist[0]].BB &&
+         "No basic block created at requested address?");
+
+  return BBInfos[Worklist[0]].BB;
+}
+
+MCFunction *
+MCObjectDisassembler::createFunction(MCModule *Module, uint64_t BeginAddr,
+                                     AddressSetTy &CallTargets,
+                                     AddressSetTy &TailCallTargets) {
+  // First, check if this is an external function.
+  StringRef ExtFnName;
+  if (MOS)
+    ExtFnName = MOS->findExternalFunctionAt(getOriginalLoadAddr(BeginAddr));
+  if (!ExtFnName.empty())
+    return Module->createFunction(ExtFnName);
+
+  // If it's not, look for an existing function.
+  for (MCModule::func_iterator FI = Module->func_begin(),
+                               FE = Module->func_end();
+       FI != FE; ++FI) {
+    if ((*FI)->empty())
+      continue;
+    // FIXME: MCModule should provide a findFunctionByAddr()
+    if ((*FI)->getEntryBlock()->getInsts()->getBeginAddr() == BeginAddr)
+      return *FI;
+  }
+
+  // Finally, just create a new one.
+  MCFunction *MCFN = Module->createFunction("");
+  getBBAt(Module, MCFN, BeginAddr, CallTargets, TailCallTargets);
+  return MCFN;
 }
 
 // MachO MCObjectDisassembler implementation.

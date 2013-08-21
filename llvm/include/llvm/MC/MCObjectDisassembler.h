@@ -16,8 +16,11 @@
 #define LLVM_MC_MCOBJECTDISASSEMBLER_H
 
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/MemoryObject.h"
+#include <vector>
 
 namespace llvm {
 
@@ -54,6 +57,19 @@ public:
   MCModule *buildModule(bool withCFG = false);
 
   MCModule *buildEmptyModule();
+
+  typedef std::vector<uint64_t> AddressSetTy;
+  /// \name Create a new MCFunction.
+  MCFunction *createFunction(MCModule *Module, uint64_t BeginAddr,
+                             AddressSetTy &CallTargets,
+                             AddressSetTy &TailCallTargets);
+
+  /// \brief Set the region on which to fallback if disassembly was requested
+  /// somewhere not accessible in the object file.
+  /// This is used for dynamic disassembly (see RawMemoryObject).
+  void setFallbackRegion(OwningPtr<MemoryObject> &Region) {
+    FallbackRegion.reset(Region.take());
+  }
 
   /// \brief Set the symbolizer to use to get information on external functions.
   /// Note that this isn't used to do instruction-level symbolization (that is,
@@ -96,6 +112,16 @@ protected:
   const MCInstrAnalysis &MIA;
   MCObjectSymbolizer *MOS;
 
+  /// \brief The fallback memory region, outside the object file.
+  OwningPtr<MemoryObject> FallbackRegion;
+
+  /// \brief Return a memory region suitable for reading starting at \p Addr.
+  /// In most cases, this returns a StringRefMemoryObject backed by the
+  /// containing section. When no section was found, this returns the
+  /// FallbackRegion, if it is suitable.
+  /// If it is not, or if there is no fallback region, this returns 0.
+  MemoryObject *getRegionFor(uint64_t Addr);
+
 private:
   /// \brief Fill \p Module by creating an atom for each section.
   /// This could be made much smarter, using information like symbols, but also
@@ -108,6 +134,10 @@ private:
   /// When the CFG is built, contiguous instructions that were previously in a
   /// single MCTextAtom will be split in multiple basic block atoms.
   void buildCFG(MCModule *Module);
+
+  MCBasicBlock *getBBAt(MCModule *Module, MCFunction *MCFN, uint64_t BeginAddr,
+                        AddressSetTy &CallTargets,
+                        AddressSetTy &TailCallTargets);
 };
 
 class MCMachOObjectDisassembler : public MCObjectDisassembler {
