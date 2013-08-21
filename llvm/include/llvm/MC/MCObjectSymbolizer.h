@@ -32,22 +32,14 @@ class MCObjectSymbolizer : public MCSymbolizer {
 protected:
   const object::ObjectFile *Obj;
 
-  typedef DenseMap<uint64_t, object::RelocationRef> AddrToRelocMap;
-  typedef std::vector<object::SectionRef> SortedSectionList;
-  SortedSectionList SortedSections;
-
   // Map a load address to the first relocation that applies there. As far as I
   // know, if there are several relocations at the exact same address, they are
   // related and the others can be determined from the first that was found in
   // the relocation table. For instance, on x86-64 mach-o, a SUBTRACTOR
   // relocation (referencing the minuend symbol) is followed by an UNSIGNED
   // relocation (referencing the subtrahend symbol).
-  AddrToRelocMap AddrToReloc;
-
-  // Helpers around SortedSections.
-  SortedSectionList::const_iterator findSectionContaining(uint64_t Addr) const;
-  void insertSection(object::SectionRef Section);
-
+  const object::RelocationRef *findRelocationAt(uint64_t Addr);
+  const object::SectionRef *findSectionContaining(uint64_t Addr);
 
   MCObjectSymbolizer(MCContext &Ctx, OwningPtr<MCRelocationInfo> &RelInfo,
                      const object::ObjectFile *Obj);
@@ -56,9 +48,9 @@ public:
   /// \name Overridden MCSymbolizer methods:
   /// @{
   bool tryAddingSymbolicOperand(MCInst &MI, raw_ostream &cStream,
-                                int64_t Value,
-                                uint64_t Address, bool IsBranch,
-                                uint64_t Offset, uint64_t InstSize);
+                                int64_t Value, uint64_t Address,
+                                bool IsBranch, uint64_t Offset,
+                                uint64_t InstSize);
 
   void tryAddingPcLoadReferenceComment(raw_ostream &cStream,
                                        int64_t Value, uint64_t Address);
@@ -68,6 +60,15 @@ public:
   static MCObjectSymbolizer *
     createObjectSymbolizer(MCContext &Ctx, OwningPtr<MCRelocationInfo> &RelInfo,
                            const object::ObjectFile *Obj);
+
+private:
+  typedef DenseMap<uint64_t, object::RelocationRef> AddrToRelocMap;
+  typedef std::vector<object::SectionRef> SortedSectionList;
+  SortedSectionList SortedSections;
+  AddrToRelocMap AddrToReloc;
+
+  void buildSectionList();
+  void buildRelocationByAddrMap();
 };
 
 }
