@@ -222,6 +222,20 @@ char g14(struct six *a, struct six *b) {
   return a->b;
 }
 
+// Types that differ only by name may alias.
+typedef StructS StructS3;
+uint32_t g15(StructS *S, StructS3 *S3, uint64_t count) {
+// CHECK: define i32 @{{.*}}(
+// CHECK: store i32 1, i32* %{{.*}}, align 4, !tbaa [[TAG_i32]]
+// CHECK: store i32 4, i32* %{{.*}}, align 4, !tbaa [[TAG_i32]]
+// PATH: define i32 @{{.*}}(
+// PATH: store i32 1, i32* %{{.*}}, align 4, !tbaa [[TAG_S_f32]]
+// PATH: store i32 4, i32* %{{.*}}, align 4, !tbaa [[TAG_S_f32]]
+  S->f32 = 1;
+  S3->f32 = 4;
+  return S->f32;
+}
+
 // CHECK: [[TAG_char]] = metadata !{metadata !"omnipotent char", metadata [[TAG_cxx_tbaa:!.*]]}
 // CHECK: [[TAG_cxx_tbaa]] = metadata !{metadata !"Simple C/C++ TBAA"}
 // CHECK: [[TAG_i32]] = metadata !{metadata !"int", metadata [[TAG_char]]}
