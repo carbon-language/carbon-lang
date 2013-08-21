@@ -28,7 +28,7 @@ CheckArches = \
 XCRun = \
   $(shell \
     result=`xcrun -find $(1) 2> /dev/null`; \
-    if [ "$$?" != "0"; then result=$(1); fi; \
+    if [ "$$?" != "0" ]; then result=$(1); fi; \
     echo $$result)
 
 ###
