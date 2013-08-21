@@ -4642,16 +4642,6 @@ public:
     return "";
   }
 
-  virtual void setFeatureEnabled(llvm::StringMap<bool> &Features,
-                                 StringRef Name,
-                                 bool Enabled) const {
-    if (Name == "32")
-      Name = "o32";
-    else if (Name == "64")
-      Name = "n64";
-    Features[Name] = Enabled;
-  }
-
   virtual void HandleTargetFeatures(std::vector<std::string> &Features) {
     IsMips16 = false;
     IsMicromips = false;
