@@ -79,10 +79,10 @@ class CXXTryStmt : public Stmt {
   }
 
 public:
-  static CXXTryStmt *Create(ASTContext &C, SourceLocation tryLoc,
+  static CXXTryStmt *Create(const ASTContext &C, SourceLocation tryLoc,
                             Stmt *tryBlock, ArrayRef<Stmt*> handlers);
 
-  static CXXTryStmt *Create(ASTContext &C, EmptyShell Empty,
+  static CXXTryStmt *Create(const ASTContext &C, EmptyShell Empty,
                             unsigned numHandlers);
 
   SourceLocation getLocStart() const LLVM_READONLY { return getTryLoc(); }

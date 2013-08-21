@@ -1538,7 +1538,7 @@ const TargetInfo::AddlRegName AddlRegNames[] = {
 // most of the implementation can be shared.
 class X86TargetInfo : public TargetInfo {
   enum X86SSEEnum {
-    NoSSE, SSE1, SSE2, SSE3, SSSE3, SSE41, SSE42, AVX, AVX2, AVX512
+    NoSSE, SSE1, SSE2, SSE3, SSSE3, SSE41, SSE42, AVX, AVX2, AVX512F
   } SSELevel;
   enum MMX3DNowEnum {
     NoMMX3DNow, MMX, AMD3DNow, AMD3DNowAthlon
@@ -2072,8 +2072,8 @@ void X86TargetInfo::setSSELevel(llvm::StringMap<bool> &Features,
                                 X86SSEEnum Level, bool Enabled) const {
   if (Enabled) {
     switch (Level) {
-    case AVX512:
-      Features["avx-512"] = true;
+    case AVX512F:
+      Features["avx512f"] = true;
     case AVX2:
       Features["avx2"] = true;
     case AVX:
@@ -2118,8 +2118,8 @@ void X86TargetInfo::setSSELevel(llvm::StringMap<bool> &Features,
     setXOPLevel(Features, SSE4A, false);
   case AVX2:
     Features["avx2"] = false;
-  case AVX512:
-    Features["avx-512"] = false;
+  case AVX512F:
+    Features["avx512f"] = false;
   }
 }
 
@@ -2222,7 +2222,7 @@ void X86TargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
   else if (Name == "avx2")
     setSSELevel(Features, AVX2, Enabled);
   else if (Name == "avx-512")
-    setSSELevel(Features, AVX512, Enabled);
+    setSSELevel(Features, AVX512F, Enabled);
   else if (Name == "fma") {
     if (Enabled)
       setSSELevel(Features, AVX, Enabled);
@@ -2308,7 +2308,7 @@ void X86TargetInfo::HandleTargetFeatures(std::vector<std::string> &Features) {
 
     assert(Features[i][0] == '+' && "Invalid target feature!");
     X86SSEEnum Level = llvm::StringSwitch<X86SSEEnum>(Feature)
-      .Case("avx-512", AVX512)
+      .Case("avx-512", AVX512F)
       .Case("avx2", AVX2)
       .Case("avx", AVX)
       .Case("sse42", SSE42)
@@ -2543,7 +2543,7 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
 
   // Each case falls through to the previous one here.
   switch (SSELevel) {
-  case AVX512:
+  case AVX512F:
     Builder.defineMacro("__AVX512F__");
   case AVX2:
     Builder.defineMacro("__AVX2__");
@@ -2569,7 +2569,7 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
 
   if (Opts.MicrosoftExt && getTriple().getArch() == llvm::Triple::x86) {
     switch (SSELevel) {
-    case AVX512:
+    case AVX512F:
     case AVX2:
     case AVX:
     case SSE42:
@@ -2613,7 +2613,7 @@ bool X86TargetInfo::hasFeature(StringRef Feature) const {
       .Case("aes", HasAES)
       .Case("avx", SSELevel >= AVX)
       .Case("avx2", SSELevel >= AVX2)
-      .Case("avx512", SSELevel >= AVX512)
+      .Case("avx512f", SSELevel >= AVX512F)
       .Case("bmi", HasBMI)
       .Case("bmi2", HasBMI2)
       .Case("fma", HasFMA)

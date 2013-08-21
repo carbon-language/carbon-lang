@@ -248,7 +248,7 @@ SourceLocation Stmt::getLocEnd() const {
   llvm_unreachable("unknown statement kind");
 }
 
-CompoundStmt::CompoundStmt(ASTContext &C, ArrayRef<Stmt*> Stmts,
+CompoundStmt::CompoundStmt(const ASTContext &C, ArrayRef<Stmt*> Stmts,
                            SourceLocation LB, SourceLocation RB)
   : Stmt(CompoundStmtClass), LBracLoc(LB), RBracLoc(RB) {
   CompoundStmtBits.NumStmts = Stmts.size();
@@ -264,7 +264,8 @@ CompoundStmt::CompoundStmt(ASTContext &C, ArrayRef<Stmt*> Stmts,
   std::copy(Stmts.begin(), Stmts.end(), Body);
 }
 
-void CompoundStmt::setStmts(ASTContext &C, Stmt **Stmts, unsigned NumStmts) {
+void CompoundStmt::setStmts(const ASTContext &C, Stmt **Stmts,
+                            unsigned NumStmts) {
   if (this->Body)
     C.Deallocate(Body);
   this->CompoundStmtBits.NumStmts = NumStmts;
@@ -277,7 +278,7 @@ const char *LabelStmt::getName() const {
   return getDecl()->getIdentifier()->getNameStart();
 }
 
-AttributedStmt *AttributedStmt::Create(ASTContext &C, SourceLocation Loc,
+AttributedStmt *AttributedStmt::Create(const ASTContext &C, SourceLocation Loc,
                                        ArrayRef<const Attr*> Attrs,
                                        Stmt *SubStmt) {
   void *Mem = C.Allocate(sizeof(AttributedStmt) +
@@ -286,7 +287,8 @@ AttributedStmt *AttributedStmt::Create(ASTContext &C, SourceLocation Loc,
   return new (Mem) AttributedStmt(Loc, Attrs, SubStmt);
 }
 
-AttributedStmt *AttributedStmt::CreateEmpty(ASTContext &C, unsigned NumAttrs) {
+AttributedStmt *AttributedStmt::CreateEmpty(const ASTContext &C,
+                                            unsigned NumAttrs) {
   assert(NumAttrs > 0 && "NumAttrs should be greater than zero");
   void *Mem = C.Allocate(sizeof(AttributedStmt) +
                          sizeof(Attr*) * (NumAttrs - 1),
@@ -294,7 +296,7 @@ AttributedStmt *AttributedStmt::CreateEmpty(ASTContext &C, unsigned NumAttrs) {
   return new (Mem) AttributedStmt(EmptyShell(), NumAttrs);
 }
 
-std::string AsmStmt::generateAsmString(ASTContext &C) const {
+std::string AsmStmt::generateAsmString(const ASTContext &C) const {
   if (const GCCAsmStmt *gccAsmStmt = dyn_cast<GCCAsmStmt>(this))
     return gccAsmStmt->generateAsmString(C);
   if (const MSAsmStmt *msAsmStmt = dyn_cast<MSAsmStmt>(this))
@@ -380,14 +382,14 @@ StringRef GCCAsmStmt::getInputConstraint(unsigned i) const {
   return getInputConstraintLiteral(i)->getString();
 }
 
-void GCCAsmStmt::setOutputsAndInputsAndClobbers(ASTContext &C,
-                                             IdentifierInfo **Names,
-                                             StringLiteral **Constraints,
-                                             Stmt **Exprs,
-                                             unsigned NumOutputs,
-                                             unsigned NumInputs,
-                                             StringLiteral **Clobbers,
-                                             unsigned NumClobbers) {
+void GCCAsmStmt::setOutputsAndInputsAndClobbers(const ASTContext &C,
+                                                IdentifierInfo **Names,
+                                                StringLiteral **Constraints,
+                                                Stmt **Exprs,
+                                                unsigned NumOutputs,
+                                                unsigned NumInputs,
+                                                StringLiteral **Clobbers,
+                                                unsigned NumClobbers) {
   this->NumOutputs = NumOutputs;
   this->NumInputs = NumInputs;
   this->NumClobbers = NumClobbers;
@@ -435,7 +437,7 @@ int GCCAsmStmt::getNamedOperand(StringRef SymbolicName) const {
 /// it into pieces.  If the asm string is erroneous, emit errors and return
 /// true, otherwise return false.
 unsigned GCCAsmStmt::AnalyzeAsmString(SmallVectorImpl<AsmStringPiece>&Pieces,
-                                   ASTContext &C, unsigned &DiagOffs) const {
+                                const ASTContext &C, unsigned &DiagOffs) const {
   StringRef Str = getAsmString()->getString();
   const char *StrStart = Str.begin();
   const char *StrEnd = Str.end();
@@ -573,7 +575,7 @@ unsigned GCCAsmStmt::AnalyzeAsmString(SmallVectorImpl<AsmStringPiece>&Pieces,
 }
 
 /// Assemble final IR asm string (GCC-style).
-std::string GCCAsmStmt::generateAsmString(ASTContext &C) const {
+std::string GCCAsmStmt::generateAsmString(const ASTContext &C) const {
   // Analyze the asm string to decompose it into its pieces.  We know that Sema
   // has already done this, so it is guaranteed to be successful.
   SmallVector<GCCAsmStmt::AsmStringPiece, 4> Pieces;
@@ -594,7 +596,7 @@ std::string GCCAsmStmt::generateAsmString(ASTContext &C) const {
 }
 
 /// Assemble final IR asm string (MS-style).
-std::string MSAsmStmt::generateAsmString(ASTContext &C) const {
+std::string MSAsmStmt::generateAsmString(const ASTContext &C) const {
   // FIXME: This needs to be translated into the IR string representation.
   return AsmStr;
 }
@@ -620,11 +622,12 @@ QualType CXXCatchStmt::getCaughtType() const {
 // Constructors
 //===----------------------------------------------------------------------===//
 
-GCCAsmStmt::GCCAsmStmt(ASTContext &C, SourceLocation asmloc, bool issimple,
-                       bool isvolatile, unsigned numoutputs, unsigned numinputs,
-                       IdentifierInfo **names, StringLiteral **constraints,
-                       Expr **exprs, StringLiteral *asmstr,
-                       unsigned numclobbers, StringLiteral **clobbers,
+GCCAsmStmt::GCCAsmStmt(const ASTContext &C, SourceLocation asmloc,
+                       bool issimple, bool isvolatile, unsigned numoutputs,
+                       unsigned numinputs, IdentifierInfo **names,
+                       StringLiteral **constraints, Expr **exprs,
+                       StringLiteral *asmstr, unsigned numclobbers,
+                       StringLiteral **clobbers,
                        SourceLocation rparenloc)
   : AsmStmt(GCCAsmStmtClass, asmloc, issimple, isvolatile, numoutputs,
             numinputs, numclobbers), RParenLoc(rparenloc), AsmStr(asmstr) {
@@ -644,7 +647,7 @@ GCCAsmStmt::GCCAsmStmt(ASTContext &C, SourceLocation asmloc, bool issimple,
   std::copy(clobbers, clobbers + NumClobbers, Clobbers);
 }
 
-MSAsmStmt::MSAsmStmt(ASTContext &C, SourceLocation asmloc,
+MSAsmStmt::MSAsmStmt(const ASTContext &C, SourceLocation asmloc,
                      SourceLocation lbraceloc, bool issimple, bool isvolatile,
                      ArrayRef<Token> asmtoks, unsigned numoutputs,
                      unsigned numinputs,
@@ -658,14 +661,14 @@ MSAsmStmt::MSAsmStmt(ASTContext &C, SourceLocation asmloc,
   initialize(C, asmstr, asmtoks, constraints, exprs, clobbers);
 }
 
-static StringRef copyIntoContext(ASTContext &C, StringRef str) {
+static StringRef copyIntoContext(const ASTContext &C, StringRef str) {
   size_t size = str.size();
   char *buffer = new (C) char[size];
   memcpy(buffer, str.data(), size);
   return StringRef(buffer, size);
 }
 
-void MSAsmStmt::initialize(ASTContext &C,
+void MSAsmStmt::initialize(const ASTContext &C,
                            StringRef asmstr,
                            ArrayRef<Token> asmtoks,
                            ArrayRef<StringRef> constraints,
@@ -726,7 +729,7 @@ ObjCAtTryStmt::ObjCAtTryStmt(SourceLocation atTryLoc, Stmt *atTryStmt,
     Stmts[NumCatchStmts + 1] = atFinallyStmt;
 }
 
-ObjCAtTryStmt *ObjCAtTryStmt::Create(ASTContext &Context,
+ObjCAtTryStmt *ObjCAtTryStmt::Create(const ASTContext &Context,
                                      SourceLocation atTryLoc,
                                      Stmt *atTryStmt,
                                      Stmt **CatchStmts,
@@ -739,9 +742,9 @@ ObjCAtTryStmt *ObjCAtTryStmt::Create(ASTContext &Context,
                                  atFinallyStmt);
 }
 
-ObjCAtTryStmt *ObjCAtTryStmt::CreateEmpty(ASTContext &Context,
-                                                 unsigned NumCatchStmts,
-                                                 bool HasFinally) {
+ObjCAtTryStmt *ObjCAtTryStmt::CreateEmpty(const ASTContext &Context,
+                                          unsigned NumCatchStmts,
+                                          bool HasFinally) {
   unsigned Size = sizeof(ObjCAtTryStmt) +
     (1 + NumCatchStmts + HasFinally) * sizeof(Stmt *);
   void *Mem = Context.Allocate(Size, llvm::alignOf<ObjCAtTryStmt>());
@@ -756,7 +759,7 @@ SourceLocation ObjCAtTryStmt::getLocEnd() const {
   return getTryBody()->getLocEnd();
 }
 
-CXXTryStmt *CXXTryStmt::Create(ASTContext &C, SourceLocation tryLoc,
+CXXTryStmt *CXXTryStmt::Create(const ASTContext &C, SourceLocation tryLoc,
                                Stmt *tryBlock, ArrayRef<Stmt*> handlers) {
   std::size_t Size = sizeof(CXXTryStmt);
   Size += ((handlers.size() + 1) * sizeof(Stmt));
@@ -765,7 +768,7 @@ CXXTryStmt *CXXTryStmt::Create(ASTContext &C, SourceLocation tryLoc,
   return new (Mem) CXXTryStmt(tryLoc, tryBlock, handlers);
 }
 
-CXXTryStmt *CXXTryStmt::Create(ASTContext &C, EmptyShell Empty,
+CXXTryStmt *CXXTryStmt::Create(const ASTContext &C, EmptyShell Empty,
                                unsigned numHandlers) {
   std::size_t Size = sizeof(CXXTryStmt);
   Size += ((numHandlers + 1) * sizeof(Stmt));
@@ -816,7 +819,7 @@ const VarDecl *CXXForRangeStmt::getLoopVariable() const {
   return const_cast<CXXForRangeStmt*>(this)->getLoopVariable();
 }
 
-IfStmt::IfStmt(ASTContext &C, SourceLocation IL, VarDecl *var, Expr *cond,
+IfStmt::IfStmt(const ASTContext &C, SourceLocation IL, VarDecl *var, Expr *cond,
                Stmt *then, SourceLocation EL, Stmt *elsev)
   : Stmt(IfStmtClass), IfLoc(IL), ElseLoc(EL)
 {
@@ -834,7 +837,7 @@ VarDecl *IfStmt::getConditionVariable() const {
   return cast<VarDecl>(DS->getSingleDecl());
 }
 
-void IfStmt::setConditionVariable(ASTContext &C, VarDecl *V) {
+void IfStmt::setConditionVariable(const ASTContext &C, VarDecl *V) {
   if (!V) {
     SubExprs[VAR] = 0;
     return;
@@ -845,7 +848,7 @@ void IfStmt::setConditionVariable(ASTContext &C, VarDecl *V) {
                                    VarRange.getEnd());
 }
 
-ForStmt::ForStmt(ASTContext &C, Stmt *Init, Expr *Cond, VarDecl *condVar,
+ForStmt::ForStmt(const ASTContext &C, Stmt *Init, Expr *Cond, VarDecl *condVar,
                  Expr *Inc, Stmt *Body, SourceLocation FL, SourceLocation LP,
                  SourceLocation RP)
   : Stmt(ForStmtClass), ForLoc(FL), LParenLoc(LP), RParenLoc(RP)
@@ -865,7 +868,7 @@ VarDecl *ForStmt::getConditionVariable() const {
   return cast<VarDecl>(DS->getSingleDecl());
 }
 
-void ForStmt::setConditionVariable(ASTContext &C, VarDecl *V) {
+void ForStmt::setConditionVariable(const ASTContext &C, VarDecl *V) {
   if (!V) {
     SubExprs[CONDVAR] = 0;
     return;
@@ -876,7 +879,7 @@ void ForStmt::setConditionVariable(ASTContext &C, VarDecl *V) {
                                        VarRange.getEnd());
 }
 
-SwitchStmt::SwitchStmt(ASTContext &C, VarDecl *Var, Expr *cond)
+SwitchStmt::SwitchStmt(const ASTContext &C, VarDecl *Var, Expr *cond)
   : Stmt(SwitchStmtClass), FirstCase(0), AllEnumCasesCovered(0)
 {
   setConditionVariable(C, Var);
@@ -892,7 +895,7 @@ VarDecl *SwitchStmt::getConditionVariable() const {
   return cast<VarDecl>(DS->getSingleDecl());
 }
 
-void SwitchStmt::setConditionVariable(ASTContext &C, VarDecl *V) {
+void SwitchStmt::setConditionVariable(const ASTContext &C, VarDecl *V) {
   if (!V) {
     SubExprs[VAR] = 0;
     return;
@@ -909,7 +912,7 @@ Stmt *SwitchCase::getSubStmt() {
   return cast<DefaultStmt>(this)->getSubStmt();
 }
 
-WhileStmt::WhileStmt(ASTContext &C, VarDecl *Var, Expr *cond, Stmt *body,
+WhileStmt::WhileStmt(const ASTContext &C, VarDecl *Var, Expr *cond, Stmt *body,
                      SourceLocation WL)
   : Stmt(WhileStmtClass) {
   setConditionVariable(C, Var);
@@ -926,7 +929,7 @@ VarDecl *WhileStmt::getConditionVariable() const {
   return cast<VarDecl>(DS->getSingleDecl());
 }
 
-void WhileStmt::setConditionVariable(ASTContext &C, VarDecl *V) {
+void WhileStmt::setConditionVariable(const ASTContext &C, VarDecl *V) {
   if (!V) {
     SubExprs[VAR] = 0;
     return;
@@ -965,10 +968,8 @@ SEHTryStmt::SEHTryStmt(bool IsCXXTry,
   Children[HANDLER] = Handler;
 }
 
-SEHTryStmt* SEHTryStmt::Create(ASTContext &C,
-                               bool IsCXXTry,
-                               SourceLocation TryLoc,
-                               Stmt *TryBlock,
+SEHTryStmt* SEHTryStmt::Create(const ASTContext &C, bool IsCXXTry,
+                               SourceLocation TryLoc, Stmt *TryBlock,
                                Stmt *Handler) {
   return new(C) SEHTryStmt(IsCXXTry,TryLoc,TryBlock,Handler);
 }
@@ -991,10 +992,8 @@ SEHExceptStmt::SEHExceptStmt(SourceLocation Loc,
   Children[BLOCK]       = Block;
 }
 
-SEHExceptStmt* SEHExceptStmt::Create(ASTContext &C,
-                                     SourceLocation Loc,
-                                     Expr *FilterExpr,
-                                     Stmt *Block) {
+SEHExceptStmt* SEHExceptStmt::Create(const ASTContext &C, SourceLocation Loc,
+                                     Expr *FilterExpr, Stmt *Block) {
   return new(C) SEHExceptStmt(Loc,FilterExpr,Block);
 }
 
@@ -1005,8 +1004,7 @@ SEHFinallyStmt::SEHFinallyStmt(SourceLocation Loc,
     Block(Block)
 {}
 
-SEHFinallyStmt* SEHFinallyStmt::Create(ASTContext &C,
-                                       SourceLocation Loc,
+SEHFinallyStmt* SEHFinallyStmt::Create(const ASTContext &C, SourceLocation Loc,
                                        Stmt *Block) {
   return new(C)SEHFinallyStmt(Loc,Block);
 }
@@ -1053,7 +1051,7 @@ CapturedStmt::CapturedStmt(EmptyShell Empty, unsigned NumCaptures)
   getStoredStmts()[NumCaptures] = 0;
 }
 
-CapturedStmt *CapturedStmt::Create(ASTContext &Context, Stmt *S,
+CapturedStmt *CapturedStmt::Create(const ASTContext &Context, Stmt *S,
                                    CapturedRegionKind Kind,
                                    ArrayRef<Capture> Captures,
                                    ArrayRef<Expr *> CaptureInits,
@@ -1081,7 +1079,7 @@ CapturedStmt *CapturedStmt::Create(ASTContext &Context, Stmt *S,
   return new (Mem) CapturedStmt(S, Kind, Captures, CaptureInits, CD, RD);
 }
 
-CapturedStmt *CapturedStmt::CreateDeserialized(ASTContext &Context,
+CapturedStmt *CapturedStmt::CreateDeserialized(const ASTContext &Context,
                                                unsigned NumCaptures) {
   unsigned Size = sizeof(CapturedStmt) + sizeof(Stmt *) * (NumCaptures + 1);
   if (NumCaptures > 0) {
@@ -1115,7 +1113,7 @@ bool CapturedStmt::capturesVariable(const VarDecl *Var) const {
   return false;
 }
 
-OMPPrivateClause *OMPPrivateClause::Create(ASTContext &C,
+OMPPrivateClause *OMPPrivateClause::Create(const ASTContext &C,
                                            SourceLocation StartLoc,
                                            SourceLocation LParenLoc,
                                            SourceLocation EndLoc,
@@ -1128,7 +1126,7 @@ OMPPrivateClause *OMPPrivateClause::Create(ASTContext &C,
   return Clause;
 }
 
-OMPPrivateClause *OMPPrivateClause::CreateEmpty(ASTContext &C,
+OMPPrivateClause *OMPPrivateClause::CreateEmpty(const ASTContext &C,
                                                 unsigned N) {
   void *Mem = C.Allocate(sizeof(OMPPrivateClause) + sizeof(Expr *) * N,
                          llvm::alignOf<OMPPrivateClause>());
@@ -1141,12 +1139,11 @@ void OMPExecutableDirective::setClauses(ArrayRef<OMPClause *> Clauses) {
   std::copy(Clauses.begin(), Clauses.end(), this->Clauses.begin());
 }
 
-OMPParallelDirective *OMPParallelDirective::Create(
-                                              ASTContext &C,
-                                              SourceLocation StartLoc,
-                                              SourceLocation EndLoc,
-                                              ArrayRef<OMPClause *> Clauses,
-                                              Stmt *AssociatedStmt) {
+OMPParallelDirective *OMPParallelDirective::Create(const ASTContext &C,
+                                                  SourceLocation StartLoc,
+                                                  SourceLocation EndLoc,
+                                                  ArrayRef<OMPClause *> Clauses,
+                                                  Stmt *AssociatedStmt) {
   void *Mem = C.Allocate(sizeof(OMPParallelDirective) +
                          sizeof(OMPClause *) * Clauses.size() + sizeof(Stmt *),
                          llvm::alignOf<OMPParallelDirective>());
@@ -1157,7 +1154,7 @@ OMPParallelDirective *OMPParallelDirective::Create(
   return Dir;
 }
 
-OMPParallelDirective *OMPParallelDirective::CreateEmpty(ASTContext &C,
+OMPParallelDirective *OMPParallelDirective::CreateEmpty(const ASTContext &C,
                                                         unsigned N,
                                                         EmptyShell) {
   void *Mem = C.Allocate(sizeof(OMPParallelDirective) +
