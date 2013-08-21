@@ -352,7 +352,7 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
         ToggleFeature(X86::FeatureRTM);
       }
       if (IsIntel && ((EBX >> 16) & 0x1)) {
-        X86SSELevel = AVX512;
+        X86SSELevel = AVX512F;
         ToggleFeature(X86::FeatureAVX512);
       }
       if (IsIntel && ((EBX >> 18) & 0x1)) {

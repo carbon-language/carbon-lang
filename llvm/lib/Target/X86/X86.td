@@ -86,16 +86,16 @@ def FeatureAVX     : SubtargetFeature<"avx", "X86SSELevel", "AVX",
 def FeatureAVX2    : SubtargetFeature<"avx2", "X86SSELevel", "AVX2",
                                       "Enable AVX2 instructions",
                                       [FeatureAVX]>;
-def FeatureAVX512   : SubtargetFeature<"avx-512", "X86SSELevel", "AVX512",
+def FeatureAVX512   : SubtargetFeature<"avx512f", "X86SSELevel", "AVX512F",
                                       "Enable AVX-512 instructions",
                                       [FeatureAVX2]>;
-def FeatureERI      : SubtargetFeature<"avx-512-eri", "HasERI", "true",
+def FeatureERI      : SubtargetFeature<"avx512er", "HasERI", "true",
                       "Enable AVX-512 Exponential and Reciprocal Instructions",
                                       [FeatureAVX512]>;
-def FeatureCDI      : SubtargetFeature<"avx-512-cdi", "HasCDI", "true",
+def FeatureCDI      : SubtargetFeature<"avx512cd", "HasCDI", "true",
                       "Enable AVX-512 Conflict Detection Instructions",
                                       [FeatureAVX512]>;
-def FeaturePFI      : SubtargetFeature<"avx-512-pfi", "HasPFI", "true",
+def FeaturePFI      : SubtargetFeature<"avx512pf", "HasPFI", "true",
                       "Enable AVX-512 PreFetch Instructions",
                                       [FeatureAVX512]>;
 
