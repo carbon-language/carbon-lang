@@ -9,7 +9,7 @@
 //
 // The StripSymbols transformation implements code stripping. Specifically, it
 // can delete:
-// 
+//
 //   * names for virtual registers
 //   * symbols for internal globals and functions
 //   * debug information
@@ -39,7 +39,7 @@ namespace {
     bool OnlyDebugInfo;
   public:
     static char ID; // Pass identification, replacement for typeid
-    explicit StripSymbols(bool ODI = false) 
+    explicit StripSymbols(bool ODI = false)
       : ModulePass(ID), OnlyDebugInfo(ODI) {
         initializeStripSymbolsPass(*PassRegistry::getPassRegistry());
       }
@@ -144,7 +144,7 @@ static void RemoveDeadConstant(Constant *C) {
   assert(C->use_empty() && "Constant is not dead!");
   SmallPtrSet<Constant*, 4> Operands;
   for (unsigned i = 0, e = C->getNumOperands(); i != e; ++i)
-    if (OnlyUsedBy(C->getOperand(i), C)) 
+    if (OnlyUsedBy(C->getOperand(i), C))
       Operands.insert(cast<Constant>(C->getOperand(i)));
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(C)) {
     if (!GV->hasLocalLinkage()) return;   // Don't delete non static globals.
@@ -182,7 +182,7 @@ static void StripTypeNames(Module &M, bool PreserveDbgInfo) {
   for (unsigned i = 0, e = StructTypes.size(); i != e; ++i) {
     StructType *STy = StructTypes[i];
     if (STy->isLiteral() || STy->getName().empty()) continue;
-    
+
     if (PreserveDbgInfo && STy->getName().startswith("llvm.dbg"))
       continue;
 
@@ -199,7 +199,7 @@ static void findUsedValues(GlobalVariable *LLVMUsed,
   ConstantArray *Inits = cast<ConstantArray>(LLVMUsed->getInitializer());
 
   for (unsigned i = 0, e = Inits->getNumOperands(); i != e; ++i)
-    if (GlobalValue *GV = 
+    if (GlobalValue *GV =
           dyn_cast<GlobalValue>(Inits->getOperand(i)->stripPointerCasts()))
       UsedValues.insert(GV);
 }
@@ -217,22 +217,22 @@ static bool StripSymbolNames(Module &M, bool PreserveDbgInfo) {
       if (!PreserveDbgInfo || !I->getName().startswith("llvm.dbg"))
         I->setName("");     // Internal symbols can't participate in linkage
   }
-  
+
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
     if (I->hasLocalLinkage() && llvmUsedValues.count(I) == 0)
       if (!PreserveDbgInfo || !I->getName().startswith("llvm.dbg"))
         I->setName("");     // Internal symbols can't participate in linkage
     StripSymtab(I->getValueSymbolTable(), PreserveDbgInfo);
   }
-  
+
   // Remove all names from types.
   StripTypeNames(M, PreserveDbgInfo);
 
   return true;
 }
 
-// StripDebugInfo - Strip debug info in the module if it exists.  
-// To do this, we remove llvm.dbg.func.start, llvm.dbg.stoppoint, and 
+// StripDebugInfo - Strip debug info in the module if it exists.
+// To do this, we remove llvm.dbg.func.start, llvm.dbg.stoppoint, and
 // llvm.dbg.region.end calls, and any globals they point to if now dead.
 static bool StripDebugInfo(Module &M) {
 
@@ -307,13 +307,13 @@ bool StripDebugDeclare::runOnModule(Module &M) {
       assert(CI->use_empty() && "llvm.dbg intrinsic should have void result");
       CI->eraseFromParent();
       if (Arg1->use_empty()) {
-        if (Constant *C = dyn_cast<Constant>(Arg1)) 
+        if (Constant *C = dyn_cast<Constant>(Arg1))
           DeadConstants.push_back(C);
-        else 
+        else
           RecursivelyDeleteTriviallyDeadInstructions(Arg1);
       }
       if (Arg2->use_empty())
-        if (Constant *C = dyn_cast<Constant>(Arg2)) 
+        if (Constant *C = dyn_cast<Constant>(Arg2))
           DeadConstants.push_back(C);
     }
     Declare->eraseFromParent();
@@ -337,7 +337,7 @@ bool StripDeadDebugInfo::runOnModule(Module &M) {
 
   // Debugging infomration is encoded in llvm IR using metadata. This is designed
   // such a way that debug info for symbols preserved even if symbols are
-  // optimized away by the optimizer. This special pass removes debug info for 
+  // optimized away by the optimizer. This special pass removes debug info for
   // such symbols.
 
   // llvm.dbg.gv keeps track of debug info for global variables.
