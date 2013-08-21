@@ -214,3 +214,13 @@ namespace PR15045 {
     call_func(f);  // expected-note {{in instantiation of function template specialization 'PR15045::call_func<PR15045::foo>' requested here}}
   }
 }
+
+namespace pr16676 {
+  struct S { int i; };
+  struct T { S* get_s(); };
+  int f(S* s) {
+    T t;
+    return t.get_s  // expected-error {{reference to non-static member function must be called; did you mean to call it with no arguments?}}
+        .i;  // expected-error {{member reference type 'pr16676::S *' is a pointer; maybe you meant to use '->'}}
+  }
+}
