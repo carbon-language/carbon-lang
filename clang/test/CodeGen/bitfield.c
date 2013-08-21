@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -triple i386-unknown-unknown %s -emit-llvm -o - -O3 | FileCheck %s
+// RUN: %clang_cc1 -triple i386-unknown-unknown %s -emit-llvm -o - -O3 -struct-path-tbaa | FileCheck %s --check-prefix=PATH
 
 static int f0(int n) {
   struct s0 {
@@ -17,6 +18,8 @@ static int f0(int n) {
 int g0(void) {
 // CHECK-LABEL: @g0()
 // CHECK: ret i32 1
+// PATH-LABEL: @g0()
+// PATH: ret i32 1
   return f0(-1) + 44335655;
 }
 
@@ -37,6 +40,8 @@ static int f1(void) {
 int g1(void) {
 // CHECK-LABEL: @g1()
 // CHECK: ret i32 1
+// PATH-LABEL: @g1()
+// PATH: ret i32 1
   return f1() + 16;
 }
 
@@ -55,6 +60,8 @@ static int f2(void) {
 int g2(void) {
 // CHECK-LABEL: @g2()
 // CHECK: ret i32 1
+// PATH-LABEL: @g2()
+// PATH: ret i32 1
   return f2() - 9;
 }
 
@@ -76,5 +83,7 @@ static int f3(int n) {
 int g3(void) {
 // CHECK-LABEL: @g3()
 // CHECK: ret i32 1
+// PATH-LABEL: @g3()
+// PATH: ret i32 1
   return f3(20) + 130725747;
 }

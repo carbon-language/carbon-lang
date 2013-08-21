@@ -277,9 +277,14 @@ CodeGenTBAA::getTBAAStructTypeInfo(QualType QTy) {
     // TODO: This is using the RTTI name. Is there a better way to get
     // a unique string for a type?
     SmallString<256> OutName;
-    llvm::raw_svector_ostream Out(OutName);
-    MContext.mangleCXXRTTIName(QualType(Ty, 0), Out);
-    Out.flush();
+    if (Features.CPlusPlus) {
+      // Don't use mangleCXXRTTIName for C code.
+      llvm::raw_svector_ostream Out(OutName);
+      MContext.mangleCXXRTTIName(QualType(Ty, 0), Out);
+      Out.flush();
+    } else {
+      OutName = RD->getName();
+    }
     // Create the struct type node with a vector of pairs (offset, type).
     return StructTypeMetadataCache[Ty] =
       MDHelper.createTBAAStructTypeNode(OutName, Fields);

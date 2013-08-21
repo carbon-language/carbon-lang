@@ -37,4 +37,4 @@ void test1(struct Test1MA *p1, struct Test1 *p2) {
 // PATH: [[TAG_INT]] = metadata !{metadata [[TYPE_INT:!.*]], metadata [[TYPE_INT]], i64 0}
 // PATH: [[TYPE_INT]] = metadata !{metadata !"int", metadata [[TYPE_CHAR]]
 // PATH: [[TAG_test1_x]] = metadata !{metadata [[TYPE_test1:!.*]], metadata [[TYPE_INT]], i64 0}
-// PATH: [[TYPE_test1]] = metadata !{metadata !"_ZTS5Test1", metadata [[TYPE_INT]], i64 0}
+// PATH: [[TYPE_test1]] = metadata !{metadata !"Test1", metadata [[TYPE_INT]], i64 0}
