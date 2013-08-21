@@ -118,8 +118,15 @@ class Tester(threading.Thread):
         result = None
         startTime = time.time()
         try:
-            result, output = test.config.test_format.execute(test,
-                                                             self.litConfig)
+            result = test.config.test_format.execute(test, self.litConfig)
+
+            # Support deprecated result from execute() which returned the result
+            # code and additional output as a tuple.
+            if isinstance(result, tuple):
+                code, output = result
+                result = lit.Test.Result(code, output)
+            elif not isinstance(result, lit.Test.Result):
+                raise ValueError("unexpected result from test execution")
         except KeyboardInterrupt:
             # This is a sad hack. Unfortunately subprocess goes
             # bonkers with ctrl-c and we start forking merrily.
@@ -128,13 +135,13 @@ class Tester(threading.Thread):
         except:
             if self.litConfig.debug:
                 raise
-            result = lit.Test.UNRESOLVED
             output = 'Exception during script execution:\n'
             output += traceback.format_exc()
             output += '\n'
-        elapsed = time.time() - startTime
+            result = lit.Test.Result(lit.Test.UNRESOLVED, output)
+        result.elapsed = time.time() - startTime
 
-        test.setResult(result, output, elapsed)
+        test.setResult(result)
         self.display.update(test)
 
 def runTests(numThreads, litConfig, provider, display):
@@ -382,7 +389,7 @@ def main(builtinParameters = {}):
     # Update results for any tests which weren't run.
     for test in tests:
         if test.result is None:
-            test.setResult(lit.Test.UNRESOLVED, '', 0.0)
+            test.setResult(lit.Test.Result(lit.Test.UNRESOLVED, '', 0.0))
 
     # List test results organized by kind.
     hasFailures = False

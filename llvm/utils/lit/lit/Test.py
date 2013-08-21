@@ -23,7 +23,7 @@ UNSUPPORTED = ResultCode('UNSUPPORTED', False)
 class Result(object):
     """Wrapper for the results of executing an individual test."""
 
-    def __init__(self, code, output, elapsed):
+    def __init__(self, code, output='', elapsed=None):
         # The result code.
         self.code = code
         # The test output.
@@ -62,9 +62,13 @@ class Test:
         # The test result, once complete.
         self.result = None
 
-    def setResult(self, result, output, elapsed):
-        assert self.result is None, "Test result already set!"
-        self.result = Result(result, output, elapsed)
+    def setResult(self, result):
+        if self.result is not None:
+            raise ArgumentError("test result already set")
+        if not isinstance(result, Result):
+            raise ArgumentError("unexpected result type")
+
+        self.result = result
 
     def getFullName(self):
         return self.suite.config.name + ' :: ' + '/'.join(self.path_in_suite)
