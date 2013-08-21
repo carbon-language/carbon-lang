@@ -31,6 +31,7 @@ class MCDisassembler;
 class MCFunction;
 class MCInstrAnalysis;
 class MCModule;
+class MCObjectSymbolizer;
 
 /// \brief Disassemble an ObjectFile to an MCModule and MCFunctions.
 /// This class builds on MCDisassembler to disassemble whole sections, creating
@@ -53,6 +54,13 @@ public:
   MCModule *buildModule(bool withCFG = false);
 
   MCModule *buildEmptyModule();
+
+  /// \brief Set the symbolizer to use to get information on external functions.
+  /// Note that this isn't used to do instruction-level symbolization (that is,
+  /// plugged into MCDisassembler), but to symbolize function call targets.
+  void setSymbolizer(MCObjectSymbolizer *ObjectSymbolizer) {
+    MOS = ObjectSymbolizer;
+  }
 
   /// \brief Get the effective address of the entrypoint, or 0 if there is none.
   virtual uint64_t getEntrypoint();
@@ -86,6 +94,7 @@ protected:
   const object::ObjectFile &Obj;
   const MCDisassembler &Dis;
   const MCInstrAnalysis &MIA;
+  MCObjectSymbolizer *MOS;
 
 private:
   /// \brief Fill \p Module by creating an atom for each section.

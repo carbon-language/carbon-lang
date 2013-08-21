@@ -18,6 +18,7 @@
 #include "llvm/MC/MCFunction.h"
 #include "llvm/MC/MCInstrAnalysis.h"
 #include "llvm/MC/MCModule.h"
+#include "llvm/MC/MCObjectSymbolizer.h"
 #include "llvm/Object/MachO.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/Debug.h"
@@ -34,7 +35,7 @@ using namespace object;
 MCObjectDisassembler::MCObjectDisassembler(const ObjectFile &Obj,
                                            const MCDisassembler &Dis,
                                            const MCInstrAnalysis &MIA)
-  : Obj(Obj), Dis(Dis), MIA(MIA) {}
+    : Obj(Obj), Dis(Dis), MIA(MIA), MOS(0) {}
 
 uint64_t MCObjectDisassembler::getEntrypoint() {
   error_code ec;
