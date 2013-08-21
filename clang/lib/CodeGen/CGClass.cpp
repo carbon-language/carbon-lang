@@ -1852,7 +1852,6 @@ void
 CodeGenFunction::InitializeVTablePointer(BaseSubobject Base, 
                                          const CXXRecordDecl *NearestVBase,
                                          CharUnits OffsetFromNearestVBase,
-                                         llvm::Constant *VTable,
                                          const CXXRecordDecl *VTableClass) {
   const CXXRecordDecl *RD = Base.getBase();
 
@@ -1875,6 +1874,7 @@ CodeGenFunction::InitializeVTablePointer(BaseSubobject Base,
     // And load the address point from the VTT.
     VTableAddressPoint = Builder.CreateLoad(VTT);
   } else {
+    llvm::Constant *VTable = CGM.getVTables().GetAddrOfVTable(VTableClass);
     uint64_t AddressPoint =
       CGM.getVTableContext().getVTableLayout(VTableClass).getAddressPoint(Base);
     VTableAddressPoint =
@@ -1919,7 +1919,6 @@ CodeGenFunction::InitializeVTablePointers(BaseSubobject Base,
                                           const CXXRecordDecl *NearestVBase,
                                           CharUnits OffsetFromNearestVBase,
                                           bool BaseIsNonVirtualPrimaryBase,
-                                          llvm::Constant *VTable,
                                           const CXXRecordDecl *VTableClass,
                                           VisitedVirtualBasesSetTy& VBases) {
   // If this base is a non-virtual primary base the address point has already
@@ -1927,7 +1926,7 @@ CodeGenFunction::InitializeVTablePointers(BaseSubobject Base,
   if (!BaseIsNonVirtualPrimaryBase) {
     // Initialize the vtable pointer for this base.
     InitializeVTablePointer(Base, NearestVBase, OffsetFromNearestVBase,
-                            VTable, VTableClass);
+                            VTableClass);
   }
   
   const CXXRecordDecl *RD = Base.getBase();
@@ -1970,7 +1969,7 @@ CodeGenFunction::InitializeVTablePointers(BaseSubobject Base,
                              I->isVirtual() ? BaseDecl : NearestVBase,
                              BaseOffsetFromNearestVBase,
                              BaseDeclIsNonVirtualPrimaryBase, 
-                             VTable, VTableClass, VBases);
+                             VTableClass, VBases);
   }
 }
 
@@ -1979,16 +1978,12 @@ void CodeGenFunction::InitializeVTablePointers(const CXXRecordDecl *RD) {
   if (!RD->isDynamicClass())
     return;
 
-  // Get the VTable.
-  llvm::Constant *VTable = CGM.getVTables().GetAddrOfVTable(RD);
-
   // Initialize the vtable pointers for this class and all of its bases.
   VisitedVirtualBasesSetTy VBases;
   InitializeVTablePointers(BaseSubobject(RD, CharUnits::Zero()), 
                            /*NearestVBase=*/0, 
                            /*OffsetFromNearestVBase=*/CharUnits::Zero(),
-                           /*BaseIsNonVirtualPrimaryBase=*/false, 
-                           VTable, RD, VBases);
+                           /*BaseIsNonVirtualPrimaryBase=*/false, RD, VBases);
 }
 
 llvm::Value *CodeGenFunction::GetVTablePtr(llvm::Value *This,
