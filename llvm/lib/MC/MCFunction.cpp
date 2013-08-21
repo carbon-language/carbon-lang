@@ -31,16 +31,15 @@ MCBasicBlock &MCFunction::createBlock(const MCTextAtom &TA) {
   return *MCBB;
 }
 
-const MCBasicBlock *MCFunction::find(uint64_t StartAddr) const {
+MCBasicBlock *MCFunction::find(uint64_t StartAddr) {
   for (const_iterator I = begin(), E = end(); I != E; ++I)
     if ((*I)->getInsts()->getBeginAddr() == StartAddr)
-      return (*I);
+      return *I;
   return 0;
 }
 
-MCBasicBlock *MCFunction::find(uint64_t StartAddr) {
-  return const_cast<MCBasicBlock *>(
-           const_cast<const MCFunction *>(this)->find(StartAddr));
+const MCBasicBlock *MCFunction::find(uint64_t StartAddr) const {
+  return const_cast<MCFunction *>(this)->find(StartAddr);
 }
 
 // MCBasicBlock
