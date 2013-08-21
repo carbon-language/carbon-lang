@@ -285,6 +285,9 @@ For API clients and LLVM developers.
 :doc:`DebuggingJITedCode`
    How to debug JITed code with GDB.
 
+:doc:`MCJITDesignAndImplementation`
+   Describes the inner workings of MCJIT execution engine.
+
 :doc:`BranchWeightMetadata`
    Provides information about Branch Prediction Information.
 
