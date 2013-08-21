@@ -113,5 +113,12 @@ void *RecordingMemoryManager::getPointerToNamedFunction(const std::string &Name,
   // is called before ExecutionEngine::runFunctionAsMain() is called.
   if (Name == "__main") return (void*)(intptr_t)&jit_noop;
 
+  // FIXME: Would it be responsible to provide GOT?
+  if (AbortOnFailure) {
+    if (Name == "_GLOBAL_OFFSET_TABLE_")
+      report_fatal_error("Program used external function '" + Name +
+                         "' which could not be resolved!");
+  }
+
   return NULL;
 }
