@@ -7859,15 +7859,27 @@ struct BaseIndexOffset {
   static BaseIndexOffset match(SDValue Ptr) {
     bool IsIndexSignExt = false;
 
-    // Just Base or possibly anything else.
+    // We only can pattern match BASE + INDEX + OFFSET. If Ptr is not an ADD
+    // instruction, then it could be just the BASE or everything else we don't
+    // know how to handle. Just use Ptr as BASE and give up.
     if (Ptr->getOpcode() != ISD::ADD)
       return BaseIndexOffset(Ptr, SDValue(), 0, IsIndexSignExt);
 
-    // Base + offset.
+    // We know that we have at least an ADD instruction. Try to pattern match
+    // the simple case of BASE + OFFSET.
     if (isa<ConstantSDNode>(Ptr->getOperand(1))) {
       int64_t Offset = cast<ConstantSDNode>(Ptr->getOperand(1))->getSExtValue();
       return  BaseIndexOffset(Ptr->getOperand(0), SDValue(), Offset,
                               IsIndexSignExt);
+    }
+
+    // Inside a loop the current BASE pointer is calculated using an ADD and a
+    // MUL insruction. In this case Ptr is the actual BASE pointer.
+    // (i64 add (i64 %array_ptr)
+    //          (i64 mul (i64 %induction_var)
+    //                   (i64 %element_size)))
+    if (Ptr->getOperand(1)->getOpcode() == ISD::MUL) {
+      return BaseIndexOffset(Ptr, SDValue(), 0, IsIndexSignExt);
     }
 
     // Look at Base + Index + Offset cases.
