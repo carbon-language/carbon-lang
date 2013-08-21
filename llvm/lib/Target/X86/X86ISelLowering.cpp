@@ -11269,6 +11269,16 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
     SDValue SetCC = DAG.getNode(X86ISD::SETCC, dl, MVT::i8, CC, Test);
     return DAG.getNode(ISD::ZERO_EXTEND, dl, MVT::i32, SetCC);
   }
+  case Intrinsic::x86_avx512_kortestz:
+  case Intrinsic::x86_avx512_kortestc: {
+    unsigned X86CC = (IntNo == Intrinsic::x86_avx512_kortestz)? X86::COND_E: X86::COND_B;
+    SDValue LHS = DAG.getNode(ISD::BITCAST, dl, MVT::v16i1, Op.getOperand(1));
+    SDValue RHS = DAG.getNode(ISD::BITCAST, dl, MVT::v16i1, Op.getOperand(2));
+    SDValue CC = DAG.getConstant(X86CC, MVT::i8);
+    SDValue Test = DAG.getNode(X86ISD::KORTEST, dl, MVT::i32, LHS, RHS);
+    SDValue SetCC = DAG.getNode(X86ISD::SETCC, dl, MVT::i8, CC, Test);
+    return DAG.getNode(ISD::ZERO_EXTEND, dl, MVT::i32, SetCC);
+  }
 
   // SSE/AVX shift intrinsics
   case Intrinsic::x86_sse2_psll_w:
@@ -12135,7 +12145,9 @@ static SDValue LowerScalarImmediateShift(SDValue Op, SelectionDAG &DAG,
 
       if (VT == MVT::v2i64 || VT == MVT::v4i32 || VT == MVT::v8i16 ||
           (Subtarget->hasInt256() &&
-           (VT == MVT::v4i64 || VT == MVT::v8i32 || VT == MVT::v16i16))) {
+           (VT == MVT::v4i64 || VT == MVT::v8i32 || VT == MVT::v16i16)) ||
+          (Subtarget->hasAVX512() &&
+           (VT == MVT::v8i64 || VT == MVT::v16i32))) {
         if (Op.getOpcode() == ISD::SHL)
           return DAG.getNode(X86ISD::VSHLI, dl, VT, R,
                              DAG.getConstant(ShiftAmt, MVT::i32));
@@ -12297,7 +12309,8 @@ static SDValue LowerScalarVariableShift(SDValue Op, SelectionDAG &DAG,
       VT == MVT::v4i32 || VT == MVT::v8i16 ||
       (Subtarget->hasInt256() &&
        ((VT == MVT::v4i64 && Op.getOpcode() != ISD::SRA) ||
-        VT == MVT::v8i32 || VT == MVT::v16i16))) {
+        VT == MVT::v8i32 || VT == MVT::v16i16)) ||
+       (Subtarget->hasAVX512() && (VT == MVT::v8i64 || VT == MVT::v16i32))) {
     SDValue BaseShAmt;
     EVT EltVT = VT.getVectorElementType();
 
@@ -12365,6 +12378,8 @@ static SDValue LowerScalarVariableShift(SDValue Op, SelectionDAG &DAG,
         case MVT::v4i64:
         case MVT::v8i32:
         case MVT::v16i16:
+        case MVT::v16i32:
+        case MVT::v8i64:
           return getTargetVShiftNode(X86ISD::VSHLI, dl, VT, R, BaseShAmt, DAG);
         }
       case ISD::SRA:
@@ -12374,6 +12389,8 @@ static SDValue LowerScalarVariableShift(SDValue Op, SelectionDAG &DAG,
         case MVT::v8i16:
         case MVT::v8i32:
         case MVT::v16i16:
+        case MVT::v16i32:
+        case MVT::v8i64:
           return getTargetVShiftNode(X86ISD::VSRAI, dl, VT, R, BaseShAmt, DAG);
         }
       case ISD::SRL:
@@ -12385,6 +12402,8 @@ static SDValue LowerScalarVariableShift(SDValue Op, SelectionDAG &DAG,
         case MVT::v4i64:
         case MVT::v8i32:
         case MVT::v16i16:
+        case MVT::v16i32:
+        case MVT::v8i64:
           return getTargetVShiftNode(X86ISD::VSRLI, dl, VT, R, BaseShAmt, DAG);
         }
       }
@@ -12393,7 +12412,8 @@ static SDValue LowerScalarVariableShift(SDValue Op, SelectionDAG &DAG,
 
   // Special case in 32-bit mode, where i64 is expanded into high and low parts.
   if (!Subtarget->is64Bit() &&
-      (VT == MVT::v2i64 || (Subtarget->hasInt256() && VT == MVT::v4i64)) &&
+      (VT == MVT::v2i64 || (Subtarget->hasInt256() && VT == MVT::v4i64) ||
+      (Subtarget->hasAVX512() && VT == MVT::v8i64)) &&
       Amt.getOpcode() == ISD::BITCAST &&
       Amt.getOperand(0).getOpcode() == ISD::BUILD_VECTOR) {
     Amt = Amt.getOperand(0);
@@ -12442,6 +12462,8 @@ static SDValue LowerShift(SDValue Op, const X86Subtarget* Subtarget,
   if (V.getNode())
       return V;
 
+  if (Subtarget->hasAVX512() && (VT == MVT::v16i32 || VT == MVT::v8i64))
+    return Op;
   // AVX2 has VPSLLV/VPSRAV/VPSRLV.
   if (Subtarget->hasInt256()) {
     if (Op.getOpcode() == ISD::SRL &&
@@ -13350,6 +13372,9 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::MUL_IMM:            return "X86ISD::MUL_IMM";
   case X86ISD::PTEST:              return "X86ISD::PTEST";
   case X86ISD::TESTP:              return "X86ISD::TESTP";
+  case X86ISD::TESTM:              return "X86ISD::TESTM";
+  case X86ISD::KORTEST:            return "X86ISD::KORTEST";
+  case X86ISD::KTEST:              return "X86ISD::KTEST";
   case X86ISD::PALIGNR:            return "X86ISD::PALIGNR";
   case X86ISD::PSHUFD:             return "X86ISD::PSHUFD";
   case X86ISD::PSHUFHW:            return "X86ISD::PSHUFHW";
