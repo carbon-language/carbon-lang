@@ -174,7 +174,7 @@ let Namespace = "Mips" in {
   /// Mips MSA registers
   /// MSA and FPU cannot both be present unless the FPU has 64-bit registers
   foreach I = 0-31 in
-  def W#I : AFPR128<0, "w"#I, [!cast<AFPR64>("D"#I#"_64")]>,
+  def W#I : AFPR128<I, "w"#I, [!cast<AFPR64>("D"#I#"_64")]>,
             DwarfRegNum<[!add(I, 32)]>;
 
   // Hi/Lo registers
