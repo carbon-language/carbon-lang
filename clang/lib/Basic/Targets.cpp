@@ -1562,6 +1562,7 @@ class X86TargetInfo : public TargetInfo {
   bool HasRDSEED;
   bool HasFMA;
   bool HasF16C;
+  bool HasAVX512CD, HasAVX512ER, HasAVX512PF;
 
   /// \brief Enumeration of all of the X86 CPUs supported by Clang.
   ///
@@ -1714,7 +1715,8 @@ public:
         XOPLevel(NoXOP), HasAES(false), HasPCLMUL(false), HasLZCNT(false),
         HasRDRND(false), HasBMI(false), HasBMI2(false), HasPOPCNT(false),
         HasRTM(false), HasPRFCHW(false), HasRDSEED(false), HasFMA(false),
-        HasF16C(false), CPU(CK_Generic) {
+        HasF16C(false), HasAVX512CD(false), HasAVX512ER(false),
+        HasAVX512PF(false), CPU(CK_Generic) {
     BigEndian = false;
     LongDoubleFormat = &llvm::APFloat::x87DoubleExtended;
   }
@@ -1980,7 +1982,10 @@ void X86TargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
     setFeatureEnabled(Features, "fma", true);
     break;
   case CK_KNL:
-    setFeatureEnabled(Features, "avx-512", true);
+    setFeatureEnabled(Features, "avx512f", true);
+    setFeatureEnabled(Features, "avx512cd", true);
+    setFeatureEnabled(Features, "avx512er", true);
+    setFeatureEnabled(Features, "avx512pf", true);
     setFeatureEnabled(Features, "aes", true);
     setFeatureEnabled(Features, "pclmul", true);
     setFeatureEnabled(Features, "lzcnt", true);
@@ -2119,7 +2124,8 @@ void X86TargetInfo::setSSELevel(llvm::StringMap<bool> &Features,
   case AVX2:
     Features["avx2"] = false;
   case AVX512F:
-    Features["avx512f"] = false;
+    Features["avx512f"] = Features["avx512cd"] = Features["avx512er"] =
+      Features["avx512pf"] = false;
   }
 }
 
@@ -2221,9 +2227,12 @@ void X86TargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
     setSSELevel(Features, AVX, Enabled);
   else if (Name == "avx2")
     setSSELevel(Features, AVX2, Enabled);
-  else if (Name == "avx-512")
+  else if (Name == "avx512f")
     setSSELevel(Features, AVX512F, Enabled);
-  else if (Name == "fma") {
+  else if (Name == "avx512cd" || Name == "avx512er" || Name == "avx512pf") {
+    if (Enabled)
+      setSSELevel(Features, AVX512F, Enabled);
+  } else if (Name == "fma") {
     if (Enabled)
       setSSELevel(Features, AVX, Enabled);
   } else if (Name == "fma4") {
@@ -2306,9 +2315,24 @@ void X86TargetInfo::HandleTargetFeatures(std::vector<std::string> &Features) {
       continue;
     }
 
+    if (Feature == "avx512cd") {
+      HasAVX512CD = true;
+      continue;
+    }
+
+    if (Feature == "avx512er") {
+      HasAVX512ER = true;
+      continue;
+    }
+
+    if (Feature == "avx512pf") {
+      HasAVX512PF = true;
+      continue;
+    }
+
     assert(Features[i][0] == '+' && "Invalid target feature!");
     X86SSEEnum Level = llvm::StringSwitch<X86SSEEnum>(Feature)
-      .Case("avx-512", AVX512F)
+      .Case("avx512f", AVX512F)
       .Case("avx2", AVX2)
       .Case("avx", AVX)
       .Case("sse42", SSE42)
@@ -2541,6 +2565,13 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
   if (HasF16C)
     Builder.defineMacro("__F16C__");
 
+  if (HasAVX512CD)
+    Builder.defineMacro("__AVX512CD__");
+  if (HasAVX512ER)
+    Builder.defineMacro("__AVX512ER__");
+  if (HasAVX512PF)
+    Builder.defineMacro("__AVX512PF__");
+
   // Each case falls through to the previous one here.
   switch (SSELevel) {
   case AVX512F:
@@ -2614,6 +2645,9 @@ bool X86TargetInfo::hasFeature(StringRef Feature) const {
       .Case("avx", SSELevel >= AVX)
       .Case("avx2", SSELevel >= AVX2)
       .Case("avx512f", SSELevel >= AVX512F)
+      .Case("avx512cd", HasAVX512CD)
+      .Case("avx512er", HasAVX512ER)
+      .Case("avx512pf", HasAVX512PF)
       .Case("bmi", HasBMI)
       .Case("bmi2", HasBMI2)
       .Case("fma", HasFMA)
