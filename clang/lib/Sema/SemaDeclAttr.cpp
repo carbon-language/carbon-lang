@@ -974,8 +974,8 @@ static void handleConsumesAttr(Sema &S, Decl *D,
   if (!checkAttributeNumArgs(S, Attr, 0)) return;
 
   if (!(isa<CXXMethodDecl>(D) || isa<CXXConstructorDecl>(D))) {
-    S.Diag(Attr.getLoc(), diag::warn_uniqueness_attribute_wrong_decl_type) <<
-      Attr.getName();
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+      << Attr.getName() << ExpectedMethod;
     return;
   }
   
@@ -989,8 +989,8 @@ static void handleCallableWhenUnconsumedAttr(Sema &S, Decl *D,
   if (!checkAttributeNumArgs(S, Attr, 0)) return;
 
   if (!isa<CXXMethodDecl>(D)) {
-    S.Diag(Attr.getLoc(), diag::warn_uniqueness_attribute_wrong_decl_type) <<
-      Attr.getName();
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+      << Attr.getName() << ExpectedMethod;
     return;
   }
   
@@ -1004,8 +1004,8 @@ static void handleTestsConsumedAttr(Sema &S, Decl *D,
   if (!checkAttributeNumArgs(S, Attr, 0)) return;
 
   if (!isa<CXXMethodDecl>(D)) {
-    S.Diag(Attr.getLoc(), diag::warn_uniqueness_attribute_wrong_decl_type) <<
-      Attr.getName();
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+      << Attr.getName() << ExpectedMethod;
     return;
   }
   
@@ -1019,8 +1019,8 @@ static void handleTestsUnconsumedAttr(Sema &S, Decl *D,
   if (!checkAttributeNumArgs(S, Attr, 0)) return;
 
   if (!isa<CXXMethodDecl>(D)) {
-    S.Diag(Attr.getLoc(), diag::warn_uniqueness_attribute_wrong_decl_type) <<
-      Attr.getName();
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+      << Attr.getName() << ExpectedMethod;
     return;
   }
   
