@@ -22,6 +22,7 @@ class error_category
 public:
     virtual ~error_category() noexcept;
 
+    constexpr error_category();
     error_category(const error_category&) = delete;
     error_category& operator=(const error_category&) = delete;
 
@@ -366,7 +367,11 @@ class _LIBCPP_TYPE_VIS error_category
 public:
     virtual ~error_category() _NOEXCEPT;
 
+#ifdef _LIBCPP_BUILDING_SYSTEM_ERROR
     error_category() _NOEXCEPT;
+#else
+    _LIBCPP_ALWAYS_INLINE _LIBCPP_CONSTEXPR_AFTER_CXX11 error_category() _NOEXCEPT {}
+#endif
 private:
     error_category(const error_category&);// = delete;
     error_category& operator=(const error_category&);// = delete;
