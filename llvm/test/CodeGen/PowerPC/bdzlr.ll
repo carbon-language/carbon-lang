@@ -35,15 +35,15 @@ for.body:                                         ; preds = %for.body.for.body_c
   %0 = phi %struct.lua_TValue.17.692* [ undef, %for.body.lr.ph ], [ %.pre, %for.body.for.body_crit_edge ]
   %indvars.iv = phi i64 [ 0, %for.body.lr.ph ], [ %indvars.iv.next, %for.body.for.body_crit_edge ]
   %tt = getelementptr inbounds %struct.lua_TValue.17.692* %0, i64 %indvars.iv, i32 1
-  %1 = load i32* %tt, align 4, !tbaa !0
-  store i32 %1, i32* undef, align 4, !tbaa !0
+  %1 = load i32* %tt, align 4
+  store i32 %1, i32* undef, align 4
   %indvars.iv.next = add i64 %indvars.iv, 1
   %lftr.wideiv = trunc i64 %indvars.iv.next to i32
   %exitcond = icmp eq i32 %lftr.wideiv, %n
   br i1 %exitcond, label %for.end, label %for.body.for.body_crit_edge
 
 for.body.for.body_crit_edge:                      ; preds = %for.body
-  %.pre = load %struct.lua_TValue.17.692** undef, align 8, !tbaa !3
+  %.pre = load %struct.lua_TValue.17.692** undef, align 8
   br label %for.body
 
 for.end:                                          ; preds = %for.body, %if.end, %entry
@@ -57,8 +57,3 @@ for.end:                                          ; preds = %for.body, %if.end, 
 }
 
 attributes #0 = { nounwind }
-
-!0 = metadata !{metadata !"int", metadata !1}
-!1 = metadata !{metadata !"omnipotent char", metadata !2}
-!2 = metadata !{metadata !"Simple C/C++ TBAA"}
-!3 = metadata !{metadata !"any pointer", metadata !1}

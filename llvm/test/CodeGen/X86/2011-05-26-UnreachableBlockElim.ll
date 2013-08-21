@@ -41,13 +41,8 @@ cond.false156.i:                                  ; preds = %for.end.i, %land.en
 
 cond.end166.i:                                    ; preds = %cond.false156.i, %cond.true138.i
   %idxprom1113.i = phi i64 [ %idxprom1114.i, %cond.false156.i ], [ undef, %cond.true138.i ]
-  %tmp235.i = load %struct.state** getelementptr inbounds (%struct.dfa* @aux_temp, i64 0, i32 2), align 8, !tbaa !0
+  %tmp235.i = load %struct.state** getelementptr inbounds (%struct.dfa* @aux_temp, i64 0, i32 2), align 8
   %att.i = getelementptr inbounds %struct.state* %tmp235.i, i64 %idxprom1113.i, i32 0
-  store i32 0, i32* %att.i, align 4, !tbaa !3
+  store i32 0, i32* %att.i, align 4
   ret void
 }
-
-!0 = metadata !{metadata !"any pointer", metadata !1}
-!1 = metadata !{metadata !"omnipotent char", metadata !2}
-!2 = metadata !{metadata !"Simple C/C++ TBAA", null}
-!3 = metadata !{metadata !"int", metadata !1}

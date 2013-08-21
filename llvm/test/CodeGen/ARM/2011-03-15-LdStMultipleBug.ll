@@ -21,8 +21,8 @@ for.body:                                         ; preds = %_Z14printIsNotZeroi
   %x = getelementptr %struct.Outer* @oStruct, i32 0, i32 1, i32 %i.022, i32 0
   %y = getelementptr %struct.Outer* @oStruct, i32 0, i32 1, i32 %i.022, i32 1
   %inc = add i32 %i.022, 1
-  %tmp8 = load i32* %x, align 4, !tbaa !0
-  %tmp11 = load i32* %y, align 4, !tbaa !0
+  %tmp8 = load i32* %x, align 4
+  %tmp11 = load i32* %y, align 4
   %mul = mul nsw i32 %tmp11, %tmp8
   %tobool.i14 = icmp eq i32 %mul, 0
   br i1 %tobool.i14, label %_Z14printIsNotZeroi.exit17, label %if.then.i16
@@ -35,15 +35,10 @@ _Z14printIsNotZeroi.exit17:                       ; preds = %_Z14printIsNotZeroi
 
 _Z14printIsNotZeroi.exit17.for.body_crit_edge:    ; preds = %_Z14printIsNotZeroi.exit17
   %b.phi.trans.insert = getelementptr %struct.Outer* @oStruct, i32 0, i32 1, i32 %inc, i32 3
-  %tmp3.pre = load i8* %b.phi.trans.insert, align 1, !tbaa !3
+  %tmp3.pre = load i8* %b.phi.trans.insert, align 1
   %phitmp27 = icmp eq i8 undef, 0
   br label %for.body
 
 for.end:                                          ; preds = %_Z14printIsNotZeroi.exit17
   ret void
 }
-
-!0 = metadata !{metadata !"int", metadata !1}
-!1 = metadata !{metadata !"omnipotent char", metadata !2}
-!2 = metadata !{metadata !"Simple C/C++ TBAA", null}
-!3 = metadata !{metadata !"bool", metadata !1}

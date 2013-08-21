@@ -48,11 +48,11 @@ entry:
   %fifteen = bitcast i64* %retval.i.i to i32**
   %sixteen = bitcast i64* %retval.i.i to i8*
   call void @llvm.lifetime.start(i64 8, i8* %sixteen)
-  store i32* %.ph.i80, i32** %fifteen, align 8, !tbaa !0
+  store i32* %.ph.i80, i32** %fifteen, align 8
   %sunkaddr = ptrtoint i64* %retval.i.i to i32
   %sunkaddr86 = add i32 %sunkaddr, 4
   %sunkaddr87 = inttoptr i32 %sunkaddr86 to i32*
-  store i32 %fourteen, i32* %sunkaddr87, align 4, !tbaa !3
+  store i32 %fourteen, i32* %sunkaddr87, align 4
   %seventeen = load i64* %retval.i.i, align 8
   call void @llvm.lifetime.end(i64 8, i8* %sixteen)
   %eighteen = lshr i64 %seventeen, 32
@@ -68,9 +68,3 @@ entry:
 declare void @llvm.lifetime.start(i64, i8* nocapture) nounwind
 
 declare void @llvm.lifetime.end(i64, i8* nocapture) nounwind
-
-!0 = metadata !{metadata !"int", metadata !1}
-!1 = metadata !{metadata !"omnipotent char", metadata !2}
-!2 = metadata !{metadata !"Simple C/C++ TBAA"}
-!3 = metadata !{metadata !"any pointer", metadata !1}
-!4 = metadata !{metadata !"vtable pointer", metadata !2}

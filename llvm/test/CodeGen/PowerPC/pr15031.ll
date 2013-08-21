@@ -317,54 +317,42 @@ if.then:                                          ; preds = %entry
 if.end:                                           ; preds = %entry, %if.then
   %Reg.addr.0 = phi i32 [ %call3, %if.then ], [ %Reg, %entry ]
   %RegNo.i.i = getelementptr inbounds %"class.llvm::MachineOperand"* %this, i64 0, i32 2, i32 0
-  %1 = load i32* %RegNo.i.i, align 4, !tbaa !0
+  %1 = load i32* %RegNo.i.i, align 4
   %cmp.i = icmp eq i32 %1, %Reg.addr.0
   br i1 %cmp.i, label %_ZN4llvm14MachineOperand6setRegEj.exit, label %if.end.i
 
 if.end.i:                                         ; preds = %if.end
   %ParentMI.i.i = getelementptr inbounds %"class.llvm::MachineOperand"* %this, i64 0, i32 3
-  %2 = load %"class.llvm::MachineInstr"** %ParentMI.i.i, align 8, !tbaa !3
+  %2 = load %"class.llvm::MachineInstr"** %ParentMI.i.i, align 8
   %tobool.i = icmp eq %"class.llvm::MachineInstr"* %2, null
   br i1 %tobool.i, label %if.end13.i, label %if.then3.i
 
 if.then3.i:                                       ; preds = %if.end.i
   %Parent.i.i = getelementptr inbounds %"class.llvm::MachineInstr"* %2, i64 0, i32 2
-  %3 = load %"class.llvm::MachineBasicBlock"** %Parent.i.i, align 8, !tbaa !3
+  %3 = load %"class.llvm::MachineBasicBlock"** %Parent.i.i, align 8
   %tobool5.i = icmp eq %"class.llvm::MachineBasicBlock"* %3, null
   br i1 %tobool5.i, label %if.end13.i, label %if.then6.i
 
 if.then6.i:                                       ; preds = %if.then3.i
   %xParent.i.i = getelementptr inbounds %"class.llvm::MachineBasicBlock"* %3, i64 0, i32 4
-  %4 = load %"class.llvm::MachineFunction"** %xParent.i.i, align 8, !tbaa !3
+  %4 = load %"class.llvm::MachineFunction"** %xParent.i.i, align 8
   %tobool8.i = icmp eq %"class.llvm::MachineFunction"* %4, null
   br i1 %tobool8.i, label %if.end13.i, label %if.then9.i
 
 if.then9.i:                                       ; preds = %if.then6.i
   %RegInfo.i.i = getelementptr inbounds %"class.llvm::MachineFunction"* %4, i64 0, i32 5
-  %5 = load %"class.llvm::MachineRegisterInfo"** %RegInfo.i.i, align 8, !tbaa !3
+  %5 = load %"class.llvm::MachineRegisterInfo"** %RegInfo.i.i, align 8
   tail call void @_ZN4llvm19MachineRegisterInfo27removeRegOperandFromUseListEPNS_14MachineOperandE(%"class.llvm::MachineRegisterInfo"* %5, %"class.llvm::MachineOperand"* %this)
-  store i32 %Reg.addr.0, i32* %RegNo.i.i, align 4, !tbaa !0
+  store i32 %Reg.addr.0, i32* %RegNo.i.i, align 4
   tail call void @_ZN4llvm19MachineRegisterInfo22addRegOperandToUseListEPNS_14MachineOperandE(%"class.llvm::MachineRegisterInfo"* %5, %"class.llvm::MachineOperand"* %this)
   br label %_ZN4llvm14MachineOperand6setRegEj.exit
 
 if.end13.i:                                       ; preds = %if.then6.i, %if.then3.i, %if.end.i
-  store i32 %Reg.addr.0, i32* %RegNo.i.i, align 4, !tbaa !0
+  store i32 %Reg.addr.0, i32* %RegNo.i.i, align 4
   br label %_ZN4llvm14MachineOperand6setRegEj.exit
 
 _ZN4llvm14MachineOperand6setRegEj.exit:           ; preds = %if.end, %if.then9.i, %if.end13.i
   ret void
 }
-
-!0 = metadata !{metadata !"int", metadata !1}
-!1 = metadata !{metadata !"omnipotent char", metadata !2}
-!2 = metadata !{metadata !"Simple C/C++ TBAA"}
-!3 = metadata !{metadata !"any pointer", metadata !1}
-!4 = metadata !{metadata !"vtable pointer", metadata !2}
-!5 = metadata !{metadata !"long", metadata !1}
-!6 = metadata !{i64 0, i64 8, metadata !3, i64 8, i64 8, metadata !5}
-!7 = metadata !{metadata !"short", metadata !1}
-!8 = metadata !{i64 0, i64 1, metadata !1, i64 1, i64 4, metadata !0, i64 2, i64 1, metadata !1, i64 3, i64 1, metadata !9, i64 3, i64 1, metadata !9, i64 3, i64 1, metadata !9, i64 3, i64 1, metadata !9, i64 3, i64 1, metadata !9, i64 3, i64 1, metadata !9, i64 3, i64 1, metadata !9, i64 3, i64 1, metadata !9, i64 4, i64 4, metadata !0, i64 4, i64 4, metadata !0, i64 8, i64 8, metadata !3, i64 16, i64 8, metadata !3, i64 16, i64 8, metadata !3, i64 16, i64 8, metadata !3, i64 16, i64 8, metadata !5, i64 16, i64 8, metadata !3, i64 16, i64 8, metadata !3, i64 16, i64 8, metadata !3, i64 16, i64 8, metadata !3, i64 24, i64 8, metadata !3, i64 16, i64 4, metadata !0, i64 16, i64 8, metadata !3, i64 16, i64 8, metadata !3, i64 16, i64 8, metadata !3, i64 24, i64 4, metadata !0}
-!9 = metadata !{metadata !"bool", metadata !1}
-!10 = metadata !{i8 0, i8 2}
 
 ; CHECK-NOT: lbzu 3, 1(3)
