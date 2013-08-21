@@ -37,6 +37,7 @@
 
 ; Skip the output to the header of the pubnames section.
 ; CHECK: debug_pubnames
+; CHECK: Version:               2
 
 ; Check for each name in the output.
 ; CHECK: global_namespace_variable

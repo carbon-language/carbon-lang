@@ -56,7 +56,9 @@ enum llvm_dwarf_constants {
 
   DW_TAG_user_base = 0x1000,            // Recommended base for user tags.
 
-  DW_CIE_VERSION = 1                    // Common frame information version.
+  DW_CIE_VERSION = 1,                   // Common frame information version.
+  DW_PUBTYPES_VERSION = 2,              // Section version number for .debug_pubtypes.
+  DW_PUBNAMES_VERSION = 2               // Section version number for .debug_pubnames.
 };
 
 
