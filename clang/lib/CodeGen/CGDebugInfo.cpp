@@ -769,7 +769,7 @@ llvm::DIType CGDebugInfo::CreateType(const FunctionType *Ty,
   SmallVector<llvm::Value *, 16> EltTys;
 
   // Add the result type at least.
-  EltTys.push_back(getOrCreateType(Ty->getResultType(), Unit));
+  EltTys.push_back(getOrCreateType(Ty->getResultType(), Unit, true));
 
   // Set up remainder of arguments if there is a prototype.
   // FIXME: IF NOT, HOW IS THIS REPRESENTED?  llvm-gcc doesn't represent '...'!
@@ -777,7 +777,7 @@ llvm::DIType CGDebugInfo::CreateType(const FunctionType *Ty,
     EltTys.push_back(DBuilder.createUnspecifiedParameter());
   else if (const FunctionProtoType *FPT = dyn_cast<FunctionProtoType>(Ty)) {
     for (unsigned i = 0, e = FPT->getNumArgs(); i != e; ++i)
-      EltTys.push_back(getOrCreateType(FPT->getArgType(i), Unit));
+      EltTys.push_back(getOrCreateType(FPT->getArgType(i), Unit, true));
   }
 
   llvm::DIArray EltTypeArray = DBuilder.getOrCreateArray(EltTys);

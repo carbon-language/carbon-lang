@@ -24,3 +24,10 @@ int baz(B *b) {
   return bar(b);
 }
 
+
+// CHECK: ; [ DW_TAG_structure_type ] [C] {{.*}} [decl]
+
+struct C {
+};
+
+C (*x)(C);
