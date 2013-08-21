@@ -70,6 +70,14 @@ public:
 
   void addPredecessor(const MCBasicBlock *MCBB);
   bool isPredecessor(const MCBasicBlock *MCBB) const;
+
+  /// \brief Split block, mirrorring NewAtom = Insts->split(..).
+  /// This moves all successors to \p SplitBB, and
+  /// adds a fallthrough to it.
+  /// \p SplitBB The result of splitting Insts, a basic block directly following
+  /// this basic block.
+  /// \returns A new basic block, backed by \p SplitBB.
+  void splitBasicBlock(MCBasicBlock *SplitBB);
   /// @}
 };
 

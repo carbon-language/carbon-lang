@@ -56,6 +56,21 @@ class MCModule {
   void map(MCAtom *NewAtom);
   /// @}
 
+  /// \name Basic block tracking
+  /// @{
+  typedef std::vector<MCBasicBlock*> BBsByAtomTy;
+  BBsByAtomTy BBsByAtom;
+
+  // For access to basic block > atom tracking.
+  friend class MCBasicBlock;
+  friend class MCTextAtom;
+
+  /// \brief Keep track of \p BBBackedByAtom as being backed by \p Atom.
+  /// This is used to update succs/preds when \p Atom is split.
+  void trackBBForAtom(const MCTextAtom *Atom, MCBasicBlock *BBBackedByAtom);
+  void splitBasicBlocksForAtom(const MCTextAtom *TA, const MCTextAtom *NewTA);
+  /// @}
+
   /// \name Function tracking
   /// @{
   typedef std::vector<MCFunction*> FunctionListTy;

@@ -106,5 +106,6 @@ MCTextAtom *MCTextAtom::split(uint64_t SplitPt) {
 
   std::copy(I, Insts.end(), std::back_inserter(RightAtom->Insts));
   Insts.erase(I, Insts.end());
+  Parent->splitBasicBlocksForAtom(this, RightAtom);
   return RightAtom;
 }

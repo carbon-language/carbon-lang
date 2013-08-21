@@ -46,8 +46,9 @@ MCBasicBlock *MCFunction::find(uint64_t StartAddr) {
 // MCBasicBlock
 
 MCBasicBlock::MCBasicBlock(const MCTextAtom &Insts, MCFunction *Parent)
-  : Insts(&Insts), Parent(Parent)
-{}
+  : Insts(&Insts), Parent(Parent) {
+  getParent()->getParent()->trackBBForAtom(&Insts, this);
+}
 
 void MCBasicBlock::addSuccessor(const MCBasicBlock *MCBB) {
   if (!isSuccessor(MCBB))
@@ -67,4 +68,15 @@ void MCBasicBlock::addPredecessor(const MCBasicBlock *MCBB) {
 bool MCBasicBlock::isPredecessor(const MCBasicBlock *MCBB) const {
   return std::find(Predecessors.begin(), Predecessors.end(),
                    MCBB) != Predecessors.end();
+}
+
+void MCBasicBlock::splitBasicBlock(MCBasicBlock *SplitBB) {
+  assert(Insts->getEndAddr() + 1 == SplitBB->Insts->getBeginAddr() &&
+         "Splitting unrelated basic blocks!");
+  SplitBB->addPredecessor(this);
+  assert(SplitBB->Successors.empty() &&
+         "Split basic block shouldn't already have successors!");
+  SplitBB->Successors = Successors;
+  Successors.clear();
+  addSuccessor(SplitBB);
 }
