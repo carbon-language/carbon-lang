@@ -335,7 +335,7 @@ bool StripDebugDeclare::runOnModule(Module &M) {
 bool StripDeadDebugInfo::runOnModule(Module &M) {
   bool Changed = false;
 
-  // Debugging infomration is encoded in llvm IR using metadata. This is designed
+  // Debugging information is encoded in llvm IR using metadata. This is designed
   // such a way that debug info for symbols preserved even if symbols are
   // optimized away by the optimizer. This special pass removes debug info for
   // such symbols.
