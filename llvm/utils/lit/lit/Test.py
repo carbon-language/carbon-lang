@@ -20,12 +20,6 @@ UNSUPPORTED = TestResult('UNSUPPORTED', False)
 
 # Test classes.
 
-class TestFormat:
-    """TestFormat - Test information provider."""
-
-    def __init__(self, name):
-        self.name = name
-
 class TestSuite:
     """TestSuite - Information on a group of tests.
 

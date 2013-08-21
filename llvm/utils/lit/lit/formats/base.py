@@ -5,7 +5,12 @@ import sys
 import lit.Test
 import lit.util
 
-class FileBasedTest(object):
+class TestFormat(object):
+    pass
+
+###
+
+class FileBasedTest(TestFormat):
     def getTestsInDirectory(self, testSuite, path_in_suite,
                             litConfig, localConfig):
         source_path = testSuite.getSourcePath(path_in_suite)
@@ -27,7 +32,7 @@ class FileBasedTest(object):
 import re
 import tempfile
 
-class OneCommandPerFileTest:
+class OneCommandPerFileTest(TestFormat):
     # FIXME: Refactor into generic test for running some command on a directory
     # of inputs.
 
