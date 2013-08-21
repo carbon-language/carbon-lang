@@ -1431,11 +1431,26 @@ static void getTargetFeatures(const Driver &D, const llvm::Triple &Triple,
     getX86TargetFeatures(Args, Features);
     break;
   }
-  for (std::vector<const char *>::iterator I = Features.begin(),
-                                           E = Features.end();
-       I != E; ++I) {
+
+  // Find the last of each feature.
+  llvm::StringMap<unsigned> LastOpt;
+  for (unsigned I = 0, N = Features.size(); I < N; ++I) {
+    const char *Name = Features[I];
+    assert(Name[0] == '-' || Name[0] == '+');
+    LastOpt[Name + 1] = I;
+  }
+
+  for (unsigned I = 0, N = Features.size(); I < N; ++I) {
+    // If this feature was overridden, ignore it.
+    const char *Name = Features[I];
+    llvm::StringMap<unsigned>::iterator LastI = LastOpt.find(Name + 1);
+    assert(LastI != LastOpt.end());
+    unsigned Last = LastI->second;
+    if (Last != I)
+      continue;
+
     CmdArgs.push_back("-target-feature");
-    CmdArgs.push_back(*I);
+    CmdArgs.push_back(Name);
   }
 }
 

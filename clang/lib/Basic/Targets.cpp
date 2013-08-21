@@ -5503,26 +5503,10 @@ TargetInfo *TargetInfo::CreateTargetInfo(DiagnosticsEngine &Diags,
   llvm::StringMap<bool> Features;
   Target->getDefaultFeatures(Features);
 
-  // Fist the last of each option;
-  llvm::StringMap<unsigned> LastOpt;
-  for (unsigned I = 0, N = Opts->FeaturesAsWritten.size();
-       I < N; ++I) {
-    const char *Name = Opts->FeaturesAsWritten[I].c_str() + 1;
-    LastOpt[Name] = I;
-  }
-
   // Apply the user specified deltas.
   for (unsigned I = 0, N = Opts->FeaturesAsWritten.size();
        I < N; ++I) {
     const char *Name = Opts->FeaturesAsWritten[I].c_str();
-
-    // If this option was overridden, ignore it.
-    llvm::StringMap<unsigned>::iterator LastI = LastOpt.find(Name + 1);
-    assert(LastI != LastOpt.end());
-    unsigned Last = LastI->second;
-    if (Last != I)
-      continue;
-
     // Apply the feature via the target.
     bool Enabled = Name[0] == '+';
     Target->setFeatureEnabled(Features, Name + 1, Enabled);
