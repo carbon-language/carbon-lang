@@ -70,9 +70,7 @@ namespace b6981007 {
     for (auto x : s) {
       // We used to attempt to evaluate the initializer of this variable,
       // and crash because it has an undeduced type.
-      // FIXME: We should set the loop variable to be invalid if we can't build
-      // the loop, to suppress this follow-on error.
-      const int &n(x); // expected-error {{could not bind to an lvalue of type 'auto'}}
+      const int &n(x);
     }
   }
 }

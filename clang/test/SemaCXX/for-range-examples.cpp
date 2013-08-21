@@ -180,3 +180,14 @@ namespace test4 {
     for (y : {1, 2, 3}) {} // expected-error {{must declare a variable}} expected-warning {{result unused}}
   }
 }
+
+namespace test5 {
+  // Test error-recovery.
+  void f() {
+    for (auto x : undeclared_identifier) // expected-error {{undeclared identifier}}
+      for (auto y : x->foo)
+        y->bar();
+    for (auto x : 123) // expected-error {{no viable 'begin'}}
+      x->foo();
+  }
+}
