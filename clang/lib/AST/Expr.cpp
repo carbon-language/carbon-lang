@@ -585,7 +585,18 @@ std::string PredefinedExpr::ComputeName(IdentType IT, const Decl *CurrentDecl) {
 
     POut.flush();
 
-    if (!isa<CXXConstructorDecl>(FD) && !isa<CXXDestructorDecl>(FD))
+    // Print "auto" for all deduced return types. This includes C++1y return
+    // type deduction and lambdas. For trailing return types resolve the
+    // decltype expression. Otherwise print the real type when this is
+    // not a constructor or destructor.
+    if ((isa<CXXMethodDecl>(FD) &&
+         cast<CXXMethodDecl>(FD)->getParent()->isLambda()) ||
+        (FT && FT->getResultType()->getAs<AutoType>()))
+      Proto = "auto " + Proto;
+    else if (FT && FT->getResultType()->getAs<DecltypeType>())
+      FT->getResultType()->getAs<DecltypeType>()->getUnderlyingType()
+          .getAsStringInternal(Proto, Policy);
+    else if (!isa<CXXConstructorDecl>(FD) && !isa<CXXDestructorDecl>(FD))
       AFT->getResultType().getAsStringInternal(Proto, Policy);
 
     Out << Proto;

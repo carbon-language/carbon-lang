@@ -1937,7 +1937,7 @@ LValue CodeGenFunction::EmitPredefinedLValue(const PredefinedExpr *E) {
   case PredefinedExpr::Function:
   case PredefinedExpr::LFunction:
   case PredefinedExpr::PrettyFunction: {
-    unsigned IdentType = E->getIdentType();
+    PredefinedExpr::IdentType IdentType = E->getIdentType();
     std::string GlobalVarName;
 
     switch (IdentType) {
@@ -1961,17 +1961,24 @@ LValue CodeGenFunction::EmitPredefinedLValue(const PredefinedExpr *E) {
       FnName = FnName.substr(1);
     GlobalVarName += FnName;
 
+    // If this is outside of a function use the top level decl.
     const Decl *CurDecl = CurCodeDecl;
-    if (CurDecl == 0)
+    if (CurDecl == 0 || isa<VarDecl>(CurDecl))
       CurDecl = getContext().getTranslationUnitDecl();
 
-    std::string FunctionName =
-        (isa<BlockDecl>(CurDecl)
-         ? FnName.str()
-         : PredefinedExpr::ComputeName((PredefinedExpr::IdentType)IdentType,
-                                       CurDecl));
+    const Type *ElemType = E->getType()->getArrayElementTypeNoTypeQual();
+    std::string FunctionName;
+    if (isa<BlockDecl>(CurDecl)) {
+      // Blocks use the mangled function name.
+      // FIXME: ComputeName should handle blocks.
+      FunctionName = FnName.str();
+    } else {
+      FunctionName = PredefinedExpr::ComputeName(IdentType, CurDecl);
+      assert(cast<ConstantArrayType>(E->getType())->getSize() - 1 ==
+                 FunctionName.size() &&
+             "Computed __func__ length differs from type!");
+    }
 
-    const Type* ElemType = E->getType()->getArrayElementTypeNoTypeQual();
     llvm::Constant *C;
     if (ElemType->isWideCharType()) {
       SmallString<32> RawChars;

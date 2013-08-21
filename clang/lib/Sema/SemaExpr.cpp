@@ -2759,14 +2759,14 @@ ExprResult Sema::ActOnPredefinedExpr(SourceLocation Loc, tok::TokenKind Kind) {
   // Pre-defined identifiers are of type char[x], where x is the length of the
   // string.
 
-  Decl *currentDecl = getCurFunctionOrMethodDecl();
-  // Blocks and lambdas can occur at global scope. Don't emit a warning.
-  if (!currentDecl) {
-    if (const BlockScopeInfo *BSI = getCurBlock())
-      currentDecl = BSI->TheDecl;
-    else if (const LambdaScopeInfo *LSI = getCurLambda())
-      currentDecl = LSI->CallOperator;
-  }
+  // Pick the current block, lambda or function.
+  Decl *currentDecl;
+  if (const BlockScopeInfo *BSI = getCurBlock())
+    currentDecl = BSI->TheDecl;
+  else if (const LambdaScopeInfo *LSI = getCurLambda())
+    currentDecl = LSI->CallOperator;
+  else
+    currentDecl = getCurFunctionOrMethodDecl();
 
   if (!currentDecl) {
     Diag(Loc, diag::ext_predef_outside_function);
