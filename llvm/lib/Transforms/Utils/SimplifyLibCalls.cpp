@@ -477,7 +477,7 @@ struct StrChrOpt : public LibCallOptimization {
 
     // Compute the offset, make sure to handle the case when we're searching for
     // zero (a weird way to spell strlen).
-    size_t I = (255 & CharC->getSExtValue()) == 0 ?
+    size_t I = (0xFF & CharC->getSExtValue()) == 0 ?
         Str.size() : Str.find(CharC->getSExtValue());
     if (I == StringRef::npos) // Didn't find the char.  strchr returns null.
       return Constant::getNullValue(CI->getType());
@@ -513,7 +513,7 @@ struct StrRChrOpt : public LibCallOptimization {
     }
 
     // Compute the offset.
-    size_t I = (255 & CharC->getSExtValue()) == 0 ?
+    size_t I = (0xFF & CharC->getSExtValue()) == 0 ?
         Str.size() : Str.rfind(CharC->getSExtValue());
     if (I == StringRef::npos) // Didn't find the char. Return null.
       return Constant::getNullValue(CI->getType());
