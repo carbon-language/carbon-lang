@@ -208,6 +208,16 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
 
   ctx.setInputGraph(std::move(inputGraph));
 
+  // Handle -help
+  if (parsedArgs->getLastArg(OPT_help)) {
+    table.PrintHelp(llvm::outs(), argv[0], "LLVM Darwin Linker", false);
+    // If only -help on command line, don't try to do any linking
+    if ( argc == 2 ) {
+      ctx.setDoNothing(true);
+      return false;
+    }
+  }
+
   // Validate the combination of options used.
   if (ctx.validate(diagnostics))
     return true;
