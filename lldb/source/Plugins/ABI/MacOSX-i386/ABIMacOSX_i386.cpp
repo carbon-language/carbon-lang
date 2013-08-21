@@ -243,13 +243,13 @@ ABIMacOSX_i386::CreateInstance (const ArchSpec &arch)
         {
             if (!g_abi_mac_sp)
                 g_abi_mac_sp.reset (new ABIMacOSX_i386(true));
-            return g_abi_sp;
+            return g_abi_mac_sp;
         }
         else
         {
             if (!g_abi_other_sp)
                 g_abi_other_sp.reset (new ABIMacOSX_i386(false));
-            return g_abi_sp;
+            return g_abi_other_sp;
         }
     }
     return ABISP();
