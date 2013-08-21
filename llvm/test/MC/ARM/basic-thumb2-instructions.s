@@ -1323,8 +1323,15 @@ _func:
         movlo r1, #-1
 
         @ alias for mvn
-	mov r3, #-3
+        mov r3, #-3
+        mov r11, #0xabcd
+        movs r0, #1
+        it ne
+        movne r3, #15
 
+        itt eq
+        moveq r0, #255
+        moveq r1, #256
 
 @ CHECK: movs	r1, #21                 @ encoding: [0x15,0x21]
 @ CHECK: movs.w	r1, #21                 @ encoding: [0x5f,0xf0,0x15,0x01]
@@ -1343,6 +1350,14 @@ _func:
 @ CHECK: it	lo                      @ encoding: [0x38,0xbf]
 @ CHECK: movlo.w	r1, #-1         @ encoding: [0x4f,0xf0,0xff,0x31]
 @ CHECK: mvn	r3, #2                  @ encoding: [0x6f,0xf0,0x02,0x03]
+@ CHECK: movw	r11, #43981             @ encoding: [0x4a,0xf6,0xcd,0x3b]
+@ CHECK: movs	r0, #1                  @ encoding: [0x01,0x20]
+@ CHECK: it	ne                      @ encoding: [0x18,0xbf]
+@ CHECK: movne	r3, #15                 @ encoding: [0x0f,0x23]
+
+@ CHECK: itt    eq                      @ encoding: [0x04,0xbf]
+@ CHECK: moveq  r0, #255                @ encoding: [0xff,0x20]
+@ CHECK: movweq r1, #256                @ encoding: [0x40,0xf2,0x00,0x11]
 
 @------------------------------------------------------------------------------
 @ MOV(shifted register)

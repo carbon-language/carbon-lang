@@ -710,6 +710,11 @@ def imm0_65535_expr : Operand<i32> {
   let ParserMatchClass = Imm0_65535ExprAsmOperand;
 }
 
+def Imm256_65535ExprAsmOperand: ImmAsmOperand { let Name = "Imm256_65535Expr"; }
+def imm256_65535_expr : Operand<i32> {
+  let ParserMatchClass = Imm256_65535ExprAsmOperand;
+}
+
 /// imm24b - True if the 32-bit immediate is encodable in 24 bits.
 def Imm24bitAsmOperand: ImmAsmOperand { let Name = "Imm24bit"; }
 def imm24b : Operand<i32>, ImmLeaf<i32, [{

@@ -1855,6 +1855,9 @@ def t2MOVi16 : T2I<(outs rGPR:$Rd), (ins imm0_65535_expr:$imm), IIC_iMOVi,
   let DecoderMethod = "DecodeT2MOVTWInstruction";
 }
 
+def : t2InstAlias<"mov${p} $Rd, $imm", 
+                  (t2MOVi16 rGPR:$Rd, imm256_65535_expr:$imm, pred:$p)>;
+
 def t2MOVi16_ga_pcrel : PseudoInst<(outs rGPR:$Rd),
                                 (ins i32imm:$addr, pclabel:$id), IIC_iMOVi, []>;
 
