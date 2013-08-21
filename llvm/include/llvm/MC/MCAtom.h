@@ -139,7 +139,7 @@ public:
 
   const MCDecodedInst &back() const { return Insts.back(); }
   const MCDecodedInst &at(size_t n) const { return Insts.at(n); }
-  uint64_t size() const { return Insts.size(); }
+  size_t size() const { return Insts.size(); }
   /// @}
 
   /// \name Atom type specific split/truncate logic.
