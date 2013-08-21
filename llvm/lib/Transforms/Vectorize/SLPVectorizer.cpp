@@ -1592,8 +1592,7 @@ struct SLPVectorizer : public FunctionPass {
       return false;
 
     // Don't vectorize when the attribute NoImplicitFloat is used.
-    if (F.getAttributes().hasAttribute(AttributeSet::FunctionIndex,
-                                       Attribute::NoImplicitFloat))
+    if (F.hasFnAttribute(Attribute::NoImplicitFloat))
       return false;
 
     DEBUG(dbgs() << "SLP: Analyzing blocks in " << F.getName() << ".\n");
