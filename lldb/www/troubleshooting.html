@@ -39,10 +39,10 @@
                         </p>
 <code><pre><tt>% <b>echo "settings set target.inline-breakpoint-strategy always" >> ~/.lldbinit</b></tt></pre></code>
                         <p> This tells LLDB to always look in all compile units and search for breakpoint
-                            locations by file and line even if the implementation file doesn't match. Settings breakpoints
+                            locations by file and line even if the implementation file doesn't match. Setting breakpoints
                             in header files always searches all compile units because inline functions are commonly defined
                             in header files and often cause multiple breakpoints to have source line information that matches
-                            the header files paths.
+                            many header file paths.
                         </p>
                         <p> If you set a file and line breakpoint using a full path to the source file, like Xcode does when setting a
                             breakpoint in its GUI on Mac OS X when you click in the gutter of the source view, this path must match 
