@@ -54,9 +54,13 @@ void MCModule::remap(MCAtom *Atom, uint64_t NewBegin, uint64_t NewEnd) {
   assert(*I == Atom && "Previous atom mapping was invalid!");
   Atoms.erase(I);
 
+  // FIXME: special case NewBegin == Atom->Begin
+
   // Insert the new mapping.
   AtomListTy::iterator NewI = std::lower_bound(atom_begin(), atom_end(),
                                                NewBegin, AtomComp);
+  assert((NewI == atom_end() || (*NewI)->getBeginAddr() > Atom->End)
+         && "Offset range already occupied!");
   Atoms.insert(NewI, Atom);
 
   // Update the atom internal bounds.
@@ -80,8 +84,8 @@ MCAtom *MCModule::findAtomContaining(uint64_t Addr) {
   return 0;
 }
 
-MCFunction *MCModule::createFunction(const StringRef &Name) {
-  Functions.push_back(new MCFunction(Name));
+MCFunction *MCModule::createFunction(StringRef Name) {
+  Functions.push_back(new MCFunction(Name, this));
   return Functions.back();
 }
 

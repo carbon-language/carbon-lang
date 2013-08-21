@@ -9,15 +9,15 @@
 
 #include "llvm/MC/MCFunction.h"
 #include "llvm/MC/MCAtom.h"
-#include "llvm/Support/raw_ostream.h"
+#include "llvm/MC/MCModule.h"
 #include <algorithm>
 
 using namespace llvm;
 
 // MCFunction
 
-MCFunction::MCFunction(StringRef Name)
-  : Name(Name)
+MCFunction::MCFunction(StringRef Name, MCModule *Parent)
+  : Name(Name), ParentModule(Parent)
 {}
 
 MCFunction::~MCFunction() {

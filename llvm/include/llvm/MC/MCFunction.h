@@ -74,21 +74,22 @@ public:
 };
 
 /// \brief Represents a function in machine code, containing MCBasicBlocks.
-/// MCFunctions are created using MCModule::createFunction.
+/// MCFunctions are created by MCModule.
 class MCFunction {
   MCFunction           (const MCFunction&) LLVM_DELETED_FUNCTION;
   MCFunction& operator=(const MCFunction&) LLVM_DELETED_FUNCTION;
 
   std::string Name;
+  MCModule *ParentModule;
   typedef std::vector<MCBasicBlock*> BasicBlockListTy;
   BasicBlockListTy Blocks;
 
   // MCModule owns the function.
   friend class MCModule;
-  MCFunction(StringRef Name);
-public:
+  MCFunction(StringRef Name, MCModule *Parent);
   ~MCFunction();
 
+public:
   /// \brief Create an MCBasicBlock backed by Insts and add it to this function.
   /// \param Insts Sequence of straight-line code backing the basic block.
   /// \returns The newly created basic block.

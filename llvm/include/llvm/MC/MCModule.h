@@ -23,6 +23,7 @@
 namespace llvm {
 
 class MCAtom;
+class MCBasicBlock;
 class MCDataAtom;
 class MCFunction;
 class MCObjectDisassembler;
@@ -88,8 +89,8 @@ public:
         atom_iterator atom_end()         { return Atoms.end(); }
   /// @}
 
-  /// \name Create a new MCFunction.
-  MCFunction *createFunction(const StringRef &Name);
+  /// \brief Create a new MCFunction.
+  MCFunction *createFunction(StringRef Name);
 
   /// \name Access to the owned function list.
   /// @{
