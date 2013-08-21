@@ -102,19 +102,29 @@ void MCObjectDisassembler::buildSectionAtoms(MCModule *Module) {
     StringRef SecName; SI->getName(SecName);
 
     if (isText) {
-      MCTextAtom *Text = Module->createTextAtom(StartAddr, EndAddr);
-      Text->setName(SecName);
+      MCTextAtom *Text = 0;
+      MCDataAtom *InvalidData = 0;
+
       uint64_t InstSize;
       for (uint64_t Index = 0; Index < SecSize; Index += InstSize) {
+        const uint64_t CurAddr = StartAddr + Index;
         MCInst Inst;
-        if (Dis.getInstruction(Inst, InstSize, memoryObject, Index,
-                               nulls(), nulls()))
+        if (Dis.getInstruction(Inst, InstSize, memoryObject, CurAddr, nulls(),
+                               nulls())) {
+          if (!Text) {
+            Text = Module->createTextAtom(CurAddr, CurAddr);
+            Text->setName(SecName);
+          }
           Text->addInst(Inst, InstSize);
-        else
-          // We don't care about splitting mixed atoms either.
-          llvm_unreachable("Couldn't disassemble instruction in atom.");
+          InvalidData = 0;
+        } else {
+          if (!InvalidData) {
+            Text = 0;
+            InvalidData = Module->createDataAtom(CurAddr, EndAddr);
+          }
+          InvalidData->addData(Contents[Index]);
+        }
       }
-
     } else {
       MCDataAtom *Data = Module->createDataAtom(StartAddr, EndAddr);
       Data->setName(SecName);
@@ -133,6 +143,8 @@ namespace {
     MCBasicBlock *BB;
     BBInfoSetTy Succs;
     BBInfoSetTy Preds;
+
+    BBInfo() : Atom(0), BB(0) {}
 
     void addSucc(BBInfo &Succ) {
       Succs.insert(&Succ);
@@ -232,8 +244,8 @@ void MCObjectDisassembler::buildCFG(MCModule *Module) {
     // Create MCBBs.
     SmallSetVector<BBInfo*, 16> Worklist;
     Worklist.insert(&BBI);
-    for (size_t WI = 0; WI < Worklist.size(); ++WI) {
-      BBInfo *BBI = Worklist[WI];
+    for (size_t wi = 0; wi < Worklist.size(); ++wi) {
+      BBInfo *BBI = Worklist[wi];
       if (!BBI->Atom)
         continue;
       BBI->BB = &MCFN.createBlock(*BBI->Atom);
@@ -247,17 +259,19 @@ void MCObjectDisassembler::buildCFG(MCModule *Module) {
     }
 
     // Set preds/succs.
-    for (size_t WI = 0; WI < Worklist.size(); ++WI) {
-      BBInfo *BBI = Worklist[WI];
+    for (size_t wi = 0; wi < Worklist.size(); ++wi) {
+      BBInfo *BBI = Worklist[wi];
       MCBasicBlock *MCBB = BBI->BB;
       if (!MCBB)
         continue;
       for (BBInfoSetTy::iterator SI = BBI->Succs.begin(), SE = BBI->Succs.end();
-                                 SI != SE; ++SI)
-        MCBB->addSuccessor((*SI)->BB);
+           SI != SE; ++SI)
+        if ((*SI)->BB)
+          MCBB->addSuccessor((*SI)->BB);
       for (BBInfoSetTy::iterator PI = BBI->Preds.begin(), PE = BBI->Preds.end();
-                                 PI != PE; ++PI)
-        MCBB->addPredecessor((*PI)->BB);
+           PI != PE; ++PI)
+        if ((*PI)->BB)
+          MCBB->addPredecessor((*PI)->BB);
     }
   }
 }
