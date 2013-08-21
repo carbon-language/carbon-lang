@@ -662,4 +662,26 @@ define i8 @test_gep_bitcast_array_different_size_element([100 x double]* %arr, i
   ret i8 %x
 }
 
+define i64 @test_gep_bitcast_array_same_size_element_as1([100 x double] addrspace(1)* %arr, i16 %N) {
+; CHECK-LABEL: @test_gep_bitcast_array_same_size_element_as1(
+; CHECK: getelementptr [100 x double] addrspace(1)* %arr, i16 0, i16 %V
+; CHECK: bitcast
+  %cast = bitcast [100 x double] addrspace(1)* %arr to i64 addrspace(1)*
+  %V = mul i16 %N, 8
+  %t = getelementptr i64 addrspace(1)* %cast, i16 %V
+  %x = load i64 addrspace(1)* %t
+  ret i64 %x
+}
+
+define i8 @test_gep_bitcast_array_different_size_element_as1([100 x double] addrspace(1)* %arr, i16 %N) {
+; CHECK-LABEL: @test_gep_bitcast_array_different_size_element_as1(
+; CHECK: getelementptr [100 x double] addrspace(1)* %arr, i16 0, i16 %N
+; CHECK: bitcast
+  %cast = bitcast [100 x double] addrspace(1)* %arr to i8 addrspace(1)*
+  %V = mul i16 %N, 8
+  %t = getelementptr i8 addrspace(1)* %cast, i16 %V
+  %x = load i8 addrspace(1)* %t
+  ret i8 %x
+}
+
 ; CHECK: attributes [[NUW]] = { nounwind }
