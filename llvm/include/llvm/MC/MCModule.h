@@ -60,14 +60,17 @@ class MCModule {
   FunctionListTy Functions;
   /// @}
 
+  /// The address of the entrypoint function.
+  uint64_t Entrypoint;
+
   MCModule           (const MCModule &) LLVM_DELETED_FUNCTION;
   MCModule& operator=(const MCModule &) LLVM_DELETED_FUNCTION;
 
   // MCObjectDisassembler creates MCModules.
   friend class MCObjectDisassembler;
-  MCModule() : Atoms() { }
 
 public:
+  MCModule() : Entrypoint(0) { }
   ~MCModule();
 
   /// \name Create a new MCAtom covering the specified offset range.
@@ -101,6 +104,9 @@ public:
   const_func_iterator func_end()   const { return Functions.end(); }
         func_iterator func_end()         { return Functions.end(); }
   /// @}
+
+  /// \brief Get the address of the entrypoint function, or 0 if there is none.
+  uint64_t getEntrypoint() const { return Entrypoint; }
 };
 
 }
