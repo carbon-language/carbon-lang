@@ -1,7 +1,7 @@
 ; RUN: opt < %s -instcombine -S | FileCheck %s
 
 target datalayout =
-"e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64"
+"e-p:64:64:64-p1:16:16:16-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64"
 
 define i32 @test1(i32 %X) {
 entry:
@@ -79,7 +79,7 @@ entry:
 
 define i1 @test8(i32 %x){
 entry:
-  %a = add i32 %x, -1 
+  %a = add i32 %x, -1
   %b = icmp eq i32 %a, %x
   ret i1 %b
 ; CHECK-LABEL: @test8(
@@ -89,7 +89,7 @@ entry:
 define i1 @test9(i32 %x)  {
 entry:
   %a = add i32 %x, -2
-  %b = icmp ugt i32 %x, %a 
+  %b = icmp ugt i32 %x, %a
   ret i1 %b
 ; CHECK-LABEL: @test9(
 ; CHECK: icmp ugt i32 %x, 1
@@ -98,10 +98,9 @@ entry:
 
 define i1 @test10(i32 %x){
 entry:
-  %a = add i32 %x, -1      
-  %b = icmp slt i32 %a, %x 
+  %a = add i32 %x, -1
+  %b = icmp slt i32 %a, %x
   ret i1 %b
-  
 ; CHECK-LABEL: @test10(
 ; CHECK: %b = icmp ne i32 %x, -2147483648
 ; CHECK: ret i1 %b
@@ -231,6 +230,18 @@ define i1 @test23(i32 %x) nounwind {
 define i1 @test24(i64 %i) {
   %p1 = getelementptr inbounds i32* getelementptr inbounds ([1000 x i32]* @X, i64 0, i64 0), i64 %i
   %cmp = icmp eq i32* %p1, getelementptr inbounds ([1000 x i32]* @X, i64 1, i64 0)
+  ret i1 %cmp
+}
+
+@X_as1 = addrspace(1) global [1000 x i32] zeroinitializer
+
+; CHECK: @test24_as1
+; CHECK: trunc i64 %i to i16
+; CHECK: %cmp = icmp eq i16 %1, 1000
+; CHECK: ret i1 %cmp
+define i1 @test24_as1(i64 %i) {
+  %p1 = getelementptr inbounds i32 addrspace(1)* getelementptr inbounds ([1000 x i32] addrspace(1)* @X_as1, i64 0, i64 0), i64 %i
+  %cmp = icmp eq i32 addrspace(1)* %p1, getelementptr inbounds ([1000 x i32] addrspace(1)* @X_as1, i64 1, i64 0)
   ret i1 %cmp
 }
 
@@ -473,7 +484,7 @@ define <2 x i1> @test49(<2 x i32> %tmp3) {
 entry:
   %tmp11 = and <2 x i32> %tmp3, <i32 3, i32 3>
   %cmp = icmp ult <2 x i32> %tmp11, <i32 4, i32 4>
-  ret <2 x i1> %cmp  
+  ret <2 x i1> %cmp
 }
 
 ; PR9343 #7
@@ -603,6 +614,21 @@ define i1 @test59(i8* %foo) {
 ; CHECK: ret i1 true
 }
 
+define i1 @test59_as1(i8 addrspace(1)* %foo) {
+  %bit = bitcast i8 addrspace(1)* %foo to i32 addrspace(1)*
+  %gep1 = getelementptr inbounds i32 addrspace(1)* %bit, i64 2
+  %gep2 = getelementptr inbounds i8 addrspace(1)* %foo, i64 10
+  %cast1 = bitcast i32 addrspace(1)* %gep1 to i8 addrspace(1)*
+  %cmp = icmp ult i8 addrspace(1)* %cast1, %gep2
+  %use = ptrtoint i8 addrspace(1)* %cast1 to i64
+  %call = call i32 @test58_d(i64 %use) nounwind
+  ret i1 %cmp
+; CHECK: @test59_as1
+; CHECK: %[[GEP:.+]] = getelementptr inbounds i8 addrspace(1)* %foo, i16 8
+; CHECK: ptrtoint i8 addrspace(1)* %[[GEP]] to i16
+; CHECK: ret i1 true
+}
+
 define i1 @test60(i8* %foo, i64 %i, i64 %j) {
   %bit = bitcast i8* %foo to i32*
   %gep1 = getelementptr inbounds i32* %bit, i64 %i
@@ -613,6 +639,21 @@ define i1 @test60(i8* %foo, i64 %i, i64 %j) {
 ; CHECK-LABEL: @test60(
 ; CHECK-NEXT: %gep1.idx = shl nuw i64 %i, 2
 ; CHECK-NEXT: icmp slt i64 %gep1.idx, %j
+; CHECK-NEXT: ret i1
+}
+
+define i1 @test60_as1(i8 addrspace(1)* %foo, i64 %i, i64 %j) {
+  %bit = bitcast i8 addrspace(1)* %foo to i32 addrspace(1)*
+  %gep1 = getelementptr inbounds i32 addrspace(1)* %bit, i64 %i
+  %gep2 = getelementptr inbounds i8 addrspace(1)* %foo, i64 %j
+  %cast1 = bitcast i32 addrspace(1)* %gep1 to i8 addrspace(1)*
+  %cmp = icmp ult i8 addrspace(1)* %cast1, %gep2
+  ret i1 %cmp
+; CHECK: @test60_as1
+; CHECK: trunc i64 %i to i16
+; CHECK: trunc i64 %j to i16
+; CHECK: %gep1.idx = shl nuw i16 %{{.+}}, 2
+; CHECK-NEXT: icmp sgt i16 %{{.+}}, %gep1.idx
 ; CHECK-NEXT: ret i1
 }
 
@@ -629,6 +670,19 @@ define i1 @test61(i8* %foo, i64 %i, i64 %j) {
 ; CHECK-NEXT: ret i1
 }
 
+define i1 @test61_as1(i8 addrspace(1)* %foo, i16 %i, i16 %j) {
+  %bit = bitcast i8 addrspace(1)* %foo to i32 addrspace(1)*
+  %gep1 = getelementptr i32 addrspace(1)* %bit, i16 %i
+  %gep2 = getelementptr i8 addrspace(1)* %foo, i16 %j
+  %cast1 = bitcast i32 addrspace(1)* %gep1 to i8 addrspace(1)*
+  %cmp = icmp ult i8 addrspace(1)* %cast1, %gep2
+  ret i1 %cmp
+; Don't transform non-inbounds GEPs.
+; CHECK: @test61_as1
+; CHECK: icmp ult i8 addrspace(1)* %cast1, %gep2
+; CHECK-NEXT: ret i1
+}
+
 define i1 @test62(i8* %a) {
   %arrayidx1 = getelementptr inbounds i8* %a, i64 1
   %arrayidx2 = getelementptr inbounds i8* %a, i64 10
@@ -636,6 +690,15 @@ define i1 @test62(i8* %a) {
   ret i1 %cmp
 ; CHECK-LABEL: @test62(
 ; CHECK-NEXT: ret i1 true
+}
+
+define i1 @test62_as1(i8 addrspace(1)* %a) {
+; CHECK-LABEL: @test62_as1(
+; CHECK-NEXT: ret i1 true
+  %arrayidx1 = getelementptr inbounds i8 addrspace(1)* %a, i64 1
+  %arrayidx2 = getelementptr inbounds i8 addrspace(1)* %a, i64 10
+  %cmp = icmp slt i8 addrspace(1)* %arrayidx1, %arrayidx2
+  ret i1 %cmp
 }
 
 define i1 @test63(i8 %a, i32 %b) nounwind {
@@ -996,6 +1059,15 @@ define i1 @test71(i8* %x) {
   %a = getelementptr i8* %x, i64 8
   %b = getelementptr inbounds i8* %x, i64 8
   %c = icmp ugt i8* %a, %b
+  ret i1 %c
+}
+
+define i1 @test71_as1(i8 addrspace(1)* %x) {
+; CHECK-LABEL: @test71_as1(
+; CHECK-NEXT: ret i1 false
+  %a = getelementptr i8 addrspace(1)* %x, i64 8
+  %b = getelementptr inbounds i8 addrspace(1)* %x, i64 8
+  %c = icmp ugt i8 addrspace(1)* %a, %b
   ret i1 %c
 }
 

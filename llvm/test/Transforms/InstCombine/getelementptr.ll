@@ -185,6 +185,28 @@ define <2 x i1> @test13_vector(<2 x i64> %X, <2 x %S*> %P) nounwind {
   ret <2 x i1> %C
 }
 
+define i1 @test13_as1(i16 %X, %S addrspace(1)* %P) {
+; CHECK-LABEL: @test13_as1(
+; CHECK-NEXT:  %C = icmp eq i16 %X, -1
+; CHECK-NEXT: ret i1 %C
+  %A = getelementptr inbounds %S addrspace(1)* %P, i16 0, i32 1, i16 %X
+  %B = getelementptr inbounds %S addrspace(1)* %P, i16 0, i32 0
+  %C = icmp eq i32 addrspace(1)* %A, %B
+  ret i1 %C
+}
+
+define <2 x i1> @test13_vector_as1(<2 x i16> %X, <2 x %S addrspace(1)*> %P) {
+; CHECK-LABEL: @test13_vector_as1(
+; CHECK-NEXT: shl nuw <2 x i16> %X, <i16 2, i16 2>
+; CHECK-NEXT: add <2 x i16> %A.idx, <i16 4, i16 4>
+; CHECK-NEXT: icmp eq <2 x i16> %A.offs, zeroinitializer
+; CHECK-NEXT: ret <2 x i1>
+  %A = getelementptr inbounds <2 x %S addrspace(1)*> %P, <2 x i16> <i16 0, i16 0>, <2 x i32> <i32 1, i32 1>, <2 x i16> %X
+  %B = getelementptr inbounds <2 x %S addrspace(1)*> %P, <2 x i16> <i16 0, i16 0>, <2 x i32> <i32 0, i32 0>
+  %C = icmp eq <2 x i32 addrspace(1)*> %A, %B
+  ret <2 x i1> %C
+}
+
 define i1 @test13_i32(i32 %X, %S* %P) {
 ; CHECK-LABEL: @test13_i32(
 ; CHECK: %C = icmp eq i32 %X, -1
@@ -256,6 +278,28 @@ define i1 @test18(i16* %P, i32 %I) {
         ret i1 %C
 ; CHECK-LABEL: @test18(
 ; CHECK: %C = icmp slt i32 %I, 0
+}
+
+; Larger than the pointer size for a non-zero address space
+define i1 @test18_as1(i16 addrspace(1)* %P, i32 %I) {
+; CHECK-LABEL: @test18_as1(
+; CHECK-NEXT: %1 = trunc i32 %I to i16
+; CHECK-NEXT: %C = icmp slt i16 %1, 0
+; CHECK-NEXT: ret i1 %C
+  %X = getelementptr inbounds i16 addrspace(1)* %P, i32 %I
+  %C = icmp ult i16 addrspace(1)* %X, %P
+  ret i1 %C
+}
+
+; Smaller than the pointer size for a non-zero address space
+define i1 @test18_as1_i32(i16 addrspace(1)* %P, i32 %I) {
+; CHECK-LABEL: @test18_as1_i32(
+; CHECK-NEXT: %1 = trunc i32 %I to i16
+; CHECK-NEXT: %C = icmp slt i16 %1, 0
+; CHECK-NEXT: ret i1 %C
+  %X = getelementptr inbounds i16 addrspace(1)* %P, i32 %I
+  %C = icmp ult i16 addrspace(1)* %X, %P
+  ret i1 %C
 }
 
 ; Smaller than pointer size
@@ -503,15 +547,38 @@ define i8* @test32(i8* %v) {
 %struct.Key = type { { i32, i32 } }
 %struct.anon = type <{ i8, [3 x i8], i32 }>
 
-define i32 *@test33(%struct.Key *%A) {
-	%B = bitcast %struct.Key* %A to %struct.anon*
-        %C = getelementptr %struct.anon* %B, i32 0, i32 2
-	ret i32 *%C
+define i32* @test33(%struct.Key* %A) {
 ; CHECK-LABEL: @test33(
 ; CHECK: getelementptr %struct.Key* %A, i64 0, i32 0, i32 1
+  %B = bitcast %struct.Key* %A to %struct.anon*
+  %C = getelementptr %struct.anon* %B, i32 0, i32 2
+  ret i32* %C
 }
 
+define i32 addrspace(1)* @test33_as1(%struct.Key addrspace(1)* %A) {
+; CHECK-LABEL: @test33_as1(
+; CHECK: getelementptr %struct.Key addrspace(1)* %A, i16 0, i32 0, i32 1
+  %B = bitcast %struct.Key addrspace(1)* %A to %struct.anon addrspace(1)*
+  %C = getelementptr %struct.anon addrspace(1)* %B, i32 0, i32 2
+  ret i32 addrspace(1)* %C
+}
 
+define i32 addrspace(1)* @test33_array_as1([10 x i32] addrspace(1)* %A) {
+; CHECK-LABEL: @test33_array_as1(
+; CHECK: getelementptr [10 x i32] addrspace(1)* %A, i16 0, i16 2
+  %B = bitcast [10 x i32] addrspace(1)* %A to [5 x i32] addrspace(1)*
+  %C = getelementptr [5 x i32] addrspace(1)* %B, i32 0, i32 2
+  ret i32 addrspace(1)* %C
+}
+
+; Make sure the GEP indices use the right pointer sized integer
+define i32 addrspace(1)* @test33_array_struct_as1([10 x %struct.Key] addrspace(1)* %A) {
+; CHECK-LABEL: @test33_array_struct_as1(
+; CHECK: getelementptr [10 x %struct.Key] addrspace(1)* %A, i16 0, i16 1, i32 0, i32 0
+  %B = bitcast [10 x %struct.Key] addrspace(1)* %A to [20 x i32] addrspace(1)*
+  %C = getelementptr [20 x i32] addrspace(1)* %B, i32 0, i32 2
+  ret i32 addrspace(1)* %C
+}
 
 	%T2 = type { i8*, i8 }
 define i8* @test34(i8* %Val, i64 %V) nounwind {
@@ -636,6 +703,17 @@ define i1 @pr16483([1 x i8]* %a, [1 x i8]* %b) {
 
 ; CHECK-LABEL: @pr16483(
 ; CHECK-NEXT: icmp ult  [1 x i8]* %a, %b
+}
+
+define i8 @test_gep_bitcast_as1(i32 addrspace(1)* %arr, i16 %N) {
+; CHECK-LABEL: @test_gep_bitcast_as1(
+; CHECK: getelementptr i32 addrspace(1)* %arr, i16 %N
+; CHECK: bitcast
+  %cast = bitcast i32 addrspace(1)* %arr to i8 addrspace(1)*
+  %V = mul i16 %N, 4
+  %t = getelementptr i8 addrspace(1)* %cast, i16 %V
+  %x = load i8 addrspace(1)* %t
+  ret i8 %x
 }
 
 ; The element size of the array matches the element size of the pointer

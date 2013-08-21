@@ -1,7 +1,7 @@
 ; Tests to make sure elimination of casts is working correctly
 ; RUN: opt < %s -instcombine -S | FileCheck %s
 
-target datalayout = "p:32:32"
+target datalayout = "p:32:32-p1:32:32-p2:16:16"
 
 ; This shouldn't convert to getelementptr because the relationship
 ; between the arithmetic and the layout of allocated memory is
@@ -43,11 +43,20 @@ define i1 @test4(i32 %A) {
   ret i1 %C
 ; CHECK-LABEL: @test4(
 ; CHECK-NEXT: %C = icmp eq i32 %A, 0
-; CHECK-NEXT: ret i1 %C 
+; CHECK-NEXT: ret i1 %C
+}
+
+define i1 @test4_as2(i16 %A) {
+; CHECK-LABEL: @test4_as2(
+; CHECK-NEXT: %C = icmp eq i16 %A, 0
+; CHECK-NEXT: ret i1 %C
+  %B = inttoptr i16 %A to i8 addrspace(2)*
+  %C = icmp eq i8 addrspace(2)* %B, null
+  ret i1 %C
 }
 
 
-; Pulling the cast out of the load allows us to eliminate the load, and then 
+; Pulling the cast out of the load allows us to eliminate the load, and then
 ; the whole array.
 
         %op = type { float }
@@ -69,11 +78,11 @@ define %unop* @test5(%op* %O) {
 ; InstCombine can not 'load (cast P)' -> cast (load P)' if the cast changes
 ; the address space.
 
-define i8 @test6(i8 addrspace(1)* %source) {                                                                                        
-entry: 
+define i8 @test6(i8 addrspace(1)* %source) {
+entry:
   %arrayidx223 = bitcast i8 addrspace(1)* %source to i8*
   %tmp4 = load i8* %arrayidx223
   ret i8 %tmp4
 ; CHECK-LABEL: @test6(
 ; CHECK: load i8* %arrayidx223
-} 
+}

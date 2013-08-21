@@ -563,16 +563,18 @@ static Value *EvaluateGEPOffsetExpression(User *GEP, InstCombiner &IC) {
     }
   }
 
+
+
   // Okay, we know we have a single variable index, which must be a
   // pointer/array/vector index.  If there is no offset, life is simple, return
   // the index.
-  unsigned IntPtrWidth = TD.getPointerSizeInBits();
+  Type *IntPtrTy = TD.getIntPtrType(GEP->getOperand(0)->getType());
+  unsigned IntPtrWidth = IntPtrTy->getIntegerBitWidth();
   if (Offset == 0) {
     // Cast to intptrty in case a truncation occurs.  If an extension is needed,
     // we don't need to bother extending: the extension won't affect where the
     // computation crosses zero.
     if (VariableIdx->getType()->getPrimitiveSizeInBits() > IntPtrWidth) {
-      Type *IntPtrTy = TD.getIntPtrType(VariableIdx->getContext());
       VariableIdx = IC.Builder->CreateTrunc(VariableIdx, IntPtrTy);
     }
     return VariableIdx;
@@ -594,7 +596,6 @@ static Value *EvaluateGEPOffsetExpression(User *GEP, InstCombiner &IC) {
     return 0;
 
   // Okay, we can do this evaluation.  Start by converting the index to intptr.
-  Type *IntPtrTy = TD.getIntPtrType(VariableIdx->getContext());
   if (VariableIdx->getType() != IntPtrTy)
     VariableIdx = IC.Builder->CreateIntCast(VariableIdx, IntPtrTy,
                                             true /*Signed*/);
@@ -2478,7 +2479,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
       case Instruction::IntToPtr:
         // icmp pred inttoptr(X), null -> icmp pred X, 0
         if (RHSC->isNullValue() && TD &&
-            TD->getIntPtrType(RHSC->getContext()) ==
+            TD->getIntPtrType(RHSC->getType()) ==
                LHSI->getOperand(0)->getType())
           return new ICmpInst(I.getPredicate(), LHSI->getOperand(0),
                         Constant::getNullValue(LHSI->getOperand(0)->getType()));

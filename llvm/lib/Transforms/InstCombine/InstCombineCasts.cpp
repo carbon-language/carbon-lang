@@ -1338,14 +1338,18 @@ Instruction *InstCombiner::visitIntToPtr(IntToPtrInst &CI) {
   // If the source integer type is not the intptr_t type for this target, do a
   // trunc or zext to the intptr_t type, then inttoptr of it.  This allows the
   // cast to be exposed to other transforms.
-  if (TD && CI.getOperand(0)->getType()->getScalarSizeInBits() !=
-      TD->getPointerSizeInBits()) {
-    Type *Ty = TD->getIntPtrType(CI.getContext());
-    if (CI.getType()->isVectorTy()) // Handle vectors of pointers.
-      Ty = VectorType::get(Ty, CI.getType()->getVectorNumElements());
 
-    Value *P = Builder->CreateZExtOrTrunc(CI.getOperand(0), Ty);
-    return new IntToPtrInst(P, CI.getType());
+  if (TD) {
+    unsigned AS = CI.getAddressSpace();
+    if (CI.getOperand(0)->getType()->getScalarSizeInBits() !=
+        TD->getPointerSizeInBits(AS)) {
+      Type *Ty = TD->getIntPtrType(CI.getContext(), AS);
+      if (CI.getType()->isVectorTy()) // Handle vectors of pointers.
+        Ty = VectorType::get(Ty, CI.getType()->getVectorNumElements());
+
+      Value *P = Builder->CreateZExtOrTrunc(CI.getOperand(0), Ty);
+      return new IntToPtrInst(P, CI.getType());
+    }
   }
 
   if (Instruction *I = commonCastTransforms(CI))
@@ -1377,7 +1381,8 @@ Instruction *InstCombiner::commonPointerCastTransforms(CastInst &CI) {
     // GEP computes a constant offset, see if we can convert these three
     // instructions into fewer.  This typically happens with unions and other
     // non-type-safe code.
-    unsigned OffsetBits = TD->getPointerSizeInBits();
+    unsigned AS = GEP->getPointerAddressSpace();
+    unsigned OffsetBits = TD->getPointerSizeInBits(AS);
     APInt Offset(OffsetBits, 0);
     BitCastInst *BCI = dyn_cast<BitCastInst>(GEP->getOperand(0));
     if (GEP->hasOneUse() &&
@@ -1412,16 +1417,22 @@ Instruction *InstCombiner::visitPtrToInt(PtrToIntInst &CI) {
   // If the destination integer type is not the intptr_t type for this target,
   // do a ptrtoint to intptr_t then do a trunc or zext.  This allows the cast
   // to be exposed to other transforms.
-  if (TD && CI.getType()->getScalarSizeInBits() != TD->getPointerSizeInBits()) {
-    Type *Ty = TD->getIntPtrType(CI.getContext());
-    if (CI.getType()->isVectorTy()) // Handle vectors of pointers.
-      Ty = VectorType::get(Ty, CI.getType()->getVectorNumElements());
 
-    Value *P = Builder->CreatePtrToInt(CI.getOperand(0), Ty);
-    return CastInst::CreateIntegerCast(P, CI.getType(), /*isSigned=*/false);
-  }
+  if (!TD)
+    return commonPointerCastTransforms(CI);
 
-  return commonPointerCastTransforms(CI);
+  Type *Ty = CI.getType();
+  unsigned AS = CI.getPointerAddressSpace();
+
+  if (Ty->getScalarSizeInBits() == TD->getPointerSizeInBits(AS))
+    return commonPointerCastTransforms(CI);
+
+  Type *PtrTy = TD->getIntPtrType(CI.getContext(), AS);
+  if (Ty->isVectorTy()) // Handle vectors of pointers.
+    PtrTy = VectorType::get(PtrTy, Ty->getVectorNumElements());
+
+  Value *P = Builder->CreatePtrToInt(CI.getOperand(0), PtrTy);
+  return CastInst::CreateIntegerCast(P, Ty, /*isSigned=*/false);
 }
 
 /// OptimizeVectorResize - This input value (which is known to have vector type)
