@@ -181,8 +181,8 @@ define <4 x i32> @test_shl_v4i32(<4 x i32> %a) {
 
 define <2 x i64> @test_shl_v2i64(<2 x i64> %a) {
 ; CHECK: test_shl_v2i64:
-; CHECK: shl {{v[0-9]+}}.2d, {{v[0-9]+}}.2d, #3
-  %tmp = shl <2 x i64> %a, <i64 3, i64 3>
+; CHECK: shl {{v[0-9]+}}.2d, {{v[0-9]+}}.2d, #63
+  %tmp = shl <2 x i64> %a, <i64 63, i64 63>
   ret <2 x i64> %tmp
 }
 

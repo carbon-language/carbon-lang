@@ -1414,7 +1414,7 @@ def FMOVvi_2D : NeonI_FMOV_impl<".2d", VPR128, v2f64, fmov64_operand, 0b1, 0b1>;
 
 // Vector Shift (Immediate) 
 
-def imm0_63 : Operand<i32>, ImmLeaf<i32, [{ return Imm >= 0 && Imm < 63; }]> {
+def imm0_63 : Operand<i32> {
   let ParserMatchClass = uimm6_asmoperand;
 }
 
