@@ -33,10 +33,10 @@
 // RUN: -msoft-float 2>&1 | FileCheck -check-prefix=ARMV7_SOFTFLOAT %s
 // ARMV7_SOFTFLOAT: clang
 // ARMV7_SOFTFLOAT: "-cc1"
-// ARMV7_SOFTFLOAT: "-msoft-float"
-// ARMV7_SOFTFLOAT: "-mfloat-abi" "soft"
 // ARMV7_SOFTFLOAT: "-target-feature"
 // ARMV7_SOFTFLOAT: "-neon"
+// ARMV7_SOFTFLOAT: "-msoft-float"
+// ARMV7_SOFTFLOAT: "-mfloat-abi" "soft"
 // ARMV7_SOFTFLOAT: "-x" "c"
 
 // RUN: %clang -target x86_64-apple-darwin10 -### -S %s -arch armv7 \

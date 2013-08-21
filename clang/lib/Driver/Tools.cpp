@@ -571,72 +571,57 @@ static bool isNoCommonDefault(const llvm::Triple &Triple) {
 //
 // FIXME: Centralize feature selection, defaulting shouldn't be also in the
 // frontend target.
-static void addFPUArgs(const Driver &D, const Arg *A, const ArgList &Args,
-                       ArgStringList &CmdArgs) {
+static void getFPUFeatures(const Driver &D, const Arg *A, const ArgList &Args,
+                           std::vector<const char *> &Features) {
   StringRef FPU = A->getValue();
 
   // Set the target features based on the FPU.
   if (FPU == "fpa" || FPU == "fpe2" || FPU == "fpe3" || FPU == "maverick") {
     // Disable any default FPU support.
-    CmdArgs.push_back("-target-feature");
-    CmdArgs.push_back("-vfp2");
-    CmdArgs.push_back("-target-feature");
-    CmdArgs.push_back("-vfp3");
-    CmdArgs.push_back("-target-feature");
-    CmdArgs.push_back("-neon");
+    Features.push_back("-vfp2");
+    Features.push_back("-vfp3");
+    Features.push_back("-neon");
   } else if (FPU == "vfp3-d16" || FPU == "vfpv3-d16") {
-    CmdArgs.push_back("-target-feature");
-    CmdArgs.push_back("+vfp3");
-    CmdArgs.push_back("-target-feature");
-    CmdArgs.push_back("+d16");
-    CmdArgs.push_back("-target-feature");
-    CmdArgs.push_back("-neon");
+    Features.push_back("+vfp3");
+    Features.push_back("+d16");
+    Features.push_back("-neon");
   } else if (FPU == "vfp") {
-    CmdArgs.push_back("-target-feature");
-    CmdArgs.push_back("+vfp2");
-    CmdArgs.push_back("-target-feature");
-    CmdArgs.push_back("-neon");
+    Features.push_back("+vfp2");
+    Features.push_back("-neon");
   } else if (FPU == "vfp3" || FPU == "vfpv3") {
-    CmdArgs.push_back("-target-feature");
-    CmdArgs.push_back("+vfp3");
-    CmdArgs.push_back("-target-feature");
-    CmdArgs.push_back("-neon");
+    Features.push_back("+vfp3");
+    Features.push_back("-neon");
   } else if (FPU == "fp-armv8") {
-    CmdArgs.push_back("-target-feature");
-    CmdArgs.push_back("+v8fp");
+    Features.push_back("+v8fp");
   } else if (FPU == "neon-fp-armv8") {
-    CmdArgs.push_back("-target-feature");
-    CmdArgs.push_back("+v8fp");
-    CmdArgs.push_back("-target-feature");
-    CmdArgs.push_back("+neon");
+    Features.push_back("+v8fp");
+    Features.push_back("+neon");
   } else if (FPU == "neon") {
-    CmdArgs.push_back("-target-feature");
-    CmdArgs.push_back("+neon");
+    Features.push_back("+neon");
   } else
     D.Diag(diag::err_drv_clang_unsupported) << A->getAsString(Args);
 }
 
 // Handle -mfpmath=.
-static void addFPMathArgs(const Driver &D, const Arg *A, const ArgList &Args,
-                          ArgStringList &CmdArgs, StringRef CPU) {
+static void getFPMathFeatures(const Driver &D, const Arg *A,
+                              const ArgList &Args,
+                              std::vector<const char *> &Features,
+                              StringRef CPU) {
   StringRef FPMath = A->getValue();
-  
+
   // Set the target features based on the FPMath.
   if (FPMath == "neon") {
-    CmdArgs.push_back("-target-feature");
-    CmdArgs.push_back("+neonfp");
-    
+    Features.push_back("+neonfp");
+
     if (CPU != "cortex-a5" && CPU != "cortex-a7" &&
         CPU != "cortex-a8" && CPU != "cortex-a9" &&
         CPU != "cortex-a9-mp" && CPU != "cortex-a15")
       D.Diag(diag::err_drv_invalid_feature) << "-mfpmath=neon" << CPU;
-    
+
   } else if (FPMath == "vfp" || FPMath == "vfp2" || FPMath == "vfp3" ||
              FPMath == "vfp4") {
-    CmdArgs.push_back("-target-feature");
-    CmdArgs.push_back("-neonfp");
-
-    // FIXME: Add warnings when disabling a feature not present for a given CPU.    
+    Features.push_back("-neonfp");
+    // FIXME: Add warnings when disabling a feature not present for a given CPU.
   } else
     D.Diag(diag::err_drv_clang_unsupported) << A->getAsString(Args);
 }
@@ -721,6 +706,34 @@ static StringRef getARMFloatABI(const Driver &D,
   return FloatABI;
 }
 
+static void getARMTargetFeatures(const Driver &D, const llvm::Triple &Triple,
+                                 const ArgList &Args,
+                                 std::vector<const char *> &Features) {
+  StringRef FloatABI = getARMFloatABI(D, Args, Triple);
+  // FIXME: Note, this is a hack, the LLVM backend doesn't actually use these
+  // yet (it uses the -mfloat-abi and -msoft-float options), and it is
+  // stripped out by the ARM target.
+  // Use software floating point operations?
+  if (FloatABI == "soft")
+    Features.push_back("+soft-float");
+
+  // Use software floating point argument passing?
+  if (FloatABI != "hard")
+    Features.push_back("+soft-float-abi");
+
+  // Honor -mfpu=.
+  if (const Arg *A = Args.getLastArg(options::OPT_mfpu_EQ))
+    getFPUFeatures(D, A, Args, Features);
+
+  // Honor -mfpmath=.
+  if (const Arg *A = Args.getLastArg(options::OPT_mfpmath_EQ))
+    getFPMathFeatures(D, A, Args, Features, getARMTargetCPU(Args, Triple));
+
+  // Setting -msoft-float effectively disables NEON because of the GCC
+  // implementation, although the same isn't true of VFP or VFP3.
+  if (FloatABI == "soft")
+    Features.push_back("-neon");
+}
 
 void Clang::AddARMTargetArgs(const ArgList &Args,
                              ArgStringList &CmdArgs,
@@ -781,39 +794,6 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
     assert(FloatABI == "hard" && "Invalid float abi!");
     CmdArgs.push_back("-mfloat-abi");
     CmdArgs.push_back("hard");
-  }
-
-  // Set appropriate target features for floating point mode.
-  //
-  // FIXME: Note, this is a hack, the LLVM backend doesn't actually use these
-  // yet (it uses the -mfloat-abi and -msoft-float options above), and it is
-  // stripped out by the ARM target.
-
-  // Use software floating point operations?
-  if (FloatABI == "soft") {
-    CmdArgs.push_back("-target-feature");
-    CmdArgs.push_back("+soft-float");
-  }
-
-  // Use software floating point argument passing?
-  if (FloatABI != "hard") {
-    CmdArgs.push_back("-target-feature");
-    CmdArgs.push_back("+soft-float-abi");
-  }
-
-  // Honor -mfpu=.
-  if (const Arg *A = Args.getLastArg(options::OPT_mfpu_EQ))
-    addFPUArgs(D, A, Args, CmdArgs);
-
-  // Honor -mfpmath=.
-  if (const Arg *A = Args.getLastArg(options::OPT_mfpmath_EQ))
-    addFPMathArgs(D, A, Args, CmdArgs, getARMTargetCPU(Args, Triple));
-
-  // Setting -msoft-float effectively disables NEON because of the GCC
-  // implementation, although the same isn't true of VFP or VFP3.
-  if (FloatABI == "soft") {
-    CmdArgs.push_back("-target-feature");
-    CmdArgs.push_back("-neon");
   }
 
   // Kernel code has more strict alignment requirements.
@@ -961,17 +941,40 @@ static StringRef getMipsFloatABI(const Driver &D, const ArgList &Args) {
 }
 
 static void AddTargetFeature(const ArgList &Args,
-                             ArgStringList &CmdArgs,
-                             OptSpecifier OnOpt,
-                             OptSpecifier OffOpt,
+                             std::vector<const char *> &Features,
+                             OptSpecifier OnOpt, OptSpecifier OffOpt,
                              StringRef FeatureName) {
   if (Arg *A = Args.getLastArg(OnOpt, OffOpt)) {
-    CmdArgs.push_back("-target-feature");
     if (A->getOption().matches(OnOpt))
-      CmdArgs.push_back(Args.MakeArgString("+" + FeatureName));
+      Features.push_back(Args.MakeArgString("+" + FeatureName));
     else
-      CmdArgs.push_back(Args.MakeArgString("-" + FeatureName));
+      Features.push_back(Args.MakeArgString("-" + FeatureName));
   }
+}
+
+static void getMIPSTargetFeatures(const Driver &D, const ArgList &Args,
+                                  std::vector<const char *> &Features) {
+  StringRef FloatABI = getMipsFloatABI(D, Args);
+  bool IsMips16 = Args.getLastArg(options::OPT_mips16) != NULL;
+  if (FloatABI == "soft" || (FloatABI == "hard" && IsMips16)) {
+    // FIXME: Note, this is a hack. We need to pass the selected float
+    // mode to the MipsTargetInfoBase to define appropriate macros there.
+    // Now it is the only method.
+    Features.push_back("+soft-float");
+  }
+
+  AddTargetFeature(Args, Features, options::OPT_msingle_float,
+                   options::OPT_mdouble_float, "single-float");
+  AddTargetFeature(Args, Features, options::OPT_mips16, options::OPT_mno_mips16,
+                   "mips16");
+  AddTargetFeature(Args, Features, options::OPT_mmicromips,
+                   options::OPT_mno_micromips, "micromips");
+  AddTargetFeature(Args, Features, options::OPT_mdsp, options::OPT_mno_dsp,
+                   "dsp");
+  AddTargetFeature(Args, Features, options::OPT_mdspr2, options::OPT_mno_dspr2,
+                   "dspr2");
+  AddTargetFeature(Args, Features, options::OPT_mmsa, options::OPT_mno_msa,
+                   "msa");
 }
 
 void Clang::AddMIPSTargetArgs(const ArgList &Args,
@@ -995,12 +998,6 @@ void Clang::AddMIPSTargetArgs(const ArgList &Args,
     CmdArgs.push_back("-mfloat-abi");
     CmdArgs.push_back("soft");
 
-    // FIXME: Note, this is a hack. We need to pass the selected float
-    // mode to the MipsTargetInfoBase to define appropriate macros there.
-    // Now it is the only method.
-    CmdArgs.push_back("-target-feature");
-    CmdArgs.push_back("+soft-float");
-
     if (FloatABI == "hard" && IsMips16) {
       CmdArgs.push_back("-mllvm");
       CmdArgs.push_back("-mips16-hard-float");
@@ -1012,25 +1009,6 @@ void Clang::AddMIPSTargetArgs(const ArgList &Args,
     CmdArgs.push_back("-mfloat-abi");
     CmdArgs.push_back("hard");
   }
-
-  AddTargetFeature(Args, CmdArgs,
-                   options::OPT_msingle_float, options::OPT_mdouble_float,
-                   "single-float");
-  AddTargetFeature(Args, CmdArgs,
-                   options::OPT_mips16, options::OPT_mno_mips16,
-                   "mips16");
-  AddTargetFeature(Args, CmdArgs,
-                   options::OPT_mmicromips, options::OPT_mno_micromips,
-                   "micromips");
-  AddTargetFeature(Args, CmdArgs,
-                   options::OPT_mdsp, options::OPT_mno_dsp,
-                   "dsp");
-  AddTargetFeature(Args, CmdArgs,
-                   options::OPT_mdspr2, options::OPT_mno_dspr2,
-                   "dspr2");
-  AddTargetFeature(Args, CmdArgs,
-                   options::OPT_mmsa, options::OPT_mno_msa,
-                   "msa");
 
   if (Arg *A = Args.getLastArg(options::OPT_mxgot, options::OPT_mno_xgot)) {
     if (A->getOption().matches(options::OPT_mxgot)) {
@@ -1125,32 +1103,26 @@ static std::string getPPCTargetCPU(const ArgList &Args) {
   return "";
 }
 
-void Clang::AddPPCTargetArgs(const ArgList &Args,
-                             ArgStringList &CmdArgs) const {
+static void getPPCTargetFeatures(const ArgList &Args,
+                                 std::vector<const char *> &Features) {
   // Allow override of the Altivec feature.
-  AddTargetFeature(Args, CmdArgs,
-                   options::OPT_faltivec, options::OPT_fno_altivec,
-                   "altivec");
+  AddTargetFeature(Args, Features, options::OPT_faltivec,
+                   options::OPT_fno_altivec, "altivec");
 
-  AddTargetFeature(Args, CmdArgs,
-                   options::OPT_mfprnd, options::OPT_mno_fprnd,
+  AddTargetFeature(Args, Features, options::OPT_mfprnd, options::OPT_mno_fprnd,
                    "fprnd");
 
   // Note that gcc calls this mfcrf and LLVM calls this mfocrf.
-  AddTargetFeature(Args, CmdArgs,
-                   options::OPT_mmfcrf, options::OPT_mno_mfcrf,
+  AddTargetFeature(Args, Features, options::OPT_mmfcrf, options::OPT_mno_mfcrf,
                    "mfocrf");
 
-  AddTargetFeature(Args, CmdArgs,
-                   options::OPT_mpopcntd, options::OPT_mno_popcntd,
-                   "popcntd");
+  AddTargetFeature(Args, Features, options::OPT_mpopcntd,
+                   options::OPT_mno_popcntd, "popcntd");
 
   // It is really only possible to turn qpx off because turning qpx on is tied
   // to using the a2q CPU.
-  if (Args.hasFlag(options::OPT_mno_qpx, options::OPT_mqpx, false)) {
-    CmdArgs.push_back("-target-feature");
-    CmdArgs.push_back("-qpx");
-  }
+  if (Args.hasFlag(options::OPT_mno_qpx, options::OPT_mqpx, false))
+    Features.push_back("-qpx");
 }
 
 /// Get the (LLVM) name of the R600 gpu we are targeting.
@@ -1168,6 +1140,18 @@ static std::string getR600TargetGPU(const ArgList &Args) {
       .Default(GPUName.c_str());
   }
   return "";
+}
+
+static void getSparcTargetFeatures(const ArgList &Args,
+                                   std::vector<const char *> Features) {
+  bool SoftFloatABI = true;
+  if (Arg *A =
+          Args.getLastArg(options::OPT_msoft_float, options::OPT_mhard_float)) {
+    if (A->getOption().matches(options::OPT_mhard_float))
+      SoftFloatABI = false;
+  }
+  if (SoftFloatABI)
+    Features.push_back("+soft-float");
 }
 
 void Clang::AddSparcTargetArgs(const ArgList &Args,
@@ -1196,8 +1180,6 @@ void Clang::AddSparcTargetArgs(const ArgList &Args,
     //
     // FIXME: This changes CPP defines, we need -target-soft-float.
     CmdArgs.push_back("-msoft-float");
-    CmdArgs.push_back("-target-feature");
-    CmdArgs.push_back("+soft-float");
   } else {
     assert(FloatABI == "hard" && "Invalid float abi!");
     CmdArgs.push_back("-mhard-float");
@@ -1318,6 +1300,26 @@ static std::string getCPUName(const ArgList &Args, const llvm::Triple &T) {
   }
 }
 
+static void getX86TargetFeatures(const ArgList &Args,
+                                 std::vector<const char *> &Features) {
+  for (arg_iterator it = Args.filtered_begin(options::OPT_m_x86_Features_Group),
+                    ie = Args.filtered_end();
+       it != ie; ++it) {
+    StringRef Name = (*it)->getOption().getName();
+    (*it)->claim();
+
+    // Skip over "-m".
+    assert(Name.startswith("m") && "Invalid feature name.");
+    Name = Name.substr(1);
+
+    bool IsNegative = Name.startswith("no-");
+    if (IsNegative)
+      Name = Name.substr(3);
+
+    Features.push_back(Args.MakeArgString((IsNegative ? "-" : "+") + Name));
+  }
+}
+
 void Clang::AddX86TargetArgs(const ArgList &Args,
                              ArgStringList &CmdArgs) const {
   if (!Args.hasFlag(options::OPT_mred_zone,
@@ -1341,23 +1343,6 @@ void Clang::AddX86TargetArgs(const ArgList &Args,
   }
   if (NoImplicitFloat)
     CmdArgs.push_back("-no-implicit-float");
-
-  for (arg_iterator it = Args.filtered_begin(options::OPT_m_x86_Features_Group),
-         ie = Args.filtered_end(); it != ie; ++it) {
-    StringRef Name = (*it)->getOption().getName();
-    (*it)->claim();
-
-    // Skip over "-m".
-    assert(Name.startswith("m") && "Invalid feature name.");
-    Name = Name.substr(1);
-
-    bool IsNegative = Name.startswith("no-");
-    if (IsNegative)
-      Name = Name.substr(3);
-
-    CmdArgs.push_back("-target-feature");
-    CmdArgs.push_back(Args.MakeArgString((IsNegative ? "-" : "+") + Name));
-  }
 }
 
 static inline bool HasPICArg(const ArgList &Args) {
@@ -1405,12 +1390,53 @@ void Clang::AddHexagonTargetArgs(const ArgList &Args,
   CmdArgs.push_back ("-machine-sink-split=0");
 }
 
-void Clang::AddAArch64TargetArgs(const ArgList &Args,
-                                 ArgStringList &CmdArgs) const {
-  const Driver &D = getToolChain().getDriver();
+static void getAArch64TargetFeatures(const Driver &D, const ArgList &Args,
+                                     std::vector<const char *> &Features) {
   // Honor -mfpu=.
   if (const Arg *A = Args.getLastArg(options::OPT_mfpu_EQ))
-    addFPUArgs(D, A, Args, CmdArgs);
+    getFPUFeatures(D, A, Args, Features);
+}
+
+static void getTargetFeatures(const Driver &D, const llvm::Triple &Triple,
+                              const ArgList &Args, ArgStringList &CmdArgs) {
+  std::vector<const char *> Features;
+  switch (Triple.getArch()) {
+  default:
+    break;
+  case llvm::Triple::mips:
+  case llvm::Triple::mipsel:
+  case llvm::Triple::mips64:
+  case llvm::Triple::mips64el:
+    getMIPSTargetFeatures(D, Args, Features);
+    break;
+
+  case llvm::Triple::arm:
+  case llvm::Triple::thumb:
+    getARMTargetFeatures(D, Triple, Args, Features);
+    break;
+
+  case llvm::Triple::ppc:
+  case llvm::Triple::ppc64:
+  case llvm::Triple::ppc64le:
+    getPPCTargetFeatures(Args, Features);
+    break;
+  case llvm::Triple::sparc:
+    getSparcTargetFeatures(Args, Features);
+    break;
+  case llvm::Triple::aarch64:
+    getAArch64TargetFeatures(D, Args, Features);
+    break;
+  case llvm::Triple::x86:
+  case llvm::Triple::x86_64:
+    getX86TargetFeatures(Args, Features);
+    break;
+  }
+  for (std::vector<const char *>::iterator I = Features.begin(),
+                                           E = Features.end();
+       I != E; ++I) {
+    CmdArgs.push_back("-target-feature");
+    CmdArgs.push_back(*I);
+  }
 }
 
 static bool
@@ -2368,6 +2394,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(Args.MakeArgString(CPU));
   }
 
+  // Add the target features
+  getTargetFeatures(D, ETriple, Args, CmdArgs);
+
   // Add target specific flags.
   switch(getToolChain().getArch()) {
   default:
@@ -2385,12 +2414,6 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     AddMIPSTargetArgs(Args, CmdArgs);
     break;
 
-  case llvm::Triple::ppc:
-  case llvm::Triple::ppc64:
-  case llvm::Triple::ppc64le:
-    AddPPCTargetArgs(Args, CmdArgs);
-    break;
-
   case llvm::Triple::sparc:
     AddSparcTargetArgs(Args, CmdArgs);
     break;
@@ -2402,10 +2425,6 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   case llvm::Triple::hexagon:
     AddHexagonTargetArgs(Args, CmdArgs);
-    break;
-
-  case llvm::Triple::aarch64:
-    AddAArch64TargetArgs(Args, CmdArgs);
     break;
   }
 
@@ -3547,20 +3566,6 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   Args.ClaimAllArgs(options::OPT_emit_llvm);
 }
 
-void ClangAs::AddARMTargetArgs(const ArgList &Args,
-                               ArgStringList &CmdArgs) const {
-  const Driver &D = getToolChain().getDriver();
-  llvm::Triple Triple = getToolChain().getTriple();
-
-  // Honor -mfpu=.
-  if (const Arg *A = Args.getLastArg(options::OPT_mfpu_EQ))
-    addFPUArgs(D, A, Args, CmdArgs);
-
-  // Honor -mfpmath=.
-  if (const Arg *A = Args.getLastArg(options::OPT_mfpmath_EQ))
-    addFPMathArgs(D, A, Args, CmdArgs, getARMTargetCPU(Args, Triple));
-}
-
 /// Add options related to the Objective-C runtime/ABI.
 ///
 /// Returns true if the runtime is non-fragile.
@@ -3773,22 +3778,16 @@ void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
   CmdArgs.push_back(Clang::getBaseInputName(Args, Inputs));
 
   // Add the target cpu
-  std::string CPU = getCPUName(Args, getToolChain().getTriple());
+  const llvm::Triple &Triple = getToolChain().getTriple();
+  std::string CPU = getCPUName(Args, Triple);
   if (!CPU.empty()) {
     CmdArgs.push_back("-target-cpu");
     CmdArgs.push_back(Args.MakeArgString(CPU));
   }
 
-  // Add target specific features flags.
-  switch(getToolChain().getArch()) {
-  default:
-    break;
-
-  case llvm::Triple::arm:
-  case llvm::Triple::thumb:
-    AddARMTargetArgs(Args, CmdArgs);
-    break;
-  }
+  // Add the target features
+  const Driver &D = getToolChain().getDriver();
+  getTargetFeatures(D, Triple, Args, CmdArgs);
 
   // Ignore explicit -force_cpusubtype_ALL option.
   (void) Args.hasArg(options::OPT_force__cpusubtype__ALL);
