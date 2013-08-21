@@ -318,6 +318,11 @@ public:
     return getOS() == Triple::Cygwin || getOS() == Triple::MinGW32;
   }
 
+  /// \brief Is this a "Windows" OS targeting a "MSVCRT.dll" environment.
+  bool isOSMSVCRT() const {
+    return getOS() == Triple::Win32 || getOS() == Triple::MinGW32;
+  }
+
   /// isOSWindows - Is this a "Windows" OS.
   bool isOSWindows() const {
     return getOS() == Triple::Win32 || isOSCygMing();
