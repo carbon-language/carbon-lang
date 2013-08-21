@@ -214,6 +214,7 @@ private:
   SDValue lowerVASTART(SDValue Op, SelectionDAG &DAG) const;
   SDValue lowerVACOPY(SDValue Op, SelectionDAG &DAG) const;
   SDValue lowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG) const;
+  SDValue lowerSMUL_LOHI(SDValue Op, SelectionDAG &DAG) const;
   SDValue lowerUMUL_LOHI(SDValue Op, SelectionDAG &DAG) const;
   SDValue lowerSDIVREM(SDValue Op, SelectionDAG &DAG) const;
   SDValue lowerUDIVREM(SDValue Op, SelectionDAG &DAG) const;

@@ -128,9 +128,11 @@ SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm)
       setOperationAction(ISD::CTLZ_ZERO_UNDEF, VT, Expand);
       setOperationAction(ISD::ROTR,            VT, Expand);
 
-      // Use *MUL_LOHI where possible and a wider multiplication otherwise.
+      // Use *MUL_LOHI where possible instead of MULH*.
       setOperationAction(ISD::MULHS, VT, Expand);
       setOperationAction(ISD::MULHU, VT, Expand);
+      setOperationAction(ISD::SMUL_LOHI, VT, Custom);
+      setOperationAction(ISD::UMUL_LOHI, VT, Custom);
 
       // We have instructions for signed but not unsigned FP conversion.
       setOperationAction(ISD::FP_TO_UINT, VT, Expand);
@@ -164,14 +166,6 @@ SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm)
 
   // Give LowerOperation the chance to replace 64-bit ORs with subregs.
   setOperationAction(ISD::OR, MVT::i64, Custom);
-
-  // The architecture has 32-bit SMUL_LOHI and UMUL_LOHI (MR and MLR),
-  // but they aren't really worth using.  There is no 64-bit SMUL_LOHI,
-  // but there is a 64-bit UMUL_LOHI: MLGR.
-  setOperationAction(ISD::SMUL_LOHI, MVT::i32, Expand);
-  setOperationAction(ISD::SMUL_LOHI, MVT::i64, Expand);
-  setOperationAction(ISD::UMUL_LOHI, MVT::i32, Expand);
-  setOperationAction(ISD::UMUL_LOHI, MVT::i64, Custom);
 
   // FIXME: Can we support these natively?
   setOperationAction(ISD::SRL_PARTS, MVT::i64, Expand);
@@ -1142,6 +1136,20 @@ static SDValue emitCmp(SelectionDAG &DAG, SDValue CmpOp0, SDValue CmpOp1,
                      DL, MVT::Glue, CmpOp0, CmpOp1);
 }
 
+// Implement a 32-bit *MUL_LOHI operation by extending both operands to
+// 64 bits.  Extend is the extension type to use.  Store the high part
+// in Hi and the low part in Lo.
+static void lowerMUL_LOHI32(SelectionDAG &DAG, SDLoc DL,
+                            unsigned Extend, SDValue Op0, SDValue Op1,
+                            SDValue &Hi, SDValue &Lo) {
+  Op0 = DAG.getNode(Extend, DL, MVT::i64, Op0);
+  Op1 = DAG.getNode(Extend, DL, MVT::i64, Op1);
+  SDValue Mul = DAG.getNode(ISD::MUL, DL, MVT::i64, Op0, Op1);
+  Hi = DAG.getNode(ISD::SRL, DL, MVT::i64, Mul, DAG.getConstant(32, MVT::i64));
+  Hi = DAG.getNode(ISD::TRUNCATE, DL, MVT::i32, Hi);
+  Lo = DAG.getNode(ISD::TRUNCATE, DL, MVT::i32, Mul);
+}
+
 // Lower a binary operation that produces two VT results, one in each
 // half of a GR128 pair.  Op0 and Op1 are the VT operands to the operation,
 // Extend extends Op0 to a GR128, and Opcode performs the GR128 operation
@@ -1427,18 +1435,64 @@ lowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG) const {
   return DAG.getMergeValues(Ops, 2, DL);
 }
 
+SDValue SystemZTargetLowering::lowerSMUL_LOHI(SDValue Op,
+                                              SelectionDAG &DAG) const {
+  EVT VT = Op.getValueType();
+  SDLoc DL(Op);
+  SDValue Ops[2];
+  if (is32Bit(VT))
+    // Just do a normal 64-bit multiplication and extract the results.
+    // We define this so that it can be used for constant division.
+    lowerMUL_LOHI32(DAG, DL, ISD::SIGN_EXTEND, Op.getOperand(0),
+                    Op.getOperand(1), Ops[1], Ops[0]);
+  else {
+    // Do a full 128-bit multiplication based on UMUL_LOHI64:
+    //
+    //   (ll * rl) + ((lh * rl) << 64) + ((ll * rh) << 64)
+    //
+    // but using the fact that the upper halves are either all zeros
+    // or all ones:
+    //
+    //   (ll * rl) - ((lh & rl) << 64) - ((ll & rh) << 64)
+    //
+    // and grouping the right terms together since they are quicker than the
+    // multiplication:
+    //
+    //   (ll * rl) - (((lh & rl) + (ll & rh)) << 64)
+    SDValue C63 = DAG.getConstant(63, MVT::i64);
+    SDValue LL = Op.getOperand(0);
+    SDValue RL = Op.getOperand(1);
+    SDValue LH = DAG.getNode(ISD::SRA, DL, VT, LL, C63);
+    SDValue RH = DAG.getNode(ISD::SRA, DL, VT, RL, C63);
+    // UMUL_LOHI64 returns the low result in the odd register and the high
+    // result in the even register.  SMUL_LOHI is defined to return the
+    // low half first, so the results are in reverse order.
+    lowerGR128Binary(DAG, DL, VT, SystemZ::AEXT128_64, SystemZISD::UMUL_LOHI64,
+                     LL, RL, Ops[1], Ops[0]);
+    SDValue NegLLTimesRH = DAG.getNode(ISD::AND, DL, VT, LL, RH);
+    SDValue NegLHTimesRL = DAG.getNode(ISD::AND, DL, VT, LH, RL);
+    SDValue NegSum = DAG.getNode(ISD::ADD, DL, VT, NegLLTimesRH, NegLHTimesRL);
+    Ops[1] = DAG.getNode(ISD::SUB, DL, VT, Ops[1], NegSum);
+  }
+  return DAG.getMergeValues(Ops, 2, DL);
+}
+
 SDValue SystemZTargetLowering::lowerUMUL_LOHI(SDValue Op,
                                               SelectionDAG &DAG) const {
   EVT VT = Op.getValueType();
   SDLoc DL(Op);
-  assert(!is32Bit(VT) && "Only support 64-bit UMUL_LOHI");
-
-  // UMUL_LOHI64 returns the low result in the odd register and the high
-  // result in the even register.  UMUL_LOHI is defined to return the
-  // low half first, so the results are in reverse order.
   SDValue Ops[2];
-  lowerGR128Binary(DAG, DL, VT, SystemZ::AEXT128_64, SystemZISD::UMUL_LOHI64,
-                   Op.getOperand(0), Op.getOperand(1), Ops[1], Ops[0]);
+  if (is32Bit(VT))
+    // Just do a normal 64-bit multiplication and extract the results.
+    // We define this so that it can be used for constant division.
+    lowerMUL_LOHI32(DAG, DL, ISD::ZERO_EXTEND, Op.getOperand(0),
+                    Op.getOperand(1), Ops[1], Ops[0]);
+  else
+    // UMUL_LOHI64 returns the low result in the odd register and the high
+    // result in the even register.  UMUL_LOHI is defined to return the
+    // low half first, so the results are in reverse order.
+    lowerGR128Binary(DAG, DL, VT, SystemZ::AEXT128_64, SystemZISD::UMUL_LOHI64,
+                     Op.getOperand(0), Op.getOperand(1), Ops[1], Ops[0]);
   return DAG.getMergeValues(Ops, 2, DL);
 }
 
@@ -1706,6 +1760,8 @@ SDValue SystemZTargetLowering::LowerOperation(SDValue Op,
     return lowerVACOPY(Op, DAG);
   case ISD::DYNAMIC_STACKALLOC:
     return lowerDYNAMIC_STACKALLOC(Op, DAG);
+  case ISD::SMUL_LOHI:
+    return lowerSMUL_LOHI(Op, DAG);
   case ISD::UMUL_LOHI:
     return lowerUMUL_LOHI(Op, DAG);
   case ISD::SDIVREM:

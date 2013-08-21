@@ -22,9 +22,13 @@ define i64 @f1(i64 %dummy, i64 %a, i64 %b) {
 ; This needs a rather convoluted sequence.
 define i64 @f2(i64 %dummy, i64 %a, i64 %b) {
 ; CHECK-LABEL: f2:
-; CHECK: mlgr
-; CHECK: agr
-; CHECK: agr
+; CHECK-DAG: srag [[RES1:%r[0-5]]], %r3, 63
+; CHECK-DAG: srag [[RES2:%r[0-5]]], %r4, 63
+; CHECK-DAG: ngr [[RES1]], %r4
+; CHECK-DAG: ngr [[RES2]], %r3
+; CHECK-DAG: agr [[RES2]], [[RES1]]
+; CHECK-DAG: mlgr %r2, %r4
+; CHECK: sgr %r2, [[RES2]]
 ; CHECK: br %r14
   %ax = sext i64 %a to i128
   %bx = sext i64 %b to i128
