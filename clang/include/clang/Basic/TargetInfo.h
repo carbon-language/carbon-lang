@@ -653,6 +653,13 @@ public:
     return false;
   }
 
+  /// \brief Use the specified unit for FP math.
+  ///
+  /// \return False on error (invalid unit name).
+  virtual bool setFPMath(StringRef Name) {
+    return false;
+  }
+
   /// \brief Use this specified C++ ABI.
   ///
   /// \return False on error (invalid C++ ABI name).
@@ -685,7 +692,11 @@ public:
   ///
   /// The target may modify the features list, to change which options are
   /// passed onwards to the backend.
-  virtual void HandleTargetFeatures(std::vector<std::string> &Features) {
+  ///
+  /// \return  False on error.
+  virtual bool HandleTargetFeatures(std::vector<std::string> &Features,
+                                    DiagnosticsEngine &Diags) {
+    return true;
   }
 
   /// \brief Determine whether the given target has the given feature.

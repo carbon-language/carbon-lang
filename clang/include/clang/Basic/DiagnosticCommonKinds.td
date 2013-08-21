@@ -115,6 +115,9 @@ def err_target_unknown_triple : Error<
 def err_target_unknown_cpu : Error<"unknown target CPU '%0'">;
 def err_target_unknown_abi : Error<"unknown target ABI '%0'">;
 def err_target_unknown_cxxabi : Error<"unknown C++ ABI '%0'">;
+def err_target_unknown_fpmath : Error<"unknown FP unit '%0'">;
+def err_target_unsupported_fpmath : Error<
+    "the '%0' unit is not supported with this instruction set">;
 
 // Source manager
 def err_cannot_open_file : Error<"cannot open file '%0': %1">, DefaultFatal;

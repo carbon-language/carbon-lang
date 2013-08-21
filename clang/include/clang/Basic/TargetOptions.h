@@ -32,6 +32,9 @@ public:
   /// If given, the name of the target CPU to generate code for.
   std::string CPU;
 
+  /// If given, the unit to use for floating point math.
+  std::string FPMath;
+
   /// If given, the name of the target ABI to use.
   std::string ABI;
 

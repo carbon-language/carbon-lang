@@ -602,30 +602,6 @@ static void getFPUFeatures(const Driver &D, const Arg *A, const ArgList &Args,
     D.Diag(diag::err_drv_clang_unsupported) << A->getAsString(Args);
 }
 
-// Handle -mfpmath=.
-static void getFPMathFeatures(const Driver &D, const Arg *A,
-                              const ArgList &Args,
-                              std::vector<const char *> &Features,
-                              StringRef CPU) {
-  StringRef FPMath = A->getValue();
-
-  // Set the target features based on the FPMath.
-  if (FPMath == "neon") {
-    Features.push_back("+neonfp");
-
-    if (CPU != "cortex-a5" && CPU != "cortex-a7" &&
-        CPU != "cortex-a8" && CPU != "cortex-a9" &&
-        CPU != "cortex-a9-mp" && CPU != "cortex-a15")
-      D.Diag(diag::err_drv_invalid_feature) << "-mfpmath=neon" << CPU;
-
-  } else if (FPMath == "vfp" || FPMath == "vfp2" || FPMath == "vfp3" ||
-             FPMath == "vfp4") {
-    Features.push_back("-neonfp");
-    // FIXME: Add warnings when disabling a feature not present for a given CPU.
-  } else
-    D.Diag(diag::err_drv_clang_unsupported) << A->getAsString(Args);
-}
-
 // Select the float ABI as determined by -msoft-float, -mhard-float, and
 // -mfloat-abi=.
 static StringRef getARMFloatABI(const Driver &D,
@@ -724,10 +700,6 @@ static void getARMTargetFeatures(const Driver &D, const llvm::Triple &Triple,
   // Honor -mfpu=.
   if (const Arg *A = Args.getLastArg(options::OPT_mfpu_EQ))
     getFPUFeatures(D, A, Args, Features);
-
-  // Honor -mfpmath=.
-  if (const Arg *A = Args.getLastArg(options::OPT_mfpmath_EQ))
-    getFPMathFeatures(D, A, Args, Features, getARMTargetCPU(Args, Triple));
 
   // Setting -msoft-float effectively disables NEON because of the GCC
   // implementation, although the same isn't true of VFP or VFP3.
@@ -2407,6 +2379,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (!CPU.empty()) {
     CmdArgs.push_back("-target-cpu");
     CmdArgs.push_back(Args.MakeArgString(CPU));
+  }
+
+  if (const Arg *A = Args.getLastArg(options::OPT_mfpmath_EQ)) {
+    CmdArgs.push_back("-mfpmath");
+    CmdArgs.push_back(A->getValue());
   }
 
   // Add the target features

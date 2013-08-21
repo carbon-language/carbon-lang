@@ -23,6 +23,8 @@ def target_abi : Separate<["-"], "target-abi">,
   HelpText<"Target a particular ABI type">;
 def target_cpu : Separate<["-"], "target-cpu">,
   HelpText<"Target a specific cpu type">;
+def mfpmath : Separate<["-"], "mfpmath">,
+  HelpText<"Which unit to use for fp math">;
 def target_feature : Separate<["-"], "target-feature">,
   HelpText<"Target specific attributes">;
 def target_linker_version : Separate<["-"], "target-linker-version">,
