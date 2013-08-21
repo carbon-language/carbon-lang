@@ -26,8 +26,8 @@ namespace lld {
 class ELFFileNode : public FileNode {
 public:
   ELFFileNode(ELFLinkingContext &ctx, StringRef path,
-              bool isWholeArchive = false, bool asNeeded = false,
-              std::vector<StringRef> searchPath = { "" })
+              std::vector<StringRef> searchPath,
+              bool isWholeArchive = false, bool asNeeded = false)
       : FileNode(path), _elfLinkingContext(ctx),
         _isWholeArchive(isWholeArchive), _asNeeded(asNeeded) {
     std::copy(searchPath.begin(), searchPath.end(),

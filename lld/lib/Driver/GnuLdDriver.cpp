@@ -270,8 +270,8 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
     case OPT_l: {
       std::unique_ptr<InputElement> inputFile =
           std::move(std::unique_ptr<InputElement>(
-              new ELFFileNode(*ctx, inputArg->getValue(), isWholeArchive,
-                              asNeeded, searchPath)));
+              new ELFFileNode(*ctx, inputArg->getValue(), searchPath,
+                              isWholeArchive, asNeeded)));
       if (controlNodeStack.empty())
         inputGraph->addInputElement(std::move(inputFile));
       else
