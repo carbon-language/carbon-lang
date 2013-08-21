@@ -2,7 +2,9 @@ import os
 
 # Test results.
 
-class TestResult:
+class ResultCode(object):
+    """Test result codes."""
+
     def __init__(self, name, isFailure):
         self.name = name
         self.isFailure = isFailure
@@ -11,12 +13,23 @@ class TestResult:
         return '%s%r' % (self.__class__.__name__,
                          (self.name, self.isFailure))
 
-PASS        = TestResult('PASS', False)
-XFAIL       = TestResult('XFAIL', False)
-FAIL        = TestResult('FAIL', True)
-XPASS       = TestResult('XPASS', True)
-UNRESOLVED  = TestResult('UNRESOLVED', True)
-UNSUPPORTED = TestResult('UNSUPPORTED', False)
+PASS        = ResultCode('PASS', False)
+XFAIL       = ResultCode('XFAIL', False)
+FAIL        = ResultCode('FAIL', True)
+XPASS       = ResultCode('XPASS', True)
+UNRESOLVED  = ResultCode('UNRESOLVED', True)
+UNSUPPORTED = ResultCode('UNSUPPORTED', False)
+
+class Result(object):
+    """Wrapper for the results of executing an individual test."""
+
+    def __init__(self, code, output, elapsed):
+        # The result code.
+        self.code = code
+        # The test output.
+        self.output = output
+        # The wall timing to execute the test, if timing.
+        self.elapsed = elapsed
 
 # Test classes.
 
@@ -46,18 +59,12 @@ class Test:
         self.suite = suite
         self.path_in_suite = path_in_suite
         self.config = config
-        # The test result code, once complete.
+        # The test result, once complete.
         self.result = None
-        # Any additional output from the test, once complete.
-        self.output = None
-        # The wall time to execute this test, if timing and once complete.
-        self.elapsed = None
 
     def setResult(self, result, output, elapsed):
         assert self.result is None, "Test result already set!"
-        self.result = result
-        self.output = output
-        self.elapsed = elapsed
+        self.result = Result(result, output, elapsed)
 
     def getFullName(self):
         return self.suite.config.name + ' :: ' + '/'.join(self.path_in_suite)

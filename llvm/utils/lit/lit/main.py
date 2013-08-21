@@ -27,7 +27,7 @@ class TestingProgressDisplay:
 
     def update(self, test):
         # Avoid locking overhead in quiet mode
-        if self.opts.quiet and not test.result.isFailure:
+        if self.opts.quiet and not test.result.code.isFailure:
             self.completed += 1
             return
 
@@ -52,19 +52,19 @@ class TestingProgressDisplay:
             self.progressBar.update(float(self.completed)/self.numTests,
                                     test.getFullName())
 
-        if self.opts.succinct and not test.result.isFailure:
+        if self.opts.succinct and not test.result.code.isFailure:
             return
 
         if self.progressBar:
             self.progressBar.clear()
 
-        print('%s: %s (%d of %d)' % (test.result.name, test.getFullName(),
+        print('%s: %s (%d of %d)' % (test.result.code.name, test.getFullName(),
                                      self.completed, self.numTests))
 
-        if test.result.isFailure and self.opts.showOutput:
+        if test.result.code.isFailure and self.opts.showOutput:
             print("%s TEST '%s' FAILED %s" % ('*'*20, test.getFullName(),
                                               '*'*20))
-            print(test.output)
+            print(test.result.output)
             print("*" * 20)
 
         sys.stdout.flush()
@@ -380,18 +380,18 @@ def main(builtinParameters = {}):
         print('Testing Time: %.2fs'%(time.time() - startTime))
 
     # Update results for any tests which weren't run.
-    for t in tests:
-        if t.result is None:
-            t.setResult(lit.Test.UNRESOLVED, '', 0.0)
+    for test in tests:
+        if test.result is None:
+            test.setResult(lit.Test.UNRESOLVED, '', 0.0)
 
     # List test results organized by kind.
     hasFailures = False
     byCode = {}
-    for t in tests:
-        if t.result not in byCode:
-            byCode[t.result] = []
-        byCode[t.result].append(t)
-        if t.result.isFailure:
+    for test in tests:
+        if test.result.code not in byCode:
+            byCode[test.result.code] = []
+        byCode[test.result.code].append(test)
+        if test.result.code.isFailure:
             hasFailures = True
 
     # Print each test in any of the failing groups.
@@ -403,16 +403,16 @@ def main(builtinParameters = {}):
             continue
         print('*'*20)
         print('%s (%d):' % (title, len(elts)))
-        for t in elts:
-            print('    %s' % t.getFullName())
+        for test in elts:
+            print('    %s' % test.getFullName())
         sys.stdout.write('\n')
 
     if opts.timeTests and tests:
         # Order by time.
-        test_times = [(t.getFullName(), t.elapsed)
-                      for t in tests]
+        test_times = [(test.getFullName(), test.result.elapsed)
+                      for test in tests]
         lit.util.printHistogram(test_times, title='Tests')
-
+    
     for name,code in (('Expected Passes    ', lit.Test.PASS),
                       ('Expected Failures  ', lit.Test.XFAIL),
                       ('Unsupported Tests  ', lit.Test.UNSUPPORTED),
