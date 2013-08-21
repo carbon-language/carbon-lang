@@ -232,6 +232,8 @@ ArgType ScanfSpecifier::getArgType(ASTContext &Ctx) const {
         case LengthModifier::AsLongLong:
         case LengthModifier::AsQuad:
           return ArgType::PtrTo(Ctx.LongLongTy);
+        case LengthModifier::AsInt64:
+          return ArgType::PtrTo(ArgType(Ctx.LongLongTy, "__int64"));
         case LengthModifier::AsIntMax:
           return ArgType::PtrTo(ArgType(Ctx.getIntMaxType(), "intmax_t"));
         case LengthModifier::AsSizeT:
@@ -243,8 +245,9 @@ ArgType ScanfSpecifier::getArgType(ASTContext &Ctx) const {
           // GNU extension.
           return ArgType::PtrTo(Ctx.LongLongTy);
         case LengthModifier::AsAllocate:
-          return ArgType::Invalid();
         case LengthModifier::AsMAllocate:
+        case LengthModifier::AsInt32:
+        case LengthModifier::AsInt3264:
           return ArgType::Invalid();
       }
 
@@ -267,6 +270,8 @@ ArgType ScanfSpecifier::getArgType(ASTContext &Ctx) const {
         case LengthModifier::AsLongLong:
         case LengthModifier::AsQuad:
           return ArgType::PtrTo(Ctx.UnsignedLongLongTy);
+        case LengthModifier::AsInt64:
+          return ArgType::PtrTo(ArgType(Ctx.UnsignedLongLongTy, "unsigned __int64"));
         case LengthModifier::AsIntMax:
           return ArgType::PtrTo(ArgType(Ctx.getUIntMaxType(), "uintmax_t"));
         case LengthModifier::AsSizeT:
@@ -278,8 +283,9 @@ ArgType ScanfSpecifier::getArgType(ASTContext &Ctx) const {
           // GNU extension.
           return ArgType::PtrTo(Ctx.UnsignedLongLongTy);
         case LengthModifier::AsAllocate:
-          return ArgType::Invalid();
         case LengthModifier::AsMAllocate:
+        case LengthModifier::AsInt32:
+        case LengthModifier::AsInt3264:
           return ArgType::Invalid();
       }
 
@@ -349,6 +355,8 @@ ArgType ScanfSpecifier::getArgType(ASTContext &Ctx) const {
         case LengthModifier::AsLongLong:
         case LengthModifier::AsQuad:
           return ArgType::PtrTo(Ctx.LongLongTy);
+        case LengthModifier::AsInt64:
+          return ArgType::PtrTo(ArgType(Ctx.LongLongTy, "__int64"));
         case LengthModifier::AsIntMax:
           return ArgType::PtrTo(ArgType(Ctx.getIntMaxType(), "intmax_t"));
         case LengthModifier::AsSizeT:
@@ -359,6 +367,8 @@ ArgType ScanfSpecifier::getArgType(ASTContext &Ctx) const {
           return ArgType(); // FIXME: Is this a known extension?
         case LengthModifier::AsAllocate:
         case LengthModifier::AsMAllocate:
+        case LengthModifier::AsInt32:
+        case LengthModifier::AsInt3264:
           return ArgType::Invalid();
         }
 

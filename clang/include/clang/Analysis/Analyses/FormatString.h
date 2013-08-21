@@ -73,6 +73,9 @@ public:
     AsIntMax,     // 'j'
     AsSizeT,      // 'z'
     AsPtrDiff,    // 't'
+    AsInt32,      // 'I32' (MSVCRT, like __int32)
+    AsInt3264,    // 'I'   (MSVCRT, like __int3264 from MIDL)
+    AsInt64,      // 'I64' (MSVCRT, like __int64)
     AsLongDouble, // 'L'
     AsAllocate,   // for '%as', GNU extension to C90 scanf
     AsMAllocate,  // for '%ms', GNU extension to scanf
@@ -95,6 +98,9 @@ public:
       case AsLongLong:
       case AsChar:
         return 2;
+      case AsInt32:
+      case AsInt64:
+        return 3;
       case None:
         return 0;
     }
