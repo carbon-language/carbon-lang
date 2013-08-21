@@ -884,14 +884,24 @@ bool ObjCMigrateASTConsumer::migrateAddFunctionAnnotation(
   unsigned i = 0;
   for (FunctionDecl::param_const_iterator pi = FuncDecl->param_begin(),
        pe = FuncDecl->param_end(); pi != pe; ++pi, ++i) {
+    const ParmVarDecl *pd = *pi;
     ArgEffect AE = AEArgs[i];
     if (AE == DecRef /*CFConsumed annotated*/ ||
         AE == IncRef) {
+      if (AE == DecRef && !pd->getAttr<CFConsumedAttr>() &&
+          Ctx.Idents.get("CF_CONSUMED").hasMacroDefinition()) {
+        edit::Commit commit(*Editor);
+        commit.insertBefore(pd->getLocation(), "CF_CONSUMED ");
+        Editor->commit(commit);
+        HasAtLeastOnePointer = true;
+      }
+      // When AE == IncRef, there is no attribute to annotate with.
+      // It is assumed that compiler will extract the info. from function
+      // API name.
       HasAtLeastOnePointer = true;
       continue;
     }
 
-    const ParmVarDecl *pd = *pi;
     QualType AT = pd->getType();
     bool IsPointer;
     if (!AuditedType(AT, IsPointer))
