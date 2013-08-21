@@ -59,6 +59,10 @@ class Test:
         self.suite = suite
         self.path_in_suite = path_in_suite
         self.config = config
+        # A list of conditions under which this test is expected to fail. These
+        # can optionally be provided by test format handlers, and will be
+        # honored when the test result is supplied.
+        self.xfails = []
         # The test result, once complete.
         self.result = None
 
@@ -70,6 +74,13 @@ class Test:
 
         self.result = result
 
+        # Apply the XFAIL handling to resolve the result exit code.
+        if self.isExpectedToFail():
+            if self.result.code == PASS:
+                self.result.code = XPASS
+            elif self.result.code == FAIL:
+                self.result.code = XFAIL
+        
     def getFullName(self):
         return self.suite.config.name + ' :: ' + '/'.join(self.path_in_suite)
 
@@ -78,3 +89,29 @@ class Test:
 
     def getExecPath(self):
         return self.suite.getExecPath(self.path_in_suite)
+
+    def isExpectedToFail(self):
+        """
+        isExpectedToFail() -> bool
+
+        Check whether this test is expected to fail in the current
+        configuration. This check relies on the test xfails property which by
+        some test formats may not be computed until the test has first been
+        executed.
+        """
+
+        # Check if any of the xfails match an available feature or the target.
+        for item in self.xfails:
+            # If this is the wildcard, it always fails.
+            if item == '*':
+                return True
+
+            # If this is an exact match for one of the features, it fails.
+            if item in self.config.available_features:
+                return True
+
+            # If this is a part of the target triple, it fails.
+            if item in self.suite.config.target_triple:
+                return True
+
+        return False

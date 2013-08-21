@@ -53,6 +53,11 @@
 # CHECK: XFAIL: shtest-format :: xfail-target.txt
 # CHECK: XFAIL: shtest-format :: xfail.txt
 # CHECK: XPASS: shtest-format :: xpass.txt
+# CHECK-NEXT: *** TEST 'shtest-format :: xpass.txt' FAILED ***
+# CHECK-NEXT: Script
+# CHECK-NEXT: --
+# CHECK-NEXT: true
+# CHECK-NEXT: --
 # CHECK: Testing Time
 
 # CHECK: Unexpected Passing Tests (1)
