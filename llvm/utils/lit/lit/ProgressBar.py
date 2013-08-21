@@ -5,6 +5,10 @@
 
 import sys, re, time
 
+def to_bytes(str):
+    # Encode to Latin1 to get binary data.
+    return str.encode('ISO-8859-1')
+
 class TerminalController:
     """
     A class that can be used to portably generate formatted output to
@@ -116,19 +120,23 @@ class TerminalController:
         set_fg = self._tigetstr('setf')
         if set_fg:
             for i,color in zip(range(len(self._COLORS)), self._COLORS):
-                setattr(self, color, curses.tparm(set_fg, i) or '')
+                setattr(self, color, self._tparm(set_fg, i))
         set_fg_ansi = self._tigetstr('setaf')
         if set_fg_ansi:
             for i,color in zip(range(len(self._ANSICOLORS)), self._ANSICOLORS):
-                setattr(self, color, curses.tparm(set_fg_ansi, i) or '')
+                setattr(self, color, self._tparm(set_fg_ansi, i))
         set_bg = self._tigetstr('setb')
         if set_bg:
             for i,color in zip(range(len(self._COLORS)), self._COLORS):
-                setattr(self, 'BG_'+color, curses.tparm(set_bg, i) or '')
+                setattr(self, 'BG_'+color, self._tparm(set_bg, i))
         set_bg_ansi = self._tigetstr('setab')
         if set_bg_ansi:
             for i,color in zip(range(len(self._ANSICOLORS)), self._ANSICOLORS):
-                setattr(self, 'BG_'+color, curses.tparm(set_bg_ansi, i) or '')
+                setattr(self, 'BG_'+color, self._tparm(set_bg_ansi, i))
+
+    def _tparm(self, arg, index):
+        import curses
+        return curses.tparm(to_bytes(arg), index).decode('ascii') or ''
 
     def _tigetstr(self, cap_name):
         # String capabilities can include "delays" of the form "$<2>".
