@@ -37,7 +37,8 @@ MCBasicBlock::MCBasicBlock(const MCTextAtom &Insts, MCFunction *Parent)
 {}
 
 void MCBasicBlock::addSuccessor(const MCBasicBlock *MCBB) {
-  Successors.push_back(MCBB);
+  if (!isSuccessor(MCBB))
+    Successors.push_back(MCBB);
 }
 
 bool MCBasicBlock::isSuccessor(const MCBasicBlock *MCBB) const {
@@ -46,7 +47,8 @@ bool MCBasicBlock::isSuccessor(const MCBasicBlock *MCBB) const {
 }
 
 void MCBasicBlock::addPredecessor(const MCBasicBlock *MCBB) {
-  Predecessors.push_back(MCBB);
+  if (!isPredecessor(MCBB))
+    Predecessors.push_back(MCBB);
 }
 
 bool MCBasicBlock::isPredecessor(const MCBasicBlock *MCBB) const {
