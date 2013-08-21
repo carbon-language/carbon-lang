@@ -17,12 +17,12 @@
 // v*table info was required by a constructor or a method definition.
 
 struct A {
-  // CHECK-A: Vtable for 'A' (3 entries)
+  // CHECK-A: VFTable for 'A' (3 entries)
   // CHECK-A-NEXT: 0 | void A::f()
   // CHECK-A-NEXT: 1 | void A::g()
   // CHECK-A-NEXT: 2 | void A::h()
 
-  // CHECK-A: VFTable for 'A' (3 entries)
+  // CHECK-A: Vtable for 'A' (3 entries)
   // CHECK-A-NEXT: 0 | void A::f()
   // CHECK-A-NEXT: 1 | void A::g()
   // CHECK-A-NEXT: 2 | void A::h()

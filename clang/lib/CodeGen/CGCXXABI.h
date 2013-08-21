@@ -256,6 +256,23 @@ public:
   /// Emit destructor variants required by this ABI.
   virtual void EmitCXXDestructors(const CXXDestructorDecl *D) = 0;
 
+  /// Get the type of the implicit "this" parameter used by a method. May return
+  /// zero if no specific type is applicable, e.g. if the ABI expects the "this"
+  /// parameter to point to some artificial offset in a complete object due to
+  /// vbases being reordered.
+  virtual const CXXRecordDecl *
+  getThisArgumentTypeForMethod(const CXXMethodDecl *MD) {
+    return MD->getParent();
+  }
+
+  /// Perform ABI-specific "this" argument adjustment required prior to
+  /// a virtual function call.
+  virtual llvm::Value *adjustThisArgumentForVirtualCall(CodeGenFunction &CGF,
+                                                        GlobalDecl GD,
+                                                        llvm::Value *This) {
+    return This;
+  }
+
   /// Build the ABI-specific portion of the parameter list for a
   /// function.  This generally involves a 'this' parameter and
   /// possibly some extra data for constructors and destructors.
@@ -266,6 +283,13 @@ public:
   virtual void BuildInstanceFunctionParams(CodeGenFunction &CGF,
                                            QualType &ResTy,
                                            FunctionArgList &Params) = 0;
+
+  /// Perform ABI-specific "this" parameter adjustment in a virtual function
+  /// prologue.
+  virtual llvm::Value *adjustThisParameterInVirtualFunctionPrologue(
+      CodeGenFunction &CGF, GlobalDecl GD, llvm::Value *This) {
+    return This;
+  }
 
   /// Emit the ABI-specific prolog for the function.
   virtual void EmitInstanceFunctionProlog(CodeGenFunction &CGF) = 0;
@@ -278,6 +302,12 @@ public:
                                    llvm::Value *This,
                                    CallExpr::const_arg_iterator ArgBeg,
                                    CallExpr::const_arg_iterator ArgEnd) = 0;
+
+  /// Build a virtual function pointer in the ABI-specific way.
+  virtual llvm::Value *getVirtualFunctionPointer(CodeGenFunction &CGF,
+                                                 GlobalDecl GD,
+                                                 llvm::Value *This,
+                                                 llvm::Type *Ty) = 0;
 
   /// Emit the ABI-specific virtual destructor call.
   virtual void EmitVirtualDestructorCall(CodeGenFunction &CGF,

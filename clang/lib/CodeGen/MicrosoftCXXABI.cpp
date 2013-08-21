@@ -113,9 +113,33 @@ public:
 
   void EmitCXXDestructors(const CXXDestructorDecl *D);
 
+  const CXXRecordDecl *getThisArgumentTypeForMethod(const CXXMethodDecl *MD) {
+    MD = MD->getCanonicalDecl();
+    if (MD->isVirtual() && !isa<CXXDestructorDecl>(MD)) {
+      MicrosoftVFTableContext::MethodVFTableLocation ML =
+          CGM.getVFTableContext().getMethodVFTableLocation(MD);
+      // The vbases might be ordered differently in the final overrider object
+      // and the complete object, so the "this" argument may sometimes point to
+      // memory that has no particular type (e.g. past the complete object).
+      // In this case, we just use a generic pointer type.
+      // FIXME: might want to have a more precise type in the non-virtual
+      // multiple inheritance case.
+      if (ML.VBase || !ML.VFTableOffset.isZero())
+        return 0;
+    }
+    return MD->getParent();
+  }
+
+  llvm::Value *adjustThisArgumentForVirtualCall(CodeGenFunction &CGF,
+                                                GlobalDecl GD,
+                                                llvm::Value *This);
+
   void BuildInstanceFunctionParams(CodeGenFunction &CGF,
                                    QualType &ResTy,
                                    FunctionArgList &Params);
+
+  llvm::Value *adjustThisParameterInVirtualFunctionPrologue(
+      CodeGenFunction &CGF, GlobalDecl GD, llvm::Value *This);
 
   void EmitInstanceFunctionProlog(CodeGenFunction &CGF);
 
@@ -125,7 +149,10 @@ public:
                            llvm::Value *This,
                            CallExpr::const_arg_iterator ArgBeg,
                            CallExpr::const_arg_iterator ArgEnd);
- 
+
+  llvm::Value *getVirtualFunctionPointer(CodeGenFunction &CGF, GlobalDecl GD,
+                                         llvm::Value *This, llvm::Type *Ty);
+
   void EmitVirtualDestructorCall(CodeGenFunction &CGF,
                                  const CXXDestructorDecl *Dtor,
                                  CXXDtorType DtorType, SourceLocation CallLoc,
@@ -423,6 +450,34 @@ void MicrosoftCXXABI::EmitCXXDestructors(const CXXDestructorDecl *D) {
   CGM.EmitGlobal(GlobalDecl(D, Dtor_Base));
 }
 
+llvm::Value *MicrosoftCXXABI::adjustThisArgumentForVirtualCall(
+    CodeGenFunction &CGF, GlobalDecl GD, llvm::Value *This) {
+  GD = GD.getCanonicalDecl();
+  const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
+  if (isa<CXXDestructorDecl>(MD))
+    return This;
+
+  MicrosoftVFTableContext::MethodVFTableLocation ML =
+      CGM.getVFTableContext().getMethodVFTableLocation(GD);
+
+  unsigned AS = cast<llvm::PointerType>(This->getType())->getAddressSpace();
+  llvm::Type *charPtrTy = CGF.Int8Ty->getPointerTo(AS);
+  if (ML.VBase) {
+    This = CGF.Builder.CreateBitCast(This, charPtrTy);
+    llvm::Value *VBaseOffset = CGM.getCXXABI()
+        .GetVirtualBaseClassOffset(CGF, This, MD->getParent(), ML.VBase);
+    This = CGF.Builder.CreateInBoundsGEP(This, VBaseOffset);
+  }
+  CharUnits StaticOffset = ML.VFTableOffset;
+  if (!StaticOffset.isZero()) {
+    assert(StaticOffset.isPositive());
+    This = CGF.Builder.CreateBitCast(This, charPtrTy);
+    This = CGF.Builder
+        .CreateConstInBoundsGEP1_64(This, StaticOffset.getQuantity());
+  }
+  return This;
+}
+
 static bool IsDeletingDtor(GlobalDecl GD) {
   const CXXMethodDecl* MD = cast<CXXMethodDecl>(GD.getDecl());
   if (isa<CXXDestructorDecl>(MD)) {
@@ -455,6 +510,41 @@ void MicrosoftCXXABI::BuildInstanceFunctionParams(CodeGenFunction &CGF,
     Params.push_back(ShouldDelete);
     getStructorImplicitParamDecl(CGF) = ShouldDelete;
   }
+}
+
+llvm::Value *MicrosoftCXXABI::adjustThisParameterInVirtualFunctionPrologue(
+    CodeGenFunction &CGF, GlobalDecl GD, llvm::Value *This) {
+  GD = GD.getCanonicalDecl();
+  const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
+  if (isa<CXXDestructorDecl>(MD))
+    return This;
+
+  // In this ABI, every virtual function takes a pointer to one of the
+  // subobjects that first defines it as the 'this' parameter, rather than a
+  // pointer to ther final overrider subobject. Thus, we need to adjust it back
+  // to the final overrider subobject before use.
+  // See comments in the MicrosoftVFTableContext implementation for the details.
+
+  MicrosoftVFTableContext::MethodVFTableLocation ML =
+      CGM.getVFTableContext().getMethodVFTableLocation(GD);
+  CharUnits Adjustment = ML.VFTableOffset;
+  if (ML.VBase) {
+    const ASTRecordLayout &DerivedLayout =
+        CGF.getContext().getASTRecordLayout(MD->getParent());
+    Adjustment += DerivedLayout.getVBaseClassOffset(ML.VBase);
+  }
+
+  if (Adjustment.isZero())
+    return This;
+
+  unsigned AS = cast<llvm::PointerType>(This->getType())->getAddressSpace();
+  llvm::Type *charPtrTy = CGF.Int8Ty->getPointerTo(AS),
+             *thisTy = This->getType();
+
+  This = CGF.Builder.CreateBitCast(This, charPtrTy);
+  assert(Adjustment.isPositive());
+  This = CGF.Builder.CreateConstGEP1_64(This, -Adjustment.getQuantity());
+  return CGF.Builder.CreateBitCast(This, thisTy);
 }
 
 void MicrosoftCXXABI::EmitInstanceFunctionProlog(CodeGenFunction &CGF) {
@@ -514,6 +604,24 @@ void MicrosoftCXXABI::EmitConstructorCall(CodeGenFunction &CGF,
                         ImplicitParam, ImplicitParamTy, ArgBeg, ArgEnd);
 }
 
+llvm::Value *MicrosoftCXXABI::getVirtualFunctionPointer(CodeGenFunction &CGF,
+                                                        GlobalDecl GD,
+                                                        llvm::Value *This,
+                                                        llvm::Type *Ty) {
+  GD = GD.getCanonicalDecl();
+  CGBuilderTy &Builder = CGF.Builder;
+
+  Ty = Ty->getPointerTo()->getPointerTo();
+  llvm::Value *VPtr = adjustThisArgumentForVirtualCall(CGF, GD, This);
+  llvm::Value *VTable = CGF.GetVTablePtr(VPtr, Ty);
+
+  MicrosoftVFTableContext::MethodVFTableLocation ML =
+      CGM.getVFTableContext().getMethodVFTableLocation(GD);
+  llvm::Value *VFuncPtr =
+      Builder.CreateConstInBoundsGEP1_64(VTable, ML.Index, "vfn");
+  return Builder.CreateLoad(VFuncPtr);
+}
+
 void MicrosoftCXXABI::EmitVirtualDestructorCall(CodeGenFunction &CGF,
                                                 const CXXDestructorDecl *Dtor,
                                                 CXXDtorType DtorType,
@@ -523,15 +631,15 @@ void MicrosoftCXXABI::EmitVirtualDestructorCall(CodeGenFunction &CGF,
 
   // We have only one destructor in the vftable but can get both behaviors
   // by passing an implicit bool parameter.
-  const CGFunctionInfo *FInfo
-      = &CGM.getTypes().arrangeCXXDestructor(Dtor, Dtor_Deleting);
+  const CGFunctionInfo *FInfo =
+      &CGM.getTypes().arrangeCXXDestructor(Dtor, Dtor_Deleting);
   llvm::Type *Ty = CGF.CGM.getTypes().GetFunctionType(*FInfo);
-  llvm::Value *Callee
-      = CGF.BuildVirtualCall(GlobalDecl(Dtor, Dtor_Deleting), This, Ty);
+  llvm::Value *Callee =
+      getVirtualFunctionPointer(CGF, GlobalDecl(Dtor, Dtor_Deleting), This, Ty);
 
   ASTContext &Context = CGF.getContext();
-  llvm::Value *ImplicitParam
-    = llvm::ConstantInt::get(llvm::IntegerType::getInt1Ty(CGF.getLLVMContext()),
+  llvm::Value *ImplicitParam =
+      llvm::ConstantInt::get(llvm::IntegerType::getInt1Ty(CGF.getLLVMContext()),
                              DtorType == Dtor_Deleting);
 
   CGF.EmitCXXMemberCall(Dtor, CallLoc, Callee, ReturnValueSlot(), This,

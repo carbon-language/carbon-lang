@@ -2125,7 +2125,7 @@ CodeGenFunction::EmitCXXOperatorMemberCallee(const CXXOperatorCallExpr *E,
                              CGM.getTypes().arrangeCXXMethodDeclaration(MD));
 
   if (UseVirtualCall(getContext(), E, MD))
-    return BuildVirtualCall(MD, This, fnType);
+    return CGM.getCXXABI().getVirtualFunctionPointer(*this, MD, This, fnType);
 
   return CGM.GetAddrOfFunction(MD, fnType);
 }

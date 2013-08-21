@@ -272,23 +272,12 @@ CodeGenModule::GetAddrOfCXXDestructor(const CXXDestructorDecl *dtor,
                                                       /*ForVTable=*/false));
 }
 
-llvm::Value *
-CodeGenFunction::BuildVirtualCall(GlobalDecl GD, llvm::Value *This,
-                                  llvm::Type *Ty) {
-  GD = GD.getCanonicalDecl();
-  uint64_t VTableIndex = CGM.getVTableContext().getMethodVTableIndex(GD);
-
-  Ty = Ty->getPointerTo()->getPointerTo();
-  llvm::Value *VTable = GetVTablePtr(This, Ty);
-  llvm::Value *VFuncPtr =
-    Builder.CreateConstInBoundsGEP1_64(VTable, VTableIndex, "vfn");
-  return Builder.CreateLoad(VFuncPtr);
-}
-
 static llvm::Value *BuildAppleKextVirtualCall(CodeGenFunction &CGF,
                                               GlobalDecl GD,
                                               llvm::Type *Ty,
                                               const CXXRecordDecl *RD) {
+  assert(!CGF.CGM.getTarget().getCXXABI().isMicrosoft() &&
+         "No kext in Microsoft ABI");
   GD = GD.getCanonicalDecl();
   CodeGenModule &CGM = CGF.CGM;
   llvm::Value *VTable = CGM.getVTables().GetAddrOfVTable(RD);

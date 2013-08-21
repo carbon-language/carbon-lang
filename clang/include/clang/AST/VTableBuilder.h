@@ -417,6 +417,10 @@ public:
     /// If nonzero, holds the vbtable index of the virtual base with the vfptr.
     uint64_t VBTableIndex;
 
+    /// If nonnull, holds the last vbase which contains the vfptr that the
+    /// method definition is adjusted to.
+    const CXXRecordDecl *VBase;
+
     /// This is the offset of the vfptr from the start of the last vbase, or the
     /// complete type if there are no virtual bases.
     CharUnits VFTableOffset;
@@ -425,19 +429,24 @@ public:
     uint64_t Index;
 
     MethodVFTableLocation()
-        : VBTableIndex(0), VFTableOffset(CharUnits::Zero()), Index(0) {}
+        : VBTableIndex(0), VBase(0), VFTableOffset(CharUnits::Zero()),
+          Index(0) {}
 
-    MethodVFTableLocation(uint64_t VBTableIndex, CharUnits VFTableOffset,
-                          uint64_t Index)
-        : VBTableIndex(VBTableIndex), VFTableOffset(VFTableOffset),
-          Index(Index) {}
+    MethodVFTableLocation(uint64_t VBTableIndex, const CXXRecordDecl *VBase,
+                          CharUnits VFTableOffset, uint64_t Index)
+        : VBTableIndex(VBTableIndex), VBase(VBase),
+          VFTableOffset(VFTableOffset), Index(Index) {}
 
     bool operator<(const MethodVFTableLocation &other) const {
-      if (VBTableIndex != other.VBTableIndex)
+      if (VBTableIndex != other.VBTableIndex) {
+        assert(VBase != other.VBase);
         return VBTableIndex < other.VBTableIndex;
+      }
       if (VFTableOffset != other.VFTableOffset)
         return VFTableOffset < other.VFTableOffset;
-      return Index < other.Index;
+      if (Index != other.Index)
+        return Index < other.Index;
+      return false;
     }
   };
 

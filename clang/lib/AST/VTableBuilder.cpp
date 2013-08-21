@@ -2490,6 +2490,10 @@ private:
     /// this method's base has, or zero.
     const uint64_t VBTableIndex;
 
+    /// VBase - If nonnull, holds the last vbase which contains the vfptr that
+    /// the method definition is adjusted to.
+    const CXXRecordDecl *VBase;
+
     /// VFTableIndex - The index in the vftable that this method has.
     const uint64_t VFTableIndex;
 
@@ -2498,11 +2502,13 @@ private:
     /// or used for vcalls in the most derived class.
     bool Shadowed;
 
-    MethodInfo(uint64_t VBTableIndex, uint64_t VFTableIndex)
-        : VBTableIndex(VBTableIndex), VFTableIndex(VFTableIndex),
+    MethodInfo(uint64_t VBTableIndex, const CXXRecordDecl *VBase,
+               uint64_t VFTableIndex)
+        : VBTableIndex(VBTableIndex), VBase(VBase), VFTableIndex(VFTableIndex),
           Shadowed(false) {}
 
-    MethodInfo() : VBTableIndex(0), VFTableIndex(0), Shadowed(false) {}
+    MethodInfo()
+        : VBTableIndex(0), VBase(0), VFTableIndex(0), Shadowed(false) {}
   };
 
   typedef llvm::DenseMap<const CXXMethodDecl *, MethodInfo> MethodInfoMapTy;
@@ -2584,8 +2590,8 @@ private:
       // and the entries shadowed by return adjusting thunks.
       if (MD->getParent() != MostDerivedClass || MI.Shadowed)
         continue;
-      MethodVFTableLocation Loc(MI.VBTableIndex, WhichVFPtr.VFPtrOffset,
-                                MI.VFTableIndex);
+      MethodVFTableLocation Loc(MI.VBTableIndex, MI.VBase,
+                                WhichVFPtr.VFPtrOffset, MI.VFTableIndex);
       if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(MD)) {
         MethodVFTableLocations[GlobalDecl(DD, Dtor_Deleting)] = Loc;
       } else {
@@ -2838,6 +2844,7 @@ void VFTableBuilder::AddMethods(BaseSubobject Base, unsigned BaseDepth,
         // No return adjustment needed - just replace the overridden method info
         // with the current info.
         MethodInfo MI(OverriddenMethodInfo.VBTableIndex,
+                      OverriddenMethodInfo.VBase,
                       OverriddenMethodInfo.VFTableIndex);
         MethodInfoMap.erase(OverriddenMDIterator);
 
@@ -2882,7 +2889,7 @@ void VFTableBuilder::AddMethods(BaseSubobject Base, unsigned BaseDepth,
     // it requires return adjustment. Insert the method info for this method.
     unsigned VBIndex =
         LastVBase ? GetVBTableIndex(MostDerivedClass, LastVBase) : 0;
-    MethodInfo MI(VBIndex, Components.size());
+    MethodInfo MI(VBIndex, LastVBase, Components.size());
 
     assert(!MethodInfoMap.count(MD) &&
            "Should not have method info for this method yet!");

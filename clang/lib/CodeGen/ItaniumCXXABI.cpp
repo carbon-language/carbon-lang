@@ -142,6 +142,9 @@ public:
                            CallExpr::const_arg_iterator ArgBeg,
                            CallExpr::const_arg_iterator ArgEnd);
 
+  llvm::Value *getVirtualFunctionPointer(CodeGenFunction &CGF, GlobalDecl GD,
+                                         llvm::Value *This, llvm::Type *Ty);
+
   void EmitVirtualDestructorCall(CodeGenFunction &CGF,
                                  const CXXDestructorDecl *Dtor,
                                  CXXDtorType DtorType, SourceLocation CallLoc,
@@ -885,6 +888,20 @@ void ItaniumCXXABI::EmitConstructorCall(CodeGenFunction &CGF,
                         This, VTT, VTTTy, ArgBeg, ArgEnd);
 }
 
+llvm::Value *ItaniumCXXABI::getVirtualFunctionPointer(CodeGenFunction &CGF,
+                                                      GlobalDecl GD,
+                                                      llvm::Value *This,
+                                                      llvm::Type *Ty) {
+  GD = GD.getCanonicalDecl();
+  Ty = Ty->getPointerTo()->getPointerTo();
+  llvm::Value *VTable = CGF.GetVTablePtr(This, Ty);
+
+  uint64_t VTableIndex = CGM.getVTableContext().getMethodVTableIndex(GD);
+  llvm::Value *VFuncPtr =
+      CGF.Builder.CreateConstInBoundsGEP1_64(VTable, VTableIndex, "vfn");
+  return CGF.Builder.CreateLoad(VFuncPtr);
+}
+
 void ItaniumCXXABI::EmitVirtualDestructorCall(CodeGenFunction &CGF,
                                               const CXXDestructorDecl *Dtor,
                                               CXXDtorType DtorType,
@@ -895,8 +912,8 @@ void ItaniumCXXABI::EmitVirtualDestructorCall(CodeGenFunction &CGF,
   const CGFunctionInfo *FInfo
     = &CGM.getTypes().arrangeCXXDestructor(Dtor, DtorType);
   llvm::Type *Ty = CGF.CGM.getTypes().GetFunctionType(*FInfo);
-  llvm::Value *Callee
-    = CGF.BuildVirtualCall(GlobalDecl(Dtor, DtorType), This, Ty);
+  llvm::Value *Callee =
+      getVirtualFunctionPointer(CGF, GlobalDecl(Dtor, DtorType), This, Ty);
 
   CGF.EmitCXXMemberCall(Dtor, CallLoc, Callee, ReturnValueSlot(), This,
                         /*ImplicitParam=*/0, QualType(), 0, 0);

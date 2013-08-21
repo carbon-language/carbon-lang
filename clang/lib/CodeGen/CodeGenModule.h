@@ -519,7 +519,12 @@ public:
   CodeGenTypes &getTypes() { return Types; }
  
   CodeGenVTables &getVTables() { return VTables; }
+
   VTableContext &getVTableContext() { return VTables.getVTableContext(); }
+
+  MicrosoftVFTableContext &getVFTableContext() {
+    return VTables.getVFTableContext();
+  }
 
   llvm::MDNode *getTBAAInfo(QualType QTy);
   llvm::MDNode *getTBAAInfoForVTablePtr();

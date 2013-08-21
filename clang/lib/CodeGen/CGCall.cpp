@@ -160,6 +160,8 @@ static CallingConv getCallingConventionForDecl(const Decl *D) {
 
 /// Arrange the argument and result information for a call to an
 /// unknown C++ non-static member function of the given abstract type.
+/// (Zero value of RD means we don't have any meaningful "this" argument type,
+///  so fall back to a generic pointer type).
 /// The member function must be an ordinary function, i.e. not a
 /// constructor or destructor.
 const CGFunctionInfo &
@@ -168,7 +170,10 @@ CodeGenTypes::arrangeCXXMethodType(const CXXRecordDecl *RD,
   SmallVector<CanQualType, 16> argTypes;
 
   // Add the 'this' pointer.
-  argTypes.push_back(GetThisType(Context, RD));
+  if (RD)
+    argTypes.push_back(GetThisType(Context, RD));
+  else
+    argTypes.push_back(Context.VoidPtrTy);
 
   return ::arrangeCXXMethodType(*this, argTypes,
               FTP->getCanonicalTypeUnqualified().getAs<FunctionProtoType>());
@@ -187,7 +192,9 @@ CodeGenTypes::arrangeCXXMethodDeclaration(const CXXMethodDecl *MD) {
 
   if (MD->isInstance()) {
     // The abstract case is perfectly fine.
-    return arrangeCXXMethodType(MD->getParent(), prototype.getTypePtr());
+    const CXXRecordDecl *ThisType =
+        CGM.getCXXABI().getThisArgumentTypeForMethod(MD);
+    return arrangeCXXMethodType(ThisType, prototype.getTypePtr());
   }
 
   return arrangeFreeFunctionType(prototype);
@@ -1340,6 +1347,11 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
 
         if (isPromoted)
           V = emitArgumentDemotion(*this, Arg, V);
+
+        if (const CXXMethodDecl *MD = dyn_cast_or_null<CXXMethodDecl>(CurCodeDecl)) {
+          if (MD->isVirtual() && Arg == CXXABIThisDecl)
+            V = CGM.getCXXABI().adjustThisParameterInVirtualFunctionPrologue(*this, CurGD, V);
+        }
 
         // Because of merging of function types from multiple decls it is
         // possible for the type of an argument to not match the corresponding

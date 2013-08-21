@@ -299,7 +299,7 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE,
   if (const CXXConstructorDecl *Ctor = dyn_cast<CXXConstructorDecl>(MD)) {
     Callee = CGM.GetAddrOfFunction(GlobalDecl(Ctor, Ctor_Complete), Ty);
   } else if (UseVirtualCall) {
-    Callee = BuildVirtualCall(MD, This, Ty); 
+    Callee = CGM.getCXXABI().getVirtualFunctionPointer(*this, MD, This, Ty);
   } else {
     if (getLangOpts().AppleKext &&
         MD->isVirtual() &&
@@ -311,6 +311,9 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE,
       Callee = CGM.GetAddrOfFunction(DevirtualizedMethod, Ty);
     }
   }
+
+  if (MD->isVirtual())
+    This = CGM.getCXXABI().adjustThisArgumentForVirtualCall(*this, MD, This);
 
   return EmitCXXMemberCall(MD, CE->getExprLoc(), Callee, ReturnValue, This,
                            /*ImplicitParam=*/0, QualType(),
