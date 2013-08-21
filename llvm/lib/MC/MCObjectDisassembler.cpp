@@ -33,8 +33,40 @@ MCObjectDisassembler::MCObjectDisassembler(const ObjectFile &Obj,
                                            const MCInstrAnalysis &MIA)
   : Obj(Obj), Dis(Dis), MIA(MIA) {}
 
-MCModule *MCObjectDisassembler::buildModule(bool withCFG) {
+uint64_t MCObjectDisassembler::getEntrypoint() {
+  error_code ec;
+  for (symbol_iterator SI = Obj.begin_symbols(), SE = Obj.end_symbols();
+       SI != SE; SI.increment(ec)) {
+    if (ec)
+      break;
+    StringRef Name;
+    SI->getName(Name);
+    if (Name == "main" || Name == "_main") {
+      uint64_t Entrypoint;
+      SI->getAddress(Entrypoint);
+      return Entrypoint;
+    }
+  }
+  return 0;
+}
+
+ArrayRef<uint64_t> MCObjectDisassembler::getStaticInitFunctions() {
+  return ArrayRef<uint64_t>();
+}
+
+ArrayRef<uint64_t> MCObjectDisassembler::getStaticExitFunctions() {
+  return ArrayRef<uint64_t>();
+}
+
+MCModule *MCObjectDisassembler::buildEmptyModule() {
   MCModule *Module = new MCModule;
+  Module->Entrypoint = getEntrypoint();
+  return Module;
+}
+
+MCModule *MCObjectDisassembler::buildModule(bool withCFG) {
+  MCModule *Module = buildEmptyModule();
+
   buildSectionAtoms(Module);
   if (withCFG)
     buildCFG(Module);
@@ -60,7 +92,7 @@ void MCObjectDisassembler::buildSectionAtoms(MCModule *Module) {
       continue;
 
     StringRef Contents; SI->getContents(Contents);
-    StringRefMemoryObject memoryObject(Contents);
+    StringRefMemoryObject memoryObject(Contents, StartAddr);
 
     // We don't care about things like non-file-backed sections yet.
     if (Contents.size() != SecSize || !SecSize)
@@ -115,6 +147,21 @@ void MCObjectDisassembler::buildCFG(MCModule *Module) {
   typedef std::set<uint64_t> AddressSetTy;
   AddressSetTy Splits;
   AddressSetTy Calls;
+
+  error_code ec;
+  for (symbol_iterator SI = Obj.begin_symbols(), SE = Obj.end_symbols();
+       SI != SE; SI.increment(ec)) {
+    if (ec)
+      break;
+    SymbolRef::Type SymType;
+    SI->getType(SymType);
+    if (SymType == SymbolRef::ST_Function) {
+      uint64_t SymAddr;
+      SI->getAddress(SymAddr);
+      Calls.insert(SymAddr);
+      Splits.insert(SymAddr);
+    }
+  }
 
   assert(Module->func_begin() == Module->func_end()
          && "Module already has a CFG!");

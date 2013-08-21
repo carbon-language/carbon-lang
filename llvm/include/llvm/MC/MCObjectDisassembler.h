@@ -15,6 +15,10 @@
 #ifndef LLVM_MC_MCOBJECTDISASSEMBLER_H
 #define LLVM_MC_MCOBJECTDISASSEMBLER_H
 
+#include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/StringRef.h"
+#include "llvm/Support/DataTypes.h"
+
 namespace llvm {
 
 namespace object {
@@ -33,14 +37,11 @@ class MCModule;
 /// It can also be used to create a control flow graph consisting of MCFunctions
 /// and MCBasicBlocks.
 class MCObjectDisassembler {
-  const object::ObjectFile &Obj;
-  const MCDisassembler &Dis;
-  const MCInstrAnalysis &MIA;
-
 public:
   MCObjectDisassembler(const object::ObjectFile &Obj,
                        const MCDisassembler &Dis,
                        const MCInstrAnalysis &MIA);
+  virtual ~MCObjectDisassembler() {}
 
   /// \brief Build an MCModule, creating atoms and optionally functions.
   /// \param withCFG Also build a CFG by adding MCFunctions to the Module.
@@ -49,6 +50,25 @@ public:
   /// created, containing MCBasicBlocks. All text atoms are split to form basic
   /// block atoms, which then each back an MCBasicBlock.
   MCModule *buildModule(bool withCFG = false);
+
+  MCModule *buildEmptyModule();
+
+  /// \brief Get the effective address of the entrypoint, or 0 if there is none.
+  virtual uint64_t getEntrypoint();
+
+  /// \name Get the addresses of static constructors/destructors in the object.
+  /// The caller is expected to know how to interpret the addresses;
+  /// for example, Mach-O init functions expect 5 arguments, not for ELF.
+  /// The addresses are original object file load addresses, not effective.
+  /// @{
+  virtual ArrayRef<uint64_t> getStaticInitFunctions();
+  virtual ArrayRef<uint64_t> getStaticExitFunctions();
+  /// @}
+
+protected:
+  const object::ObjectFile &Obj;
+  const MCDisassembler &Dis;
+  const MCInstrAnalysis &MIA;
 
 private:
   /// \brief Fill \p Module by creating an atom for each section.
