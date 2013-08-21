@@ -407,17 +407,11 @@ def main(builtinParameters = {}):
             print('    %s' % t.getFullName())
         sys.stdout.write('\n')
 
-    if opts.timeTests:
-        # Collate, in case we repeated tests.
-        times = {}
-        for t in tests:
-            key = t.getFullName()
-            times[key] = times.get(key, 0.) + t.elapsed
-
-        byTime = list(times.items())
-        byTime.sort(key = lambda item: item[1])
-        if byTime:
-            lit.util.printHistogram(byTime, title='Tests')
+    if opts.timeTests and tests:
+        # Order by time.
+        test_times = [(t.getFullName(), t.elapsed)
+                      for t in tests]
+        lit.util.printHistogram(test_times, title='Tests')
 
     for name,code in (('Expected Passes    ', lit.Test.PASS),
                       ('Expected Failures  ', lit.Test.XFAIL),
