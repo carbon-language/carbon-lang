@@ -1,0 +1,86 @@
+# RUN: yaml2obj -format=elf %s | llvm-objdump -d -yaml-cfg=%t - && FileCheck --check-prefix=CFG < %t %s
+# REQUIRES: shell
+#
+# Generated from:
+# main:
+# 	movl	$48, %eax
+# 	cmpl	$3, %edi
+# 	jl	.LBB0_2
+# 	movq	8(%rsi), %rax
+# 	movsbl	(%rax), %eax
+# .LBB0_2:
+# 	ret
+#
+
+!ELF
+FileHeader:
+  Class: ELFCLASS64
+  Data: ELFDATA2LSB
+  Type: ET_REL
+  Machine: EM_X86_64
+Sections:
+  - Name: .text
+    Type: SHT_PROGBITS
+    Flags: [ SHF_ALLOC, SHF_EXECINSTR ]
+    Content: "B83000000083FF037C07488B46080FBE00C3"
+
+## 0000000000000000 <main>:
+
+#CFG: Atoms:
+#CFG:   - StartAddress:    0x0000000000000000
+#CFG:     Size:            10
+
+##    0:   b8 30 00 00 00          mov    $0x30,%eax
+#CFG:       - Inst:            MOV32ri
+#CFG:         Size:            5
+#CFG:         Ops:             [ REAX, I48 ]
+
+##    5:   83 ff 03                cmp    $0x3,%edi
+#CFG:       - Inst:            CMP32ri8
+#CFG:         Size:            3
+#CFG:         Ops:             [ REDI, I3 ]
+
+##    8:   7c 07                   jl     11 <main+0x11>
+#CFG:       - Inst:            JL_1
+#CFG:         Size:            2
+#CFG:         Ops:             [ I7 ]
+
+#CFG:   - StartAddress:    0x000000000000000A
+#CFG:     Size:            7
+
+##    a:   48 8b 46 08             mov    0x8(%rsi),%rax
+#CFG:       - Inst:            MOV64rm
+#CFG:         Size:            4
+#CFG:         Ops:             [ RRAX, RRSI, I1, R, I8, R ]
+
+##    e:   0f be 00                movsbl (%rax),%eax
+#CFG:       - Inst:            MOVSX32rm8
+#CFG:         Size:            3
+#CFG:         Ops:             [ REAX, RRAX, I1, R, I0, R ]
+#CFG:   - StartAddress:    0x0000000000000011
+#CFG:     Size:            1
+
+##   11:   c3                      retq
+#CFG:       - Inst:            RET
+#CFG:         Size:            1
+#CFG:         Ops:             [  ]
+
+Symbols:
+  Global:
+    - Name: main
+      Type: STT_FUNC
+      Section: .text
+      Value: 0x0
+      Size: 18
+
+#CFG: Functions:
+#CFG:     BasicBlocks:
+#CFG:       - Address:         0x0000000000000000
+#CFG:         Preds:           [  ]
+#CFG:         Succs:           [ 0x0000000000000011, 0x000000000000000A ]
+#CFG:       - Address:         0x0000000000000011
+#CFG:         Preds:           [ 0x0000000000000000, 0x000000000000000A ]
+#CFG:         Succs:           [  ]
+#CFG:       - Address:         0x000000000000000A
+#CFG:         Preds:           [ 0x0000000000000000 ]
+#CFG:         Succs:           [ 0x0000000000000011 ]

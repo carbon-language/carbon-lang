@@ -374,7 +374,7 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
       std::string Error;
       raw_fd_ostream YAMLOut(YAMLCFG.c_str(), Error);
       if (!Error.empty()) {
-        errs() << "llvm-objdump: warning: " << Error << '\n';
+        errs() << ToolName << ": warning: " << Error << '\n';
         return;
       }
       mcmodule2yaml(YAMLOut, *Mod, *MII, *MRI);
