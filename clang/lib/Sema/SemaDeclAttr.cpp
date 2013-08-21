@@ -497,8 +497,6 @@ enum ThreadAttributeDeclKind {
 
 static bool checkGuardedVarAttrCommon(Sema &S, Decl *D,
                                       const AttributeList &Attr) {
-  assert(!Attr.isInvalid());
-
   if (!checkAttributeNumArgs(S, Attr, 0))
     return false;
 
@@ -537,8 +535,6 @@ static void handlePtGuardedVarAttr(Sema &S, Decl *D,
 static bool checkGuardedByAttrCommon(Sema &S, Decl *D,
                                      const AttributeList &Attr,
                                      Expr* &Arg) {
-  assert(!Attr.isInvalid());
-
   if (!checkAttributeNumArgs(S, Attr, 1))
     return false;
 
@@ -584,8 +580,6 @@ static void handlePtGuardedByAttr(Sema &S, Decl *D,
 
 static bool checkLockableAttrCommon(Sema &S, Decl *D,
                                     const AttributeList &Attr) {
-  assert(!Attr.isInvalid());
-
   if (!checkAttributeNumArgs(S, Attr, 0))
     return false;
 
@@ -618,8 +612,6 @@ static void handleScopedLockableAttr(Sema &S, Decl *D,
 
 static void handleNoThreadSafetyAnalysis(Sema &S, Decl *D,
                                          const AttributeList &Attr) {
-  assert(!Attr.isInvalid());
-
   if (!checkAttributeNumArgs(S, Attr, 0))
     return;
 
@@ -635,8 +627,6 @@ static void handleNoThreadSafetyAnalysis(Sema &S, Decl *D,
 
 static void handleNoSanitizeAddressAttr(Sema &S, Decl *D,
                                       const AttributeList &Attr) {
-  assert(!Attr.isInvalid());
-
   if (!checkAttributeNumArgs(S, Attr, 0))
     return;
 
@@ -653,8 +643,6 @@ static void handleNoSanitizeAddressAttr(Sema &S, Decl *D,
 
 static void handleNoSanitizeMemory(Sema &S, Decl *D,
                                    const AttributeList &Attr) {
-  assert(!Attr.isInvalid());
-
   if (!checkAttributeNumArgs(S, Attr, 0))
     return;
 
@@ -670,8 +658,6 @@ static void handleNoSanitizeMemory(Sema &S, Decl *D,
 
 static void handleNoSanitizeThread(Sema &S, Decl *D,
                                    const AttributeList &Attr) {
-  assert(!Attr.isInvalid());
-
   if (!checkAttributeNumArgs(S, Attr, 0))
     return;
 
@@ -688,8 +674,6 @@ static void handleNoSanitizeThread(Sema &S, Decl *D,
 static bool checkAcquireOrderAttrCommon(Sema &S, Decl *D,
                                         const AttributeList &Attr,
                                         SmallVectorImpl<Expr *> &Args) {
-  assert(!Attr.isInvalid());
-
   if (!checkAttributeAtLeastNumArgs(S, Attr, 1))
     return false;
 
@@ -749,8 +733,6 @@ static void handleAcquiredBeforeAttr(Sema &S, Decl *D,
 static bool checkLockFunAttrCommon(Sema &S, Decl *D,
                                    const AttributeList &Attr,
                                    SmallVectorImpl<Expr *> &Args) {
-  assert(!Attr.isInvalid());
-
   // zero or more arguments ok
 
   // check that the attribute is applied to a function
@@ -824,8 +806,6 @@ static void handleAssertExclusiveLockAttr(Sema &S, Decl *D,
 static bool checkTryLockFunAttrCommon(Sema &S, Decl *D,
                                       const AttributeList &Attr,
                                       SmallVectorImpl<Expr *> &Args) {
-  assert(!Attr.isInvalid());
-
   if (!checkAttributeAtLeastNumArgs(S, Attr, 1))
     return false;
 
@@ -878,8 +858,6 @@ static void handleExclusiveTrylockFunctionAttr(Sema &S, Decl *D,
 static bool checkLocksRequiredCommon(Sema &S, Decl *D,
                                      const AttributeList &Attr,
                                      SmallVectorImpl<Expr *> &Args) {
-  assert(!Attr.isInvalid());
-
   if (!checkAttributeAtLeastNumArgs(S, Attr, 1))
     return false;
 
@@ -925,8 +903,6 @@ static void handleSharedLocksRequiredAttr(Sema &S, Decl *D,
 
 static void handleUnlockFunAttr(Sema &S, Decl *D,
                                 const AttributeList &Attr) {
-  assert(!Attr.isInvalid());
-
   // zero or more arguments ok
 
   if (!isa<FunctionDecl>(D) && !isa<FunctionTemplateDecl>(D)) {
@@ -948,8 +924,6 @@ static void handleUnlockFunAttr(Sema &S, Decl *D,
 
 static void handleLockReturnedAttr(Sema &S, Decl *D,
                                    const AttributeList &Attr) {
-  assert(!Attr.isInvalid());
-
   if (!checkAttributeNumArgs(S, Attr, 1))
     return;
 
@@ -973,8 +947,6 @@ static void handleLockReturnedAttr(Sema &S, Decl *D,
 
 static void handleLocksExcludedAttr(Sema &S, Decl *D,
                                     const AttributeList &Attr) {
-  assert(!Attr.isInvalid());
-
   if (!checkAttributeAtLeastNumArgs(S, Attr, 1))
     return;
 
@@ -999,7 +971,6 @@ static void handleLocksExcludedAttr(Sema &S, Decl *D,
 
 static void handleConsumesAttr(Sema &S, Decl *D,
                                const AttributeList &Attr) {
-  assert(!Attr.isInvalid());
   if (!checkAttributeNumArgs(S, Attr, 0)) return;
 
   if (!(isa<CXXMethodDecl>(D) || isa<CXXConstructorDecl>(D))) {
@@ -1015,7 +986,6 @@ static void handleConsumesAttr(Sema &S, Decl *D,
 
 static void handleCallableWhenUnconsumedAttr(Sema &S, Decl *D,
                                              const AttributeList &Attr) {
-  assert(!Attr.isInvalid());
   if (!checkAttributeNumArgs(S, Attr, 0)) return;
 
   if (!isa<CXXMethodDecl>(D)) {
@@ -1031,7 +1001,6 @@ static void handleCallableWhenUnconsumedAttr(Sema &S, Decl *D,
 
 static void handleTestsConsumedAttr(Sema &S, Decl *D,
                                     const AttributeList &Attr) {
-  assert(!Attr.isInvalid());
   if (!checkAttributeNumArgs(S, Attr, 0)) return;
 
   if (!isa<CXXMethodDecl>(D)) {
@@ -1047,7 +1016,6 @@ static void handleTestsConsumedAttr(Sema &S, Decl *D,
 
 static void handleTestsUnconsumedAttr(Sema &S, Decl *D,
                                       const AttributeList &Attr) {
-  assert(!Attr.isInvalid());
   if (!checkAttributeNumArgs(S, Attr, 0)) return;
 
   if (!isa<CXXMethodDecl>(D)) {
@@ -1714,7 +1682,6 @@ static void handleMayAliasAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 }
 
 static void handleNoCommonAttr(Sema &S, Decl *D, const AttributeList &Attr) {
-  assert(!Attr.isInvalid());
   if (isa<VarDecl>(D))
     D->addAttr(::new (S.Context)
                NoCommonAttr(Attr.getRange(), S.Context,
@@ -1725,8 +1692,6 @@ static void handleNoCommonAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 }
 
 static void handleCommonAttr(Sema &S, Decl *D, const AttributeList &Attr) {
-  assert(!Attr.isInvalid());
-
   if (S.LangOpts.CPlusPlus) {
     S.Diag(Attr.getLoc(), diag::err_common_not_supported_cplusplus);
     return;
@@ -4020,13 +3985,10 @@ static void handleCallConvAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 }
 
 static void handleOpenCLKernelAttr(Sema &S, Decl *D, const AttributeList &Attr){
-  assert(!Attr.isInvalid());
   D->addAttr(::new (S.Context) OpenCLKernelAttr(Attr.getRange(), S.Context));
 }
 
 static void handleOpenCLImageAccessAttr(Sema &S, Decl *D, const AttributeList &Attr){
-  assert(!Attr.isInvalid());
-
   Expr *E = Attr.getArg(0);
   llvm::APSInt ArgNum(32);
   if (E->isTypeDependent() || E->isValueDependent() ||
