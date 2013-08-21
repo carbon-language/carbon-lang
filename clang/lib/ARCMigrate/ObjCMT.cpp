@@ -222,11 +222,9 @@ void ObjCMigrateASTConsumer::migrateDecl(Decl *D) {
   BodyMigrator(*this).TraverseDecl(D);
 }
 
-static void append_attr(std::string &PropertyString, const char *attr,
-                        bool GetterHasIsPrefix) {
-  PropertyString += (GetterHasIsPrefix ? ", " : "(");
+static void append_attr(std::string &PropertyString, const char *attr) {
+  PropertyString += ", ";
   PropertyString += attr;
-  PropertyString += ')';
 }
 
 static bool rewriteToObjCProperty(const ObjCMethodDecl *Getter,
@@ -234,11 +232,11 @@ static bool rewriteToObjCProperty(const ObjCMethodDecl *Getter,
                                   const NSAPI &NS, edit::Commit &commit,
                                   bool GetterHasIsPrefix) {
   ASTContext &Context = NS.getASTContext();
-  std::string PropertyString = "@property";
+  std::string PropertyString = "@property(nonatomic";
   std::string PropertyNameString = Getter->getNameAsString();
   StringRef PropertyName(PropertyNameString);
   if (GetterHasIsPrefix) {
-    PropertyString += "(getter=";
+    PropertyString += ", getter=";
     PropertyString += PropertyNameString;
   }
   // Short circuit properties that contain the name "delegate" or "dataSource",
@@ -246,7 +244,7 @@ static bool rewriteToObjCProperty(const ObjCMethodDecl *Getter,
   if (PropertyName.equals("target") ||
       (PropertyName.find("delegate") != StringRef::npos) ||
       (PropertyName.find("dataSource") != StringRef::npos))
-    append_attr(PropertyString, "unsafe_unretained", GetterHasIsPrefix);
+    append_attr(PropertyString, "unsafe_unretained");
   else {
     const ParmVarDecl *argDecl = *Setter->param_begin();
     QualType ArgType = Context.getCanonicalType(argDecl->getType());
@@ -258,20 +256,18 @@ static bool rewriteToObjCProperty(const ObjCMethodDecl *Getter,
         ObjCInterfaceDecl *IDecl = ObjPtrTy->getObjectType()->getInterface();
         if (IDecl &&
             IDecl->lookupNestedProtocol(&Context.Idents.get("NSCopying")))
-          append_attr(PropertyString, "copy", GetterHasIsPrefix);
+          append_attr(PropertyString, "copy");
         else
-          append_attr(PropertyString, "retain", GetterHasIsPrefix);
-      } else if (GetterHasIsPrefix)
-          PropertyString += ')';
+          append_attr(PropertyString, "retain");
+      }
     } else if (propertyLifetime == Qualifiers::OCL_Weak)
       // TODO. More precise determination of 'weak' attribute requires
       // looking into setter's implementation for backing weak ivar.
-      append_attr(PropertyString, "weak", GetterHasIsPrefix);
+      append_attr(PropertyString, "weak");
     else if (RetainableObject)
-      append_attr(PropertyString, "retain", GetterHasIsPrefix);
-    else if (GetterHasIsPrefix)
-      PropertyString += ')';
+      append_attr(PropertyString, "retain");
   }
+  PropertyString += ')';
   
   QualType RT = Getter->getResultType();
   if (!isa<TypedefType>(RT)) {

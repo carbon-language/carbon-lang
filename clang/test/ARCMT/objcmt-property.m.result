@@ -17,9 +17,9 @@ typedef char BOOL;
   int ivarVal;
 }
 
-@property(weak) NSString * WeakProp;
+@property(nonatomic, weak) NSString * WeakProp;
 
-@property(retain) NSString * StrongProp;
+@property(nonatomic, retain) NSString * StrongProp;
 
 
 - (NSString *) UnavailProp  __attribute__((unavailable));
@@ -31,7 +31,7 @@ typedef char BOOL;
 - (NSString *) UnavailProp2;
 - (void) setUnavailProp2  : (NSString *)Val  __attribute__((unavailable));
 
-@property(copy) NSDictionary * undoAction;
+@property(nonatomic, copy) NSDictionary * undoAction;
 
 @end
 
@@ -51,35 +51,35 @@ typedef char BOOL;
 
 
 
-@property(retain) NSArray * names2;
-@property(retain) NSArray * names3;
-@property(retain) NSArray * names4;
-@property(retain) NSArray * names1;
+@property(nonatomic, retain) NSArray * names2;
+@property(nonatomic, retain) NSArray * names3;
+@property(nonatomic, retain) NSArray * names4;
+@property(nonatomic, retain) NSArray * names1;
 @end
 
 // Properties that contain the name "delegate" or "dataSource",
 // or have exact name "target" have unsafe_unretained attribute.
 @interface NSInvocation 
-@property(unsafe_unretained) id target;
+@property(nonatomic, unsafe_unretained) id target;
 
 
-@property(unsafe_unretained) id dataSource;
+@property(nonatomic, unsafe_unretained) id dataSource;
 
-@property(unsafe_unretained) id xxxdelegateYYY;
-
-
+@property(nonatomic, unsafe_unretained) id xxxdelegateYYY;
 
 
-@property(retain) id MYtarget;
 
 
-@property(retain) id targetX;
+@property(nonatomic, retain) id MYtarget;
+
+
+@property(nonatomic, retain) id targetX;
 
  
-@property int value;
+@property(nonatomic) int value;
 
 
-@property(getter=isContinuous) BOOL continuous;
+@property(nonatomic, getter=isContinuous) BOOL continuous;
 
 
 - (id) isAnObject;
