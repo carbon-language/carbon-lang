@@ -191,10 +191,6 @@
 #define _LIBCPP_EXCEPTION_ABI _LIBCPP_TYPE_VIS
 #endif
 
-#ifndef _LIBCPP_CANTTHROW
-#define _LIBCPP_CANTTHROW __attribute__ ((__nothrow__))
-#endif
-
 #ifndef _LIBCPP_ALWAYS_INLINE
 #define _LIBCPP_ALWAYS_INLINE  __attribute__ ((__visibility__("hidden"), __always_inline__))
 #endif
