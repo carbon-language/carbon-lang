@@ -8,6 +8,7 @@ add_clang_library(migrateCore
   IncludeExcludeInfo.cpp
   PerfSupport.cpp
   Reformatting.cpp
+  IncludeDirectives.cpp
   )
 target_link_libraries(migrateCore
   clangFormat
