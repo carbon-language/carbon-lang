@@ -393,6 +393,40 @@ Value *Value::stripInBoundsConstantOffsets() {
   return stripPointerCastsAndOffsets<PSK_InBoundsConstantIndices>(this);
 }
 
+Value *Value::stripAndAccumulateInBoundsConstantOffsets(const DataLayout &DL,
+                                                        APInt &Offset) {
+  if (!getType()->isPointerTy())
+    return this;
+
+  assert(Offset.getBitWidth() == DL.getPointerSizeInBits(cast<PointerType>(
+                                     getType())->getAddressSpace()) &&
+         "The offset must have exactly as many bits as our pointer.");
+
+  // Even though we don't look through PHI nodes, we could be called on an
+  // instruction in an unreachable block, which may be on a cycle.
+  SmallPtrSet<Value *, 4> Visited;
+  Visited.insert(this);
+  Value *V = this;
+  do {
+    if (GEPOperator *GEP = dyn_cast<GEPOperator>(V)) {
+      if (!GEP->isInBounds())
+        return V;
+      if (!GEP->accumulateConstantOffset(DL, Offset))
+        return V;
+      V = GEP->getPointerOperand();
+    } else if (Operator::getOpcode(V) == Instruction::BitCast) {
+      V = cast<Operator>(V)->getOperand(0);
+    } else if (GlobalAlias *GA = dyn_cast<GlobalAlias>(V)) {
+      V = GA->getAliasee();
+    } else {
+      return V;
+    }
+    assert(V->getType()->isPointerTy() && "Unexpected operand type!");
+  } while (Visited.insert(V));
+
+  return V;
+}
+
 Value *Value::stripInBoundsOffsets() {
   return stripPointerCastsAndOffsets<PSK_InBounds>(this);
 }
