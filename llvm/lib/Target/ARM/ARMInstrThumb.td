@@ -1204,9 +1204,9 @@ def tUXTH :                     // A8.6.264
 // Expanded after instruction selection into a branch sequence.
 let usesCustomInserter = 1 in  // Expanded after instruction selection.
   def tMOVCCr_pseudo :
-  PseudoInst<(outs tGPR:$dst), (ins tGPR:$false, tGPR:$true, pred:$cc),
-              NoItinerary,
-             [/*(set tGPR:$dst, (ARMcmov tGPR:$false, tGPR:$true, imm:$cc))*/]>;
+  PseudoInst<(outs tGPR:$dst), (ins tGPR:$false, tGPR:$true, cmovpred:$p),
+             NoItinerary,
+             [(set tGPR:$dst, (ARMcmov tGPR:$false, tGPR:$true, cmovpred:$p))]>;
 
 // tLEApcrel - Load a pc-relative address into a register without offending the
 // assembler.

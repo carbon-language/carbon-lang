@@ -1466,15 +1466,17 @@ def : Pat<(fneg (f32 (fma SPR:$Sn, (fneg SPR:$Sm), SPR:$Sdin))),
 //
 
 let neverHasSideEffects = 1 in {
-def VMOVDcc  : ARMPseudoInst<(outs DPR:$Dd), (ins DPR:$Dn, DPR:$Dm, pred:$p),
-                    4, IIC_fpUNA64,
-                    [/*(set DPR:$Dd, (ARMcmov DPR:$Dn, DPR:$Dm, imm:$cc))*/]>,
-                 RegConstraint<"$Dn = $Dd">;
+def VMOVDcc  : PseudoInst<(outs DPR:$Dd), (ins DPR:$Dn, DPR:$Dm, cmovpred:$p),
+                    IIC_fpUNA64,
+                    [(set (f64 DPR:$Dd),
+                          (ARMcmov DPR:$Dn, DPR:$Dm, cmovpred:$p))]>,
+               RegConstraint<"$Dn = $Dd">, Requires<[HasVFP2]>;
 
-def VMOVScc  : ARMPseudoInst<(outs SPR:$Sd), (ins SPR:$Sn, SPR:$Sm, pred:$p),
-                    4, IIC_fpUNA32,
-                    [/*(set SPR:$Sd, (ARMcmov SPR:$Sn, SPR:$Sm, imm:$cc))*/]>,
-                 RegConstraint<"$Sn = $Sd">;
+def VMOVScc  : PseudoInst<(outs SPR:$Sd), (ins SPR:$Sn, SPR:$Sm, cmovpred:$p),
+                    IIC_fpUNA32,
+                    [(set (f32 SPR:$Sd),
+                          (ARMcmov SPR:$Sn, SPR:$Sm, cmovpred:$p))]>,
+               RegConstraint<"$Sn = $Sd">, Requires<[HasVFP2]>;
 } // neverHasSideEffects
 
 //===----------------------------------------------------------------------===//

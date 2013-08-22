@@ -90,7 +90,7 @@ CGIOperandList::CGIOperandList(Record *R) : TheDef(R) {
       if (unsigned NumArgs = MIOpInfo->getNumArgs())
         NumOps = NumArgs;
 
-      if (Rec->isSubClassOf("PredicateOperand"))
+      if (Rec->isSubClassOf("PredicateOp"))
         isPredicable = true;
       else if (Rec->isSubClassOf("OptionalDefOperand"))
         hasOptionalDef = true;

@@ -727,7 +727,6 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
       MI.eraseFromParent();
       return true;
     }
-
     case ARM::MOVCCsr: {
       BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(ARM::MOVsr),
               (MI.getOperand(1).getReg()))
@@ -743,13 +742,14 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
       MI.eraseFromParent();
       return true;
     }
+    case ARM::t2MOVCCi16:
     case ARM::MOVCCi16: {
-      BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(ARM::MOVi16),
+      unsigned NewOpc = AFI->isThumbFunction() ? ARM::t2MOVi16 : ARM::MOVi16;
+      BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(NewOpc),
               MI.getOperand(1).getReg())
         .addImm(MI.getOperand(2).getImm())
         .addImm(MI.getOperand(3).getImm()) // 'pred'
         .addReg(MI.getOperand(4).getReg());
-
       MI.eraseFromParent();
       return true;
     }
@@ -766,14 +766,38 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
       MI.eraseFromParent();
       return true;
     }
+    case ARM::t2MVNCCi:
     case ARM::MVNCCi: {
-      BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(ARM::MVNi),
+      unsigned Opc = AFI->isThumbFunction() ? ARM::t2MVNi : ARM::MVNi;
+      BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(Opc),
               MI.getOperand(1).getReg())
         .addImm(MI.getOperand(2).getImm())
         .addImm(MI.getOperand(3).getImm()) // 'pred'
         .addReg(MI.getOperand(4).getReg())
         .addReg(0); // 's' bit
 
+      MI.eraseFromParent();
+      return true;
+    }
+    case ARM::t2MOVCClsl:
+    case ARM::t2MOVCClsr:
+    case ARM::t2MOVCCasr:
+    case ARM::t2MOVCCror: {
+      unsigned NewOpc;
+      switch (Opcode) {
+      case ARM::t2MOVCClsl: NewOpc = ARM::t2LSLri; break;
+      case ARM::t2MOVCClsr: NewOpc = ARM::t2LSRri; break;
+      case ARM::t2MOVCCasr: NewOpc = ARM::t2ASRri; break;
+      case ARM::t2MOVCCror: NewOpc = ARM::t2RORri; break;
+      default: llvm_unreachable("unexpeced conditional move");
+      }
+      BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(NewOpc),
+              MI.getOperand(1).getReg())
+        .addReg(MI.getOperand(2).getReg())
+        .addImm(MI.getOperand(3).getImm())
+        .addImm(MI.getOperand(4).getImm()) // 'pred'
+        .addReg(MI.getOperand(5).getReg())
+        .addReg(0); // 's' bit
       MI.eraseFromParent();
       return true;
     }

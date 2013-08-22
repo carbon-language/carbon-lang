@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=thumb -mattr=+thumb2 | FileCheck %s
+; RUN: llc < %s -march=thumb -mattr=+thumb2 -show-mc-encoding | FileCheck %s
 
 define i32 @f1(i32 %a.s) {
 entry:
@@ -66,7 +66,7 @@ define i32 @f7(i32 %a, i32 %b, i32 %c) {
 entry:
 ; CHECK-LABEL: f7:
 ; CHECK: it hi
-; CHECK: lsrhi.w
+; CHECK: lsrhi {{r[0-9]+}}
     %tmp1 = icmp ugt i32 %a, %b
     %tmp2 = udiv i32 %c, 3
     %tmp3 = select i1 %tmp1, i32 %tmp2, i32 3
@@ -77,7 +77,7 @@ define i32 @f8(i32 %a, i32 %b, i32 %c) {
 entry:
 ; CHECK-LABEL: f8:
 ; CHECK: it lo
-; CHECK: lsllo.w
+; CHECK: lsllo {{r[0-9]+}}
     %tmp1 = icmp ult i32 %a, %b
     %tmp2 = mul i32 %c, 4
     %tmp3 = select i1 %tmp1, i32 %tmp2, i32 3
@@ -95,4 +95,12 @@ entry:
     %tmp4 = or i32 %tmp2, %tmp3
     %tmp5 = select i1 %tmp1, i32 %tmp4, i32 3
     ret i32 %tmp5
+}
+
+define i32 @f10(i32 %a, i32 %b) {
+; CHECK-LABEL: f10:
+; CHECK: movwne r2, #1234    @ encoding: [0x40,0xf2,0xd2,0x42]
+    %tst = icmp ne i32 %a, %b
+    %val = select i1 %tst, i32 1234, i32 12345
+    ret i32 %val
 }

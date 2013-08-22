@@ -132,8 +132,8 @@ InstrInfoEmitter::GetOperandInfo(const CodeGenInstruction &Inst) {
         Res += "|(1<<MCOI::LookupPtrRegClass)";
 
       // Predicate operands.  Check to see if the original unexpanded operand
-      // was of type PredicateOperand.
-      if (Inst.Operands[i].Rec->isSubClassOf("PredicateOperand"))
+      // was of type PredicateOp.
+      if (Inst.Operands[i].Rec->isSubClassOf("PredicateOp"))
         Res += "|(1<<MCOI::Predicate)";
 
       // Optional def operands.  Check to see if the original unexpanded operand

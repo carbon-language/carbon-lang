@@ -11,7 +11,7 @@ entry:
 
 ; ARMT2-LABEL: t1:
 ; ARMT2: movw [[R:r[0-1]]], #357
-; ARMT2: movgt [[R]], #123
+; ARMT2: movwgt [[R]], #123
 
 ; THUMB2-LABEL: t1:
 ; THUMB2: movw [[R:r[0-1]]], #357
@@ -25,9 +25,9 @@ entry:
 define i32 @t2(i32 %c) nounwind readnone {
 entry:
 ; ARM-LABEL: t2:
-; ARM: mov [[R:r[0-1]]], #123
-; ARM: movgt [[R]], #101
-; ARM: orrgt [[R]], [[R]], #256
+; ARM: mov [[R:r[0-9]+]], #101
+; ARM: orr [[R]], [[R]], #256
+; ARM: movle [[R]], #123
 
 ; ARMT2-LABEL: t2:
 ; ARMT2: mov [[R:r[0-1]]], #123
@@ -50,7 +50,7 @@ entry:
 
 ; ARMT2-LABEL: t3:
 ; ARMT2: mov [[R:r[0-1]]], #0
-; ARMT2: moveq [[R]], #1
+; ARMT2: movweq [[R]], #1
 
 ; THUMB2-LABEL: t3:
 ; THUMB2: mov{{(s|\.w)}} [[R:r[0-1]]], #0

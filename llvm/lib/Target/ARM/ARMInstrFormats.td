@@ -155,6 +155,16 @@ def pred : PredicateOperand<OtherVT, (ops i32imm, i32imm),
   let DecoderMethod = "DecodePredicateOperand";
 }
 
+// Selectable predicate operand for CMOV instructions. We can't use a normal
+// predicate because the default values interfere with instruction selection. In
+// all other respects it is identical though: pseudo-instruction expansion
+// relies on the MachineOperands being compatible.
+def cmovpred : Operand<i32>, PredicateOp,
+               ComplexPattern<i32, 2, "SelectCMOVPred"> {
+  let MIOperandInfo = (ops i32imm, i32imm);
+  let PrintMethod = "printPredicateOperand";
+}
+
 // Conditional code result for instructions whose 's' bit is set, e.g. subs.
 def CCOutOperand : AsmOperandClass { let Name = "CCOut"; }
 def cc_out : OptionalDefOperand<OtherVT, (ops CCR), (ops (i32 zero_reg))> {
