@@ -181,13 +181,12 @@ private:
       HasFinally(HasFinally) { }
 
 public:
-  static ObjCAtTryStmt *Create(ASTContext &Context, SourceLocation atTryLoc, 
-                               Stmt *atTryStmt,
+  static ObjCAtTryStmt *Create(const ASTContext &Context,
+                               SourceLocation atTryLoc, Stmt *atTryStmt,
                                Stmt **CatchStmts, unsigned NumCatchStmts,
                                Stmt *atFinallyStmt);
-  static ObjCAtTryStmt *CreateEmpty(ASTContext &Context, 
-                                    unsigned NumCatchStmts,
-                                    bool HasFinally);
+  static ObjCAtTryStmt *CreateEmpty(const ASTContext &Context,
+                                    unsigned NumCatchStmts, bool HasFinally);
   
   /// \brief Retrieve the location of the @ in the \@try.
   SourceLocation getAtTryLoc() const { return AtTryLoc; }
