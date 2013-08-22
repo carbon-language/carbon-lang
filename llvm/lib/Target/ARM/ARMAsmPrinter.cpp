@@ -496,6 +496,23 @@ bool ARMAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
       if (!FlagsOP.isImm())
         return true;
       unsigned Flags = FlagsOP.getImm();
+
+      // This operand may not be the one that actually provides the register. If
+      // it's tied to a previous one then we should refer instead to that one
+      // for registers and their classes.
+      unsigned TiedIdx;
+      if (InlineAsm::isUseOperandTiedToDef(Flags, TiedIdx)) {
+        for (OpNum = InlineAsm::MIOp_FirstOperand; TiedIdx; --TiedIdx) {
+          unsigned OpFlags = MI->getOperand(OpNum).getImm();
+          OpNum += InlineAsm::getNumOperandRegisters(OpFlags) + 1;
+        }
+        Flags = MI->getOperand(OpNum).getImm();
+
+        // Later code expects OpNum to be pointing at the register rather than
+        // the flags.
+        OpNum += 1;
+      }
+
       unsigned NumVals = InlineAsm::getNumOperandRegisters(Flags);
       unsigned RC;
       InlineAsm::hasRegClassConstraint(Flags, RC);

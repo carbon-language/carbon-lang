@@ -94,3 +94,13 @@ define i64 @tied_64bit_test(i64 %in) nounwind {
   call void asm "OUT($0), IN($1)", "=*rm,0"(i64* %addr, i64 %in)
   ret i64 %in
 }
+
+; If we explicitly name a tied operand, then the code should lookup the operand
+; we were tied to for information about register class and so on.
+define i64 @tied_64bit_lookback_test(i64 %in) nounwind {
+; CHECK-LABEL: tied_64bit_lookback_test:
+; CHECK: OUTLO([[LO:r[0-9]+]]) OUTHI([[HI:r[0-9]+]]) INLO([[LO]]) INHI([[HI]])
+  %vars = call {i64, i32, i64} asm "OUTLO(${2:Q}) OUTHI(${2:R}) INLO(${3:Q}) INHI(${3:R})", "=r,=r,=r,2"(i64 %in)
+  %res = extractvalue {i64, i32, i64} %vars, 2
+  ret i64 %res
+}
