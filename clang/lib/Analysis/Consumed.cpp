@@ -30,7 +30,6 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/raw_ostream.h"
 
-// TODO: Add support for methods with CallableWhenUnconsumed.
 // TODO: Mark variables as Unknown going into while- or for-loops only if they
 //       are referenced inside that block. (Deferred)
 // TODO: Add a method(s) to identify which method calls perform what state
@@ -47,6 +46,10 @@ using namespace consumed;
 
 // Key method definition
 ConsumedWarningsHandlerBase::~ConsumedWarningsHandlerBase() {}
+
+static bool isTestingFunction(const FunctionDecl *FunDecl) {
+  return FunDecl->hasAttr<TestsUnconsumedAttr>();
+}
 
 static StringRef stateToString(ConsumedState State) {
   switch (State) {
@@ -91,9 +94,9 @@ class ConsumedStmtVisitor : public ConstStmtVisitor<ConsumedStmtVisitor> {
       StateOrVar.Var = Var;
     }
     
-    ConsumedState getState() { return StateOrVar.State; };
+    ConsumedState getState() const { return StateOrVar.State; }
     
-    const VarDecl * getVar() { return IsVar ? StateOrVar.Var : NULL; };
+    const VarDecl * getVar() const { return IsVar ? StateOrVar.Var : NULL; }
   };
   
   typedef llvm::DenseMap<const Stmt *, PropagationInfo> MapType;
@@ -105,6 +108,9 @@ class ConsumedStmtVisitor : public ConstStmtVisitor<ConsumedStmtVisitor> {
   ConsumedStateMap *StateMap;
   MapType PropagationMap;
   
+  void checkCallability(const PropagationInfo &PState,
+                        const FunctionDecl *FunDecl,
+                        const CallExpr *Call);
   void forwardInfo(const Stmt *From, const Stmt *To);
   bool isLikeMoveAssignment(const CXXMethodDecl *MethodDecl);
   
@@ -133,6 +139,54 @@ public:
     PropagationMap.clear();
   }
 };
+
+// TODO: When we support CallableWhenConsumed this will have to check for
+//       the different attributes and change the behavior bellow. (Deferred)
+void ConsumedStmtVisitor::checkCallability(const PropagationInfo &PState,
+                                           const FunctionDecl *FunDecl,
+                                           const CallExpr *Call) {
+  
+  if (!FunDecl->hasAttr<CallableWhenUnconsumedAttr>()) return;
+  
+  if (PState.IsVar) {
+    const VarDecl *Var = PState.getVar();
+    
+    switch (StateMap->getState(Var)) {
+    case CS_Consumed:
+      Analyzer.WarningsHandler.warnUseWhileConsumed(
+        FunDecl->getNameAsString(), Var->getNameAsString(),
+        Call->getExprLoc());
+      break;
+    
+    case CS_Unknown:
+      Analyzer.WarningsHandler.warnUseInUnknownState(
+        FunDecl->getNameAsString(), Var->getNameAsString(),
+        Call->getExprLoc());
+      break;
+      
+    case CS_None:
+    case CS_Unconsumed:
+      break;
+    }
+    
+  } else {
+    switch (PState.getState()) {
+    case CS_Consumed:
+      Analyzer.WarningsHandler.warnUseOfTempWhileConsumed(
+        FunDecl->getNameAsString(), Call->getExprLoc());
+      break;
+    
+    case CS_Unknown:
+      Analyzer.WarningsHandler.warnUseOfTempInUnknownState(
+        FunDecl->getNameAsString(), Call->getExprLoc());
+      break;
+      
+    case CS_None:
+    case CS_Unconsumed:
+      break;
+    }
+  }
+}
 
 void ConsumedStmtVisitor::forwardInfo(const Stmt *From, const Stmt *To) {
   InfoEntry Entry = PropagationMap.find(From);
@@ -278,14 +332,16 @@ void ConsumedStmtVisitor::VisitCXXMemberCallExpr(
   
   if (Entry != PropagationMap.end()) {
     PropagationInfo PState = Entry->second;
-    if (!PState.IsVar) return;
+    const CXXMethodDecl *MethodDecl = Call->getMethodDecl();
     
-    const CXXMethodDecl *Method = Call->getMethodDecl();
+    checkCallability(PState, MethodDecl, Call);
     
-    if (Method->hasAttr<ConsumesAttr>())
-      StateMap->setState(PState.getVar(), consumed::CS_Consumed);
-    else if (!Method->isConst())
-      StateMap->setState(PState.getVar(), consumed::CS_Unknown);
+    if (PState.IsVar) {
+      if (MethodDecl->hasAttr<ConsumesAttr>())
+        StateMap->setState(PState.getVar(), consumed::CS_Consumed);
+      else if (!MethodDecl->isConst())
+        StateMap->setState(PState.getVar(), consumed::CS_Unknown);
+    }
   }
 }
 
@@ -374,57 +430,21 @@ void ConsumedStmtVisitor::VisitCXXOperatorCallExpr(
     InfoEntry Entry = PropagationMap.find(Call->getArg(0));
     
     if (Entry != PropagationMap.end()) {
-      
       PropagationInfo PState = Entry->second;
       
-      // TODO: When we support CallableWhenConsumed this will have to check for
-      //       the different attributes and change the behavior bellow.
-      //       (Deferred)
-      if (FunDecl->hasAttr<CallableWhenUnconsumedAttr>()) {
-        if (PState.IsVar) {
-          const VarDecl *Var = PState.getVar();
-          
-          switch (StateMap->getState(Var)) {
-          case CS_Consumed:
-            Analyzer.WarningsHandler.warnUseWhileConsumed(
-              FunDecl->getNameAsString(), Var->getNameAsString(),
-              Call->getExprLoc());
-            break;
-          
-          case CS_Unknown:
-            Analyzer.WarningsHandler.warnUseInUnknownState(
-              FunDecl->getNameAsString(), Var->getNameAsString(),
-              Call->getExprLoc());
-            break;
-            
-          default:
-            break;
-          }
-          
-        } else {
-          switch (PState.getState()) {
-          case CS_Consumed:
-            Analyzer.WarningsHandler.warnUseOfTempWhileConsumed(
-              FunDecl->getNameAsString(), Call->getExprLoc());
-            break;
-          
-          case CS_Unknown:
-            Analyzer.WarningsHandler.warnUseOfTempInUnknownState(
-              FunDecl->getNameAsString(), Call->getExprLoc());
-            break;
-            
-          default:
-            break;
-          }
-        }
-      }
+      checkCallability(PState, FunDecl, Call);
       
-      // Handle non-constant member operators.
-      if (const CXXMethodDecl *MethodDecl =
-        dyn_cast_or_null<CXXMethodDecl>(FunDecl)) {
-        
-        if (!MethodDecl->isConst() && PState.IsVar)
-          StateMap->setState(PState.getVar(), consumed::CS_Unknown);
+      if (PState.IsVar) {
+        if (FunDecl->hasAttr<ConsumesAttr>()) {
+          // Handle consuming operators.
+          StateMap->setState(PState.getVar(), consumed::CS_Consumed);
+        } else if (const CXXMethodDecl *MethodDecl =
+          dyn_cast_or_null<CXXMethodDecl>(FunDecl)) {
+          
+          // Handle non-constant member operators.
+          if (!MethodDecl->isConst())
+            StateMap->setState(PState.getVar(), consumed::CS_Unknown);
+        }
       }
     }
   }
@@ -505,10 +525,10 @@ public:
 };
 
 bool TestedVarsVisitor::VisitCallExpr(CallExpr *Call) {
-  if (const CXXMethodDecl *Method =
-    dyn_cast_or_null<CXXMethodDecl>(Call->getDirectCallee())) {
+  if (const FunctionDecl *FunDecl =
+    dyn_cast_or_null<FunctionDecl>(Call->getDirectCallee())) {
     
-    if (isTestingFunction(Method)) {
+    if (isTestingFunction(FunDecl)) {
       CurrTestLoc = Call->getExprLoc();
       IsUsefulConditional = true;
       return true;
@@ -521,16 +541,11 @@ bool TestedVarsVisitor::VisitCallExpr(CallExpr *Call) {
 }
 
 bool TestedVarsVisitor::VisitDeclRefExpr(DeclRefExpr *DeclRef) {
-  if (const VarDecl *Var = dyn_cast_or_null<VarDecl>(DeclRef->getDecl())) {
-    if (StateMap->getState(Var) != consumed::CS_None) {
+  if (const VarDecl *Var = dyn_cast_or_null<VarDecl>(DeclRef->getDecl()))
+    if (StateMap->getState(Var) != consumed::CS_None)
       Test = VarTestResult(Var, CurrTestLoc, !Invert);
-    }
-    
-  } else {
-    IsUsefulConditional = false;
-  }
   
-  return IsUsefulConditional;
+  return true;
 }
 
 bool TestedVarsVisitor::VisitUnaryOperator(UnaryOperator *UnaryOp) {
@@ -637,6 +652,9 @@ void ConsumedStateMap::setState(const VarDecl *Var, ConsumedState State) {
   Map[Var] = State;
 }
 
+void ConsumedStateMap::remove(const VarDecl *Var) {
+  Map.erase(Var);
+}
 
 bool ConsumedAnalyzer::isConsumableType(QualType Type) {
   const CXXRecordDecl *RD =
@@ -741,12 +759,16 @@ void ConsumedAnalyzer::run(AnalysisDeclContext &AC) {
     for (CFGBlock::const_iterator BI = CurrBlock->begin(),
          BE = CurrBlock->end(); BI != BE; ++BI) {
       
-      if (BI->getKind() == CFGElement::Statement)
+      switch (BI->getKind()) {
+      case CFGElement::Statement:
         Visitor.Visit(BI->castAs<CFGStmt>().getStmt());
+        break;
+      case CFGElement::AutomaticObjectDtor:
+        CurrStates->remove(BI->castAs<CFGAutomaticObjDtor>().getVarDecl());
+      default:
+        break;
+      }
     }
-    
-    // TODO: Remove any variables that have reached the end of their
-    //       lifetimes from the state map. (Deferred)
     
     if (const IfStmt *Terminator =
       dyn_cast_or_null<IfStmt>(CurrBlock->getTerminator().getStmt())) {
@@ -785,9 +807,4 @@ void ConsumedAnalyzer::run(AnalysisDeclContext &AC) {
   
   WarningsHandler.emitDiagnostics();
 }
-
-bool isTestingFunction(const CXXMethodDecl *Method) {
-  return Method->hasAttr<TestsUnconsumedAttr>();
-}
-
 }} // end namespace clang::consumed

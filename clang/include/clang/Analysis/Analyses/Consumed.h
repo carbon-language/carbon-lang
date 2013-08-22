@@ -118,6 +118,9 @@ namespace consumed {
     
     /// \brief Set the consumed state of a given variable.
     void setState(const VarDecl *Var, ConsumedState State);
+    
+    /// \brief Remove the variable from our state map.
+    void remove(const VarDecl *Var);
   };
   
   class ConsumedBlockInfo {
@@ -186,10 +189,6 @@ namespace consumed {
     /// exactly once.
     void run(AnalysisDeclContext &AC);
   };
-  
-  /// \brief Check to see if a function tests an object's validity.
-  bool isTestingFunction(const CXXMethodDecl *MethodDecl);
-  
 }} // end namespace clang::consumed
 
 #endif

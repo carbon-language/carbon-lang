@@ -932,7 +932,7 @@ def TestsUnconsumed : InheritableAttr {
 
 def Consumes : InheritableAttr {
   let Spellings = [GNU<"consumes">];
-  let Subjects = [CXXMethod];
+  let Subjects = [CXXMethod, CXXConstructor];
 }
 
 def TestsConsumed : InheritableAttr {

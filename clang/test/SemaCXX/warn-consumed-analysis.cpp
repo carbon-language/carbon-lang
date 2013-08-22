@@ -27,10 +27,13 @@ class Bar {
   template <typename U>
   Bar<T>& operator=(Bar<U> &&other);
   
+  void operator()(int a) CONSUMES;
   void operator*(void) const CALLABLE_WHEN_UNCONSUMED;
+  void unconsumedCall(void) const CALLABLE_WHEN_UNCONSUMED;
   
   bool isValid(void) const TESTS_UNCONSUMED;
   operator bool() const TESTS_UNCONSUMED;
+  bool operator!=(nullptr_t) const TESTS_UNCONSUMED;
   
   void constCall(void) const;
   void nonconstCall(void);
@@ -60,6 +63,10 @@ void testInitialization(void) {
   } else {
     *var0;  // expected-warning {{invocation of method 'operator*' on object 'var0' while it is in the 'consumed' state}}
   }
+}
+
+void testTempValue(void) {
+  *Bar<int>(); // expected-warning {{invocation of method 'operator*' on a temporary object while it is in the 'consumed' state}}
 }
 
 void testSimpleRValueRefs(void) {
@@ -93,6 +100,13 @@ void testIfStmt(void) {
   }
   
   if (var) {
+    // Empty
+    
+  } else {
+    *var; // expected-warning {{invocation of method 'operator*' on object 'var' while it is in the 'consumed' state}}
+  }
+  
+  if (var != nullptr) {
     // Empty
     
   } else {
@@ -162,6 +176,15 @@ void testConsumes1(void) {
   Bar<int> var(nullptr);
   
   *var; // expected-warning {{invocation of method 'operator*' on object 'var' while it is in the 'consumed' state}}
+}
+
+void testConsumes2(void) {
+  Bar<int> var(42);
+  
+  var.unconsumedCall();
+  var(6);
+  
+  var.unconsumedCall(); // expected-warning {{invocation of method 'unconsumedCall' on object 'var' while it is in the 'consumed' state}}
 }
 
 void testSimpleForLoop(void) {

@@ -1551,10 +1551,9 @@ clang::sema::AnalysisBasedWarnings::AnalysisBasedWarnings(Sema &s)
   DefaultPolicy.enableThreadSafetyAnalysis = (unsigned)
     (D.getDiagnosticLevel(diag::warn_double_lock, SourceLocation()) !=
      DiagnosticsEngine::Ignored);
-  DefaultPolicy.enableConsumedAnalysis =
-      (unsigned)(D.getDiagnosticLevel(diag::warn_use_while_consumed,
-                                      SourceLocation()) !=
-                 DiagnosticsEngine::Ignored);
+  DefaultPolicy.enableConsumedAnalysis = (unsigned)
+    (D.getDiagnosticLevel(diag::warn_use_while_consumed, SourceLocation()) !=
+     DiagnosticsEngine::Ignored);
 }
 
 static void flushDiagnostics(Sema &S, sema::FunctionScopeInfo *fscope) {
