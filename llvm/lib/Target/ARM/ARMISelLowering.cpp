@@ -3178,6 +3178,61 @@ SDValue ARMTargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
                          SelectTrue, SelectFalse, ISD::SETNE);
 }
 
+static ISD::CondCode getInverseCCForVSEL(ISD::CondCode CC) {
+  if (CC == ISD::SETNE)
+    return ISD::SETEQ;
+  return ISD::getSetCCSwappedOperands(CC);
+}
+
+static void checkVSELConstraints(ISD::CondCode CC, ARMCC::CondCodes &CondCode,
+                                 bool &swpCmpOps, bool &swpVselOps) {
+  // Start by selecting the GE condition code for opcodes that return true for
+  // 'equality'
+  if (CC == ISD::SETUGE || CC == ISD::SETOGE || CC == ISD::SETOLE ||
+      CC == ISD::SETULE)
+    CondCode = ARMCC::GE;
+
+  // and GT for opcodes that return false for 'equality'.
+  else if (CC == ISD::SETUGT || CC == ISD::SETOGT || CC == ISD::SETOLT ||
+           CC == ISD::SETULT)
+    CondCode = ARMCC::GT;
+
+  // Since we are constrained to GE/GT, if the opcode contains 'less', we need
+  // to swap the compare operands.
+  if (CC == ISD::SETOLE || CC == ISD::SETULE || CC == ISD::SETOLT ||
+      CC == ISD::SETULT)
+    swpCmpOps = true;
+
+  // Both GT and GE are ordered comparisons, and return false for 'unordered'.
+  // If we have an unordered opcode, we need to swap the operands to the VSEL
+  // instruction (effectively negating the condition).
+  //
+  // This also has the effect of swapping which one of 'less' or 'greater'
+  // returns true, so we also swap the compare operands. It also switches
+  // whether we return true for 'equality', so we compensate by picking the
+  // opposite condition code to our original choice.
+  if (CC == ISD::SETULE || CC == ISD::SETULT || CC == ISD::SETUGE ||
+      CC == ISD::SETUGT) {
+    swpCmpOps = !swpCmpOps;
+    swpVselOps = !swpVselOps;
+    CondCode = CondCode == ARMCC::GT ? ARMCC::GE : ARMCC::GT;
+  }
+
+  // 'ordered' is 'anything but unordered', so use the VS condition code and
+  // swap the VSEL operands.
+  if (CC == ISD::SETO) {
+    CondCode = ARMCC::VS;
+    swpVselOps = true;
+  }
+
+  // 'unordered or not equal' is 'anything but equal', so use the EQ condition
+  // code and swap the VSEL operands.
+  if (CC == ISD::SETUNE) {
+    CondCode = ARMCC::EQ;
+    swpVselOps = true;
+  }
+}
+
 SDValue ARMTargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const {
   EVT VT = Op.getValueType();
   SDValue LHS = Op.getOperand(0);
@@ -3188,14 +3243,51 @@ SDValue ARMTargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const {
   SDLoc dl(Op);
 
   if (LHS.getValueType() == MVT::i32) {
+    // Try to generate VSEL on ARMv8.
+    // The VSEL instruction can't use all the usual ARM condition
+    // codes: it only has two bits to select the condition code, so it's
+    // constrained to use only GE, GT, VS and EQ.
+    //
+    // To implement all the various ISD::SETXXX opcodes, we sometimes need to
+    // swap the operands of the previous compare instruction (effectively
+    // inverting the compare condition, swapping 'less' and 'greater') and
+    // sometimes need to swap the operands to the VSEL (which inverts the
+    // condition in the sense of firing whenever the previous condition didn't)
+    if (getSubtarget()->hasV8FP() && (TrueVal.getValueType() == MVT::f32 ||
+                                      TrueVal.getValueType() == MVT::f64)) {
+      ARMCC::CondCodes CondCode = IntCCToARMCC(CC);
+      if (CondCode == ARMCC::LT || CondCode == ARMCC::LE ||
+          CondCode == ARMCC::VC || CondCode == ARMCC::NE) {
+        CC = getInverseCCForVSEL(CC);
+        std::swap(TrueVal, FalseVal);
+      }
+    }
+
     SDValue ARMcc;
     SDValue CCR = DAG.getRegister(ARM::CPSR, MVT::i32);
     SDValue Cmp = getARMCmp(LHS, RHS, CC, ARMcc, DAG, dl);
-    return DAG.getNode(ARMISD::CMOV, dl, VT, FalseVal, TrueVal, ARMcc, CCR,Cmp);
+    return DAG.getNode(ARMISD::CMOV, dl, VT, FalseVal, TrueVal, ARMcc, CCR,
+                       Cmp);
   }
 
   ARMCC::CondCodes CondCode, CondCode2;
   FPCCToARMCC(CC, CondCode, CondCode2);
+
+  // Try to generate VSEL on ARMv8.
+  if (getSubtarget()->hasV8FP() && (TrueVal.getValueType() == MVT::f32 ||
+                                    TrueVal.getValueType() == MVT::f64)) {
+    bool swpCmpOps = false;
+    bool swpVselOps = false;
+    checkVSELConstraints(CC, CondCode, swpCmpOps, swpVselOps);
+
+    if (CondCode == ARMCC::GT || CondCode == ARMCC::GE ||
+        CondCode == ARMCC::VS || CondCode == ARMCC::EQ) {
+      if (swpCmpOps)
+        std::swap(LHS, RHS);
+      if (swpVselOps)
+        std::swap(TrueVal, FalseVal);
+    }
+  }
 
   SDValue ARMcc = DAG.getConstant(CondCode, MVT::i32);
   SDValue Cmp = getVFPCmp(LHS, RHS, DAG, dl);
