@@ -938,7 +938,6 @@ ExprResult Parser::ParseLambdaExpressionAfterIntroducer(
 
     
     if (Tok.isNot(tok::r_paren)) {
-      sema::LambdaScopeInfo *LSI = Actions.getCurLambda(); 
       if (getLangOpts().CPlusPlus1y)
         Actions.RecordParsingTemplateParameterDepth(TemplateParameterDepth);
       ParseParameterDeclarationClause(D, Attr, ParamInfo, EllipsisLoc);
