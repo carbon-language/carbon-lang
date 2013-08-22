@@ -2,7 +2,7 @@
 
 int printf(const char *format, ...) __attribute__((format(printf, 1, 2)));
 
-void unsigned_test() {
+void signed_test() {
   short val = 30;
   printf("val = %I64d\n", val); // expected-warning{{'I64' length modifier is not supported by ISO C}} \
                                 // expected-warning{{format specifies type '__int64' (aka 'long long') but the argument has type 'short'}}
@@ -13,7 +13,7 @@ void unsigned_test() {
                                  // expected-warning{{format specifies type '__int32' (aka 'int') but the argument has type 'long long'}}
 }
 
-void signed_test() {
+void unsigned_test() {
   unsigned short val = 30;
   printf("val = %I64u\n", val); // expected-warning{{'I64' length modifier is not supported by ISO C}} \
                                 // expected-warning{{format specifies type 'unsigned __int64' (aka 'unsigned long long') but the argument has type 'unsigned short'}}
