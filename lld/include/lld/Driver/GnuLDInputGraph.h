@@ -89,12 +89,15 @@ public:
   }
 
   /// \brief Validate the options
-  virtual bool validate() { return true; }
+  virtual bool validate() {
+    (void)_elfLinkingContext;
+    return true;
+  }
 
   /// \brief Dump the ELFGroup
   virtual bool dump(llvm::raw_ostream &) { return true; }
 
-protected:
+private:
   ELFLinkingContext &_elfLinkingContext;
 };
 

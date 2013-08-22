@@ -38,7 +38,10 @@ public:
   createLinkerInput(const lld::LinkingContext &);
 
   /// \brief validates the Input Element
-  virtual bool validate() { return true; }
+  virtual bool validate() {
+    (void)_ctx;
+    return true;
+  }
 
   /// \brief Dump the Input Element
   virtual bool dump(raw_ostream &) { return true; }
