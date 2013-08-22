@@ -54,11 +54,18 @@ template <class HexagonELFType>
 void SDataSection<HexagonELFType>::doPreFlight() {
   // sort the atoms on the alignments they have been set
   std::stable_sort(this->_atoms.begin(), this->_atoms.end(),
-                   [](const lld::AtomLayout * A, const lld::AtomLayout * B) {
+                                             [](const lld::AtomLayout * A,
+                                                const lld::AtomLayout * B) {
     const DefinedAtom *definedAtomA = cast<DefinedAtom>(A->_atom);
     const DefinedAtom *definedAtomB = cast<DefinedAtom>(B->_atom);
     int64_t align2A = 1 << definedAtomA->alignment().powerOf2;
     int64_t align2B = 1 << definedAtomB->alignment().powerOf2;
+    if (align2A == align2B) {
+      if (definedAtomA->merge() == DefinedAtom::mergeAsTentative)
+        return false;
+      if (definedAtomB->merge() == DefinedAtom::mergeAsTentative)
+        return true;
+    }
     return align2A < align2B;
   });
 
