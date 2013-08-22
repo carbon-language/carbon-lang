@@ -52,6 +52,11 @@ struct G {
   };
 };
 
+struct H {};
+struct I : virtual H {};
+struct J : I {};
+J j;
+
 struct A {
   int one;
   static const int HdrSize = 52;
@@ -103,6 +108,8 @@ int main(int argc, char **argv) {
 // CHECK: [[D_MEM]] = metadata !{metadata [[D_FUNC:![0-9]*]]}
 // CHECK: [[D_FUNC]] = {{.*}} ; [ DW_TAG_subprogram ] {{.*}} [func]
 
+// CHECK: ; [ DW_TAG_structure_type ] [I] {{.*}} [def]
+
 // CHECK: [[F_I_DEF:![0-9]*]] = {{.*}}, metadata [[F_I:![0-9]*]]} ; [ DW_TAG_variable ] [i]
 // CHECK: [[F_I]] = {{.*}} ; [ DW_TAG_member ] [i]
 // CHECK: [[F:![0-9]*]] = {{.*}} metadata [[F_MEM:![0-9]*]], i32 0, null, null} ; [ DW_TAG_structure_type ] [F] {{.*}} [def]
@@ -117,5 +124,5 @@ int main(int argc, char **argv) {
 // CHECK: [[G_INNER_MEM]] = metadata !{metadata [[G_INNER_I:![0-9]*]]}
 // CHECK: [[G_INNER_I]] = {{.*}} ; [ DW_TAG_member ] [j] {{.*}} [from int]
 
-// CHECK: ![[EXCEPTLOC]] = metadata !{i32 79,
-// CHECK: ![[RETLOC]] = metadata !{i32 78,
+// CHECK: ![[EXCEPTLOC]] = metadata !{i32 84,
+// CHECK: ![[RETLOC]] = metadata !{i32 83,
