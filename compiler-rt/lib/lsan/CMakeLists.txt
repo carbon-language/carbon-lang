@@ -1,7 +1,8 @@
 include_directories(..)
 
 set(LSAN_CFLAGS
-  ${SANITIZER_COMMON_CFLAGS})
+  ${SANITIZER_COMMON_CFLAGS}
+  -fno-rtti)
 
 set(LSAN_COMMON_SOURCES
   lsan_common.cc
