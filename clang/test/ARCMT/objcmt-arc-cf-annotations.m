@@ -2038,3 +2038,10 @@ void rdar13783514(xpc_connection_t connection) {
 } // no-warning
 
 CFAttributedStringRef CFAttributedCreate(void *CFObj CF_CONSUMED) CF_RETURNS_RETAINED;
+
+@interface Action
+- (SEL)action;
+- (void)setAction:(SEL)aSelector;
+- (id) target;
+- (void)setTarget:(id)aTarget;
+@end

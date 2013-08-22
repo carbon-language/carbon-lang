@@ -2140,3 +2140,10 @@ CFAttributedStringRef CFAttributedCreate(void *CFObj CF_CONSUMED) CF_RETURNS_RET
 
 CF_IMPLICIT_BRIDGING_DISABLED
 
+
+@interface Action
+@property(nonatomic) SEL action;
+
+@property(nonatomic, unsafe_unretained) id target;
+
+@end

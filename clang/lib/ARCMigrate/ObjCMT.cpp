@@ -788,7 +788,7 @@ AuditedType (QualType AT, bool &IsPoniter) {
       IsVoidStarType(AT) ||
       // If an ObjC object is type, assuming that it is not a CF function and
       // that it is an un-audited function.
-      AT->isObjCObjectPointerType())
+      AT->isObjCObjectPointerType() || AT->isObjCBuiltinType())
     return false;
   // All other pointers are assumed audited as harmless.
   return true;
