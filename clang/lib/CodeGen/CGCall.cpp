@@ -1058,13 +1058,12 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
     // Attributes that should go on the function, but not the call site.
     if (!CodeGenOpts.DisableFPElim) {
       FuncAttrs.addAttribute("no-frame-pointer-elim", "false");
-      FuncAttrs.addAttribute("no-frame-pointer-elim-non-leaf", "false");
     } else if (CodeGenOpts.OmitLeafFramePointer) {
       FuncAttrs.addAttribute("no-frame-pointer-elim", "false");
-      FuncAttrs.addAttribute("no-frame-pointer-elim-non-leaf", "true");
+      FuncAttrs.addAttribute("no-frame-pointer-elim-non-leaf");
     } else {
       FuncAttrs.addAttribute("no-frame-pointer-elim", "true");
-      FuncAttrs.addAttribute("no-frame-pointer-elim-non-leaf", "true");
+      FuncAttrs.addAttribute("no-frame-pointer-elim-non-leaf");
     }
 
     FuncAttrs.addAttribute("less-precise-fpmad",
@@ -1079,18 +1078,6 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
                            llvm::toStringRef(CodeGenOpts.SoftFloat));
     FuncAttrs.addAttribute("stack-protector-buffer-size",
                            llvm::utostr(CodeGenOpts.SSPBufferSize));
-
-    bool NoFramePointerElimNonLeaf;
-    if (!CodeGenOpts.DisableFPElim) {
-      NoFramePointerElimNonLeaf = false;
-    } else if (CodeGenOpts.OmitLeafFramePointer) {
-      NoFramePointerElimNonLeaf = true;
-    } else {
-      NoFramePointerElimNonLeaf = true;
-    }
-
-    FuncAttrs.addAttribute("no-frame-pointer-elim-non-leaf",
-                           llvm::toStringRef(NoFramePointerElimNonLeaf));
 
     if (!CodeGenOpts.StackRealignment)
       FuncAttrs.addAttribute("no-realign-stack");
