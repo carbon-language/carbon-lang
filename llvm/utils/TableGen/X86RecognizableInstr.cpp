@@ -818,17 +818,20 @@ void RecognizableInstr::emitInstructionSpecifier(DisassemblerTables &tables) {
   case X86Local::MRM5r:
   case X86Local::MRM6r:
   case X86Local::MRM7r:
-    // Operand 1 is a register operand in the R/M field.
-    // Operand 2 (optional) is an immediate or relocation.
-    // Operand 3 (optional) is an immediate.
-    if (HasVEX_4VPrefix)
-      assert(numPhysicalOperands <= 3 &&
-             "Unexpected number of operands for MRMnRFrm with VEX_4V");
-    else
-      assert(numPhysicalOperands <= 3 &&
-             "Unexpected number of operands for MRMnRFrm");
+    {
+      // Operand 1 is a register operand in the R/M field.
+      // Operand 2 (optional) is an immediate or relocation.
+      // Operand 3 (optional) is an immediate.
+      unsigned kOp = (HasEVEX_K) ? 1:0;
+      unsigned Op4v = (HasVEX_4VPrefix) ? 1:0;
+      if (numPhysicalOperands > 3 + kOp + Op4v)
+        llvm_unreachable("Unexpected number of operands for MRMnr");
+    }
     if (HasVEX_4VPrefix)
       HANDLE_OPERAND(vvvvRegister)
+
+    if (HasEVEX_K)
+      HANDLE_OPERAND(writemaskRegister)
     HANDLE_OPTIONAL(rmRegister)
     HANDLE_OPTIONAL(relocation)
     HANDLE_OPTIONAL(immediate)
@@ -841,16 +844,19 @@ void RecognizableInstr::emitInstructionSpecifier(DisassemblerTables &tables) {
   case X86Local::MRM5m:
   case X86Local::MRM6m:
   case X86Local::MRM7m:
-    // Operand 1 is a memory operand (possibly SIB-extended)
-    // Operand 2 (optional) is an immediate or relocation.
-    if (HasVEX_4VPrefix)
-      assert(numPhysicalOperands >= 2 && numPhysicalOperands <= 3 &&
-             "Unexpected number of operands for MRMnMFrm");
-    else
-      assert(numPhysicalOperands >= 1 && numPhysicalOperands <= 2 &&
-             "Unexpected number of operands for MRMnMFrm");
+    {
+      // Operand 1 is a memory operand (possibly SIB-extended)
+      // Operand 2 (optional) is an immediate or relocation.
+      unsigned kOp = (HasEVEX_K) ? 1:0;
+      unsigned Op4v = (HasVEX_4VPrefix) ? 1:0;
+      if (numPhysicalOperands < 1 + kOp + Op4v ||
+          numPhysicalOperands > 2 + kOp + Op4v)
+        llvm_unreachable("Unexpected number of operands for MRMnm");
+    }
     if (HasVEX_4VPrefix)
       HANDLE_OPERAND(vvvvRegister)
+    if (HasEVEX_K)
+      HANDLE_OPERAND(writemaskRegister)
     HANDLE_OPERAND(memory)
     HANDLE_OPTIONAL(relocation)
     break;

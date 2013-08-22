@@ -868,11 +868,12 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   case X86II::MRM6r: case X86II::MRM7r:
     // MRM0r-MRM7r instructions forms:
     //  dst(VEX_4V), src(ModR/M), imm8
-    VEX_4V = getVEXRegisterEncoding(MI, CurOp);
-    if (HasEVEX && X86II::is32ExtendedReg(MI.getOperand(CurOp).getReg()))
-        EVEX_V2 = 0x0;
-    CurOp++;
-    
+    if (HasVEX_4V) {
+      VEX_4V = getVEXRegisterEncoding(MI, CurOp);
+      if (HasEVEX && X86II::is32ExtendedReg(MI.getOperand(CurOp).getReg()))
+          EVEX_V2 = 0x0;
+      CurOp++;
+    }    
     if (HasEVEX_K)
       EVEX_aaa = getWriteMaskRegisterEncoding(MI, CurOp++);
 
