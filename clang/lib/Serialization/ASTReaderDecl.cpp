@@ -1522,8 +1522,6 @@ ASTDeclReader::VisitClassTemplateSpecializationDeclImpl(
     if (D->isCanonicalDecl()) { // It's kept in the folding set.
       if (ClassTemplatePartialSpecializationDecl *Partial =
               dyn_cast<ClassTemplatePartialSpecializationDecl>(D)) {
-        Partial->SequenceNumber =
-            CanonPattern->getNextPartialSpecSequenceNumber();
         CanonPattern->getCommonPtr()->PartialSpecializations
             .GetOrInsertNode(Partial);
       } else {
@@ -1623,8 +1621,6 @@ ASTDeclReader::VisitVarTemplateSpecializationDeclImpl(
     if (D->isCanonicalDecl()) { // It's kept in the folding set.
       if (VarTemplatePartialSpecializationDecl *Partial =
               dyn_cast<VarTemplatePartialSpecializationDecl>(D)) {
-        Partial->SequenceNumber =
-            CanonPattern->getNextPartialSpecSequenceNumber();
         CanonPattern->getCommonPtr()->PartialSpecializations
             .GetOrInsertNode(Partial);
       } else {

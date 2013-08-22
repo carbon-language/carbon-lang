@@ -397,13 +397,11 @@ void ClassTemplateDecl::getPartialSpecializations(
   llvm::FoldingSetVector<ClassTemplatePartialSpecializationDecl> &PartialSpecs
     = getPartialSpecializations();
   PS.clear();
-  PS.resize(PartialSpecs.size());
+  PS.reserve(PartialSpecs.size());
   for (llvm::FoldingSetVector<ClassTemplatePartialSpecializationDecl>::iterator
        P = PartialSpecs.begin(), PEnd = PartialSpecs.end();
-       P != PEnd; ++P) {
-    assert(!PS[P->getSequenceNumber()]);
-    PS[P->getSequenceNumber()] = P->getMostRecentDecl();
-  }
+       P != PEnd; ++P)
+    PS.push_back(P->getMostRecentDecl());
 }
 
 ClassTemplatePartialSpecializationDecl *
@@ -830,15 +828,14 @@ ClassTemplatePartialSpecializationDecl(ASTContext &Context, TagKind TK,
                                        const TemplateArgument *Args,
                                        unsigned NumArgs,
                                const ASTTemplateArgumentListInfo *ArgInfos,
-                               ClassTemplatePartialSpecializationDecl *PrevDecl,
-                                       unsigned SequenceNumber)
+                               ClassTemplatePartialSpecializationDecl *PrevDecl)
   : ClassTemplateSpecializationDecl(Context,
                                     ClassTemplatePartialSpecialization,
                                     TK, DC, StartLoc, IdLoc,
                                     SpecializedTemplate,
                                     Args, NumArgs, PrevDecl),
     TemplateParams(Params), ArgsAsWritten(ArgInfos),
-    SequenceNumber(SequenceNumber), InstantiatedFromMember(0, false)
+    InstantiatedFromMember(0, false)
 {
   AdoptTemplateParameterList(Params, this);
 }
@@ -853,8 +850,7 @@ Create(ASTContext &Context, TagKind TK,DeclContext *DC,
        unsigned NumArgs,
        const TemplateArgumentListInfo &ArgInfos,
        QualType CanonInjectedType,
-       ClassTemplatePartialSpecializationDecl *PrevDecl,
-       unsigned SequenceNumber) {
+       ClassTemplatePartialSpecializationDecl *PrevDecl) {
   const ASTTemplateArgumentListInfo *ASTArgInfos =
     ASTTemplateArgumentListInfo::Create(Context, ArgInfos);
 
@@ -865,8 +861,7 @@ Create(ASTContext &Context, TagKind TK,DeclContext *DC,
                                                           SpecializedTemplate,
                                                           Args, NumArgs,
                                                           ASTArgInfos,
-                                                          PrevDecl,
-                                                          SequenceNumber);
+                                                          PrevDecl);
   Result->setSpecializationKind(TSK_ExplicitSpecialization);
   Result->MayHaveOutOfDateDef = false;
 
@@ -1068,14 +1063,12 @@ void VarTemplateDecl::getPartialSpecializations(
   llvm::FoldingSetVector<VarTemplatePartialSpecializationDecl> &PartialSpecs =
       getPartialSpecializations();
   PS.clear();
-  PS.resize(PartialSpecs.size());
+  PS.reserve(PartialSpecs.size());
   for (llvm::FoldingSetVector<VarTemplatePartialSpecializationDecl>::iterator
            P = PartialSpecs.begin(),
            PEnd = PartialSpecs.end();
-       P != PEnd; ++P) {
-    assert(!PS[P->getSequenceNumber()]);
-    PS[P->getSequenceNumber()] = P->getMostRecentDecl();
-  }
+       P != PEnd; ++P)
+    PS.push_back(P->getMostRecentDecl());
 }
 
 VarTemplatePartialSpecializationDecl *
@@ -1168,12 +1161,12 @@ VarTemplatePartialSpecializationDecl::VarTemplatePartialSpecializationDecl(
     SourceLocation IdLoc, TemplateParameterList *Params,
     VarTemplateDecl *SpecializedTemplate, QualType T, TypeSourceInfo *TInfo,
     StorageClass S, const TemplateArgument *Args, unsigned NumArgs,
-    const ASTTemplateArgumentListInfo *ArgInfos, unsigned SequenceNumber)
+    const ASTTemplateArgumentListInfo *ArgInfos)
     : VarTemplateSpecializationDecl(Context, VarTemplatePartialSpecialization,
                                     DC, StartLoc, IdLoc, SpecializedTemplate, T,
                                     TInfo, S, Args, NumArgs),
       TemplateParams(Params), ArgsAsWritten(ArgInfos),
-      SequenceNumber(SequenceNumber), InstantiatedFromMember(0, false) {
+      InstantiatedFromMember(0, false) {
   // TODO: The template parameters should be in DC by now. Verify.
   // AdoptTemplateParameterList(Params, DC);
 }
@@ -1184,14 +1177,14 @@ VarTemplatePartialSpecializationDecl::Create(
     SourceLocation IdLoc, TemplateParameterList *Params,
     VarTemplateDecl *SpecializedTemplate, QualType T, TypeSourceInfo *TInfo,
     StorageClass S, const TemplateArgument *Args, unsigned NumArgs,
-    const TemplateArgumentListInfo &ArgInfos, unsigned SequenceNumber) {
+    const TemplateArgumentListInfo &ArgInfos) {
   const ASTTemplateArgumentListInfo *ASTArgInfos
     = ASTTemplateArgumentListInfo::Create(Context, ArgInfos);
 
   VarTemplatePartialSpecializationDecl *Result =
       new (Context) VarTemplatePartialSpecializationDecl(
           Context, DC, StartLoc, IdLoc, Params, SpecializedTemplate, T, TInfo,
-          S, Args, NumArgs, ASTArgInfos, SequenceNumber);
+          S, Args, NumArgs, ASTArgInfos);
   Result->setSpecializationKind(TSK_ExplicitSpecialization);
   return Result;
 }

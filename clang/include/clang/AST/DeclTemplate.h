@@ -1651,11 +1651,6 @@ class ClassTemplatePartialSpecializationDecl
   /// FIXME: redundant with TypeAsWritten?
   const ASTTemplateArgumentListInfo *ArgsAsWritten;
 
-  /// \brief Sequence number indicating when this class template partial
-  /// specialization was added to the set of partial specializations for
-  /// its owning class template.
-  unsigned SequenceNumber;
-
   /// \brief The class template partial specialization from which this
   /// class template partial specialization was instantiated.
   ///
@@ -1673,13 +1668,11 @@ class ClassTemplatePartialSpecializationDecl
                                          const TemplateArgument *Args,
                                          unsigned NumArgs,
                                const ASTTemplateArgumentListInfo *ArgsAsWritten,
-                               ClassTemplatePartialSpecializationDecl *PrevDecl,
-                                         unsigned SequenceNumber);
+                               ClassTemplatePartialSpecializationDecl *PrevDecl);
 
   ClassTemplatePartialSpecializationDecl()
     : ClassTemplateSpecializationDecl(ClassTemplatePartialSpecialization),
-      TemplateParams(0), ArgsAsWritten(0), SequenceNumber(0),
-      InstantiatedFromMember(0, false) { }
+      TemplateParams(0), ArgsAsWritten(0), InstantiatedFromMember(0, false) { }
 
 public:
   static ClassTemplatePartialSpecializationDecl *
@@ -1691,8 +1684,7 @@ public:
          unsigned NumArgs,
          const TemplateArgumentListInfo &ArgInfos,
          QualType CanonInjectedType,
-         ClassTemplatePartialSpecializationDecl *PrevDecl,
-         unsigned SequenceNumber);
+         ClassTemplatePartialSpecializationDecl *PrevDecl);
 
   static ClassTemplatePartialSpecializationDecl *
   CreateDeserialized(ASTContext &C, unsigned ID);
@@ -1711,11 +1703,6 @@ public:
   const ASTTemplateArgumentListInfo *getTemplateArgsAsWritten() const {
     return ArgsAsWritten;
   }
-
-  /// \brief Get the sequence number for this class template partial
-  /// specialization. Internal, only valid for specializations which
-  /// are in the specialized class template's folding set.
-  unsigned getSequenceNumber() const { return SequenceNumber; }
 
   /// \brief Retrieve the member class template partial specialization from
   /// which this particular class template partial specialization was
@@ -1928,13 +1915,6 @@ public:
   /// already in. InsertPos must be obtained from findPartialSpecialization.
   void AddPartialSpecialization(ClassTemplatePartialSpecializationDecl *D,
                                 void *InsertPos);
-
-  /// \brief Return the next partial specialization sequence number.
-  unsigned getNextPartialSpecSequenceNumber() {
-    // Do not load lazy specializations here. They get numbered as they are
-    // loaded.
-    return getCommonPtr()->PartialSpecializations.size();
-  }
 
   /// \brief Retrieve the partial specializations as an ordered list.
   void getPartialSpecializations(
@@ -2527,11 +2507,6 @@ class VarTemplatePartialSpecializationDecl
   /// FIXME: redundant with TypeAsWritten?
   const ASTTemplateArgumentListInfo *ArgsAsWritten;
 
-  /// \brief Sequence number indicating when this variable template partial
-  /// specialization was added to the set of partial specializations for
-  /// its owning variable template.
-  unsigned SequenceNumber;
-
   /// \brief The variable template partial specialization from which this
   /// variable template partial specialization was instantiated.
   ///
@@ -2545,13 +2520,11 @@ class VarTemplatePartialSpecializationDecl
       SourceLocation IdLoc, TemplateParameterList *Params,
       VarTemplateDecl *SpecializedTemplate, QualType T, TypeSourceInfo *TInfo,
       StorageClass S, const TemplateArgument *Args, unsigned NumArgs,
-      const ASTTemplateArgumentListInfo *ArgInfos,
-      unsigned SequenceNumber);
+      const ASTTemplateArgumentListInfo *ArgInfos);
 
   VarTemplatePartialSpecializationDecl()
       : VarTemplateSpecializationDecl(VarTemplatePartialSpecialization),
-        TemplateParams(0), ArgsAsWritten(0),
-        SequenceNumber(0), InstantiatedFromMember(0, false) {}
+        TemplateParams(0), ArgsAsWritten(0), InstantiatedFromMember(0, false) {}
 
 public:
   static VarTemplatePartialSpecializationDecl *
@@ -2559,8 +2532,7 @@ public:
          SourceLocation IdLoc, TemplateParameterList *Params,
          VarTemplateDecl *SpecializedTemplate, QualType T,
          TypeSourceInfo *TInfo, StorageClass S, const TemplateArgument *Args,
-         unsigned NumArgs, const TemplateArgumentListInfo &ArgInfos,
-         unsigned SequenceNumber);
+         unsigned NumArgs, const TemplateArgumentListInfo &ArgInfos);
 
   static VarTemplatePartialSpecializationDecl *CreateDeserialized(ASTContext &C,
                                                                   unsigned ID);
@@ -2579,10 +2551,6 @@ public:
   const ASTTemplateArgumentListInfo *getTemplateArgsAsWritten() const {
     return ArgsAsWritten;
   }
-
-  /// \brief Get the sequence number for this variable template partial
-  /// specialization.
-  unsigned getSequenceNumber() const { return SequenceNumber; }
 
   /// \brief Retrieve the member variable template partial specialization from
   /// which this particular variable template partial specialization was
@@ -2779,11 +2747,6 @@ public:
   /// already in. InsertPos must be obtained from findPartialSpecialization.
   void AddPartialSpecialization(VarTemplatePartialSpecializationDecl *D,
                                 void *InsertPos);
-
-  /// \brief Return the next partial specialization sequence number.
-  unsigned getNextPartialSpecSequenceNumber() {
-    return getCommonPtr()->PartialSpecializations.size();
-  }
 
   /// \brief Retrieve the partial specializations as an ordered list.
   void getPartialSpecializations(

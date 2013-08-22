@@ -2514,8 +2514,7 @@ TemplateDeclInstantiator::InstantiateClassTemplatePartialSpecialization(
                                                      Converted.size(),
                                                      InstTemplateArgs,
                                                      CanonType,
-                                                     0,
-                             ClassTemplate->getNextPartialSpecSequenceNumber());
+                                                     0);
   // Substitute the nested name specifier, if any.
   if (SubstQualifier(PartialSpec, InstPartialSpec))
     return 0;
@@ -2641,8 +2640,7 @@ TemplateDeclInstantiator::InstantiateVarTemplatePartialSpecialization(
           SemaRef.Context, Owner, PartialSpec->getInnerLocStart(),
           PartialSpec->getLocation(), InstParams, VarTemplate, DI->getType(),
           DI, PartialSpec->getStorageClass(), Converted.data(),
-          Converted.size(), InstTemplateArgs,
-          VarTemplate->getNextPartialSpecSequenceNumber());
+          Converted.size(), InstTemplateArgs);
 
   // Substitute the nested name specifier, if any.
   if (SubstQualifier(PartialSpec, InstPartialSpec))
