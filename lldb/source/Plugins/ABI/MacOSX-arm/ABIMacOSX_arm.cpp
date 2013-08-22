@@ -654,7 +654,7 @@ ABIMacOSX_arm::RegisterIsVolatile (const RegisterInfo *reg_info)
 {
     if (reg_info)
     {
-        // Volatile registers include: r0, r1, r2, r3, r9, r12, r13
+        // Volatile registers are: r0, r1, r2, r3, r9, r12, r13 (aka sp)
         const char *name = reg_info->name;
         if (name[0] == 'r')
         {
@@ -668,7 +668,7 @@ ABIMacOSX_arm::RegisterIsVolatile (const RegisterInfo *reg_info)
                         return true; // r1
                     case '2':
                     case '3':
-                        return name[2] == '\0'; // r12 - r13
+                        return name[3] == '\0'; // r12, r13 (sp)
                     default:
                         break;
                     }
