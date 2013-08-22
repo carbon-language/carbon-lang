@@ -2391,7 +2391,7 @@ DeclResult Sema::ActOnVarTemplateSpecialization(
     // If we are providing an explicit specialization of a member variable
     // template specialization, make a note of that.
     if (PrevPartial && PrevPartial->getInstantiatedFromMember())
-      Partial->setMemberSpecialization();
+      PrevPartial->setMemberSpecialization();
 
     // Check that all of the template parameters of the variable template
     // partial specialization are deducible from the template
@@ -2477,6 +2477,9 @@ DeclResult Sema::ActOnVarTemplateSpecialization(
                           ForRedeclaration);
     PrevSpec.addDecl(PrevDecl);
     D.setRedeclaration(CheckVariableDeclaration(Specialization, PrevSpec));
+  } else if (Specialization->isStaticDataMember() &&
+             Specialization->isOutOfLine()) {
+    Specialization->setAccess(VarTemplate->getAccess());
   }
 
   // Link instantiations of static data members back to the template from

@@ -952,7 +952,6 @@ TemplateDeclInstantiator::VisitClassTemplatePartialSpecializationDecl(
 Decl *TemplateDeclInstantiator::VisitVarTemplateDecl(VarTemplateDecl *D) {
   assert(D->getTemplatedDecl()->isStaticDataMember() &&
          "Only static data member templates are allowed.");
-  // FIXME: Also only when instantiating a class?
 
   // Create a local instantiation scope for this variable template, which
   // will contain the instantiations of the template parameters.
@@ -971,27 +970,10 @@ Decl *TemplateDeclInstantiator::VisitVarTemplateDecl(VarTemplateDecl *D) {
       PrevVarTemplate = dyn_cast<VarTemplateDecl>(Found.front());
   }
 
-  // FIXME: This, and ForVarTemplate, is a hack that is probably unnecessary.
-  // We should use a simplified version of VisitVarDecl.
   VarDecl *VarInst =
       cast_or_null<VarDecl>(VisitVarDecl(Pattern, /*ForVarTemplate=*/ true));
 
   DeclContext *DC = Owner;
-
-  /* FIXME: This should be handled in VisitVarDecl, as used to produce
-     VarInst above.
-  // Instantiate the qualifier.
-  NestedNameSpecifierLoc QualifierLoc = Pattern->getQualifierLoc();
-  if (QualifierLoc) {
-    QualifierLoc =
-        SemaRef.SubstNestedNameSpecifierLoc(QualifierLoc, TemplateArgs);
-    if (!QualifierLoc)
-      return 0;
-  }
-
-  if (QualifierLoc)
-    VarInst->setQualifierInfo(QualifierLoc);
-  */
 
   VarTemplateDecl *Inst = VarTemplateDecl::Create(
       SemaRef.Context, DC, D->getLocation(), D->getIdentifier(), InstParams,
@@ -1028,7 +1010,6 @@ Decl *TemplateDeclInstantiator::VisitVarTemplatePartialSpecializationDecl(
     VarTemplatePartialSpecializationDecl *D) {
   assert(D->isStaticDataMember() &&
          "Only static data member templates are allowed.");
-  // FIXME: Also only when instantiating a class?
 
   VarTemplateDecl *VarTemplate = D->getSpecializedTemplate();
 
@@ -2669,11 +2650,18 @@ TemplateDeclInstantiator::InstantiateVarTemplatePartialSpecialization(
   InstPartialSpec->setTypeAsWritten(WrittenTy);
 
   InstPartialSpec->setAccess(PartialSpec->getAccess());
-  // FIXME: How much of BuildVariableInstantiation() should go in here?
 
   // Add this partial specialization to the set of variable template partial
   // specializations. The instantiation of the initializer is not necessary.
   VarTemplate->AddPartialSpecialization(InstPartialSpec, /*InsertPos=*/0);
+
+  // Set the initializer, to use as pattern for initialization.
+  if (VarDecl *Def = PartialSpec->getDefinition(SemaRef.getASTContext()))
+    PartialSpec = cast<VarTemplatePartialSpecializationDecl>(Def);
+  SemaRef.BuildVariableInstantiation(InstPartialSpec, PartialSpec, TemplateArgs,
+                                     LateAttrs, StartingScope);
+  InstPartialSpec->setInit(PartialSpec->getInit());
+
   return InstPartialSpec;
 }
 
@@ -3303,8 +3291,10 @@ VarTemplateSpecializationDecl *Sema::CompleteVarTemplateSpecializationDecl(
     const MultiLevelTemplateArgumentList &TemplateArgs) {
 
   // Do substitution on the type of the declaration
+  MultiLevelTemplateArgumentList Innermost;
+  Innermost.addOuterTemplateArguments(TemplateArgs.getInnermost());
   TypeSourceInfo *DI =
-      SubstType(PatternDecl->getTypeSourceInfo(), TemplateArgs,
+      SubstType(PatternDecl->getTypeSourceInfo(), Innermost,
                 PatternDecl->getTypeSpecStartLoc(), PatternDecl->getDeclName());
   if (!DI)
     return 0;
@@ -3386,6 +3376,11 @@ void Sema::BuildVariableInstantiation(
 
   if (isa<VarTemplateSpecializationDecl>(NewVar)) {
     // Do not instantiate the variable just yet.
+  } else if (ForVarTemplate) {
+    assert(!NewVar->getInit() &&
+           "A variable should not have an initializer if it is templated"
+           " and we are instantiating its template");
+    NewVar->setInit(OldVar->getInit());
   } else
     InstantiateVariableInitializer(NewVar, OldVar, TemplateArgs);
 

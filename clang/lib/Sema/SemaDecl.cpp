@@ -5333,17 +5333,12 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
   // If we are providing an explicit specialization of a static variable
   // template, make a note of that.
   if (PrevVarTemplate && PrevVarTemplate->getInstantiatedFromMemberTemplate())
-    NewTemplate->setMemberSpecialization();
+    PrevVarTemplate->setMemberSpecialization();
 
   // Set the lexical context of this template
   NewTemplate->setLexicalDeclContext(CurContext);
   if (NewVD->isStaticDataMember() && NewVD->isOutOfLine())
     NewTemplate->setAccess(NewVD->getAccess());
-
-  if (PrevVarTemplate)
-    mergeDeclAttributes(NewVD, PrevVarTemplate->getTemplatedDecl());
-
-  AddPushedVisibilityAttribute(NewVD);
 
   PushOnScopeChains(NewTemplate, S);
   AddToScope = false;

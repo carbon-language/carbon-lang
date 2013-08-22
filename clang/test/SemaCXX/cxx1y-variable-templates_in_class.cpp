@@ -127,13 +127,13 @@ struct matrix_constants {
 };
 
 namespace in_class_template {
-  // FIXME: member data templates of class templates are not well supported yet.
 
   template<typename T>
   class D0 {
     template<typename U> static U Data;
     template<typename U> static const U Data<U*> = U();
   };
+  template const int D0<float>::Data<int*>;
 
   template<typename T>
   class D1 {
@@ -142,14 +142,63 @@ namespace in_class_template {
   };
   template<typename T>
   template<typename U> U* D1<T>::Data<U*> = (U*)(0);
-    
-  namespace to_be_fixed {
-    // FIXME: The following generate runtime exceptions!
+  template int* D1<float>::Data<int*>;
 
-    //template<>
-    //template<typename U> U* D1<float>::Data<U*> = (U*)(0) + 1;
-    //template const int D0<float>::Data<int*>;
-    //template int* D1<float>::Data<int*>;
+  template<typename T>
+  class D2 {
+    template<typename U> static U Data;
+    template<typename U> static U* Data<U*>;
+  };
+  template<>
+  template<typename U> U* D2<float>::Data<U*> = (U*)(0) + 1;
+  template int* D1<float>::Data<int*>;
+  
+  template<typename T>
+  struct D3 {
+    template<typename U> static const U Data = U(100);
+  };
+  template const int D3<float>::Data<int>;
+#ifndef PRECXX11
+  static_assert(D3<float>::Data<int> == 100, "");
+#endif
+
+  namespace bug_files {
+    // FIXME: A bug has been filed addressing an issue similar to these. 
+    // No error diagnosis should be produced, because an
+    // explicit specialization of a member templates of class 
+    // template specialization should not inherit the partial 
+    // specializations from the class template specialization.
+
+    template<typename T>
+    class D0 {
+      template<typename U> static U Data;
+      template<typename U> static const U Data<U*> = U(10);  // expected-note {{previous definition is here}}
+    };
+    template<>
+    template<typename U> U D0<float>::Data<U*> = U(100);  // expected-error{{redefinition of 'Data'}}
+
+    template<typename T>
+    class D1 {
+      template<typename U> static U Data;
+      template<typename U> static U* Data<U*>;  // expected-note {{previous definition is here}}
+    };  
+    template<typename T>
+    template<typename U> U* D1<T>::Data<U*> = (U*)(0);
+    template<>
+    template<typename U> U* D1<float>::Data<U*> = (U*)(0) + 1;  // expected-error{{redefinition of 'Data'}}
+  }
+  
+  namespace other_bugs {
+    // FIXME: This fails to properly initilize the variable 'k'.
+    
+    template<typename A> struct S { 
+      template<typename B> static int V;
+      template<typename B> static int V0;
+    };
+    template struct S<int>;
+    template<typename A> template<typename B> int S<A>::V0 = 123;
+    template<typename A> template<typename B> int S<A>::V<B> = 123;
+    int k = S<int>::V<void>;
   }
 }
 
