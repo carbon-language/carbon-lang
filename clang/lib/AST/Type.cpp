@@ -1130,7 +1130,7 @@ bool QualType::isTriviallyCopyableType(ASTContext &Context) const {
 
 
 
-bool Type::isLiteralType(ASTContext &Ctx) const {
+bool Type::isLiteralType(const ASTContext &Ctx) const {
   if (isDependentType())
     return false;
 

@@ -906,7 +906,7 @@ class DeclRefExpr : public Expr {
     return const_cast<DeclRefExpr *>(this)->getInternalFoundDecl();
   }
 
-  DeclRefExpr(ASTContext &Ctx,
+  DeclRefExpr(const ASTContext &Ctx,
               NestedNameSpecifierLoc QualifierLoc,
               SourceLocation TemplateKWLoc,
               ValueDecl *D, bool refersToEnclosingLocal,
@@ -921,7 +921,7 @@ class DeclRefExpr : public Expr {
 
   /// \brief Computes the type- and value-dependence flags for this
   /// declaration reference expression.
-  void computeDependence(ASTContext &C);
+  void computeDependence(const ASTContext &C);
 
 public:
   DeclRefExpr(ValueDecl *D, bool refersToEnclosingLocal, QualType T,
@@ -937,7 +937,7 @@ public:
     computeDependence(D->getASTContext());
   }
 
-  static DeclRefExpr *Create(ASTContext &Context,
+  static DeclRefExpr *Create(const ASTContext &Context,
                              NestedNameSpecifierLoc QualifierLoc,
                              SourceLocation TemplateKWLoc,
                              ValueDecl *D,
@@ -947,7 +947,7 @@ public:
                              NamedDecl *FoundD = 0,
                              const TemplateArgumentListInfo *TemplateArgs = 0);
 
-  static DeclRefExpr *Create(ASTContext &Context,
+  static DeclRefExpr *Create(const ASTContext &Context,
                              NestedNameSpecifierLoc QualifierLoc,
                              SourceLocation TemplateKWLoc,
                              ValueDecl *D,
@@ -958,7 +958,7 @@ public:
                              const TemplateArgumentListInfo *TemplateArgs = 0);
 
   /// \brief Construct an empty declaration reference expression.
-  static DeclRefExpr *CreateEmpty(ASTContext &Context,
+  static DeclRefExpr *CreateEmpty(const ASTContext &Context,
                                   bool HasQualifier,
                                   bool HasFoundDecl,
                                   bool HasTemplateKWAndArgsInfo,

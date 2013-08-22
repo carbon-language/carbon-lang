@@ -238,8 +238,8 @@ SourceLocation Expr::getExprLoc() const {
 /// \brief Compute the type-, value-, and instantiation-dependence of a 
 /// declaration reference
 /// based on the declaration being referenced.
-static void computeDeclRefDependence(ASTContext &Ctx, NamedDecl *D, QualType T,
-                                     bool &TypeDependent,
+static void computeDeclRefDependence(const ASTContext &Ctx, NamedDecl *D,
+                                     QualType T, bool &TypeDependent,
                                      bool &ValueDependent,
                                      bool &InstantiationDependent) {
   TypeDependent = false;
@@ -328,7 +328,7 @@ static void computeDeclRefDependence(ASTContext &Ctx, NamedDecl *D, QualType T,
   }
 }
 
-void DeclRefExpr::computeDependence(ASTContext &Ctx) {
+void DeclRefExpr::computeDependence(const ASTContext &Ctx) {
   bool TypeDependent = false;
   bool ValueDependent = false;
   bool InstantiationDependent = false;
@@ -362,7 +362,7 @@ void DeclRefExpr::computeDependence(ASTContext &Ctx) {
     ExprBits.ContainsUnexpandedParameterPack = true;
 }
 
-DeclRefExpr::DeclRefExpr(ASTContext &Ctx,
+DeclRefExpr::DeclRefExpr(const ASTContext &Ctx,
                          NestedNameSpecifierLoc QualifierLoc,
                          SourceLocation TemplateKWLoc,
                          ValueDecl *D, bool RefersToEnclosingLocal,
@@ -399,7 +399,7 @@ DeclRefExpr::DeclRefExpr(ASTContext &Ctx,
   computeDependence(Ctx);
 }
 
-DeclRefExpr *DeclRefExpr::Create(ASTContext &Context,
+DeclRefExpr *DeclRefExpr::Create(const ASTContext &Context,
                                  NestedNameSpecifierLoc QualifierLoc,
                                  SourceLocation TemplateKWLoc,
                                  ValueDecl *D,
@@ -415,7 +415,7 @@ DeclRefExpr *DeclRefExpr::Create(ASTContext &Context,
                 T, VK, FoundD, TemplateArgs);
 }
 
-DeclRefExpr *DeclRefExpr::Create(ASTContext &Context,
+DeclRefExpr *DeclRefExpr::Create(const ASTContext &Context,
                                  NestedNameSpecifierLoc QualifierLoc,
                                  SourceLocation TemplateKWLoc,
                                  ValueDecl *D,
@@ -445,7 +445,7 @@ DeclRefExpr *DeclRefExpr::Create(ASTContext &Context,
                                NameInfo, FoundD, TemplateArgs, T, VK);
 }
 
-DeclRefExpr *DeclRefExpr::CreateEmpty(ASTContext &Context,
+DeclRefExpr *DeclRefExpr::CreateEmpty(const ASTContext &Context,
                                       bool HasQualifier,
                                       bool HasFoundDecl,
                                       bool HasTemplateKWAndArgsInfo,
@@ -3378,7 +3378,7 @@ void ObjCMessageExpr::initArgsAndSelLocs(ArrayRef<Expr *> Args,
   }
 }
 
-ObjCMessageExpr *ObjCMessageExpr::Create(ASTContext &Context, QualType T,
+ObjCMessageExpr *ObjCMessageExpr::Create(const ASTContext &Context, QualType T,
                                          ExprValueKind VK,
                                          SourceLocation LBracLoc,
                                          SourceLocation SuperLoc,
@@ -3403,7 +3403,7 @@ ObjCMessageExpr *ObjCMessageExpr::Create(ASTContext &Context, QualType T,
                                    Method, Args, RBracLoc, isImplicit);
 }
 
-ObjCMessageExpr *ObjCMessageExpr::Create(ASTContext &Context, QualType T,
+ObjCMessageExpr *ObjCMessageExpr::Create(const ASTContext &Context, QualType T,
                                          ExprValueKind VK,
                                          SourceLocation LBracLoc,
                                          TypeSourceInfo *Receiver,
@@ -3426,7 +3426,7 @@ ObjCMessageExpr *ObjCMessageExpr::Create(ASTContext &Context, QualType T,
                                    isImplicit);
 }
 
-ObjCMessageExpr *ObjCMessageExpr::Create(ASTContext &Context, QualType T,
+ObjCMessageExpr *ObjCMessageExpr::Create(const ASTContext &Context, QualType T,
                                          ExprValueKind VK,
                                          SourceLocation LBracLoc,
                                          Expr *Receiver,
@@ -3449,14 +3449,14 @@ ObjCMessageExpr *ObjCMessageExpr::Create(ASTContext &Context, QualType T,
                                    isImplicit);
 }
 
-ObjCMessageExpr *ObjCMessageExpr::CreateEmpty(ASTContext &Context, 
+ObjCMessageExpr *ObjCMessageExpr::CreateEmpty(const ASTContext &Context,
                                               unsigned NumArgs,
                                               unsigned NumStoredSelLocs) {
   ObjCMessageExpr *Mem = alloc(Context, NumArgs, NumStoredSelLocs);
   return new (Mem) ObjCMessageExpr(EmptyShell(), NumArgs);
 }
 
-ObjCMessageExpr *ObjCMessageExpr::alloc(ASTContext &C,
+ObjCMessageExpr *ObjCMessageExpr::alloc(const ASTContext &C,
                                         ArrayRef<Expr *> Args,
                                         SourceLocation RBraceLoc,
                                         ArrayRef<SourceLocation> SelLocs,
@@ -3468,7 +3468,7 @@ ObjCMessageExpr *ObjCMessageExpr::alloc(ASTContext &C,
   return alloc(C, Args.size(), NumStoredSelLocs);
 }
 
-ObjCMessageExpr *ObjCMessageExpr::alloc(ASTContext &C,
+ObjCMessageExpr *ObjCMessageExpr::alloc(const ASTContext &C,
                                         unsigned NumArgs,
                                         unsigned NumStoredSelLocs) {
   unsigned Size = sizeof(ObjCMessageExpr) + sizeof(void *) + 
@@ -3979,7 +3979,7 @@ ObjCArrayLiteral::ObjCArrayLiteral(ArrayRef<Expr *> Elements,
   }
 }
 
-ObjCArrayLiteral *ObjCArrayLiteral::Create(ASTContext &C, 
+ObjCArrayLiteral *ObjCArrayLiteral::Create(const ASTContext &C,
                                            ArrayRef<Expr *> Elements,
                                            QualType T, ObjCMethodDecl * Method,
                                            SourceRange SR) {
@@ -3988,7 +3988,7 @@ ObjCArrayLiteral *ObjCArrayLiteral::Create(ASTContext &C,
   return new (Mem) ObjCArrayLiteral(Elements, T, Method, SR);
 }
 
-ObjCArrayLiteral *ObjCArrayLiteral::CreateEmpty(ASTContext &C, 
+ObjCArrayLiteral *ObjCArrayLiteral::CreateEmpty(const ASTContext &C,
                                                 unsigned NumElements) {
   
   void *Mem = C.Allocate(sizeof(ObjCArrayLiteral) 
@@ -4033,7 +4033,7 @@ ObjCDictionaryLiteral::ObjCDictionaryLiteral(
 }
 
 ObjCDictionaryLiteral *
-ObjCDictionaryLiteral::Create(ASTContext &C,
+ObjCDictionaryLiteral::Create(const ASTContext &C,
                               ArrayRef<ObjCDictionaryElement> VK, 
                               bool HasPackExpansions,
                               QualType T, ObjCMethodDecl *method,
@@ -4048,7 +4048,7 @@ ObjCDictionaryLiteral::Create(ASTContext &C,
 }
 
 ObjCDictionaryLiteral *
-ObjCDictionaryLiteral::CreateEmpty(ASTContext &C, unsigned NumElements,
+ObjCDictionaryLiteral::CreateEmpty(const ASTContext &C, unsigned NumElements,
                                    bool HasPackExpansions) {
   unsigned ExpansionsSize = 0;
   if (HasPackExpansions)
@@ -4059,7 +4059,7 @@ ObjCDictionaryLiteral::CreateEmpty(ASTContext &C, unsigned NumElements,
                                          HasPackExpansions);
 }
 
-ObjCSubscriptRefExpr *ObjCSubscriptRefExpr::Create(ASTContext &C,
+ObjCSubscriptRefExpr *ObjCSubscriptRefExpr::Create(const ASTContext &C,
                                                    Expr *base,
                                                    Expr *key, QualType T, 
                                                    ObjCMethodDecl *getMethod,
