@@ -176,13 +176,14 @@ bool ContinuationIndenter::mustBreak(const LineState &State) {
 }
 
 unsigned ContinuationIndenter::addTokenToState(LineState &State, bool Newline,
-                                               bool DryRun) {
+                                               bool DryRun,
+                                               unsigned ExtraSpaces) {
   const FormatToken &Current = *State.NextToken;
   const FormatToken &Previous = *State.NextToken->Previous;
 
   // Extra penalty that needs to be added because of the way certain line
   // breaks are chosen.
-  unsigned ExtraPenalty = 0;
+  unsigned Penalty = 0;
 
   if (State.Stack.size() == 0 || Current.Type == TT_ImplicitStringLiteral) {
     // FIXME: Is this correct?
@@ -199,13 +200,20 @@ unsigned ContinuationIndenter::addTokenToState(LineState &State, bool Newline,
   unsigned ContinuationIndent =
       std::max(State.Stack.back().LastSpace, State.Stack.back().Indent) + 4;
   if (Newline) {
+    // The first line break on any ParenLevel causes an extra penalty in order
+    // prefer similar line breaks.
+    if (!State.Stack.back().ContainsLineBreak)
+      Penalty += 15;
+    State.Stack.back().ContainsLineBreak = true;
+
+    Penalty += State.NextToken->SplitPenalty;
+
     // Breaking before the first "<<" is generally not desirable if the LHS is
     // short.
     if (Current.is(tok::lessless) && State.Stack.back().FirstLessLess == 0 &&
         State.Column <= Style.ColumnLimit / 2)
-      ExtraPenalty += Style.PenaltyBreakFirstLessLess;
+      Penalty += Style.PenaltyBreakFirstLessLess;
 
-    State.Stack.back().ContainsLineBreak = true;
     if (Current.is(tok::r_brace)) {
       if (Current.BlockKind == BK_BracedInit)
         State.Column = State.Stack[State.Stack.size() - 2].LastSpace;
@@ -333,7 +341,7 @@ unsigned ContinuationIndenter::addTokenToState(LineState &State, bool Newline,
         State.Stack.back().LastSpace = State.Stack.back().VariablePos;
     }
 
-    unsigned Spaces = State.NextToken->SpacesRequiredBefore;
+    unsigned Spaces = State.NextToken->SpacesRequiredBefore + ExtraSpaces;
 
     if (!DryRun)
       Whitespaces.replaceWhitespace(Current, 0, Spaces, State.Column + Spaces);
@@ -395,7 +403,7 @@ unsigned ContinuationIndenter::addTokenToState(LineState &State, bool Newline,
     }
   }
 
-  return moveStateToNextToken(State, DryRun, Newline) + ExtraPenalty;
+  return moveStateToNextToken(State, DryRun, Newline) + Penalty;
 }
 
 unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
@@ -542,11 +550,20 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
 
   State.NextToken = State.NextToken->Next;
 
-  if (!Newline && Style.AlwaysBreakBeforeMultilineStrings &&
-      Current.is(tok::string_literal) && Current.CanBreakBefore)
-    return 0;
+  unsigned Penalty = 0;
+  if (Newline || !Style.AlwaysBreakBeforeMultilineStrings ||
+      Current.isNot(tok::string_literal) || !Current.CanBreakBefore)
+    Penalty += breakProtrudingToken(Current, State, DryRun);
 
-  return breakProtrudingToken(Current, State, DryRun);
+  // If the previous has a special role, let it consume tokens as appropriate.
+  // It is necessary to start at the previous token for the only implemented
+  // role (comma separated list). That way, the decision whether or not to break
+  // after the "{" is already done and both options are tried and evaluated.
+  // FIXME: This is ugly, find a better way.
+  if (Previous && Previous->Role)
+    Penalty += Previous->Role->format(State, this, DryRun);
+
+  return Penalty;
 }
 
 unsigned ContinuationIndenter::breakProtrudingToken(const FormatToken &Current,

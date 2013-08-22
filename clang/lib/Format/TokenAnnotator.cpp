@@ -29,9 +29,11 @@ namespace {
 /// into template parameter lists.
 class AnnotatingParser {
 public:
-  AnnotatingParser(AnnotatedLine &Line, IdentifierInfo &Ident_in)
-      : Line(Line), CurrentToken(Line.First), KeywordVirtualFound(false),
-        NameFound(false), AutoFound(false), Ident_in(Ident_in) {
+  AnnotatingParser(const FormatStyle &Style, AnnotatedLine &Line,
+                   IdentifierInfo &Ident_in)
+      : Style(Style), Line(Line), CurrentToken(Line.First),
+        KeywordVirtualFound(false), NameFound(false), AutoFound(false),
+        Ident_in(Ident_in) {
     Contexts.push_back(Context(tok::unknown, 1, /*IsExpression=*/false));
   }
 
@@ -268,6 +270,9 @@ private:
   void updateParameterCount(FormatToken *Left, FormatToken *Current) {
     if (Current->is(tok::comma)) {
       ++Left->ParameterCount;
+      if (!Left->Role)
+        Left->Role.reset(new CommaSeparatedList(Style));
+      Left->Role->CommaFound(Current);
     } else if (Left->ParameterCount == 0 && Current->isNot(tok::comment)) {
       Left->ParameterCount = 1;
     }
@@ -827,6 +832,7 @@ private:
 
   SmallVector<Context, 8> Contexts;
 
+  const FormatStyle &Style;
   AnnotatedLine &Line;
   FormatToken *CurrentToken;
   bool KeywordVirtualFound;
@@ -937,7 +943,7 @@ private:
 } // end anonymous namespace
 
 void TokenAnnotator::annotate(AnnotatedLine &Line) {
-  AnnotatingParser Parser(Line, Ident_in);
+  AnnotatingParser Parser(Style, Line, Ident_in);
   Line.Type = Parser.parseLine();
   if (Line.Type == LT_Invalid)
     return;
@@ -1007,6 +1013,11 @@ void TokenAnnotator::calculateFormattingInformation(AnnotatedLine &Line) {
   }
 
   calculateUnbreakableTailLengths(Line);
+  for (Current = Line.First; Current != NULL; Current = Current->Next) {
+    if (Current->Role)
+      Current->Role->precomputeFormattingInfos(Current);
+  }
+
   DEBUG({
     printDebugInfo(Line);
   });

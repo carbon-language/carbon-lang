@@ -1691,16 +1691,6 @@ TEST_F(FormatTest, StaticInitializers) {
       "  100000000, \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"\n"
       "};");
 
-  verifyFormat(
-      "static SomeClass = { a, b, c, d, e, f, g, h, i, j,\n"
-      "                     looooooooooooooooooooooooooooooooooongname,\n"
-      "                     looooooooooooooooooooooooooooooong };");
-  // Allow bin-packing in static initializers as this would often lead to
-  // terrible results, e.g.:
-  verifyGoogleFormat(
-      "static SomeClass = {a, b, c, d, e, f, g, h, i, j,\n"
-      "                    looooooooooooooooooooooooooooooooooongname,\n"
-      "                    looooooooooooooooooooooooooooooong};");
   // Here, everything other than the "}" would fit on a line.
   verifyFormat("static int LooooooooooooooooooooooooongVariable[1] = {\n"
                "  100000000000000000000000\n"
@@ -1782,7 +1772,7 @@ TEST_F(FormatTest, NestedStaticInitializers) {
       "struct {\n"
       "  unsigned bit;\n"
       "  const char *const name;\n"
-      "} kBitsToOs[] = { { kOsMac, \"Mac\" }, { kOsWin, \"Windows\" },\n"
+      "} kBitsToOs[] = { { kOsMac, \"Mac\" },     { kOsWin, \"Windows\" },\n"
       "                  { kOsLinux, \"Linux\" }, { kOsCrOS, \"Chrome OS\" } };");
 }
 
@@ -4150,6 +4140,44 @@ TEST_F(FormatTest, LayoutCxx11ConstructorBraceInitializers) {
                  "  T member = {arg1, arg2};\n"
                  "};",
                  NoSpaces);
+}
+
+TEST_F(FormatTest, FormatsBracedListsinColumnLayout) {
+  verifyFormat("vector<int> x = { 1, 22, 333, 4444, 55555, 666666, 7777777,\n"
+               "                  1, 22, 333, 4444, 55555, 666666, 7777777,\n"
+               "                  1, 22, 333, 4444, 55555, 666666, 7777777,\n"
+               "                  1, 22, 333, 4444, 55555, 666666, 7777777,\n"
+               "                  1, 22, 333, 4444, 55555, 666666, 7777777,\n"
+               "                  1, 22, 333, 4444, 55555, 666666, 7777777 };");
+  verifyFormat("vector<int> x = { 1, 22, 333, 4444, 55555, 666666, 7777777,\n"
+               "                  // line comment\n"
+               "                  1, 22, 333, 4444, 55555, 666666, 7777777,\n"
+               "                  1, 22, 333, 4444, 55555,\n"
+               "                  // line comment\n"
+               "                  1, 22, 333, 4444, 55555, 666666, 7777777,\n"
+               "                  1, 22, 333, 4444, 55555, 666666, 7777777 };");
+  verifyFormat(
+      "vector<int> x = { 1,       22, 333, 4444, 55555, 666666, 7777777,\n"
+      "                  1,       22, 333, 4444, 55555, 666666, 7777777,\n"
+      "                  1,       22, 333, 4444, 55555, 666666, // comment\n"
+      "                  7777777, 1,  22,  333,  4444,  55555,  666666,\n"
+      "                  7777777, 1,  22,  333,  4444,  55555,  666666,\n"
+      "                  7777777, 1,  22,  333,  4444,  55555,  666666,\n"
+      "                  7777777 };");
+  verifyFormat("static const uint16_t CallerSavedRegs64Bittttt[] = {\n"
+               "  X86::RAX, X86::RDX, X86::RCX, X86::RSI, X86::RDI,\n"
+               "  X86::R8,  X86::R9,  X86::R10, X86::R11, 0\n"
+               "};");
+  verifyFormat("vector<int> x = { 1, 1, 1, 1,\n"
+               "                  1, 1, 1, 1 };",
+               getLLVMStyleWithColumns(39));
+  verifyFormat("vector<int> x = { 1, 1, 1, 1,\n"
+               "                  1, 1, 1, 1 };",
+               getLLVMStyleWithColumns(38));
+  verifyFormat("vector<int> aaaaaaaaaaaaaaaaaaaaaa = {\n"
+               "  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1\n"
+               "};",
+               getLLVMStyleWithColumns(40));
 }
 
 TEST_F(FormatTest, PullTrivialFunctionDefinitionsIntoSingleLine) {

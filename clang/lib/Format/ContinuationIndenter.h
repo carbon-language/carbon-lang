@@ -60,7 +60,8 @@ public:
   ///
   /// If \p DryRun is \c false, also creates and stores the required
   /// \c Replacement.
-  unsigned addTokenToState(LineState &State, bool Newline, bool DryRun);
+  unsigned addTokenToState(LineState &State, bool Newline, bool DryRun,
+                           unsigned ExtraSpaces = 0);
 
   /// \brief Get the column limit for this line. This is the style's column
   /// limit, potentially reduced for preprocessor definitions.

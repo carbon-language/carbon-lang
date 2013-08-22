@@ -17,7 +17,9 @@
 #define LLVM_CLANG_FORMAT_FORMAT_TOKEN_H
 
 #include "clang/Basic/OperatorPrecedence.h"
+#include "clang/Format/Format.h"
 #include "clang/Lex/Lexer.h"
+#include "llvm/ADT/OwningPtr.h"
 
 namespace clang {
 namespace format {
@@ -71,6 +73,8 @@ enum ParameterPackingKind {
   PPK_OnePerLine,
   PPK_Inconclusive
 };
+
+class TokenRole;
 
 /// \brief A wrapper around a \c Token storing information about the
 /// whitespace characters preceeding it.
@@ -143,7 +147,10 @@ struct FormatToken {
 
   TokenType Type;
 
+  /// \brief The number of spaces that should be inserted before this token.
   unsigned SpacesRequiredBefore;
+
+  /// \brief \c true if it is allowed to break before this token.
   bool CanBreakBefore;
 
   bool ClosesTemplateDeclaration;
@@ -154,6 +161,10 @@ struct FormatToken {
   /// 0 parameters from functions with 1 parameter. Thus, we can simply count
   /// the number of commas.
   unsigned ParameterCount;
+
+  /// \brief A token can have a special role that can carry extra information
+  /// about the token's formatting.
+  llvm::OwningPtr<TokenRole> Role;
 
   /// \brief If this is an opening parenthesis, how are the parameters packed?
   ParameterPackingKind PackingKind;
@@ -298,6 +309,78 @@ private:
   // Disallow copying.
   FormatToken(const FormatToken &) LLVM_DELETED_FUNCTION;
   void operator=(const FormatToken &) LLVM_DELETED_FUNCTION;
+};
+
+class ContinuationIndenter;
+struct LineState;
+
+class TokenRole {
+public:
+  TokenRole(const FormatStyle &Style) : Style(Style) {}
+  virtual ~TokenRole();
+
+  /// \brief After the \c TokenAnnotator has finished annotating all the tokens,
+  /// this function precomputes required information for formatting.
+  virtual void precomputeFormattingInfos(const FormatToken *Token);
+
+  /// \brief Apply the special formatting that the given role demands.
+  ///
+  /// Continues formatting from \p State leaving indentation to \p Indenter and
+  /// returns the total penalty that this formatting incurs.
+  virtual unsigned format(LineState &State, ContinuationIndenter *Indenter,
+                          bool DryRun) {
+    return 0;
+  }
+
+  /// \brief Notifies the \c Role that a comma was found.
+  virtual void CommaFound(const FormatToken *Token) {}
+
+protected:
+  const FormatStyle &Style;
+};
+
+class CommaSeparatedList : public TokenRole {
+public:
+  CommaSeparatedList(const FormatStyle &Style) : TokenRole(Style) {}
+
+  virtual void precomputeFormattingInfos(const FormatToken *Token);
+
+  virtual unsigned format(LineState &State, ContinuationIndenter *Indenter,
+                          bool DryRun);
+
+  /// \brief Adds \p Token as the next comma to the \c CommaSeparated list.
+  virtual void CommaFound(const FormatToken *Token) { Commas.push_back(Token); }
+
+private:
+  /// \brief A struct that holds information on how to format a given list with
+  /// a specific number of columns.
+  struct ColumnFormat {
+    /// \brief The number of columns to use.
+    unsigned Columns;
+
+    /// \brief The total width in characters.
+    unsigned TotalWidth;
+
+    /// \brief The number of lines required for this format.
+    unsigned LineCount;
+
+    /// \brief The size of each column in characters.
+    SmallVector<unsigned, 8> ColumnSizes;
+  };
+
+  /// \brief Calculate which \c ColumnFormat fits best into
+  /// \p RemainingCharacters.
+  const ColumnFormat *getColumnFormat(unsigned RemainingCharacters) const;
+
+  /// \brief The ordered \c FormatTokens making up the commas of this list.
+  SmallVector<const FormatToken *, 8> Commas;
+
+  /// \brief The length of each of the list's items in characters including the
+  /// trailing comma.
+  SmallVector<unsigned, 8> ItemLengths;
+
+  /// \brief Precomputed formats that can be used for this list.
+  SmallVector<ColumnFormat, 4> Formats;
 };
 
 } // namespace format
