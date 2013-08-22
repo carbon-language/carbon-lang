@@ -2487,12 +2487,31 @@ Sema::ActOnCapScopeReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
   // [expr.prim.lambda]p4 in C++11; block literals follow the same rules.
   CapturingScopeInfo *CurCap = cast<CapturingScopeInfo>(getCurFunction());
   QualType FnRetType = CurCap->ReturnType;
-
-  // For blocks/lambdas with implicit return types, we check each return
-  // statement individually, and deduce the common return type when the block
-  // or lambda is completed.
-  if (CurCap->HasImplicitReturnType) {
-    // FIXME: Fold this into the 'auto' codepath below.
+  LambdaScopeInfo *const LambdaSI = getCurLambda();
+  // In C++1y, an implicit return type behaves as if 'auto' was
+  // the return type.
+  if (FnRetType.isNull() && getLangOpts().CPlusPlus1y) {
+    if (LambdaSI) {
+      FunctionDecl *CallOp = LambdaSI->CallOperator; 
+      FnRetType = CallOp->getResultType();
+      assert(FnRetType->getContainedAutoType());
+    }
+  }
+  
+  // For blocks/lambdas with implicit return types in C++11, we check each 
+  // return statement individually, and deduce the common return type when 
+  // the block or lambda is completed.  In C++1y, the return type deduction
+  // of a lambda is specified in terms of auto.
+  // Notably, in C++11, we take the type of the expression after decay and
+  // lvalue-to-rvalue conversion, so a class type can be cv-qualified.
+  // In C++1y, we perform template argument deduction as if the return
+  // type were 'auto', so an implicit return type is never cv-qualified.
+  // i.e if (getLangOpts().CPlusPlus1y && FnRetType.hasQualifiers())
+  //   FnRetType = FnRetType.getUnqualifiedType();
+  // Return type deduction is unchanged for blocks in C++1y.
+  // FIXME: Fold this into the 'auto' codepath below.
+  if (CurCap->HasImplicitReturnType && 
+                            (!LambdaSI || !getLangOpts().CPlusPlus1y)) {
     if (RetValExp && !isa<InitListExpr>(RetValExp)) {
       ExprResult Result = DefaultFunctionArrayLvalueConversion(RetValExp);
       if (Result.isInvalid())
@@ -2500,13 +2519,7 @@ Sema::ActOnCapScopeReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
       RetValExp = Result.take();
 
       if (!CurContext->isDependentContext()) {
-        FnRetType = RetValExp->getType();
-        // In C++11, we take the type of the expression after decay and
-        // lvalue-to-rvalue conversion, so a class type can be cv-qualified.
-        // In C++1y, we perform template argument deduction as if the return
-        // type were 'auto', so an implicit return type is never cv-qualified.
-        if (getLangOpts().CPlusPlus1y && FnRetType.hasQualifiers())
-          FnRetType = FnRetType.getUnqualifiedType();
+        FnRetType = RetValExp->getType();       
       } else
         FnRetType = CurCap->ReturnType = Context.DependentTy;
     } else {
@@ -2517,7 +2530,6 @@ Sema::ActOnCapScopeReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
         Diag(ReturnLoc, diag::err_lambda_return_init_list)
           << RetValExp->getSourceRange();
       }
-
       FnRetType = Context.VoidTy;
     }
 
@@ -2526,7 +2538,8 @@ Sema::ActOnCapScopeReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
     if (CurCap->ReturnType.isNull())
       CurCap->ReturnType = FnRetType;
   } else if (AutoType *AT =
-                 FnRetType.isNull() ? 0 : FnRetType->getContainedAutoType()) {
+                 (FnRetType.isNull() || !LambdaSI) ? 0 
+                      : FnRetType->getContainedAutoType()) {
     // In C++1y, the return type may involve 'auto'.
     FunctionDecl *FD = cast<LambdaScopeInfo>(CurCap)->CallOperator;
     if (CurContext->isDependentContext()) {
@@ -2534,7 +2547,7 @@ Sema::ActOnCapScopeReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
       //   Return type deduction [...] occurs when the definition is
       //   instantiated even if the function body contains a return
       //   statement with a non-type-dependent operand.
-      CurCap->ReturnType = FnRetType = Context.DependentTy;
+      CurCap->ReturnType = FnRetType;
     } else if (DeduceFunctionTypeFromReturnExpr(FD, ReturnLoc, RetValExp, AT)) {
       FD->setInvalidDecl();
       return StmtError();
@@ -2564,7 +2577,7 @@ Sema::ActOnCapScopeReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
   // pickier with blocks than for normal functions because we don't have GCC
   // compatibility to worry about here.
   const VarDecl *NRVOCandidate = 0;
-  if (FnRetType->isDependentType()) {
+  if (FnRetType->isDependentType() || FnRetType->isUndeducedType()) {
     // Delay processing for now.  TODO: there are lots of dependent
     // types we can conclusively prove aren't void.
   } else if (FnRetType->isVoidType()) {
@@ -2624,7 +2637,6 @@ Sema::ActOnCapScopeReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
 
   return Owned(Result);
 }
-
 /// Deduce the return type for a function from a returned expression, per
 /// C++1y [dcl.spec.auto]p6.
 bool Sema::DeduceFunctionTypeFromReturnExpr(FunctionDecl *FD,
@@ -2634,7 +2646,6 @@ bool Sema::DeduceFunctionTypeFromReturnExpr(FunctionDecl *FD,
   TypeLoc OrigResultType = FD->getTypeSourceInfo()->getTypeLoc().
     IgnoreParens().castAs<FunctionProtoTypeLoc>().getResultLoc();
   QualType Deduced;
-
   if (RetExpr && isa<InitListExpr>(RetExpr)) {
     //  If the deduction is for a return statement and the initializer is
     //  a braced-init-list, the program is ill-formed.
@@ -2692,9 +2703,18 @@ bool Sema::DeduceFunctionTypeFromReturnExpr(FunctionDecl *FD,
     AutoType *NewAT = Deduced->getContainedAutoType();
     if (!FD->isDependentContext() &&
         !Context.hasSameType(AT->getDeducedType(), NewAT->getDeducedType())) {
-      Diag(ReturnLoc, diag::err_auto_fn_different_deductions)
-        << (AT->isDecltypeAuto() ? 1 : 0)
-        << NewAT->getDeducedType() << AT->getDeducedType();
+      LambdaScopeInfo *const LambdaSI = getCurLambda();
+      if (LambdaSI && LambdaSI->HasImplicitReturnType) {
+        Diag(ReturnLoc,
+          diag::err_typecheck_missing_return_type_incompatible)
+          << NewAT->getDeducedType() << AT->getDeducedType()
+          << true /*IsLambda*/;
+      }
+      else {  
+        Diag(ReturnLoc, diag::err_auto_fn_different_deductions)
+          << (AT->isDecltypeAuto() ? 1 : 0)
+          << NewAT->getDeducedType() << AT->getDeducedType();
+      }
       return true;
     }
   } else if (!FD->isInvalidDecl()) {
@@ -2710,10 +2730,8 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
   // Check for unexpanded parameter packs.
   if (RetValExp && DiagnoseUnexpandedParameterPack(RetValExp))
     return StmtError();
-
   if (isa<CapturingScopeInfo>(getCurFunction()))
     return ActOnCapScopeReturnStmt(ReturnLoc, RetValExp);
-
   QualType FnRetType;
   QualType RelatedRetType;
   if (const FunctionDecl *FD = getCurFunctionDecl()) {

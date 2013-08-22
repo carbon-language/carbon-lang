@@ -781,7 +781,13 @@ static QualType ConvertDeclSpecToType(TypeProcessingState &state) {
     // specified with a trailing return type or inferred.
     if (declarator.getContext() == Declarator::LambdaExprContext ||
         isOmittedBlockReturnType(declarator)) {
-      Result = Context.DependentTy;
+      // In C++1y (n3690 CD), 5.1.2 [expr.prim.lambda]/4 : The lambda return 
+      // type is auto, which is replaced by the trailing-return-type if 
+      // provided and/or deduced from return statements as described 
+      // in 7.1.6.4. 
+      Result = S.getLangOpts().CPlusPlus1y &&
+               declarator.getContext() == Declarator::LambdaExprContext 
+                  ? Context.getAutoDeductType() : Context.DependentTy;
       break;
     }
 
@@ -1006,11 +1012,17 @@ static QualType ConvertDeclSpecToType(TypeProcessingState &state) {
 
   case DeclSpec::TST_auto:
     // TypeQuals handled by caller.
-    Result = Context.getAutoType(QualType(), /*decltype(auto)*/false);
+    Result = Context.getAutoType(QualType(), 
+                                /*decltype(auto)*/false, 
+                                /*IsDependent*/   false, 
+                                /*IsParameterPack*/ declarator.hasEllipsis());
     break;
 
   case DeclSpec::TST_decltype_auto:
-    Result = Context.getAutoType(QualType(), /*decltype(auto)*/true);
+    Result = Context.getAutoType(QualType(), 
+                                 /*decltype(auto)*/true, 
+                                 /*IsDependent*/   false, 
+                                 /*IsParameterPack*/ false);
     break;
 
   case DeclSpec::TST_unknown_anytype:
@@ -1557,7 +1569,7 @@ QualType Sema::BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
         ASM = ArrayType::Normal;
       }
     } else if (!T->isDependentType() && !T->isVariablyModifiedType() &&
-               !T->isIncompleteType()) {
+               !T->isIncompleteType() && !T->isUndeducedType()) {
       // Is the array too large?
       unsigned ActiveSizeBits
         = ConstantArrayType::getNumAddressingBits(Context, T, ConstVal);
@@ -2097,6 +2109,7 @@ static QualType GetDeclSpecTypeForDeclarator(TypeProcessingState &state,
   // In C++11, a function declarator using 'auto' must have a trailing return
   // type (this is checked later) and we can skip this. In other languages
   // using auto, we need to check regardless.
+  // Generic Lambdas (C++14) allow 'auto' in their parameters.
   if (ContainsPlaceholderType &&
       (!SemaRef.getLangOpts().CPlusPlus11 || !D.isFunctionDeclarator())) {
     int Error = -1;
@@ -2109,7 +2122,12 @@ static QualType GetDeclSpecTypeForDeclarator(TypeProcessingState &state,
     case Declarator::ObjCParameterContext:
     case Declarator::ObjCResultContext:
     case Declarator::PrototypeContext:
-      Error = 0; // Function prototype
+      Error = 0;  
+      break;
+    case Declarator::LambdaExprParameterContext:
+      if (!(SemaRef.getLangOpts().CPlusPlus1y 
+              && D.getDeclSpec().getTypeSpecType() == DeclSpec::TST_auto))
+        Error = 0;
       break;
     case Declarator::MemberContext:
       if (D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_static)
@@ -2189,8 +2207,13 @@ static QualType GetDeclSpecTypeForDeclarator(TypeProcessingState &state,
       AutoRange = D.getName().getSourceRange();
 
     if (Error != -1) {
+      if (D.getDeclSpec().getTypeSpecType() == DeclSpec::TST_decltype_auto) {
+        SemaRef.Diag(AutoRange.getBegin(), 
+            diag::err_decltype_auto_function_declarator_not_declaration);
+      } else {
       SemaRef.Diag(AutoRange.getBegin(), diag::err_auto_not_allowed)
         << Error << AutoRange;
+      }
       T = SemaRef.Context.IntTy;
       D.setInvalidType(true);
     } else
@@ -2240,6 +2263,7 @@ static QualType GetDeclSpecTypeForDeclarator(TypeProcessingState &state,
       D.setInvalidType(true);
       break;
     case Declarator::PrototypeContext:
+    case Declarator::LambdaExprParameterContext:
     case Declarator::ObjCParameterContext:
     case Declarator::ObjCResultContext:
     case Declarator::KNRTypeListContext:
@@ -2613,8 +2637,11 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
           }
         }
       }
-
-      if (const AutoType *AT = T->getContainedAutoType()) {
+      const AutoType *AT = T->getContainedAutoType();
+      // Allow arrays of auto if we are a generic lambda parameter.
+      // i.e. [](auto (&array)[5]) { return array[0]; }; OK
+      if (AT && !(S.getLangOpts().CPlusPlus1y && 
+                  D.getContext() == Declarator::LambdaExprParameterContext)) {
         // We've already diagnosed this for decltype(auto).
         if (!AT->isDecltypeAuto())
           S.Diag(DeclType.Loc, diag::err_illegal_decl_array_of_auto)
@@ -3110,6 +3137,7 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
     //   is a parameter pack (14.5.3). [...]
     switch (D.getContext()) {
     case Declarator::PrototypeContext:
+    case Declarator::LambdaExprParameterContext:
       // C++0x [dcl.fct]p13:
       //   [...] When it is part of a parameter-declaration-clause, the
       //   parameter pack is a function parameter pack (14.5.3). The type T
@@ -3128,7 +3156,6 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
         T = Context.getPackExpansionType(T, None);
       }
       break;
-
     case Declarator::TemplateParamContext:
       // C++0x [temp.param]p15:
       //   If a template-parameter is a [...] is a parameter-declaration that

@@ -3766,7 +3766,8 @@ namespace {
         QualType Result =
           SemaRef.Context.getAutoType(Dependent ? QualType() : Replacement,
                                       TL.getTypePtr()->isDecltypeAuto(),
-                                      Dependent);
+                                      Dependent, TL.getTypePtr()->
+                                        containsUnexpandedParameterPack());
         AutoTypeLoc NewTL = TLB.push<AutoTypeLoc>(Result);
         NewTL.setNameLoc(TL.getNameLoc());
         return Result;
@@ -3907,8 +3908,16 @@ Sema::DeduceAutoType(TypeLoc Type, Expr *&Init, QualType &Result) {
   return DAR_Succeeded;
 }
 
-QualType Sema::SubstAutoType(QualType Type, QualType Deduced) {
-  return SubstituteAutoTransform(*this, Deduced).TransformType(Type);
+QualType Sema::SubstAutoType(QualType TypeWithAuto, 
+                             QualType TypeToReplaceAuto) {
+  return SubstituteAutoTransform(*this, TypeToReplaceAuto).
+               TransformType(TypeWithAuto);
+}
+
+TypeSourceInfo* Sema::SubstAutoTypeSourceInfo(TypeSourceInfo *TypeWithAuto, 
+                             QualType TypeToReplaceAuto) {
+    return SubstituteAutoTransform(*this, TypeToReplaceAuto).
+               TransformType(TypeWithAuto);
 }
 
 void Sema::DiagnoseAutoDeductionFailure(VarDecl *VDecl, Expr *Init) {

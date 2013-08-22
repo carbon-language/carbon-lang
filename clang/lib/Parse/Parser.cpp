@@ -1175,7 +1175,6 @@ void Parser::ParseKNRParamDeclarations(Declarator &D) {
       // Ask the actions module to compute the type for this declarator.
       Decl *Param =
         Actions.ActOnParamDeclarator(getCurScope(), ParmDeclarator);
-
       if (Param &&
           // A missing identifier has already been diagnosed.
           ParmDeclarator.getIdentifier()) {

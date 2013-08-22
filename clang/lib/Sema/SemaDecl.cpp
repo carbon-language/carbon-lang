@@ -35,6 +35,7 @@
 #include "clang/Sema/DeclSpec.h"
 #include "clang/Sema/DelayedDiagnostic.h"
 #include "clang/Sema/Initialization.h"
+#include "clang/Sema/SemaLambda.h"
 #include "clang/Sema/Lookup.h"
 #include "clang/Sema/ParsedTemplate.h"
 #include "clang/Sema/Scope.h"
@@ -8909,6 +8910,7 @@ Decl *Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
   const DeclSpec &DS = D.getDeclSpec();
 
   // Verify C99 6.7.5.3p2: The only SCS allowed is 'register'.
+
   // C++03 [dcl.stc]p2 also permits 'auto'.
   VarDecl::StorageClass StorageClass = SC_None;
   if (DS.getStorageClassSpec() == DeclSpec::SCS_register) {
@@ -9015,6 +9017,14 @@ Decl *Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
   if (New->hasAttr<BlocksAttr>()) {
     Diag(New->getLocation(), diag::err_block_on_nonlocal);
   }
+
+  // Handle 'auto' within a generic lambda.
+  QualType ParamType = New->getType();
+  if (getLangOpts().CPlusPlus1y && ParamType->getContainedAutoType()) { 
+    assert(getCurLambda() && 
+                  "'auto' in parameter type only allowed in lambdas!");
+    New = ActOnLambdaAutoParameter(New);
+  } 
   return New;
 }
 
@@ -9268,9 +9278,38 @@ Decl *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Decl *D) {
     FD = FunTmpl->getTemplatedDecl();
   else
     FD = cast<FunctionDecl>(D);
+  // If we are instantiating a generic lambda call operator, push
+  // a LambdaScopeInfo onto the function stack.  But use the information
+  // that's already been calculated (ActOnLambdaExpr) when analyzing the
+  // template version, to prime the current LambdaScopeInfo. 
+  if (getLangOpts().CPlusPlus1y 
+                        && isGenericLambdaCallOperatorSpecialization(D)) {
+    CXXMethodDecl *CallOperator = cast<CXXMethodDecl>(D);
+    CXXRecordDecl *LambdaClass = CallOperator->getParent();
+    LambdaExpr    *LE = LambdaClass->getLambdaExpr();
+    assert(LE && 
+     "No LambdaExpr of closure class when instantiating a generic lambda!");
+    assert(ActiveTemplateInstantiations.size() &&
+      "There should be an active template instantiation on the stack " 
+      "when instantiating a generic lambda!");
+    PushLambdaScope();
+    LambdaScopeInfo *LSI = getCurLambda();
+    LSI->CallOperator = CallOperator;
+    LSI->Lambda = LambdaClass;
+    LSI->ReturnType = CallOperator->getResultType();
 
-  // Enter a new function scope
-  PushFunctionScope();
+    if (LE->getCaptureDefault() == LCD_None)
+      LSI->ImpCaptureStyle = CapturingScopeInfo::ImpCap_None;
+    else if (LE->getCaptureDefault() == LCD_ByCopy)
+      LSI->ImpCaptureStyle = CapturingScopeInfo::ImpCap_LambdaByval;
+    else if (LE->getCaptureDefault() == LCD_ByRef)
+      LSI->ImpCaptureStyle = CapturingScopeInfo::ImpCap_LambdaByref;
+    
+    LSI->IntroducerRange = LE->getIntroducerRange();
+  }
+  else
+    // Enter a new function scope
+    PushFunctionScope();
 
   // See if this is a redefinition.
   if (!FD->isLateTemplateParsed())

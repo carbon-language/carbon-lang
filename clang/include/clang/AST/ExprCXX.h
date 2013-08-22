@@ -1605,6 +1605,13 @@ public:
   /// lambda expression. 
   CXXMethodDecl *getCallOperator() const;
 
+  /// \brief If this is a generic lambda expression, retrieve the template 
+  /// parameter list associated with it, or else return null. 
+  TemplateParameterList *getTemplateParameterList() const;
+
+  /// \brief Whether this is a generic lambda.
+  bool isGenericLambda() const { return !!getTemplateParameterList(); }
+
   /// \brief Retrieve the body of the lambda.
   CompoundStmt *getBody() const;
 

@@ -3649,20 +3649,24 @@ QualType ASTContext::getUnaryTransformType(QualType BaseType,
 /// deduced to the given type, or to the canonical undeduced 'auto' type, or the
 /// canonical deduced-but-dependent 'auto' type.
 QualType ASTContext::getAutoType(QualType DeducedType, bool IsDecltypeAuto,
-                                 bool IsDependent) const {
-  if (DeducedType.isNull() && !IsDecltypeAuto && !IsDependent)
+                             bool IsDependent, bool IsParameterPack) const {
+  if (DeducedType.isNull() && !IsDecltypeAuto && !IsDependent && 
+                              !IsParameterPack)
     return getAutoDeductType();
-
+  assert(!IsParameterPack || DeducedType.isNull() 
+           && "Auto parameter pack: auto ... a should always be undeduced!");
   // Look in the folding set for an existing type.
   void *InsertPos = 0;
   llvm::FoldingSetNodeID ID;
-  AutoType::Profile(ID, DeducedType, IsDecltypeAuto, IsDependent);
+  AutoType::Profile(ID, DeducedType, IsDecltypeAuto, IsDependent, 
+     IsParameterPack);
   if (AutoType *AT = AutoTypes.FindNodeOrInsertPos(ID, InsertPos))
     return QualType(AT, 0);
 
   AutoType *AT = new (*this, TypeAlignment) AutoType(DeducedType,
                                                      IsDecltypeAuto,
-                                                     IsDependent);
+                                                     IsDependent, 
+                                                     IsParameterPack);
   Types.push_back(AT);
   if (InsertPos)
     AutoTypes.InsertNode(AT, InsertPos);
@@ -3702,7 +3706,8 @@ QualType ASTContext::getAutoDeductType() const {
   if (AutoDeductTy.isNull())
     AutoDeductTy = QualType(
       new (*this, TypeAlignment) AutoType(QualType(), /*decltype(auto)*/false,
-                                          /*dependent*/false),
+                                          /*dependent*/false, 
+                                          /*IsParameterPack*/false),
       0);
   return AutoDeductTy;
 }

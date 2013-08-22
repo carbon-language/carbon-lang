@@ -32,6 +32,7 @@
 #include "clang/Sema/CXXFieldCollector.h"
 #include "clang/Sema/DeclSpec.h"
 #include "clang/Sema/Initialization.h"
+#include "clang/Sema/SemaLambda.h"
 #include "clang/Sema/Lookup.h"
 #include "clang/Sema/ParsedTemplate.h"
 #include "clang/Sema/Scope.h"
@@ -10015,29 +10016,27 @@ void Sema::DefineImplicitLambdaToFunctionPointerConversion(
        SourceLocation CurrentLocation,
        CXXConversionDecl *Conv) 
 {
-  CXXRecordDecl *Lambda = Conv->getParent();
+  CXXRecordDecl *LambdaClass = Conv->getParent();
   
   // Make sure that the lambda call operator is marked used.
-  markLambdaCallOperatorUsed(*this, Lambda);
+  markLambdaCallOperatorUsed(*this, LambdaClass);
   
   Conv->setUsed();
   
   SynthesizedFunctionScope Scope(*this, Conv);
   DiagnosticErrorTrap Trap(Diags);
   
-  // Return the address of the __invoke function.
-  DeclarationName InvokeName = &Context.Idents.get("__invoke");
-  CXXMethodDecl *Invoke 
-    = cast<CXXMethodDecl>(Lambda->lookup(InvokeName).front());
+  CXXMethodDecl *Invoke = LambdaClass->getLambdaStaticInvoker();
+
   Expr *FunctionRef = BuildDeclRefExpr(Invoke, Invoke->getType(),
                                        VK_LValue, Conv->getLocation()).take();
-  assert(FunctionRef && "Can't refer to __invoke function?");
+  assert(FunctionRef && "Can't refer to lambda static invoker function?");
   Stmt *Return = ActOnReturnStmt(Conv->getLocation(), FunctionRef).take();
   Conv->setBody(new (Context) CompoundStmt(Context, Return,
                                            Conv->getLocation(),
                                            Conv->getLocation()));
     
-  // Fill in the __invoke function with a dummy implementation. IR generation
+  // Fill in the invoke function with a dummy implementation. IR generation
   // will fill in the actual details.
   Invoke->setUsed();
   Invoke->setReferenced();

@@ -20,6 +20,7 @@
 #include "clang/Sema/ParsedTemplate.h"
 #include "clang/Sema/Scope.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "clang/AST/DeclTemplate.h"
 
 using namespace clang;
 
@@ -908,12 +909,16 @@ ExprResult Parser::ParseLambdaExpressionAfterIntroducer(
   PrettyStackTraceLoc CrashInfo(PP.getSourceManager(), LambdaBeginLoc,
                                 "lambda expression parsing");
 
+ 
+
   // FIXME: Call into Actions to add any init-capture declarations to the
   // scope while parsing the lambda-declarator and compound-statement.
 
   // Parse lambda-declarator[opt].
   DeclSpec DS(AttrFactory);
   Declarator D(DS, Declarator::LambdaExprContext);
+  TemplateParameterDepthRAII CurTemplateDepthTracker(TemplateParameterDepth);
+  Actions.PushLambdaScope();    
 
   if (Tok.is(tok::l_paren)) {
     ParseScope PrototypeScope(this,
@@ -931,9 +936,17 @@ ExprResult Parser::ParseLambdaExpressionAfterIntroducer(
     SmallVector<DeclaratorChunk::ParamInfo, 16> ParamInfo;
     SourceLocation EllipsisLoc;
 
-    if (Tok.isNot(tok::r_paren))
+    
+    if (Tok.isNot(tok::r_paren)) {
+      sema::LambdaScopeInfo *LSI = Actions.getCurLambda(); 
+      if (getLangOpts().CPlusPlus1y)
+        Actions.RecordParsingTemplateParameterDepth(TemplateParameterDepth);
       ParseParameterDeclarationClause(D, Attr, ParamInfo, EllipsisLoc);
-
+      // For a generic lambda, each 'auto' within the parameter declaration 
+      // clause creates a template type parameter, so increment the depth.
+      if (getLangOpts().CPlusPlus1y && Actions.getCurGenericLambda()) 
+        ++CurTemplateDepthTracker;
+    }
     T.consumeClose();
     SourceLocation RParenLoc = T.getCloseLocation();
     DeclEndLoc = RParenLoc;

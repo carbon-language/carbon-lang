@@ -14,6 +14,7 @@
 #include "clang/AST/ExprCXX.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Sema/Initialization.h"
+#include "clang/Sema/SemaLambda.h"
 #include "clang/Sema/Lookup.h"
 #include "clang/Sema/Scope.h"
 #include "clang/Sema/ScopeInfo.h"
@@ -120,11 +121,69 @@ Sema::getCurrentMangleNumberContext(const DeclContext *DC,
   llvm_unreachable("unexpected context");
 }
 
+
+ParmVarDecl *Sema::ActOnLambdaAutoParameter(ParmVarDecl *PVD) {
+  LambdaScopeInfo *LSI = getCurLambda();
+  assert(LSI && "No LambdaScopeInfo on the stack!");
+  const unsigned TemplateParameterDepth = LSI->AutoTemplateParameterDepth;
+  const unsigned AutoParameterPosition = LSI->AutoTemplateParams.size();
+  // Invent a template type parameter corresponding to the auto 
+  // containing parameter.
+  TemplateTypeParmDecl *TemplateParam =
+    TemplateTypeParmDecl::Create(Context, 
+      // Temporarily add to the TranslationUnit DeclContext.  When the 
+      // associated TemplateParameterList is attached to a template
+      // declaration (such as FunctionTemplateDecl), the DeclContext 
+      // for each template parameter gets updated appropriately via
+      // a call to AdoptTemplateParameterList. 
+      Context.getTranslationUnitDecl(), 
+      SourceLocation(), 
+      PVD->getLocation(), 
+      TemplateParameterDepth, 
+      AutoParameterPosition,  // our template param index 
+      /* Identifier*/ 0, false, PVD->isParameterPack());
+  LSI->AutoTemplateParams.push_back(TemplateParam);
+  QualType AutoTy = PVD->getType();
+  // Now replace the 'auto' in the function parameter with this invented 
+  // template type parameter.
+  QualType TemplParamType = QualType(TemplateParam->getTypeForDecl(), 0);    
+  
+  TypeSourceInfo *AutoTSI = PVD->getTypeSourceInfo();
+  TypeSourceInfo *NewTSI = SubstAutoTypeSourceInfo(AutoTSI, TemplParamType);
+  PVD->setType(NewTSI->getType());
+  PVD->setTypeSourceInfo(NewTSI);
+  return PVD;
+}
+
+
+static inline TemplateParameterList *
+              getGenericLambdaTemplateParameterList(LambdaScopeInfo *LSI, 
+                            Sema &SemaRef) {
+  if (LSI->GLTemplateParameterList)
+    return LSI->GLTemplateParameterList;
+  else if (LSI->AutoTemplateParams.size()) {
+    SourceRange IntroRange = LSI->IntroducerRange;
+    SourceLocation LAngleLoc = IntroRange.getBegin();
+    SourceLocation RAngleLoc = IntroRange.getEnd();
+    LSI->GLTemplateParameterList = 
+          TemplateParameterList::Create(SemaRef.Context, 
+            /* Template kw loc */ SourceLocation(), 
+            LAngleLoc,
+            (NamedDecl**)LSI->AutoTemplateParams.data(), 
+            LSI->AutoTemplateParams.size(), RAngleLoc);  
+  }
+  return LSI->GLTemplateParameterList;
+}
+
+
+
 CXXMethodDecl *Sema::startLambdaDefinition(CXXRecordDecl *Class,
                  SourceRange IntroducerRange,
                  TypeSourceInfo *MethodType,
                  SourceLocation EndLoc,
                  ArrayRef<ParmVarDecl *> Params) {
+  TemplateParameterList *TemplateParams = 
+            getGenericLambdaTemplateParameterList(getCurLambda(), *this);
   // C++11 [expr.prim.lambda]p5:
   //   The closure type for a lambda-expression has a public inline function 
   //   call operator (13.5.4) whose parameters and return type are described by
@@ -152,6 +211,17 @@ CXXMethodDecl *Sema::startLambdaDefinition(CXXRecordDecl *Class,
   // Temporarily set the lexical declaration context to the current
   // context, so that the Scope stack matches the lexical nesting.
   Method->setLexicalDeclContext(CurContext);  
+  // Create a function template if we have a template parameter list
+  FunctionTemplateDecl *const TemplateMethod = TemplateParams ?
+            FunctionTemplateDecl::Create(Context, Class,
+                                         Method->getLocation(), MethodName, 
+                                         TemplateParams,
+                                         Method) : 0;
+  if (TemplateMethod) {
+    TemplateMethod->setLexicalDeclContext(CurContext);
+    TemplateMethod->setAccess(AS_public);
+    Method->setDescribedFunctionTemplate(TemplateMethod);
+  }
   
   // Add parameters.
   if (!Params.empty()) {
@@ -177,15 +247,16 @@ CXXMethodDecl *Sema::startLambdaDefinition(CXXRecordDecl *Class,
   return Method;
 }
 
-LambdaScopeInfo *Sema::enterLambdaScope(CXXMethodDecl *CallOperator,
+void Sema::buildLambdaScope(LambdaScopeInfo *LSI,
+                                        CXXMethodDecl *CallOperator,
                                         SourceRange IntroducerRange,
                                         LambdaCaptureDefault CaptureDefault,
                                         SourceLocation CaptureDefaultLoc,
                                         bool ExplicitParams,
                                         bool ExplicitResultType,
                                         bool Mutable) {
-  PushLambdaScope(CallOperator->getParent(), CallOperator);
-  LambdaScopeInfo *LSI = getCurLambda();
+  LSI->CallOperator = CallOperator;
+  LSI->Lambda = CallOperator->getParent();
   if (CaptureDefault == LCD_ByCopy)
     LSI->ImpCaptureStyle = LambdaScopeInfo::ImpCap_LambdaByval;
   else if (CaptureDefault == LCD_ByRef)
@@ -208,8 +279,6 @@ LambdaScopeInfo *Sema::enterLambdaScope(CXXMethodDecl *CallOperator,
   } else {
     LSI->HasImplicitReturnType = true;
   }
-
-  return LSI;
 }
 
 void Sema::finishLambdaExplicitCaptures(LambdaScopeInfo *LSI) {
@@ -358,7 +427,7 @@ static void adjustBlockReturnsToEnum(Sema &S, ArrayRef<ReturnStmt*> returns,
 }
 
 void Sema::deduceClosureReturnType(CapturingScopeInfo &CSI) {
-  assert(CSI.HasImplicitReturnType);
+  assert(CSI.HasImplicitReturnType || CSI.ReturnType->isUndeducedType());
 
   // C++ Core Issue #975, proposed resolution:
   //   If a lambda-expression does not include a trailing-return-type,
@@ -392,7 +461,7 @@ void Sema::deduceClosureReturnType(CapturingScopeInfo &CSI) {
   // Second case: at least one return statement has dependent type.
   // Delay type checking until instantiation.
   assert(!CSI.ReturnType.isNull() && "We should have a tentative return type.");
-  if (CSI.ReturnType->isDependentType())
+  if (CSI.ReturnType->isDependentType() || CSI.ReturnType->isUndeducedType())
     return;
 
   // Try to apply the enum-fuzz rule.
@@ -519,15 +588,25 @@ FieldDecl *Sema::checkInitCapture(SourceLocation Loc, bool ByRef,
 }
 
 void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
-                                        Declarator &ParamInfo,
-                                        Scope *CurScope) {
+                  Declarator &ParamInfo, Scope *CurScope) {
   // Determine if we're within a context where we know that the lambda will
   // be dependent, because there are template parameters in scope.
   bool KnownDependent = false;
-  if (Scope *TmplScope = CurScope->getTemplateParamParent())
-    if (!TmplScope->decl_empty())
+  LambdaScopeInfo *const LSI = getCurLambda();
+  assert(LSI && "LambdaScopeInfo should be on stack!");
+  TemplateParameterList *TemplateParams = 
+            getGenericLambdaTemplateParameterList(LSI, *this);
+
+  if (Scope *TmplScope = CurScope->getTemplateParamParent()) {
+    // Since we have our own TemplateParams, so check if an outer scope
+    // has template params, only then are we in a dependent scope.
+    if (TemplateParams)  {
+      TmplScope = TmplScope->getParent();
+      TmplScope = TmplScope ? TmplScope->getTemplateParamParent() : 0;
+    }
+    if (TmplScope && !TmplScope->decl_empty())
       KnownDependent = true;
-  
+  }
   // Determine the signature of the call operator.
   TypeSourceInfo *MethodTyInfo;
   bool ExplicitParams = true;
@@ -542,7 +621,11 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
     FunctionProtoType::ExtProtoInfo EPI;
     EPI.HasTrailingReturn = true;
     EPI.TypeQuals |= DeclSpec::TQ_const;
-    QualType MethodTy = Context.getFunctionType(Context.DependentTy, None,
+    // For C++1y, use the new return type deduction machinery, by imaginging
+    // 'auto' if no trailing return type.
+    QualType DefaultTypeForNoTrailingReturn = getLangOpts().CPlusPlus1y ?
+                    Context.getAutoDeductType() : Context.DependentTy;
+    QualType MethodTy = Context.getFunctionType(DefaultTypeForNoTrailingReturn, None,
                                                 EPI);
     MethodTyInfo = Context.getTrivialTypeSourceInfo(MethodTy);
     ExplicitParams = false;
@@ -560,14 +643,15 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
     if (!FTI.hasMutableQualifier())
       FTI.TypeQuals |= DeclSpec::TQ_const;
     
+    ExplicitResultType = FTI.hasTrailingReturnType();
+    // In C++11 if there is no explicit return type, the return type is
+    // artificially set to DependentTy, whereas in C++1y it is set to AutoTy
+    // (through ConvertDeclSpecToType) which allows us to support both
+    // C++11 and C++1y return type deduction semantics.
     MethodTyInfo = GetTypeForDeclarator(ParamInfo, CurScope);
     assert(MethodTyInfo && "no type from lambda-declarator");
     EndLoc = ParamInfo.getSourceRange().getEnd();
     
-    ExplicitResultType
-      = MethodTyInfo->getType()->getAs<FunctionType>()->getResultType() 
-                                                        != Context.DependentTy;
-
     if (FTI.NumArgs == 1 && !FTI.isVariadic && FTI.ArgInfo[0].Ident == 0 &&
         cast<ParmVarDecl>(FTI.ArgInfo[0].Param)->getType()->isVoidType()) {
       // Empty arg list, don't push any params.
@@ -588,7 +672,6 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
 
   CXXMethodDecl *Method = startLambdaDefinition(Class, Intro.Range,
                                                 MethodTyInfo, EndLoc, Params);
-  
   if (ExplicitParams)
     CheckCXXDefaultArguments(Method);
   
@@ -598,9 +681,8 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
   // Introduce the function call operator as the current declaration context.
   PushDeclContext(CurScope, Method);
     
-  // Introduce the lambda scope.
-  LambdaScopeInfo *LSI
-    = enterLambdaScope(Method,
+  // Build the lambda scope.
+  buildLambdaScope(LSI, Method,
                        Intro.Range,
                        Intro.Default, Intro.DefaultLoc,
                        ExplicitParams,
@@ -812,6 +894,8 @@ static void addFunctionPointerConversion(Sema &S,
                                          SourceRange IntroducerRange,
                                          CXXRecordDecl *Class,
                                          CXXMethodDecl *CallOperator) {
+  // FIXME: The conversion operator needs to be fixed for generic lambdas.
+  if (Class->isGenericLambda()) return;
   // Add the conversion to function pointer.
   const FunctionProtoType *Proto
     = CallOperator->getType()->getAs<FunctionProtoType>(); 
@@ -849,10 +933,9 @@ static void addFunctionPointerConversion(Sema &S,
   Conversion->setAccess(AS_public);
   Conversion->setImplicit(true);
   Class->addDecl(Conversion);
-  
-  // Add a non-static member function "__invoke" that will be the result of
-  // the conversion.
-  Name = &S.Context.Idents.get("__invoke");
+  // Add a non-static member function that will be the result of
+  // the conversion with a certain unique ID.
+  Name = &S.Context.Idents.get(getLambdaStaticInvokerName());
   CXXMethodDecl *Invoke
     = CXXMethodDecl::Create(S.Context, Class, Loc, 
                             DeclarationNameInfo(Name, Loc), FunctionTy, 
@@ -1000,8 +1083,11 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc, Stmt *Body,
     //   If a lambda-expression does not include a
     //   trailing-return-type, it is as if the trailing-return-type
     //   denotes the following type:
+    // Skip for C++1y return type deduction semantics which uses
+    // different machinery currently.
+    // FIXME: Refactor and Merge the return type deduction machinery.
     // FIXME: Assumes current resolution to core issue 975.
-    if (LSI->HasImplicitReturnType) {
+    if (LSI->HasImplicitReturnType && !getLangOpts().CPlusPlus1y) {
       deduceClosureReturnType(*LSI);
 
       //   - if there are no return statements in the
@@ -1019,13 +1105,18 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc, Stmt *Body,
           LSI->ReturnType, Proto->getArgTypes(), Proto->getExtProtoInfo());
       CallOperator->setType(FunctionTy);
     }
-
     // C++ [expr.prim.lambda]p7:
     //   The lambda-expression's compound-statement yields the
     //   function-body (8.4) of the function call operator [...].
     ActOnFinishFunctionBody(CallOperator, Body, IsInstantiation);
     CallOperator->setLexicalDeclContext(Class);
-    Class->addDecl(CallOperator);
+    Decl *TemplateOrNonTemplateCallOperatorDecl = 
+      !CallOperator->getDescribedFunctionTemplate() ? cast<Decl>(CallOperator)
+        : CallOperator->getDescribedFunctionTemplate();
+
+    TemplateOrNonTemplateCallOperatorDecl->setLexicalDeclContext(Class);
+    Class->addDecl(TemplateOrNonTemplateCallOperatorDecl);
+
     PopExpressionEvaluationContext();
 
     // C++11 [expr.prim.lambda]p6:
@@ -1065,7 +1156,7 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc, Stmt *Body,
                                           CaptureInits, ArrayIndexVars, 
                                           ArrayIndexStarts, Body->getLocEnd(),
                                           ContainsUnexpandedParameterPack);
-
+  Class->setLambdaExpr(Lambda);
   // C++11 [expr.prim.lambda]p2:
   //   A lambda-expression shall not appear in an unevaluated operand
   //   (Clause 5).
@@ -1085,7 +1176,15 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc, Stmt *Body,
       break;
     }
   }
-  
+  // TODO: Implement capturing.
+  if (Lambda->isGenericLambda()) {
+    if (Lambda->getCaptureDefault() != LCD_None) {
+      Diag(Lambda->getIntroducerRange().getBegin(), 
+        diag::err_glambda_not_fully_implemented) 
+        << " capturing not implemented yet";
+      return ExprError();
+    }
+  }
   return MaybeBindToTemporary(Lambda);
 }
 
