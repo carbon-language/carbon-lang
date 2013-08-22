@@ -551,7 +551,12 @@ AC_ARG_ENABLE(clang-static-analyzer,
                              enableval="yes")
 case "$enableval" in
   yes) AC_SUBST(ENABLE_CLANG_STATIC_ANALYZER,[1]) ;;
-  no)  AC_SUBST(ENABLE_CLANG_STATIC_ANALYZER,[0]) ;;
+  no)  
+    if test ${clang_arcmt} != "no" ; then
+      AC_MSG_ERROR([Cannot enable clang ARC Migration Tool while disabling static analyzer.])
+    fi
+    AC_SUBST(ENABLE_CLANG_STATIC_ANALYZER,[0]) 
+    ;;
   default) AC_SUBST(ENABLE_CLANG_STATIC_ANALYZER,[1]);;
   *) AC_MSG_ERROR([Invalid setting for --enable-clang-static-analyzer. Use "yes" or "no"]) ;;
 esac

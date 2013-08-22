@@ -5224,8 +5224,14 @@ fi
 case "$enableval" in
   yes) ENABLE_CLANG_STATIC_ANALYZER=1
  ;;
-  no)  ENABLE_CLANG_STATIC_ANALYZER=0
- ;;
+  no)
+    if test ${clang_arcmt} != "no" ; then
+      { { echo "$as_me:$LINENO: error: Cannot enable clang ARC Migration Tool while disabling static analyzer." >&5
+echo "$as_me: error: Cannot enable clang ARC Migration Tool while disabling static analyzer." >&2;}
+   { (exit 1); exit 1; }; }
+    fi
+    ENABLE_CLANG_STATIC_ANALYZER=0
+    ;;
   default) ENABLE_CLANG_STATIC_ANALYZER=1
 ;;
   *) { { echo "$as_me:$LINENO: error: Invalid setting for --enable-clang-static-analyzer. Use \"yes\" or \"no\"" >&5
