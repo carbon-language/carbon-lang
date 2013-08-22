@@ -726,8 +726,8 @@ error_code mapped_file_region::init(int FD, bool CloseFD, uint64_t Offset) {
   FileMappingHandle = ::CreateFileMapping(FileHandle,
                                           0,
                                           flprotect,
-                                          Size >> 32,
-                                          Size & 0xffffffff,
+                                          (Offset + Size) >> 32,
+                                          (Offset + Size) & 0xffffffff,
                                           0);
   if (FileMappingHandle == NULL) {
     error_code ec = windows_error(GetLastError());
