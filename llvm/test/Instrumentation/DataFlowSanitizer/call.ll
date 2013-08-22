@@ -7,10 +7,10 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 declare i32 @f(i32)
 declare float @llvm.sqrt.f32(float)
 
-; CHECK: @call
+; CHECK: @"dfs$call"
 define i32 @call() {
   ; CHECK: store{{.*}}__dfsan_arg_tls
-  ; CHECK: call{{.*}}@f
+  ; CHECK: call{{.*}}@"dfs$f"
   ; CHECK: load{{.*}}__dfsan_retval_tls
   %r = call i32 @f(i32 0)
 

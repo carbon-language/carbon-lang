@@ -3,14 +3,14 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 
 declare i32 @g()
 
-; CHECK: define { i32, i16 } @f(i32, i16)
+; CHECK: define { i32, i16 } @"dfs$f"(i32, i16)
 define i32 @f(i32) {
   ; CHECK: [[LOCALLABELALLOCA:%.*]] = alloca i16
   ; CHECK: [[ARGCMP:%.*]] = icmp ne i16 %1, 0
   ; CHECK: br i1 [[ARGCMP]]
   %i = alloca i32
   store i32 %0, i32* %i
-  ; CHECK: [[CALL:%.*]] = call { i32, i16 } @g()
+  ; CHECK: [[CALL:%.*]] = call { i32, i16 } @"dfs$g"()
   ; CHECK: [[CALLLABEL:%.*]] = extractvalue { i32, i16 } [[CALL]], 1
   ; CHECK: [[CALLCMP:%.*]] = icmp ne i16 [[CALLLABEL]], 0
   ; CHECK: br i1 [[CALLCMP]]

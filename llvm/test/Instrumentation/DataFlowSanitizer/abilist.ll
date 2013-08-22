@@ -16,7 +16,7 @@ declare void @custom1(i32 %a, i32 %b)
 
 declare i32 @custom2(i32 %a, i32 %b)
 
-; CHECK: @f
+; CHECK: @"dfs$f"
 define void @f() {
   ; CHECK: %[[LABELRETURN:.*]] = alloca i16
 
@@ -37,7 +37,7 @@ define void @f() {
 ; CHECK: insertvalue {{.*}}[[RVSHADOW]], 1
 ; CHECK: ret { i32, i16 }
 
-; CHECK: @g
+; CHECK: @"dfs$g"
 define i32 (i32, i32)* @g() {
   ; CHECK: ret {{.*}} @"dfsw$custom2"
   ret i32 (i32, i32)* @custom2
