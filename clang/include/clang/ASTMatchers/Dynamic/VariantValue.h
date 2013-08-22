@@ -21,6 +21,7 @@
 
 #include "clang/ASTMatchers/ASTMatchers.h"
 #include "clang/ASTMatchers/ASTMatchersInternal.h"
+#include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/type_traits.h"
 
@@ -44,12 +45,29 @@ using ast_matchers::internal::DynTypedMatcher;
 ///  - hasTypedMatcher<T>()/getTypedMatcher<T>(): These calls will determine if
 ///    the underlying matcher(s) can unambiguously return a Matcher<T>.
 class VariantMatcher {
+  /// \brief Methods that depend on T from hasTypedMatcher/getTypedMatcher.
+  class MatcherOps {
+  public:
+    virtual ~MatcherOps();
+    virtual bool canConstructFrom(const DynTypedMatcher &Matcher) const = 0;
+  };
+
+  /// \brief Payload interface to be specialized by each matcher type.
+  ///
+  /// It follows a similar interface as VariantMatcher itself.
+  class Payload : public RefCountedBaseVPTR {
+  public:
+    virtual ~Payload();
+    virtual bool getSingleMatcher(const DynTypedMatcher *&Out) const = 0;
+    virtual std::string getTypeAsString() const = 0;
+    virtual bool hasTypedMatcher(const MatcherOps &Ops) const = 0;
+    virtual const DynTypedMatcher *
+    getTypedMatcher(const MatcherOps &Ops) const = 0;
+  };
+
 public:
   /// \brief A null matcher.
   VariantMatcher();
-
-  /// \brief Clones the matcher objects.
-  VariantMatcher(const VariantMatcher &Other);
 
   /// \brief Clones the provided matcher.
   static VariantMatcher SingleMatcher(const DynTypedMatcher &Matcher);
@@ -60,46 +78,42 @@ public:
   static VariantMatcher
   PolymorphicMatcher(ArrayRef<const DynTypedMatcher *> Matchers);
 
-  ~VariantMatcher();
-
-  /// \brief Copy the \c VariantMatcher, by making a copy of its representation.
-  VariantMatcher &operator=(const VariantMatcher &Other);
-
   /// \brief Makes the matcher the "null" matcher.
   void reset();
 
   /// \brief Whether the matcher is null.
-  bool isNull() const { return List.empty(); }
+  bool isNull() const { return !Value; }
 
   /// \brief Return a single matcher, if there is no ambiguity.
   ///
-  /// \returns True, and set Out to the matcher, if there is only one matcher.
-  /// False, if the underlying matcher is a polymorphic matcher with
+  /// \returns \c true, and set Out to the matcher, if there is only one
+  /// matcher. \c false, if the underlying matcher is a polymorphic matcher with
   /// more than one representation.
   bool getSingleMatcher(const DynTypedMatcher *&Out) const;
 
-  /// \brief Determines if any of the contained matchers can be converted
-  ///   to \c Matcher<T>.
+  /// \brief Determines if the contained matcher can be converted to
+  ///   \c Matcher<T>.
   ///
-  /// Returns true if one, and only one, of the contained matchers can be
-  /// converted to \c Matcher<T>. If there are more than one that can, the
-  /// result would be ambigous and false is returned.
+  /// For the Single case, it returns true if it can be converted to
+  /// \c Matcher<T>.
+  /// For the Polymorphic case, it returns true if one, and only one, of the
+  /// overloads can be converted to \c Matcher<T>. If there are more than one
+  /// that can, the result would be ambiguous and false is returned.
   template <class T>
   bool hasTypedMatcher() const {
-    return getTypedMatcher(
-        &ast_matchers::internal::Matcher<T>::canConstructFrom) != NULL;
+    if (Value) return Value->hasTypedMatcher(TypedMatcherOps<T>());
+    return false;
   }
 
-  /// \brief Wrap the correct matcher as a \c Matcher<T>.
+  /// \brief Return this matcher as a \c Matcher<T>.
   ///
-  /// Selects the appropriate matcher from the wrapped matchers and returns it
-  /// as a \c Matcher<T>.
+  /// Handles the different types (Single, Polymorphic) accordingly.
   /// Asserts that \c hasTypedMatcher<T>() is true.
   template <class T>
   ast_matchers::internal::Matcher<T> getTypedMatcher() const {
     assert(hasTypedMatcher<T>());
-    return ast_matchers::internal::Matcher<T>::constructFrom(*getTypedMatcher(
-        &ast_matchers::internal::Matcher<T>::canConstructFrom));
+    return ast_matchers::internal::Matcher<T>::constructFrom(
+        *Value->getTypedMatcher(TypedMatcherOps<T>()));
   }
 
   /// \brief String representation of the type of the value.
@@ -109,13 +123,20 @@ public:
   std::string getTypeAsString() const;
 
 private:
-  /// \brief Returns the matcher that passes the callback.
-  ///
-  /// Returns NULL if no matcher passes the test, or if more than one do.
-  const DynTypedMatcher *
-  getTypedMatcher(bool (*CanConstructCallback)(const DynTypedMatcher &)) const;
+  explicit VariantMatcher(Payload *Value) : Value(Value) {}
 
-  std::vector<const DynTypedMatcher *> List;
+  class SinglePayload;
+  class PolymorphicPayload;
+
+  template <typename T>
+  class TypedMatcherOps : public MatcherOps {
+  public:
+    virtual bool canConstructFrom(const DynTypedMatcher &Matcher) const {
+      return ast_matchers::internal::Matcher<T>::canConstructFrom(Matcher);
+    }
+  };
+
+  IntrusiveRefCntPtr<const Payload> Value;
 };
 
 /// \brief Variant value class.
