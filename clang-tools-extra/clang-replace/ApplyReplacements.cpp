@@ -15,6 +15,7 @@
 #include "ApplyReplacements.h"
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/SourceManager.h"
+#include "clang/Rewrite/Core/Rewriter.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -122,7 +123,7 @@ static void reportConflict(
 ///
 /// \param[in,out] Replacements Container of all replacements grouped by file
 /// to be deduplicated and checked for conflicts.
-/// \param[in] SM SourceManager required for conflict reporting
+/// \param[in] SM SourceManager required for conflict reporting.
 ///
 /// \returns \li true if conflicts were detected
 ///          \li false if no conflicts were detected
@@ -166,7 +167,7 @@ static bool deduplicateAndDetectConflicts(FileToReplacementsMap &Replacements,
 
 bool mergeAndDeduplicate(const TUReplacements &TUs,
                          FileToReplacementsMap &GroupedReplacements,
-                         clang::DiagnosticsEngine &Diagnostics) {
+                         clang::SourceManager &SM) {
 
   // FIXME: Use Diagnostics for output
 
@@ -179,12 +180,40 @@ bool mergeAndDeduplicate(const TUReplacements &TUs,
          RI != RE; ++RI)
       GroupedReplacements[RI->getFilePath()].push_back(*RI);
 
-  FileManager Files((FileSystemOptions()));
-  SourceManager SM(Diagnostics, Files);
 
   // Ask clang to deduplicate and report conflicts.
   if (deduplicateAndDetectConflicts(GroupedReplacements, SM))
     return false;
+
+  return true;
+}
+
+bool applyReplacements(const FileToReplacementsMap &GroupedReplacements,
+                       clang::SourceManager &SM) {
+  Rewriter Rewrites(SM, LangOptions());
+
+  // Apply all changes
+  for (FileToReplacementsMap::const_iterator I = GroupedReplacements.begin(),
+                                             E = GroupedReplacements.end();
+       I != E; ++I) {
+    if (!tooling::applyAllReplacements(I->getValue(), Rewrites))
+      return false;
+  }
+
+  // Write all changes to disk
+  for (Rewriter::buffer_iterator BufferI = Rewrites.buffer_begin(),
+                                 BufferE = Rewrites.buffer_end();
+       BufferI != BufferE; ++BufferI) {
+    std::string ErrorInfo;
+    const char *FileName = SM.getFileEntryForID(BufferI->first)->getName();
+    llvm::raw_fd_ostream FileStream(FileName, ErrorInfo,
+                                    llvm::sys::fs::F_Binary);
+    if (!ErrorInfo.empty()) {
+      errs() << "Unable to open " << FileName << " for writing\n";
+      return false;
+    }
+    BufferI->second.write(FileStream);
+  }
 
   return true;
 }

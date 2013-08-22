@@ -15,6 +15,7 @@
 #include "ApplyReplacements.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/DiagnosticOptions.h"
+#include "clang/Basic/SourceManager.h"
 #include "llvm/Support/CommandLine.h"
 
 using namespace llvm;
@@ -43,8 +44,13 @@ int main(int argc, char **argv) {
     return false;
   }
 
+  FileManager Files((FileSystemOptions()));
+  SourceManager SM(Diagnostics, Files);
+
   FileToReplacementsMap GroupedReplacements;
-  if (mergeAndDeduplicate(TUs, GroupedReplacements, Diagnostics))
-    return 0;
-  return 1;
+  if (!mergeAndDeduplicate(TUs, GroupedReplacements, SM))
+    return 1;
+
+  if (!applyReplacements(GroupedReplacements, SM))
+    return 1;
 }

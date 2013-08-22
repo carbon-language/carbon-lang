@@ -63,13 +63,24 @@ collectReplacementsFromDirectory(const llvm::StringRef Directory,
 /// deduplicate, and test for conflicts.
 /// \param[out] GroupedReplacements Container grouping all Replacements by the
 /// file they target.
-/// \param[in] Diagnostics DiagnosticsEngine used for error/warning output.
+/// \param[in] SM SourceManager required for conflict reporting.
 ///
 /// \returns \li true If all changes were applied successfully.
 ///          \li false If there were conflicts.
 bool mergeAndDeduplicate(const TUReplacements &TUs,
                          FileToReplacementsMap &GroupedReplacements,
-                         clang::DiagnosticsEngine &Diagnostics);
+                         clang::SourceManager &SM);
+
+/// \brief Apply all replacements in \c GroupedReplacements.
+///
+/// \param[in] GroupedReplacements Deduplicated and conflict free Replacements
+/// to apply.
+/// \param[in] SM SourceManager required to construct clang::Rewriter.
+///
+/// \returns \li true If all changes were applied successfully.
+///          \li false If a replacement failed to apply.
+bool applyReplacements(const FileToReplacementsMap &GroupedReplacements,
+                       clang::SourceManager &SM);
 
 } // end namespace replace
 } // end namespace clang
