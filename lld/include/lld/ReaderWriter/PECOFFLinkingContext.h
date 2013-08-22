@@ -95,7 +95,7 @@ public:
   virtual ErrorOr<Reference::Kind> relocKindFromString(StringRef str) const;
   virtual ErrorOr<std::string> stringFromRelocKind(Reference::Kind kind) const;
 
-  StringRef allocateString(StringRef ref) {
+  StringRef allocateString(StringRef ref) const {
     char *x = _alloc.Allocate<char>(ref.size() + 1);
     memcpy(x, ref.data(), ref.size());
     x[ref.size()] = '\0';

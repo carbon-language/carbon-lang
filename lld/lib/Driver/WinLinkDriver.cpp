@@ -195,7 +195,7 @@ StringRef PECOFFFileNode::path(const LinkingContext &) const {
   if (_path.endswith(".lib"))
     return _ctx.searchLibraryFile(_path);
   if (llvm::sys::path::extension(_path).empty())
-    return (_path.str() + ".obj");
+    return (_ctx.allocateString(_path.str() + ".obj"));
   return _path;
 }
 

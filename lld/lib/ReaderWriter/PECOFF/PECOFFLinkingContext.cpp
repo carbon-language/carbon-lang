@@ -73,7 +73,7 @@ StringRef PECOFFLinkingContext::searchLibraryFile(StringRef filename) const {
     SmallString<128> path = dir;
     llvm::sys::path::append(path, filename);
     if (llvm::sys::fs::exists(path.str()))
-      return (*(new (_alloc) std::string(path.str())));
+      return allocateString(path.str());
   }
   return filename;
 }
@@ -95,5 +95,4 @@ void PECOFFLinkingContext::addPasses(PassManager &pm) const {
   pm.add(std::unique_ptr<Pass>(new pecoff::IdataPass()));
   pm.add(std::unique_ptr<Pass>(new LayoutPass()));
 }
-
 } // end namespace lld
