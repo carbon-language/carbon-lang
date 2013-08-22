@@ -201,7 +201,7 @@ StringRef PECOFFFileNode::path(const LinkingContext &) const {
 
 StringRef PECOFFLibraryNode::path(const LinkingContext &) const {
   if (!_path.endswith(".lib"))
-    return _ctx.searchLibraryFile(_path.str() + ".lib");
+    return _ctx.searchLibraryFile(_ctx.allocateString(_path.str() + ".lib"));
   return _ctx.searchLibraryFile(_path);
 }
 
