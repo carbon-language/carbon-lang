@@ -6288,7 +6288,7 @@ void Sema::CheckArrayAccess(const Expr *BaseExpr, const Expr *IndexExpr,
       if (SourceMgr.isInSystemHeader(RBracketLoc)) {
         SourceLocation IndexLoc = SourceMgr.getSpellingLoc(
             IndexExpr->getLocStart());
-        if (SourceMgr.isFromSameFile(RBracketLoc, IndexLoc))
+        if (SourceMgr.isWrittenInSameFile(RBracketLoc, IndexLoc))
           return;
       }
     }

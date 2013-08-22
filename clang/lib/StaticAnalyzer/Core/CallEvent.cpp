@@ -741,7 +741,7 @@ bool ObjCMethodCall::canBeOverridenInSubclass(ObjCInterfaceDecl *IDecl,
   // TODO: It could actually be subclassed if the subclass is private as well.
   // This is probably very rare.
   SourceLocation InterfLoc = IDecl->getEndOfDefinitionLoc();
-  if (InterfLoc.isValid() && SM.isFromMainFile(InterfLoc))
+  if (InterfLoc.isValid() && SM.isInMainFile(InterfLoc))
     return false;
 
   // Assume that property accessors are not overridden.
@@ -763,7 +763,7 @@ bool ObjCMethodCall::canBeOverridenInSubclass(ObjCInterfaceDecl *IDecl,
       return false;
 
     // If outside the main file,
-    if (D->getLocation().isValid() && !SM.isFromMainFile(D->getLocation()))
+    if (D->getLocation().isValid() && !SM.isInMainFile(D->getLocation()))
       return true;
 
     if (D->isOverriding()) {

@@ -129,11 +129,11 @@ getFirstStackedCallToHeaderFile(PathDiagnosticCallPiece *CP,
   if (CallLoc.isMacroID())
     return 0;
 
-  assert(SMgr.isFromMainFile(CallLoc) &&
+  assert(SMgr.isInMainFile(CallLoc) &&
          "The call piece should be in the main file.");
 
   // Check if CP represents a path through a function outside of the main file.
-  if (!SMgr.isFromMainFile(CP->callEnterWithin.asLocation()))
+  if (!SMgr.isInMainFile(CP->callEnterWithin.asLocation()))
     return CP;
 
   const PathPieces &Path = CP->path;

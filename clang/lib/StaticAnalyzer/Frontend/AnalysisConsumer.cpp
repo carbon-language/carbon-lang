@@ -596,7 +596,7 @@ AnalysisConsumer::getModeForDecl(Decl *D, AnalysisMode Mode) {
   // - System headers: don't run any checks.
   SourceManager &SM = Ctx->getSourceManager();
   SourceLocation SL = SM.getExpansionLoc(D->getLocation());
-  if (!Opts->AnalyzeAll && !SM.isFromMainFile(SL)) {
+  if (!Opts->AnalyzeAll && !SM.isInMainFile(SL)) {
     if (SL.isInvalid() || SM.isInSystemHeader(SL))
       return AM_None;
     return Mode & ~AM_Path;

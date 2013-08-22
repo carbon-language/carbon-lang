@@ -764,7 +764,7 @@ static bool mayInlineDecl(const CallEvent &Call, AnalysisDeclContext *CalleeADC,
       // Conditionally control the inlining of methods on objects that look
       // like C++ containers.
       if (!Opts.mayInlineCXXContainerCtorsAndDtors())
-        if (!Ctx.getSourceManager().isFromMainFile(FD->getLocation()))
+        if (!Ctx.getSourceManager().isInMainFile(FD->getLocation()))
           if (isContainerCtorOrDtor(Ctx, FD))
             return false;
             

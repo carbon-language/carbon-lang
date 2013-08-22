@@ -2040,7 +2040,7 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok,
   assert(!MI->isUsed());
   // If we need warning for not using the macro, add its location in the
   // warn-because-unused-macro set. If it gets used it will be removed from set.
-  if (isInPrimaryFile() && // don't warn for include'd macros.
+  if (getSourceManager().isInMainFile(MI->getDefinitionLoc()) &&
       Diags->getDiagnosticLevel(diag::pp_macro_not_used,
           MI->getDefinitionLoc()) != DiagnosticsEngine::Ignored) {
     MI->setIsWarnIfUnused(true);

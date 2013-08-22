@@ -217,7 +217,7 @@ int clang_Location_isFromMainFile(CXSourceLocation location) {
 
   const SourceManager &SM =
     *static_cast<const SourceManager*>(location.ptr_data[0]);
-  return SM.isFromMainFile(Loc);
+  return SM.isWrittenInMainFile(Loc);
 }
 
 void clang_getExpansionLocation(CXSourceLocation location,

@@ -722,7 +722,7 @@ void Sema::ActOnEndOfTranslationUnit() {
           else {
             if (FD->getStorageClass() == SC_Static &&
                 !FD->isInlineSpecified() &&
-                !SourceMgr.isFromMainFile(
+                !SourceMgr.isInMainFile(
                    SourceMgr.getExpansionLoc(FD->getLocation())))
               Diag(DiagD->getLocation(), diag::warn_unneeded_static_internal_decl)
                 << DiagD->getDeclName();
@@ -743,7 +743,7 @@ void Sema::ActOnEndOfTranslationUnit() {
         if (DiagD->isReferenced()) {
           Diag(DiagD->getLocation(), diag::warn_unneeded_internal_decl)
                 << /*variable*/1 << DiagD->getDeclName();
-        } else if (getSourceManager().isFromMainFile(DiagD->getLocation())) {
+        } else if (SourceMgr.isInMainFile(DiagD->getLocation())) {
           // If the declaration is in a header which is included into multiple
           // TUs, it will declare one variable per TU, and one of the other
           // variables may be used. So, only warn if the declaration is in the

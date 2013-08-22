@@ -83,6 +83,19 @@ extern inline void defineStaticVarInExtern() {
   static int y = 0; // ok
 }
 
+// Check behavior of line markers.
+# 1 "XXX.h" 1
+inline int useStaticMainFileInLineMarker() { // expected-note 2 {{use 'static' to give inline function 'useStaticMainFileInLineMarker' internal linkage}}
+  staticFunction(); // expected-warning{{static function 'staticFunction' is used in an inline function with external linkage}}
+  return staticVar; // expected-warning{{static variable 'staticVar' is used in an inline function with external linkage}}
+}
+# 100 "inline.c" 2
+
+inline int useStaticMainFileAfterLineMarker() {
+  staticFunction(); // no-warning
+  return staticVar; // no-warning
+}
+
 #endif
 
 

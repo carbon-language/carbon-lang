@@ -628,11 +628,11 @@ static bool IsFromSameFile(SourceManager &SM, SourceLocation DirectiveLoc,
   while (DiagnosticLoc.isMacroID())
     DiagnosticLoc = SM.getImmediateMacroCallerLoc(DiagnosticLoc);
 
-  if (SM.isFromSameFile(DirectiveLoc, DiagnosticLoc))
+  if (SM.isWrittenInSameFile(DirectiveLoc, DiagnosticLoc))
     return true;
 
   const FileEntry *DiagFile = SM.getFileEntryForID(SM.getFileID(DiagnosticLoc));
-  if (!DiagFile && SM.isFromMainFile(DirectiveLoc))
+  if (!DiagFile && SM.isWrittenInMainFile(DirectiveLoc))
     return true;
 
   return (DiagFile == SM.getFileEntryForID(SM.getFileID(DirectiveLoc)));

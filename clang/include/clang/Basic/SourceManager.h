@@ -1292,14 +1292,30 @@ public:
   PresumedLoc getPresumedLoc(SourceLocation Loc,
                              bool UseLineDirectives = true) const;
 
-  /// \brief Returns true if both SourceLocations correspond to the same file.
-  bool isFromSameFile(SourceLocation Loc1, SourceLocation Loc2) const {
+  /// \brief Returns whether the PresumedLoc for a given SourceLocation is 
+  /// in the main file.
+  ///
+  /// This computes the "presumed" location for a SourceLocation, then checks
+  /// whether it came from a file other than the main file. This is different
+  /// from isWrittenInMainFile() because it takes line marker directives into
+  /// account.
+  bool isInMainFile(SourceLocation Loc) const {
+    return getPresumedLoc(Loc).getIncludeLoc().isInvalid();
+  }
+
+  /// \brief Returns true if the spelling locations for both SourceLocations
+  /// are part of the same file buffer.
+  ///
+  /// This check ignores line marker directives.
+  bool isWrittenInSameFile(SourceLocation Loc1, SourceLocation Loc2) const {
     return getFileID(Loc1) == getFileID(Loc2);
   }
 
-  /// \brief Returns true if the file of provided SourceLocation is the main
-  /// file.
-  bool isFromMainFile(SourceLocation Loc) const {
+  /// \brief Returns true if the spelling location for the given location
+  /// is in the main file buffer.
+  ///
+  /// This check ignores line marker directives.
+  bool isWrittenInMainFile(SourceLocation Loc) const {
     return getFileID(Loc) == getMainFileID();
   }
 

@@ -115,7 +115,7 @@ void clang::RewriteMacrosInInput(Preprocessor &PP, raw_ostream *OS) {
     SourceLocation PPLoc = SM.getExpansionLoc(PPTok.getLocation());
 
     // If PPTok is from a different source file, ignore it.
-    if (!SM.isFromMainFile(PPLoc)) {
+    if (!SM.isWrittenInMainFile(PPLoc)) {
       PP.Lex(PPTok);
       continue;
     }
