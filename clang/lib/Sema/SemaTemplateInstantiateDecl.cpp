@@ -320,10 +320,11 @@ TemplateDeclInstantiator::VisitTypeAliasTemplateDecl(TypeAliasTemplateDecl *D) {
 
 // FIXME: Revise for static member templates.
 Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
-  return VisitVarDecl(D, /*ForVarTemplate=*/false);
+  return VisitVarDecl(D, /*InstantiatingVarTemplate=*/false);
 }
 
-Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D, bool ForVarTemplate) {
+Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D,
+                                             bool InstantiatingVarTemplate) {
 
   // If this is the variable for an anonymous struct or union,
   // instantiate the anonymous struct/union type first.
@@ -361,7 +362,7 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D, bool ForVarTemplate) {
     return 0;
 
   SemaRef.BuildVariableInstantiation(Var, D, TemplateArgs, LateAttrs,
-                                     StartingScope, ForVarTemplate);
+                                     StartingScope, InstantiatingVarTemplate);
   return Var;
 }
 
@@ -971,7 +972,8 @@ Decl *TemplateDeclInstantiator::VisitVarTemplateDecl(VarTemplateDecl *D) {
   }
 
   VarDecl *VarInst =
-      cast_or_null<VarDecl>(VisitVarDecl(Pattern, /*ForVarTemplate=*/ true));
+      cast_or_null<VarDecl>(VisitVarDecl(Pattern,
+                                         /*InstantiatingVarTemplate=*/true));
 
   DeclContext *DC = Owner;
 
@@ -2649,8 +2651,6 @@ TemplateDeclInstantiator::InstantiateVarTemplatePartialSpecialization(
   InstPartialSpec->setInstantiatedFromMember(PartialSpec);
   InstPartialSpec->setTypeAsWritten(WrittenTy);
 
-  InstPartialSpec->setAccess(PartialSpec->getAccess());
-
   // Add this partial specialization to the set of variable template partial
   // specializations. The instantiation of the initializer is not necessary.
   VarTemplate->AddPartialSpecialization(InstPartialSpec, /*InsertPos=*/0);
@@ -3314,9 +3314,8 @@ VarTemplateSpecializationDecl *Sema::CompleteVarTemplateSpecializationDecl(
 void Sema::BuildVariableInstantiation(
     VarDecl *NewVar, VarDecl *OldVar,
     const MultiLevelTemplateArgumentList &TemplateArgs,
-    LateInstantiatedAttrVec *LateAttrs,
-    LocalInstantiationScope *StartingScope,
-    bool ForVarTemplate) {
+    LateInstantiatedAttrVec *LateAttrs, LocalInstantiationScope *StartingScope,
+    bool InstantiatingVarTemplate) {
 
   // If we are instantiating a static data member defined
   // out-of-line, the instantiation will have the same lexical
@@ -3354,15 +3353,14 @@ void Sema::BuildVariableInstantiation(
   } else if (!isa<VarTemplateSpecializationDecl>(NewVar) &&
              OldVar->hasLinkage())
     LookupQualifiedName(Previous, NewVar->getDeclContext(), false);
-
-  CheckVariableDeclaration(NewVar, Previous, ForVarTemplate);
+  CheckVariableDeclaration(NewVar, Previous);
 
   if (OldVar->isOutOfLine()) {
     OldVar->getLexicalDeclContext()->addDecl(NewVar);
-    if (!ForVarTemplate)
+    if (!InstantiatingVarTemplate)
       NewVar->getDeclContext()->makeDeclVisibleInContext(NewVar);
   } else {
-    if (!ForVarTemplate)
+    if (!InstantiatingVarTemplate)
       NewVar->getDeclContext()->addDecl(NewVar);
     if (NewVar->getDeclContext()->isFunctionOrMethod())
       CurrentInstantiationScope->InstantiatedLocal(OldVar, NewVar);
@@ -3370,13 +3368,13 @@ void Sema::BuildVariableInstantiation(
 
   // Link instantiations of static data members back to the template from
   // which they were instantiated.
-  if (NewVar->isStaticDataMember() && !ForVarTemplate)
+  if (NewVar->isStaticDataMember() && !InstantiatingVarTemplate)
     NewVar->setInstantiationOfStaticDataMember(OldVar,
                                                TSK_ImplicitInstantiation);
 
   if (isa<VarTemplateSpecializationDecl>(NewVar)) {
     // Do not instantiate the variable just yet.
-  } else if (ForVarTemplate) {
+  } else if (InstantiatingVarTemplate) {
     assert(!NewVar->getInit() &&
            "A variable should not have an initializer if it is templated"
            " and we are instantiating its template");

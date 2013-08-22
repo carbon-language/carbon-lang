@@ -2782,7 +2782,7 @@ public:
 
   /// \brief Return the next partial specialization sequence number.
   unsigned getNextPartialSpecSequenceNumber() {
-    return getPartialSpecializations().size();
+    return getCommonPtr()->PartialSpecializations.size();
   }
 
   /// \brief Retrieve the partial specializations as an ordered list.

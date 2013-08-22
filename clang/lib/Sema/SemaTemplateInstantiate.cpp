@@ -2254,12 +2254,10 @@ namespace {
   };
 }
 
-bool
-Sema::InstantiateClassTemplateSpecialization(
-                           SourceLocation PointOfInstantiation,
-                           ClassTemplateSpecializationDecl *ClassTemplateSpec,
-                           TemplateSpecializationKind TSK,
-                           bool Complain) {
+bool Sema::InstantiateClassTemplateSpecialization(
+    SourceLocation PointOfInstantiation,
+    ClassTemplateSpecializationDecl *ClassTemplateSpec,
+    TemplateSpecializationKind TSK, bool Complain) {
   // Perform the actual instantiation on the canonical declaration.
   ClassTemplateSpec = cast<ClassTemplateSpecializationDecl>(
                                          ClassTemplateSpec->getCanonicalDecl());

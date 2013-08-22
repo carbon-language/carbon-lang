@@ -425,7 +425,7 @@ namespace clang {
     Decl *VisitFunctionDecl(FunctionDecl *D,
                             TemplateParameterList *TemplateParams);
     Decl *VisitDecl(Decl *D);
-    Decl *VisitVarDecl(VarDecl *D, bool ForVarTemplate);
+    Decl *VisitVarDecl(VarDecl *D, bool InstantiatingVarTemplate);
 
     // Enable late instantiation of attributes.  Late instantiated attributes
     // will be stored in LA.
