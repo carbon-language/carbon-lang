@@ -482,21 +482,22 @@ public:
   ///
   /// Note: This does not perform the implicit conversions required by C++11
   /// [expr.const]p5.
-  bool isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
+  bool isIntegerConstantExpr(llvm::APSInt &Result, const ASTContext &Ctx,
                              SourceLocation *Loc = 0,
                              bool isEvaluated = true) const;
-  bool isIntegerConstantExpr(ASTContext &Ctx, SourceLocation *Loc = 0) const;
+  bool isIntegerConstantExpr(const ASTContext &Ctx,
+                             SourceLocation *Loc = 0) const;
 
   /// isCXX98IntegralConstantExpr - Return true if this expression is an
   /// integral constant expression in C++98. Can only be used in C++.
-  bool isCXX98IntegralConstantExpr(ASTContext &Ctx) const;
+  bool isCXX98IntegralConstantExpr(const ASTContext &Ctx) const;
 
   /// isCXX11ConstantExpr - Return true if this expression is a constant
   /// expression in C++11. Can only be used in C++.
   ///
   /// Note: This does not perform the implicit conversions required by C++11
   /// [expr.const]p5.
-  bool isCXX11ConstantExpr(ASTContext &Ctx, APValue *Result = 0,
+  bool isCXX11ConstantExpr(const ASTContext &Ctx, APValue *Result = 0,
                            SourceLocation *Loc = 0) const;
 
   /// isPotentialConstantExpr - Return true if this function's definition

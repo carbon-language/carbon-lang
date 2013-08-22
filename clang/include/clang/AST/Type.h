@@ -818,7 +818,7 @@ public:
   /// an lvalue. It removes a top-level reference (since there are no
   /// expressions of reference type) and deletes top-level cvr-qualifiers
   /// from non-class types (in C++) or all types (in C).
-  QualType getNonLValueExprType(ASTContext &Context) const;
+  QualType getNonLValueExprType(const ASTContext &Context) const;
 
   /// getDesugaredType - Return the specified type with any "sugar" removed from
   /// the type.  This takes off typedefs, typeof's etc.  If the outer level of
@@ -2970,7 +2970,7 @@ public:
     NR_Nothrow      ///< The noexcept specifier evaluates to true.
   };
   /// \brief Get the meaning of the noexcept spec on this function, if any.
-  NoexceptResult getNoexceptSpec(ASTContext &Ctx) const;
+  NoexceptResult getNoexceptSpec(const ASTContext &Ctx) const;
   unsigned getNumExceptions() const { return NumExceptions; }
   QualType getExceptionType(unsigned i) const {
     assert(i < NumExceptions && "Invalid exception number!");
@@ -3001,7 +3001,7 @@ public:
       return 0;
     return reinterpret_cast<FunctionDecl * const *>(arg_type_end())[1];
   }
-  bool isNothrow(ASTContext &Ctx) const {
+  bool isNothrow(const ASTContext &Ctx) const {
     ExceptionSpecificationType EST = getExceptionSpecType();
     assert(EST != EST_Unevaluated && EST != EST_Uninstantiated);
     if (EST == EST_DynamicNone || EST == EST_BasicNoexcept)

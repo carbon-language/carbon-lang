@@ -8053,7 +8053,7 @@ static ICEDiag NoDiag() { return ICEDiag(IK_ICE, SourceLocation()); }
 
 static ICEDiag Worst(ICEDiag A, ICEDiag B) { return A.Kind >= B.Kind ? A : B; }
 
-static ICEDiag CheckEvalInICE(const Expr* E, ASTContext &Ctx) {
+static ICEDiag CheckEvalInICE(const Expr* E, const ASTContext &Ctx) {
   Expr::EvalResult EVResult;
   if (!E->EvaluateAsRValue(EVResult, Ctx) || EVResult.HasSideEffects ||
       !EVResult.Val.isInt())
@@ -8062,7 +8062,7 @@ static ICEDiag CheckEvalInICE(const Expr* E, ASTContext &Ctx) {
   return NoDiag();
 }
 
-static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
+static ICEDiag CheckICE(const Expr* E, const ASTContext &Ctx) {
   assert(!E->isValueDependent() && "Should not see value dependent exprs!");
   if (!E->getType()->isIntegralOrEnumerationType())
     return ICEDiag(IK_NotICE, E->getLocStart());
@@ -8423,7 +8423,7 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
 }
 
 /// Evaluate an expression as a C++11 integral constant expression.
-static bool EvaluateCPlusPlus11IntegralConstantExpr(ASTContext &Ctx,
+static bool EvaluateCPlusPlus11IntegralConstantExpr(const ASTContext &Ctx,
                                                     const Expr *E,
                                                     llvm::APSInt *Value,
                                                     SourceLocation *Loc) {
@@ -8441,7 +8441,8 @@ static bool EvaluateCPlusPlus11IntegralConstantExpr(ASTContext &Ctx,
   return true;
 }
 
-bool Expr::isIntegerConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const {
+bool Expr::isIntegerConstantExpr(const ASTContext &Ctx,
+                                 SourceLocation *Loc) const {
   if (Ctx.getLangOpts().CPlusPlus11)
     return EvaluateCPlusPlus11IntegralConstantExpr(Ctx, this, 0, Loc);
 
@@ -8453,7 +8454,7 @@ bool Expr::isIntegerConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const {
   return true;
 }
 
-bool Expr::isIntegerConstantExpr(llvm::APSInt &Value, ASTContext &Ctx,
+bool Expr::isIntegerConstantExpr(llvm::APSInt &Value, const ASTContext &Ctx,
                                  SourceLocation *Loc, bool isEvaluated) const {
   if (Ctx.getLangOpts().CPlusPlus11)
     return EvaluateCPlusPlus11IntegralConstantExpr(Ctx, this, &Value, Loc);
@@ -8465,11 +8466,11 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Value, ASTContext &Ctx,
   return true;
 }
 
-bool Expr::isCXX98IntegralConstantExpr(ASTContext &Ctx) const {
+bool Expr::isCXX98IntegralConstantExpr(const ASTContext &Ctx) const {
   return CheckICE(this, Ctx).Kind == IK_ICE;
 }
 
-bool Expr::isCXX11ConstantExpr(ASTContext &Ctx, APValue *Result,
+bool Expr::isCXX11ConstantExpr(const ASTContext &Ctx, APValue *Result,
                                SourceLocation *Loc) const {
   // We support this checking in C++98 mode in order to diagnose compatibility
   // issues.
