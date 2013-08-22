@@ -470,7 +470,8 @@ bool DataFlowSanitizer::runOnModule(Module &M) {
       FnsToInstrument.push_back(&*i);
   }
 
-  // Give function aliases prefixes when necessary.
+  // Give function aliases prefixes when necessary, and build wrappers where the
+  // instrumentedness is inconsistent.
   for (Module::alias_iterator i = M.alias_begin(), e = M.alias_end(); i != e;) {
     GlobalAlias *GA = &*i;
     ++i;
@@ -481,6 +482,16 @@ bool DataFlowSanitizer::runOnModule(Module &M) {
       bool GAInst = isInstrumented(GA), FInst = isInstrumented(F);
       if (GAInst && FInst) {
         addGlobalNamePrefix(GA);
+      } else if (GAInst != FInst) {
+        // Non-instrumented alias of an instrumented function, or vice versa.
+        // Replace the alias with a native-ABI wrapper of the aliasee.  The pass
+        // below will take care of instrumenting it.
+        Function *NewF =
+            buildWrapperFunction(F, "", GA->getLinkage(), F->getFunctionType());
+        GA->replaceAllUsesWith(NewF);
+        NewF->takeName(GA);
+        GA->eraseFromParent();
+        FnsToInstrument.push_back(NewF);
       }
     }
   }

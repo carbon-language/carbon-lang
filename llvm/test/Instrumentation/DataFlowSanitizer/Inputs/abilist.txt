@@ -1,5 +1,5 @@
-fun:discard=uninstrumented
-fun:discard=discard
+fun:discard*=uninstrumented
+fun:discard*=discard
 
 fun:functional=uninstrumented
 fun:functional=functional

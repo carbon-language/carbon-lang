@@ -29,6 +29,12 @@ define void @f() {
   ret void
 }
 
+; CHECK: define i32 (i32, i32)* @discardg(i32)
+; CHECK: %[[CALL:.*]] = call { i32 (i32, i32)*, i16 } @"dfs$g"(i32 %0, i16 0)
+; CHECK: %[[XVAL:.*]] = extractvalue { i32 (i32, i32)*, i16 } %[[CALL]], 0
+; CHECK: ret {{.*}} %[[XVAL]]
+@discardg = alias i32 (i32, i32)* (i32)* @g
+
 ; CHECK: define linkonce_odr { i32, i16 } @"dfsw$custom2"(i32, i32, i16, i16)
 ; CHECK: %[[LABELRETURN2:.*]] = alloca i16
 ; CHECK: %[[RV:.*]] = call i32 @__dfsw_custom2
@@ -38,10 +44,17 @@ define void @f() {
 ; CHECK: ret { i32, i16 }
 
 ; CHECK: @"dfs$g"
-define i32 (i32, i32)* @g() {
+define i32 (i32, i32)* @g(i32) {
   ; CHECK: ret {{.*}} @"dfsw$custom2"
   ret i32 (i32, i32)* @custom2
 }
+
+; CHECK: define { i32, i16 } @"dfs$adiscard"(i32, i32, i16, i16)
+; CHECK: %[[CALL:.*]] = call i32 @discard(i32 %0, i32 %1)
+; CHECK: %[[IVAL0:.*]] = insertvalue { i32, i16 } undef, i32 %[[CALL]], 0
+; CHECK: %[[IVAL1:.*]] = insertvalue { i32, i16 } %[[IVAL0]], i16 0, 1
+; CHECK: ret { i32, i16 } %[[IVAL1]]
+@adiscard = alias i32 (i32, i32)* @discard
 
 ; CHECK: declare void @__dfsw_custom1(i32, i32, i16, i16)
 ; CHECK: declare i32 @__dfsw_custom2(i32, i32, i16, i16, i16*)
