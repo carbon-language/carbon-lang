@@ -1280,6 +1280,11 @@ ObjectFileELF::FindDynamicSymbol(unsigned tag)
 unsigned
 ObjectFileELF::PLTRelocationType()
 {
+    // DT_PLTREL
+    //  This member specifies the type of relocation entry to which the
+    //  procedure linkage table refers. The d_val member holds DT_REL or
+    //  DT_RELA, as appropriate. All relocations in a procedure linkage table
+    //  must use the same relocation.
     const ELFDynamic *symbol = FindDynamicSymbol(DT_PLTREL);
 
     if (symbol)
@@ -1304,7 +1309,10 @@ ParsePLTRelocations(Symtab *symbol_table,
     ELFRelocation rel(rel_type);
     ELFSymbol symbol;
     lldb::offset_t offset = 0;
-    const elf_xword plt_entsize = plt_hdr->sh_entsize;
+    // Clang 3.3 sets entsize to 4 for 32-bit binaries, but the plt entries are 16 bytes.
+    // So round the entsize up by the alignment if addralign is set.
+    const elf_xword plt_entsize = plt_hdr->sh_addralign ?
+        llvm::RoundUpToAlignment (plt_hdr->sh_entsize, plt_hdr->sh_addralign) : plt_hdr->sh_entsize;
     const elf_xword num_relocations = rel_hdr->sh_size / rel_hdr->sh_entsize;
 
     typedef unsigned (*reloc_info_fn)(const ELFRelocation &rel);
@@ -1479,10 +1487,17 @@ ObjectFileELF::GetSymtab()
         if (symtab)
             symbol_id += ParseSymbolTable (m_symtab_ap.get(), symbol_id, symtab);
 
-        // Synthesize trampoline symbols to help navigate the PLT.
+        // DT_JMPREL
+        //      If present, this entry's d_ptr member holds the address of relocation
+        //      entries associated solely with the procedure linkage table. Separating
+        //      these relocation entries lets the dynamic linker ignore them during
+        //      process initialization, if lazy binding is enabled. If this entry is
+        //      present, the related entries of types DT_PLTRELSZ and DT_PLTREL must
+        //      also be present.
         const ELFDynamic *symbol = FindDynamicSymbol(DT_JMPREL);
         if (symbol)
         {
+            // Synthesize trampoline symbols to help navigate the PLT.
             addr_t addr = symbol->d_ptr;
             Section *reloc_section = section_list->FindSectionContainingFileAddress(addr).get();
             if (reloc_section) 
