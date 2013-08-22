@@ -49,8 +49,7 @@ class ObjCMigrateASTConsumer : public ASTConsumer {
                             ObjCMethodDecl *OM,
                             ObjCInstanceTypeFamily OIT_Family = OIT_None);
   
-  void migrateCFFunctions(ASTContext &Ctx,
-                          const FunctionDecl *FuncDecl);
+  void migrateCFAnnotation(ASTContext &Ctx, const Decl *Decl);
   
   void AnnotateImplicitBridging(ASTContext &Ctx);
   
@@ -61,9 +60,6 @@ class ObjCMigrateASTConsumer : public ASTConsumer {
   
   bool migrateAddMethodAnnotation(ASTContext &Ctx,
                                   const ObjCMethodDecl *MethodDecl);
-  
-  void migrateMethodForCFAnnotation(ASTContext &Ctx,
-                               const ObjCMethodDecl *MethodDecl);
 public:
   std::string MigrateDir;
   bool MigrateLiterals;
@@ -832,30 +828,32 @@ void ObjCMigrateASTConsumer::AnnotateImplicitBridging(ASTContext &Ctx) {
   CFFunctionIBCandidates.clear();
 }
 
-void ObjCMigrateASTConsumer::migrateCFFunctions(
-                               ASTContext &Ctx,
-                               const FunctionDecl *FuncDecl) {
-  if (FuncDecl->hasAttr<CFAuditedTransferAttr>()) {
+void ObjCMigrateASTConsumer::migrateCFAnnotation(ASTContext &Ctx, const Decl *Decl) {
+  if (Decl->hasAttr<CFAuditedTransferAttr>()) {
     assert(CFFunctionIBCandidates.empty() &&
-           "Cannot have audited functions inside user "
+           "Cannot have audited functions/methods inside user "
            "provided CF_IMPLICIT_BRIDGING_ENABLE");
     return;
   }
   
   // Finction must be annotated first.
-  bool Audited = migrateAddFunctionAnnotation(Ctx, FuncDecl);
+  bool Audited;
+  if (const FunctionDecl *FuncDecl = dyn_cast<FunctionDecl>(Decl))
+    Audited = migrateAddFunctionAnnotation(Ctx, FuncDecl);
+  else
+    Audited = migrateAddMethodAnnotation(Ctx, cast<ObjCMethodDecl>(Decl));
   if (Audited) {
-    CFFunctionIBCandidates.push_back(FuncDecl);
+    CFFunctionIBCandidates.push_back(Decl);
     if (!FileId)
-      FileId = PP.getSourceManager().getFileID(FuncDecl->getLocation()).getHashValue();
+      FileId = PP.getSourceManager().getFileID(Decl->getLocation()).getHashValue();
   }
   else
     AnnotateImplicitBridging(Ctx);
 }
 
 bool ObjCMigrateASTConsumer::migrateAddFunctionAnnotation(
-                                                ASTContext &Ctx,
-                                                const FunctionDecl *FuncDecl) {
+                                                  ASTContext &Ctx,
+                                                  const FunctionDecl *FuncDecl) {
   if (FuncDecl->hasBody())
     return false;
 
@@ -933,29 +931,8 @@ void ObjCMigrateASTConsumer::migrateARCSafeAnnotation(ASTContext &Ctx,
        MEnd = CDecl->meth_end();
        M != MEnd; ++M) {
     ObjCMethodDecl *Method = (*M);
-    migrateMethodForCFAnnotation(Ctx, Method);
+    migrateCFAnnotation(Ctx, Method);
   }
-}
-
-void ObjCMigrateASTConsumer::migrateMethodForCFAnnotation(
-                                            ASTContext &Ctx,
-                                            const ObjCMethodDecl *MethodDecl) {
-  if (MethodDecl->hasAttr<CFAuditedTransferAttr>()) {
-    assert(CFFunctionIBCandidates.empty() &&
-           "Cannot have audited method inside user "
-           "provided CF_IMPLICIT_BRIDGING_ENABLE");
-    return;
-  }
-  
-  // Method must be annotated first.
-  bool Audited = migrateAddMethodAnnotation(Ctx, MethodDecl);
-  if (Audited) {
-    CFFunctionIBCandidates.push_back(MethodDecl);
-    if (!FileId)
-      FileId = PP.getSourceManager().getFileID(MethodDecl->getLocation()).getHashValue();
-  }
-  else
-    AnnotateImplicitBridging(Ctx);
 }
 
 bool ObjCMigrateASTConsumer::migrateAddMethodAnnotation(ASTContext &Ctx,
@@ -1074,7 +1051,7 @@ void ObjCMigrateASTConsumer::HandleTranslationUnit(ASTContext &Ctx) {
             migrateNSEnumDecl(Ctx, ED, TD);
       }
       else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(*D))
-        migrateCFFunctions(Ctx, FD);
+        migrateCFAnnotation(Ctx, FD);
       
       if (ObjCContainerDecl *CDecl = dyn_cast<ObjCContainerDecl>(*D)) {
         // migrate methods which can have instancetype as their result type.
