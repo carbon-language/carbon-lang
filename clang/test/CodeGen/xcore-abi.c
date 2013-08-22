@@ -110,4 +110,4 @@ char testchar (void) {
 }
 
 // CHECK: "no-frame-pointer-elim"="false"
-// CHECK: "no-frame-pointer-elim-non-leaf"="false"
+// CHECK-NOT: "no-frame-pointer-elim-non-leaf"
