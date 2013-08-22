@@ -3468,6 +3468,7 @@ public:
                 case 'a':
                 {
                     ExecutionContext exe_ctx (m_interpreter.GetExecutionContext());
+                    m_str = option_arg;
                     m_type = eLookupTypeAddress;
                     m_addr = Args::StringToAddress(&exe_ctx, option_arg, LLDB_INVALID_ADDRESS, &error);
                     if (m_addr == LLDB_INVALID_ADDRESS)
@@ -3481,6 +3482,10 @@ public:
                     m_type = eLookupTypeFunctionOrSymbol;
                     break;
                 }
+
+                default:
+                    error.SetErrorStringWithFormat ("unrecognized option %c.", short_option);
+                    break;
             }
 
             return error;
@@ -3591,8 +3596,21 @@ protected:
                 }
             }
         }
+        else
+        {
+            result.AppendError ("address-expression or function name option must be specified.");
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
 
         size_t num_matches = sc_list.GetSize();
+        if (num_matches == 0)
+        {
+            result.AppendErrorWithFormat ("no unwind data found that matches '%s'.", m_options.m_str.c_str());
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+
         for (uint32_t idx = 0; idx < num_matches; idx++)
         {
             SymbolContext sc;
