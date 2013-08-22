@@ -1007,17 +1007,10 @@ void Sema::PushBlockScope(Scope *BlockScope, BlockDecl *Block) {
                                               BlockScope, Block));
 }
 
-void Sema::PushLambdaScope() {
-  FunctionScopes.push_back(new LambdaScopeInfo(getDiagnostics()));
-}
-
-void Sema::RecordParsingTemplateParameterDepth(unsigned Depth) {
-  if (LambdaScopeInfo *const LSI = getCurLambda()) {
-    LSI->AutoTemplateParameterDepth = Depth;
-    return;
-  } 
-  assert(false && 
-      "Remove assertion if intentionally called in a non-lambda context.");
+void Sema::PushLambdaScope(CXXRecordDecl *Lambda,
+                           CXXMethodDecl *CallOperator) {
+  FunctionScopes.push_back(new LambdaScopeInfo(getDiagnostics(), Lambda,
+                                               CallOperator));
 }
 
 void Sema::PopFunctionScopeInfo(const AnalysisBasedWarnings::Policy *WP,
@@ -1073,16 +1066,6 @@ LambdaScopeInfo *Sema::getCurLambda() {
 
   return dyn_cast<LambdaScopeInfo>(FunctionScopes.back());
 }
-// We have a generic lambda if we parsed auto parameters, or we have 
-// an associated template parameter list.
-LambdaScopeInfo *Sema::getCurGenericLambda() {
-  if (LambdaScopeInfo *LSI =  getCurLambda()) {
-    return (LSI->AutoTemplateParams.size() ||
-                    LSI->GLTemplateParameterList) ? LSI : 0;
-  }
-  return 0;
-}
-
 
 void Sema::ActOnComment(SourceRange Comment) {
   if (!LangOpts.RetainCommentsFromSystemHeaders &&

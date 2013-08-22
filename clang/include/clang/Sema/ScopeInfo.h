@@ -35,8 +35,6 @@ class LabelDecl;
 class ReturnStmt;
 class Scope;
 class SwitchStmt;
-class TemplateTypeParmDecl;
-class TemplateParameterList;
 class VarDecl;
 class DeclRefExpr;
 class ObjCIvarRefExpr;
@@ -615,27 +613,12 @@ public:
   /// \brief Offsets into the ArrayIndexVars array at which each capture starts
   /// its list of array index variables.
   SmallVector<unsigned, 4> ArrayIndexStarts;
-  
-  /// \brief If this is a generic lambda, use this as the depth of 
-  /// each 'auto' parameter, during initial AST construction.
-  unsigned AutoTemplateParameterDepth;
 
-  // If this is a generic lambda, store the list of the auto 
-  // parameters converted into TemplateTypeParmDecls into a vector
-  // that can be used to construct the generic lambda's template
-  // parameter list, during initial AST construction.
-  /// \brief Store the list of the auto parameters for a generic lambda.
-  SmallVector<TemplateTypeParmDecl*, 4> AutoTemplateParams;
-
-  // If this is a generic lambda, store its template parameter list.
-  TemplateParameterList *GLTemplateParameterList;
-  
-  LambdaScopeInfo(DiagnosticsEngine &Diag)
-    : CapturingScopeInfo(Diag, ImpCap_None), Lambda(0),
-      CallOperator(0), NumExplicitCaptures(0), Mutable(false),
-      ExprNeedsCleanups(false), ContainsUnexpandedParameterPack(false),
-      AutoTemplateParameterDepth(0),
-      GLTemplateParameterList(0)
+  LambdaScopeInfo(DiagnosticsEngine &Diag, CXXRecordDecl *Lambda,
+                  CXXMethodDecl *CallOperator)
+    : CapturingScopeInfo(Diag, ImpCap_None), Lambda(Lambda),
+      CallOperator(CallOperator), NumExplicitCaptures(0), Mutable(false),
+      ExprNeedsCleanups(false), ContainsUnexpandedParameterPack(false)
   {
     Kind = SK_Lambda;
   }
@@ -648,10 +631,8 @@ public:
   }
 
   static bool classof(const FunctionScopeInfo *FSI) {
-    return FSI->Kind == SK_Lambda; 
+    return FSI->Kind == SK_Lambda;
   }
-
-
 };
 
 

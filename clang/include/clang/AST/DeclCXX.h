@@ -516,8 +516,8 @@ class CXXRecordDecl : public RecordDecl {
     
     LambdaDefinitionData(CXXRecordDecl *D, TypeSourceInfo *Info, bool Dependent) 
       : DefinitionData(D), Dependent(Dependent), NumCaptures(0), 
-        NumExplicitCaptures(0), ManglingNumber(0), ContextDecl(0), 
-        Captures(0), MethodTyInfo(Info), TheLambdaExpr(0) 
+        NumExplicitCaptures(0), ManglingNumber(0), ContextDecl(0), Captures(0),
+        MethodTyInfo(Info) 
     {
       IsLambda = true;
     }
@@ -529,7 +529,7 @@ class CXXRecordDecl : public RecordDecl {
     /// within the default argument of a function template, because the
     /// lambda will have been created with the enclosing context as its
     /// declaration context, rather than function. This is an unfortunate
-    /// artifact of having to parse the default arguments before. 
+    /// artifact of having to parse the default arguments before 
     unsigned Dependent : 1;
     
     /// \brief The number of captures in this lambda.
@@ -554,10 +554,6 @@ class CXXRecordDecl : public RecordDecl {
 
     /// \brief The type of the call method.
     TypeSourceInfo *MethodTyInfo;
-
-    /// \brief The AST node of the lambda expression.
-    LambdaExpr *TheLambdaExpr;
-       
   };
 
   struct DefinitionData &data() {
@@ -992,36 +988,6 @@ public:
 
   /// \brief Determine whether this class describes a lambda function object.
   bool isLambda() const { return hasDefinition() && data().IsLambda; }
-
-  /// \brief Determine whether this class describes a generic 
-  /// lambda function object (i.e. function call operator is
-  /// a template). 
-  bool isGenericLambda() const; 
-
-  /// \brief Retrieve the lambda call operator of the closure type
-  /// if this is a closure type.
-  CXXMethodDecl* getLambdaCallOperator() const; 
-
-  /// \brief Retrieve the lambda static invoker, the address of which
-  /// is returned by the conversion operator, and the body of which
-  /// is forwarded to the lambda call operator. 
-  CXXMethodDecl* getLambdaStaticInvoker() const; 
-
-  /// \brief Retrieve the generic lambda's template parameter list.
-  /// Returns null if the class does not represent a lambda or a generic 
-  /// lambda.
-  TemplateParameterList* getGenericLambdaTemplateParameterList() const;
-
-  /// \brief Assign the member call operator of the lambda. 
-  void setLambdaExpr(LambdaExpr *E) {
-    getLambdaData().TheLambdaExpr = E;
-  }
-
-  /// \brief Retrieve the parent lambda expression.
-  LambdaExpr* getLambdaExpr() const {
-    return isLambda() ? getLambdaData().TheLambdaExpr : 0;
-  }
-
 
   /// \brief For a closure type, retrieve the mapping from captured
   /// variables and \c this to the non-static data members that store the

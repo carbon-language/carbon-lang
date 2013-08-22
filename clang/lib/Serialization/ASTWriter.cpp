@@ -253,7 +253,6 @@ void ASTTypeWriter::VisitAutoType(const AutoType *T) {
   Record.push_back(T->isDecltypeAuto());
   if (T->getDeducedType().isNull())
     Record.push_back(T->isDependentType());
-  Record.push_back(T->containsUnexpandedParameterPack());
   Code = TYPE_AUTO;
 }
 
@@ -5137,7 +5136,6 @@ void ASTWriter::AddCXXDefinitionData(const CXXRecordDecl *D, RecordDataImpl &Rec
     Record.push_back(Lambda.ManglingNumber);
     AddDeclRef(Lambda.ContextDecl, Record);
     AddTypeSourceInfo(Lambda.MethodTyInfo, Record);
-    AddStmt(Lambda.TheLambdaExpr);
     for (unsigned I = 0, N = Lambda.NumCaptures; I != N; ++I) {
       LambdaExpr::Capture &Capture = Lambda.Captures[I];
       AddSourceLocation(Capture.getLocation(), Record);

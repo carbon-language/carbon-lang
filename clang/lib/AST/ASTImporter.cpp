@@ -1709,9 +1709,7 @@ QualType ASTNodeImporter::VisitAutoType(const AutoType *T) {
       return QualType();
   }
   
-  return Importer.getToContext().getAutoType(ToDeduced, T->isDecltypeAuto(), 
-                                             /*IsDependent*/false,
-                                      T->containsUnexpandedParameterPack());
+  return Importer.getToContext().getAutoType(ToDeduced, T->isDecltypeAuto());
 }
 
 QualType ASTNodeImporter::VisitRecordType(const RecordType *T) {

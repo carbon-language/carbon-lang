@@ -4740,9 +4740,7 @@ QualType ASTReader::readTypeRecord(unsigned Index) {
     QualType Deduced = readType(*Loc.F, Record, Idx);
     bool IsDecltypeAuto = Record[Idx++];
     bool IsDependent = Deduced.isNull() ? Record[Idx++] : false;
-    bool IsParameterPack = Record[Idx++];
-    return Context.getAutoType(Deduced, IsDecltypeAuto, IsDependent, 
-                                                      IsParameterPack);
+    return Context.getAutoType(Deduced, IsDecltypeAuto, IsDependent);
   }
 
   case TYPE_RECORD: {

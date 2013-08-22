@@ -969,13 +969,7 @@ public:
 
   void PushFunctionScope();
   void PushBlockScope(Scope *BlockScope, BlockDecl *Block);
-  void PushLambdaScope();
-  
-  // This is used to inform Sema what the current TemplateParameterDepth
-  // is during Parsing.  Currently it is used to pass on the depth
-  // when parsing generic lambda 'auto' parameters.
-  void RecordParsingTemplateParameterDepth(unsigned Depth);
-  
+  void PushLambdaScope(CXXRecordDecl *Lambda, CXXMethodDecl *CallOperator);
   void PushCapturedRegionScope(Scope *RegionScope, CapturedDecl *CD,
                                RecordDecl *RD,
                                CapturedRegionKind K);
@@ -1002,11 +996,8 @@ public:
   /// \brief Retrieve the current block, if any.
   sema::BlockScopeInfo *getCurBlock();
 
-  /// \brief Retrieve the current lambda scope info, if any.
+  /// \brief Retrieve the current lambda expression, if any.
   sema::LambdaScopeInfo *getCurLambda();
-
-  /// \brief Retrieve the current generic lambda info, if any.
-  sema::LambdaScopeInfo *getCurGenericLambda();
 
   /// \brief Retrieve the current captured region, if any.
   sema::CapturedRegionScopeInfo *getCurCapturedRegion();
@@ -4410,10 +4401,6 @@ public:
   /// initializer for the declaration 'Dcl'.
   void ActOnCXXExitDeclInitializer(Scope *S, Decl *Dcl);
 
-  /// \brief Invoked when an auto parameter is parsed
-  /// in a lambda's parameter declaration clause.
-  ParmVarDecl *ActOnLambdaAutoParameter(ParmVarDecl *P);
-
   /// \brief Create a new lambda closure type.
   CXXRecordDecl *createLambdaClosureType(SourceRange IntroducerRange,
                                          TypeSourceInfo *Info,
@@ -4426,15 +4413,14 @@ public:
                                        SourceLocation EndLoc,
                                        ArrayRef<ParmVarDecl *> Params);
 
-  /// \brief Endow the lambda scope info with the relevant properties.
-  void buildLambdaScope(sema::LambdaScopeInfo *LSI, 
-                        CXXMethodDecl *CallOperator,
-                        SourceRange IntroducerRange,
-                        LambdaCaptureDefault CaptureDefault,
-                        SourceLocation CaptureDefaultLoc,
-                        bool ExplicitParams,
-                        bool ExplicitResultType,
-                        bool Mutable);
+  /// \brief Introduce the scope for a lambda expression.
+  sema::LambdaScopeInfo *enterLambdaScope(CXXMethodDecl *CallOperator,
+                                          SourceRange IntroducerRange,
+                                          LambdaCaptureDefault CaptureDefault,
+                                          SourceLocation CaptureDefaultLoc,
+                                          bool ExplicitParams,
+                                          bool ExplicitResultType,
+                                          bool Mutable);
 
   /// \brief Check and build an init-capture with the specified name and
   /// initializer.
@@ -5819,12 +5805,6 @@ public:
                           sema::TemplateDeductionInfo &Info,
                           bool InOverloadResolution = false);
 
-  /// \brief Substitute Replacement for \p auto in \p TypeWithAuto
-  QualType SubstAutoType(QualType TypeWithAuto, QualType Replacement);
-  /// \brief Substitute Replacement for auto in TypeWithAuto
-  TypeSourceInfo* SubstAutoTypeSourceInfo(TypeSourceInfo *TypeWithAuto, 
-                                          QualType Replacement);
-
   /// \brief Result type of DeduceAutoType.
   enum DeduceAutoResult {
     DAR_Succeeded,
@@ -5836,6 +5816,7 @@ public:
                                   QualType &Result);
   DeduceAutoResult DeduceAutoType(TypeLoc AutoTypeLoc, Expr *&Initializer,
                                   QualType &Result);
+  QualType SubstAutoType(QualType TypeWithAuto, QualType Replacement);
   void DiagnoseAutoDeductionFailure(VarDecl *VDecl, Expr *Init);
   bool DeduceReturnType(FunctionDecl *FD, SourceLocation Loc,
                         bool Diagnose = true);

@@ -589,10 +589,6 @@ namespace {
     AutoType *VisitAttributedType(const AttributedType *T) {
       return Visit(T->getModifiedType());
     }
-    AutoType *VisitPackExpansionType(const PackExpansionType *T) {
-      return Visit(T->getPattern());
-    }
-
   };
 }
 

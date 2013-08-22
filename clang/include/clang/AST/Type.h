@@ -3614,11 +3614,10 @@ public:
 /// is no deduced type and an auto type is canonical. In the latter case, it is
 /// also a dependent type.
 class AutoType : public Type, public llvm::FoldingSetNode {
-  AutoType(QualType DeducedType, bool IsDecltypeAuto, 
-           bool IsDependent, bool IsParameterPack)
+  AutoType(QualType DeducedType, bool IsDecltypeAuto, bool IsDependent)
     : Type(Auto, DeducedType.isNull() ? QualType(this, 0) : DeducedType,
            /*Dependent=*/IsDependent, /*InstantiationDependent=*/IsDependent,
-           /*VariablyModified=*/false, /*ContainsParameterPack=*/IsParameterPack) {
+           /*VariablyModified=*/false, /*ContainsParameterPack=*/false) {
     assert((DeducedType.isNull() || !IsDependent) &&
            "auto deduced to dependent type");
     AutoTypeBits.IsDecltypeAuto = IsDecltypeAuto;
@@ -3642,17 +3641,14 @@ public:
   }
 
   void Profile(llvm::FoldingSetNodeID &ID) {
-    Profile(ID, getDeducedType(), isDecltypeAuto(), 
-		    isDependentType(), containsUnexpandedParameterPack());
+    Profile(ID, getDeducedType(), isDecltypeAuto(), isDependentType());
   }
 
   static void Profile(llvm::FoldingSetNodeID &ID, QualType Deduced,
-                      bool IsDecltypeAuto, bool IsDependent, 
-                      bool IsParameterPack) {
+                      bool IsDecltypeAuto, bool IsDependent) {
     ID.AddPointer(Deduced.getAsOpaquePtr());
     ID.AddBoolean(IsDecltypeAuto);
     ID.AddBoolean(IsDependent);
-    ID.AddBoolean(IsParameterPack);
   }
 
   static bool classof(const Type *T) {
