@@ -580,32 +580,13 @@ ABIMacOSX_arm::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueObj
 bool
 ABIMacOSX_arm::CreateFunctionEntryUnwindPlan (UnwindPlan &unwind_plan)
 {
-    uint32_t reg_kind = unwind_plan.GetRegisterKind();
-    uint32_t lr_reg_num = LLDB_INVALID_REGNUM;
-    uint32_t sp_reg_num = LLDB_INVALID_REGNUM;
-    uint32_t pc_reg_num = LLDB_INVALID_REGNUM;
-    
-    switch (reg_kind)
-    {
-        case eRegisterKindDWARF:
-        case eRegisterKindGCC:
-            lr_reg_num = dwarf_lr;
-            sp_reg_num = dwarf_sp;
-            pc_reg_num = dwarf_pc;
-            break;
-            
-        case eRegisterKindGeneric:
-            lr_reg_num = LLDB_REGNUM_GENERIC_RA;
-            sp_reg_num = LLDB_REGNUM_GENERIC_SP;
-            pc_reg_num = LLDB_REGNUM_GENERIC_PC;
-            break;
-    }
-    
-    if (lr_reg_num == LLDB_INVALID_REGNUM ||
-        sp_reg_num == LLDB_INVALID_REGNUM ||
-        pc_reg_num == LLDB_INVALID_REGNUM)
-        return false;
+    unwind_plan.Clear();
+    unwind_plan.SetRegisterKind (eRegisterKindDWARF);
 
+    uint32_t lr_reg_num = dwarf_lr;
+    uint32_t sp_reg_num = dwarf_sp;
+    uint32_t pc_reg_num = dwarf_pc;
+    
     UnwindPlan::RowSP row(new UnwindPlan::Row);
     
     // Our Call Frame Address is the stack pointer value
@@ -626,14 +607,15 @@ ABIMacOSX_arm::CreateFunctionEntryUnwindPlan (UnwindPlan &unwind_plan)
 bool
 ABIMacOSX_arm::CreateDefaultUnwindPlan (UnwindPlan &unwind_plan)
 {
-    uint32_t fp_reg_num = dwarf_r7; // apple uses r7 for all frames. Normal arm uses r11;
+    unwind_plan.Clear ();
+    unwind_plan.SetRegisterKind (eRegisterKindDWARF);
+
+    uint32_t fp_reg_num = dwarf_r7;   // apple uses r7 for all frames. Normal arm uses r11
     uint32_t pc_reg_num = dwarf_pc;
     
     UnwindPlan::RowSP row(new UnwindPlan::Row);
     const int32_t ptr_size = 4;
     
-    unwind_plan.Clear ();
-    unwind_plan.SetRegisterKind (eRegisterKindDWARF);
     row->SetCFARegister (fp_reg_num);
     row->SetCFAOffset (2 * ptr_size);
     row->SetOffset (0);

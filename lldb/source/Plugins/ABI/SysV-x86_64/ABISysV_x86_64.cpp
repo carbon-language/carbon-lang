@@ -1085,33 +1085,12 @@ ABISysV_x86_64::GetReturnValueObjectImpl (Thread &thread, ClangASTType &return_c
 bool
 ABISysV_x86_64::CreateFunctionEntryUnwindPlan (UnwindPlan &unwind_plan)
 {
-    uint32_t reg_kind = unwind_plan.GetRegisterKind();
-    uint32_t sp_reg_num = LLDB_INVALID_REGNUM;
-    uint32_t pc_reg_num = LLDB_INVALID_REGNUM;
+    unwind_plan.Clear();
+    unwind_plan.SetRegisterKind (eRegisterKindDWARF);
     
-    switch (reg_kind)
-    {
-    case eRegisterKindDWARF:
-    case eRegisterKindGCC:
-        sp_reg_num = gcc_dwarf_rsp;
-        pc_reg_num = gcc_dwarf_rip;
-        break;
-
-    case eRegisterKindGDB:
-        sp_reg_num = gdb_rsp;
-        pc_reg_num = gdb_rip;
-        break;
-
-    case eRegisterKindGeneric:
-        sp_reg_num = LLDB_REGNUM_GENERIC_SP;
-        pc_reg_num = LLDB_REGNUM_GENERIC_PC;
-        break;
-    }
-
-    if (sp_reg_num == LLDB_INVALID_REGNUM ||
-        pc_reg_num == LLDB_INVALID_REGNUM)
-        return false;
-
+    uint32_t sp_reg_num = gcc_dwarf_rsp;
+    uint32_t pc_reg_num = gcc_dwarf_rip;
+    
     UnwindPlan::RowSP row(new UnwindPlan::Row);
     row->SetCFARegister (sp_reg_num);
     row->SetCFAOffset (8);
@@ -1125,38 +1104,13 @@ ABISysV_x86_64::CreateFunctionEntryUnwindPlan (UnwindPlan &unwind_plan)
 bool
 ABISysV_x86_64::CreateDefaultUnwindPlan (UnwindPlan &unwind_plan)
 {
-    uint32_t reg_kind = unwind_plan.GetRegisterKind();
-    uint32_t fp_reg_num = LLDB_INVALID_REGNUM;
-    uint32_t sp_reg_num = LLDB_INVALID_REGNUM;
-    uint32_t pc_reg_num = LLDB_INVALID_REGNUM;
+    unwind_plan.Clear();
+    unwind_plan.SetRegisterKind (eRegisterKindDWARF);
+
+    uint32_t fp_reg_num = gcc_dwarf_rbp;
+    uint32_t sp_reg_num = gcc_dwarf_rsp;
+    uint32_t pc_reg_num = gcc_dwarf_rip;
     
-    switch (reg_kind)
-    {
-        case eRegisterKindDWARF:
-        case eRegisterKindGCC:
-            fp_reg_num = gcc_dwarf_rbp;
-            sp_reg_num = gcc_dwarf_rsp;
-            pc_reg_num = gcc_dwarf_rip;
-            break;
-            
-        case eRegisterKindGDB:
-            fp_reg_num = gdb_rbp;
-            sp_reg_num = gdb_rsp;
-            pc_reg_num = gdb_rip;
-            break;
-            
-        case eRegisterKindGeneric:
-            fp_reg_num = LLDB_REGNUM_GENERIC_FP;
-            sp_reg_num = LLDB_REGNUM_GENERIC_SP;
-            pc_reg_num = LLDB_REGNUM_GENERIC_PC;
-            break;
-    }
-
-    if (fp_reg_num == LLDB_INVALID_REGNUM ||
-        sp_reg_num == LLDB_INVALID_REGNUM ||
-        pc_reg_num == LLDB_INVALID_REGNUM)
-        return false;
-
     UnwindPlan::RowSP row(new UnwindPlan::Row);
 
     const int32_t ptr_size = 8;
