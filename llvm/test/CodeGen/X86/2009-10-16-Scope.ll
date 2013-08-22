@@ -24,8 +24,7 @@ declare i32 @foo(i32) ssp
 
 !0 = metadata !{i32 5, i32 2, metadata !1, null}
 !1 = metadata !{i32 458763, null, metadata !2, i32 1, i32 1, i32 0}; [DW_TAG_lexical_block ]
-!2 = metadata !{i32 458798, i32 0, metadata !3, metadata !"bar", metadata !"bar", metadata !"bar", i32 4, null, i1 false, i1 true,
-               i32 0, i32 0, null, i32 0, i32 0, null, null, null, null, i32 0} ; [ DW_TAG_subprogram ]
+!2 = metadata !{i32 458798, i32 0, metadata !3, metadata !"bar", metadata !"bar", metadata !"bar", i32 4, null, i1 false, i1 true, i32 0, i32 0, null, i32 0, i32 0, null, null, null, null, i32 0} ; [ DW_TAG_subprogram ]
 !3 = metadata !{i32 458769, metadata !8, i32 12, metadata !"clang 1.1", i1 true, metadata !"", i32 0, null, metadata !9, null, null, null, metadata !""}; [DW_TAG_compile_unit ]
 !4 = metadata !{i32 459008, metadata !5, metadata !"count_", metadata !3, i32 5, metadata !6}; [ DW_TAG_auto_variable ]
 !5 = metadata !{i32 458763, null, metadata !1, i32 1, i32 1, i32 0}; [DW_TAG_lexical_block ]

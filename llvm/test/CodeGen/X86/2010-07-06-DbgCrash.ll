@@ -7,8 +7,7 @@
 !39 = metadata !{i32 524305, metadata !109, i32 1, metadata !"4.2.1 (Based on Apple Inc. build 5658) (LLVM build 9999)", i1 true, metadata !"", i32 0, metadata !108, metadata !108, null, null, null, metadata !""} ; [ DW_TAG_compile_unit ]
 !46 = metadata !{i32 524303, metadata !109, null, metadata !"", i32 0, i64 64, i64 64, i64 0, i32 0, metadata !47} ; [ DW_TAG_pointer_type ]
 !47 = metadata !{i32 524324, metadata !109, null, metadata !"char", i32 0, i64 8, i64 8, i64 0, i32 0, i32 6} ; [ DW_TAG_base_type ]
-!97 = metadata !{i32 524334, i32 0, metadata !39, metadata !"main", metadata !"main", metadata !"main", i32 73, metadata !98, i1 false, i1 true,
-                i32 0, i32 0, null, i32 0, i32 0, null, null, null, null, i32 0} ; [ DW_TAG_subprogram ]
+!97 = metadata !{i32 524334, i32 0, metadata !39, metadata !"main", metadata !"main", metadata !"main", i32 73, metadata !98, i1 false, i1 true, i32 0, i32 0, null, i32 0, i32 0, null, null, null, null, i32 0} ; [ DW_TAG_subprogram ]
 !98 = metadata !{i32 524309, metadata !109, null, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !99, i32 0, null} ; [ DW_TAG_subroutine_type ]
 !99 = metadata !{metadata !100}
 !100 = metadata !{i32 524324, metadata !109, null, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]

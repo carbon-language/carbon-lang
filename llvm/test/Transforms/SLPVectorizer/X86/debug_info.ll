@@ -13,13 +13,13 @@ target triple = "x86_64-apple-macosx10.7.0"
 ; }
 
 ;CHECK: @depth
-;CHECK: getelementptr inbounds {{.*}}, !dbg !24
-;CHECK: bitcast double* {{.*}}, !dbg !24
-;CHECK: load <2 x double>* {{.*}}, !dbg !24
-;CHECK: store <2 x double> {{.*}}, !dbg !26
+;CHECK: getelementptr inbounds {{.*}}, !dbg ![[LOC:[0-9]+]]
+;CHECK: bitcast double* {{.*}}, !dbg ![[LOC]]
+;CHECK: load <2 x double>* {{.*}}, !dbg ![[LOC]]
+;CHECK: store <2 x double> {{.*}}, !dbg ![[LOC2:[0-9]+]]
 ;CHECK: ret
-;CHECK: !24 = metadata !{i32 4, i32 0,
-;CHECK: !26 = metadata !{i32 7, i32 0,
+;CHECK: ![[LOC]] = metadata !{i32 4, i32 0,
+;CHECK: ![[LOC2]] = metadata !{i32 7, i32 0,
 
 define i32 @depth(double* nocapture %A, i32 %m) #0 {
 entry:

@@ -5,17 +5,17 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 ; Make sure we are preserving debug info in the vectorized code.
 
 ; CHECK: for.body.lr.ph
-; CHECK:   cmp.zero = icmp eq i64 {{.*}}, 0, !dbg !21
+; CHECK:   cmp.zero = icmp eq i64 {{.*}}, 0, !dbg ![[LOC:[0-9]+]]
 ; CHECK: vector.body
-; CHECK:   index {{.*}}, !dbg !21
-; CHECK:   getelementptr inbounds i32* %a, {{.*}}, !dbg !22
-; CHECK:   load <2 x i32>* {{.*}}, !dbg !22
-; CHECK:   add <2 x i32> {{.*}}, !dbg !22
-; CHECK:   add i64 %index, 2, !dbg !21
-; CHECK:   icmp eq i64 %index.next, %end.idx.rnd.down, !dbg !21
+; CHECK:   index {{.*}}, !dbg ![[LOC]]
+; CHECK:   getelementptr inbounds i32* %a, {{.*}}, !dbg ![[LOC2:[0-9]+]]
+; CHECK:   load <2 x i32>* {{.*}}, !dbg ![[LOC2]]
+; CHECK:   add <2 x i32> {{.*}}, !dbg ![[LOC2]]
+; CHECK:   add i64 %index, 2, !dbg ![[LOC]]
+; CHECK:   icmp eq i64 %index.next, %end.idx.rnd.down, !dbg ![[LOC]]
 ; CHECK: middle.block
-; CHECK:   add <2 x i32> %rdx.vec.exit.phi, %rdx.shuf, !dbg !22
-; CHECK:   extractelement <2 x i32> %bin.rdx, i32 0, !dbg !22
+; CHECK:   add <2 x i32> %rdx.vec.exit.phi, %rdx.shuf, !dbg ![[LOC2]]
+; CHECK:   extractelement <2 x i32> %bin.rdx, i32 0, !dbg ![[LOC2]]
 
 define i32 @f(i32* nocapture %a, i32 %size) #0 {
 entry:
