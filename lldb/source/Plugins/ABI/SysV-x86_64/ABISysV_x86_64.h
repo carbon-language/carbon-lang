@@ -76,9 +76,9 @@ public:
     virtual bool
     CallFrameAddressIsValid (lldb::addr_t cfa)
     {
-        // Make sure the stack call frame addresses are are 8 byte aligned
-        if (cfa & (8ull - 1ull))
-            return false;   // Not 8 byte aligned
+        // Make sure the stack call frame addresses are 16 byte aligned
+        if (cfa & (16ull - 1ull))
+            return false;   // Not 16 byte aligned
         if (cfa == 0)
             return false;   // Zero is not a valid stack address
         return true;
