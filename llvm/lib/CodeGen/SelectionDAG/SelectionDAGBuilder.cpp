@@ -1809,7 +1809,7 @@ SelectionDAGBuilder::visitSPDescriptorFailure(StackProtectorDescriptor &SPD) {
   const TargetLowering *TLI = TM.getTargetLowering();
   SDValue Chain = TLI->makeLibCall(DAG, RTLIB::STACKPROTECTOR_CHECK_FAIL,
                                    MVT::isVoid, 0, 0, false, getCurSDLoc(),
-                                   true, false).second;
+                                   false, false).second;
   DAG.setRoot(Chain);
 }
 
