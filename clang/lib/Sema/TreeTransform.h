@@ -1387,9 +1387,8 @@ public:
   ///
   /// By default, performs semantic analysis to build the new statement.
   /// Subclasses may override this routine to provide different behavior.
-  StmtResult RebuildCXXTryStmt(SourceLocation TryLoc,
-                               Stmt *TryBlock,
-                               MultiStmtArg Handlers) {
+  StmtResult RebuildCXXTryStmt(SourceLocation TryLoc, Stmt *TryBlock,
+                               ArrayRef<Stmt *> Handlers) {
     return getSema().ActOnCXXTryBlock(TryLoc, TryBlock, Handlers);
   }
 

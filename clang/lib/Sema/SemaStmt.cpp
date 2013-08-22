@@ -3057,18 +3057,16 @@ public:
 
 /// ActOnCXXTryBlock - Takes a try compound-statement and a number of
 /// handlers and creates a try statement from them.
-StmtResult
-Sema::ActOnCXXTryBlock(SourceLocation TryLoc, Stmt *TryBlock,
-                       MultiStmtArg RawHandlers) {
+StmtResult Sema::ActOnCXXTryBlock(SourceLocation TryLoc, Stmt *TryBlock,
+                                  ArrayRef<Stmt *> Handlers) {
   // Don't report an error if 'try' is used in system headers.
   if (!getLangOpts().CXXExceptions &&
       !getSourceManager().isInSystemHeader(TryLoc))
       Diag(TryLoc, diag::err_exceptions_disabled) << "try";
 
-  unsigned NumHandlers = RawHandlers.size();
+  const unsigned NumHandlers = Handlers.size();
   assert(NumHandlers > 0 &&
          "The parser shouldn't call this if there are no handlers.");
-  Stmt **Handlers = RawHandlers.data();
 
   SmallVector<TypeWithHandler, 8> TypesWithHandlers;
 
@@ -3116,8 +3114,7 @@ Sema::ActOnCXXTryBlock(SourceLocation TryLoc, Stmt *TryBlock,
   // Neither of these are explicitly forbidden, but every compiler detects them
   // and warns.
 
-  return Owned(CXXTryStmt::Create(Context, TryLoc, TryBlock,
-                                  llvm::makeArrayRef(Handlers, NumHandlers)));
+  return Owned(CXXTryStmt::Create(Context, TryLoc, TryBlock, Handlers));
 }
 
 StmtResult

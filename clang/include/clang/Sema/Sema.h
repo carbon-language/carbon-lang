@@ -2980,11 +2980,10 @@ public:
   StmtResult ActOnCXXCatchBlock(SourceLocation CatchLoc,
                                 Decl *ExDecl, Stmt *HandlerBlock);
   StmtResult ActOnCXXTryBlock(SourceLocation TryLoc, Stmt *TryBlock,
-                              MultiStmtArg Handlers);
+                              ArrayRef<Stmt *> Handlers);
 
   StmtResult ActOnSEHTryBlock(bool IsCXXTry, // try (true) or __try (false) ?
-                              SourceLocation TryLoc,
-                              Stmt *TryBlock,
+                              SourceLocation TryLoc, Stmt *TryBlock,
                               Stmt *Handler);
 
   StmtResult ActOnSEHExceptBlock(SourceLocation Loc,
