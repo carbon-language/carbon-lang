@@ -94,7 +94,7 @@ public:
   /// \brief Dump the ELFGroup
   virtual bool dump(llvm::raw_ostream &) { return true; }
 
-private:
+protected:
   ELFLinkingContext &_elfLinkingContext;
 };
 

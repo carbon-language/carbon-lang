@@ -126,9 +126,9 @@ public:
 
   virtual int64_t getOrdinal() const { return _ordinal; }
 
-  virtual int64_t weight() const { return 0; }
+  virtual int64_t weight() const { return _weight; }
 
-  virtual void setWeight() { return; }
+  virtual void setWeight(int64_t weight) { _weight = weight; }
 
   /// \brief validates the Input Element
   virtual bool validate() = 0;
