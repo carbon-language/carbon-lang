@@ -1,4 +1,4 @@
-; RUN: opt < %s -basicaa -slp-vectorizer -dce -S -mtriple=i386-apple-macosx10.8.0 -mcpu=corei7-avx | FileCheck %s
+; RUN: opt < %s -basicaa -slp-vectorizer -slp-threshold=-100 -dce -S -mtriple=i386-apple-macosx10.8.0 -mcpu=corei7-avx | FileCheck %s
 
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:128:128-n8:16:32-S128"
 target triple = "i386-apple-macosx10.9.0"
@@ -95,3 +95,41 @@ for.end:                                          ; preds = %for.body
   ret i32 0
 }
 
+define void @test(x86_fp80* %i1, x86_fp80* %i2, x86_fp80* %o) {
+; CHECK-LABEL: @test(
+;
+; Test that we correctly recognize the discontiguous memory in arrays where the
+; size is less than the alignment, and through various different GEP formations.
+
+entry:
+  %i1.0 = load x86_fp80* %i1, align 16
+  %i1.gep1 = getelementptr x86_fp80* %i1, i64 1
+  %i1.1 = load x86_fp80* %i1.gep1, align 16
+; CHECK: load x86_fp80*
+; CHECK: load x86_fp80*
+; CHECK: insertelement <2 x x86_fp80>
+; CHECK: insertelement <2 x x86_fp80>
+  br i1 undef, label %then, label %end
+
+then:
+  %i2.gep0 = getelementptr inbounds x86_fp80* %i2, i64 0
+  %i2.0 = load x86_fp80* %i2.gep0, align 16
+  %i2.gep1 = getelementptr inbounds x86_fp80* %i2, i64 1
+  %i2.1 = load x86_fp80* %i2.gep1, align 16
+; CHECK: load x86_fp80*
+; CHECK: load x86_fp80*
+; CHECK: insertelement <2 x x86_fp80>
+; CHECK: insertelement <2 x x86_fp80>
+  br label %end
+
+end:
+  %phi0 = phi x86_fp80 [ %i1.0, %entry ], [ %i2.0, %then ]
+  %phi1 = phi x86_fp80 [ %i1.1, %entry ], [ %i2.1, %then ]
+; CHECK: phi <2 x x86_fp80>
+; CHECK: extractelement <2 x x86_fp80>
+; CHECK: extractelement <2 x x86_fp80>
+  store x86_fp80 %phi0, x86_fp80* %o, align 16
+  %o.gep1 = getelementptr inbounds x86_fp80* %o, i64 1
+  store x86_fp80 %phi1, x86_fp80* %o.gep1, align 16
+  ret void
+}

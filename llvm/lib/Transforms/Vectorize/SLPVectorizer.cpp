@@ -992,63 +992,29 @@ bool BoUpSLP::isConsecutiveAccess(Value *A, Value *B) {
   if (PtrA == PtrB || PtrA->getType() != PtrB->getType())
     return false;
 
-  // Calculate a constant offset from the base pointer without using SCEV
-  // in the supported cases.
-  // TODO: Add support for the case where one of the pointers is a GEP that
-  // uses the other pointer.
-  GetElementPtrInst *GepA = dyn_cast<GetElementPtrInst>(PtrA);
-  GetElementPtrInst *GepB = dyn_cast<GetElementPtrInst>(PtrB);
-
-  unsigned BW = DL->getPointerSizeInBits(ASA);
+  unsigned PtrBitWidth = DL->getPointerSizeInBits(ASA);
   Type *Ty = cast<PointerType>(PtrA->getType())->getElementType();
-  int64_t Sz = DL->getTypeStoreSize(Ty);
+  APInt Size(PtrBitWidth, DL->getTypeStoreSize(Ty));
 
-  // Check if PtrA is the base and PtrB is a constant offset.
-  if (GepB && GepB->getPointerOperand() == PtrA) {
-    APInt Offset(BW, 0);
-    if (GepB->accumulateConstantOffset(*DL, Offset))
-      return Offset.getSExtValue() == Sz;
-    return false;
-  }
+  APInt OffsetA(PtrBitWidth, 0), OffsetB(PtrBitWidth, 0);
+  PtrA = PtrA->stripAndAccumulateInBoundsConstantOffsets(*DL, OffsetA);
+  PtrB = PtrB->stripAndAccumulateInBoundsConstantOffsets(*DL, OffsetB);
 
-  // Check if PtrB is the base and PtrA is a constant offset.
-  if (GepA && GepA->getPointerOperand() == PtrB) {
-    APInt Offset(BW, 0);
-    if (GepA->accumulateConstantOffset(*DL, Offset))
-      return Offset.getSExtValue() == -Sz;
-    return false;
-  }
+  APInt OffsetDelta = OffsetB - OffsetA;
 
-  // If both pointers are GEPs:
-  if (GepA && GepB) {
-    // Check that they have the same base pointer and number of indices.
-    if (GepA->getPointerOperand() != GepB->getPointerOperand() ||
-        GepA->getNumIndices() != GepB->getNumIndices())
-      return false;
+  // Check if they are based on the same pointer. That makes the offsets
+  // sufficient.
+  if (PtrA == PtrB)
+    return OffsetDelta == Size;
 
-    // Try to strip the geps. This makes SCEV faster.
-    // Make sure that all of the indices except for the last are identical.
-    int LastIdx = GepA->getNumIndices();
-    for (int i = 0; i < LastIdx - 1; i++) {
-      if (GepA->getOperand(i+1) != GepB->getOperand(i+1))
-          return false;
-    }
+  // Compute the necessary base pointer delta to have the necessary final delta
+  // equal to the size.
+  APInt BaseDelta = Size - OffsetDelta;
 
-    PtrA = GepA->getOperand(LastIdx);
-    PtrB = GepB->getOperand(LastIdx);
-    Sz = 1;
-  }
-
-  ConstantInt *CA = dyn_cast<ConstantInt>(PtrA);
-  ConstantInt *CB = dyn_cast<ConstantInt>(PtrB);
-  if (CA && CB) {
-    return (CA->getSExtValue() + Sz == CB->getSExtValue());
-  }
-
-  // Calculate the distance.
+  // Otherwise compute the distance with SCEV between the base pointers.
   const SCEV *PtrSCEVA = SE->getSCEV(PtrA);
   const SCEV *PtrSCEVB = SE->getSCEV(PtrB);
-  const SCEV *C = SE->getConstant(PtrSCEVA->getType(), Sz);
+  const SCEV *C = SE->getConstant(BaseDelta);
   const SCEV *X = SE->getAddExpr(PtrSCEVA, C);
   return X == PtrSCEVB;
 }
