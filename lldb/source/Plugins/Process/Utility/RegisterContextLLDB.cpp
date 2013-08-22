@@ -1101,7 +1101,8 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, lldb_privat
             const RegisterInfo *reg_info = GetRegisterInfoAtIndex(lldb_regnum);
             if (reg_info && abi->RegisterIsVolatile (reg_info))
             {
-                UnwindLogMsg ("did not supply reg location for %d because it is volatile", lldb_regnum);
+                UnwindLogMsg ("did not supply reg location for %d (%s) because it is volatile",
+                    lldb_regnum, reg_info->name ? reg_info->name : "??");
                 return UnwindLLDB::RegisterSearchResult::eRegisterIsVolatile;
             }
         }
