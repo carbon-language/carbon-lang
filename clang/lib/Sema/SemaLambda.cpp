@@ -143,6 +143,7 @@ ParmVarDecl *Sema::ActOnLambdaAutoParameter(ParmVarDecl *PVD) {
       AutoParameterPosition,  // our template param index 
       /* Identifier*/ 0, false, PVD->isParameterPack());
   LSI->AutoTemplateParams.push_back(TemplateParam);
+  QualType AutoTy = PVD->getType();
   // Now replace the 'auto' in the function parameter with this invented 
   // template type parameter.
   QualType TemplParamType = QualType(TemplateParam->getTypeForDecl(), 0);    
