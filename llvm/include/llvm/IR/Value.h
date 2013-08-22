@@ -260,37 +260,37 @@ public:
   /// this value.
   bool hasValueHandle() const { return HasValueHandle; }
 
-  /// \brief This method strips off any unneeded pointer casts,
-  /// all-zero GEPs and aliases from the specified value, returning the original
-  /// uncasted value. If this is called on a non-pointer value, it returns
-  /// 'this'.
+  /// \brief Strips off any unneeded pointer casts, all-zero GEPs and aliases
+  /// from the specified value, returning the original uncasted value.
+  ///
+  /// If this is called on a non-pointer value, it returns 'this'.
   Value *stripPointerCasts();
   const Value *stripPointerCasts() const {
     return const_cast<Value*>(this)->stripPointerCasts();
   }
 
-  /// \brief This method strips off any unneeded pointer casts and
-  /// all-zero GEPs from the specified value, returning the original
-  /// uncasted value. If this is called on a non-pointer value, it returns
-  /// 'this'.
+  /// \brief Strips off any unneeded pointer casts and all-zero GEPs from the
+  /// specified value, returning the original uncasted value.
+  ///
+  /// If this is called on a non-pointer value, it returns 'this'.
   Value *stripPointerCastsNoFollowAliases();
   const Value *stripPointerCastsNoFollowAliases() const {
     return const_cast<Value*>(this)->stripPointerCastsNoFollowAliases();
   }
 
-  /// stripInBoundsConstantOffsets - This method strips off unneeded pointer casts and
-  /// all-constant GEPs from the specified value, returning the original
-  /// pointer value. If this is called on a non-pointer value, it returns
-  /// 'this'.
+  /// \brief Strips off unneeded pointer casts and all-constant GEPs from the
+  /// specified value, returning the original pointer value.
+  ///
+  /// If this is called on a non-pointer value, it returns 'this'.
   Value *stripInBoundsConstantOffsets();
   const Value *stripInBoundsConstantOffsets() const {
     return const_cast<Value*>(this)->stripInBoundsConstantOffsets();
   }
 
-  /// stripInBoundsOffsets - This method strips off unneeded pointer casts and
-  /// any in-bounds Offsets from the specified value, returning the original
-  /// pointer value. If this is called on a non-pointer value, it returns
-  /// 'this'.
+  /// \brief Strips off unneeded pointer casts and any in-bounds offsets from
+  /// the specified value, returning the original pointer value.
+  ///
+  /// If this is called on a non-pointer value, it returns 'this'.
   Value *stripInBoundsOffsets();
   const Value *stripInBoundsOffsets() const {
     return const_cast<Value*>(this)->stripInBoundsOffsets();
