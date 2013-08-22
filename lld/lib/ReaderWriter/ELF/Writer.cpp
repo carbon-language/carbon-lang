@@ -26,14 +26,14 @@ std::unique_ptr<Writer> createWriterELF(const ELFLinkingContext &info) {
   switch(info.getOutputType()) {
   case llvm::ELF::ET_EXEC:
     if (info.is64Bits()) {
-      if (info.isLittleEndian()) 
+      if (info.isLittleEndian())
         return std::unique_ptr<Writer>(new
             elf::ExecutableWriter<ELFType<support::little, 8, true>>(info));
       else
         return std::unique_ptr<Writer>(new
                 elf::ExecutableWriter<ELFType<support::big, 8, true>>(info));
     } else {
-      if (info.isLittleEndian()) 
+      if (info.isLittleEndian())
         return std::unique_ptr<Writer>(new
             elf::ExecutableWriter<ELFType<support::little, 4, false>>(info));
       else
@@ -43,14 +43,14 @@ std::unique_ptr<Writer> createWriterELF(const ELFLinkingContext &info) {
   break;
   case llvm::ELF::ET_DYN:
     if (info.is64Bits()) {
-      if (info.isLittleEndian()) 
+      if (info.isLittleEndian())
         return std::unique_ptr<Writer>(new
           elf::DynamicLibraryWriter<ELFType<support::little, 8, true>>(info));
       else
         return std::unique_ptr<Writer>(new
               elf::DynamicLibraryWriter<ELFType<support::big, 8, true>>(info));
     } else {
-      if (info.isLittleEndian()) 
+      if (info.isLittleEndian())
         return std::unique_ptr<Writer>(new
           elf::DynamicLibraryWriter<ELFType<support::little, 4, false>>(info));
       else
