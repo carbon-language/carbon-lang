@@ -793,7 +793,7 @@ mapped_file_region::mapped_file_region(const Twine &path,
                                        mapmode mode,
                                        uint64_t length,
                                        uint64_t offset,
-                                       error_code &ec) 
+                                       error_code &ec)
   : Mode(mode)
   , Size(length)
   , Mapping()
@@ -995,7 +995,7 @@ error_code detail::directory_iterator_increment(detail::DirIterState &it) {
   return error_code::success();
 }
 
-error_code map_file_pages(const Twine &path, off_t file_offset, size_t size,  
+error_code map_file_pages(const Twine &path, off_t file_offset, size_t size,
                                             bool map_writable, void *&result) {
   assert(0 && "NOT IMPLEMENTED");
   return windows_error::invalid_function;
@@ -1055,7 +1055,7 @@ error_code openFileForWrite(const Twine &Name, int &ResultFD,
   DWORD CreationDisposition;
   if (Flags & F_Excl)
     CreationDisposition = CREATE_NEW;
-  else if (Flags & F_Append) 
+  else if (Flags & F_Append)
     CreationDisposition = OPEN_ALWAYS;
   else
     CreationDisposition = CREATE_ALWAYS;
