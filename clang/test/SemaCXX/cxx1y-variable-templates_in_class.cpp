@@ -124,6 +124,25 @@ namespace non_const_init {
   }
 }
 
+#ifndef PRECXX11
+namespace constexpred {
+  class A {
+    template<typename T> constexpr T wrong;           // expected-error {{member 'wrong' declared as a template}} \
+                                                      // expected-error {{non-static data member cannot be constexpr; did you intend to make it const?}}
+    template<typename T> constexpr T wrong_init = 5;      // expected-error {{non-static data member cannot be constexpr; did you intend to make it static?}}
+    template<typename T, typename T0> static constexpr T right = T(100);
+    template<typename T> static constexpr T right<T,int> = 5;
+    template<typename T> constexpr int right<int,T>;  // expected-error {{member 'right' declared as a template}} \
+                                                      // expected-error {{non-static data member cannot be constexpr; did you intend to make it const?}}
+    template<typename T> constexpr float right<float,T> = 5;  // expected-error {{non-static data member cannot be constexpr; did you intend to make it static?}}
+    template<> static constexpr int right<int,int> = 7;       // expected-error {{explicit specialization of 'right' in class scope}}
+    template<> static constexpr float right<float,int>;       // expected-error {{explicit specialization of 'right' in class scope}}
+    template static constexpr int right<int,int>;     // expected-error {{template specialization requires 'template<>'}} \
+                                                  // expected-error {{explicit specialization of 'right' in class scope}}
+  };
+}
+#endif
+
 struct matrix_constants {
   // TODO: (?)
 };
