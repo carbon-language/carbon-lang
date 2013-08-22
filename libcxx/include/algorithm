@@ -829,7 +829,7 @@ for_each(_InputIterator __first, _InputIterator __last, _Function __f)
 {
     for (; __first != __last; ++__first)
         __f(*__first);
-    return _VSTD::move(__f);
+    return _VSTD::move(__f);  // explicitly moved for (emulated) C++03
 }
 
 // find

@@ -1266,7 +1266,7 @@ map<_Key, _Tp, _Compare, _Allocator>::__construct_node_with_key(key_type&& __k)
     __h.get_deleter().__first_constructed = true;
     __node_traits::construct(__na, _VSTD::addressof(__h->__value_.__cc.second));
     __h.get_deleter().__second_constructed = true;
-    return _VSTD::move(__h);
+    return __h;
 }
 
 #ifndef _LIBCPP_HAS_NO_VARIADICS
@@ -1300,7 +1300,7 @@ map<_Key, _Tp, _Compare, _Allocator>::__construct_node_with_key(const key_type& 
     __h.get_deleter().__first_constructed = true;
     __node_traits::construct(__na, _VSTD::addressof(__h->__value_.__cc.second));
     __h.get_deleter().__second_constructed = true;
-    return _VSTD::move(__h);
+    return _VSTD::move(__h);  // explicitly moved for C++03
 }
 
 template <class _Key, class _Tp, class _Compare, class _Allocator>

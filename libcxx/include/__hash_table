@@ -2101,7 +2101,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__construct_node(value_type&& __v,
     __h.get_deleter().__value_constructed = true;
     __h->__hash_ = __hash;
     __h->__next_ = nullptr;
-    return _VSTD::move(__h);
+    return __h;
 }
 
 #else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
@@ -2116,7 +2116,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__construct_node(const value_type& __v
     __h.get_deleter().__value_constructed = true;
     __h->__hash_ = hash_function()(__h->__value_);
     __h->__next_ = nullptr;
-    return _VSTD::move(__h);
+    return _VSTD::move(__h);  // explicitly moved for C++03
 }
 
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
@@ -2132,7 +2132,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__construct_node(const value_type& __v
     __h.get_deleter().__value_constructed = true;
     __h->__hash_ = __hash;
     __h->__next_ = nullptr;
-    return _VSTD::move(__h);
+    return _VSTD::move(__h);  // explicitly moved for C++03
 }
 
 template <class _Tp, class _Hash, class _Equal, class _Alloc>
