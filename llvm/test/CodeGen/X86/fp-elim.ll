@@ -4,7 +4,7 @@
 ; Implement -momit-leaf-frame-pointer
 ; rdar://7886181
 
-define i32 @t1() "no-frame-pointer-elim-non-leaf"="false" nounwind readnone {
+define i32 @t1() nounwind readnone {
 entry:
 ; FP-ELIM-LABEL:  t1:
 ; FP-ELIM-NEXT:     movl
@@ -17,7 +17,7 @@ entry:
   ret i32 10
 }
 
-define void @t2() "no-frame-pointer-elim-non-leaf"="false" nounwind {
+define void @t2() nounwind {
 entry:
 ; FP-ELIM-LABEL:  t2:
 ; FP-ELIM-NOT:      pushl %ebp
@@ -31,7 +31,7 @@ entry:
   ret void
 }
 
-define i32 @t3() "no-frame-pointer-elim-non-leaf"="true" nounwind readnone {
+define i32 @t3() "no-frame-pointer-elim-non-leaf" nounwind readnone {
 entry:
 ; FP-ELIM-LABEL:  t3:
 ; FP-ELIM-NEXT:     movl
@@ -44,7 +44,7 @@ entry:
   ret i32 10
 }
 
-define void @t4() "no-frame-pointer-elim-non-leaf"="true" nounwind {
+define void @t4() "no-frame-pointer-elim-non-leaf" nounwind {
 entry:
 ; FP-ELIM-LABEL:  t4:
 ; FP-ELIM-NEXT:     pushl %ebp
