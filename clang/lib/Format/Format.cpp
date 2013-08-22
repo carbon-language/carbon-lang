@@ -439,6 +439,7 @@ private:
     for (std::deque<StateNode *>::iterator I = Path.begin(), E = Path.end();
          I != E; ++I) {
       unsigned Penalty = Indenter->addTokenToState(State, (*I)->NewLine, false);
+      (void)Penalty;
       DEBUG({
         if ((*I)->NewLine) {
           llvm::dbgs() << "Penalty for placing "
