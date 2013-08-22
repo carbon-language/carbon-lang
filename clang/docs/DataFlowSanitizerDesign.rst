@@ -205,3 +205,16 @@ native ABI function directly and the pass will compute the appropriate label
 internally.  This has the advantage of reducing the number of union operations
 required when the return value label is known to be zero (i.e. ``discard``
 functions, or ``functional`` functions with known unlabelled arguments).
+
+Checking ABI Consistency
+------------------------
+
+DFSan changes the ABI of each function in the module.  This makes it possible
+for a function with the native ABI to be called with the instrumented ABI,
+or vice versa, thus possibly invoking undefined behavior.  A simple way
+of statically detecting instances of this problem is to prepend the prefix
+"dfs$" to the name of each instrumented-ABI function.
+
+This will not catch every such problem; in particular function pointers passed
+across the instrumented-native barrier cannot be used on the other side.
+These problems could potentially be caught dynamically.
