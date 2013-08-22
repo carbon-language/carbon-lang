@@ -5231,6 +5231,7 @@ echo "$as_me: error: Cannot enable clang ARC Migration Tool while disabling stat
    { (exit 1); exit 1; }; }
     fi
     ENABLE_CLANG_STATIC_ANALYZER=0
+
     ;;
   default) ENABLE_CLANG_STATIC_ANALYZER=1
 ;;
@@ -10567,7 +10568,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10564 "configure"
+#line 10571 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
