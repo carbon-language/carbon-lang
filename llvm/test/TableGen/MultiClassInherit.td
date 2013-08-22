@@ -1,4 +1,35 @@
-// RUN: llvm-tblgen %s | grep "zing = 4" | count 28
+// RUN: llvm-tblgen %s | FileCheck %s
+
+// "zing = 4" x 28
+// CHECK: zing = 4
+// CHECK: zing = 4
+// CHECK: zing = 4
+// CHECK: zing = 4
+// CHECK: zing = 4
+// CHECK: zing = 4
+// CHECK: zing = 4
+// CHECK: zing = 4
+// CHECK: zing = 4
+// CHECK: zing = 4
+// CHECK: zing = 4
+// CHECK: zing = 4
+// CHECK: zing = 4
+// CHECK: zing = 4
+// CHECK: zing = 4
+// CHECK: zing = 4
+// CHECK: zing = 4
+// CHECK: zing = 4
+// CHECK: zing = 4
+// CHECK: zing = 4
+// CHECK: zing = 4
+// CHECK: zing = 4
+// CHECK: zing = 4
+// CHECK: zing = 4
+// CHECK: zing = 4
+// CHECK: zing = 4
+// CHECK: zing = 4
+// CHECK: zing = 4
+// CHECK-NOT: zing = 4
 
 class C1<int A, string B> { 
   int bar = A;

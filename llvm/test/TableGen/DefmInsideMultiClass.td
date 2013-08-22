@@ -1,4 +1,7 @@
-// RUN: llvm-tblgen %s | grep ADDPSrr | count 1
+// RUN: llvm-tblgen %s | FileCheck %s
+
+// CHECK: ADDPSrr
+// CHECK-NOT: ADDPSrr
 
 class Instruction<bits<4> opc, string Name> {
   bits<4> opcode = opc;

@@ -1,6 +1,13 @@
-// RUN: llvm-tblgen %s | grep 'Jr' | count 2
-// RUN: llvm-tblgen %s | grep 'Sr' | count 2
-// RUN: llvm-tblgen %s | grep '"NAME"' | count 1
+// RUN: llvm-tblgen %s | FileCheck %s
+
+// CHECK: Classes
+// CHECK: Sr
+// CHECK: Jr
+// CHECK: "NAME"
+
+// CHECK: Defs
+// CHECK: Jr
+// CHECK: Sr
 
 // Variables for foreach
 class decls {

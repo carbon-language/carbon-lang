@@ -1,9 +1,4 @@
-// RUN: llvm-tblgen %s | grep "Smith" | count 7
-// RUN: llvm-tblgen %s | grep "Johnson" | count 2
-// RUN: llvm-tblgen %s | grep "FIRST" | count 1
-// RUN: llvm-tblgen %s | grep "LAST" | count 1
-// RUN: llvm-tblgen %s | grep "TVAR" | count 2
-// RUN: llvm-tblgen %s | grep "Bogus" | count 1
+// RUN: llvm-tblgen %s | FileCheck %s
 
 class Honorific<string t> {
   string honorific = t;
@@ -27,3 +22,56 @@ def JohnSmith : AName<"FIRST LAST", TVAR>;
 def JaneSmith : AName<"Jane LAST", Ms>;
 def JohnSmithJones : AName<"FIRST LAST-Jones", Mr>;
 def JimmyJohnson : AName<"Jimmy Johnson", Mr>;
+
+// CHECK:      ------------- Classes -----------------
+// CHECK-NEXT: class AName<string AName:name = ?, Honorific AName:honorific = ?> {
+// CHECK-NEXT:   string name = !subst("FIRST", "John", !subst("LAST", "Smith", AName:name));
+// CHECK-NEXT:   Honorific honorific = !subst(TVAR, Mr, AName:honorific);
+// CHECK-NEXT:   string NAME = ?;
+// CHECK-NEXT: }
+// CHECK-NEXT: class Honorific<string Honorific:t = ?> {
+// CHECK-NEXT:   string honorific = Honorific:t;
+// CHECK-NEXT:   string NAME = ?;
+// CHECK-NEXT: }
+// CHECK-NEXT: class Name<string Name:n = ?, Honorific Name:t = ?> {
+// CHECK-NEXT:   string name = Name:n;
+// CHECK-NEXT:   Honorific honorific = Name:t;
+// CHECK-NEXT:   string NAME = ?;
+// CHECK-NEXT: }
+// CHECK-NEXT: ------------- Defs -----------------
+// CHECK-NEXT: def JaneSmith {
+// CHECK-NEXT:   string name = "Jane Smith";
+// CHECK-NEXT:   Honorific honorific = Ms;
+// CHECK-NEXT:   string NAME = ?;
+// CHECK-NEXT: }
+// CHECK-NEXT: def JimmyJohnson {
+// CHECK-NEXT:   string name = "Jimmy Johnson";
+// CHECK-NEXT:   Honorific honorific = Mr;
+// CHECK-NEXT:   string NAME = ?;
+// CHECK-NEXT: }
+// CHECK-NEXT: def JohnSmith {
+// CHECK-NEXT:   string name = "John Smith";
+// CHECK-NEXT:   Honorific honorific = Mr;
+// CHECK-NEXT:   string NAME = ?;
+// CHECK-NEXT: }
+// CHECK-NEXT: def JohnSmithJones {
+// CHECK-NEXT:   string name = "John Smith-Jones";
+// CHECK-NEXT:   Honorific honorific = Mr;
+// CHECK-NEXT:   string NAME = ?;
+// CHECK-NEXT: }
+// CHECK-NEXT: def Mr 
+// CHECK-NEXT:   string honorific = "Mr.";
+// CHECK-NEXT:   string NAME = ?;
+// CHECK-NEXT: }
+// CHECK-NEXT: def Mrs {
+// CHECK-NEXT:   string honorific = "Mrs.";
+// CHECK-NEXT:   string NAME = ?;
+// CHECK-NEXT: }
+// CHECK-NEXT: def Ms {
+// CHECK-NEXT:   string honorific = "Ms.";
+// CHECK-NEXT:   string NAME = ?;
+// CHECK-NEXT: }
+// CHECK-NEXT: def TVAR {
+// CHECK-NEXT:   string honorific = "Bogus";
+// CHECK-NEXT:   string NAME = ?;
+// CHECK-NEXT: }

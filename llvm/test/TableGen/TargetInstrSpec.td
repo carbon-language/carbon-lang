@@ -1,5 +1,10 @@
-// RUN: llvm-tblgen %s | grep '\[(set VR128:$dst, (int_x86_sse2_add_pd VR128:$src1, VR128:$src2))\]' | count 1
-// RUN: llvm-tblgen %s | grep '\[(set VR128:$dst, (int_x86_sse2_add_ps VR128:$src1, VR128:$src2))\]' | count 1
+// RUN: llvm-tblgen %s | FileCheck %s
+
+// CHECK: [(set VR128:$dst, (int_x86_sse2_add_pd VR128:$src1, VR128:$src2))]
+// CHECK-NOT: [(set VR128:$dst, (int_x86_sse2_add_pd VR128:$src1, VR128:$src2))]
+
+// CHECK: [(set VR128:$dst, (int_x86_sse2_add_ps VR128:$src1, VR128:$src2))]
+// CHECK-NOT: [(set VR128:$dst, (int_x86_sse2_add_ps VR128:$src1, VR128:$src2))]
 
 class ValueType<int size, int value> {
   int Size = size;

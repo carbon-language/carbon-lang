@@ -1,4 +1,9 @@
-// RUN: llvm-tblgen %s | grep "add_ps" | count 3
+// RUN: llvm-tblgen %s | FileCheck %s
+
+// CHECK: add_ps
+// CHECK: add_ps
+// CHECK: add_ps
+// CHECK-NOT: add_ps
 
 class ValueType<int size, int value> {
   int Size = size;
