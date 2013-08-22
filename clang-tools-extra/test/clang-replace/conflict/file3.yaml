@@ -1,0 +1,8 @@
+---
+MainSourceFile: "source1.cpp"
+Replacements:
+  - FilePath:        "$(path)/common.h"
+    Offset:          169
+    Length:          0
+    ReplacementText: "(int*)"
+...

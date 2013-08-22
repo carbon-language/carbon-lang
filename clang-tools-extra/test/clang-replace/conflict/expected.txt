@@ -1,0 +1,11 @@
+There are conflicting changes to $(path)/common.h:
+The following changes conflict:
+  Replace 8:8-8:33 with "auto & i : ints"
+  Replace 8:8-8:33 with "int & elem : ints"
+The following changes conflict:
+  Replace 9:5-9:11 with "elem"
+  Replace 9:5-9:11 with "i"
+The following changes conflict:
+  Remove 12:3-12:14
+  Insert at 12:12 (int*)
+  Replace 12:12-12:12 with "nullptr"
