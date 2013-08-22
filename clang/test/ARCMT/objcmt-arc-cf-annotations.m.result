@@ -197,7 +197,13 @@ typedef double NSTimeInterval;
 @interface NSString : NSObject <NSCopying, NSMutableCopying, NSCoding>
 - (NSUInteger)length;
 - (NSString *)stringByAppendingString:(NSString *)aString;
+
+CF_IMPLICIT_BRIDGING_ENABLED
+
 - ( const char *)UTF8String;
+
+CF_IMPLICIT_BRIDGING_DISABLED
+
 - (instancetype)initWithUTF8String:(const char *)nullTerminatedCString;
 + (instancetype)stringWithUTF8String:(const char *)nullTerminatedCString;
 @end        @class NSString, NSURL, NSError;
@@ -292,9 +298,9 @@ typedef const struct __DADissenter * DADissenterRef;
 extern DADissenterRef DADissenterCreate( CFAllocatorRef allocator, DAReturn status, CFStringRef string ) CF_RETURNS_RETAINED;
 @interface CIContext: NSObject {
 }
-- (CGImageRef)createCGImage:(CIImage *)im fromRect:(CGRect)r;
-- (CGImageRef)createCGImage:(CIImage *)im fromRect:(CGRect)r     format:(CIFormat)f colorSpace:(CGColorSpaceRef)cs;
-- (CGLayerRef)createCGLayerWithSize:(CGSize)size info:(CFDictionaryRef)d;
+- (CGImageRef)createCGImage:(CIImage *)im fromRect:(CGRect)r CF_RETURNS_RETAINED;
+- (CGImageRef)createCGImage:(CIImage *)im fromRect:(CGRect)r     format:(CIFormat)f colorSpace:(CGColorSpaceRef)cs CF_RETURNS_RETAINED;
+- (CGLayerRef)createCGLayerWithSize:(CGSize)size info:(CFDictionaryRef)d CF_RETURNS_RETAINED;
 @end extern NSString* const QCRendererEventKey;
 @protocol QCCompositionRenderer - (NSDictionary*) attributes;
 @end   @interface QCRenderer : NSObject <QCCompositionRenderer> {
@@ -819,8 +825,14 @@ void rdar_6866843() {
 typedef CFTypeRef OtherRef;
 
 @interface RDar6877235 : NSObject {}
-- (CFTypeRef)_copyCFTypeRef;
-- (OtherRef)_copyOtherRef;
+
+CF_IMPLICIT_BRIDGING_ENABLED
+
+- (CFTypeRef)_copyCFTypeRef CF_RETURNS_RETAINED;
+- (OtherRef)_copyOtherRef CF_RETURNS_RETAINED;
+
+CF_IMPLICIT_BRIDGING_DISABLED
+
 @end
 
 @implementation RDar6877235
@@ -954,7 +966,13 @@ static void PR4230_new(void)
 typedef struct s6893565* TD6893565;
 
 @interface RDar6893565 {}
+
+CF_IMPLICIT_BRIDGING_ENABLED
+
 -(TD6893565)newThing;
+
+CF_IMPLICIT_BRIDGING_DISABLED
+
 @end
 
 @implementation RDar6893565
@@ -1373,7 +1391,13 @@ typedef NSString* MyStringTy;
 - (int) returnsAnOwnedInt NS_RETURNS_RETAINED; // expected-warning{{'ns_returns_retained' attribute only applies to methods that return an Objective-C object}}
 - (id) pseudoInit NS_CONSUMES_SELF NS_RETURNS_RETAINED;
 + (void) consume:(id) NS_CONSUMED x;
+
+CF_IMPLICIT_BRIDGING_ENABLED
+
 + (void) consume2:(id) CF_CONSUMED x;
+
+CF_IMPLICIT_BRIDGING_DISABLED
+
 @end
 
 static int ownership_attribute_doesnt_go_here NS_RETURNS_RETAINED; // expected-warning{{'ns_returns_retained' attribute only applies to functions and methods}}
@@ -1448,9 +1472,21 @@ void testattr4() {
 - (NSDate*) returnsCFRetained CF_RETURNS_RETAINED;
 - (CFDateRef) returnsCFRetainedAsCF CF_RETURNS_RETAINED;
 - (CFDateRef) newCFRetainedAsCF CF_RETURNS_NOT_RETAINED;
-- (CFDateRef) newCFRetainedAsCFNoAttr;
+
+CF_IMPLICIT_BRIDGING_ENABLED
+
+- (CFDateRef) newCFRetainedAsCFNoAttr CF_RETURNS_RETAINED;
+
+CF_IMPLICIT_BRIDGING_DISABLED
+
 - (NSDate*) alsoReturnsRetained;
-- (CFDateRef) alsoReturnsRetainedAsCF;
+
+CF_IMPLICIT_BRIDGING_ENABLED
+
+- (CFDateRef) alsoReturnsRetainedAsCF CF_RETURNS_NOT_RETAINED;
+
+CF_IMPLICIT_BRIDGING_DISABLED
+
 - (NSDate*) returnsNSRetained NS_RETURNS_RETAINED;
 @end
 
