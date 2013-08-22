@@ -565,24 +565,31 @@ INTERCEPTOR(int, __isoc99_sscanf, const char *str, const char *format, ...)
 SCANF_INTERCEPTOR_IMPL(__isoc99_sscanf, __isoc99_vsscanf, str, format)
 #endif
 
-#define INIT_SCANF                                                             \
-  INTERCEPT_FUNCTION(scanf);                                                   \
-  INTERCEPT_FUNCTION(sscanf);                                                  \
-  INTERCEPT_FUNCTION(fscanf);                                                  \
-  INTERCEPT_FUNCTION(vscanf);                                                  \
-  INTERCEPT_FUNCTION(vsscanf);                                                 \
-  INTERCEPT_FUNCTION(vfscanf);                                                 \
-  INTERCEPT_FUNCTION(__isoc99_scanf);                                          \
-  INTERCEPT_FUNCTION(__isoc99_sscanf);                                         \
-  INTERCEPT_FUNCTION(__isoc99_fscanf);                                         \
-  INTERCEPT_FUNCTION(__isoc99_vscanf);                                         \
-  INTERCEPT_FUNCTION(__isoc99_vsscanf);                                        \
-  INTERCEPT_FUNCTION(__isoc99_vfscanf);
+#endif
 
+#if SANITIZER_INTERCEPT_SCANF
+#define INIT_SCANF             \
+  INTERCEPT_FUNCTION(scanf);   \
+  INTERCEPT_FUNCTION(sscanf);  \
+  INTERCEPT_FUNCTION(fscanf);  \
+  INTERCEPT_FUNCTION(vscanf);  \
+  INTERCEPT_FUNCTION(vsscanf); \
+  INTERCEPT_FUNCTION(vfscanf);
 #else
 #define INIT_SCANF
 #endif
 
+#if SANITIZER_INTERCEPT_ISOC99_SCANF
+#define INIT_ISOC99_SCANF               \
+  INTERCEPT_FUNCTION(__isoc99_scanf);   \
+  INTERCEPT_FUNCTION(__isoc99_sscanf);  \
+  INTERCEPT_FUNCTION(__isoc99_fscanf);  \
+  INTERCEPT_FUNCTION(__isoc99_vscanf);  \
+  INTERCEPT_FUNCTION(__isoc99_vsscanf); \
+  INTERCEPT_FUNCTION(__isoc99_vfscanf);
+#else
+#define INIT_ISOC99_SCANF
+#endif
 
 #if SANITIZER_INTERCEPT_IOCTL
 #include "sanitizer_common_interceptors_ioctl.inc"
@@ -2005,6 +2012,7 @@ INTERCEPTOR(int, ppoll, __sanitizer_pollfd *fds, __sanitizer_nfds_t nfds,
   INIT_PRCTL;                              \
   INIT_LOCALTIME_AND_FRIENDS;              \
   INIT_SCANF;                              \
+  INIT_ISOC99_SCANF;                       \
   INIT_FREXP;                              \
   INIT_FREXPF_FREXPL;                      \
   INIT_GETPWNAM_AND_FRIENDS;               \
