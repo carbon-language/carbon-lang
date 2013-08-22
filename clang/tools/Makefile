@@ -18,6 +18,10 @@ ifeq ($(ENABLE_CLANG_REWRITER),1)
   PARALLEL_DIRS += clang-format
 endif
 
+ifeq ($(ENABLE_CLANG_STATIC_ANALYZER), 1)
+  PARALLEL_DIRS += clang-check
+endif
+
 ifeq ($(ENABLE_CLANG_ARCMT), 1)
   DIRS += libclang c-index-test c-arcmt-test
   PARALLEL_DIRS += arcmt-test
