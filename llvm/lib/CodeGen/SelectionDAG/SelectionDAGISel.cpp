@@ -1147,11 +1147,53 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
   SDB->SPDescriptor.resetPerFunctionState();
 }
 
+/// Given that the input MI is before a partial terminator sequence TSeq, return
+/// true if M + TSeq also a partial terminator sequence.
+///
+/// A Terminator sequence is a sequence of MachineInstrs which at this point in
+/// lowering copy vregs into physical registers, which are then passed into
+/// terminator instructors so we can satisfy ABI constraints. A partial
+/// terminator sequence is an improper subset of a terminator sequence (i.e. it
+/// may be the whole terminator sequence).
+static bool MIIsInTerminatorSequence(const MachineInstr *MI) {
+  // If we do not have a copy or an implicit def, we return true if and only if
+  // MI is a debug value.
+  if (!MI->isCopy() && !MI->isImplicitDef())
+    // Sometimes DBG_VALUE MI sneak in between the copies from the vregs to the
+    // physical registers if there is debug info associated with the terminator
+    // of our mbb. We want to include said debug info in our terminator
+    // sequence, so we return true in that case.
+    return MI->isDebugValue();
+
+  // If we are not defining a register that is a physical register via a copy or
+  // are defining a register via an implicit def, we have left the terminator
+  // sequence.
+  MachineInstr::const_mop_iterator OPI = MI->operands_begin();  
+  if (!OPI->isReg() || !OPI->isDef() ||
+      (!TargetRegisterInfo::isPhysicalRegister(OPI->getReg()) &&
+       !MI->isImplicitDef()))
+    return false;
+
+  return true;
+}
+
 /// Find the split point at which to splice the end of BB into its success stack
 /// protector check machine basic block.
+///
+/// On many platforms, due to ABI constraints, terminators, even before register
+/// allocation, use physical registers. This creates an issue for us since
+/// physical registers at this point can not travel across basic
+/// blocks. Luckily, selectiondag always moves physical registers into vregs
+/// when they enter functions and moves them through a sequence of copies back
+/// into the physical registers right before the terminator creating a
+/// ``Terminator Sequence''. This function is searching for the beginning of the
+/// terminator sequence so that we can ensure that we splice off not just the
+/// terminator, but additionally the copies that move the vregs into the
+/// physical registers.
 static MachineBasicBlock::iterator
 FindSplitPointForStackProtector(MachineBasicBlock *BB, DebugLoc DL) {
-  MachineBasicBlock::iterator SplitPoint = BB->getFirstTerminator();
+  MachineBasicBlock::iterator SplitPoint = BB->getFirstTerminator();  
+  //
   if (SplitPoint == BB->begin())
     return SplitPoint;
 
@@ -1159,14 +1201,7 @@ FindSplitPointForStackProtector(MachineBasicBlock *BB, DebugLoc DL) {
   MachineBasicBlock::iterator Previous = SplitPoint;
   --Previous;
 
-  while (Previous->isCopy() || Previous->isImplicitDef()) {
-    MachineInstr::mop_iterator OPI = Previous->operands_begin();
-
-    if (!OPI->isReg() || !OPI->isDef() ||
-        (!TargetRegisterInfo::isPhysicalRegister(OPI->getReg()) &&
-         !Previous->isImplicitDef()))
-      break;
-
+  while (MIIsInTerminatorSequence(Previous)) {
     SplitPoint = Previous;
     if (Previous == Start)
       break;
