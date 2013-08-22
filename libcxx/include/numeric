@@ -157,7 +157,7 @@ adjacent_difference(_InputIterator __first, _InputIterator __last, _OutputIterat
         {
             typename iterator_traits<_InputIterator>::value_type __t2(*__first);
             *__result = __t2 - __t1;
-            __t1 = __t2;
+            __t1 = _VSTD::move(__t2);
         }
     }
     return __result;
@@ -177,7 +177,7 @@ adjacent_difference(_InputIterator __first, _InputIterator __last, _OutputIterat
         {
             typename iterator_traits<_InputIterator>::value_type __t2(*__first);
             *__result = __binary_op(__t2, __t1);
-            __t1 = __t2;
+            __t1 = _VSTD::move(__t2);
         }
     }
     return __result;

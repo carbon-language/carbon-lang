@@ -38,6 +38,43 @@ test()
         assert(ib[i] == ir[i]);
 }
 
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+
+class Y;
+
+class X
+{
+    int i_;
+
+    X& operator=(const X&);
+public:
+    explicit X(int i) : i_(i) {}
+    X(const X& x) : i_(x.i_) {}
+    X& operator=(X&& x)
+    {
+        i_ = x.i_;
+        x.i_ = -1;
+        return *this;
+    }
+
+    friend X operator-(const X& x, const X& y) {return X(x.i_ - y.i_);}
+
+    friend class Y;
+};
+
+class Y
+{
+    int i_;
+
+    Y& operator=(const Y&);
+public:
+    explicit Y(int i) : i_(i) {}
+    Y(const Y& y) : i_(y.i_) {}
+    void operator=(const X& x) {i_ = x.i_;}
+};
+
+#endif
+
 int main()
 {
     test<input_iterator<const int*>, output_iterator<int*> >();
@@ -69,4 +106,10 @@ int main()
     test<const int*, bidirectional_iterator<int*> >();
     test<const int*, random_access_iterator<int*> >();
     test<const int*, int*>();
+
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    X x[3] = {X(1), X(2), X(3)};
+    Y y[3] = {Y(1), Y(2), Y(3)};
+    std::adjacent_difference(x, x+3, y);
+#endif
 }
