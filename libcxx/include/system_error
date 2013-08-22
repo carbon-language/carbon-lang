@@ -370,7 +370,8 @@ public:
 #ifdef _LIBCPP_BUILDING_SYSTEM_ERROR
     error_category() _NOEXCEPT;
 #else
-    _LIBCPP_ALWAYS_INLINE _LIBCPP_CONSTEXPR_AFTER_CXX11 error_category() _NOEXCEPT {}
+    _LIBCPP_ALWAYS_INLINE
+    _LIBCPP_CONSTEXPR_AFTER_CXX11 error_category() _NOEXCEPT = default;
 #endif
 private:
     error_category(const error_category&);// = delete;
