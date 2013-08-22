@@ -278,6 +278,19 @@ CodeGenModule::EmitCXXGlobalVarDeclInitFunc(const VarDecl *D,
     OrderGlobalInits Key(order, PrioritizedCXXGlobalInits.size());
     PrioritizedCXXGlobalInits.push_back(std::make_pair(Key, Fn));
     DelayedCXXInitPosition.erase(D);
+  } else if (D->getInstantiatedFromStaticDataMember()) {
+    // C++ [basic.start.init]p2:
+    //   Defnitions of explicitly specialized class template static data members
+    //   have ordered initialization. Other class template static data members
+    //   (i.e., implicitly or explicitly instantiated specializations) have
+    //   unordered initialization.
+    //
+    // As a consequence, we can put them into their own llvm.global_ctors entry.
+    // This should allow GlobalOpt to fire more often, and allow us to implement
+    // the Microsoft C++ ABI, which uses COMDAT elimination to avoid double
+    // initializaiton.
+    AddGlobalCtor(Fn);
+    DelayedCXXInitPosition.erase(D);
   } else {
     llvm::DenseMap<const Decl *, unsigned>::iterator I =
       DelayedCXXInitPosition.find(D);
