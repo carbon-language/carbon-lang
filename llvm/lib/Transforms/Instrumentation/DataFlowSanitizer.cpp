@@ -186,6 +186,9 @@ class DataFlowSanitizer : public ModulePass {
   InstrumentedABI getInstrumentedABI();
   WrapperKind getWrapperKind(Function *F);
   void addGlobalNamePrefix(GlobalValue *GV);
+  Function *buildWrapperFunction(Function *F, StringRef NewFName,
+                                 GlobalValue::LinkageTypes NewFLink,
+                                 FunctionType *NewFT);
 
  public:
   DataFlowSanitizer(StringRef ABIListFile = StringRef(),
@@ -387,6 +390,33 @@ void DataFlowSanitizer::addGlobalNamePrefix(GlobalValue *GV) {
   }
 }
 
+Function *
+DataFlowSanitizer::buildWrapperFunction(Function *F, StringRef NewFName,
+                                        GlobalValue::LinkageTypes NewFLink,
+                                        FunctionType *NewFT) {
+  FunctionType *FT = F->getFunctionType();
+  Function *NewF = Function::Create(NewFT, NewFLink, NewFName,
+                                    F->getParent());
+  NewF->copyAttributesFrom(F);
+  NewF->removeAttributes(
+      AttributeSet::ReturnIndex,
+      AttributeFuncs::typeIncompatible(NewFT->getReturnType(),
+                                       AttributeSet::ReturnIndex));
+
+  BasicBlock *BB = BasicBlock::Create(*Ctx, "entry", NewF);
+  std::vector<Value *> Args;
+  unsigned n = FT->getNumParams();
+  for (Function::arg_iterator ai = NewF->arg_begin(); n != 0; ++ai, --n)
+    Args.push_back(&*ai);
+  CallInst *CI = CallInst::Create(F, Args, "", BB);
+  if (FT->getReturnType()->isVoidTy())
+    ReturnInst::Create(*Ctx, BB);
+  else
+    ReturnInst::Create(*Ctx, CI, BB);
+
+  return NewF;
+}
+
 bool DataFlowSanitizer::runOnModule(Module &M) {
   if (!DL)
     return false;
@@ -521,27 +551,10 @@ bool DataFlowSanitizer::runOnModule(Module &M) {
                                 ? getArgsFunctionType(FT)
                                 : FT;
       Function *NewF =
-          Function::Create(NewFT, GlobalValue::LinkOnceODRLinkage,
-                           std::string("dfsw$") + F.getName(), &M);
-      NewF->copyAttributesFrom(&F);
-      NewF->removeAttributes(
-              AttributeSet::ReturnIndex,
-              AttributeFuncs::typeIncompatible(NewFT->getReturnType(),
-                                               AttributeSet::ReturnIndex));
+          buildWrapperFunction(&F, std::string("dfsw$") + std::string(F.getName()),
+                               GlobalValue::LinkOnceODRLinkage, NewFT);
       if (getInstrumentedABI() == IA_TLS)
-        NewF->removeAttributes(AttributeSet::FunctionIndex,
-                               ReadOnlyNoneAttrs);
-
-      BasicBlock *BB = BasicBlock::Create(*Ctx, "entry", NewF);
-      std::vector<Value *> Args;
-      unsigned n = FT->getNumParams();
-      for (Function::arg_iterator ai = NewF->arg_begin(); n != 0; ++ai, --n)
-        Args.push_back(&*ai);
-      CallInst *CI = CallInst::Create(&F, Args, "", BB);
-      if (FT->getReturnType()->isVoidTy())
-        ReturnInst::Create(*Ctx, BB);
-      else
-        ReturnInst::Create(*Ctx, CI, BB);
+        NewF->removeAttributes(AttributeSet::FunctionIndex, ReadOnlyNoneAttrs);
 
       Value *WrappedFnCst =
           ConstantExpr::getBitCast(NewF, PointerType::getUnqual(FT));
