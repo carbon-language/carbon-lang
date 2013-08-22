@@ -5461,6 +5461,25 @@ def VCVTxu2fq : N2VCvtQ<1, 1, 0b1110, 0, 1, "vcvt", "f32.u32",
                         v4f32, v4i32, int_arm_neon_vcvtfxu2fp>;
 }
 
+def : NEONInstAlias<"vcvt${p}.s32.f32 $Dd, $Dm, #0", 
+                    (VCVTf2sd DPR:$Dd, DPR:$Dm, pred:$p)>;
+def : NEONInstAlias<"vcvt${p}.u32.f32 $Dd, $Dm, #0", 
+                    (VCVTf2ud DPR:$Dd, DPR:$Dm, pred:$p)>;
+def : NEONInstAlias<"vcvt${p}.f32.s32 $Dd, $Dm, #0", 
+                    (VCVTs2fd DPR:$Dd, DPR:$Dm, pred:$p)>;
+def : NEONInstAlias<"vcvt${p}.f32.u32 $Dd, $Dm, #0", 
+                    (VCVTu2fd DPR:$Dd, DPR:$Dm, pred:$p)>;
+
+def : NEONInstAlias<"vcvt${p}.s32.f32 $Qd, $Qm, #0", 
+                    (VCVTf2sq QPR:$Qd, QPR:$Qm, pred:$p)>;
+def : NEONInstAlias<"vcvt${p}.u32.f32 $Qd, $Qm, #0", 
+                    (VCVTf2uq QPR:$Qd, QPR:$Qm, pred:$p)>;
+def : NEONInstAlias<"vcvt${p}.f32.s32 $Qd, $Qm, #0", 
+                    (VCVTs2fq QPR:$Qd, QPR:$Qm, pred:$p)>;
+def : NEONInstAlias<"vcvt${p}.f32.u32 $Qd, $Qm, #0", 
+                    (VCVTu2fq QPR:$Qd, QPR:$Qm, pred:$p)>;
+
+
 //   VCVT     : Vector Convert Between Half-Precision and Single-Precision.
 def  VCVTf2h  : N2VNInt<0b11, 0b11, 0b01, 0b10, 0b01100, 0, 0,
                         IIC_VUNAQ, "vcvt", "f16.f32",
