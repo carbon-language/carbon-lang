@@ -128,7 +128,7 @@ void MemoryBufferTest::testGetOpenFileSlice(bool Reopen) {
   OwningBuffer Buf;
   error_code EC = MemoryBuffer::getOpenFileSlice(TestFD, TestPath.c_str(), Buf,
                                                  40000, // Size
-                                                 8000   // Offset
+                                                 80000  // Offset
                                                  );
   EXPECT_FALSE(EC);
 
