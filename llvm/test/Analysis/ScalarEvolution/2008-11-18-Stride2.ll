@@ -1,5 +1,7 @@
-; RUN: opt < %s -analyze -scalar-evolution 2>&1 | grep "/u 3"
+; RUN: opt < %s -analyze -scalar-evolution 2>&1 | FileCheck %s
 ; XFAIL: *
+
+; CHECK: /u 3
 
 ; This is a tricky testcase for unsigned wrap detection which ScalarEvolution
 ; doesn't yet know how to do.

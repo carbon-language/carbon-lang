@@ -1,5 +1,7 @@
-; RUN: opt < %s -scalar-evolution -analyze | grep "Loop %bb: backedge-taken count is (-1 + (-1 \* %x) + %y)"
+; RUN: opt < %s -scalar-evolution -analyze | FileCheck %s
 ; PR1597
+
+; CHECK: Loop %bb: backedge-taken count is (-1 + (-1 * %x) + %y)
 
 define i32 @f(i32 %x, i32 %y) {
 entry:

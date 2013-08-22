@@ -1,4 +1,6 @@
-; RUN: opt < %s -analyze -scalar-evolution | grep "backedge-taken count is 255"
+; RUN: opt < %s -analyze -scalar-evolution | FileCheck %s
+
+; CHECK: backedge-taken count is 255
 
 define i32 @foo(i32 %x, i32 %y, i32* %lam, i32* %alp) nounwind {
 bb1.thread:

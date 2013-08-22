@@ -1,5 +1,8 @@
-; RUN: opt < %s -analyze -scalar-evolution 2>&1 | not grep smax
+; RUN: opt < %s -analyze -scalar-evolution 2>&1 | FileCheck %s
 ; PR2070
+
+; CHECK: Printing analysis 'Scalar Evolution Analysis' for function 'a'
+; CHECK-NOT: smax
 
 define i32 @a(i32 %x) nounwind  {
 entry:

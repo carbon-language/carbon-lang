@@ -1,5 +1,7 @@
-; RUN: opt < %s -analyze -scalar-evolution 2>&1 | grep "/u 5"
+; RUN: opt < %s -analyze -scalar-evolution 2>&1 | FileCheck %s
 ; XFAIL: *
+
+; CHECK: /u 5
 
 define i8 @foo0(i8 %i0) nounwind {
 entry:

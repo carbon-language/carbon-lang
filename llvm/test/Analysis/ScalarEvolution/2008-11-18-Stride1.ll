@@ -1,5 +1,6 @@
-; RUN: opt < %s -analyze -scalar-evolution \
-; RUN:  | grep "Loop %bb: Unpredictable backedge-taken count\."
+; RUN: opt < %s -analyze -scalar-evolution | FileCheck %s
+
+; CHECK: Loop %bb: Unpredictable backedge-taken count.
 
 ; ScalarEvolution can't compute a trip count because it doesn't know if
 ; dividing by the stride will have a remainder. This could theoretically

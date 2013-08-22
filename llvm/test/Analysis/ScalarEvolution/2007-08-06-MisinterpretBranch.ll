@@ -1,5 +1,7 @@
-; RUN: opt < %s -indvars -adce -simplifycfg -S | grep "icmp s"
+; RUN: opt < %s -indvars -adce -simplifycfg -S | FileCheck %s
 ; PR1598
+
+; CHECK: icmp s
 
 define i32 @f(i32 %a, i32 %b, i32 %x, i32 %y) {
 entry:

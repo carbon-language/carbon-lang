@@ -1,5 +1,8 @@
-; RUN: opt < %s -scalar-evolution -analyze \
-; RUN:   | grep "\-->  (zext" | count 2
+; RUN: opt < %s -scalar-evolution -analyze | FileCheck %s
+
+; CHECK: -->  (zext
+; CHECK: -->  (zext
+; CHECK-NOT: -->  (zext
 
 define i32 @foo(i32 %x) {
   %n = and i32 %x, 255

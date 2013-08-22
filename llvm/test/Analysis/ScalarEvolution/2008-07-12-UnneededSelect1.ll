@@ -1,5 +1,8 @@
-; RUN: opt < %s -analyze -scalar-evolution 2>&1 | not grep smax
+; RUN: opt < %s -analyze -scalar-evolution 2>&1 | FileCheck %s
 ; PR2261
+
+; CHECK: Printing analysis 'Scalar Evolution Analysis' for function 'foo'
+; CHECK-NOT: smax
 
 @lut = common global [256 x i8] zeroinitializer, align 32		; <[256 x i8]*> [#uses=1]
 

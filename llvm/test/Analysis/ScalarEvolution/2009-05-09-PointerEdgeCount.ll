@@ -1,5 +1,8 @@
-; RUN: opt < %s -analyze -scalar-evolution | grep "count is 2"
+; RUN: opt < %s -analyze -scalar-evolution | FileCheck %s
 ; PR3171
+
+; CHECK: count is 2
+
 target datalayout = "E-p:64:64:64-a0:0:8-f32:32:32-f64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-v64:64:64-v128:128:128"
 
 	%struct.Foo = type { i32 }

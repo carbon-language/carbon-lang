@@ -1,6 +1,7 @@
-; RUN: opt < %s -analyze -scalar-evolution \
-; RUN:   -scalar-evolution-max-iterations=0 | grep "backedge-taken count is 61"
+; RUN: opt < %s -analyze -scalar-evolution -scalar-evolution-max-iterations=0 | FileCheck %s
 ; PR2364
+
+; CHECK: backedge-taken count is 61
 
 define i32 @func_6() nounwind  {
 entry:

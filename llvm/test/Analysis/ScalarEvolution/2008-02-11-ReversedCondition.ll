@@ -1,4 +1,6 @@
-; RUN: opt < %s -scalar-evolution -analyze | grep "Loop %header: backedge-taken count is (0 smax %n)"
+; RUN: opt < %s -scalar-evolution -analyze | FileCheck %s
+
+; CHECK: Loop %header: backedge-taken count is (0 smax %n)
 
 define void @foo(i32 %n) {
 entry:
