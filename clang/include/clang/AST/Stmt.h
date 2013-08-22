@@ -380,7 +380,7 @@ public:
 
   /// dumpPretty/printPretty - These two methods do a "pretty print" of the AST
   /// back to its original source language syntax.
-  void dumpPretty(ASTContext &Context) const;
+  void dumpPretty(const ASTContext &Context) const;
   void printPretty(raw_ostream &OS, PrinterHelper *Helper,
                    const PrintingPolicy &Policy,
                    unsigned Indentation = 0) const;
@@ -559,7 +559,7 @@ public:
     CompoundStmtBits.NumStmts = 0;
   }
 
-  void setStmts(ASTContext &C, Stmt **Stmts, unsigned NumStmts);
+  void setStmts(const ASTContext &C, Stmt **Stmts, unsigned NumStmts);
 
   bool body_empty() const { return CompoundStmtBits.NumStmts == 0; }
   unsigned size() const { return CompoundStmtBits.NumStmts; }
@@ -1406,7 +1406,7 @@ public:
   //===--- Asm String Analysis ---===//
 
   /// Assemble final IR asm string.
-  std::string generateAsmString(ASTContext &C) const;
+  std::string generateAsmString(const ASTContext &C) const;
 
   //===--- Output operands ---===//
 
@@ -1575,10 +1575,10 @@ public:
   /// translation of strings from GCC syntax to LLVM IR syntax, and handles
   //// flattening of named references like %[foo] to Operand AsmStringPiece's.
   unsigned AnalyzeAsmString(SmallVectorImpl<AsmStringPiece> &Pieces,
-                            ASTContext &C, unsigned &DiagOffs) const;
+                            const ASTContext &C, unsigned &DiagOffs) const;
 
   /// Assemble final IR asm string.
-  std::string generateAsmString(ASTContext &C) const;
+  std::string generateAsmString(const ASTContext &C) const;
 
   //===--- Output operands ---===//
 
@@ -1638,7 +1638,7 @@ public:
   }
 
 private:
-  void setOutputsAndInputsAndClobbers(ASTContext &C,
+  void setOutputsAndInputsAndClobbers(const ASTContext &C,
                                       IdentifierInfo **Names,
                                       StringLiteral **Constraints,
                                       Stmt **Exprs,
@@ -1709,7 +1709,7 @@ public:
   StringRef getAsmString() const { return AsmStr; }
 
   /// Assemble final IR asm string.
-  std::string generateAsmString(ASTContext &C) const;
+  std::string generateAsmString(const ASTContext &C) const;
 
   //===--- Output operands ---===//
 

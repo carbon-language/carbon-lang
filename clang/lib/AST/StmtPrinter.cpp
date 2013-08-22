@@ -1960,7 +1960,7 @@ void StmtPrinter::VisitAsTypeExpr(AsTypeExpr *Node) {
 // Stmt method implementations
 //===----------------------------------------------------------------------===//
 
-void Stmt::dumpPretty(ASTContext &Context) const {
+void Stmt::dumpPretty(const ASTContext &Context) const {
   printPretty(llvm::errs(), 0, PrintingPolicy(Context.getLangOpts()));
 }
 

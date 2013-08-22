@@ -264,7 +264,8 @@ CompoundStmt::CompoundStmt(const ASTContext &C, ArrayRef<Stmt*> Stmts,
   std::copy(Stmts.begin(), Stmts.end(), Body);
 }
 
-void CompoundStmt::setStmts(ASTContext &C, Stmt **Stmts, unsigned NumStmts) {
+void CompoundStmt::setStmts(const ASTContext &C, Stmt **Stmts,
+                            unsigned NumStmts) {
   if (this->Body)
     C.Deallocate(Body);
   this->CompoundStmtBits.NumStmts = NumStmts;
@@ -295,7 +296,7 @@ AttributedStmt *AttributedStmt::CreateEmpty(const ASTContext &C,
   return new (Mem) AttributedStmt(EmptyShell(), NumAttrs);
 }
 
-std::string AsmStmt::generateAsmString(ASTContext &C) const {
+std::string AsmStmt::generateAsmString(const ASTContext &C) const {
   if (const GCCAsmStmt *gccAsmStmt = dyn_cast<GCCAsmStmt>(this))
     return gccAsmStmt->generateAsmString(C);
   if (const MSAsmStmt *msAsmStmt = dyn_cast<MSAsmStmt>(this))
@@ -381,14 +382,14 @@ StringRef GCCAsmStmt::getInputConstraint(unsigned i) const {
   return getInputConstraintLiteral(i)->getString();
 }
 
-void GCCAsmStmt::setOutputsAndInputsAndClobbers(ASTContext &C,
-                                             IdentifierInfo **Names,
-                                             StringLiteral **Constraints,
-                                             Stmt **Exprs,
-                                             unsigned NumOutputs,
-                                             unsigned NumInputs,
-                                             StringLiteral **Clobbers,
-                                             unsigned NumClobbers) {
+void GCCAsmStmt::setOutputsAndInputsAndClobbers(const ASTContext &C,
+                                                IdentifierInfo **Names,
+                                                StringLiteral **Constraints,
+                                                Stmt **Exprs,
+                                                unsigned NumOutputs,
+                                                unsigned NumInputs,
+                                                StringLiteral **Clobbers,
+                                                unsigned NumClobbers) {
   this->NumOutputs = NumOutputs;
   this->NumInputs = NumInputs;
   this->NumClobbers = NumClobbers;
@@ -436,7 +437,7 @@ int GCCAsmStmt::getNamedOperand(StringRef SymbolicName) const {
 /// it into pieces.  If the asm string is erroneous, emit errors and return
 /// true, otherwise return false.
 unsigned GCCAsmStmt::AnalyzeAsmString(SmallVectorImpl<AsmStringPiece>&Pieces,
-                                   ASTContext &C, unsigned &DiagOffs) const {
+                                const ASTContext &C, unsigned &DiagOffs) const {
   StringRef Str = getAsmString()->getString();
   const char *StrStart = Str.begin();
   const char *StrEnd = Str.end();
@@ -574,7 +575,7 @@ unsigned GCCAsmStmt::AnalyzeAsmString(SmallVectorImpl<AsmStringPiece>&Pieces,
 }
 
 /// Assemble final IR asm string (GCC-style).
-std::string GCCAsmStmt::generateAsmString(ASTContext &C) const {
+std::string GCCAsmStmt::generateAsmString(const ASTContext &C) const {
   // Analyze the asm string to decompose it into its pieces.  We know that Sema
   // has already done this, so it is guaranteed to be successful.
   SmallVector<GCCAsmStmt::AsmStringPiece, 4> Pieces;
@@ -595,7 +596,7 @@ std::string GCCAsmStmt::generateAsmString(ASTContext &C) const {
 }
 
 /// Assemble final IR asm string (MS-style).
-std::string MSAsmStmt::generateAsmString(ASTContext &C) const {
+std::string MSAsmStmt::generateAsmString(const ASTContext &C) const {
   // FIXME: This needs to be translated into the IR string representation.
   return AsmStr;
 }
