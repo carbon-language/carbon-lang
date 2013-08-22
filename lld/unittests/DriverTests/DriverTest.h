@@ -37,8 +37,7 @@ protected:
     const InputElement &inputElement = linkingContext()->inputGraph()[index];
     if (inputElement.kind() == InputElement::Kind::File)
       return (llvm::dyn_cast<FileNode>(&inputElement))->path(*linkingContext());
-    assert(0 && "not handling other types of input files");
-    return "";
+    llvm_unreachable("not handling other types of input files");
   }
 
   // For unit tests to call driver with various command lines.
