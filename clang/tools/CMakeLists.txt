@@ -1,13 +1,18 @@
-add_subdirectory(libclang)
-add_subdirectory(c-index-test)
-add_subdirectory(arcmt-test)
-add_subdirectory(c-arcmt-test)
 add_subdirectory(diagtool)
 add_subdirectory(driver)
+if(CLANG_ENABLE_REWRITER)
+  add_subdirectory(clang-format)
+endif()
+
+if(CLANG_ENABLE_ARCMT)
+  add_subdirectory(libclang)
+  add_subdirectory(c-index-test)
+  add_subdirectory(arcmt-test)
+  add_subdirectory(c-arcmt-test)
+endif()
 if(CLANG_ENABLE_STATIC_ANALYZER)
   add_subdirectory(clang-check)
 endif()
-add_subdirectory(clang-format)
 
 # We support checking out the clang-tools-extra repository into the 'extra'
 # subdirectory. It contains tools developed as part of the Clang/LLVM project

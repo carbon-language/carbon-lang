@@ -274,9 +274,9 @@ install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include/
 
 add_definitions( -D_GNU_SOURCE )
 
-option(CLANG_ENABLE_ARCMT "Enable ARCMT by default." ON)
-option(CLANG_ENABLE_REWRITER "Enable rewriter by default." ON)
-option(CLANG_ENABLE_STATIC_ANALYZER "Enable static analyzer by default." ON)
+option(CLANG_ENABLE_ARCMT "Build ARCMT." ON)
+option(CLANG_ENABLE_REWRITER "Build rewriter." ON)
+option(CLANG_ENABLE_STATIC_ANALYZER "Build static analyzer." ON)
 
 if (NOT CLANG_ENABLE_REWRITER AND CLANG_ENABLE_ARCMT)
   message(FATAL_ERROR "Cannot disable rewriter while enabling ARCMT")
@@ -284,6 +284,10 @@ endif()
 
 if (NOT CLANG_ENABLE_REWRITER AND CLANG_ENABLE_STATIC_ANALYZER)
   message(FATAL_ERROR "Cannot disable rewriter while enabling static analyzer")
+endif()
+
+if (NOT CLANG_ENABLE_STATIC_ANALYZER AND CLANG_ENABLE_ARCMT)
+  message(FATAL_ERROR "Cannot disable static analyzer while enabling ARCMT")
 endif()
 
 if(CLANG_ENABLE_ARCMT)
