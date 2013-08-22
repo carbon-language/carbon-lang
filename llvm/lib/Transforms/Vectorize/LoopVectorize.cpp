@@ -2667,7 +2667,8 @@ bool LoopVectorizationLegality::canVectorize() {
 
 static Type *convertPointerToIntegerType(DataLayout &DL, Type *Ty) {
   if (Ty->isPointerTy())
-    return DL.getIntPtrType(Ty->getContext());
+    return DL.getIntPtrType(Ty);
+
   return Ty;
 }
 
