@@ -143,7 +143,7 @@ bool SIFixSGPRCopies::runOnMachineFunction(MachineFunction &MF) {
       }
       unsigned Reg = MI.getOperand(0).getReg();
       const TargetRegisterClass *RC = inferRegClass(TRI, MRI, Reg);
-      if (RC == &AMDGPU::VSrc_32RegClass) {
+      if (TRI->getCommonSubClass(RC, &AMDGPU::VReg_32RegClass)) {
         MRI.constrainRegClass(Reg, &AMDGPU::VReg_32RegClass);
       }
     }
