@@ -84,7 +84,7 @@ Transform::~Transform() {}
 
 bool Transform::isFileModifiable(const SourceManager &SM,
                                  const SourceLocation &Loc) const {
-  if (SM.isFromMainFile(Loc))
+  if (SM.isWrittenInMainFile(Loc))
     return true;
 
   if (!GlobalOptions.EnableHeaderModifications)

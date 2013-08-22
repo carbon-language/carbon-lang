@@ -40,7 +40,7 @@ UserNullMacroNames("user-null-macros",
 
 bool isReplaceableRange(SourceLocation StartLoc, SourceLocation EndLoc,
                         const SourceManager &SM, const Transform &Owner) {
-  return SM.isFromSameFile(StartLoc, EndLoc) &&
+  return SM.isWrittenInSameFile(StartLoc, EndLoc) &&
          Owner.isFileModifiable(SM, StartLoc);
 }
 
