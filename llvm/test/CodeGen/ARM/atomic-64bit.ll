@@ -1,5 +1,5 @@
 ; RUN: llc < %s -mtriple=armv7-apple-ios | FileCheck %s
-; RUN: llc < %s -mtriple=thumbv7-none-linux-gnueabihf | FileCheck %s --check-prefix=CHECK-THUMB
+; RUN: llc < %s -mtriple=thumbv7-none-linux-gnueabihf -verify-machineinstrs | FileCheck %s --check-prefix=CHECK-THUMB
 
 define i64 @test1(i64* %ptr, i64 %val) {
 ; CHECK-LABEL: test1:

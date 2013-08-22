@@ -6360,6 +6360,8 @@ ARMTargetLowering::EmitAtomicBinary64(MachineInstr *MI, MachineBasicBlock *BB,
     MRI.constrainRegClass(destlo, &ARM::rGPRRegClass);
     MRI.constrainRegClass(desthi, &ARM::rGPRRegClass);
     MRI.constrainRegClass(ptr, &ARM::rGPRRegClass);
+    MRI.constrainRegClass(vallo, &ARM::rGPRRegClass);
+    MRI.constrainRegClass(valhi, &ARM::rGPRRegClass);
   }
 
   MachineBasicBlock *loopMBB = MF->CreateMachineBasicBlock(LLVM_BB);
@@ -6467,6 +6469,8 @@ ARMTargetLowering::EmitAtomicBinary64(MachineInstr *MI, MachineBasicBlock *BB,
 
   // Store
   if (isThumb2) {
+    MRI.constrainRegClass(StoreLo, &ARM::rGPRRegClass);
+    MRI.constrainRegClass(StoreHi, &ARM::rGPRRegClass);
     AddDefaultPred(BuildMI(BB, dl, TII->get(ARM::t2STREXD), storesuccess)
                    .addReg(StoreLo).addReg(StoreHi).addReg(ptr));
   } else {
