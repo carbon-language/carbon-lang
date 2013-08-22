@@ -296,8 +296,9 @@ ArgType PrintfSpecifier::getArgType(ASTContext &Ctx,
         // FIXME: How to get the corresponding signed version of size_t?
         return ArgType();
       case LengthModifier::AsInt3264:
-        return Ctx.getTargetInfo().getTriple().isArch64Bit() ? Ctx.LongLongTy
-                                                             : Ctx.IntTy;
+        return Ctx.getTargetInfo().getTriple().isArch64Bit()
+                   ? ArgType(Ctx.LongLongTy, "__int64")
+                   : ArgType(Ctx.IntTy, "__int32");
       case LengthModifier::AsPtrDiff:
         return ArgType(Ctx.getPointerDiffType(), "ptrdiff_t");
       case LengthModifier::AsAllocate:
@@ -328,8 +329,8 @@ ArgType PrintfSpecifier::getArgType(ASTContext &Ctx,
         return ArgType(Ctx.getSizeType(), "size_t");
       case LengthModifier::AsInt3264:
         return Ctx.getTargetInfo().getTriple().isArch64Bit()
-                   ? Ctx.UnsignedLongLongTy
-                   : Ctx.UnsignedIntTy;
+                   ? ArgType(Ctx.UnsignedLongLongTy, "unsigned __int64")
+                   : ArgType(Ctx.UnsignedIntTy, "unsigned __int32");
       case LengthModifier::AsPtrDiff:
         // FIXME: How to get the corresponding unsigned
         // version of ptrdiff_t?
