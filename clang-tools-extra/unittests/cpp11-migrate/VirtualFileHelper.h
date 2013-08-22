@@ -27,8 +27,8 @@ namespace clang {
 /// map virtual files conveniently.
 class VirtualFileHelper {
   struct VirtualFile {
-    std::string FileName;
-    std::string Code;
+    llvm::StringRef FileName;
+    llvm::StringRef Code;
   };
 
 public:
@@ -49,21 +49,15 @@ public:
   /// mapped to it.
   SourceManager &getNewSourceManager() {
     Sources.reset(new SourceManager(Diagnostics, Files));
-    mapVirtualFiles(*Sources);
-    return *Sources;
-  }
-
-  /// \brief Map the virtual file contents in the given \c SourceManager.
-  void mapVirtualFiles(SourceManager &SM) const {
-    for (llvm::SmallVectorImpl<VirtualFile>::const_iterator
-             I = VirtualFiles.begin(),
-             E = VirtualFiles.end();
+    for (llvm::SmallVectorImpl<VirtualFile>::iterator I = VirtualFiles.begin(),
+                                                      E = VirtualFiles.end();
          I != E; ++I) {
       llvm::MemoryBuffer *Buf = llvm::MemoryBuffer::getMemBuffer(I->Code);
-      const FileEntry *Entry = SM.getFileManager().getVirtualFile(
+      const FileEntry *Entry = Files.getVirtualFile(
           I->FileName, Buf->getBufferSize(), /*ModificationTime=*/0);
-      SM.overrideFileContents(Entry, Buf);
+      Sources->overrideFileContents(Entry, Buf);
     }
+    return *Sources;
   }
 
 private:

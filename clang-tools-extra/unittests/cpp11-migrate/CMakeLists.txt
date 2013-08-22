@@ -13,7 +13,6 @@ add_extra_unittest(Cpp11MigrateTests
   PerfSupportTest.cpp
   TransformTest.cpp
   UniqueHeaderNameTest.cpp
-  IncludeDirectivesTest.cpp
   )
 
 target_link_libraries(Cpp11MigrateTests
