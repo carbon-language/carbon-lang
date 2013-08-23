@@ -149,3 +149,17 @@ define void @f10(i32 %lhs, i64 %base, i64 %index, i32 *%dst) {
   store i32 %res, i32 *%dst
   ret void
 }
+
+; Check the comparison can be reversed if that allows CH to be used.
+define double @f11(double %a, double %b, i32 %rhs, i16 *%src) {
+; CHECK-LABEL: f11:
+; CHECK: ch %r2, 0(%r3)
+; CHECK-NEXT: jh {{\.L.*}}
+; CHECK: ldr %f0, %f2
+; CHECK: br %r14
+  %half = load i16 *%src
+  %lhs = sext i16 %half to i32
+  %cond = icmp slt i32 %lhs, %rhs
+  %res = select i1 %cond, double %a, double %b
+  ret double %res
+}

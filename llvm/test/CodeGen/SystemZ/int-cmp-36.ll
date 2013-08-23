@@ -100,3 +100,22 @@ exit:
   %res = phi i32 [ %src1, %entry ], [ %mul, %mulb ]
   ret i32 %res
 }
+
+; Check the comparison can be reversed if that allows CHRL to be used.
+define i32 @f6(i32 %src2) {
+; CHECK-LABEL: f6:
+; CHECK: chrl %r2, g
+; CHECK-NEXT: jh {{\.L.*}}
+; CHECK: br %r14
+entry:
+  %val = load i16 *@g
+  %src1 = sext i16 %val to i32
+  %cond = icmp slt i32 %src1, %src2
+  br i1 %cond, label %exit, label %mulb
+mulb:
+  %mul = mul i32 %src2, %src2
+  br label %exit
+exit:
+  %res = phi i32 [ %src2, %entry ], [ %mul, %mulb ]
+  ret i32 %res
+}

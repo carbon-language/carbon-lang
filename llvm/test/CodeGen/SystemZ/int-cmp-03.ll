@@ -160,3 +160,16 @@ define double @f11(double %a, double %b, i32 %i1, i64 %base, i64 %index) {
   %res = select i1 %cond, double %a, double %b
   ret double %res
 }
+
+; Check the comparison can be reversed if that allows CL to be used.
+define double @f12(double %a, double %b, i32 %i2, i32 *%ptr) {
+; CHECK-LABEL: f12:
+; CHECK: cl %r2, 0(%r3)
+; CHECK-NEXT: jh {{\.L.*}}
+; CHECK: ldr %f0, %f2
+; CHECK: br %r14
+  %i1 = load i32 *%ptr
+  %cond = icmp ult i32 %i1, %i2
+  %res = select i1 %cond, double %a, double %b
+  ret double %res
+}

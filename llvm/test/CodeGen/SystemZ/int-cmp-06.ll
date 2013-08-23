@@ -104,7 +104,7 @@ define double @f8(double %a, double %b, i64 %i1, i64 %unext) {
   ret double %res
 }
 
-; Check unsigned comparisonn with memory.
+; Check unsigned comparison with memory.
 define double @f9(double %a, double %b, i64 %i1, i32 *%ptr) {
 ; CHECK-LABEL: f9:
 ; CHECK: clgf %r2, 0(%r3)
@@ -339,4 +339,18 @@ define i64 @f19(i32 *%ptr0) {
   %sel9 = select i1 %cmp9, i64 %sel8, i64 9
 
   ret i64 %sel9
+}
+
+; Check the comparison can be reversed if that allows CLGF to be used.
+define double @f20(double %a, double %b, i64 %i2, i32 *%ptr) {
+; CHECK-LABEL: f20:
+; CHECK: clgf %r2, 0(%r3)
+; CHECK-NEXT: jh {{\.L.*}}
+; CHECK: ldr %f0, %f2
+; CHECK: br %r14
+  %unext = load i32 *%ptr
+  %i1 = zext i32 %unext to i64
+  %cond = icmp ult i64 %i1, %i2
+  %res = select i1 %cond, double %a, double %b
+  ret double %res
 }

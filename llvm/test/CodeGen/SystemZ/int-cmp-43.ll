@@ -96,3 +96,21 @@ exit:
   %res = phi i64 [ %src1, %entry ], [ %mul, %mulb ]
   ret i64 %res
 }
+
+; Check the comparison can be reversed if that allows CGRL to be used.
+define i64 @f6(i64 %src2) {
+; CHECK-LABEL: f6:
+; CHECK: cgrl %r2, g
+; CHECK-NEXT: jh {{\.L.*}}
+; CHECK: br %r14
+entry:
+  %src1 = load i64 *@g
+  %cond = icmp slt i64 %src1, %src2
+  br i1 %cond, label %exit, label %mulb
+mulb:
+  %mul = mul i64 %src2, %src2
+  br label %exit
+exit:
+  %res = phi i64 [ %src2, %entry ], [ %mul, %mulb ]
+  ret i64 %res
+}

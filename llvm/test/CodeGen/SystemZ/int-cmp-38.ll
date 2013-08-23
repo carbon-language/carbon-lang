@@ -115,3 +115,21 @@ exit:
   %res = phi i32 [ %src1, %entry ], [ %mul, %mulb ]
   ret i32 %res
 }
+
+; Check the comparison can be reversed if that allows CRL to be used.
+define i32 @f7(i32 %src2) {
+; CHECK-LABEL: f7:
+; CHECK: crl %r2, g
+; CHECK-NEXT: jh {{\.L.*}}
+; CHECK: br %r14
+entry:
+  %src1 = load i32 *@g
+  %cond = icmp slt i32 %src1, %src2
+  br i1 %cond, label %exit, label %mulb
+mulb:
+  %mul = mul i32 %src2, %src2
+  br label %exit
+exit:
+  %res = phi i32 [ %src2, %entry ], [ %mul, %mulb ]
+  ret i32 %res
+}

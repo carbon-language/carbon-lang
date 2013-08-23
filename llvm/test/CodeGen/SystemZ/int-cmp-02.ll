@@ -181,3 +181,16 @@ while.body:
 while.end:
   ret void
 }
+
+; Check the comparison can be reversed if that allows C to be used.
+define double @f13(double %a, double %b, i32 %i2, i32 *%ptr) {
+; CHECK-LABEL: f13:
+; CHECK: c %r2, 0(%r3)
+; CHECK-NEXT: jh {{\.L.*}}
+; CHECK: ldr %f0, %f2
+; CHECK: br %r14
+  %i1 = load i32 *%ptr
+  %cond = icmp slt i32 %i1, %i2
+  %res = select i1 %cond, double %a, double %b
+  ret double %res
+}
