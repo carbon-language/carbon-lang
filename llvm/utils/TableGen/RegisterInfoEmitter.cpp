@@ -1314,9 +1314,21 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
     OS << "0 };\n";
 
     // Emit the *_RegMask bit mask of call-preserved registers.
+    BitVector Covered = RegBank.computeCoveredRegisters(*Regs);
+
+    // Check for an optional OtherPreserved set.
+    // Add those registers to RegMask, but not to SaveList.
+    if (DagInit *OPDag =
+        dyn_cast<DagInit>(CSRSet->getValueInit("OtherPreserved"))) {
+      SetTheory::RecSet OPSet;
+      RegBank.getSets().evaluate(OPDag, OPSet, CSRSet->getLoc());
+      Covered |= RegBank.computeCoveredRegisters(
+        ArrayRef<Record*>(OPSet.begin(), OPSet.end()));
+    }
+
     OS << "static const uint32_t " << CSRSet->getName()
        << "_RegMask[] = { ";
-    printBitVectorAsHex(OS, RegBank.computeCoveredRegisters(*Regs), 32);
+    printBitVectorAsHex(OS, Covered, 32);
     OS << "};\n";
   }
   OS << "\n\n";

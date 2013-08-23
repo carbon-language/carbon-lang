@@ -40,8 +40,12 @@ SparcRegisterInfo::SparcRegisterInfo(SparcSubtarget &st)
 
 const uint16_t* SparcRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF)
                                                                          const {
-  static const uint16_t CalleeSavedRegs[] = { 0 };
-  return CalleeSavedRegs;
+  return CSR_SaveList;
+}
+
+const uint32_t*
+SparcRegisterInfo::getCallPreservedMask(CallingConv::ID CC) const {
+  return CSR_RegMask;
 }
 
 BitVector SparcRegisterInfo::getReservedRegs(const MachineFunction &MF) const {

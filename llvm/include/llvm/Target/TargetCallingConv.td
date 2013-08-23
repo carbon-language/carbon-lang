@@ -143,4 +143,10 @@ class CallingConv<list<CCAction> actions> {
 /// returning from getCallPreservedMask().
 class CalleeSavedRegs<dag saves> {
   dag SaveList = saves;
+
+  // Registers that are also preserved across function calls, but should not be
+  // included in the generated FOO_SaveList array. These registers will be
+  // included in the FOO_RegMask bit mask. This can be used for registers that
+  // are saved automatically, like the SPARC register windows.
+  dag OtherPreserved;
 }
