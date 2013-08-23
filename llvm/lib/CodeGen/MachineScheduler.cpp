@@ -53,6 +53,9 @@ static cl::opt<unsigned> MISchedCutoff("misched-cutoff", cl::Hidden,
 static bool ViewMISchedDAGs = false;
 #endif // NDEBUG
 
+static cl::opt<bool> EnableCyclicPath("misched-cyclicpath", cl::Hidden,
+  cl::desc("Enable cyclic critical path analysis."), cl::init(false));
+
 static cl::opt<bool> EnableLoadCluster("misched-cluster", cl::Hidden,
   cl::desc("Enable load clustering."), cl::init(true));
 
@@ -1207,16 +1210,21 @@ public:
   struct SchedRemainder {
     // Critical path through the DAG in expected latency.
     unsigned CriticalPath;
+    unsigned CyclicCritPath;
 
     // Scaled count of micro-ops left to schedule.
     unsigned RemIssueCount;
+
+    bool IsAcyclicLatencyLimited;
 
     // Unscheduled resources
     SmallVector<unsigned, 16> RemainingCounts;
 
     void reset() {
       CriticalPath = 0;
+      CyclicCritPath = 0;
       RemIssueCount = 0;
+      IsAcyclicLatencyLimited = false;
       RemainingCounts.clear();
     }
 
@@ -1434,6 +1442,8 @@ public:
   virtual void registerRoots();
 
 protected:
+  void checkAcyclicLatency();
+
   void tryCandidate(SchedCandidate &Cand,
                     SchedCandidate &TryCand,
                     SchedBoundary &Zone,
@@ -1547,8 +1557,32 @@ void ConvergingScheduler::releaseBottomNode(SUnit *SU) {
   Bot.releaseNode(SU, SU->BotReadyCycle);
 }
 
+void ConvergingScheduler::checkAcyclicLatency() {
+  if (Rem.CyclicCritPath == 0 || Rem.CyclicCritPath >= Rem.CriticalPath)
+    return;
+
+  unsigned BufferLimit =
+    SchedModel->getMicroOpBufferSize() * SchedModel->getMicroOpFactor();
+  unsigned LatencyLag = Rem.CriticalPath - Rem.CyclicCritPath;
+  Rem.IsAcyclicLatencyLimited =
+    (LatencyLag * SchedModel->getLatencyFactor()) > BufferLimit;
+
+  DEBUG(dbgs() << "BufferLimit " << BufferLimit << "u / "
+        << Rem.RemIssueCount << "u = "
+        << (BufferLimit + Rem.RemIssueCount) / Rem.RemIssueCount << " iters. "
+        << "Latency = " << LatencyLag << "c = "
+        << LatencyLag * SchedModel->getLatencyFactor() << "u\n";
+        if (Rem.IsAcyclicLatencyLimited)
+          dbgs() << "  ACYCLIC LATENCY LIMIT\n");
+}
+
 void ConvergingScheduler::registerRoots() {
   Rem.CriticalPath = DAG->ExitSU.getDepth();
+
+  if (EnableCyclicPath) {
+    Rem.CyclicCritPath = DAG->computeCyclicCriticalPath();
+    checkAcyclicLatency();
+  }
   // Some roots may not feed into ExitSU. Check all of them in case.
   for (std::vector<SUnit*>::const_iterator
          I = Bot.Available.begin(), E = Bot.Available.end(); I != E; ++I) {
@@ -2096,6 +2130,32 @@ static int biasPhysRegCopy(const SUnit *SU, bool isTop) {
   return 0;
 }
 
+static bool tryLatency(ConvergingScheduler::SchedCandidate &TryCand,
+                       ConvergingScheduler::SchedCandidate &Cand,
+                       ConvergingScheduler::SchedBoundary &Zone) {
+  if (Zone.isTop()) {
+    if (Cand.SU->getDepth() > Zone.getScheduledLatency()) {
+      if (tryLess(TryCand.SU->getDepth(), Cand.SU->getDepth(),
+                  TryCand, Cand, ConvergingScheduler::TopDepthReduce))
+        return true;
+    }
+    if (tryGreater(TryCand.SU->getHeight(), Cand.SU->getHeight(),
+                   TryCand, Cand, ConvergingScheduler::TopPathReduce))
+      return true;
+  }
+  else {
+    if (Cand.SU->getHeight() > Zone.getScheduledLatency()) {
+      if (tryLess(TryCand.SU->getHeight(), Cand.SU->getHeight(),
+                  TryCand, Cand, ConvergingScheduler::BotHeightReduce))
+        return true;
+    }
+    if (tryGreater(TryCand.SU->getDepth(), Cand.SU->getDepth(),
+                   TryCand, Cand, ConvergingScheduler::BotPathReduce))
+      return true;
+  }
+  return false;
+}
+
 /// Apply a set of heursitics to a new candidate. Heuristics are currently
 /// hierarchical. This may be more efficient than a graduated cost model because
 /// we don't need to evaluate all aspects of the model for each node in the
@@ -2133,6 +2193,10 @@ void ConvergingScheduler::tryCandidate(SchedCandidate &Cand,
   // invalid; convert it to INT_MAX to give it lowest priority.
   if (tryPressure(TryCand.RPDelta.Excess, Cand.RPDelta.Excess, TryCand, Cand,
                   RegExcess))
+    return;
+
+  // For loops that are acyclic path limited, aggressively schedule for latency.
+  if (Rem.IsAcyclicLatencyLimited && tryLatency(TryCand, Cand, Zone))
     return;
 
   // Avoid increasing the max critical pressure in the scheduled region.
@@ -2174,27 +2238,10 @@ void ConvergingScheduler::tryCandidate(SchedCandidate &Cand,
     return;
 
   // Avoid serializing long latency dependence chains.
-  if (Cand.Policy.ReduceLatency) {
-    if (Zone.isTop()) {
-      if (Cand.SU->getDepth() > Zone.getScheduledLatency()) {
-        if (tryLess(TryCand.SU->getDepth(), Cand.SU->getDepth(),
-                    TryCand, Cand, TopDepthReduce))
-          return;
-      }
-      if (tryGreater(TryCand.SU->getHeight(), Cand.SU->getHeight(),
-                     TryCand, Cand, TopPathReduce))
-        return;
-    }
-    else {
-      if (Cand.SU->getHeight() > Zone.getScheduledLatency()) {
-        if (tryLess(TryCand.SU->getHeight(), Cand.SU->getHeight(),
-                    TryCand, Cand, BotHeightReduce))
-          return;
-      }
-      if (tryGreater(TryCand.SU->getDepth(), Cand.SU->getDepth(),
-                     TryCand, Cand, BotPathReduce))
-        return;
-    }
+  // For acyclic path limited loops, latency was already checked above.
+  if (Cand.Policy.ReduceLatency && !Rem.IsAcyclicLatencyLimited
+      && tryLatency(TryCand, Cand, Zone)) {
+    return;
   }
 
   // Prefer immediate defs/users of the last scheduled instruction. This is a

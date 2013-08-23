@@ -36,6 +36,8 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
+#include <queue>
+
 using namespace llvm;
 
 static cl::opt<bool> EnableAASchedMI("enable-aa-sched-mi", cl::Hidden,
@@ -977,6 +979,65 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
   Uses.clear();
   VRegDefs.clear();
   PendingLoads.clear();
+}
+
+/// Compute the max cyclic critical path through the DAG. For loops that span
+/// basic blocks, MachineTraceMetrics should be used for this instead.
+unsigned ScheduleDAGInstrs::computeCyclicCriticalPath() {
+  // This only applies to single block loop.
+  if (!BB->isSuccessor(BB))
+    return 0;
+
+  unsigned MaxCyclicLatency = 0;
+  // Visit each live out vreg def to find def/use pairs that cross iterations.
+  for (SUnit::const_pred_iterator
+         PI = ExitSU.Preds.begin(), PE = ExitSU.Preds.end(); PI != PE; ++PI) {
+    MachineInstr *MI = PI->getSUnit()->getInstr();
+    for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+      const MachineOperand &MO = MI->getOperand(i);
+      if (!MO.isReg() || !MO.isDef())
+        break;
+      unsigned Reg = MO.getReg();
+      if (!Reg || TRI->isPhysicalRegister(Reg))
+        continue;
+
+      const LiveInterval &LI = LIS->getInterval(Reg);
+      unsigned LiveOutHeight = PI->getSUnit()->getHeight();
+      unsigned LiveOutDepth = PI->getSUnit()->getDepth() + PI->getLatency();
+      // Visit all local users of the vreg def.
+      for (VReg2UseMap::iterator
+             UI = VRegUses.find(Reg); UI != VRegUses.end(); ++UI) {
+        if (UI->SU == &ExitSU)
+          continue;
+
+        // Only consider uses of the phi.
+        LiveRangeQuery LRQ(LI, LIS->getInstructionIndex(UI->SU->getInstr()));
+        if (!LRQ.valueIn()->isPHIDef())
+          continue;
+
+        // Cheat a bit and assume that a path spanning two iterations is a
+        // cycle, which could overestimate in strange cases. This allows cyclic
+        // latency to be estimated as the minimum height or depth slack.
+        unsigned CyclicLatency = 0;
+        if (LiveOutDepth > UI->SU->getDepth())
+          CyclicLatency = LiveOutDepth - UI->SU->getDepth();
+        unsigned LiveInHeight = UI->SU->getHeight() + PI->getLatency();
+        if (LiveInHeight > LiveOutHeight) {
+          if (LiveInHeight - LiveOutHeight < CyclicLatency)
+            CyclicLatency = LiveInHeight - LiveOutHeight;
+        }
+        else
+          CyclicLatency = 0;
+        DEBUG(dbgs() << "Cyclic Path: SU(" << PI->getSUnit()->NodeNum
+              << ") -> SU(" << UI->SU->NodeNum << ") = "
+              << CyclicLatency << "\n");
+        if (CyclicLatency > MaxCyclicLatency)
+          MaxCyclicLatency = CyclicLatency;
+      }
+    }
+  }
+  DEBUG(dbgs() << "Cyclic Critical Path: " << MaxCyclicLatency << "\n");
+  return MaxCyclicLatency;
 }
 
 void ScheduleDAGInstrs::dumpNode(const SUnit *SU) const {

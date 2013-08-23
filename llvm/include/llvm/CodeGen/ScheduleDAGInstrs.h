@@ -197,6 +197,9 @@ namespace llvm {
     /// input.
     void buildSchedGraph(AliasAnalysis *AA, RegPressureTracker *RPTracker = 0);
 
+    /// Compute the cyclic critical path through the DAG.
+    unsigned computeCyclicCriticalPath();
+
     /// addSchedBarrierDeps - Add dependencies from instructions in the current
     /// list of instructions being scheduled to scheduling barrier. We want to
     /// make sure instructions which define registers that are either used by
