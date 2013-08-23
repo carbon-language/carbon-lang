@@ -25,16 +25,10 @@ using namespace llvm;
 
 /// Increase pressure for each pressure set provided by TargetRegisterInfo.
 static void increaseSetPressure(std::vector<unsigned> &CurrSetPressure,
-                                std::vector<unsigned> &MaxSetPressure,
                                 PSetIterator PSetI) {
   unsigned Weight = PSetI.getWeight();
-  for (; PSetI.isValid(); ++PSetI) {
+  for (; PSetI.isValid(); ++PSetI)
     CurrSetPressure[*PSetI] += Weight;
-    if (&CurrSetPressure != &MaxSetPressure
-        && CurrSetPressure[*PSetI] > MaxSetPressure[*PSetI]) {
-      MaxSetPressure[*PSetI] = CurrSetPressure[*PSetI];
-    }
-  }
 }
 
 /// Decrease pressure for each pressure set provided by TargetRegisterInfo.
@@ -87,8 +81,14 @@ void RegPressureTracker::dump() const {
 /// the high water mark if needed.
 void RegPressureTracker::increaseRegPressure(ArrayRef<unsigned> Regs) {
   for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
-    increaseSetPressure(CurrSetPressure, P.MaxSetPressure,
-                        MRI->getPressureSets(Regs[i]));
+    PSetIterator PSetI = MRI->getPressureSets(Regs[i]);
+    unsigned Weight = PSetI.getWeight();
+    for (; PSetI.isValid(); ++PSetI) {
+      CurrSetPressure[*PSetI] += Weight;
+      if (CurrSetPressure[*PSetI] > P.MaxSetPressure[*PSetI]) {
+        P.MaxSetPressure[*PSetI] = CurrSetPressure[*PSetI];
+      }
+    }
   }
 }
 
@@ -281,8 +281,7 @@ void RegPressureTracker::initLiveThru(const RegPressureTracker &RPTracker) {
     unsigned Reg = P.LiveOutRegs[i];
     if (TargetRegisterInfo::isVirtualRegister(Reg)
         && !RPTracker.hasUntiedDef(Reg)) {
-      increaseSetPressure(LiveThruPressure, LiveThruPressure,
-                          MRI->getPressureSets(Reg));
+      increaseSetPressure(LiveThruPressure, MRI->getPressureSets(Reg));
     }
   }
 }
@@ -366,8 +365,7 @@ void RegPressureTracker::discoverLiveIn(unsigned Reg) {
 
   // At live in discovery, unconditionally increase the high water mark.
   P.LiveInRegs.push_back(Reg);
-  increaseSetPressure(P.MaxSetPressure, P.MaxSetPressure,
-                      MRI->getPressureSets(Reg));
+  increaseSetPressure(P.MaxSetPressure, MRI->getPressureSets(Reg));
 }
 
 /// Add Reg to the live out set and increase max pressure.
@@ -378,8 +376,7 @@ void RegPressureTracker::discoverLiveOut(unsigned Reg) {
 
   // At live out discovery, unconditionally increase the high water mark.
   P.LiveOutRegs.push_back(Reg);
-  increaseSetPressure(P.MaxSetPressure, P.MaxSetPressure,
-                      MRI->getPressureSets(Reg));
+  increaseSetPressure(P.MaxSetPressure, MRI->getPressureSets(Reg));
 }
 
 /// Recede across the previous instruction.
