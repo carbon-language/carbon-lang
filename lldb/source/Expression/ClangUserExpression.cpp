@@ -508,6 +508,9 @@ ClangUserExpression::Parse (Stream &error_stream,
     if (!m_expr_decl_map->WillParse(exe_ctx, m_materializer_ap.get()))
     {
         error_stream.PutCString ("error: current process state is unsuitable for expression parsing\n");
+        
+        m_expr_decl_map.reset(); // We are being careful here in the case of breakpoint conditions.
+        
         return false;
     }
     
@@ -525,7 +528,7 @@ ClangUserExpression::Parse (Stream &error_stream,
     {
         error_stream.Printf ("error: %d errors parsing expression\n", num_errors);
         
-        m_expr_decl_map->DidParse();
+        m_expr_decl_map.reset(); // We are being careful here in the case of breakpoint conditions.
         
         return false;
     }
@@ -540,6 +543,8 @@ ClangUserExpression::Parse (Stream &error_stream,
                                                   exe_ctx,
                                                   m_can_interpret,
                                                   execution_policy);
+    
+    m_expr_decl_map.reset(); // Make this go away since we don't need any of its state after parsing.  This also gets rid of any ClangASTImporter::Minions.
         
     if (jit_error.Success())
     {
