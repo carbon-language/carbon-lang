@@ -318,9 +318,14 @@ def CCR : RegisterClass<"Mips", [i32], 32, (sequence "FCR%u", 0, 31)>,
 def FCC : RegisterClass<"Mips", [i32], 32, (sequence "FCC%u", 0, 7)>,
           Unallocatable;
 
-def MSA128: RegisterClass<"Mips",
-                          [v16i8, v8i16, v4i32, v2i64, v8f16, v4f32, v2f64],
-                          128, (sequence "W%u", 0, 31)>;
+def MSA128B: RegisterClass<"Mips", [v16i8], 128,
+                           (sequence "W%u", 0, 31)>;
+def MSA128H: RegisterClass<"Mips", [v8i16, v8f16], 128,
+                           (sequence "W%u", 0, 31)>;
+def MSA128W: RegisterClass<"Mips", [v4i32, v4f32], 128,
+                           (sequence "W%u", 0, 31)>;
+def MSA128D: RegisterClass<"Mips", [v2i64, v2f64], 128,
+                           (sequence "W%u", 0, 31)>;
 
 // Hi/Lo Registers
 def LO32 : RegisterClass<"Mips", [i32], 32, (add LO0)>;

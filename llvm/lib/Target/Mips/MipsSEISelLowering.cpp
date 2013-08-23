@@ -78,13 +78,13 @@ MipsSETargetLowering::MipsSETargetLowering(MipsTargetMachine &TM)
     setOperationAction(ISD::MUL, MVT::v2i16, Legal);
 
   if (Subtarget->hasMSA()) {
-    addMSAType(MVT::v16i8);
-    addMSAType(MVT::v8i16);
-    addMSAType(MVT::v4i32);
-    addMSAType(MVT::v2i64);
-    addMSAType(MVT::v8f16);
-    addMSAType(MVT::v4f32);
-    addMSAType(MVT::v2f64);
+    addMSAType(MVT::v16i8, &Mips::MSA128BRegClass);
+    addMSAType(MVT::v8i16, &Mips::MSA128HRegClass);
+    addMSAType(MVT::v4i32, &Mips::MSA128WRegClass);
+    addMSAType(MVT::v2i64, &Mips::MSA128DRegClass);
+    addMSAType(MVT::v8f16, &Mips::MSA128HRegClass);
+    addMSAType(MVT::v4f32, &Mips::MSA128WRegClass);
+    addMSAType(MVT::v2f64, &Mips::MSA128DRegClass);
   }
 
   if (!TM.Options.UseSoftFloat) {
@@ -133,9 +133,9 @@ llvm::createMipsSETargetLowering(MipsTargetMachine &TM) {
   return new MipsSETargetLowering(TM);
 }
 
-void
-MipsSETargetLowering::addMSAType(MVT::SimpleValueType Ty) {
-  addRegisterClass(Ty, &Mips::MSA128RegClass);
+void MipsSETargetLowering::
+addMSAType(MVT::SimpleValueType Ty, const TargetRegisterClass *RC) {
+  addRegisterClass(Ty, RC);
 
   // Expand all builtin opcodes.
   for (unsigned Opc = 0; Opc < ISD::BUILTIN_OP_END; ++Opc)
