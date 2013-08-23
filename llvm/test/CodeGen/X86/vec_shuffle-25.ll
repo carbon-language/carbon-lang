@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -mattr=sse41 -o %t
+; RUN: llc < %s -march=x86 -mattr=sse4.1 -o %t
 ; RUN: grep unpcklps %t | count 3
 ; RUN: grep unpckhps %t | count 1
  

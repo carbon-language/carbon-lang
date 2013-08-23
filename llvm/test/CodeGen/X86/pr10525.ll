@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86-64 -mattr=+sse2,+sse41
+; RUN: llc < %s -march=x86-64 -mattr=+sse2,+sse4.1
 
 ; No check in a crash test
 

@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=x86_64-apple-macosx -mattr=+sse41 | FileCheck -check-prefix=CHECK-SSE %s
+; RUN: llc < %s -mtriple=x86_64-apple-macosx -mattr=+sse4.1 | FileCheck -check-prefix=CHECK-SSE %s
 ; RUN: llc < %s -mtriple=x86_64-apple-macosx -mattr=+avx | FileCheck -check-prefix=CHECK-AVX %s
 
 define float @test1(float %x) nounwind  {

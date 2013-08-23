@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -mattr=+sse41,-avx | FileCheck %s
+; RUN: llc < %s -march=x86 -mattr=+sse4.1,-avx | FileCheck %s
 ; RUN: llc < %s -march=x86 -mcpu=corei7-avx | FileCheck --check-prefix=AVX %s
 
 ; PR11674

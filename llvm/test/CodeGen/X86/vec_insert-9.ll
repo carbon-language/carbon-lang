@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -mattr=+sse41 > %t
+; RUN: llc < %s -march=x86 -mattr=+sse4.1 > %t
 ; RUN: grep pinsrd %t | count 1
 
 define <4 x i32> @var_insert2(<4 x i32> %x, i32 %val, i32 %idx) nounwind  {

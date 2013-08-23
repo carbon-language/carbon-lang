@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -mcpu=yonah -mattr=+sse2,-sse41 | FileCheck %s
+; RUN: llc < %s -march=x86 -mcpu=yonah -mattr=+sse2,-sse4.1 | FileCheck %s
 
 ; CHECK: vsel_float
 ; CHECK: pandn
