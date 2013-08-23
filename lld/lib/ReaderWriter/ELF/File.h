@@ -185,13 +185,11 @@ public:
         _sectionSymbols[section];
 
       if (section->sh_type == llvm::ELF::SHT_RELA) {
-        auto sectionName = _objFile->getSectionName(section);
+        auto sHdr = _objFile->getSection(section->sh_info);
+
+        auto sectionName = _objFile->getSectionName(sHdr);
         if (!sectionName)
           return error_code(sectionName);
-
-        // Get rid of the leading .rela so Atoms can use their own section
-        // name to find the relocs.
-        *sectionName = sectionName->drop_front(5);
 
         auto rai(_objFile->begin_rela(section));
         auto rae(_objFile->end_rela(section));
@@ -201,13 +199,11 @@ public:
       }
 
       if (section->sh_type == llvm::ELF::SHT_REL) {
-        auto sectionName = _objFile->getSectionName(section);
+        auto sHdr = _objFile->getSection(section->sh_info);
+
+        auto sectionName = _objFile->getSectionName(sHdr);
         if (!sectionName)
           return error_code(sectionName);
-
-        // Get rid of the leading .rel so Atoms can use their own section
-        // name to find the relocs.
-        *sectionName = sectionName->drop_front(4);
 
         auto ri(_objFile->begin_rel(section));
         auto re(_objFile->end_rel(section));
