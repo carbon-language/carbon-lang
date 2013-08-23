@@ -4831,6 +4831,7 @@ bool Sema::RequireCompleteExprType(Expr *E, TypeDiagnoser &Diagnoser){
 
   // Fast path the case where the type is already complete.
   if (!T->isIncompleteType())
+    // FIXME: The definition might not be visible.
     return false;
 
   // Incomplete array types may be completed by the initializer attached to
