@@ -1976,7 +1976,7 @@ void X86TargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
     setFeatureEnabled(Features, "ssse3", true);
     break;
   case CK_Corei7:
-    setFeatureEnabled(Features, "sse4", true);
+    setFeatureEnabled(Features, "sse4.2", true);
     break;
   case CK_Corei7AVX:
     setFeatureEnabled(Features, "avx", true);
@@ -2105,9 +2105,9 @@ void X86TargetInfo::setSSELevel(llvm::StringMap<bool> &Features,
     case AVX:
       Features["avx"] = true;
     case SSE42:
-      Features["popcnt"] = Features["sse42"] = true;
+      Features["popcnt"] = Features["sse4.2"] = true;
     case SSE41:
-      Features["sse41"] = true;
+      Features["sse4.1"] = true;
     case SSSE3:
       Features["ssse3"] = true;
     case SSE3:
@@ -2136,9 +2136,9 @@ void X86TargetInfo::setSSELevel(llvm::StringMap<bool> &Features,
   case SSSE3:
     Features["ssse3"] = false;
   case SSE41:
-    Features["sse41"] = false;
+    Features["sse4.1"] = false;
   case SSE42:
-    Features["popcnt"] = Features["sse42"] = false;
+    Features["popcnt"] = Features["sse4.2"] = false;
   case AVX:
     Features["fma"] = Features["avx"] = false;
     setXOPLevel(Features, FMA4, false);
@@ -2211,12 +2211,8 @@ void X86TargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
                                       bool Enabled) const {
   // FIXME: This *really* should not be here.  We need some way of translating
   // options into llvm subtarget features.
-  if (Name == "sse4" || Name == "sse4.2")
-    Name = "sse42";
-  if (Name == "sse4.1")
-    Name = "sse41";
-  if (Name == "rdrnd")
-    Name = "rdrand";
+  if (Name == "sse4")
+    Name = "sse4.2";
 
   Features[Name] = Enabled;
 
@@ -2230,9 +2226,9 @@ void X86TargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
     setSSELevel(Features, SSE3, Enabled);
   else if (Name == "ssse3")
     setSSELevel(Features, SSSE3, Enabled);
-  else if (Name == "sse42")
+  else if (Name == "sse4.2")
     setSSELevel(Features, SSE42, Enabled);
-  else if (Name == "sse41")
+  else if (Name == "sse4.1")
     setSSELevel(Features, SSE41, Enabled);
   else if (Name == "3dnow")
     setMMXLevel(Features, AMD3DNow, Enabled);
@@ -2292,7 +2288,7 @@ bool X86TargetInfo::HandleTargetFeatures(std::vector<std::string> &Features,
       continue;
     }
 
-    if (Feature == "rdrand") {
+    if (Feature == "rdrnd") {
       HasRDRND = true;
       continue;
     }
@@ -2357,8 +2353,8 @@ bool X86TargetInfo::HandleTargetFeatures(std::vector<std::string> &Features,
       .Case("avx512f", AVX512F)
       .Case("avx2", AVX2)
       .Case("avx", AVX)
-      .Case("sse42", SSE42)
-      .Case("sse41", SSE41)
+      .Case("sse4.2", SSE42)
+      .Case("sse4.1", SSE41)
       .Case("ssse3", SSSE3)
       .Case("sse3", SSE3)
       .Case("sse2", SSE2)
@@ -2699,8 +2695,8 @@ bool X86TargetInfo::hasFeature(StringRef Feature) const {
       .Case("sse2", SSELevel >= SSE2)
       .Case("sse3", SSELevel >= SSE3)
       .Case("ssse3", SSELevel >= SSSE3)
-      .Case("sse41", SSELevel >= SSE41)
-      .Case("sse42", SSELevel >= SSE42)
+      .Case("sse4.1", SSELevel >= SSE41)
+      .Case("sse4.2", SSELevel >= SSE42)
       .Case("sse4a", XOPLevel >= SSE4A)
       .Case("x86", true)
       .Case("x86_32", getTriple().getArch() == llvm::Triple::x86)
