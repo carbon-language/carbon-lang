@@ -73,6 +73,14 @@ void PrintRegUnit::print(raw_ostream &OS) const {
     OS << '~' << TRI->getName(*Roots);
 }
 
+void PrintVRegOrUnit::print(raw_ostream &OS) const {
+  if (TRI && TRI->isVirtualRegister(Unit)) {
+    OS << "%vreg" << TargetRegisterInfo::virtReg2Index(Unit);
+    return;
+  }
+  PrintRegUnit::print(OS);
+}
+
 /// getAllocatableClass - Return the maximal subclass of the given register
 /// class that is alloctable, or NULL.
 const TargetRegisterClass *
