@@ -2,13 +2,7 @@
 # three small executables. This is done to minimize memory load in parallel
 # builds.  Please retain this ordering.
 
-if( NOT WIN32 OR MSYS OR CYGWIN )
-  # We currently require 'sed' to build llvm-config, so don't try to build it
-  # on pure Win32.
-  add_llvm_tool_subdirectory(llvm-config)
-else()
-  ignore_llvm_tool_subdirectory(llvm-config)
-endif()
+add_llvm_tool_subdirectory(llvm-config)
 
 add_llvm_tool_subdirectory(opt)
 add_llvm_tool_subdirectory(llvm-as)
