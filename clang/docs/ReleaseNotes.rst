@@ -61,7 +61,8 @@ New Compiler Flags
 
 - Clang no longer special cases -O4 to enable lto. Explicitly pass -flto to
   enable it.
--  ...
+- Command line "clang -O3 -flto a.c -c" and "clang -emit-llvm a.c -c" 
+  are no longer equivalent.
 
 C Language Changes in Clang
 ---------------------------
