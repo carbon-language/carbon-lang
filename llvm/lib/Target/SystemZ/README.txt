@@ -35,10 +35,6 @@ performance measurements.
 
 --
 
-We don't support prefetching yet.
-
---
-
 There is no scheduling support.
 
 --

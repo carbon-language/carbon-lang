@@ -132,7 +132,12 @@ namespace SystemZISD {
     //            operand into the high bits
     // Operand 4: the negative of operand 2, for rotating the other way
     // Operand 5: the width of the field in bits (8 or 16)
-    ATOMIC_CMP_SWAPW
+    ATOMIC_CMP_SWAPW,
+
+    // Prefetch from the second operand using the 4-bit control code in
+    // the first operand.  The code is 1 for a load prefetch and 2 for
+    // a store prefetch.
+    PREFETCH
   };
 }
 
@@ -225,6 +230,7 @@ private:
   SDValue lowerATOMIC_CMP_SWAP(SDValue Op, SelectionDAG &DAG) const;
   SDValue lowerSTACKSAVE(SDValue Op, SelectionDAG &DAG) const;
   SDValue lowerSTACKRESTORE(SDValue Op, SelectionDAG &DAG) const;
+  SDValue lowerPREFETCH(SDValue Op, SelectionDAG &DAG) const;
 
   // If the last instruction before MBBI in MBB was some form of COMPARE,
   // try to replace it with a COMPARE AND BRANCH just before MBBI.

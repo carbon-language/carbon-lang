@@ -194,6 +194,9 @@ SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm)
   setOperationAction(ISD::STACKSAVE,    MVT::Other, Custom);
   setOperationAction(ISD::STACKRESTORE, MVT::Other, Custom);
 
+  // Handle prefetches with PFD or PFDRL.
+  setOperationAction(ISD::PREFETCH, MVT::Other, Custom);
+
   // Handle floating-point types.
   for (unsigned I = MVT::FIRST_FP_VALUETYPE;
        I <= MVT::LAST_FP_VALUETYPE;
@@ -1806,6 +1809,26 @@ SDValue SystemZTargetLowering::lowerSTACKRESTORE(SDValue Op,
                           SystemZ::R15D, Op.getOperand(1));
 }
 
+SDValue SystemZTargetLowering::lowerPREFETCH(SDValue Op,
+                                             SelectionDAG &DAG) const {
+  bool IsData = cast<ConstantSDNode>(Op.getOperand(4))->getZExtValue();
+  if (!IsData)
+    // Just preserve the chain.
+    return Op.getOperand(0);
+
+  bool IsWrite = cast<ConstantSDNode>(Op.getOperand(2))->getZExtValue();
+  unsigned Code = IsWrite ? SystemZ::PFD_WRITE : SystemZ::PFD_READ;
+  MemIntrinsicSDNode *Node = cast<MemIntrinsicSDNode>(Op.getNode());
+  SDValue Ops[] = {
+    Op.getOperand(0),
+    DAG.getConstant(Code, MVT::i32),
+    Op.getOperand(1)
+  };
+  return DAG.getMemIntrinsicNode(SystemZISD::PREFETCH, SDLoc(Op),
+                                 Node->getVTList(), Ops, array_lengthof(Ops),
+                                 Node->getMemoryVT(), Node->getMemOperand());
+}
+
 SDValue SystemZTargetLowering::LowerOperation(SDValue Op,
                                               SelectionDAG &DAG) const {
   switch (Op.getOpcode()) {
@@ -1869,6 +1892,8 @@ SDValue SystemZTargetLowering::LowerOperation(SDValue Op,
     return lowerSTACKSAVE(Op, DAG);
   case ISD::STACKRESTORE:
     return lowerSTACKRESTORE(Op, DAG);
+  case ISD::PREFETCH:
+    return lowerPREFETCH(Op, DAG);
   default:
     llvm_unreachable("Unexpected node to lower");
   }
@@ -1909,6 +1934,7 @@ const char *SystemZTargetLowering::getTargetNodeName(unsigned Opcode) const {
     OPCODE(ATOMIC_LOADW_UMIN);
     OPCODE(ATOMIC_LOADW_UMAX);
     OPCODE(ATOMIC_CMP_SWAPW);
+    OPCODE(PREFETCH);
   }
   return NULL;
 #undef OPCODE

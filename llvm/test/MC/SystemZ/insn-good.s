@@ -6106,6 +6106,65 @@
 	oy	%r0, 524287(%r15,%r1)
 	oy	%r15, 0
 
+#CHECK: pfd	0, -524288            # encoding: [0xe3,0x00,0x00,0x00,0x80,0x36]
+#CHECK: pfd	0, -1                 # encoding: [0xe3,0x00,0x0f,0xff,0xff,0x36]
+#CHECK: pfd	0, 0                  # encoding: [0xe3,0x00,0x00,0x00,0x00,0x36]
+#CHECK: pfd	0, 1                  # encoding: [0xe3,0x00,0x00,0x01,0x00,0x36]
+#CHECK: pfd	0, 524287             # encoding: [0xe3,0x00,0x0f,0xff,0x7f,0x36]
+#CHECK: pfd	0, 0(%r1)             # encoding: [0xe3,0x00,0x10,0x00,0x00,0x36]
+#CHECK: pfd	0, 0(%r15)            # encoding: [0xe3,0x00,0xf0,0x00,0x00,0x36]
+#CHECK: pfd	0, 524287(%r1,%r15)   # encoding: [0xe3,0x01,0xff,0xff,0x7f,0x36]
+#CHECK: pfd	0, 524287(%r15,%r1)   # encoding: [0xe3,0x0f,0x1f,0xff,0x7f,0x36]
+#CHECK: pfd	15, 0                 # encoding: [0xe3,0xf0,0x00,0x00,0x00,0x36]
+
+	pfd	0, -524288
+	pfd	0, -1
+	pfd	0, 0
+	pfd	0, 1
+	pfd	0, 524287
+	pfd	0, 0(%r1)
+	pfd	0, 0(%r15)
+	pfd	0, 524287(%r1,%r15)
+	pfd	0, 524287(%r15,%r1)
+	pfd	15, 0
+
+#CHECK: pfdrl	0, .[[LAB:L.*]]-4294967296 # encoding: [0xc6,0x02,A,A,A,A]
+#CHECK:  fixup A - offset: 2, value: (.[[LAB]]-4294967296)+2, kind: FK_390_PC32DBL
+	pfdrl	0, -0x100000000
+#CHECK: pfdrl	0, .[[LAB:L.*]]-2	# encoding: [0xc6,0x02,A,A,A,A]
+#CHECK:  fixup A - offset: 2, value: (.[[LAB]]-2)+2, kind: FK_390_PC32DBL
+	pfdrl	0, -2
+#CHECK: pfdrl	0, .[[LAB:L.*]]	# encoding: [0xc6,0x02,A,A,A,A]
+#CHECK:  fixup A - offset: 2, value: .[[LAB]]+2, kind: FK_390_PC32DBL
+	pfdrl	0, 0
+#CHECK: pfdrl	0, .[[LAB:L.*]]+4294967294 # encoding: [0xc6,0x02,A,A,A,A]
+#CHECK:  fixup A - offset: 2, value: (.[[LAB]]+4294967294)+2, kind: FK_390_PC32DBL
+	pfdrl	0, 0xfffffffe
+
+#CHECK: pfdrl	0, foo                # encoding: [0xc6,0x02,A,A,A,A]
+# fixup A - offset: 2, value: foo+2, kind: FK_390_PC32DBL
+#CHECK: pfdrl	15, foo               # encoding: [0xc6,0xf2,A,A,A,A]
+# fixup A - offset: 2, value: foo+2, kind: FK_390_PC32DBL
+
+	pfdrl	0, foo
+	pfdrl	15, foo
+
+#CHECK: pfdrl	3, bar+100            # encoding: [0xc6,0x32,A,A,A,A]
+# fixup A - offset: 2, value: (bar+100)+2, kind: FK_390_PC32DBL
+#CHECK: pfdrl	4, bar+100            # encoding: [0xc6,0x42,A,A,A,A]
+# fixup A - offset: 2, value: (bar+100)+2, kind: FK_390_PC32DBL
+
+	pfdrl	3, bar+100
+	pfdrl	4, bar+100
+
+#CHECK: pfdrl	7, frob@PLT           # encoding: [0xc6,0x72,A,A,A,A]
+# fixup A - offset: 2, value: frob@PLT+2, kind: FK_390_PC32DBL
+#CHECK: pfdrl	8, frob@PLT           # encoding: [0xc6,0x82,A,A,A,A]
+# fixup A - offset: 2, value: frob@PLT+2, kind: FK_390_PC32DBL
+
+	pfdrl	7, frob@PLT
+	pfdrl	8, frob@PLT
+
 #CHECK: risbg	%r0, %r0, 0, 0, 0       # encoding: [0xec,0x00,0x00,0x00,0x00,0x55]
 #CHECK: risbg	%r0, %r0, 0, 0, 63      # encoding: [0xec,0x00,0x00,0x00,0x3f,0x55]
 #CHECK: risbg	%r0, %r0, 0, 255, 0     # encoding: [0xec,0x00,0x00,0xff,0x00,0x55]

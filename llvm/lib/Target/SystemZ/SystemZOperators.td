@@ -64,6 +64,9 @@ def SDT_ZString             : SDTypeProfile<1, 3,
                                              SDTCisPtrTy<2>,
                                              SDTCisVT<3, i32>]>;
 def SDT_ZI32Intrinsic       : SDTypeProfile<1, 0, [SDTCisVT<0, i32>]>;
+def SDT_ZPrefetch           : SDTypeProfile<0, 2,
+                                            [SDTCisVT<0, i8>,
+                                             SDTCisPtrTy<1>]>;
 
 //===----------------------------------------------------------------------===//
 // Node definitions
@@ -130,6 +133,9 @@ def z_search_string     : SDNode<"SystemZISD::SEARCH_STRING", SDT_ZString,
                                  [SDNPHasChain, SDNPOutGlue, SDNPMayLoad]>;
 def z_ipm               : SDNode<"SystemZISD::IPM", SDT_ZI32Intrinsic,
                                  [SDNPInGlue]>;
+def z_prefetch          : SDNode<"SystemZISD::PREFETCH", SDT_ZPrefetch,
+                                 [SDNPHasChain, SDNPMayLoad, SDNPMayStore,
+                                  SDNPMemOperand]>;
 
 //===----------------------------------------------------------------------===//
 // Pattern fragments

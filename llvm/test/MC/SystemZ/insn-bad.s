@@ -2276,6 +2276,40 @@
 	oy	%r0, 524288
 
 #CHECK: error: invalid operand
+#CHECK: pfd	-1, 0
+#CHECK: error: invalid operand
+#CHECK: pfd	16, 0
+#CHECK: error: invalid operand
+#CHECK: pfd	1, -524289
+#CHECK: error: invalid operand
+#CHECK: pfd	1, 524288
+
+	pfd	-1, 0
+	pfd	16, 0
+	pfd	1, -524289
+	pfd	1, 524288
+
+#CHECK: error: invalid operand
+#CHECK: pfdrl	-1, 0
+#CHECK: error: invalid operand
+#CHECK: pfdrl	16, 0
+#CHECK: error: offset out of range
+#CHECK: pfdrl	1, -0x1000000002
+#CHECK: error: offset out of range
+#CHECK: pfdrl	1, -1
+#CHECK: error: offset out of range
+#CHECK: pfdrl	1, 1
+#CHECK: error: offset out of range
+#CHECK: pfdrl	1, 0x100000000
+
+	pfdrl	-1, 0
+	pfdrl	16, 0
+	pfdrl	1, -0x1000000002
+	pfdrl	1, -1
+	pfdrl	1, 1
+	pfdrl	1, 0x100000000
+
+#CHECK: error: invalid operand
 #CHECK: risbg	%r0,%r0,0,0,-1
 #CHECK: error: invalid operand
 #CHECK: risbg	%r0,%r0,0,0,64

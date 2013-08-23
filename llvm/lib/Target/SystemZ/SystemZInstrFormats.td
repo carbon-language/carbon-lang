@@ -540,6 +540,10 @@ class InstSS<bits<8> op, dag outs, dag ins, string asmstr, list<dag> pattern>
 //     One output operand and five input operands.  The first two operands
 //     are registers and the other three are immediates.
 //
+//   Prefetch:
+//     One 4-bit immediate operand and one address operand.  The immediate
+//     operand is 1 for a load prefetch and 2 for a store prefetch.
+//
 // The format determines which input operands are tied to output operands,
 // and also determines the shape of any address operand.
 //
@@ -1302,6 +1306,22 @@ class RotateSelectRIEf<string mnemonic, bits<16> opcode, RegisterOperand cls1,
              mnemonic#"\t$R1, $R2, $I3, $I4, $I5", []> {
   let Constraints = "$R1 = $R1src";
   let DisableEncoding = "$R1src";
+}
+
+class PrefetchRXY<string mnemonic, bits<16> opcode, SDPatternOperator operator>
+  : InstRXY<opcode, (outs), (ins uimm8zx4:$R1, bdxaddr20only:$XBD2),
+            mnemonic##"\t$R1, $XBD2",
+            [(operator uimm8zx4:$R1, bdxaddr20only:$XBD2)]>;
+
+class PrefetchRILPC<string mnemonic, bits<12> opcode,
+                    SDPatternOperator operator>
+  : InstRIL<opcode, (outs), (ins uimm8zx4:$R1, pcrel32:$I2),
+            mnemonic##"\t$R1, $I2",
+            [(operator uimm8zx4:$R1, pcrel32:$I2)]> {
+  // We want PC-relative addresses to be tried ahead of BD and BDX addresses.
+  // However, BDXs have two extra operands and are therefore 6 units more
+  // complex.
+  let AddedComplexity = 7;
 }
 
 // A floating-point load-and test operation.  Create both a normal unary

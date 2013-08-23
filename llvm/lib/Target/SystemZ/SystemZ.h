@@ -57,6 +57,10 @@ namespace llvm {
     const unsigned CCMASK_SRST_NOTFOUND = CCMASK_2;
     const unsigned CCMASK_SRST          = CCMASK_1 | CCMASK_2;
 
+    // Mask assignments for PFD.
+    const unsigned PFD_READ  = 1;
+    const unsigned PFD_WRITE = 2;
+
     // Return true if Val fits an LLILL operand.
     static inline bool isImmLL(uint64_t Val) {
       return (Val & ~0x000000000000ffffULL) == 0;
