@@ -4178,6 +4178,15 @@ TEST_F(FormatTest, FormatsBracedListsinColumnLayout) {
                "  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1\n"
                "};",
                getLLVMStyleWithColumns(40));
+
+  // Trailing commas.
+  verifyFormat("vector<int> x = { 1, 1, 1, 1,\n"
+               "                  1, 1, 1, 1, };",
+               getLLVMStyleWithColumns(39));
+  verifyFormat("vector<int> x = {\n"
+               "  1, 1, 1, 1, 1, 1, 1, 1, //\n"
+               "};",
+               getLLVMStyleWithColumns(39));
 }
 
 TEST_F(FormatTest, PullTrivialFunctionDefinitionsIntoSingleLine) {

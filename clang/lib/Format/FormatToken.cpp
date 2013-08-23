@@ -92,6 +92,11 @@ void CommaSeparatedList::precomputeFormattingInfos(const FormatToken *Token) {
   SmallVector<unsigned, 8> EndOfLineItemLength;
 
   for (unsigned i = 0, e = Commas.size() + 1; i != e; ++i) {
+    // If there is a trailing comma in the list, the next item will start at the
+    // closing brace. Don't create an extra item for this.
+    if (ItemBegin == Token->MatchingParen)
+      break;
+
     // Skip comments on their own line.
     while (ItemBegin->HasUnescapedNewline && ItemBegin->isTrailingComment())
       ItemBegin = ItemBegin->Next;

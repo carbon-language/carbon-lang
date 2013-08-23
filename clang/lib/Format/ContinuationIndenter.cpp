@@ -569,6 +569,9 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
 unsigned ContinuationIndenter::breakProtrudingToken(const FormatToken &Current,
                                                     LineState &State,
                                                     bool DryRun) {
+  if (!Current.isOneOf(tok::string_literal, tok::comment))
+    return 0;
+
   llvm::OwningPtr<BreakableToken> Token;
   unsigned StartColumn = State.Column - Current.CodePointCount;
   unsigned OriginalStartColumn =
