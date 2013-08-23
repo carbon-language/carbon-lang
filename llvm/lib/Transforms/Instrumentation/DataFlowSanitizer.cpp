@@ -775,7 +775,7 @@ Value *DataFlowSanitizer::combineShadows(Value *V1, Value *V2,
     BasicBlock *Tail = BI->getSuccessor(0);
     PHINode *Phi = PHINode::Create(ShadowTy, 2, "", Tail->begin());
     Phi->addIncoming(Call, Call->getParent());
-    Phi->addIncoming(ZeroShadow, Head);
+    Phi->addIncoming(V1, Head);
     Pos = Phi;
     return Phi;
   } else {
