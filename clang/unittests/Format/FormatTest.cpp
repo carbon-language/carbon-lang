@@ -3524,6 +3524,10 @@ TEST_F(FormatTest, IndentsRelativeToUnaryOperators) {
                "}");
   verifyFormat("aaaaaaaaaa(!aaaaaaaaaa( // break\n"
                "                aaaaa));");
+
+  // Only indent relative to unary operators if the expression is nested.
+  verifyFormat("*aaa = aaaaaaa( // break\n"
+               "    bbbbbb);");
 }
 
 TEST_F(FormatTest, UndestandsOverloadedOperators) {

@@ -853,13 +853,21 @@ public:
 
   /// \brief Parse expressions with the given operatore precedence.
   void parse(int Precedence = 0) {
+    if (Current == NULL)
+      return;
+
     // Conditional expressions need to be parsed separately for proper nesting.
     if (Precedence == prec::Conditional + 1) {
       parseConditionalExpr();
       return;
     }
-    if (Precedence > prec::PointerToMember || Current == NULL)
+
+    // Parse unary operators, which all have a higher precedence than binary
+    // operators.
+    if (Precedence > prec::PointerToMember) {
+      parseUnaryOperator();
       return;
+    }
 
     FormatToken *Start = Current;
     bool OperatorFound = false;
@@ -868,20 +876,11 @@ public:
       // Consume operators with higher precedence.
       parse(Precedence + 1);
 
-      int CurrentPrecedence = 0;
-      if (Current) {
-        if (Current->Type == TT_ConditionalExpr)
-          CurrentPrecedence = 1 + (int)prec::Conditional;
-        else if (Current->is(tok::semi) || Current->Type == TT_InlineASMColon)
-          CurrentPrecedence = 1;
-        else if (Current->Type == TT_BinaryOperator || Current->is(tok::comma))
-          CurrentPrecedence = 1 + (int)Current->getPrecedence();
-        else if (Current->Type == TT_ObjCSelectorName) {
-          CurrentPrecedence = 1 + (int)prec::Assignment;
-          if (Precedence == CurrentPrecedence)
-            Start = Current;
-        }
-      }
+      int CurrentPrecedence = getCurrentPrecedence();
+
+      if (Current && Current->Type == TT_ObjCSelectorName &&
+          Precedence == CurrentPrecedence)
+        Start = Current;
 
       // At the end of the line or when an operator with higher precedence is
       // found, insert fake parenthesis and return.
@@ -910,10 +909,52 @@ public:
   }
 
 private:
+  /// \brief Gets the precedence (+1) of the given token for binary operators
+  /// and other tokens that we treat like binary operators.
+  int getCurrentPrecedence() {
+    if (Current) {
+      if (Current->Type == TT_ConditionalExpr)
+        return 1 + (int)prec::Conditional;
+      else if (Current->is(tok::semi) || Current->Type == TT_InlineASMColon)
+        return 1;
+      else if (Current->Type == TT_BinaryOperator || Current->is(tok::comma))
+        return 1 + (int)Current->getPrecedence();
+      else if (Current->Type == TT_ObjCSelectorName)
+        return 1 + (int)prec::Assignment;
+    }
+    return 0;
+  }
+
   void addFakeParenthesis(FormatToken *Start, prec::Level Precedence) {
     Start->FakeLParens.push_back(Precedence);
     if (Current)
       ++Current->Previous->FakeRParens;
+  }
+
+  /// \brief Parse unary operator expressions and surround them with fake
+  /// parentheses if appropriate.
+  void parseUnaryOperator() {
+    if (Current == NULL || Current->Type != TT_UnaryOperator)
+      return;
+
+    FormatToken *Start = Current;
+    next();
+
+    while (Current) {
+      if (Current->opensScope()) {
+        while (Current && !Current->closesScope()) {
+          next();
+          parse();
+        }
+        next();
+      } else if (getCurrentPrecedence() == 0 && !Current->closesScope()) {
+        next();
+      } else {
+        break;
+      }
+    }
+    // The actual precedence doesn't matter.
+    addFakeParenthesis(Start, prec::Level(0));
   }
 
   void parseConditionalExpr() {
