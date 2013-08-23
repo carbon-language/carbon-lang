@@ -631,6 +631,11 @@ ABIMacOSX_arm::CreateDefaultUnwindPlan (UnwindPlan &unwind_plan)
     return true;
 }
 
+// cf. "ARMv6 Function Calling Conventions"
+// https://developer.apple.com/library/ios/documentation/Xcode/Conceptual/iPhoneOSABIReference/Articles/ARMv6FunctionCallingConventions.html
+// and "ARMv7 Function Calling Conventions"
+// https://developer.apple.com/library/ios/documentation/Xcode/Conceptual/iPhoneOSABIReference/Articles/ARMv7FunctionCallingConventions.html
+
 // ARMv7 on iOS general purpose reg rules:
 //    r0-r3 not preserved  (used for argument passing)
 //    r4-r6 preserved
