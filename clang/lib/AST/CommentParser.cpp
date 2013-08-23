@@ -16,6 +16,15 @@
 #include "llvm/Support/ErrorHandling.h"
 
 namespace clang {
+
+static inline bool isWhitespace(llvm::StringRef S) {
+  for (StringRef::const_iterator I = S.begin(), E = S.end(); I != E; ++I) {
+    if (!isWhitespace(*I))
+      return false;
+  }
+  return true;
+}
+
 namespace comments {
 
 /// Re-lexes a sequence of tok::text tokens.
@@ -593,6 +602,18 @@ BlockContentComment *Parser::parseParagraphOrBlockCommand() {
       if (Tok.is(tok::newline) || Tok.is(tok::eof)) {
         consumeToken();
         break; // Two newlines -- end of paragraph.
+      }
+      // Also allow [tok::newline, tok::text, tok::newline] if the middle
+      // tok::text is just whitespace.
+      if (Tok.is(tok::text) && isWhitespace(Tok.getText())) {
+        Token WhitespaceTok = Tok;
+        consumeToken();
+        if (Tok.is(tok::newline) || Tok.is(tok::eof)) {
+          consumeToken();
+          break;
+        }
+        // We have [tok::newline, tok::text, non-newline].  Put back tok::text.
+        putBack(WhitespaceTok);
       }
       if (Content.size() > 0)
         Content.back()->addTrailingNewline();

@@ -45,7 +45,7 @@
 // CHECK-NEXT:     (CXComment_Text Text=[     ] IsWhitespace)))
 // CHECK:       (CXComment_BlockCommand CommandName=[seealso]
 // CHECK-NEXT:     (CXComment_Paragraph
-// CHECK-NEXT:     (CXComment_Text Text=[ //k_ref/doc/uid/XX30000905-CH204 Programming] HasTrailingNewline)
+// CHECK-NEXT:     (CXComment_Text Text=[ //k_ref/doc/uid/XX30000905-CH204 Programming])
 
 // rdar://12379053
 /*!
