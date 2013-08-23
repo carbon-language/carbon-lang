@@ -26,52 +26,24 @@ using namespace llvm;
 /// Increase pressure for each pressure set provided by TargetRegisterInfo.
 static void increaseSetPressure(std::vector<unsigned> &CurrSetPressure,
                                 std::vector<unsigned> &MaxSetPressure,
-                                const int *PSet, unsigned Weight) {
-  for (; *PSet != -1; ++PSet) {
-    CurrSetPressure[*PSet] += Weight;
+                                PSetIterator PSetI) {
+  unsigned Weight = PSetI.getWeight();
+  for (; PSetI.isValid(); ++PSetI) {
+    CurrSetPressure[*PSetI] += Weight;
     if (&CurrSetPressure != &MaxSetPressure
-        && CurrSetPressure[*PSet] > MaxSetPressure[*PSet]) {
-      MaxSetPressure[*PSet] = CurrSetPressure[*PSet];
+        && CurrSetPressure[*PSetI] > MaxSetPressure[*PSetI]) {
+      MaxSetPressure[*PSetI] = CurrSetPressure[*PSetI];
     }
   }
 }
 
 /// Decrease pressure for each pressure set provided by TargetRegisterInfo.
 static void decreaseSetPressure(std::vector<unsigned> &CurrSetPressure,
-                                const int *PSet, unsigned Weight) {
-  for (; *PSet != -1; ++PSet) {
-    assert(CurrSetPressure[*PSet] >= Weight && "register pressure underflow");
-    CurrSetPressure[*PSet] -= Weight;
-  }
-}
-
-/// Directly increase pressure only within this RegisterPressure result.
-void RegisterPressure::increase(unsigned Reg, const TargetRegisterInfo *TRI,
-                                const MachineRegisterInfo *MRI) {
-  if (TargetRegisterInfo::isVirtualRegister(Reg)) {
-    const TargetRegisterClass *RC = MRI->getRegClass(Reg);
-    increaseSetPressure(MaxSetPressure, MaxSetPressure,
-                        TRI->getRegClassPressureSets(RC),
-                        TRI->getRegClassWeight(RC).RegWeight);
-  }
-  else {
-    increaseSetPressure(MaxSetPressure, MaxSetPressure,
-                        TRI->getRegUnitPressureSets(Reg),
-                        TRI->getRegUnitWeight(Reg));
-  }
-}
-
-/// Directly decrease pressure only within this RegisterPressure result.
-void RegisterPressure::decrease(unsigned Reg, const TargetRegisterInfo *TRI,
-                                const MachineRegisterInfo *MRI) {
-  if (TargetRegisterInfo::isVirtualRegister(Reg)) {
-    const TargetRegisterClass *RC = MRI->getRegClass(Reg);
-    decreaseSetPressure(MaxSetPressure, TRI->getRegClassPressureSets(RC),
-                        TRI->getRegClassWeight(RC).RegWeight);
-  }
-  else {
-    decreaseSetPressure(MaxSetPressure, TRI->getRegUnitPressureSets(Reg),
-                        TRI->getRegUnitWeight(Reg));
+                                PSetIterator PSetI) {
+  unsigned Weight = PSetI.getWeight();
+  for (; PSetI.isValid(); ++PSetI) {
+    assert(CurrSetPressure[*PSetI] >= Weight && "register pressure underflow");
+    CurrSetPressure[*PSetI] -= Weight;
   }
 }
 
@@ -114,35 +86,16 @@ void RegPressureTracker::dump() const {
 /// Increase the current pressure as impacted by these registers and bump
 /// the high water mark if needed.
 void RegPressureTracker::increaseRegPressure(ArrayRef<unsigned> Regs) {
-  for (unsigned I = 0, E = Regs.size(); I != E; ++I) {
-    if (TargetRegisterInfo::isVirtualRegister(Regs[I])) {
-      const TargetRegisterClass *RC = MRI->getRegClass(Regs[I]);
-      increaseSetPressure(CurrSetPressure, P.MaxSetPressure,
-                          TRI->getRegClassPressureSets(RC),
-                          TRI->getRegClassWeight(RC).RegWeight);
-    }
-    else {
-      increaseSetPressure(CurrSetPressure, P.MaxSetPressure,
-                          TRI->getRegUnitPressureSets(Regs[I]),
-                          TRI->getRegUnitWeight(Regs[I]));
-    }
+  for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
+    increaseSetPressure(CurrSetPressure, P.MaxSetPressure,
+                        MRI->getPressureSets(Regs[i]));
   }
 }
 
 /// Simply decrease the current pressure as impacted by these registers.
 void RegPressureTracker::decreaseRegPressure(ArrayRef<unsigned> Regs) {
-  for (unsigned I = 0, E = Regs.size(); I != E; ++I) {
-    if (TargetRegisterInfo::isVirtualRegister(Regs[I])) {
-      const TargetRegisterClass *RC = MRI->getRegClass(Regs[I]);
-      decreaseSetPressure(CurrSetPressure,
-                          TRI->getRegClassPressureSets(RC),
-                          TRI->getRegClassWeight(RC).RegWeight);
-    }
-    else {
-      decreaseSetPressure(CurrSetPressure, TRI->getRegUnitPressureSets(Regs[I]),
-                          TRI->getRegUnitWeight(Regs[I]));
-    }
-  }
+  for (unsigned I = 0, E = Regs.size(); I != E; ++I)
+    decreaseSetPressure(CurrSetPressure, MRI->getPressureSets(Regs[I]));
 }
 
 /// Clear the result so it can be used for another round of pressure tracking.
@@ -328,10 +281,8 @@ void RegPressureTracker::initLiveThru(const RegPressureTracker &RPTracker) {
     unsigned Reg = P.LiveOutRegs[i];
     if (TargetRegisterInfo::isVirtualRegister(Reg)
         && !RPTracker.hasUntiedDef(Reg)) {
-      const TargetRegisterClass *RC = MRI->getRegClass(Reg);
       increaseSetPressure(LiveThruPressure, LiveThruPressure,
-                          TRI->getRegClassPressureSets(RC),
-                          TRI->getRegClassWeight(RC).RegWeight);
+                          MRI->getPressureSets(Reg));
     }
   }
 }
@@ -415,7 +366,8 @@ void RegPressureTracker::discoverLiveIn(unsigned Reg) {
 
   // At live in discovery, unconditionally increase the high water mark.
   P.LiveInRegs.push_back(Reg);
-  P.increase(Reg, TRI, MRI);
+  increaseSetPressure(P.MaxSetPressure, P.MaxSetPressure,
+                      MRI->getPressureSets(Reg));
 }
 
 /// Add Reg to the live out set and increase max pressure.
@@ -426,7 +378,8 @@ void RegPressureTracker::discoverLiveOut(unsigned Reg) {
 
   // At live out discovery, unconditionally increase the high water mark.
   P.LiveOutRegs.push_back(Reg);
-  P.increase(Reg, TRI, MRI);
+  increaseSetPressure(P.MaxSetPressure, P.MaxSetPressure,
+                      MRI->getPressureSets(Reg));
 }
 
 /// Recede across the previous instruction.
