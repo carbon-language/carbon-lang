@@ -4342,7 +4342,8 @@ def err_member_decl_does_not_match_suggest : Error<
   "out-of-line %select{declaration|definition}2 of %0 "
   "does not match any declaration in %1; did you mean %3?">;
 def err_member_def_does_not_match_ret_type : Error<
-  "out-of-line definition of %q0 differs from the declaration in the return type">;
+  "return type of out-of-line definition of %q0 differs from "
+  "that in the declaration">;
 def err_nonstatic_member_out_of_line : Error<
   "non-static data member defined out-of-line">;
 def err_qualified_typedef_declarator : Error<

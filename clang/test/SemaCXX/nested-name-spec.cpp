@@ -261,7 +261,7 @@ namespace PR8159 {
 
 namespace rdar7980179 {
   class A { void f0(); }; // expected-note {{previous}}
-  int A::f0() {} // expected-error {{out-of-line definition of 'rdar7980179::A::f0' differs from the declaration in the return type}}
+  int A::f0() {} // expected-error {{return type of out-of-line definition of 'rdar7980179::A::f0' differs}}
 }
 
 namespace alias = A;
