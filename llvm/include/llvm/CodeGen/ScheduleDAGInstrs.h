@@ -81,10 +81,6 @@ namespace llvm {
     /// isPostRA flag indicates vregs cannot be present.
     bool IsPostRA;
 
-    /// UnitLatencies (misnamed) flag avoids computing def-use latencies, using
-    /// the def-side latency only.
-    bool UnitLatencies;
-
     /// The standard DAG builder does not normally include terminators as DAG
     /// nodes because it does not create the necessary dependencies to prevent
     /// reordering. A specialized scheduler can overide
