@@ -1,6 +1,6 @@
 ; RUN: llc < %s -march=x86 -mattr=-sse3,+sse2 | FileCheck %s -check-prefix=SSE2
 ; RUN: llc < %s -march=x86 -mattr=-sse4.2,+sse4.1 | FileCheck %s -check-prefix=SSE41
-; RUN: llc < %s -march=x86 -mattr=+sse42 | FileCheck %s -check-prefix=SSE42
+; RUN: llc < %s -march=x86 -mattr=+sse4.2 | FileCheck %s -check-prefix=SSE42
 
 define <2 x i64> @test1(<2 x i64> %A, <2 x i64> %B) nounwind {
 ; SSE42-LABEL: test1:

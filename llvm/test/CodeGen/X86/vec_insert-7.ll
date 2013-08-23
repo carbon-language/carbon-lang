@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -mattr=+mmx,+sse42 -mtriple=i686-apple-darwin9 | FileCheck %s
+; RUN: llc < %s -march=x86 -mattr=+mmx,+sse4.2 -mtriple=i686-apple-darwin9 | FileCheck %s
 ; MMX insertelement is not available; these are promoted to XMM.
 ; (Without SSE they are split to two ints, and the code is much better.)
 

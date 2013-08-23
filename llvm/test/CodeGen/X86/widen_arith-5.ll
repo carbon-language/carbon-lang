@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86-64 -mattr=+sse42  | FileCheck %s
+; RUN: llc < %s -march=x86-64 -mattr=+sse4.2  | FileCheck %s
 ; CHECK: movdqa
 ; CHECK: pslld $2
 ; CHECK: psubd

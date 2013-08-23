@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -mcpu=nehalem -mattr=+sse42 | FileCheck %s
+; RUN: llc < %s -march=x86 -mcpu=nehalem -mattr=+sse4.2 | FileCheck %s
 ; CHECK: pextrd
 ; CHECK: pextrd
 ; CHECK: movd

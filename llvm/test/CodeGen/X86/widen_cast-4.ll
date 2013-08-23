@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -mattr=+sse42 | FileCheck %s
+; RUN: llc < %s -march=x86 -mattr=+sse4.2 | FileCheck %s
 ; CHECK: psraw
 ; CHECK: psraw
 

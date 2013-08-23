@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=x86_64-apple-darwin9 -mattr=sse42 | FileCheck %s -check-prefix=X64
+; RUN: llc < %s -mtriple=x86_64-apple-darwin9 -mattr=sse4.2 | FileCheck %s -check-prefix=X64
 
 declare i64 @llvm.x86.sse42.crc32.64.8(i64, i8) nounwind
 declare i64 @llvm.x86.sse42.crc32.64.64(i64, i64) nounwind

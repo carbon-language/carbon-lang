@@ -1,4 +1,4 @@
-; RUN: llc < %s -mcpu=generic -march=x86 -mattr=+sse42 |  FileCheck %s
+; RUN: llc < %s -mcpu=generic -march=x86 -mattr=+sse4.2 |  FileCheck %s
 
 define void @update(<3 x i8>* %dst, <3 x i8>* %src, i32 %n) nounwind {
 entry:

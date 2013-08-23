@@ -1,5 +1,5 @@
-; RUN: llc < %s -mtriple=i686-apple-darwin9 -mattr=sse42 | FileCheck %s -check-prefix=X32
-; RUN: llc < %s -mtriple=x86_64-apple-darwin9 -mattr=sse42 | FileCheck %s -check-prefix=X64
+; RUN: llc < %s -mtriple=i686-apple-darwin9 -mattr=sse4.2 | FileCheck %s -check-prefix=X32
+; RUN: llc < %s -mtriple=x86_64-apple-darwin9 -mattr=sse4.2 | FileCheck %s -check-prefix=X64
 
 declare i32 @llvm.x86.sse42.crc32.32.8(i32, i8) nounwind
 declare i32 @llvm.x86.sse42.crc32.32.16(i32, i16) nounwind

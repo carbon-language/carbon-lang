@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -mcpu=nehalem -mattr=+sse42 | FileCheck %s
+; RUN: llc < %s -march=x86 -mcpu=nehalem -mattr=+sse4.2 | FileCheck %s
 ; CHECK-NOT: cvtsi2ss
 
 ; unsigned to float v7i16 to v7f32
