@@ -12,6 +12,7 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclTemplate.h"
+#include "clang/Basic/CharInfo.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -94,9 +95,7 @@ Comment::child_iterator Comment::child_end() const {
 bool TextComment::isWhitespaceNoCache() const {
   for (StringRef::const_iterator I = Text.begin(), E = Text.end();
        I != E; ++I) {
-    const char C = *I;
-    if (C != ' ' && C != '\n' && C != '\r' &&
-        C != '\t' && C != '\f' && C != '\v')
+    if (!clang::isWhitespace(*I))
       return false;
   }
   return true;
