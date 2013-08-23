@@ -71,6 +71,5 @@ add_lldb_library(lldbCore
   ValueObjectSyntheticFilter.cpp
   ValueObjectVariable.cpp
   VMRange.cpp
-  #Windows.cpp
   )
 

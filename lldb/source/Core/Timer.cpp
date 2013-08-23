@@ -14,6 +14,7 @@
 
 #include "lldb/Core/Stream.h"
 #include "lldb/Host/Mutex.h"
+#include "lldb/Host/Host.h"
 
 #include <stdio.h>
 
@@ -26,7 +27,7 @@ uint32_t Timer::g_display_depth = 0;
 FILE * Timer::g_file = NULL;
 typedef std::vector<Timer *> TimerStack;
 typedef std::map<const char *, uint64_t> TimerCategoryMap;
-static pthread_key_t g_key;
+static lldb::thread_key_t g_key;
 
 static Mutex &
 GetCategoryMutex()
@@ -46,11 +47,11 @@ GetCategoryMap()
 static TimerStack *
 GetTimerStackForCurrentThread ()
 {
-    void *timer_stack = ::pthread_getspecific (g_key);
+    void *timer_stack = Host::ThreadLocalStorageGet(g_key);
     if (timer_stack == NULL)
     {
-        ::pthread_setspecific (g_key, new TimerStack);
-        timer_stack = ::pthread_getspecific (g_key);
+        Host::ThreadLocalStorageSet(g_key, new TimerStack);
+        timer_stack = Host::ThreadLocalStorageGet(g_key);
     }
     return (TimerStack *)timer_stack;
 }
@@ -71,8 +72,7 @@ void
 Timer::Initialize ()
 {
     Timer::g_file = stdout;
-    ::pthread_key_create (&g_key, ThreadSpecificCleanup);
-
+    g_key = Host::ThreadLocalStorageCreate(ThreadSpecificCleanup);
 }
 
 Timer::Timer (const char *category, const char *format, ...) :

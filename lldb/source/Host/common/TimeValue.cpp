@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/Host/TimeValue.h"
+#include "lldb/Host/Config.h"
 
 // C Includes
 #include <stddef.h>
@@ -148,6 +149,7 @@ TimeValue::Dump (Stream *s, uint32_t width) const
     if (s == NULL)
         return;
 
+#ifndef LLDB_DISABLE_POSIX
     char time_buf[32];
     time_t time = GetAsSecondsSinceJan1_1970();
     char *time_cstr = ::ctime_r(&time, time_buf);
@@ -163,6 +165,7 @@ TimeValue::Dump (Stream *s, uint32_t width) const
     }
     else if (width > 0)
         s->Printf("%-*s", width, "");
+#endif
 }
 
 bool

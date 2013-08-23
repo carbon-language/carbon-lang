@@ -7,6 +7,7 @@ add_lldb_library(lldbHostCommon
   FileSpec.cpp
   Host.cpp
   Mutex.cpp
+  ProcessRunLock.cpp
   SocketAddress.cpp
   Symbols.cpp
   Terminal.cpp

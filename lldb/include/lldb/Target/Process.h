@@ -10,9 +10,13 @@
 #ifndef liblldb_Process_h_
 #define liblldb_Process_h_
 
+#include "lldb/Host/Config.h"
+
 // C Includes
 #include <limits.h>
+#ifndef LLDB_DISABLE_POSIX
 #include <spawn.h>
+#endif
 
 // C++ Includes
 #include <list>
@@ -475,11 +479,13 @@ public:
         bool
         Open (int fd, const char *path, bool read, bool write);
         
+#ifndef LLDB_DISABLE_POSIX
         static bool
         AddPosixSpawnFileAction (posix_spawn_file_actions_t *file_actions,
                                  const FileAction *info,
                                  Log *log, 
                                  Error& error);
+#endif
 
         int
         GetFD () const
@@ -3711,10 +3717,10 @@ protected:
     void
     ResumePrivateStateThread ();
 
-    static void *
+    static lldb::thread_result_t
     PrivateStateThread (void *arg);
 
-    void *
+    lldb::thread_result_t
     RunPrivateStateThread ();
 
     void

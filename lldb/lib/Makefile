@@ -17,7 +17,9 @@ NO_BUILD_ARCHIVE = 1
 LINK_LIBS_IN_SHARED = 1
 SHARED_LIBRARY = 1
 
+ifeq (,$(findstring -DLLDB_DISABLE_PYTHON,$(CXXFLAGS)))
 PYTHON_BUILD_FLAGS = $(shell python-config --ldflags)
+endif
 
 # Include all archives in liblldb.so file
 USEDLIBS = lldbAPI.a \
@@ -72,7 +74,7 @@ USEDLIBS = lldbAPI.a \
 # Because GCC requires RTTI enabled for lldbCore (see source/Core/Makefile) it is
 # necessary to also link the clang rewriter libraries so vtable references can
 # be resolved correctly, if we are building with GCC.
-ifeq (g++,$(shell basename $(CXX) | colrm 4))
+ifeq (g++,$(shell basename $(CXX) | cut -c 1-4))
   USEDLIBS += clangRewriteCore.a \
               clangRewriteFrontend.a
 endif

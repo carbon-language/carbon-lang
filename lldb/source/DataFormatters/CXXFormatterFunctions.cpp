@@ -1237,6 +1237,7 @@ lldb_private::formatters::GetOSXEpoch ()
     static time_t epoch = 0;
     if (!epoch)
     {
+#ifndef _WIN32
         tzset();
         tm tm_epoch;
         tm_epoch.tm_sec = 0;
@@ -1249,6 +1250,7 @@ lldb_private::formatters::GetOSXEpoch ()
         tm_epoch.tm_gmtoff = 0;
         tm_epoch.tm_zone = NULL;
         epoch = timegm(&tm_epoch);
+#endif
     }
     return epoch;
 }

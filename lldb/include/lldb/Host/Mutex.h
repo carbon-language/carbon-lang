@@ -11,7 +11,7 @@
 #define liblldb_Mutex_h_
 #if defined(__cplusplus)
 
-#include <pthread.h>
+#include "lldb/lldb-types.h"
 #include <assert.h>
 
 #ifdef LLDB_CONFIGURATION_DEBUG
@@ -238,7 +238,7 @@ protected:
     //------------------------------------------------------------------
     // TODO: Hide the mutex in the implementation file in case we ever need to port to an
     // architecture that doesn't have pthread mutexes.
-    pthread_mutex_t m_mutex; ///< The pthread mutex object.
+    lldb::mutex_t m_mutex; ///< The OS mutex object.
 
 private:
     //------------------------------------------------------------------
@@ -247,7 +247,7 @@ private:
     /// @return
     ///     A pointer to the pthread mutex object owned by this object.
     //------------------------------------------------------------------
-    pthread_mutex_t *
+    lldb::mutex_t *
     GetMutex();
 
     Mutex(const Mutex&);

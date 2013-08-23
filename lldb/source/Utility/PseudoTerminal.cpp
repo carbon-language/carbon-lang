@@ -17,6 +17,21 @@
 #include <sys/ioctl.h>
 #endif
 
+#ifdef _WIN32
+#include "lldb/Host/windows/win32.h"
+// empty functions
+int posix_openpt(int flag) { return 0; }
+
+int strerror_r(int errnum, char *buf, size_t buflen) { return 0; }
+
+int unlockpt(int fd) { return 0; }
+int grantpt(int fd) { return 0; }
+char *ptsname(int fd) { return 0; }
+
+pid_t fork(void) { return 0; }
+pid_t setsid(void) { return 0; }
+#endif
+
 using namespace lldb_utility;
 
 //----------------------------------------------------------------------

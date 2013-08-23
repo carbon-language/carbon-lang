@@ -11,9 +11,9 @@
 #define liblldb_ProcessRunLock_h_
 #if defined(__cplusplus)
 
+#include "lldb/lldb-defines.h"
 #include "lldb/Host/Mutex.h"
 #include "lldb/Host/Condition.h"
-#include <pthread.h>
 #include <stdint.h>
 #include <time.h>
 
@@ -32,75 +32,14 @@ namespace lldb_private {
 class ProcessRunLock
 {
 public:
-    ProcessRunLock () :
-        m_rwlock(),
-        m_running(false)
-    {
-        int err = ::pthread_rwlock_init(&m_rwlock, NULL); (void)err;
-//#if LLDB_CONFIGURATION_DEBUG
-//        assert(err == 0);
-//#endif
-    }
-
-    ~ProcessRunLock ()
-    {
-        int err = ::pthread_rwlock_destroy (&m_rwlock); (void)err;
-//#if LLDB_CONFIGURATION_DEBUG
-//        assert(err == 0);
-//#endif
-    }
-
-    bool
-    ReadTryLock ()
-    {
-        ::pthread_rwlock_rdlock (&m_rwlock);
-        if (m_running == false)
-        {
-            return true;
-        }
-        ::pthread_rwlock_unlock (&m_rwlock);
-        return false;
-    }
-
-    bool
-    ReadUnlock ()
-    {
-        return ::pthread_rwlock_unlock (&m_rwlock) == 0;
-    }
-    
-    bool
-    SetRunning()
-    {
-        ::pthread_rwlock_wrlock (&m_rwlock);
-        m_running = true;
-        ::pthread_rwlock_unlock (&m_rwlock);
-        return true;
-    }
-    
-    bool
-    TrySetRunning()
-    {
-        bool r;
-
-        if (::pthread_rwlock_trywrlock (&m_rwlock) == 0)
-        {
-            r = !m_running;
-            m_running = true;
-            ::pthread_rwlock_unlock (&m_rwlock);
-            return r;
-        }
-        return false;
-    }
-    
-    bool
-    SetStopped ()
-    {
-        ::pthread_rwlock_wrlock (&m_rwlock);
-        m_running = false;
-        ::pthread_rwlock_unlock (&m_rwlock);
-        return true;
-    }
-
+    ProcessRunLock();
+    ~ProcessRunLock();
+    bool ReadTryLock ();
+    bool ReadUnlock ();
+    bool SetRunning ();
+    bool TrySetRunning ();
+    bool SetStopped ();
+public:
     class ProcessRunLocker
     {
     public:
@@ -153,7 +92,7 @@ public:
     };
 
 protected:
-    pthread_rwlock_t m_rwlock;
+    lldb::rwlock_t m_rwlock;
     bool m_running;
 private:
     DISALLOW_COPY_AND_ASSIGN(ProcessRunLock);

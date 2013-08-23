@@ -209,6 +209,9 @@ public:
     static lldb::pid_t
     GetCurrentProcessID ();
 
+    static void
+    Kill(lldb::pid_t pid, int signo);
+
     //------------------------------------------------------------------
     /// Get the thread ID for the calling thread in the current process.
     ///
@@ -263,6 +266,17 @@ public:
     ThreadJoin (lldb::thread_t thread,
                 lldb::thread_result_t *thread_result_ptr,
                 Error *error);
+
+    typedef void (*ThreadLocalStorageCleanupCallback) (void *p);
+
+    static lldb::thread_key_t
+    ThreadLocalStorageCreate(ThreadLocalStorageCleanupCallback callback);
+
+    static void*
+    ThreadLocalStorageGet(lldb::thread_key_t key);
+
+    static void
+    ThreadLocalStorageSet(lldb::thread_key_t key, void *value);
 
     //------------------------------------------------------------------
     /// Gets the name of a thread in a process.

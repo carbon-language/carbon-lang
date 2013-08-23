@@ -12,6 +12,10 @@
 
 #if defined(__cplusplus)
 
+#ifdef _WIN32
+#include "lldb/Host/windows/win32.h"
+#endif
+
 #include "lldb/lldb-public.h"
 #include "lldb/lldb-private-enumerations.h"
 #include "lldb/lldb-private-interfaces.h"

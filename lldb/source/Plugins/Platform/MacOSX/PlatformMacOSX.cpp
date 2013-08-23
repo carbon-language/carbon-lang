@@ -8,9 +8,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "PlatformMacOSX.h"
+#include "lldb/Host/Config.h"
 
 // C Includes
+#ifndef LLDB_DISABLE_POSIX
 #include <sys/sysctl.h>
+#endif
 
 // C++ Includes
 // Other libraries and framework includes

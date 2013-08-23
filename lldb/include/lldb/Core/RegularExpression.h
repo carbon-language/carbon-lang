@@ -11,7 +11,36 @@
 #define liblldb_DBRegex_h_
 #if defined(__cplusplus)
 
+#ifdef _WIN32
+#include "../lib/Support/regex_impl.h"
+
+typedef llvm_regmatch_t regmatch_t;
+typedef llvm_regex_t regex_t;
+
+inline int regcomp(llvm_regex_t * a, const char *b, int c)
+{
+    return llvm_regcomp(a, b, c);
+}
+
+inline size_t regerror(int a, const llvm_regex_t *b, char *c, size_t d)
+{
+    return llvm_regerror(a, b, c, d);
+}
+
+inline int regexec(const llvm_regex_t * a, const char * b, size_t c,
+    llvm_regmatch_t d [], int e)
+{
+    return llvm_regexec(a, b, c, d, e);
+}
+
+inline void regfree(llvm_regex_t * a)
+{
+    llvm_regfree(a);
+}
+
+#else
 #include <regex.h>
+#endif
 #include <stdint.h>
 
 #include <string>

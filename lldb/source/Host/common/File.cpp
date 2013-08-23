@@ -16,6 +16,10 @@
 #include <stdarg.h>
 #include <sys/stat.h>
 
+#ifdef _WIN32
+#include "lldb/Host/windows/windows.h"
+#endif
+
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Host/Config.h"
@@ -167,7 +171,11 @@ File::Duplicate (const File &rhs)
 
     if (rhs.DescriptorIsValid())
     {
+#ifdef _WIN32
+        m_descriptor = ::_dup(rhs.GetDescriptor());
+#else
         m_descriptor = ::fcntl(rhs.GetDescriptor(), F_DUPFD);
+#endif
         if (!DescriptorIsValid())
             error.SetErrorToErrno();
         else
@@ -217,8 +225,12 @@ File::Open (const char *path, uint32_t options, uint32_t permissions)
         oflag |= O_RDONLY;
     }
     
+#ifndef _WIN32
     if (options & eOpenOptionNonBlocking)
         oflag |= O_NONBLOCK;
+#else
+    oflag |= O_BINARY;
+#endif
 
     mode_t mode = 0;
     if (oflag & O_CREAT)
@@ -226,12 +238,14 @@ File::Open (const char *path, uint32_t options, uint32_t permissions)
         if (permissions & ePermissionsUserRead)     mode |= S_IRUSR;
         if (permissions & ePermissionsUserWrite)    mode |= S_IWUSR;
         if (permissions & ePermissionsUserExecute)  mode |= S_IXUSR;
+#ifndef _WIN32
         if (permissions & ePermissionsGroupRead)    mode |= S_IRGRP;
         if (permissions & ePermissionsGroupWrite)   mode |= S_IWGRP;
         if (permissions & ePermissionsGroupExecute) mode |= S_IXGRP;
         if (permissions & ePermissionsWorldRead)    mode |= S_IROTH;
         if (permissions & ePermissionsWorldWrite)   mode |= S_IWOTH;
         if (permissions & ePermissionsWorldExecute) mode |= S_IXOTH;
+#endif
     }
 
     do
@@ -452,6 +466,11 @@ File::Sync ()
     Error error;
     if (DescriptorIsValid())
     {
+#ifdef _WIN32
+        int err = FlushFileBuffers((HANDLE)_get_osfhandle(m_descriptor));
+        if (err == 0)
+            error.SetErrorToGenericError();
+#else
         int err = 0;
         do
         {
@@ -460,6 +479,7 @@ File::Sync ()
         
         if (err == -1)
             error.SetErrorToErrno();
+#endif
     }
     else 
     {
@@ -559,6 +579,7 @@ File::Write (const void *buf, size_t &num_bytes)
 Error
 File::Read (void *buf, size_t &num_bytes, off_t &offset)
 {
+#ifndef _WIN32
     Error error;
     int fd = GetDescriptor();
     if (fd != kInvalidDescriptor)
@@ -586,6 +607,14 @@ File::Read (void *buf, size_t &num_bytes, off_t &offset)
         error.SetErrorString("invalid file handle");
     }
     return error;
+#else
+    long cur = ::lseek(m_descriptor, 0, SEEK_CUR);
+    SeekFromStart(offset);
+    Error error = Read(buf, num_bytes);
+    if (!error.Fail())
+        SeekFromStart(cur);
+    return error;
+#endif
 }
 
 Error
@@ -648,6 +677,7 @@ File::Write (const void *buf, size_t &num_bytes, off_t &offset)
     int fd = GetDescriptor();
     if (fd != kInvalidDescriptor)
     {
+#ifndef _WIN32
         ssize_t bytes_written = -1;
         do
         {
@@ -664,6 +694,17 @@ File::Write (const void *buf, size_t &num_bytes, off_t &offset)
             offset += bytes_written;
             num_bytes = bytes_written;
         }
+#else
+        long cur = ::lseek(m_descriptor, 0, SEEK_CUR);
+        error = Write(buf, num_bytes);
+        long after = ::lseek(m_descriptor, 0, SEEK_CUR);
+
+        if (!error.Fail())
+            SeekFromStart(cur);
+
+        ssize_t bytes_written = after - cur;
+        offset = after;
+#endif
     }
     else 
     {

@@ -11,12 +11,15 @@
 
 // C Includes
 #include <errno.h>
-#include <pthread.h>
 #include <stdlib.h>
+#ifdef _WIN32
+#include "lldb/Host/windows/windows.h"
+#else
 #include <sys/file.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#endif
 
 // C++ Includes
 // Other libraries and framework includes
@@ -73,7 +76,12 @@ ConnectionSharedMemory::Disconnect (Error *error_ptr)
     m_mmap.Clear();
     if (!m_name.empty())
     {
+#ifdef _WIN32
+        close(m_fd);
+        m_fd = -1;
+#else
         shm_unlink (m_name.c_str());
+#endif
         m_name.clear();
     }
     return eConnectionStatusSuccess;
@@ -114,6 +122,16 @@ ConnectionSharedMemory::Open (bool create, const char *name, size_t size, Error 
     }
     
     m_name.assign (name);
+
+#ifdef _WIN32
+    HANDLE handle;
+    if (create)
+        handle = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, (DWORD)(size >> 32), (DWORD)(size), name);
+    else
+        handle = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, name);
+
+    m_fd = _open_osfhandle((intptr_t)handle, 0);
+#else
     int oflag = O_RDWR;
     if (create)
         oflag |= O_CREAT;
@@ -121,6 +139,7 @@ ConnectionSharedMemory::Open (bool create, const char *name, size_t size, Error 
 
     if (create)
         ::ftruncate (m_fd, size);
+#endif
 
     if (m_mmap.MemoryMapFromFileDescriptor(m_fd, 0, size, true, false) == size)
         return eConnectionStatusSuccess;

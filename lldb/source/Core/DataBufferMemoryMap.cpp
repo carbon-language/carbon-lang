@@ -12,7 +12,11 @@
 #include <fcntl.h>
 #include <limits.h>
 #include <sys/stat.h>
+#ifdef _WIN32
+#include "lldb/Host/windows/windows.h"
+#else
 #include <sys/mman.h>
+#endif
 
 #include "lldb/Core/DataBufferMemoryMap.h"
 #include "lldb/Core/Error.h"
@@ -86,7 +90,11 @@ DataBufferMemoryMap::Clear()
         Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_MMAP));
         if (log)
             log->Printf("DataBufferMemoryMap::Clear() m_mmap_addr = %p, m_mmap_size = %zu", m_mmap_addr, m_mmap_size);
+#ifdef _WIN32
+        UnmapViewOfFile(m_mmap_addr);
+#else
         ::munmap((void *)m_mmap_addr, m_mmap_size);
+#endif
         m_mmap_addr = NULL;
         m_mmap_size = 0;
         m_data = NULL;
@@ -166,13 +174,49 @@ DataBufferMemoryMap::MemoryMapFromFileDescriptor (int fd,
         Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_MMAP|LIBLLDB_LOG_VERBOSE));
         if (log)
         {
+#ifdef _WIN32
+            log->Printf("DataBufferMemoryMap::MemoryMapFromFileSpec(fd=%p, offset=0x%" PRIx64 ", length=0x%" PRIx64 ", writeable=%i, fd_is_file=%i)",
+#else
             log->Printf("DataBufferMemoryMap::MemoryMapFromFileSpec(fd=%i, offset=0x%" PRIx64 ", length=0x%" PRIx64 ", writeable=%i, fd_is_file=%i)",
+#endif
                         fd,
                         offset,
                         length,
                         writeable,
                         fd_is_file);
         }
+#ifdef _WIN32
+        HANDLE handle = (HANDLE)_get_osfhandle(fd);
+        DWORD file_size_low, file_size_high;
+        file_size_low = GetFileSize(handle, &file_size_high);
+        const size_t file_size = (file_size_high << 32) | file_size_low;
+        const size_t max_bytes_available = file_size - offset;
+        if (length == SIZE_MAX)
+        {
+            length = max_bytes_available;
+        }
+        else if (length > max_bytes_available)
+        {
+            // Cap the length if too much data was requested
+            length = max_bytes_available;
+        }
+
+        if (length > 0)
+        {
+            HANDLE fileMapping = CreateFileMapping(handle, NULL, writeable ? PAGE_READWRITE : PAGE_READONLY, file_size_high, file_size_low, NULL);
+            if (fileMapping != NULL)
+            {
+                m_mmap_addr = (uint8_t*)MapViewOfFile(fileMapping, writeable ? FILE_MAP_ALL_ACCESS : FILE_MAP_READ, (DWORD)(offset >> 32), (DWORD)(offset), length);
+                if (m_mmap_addr != NULL)
+                {
+                    m_mmap_size = length;
+                    m_data = m_mmap_addr;
+                    m_size = length;
+                }
+                CloseHandle(fileMapping);
+            }
+        }
+#else
         struct stat stat;
         if (::fstat(fd, &stat) == 0)
         {
@@ -253,6 +297,7 @@ DataBufferMemoryMap::MemoryMapFromFileDescriptor (int fd,
                 }
             }
         }
+#endif
     }
     return GetByteSize ();
 }

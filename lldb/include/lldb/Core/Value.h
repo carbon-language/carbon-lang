@@ -114,7 +114,7 @@ public:
 #if defined (ENABLE_128_BIT_SUPPORT)
                 else if (length >= 16) scalar = *(const __uint128_t *)bytes;
 #else
-                else if (length >= 16) scalar = *(const __uint64_t *)bytes;
+                else if (length >= 16) scalar = *(const uint64_t *)bytes;
 #endif
             }
             return scalar;

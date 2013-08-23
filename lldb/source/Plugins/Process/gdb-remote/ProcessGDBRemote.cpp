@@ -8,13 +8,16 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/lldb-python.h"
+#include "lldb/Host/Config.h"
 
 // C Includes
 #include <errno.h>
-#include <spawn.h>
 #include <stdlib.h>
+#ifndef LLDB_DISABLE_POSIX
+#include <spawn.h>
 #include <netinet/in.h>
 #include <sys/mman.h>       // for mmap
+#endif
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <time.h>
@@ -2687,7 +2690,7 @@ ProcessGDBRemote::KillDebugserverProcess ()
 {
     if (m_debugserver_pid != LLDB_INVALID_PROCESS_ID)
     {
-        ::kill (m_debugserver_pid, SIGINT);
+        Host::Kill (m_debugserver_pid, SIGINT);
         m_debugserver_pid = LLDB_INVALID_PROCESS_ID;
     }
 }
@@ -2794,7 +2797,7 @@ ProcessGDBRemote::StopAsyncThread ()
 }
 
 
-void *
+thread_result_t
 ProcessGDBRemote::AsyncThread (void *arg)
 {
     ProcessGDBRemote *process = (ProcessGDBRemote*) arg;

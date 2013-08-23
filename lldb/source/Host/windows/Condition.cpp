@@ -15,8 +15,6 @@
 
 using namespace lldb_private;
 
-#ifndef _WIN32
-
 //----------------------------------------------------------------------
 // Default constructor
 //
@@ -26,7 +24,7 @@ using namespace lldb_private;
 Condition::Condition () :
     m_condition()
 {
-    ::pthread_cond_init (&m_condition, NULL);
+    InitializeConditionVariable(&m_condition);
 }
 
 //----------------------------------------------------------------------
@@ -36,7 +34,6 @@ Condition::Condition () :
 //----------------------------------------------------------------------
 Condition::~Condition ()
 {
-    ::pthread_cond_destroy (&m_condition);
 }
 
 //----------------------------------------------------------------------
@@ -45,7 +42,8 @@ Condition::~Condition ()
 int
 Condition::Broadcast ()
 {
-    return ::pthread_cond_broadcast (&m_condition);
+    WakeAllConditionVariable(&m_condition);
+    return 0;
 }
 
 //----------------------------------------------------------------------
@@ -54,12 +52,8 @@ Condition::Broadcast ()
 int
 Condition::Signal ()
 {
-    return ::pthread_cond_signal (&m_condition);
-}
-
-/* convert struct timeval to ms(milliseconds) */
-static unsigned long int tv2ms(struct timeval a) {
-    return ((a.tv_sec * 1000) + (a.tv_usec / 1000));
+    WakeConditionVariable(&m_condition);
+    return 0;
 }
 
 //----------------------------------------------------------------------
@@ -78,36 +72,24 @@ static unsigned long int tv2ms(struct timeval a) {
 int
 Condition::Wait (Mutex &mutex, const TimeValue *abstime, bool *timed_out)
 {
-    int err = 0;
-    do
-    {
-        if (abstime && abstime->IsValid())
-        {
-            struct timespec abstime_ts = abstime->GetAsTimeSpec();
-            err = ::pthread_cond_timedwait (&m_condition, mutex.GetMutex(), &abstime_ts);
-        }
-        else
-            err = ::pthread_cond_wait (&m_condition, mutex.GetMutex());
-    } while (err == EINTR);
+    DWORD wait = INFINITE;
+    if (abstime != NULL) {
+        int wval = (*abstime - TimeValue::Now()) / 1000000;
+        if (wval < 0) wval = 0;
+
+        wait = wval;
+    }
+
+    int err = SleepConditionVariableCS(&m_condition, &mutex.m_mutex, wait);
 
     if (timed_out != NULL)
     {
-        if (err == ETIMEDOUT)
+        if ((err == 0) && GetLastError() == ERROR_TIMEOUT)
             *timed_out = true;
         else
             *timed_out = false;
     }
 
-    return err;
+    return err != 0;
 }
 
-#endif
-
-//----------------------------------------------------------------------
-// Get accessor to the pthread condition object
-//----------------------------------------------------------------------
-lldb::condition_t *
-Condition::GetCondition()
-{
-    return &m_condition;
-}

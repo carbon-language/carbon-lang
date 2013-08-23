@@ -12,7 +12,7 @@
 #if defined(__cplusplus)
 
 
-#include <pthread.h>
+#include "lldb/lldb-types.h"
 #include "lldb/Host/Mutex.h"
 
 namespace lldb_private {
@@ -105,7 +105,7 @@ protected:
     //------------------------------------------------------------------
     // Member variables
     //------------------------------------------------------------------
-    pthread_cond_t m_condition; ///< The condition variable.
+    lldb::condition_t m_condition; ///< The condition variable.
     
     //------------------------------------------------------------------
     /// Get accessor to the pthread condition object.
@@ -113,7 +113,7 @@ protected:
     /// @return
     ///     A pointer to the condition variable owned by this object.
     //------------------------------------------------------------------
-    pthread_cond_t *
+    lldb::condition_t *
     GetCondition ();
 };
 

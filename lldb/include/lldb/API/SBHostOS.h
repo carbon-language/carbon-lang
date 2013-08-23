@@ -30,7 +30,7 @@ public:
 
     static lldb::thread_t
     ThreadCreate (const char *name,
-                  void *(*thread_function)(void *),
+                  thread_func_t thread_function,
                   void *thread_arg,
                   lldb::SBError *err);
 
@@ -43,7 +43,7 @@ public:
                   lldb::SBError *err);
     static bool
     ThreadJoin (lldb::thread_t thread,
-                void **result,
+                thread_result_t *result,
                 lldb::SBError *err);
 
 

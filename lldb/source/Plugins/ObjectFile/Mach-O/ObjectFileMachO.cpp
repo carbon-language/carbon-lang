@@ -1545,7 +1545,7 @@ ObjectFileMachO::ParseSymtab ()
             function_starts_load_command.cmd = lc.cmd;
             function_starts_load_command.cmdsize = lc.cmdsize;
             if (m_data.GetU32(&offset, &function_starts_load_command.dataoff, 2) == NULL) // fill in symoff, nsyms, stroff, strsize fields
-                bzero (&function_starts_load_command, sizeof(function_starts_load_command));
+                memset (&function_starts_load_command, 0, sizeof(function_starts_load_command));
             break;
 
         default:

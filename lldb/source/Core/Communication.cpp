@@ -333,8 +333,8 @@ Communication::ReadThreadIsRunning ()
     return m_read_thread_enabled;
 }
 
-void *
-Communication::ReadThread (void *p)
+lldb::thread_result_t
+Communication::ReadThread (lldb::thread_arg_t p)
 {
     Communication *comm = (Communication *)p;
 

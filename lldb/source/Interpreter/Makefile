@@ -11,7 +11,9 @@ LLDB_LEVEL := ../..
 LIBRARYNAME := lldbInterpreter
 BUILD_ARCHIVE = 1
 
+ifeq (,$(findstring -DLLDB_DISABLE_PYTHON,$(CXXFLAGS)))
 BUILT_SOURCES := LLDBWrapPython.cpp
+endif
 
 include $(LLDB_LEVEL)/Makefile
 -include $(PROJ_OBJ_DIR)/LLDBWrapPython.cpp.d

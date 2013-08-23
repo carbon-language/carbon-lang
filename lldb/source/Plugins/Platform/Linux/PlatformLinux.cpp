@@ -10,10 +10,13 @@
 #include "lldb/lldb-python.h"
 
 #include "PlatformLinux.h"
+#include "lldb/Host/Config.h"
 
 // C Includes
 #include <stdio.h>
+#ifndef LLDB_DISABLE_POSIX
 #include <sys/utsname.h>
+#endif
 
 // C++ Includes
 // Other libraries and framework includes
@@ -357,9 +360,10 @@ PlatformLinux::GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch)
 void
 PlatformLinux::GetStatus (Stream &strm)
 {
-    struct utsname un;
-
     Platform::GetStatus(strm);
+
+#ifndef LLDB_DISABLE_POSIX
+    struct utsname un;
 
     if (uname(&un))
         return;
@@ -367,6 +371,7 @@ PlatformLinux::GetStatus (Stream &strm)
     strm.Printf ("    Kernel: %s\n", un.sysname);
     strm.Printf ("   Release: %s\n", un.release);
     strm.Printf ("   Version: %s\n", un.version);
+#endif
 }
 
 size_t

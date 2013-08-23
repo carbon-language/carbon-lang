@@ -11,7 +11,6 @@
 
 // C Includes
 #include <sys/stat.h>
-#include <dirent.h>
 #if defined(__APPLE__) || defined(__linux__)
 #include <pwd.h>
 #endif
@@ -119,6 +118,72 @@ CommandCompletions::SourceFiles
         completer.DoCompletion (searcher);
     }
     return matches.GetSize();
+}
+
+typedef struct DiskFilesOrDirectoriesBaton
+{
+    const char *remainder;
+    char *partial_name_copy;
+    bool only_directories;
+    bool *saw_directory;
+    StringList *matches;
+    char *end_ptr;
+    size_t baselen;
+};
+
+FileSpec::EnumerateDirectoryResult DiskFilesOrDirectoriesCallback(void *baton, FileSpec::FileType file_type, const FileSpec &spec)
+{
+    const char *name = spec.GetFilename().AsCString();
+
+    const DiskFilesOrDirectoriesBaton *parameters = (DiskFilesOrDirectoriesBaton*)baton;
+    char *end_ptr = parameters->end_ptr;
+    char *partial_name_copy = parameters->partial_name_copy;
+    size_t baselen = end_ptr - partial_name_copy;
+    const char *remainder = parameters->remainder;
+
+    // Omit ".", ".." and any . files if the match string doesn't start with .
+    if (name[0] == '.')
+    {
+        if (name[1] == '\0')
+            return FileSpec::eEnumerateDirectoryResultNext;
+        else if (name[1] == '.' && name[2] == '\0')
+            return FileSpec::eEnumerateDirectoryResultNext;
+        else if (remainder[0] != '.')
+            return FileSpec::eEnumerateDirectoryResultNext;
+    }
+
+    // If we found a directory, we put a "/" at the end of the name.
+
+    if (remainder[0] == '\0' || strstr(name, remainder) == name)
+    {
+        if (strlen(name) + parameters->baselen >= PATH_MAX)
+            return FileSpec::eEnumerateDirectoryResultNext;
+
+        strcpy(end_ptr, name);
+
+        bool isa_directory = false;
+        if (file_type == FileSpec::eFileTypeDirectory)
+            isa_directory = true;
+        else if (file_type == FileSpec::eFileTypeSymbolicLink)
+        {
+            struct stat stat_buf;
+            if ((stat(partial_name_copy, &stat_buf) == 0) && S_ISDIR(stat_buf.st_mode))
+                isa_directory = true;
+        }
+
+        if (isa_directory)
+        {
+            *parameters->saw_directory = true;
+            size_t len = strlen(parameters->partial_name_copy);
+            partial_name_copy[len] = '/';
+            partial_name_copy[len + 1] = '\0';
+        }
+        if (parameters->only_directories && !isa_directory)
+            return FileSpec::eEnumerateDirectoryResultNext;
+        parameters->matches->AppendString(partial_name_copy);
+    }
+
+    return FileSpec::eEnumerateDirectoryResultNext;
 }
 
 static int
@@ -239,60 +304,18 @@ DiskFilesOrDirectories
 
     // Okay, containing_part is now the directory we want to open and look for files:
 
-    lldb_utility::CleanUp <DIR *, int> dir_stream (opendir(containing_part), NULL, closedir);
-    if (!dir_stream.is_valid())
-        return matches.GetSize();
-    
-    struct dirent *dirent_buf;
-    
     size_t baselen = end_ptr - partial_name_copy;
     
-    while ((dirent_buf = readdir(dir_stream.get())) != NULL) 
-    {
-        char *name = dirent_buf->d_name;
-        
-        // Omit ".", ".." and any . files if the match string doesn't start with .
-        if (name[0] == '.')
-        {
-            if (name[1] == '\0')
-                continue;
-            else if (name[1] == '.' && name[2] == '\0')
-                continue;
-            else if (remainder[0] != '.')
-                continue;
-        }
-        
-        // If we found a directory, we put a "/" at the end of the name.
-        
-        if (remainder[0] == '\0' || strstr(dirent_buf->d_name, remainder) == name)
-        {
-            if (strlen(name) + baselen >= PATH_MAX)
-                continue;
-                
-            strcpy(end_ptr, name);
-            
-            bool isa_directory = false;
-            if (dirent_buf->d_type & DT_DIR)
-                isa_directory = true;
-            else if (dirent_buf->d_type & DT_LNK)
-            { 
-                struct stat stat_buf;
-                if ((stat(partial_name_copy, &stat_buf) == 0) && S_ISDIR(stat_buf.st_mode))
-                    isa_directory = true;
-            }
-            
-            if (isa_directory)
-            {
-                saw_directory = true;
-                size_t len = strlen(partial_name_copy);
-                partial_name_copy[len] = '/';
-                partial_name_copy[len + 1] = '\0';
-            }
-            if (only_directories && !isa_directory)
-                continue;
-            matches.AppendString(partial_name_copy);
-        }
-    }
+    DiskFilesOrDirectoriesBaton parameters;
+    parameters.remainder = remainder;
+    parameters.partial_name_copy = partial_name_copy;
+    parameters.only_directories = only_directories;
+    parameters.saw_directory = &saw_directory;
+    parameters.matches = &matches;
+    parameters.end_ptr = end_ptr;
+    parameters.baselen = baselen;
+
+    FileSpec::EnumerateDirectory(containing_part, true, true, true, DiskFilesOrDirectoriesCallback, &parameters);
     
     return matches.GetSize();
 }

@@ -340,7 +340,7 @@ protected:
     void
     StopAsyncThread ();
 
-    static void *
+    static lldb::thread_result_t
     AsyncThread (void *arg);
 
     static bool

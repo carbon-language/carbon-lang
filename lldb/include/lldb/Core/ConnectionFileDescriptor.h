@@ -11,9 +11,13 @@
 #define liblldb_ConnectionFileDescriptor_h_
 
 // C Includes
+#ifdef _WIN32
+typedef unsigned short in_port_t;
+#else
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
+#endif
 
 // C++ Includes
 // Other libraries and framework includes

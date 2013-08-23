@@ -78,9 +78,9 @@ set( LLDB_USED_LIBS
 # Windows-only libraries
 if ( CMAKE_SYSTEM_NAME MATCHES "Windows" )
   list(APPEND LLDB_USED_LIBS
-    #lldbHostWindows
+    lldbHostWindows
     #lldbPluginPlatformWindows
-    #Ws2_32
+    Ws2_32
     )
 endif ()
 
@@ -137,10 +137,12 @@ set( CLANG_USED_LIBS
   clangSerialization
   )  
   
-set( LLDB_SYSTEM_LIBS
-  edit
-  python2.7
-  )
+if (NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
+  set( LLDB_SYSTEM_LIBS
+    edit
+    python2.7
+    )
+endif()
 
 set( LLVM_LINK_COMPONENTS
   ${LLVM_TARGETS_TO_BUILD}
@@ -164,10 +166,14 @@ set( LLVM_LINK_COMPONENTS
 set_source_files_properties(${LLDB_BINARY_DIR}/scripts/LLDBWrapPython.cpp PROPERTIES GENERATED 1)
 set(SHARED_LIBRARY 1)
 
+if(NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
+  set(LLDB_WRAP_PYTHON ${LLDB_BINARY_DIR}/scripts/LLDBWrapPython.cpp)
+endif()
+
 add_lldb_library(liblldb
   lldb.cpp
   lldb-log.cpp
-  ${LLDB_BINARY_DIR}/scripts/LLDBWrapPython.cpp
+  ${LLDB_WRAP_PYTHON}
   ${LLDB_VERS_GENERATED_FILE}
   )
 set_target_properties(liblldb
@@ -175,10 +181,12 @@ set_target_properties(liblldb
   OUTPUT_NAME lldb
   VERSION ${LLDB_VERSION}
   )
-add_dependencies(liblldb
-  ${LLDB_BINARY_DIR}/scripts/LLDBWrapPython.cpp
-  ${LLDB_VERS_GENERATED_FILE}
-  )
+if (LLDB_WRAP_PYTHON OR LLDB_VERS_GENERATED_FILE)
+  add_dependencies(liblldb
+    ${LLDB_WRAP_PYTHON}
+    ${LLDB_VERS_GENERATED_FILE}
+    )
+endif()
 target_link_libraries(liblldb ${LLDB_SYSTEM_LIBS})
 
 # Determine LLDB revision and repository. GetSourceVersion and GetRepositoryPath are shell-scripts, and as
@@ -209,4 +217,5 @@ endif ()
 
 
 install(TARGETS liblldb
+  RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib)

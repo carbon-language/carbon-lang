@@ -10,15 +10,21 @@
 #include "lldb/lldb-python.h"
 
 // C includes
-#include <dlfcn.h>
 #include <errno.h>
-#include <grp.h>
 #include <limits.h>
+#include <sys/types.h>
+#include <unistd.h>
+#ifdef _WIN32
+#include "lldb/Host/windows/windows.h"
+#include <winsock2.h>
+#include <WS2tcpip.h>
+#else
+#include <dlfcn.h>
+#include <grp.h>
 #include <netdb.h>
 #include <pwd.h>
-#include <sys/types.h>
 #include <sys/sysctl.h>
-#include <unistd.h>
+#endif
 
 #if defined (__APPLE__)
 
@@ -66,7 +72,7 @@ using namespace lldb;
 using namespace lldb_private;
 
 
-#if !defined (__APPLE__)
+#if !defined (__APPLE__) && !defined (_WIN32)
 struct MonitorInfo
 {
     lldb::pid_t pid;                            // The process ID to monitor
@@ -75,7 +81,7 @@ struct MonitorInfo
     bool monitor_signals;                       // If true, call the callback when "pid" gets signaled.
 };
 
-static void *
+static thread_result_t
 MonitorChildProcessThreadFunction (void *arg);
 
 lldb::thread_t
@@ -133,7 +139,7 @@ private:
     int m_old_state;    // Save the old cancelability state.
 };
 
-static void *
+static thread_result_t
 MonitorChildProcessThreadFunction (void *arg)
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
@@ -259,6 +265,9 @@ MonitorChildProcessThreadFunction (void *arg)
     return NULL;
 }
 
+#endif // #if !defined (__APPLE__) && !defined (_WIN32)
+
+#if !defined (__APPLE__)
 
 void
 Host::SystemLog (SystemLogType type, const char *format, va_list args)
@@ -266,7 +275,7 @@ Host::SystemLog (SystemLogType type, const char *format, va_list args)
     vfprintf (stderr, format, args);
 }
 
-#endif // #if !defined (__APPLE__)
+#endif
 
 void
 Host::SystemLog (SystemLogType type, const char *format, ...)
@@ -275,12 +284,6 @@ Host::SystemLog (SystemLogType type, const char *format, ...)
     va_start (args, format);
     SystemLog (type, format, args);
     va_end (args);
-}
-
-size_t
-Host::GetPageSize()
-{
-    return ::getpagesize();
 }
 
 const ArchSpec &
@@ -445,6 +448,8 @@ Host::GetCurrentProcessID()
     return ::getpid();
 }
 
+#ifndef _WIN32
+
 lldb::tid_t
 Host::GetCurrentThreadID()
 {
@@ -521,6 +526,8 @@ Host::GetSignalAsCString (int signo)
     return NULL;
 }
 
+#endif
+
 void
 Host::WillTerminate ()
 {
@@ -563,6 +570,9 @@ struct HostThreadCreateInfo
 };
 
 static thread_result_t
+#ifdef _WIN32
+__stdcall
+#endif
 ThreadCreateTrampoline (thread_arg_t arg)
 {
     HostThreadCreateInfo *info = (HostThreadCreateInfo *)arg;
@@ -592,7 +602,12 @@ Host::ThreadCreate
     // Host::ThreadCreateTrampoline will delete this pointer for us.
     HostThreadCreateInfo *info_ptr = new HostThreadCreateInfo (thread_name, thread_fptr, thread_arg);
     
+#ifdef _WIN32
+    thread = ::_beginthreadex(0, 0, ThreadCreateTrampoline, info_ptr, 0, NULL);
+    int err = thread <= 0 ? GetLastError() : 0;
+#else
     int err = ::pthread_create (&thread, NULL, ThreadCreateTrampoline, info_ptr);
+#endif
     if (err == 0)
     {
         if (error)
@@ -605,6 +620,8 @@ Host::ThreadCreate
     
     return LLDB_INVALID_HOST_THREAD;
 }
+
+#ifndef _WIN32
 
 bool
 Host::ThreadCancel (lldb::thread_t thread, Error *error)
@@ -631,6 +648,26 @@ Host::ThreadJoin (lldb::thread_t thread, thread_result_t *thread_result_ptr, Err
     if (error)
         error->SetError(err, eErrorTypePOSIX);
     return err == 0;
+}
+
+lldb::thread_key_t
+Host::ThreadLocalStorageCreate(ThreadLocalStorageCleanupCallback callback)
+{
+    pthread_key_t key;
+    ::pthread_key_create (&key, callback);
+    return key;
+}
+
+void*
+Host::ThreadLocalStorageGet(lldb::thread_key_t key)
+{
+    return ::pthread_getspecific (key);
+}
+
+void
+Host::ThreadLocalStorageSet(lldb::thread_key_t key, void *value)
+{
+   ::pthread_setspecific (key, value);
 }
 
 bool
@@ -726,6 +763,8 @@ Host::SetShortThreadName (lldb::pid_t pid, lldb::tid_t tid,
     return false;
 }
 
+#endif
+
 FileSpec
 Host::GetProgramFileSpec ()
 {
@@ -771,19 +810,6 @@ Host::GetProgramFileSpec ()
     return g_program_filespec;
 }
 
-FileSpec
-Host::GetModuleFileSpecForHostAddress (const void *host_addr)
-{
-    FileSpec module_filespec;
-    Dl_info info;
-    if (::dladdr (host_addr, &info))
-    {
-        if (info.dli_fname)
-            module_filespec.SetFile(info.dli_fname, true);
-    }
-    return module_filespec;
-}
-
 #if !defined (__APPLE__) // see Host.mm
 
 bool
@@ -799,6 +825,8 @@ Host::ResolveExecutableInBundle (FileSpec &file)
     return false;
 }
 #endif
+
+#ifndef _WIN32
 
 // Opaque info that tracks a dynamic library that was loaded
 struct DynamicLibraryInfo
@@ -923,6 +951,21 @@ Host::DynamicLibraryGetSymbol (void *opaque, const char *symbol_name, Error &err
     }
     return NULL;
 }
+
+FileSpec
+Host::GetModuleFileSpecForHostAddress (const void *host_addr)
+{
+    FileSpec module_filespec;
+    Dl_info info;
+    if (::dladdr (host_addr, &info))
+    {
+        if (info.dli_fname)
+            module_filespec.SetFile(info.dli_fname, true);
+    }
+    return module_filespec;
+}
+
+#endif
 
 bool
 Host::GetLLDBPath (PathType path_type, FileSpec &file_spec)
@@ -1175,6 +1218,8 @@ Host::GetHostname (std::string &s)
     return false;
 }
 
+#ifndef _WIN32
+
 const char *
 Host::GetUserName (uint32_t uid, std::string &user_name)
 {
@@ -1234,22 +1279,6 @@ Host::GetGroupName (uint32_t gid, std::string &group_name)
     return NULL;
 }
 
-#if !defined (__APPLE__) && !defined (__FreeBSD__) && !defined (__FreeBSD_kernel__) // see macosx/Host.mm
-bool
-Host::GetOSBuildString (std::string &s)
-{
-    s.clear();
-    return false;
-}
-
-bool
-Host::GetOSKernelDescription (std::string &s)
-{
-    s.clear();
-    return false;
-}
-#endif
-
 uint32_t
 Host::GetUserID ()
 {
@@ -1273,6 +1302,24 @@ Host::GetEffectiveGroupID ()
 {
     return getegid();
 }
+
+#endif
+
+#if !defined (__APPLE__) && !defined (__FreeBSD__) && !defined (__FreeBSD_kernel__) // see macosx/Host.mm
+bool
+Host::GetOSBuildString (std::string &s)
+{
+    s.clear();
+    return false;
+}
+
+bool
+Host::GetOSKernelDescription (std::string &s)
+{
+    s.clear();
+    return false;
+}
+#endif
 
 #if !defined (__APPLE__) && !defined(__linux__)
 uint32_t
@@ -1441,7 +1488,7 @@ Host::RunShellCommand (const char *command,
             error.SetErrorString("timed out waiting for shell command to complete");
             
             // Kill the process since it didn't complete withint the timeout specified
-            ::kill (pid, SIGKILL);
+            Kill (pid, SIGKILL);
             // Wait for the monitor callback to get the message
             timeout_time = TimeValue::Now();
             timeout_time.OffsetWithSeconds(1);
@@ -1490,6 +1537,13 @@ Host::RunShellCommand (const char *command,
     return error;
 }
 
+#ifndef _WIN32
+
+size_t
+Host::GetPageSize()
+{
+    return ::getpagesize();
+}
 
 uint32_t
 Host::GetNumberCPUS ()
@@ -1500,14 +1554,7 @@ Host::GetNumberCPUS ()
 #if defined(__APPLE__) or defined (__linux__) or defined (__FreeBSD__) or defined (__FreeBSD_kernel__)
 
         g_num_cores = ::sysconf(_SC_NPROCESSORS_ONLN);
-        
-#elif defined(_WIN32) || defined(__WIN32__) || defined(__CYGWIN__)
-        
-        // Header file for this might need to be included at the top of this file
-        SYSTEM_INFO system_info;
-        ::GetSystemInfo (&system_info);
-        g_num_cores = system_info.dwNumberOfProcessors;
-        
+
 #else
         
         // Assume POSIX support if a host specific case has not been supplied above
@@ -1540,7 +1587,13 @@ Host::GetNumberCPUS ()
     return g_num_cores;
 }
 
+void
+Host::Kill(lldb::pid_t pid, int signo)
+{
+    ::kill(pid, signo);
+}
 
+#endif
 
 #if !defined (__APPLE__)
 bool

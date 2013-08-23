@@ -663,6 +663,7 @@ ProcessLaunchInfo::FileAction::Duplicate (int fd, int dup_fd)
 
 
 
+#ifndef LLDB_DISABLE_POSIX
 bool
 ProcessLaunchInfo::FileAction::AddPosixSpawnFileAction (posix_spawn_file_actions_t *file_actions,
                                                         const FileAction *info,
@@ -733,6 +734,7 @@ ProcessLaunchInfo::FileAction::AddPosixSpawnFileAction (posix_spawn_file_actions
     }
     return error.Success();
 }
+#endif
 
 Error
 ProcessLaunchCommandOptions::SetOptionValue (uint32_t option_idx, const char *option_arg)
@@ -3968,15 +3970,15 @@ Process::HandlePrivateEvent (EventSP &event_sp)
     m_currently_handling_event.SetValue(false, eBroadcastAlways);
 }
 
-void *
+thread_result_t
 Process::PrivateStateThread (void *arg)
 {
     Process *proc = static_cast<Process*> (arg);
-    void *result = proc->RunPrivateStateThread ();
+    thread_result_t result = proc->RunPrivateStateThread();
     return result;
 }
 
-void *
+thread_result_t
 Process::RunPrivateStateThread ()
 {
     bool control_only = true;

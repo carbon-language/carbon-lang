@@ -1,4 +1,4 @@
-##===- source/Makefile -------------------------------------*- Makefile -*-===##
+##===- source/Host/windows/Makefile ------------------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
@@ -7,11 +7,8 @@
 # 
 ##===----------------------------------------------------------------------===##
 
-LLDB_LEVEL := ..
-include $(LLDB_LEVEL)/../../Makefile.config
-
-ifneq ($(HOST_OS),MingW)
-DIRS := driver lldb-platform
-endif
+LLDB_LEVEL := ../../..
+LIBRARYNAME := lldbHostWindows
+BUILD_ARCHIVE = 1
 
 include $(LLDB_LEVEL)/Makefile

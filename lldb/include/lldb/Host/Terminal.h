@@ -12,6 +12,7 @@
 #if defined(__cplusplus)
 
 #include "lldb/lldb-private.h"
+#include "lldb/Host/Config.h"
 
 struct termios;
 
@@ -173,7 +174,9 @@ protected:
     //------------------------------------------------------------------
     Terminal        m_tty;          ///< A terminal
     int             m_tflags;       ///< Cached tflags information.
+#ifdef LLDB_CONFIG_TERMIOS_SUPPORTED
     std::unique_ptr<struct termios> m_termios_ap; ///< Cached terminal state information.
+#endif
     lldb::pid_t     m_process_group;///< Cached process group information.
 
 };

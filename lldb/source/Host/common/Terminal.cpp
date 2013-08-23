@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/Host/Terminal.h"
-#include "lldb/Host/Config.h"
 
 #include <fcntl.h>
 #include <unistd.h>
@@ -24,6 +23,7 @@ using namespace lldb_private;
 bool
 Terminal::IsATerminal () const
 {
+
     return m_fd >= 0 && ::isatty (m_fd);
 }
     
@@ -108,7 +108,9 @@ Terminal::SetCanonical (bool enabled)
 TerminalState::TerminalState() :
     m_tty(),
     m_tflags(-1),
+#ifdef LLDB_CONFIG_TERMIOS_SUPPORTED
     m_termios_ap(),
+#endif
     m_process_group(-1)
 {
 }
@@ -125,7 +127,9 @@ TerminalState::Clear ()
 {
     m_tty.Clear();
     m_tflags = -1;
+#ifdef LLDB_CONFIG_TERMIOS_SUPPORTED
     m_termios_ap.reset();
+#endif
     m_process_group = -1;
 }
 
@@ -140,7 +144,9 @@ TerminalState::Save (int fd, bool save_process_group)
     m_tty.SetFileDescriptor(fd);
     if (m_tty.IsATerminal())
     {
+#ifndef LLDB_DISABLE_POSIX
         m_tflags = ::fcntl (fd, F_GETFL, 0);
+#endif
 #ifdef LLDB_CONFIG_TERMIOS_SUPPORTED
         if (m_termios_ap.get() == NULL)
             m_termios_ap.reset (new struct termios);
@@ -148,16 +154,20 @@ TerminalState::Save (int fd, bool save_process_group)
         if (err != 0)
             m_termios_ap.reset();
 #endif // #ifdef LLDB_CONFIG_TERMIOS_SUPPORTED
+#ifndef LLDB_DISABLE_POSIX
         if (save_process_group)
             m_process_group = ::tcgetpgrp (0);
         else
             m_process_group = -1;
+#endif
     }
     else
     {
         m_tty.Clear();
         m_tflags = -1;
+#ifdef LLDB_CONFIG_TERMIOS_SUPPORTED
         m_termios_ap.reset();
+#endif
         m_process_group = -1;
     }
     return IsValid();
@@ -173,14 +183,17 @@ TerminalState::Restore () const
     if (IsValid())
     {
         const int fd = m_tty.GetFileDescriptor();
+#ifndef LLDB_DISABLE_POSIX
         if (TFlagsIsValid())
             fcntl (fd, F_SETFL, m_tflags);
+#endif
 
 #ifdef LLDB_CONFIG_TERMIOS_SUPPORTED
         if (TTYStateIsValid())
             tcsetattr (fd, TCSANOW, m_termios_ap.get());
 #endif // #ifdef LLDB_CONFIG_TERMIOS_SUPPORTED
 
+#ifndef LLDB_DISABLE_POSIX
         if (ProcessGroupIsValid())
         {
             // Save the original signal handler.
@@ -191,6 +204,7 @@ TerminalState::Restore () const
             // Restore the original signal handler.
             signal (SIGTTOU, saved_sigttou_callback);
         }
+#endif
         return true;
     }
     return false;
@@ -224,7 +238,11 @@ TerminalState::TFlagsIsValid() const
 bool
 TerminalState::TTYStateIsValid() const
 {
+#ifdef LLDB_CONFIG_TERMIOS_SUPPORTED
     return m_termios_ap.get() != 0;
+#else
+    return false;
+#endif
 }
 
 //----------------------------------------------------------------------

@@ -38,7 +38,7 @@
 #include "lldb/Target/Target.h"
 #include "lldb/Target/StackFrame.h"
 
-#include <regex.h>
+#include "lldb/Core/RegularExpression.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -369,20 +369,17 @@ public:
                 }
             }
             
-            if (!s_regex_compiled)
+            if (!s_regex.IsValid())
             {
-                ::regcomp(&s_regex, "[ \t]*([^ ^\t]+)[ \t]*([^ ^\t].*)?", REG_EXTENDED);
-                s_regex_compiled = true;
+                s_regex.Compile("[ \t]*([^ ^\t]+)[ \t]*([^ ^\t].*)?", REG_EXTENDED);
             }
             
-            ::regmatch_t matches[3];
+            RegularExpression::Match matches(3);
             
-            if (!::regexec(&s_regex, out_string, sizeof(matches) / sizeof(::regmatch_t), matches, 0))
+            if (s_regex.Execute(out_string, &matches))
             {
-                if (matches[1].rm_so != -1)
-                    m_opcode_name.assign(out_string + matches[1].rm_so, matches[1].rm_eo - matches[1].rm_so);
-                if (matches[2].rm_so != -1)
-                    m_mnemonics.assign(out_string + matches[2].rm_so, matches[2].rm_eo - matches[2].rm_so);
+                matches.GetMatchAtIndex(out_string, 1, m_opcode_name);
+                matches.GetMatchAtIndex(out_string, 2, m_mnemonics);
             }
         }
     }
@@ -416,12 +413,10 @@ protected:
     bool                    m_is_valid;
     bool                    m_using_file_addr;
     
-    static bool             s_regex_compiled;
-    static ::regex_t        s_regex;
+    static RegularExpression s_regex;
 };
 
-bool InstructionLLVMC::s_regex_compiled = false;
-::regex_t InstructionLLVMC::s_regex;
+RegularExpression InstructionLLVMC::s_regex;
 
 DisassemblerLLVMC::LLVMCDisassembler::LLVMCDisassembler (const char *triple, unsigned flavor, DisassemblerLLVMC &owner):
     m_is_valid(true)
@@ -796,7 +791,7 @@ int DisassemblerLLVMC::OpInfo (uint64_t PC,
     default:
         break;
     case 1:
-        bzero (tag_bug, sizeof(::LLVMOpInfo1));
+        memset (tag_bug, 0, sizeof(::LLVMOpInfo1));
         break;
     }
     return 0;

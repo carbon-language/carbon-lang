@@ -10,10 +10,13 @@
 #include "lldb/lldb-python.h"
 
 #include "PlatformFreeBSD.h"
+#include "lldb/Host/Config.h"
 
 // C Includes
 #include <stdio.h>
+#ifndef LLDB_DISABLE_POSIX
 #include <sys/utsname.h>
+#endif
 
 // C++ Includes
 // Other libraries and framework includes
@@ -636,6 +639,7 @@ PlatformFreeBSD::GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch)
 void
 PlatformFreeBSD::GetStatus (Stream &strm)
 {
+#ifndef LLDB_DISABLE_POSIX
     struct utsname un;
 
     if (uname(&un)) {
@@ -644,5 +648,7 @@ PlatformFreeBSD::GetStatus (Stream &strm)
     }
 
     strm << "Host: " << un.sysname << ' ' << un.release << ' ' << un.version << '\n';
+#endif
+
     Platform::GetStatus(strm);
 }

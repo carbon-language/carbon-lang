@@ -29,9 +29,14 @@
 #include "Utility/StringExtractorGDBRemote.h"
 #include "ProcessGDBRemote.h"
 #include "ProcessGDBRemoteLog.h"
+#include "lldb/Host/Config.h"
 
 using namespace lldb;
 using namespace lldb_private;
+
+#ifdef LLDB_DISABLE_POSIX
+#define SIGSTOP 17
+#endif
 
 //----------------------------------------------------------------------
 // GDBRemoteCommunicationClient constructor

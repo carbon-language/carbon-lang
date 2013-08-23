@@ -12,9 +12,18 @@
 
 // C Includes
 #include <stdint.h>
+
+#ifdef _WIN32
+#include "lldb/Host/windows/windows.h"
+#include <winsock2.h>
+#include <WS2tcpip.h>
+typedef ADDRESS_FAMILY sa_family_t;
+typedef USHORT in_port_t;
+#else
 #include <sys/socket.h>
 #include <netdb.h>
 #include <netinet/in.h>
+#endif
 
 #if defined(__FreeBSD__)
 #include <sys/types.h>
