@@ -1,0 +1,3 @@
+.text
+.data
+.word .text

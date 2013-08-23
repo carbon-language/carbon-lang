@@ -354,7 +354,7 @@ public:
 
       // If the section has no symbols, create a custom atom for it.
       if (section && section->sh_type == llvm::ELF::SHT_PROGBITS &&
-          symbols.empty() && !sectionContents->empty()) {
+          symbols.empty()) {
         ELFDefinedAtom<ELFT> *newAtom = createSectionAtom(
             section, *sectionName, secCont);
         _definedAtoms._atoms.push_back(newAtom);
@@ -606,8 +606,6 @@ private:
   /// \brief Do we want to ignore the section. Ignored sections are
   /// not processed to create atoms
   bool isIgnoredSection(const Elf_Shdr *section) {
-    if (section->sh_size == 0)
-      return true;
     switch (section->sh_type) {
     case llvm::ELF::SHT_NOTE:
     case llvm::ELF::SHT_STRTAB:
