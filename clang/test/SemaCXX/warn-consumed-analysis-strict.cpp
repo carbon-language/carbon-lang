@@ -7,24 +7,24 @@
 typedef decltype(nullptr) nullptr_t;
 
 template <typename T>
-class Bar {
+class ConsumableClass {
   T var;
   
   public:
-  Bar(void);
-  Bar(T val);
-  Bar(Bar<T> &other);
-  Bar(Bar<T> &&other);
+  ConsumableClass(void);
+  ConsumableClass(T val);
+  ConsumableClass(ConsumableClass<T> &other);
+  ConsumableClass(ConsumableClass<T> &&other);
   
-  Bar<T>& operator=(Bar<T>  &other);
-  Bar<T>& operator=(Bar<T> &&other);
-  Bar<T>& operator=(nullptr_t);
-  
-  template <typename U>
-  Bar<T>& operator=(Bar<U>  &other);
+  ConsumableClass<T>& operator=(ConsumableClass<T>  &other);
+  ConsumableClass<T>& operator=(ConsumableClass<T> &&other);
+  ConsumableClass<T>& operator=(nullptr_t);
   
   template <typename U>
-  Bar<T>& operator=(Bar<U> &&other);
+  ConsumableClass<T>& operator=(ConsumableClass<U>  &other);
+  
+  template <typename U>
+  ConsumableClass<T>& operator=(ConsumableClass<U> &&other);
   
   void operator*(void) const CALLABLE_WHEN_UNCONSUMED;
   
@@ -36,11 +36,11 @@ class Bar {
   void consume(void) CONSUMES;
 };
 
-void baf0(Bar<int>  &var);
-void baf1(Bar<int>  *var);
+void baf0(ConsumableClass<int>  &var);
+void baf1(ConsumableClass<int>  *var);
 
 void testIfStmt(void) {
-  Bar<int> var;
+  ConsumableClass<int> var;
   
   if (var.isValid()) { // expected-warning {{unnecessary test. Variable 'var' is known to be in the 'consumed' state}}
     
@@ -52,7 +52,7 @@ void testIfStmt(void) {
 }
 
 void testConditionalMerge(void) {
-  Bar<int> var;
+  ConsumableClass<int> var;
   
   if (var.isValid()) {// expected-warning {{unnecessary test. Variable 'var' is known to be in the 'consumed' state}}
     
@@ -72,25 +72,25 @@ void testConditionalMerge(void) {
 }
 
 void testCallingConventions(void) {
-  Bar<int> var(42);
+  ConsumableClass<int> var(42);
   
   baf0(var);  
   *var; // expected-warning {{invocation of method 'operator*' on object 'var' while it is in an unknown state}}
   
-  var = Bar<int>(42);
+  var = ConsumableClass<int>(42);
   baf1(&var);  
   *var; // expected-warning {{invocation of method 'operator*' on object 'var' while it is in an unknown state}}
 }
 
 void testMoveAsignmentish(void) {
-  Bar<int> var;
+  ConsumableClass<int> var;
   
   var = nullptr;
   *var; // expected-warning {{invocation of method 'operator*' on object 'var' while it is in an unknown state}}
 }
 
 void testConstAndNonConstMemberFunctions(void) {
-  Bar<int> var(42);
+  ConsumableClass<int> var(42);
   
   var.constCall();
   *var;
@@ -100,7 +100,7 @@ void testConstAndNonConstMemberFunctions(void) {
 }
 
 void testSimpleForLoop(void) {
-  Bar<int> var;
+  ConsumableClass<int> var;
   
   for (int i = 0; i < 10; ++i) {
     *var; // expected-warning {{invocation of method 'operator*' on object 'var' while it is in an unknown state}}
@@ -112,7 +112,7 @@ void testSimpleForLoop(void) {
 void testSimpleWhileLoop(void) {
   int i = 0;
   
-  Bar<int> var;
+  ConsumableClass<int> var;
   
   while (i < 10) {
     *var; // expected-warning {{invocation of method 'operator*' on object 'var' while it is in an unknown state}}
