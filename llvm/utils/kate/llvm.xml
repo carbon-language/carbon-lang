@@ -85,6 +85,7 @@
       <item> noredzone </item>
       <item> noreturn </item>
       <item> nounwind </item>
+      <item> optnone </item>
       <item> optsize </item>
       <item> readnone </item>
       <item> readonly </item>

@@ -48,7 +48,7 @@ syn keyword llvmKeyword linkonce linkonce_odr linkonce_odr_auto_hide
 syn keyword llvmKeyword localdynamic localexec minsize module monotonic
 syn keyword llvmKeyword msp430_intrcc naked nest noalias nocapture
 syn keyword llvmKeyword noimplicitfloat noinline nonlazybind noredzone noreturn
-syn keyword llvmKeyword nounwind optsize personality private protected
+syn keyword llvmKeyword nounwind optnone optsize personality private protected
 syn keyword llvmKeyword ptx_device ptx_kernel readnone readonly release
 syn keyword llvmKeyword returns_twice sanitize_thread sanitize_memory
 syn keyword llvmKeyword section seq_cst sideeffect signext singlethread

@@ -751,7 +751,8 @@ void Verifier::VerifyAttributeTypes(AttributeSet Attrs, unsigned Idx,
         I->getKindAsEnum() == Attribute::NoDuplicate ||
         I->getKindAsEnum() == Attribute::Builtin ||
         I->getKindAsEnum() == Attribute::NoBuiltin ||
-        I->getKindAsEnum() == Attribute::Cold) {
+        I->getKindAsEnum() == Attribute::Cold ||
+        I->getKindAsEnum() == Attribute::OptimizeNone) {
       if (!isFunction) {
         CheckFailed("Attribute '" + I->getAsString() +
                     "' only applies to functions!", V);
@@ -897,6 +898,21 @@ void Verifier::VerifyFunctionAttrs(FunctionType *FT, AttributeSet Attrs,
             Attrs.hasAttribute(AttributeSet::FunctionIndex,
                                Attribute::AlwaysInline)),
           "Attributes 'noinline and alwaysinline' are incompatible!", V);
+
+  if (Attrs.hasAttribute(AttributeSet::FunctionIndex, 
+                         Attribute::OptimizeNone)) {
+    Assert1(!Attrs.hasAttribute(AttributeSet::FunctionIndex,
+                                Attribute::AlwaysInline),
+            "Attributes 'alwaysinline and optnone' are incompatible!", V);
+
+    Assert1(!Attrs.hasAttribute(AttributeSet::FunctionIndex,
+                                Attribute::OptimizeForSize),
+            "Attributes 'optsize and optnone' are incompatible!", V);
+
+    Assert1(!Attrs.hasAttribute(AttributeSet::FunctionIndex,
+                                Attribute::MinSize),
+            "Attributes 'minsize and optnone' are incompatible!", V);
+  }
 }
 
 void Verifier::VerifyBitcastType(const Value *V, Type *DestTy, Type *SrcTy) {

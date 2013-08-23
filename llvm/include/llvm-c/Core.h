@@ -165,8 +165,9 @@ typedef enum {
        a temporary measure until the API/ABI impact to the C API is understood
        and the path forward agreed upon.
     LLVMAddressSafety = 1ULL << 32,
-    LLVMStackProtectStrongAttribute = 1ULL<<33
-    LLVMCold = 1ULL << 34
+    LLVMStackProtectStrongAttribute = 1ULL<<33,
+    LLVMCold = 1ULL << 34,
+    LLVMOptimizeNone = 1ULL << 35
     */
 } LLVMAttribute;
 

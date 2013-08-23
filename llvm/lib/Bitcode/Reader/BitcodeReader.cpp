@@ -573,6 +573,9 @@ bool BitcodeReader::ParseAttrKind(uint64_t Code, Attribute::AttrKind *Kind) {
   case bitc::ATTR_KIND_OPTIMIZE_FOR_SIZE:
     *Kind = Attribute::OptimizeForSize;
     return false;
+  case bitc::ATTR_KIND_OPTIMIZE_NONE:
+    *Kind = Attribute::OptimizeNone;
+    return false;
   case bitc::ATTR_KIND_READ_NONE:
     *Kind = Attribute::ReadNone;
     return false;

@@ -879,6 +879,17 @@ example:
     This function attribute indicates that the function never returns
     with an unwind or exceptional control flow. If the function does
     unwind, its runtime behavior is undefined.
+``optnone``
+    This function attribute indicates that the function is not optimized
+    by any optimization or code generator passes with the 
+    exception of interprocedural optimization passes.
+    This attribute cannot be used together with the ``alwaysinline``
+    attribute; this attribute is also incompatible
+    with the ``minsize`` attribute and the ``optsize`` attribute.
+    
+    The inliner should never inline this function in any situation.
+    Only functions with the ``alwaysinline`` attribute are valid
+    candidates for inlining inside the body of this function.
 ``optsize``
     This attribute suggests that optimization passes and code generator
     passes make choices that keep the code size of this function low,

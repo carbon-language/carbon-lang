@@ -368,7 +368,8 @@ namespace bitc {
     ATTR_KIND_UW_TABLE = 33,
     ATTR_KIND_Z_EXT = 34,
     ATTR_KIND_BUILTIN = 35,
-    ATTR_KIND_COLD = 36
+    ATTR_KIND_COLD = 36,
+    ATTR_KIND_OPTIMIZE_NONE = 37
   };
 
 } // End bitc namespace

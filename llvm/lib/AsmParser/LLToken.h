@@ -114,6 +114,7 @@ namespace lltok {
     kw_noredzone,
     kw_noreturn,
     kw_nounwind,
+    kw_optnone,
     kw_optsize,
     kw_readnone,
     kw_readonly,

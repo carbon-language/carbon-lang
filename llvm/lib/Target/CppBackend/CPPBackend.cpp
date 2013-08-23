@@ -497,6 +497,7 @@ void CppWriter::printAttributes(const AttributeSet &PAL,
       HANDLE_ATTR(ReadOnly);
       HANDLE_ATTR(NoInline);
       HANDLE_ATTR(AlwaysInline);
+      HANDLE_ATTR(OptimizeNone);
       HANDLE_ATTR(OptimizeForSize);
       HANDLE_ATTR(StackProtect);
       HANDLE_ATTR(StackProtectReq);
