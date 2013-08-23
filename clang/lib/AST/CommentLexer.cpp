@@ -157,7 +157,7 @@ const char *skipDecimalCharacterReference(const char *BufferPtr,
 }
 
 const char *skipHexCharacterReference(const char *BufferPtr,
-                                          const char *BufferEnd) {
+                                      const char *BufferEnd) {
   for ( ; BufferPtr != BufferEnd; ++BufferPtr) {
     if (!isHTMLHexCharacterReferenceCharacter(*BufferPtr))
       return BufferPtr;
