@@ -2993,6 +2993,9 @@ def err_pointer_to_member_call_drops_quals : Error<
 def err_pointer_to_member_oper_value_classify: Error<
   "pointer-to-member function type %0 can only be called on an "
   "%select{rvalue|lvalue}1">;
+def ext_ms_deref_template_argument: ExtWarn<
+  "non-type template argument containing a dereference operation is a "
+  "Microsoft extension">, InGroup<Microsoft>;
 
 // C++ template specialization
 def err_template_spec_unknown_kind : Error<
