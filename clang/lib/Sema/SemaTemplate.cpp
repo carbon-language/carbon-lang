@@ -4072,6 +4072,63 @@ isNullPointerValueTemplateArgument(Sema &S, NonTypeTemplateParmDecl *Param,
   return NPV_NotNullPointer;
 }
 
+/// \brief Checks whether the given template argument is compatible with its
+/// template parameter.
+static bool CheckTemplateArgumentIsCompatibleWithParameter(
+    Sema &S, NonTypeTemplateParmDecl *Param, QualType ParamType, Expr *ArgIn,
+    Expr *Arg, QualType ArgType) {
+  bool ObjCLifetimeConversion;
+  if (ParamType->isPointerType() &&
+      !ParamType->getAs<PointerType>()->getPointeeType()->isFunctionType() &&
+      S.IsQualificationConversion(ArgType, ParamType, false,
+                                  ObjCLifetimeConversion)) {
+    // For pointer-to-object types, qualification conversions are
+    // permitted.
+  } else {
+    if (const ReferenceType *ParamRef = ParamType->getAs<ReferenceType>()) {
+      if (!ParamRef->getPointeeType()->isFunctionType()) {
+        // C++ [temp.arg.nontype]p5b3:
+        //   For a non-type template-parameter of type reference to
+        //   object, no conversions apply. The type referred to by the
+        //   reference may be more cv-qualified than the (otherwise
+        //   identical) type of the template- argument. The
+        //   template-parameter is bound directly to the
+        //   template-argument, which shall be an lvalue.
+
+        // FIXME: Other qualifiers?
+        unsigned ParamQuals = ParamRef->getPointeeType().getCVRQualifiers();
+        unsigned ArgQuals = ArgType.getCVRQualifiers();
+
+        if ((ParamQuals | ArgQuals) != ParamQuals) {
+          S.Diag(Arg->getLocStart(),
+                 diag::err_template_arg_ref_bind_ignores_quals)
+            << ParamType << Arg->getType() << Arg->getSourceRange();
+          S.Diag(Param->getLocation(), diag::note_template_param_here);
+          return true;
+        }
+      }
+    }
+
+    // At this point, the template argument refers to an object or
+    // function with external linkage. We now need to check whether the
+    // argument and parameter types are compatible.
+    if (!S.Context.hasSameUnqualifiedType(ArgType,
+                                          ParamType.getNonReferenceType())) {
+      // We can't perform this conversion or binding.
+      if (ParamType->isReferenceType())
+        S.Diag(Arg->getLocStart(), diag::err_template_arg_no_ref_bind)
+          << ParamType << ArgIn->getType() << Arg->getSourceRange();
+      else
+        S.Diag(Arg->getLocStart(),  diag::err_template_arg_not_convertible)
+          << ArgIn->getType() << ParamType << Arg->getSourceRange();
+      S.Diag(Param->getLocation(), diag::note_template_param_here);
+      return true;
+    }
+  }
+
+  return false;
+}
+
 /// \brief Checks whether the given template argument is the address
 /// of an object or function according to C++ [temp.arg.nontype]p1.
 static bool
@@ -4099,60 +4156,93 @@ CheckTemplateArgumentAddressOfObjectOrFunction(Sema &S,
       break;
     }
   }
-  
-  // See through any implicit casts we added to fix the type.
-  Arg = Arg->IgnoreImpCasts();
-
-  // C++ [temp.arg.nontype]p1:
-  //
-  //   A template-argument for a non-type, non-template
-  //   template-parameter shall be one of: [...]
-  //
-  //     -- the address of an object or function with external
-  //        linkage, including function templates and function
-  //        template-ids but excluding non-static class members,
-  //        expressed as & id-expression where the & is optional if
-  //        the name refers to a function or array, or if the
-  //        corresponding template-parameter is a reference; or
-
-  // In C++98/03 mode, give an extension warning on any extra parentheses.
-  // See http://www.open-std.org/jtc1/sc22/wg21/docs/cwg_defects.html#773
-  bool ExtraParens = false;
-  while (ParenExpr *Parens = dyn_cast<ParenExpr>(Arg)) {
-    if (!Invalid && !ExtraParens) {
-      S.Diag(Arg->getLocStart(),
-             S.getLangOpts().CPlusPlus11 ?
-               diag::warn_cxx98_compat_template_arg_extra_parens :
-               diag::ext_template_arg_extra_parens)
-        << Arg->getSourceRange();
-      ExtraParens = true;
-    }
-
-    Arg = Parens->getSubExpr();
-  }
-
-  while (SubstNonTypeTemplateParmExpr *subst =
-           dyn_cast<SubstNonTypeTemplateParmExpr>(Arg))
-    Arg = subst->getReplacement()->IgnoreImpCasts();
 
   bool AddressTaken = false;
   SourceLocation AddrOpLoc;
-  if (UnaryOperator *UnOp = dyn_cast<UnaryOperator>(Arg)) {
-    if (UnOp->getOpcode() == UO_AddrOf) {
-      Arg = UnOp->getSubExpr();
-      AddressTaken = true;
-      AddrOpLoc = UnOp->getOperatorLoc();
+  if (S.getLangOpts().MicrosoftExt) {
+    // Microsoft Visual C++ strips all casts, allows an arbitrary number of
+    // dereference and address-of operators.
+    Arg = Arg->IgnoreParenCasts();
+
+    bool ExtWarnMSTemplateArg = false;
+    UnaryOperatorKind FirstOpKind;
+    SourceLocation FirstOpLoc;
+    while (UnaryOperator *UnOp = dyn_cast<UnaryOperator>(Arg)) {
+      UnaryOperatorKind UnOpKind = UnOp->getOpcode();
+      if (UnOpKind == UO_Deref)
+        ExtWarnMSTemplateArg = true;
+      if (UnOpKind == UO_AddrOf || UnOpKind == UO_Deref) {
+        Arg = UnOp->getSubExpr()->IgnoreParenCasts();
+        if (!AddrOpLoc.isValid()) {
+          FirstOpKind = UnOpKind;
+          FirstOpLoc = UnOp->getOperatorLoc();
+        }
+      } else
+        break;
     }
-  }
+    if (FirstOpLoc.isValid()) {
+      if (ExtWarnMSTemplateArg)
+        S.Diag(ArgIn->getLocStart(), diag::ext_ms_deref_template_argument)
+          << ArgIn->getSourceRange();
 
-  if (isa<CXXUuidofExpr>(Arg)) {
-    Converted = TemplateArgument(ArgIn);
-    return false;
-  }
+      if (FirstOpKind == UO_AddrOf)
+        AddressTaken = true;
+      else if (Arg->getType()->isPointerType()) {
+        // We cannot let pointers get dereferenced here, that is obviously not a
+        // constant expression.
+        assert(FirstOpKind == UO_Deref);
+        S.Diag(Arg->getLocStart(), diag::err_template_arg_not_decl_ref)
+          << Arg->getSourceRange();
+      }
+    }
+  } else {
+    // See through any implicit casts we added to fix the type.
+    Arg = Arg->IgnoreImpCasts();
 
-  while (SubstNonTypeTemplateParmExpr *subst =
-           dyn_cast<SubstNonTypeTemplateParmExpr>(Arg))
-    Arg = subst->getReplacement()->IgnoreImpCasts();
+    // C++ [temp.arg.nontype]p1:
+    //
+    //   A template-argument for a non-type, non-template
+    //   template-parameter shall be one of: [...]
+    //
+    //     -- the address of an object or function with external
+    //        linkage, including function templates and function
+    //        template-ids but excluding non-static class members,
+    //        expressed as & id-expression where the & is optional if
+    //        the name refers to a function or array, or if the
+    //        corresponding template-parameter is a reference; or
+
+    // In C++98/03 mode, give an extension warning on any extra parentheses.
+    // See http://www.open-std.org/jtc1/sc22/wg21/docs/cwg_defects.html#773
+    bool ExtraParens = false;
+    while (ParenExpr *Parens = dyn_cast<ParenExpr>(Arg)) {
+      if (!Invalid && !ExtraParens) {
+        S.Diag(Arg->getLocStart(),
+               S.getLangOpts().CPlusPlus11
+                   ? diag::warn_cxx98_compat_template_arg_extra_parens
+                   : diag::ext_template_arg_extra_parens)
+            << Arg->getSourceRange();
+        ExtraParens = true;
+      }
+
+      Arg = Parens->getSubExpr();
+    }
+
+    while (SubstNonTypeTemplateParmExpr *subst =
+               dyn_cast<SubstNonTypeTemplateParmExpr>(Arg))
+      Arg = subst->getReplacement()->IgnoreImpCasts();
+
+    if (UnaryOperator *UnOp = dyn_cast<UnaryOperator>(Arg)) {
+      if (UnOp->getOpcode() == UO_AddrOf) {
+        Arg = UnOp->getSubExpr();
+        AddressTaken = true;
+        AddrOpLoc = UnOp->getOperatorLoc();
+      }
+    }
+
+    while (SubstNonTypeTemplateParmExpr *subst =
+               dyn_cast<SubstNonTypeTemplateParmExpr>(Arg))
+      Arg = subst->getReplacement()->IgnoreImpCasts();
+  }
 
   // Stop checking the precise nature of the argument if it is value dependent,
   // it should be checked when instantiated.
@@ -4160,7 +4250,16 @@ CheckTemplateArgumentAddressOfObjectOrFunction(Sema &S,
     Converted = TemplateArgument(ArgIn);
     return false;
   }
-  
+
+  if (isa<CXXUuidofExpr>(Arg)) {
+    if (CheckTemplateArgumentIsCompatibleWithParameter(S, Param, ParamType,
+                                                       ArgIn, Arg, ArgType))
+      return true;
+
+    Converted = TemplateArgument(ArgIn);
+    return false;
+  }
+
   DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(Arg);
   if (!DRE) {
     S.Diag(Arg->getLocStart(), diag::err_template_arg_not_decl_ref)
@@ -4305,55 +4404,9 @@ CheckTemplateArgumentAddressOfObjectOrFunction(Sema &S,
     }
   }
 
-  bool ObjCLifetimeConversion;
-  if (ParamType->isPointerType() &&
-      !ParamType->getAs<PointerType>()->getPointeeType()->isFunctionType() &&
-      S.IsQualificationConversion(ArgType, ParamType, false, 
-                                  ObjCLifetimeConversion)) {
-    // For pointer-to-object types, qualification conversions are
-    // permitted.
-  } else {
-    if (const ReferenceType *ParamRef = ParamType->getAs<ReferenceType>()) {
-      if (!ParamRef->getPointeeType()->isFunctionType()) {
-        // C++ [temp.arg.nontype]p5b3:
-        //   For a non-type template-parameter of type reference to
-        //   object, no conversions apply. The type referred to by the
-        //   reference may be more cv-qualified than the (otherwise
-        //   identical) type of the template- argument. The
-        //   template-parameter is bound directly to the
-        //   template-argument, which shall be an lvalue.
-
-        // FIXME: Other qualifiers?
-        unsigned ParamQuals = ParamRef->getPointeeType().getCVRQualifiers();
-        unsigned ArgQuals = ArgType.getCVRQualifiers();
-
-        if ((ParamQuals | ArgQuals) != ParamQuals) {
-          S.Diag(Arg->getLocStart(),
-                 diag::err_template_arg_ref_bind_ignores_quals)
-            << ParamType << Arg->getType()
-            << Arg->getSourceRange();
-          S.Diag(Param->getLocation(), diag::note_template_param_here);
-          return true;
-        }
-      }
-    }
-
-    // At this point, the template argument refers to an object or
-    // function with external linkage. We now need to check whether the
-    // argument and parameter types are compatible.
-    if (!S.Context.hasSameUnqualifiedType(ArgType,
-                                          ParamType.getNonReferenceType())) {
-      // We can't perform this conversion or binding.
-      if (ParamType->isReferenceType())
-        S.Diag(Arg->getLocStart(), diag::err_template_arg_no_ref_bind)
-          << ParamType << ArgIn->getType() << Arg->getSourceRange();
-      else
-        S.Diag(Arg->getLocStart(),  diag::err_template_arg_not_convertible)
-          << ArgIn->getType() << ParamType << Arg->getSourceRange();
-      S.Diag(Param->getLocation(), diag::note_template_param_here);
-      return true;
-    }
-  }
+  if (CheckTemplateArgumentIsCompatibleWithParameter(S, Param, ParamType, ArgIn,
+                                                     Arg, ArgType))
+    return true;
 
   // Create the template argument.
   Converted = TemplateArgument(cast<ValueDecl>(Entity->getCanonicalDecl()),

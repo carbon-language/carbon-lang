@@ -60,8 +60,8 @@ public:
     /// The template argument is a pack expansion of a template name that was 
     /// provided for a template template parameter.
     TemplateExpansion,
-    /// The template argument is a value- or type-dependent expression
-    /// stored in an Expr*.
+    /// The template argument is a value- or type-dependent expression or a
+    /// non-dependent __uuidof expression stored in an Expr*.
     Expression,
     /// The template argument is actually a parameter pack. Arguments are stored
     /// in the Args struct.

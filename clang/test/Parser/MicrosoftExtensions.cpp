@@ -95,10 +95,10 @@ void template_uuid()
 }
 
 
-template <class T, const GUID* g = &__uuidof(T)>
+template <class T, const GUID* g = &__uuidof(T)> // expected-note {{template parameter is declared here}}
 class COM_CLASS_TEMPLATE  { };
 
-typedef COM_CLASS_TEMPLATE<struct_with_uuid, &__uuidof(struct_with_uuid)> COM_TYPE_1;
+typedef COM_CLASS_TEMPLATE<struct_with_uuid, &*&__uuidof(struct_with_uuid)> COM_TYPE_1; // expected-warning {{non-type template argument containing a dereference operation is a Microsoft extension}}
 typedef COM_CLASS_TEMPLATE<struct_with_uuid> COM_TYPE_2;
 
 template <class T, const GUID& g>
@@ -112,6 +112,9 @@ typedef COM_CLASS_TEMPLATE_REF<struct_with_uuid, __uuidof(struct_with_uuid)> COM
   }
   struct __declspec(uuid("000000A0-0000-0000-C000-000000000049")) late_defined_uuid;
 
+COM_CLASS_TEMPLATE_REF<int, __uuidof(struct_with_uuid)> good_template_arg;
+
+COM_CLASS_TEMPLATE<int, __uuidof(struct_with_uuid)> bad_template_arg; // expected-error {{non-type template argument of type 'const _GUID' is not a constant expression}}
 
 class CtorCall {
 public:
