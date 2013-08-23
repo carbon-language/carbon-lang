@@ -116,12 +116,9 @@ bool ContinuationIndenter::mustBreak(const LineState &State) {
       !Current.isOneOf(tok::r_paren, tok::r_brace))
     return true;
   if (Style.AlwaysBreakBeforeMultilineStrings &&
-      State.Column > State.Stack.back().Indent &&
-      Current.is(tok::string_literal) && Previous.isNot(tok::lessless) &&
-      Previous.Type != TT_InlineASMColon &&
-      ((Current.getNextNonComment() &&
-        Current.getNextNonComment()->is(tok::string_literal)) ||
-       (Current.TokenText.find("\\\n") != StringRef::npos)))
+      State.Column > State.Stack.back().Indent && // Breaking saves columns.
+      Previous.isNot(tok::lessless) && Previous.Type != TT_InlineASMColon &&
+      NextIsMultilineString(State))
     return true;
 
   if (!Style.BreakBeforeBinaryOperators) {
@@ -547,13 +544,8 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
   }
 
   State.Column += Current.CodePointCount;
-
   State.NextToken = State.NextToken->Next;
-
-  unsigned Penalty = 0;
-  if (Newline || !Style.AlwaysBreakBeforeMultilineStrings ||
-      Current.isNot(tok::string_literal) || !Current.CanBreakBefore)
-    Penalty += breakProtrudingToken(Current, State, DryRun);
+  unsigned Penalty =  breakProtrudingToken(Current, State, DryRun);
 
   // If the previous has a special role, let it consume tokens as appropriate.
   // It is necessary to start at the previous token for the only implemented
@@ -686,6 +678,20 @@ unsigned ContinuationIndenter::breakProtrudingToken(const FormatToken &Current,
 unsigned ContinuationIndenter::getColumnLimit() const {
   // In preprocessor directives reserve two chars for trailing " \"
   return Style.ColumnLimit - (Line.InPPDirective ? 2 : 0);
+}
+
+bool ContinuationIndenter::NextIsMultilineString(const LineState &State) {
+  const FormatToken &Current = *State.NextToken;
+  if (!Current.is(tok::string_literal))
+    return false;
+  if (Current.getNextNonComment() &&
+      Current.getNextNonComment()->is(tok::string_literal))
+    return true; // Implicit concatenation.
+  if (State.Column + Current.CodePointCount + Current.UnbreakableTailLength >
+      Style.ColumnLimit)
+    return true; // String will be split.
+  // String literal might have escaped newlines.
+  return Current.TokenText.find("\\\n") != StringRef::npos;
 }
 
 } // namespace format

@@ -84,6 +84,13 @@ private:
   unsigned breakProtrudingToken(const FormatToken &Current, LineState &State,
                                 bool DryRun);
 
+  /// \brief Returns \c true if the next token starts a multiline string
+  /// literal.
+  ///
+  /// This includes implicitly concatenated strings, strings that will be broken
+  /// by clang-format and string literals with escaped newlines.
+  bool NextIsMultilineString(const LineState &State);
+
   FormatStyle Style;
   SourceManager &SourceMgr;
   const AnnotatedLine &Line;

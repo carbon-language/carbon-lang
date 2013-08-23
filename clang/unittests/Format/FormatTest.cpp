@@ -5265,6 +5265,12 @@ TEST_F(FormatTest, BreakStringLiterals) {
             format("llvm::outs() << "
                    "\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaa"
                    "aaaaaaaaaaaaaaaaaaa\";"));
+  EXPECT_EQ("ffff(\n"
+            "    {\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa \"\n"
+            "     \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"});",
+            format("ffff({\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa "
+                   "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"});",
+                   getGoogleStyle()));
 
   FormatStyle AlignLeft = getLLVMStyleWithColumns(12);
   AlignLeft.AlignEscapedNewlinesLeft = true;
