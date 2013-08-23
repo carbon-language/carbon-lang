@@ -23,6 +23,9 @@ class StringRef;
 class raw_ostream;
 
 class DWARFCompileUnit {
+  DWARFCompileUnit(DWARFCompileUnit const &) LLVM_DELETED_FUNCTION;
+  DWARFCompileUnit &operator=(DWARFCompileUnit const &) LLVM_DELETED_FUNCTION;
+
   const DWARFDebugAbbrev *Abbrev;
   StringRef InfoSection;
   StringRef AbbrevSection;

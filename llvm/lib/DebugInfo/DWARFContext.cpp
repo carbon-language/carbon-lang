@@ -23,6 +23,11 @@ using namespace object;
 
 typedef DWARFDebugLine::LineTable DWARFLineTable;
 
+DWARFContext::~DWARFContext() {
+  DeleteContainerPointers(CUs);
+  DeleteContainerPointers(DWOCUs);
+}
+
 void DWARFContext::dump(raw_ostream &OS, DIDumpType DumpType) {
   if (DumpType == DIDT_All || DumpType == DIDT_Abbrev) {
     OS << ".debug_abbrev contents:\n";
@@ -249,18 +254,15 @@ void DWARFContext::parseCompileUnits() {
   const DataExtractor &DIData = DataExtractor(getInfoSection(),
                                               isLittleEndian(), 0);
   while (DIData.isValidOffset(offset)) {
-    CUs.push_back(DWARFCompileUnit(getDebugAbbrev(), getInfoSection(),
-                                   getAbbrevSection(), getRangeSection(),
-                                   getStringSection(), StringRef(),
-                                   getAddrSection(),
-                                   &infoRelocMap(),
-                                   isLittleEndian()));
-    if (!CUs.back().extract(DIData, &offset)) {
-      CUs.pop_back();
+    OwningPtr<DWARFCompileUnit> CU(new DWARFCompileUnit(
+        getDebugAbbrev(), getInfoSection(), getAbbrevSection(),
+        getRangeSection(), getStringSection(), StringRef(), getAddrSection(),
+        &infoRelocMap(), isLittleEndian()));
+    if (!CU->extract(DIData, &offset)) {
       break;
     }
-
-    offset = CUs.back().getNextCompileUnitOffset();
+    CUs.push_back(CU.take());
+    offset = CUs.back()->getNextCompileUnitOffset();
   }
 }
 
@@ -269,34 +271,30 @@ void DWARFContext::parseDWOCompileUnits() {
   const DataExtractor &DIData = DataExtractor(getInfoDWOSection(),
                                               isLittleEndian(), 0);
   while (DIData.isValidOffset(offset)) {
-    DWOCUs.push_back(DWARFCompileUnit(getDebugAbbrevDWO(), getInfoDWOSection(),
-                                      getAbbrevDWOSection(),
-                                      getRangeDWOSection(),
-                                      getStringDWOSection(),
-                                      getStringOffsetDWOSection(),
-                                      getAddrSection(),
-                                      &infoDWORelocMap(),
-                                      isLittleEndian()));
-    if (!DWOCUs.back().extract(DIData, &offset)) {
-      DWOCUs.pop_back();
+    OwningPtr<DWARFCompileUnit> DWOCU(new DWARFCompileUnit(
+        getDebugAbbrevDWO(), getInfoDWOSection(), getAbbrevDWOSection(),
+        getRangeDWOSection(), getStringDWOSection(),
+        getStringOffsetDWOSection(), getAddrSection(), &infoDWORelocMap(),
+        isLittleEndian()));
+    if (!DWOCU->extract(DIData, &offset)) {
       break;
     }
-
-    offset = DWOCUs.back().getNextCompileUnitOffset();
+    DWOCUs.push_back(DWOCU.take());
+    offset = DWOCUs.back()->getNextCompileUnitOffset();
   }
 }
 
 namespace {
   struct OffsetComparator {
-    bool operator()(const DWARFCompileUnit &LHS,
-                    const DWARFCompileUnit &RHS) const {
-      return LHS.getOffset() < RHS.getOffset();
+    bool operator()(const DWARFCompileUnit *LHS,
+                    const DWARFCompileUnit *RHS) const {
+      return LHS->getOffset() < RHS->getOffset();
     }
-    bool operator()(const DWARFCompileUnit &LHS, uint32_t RHS) const {
-      return LHS.getOffset() < RHS;
+    bool operator()(const DWARFCompileUnit *LHS, uint32_t RHS) const {
+      return LHS->getOffset() < RHS;
     }
-    bool operator()(uint32_t LHS, const DWARFCompileUnit &RHS) const {
-      return LHS < RHS.getOffset();
+    bool operator()(uint32_t LHS, const DWARFCompileUnit *RHS) const {
+      return LHS < RHS->getOffset();
     }
   };
 }
@@ -305,10 +303,11 @@ DWARFCompileUnit *DWARFContext::getCompileUnitForOffset(uint32_t Offset) {
   if (CUs.empty())
     parseCompileUnits();
 
-  DWARFCompileUnit *CU = std::lower_bound(CUs.begin(), CUs.end(), Offset,
-                                          OffsetComparator());
-  if (CU != CUs.end())
-    return &*CU;
+  DWARFCompileUnit **CU =
+      std::lower_bound(CUs.begin(), CUs.end(), Offset, OffsetComparator());
+  if (CU != CUs.end()) {
+    return *CU;
+  }
   return 0;
 }
 
