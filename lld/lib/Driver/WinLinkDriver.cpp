@@ -410,7 +410,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
     SmallString<128> firstInputFilePath =
         (llvm::dyn_cast<FileNode>(&((inputGraph)[0])))->path(ctx);
     (llvm::sys::path::replace_extension(firstInputFilePath, ".exe"));
-    ctx.setOutputPath(firstInputFilePath.str());
+    ctx.setOutputPath(ctx.allocateString(firstInputFilePath.str()));
   }
 
   // Validate the combination of options used.
