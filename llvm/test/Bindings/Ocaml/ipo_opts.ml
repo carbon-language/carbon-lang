@@ -1,4 +1,7 @@
-(* RUN: %ocamlopt -warn-error A llvm.cmxa llvm_ipo.cmxa llvm_target.cmxa %s -o %t
+(* RUN: rm -rf %t.builddir
+ * RUN: mkdir -p %t.builddir
+ * RUN: cp %s %t.builddir
+ * RUN: %ocamlopt -warn-error A llvm.cmxa llvm_ipo.cmxa llvm_target.cmxa %t.builddir/ipo_opts.ml -o %t
  * RUN: %t %t.bc
  * XFAIL: vg_leak
  *)

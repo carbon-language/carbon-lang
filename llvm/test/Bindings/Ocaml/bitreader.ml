@@ -1,4 +1,7 @@
-(* RUN: %ocamlopt -warn-error A llvm.cmxa llvm_bitreader.cmxa llvm_bitwriter.cmxa %s -o %t
+(* RUN: rm -rf %t.builddir
+ * RUN: mkdir -p %t.builddir
+ * RUN: cp %s %t.builddir
+ * RUN: %ocamlopt -warn-error A llvm.cmxa llvm_bitreader.cmxa llvm_bitwriter.cmxa %t.builddir/bitreader.ml -o %t
  * RUN: %t %t.bc
  * RUN: llvm-dis < %t.bc
  * XFAIL: vg_leak
