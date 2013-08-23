@@ -3,6 +3,7 @@
 ; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
 
 declare double @llvm.sqrt.f64(double %f)
+declare double @sqrt(double)
 
 ; Check register square root.
 define double @f1(double %val) {
@@ -151,4 +152,18 @@ define void @f7(double *%ptr) {
   store volatile double %sqrt16, double *%ptr
 
   ret void
+}
+
+; Check that a call to the normal sqrt function is lowered.
+define double @f8(double %dummy, double %val) {
+; CHECK-LABEL: f8:
+; CHECK: sqdbr %f0, %f2
+; CHECK: cdbr %f0, %f0
+; CHECK: jo [[LABEL:\.L.*]]
+; CHECK: br %r14
+; CHECK: [[LABEL]]:
+; CHECK: ldr %f0, %f2
+; CHECK: jg sqrt@PLT
+  %res = tail call double @sqrt(double %val)
+  ret double %res
 }

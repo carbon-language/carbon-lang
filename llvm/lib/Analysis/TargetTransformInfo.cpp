@@ -145,6 +145,10 @@ TargetTransformInfo::getPopcntSupport(unsigned IntTyWidthInBit) const {
   return PrevTTI->getPopcntSupport(IntTyWidthInBit);
 }
 
+bool TargetTransformInfo::haveFastSqrt(Type *Ty) const {
+  return PrevTTI->haveFastSqrt(Ty);
+}
+
 unsigned TargetTransformInfo::getIntImmCost(const APInt &Imm, Type *Ty) const {
   return PrevTTI->getIntImmCost(Imm, Ty);
 }
@@ -503,6 +507,10 @@ struct NoTTI : ImmutablePass, TargetTransformInfo {
 
   PopcntSupportKind getPopcntSupport(unsigned IntTyWidthInBit) const {
     return PSK_Software;
+  }
+
+  bool haveFastSqrt(Type *Ty) const {
+    return false;
   }
 
   unsigned getIntImmCost(const APInt &Imm, Type *Ty) const {

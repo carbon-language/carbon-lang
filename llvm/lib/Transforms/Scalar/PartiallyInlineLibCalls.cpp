@@ -1,4 +1,4 @@
-//===---- MipsOptimizeMathLibCalls.cpp - Optimize math lib calls.      ----===//
+//===--- PartiallyInlineLibCalls.cpp - Partially inline libcalls ----------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,76 +7,60 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This pass does an IR transformation which enables the backend to emit native
-// math instructions.
+// This pass tries to partially inline the fast path of well-known library
+// functions, such as using square-root instructions for cases where sqrt()
+// does not need to set errno.
 //
 //===----------------------------------------------------------------------===//
 
-#include "MipsTargetMachine.h"
+#define DEBUG_TYPE "partially-inline-libcalls"
+#include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Target/TargetLibraryInfo.h"
+#include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 
 using namespace llvm;
 
-static cl::opt<bool> DisableOpt("disable-mips-math-optimization",
-                                cl::init(false),
-                                cl::desc("MIPS: Disable math lib call "
-                                         "optimization."), cl::Hidden);
-
 namespace {
-  class MipsOptimizeMathLibCalls : public FunctionPass {
+  class PartiallyInlineLibCalls : public FunctionPass {
   public:
     static char ID;
 
-    MipsOptimizeMathLibCalls(MipsTargetMachine &TM_) :
-      FunctionPass(ID), TM(TM_) {}
-
-    virtual const char *getPassName() const {
-      return "MIPS: Optimize calls to math library functions.";
+    PartiallyInlineLibCalls() :
+      FunctionPass(ID) {
+      initializePartiallyInlineLibCallsPass(*PassRegistry::getPassRegistry());
     }
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
-
     virtual bool runOnFunction(Function &F);
 
   private:
     /// Optimize calls to sqrt.
     bool optimizeSQRT(CallInst *Call, Function *CalledFunc,
-                      BasicBlock &CurrBB,
-                      Function::iterator &BB);
-
-    const TargetMachine &TM;
+                      BasicBlock &CurrBB, Function::iterator &BB);
   };
 
-  char MipsOptimizeMathLibCalls::ID = 0;
+  char PartiallyInlineLibCalls::ID = 0;
 }
 
-FunctionPass *llvm::createMipsOptimizeMathLibCalls(MipsTargetMachine &TM) {
-  return new MipsOptimizeMathLibCalls(TM);
-}
+INITIALIZE_PASS(PartiallyInlineLibCalls, "partially-inline-libcalls",
+                "Partially inline calls to library functions", false, false)
 
-void MipsOptimizeMathLibCalls::getAnalysisUsage(AnalysisUsage &AU) const {
+void PartiallyInlineLibCalls::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<TargetLibraryInfo>();
+  AU.addRequired<TargetTransformInfo>();
   FunctionPass::getAnalysisUsage(AU);
 }
 
-bool MipsOptimizeMathLibCalls::runOnFunction(Function &F) {
-  if (DisableOpt)
-    return false;
-
-  const MipsSubtarget &Subtarget = TM.getSubtarget<MipsSubtarget>();
-
-  if (Subtarget.inMips16Mode())
-    return false;
-
+bool PartiallyInlineLibCalls::runOnFunction(Function &F) {
   bool Changed = false;
   Function::iterator CurrBB;
-  const TargetLibraryInfo *LibInfo = &getAnalysis<TargetLibraryInfo>();
-
+  TargetLibraryInfo *TLI = &getAnalysis<TargetLibraryInfo>();
+  const TargetTransformInfo *TTI = &getAnalysis<TargetTransformInfo>();
   for (Function::iterator BB = F.begin(), BE = F.end(); BB != BE;) {
     CurrBB = BB++;
 
@@ -88,25 +72,18 @@ bool MipsOptimizeMathLibCalls::runOnFunction(Function &F) {
       if (!Call || !(CalledFunc = Call->getCalledFunction()))
         continue;
 
-      LibFunc::Func LibFunc;
-      Attribute A = CalledFunc->getAttributes()
-        .getAttribute(AttributeSet::FunctionIndex, "use-soft-float");
-
-      // Skip if function has "use-soft-float" attribute.
-      if ((A.isStringAttribute() && (A.getValueAsString() == "true")) ||
-          TM.Options.UseSoftFloat)
-        continue;
-
       // Skip if function either has local linkage or is not a known library
       // function.
+      LibFunc::Func LibFunc;
       if (CalledFunc->hasLocalLinkage() || !CalledFunc->hasName() ||
-          !LibInfo->getLibFunc(CalledFunc->getName(), LibFunc))
+          !TLI->getLibFunc(CalledFunc->getName(), LibFunc))
         continue;
 
       switch (LibFunc) {
       case LibFunc::sqrtf:
       case LibFunc::sqrt:
-        if (optimizeSQRT(Call, CalledFunc, *CurrBB, BB))
+        if (TTI->haveFastSqrt(Call->getType()) &&
+            optimizeSQRT(Call, CalledFunc, *CurrBB, BB))
           break;
         continue;
       default:
@@ -121,10 +98,10 @@ bool MipsOptimizeMathLibCalls::runOnFunction(Function &F) {
   return Changed;
 }
 
-bool MipsOptimizeMathLibCalls::optimizeSQRT(CallInst *Call,
-                                            Function *CalledFunc,
-                                            BasicBlock &CurrBB,
-                                            Function::iterator &BB) {
+bool PartiallyInlineLibCalls::optimizeSQRT(CallInst *Call,
+                                           Function *CalledFunc,
+                                           BasicBlock &CurrBB,
+                                           Function::iterator &BB) {
   // There is no need to change the IR, since backend will emit sqrt
   // instruction if the call has already been marked read-only.
   if (Call->onlyReadsMemory())
@@ -172,4 +149,8 @@ bool MipsOptimizeMathLibCalls::optimizeSQRT(CallInst *Call,
 
   BB = JoinBB;
   return true;
+}
+
+FunctionPass *llvm::createPartiallyInlineLibCallsPass() {
+  return new PartiallyInlineLibCalls();
 }

@@ -32,6 +32,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/TargetRegistry.h"
+#include "llvm/Transforms/Scalar.h"
 using namespace llvm;
 
 
@@ -160,7 +161,7 @@ void MipsPassConfig::addIRPasses() {
     addPass(createMipsOs16(getMipsTargetMachine()));
   if (getMipsSubtarget().inMips16HardFloat())
     addPass(createMips16HardFloat(getMipsTargetMachine()));
-  addPass(createMipsOptimizeMathLibCalls(getMipsTargetMachine()));
+  addPass(createPartiallyInlineLibCallsPass());
 }
 // Install an instruction selector pass using
 // the ISelDag to gen Mips code.

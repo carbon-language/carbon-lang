@@ -83,6 +83,7 @@ public:
   virtual unsigned getJumpBufAlignment() const;
   virtual unsigned getJumpBufSize() const;
   virtual bool shouldBuildLookupTables() const;
+  virtual bool haveFastSqrt(Type *Ty) const;
 
   /// @}
 
@@ -180,6 +181,12 @@ bool BasicTTI::shouldBuildLookupTables() const {
   return TLI->supportJumpTables() &&
       (TLI->isOperationLegalOrCustom(ISD::BR_JT, MVT::Other) ||
        TLI->isOperationLegalOrCustom(ISD::BRIND, MVT::Other));
+}
+
+bool BasicTTI::haveFastSqrt(Type *Ty) const {
+  const TargetLoweringBase *TLI = getTLI();
+  EVT VT = TLI->getValueType(Ty);
+  return TLI->isTypeLegal(VT) && TLI->isOperationLegalOrCustom(ISD::FSQRT, VT);
 }
 
 //===----------------------------------------------------------------------===//

@@ -2,7 +2,8 @@
 ;
 ; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
 
-declare float @llvm.sqrt.f32(float %f)
+declare float @llvm.sqrt.f32(float)
+declare float @sqrtf(float)
 
 ; Check register square root.
 define float @f1(float %val) {
@@ -151,4 +152,18 @@ define void @f7(float *%ptr) {
   store volatile float %sqrt16, float *%ptr
 
   ret void
+}
+
+; Check that a call to the normal sqrtf function is lowered.
+define float @f8(float %dummy, float %val) {
+; CHECK-LABEL: f8:
+; CHECK: sqebr %f0, %f2
+; CHECK: cebr %f0, %f0
+; CHECK: jo [[LABEL:\.L.*]]
+; CHECK: br %r14
+; CHECK: [[LABEL]]:
+; CHECK: ler %f0, %f2
+; CHECK: jg sqrtf@PLT
+  %res = tail call float @sqrtf(float %val)
+  ret float %res
 }

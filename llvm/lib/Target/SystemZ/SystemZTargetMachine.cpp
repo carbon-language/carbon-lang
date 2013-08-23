@@ -10,6 +10,7 @@
 #include "SystemZTargetMachine.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Support/TargetRegistry.h"
+#include "llvm/Transforms/Scalar.h"
 
 using namespace llvm;
 
@@ -47,11 +48,17 @@ public:
     return getTM<SystemZTargetMachine>();
   }
 
+  virtual void addIRPasses() LLVM_OVERRIDE;
   virtual bool addInstSelector() LLVM_OVERRIDE;
   virtual bool addPreSched2() LLVM_OVERRIDE;
   virtual bool addPreEmitPass() LLVM_OVERRIDE;
 };
 } // end anonymous namespace
+
+void SystemZPassConfig::addIRPasses() {
+  TargetPassConfig::addIRPasses();
+  addPass(createPartiallyInlineLibCallsPass());
+}
 
 bool SystemZPassConfig::addInstSelector() {
   addPass(createSystemZISelDag(getSystemZTargetMachine(), getOptLevel()));

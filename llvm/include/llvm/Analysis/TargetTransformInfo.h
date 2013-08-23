@@ -262,6 +262,10 @@ public:
   /// getPopcntSupport - Return hardware support for population count.
   virtual PopcntSupportKind getPopcntSupport(unsigned IntTyWidthInBit) const;
 
+  /// haveFastSqrt -- Return true if the hardware has a fast square-root
+  /// instruction.
+  virtual bool haveFastSqrt(Type *Ty) const;
+
   /// getIntImmCost - Return the expected cost of materializing the given
   /// integer immediate of the specified type.
   virtual unsigned getIntImmCost(const APInt &Imm, Type *Ty) const;
