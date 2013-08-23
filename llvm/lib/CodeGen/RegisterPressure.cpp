@@ -79,9 +79,9 @@ void RegPressureTracker::dump() const {
 
 /// Increase the current pressure as impacted by these registers and bump
 /// the high water mark if needed.
-void RegPressureTracker::increaseRegPressure(ArrayRef<unsigned> Regs) {
-  for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
-    PSetIterator PSetI = MRI->getPressureSets(Regs[i]);
+void RegPressureTracker::increaseRegPressure(ArrayRef<unsigned> RegUnits) {
+  for (unsigned i = 0, e = RegUnits.size(); i != e; ++i) {
+    PSetIterator PSetI = MRI->getPressureSets(RegUnits[i]);
     unsigned Weight = PSetI.getWeight();
     for (; PSetI.isValid(); ++PSetI) {
       CurrSetPressure[*PSetI] += Weight;
@@ -93,9 +93,9 @@ void RegPressureTracker::increaseRegPressure(ArrayRef<unsigned> Regs) {
 }
 
 /// Simply decrease the current pressure as impacted by these registers.
-void RegPressureTracker::decreaseRegPressure(ArrayRef<unsigned> Regs) {
-  for (unsigned I = 0, E = Regs.size(); I != E; ++I)
-    decreaseSetPressure(CurrSetPressure, MRI->getPressureSets(Regs[I]));
+void RegPressureTracker::decreaseRegPressure(ArrayRef<unsigned> RegUnits) {
+  for (unsigned I = 0, E = RegUnits.size(); I != E; ++I)
+    decreaseSetPressure(CurrSetPressure, MRI->getPressureSets(RegUnits[I]));
 }
 
 /// Clear the result so it can be used for another round of pressure tracking.
@@ -287,8 +287,9 @@ void RegPressureTracker::initLiveThru(const RegPressureTracker &RPTracker) {
 }
 
 /// \brief Convenient wrapper for checking membership in RegisterOperands.
-static bool containsReg(ArrayRef<unsigned> Regs, unsigned Reg) {
-  return std::find(Regs.begin(), Regs.end(), Reg) != Regs.end();
+/// (std::count() doesn't have an early exit).
+static bool containsReg(ArrayRef<unsigned> RegUnits, unsigned RegUnit) {
+  return std::find(RegUnits.begin(), RegUnits.end(), RegUnit) != RegUnits.end();
 }
 
 /// Collect this instruction's unique uses and defs into SmallVectors for
@@ -320,17 +321,17 @@ public:
   }
 
 protected:
-  void pushRegUnits(unsigned Reg, SmallVectorImpl<unsigned> &Regs) {
+  void pushRegUnits(unsigned Reg, SmallVectorImpl<unsigned> &RegUnits) {
     if (TargetRegisterInfo::isVirtualRegister(Reg)) {
-      if (containsReg(Regs, Reg))
+      if (containsReg(RegUnits, Reg))
         return;
-      Regs.push_back(Reg);
+      RegUnits.push_back(Reg);
     }
     else if (MRI->isAllocatable(Reg)) {
       for (MCRegUnitIterator Units(Reg, TRI); Units.isValid(); ++Units) {
-        if (containsReg(Regs, *Units))
+        if (containsReg(RegUnits, *Units))
           continue;
-        Regs.push_back(*Units);
+        RegUnits.push_back(*Units);
       }
     }
   }
