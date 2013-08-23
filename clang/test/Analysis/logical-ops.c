@@ -25,3 +25,15 @@ int testTypeIsInt(int i, void *p) {
     return 1;
   return 0;
 }
+
+// These crashed the analyzer at some point.
+int between(char *x) {
+  extern char start[];
+  extern char end[];
+  return x >= start && x < end;
+}
+
+int undef(void) {} // expected-warning{{control reaches end of non-void function}}
+void useUndef(void) { 0 || undef(); }
+
+void testPointer(void) { (void) (1 && testPointer && 0); }
