@@ -178,11 +178,11 @@ void ScheduleDAGInstrs::finishBlock() {
 void ScheduleDAGInstrs::enterRegion(MachineBasicBlock *bb,
                                     MachineBasicBlock::iterator begin,
                                     MachineBasicBlock::iterator end,
-                                    unsigned endcount) {
+                                    unsigned regioninstrs) {
   assert(bb == BB && "startBlock should set BB");
   RegionBegin = begin;
   RegionEnd = end;
-  EndIndex = endcount;
+  NumRegionInstrs = regioninstrs;
   MISUnitMap.clear();
 
   ScheduleDAG::clearDAG();
@@ -664,7 +664,7 @@ void addChainDependency (AliasAnalysis *AA, const MachineFrameInfo *MFI,
 void ScheduleDAGInstrs::initSUnits() {
   // We'll be allocating one SUnit for each real instruction in the region,
   // which is contained within a basic block.
-  SUnits.reserve(BB->size());
+  SUnits.reserve(NumRegionInstrs);
 
   for (MachineBasicBlock::iterator I = RegionBegin; I != RegionEnd; ++I) {
     MachineInstr *MI = I;

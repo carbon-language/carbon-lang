@@ -160,7 +160,8 @@ void VLIWPacketizerList::PacketizeMIs(MachineBasicBlock *MBB,
                                       MachineBasicBlock::iterator EndItr) {
   assert(VLIWScheduler && "VLIW Scheduler is not initialized!");
   VLIWScheduler->startBlock(MBB);
-  VLIWScheduler->enterRegion(MBB, BeginItr, EndItr, MBB->size());
+  VLIWScheduler->enterRegion(MBB, BeginItr, EndItr,
+                             std::distance(BeginItr, EndItr));
   VLIWScheduler->schedule();
 
   // Generate MI -> SU map.

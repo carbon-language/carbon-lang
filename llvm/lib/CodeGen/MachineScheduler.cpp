@@ -255,14 +255,15 @@ bool MachineScheduler::runOnMachineFunction(MachineFunction &mf) {
 
       // The next region starts above the previous region. Look backward in the
       // instruction stream until we find the nearest boundary.
+      unsigned NumRegionInstrs = 0;
       MachineBasicBlock::iterator I = RegionEnd;
-      for(;I != MBB->begin(); --I, --RemainingInstrs) {
+      for(;I != MBB->begin(); --I, --RemainingInstrs, ++NumRegionInstrs) {
         if (TII->isSchedulingBoundary(llvm::prior(I), MBB, *MF))
           break;
       }
       // Notify the scheduler of the region, even if we may skip scheduling
       // it. Perhaps it still needs to be bundled.
-      Scheduler->enterRegion(MBB, I, RegionEnd, RemainingInstrs);
+      Scheduler->enterRegion(MBB, I, RegionEnd, NumRegionInstrs);
 
       // Skip empty scheduling regions (0 or 1 schedulable instructions).
       if (I == RegionEnd || I == llvm::prior(RegionEnd)) {
@@ -277,7 +278,8 @@ bool MachineScheduler::runOnMachineFunction(MachineFunction &mf) {
             << "\n  From: " << *I << "    To: ";
             if (RegionEnd != MBB->end()) dbgs() << *RegionEnd;
             else dbgs() << "End";
-            dbgs() << " Remaining: " << RemainingInstrs << "\n");
+            dbgs() << " RegionInstrs: " << NumRegionInstrs
+            << " Remaining: " << RemainingInstrs << "\n");
 
       // Schedule a region: possibly reorder instructions.
       // This invalidates 'RegionEnd' and 'I'.
@@ -446,9 +448,9 @@ bool ScheduleDAGMI::checkSchedLimit() {
 void ScheduleDAGMI::enterRegion(MachineBasicBlock *bb,
                                 MachineBasicBlock::iterator begin,
                                 MachineBasicBlock::iterator end,
-                                unsigned endcount)
+                                unsigned regioninstrs)
 {
-  ScheduleDAGInstrs::enterRegion(bb, begin, end, endcount);
+  ScheduleDAGInstrs::enterRegion(bb, begin, end, regioninstrs);
 
   // For convenience remember the end of the liveness region.
   LiveRegionEnd =

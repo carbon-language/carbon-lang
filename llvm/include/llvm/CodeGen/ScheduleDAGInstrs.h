@@ -104,12 +104,8 @@ namespace llvm {
     /// The end of the range to be scheduled.
     MachineBasicBlock::iterator RegionEnd;
 
-    /// The index in BB of RegionEnd.
-    ///
-    /// This is the instruction number from the top of the current block, not
-    /// the SlotIndex. It is only used by the AntiDepBreaker and should be
-    /// removed once that client is obsolete.
-    unsigned EndIndex;
+    /// Instructions in this region (distance(RegionBegin, RegionEnd)).
+    unsigned NumRegionInstrs;
 
     /// After calling BuildSchedGraph, each machine instruction in the current
     /// scheduling region is mapped to an SUnit.
@@ -185,7 +181,7 @@ namespace llvm {
     virtual void enterRegion(MachineBasicBlock *bb,
                              MachineBasicBlock::iterator begin,
                              MachineBasicBlock::iterator end,
-                             unsigned endcount);
+                             unsigned regioninstrs);
 
     /// Notify that the scheduler has finished scheduling the current region.
     virtual void exitRegion();

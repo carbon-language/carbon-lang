@@ -127,6 +127,12 @@ namespace {
     /// The schedule. Null SUnit*'s represent noop instructions.
     std::vector<SUnit*> Sequence;
 
+    /// The index in BB of RegionEnd.
+    ///
+    /// This is the instruction number from the top of the current block, not
+    /// the SlotIndex. It is only used by the AntiDepBreaker.
+    unsigned EndIndex;
+
   public:
     SchedulePostRATDList(
       MachineFunction &MF, MachineLoopInfo &MLI, MachineDominatorTree &MDT,
@@ -141,11 +147,14 @@ namespace {
     ///
     void startBlock(MachineBasicBlock *BB);
 
+    // Set the index of RegionEnd within the current BB.
+    void setEndIndex(unsigned EndIdx) { EndIndex = EndIdx; }
+
     /// Initialize the scheduler state for the next scheduling region.
     virtual void enterRegion(MachineBasicBlock *bb,
                              MachineBasicBlock::iterator begin,
                              MachineBasicBlock::iterator end,
-                             unsigned endcount);
+                             unsigned regioninstrs);
 
     /// Notify that the scheduler has finished scheduling the current region.
     virtual void exitRegion();
@@ -197,7 +206,7 @@ SchedulePostRATDList::SchedulePostRATDList(
   TargetSubtargetInfo::AntiDepBreakMode AntiDepMode,
   SmallVectorImpl<const TargetRegisterClass*> &CriticalPathRCs)
   : ScheduleDAGInstrs(MF, MLI, MDT, /*IsPostRA=*/true), AA(AA),
-    LiveRegs(TRI->getNumRegs())
+    LiveRegs(TRI->getNumRegs()), EndIndex(0)
 {
   const TargetMachine &TM = MF.getTarget();
   const InstrItineraryData *InstrItins = TM.getInstrItineraryData();
@@ -223,8 +232,8 @@ SchedulePostRATDList::~SchedulePostRATDList() {
 void SchedulePostRATDList::enterRegion(MachineBasicBlock *bb,
                  MachineBasicBlock::iterator begin,
                  MachineBasicBlock::iterator end,
-                 unsigned endcount) {
-  ScheduleDAGInstrs::enterRegion(bb, begin, end, endcount);
+                 unsigned regioninstrs) {
+  ScheduleDAGInstrs::enterRegion(bb, begin, end, regioninstrs);
   Sequence.clear();
 }
 
@@ -312,20 +321,21 @@ bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
     unsigned Count = MBB->size(), CurrentCount = Count;
     for (MachineBasicBlock::iterator I = Current; I != MBB->begin(); ) {
       MachineInstr *MI = llvm::prior(I);
+      --Count;
       // Calls are not scheduling boundaries before register allocation, but
       // post-ra we don't gain anything by scheduling across calls since we
       // don't need to worry about register pressure.
       if (MI->isCall() || TII->isSchedulingBoundary(MI, MBB, Fn)) {
-        Scheduler.enterRegion(MBB, I, Current, CurrentCount);
+        Scheduler.enterRegion(MBB, I, Current, CurrentCount - Count);
+        Scheduler.setEndIndex(CurrentCount);
         Scheduler.schedule();
         Scheduler.exitRegion();
         Scheduler.EmitSchedule();
         Current = MI;
-        CurrentCount = Count - 1;
+        CurrentCount = Count;
         Scheduler.Observe(MI, CurrentCount);
       }
       I = MI;
-      --Count;
       if (MI->isBundle())
         Count -= MI->getBundleSize();
     }
@@ -333,6 +343,7 @@ bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
     assert((MBB->begin() == Current || CurrentCount != 0) &&
            "Instruction count mismatch!");
     Scheduler.enterRegion(MBB, MBB->begin(), Current, CurrentCount);
+    Scheduler.setEndIndex(CurrentCount);
     Scheduler.schedule();
     Scheduler.exitRegion();
     Scheduler.EmitSchedule();

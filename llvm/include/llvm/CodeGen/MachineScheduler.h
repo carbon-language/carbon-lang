@@ -293,8 +293,7 @@ public:
   void enterRegion(MachineBasicBlock *bb,
                    MachineBasicBlock::iterator begin,
                    MachineBasicBlock::iterator end,
-                   unsigned endcount);
-
+                   unsigned regioninstrs) LLVM_OVERRIDE;
 
   /// Implement ScheduleDAGInstrs interface for scheduling a sequence of
   /// reorderable instructions.
