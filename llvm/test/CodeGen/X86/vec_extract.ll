@@ -1,4 +1,4 @@
-; RUN: llc < %s -mcpu=corei7 -march=x86 -mattr=+sse2,-sse41 -o %t
+; RUN: llc < %s -mcpu=corei7 -march=x86 -mattr=+sse2,-sse4.1 -o %t
 ; RUN: grep movss    %t | count 4
 ; RUN: grep movhlps  %t | count 1
 ; RUN: not grep pshufd   %t 

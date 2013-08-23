@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -mcpu=generic -mattr=sse41 | FileCheck %s
+; RUN: llc < %s -march=x86 -mcpu=generic -mattr=sse4.1 | FileCheck %s
 ; RUN: llc < %s -march=x86 -mcpu=atom | FileCheck -check-prefix=ATOM %s
 
 ; Transpose example using the more generic vector shuffle. Return float8

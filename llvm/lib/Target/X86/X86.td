@@ -50,10 +50,10 @@ def FeatureSSE3    : SubtargetFeature<"sse3", "X86SSELevel", "SSE3",
 def FeatureSSSE3   : SubtargetFeature<"ssse3", "X86SSELevel", "SSSE3",
                                       "Enable SSSE3 instructions",
                                       [FeatureSSE3]>;
-def FeatureSSE41   : SubtargetFeature<"sse41", "X86SSELevel", "SSE41",
+def FeatureSSE41   : SubtargetFeature<"sse4.1", "X86SSELevel", "SSE41",
                                       "Enable SSE 4.1 instructions",
                                       [FeatureSSSE3]>;
-def FeatureSSE42   : SubtargetFeature<"sse42", "X86SSELevel", "SSE42",
+def FeatureSSE42   : SubtargetFeature<"sse4.2", "X86SSELevel", "SSE42",
                                       "Enable SSE 4.2 instructions",
                                       [FeatureSSE41]>;
 def Feature3DNow   : SubtargetFeature<"3dnow", "X863DNowLevel", "ThreeDNow",
@@ -119,7 +119,7 @@ def FeatureAES     : SubtargetFeature<"aes", "HasAES", "true",
                                       [FeatureSSE2]>;
 def FeatureMOVBE   : SubtargetFeature<"movbe", "HasMOVBE", "true",
                                       "Support MOVBE instruction">;
-def FeatureRDRAND  : SubtargetFeature<"rdrand", "HasRDRAND", "true",
+def FeatureRDRAND  : SubtargetFeature<"rdrnd", "HasRDRAND", "true",
                                       "Support RDRAND instruction">;
 def FeatureF16C    : SubtargetFeature<"f16c", "HasF16C", "true",
                        "Support 16-bit floating point conversion instructions">;

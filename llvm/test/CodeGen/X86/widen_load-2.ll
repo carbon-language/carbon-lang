@@ -1,4 +1,4 @@
-; RUN: llc < %s -o - -mcpu=generic -march=x86-64 -mattr=+sse42 | FileCheck %s
+; RUN: llc < %s -o - -mcpu=generic -march=x86-64 -mattr=+sse4.2 | FileCheck %s
 
 ; Test based on pr5626 to load/store
 ;

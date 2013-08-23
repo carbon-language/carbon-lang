@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86-64 -mattr=+sse41,-avx,+rdrand,+rdseed | FileCheck %s
+; RUN: llc < %s -march=x86-64 -mattr=+sse4.1,-avx,+rdrnd,+rdseed | FileCheck %s
 
 define i32 @foo(<2 x i64> %c, i32 %a, i32 %b) {
   %t1 = call i32 @llvm.x86.sse41.ptestz(<2 x i64> %c, <2 x i64> %c)

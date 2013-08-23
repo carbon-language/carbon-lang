@@ -1,5 +1,5 @@
-; RUN: llc < %s -march=x86 -mattr=+sse2,-sse41 | FileCheck --check-prefix=X32 %s
-; RUN: llc < %s -march=x86-64 -mattr=+sse2,-sse41 | FileCheck --check-prefix=X64 %s
+; RUN: llc < %s -march=x86 -mattr=+sse2,-sse4.1 | FileCheck --check-prefix=X32 %s
+; RUN: llc < %s -march=x86-64 -mattr=+sse2,-sse4.1 | FileCheck --check-prefix=X64 %s
 
 define <4 x float> @t1(float %s, <4 x float> %tmp) nounwind {
 ; X32-LABEL: t1:
