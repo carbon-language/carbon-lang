@@ -159,6 +159,12 @@ class SystemZDAGToDAGISel : public SelectionDAGISel {
   bool selectBDAddr(SystemZAddressingMode::DispRange DR, SDValue Addr,
                     SDValue &Base, SDValue &Disp);
 
+  // Try to match Addr as a FormBDX address with displacement type DR.
+  // Return true on success and if the result had no index.  Store the
+  // base and displacement in Base and Disp respectively.
+  bool selectMVIAddr(SystemZAddressingMode::DispRange DR, SDValue Addr,
+                     SDValue &Base, SDValue &Disp);
+
   // Try to match Addr as a FormBDX* address of form Form with
   // displacement type DR.  Return true on success, storing the base,
   // displacement and index in Base, Disp and Index respectively.
@@ -187,6 +193,14 @@ class SystemZDAGToDAGISel : public SelectionDAGISel {
   }
   bool selectBDAddr20Pair(SDValue Addr, SDValue &Base, SDValue &Disp) {
     return selectBDAddr(SystemZAddressingMode::Disp20Pair, Addr, Base, Disp);
+  }
+
+  // MVI matching routines used by SystemZOperands.td.
+  bool selectMVIAddr12Pair(SDValue Addr, SDValue &Base, SDValue &Disp) {
+    return selectMVIAddr(SystemZAddressingMode::Disp12Pair, Addr, Base, Disp);
+  }
+  bool selectMVIAddr20Pair(SDValue Addr, SDValue &Base, SDValue &Disp) {
+    return selectMVIAddr(SystemZAddressingMode::Disp20Pair, Addr, Base, Disp);
   }
 
   // BDX matching routines used by SystemZOperands.td.
@@ -569,6 +583,17 @@ bool SystemZDAGToDAGISel::selectBDAddr(SystemZAddressingMode::DispRange DR,
                                        SDValue &Disp) {
   SystemZAddressingMode AM(SystemZAddressingMode::FormBD, DR);
   if (!selectAddress(Addr, AM))
+    return false;
+
+  getAddressOperands(AM, Addr.getValueType(), Base, Disp);
+  return true;
+}
+
+bool SystemZDAGToDAGISel::selectMVIAddr(SystemZAddressingMode::DispRange DR,
+                                        SDValue Addr, SDValue &Base,
+                                        SDValue &Disp) {
+  SystemZAddressingMode AM(SystemZAddressingMode::FormBDXNormal, DR);
+  if (!selectAddress(Addr, AM) || AM.Index.getNode())
     return false;
 
   getAddressOperands(AM, Addr.getValueType(), Base, Disp);

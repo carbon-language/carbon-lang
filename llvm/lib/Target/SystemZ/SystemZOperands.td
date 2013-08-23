@@ -435,6 +435,7 @@ def BDLAddr64Disp12Len8 : AddressAsmOperand<"BDLAddr",  "64", "12", "Len8">;
 // <type> is one of:
 //   shift    : base + displacement (32-bit)
 //   bdaddr   : base + displacement
+//   mviaddr  : like bdaddr, but reject cases with a natural index
 //   bdxaddr  : base + displacement + index
 //   laaddr   : like bdxaddr, but used for Load Address operations
 //   dynalloc : base + displacement + index + ADJDYNALLOC
@@ -460,6 +461,8 @@ def bdaddr12only      : BDMode <"BDAddr",   "64", "12", "Only">;
 def bdaddr12pair      : BDMode <"BDAddr",   "64", "12", "Pair">;
 def bdaddr20only      : BDMode <"BDAddr",   "64", "20", "Only">;
 def bdaddr20pair      : BDMode <"BDAddr",   "64", "20", "Pair">;
+def mviaddr12pair     : BDMode <"MVIAddr",  "64", "12", "Pair">;
+def mviaddr20pair     : BDMode <"MVIAddr",  "64", "20", "Pair">;
 def bdxaddr12only     : BDXMode<"BDXAddr",  "64", "12", "Only">;
 def bdxaddr12pair     : BDXMode<"BDXAddr",  "64", "12", "Pair">;
 def bdxaddr20only     : BDXMode<"BDXAddr",  "64", "20", "Only">;

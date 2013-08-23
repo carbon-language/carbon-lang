@@ -66,34 +66,34 @@ define void @f7(i64 *%a) {
   ret void
 }
 
-; Check the next doubleword up, which needs separate address logic.
-; Other sequences besides this one would be OK.
+; Check the next doubleword up, which is out of range.  We prefer STG
+; in that case.
 define void @f8(i64 *%a) {
 ; CHECK-LABEL: f8:
-; CHECK: aghi %r2, 4096
-; CHECK: mvghi 0(%r2), 42
+; CHECK: lghi [[TMP:%r[0-5]]], 42
+; CHECK: stg [[TMP]], 4096(%r2)
 ; CHECK: br %r14
   %ptr = getelementptr i64 *%a, i64 512
   store i64 42, i64 *%ptr
   ret void
 }
 
-; Check negative displacements, which also need separate address logic.
+; Check negative displacements, for which we again prefer STG.
 define void @f9(i64 *%a) {
 ; CHECK-LABEL: f9:
-; CHECK: aghi %r2, -8
-; CHECK: mvghi 0(%r2), 42
+; CHECK: lghi [[TMP:%r[0-5]]], 42
+; CHECK: stg [[TMP]], -8(%r2)
 ; CHECK: br %r14
   %ptr = getelementptr i64 *%a, i64 -1
   store i64 42, i64 *%ptr
   ret void
 }
 
-; Check that MVGHI does not allow an index
+; Check that MVGHI does not allow an index.
 define void @f10(i64 %src, i64 %index) {
 ; CHECK-LABEL: f10:
-; CHECK: agr %r2, %r3
-; CHECK: mvghi 0(%r2), 42
+; CHECK: lghi [[TMP:%r[0-5]]], 42
+; CHECK: stg [[TMP]], 0({{%r2,%r3|%r3,%r2}})
 ; CHECK: br %r14
   %add = add i64 %src, %index
   %ptr = inttoptr i64 %add to i64 *

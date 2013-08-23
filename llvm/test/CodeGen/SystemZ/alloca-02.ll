@@ -21,18 +21,21 @@ define i64 @f1(i64 %length, i64 %index) {
 ;
 ; CHECK-C-LABEL: f1:
 ; CHECK-C: lgr %r15, [[ADDR:%r[1-5]]]
-; CHECK-C: la [[TMP:%r[1-5]]], 160(%r3,[[ADDR]])
-; CHECK-C: mvi 0([[TMP]]), 2
+; CHECK-C-DAG: la %r2, 160([[ADDR]])
+; CHECK-C-DAG: lhi [[TMP:%r[0-5]]], 2
+; CHECK-C: stc [[TMP]], 0({{%r3,%r2|%r2,%r3}})
 ;
 ; CHECK-D-LABEL: f1:
 ; CHECK-D: lgr %r15, [[ADDR:%r[1-5]]]
-; CHECK-D: la [[TMP:%r[1-5]]], 160(%r3,[[ADDR]])
-; CHECK-D: mvi 4095([[TMP]]), 3
+; CHECK-D-DAG: la %r2, 160([[ADDR]])
+; CHECK-D-DAG: lhi [[TMP:%r[0-5]]], 3
+; CHECK-D: stc [[TMP]], 4095({{%r3,%r2|%r2,%r3}})
 ;
 ; CHECK-E-LABEL: f1:
 ; CHECK-E: lgr %r15, [[ADDR:%r[1-5]]]
-; CHECK-E: la [[TMP:%r[1-5]]], 160(%r3,[[ADDR]])
-; CHECK-E: mviy 4096([[TMP]]), 4
+; CHECK-E-DAG: la %r2, 160([[ADDR]])
+; CHECK-E-DAG: lhi [[TMP:%r[0-5]]], 4
+; CHECK-E: stcy [[TMP]], 4096({{%r3,%r2|%r2,%r3}})
   %a = alloca i8, i64 %length
   store volatile i8 0, i8 *%a
   %b = getelementptr i8 *%a, i64 4095

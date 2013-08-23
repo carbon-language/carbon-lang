@@ -66,34 +66,33 @@ define void @f7(i32 *%a) {
   ret void
 }
 
-; Check the next word up, which needs separate address logic.
-; Other sequences besides this one would be OK.
+; Check the next word up, which is out of range.  We prefer STY in that case.
 define void @f8(i32 *%a) {
 ; CHECK-LABEL: f8:
-; CHECK: aghi %r2, 4096
-; CHECK: mvhi 0(%r2), 42
+; CHECK: lhi [[TMP:%r[0-5]]], 42
+; CHECK: sty [[TMP]], 4096(%r2)
 ; CHECK: br %r14
   %ptr = getelementptr i32 *%a, i64 1024
   store i32 42, i32 *%ptr
   ret void
 }
 
-; Check negative displacements, which also need separate address logic.
+; Check negative displacements, for which we again prefer STY.
 define void @f9(i32 *%a) {
 ; CHECK-LABEL: f9:
-; CHECK: aghi %r2, -4
-; CHECK: mvhi 0(%r2), 42
+; CHECK: lhi [[TMP:%r[0-5]]], 42
+; CHECK: sty [[TMP]], -4(%r2)
 ; CHECK: br %r14
   %ptr = getelementptr i32 *%a, i64 -1
   store i32 42, i32 *%ptr
   ret void
 }
 
-; Check that MVHI does not allow an index
+; Check that MVHI does not allow an index.
 define void @f10(i64 %src, i64 %index) {
 ; CHECK-LABEL: f10:
-; CHECK: agr %r2, %r3
-; CHECK: mvhi 0(%r2), 42
+; CHECK: lhi [[TMP:%r[0-5]]], 42
+; CHECK: st [[TMP]], 0({{%r2,%r3|%r3,%r2}})
 ; CHECK: br %r14
   %add = add i64 %src, %index
   %ptr = inttoptr i64 %add to i32 *

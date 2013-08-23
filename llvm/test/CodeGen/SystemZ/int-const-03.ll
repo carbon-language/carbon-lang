@@ -139,11 +139,11 @@ define void @f14(i8 *%src) {
   ret void
 }
 
-; Check that MVI does not allow an index
+; Check that MVI does not allow an index.  We prefer STC in that case.
 define void @f15(i64 %src, i64 %index) {
 ; CHECK-LABEL: f15:
-; CHECK: agr %r2, %r3
-; CHECK: mvi 4095(%r2), 42
+; CHECK: lhi [[TMP:%r[0-5]]], 42
+; CHECK: stc [[TMP]], 4095({{%r2,%r3|%r3,%r2}}
 ; CHECK: br %r14
   %add1 = add i64 %src, %index
   %add2 = add i64 %add1, 4095
@@ -152,11 +152,11 @@ define void @f15(i64 %src, i64 %index) {
   ret void
 }
 
-; Check that MVIY does not allow an index
+; Check that MVIY does not allow an index.  We prefer STCY in that case.
 define void @f16(i64 %src, i64 %index) {
 ; CHECK-LABEL: f16:
-; CHECK: agr %r2, %r3
-; CHECK: mviy 4096(%r2), 42
+; CHECK: lhi [[TMP:%r[0-5]]], 42
+; CHECK: stcy [[TMP]], 4096({{%r2,%r3|%r3,%r2}}
 ; CHECK: br %r14
   %add1 = add i64 %src, %index
   %add2 = add i64 %add1, 4096

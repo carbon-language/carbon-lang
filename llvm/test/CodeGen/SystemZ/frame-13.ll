@@ -182,17 +182,16 @@ define void @f8() {
 }
 
 ; Check a case where the original displacement is out of range.  The backend
-; should force an LAY from the outset.  We don't yet do any kind of anchor
-; optimization, so there should be no offset on the MVHI itself.
+; should force STY to be used instead.
 define void @f9() {
 ; CHECK-NOFP-LABEL: f9:
-; CHECK-NOFP: lay %r1, 12296(%r15)
-; CHECK-NOFP: mvhi 0(%r1), 42
+; CHECK-NOFP: lhi [[TMP:%r[0-5]]], 42
+; CHECK-NOFP: sty [[TMP]], 12296(%r15)
 ; CHECK-NOFP: br %r14
 ;
 ; CHECK-FP-LABEL: f9:
-; CHECK-FP: lay %r1, 12296(%r11)
-; CHECK-FP: mvhi 0(%r1), 42
+; CHECK-FP: lhi [[TMP:%r[0-5]]], 42
+; CHECK-FP: sty [[TMP]], 12296(%r11)
 ; CHECK-FP: br %r14
   %region1 = alloca [2006 x i32], align 8
   %region2 = alloca [2006 x i32], align 8

@@ -627,27 +627,33 @@ class StoreMultipleRSY<string mnemonic, bits<16> opcode, RegisterOperand cls>
   let mayStore = 1;
 }
 
+// StoreSI* instructions are used to store an integer to memory, but the
+// addresses are more restricted than for normal stores.  If we are in the
+// situation of having to force either the address into a register or the
+// constant into a register, it's usually better to do the latter.
+// We therefore match the address in the same way as a normal store and
+// only use the StoreSI* instruction if the matched address is suitable.
 class StoreSI<string mnemonic, bits<8> opcode, SDPatternOperator operator,
-              Immediate imm, AddressingMode mode = bdaddr12only>
-  : InstSI<opcode, (outs), (ins mode:$BD1, imm:$I2),
+              Immediate imm>
+  : InstSI<opcode, (outs), (ins mviaddr12pair:$BD1, imm:$I2),
            mnemonic#"\t$BD1, $I2",
-           [(operator imm:$I2, mode:$BD1)]> {
+           [(operator imm:$I2, mviaddr12pair:$BD1)]> {
   let mayStore = 1;
 }
 
 class StoreSIY<string mnemonic, bits<16> opcode, SDPatternOperator operator,
-               Immediate imm, AddressingMode mode = bdaddr20only>
-  : InstSIY<opcode, (outs), (ins mode:$BD1, imm:$I2),
+               Immediate imm>
+  : InstSIY<opcode, (outs), (ins mviaddr20pair:$BD1, imm:$I2),
             mnemonic#"\t$BD1, $I2",
-            [(operator imm:$I2, mode:$BD1)]> {
+            [(operator imm:$I2, mviaddr20pair:$BD1)]> {
   let mayStore = 1;
 }
 
 class StoreSIL<string mnemonic, bits<16> opcode, SDPatternOperator operator,
                Immediate imm>
-  : InstSIL<opcode, (outs), (ins bdaddr12only:$BD1, imm:$I2),
+  : InstSIL<opcode, (outs), (ins mviaddr12pair:$BD1, imm:$I2),
             mnemonic#"\t$BD1, $I2",
-            [(operator imm:$I2, bdaddr12only:$BD1)]> {
+            [(operator imm:$I2, mviaddr12pair:$BD1)]> {
   let mayStore = 1;
 }
 
@@ -655,9 +661,9 @@ multiclass StoreSIPair<string mnemonic, bits<8> siOpcode, bits<16> siyOpcode,
                        SDPatternOperator operator, Immediate imm> {
   let DispKey = mnemonic in {
     let DispSize = "12" in
-      def "" : StoreSI<mnemonic, siOpcode, operator, imm, bdaddr12pair>;
+      def "" : StoreSI<mnemonic, siOpcode, operator, imm>;
     let DispSize = "20" in
-      def Y  : StoreSIY<mnemonic#"y", siyOpcode, operator, imm, bdaddr20pair>;
+      def Y  : StoreSIY<mnemonic#"y", siyOpcode, operator, imm>;
   }
 }
 
