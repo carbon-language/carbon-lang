@@ -65,6 +65,8 @@ DefinedAtom::ContentPermissions DefinedAtom::permissions(ContentType type) {
   case typeTLVInitialData:
   case typeTLVInitialZeroFill:
   case typeTLVInitializerPtr:
+  case typeThreadData:
+  case typeThreadZeroFill:
     return permRW_L;
 
   case typeUnknown:

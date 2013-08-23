@@ -343,9 +343,9 @@ Layout::SectionOrder DefaultLayout<ELFT>::getSectionOrder(
   case DefinedAtom::typeStub:
     return ORDER_PLT;
 
-  case DefinedAtom::typeTLVInitialData:
+  case DefinedAtom::typeThreadData:
     return ORDER_TDATA;
-  case DefinedAtom::typeTLVInitialZeroFill:
+  case DefinedAtom::typeThreadZeroFill:
     return ORDER_TBSS;
   default:
     // If we get passed in a section push it to OTHER

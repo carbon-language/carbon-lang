@@ -145,6 +145,8 @@ public:
     typeTLVInitialZeroFill, // TLV initial zero fill data [Darwin]
     typeTLVInitializerPtr,  // pointer to thread local initializer [Darwin]
     typeDataDirectoryEntry, // linker created for data directory header [PECOFF]
+    typeThreadZeroFill,     // Uninitialized thread local data(TBSS) [ELF]
+    typeThreadData,         // Initialized thread local data(TDATA) [ELF]
   };
 
   // Permission bits for atoms and segments. The order of these values are
@@ -311,7 +313,8 @@ public:
     ContentType atomContentType = contentType();
     return !(atomContentType == DefinedAtom::typeZeroFill ||
              atomContentType == DefinedAtom::typeZeroFillFast ||
-             atomContentType == DefinedAtom::typeTLVInitialZeroFill);
+             atomContentType == DefinedAtom::typeTLVInitialZeroFill ||
+             atomContentType == DefinedAtom::typeThreadZeroFill);
   }
 
 protected:

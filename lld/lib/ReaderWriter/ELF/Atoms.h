@@ -286,8 +286,8 @@ public:
 
     if (_section->sh_flags ==
         (llvm::ELF::SHF_ALLOC | llvm::ELF::SHF_WRITE | llvm::ELF::SHF_TLS)) {
-      return _contentType = _section->sh_type == llvm::ELF::SHT_NOBITS ? typeTLVInitialZeroFill
-                                                        : typeTLVInitialData;
+      return _contentType = _section->sh_type == llvm::ELF::SHT_NOBITS ? typeThreadZeroFill
+                                                        : typeThreadData;
     }
 
     if (_symbol->getType() == llvm::ELF::STT_GNU_IFUNC)

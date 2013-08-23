@@ -19,6 +19,6 @@ CHECK:    size:            4000
 CHECK:    section-name:    .bss
 CHECK:  - name:            largetbss
 CHECK:    scope:           global
-CHECK:    type:            tlv-zero-fill
+CHECK:    type:            thread-zero-fill
 CHECK:    size:            4000
 CHECK:    section-name:    .tbss

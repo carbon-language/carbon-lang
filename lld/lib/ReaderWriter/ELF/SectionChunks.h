@@ -146,11 +146,11 @@ public:
     case DefinedAtom::typeGOT:
     case DefinedAtom::typeStub:
     case DefinedAtom::typeResolver:
-    case DefinedAtom::typeTLVInitialData:
+    case DefinedAtom::typeThreadData:
       this->_type = SHT_PROGBITS;
       break;
 
-    case DefinedAtom::typeTLVInitialZeroFill:
+    case DefinedAtom::typeThreadZeroFill:
     case DefinedAtom::typeZeroFillFast:
     case DefinedAtom::typeZeroFill:
       this->_type = SHT_NOBITS;
@@ -167,8 +167,8 @@ public:
     case DefinedAtom::permRW_:
     case DefinedAtom::permRW_L:
       this->_flags = SHF_ALLOC | SHF_WRITE;
-      if (_contentType == DefinedAtom::typeTLVInitialData ||
-          _contentType == DefinedAtom::typeTLVInitialZeroFill)
+      if (_contentType == DefinedAtom::typeThreadData ||
+          _contentType == DefinedAtom::typeThreadZeroFill)
         this->_flags |= SHF_TLS;
       break;
     case DefinedAtom::permRWX:
@@ -292,7 +292,7 @@ const lld::AtomLayout &AtomSection<ELFT>::appendAtom(const Atom *atom) {
     case DefinedAtom::typeGOT:
     case DefinedAtom::typeStub:
     case DefinedAtom::typeResolver:
-    case DefinedAtom::typeTLVInitialData:
+    case DefinedAtom::typeThreadData:
       _atoms.push_back(new (_alloc) lld::AtomLayout(atom, fOffset, 0));
       this->_fsize = fOffset + definedAtom->size();
       this->_msize = mOffset + definedAtom->size();
@@ -301,7 +301,7 @@ const lld::AtomLayout &AtomSection<ELFT>::appendAtom(const Atom *atom) {
                                    << "Adding atom: " << atom->name() << "@"
                                    << fOffset << "\n");
       break;
-    case DefinedAtom::typeTLVInitialZeroFill:
+    case DefinedAtom::typeThreadZeroFill:
     case DefinedAtom::typeZeroFill:
     case DefinedAtom::typeZeroFillFast:
       _atoms.push_back(new (_alloc) lld::AtomLayout(atom, mOffset, 0));
@@ -713,8 +713,8 @@ void SymbolTable<ELFT>::addDefinedAtom(Elf_Sym &sym, const DefinedAtom *da,
     type = llvm::ELF::STT_OBJECT;
     sym.st_value = addr;
     break;
-  case DefinedAtom::typeTLVInitialData:
-  case DefinedAtom::typeTLVInitialZeroFill:
+  case DefinedAtom::typeThreadData:
+  case DefinedAtom::typeThreadZeroFill:
     type = llvm::ELF::STT_TLS;
     sym.st_value = addr;
     break;

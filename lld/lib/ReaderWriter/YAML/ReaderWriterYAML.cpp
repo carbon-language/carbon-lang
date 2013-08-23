@@ -487,6 +487,10 @@ struct ScalarEnumerationTraits<lld::DefinedAtom::ContentType> {
                           lld::DefinedAtom::typeTLVInitialZeroFill);
     io.enumCase(value, "tlv-initializer-ptr",
                           lld::DefinedAtom::typeTLVInitializerPtr);
+    io.enumCase(value, "thread-data",
+                          lld::DefinedAtom::typeThreadData);
+    io.enumCase(value, "thread-zero-fill",
+                          lld::DefinedAtom::typeThreadZeroFill);
   }
 };
 
