@@ -1792,22 +1792,33 @@ TEST(MemorySanitizer, VAArgOverflow) {
 static void vaargsfn_tlsoverwrite2(int guard, ...) {
   va_list vl;
   va_start(vl, guard);
-  EXPECT_NOT_POISONED(va_arg(vl, int));
+  for (int i = 0; i < 20; ++i)
+    EXPECT_NOT_POISONED(va_arg(vl, int));
   va_end(vl);
 }
 
 static void vaargsfn_tlsoverwrite(int guard, ...) {
   // This call will overwrite TLS contents unless it's backed up somewhere.
-  vaargsfn_tlsoverwrite2(2, 42);
+  vaargsfn_tlsoverwrite2(2,
+      42, 42, 42, 42, 42,
+      42, 42, 42, 42, 42,
+      42, 42, 42, 42, 42,
+      42, 42, 42, 42, 42); // 20x
   va_list vl;
   va_start(vl, guard);
-  EXPECT_POISONED(va_arg(vl, int));
+  for (int i = 0; i < 20; ++i)
+    EXPECT_POISONED(va_arg(vl, int));
   va_end(vl);
 }
 
 TEST(MemorySanitizer, VAArgTLSOverwrite) {
   int* x = GetPoisoned<int>();
-  vaargsfn_tlsoverwrite(1, *x);
+  vaargsfn_tlsoverwrite(1,
+      *x, *x, *x, *x, *x,
+      *x, *x, *x, *x, *x,
+      *x, *x, *x, *x, *x,
+      *x, *x, *x, *x, *x); // 20x
+
 }
 
 struct StructByVal {
