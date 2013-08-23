@@ -2026,21 +2026,8 @@ public:
     typedef size_type __storage_type;
     typedef __bit_iterator<vector, false>            pointer;
     typedef __bit_iterator<vector, true>             const_pointer;
-#ifdef _LIBCPP_DEBUG
-    typedef __debug_iter<vector, pointer>            iterator;
-    typedef __debug_iter<vector, const_pointer>      const_iterator;
-
-    friend class __debug_iter<vector, pointer>;
-    friend class __debug_iter<vector, const_pointer>;
-
-    pair<iterator*, const_iterator*> __iterator_list_;
-
-    _LIBCPP_INLINE_VISIBILITY iterator*&       __get_iterator_list(iterator*)       {return __iterator_list_.first;}
-    _LIBCPP_INLINE_VISIBILITY const_iterator*& __get_iterator_list(const_iterator*) {return __iterator_list_.second;}
-#else  // _LIBCPP_DEBUG
     typedef pointer                                  iterator;
     typedef const_pointer                            const_iterator;
-#endif  // _LIBCPP_DEBUG
     typedef _VSTD::reverse_iterator<iterator>         reverse_iterator;
     typedef _VSTD::reverse_iterator<const_iterator>   const_reverse_iterator;
 
@@ -2299,14 +2286,6 @@ private:
     _LIBCPP_INLINE_VISIBILITY
     const_reference __make_ref(size_type __pos) const _NOEXCEPT
         {return const_reference(__begin_ + __pos / __bits_per_word, __storage_type(1) << __pos % __bits_per_word);}
-#ifdef _LIBCPP_DEBUG
-    _LIBCPP_INLINE_VISIBILITY iterator __make_iter(size_type __pos)
-        {return iterator(this, pointer(__begin_ + __pos / __bits_per_word, static_cast<unsigned>(__pos % __bits_per_word)));}
-    _LIBCPP_INLINE_VISIBILITY const_iterator __make_iter(size_type __pos) const
-        {return const_iterator(this, const_pointer(__begin_ + __pos / __bits_per_word, static_cast<unsigned>(__pos % __bits_per_word)));}
-    _LIBCPP_INLINE_VISIBILITY iterator __const_iterator_cast(const_iterator __p)
-        {return iterator(this, pointer(const_cast<__storage_pointer>(__p.base().__seg_), __p.base().__ctz_));}
-#else  // _LIBCPP_DEBUG
     _LIBCPP_INLINE_VISIBILITY
     iterator __make_iter(size_type __pos) _NOEXCEPT
         {return iterator(__begin_ + __pos / __bits_per_word, static_cast<unsigned>(__pos % __bits_per_word));}
@@ -2316,7 +2295,6 @@ private:
     _LIBCPP_INLINE_VISIBILITY
     iterator __const_iterator_cast(const_iterator __p) _NOEXCEPT
         {return begin() + (__p - cbegin());}
-#endif  // _LIBCPP_DEBUG
 
     _LIBCPP_INLINE_VISIBILITY
     void __copy_assign_alloc(const vector& __v)
@@ -2387,16 +2365,10 @@ private:
 };
 
 template <class _Allocator>
-#ifndef _LIBCPP_DEBUG
 _LIBCPP_INLINE_VISIBILITY inline
-#endif
 void
 vector<bool, _Allocator>::__invalidate_all_iterators()
 {
-#ifdef _LIBCPP_DEBUG
-    iterator::__remove_all(this);
-    const_iterator::__remove_all(this);
-#endif  // _LIBCPP_DEBUG
 }
 
 //  Allocate space for __n objects
@@ -2666,9 +2638,7 @@ vector<bool, _Allocator>::~vector()
 {
     if (__begin_ != nullptr)
         __storage_traits::deallocate(__alloc(), __begin_, __cap());
-#ifdef _LIBCPP_DEBUG
     __invalidate_all_iterators();
-#endif
 }
 
 template <class _Allocator>
@@ -3073,10 +3043,6 @@ vector<bool, _Allocator>::swap(vector& __x)
     _VSTD::swap(this->__size_, __x.__size_);
     _VSTD::swap(this->__cap(), __x.__cap());
     __swap_alloc(this->__alloc(), __x.__alloc());
-#ifdef _LIBCPP_DEBUG
-    iterator::swap(this, &__x);
-    const_iterator::swap(this, &__x);
-#endif  // _LIBCPP_DEBUG
 }
 
 template <class _Allocator>
