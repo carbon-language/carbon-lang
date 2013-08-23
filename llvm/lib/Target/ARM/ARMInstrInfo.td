@@ -4197,7 +4197,7 @@ def MOVCCi32imm
                     8, IIC_iCMOVix2,
                     [(set GPR:$Rd, (ARMcmov GPR:$false, imm:$src,
                                             cmovpred:$p))]>,
-      RegConstraint<"$false = $Rd">, Requires<[HasV6T2]>;
+      RegConstraint<"$false = $Rd">, Requires<[IsARM, HasV6T2]>;
 
 let isMoveImm = 1 in
 def MVNCCi : ARMPseudoInst<(outs GPR:$Rd),

@@ -99,8 +99,17 @@ entry:
 
 define i32 @f10(i32 %a, i32 %b) {
 ; CHECK-LABEL: f10:
-; CHECK: movwne r2, #1234    @ encoding: [0x40,0xf2,0xd2,0x42]
+; CHECK: movwne {{r[0-9]+}}, #1234    @ encoding: [0x40,0xf2,0xd2,0x4{{[0-9a-f]+}}]
     %tst = icmp ne i32 %a, %b
     %val = select i1 %tst, i32 1234, i32 12345
+    ret i32 %val
+}
+
+; Make sure we pick the Thumb encoding for movw/movt
+define i32 @f11(i32 %a, i32 %b) {
+; CHECK-LABEL: f11:
+; CHECK: movwne {{r[0-9]+}}, #50033         @ encoding: [0x4c,0xf2,0x71,0x3{{[0-9a-f]+}}]
+    %tst = icmp ne i32 %a, %b
+    %val = select i1 %tst, i32 123454321, i32 543212345
     ret i32 %val
 }
