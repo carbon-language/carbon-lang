@@ -597,6 +597,31 @@ define void @VACopy(i8* %p1, i8* %p2) nounwind uwtable sanitize_memory {
 ; CHECK: ret void
 
 
+; Test that va_start instrumentation does not use va_arg_tls*.
+; It should work with a local stack copy instead.
+
+%struct.__va_list_tag = type { i32, i32, i8*, i8* }
+declare void @llvm.va_start(i8*) nounwind
+
+; Function Attrs: nounwind uwtable
+define void @VAStart(i32 %x, ...) {
+entry:
+  %x.addr = alloca i32, align 4
+  %va = alloca [1 x %struct.__va_list_tag], align 16
+  store i32 %x, i32* %x.addr, align 4
+  %arraydecay = getelementptr inbounds [1 x %struct.__va_list_tag]* %va, i32 0, i32 0
+  %arraydecay1 = bitcast %struct.__va_list_tag* %arraydecay to i8*
+  call void @llvm.va_start(i8* %arraydecay1)
+  ret void
+}
+
+; CHECK: @VAStart
+; CHECK: call void @llvm.va_start
+; CHECK-NOT: @__msan_va_arg_tls
+; CHECK-NOT: @__msan_va_arg_overflow_size_tls
+; CHECK: ret void
+
+
 ; Test handling of volatile stores.
 ; Check that MemorySanitizer does not add a check of the value being stored.
 
