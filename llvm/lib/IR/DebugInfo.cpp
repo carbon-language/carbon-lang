@@ -1005,6 +1005,19 @@ void DebugInfoFinder::processSubprogram(DISubprogram SP) {
     return;
   processScope(SP.getContext());
   processType(SP.getType());
+  DIArray TParams = SP.getTemplateParams();
+  for (unsigned I = 0, E = TParams.getNumElements(); I != E; ++I) {
+    DIDescriptor Element = TParams.getElement(I);
+    if (Element.isTemplateTypeParameter()) {
+      DITemplateTypeParameter TType(Element);
+      processScope(TType.getContext());
+      processType(TType.getType());
+    } else if (Element.isTemplateValueParameter()) {
+      DITemplateValueParameter TVal(Element);
+      processScope(TVal.getContext());
+      processType(TVal.getType());
+    }
+  }
 }
 
 /// processDeclare - Process DbgDeclareInst.
