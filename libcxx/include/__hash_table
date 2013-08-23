@@ -20,7 +20,7 @@
 
 #include <__undef_min_max>
 
-#ifdef _LIBCPP_DEBUG2
+#ifdef _LIBCPP_DEBUG
 #   include <__debug>
 #else
 #   define _LIBCPP_ASSERT(x, m) ((void)0)

@@ -15,7 +15,7 @@
 
 // void swap(unordered_map& x, unordered_map& y);
 
-#if _LIBCPP_DEBUG2 >= 1
+#if _LIBCPP_DEBUG >= 1
 #define _LIBCPP_ASSERT(x, m) ((x) ? (void)0 : std::exit(0))
 #endif
 
@@ -24,7 +24,7 @@
 
 int main()
 {
-#if _LIBCPP_DEBUG2 >= 1
+#if _LIBCPP_DEBUG >= 1
     {
         typedef std::pair<int, int> P;
         P a1[] = {P(1, 1), P(3, 3), P(7, 7), P(9, 9), P(10, 10)};

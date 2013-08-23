@@ -12,7 +12,7 @@
 // template <InputIterator Iter>
 //   iterator insert(const_iterator position, Iter first, Iter last);
 
-#if _LIBCPP_DEBUG2 >= 1
+#if _LIBCPP_DEBUG >= 1
 #define _LIBCPP_ASSERT(x, m) ((x) ? (void)0 : std::exit(0))
 #endif
 
@@ -99,7 +99,7 @@ int main()
     assert(*i == 3);
     }
     throw_next = 0xFFFF;
-#if _LIBCPP_DEBUG2 >= 1
+#if _LIBCPP_DEBUG >= 1
     {
         std::list<int> v(100);
         std::list<int> v2(100);
@@ -167,7 +167,7 @@ int main()
     ++i;
     assert(*i == 3);
     }
-#if _LIBCPP_DEBUG2 >= 1
+#if _LIBCPP_DEBUG >= 1
     {
         throw_next = 0xFFFF;
         std::list<int, min_allocator<int>> v(100);

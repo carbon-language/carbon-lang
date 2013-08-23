@@ -11,7 +11,7 @@
 
 // Operations on "NULL" iterators
 
-#if _LIBCPP_DEBUG2 >= 1
+#if _LIBCPP_DEBUG >= 1
 
 #define _LIBCPP_ASSERT(x, m) do { if (!x) throw 1; } while(0)
 

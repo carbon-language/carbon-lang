@@ -321,7 +321,7 @@ template <class T, size_t N> T* end(T (&array)[N]);
 #include <Availability.h>
 #endif
 
-#ifdef _LIBCPP_DEBUG2
+#ifdef _LIBCPP_DEBUG
 #   include <__debug>
 #else
 #   define _LIBCPP_ASSERT(x, m) ((void)0)

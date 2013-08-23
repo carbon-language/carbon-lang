@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define _LIBCPP_DEBUG2 1
+#define _LIBCPP_DEBUG 1
 #include "__config"
 #include "__debug"
 #include "functional"

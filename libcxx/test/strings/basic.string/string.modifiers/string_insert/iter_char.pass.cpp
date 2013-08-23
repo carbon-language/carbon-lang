@@ -11,7 +11,7 @@
 
 // iterator insert(const_iterator p, charT c);
 
-#if _LIBCPP_DEBUG2 >= 1
+#if _LIBCPP_DEBUG >= 1
 #define _LIBCPP_ASSERT(x, m) ((x) ? (void)0 : std::exit(0))
 #endif
 
@@ -76,7 +76,7 @@ int main()
     test(s, s.begin()+6, 'C', S("a567ABC1432dcb"));
     }
 #endif
-#if _LIBCPP_DEBUG2 >= 1
+#if _LIBCPP_DEBUG >= 1
     {
         typedef std::string S;
         S s;

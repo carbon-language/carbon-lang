@@ -525,13 +525,13 @@ template <unsigned> struct __static_assert_check {};
 #define _LIBCPP_DECLARE_STRONG_ENUM_EPILOG(x)
 #endif  // _LIBCPP_HAS_NO_STRONG_ENUMS
 
-#ifdef _LIBCPP_DEBUG2
-#   if _LIBCPP_DEBUG2 == 0
+#ifdef _LIBCPP_DEBUG
+#   if _LIBCPP_DEBUG == 0
 #       define _LIBCPP_DEBUG_LEVEL 1
-#   elif _LIBCPP_DEBUG2 == 1
+#   elif _LIBCPP_DEBUG == 1
 #       define _LIBCPP_DEBUG_LEVEL 2
 #   else
-#       error Supported values for _LIBCPP_DEBUG2 are 0 and 1
+#       error Supported values for _LIBCPP_DEBUG are 0 and 1
 #   endif
 #   define _LIBCPP_EXTERN_TEMPLATE(...)
 #endif

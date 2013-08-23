@@ -61,7 +61,7 @@ int main()
         assert(l2.get_allocator() == lo.get_allocator());
     }
 #endif
-#if _LIBCPP_DEBUG2 >= 1
+#if _LIBCPP_DEBUG >= 1
     {
         std::list<int> l1 = {1, 2, 3};
         std::list<int>::iterator i = l1.begin();

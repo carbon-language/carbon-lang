@@ -209,7 +209,7 @@ int main()
         assert(c.max_load_factor() == 1);
     }
 #endif
-#if _LIBCPP_DEBUG2 >= 1
+#if _LIBCPP_DEBUG >= 1
     {
         std::unordered_set<int> s1 = {1, 2, 3};
         std::unordered_set<int>::iterator i = s1.begin();

@@ -16,7 +16,7 @@
 // template <class... Args>
 //     iterator emplace_hint(const_iterator p, Args&&... args);
 
-#if _LIBCPP_DEBUG2 >= 1
+#if _LIBCPP_DEBUG >= 1
 #define _LIBCPP_ASSERT(x, m) ((x) ? (void)0 : std::exit(0))
 #endif
 
@@ -76,7 +76,7 @@ int main()
         assert(r->second == Emplaceable(6, 7));
     }
 #endif
-#if _LIBCPP_DEBUG2 >= 1
+#if _LIBCPP_DEBUG >= 1
     {
         typedef std::unordered_map<int, Emplaceable> C;
         typedef C::iterator R;

@@ -213,7 +213,7 @@ int main()
         assert(c0.size() == 0);
     }
 #endif
-#if _LIBCPP_DEBUG2 >= 1
+#if _LIBCPP_DEBUG >= 1
     {
         std::unordered_map<int, int> s1 = {{1, 1}, {2, 2}, {3, 3}};
         std::unordered_map<int, int>::iterator i = s1.begin();

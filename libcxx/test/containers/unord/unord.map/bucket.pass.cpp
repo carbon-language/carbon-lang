@@ -15,7 +15,7 @@
 
 // size_type bucket(const key_type& __k) const;
 
-#ifdef _LIBCPP_DEBUG2
+#ifdef _LIBCPP_DEBUG
 #define _LIBCPP_ASSERT(x, m) ((x) ? (void)0 : std::exit(0))
 #endif
 

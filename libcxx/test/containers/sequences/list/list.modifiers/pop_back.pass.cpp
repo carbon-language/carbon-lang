@@ -11,7 +11,7 @@
 
 // void pop_back();
 
-#if _LIBCPP_DEBUG2 >= 1
+#if _LIBCPP_DEBUG >= 1
 #define _LIBCPP_ASSERT(x, m) ((x) ? (void)0 : std::exit(0))
 #endif
 
@@ -31,7 +31,7 @@ int main()
     assert(c == std::list<int>(a, a+1));
     c.pop_back();
     assert(c.empty());
-#if _LIBCPP_DEBUG2 >= 1
+#if _LIBCPP_DEBUG >= 1
         c.pop_back();
         assert(false);
 #endif        
@@ -46,7 +46,7 @@ int main()
     assert((c == std::list<int, min_allocator<int>>(a, a+1)));
     c.pop_back();
     assert(c.empty());
-#if _LIBCPP_DEBUG2 >= 1
+#if _LIBCPP_DEBUG >= 1
         c.pop_back();
         assert(false);
 #endif        
