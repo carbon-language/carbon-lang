@@ -45,8 +45,7 @@ public:
   /// dequeue - Remove a block from the worklist.
   const CFGBlock *dequeue() {
     assert(!BlockQueue.empty());
-    const CFGBlock *B = BlockQueue.back();
-    BlockQueue.pop_back();
+    const CFGBlock *B = BlockQueue.pop_back_val();
     BlockSet[B] = 0;
     return B;
   }

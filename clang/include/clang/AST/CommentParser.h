@@ -61,10 +61,8 @@ class Parser {
   void consumeToken() {
     if (MoreLATokens.empty())
       L.lex(Tok);
-    else {
-      Tok = MoreLATokens.back();
-      MoreLATokens.pop_back();
-    }
+    else
+      Tok = MoreLATokens.pop_back_val();
   }
 
   void putBack(const Token &OldTok) {

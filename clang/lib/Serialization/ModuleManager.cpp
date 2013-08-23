@@ -332,8 +332,7 @@ ModuleManager::visit(bool (*Visitor)(ModuleFile &M, void *UserData),
         break;
 
       // Pop the next module off the stack.
-      NextModule = State->Stack.back();
-      State->Stack.pop_back();
+      NextModule = State->Stack.pop_back_val();
     } while (true);
   }
 

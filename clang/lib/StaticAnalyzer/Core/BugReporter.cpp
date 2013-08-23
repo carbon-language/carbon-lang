@@ -2651,10 +2651,8 @@ void BugReport::pushInterestingSymbolsAndRegions() {
 }
 
 void BugReport::popInterestingSymbolsAndRegions() {
-  delete interestingSymbols.back();
-  interestingSymbols.pop_back();
-  delete interestingRegions.back();
-  interestingRegions.pop_back();
+  delete interestingSymbols.pop_back_val();
+  delete interestingRegions.pop_back_val();
 }
 
 const Stmt *BugReport::getStmt() const {

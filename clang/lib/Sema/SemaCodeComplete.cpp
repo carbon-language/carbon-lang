@@ -464,9 +464,8 @@ getRequiredQualification(ASTContext &Context,
   
   NestedNameSpecifier *Result = 0;
   while (!TargetParents.empty()) {
-    const DeclContext *Parent = TargetParents.back();
-    TargetParents.pop_back();
-    
+    const DeclContext *Parent = TargetParents.pop_back_val();
+
     if (const NamespaceDecl *Namespace = dyn_cast<NamespaceDecl>(Parent)) {
       if (!Namespace->getIdentifier())
         continue;

@@ -566,8 +566,7 @@ void NestedNameSpecifierLocBuilder::MakeTrivial(ASTContext &Context,
   for (NestedNameSpecifier *NNS = Qualifier; NNS; NNS = NNS->getPrefix())
     Stack.push_back(NNS);
   while (!Stack.empty()) {
-    NestedNameSpecifier *NNS = Stack.back();
-    Stack.pop_back();
+    NestedNameSpecifier *NNS = Stack.pop_back_val();
     switch (NNS->getKind()) {
       case NestedNameSpecifier::Identifier:
       case NestedNameSpecifier::Namespace:

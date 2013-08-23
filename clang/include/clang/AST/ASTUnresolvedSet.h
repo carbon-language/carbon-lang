@@ -58,10 +58,7 @@ public:
     return false;
   }
 
-  void erase(unsigned I) {
-    Decls[I] = Decls.back();
-    Decls.pop_back();
-  }
+  void erase(unsigned I) { Decls[I] = Decls.pop_back_val(); }
 
   void clear() { Decls.clear(); }
 

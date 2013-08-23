@@ -630,8 +630,7 @@ void Sema::ActOnEndOfTranslationUnit() {
       SmallVector<Module *, 2> Stack;
       Stack.push_back(CurrentModule);
       while (!Stack.empty()) {
-        Module *Mod = Stack.back();
-        Stack.pop_back();
+        Module *Mod = Stack.pop_back_val();
 
         // Resolve the exported declarations and conflicts.
         // FIXME: Actually complain, once we figure out how to teach the

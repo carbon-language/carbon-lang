@@ -515,8 +515,7 @@ HTMLEndTagComment *Sema::actOnHTMLEndTag(SourceLocation LocBegin,
   }
 
   while (!HTMLOpenTags.empty()) {
-    const HTMLStartTagComment *HST = HTMLOpenTags.back();
-    HTMLOpenTags.pop_back();
+    const HTMLStartTagComment *HST = HTMLOpenTags.pop_back_val();
     StringRef LastNotClosedTagName = HST->getTagName();
     if (LastNotClosedTagName == TagName)
       break;

@@ -863,8 +863,7 @@ void CodeGenModule::EmitModuleLinkOptions() {
   // Find all of the modules to import, making a little effort to prune
   // non-leaf modules.
   while (!Stack.empty()) {
-    clang::Module *Mod = Stack.back();
-    Stack.pop_back();
+    clang::Module *Mod = Stack.pop_back_val();
 
     bool AnyChildren = false;
 

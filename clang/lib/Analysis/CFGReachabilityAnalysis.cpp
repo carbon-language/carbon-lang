@@ -50,11 +50,10 @@ void CFGReverseBlockReachabilityAnalysis::mapReachability(const CFGBlock *Dst) {
   // multiple queries relating to a destination node.
   worklist.push_back(Dst);
   bool firstRun = true;
-  
-  while (!worklist.empty()) {    
-    const CFGBlock *block = worklist.back();
-    worklist.pop_back();
-    
+
+  while (!worklist.empty()) {
+    const CFGBlock *block = worklist.pop_back_val();
+
     if (visited[block->getBlockID()])
       continue;
     visited[block->getBlockID()] = true;

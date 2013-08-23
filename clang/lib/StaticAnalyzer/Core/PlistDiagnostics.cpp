@@ -382,11 +382,10 @@ void PlistDiagnostics::FlushDiagnosticsImpl(
     WorkList.push_back(&D->path);
 
     while (!WorkList.empty()) {
-      const PathPieces &path = *WorkList.back();
-      WorkList.pop_back();
-    
-      for (PathPieces::const_iterator I = path.begin(), E = path.end();
-           I!=E; ++I) {
+      const PathPieces &path = *WorkList.pop_back_val();
+
+      for (PathPieces::const_iterator I = path.begin(), E = path.end(); I != E;
+           ++I) {
         const PathDiagnosticPiece *piece = I->getPtr();
         AddFID(FM, Fids, SM, piece->getLocation().asLocation());
         ArrayRef<SourceRange> Ranges = piece->getRanges();

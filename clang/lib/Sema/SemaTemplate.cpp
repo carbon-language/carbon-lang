@@ -3527,8 +3527,7 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
         // deduced argument and place it on the argument pack. Note that we
         // stay on the same template parameter so that we can deduce more
         // arguments.
-        ArgumentPack.push_back(Converted.back());
-        Converted.pop_back();
+        ArgumentPack.push_back(Converted.pop_back_val());
       } else {
         // Move to the next template parameter.
         ++Param;

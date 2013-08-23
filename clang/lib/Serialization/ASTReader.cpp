@@ -2819,13 +2819,12 @@ void ASTReader::makeModuleVisible(Module *Mod,
                                   bool Complain) {
   llvm::SmallPtrSet<Module *, 4> Visited;
   SmallVector<Module *, 4> Stack;
-  Stack.push_back(Mod);  
+  Stack.push_back(Mod);
   while (!Stack.empty()) {
-    Mod = Stack.back();
-    Stack.pop_back();
+    Mod = Stack.pop_back_val();
 
     if (NameVisibility <= Mod->NameVisibility) {
-      // This module already has this level of visibility (or greater), so 
+      // This module already has this level of visibility (or greater), so
       // there is nothing more to do.
       continue;
     }

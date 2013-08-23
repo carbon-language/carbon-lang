@@ -216,11 +216,10 @@ void PathDiagnosticConsumer::HandlePathDiagnostic(PathDiagnostic *D) {
     WorkList.push_back(&D->path);
 
     while (!WorkList.empty()) {
-      const PathPieces &path = *WorkList.back();
-      WorkList.pop_back();
+      const PathPieces &path = *WorkList.pop_back_val();
 
-      for (PathPieces::const_iterator I = path.begin(), E = path.end();
-           I != E; ++I) {
+      for (PathPieces::const_iterator I = path.begin(), E = path.end(); I != E;
+           ++I) {
         const PathDiagnosticPiece *piece = I->getPtr();
         FullSourceLoc L = piece->getLocation().asLocation().getExpansionLoc();
       

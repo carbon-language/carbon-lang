@@ -2256,8 +2256,7 @@ bool CursorVisitor::IsInRegionOfInterest(CXCursor C) {
 bool CursorVisitor::RunVisitorWorkList(VisitorWorkList &WL) {
   while (!WL.empty()) {
     // Dequeue the worklist item.
-    VisitorJob LI = WL.back();
-    WL.pop_back();
+    VisitorJob LI = WL.pop_back_val();
 
     // Set the Parent field, then back to its old value once we're done.
     SetParentRAII SetParent(Parent, StmtParent, LI.getParent());

@@ -240,10 +240,9 @@ const CFGBlock *DataflowWorklist::dequeue() {
 
   // First dequeue from the worklist.  This can represent
   // updates along backedges that we want propagated as quickly as possible.
-  if (!worklist.empty()) {
-    B = worklist.back();
-    worklist.pop_back();
-  }
+  if (!worklist.empty())
+    B = worklist.pop_back_val();
+
   // Next dequeue from the initial reverse post order.  This is the
   // theoretical ideal in the presence of no back edges.
   else if (PO_I != PO_E) {
@@ -527,8 +526,7 @@ public:
     // of marking it as not being a candidate element of the frontier.
     SuccsVisited[block->getBlockID()] = block->succ_size();
     while (!Queue.empty()) {
-      const CFGBlock *B = Queue.back();
-      Queue.pop_back();
+      const CFGBlock *B = Queue.pop_back_val();
       for (CFGBlock::const_pred_iterator I = B->pred_begin(), E = B->pred_end();
            I != E; ++I) {
         const CFGBlock *Pred = *I;

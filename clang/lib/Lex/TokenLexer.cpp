@@ -329,8 +329,7 @@ void TokenLexer::ExpandFunctionArguments() {
           (unsigned)ArgNo == Macro->getNumArgs()-1 &&
           Macro->isVariadic()) {
         // Remove the paste operator, report use of the extension.
-        PP.Diag(ResultToks.back().getLocation(), diag::ext_paste_comma);
-        ResultToks.pop_back();
+        PP.Diag(ResultToks.pop_back_val().getLocation(), diag::ext_paste_comma);
       }
 
       ResultToks.append(ArgToks, ArgToks+NumToks);
@@ -386,8 +385,7 @@ void TokenLexer::ExpandFunctionArguments() {
     assert(PasteBefore);
     if (NonEmptyPasteBefore) {
       assert(ResultToks.back().is(tok::hashhash));
-      NextTokGetsSpace |= ResultToks.back().hasLeadingSpace();
-      ResultToks.pop_back();
+      NextTokGetsSpace |= ResultToks.pop_back_val().hasLeadingSpace();
     }
 
     // If this is the __VA_ARGS__ token, and if the argument wasn't provided,

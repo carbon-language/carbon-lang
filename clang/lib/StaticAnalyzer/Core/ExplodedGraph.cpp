@@ -357,8 +357,7 @@ ExplodedGraph::trim(ArrayRef<const NodeTy *> Sinks,
 
   // Process the first worklist until it is empty.
   while (!WL1.empty()) {
-    const ExplodedNode *N = WL1.back();
-    WL1.pop_back();
+    const ExplodedNode *N = WL1.pop_back_val();
 
     // Have we already visited this node?  If so, continue to the next one.
     if (Pass1.count(N))
@@ -388,8 +387,7 @@ ExplodedGraph::trim(ArrayRef<const NodeTy *> Sinks,
 
   // ===- Pass 2 (forward DFS to construct the new graph) -===
   while (!WL2.empty()) {
-    const ExplodedNode *N = WL2.back();
-    WL2.pop_back();
+    const ExplodedNode *N = WL2.pop_back_val();
 
     // Skip this node if we have already processed it.
     if (Pass2.find(N) != Pass2.end())

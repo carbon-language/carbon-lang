@@ -87,8 +87,7 @@ void DataflowWorklist::sortWorklist() {
 const CFGBlock *DataflowWorklist::dequeue() {
   if (worklist.empty())
     return 0;
-  const CFGBlock *b = worklist.back();
-  worklist.pop_back();
+  const CFGBlock *b = worklist.pop_back_val();
   enqueuedBlocks[b->getBlockID()] = false;
   return b;
 }

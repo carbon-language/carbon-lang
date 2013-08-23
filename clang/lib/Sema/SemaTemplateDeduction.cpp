@@ -1431,8 +1431,7 @@ DeduceTemplateArgumentsByTypeMatch(Sema &S,
                                                               Deduced.end());
           while (!ToVisit.empty()) {
             // Retrieve the next class in the inheritance hierarchy.
-            const RecordType *NextT = ToVisit.back();
-            ToVisit.pop_back();
+            const RecordType *NextT = ToVisit.pop_back_val();
 
             // If we have already seen this type, skip it.
             if (!Visited.insert(NextT))
@@ -2091,8 +2090,7 @@ ConvertDeducedTemplateArgument(Sema &S, NamedDecl *Param,
         return true;
 
       // Move the converted template argument into our argument pack.
-      PackedArgsBuilder.push_back(Output.back());
-      Output.pop_back();
+      PackedArgsBuilder.push_back(Output.pop_back_val());
     }
 
     // Create the resulting argument pack.

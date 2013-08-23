@@ -167,8 +167,7 @@ namespace {
         if (queue.empty())
           return;
 
-        DC = queue.back();
-        queue.pop_back();
+        DC = queue.pop_back_val();
       }
     }
 
@@ -1446,8 +1445,7 @@ static bool LookupQualifiedNameInUsingDirectives(Sema &S, LookupResult &R,
 
   bool Found = false;
   while (!Queue.empty()) {
-    NamespaceDecl *ND = Queue.back();
-    Queue.pop_back();
+    NamespaceDecl *ND = Queue.pop_back_val();
 
     // We go through some convolutions here to avoid copying results
     // between LookupResults.
@@ -2039,8 +2037,7 @@ addAssociatedClassesAndNamespaces(AssociatedLookup &Result,
   Bases.push_back(Class);
   while (!Bases.empty()) {
     // Pop this class off the stack.
-    Class = Bases.back();
-    Bases.pop_back();
+    Class = Bases.pop_back_val();
 
     // Visit the base classes.
     for (CXXRecordDecl::base_class_iterator Base = Class->bases_begin(),
@@ -2224,9 +2221,9 @@ addAssociatedClassesAndNamespaces(AssociatedLookup &Result, QualType Ty) {
       continue;
     }
 
-    if (Queue.empty()) break;
-    T = Queue.back();
-    Queue.pop_back();
+    if (Queue.empty())
+      break;
+    T = Queue.pop_back_val();
   }
 }
 

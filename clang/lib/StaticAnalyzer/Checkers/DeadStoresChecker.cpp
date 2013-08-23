@@ -85,10 +85,9 @@ void ReachableCode::computeReachableBlocks() {
   
   SmallVector<const CFGBlock*, 10> worklist;
   worklist.push_back(&cfg.getEntry());
-  
+
   while (!worklist.empty()) {
-    const CFGBlock *block = worklist.back();
-    worklist.pop_back();
+    const CFGBlock *block = worklist.pop_back_val();
     llvm::BitVector::reference isReachable = reachable[block->getBlockID()];
     if (isReachable)
       continue;

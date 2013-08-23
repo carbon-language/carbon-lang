@@ -315,8 +315,7 @@ static AccessResult IsDerivedFromInclusive(const CXXRecordDecl *Derived,
 
     if (Queue.empty()) break;
 
-    Derived = Queue.back();
-    Queue.pop_back();
+    Derived = Queue.pop_back_val();
   }
 
   return OnFailure;

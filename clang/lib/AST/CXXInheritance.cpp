@@ -168,9 +168,9 @@ bool CXXRecordDecl::forallBases(ForallBasesCallback *BaseMatches,
       }
     }
 
-    if (Queue.empty()) break;
-    Record = Queue.back(); // not actually a queue.
-    Queue.pop_back();
+    if (Queue.empty())
+      break;
+    Record = Queue.pop_back_val(); // not actually a queue.
   }
 
   return AllMatches;

@@ -1249,8 +1249,7 @@ static bool findCircularInheritance(const CXXRecordDecl *Class,
     if (Queue.empty())
       return false;
 
-    Current = Queue.back();
-    Queue.pop_back();
+    Current = Queue.pop_back_val();
   }
 
   return false;

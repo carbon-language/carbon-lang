@@ -6031,8 +6031,7 @@ void Sema::CheckUnsequencedOperations(Expr *E) {
   SmallVector<Expr *, 8> WorkList;
   WorkList.push_back(E);
   while (!WorkList.empty()) {
-    Expr *Item = WorkList.back();
-    WorkList.pop_back();
+    Expr *Item = WorkList.pop_back_val();
     SequenceChecker(*this, Item, WorkList);
   }
 }

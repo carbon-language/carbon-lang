@@ -139,15 +139,9 @@ public:
     I.ir->set(New, AS);
   }
 
-  void erase(unsigned I) {
-    decls()[I] = decls().back();
-    decls().pop_back();
-  }
+  void erase(unsigned I) { decls()[I] = decls().pop_back_val(); }
 
-  void erase(iterator I) {
-    *I.ir = decls().back();
-    decls().pop_back();
-  }
+  void erase(iterator I) { *I.ir = decls().pop_back_val(); }
 
   void setAccess(iterator I, AccessSpecifier AS) {
     I.ir->setAccess(AS);
