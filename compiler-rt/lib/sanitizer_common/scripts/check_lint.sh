@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -e
-
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 # Guess path to LLVM_CHECKOUT if not provided
@@ -21,6 +19,7 @@ CPPLINT=${SCRIPT_DIR}/cpplint/cpplint.py
 
 # Filters
 # TODO: remove some of these filters
+LLVM_LINT_FILTER=-,+whitespace
 COMMON_LINT_FILTER=-build/include,-build/header_guard,-legal/copyright,-whitespace/comments,-readability/casting,\
 -build/namespaces
 ASAN_RTL_LINT_FILTER=${COMMON_LINT_FILTER},-runtime/int
@@ -37,54 +36,57 @@ SANITIZER_INCLUDES_LINT_FILTER=${COMMON_LINT_FILTER},-runtime/int
 
 cd ${LLVM_CHECKOUT}
 
-# FIXME: We should use some bash magic to continue cpplint invocations, but
-# still mark the whole run as failed if any invocation fails.
+EXITSTATUS=0
 
-# LLVM Instrumentation
-LLVM_INSTRUMENTATION=lib/Transforms/Instrumentation
-LLVM_LINT_FILTER=-,+whitespace
-${CPPLINT} --filter=${LLVM_LINT_FILTER} lib/Transforms/Instrumentation/*Sanitizer.cpp \
-                                        lib/Transforms/Utils/SpecialCaseList.cpp
+run_lint() {
+  FILTER=$1
+  shift
+  ${CPPLINT} --filter=${FILTER} "$@"
+  if [ "$?" != "0" ]; then
+    EXITSTATUS=1
+  fi
+}
+
+run_lint ${LLVM_LINT_FILTER} --filter=${LLVM_LINT_FILTER} \
+  lib/Transforms/Instrumentation/*Sanitizer.cpp \
+  lib/Transforms/Utils/SpecialCaseList.cpp
 
 COMPILER_RT=projects/compiler-rt
-
 # Headers
 SANITIZER_INCLUDES=${COMPILER_RT}/include/sanitizer
-${CPPLINT} --filter=${SANITIZER_INCLUDES_LINT_FILTER} ${SANITIZER_INCLUDES}/*.h
+run_lint ${SANITIZER_INCLUDES_LINT_FILTER} ${SANITIZER_INCLUDES}/*.h
 
 # Sanitizer_common
 COMMON_RTL=${COMPILER_RT}/lib/sanitizer_common
-${CPPLINT} --filter=${COMMON_RTL_INC_LINT_FILTER} ${COMMON_RTL}/*.{cc,h}
-${CPPLINT} --filter=${COMMON_RTL_INC_LINT_FILTER} ${COMMON_RTL}/tests/*.cc
+run_lint ${COMMON_RTL_INC_LINT_FILTER} ${COMMON_RTL}/*.{cc,h} \
+                                       ${COMMON_RTL}/tests/*.cc
 
 # Interception
 INTERCEPTION=${COMPILER_RT}/lib/interception
-${CPPLINT} --filter=${ASAN_RTL_LINT_FILTER} ${INTERCEPTION}/*.{cc,h}
+run_lint ${ASAN_RTL_LINT_FILTER} ${INTERCEPTION}/*.{cc,h}
 
 # ASan
 ASAN_RTL=${COMPILER_RT}/lib/asan
-${CPPLINT} --filter=${ASAN_RTL_LINT_FILTER} ${ASAN_RTL}/*.{cc,h}
-${CPPLINT} --filter=${ASAN_TEST_LINT_FILTER} ${ASAN_RTL}/tests/*.{cc,h}
-${CPPLINT} --filter=${ASAN_LIT_TEST_LINT_FILTER} ${ASAN_RTL}/lit_tests/*/*.cc \
+run_lint ${ASAN_RTL_LINT_FILTER} ${ASAN_RTL}/*.{cc,h}
+run_lint ${ASAN_TEST_LINT_FILTER} ${ASAN_RTL}/tests/*.{cc,h}
+run_lint ${ASAN_LIT_TEST_LINT_FILTER} ${ASAN_RTL}/lit_tests/*/*.cc
 
 # TSan
 TSAN_RTL=${COMPILER_RT}/lib/tsan
-${CPPLINT} --filter=${TSAN_RTL_LINT_FILTER} ${TSAN_RTL}/rtl/*.{cc,h}
-${CPPLINT} --filter=${TSAN_TEST_LINT_FILTER} ${TSAN_RTL}/tests/rtl/*.{cc,h} \
-                                             ${TSAN_RTL}/tests/unit/*.cc
-${CPPLINT} --filter=${TSAN_LIT_TEST_LINT_FILTER} ${TSAN_RTL}/lit_tests/*.cc
+run_lint ${TSAN_RTL_LINT_FILTER} ${TSAN_RTL}/rtl/*.{cc,h}
+run_lint ${TSAN_TEST_LINT_FILTER} ${TSAN_RTL}/tests/rtl/*.{cc,h} \
+                                  ${TSAN_RTL}/tests/unit/*.cc
+run_lint ${TSAN_LIT_TEST_LINT_FILTER} ${TSAN_RTL}/lit_tests/*.cc
 
 # MSan
 MSAN_RTL=${COMPILER_RT}/lib/msan
-${CPPLINT} --filter=${MSAN_RTL_LINT_FILTER} ${MSAN_RTL}/*.{cc,h}
+run_lint ${MSAN_RTL_LINT_FILTER} ${MSAN_RTL}/*.{cc,h}
 
 # LSan
 LSAN_RTL=${COMPILER_RT}/lib/lsan
-${CPPLINT} --filter=${LSAN_RTL_LINT_FILTER} ${LSAN_RTL}/*.{cc,h}
-${CPPLINT} --filter=${LSAN_RTL_LINT_FILTER} ${LSAN_RTL}/tests/*.{cc,h}
-${CPPLINT} --filter=${LSAN_LIT_TEST_LINT_FILTER} ${LSAN_RTL}/lit_tests/*/*.cc
-
-set +e
+run_lint ${LSAN_RTL_LINT_FILTER} ${LSAN_RTL}/*.{cc,h}
+run_lint ${LSAN_RTL_LINT_FILTER} ${LSAN_RTL}/tests/*.{cc,h}
+run_lint ${LSAN_LIT_TEST_LINT_FILTER} ${LSAN_RTL}/lit_tests/*/*.cc
 
 # Misc files
 FILES=${COMMON_RTL}/*.inc
@@ -92,6 +94,8 @@ for FILE in $FILES; do
     TMPFILE=$(mktemp -u ${FILE}.XXXXX).cc
     echo "Checking $FILE"
     cp -f $FILE $TMPFILE && \
-        ${CPPLINT} --filter=${COMMON_RTL_INC_LINT_FILTER} $TMPFILE
+        run_lint ${COMMON_RTL_INC_LINT_FILTER} $TMPFILE
     rm $TMPFILE
 done
+
+exit $EXITSTATUS

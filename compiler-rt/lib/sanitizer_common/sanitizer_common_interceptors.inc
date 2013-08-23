@@ -1853,7 +1853,7 @@ INTERCEPTOR(int, scandir, char *dirp, __sanitizer_dirent ***namelist,
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, scandir, dirp, namelist, filter, compar);
   if (dirp) COMMON_INTERCEPTOR_READ_RANGE(ctx, dirp, REAL(strlen)(dirp) + 1);
-  CHECK(scandir_ctx == 0);
+  CHECK_EQ(0, scandir_ctx);
   scandir_ctx = ctx;
   scandir_filter = filter;
   scandir_compar = compar;
@@ -1906,7 +1906,7 @@ INTERCEPTOR(int, scandir64, char *dirp, __sanitizer_dirent64 ***namelist,
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, scandir64, dirp, namelist, filter, compar);
   if (dirp) COMMON_INTERCEPTOR_READ_RANGE(ctx, dirp, REAL(strlen)(dirp) + 1);
-  CHECK(scandir64_ctx == 0);
+  CHECK_EQ(0, scandir64_ctx);
   scandir64_ctx = ctx;
   scandir64_filter = filter;
   scandir64_compar = compar;
@@ -1956,7 +1956,8 @@ static void read_pollfd(void *ctx, __sanitizer_pollfd *fds,
 static void write_pollfd(void *ctx, __sanitizer_pollfd *fds,
                          __sanitizer_nfds_t nfds) {
   for (unsigned i = 0; i < nfds; ++i)
-    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, &fds[i].revents, sizeof(fds[i].revents));
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, &fds[i].revents,
+                                   sizeof(fds[i].revents));
 }
 
 INTERCEPTOR(int, poll, __sanitizer_pollfd *fds, __sanitizer_nfds_t nfds,

@@ -9,12 +9,14 @@
 
 int num_threads;
 int total_num_alloc;
+const int kMaxNumThreads = 5000;
+pthread_t tid[kMaxNumThreads];
 
 pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 bool go = false;
 
-void *thread_fun(void *) {
+void *thread_fun(void *arg) {
   pthread_mutex_lock(&mutex);
   while (!go) pthread_cond_wait(&cond, &mutex);
   pthread_mutex_unlock(&mutex);
@@ -30,9 +32,9 @@ int main(int argc, char** argv) {
   assert(argc == 3);
   num_threads = atoi(argv[1]);
   assert(num_threads > 0);
+  assert(num_threads <= kMaxNumThreads);
   total_num_alloc = atoi(argv[2]);
   assert(total_num_alloc > 0);
-  pthread_t tid[num_threads];
   printf("%d threads, %d allocations in each\n", num_threads,
          total_num_alloc / num_threads);
   for (int i = 0; i < num_threads; i++)
