@@ -984,8 +984,8 @@ VarTemplateDecl *VarTemplateDecl::CreateDeserialized(ASTContext &C,
   return new (Mem) VarTemplateDecl(EmptyShell());
 }
 
-// FIXME: Should this be unified accross class, function and variable
-// templates? Perhaps also moved to RedeclarableTemplateDecl?
+// TODO: Unify accross class, function and variable templates?
+//       May require moving this and Common to RedeclarableTemplateDecl.
 void VarTemplateDecl::LoadLazySpecializations() const {
   Common *CommonPtr = getCommonPtr();
   if (CommonPtr->LazySpecializations) {

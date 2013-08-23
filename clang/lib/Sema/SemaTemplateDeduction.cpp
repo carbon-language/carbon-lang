@@ -2288,7 +2288,11 @@ Sema::DeduceTemplateArguments(ClassTemplatePartialSpecializationDecl *Partial,
 
 /// Complete template argument deduction for a variable template partial
 /// specialization.
-/// TODO: Unify with ClassTemplatePartialSpecializationDecl version.
+/// TODO: Unify with ClassTemplatePartialSpecializationDecl version?
+///       May require unifying ClassTemplate(Partial)SpecializationDecl and
+///        VarTemplate(Partial)SpecializationDecl with a new data
+///        structure Template(Partial)SpecializationDecl, and
+///        using Template(Partial)SpecializationDecl as input type.
 static Sema::TemplateDeductionResult FinishTemplateArgumentDeduction(
     Sema &S, VarTemplatePartialSpecializationDecl *Partial,
     const TemplateArgumentList &TemplateArgs,
@@ -2404,7 +2408,11 @@ static Sema::TemplateDeductionResult FinishTemplateArgumentDeduction(
 /// \brief Perform template argument deduction to determine whether
 /// the given template arguments match the given variable template
 /// partial specialization per C++ [temp.class.spec.match].
-/// TODO: Unify with ClassTemplatePartialSpecializationDecl version.
+/// TODO: Unify with ClassTemplatePartialSpecializationDecl version?
+///       May require unifying ClassTemplate(Partial)SpecializationDecl and
+///        VarTemplate(Partial)SpecializationDecl with a new data
+///        structure Template(Partial)SpecializationDecl, and
+///        using Template(Partial)SpecializationDecl as input type.
 Sema::TemplateDeductionResult
 Sema::DeduceTemplateArguments(VarTemplatePartialSpecializationDecl *Partial,
                               const TemplateArgumentList &TemplateArgs,
@@ -4458,7 +4466,11 @@ Sema::getMoreSpecializedPartialSpecialization(
   return Better1 ? PS1 : PS2;
 }
 
-/// TODO: Unify with ClassTemplatePartialSpecializationDecl version.
+/// TODO: Unify with ClassTemplatePartialSpecializationDecl version?
+///       May require unifying ClassTemplate(Partial)SpecializationDecl and
+///        VarTemplate(Partial)SpecializationDecl with a new data
+///        structure Template(Partial)SpecializationDecl, and
+///        using Template(Partial)SpecializationDecl as input type.
 VarTemplatePartialSpecializationDecl *
 Sema::getMoreSpecializedPartialSpecialization(
     VarTemplatePartialSpecializationDecl *PS1,
