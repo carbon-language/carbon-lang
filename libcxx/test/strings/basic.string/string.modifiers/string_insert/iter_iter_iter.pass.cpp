@@ -12,6 +12,10 @@
 // template<class InputIterator>
 //   iterator insert(const_iterator p, InputIterator first, InputIterator last);
 
+#if _LIBCPP_DEBUG2 >= 1
+#define _LIBCPP_ASSERT(x, m) ((x) ? (void)0 : std::exit(0))
+#endif
+
 #include <string>
 #include <cassert>
 
@@ -121,6 +125,16 @@ int main()
     test(S("12345678901234567890"), 15, input_iterator<const char*>(s), input_iterator<const char*>(s+10), S("123456789012345ABCDEFGHIJ67890"));
     test(S("12345678901234567890"), 20, input_iterator<const char*>(s), input_iterator<const char*>(s+52),
          S("12345678901234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"));
+    }
+#endif
+#if _LIBCPP_DEBUG2 >= 1
+    {
+        std::string v;
+        std::string v2;
+        char a[] = "123";
+        const int N = sizeof(a)/sizeof(a[0]);
+        std::string::iterator i = v.insert(v2.cbegin() + 10, a, a+N);
+        assert(false);
     }
 #endif
 }

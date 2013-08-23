@@ -28,10 +28,10 @@ test(S s, typename S::size_type pos1, typename S::size_type n1, typename S::size
     typename S::size_type old_size = s.size();
     typename S::const_iterator first = s.begin() + pos1;
     typename S::const_iterator last = s.begin() + pos1 + n1;
+    typename S::size_type xlen = last - first;
     s.replace(first, last, n2, c);
     assert(s.__invariants());
     assert(s == expected);
-    typename S::size_type xlen = last - first;
     typename S::size_type rlen = n2;
     assert(s.size() == old_size - xlen + rlen);
 }

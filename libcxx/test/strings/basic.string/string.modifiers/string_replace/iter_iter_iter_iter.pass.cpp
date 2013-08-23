@@ -26,10 +26,10 @@ test(S s, typename S::size_type pos1, typename S::size_type n1, It f, It l, S ex
     typename S::size_type old_size = s.size();
     typename S::const_iterator first = s.begin() + pos1;
     typename S::const_iterator last = s.begin() + pos1 + n1;
+    typename S::size_type xlen = last - first;
     s.replace(first, last, f, l);
     assert(s.__invariants());
     assert(s == expected);
-    typename S::size_type xlen = last - first;
     typename S::size_type rlen = std::distance(f, l);
     assert(s.size() == old_size - xlen + rlen);
 }

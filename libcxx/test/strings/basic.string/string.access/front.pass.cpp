@@ -12,6 +12,10 @@
 // const charT& front() const;
 //       charT& front();
 
+#ifdef _LIBCPP_DEBUG2
+#define _LIBCPP_ASSERT(x, m) ((x) ? (void)0 : std::exit(0))
+#endif
+
 #include <string>
 #include <cassert>
 
@@ -40,6 +44,13 @@ int main()
     typedef std::basic_string<char, std::char_traits<char>, min_allocator<char>> S;
     test(S("1"));
     test(S("1234567890123456789012345678901234567890"));
+    }
+#endif
+#ifdef _LIBCPP_DEBUG2
+    {
+        std::string s;
+        char c = s.front();
+        assert(false);
     }
 #endif
 }

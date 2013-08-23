@@ -9,48 +9,46 @@
 
 // <string>
 
-// const charT& back() const;
-//       charT& back();
+// Call front() on empty container.
 
-#ifdef _LIBCPP_DEBUG2
+#if _LIBCPP_DEBUG2 >= 1
+
 #define _LIBCPP_ASSERT(x, m) ((x) ? (void)0 : std::exit(0))
-#endif
 
 #include <string>
 #include <cassert>
+#include <iterator>
+#include <exception>
+#include <cstdlib>
 
 #include "../min_allocator.h"
-
-template <class S>
-void
-test(S s)
-{
-    const S& cs = s;
-    assert(&cs.back() == &cs[cs.size()-1]);
-    assert(&s.back() == &s[cs.size()-1]);
-    s.back() = typename S::value_type('z');
-    assert(s.back() == typename S::value_type('z'));
-}
 
 int main()
 {
     {
     typedef std::string S;
-    test(S("1"));
-    test(S("1234567890123456789012345678901234567890"));
+    S s(1, '\0');
+    assert(s.front() == 0);
+    s.clear();
+    assert(s.front() == 0);
+    assert(false);
     }
 #if __cplusplus >= 201103L
     {
     typedef std::basic_string<char, std::char_traits<char>, min_allocator<char>> S;
-    test(S("1"));
-    test(S("1234567890123456789012345678901234567890"));
-    }
-#endif
-#ifdef _LIBCPP_DEBUG2
-    {
-        std::string s;
-        char c = s.back();
-        assert(false);
+    S s(1, '\0');
+    assert(s.front() == 0);
+    s.clear();
+    assert(s.front() == 0);
+    assert(false);
     }
 #endif
 }
+
+#else
+
+int main()
+{
+}
+
+#endif

@@ -12,6 +12,10 @@
 // const_reference operator[](size_type pos) const;
 //       reference operator[](size_type pos);
 
+#ifdef _LIBCPP_DEBUG2
+#define _LIBCPP_ASSERT(x, m) ((x) ? (void)0 : std::exit(0))
+#endif
+
 #include <string>
 #include <cassert>
 
@@ -45,6 +49,15 @@ int main()
     assert(cs[cs.size()] == '\0');
     const S s2 = S();
     assert(s2[0] == '\0');
+    }
+#endif
+#ifdef _LIBCPP_DEBUG2
+    {
+        std::string s;
+        char c = s[0];
+        assert(c == '\0');
+        c = s[1];
+        assert(false);
     }
 #endif
 }

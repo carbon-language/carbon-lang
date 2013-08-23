@@ -1197,12 +1197,13 @@ public:
     _LIBCPP_INLINE_VISIBILITY iterator_type base() const _NOEXCEPT {return __i;}
 
 private:
-    _LIBCPP_INLINE_VISIBILITY __wrap_iter(iterator_type __x) _NOEXCEPT : __i(__x) {}
 #if _LIBCPP_DEBUG_LEVEL >= 2
     _LIBCPP_INLINE_VISIBILITY __wrap_iter(const void* __p, iterator_type __x) : __i(__x)
     {
         __get_db()->__insert_ic(this, __p);
     }
+#else
+    _LIBCPP_INLINE_VISIBILITY __wrap_iter(iterator_type __x) _NOEXCEPT : __i(__x) {}
 #endif
 
     template <class _Up> friend class __wrap_iter;

@@ -3785,7 +3785,7 @@ basic_regex<_CharT, _Traits>::__parse_expression_term(_ForwardIterator __first,
                 }
                 __ml->__add_range(_VSTD::move(__start_range), _VSTD::move(__end_range));
             }
-            else
+            else if (!__start_range.empty())
             {
                 if (__start_range.size() == 1)
                     __ml->__add_char(__start_range[0]);
@@ -3793,7 +3793,7 @@ basic_regex<_CharT, _Traits>::__parse_expression_term(_ForwardIterator __first,
                     __ml->__add_digraph(__start_range[0], __start_range[1]);
             }
         }
-        else
+        else if (!__start_range.empty())
         {
             if (__start_range.size() == 1)
                 __ml->__add_char(__start_range[0]);

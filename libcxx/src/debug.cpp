@@ -118,20 +118,19 @@ void
 __libcpp_db::__insert_ic(void* __i, const void* __c)
 {
     WLock _(mut());
-    __i_node* i = __insert_iterator(__i);
-    const char* errmsg =
-        "Container constructed in a translation unit with debug mode disabled."
-        " But it is being used in a translation unit with debug mode enabled."
-        " Enable it in the other translation unit with #define _LIBCPP_DEBUG2 1";
-    _LIBCPP_ASSERT(__cbeg_ != __cend_, errmsg);
+    if (__cbeg_ == __cend_)
+        return;
     size_t hc = hash<const void*>()(__c) % static_cast<size_t>(__cend_ - __cbeg_);
     __c_node* c = __cbeg_[hc];
-    _LIBCPP_ASSERT(c != nullptr, errmsg);
+    if (c == nullptr)
+        return;
     while (c->__c_ != __c)
     {
         c = c->__next_;
-        _LIBCPP_ASSERT(c != nullptr, errmsg);
+        if (c == nullptr)
+            return;
     }
+    __i_node* i = __insert_iterator(__i);
     c->__add(i);
     i->__c_ = c;
 }
@@ -217,18 +216,23 @@ void
 __libcpp_db::__invalidate_all(void* __c)
 {
     WLock _(mut());
-    size_t hc = hash<void*>()(__c) % static_cast<size_t>(__cend_ - __cbeg_);
-    __c_node* p = __cbeg_[hc];
-    _LIBCPP_ASSERT(p != nullptr, "debug mode internal logic error __invalidate_all A");
-    while (p->__c_ != __c)
+    if (__cend_ != __cbeg_)
     {
-        p = p->__next_;
-        _LIBCPP_ASSERT(p != nullptr, "debug mode internal logic error __invalidate_all B");
-    }
-    while (p->end_ != p->beg_)
-    {
-        --p->end_;
-        (*p->end_)->__c_ = nullptr;
+        size_t hc = hash<void*>()(__c) % static_cast<size_t>(__cend_ - __cbeg_);
+        __c_node* p = __cbeg_[hc];
+        if (p == nullptr)
+            return;
+        while (p->__c_ != __c)
+        {
+            p = p->__next_;
+            if (p == nullptr)
+                return;
+        }
+        while (p->end_ != p->beg_)
+        {
+            --p->end_;
+            (*p->end_)->__c_ = nullptr;
+        }
     }
 }
 
@@ -236,13 +240,26 @@ __c_node*
 __libcpp_db::__find_c_and_lock(void* __c) const
 {
     mut().lock();
+    if (__cend_ == __cbeg_)
+    {
+        mut().unlock();
+        return nullptr;
+    }
     size_t hc = hash<void*>()(__c) % static_cast<size_t>(__cend_ - __cbeg_);
     __c_node* p = __cbeg_[hc];
-    _LIBCPP_ASSERT(p != nullptr, "debug mode internal logic error __find_c_and_lock A");
+    if (p == nullptr)
+    {
+        mut().unlock();
+        return nullptr;
+    }
     while (p->__c_ != __c)
     {
         p = p->__next_;
-        _LIBCPP_ASSERT(p != nullptr, "debug mode internal logic error __find_c_and_lock B");
+        if (p == nullptr)
+        {
+            mut().unlock();
+            return nullptr;
+        }
     }
     return p;
 }
@@ -271,28 +288,35 @@ void
 __libcpp_db::__erase_c(void* __c)
 {
     WLock _(mut());
-    size_t hc = hash<void*>()(__c) % static_cast<size_t>(__cend_ - __cbeg_);
-    __c_node* p = __cbeg_[hc];
-    __c_node* q = nullptr;
-    _LIBCPP_ASSERT(p != nullptr, "debug mode internal logic error __erase_c A");
-    while (p->__c_ != __c)
+    if (__cend_ != __cbeg_)
     {
-        q = p;
-        p = p->__next_;
-        _LIBCPP_ASSERT(p != nullptr, "debug mode internal logic error __erase_c B");
+        size_t hc = hash<void*>()(__c) % static_cast<size_t>(__cend_ - __cbeg_);
+        __c_node* p = __cbeg_[hc];
+        if (p == nullptr)
+            return;
+        __c_node* q = nullptr;
+        _LIBCPP_ASSERT(p != nullptr, "debug mode internal logic error __erase_c A");
+        while (p->__c_ != __c)
+        {
+            q = p;
+            p = p->__next_;
+            if (p == nullptr)
+                return;
+            _LIBCPP_ASSERT(p != nullptr, "debug mode internal logic error __erase_c B");
+        }
+        if (q == nullptr)
+            __cbeg_[hc] = p->__next_;
+        else
+            q->__next_ = p->__next_;
+        while (p->end_ != p->beg_)
+        {
+            --p->end_;
+            (*p->end_)->__c_ = nullptr;
+        }
+        free(p->beg_);
+        free(p);
+        --__csz_;
     }
-    if (q == nullptr)
-        __cbeg_[hc] = p->__next_;
-    else
-        q->__next_ = p->__next_;
-    while (p->end_ != p->beg_)
-    {
-        --p->end_;
-        (*p->end_)->__c_ = nullptr;
-    }
-    free(p->beg_);
-    free(p);
-    --__csz_;
 }
 
 void
