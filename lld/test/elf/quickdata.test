@@ -11,4 +11,4 @@ hexagon:    scope:           global
 hexagon:    type:            quick-data
 hexagon:  - name:            bss1
 hexagon:    scope:           global
-hexagon:    type:            quick-data
+hexagon:    type:            zero-fill-quick

@@ -306,6 +306,14 @@ public:
   /// Utility for deriving permissions from content type
   static ContentPermissions permissions(ContentType type);
 
+  /// Utility function to check if the atom occupies file space
+  virtual bool occupiesDiskSpace() const {
+    ContentType atomContentType = contentType();
+    return !(atomContentType == DefinedAtom::typeZeroFill ||
+             atomContentType == DefinedAtom::typeZeroFillFast ||
+             atomContentType == DefinedAtom::typeTLVInitialZeroFill);
+  }
+
 protected:
   // DefinedAtom is an abstract base class. Only subclasses can access
   // constructor.

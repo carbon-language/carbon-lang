@@ -887,6 +887,8 @@ struct MappingTraits<const lld::DefinedAtom*> {
         _sectionName(atom->customSectionName()) {
           for ( const lld::Reference *r : *atom )
             _references.push_back(r);
+          if (!atom->occupiesDiskSpace())
+            return;
           ArrayRef<uint8_t> cont = atom->rawContent();
           _content.reserve(cont.size());
           for (uint8_t x : cont)
@@ -933,8 +935,10 @@ struct MappingTraits<const lld::DefinedAtom*> {
     virtual ContentPermissions permissions() const   { return _permissions; }
     virtual bool               isAlias() const       { return false; }
     ArrayRef<uint8_t>          rawContent() const    {
+      if (!occupiesDiskSpace())
+        return ArrayRef<uint8_t>();
       return ArrayRef<uint8_t>(
-        reinterpret_cast<const uint8_t *>(_content.data()), _content.size());
+          reinterpret_cast<const uint8_t *>(_content.data()), _content.size());
     }
 
     virtual uint64_t           ordinal() const       { return _ordinal; }

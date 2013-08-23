@@ -359,8 +359,7 @@ void AtomSection<ELFT>::write(ELFWriter *writer,
                     llvm::dbgs() << "Writing atom: " << ai->_atom->name()
                                  << " | " << ai->_fileOffset << "\n");
     const DefinedAtom *definedAtom = cast<DefinedAtom>(ai->_atom);
-    if ((definedAtom->contentType() == DefinedAtom::typeZeroFill) ||
-        (definedAtom->contentType() == DefinedAtom::typeZeroFillFast))
+    if (!definedAtom->occupiesDiskSpace())
       return;
     // Copy raw content of atom to file buffer.
     llvm::ArrayRef<uint8_t> content = definedAtom->rawContent();

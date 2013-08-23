@@ -46,7 +46,9 @@ public:
       return DefinedAtom::typeZeroFillFast;
 
     default:
-      if (section->sh_flags & llvm::ELF::SHF_HEX_GPREL)
+      if (section->sh_type == llvm::ELF::SHT_NOBITS)
+        return DefinedAtom::typeZeroFillFast;
+      else if (section->sh_flags & llvm::ELF::SHF_HEX_GPREL)
         return DefinedAtom::typeDataFast;
       else
         llvm_unreachable("unknown symbol type");

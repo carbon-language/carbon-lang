@@ -344,8 +344,11 @@ public:
       if (!sectionName)
         return error_code(sectionName);
 
-      auto sectionContents = section ? _objFile->getSectionContents(section)
-                                     : ArrayRef<uint8_t>();
+      auto sectionContents =
+          (section && section->sh_type != llvm::ELF::SHT_NOBITS)
+              ? _objFile->getSectionContents(section)
+              : ArrayRef<uint8_t>();
+
       if (!sectionContents)
         return error_code(sectionContents);
 

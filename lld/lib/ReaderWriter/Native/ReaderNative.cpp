@@ -816,12 +816,11 @@ inline const NativeAtomAttributesV1& NativeDefinedAtomV1::attributes() const {
 }
 
 inline ArrayRef<uint8_t> NativeDefinedAtomV1::rawContent() const {
-  if (( this->contentType() == DefinedAtom::typeZeroFill ) ||
-      ( this->contentType() == DefinedAtom::typeZeroFillFast))
+  if (!occupiesDiskSpace())
     return ArrayRef<uint8_t>();
   const uint8_t* p = _file->content(_ivarData->contentOffset,
                                     _ivarData->contentSize);
-   return ArrayRef<uint8_t>(p, _ivarData->contentSize);
+  return ArrayRef<uint8_t>(p, _ivarData->contentSize);
 }
 
 inline StringRef NativeDefinedAtomV1::customSectionName() const {
