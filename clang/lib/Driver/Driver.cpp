@@ -1359,10 +1359,6 @@ bool Driver::IsUsingLTO(const ArgList &Args) const {
   if (Args.hasFlag(options::OPT_flto, options::OPT_fno_lto, false))
     return true;
 
-  // Check for -O4.
-  if (const Arg *A = Args.getLastArg(options::OPT_O_Group))
-      return A->getOption().matches(options::OPT_O4);
-
   return false;
 }
 

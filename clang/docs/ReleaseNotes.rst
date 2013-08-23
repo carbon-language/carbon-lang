@@ -59,6 +59,8 @@ about them. The improvements since the 3.3 release include:
 New Compiler Flags
 ------------------
 
+- Clang no longer special cases -O4 to enable lto. Explicitly pass -flto to
+  enable it.
 -  ...
 
 C Language Changes in Clang
