@@ -56,13 +56,19 @@ namespace llvm {
   /// Use a SparseMultiSet to track physical registers. Storage is only
   /// allocated once for the pass. It can be cleared in constant time and reused
   /// without any frees.
-  typedef SparseMultiSet<PhysRegSUOper, llvm::identity<unsigned>, uint16_t> Reg2SUnitsMap;
+  typedef SparseMultiSet<PhysRegSUOper, llvm::identity<unsigned>, uint16_t>
+  Reg2SUnitsMap;
 
   /// Use SparseSet as a SparseMap by relying on the fact that it never
   /// compares ValueT's, only unsigned keys. This allows the set to be cleared
   /// between scheduling regions in constant time as long as ValueT does not
   /// require a destructor.
   typedef SparseSet<VReg2SUnit, VirtReg2IndexFunctor> VReg2SUnitMap;
+
+  /// Track local uses of virtual registers. These uses are gathered by the DAG
+  /// builder and may be consulted by the scheduler to avoid iterating an entire
+  /// vreg use list.
+  typedef SparseMultiSet<VReg2SUnit, VirtReg2IndexFunctor> VReg2UseMap;
 
   /// ScheduleDAGInstrs - A ScheduleDAG subclass for scheduling lists of
   /// MachineInstrs.
@@ -106,6 +112,11 @@ namespace llvm {
     /// After calling BuildSchedGraph, each machine instruction in the current
     /// scheduling region is mapped to an SUnit.
     DenseMap<MachineInstr*, SUnit*> MISUnitMap;
+
+    /// After calling BuildSchedGraph, each vreg used in the scheduling region
+    /// is mapped to a set of SUnits. These include all local vreg uses, not
+    /// just the uses for a singly defined vreg.
+    VReg2UseMap VRegUses;
 
     /// State internal to DAG building.
     /// -------------------------------

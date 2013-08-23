@@ -405,6 +405,9 @@ void ScheduleDAGInstrs::addVRegUseDeps(SUnit *SU, unsigned OperIdx) {
   MachineInstr *MI = SU->getInstr();
   unsigned Reg = MI->getOperand(OperIdx).getReg();
 
+  // Record this local VReg use.
+  VRegUses.insert(VReg2SUnit(Reg, SU));
+
   // Lookup this operand's reaching definition.
   assert(LIS && "vreg dependencies requires LiveIntervals");
   LiveRangeQuery LRQ(LIS->getInterval(Reg), LIS->getInstructionIndex(MI));
@@ -715,10 +718,9 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
   Uses.setUniverse(TRI->getNumRegs());
 
   assert(VRegDefs.empty() && "Only BuildSchedGraph may access VRegDefs");
-  // FIXME: Allow SparseSet to reserve space for the creation of virtual
-  // registers during scheduling. Don't artificially inflate the Universe
-  // because we want to assert that vregs are not created during DAG building.
+  VRegUses.clear();
   VRegDefs.setUniverse(MRI.getNumVirtRegs());
+  VRegUses.setUniverse(MRI.getNumVirtRegs());
 
   // Model data dependencies between instructions being scheduled and the
   // ExitSU.
