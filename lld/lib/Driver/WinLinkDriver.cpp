@@ -99,6 +99,16 @@ llvm::COFF::WindowsSubsystem stringToWinSubsystem(StringRef str) {
   return llvm::StringSwitch<llvm::COFF::WindowsSubsystem>(str.lower())
       .Case("windows", llvm::COFF::IMAGE_SUBSYSTEM_WINDOWS_GUI)
       .Case("console", llvm::COFF::IMAGE_SUBSYSTEM_WINDOWS_CUI)
+      .Case("boot_application",
+            llvm::COFF::IMAGE_SUBSYSTEM_WINDOWS_BOOT_APPLICATION)
+      .Case("efi_application", llvm::COFF::IMAGE_SUBSYSTEM_EFI_APPLICATION)
+      .Case("efi_boot_service_driver",
+            llvm::COFF::IMAGE_SUBSYSTEM_EFI_BOOT_SERVICE_DRIVER)
+      .Case("efi_rom", llvm::COFF::IMAGE_SUBSYSTEM_EFI_ROM)
+      .Case("efi_runtime_driver",
+            llvm::COFF::IMAGE_SUBSYSTEM_EFI_RUNTIME_DRIVER)
+      .Case("native", llvm::COFF::IMAGE_SUBSYSTEM_NATIVE)
+      .Case("posix", llvm::COFF::IMAGE_SUBSYSTEM_POSIX_CUI)
       .Default(llvm::COFF::IMAGE_SUBSYSTEM_UNKNOWN);
 }
 
