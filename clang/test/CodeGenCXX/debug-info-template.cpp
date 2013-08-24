@@ -98,7 +98,7 @@ TC<unsigned, 2, &glb, &foo::e, &foo::f, &func, tmpl_impl, 1, 2, 3>::nested tci;
 TC<int, -3, nullptr, nullptr, nullptr, nullptr, tmpl_impl> tcn;
 
 struct _GUID;
-template <_GUID *>
+template <const _GUID *>
 struct tmpl_guid {
 };
 
