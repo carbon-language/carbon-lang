@@ -315,7 +315,7 @@ static void translateImmediate(MCInst &mcInst, uint64_t immediate,
     // operand is 64 bits wide.  Do nothing.
     break;
   }
-    
+
   if(!tryAddingSymbolicOperand(immediate + pcrel, isBranch, insn.startLocation,
                                insn.immediateOffset, insn.immediateSize,
                                mcInst, Dis))
