@@ -522,7 +522,7 @@ namespace COFF {
                                              ///  services.
     IMAGE_SUBSYSTEM_EFI_ROM = 13, ///< An EFI ROM image.
     IMAGE_SUBSYSTEM_XBOX = 14, ///< XBOX.
-    IMAGE_SUBSYSTEM_WINDOWS_BOOT_APPLICATION = 16, ///< A BCD application.
+    IMAGE_SUBSYSTEM_WINDOWS_BOOT_APPLICATION = 16 ///< A BCD application.
   };
 
   enum DLLCharacteristics {
