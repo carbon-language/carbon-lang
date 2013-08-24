@@ -1161,12 +1161,10 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
         ValueList Operands;
         BasicBlock *IBB = PH->getIncomingBlock(i);
 
-        if (VisitedBBs.count(IBB)) {
+        if (!VisitedBBs.insert(IBB)) {
           NewPhi->addIncoming(NewPhi->getIncomingValueForBlock(IBB), IBB);
           continue;
         }
-
-        VisitedBBs.insert(IBB);
 
         // Prepare the operand vector.
         for (unsigned j = 0; j < E->Scalars.size(); ++j)
@@ -1851,9 +1849,8 @@ bool SLPVectorizer::vectorizeChainsInBlock(BasicBlock *BB, BoUpSLP &R) {
       break;
 
     // We may go through BB multiple times so skip the one we have checked.
-    if (VisitedInstrs.count(instr))
+    if (!VisitedInstrs.insert(instr))
       continue;
-    VisitedInstrs.insert(instr);
 
     // Stop constructing the list when you reach a different type.
     if (Incoming.size() && P->getType() != Incoming[0]->getType()) {
@@ -1879,9 +1876,8 @@ bool SLPVectorizer::vectorizeChainsInBlock(BasicBlock *BB, BoUpSLP &R) {
   for (BasicBlock::iterator it = BB->begin(), e = BB->end(); it != e; it++) {
 
     // We may go through BB multiple times so skip the one we have checked.
-    if (VisitedInstrs.count(it))
+    if (!VisitedInstrs.insert(it))
       continue;
-    VisitedInstrs.insert(it);
 
     if (isa<DbgInfoIntrinsic>(it))
       continue;
