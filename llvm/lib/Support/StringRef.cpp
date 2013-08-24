@@ -85,7 +85,7 @@ int StringRef::compare_numeric(StringRef RHS) const {
 // Compute the edit distance between the two given strings.
 unsigned StringRef::edit_distance(llvm::StringRef Other,
                                   bool AllowReplacements,
-                                  unsigned MaxEditDistance) {
+                                  unsigned MaxEditDistance) const {
   return llvm::ComputeEditDistance(
       llvm::ArrayRef<char>(data(), size()),
       llvm::ArrayRef<char>(Other.data(), Other.size()),

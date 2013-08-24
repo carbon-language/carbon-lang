@@ -175,7 +175,7 @@ namespace llvm {
     /// transform one of the given strings into the other. If zero,
     /// the strings are identical.
     unsigned edit_distance(StringRef Other, bool AllowReplacements = true,
-                           unsigned MaxEditDistance = 0);
+                           unsigned MaxEditDistance = 0) const;
 
     /// str - Get the contents as an std::string.
     std::string str() const {
