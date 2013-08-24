@@ -1072,9 +1072,12 @@ def MOV64mi32 : RIi32<0xC7, MRM0m, (outs), (ins i64mem:$dst, i64i32imm:$src),
                       [(store i64immSExt32:$src, addr:$dst)], IIC_MOV_MEM>;
 } // SchedRW
 
+let hasSideEffects = 0 in {
+
 /// moffs8, moffs16 and moffs32 versions of moves.  The immediate is a
 /// 32-bit offset from the PC.  These are only valid in x86-32 mode.
 let SchedRW = [WriteALU] in {
+let mayLoad = 1 in {
 def MOV8o8a : Ii32 <0xA0, RawFrm, (outs), (ins offset8:$src),
                    "mov{b}\t{$src, %al|al, $src}", [], IIC_MOV_MEM>,
                    Requires<[In32BitMode]>;
@@ -1084,6 +1087,8 @@ def MOV16o16a : Ii32 <0xA1, RawFrm, (outs), (ins offset16:$src),
 def MOV32o32a : Ii32 <0xA1, RawFrm, (outs), (ins offset32:$src),
                       "mov{l}\t{$src, %eax|eax, $src}", [], IIC_MOV_MEM>,
                      Requires<[In32BitMode]>;
+}
+let mayStore = 1 in {
 def MOV8ao8 : Ii32 <0xA2, RawFrm, (outs offset8:$dst), (ins),
                    "mov{b}\t{%al, $dst|$dst, al}", [], IIC_MOV_MEM>,
                   Requires<[In32BitMode]>;
@@ -1094,9 +1099,11 @@ def MOV32ao32 : Ii32 <0xA3, RawFrm, (outs offset32:$dst), (ins),
                       "mov{l}\t{%eax, $dst|$dst, eax}", [], IIC_MOV_MEM>,
                      Requires<[In32BitMode]>;
 }
+}
 
 // These forms all have full 64-bit absolute addresses in their instructions
 // and use the movabs mnemonic to indicate this specific form.
+let mayLoad = 1 in {
 def MOV64o8a : RIi64_NOREX<0xA0, RawFrm, (outs), (ins offset64:$src),
                      "movabs{b}\t{$src, %al|al, $src}", []>,
                      Requires<[In64BitMode]>;
@@ -1109,7 +1116,9 @@ def MOV64o32a : RIi64_NOREX<0xA1, RawFrm, (outs), (ins offset64:$src),
 def MOV64o64a : RIi64<0xA1, RawFrm, (outs), (ins offset64:$src),
                      "movabs{q}\t{$src, %rax|rax, $src}", []>,
                      Requires<[In64BitMode]>;
+}
 
+let mayStore = 1 in {
 def MOV64ao8 : RIi64_NOREX<0xA2, RawFrm, (outs offset64:$dst), (ins),
                      "movabs{b}\t{%al, $dst|$dst, al}", []>,
                      Requires<[In64BitMode]>;
@@ -1122,6 +1131,8 @@ def MOV64ao32 : RIi64_NOREX<0xA3, RawFrm, (outs offset64:$dst), (ins),
 def MOV64ao64 : RIi64<0xA3, RawFrm, (outs offset64:$dst), (ins),
                      "movabs{q}\t{%rax, $dst|$dst, rax}", []>,
                      Requires<[In64BitMode]>;
+}
+} // hasSideEffects = 0
 
 let isCodeGenOnly = 1, hasSideEffects = 0, SchedRW = [WriteMove] in {
 def MOV8rr_REV : I<0x8A, MRMSrcReg, (outs GR8:$dst), (ins GR8:$src),
