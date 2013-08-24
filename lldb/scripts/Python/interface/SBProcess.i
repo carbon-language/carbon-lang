@@ -251,8 +251,7 @@ public:
 
     # Read 4 bytes from address 'addr' and assume error.Success() is True.
     content = process.ReadMemory(addr, 4, error)
-    # Use 'ascii' encoding as each byte of 'content' is within [0..255].
-    new_bytes = bytearray(content, 'ascii')
+    new_bytes = bytearray(content)
     ") ReadMemory;
     size_t
     ReadMemory (addr_t addr, void *buf, size_t size, lldb::SBError &error);
