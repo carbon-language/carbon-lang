@@ -20,6 +20,7 @@
 #include "NVPTXRegisterInfo.h"
 #include "NVPTXTargetMachine.h"
 #include "NVPTXUtilities.h"
+#include "InstPrinter/NVPTXInstPrinter.h"
 #include "cl_common_defines.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Analysis/ConstantFolding.h"
@@ -1992,6 +1993,116 @@ bool NVPTXAsmPrinter::ignoreLoc(const MachineInstr &MI) {
   }
   return false;
 }
+
+/// PrintAsmOperand - Print out an operand for an inline asm expression.
+///
+bool NVPTXAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
+                                      unsigned AsmVariant,
+                                      const char *ExtraCode, raw_ostream &O) {
+  if (ExtraCode && ExtraCode[0]) {
+    if (ExtraCode[1] != 0)
+      return true; // Unknown modifier.
+
+    switch (ExtraCode[0]) {
+    default:
+      // See if this is a generic print operand
+      return AsmPrinter::PrintAsmOperand(MI, OpNo, AsmVariant, ExtraCode, O);
+    case 'r':
+      break;
+    }
+  }
+
+  printOperand(MI, OpNo, O);
+
+  return false;
+}
+
+bool NVPTXAsmPrinter::PrintAsmMemoryOperand(
+    const MachineInstr *MI, unsigned OpNo, unsigned AsmVariant,
+    const char *ExtraCode, raw_ostream &O) {
+  if (ExtraCode && ExtraCode[0])
+    return true; // Unknown modifier
+
+  O << '[';
+  printMemOperand(MI, OpNo, O);
+  O << ']';
+
+  return false;
+}
+
+void NVPTXAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
+                                   raw_ostream &O, const char *Modifier) {
+  const MachineOperand &MO = MI->getOperand(opNum);
+  switch (MO.getType()) {
+  case MachineOperand::MO_Register:
+    if (TargetRegisterInfo::isPhysicalRegister(MO.getReg())) {
+      if (MO.getReg() == NVPTX::VRDepot)
+        O << DEPOTNAME << getFunctionNumber();
+      else
+        O << NVPTXInstPrinter::getRegisterName(MO.getReg());
+    } else {
+      emitVirtualRegister(MO.getReg(), false, O);
+    }
+    return;
+
+  case MachineOperand::MO_Immediate:
+    if (!Modifier)
+      O << MO.getImm();
+    else if (strstr(Modifier, "vec") == Modifier)
+      printVecModifiedImmediate(MO, Modifier, O);
+    else
+      llvm_unreachable(
+          "Don't know how to handle modifier on immediate operand");
+    return;
+
+  case MachineOperand::MO_FPImmediate:
+    printFPConstant(MO.getFPImm(), O);
+    break;
+
+  case MachineOperand::MO_GlobalAddress:
+    O << *Mang->getSymbol(MO.getGlobal());
+    break;
+
+  case MachineOperand::MO_ExternalSymbol: {
+    const char *symbname = MO.getSymbolName();
+    if (strstr(symbname, ".PARAM") == symbname) {
+      unsigned index;
+      sscanf(symbname + 6, "%u[];", &index);
+      printParamName(index, O);
+    } else if (strstr(symbname, ".HLPPARAM") == symbname) {
+      unsigned index;
+      sscanf(symbname + 9, "%u[];", &index);
+      O << *CurrentFnSym << "_param_" << index << "_offset";
+    } else
+      O << symbname;
+    break;
+  }
+
+  case MachineOperand::MO_MachineBasicBlock:
+    O << *MO.getMBB()->getSymbol();
+    return;
+
+  default:
+    llvm_unreachable("Operand type not supported.");
+  }
+}
+
+void NVPTXAsmPrinter::printMemOperand(const MachineInstr *MI, int opNum,
+                                      raw_ostream &O, const char *Modifier) {
+  printOperand(MI, opNum, O);
+
+  if (Modifier && !strcmp(Modifier, "add")) {
+    O << ", ";
+    printOperand(MI, opNum + 1, O);
+  } else {
+    if (MI->getOperand(opNum + 1).isImm() &&
+        MI->getOperand(opNum + 1).getImm() == 0)
+      return; // don't print ',0' or '+0'
+    O << "+";
+    printOperand(MI, opNum + 1, O);
+  }
+}
+
 
 // Force static initialization.
 extern "C" void LLVMInitializeNVPTXBackendAsmPrinter() {

@@ -222,7 +222,14 @@ private:
   bool isImageType(const Type *Ty);
   void printReturnValStr(const Function *, raw_ostream &O);
   void printReturnValStr(const MachineFunction &MF, raw_ostream &O);
-
+  bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
+                       unsigned AsmVariant, const char *ExtraCode,
+                       raw_ostream &);
+  void printOperand(const MachineInstr *MI, int opNum, raw_ostream &O,
+                    const char *Modifier = 0);
+  bool PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
+                             unsigned AsmVariant, const char *ExtraCode,
+                             raw_ostream &);
 protected:
   bool doInitialization(Module &M);
   bool doFinalization(Module &M);
