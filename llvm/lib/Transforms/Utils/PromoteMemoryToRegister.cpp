@@ -431,16 +431,6 @@ static bool rewriteSingleStoreAlloca(AllocaInst *AI, AllocaInfo &Info,
   return true;
 }
 
-namespace {
-/// This is a helper predicate used to search by the first element of a pair.
-struct StoreIndexSearchPredicate {
-  bool operator()(const std::pair<unsigned, StoreInst *> &LHS,
-                  const std::pair<unsigned, StoreInst *> &RHS) {
-    return LHS.first < RHS.first;
-  }
-};
-}
-
 /// Many allocas are only used within a single basic block.  If this is the
 /// case, avoid traversing the CFG and inserting a lot of potentially useless
 /// PHI nodes by just performing a single linear pass over the basic block
@@ -473,8 +463,7 @@ static void promoteSingleBlockAlloca(AllocaInst *AI, const AllocaInfo &Info,
 
   // Sort the stores by their index, making it efficient to do a lookup with a
   // binary search.
-  std::sort(StoresByIndex.begin(), StoresByIndex.end(),
-            StoreIndexSearchPredicate());
+  std::sort(StoresByIndex.begin(), StoresByIndex.end(), less_first());
 
   // Walk all of the loads from this alloca, replacing them with the nearest
   // store above them, if any.
@@ -489,7 +478,7 @@ static void promoteSingleBlockAlloca(AllocaInst *AI, const AllocaInfo &Info,
     StoresByIndexTy::iterator I =
         std::lower_bound(StoresByIndex.begin(), StoresByIndex.end(),
                          std::make_pair(LoadIdx, static_cast<StoreInst *>(0)),
-                         StoreIndexSearchPredicate());
+                         less_first());
 
     if (I == StoresByIndex.begin())
       // If there is no store before this load, the load takes the undef value.
@@ -849,16 +838,6 @@ void PromoteMem2Reg::ComputeLiveInBlocks(
   }
 }
 
-namespace {
-typedef std::pair<DomTreeNode *, unsigned> DomTreeNodePair;
-
-struct DomTreeNodeCompare {
-  bool operator()(const DomTreeNodePair &LHS, const DomTreeNodePair &RHS) {
-    return LHS.second < RHS.second;
-  }
-};
-} // end anonymous namespace
-
 /// At this point, we're committed to promoting the alloca using IDF's, and the
 /// standard SSA construction algorithm.  Determine which blocks need phi nodes
 /// and see if we can optimize out some work by avoiding insertion of dead phi
@@ -876,9 +855,9 @@ void PromoteMem2Reg::DetermineInsertionPoint(AllocaInst *AI, unsigned AllocaNum,
 
   // Use a priority queue keyed on dominator tree level so that inserted nodes
   // are handled from the bottom of the dominator tree upwards.
-  typedef std::priority_queue<DomTreeNodePair,
-                              SmallVector<DomTreeNodePair, 32>,
-                              DomTreeNodeCompare> IDFPriorityQueue;
+  typedef std::pair<DomTreeNode *, unsigned> DomTreeNodePair;
+  typedef std::priority_queue<DomTreeNodePair, SmallVector<DomTreeNodePair, 32>,
+                              less_second> IDFPriorityQueue;
   IDFPriorityQueue PQ;
 
   for (SmallPtrSet<BasicBlock *, 32>::const_iterator I = DefBlocks.begin(),

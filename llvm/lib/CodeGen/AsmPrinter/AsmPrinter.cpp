@@ -1287,12 +1287,6 @@ void AsmPrinter::EmitLLVMUsedList(const ConstantArray *InitList) {
   }
 }
 
-typedef std::pair<unsigned, Constant*> Structor;
-
-static bool priority_order(const Structor& lhs, const Structor& rhs) {
-  return lhs.first < rhs.first;
-}
-
 /// EmitXXStructorList - Emit the ctor or dtor list taking into account the init
 /// priority.
 void AsmPrinter::EmitXXStructorList(const Constant *List, bool isCtor) {
@@ -1309,6 +1303,7 @@ void AsmPrinter::EmitXXStructorList(const Constant *List, bool isCtor) {
       !isa<PointerType>(ETy->getTypeAtIndex(1U))) return; // Not (int, ptr).
 
   // Gather the structors in a form that's convenient for sorting by priority.
+  typedef std::pair<unsigned, Constant *> Structor;
   SmallVector<Structor, 8> Structors;
   for (unsigned i = 0, e = InitList->getNumOperands(); i != e; ++i) {
     ConstantStruct *CS = dyn_cast<ConstantStruct>(InitList->getOperand(i));
@@ -1324,7 +1319,7 @@ void AsmPrinter::EmitXXStructorList(const Constant *List, bool isCtor) {
   // Emit the function pointers in the target-specific order
   const DataLayout *TD = TM.getDataLayout();
   unsigned Align = Log2_32(TD->getPointerPrefAlignment());
-  std::stable_sort(Structors.begin(), Structors.end(), priority_order);
+  std::stable_sort(Structors.begin(), Structors.end(), less_first());
   for (unsigned i = 0, e = Structors.size(); i != e; ++i) {
     const MCSection *OutputSection =
       (isCtor ?

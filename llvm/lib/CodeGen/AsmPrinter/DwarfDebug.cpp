@@ -108,16 +108,8 @@ DwarfPubNames("generate-dwarf-pubnames", cl::Hidden,
                          clEnumVal(Disable, "Disabled"), clEnumValEnd),
               cl::init(Default));
 
-namespace {
-  const char *const DWARFGroupName = "DWARF Emission";
-  const char *const DbgTimerName = "DWARF Debug Writer";
-
-  struct CompareFirst {
-    template <typename T> bool operator()(const T &lhs, const T &rhs) const {
-      return lhs.first < rhs.first;
-    }
-  };
-} // end anonymous namespace
+static const char *const DWARFGroupName = "DWARF Emission";
+static const char *const DbgTimerName = "DWARF Debug Writer";
 
 //===----------------------------------------------------------------------===//
 
@@ -625,7 +617,7 @@ DIE *DwarfDebug::constructScopeDIE(CompileUnit *TheCU, LexicalScope *Scope) {
               ImportedEntityMap::const_iterator> Range = std::equal_range(
         ScopesWithImportedEntities.begin(), ScopesWithImportedEntities.end(),
         std::pair<const MDNode *, const MDNode *>(DS, (const MDNode*)0),
-        CompareFirst());
+        less_first());
     if (Children.empty() && Range.first == Range.second)
       return NULL;
     ScopeDIE = constructLexicalScopeDIE(TheCU, Scope);
@@ -879,7 +871,7 @@ void DwarfDebug::beginModule() {
           DIImportedEntity(ImportedEntities.getElement(i)).getContext(),
           ImportedEntities.getElement(i)));
     std::sort(ScopesWithImportedEntities.begin(),
-              ScopesWithImportedEntities.end(), CompareFirst());
+              ScopesWithImportedEntities.end(), less_first());
     DIArray GVs = CUNode.getGlobalVariables();
     for (unsigned i = 0, e = GVs.getNumElements(); i != e; ++i)
       CU->createGlobalVariableDIE(GVs.getElement(i));

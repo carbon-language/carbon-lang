@@ -690,15 +690,6 @@ void ScheduleDAGSDNodes::VerifyScheduledSequence(bool isBottomUp) {
 }
 #endif // NDEBUG
 
-namespace {
-  struct OrderSorter {
-    bool operator()(const std::pair<unsigned, MachineInstr*> &A,
-                    const std::pair<unsigned, MachineInstr*> &B) {
-      return A.first < B.first;
-    }
-  };
-}
-
 /// ProcessSDDbgValues - Process SDDbgValues associated with this node.
 static void
 ProcessSDDbgValues(SDNode *N, SelectionDAG *DAG, InstrEmitter &Emitter,
@@ -857,7 +848,7 @@ EmitSchedule(MachineBasicBlock::iterator &InsertPos) {
 
     // Sort the source order instructions and use the order to insert debug
     // values.
-    std::sort(Orders.begin(), Orders.end(), OrderSorter());
+    std::sort(Orders.begin(), Orders.end(), less_first());
 
     SDDbgInfo::DbgIterator DI = DAG->DbgBegin();
     SDDbgInfo::DbgIterator DE = DAG->DbgEnd();
