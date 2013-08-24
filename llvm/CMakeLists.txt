@@ -231,6 +231,10 @@ option(LLVM_BUILD_TESTS
   "Build LLVM unit tests. If OFF, just generate build targets." OFF)
 option(LLVM_INCLUDE_TESTS "Generate build targets for the LLVM unit tests." ON)
 
+option (LLVM_BUILD_DOCS "Build the llvm documentation." OFF)
+option (LLVM_INCLUDE_DOCS "Generate build targets for llvm documentation." ON)
+option (LLVM_ENABLE_DOXYGEN "Use doxygen to generate llvm documentation." OFF)
+
 # All options referred to from HandleLLVMOptions have to be specified
 # BEFORE this include, otherwise options will not be correctly set on
 # first cmake run
@@ -465,6 +469,10 @@ if( LLVM_INCLUDE_TESTS )
     )
 endif()
 
+if (LLVM_INCLUDE_DOCS)
+  add_subdirectory(docs)
+endif()
+
 add_subdirectory(cmake/modules)
 
 if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY)
@@ -496,8 +504,6 @@ if( NOT WIN32 )
   install(FILES include/llvm-c/lto.h DESTINATION include/llvm-c)
 endif()
 
-
-# TODO: make and install documentation.
 
 set(CPACK_PACKAGE_VENDOR "LLVM")
 set(CPACK_PACKAGE_VERSION_MAJOR ${LLVM_VERSION_MAJOR})
