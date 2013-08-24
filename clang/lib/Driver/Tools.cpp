@@ -2941,9 +2941,14 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(Args.MakeArgString("-mstack-alignment=" + alignment));
   }
   // -mkernel implies -mstrict-align; don't add the redundant option.
-  if (Args.hasArg(options::OPT_mstrict_align) && !KernelOrKext) {
-    CmdArgs.push_back("-backend-option");
-    CmdArgs.push_back("-arm-strict-align");
+  if (!KernelOrKext) {
+    if (Args.hasArg(options::OPT_mno_unaligned_access)) {
+      CmdArgs.push_back("-backend-option");
+      CmdArgs.push_back("-arm-strict-align");
+    } else if (Args.hasArg(options::OPT_munaligned_access)) {
+      CmdArgs.push_back("-backend-option");
+      CmdArgs.push_back("-arm-no-strict-align");
+    }
   }
 
   // Forward -f options with positive and negative forms; we translate
