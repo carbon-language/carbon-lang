@@ -350,7 +350,20 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
 
     case OPT_fixed:
       // handle /fixed
+
+      // make sure /dynamicbase wasn't specified
+      if (parsedArgs->getLastArg(OPT_dynamicbase)) {
+        diagnostics << "/dynamicbase must not be specified with /fixed\n";
+        return true;
+      }
+
       ctx.setBaseRelocationEnabled(false);
+      ctx.setDynamicBaseEnabled(false);
+      break;
+
+    case OPT_no_dynamicbase:
+      // handle /dynamicbase:no
+      ctx.setDynamicBaseEnabled(false);
       break;
 
     case OPT_tsaware:

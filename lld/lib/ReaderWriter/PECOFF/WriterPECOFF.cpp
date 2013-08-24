@@ -204,7 +204,7 @@ public:
           llvm::COFF::IMAGE_DLL_CHARACTERISTICS_TERMINAL_SERVER_AWARE;
     if (context.isNxCompat())
       dllCharacteristics |= llvm::COFF::IMAGE_DLL_CHARACTERISTICS_NX_COMPAT;
-    if (context.getBaseRelocationEnabled())
+    if (context.getDynamicBaseEnabled())
       dllCharacteristics |= llvm::COFF::IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE;
     _peHeader.DLLCharacteristics = dllCharacteristics;
 

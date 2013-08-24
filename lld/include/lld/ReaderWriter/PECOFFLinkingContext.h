@@ -29,7 +29,8 @@ public:
         _heapReserve(1024 * 1024), _heapCommit(4096),
         _subsystem(llvm::COFF::IMAGE_SUBSYSTEM_UNKNOWN), _minOSVersion(6, 0),
         _nxCompat(true), _largeAddressAware(false),
-        _baseRelocationEnabled(true), _terminalServerAware(true) {}
+        _baseRelocationEnabled(true), _terminalServerAware(true),
+        _dynamicBaseEnabled(true) {}
 
   struct OSVersion {
     OSVersion(int v1, int v2) : majorVersion(v1), minorVersion(v2) {}
@@ -92,6 +93,9 @@ public:
   void setTerminalServerAware(bool val) { _terminalServerAware = val; }
   bool isTerminalServerAware() const { return _terminalServerAware; }
 
+  void setDynamicBaseEnabled(bool val) { _dynamicBaseEnabled = val; }
+  bool getDynamicBaseEnabled() const { return _dynamicBaseEnabled; }
+
   virtual ErrorOr<Reference::Kind> relocKindFromString(StringRef str) const;
   virtual ErrorOr<std::string> stringFromRelocKind(Reference::Kind kind) const;
 
@@ -123,6 +127,7 @@ private:
   bool _largeAddressAware;
   bool _baseRelocationEnabled;
   bool _terminalServerAware;
+  bool _dynamicBaseEnabled;
 
   std::vector<StringRef> _inputSearchPaths;
   mutable std::unique_ptr<Reader> _reader;

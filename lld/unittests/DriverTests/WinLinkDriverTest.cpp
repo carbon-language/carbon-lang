@@ -53,6 +53,7 @@ TEST_F(WinLinkParserTest, Basic) {
   EXPECT_FALSE(_context.getLargeAddressAware());
   EXPECT_TRUE(_context.getBaseRelocationEnabled());
   EXPECT_TRUE(_context.isTerminalServerAware());
+  EXPECT_TRUE(_context.getDynamicBaseEnabled());
   EXPECT_TRUE(_context.initialUndefinedSymbols().empty());
 }
 
@@ -171,6 +172,7 @@ TEST_F(WinLinkParserTest, NoLargeAddressAware) {
 TEST_F(WinLinkParserTest, Fixed) {
   EXPECT_FALSE(parse("link.exe", "/fixed", "a.out", nullptr));
   EXPECT_FALSE(_context.getBaseRelocationEnabled());
+  EXPECT_FALSE(_context.getDynamicBaseEnabled());
 }
 
 TEST_F(WinLinkParserTest, NoFixed) {
@@ -186,6 +188,16 @@ TEST_F(WinLinkParserTest, TerminalServerAware) {
 TEST_F(WinLinkParserTest, NoTerminalServerAware) {
   EXPECT_FALSE(parse("link.exe", "/tsaware:no", "a.out", nullptr));
   EXPECT_FALSE(_context.isTerminalServerAware());
+}
+
+TEST_F(WinLinkParserTest, DynamicBase) {
+  EXPECT_FALSE(parse("link.exe", "/dynamicbase", "a.out", nullptr));
+  EXPECT_TRUE(_context.getDynamicBaseEnabled());
+}
+
+TEST_F(WinLinkParserTest, NoDynamicBase) {
+  EXPECT_FALSE(parse("link.exe", "/dynamicbase:no", "a.out", nullptr));
+  EXPECT_FALSE(_context.getDynamicBaseEnabled());
 }
 
 TEST_F(WinLinkParserTest, Include) {

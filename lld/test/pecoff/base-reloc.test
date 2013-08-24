@@ -19,14 +19,12 @@ NOBASEREL-SECTION-NOT: Contents of section .reloc:
 
 # RUN: lld -flavor link /out:%t1 /subsystem:console /force -- %t.obj \
 # RUN:   && llvm-readobj -file-headers %t1 \
-# RUN:   | FileCheck %s --check-prefix=BASEREL1
+# RUN:   | FileCheck %s --check-prefix=BASEREL-HEADER
 #
 # RUN: lld -flavor link /out:%t1 /subsystem:console /force /fixed -- %t.obj \
 # RUN:   && llvm-readobj -file-headers %t1 \
-# RUN:   | FileCheck %s --check-prefix=BASEREL2
+# RUN:   | FileCheck %s --check-prefix=NOBASEREL-HEADER
 
-BASEREL1-NOT: IMAGE_FILE_RELOCS_STRIPPED
-BASEREL1: IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE
+BASEREL-HEADER-NOT: IMAGE_FILE_RELOCS_STRIPPED
 
-BASEREL2: IMAGE_FILE_RELOCS_STRIPPED
-BASEREL2-NOT: IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE
+NOBASEREL-HEADER: IMAGE_FILE_RELOCS_STRIPPED

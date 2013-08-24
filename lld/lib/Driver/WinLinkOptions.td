@@ -42,6 +42,9 @@ def no_largeaddressaware : F<"largeaddressaware:no">,
 def fixed : F<"fixed">;
 def no_fixed : F<"fixed:no">, HelpText<"Enable base relocations">;
 
+def dynamicbase : F<"dynamicbase">;
+def no_dynamicbase : F<"dynamicbase:no">, HelpText<"Disable address space layout randomization">;
+
 def tsaware : F<"tsaware">;
 def no_tsaware : F<"tsaware:no">,
     HelpText<"Create non-Terminal Server aware executable">;

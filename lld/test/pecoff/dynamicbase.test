@@ -1,0 +1,22 @@
+# RUN: yaml2obj %p/Inputs/hello.obj.yaml > %t.obj
+#
+# RUN: lld -flavor link /out:%t1 /subsystem:console /force -- %t.obj \
+# RUN:   && llvm-readobj -file-headers %t1 \
+# RUN:   | FileCheck %s --check-prefix=DYNAMICBASE
+#
+# RUN: lld -flavor link /out:%t1 /subsystem:console /force /dynamicbase:no \
+# RUN:   -- %t.obj && llvm-readobj -file-headers %t1 \
+# RUN:   | FileCheck %s --check-prefix=NODYNAMICBASE
+#
+# RUN: lld -flavor link /out:%t1 /subsystem:console /force /fixed -- %t.obj \
+# RUN:   && llvm-readobj -file-headers %t1 \
+# RUN:   | FileCheck %s --check-prefix=NODYNAMICBASE
+#
+# RUN: not lld -flavor link /out:%t1 /subsystem:console /force /fixed \
+# RUN:   /dynamicbase -- %t.obj 2>&1 | FileCheck %s --check-prefix=DYNAMIC-AND-FIXED
+
+DYNAMICBASE: IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE
+
+NODYNAMICBASE-NOT: IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE
+
+DYNAMIC-AND-FIXED: /dynamicbase must not be specified with /fixed
