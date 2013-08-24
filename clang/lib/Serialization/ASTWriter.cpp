@@ -4623,11 +4623,6 @@ DeclID ASTWriter::getDeclID(const Decl *D) {
   return DeclIDs[D];
 }
 
-static inline bool compLocDecl(std::pair<unsigned, serialization::DeclID> L,
-                               std::pair<unsigned, serialization::DeclID> R) {
-  return L.first < R.first;
-}
-
 void ASTWriter::associateDeclWithFile(const Decl *D, DeclID ID) {
   assert(ID);
   assert(D);
@@ -4667,7 +4662,7 @@ void ASTWriter::associateDeclWithFile(const Decl *D, DeclID ID) {
   }
 
   LocDeclIDsTy::iterator
-    I = std::upper_bound(Decls.begin(), Decls.end(), LocDecl, compLocDecl);
+    I = std::upper_bound(Decls.begin(), Decls.end(), LocDecl, less_first());
 
   Decls.insert(I, LocDecl);
 }
