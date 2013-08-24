@@ -28,6 +28,9 @@ if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   get_filename_component(PATH_TO_LLVM_BUILD ${LLD_PATH_TO_LLVM_BUILD}
                          ABSOLUTE)
 
+  option(LLVM_INSTALL_TOOLCHAIN_ONLY
+    "Only include toolchain files in the 'install' target." OFF)
+
   include(AddLLVM)
   include(TableGen)
   include("${LLD_PATH_TO_LLVM_BUILD}/share/llvm/cmake/LLVMConfig.cmake")
@@ -130,9 +133,11 @@ macro(add_lld_library name)
   target_link_libraries(${name} ${LLVM_COMMON_LIBS})
   link_system_libs(${name})
 
-  install(TARGETS ${name}
-    LIBRARY DESTINATION lib${LLVM_LIBDIR_SUFFIX}
-    ARCHIVE DESTINATION lib${LLVM_LIBDIR_SUFFIX})
+  if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY)
+    install(TARGETS ${name}
+      LIBRARY DESTINATION lib${LLVM_LIBDIR_SUFFIX}
+      ARCHIVE DESTINATION lib${LLVM_LIBDIR_SUFFIX})
+  endif()
   set_target_properties(${name} PROPERTIES FOLDER "lld libraries")
 endmacro(add_lld_library)
 
@@ -146,12 +151,14 @@ include_directories(BEFORE
   ${CMAKE_CURRENT_SOURCE_DIR}/include
   )
 
-install(DIRECTORY include/
-  DESTINATION include
-  FILES_MATCHING
-  PATTERN "*.h"
-  PATTERN ".svn" EXCLUDE
-  )
+if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY)
+  install(DIRECTORY include/
+    DESTINATION include
+    FILES_MATCHING
+    PATTERN "*.h"
+    PATTERN ".svn" EXCLUDE
+    )
+endif()
 
 add_subdirectory(lib)
 add_subdirectory(tools)
