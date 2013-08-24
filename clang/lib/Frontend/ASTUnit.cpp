@@ -2679,8 +2679,8 @@ void ASTUnit::addFileLevelDecl(Decl *D) {
     return;
   }
 
-  LocDeclsTy::iterator I =
-      std::upper_bound(Decls->begin(), Decls->end(), LocDecl, less_first());
+  LocDeclsTy::iterator I = std::upper_bound(Decls->begin(), Decls->end(),
+                                            LocDecl, llvm::less_first());
 
   Decls->insert(I, LocDecl);
 }
@@ -2706,7 +2706,7 @@ void ASTUnit::findFileRegionDecls(FileID File, unsigned Offset, unsigned Length,
 
   LocDeclsTy::iterator BeginIt =
       std::lower_bound(LocDecls.begin(), LocDecls.end(),
-                       std::make_pair(Offset, (Decl *)0), less_first());
+                       std::make_pair(Offset, (Decl *)0), llvm::less_first());
   if (BeginIt != LocDecls.begin())
     --BeginIt;
 
@@ -2719,7 +2719,7 @@ void ASTUnit::findFileRegionDecls(FileID File, unsigned Offset, unsigned Length,
 
   LocDeclsTy::iterator EndIt = std::upper_bound(
       LocDecls.begin(), LocDecls.end(),
-      std::make_pair(Offset + Length, (Decl *)0), less_first());
+      std::make_pair(Offset + Length, (Decl *)0), llvm::less_first());
   if (EndIt != LocDecls.end())
     ++EndIt;
   

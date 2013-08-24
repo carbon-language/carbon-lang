@@ -34,6 +34,7 @@ namespace clang {
 class DirectoryEntry;
 class FileEntry;
 class FileManager;
+class IdentifierIterator;
 
 namespace serialization {
   class ModuleFile;
