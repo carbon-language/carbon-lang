@@ -923,6 +923,18 @@ void DebugInfoFinder::processModule(const Module &M) {
       DIArray RetainedTypes = CU.getRetainedTypes();
       for (unsigned i = 0, e = RetainedTypes.getNumElements(); i != e; ++i)
         processType(DIType(RetainedTypes.getElement(i)));
+      DIArray Imports = CU.getImportedEntities();
+      for (unsigned i = 0, e = Imports.getNumElements(); i != e; ++i) {
+        DIImportedEntity Import = DIImportedEntity(
+                                    Imports.getElement(i));
+        DIDescriptor Entity = Import.getEntity();
+        if (Entity.isType())
+          processType(DIType(Entity));
+        else if (Entity.isSubprogram())
+          processSubprogram(DISubprogram(Entity));
+        else if (Entity.isNameSpace())
+          processScope(DINameSpace(Entity).getContext());
+      }
       // FIXME: We really shouldn't be bailing out after visiting just one CU
       return;
     }
