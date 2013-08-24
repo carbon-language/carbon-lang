@@ -15,6 +15,8 @@ set(LLVM_VERSION_MINOR 4)
 
 set(PACKAGE_VERSION "${LLVM_VERSION_MAJOR}.${LLVM_VERSION_MINOR}svn")
 
+option(LLVM_INSTALL_TOOLCHAIN_ONLY "Only include toolchain files in the 'install' target." OFF)
+
 option(LLVM_USE_FOLDERS "Enable solution folders in Visual Studio. Disable for Express versions." ON)
 if ( LLVM_USE_FOLDERS )
   set_property(GLOBAL PROPERTY USE_FOLDERS ON)
@@ -465,28 +467,35 @@ endif()
 
 add_subdirectory(cmake/modules)
 
-install(DIRECTORY include/
-  DESTINATION include
-  FILES_MATCHING
-  PATTERN "*.def"
-  PATTERN "*.h"
-  PATTERN "*.td"
-  PATTERN "*.inc"
-  PATTERN "LICENSE.TXT"
-  PATTERN ".svn" EXCLUDE
-  )
+if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY)
+  install(DIRECTORY include/
+    DESTINATION include
+    FILES_MATCHING
+    PATTERN "*.def"
+    PATTERN "*.h"
+    PATTERN "*.td"
+    PATTERN "*.inc"
+    PATTERN "LICENSE.TXT"
+    PATTERN ".svn" EXCLUDE
+    )
 
-install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include/
-  DESTINATION include
-  FILES_MATCHING
-  PATTERN "*.def"
-  PATTERN "*.h"
-  PATTERN "*.gen"
-  PATTERN "*.inc"
-  # Exclude include/llvm/CMakeFiles/intrinsics_gen.dir, matched by "*.def"
-  PATTERN "CMakeFiles" EXCLUDE
-  PATTERN ".svn" EXCLUDE
-  )
+  install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include/
+    DESTINATION include
+    FILES_MATCHING
+    PATTERN "*.def"
+    PATTERN "*.h"
+    PATTERN "*.gen"
+    PATTERN "*.inc"
+    # Exclude include/llvm/CMakeFiles/intrinsics_gen.dir, matched by "*.def"
+    PATTERN "CMakeFiles" EXCLUDE
+    PATTERN ".svn" EXCLUDE
+    )
+endif()
+
+if( NOT WIN32 )
+  install(FILES include/llvm-c/lto.h DESTINATION include/llvm-c)
+endif()
+
 
 # TODO: make and install documentation.
 

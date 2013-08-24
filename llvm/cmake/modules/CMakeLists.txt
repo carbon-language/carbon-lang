@@ -19,19 +19,21 @@ configure_file(
   ${llvm_cmake_builddir}/LLVMConfigVersion.cmake
   @ONLY)
 
-install(FILES
-  ${llvm_cmake_builddir}/LLVMConfig.cmake
-  ${llvm_cmake_builddir}/LLVMConfigVersion.cmake
-  LLVM-Config.cmake
-  DESTINATION share/llvm/cmake)
+if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY)
+  install(FILES
+    ${llvm_cmake_builddir}/LLVMConfig.cmake
+    ${llvm_cmake_builddir}/LLVMConfigVersion.cmake
+    LLVM-Config.cmake
+    DESTINATION share/llvm/cmake)
 
-install(DIRECTORY .
-  DESTINATION share/llvm/cmake
-  FILES_MATCHING PATTERN *.cmake
-  PATTERN .svn EXCLUDE
-  PATTERN LLVMConfig.cmake EXCLUDE
-  PATTERN LLVMConfigVersion.cmake EXCLUDE
-  PATTERN LLVM-Config.cmake EXCLUDE
-  PATTERN GetHostTriple.cmake EXCLUDE
-  PATTERN VersionFromVCS.cmake EXCLUDE
-  PATTERN CheckAtomic.cmake EXCLUDE)
+  install(DIRECTORY .
+    DESTINATION share/llvm/cmake
+    FILES_MATCHING PATTERN *.cmake
+    PATTERN .svn EXCLUDE
+    PATTERN LLVMConfig.cmake EXCLUDE
+    PATTERN LLVMConfigVersion.cmake EXCLUDE
+    PATTERN LLVM-Config.cmake EXCLUDE
+    PATTERN GetHostTriple.cmake EXCLUDE
+    PATTERN VersionFromVCS.cmake EXCLUDE
+    PATTERN CheckAtomic.cmake EXCLUDE)
+endif()
