@@ -639,7 +639,10 @@ DIE *DwarfDebug::constructScopeDIE(CompileUnit *TheCU, LexicalScope *Scope) {
       constructImportedEntityDIE(TheCU, i->second, ScopeDIE);
   }
 
-  if (!ScopeDIE) return NULL;
+  if (!ScopeDIE) {
+    std::for_each(Children.begin(), Children.end(), deleter<DIE>);
+    return NULL;
+  }
 
   // Add children
   for (SmallVectorImpl<DIE *>::iterator I = Children.begin(),
