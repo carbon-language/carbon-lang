@@ -143,8 +143,8 @@ void OMPGenerator::createCallParallelLoopStart(
     F = Function::Create(Ty, Linkage, Name, M);
   }
 
-  Value *Args[] = { SubFunction, SubfunctionParam, NumberOfThreads, LowerBound,
-                    UpperBound, Stride, };
+  Value *Args[] = { SubFunction, SubfunctionParam, NumberOfThreads,
+                    LowerBound,  UpperBound,       Stride };
 
   Builder.CreateCall(F, Args);
 }
