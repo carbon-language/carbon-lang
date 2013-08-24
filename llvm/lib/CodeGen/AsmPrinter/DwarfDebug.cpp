@@ -313,12 +313,7 @@ static bool isObjCClass(StringRef Name) {
 static bool hasObjCCategory(StringRef Name) {
   if (!isObjCClass(Name)) return false;
 
-  size_t pos = Name.find(')');
-  if (pos != std::string::npos) {
-    if (Name[pos+1] != ' ') return false;
-    return true;
-  }
-  return false;
+  return Name.find(") ") != StringRef::npos;
 }
 
 static void getObjCClassCategory(StringRef In, StringRef &Class,
