@@ -371,7 +371,7 @@ public:
     error_category() _NOEXCEPT;
 #else
     _LIBCPP_ALWAYS_INLINE
-    _LIBCPP_CONSTEXPR_AFTER_CXX11 error_category() _NOEXCEPT = default;
+    _LIBCPP_CONSTEXPR_AFTER_CXX11 error_category() _NOEXCEPT _LIBCPP_DEFAULT;
 #endif
 private:
     error_category(const error_category&);// = delete;
