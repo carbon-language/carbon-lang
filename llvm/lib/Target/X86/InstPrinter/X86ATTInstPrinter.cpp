@@ -215,3 +215,19 @@ void X86ATTInstPrinter::printMemReference(const MCInst *MI, unsigned Op,
 
   O << markup(">");
 }
+
+void X86ATTInstPrinter::printMemOffset(const MCInst *MI, unsigned Op,
+                                       raw_ostream &O) {
+  const MCOperand &DispSpec = MI->getOperand(Op);
+
+  O << markup("<mem:");
+
+  if (DispSpec.isImm()) {
+    O << formatImm(DispSpec.getImm());
+  } else {
+    assert(DispSpec.isExpr() && "non-immediate displacement?");
+    O << *DispSpec.getExpr();
+  }
+
+  O << markup(">");
+}

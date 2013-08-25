@@ -39,7 +39,8 @@ public:
   void printSSECC(const MCInst *MI, unsigned Op, raw_ostream &O);
   void printAVXCC(const MCInst *MI, unsigned Op, raw_ostream &O);
   void printPCRelImm(const MCInst *MI, unsigned OpNo, raw_ostream &O);
-  
+  void printMemOffset(const MCInst *MI, unsigned OpNo, raw_ostream &O);
+
   void printopaquemem(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
     O << "opaque ptr ";
     printMemReference(MI, OpNo, O);
@@ -96,6 +97,23 @@ public:
   void printf512mem(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
     O << "zmmword ptr ";
     printMemReference(MI, OpNo, O);
+  }
+
+  void printMemOffs8(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
+    O << "byte ptr ";
+    printMemOffset(MI, OpNo, O);
+  }
+  void printMemOffs16(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
+    O << "word ptr ";
+    printMemOffset(MI, OpNo, O);
+  }
+  void printMemOffs32(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
+    O << "dword ptr ";
+    printMemOffset(MI, OpNo, O);
+  }
+  void printMemOffs64(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
+    O << "qword ptr ";
+    printMemOffset(MI, OpNo, O);
   }
 };
   

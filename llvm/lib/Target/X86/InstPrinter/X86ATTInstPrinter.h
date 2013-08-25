@@ -42,7 +42,8 @@ public:
   void printSSECC(const MCInst *MI, unsigned Op, raw_ostream &OS);
   void printAVXCC(const MCInst *MI, unsigned Op, raw_ostream &OS);
   void printPCRelImm(const MCInst *MI, unsigned OpNo, raw_ostream &OS);
-  
+  void printMemOffset(const MCInst *MI, unsigned OpNo, raw_ostream &OS);
+
   void printopaquemem(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
     printMemReference(MI, OpNo, O);
   }
@@ -85,6 +86,19 @@ public:
   }
   void printf512mem(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
     printMemReference(MI, OpNo, O);
+  }
+
+  void printMemOffs8(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
+    printMemOffset(MI, OpNo, O);
+  }
+  void printMemOffs16(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
+    printMemOffset(MI, OpNo, O);
+  }
+  void printMemOffs32(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
+    printMemOffset(MI, OpNo, O);
+  }
+  void printMemOffs64(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
+    printMemOffset(MI, OpNo, O);
   }
 };
   

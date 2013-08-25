@@ -849,6 +849,23 @@ struct X86Operand : public MCParsedAsmOperand {
       !getMemIndexReg() && getMemScale() == 1;
   }
 
+  bool isMemOffs8() const {
+    return Kind == Memory && !getMemSegReg() && !getMemBaseReg() &&
+      !getMemIndexReg() && getMemScale() == 1 && (!Mem.Size || Mem.Size == 8);
+  }
+  bool isMemOffs16() const {
+    return Kind == Memory && !getMemSegReg() && !getMemBaseReg() &&
+      !getMemIndexReg() && getMemScale() == 1 && (!Mem.Size || Mem.Size == 16);
+  }
+  bool isMemOffs32() const {
+    return Kind == Memory && !getMemSegReg() && !getMemBaseReg() &&
+      !getMemIndexReg() && getMemScale() == 1 && (!Mem.Size || Mem.Size == 32);
+  }
+  bool isMemOffs64() const {
+    return Kind == Memory && !getMemSegReg() && !getMemBaseReg() &&
+      !getMemIndexReg() && getMemScale() == 1 && (!Mem.Size || Mem.Size == 64);
+  }
+
   bool isReg() const { return Kind == Register; }
 
   void addExpr(MCInst &Inst, const MCExpr *Expr) const {
@@ -923,6 +940,28 @@ struct X86Operand : public MCParsedAsmOperand {
   }
 
   void addAbsMemOperands(MCInst &Inst, unsigned N) const {
+    assert((N == 1) && "Invalid number of operands!");
+    // Add as immediates when possible.
+    if (const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getMemDisp()))
+      Inst.addOperand(MCOperand::CreateImm(CE->getValue()));
+    else
+      Inst.addOperand(MCOperand::CreateExpr(getMemDisp()));
+  }
+
+  void addMemOffs8Operands(MCInst &Inst, unsigned N) const {
+    addMemOffsOperands(Inst, N);
+  }
+  void addMemOffs16Operands(MCInst &Inst, unsigned N) const {
+    addMemOffsOperands(Inst, N);
+  }
+  void addMemOffs32Operands(MCInst &Inst, unsigned N) const {
+    addMemOffsOperands(Inst, N);
+  }
+  void addMemOffs64Operands(MCInst &Inst, unsigned N) const {
+    addMemOffsOperands(Inst, N);
+  }
+
+  void addMemOffsOperands(MCInst &Inst, unsigned N) const {
     assert((N == 1) && "Invalid number of operands!");
     // Add as immediates when possible.
     if (const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getMemDisp()))
