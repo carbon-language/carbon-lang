@@ -1258,7 +1258,8 @@ CollectTemplateParams(const TemplateParameterList *TPList,
             cast<MemberPointerType>(T.getTypePtr()), chars);
       }
       llvm::DITemplateValueParameter TVP =
-          DBuilder.createTemplateValueParameter(TheCU, Name, TTy, V);
+          DBuilder.createTemplateValueParameter(TheCU, Name, TTy,
+                                                V->stripPointerCasts());
       TemplateParams.push_back(TVP);
     } break;
     case TemplateArgument::NullPtr: {

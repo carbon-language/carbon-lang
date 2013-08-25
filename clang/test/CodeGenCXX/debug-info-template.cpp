@@ -74,7 +74,12 @@
 // CHECK: [[TGIARG1]] = {{.*}}metadata !"", metadata [[CONST_GUID_PTR:![0-9]*]], { i32, i16, i16, [8 x i8] }* @_GUID_12345678_1234_1234_1234_1234567890ab, {{.*}} ; [ DW_TAG_template_value_parameter ]
 // CHECK: [[CONST_GUID_PTR]] = {{.*}}, metadata [[CONST_GUID:![0-9]*]]} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from ]
 // CHECK: [[CONST_GUID]] = {{.*}}, metadata [[GUID:![0-9]*]]} ; [ DW_TAG_const_type ] [line 0, size 0, align 0, offset 0] [from _GUID]
-// CHECK: [[GUID]] = {{.*}} ; [ DW_TAG_structure_type ] [_GUID] [line 100, size 0, align 0, offset 0] [decl]
+// CHECK: [[GUID]] = {{.*}} ; [ DW_TAG_structure_type ] [_GUID]
+
+// CHECK: metadata [[PTOARGS:![0-9]*]]} ; [ DW_TAG_structure_type ] [PaddingAtEndTemplate<&PaddedObj>]
+// CHECK: [[PTOARGS]] = metadata !{metadata [[PTOARG1:![0-9]*]]}
+// CHECK: [[PTOARG1]] = {{.*}}metadata !"", metadata [[CONST_PADDINGATEND_PTR:![0-9]*]], { i32, i8, [3 x i8] }* @PaddedObj, {{.*}} ; [ DW_TAG_template_value_parameter ]
+// CHECK: [[CONST_PADDINGATEND_PTR]] = {{.*}} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from PaddingAtEnd]
 struct foo {
   char pad[8]; // make the member pointer to 'e' a bit more interesting (nonzero)
   int e;
@@ -104,3 +109,16 @@ struct tmpl_guid {
 
 struct __declspec(uuid("{12345678-1234-1234-1234-1234567890ab}")) uuid;
 tmpl_guid<&__uuidof(uuid)> tgi;
+
+struct PaddingAtEnd {
+  int i;
+  char c;
+};
+
+PaddingAtEnd PaddedObj = {};
+
+template <const PaddingAtEnd *>
+struct PaddingAtEndTemplate {
+};
+
+PaddingAtEndTemplate<&PaddedObj> PaddedTemplateObj;
