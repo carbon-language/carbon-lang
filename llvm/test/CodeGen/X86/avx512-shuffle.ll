@@ -16,7 +16,7 @@
 ; CHECK: .long 0
 ; CHECK: .long 10
 ; CHECK: .long 1
-; CHECK: test1:
+; CHECK-LABEL: test1:
 ; CHECK: vpermps
 ; CHECK: ret
 define <16 x float> @test1(<16 x float> %a) nounwind {
@@ -24,7 +24,7 @@ define <16 x float> @test1(<16 x float> %a) nounwind {
   ret <16 x float> %c
 }
 
-; CHECK: test2:
+; CHECK-LABEL: test2:
 ; CHECK: vpermd
 ; CHECK: ret
 define <16 x i32> @test2(<16 x i32> %a) nounwind {
@@ -32,7 +32,7 @@ define <16 x i32> @test2(<16 x i32> %a) nounwind {
   ret <16 x i32> %c
 }
 
-; CHECK: test3:
+; CHECK-LABEL: test3:
 ; CHECK: vpermq
 ; CHECK: ret
 define <8 x i64> @test3(<8 x i64> %a) nounwind {
@@ -40,7 +40,7 @@ define <8 x i64> @test3(<8 x i64> %a) nounwind {
   ret <8 x i64> %c
 }
 
-; CHECK: test4:
+; CHECK-LABEL: test4:
 ; CHECK: vpermpd
 ; CHECK: ret
 define <8 x double> @test4(<8 x double> %a) nounwind {
@@ -48,7 +48,7 @@ define <8 x double> @test4(<8 x double> %a) nounwind {
   ret <8 x double> %c
 }
 
-; CHECK: test5:
+; CHECK-LABEL: test5:
 ; CHECK: vpermi2pd
 ; CHECK: ret
 define <8 x double> @test5(<8 x double> %a, <8 x double> %b) nounwind {
@@ -56,7 +56,7 @@ define <8 x double> @test5(<8 x double> %a, <8 x double> %b) nounwind {
   ret <8 x double> %c
 }
 
-; CHECK: test6:
+; CHECK-LABEL: test6:
 ; CHECK: vpermq $30
 ; CHECK: ret
 define <8 x i64> @test6(<8 x i64> %a) nounwind {
@@ -64,7 +64,7 @@ define <8 x i64> @test6(<8 x i64> %a) nounwind {
   ret <8 x i64> %c
 }
 
-; CHECK: test7:
+; CHECK-LABEL: test7:
 ; CHECK: vpermi2q
 ; CHECK: ret
 define <8 x i64> @test7(<8 x i64> %a, <8 x i64> %b) nounwind {
@@ -72,7 +72,7 @@ define <8 x i64> @test7(<8 x i64> %a, <8 x i64> %b) nounwind {
   ret <8 x i64> %c
 }
 
-; CHECK: test8:
+; CHECK-LABEL: test8:
 ; CHECK: vpermi2d
 ; CHECK: ret
 define <16 x i32> @test8(<16 x i32> %a, <16 x i32> %b) nounwind {
@@ -80,7 +80,7 @@ define <16 x i32> @test8(<16 x i32> %a, <16 x i32> %b) nounwind {
   ret <16 x i32> %c
 }
 
-; CHECK: test9:
+; CHECK-LABEL: test9:
 ; CHECK: vpermi2ps
 ; CHECK: ret
 define <16 x float> @test9(<16 x float> %a, <16 x float> %b) nounwind {
@@ -88,7 +88,7 @@ define <16 x float> @test9(<16 x float> %a, <16 x float> %b) nounwind {
   ret <16 x float> %c
 }
 
-; CHECK: test10:
+; CHECK-LABEL: test10:
 ; CHECK: vpermi2ps (
 ; CHECK: ret
 define <16 x float> @test10(<16 x float> %a, <16 x float>* %b) nounwind {
@@ -97,7 +97,7 @@ define <16 x float> @test10(<16 x float> %a, <16 x float>* %b) nounwind {
   ret <16 x float> %d
 }
 
-; CHECK: test11:
+; CHECK-LABEL: test11:
 ; CHECK: vpermi2d (
 ; CHECK: ret
 define <16 x i32> @test11(<16 x i32> %a, <16 x i32>* %b) nounwind {
@@ -105,3 +105,36 @@ define <16 x i32> @test11(<16 x i32> %a, <16 x i32>* %b) nounwind {
   %d = shufflevector <16 x i32> %a, <16 x i32> %c, <16 x i32> <i32 15, i32 31, i32 14, i32 22, i32 13, i32 29, i32 4, i32 28, i32 11, i32 27, i32 10, i32 26, i32 9, i32 25, i32 8, i32 24>
   ret <16 x i32> %d
 }
+
+; CHECK-LABEL: test18
+; CHECK: vpunpckhdq %zmm
+; CHECK: ret
+define <16 x i32> @test18(<16 x i32> %a, <16 x i32> %c) {
+ %b = shufflevector <16 x i32> %a, <16 x i32> %c, <16 x i32><i32 2, i32 10, i32 3, i32 11, i32 6, i32 14, i32 7, i32 15, i32 18, i32 26, i32 19, i32 27, i32 22, i32 30, i32 23, i32 31>
+ ret <16 x i32> %b
+}
+
+; CHECK-LABEL: test19
+; CHECK: vpunpckldq %zmm
+; CHECK: ret
+define <16 x i32> @test19(<16 x i32> %a, <16 x i32> %c) {
+ %b = shufflevector <16 x i32> %a, <16 x i32> %c, <16 x i32><i32 0, i32 8, i32 1, i32 9, i32 4, i32 12, i32 5, i32 13, i32 16, i32 24, i32 17, i32 25, i32 20, i32 28, i32 21, i32 29>
+ ret <16 x i32> %b
+}
+
+; CHECK-LABEL: test20
+; CHECK: vpunpckhqdq  %zmm
+; CHECK: ret
+define <8 x i64> @test20(<8 x i64> %a, <8 x i64> %c) {
+ %b = shufflevector <8 x i64> %a, <8 x i64> %c, <8 x i32><i32 1, i32 5, i32 3, i32 7, i32 9, i32 13, i32 11, i32 15>
+ ret <8 x i64> %b
+}
+
+; CHECK-LABEL: test21
+; CHECK: vunpcklps %zmm
+; CHECK: ret
+define <16 x float> @test21(<16 x float> %a, <16 x float> %c) {
+ %b = shufflevector <16 x float> %a, <16 x float> %c, <16 x i32><i32 0, i32 8, i32 1, i32 9, i32 4, i32 12, i32 5, i32 13, i32 16, i32 24, i32 17, i32 25, i32 20, i32 28, i32 21, i32 29>
+ ret <16 x float> %b
+}
+
