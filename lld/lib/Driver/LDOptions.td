@@ -6,10 +6,16 @@ def target : Separate<["-"], "target">,
   
 def mllvm : Separate<["-"], "mllvm">, HelpText<"Options to pass to LLVM">;
 
+// Single and multiple dash options combined
+multiclass smDash<string opt1, string opt2, string help> {
+  def "" : Separate<["-"], opt1>, HelpText<help>;
+  def opt1_eq : Separate<["-"], opt1#"=">, Alias<!cast<Option>(opt1)>;
+  def opt2_dashdash : Separate<["--"], opt2>, Alias<!cast<Option>(opt1)>;
+  def opt2_dashdash_eq : Separate<["--"], opt2#"=">, Alias<!cast<Option>(opt1)>;
+}
 
-def entry : Joined<["--"], "entry=">,
-    HelpText<"Name of entry point symbol">;
-def entry_e : Separate<["-"], "e">, Alias<entry>;
+defm e : smDash<"e", "entry",
+         "Name of entry point symbol">;
 
 def output : Separate<["-"], "o">, 
     MetaVarName<"<path>">,
@@ -72,13 +78,8 @@ def omagic_alias : Flag<["-"], "N">, Alias<omagic>;
 def no_omagic : Flag<["--"], "no-omagic">,
     HelpText<"This option negates most of the effects of the -N option. Disable linking with shared libraries">;
 
-// TODO: remove the options with the = sign, once the change in the OptionParser
-// is done to recognize the allowed suffixes for an argument. 
-def u : Separate<["-"], "u">,
-    HelpText<"Force symbol to be entered in the output file as an undefined symbol">;
-def undefined : Separate<["--"], "undefined">, Alias<u>;
-def u_equal : Joined<["-"], "u=">, Alias<u>;
-def undefined_equal : Joined<["--"], "undefined=">, Alias<u>;
+defm u : smDash<"u", "undefined",
+         "Force symbol to be entered in the output file as an undefined symbol">;
 
 def as_needed : Flag<["--"], "as-needed">,
     HelpText<"This option affects ELF DT_NEEDED tags for dynamic libraries mentioned on the command line">;

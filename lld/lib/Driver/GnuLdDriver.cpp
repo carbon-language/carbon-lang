@@ -170,7 +170,7 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
       ctx->setAllowShlibUndefines(true);
       ctx->setUseShlibUndefines(false);
       break;
-    case OPT_entry:
+    case OPT_e:
       ctx->setEntrySymbolName(inputArg->getValue());
       break;
 
