@@ -13,8 +13,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_OBJECT_MCMODULEYAML_H
-#define LLVM_OBJECT_MCMODULEYAML_H
+#ifndef LLVM_MC_MCMODULEYAML_H
+#define LLVM_MC_MCMODULEYAML_H
 
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringRef.h"
