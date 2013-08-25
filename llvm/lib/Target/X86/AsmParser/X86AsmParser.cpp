@@ -814,6 +814,9 @@ struct X86Operand : public MCParsedAsmOperand {
   bool isMem256() const {
     return Kind == Memory && (!Mem.Size || Mem.Size == 256);
   }
+  bool isMem512() const {
+    return Kind == Memory && (!Mem.Size || Mem.Size == 512);
+  }
 
   bool isMemVX32() const {
     return Kind == Memory && (!Mem.Size || Mem.Size == 32) &&
@@ -838,10 +841,6 @@ struct X86Operand : public MCParsedAsmOperand {
   bool isMemVZ64() const {
     return Kind == Memory && (!Mem.Size || Mem.Size == 64) &&
       getMemIndexReg() >= X86::ZMM0 && getMemIndexReg() <= X86::ZMM31;
-  }
-
-  bool isMem512() const {
-    return Kind == Memory && (!Mem.Size || Mem.Size == 512);
   }
 
   bool isAbsMem() const {
@@ -907,10 +906,16 @@ struct X86Operand : public MCParsedAsmOperand {
   void addMem256Operands(MCInst &Inst, unsigned N) const {
     addMemOperands(Inst, N);
   }
+  void addMem512Operands(MCInst &Inst, unsigned N) const {
+    addMemOperands(Inst, N);
+  }
   void addMemVX32Operands(MCInst &Inst, unsigned N) const {
     addMemOperands(Inst, N);
   }
   void addMemVY32Operands(MCInst &Inst, unsigned N) const {
+    addMemOperands(Inst, N);
+  }
+  void addMemVZ32Operands(MCInst &Inst, unsigned N) const {
     addMemOperands(Inst, N);
   }
   void addMemVX64Operands(MCInst &Inst, unsigned N) const {
@@ -919,14 +924,7 @@ struct X86Operand : public MCParsedAsmOperand {
   void addMemVY64Operands(MCInst &Inst, unsigned N) const {
     addMemOperands(Inst, N);
   }
-
-  void addMemVZ32Operands(MCInst &Inst, unsigned N) const {
-    addMemOperands(Inst, N);
-  }
   void addMemVZ64Operands(MCInst &Inst, unsigned N) const {
-    addMemOperands(Inst, N);
-  }
-  void addMem512Operands(MCInst &Inst, unsigned N) const {
     addMemOperands(Inst, N);
   }
 

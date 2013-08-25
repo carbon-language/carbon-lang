@@ -302,6 +302,9 @@ def X86Mem128AsmOperand : AsmOperandClass {
 def X86Mem256AsmOperand : AsmOperandClass {
   let Name = "Mem256"; let PredicateMethod = "isMem256";
 }
+def X86Mem512AsmOperand : AsmOperandClass {
+  let Name = "Mem512"; let PredicateMethod = "isMem512";
+}
 
 // Gather mem operands
 def X86MemVX32Operand : AsmOperandClass {
@@ -310,21 +313,17 @@ def X86MemVX32Operand : AsmOperandClass {
 def X86MemVY32Operand : AsmOperandClass {
   let Name = "MemVY32"; let PredicateMethod = "isMemVY32";
 }
+def X86MemVZ32Operand : AsmOperandClass {
+  let Name = "MemVZ32"; let PredicateMethod = "isMemVZ32";
+}
 def X86MemVX64Operand : AsmOperandClass {
   let Name = "MemVX64"; let PredicateMethod = "isMemVX64";
 }
 def X86MemVY64Operand : AsmOperandClass {
   let Name = "MemVY64"; let PredicateMethod = "isMemVY64";
 }
-
 def X86MemVZ64Operand : AsmOperandClass {
   let Name = "MemVZ64"; let PredicateMethod = "isMemVZ64";
-}
-def X86MemVZ32Operand : AsmOperandClass {
-  let Name = "MemVZ32"; let PredicateMethod = "isMemVZ32";
-}
-def X86Mem512AsmOperand : AsmOperandClass {
-  let Name = "Mem512"; let PredicateMethod = "isMem512";
 }
 
 def X86AbsMemAsmOperand : AsmOperandClass {
