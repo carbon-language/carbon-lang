@@ -591,6 +591,59 @@ ObjectFilePECOFF::GetSymtab()
                 }
                 
             }
+
+            // Read export header
+            if (coff_data_dir_export_table < m_coff_header_opt.data_dirs.size()
+                && m_coff_header_opt.data_dirs[coff_data_dir_export_table].vmsize > 0 && m_coff_header_opt.data_dirs[coff_data_dir_export_table].vmaddr > 0)
+            {
+                export_directory_entry export_table;
+                uint32_t data_start = m_coff_header_opt.data_dirs[coff_data_dir_export_table].vmaddr;
+                Address address(m_coff_header_opt.image_base + data_start, sect_list);
+                DataBufferSP symtab_data_sp(m_file.ReadFileContents(address.GetSection()->GetFileOffset() + address.GetOffset(), m_coff_header_opt.data_dirs[0].vmsize));
+                DataExtractor symtab_data (symtab_data_sp, GetByteOrder(), GetAddressByteSize());
+                lldb::offset_t offset = 0;
+
+                // Read export_table header
+                export_table.characteristics = symtab_data.GetU32(&offset);
+                export_table.time_date_stamp = symtab_data.GetU32(&offset);
+                export_table.major_version = symtab_data.GetU16(&offset);
+                export_table.minor_version = symtab_data.GetU16(&offset);
+                export_table.name = symtab_data.GetU32(&offset);
+                export_table.base = symtab_data.GetU32(&offset);
+                export_table.number_of_functions = symtab_data.GetU32(&offset);
+                export_table.number_of_names = symtab_data.GetU32(&offset);
+                export_table.address_of_functions = symtab_data.GetU32(&offset);
+                export_table.address_of_names = symtab_data.GetU32(&offset);
+                export_table.address_of_name_ordinals = symtab_data.GetU32(&offset);
+
+                bool has_ordinal = export_table.address_of_name_ordinals != 0;
+
+                lldb::offset_t name_offset = export_table.address_of_names - data_start;
+                lldb::offset_t name_ordinal_offset = export_table.address_of_name_ordinals - data_start;
+
+                Symbol *symbols = m_symtab_ap->Resize(export_table.number_of_names);
+
+                std::string symbol_name;
+
+                // Read each export table entry
+                for (size_t i = 0; i < export_table.number_of_names; ++i)
+                {
+                    uint32_t name_ordinal = has_ordinal ? symtab_data.GetU16(&name_ordinal_offset) : i;
+                    uint32_t name_address = symtab_data.GetU32(&name_offset);
+
+                    const char* symbol_name_cstr = symtab_data.PeekCStr(name_address - data_start);
+                    symbol_name.assign(symbol_name_cstr);
+
+                    lldb::offset_t function_offset = export_table.address_of_functions - data_start + sizeof(uint32_t) * name_ordinal;
+                    uint32_t function_rva = symtab_data.GetU32(&function_offset);
+
+                    Address symbol_addr(m_coff_header_opt.image_base + function_rva, sect_list);
+                    symbols[i].GetMangled().SetValue(ConstString(symbol_name.c_str()));
+                    symbols[i].GetAddress() = symbol_addr;
+                    symbols[i].SetType(lldb::eSymbolTypeCode);
+                    symbols[i].SetDebug(true);
+                }
+            }
         }
     }
     return m_symtab_ap.get();

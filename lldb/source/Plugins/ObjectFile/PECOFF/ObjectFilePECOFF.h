@@ -199,6 +199,12 @@ protected:
         //    uint32_t	num_data_dir_entries;
 		std::vector<data_directory> data_dirs;	// will contain num_data_dir_entries entries
 	} coff_opt_header_t;
+
+    typedef enum coff_data_dir_type
+    {
+        coff_data_dir_export_table = 0,
+        coff_data_dir_import_table = 1,
+    } coff_data_dir_type;
     
 	typedef struct section_header {
 		char		name[8];
@@ -221,6 +227,20 @@ protected:
 		uint8_t		storage;
 		uint8_t		naux;		
 	} coff_symbol_t;
+
+    typedef struct export_directory_entry {
+        uint32_t   characteristics;
+        uint32_t   time_date_stamp;
+        uint16_t   major_version;
+        uint16_t   minor_version;
+        uint32_t   name;
+        uint32_t   base;
+        uint32_t   number_of_functions;
+        uint32_t   number_of_names;
+        uint32_t   address_of_functions;
+        uint32_t   address_of_names;
+        uint32_t   address_of_name_ordinals;
+    };
     
 	bool ParseDOSHeader ();
 	bool ParseCOFFHeader (lldb::offset_t *offset_ptr);
