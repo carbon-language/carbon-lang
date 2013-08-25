@@ -109,7 +109,7 @@ namespace clang {
 /// Note that since WalkUpFromFoo() calls WalkUpFromBar() (where Bar
 /// is Foo's super class) before calling VisitFoo(), the result is
 /// that the Visit*() methods for a given node are called in the
-/// top-down order (e.g. for a node of type NamedDecl, the order will
+/// top-down order (e.g. for a node of type NamespaceDecl, the order will
 /// be VisitDecl(), VisitNamedDecl(), and then VisitNamespaceDecl()).
 ///
 /// This scheme guarantees that all Visit*() calls for the same AST
