@@ -23,6 +23,8 @@ class SparcCtrlReg<string n>: Register<n> {
 let Namespace = "SP" in {
 def sub_even : SubRegIndex<32>;
 def sub_odd  : SubRegIndex<32, 32>;
+def sub_even64 : SubRegIndex<64>;
+def sub_odd64  : SubRegIndex<64, 64>;
 }
 
 // Registers are identified with 5-bit ID numbers.
@@ -36,6 +38,13 @@ class Rf<bits<16> Enc, string n> : SparcReg<Enc, n>;
 class Rd<bits<16> Enc, string n, list<Register> subregs> : SparcReg<Enc, n> {
   let SubRegs = subregs;
   let SubRegIndices = [sub_even, sub_odd];
+  let CoveredBySubRegs = 1;
+}
+
+// Rq - Slots in the FP register file for 128-bit floating-point values.
+class Rq<bits<16> Enc, string n, list<Register> subregs> : SparcReg<Enc, n> {
+  let SubRegs = subregs;
+  let SubRegIndices = [sub_even64, sub_odd64];
   let CoveredBySubRegs = 1;
 }
 
@@ -132,6 +141,43 @@ def D13 : Rd<26, "F26", [F26, F27]>, DwarfRegNum<[85]>;
 def D14 : Rd<28, "F28", [F28, F29]>, DwarfRegNum<[86]>;
 def D15 : Rd<30, "F30", [F30, F31]>, DwarfRegNum<[87]>;
 
+// Unaliased double precision floating point registers.
+// FIXME: Define DwarfRegNum for these registers.
+def D16 : SparcReg< 1, "F32">;
+def D17 : SparcReg< 3, "F34">;
+def D18 : SparcReg< 5, "F36">;
+def D19 : SparcReg< 7, "F38">;
+def D20 : SparcReg< 9, "F40">;
+def D21 : SparcReg<11, "F42">;
+def D22 : SparcReg<13, "F44">;
+def D23 : SparcReg<15, "F46">;
+def D24 : SparcReg<17, "F48">;
+def D25 : SparcReg<19, "F50">;
+def D26 : SparcReg<21, "F52">;
+def D27 : SparcReg<23, "F54">;
+def D28 : SparcReg<25, "F56">;
+def D29 : SparcReg<27, "F58">;
+def D30 : SparcReg<29, "F60">;
+def D31 : SparcReg<31, "F62">;
+
+// Aliases of the F* registers used to hold 128-bit for values (long doubles).
+def Q0  : Rq< 0,  "F0", [D0,   D1]>;
+def Q1  : Rq< 4,  "F4", [D2,   D3]>;
+def Q2  : Rq< 8,  "F8", [D4,   D5]>;
+def Q3  : Rq<12, "F12", [D6,   D7]>;
+def Q4  : Rq<16, "F16", [D8,   D9]>;
+def Q5  : Rq<20, "F20", [D10, D11]>;
+def Q6  : Rq<24, "F24", [D12, D13]>;
+def Q7  : Rq<28, "F28", [D14, D15]>;
+def Q8  : Rq< 1, "F32", [D16, D17]>;
+def Q9  : Rq< 5, "F36", [D18, D19]>;
+def Q10 : Rq< 9, "F40", [D20, D21]>;
+def Q11 : Rq<13, "F44", [D22, D23]>;
+def Q12 : Rq<17, "F48", [D24, D25]>;
+def Q13 : Rq<21, "F52", [D26, D27]>;
+def Q14 : Rq<25, "F56", [D28, D29]>;
+def Q15 : Rq<29, "F60", [D30, D31]>;
+
 // Register classes.
 //
 // FIXME: the register order should be defined in terms of the preferred
@@ -155,4 +201,6 @@ def I64Regs : RegisterClass<"SP", [i64], 64, (add IntRegs)>;
 // Floating point register classes.
 def FPRegs : RegisterClass<"SP", [f32], 32, (sequence "F%u", 0, 31)>;
 
-def DFPRegs : RegisterClass<"SP", [f64], 64, (sequence "D%u", 0, 15)>;
+def DFPRegs : RegisterClass<"SP", [f64], 64, (sequence "D%u", 0, 31)>;
+
+def QFPRegs : RegisterClass<"SP", [f128], 128, (sequence "Q%u", 0, 15)>;
