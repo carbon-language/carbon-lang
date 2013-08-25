@@ -341,7 +341,7 @@ DWARFCallFrameInfo::GetFDEIndex ()
         dw_offset_t next_entry = current_entry + len + 4;
         dw_offset_t cie_id = m_cfi_data.GetU32 (&offset);
 
-        if (cie_id == 0 || cie_id == UINT32_MAX)
+        if (cie_id == 0 || cie_id == UINT32_MAX || len == 0)
         {
             m_cie_map[current_entry] = ParseCIE (current_entry);
             offset = next_entry;
