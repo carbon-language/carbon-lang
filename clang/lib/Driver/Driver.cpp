@@ -1171,6 +1171,10 @@ void Driver::BuildActions(const ToolChain &TC, DerivedArgList &Args,
   Arg *FinalPhaseArg;
   phases::ID FinalPhase = getFinalPhase(Args, &FinalPhaseArg);
 
+  if (FinalPhase == phases::Link && Args.hasArg(options::OPT_emit_llvm)) {
+    Diag(clang::diag::err_drv_emit_llvm_link);
+  }
+
   // Reject -Z* at the top level, these options should never have been exposed
   // by gcc.
   if (Arg *A = Args.getLastArg(options::OPT_Z_Joined))
