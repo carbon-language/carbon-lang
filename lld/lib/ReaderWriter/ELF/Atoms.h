@@ -326,6 +326,7 @@ public:
         ret = typeZeroFill;
       break;
     case llvm::ELF::SHT_INIT_ARRAY:
+    case llvm::ELF::SHT_FINI_ARRAY:
       ret = typeData;
       break;
     }
@@ -432,6 +433,7 @@ public:
       return _permissions = permRW_;
 
     case llvm::ELF::SHT_INIT_ARRAY:
+    case llvm::ELF::SHT_FINI_ARRAY:
       return _permissions = permRW_;
 
     default:

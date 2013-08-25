@@ -329,6 +329,7 @@ Layout::SectionOrder DefaultLayout<ELFT>::getSectionOrder(
   case DefinedAtom::typeDataFast:
     return llvm::StringSwitch<Reference::Kind>(name)
         .StartsWith(".init_array", ORDER_INIT_ARRAY)
+        .StartsWith(".fini_array", ORDER_FINI_ARRAY)
         .Default(ORDER_DATA);
 
   case DefinedAtom::typeZeroFill:

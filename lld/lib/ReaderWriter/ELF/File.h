@@ -181,7 +181,9 @@ public:
       }
 
       // Create a sectionSymbols entry for every progbits section.
-      if (section->sh_type == llvm::ELF::SHT_PROGBITS)
+      if ((section->sh_type == llvm::ELF::SHT_PROGBITS) ||
+          (section->sh_type == llvm::ELF::SHT_INIT_ARRAY) ||
+          (section->sh_type == llvm::ELF::SHT_FINI_ARRAY))
         _sectionSymbols[section];
 
       if (section->sh_type == llvm::ELF::SHT_RELA) {
