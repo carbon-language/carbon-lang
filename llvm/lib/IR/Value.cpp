@@ -411,8 +411,10 @@ Value *Value::stripAndAccumulateInBoundsConstantOffsets(const DataLayout &DL,
     if (GEPOperator *GEP = dyn_cast<GEPOperator>(V)) {
       if (!GEP->isInBounds())
         return V;
-      if (!GEP->accumulateConstantOffset(DL, Offset))
+      APInt GEPOffset(Offset);
+      if (!GEP->accumulateConstantOffset(DL, GEPOffset))
         return V;
+      Offset = GEPOffset;
       V = GEP->getPointerOperand();
     } else if (Operator::getOpcode(V) == Instruction::BitCast) {
       V = cast<Operator>(V)->getOperand(0);
