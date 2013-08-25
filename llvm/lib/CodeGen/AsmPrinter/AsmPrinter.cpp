@@ -459,16 +459,6 @@ void AsmPrinter::EmitFunctionHeader() {
     OutStreamer.EmitLabel(DeadBlockSyms[i]);
   }
 
-  // Add some workaround for linkonce linkage on Cygwin\MinGW.
-  if (MAI->getLinkOnceDirective() != 0 &&
-      (F->hasLinkOnceLinkage() || F->hasWeakLinkage())) {
-    // FIXME: What is this?
-    MCSymbol *FakeStub =
-      OutContext.GetOrCreateSymbol(Twine("Lllvm$workaround$fake$stub$")+
-                                   CurrentFnSym->getName());
-    OutStreamer.EmitLabel(FakeStub);
-  }
-
   // Emit pre-function debug and/or EH information.
   if (DE) {
     NamedRegionTimer T(EHTimerName, DWARFGroupName, TimePassesIsEnabled);
