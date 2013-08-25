@@ -66,9 +66,9 @@ private:
 
 public:
     explicit __libcpp_nmstr(const char* msg);
-    __libcpp_nmstr(const __libcpp_nmstr& s) _LIBCPP_CANTTHROW;
-    __libcpp_nmstr& operator=(const __libcpp_nmstr& s) _LIBCPP_CANTTHROW;
-    ~__libcpp_nmstr() _LIBCPP_CANTTHROW;
+    __libcpp_nmstr(const __libcpp_nmstr& s) _NOEXCEPT;
+    __libcpp_nmstr& operator=(const __libcpp_nmstr& s) _NOEXCEPT;
+    ~__libcpp_nmstr();
     const char* c_str() const _NOEXCEPT {return str_;}
 };
 
@@ -84,7 +84,7 @@ __libcpp_nmstr::__libcpp_nmstr(const char* msg)
 }
 
 inline
-__libcpp_nmstr::__libcpp_nmstr(const __libcpp_nmstr& s)
+__libcpp_nmstr::__libcpp_nmstr(const __libcpp_nmstr& s) _NOEXCEPT
     : str_(s.str_)
 {
 #if __APPLE__
@@ -94,7 +94,7 @@ __libcpp_nmstr::__libcpp_nmstr(const __libcpp_nmstr& s)
 }
 
 __libcpp_nmstr&
-__libcpp_nmstr::operator=(const __libcpp_nmstr& s)
+__libcpp_nmstr::operator=(const __libcpp_nmstr& s) _NOEXCEPT
 {
     const char* p = str_;
     str_ = s.str_;
