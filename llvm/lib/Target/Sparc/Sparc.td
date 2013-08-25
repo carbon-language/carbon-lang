@@ -30,6 +30,10 @@ def FeatureVIS
   : SubtargetFeature<"vis", "IsVIS", "true",
                      "Enable UltraSPARC Visual Instruction Set extensions">;
 
+def FeatureHardQuad
+  : SubtargetFeature<"hard-quad-float", "HasHardQuad", "true",
+                     "Enable quad-word floating point instructions">;
+
 //===----------------------------------------------------------------------===//
 // Register File, Calling Conv, Instruction Descriptions
 //===----------------------------------------------------------------------===//

@@ -39,6 +39,10 @@ def HasNoV9 : Predicate<"!Subtarget.isV9()">;
 // HasVIS - This is true when the target processor has VIS extensions.
 def HasVIS : Predicate<"Subtarget.isVIS()">;
 
+// HasHardQuad - This is true when the target processor supports quad floating
+// point instructions.
+def HasHardQuad : Predicate<"Subtarget.hasHardQuad()">;
+
 // UseDeprecatedInsts - This predicate is true when the target processor is a
 // V8, or when it is V9 but the V8 deprecated instructions are efficient enough
 // to use when appropriate.  In either of these cases, the instruction selector
@@ -354,6 +358,16 @@ def LDDFri : F3_2<3, 0b100011,
                   (outs DFPRegs:$dst), (ins MEMri:$addr),
                   "ldd [$addr], $dst",
                   [(set f64:$dst, (load ADDRri:$addr))]>;
+def LDQFrr : F3_1<3, 0b100010,
+                  (outs QFPRegs:$dst), (ins MEMrr:$addr),
+                  "ldq [$addr], $dst",
+                  [(set f128:$dst, (load ADDRrr:$addr))]>,
+                  Requires<[HasV9, HasHardQuad]>;
+def LDQFri : F3_2<3, 0b100010,
+                  (outs QFPRegs:$dst), (ins MEMri:$addr),
+                  "ldq [$addr], $dst",
+                  [(set f128:$dst, (load ADDRri:$addr))]>,
+                  Requires<[HasV9, HasHardQuad]>;
 
 // Section B.4 - Store Integer Instructions, p. 95
 def STBrr : F3_1<3, 0b000101,
@@ -398,6 +412,16 @@ def STDFri  : F3_2<3, 0b100111,
                    (outs), (ins MEMri:$addr, DFPRegs:$src),
                    "std $src, [$addr]",
                    [(store f64:$src, ADDRri:$addr)]>;
+def STQFrr  : F3_1<3, 0b100110,
+                   (outs), (ins MEMrr:$addr, QFPRegs:$src),
+                   "stq  $src, [$addr]",
+                   [(store f128:$src, ADDRrr:$addr)]>,
+                   Requires<[HasV9, HasHardQuad]>;
+def STQFri  : F3_2<3, 0b100110,
+                   (outs), (ins MEMri:$addr, QFPRegs:$src),
+                   "stq $src, [$addr]",
+                   [(store f128:$src, ADDRri:$addr)]>,
+                   Requires<[HasV9, HasHardQuad]>;
 
 // Section B.9 - SETHI Instruction, p. 104
 def SETHIi: F2_1<0b100,
@@ -599,6 +623,11 @@ def FITOD : F3_3<2, 0b110100, 0b011001000,
                  (outs DFPRegs:$dst), (ins FPRegs:$src),
                  "fitod $src, $dst",
                  [(set DFPRegs:$dst, (SPitof FPRegs:$src))]>;
+def FITOQ : F3_3<2, 0b110100, 0b011001100,
+                 (outs QFPRegs:$dst), (ins FPRegs:$src),
+                 "fitoq $src, $dst",
+                 [(set QFPRegs:$dst, (SPitof FPRegs:$src))]>,
+                 Requires<[HasHardQuad]>;
 
 // Convert Floating-point to Integer Instructions, p. 142
 def FSTOI : F3_3<2, 0b110100, 0b011010001,
@@ -609,16 +638,41 @@ def FDTOI : F3_3<2, 0b110100, 0b011010010,
                  (outs FPRegs:$dst), (ins DFPRegs:$src),
                  "fdtoi $src, $dst",
                  [(set FPRegs:$dst, (SPftoi DFPRegs:$src))]>;
+def FQTOI : F3_3<2, 0b110100, 0b011010011,
+                 (outs FPRegs:$dst), (ins QFPRegs:$src),
+                 "fqtoi $src, $dst",
+                 [(set FPRegs:$dst, (SPftoi QFPRegs:$src))]>,
+                 Requires<[HasHardQuad]>;
 
 // Convert between Floating-point Formats Instructions, p. 143
 def FSTOD : F3_3<2, 0b110100, 0b011001001,
                  (outs DFPRegs:$dst), (ins FPRegs:$src),
                  "fstod $src, $dst",
                  [(set f64:$dst, (fextend f32:$src))]>;
+def FSTOQ : F3_3<2, 0b110100, 0b011001101,
+                 (outs QFPRegs:$dst), (ins FPRegs:$src),
+                 "fstoq $src, $dst",
+                 [(set f128:$dst, (fextend f32:$src))]>,
+                 Requires<[HasHardQuad]>;
 def FDTOS : F3_3<2, 0b110100, 0b011000110,
                  (outs FPRegs:$dst), (ins DFPRegs:$src),
                  "fdtos $src, $dst",
                  [(set f32:$dst, (fround f64:$src))]>;
+def FDTOQ : F3_3<2, 0b110100, 0b01101110,
+                 (outs QFPRegs:$dst), (ins DFPRegs:$src),
+                 "fdtoq $src, $dst",
+                 [(set f128:$dst, (fextend f64:$src))]>,
+                 Requires<[HasHardQuad]>;
+def FQTOS : F3_3<2, 0b110100, 0b011000111,
+                 (outs FPRegs:$dst), (ins QFPRegs:$src),
+                 "fqtos $src, $dst",
+                 [(set f32:$dst, (fround f128:$src))]>,
+                 Requires<[HasHardQuad]>;
+def FQTOD : F3_3<2, 0b110100, 0b011001011,
+                 (outs DFPRegs:$dst), (ins QFPRegs:$src),
+                 "fqtod $src, $dst",
+                 [(set f64:$dst, (fround f128:$src))]>,
+                 Requires<[HasHardQuad]>;
 
 // Floating-point Move Instructions, p. 144
 def FMOVS : F3_3<2, 0b110100, 0b000000001,
@@ -643,6 +697,11 @@ def FSQRTD : F3_3<2, 0b110100, 0b000101010,
                   (outs DFPRegs:$dst), (ins DFPRegs:$src),
                   "fsqrtd $src, $dst",
                   [(set f64:$dst, (fsqrt f64:$src))]>;
+def FSQRTQ : F3_3<2, 0b110100, 0b000101011,
+                  (outs QFPRegs:$dst), (ins QFPRegs:$src),
+                  "fsqrtq $src, $dst",
+                  [(set f128:$dst, (fsqrt f128:$src))]>,
+                  Requires<[HasHardQuad]>;
 
 
 
@@ -655,6 +714,12 @@ def FADDD  : F3_3<2, 0b110100, 0b001000010,
                   (outs DFPRegs:$dst), (ins DFPRegs:$src1, DFPRegs:$src2),
                   "faddd $src1, $src2, $dst",
                   [(set f64:$dst, (fadd f64:$src1, f64:$src2))]>;
+def FADDQ  : F3_3<2, 0b110100, 0b001000011,
+                  (outs QFPRegs:$dst), (ins QFPRegs:$src1, QFPRegs:$src2),
+                  "faddq $src1, $src2, $dst",
+                  [(set f128:$dst, (fadd f128:$src1, f128:$src2))]>,
+                  Requires<[HasHardQuad]>;
+
 def FSUBS  : F3_3<2, 0b110100, 0b001000101,
                   (outs FPRegs:$dst), (ins FPRegs:$src1, FPRegs:$src2),
                   "fsubs $src1, $src2, $dst",
@@ -663,6 +728,12 @@ def FSUBD  : F3_3<2, 0b110100, 0b001000110,
                   (outs DFPRegs:$dst), (ins DFPRegs:$src1, DFPRegs:$src2),
                   "fsubd $src1, $src2, $dst",
                   [(set f64:$dst, (fsub f64:$src1, f64:$src2))]>;
+def FSUBQ  : F3_3<2, 0b110100, 0b001000111,
+                  (outs QFPRegs:$dst), (ins QFPRegs:$src1, QFPRegs:$src2),
+                  "fsubq $src1, $src2, $dst",
+                  [(set f128:$dst, (fsub f128:$src1, f128:$src2))]>,
+                  Requires<[HasHardQuad]>;
+
 
 // Floating-point Multiply and Divide Instructions, p. 147
 def FMULS  : F3_3<2, 0b110100, 0b001001001,
@@ -673,11 +744,24 @@ def FMULD  : F3_3<2, 0b110100, 0b001001010,
                   (outs DFPRegs:$dst), (ins DFPRegs:$src1, DFPRegs:$src2),
                   "fmuld $src1, $src2, $dst",
                   [(set f64:$dst, (fmul f64:$src1, f64:$src2))]>;
+def FMULQ  : F3_3<2, 0b110100, 0b001001011,
+                  (outs QFPRegs:$dst), (ins QFPRegs:$src1, QFPRegs:$src2),
+                  "fmulq $src1, $src2, $dst",
+                  [(set f128:$dst, (fmul f128:$src1, f128:$src2))]>,
+                  Requires<[HasHardQuad]>;
+
 def FSMULD : F3_3<2, 0b110100, 0b001101001,
                   (outs DFPRegs:$dst), (ins FPRegs:$src1, FPRegs:$src2),
                   "fsmuld $src1, $src2, $dst",
                   [(set f64:$dst, (fmul (fextend f32:$src1),
                                         (fextend f32:$src2)))]>;
+def FDMULQ : F3_3<2, 0b110100, 0b001101110,
+                  (outs QFPRegs:$dst), (ins DFPRegs:$src1, DFPRegs:$src2),
+                  "fdmulq $src1, $src2, $dst",
+                  [(set f128:$dst, (fmul (fextend f64:$src1),
+                                         (fextend f64:$src2)))]>,
+                  Requires<[HasHardQuad]>;
+
 def FDIVS  : F3_3<2, 0b110100, 0b001001101,
                  (outs FPRegs:$dst), (ins FPRegs:$src1, FPRegs:$src2),
                  "fdivs $src1, $src2, $dst",
@@ -686,6 +770,11 @@ def FDIVD  : F3_3<2, 0b110100, 0b001001110,
                  (outs DFPRegs:$dst), (ins DFPRegs:$src1, DFPRegs:$src2),
                  "fdivd $src1, $src2, $dst",
                  [(set f64:$dst, (fdiv f64:$src1, f64:$src2))]>;
+def FDIVQ  : F3_3<2, 0b110100, 0b001001111,
+                 (outs QFPRegs:$dst), (ins QFPRegs:$src1, QFPRegs:$src2),
+                 "fdivq $src1, $src2, $dst",
+                 [(set f128:$dst, (fdiv f128:$src1, f128:$src2))]>,
+                 Requires<[HasHardQuad]>;
 
 // Floating-point Compare Instructions, p. 148
 // Note: the 2nd template arg is different for these guys.
@@ -701,6 +790,11 @@ let Defs = [FCC] in {
                    (outs), (ins DFPRegs:$src1, DFPRegs:$src2),
                    "fcmpd $src1, $src2\n\tnop",
                    [(SPcmpfcc f64:$src1, f64:$src2)]>;
+  def FCMPQ  : F3_3<2, 0b110101, 0b001010011,
+                   (outs), (ins QFPRegs:$src1, QFPRegs:$src2),
+                   "fcmpq $src1, $src2\n\tnop",
+                   [(SPcmpfcc f128:$src1, f128:$src2)]>,
+                   Requires<[HasHardQuad]>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -762,14 +856,28 @@ let Predicates = [HasV9] in {
   def FMOVD : F3_3<2, 0b110100, 0b000000010,
                    (outs DFPRegs:$dst), (ins DFPRegs:$src),
                    "fmovd $src, $dst", []>;
+  def FMOVQ : F3_3<2, 0b110100, 0b000000011,
+                   (outs QFPRegs:$dst), (ins QFPRegs:$src),
+                   "fmovq $src, $dst", []>,
+                   Requires<[HasHardQuad]>;
   def FNEGD : F3_3<2, 0b110100, 0b000000110,
                    (outs DFPRegs:$dst), (ins DFPRegs:$src),
                    "fnegd $src, $dst",
                    [(set f64:$dst, (fneg f64:$src))]>;
+  def FNEGQ : F3_3<2, 0b110100, 0b000000111,
+                   (outs QFPRegs:$dst), (ins QFPRegs:$src),
+                   "fnegq $src, $dst",
+                   [(set f128:$dst, (fneg f128:$src))]>,
+                   Requires<[HasHardQuad]>;
   def FABSD : F3_3<2, 0b110100, 0b000001010,
                    (outs DFPRegs:$dst), (ins DFPRegs:$src),
                    "fabsd $src, $dst",
                    [(set f64:$dst, (fabs f64:$src))]>;
+  def FABSQ : F3_3<2, 0b110100, 0b000001011,
+                   (outs QFPRegs:$dst), (ins QFPRegs:$src),
+                   "fabsq $src, $dst",
+                   [(set f128:$dst, (fabs f128:$src))]>,
+                   Requires<[HasHardQuad]>;
 }
 
 // POPCrr - This does a ctpop of a 64-bit register.  As such, we have to clear

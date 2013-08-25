@@ -1257,15 +1257,21 @@ SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
   addRegisterClass(MVT::i32, &SP::IntRegsRegClass);
   addRegisterClass(MVT::f32, &SP::FPRegsRegClass);
   addRegisterClass(MVT::f64, &SP::DFPRegsRegClass);
+  addRegisterClass(MVT::f128, &SP::QFPRegsRegClass);
   if (Subtarget->is64Bit())
     addRegisterClass(MVT::i64, &SP::I64RegsRegClass);
 
   // Turn FP extload into load/fextend
   setLoadExtAction(ISD::EXTLOAD, MVT::f32, Expand);
+  setLoadExtAction(ISD::EXTLOAD, MVT::f64, Expand);
+
   // Sparc doesn't have i1 sign extending load
   setLoadExtAction(ISD::SEXTLOAD, MVT::i1, Promote);
+
   // Turn FP truncstore into trunc + store.
   setTruncStoreAction(MVT::f64, MVT::f32, Expand);
+  setTruncStoreAction(MVT::f128, MVT::f32, Expand);
+  setTruncStoreAction(MVT::f128, MVT::f64, Expand);
 
   // Custom legalize GlobalAddress nodes into LO/HI parts.
   setOperationAction(ISD::GlobalAddress, getPointerTy(), Custom);
@@ -1299,9 +1305,12 @@ SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::SELECT, MVT::i32, Expand);
   setOperationAction(ISD::SELECT, MVT::f32, Expand);
   setOperationAction(ISD::SELECT, MVT::f64, Expand);
+  setOperationAction(ISD::SELECT, MVT::f128, Expand);
+
   setOperationAction(ISD::SETCC, MVT::i32, Expand);
   setOperationAction(ISD::SETCC, MVT::f32, Expand);
   setOperationAction(ISD::SETCC, MVT::f64, Expand);
+  setOperationAction(ISD::SETCC, MVT::f128, Expand);
 
   // Sparc doesn't have BRCOND either, it has BR_CC.
   setOperationAction(ISD::BRCOND, MVT::Other, Expand);
@@ -1310,10 +1319,12 @@ SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::BR_CC, MVT::i32, Custom);
   setOperationAction(ISD::BR_CC, MVT::f32, Custom);
   setOperationAction(ISD::BR_CC, MVT::f64, Custom);
+  setOperationAction(ISD::BR_CC, MVT::f128, Custom);
 
   setOperationAction(ISD::SELECT_CC, MVT::i32, Custom);
   setOperationAction(ISD::SELECT_CC, MVT::f32, Custom);
   setOperationAction(ISD::SELECT_CC, MVT::f64, Custom);
+  setOperationAction(ISD::SELECT_CC, MVT::f128, Custom);
 
   if (Subtarget->is64Bit()) {
     setOperationAction(ISD::BITCAST, MVT::f64, Expand);
@@ -1334,6 +1345,11 @@ SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
     setOperationAction(ISD::FABS, MVT::f64, Custom);
   }
 
+  setOperationAction(ISD::FSIN , MVT::f128, Expand);
+  setOperationAction(ISD::FCOS , MVT::f128, Expand);
+  setOperationAction(ISD::FSINCOS, MVT::f128, Expand);
+  setOperationAction(ISD::FREM , MVT::f128, Expand);
+  setOperationAction(ISD::FMA  , MVT::f128, Expand);
   setOperationAction(ISD::FSIN , MVT::f64, Expand);
   setOperationAction(ISD::FCOS , MVT::f64, Expand);
   setOperationAction(ISD::FSINCOS, MVT::f64, Expand);
@@ -1352,8 +1368,10 @@ SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::ROTL , MVT::i32, Expand);
   setOperationAction(ISD::ROTR , MVT::i32, Expand);
   setOperationAction(ISD::BSWAP, MVT::i32, Expand);
+  setOperationAction(ISD::FCOPYSIGN, MVT::f128, Expand);
   setOperationAction(ISD::FCOPYSIGN, MVT::f64, Expand);
   setOperationAction(ISD::FCOPYSIGN, MVT::f32, Expand);
+  setOperationAction(ISD::FPOW , MVT::f128, Expand);
   setOperationAction(ISD::FPOW , MVT::f64, Expand);
   setOperationAction(ISD::FPOW , MVT::f32, Expand);
 
@@ -1386,6 +1404,31 @@ SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
 
   if (Subtarget->isV9())
     setOperationAction(ISD::CTPOP, MVT::i32, Legal);
+
+  if (Subtarget->isV9() && Subtarget->hasHardQuad()) {
+    setOperationAction(ISD::LOAD, MVT::f128, Legal);
+    setOperationAction(ISD::STORE, MVT::f128, Legal);
+  } else {
+    setOperationAction(ISD::LOAD, MVT::f128, Custom);
+    setOperationAction(ISD::STORE, MVT::f128, Custom);
+  }
+
+  if (Subtarget->hasHardQuad()) {
+    setOperationAction(ISD::FADD,  MVT::f128, Legal);
+    setOperationAction(ISD::FSUB,  MVT::f128, Legal);
+    setOperationAction(ISD::FMUL,  MVT::f128, Legal);
+    setOperationAction(ISD::FDIV,  MVT::f128, Legal);
+    setOperationAction(ISD::FSQRT, MVT::f128, Legal);
+    setOperationAction(ISD::FP_EXTEND, MVT::f128, Legal);
+    setOperationAction(ISD::FP_ROUND,  MVT::f64, Legal);
+    if (Subtarget->isV9()) {
+      setOperationAction(ISD::FNEG, MVT::f128, Legal);
+      setOperationAction(ISD::FABS, MVT::f128, Legal);
+    } else {
+      setOperationAction(ISD::FNEG, MVT::f128, Custom);
+      setOperationAction(ISD::FABS, MVT::f128, Custom);
+    }
+  }
 
   setMinFunctionAlignment(2);
 
@@ -1800,6 +1843,94 @@ static SDValue LowerF64Op(SDValue Op, SelectionDAG &DAG)
   return DstReg64;
 }
 
+// Lower a f128 load into two f64 loads.
+static SDValue LowerF128Load(SDValue Op, SelectionDAG &DAG)
+{
+  SDLoc dl(Op);
+  LoadSDNode *LdNode = dyn_cast<LoadSDNode>(Op.getNode());
+  assert(LdNode && LdNode->getOffset().getOpcode() == ISD::UNDEF
+         && "Unexpected node type");
+
+  SDValue Hi64 = DAG.getLoad(MVT::f64,
+                             dl,
+                             LdNode->getChain(),
+                             LdNode->getBasePtr(),
+                             LdNode->getPointerInfo(),
+                             false, false, false, 8);
+  EVT addrVT = LdNode->getBasePtr().getValueType();
+  SDValue LoPtr = DAG.getNode(ISD::ADD, dl, addrVT,
+                              LdNode->getBasePtr(),
+                              DAG.getConstant(8, addrVT));
+  SDValue Lo64 = DAG.getLoad(MVT::f64,
+                             dl,
+                             LdNode->getChain(),
+                             LoPtr,
+                             LdNode->getPointerInfo(),
+                             false, false, false, 8);
+
+  SDValue SubRegEven = DAG.getTargetConstant(SP::sub_even64, MVT::i32);
+  SDValue SubRegOdd  = DAG.getTargetConstant(SP::sub_odd64, MVT::i32);
+
+  SDNode *InFP128 = DAG.getMachineNode(TargetOpcode::IMPLICIT_DEF,
+                                       dl, MVT::f128);
+  InFP128 = DAG.getMachineNode(TargetOpcode::INSERT_SUBREG, dl,
+                               MVT::f128,
+                               SDValue(InFP128, 0),
+                               Hi64,
+                               SubRegEven);
+  InFP128 = DAG.getMachineNode(TargetOpcode::INSERT_SUBREG, dl,
+                               MVT::f128,
+                               SDValue(InFP128, 0),
+                               Lo64,
+                               SubRegOdd);
+  SDValue OutChains[2] = { SDValue(Hi64.getNode(), 1),
+                           SDValue(Lo64.getNode(), 1) };
+  SDValue OutChain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
+                                 &OutChains[0], 2);
+  SDValue Ops[2] = {SDValue(InFP128,0), OutChain};
+  return DAG.getMergeValues(Ops, 2, dl);
+}
+
+// Lower a f128 store into two f64 stores.
+static SDValue LowerF128Store(SDValue Op, SelectionDAG &DAG) {
+  SDLoc dl(Op);
+  StoreSDNode *StNode = dyn_cast<StoreSDNode>(Op.getNode());
+  assert(StNode && StNode->getOffset().getOpcode() == ISD::UNDEF
+         && "Unexpected node type");
+  SDValue SubRegEven = DAG.getTargetConstant(SP::sub_even64, MVT::i32);
+  SDValue SubRegOdd  = DAG.getTargetConstant(SP::sub_odd64, MVT::i32);
+
+  SDNode *Hi64 = DAG.getMachineNode(TargetOpcode::EXTRACT_SUBREG,
+                                    dl,
+                                    MVT::f64,
+                                    StNode->getValue(),
+                                    SubRegEven);
+  SDNode *Lo64 = DAG.getMachineNode(TargetOpcode::EXTRACT_SUBREG,
+                                    dl,
+                                    MVT::f64,
+                                    StNode->getValue(),
+                                    SubRegOdd);
+  SDValue OutChains[2];
+  OutChains[0] = DAG.getStore(StNode->getChain(),
+                              dl,
+                              SDValue(Hi64, 0),
+                              StNode->getBasePtr(),
+                              MachinePointerInfo(),
+                              false, false, 8);
+  EVT addrVT = StNode->getBasePtr().getValueType();
+  SDValue LoPtr = DAG.getNode(ISD::ADD, dl, addrVT,
+                              StNode->getBasePtr(),
+                              DAG.getConstant(8, addrVT));
+  OutChains[1] = DAG.getStore(StNode->getChain(),
+                             dl,
+                             SDValue(Lo64, 0),
+                             LoPtr,
+                             MachinePointerInfo(),
+                             false, false, 8);
+  return DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
+                     &OutChains[0], 2);
+}
+
 SDValue SparcTargetLowering::
 LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   switch (Op.getOpcode()) {
@@ -1822,6 +1953,9 @@ LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::VASTART:            return LowerVASTART(Op, DAG, *this);
   case ISD::VAARG:              return LowerVAARG(Op, DAG);
   case ISD::DYNAMIC_STACKALLOC: return LowerDYNAMIC_STACKALLOC(Op, DAG);
+
+  case ISD::LOAD:               return LowerF128Load(Op, DAG);
+  case ISD::STORE:              return LowerF128Store(Op, DAG);
   }
 }
 
