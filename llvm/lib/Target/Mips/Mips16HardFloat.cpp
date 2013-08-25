@@ -325,7 +325,7 @@ static void assureFPCallStub(Function &F, Module *M,
 // Functions that are inline intrinsics don't need helpers.
 //
 static const char *IntrinsicInline[] =
-  {"fabs"};
+  {"fabs", "llvm.powi.f64"};
 
 static bool isIntrinsicInline(Function *F) {
   return std::binary_search(
