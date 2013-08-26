@@ -1914,7 +1914,6 @@ bool SLPVectorizer::vectorizeChainsInBlock(BasicBlock *BB, BoUpSLP &R) {
   VisitedInstrs.clear();
 
   for (BasicBlock::iterator it = BB->begin(), e = BB->end(); it != e; it++) {
-
     // We may go through BB multiple times so skip the one we have checked.
     if (!VisitedInstrs.insert(it))
       continue;
