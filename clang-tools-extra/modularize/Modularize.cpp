@@ -418,13 +418,23 @@ public:
     if (isa<NamespaceDecl>(ND) || isa<UsingDirectiveDecl>(ND) ||
         isa<NamespaceAliasDecl>(ND) ||
         isa<ClassTemplateSpecializationDecl>(ND) || isa<UsingDecl>(ND) ||
+        isa<ClassTemplateDecl>(ND) || isa<TemplateTypeParmDecl>(ND) ||
+        isa<TypeAliasTemplateDecl>(ND) ||
         isa<UsingShadowDecl>(ND) || isa<FunctionDecl>(ND) ||
         isa<FunctionTemplateDecl>(ND) ||
         (isa<TagDecl>(ND) &&
          !cast<TagDecl>(ND)->isThisDeclarationADefinition()))
       return true;
 
-    std::string Name = ND->getNameAsString();
+    // Skip anonymous declarations.
+    if (!ND->getDeclName())
+      return true;
+
+    // Get the qualified name.
+    std::string Name;
+    llvm::raw_string_ostream OS(Name);
+    ND->printQualifiedName(OS);
+    OS.flush();
     if (Name.empty())
       return true;
 
