@@ -37,6 +37,26 @@ def RetCC_PPC : CallingConv<[
 ]>;
 
 
+// Note that we don't currently have calling conventions for 64-bit
+// PowerPC, but handle all the complexities of the ABI in the lowering
+// logic.  FIXME: See if the logic can be simplified with use of CCs.
+// This may require some extensions to current table generation.
+
+// Simple return-value convention for 64-bit ELF PowerPC fast isel.
+// All small ints are promoted to i64.  Vector types, quadword ints,
+// and multiple register returns are "supported" to avoid compile
+// errors, but none are handled by the fast selector.
+def RetCC_PPC64_ELF_FIS : CallingConv<[
+  CCIfType<[i8],   CCPromoteToType<i64>>,
+  CCIfType<[i16],  CCPromoteToType<i64>>,
+  CCIfType<[i32],  CCPromoteToType<i64>>,
+  CCIfType<[i64],  CCAssignToReg<[X3, X4]>>,
+  CCIfType<[i128], CCAssignToReg<[X3, X4, X5, X6]>>,
+  CCIfType<[f32],  CCAssignToReg<[F1, F2]>>,
+  CCIfType<[f64],  CCAssignToReg<[F1, F2, F3, F4]>>,
+  CCIfType<[v16i8, v8i16, v4i32, v4f32], CCAssignToReg<[V2]>>
+]>;
+
 //===----------------------------------------------------------------------===//
 // PowerPC System V Release 4 32-bit ABI
 //===----------------------------------------------------------------------===//

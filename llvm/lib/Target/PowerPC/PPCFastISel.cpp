@@ -95,6 +95,8 @@ class PPCFastISel : public FastISel {
   private:
     bool SelectBranch(const Instruction *I);
     bool SelectIndirectBr(const Instruction *I);
+    bool SelectRet(const Instruction *I);
+    bool SelectIntExt(const Instruction *I);
 
   // Utility routines.
   private:
@@ -109,12 +111,31 @@ class PPCFastISel : public FastISel {
     unsigned PPCMaterialize64BitInt(int64_t Imm,
                                     const TargetRegisterClass *RC);
 
+  // Call handling routines.
+  private:
+    CCAssignFn *usePPC32CCs(unsigned Flag);
+
   private:
   #include "PPCGenFastISel.inc"
 
 };
 
 } // end anonymous namespace
+
+#include "PPCGenCallingConv.inc"
+
+// Function whose sole purpose is to kill compiler warnings 
+// stemming from unused functions included from PPCGenCallingConv.inc.
+CCAssignFn *PPCFastISel::usePPC32CCs(unsigned Flag) {
+  if (Flag == 1)
+    return CC_PPC32_SVR4;
+  else if (Flag == 2)
+    return CC_PPC32_SVR4_ByVal;
+  else if (Flag == 3)
+    return CC_PPC32_SVR4_VarArg;
+  else
+    return RetCC_PPC;
+}
 
 static Optional<PPC::Predicate> getComparePred(CmpInst::Predicate Pred) {
   switch (Pred) {
@@ -309,13 +330,164 @@ bool PPCFastISel::PPCEmitCmp(const Value *SrcValue1, const Value *SrcValue2,
   return true;
 }
 
+// Attempt to fast-select a return instruction.
+bool PPCFastISel::SelectRet(const Instruction *I) {
+
+  if (!FuncInfo.CanLowerReturn)
+    return false;
+
+  const ReturnInst *Ret = cast<ReturnInst>(I);
+  const Function &F = *I->getParent()->getParent();
+
+  // Build a list of return value registers.
+  SmallVector<unsigned, 4> RetRegs;
+  CallingConv::ID CC = F.getCallingConv();
+
+  if (Ret->getNumOperands() > 0) {
+    SmallVector<ISD::OutputArg, 4> Outs;
+    GetReturnInfo(F.getReturnType(), F.getAttributes(), Outs, TLI);
+
+    // Analyze operands of the call, assigning locations to each operand.
+    SmallVector<CCValAssign, 16> ValLocs;
+    CCState CCInfo(CC, F.isVarArg(), *FuncInfo.MF, TM, ValLocs, *Context);
+    CCInfo.AnalyzeReturn(Outs, RetCC_PPC64_ELF_FIS);
+    const Value *RV = Ret->getOperand(0);
+    
+    // FIXME: Only one output register for now.
+    if (ValLocs.size() > 1)
+      return false;
+
+    // Special case for returning a constant integer of any size.
+    // Materialize the constant as an i64 and copy it to the return
+    // register.  This avoids an unnecessary extend or truncate.
+    if (isa<ConstantInt>(*RV)) {
+      const Constant *C = cast<Constant>(RV);
+      unsigned SrcReg = PPCMaterializeInt(C, MVT::i64);
+      unsigned RetReg = ValLocs[0].getLocReg();
+      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TargetOpcode::COPY),
+              RetReg).addReg(SrcReg);
+      RetRegs.push_back(RetReg);
+
+    } else {
+      unsigned Reg = getRegForValue(RV);
+
+      if (Reg == 0)
+        return false;
+
+      // Copy the result values into the output registers.
+      for (unsigned i = 0; i < ValLocs.size(); ++i) {
+
+        CCValAssign &VA = ValLocs[i];
+        assert(VA.isRegLoc() && "Can only return in registers!");
+        RetRegs.push_back(VA.getLocReg());
+        unsigned SrcReg = Reg + VA.getValNo();
+
+        EVT RVEVT = TLI.getValueType(RV->getType());
+        if (!RVEVT.isSimple())
+          return false;
+        MVT RVVT = RVEVT.getSimpleVT();
+        MVT DestVT = VA.getLocVT();
+
+        if (RVVT != DestVT && RVVT != MVT::i8 &&
+            RVVT != MVT::i16 && RVVT != MVT::i32)
+          return false;
+      
+        if (RVVT != DestVT) {
+          switch (VA.getLocInfo()) {
+            default:
+              llvm_unreachable("Unknown loc info!");
+            case CCValAssign::Full:
+              llvm_unreachable("Full value assign but types don't match?");
+            case CCValAssign::AExt:
+            case CCValAssign::ZExt: {
+              const TargetRegisterClass *RC =
+                (DestVT == MVT::i64) ? &PPC::G8RCRegClass : &PPC::GPRCRegClass;
+              unsigned TmpReg = createResultReg(RC);
+              if (!PPCEmitIntExt(RVVT, SrcReg, DestVT, TmpReg, true))
+                return false;
+              SrcReg = TmpReg;
+              break;
+            }
+            case CCValAssign::SExt: {
+              const TargetRegisterClass *RC =
+                (DestVT == MVT::i64) ? &PPC::G8RCRegClass : &PPC::GPRCRegClass;
+              unsigned TmpReg = createResultReg(RC);
+              if (!PPCEmitIntExt(RVVT, SrcReg, DestVT, TmpReg, false))
+                return false;
+              SrcReg = TmpReg;
+              break;
+            }
+          }
+        }
+
+        BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                TII.get(TargetOpcode::COPY), RetRegs[i])
+          .addReg(SrcReg);
+      }
+    }
+  }
+
+  MachineInstrBuilder MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                                    TII.get(PPC::BLR));
+
+  for (unsigned i = 0, e = RetRegs.size(); i != e; ++i)
+    MIB.addReg(RetRegs[i], RegState::Implicit);
+
+  return true;
+}
+
 // Attempt to emit an integer extend of SrcReg into DestReg.  Both
 // signed and zero extensions are supported.  Return false if we
-// can't handle it.  Not yet implemented.
+// can't handle it.
 bool PPCFastISel::PPCEmitIntExt(MVT SrcVT, unsigned SrcReg, MVT DestVT,
                                 unsigned DestReg, bool IsZExt) {
-  return (SrcVT == MVT::i8 && SrcReg && DestVT == MVT::i8 && DestReg
-          && IsZExt && false);
+  if (DestVT != MVT::i32 && DestVT != MVT::i64)
+    return false;
+  if (SrcVT != MVT::i8 && SrcVT != MVT::i16 && SrcVT != MVT::i32)
+    return false;
+
+  // Signed extensions use EXTSB, EXTSH, EXTSW.
+  if (!IsZExt) {
+    unsigned Opc;
+    if (SrcVT == MVT::i8)
+      Opc = (DestVT == MVT::i32) ? PPC::EXTSB : PPC::EXTSB8_32_64;
+    else if (SrcVT == MVT::i16)
+      Opc = (DestVT == MVT::i32) ? PPC::EXTSH : PPC::EXTSH8_32_64;
+    else {
+      assert(DestVT == MVT::i64 && "Signed extend from i32 to i32??");
+      Opc = PPC::EXTSW_32_64;
+    }
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(Opc), DestReg)
+      .addReg(SrcReg);
+
+  // Unsigned 32-bit extensions use RLWINM.
+  } else if (DestVT == MVT::i32) {
+    unsigned MB;
+    if (SrcVT == MVT::i8)
+      MB = 24;
+    else {
+      assert(SrcVT == MVT::i16 && "Unsigned extend from i32 to i32??");
+      MB = 16;
+    }
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(PPC::RLWINM),
+            DestReg)
+      .addReg(SrcReg).addImm(/*SH=*/0).addImm(MB).addImm(/*ME=*/31);
+
+  // Unsigned 64-bit extensions use RLDICL (with a 32-bit source).
+  } else {
+    unsigned MB;
+    if (SrcVT == MVT::i8)
+      MB = 56;
+    else if (SrcVT == MVT::i16)
+      MB = 48;
+    else
+      MB = 32;
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+            TII.get(PPC::RLDICL_32_64), DestReg)
+      .addReg(SrcReg).addImm(/*SH=*/0).addImm(MB);
+  }
+
+  return true;
 }
 
 // Attempt to fast-select an indirect branch instruction.
@@ -335,6 +507,45 @@ bool PPCFastISel::SelectIndirectBr(const Instruction *I) {
   return true;
 }
 
+// Attempt to fast-select an integer extend instruction.
+bool PPCFastISel::SelectIntExt(const Instruction *I) {
+  Type *DestTy = I->getType();
+  Value *Src = I->getOperand(0);
+  Type *SrcTy = Src->getType();
+
+  bool IsZExt = isa<ZExtInst>(I);
+  unsigned SrcReg = getRegForValue(Src);
+  if (!SrcReg) return false;
+
+  EVT SrcEVT, DestEVT;
+  SrcEVT = TLI.getValueType(SrcTy, true);
+  DestEVT = TLI.getValueType(DestTy, true);
+  if (!SrcEVT.isSimple())
+    return false;
+  if (!DestEVT.isSimple())
+    return false;
+
+  MVT SrcVT = SrcEVT.getSimpleVT();
+  MVT DestVT = DestEVT.getSimpleVT();
+
+  // If we know the register class needed for the result of this
+  // instruction, use it.  Otherwise pick the register class of the
+  // correct size that does not contain X0/R0, since we don't know
+  // whether downstream uses permit that assignment.
+  unsigned AssignedReg = FuncInfo.ValueMap[I];
+  const TargetRegisterClass *RC =
+    (AssignedReg ? MRI.getRegClass(AssignedReg) :
+     (DestVT == MVT::i64 ? &PPC::G8RC_and_G8RC_NOX0RegClass :
+      &PPC::GPRC_and_GPRC_NOR0RegClass));
+  unsigned ResultReg = createResultReg(RC);
+
+  if (!PPCEmitIntExt(SrcVT, SrcReg, DestVT, ResultReg, IsZExt))
+    return false;
+
+  UpdateValueMap(I, ResultReg);
+  return true;
+}
+
 // Attempt to fast-select an instruction that wasn't handled by
 // the table-generated machinery.
 bool PPCFastISel::TargetSelectInstruction(const Instruction *I) {
@@ -344,6 +555,11 @@ bool PPCFastISel::TargetSelectInstruction(const Instruction *I) {
       return SelectBranch(I);
     case Instruction::IndirectBr:
       return SelectIndirectBr(I);
+    case Instruction::Ret:
+      return SelectRet(I);
+    case Instruction::ZExt:
+    case Instruction::SExt:
+      return SelectIntExt(I);
     // Here add other flavors of Instruction::XXX that automated
     // cases don't catch.  For example, switches are terminators
     // that aren't yet handled.

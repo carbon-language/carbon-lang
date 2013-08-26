@@ -506,6 +506,14 @@ defm EXTSH8 : XForm_11r<31, 922, (outs g8rc:$rA), (ins g8rc:$rS),
                         [(set i64:$rA, (sext_inreg i64:$rS, i16))]>;
 } // Interpretation64Bit
 
+// For fast-isel:
+let isCodeGenOnly = 1 in {
+def EXTSB8_32_64 : XForm_11<31, 954, (outs g8rc:$rA), (ins gprc:$rS),
+                           "extsb $rA, $rS", IntSimple, []>, isPPC64;
+def EXTSH8_32_64 : XForm_11<31, 922, (outs g8rc:$rA), (ins gprc:$rS),
+                           "extsh $rA, $rS", IntSimple, []>, isPPC64;
+} // isCodeGenOnly for fast-isel
+
 defm EXTSW  : XForm_11r<31, 986, (outs g8rc:$rA), (ins g8rc:$rS),
                         "extsw", "$rA, $rS", IntSimple,
                         [(set i64:$rA, (sext_inreg i64:$rS, i32))]>, isPPC64;
@@ -569,6 +577,14 @@ defm RLDICL : MDForm_1r<30, 0,
                         (outs g8rc:$rA), (ins g8rc:$rS, u6imm:$SH, u6imm:$MBE),
                         "rldicl", "$rA, $rS, $SH, $MBE", IntRotateDI,
                         []>, isPPC64;
+// For fast-isel:
+let isCodeGenOnly = 1 in
+def RLDICL_32_64 : MDForm_1<30, 0,
+                           (outs g8rc:$rA),
+                           (ins gprc:$rS, u6imm:$SH, u6imm:$MBE),
+                           "rldicl $rA, $rS, $SH, $MBE", IntRotateDI,
+                           []>, isPPC64;
+// End fast-isel.
 defm RLDICR : MDForm_1r<30, 1,
                         (outs g8rc:$rA), (ins g8rc:$rS, u6imm:$SH, u6imm:$MBE),
                         "rldicr", "$rA, $rS, $SH, $MBE", IntRotateDI,
