@@ -504,14 +504,42 @@ void Lint::visitShl(BinaryOperator &I) {
             "Undefined result: Shift count out of range", &I);
 }
 
-static bool isZero(Value *V, DataLayout *TD) {
+static bool isZero(Value *V, DataLayout *DL) {
   // Assume undef could be zero.
-  if (isa<UndefValue>(V)) return true;
+  if (isa<UndefValue>(V))
+    return true;
 
-  unsigned BitWidth = cast<IntegerType>(V->getType())->getBitWidth();
-  APInt KnownZero(BitWidth, 0), KnownOne(BitWidth, 0);
-  ComputeMaskedBits(V, KnownZero, KnownOne, TD);
-  return KnownZero.isAllOnesValue();
+  VectorType *VecTy = dyn_cast<VectorType>(V->getType());
+  if (!VecTy) {
+    unsigned BitWidth = V->getType()->getIntegerBitWidth();
+    APInt KnownZero(BitWidth, 0), KnownOne(BitWidth, 0);
+    ComputeMaskedBits(V, KnownZero, KnownOne, DL);
+    return KnownZero.isAllOnesValue();
+  }
+
+  // Per-component check doesn't work with zeroinitializer
+  Constant *C = dyn_cast<Constant>(V);
+  if (!C)
+    return false;
+
+  if (C->isZeroValue())
+    return true;
+
+  // For a vector, KnownZero will only be true if all values are zero, so check
+  // this per component
+  unsigned BitWidth = VecTy->getElementType()->getIntegerBitWidth();
+  for (unsigned I = 0, N = VecTy->getNumElements(); I != N; ++I) {
+    Constant *Elem = C->getAggregateElement(I);
+    if (isa<UndefValue>(Elem))
+      return true;
+
+    APInt KnownZero(BitWidth, 0), KnownOne(BitWidth, 0);
+    ComputeMaskedBits(Elem, KnownZero, KnownOne, DL);
+    if (KnownZero.isAllOnesValue())
+      return true;
+  }
+
+  return false;
 }
 
 void Lint::visitSDiv(BinaryOperator &I) {
