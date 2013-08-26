@@ -2686,14 +2686,13 @@ void DwarfDebug::emitDebugInlineInfo() {
 // DW_AT_ranges_base, DW_AT_addr_base. If DW_AT_ranges is present,
 // DW_AT_low_pc and DW_AT_high_pc are not used, and vice versa.
 CompileUnit *DwarfDebug::constructSkeletonCU(const CompileUnit *CU) {
-  DICompileUnit DIUnit(CU->getNode());
 
   DIE *Die = new DIE(dwarf::DW_TAG_compile_unit);
   CompileUnit *NewCU = new CompileUnit(CU->getUniqueID(), Die, CU->getNode(),
                                        Asm, this, &SkeletonHolder);
 
   NewCU->addLocalString(Die, dwarf::DW_AT_GNU_dwo_name,
-                        DIUnit.getSplitDebugFilename());
+                        DICompileUnit(CU->getNode()).getSplitDebugFilename());
 
   // Relocate to the beginning of the addr_base section, else 0 for the
   // beginning of the one for this compile unit.
