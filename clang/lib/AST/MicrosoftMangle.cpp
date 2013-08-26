@@ -508,8 +508,8 @@ MicrosoftCXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND,
       }
 
       // When VC encounters an anonymous type with no tag and no typedef,
-      // it literally emits '<unnamed-tag>'.
-      Out << "<unnamed-tag>";
+      // it literally emits '<unnamed-tag>@'.
+      Out << "<unnamed-tag>@";
       break;
     }
       
