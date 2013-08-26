@@ -165,7 +165,9 @@ bool SanitizerGetThreadName(char *name, int max_len);
 
 // Specific tools may override behavior of "Die" and "CheckFailed" functions
 // to do tool-specific job.
-void SetDieCallback(void (*callback)(void));
+typedef void (*DieCallbackType)(void);
+void SetDieCallback(DieCallbackType);
+DieCallbackType GetDieCallback();
 typedef void (*CheckFailedCallbackType)(const char *, int, const char *,
                                        u64, u64);
 void SetCheckFailedCallback(CheckFailedCallbackType callback);

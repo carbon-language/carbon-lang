@@ -37,9 +37,13 @@ static char report_path_prefix[4096];  // Set via __sanitizer_set_report_path.
 // child thread will be different from |report_fd_pid|.
 static uptr report_fd_pid = 0;
 
-static void (*DieCallback)(void);
-void SetDieCallback(void (*callback)(void)) {
+static DieCallbackType DieCallback;
+void SetDieCallback(DieCallbackType callback) {
   DieCallback = callback;
+}
+
+DieCallbackType GetDieCallback() {
+  return DieCallback;
 }
 
 void NORETURN Die() {

@@ -191,6 +191,8 @@ struct TracerThreadArgument {
   BlockingMutex mutex;
 };
 
+static DieCallbackType old_die_callback;
+
 // Signal handler to wake up suspended threads when the tracer thread dies.
 void TracerThreadSignalHandler(int signum, siginfo_t *siginfo, void *) {
   if (thread_suspender_instance != NULL) {
@@ -200,6 +202,19 @@ void TracerThreadSignalHandler(int signum, siginfo_t *siginfo, void *) {
       thread_suspender_instance->ResumeAllThreads();
   }
   internal__exit((signum == SIGABRT) ? 1 : 2);
+}
+
+static void TracerThreadDieCallback() {
+  // Generally a call to Die() in the tracer thread should be fatal to the
+  // parent process as well, because they share the address space.
+  // This really only works correctly if all the threads are suspended at this
+  // point. So we correctly handle calls to Die() from within the callback, but
+  // not those that happen before or after the callback. Hopefully there aren't
+  // a lot of opportunities for that to happen...
+  if (thread_suspender_instance)
+    thread_suspender_instance->KillAllThreads();
+  if (old_die_callback)
+    old_die_callback();
 }
 
 // Size of alternative stack for signal handlers in the tracer thread.
@@ -213,6 +228,8 @@ static int TracerThread(void* argument) {
   // Wait for the parent thread to finish preparations.
   tracer_thread_argument->mutex.Lock();
   tracer_thread_argument->mutex.Unlock();
+
+  SetDieCallback(TracerThreadDieCallback);
 
   ThreadSuspender thread_suspender(internal_getppid());
   // Global pointer for the signal handler.
@@ -283,40 +300,67 @@ NOINLINE static void WipeStack() {
   internal_memset(arr, 0, sizeof(arr));
 }
 
+// We have a limitation on the stack frame size, so some stuff had to be moved
+// into globals.
 static sigset_t blocked_sigset;
 static sigset_t old_sigset;
 static struct sigaction old_sigactions[ARRAY_SIZE(kUnblockedSignals)];
 
-void StopTheWorld(StopTheWorldCallback callback, void *argument) {
-  // Glibc's sigaction() has a side-effect where it copies garbage stack values
-  // into oldact, which can cause false negatives in LSan. As a quick workaround
-  // we zero some stack space here.
-  WipeStack();
-  // Block all signals that can be blocked safely, and install default handlers
-  // for the remaining signals.
-  // We cannot allow user-defined handlers to run while the ThreadSuspender
-  // thread is active, because they could conceivably call some libc functions
-  // which modify errno (which is shared between the two threads).
-  sigfillset(&blocked_sigset);
-  for (uptr signal_index = 0; signal_index < ARRAY_SIZE(kUnblockedSignals);
-       signal_index++) {
-    // Remove the signal from the set of blocked signals.
-    sigdelset(&blocked_sigset, kUnblockedSignals[signal_index]);
-    // Install the default handler.
-    struct sigaction new_sigaction;
-    internal_memset(&new_sigaction, 0, sizeof(new_sigaction));
-    new_sigaction.sa_handler = SIG_DFL;
-    sigfillset(&new_sigaction.sa_mask);
-    sigaction(kUnblockedSignals[signal_index], &new_sigaction,
-                    &old_sigactions[signal_index]);
+class StopTheWorldScope {
+ public:
+  StopTheWorldScope() {
+    // Glibc's sigaction() has a side-effect where it copies garbage stack values
+    // into oldact, which can cause false negatives in LSan. As a quick workaround
+    // we zero some stack space here.
+    WipeStack();
+    // Block all signals that can be blocked safely, and install default handlers
+    // for the remaining signals.
+    // We cannot allow user-defined handlers to run while the ThreadSuspender
+    // thread is active, because they could conceivably call some libc functions
+    // which modify errno (which is shared between the two threads).
+    sigfillset(&blocked_sigset);
+    for (uptr signal_index = 0; signal_index < ARRAY_SIZE(kUnblockedSignals);
+         signal_index++) {
+      // Remove the signal from the set of blocked signals.
+      sigdelset(&blocked_sigset, kUnblockedSignals[signal_index]);
+      // Install the default handler.
+      struct sigaction new_sigaction;
+      internal_memset(&new_sigaction, 0, sizeof(new_sigaction));
+      new_sigaction.sa_handler = SIG_DFL;
+      sigfillset(&new_sigaction.sa_mask);
+      sigaction(kUnblockedSignals[signal_index], &new_sigaction,
+                      &old_sigactions[signal_index]);
+    }
+    int sigprocmask_status =
+        sigprocmask(SIG_BLOCK, &blocked_sigset, &old_sigset);
+    CHECK_EQ(sigprocmask_status, 0); // sigprocmask should never fail
+    // Make this process dumpable. Processes that are not dumpable cannot be
+    // attached to.
+    process_was_dumpable_ = internal_prctl(PR_GET_DUMPABLE, 0, 0, 0, 0);
+    if (!process_was_dumpable_)
+      internal_prctl(PR_SET_DUMPABLE, 1, 0, 0, 0);
+    old_die_callback = GetDieCallback();
   }
-  int sigprocmask_status = sigprocmask(SIG_BLOCK, &blocked_sigset, &old_sigset);
-  CHECK_EQ(sigprocmask_status, 0); // sigprocmask should never fail
-  // Make this process dumpable. Processes that are not dumpable cannot be
-  // attached to.
-  int process_was_dumpable = internal_prctl(PR_GET_DUMPABLE, 0, 0, 0, 0);
-  if (!process_was_dumpable)
-    internal_prctl(PR_SET_DUMPABLE, 1, 0, 0, 0);
+
+  ~StopTheWorldScope() {
+    SetDieCallback(old_die_callback);
+    // Restore the dumpable flag.
+    if (!process_was_dumpable_)
+      internal_prctl(PR_SET_DUMPABLE, 0, 0, 0, 0);
+    // Restore the signal handlers.
+    for (uptr signal_index = 0; signal_index < ARRAY_SIZE(kUnblockedSignals);
+         signal_index++) {
+      sigaction(kUnblockedSignals[signal_index],
+                &old_sigactions[signal_index], NULL);
+    }
+    sigprocmask(SIG_SETMASK, &old_sigset, &old_sigset);
+  }
+ private:
+  int process_was_dumpable_;
+};
+
+void StopTheWorld(StopTheWorldCallback callback, void *argument) {
+  StopTheWorldScope in_stoptheworld;
   // Prepare the arguments for TracerThread.
   struct TracerThreadArgument tracer_thread_argument;
   tracer_thread_argument.callback = callback;
@@ -349,16 +393,6 @@ void StopTheWorld(StopTheWorldCallback callback, void *argument) {
     if (internal_iserror(waitpid_status, &wperrno))
       Report("Waiting on the tracer thread failed (errno %d).\n", wperrno);
   }
-  // Restore the dumpable flag.
-  if (!process_was_dumpable)
-    internal_prctl(PR_SET_DUMPABLE, 0, 0, 0, 0);
-  // Restore the signal handlers.
-  for (uptr signal_index = 0; signal_index < ARRAY_SIZE(kUnblockedSignals);
-       signal_index++) {
-    sigaction(kUnblockedSignals[signal_index],
-              &old_sigactions[signal_index], NULL);
-  }
-  sigprocmask(SIG_SETMASK, &old_sigset, &old_sigset);
 }
 
 // Platform-specific methods from SuspendedThreadsList.
