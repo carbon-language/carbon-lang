@@ -233,6 +233,8 @@ SDValue AMDGPUTargetLowering::LowerGlobalAddress(AMDGPUMachineFunction* MFI,
 
   const DataLayout *TD = getTargetMachine().getDataLayout();
   GlobalAddressSDNode *G = cast<GlobalAddressSDNode>(Op);
+
+  assert(G->getAddressSpace() == AMDGPUAS::LOCAL_ADDRESS);
   // XXX: What does the value of G->getOffset() mean?
   assert(G->getOffset() == 0 &&
          "Do not know what to do with an non-zero offset");
@@ -244,7 +246,7 @@ SDValue AMDGPUTargetLowering::LowerGlobalAddress(AMDGPUMachineFunction* MFI,
   // XXX: Account for alignment?
   MFI->LDSSize += Size;
 
-  return DAG.getConstant(Offset, TD->getPointerSize() == 8 ? MVT::i64 : MVT::i32);
+  return DAG.getConstant(Offset, getPointerTy(G->getAddressSpace()));
 }
 
 void AMDGPUTargetLowering::ExtractVectorElements(SDValue Op, SelectionDAG &DAG,

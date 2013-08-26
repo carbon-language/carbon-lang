@@ -3242,6 +3242,10 @@ void SelectionDAGBuilder::visitGetElementPtr(const User &I) {
 
       Ty = StTy->getElementType(Field);
     } else {
+      uint32_t AS = 0;
+      if (PointerType *PtrType = dyn_cast<PointerType>(Ty)) {
+        AS = PtrType->getAddressSpace();
+      }
       Ty = cast<SequentialType>(Ty)->getElementType();
 
       // If this is a constant subscript, handle it quickly.
@@ -3251,14 +3255,13 @@ void SelectionDAGBuilder::visitGetElementPtr(const User &I) {
         uint64_t Offs =
             TD->getTypeAllocSize(Ty)*cast<ConstantInt>(CI)->getSExtValue();
         SDValue OffsVal;
-        EVT PTy = TLI->getPointerTy();
+        EVT PTy = TLI->getPointerTy(AS);
         unsigned PtrBits = PTy.getSizeInBits();
         if (PtrBits < 64)
-          OffsVal = DAG.getNode(ISD::TRUNCATE, getCurSDLoc(),
-                                TLI->getPointerTy(),
+          OffsVal = DAG.getNode(ISD::TRUNCATE, getCurSDLoc(), PTy,
                                 DAG.getConstant(Offs, MVT::i64));
         else
-          OffsVal = DAG.getIntPtrConstant(Offs);
+          OffsVal = DAG.getConstant(Offs, PTy);
 
         N = DAG.getNode(ISD::ADD, getCurSDLoc(), N.getValueType(), N,
                         OffsVal);
@@ -3266,7 +3269,7 @@ void SelectionDAGBuilder::visitGetElementPtr(const User &I) {
       }
 
       // N = N + Idx * ElementSize;
-      APInt ElementSize = APInt(TLI->getPointerTy().getSizeInBits(),
+      APInt ElementSize = APInt(TLI->getPointerSizeInBits(AS),
                                 TD->getTypeAllocSize(Ty));
       SDValue IdxN = getValue(Idx);
 

@@ -767,6 +767,19 @@ void TargetLoweringBase::initActions() {
   setOperationAction(ISD::DEBUGTRAP, MVT::Other, Expand);
 }
 
+MVT TargetLoweringBase::getPointerTy(uint32_t AS) const {
+  return MVT::getIntegerVT(getPointerSizeInBits(AS));
+}
+
+unsigned TargetLoweringBase::getPointerSizeInBits(uint32_t AS) const {
+  return TD->getPointerSizeInBits(AS);
+}
+
+unsigned TargetLoweringBase::getPointerTypeSizeInBits(Type *Ty) const {
+  assert(Ty->isPointerTy());
+  return getPointerSizeInBits(Ty->getPointerAddressSpace());
+}
+
 MVT TargetLoweringBase::getScalarShiftAmountTy(EVT LHSTy) const {
   return MVT::getIntegerVT(8*TD->getPointerSize(0));
 }

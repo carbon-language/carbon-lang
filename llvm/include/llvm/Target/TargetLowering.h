@@ -151,7 +151,9 @@ public:
   // Return the pointer type for the given address space, defaults to
   // the pointer type from the data layout.
   // FIXME: The default needs to be removed once all the code is updated.
-  virtual MVT getPointerTy(uint32_t /*AS*/ = 0) const { return PointerTy; }
+  virtual MVT getPointerTy(uint32_t /*AS*/ = 0) const;
+  unsigned getPointerSizeInBits(uint32_t AS = 0) const;
+  unsigned getPointerTypeSizeInBits(Type *Ty) const;
   virtual MVT getScalarShiftAmountTy(EVT LHSTy) const;
 
   EVT getShiftAmountTy(EVT LHSTy) const;
@@ -568,7 +570,7 @@ public:
   /// otherwise it will assert.
   EVT getValueType(Type *Ty, bool AllowUnknown = false) const {
     // Lower scalar pointers to native pointer types.
-    if (Ty->isPointerTy()) return PointerTy;
+    if (Ty->isPointerTy()) return getPointerTy(Ty->getPointerAddressSpace());
 
     if (Ty->isVectorTy()) {
       VectorType *VTy = cast<VectorType>(Ty);

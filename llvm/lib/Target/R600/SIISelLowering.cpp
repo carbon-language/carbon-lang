@@ -87,7 +87,7 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
   setLoadExtAction(ISD::EXTLOAD, MVT::f32, Expand);
   setTruncStoreAction(MVT::f64, MVT::f32, Expand);
 
-  setOperationAction(ISD::GlobalAddress, MVT::i64, Custom);
+  setOperationAction(ISD::GlobalAddress, MVT::i32, Custom);
 
   setTargetDAGCombine(ISD::SELECT_CC);
 
