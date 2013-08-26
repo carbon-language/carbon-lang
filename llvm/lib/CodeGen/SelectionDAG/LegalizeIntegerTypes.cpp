@@ -1844,7 +1844,7 @@ void DAGTypeLegalizer::ExpandIntRes_LOAD(LoadSDNode *N,
     // Increment the pointer to the other half.
     unsigned IncrementSize = NVT.getSizeInBits()/8;
     Ptr = DAG.getNode(ISD::ADD, dl, Ptr.getValueType(), Ptr,
-                      DAG.getIntPtrConstant(IncrementSize));
+                      DAG.getConstant(IncrementSize, Ptr.getValueType()));
     Hi = DAG.getExtLoad(ExtType, dl, NVT, Ch, Ptr,
                         N->getPointerInfo().getWithOffset(IncrementSize), NEVT,
                         isVolatile, isNonTemporal,
@@ -1870,7 +1870,7 @@ void DAGTypeLegalizer::ExpandIntRes_LOAD(LoadSDNode *N,
 
     // Increment the pointer to the other half.
     Ptr = DAG.getNode(ISD::ADD, dl, Ptr.getValueType(), Ptr,
-                      DAG.getIntPtrConstant(IncrementSize));
+                      DAG.getConstant(IncrementSize, Ptr.getValueType()));
     // Load the rest of the low bits.
     Lo = DAG.getExtLoad(ISD::ZEXTLOAD, dl, NVT, Ch, Ptr,
                         N->getPointerInfo().getWithOffset(IncrementSize),
@@ -2732,7 +2732,7 @@ SDValue DAGTypeLegalizer::ExpandIntOp_STORE(StoreSDNode *N, unsigned OpNo) {
     // Increment the pointer to the other half.
     unsigned IncrementSize = NVT.getSizeInBits()/8;
     Ptr = DAG.getNode(ISD::ADD, dl, Ptr.getValueType(), Ptr,
-                      DAG.getIntPtrConstant(IncrementSize));
+                      DAG.getConstant(IncrementSize, Ptr.getValueType()));
     Hi = DAG.getTruncStore(Ch, dl, Hi, Ptr,
                            N->getPointerInfo().getWithOffset(IncrementSize),
                            NEVT, isVolatile, isNonTemporal,
@@ -2768,7 +2768,7 @@ SDValue DAGTypeLegalizer::ExpandIntOp_STORE(StoreSDNode *N, unsigned OpNo) {
 
   // Increment the pointer to the other half.
   Ptr = DAG.getNode(ISD::ADD, dl, Ptr.getValueType(), Ptr,
-                    DAG.getIntPtrConstant(IncrementSize));
+                    DAG.getConstant(IncrementSize, Ptr.getValueType()));
   // Store the lowest ExcessBits bits in the second half.
   Lo = DAG.getTruncStore(Ch, dl, Lo, Ptr,
                          N->getPointerInfo().getWithOffset(IncrementSize),
@@ -2839,7 +2839,8 @@ SDValue DAGTypeLegalizer::ExpandIntOp_UINT_TO_FP(SDNode *N) {
     SDValue Offset = DAG.getSelect(dl, Zero.getValueType(), SignSet,
                                    Zero, Four);
     unsigned Alignment = cast<ConstantPoolSDNode>(FudgePtr)->getAlignment();
-    FudgePtr = DAG.getNode(ISD::ADD, dl, TLI.getPointerTy(), FudgePtr, Offset);
+    FudgePtr = DAG.getNode(ISD::ADD, dl, FudgePtr.getValueType(),
+                           FudgePtr, Offset);
     Alignment = std::min(Alignment, 4u);
 
     // Load the value out, extending it from f32 to the destination float type.

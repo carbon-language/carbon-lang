@@ -787,7 +787,7 @@ void DAGTypeLegalizer::SplitVecRes_INSERT_VECTOR_ELT(SDNode *N, SDValue &Lo,
   // Increment the pointer to the other part.
   unsigned IncrementSize = Lo.getValueType().getSizeInBits() / 8;
   StackPtr = DAG.getNode(ISD::ADD, dl, StackPtr.getValueType(), StackPtr,
-                         DAG.getIntPtrConstant(IncrementSize));
+                       DAG.getConstant(IncrementSize, StackPtr.getValueType()));
 
   // Load the Hi part from the stack slot.
   Hi = DAG.getLoad(Hi.getValueType(), dl, Store, StackPtr, MachinePointerInfo(),
@@ -829,7 +829,7 @@ void DAGTypeLegalizer::SplitVecRes_LOAD(LoadSDNode *LD, SDValue &Lo,
 
   unsigned IncrementSize = LoMemVT.getSizeInBits()/8;
   Ptr = DAG.getNode(ISD::ADD, dl, Ptr.getValueType(), Ptr,
-                    DAG.getIntPtrConstant(IncrementSize));
+                    DAG.getConstant(IncrementSize, Ptr.getValueType()));
   Hi = DAG.getLoad(ISD::UNINDEXED, ExtType, HiVT, dl, Ch, Ptr, Offset,
                    LD->getPointerInfo().getWithOffset(IncrementSize),
                    HiMemVT, isVolatile, isNonTemporal, isInvariant, Alignment);
@@ -2595,7 +2595,7 @@ SDValue DAGTypeLegalizer::GenWidenVectorLoads(SmallVectorImpl<SDValue> &LdChain,
     unsigned Increment = NewVTWidth / 8;
     Offset += Increment;
     BasePtr = DAG.getNode(ISD::ADD, dl, BasePtr.getValueType(), BasePtr,
-                          DAG.getIntPtrConstant(Increment));
+                          DAG.getConstant(Increment, BasePtr.getValueType()));
 
     SDValue L;
     if (LdWidth < NewVTWidth) {
@@ -2716,7 +2716,9 @@ DAGTypeLegalizer::GenWidenVectorExtLoads(SmallVectorImpl<SDValue> &LdChain,
   unsigned i = 0, Offset = Increment;
   for (i=1; i < NumElts; ++i, Offset += Increment) {
     SDValue NewBasePtr = DAG.getNode(ISD::ADD, dl, BasePtr.getValueType(),
-                                     BasePtr, DAG.getIntPtrConstant(Offset));
+                                     BasePtr,
+                                     DAG.getConstant(Offset,
+                                                     BasePtr.getValueType()));
     Ops[i] = DAG.getExtLoad(ExtType, dl, EltVT, Chain, NewBasePtr,
                             LD->getPointerInfo().getWithOffset(Offset), LdEltVT,
                             isVolatile, isNonTemporal, Align);
@@ -2773,7 +2775,7 @@ void DAGTypeLegalizer::GenWidenVectorStores(SmallVectorImpl<SDValue> &StChain,
         Offset += Increment;
         Idx += NumVTElts;
         BasePtr = DAG.getNode(ISD::ADD, dl, BasePtr.getValueType(), BasePtr,
-                              DAG.getIntPtrConstant(Increment));
+                              DAG.getConstant(Increment, BasePtr.getValueType()));
       } while (StWidth != 0 && StWidth >= NewVTWidth);
     } else {
       // Cast the vector to the scalar type we can store
@@ -2792,7 +2794,7 @@ void DAGTypeLegalizer::GenWidenVectorStores(SmallVectorImpl<SDValue> &StChain,
         StWidth -= NewVTWidth;
         Offset += Increment;
         BasePtr = DAG.getNode(ISD::ADD, dl, BasePtr.getValueType(), BasePtr,
-                              DAG.getIntPtrConstant(Increment));
+                            DAG.getConstant(Increment, BasePtr.getValueType()));
       } while (StWidth != 0 && StWidth >= NewVTWidth);
       // Restore index back to be relative to the original widen element type
       Idx = Idx * NewVTWidth / ValEltWidth;
@@ -2836,7 +2838,8 @@ DAGTypeLegalizer::GenWidenVectorTruncStores(SmallVectorImpl<SDValue> &StChain,
   unsigned Offset = Increment;
   for (unsigned i=1; i < NumElts; ++i, Offset += Increment) {
     SDValue NewBasePtr = DAG.getNode(ISD::ADD, dl, BasePtr.getValueType(),
-                                     BasePtr, DAG.getIntPtrConstant(Offset));
+                                     BasePtr, DAG.getConstant(Offset,
+                                                       BasePtr.getValueType()));
     SDValue EOp = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, ValEltVT, ValOp,
                             DAG.getConstant(0, TLI.getVectorIdxTy()));
     StChain.push_back(DAG.getTruncStore(Chain, dl, EOp, NewBasePtr,

@@ -4780,14 +4780,14 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     SDValue CfaArg = DAG.getSExtOrTrunc(getValue(I.getArgOperand(0)), sdl,
                                         TLI->getPointerTy());
     SDValue Offset = DAG.getNode(ISD::ADD, sdl,
-                                 TLI->getPointerTy(),
+                                 CfaArg.getValueType(),
                                  DAG.getNode(ISD::FRAME_TO_ARGS_OFFSET, sdl,
-                                             TLI->getPointerTy()),
+                                             CfaArg.getValueType()),
                                  CfaArg);
     SDValue FA = DAG.getNode(ISD::FRAMEADDR, sdl,
                              TLI->getPointerTy(),
                              DAG.getConstant(0, TLI->getPointerTy()));
-    setValue(&I, DAG.getNode(ISD::ADD, sdl, TLI->getPointerTy(),
+    setValue(&I, DAG.getNode(ISD::ADD, sdl, FA.getValueType(),
                              FA, Offset));
     return 0;
   }

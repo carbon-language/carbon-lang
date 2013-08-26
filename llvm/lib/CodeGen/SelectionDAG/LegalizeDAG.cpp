@@ -538,7 +538,7 @@ ExpandUnalignedLoad(LoadSDNode *LD, SelectionDAG &DAG,
                         NewLoadedVT, LD->isVolatile(),
                         LD->isNonTemporal(), Alignment);
     Ptr = DAG.getNode(ISD::ADD, dl, Ptr.getValueType(), Ptr,
-                      DAG.getConstant(IncrementSize, TLI.getPointerTy()));
+                      DAG.getConstant(IncrementSize, Ptr.getValueType()));
     Hi = DAG.getExtLoad(HiExtType, dl, VT, Chain, Ptr,
                         LD->getPointerInfo().getWithOffset(IncrementSize),
                         NewLoadedVT, LD->isVolatile(),
@@ -548,7 +548,7 @@ ExpandUnalignedLoad(LoadSDNode *LD, SelectionDAG &DAG,
                         NewLoadedVT, LD->isVolatile(),
                         LD->isNonTemporal(), Alignment);
     Ptr = DAG.getNode(ISD::ADD, dl, Ptr.getValueType(), Ptr,
-                      DAG.getConstant(IncrementSize, TLI.getPointerTy()));
+                      DAG.getConstant(IncrementSize, Ptr.getValueType()));
     Lo = DAG.getExtLoad(ISD::ZEXTLOAD, dl, VT, Chain, Ptr,
                         LD->getPointerInfo().getWithOffset(IncrementSize),
                         NewLoadedVT, LD->isVolatile(),
@@ -687,7 +687,7 @@ SDValue SelectionDAGLegalize::OptimizeFloatStore(StoreSDNode* ST) {
         Lo = DAG.getStore(Chain, dl, Lo, Ptr, ST->getPointerInfo(), isVolatile,
                           isNonTemporal, Alignment);
         Ptr = DAG.getNode(ISD::ADD, dl, Ptr.getValueType(), Ptr,
-                            DAG.getIntPtrConstant(4));
+                          DAG.getConstant(4, Ptr.getValueType()));
         Hi = DAG.getStore(Chain, dl, Hi, Ptr,
                           ST->getPointerInfo().getWithOffset(4),
                           isVolatile, isNonTemporal, MinAlign(Alignment, 4U));
@@ -793,7 +793,7 @@ void SelectionDAGLegalize::LegalizeStoreOps(SDNode *Node) {
           // Store the remaining ExtraWidth bits.
           IncrementSize = RoundWidth / 8;
           Ptr = DAG.getNode(ISD::ADD, dl, Ptr.getValueType(), Ptr,
-                             DAG.getIntPtrConstant(IncrementSize));
+                            DAG.getConstant(IncrementSize, Ptr.getValueType()));
           Hi = DAG.getNode(ISD::SRL, dl, Value.getValueType(), Value,
                            DAG.getConstant(RoundWidth,
                                     TLI.getShiftAmountTy(Value.getValueType())));
@@ -814,7 +814,7 @@ void SelectionDAGLegalize::LegalizeStoreOps(SDNode *Node) {
           // Store the remaining ExtraWidth bits.
           IncrementSize = RoundWidth / 8;
           Ptr = DAG.getNode(ISD::ADD, dl, Ptr.getValueType(), Ptr,
-                             DAG.getIntPtrConstant(IncrementSize));
+                             DAG.getConstant(IncrementSize, Ptr.getValueType()));
           Lo = DAG.getTruncStore(Chain, dl, Value, Ptr,
                               ST->getPointerInfo().getWithOffset(IncrementSize),
                                  ExtraVT, isVolatile, isNonTemporal,
@@ -992,7 +992,7 @@ void SelectionDAGLegalize::LegalizeLoadOps(SDNode *Node) {
       // Load the remaining ExtraWidth bits.
       IncrementSize = RoundWidth / 8;
       Ptr = DAG.getNode(ISD::ADD, dl, Ptr.getValueType(), Ptr,
-                         DAG.getIntPtrConstant(IncrementSize));
+                         DAG.getConstant(IncrementSize, Ptr.getValueType()));
       Hi = DAG.getExtLoad(ExtType, dl, Node->getValueType(0), Chain, Ptr,
                           LD->getPointerInfo().getWithOffset(IncrementSize),
                           ExtraVT, isVolatile, isNonTemporal,
@@ -1021,7 +1021,7 @@ void SelectionDAGLegalize::LegalizeLoadOps(SDNode *Node) {
       // Load the remaining ExtraWidth bits.
       IncrementSize = RoundWidth / 8;
       Ptr = DAG.getNode(ISD::ADD, dl, Ptr.getValueType(), Ptr,
-                         DAG.getIntPtrConstant(IncrementSize));
+                         DAG.getConstant(IncrementSize, Ptr.getValueType()));
       Lo = DAG.getExtLoad(ISD::ZEXTLOAD,
                           dl, Node->getValueType(0), Chain, Ptr,
                           LD->getPointerInfo().getWithOffset(IncrementSize),
@@ -1531,7 +1531,8 @@ SDValue SelectionDAGLegalize::ExpandFCOPYSIGN(SDNode* Node) {
       unsigned Strides = (FloatVT.getSizeInBits()-1)/LoadTy.getSizeInBits();
       unsigned ByteOffset = (Strides * LoadTy.getSizeInBits()) / 8;
       LoadPtr = DAG.getNode(ISD::ADD, dl, LoadPtr.getValueType(),
-                            LoadPtr, DAG.getIntPtrConstant(ByteOffset));
+                            LoadPtr,
+                            DAG.getConstant(ByteOffset, LoadPtr.getValueType()));
       // Load a legal integer containing the sign bit.
       SignBit = DAG.getLoad(LoadTy, dl, Ch, LoadPtr, MachinePointerInfo(),
                             false, false, false, 0);
@@ -2232,11 +2233,11 @@ SDValue SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
     SDValue StackSlot = DAG.CreateStackTemporary(MVT::f64);
 
     // word offset constant for Hi/Lo address computation
-    SDValue WordOff = DAG.getConstant(sizeof(int), TLI.getPointerTy());
+    SDValue WordOff = DAG.getConstant(sizeof(int), StackSlot.getValueType());
     // set up Hi and Lo (into buffer) address based on endian
     SDValue Hi = StackSlot;
-    SDValue Lo = DAG.getNode(ISD::ADD, dl,
-                             TLI.getPointerTy(), StackSlot, WordOff);
+    SDValue Lo = DAG.getNode(ISD::ADD, dl, StackSlot.getValueType(),
+                             StackSlot, WordOff);
     if (TLI.isLittleEndian())
       std::swap(Hi, Lo);
 
@@ -2395,7 +2396,7 @@ SDValue SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
 
   SDValue CPIdx = DAG.getConstantPool(FudgeFactor, TLI.getPointerTy());
   unsigned Alignment = cast<ConstantPoolSDNode>(CPIdx)->getAlignment();
-  CPIdx = DAG.getNode(ISD::ADD, dl, TLI.getPointerTy(), CPIdx, CstOffset);
+  CPIdx = DAG.getNode(ISD::ADD, dl, CPIdx.getValueType(), CPIdx, CstOffset);
   Alignment = std::min(Alignment, 4u);
   SDValue FudgeInReg;
   if (DestVT == MVT::f32)
@@ -2947,20 +2948,20 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
     if (Align > TLI.getMinStackArgumentAlignment()) {
       assert(((Align & (Align-1)) == 0) && "Expected Align to be a power of 2");
 
-      VAList = DAG.getNode(ISD::ADD, dl, TLI.getPointerTy(), VAList,
+      VAList = DAG.getNode(ISD::ADD, dl, VAList.getValueType(), VAList,
                            DAG.getConstant(Align - 1,
-                                           TLI.getPointerTy()));
+                                           VAList.getValueType()));
 
-      VAList = DAG.getNode(ISD::AND, dl, TLI.getPointerTy(), VAList,
+      VAList = DAG.getNode(ISD::AND, dl, VAList.getValueType(), VAList,
                            DAG.getConstant(-(int64_t)Align,
-                                           TLI.getPointerTy()));
+                                           VAList.getValueType()));
     }
 
     // Increment the pointer, VAList, to the next vaarg
-    Tmp3 = DAG.getNode(ISD::ADD, dl, TLI.getPointerTy(), VAList,
+    Tmp3 = DAG.getNode(ISD::ADD, dl, VAList.getValueType(), VAList,
                        DAG.getConstant(TLI.getDataLayout()->
                           getTypeAllocSize(VT.getTypeForEVT(*DAG.getContext())),
-                                       TLI.getPointerTy()));
+                                       VAList.getValueType()));
     // Store the incremented VAList to the legalized pointer
     Tmp3 = DAG.getStore(VAListLoad.getValue(1), dl, Tmp3, Tmp2,
                         MachinePointerInfo(V), false, false, 0);
@@ -3572,9 +3573,10 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
     unsigned EntrySize =
       DAG.getMachineFunction().getJumpTableInfo()->getEntrySize(TD);
 
-    Index = DAG.getNode(ISD::MUL, dl, PTy,
-                        Index, DAG.getConstant(EntrySize, PTy));
-    SDValue Addr = DAG.getNode(ISD::ADD, dl, PTy, Index, Table);
+    Index = DAG.getNode(ISD::MUL, dl, Index.getValueType(),
+                       Index, DAG.getConstant(EntrySize, Index.getValueType()));
+    SDValue Addr = DAG.getNode(ISD::ADD, dl, Index.getValueType(),
+                               Index, Table);
 
     EVT MemVT = EVT::getIntegerVT(*DAG.getContext(), EntrySize * 8);
     SDValue LD = DAG.getExtLoad(ISD::SEXTLOAD, dl, PTy, Chain, Addr,

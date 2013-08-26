@@ -434,7 +434,7 @@ SDValue VectorLegalizer::ExpandLoad(SDValue Op) {
       RemainingBytes -= LoadBytes;
       Offset += LoadBytes;
       BasePTR = DAG.getNode(ISD::ADD, dl, BasePTR.getValueType(), BasePTR,
-                            DAG.getIntPtrConstant(LoadBytes));
+                            DAG.getConstant(LoadBytes, BasePTR.getValueType()));
 
       LoadVals.push_back(ScalarLoad.getValue(0));
       LoadChains.push_back(ScalarLoad.getValue(1));
@@ -502,7 +502,7 @@ SDValue VectorLegalizer::ExpandLoad(SDValue Op) {
                 LD->getAlignment());
 
       BasePTR = DAG.getNode(ISD::ADD, dl, BasePTR.getValueType(), BasePTR,
-                         DAG.getIntPtrConstant(Stride));
+                         DAG.getConstant(Stride, BasePTR.getValueType()));
 
       Vals.push_back(ScalarLoad.getValue(0));
       LoadChains.push_back(ScalarLoad.getValue(1));
@@ -561,7 +561,7 @@ SDValue VectorLegalizer::ExpandStore(SDValue Op) {
                isVolatile, isNonTemporal, Alignment);
 
     BasePTR = DAG.getNode(ISD::ADD, dl, BasePTR.getValueType(), BasePTR,
-                                DAG.getIntPtrConstant(Stride));
+                               DAG.getConstant(Stride, BasePTR.getValueType()));
 
     Stores.push_back(Store);
   }
