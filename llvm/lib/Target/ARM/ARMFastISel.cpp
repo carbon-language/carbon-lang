@@ -653,6 +653,7 @@ unsigned ARMFastISel::ARMMaterializeInt(const Constant *C, MVT VT) {
                     .addConstantPoolIndex(Idx));
   else
     // The extra immediate is for addrmode2.
+    DestReg = constrainOperandRegClass(TII.get(ARM::LDRcp), DestReg, 0);
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                             TII.get(ARM::LDRcp), DestReg)
                     .addConstantPoolIndex(Idx)
@@ -728,6 +729,7 @@ unsigned ARMFastISel::ARMMaterializeGV(const GlobalValue *GV, MVT VT) {
       AddOptionalDefs(MIB);
     } else {
       // The extra immediate is for addrmode2.
+      DestReg = constrainOperandRegClass(TII.get(ARM::LDRcp), DestReg, 0);
       MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(ARM::LDRcp),
                     DestReg)
         .addConstantPoolIndex(Idx)
@@ -3027,12 +3029,14 @@ unsigned ARMFastISel::ARMLowerPICELF(const GlobalValue *GV,
   unsigned DestReg1 = createResultReg(TLI.getRegClassFor(VT));
   // Load value.
   if (isThumb2) {
+    DestReg1 = constrainOperandRegClass(TII.get(ARM::t2LDRpci), DestReg1, 0);
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                             TII.get(ARM::t2LDRpci), DestReg1)
                     .addConstantPoolIndex(Idx));
     Opc = UseGOTOFF ? ARM::t2ADDrr : ARM::t2LDRs;
   } else {
     // The extra immediate is for addrmode2.
+    DestReg1 = constrainOperandRegClass(TII.get(ARM::LDRcp), DestReg1, 0);
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt,
                             DL, TII.get(ARM::LDRcp), DestReg1)
                     .addConstantPoolIndex(Idx).addImm(0));
@@ -3046,6 +3050,9 @@ unsigned ARMFastISel::ARMLowerPICELF(const GlobalValue *GV,
   }
 
   unsigned DestReg2 = createResultReg(TLI.getRegClassFor(VT));
+  DestReg2 = constrainOperandRegClass(TII.get(Opc), DestReg2, 0);
+  DestReg1 = constrainOperandRegClass(TII.get(Opc), DestReg1, 1);
+  GlobalBaseReg = constrainOperandRegClass(TII.get(Opc), GlobalBaseReg, 2);
   MachineInstrBuilder MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt,
                                     DL, TII.get(Opc), DestReg2)
                             .addReg(DestReg1)
