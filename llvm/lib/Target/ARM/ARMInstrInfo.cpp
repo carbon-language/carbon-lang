@@ -22,6 +22,7 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/MC/MCAsmInfo.h"
@@ -119,20 +120,24 @@ namespace {
       MachineBasicBlock &FirstMBB = MF.front();
       MachineBasicBlock::iterator MBBI = FirstMBB.begin();
       DebugLoc DL = FirstMBB.findDebugLoc(MBBI);
-      unsigned GlobalBaseReg = AFI->getGlobalBaseReg();
+      unsigned TempReg =
+          MF.getRegInfo().createVirtualRegister(&ARM::rGPRRegClass);
       unsigned Opc = TM->getSubtarget<ARMSubtarget>().isThumb2() ?
                      ARM::t2LDRpci : ARM::LDRcp;
       const TargetInstrInfo &TII = *TM->getInstrInfo();
       MachineInstrBuilder MIB = BuildMI(FirstMBB, MBBI, DL,
-                                        TII.get(Opc), GlobalBaseReg)
+                                        TII.get(Opc), TempReg)
                                 .addConstantPoolIndex(Idx);
       if (Opc == ARM::LDRcp)
         MIB.addImm(0);
       AddDefaultPred(MIB);
 
       // Fix the GOT address by adding pc.
+      unsigned GlobalBaseReg = AFI->getGlobalBaseReg();
+      Opc = TM->getSubtarget<ARMSubtarget>().isThumb2() ? ARM::tPICADD
+                                                        : ARM::PICADD;
       BuildMI(FirstMBB, MBBI, DL, TII.get(ARM::tPICADD), GlobalBaseReg)
-          .addReg(GlobalBaseReg).addImm(ARMPCLabelIndex);
+          .addReg(TempReg).addImm(ARMPCLabelIndex);
 
       return true;
     }
