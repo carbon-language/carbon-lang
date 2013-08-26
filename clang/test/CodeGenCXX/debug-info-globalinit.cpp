@@ -12,6 +12,7 @@ int test() {
 
 static int i = test();
 __attribute__((nodebug)) static int j = test();
+static int k = test();
 
 int main(void) {}
 
@@ -26,5 +27,12 @@ int main(void) {}
 // CHECK: %[[C1:.+]] = call i32 @_Z4testv()
 // CHECK-NOT: dbg
 // CHECK: store i32 %[[C1]], i32* @_ZL1j, align 4
+//
+// CHECK-LABEL: define internal void @__cxx_global_var_init2()
+// CHECK-NOT: __cxx_global_var_init
+// CHECK: %[[C2:.+]] = call i32 @_Z4testv(), !dbg ![[LINE2:.*]]
+// CHECK-NOT: __cxx_global_var_init
+// CHECK: store i32 %[[C2]], i32* @_ZL1k, align 4, !dbg
 // 
 // CHECK: ![[LINE]] = metadata !{i32 13, i32
+// CHECK: ![[LINE]] = metadata !{i32 15, i32
