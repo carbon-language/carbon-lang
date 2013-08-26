@@ -1327,7 +1327,7 @@ let Predicates = [UseSSE2] in {
 // SSE 1 & 2 - Move Low to High and High to Low packed FP Instructions
 //===----------------------------------------------------------------------===//
 
-let AddedComplexity = 20 in {
+let AddedComplexity = 20, Predicates = [UseAVX] in {
   def VMOVLHPSrr : VPSI<0x16, MRMSrcReg, (outs VR128:$dst),
                                        (ins VR128:$src1, VR128:$src2),
                       "movlhps\t{$src2, $src1, $dst|$dst, $src1, $src2}",
@@ -1358,7 +1358,7 @@ let Constraints = "$src1 = $dst", AddedComplexity = 20 in {
                         IIC_SSE_MOV_LH>, Sched<[WriteShuffle]>;
 }
 
-let Predicates = [HasAVX] in {
+let Predicates = [UseAVX] in {
   // MOVLHPS patterns
   def : Pat<(v4i32 (X86Movlhps VR128:$src1, VR128:$src2)),
             (VMOVLHPSrr VR128:$src1, VR128:$src2)>;
