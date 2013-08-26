@@ -108,7 +108,7 @@ class ConsumedStmtVisitor : public ConstStmtVisitor<ConsumedStmtVisitor> {
   ConsumedStateMap *StateMap;
   MapType PropagationMap;
   
-  void checkCallability(const PropagationInfo &PState,
+  void checkCallability(const PropagationInfo &PInfo,
                         const FunctionDecl *FunDecl,
                         const CallExpr *Call);
   void forwardInfo(const Stmt *From, const Stmt *To);
@@ -142,14 +142,14 @@ public:
 
 // TODO: When we support CallableWhenConsumed this will have to check for
 //       the different attributes and change the behavior bellow. (Deferred)
-void ConsumedStmtVisitor::checkCallability(const PropagationInfo &PState,
+void ConsumedStmtVisitor::checkCallability(const PropagationInfo &PInfo,
                                            const FunctionDecl *FunDecl,
                                            const CallExpr *Call) {
   
   if (!FunDecl->hasAttr<CallableWhenUnconsumedAttr>()) return;
   
-  if (PState.IsVar) {
-    const VarDecl *Var = PState.getVar();
+  if (PInfo.IsVar) {
+    const VarDecl *Var = PInfo.getVar();
     
     switch (StateMap->getState(Var)) {
     case CS_Consumed:
@@ -170,7 +170,7 @@ void ConsumedStmtVisitor::checkCallability(const PropagationInfo &PState,
     }
     
   } else {
-    switch (PState.getState()) {
+    switch (PInfo.getState()) {
     case CS_Consumed:
       Analyzer.WarningsHandler.warnUseOfTempWhileConsumed(
         FunDecl->getNameAsString(), Call->getExprLoc());
@@ -254,20 +254,20 @@ void ConsumedStmtVisitor::VisitCallExpr(const CallExpr *Call) {
         continue;
       }
       
-      PropagationInfo PState = Entry->second;
+      PropagationInfo PInfo = Entry->second;
       
       if (ParamType->isRValueReferenceType() ||
           (ParamType->isLValueReferenceType() &&
            !cast<LValueReferenceType>(*ParamType).isSpelledAsLValue())) {
         
-        StateMap->setState(PState.getVar(), consumed::CS_Consumed);
+        StateMap->setState(PInfo.getVar(), consumed::CS_Consumed);
         
       } else if (!(ParamType.isConstQualified() ||
                    ((ParamType->isReferenceType() ||
                      ParamType->isPointerType()) &&
                     ParamType->getPointeeType().isConstQualified()))) {
         
-        StateMap->setState(PState.getVar(), consumed::CS_Unknown);
+        StateMap->setState(PInfo.getVar(), consumed::CS_Unknown);
       }
     }
   }
@@ -295,11 +295,11 @@ void ConsumedStmtVisitor::VisitCXXConstructExpr(const CXXConstructExpr *Call) {
       
     } else if (Constructor->isMoveConstructor()) {
       
-      PropagationInfo PState =
+      PropagationInfo PInfo =
         PropagationMap.find(Call->getArg(0))->second;
       
-      if (PState.IsVar) {
-        const VarDecl* Var = PState.getVar();
+      if (PInfo.IsVar) {
+        const VarDecl* Var = PInfo.getVar();
         
         PropagationMap.insert(PairType(Call,
           PropagationInfo(StateMap->getState(Var))));
@@ -307,7 +307,7 @@ void ConsumedStmtVisitor::VisitCXXConstructExpr(const CXXConstructExpr *Call) {
         StateMap->setState(Var, consumed::CS_Consumed);
         
       } else {
-        PropagationMap.insert(PairType(Call, PState));
+        PropagationMap.insert(PairType(Call, PInfo));
       }
         
     } else if (Constructor->isCopyConstructor()) {
@@ -331,16 +331,16 @@ void ConsumedStmtVisitor::VisitCXXMemberCallExpr(
   InfoEntry Entry = PropagationMap.find(Call->getCallee()->IgnoreParens());
   
   if (Entry != PropagationMap.end()) {
-    PropagationInfo PState = Entry->second;
+    PropagationInfo PInfo = Entry->second;
     const CXXMethodDecl *MethodDecl = Call->getMethodDecl();
     
-    checkCallability(PState, MethodDecl, Call);
+    checkCallability(PInfo, MethodDecl, Call);
     
-    if (PState.IsVar) {
+    if (PInfo.IsVar) {
       if (MethodDecl->hasAttr<ConsumesAttr>())
-        StateMap->setState(PState.getVar(), consumed::CS_Consumed);
+        StateMap->setState(PInfo.getVar(), consumed::CS_Consumed);
       else if (!MethodDecl->isConst())
-        StateMap->setState(PState.getVar(), consumed::CS_Unknown);
+        StateMap->setState(PInfo.getVar(), consumed::CS_Unknown);
     }
   }
 }
@@ -359,46 +359,46 @@ void ConsumedStmtVisitor::VisitCXXOperatorCallExpr(
     InfoEntry LEntry = PropagationMap.find(Call->getArg(0));
     InfoEntry REntry = PropagationMap.find(Call->getArg(1));
     
-    PropagationInfo LPState, RPState;
+    PropagationInfo LPInfo, RPInfo;
     
     if (LEntry != PropagationMap.end() &&
         REntry != PropagationMap.end()) {
       
-      LPState = LEntry->second;
-      RPState = REntry->second;
+      LPInfo = LEntry->second;
+      RPInfo = REntry->second;
       
-      if (LPState.IsVar && RPState.IsVar) {
-        StateMap->setState(LPState.getVar(),
-          StateMap->getState(RPState.getVar()));
+      if (LPInfo.IsVar && RPInfo.IsVar) {
+        StateMap->setState(LPInfo.getVar(),
+          StateMap->getState(RPInfo.getVar()));
         
-        StateMap->setState(RPState.getVar(), consumed::CS_Consumed);
+        StateMap->setState(RPInfo.getVar(), consumed::CS_Consumed);
         
-        PropagationMap.insert(PairType(Call, LPState));
+        PropagationMap.insert(PairType(Call, LPInfo));
         
-      } else if (LPState.IsVar && !RPState.IsVar) {
-        StateMap->setState(LPState.getVar(), RPState.getState());
+      } else if (LPInfo.IsVar && !RPInfo.IsVar) {
+        StateMap->setState(LPInfo.getVar(), RPInfo.getState());
         
-        PropagationMap.insert(PairType(Call, LPState));
+        PropagationMap.insert(PairType(Call, LPInfo));
         
-      } else if (!LPState.IsVar && RPState.IsVar) {
+      } else if (!LPInfo.IsVar && RPInfo.IsVar) {
         PropagationMap.insert(PairType(Call,
-          PropagationInfo(StateMap->getState(RPState.getVar()))));
+          PropagationInfo(StateMap->getState(RPInfo.getVar()))));
         
-        StateMap->setState(RPState.getVar(), consumed::CS_Consumed);
+        StateMap->setState(RPInfo.getVar(), consumed::CS_Consumed);
         
       } else {
-        PropagationMap.insert(PairType(Call, RPState));
+        PropagationMap.insert(PairType(Call, RPInfo));
       }
       
     } else if (LEntry != PropagationMap.end() &&
                REntry == PropagationMap.end()) {
       
-      LPState = LEntry->second;
+      LPInfo = LEntry->second;
       
-      if (LPState.IsVar) {
-        StateMap->setState(LPState.getVar(), consumed::CS_Unknown);
+      if (LPInfo.IsVar) {
+        StateMap->setState(LPInfo.getVar(), consumed::CS_Unknown);
         
-        PropagationMap.insert(PairType(Call, LPState));
+        PropagationMap.insert(PairType(Call, LPInfo));
         
       } else {
         PropagationMap.insert(PairType(Call,
@@ -408,10 +408,10 @@ void ConsumedStmtVisitor::VisitCXXOperatorCallExpr(
     } else if (LEntry == PropagationMap.end() &&
                REntry != PropagationMap.end()) {
       
-      RPState = REntry->second;
+      RPInfo = REntry->second;
       
-      if (RPState.IsVar) {
-        const VarDecl *Var = RPState.getVar();
+      if (RPInfo.IsVar) {
+        const VarDecl *Var = RPInfo.getVar();
         
         PropagationMap.insert(PairType(Call,
           PropagationInfo(StateMap->getState(Var))));
@@ -419,7 +419,7 @@ void ConsumedStmtVisitor::VisitCXXOperatorCallExpr(
         StateMap->setState(Var, consumed::CS_Consumed);
         
       } else {
-        PropagationMap.insert(PairType(Call, RPState));
+        PropagationMap.insert(PairType(Call, RPInfo));
       }
     }
     
@@ -430,20 +430,20 @@ void ConsumedStmtVisitor::VisitCXXOperatorCallExpr(
     InfoEntry Entry = PropagationMap.find(Call->getArg(0));
     
     if (Entry != PropagationMap.end()) {
-      PropagationInfo PState = Entry->second;
+      PropagationInfo PInfo = Entry->second;
       
-      checkCallability(PState, FunDecl, Call);
+      checkCallability(PInfo, FunDecl, Call);
       
-      if (PState.IsVar) {
+      if (PInfo.IsVar) {
         if (FunDecl->hasAttr<ConsumesAttr>()) {
           // Handle consuming operators.
-          StateMap->setState(PState.getVar(), consumed::CS_Consumed);
+          StateMap->setState(PInfo.getVar(), consumed::CS_Consumed);
         } else if (const CXXMethodDecl *MethodDecl =
           dyn_cast_or_null<CXXMethodDecl>(FunDecl)) {
           
           // Handle non-constant member operators.
           if (!MethodDecl->isConst())
-            StateMap->setState(PState.getVar(), consumed::CS_Unknown);
+            StateMap->setState(PInfo.getVar(), consumed::CS_Unknown);
         }
       }
     }
@@ -492,11 +492,11 @@ void ConsumedStmtVisitor::VisitUnaryOperator(const UnaryOperator *UOp) {
 
 void ConsumedStmtVisitor::VisitVarDecl(const VarDecl *Var) {
   if (Analyzer.isConsumableType(Var->getType())) {
-    PropagationInfo PState =
+    PropagationInfo PInfo =
       PropagationMap.find(Var->getInit())->second;
     
-    StateMap->setState(Var, PState.IsVar ?
-      StateMap->getState(PState.getVar()) : PState.getState());
+    StateMap->setState(Var, PInfo.IsVar ?
+      StateMap->getState(PInfo.getVar()) : PInfo.getState());
   }
 }
 } // end anonymous::ConsumedStmtVisitor
