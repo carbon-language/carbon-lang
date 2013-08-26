@@ -3530,7 +3530,7 @@ TEST_F(FormatTest, IndentsRelativeToUnaryOperators) {
                "    bbbbbb);");
 }
 
-TEST_F(FormatTest, UndestandsOverloadedOperators) {
+TEST_F(FormatTest, UnderstandsOverloadedOperators) {
   verifyFormat("bool operator<();");
   verifyFormat("bool operator>();");
   verifyFormat("bool operator=();");
@@ -4190,6 +4190,10 @@ TEST_F(FormatTest, FormatsBracedListsinColumnLayout) {
   verifyFormat("vector<int> x = {\n"
                "  1, 1, 1, 1, 1, 1, 1, 1, //\n"
                "};",
+               getLLVMStyleWithColumns(39));
+  verifyFormat("vector<int> x = { 1, 1, 1, 1,\n"
+               "                  1, 1, 1, 1,\n"
+               "                  /**/ /**/ };",
                getLLVMStyleWithColumns(39));
 }
 

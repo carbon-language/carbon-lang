@@ -77,11 +77,13 @@ unsigned CommaSeparatedList::format(LineState &State,
 // assuming that the entire sequence is put on a single line.
 static unsigned CodePointsBetween(const FormatToken *Begin,
                                   const FormatToken *End) {
+  assert(End->TotalLength >= Begin->TotalLength);
   return End->TotalLength - Begin->TotalLength + Begin->CodePointCount;
 }
 
 void CommaSeparatedList::precomputeFormattingInfos(const FormatToken *Token) {
-  if (!Token->MatchingParen)
+  // FIXME: At some point we might want to do this for other lists, too.
+  if (!Token->MatchingParen || Token->isNot(tok::l_brace))
     return;
 
   FormatToken *ItemBegin = Token->Next;
@@ -92,11 +94,6 @@ void CommaSeparatedList::precomputeFormattingInfos(const FormatToken *Token) {
   SmallVector<unsigned, 8> EndOfLineItemLength;
 
   for (unsigned i = 0, e = Commas.size() + 1; i != e; ++i) {
-    // If there is a trailing comma in the list, the next item will start at the
-    // closing brace. Don't create an extra item for this.
-    if (ItemBegin == Token->MatchingParen)
-      break;
-
     // Skip comments on their own line.
     while (ItemBegin->HasUnescapedNewline && ItemBegin->isTrailingComment())
       ItemBegin = ItemBegin->Next;
@@ -119,14 +116,17 @@ void CommaSeparatedList::precomputeFormattingInfos(const FormatToken *Token) {
     } else {
       ItemEnd = Commas[i];
       // The comma is counted as part of the item when calculating the length.
-      ItemLengths.push_back(ItemEnd->TotalLength - ItemBegin->TotalLength +
-                            ItemBegin->CodePointCount);
+      ItemLengths.push_back(CodePointsBetween(ItemBegin, ItemEnd));
       // Consume trailing comments so the are included in EndOfLineItemLength.
       if (ItemEnd->Next && !ItemEnd->Next->HasUnescapedNewline &&
           ItemEnd->Next->isTrailingComment())
         ItemEnd = ItemEnd->Next;
     }
     EndOfLineItemLength.push_back(CodePointsBetween(ItemBegin, ItemEnd));
+    // If there is a trailing comma in the list, the next item will start at the
+    // closing brace. Don't create an extra item for this.
+    if (ItemEnd->getNextNonComment() == Token->MatchingParen)
+      break;
     ItemBegin = ItemEnd->Next;
   }
 
