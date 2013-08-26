@@ -168,6 +168,58 @@ entry:
   ret void
 }
 
+;===------------------------------------------------------------------------===;
+; Local Address Space
+;===------------------------------------------------------------------------===;
+
+; EG-CHECK: @store_local_v2i16
+; EG-CHECK: LDS_WRITE
+; CM-CHECK: @store_local_v2i16
+; CM-CHECK: LDS_WRITE
+; SI-CHECK: @store_local_v2i16
+; SI-CHECK: DS_WRITE_B32
+define void @store_local_v2i16(<2 x i16> addrspace(3)* %out, <2 x i16> %in) {
+entry:
+  store <2 x i16> %in, <2 x i16> addrspace(3)* %out
+  ret void
+}
+
+; EG-CHECK: @store_local_v2i32
+; EG-CHECK: LDS_WRITE
+; EG-CHECK: LDS_WRITE
+; CM-CHECK: @store_local_v2i32
+; CM-CHECK: LDS_WRITE
+; CM-CHECK: LDS_WRITE
+; SI-CHECK: @store_local_v2i32
+; SI-CHECK: DS_WRITE_B32
+; SI-CHECK: DS_WRITE_B32
+define void @store_local_v2i32(<2 x i32> addrspace(3)* %out, <2 x i32> %in) {
+entry:
+  store <2 x i32> %in, <2 x i32> addrspace(3)* %out
+  ret void
+}
+
+; EG-CHECK: @store_local_v4i32
+; EG-CHECK: LDS_WRITE
+; EG-CHECK: LDS_WRITE
+; EG-CHECK: LDS_WRITE
+; EG-CHECK: LDS_WRITE
+; CM-CHECK: @store_local_v4i32
+; CM-CHECK: LDS_WRITE
+; CM-CHECK: LDS_WRITE
+; CM-CHECK: LDS_WRITE
+; CM-CHECK: LDS_WRITE
+; SI-CHECK: @store_local_v4i32
+; SI-CHECK: DS_WRITE_B32
+; SI-CHECK: DS_WRITE_B32
+; SI-CHECK: DS_WRITE_B32
+; SI-CHECK: DS_WRITE_B32
+define void @store_local_v4i32(<4 x i32> addrspace(3)* %out, <4 x i32> %in) {
+entry:
+  store <4 x i32> %in, <4 x i32> addrspace(3)* %out
+  ret void
+}
+
 ; The stores in this function are combined by the optimizer to create a
 ; 64-bit store with 32-bit alignment.  This is legal for SI and the legalizer
 ; should not try to split the 64-bit store back into 2 32-bit stores.

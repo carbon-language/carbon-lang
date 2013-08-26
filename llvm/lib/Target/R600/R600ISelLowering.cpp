@@ -1002,7 +1002,7 @@ SDValue R600TargetLowering::LowerSTORE(SDValue Op, SelectionDAG &DAG) const {
   SDValue Value = Op.getOperand(1);
   SDValue Ptr = Op.getOperand(2);
 
-  SDValue Result = AMDGPUTargetLowering::LowerVectorStore(Op, DAG);
+  SDValue Result = AMDGPUTargetLowering::LowerSTORE(Op, DAG);
   if (Result.getNode()) {
     return Result;
   }

@@ -67,6 +67,13 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::STORE, MVT::f64, Promote);
   AddPromotedToType(ISD::STORE, MVT::f64, MVT::i64);
 
+  // Custom lowering of vector stores is required for local address space
+  // stores.
+  setOperationAction(ISD::STORE, MVT::v4i32, Custom);
+  // XXX: Native v2i32 local address space stores are possible, but not
+  // currently implemented.
+  setOperationAction(ISD::STORE, MVT::v2i32, Custom);
+
   setTruncStoreAction(MVT::v2i32, MVT::v2i16, Custom);
   setTruncStoreAction(MVT::v2i32, MVT::v2i8, Custom);
   setTruncStoreAction(MVT::v4i32, MVT::v4i8, Custom);
@@ -221,7 +228,7 @@ SDValue AMDGPUTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG)
   case ISD::CONCAT_VECTORS: return LowerCONCAT_VECTORS(Op, DAG);
   case ISD::EXTRACT_SUBVECTOR: return LowerEXTRACT_SUBVECTOR(Op, DAG);
   case ISD::INTRINSIC_WO_CHAIN: return LowerINTRINSIC_WO_CHAIN(Op, DAG);
-  case ISD::STORE: return LowerVectorStore(Op, DAG);
+  case ISD::STORE: return LowerSTORE(Op, DAG);
   case ISD::UDIVREM: return LowerUDIVREM(Op, DAG);
   }
   return Op;
@@ -417,7 +424,98 @@ SDValue AMDGPUTargetLowering::LowerMinMax(SDValue Op,
   return Op;
 }
 
+SDValue AMDGPUTargetLowering::MergeVectorStore(const SDValue &Op,
+                                               SelectionDAG &DAG) const {
+  StoreSDNode *Store = dyn_cast<StoreSDNode>(Op);
+  EVT MemVT = Store->getMemoryVT();
+  unsigned MemBits = MemVT.getSizeInBits();
 
+  // Byte stores are really expensive, so if possible, try to pack
+  // 32-bit vector truncatating store into an i32 store.
+  // XXX: We could also handle optimize other vector bitwidths
+  if (!MemVT.isVector() || MemBits > 32) {
+    return SDValue();
+  }
+
+  SDLoc DL(Op);
+  const SDValue &Value = Store->getValue();
+  EVT VT = Value.getValueType();
+  const SDValue &Ptr = Store->getBasePtr();
+  EVT MemEltVT = MemVT.getVectorElementType();
+  unsigned MemEltBits = MemEltVT.getSizeInBits();
+  unsigned MemNumElements = MemVT.getVectorNumElements();
+  EVT PackedVT = EVT::getIntegerVT(*DAG.getContext(), MemVT.getSizeInBits());
+  SDValue Mask;
+  switch(MemEltBits) {
+  case 8:
+    Mask = DAG.getConstant(0xFF, PackedVT);
+    break;
+  case 16:
+    Mask = DAG.getConstant(0xFFFF, PackedVT);
+    break;
+  default:
+    llvm_unreachable("Cannot lower this vector store");
+  }
+  SDValue PackedValue;
+  for (unsigned i = 0; i < MemNumElements; ++i) {
+    EVT ElemVT = VT.getVectorElementType();
+    SDValue Elt = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, DL, ElemVT, Value,
+                              DAG.getConstant(i, MVT::i32));
+    Elt = DAG.getZExtOrTrunc(Elt, DL, PackedVT);
+    Elt = DAG.getNode(ISD::AND, DL, PackedVT, Elt, Mask);
+    SDValue Shift = DAG.getConstant(MemEltBits * i, PackedVT);
+    Elt = DAG.getNode(ISD::SHL, DL, PackedVT, Elt, Shift);
+    if (i == 0) {
+      PackedValue = Elt;
+    } else {
+      PackedValue = DAG.getNode(ISD::OR, DL, PackedVT, PackedValue, Elt);
+    }
+  }
+  return DAG.getStore(Store->getChain(), DL, PackedValue, Ptr,
+                      MachinePointerInfo(Store->getMemOperand()->getValue()),
+                      Store->isVolatile(),  Store->isNonTemporal(),
+                      Store->getAlignment());
+}
+
+SDValue AMDGPUTargetLowering::SplitVectorStore(SDValue Op,
+                                            SelectionDAG &DAG) const {
+  StoreSDNode *Store = cast<StoreSDNode>(Op);
+  EVT MemEltVT = Store->getMemoryVT().getVectorElementType();
+  EVT EltVT = Store->getValue().getValueType().getVectorElementType();
+  EVT PtrVT = Store->getBasePtr().getValueType();
+  unsigned NumElts = Store->getMemoryVT().getVectorNumElements();
+  SDLoc SL(Op);
+
+  SmallVector<SDValue, 8> Chains;
+
+  for (unsigned i = 0, e = NumElts; i != e; ++i) {
+    SDValue Val = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, SL, EltVT,
+                              Store->getValue(), DAG.getConstant(i, MVT::i32));
+    SDValue Ptr = DAG.getNode(ISD::ADD, SL, PtrVT,
+                              Store->getBasePtr(),
+                            DAG.getConstant(i * (MemEltVT.getSizeInBits() / 8),
+                                            PtrVT));
+    Chains.push_back(DAG.getStore(Store->getChain(), SL, Val, Ptr,
+                         MachinePointerInfo(Store->getMemOperand()->getValue()),
+                         Store->isVolatile(), Store->isNonTemporal(),
+                         Store->getAlignment()));
+  }
+  return DAG.getNode(ISD::TokenFactor, SL, MVT::Other, &Chains[0], NumElts);
+}
+
+SDValue AMDGPUTargetLowering::LowerSTORE(SDValue Op, SelectionDAG &DAG) const {
+  SDValue Result = AMDGPUTargetLowering::MergeVectorStore(Op, DAG);
+  if (Result.getNode()) {
+    return Result;
+  }
+
+  StoreSDNode *Store = cast<StoreSDNode>(Op);
+  if (Store->getAddressSpace() == AMDGPUAS::LOCAL_ADDRESS &&
+      Store->getValue().getValueType().isVector()) {
+    return SplitVectorStore(Op, DAG);
+  }
+  return SDValue();
+}
 
 SDValue AMDGPUTargetLowering::LowerUDIVREM(SDValue Op,
     SelectionDAG &DAG) const {
@@ -524,58 +622,6 @@ SDValue AMDGPUTargetLowering::LowerUDIVREM(SDValue Op,
   return DAG.getMergeValues(Ops, 2, DL);
 }
 
-SDValue AMDGPUTargetLowering::LowerVectorStore(const SDValue &Op,
-                                               SelectionDAG &DAG) const {
-  StoreSDNode *Store = dyn_cast<StoreSDNode>(Op);
-  EVT MemVT = Store->getMemoryVT();
-  unsigned MemBits = MemVT.getSizeInBits();
-
-  // Byte stores are really expensive, so if possible, try to pack
-  // 32-bit vector truncatating store into an i32 store.
-  // XXX: We could also handle optimize other vector bitwidths
-  if (!MemVT.isVector() || MemBits > 32) {
-    return SDValue();
-  }
-
-  SDLoc DL(Op);
-  const SDValue &Value = Store->getValue();
-  EVT VT = Value.getValueType();
-  const SDValue &Ptr = Store->getBasePtr();
-  EVT MemEltVT = MemVT.getVectorElementType();
-  unsigned MemEltBits = MemEltVT.getSizeInBits();
-  unsigned MemNumElements = MemVT.getVectorNumElements();
-  EVT PackedVT = EVT::getIntegerVT(*DAG.getContext(), MemVT.getSizeInBits());
-  SDValue Mask;
-  switch(MemEltBits) {
-  case 8:
-    Mask = DAG.getConstant(0xFF, PackedVT);
-    break;
-  case 16:
-    Mask = DAG.getConstant(0xFFFF, PackedVT);
-    break;
-  default:
-    llvm_unreachable("Cannot lower this vector store");
-  }
-  SDValue PackedValue;
-  for (unsigned i = 0; i < MemNumElements; ++i) {
-    EVT ElemVT = VT.getVectorElementType();
-    SDValue Elt = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, DL, ElemVT, Value,
-                              DAG.getConstant(i, MVT::i32));
-    Elt = DAG.getZExtOrTrunc(Elt, DL, PackedVT);
-    Elt = DAG.getNode(ISD::AND, DL, PackedVT, Elt, Mask);
-    SDValue Shift = DAG.getConstant(MemEltBits * i, PackedVT);
-    Elt = DAG.getNode(ISD::SHL, DL, PackedVT, Elt, Shift);
-    if (i == 0) {
-      PackedValue = Elt;
-    } else {
-      PackedValue = DAG.getNode(ISD::OR, DL, PackedVT, PackedValue, Elt);
-    }
-  }
-  return DAG.getStore(Store->getChain(), DL, PackedValue, Ptr,
-                      MachinePointerInfo(Store->getMemOperand()->getValue()),
-                      Store->isVolatile(),  Store->isNonTemporal(),
-                      Store->getAlignment());
-}
 
 //===----------------------------------------------------------------------===//
 // Helper functions
