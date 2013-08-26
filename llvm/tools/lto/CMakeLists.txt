@@ -26,3 +26,8 @@ if( NOT BUILD_SHARED_LIBS )
   add_llvm_library(${LTO_STATIC_TARGET_NAME} ${SOURCES})
   set_property(TARGET ${LTO_STATIC_TARGET_NAME} PROPERTY OUTPUT_NAME "LTO")
 endif()
+
+if( NOT WIN32 )
+  install(FILES ${LLVM_MAIN_INCLUDE_DIR}/llvm-c/lto.h
+          DESTINATION include/llvm-c)
+endif()
