@@ -13,6 +13,7 @@
 
 #include "LLVMSymbolize.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/Config/config.h"
 #include "llvm/Object/MachO.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Compression.h"
@@ -22,6 +23,7 @@
 #include "llvm/Support/Path.h"
 
 #include <sstream>
+#include <stdlib.h>
 
 namespace llvm {
 namespace symbolize {
@@ -228,7 +230,14 @@ static bool checkFileCRC(StringRef Path, uint32_t CRCHash) {
 static bool findDebugBinary(const std::string &OrigPath,
                             const std::string &DebuglinkName, uint32_t CRCHash,
                             std::string &Result) {
-  SmallString<16> OrigDir(OrigPath);
+  std::string OrigRealPath = OrigPath;
+#if defined(HAVE_REALPATH)
+  if (char *RP = realpath(OrigPath.c_str(), NULL)) {
+    OrigRealPath = RP;
+    free(RP);
+  }
+#endif
+  SmallString<16> OrigDir(OrigRealPath);
   llvm::sys::path::remove_filename(OrigDir);
   SmallString<16> DebugPath = OrigDir;
   // Try /path/to/original_binary/debuglink_name
@@ -238,7 +247,7 @@ static bool findDebugBinary(const std::string &OrigPath,
     return true;
   }
   // Try /path/to/original_binary/.debug/debuglink_name
-  DebugPath = OrigPath;
+  DebugPath = OrigRealPath;
   llvm::sys::path::append(DebugPath, ".debug", DebuglinkName);
   if (checkFileCRC(DebugPath, CRCHash)) {
     Result = DebugPath.str();
