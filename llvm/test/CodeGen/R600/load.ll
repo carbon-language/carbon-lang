@@ -516,3 +516,17 @@ entry:
   store float %0, float addrspace(1)* %out
   ret void
 }
+
+; load a v2f32 value from the local address space
+; R600-CHECK: @load_v2f32_local
+; R600-CHECK: LDS_READ_RET
+; R600-CHECK: LDS_READ_RET
+; SI-CHECK: @load_v2f32_local
+; SI-CHECK: DS_READ_B32
+; SI-CHECK: DS_READ_B32
+define void @load_v2f32_local(<2 x float> addrspace(1)* %out, <2 x float> addrspace(3)* %in) {
+entry:
+  %0 = load <2 x float> addrspace(3)* %in
+  store <2 x float> %0, <2 x float> addrspace(1)* %out
+  ret void
+}

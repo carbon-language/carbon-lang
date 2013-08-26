@@ -424,6 +424,29 @@ SDValue AMDGPUTargetLowering::LowerMinMax(SDValue Op,
   return Op;
 }
 
+SDValue AMDGPUTargetLowering::SplitVectorLoad(const SDValue &Op,
+                                              SelectionDAG &DAG) const {
+  LoadSDNode *Load = dyn_cast<LoadSDNode>(Op);
+  EVT MemEltVT = Load->getMemoryVT().getVectorElementType();
+  EVT EltVT = Op.getValueType().getVectorElementType();
+  EVT PtrVT = Load->getBasePtr().getValueType();
+  unsigned NumElts = Load->getMemoryVT().getVectorNumElements();
+  SmallVector<SDValue, 8> Loads;
+  SDLoc SL(Op);
+
+  for (unsigned i = 0, e = NumElts; i != e; ++i) {
+    SDValue Ptr = DAG.getNode(ISD::ADD, SL, PtrVT, Load->getBasePtr(),
+                    DAG.getConstant(i * (MemEltVT.getSizeInBits() / 8), PtrVT));
+    Loads.push_back(DAG.getExtLoad(Load->getExtensionType(), SL, EltVT,
+                        Load->getChain(), Ptr,
+                        MachinePointerInfo(Load->getMemOperand()->getValue()),
+                        MemEltVT, Load->isVolatile(), Load->isNonTemporal(),
+                        Load->getAlignment()));
+  }
+  return DAG.getNode(ISD::BUILD_VECTOR, SL, Op.getValueType(), &Loads[0],
+                     Loads.size());
+}
+
 SDValue AMDGPUTargetLowering::MergeVectorStore(const SDValue &Op,
                                                SelectionDAG &DAG) const {
   StoreSDNode *Store = dyn_cast<StoreSDNode>(Op);

@@ -66,6 +66,10 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
 
   setOperationAction(ISD::BITCAST, MVT::i128, Legal);
 
+  // We need to custom lower vector stores from local memory
+  setOperationAction(ISD::LOAD, MVT::v2i32, Custom);
+  setOperationAction(ISD::LOAD, MVT::v4i32, Custom);
+
   setOperationAction(ISD::SELECT_CC, MVT::f32, Custom);
   setOperationAction(ISD::SELECT_CC, MVT::i32, Custom);
 
@@ -368,6 +372,19 @@ SDValue SITargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   switch (Op.getOpcode()) {
   default: return AMDGPUTargetLowering::LowerOperation(Op, DAG);
   case ISD::BRCOND: return LowerBRCOND(Op, DAG);
+  case ISD::LOAD: {
+    LoadSDNode *Load = dyn_cast<LoadSDNode>(Op);
+    if (Load->getAddressSpace() == AMDGPUAS::LOCAL_ADDRESS &&
+        Op.getValueType().isVector()) {
+      SDValue MergedValues[2] = {
+        SplitVectorLoad(Op, DAG),
+        Load->getChain()
+      };
+      return DAG.getMergeValues(MergedValues, 2, SDLoc(Op));
+    } else {
+      return SDValue();
+    }
+  }
   case ISD::SELECT_CC: return LowerSELECT_CC(Op, DAG);
   case ISD::SIGN_EXTEND: return LowerSIGN_EXTEND(Op, DAG);
   case ISD::ZERO_EXTEND: return LowerZERO_EXTEND(Op, DAG);

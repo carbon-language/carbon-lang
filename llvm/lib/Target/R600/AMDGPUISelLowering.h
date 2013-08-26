@@ -50,6 +50,8 @@ protected:
                                        unsigned Reg, EVT VT) const;
   SDValue LowerGlobalAddress(AMDGPUMachineFunction *MFI, SDValue Op,
                              SelectionDAG &DAG) const;
+  /// \brief Split a vector load into multiple scalar loads.
+  SDValue SplitVectorLoad(const SDValue &Op, SelectionDAG &DAG) const;
   SDValue LowerSTORE(SDValue Op, SelectionDAG &DAG) const;
   bool isHWTrueValue(SDValue Op) const;
   bool isHWFalseValue(SDValue Op) const;
