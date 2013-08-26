@@ -1032,7 +1032,7 @@ void DwarfDebug::finalizeModuleInfo() {
       TheCU->addUInt(TheCU->getCUDie(), dwarf::DW_AT_GNU_dwo_id,
                      dwarf::DW_FORM_data8, ID);
       // Now construct the skeleton CU associated.
-      CompileUnit *SkCU = constructSkeletonCU(CUI->first);
+      CompileUnit *SkCU = constructSkeletonCU(TheCU);
       // This should be a unique identifier when we want to build .dwp files.
       SkCU->addUInt(SkCU->getCUDie(), dwarf::DW_AT_GNU_dwo_id,
                     dwarf::DW_FORM_data8, ID);
@@ -2685,12 +2685,12 @@ void DwarfDebug::emitDebugInlineInfo() {
 // DW_AT_low_pc, DW_AT_high_pc, DW_AT_ranges, DW_AT_dwo_name, DW_AT_dwo_id,
 // DW_AT_ranges_base, DW_AT_addr_base. If DW_AT_ranges is present,
 // DW_AT_low_pc and DW_AT_high_pc are not used, and vice versa.
-CompileUnit *DwarfDebug::constructSkeletonCU(const MDNode *N) {
-  DICompileUnit DIUnit(N);
+CompileUnit *DwarfDebug::constructSkeletonCU(const CompileUnit *CU) {
+  DICompileUnit DIUnit(CU->getNode());
 
   DIE *Die = new DIE(dwarf::DW_TAG_compile_unit);
-  CompileUnit *NewCU =
-      new CompileUnit(GlobalCUIndexCount++, Die, N, Asm, this, &SkeletonHolder);
+  CompileUnit *NewCU = new CompileUnit(CU->getUniqueID(), Die, CU->getNode(),
+                                       Asm, this, &SkeletonHolder);
 
   NewCU->addLocalString(Die, dwarf::DW_AT_GNU_dwo_name,
                         DIUnit.getSplitDebugFilename());

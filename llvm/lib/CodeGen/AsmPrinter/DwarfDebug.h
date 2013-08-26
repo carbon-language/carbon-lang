@@ -559,7 +559,7 @@ private:
 
   /// \brief Construct the split debug info compile unit for the debug info
   /// section.
-  CompileUnit *constructSkeletonCU(const MDNode *);
+  CompileUnit *constructSkeletonCU(const CompileUnit *CU);
 
   /// \brief Emit the local split abbreviations.
   void emitSkeletonAbbrevs(const MCSection *);
