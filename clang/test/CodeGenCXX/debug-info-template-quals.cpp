@@ -20,7 +20,7 @@ void foo (const char *c) {
 // CHECK: [[CH]] = {{.*}} ; [ DW_TAG_base_type ] [char] [line 0, size 8, align 8, offset 0, enc DW_ATE_signed_char]
 
 // CHECK: {{.*}} metadata [[TYPE:![0-9]*]], {{.*}}, metadata !{{[0-9]*}}, metadata !{{[0-9]*}}, i32 8} ; [ DW_TAG_subprogram ] [line 7] [def] [scope 8] [assign]
-// CHECK: [[TYPE]] = metadata !{i32 {{.*}}, metadata [[ARGS:.*]], i32 0, null{{.*}}} ; [ DW_TAG_subroutine_type ]
+// CHECK: [[TYPE]] = metadata !{i32 {{.*}}, metadata [[ARGS:.*]], i32 0, null, null, null} ; [ DW_TAG_subroutine_type ]
 // CHECK: [[ARGS]] = metadata !{metadata !{{.*}}, metadata !{{.*}}, metadata [[P]], metadata [[R:.*]]}
 // CHECK: [[BS:.*]] = {{.*}} ; [ DW_TAG_structure_type ] [basic_string<char>] [line 4, size 8, align 8, offset 0] [def] [from ]
 // CHECK: [[R]] = {{.*}}, metadata [[CON2:![0-9]*]]} ; [ DW_TAG_reference_type ] [line 0, size 0, align 0, offset 0] [from ]

@@ -26,7 +26,7 @@
 // pointer type)
 // CHECK: [[FOO]] = {{.*}} ; [ DW_TAG_structure_type ] [foo]
 // CHECK: metadata !"f", metadata !"_ZN3foo1fEv", i32 {{[0-9]*}}, metadata [[FTYPE:![0-9]*]],
-// CHECK: [[FTYPE:![0-9]*]] = {{.*}}, metadata [[FARGS:![0-9]*]], i32 0, null{{.*}}} ; [ DW_TAG_subroutine_type ]
+// CHECK: [[FTYPE:![0-9]*]] = {{.*}}, metadata [[FARGS:![0-9]*]], i32 0, null, null, null} ; [ DW_TAG_subroutine_type ]
 // CHECK: [[FARGS]] = metadata !{null, metadata [[FARG1:![0-9]*]]}
 // CHECK: [[FARG1]] = {{.*}} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [artificial] [from foo]
 //
@@ -38,7 +38,7 @@
 // CHECK: [[MEMFUNPTR]] = {{.*}}, metadata [[FTYPE]], metadata [[FOO]]} ; [ DW_TAG_ptr_to_member_type ]
 // CHECK: [[TCARG6]] = {{.*}}metadata !"f", metadata [[FUNPTR:![0-9]*]], void ()* @_Z4funcv, {{.*}} ; [ DW_TAG_template_value_parameter ]
 // CHECK: [[FUNPTR]] = {{.*}}, metadata [[FUNTYPE:![0-9]*]]} ; [ DW_TAG_pointer_type ]
-// CHECK: [[FUNTYPE]] = {{.*}}, metadata [[FUNARGS:![0-9]*]], i32 0, null{{.*}}} ; [ DW_TAG_subroutine_type ]
+// CHECK: [[FUNTYPE]] = {{.*}}, metadata [[FUNARGS:![0-9]*]], i32 0, null, null, null} ; [ DW_TAG_subroutine_type ]
 // CHECK: [[FUNARGS]] = metadata !{null}
 // CHECK: [[TCARG7]] = {{.*}}metadata !"tmpl", null, metadata !"tmpl_impl", {{.*}} ; [ DW_TAG_GNU_template_template_param ]
 // CHECK: [[TCARG8]] = {{.*}}metadata !"Is", null, metadata [[TCARG8_VALS:![0-9]*]], {{.*}} ; [ DW_TAG_GNU_template_parameter_pack ]
