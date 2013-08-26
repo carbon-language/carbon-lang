@@ -39,9 +39,8 @@ class CompileUnit {
   ///
   unsigned UniqueID;
 
-  /// Language - The DW_AT_language of the compile unit
-  ///
-  unsigned Language;
+  /// Node - MDNode for the compile unit.
+  const MDNode *Node;
 
   /// Die - Compile unit debug information entry.
   ///
@@ -96,13 +95,14 @@ class CompileUnit {
   int64_t getDefaultLowerBound() const;
 
 public:
-  CompileUnit(unsigned UID, unsigned L, DIE *D, const MDNode *N, AsmPrinter *A,
+  CompileUnit(unsigned UID, DIE *D, const MDNode *N, AsmPrinter *A,
               DwarfDebug *DW, DwarfUnits *DWU);
   ~CompileUnit();
 
   // Accessors.
   unsigned getUniqueID()            const { return UniqueID; }
-  unsigned getLanguage()            const { return Language; }
+  uint16_t getLanguage() const { return DICompileUnit(Node).getLanguage(); }
+  const MDNode *getNode() const { return Node; }
   DIE* getCUDie()                   const { return CUDie.get(); }
   unsigned getDebugInfoOffset()     const { return DebugInfoOffset; }
   const StringMap<DIE*> &getGlobalNames() const { return GlobalNames; }

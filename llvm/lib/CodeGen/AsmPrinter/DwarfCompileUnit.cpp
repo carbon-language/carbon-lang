@@ -33,10 +33,10 @@
 using namespace llvm;
 
 /// CompileUnit - Compile unit constructor.
-CompileUnit::CompileUnit(unsigned UID, unsigned L, DIE *D, const MDNode *N,
-                         AsmPrinter *A, DwarfDebug *DW, DwarfUnits *DWU)
-  : UniqueID(UID), Language(L), CUDie(D), Asm(A), DD(DW), DU(DWU),
-    IndexTyDie(0), DebugInfoOffset(0) {
+CompileUnit::CompileUnit(unsigned UID, DIE *D, const MDNode *N, AsmPrinter *A,
+                         DwarfDebug *DW, DwarfUnits *DWU)
+    : UniqueID(UID), Node(N), CUDie(D), Asm(A), DD(DW), DU(DWU), IndexTyDie(0),
+      DebugInfoOffset(0) {
   DIEIntegerOne = new (DIEValueAllocator) DIEInteger(1);
   insertDIE(N, D);
 }
@@ -57,7 +57,7 @@ DIEEntry *CompileUnit::createDIEEntry(DIE *Entry) {
 /// getDefaultLowerBound - Return the default lower bound for an array. If the
 /// DWARF version doesn't handle the language, return -1.
 int64_t CompileUnit::getDefaultLowerBound() const {
-  switch (Language) {
+  switch (DICompileUnit(Node).getLanguage()) {
   default:
     break;
 
@@ -971,6 +971,7 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
     }
     // Add prototype flag if we're dealing with a C language and the
     // function has been prototyped.
+    uint16_t Language = DICompileUnit(Node).getLanguage();
     if (isPrototyped &&
         (Language == dwarf::DW_LANG_C89 ||
          Language == dwarf::DW_LANG_C99 ||
@@ -1244,6 +1245,7 @@ DIE *CompileUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
 
   // Add the prototype if we have a prototype and we have a C like
   // language.
+  uint16_t Language = DICompileUnit(Node).getLanguage();
   if (SP.isPrototyped() &&
       (Language == dwarf::DW_LANG_C89 ||
        Language == dwarf::DW_LANG_C99 ||
