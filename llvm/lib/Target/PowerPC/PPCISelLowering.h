@@ -627,6 +627,8 @@ namespace llvm {
 
     SDValue DAGCombineFastRecip(SDValue Op, DAGCombinerInfo &DCI) const;
     SDValue DAGCombineFastRecipFSQRT(SDValue Op, DAGCombinerInfo &DCI) const;
+
+    CCAssignFn *useFastISelCCs(unsigned Flag) const;
   };
 
   namespace PPC {
