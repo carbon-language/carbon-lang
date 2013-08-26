@@ -630,6 +630,9 @@ class TEQ_FT<string opstr, RegisterOperand RO> :
   InstSE<(outs), (ins RO:$rs, RO:$rt, uimm16:$code_),
          !strconcat(opstr, "\t$rs, $rt, $code_"), [], NoItinerary, FrmI>;
 
+class TEQI_FT<string opstr, RegisterOperand RO> :
+  InstSE<(outs), (ins RO:$rs, uimm16:$imm16),
+         !strconcat(opstr, "\t$rs, $imm16"), [], NoItinerary, FrmOther>;
 // Mul, Div
 class Mult<string opstr, InstrItinClass itin, RegisterOperand RO,
            list<Register> DefRegs> :
@@ -914,6 +917,18 @@ def SWR : StoreLeftRight<"swr", MipsSWR, GPR32Opnd>, LW_FM<0x2e>;
 
 def SYNC : SYNC_FT, SYNC_FM;
 def TEQ : TEQ_FT<"teq", GPR32Opnd>, TEQ_FM<0x34>;
+def TGE : TEQ_FT<"tge", GPR32Opnd>, TEQ_FM<0x30>;
+def TGEU : TEQ_FT<"tgeu", GPR32Opnd>, TEQ_FM<0x31>;
+def TLT : TEQ_FT<"tlt", GPR32Opnd>, TEQ_FM<0x32>;
+def TLTU : TEQ_FT<"tltu", GPR32Opnd>, TEQ_FM<0x33>;
+def TNE : TEQ_FT<"tne", GPR32Opnd>, TEQ_FM<0x36>;
+
+def TEQI : TEQI_FT<"teqi", GPR32Opnd>, TEQI_FM<0xc>;
+def TGEI : TEQI_FT<"tgei", GPR32Opnd>, TEQI_FM<0x8>;
+def TGEIU : TEQI_FT<"tgeiu", GPR32Opnd>, TEQI_FM<0x9>;
+def TLTI : TEQI_FT<"tlti", GPR32Opnd>, TEQI_FM<0xa>;
+def TTLTIU : TEQI_FT<"tltiu", GPR32Opnd>, TEQI_FM<0xb>;
+def TNEI : TEQI_FT<"tnei", GPR32Opnd>, TEQI_FM<0xe>;
 
 def BREAK : BRK_FT<"break">, BRK_FM<0xd>;
 def SYSCALL : SYS_FT<"syscall">, SYS_FM<0xc>;
@@ -1093,6 +1108,13 @@ def : InstAlias<"break $imm", (BREAK uimm10:$imm, 0), 1>;
 def : InstAlias<"break", (BREAK 0, 0), 1>;
 def : InstAlias<"ei", (EI ZERO), 1>;
 def : InstAlias<"di", (DI ZERO), 1>;
+
+def  : InstAlias<"teq $rs, $rt", (TEQ GPR32Opnd:$rs, GPR32Opnd:$rt, 0), 1>;
+def  : InstAlias<"tge $rs, $rt", (TGE GPR32Opnd:$rs, GPR32Opnd:$rt, 0), 1>;
+def  : InstAlias<"tgeu $rs, $rt", (TGEU GPR32Opnd:$rs, GPR32Opnd:$rt, 0), 1>;
+def  : InstAlias<"tlt $rs, $rt", (TLT GPR32Opnd:$rs, GPR32Opnd:$rt, 0), 1>;
+def  : InstAlias<"tltu $rs, $rt", (TLTU GPR32Opnd:$rs, GPR32Opnd:$rt, 0), 1>;
+def  : InstAlias<"tne $rs, $rt", (TNE GPR32Opnd:$rs, GPR32Opnd:$rt, 0), 1>;
 //===----------------------------------------------------------------------===//
 // Assembler Pseudo Instructions
 //===----------------------------------------------------------------------===//

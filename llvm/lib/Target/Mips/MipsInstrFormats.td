@@ -479,6 +479,17 @@ class TEQ_FM<bits<6> funct> {
   let Inst{5-0}   = funct;
 }
 
+class TEQI_FM<bits<5> funct> {
+  bits<5> rs;
+  bits<16> imm16;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 1;
+  let Inst{25-21} = rs;
+  let Inst{20-16}   = funct;
+  let Inst{15-0}  = imm16;
+}
 //===----------------------------------------------------------------------===//
 //  System calls format <op|code_|funct>
 //===----------------------------------------------------------------------===//
