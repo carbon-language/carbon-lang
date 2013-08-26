@@ -26,9 +26,9 @@ public:
   DefaultTargetHandler(ELFLinkingContext &context)
       : TargetHandler<ELFT>(context) {}
 
-  bool doesOverrideHeader() { return false; }
+  bool doesOverrideELFHeader() { return false; }
 
-  void setHeaderInfo(Header<ELFT> *Header) {
+  void setELFHeader(ELFHeader<ELFT> *elfHeader) {
     llvm_unreachable("Target should provide implementation for function ");
   }
 

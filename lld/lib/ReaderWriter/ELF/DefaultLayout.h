@@ -230,9 +230,7 @@ public:
     return false;
   }
 
-  inline void setHeader(Header<ELFT> *e) {
-    _header = e;
-  }
+  inline void setHeader(ELFHeader<ELFT> *elfHeader) { _elfHeader = elfHeader; }
 
   inline void setProgramHeader(ProgramHeader<ELFT> *p) {
     _programHeader = p;
@@ -244,9 +242,7 @@ public:
 
   inline range<ChunkIter> segments() { return _segments; }
 
-  inline Header<ELFT> *getHeader() {
-    return _header;
-  }
+  inline ELFHeader<ELFT> *getHeader() { return _elfHeader; }
 
   inline ProgramHeader<ELFT> *getProgramHeader() {
     return _programHeader;
@@ -300,7 +296,7 @@ private:
   std::vector<Chunk<ELFT> *> _sections;
   std::vector<Segment<ELFT> *> _segments;
   std::vector<MergedSections<ELFT> *> _mergedSections;
-  Header<ELFT> *_header;
+  ELFHeader<ELFT> *_elfHeader;
   ProgramHeader<ELFT> *_programHeader;
   LLD_UNIQUE_BUMP_PTR(RelocationTable<ELFT>) _dynamicRelocationTable;
   LLD_UNIQUE_BUMP_PTR(RelocationTable<ELFT>) _pltRelocationTable;
@@ -648,7 +644,7 @@ template <class ELFT> void DefaultLayout<ELFT>::assignSectionsToSegments() {
     Segment<ELFT> *segment =
         new (_allocator) ProgramHeaderSegment<ELFT>(_context);
     _segments.push_back(segment);
-    segment->append(_header);
+    segment->append(_elfHeader);
     segment->append(_programHeader);
   }
 }
@@ -693,7 +689,7 @@ DefaultLayout<ELFT>::assignVirtualAddress() {
     }
   }
   firstLoadSegment->prepend(_programHeader);
-  firstLoadSegment->prepend(_header);
+  firstLoadSegment->prepend(_elfHeader);
   bool newSegmentHeaderAdded = true;
   while (true) {
     for (auto si : _segments) {

@@ -109,7 +109,7 @@ protected:
   typedef llvm::DenseMap<const Atom *, uint64_t> AtomToAddress;
   AtomToAddress _atomToAddressMap;
   TargetLayout<ELFT> *_layout;
-  LLD_UNIQUE_BUMP_PTR(Header<ELFT>) _Header;
+  LLD_UNIQUE_BUMP_PTR(ELFHeader<ELFT>) _elfHeader;
   LLD_UNIQUE_BUMP_PTR(ProgramHeader<ELFT>) _programHeader;
   LLD_UNIQUE_BUMP_PTR(SymbolTable<ELFT>) _symtab;
   LLD_UNIQUE_BUMP_PTR(StringTable<ELFT>) _strtab;
@@ -209,8 +209,8 @@ template<class ELFT>
 void OutputELFWriter<ELFT>::buildSectionHeaderTable() {
   ScopedTask task(getDefaultDomain(), "buildSectionHeaderTable");
   for (auto mergedSec : _layout->mergedSections()) {
-    if (mergedSec->kind() != Chunk<ELFT>::K_ELFSection &&
-        mergedSec->kind() != Chunk<ELFT>::K_AtomSection)
+    if (mergedSec->kind() != Chunk<ELFT>::Kind::ELFSection &&
+        mergedSec->kind() != Chunk<ELFT>::Kind::AtomSection)
       continue;
     if (mergedSec->hasSegment())
       _shdrtab->appendSection(mergedSec);
@@ -221,8 +221,8 @@ template<class ELFT>
 void OutputELFWriter<ELFT>::assignSectionsWithNoSegments() {
   ScopedTask task(getDefaultDomain(), "assignSectionsWithNoSegments");
   for (auto mergedSec : _layout->mergedSections()) {
-    if (mergedSec->kind() != Chunk<ELFT>::K_ELFSection &&
-        mergedSec->kind() != Chunk<ELFT>::K_AtomSection)
+    if (mergedSec->kind() != Chunk<ELFT>::Kind::ELFSection &&
+        mergedSec->kind() != Chunk<ELFT>::Kind::AtomSection)
       continue;
     if (!mergedSec->hasSegment())
       _shdrtab->appendSection(mergedSec);
@@ -247,9 +247,9 @@ void OutputELFWriter<ELFT>::addFiles(InputFiles &inputFiles) {
 }
 
 template <class ELFT> void OutputELFWriter<ELFT>::createDefaultSections() {
-  _Header.reset(new (_alloc) Header<ELFT>(_context));
+  _elfHeader.reset(new (_alloc) ELFHeader<ELFT>(_context));
   _programHeader.reset(new (_alloc) ProgramHeader<ELFT>(_context));
-  _layout->setHeader(_Header.get());
+  _layout->setHeader(_elfHeader.get());
   _layout->setProgramHeader(_programHeader.get());
 
   _symtab.reset(new (_alloc) SymbolTable<ELFT>(
@@ -365,37 +365,38 @@ error_code OutputELFWriter<ELFT>::writeFile(const File &file, StringRef path) {
   if (ec)
     return ec;
 
-  _Header->e_ident(ELF::EI_CLASS,
-                   _context.is64Bits() ? ELF::ELFCLASS64 : ELF::ELFCLASS32);
-  _Header->e_ident(ELF::EI_DATA, _context.isLittleEndian() ? ELF::ELFDATA2LSB
-                                                           : ELF::ELFDATA2MSB);
-  _Header->e_type(_context.getOutputType());
-  _Header->e_machine(_context.getOutputMachine());
+  _elfHeader->e_ident(ELF::EI_CLASS,
+                      _context.is64Bits() ? ELF::ELFCLASS64 : ELF::ELFCLASS32);
+  _elfHeader->e_ident(ELF::EI_DATA, _context.isLittleEndian()
+                                        ? ELF::ELFDATA2LSB
+                                        : ELF::ELFDATA2MSB);
+  _elfHeader->e_type(_context.getOutputType());
+  _elfHeader->e_machine(_context.getOutputMachine());
 
-  if (!_targetHandler.doesOverrideHeader()) {
-    _Header->e_ident(ELF::EI_VERSION, 1);
-    _Header->e_ident(ELF::EI_OSABI, 0);
-    _Header->e_version(1);
+  if (!_targetHandler.doesOverrideELFHeader()) {
+    _elfHeader->e_ident(ELF::EI_VERSION, 1);
+    _elfHeader->e_ident(ELF::EI_OSABI, 0);
+    _elfHeader->e_version(1);
   } else {
     // override the contents of the ELF Header
-    _targetHandler.setHeaderInfo(_Header.get());
+    _targetHandler.setELFHeader(_elfHeader.get());
   }
-  _Header->e_phoff(_programHeader->fileOffset());
-  _Header->e_shoff(_shdrtab->fileOffset());
-  _Header->e_phentsize(_programHeader->entsize());
-  _Header->e_phnum(_programHeader->numHeaders());
-  _Header->e_shentsize(_shdrtab->entsize());
-  _Header->e_shnum(_shdrtab->numHeaders());
-  _Header->e_shstrndx(_shstrtab->ordinal());
+  _elfHeader->e_phoff(_programHeader->fileOffset());
+  _elfHeader->e_shoff(_shdrtab->fileOffset());
+  _elfHeader->e_phentsize(_programHeader->entsize());
+  _elfHeader->e_phnum(_programHeader->numHeaders());
+  _elfHeader->e_shentsize(_shdrtab->entsize());
+  _elfHeader->e_shnum(_shdrtab->numHeaders());
+  _elfHeader->e_shstrndx(_shstrtab->ordinal());
   uint64_t virtualAddr = 0;
   _layout->findAtomAddrByName(_context.entrySymbolName(), virtualAddr);
-  _Header->e_entry(virtualAddr);
+  _elfHeader->e_entry(virtualAddr);
 
   // HACK: We have to write out the header and program header here even though
   // they are a member of a segment because only sections are written in the
   // following loop.
   ScopedTask writeTask(getDefaultDomain(), "ELF Writer write to memory");
-  _Header->write(this, *buffer);
+  _elfHeader->write(this, *buffer);
   _programHeader->write(this, *buffer);
 
   for (auto section : _layout->sections())

@@ -192,7 +192,7 @@ public:
 
   // For LLVM RTTI
   static inline bool classof(const Chunk<ELFT> *c) {
-    return c->kind() == Chunk<ELFT>::K_ELFSegment;
+    return c->kind() == Chunk<ELFT>::Kind::ELFSegment;
   }
 
   // Getters
@@ -212,16 +212,16 @@ public:
     switch (_segmentType) {
     case llvm::ELF::PT_LOAD: {
       if (fl && llvm::ELF::PF_X)
-        return Chunk<ELFT>::CT_Code;
+        return Chunk<ELFT>::ContentType::Code;
       if (fl && llvm::ELF::PF_W)
-        return Chunk<ELFT>::CT_Data;
+        return Chunk<ELFT>::ContentType::Data;
     }
     case llvm::ELF::PT_TLS:
-      return Chunk<ELFT>::CT_Tls;
+      return Chunk<ELFT>::ContentType::TLS;
     case llvm::ELF::PT_NOTE:
-      return Chunk<ELFT>::CT_Note;
+      return Chunk<ELFT>::ContentType::Note;
     default:
-      return Chunk<ELFT>::CT_Unknown;
+      return Chunk<ELFT>::ContentType::Unknown;
     }
   }
 
@@ -274,7 +274,7 @@ private:
 
   /// \brief Check if the chunk needs to be aligned
   bool needAlign(Chunk<ELFT> *chunk) const {
-    if (chunk->getContentType() == Chunk<ELFT>::CT_Data &&
+    if (chunk->getContentType() == Chunk<ELFT>::ContentType::Data &&
         _outputMagic == ELFLinkingContext::OutputMagic::NMAGIC)
       return true;
     return false;
@@ -327,8 +327,8 @@ protected:
 template <class ELFT>
 Segment<ELFT>::Segment(const ELFLinkingContext &context, StringRef name,
                        const Layout::SegmentType type)
-    : Chunk<ELFT>(name, Chunk<ELFT>::K_ELFSegment, context), _segmentType(type),
-      _flags(0), _atomflags(0) {
+    : Chunk<ELFT>(name, Chunk<ELFT>::Kind::ELFSegment, context),
+      _segmentType(type), _flags(0), _atomflags(0) {
   this->_align2 = 0;
   this->_fsize = 0;
   _outputMagic = context.getOutputMagic();

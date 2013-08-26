@@ -33,30 +33,20 @@ class Chunk {
 public:
 
   /// \brief Describes the type of Chunk
-  enum Kind {
-    K_Header, ///< ELF Header
-    K_ProgramHeader, ///< Program Header
-    K_ELFSegment, ///< Segment
-    K_ELFSection, ///< Section
-    K_AtomSection, ///< A section containing atoms.
-    K_SectionHeader ///< Section header
+  enum Kind : uint8_t{ ELFHeader,     ///< ELF Header
+                       ProgramHeader, ///< Program Header
+                       SectionHeader, ///< Section header
+                       ELFSegment,    ///< Segment
+                       ELFSection,    ///< Section
+                       AtomSection    ///< A section containing atoms.
   };
   /// \brief the ContentType of the chunk
-  enum ContentType {
-    CT_Unknown,
-    CT_Header,
-    CT_Code,
-    CT_Data,
-    CT_Note,
-    CT_Tls,
-  };
+  enum ContentType : uint8_t{ Unknown, Header, Code, Data, Note, TLS };
 
   Chunk(StringRef name, Kind kind, const ELFLinkingContext &context)
       : _name(name), _kind(kind), _fsize(0), _msize(0), _align2(0), _order(0),
         _ordinal(1), _start(0), _fileoffset(0), _context(context) {}
   virtual ~Chunk() {}
-  // Does the chunk occupy disk space
-  virtual bool occupiesNoDiskSpace() const { return false; }
   // The name of the chunk
   StringRef name() const { return _name; }
   // Kind of chunk
@@ -76,8 +66,8 @@ public:
   // Output start address of the chunk
   void               setVAddr(uint64_t start) { _start = start; }
   uint64_t            virtualAddr() const { return _start; }
-  // Does the chunk occupy memory during execution ?
-  uint64_t            memSize() const { return _msize; }
+  // Memory size of the chunk
+  uint64_t memSize() const { return _msize; }
   void setMemSize(uint64_t msize) { _msize = msize; }
   // Whats the contentType of the chunk ?
   virtual int getContentType() const = 0;

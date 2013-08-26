@@ -48,7 +48,7 @@ template <class ELFT> class Segment;
 template <class ELFT> class Section : public Chunk<ELFT> {
 public:
   Section(const ELFLinkingContext &context, StringRef name,
-          typename Chunk<ELFT>::Kind k = Chunk<ELFT>::K_ELFSection)
+          typename Chunk<ELFT>::Kind k = Chunk<ELFT>::Kind::ELFSection)
       : Chunk<ELFT>(name, k, context), _parent(nullptr), _flags(0), _entSize(0),
         _type(0), _link(0), _info(0), _segmentType(SHT_NULL) {}
 
@@ -81,13 +81,13 @@ public:
   /// \brief Return the type of content that the section contains
   virtual int getContentType() const {
     if (_flags & llvm::ELF::SHF_EXECINSTR)
-      return Chunk<ELFT>::CT_Code;
+      return Chunk<ELFT>::ContentType::Code;
     else if (_flags & llvm::ELF::SHF_WRITE)
-      return Chunk<ELFT>::CT_Data;
+      return Chunk<ELFT>::ContentType::Data;
     else if (_flags & llvm::ELF::SHF_ALLOC)
-      return Chunk<ELFT>::CT_Code;
+      return Chunk<ELFT>::ContentType::Code;
     else
-      return Chunk<ELFT>::CT_Unknown;
+      return Chunk<ELFT>::ContentType::Unknown;
   }
 
   /// \brief convert the segment type to a String for diagnostics and printing
@@ -109,8 +109,8 @@ public:
   }
 
   static bool classof(const Chunk<ELFT> *c) {
-    return c->kind() == Chunk<ELFT>::K_ELFSection ||
-           c->kind() == Chunk<ELFT>::K_AtomSection;
+    return c->kind() == Chunk<ELFT>::Kind::ELFSection ||
+           c->kind() == Chunk<ELFT>::Kind::AtomSection;
   }
 
 protected:
@@ -135,7 +135,7 @@ template <class ELFT> class AtomSection : public Section<ELFT> {
 public:
   AtomSection(const ELFLinkingContext &context, StringRef name,
               int32_t contentType, int32_t permissions, int32_t order)
-      : Section<ELFT>(context, name, Chunk<ELFT>::K_AtomSection),
+      : Section<ELFT>(context, name, Chunk<ELFT>::Kind::AtomSection),
         _contentType(contentType), _contentPermissions(permissions) {
     this->setOrder(order);
     switch (contentType) {
@@ -215,18 +215,6 @@ public:
     return false;
   }
 
-  /// \brief Does the Atom occupy any disk space
-  bool occupiesNoDiskSpace() const {
-    return ((_contentType == DefinedAtom::typeZeroFill) ||
-            (_contentType == DefinedAtom::typeZeroFillFast));
-  }
-
-  /// \brief The permission of the section is the most permissive permission
-  /// of all atoms that the section contains
-  void setContentPermissions(int32_t perm) {
-    _contentPermissions = std::max(perm, _contentPermissions);
-  }
-
   /// \brief Return the raw flags, we need this to sort segments
   inline int64_t atomflags() const {
     return _contentPermissions;
@@ -240,7 +228,7 @@ public:
   virtual void write(ELFWriter *writer, llvm::FileOutputBuffer &buffer);
 
   static bool classof(const Chunk<ELFT> *c) {
-    return c->kind() == Chunk<ELFT>::K_AtomSection;
+    return c->kind() == Chunk<ELFT>::Kind::AtomSection;
   }
 
 protected:
