@@ -115,3 +115,32 @@
 // CHECK-DEBIAN-PPC64: "-internal-externc-isystem" "[[SYSROOT]]/usr/include/powerpc64-linux-gnu"
 // CHECK-DEBIAN-PPC64: "-internal-externc-isystem" "[[SYSROOT]]/include"
 // CHECK-DEBIAN-PPC64: "-internal-externc-isystem" "[[SYSROOT]]/usr/include"
+//
+// Test Gentoo's weirdness both before and after they changed it in their GCC
+// 4.6.4 release.
+// RUN: %clang -no-canonical-prefixes %s -### -fsyntax-only 2>&1 \
+// RUN:     -target x86_64-unknown-linux-gnu \
+// RUN:     --sysroot=%S/Inputs/gentoo_linux_gcc_4.6.2_tree \
+// RUN:   | FileCheck --check-prefix=CHECK-GENTOO-4-6-2 %s
+// CHECK-GENTOO-4-6-2: "{{.*}}clang{{.*}}" "-cc1"
+// CHECK-GENTOO-4-6-2: "-isysroot" "[[SYSROOT:[^"]+]]"
+// CHECK-GENTOO-4-6-2: "-internal-isystem" "[[SYSROOT]]/usr/lib/gcc/x86_64-pc-linux-gnu/4.6.2/include/g++-v4"
+// CHECK-GENTOO-4-6-2: "-internal-isystem" "[[SYSROOT]]/usr/lib/gcc/x86_64-pc-linux-gnu/4.6.2/include/g++-v4/x86_64-pc-linux-gnu"
+// CHECK-GENTOO-4-6-2: "-internal-isystem" "[[SYSROOT]]/usr/lib/gcc/x86_64-pc-linux-gnu/4.6.2/include/g++-v4/backward"
+// CHECK-GENTOO-4-6-2: "-internal-isystem" "[[SYSROOT]]/usr/local/include"
+// CHECK-GENTOO-4-6-2: "-internal-isystem" "{{.*}}{{/|\\\\}}lib{{(64|32)?}}{{/|\\\\}}clang{{/|\\\\}}{{[0-9]\.[0-9]}}{{/|\\\\}}include"
+// CHECK-GENTOO-4-6-2: "-internal-externc-isystem" "[[SYSROOT]]/include"
+// CHECK-GENTOO-4-6-2: "-internal-externc-isystem" "[[SYSROOT]]/usr/include"
+// RUN: %clang -no-canonical-prefixes %s -### -fsyntax-only 2>&1 \
+// RUN:     -target x86_64-unknown-linux-gnu \
+// RUN:     --sysroot=%S/Inputs/gentoo_linux_gcc_4.6.4_tree \
+// RUN:   | FileCheck --check-prefix=CHECK-GENTOO-4-6-4 %s
+// CHECK-GENTOO-4-6-4: "{{.*}}clang{{.*}}" "-cc1"
+// CHECK-GENTOO-4-6-4: "-isysroot" "[[SYSROOT:[^"]+]]"
+// CHECK-GENTOO-4-6-4: "-internal-isystem" "[[SYSROOT]]/usr/lib/gcc/x86_64-pc-linux-gnu/4.6.4/include/g++-v4.6"
+// CHECK-GENTOO-4-6-4: "-internal-isystem" "[[SYSROOT]]/usr/lib/gcc/x86_64-pc-linux-gnu/4.6.4/include/g++-v4.6/x86_64-pc-linux-gnu"
+// CHECK-GENTOO-4-6-4: "-internal-isystem" "[[SYSROOT]]/usr/lib/gcc/x86_64-pc-linux-gnu/4.6.4/include/g++-v4.6/backward"
+// CHECK-GENTOO-4-6-4: "-internal-isystem" "[[SYSROOT]]/usr/local/include"
+// CHECK-GENTOO-4-6-4: "-internal-isystem" "{{.*}}{{/|\\\\}}lib{{(64|32)?}}{{/|\\\\}}clang{{/|\\\\}}{{[0-9]\.[0-9]}}{{/|\\\\}}include"
+// CHECK-GENTOO-4-6-4: "-internal-externc-isystem" "[[SYSROOT]]/include"
+// CHECK-GENTOO-4-6-4: "-internal-externc-isystem" "[[SYSROOT]]/usr/include"

@@ -50,6 +50,9 @@ protected:
     /// \brief The parsed major, minor, and patch numbers.
     int Major, Minor, Patch;
 
+    /// \brief The text of the parsed major, and major+minor versions.
+    std::string MajorStr, MinorStr;
+
     /// \brief Any textual suffix on the patch number.
     std::string PatchSuffix;
 
