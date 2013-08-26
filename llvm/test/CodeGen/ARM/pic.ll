@@ -4,7 +4,7 @@
 ; call to the external function should come with PLT fixup type.
 
 ; RUN:  llc < %s -mtriple=armv7-unknown-linux-gnueabi \
-; RUN:           -relocation-model=pic -fast-isel \
+; RUN:           -relocation-model=pic -fast-isel -verify-machineinstrs \
 ; RUN:    | FileCheck %s
 
 define void @test() {
