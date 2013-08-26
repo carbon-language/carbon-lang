@@ -126,6 +126,9 @@ static const unsigned MaxVectorWidth = 64;
 /// Maximum vectorization unroll count.
 static const unsigned MaxUnrollFactor = 16;
 
+/// The cost of a loop that is considered 'small' by the unroller.
+static const unsigned SmallLoopCost = 20;
+
 namespace {
 
 // Forward declarations.
@@ -167,7 +170,9 @@ public:
     updateAnalysis();
   }
 
-private:
+  virtual ~InnerLoopVectorizer() {}
+
+protected:
   /// A small list of PHINodes.
   typedef SmallVector<PHINode*, 4> PhiVector;
   /// When we unroll loops we have multiple vector values for each scalar.
@@ -187,7 +192,13 @@ private:
   /// Create an empty loop, based on the loop ranges of the old loop.
   void createEmptyLoop(LoopVectorizationLegality *Legal);
   /// Copy and widen the instructions from the old loop.
-  void vectorizeLoop(LoopVectorizationLegality *Legal);
+  virtual void vectorizeLoop(LoopVectorizationLegality *Legal);
+
+  /// \brief The Loop exit block may have single value PHI nodes where the
+  /// incoming value is 'Undef'. While vectorizing we only handled real values
+  /// that were defined inside the loop. Here we fix the 'undef case'.
+  /// See PR14725.
+  void fixLCSSAPHIs();
 
   /// A helper function that computes the predicate of the block BB, assuming
   /// that the header block of the loop is set to True. It returns the *entry*
@@ -201,16 +212,23 @@ private:
   void vectorizeBlockInLoop(LoopVectorizationLegality *Legal, BasicBlock *BB,
                             PhiVector *PV);
 
+  /// Vectorize a single PHINode in a block. This method handles the induction
+  /// variable canonicalization. It supports both VF = 1 for unrolled loops and
+  /// arbitrary length vectors.
+  void widenPHIInstruction(Instruction *PN, VectorParts &Entry,
+                           LoopVectorizationLegality *Legal,
+                           unsigned UF, unsigned VF, PhiVector *PV);
+
   /// Insert the new loop to the loop hierarchy and pass manager
   /// and update the analysis passes.
   void updateAnalysis();
 
   /// This instruction is un-vectorizable. Implement it as a sequence
   /// of scalars.
-  void scalarizeInstruction(Instruction *Instr);
+  virtual void scalarizeInstruction(Instruction *Instr);
 
   /// Vectorize Load and Store instructions,
-  void vectorizeMemoryInstruction(Instruction *Instr,
+  virtual void vectorizeMemoryInstruction(Instruction *Instr,
                                   LoopVectorizationLegality *Legal);
 
   /// Create a broadcast instruction. This method generates a broadcast
@@ -218,12 +236,12 @@ private:
   /// value. If this is the induction variable then we extend it to N, N+1, ...
   /// this is needed because each iteration in the loop corresponds to a SIMD
   /// element.
-  Value *getBroadcastInstrs(Value *V);
+  virtual Value *getBroadcastInstrs(Value *V);
 
   /// This function adds 0, 1, 2 ... to each vector element, starting at zero.
   /// If Negate is set then negative numbers are added e.g. (0, -1, -2, ...).
   /// The sequence starts at StartIndex.
-  Value *getConsecutiveVector(Value* Val, int StartIdx, bool Negate);
+  virtual Value *getConsecutiveVector(Value* Val, int StartIdx, bool Negate);
 
   /// When we go over instructions in the basic block we rely on previous
   /// values within the current basic block or on loop invariant values.
@@ -233,7 +251,7 @@ private:
   VectorParts &getVectorValue(Value *V);
 
   /// Generate a shuffle sequence that will reverse the vector Vec.
-  Value *reverseVector(Value *Vec);
+  virtual Value *reverseVector(Value *Vec);
 
   /// This is a helper class that holds the vectorizer state. It maps scalar
   /// instructions to vector instructions. When the code is 'unrolled' then
@@ -291,6 +309,8 @@ private:
   /// The vectorization SIMD factor to use. Each vector will have this many
   /// vector elements.
   unsigned VF;
+
+protected:
   /// The vectorization unroll factor to use. Each scalar is vectorized to this
   /// many different vector instructions.
   unsigned UF;
@@ -324,6 +344,23 @@ private:
   /// Maps scalars to widened vectors.
   ValueMap WidenMap;
   EdgeMaskCache MaskCache;
+};
+
+class InnerLoopUnroller : public InnerLoopVectorizer {
+public:
+  InnerLoopUnroller(Loop *OrigLoop, ScalarEvolution *SE, LoopInfo *LI,
+                    DominatorTree *DT, DataLayout *DL,
+                    const TargetLibraryInfo *TLI, unsigned UnrollFactor) :
+    InnerLoopVectorizer(OrigLoop, SE, LI, DT, DL, TLI, 1, UnrollFactor) { }
+
+private:
+  virtual void vectorizeLoop(LoopVectorizationLegality *Legal);
+  virtual void scalarizeInstruction(Instruction *Instr);
+  virtual void vectorizeMemoryInstruction(Instruction *Instr,
+                                          LoopVectorizationLegality *Legal);
+  virtual Value *getBroadcastInstrs(Value *V);
+  virtual Value *getConsecutiveVector(Value* Val, int StartIdx, bool Negate);
+  virtual Value *reverseVector(Value *Vec);
 };
 
 /// \brief Look for a meaningful debug location on the instruction or it's
@@ -875,7 +912,7 @@ struct LoopVectorize : public LoopPass {
 
     LoopVectorizeHints Hints(L);
 
-    if (Hints.Width == 1) {
+    if (Hints.Width == 1 && Hints.Unroll == 1) {
       DEBUG(dbgs() << "LV: Not vectorizing.\n");
       return false;
     }
@@ -914,16 +951,23 @@ struct LoopVectorize : public LoopPass {
 
     if (VF.Width == 1) {
       DEBUG(dbgs() << "LV: Vectorization is possible but not beneficial.\n");
-      return false;
     }
 
     DEBUG(dbgs() << "LV: Found a vectorizable loop ("<< VF.Width << ") in "<<
           F->getParent()->getModuleIdentifier()<<"\n");
     DEBUG(dbgs() << "LV: Unroll Factor is " << UF << "\n");
 
-    // If we decided that it is *legal* to vectorize the loop then do it.
-    InnerLoopVectorizer LB(L, SE, LI, DT, DL, TLI, VF.Width, UF);
-    LB.vectorize(&LVL);
+    if (VF.Width == 1) {
+      if (UF == 1)
+        return false;
+      // We decided not to vectorize, but we may want to unroll.
+      InnerLoopUnroller Unroller(L, SE, LI, DT, DL, TLI, UF);
+      Unroller.vectorize(&LVL);
+    } else {
+      // If we decided that it is *legal* to vectorize the loop then do it.
+      InnerLoopVectorizer LB(L, SE, LI, DT, DL, TLI, VF.Width, UF);
+      LB.vectorize(&LVL);
+    }
 
     // Mark the loop as already vectorized to avoid vectorizing again.
     Hints.setAlreadyVectorized(L);
@@ -2136,11 +2180,11 @@ InnerLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
     (RdxPhi)->setIncomingValue(SelfEdgeBlockIdx, Scalar0);
     (RdxPhi)->setIncomingValue(IncomingEdgeBlockIdx, RdxDesc.LoopExitInstr);
   }// end of for each redux variable.
+ 
+  fixLCSSAPHIs();
+}
 
-  // The Loop exit block may have single value PHI nodes where the incoming
-  // value is 'undef'. While vectorizing we only handled real values that
-  // were defined inside the loop. Here we handle the 'undef case'.
-  // See PR14725.
+void InnerLoopVectorizer::fixLCSSAPHIs() {
   for (BasicBlock::iterator LEI = LoopExitBlock->begin(),
        LEE = LoopExitBlock->end(); LEI != LEE; ++LEI) {
     PHINode *LCSSAPhi = dyn_cast<PHINode>(LEI);
@@ -2149,7 +2193,7 @@ InnerLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
       LCSSAPhi->addIncoming(UndefValue::get(LCSSAPhi->getType()),
                             LoopMiddleBlock);
   }
-}
+} 
 
 InnerLoopVectorizer::VectorParts
 InnerLoopVectorizer::createEdgeMask(BasicBlock *Src, BasicBlock *Dst) {
@@ -2210,6 +2254,170 @@ InnerLoopVectorizer::createBlockInMask(BasicBlock *BB) {
   return BlockMask;
 }
 
+void InnerLoopVectorizer::widenPHIInstruction(Instruction *PN,
+                                              InnerLoopVectorizer::VectorParts &Entry,
+                                              LoopVectorizationLegality *Legal,
+                                              unsigned UF, unsigned VF, PhiVector *PV) {
+  PHINode* P = cast<PHINode>(PN);
+  // Handle reduction variables:
+  if (Legal->getReductionVars()->count(P)) {
+    for (unsigned part = 0; part < UF; ++part) {
+      // This is phase one of vectorizing PHIs.
+      Type *VecTy = (VF == 1) ? PN->getType() :
+      VectorType::get(PN->getType(), VF);
+      Entry[part] = PHINode::Create(VecTy, 2, "vec.phi",
+                                    LoopVectorBody-> getFirstInsertionPt());
+    }
+    PV->push_back(P);
+    return;
+  }
+
+  setDebugLocFromInst(Builder, P);
+  // Check for PHI nodes that are lowered to vector selects.
+  if (P->getParent() != OrigLoop->getHeader()) {
+    // We know that all PHIs in non header blocks are converted into
+    // selects, so we don't have to worry about the insertion order and we
+    // can just use the builder.
+    // At this point we generate the predication tree. There may be
+    // duplications since this is a simple recursive scan, but future
+    // optimizations will clean it up.
+
+    unsigned NumIncoming = P->getNumIncomingValues();
+
+    // Generate a sequence of selects of the form:
+    // SELECT(Mask3, In3,
+    //      SELECT(Mask2, In2,
+    //                   ( ...)))
+    for (unsigned In = 0; In < NumIncoming; In++) {
+      VectorParts Cond = createEdgeMask(P->getIncomingBlock(In),
+                                        P->getParent());
+      VectorParts &In0 = getVectorValue(P->getIncomingValue(In));
+
+      for (unsigned part = 0; part < UF; ++part) {
+        // We might have single edge PHIs (blocks) - use an identity
+        // 'select' for the first PHI operand.
+        if (In == 0)
+          Entry[part] = Builder.CreateSelect(Cond[part], In0[part],
+                                             In0[part]);
+        else
+          // Select between the current value and the previous incoming edge
+          // based on the incoming mask.
+          Entry[part] = Builder.CreateSelect(Cond[part], In0[part],
+                                             Entry[part], "predphi");
+      }
+    }
+    return;
+  }
+
+  // This PHINode must be an induction variable.
+  // Make sure that we know about it.
+  assert(Legal->getInductionVars()->count(P) &&
+         "Not an induction variable");
+
+  LoopVectorizationLegality::InductionInfo II =
+  Legal->getInductionVars()->lookup(P);
+
+  switch (II.IK) {
+    case LoopVectorizationLegality::IK_NoInduction:
+      llvm_unreachable("Unknown induction");
+    case LoopVectorizationLegality::IK_IntInduction: {
+      assert(P->getType() == II.StartValue->getType() && "Types must match");
+      Type *PhiTy = P->getType();
+      Value *Broadcasted;
+      if (P == OldInduction) {
+        // Handle the canonical induction variable. We might have had to
+        // extend the type.
+        Broadcasted = Builder.CreateTrunc(Induction, PhiTy);
+      } else {
+        // Handle other induction variables that are now based on the
+        // canonical one.
+        Value *NormalizedIdx = Builder.CreateSub(Induction, ExtendedIdx,
+                                                 "normalized.idx");
+        NormalizedIdx = Builder.CreateSExtOrTrunc(NormalizedIdx, PhiTy);
+        Broadcasted = Builder.CreateAdd(II.StartValue, NormalizedIdx,
+                                        "offset.idx");
+      }
+      Broadcasted = getBroadcastInstrs(Broadcasted);
+      // After broadcasting the induction variable we need to make the vector
+      // consecutive by adding 0, 1, 2, etc.
+      for (unsigned part = 0; part < UF; ++part)
+        Entry[part] = getConsecutiveVector(Broadcasted, VF * part, false);
+      return;
+    }
+    case LoopVectorizationLegality::IK_ReverseIntInduction:
+    case LoopVectorizationLegality::IK_PtrInduction:
+    case LoopVectorizationLegality::IK_ReversePtrInduction:
+      // Handle reverse integer and pointer inductions.
+      Value *StartIdx = ExtendedIdx;
+      // This is the normalized GEP that starts counting at zero.
+      Value *NormalizedIdx = Builder.CreateSub(Induction, StartIdx,
+                                               "normalized.idx");
+
+      // Handle the reverse integer induction variable case.
+      if (LoopVectorizationLegality::IK_ReverseIntInduction == II.IK) {
+        IntegerType *DstTy = cast<IntegerType>(II.StartValue->getType());
+        Value *CNI = Builder.CreateSExtOrTrunc(NormalizedIdx, DstTy,
+                                               "resize.norm.idx");
+        Value *ReverseInd  = Builder.CreateSub(II.StartValue, CNI,
+                                               "reverse.idx");
+
+        // This is a new value so do not hoist it out.
+        Value *Broadcasted = getBroadcastInstrs(ReverseInd);
+        // After broadcasting the induction variable we need to make the
+        // vector consecutive by adding  ... -3, -2, -1, 0.
+        for (unsigned part = 0; part < UF; ++part)
+          Entry[part] = getConsecutiveVector(Broadcasted, -(int)VF * part,
+                                             true);
+        return;
+      }
+
+      // Handle the pointer induction variable case.
+      assert(P->getType()->isPointerTy() && "Unexpected type.");
+
+      // Is this a reverse induction ptr or a consecutive induction ptr.
+      bool Reverse = (LoopVectorizationLegality::IK_ReversePtrInduction ==
+                      II.IK);
+
+      // This is the vector of results. Notice that we don't generate
+      // vector geps because scalar geps result in better code.
+      for (unsigned part = 0; part < UF; ++part) {
+        if (VF == 1) {
+          int EltIndex = (part) * (Reverse ? -1 : 1);
+          Constant *Idx = ConstantInt::get(Induction->getType(), EltIndex);
+          Value *GlobalIdx;
+          if (Reverse)
+            GlobalIdx = Builder.CreateSub(Idx, NormalizedIdx, "gep.ridx");
+          else
+            GlobalIdx = Builder.CreateAdd(NormalizedIdx, Idx, "gep.idx");
+
+          Value *SclrGep = Builder.CreateGEP(II.StartValue, GlobalIdx,
+                                             "next.gep");
+          Entry[part] = SclrGep;
+          continue;
+        }
+
+        Value *VecVal = UndefValue::get(VectorType::get(P->getType(), VF));
+        for (unsigned int i = 0; i < VF; ++i) {
+          int EltIndex = (i + part * VF) * (Reverse ? -1 : 1);
+          Constant *Idx = ConstantInt::get(Induction->getType(), EltIndex);
+          Value *GlobalIdx;
+          if (!Reverse)
+            GlobalIdx = Builder.CreateAdd(NormalizedIdx, Idx, "gep.idx");
+          else
+            GlobalIdx = Builder.CreateSub(Idx, NormalizedIdx, "gep.ridx");
+
+          Value *SclrGep = Builder.CreateGEP(II.StartValue, GlobalIdx,
+                                             "next.gep");
+          VecVal = Builder.CreateInsertElement(VecVal, SclrGep,
+                                               Builder.getInt32(i),
+                                               "insert.gep");
+        }
+        Entry[part] = VecVal;
+      }
+      return;
+  }
+}
+
 void
 InnerLoopVectorizer::vectorizeBlockInLoop(LoopVectorizationLegality *Legal,
                                           BasicBlock *BB, PhiVector *PV) {
@@ -2222,149 +2430,9 @@ InnerLoopVectorizer::vectorizeBlockInLoop(LoopVectorizationLegality *Legal,
       // loop control flow instructions.
       continue;
     case Instruction::PHI:{
-      PHINode* P = cast<PHINode>(it);
-      // Handle reduction variables:
-      if (Legal->getReductionVars()->count(P)) {
-        for (unsigned part = 0; part < UF; ++part) {
-          // This is phase one of vectorizing PHIs.
-          Type *VecTy = VectorType::get(it->getType(), VF);
-          Entry[part] = PHINode::Create(VecTy, 2, "vec.phi",
-                                        LoopVectorBody-> getFirstInsertionPt());
-        }
-        PV->push_back(P);
-        continue;
-      }
-
-      setDebugLocFromInst(Builder, P);
-      // Check for PHI nodes that are lowered to vector selects.
-      if (P->getParent() != OrigLoop->getHeader()) {
-        // We know that all PHIs in non header blocks are converted into
-        // selects, so we don't have to worry about the insertion order and we
-        // can just use the builder.
-        // At this point we generate the predication tree. There may be
-        // duplications since this is a simple recursive scan, but future
-        // optimizations will clean it up.
-
-        unsigned NumIncoming = P->getNumIncomingValues();
-
-        // Generate a sequence of selects of the form:
-        // SELECT(Mask3, In3,
-        //      SELECT(Mask2, In2,
-        //                   ( ...)))
-        for (unsigned In = 0; In < NumIncoming; In++) {
-          VectorParts Cond = createEdgeMask(P->getIncomingBlock(In),
-                                            P->getParent());
-          VectorParts &In0 = getVectorValue(P->getIncomingValue(In));
-
-          for (unsigned part = 0; part < UF; ++part) {
-            // We might have single edge PHIs (blocks) - use an identity
-            // 'select' for the first PHI operand.
-            if (In == 0)
-              Entry[part] = Builder.CreateSelect(Cond[part], In0[part],
-                                                 In0[part]);
-            else
-              // Select between the current value and the previous incoming edge
-              // based on the incoming mask.
-              Entry[part] = Builder.CreateSelect(Cond[part], In0[part],
-                                                 Entry[part], "predphi");
-          }
-        }
-        continue;
-      }
-
-      // This PHINode must be an induction variable.
-      // Make sure that we know about it.
-      assert(Legal->getInductionVars()->count(P) &&
-             "Not an induction variable");
-
-      LoopVectorizationLegality::InductionInfo II =
-        Legal->getInductionVars()->lookup(P);
-
-      switch (II.IK) {
-      case LoopVectorizationLegality::IK_NoInduction:
-        llvm_unreachable("Unknown induction");
-      case LoopVectorizationLegality::IK_IntInduction: {
-        assert(P->getType() == II.StartValue->getType() && "Types must match");
-        Type *PhiTy = P->getType();
-        Value *Broadcasted;
-        if (P == OldInduction) {
-          // Handle the canonical induction variable. We might have had to
-          // extend the type.
-          Broadcasted = Builder.CreateTrunc(Induction, PhiTy);
-        } else {
-          // Handle other induction variables that are now based on the
-          // canonical one.
-          Value *NormalizedIdx = Builder.CreateSub(Induction, ExtendedIdx,
-                                                   "normalized.idx");
-          NormalizedIdx = Builder.CreateSExtOrTrunc(NormalizedIdx, PhiTy);
-          Broadcasted = Builder.CreateAdd(II.StartValue, NormalizedIdx,
-                                          "offset.idx");
-        }
-        Broadcasted = getBroadcastInstrs(Broadcasted);
-        // After broadcasting the induction variable we need to make the vector
-        // consecutive by adding 0, 1, 2, etc.
-        for (unsigned part = 0; part < UF; ++part)
-          Entry[part] = getConsecutiveVector(Broadcasted, VF * part, false);
-        continue;
-      }
-      case LoopVectorizationLegality::IK_ReverseIntInduction:
-      case LoopVectorizationLegality::IK_PtrInduction:
-      case LoopVectorizationLegality::IK_ReversePtrInduction:
-        // Handle reverse integer and pointer inductions.
-        Value *StartIdx = ExtendedIdx;
-        // This is the normalized GEP that starts counting at zero.
-        Value *NormalizedIdx = Builder.CreateSub(Induction, StartIdx,
-                                                 "normalized.idx");
-
-        // Handle the reverse integer induction variable case.
-        if (LoopVectorizationLegality::IK_ReverseIntInduction == II.IK) {
-          IntegerType *DstTy = cast<IntegerType>(II.StartValue->getType());
-          Value *CNI = Builder.CreateSExtOrTrunc(NormalizedIdx, DstTy,
-                                                 "resize.norm.idx");
-          Value *ReverseInd  = Builder.CreateSub(II.StartValue, CNI,
-                                                 "reverse.idx");
-
-          // This is a new value so do not hoist it out.
-          Value *Broadcasted = getBroadcastInstrs(ReverseInd);
-          // After broadcasting the induction variable we need to make the
-          // vector consecutive by adding  ... -3, -2, -1, 0.
-          for (unsigned part = 0; part < UF; ++part)
-            Entry[part] = getConsecutiveVector(Broadcasted, -(int)VF * part,
-                                               true);
-          continue;
-        }
-
-        // Handle the pointer induction variable case.
-        assert(P->getType()->isPointerTy() && "Unexpected type.");
-
-        // Is this a reverse induction ptr or a consecutive induction ptr.
-        bool Reverse = (LoopVectorizationLegality::IK_ReversePtrInduction ==
-                        II.IK);
-
-        // This is the vector of results. Notice that we don't generate
-        // vector geps because scalar geps result in better code.
-        for (unsigned part = 0; part < UF; ++part) {
-          Value *VecVal = UndefValue::get(VectorType::get(P->getType(), VF));
-          for (unsigned int i = 0; i < VF; ++i) {
-            int EltIndex = (i + part * VF) * (Reverse ? -1 : 1);
-            Constant *Idx = ConstantInt::get(Induction->getType(), EltIndex);
-            Value *GlobalIdx;
-            if (!Reverse)
-              GlobalIdx = Builder.CreateAdd(NormalizedIdx, Idx, "gep.idx");
-            else
-              GlobalIdx = Builder.CreateSub(Idx, NormalizedIdx, "gep.ridx");
-
-            Value *SclrGep = Builder.CreateGEP(II.StartValue, GlobalIdx,
-                                               "next.gep");
-            VecVal = Builder.CreateInsertElement(VecVal, SclrGep,
-                                                 Builder.getInt32(i),
-                                                 "insert.gep");
-          }
-          Entry[part] = VecVal;
-        }
-        continue;
-      }
-
+      // Vectorize PHINodes.
+      widenPHIInstruction(it, Entry, Legal, UF, VF, PV);
+      continue;
     }// End of PHI.
 
     case Instruction::Add:
@@ -2423,8 +2491,10 @@ InnerLoopVectorizer::vectorizeBlockInLoop(LoopVectorizationLegality *Legal,
       VectorParts &Cond = getVectorValue(it->getOperand(0));
       VectorParts &Op0  = getVectorValue(it->getOperand(1));
       VectorParts &Op1  = getVectorValue(it->getOperand(2));
-      Value *ScalarCond = Builder.CreateExtractElement(Cond[0],
-                                                       Builder.getInt32(0));
+
+      Value *ScalarCond = (VF == 1) ? Cond[0] :
+        Builder.CreateExtractElement(Cond[0], Builder.getInt32(0));
+
       for (unsigned Part = 0; Part < UF; ++Part) {
         Entry[Part] = Builder.CreateSelect(
           InvariantCond ? ScalarCond : Cond[Part],
@@ -2485,7 +2555,8 @@ InnerLoopVectorizer::vectorizeBlockInLoop(LoopVectorizationLegality *Legal,
         break;
       }
       /// Vectorize casts.
-      Type *DestTy = VectorType::get(CI->getType()->getScalarType(), VF);
+      Type *DestTy = (VF == 1) ? CI->getType() :
+                                 VectorType::get(CI->getType(), VF);
 
       VectorParts &A = getVectorValue(it->getOperand(0));
       for (unsigned Part = 0; Part < UF; ++Part)
@@ -2515,7 +2586,10 @@ InnerLoopVectorizer::vectorizeBlockInLoop(LoopVectorizationLegality *Legal,
             VectorParts &Arg = getVectorValue(CI->getArgOperand(i));
             Args.push_back(Arg[Part]);
           }
-          Type *Tys[] = { VectorType::get(CI->getType()->getScalarType(), VF) };
+          Type *Tys[] = {CI->getType()};
+          if (VF > 1)
+            Tys[0] = VectorType::get(CI->getType()->getScalarType(), VF);
+
           Function *F = Intrinsic::getDeclaration(M, ID, Tys);
           Entry[Part] = Builder.CreateCall(F, Args);
         }
@@ -4267,7 +4341,19 @@ LoopVectorizationCostModel::selectUnrollFactor(bool OptForSize,
   else if (UF < 1)
     UF = 1;
 
-  if (Legal->getReductionVars()->size()) {
+  bool HasReductions = Legal->getReductionVars()->size();
+
+  // Decide if we want to unroll if we decided that it is legal to vectorize
+  // but not profitable.
+  if (VF == 1) {
+    if (TheLoop->getNumBlocks() > 1 || !HasReductions ||
+        LoopCost > SmallLoopCost)
+      return 1;
+
+    return UF;
+  }
+
+  if (HasReductions) {
     DEBUG(dbgs() << "LV: Unrolling because of reductions. \n");
     return UF;
   }
@@ -4277,9 +4363,9 @@ LoopVectorizationCostModel::selectUnrollFactor(bool OptForSize,
   // to estimate the cost of the loop and unroll until the cost of the
   // loop overhead is about 5% of the cost of the loop.
   DEBUG(dbgs() << "LV: Loop cost is "<< LoopCost <<" \n");
-  if (LoopCost < 20) {
+  if (LoopCost < SmallLoopCost) {
     DEBUG(dbgs() << "LV: Unrolling to reduce branch cost. \n");
-    unsigned NewUF = 20/LoopCost + 1;
+    unsigned NewUF = SmallLoopCost / (LoopCost + 1);
     return std::min(NewUF, UF);
   }
 
@@ -4701,3 +4787,245 @@ bool LoopVectorizationCostModel::isConsecutiveLoadOrStore(Instruction *Inst) {
 
   return false;
 }
+
+void
+InnerLoopUnroller::vectorizeLoop(LoopVectorizationLegality *Legal) {
+  // In order to support reduction variables we need to be able to unroll
+  // Phi nodes. Phi nodes have cycles, so we need to unroll them in two
+  // stages. See InnerLoopVectorizer::vectorizeLoop for more details.
+  PhiVector RdxPHIsToFix;
+
+  // Scan the loop in a topological order to ensure that defs are vectorized
+  // before users.
+  LoopBlocksDFS DFS(OrigLoop);
+  DFS.perform(LI);
+
+  // Unroll all of the blocks in the original loop.
+  for (LoopBlocksDFS::RPOIterator bb = DFS.beginRPO(), be = DFS.endRPO();
+       bb != be; ++bb)
+    vectorizeBlockInLoop(Legal, *bb, &RdxPHIsToFix);
+
+  // Create the 'reduced' values for each of the induction vars.
+  // The reduced values are the vector values that we scalarize and combine
+  // after the loop is finished.
+  for (PhiVector::iterator it = RdxPHIsToFix.begin(), e = RdxPHIsToFix.end();
+       it != e; ++it) {
+    PHINode *RdxPhi = *it;
+    assert(RdxPhi && "Unable to recover vectorized PHI");
+
+    // Find the reduction variable descriptor.
+    assert(Legal->getReductionVars()->count(RdxPhi) &&
+           "Unable to find the reduction variable");
+    LoopVectorizationLegality::ReductionDescriptor RdxDesc =
+    (*Legal->getReductionVars())[RdxPhi];
+
+    setDebugLocFromInst(Builder, RdxDesc.StartValue);
+
+    // We need to generate a reduction vector from the incoming scalar.
+    // To do so, we need to generate the 'identity' vector and overide
+    // one of the elements with the incoming scalar reduction. We need
+    // to do it in the vector-loop preheader.
+    Builder.SetInsertPoint(LoopBypassBlocks.front()->getTerminator());
+
+    // This is the vector-clone of the value that leaves the loop.
+    VectorParts &VectorExit = getVectorValue(RdxDesc.LoopExitInstr);
+    Type *VecTy = VectorExit[0]->getType();
+
+    // Find the reduction identity variable. Zero for addition, or, xor,
+    // one for multiplication, -1 for And.
+    Value *Identity;
+    Value *VectorStart;
+    if (RdxDesc.Kind == LoopVectorizationLegality::RK_IntegerMinMax ||
+        RdxDesc.Kind == LoopVectorizationLegality::RK_FloatMinMax) {
+      // MinMax reduction have the start value as their identify.
+      VectorStart = Identity = RdxDesc.StartValue;
+
+    } else {
+      Identity = LoopVectorizationLegality::getReductionIdentity(RdxDesc.Kind,
+                                                        VecTy->getScalarType());
+
+      // This vector is the Identity vector where the first element is the
+      // incoming scalar reduction.
+      VectorStart = RdxDesc.StartValue;
+    }
+
+    // Fix the vector-loop phi.
+    // We created the induction variable so we know that the
+    // preheader is the first entry.
+    BasicBlock *VecPreheader = Induction->getIncomingBlock(0);
+
+    // Reductions do not have to start at zero. They can start with
+    // any loop invariant values.
+    VectorParts &VecRdxPhi = WidenMap.get(RdxPhi);
+    BasicBlock *Latch = OrigLoop->getLoopLatch();
+    Value *LoopVal = RdxPhi->getIncomingValueForBlock(Latch);
+    VectorParts &Val = getVectorValue(LoopVal);
+    for (unsigned part = 0; part < UF; ++part) {
+      // Make sure to add the reduction stat value only to the
+      // first unroll part.
+      Value *StartVal = (part == 0) ? VectorStart : Identity;
+      cast<PHINode>(VecRdxPhi[part])->addIncoming(StartVal, VecPreheader);
+      cast<PHINode>(VecRdxPhi[part])->addIncoming(Val[part], LoopVectorBody);
+    }
+
+    // Before each round, move the insertion point right between
+    // the PHIs and the values we are going to write.
+    // This allows us to write both PHINodes and the extractelement
+    // instructions.
+    Builder.SetInsertPoint(LoopMiddleBlock->getFirstInsertionPt());
+
+    VectorParts RdxParts;
+    setDebugLocFromInst(Builder, RdxDesc.LoopExitInstr);
+    for (unsigned part = 0; part < UF; ++part) {
+      // This PHINode contains the vectorized reduction variable, or
+      // the initial value vector, if we bypass the vector loop.
+      VectorParts &RdxExitVal = getVectorValue(RdxDesc.LoopExitInstr);
+      PHINode *NewPhi = Builder.CreatePHI(VecTy, 2, "rdx.vec.exit.phi");
+      Value *StartVal = (part == 0) ? VectorStart : Identity;
+      for (unsigned I = 0, E = LoopBypassBlocks.size(); I != E; ++I)
+        NewPhi->addIncoming(StartVal, LoopBypassBlocks[I]);
+      NewPhi->addIncoming(RdxExitVal[part], LoopVectorBody);
+      RdxParts.push_back(NewPhi);
+    }
+
+    // Reduce all of the unrolled parts into a single vector.
+    Value *ReducedPartRdx = RdxParts[0];
+    unsigned Op = getReductionBinOp(RdxDesc.Kind);
+    setDebugLocFromInst(Builder, ReducedPartRdx);
+    for (unsigned part = 1; part < UF; ++part) {
+      if (Op != Instruction::ICmp && Op != Instruction::FCmp)
+        ReducedPartRdx = Builder.CreateBinOp((Instruction::BinaryOps)Op,
+                                             RdxParts[part], ReducedPartRdx,
+                                             "bin.rdx");
+      else
+        ReducedPartRdx = createMinMaxOp(Builder, RdxDesc.MinMaxKind,
+                                        ReducedPartRdx, RdxParts[part]);
+    }
+
+    // Now, we need to fix the users of the reduction variable
+    // inside and outside of the scalar remainder loop.
+    // We know that the loop is in LCSSA form. We need to update the
+    // PHI nodes in the exit blocks.
+    for (BasicBlock::iterator LEI = LoopExitBlock->begin(),
+         LEE = LoopExitBlock->end(); LEI != LEE; ++LEI) {
+      PHINode *LCSSAPhi = dyn_cast<PHINode>(LEI);
+      if (!LCSSAPhi) continue;
+
+      // All PHINodes need to have a single entry edge, or two if
+      // we already fixed them.
+      assert(LCSSAPhi->getNumIncomingValues() < 3 && "Invalid LCSSA PHI");
+
+      // We found our reduction value exit-PHI. Update it with the
+      // incoming bypass edge.
+      if (LCSSAPhi->getIncomingValue(0) == RdxDesc.LoopExitInstr) {
+        // Add an edge coming from the bypass.
+        LCSSAPhi->addIncoming(ReducedPartRdx, LoopMiddleBlock);
+        break;
+      }
+    }// end of the LCSSA phi scan.
+
+    // Fix the scalar loop reduction variable with the incoming reduction sum
+    // from the vector body and from the backedge value.
+    int IncomingEdgeBlockIdx =
+    (RdxPhi)->getBasicBlockIndex(OrigLoop->getLoopLatch());
+    assert(IncomingEdgeBlockIdx >= 0 && "Invalid block index");
+    // Pick the other block.
+    int SelfEdgeBlockIdx = (IncomingEdgeBlockIdx ? 0 : 1);
+    (RdxPhi)->setIncomingValue(SelfEdgeBlockIdx, ReducedPartRdx);
+    (RdxPhi)->setIncomingValue(IncomingEdgeBlockIdx, RdxDesc.LoopExitInstr);
+  }// end of for each redux variable.
+
+  fixLCSSAPHIs();
+}
+
+void InnerLoopUnroller::scalarizeInstruction(Instruction *Instr) {
+  assert(!Instr->getType()->isAggregateType() && "Can't handle vectors");
+  // Holds vector parameters or scalars, in case of uniform vals.
+  SmallVector<VectorParts, 4> Params;
+
+  setDebugLocFromInst(Builder, Instr);
+
+  // Find all of the vectorized parameters.
+  for (unsigned op = 0, e = Instr->getNumOperands(); op != e; ++op) {
+    Value *SrcOp = Instr->getOperand(op);
+
+    // If we are accessing the old induction variable, use the new one.
+    if (SrcOp == OldInduction) {
+      Params.push_back(getVectorValue(SrcOp));
+      continue;
+    }
+
+    // Try using previously calculated values.
+    Instruction *SrcInst = dyn_cast<Instruction>(SrcOp);
+
+    // If the src is an instruction that appeared earlier in the basic block
+    // then it should already be vectorized.
+    if (SrcInst && OrigLoop->contains(SrcInst)) {
+      assert(WidenMap.has(SrcInst) && "Source operand is unavailable");
+      // The parameter is a vector value from earlier.
+      Params.push_back(WidenMap.get(SrcInst));
+    } else {
+      // The parameter is a scalar from outside the loop. Maybe even a constant.
+      VectorParts Scalars;
+      Scalars.append(UF, SrcOp);
+      Params.push_back(Scalars);
+    }
+  }
+
+  assert(Params.size() == Instr->getNumOperands() &&
+         "Invalid number of operands");
+
+  // Does this instruction return a value ?
+  bool IsVoidRetTy = Instr->getType()->isVoidTy();
+
+  Value *UndefVec = IsVoidRetTy ? 0 :
+  UndefValue::get(Instr->getType());
+  // Create a new entry in the WidenMap and initialize it to Undef or Null.
+  VectorParts &VecResults = WidenMap.splat(Instr, UndefVec);
+
+  // For each vector unroll 'part':
+  for (unsigned Part = 0; Part < UF; ++Part) {
+    // For each scalar that we create:
+
+    Instruction *Cloned = Instr->clone();
+      if (!IsVoidRetTy)
+        Cloned->setName(Instr->getName() + ".cloned");
+      // Replace the operands of the cloned instrucions with extracted scalars.
+      for (unsigned op = 0, e = Instr->getNumOperands(); op != e; ++op) {
+        Value *Op = Params[op][Part];
+        Cloned->setOperand(op, Op);
+      }
+
+      // Place the cloned scalar in the new loop.
+      Builder.Insert(Cloned);
+
+      // If the original scalar returns a value we need to place it in a vector
+      // so that future users will be able to use it.
+      if (!IsVoidRetTy)
+        VecResults[Part] = Cloned;
+  }
+}
+
+void
+InnerLoopUnroller::vectorizeMemoryInstruction(Instruction *Instr,
+                                              LoopVectorizationLegality*) {
+  return scalarizeInstruction(Instr);
+}
+
+Value *InnerLoopUnroller::reverseVector(Value *Vec) {
+  return Vec;
+}
+
+Value *InnerLoopUnroller::getBroadcastInstrs(Value *V) {
+  return V;
+}
+
+Value *InnerLoopUnroller::getConsecutiveVector(Value* Val, int StartIdx,
+                                               bool Negate) {
+  // When unrolling and the VF is 1, we only need to add a simple scalar.
+  Type *ITy = Val->getType();
+  assert(!ITy->isVectorTy() && "Val must be a scalar");
+  Constant *C = ConstantInt::get(ITy, StartIdx, Negate);
+  return Builder.CreateAdd(Val, C, "induction");
+}
+
