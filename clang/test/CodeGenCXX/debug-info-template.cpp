@@ -6,7 +6,7 @@
 // CHECK: [[INT:![0-9]*]] = {{.*}} ; [ DW_TAG_base_type ] [int]
 // CHECK: metadata [[TCNESTED:![0-9]*]], i32 0, i32 1, %"struct.TC<unsigned int, 2, &glb, &foo::e, &foo::f, &func, tmpl_impl, 1, 2, 3>::nested"* @tci, null} ; [ DW_TAG_variable ] [tci]
 // CHECK: [[TCNESTED]] = metadata !{i32 {{[0-9]*}}, metadata !{{[0-9]*}}, metadata [[TC:![0-9]*]], {{.*}} ; [ DW_TAG_structure_type ] [nested]
-// CHECK: [[TC]] = {{.*}}, metadata [[TCARGS:![0-9]*]]} ; [ DW_TAG_structure_type ] [TC<unsigned int, 2, &glb, &foo::e, &foo::f, &func, tmpl_impl, 1, 2, 3>]
+// CHECK: [[TC]] = {{.*}}, metadata [[TCARGS:![0-9]*]], null} ; [ DW_TAG_structure_type ] [TC<unsigned int, 2, &glb, &foo::e, &foo::f, &func, tmpl_impl, 1, 2, 3>]
 // CHECK: [[TCARGS]] = metadata !{metadata [[TCARG1:![0-9]*]], metadata [[TCARG2:![0-9]*]], metadata [[TCARG3:![0-9]*]], metadata [[TCARG4:![0-9]*]], metadata [[TCARG5:![0-9]*]], metadata [[TCARG6:![0-9]*]], metadata [[TCARG7:![0-9]*]], metadata [[TCARG8:![0-9]*]]}
 //
 // We seem to be missing file/line/col info on template value parameters -
@@ -26,7 +26,7 @@
 // pointer type)
 // CHECK: [[FOO]] = {{.*}} ; [ DW_TAG_structure_type ] [foo]
 // CHECK: metadata !"f", metadata !"_ZN3foo1fEv", i32 {{[0-9]*}}, metadata [[FTYPE:![0-9]*]],
-// CHECK: [[FTYPE:![0-9]*]] = {{.*}}, metadata [[FARGS:![0-9]*]], i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
+// CHECK: [[FTYPE:![0-9]*]] = {{.*}}, metadata [[FARGS:![0-9]*]], i32 0, null{{.*}}} ; [ DW_TAG_subroutine_type ]
 // CHECK: [[FARGS]] = metadata !{null, metadata [[FARG1:![0-9]*]]}
 // CHECK: [[FARG1]] = {{.*}} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [artificial] [from foo]
 //
@@ -38,7 +38,7 @@
 // CHECK: [[MEMFUNPTR]] = {{.*}}, metadata [[FTYPE]], metadata [[FOO]]} ; [ DW_TAG_ptr_to_member_type ]
 // CHECK: [[TCARG6]] = {{.*}}metadata !"f", metadata [[FUNPTR:![0-9]*]], void ()* @_Z4funcv, {{.*}} ; [ DW_TAG_template_value_parameter ]
 // CHECK: [[FUNPTR]] = {{.*}}, metadata [[FUNTYPE:![0-9]*]]} ; [ DW_TAG_pointer_type ]
-// CHECK: [[FUNTYPE]] = {{.*}}, metadata [[FUNARGS:![0-9]*]], i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
+// CHECK: [[FUNTYPE]] = {{.*}}, metadata [[FUNARGS:![0-9]*]], i32 0, null{{.*}}} ; [ DW_TAG_subroutine_type ]
 // CHECK: [[FUNARGS]] = metadata !{null}
 // CHECK: [[TCARG7]] = {{.*}}metadata !"tmpl", null, metadata !"tmpl_impl", {{.*}} ; [ DW_TAG_GNU_template_template_param ]
 // CHECK: [[TCARG8]] = {{.*}}metadata !"Is", null, metadata [[TCARG8_VALS:![0-9]*]], {{.*}} ; [ DW_TAG_GNU_template_parameter_pack ]
@@ -49,7 +49,7 @@
 
 
 // CHECK: metadata [[TCNT:![0-9]*]], i32 0, i32 1, %struct.TC* @tcn, null} ; [ DW_TAG_variable ] [tcn]
-// CHECK: [[TCNT:![0-9]*]] = {{.*}}, metadata [[TCNARGS:![0-9]*]]} ; [ DW_TAG_structure_type ] [TC<int, -3, nullptr, nullptr, nullptr, nullptr, tmpl_impl>]
+// CHECK: [[TCNT:![0-9]*]] = {{.*}}, metadata [[TCNARGS:![0-9]*]], null} ; [ DW_TAG_structure_type ] [TC<int, -3, nullptr, nullptr, nullptr, nullptr, tmpl_impl>]
 // CHECK: [[TCNARGS]] = metadata !{metadata [[TCNARG1:![0-9]*]], metadata [[TCNARG2:![0-9]*]], metadata [[TCNARG3:![0-9]*]], metadata [[TCNARG4:![0-9]*]], metadata [[TCNARG5:![0-9]*]], metadata [[TCNARG6:![0-9]*]], metadata [[TCARG7:![0-9]*]], metadata [[TCNARG8:![0-9]*]]}
 // CHECK: [[TCNARG1]] = {{.*}}metadata !"T", metadata [[INT]], {{.*}} ; [ DW_TAG_template_type_parameter ]
 // CHECK: [[TCNARG2]] = {{.*}}metadata !"", metadata [[INT]], i32 -3, {{.*}} ; [ DW_TAG_template_value_parameter ]
@@ -69,14 +69,14 @@
 // CHECK: [[TCNARG5]] = {{.*}}metadata !"b", metadata [[MEMFUNPTR]], i8 0, {{.*}} ; [ DW_TAG_template_value_parameter ]
 // CHECK: [[TCNARG6]] = {{.*}}metadata !"f", metadata [[FUNPTR]], i8 0, {{.*}} ; [ DW_TAG_template_value_parameter ]
 // CHECK: [[TCNARG8]] = {{.*}}metadata !"Is", null, metadata [[EMPTY]], {{.*}} ; [ DW_TAG_GNU_template_parameter_pack ]
-// CHECK: metadata [[TGIARGS:![0-9]*]]} ; [ DW_TAG_structure_type ] [tmpl_guid<&__uuidof(uuid)>]
+// CHECK: metadata [[TGIARGS:![0-9]*]], null} ; [ DW_TAG_structure_type ] [tmpl_guid<&__uuidof(uuid)>]
 // CHECK: [[TGIARGS]] = metadata !{metadata [[TGIARG1:![0-9]*]]}
 // CHECK: [[TGIARG1]] = {{.*}}metadata !"", metadata [[CONST_GUID_PTR:![0-9]*]], { i32, i16, i16, [8 x i8] }* @_GUID_12345678_1234_1234_1234_1234567890ab, {{.*}} ; [ DW_TAG_template_value_parameter ]
 // CHECK: [[CONST_GUID_PTR]] = {{.*}}, metadata [[CONST_GUID:![0-9]*]]} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from ]
 // CHECK: [[CONST_GUID]] = {{.*}}, metadata [[GUID:![0-9]*]]} ; [ DW_TAG_const_type ] [line 0, size 0, align 0, offset 0] [from _GUID]
 // CHECK: [[GUID]] = {{.*}} ; [ DW_TAG_structure_type ] [_GUID]
 
-// CHECK: metadata [[PTOARGS:![0-9]*]]} ; [ DW_TAG_structure_type ] [PaddingAtEndTemplate<&PaddedObj>]
+// CHECK: metadata [[PTOARGS:![0-9]*]], null} ; [ DW_TAG_structure_type ] [PaddingAtEndTemplate<&PaddedObj>]
 // CHECK: [[PTOARGS]] = metadata !{metadata [[PTOARG1:![0-9]*]]}
 // CHECK: [[PTOARG1]] = {{.*}}metadata !"", metadata [[CONST_PADDINGATEND_PTR:![0-9]*]], { i32, i8, [3 x i8] }* @PaddedObj, {{.*}} ; [ DW_TAG_template_value_parameter ]
 // CHECK: [[CONST_PADDINGATEND_PTR]] = {{.*}} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from PaddingAtEnd]

@@ -96,7 +96,7 @@ int main(int argc, char **argv) {
 // CHECK: DW_TAG_class_type ] [B]
 // CHECK: metadata !"_vptr$B", {{.*}}, i32 64, metadata !{{.*}}} ; [ DW_TAG_member ]
 
-// CHECK: [[C:![0-9]*]] = {{.*}} metadata [[C_MEM:![0-9]*]], i32 0, metadata [[C]], null} ; [ DW_TAG_structure_type ] [C] {{.*}} [def]
+// CHECK: [[C:![0-9]*]] = {{.*}} metadata [[C_MEM:![0-9]*]], i32 0, metadata [[C]], null, null} ; [ DW_TAG_structure_type ] [C] {{.*}} [def]
 // CHECK: [[C_MEM]] = metadata !{metadata [[C_VPTR:![0-9]*]], metadata [[C_S:![0-9]*]], metadata [[C_DTOR:![0-9]*]]}
 // CHECK: [[C_VPTR]] = {{.*}} ; [ DW_TAG_member ] [_vptr$C] {{.*}} [artificial]
 // CHECK: [[C_S]] = {{.*}} ; [ DW_TAG_member ] [s] {{.*}} [static] [from int]
@@ -104,7 +104,7 @@ int main(int argc, char **argv) {
 
 // CHECK: ; [ DW_TAG_structure_type ] [A]
 // CHECK: HdrSize
-// CHECK: metadata [[D_MEM:![0-9]*]], i32 0, null} ; [ DW_TAG_structure_type ] [D] {{.*}} [decl]
+// CHECK: metadata [[D_MEM:![0-9]*]], i32 0, null, null, null} ; [ DW_TAG_structure_type ] [D] {{.*}} [decl]
 // CHECK: [[D_MEM]] = metadata !{metadata [[D_FUNC:![0-9]*]]}
 // CHECK: [[D_FUNC]] = {{.*}} ; [ DW_TAG_subprogram ] {{.*}} [func]
 
@@ -112,15 +112,15 @@ int main(int argc, char **argv) {
 
 // CHECK: [[F_I_DEF:![0-9]*]] = {{.*}}, metadata [[F_I:![0-9]*]]} ; [ DW_TAG_variable ] [i]
 // CHECK: [[F_I]] = {{.*}} ; [ DW_TAG_member ] [i]
-// CHECK: [[F:![0-9]*]] = {{.*}} metadata [[F_MEM:![0-9]*]], i32 0, null, null} ; [ DW_TAG_structure_type ] [F] {{.*}} [def]
+// CHECK: [[F:![0-9]*]] = {{.*}} metadata [[F_MEM:![0-9]*]], i32 0, null, null, null} ; [ DW_TAG_structure_type ] [F] {{.*}} [def]
 // CHECK: [[F_MEM]] = metadata !{metadata [[F_I]]}
 
-// CHECK: null, i32 0, null} ; [ DW_TAG_structure_type ] [E] {{.*}} [decl]
+// CHECK: null, i32 0, null, null, null} ; [ DW_TAG_structure_type ] [E] {{.*}} [decl]
 
-// CHECK: metadata [[G_INNER_MEM:![0-9]*]], i32 0, null, null} ; [ DW_TAG_structure_type ] [inner] [line 50, {{.*}} [def]
+// CHECK: metadata [[G_INNER_MEM:![0-9]*]], i32 0, null, null, null} ; [ DW_TAG_structure_type ] [inner] [line 50, {{.*}} [def]
 // Context chains (in Clang -flimit-debug-info and in GCC generally) contain
 // definitions without members (& without a vbase 'containing type'):
-// CHECK: null, i32 0, null, null} ; [ DW_TAG_structure_type ] [G] {{.*}} [def]
+// CHECK: null, i32 0, null, null, null} ; [ DW_TAG_structure_type ] [G] {{.*}} [def]
 // CHECK: [[G_INNER_MEM]] = metadata !{metadata [[G_INNER_I:![0-9]*]]}
 // CHECK: [[G_INNER_I]] = {{.*}} ; [ DW_TAG_member ] [j] {{.*}} [from int]
 
