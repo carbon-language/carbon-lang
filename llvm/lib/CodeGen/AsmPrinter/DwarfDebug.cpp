@@ -101,12 +101,12 @@ SplitDwarf("split-dwarf", cl::Hidden,
            cl::init(Default));
 
 static cl::opt<DefaultOnOff>
-DwarfPubNames("generate-dwarf-pubnames", cl::Hidden,
-              cl::desc("Generate DWARF pubnames section"),
-              cl::values(clEnumVal(Default, "Default for platform"),
-                         clEnumVal(Enable, "Enabled"),
-                         clEnumVal(Disable, "Disabled"), clEnumValEnd),
-              cl::init(Default));
+DwarfPubSections("generate-dwarf-pub-sections", cl::Hidden,
+                 cl::desc("Generate DWARF pubnames and pubtypes sections"),
+                 cl::values(clEnumVal(Default, "Default for platform"),
+                            clEnumVal(Enable, "Enabled"),
+                            clEnumVal(Disable, "Disabled"), clEnumValEnd),
+                 cl::init(Default));
 
 static const char *const DWARFGroupName = "DWARF Emission";
 static const char *const DbgTimerName = "DWARF Debug Writer";
@@ -217,10 +217,10 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
   else
     HasSplitDwarf = SplitDwarf == Enable;
 
-  if (DwarfPubNames == Default)
-    HasDwarfPubNames = !IsDarwin;
+  if (DwarfPubSections == Default)
+    HasDwarfPubSections = !IsDarwin;
   else
-    HasDwarfPubNames = DwarfPubNames == Enable;
+    HasDwarfPubSections = DwarfPubSections == Enable;
 
   DwarfVersion = getDwarfVersionFromModule(MMI->getModule());
 
@@ -792,7 +792,7 @@ void DwarfDebug::constructSubprogramDIE(CompileUnit *TheCU,
   TheCU->addToContextOwner(SubprogramDie, SP.getContext());
 
   // Expose as global, if requested.
-  if (HasDwarfPubNames)
+  if (HasDwarfPubSections)
     TheCU->addGlobalName(SP.getName(), SubprogramDie);
 }
 
@@ -1141,13 +1141,13 @@ void DwarfDebug::endModule() {
   }
 
   // Emit info into a debug pubnames section, if requested.
-  if (HasDwarfPubNames)
+  if (HasDwarfPubSections)
     emitDebugPubnames();
 
   // Emit info into a debug pubtypes section.
   // TODO: When we don't need the option anymore we can
   // remove all of the code that adds to the table.
-  if (useDarwinGDBCompat())
+  if (useDarwinGDBCompat() || HasDwarfPubSections)
     emitDebugPubTypes();
 
   // Finally emit string information into a string table.
@@ -1927,9 +1927,9 @@ void DwarfDebug::emitSectionLabels() {
   DwarfLineSectionSym =
     emitSectionSym(Asm, TLOF.getDwarfLineSection(), "section_line");
   emitSectionSym(Asm, TLOF.getDwarfLocSection());
-  if (HasDwarfPubNames)
+  if (HasDwarfPubSections)
     emitSectionSym(Asm, TLOF.getDwarfPubNamesSection());
-  if (useDarwinGDBCompat())
+  if (useDarwinGDBCompat() || HasDwarfPubSections)
     emitSectionSym(Asm, TLOF.getDwarfPubTypesSection());
   DwarfStrSectionSym =
     emitSectionSym(Asm, TLOF.getDwarfStrSection(), "info_string");

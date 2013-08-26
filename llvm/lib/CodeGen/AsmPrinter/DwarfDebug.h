@@ -431,12 +431,15 @@ class DwarfDebug {
   // Holder for types that are going to be extracted out into a type unit.
   std::vector<DIE *> TypeUnits;
 
+  // Whether to emit the pubnames/pubtypes sections.
+  bool HasDwarfPubSections;
+
+  // Version of dwarf we're emitting.
+  unsigned DwarfVersion;
+
   // DWARF5 Experimental Options
   bool HasDwarfAccelTables;
   bool HasSplitDwarf;
-  bool HasDwarfPubNames;
-
-  unsigned DwarfVersion;
 
   // Separated Dwarf Variables
   // In general these will all be for bits that are left in the
