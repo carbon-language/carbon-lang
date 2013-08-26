@@ -210,7 +210,7 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
   if (DwarfAccelTables == Default)
     HasDwarfAccelTables = IsDarwin;
   else
-    HasDwarfAccelTables = DwarfAccelTables = Enable;
+    HasDwarfAccelTables = DwarfAccelTables == Enable;
 
   if (SplitDwarf == Default)
     HasSplitDwarf = false;
