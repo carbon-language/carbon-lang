@@ -380,6 +380,22 @@ void InternalSort(Container *v, uptr size, Compare comp) {
   }
 }
 
+template<class Container, class Value, class Compare>
+uptr InternalBinarySearch(const Container &v, uptr first, uptr last,
+                          const Value &val, Compare comp) {
+  uptr not_found = last + 1;
+  while (last >= first) {
+    uptr mid = (first + last) / 2;
+    if (comp(v[mid], val))
+      first = mid + 1;
+    else if (comp(val, v[mid]))
+      last = mid - 1;
+    else
+      return mid;
+  }
+  return not_found;
+}
+
 }  // namespace __sanitizer
 
 #endif  // SANITIZER_COMMON_H

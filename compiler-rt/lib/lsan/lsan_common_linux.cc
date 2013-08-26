@@ -90,26 +90,34 @@ void ProcessGlobalRegions(Frontier *frontier) {
   dl_iterate_phdr(ProcessGlobalRegionsCallback, frontier);
 }
 
-static uptr GetCallerPC(u32 stack_id) {
+static uptr GetCallerPC(u32 stack_id, StackDepotReverseMap *map) {
   CHECK(stack_id);
   uptr size = 0;
-  const uptr *trace = StackDepotGet(stack_id, &size);
+  const uptr *trace = map->Get(stack_id, &size);
   // The top frame is our malloc/calloc/etc. The next frame is the caller.
   if (size >= 2)
     return trace[1];
   return 0;
 }
 
+struct ProcessPlatformAllocParam {
+  Frontier *frontier;
+  StackDepotReverseMap *stack_depot_reverse_map;
+};
+
 // ForEachChunk callback. Identifies unreachable chunks which must be treated as
 // reachable. Marks them as reachable and adds them to the frontier.
 static void ProcessPlatformSpecificAllocationsCb(uptr chunk, void *arg) {
   CHECK(arg);
+  ProcessPlatformAllocParam *param =
+      reinterpret_cast<ProcessPlatformAllocParam *>(arg);
   chunk = GetUserBegin(chunk);
   LsanMetadata m(chunk);
   if (m.allocated() && m.tag() != kReachable) {
-    if (linker->containsAddress(GetCallerPC(m.stack_trace_id()))) {
+    if (linker->containsAddress(
+            GetCallerPC(m.stack_trace_id(), param->stack_depot_reverse_map))) {
       m.set_tag(kReachable);
-      reinterpret_cast<Frontier *>(arg)->push_back(chunk);
+      param->frontier->push_back(chunk);
     }
   }
 }
@@ -119,7 +127,9 @@ static void ProcessPlatformSpecificAllocationsCb(uptr chunk, void *arg) {
 void ProcessPlatformSpecificAllocations(Frontier *frontier) {
   if (!flags()->use_tls) return;
   if (!linker) return;
-  ForEachChunk(ProcessPlatformSpecificAllocationsCb, frontier);
+  StackDepotReverseMap stack_depot_reverse_map;
+  ProcessPlatformAllocParam arg = {frontier, &stack_depot_reverse_map};
+  ForEachChunk(ProcessPlatformSpecificAllocationsCb, &arg);
 }
 
 }  // namespace __lsan

@@ -201,4 +201,38 @@ const uptr *StackDepotGet(u32 id, uptr *size) {
   return 0;
 }
 
+bool StackDepotReverseMap::IdDescPair::IdComparator(
+    const StackDepotReverseMap::IdDescPair &a,
+    const StackDepotReverseMap::IdDescPair &b) {
+  return a.id < b.id;
+}
+
+StackDepotReverseMap::StackDepotReverseMap()
+    : map_(StackDepotGetStats()->n_uniq_ids + 100) {
+  for (int idx = 0; idx < kTabSize; idx++) {
+    atomic_uintptr_t *p = &depot.tab[idx];
+    uptr v = atomic_load(p, memory_order_consume);
+    StackDesc *s = (StackDesc*)(v & ~1);
+    for (; s; s = s->link) {
+      IdDescPair pair = {s->id, s};
+      map_.push_back(pair);
+    }
+  }
+  InternalSort(&map_, map_.size(), IdDescPair::IdComparator);
+}
+
+const uptr *StackDepotReverseMap::Get(u32 id, uptr *size) {
+  if (!map_.size()) return 0;
+  IdDescPair pair = {id, 0};
+  uptr idx = InternalBinarySearch(map_, 0, map_.size(), pair,
+                                  IdDescPair::IdComparator);
+  if (idx > map_.size()) {
+    *size = 0;
+    return 0;
+  }
+  StackDesc *desc = map_[idx].desc;
+  *size = desc->size;
+  return desc->stack;
+}
+
 }  // namespace __sanitizer

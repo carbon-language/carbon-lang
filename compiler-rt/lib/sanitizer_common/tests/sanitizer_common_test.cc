@@ -158,4 +158,19 @@ TEST(SanitizerCommon, ThreadStackTlsWorker) {
   pthread_join(t, 0);
 }
 
+bool UptrLess(uptr a, uptr b) {
+  return a < b;
+}
+
+TEST(SanitizerCommon, InternalBinarySearch) {
+  const uptr sz = 5;
+  uptr arr[sz];
+  for (uptr i = 0; i < sz; i++) arr[i] = i * i;
+
+  for (uptr i = 0; i < sz; i++)
+    ASSERT_EQ(InternalBinarySearch(arr, 0, sz, i * i, UptrLess), i);
+
+  ASSERT_EQ(InternalBinarySearch(arr, 0, sz, 7, UptrLess), sz + 1);
+}
+
 }  // namespace __sanitizer
