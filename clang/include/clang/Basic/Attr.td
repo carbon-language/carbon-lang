@@ -963,7 +963,7 @@ def TypeTagForDatatype : InheritableAttr {
 
 // Microsoft-related attributes
 
-def MsProperty : Attr {
+def MsProperty : IgnoredAttr {
   let Spellings = [Declspec<"property">];
 }
 
