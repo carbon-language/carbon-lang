@@ -34,6 +34,7 @@ namespace replace {
 llvm::error_code
 collectReplacementsFromDirectory(const llvm::StringRef Directory,
                                  TUReplacements &TUs,
+                                 TUReplacementFiles & TURFiles,
                                  clang::DiagnosticsEngine &Diagnostics) {
   using namespace llvm::sys::fs;
   using namespace llvm::sys::path;
@@ -50,6 +51,8 @@ collectReplacementsFromDirectory(const llvm::StringRef Directory,
 
     if (extension(I->path()) != ".yaml")
       continue;
+
+    TURFiles.push_back(I->path());
 
     OwningPtr<MemoryBuffer> Out;
     error_code BufferError = MemoryBuffer::getFile(I->path(), Out);
@@ -216,6 +219,23 @@ bool applyReplacements(const FileToReplacementsMap &GroupedReplacements,
   }
 
   return true;
+}
+
+bool deleteReplacementFiles(const TUReplacementFiles &Files,
+                            clang::DiagnosticsEngine &Diagnostics) {
+  bool Success = true;
+  for (TUReplacementFiles::const_iterator I = Files.begin(), E = Files.end();
+       I != E; ++I) {
+    error_code Error = llvm::sys::fs::remove(*I);
+    if (Error) {
+      Success = false;
+      // FIXME: Use Diagnostics for outputting errors.
+      errs() << "Error deleting file: " << *I << "\n";
+      errs() << Error.message() << "\n";
+      errs() << "Please delete the file manually\n";
+    }
+  }
+  return Success;
 }
 
 } // end namespace replace
