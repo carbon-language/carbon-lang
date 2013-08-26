@@ -16,7 +16,7 @@ define i32 @bar() nounwind ssp {
 !0 = metadata !{i32 589841, metadata !8, i32 12, metadata !"Apple clang version 3.0 (tags/Apple/clang-209.11) (based on LLVM 3.0svn)", i1 true, metadata !"", i32 0, metadata !9, metadata !9, metadata !10, null, null, metadata !""} ; [ DW_TAG_compile_unit ]
 !1 = metadata !{i32 589870, metadata !8, metadata !2, metadata !"bar", metadata !"bar", metadata !"", i32 1, metadata !3, i1 false, i1 true, i32 0, i32 0, i32 0, i32 0, i1 false, i32 ()* @bar, null, null, null, i32 0} ; [ DW_TAG_subprogram ]
 !2 = metadata !{i32 589865, metadata !8} ; [ DW_TAG_file_type ]
-!3 = metadata !{i32 589845, metadata !8, metadata !2, metadata !"", i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !4, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
+!3 = metadata !{i32 589845, metadata !8, metadata !2, metadata !"", i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !4, i32 0, i32 0, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !4 = metadata !{metadata !5}
 !5 = metadata !{i32 589860, null, metadata !0, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
 !6 = metadata !{i32 1, i32 13, metadata !7, null}

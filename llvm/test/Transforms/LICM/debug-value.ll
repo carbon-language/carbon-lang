@@ -42,7 +42,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !4 = metadata !{metadata !5}
 !5 = metadata !{i32 589860, null, metadata !2, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
 !6 = metadata !{i32 589870, metadata !25, metadata !1, metadata !"dscal", metadata !"dscal", metadata !"", i32 206, metadata !7, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 false, null, null, null, null, i32 0} ; [ DW_TAG_subprogram ]
-!7 = metadata !{i32 589845, metadata !25, metadata !1, metadata !"", i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !8, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
+!7 = metadata !{i32 589845, metadata !25, metadata !1, metadata !"", i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !8, i32 0, i32 0, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !8 = metadata !{null}
 !9 = metadata !{i32 589870, metadata !25, metadata !1, metadata !"daxpy", metadata !"daxpy", metadata !"", i32 230, metadata !7, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 false, null, null, null, null, i32 0} ; [ DW_TAG_subprogram ]
 !10 = metadata !{i32 589870, metadata !25, metadata !1, metadata !"dgefa", metadata !"dgefa", metadata !"", i32 267, metadata !7, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 false, null, null, null, null, i32 0} ; [ DW_TAG_subprogram ]

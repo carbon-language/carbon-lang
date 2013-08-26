@@ -17,7 +17,7 @@ declare i32 @printf(i8*, ...)
 !0 = metadata !{i32 589870, metadata !8, metadata !1, metadata !"foo", metadata !"foo", metadata !"", i32 4, metadata !3, i1 false, i1 true, i32 0, i32 0, null, i32 0, i1 false, void ()* @foo, null, null, null, i32 0} ; [ DW_TAG_subprogram ]
 !1 = metadata !{i32 589865, metadata !8} ; [ DW_TAG_file_type ]
 !2 = metadata !{i32 589841, metadata !8, i32 12, metadata !"clang", i1 true, metadata !"", i32 0, metadata !4, metadata !4, metadata !9, null, null, metadata !""} ; [ DW_TAG_compile_unit ]
-!3 = metadata !{i32 589845, metadata !8, metadata !1, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !4, i32 0, null} ; [ DW_TAG_subroutine_type ]
+!3 = metadata !{i32 589845, metadata !8, metadata !1, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !4, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !4 = metadata !{null}
 !5 = metadata !{i32 5, i32 2, metadata !6, null}
 !6 = metadata !{i32 589835, metadata !8, metadata !0, i32 4, i32 12, i32 0} ; [ DW_TAG_lexical_block ]

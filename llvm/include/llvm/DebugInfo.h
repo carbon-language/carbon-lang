@@ -34,6 +34,7 @@ namespace llvm {
   class DbgValueInst;
   class Instruction;
   class MDNode;
+  class MDString;
   class NamedMDNode;
   class LLVMContext;
   class raw_ostream;
@@ -330,6 +331,7 @@ namespace llvm {
     }
     void setContainingType(DICompositeType ContainingType);
     DIArray getTemplateParams() const { return getFieldAs<DIArray>(13); }
+    MDString *getIdentifier() const;
 
     /// Verify - Verify that a composite type descriptor is well formed.
     bool Verify() const;

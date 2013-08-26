@@ -54,7 +54,7 @@ declare void @uuid_LtoB(i8*, i8*)
 !2 = metadata !{i32 524334, metadata !39, null, metadata !"gpt2gpm", metadata !"gpt2gpm", metadata !"gpt2gpm", i32 807, metadata !5, i1 true, i1 true, i32 0, i32 0, null, i1 false, i32 0, null, null, null, null, i32 0} ; [ DW_TAG_subprogram ]
 !3 = metadata !{i32 524329, metadata !39} ; [ DW_TAG_file_type ]
 !4 = metadata !{i32 524305, metadata !39, i32 1, metadata !"llvm-gcc", i1 true, metadata !"", i32 0, metadata !18, metadata !18, metadata !40, null, null, i32 0} ; [ DW_TAG_compile_unit ]
-!5 = metadata !{i32 524309, metadata !39, metadata !3, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !6, i32 0, null} ; [ DW_TAG_subroutine_type ]
+!5 = metadata !{i32 524309, metadata !39, metadata !3, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !6, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !6 = metadata !{null}
 !7 = metadata !{i32 810, i32 0, metadata !1, null}
 !8 = metadata !{i32 524545, metadata !9, metadata !"data", metadata !10, i32 201, metadata !11} ; [ DW_TAG_arg_variable ]
@@ -74,11 +74,11 @@ declare void @uuid_LtoB(i8*, i8*)
 !22 = metadata !{i32 524324, metadata !39, metadata !3, metadata !"long unsigned int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 7} ; [ DW_TAG_base_type ]
 !23 = metadata !{i32 524544, metadata !24, metadata !"u", metadata !10, i32 100, metadata !25} ; [ DW_TAG_auto_variable ]
 !24 = metadata !{i32 524299, metadata !38, metadata !16, i32 95, i32 0, i32 0} ; [ DW_TAG_lexical_block ]
-!25 = metadata !{i32 524311, metadata !38, metadata !16, metadata !"", i32 97, i64 64, i64 64, i64 0, i32 0, null, metadata !26, i32 0, null} ; [ DW_TAG_union_type ]
+!25 = metadata !{i32 524311, metadata !38, metadata !16, metadata !"", i32 97, i64 64, i64 64, i64 0, i32 0, null, metadata !26, i32 0, null, null, null} ; [ DW_TAG_union_type ] [line 97, size 64, align 64, offset 0] [def] [from ]
 !26 = metadata !{metadata !27, metadata !28}
 !27 = metadata !{i32 524301, metadata !38, metadata !25, metadata !"u64", i32 98, i64 64, i64 64, i64 0, i32 0, metadata !11} ; [ DW_TAG_member ]
 !28 = metadata !{i32 524301, metadata !38, metadata !25, metadata !"u32", i32 99, i64 64, i64 32, i64 0, i32 0, metadata !29} ; [ DW_TAG_member ]
-!29 = metadata !{i32 524289, metadata !39, metadata !3, metadata !"", i32 0, i64 64, i64 32, i64 0, i32 0, metadata !30, metadata !32, i32 0, null} ; [ DW_TAG_array_type ]
+!29 = metadata !{i32 524289, metadata !39, metadata !3, metadata !"", i32 0, i64 64, i64 32, i64 0, i32 0, metadata !30, metadata !32, i32 0, null, null, null} ; [ DW_TAG_array_type ] [line 0, size 64, align 32, offset 0] [from uint32_t]
 !30 = metadata !{i32 524310, metadata !36, metadata !3, metadata !"uint32_t", i32 55, i64 0, i64 0, i64 0, i32 0, metadata !31} ; [ DW_TAG_typedef ]
 !31 = metadata !{i32 524324, metadata !39, metadata !3, metadata !"unsigned int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 7} ; [ DW_TAG_base_type ]
 !32 = metadata !{metadata !33}

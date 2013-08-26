@@ -34,13 +34,13 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 !1 = metadata !{i32 786478, metadata !18, metadata !2, metadata !"foo", metadata !"foo", metadata !"foo", i32 7, metadata !4, i1 false, i1 true, i32 0, i32 0, null, i32 0, i1 false, i32 (%struct.X*, %struct.Y*)* @foo, null, null, null, i32 7} ; [ DW_TAG_subprogram ]
 !2 = metadata !{i32 786473, metadata !18} ; [ DW_TAG_file_type ]
 !3 = metadata !{i32 786449, metadata !18, i32 1, metadata !"4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", i1 false, metadata !"", i32 0, metadata !19, metadata !19, metadata !17, null,  null, metadata !""} ; [ DW_TAG_compile_unit ]
-!4 = metadata !{i32 786453, metadata !18, metadata !2, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !5, i32 0, null} ; [ DW_TAG_subroutine_type ]
+!4 = metadata !{i32 786453, metadata !18, metadata !2, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !5, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !5 = metadata !{metadata !6, metadata !7, metadata !9}
 !6 = metadata !{i32 786468, metadata !18, metadata !2, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
 !7 = metadata !{i32 786447, metadata !18, metadata !2, metadata !"", i32 0, i64 64, i64 64, i64 0, i32 0, metadata !8} ; [ DW_TAG_pointer_type ]
-!8 = metadata !{i32 786451, metadata !18, metadata !2, metadata !"X", i32 3, i64 0, i64 0, i64 0, i32 4, null, null, i32 0, null} ; [ DW_TAG_structure_type ]
+!8 = metadata !{i32 786451, metadata !18, metadata !2, metadata !"X", i32 3, i64 0, i64 0, i64 0, i32 4, null, null, i32 0, null, null, null} ; [ DW_TAG_structure_type ] [X] [line 3, size 0, align 0, offset 0] [decl] [from ]
 !9 = metadata !{i32 786447, metadata !18, metadata !2, metadata !"", i32 0, i64 64, i64 64, i64 0, i32 0, metadata !10} ; [ DW_TAG_pointer_type ]
-!10 = metadata !{i32 786451, metadata !18, metadata !2, metadata !"Y", i32 4, i64 32, i64 32, i64 0, i32 0, null, metadata !11, i32 0, null} ; [ DW_TAG_structure_type ]
+!10 = metadata !{i32 786451, metadata !18, metadata !2, metadata !"Y", i32 4, i64 32, i64 32, i64 0, i32 0, null, metadata !11, i32 0, null, null, null} ; [ DW_TAG_structure_type ] [Y] [line 4, size 32, align 32, offset 0] [def] [from ]
 !11 = metadata !{metadata !12}
 !12 = metadata !{i32 786445, metadata !18, metadata !10, metadata !"x", i32 5, i64 32, i64 32, i64 0, i32 0, metadata !6} ; [ DW_TAG_member ]
 !13 = metadata !{i32 7, i32 0, metadata !1, null}

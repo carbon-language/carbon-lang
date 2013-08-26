@@ -33,7 +33,7 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 !3 = metadata !{metadata !5}
 !5 = metadata !{i32 786478, metadata !19, metadata !6, metadata !"callee", metadata !"callee", metadata !"", i32 4, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 0, i1 false, i32 (i32)* @callee, null, null, metadata !10, i32 7} ; [ DW_TAG_subprogram ]
 !6 = metadata !{i32 786473, metadata !19} ; [ DW_TAG_file_type ]
-!7 = metadata !{i32 786453, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !8, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
+!7 = metadata !{i32 786453, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !8, i32 0, i32 0, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !8 = metadata !{metadata !9, metadata !9}
 !9 = metadata !{i32 786468, null, null, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
 !10 = metadata !{metadata !11}

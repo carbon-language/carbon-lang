@@ -18,7 +18,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !2 = metadata !{i32 524329, metadata !12} ; [ DW_TAG_file_type ]
 !12 = metadata !{metadata !"libgcc2.c", metadata !"/Users/bwilson/local/nightly/test-2010-04-14/build/llvmgcc.roots/llvmgcc~obj/src/gcc"}
 !3 = metadata !{i32 524305, metadata !12, i32 1, metadata !"4.2.1 (Based on Apple Inc. build 5658) (LLVM build 00)", i1 true, metadata !"", i32 0, metadata !13, metadata !13, metadata !14, null, null, metadata !""} ; [ DW_TAG_compile_unit ]
-!4 = metadata !{i32 524309, metadata !12, metadata !2, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !5, i32 0, null} ; [ DW_TAG_subroutine_type ]
+!4 = metadata !{i32 524309, metadata !12, metadata !2, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !5, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !5 = metadata !{metadata !6, metadata !6, metadata !6}
 !6 = metadata !{i32 524310, metadata !12, null, metadata !"SItype", i32 152, i64 0, i64 0, i64 0, i32 0, metadata !8} ; [ DW_TAG_typedef ]
 !7 = metadata !{i32 524329, metadata !"libgcc2.h", metadata !"/Users/bwilson/local/nightly/test-2010-04-14/build/llvmgcc.roots/llvmgcc~obj/src/gcc", metadata !3} ; [ DW_TAG_file_type ]

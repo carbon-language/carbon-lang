@@ -15,7 +15,7 @@
 !3 = metadata !{metadata !5}
 !5 = metadata !{i32 720948, i32 0, null, metadata !"crass", metadata !"crass", metadata !"", metadata !6, i32 1, metadata !7, i32 0, i32 1, %struct.crass* @crass, null} ; [ DW_TAG_variable ]
 !6 = metadata !{i32 720937, metadata !13} ; [ DW_TAG_file_type ]
-!7 = metadata !{i32 786451, metadata !13, null, metadata !"crass", i32 1, i64 64, i64 64, i32 0, i32 0, null, metadata !8, i32 0, i32 0} ; [ DW_TAG_structure_type ]
+!7 = metadata !{i32 786451, metadata !13, null, metadata !"crass", i32 1, i64 64, i64 64, i32 0, i32 0, null, metadata !8, i32 0, i32 0, null, null} ; [ DW_TAG_structure_type ] [crass] [line 1, size 64, align 64, offset 0] [def] [from ]
 !8 = metadata !{metadata !9}
 !9 = metadata !{i32 786445, metadata !13, metadata !7, metadata !"ptr", i32 1, i64 64, i64 64, i64 0, i32 0, metadata !10} ; [ DW_TAG_member ]
 !10 = metadata !{i32 720934, null, null, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, metadata !11} ; [ DW_TAG_const_type ]

@@ -74,11 +74,11 @@ declare i32 @puts(i8* nocapture) nounwind
 !0 = metadata !{i32 786478, metadata !31, metadata !1, metadata !"gcd", metadata !"gcd", metadata !"", i32 5, metadata !3, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, i64 (i64, i64)* @gcd, null, null, metadata !29, i32 0} ; [ DW_TAG_subprogram ]
 !1 = metadata !{i32 786473, metadata !31} ; [ DW_TAG_file_type ]
 !2 = metadata !{i32 786449, metadata !31, i32 12, metadata !"clang version 2.9 (trunk 124117)", i1 true, metadata !"", i32 0, metadata !32, metadata !32, metadata !28, null,  null, null} ; [ DW_TAG_compile_unit ]
-!3 = metadata !{i32 786453, metadata !31, metadata !1, metadata !"", i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !4, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
+!3 = metadata !{i32 786453, metadata !31, metadata !1, metadata !"", i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !4, i32 0, i32 0, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !4 = metadata !{metadata !5}
 !5 = metadata !{i32 786468, null, metadata !2, metadata !"long int", i32 0, i64 64, i64 64, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
 !6 = metadata !{i32 786478, metadata !31, metadata !1, metadata !"main", metadata !"main", metadata !"", i32 25, metadata !7, i1 false, i1 true, i32 0, i32 0, i32 0, i32 0, i1 true, i32 ()* @main, null, null, metadata !30, i32 0} ; [ DW_TAG_subprogram ]
-!7 = metadata !{i32 786453, metadata !31, metadata !1, metadata !"", i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !8, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
+!7 = metadata !{i32 786453, metadata !31, metadata !1, metadata !"", i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !8, i32 0, i32 0, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !8 = metadata !{metadata !9}
 !9 = metadata !{i32 786468, null, metadata !2, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
 !10 = metadata !{i32 786689, metadata !0, metadata !"a", metadata !1, i32 5, metadata !5, i32 0, null} ; [ DW_TAG_arg_variable ]

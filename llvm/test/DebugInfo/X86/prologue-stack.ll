@@ -25,7 +25,7 @@ declare i32 @callme(i32)
 !3 = metadata !{metadata !5}
 !5 = metadata !{i32 786478, metadata !13, metadata !6, metadata !"isel_line_test2", metadata !"isel_line_test2", metadata !"", i32 3, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 0, i1 false, i32 ()* @isel_line_test2, null, null, metadata !1, i32 4} ; [ DW_TAG_subprogram ] [line 3] [def] [scope 4] [isel_line_test2]
 !6 = metadata !{i32 786473, metadata !13} ; [ DW_TAG_file_type ]
-!7 = metadata !{i32 786453, i32 0, null, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !8, i32 0, i32 0} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!7 = metadata !{i32 786453, i32 0, null, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !8, i32 0, i32 0, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !8 = metadata !{metadata !9}
 !9 = metadata !{i32 786468, null, null, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
 !10 = metadata !{i32 5, i32 3, metadata !11, null}

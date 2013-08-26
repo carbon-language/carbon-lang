@@ -79,11 +79,11 @@ entry:
 !3 = metadata !{metadata !4, metadata !9}
 !4 = metadata !{i32 786478, metadata !1, metadata !5, metadata !"vla", metadata !"vla", metadata !"", i32 1, metadata !6, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, i32 (i32)* @vla, null, null, metadata !2, i32 1} ; [ DW_TAG_subprogram ] [line 1] [def] [vla]
 !5 = metadata !{i32 786473, metadata !1}          ; [ DW_TAG_file_type ] [/vla.c]
-!6 = metadata !{i32 786453, i32 0, i32 0, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !7, i32 0, i32 0} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!6 = metadata !{i32 786453, i32 0, i32 0, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !7, i32 0, i32 0, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !7 = metadata !{metadata !8, metadata !8}
 !8 = metadata !{i32 786468, null, null, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
 !9 = metadata !{i32 786478, metadata !1, metadata !5, metadata !"main", metadata !"main", metadata !"", i32 7, metadata !10, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, i32 (i32, i8**)* @main, null, null, metadata !2, i32 7} ; [ DW_TAG_subprogram ] [line 7] [def] [main]
-!10 = metadata !{i32 786453, i32 0, i32 0, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !11, i32 0, i32 0} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!10 = metadata !{i32 786453, i32 0, i32 0, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !11, i32 0, i32 0, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !11 = metadata !{metadata !8, metadata !8, metadata !12}
 !12 = metadata !{i32 786447, null, null, metadata !"", i32 0, i64 64, i64 64, i64 0, i32 0, metadata !13} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from ]
 !13 = metadata !{i32 786447, null, null, metadata !"", i32 0, i64 64, i64 64, i64 0, i32 0, metadata !14} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from char]
@@ -92,7 +92,7 @@ entry:
 !16 = metadata !{i32 1, i32 0, metadata !4, null}
 !17 = metadata !{i32 2, i32 0, metadata !4, null}
 !18 = metadata !{i32 786688, metadata !4, metadata !"a", metadata !5, i32 2, metadata !19, i32 0, i32 0} ; [ DW_TAG_auto_variable ] [a] [line 2]
-!19 = metadata !{i32 786433, null, null, metadata !"", i32 0, i64 0, i64 32, i32 0, i32 0, metadata !8, metadata !20, i32 0, i32 0} ; [ DW_TAG_array_type ] [line 0, size 0, align 32, offset 0] [from int]
+!19 = metadata !{i32 786433, null, null, metadata !"", i32 0, i64 0, i64 32, i32 0, i32 0, metadata !8, metadata !20, i32 0, i32 0, null, null} ; [ DW_TAG_array_type ] [line 0, size 0, align 32, offset 0] [from int]
 !20 = metadata !{metadata !21}
 !21 = metadata !{i32 786465, i64 0, i64 -1}       ; [ DW_TAG_subrange_type ] [unbounded]
 !22 = metadata !{i32 3, i32 0, metadata !4, null}

@@ -14,7 +14,7 @@ entry:
 !0 = metadata !{i32 589870, metadata !6, metadata !1, metadata !"f", metadata !"f", metadata !"", i32 1, metadata !3, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, i32 ()* @f, null, null, null, i32 0} ; [ DW_TAG_subprogram ]
 !1 = metadata !{i32 589865, metadata !6} ; [ DW_TAG_file_type ]
 !2 = metadata !{i32 589841, metadata !6, i32 12, metadata !"clang version 3.0 ()", i1 true, metadata !"", i32 0, metadata !7, metadata !7, metadata !8, null, null, metadata !""} ; [ DW_TAG_compile_unit ]
-!3 = metadata !{i32 589845, metadata !6, metadata !1, metadata !"", i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !4, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
+!3 = metadata !{i32 589845, metadata !6, metadata !1, metadata !"", i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !4, i32 0, i32 0, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !4 = metadata !{metadata !5}
 !5 = metadata !{i32 589860, null, metadata !2, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
 !6 = metadata !{metadata !"/home/espindola/llvm/test.c", metadata !"/home/espindola/tmpfs/build"}

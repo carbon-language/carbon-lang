@@ -617,7 +617,8 @@ DICompositeType DIBuilder::createClassType(DIDescriptor Context, StringRef Name,
     Elements,
     ConstantInt::get(Type::getInt32Ty(VMContext), 0),
     VTableHolder,
-    TemplateParams
+    TemplateParams,
+    NULL  // Type Identifer
   };
   DICompositeType R(MDNode::get(VMContext, Elts));
   assert(R.isCompositeType() &&
@@ -651,6 +652,7 @@ DICompositeType DIBuilder::createStructType(DIDescriptor Context,
     ConstantInt::get(Type::getInt32Ty(VMContext), RunTimeLang),
     VTableHolder,
     NULL,
+    NULL  // Type Identifer
   };
   DICompositeType R(MDNode::get(VMContext, Elts));
   assert(R.isCompositeType() &&
@@ -679,8 +681,9 @@ DICompositeType DIBuilder::createUnionType(DIDescriptor Scope, StringRef Name,
     NULL,
     Elements,
     ConstantInt::get(Type::getInt32Ty(VMContext), RunTimeLang),
-    Constant::getNullValue(Type::getInt32Ty(VMContext)),
-    NULL
+    NULL,
+    NULL,
+    NULL  // Type Identifer
   };
   return DICompositeType(MDNode::get(VMContext, Elts));
 }
@@ -702,7 +705,9 @@ DIBuilder::createSubroutineType(DIFile File, DIArray ParameterTypes) {
     NULL,
     ParameterTypes,
     ConstantInt::get(Type::getInt32Ty(VMContext), 0),
-    Constant::getNullValue(Type::getInt32Ty(VMContext))
+    NULL,
+    NULL,
+    NULL  // Type Identifer
   };
   return DICompositeType(MDNode::get(VMContext, Elts));
 }
@@ -727,7 +732,9 @@ DICompositeType DIBuilder::createEnumerationType(
     UnderlyingType,
     Elements,
     ConstantInt::get(Type::getInt32Ty(VMContext), 0),
-    Constant::getNullValue(Type::getInt32Ty(VMContext))
+    NULL,
+    NULL,
+    NULL  // Type Identifer
   };
   MDNode *Node = MDNode::get(VMContext, Elts);
   AllEnumTypes.push_back(Node);
@@ -751,7 +758,9 @@ DICompositeType DIBuilder::createArrayType(uint64_t Size, uint64_t AlignInBits,
     Ty,
     Subscripts,
     ConstantInt::get(Type::getInt32Ty(VMContext), 0),
-    Constant::getNullValue(Type::getInt32Ty(VMContext))
+    NULL,
+    NULL,
+    NULL  // Type Identifer
   };
   return DICompositeType(MDNode::get(VMContext, Elts));
 }
@@ -773,7 +782,9 @@ DICompositeType DIBuilder::createVectorType(uint64_t Size, uint64_t AlignInBits,
     Ty,
     Subscripts,
     ConstantInt::get(Type::getInt32Ty(VMContext), 0),
-    Constant::getNullValue(Type::getInt32Ty(VMContext))
+    NULL,
+    NULL,
+    NULL  // Type Identifer
   };
   return DICompositeType(MDNode::get(VMContext, Elts));
 }
@@ -864,7 +875,9 @@ DICompositeType DIBuilder::createForwardDecl(unsigned Tag, StringRef Name,
     NULL,
     DIArray(),
     ConstantInt::get(Type::getInt32Ty(VMContext), RuntimeLang),
-    NULL
+    NULL,
+    NULL, //TemplateParams
+    NULL  // Type Identifer
   };
   MDNode *Node = MDNode::getTemporary(VMContext, Elts);
   DICompositeType RetTy(Node);

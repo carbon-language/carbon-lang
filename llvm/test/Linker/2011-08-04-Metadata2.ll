@@ -21,7 +21,7 @@ entry:
 !0 = metadata !{i32 589841, metadata !9, i32 12, metadata !"clang version 3.0 ()", i1 true, metadata !"", i32 0, metadata !4, metadata !4, metadata !10, null, null, metadata !""}
 !1 = metadata !{i32 589870, metadata !9, metadata !2, metadata !"bar", metadata !"bar", metadata !"", i32 2, metadata !3, i1 false, i1 true, i32 0, i32 0, i32 0, i32 0, i1 false, void ()* @bar, null, null, null, i32 0}
 !2 = metadata !{i32 589865, metadata !9}
-!3 = metadata !{i32 589845, metadata !9, metadata !2, metadata !"", i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !4, i32 0, i32 0}
+!3 = metadata !{i32 589845, metadata !9, metadata !2, metadata !"", i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !4, i32 0, i32 0, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !4 = metadata !{null}
 !5 = metadata !{i32 589876, i32 0, metadata !0, metadata !"x", metadata !"x", metadata !"", metadata !2, i32 1, metadata !6, i32 1, i32 1, i32* @x}
 !6 = metadata !{i32 589860, null, metadata !0, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5}
