@@ -279,51 +279,51 @@ def ptr_rc_nosp : PointerLikeRegClass<1>;
 // *mem - Operand definitions for the funky X86 addressing mode operands.
 //
 def X86MemAsmOperand : AsmOperandClass {
- let Name = "Mem"; let PredicateMethod = "isMem";
+ let Name = "Mem";
 }
 def X86Mem8AsmOperand : AsmOperandClass {
-  let Name = "Mem8"; let PredicateMethod = "isMem8";
+  let Name = "Mem8"; let RenderMethod = "addMemOperands";
 }
 def X86Mem16AsmOperand : AsmOperandClass {
-  let Name = "Mem16"; let PredicateMethod = "isMem16";
+  let Name = "Mem16"; let RenderMethod = "addMemOperands";
 }
 def X86Mem32AsmOperand : AsmOperandClass {
-  let Name = "Mem32"; let PredicateMethod = "isMem32";
+  let Name = "Mem32"; let RenderMethod = "addMemOperands";
 }
 def X86Mem64AsmOperand : AsmOperandClass {
-  let Name = "Mem64"; let PredicateMethod = "isMem64";
+  let Name = "Mem64"; let RenderMethod = "addMemOperands";
 }
 def X86Mem80AsmOperand : AsmOperandClass {
-  let Name = "Mem80"; let PredicateMethod = "isMem80";
+  let Name = "Mem80"; let RenderMethod = "addMemOperands";
 }
 def X86Mem128AsmOperand : AsmOperandClass {
-  let Name = "Mem128"; let PredicateMethod = "isMem128";
+  let Name = "Mem128"; let RenderMethod = "addMemOperands";
 }
 def X86Mem256AsmOperand : AsmOperandClass {
-  let Name = "Mem256"; let PredicateMethod = "isMem256";
+  let Name = "Mem256"; let RenderMethod = "addMemOperands";
 }
 def X86Mem512AsmOperand : AsmOperandClass {
-  let Name = "Mem512"; let PredicateMethod = "isMem512";
+  let Name = "Mem512"; let RenderMethod = "addMemOperands";
 }
 
 // Gather mem operands
 def X86MemVX32Operand : AsmOperandClass {
-  let Name = "MemVX32"; let PredicateMethod = "isMemVX32";
+  let Name = "MemVX32"; let RenderMethod = "addMemOperands";
 }
 def X86MemVY32Operand : AsmOperandClass {
-  let Name = "MemVY32"; let PredicateMethod = "isMemVY32";
+  let Name = "MemVY32"; let RenderMethod = "addMemOperands";
 }
 def X86MemVZ32Operand : AsmOperandClass {
-  let Name = "MemVZ32"; let PredicateMethod = "isMemVZ32";
+  let Name = "MemVZ32"; let RenderMethod = "addMemOperands";
 }
 def X86MemVX64Operand : AsmOperandClass {
-  let Name = "MemVX64"; let PredicateMethod = "isMemVX64";
+  let Name = "MemVX64"; let RenderMethod = "addMemOperands";
 }
 def X86MemVY64Operand : AsmOperandClass {
-  let Name = "MemVY64"; let PredicateMethod = "isMemVY64";
+  let Name = "MemVY64"; let RenderMethod = "addMemOperands";
 }
 def X86MemVZ64Operand : AsmOperandClass {
-  let Name = "MemVZ64"; let PredicateMethod = "isMemVZ64";
+  let Name = "MemVZ64"; let RenderMethod = "addMemOperands";
 }
 
 def X86AbsMemAsmOperand : AsmOperandClass {
@@ -446,18 +446,22 @@ def brtarget8 : Operand<OtherVT>;
 
 def X86MemOffs8AsmOperand : AsmOperandClass {
   let Name = "MemOffs8";
+  let RenderMethod = "addMemOffsOperands";
   let SuperClasses = [X86Mem8AsmOperand];
 }
 def X86MemOffs16AsmOperand : AsmOperandClass {
   let Name = "MemOffs16";
+  let RenderMethod = "addMemOffsOperands";
   let SuperClasses = [X86Mem16AsmOperand];
 }
 def X86MemOffs32AsmOperand : AsmOperandClass {
   let Name = "MemOffs32";
+  let RenderMethod = "addMemOffsOperands";
   let SuperClasses = [X86Mem32AsmOperand];
 }
 def X86MemOffs64AsmOperand : AsmOperandClass {
   let Name = "MemOffs64";
+  let RenderMethod = "addMemOffsOperands";
   let SuperClasses = [X86Mem64AsmOperand];
 }
 
