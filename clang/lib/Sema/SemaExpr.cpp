@@ -2765,6 +2765,8 @@ ExprResult Sema::ActOnPredefinedExpr(SourceLocation Loc, tok::TokenKind Kind) {
     currentDecl = BSI->TheDecl;
   else if (const LambdaScopeInfo *LSI = getCurLambda())
     currentDecl = LSI->CallOperator;
+  else if (const CapturedRegionScopeInfo *CSI = getCurCapturedRegion())
+    currentDecl = CSI->TheCapturedDecl;
   else
     currentDecl = getCurFunctionOrMethodDecl();
 

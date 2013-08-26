@@ -37,4 +37,29 @@ int main() {
     static_assert(sizeof(__PRETTY_FUNCTION__) == 1, "__main_block_invoke");
   }
   ();
+
+  #pragma clang __debug captured
+  {
+    static_assert(sizeof(__func__) == 5, "main");
+    static_assert(sizeof(__FUNCTION__) == 5, "main");
+    static_assert(sizeof(__PRETTY_FUNCTION__) == 11, "int main()");
+
+    #pragma clang __debug captured
+    {
+      static_assert(sizeof(__func__) == 5, "main");
+      static_assert(sizeof(__FUNCTION__) == 5, "main");
+      static_assert(sizeof(__PRETTY_FUNCTION__) == 11, "int main()");
+    }
+  }
+
+  []() {
+    #pragma clang __debug captured
+    {
+      static_assert(sizeof(__func__) == 11, "operator()");
+      static_assert(sizeof(__FUNCTION__) == 11, "operator()");
+      static_assert(sizeof(__PRETTY_FUNCTION__) == 51,
+                    "auto main()::<anonymous class>::operator()() const");
+    }
+  }
+  ();
 }

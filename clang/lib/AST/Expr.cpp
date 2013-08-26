@@ -604,6 +604,16 @@ std::string PredefinedExpr::ComputeName(IdentType IT, const Decl *CurrentDecl) {
     Out.flush();
     return Name.str().str();
   }
+  if (const CapturedDecl *CD = dyn_cast<CapturedDecl>(CurrentDecl)) {
+    for (const DeclContext *DC = CD->getParent(); DC; DC = DC->getParent())
+      // Skip to its enclosing function or method, but not its enclosing
+      // CapturedDecl.
+      if (DC->isFunctionOrMethod() && (DC->getDeclKind() != Decl::Captured)) {
+        const Decl *D = Decl::castFromDeclContext(DC);
+        return ComputeName(IT, D);
+      }
+    llvm_unreachable("CapturedDecl not inside a function or method");
+  }
   if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(CurrentDecl)) {
     SmallString<256> Name;
     llvm::raw_svector_ostream Out(Name);
