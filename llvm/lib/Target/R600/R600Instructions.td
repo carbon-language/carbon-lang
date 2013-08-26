@@ -1682,6 +1682,18 @@ def LDS_SHORT_WRITE : R600_LDS_1A1D<0x13, "LDS_SHORT_WRITE",
 def LDS_READ_RET : R600_LDS_1A <0x32, "LDS_READ_RET",
   [(set (i32 R600_Reg32:$dst), (local_load R600_Reg32:$src0))]
 >;
+def LDS_BYTE_READ_RET : R600_LDS_1A <0x36, "LDS_BYTE_READ_RET",
+  [(set i32:$dst, (sextloadi8_local i32:$src0))]
+>;
+def LDS_UBYTE_READ_RET : R600_LDS_1A <0x37, "LDS_UBYTE_READ_RET",
+  [(set i32:$dst, (az_extloadi8_local i32:$src0))]
+>;
+def LDS_SHORT_READ_RET : R600_LDS_1A <0x38, "LDS_SHORT_READ_RET",
+  [(set i32:$dst, (sextloadi16_local i32:$src0))]
+>;
+def LDS_USHORT_READ_RET : R600_LDS_1A <0x39, "LDS_USHORT_READ_RET",
+  [(set i32:$dst, (az_extloadi16_local i32:$src0))]
+>;
 
   // TRUNC is used for the FLT_TO_INT instructions to work around a
   // perceived problem where the rounding modes are applied differently

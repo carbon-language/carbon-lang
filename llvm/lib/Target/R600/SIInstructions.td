@@ -395,6 +395,10 @@ def DS_WRITE_B32 : DS_Store_Helper <0x0000000d, "DS_WRITE_B32", VReg_32>;
 def DS_WRITE_B8 : DS_Store_Helper <0x00000001e, "DS_WRITE_B8", VReg_32>;
 def DS_WRITE_B16 : DS_Store_Helper <0x00000001f, "DS_WRITE_B16", VReg_32>;
 def DS_READ_B32 : DS_Load_Helper <0x00000036, "DS_READ_B32", VReg_32>;
+def DS_READ_I8 : DS_Load_Helper <0x00000039, "DS_READ_I8", VReg_32>;
+def DS_READ_U8 : DS_Load_Helper <0x0000003a, "DS_READ_U8", VReg_32>;
+def DS_READ_I16 : DS_Load_Helper <0x0000003b, "DS_READ_I16", VReg_32>;
+def DS_READ_U16 : DS_Load_Helper <0x0000003c, "DS_READ_U16", VReg_32>;
 
 //def BUFFER_LOAD_FORMAT_X : MUBUF_ <0x00000000, "BUFFER_LOAD_FORMAT_X", []>;
 //def BUFFER_LOAD_FORMAT_XY : MUBUF_ <0x00000001, "BUFFER_LOAD_FORMAT_XY", []>;
@@ -1747,6 +1751,16 @@ def : Pat <
 /**********   Load/Store Patterns   **********/
 /********** ======================= **********/
 
+class DSReadPat <DS inst, ValueType vt, PatFrag frag> : Pat <
+  (frag i32:$src0),
+  (vt (inst 0, $src0, $src0, $src0, 0, 0))
+>;
+
+def : DSReadPat <DS_READ_I8,  i32, sextloadi8_local>;
+def : DSReadPat <DS_READ_U8,  i32, az_extloadi8_local>;
+def : DSReadPat <DS_READ_I16, i32, sextloadi16_local>;
+def : DSReadPat <DS_READ_U16, i32, az_extloadi16_local>;
+def : DSReadPat <DS_READ_B32, i32, local_load>;
 def : Pat <
     (local_load i32:$src0),
     (i32 (DS_READ_B32 0, $src0, $src0, $src0, 0, 0))

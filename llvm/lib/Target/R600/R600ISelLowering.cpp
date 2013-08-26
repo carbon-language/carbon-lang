@@ -104,7 +104,21 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
     static_cast<const R600InstrInfo*>(MF->getTarget().getInstrInfo());
 
   switch (MI->getOpcode()) {
-  default: return AMDGPUTargetLowering::EmitInstrWithCustomInserter(MI, BB);
+  default:
+    if (TII->get(MI->getOpcode()).TSFlags & R600_InstFlag::LDS_1A) {
+      MachineInstrBuilder NewMI = BuildMI(*BB, I, BB->findDebugLoc(I),
+                                          TII->get(MI->getOpcode()),
+                                          AMDGPU::OQAP);
+      for (unsigned i = 1, e = MI->getNumOperands(); i < e; ++i) {
+        NewMI.addOperand(MI->getOperand(i));
+      }
+      TII->buildDefaultInstruction(*BB, I, AMDGPU::MOV,
+                                   MI->getOperand(0).getReg(),
+                                   AMDGPU::OQAP);
+    } else {
+      return AMDGPUTargetLowering::EmitInstrWithCustomInserter(MI, BB);
+    }
+    break;
   case AMDGPU::CLAMP_R600: {
     MachineInstr *NewMI = TII->buildDefaultInstruction(*BB, I,
                                                    AMDGPU::MOV,
@@ -137,19 +151,6 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
     assert(TargetRegisterInfo::isVirtualRegister(maskedRegister));
     MachineInstr * defInstr = MRI.getVRegDef(maskedRegister);
     TII->addFlag(defInstr, 0, MO_FLAG_MASK);
-    break;
-  }
-
-  case AMDGPU::LDS_READ_RET: {
-    MachineInstrBuilder NewMI = BuildMI(*BB, I, BB->findDebugLoc(I),
-                                        TII->get(MI->getOpcode()),
-                                        AMDGPU::OQAP);
-    for (unsigned i = 1, e = MI->getNumOperands(); i < e; ++i) {
-      NewMI.addOperand(MI->getOperand(i));
-    }
-    TII->buildDefaultInstruction(*BB, I, AMDGPU::MOV,
-                                 MI->getOperand(0).getReg(),
-                                 AMDGPU::OQAP);
     break;
   }
 
