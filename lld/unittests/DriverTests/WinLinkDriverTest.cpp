@@ -244,4 +244,14 @@ TEST_F(WinLinkParserTest, DashDash) {
   EXPECT_EQ("-c.obj", inputFile(2));
 }
 
+TEST_F(WinLinkParserTest, DefEntryNameConsole) {
+  EXPECT_FALSE(parse("link.exe", "/subsystem:console", "a.obj", nullptr));
+  EXPECT_EQ("_mainCRTStartup", _context.entrySymbolName());
+}
+
+TEST_F(WinLinkParserTest, DefEntryNameWindows) {
+  EXPECT_FALSE(parse("link.exe", "/subsystem:windows", "a.obj", nullptr));
+  EXPECT_EQ("_WinMainCRTStartup", _context.entrySymbolName());
+}
+
 } // end anonymous namespace

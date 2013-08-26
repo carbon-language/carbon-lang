@@ -248,6 +248,10 @@ public:
 
   virtual void setSizeOfImage(uint32_t size) { _peHeader.SizeOfImage = size; }
 
+  virtual void setAddressOfEntryPoint(uint32_t address) {
+    _peHeader.AddressOfEntryPoint = address;
+  }
+
 private:
   llvm::object::coff_file_header _coffHeader;
   llvm::object::pe32_header _peHeader;
@@ -354,6 +358,13 @@ public:
   virtual void setVirtualAddress(uint32_t rva) {
     for (AtomLayout *layout : _atomLayouts)
       layout->_virtualAddr += rva;
+  }
+
+  uint64_t getAtomVirtualAddress(StringRef name) {
+    for (auto atomLayout : _atomLayouts)
+      if (atomLayout->_atom->name() == name)
+        return atomLayout->_virtualAddr;
+    return 0;
   }
 
   static bool classof(const Chunk *c) {
@@ -794,6 +805,8 @@ public:
     peHeader->setSizeOfUninitializedData(bss->size());
     peHeader->setNumberOfSections(_numSections);
     peHeader->setSizeOfImage(_imageSizeInMemory);
+
+    setAddressOfEntryPoint(text, peHeader);
   }
 
   virtual error_code writeFile(const File &linkedFile, StringRef path) {
@@ -850,6 +863,22 @@ private:
                                                   chunk->align());
       chunk->setFileOffset(_imageSizeOnDisk);
       _imageSizeOnDisk += chunk->size();
+    }
+  }
+
+  void setAddressOfEntryPoint(TextSectionChunk *text, PEHeaderChunk *peHeader) {
+    // Find the virtual address of the entry point symbol if any.
+    // PECOFF spec says that entry point for dll images is optional, in which
+    // case it must be set to 0.
+    if (_PECOFFLinkingContext.entrySymbolName().empty() &&
+        _PECOFFLinkingContext.getImageType()
+                              == PECOFFLinkingContext::IMAGE_DLL) {
+      peHeader->setAddressOfEntryPoint(0);
+    } else {
+      uint64_t entryPointAddress = text->getAtomVirtualAddress(
+        _PECOFFLinkingContext.entrySymbolName());
+      if (entryPointAddress != 0)
+        peHeader->setAddressOfEntryPoint(entryPointAddress);
     }
   }
 

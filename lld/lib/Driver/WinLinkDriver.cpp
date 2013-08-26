@@ -162,6 +162,21 @@ void processLibEnv(PECOFFLinkingContext &context) {
       context.appendInputSearchPath(context.allocateString(path));
 }
 
+// Sets a default entry point symbol name depending on context image type and
+// subsystem. These default names are MS CRT compliant.
+void setDefaultEntrySymbolName(PECOFFLinkingContext &context) {
+  if (context.getImageType() == PECOFFLinkingContext::ImageType::IMAGE_DLL) {
+    context.setEntrySymbolName("__DllMainCRTStartup");
+  } else {
+    llvm::COFF::WindowsSubsystem subsystem = context.getSubsystem();
+    if (subsystem == llvm::COFF::WindowsSubsystem::IMAGE_SUBSYSTEM_WINDOWS_GUI)
+      context.setEntrySymbolName("_WinMainCRTStartup");
+    else if (subsystem ==
+      llvm::COFF::WindowsSubsystem::IMAGE_SUBSYSTEM_WINDOWS_CUI)
+      context.setEntrySymbolName("_mainCRTStartup");
+  }
+}
+
 // Parses the given command line options and returns the result. Returns NULL if
 // there's an error in the options.
 std::unique_ptr<llvm::opt::InputArgList> parseArgs(int argc, const char *argv[],
@@ -405,6 +420,10 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
       break;
     }
   }
+
+  // Use the default entry name if /entry option is not given.
+  if (!parsedArgs->getLastArg(OPT_entry))
+    setDefaultEntrySymbolName(ctx);
 
   // Arguments after "--" are interpreted as filenames even if they
   // start with a hypen or a slash. This is not compatible with link.exe
