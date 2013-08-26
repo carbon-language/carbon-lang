@@ -14,14 +14,7 @@
 #include <cstdio>  // vsprintf, vsnprintf
 #include <cstring> // strcpy, wcsncpy
 #include <cwchar>  // mbstate_t
-#include <memory> // unique_ptr
 
-namespace { // Private
-
-    struct free_deleter { 
-        inline void operator()(char* p) { free(p); } 
-    }; 
-}
 // Some of these functions aren't standard or if they conform, the name does not.
 
 int asprintf(char **sptr, const char *__restrict format, ...)
@@ -29,44 +22,44 @@ int asprintf(char **sptr, const char *__restrict format, ...)
     va_list ap;
     va_start(ap, format);
     int result;
-#ifndef _LIBCPP_NO_EXCEPTIONS
-    try {
-#endif
-        result = vasprintf(sptr, format, ap);
-#ifndef _LIBCPP_NO_EXCEPTIONS
-    } catch( ... ) {
-        va_end(ap);
-        throw;
-    }
-#endif
+    result = vasprintf(sptr, format, ap);
     va_end(ap);
     return result;
 }
 
-// Like sprintf, but when return value >= 0 it returns a pointer to a malloc'd string in *sptr.
+// Like sprintf, but when return value >= 0 it returns
+// a pointer to a malloc'd string in *sptr.
 // If return >= 0, use free to delete *sptr.
 int vasprintf( char **sptr, const char *__restrict format, va_list ap )
 {
     *sptr = NULL;
-    int count = _vsnprintf( NULL, 0, format, ap ); // Query the buffer size required.
-    if( count >= 0 ) {
-        std::unique_ptr<char, free_deleter> p( static_cast<char*>(malloc(count+1)) );
-        if ( ! p )
-            return -1;
-        if ( vsnprintf( p.get(), count+1, format, ap ) == count ) // We should have used exactly what was required.
-            *sptr = p.release();
-        else // Otherwise something is wrong, likely a bug in vsnprintf. If so free the memory and report the error.
-            return -1; // Pointer will get automaticlaly deleted.
+    // Query the count required.
+    int count = _vsnprintf( NULL, 0, format, ap );
+    if (count < 0)
+        return count;
+    size_t buffer_size = static_cast<size_t>(count) + 1;
+    char* p = static_cast<char*>(malloc(buffer_size));
+    if ( ! p )
+        return -1;
+    // If we haven't used exactly what was required, something is wrong.
+    // Maybe bug in vsnprintf. Report the error and return.
+    if (_vsnprintf(p, buffer_size, format, ap) != count) {
+        free(p);
+        return -1;
     }
-
+    // All good. This is returning memory to the caller not freeing it.
+    *sptr = p;
     return count;
 }
 
-// Returns >= 0: the number of wide characters found in the multi byte sequence src (of src_size_bytes),
-// that fit in the buffer dst (of max_dest_chars elements size). The count returned excludes the null terminator.
-// When dst is NULL, no characters are copied and no "out" parameters are updated.
+// Returns >= 0: the number of wide characters found in the 
+// multi byte sequence src (of src_size_bytes), that fit in the buffer dst 
+// (of max_dest_chars elements size). The count returned excludes the
+// null terminator. When dst is NULL, no characters are copied 
+// and no "out" parameters are updated.
 // Returns (size_t) -1: an incomplete sequence encountered.
-// Leaves *src pointing the next character to convert or NULL if a null character was converted from *src.
+// Leaves *src pointing the next character to convert or NULL 
+// if a null character was converted from *src.
 size_t mbsnrtowcs( wchar_t *__restrict dst, const char **__restrict src,
                    size_t src_size_bytes, size_t max_dest_chars, mbstate_t *__restrict ps )
 {
@@ -112,10 +105,13 @@ size_t mbsnrtowcs( wchar_t *__restrict dst, const char **__restrict src,
 }
 
 // Converts max_source_chars from the wide character buffer pointer to by *src,
-// into the multi byte character sequence buffer stored at dst which must be dst_size_bytes bytes in size.
-// Returns >= 0: the number of bytes in the sequence sequence converted frome *src, excluding the null terminator.
+// into the multi byte character sequence buffer stored at dst which must be
+// dst_size_bytes bytes in size.
+// Returns >= 0: the number of bytes in the sequence sequence 
+// converted frome *src, excluding the null terminator.
 // Returns size_t(-1) if an error occurs, also sets errno.
-// If dst is NULL dst_size_bytes is ignored and no bytes are copied to dst and no "out" parameters are updated.
+// If dst is NULL dst_size_bytes is ignored and no bytes are copied to dst 
+// and no "out" parameters are updated.
 size_t wcsnrtombs( char *__restrict dst, const wchar_t **__restrict src,
                    size_t max_source_chars, size_t dst_size_bytes, mbstate_t *__restrict ps )
 {
@@ -138,7 +134,8 @@ size_t wcsnrtombs( char *__restrict dst, const wchar_t **__restrict src,
             result = wcrtomb_s( &char_size, dst + dest_converted, dest_remaining, c, ps);
         else
             result = wcrtomb_s( &char_size, NULL, 0, c, ps);
-        // If result is zero there is no error and char_size contains the size of the multi-byte-sequence converted.
+        // If result is zero there is no error and char_size contains the 
+        // size of the multi-byte-sequence converted.
         // Otherwise result indicates an errno type error.
         if ( result == no_error ) {
             if ( c == L'\0' ) {

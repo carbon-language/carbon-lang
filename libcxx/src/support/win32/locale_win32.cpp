@@ -8,9 +8,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "support/win32/locale_win32.h"
+#include <locale>
 #include <cstdarg> // va_start, va_end
-#include <cwchar>  // mbstate_t
 
 // FIXME: base currently unused. Needs manual work to construct the new locale
 locale_t newlocale( int mask, const char * locale, locale_t /*base*/ )
@@ -34,38 +33,38 @@ lconv *localeconv_l( locale_t loc )
     __locale_raii __current( uselocale(loc), uselocale );
     return localeconv();
 }
-size_t mbrlen_l( const char *__restrict__ s, size_t n,
-                 mbstate_t *__restrict__ ps, locale_t loc )
+size_t mbrlen_l( const char *__restrict s, size_t n,
+                 mbstate_t *__restrict ps, locale_t loc )
 {
     __locale_raii __current( uselocale(loc), uselocale );
     return mbrlen( s, n, ps );
 }
-size_t mbsrtowcs_l( wchar_t *__restrict__ dst, const char **__restrict__ src,
-                    size_t len, mbstate_t *__restrict__ ps, locale_t loc )
+size_t mbsrtowcs_l( wchar_t *__restrict dst, const char **__restrict src,
+                    size_t len, mbstate_t *__restrict ps, locale_t loc )
 {
     __locale_raii __current( uselocale(loc), uselocale );
     return mbsrtowcs( dst, src, len, ps );
 }
-size_t wcrtomb_l( char *__restrict__ s, wchar_t wc, mbstate_t *__restrict__ ps,
+size_t wcrtomb_l( char *__restrict s, wchar_t wc, mbstate_t *__restrict ps,
                   locale_t loc )
 {
     __locale_raii __current( uselocale(loc), uselocale );
     return wcrtomb( s, wc, ps );
 }
-size_t mbrtowc_l( wchar_t *__restrict__ pwc, const char *__restrict__ s,
-                  size_t n, mbstate_t *__restrict__ ps, locale_t loc )
+size_t mbrtowc_l( wchar_t *__restrict pwc, const char *__restrict s,
+                  size_t n, mbstate_t *__restrict ps, locale_t loc )
 {
     __locale_raii __current( uselocale(loc), uselocale );
     return mbrtowc( pwc, s, n, ps );
 }
-size_t mbsnrtowcs_l( wchar_t *__restrict__ dst, const char **__restrict__ src,
-                     size_t nms, size_t len, mbstate_t *__restrict__ ps, locale_t loc )
+size_t mbsnrtowcs_l( wchar_t *__restrict dst, const char **__restrict src,
+                     size_t nms, size_t len, mbstate_t *__restrict ps, locale_t loc )
 {
     __locale_raii __current( uselocale(loc), uselocale );
     return mbsnrtowcs( dst, src, nms, len, ps );
 }
-size_t wcsnrtombs_l( char *__restrict__ dst, const wchar_t **__restrict__ src,
-                     size_t nwc, size_t len, mbstate_t *__restrict__ ps, locale_t loc )
+size_t wcsnrtombs_l( char *__restrict dst, const wchar_t **__restrict src,
+                     size_t nwc, size_t len, mbstate_t *__restrict ps, locale_t loc )
 {
     __locale_raii __current( uselocale(loc), uselocale );
     return wcsnrtombs( dst, src, nwc, len, ps );
