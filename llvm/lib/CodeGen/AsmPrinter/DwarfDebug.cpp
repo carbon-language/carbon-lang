@@ -1929,7 +1929,8 @@ void DwarfDebug::emitSectionLabels() {
   emitSectionSym(Asm, TLOF.getDwarfLocSection());
   if (HasDwarfPubNames)
     emitSectionSym(Asm, TLOF.getDwarfPubNamesSection());
-  emitSectionSym(Asm, TLOF.getDwarfPubTypesSection());
+  if (useDarwinGDBCompat())
+    emitSectionSym(Asm, TLOF.getDwarfPubTypesSection());
   DwarfStrSectionSym =
     emitSectionSym(Asm, TLOF.getDwarfStrSection(), "info_string");
   if (useSplitDwarf()) {
