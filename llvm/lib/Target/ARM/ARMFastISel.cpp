@@ -1380,6 +1380,7 @@ bool ARMFastISel::SelectBranch(const Instruction *I) {
         (isLoadTypeLegal(TI->getOperand(0)->getType(), SourceVT))) {
       unsigned TstOpc = isThumb2 ? ARM::t2TSTri : ARM::TSTri;
       unsigned OpReg = getRegForValue(TI->getOperand(0));
+      OpReg = constrainOperandRegClass(TII.get(TstOpc), OpReg, 0);
       AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                               TII.get(TstOpc))
                       .addReg(OpReg).addImm(1));
@@ -1417,6 +1418,7 @@ bool ARMFastISel::SelectBranch(const Instruction *I) {
   // and it left a value for us in a virtual register.  Ergo, we test
   // the one-bit value left in the virtual register.
   unsigned TstOpc = isThumb2 ? ARM::t2TSTri : ARM::TSTri;
+  CmpReg = constrainOperandRegClass(TII.get(TstOpc), CmpReg, 0);
   AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TstOpc))
                   .addReg(CmpReg).addImm(1));
 
