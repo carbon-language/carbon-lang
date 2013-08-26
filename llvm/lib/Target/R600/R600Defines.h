@@ -45,7 +45,8 @@ namespace R600_InstFlag {
     ALU_INST = (1 << 14),
     LDS_1A = (1 << 15),
     LDS_1A1D = (1 << 16),
-    IS_EXPORT = (1 << 17)
+    IS_EXPORT = (1 << 17),
+    LDS_1A2D = (1 << 18)
   };
 }
 

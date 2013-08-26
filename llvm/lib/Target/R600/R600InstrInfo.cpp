@@ -149,7 +149,8 @@ bool R600InstrInfo::isLDSInstr(unsigned Opcode) const {
   unsigned TargetFlags = get(Opcode).TSFlags;
 
   return ((TargetFlags & R600_InstFlag::LDS_1A) |
-          (TargetFlags & R600_InstFlag::LDS_1A1D));
+          (TargetFlags & R600_InstFlag::LDS_1A1D) |
+          (TargetFlags & R600_InstFlag::LDS_1A2D));
 }
 
 bool R600InstrInfo::isTransOnly(unsigned Opcode) const {

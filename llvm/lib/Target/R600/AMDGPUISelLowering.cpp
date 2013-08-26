@@ -495,9 +495,9 @@ SDValue AMDGPUTargetLowering::SplitVectorStore(SDValue Op,
                               Store->getBasePtr(),
                             DAG.getConstant(i * (MemEltVT.getSizeInBits() / 8),
                                             PtrVT));
-    Chains.push_back(DAG.getStore(Store->getChain(), SL, Val, Ptr,
+    Chains.push_back(DAG.getTruncStore(Store->getChain(), SL, Val, Ptr,
                          MachinePointerInfo(Store->getMemOperand()->getValue()),
-                         Store->isVolatile(), Store->isNonTemporal(),
+                         MemEltVT, Store->isVolatile(), Store->isNonTemporal(),
                          Store->getAlignment()));
   }
   return DAG.getNode(ISD::TokenFactor, SL, MVT::Other, &Chains[0], NumElts);

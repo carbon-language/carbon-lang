@@ -156,13 +156,23 @@ def truncstorei16_global : PatFrag<(ops node:$val, node:$ptr),
   return isGlobalStore(dyn_cast<StoreSDNode>(N));
 }]>;
 
-def local_load : PatFrag<(ops node:$ptr), (load node:$ptr), [{
-    return isLocalLoad(dyn_cast<LoadSDNode>(N));
-}]>;
-
 def local_store : PatFrag<(ops node:$val, node:$ptr),
                              (store node:$val, node:$ptr), [{
-    return isLocalStore(dyn_cast<StoreSDNode>(N));
+  return isLocalStore(dyn_cast<StoreSDNode>(N));
+}]>;
+
+def truncstorei8_local : PatFrag<(ops node:$val, node:$ptr),
+                                  (truncstorei8 node:$val, node:$ptr), [{
+  return isLocalStore(dyn_cast<StoreSDNode>(N));
+}]>;
+
+def truncstorei16_local : PatFrag<(ops node:$val, node:$ptr),
+                                  (truncstorei16 node:$val, node:$ptr), [{
+  return isLocalStore(dyn_cast<StoreSDNode>(N));
+}]>;
+
+def local_load : PatFrag<(ops node:$ptr), (load node:$ptr), [{
+    return isLocalLoad(dyn_cast<LoadSDNode>(N));
 }]>;
 
 def mskor_global : PatFrag<(ops node:$val, node:$ptr),

@@ -172,6 +172,24 @@ entry:
 ; Local Address Space
 ;===------------------------------------------------------------------------===;
 
+; EG-CHECK: @store_local_i8
+; EG-CHECK: LDS_BYTE_WRITE
+; SI-CHECK: @store_local_i8
+; SI-CHECK: DS_WRITE_B8
+define void @store_local_i8(i8 addrspace(3)* %out, i8 %in) {
+  store i8 %in, i8 addrspace(3)* %out
+  ret void
+}
+
+; EG-CHECK: @store_local_i16
+; EG-CHECK: LDS_SHORT_WRITE
+; SI-CHECK: @store_local_i16
+; SI-CHECK: DS_WRITE_B16
+define void @store_local_i16(i16 addrspace(3)* %out, i16 %in) {
+  store i16 %in, i16 addrspace(3)* %out
+  ret void
+}
+
 ; EG-CHECK: @store_local_v2i16
 ; EG-CHECK: LDS_WRITE
 ; CM-CHECK: @store_local_v2i16

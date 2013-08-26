@@ -73,6 +73,13 @@ def AMDGPUregister_store : SDNode<"AMDGPUISD::REGISTER_STORE",
                            SDTypeProfile<0, 3, [SDTCisPtrTy<1>, SDTCisInt<2>]>,
                            [SDNPHasChain, SDNPMayStore]>;
 
+// MSKOR instructions are atomic memory instructions used mainly for storing
+// 8-bit and 16-bit values.  The definition is:
+//
+// MSKOR(dst, mask, src) MEM[dst] = ((MEM[dst] & ~mask) | src)
+//
+// src0: vec4(src, 0, 0, mask)
+// src1: dst - rat offset (aka pointer) in dwords  
 def AMDGPUstore_mskor : SDNode<"AMDGPUISD::STORE_MSKOR",
                         SDTypeProfile<0, 2, []>,
                         [SDNPHasChain, SDNPMayStore, SDNPMemOperand]>;

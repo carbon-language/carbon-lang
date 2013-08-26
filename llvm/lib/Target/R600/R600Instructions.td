@@ -1657,12 +1657,30 @@ class R600_LDS_1A1D <bits<6> lds_op, string name, list<dag> pattern> :
   let LDS_1A1D = 1;
 }
 
-def LDS_READ_RET : R600_LDS_1A <0x32, "LDS_READ_RET",
-  [(set (i32 R600_Reg32:$dst), (local_load R600_Reg32:$src0))]
->;
+class R600_LDS_1A2D <bits<6> lds_op, string name, list<dag> pattern> :
+    R600_LDS <
+  lds_op,
+  (outs),
+  (ins R600_Reg32:$src0, REL:$src0_rel, SEL:$src0_sel,
+       R600_Reg32:$src1, REL:$src1_rel, SEL:$src1_sel,
+       R600_Reg32:$src2, REL:$src2_rel, SEL:$src2_sel,
+       LAST:$last, R600_Pred:$pred_sel, BANK_SWIZZLE:$bank_swizzle),
+  "  "#name# "$last $src0$src0_rel, $src1$src1_rel, $src2$src2_rel, $pred_sel",
+  pattern> {
+  let LDS_1A2D = 1;
+}
 
 def LDS_WRITE : R600_LDS_1A1D <0xD, "LDS_WRITE",
   [(local_store (i32 R600_Reg32:$src1), R600_Reg32:$src0)]
+>;
+def LDS_BYTE_WRITE : R600_LDS_1A1D<0x12, "LDS_BYTE_WRITE",
+  [(truncstorei8_local i32:$src1, i32:$src0)]
+>;
+def LDS_SHORT_WRITE : R600_LDS_1A1D<0x13, "LDS_SHORT_WRITE",
+  [(truncstorei16_local i32:$src1, i32:$src0)]
+>;
+def LDS_READ_RET : R600_LDS_1A <0x32, "LDS_READ_RET",
+  [(set (i32 R600_Reg32:$dst), (local_load R600_Reg32:$src0))]
 >;
 
   // TRUNC is used for the FLT_TO_INT instructions to work around a

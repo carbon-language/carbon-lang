@@ -392,6 +392,8 @@ defm V_CMPX_CLASS_F64 : VOPC_64 <0x000000b8, "V_CMPX_CLASS_F64">;
 } // End isCompare = 1
 
 def DS_WRITE_B32 : DS_Store_Helper <0x0000000d, "DS_WRITE_B32", VReg_32>;
+def DS_WRITE_B8 : DS_Store_Helper <0x00000001e, "DS_WRITE_B8", VReg_32>;
+def DS_WRITE_B16 : DS_Store_Helper <0x00000001f, "DS_WRITE_B16", VReg_32>;
 def DS_READ_B32 : DS_Load_Helper <0x00000036, "DS_READ_B32", VReg_32>;
 
 //def BUFFER_LOAD_FORMAT_X : MUBUF_ <0x00000000, "BUFFER_LOAD_FORMAT_X", []>;
@@ -1750,10 +1752,14 @@ def : Pat <
     (i32 (DS_READ_B32 0, $src0, $src0, $src0, 0, 0))
 >;
 
-def : Pat <
-    (local_store i32:$src1, i32:$src0),
-    (DS_WRITE_B32 0, $src0, $src1, $src1, 0, 0)
+class DSWritePat <DS inst, ValueType vt, PatFrag frag> : Pat <
+  (frag i32:$src1, i32:$src0),
+  (inst 0, $src0, $src1, $src1, 0, 0)
 >;
+
+def : DSWritePat <DS_WRITE_B8, i32, truncstorei8_local>;
+def : DSWritePat <DS_WRITE_B16, i32, truncstorei16_local>;
+def : DSWritePat <DS_WRITE_B32, i32, local_store>;
 
 /********** ================== **********/
 /**********   SMRD Patterns    **********/
