@@ -1132,16 +1132,21 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
     return E->VectorizedValue;
   }
 
-  Type *ScalarTy = E->Scalars[0]->getType();
-  if (StoreInst *SI = dyn_cast<StoreInst>(E->Scalars[0]))
+  Instruction *VL0 = cast<Instruction>(E->Scalars[0]);
+  Type *ScalarTy = VL0->getType();
+  if (StoreInst *SI = dyn_cast<StoreInst>(VL0))
     ScalarTy = SI->getValueOperand()->getType();
   VectorType *VecTy = VectorType::get(ScalarTy, E->Scalars.size());
 
   if (E->NeedToGather) {
+    BasicBlock *BB = VL0->getParent();
+    BasicBlock::iterator NextInst = getLastInstruction(E->Scalars);
+    ++NextInst;
+    assert(NextInst != BB->end());
+    Builder.SetInsertPoint(NextInst);
     return Gather(E->Scalars, VecTy);
   }
 
-  Instruction *VL0 = cast<Instruction>(E->Scalars[0]);
   unsigned Opcode = VL0->getOpcode();
   assert(Opcode == getSameOpcode(E->Scalars) && "Invalid opcode");
 
@@ -1835,6 +1840,40 @@ bool SLPVectorizer::tryToVectorize(BinaryOperator *V, BoUpSLP &R) {
   return 0;
 }
 
+/// \brief Recognize construction of vectors like
+///  %ra = insertelement <4 x float> undef, float %s0, i32 0
+///  %rb = insertelement <4 x float> %ra, float %s1, i32 1
+///  %rc = insertelement <4 x float> %rb, float %s2, i32 2
+///  %rd = insertelement <4 x float> %rc, float %s3, i32 3
+///
+/// Returns true if it matches
+///
+static bool findBuildVector(InsertElementInst *IE,
+                            SmallVectorImpl<Value *> &Ops) {
+  if (!isa<UndefValue>(IE->getOperand(0)))
+    return false;
+
+  while (true) {
+    Ops.push_back(IE->getOperand(1));
+
+    if (IE->use_empty())
+      return false;
+
+    InsertElementInst *NextUse = dyn_cast<InsertElementInst>(IE->use_back());
+    if (!NextUse)
+      return true;
+
+    // If this isn't the final use, make sure the next insertelement is the only
+    // use. It's OK if the final constructed vector is used multiple times
+    if (!IE->hasOneUse())
+      return false;
+
+    IE = NextUse;
+  }
+
+  return false;
+}
+
 bool SLPVectorizer::vectorizeChainsInBlock(BasicBlock *BB, BoUpSLP &R) {
   bool Changed = false;
   SmallVector<Value *, 4> Incoming;
@@ -1932,6 +1971,21 @@ bool SLPVectorizer::vectorizeChainsInBlock(BasicBlock *BB, BoUpSLP &R) {
             }
          }
       }
+      continue;
+    }
+
+    // Try to vectorize trees that start at insertelement instructions.
+    if (InsertElementInst *IE = dyn_cast<InsertElementInst>(it)) {
+      SmallVector<Value *, 8> Ops;
+      if (!findBuildVector(IE, Ops))
+        continue;
+
+      if (tryToVectorizeList(Ops, R)) {
+        Changed = true;
+        it = BB->begin();
+        e = BB->end();
+      }
+
       continue;
     }
   }
