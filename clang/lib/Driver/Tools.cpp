@@ -1863,8 +1863,7 @@ static bool isOptimizationLevelFast(const ArgList &Args) {
 /// \brief Vectorize at all optimization levels greater than 1 except for -Oz.
 static bool shouldEnableVectorizerAtOLevel(const ArgList &Args) {
   if (Arg *A = Args.getLastArg(options::OPT_O_Group)) {
-    if (A->getOption().matches(options::OPT_O4) ||
-        A->getOption().matches(options::OPT_Ofast))
+    if (A->getOption().matches(options::OPT_Ofast))
       return true;
 
     if (A->getOption().matches(options::OPT_O0))
@@ -1872,9 +1871,9 @@ static bool shouldEnableVectorizerAtOLevel(const ArgList &Args) {
 
     assert(A->getOption().matches(options::OPT_O) && "Must have a -O flag");
 
-    // Vectorize -O (which really is -O2), -Os.
+    // Vectorize -Os.
     StringRef S(A->getValue());
-    if (S == "s" || S.empty())
+    if (S == "s")
       return true;
 
     // Don't vectorize -Oz.
@@ -2623,13 +2622,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // preprocessed inputs and configure concludes that -fPIC is not supported.
   Args.ClaimAllArgs(options::OPT_D);
 
-  // Manually translate -O4 to -O3; let clang reject others.
-  if (Arg *A = Args.getLastArg(options::OPT_O_Group)) {
-    if (A->getOption().matches(options::OPT_O4))
-      CmdArgs.push_back("-O3");
-    else
-      A->render(Args, CmdArgs);
-  }
+  if (Arg *A = Args.getLastArg(options::OPT_O_Group))
+    A->render(Args, CmdArgs);
 
   // Don't warn about unused -flto.  This can happen when we're preprocessing or
   // precompiling.
