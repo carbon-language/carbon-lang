@@ -100,25 +100,25 @@ public:
   ~CompileUnit();
 
   // Accessors.
-  unsigned getUniqueID()            const { return UniqueID; }
+  unsigned getUniqueID() const { return UniqueID; }
   uint16_t getLanguage() const { return DICompileUnit(Node).getLanguage(); }
   const MDNode *getNode() const { return Node; }
-  DIE* getCUDie()                   const { return CUDie.get(); }
-  unsigned getDebugInfoOffset()     const { return DebugInfoOffset; }
-  const StringMap<DIE*> &getGlobalNames() const { return GlobalNames; }
-  const StringMap<DIE*> &getGlobalTypes() const { return GlobalTypes; }
+  DIE *getCUDie() const { return CUDie.get(); }
+  unsigned getDebugInfoOffset() const { return DebugInfoOffset; }
+  const StringMap<DIE *> &getGlobalNames() const { return GlobalNames; }
+  const StringMap<DIE *> &getGlobalTypes() const { return GlobalTypes; }
 
-  const StringMap<std::vector<DIE*> > &getAccelNames() const {
+  const StringMap<std::vector<DIE *> > &getAccelNames() const {
     return AccelNames;
   }
-  const StringMap<std::vector<DIE*> > &getAccelObjC() const {
+  const StringMap<std::vector<DIE *> > &getAccelObjC() const {
     return AccelObjC;
   }
-  const StringMap<std::vector<DIE*> > &getAccelNamespace() const {
+  const StringMap<std::vector<DIE *> > &getAccelNamespace() const {
     return AccelNamespace;
   }
-  const StringMap<std::vector<std::pair<DIE*, unsigned > > >
-  &getAccelTypes() const {
+  const StringMap<std::vector<std::pair<DIE *, unsigned> > > &
+  getAccelTypes() const {
     return AccelTypes;
   }
 
