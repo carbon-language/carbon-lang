@@ -468,8 +468,8 @@ void CodeGenFunction::StartObjCMethod(const ObjCMethodDecl *OMD,
                                       SourceLocation StartLoc) {
   FunctionArgList args;
   // Check if we should generate debug info for this method.
-  if (!OMD->hasAttr<NoDebugAttr>())
-    maybeInitializeDebugInfo();
+  if (OMD->hasAttr<NoDebugAttr>())
+    DebugInfo = NULL; // disable debug info indefinitely for this function
 
   llvm::Function *Fn = CGM.getObjCRuntime().GenerateMethod(OMD, CD);
 
@@ -2905,9 +2905,6 @@ CodeGenFunction::GenerateObjCAtomicSetterCopyHelperFunction(
                            "__assign_helper_atomic_property_",
                            &CGM.getModule());
   
-  // Initialize debug info if needed.
-  maybeInitializeDebugInfo();
-  
   StartFunction(FD, C.VoidTy, Fn, FI, args, SourceLocation());
   
   DeclRefExpr DstExpr(&dstDecl, false, DestTy,
@@ -2987,9 +2984,6 @@ CodeGenFunction::GenerateObjCAtomicGetterCopyHelperFunction(
   llvm::Function *Fn =
   llvm::Function::Create(LTy, llvm::GlobalValue::InternalLinkage,
                          "__copy_helper_atomic_property_", &CGM.getModule());
-  
-  // Initialize debug info if needed.
-  maybeInitializeDebugInfo();
   
   StartFunction(FD, C.VoidTy, Fn, FI, args, SourceLocation());
   

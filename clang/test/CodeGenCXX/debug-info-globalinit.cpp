@@ -35,4 +35,4 @@ int main(void) {}
 // CHECK: store i32 %[[C2]], i32* @_ZL1k, align 4, !dbg
 // 
 // CHECK: ![[LINE]] = metadata !{i32 13, i32
-// CHECK: ![[LINE]] = metadata !{i32 15, i32
+// CHECK: ![[LINE2]] = metadata !{i32 15, i32

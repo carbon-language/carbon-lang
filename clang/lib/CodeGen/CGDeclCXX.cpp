@@ -172,9 +172,6 @@ static llvm::Constant *createAtExitStub(CodeGenModule &CGM,
 
   CodeGenFunction CGF(CGM);
 
-  // Initialize debug info if needed.
-  CGF.maybeInitializeDebugInfo();
-
   CGF.StartFunction(GlobalDecl(), CGM.getContext().VoidTy, fn,
                     CGM.getTypes().arrangeNullaryFunction(),
                     FunctionArgList(), SourceLocation());
@@ -399,8 +396,8 @@ void CodeGenFunction::GenerateCXXGlobalVarDeclInitFunc(llvm::Function *Fn,
                                                  llvm::GlobalVariable *Addr,
                                                        bool PerformInit) {
   // Check if we need to emit debug info for variable initializer.
-  if (!D->hasAttr<NoDebugAttr>())
-    maybeInitializeDebugInfo();
+  if (D->hasAttr<NoDebugAttr>())
+    DebugInfo = NULL; // disable debug info indefinitely for this function
 
   StartFunction(GlobalDecl(D), getContext().VoidTy, Fn,
                 getTypes().arrangeNullaryFunction(),
@@ -423,9 +420,6 @@ void
 CodeGenFunction::GenerateCXXGlobalInitFunc(llvm::Function *Fn,
                                            ArrayRef<llvm::Constant *> Decls,
                                            llvm::GlobalVariable *Guard) {
-  // Initialize debug info if needed.
-  maybeInitializeDebugInfo();
-
   StartFunction(GlobalDecl(), getContext().VoidTy, Fn,
                 getTypes().arrangeNullaryFunction(),
                 FunctionArgList(), SourceLocation());
@@ -472,9 +466,6 @@ CodeGenFunction::GenerateCXXGlobalInitFunc(llvm::Function *Fn,
 void CodeGenFunction::GenerateCXXGlobalDtorsFunc(llvm::Function *Fn,
                   const std::vector<std::pair<llvm::WeakVH, llvm::Constant*> >
                                                 &DtorsAndObjects) {
-  // Initialize debug info if needed.
-  maybeInitializeDebugInfo();
-
   StartFunction(GlobalDecl(), getContext().VoidTy, Fn,
                 getTypes().arrangeNullaryFunction(),
                 FunctionArgList(), SourceLocation());
@@ -510,9 +501,6 @@ CodeGenFunction::generateDestroyHelper(llvm::Constant *addr,
   llvm::FunctionType *FTy = CGM.getTypes().GetFunctionType(FI);
   llvm::Function *fn = 
     CreateGlobalInitOrDestructFunction(CGM, FTy, "__cxx_global_array_dtor");
-
-  // Initialize debug info if needed.
-  maybeInitializeDebugInfo();
 
   StartFunction(GlobalDecl(), getContext().VoidTy, fn, FI, args,
                 SourceLocation());
