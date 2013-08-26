@@ -302,7 +302,7 @@
 #cmakedefine HAVE_READDIR ${HAVE_READDIR}
 
 /* Define to 1 if you have the `realpath' function. */
-#undef HAVE_REALPATH
+#cmakedefine HAVE_REALPATH ${HAVE_REALPATH}
 
 /* Define to 1 if you have the `rintf' function. */
 #undef HAVE_RINTF
