@@ -202,6 +202,21 @@ entry:
   ret void
 }
 
+; EG-CHECK: @store_local_v4i8
+; EG-CHECK: LDS_WRITE
+; CM-CHECK: @store_local_v4i8
+; CM-CHECK: LDS_WRITE
+; SI-CHECK: @store_local_v4i8
+; SI-CHECK: DS_WRITE_B8
+; SI-CHECK: DS_WRITE_B8
+; SI-CHECK: DS_WRITE_B8
+; SI-CHECK: DS_WRITE_B8
+define void @store_local_v4i8(<4 x i8> addrspace(3)* %out, <4 x i8> %in) {
+entry:
+  store <4 x i8> %in, <4 x i8> addrspace(3)* %out
+  ret void
+}
+
 ; EG-CHECK: @store_local_v2i32
 ; EG-CHECK: LDS_WRITE
 ; EG-CHECK: LDS_WRITE
