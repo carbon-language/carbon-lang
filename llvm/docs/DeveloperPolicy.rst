@@ -128,7 +128,24 @@ software. We generally follow these policies:
    all necessary review-related changes.
 
 #. Code review can be an iterative process, which continues until the patch is
-   ready to be committed.
+   ready to be committed. Specifically, once a patch is sent out for review, it
+   needs an explicit "looks good" before it is submitted. Do not assume silent
+   approval, or request active objections to the patch with a deadline.
+
+Sometimes code reviews will take longer than you would hope for, especially for
+larger features. Accepted ways to speed up review times for your patches are:
+
+* Review other people's patches. If you help out, everybody will be more
+  willing to do the same for you; goodwill is our currency.
+* Ping the patch. If it is urgent, provide reasons why it is important to you to
+  get this patch landed and ping it every couple of days. If it is
+  not urgent, the common courtesy ping rate is one week. Remember that you're
+  asking for valuable time from other professional developers.
+* Ask for help on IRC. Developers on IRC will be able to either help you
+  directly, or tell you who might be a good reviewer.
+* Split your patch into multiple smaller patches that build on each other. The
+  smaller your patch, the higher the probability that somebody will take a quick
+  look at it.
 
 Developers should participate in code reviews as both reviewers and
 reviewees. If someone is kind enough to review your code, you should return the
