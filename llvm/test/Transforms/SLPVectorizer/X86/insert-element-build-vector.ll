@@ -1,4 +1,4 @@
-; RUN: opt -S -slp-vectorizer < %s | FileCheck %s
+; RUN: opt -S -slp-vectorizer -slp-threshold=-10000 < %s | FileCheck %s
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-n8:16:32:64-S128"
 
 target triple = "x86_64-apple-macosx10.8.0"
@@ -171,6 +171,7 @@ define <2 x float> @simple_select_v2(<2 x float> %a, <2 x float> %b, <2 x i32> %
 
 ; Make sure when we construct partial vectors, we don't keep
 ; re-visiting the insertelement chains starting with undef
+; (low cost threshold needed to force this to happen)
 define <4 x float> @simple_select_partial_vector(<4 x float> %a, <4 x float> %b, <4 x i32> %c) #0 {
   %c0 = extractelement <4 x i32> %c, i32 0
   %c1 = extractelement <4 x i32> %c, i32 1
