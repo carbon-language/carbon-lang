@@ -8,4 +8,5 @@
 #  add_subdirectory(Windows)
 #endif()
 
+add_subdirectory(POSIX)
 add_subdirectory(gdb-server)

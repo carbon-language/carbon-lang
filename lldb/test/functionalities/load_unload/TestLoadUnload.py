@@ -27,6 +27,7 @@ class LoadUnloadTestCase(TestBase):
 
     @skipIfFreeBSD # llvm.org/pr14424 - missing FreeBSD Makefiles/testcase support
     @skipIfLinux # llvm.org/pr14424 - missing linux Makefiles/testcase support
+    @not_remote_testsuite_ready
     def test_modules_search_paths(self):
         """Test target modules list after loading a different copy of the library libd.dylib, and verifies that it works with 'target modules search-paths add'."""
 
@@ -81,6 +82,7 @@ class LoadUnloadTestCase(TestBase):
 
     @skipIfFreeBSD # llvm.org/pr14424 - missing FreeBSD Makefiles/testcase support
     @skipIfLinux # llvm.org/pr14424 - missing linux Makefiles/testcase support
+    @not_remote_testsuite_ready
     def test_dyld_library_path(self):
         """Test DYLD_LIBRARY_PATH after moving libd.dylib, which defines d_function, somewhere else."""
 
@@ -135,6 +137,7 @@ class LoadUnloadTestCase(TestBase):
             substrs = [special_dir, os.path.basename(new_dylib)])
 
     @skipIfFreeBSD # llvm.org/pr14424 - missing FreeBSD Makefiles/testcase support
+    @not_remote_testsuite_ready
     @skipIfLinux # llvm.org/pr14424 - missing linux Makefiles/testcase support
     def test_lldb_process_load_and_unload_commands(self):
         """Test that lldb process load/unload command work correctly."""
@@ -183,6 +186,7 @@ class LoadUnloadTestCase(TestBase):
         self.runCmd("process continue")
 
     @skipIfFreeBSD # llvm.org/pr14424 - missing FreeBSD Makefiles/testcase support
+    @not_remote_testsuite_ready
     @skipIfLinux # llvm.org/pr14424 - missing linux Makefiles/testcase support
     def test_load_unload(self):
         """Test breakpoint by name works correctly with dlopen'ing."""
@@ -224,6 +228,7 @@ class LoadUnloadTestCase(TestBase):
             substrs = [' resolved, hit count = 2'])
 
     @skipIfFreeBSD # llvm.org/pr14424 - missing FreeBSD Makefiles/testcase support
+    @not_remote_testsuite_ready
     @skipIfLinux # llvm.org/pr14424 - missing linux Makefiles/testcase support
     def test_step_over_load (self):
         """Test stepping over code that loads a shared library works correctly."""

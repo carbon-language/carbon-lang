@@ -531,6 +531,9 @@
 		944372DD171F6B4300E57C32 /* RegisterContextDummy.h in Headers */ = {isa = PBXBuildFile; fileRef = 944372DB171F6B4300E57C32 /* RegisterContextDummy.h */; };
 		9443B122140C18C40013457C /* SBData.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9443B121140C18C10013457C /* SBData.cpp */; };
 		9443B123140C26AB0013457C /* SBData.h in Headers */ = {isa = PBXBuildFile; fileRef = 9443B120140C18A90013457C /* SBData.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		945759671534941F005A9070 /* PlatformPOSIX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 945759651534941F005A9070 /* PlatformPOSIX.cpp */; };
+		945759681534941F005A9070 /* PlatformPOSIX.h in Headers */ = {isa = PBXBuildFile; fileRef = 945759661534941F005A9070 /* PlatformPOSIX.h */; };
+		945E8D80152F6AB40019BCCD /* StreamGDBRemote.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 945E8D7F152F6AB40019BCCD /* StreamGDBRemote.cpp */; };
 		9452573A16262D0200325455 /* SBDeclaration.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9452573916262D0200325455 /* SBDeclaration.cpp */; };
 		9456F2241616671900656F91 /* DynamicLibrary.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9456F2211616644B00656F91 /* DynamicLibrary.cpp */; };
 		94611EB213CCA4A4003A22AF /* RefCounter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94611EB113CCA4A4003A22AF /* RefCounter.cpp */; };
@@ -547,6 +550,7 @@
 		947A1D651616476B0017C8D1 /* CommandObjectPlugin.h in Headers */ = {isa = PBXBuildFile; fileRef = 947A1D631616476A0017C8D1 /* CommandObjectPlugin.h */; };
 		949ADF031406F648004833E1 /* ValueObjectConstResultImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 949ADF021406F648004833E1 /* ValueObjectConstResultImpl.cpp */; };
 		94B6E76213D88365005F417F /* ValueObjectSyntheticFilter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94B6E76113D88362005F417F /* ValueObjectSyntheticFilter.cpp */; };
+		94E829CA152D33C1006F96A3 /* lldb-platform in Resources */ = {isa = PBXBuildFile; fileRef = 26DC6A101337FE6900FF7998 /* lldb-platform */; };
 		94BA8B6D176F8C9B005A91B5 /* Range.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94BA8B6C176F8C9B005A91B5 /* Range.cpp */; };
 		94BA8B70176F97CE005A91B5 /* CommandHistory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94BA8B6F176F97CE005A91B5 /* CommandHistory.cpp */; };
 		94CB255B16B069770059775D /* CXXFormatterFunctions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94CB255716B069770059775D /* CXXFormatterFunctions.cpp */; };
@@ -711,6 +715,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = 2689FFC913353D7A00698AC0;
 			remoteInfo = "lldb-core";
+		};
+		94E829C8152D33B4006F96A3 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 26DC6A0F1337FE6900FF7998;
+			remoteInfo = "lldb-platform";
 		};
 /* End PBXContainerItemProxy section */
 
@@ -1562,6 +1573,10 @@
 		944372DB171F6B4300E57C32 /* RegisterContextDummy.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RegisterContextDummy.h; path = Utility/RegisterContextDummy.h; sourceTree = "<group>"; };
 		9443B120140C18A90013457C /* SBData.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SBData.h; path = include/lldb/API/SBData.h; sourceTree = "<group>"; };
 		9443B121140C18C10013457C /* SBData.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBData.cpp; path = source/API/SBData.cpp; sourceTree = "<group>"; };
+		945759651534941F005A9070 /* PlatformPOSIX.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PlatformPOSIX.cpp; path = POSIX/PlatformPOSIX.cpp; sourceTree = "<group>"; };
+		945759661534941F005A9070 /* PlatformPOSIX.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PlatformPOSIX.h; path = POSIX/PlatformPOSIX.h; sourceTree = "<group>"; };
+		945E8D7D152F6AA80019BCCD /* StreamGDBRemote.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = StreamGDBRemote.h; path = include/lldb/Core/StreamGDBRemote.h; sourceTree = "<group>"; };
+		945E8D7F152F6AB40019BCCD /* StreamGDBRemote.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = StreamGDBRemote.cpp; path = source/Core/StreamGDBRemote.cpp; sourceTree = "<group>"; };
 		944DC3481774C99000D7D884 /* python-swigsafecast.swig */ = {isa = PBXFileReference; lastKnownFileType = text; path = "python-swigsafecast.swig"; sourceTree = "<group>"; };
 		9452573616262CD000325455 /* SBDeclaration.i */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c.preprocessed; path = SBDeclaration.i; sourceTree = "<group>"; };
 		9452573816262CEF00325455 /* SBDeclaration.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SBDeclaration.h; path = include/lldb/API/SBDeclaration.h; sourceTree = "<group>"; };
@@ -2656,6 +2671,8 @@
 				4C6649A214EEE81000B0316F /* StreamCallback.cpp */,
 				26BC7D7A10F1B77400F91463 /* StreamFile.h */,
 				26BC7E9210F1B85900F91463 /* StreamFile.cpp */,
+				945E8D7D152F6AA80019BCCD /* StreamGDBRemote.h */,
+				945E8D7F152F6AB40019BCCD /* StreamGDBRemote.cpp */,
 				26BC7D7B10F1B77400F91463 /* StreamString.h */,
 				26BC7E9310F1B85900F91463 /* StreamString.cpp */,
 				4C626533130F1B0A00C889F6 /* StreamTee.h */,
@@ -3154,6 +3171,7 @@
 		26C5577E132575B6008FD8FE /* Platform */ = {
 			isa = PBXGroup;
 			children = (
+				9457596415349416005A9070 /* POSIX */,
 				2694E99814FC0BB30076DE67 /* FreeBSD */,
 				264A97BC133918A30017F0BE /* GDB Server */,
 				2694E99F14FC0BBD0076DE67 /* Linux */,
@@ -3402,6 +3420,69 @@
 			path = source/Host/common;
 			sourceTree = "<group>";
 		};
+		9457596415349416005A9070 /* POSIX */ = {
+			isa = PBXGroup;
+			children = (
+				945759651534941F005A9070 /* PlatformPOSIX.cpp */,
+				945759661534941F005A9070 /* PlatformPOSIX.h */,
+			);
+			name = POSIX;
+			sourceTree = "<group>";
+		};
+		940DB8C416EA64D400D3C2F1 /* lldb-perf */ = {
+			isa = PBXGroup;
+			children = (
+				940DB8C616EA654E00D3C2F1 /* darwin */,
+				940DB8C516EA654900D3C2F1 /* lib */,
+			);
+			name = "lldb-perf";
+			path = "tools/lldb-perf";
+			sourceTree = "<group>";
+		};
+		940DB8C516EA654900D3C2F1 /* lib */ = {
+			isa = PBXGroup;
+			children = (
+				940DB8CA16EA66FB00D3C2F1 /* Gauge.h */,
+				940DB8CE16EA670C00D3C2F1 /* Measurement.h */,
+				940DB8D116EA671800D3C2F1 /* MemoryGauge.cpp */,
+				940DB8D216EA671800D3C2F1 /* MemoryGauge.h */,
+				940DB8D516EA672200D3C2F1 /* Metric.cpp */,
+				940DB8D616EA672200D3C2F1 /* Metric.h */,
+				940DB8D916EA672D00D3C2F1 /* TestCase.cpp */,
+				940DB8DA16EA672D00D3C2F1 /* TestCase.h */,
+				940DB8DD16EA673800D3C2F1 /* Timer.cpp */,
+				940DB8DE16EA673800D3C2F1 /* Timer.h */,
+				940DB8E116EA674000D3C2F1 /* Xcode.cpp */,
+				940DB8E216EA674000D3C2F1 /* Xcode.h */,
+			);
+			path = lib;
+			sourceTree = "<group>";
+		};
+		940DB8C616EA654E00D3C2F1 /* darwin */ = {
+			isa = PBXGroup;
+			children = (
+				940DB8FB16EA84BF00D3C2F1 /* formatters */,
+				940DB8C716EA655400D3C2F1 /* sketch */,
+			);
+			path = darwin;
+			sourceTree = "<group>";
+		};
+		940DB8C716EA655400D3C2F1 /* sketch */ = {
+			isa = PBXGroup;
+			children = (
+				940DB8E616EA709400D3C2F1 /* main.cpp */,
+			);
+			path = sketch;
+			sourceTree = "<group>";
+		};
+		940DB8FB16EA84BF00D3C2F1 /* formatters */ = {
+			isa = PBXGroup;
+			children = (
+				94DB60F016EA888A00459D9E /* main.cpp */,
+			);
+			path = formatters;
+			sourceTree = "<group>";
+		};
 		94CB255616B0683B0059775D /* DataFormatters */ = {
 			isa = PBXGroup;
 			children = (
@@ -3536,6 +3617,7 @@
 				2694E99E14FC0BB30076DE67 /* PlatformFreeBSD.h in Headers */,
 				2694E9A514FC0BBD0076DE67 /* PlatformLinux.h in Headers */,
 				2663E379152BD1890091EC22 /* ReadWriteLock.h in Headers */,
+				945759681534941F005A9070 /* PlatformPOSIX.h in Headers */,
 				26B1EFAF154638AF00E2DAC7 /* DWARFDeclContext.h in Headers */,
 				260CC62E15D04377002BF2E0 /* OptionValueArgs.h in Headers */,
 				260CC62F15D04377002BF2E0 /* OptionValueArray.h in Headers */,
@@ -3616,6 +3698,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				94E829C9152D33B4006F96A3 /* PBXTargetDependency */,
 				2689011513353E9B00698AC0 /* PBXTargetDependency */,
 				262CFC7211A450CB00946C6C /* PBXTargetDependency */,
 				26368AF6126B95FA00E8659F /* PBXTargetDependency */,
@@ -3766,6 +3849,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				94E829CA152D33C1006F96A3 /* lldb-platform in Resources */,
 				262CFC7711A4510000946C6C /* debugserver in Resources */,
 				26368AF7126B960500E8659F /* darwin-debug in Resources */,
 			);
@@ -4269,6 +4353,8 @@
 				26FFC19D14FC072100087D58 /* DynamicLoaderPOSIXDYLD.cpp in Sources */,
 				2694E99D14FC0BB30076DE67 /* PlatformFreeBSD.cpp in Sources */,
 				2694E9A414FC0BBD0076DE67 /* PlatformLinux.cpp in Sources */,
+				945E8D80152F6AB40019BCCD /* StreamGDBRemote.cpp in Sources */,
+				945759671534941F005A9070 /* PlatformPOSIX.cpp in Sources */,
 				26B1EFAE154638AF00E2DAC7 /* DWARFDeclContext.cpp in Sources */,
 				260CC64815D0440D002BF2E0 /* OptionValueArgs.cpp in Sources */,
 				260CC64915D0440D002BF2E0 /* OptionValueArray.cpp in Sources */,
@@ -4415,6 +4501,11 @@
 			isa = PBXTargetDependency;
 			target = 2689FFC913353D7A00698AC0 /* lldb-core */;
 			targetProxy = 26DC6A151337FE7300FF7998 /* PBXContainerItemProxy */;
+		};
+		94E829C9152D33B4006F96A3 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 26DC6A0F1337FE6900FF7998 /* lldb-platform */;
+			targetProxy = 94E829C8152D33B4006F96A3 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -5127,6 +5218,7 @@
 				OTHER_LDFLAGS = (
 					"-lllvmclang",
 					"-lpython",
+					"-lxml2",
 					"-framework",
 					DebugSymbols,
 					"-framework",
@@ -5190,6 +5282,7 @@
 				OTHER_LDFLAGS = (
 					"-lllvmclang",
 					"-lpython",
+					"-lxml2",
 					"-framework",
 					DebugSymbols,
 					"-framework",
@@ -5252,6 +5345,7 @@
 				OTHER_LDFLAGS = (
 					"-lllvmclang",
 					"-lpython",
+					"-lxml2",
 					"-framework",
 					DebugSymbols,
 					"-framework",

@@ -749,6 +749,15 @@ PlatformRemoteiOS::GetSharedModule (const ModuleSpec &module_spec,
         // Not the module we are looking for... Nothing to see here...
         module_sp.reset();
     }
+    else
+    {
+        // This may not be an SDK-related module.  Try whether we can bring in the thing to our local cache.
+        error = GetSharedModuleWithLocalCache(module_spec, module_sp, module_search_paths_ptr, old_module_sp_ptr, did_create_ptr);
+        if (error.Success())
+            return error;
+        else
+            error.Clear(); // Clear the error and fall-through.
+    }
 
     const bool always_create = false;
     error = ModuleList::GetSharedModule (module_spec, 
@@ -762,24 +771,6 @@ PlatformRemoteiOS::GetSharedModule (const ModuleSpec &module_spec,
         module_sp->SetPlatformFileSpec(platform_file);
 
     return error;
-}
-
-
-uint32_t
-PlatformRemoteiOS::FindProcesses (const ProcessInstanceInfoMatch &match_info,
-                                  ProcessInstanceInfoList &process_infos)
-{
-    // TODO: if connected, send a packet to get the remote process infos by name
-    process_infos.Clear();
-    return 0;
-}
-
-bool
-PlatformRemoteiOS::GetProcessInfo (lldb::pid_t pid, ProcessInstanceInfo &process_info)
-{
-    // TODO: if connected, send a packet to get the remote process info
-    process_info.Clear();
-    return false;
 }
 
 bool

@@ -912,6 +912,19 @@ LLDBSwigPythonCallModuleInit
 // typemaps and in the extensions (SBInputReader.__del__()).
 #include "lldb/API/SBInputReader.h"
 #include "lldb/API/SBDebugger.h"
+#include "lldb/API/SBValue.h"
+ 
+SWIGEXPORT lldb::ValueObjectSP
+LLDBSWIGPython_GetValueObjectSPFromSBValue (void* data)
+{
+    lldb::ValueObjectSP valobj_sp;
+    if (data)
+    {
+        lldb::SBValue* sb_ptr = (lldb::SBValue *)data;
+        valobj_sp = sb_ptr->GetSP();
+    }
+    return valobj_sp;
+}
 
 #ifdef __cplusplus
 extern "C" {

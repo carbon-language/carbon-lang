@@ -52,6 +52,7 @@ static ScriptInterpreter::SWIGPythonCalculateNumChildren g_swig_calc_children = 
 static ScriptInterpreter::SWIGPythonGetChildAtIndex g_swig_get_child_index = NULL;
 static ScriptInterpreter::SWIGPythonGetIndexOfChildWithName g_swig_get_index_child = NULL;
 static ScriptInterpreter::SWIGPythonCastPyObjectToSBValue g_swig_cast_to_sbvalue  = NULL;
+static ScriptInterpreter::SWIGPythonGetValueObjectSPFromSBValue g_swig_get_valobj_sp_from_sbvalue = NULL;
 static ScriptInterpreter::SWIGPythonUpdateSynthProviderInstance g_swig_update_provider = NULL;
 static ScriptInterpreter::SWIGPythonMightHaveChildrenSynthProviderInstance g_swig_mighthavechildren_provider = NULL;
 static ScriptInterpreter::SWIGPythonCallCommand g_swig_call_command = NULL;
@@ -103,6 +104,9 @@ LLDBSwigPython_GetIndexOfChildWithName (void *implementor, const char* child_nam
 
 extern "C" void *
 LLDBSWIGPython_CastPyObjectToSBValue (void* data);
+
+extern lldb::ValueObjectSP
+LLDBSWIGPython_GetValueObjectSPFromSBValue (void* data);
 
 extern "C" bool
 LLDBSwigPython_UpdateSynthProviderInstance (void* implementor);
@@ -2451,20 +2455,18 @@ ScriptInterpreterPython::GetChildAtIndex (const lldb::ScriptInterpreterObjectSP&
     if (!g_swig_get_child_index || !g_swig_cast_to_sbvalue)
         return lldb::ValueObjectSP();
     
-    void* child_ptr = NULL;
-    lldb::SBValue* value_sb = NULL;
     lldb::ValueObjectSP ret_val;
     
     {
         Locker py_lock(this);
-        child_ptr = g_swig_get_child_index (implementor,idx);
+        void* child_ptr = g_swig_get_child_index (implementor,idx);
         if (child_ptr != NULL && child_ptr != Py_None)
         {
-            value_sb = (lldb::SBValue*)g_swig_cast_to_sbvalue(child_ptr);
-            if (value_sb == NULL)
+            lldb::SBValue* sb_value_ptr = (lldb::SBValue*)g_swig_cast_to_sbvalue(child_ptr);
+            if (sb_value_ptr == NULL)
                 Py_XDECREF(child_ptr);
             else
-                ret_val = value_sb->GetSP();
+                ret_val = g_swig_get_valobj_sp_from_sbvalue (sb_value_ptr);
         }
         else
         {
@@ -3058,6 +3060,7 @@ ScriptInterpreterPython::InitializeInterpreter (SWIGInitCallback python_swig_ini
     g_swig_get_child_index = LLDBSwigPython_GetChildAtIndex;
     g_swig_get_index_child = LLDBSwigPython_GetIndexOfChildWithName;
     g_swig_cast_to_sbvalue = LLDBSWIGPython_CastPyObjectToSBValue;
+    g_swig_get_valobj_sp_from_sbvalue = LLDBSWIGPython_GetValueObjectSPFromSBValue;
     g_swig_update_provider = LLDBSwigPython_UpdateSynthProviderInstance;
     g_swig_mighthavechildren_provider = LLDBSwigPython_MightHaveChildrenSynthProviderInstance;
     g_swig_call_command = LLDBSwigPythonCallCommand;

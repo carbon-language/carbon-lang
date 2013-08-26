@@ -22,6 +22,9 @@ class SBDirCheckerCase(TestBase):
     def test_sb_api_directory(self):
         """Test the SB API directory and make sure there's no unwanted stuff."""
 
+        # Only proceed if this is "darwin", "x86_64", and local platform.
+        if not (sys.platform.startswith("darwin") and self.getArchitecture() == "x86_64" and not lldb.test_remote):
+            self.skipTest("This test is only for LLDB.framework built 64-bit and !lldb.test_remote")
         if self.getArchitecture() == "i386":
             self.skipTest("LLDB is 64-bit and cannot be linked to 32-bit test program.")
 

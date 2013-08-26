@@ -101,8 +101,17 @@ public:
     bool
     GetNameColonValue (std::string &name, std::string &value);
 
+    int32_t
+    GetS32 (int32_t fail_value, int base = 0);
+
     uint32_t
     GetU32 (uint32_t fail_value, int base = 0);
+
+    int64_t
+    GetS64 (int64_t fail_value, int base = 0);
+    
+    uint64_t
+    GetU64 (uint64_t fail_value, int base = 0);
 
     uint32_t
     GetHexMaxU32 (bool little_endian, uint32_t fail_value);
@@ -119,6 +128,10 @@ public:
     size_t
     GetHexByteString (std::string &str);
 
+    size_t
+    GetHexByteStringTerminatedBy (std::string &str,
+                                  char terminator);
+    
     const char *
     Peek ()
     {

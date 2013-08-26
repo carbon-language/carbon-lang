@@ -156,6 +156,26 @@ PlatformFreeBSD::~PlatformFreeBSD()
 {
 }
 
+//TODO:VK: inherit PlatformPOSIX
+lldb_private::Error
+PlatformFreeBSD::RunShellCommand (const char *command,
+                                  const char *working_dir,
+                                  int *status_ptr,
+                                  int *signo_ptr,
+                                  std::string *command_output,
+                                  uint32_t timeout_sec)
+{
+    if (IsHost())
+        return Host::RunShellCommand(command, working_dir, status_ptr, signo_ptr, command_output, timeout_sec);
+    else
+    {
+        if (m_remote_platform_sp)
+            return m_remote_platform_sp->RunShellCommand(command, working_dir, status_ptr, signo_ptr, command_output, timeout_sec);
+        else
+            return Error("unable to run a remote command without a platform");
+    }
+}
+
 
 Error
 PlatformFreeBSD::ResolveExecutable (const FileSpec &exe_file,
@@ -165,10 +185,10 @@ PlatformFreeBSD::ResolveExecutable (const FileSpec &exe_file,
 {
     Error error;
     // Nothing special to do here, just use the actual file and architecture
-
+    
     char exe_path[PATH_MAX];
     FileSpec resolved_exe_file (exe_file);
-
+    
     if (IsHost())
     {
         // If we have "ls" as the exe_file, resolve the executable location based on
@@ -178,10 +198,10 @@ PlatformFreeBSD::ResolveExecutable (const FileSpec &exe_file,
             exe_file.GetPath(exe_path, sizeof(exe_path));
             resolved_exe_file.SetFile(exe_path, true);
         }
-
+        
         if (!resolved_exe_file.Exists())
             resolved_exe_file.ResolveExecutableLocation ();
-
+        
         if (resolved_exe_file.Exists())
             error.Clear();
         else
@@ -216,8 +236,8 @@ PlatformFreeBSD::ResolveExecutable (const FileSpec &exe_file,
             }
         }
     }
-
-
+    
+    
     if (error.Success())
     {
         ModuleSpec module_spec (resolved_exe_file, exe_arch);
@@ -228,7 +248,7 @@ PlatformFreeBSD::ResolveExecutable (const FileSpec &exe_file,
                                                  module_search_paths_ptr,
                                                  NULL,
                                                  NULL);
-
+            
             if (!exe_module_sp || exe_module_sp->GetObjectFile() == NULL)
             {
                 exe_module_sp.reset();
@@ -259,12 +279,12 @@ PlatformFreeBSD::ResolveExecutable (const FileSpec &exe_file,
                     else
                         error.SetErrorToGenericError();
                 }
-
+                
                 if (idx > 0)
                     arch_names.PutCString (", ");
                 arch_names.PutCString (platform_arch.GetArchitectureName());
             }
-
+            
             if (error.Fail() || !exe_module_sp)
             {
                 error.SetErrorStringWithFormat ("'%s' doesn't contain any '%s' platform architectures: %s",
@@ -279,7 +299,7 @@ PlatformFreeBSD::ResolveExecutable (const FileSpec &exe_file,
         error.SetErrorStringWithFormat ("'%s' does not exist",
                                         exe_file.GetPath().c_str());
     }
-
+    
     return error;
 }
 
@@ -642,11 +662,18 @@ PlatformFreeBSD::GetStatus (Stream &strm)
 #ifndef LLDB_DISABLE_POSIX
     struct utsname un;
 
-    if (uname(&un)) {
-        strm << "FreeBSD";
-        return;
-    }
+    strm << "      Host: ";
 
+    ::memset(&un, 0, sizeof(utsname));
+    if (uname(&un) == -1)
+        strm << "FreeBSD" << '\n';
+
+    strm << un.sysname << ' ' << un.release;
+    if (un.nodename[0] != '\0')
+        strm << " (" << un.nodename << ')';
+    strm << '\n';
+
+    // Dump a common information about the platform status.
     strm << "Host: " << un.sysname << ' ' << un.release << ' ' << un.version << '\n';
 #endif
 

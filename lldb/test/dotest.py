@@ -154,6 +154,9 @@ config = {}
 # The pre_flight and post_flight functions come from reading a config file.
 pre_flight = None
 post_flight = None
+# So do the lldbtest_remote_sandbox and lldbtest_remote_shell_template variables.
+lldbtest_remote_sandbox = None
+lldbtest_remote_shell_template = None
 
 # The 'archs' and 'compilers' can be specified via either command line or configFile,
 # with the command line overriding the configFile.  The corresponding options can be
@@ -745,11 +748,11 @@ def parseOptionsAndInitTestdirs():
     # respectively.
     #
     # See also lldb-trunk/examples/test/usage-config.
-    global config, pre_flight, post_flight
+    global config, pre_flight, post_flight, lldbtest_remote_sandbox, lldbtest_remote_shell_template
     if configFile:
         # Pass config (a dictionary) as the locals namespace for side-effect.
         execfile(configFile, globals(), config)
-        print "config:", config
+        #print "config:", config
         if "pre_flight" in config:
             pre_flight = config["pre_flight"]
             if not callable(pre_flight):
@@ -760,6 +763,10 @@ def parseOptionsAndInitTestdirs():
             if not callable(post_flight):
                 print "fatal error: post_flight is not callable, exiting."
                 sys.exit(1)
+        if "lldbtest_remote_sandbox" in config:
+            lldbtest_remote_sandbox = config["lldbtest_remote_sandbox"]
+        if "lldbtest_remote_shell_template" in config:
+            lldbtest_remote_shell_template = config["lldbtest_remote_shell_template"]
         #print "sys.stderr:", sys.stderr
         #print "sys.stdout:", sys.stdout
 
@@ -1198,6 +1205,17 @@ def getsource_if_available(obj):
 if not noHeaders:
     print "lldb.pre_flight:", getsource_if_available(lldb.pre_flight)
     print "lldb.post_flight:", getsource_if_available(lldb.post_flight)
+
+# If either pre_flight or post_flight is defined, set lldb.test_remote to True.
+if lldb.pre_flight or lldb.post_flight:
+    lldb.test_remote = True
+else:
+    lldb.test_remote = False
+
+# So do the lldbtest_remote_sandbox and lldbtest_remote_shell_template variables.
+lldb.lldbtest_remote_sandbox = lldbtest_remote_sandbox
+lldb.lldbtest_remote_sandboxed_executable = None
+lldb.lldbtest_remote_shell_template = lldbtest_remote_shell_template
 
 # Put all these test decorators in the lldb namespace.
 lldb.dont_do_python_api_test = dont_do_python_api_test

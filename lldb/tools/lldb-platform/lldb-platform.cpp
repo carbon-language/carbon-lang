@@ -37,11 +37,13 @@ using namespace lldb_private;
 
 int g_debug = 0;
 int g_verbose = 0;
+int g_stay_alive = 0;
 
 static struct option g_long_options[] =
 {
     { "debug",              no_argument,        &g_debug,           1   },
     { "verbose",            no_argument,        &g_verbose,         1   },
+    { "stay-alive",         no_argument,        &g_stay_alive,      1   },
     { "log-file",           required_argument,  NULL,               'l' },
     { "log-flags",          required_argument,  NULL,               'f' },
     { "listen",             required_argument,  NULL,               'L' },
@@ -60,7 +62,21 @@ signal_handler(int signo)
     case SIGPIPE:
         g_sigpipe_received = 1;
         break;
+    case SIGHUP:
+        // Use SIGINT first, if that does not work, use SIGHUP as a last resort.
+        // And we should not call exit() here because it results in the global destructors
+        // to be invoked and wreaking havoc on the threads still running.
+        Host::SystemLog(Host::eSystemLogWarning, "SIGHUP received, exiting lldb-platform...\n");
+        abort();
+        break;
     }
+}
+
+static void
+display_usage (const char *progname)
+{
+    fprintf(stderr, "Usage:\n  %s [--log-file log-file-path] [--log-flags flags] --listen port\n", progname);
+    exit(0);
 }
 
 //----------------------------------------------------------------------
@@ -69,7 +85,9 @@ signal_handler(int signo)
 int
 main (int argc, char *argv[])
 {
+    const char *progname = argv[0];
     signal (SIGPIPE, signal_handler);
+    signal (SIGHUP, signal_handler);
     int long_option_index = 0;
     StreamSP log_stream_sp;
     Args log_args;
@@ -167,8 +185,16 @@ main (int argc, char *argv[])
         case 'L':
             listen_host_port.append (optarg);
             break;
+
+        case 'h':   /* fall-through is intentional */
+        case '?':
+            display_usage(progname);
+            break;
         }
     }
+    // Print usage and exit if no listening port is specified.
+    if (listen_host_port.empty())
+        display_usage(progname);
     
     if (log_stream_sp)
     {
@@ -182,50 +208,63 @@ main (int argc, char *argv[])
     argv += optind;
 
 
-    GDBRemoteCommunicationServer gdb_server (true);
-    if (!listen_host_port.empty())
-    {
-        std::unique_ptr<ConnectionFileDescriptor> conn_ap(new ConnectionFileDescriptor());
-        if (conn_ap.get())
+    do {
+        GDBRemoteCommunicationServer gdb_server (true);
+        if (!listen_host_port.empty())
         {
-            std::string connect_url ("listen://");
-            connect_url.append(listen_host_port.c_str());
-
-            printf ("Listening for a connection on %s...\n", listen_host_port.c_str());
-            if (conn_ap->Connect(connect_url.c_str(), &error) == eConnectionStatusSuccess)
+            std::unique_ptr<ConnectionFileDescriptor> conn_ap(new ConnectionFileDescriptor());
+            if (conn_ap.get())
             {
-                printf ("Connection established.\n");
-                gdb_server.SetConnection (conn_ap.release());
+                for (int j = 0; j < listen_host_port.size(); j++)
+                {
+                    char c = listen_host_port[j];
+                    if (c > '9' || c < '0')
+                        printf("WARNING: passing anything but a number as argument to --listen will most probably make connecting impossible.\n");
+                }
+                std::auto_ptr<ConnectionFileDescriptor> conn_ap(new ConnectionFileDescriptor());
+                if (conn_ap.get())
+                {
+                    std::string connect_url ("listen://");
+                    connect_url.append(listen_host_port.c_str());
+
+                    printf ("Listening for a connection on %s...\n", listen_host_port.c_str());
+                    if (conn_ap->Connect(connect_url.c_str(), &error) == eConnectionStatusSuccess)
+                    {
+                        printf ("Connection established.\n");
+                        gdb_server.SetConnection (conn_ap.release());
+                    }
+                }
+            }
+
+            if (gdb_server.IsConnected())
+            {
+                // After we connected, we need to get an initial ack from...
+                if (gdb_server.HandshakeWithClient(&error))
+                {
+                    bool interrupt = false;
+                    bool done = false;
+                    while (!interrupt && !done)
+                    {
+                        if (!gdb_server.GetPacketAndSendResponse (UINT32_MAX, error, interrupt, done))
+                            break;
+                    }
+                    
+                    if (error.Fail())
+                    {
+                        fprintf(stderr, "error: %s\n", error.AsCString());
+                    }
+                }
+                else
+                {
+                    fprintf(stderr, "error: handshake with client failed\n");
+                }
             }
         }
-    }
-
-
-    if (gdb_server.IsConnected())
-    {
-        // After we connected, we need to get an initial ack from...
-        if (gdb_server.HandshakeWithClient(&error))
-        {
-            bool interrupt = false;
-            bool done = false;
-            while (!interrupt && !done)
-            {
-                if (!gdb_server.GetPacketAndSendResponse (UINT32_MAX, error, interrupt, done))
-                    break;
-            }
-            
-            if (error.Fail())
-            {
-                fprintf(stderr, "error: %s\n", error.AsCString());
-            }
-        }
-        else
-        {
-            fprintf(stderr, "error: handshake with client failed\n");
-        }
-    }
+    } while (g_stay_alive);
 
     Debugger::Terminate();
+
+    fprintf(stderr, "lldb-platform exiting...\n");
 
     return 0;
 }

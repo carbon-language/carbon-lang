@@ -89,7 +89,10 @@ public:
     GetLaunchSuccess (std::string &error_str);
 
     uint16_t
-    LaunchGDBserverAndGetPort ();
+    LaunchGDBserverAndGetPort (lldb::pid_t &pid);
+    
+    bool
+    KillSpawnedProcess (lldb::pid_t pid);
 
     //------------------------------------------------------------------
     /// Sends a GDB remote protocol 'A' packet that delivers program
@@ -347,10 +350,61 @@ public:
         return m_interrupt_sent;
     }
     
+    virtual lldb::user_id_t
+    OpenFile (const lldb_private::FileSpec& file_spec,
+              uint32_t flags,
+              mode_t mode,
+              lldb_private::Error &error);
+    
+    virtual bool
+    CloseFile (lldb::user_id_t fd,
+               lldb_private::Error &error);
+    
+    virtual lldb::user_id_t
+    GetFileSize (const lldb_private::FileSpec& file_spec);
+    
+    virtual uint32_t
+    GetFilePermissions(const lldb_private::FileSpec& file_spec,
+                       lldb_private::Error &error);
+
+    virtual uint64_t
+    ReadFile (lldb::user_id_t fd,
+              uint64_t offset,
+              void *dst,
+              uint64_t dst_len,
+              lldb_private::Error &error);
+    
+    virtual uint64_t
+    WriteFile (lldb::user_id_t fd,
+               uint64_t offset,
+               const void* src,
+               uint64_t src_len,
+               lldb_private::Error &error);
+    
+    virtual uint32_t
+    MakeDirectory (const std::string &path,
+                   mode_t mode);
+    
+    virtual bool
+    GetFileExists (const lldb_private::FileSpec& file_spec);
+    
+    virtual lldb_private::Error
+    RunShellCommand (const char *command,           // Shouldn't be NULL
+                     const char *working_dir,       // Pass NULL to use the current working directory
+                     int *status_ptr,               // Pass NULL if you don't want the process exit status
+                     int *signo_ptr,                // Pass NULL if you don't want the signal that caused the process to exit
+                     std::string *command_output,   // Pass NULL if you don't want the command output
+                     uint32_t timeout_sec);         // Timeout in seconds to wait for shell program to finish
+    
+    virtual bool
+    CalculateMD5 (const lldb_private::FileSpec& file_spec,
+                  uint64_t &high,
+                  uint64_t &low);
+    
     std::string
     HarmonizeThreadIdsForProfileData (ProcessGDBRemote *process,
                                       StringExtractorGDBRemote &inputStringExtractor);
-    
+
 protected:
 
     bool

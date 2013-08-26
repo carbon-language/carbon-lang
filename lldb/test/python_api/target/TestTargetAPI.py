@@ -195,7 +195,7 @@ class TargetAPITestCase(TestBase):
         self.expect(desc, exe=False,
             substrs = ['a.out', 'Target', 'Module', 'Breakpoint'])
 
-
+    @not_remote_testsuite_ready
     def launch_new_process_and_redirect_stdout(self):
         """Exercise SBTaget.Launch() API with redirected stdout."""
         exe = os.path.join(os.getcwd(), "a.out")

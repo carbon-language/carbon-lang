@@ -421,6 +421,20 @@ invalidate-regs
             change depending on if the mode has changed. 
 
 //----------------------------------------------------------------------
+// "qPlatform_RunCommand"
+//
+// BRIEF
+//  Run a command in a shell on the connected remote machine.
+//
+// PRIORITY TO IMPLEMENT
+//  TODO
+//----------------------------------------------------------------------
+
+send packet: TODO (see GDBRemoteCommunicationClient::RunShellCommand)
+read packet: TODO (see GDBRemoteCommunicationServer::Handle_qPlatform_RunCommand)
+
+
+//----------------------------------------------------------------------
 // "qHostInfo"
 //
 // BRIEF
@@ -848,3 +862,123 @@ for this region.
 //  your debug session more reliable and informative.
 //----------------------------------------------------------------------
  
+
+//----------------------------------------------------------------------
+// PLATFORM EXTENSION - for use as a GDB remote platform
+//----------------------------------------------------------------------
+// "qfProcessInfo"
+// "qsProcessInfo"
+//
+// BRIEF
+//  Get the first process info (qfProcessInfo) or subsequent processs
+//  info (qsProcessInfo) for one or more processes on the remote 
+//  platform. The first call gets the first match and subsequent calls
+//  to qsProcessInfo gets the subsequent matches. Return an error EXX,
+//  where XX are two hex digits, when no more matches are available.
+//
+// PRIORITY TO IMPLEMENT
+//  Required. The qfProcessInfo packet can be followed by a ':' and
+//  some key value pairs. The key value pairs in the command are:
+//
+//  KEY           VALUE     DESCRIPTION
+//  ===========   ========  ================================================
+//  "name"        ascii-hex An ASCII hex string that contains the name of 
+//                          the process that will be matched.
+//  "name_match"  enum      One of: "equals", "starts_with", "ends_with", 
+//                          "contains" or "regex"
+//  "pid"         integer   A string value containing the decimal process ID
+//  "parent_pid"  integer   A string value containing the decimal parent 
+//                          process ID
+//  "uid"         integer   A string value containing the decimal user ID
+//  "gid"         integer   A string value containing the decimal group ID
+//  "euid"        integer   A string value containing the decimal effective user ID
+//  "egid"        integer   A string value containing the decimal effective group ID
+//  "all_users"   bool      A boolean value that specifies if processes should
+//                          be listed for all users, not just the user that the 
+//                          platform is running as
+//  "triple"      ascii-hex An ASCII hex target triple string ("x86_64", 
+//                          "x86_64-apple-macosx", "armv7-apple-ios")
+//
+// The response consists of key/value pairs where the key is separated from the
+// values with colons and each pair is terminated with a semi colon. For a list
+// of the key/value pairs in the response see the "qProcessInfoPID" packet
+// documentation.
+//
+// Sample packet/response:
+// send packet: $qfProcessInfo#00
+// read packet: $pid:60001;ppid:59948;uid:7746;gid:11;euid:7746;egid:11;name:6c6c6462;triple:7838365f36342d6170706c652d6d61636f7378;#00
+// send packet: $qsProcessInfo#00
+// read packet: $pid:59992;ppid:192;uid:7746;gid:11;euid:7746;egid:11;name:6d64776f726b6572;triple:7838365f36342d6170706c652d6d61636f7378;#00
+// send packet: $qsProcessInfo#00
+// read packet: $E04#00
+//----------------------------------------------------------------------
+
+
+//----------------------------------------------------------------------
+// PLATFORM EXTENSION - for use as a GDB remote platform
+//----------------------------------------------------------------------
+// "qLaunchGDBServer"
+//
+// BRIEF
+//  Have the remote platform launch a GDB server.
+//
+// PRIORITY TO IMPLEMENT
+//  Required. The qLaunchGDBServer packet must be followed by a ':' and
+//  some key value pairs. The key value pairs in the command are:
+//
+//  KEY           VALUE     DESCRIPTION
+//  ===========   ========  ================================================
+//  "port"        integer   A string value containing the decimal port ID or
+//                          zero if the port should be bound and returned
+//
+//  "host"        integer   The host that connections should be limited to
+//                          when the GDB server is connected to.
+//
+// The response consists of key/value pairs where the key is separated from the
+// values with colons and each pair is terminated with a semi colon.
+//
+// Sample packet/response:
+// send packet: $qLaunchGDBServer:port:0;host:lldb.apple.com;#00
+// read packet: $pid:60025;port:50776;#00
+//
+// The "pid" key/value pair is only specified if the remote platform launched
+// a separate process for the GDB remote server and can be omitted if no
+// process was separately launched.
+//
+// The "port" key/value pair in the response lets clients know what port number
+// to attach to in case zero was specified as the "port" in the sent command.
+//----------------------------------------------------------------------
+
+
+//----------------------------------------------------------------------
+// PLATFORM EXTENSION - for use as a GDB remote platform
+//----------------------------------------------------------------------
+// "qProcessInfoPID:PID"
+//
+// BRIEF
+//  Have the remote platform get detailed information on a process by
+//  ID. PID is specified as a decimal integer.
+//
+// PRIORITY TO IMPLEMENT
+//  Optional. 
+//
+// The response consists of key/value pairs where the key is separated from the
+// values with colons and each pair is terminated with a semi colon.
+//
+// The key value pairs in the response are:
+//
+//  KEY           VALUE     DESCRIPTION
+//  ===========   ========  ================================================
+//  "pid"         integer   Process ID as a decimal integer string
+//  "ppid"        integer   Parent process ID as a decimal integer string
+//  "uid"         integer   A string value containing the decimal user ID
+//  "gid"         integer   A string value containing the decimal group ID
+//  "euid"        integer   A string value containing the decimal effective user ID
+//  "egid"        integer   A string value containing the decimal effective group ID
+//  "name"        ascii-hex An ASCII hex string that contains the name of the process
+//  "triple"      ascii-hex A target triple ("x86_64-apple-macosx", "armv7-apple-ios")
+//
+// Sample packet/response:
+// send packet: $qProcessInfoPID:60050#00
+// read packet: $pid:60050;ppid:59948;uid:7746;gid:11;euid:7746;egid:11;name:6c6c6462;triple:7838365f36342d6170706c652d6d61636f7378;#00
+//----------------------------------------------------------------------

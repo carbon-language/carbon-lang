@@ -94,6 +94,9 @@ StringExtractorGDBRemote::GetServerPacketType () const
             else if (PACKET_STARTS_WITH ("QSetSTDERR:"))        return eServerPacketType_QSetSTDERR;
             else if (PACKET_STARTS_WITH ("QSetWorkingDir:"))    return eServerPacketType_QSetWorkingDir;
             break;
+        case 'L':
+            if (PACKET_STARTS_WITH ("QLaunchArch:"))            return eServerPacketType_QLaunchArch;
+            break;
         }
         break;
             
@@ -120,14 +123,21 @@ StringExtractorGDBRemote::GetServerPacketType () const
             if (PACKET_MATCHES ("qHostInfo"))                   return eServerPacketType_qHostInfo;
             break;
 
+        case 'K':
+            if (PACKET_STARTS_WITH ("qKillSpawnedProcess"))     return eServerPacketType_qKillSpawnedProcess;
+            break;
+        
         case 'L':
-            if (PACKET_MATCHES ("qLaunchGDBServer"))            return eServerPacketType_qLaunchGDBServer;
+            if (PACKET_STARTS_WITH ("qLaunchGDBServer"))        return eServerPacketType_qLaunchGDBServer;
             if (PACKET_MATCHES ("qLaunchSuccess"))              return eServerPacketType_qLaunchSuccess;
             break;
             
         case 'P':
-            if (PACKET_STARTS_WITH ("qProcessInfoPID:"))        return eServerPacketType_qProcessInfoPID;
+            if (PACKET_STARTS_WITH ("qProcessInfoPID:"))                 return eServerPacketType_qProcessInfoPID;
+            if (PACKET_STARTS_WITH ("qPlatform_RunCommand:"))            return eServerPacketType_qPlatform_RunCommand;
+            if (PACKET_STARTS_WITH ("qPlatform_IO_MkDir:"))              return eServerPacketType_qPlatform_IO_MkDir;
             break;
+                
 
         case 'S':
             if (PACKET_STARTS_WITH ("qSpeedTest:"))             return eServerPacketType_qSpeedTest;
@@ -138,6 +148,21 @@ StringExtractorGDBRemote::GetServerPacketType () const
             break;
         }
         break;
+    case 'v':
+            if (PACKET_STARTS_WITH("vFile:"))
+            {
+                if (PACKET_STARTS_WITH("vFile:open:"))               return eServerPacketType_vFile_Open;
+                else if (PACKET_STARTS_WITH("vFile:close:"))         return eServerPacketType_vFile_Close;
+                else if (PACKET_STARTS_WITH("vFile:pread"))          return eServerPacketType_vFile_pRead;
+                else if (PACKET_STARTS_WITH("vFile:pwrite"))         return eServerPacketType_vFile_pWrite;
+                else if (PACKET_STARTS_WITH("vFile:size"))           return eServerPacketType_vFile_Size;
+                else if (PACKET_STARTS_WITH("vFile:exists"))         return eServerPacketType_vFile_Exists;
+                else if (PACKET_STARTS_WITH("vFile:stat"))           return eServerPacketType_vFile_Stat;
+                else if (PACKET_STARTS_WITH("vFile:mode"))           return eServerPacketType_vFile_Mode;
+                else if (PACKET_STARTS_WITH("vFile:MD5"))            return eServerPacketType_vFile_MD5;
+
+            }
+            break;
     }
     return eServerPacketType_unimplemented;
 }
@@ -180,3 +205,19 @@ StringExtractorGDBRemote::GetError ()
     }
     return 0;
 }
+
+size_t
+StringExtractorGDBRemote::GetEscapedBinaryData (std::string &str)
+{
+    str.clear();
+    char ch;
+    while (GetBytesLeft())
+    {
+        ch = GetChar();
+        if (ch == 0x7d)
+            ch = (GetChar() ^ 0x20);
+        str.append(1,ch);
+    }
+    return str.size();
+}
+

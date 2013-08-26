@@ -22,6 +22,7 @@
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/PluginInterface.h"
+#include "lldb/Interpreter/Options.h"
 #include "lldb/Host/Mutex.h"
 
 namespace lldb_private {
@@ -542,9 +543,190 @@ namespace lldb_private {
             return false;
         }
         
+        virtual uint32_t
+        MakeDirectory (const std::string &path,
+                       mode_t mode)
+        {
+            return UINT32_MAX;
+        }
+        
+        // this need not be virtual: the core behavior is in
+        // MakeDirectory(std::string,mode_t)
+        uint32_t
+        MakeDirectory (const FileSpec &spec,
+                       mode_t mode);
+        
+        virtual lldb::user_id_t
+        OpenFile (const FileSpec& file_spec,
+                  uint32_t flags,
+                  mode_t mode,
+                  Error &error)
+        {
+            return UINT64_MAX;
+        }
+        
+        virtual bool
+        CloseFile (lldb::user_id_t fd,
+                   Error &error)
+        {
+            return false;
+        }
+        
+        virtual lldb::user_id_t
+        GetFileSize (const FileSpec& file_spec)
+        {
+            return UINT64_MAX;
+        }
+
+        virtual uint64_t
+        ReadFile (lldb::user_id_t fd,
+                  uint64_t offset,
+                  void *dst,
+                  uint64_t dst_len,
+                  Error &error)
+        {
+            error.SetErrorStringWithFormat ("Platform::ReadFile() is not supported in the %s platform", GetName().GetCString());
+            return -1;
+        }
+        
+        virtual uint64_t
+        WriteFile (lldb::user_id_t fd,
+                   uint64_t offset,
+                   const void* src,
+                   uint64_t src_len,
+                   Error &error)
+        {
+            error.SetErrorStringWithFormat ("Platform::ReadFile() is not supported in the %s platform", GetName().GetCString());
+            return -1;
+        }
+        
+        virtual Error
+        PutFile (const FileSpec& source,
+                 const FileSpec& destination,
+                 uint32_t uid = UINT32_MAX,
+                 uint32_t gid = UINT32_MAX);
+                
         virtual size_t
         GetEnvironment (StringList &environment);
         
+        virtual Error
+        GetFile (const FileSpec& source,
+                 const FileSpec& destination);
+        
+        virtual bool
+        GetFileExists (const lldb_private::FileSpec& file_spec);
+        
+        virtual uint32_t
+        GetFilePermissions (const lldb_private::FileSpec &file_spec,
+                            Error &error)
+        {
+            error.SetErrorStringWithFormat ("Platform::GetFilePermissions() is not supported in the %s platform", GetName().GetCString());
+            return 0;
+        }
+
+        virtual bool
+        GetSupportsRSync ()
+        {
+            return m_supports_rsync;
+        }
+        
+        virtual void
+        SetSupportsRSync(bool flag)
+        {
+            m_supports_rsync = flag;
+        }
+        
+        virtual const char*
+        GetRSyncOpts ()
+        {
+            return m_rsync_opts.c_str();
+        }
+        
+        virtual void
+        SetRSyncOpts (const char* opts)
+        {
+            m_rsync_opts.assign(opts);
+        }
+        
+        virtual const char*
+        GetRSyncPrefix ()
+        {
+            return m_rsync_prefix.c_str();
+        }
+        
+        virtual void
+        SetRSyncPrefix (const char* prefix)
+        {
+            m_rsync_prefix.assign(prefix);
+        }
+        
+        virtual bool
+        GetSupportsSSH ()
+        {
+            return m_supports_ssh;
+        }
+        
+        virtual void
+        SetSupportsSSH(bool flag)
+        {
+            m_supports_ssh = flag;
+        }
+        
+        virtual const char*
+        GetSSHOpts ()
+        {
+            return m_ssh_opts.c_str();
+        }
+        
+        virtual void
+        SetSSHOpts (const char* opts)
+        {
+            m_ssh_opts.assign(opts);
+        }
+        
+        virtual bool
+        GetIgnoresRemoteHostname ()
+        {
+            return m_ignores_remote_hostname;
+        }
+        
+        virtual void
+        SetIgnoresRemoteHostname(bool flag)
+        {
+            m_ignores_remote_hostname = flag;
+        }
+        
+        virtual lldb_private::OptionGroupOptions *
+        GetConnectionOptions (CommandInterpreter& interpreter)
+        {
+            return NULL;
+        }
+        
+        virtual lldb_private::Error
+        RunShellCommand (const char *command,           // Shouldn't be NULL
+                         const char *working_dir,       // Pass NULL to use the current working directory
+                         int *status_ptr,               // Pass NULL if you don't want the process exit status
+                         int *signo_ptr,                // Pass NULL if you don't want the signal that caused the process to exit
+                         std::string *command_output,   // Pass NULL if you don't want the command output
+                         uint32_t timeout_sec);         // Timeout in seconds to wait for shell program to finish
+        
+        virtual void
+        SetLocalCacheDirectory (const char* local);
+        
+        virtual const char*
+        GetLocalCacheDirectory ();
+        
+        virtual std::string
+        GetPlatformSpecificConnectionInformation()
+        {
+            return "";
+        }
+        
+        virtual bool
+        CalculateMD5 (const FileSpec& file_spec,
+                      uint64_t &low,
+                      uint64_t &high);
+                
     protected:
         bool m_is_host;
         // Set to true when we are able to actually set the OS version while 
@@ -569,7 +751,14 @@ namespace lldb_private {
         IDToNameMap m_gid_map;
         size_t m_max_uid_name_len;
         size_t m_max_gid_name_len;
-        
+        bool m_supports_rsync;
+        std::string m_rsync_opts;
+        std::string m_rsync_prefix;
+        bool m_supports_ssh;
+        std::string m_ssh_opts;
+        bool m_ignores_remote_hostname;
+        std::string m_local_cache_directory;
+
         const char *
         GetCachedUserName (uint32_t uid)
         {
@@ -750,6 +939,110 @@ namespace lldb_private {
     private:
         DISALLOW_COPY_AND_ASSIGN (PlatformList);
     };
+    
+    class OptionGroupPlatformRSync : public lldb_private::OptionGroup
+    {
+    public:
+        OptionGroupPlatformRSync ();
+        
+        virtual
+        ~OptionGroupPlatformRSync ();
+        
+        virtual lldb_private::Error
+        SetOptionValue (CommandInterpreter &interpreter,
+                        uint32_t option_idx,
+                        const char *option_value);
+        
+        void
+        OptionParsingStarting (CommandInterpreter &interpreter);
+        
+        const lldb_private::OptionDefinition*
+        GetDefinitions ();
+        
+        virtual uint32_t
+        GetNumDefinitions ();
+        
+        // Options table: Required for subclasses of Options.
+        
+        static lldb_private::OptionDefinition g_option_table[];
+        
+        // Instance variables to hold the values for command options.
+        
+        bool m_rsync;
+        std::string m_rsync_opts;
+        std::string m_rsync_prefix;
+        bool m_ignores_remote_hostname;
+    private:
+        DISALLOW_COPY_AND_ASSIGN(OptionGroupPlatformRSync);
+    };
+    
+    class OptionGroupPlatformSSH : public lldb_private::OptionGroup
+    {
+    public:
+        OptionGroupPlatformSSH ();
+        
+        virtual
+        ~OptionGroupPlatformSSH ();
+        
+        virtual lldb_private::Error
+        SetOptionValue (CommandInterpreter &interpreter,
+                        uint32_t option_idx,
+                        const char *option_value);
+        
+        void
+        OptionParsingStarting (CommandInterpreter &interpreter);
+        
+        virtual uint32_t
+        GetNumDefinitions ();
+        
+        const lldb_private::OptionDefinition*
+        GetDefinitions ();
+        
+        // Options table: Required for subclasses of Options.
+        
+        static lldb_private::OptionDefinition g_option_table[];
+        
+        // Instance variables to hold the values for command options.
+        
+        bool m_ssh;
+        std::string m_ssh_opts;
+    private:
+        DISALLOW_COPY_AND_ASSIGN(OptionGroupPlatformSSH);
+    };
+    
+    class OptionGroupPlatformCaching : public lldb_private::OptionGroup
+    {
+    public:
+        OptionGroupPlatformCaching ();
+        
+        virtual
+        ~OptionGroupPlatformCaching ();
+        
+        virtual lldb_private::Error
+        SetOptionValue (CommandInterpreter &interpreter,
+                        uint32_t option_idx,
+                        const char *option_value);
+        
+        void
+        OptionParsingStarting (CommandInterpreter &interpreter);
+        
+        virtual uint32_t
+        GetNumDefinitions ();
+        
+        const lldb_private::OptionDefinition*
+        GetDefinitions ();
+        
+        // Options table: Required for subclasses of Options.
+        
+        static lldb_private::OptionDefinition g_option_table[];
+        
+        // Instance variables to hold the values for command options.
+        
+        std::string m_cache_dir;
+    private:
+        DISALLOW_COPY_AND_ASSIGN(OptionGroupPlatformCaching);
+    };
+    
 } // namespace lldb_private
 
 #endif  // liblldb_Platform_h_

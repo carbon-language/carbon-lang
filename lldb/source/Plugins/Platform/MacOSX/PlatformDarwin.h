@@ -14,9 +14,9 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
-#include "lldb/Target/Platform.h"
+#include "Plugins/Platform/POSIX/PlatformPOSIX.h"
 
-class PlatformDarwin : public lldb_private::Platform
+class PlatformDarwin : public PlatformPOSIX
 {
 public:
     PlatformDarwin (bool is_host);
@@ -118,12 +118,18 @@ public:
     x86GetSupportedArchitectureAtIndex (uint32_t idx, lldb_private::ArchSpec &arch);
 
 protected:
-    lldb::PlatformSP m_remote_platform_sp; // Allow multiple ways to connect to a remote darwin OS
+    virtual lldb_private::Error
+    GetSharedModuleWithLocalCache (const lldb_private::ModuleSpec &module_spec,
+                                   lldb::ModuleSP &module_sp,
+                                   const lldb_private::FileSpecList *module_search_paths_ptr,
+                                   lldb::ModuleSP *old_module_sp_ptr,
+                                   bool *did_create_ptr);
+
     std::string m_developer_directory;
     
     const char *
     GetDeveloperDirectory();
-
+    
 private:
     DISALLOW_COPY_AND_ASSIGN (PlatformDarwin);
 

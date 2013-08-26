@@ -133,7 +133,11 @@ GDBRemoteCommunication::GDBRemoteCommunication(const char *comm_name,
                                                const char *listener_name, 
                                                bool is_platform) :
     Communication(comm_name),
+#ifdef LLDB_CONFIGURATION_DEBUG
+    m_packet_timeout (1000),
+#else
     m_packet_timeout (1),
+#endif
     m_sequence_mutex (Mutex::eMutexTypeRecursive),
     m_public_is_running (false),
     m_private_is_running (false),

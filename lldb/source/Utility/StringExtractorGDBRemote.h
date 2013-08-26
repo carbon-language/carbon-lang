@@ -53,17 +53,30 @@ public:
         eServerPacketType_qGroupName,
         eServerPacketType_qHostInfo,
         eServerPacketType_qLaunchGDBServer,
+        eServerPacketType_qKillSpawnedProcess,
         eServerPacketType_qLaunchSuccess,
         eServerPacketType_qProcessInfoPID,
         eServerPacketType_qSpeedTest,
         eServerPacketType_qUserName,
         eServerPacketType_QEnvironment,
+        eServerPacketType_QLaunchArch,
         eServerPacketType_QSetDisableASLR,
         eServerPacketType_QSetSTDIN,
         eServerPacketType_QSetSTDOUT,
         eServerPacketType_QSetSTDERR,
         eServerPacketType_QSetWorkingDir,
-        eServerPacketType_QStartNoAckMode
+        eServerPacketType_QStartNoAckMode,
+        eServerPacketType_qPlatform_RunCommand,
+        eServerPacketType_qPlatform_IO_MkDir,
+        eServerPacketType_vFile_Open,
+        eServerPacketType_vFile_Close,
+        eServerPacketType_vFile_pRead,
+        eServerPacketType_vFile_pWrite,
+        eServerPacketType_vFile_Size,
+        eServerPacketType_vFile_Mode,
+        eServerPacketType_vFile_Exists,
+        eServerPacketType_vFile_MD5,
+        eServerPacketType_vFile_Stat
     };
     
     ServerPacketType
@@ -98,6 +111,10 @@ public:
     // digits. Otherwise the error encoded in XX is returned.
     uint8_t
     GetError();
+    
+    size_t
+    GetEscapedBinaryData (std::string &str);
+
 };
 
 #endif  // utility_StringExtractorGDBRemote_h_

@@ -18,6 +18,7 @@
 #include "lldb/Breakpoint/BreakpointLocation.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Error.h"
+#include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/ModuleSpec.h"
 #include "lldb/Core/Timer.h"
@@ -36,8 +37,7 @@ using namespace lldb_private;
 /// Default Constructor
 //------------------------------------------------------------------
 PlatformDarwin::PlatformDarwin (bool is_host) :
-    Platform(is_host),  // This is the local host platform
-    m_remote_platform_sp (),
+    PlatformPOSIX(is_host),  // This is the local host platform
     m_developer_directory ()
 {
 }
@@ -209,11 +209,11 @@ PlatformDarwin::ResolveExecutable (const FileSpec &exe_file,
             StreamString arch_names;
             for (uint32_t idx = 0; GetSupportedArchitectureAtIndex (idx, module_spec.GetArchitecture()); ++idx)
             {
-                error = ModuleList::GetSharedModule (module_spec, 
-                                                     exe_module_sp, 
-                                                     module_search_paths_ptr,
-                                                     NULL, 
-                                                     NULL);
+                error = GetSharedModule (module_spec, 
+                                         exe_module_sp, 
+                                         module_search_paths_ptr,
+                                         NULL, 
+                                         NULL);
                 // Did we find an executable using one of the 
                 if (error.Success())
                 {
@@ -268,7 +268,144 @@ PlatformDarwin::ResolveSymbolFile (Target &target,
     
 }
 
+static lldb_private::Error
+MakeCacheFolderForFile (const FileSpec& module_cache_spec)
+{
+    FileSpec module_cache_folder = module_cache_spec.CopyByRemovingLastPathComponent();
+    StreamString mkdir_folder_cmd;
+    mkdir_folder_cmd.Printf("mkdir -p %s/%s", module_cache_folder.GetDirectory().AsCString(), module_cache_folder.GetFilename().AsCString());
+    return Host::RunShellCommand(mkdir_folder_cmd.GetData(),
+                          NULL,
+                          NULL,
+                          NULL,
+                          NULL,
+                          60);
+}
 
+static lldb_private::Error
+BringInRemoteFile (Platform* platform,
+                   const lldb_private::ModuleSpec &module_spec,
+                   const FileSpec& module_cache_spec)
+{
+    MakeCacheFolderForFile(module_cache_spec);
+    Error err = platform->GetFile(module_spec.GetFileSpec(), module_cache_spec);
+    return err;
+}
+
+lldb_private::Error
+PlatformDarwin::GetSharedModuleWithLocalCache (const lldb_private::ModuleSpec &module_spec,
+                                               lldb::ModuleSP &module_sp,
+                                               const lldb_private::FileSpecList *module_search_paths_ptr,
+                                               lldb::ModuleSP *old_module_sp_ptr,
+                                               bool *did_create_ptr)
+{
+
+    Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PLATFORM));
+    if (log)
+        log->Printf("[%s] Trying to find module %s/%s - platform path %s/%s symbol path %s/%s\n",
+                     (IsHost() ? "host" : "remote"),
+                     module_spec.GetFileSpec().GetDirectory().AsCString(),
+                     module_spec.GetFileSpec().GetFilename().AsCString(),
+                     module_spec.GetPlatformFileSpec().GetDirectory().AsCString(),
+                     module_spec.GetPlatformFileSpec().GetFilename().AsCString(),
+                     module_spec.GetSymbolFileSpec().GetDirectory().AsCString(),
+                     module_spec.GetSymbolFileSpec().GetFilename().AsCString());
+
+    std::string cache_path(GetLocalCacheDirectory());
+    std::string module_path (module_spec.GetFileSpec().GetPath());
+    cache_path.append(module_path);
+    FileSpec module_cache_spec(cache_path.c_str(),false);
+    
+    // if rsync is supported, always bring in the file - rsync will be very efficient
+    // when files are the same on the local and remote end of the connection
+    if (this->GetSupportsRSync())
+    {
+        Error err = BringInRemoteFile (this, module_spec, module_cache_spec);
+        if (err.Fail())
+            return err;
+        if (module_cache_spec.Exists())
+        {
+            Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PLATFORM));
+            if (log)
+                log->Printf("[%s] module %s/%s was rsynced and is now there\n",
+                             (IsHost() ? "host" : "remote"),
+                             module_spec.GetFileSpec().GetDirectory().AsCString(),
+                             module_spec.GetFileSpec().GetFilename().AsCString());
+            ModuleSpec local_spec(module_cache_spec, module_spec.GetArchitecture());
+            module_sp.reset(new Module(local_spec));
+            module_sp->SetPlatformFileSpec(module_spec.GetFileSpec());
+            return Error();
+        }
+    }
+
+    if (module_spec.GetFileSpec().Exists() && !module_sp)
+    {
+        module_sp.reset(new Module(module_spec));
+        return Error();
+    }
+    
+    // try to find the module in the cache
+    if (module_cache_spec.Exists())
+    {
+        // get the local and remote MD5 and compare
+        {
+            // when going over the *slow* GDB remote transfer mechanism we first check
+            // the hashes of the files - and only do the actual transfer if they differ
+            uint64_t high_local,high_remote,low_local,low_remote;
+            Host::CalculateMD5 (module_cache_spec, low_local, high_local);
+            m_remote_platform_sp->CalculateMD5(module_spec.GetFileSpec(), low_remote, high_remote);
+            if (low_local != low_remote || high_local != high_remote)
+            {
+                // bring in the remote file
+                Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PLATFORM));
+                if (log)
+                    log->Printf("[%s] module %s/%s needs to be replaced from remote copy\n",
+                                 (IsHost() ? "host" : "remote"),
+                                 module_spec.GetFileSpec().GetDirectory().AsCString(),
+                                 module_spec.GetFileSpec().GetFilename().AsCString());
+                Error err = BringInRemoteFile (this, module_spec, module_cache_spec);
+                if (err.Fail())
+                    return err;
+            }
+        }
+        
+        ModuleSpec local_spec(module_cache_spec, module_spec.GetArchitecture());
+        module_sp.reset(new Module(local_spec));
+        module_sp->SetPlatformFileSpec(module_spec.GetFileSpec());
+        Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PLATFORM));
+            if (log)
+                log->Printf("[%s] module %s/%s was found in the cache\n",
+                             (IsHost() ? "host" : "remote"),
+                             module_spec.GetFileSpec().GetDirectory().AsCString(),
+                             module_spec.GetFileSpec().GetFilename().AsCString());
+        return Error();
+    }
+    
+    // bring in the remote module file
+    if (log)
+        log->Printf("[%s] module %s/%s needs to come in remotely\n",
+                     (IsHost() ? "host" : "remote"),
+                     module_spec.GetFileSpec().GetDirectory().AsCString(),
+                     module_spec.GetFileSpec().GetFilename().AsCString());
+    Error err = BringInRemoteFile (this, module_spec, module_cache_spec);
+    if (err.Fail())
+        return err;
+    if (module_cache_spec.Exists())
+    {
+        Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PLATFORM));
+        if (log)
+            log->Printf("[%s] module %s/%s is now cached and fine\n",
+                         (IsHost() ? "host" : "remote"),
+                         module_spec.GetFileSpec().GetDirectory().AsCString(),
+                         module_spec.GetFileSpec().GetFilename().AsCString());
+        ModuleSpec local_spec(module_cache_spec, module_spec.GetArchitecture());
+        module_sp.reset(new Module(local_spec));
+        module_sp->SetPlatformFileSpec(module_spec.GetFileSpec());
+        return Error();
+    }
+    else
+        return Error("unable to obtain valid module file");
+}
 
 Error
 PlatformDarwin::GetSharedModule (const ModuleSpec &module_spec,
@@ -508,25 +645,38 @@ PlatformDarwin::ConnectRemote (Args& args)
         if (!m_remote_platform_sp)
             m_remote_platform_sp = Platform::Create ("remote-gdb-server", error);
 
-        if (m_remote_platform_sp)
-        {
-            if (error.Success())
-            {
-                if (m_remote_platform_sp)
-                {
-                    error = m_remote_platform_sp->ConnectRemote (args);
-                }
-                else
-                {
-                    error.SetErrorString ("\"platform connect\" takes a single argument: <connect-url>");
-                }
-            }
-        }
+        if (m_remote_platform_sp && error.Success())
+            error = m_remote_platform_sp->ConnectRemote (args);
         else
             error.SetErrorString ("failed to create a 'remote-gdb-server' platform");
         
         if (error.Fail())
             m_remote_platform_sp.reset();
+    }
+    
+    if (error.Success() && m_remote_platform_sp)
+    {
+        if (m_options.get())
+        {
+            OptionGroupOptions* options = m_options.get();
+            OptionGroupPlatformRSync* m_rsync_options = (OptionGroupPlatformRSync*)options->GetGroupWithOption('r');
+            OptionGroupPlatformSSH* m_ssh_options = (OptionGroupPlatformSSH*)options->GetGroupWithOption('s');
+            OptionGroupPlatformCaching* m_cache_options = (OptionGroupPlatformCaching*)options->GetGroupWithOption('c');
+            
+            if (m_rsync_options->m_rsync)
+            {
+                SetSupportsRSync(true);
+                SetRSyncOpts(m_rsync_options->m_rsync_opts.c_str());
+                SetRSyncPrefix(m_rsync_options->m_rsync_prefix.c_str());
+                SetIgnoresRemoteHostname(m_rsync_options->m_ignores_remote_hostname);
+            }
+            if (m_ssh_options->m_ssh)
+            {
+                SetSupportsSSH(true);
+                SetSSHOpts(m_ssh_options->m_ssh_opts.c_str());
+            }
+            SetLocalCacheDirectory(m_cache_options->m_cache_dir.c_str());
+        }
     }
 
     return error;

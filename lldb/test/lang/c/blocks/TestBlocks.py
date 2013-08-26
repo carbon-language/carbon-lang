@@ -6,7 +6,7 @@ import lldb
 from lldbtest import *
 import lldbutil
 
-class AnonymousTestCase(TestBase):
+class BlocksTestCase(TestBase):
 
     mydir = os.path.join("lang", "c", "blocks")
     lines = []

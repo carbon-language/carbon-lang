@@ -26,10 +26,158 @@
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Platform.h"
 #include "lldb/Target/Process.h"
+#include "lldb/Utility/Utils.h"
 
 using namespace lldb;
 using namespace lldb_private;
 
+static mode_t
+ParsePermissionString(const char* permissions)
+{
+    if (strlen(permissions) != 9)
+        return (mode_t)(-1);
+    bool user_r,user_w,user_x,
+    group_r,group_w,group_x,
+    world_r,world_w,world_x;
+    
+    user_r = (permissions[0] == 'r');
+    user_w = (permissions[1] == 'w');
+    user_x = (permissions[2] == 'x');
+    
+    group_r = (permissions[3] == 'r');
+    group_w = (permissions[4] == 'w');
+    group_x = (permissions[5] == 'x');
+    
+    world_r = (permissions[6] == 'r');
+    world_w = (permissions[7] == 'w');
+    world_x = (permissions[8] == 'x');
+    
+    mode_t user,group,world;
+    user = (user_r ? 4 : 0) | (user_w ? 2 : 0) | (user_x ? 1 : 0);
+    group = (group_r ? 4 : 0) | (group_w ? 2 : 0) | (group_x ? 1 : 0);
+    world = (world_r ? 4 : 0) | (world_w ? 2 : 0) | (world_x ? 1 : 0);
+    
+    return user | group | world;
+}
+
+static OptionDefinition
+g_permissions_options[] =
+{
+    {   LLDB_OPT_SET_ALL, false, "permissions-value", 'v', required_argument,       NULL, 0, eArgTypePermissionsNumber         , "Give out the numeric value for permissions (e.g. 757)" },
+    {   LLDB_OPT_SET_ALL, false, "permissions-string",'s', required_argument, NULL, 0, eArgTypePermissionsString  , "Give out the string value for permissions (e.g. rwxr-xr--)." },
+    {   LLDB_OPT_SET_ALL, false, "user-read", 'r', no_argument,       NULL, 0, eArgTypeNone         , "Allow user to read." },
+    {   LLDB_OPT_SET_ALL, false, "user-write", 'w', no_argument,       NULL, 0, eArgTypeNone         , "Allow user to write." },
+    {   LLDB_OPT_SET_ALL, false, "user-exec", 'x', no_argument,       NULL, 0, eArgTypeNone         , "Allow user to execute." },
+
+    {   LLDB_OPT_SET_ALL, false, "group-read", 'R', no_argument,       NULL, 0, eArgTypeNone         , "Allow group to read." },
+    {   LLDB_OPT_SET_ALL, false, "group-write", 'W', no_argument,       NULL, 0, eArgTypeNone         , "Allow group to write." },
+    {   LLDB_OPT_SET_ALL, false, "group-exec", 'X', no_argument,       NULL, 0, eArgTypeNone         , "Allow group to execute." },
+
+    {   LLDB_OPT_SET_ALL, false, "world-read", 'd', no_argument,       NULL, 0, eArgTypeNone         , "Allow world to read." },
+    {   LLDB_OPT_SET_ALL, false, "world-write", 't', no_argument,       NULL, 0, eArgTypeNone         , "Allow world to write." },
+    {   LLDB_OPT_SET_ALL, false, "world-exec", 'e', no_argument,       NULL, 0, eArgTypeNone         , "Allow world to execute." },
+
+};
+
+class OptionPermissions : public lldb_private::OptionGroup
+{
+public:
+    OptionPermissions ()
+    {
+    }
+    
+    virtual
+    ~OptionPermissions ()
+    {
+    }
+    
+    virtual lldb_private::Error
+    SetOptionValue (CommandInterpreter &interpreter,
+                    uint32_t option_idx,
+                    const char *option_arg)
+    {
+        Error error;
+        char short_option = (char) GetDefinitions()[option_idx].short_option;
+        switch (short_option)
+        {
+            case 'v':
+            {
+                bool ok;
+                uint32_t perms = Args::StringToUInt32(option_arg, 777, 8, &ok);
+                if (!ok)
+                    error.SetErrorStringWithFormat("invalid value for permissions: %s", option_arg);
+                else
+                    m_permissions = perms;
+            }
+                break;
+            case 's':
+            {
+                mode_t perms = ParsePermissionString(option_arg);
+                if (perms == (mode_t)-1)
+                    error.SetErrorStringWithFormat("invalid value for permissions: %s", option_arg);
+                else
+                    m_permissions = perms;
+            }
+            case 'r':
+                m_permissions |= File::ePermissionsUserRead;
+                break;
+            case 'w':
+                m_permissions |= File::ePermissionsUserWrite;
+                break;
+            case 'x':
+                m_permissions |= File::ePermissionsUserExecute;
+                break;
+            case 'R':
+                m_permissions |= File::ePermissionsGroupRead;
+                break;
+            case 'W':
+                m_permissions |= File::ePermissionsGroupWrite;
+                break;
+            case 'X':
+                m_permissions |= File::ePermissionsGroupExecute;
+                break;
+            case 'd':
+                m_permissions |= File::ePermissionsWorldRead;
+                break;
+            case 't':
+                m_permissions |= File::ePermissionsWorldWrite;
+                break;
+            case 'e':
+                m_permissions |= File::ePermissionsWorldExecute;
+                break;
+
+            default:
+                error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
+                break;
+        }
+        
+        return error;
+    }
+    
+    void
+    OptionParsingStarting (CommandInterpreter &interpreter)
+    {
+        m_permissions = 0;
+    }
+    
+    virtual uint32_t
+    GetNumDefinitions ()
+    {
+        return llvm::array_lengthof(g_permissions_options);
+    }
+    
+    const lldb_private::OptionDefinition*
+    GetDefinitions ()
+    {
+        return g_permissions_options;
+    }
+        
+    // Instance variables to hold the values for command options.
+    
+    uint32_t m_permissions;
+private:
+    DISALLOW_COPY_AND_ASSIGN(OptionPermissions);
+};
 
 //----------------------------------------------------------------------
 // "platform select <platform-name>"
@@ -274,11 +422,26 @@ protected:
         }
         else
         {
-            result.AppendError ("no platform us currently selected\n");
+            result.AppendError ("no platform is currently selected\n");
             result.SetStatus (eReturnStatusFailed);            
         }
         return result.Succeeded();
     }
+    
+    virtual Options *
+    GetOptions ()
+    {
+        PlatformSP platform_sp (m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform());
+        OptionGroupOptions* m_platform_options = NULL;
+        if (platform_sp)
+        {
+            m_platform_options = platform_sp->GetConnectionOptions(m_interpreter);
+            if (m_platform_options != NULL && !m_platform_options->m_did_finalize)
+                m_platform_options->Finalize();
+        }
+        return m_platform_options;
+    }
+
 };
 
 //----------------------------------------------------------------------
@@ -359,6 +522,680 @@ protected:
         return result.Succeeded();
     }
 };
+
+//----------------------------------------------------------------------
+// "platform mkdir"
+//----------------------------------------------------------------------
+class CommandObjectPlatformMkDir : public CommandObjectParsed
+{
+public:
+    CommandObjectPlatformMkDir (CommandInterpreter &interpreter) :
+    CommandObjectParsed (interpreter,
+                         "platform shell",
+                         "Make a new directory on the remote end.",
+                         NULL,
+                         0),
+    m_options(interpreter)
+    {
+    }
+    
+    virtual
+    ~CommandObjectPlatformMkDir ()
+    {
+    }
+    
+    virtual bool
+    DoExecute (Args& args, CommandReturnObject &result)
+    {
+        PlatformSP platform_sp (m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform());
+        if (platform_sp)
+        {
+            std::string cmd_line;
+            args.GetCommandString(cmd_line);
+            mode_t perms;
+            const OptionPermissions* options_permissions = (OptionPermissions*)m_options.GetGroupWithOption('r');
+            if (options_permissions)
+                perms = options_permissions->m_permissions;
+            else
+                perms = 0000700 | 0000070 | 0000007;
+            uint32_t retcode = platform_sp->MakeDirectory(cmd_line,perms);
+            result.AppendMessageWithFormat("Status = %d\n",retcode);
+            result.SetStatus (eReturnStatusSuccessFinishResult);
+        }
+        else
+        {
+            result.AppendError ("no platform currently selected\n");
+            result.SetStatus (eReturnStatusFailed);
+        }
+        return result.Succeeded();
+    }
+    
+    virtual Options *
+    GetOptions ()
+    {
+        if (m_options.DidFinalize() == false)
+        {
+            m_options.Append(new OptionPermissions());
+            m_options.Finalize();
+        }
+        return &m_options;
+    }
+    OptionGroupOptions m_options;
+    
+};
+
+//----------------------------------------------------------------------
+// "platform fopen"
+//----------------------------------------------------------------------
+class CommandObjectPlatformFOpen : public CommandObjectParsed
+{
+public:
+    CommandObjectPlatformFOpen (CommandInterpreter &interpreter) :
+    CommandObjectParsed (interpreter,
+                         "platform file open",
+                         "Open a file on the remote end.",
+                         NULL,
+                         0),
+    m_options(interpreter)
+    {
+    }
+    
+    virtual
+    ~CommandObjectPlatformFOpen ()
+    {
+    }
+    
+    virtual bool
+    DoExecute (Args& args, CommandReturnObject &result)
+    {
+        PlatformSP platform_sp (m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform());
+        if (platform_sp)
+        {
+            Error error;
+            std::string cmd_line;
+            args.GetCommandString(cmd_line);
+            mode_t perms;
+            const OptionPermissions* options_permissions = (OptionPermissions*)m_options.GetGroupWithOption('r');
+            if (options_permissions)
+                perms = options_permissions->m_permissions;
+            else
+                perms = 0000700 | 0000070 | 0000007;
+            lldb::user_id_t fd = platform_sp->OpenFile(FileSpec(cmd_line.c_str(),false),
+                                                       File::eOpenOptionRead | File::eOpenOptionWrite |
+                                                       File::eOpenOptionAppend | File::eOpenOptionCanCreate,
+                                                       perms,
+                                                       error);
+            if (error.Success())
+            {
+                result.AppendMessageWithFormat("File Descriptor = %" PRIu64 "\n",fd);
+                result.SetStatus (eReturnStatusSuccessFinishResult);
+            }
+            else
+            {
+                result.AppendError(error.AsCString());
+                result.SetStatus (eReturnStatusFailed);
+            }
+        }
+        else
+        {
+            result.AppendError ("no platform currently selected\n");
+            result.SetStatus (eReturnStatusFailed);
+        }
+        return result.Succeeded();
+    }
+    virtual Options *
+    GetOptions ()
+    {
+        if (m_options.DidFinalize() == false)
+        {
+            m_options.Append(new OptionPermissions());
+            m_options.Finalize();
+        }
+        return &m_options;
+    }
+    OptionGroupOptions m_options;
+};
+
+//----------------------------------------------------------------------
+// "platform fclose"
+//----------------------------------------------------------------------
+class CommandObjectPlatformFClose : public CommandObjectParsed
+{
+public:
+    CommandObjectPlatformFClose (CommandInterpreter &interpreter) :
+    CommandObjectParsed (interpreter,
+                         "platform file close",
+                         "Close a file on the remote end.",
+                         NULL,
+                         0)
+    {
+    }
+    
+    virtual
+    ~CommandObjectPlatformFClose ()
+    {
+    }
+    
+    virtual bool
+    DoExecute (Args& args, CommandReturnObject &result)
+    {
+        PlatformSP platform_sp (m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform());
+        if (platform_sp)
+        {
+            std::string cmd_line;
+            args.GetCommandString(cmd_line);
+            const lldb::user_id_t fd = Args::StringToUInt64(cmd_line.c_str(), UINT64_MAX);
+            Error error;
+            bool success = platform_sp->CloseFile(fd, error);
+            if (success)
+            {
+                result.AppendMessageWithFormat("file %" PRIu64 " closed.\n", fd);
+                result.SetStatus (eReturnStatusSuccessFinishResult);
+            }
+            else
+            {
+                result.AppendError(error.AsCString());
+                result.SetStatus (eReturnStatusFailed);
+            }
+        }
+        else
+        {
+            result.AppendError ("no platform currently selected\n");
+            result.SetStatus (eReturnStatusFailed);
+        }
+        return result.Succeeded();
+    }
+};
+
+//----------------------------------------------------------------------
+// "platform fread"
+//----------------------------------------------------------------------
+class CommandObjectPlatformFRead : public CommandObjectParsed
+{
+public:
+    CommandObjectPlatformFRead (CommandInterpreter &interpreter) :
+    CommandObjectParsed (interpreter,
+                         "platform file read",
+                         "Read data from a file on the remote end.",
+                         NULL,
+                         0),
+    m_options (interpreter)
+    {
+    }
+    
+    virtual
+    ~CommandObjectPlatformFRead ()
+    {
+    }
+    
+    virtual bool
+    DoExecute (Args& args, CommandReturnObject &result)
+    {
+        PlatformSP platform_sp (m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform());
+        if (platform_sp)
+        {
+            std::string cmd_line;
+            args.GetCommandString(cmd_line);
+            const lldb::user_id_t fd = Args::StringToUInt64(cmd_line.c_str(), UINT64_MAX);
+            std::string buffer(m_options.m_count,0);
+            Error error;
+            uint32_t retcode = platform_sp->ReadFile(fd, m_options.m_offset, &buffer[0], m_options.m_count, error);
+            result.AppendMessageWithFormat("Return = %d\n",retcode);
+            result.AppendMessageWithFormat("Data = \"%s\"\n",buffer.c_str());
+            result.SetStatus (eReturnStatusSuccessFinishResult);
+        }
+        else
+        {
+            result.AppendError ("no platform currently selected\n");
+            result.SetStatus (eReturnStatusFailed);
+        }
+        return result.Succeeded();
+    }
+    virtual Options *
+    GetOptions ()
+    {
+        return &m_options;
+    }
+    
+protected:
+    class CommandOptions : public Options
+    {
+    public:
+        
+        CommandOptions (CommandInterpreter &interpreter) :
+        Options (interpreter)
+        {
+        }
+        
+        virtual
+        ~CommandOptions ()
+        {
+        }
+        
+        virtual Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        {
+            Error error;
+            char short_option = (char) m_getopt_table[option_idx].val;
+            bool success = false;
+            
+            switch (short_option)
+            {
+                case 'o':
+                    m_offset = Args::StringToUInt32(option_arg, 0, 0, &success);
+                    if (!success)
+                        error.SetErrorStringWithFormat("invalid offset: '%s'", option_arg);
+                    break;
+                case 'c':
+                    m_count = Args::StringToUInt32(option_arg, 0, 0, &success);
+                    if (!success)
+                        error.SetErrorStringWithFormat("invalid offset: '%s'", option_arg);
+                    break;
+
+                default:
+                    error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
+                    break;
+            }
+            
+            return error;
+        }
+        
+        void
+        OptionParsingStarting ()
+        {
+            m_offset = 0;
+            m_count = 1;
+        }
+        
+        const OptionDefinition*
+        GetDefinitions ()
+        {
+            return g_option_table;
+        }
+        
+        // Options table: Required for subclasses of Options.
+        
+        static OptionDefinition g_option_table[];
+        
+        // Instance variables to hold the values for command options.
+        
+        uint32_t m_offset;
+        uint32_t m_count;
+    };
+    CommandOptions m_options;
+};
+OptionDefinition
+CommandObjectPlatformFRead::CommandOptions::g_option_table[] =
+{
+    {   LLDB_OPT_SET_1, false, "offset"           , 'o', required_argument, NULL, 0, eArgTypeIndex        , "Offset into the file at which to start reading." },
+    {   LLDB_OPT_SET_1, false, "count"            , 'c', required_argument, NULL, 0, eArgTypeCount        , "Number of bytes to read from the file." },
+    {  0              , false, NULL               ,  0 , 0                , NULL, 0, eArgTypeNone         , NULL }
+};
+
+
+//----------------------------------------------------------------------
+// "platform fwrite"
+//----------------------------------------------------------------------
+class CommandObjectPlatformFWrite : public CommandObjectParsed
+{
+public:
+    CommandObjectPlatformFWrite (CommandInterpreter &interpreter) :
+    CommandObjectParsed (interpreter,
+                         "platform file write",
+                         "Write data to a file on the remote end.",
+                         NULL,
+                         0),
+    m_options (interpreter)
+    {
+    }
+    
+    virtual
+    ~CommandObjectPlatformFWrite ()
+    {
+    }
+    
+    virtual bool
+    DoExecute (Args& args, CommandReturnObject &result)
+    {
+        PlatformSP platform_sp (m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform());
+        if (platform_sp)
+        {
+            std::string cmd_line;
+            args.GetCommandString(cmd_line);
+            Error error;
+            const lldb::user_id_t fd = Args::StringToUInt64(cmd_line.c_str(), UINT64_MAX);
+            uint32_t retcode = platform_sp->WriteFile (fd,
+                                                       m_options.m_offset,
+                                                       &m_options.m_data[0],
+                                                       m_options.m_data.size(),
+                                                       error);
+            result.AppendMessageWithFormat("Return = %d\n",retcode);
+            result.SetStatus (eReturnStatusSuccessFinishResult);
+        }
+        else
+        {
+            result.AppendError ("no platform currently selected\n");
+            result.SetStatus (eReturnStatusFailed);
+        }
+        return result.Succeeded();
+    }
+    virtual Options *
+    GetOptions ()
+    {
+        return &m_options;
+    }
+    
+protected:
+    class CommandOptions : public Options
+    {
+    public:
+        
+        CommandOptions (CommandInterpreter &interpreter) :
+        Options (interpreter)
+        {
+        }
+        
+        virtual
+        ~CommandOptions ()
+        {
+        }
+        
+        virtual Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        {
+            Error error;
+            char short_option = (char) m_getopt_table[option_idx].val;
+            bool success = false;
+            
+            switch (short_option)
+            {
+                case 'o':
+                    m_offset = Args::StringToUInt32(option_arg, 0, 0, &success);
+                    if (!success)
+                        error.SetErrorStringWithFormat("invalid offset: '%s'", option_arg);
+                    break;
+                case 'd':
+                    m_data.assign(option_arg);
+                    break;
+                    
+                default:
+                    error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
+                    break;
+            }
+            
+            return error;
+        }
+        
+        void
+        OptionParsingStarting ()
+        {
+            m_offset = 0;
+            m_data.clear();
+        }
+        
+        const OptionDefinition*
+        GetDefinitions ()
+        {
+            return g_option_table;
+        }
+        
+        // Options table: Required for subclasses of Options.
+        
+        static OptionDefinition g_option_table[];
+        
+        // Instance variables to hold the values for command options.
+        
+        uint32_t m_offset;
+        std::string m_data;
+    };
+    CommandOptions m_options;
+};
+OptionDefinition
+CommandObjectPlatformFWrite::CommandOptions::g_option_table[] =
+{
+    {   LLDB_OPT_SET_1, false, "offset"           , 'o', required_argument, NULL, 0, eArgTypeIndex        , "Offset into the file at which to start reading." },
+    {   LLDB_OPT_SET_1, false, "data"            , 'd', required_argument, NULL, 0, eArgTypeValue        , "Text to write to the file." },
+    {  0              , false, NULL               ,  0 , 0                , NULL, 0, eArgTypeNone         , NULL }
+};
+
+class CommandObjectPlatformFile : public CommandObjectMultiword
+{
+public:
+    //------------------------------------------------------------------
+    // Constructors and Destructors
+    //------------------------------------------------------------------
+    CommandObjectPlatformFile (CommandInterpreter &interpreter) :
+    CommandObjectMultiword (interpreter,
+                            "platform file",
+                            "A set of commands to manage file access through a platform",
+                            "platform file [open|close|read|write] ...")
+    {
+        LoadSubCommand ("open", CommandObjectSP (new CommandObjectPlatformFOpen  (interpreter)));
+        LoadSubCommand ("close", CommandObjectSP (new CommandObjectPlatformFClose  (interpreter)));
+        LoadSubCommand ("read", CommandObjectSP (new CommandObjectPlatformFRead  (interpreter)));
+        LoadSubCommand ("write", CommandObjectSP (new CommandObjectPlatformFWrite  (interpreter)));
+    }
+    
+    virtual
+    ~CommandObjectPlatformFile ()
+    {
+    }
+    
+private:
+    //------------------------------------------------------------------
+    // For CommandObjectPlatform only
+    //------------------------------------------------------------------
+    DISALLOW_COPY_AND_ASSIGN (CommandObjectPlatformFile);
+};
+
+//----------------------------------------------------------------------
+// "platform get-file remote-file-path host-file-path"
+//----------------------------------------------------------------------
+class CommandObjectPlatformGetFile : public CommandObjectParsed
+{
+public:
+    CommandObjectPlatformGetFile (CommandInterpreter &interpreter) :
+    CommandObjectParsed (interpreter,
+                         "platform get-file",
+                         "Transfer a file from the remote end to the local host.",
+                         "platform get-file <remote-file-spec> <local-file-spec>",
+                         0)
+    {
+        SetHelpLong(
+"Examples: \n\
+\n\
+    platform get-file /the/remote/file/path /the/local/file/path\n\
+    # Transfer a file from the remote end with file path /the/remote/file/path to the local host.\n");
+
+        CommandArgumentEntry arg1, arg2;
+        CommandArgumentData file_arg_remote, file_arg_host;
+    
+        // Define the first (and only) variant of this arg.
+        file_arg_remote.arg_type = eArgTypeFilename;
+        file_arg_remote.arg_repetition = eArgRepeatPlain;
+        // There is only one variant this argument could be; put it into the argument entry.
+        arg1.push_back (file_arg_remote);
+        
+        // Define the second (and only) variant of this arg.
+        file_arg_host.arg_type = eArgTypeFilename;
+        file_arg_host.arg_repetition = eArgRepeatPlain;
+        // There is only one variant this argument could be; put it into the argument entry.
+        arg2.push_back (file_arg_host);
+
+        // Push the data for the first and the second arguments into the m_arguments vector.
+        m_arguments.push_back (arg1);
+        m_arguments.push_back (arg2);
+    }
+    
+    virtual
+    ~CommandObjectPlatformGetFile ()
+    {
+    }
+    
+    virtual bool
+    DoExecute (Args& args, CommandReturnObject &result)
+    {
+        // If the number of arguments is incorrect, issue an error message.
+        if (args.GetArgumentCount() != 2)
+        {
+            result.GetErrorStream().Printf("error: required arguments missing; specify both the source and destination file paths\n");
+            result.SetStatus(eReturnStatusFailed);
+            return false;
+        }
+
+        PlatformSP platform_sp (m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform());
+        if (platform_sp)
+        {
+            const char *remote_file_path = args.GetArgumentAtIndex(0);
+            const char *local_file_path = args.GetArgumentAtIndex(1);
+            Error error = platform_sp->GetFile(FileSpec(remote_file_path, false),
+                                               FileSpec(local_file_path, false));
+            if (error.Success())
+            {
+                result.AppendMessageWithFormat("successfully get-file from %s (remote) to %s (host)\n",
+                                               remote_file_path, local_file_path);
+                result.SetStatus (eReturnStatusSuccessFinishResult);
+            }
+            else
+            {
+                result.AppendMessageWithFormat("get-file failed: %s\n", error.AsCString());
+                result.SetStatus (eReturnStatusFailed);
+            }
+        }
+        else
+        {
+            result.AppendError ("no platform currently selected\n");
+            result.SetStatus (eReturnStatusFailed);
+        }
+        return result.Succeeded();
+    }
+};
+
+//----------------------------------------------------------------------
+// "platform get-size remote-file-path"
+//----------------------------------------------------------------------
+class CommandObjectPlatformGetSize : public CommandObjectParsed
+{
+public:
+    CommandObjectPlatformGetSize (CommandInterpreter &interpreter) :
+    CommandObjectParsed (interpreter,
+                         "platform get-size",
+                         "Get the file size from the remote end.",
+                         "platform get-size <remote-file-spec>",
+                         0)
+    {
+        SetHelpLong(
+"Examples: \n\
+\n\
+    platform get-size /the/remote/file/path\n\
+    # Get the file size from the remote end with path /the/remote/file/path.\n");
+
+        CommandArgumentEntry arg1;
+        CommandArgumentData file_arg_remote;
+    
+        // Define the first (and only) variant of this arg.
+        file_arg_remote.arg_type = eArgTypeFilename;
+        file_arg_remote.arg_repetition = eArgRepeatPlain;
+        // There is only one variant this argument could be; put it into the argument entry.
+        arg1.push_back (file_arg_remote);
+        
+        // Push the data for the first argument into the m_arguments vector.
+        m_arguments.push_back (arg1);
+    }
+    
+    virtual
+    ~CommandObjectPlatformGetSize ()
+    {
+    }
+    
+    virtual bool
+    DoExecute (Args& args, CommandReturnObject &result)
+    {
+        // If the number of arguments is incorrect, issue an error message.
+        if (args.GetArgumentCount() != 1)
+        {
+            result.GetErrorStream().Printf("error: required argument missing; specify the source file path as the only argument\n");
+            result.SetStatus(eReturnStatusFailed);
+            return false;
+        }
+
+        PlatformSP platform_sp (m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform());
+        if (platform_sp)
+        {
+            std::string remote_file_path(args.GetArgumentAtIndex(0));
+            user_id_t size = platform_sp->GetFileSize(FileSpec(remote_file_path.c_str(), false));
+            if (size != UINT64_MAX)
+            {
+                result.AppendMessageWithFormat("File size of %s (remote): %" PRIu64 "\n", remote_file_path.c_str(), size);
+                result.SetStatus (eReturnStatusSuccessFinishResult);
+            }
+            else
+            {
+                result.AppendMessageWithFormat("Eroor getting file size of %s (remote)\n", remote_file_path.c_str());
+                result.SetStatus (eReturnStatusFailed);
+            }
+        }
+        else
+        {
+            result.AppendError ("no platform currently selected\n");
+            result.SetStatus (eReturnStatusFailed);
+        }
+        return result.Succeeded();
+    }
+};
+
+//----------------------------------------------------------------------
+// "platform put-file"
+//----------------------------------------------------------------------
+class CommandObjectPlatformPutFile : public CommandObjectParsed
+{
+public:
+    CommandObjectPlatformPutFile (CommandInterpreter &interpreter) :
+    CommandObjectParsed (interpreter,
+                         "platform put-file",
+                         "Transfer a file from this system to the remote end.",
+                         NULL,
+                         0)
+    {
+    }
+    
+    virtual
+    ~CommandObjectPlatformPutFile ()
+    {
+    }
+    
+    virtual bool
+    DoExecute (Args& args, CommandReturnObject &result)
+    {
+        const char* src = args.GetArgumentAtIndex(0);
+        const char* dst = args.GetArgumentAtIndex(1);
+
+        FileSpec src_fs(src, true);
+        FileSpec dst_fs(dst, false);
+        
+        PlatformSP platform_sp (m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform());
+        if (platform_sp)
+        {
+            Error error (platform_sp->PutFile(src_fs, dst_fs));
+            if (error.Success())
+            {
+                result.SetStatus (eReturnStatusSuccessFinishNoResult);
+            }
+            else
+            {
+                result.AppendError (error.AsCString());
+                result.SetStatus (eReturnStatusFailed);
+            }
+        }
+        else
+        {
+            result.AppendError ("no platform currently selected\n");
+            result.SetStatus (eReturnStatusFailed);
+        }
+        return result.Succeeded();
+    }
+};
+
 //----------------------------------------------------------------------
 // "platform process launch"
 //----------------------------------------------------------------------
@@ -868,7 +1705,205 @@ protected:
     }
 };
 
+class CommandObjectPlatformProcessAttach : public CommandObjectParsed
+{
+public:
+    
+    class CommandOptions : public Options
+    {
+    public:
+        
+        CommandOptions (CommandInterpreter &interpreter) :
+        Options(interpreter)
+        {
+            // Keep default values of all options in one place: OptionParsingStarting ()
+            OptionParsingStarting ();
+        }
+        
+        ~CommandOptions ()
+        {
+        }
+        
+        Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        {
+            Error error;
+            char short_option = (char) m_getopt_table[option_idx].val;
+            bool success = false;
+            switch (short_option)
+            {
+                case 'p':   
+                {
+                    lldb::pid_t pid = Args::StringToUInt32 (option_arg, LLDB_INVALID_PROCESS_ID, 0, &success);
+                    if (!success || pid == LLDB_INVALID_PROCESS_ID)
+                    {
+                        error.SetErrorStringWithFormat("invalid process ID '%s'", option_arg);
+                    }
+                    else
+                    {
+                        attach_info.SetProcessID (pid);
+                    }
+                }
+                    break;
+                    
+                case 'P':
+                    attach_info.SetProcessPluginName (option_arg);
+                    break;
+                    
+                case 'n': 
+                    attach_info.GetExecutableFile().SetFile(option_arg, false);
+                    break;
+                    
+                case 'w':   
+                    attach_info.SetWaitForLaunch(true);
+                    break;
+                    
+                default:
+                    error.SetErrorStringWithFormat("invalid short option character '%c'", short_option);
+                    break;
+            }
+            return error;
+        }
+        
+        void
+        OptionParsingStarting ()
+        {
+            attach_info.Clear();
+        }
+        
+        const OptionDefinition*
+        GetDefinitions ()
+        {
+            return g_option_table;
+        }
+        
+        virtual bool
+        HandleOptionArgumentCompletion (Args &input,
+                                        int cursor_index,
+                                        int char_pos,
+                                        OptionElementVector &opt_element_vector,
+                                        int opt_element_index,
+                                        int match_start_point,
+                                        int max_return_elements,
+                                        bool &word_complete,
+                                        StringList &matches)
+        {
+            int opt_arg_pos = opt_element_vector[opt_element_index].opt_arg_pos;
+            int opt_defs_index = opt_element_vector[opt_element_index].opt_defs_index;
+            
+            // We are only completing the name option for now...
+            
+            const OptionDefinition *opt_defs = GetDefinitions();
+            if (opt_defs[opt_defs_index].short_option == 'n')
+            {
+                // Are we in the name?
+                
+                // Look to see if there is a -P argument provided, and if so use that plugin, otherwise
+                // use the default plugin.
+                
+                const char *partial_name = NULL;
+                partial_name = input.GetArgumentAtIndex(opt_arg_pos);
+                
+                PlatformSP platform_sp (m_interpreter.GetPlatform (true));
+                if (platform_sp)
+                {
+                    ProcessInstanceInfoList process_infos;
+                    ProcessInstanceInfoMatch match_info;
+                    if (partial_name)
+                    {
+                        match_info.GetProcessInfo().GetExecutableFile().SetFile(partial_name, false);
+                        match_info.SetNameMatchType(eNameMatchStartsWith);
+                    }
+                    platform_sp->FindProcesses (match_info, process_infos);
+                    const uint32_t num_matches = process_infos.GetSize();
+                    if (num_matches > 0)
+                    {
+                        for (uint32_t i=0; i<num_matches; ++i)
+                        {
+                            matches.AppendString (process_infos.GetProcessNameAtIndex(i), 
+                                                  process_infos.GetProcessNameLengthAtIndex(i));
+                        }
+                    }
+                }
+            }
+            
+            return false;
+        }
+        
+        // Options table: Required for subclasses of Options.
+        
+        static OptionDefinition g_option_table[];
+        
+        // Instance variables to hold the values for command options.
+        
+        ProcessAttachInfo attach_info;
+    };
+    
+    CommandObjectPlatformProcessAttach (CommandInterpreter &interpreter) :
+    CommandObjectParsed (interpreter,
+                         "platform process attach",
+                         "Attach to a process.",
+                         "platform process attach <cmd-options>"),
+    m_options (interpreter)
+    {
+    }
+    
+    ~CommandObjectPlatformProcessAttach ()
+    {
+    }
+    
+    bool
+    DoExecute (Args& command,
+             CommandReturnObject &result)
+    {
+        PlatformSP platform_sp (m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform());
+        if (platform_sp)
+        {
+            Error err;
+            ProcessSP remote_process_sp =
+            platform_sp->Attach(m_options.attach_info, m_interpreter.GetDebugger(), NULL, m_interpreter.GetDebugger().GetListener(), err);
+            if (err.Fail())
+            {
+                result.AppendError(err.AsCString());
+                result.SetStatus (eReturnStatusFailed);
+            }
+            else if (remote_process_sp.get() == NULL)
+            {
+                result.AppendError("could not attach: unknown reason");
+                result.SetStatus (eReturnStatusFailed);
+            }
+            else
+                result.SetStatus (eReturnStatusSuccessFinishResult);
+        }
+        else
+        {
+            result.AppendError ("no platform is currently selected");
+            result.SetStatus (eReturnStatusFailed);            
+        }
+        return result.Succeeded();
+    }
+    
+    Options *
+    GetOptions ()
+    {
+        return &m_options;
+    }
+    
+protected:
+    
+    CommandOptions m_options;
+};
 
+
+OptionDefinition
+CommandObjectPlatformProcessAttach::CommandOptions::g_option_table[] =
+{
+    { LLDB_OPT_SET_ALL, false, "plugin", 'P', required_argument, NULL, 0, eArgTypePlugin,        "Name of the process plugin you want to use."},
+    { LLDB_OPT_SET_1,   false, "pid",    'p', required_argument, NULL, 0, eArgTypePid,           "The process ID of an existing process to attach to."},
+    { LLDB_OPT_SET_2,   false, "name",   'n', required_argument, NULL, 0, eArgTypeProcessName,  "The name of the process to attach to."},
+    { LLDB_OPT_SET_2,   false, "waitfor",'w', no_argument,       NULL, 0, eArgTypeNone,              "Wait for the the process with <process-name> to launch."},
+    { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
+};
 
 
 class CommandObjectPlatformProcess : public CommandObjectMultiword
@@ -883,7 +1918,7 @@ public:
                                 "A set of commands to query, launch and attach to platform processes",
                                 "platform process [attach|launch|list] ...")
     {
-//        LoadSubCommand ("attach", CommandObjectSP (new CommandObjectPlatformProcessAttach (interpreter)));
+        LoadSubCommand ("attach", CommandObjectSP (new CommandObjectPlatformProcessAttach (interpreter)));
         LoadSubCommand ("launch", CommandObjectSP (new CommandObjectPlatformProcessLaunch (interpreter)));
         LoadSubCommand ("info"  , CommandObjectSP (new CommandObjectPlatformProcessInfo (interpreter)));
         LoadSubCommand ("list"  , CommandObjectSP (new CommandObjectPlatformProcessList (interpreter)));
@@ -902,16 +1937,84 @@ private:
     DISALLOW_COPY_AND_ASSIGN (CommandObjectPlatformProcess);
 };
 
-
+//----------------------------------------------------------------------
+// "platform shell"
+//----------------------------------------------------------------------
 class CommandObjectPlatformShell : public CommandObjectRaw
 {
 public:
+    
+    class CommandOptions : public Options
+    {
+    public:
+        
+        CommandOptions (CommandInterpreter &interpreter) :
+        Options(interpreter)
+        {
+        }
+        
+        virtual
+        ~CommandOptions ()
+        {
+        }
+        
+        virtual uint32_t
+        GetNumDefinitions ()
+        {
+            return 1;
+        }
+        
+        virtual const OptionDefinition*
+        GetDefinitions ()
+        {
+            return g_option_table;
+        }
+        
+        virtual Error
+        SetOptionValue (uint32_t option_idx,
+                        const char *option_value)
+        {
+            Error error;
+            
+            const char short_option = (char) g_option_table[option_idx].short_option;
+            
+            switch (short_option)
+            {
+                case 't':
+                {
+                    bool success;
+                    timeout = Args::StringToUInt32(option_value, 10, 10, &success);
+                    if (!success)
+                        error.SetErrorStringWithFormat("could not convert \"%s\" to a numeric value.", option_value);
+                    break;
+                }
+                default:
+                    error.SetErrorStringWithFormat("invalid short option character '%c'", short_option);
+                    break;
+            }
+            
+            return error;
+        }
+        
+        virtual void
+        OptionParsingStarting ()
+        {
+            timeout = 10;
+        }
+        
+        // Options table: Required for subclasses of Options.
+        
+        static OptionDefinition g_option_table[];
+        uint32_t timeout;
+    };
+    
     CommandObjectPlatformShell (CommandInterpreter &interpreter) :
-        CommandObjectRaw (interpreter, 
-                         "platform shell",
-                         "Run a shell command on a the selected platform.",
-                         "platform shell <shell-command>",
-                         0)
+    CommandObjectRaw (interpreter, 
+                      "platform shell",
+                      "Run a shell command on a the selected platform.",
+                      "platform shell <shell-command>",
+                      0),
+    m_options(interpreter)
     {
     }
     
@@ -920,31 +2023,80 @@ public:
     {
     }
     
-protected:
     virtual bool
     DoExecute (const char *raw_command_line, CommandReturnObject &result)
     {
-        // TODO: Implement "Platform::RunShellCommand()" and switch over to using
-        // the current platform when it is in the interface. 
-        const char *working_dir = NULL;
-        std::string output;
-        int status = -1;
-        int signo = -1;
-        Error error (Host::RunShellCommand (raw_command_line, working_dir, &status, &signo, &output, 10));
-        if (!output.empty())
-            result.GetOutputStream().PutCString(output.c_str());
-        if (status > 0)
+        const char* expr = NULL;
+
+        // Print out an usage syntax on an empty command line.
+        if (raw_command_line[0] == '\0')
         {
-            if (signo > 0)
+            result.GetOutputStream().Printf("%s\n", this->GetSyntax());
+            return true;
+        }
+
+        if (raw_command_line[0] == '-')
+        {
+            // We have some options and these options MUST end with --.
+            const char *end_options = NULL;
+            const char *s = raw_command_line;
+            while (s && s[0])
             {
-                const char *signo_cstr = Host::GetSignalAsCString(signo);
-                if (signo_cstr)
-                    result.GetOutputStream().Printf("error: command returned with status %i and signal %s\n", status, signo_cstr);
-                else
-                    result.GetOutputStream().Printf("error: command returned with status %i and signal %i\n", status, signo);
+                end_options = ::strstr (s, "--");
+                if (end_options)
+                {
+                    end_options += 2; // Get past the "--"
+                    if (::isspace (end_options[0]))
+                    {
+                        expr = end_options;
+                        while (::isspace (*expr))
+                            ++expr;
+                        break;
+                    }
+                }
+                s = end_options;
             }
-            else
-                result.GetOutputStream().Printf("error: command returned with status %i\n", status);
+            
+            if (end_options)
+            {
+                Args args (raw_command_line, end_options - raw_command_line);
+                if (!ParseOptions (args, result))
+                    return false;
+            }
+        }
+        
+        if (expr == NULL)
+            expr = raw_command_line;
+        
+        PlatformSP platform_sp (m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform());
+        Error error;
+        if (platform_sp)
+        {
+            const char *working_dir = NULL;
+            std::string output;
+            int status = -1;
+            int signo = -1;
+            error = (platform_sp->RunShellCommand (expr, working_dir, &status, &signo, &output, m_options.timeout));
+            if (!output.empty())
+                result.GetOutputStream().PutCString(output.c_str());
+            if (status > 0)
+            {
+                if (signo > 0)
+                {
+                    const char *signo_cstr = Host::GetSignalAsCString(signo);
+                    if (signo_cstr)
+                        result.GetOutputStream().Printf("error: command returned with status %i and signal %s\n", status, signo_cstr);
+                    else
+                        result.GetOutputStream().Printf("error: command returned with status %i and signal %i\n", status, signo);
+                }
+                else
+                    result.GetOutputStream().Printf("error: command returned with status %i\n", status);
+            }
+        }
+        else
+        {
+            result.GetOutputStream().Printf("error: cannot run remote shell commands without a platform\n");
+            error.SetErrorString("error: cannot run remote shell commands without a platform");
         }
 
         if (error.Fail())
@@ -957,6 +2109,208 @@ protected:
             result.SetStatus (eReturnStatusSuccessFinishResult);
         }
         return true;
+    }
+    CommandOptions m_options;
+};
+
+OptionDefinition
+CommandObjectPlatformShell::CommandOptions::g_option_table[] =
+{
+    { LLDB_OPT_SET_ALL, false, "timeout",      't', required_argument, NULL, 0, eArgTypeValue,    "Seconds to wait for the remote host to finish running the command."},
+};
+
+struct RecurseCopyBaton
+{
+    const std::string& destination;
+    const PlatformSP& platform_sp;
+    Error error;
+};
+
+
+static FileSpec::EnumerateDirectoryResult
+RecurseCopy_Callback (void *baton,
+                      FileSpec::FileType file_type,
+                      const FileSpec &spec)
+{
+    RecurseCopyBaton* rc_baton = (RecurseCopyBaton*)baton;
+    switch (file_type)
+    {
+        case FileSpec::eFileTypePipe:
+        case FileSpec::eFileTypeSocket:
+            // we have no way to copy pipes and sockets - ignore them and continue
+            return FileSpec::eEnumerateDirectoryResultNext;
+            break;
+            
+        case FileSpec::eFileTypeSymbolicLink:
+            // what to do for symlinks?
+            return FileSpec::eEnumerateDirectoryResultNext;
+            break;
+            
+        case FileSpec::eFileTypeDirectory:
+        {
+            // make the new directory and get in there
+            FileSpec new_directory(rc_baton->destination.c_str(),false);
+            new_directory.AppendPathComponent(spec.GetLastPathComponent());
+            uint32_t errcode = rc_baton->platform_sp->MakeDirectory(new_directory, 0777);
+            std::string new_directory_path (new_directory.GetPath());
+            if (errcode != 0)
+            {
+                rc_baton->error.SetErrorStringWithFormat("unable to setup directory %s on remote end",new_directory_path.c_str());
+                return FileSpec::eEnumerateDirectoryResultQuit; // got an error, bail out
+            }
+            
+            // now recurse
+            std::string local_path (spec.GetPath());
+            RecurseCopyBaton rc_baton2 = { new_directory_path, rc_baton->platform_sp, Error() };
+            FileSpec::EnumerateDirectory(local_path.c_str(), true, true, true, RecurseCopy_Callback, &rc_baton2);
+            if (rc_baton2.error.Fail())
+            {
+                rc_baton->error.SetErrorString(rc_baton2.error.AsCString());
+                return FileSpec::eEnumerateDirectoryResultQuit; // got an error, bail out
+            }
+            return FileSpec::eEnumerateDirectoryResultNext;
+        }
+            break;
+            
+        case FileSpec::eFileTypeRegular:
+        {
+            // copy the file and keep going
+            std::string dest(rc_baton->destination);
+            dest.append(spec.GetFilename().GetCString());
+            Error err = rc_baton->platform_sp->PutFile(spec, FileSpec(dest.c_str(), false));
+            if (err.Fail())
+            {
+                rc_baton->error.SetErrorString(err.AsCString());
+                return FileSpec::eEnumerateDirectoryResultQuit; // got an error, bail out
+            }
+            return FileSpec::eEnumerateDirectoryResultNext;
+        }
+            break;
+            
+        case FileSpec::eFileTypeInvalid:
+        case FileSpec::eFileTypeOther:
+        case FileSpec::eFileTypeUnknown:
+        default:
+            rc_baton->error.SetErrorStringWithFormat("invalid file detected during copy: %s/%s", spec.GetDirectory().GetCString(), spec.GetFilename().GetCString());
+            return FileSpec::eEnumerateDirectoryResultQuit; // got an error, bail out
+            break;
+    }
+}
+
+//----------------------------------------------------------------------
+// "platform install" - install a target to a remote end
+//----------------------------------------------------------------------
+class CommandObjectPlatformInstall : public CommandObjectParsed
+{
+public:
+    CommandObjectPlatformInstall (CommandInterpreter &interpreter) :
+    CommandObjectParsed (interpreter,
+                         "platform target-install",
+                         "Install a target (bundle or executable file) to the remote end.",
+                         "platform target-install <local-thing> <remote-sandbox>",
+                         0)
+    {
+    }
+    
+    virtual
+    ~CommandObjectPlatformInstall ()
+    {
+    }
+    
+    virtual bool
+    DoExecute (Args& args, CommandReturnObject &result)
+    {
+        if (args.GetArgumentCount() != 2)
+        {
+            result.AppendError("platform target-install takes two arguments");
+            result.SetStatus(eReturnStatusFailed);
+            return false;
+        }
+        // TODO: move the bulk of this code over to the platform itself
+        std::string local_thing(args.GetArgumentAtIndex(0));
+        std::string remote_sandbox(args.GetArgumentAtIndex(1));
+        FileSpec source(local_thing.c_str(), true);
+        if (source.Exists() == false)
+        {
+            result.AppendError("source location does not exist or is not accessible");
+            result.SetStatus(eReturnStatusFailed);
+            return false;
+        }
+        PlatformSP platform_sp (m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform());
+        if (!platform_sp)
+        {
+            result.AppendError ("no platform currently selected");
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+        FileSpec::FileType source_type(source.GetFileType());
+        if (source_type == FileSpec::eFileTypeDirectory)
+        {
+            if (platform_sp->GetSupportsRSync())
+            {
+                FileSpec remote_folder(remote_sandbox.c_str(), false);
+                Error rsync_err = platform_sp->PutFile(source, remote_folder);
+                if (rsync_err.Success())
+                {
+                    result.SetStatus(eReturnStatusSuccessFinishResult);
+                    return result.Succeeded();
+                }
+            }
+            FileSpec remote_folder(remote_sandbox.c_str(), false);
+            remote_folder.AppendPathComponent(source.GetLastPathComponent());
+            // TODO: default permissions are bad
+            uint32_t errcode = platform_sp->MakeDirectory(remote_folder, 0777);
+            if (errcode != 0)
+            {
+                result.AppendError("unable to setup target directory on remote end");
+                result.SetStatus(eReturnStatusSuccessFinishNoResult);
+                return result.Succeeded();
+            }
+            // now recurse
+            std::string remote_folder_path (remote_folder.GetPath());
+            Error err = RecurseCopy(source,remote_folder_path,platform_sp);
+            if (err.Fail())
+            {
+                result.AppendError(err.AsCString());
+                result.SetStatus(eReturnStatusFailed);
+            }
+            else
+                result.SetStatus(eReturnStatusSuccessFinishResult);
+            return result.Succeeded();
+        }
+        else if (source_type == FileSpec::eFileTypeRegular)
+        {
+            // just a plain file - push it to remote and be done
+            remote_sandbox.append(source.GetFilename().GetCString());
+            FileSpec destination(remote_sandbox.c_str(),false);
+            Error err = platform_sp->PutFile(source, destination);
+            if (err.Success())
+                result.SetStatus(eReturnStatusSuccessFinishResult);
+            else
+            {
+                result.AppendError(err.AsCString());
+                result.SetStatus(eReturnStatusFailed);
+            }
+            return result.Succeeded();
+        }
+        else
+        {
+            result.AppendError("source is not a known type of file");
+            result.SetStatus(eReturnStatusFailed);
+            return result.Succeeded();
+        }
+    }
+private:
+    
+    Error
+    RecurseCopy (const FileSpec& source,
+                 const std::string& destination,
+                 const PlatformSP& platform_sp)
+    {
+        std::string source_path (source.GetPath());
+        RecurseCopyBaton baton = { destination, platform_sp, Error() };
+        FileSpec::EnumerateDirectory(source_path.c_str(), true, true, true, RecurseCopy_Callback, &baton);
+        return baton.error;
     }
 };
 
@@ -974,8 +2328,16 @@ CommandObjectPlatform::CommandObjectPlatform(CommandInterpreter &interpreter) :
     LoadSubCommand ("status", CommandObjectSP (new CommandObjectPlatformStatus  (interpreter)));
     LoadSubCommand ("connect", CommandObjectSP (new CommandObjectPlatformConnect  (interpreter)));
     LoadSubCommand ("disconnect", CommandObjectSP (new CommandObjectPlatformDisconnect  (interpreter)));
+#ifdef LLDB_CONFIGURATION_DEBUG
+    LoadSubCommand ("mkdir", CommandObjectSP (new CommandObjectPlatformMkDir  (interpreter)));
+    LoadSubCommand ("file", CommandObjectSP (new CommandObjectPlatformFile  (interpreter)));
+    LoadSubCommand ("get-file", CommandObjectSP (new CommandObjectPlatformGetFile  (interpreter)));
+    LoadSubCommand ("get-size", CommandObjectSP (new CommandObjectPlatformGetSize  (interpreter)));
+    LoadSubCommand ("put-file", CommandObjectSP (new CommandObjectPlatformPutFile  (interpreter)));
+#endif
     LoadSubCommand ("process", CommandObjectSP (new CommandObjectPlatformProcess  (interpreter)));
     LoadSubCommand ("shell", CommandObjectSP (new CommandObjectPlatformShell  (interpreter)));
+    LoadSubCommand ("target-install", CommandObjectSP (new CommandObjectPlatformInstall  (interpreter)));
 }
 
 

@@ -80,10 +80,11 @@ class HelloWatchpointTestCase(TestBase):
                        'stop reason = watchpoint'])
 
         self.runCmd("process continue")
+
         # Don't expect the read of 'global' to trigger a stop exception.
-        # The process status should be 'exited'.
-        self.expect("process status",
-            substrs = ['exited'])
+        process = self.dbg.GetSelectedTarget().GetProcess()
+        if process.GetState() == lldb.eStateStopped:
+            self.assertFalse(lldbutil.get_stopped_thread(process, lldb.eStopReasonWatchpoint))
 
         # Use the '-v' option to do verbose listing of the watchpoint.
         # The hit count should now be 1.

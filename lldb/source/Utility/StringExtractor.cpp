@@ -168,10 +168,68 @@ StringExtractor::GetU32 (uint32_t fail_value, int base)
     {
         char *end = NULL;
         const char *start = m_packet.c_str();
-        const char *uint_cstr = start + m_index;
-        uint32_t result = ::strtoul (uint_cstr, &end, base);
+        const char *cstr = start + m_index;
+        uint32_t result = ::strtoul (cstr, &end, base);
 
-        if (end && end != uint_cstr)
+        if (end && end != cstr)
+        {
+            m_index = end - start;
+            return result;
+        }
+    }
+    return fail_value;
+}
+
+int32_t
+StringExtractor::GetS32 (int32_t fail_value, int base)
+{
+    if (m_index < m_packet.size())
+    {
+        char *end = NULL;
+        const char *start = m_packet.c_str();
+        const char *cstr = start + m_index;
+        int32_t result = ::strtol (cstr, &end, base);
+        
+        if (end && end != cstr)
+        {
+            m_index = end - start;
+            return result;
+        }
+    }
+    return fail_value;
+}
+
+
+uint64_t
+StringExtractor::GetU64 (uint64_t fail_value, int base)
+{
+    if (m_index < m_packet.size())
+    {
+        char *end = NULL;
+        const char *start = m_packet.c_str();
+        const char *cstr = start + m_index;
+        uint64_t result = ::strtoull (cstr, &end, base);
+        
+        if (end && end != cstr)
+        {
+            m_index = end - start;
+            return result;
+        }
+    }
+    return fail_value;
+}
+
+int64_t
+StringExtractor::GetS64 (int64_t fail_value, int base)
+{
+    if (m_index < m_packet.size())
+    {
+        char *end = NULL;
+        const char *start = m_packet.c_str();
+        const char *cstr = start + m_index;
+        int64_t result = ::strtoll (cstr, &end, base);
+        
+        if (end && end != cstr)
         {
             m_index = end - start;
             return result;
@@ -368,6 +426,20 @@ StringExtractor::GetHexByteString (std::string &str)
     char ch;
     while ((ch = GetHexU8()) != '\0')
         str.append(1, ch);
+    return str.size();
+}
+
+size_t
+StringExtractor::GetHexByteStringTerminatedBy (std::string &str,
+                                               char terminator)
+{
+    str.clear();
+    char ch;
+    while ((ch = GetHexU8(0,false)) != '\0')
+        str.append(1, ch);
+    if (Peek() && *Peek() == terminator)
+        return str.size();
+    str.clear();
     return str.size();
 }
 

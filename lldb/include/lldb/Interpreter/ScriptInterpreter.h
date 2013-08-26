@@ -112,6 +112,7 @@ public:
     typedef void*          (*SWIGPythonGetChildAtIndex)                        (void *implementor, uint32_t idx);
     typedef int            (*SWIGPythonGetIndexOfChildWithName)                (void *implementor, const char* child_name);
     typedef void*          (*SWIGPythonCastPyObjectToSBValue)                  (void* data);
+    typedef lldb::ValueObjectSP  (*SWIGPythonGetValueObjectSPFromSBValue)      (void* data);
     typedef bool           (*SWIGPythonUpdateSynthProviderInstance)            (void* data);
     typedef bool           (*SWIGPythonMightHaveChildrenSynthProviderInstance) (void* data);
 

@@ -114,6 +114,10 @@ class ConditionalBreakTestCase(TestBase):
 
         if not self.TraceOn():
             self.HideStdout()
+
+        # Separate out the "file a.out" command from .lldb file, for the sake of
+        # remote testsuite.
+        self.runCmd("file a.out")
         self.runCmd("command source .lldb")
 
         self.runCmd ("break list")

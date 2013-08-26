@@ -3,5 +3,5 @@ if (CMAKE_SYSTEM_NAME MATCHES "Darwin")
 endif()
 if (NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
   add_subdirectory(driver)
+  add_subdirectory(lldb-platform)
 endif()
-

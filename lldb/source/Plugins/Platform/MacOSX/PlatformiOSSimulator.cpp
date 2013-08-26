@@ -315,9 +315,9 @@ PlatformiOSSimulator::GetSDKDirectory()
 }
 
 Error
-PlatformiOSSimulator::GetFile (const FileSpec &platform_file, 
-                               const UUID *uuid_ptr,
-                               FileSpec &local_file)
+PlatformiOSSimulator::GetSymbolFile (const FileSpec &platform_file, 
+                                     const UUID *uuid_ptr,
+                                     FileSpec &local_file)
 {
     Error error;
     char platform_file_path[PATH_MAX];
@@ -370,7 +370,7 @@ PlatformiOSSimulator::GetSharedModule (const ModuleSpec &module_spec,
     Error error;
     FileSpec local_file;
     const FileSpec &platform_file = module_spec.GetFileSpec();
-    error = GetFile (platform_file, module_spec.GetUUIDPtr(), local_file);
+    error = GetSymbolFile (platform_file, module_spec.GetUUIDPtr(), local_file);
     if (error.Success())
     {
         error = ResolveExecutable (local_file, module_spec.GetArchitecture(), module_sp, module_search_paths_ptr);

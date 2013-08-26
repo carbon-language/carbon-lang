@@ -35,7 +35,6 @@ class UniversalTestCase(TestBase):
         process = target.LaunchSimple(None, None, os.getcwd())
         self.assertTrue(process, PROCESS_IS_VALID)
 
-    # rdar://problem/8972204 AddressByteSize of 32-bit process should be 4, got 8 instead.
     @unittest2.skipUnless(sys.platform.startswith("darwin") and os.uname()[4] in ['i386', 'x86_64'],
                           "requires Darwin & i386")
     def test_process_launch_for_universal(self):
@@ -74,7 +73,7 @@ class UniversalTestCase(TestBase):
         self.runCmd("continue")
 
         # Now specify i386 as the architecture for "testit".
-        self.expect("file " + exe + " -a i386", CURRENT_EXECUTABLE_SET,
+        self.expect("file -a i386 " + exe, CURRENT_EXECUTABLE_SET,
             startstr = "Current executable set to ",
             substrs = ["testit' (i386)."])
 

@@ -238,7 +238,7 @@ Error::LogIfError (Log *log, const char *format, ...)
             if (err_str == NULL)
                 err_str = "???";
 
-            SetErrorStringWithFormat("error: %s err = %s (0x%8.8x)", arg_msg, err_str, m_code);
+            SetErrorStringWithFormat("%s err = %s (0x%8.8x)", arg_msg, err_str, m_code);
             if (log)
                 log->Error("%s", m_string.c_str());
 

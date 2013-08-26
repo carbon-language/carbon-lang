@@ -58,6 +58,7 @@ set( LLDB_USED_LIBS
   lldbPluginPlatformGDB
   lldbPluginPlatformFreeBSD
   lldbPluginPlatformLinux
+  lldbPluginPlatformPOSIX
   lldbPluginObjectFileMachO
   lldbPluginObjectContainerMachOArchive
   lldbPluginObjectContainerBSDArchive

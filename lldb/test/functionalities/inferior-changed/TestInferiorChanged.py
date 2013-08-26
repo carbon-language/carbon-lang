@@ -44,8 +44,8 @@ class ChangedInferiorTestCase(TestBase):
 
     def inferior_crashing(self):
         """Inferior crashes upon launching; lldb should catch the event and stop."""
-        exe = os.path.join(os.getcwd(), "a.out")
-        self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
+        self.exe = os.path.join(os.getcwd(), "a.out")
+        self.runCmd("file " + self.exe, CURRENT_EXECUTABLE_SET)
 
         self.runCmd("run", RUN_SUCCEEDED)
 
@@ -67,6 +67,9 @@ class ChangedInferiorTestCase(TestBase):
     def inferior_not_crashing(self):
         """Test lldb reloads the inferior after it was changed during the session."""
         self.runCmd("process kill")
+        # Prod the lldb-platform that we have a newly built inferior ready.
+        if lldb.lldbtest_remote_sandbox:
+            self.runCmd("file " + self.exe, CURRENT_EXECUTABLE_SET)
         self.runCmd("run", RUN_SUCCEEDED)
         self.runCmd("process status")
 

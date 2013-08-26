@@ -1472,7 +1472,11 @@ Host::RunShellCommand (const char *command,
     
     error = LaunchProcess (launch_info);
     const lldb::pid_t pid = launch_info.GetProcessID();
-    if (pid != LLDB_INVALID_PROCESS_ID)
+
+    if (error.Success() && pid == LLDB_INVALID_PROCESS_ID)
+        error.SetErrorString("failed to get process ID");
+
+    if (error.Success())
     {
         // The process successfully launched, so we can defer ownership of
         // "shell_info" to the MonitorShellCommand callback function that will
@@ -1523,10 +1527,6 @@ Host::RunShellCommand (const char *command,
             }
         }
         shell_info->can_delete.SetValue(true, eBroadcastAlways);
-    }
-    else
-    {
-        error.SetErrorString("failed to get process ID");
     }
 
     if (output_file_path)
@@ -1613,9 +1613,169 @@ Host::SetCrashDescription (const char *description)
 }
 
 lldb::pid_t
-LaunchApplication (const FileSpec &app_file_spec)
+Host::LaunchApplication (const FileSpec &app_file_spec)
 {
     return LLDB_INVALID_PROCESS_ID;
 }
 
+uint32_t
+Host::MakeDirectory (const char* path, mode_t mode)
+{
+    return UINT32_MAX;
+}
 #endif
+
+typedef std::map<lldb::user_id_t, lldb::FileSP> FDToFileMap;
+FDToFileMap& GetFDToFileMap()
+{
+    static FDToFileMap g_fd2filemap;
+    return g_fd2filemap;
+}
+
+lldb::user_id_t
+Host::OpenFile (const FileSpec& file_spec,
+                uint32_t flags,
+                mode_t mode,
+                Error &error)
+{
+    std::string path (file_spec.GetPath());
+    if (path.empty())
+    {
+        error.SetErrorString("empty path");
+        return UINT64_MAX;
+    }
+    FileSP file_sp(new File());
+    error = file_sp->Open(path.c_str(),flags,mode);
+    if (file_sp->IsValid() == false)
+        return UINT64_MAX;
+    lldb::user_id_t fd = file_sp->GetDescriptor();
+    GetFDToFileMap()[fd] = file_sp;
+    return fd;
+}
+
+bool
+Host::CloseFile (lldb::user_id_t fd, Error &error)
+{
+    if (fd == UINT64_MAX)
+    {
+        error.SetErrorString ("invalid file descriptor");
+        return false;
+    }
+    FDToFileMap& file_map = GetFDToFileMap();
+    FDToFileMap::iterator pos = file_map.find(fd);
+    if (pos == file_map.end())
+    {
+        error.SetErrorStringWithFormat ("invalid host file descriptor %" PRIu64, fd);
+        return false;
+    }
+    FileSP file_sp = pos->second;
+    if (!file_sp)
+    {
+        error.SetErrorString ("invalid host backing file");
+        return false;
+    }
+    error = file_sp->Close();
+    file_map.erase(pos);
+    return error.Success();
+}
+
+uint64_t
+Host::WriteFile (lldb::user_id_t fd, uint64_t offset, const void* src, uint64_t src_len, Error &error)
+{
+    if (fd == UINT64_MAX)
+    {
+        error.SetErrorString ("invalid file descriptor");
+        return UINT64_MAX;
+    }
+    FDToFileMap& file_map = GetFDToFileMap();
+    FDToFileMap::iterator pos = file_map.find(fd);
+    if (pos == file_map.end())
+    {
+        error.SetErrorStringWithFormat("invalid host file descriptor %" PRIu64 , fd);
+        return false;
+    }
+    FileSP file_sp = pos->second;
+    if (!file_sp)
+    {
+        error.SetErrorString ("invalid host backing file");
+        return UINT64_MAX;
+    }
+    if (file_sp->SeekFromStart(offset, &error) != offset || error.Fail())
+        return UINT64_MAX;
+    size_t bytes_written = src_len;
+    error = file_sp->Write(src, bytes_written);
+    if (error.Fail())
+        return UINT64_MAX;
+    return bytes_written;
+}
+
+uint64_t
+Host::ReadFile (lldb::user_id_t fd, uint64_t offset, void* dst, uint64_t dst_len, Error &error)
+{
+    if (fd == UINT64_MAX)
+    {
+        error.SetErrorString ("invalid file descriptor");
+        return UINT64_MAX;
+    }
+    FDToFileMap& file_map = GetFDToFileMap();
+    FDToFileMap::iterator pos = file_map.find(fd);
+    if (pos == file_map.end())
+    {
+        error.SetErrorStringWithFormat ("invalid host file descriptor %" PRIu64, fd);
+        return false;
+    }
+    FileSP file_sp = pos->second;
+    if (!file_sp)
+    {
+        error.SetErrorString ("invalid host backing file");
+        return UINT64_MAX;
+    }
+    if (file_sp->SeekFromStart(offset, &error) != offset || error.Fail())
+        return UINT64_MAX;
+    size_t bytes_read = dst_len;
+    error = file_sp->Read(dst ,bytes_read);
+    if (error.Fail())
+        return UINT64_MAX;
+    return bytes_read;
+}
+
+lldb::user_id_t
+Host::GetFileSize (const FileSpec& file_spec)
+{
+    return file_spec.GetByteSize();
+}
+
+bool
+Host::GetFileExists (const FileSpec& file_spec)
+{
+    return file_spec.Exists();
+}
+
+bool
+Host::CalculateMD5 (const FileSpec& file_spec,
+                    uint64_t &low,
+                    uint64_t &high)
+{
+#if defined (__APPLE__)
+    StreamString md5_cmd_line;
+    md5_cmd_line.Printf("md5 -q '%s'", file_spec.GetPath().c_str());
+    std::string hash_string;
+    Error err = Host::RunShellCommand(md5_cmd_line.GetData(), NULL, NULL, NULL, &hash_string, 60);
+    if (err.Fail())
+        return false;
+    // a correctly formed MD5 is 16-bytes, that is 32 hex digits
+    // if the output is any other length it is probably wrong
+    if (hash_string.size() != 32)
+        return false;
+    std::string part1(hash_string,0,16);
+    std::string part2(hash_string,16);
+    const char* part1_cstr = part1.c_str();
+    const char* part2_cstr = part2.c_str();
+    high = ::strtoull(part1_cstr, NULL, 16);
+    low = ::strtoull(part2_cstr, NULL, 16);
+    return true;
+#else
+    // your own MD5 implementation here
+    return false;
+#endif
+}

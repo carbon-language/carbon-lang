@@ -373,6 +373,23 @@ def dwarf_test(func):
     wrapper.__dwarf_test__ = True
     return wrapper
 
+def not_remote_testsuite_ready(func):
+    """Decorate the item as a test which is not ready yet for remote testsuite."""
+    if isinstance(func, type) and issubclass(func, unittest2.TestCase):
+        raise Exception("@not_remote_testsuite_ready can only be used to decorate a test method")
+    @wraps(func)
+    def wrapper(self, *args, **kwargs):
+        try:
+            if lldb.lldbtest_remote_sandbox:
+                self.skipTest("not ready for remote testsuite")
+        except AttributeError:
+            pass
+        return func(self, *args, **kwargs)
+
+    # Mark this function as such to separate them from the regular tests.
+    wrapper.__not_ready_for_remote_testsuite_test__ = True
+    return wrapper
+
 def expectedFailureGcc(bugnumber=None, compiler_version=["=", None]):
      if callable(bugnumber):
         @wraps(bugnumber)
@@ -1556,6 +1573,31 @@ class TestBase(Base):
         if not self.dbg:
             raise Exception('Invalid debugger instance')
 
+        #
+        # Warning: MAJOR HACK AHEAD!
+        # If we are running testsuite remotely (by checking lldb.lldbtest_remote_sandbox),
+        # redefine the self.dbg.CreateTarget(filename) method to execute a "file filename"
+        # command, instead.  See also runCmd() where it decorates the "file filename" call
+        # with additional functionality when running testsuite remotely.
+        #
+        if lldb.lldbtest_remote_sandbox:
+            def DecoratedCreateTarget(arg):
+                self.runCmd("file %s" % arg)
+                target = self.dbg.GetSelectedTarget()
+                #
+                # SBTarget.LaunchSimple() currently not working for remote platform?
+                # johnny @ 04/23/2012
+                #
+                def DecoratedLaunchSimple(argv, envp, wd):
+                    self.runCmd("run")
+                    return target.GetProcess()
+                target.LaunchSimple = DecoratedLaunchSimple
+
+                return target
+            self.dbg.CreateTarget = DecoratedCreateTarget
+            if self.TraceOn():
+                print "self.dbg.Create is redefined to:\n%s" % getsource_if_available(DecoratedCreateTarget)
+
         # We want our debugger to be synchronous.
         self.dbg.SetAsync(False)
 
@@ -1644,6 +1686,38 @@ class TestBase(Base):
             raise Exception("Bad 'cmd' parameter encountered")
 
         trace = (True if traceAlways else trace)
+
+        # This is an opportunity to insert the 'platform target-install' command if we are told so
+        # via the settig of lldb.lldbtest_remote_sandbox.
+        if cmd.startswith("target create "):
+            cmd = cmd.replace("target create ", "file ")
+        if cmd.startswith("file ") and lldb.lldbtest_remote_sandbox:
+            with recording(self, trace) as sbuf:
+                the_rest = cmd.split("file ")[1]
+                # Split the rest of the command line.
+                atoms = the_rest.split()
+                #
+                # NOTE: This assumes that the options, if any, follow the file command,
+                # instead of follow the specified target.
+                #
+                target = atoms[-1]
+                # Now let's get the absolute pathname of our target.
+                abs_target = os.path.abspath(target)
+                print >> sbuf, "Found a file command, target (with absolute pathname)=%s" % abs_target
+                fpath, fname = os.path.split(abs_target)
+                parent_dir = os.path.split(fpath)[0]
+                platform_target_install_command = 'platform target-install %s %s' % (fpath, lldb.lldbtest_remote_sandbox)
+                print >> sbuf, "Insert this command to be run first: %s" % platform_target_install_command
+                self.ci.HandleCommand(platform_target_install_command, self.res)
+                # And this is the file command we want to execute, instead.
+                #
+                # Warning: SIDE EFFECT AHEAD!!!
+                # Populate the remote executable pathname into the lldb namespace,
+                # so that test cases can grab this thing out of the namespace.
+                #
+                lldb.lldbtest_remote_sandboxed_executable = abs_target.replace(parent_dir, lldb.lldbtest_remote_sandbox)
+                cmd = "file -P %s %s %s" % (lldb.lldbtest_remote_sandboxed_executable, the_rest.replace(target, ''), abs_target)
+                print >> sbuf, "And this is the replaced file command: %s" % cmd
 
         running = (cmd.startswith("run") or cmd.startswith("process launch"))
 

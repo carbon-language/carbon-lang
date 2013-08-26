@@ -80,9 +80,9 @@ public:
     GetStatus (lldb_private::Stream &strm);
 
     virtual lldb_private::Error
-    GetFile (const lldb_private::FileSpec &platform_file, 
-             const lldb_private::UUID *uuid_ptr,
-             lldb_private::FileSpec &local_file);
+    GetSymbolFile (const lldb_private::FileSpec &platform_file, 
+                   const lldb_private::UUID *uuid_ptr,
+                   lldb_private::FileSpec &local_file);
 
     virtual lldb_private::Error
     GetSharedModule (const lldb_private::ModuleSpec &module_spec,

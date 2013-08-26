@@ -158,6 +158,7 @@ public:
         m_arch_option (),
         m_platform_options(true), // Do include the "--platform" option in the platform settings by passing true
         m_core_file (LLDB_OPT_SET_1, false, "core", 'c', 0, eArgTypeFilename, "Fullpath to a core file to use for this target."),
+        m_platform_path (LLDB_OPT_SET_1, false, "platform-path", 'P', 0, eArgTypePath, "Path to the remote file to use for this target."),
         m_symbol_file (LLDB_OPT_SET_1, false, "symfile", 's', 0, eArgTypeFilename, "Fullpath to a stand alone debug symbols file for when debug symbols are not in the executable."),
         m_remote_file (LLDB_OPT_SET_1, false, "remote-file", 'r', 0, eArgTypeFilename, "Fullpath to the file on the remote host if debugging remotely."),
         m_add_dependents (LLDB_OPT_SET_1, false, "no-dependents", 'd', "Don't load dependent files when creating the target, just add the specified executable.", true, true)
@@ -178,6 +179,7 @@ public:
         m_option_group.Append (&m_arch_option, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
         m_option_group.Append (&m_platform_options, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
         m_option_group.Append (&m_core_file, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
+        m_option_group.Append (&m_platform_path, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
         m_option_group.Append (&m_symbol_file, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
         m_option_group.Append (&m_remote_file, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
         m_option_group.Append (&m_add_dependents, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
@@ -226,7 +228,7 @@ protected:
         FileSpec core_file (m_core_file.GetOptionValue().GetCurrentValue());
         FileSpec remote_file (m_remote_file.GetOptionValue().GetCurrentValue());
 
-        if (argc == 1 || core_file)
+        if (argc == 1 || core_file || remote_file)
         {
             FileSpec symfile (m_symbol_file.GetOptionValue().GetCurrentValue());
             if (symfile)
@@ -243,11 +245,70 @@ protected:
 
             const char *file_path = command.GetArgumentAtIndex(0);
             Timer scoped_timer(__PRETTY_FUNCTION__, "(lldb) target create '%s'", file_path);
-            TargetSP target_sp;
+            FileSpec file_spec;
+            
+            if (file_path)
+                file_spec.SetFile (file_path, true);
+            
+            bool must_set_platform_path = false;
+            
             Debugger &debugger = m_interpreter.GetDebugger();
+            PlatformSP platform_sp(debugger.GetPlatformList().GetSelectedPlatform ());
+
+            if (remote_file)
+            {
+                // I have a remote file.. two possible cases
+                if (file_spec && file_spec.Exists())
+                {
+                    // if the remote file does not exist, push it there
+                    if (!platform_sp->GetFileExists (remote_file))
+                    {
+                        Error err = platform_sp->PutFile(file_spec, remote_file);
+                        if (err.Fail())
+                        {
+                            result.AppendError(err.AsCString());
+                            result.SetStatus (eReturnStatusFailed);
+                            return false;
+                        }
+                    }
+                }
+                else
+                {
+                    // there is no local file and we need one
+                    // in order to make the remote ---> local transfer we need a platform
+                    // TODO: if the user has passed in a --platform argument, use it to fetch the right platform
+                    if (!platform_sp)
+                    {
+                        result.AppendError("unable to perform remote debugging without a platform");
+                        result.SetStatus (eReturnStatusFailed);
+                        return false;
+                    }
+                    if (file_path)
+                    {
+                        // copy the remote file to the local file
+                        Error err = platform_sp->GetFile(remote_file, file_spec);
+                        if (err.Fail())
+                        {
+                            result.AppendError(err.AsCString());
+                            result.SetStatus (eReturnStatusFailed);
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        // make up a local file
+                        result.AppendError("remote --> local transfer without local path is not implemented yet");
+                        result.SetStatus (eReturnStatusFailed);
+                        return false;
+                    }
+                }
+            }
+
+            TargetSP target_sp;
             const char *arch_cstr = m_arch_option.GetArchitectureName();
             const bool get_dependent_files = m_add_dependents.GetOptionValue().GetCurrentValue();
             Error error (debugger.GetTargetList().CreateTarget (debugger,
+//                                                                remote_file ? remote_file : file_spec,
                                                                 file_path,
                                                                 arch_cstr,
                                                                 get_dependent_files,
@@ -273,6 +334,13 @@ protected:
                 }
                 
                 debugger.GetTargetList().SetSelectedTarget(target_sp.get());
+                if (must_set_platform_path)
+                {
+                    ModuleSpec main_module_spec(file_spec);
+                    ModuleSP module_sp = target_sp->GetSharedModule(main_module_spec);
+                    if (module_sp)
+                        module_sp->SetPlatformFileSpec(remote_file);
+                }
                 if (core_file)
                 {
                     char core_path[PATH_MAX];
@@ -341,6 +409,7 @@ private:
     OptionGroupArchitecture m_arch_option;
     OptionGroupPlatform m_platform_options;
     OptionGroupFile m_core_file;
+    OptionGroupFile m_platform_path;
     OptionGroupFile m_symbol_file;
     OptionGroupFile m_remote_file;
     OptionGroupBoolean m_add_dependents;

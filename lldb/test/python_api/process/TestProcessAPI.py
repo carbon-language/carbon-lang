@@ -78,7 +78,6 @@ class ProcessAPITestCase(TestBase):
     def read_memory(self):
         """Test Python SBProcess.ReadMemory() API."""
         exe = os.path.join(os.getcwd(), "a.out")
-        self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         target = self.dbg.CreateTarget(exe)
         self.assertTrue(target, VALID_TARGET)
@@ -160,7 +159,6 @@ class ProcessAPITestCase(TestBase):
     def write_memory(self):
         """Test Python SBProcess.WriteMemory() API."""
         exe = os.path.join(os.getcwd(), "a.out")
-        self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         target = self.dbg.CreateTarget(exe)
         self.assertTrue(target, VALID_TARGET)
@@ -211,7 +209,6 @@ class ProcessAPITestCase(TestBase):
     def access_my_int(self):
         """Test access 'my_int' using Python SBProcess.GetByteOrder() and other APIs."""
         exe = os.path.join(os.getcwd(), "a.out")
-        self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         target = self.dbg.CreateTarget(exe)
         self.assertTrue(target, VALID_TARGET)
@@ -300,7 +297,6 @@ class ProcessAPITestCase(TestBase):
     def remote_launch_should_fail(self):
         """Test SBProcess.RemoteLaunch() API with a process not in eStateConnected, and it should fail."""
         exe = os.path.join(os.getcwd(), "a.out")
-        self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         target = self.dbg.CreateTarget(exe)
         self.assertTrue(target, VALID_TARGET)

@@ -447,7 +447,7 @@ class ObjCDataFormatterTestCase(TestBase):
         self.expect('frame variable bundle_string bundle_url main_bundle',
                     substrs = ['(NSBundle *) bundle_string = ',' @"/System/Library/Frameworks/Accelerate.framework"',
                     '(NSBundle *) bundle_url = ',' @"/System/Library/Frameworks/Cocoa.framework"',
-                    '(NSBundle *) main_bundle = ','test/functionalities/data-formatter/data-formatter-objc'])
+                    '(NSBundle *) main_bundle = ','data-formatter-objc'])
 
     def nsexception_data_formatter_commands(self):
         self.expect('frame variable except0 except1 except2 except3',

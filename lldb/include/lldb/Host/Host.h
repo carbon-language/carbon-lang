@@ -18,6 +18,7 @@
 
 #include "lldb/lldb-private.h"
 #include "lldb/Core/StringList.h"
+#include "lldb/Host/File.h"
 
 namespace lldb_private {
 
@@ -508,6 +509,45 @@ public:
     DynamicLibraryGetSymbol (void *dynamic_library_handle, 
                              const char *symbol_name, 
                              Error &error);
+    
+    static uint32_t
+    MakeDirectory (const char* path, mode_t mode);
+    
+    static lldb::user_id_t
+    OpenFile (const FileSpec& file_spec,
+              uint32_t flags,
+              mode_t mode,
+              Error &error);
+    
+    static bool
+    CloseFile (lldb::user_id_t fd,
+               Error &error);
+    
+    static uint64_t
+    WriteFile (lldb::user_id_t fd,
+               uint64_t offset,
+               const void* src,
+               uint64_t src_len,
+               Error &error);
+    
+    static uint64_t
+    ReadFile (lldb::user_id_t fd,
+              uint64_t offset,
+              void* dst,
+              uint64_t dst_len,
+              Error &error);
+
+    static lldb::user_id_t
+    GetFileSize (const FileSpec& file_spec);
+    
+    static bool
+    GetFileExists (const FileSpec& file_spec);
+    
+    static bool
+    CalculateMD5 (const FileSpec& file_spec,
+                  uint64_t &low,
+                  uint64_t &high);
+
 };
 
 } // namespace lldb_private

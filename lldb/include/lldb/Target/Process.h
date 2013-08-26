@@ -243,6 +243,12 @@ public:
         return m_arch;
     }
     
+    void
+    SetArchitecture (ArchSpec arch)
+    {
+        m_arch = arch;
+    }
+    
     lldb::pid_t
     GetProcessID () const
     {

@@ -126,6 +126,7 @@ lldb_private::DisableLog (const char **categories, Stream *feedback_strm)
                 else if (0 == ::strncasecmp(arg, "expr", 4))    flag_bits &= ~LIBLLDB_LOG_EXPRESSIONS;
                 else if (0 == ::strncasecmp(arg, "object", 6))  flag_bits &= ~LIBLLDB_LOG_OBJECT;
                 else if (0 == ::strcasecmp(arg, "process"))     flag_bits &= ~LIBLLDB_LOG_PROCESS;
+                else if (0 == ::strcasecmp(arg, "platform"))    flag_bits &= ~LIBLLDB_LOG_PLATFORM;
                 else if (0 == ::strcasecmp(arg, "script"))      flag_bits &= ~LIBLLDB_LOG_SCRIPT;
                 else if (0 == ::strcasecmp(arg, "state"))       flag_bits &= ~LIBLLDB_LOG_STATE;
                 else if (0 == ::strcasecmp(arg, "step"))        flag_bits &= ~LIBLLDB_LOG_STEP;
@@ -196,6 +197,7 @@ lldb_private::EnableLog (StreamSP &log_stream_sp, uint32_t log_options, const ch
             else if (0 == ::strncasecmp(arg, "expr", 4))    flag_bits |= LIBLLDB_LOG_EXPRESSIONS;
             else if (0 == ::strncasecmp(arg, "object", 6))  flag_bits |= LIBLLDB_LOG_OBJECT;
             else if (0 == ::strcasecmp(arg, "process"))     flag_bits |= LIBLLDB_LOG_PROCESS;
+            else if (0 == ::strcasecmp(arg, "platform"))    flag_bits |= LIBLLDB_LOG_PLATFORM;
             else if (0 == ::strcasecmp(arg, "script"))      flag_bits |= LIBLLDB_LOG_SCRIPT;
             else if (0 == ::strcasecmp(arg, "state"))       flag_bits |= LIBLLDB_LOG_STATE;
             else if (0 == ::strcasecmp(arg, "step"))        flag_bits |= LIBLLDB_LOG_STEP;
@@ -244,6 +246,7 @@ lldb_private::ListLogCategories (Stream *strm)
                  "  object - log object construction/destruction for important objects\n"
                  "  module - log module activities such as when modules are created, detroyed, replaced, and more\n"
                  "  process - log process events and activities\n"
+                 "  platform - log platform events and activities\n"
                  "  script - log events about the script interpreter\n"
                  "  state - log private and public process state changes\n"
                  "  step - log step related activities\n"

@@ -448,6 +448,12 @@ protected:
         void
         Finalize ();
         
+        bool
+        DidFinalize ()
+        {
+            return m_did_finalize;
+        }
+        
         virtual Error
         SetOptionValue (uint32_t option_idx, 
                         const char *option_arg);
@@ -464,6 +470,10 @@ protected:
             assert (m_did_finalize);
             return &m_option_defs[0];
         }
+        
+        const OptionGroup*
+        GetGroupWithOption (char short_opt);
+        
         struct OptionInfo
         {
             OptionInfo (OptionGroup* g, uint32_t i) :

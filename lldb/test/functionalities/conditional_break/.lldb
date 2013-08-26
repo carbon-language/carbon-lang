@@ -1,4 +1,4 @@
-file a.out
+#file a.out
 breakpoint set -n c
 #script import sys, os
 #script sys.path.append(os.path.join(os.getcwd(), os.pardir))

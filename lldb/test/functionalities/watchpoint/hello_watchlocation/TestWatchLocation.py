@@ -90,15 +90,13 @@ class HelloWatchLocationTestCase(TestBase):
         # only once.  The stop reason of the thread should be watchpoint.
         self.expect("thread list", STOPPED_DUE_TO_WATCHPOINT,
             substrs = ['stopped',
-                       'stop reason = watchpoint %d' % expected_wp_id,
-                       self.violating_func])
+                       'stop reason = watchpoint %d' % expected_wp_id])
 
         # Switch to the thread stopped due to watchpoint and issue some commands.
         self.switch_to_thread_with_stop_reason(lldb.eStopReasonWatchpoint)
         self.runCmd("thread backtrace")
-        self.runCmd("expr unsigned val = *g_char_ptr; val")
-        self.expect(self.res.GetOutput().splitlines()[0], exe=False,
-            endstr = ' = 1')
+        self.expect("frame info",
+            substrs = [self.violating_func])
 
         # Use the '-v' option to do verbose listing of the watchpoint.
         # The hit count should now be 1.

@@ -51,6 +51,7 @@ add_lldb_library(lldbCore
   StreamAsynchronousIO.cpp
   StreamCallback.cpp
   StreamFile.cpp
+  StreamGDBRemote.cpp
   StreamString.cpp
   StringList.cpp
   Timer.cpp

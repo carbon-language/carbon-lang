@@ -1984,3 +1984,10 @@ Host::GetAuxvData(lldb_private::Process *process)
 {
     return lldb::DataBufferSP();
 }
+
+uint32_t
+Host::MakeDirectory (const char* path, mode_t mode)
+{
+    return ::mkdir(path,mode);
+}
+

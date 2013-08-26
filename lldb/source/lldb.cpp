@@ -42,6 +42,7 @@
 #include "Plugins/DynamicLoader/POSIX-DYLD/DynamicLoaderPOSIXDYLD.h"
 #include "Plugins/Platform/FreeBSD/PlatformFreeBSD.h"
 #include "Plugins/Platform/Linux/PlatformLinux.h"
+#include "Plugins/Platform/POSIX/PlatformPOSIX.h"
 #include "Plugins/LanguageRuntime/CPlusPlus/ItaniumABI/ItaniumABILanguageRuntime.h"
 #ifndef LLDB_DISABLE_PYTHON
 #include "Plugins/OperatingSystem/Python/OperatingSystemPython.h"

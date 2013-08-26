@@ -992,6 +992,18 @@ OptionGroupOptions::Append (OptionGroup* group)
     }
 }
 
+const OptionGroup*
+OptionGroupOptions::GetGroupWithOption (char short_opt)
+{
+    for (uint32_t i = 0; i < m_option_defs.size(); i++)
+    {
+        OptionDefinition opt_def = m_option_defs[i];
+        if (opt_def.short_option == short_opt)
+            return m_option_infos[i].option_group;
+    }
+    return NULL;
+}
+
 void
 OptionGroupOptions::Append (OptionGroup* group, 
                             uint32_t src_mask, 

@@ -813,19 +813,21 @@ ProcessPOSIX::UpdateThreadList(ThreadList &old_thread_list, ThreadList &new_thre
     if (log && log->GetMask().Test(POSIX_LOG_VERBOSE))
         log->Printf ("ProcessPOSIX::%s() (pid = %" PRIi64 ")", __FUNCTION__, GetID());
 
+    bool has_updated = false;
     // Update the process thread list with this new thread.
     // FIXME: We should be using tid, not pid.
     assert(m_monitor);
     ThreadSP thread_sp (old_thread_list.FindThreadByID (GetID(), false));
     if (!thread_sp) {
         thread_sp.reset(CreateNewPOSIXThread(*this, GetID()));
+        has_updated = true;
     }
 
     if (log && log->GetMask().Test(POSIX_LOG_VERBOSE))
         log->Printf ("ProcessPOSIX::%s() updated pid = %" PRIi64, __FUNCTION__, GetID());
     new_thread_list.AddThread(thread_sp);
 
-    return new_thread_list.GetSize(false) > 0;
+    return has_updated; // the list has been updated
 }
 
 ByteOrder

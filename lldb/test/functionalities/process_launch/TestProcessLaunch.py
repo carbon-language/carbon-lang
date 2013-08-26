@@ -31,6 +31,7 @@ class ProcessLaunchTestCase(TestBase):
         self.buildDwarf ()
         self.process_io_test ()
 
+    @not_remote_testsuite_ready
     def process_io_test (self):
         """Test that process launch I/O redirection flags work properly."""
         exe = os.path.join (os.getcwd(), "a.out")
@@ -127,6 +128,7 @@ class ProcessLaunchTestCase(TestBase):
 
     # rdar://problem/9056462
     # The process launch flag '-w' for setting the current working directory not working?
+    @not_remote_testsuite_ready
     def my_working_dir_test (self):
         """Test that '-w dir' sets the working dir when running the inferior."""
         exe = os.path.join (os.getcwd(), "a.out")

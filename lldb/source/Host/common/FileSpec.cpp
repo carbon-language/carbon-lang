@@ -29,6 +29,7 @@
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Program.h"
 
+#include "lldb/Core/StreamString.h"
 #include "lldb/Host/File.h"
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Core/DataBufferHeap.h"
@@ -1106,6 +1107,140 @@ FileSpec::EnumerateDirectory
     return eEnumerateDirectoryResultNext;    
 }
 
+FileSpec
+FileSpec::CopyByAppendingPathComponent (const char *new_path)  const
+{
+    const bool resolve = false;
+    if (m_filename.IsEmpty() && m_directory.IsEmpty())
+        return FileSpec(new_path,resolve);
+    StreamString stream;
+    if (m_filename.IsEmpty())
+        stream.Printf("%s/%s",m_directory.GetCString(),new_path);
+    else if (m_directory.IsEmpty())
+        stream.Printf("%s/%s",m_filename.GetCString(),new_path);
+    else
+        stream.Printf("%s/%s/%s",m_directory.GetCString(), m_filename.GetCString(),new_path);
+    return FileSpec(stream.GetData(),resolve);
+}
+
+FileSpec
+FileSpec::CopyByRemovingLastPathComponent ()  const
+{
+    const bool resolve = false;
+    if (m_filename.IsEmpty() && m_directory.IsEmpty())
+        return FileSpec("",resolve);
+    if (m_directory.IsEmpty())
+        return FileSpec("",resolve);
+    if (m_filename.IsEmpty())
+    {
+        const char* dir_cstr = m_directory.GetCString();
+        const char* last_slash_ptr = ::strrchr(dir_cstr, '/');
+        
+        // check for obvious cases before doing the full thing
+        if (!last_slash_ptr)
+            return FileSpec("",resolve);
+        if (last_slash_ptr == dir_cstr)
+            return FileSpec("/",resolve);
+        
+        size_t last_slash_pos = last_slash_ptr - dir_cstr+1;
+        ConstString new_path(dir_cstr,last_slash_pos);
+        return FileSpec(new_path.GetCString(),resolve);
+    }
+    else
+        return FileSpec(m_directory.GetCString(),resolve);
+}
+
+const char*
+FileSpec::GetLastPathComponent () const
+{
+    if (m_filename.IsEmpty() && m_directory.IsEmpty())
+        return NULL;
+    if (m_filename.IsEmpty())
+    {
+        const char* dir_cstr = m_directory.GetCString();
+        const char* last_slash_ptr = ::strrchr(dir_cstr, '/');
+        if (last_slash_ptr == NULL)
+            return m_directory.GetCString();
+        if (last_slash_ptr == dir_cstr)
+        {
+            if (last_slash_ptr[1] == 0)
+                return last_slash_ptr;
+            else
+                return last_slash_ptr+1;
+        }
+        if (last_slash_ptr[1] != 0)
+            return last_slash_ptr+1;
+        const char* penultimate_slash_ptr = last_slash_ptr;
+        while (*penultimate_slash_ptr)
+        {
+            --penultimate_slash_ptr;
+            if (penultimate_slash_ptr == dir_cstr)
+                break;
+            if (*penultimate_slash_ptr == '/')
+                break;
+        }
+        ConstString new_path(penultimate_slash_ptr+1,last_slash_ptr-penultimate_slash_ptr);
+        return new_path.AsCString();
+    }
+    return m_filename.GetCString();
+}
+
+void
+FileSpec::AppendPathComponent (const char *new_path)
+{
+    const bool resolve = false;
+    if (m_filename.IsEmpty() && m_directory.IsEmpty())
+    {
+        SetFile(new_path,resolve);
+        return;
+    }
+    StreamString stream;
+    if (m_filename.IsEmpty())
+        stream.Printf("%s/%s",m_directory.GetCString(),new_path);
+    else if (m_directory.IsEmpty())
+        stream.Printf("%s/%s",m_filename.GetCString(),new_path);
+    else
+        stream.Printf("%s/%s/%s",m_directory.GetCString(), m_filename.GetCString(),new_path);
+    SetFile(stream.GetData(), resolve);
+}
+
+void
+FileSpec::RemoveLastPathComponent ()
+{
+    const bool resolve = false;
+    if (m_filename.IsEmpty() && m_directory.IsEmpty())
+    {
+        SetFile("",resolve);
+        return;
+    }
+    if (m_directory.IsEmpty())
+    {
+        SetFile("",resolve);
+        return;
+    }
+    if (m_filename.IsEmpty())
+    {
+        const char* dir_cstr = m_directory.GetCString();
+        const char* last_slash_ptr = ::strrchr(dir_cstr, '/');
+        
+        // check for obvious cases before doing the full thing
+        if (!last_slash_ptr)
+        {
+            SetFile("",resolve);
+            return;
+        }
+        if (last_slash_ptr == dir_cstr)
+        {
+            SetFile("/",resolve);
+            return;
+        }        
+        size_t last_slash_pos = last_slash_ptr - dir_cstr+1;
+        ConstString new_path(dir_cstr,last_slash_pos);
+        SetFile(new_path.GetCString(),resolve);
+    }
+    else
+        SetFile(m_directory.GetCString(),resolve);
+}
 //------------------------------------------------------------------
 /// Returns true if the filespec represents an implementation source
 /// file (files with a ".c", ".cpp", ".m", ".mm" (many more)
