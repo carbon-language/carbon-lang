@@ -72,29 +72,6 @@
 //
 // See PreprocessorTracker.cpp for additional details.
 //
-// Current problems:
-//
-// Modularize has problems with C++:
-//
-// 1. Modularize doesn't distinguish class of the same name in
-// different namespaces.  The result is erroneous duplicate definition errors.
-//
-// 2. Modularize doesn't distinguish between a regular class and a template
-// class of the same name.
-//
-// Other problems:
-//
-// 3. There seem to be a lot of spurious "not always provided" messages,
-// and many duplicates of these.
-//
-// 4. There are some legitimate uses of preprocessor macros that
-// modularize will flag as errors, such as repeatedly #include'ing
-// a file and using interleaving defined/undefined macros
-// to change declarations in the included file.  Is there a way
-// to address this?  Maybe have modularize accept a list of macros
-// to ignore.  Otherwise you can just exclude the file, after checking
-// for legitimate errors.
-//
 // Future directions:
 //
 // Basically, we want to add new checks for whatever we can check with respect
@@ -102,21 +79,28 @@
 //
 // Some ideas:
 //
-// 1. Fix the C++ and other problems.
-//
-// 2. Add options to disable any of the checks, in case
+// 1. Add options to disable any of the checks, in case
 // there is some problem with them, or the messages get too verbose.
 //
-// 3. Try to figure out the preprocessor conditional directives that
+// 2. Try to figure out the preprocessor conditional directives that
 // contribute to problems and tie them to the inconsistent definitions.
 //
-// 4. Check for correct and consistent usage of extern "C" {} and other
+// 3. Check for correct and consistent usage of extern "C" {} and other
 // directives. Warn about #include inside extern "C" {}.
 //
-// 5. To support headers that depend on other headers to be included first
-// add support for a dependency list to the header list input.
-// I.e.: header.h: dependent1.h dependent2.h
-// (Implement using clang's "-include" option"?)
+// 4. There seem to be a lot of spurious "not always provided" messages,
+// and many duplicates of these, which seem to occur when something is
+// defined within a preprocessor conditional block, even if the conditional
+// always evaluates the same in the stand-alone case.  Perhaps we could
+// collapse the duplicates, and add an option for disabling the test (see #4).
+//
+// 5. There are some legitimate uses of preprocessor macros that
+// modularize will flag as errors, such as repeatedly #include'ing
+// a file and using interleaving defined/undefined macros
+// to change declarations in the included file.  Is there a way
+// to address this?  Maybe have modularize accept a list of macros
+// to ignore.  Otherwise you can just exclude the file, after checking
+// for legitimate errors.
 //
 // 6. What else?
 //
