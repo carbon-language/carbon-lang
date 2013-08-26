@@ -1141,10 +1141,9 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
   VectorType *VecTy = VectorType::get(ScalarTy, E->Scalars.size());
 
   if (E->NeedToGather) {
-    BasicBlock *BB = VL0->getParent();
     BasicBlock::iterator NextInst = getLastInstruction(E->Scalars);
     ++NextInst;
-    assert(NextInst != BB->end());
+    assert(NextInst != VL0->getParent()->end());
     Builder.SetInsertPoint(NextInst);
     return Gather(E->Scalars, VecTy);
   }
@@ -1270,7 +1269,7 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
 
       if (Value *V = alreadyVectorized(E->Scalars))
         return V;
-      
+
       Value *V = Builder.CreateSelect(Cond, True, False);
       E->VectorizedValue = V;
       return V;
