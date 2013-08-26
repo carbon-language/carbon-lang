@@ -240,7 +240,7 @@ protected:
         uint32_t   address_of_functions;
         uint32_t   address_of_names;
         uint32_t   address_of_name_ordinals;
-    };
+    } export_directory_entry;
     
 	bool ParseDOSHeader ();
 	bool ParseCOFFHeader (lldb::offset_t *offset_ptr);

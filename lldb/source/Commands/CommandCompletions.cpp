@@ -129,7 +129,7 @@ typedef struct DiskFilesOrDirectoriesBaton
     StringList *matches;
     char *end_ptr;
     size_t baselen;
-};
+} DiskFilesOrDirectoriesBaton;
 
 FileSpec::EnumerateDirectoryResult DiskFilesOrDirectoriesCallback(void *baton, FileSpec::FileType file_type, const FileSpec &spec)
 {
@@ -138,7 +138,6 @@ FileSpec::EnumerateDirectoryResult DiskFilesOrDirectoriesCallback(void *baton, F
     const DiskFilesOrDirectoriesBaton *parameters = (DiskFilesOrDirectoriesBaton*)baton;
     char *end_ptr = parameters->end_ptr;
     char *partial_name_copy = parameters->partial_name_copy;
-    size_t baselen = end_ptr - partial_name_copy;
     const char *remainder = parameters->remainder;
 
     // Omit ".", ".." and any . files if the match string doesn't start with .
