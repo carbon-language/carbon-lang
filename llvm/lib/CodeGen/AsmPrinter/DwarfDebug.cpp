@@ -2687,7 +2687,6 @@ void DwarfDebug::emitDebugInlineInfo() {
 // DW_AT_low_pc and DW_AT_high_pc are not used, and vice versa.
 CompileUnit *DwarfDebug::constructSkeletonCU(const MDNode *N) {
   DICompileUnit DIUnit(N);
-  CompilationDir = DIUnit.getDirectory();
 
   DIE *Die = new DIE(dwarf::DW_TAG_compile_unit);
   CompileUnit *NewCU =
