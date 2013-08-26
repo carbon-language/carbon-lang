@@ -3,6 +3,8 @@
 // vftables are emitted very late, so do another pass to try to keep the checks
 // in source order.
 // RUN: FileCheck --check-prefix DTORS %s < %t
+//
+// RUN: %clang_cc1 -emit-llvm %s -o - -cxx-abi microsoft -triple=x86_64-pc-win32 -fno-rtti | FileCheck --check-prefix DTORS-X64 %s
 
 namespace basic {
 
@@ -57,6 +59,9 @@ struct C {
 //
 // DTORS:      [[CONTINUE_LABEL]]
 // DTORS-NEXT:   ret void
+
+// Check that we do the mangling correctly on x64.
+// DTORS-X64:  @"\01??_GC@basic@@UEAAPEAXI@Z"
   }
   virtual void foo();
 };

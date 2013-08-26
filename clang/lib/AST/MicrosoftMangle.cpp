@@ -1294,7 +1294,7 @@ void MicrosoftCXXNameMangler::mangleFunctionType(const FunctionType *T,
       // However, the FunctionType generated has 0 arguments.
       // FIXME: This is a temporary hack.
       // Maybe should fix the FunctionType creation instead?
-      Out << "PAXI@Z";
+      Out << (PointersAre64Bit ? "PEAXI@Z" : "PAXI@Z");
       return;
     }
     Out << '@';
