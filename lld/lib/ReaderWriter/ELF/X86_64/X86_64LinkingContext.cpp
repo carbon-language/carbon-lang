@@ -201,8 +201,8 @@ protected:
   }
 
 public:
-  GOTPLTPass(const ELFLinkingContext &ti)
-      : _file(ti), _null(nullptr), _PLT0(nullptr), _got0(nullptr),
+  GOTPLTPass(const ELFLinkingContext &ctx)
+      : _file(ctx), _null(nullptr), _PLT0(nullptr), _got0(nullptr),
         _got1(nullptr) {}
 
   /// \brief Do the pass.
@@ -280,7 +280,7 @@ protected:
 /// TLS always assumes module 1 and attempts to remove indirection.
 class StaticGOTPLTPass LLVM_FINAL : public GOTPLTPass<StaticGOTPLTPass> {
 public:
-  StaticGOTPLTPass(const elf::X86_64LinkingContext &ti) : GOTPLTPass(ti) {}
+  StaticGOTPLTPass(const elf::X86_64LinkingContext &ctx) : GOTPLTPass(ctx) {}
 
   ErrorOr<void> handlePLT32(const Reference &ref) {
     // __tls_get_addr is handled elsewhere.
@@ -303,7 +303,7 @@ public:
 
 class DynamicGOTPLTPass LLVM_FINAL : public GOTPLTPass<DynamicGOTPLTPass> {
 public:
-  DynamicGOTPLTPass(const elf::X86_64LinkingContext &ti) : GOTPLTPass(ti) {}
+  DynamicGOTPLTPass(const elf::X86_64LinkingContext &ctx) : GOTPLTPass(ctx) {}
 
   const PLT0Atom *getPLT0() {
     if (_PLT0)

@@ -117,9 +117,9 @@ private:
 /// symbols.
 class UndefinedSymbolFile : public SimpleFile {
 public:
-  UndefinedSymbolFile(const LinkingContext &ti)
-      : SimpleFile(ti, "Linker Internal File") {
-    for (StringRef symbol : ti.initialUndefinedSymbols()) {
+  UndefinedSymbolFile(const LinkingContext &ctx)
+      : SimpleFile(ctx, "Linker Internal File") {
+    for (StringRef symbol : ctx.initialUndefinedSymbols()) {
       UndefinedAtom *atom = new (_alloc) coff::COFFUndefinedAtom(*this, symbol);
       addAtom(*atom);
     }

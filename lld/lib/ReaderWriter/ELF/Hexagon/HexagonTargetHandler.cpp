@@ -144,8 +144,8 @@ protected:
   }
 
 public:
-  GOTPLTPass(const ELFLinkingContext &ti)
-      : _file(ti), _null(nullptr), _PLT0(nullptr), _got0(nullptr) {}
+  GOTPLTPass(const ELFLinkingContext &ctx)
+      : _file(ctx), _null(nullptr), _PLT0(nullptr), _got0(nullptr) {}
 
   /// \brief Do the pass.
   ///
@@ -212,7 +212,7 @@ protected:
 
 class DynamicGOTPLTPass LLVM_FINAL : public GOTPLTPass<DynamicGOTPLTPass> {
 public:
-  DynamicGOTPLTPass(const elf::HexagonLinkingContext &ti) : GOTPLTPass(ti) {
+  DynamicGOTPLTPass(const elf::HexagonLinkingContext &ctx) : GOTPLTPass(ctx) {
     _got0 = new (_file._alloc) HexagonGOTPLT0Atom(_file);
 #ifndef NDEBUG
     _got0->_name = "__got0";

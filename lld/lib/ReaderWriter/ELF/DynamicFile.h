@@ -25,11 +25,11 @@ namespace elf {
 template <class ELFT> class DynamicFile LLVM_FINAL : public SharedLibraryFile {
 public:
   static ErrorOr<std::unique_ptr<DynamicFile> >
-  create(const ELFLinkingContext &ti, std::unique_ptr<llvm::MemoryBuffer> mb) {
+  create(const ELFLinkingContext &ctx, std::unique_ptr<llvm::MemoryBuffer> mb) {
     std::unique_ptr<DynamicFile> file(
-        new DynamicFile(ti, mb->getBufferIdentifier()));
+        new DynamicFile(ctx, mb->getBufferIdentifier()));
 
-    bool useShlibUndefines = ti.useShlibUndefines();
+    bool useShlibUndefines = ctx.useShlibUndefines();
 
     error_code ec;
     file->_objFile.reset(new llvm::object::ELFFile<ELFT>(mb.release(), ec));

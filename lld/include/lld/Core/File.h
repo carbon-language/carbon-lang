@@ -240,8 +240,8 @@ public:
 
 protected:
   /// \brief only subclasses of MutableFile can be instantiated
-  MutableFile(const LinkingContext &ti, StringRef p)
-      : File(p, kindObject), _context(ti) {}
+  MutableFile(const LinkingContext &ctx, StringRef p)
+      : File(p, kindObject), _context(ctx) {}
 
 private:
   const LinkingContext &_context;

@@ -53,9 +53,9 @@ struct DynamicFileCreateELFTraits {
   typedef llvm::ErrorOr<std::unique_ptr<lld::SharedLibraryFile>> result_type;
 
   template <class ELFT>
-  static result_type create(const lld::ELFLinkingContext &ti,
+  static result_type create(const lld::ELFLinkingContext &ctx,
                             std::unique_ptr<llvm::MemoryBuffer> mb) {
-    return lld::elf::DynamicFile<ELFT>::create(ti, std::move(mb));
+    return lld::elf::DynamicFile<ELFT>::create(ctx, std::move(mb));
   }
 };
 
@@ -63,11 +63,11 @@ struct ELFFileCreateELFTraits {
   typedef std::unique_ptr<lld::File> result_type;
 
   template <class ELFT>
-  static result_type create(const lld::ELFLinkingContext &ti,
+  static result_type create(const lld::ELFLinkingContext &ctx,
                             std::unique_ptr<llvm::MemoryBuffer> mb,
                             lld::error_code &ec) {
     return std::unique_ptr<lld::File>(
-        new lld::elf::ELFFile<ELFT>(ti, std::move(mb), ec));
+        new lld::elf::ELFFile<ELFT>(ctx, std::move(mb), ec));
   }
 };
 }
@@ -78,8 +78,8 @@ namespace elf {
 /// memory buffer for ELF class and bit width
 class ELFReader : public Reader {
 public:
-  ELFReader(const ELFLinkingContext &ti)
-      : lld::Reader(ti), _elfLinkingContext(ti), _readerArchive(ti, *this) {}
+  ELFReader(const ELFLinkingContext &ctx)
+      : lld::Reader(ctx), _elfLinkingContext(ctx), _readerArchive(ctx, *this) {}
 
   error_code parseFile(std::unique_ptr<MemoryBuffer> &mb,
                        std::vector<std::unique_ptr<File>> &result) const {
