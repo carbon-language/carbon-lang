@@ -18,7 +18,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Object/Binary.h"
-#include "llvm/Support/MachO.h"
+#include "llvm/Object/MachOFormat.h"
 
 namespace llvm {
 namespace object {
@@ -35,7 +35,7 @@ public:
     /// \brief Index of object in the universal binary.
     uint32_t Index;
     /// \brief Descriptor of the object.
-    MachO::fat_arch Header;
+    macho::FatArchHeader Header;
 
   public:
     ObjectForArch(const MachOUniversalBinary *Parent, uint32_t Index);
@@ -50,7 +50,7 @@ public:
     }
 
     ObjectForArch getNext() const { return ObjectForArch(Parent, Index + 1); }
-    uint32_t getCPUType() const { return Header.cputype; }
+    uint32_t getCPUType() const { return Header.CPUType; }
 
     error_code getAsObjectFile(OwningPtr<ObjectFile> &Result) const;
   };

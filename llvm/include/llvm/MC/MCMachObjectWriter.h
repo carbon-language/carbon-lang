@@ -15,8 +15,8 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCObjectWriter.h"
+#include "llvm/Object/MachOFormat.h"
 #include "llvm/Support/DataTypes.h"
-#include "llvm/Support/MachO.h"
 #include <vector>
 
 namespace llvm {
@@ -98,7 +98,7 @@ class MachObjectWriter : public MCObjectWriter {
   /// @{
 
   llvm::DenseMap<const MCSectionData*,
-                 std::vector<MachO::any_relocation_info> > Relocations;
+                 std::vector<object::macho::RelocationEntry> > Relocations;
   llvm::DenseMap<const MCSectionData*, unsigned> IndirectSymBase;
 
   /// @}
@@ -155,8 +155,9 @@ public:
 
   bool is64Bit() const { return TargetObjectWriter->is64Bit(); }
   bool isARM() const {
-    uint32_t CPUType = TargetObjectWriter->getCPUType() & ~MachO::CPU_ARCH_MASK;
-    return CPUType == MachO::CPU_TYPE_ARM;
+    uint32_t CPUType = TargetObjectWriter->getCPUType() &
+      ~object::mach::CTFM_ArchMask;
+    return CPUType == object::mach::CTM_ARM;
   }
 
   /// @}
@@ -212,21 +213,7 @@ public:
   //    these through in many cases.
 
   void addRelocation(const MCSectionData *SD,
-                     MachO::relocation_info &MRE) {
-    MachO::any_relocation_info AMRE;
-    memcpy(&AMRE, &MRE, sizeof(MRE));
-    Relocations[SD].push_back(AMRE);
-  }
-
-  void addRelocation(const MCSectionData *SD,
-                     MachO::scattered_relocation_info &SMRE) {
-    MachO::any_relocation_info MRE;
-    memcpy(&MRE, &SMRE, sizeof(MRE));
-    Relocations[SD].push_back(MRE);
-  }
-
-  void addRelocation(const MCSectionData *SD,
-                     MachO::any_relocation_info &MRE) {
+                     object::macho::RelocationEntry &MRE) {
     Relocations[SD].push_back(MRE);
   }
 

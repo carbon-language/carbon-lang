@@ -17,7 +17,7 @@
 
 using namespace llvm;
 using namespace object;
-using namespace MachO;
+using namespace macho;
 
 namespace {
 class X86_64MachORelocationInfo : public MCRelocationInfo {
@@ -33,7 +33,7 @@ public:
     StringRef SymName; SymI->getName(SymName);
     uint64_t  SymAddr; SymI->getAddress(SymAddr);
 
-    any_relocation_info RE = Obj->getRelocation(Rel.getRawDataRefImpl());
+    RelocationEntry RE = Obj->getRelocation(Rel.getRawDataRefImpl());
     bool isPCRel = Obj->getAnyRelocationPCRel(RE);
 
     MCSymbol *Sym = Ctx.GetOrCreateSymbol(SymName);
@@ -43,44 +43,44 @@ public:
     const MCExpr *Expr = 0;
 
     switch(RelType) {
-    case X86_64_RELOC_TLV:
+    case RIT_X86_64_TLV:
       Expr = MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_TLVP, Ctx);
       break;
-    case X86_64_RELOC_SIGNED_4:
+    case RIT_X86_64_Signed4:
       Expr = MCBinaryExpr::CreateAdd(MCSymbolRefExpr::Create(Sym, Ctx),
                                      MCConstantExpr::Create(4, Ctx),
                                      Ctx);
       break;
-    case X86_64_RELOC_SIGNED_2:
+    case RIT_X86_64_Signed2:
       Expr = MCBinaryExpr::CreateAdd(MCSymbolRefExpr::Create(Sym, Ctx),
                                      MCConstantExpr::Create(2, Ctx),
                                      Ctx);
       break;
-    case X86_64_RELOC_SIGNED_1:
+    case RIT_X86_64_Signed1:
       Expr = MCBinaryExpr::CreateAdd(MCSymbolRefExpr::Create(Sym, Ctx),
                                      MCConstantExpr::Create(1, Ctx),
                                      Ctx);
       break;
-    case X86_64_RELOC_GOT_LOAD:
+    case RIT_X86_64_GOTLoad:
       Expr = MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_GOTPCREL, Ctx);
       break;
-    case X86_64_RELOC_GOT:
+    case RIT_X86_64_GOT:
       Expr = MCSymbolRefExpr::Create(Sym, isPCRel ?
                                      MCSymbolRefExpr::VK_GOTPCREL :
                                      MCSymbolRefExpr::VK_GOT,
                                      Ctx);
       break;
-    case X86_64_RELOC_SUBTRACTOR:
+    case RIT_X86_64_Subtractor:
       {
         RelocationRef RelNext;
         Obj->getRelocationNext(Rel.getRawDataRefImpl(), RelNext);
-        any_relocation_info RENext = Obj->getRelocation(RelNext.getRawDataRefImpl());
+        RelocationEntry RENext = Obj->getRelocation(RelNext.getRawDataRefImpl());
 
         // X86_64_SUBTRACTOR must be followed by a relocation of type
-        // X86_64_RELOC_UNSIGNED.
+        // X86_64_RELOC_UNSIGNED    .
         // NOTE: Scattered relocations don't exist on x86_64.
         unsigned RType = Obj->getAnyRelocationType(RENext);
-        if (RType != X86_64_RELOC_UNSIGNED)
+        if (RType != RIT_X86_64_Unsigned)
           report_fatal_error("Expected X86_64_RELOC_UNSIGNED after "
                              "X86_64_RELOC_SUBTRACTOR.");
 

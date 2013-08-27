@@ -31,18 +31,18 @@ template<typename T>
 static void SwapStruct(T &Value);
 
 template<>
-void SwapStruct(MachO::fat_header &H) {
-  SwapValue(H.magic);
-  SwapValue(H.nfat_arch);
+void SwapStruct(macho::FatHeader &H) {
+  SwapValue(H.Magic);
+  SwapValue(H.NumFatArch);
 }
 
 template<>
-void SwapStruct(MachO::fat_arch &H) {
-  SwapValue(H.cputype);
-  SwapValue(H.cpusubtype);
-  SwapValue(H.offset);
-  SwapValue(H.size);
-  SwapValue(H.align);
+void SwapStruct(macho::FatArchHeader &H) {
+  SwapValue(H.CPUType);
+  SwapValue(H.CPUSubtype);
+  SwapValue(H.Offset);
+  SwapValue(H.Size);
+  SwapValue(H.Align);
 }
 
 template<typename T>
@@ -63,10 +63,10 @@ MachOUniversalBinary::ObjectForArch::ObjectForArch(
   } else {
     // Parse object header.
     StringRef ParentData = Parent->getData();
-    const char *HeaderPos = ParentData.begin() + sizeof(MachO::fat_header) +
-                            Index * sizeof(MachO::fat_arch);
-    Header = getUniversalBinaryStruct<MachO::fat_arch>(HeaderPos);
-    if (ParentData.size() < Header.offset + Header.size) {
+    const char *HeaderPos = ParentData.begin() + macho::FatHeaderSize +
+                            Index * macho::FatArchHeaderSize;
+    Header = getUniversalBinaryStruct<macho::FatArchHeader>(HeaderPos);
+    if (ParentData.size() < Header.Offset + Header.Size) {
       clear();
     }
   }
@@ -76,10 +76,10 @@ error_code MachOUniversalBinary::ObjectForArch::getAsObjectFile(
     OwningPtr<ObjectFile> &Result) const {
   if (Parent) {
     StringRef ParentData = Parent->getData();
-    StringRef ObjectData = ParentData.substr(Header.offset, Header.size);
+    StringRef ObjectData = ParentData.substr(Header.Offset, Header.Size);
     std::string ObjectName =
         Parent->getFileName().str() + ":" +
-        Triple::getArchTypeName(MachOObjectFile::getArch(Header.cputype));
+        Triple::getArchTypeName(MachOObjectFile::getArch(Header.CPUType));
     MemoryBuffer *ObjBuffer = MemoryBuffer::getMemBuffer(
         ObjectData, ObjectName, false);
     if (ObjectFile *Obj = ObjectFile::createMachOObjectFile(ObjBuffer)) {
@@ -96,31 +96,31 @@ MachOUniversalBinary::MachOUniversalBinary(MemoryBuffer *Source,
                                            error_code &ec)
   : Binary(Binary::ID_MachOUniversalBinary, Source),
     NumberOfObjects(0) {
-  if (Source->getBufferSize() < sizeof(MachO::fat_header)) {
+  if (Source->getBufferSize() < macho::FatHeaderSize) {
     ec = object_error::invalid_file_type;
     return;
   }
   // Check for magic value and sufficient header size.
   StringRef Buf = getData();
-  MachO::fat_header H= getUniversalBinaryStruct<MachO::fat_header>(Buf.begin());
-  NumberOfObjects = H.nfat_arch;
-  uint32_t MinSize = sizeof(MachO::fat_header) +
-                     sizeof(MachO::fat_arch) * NumberOfObjects;
-  if (H.magic != MachO::FAT_MAGIC || Buf.size() < MinSize) {
+  macho::FatHeader H = getUniversalBinaryStruct<macho::FatHeader>(Buf.begin());
+  NumberOfObjects = H.NumFatArch;
+  uint32_t MinSize = macho::FatHeaderSize +
+                     macho::FatArchHeaderSize * NumberOfObjects;
+  if (H.Magic != macho::HM_Universal || Buf.size() < MinSize) {
     ec = object_error::parse_failed;
     return;
   }
   ec = object_error::success;
 }
 
-static bool getCTMForArch(Triple::ArchType Arch, MachO::CPUType &CTM) {
+static bool getCTMForArch(Triple::ArchType Arch, mach::CPUTypeMachine &CTM) {
   switch (Arch) {
-    case Triple::x86:    CTM = MachO::CPU_TYPE_I386; return true;
-    case Triple::x86_64: CTM = MachO::CPU_TYPE_X86_64; return true;
-    case Triple::arm:    CTM = MachO::CPU_TYPE_ARM; return true;
-    case Triple::sparc:  CTM = MachO::CPU_TYPE_SPARC; return true;
-    case Triple::ppc:    CTM = MachO::CPU_TYPE_POWERPC; return true;
-    case Triple::ppc64:  CTM = MachO::CPU_TYPE_POWERPC64; return true;
+    case Triple::x86:    CTM = mach::CTM_i386; return true;
+    case Triple::x86_64: CTM = mach::CTM_x86_64; return true;
+    case Triple::arm:    CTM = mach::CTM_ARM; return true;
+    case Triple::sparc:  CTM = mach::CTM_SPARC; return true;
+    case Triple::ppc:    CTM = mach::CTM_PowerPC; return true;
+    case Triple::ppc64:  CTM = mach::CTM_PowerPC64; return true;
     default: return false;
   }
 }
@@ -128,7 +128,7 @@ static bool getCTMForArch(Triple::ArchType Arch, MachO::CPUType &CTM) {
 error_code
 MachOUniversalBinary::getObjectForArch(Triple::ArchType Arch,
                                        OwningPtr<ObjectFile> &Result) const {
-  MachO::CPUType CTM;
+  mach::CPUTypeMachine CTM;
   if (!getCTMForArch(Arch, CTM))
     return object_error::arch_not_found;
   for (object_iterator I = begin_objects(), E = end_objects(); I != E; ++I) {

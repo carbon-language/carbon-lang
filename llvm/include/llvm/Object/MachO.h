@@ -18,8 +18,8 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Triple.h"
+#include "llvm/Object/MachOFormat.h"
 #include "llvm/Object/ObjectFile.h"
-#include "llvm/Support/MachO.h"
 
 namespace llvm {
 namespace object {
@@ -53,7 +53,7 @@ class MachOObjectFile : public ObjectFile {
 public:
   struct LoadCommandInfo {
     const char *Ptr;      // Where in memory the load command is.
-    MachO::load_command C; // The command itself.
+    macho::LoadCommand C; // The command itself.
   };
 
   MachOObjectFile(MemoryBuffer *Object, bool IsLittleEndian, bool Is64Bits,
@@ -146,53 +146,50 @@ public:
   ArrayRef<char> getSectionRawFinalSegmentName(DataRefImpl Sec) const;
 
   // MachO specific Info about relocations.
-  bool isRelocationScattered(const MachO::any_relocation_info &RE) const;
-  unsigned getPlainRelocationSymbolNum(
-                                    const MachO::any_relocation_info &RE) const;
-  bool getPlainRelocationExternal(const MachO::any_relocation_info &RE) const;
-  bool getScatteredRelocationScattered(
-                                    const MachO::any_relocation_info &RE) const;
-  uint32_t getScatteredRelocationValue(
-                                    const MachO::any_relocation_info &RE) const;
-  unsigned getAnyRelocationAddress(const MachO::any_relocation_info &RE) const;
-  unsigned getAnyRelocationPCRel(const MachO::any_relocation_info &RE) const;
-  unsigned getAnyRelocationLength(const MachO::any_relocation_info &RE) const;
-  unsigned getAnyRelocationType(const MachO::any_relocation_info &RE) const;
-  SectionRef getRelocationSection(const MachO::any_relocation_info &RE) const;
+  bool isRelocationScattered(const macho::RelocationEntry &RE) const;
+  unsigned getPlainRelocationSymbolNum(const macho::RelocationEntry &RE) const;
+  bool getPlainRelocationExternal(const macho::RelocationEntry &RE) const;
+  bool getScatteredRelocationScattered(const macho::RelocationEntry &RE) const;
+  uint32_t getScatteredRelocationValue(const macho::RelocationEntry &RE) const;
+  unsigned getAnyRelocationAddress(const macho::RelocationEntry &RE) const;
+  unsigned getAnyRelocationPCRel(const macho::RelocationEntry &RE) const;
+  unsigned getAnyRelocationLength(const macho::RelocationEntry &RE) const;
+  unsigned getAnyRelocationType(const macho::RelocationEntry &RE) const;
+  SectionRef getRelocationSection(const macho::RelocationEntry &RE) const;
 
   // Walk load commands.
   LoadCommandInfo getFirstLoadCommandInfo() const;
   LoadCommandInfo getNextLoadCommandInfo(const LoadCommandInfo &L) const;
 
   // MachO specific structures.
-  MachO::section getSection(DataRefImpl DRI) const;
-  MachO::section_64 getSection64(DataRefImpl DRI) const;
-  MachO::section getSection(const LoadCommandInfo &L, unsigned Index) const;
-  MachO::section_64 getSection64(const LoadCommandInfo &L,unsigned Index) const;
-  MachO::nlist getSymbolTableEntry(DataRefImpl DRI) const;
-  MachO::nlist_64 getSymbol64TableEntry(DataRefImpl DRI) const;
+  macho::Section getSection(DataRefImpl DRI) const;
+  macho::Section64 getSection64(DataRefImpl DRI) const;
+  macho::Section getSection(const LoadCommandInfo &L, unsigned Index) const;
+  macho::Section64 getSection64(const LoadCommandInfo &L, unsigned Index) const;
+  macho::SymbolTableEntry getSymbolTableEntry(DataRefImpl DRI) const;
+  macho::Symbol64TableEntry getSymbol64TableEntry(DataRefImpl DRI) const;
 
-  MachO::linkedit_data_command
+  macho::LinkeditDataLoadCommand
   getLinkeditDataLoadCommand(const LoadCommandInfo &L) const;
-  MachO::segment_command
+  macho::SegmentLoadCommand
   getSegmentLoadCommand(const LoadCommandInfo &L) const;
-  MachO::segment_command_64
+  macho::Segment64LoadCommand
   getSegment64LoadCommand(const LoadCommandInfo &L) const;
-  MachO::linker_options_command
+  macho::LinkerOptionsLoadCommand
   getLinkerOptionsLoadCommand(const LoadCommandInfo &L) const;
 
-  MachO::any_relocation_info getRelocation(DataRefImpl Rel) const;
-  MachO::data_in_code_entry getDice(DataRefImpl Rel) const;
-  MachO::mach_header getHeader() const;
-  MachO::mach_header_64 getHeader64() const;
-  uint32_t
-  getIndirectSymbolTableEntry(const MachO::dysymtab_command &DLC,
+  macho::RelocationEntry getRelocation(DataRefImpl Rel) const;
+  macho::DataInCodeTableEntry getDice(DataRefImpl Rel) const;
+  macho::Header getHeader() const;
+  macho::Header64Ext getHeader64Ext() const;
+  macho::IndirectSymbolTableEntry
+  getIndirectSymbolTableEntry(const macho::DysymtabLoadCommand &DLC,
                               unsigned Index) const;
-  MachO::data_in_code_entry getDataInCodeTableEntry(uint32_t DataOffset,
-                                                    unsigned Index) const;
-  MachO::symtab_command getSymtabLoadCommand() const;
-  MachO::dysymtab_command getDysymtabLoadCommand() const;
-  MachO::linkedit_data_command getDataInCodeLoadCommand() const;
+  macho::DataInCodeTableEntry getDataInCodeTableEntry(uint32_t DataOffset,
+                                                      unsigned Index) const;
+  macho::SymtabLoadCommand getSymtabLoadCommand() const;
+  macho::DysymtabLoadCommand getDysymtabLoadCommand() const;
+  macho::LinkeditDataLoadCommand getDataInCodeLoadCommand() const;
 
   StringRef getStringTableData() const;
   bool is64Bit() const;
@@ -226,8 +223,8 @@ inline bool DiceRef::operator<(const DiceRef &Other) const {
 
 inline error_code DiceRef::getNext(DiceRef &Result) const {
   DataRefImpl Rel = DicePimpl;
-  const MachO::data_in_code_entry *P =
-    reinterpret_cast<const MachO::data_in_code_entry *>(Rel.p);
+  const macho::DataInCodeTableEntry *P =
+    reinterpret_cast<const macho::DataInCodeTableEntry *>(Rel.p);
   Rel.p = reinterpret_cast<uintptr_t>(P + 1);
   Result = DiceRef(Rel, OwningObject);
   return object_error::success;
@@ -240,24 +237,24 @@ inline error_code DiceRef::getNext(DiceRef &Result) const {
 inline error_code DiceRef::getOffset(uint32_t &Result) const {
   const MachOObjectFile *MachOOF =
     static_cast<const MachOObjectFile *>(OwningObject);
-  MachO::data_in_code_entry Dice = MachOOF->getDice(DicePimpl);
-  Result = Dice.offset;
+  macho::DataInCodeTableEntry Dice = MachOOF->getDice(DicePimpl);
+  Result = Dice.Offset;
   return object_error::success;
 }
 
 inline error_code DiceRef::getLength(uint16_t &Result) const {
   const MachOObjectFile *MachOOF =
     static_cast<const MachOObjectFile *>(OwningObject);
-  MachO::data_in_code_entry Dice = MachOOF->getDice(DicePimpl);
-  Result = Dice.length;
+  macho::DataInCodeTableEntry Dice = MachOOF->getDice(DicePimpl);
+  Result = Dice.Length;
   return object_error::success;
 }
 
 inline error_code DiceRef::getKind(uint16_t &Result) const {
   const MachOObjectFile *MachOOF =
     static_cast<const MachOObjectFile *>(OwningObject);
-  MachO::data_in_code_entry Dice = MachOOF->getDice(DicePimpl);
-  Result = Dice.kind;
+  macho::DataInCodeTableEntry Dice = MachOOF->getDice(DicePimpl);
+  Result = Dice.Kind;
   return object_error::success;
 }
 

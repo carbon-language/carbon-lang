@@ -16,11 +16,12 @@
 #include "llvm/MC/MCMachObjectWriter.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCValue.h"
+#include "llvm/Object/MachOFormat.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"
-#include "llvm/Support/MachO.h"
 
 using namespace llvm;
+using namespace llvm::object;
 
 namespace {
 class PPCMachObjectWriter : public MCMachObjectTargetWriter {
@@ -89,29 +90,29 @@ static unsigned getRelocType(const MCValue &Target,
       Target.isAbsolute() ? MCSymbolRefExpr::VK_None
                           : Target.getSymA()->getKind();
   // determine the type of the relocation
-  unsigned Type = MachO::GENERIC_RELOC_VANILLA;
+  unsigned Type = macho::RIT_Vanilla;
   if (IsPCRel) { // relative to PC
     switch ((unsigned)FixupKind) {
     default:
       report_fatal_error("Unimplemented fixup kind (relative)");
     case PPC::fixup_ppc_br24:
-      Type = MachO::PPC_RELOC_BR24; // R_PPC_REL24
+      Type = macho::RIT_PPC_BR24; // R_PPC_REL24
       break;
     case PPC::fixup_ppc_brcond14:
-      Type = MachO::PPC_RELOC_BR14;
+      Type = macho::RIT_PPC_BR14;
       break;
     case PPC::fixup_ppc_half16:
       switch (Modifier) {
       default:
         llvm_unreachable("Unsupported modifier for half16 fixup");
       case MCSymbolRefExpr::VK_PPC_HA:
-        Type = MachO::PPC_RELOC_HA16;
+        Type = macho::RIT_PPC_HA16;
         break;
       case MCSymbolRefExpr::VK_PPC_LO:
-        Type = MachO::PPC_RELOC_LO16;
+        Type = macho::RIT_PPC_LO16;
         break;
       case MCSymbolRefExpr::VK_PPC_HI:
-        Type = MachO::PPC_RELOC_HI16;
+        Type = macho::RIT_PPC_HI16;
         break;
       }
       break;
@@ -125,13 +126,13 @@ static unsigned getRelocType(const MCValue &Target,
       default:
         llvm_unreachable("Unsupported modifier for half16 fixup");
       case MCSymbolRefExpr::VK_PPC_HA:
-        Type = MachO::PPC_RELOC_HA16_SECTDIFF;
+        Type = macho::RIT_PPC_HA16_SECTDIFF;
         break;
       case MCSymbolRefExpr::VK_PPC_LO:
-        Type = MachO::PPC_RELOC_LO16_SECTDIFF;
+        Type = macho::RIT_PPC_LO16_SECTDIFF;
         break;
       case MCSymbolRefExpr::VK_PPC_HI:
-        Type = MachO::PPC_RELOC_HI16_SECTDIFF;
+        Type = macho::RIT_PPC_HI16_SECTDIFF;
         break;
       }
       break;
@@ -144,34 +145,30 @@ static unsigned getRelocType(const MCValue &Target,
   return Type;
 }
 
-static void makeRelocationInfo(MachO::any_relocation_info &MRE,
+static void makeRelocationInfo(macho::RelocationEntry &MRE,
                                const uint32_t FixupOffset, const uint32_t Index,
                                const unsigned IsPCRel, const unsigned Log2Size,
                                const unsigned IsExtern, const unsigned Type) {
-  MRE.r_word0 = FixupOffset;
+  MRE.Word0 = FixupOffset;
   // The bitfield offsets that work (as determined by trial-and-error)
   // are different than what is documented in the mach-o manuals.
-  // This appears to be an endianness issue; reversing the order of the
-  // documented bitfields in <llvm/Support/MachO.h> fixes this (but
-  // breaks x86/ARM assembly).
-  MRE.r_word1 = ((Index << 8) |    // was << 0
-                 (IsPCRel << 7) |  // was << 24
-                 (Log2Size << 5) | // was << 25
-                 (IsExtern << 4) | // was << 27
-                 (Type << 0));     // was << 28
+  // Is this an endianness issue w/ PPC?
+  MRE.Word1 = ((Index << 8) |    // was << 0
+               (IsPCRel << 7) |  // was << 24
+               (Log2Size << 5) | // was << 25
+               (IsExtern << 4) | // was << 27
+               (Type << 0));     // was << 28
 }
 
 static void
-makeScatteredRelocationInfo(MachO::scattered_relocation_info &MRE,
-                            const uint32_t Addr, const unsigned Type,
-                            const unsigned Log2Size, const unsigned IsPCRel,
-                            const uint32_t Value2) {
-  MRE.r_scattered = true;
-  MRE.r_pcrel = IsPCRel;
-  MRE.r_length = Log2Size;
-  MRE.r_type = Type;
-  MRE.r_address = Addr;
-  MRE.r_value = Value2;
+makeScatteredRelocationInfo(macho::RelocationEntry &MRE, const uint32_t Addr,
+                            const unsigned Type, const unsigned Log2Size,
+                            const unsigned IsPCRel, const uint32_t Value2) {
+  // For notes on bitfield positions and endianness, see:
+  // https://developer.apple.com/library/mac/documentation/developertools/conceptual/MachORuntime/Reference/reference.html#//apple_ref/doc/uid/20001298-scattered_relocation_entry
+  MRE.Word0 = ((Addr << 0) | (Type << 24) | (Log2Size << 28) | (IsPCRel << 30) |
+               macho::RF_Scattered);
+  MRE.Word1 = Value2;
 }
 
 /// Compute fixup offset (address).
@@ -226,19 +223,18 @@ bool PPCMachObjectWriter::RecordScatteredRelocation(
       report_fatal_error("symbol '" + B->getSymbol().getName() +
                          "' can not be undefined in a subtraction expression");
 
-    // FIXME: is Type correct? see include/llvm/Support/MachO.h
+    // FIXME: is Type correct? see include/llvm/Object/MachOFormat.h
     Value2 = Writer->getSymbolAddress(B_SD, Layout);
     FixedValue -= Writer->getSectionAddress(B_SD->getFragment()->getParent());
   }
   // FIXME: does FixedValue get used??
 
   // Relocations are written out in reverse order, so the PAIR comes first.
-  if (Type == MachO::PPC_RELOC_SECTDIFF ||
-      Type == MachO::PPC_RELOC_HI16_SECTDIFF ||
-      Type == MachO::PPC_RELOC_LO16_SECTDIFF ||
-      Type == MachO::PPC_RELOC_HA16_SECTDIFF ||
-      Type == MachO::PPC_RELOC_LO14_SECTDIFF ||
-      Type == MachO::PPC_RELOC_LOCAL_SECTDIFF) {
+  if (Type == macho::RIT_PPC_SECTDIFF || Type == macho::RIT_PPC_HI16_SECTDIFF ||
+      Type == macho::RIT_PPC_LO16_SECTDIFF ||
+      Type == macho::RIT_PPC_HA16_SECTDIFF ||
+      Type == macho::RIT_PPC_LO14_SECTDIFF ||
+      Type == macho::RIT_PPC_LOCAL_SECTDIFF) {
     // X86 had this piece, but ARM does not
     // If the offset is too large to fit in a scattered relocation,
     // we're hosed. It's an unfortunate limitation of the MachO format.
@@ -257,7 +253,7 @@ bool PPCMachObjectWriter::RecordScatteredRelocation(
     // see PPCMCExpr::EvaluateAsRelocatableImpl()
     uint32_t other_half = 0;
     switch (Type) {
-    case MachO::PPC_RELOC_LO16_SECTDIFF:
+    case macho::RIT_PPC_LO16_SECTDIFF:
       other_half = (FixedValue >> 16) & 0xffff;
       // applyFixupOffset longer extracts the high part because it now assumes
       // this was already done.
@@ -266,12 +262,12 @@ bool PPCMachObjectWriter::RecordScatteredRelocation(
       // So we need to adjust FixedValue again here.
       FixedValue &= 0xffff;
       break;
-    case MachO::PPC_RELOC_HA16_SECTDIFF:
+    case macho::RIT_PPC_HA16_SECTDIFF:
       other_half = FixedValue & 0xffff;
       FixedValue =
           ((FixedValue >> 16) + ((FixedValue & 0x8000) ? 1 : 0)) & 0xffff;
       break;
-    case MachO::PPC_RELOC_HI16_SECTDIFF:
+    case macho::RIT_PPC_HI16_SECTDIFF:
       other_half = FixedValue & 0xffff;
       FixedValue = (FixedValue >> 16) & 0xffff;
       break;
@@ -280,9 +276,9 @@ bool PPCMachObjectWriter::RecordScatteredRelocation(
       break;
     }
 
-    MachO::scattered_relocation_info MRE;
-    makeScatteredRelocationInfo(MRE, other_half, MachO::GENERIC_RELOC_PAIR,
-                                Log2Size, IsPCRel, Value2);
+    macho::RelocationEntry MRE;
+    makeScatteredRelocationInfo(MRE, other_half, macho::RIT_Pair, Log2Size,
+                                IsPCRel, Value2);
     Writer->addRelocation(Fragment->getParent(), MRE);
   } else {
     // If the offset is more than 24-bits, it won't fit in a scattered
@@ -295,7 +291,7 @@ bool PPCMachObjectWriter::RecordScatteredRelocation(
     if (FixupOffset > 0xffffff)
       return false;
   }
-  MachO::scattered_relocation_info MRE;
+  macho::RelocationEntry MRE;
   makeScatteredRelocationInfo(MRE, FixupOffset, Type, Log2Size, IsPCRel, Value);
   Writer->addRelocation(Fragment->getParent(), MRE);
   return true;
@@ -316,8 +312,7 @@ void PPCMachObjectWriter::RecordPPCRelocation(
   // relocations.
   if (Target.getSymB() &&
       // Q: are branch targets ever scattered?
-      RelocType != MachO::PPC_RELOC_BR24 &&
-      RelocType != MachO::PPC_RELOC_BR14) {
+      RelocType != macho::RIT_PPC_BR24 && RelocType != macho::RIT_PPC_BR14) {
     RecordScatteredRelocation(Writer, Asm, Layout, Fragment, Fixup, Target,
                               Log2Size, FixedValue);
     return;
@@ -374,7 +369,8 @@ void PPCMachObjectWriter::RecordPPCRelocation(
       FixedValue -= Writer->getSectionAddress(Fragment->getParent());
   }
 
-  MachO::any_relocation_info MRE;
+  // struct relocation_info (8 bytes)
+  macho::RelocationEntry MRE;
   makeRelocationInfo(MRE, FixupOffset, Index, IsPCRel, Log2Size, IsExtern,
                      Type);
   Writer->addRelocation(Fragment->getParent(), MRE);
