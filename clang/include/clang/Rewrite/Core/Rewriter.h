@@ -149,6 +149,7 @@ public:
   };
 
   typedef std::map<FileID, RewriteBuffer>::iterator buffer_iterator;
+  typedef std::map<FileID, RewriteBuffer>::const_iterator const_buffer_iterator;
 
   explicit Rewriter(SourceManager &SM, const LangOptions &LO)
     : SourceMgr(&SM), LangOpts(&LO) {}
@@ -282,6 +283,8 @@ public:
   // Iterators over rewrite buffers.
   buffer_iterator buffer_begin() { return RewriteBuffers.begin(); }
   buffer_iterator buffer_end() { return RewriteBuffers.end(); }
+  const_buffer_iterator buffer_begin() const { return RewriteBuffers.begin(); }
+  const_buffer_iterator buffer_end() const { return RewriteBuffers.end(); }
 
   /// overwriteChangedFiles - Save all changed files to disk.
   ///
