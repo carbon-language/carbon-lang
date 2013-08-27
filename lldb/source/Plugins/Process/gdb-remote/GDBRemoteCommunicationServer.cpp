@@ -785,7 +785,7 @@ GDBRemoteCommunicationServer::Handle_qLaunchGDBServer (StringExtractorGDBRemote 
             ::snprintf (connect_url, sizeof(connect_url), "unix-accept://%s", unix_socket_name);
             // Spawn a new thread to accept the port that gets bound after
             // binding to port 0 (zero).
-            lldb::thread_t accept_thread = NULL;
+            lldb::thread_t accept_thread = LLDB_INVALID_HOST_THREAD;
             
             if (port == 0)
             {
