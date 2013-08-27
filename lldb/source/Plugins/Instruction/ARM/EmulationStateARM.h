@@ -80,7 +80,7 @@ public:
                          const lldb_private::RegisterValue &reg_value);
 private:
     uint32_t m_gpr[17];
-    struct sd_regs
+    struct _sd_regs
     {
         union 
         {
