@@ -33,6 +33,7 @@
 #endif
 
 #if defined (__linux__) || defined (__FreeBSD__) || defined (__FreeBSD_kernel__)
+#include <spawn.h>
 #include <sys/wait.h>
 #include <sys/syscall.h>
 #endif
@@ -47,6 +48,7 @@
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Log.h"
+#include "lldb/Core/Module.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/ThreadSafeSTLMap.h"
 #include "lldb/Host/Config.h"
@@ -55,13 +57,11 @@
 #include "lldb/Host/Mutex.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/TargetList.h"
+#include "lldb/Utility/CleanUp.h"
 
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/raw_ostream.h"
-
-
-
 
 
 using namespace lldb;
@@ -91,7 +91,7 @@ Host::StartMonitoringChildProcess
 {
     lldb::thread_t thread = LLDB_INVALID_HOST_THREAD;
     MonitorInfo * info_ptr = new MonitorInfo();
-        
+
     info_ptr->pid = pid;
     info_ptr->callback = callback;
     info_ptr->callback_baton = callback_baton;
@@ -147,8 +147,10 @@ MonitorChildProcessThreadFunction (void *arg)
 
     const Host::MonitorChildProcessCallback callback = info->callback;
     void * const callback_baton = info->callback_baton;
-    const lldb::pid_t pid = info->pid;
     const bool monitor_signals = info->monitor_signals;
+
+    assert (info->pid <= UINT32_MAX);
+    const ::pid_t pid = monitor_signals ? -1 * info->pid : info->pid;
 
     delete info;
 
@@ -162,12 +164,12 @@ MonitorChildProcessThreadFunction (void *arg)
     {
         log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS);
         if (log)
-            log->Printf("%s ::wait_pid (pid = %" PRIu64 ", &status, options = %i)...", function, pid, options);
+            log->Printf("%s ::wait_pid (pid = %" PRIi32 ", &status, options = %i)...", function, pid, options);
 
         // Wait for all child processes
         ::pthread_testcancel ();
         // Get signals from all children with same process group of pid
-        const lldb::pid_t wait_pid = ::waitpid (-1*pid, &status, options);
+        const ::pid_t wait_pid = ::waitpid (pid, &status, options);
         ::pthread_testcancel ();
 
         if (wait_pid == -1)
@@ -218,7 +220,7 @@ MonitorChildProcessThreadFunction (void *arg)
 
                 log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS);
                 if (log)
-                    log->Printf ("%s ::waitpid (pid = %" PRIu64 ", &status, options = %i) => pid = %" PRIu64 ", status = 0x%8.8x (%s), signal = %i, exit_state = %i",
+                    log->Printf ("%s ::waitpid (pid = %" PRIi32 ", &status, options = %i) => pid = %" PRIi32 ", status = 0x%8.8x (%s), signal = %i, exit_state = %i",
                                  function,
                                  wait_pid,
                                  options,
@@ -1479,14 +1481,18 @@ Host::RunShellCommand (const char *command,
         // get called when the process dies. We release the unique pointer as it
         // doesn't need to delete the ShellInfo anymore.
         ShellInfo *shell_info = shell_info_ap.release();
+        TimeValue *timeout_ptr = nullptr;
         TimeValue timeout_time(TimeValue::Now());
-        timeout_time.OffsetWithSeconds(timeout_sec);
+        if (timeout_sec > 0) {
+            timeout_time.OffsetWithSeconds(timeout_sec);
+            timeout_ptr = &timeout_time;
+        }
         bool timed_out = false;
-        shell_info->process_reaped.WaitForValueEqualTo(true, &timeout_time, &timed_out);
+        shell_info->process_reaped.WaitForValueEqualTo(true, timeout_ptr, &timed_out);
         if (timed_out)
         {
             error.SetErrorString("timed out waiting for shell command to complete");
-            
+
             // Kill the process since it didn't complete withint the timeout specified
             Kill (pid, SIGKILL);
             // Wait for the monitor callback to get the message
@@ -1532,6 +1538,205 @@ Host::RunShellCommand (const char *command,
     // the process...
     return error;
 }
+
+#if defined(__linux__) or defined(__FreeBSD__)
+// The functions below implement process launching via posix_spawn() for Linux
+// and FreeBSD.
+
+// The posix_spawn() and posix_spawnp() functions first appeared in FreeBSD 8.0,
+static Error
+LaunchProcessPosixSpawn (const char *exe_path, ProcessLaunchInfo &launch_info, ::pid_t &pid)
+{
+    Error error;
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_HOST | LIBLLDB_LOG_PROCESS));
+
+    assert(exe_path);
+    assert(!launch_info.GetFlags().Test (eLaunchFlagDebug));
+
+    posix_spawnattr_t attr;
+
+    error.SetError( ::posix_spawnattr_init (&attr), eErrorTypePOSIX);
+    error.LogIfError(log, "::posix_spawnattr_init ( &attr )");
+    if (error.Fail())
+        return error;
+
+    // Make a quick class that will cleanup the posix spawn attributes in case
+    // we return in the middle of this function.
+    lldb_utility::CleanUp <posix_spawnattr_t *, int> posix_spawnattr_cleanup(&attr, posix_spawnattr_destroy);
+
+    sigset_t no_signals;
+    sigset_t all_signals;
+    sigemptyset (&no_signals);
+    sigfillset (&all_signals);
+    ::posix_spawnattr_setsigmask(&attr, &all_signals);
+    ::posix_spawnattr_setsigdefault(&attr, &no_signals);
+
+    short flags = POSIX_SPAWN_SETSIGDEF | POSIX_SPAWN_SETSIGMASK;
+
+    error.SetError( ::posix_spawnattr_setflags (&attr, flags), eErrorTypePOSIX);
+    error.LogIfError(log, "::posix_spawnattr_setflags ( &attr, flags=0x%8.8x )", flags);
+    if (error.Fail())
+        return error;
+
+    const size_t num_file_actions = launch_info.GetNumFileActions ();
+    posix_spawn_file_actions_t file_actions, *file_action_ptr = NULL;
+    // Make a quick class that will cleanup the posix spawn attributes in case
+    // we return in the middle of this function.
+    lldb_utility::CleanUp <posix_spawn_file_actions_t *, int>
+        posix_spawn_file_actions_cleanup (file_action_ptr, NULL, posix_spawn_file_actions_destroy);
+
+    if (num_file_actions > 0)
+    {
+        error.SetError( ::posix_spawn_file_actions_init (&file_actions), eErrorTypePOSIX);
+        error.LogIfError(log, "::posix_spawn_file_actions_init ( &file_actions )");
+        if (error.Fail())
+            return error;
+
+        file_action_ptr = &file_actions;
+        posix_spawn_file_actions_cleanup.set(file_action_ptr);
+
+        for (size_t i = 0; i < num_file_actions; ++i)
+        {
+            const ProcessLaunchInfo::FileAction *launch_file_action = launch_info.GetFileActionAtIndex(i);
+            if (launch_file_action &&
+                !ProcessLaunchInfo::FileAction::AddPosixSpawnFileAction (&file_actions,
+                                                                         launch_file_action,
+                                                                         log,
+                                                                         error))
+                return error;
+        }
+    }
+
+    // Change working directory if neccessary.
+    char current_dir[PATH_MAX];
+    current_dir[0] = '\0';
+
+    const char *working_dir = launch_info.GetWorkingDirectory();
+    if (working_dir != NULL)
+    {
+        if (::getcwd(current_dir, sizeof(current_dir)) == NULL)
+        {
+            error.SetError(errno, eErrorTypePOSIX);
+            error.LogIfError(log, "unable to save the current directory");
+            return error;
+        }
+
+        if (::chdir(working_dir) == -1)
+        {
+            error.SetError(errno, eErrorTypePOSIX);
+            error.LogIfError(log, "unable to change working directory to %s", working_dir);
+            return error;
+        }
+    }
+
+    const char *tmp_argv[2];
+    char * const *argv = (char * const*)launch_info.GetArguments().GetConstArgumentVector();
+    char * const *envp = (char * const*)launch_info.GetEnvironmentEntries().GetConstArgumentVector();
+
+    // Prepare minimal argument list if we didn't get it from the launch_info structure.
+    // We must pass argv into posix_spawnp and it must contain at least two items -
+    // pointer to an executable and NULL.
+    if (argv == NULL)
+    {
+        tmp_argv[0] = exe_path;
+        tmp_argv[1] = NULL;
+        argv = (char * const*)tmp_argv;
+    }
+
+    error.SetError (::posix_spawnp (&pid,
+                                    exe_path,
+                                    (num_file_actions > 0) ? &file_actions : NULL,
+                                    &attr,
+                                    argv,
+                                    envp),
+                    eErrorTypePOSIX);
+
+    error.LogIfError(log, "::posix_spawnp ( pid => %i, path = '%s', file_actions = %p, attr = %p, argv = %p, envp = %p )",
+                     pid, exe_path, file_action_ptr, &attr, argv, envp);
+
+    // Change back the current directory.
+    // NOTE: do not override previously established error from posix_spawnp.
+    if (working_dir != NULL && ::chdir(current_dir) == -1 && error.Success())
+    {
+        error.SetError(errno, eErrorTypePOSIX);
+        error.LogIfError(log, "unable to change current directory back to %s",
+                         current_dir);
+    }
+
+    return error;
+}
+
+
+Error
+Host::LaunchProcess (ProcessLaunchInfo &launch_info)
+{
+    Error error;
+    char exe_path[PATH_MAX];
+
+    PlatformSP host_platform_sp (Platform::GetDefaultPlatform ());
+
+    const ArchSpec &arch_spec = launch_info.GetArchitecture();
+
+    FileSpec exe_spec(launch_info.GetExecutableFile());
+
+    FileSpec::FileType file_type = exe_spec.GetFileType();
+    if (file_type != FileSpec::eFileTypeRegular)
+    {
+        lldb::ModuleSP exe_module_sp;
+        error = host_platform_sp->ResolveExecutable (exe_spec,
+                                                     arch_spec,
+                                                     exe_module_sp,
+                                                     NULL);
+
+        if (error.Fail())
+            return error;
+
+        if (exe_module_sp)
+            exe_spec = exe_module_sp->GetFileSpec();
+    }
+
+    if (exe_spec.Exists())
+    {
+        exe_spec.GetPath (exe_path, sizeof(exe_path));
+    }
+    else
+    {
+        launch_info.GetExecutableFile().GetPath (exe_path, sizeof(exe_path));
+        error.SetErrorStringWithFormat ("executable doesn't exist: '%s'", exe_path);
+        return error;
+    }
+
+    assert(!launch_info.GetFlags().Test (eLaunchFlagLaunchInTTY));
+
+    ::pid_t pid = LLDB_INVALID_PROCESS_ID;
+
+    error = LaunchProcessPosixSpawn(exe_path, launch_info, pid);
+
+    if (pid != LLDB_INVALID_PROCESS_ID)
+    {
+        // If all went well, then set the process ID into the launch info
+        launch_info.SetProcessID(pid);
+
+        // Make sure we reap any processes we spawn or we will have zombies.
+        if (!launch_info.MonitorProcess())
+        {
+            const bool monitor_signals = false;
+            StartMonitoringChildProcess (Process::SetProcessExitStatus,
+                                         NULL,
+                                         pid,
+                                         monitor_signals);
+        }
+    }
+    else
+    {
+        // Invalid process ID, something didn't go well
+        if (error.Success())
+            error.SetErrorString ("process launch failed for unknown reasons");
+    }
+    return error;
+}
+
+#endif // defined(__linux__) or defined(__FreeBSD__)
 
 #ifndef _WIN32
 
