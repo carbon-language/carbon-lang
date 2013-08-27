@@ -57,9 +57,9 @@ class ObjCMigrateASTConsumer : public ASTConsumer {
   
   void migrateCFAnnotation(ASTContext &Ctx, const Decl *Decl);
   void AddCFAnnotations(ASTContext &Ctx, const CallEffects &CE,
-                        const FunctionDecl *FuncDecl);
+                        const FunctionDecl *FuncDecl, bool ResultAnnotated);
   void AddCFAnnotations(ASTContext &Ctx, const CallEffects &CE,
-                        const ObjCMethodDecl *MethodDecl);
+                        const ObjCMethodDecl *MethodDecl, bool ResultAnnotated);
   
   void AnnotateImplicitBridging(ASTContext &Ctx);
   
@@ -868,10 +868,10 @@ void ObjCMigrateASTConsumer::migrateCFAnnotation(ASTContext &Ctx, const Decl *De
 
 void ObjCMigrateASTConsumer::AddCFAnnotations(ASTContext &Ctx,
                                               const CallEffects &CE,
-                                              const FunctionDecl *FuncDecl) {
+                                              const FunctionDecl *FuncDecl,
+                                              bool ResultAnnotated) {
   // Annotate function.
-  if (!FuncDecl->getAttr<CFReturnsRetainedAttr>() &&
-      !FuncDecl->getAttr<CFReturnsNotRetainedAttr>()) {
+  if (!ResultAnnotated) {
     RetEffect Ret = CE.getReturnValue();
     const char *AnnotationString = 0;
     if (Ret.getObjKind() == RetEffect::CF && Ret.isOwned()) {
@@ -947,7 +947,7 @@ ObjCMigrateASTConsumer::CF_BRIDGING_KIND
     else {
       QualType AT = pd->getType();
       if (!AuditedType(AT)) {
-        AddCFAnnotations(Ctx, CE, FuncDecl);
+        AddCFAnnotations(Ctx, CE, FuncDecl, FuncIsReturnAnnotated);
         return CF_BRIDGING_NONE;
       }
     }
@@ -974,10 +974,10 @@ void ObjCMigrateASTConsumer::migrateARCSafeAnnotation(ASTContext &Ctx,
 
 void ObjCMigrateASTConsumer::AddCFAnnotations(ASTContext &Ctx,
                                               const CallEffects &CE,
-                                              const ObjCMethodDecl *MethodDecl) {
+                                              const ObjCMethodDecl *MethodDecl,
+                                              bool ResultAnnotated) {
   // Annotate function.
-  if (!MethodDecl->getAttr<CFReturnsRetainedAttr>() &&
-      !MethodDecl->getAttr<CFReturnsNotRetainedAttr>()) {
+  if (!ResultAnnotated) {
     RetEffect Ret = CE.getReturnValue();
     const char *AnnotationString = 0;
     if (Ret.getObjKind() == RetEffect::CF && Ret.isOwned()) {
@@ -1052,7 +1052,7 @@ ObjCMigrateASTConsumer::CF_BRIDGING_KIND
     else {
       QualType AT = pd->getType();
       if (!AuditedType(AT)) {
-        AddCFAnnotations(Ctx, CE, MethodDecl);
+        AddCFAnnotations(Ctx, CE, MethodDecl, MethodIsReturnAnnotated);
         return CF_BRIDGING_NONE;
       }
     }
