@@ -13,27 +13,25 @@
 #include "llvm/ADT/Twine.h"
 #include "llvm/TableGen/Record.h"
 #include "llvm/TableGen/TableGenBackend.h"
+#include <cstring>
 #include <map>
+#include <strings.h>
 
 using namespace llvm;
 
+// Ordering on Info. The logic should match with the consumer-side function in
+// llvm/Option/OptTable.h.
 static int StrCmpOptionName(const char *A, const char *B) {
-  char a = *A, b = *B;
-  while (a == b) {
-    if (a == '\0')
-      return 0;
-
-    a = *++A;
-    b = *++B;
+  size_t I = strlen(A);
+  size_t J = strlen(B);
+  if (I == J) {
+    if (int N = strcasecmp(A, B))
+      return N;
+    return strcmp(A, B);
   }
-
-  if (a == '\0') // A is a prefix of B.
-    return 1;
-  if (b == '\0') // B is a prefix of A.
-    return -1;
-
-  // Otherwise lexicographic.
-  return (a < b) ? -1 : 1;
+  if (I < J)
+    return strncasecmp(A, B, I) < 0 ? -1 : 1;
+  return strncasecmp(A, B, J) <= 0 ? -1 : 1;
 }
 
 static int CompareOptionRecords(const void *Av, const void *Bv) {
@@ -50,7 +48,7 @@ static int CompareOptionRecords(const void *Av, const void *Bv) {
   if (!ASent)
     if (int Cmp = StrCmpOptionName(A->getValueAsString("Name").c_str(),
                                    B->getValueAsString("Name").c_str()))
-    return Cmp;
+      return Cmp;
 
   if (!ASent) {
     std::vector<std::string> APrefixes = A->getValueAsListOfStrings("Prefixes");

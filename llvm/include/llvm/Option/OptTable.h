@@ -51,6 +51,7 @@ private:
   /// \brief The static option information table.
   const Info *OptionInfos;
   unsigned NumOptionInfos;
+  bool IgnoreCase;
 
   unsigned TheInputOptionID;
   unsigned TheUnknownOptionID;
@@ -72,7 +73,8 @@ private:
   }
 
 protected:
-  OptTable(const Info *_OptionInfos, unsigned _NumOptionInfos);
+  OptTable(const Info *_OptionInfos, unsigned _NumOptionInfos,
+           bool _IgnoreCase = false);
 public:
   ~OptTable();
 
