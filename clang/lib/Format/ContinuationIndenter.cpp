@@ -38,6 +38,15 @@ static unsigned getLengthToMatchingParen(const FormatToken &Tok) {
   return End->TotalLength - Tok.TotalLength + 1;
 }
 
+// Returns \c true if \c Tok starts a binary expression.
+static bool startsBinaryExpression(const FormatToken &Tok) {
+  for (unsigned i = 0, e = Tok.FakeLParens.size(); i != e; ++i) {
+    if (Tok.FakeLParens[i] > prec::Unknown)
+      return true;
+  }
+  return false;
+}
+
 ContinuationIndenter::ContinuationIndenter(const FormatStyle &Style,
                                            SourceManager &SourceMgr,
                                            const AnnotatedLine &Line,
@@ -372,8 +381,8 @@ unsigned ContinuationIndenter::addTokenToState(LineState &State, bool Newline,
               Previous.Type == TT_ConditionalExpr ||
               Previous.Type == TT_UnaryOperator ||
               Previous.Type == TT_CtorInitializerColon) &&
-             !(Previous.getPrecedence() == prec::Assignment &&
-               Current.FakeLParens.empty()))
+             (Previous.getPrecedence() != prec::Assignment ||
+              startsBinaryExpression(Current)))
       // Always indent relative to the RHS of the expression unless this is a
       // simple assignment without binary expression on the RHS. Also indent
       // relative to unary operators and the colons of constructor initializers.
@@ -395,7 +404,9 @@ unsigned ContinuationIndenter::addTokenToState(LineState &State, bool Newline,
         if (Next && Next->isOneOf(tok::period, tok::arrow))
           HasTrailingCall = true;
       }
-      if (HasMultipleParameters || HasTrailingCall)
+      if (HasMultipleParameters ||
+          (HasTrailingCall &&
+           State.Stack[State.Stack.size() - 2].CallContinuation == 0))
         State.Stack.back().LastSpace = State.Column;
     }
   }
@@ -420,8 +431,7 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
   if (!Current.opensScope() && !Current.closesScope())
     State.LowestLevelOnLine =
         std::min(State.LowestLevelOnLine, State.ParenLevel);
-  if (Current.isOneOf(tok::period, tok::arrow) &&
-      Line.Type == LT_BuilderTypeCall && State.ParenLevel == 0)
+  if (Current.isOneOf(tok::period, tok::arrow))
     State.Stack.back().StartOfFunctionCall =
         Current.LastInChainOfCalls ? 0 : State.Column + Current.CodePointCount;
   if (Current.Type == TT_CtorInitializerColon) {
@@ -545,7 +555,7 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
 
   State.Column += Current.CodePointCount;
   State.NextToken = State.NextToken->Next;
-  unsigned Penalty =  breakProtrudingToken(Current, State, DryRun);
+  unsigned Penalty = breakProtrudingToken(Current, State, DryRun);
 
   // If the previous has a special role, let it consume tokens as appropriate.
   // It is necessary to start at the previous token for the only implemented

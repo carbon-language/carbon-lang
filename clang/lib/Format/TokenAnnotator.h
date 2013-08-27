@@ -28,7 +28,6 @@ namespace format {
 enum LineType {
   LT_Invalid,
   LT_Other,
-  LT_BuilderTypeCall,
   LT_PreprocessorDirective,
   LT_VirtualFunctionDecl,
   LT_ObjCDecl, // An @interface, @implementation, or @protocol line.
