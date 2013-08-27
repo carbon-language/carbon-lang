@@ -8,7 +8,9 @@
 //===----------------------------------------------------------------------===//
 
 // C Includes
+#ifdef __APPLE__
 #include <mach/mach.h>
+#endif
 
 // C++ Includes
 // Other libraries and framework includes
