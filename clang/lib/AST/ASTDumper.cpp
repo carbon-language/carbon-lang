@@ -745,6 +745,9 @@ void ASTDumper::dumpDecl(const Decl *D) {
   lastChild();
   dumpFullComment(Comment);
 
+  if (D->isInvalidDecl())
+    OS << " invalid";
+
   setMoreChildren(false);
   if (HasDeclContext)
     dumpDeclContext(cast<DeclContext>(D));
