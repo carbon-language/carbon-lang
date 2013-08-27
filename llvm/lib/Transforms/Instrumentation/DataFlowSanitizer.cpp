@@ -48,6 +48,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/DepthFirstIterator.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/InlineAsm.h"
 #include "llvm/IR/IRBuilder.h"
@@ -182,6 +183,7 @@ class DataFlowSanitizer : public ModulePass {
   bool isInstrumented(const Function *F);
   bool isInstrumented(const GlobalAlias *GA);
   FunctionType *getArgsFunctionType(FunctionType *T);
+  FunctionType *getTrampolineFunctionType(FunctionType *T);
   FunctionType *getCustomFunctionType(FunctionType *T);
   InstrumentedABI getInstrumentedABI();
   WrapperKind getWrapperKind(Function *F);
@@ -189,6 +191,7 @@ class DataFlowSanitizer : public ModulePass {
   Function *buildWrapperFunction(Function *F, StringRef NewFName,
                                  GlobalValue::LinkageTypes NewFLink,
                                  FunctionType *NewFT);
+  Constant *getOrBuildTrampolineFunction(FunctionType *FT, StringRef FName);
 
  public:
   DataFlowSanitizer(StringRef ABIListFile = StringRef(),
@@ -288,10 +291,32 @@ FunctionType *DataFlowSanitizer::getArgsFunctionType(FunctionType *T) {
   return FunctionType::get(RetType, ArgTypes, T->isVarArg());
 }
 
+FunctionType *DataFlowSanitizer::getTrampolineFunctionType(FunctionType *T) {
+  assert(!T->isVarArg());
+  llvm::SmallVector<Type *, 4> ArgTypes;
+  ArgTypes.push_back(T->getPointerTo());
+  std::copy(T->param_begin(), T->param_end(), std::back_inserter(ArgTypes));
+  for (unsigned i = 0, e = T->getNumParams(); i != e; ++i)
+    ArgTypes.push_back(ShadowTy);
+  Type *RetType = T->getReturnType();
+  if (!RetType->isVoidTy())
+    ArgTypes.push_back(ShadowPtrTy);
+  return FunctionType::get(T->getReturnType(), ArgTypes, false);
+}
+
 FunctionType *DataFlowSanitizer::getCustomFunctionType(FunctionType *T) {
   assert(!T->isVarArg());
   llvm::SmallVector<Type *, 4> ArgTypes;
-  std::copy(T->param_begin(), T->param_end(), std::back_inserter(ArgTypes));
+  for (FunctionType::param_iterator i = T->param_begin(), e = T->param_end(); i != e; ++i) {
+    FunctionType *FT;
+    if (isa<PointerType>(*i) &&
+        (FT = dyn_cast<FunctionType>(cast<PointerType>(*i)->getElementType()))) {
+      ArgTypes.push_back(getTrampolineFunctionType(FT)->getPointerTo());
+      ArgTypes.push_back(Type::getInt8PtrTy(*Ctx));
+    } else {
+      ArgTypes.push_back(*i);
+    }
+  }
   for (unsigned i = 0, e = T->getNumParams(); i != e; ++i)
     ArgTypes.push_back(ShadowTy);
   Type *RetType = T->getReturnType();
@@ -415,6 +440,39 @@ DataFlowSanitizer::buildWrapperFunction(Function *F, StringRef NewFName,
     ReturnInst::Create(*Ctx, CI, BB);
 
   return NewF;
+}
+
+Constant *DataFlowSanitizer::getOrBuildTrampolineFunction(FunctionType *FT,
+                                                          StringRef FName) {
+  FunctionType *FTT = getTrampolineFunctionType(FT);
+  Constant *C = Mod->getOrInsertFunction(FName, FTT);
+  Function *F = dyn_cast<Function>(C);
+  if (F && F->isDeclaration()) {
+    F->setLinkage(GlobalValue::LinkOnceODRLinkage);
+    BasicBlock *BB = BasicBlock::Create(*Ctx, "entry", F);
+    std::vector<Value *> Args;
+    Function::arg_iterator AI = F->arg_begin(); ++AI;
+    for (unsigned N = FT->getNumParams(); N != 0; ++AI, --N)
+      Args.push_back(&*AI);
+    CallInst *CI =
+        CallInst::Create(&F->getArgumentList().front(), Args, "", BB);
+    ReturnInst *RI;
+    if (FT->getReturnType()->isVoidTy())
+      RI = ReturnInst::Create(*Ctx, BB);
+    else
+      RI = ReturnInst::Create(*Ctx, CI, BB);
+
+    DFSanFunction DFSF(*this, F, /*IsNativeABI=*/true);
+    Function::arg_iterator ValAI = F->arg_begin(), ShadowAI = AI; ++ValAI;
+    for (unsigned N = FT->getNumParams(); N != 0; ++ValAI, ++ShadowAI, --N)
+      DFSF.ValShadowMap[ValAI] = ShadowAI;
+    DFSanVisitor(DFSF).visitCallInst(*CI);
+    if (!FT->getReturnType()->isVoidTy())
+      new StoreInst(DFSF.getShadow(RI->getReturnValue()),
+                    &F->getArgumentList().back(), RI);
+  }
+
+  return C;
 }
 
 bool DataFlowSanitizer::runOnModule(Module &M) {
@@ -1181,8 +1239,24 @@ void DFSanVisitor::visitCallSite(CallSite CS) {
         std::vector<Value *> Args;
 
         CallSite::arg_iterator i = CS.arg_begin();
-        for (unsigned n = FT->getNumParams(); n != 0; ++i, --n)
-          Args.push_back(*i);
+        for (unsigned n = FT->getNumParams(); n != 0; ++i, --n) {
+          Type *T = (*i)->getType();
+          FunctionType *ParamFT;
+          if (isa<PointerType>(T) &&
+              (ParamFT = dyn_cast<FunctionType>(
+                   cast<PointerType>(T)->getElementType()))) {
+            std::string TName = "dfst";
+            TName += utostr(FT->getNumParams() - n);
+            TName += "$";
+            TName += F->getName();
+            Constant *T = DFSF.DFS.getOrBuildTrampolineFunction(ParamFT, TName);
+            Args.push_back(T);
+            Args.push_back(
+                IRB.CreateBitCast(*i, Type::getInt8PtrTy(*DFSF.DFS.Ctx)));
+          } else {
+            Args.push_back(*i);
+          }
+        }
 
         i = CS.arg_begin();
         for (unsigned n = FT->getNumParams(); n != 0; ++i, --n)

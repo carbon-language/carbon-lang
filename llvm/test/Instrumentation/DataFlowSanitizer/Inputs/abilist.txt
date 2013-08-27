@@ -4,8 +4,5 @@ fun:discard*=discard
 fun:functional=uninstrumented
 fun:functional=functional
 
-fun:custom1=uninstrumented
-fun:custom1=custom
-
-fun:custom2=uninstrumented
-fun:custom2=custom
+fun:custom*=uninstrumented
+fun:custom*=custom
