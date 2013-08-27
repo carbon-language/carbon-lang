@@ -252,14 +252,12 @@ File::Open (const char *path, uint32_t options, uint32_t permissions)
         if (permissions & ePermissionsUserRead)     mode |= S_IRUSR;
         if (permissions & ePermissionsUserWrite)    mode |= S_IWUSR;
         if (permissions & ePermissionsUserExecute)  mode |= S_IXUSR;
-#ifndef _WIN32
         if (permissions & ePermissionsGroupRead)    mode |= S_IRGRP;
         if (permissions & ePermissionsGroupWrite)   mode |= S_IWGRP;
         if (permissions & ePermissionsGroupExecute) mode |= S_IXGRP;
         if (permissions & ePermissionsWorldRead)    mode |= S_IROTH;
         if (permissions & ePermissionsWorldWrite)   mode |= S_IWOTH;
         if (permissions & ePermissionsWorldExecute) mode |= S_IXOTH;
-#endif
     }
 
     do

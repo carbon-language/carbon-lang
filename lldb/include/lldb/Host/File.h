@@ -12,6 +12,7 @@
 #if defined(__cplusplus)
 
 #include <stdio.h>
+#include <sys/types.h>
 
 #include "lldb/lldb-private.h"
 

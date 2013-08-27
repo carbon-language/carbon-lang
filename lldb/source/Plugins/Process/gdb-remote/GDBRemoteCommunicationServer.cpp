@@ -885,7 +885,7 @@ GDBRemoteCommunicationServer::Handle_qKillSpawnedProcess (StringExtractorGDBRemo
             if (m_spawned_pids.find(pid) == m_spawned_pids.end())
                 return SendErrorResponse (10);
         }
-        kill (pid, SIGTERM);
+        Host::Kill (pid, SIGTERM);
         
         for (size_t i=0; i<10; ++i)
         {
@@ -904,7 +904,7 @@ GDBRemoteCommunicationServer::Handle_qKillSpawnedProcess (StringExtractorGDBRemo
             if (m_spawned_pids.find(pid) == m_spawned_pids.end())
                 return true;
         }
-        kill (pid, SIGKILL);
+        Host::Kill (pid, SIGKILL);
         
         for (size_t i=0; i<10; ++i)
         {
@@ -1111,6 +1111,10 @@ GDBRemoteCommunicationServer::Handle_vFile_Close (StringExtractorGDBRemote &pack
 bool
 GDBRemoteCommunicationServer::Handle_vFile_pRead (StringExtractorGDBRemote &packet)
 {
+#ifdef _WIN32
+    // Not implemented on Windows
+    return false;
+#else
     StreamGDBRemote response;
     packet.SetFilePos(::strlen("vFile:pread:"));
     int fd = packet.GetS32(-1);
@@ -1140,11 +1144,16 @@ GDBRemoteCommunicationServer::Handle_vFile_pRead (StringExtractorGDBRemote &pack
     }
     SendPacketNoLock(response.GetData(), response.GetSize());
     return true;
+#endif
 }
 
 bool
 GDBRemoteCommunicationServer::Handle_vFile_pWrite (StringExtractorGDBRemote &packet)
 {
+#ifdef _WIN32
+    // Not implemented on Windows
+    return false;
+#else
     packet.SetFilePos(::strlen("vFile:pwrite:"));
 
     StreamGDBRemote response;
@@ -1172,6 +1181,7 @@ GDBRemoteCommunicationServer::Handle_vFile_pWrite (StringExtractorGDBRemote &pac
 
     SendPacketNoLock(response.GetData(), response.GetSize());
     return true;
+#endif
 }
 
 bool

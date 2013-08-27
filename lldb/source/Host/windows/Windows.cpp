@@ -65,7 +65,7 @@ char * strcasestr(const char *s, const char* find)
     return ((char *) s);
 }
 
-char* __cdecl realpath(const char * name, char * resolved)
+char* realpath(const char * name, char * resolved)
 {
     char *retname = NULL;  /* we will return this, if we fail */
 
