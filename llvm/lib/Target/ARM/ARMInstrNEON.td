@@ -3979,6 +3979,13 @@ defm VADDHN   : N3VNInt_HSD<0,1,0b0100,0, "vaddhn", "i",
 defm VRADDHN  : N3VNInt_HSD<1,1,0b0100,0, "vraddhn", "i",
                             int_arm_neon_vraddhn, 1>;
 
+def : Pat<(v8i8  (trunc (NEONvshru (add (v8i16 QPR:$Vn), QPR:$Vm), 8))),
+          (VADDHNv8i8 QPR:$Vn, QPR:$Vm)>;
+def : Pat<(v4i16 (trunc (NEONvshru (add (v4i32 QPR:$Vn), QPR:$Vm), 16))),
+          (VADDHNv4i16 QPR:$Vn, QPR:$Vm)>;
+def : Pat<(v2i32 (trunc (NEONvshru (add (v2i64 QPR:$Vn), QPR:$Vm), 32))),
+          (VADDHNv2i32 QPR:$Vn, QPR:$Vm)>;
+
 // Vector Multiply Operations.
 
 //   VMUL     : Vector Multiply (integer, polynomial and floating-point)
@@ -4261,6 +4268,13 @@ defm VSUBHN   : N3VNInt_HSD<0,1,0b0110,0, "vsubhn", "i",
 //   VRSUBHN  : Vector Rounding Subtract and Narrow Returning High Half (D=Q-Q)
 defm VRSUBHN  : N3VNInt_HSD<1,1,0b0110,0, "vrsubhn", "i",
                             int_arm_neon_vrsubhn, 0>;
+
+def : Pat<(v8i8  (trunc (NEONvshru (sub (v8i16 QPR:$Vn), QPR:$Vm), 8))),
+          (VSUBHNv8i8 QPR:$Vn, QPR:$Vm)>;
+def : Pat<(v4i16 (trunc (NEONvshru (sub (v4i32 QPR:$Vn), QPR:$Vm), 16))),
+          (VSUBHNv4i16 QPR:$Vn, QPR:$Vm)>;
+def : Pat<(v2i32 (trunc (NEONvshru (sub (v2i64 QPR:$Vn), QPR:$Vm), 32))),
+          (VSUBHNv2i32 QPR:$Vn, QPR:$Vm)>;
 
 // Vector Comparisons.
 
