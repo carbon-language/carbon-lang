@@ -568,16 +568,16 @@ error_code MachOObjectFile::getSymbolType(DataRefImpl Symb,
   Res = SymbolRef::ST_Other;
 
   // If this is a STAB debugging symbol, we can do nothing more.
-  if (n_type & MachO::NlistMaskStab) {
+  if (n_type & MachO::N_STAB) {
     Res = SymbolRef::ST_Debug;
     return object_error::success;
   }
 
-  switch (n_type & MachO::NlistMaskType) {
-    case MachO::NListTypeUndefined :
+  switch (n_type & MachO::N_TYPE) {
+    case MachO::N_UNDF :
       Res = SymbolRef::ST_Unknown;
       break;
-    case MachO::NListTypeSection :
+    case MachO::N_SECT :
       Res = SymbolRef::ST_Function;
       break;
   }
@@ -620,15 +620,15 @@ error_code MachOObjectFile::getSymbolFlags(DataRefImpl DRI,
   // TODO: Correctly set SF_ThreadLocal
   Result = SymbolRef::SF_None;
 
-  if ((MachOType & MachO::NlistMaskType) == MachO::NListTypeUndefined)
+  if ((MachOType & MachO::N_TYPE) == MachO::N_UNDF)
     Result |= SymbolRef::SF_Undefined;
 
   if (MachOFlags & macho::STF_StabsEntryMask)
     Result |= SymbolRef::SF_FormatSpecific;
 
-  if (MachOType & MachO::NlistMaskExternal) {
+  if (MachOType & MachO::N_EXT) {
     Result |= SymbolRef::SF_Global;
-    if ((MachOType & MachO::NlistMaskType) == MachO::NListTypeUndefined) {
+    if ((MachOType & MachO::N_TYPE) == MachO::N_UNDF) {
       uint64_t Value;
       getSymbolAddress(DRI, Value);
       if (Value)
@@ -636,10 +636,10 @@ error_code MachOObjectFile::getSymbolFlags(DataRefImpl DRI,
     }
   }
 
-  if (MachOFlags & (MachO::NListDescWeakRef | MachO::NListDescWeakDef))
+  if (MachOFlags & (MachO::N_WEAK_REF | MachO::N_WEAK_DEF))
     Result |= SymbolRef::SF_Weak;
 
-  if ((MachOType & MachO::NlistMaskType) == MachO::NListTypeAbsolute)
+  if ((MachOType & MachO::N_TYPE) == MachO::N_ABS)
     Result |= SymbolRef::SF_Absolute;
 
   return object_error::success;
@@ -777,9 +777,9 @@ error_code MachOObjectFile::isSectionVirtual(DataRefImpl Sec,
 error_code
 MachOObjectFile::isSectionZeroInit(DataRefImpl Sec, bool &Res) const {
   uint32_t Flags = getSectionFlags(this, Sec);
-  unsigned SectionType = Flags & MachO::SectionFlagMaskSectionType;
-  Res = SectionType == MachO::SectionTypeZeroFill ||
-    SectionType == MachO::SectionTypeZeroFillLarge;
+  unsigned SectionType = Flags & MachO::SECTION_TYPE;
+  Res = SectionType == MachO::S_ZEROFILL ||
+    SectionType == MachO::S_GB_ZEROFILL;
   return object_error::success;
 }
 
@@ -1272,28 +1272,28 @@ StringRef MachOObjectFile::getFileFormatName() const {
   unsigned CPUType = getCPUType(this);
   if (!is64Bit()) {
     switch (CPUType) {
-    case llvm::MachO::CPUTypeI386:
+    case llvm::MachO::CPU_TYPE_I386:
       return "Mach-O 32-bit i386";
-    case llvm::MachO::CPUTypeARM:
+    case llvm::MachO::CPU_TYPE_ARM:
       return "Mach-O arm";
-    case llvm::MachO::CPUTypePowerPC:
+    case llvm::MachO::CPU_TYPE_POWERPC:
       return "Mach-O 32-bit ppc";
     default:
-      assert((CPUType & llvm::MachO::CPUArchABI64) == 0 &&
+      assert((CPUType & llvm::MachO::CPU_ARCH_ABI64) == 0 &&
              "64-bit object file when we're not 64-bit?");
       return "Mach-O 32-bit unknown";
     }
   }
 
   // Make sure the cpu type has the correct mask.
-  assert((CPUType & llvm::MachO::CPUArchABI64)
-         == llvm::MachO::CPUArchABI64 &&
+  assert((CPUType & llvm::MachO::CPU_ARCH_ABI64)
+         == llvm::MachO::CPU_ARCH_ABI64 &&
          "32-bit object file when we're 64-bit?");
 
   switch (CPUType) {
-  case llvm::MachO::CPUTypeX86_64:
+  case llvm::MachO::CPU_TYPE_X86_64:
     return "Mach-O 64-bit x86-64";
-  case llvm::MachO::CPUTypePowerPC64:
+  case llvm::MachO::CPU_TYPE_POWERPC64:
     return "Mach-O 64-bit ppc64";
   default:
     return "Mach-O 64-bit unknown";
@@ -1302,15 +1302,15 @@ StringRef MachOObjectFile::getFileFormatName() const {
 
 Triple::ArchType MachOObjectFile::getArch(uint32_t CPUType) {
   switch (CPUType) {
-  case llvm::MachO::CPUTypeI386:
+  case llvm::MachO::CPU_TYPE_I386:
     return Triple::x86;
-  case llvm::MachO::CPUTypeX86_64:
+  case llvm::MachO::CPU_TYPE_X86_64:
     return Triple::x86_64;
-  case llvm::MachO::CPUTypeARM:
+  case llvm::MachO::CPU_TYPE_ARM:
     return Triple::arm;
-  case llvm::MachO::CPUTypePowerPC:
+  case llvm::MachO::CPU_TYPE_POWERPC:
     return Triple::ppc;
-  case llvm::MachO::CPUTypePowerPC64:
+  case llvm::MachO::CPU_TYPE_POWERPC64:
     return Triple::ppc64;
   default:
     return Triple::UnknownArch;
@@ -1382,7 +1382,7 @@ MachOObjectFile::getSectionRawFinalSegmentName(DataRefImpl Sec) const {
 bool
 MachOObjectFile::isRelocationScattered(const macho::RelocationEntry &RE)
   const {
-  if (getCPUType(this) == llvm::MachO::CPUTypeX86_64)
+  if (getCPUType(this) == llvm::MachO::CPU_TYPE_X86_64)
     return false;
   return getPlainRelocationAddress(RE) & macho::RF_Scattered;
 }

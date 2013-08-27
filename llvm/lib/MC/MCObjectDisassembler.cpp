@@ -540,7 +540,7 @@ uint64_t MCMachOObjectDisassembler::getEntrypoint() {
     uint32_t LoadCommandCount = MOOF.getHeader().NumLoadCommands;
     MachOObjectFile::LoadCommandInfo Load = MOOF.getFirstLoadCommandInfo();
     for (unsigned I = 0;; ++I) {
-      if (Load.C.Type == MachO::LoadCommandMain) {
+      if (Load.C.Type == MachO::LC_MAIN) {
         EntryFileOffset =
             ((const MachO::entry_point_command *)Load.Ptr)->entryoff;
         break;
