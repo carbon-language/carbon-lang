@@ -128,6 +128,10 @@ public:
                                         const uint16_t attr,
                                         const char *fail_value) const;
 
+  uint64_t getAttributeValueAsAddress(const DWARFCompileUnit *CU,
+                                      const uint16_t Attr,
+                                      uint64_t FailValue) const;
+
   uint64_t getAttributeValueAsUnsigned(const DWARFCompileUnit *cu,
                                        const uint16_t attr,
                                        uint64_t fail_value) const;
@@ -146,7 +150,8 @@ public:
                        uint64_t &LowPC, uint64_t &HighPC) const;
 
   void buildAddressRangeTable(const DWARFCompileUnit *CU,
-                              DWARFDebugAranges *DebugAranges) const;
+                              DWARFDebugAranges *DebugAranges,
+                              uint32_t CUOffsetInAranges) const;
 
   bool addressRangeContainsAddress(const DWARFCompileUnit *CU,
                                    const uint64_t Address) const;

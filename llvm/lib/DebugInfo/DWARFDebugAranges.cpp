@@ -95,7 +95,7 @@ bool DWARFDebugAranges::generate(DWARFContext *ctx) {
       if (DWARFCompileUnit *cu = ctx->getCompileUnitAtIndex(cu_idx)) {
         uint32_t CUOffset = cu->getOffset();
         if (ParsedCUOffsets.insert(CUOffset).second)
-          cu->buildAddressRangeTable(this, true);
+          cu->buildAddressRangeTable(this, true, CUOffset);
       }
     }
   }
