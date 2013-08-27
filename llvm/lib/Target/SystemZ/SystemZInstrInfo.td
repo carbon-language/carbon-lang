@@ -344,25 +344,25 @@ def MVGHI : StoreSIL<"mvghi", 0xE548, store,         imm64sx16>;
 
 // Memory-to-memory moves.
 let mayLoad = 1, mayStore = 1 in
-  defm MVC : MemorySS<"mvc", 0xD2, z_mvc>;
+  defm MVC : MemorySS<"mvc", 0xD2, z_mvc, z_mvc_loop>;
 
 // String moves.
 let mayLoad = 1, mayStore = 1, Defs = [CC], Uses = [R0W] in
   defm MVST : StringRRE<"mvst", 0xB255, z_stpcpy>;
 
 defm LoadStore8_32  : MVCLoadStore<anyextloadi8, truncstorei8, i32,
-                                   MVCWrapper, 1>;
+                                   MVCSequence, 1>;
 defm LoadStore16_32 : MVCLoadStore<anyextloadi16, truncstorei16, i32,
-                                   MVCWrapper, 2>;
-defm LoadStore32_32 : MVCLoadStore<load, store, i32, MVCWrapper, 4>;
+                                   MVCSequence, 2>;
+defm LoadStore32_32 : MVCLoadStore<load, store, i32, MVCSequence, 4>;
 
 defm LoadStore8  : MVCLoadStore<anyextloadi8, truncstorei8, i64,
-                                MVCWrapper, 1>;
+                                MVCSequence, 1>;
 defm LoadStore16 : MVCLoadStore<anyextloadi16, truncstorei16, i64,
-                                MVCWrapper, 2>;
+                                MVCSequence, 2>;
 defm LoadStore32 : MVCLoadStore<anyextloadi32, truncstorei32, i64,
-                                MVCWrapper, 4>;
-defm LoadStore64 : MVCLoadStore<load, store, i64, MVCWrapper, 8>;
+                                MVCSequence, 4>;
+defm LoadStore64 : MVCLoadStore<load, store, i64, MVCSequence, 8>;
 
 //===----------------------------------------------------------------------===//
 // Sign extensions
@@ -1028,7 +1028,7 @@ defm : ZXB<z_ucmp, GR64, CLGFR>;
 
 // Memory-to-memory comparison.
 let mayLoad = 1, Defs = [CC] in
-  defm CLC : MemorySS<"clc", 0xD5, z_clc>;
+  defm CLC : MemorySS<"clc", 0xD5, z_clc, z_clc_loop>;
 
 // String comparison.
 let mayLoad = 1, Defs = [CC], Uses = [R0W] in

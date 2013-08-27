@@ -1426,23 +1426,26 @@ class AtomicLoadWBinaryReg<SDPatternOperator operator>
 class AtomicLoadWBinaryImm<SDPatternOperator operator, Immediate imm>
   : AtomicLoadWBinary<operator, (i32 imm:$src2), imm>;
 
-// Define an instruction that operates on two fixed-length blocks of memory.
-// The real instruction uses a bdladdr12onlylen8 for the first operand and a
-// bdaddr12only for the second, with the length of the second operand being
-// implicitly the same as the first.  This arrangement matches the underlying
-// assembly syntax.  However, for instruction selection it's easier to have
-// two normal bdaddr12onlys and a separate length operand, so define a pseudo
-// instruction for that too.
+// Define an instruction that operates on two fixed-length blocks of memory,
+// and associated pseudo instructions for operating on blocks of any size.
+// The Sequence form uses a straight-line sequence of instructions and
+// the Loop form uses a loop of length-256 instructions followed by
+// another instruction to handle the excess.
 multiclass MemorySS<string mnemonic, bits<8> opcode,
-                    SDPatternOperator operator> {
+                    SDPatternOperator sequence, SDPatternOperator loop> {
   def "" : InstSS<opcode, (outs), (ins bdladdr12onlylen8:$BDL1,
                                        bdaddr12only:$BD2),
                   mnemonic##"\t$BDL1, $BD2", []>;
-  let usesCustomInserter = 1 in
-    def Wrapper : Pseudo<(outs), (ins bdaddr12only:$dest, bdaddr12only:$src,
-                                      imm32len8:$length),
-                         [(operator bdaddr12only:$dest, bdaddr12only:$src,
-                                    imm32len8:$length)]>;
+  let usesCustomInserter = 1 in {
+    def Sequence : Pseudo<(outs), (ins bdaddr12only:$dest, bdaddr12only:$src,
+                                       imm64:$length),
+                           [(sequence bdaddr12only:$dest, bdaddr12only:$src,
+                                      imm64:$length)]>;
+    def Loop : Pseudo<(outs), (ins bdaddr12only:$dest, bdaddr12only:$src,
+                                   imm64:$length, GR64:$count256),
+                      [(loop bdaddr12only:$dest, bdaddr12only:$src,
+                             imm64:$length, GR64:$count256)]>;
+  }
 }
 
 // Define an instruction that operates on two strings, both terminated

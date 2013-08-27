@@ -57,7 +57,12 @@ def SDT_ZAtomicCmpSwapW     : SDTypeProfile<1, 6,
 def SDT_ZMemMemLength       : SDTypeProfile<0, 3,
                                             [SDTCisPtrTy<0>,
                                              SDTCisPtrTy<1>,
-                                             SDTCisVT<2, i32>]>;
+                                             SDTCisVT<2, i64>]>;
+def SDT_ZMemMemLoop         : SDTypeProfile<0, 4,
+                                            [SDTCisPtrTy<0>,
+                                             SDTCisPtrTy<1>,
+                                             SDTCisVT<2, i64>,
+                                             SDTCisVT<3, i64>]>;
 def SDT_ZString             : SDTypeProfile<1, 3,
                                             [SDTCisPtrTy<0>,
                                              SDTCisPtrTy<1>,
@@ -123,7 +128,11 @@ def z_atomic_cmp_swapw  : AtomicWOp<"ATOMIC_CMP_SWAPW", SDT_ZAtomicCmpSwapW>;
 
 def z_mvc               : SDNode<"SystemZISD::MVC", SDT_ZMemMemLength,
                                  [SDNPHasChain, SDNPMayStore, SDNPMayLoad]>;
+def z_mvc_loop          : SDNode<"SystemZISD::MVC_LOOP", SDT_ZMemMemLoop,
+                                 [SDNPHasChain, SDNPMayStore, SDNPMayLoad]>;
 def z_clc               : SDNode<"SystemZISD::CLC", SDT_ZMemMemLength,
+                                 [SDNPHasChain, SDNPOutGlue, SDNPMayLoad]>;
+def z_clc_loop          : SDNode<"SystemZISD::CLC_LOOP", SDT_ZMemMemLoop,
                                  [SDNPHasChain, SDNPOutGlue, SDNPMayLoad]>;
 def z_strcmp            : SDNode<"SystemZISD::STRCMP", SDT_ZString,
                                  [SDNPHasChain, SDNPOutGlue, SDNPMayLoad]>;

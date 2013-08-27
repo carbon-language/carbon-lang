@@ -1917,7 +1917,9 @@ const char *SystemZTargetLowering::getTargetNodeName(unsigned Opcode) const {
     OPCODE(UDIVREM32);
     OPCODE(UDIVREM64);
     OPCODE(MVC);
+    OPCODE(MVC_LOOP);
     OPCODE(CLC);
+    OPCODE(CLC_LOOP);
     OPCODE(STRCMP);
     OPCODE(STPCPY);
     OPCODE(SEARCH_STRING);
@@ -1952,16 +1954,29 @@ static MachineBasicBlock *emitBlockAfter(MachineBasicBlock *MBB) {
   return NewMBB;
 }
 
-// Split MBB after MI and return the new block (the one that contains
-// instructions after MI).
-static MachineBasicBlock *splitBlockAfter(MachineInstr *MI,
-                                          MachineBasicBlock *MBB) {
+// Split MBB before MI and return the new block (the one that contains MI).
+static MachineBasicBlock *splitBlockBefore(MachineInstr *MI,
+                                           MachineBasicBlock *MBB) {
   MachineBasicBlock *NewMBB = emitBlockAfter(MBB);
-  NewMBB->splice(NewMBB->begin(), MBB,
-                 llvm::next(MachineBasicBlock::iterator(MI)),
-                 MBB->end());
+  NewMBB->splice(NewMBB->begin(), MBB, MI, MBB->end());
   NewMBB->transferSuccessorsAndUpdatePHIs(MBB);
   return NewMBB;
+}
+
+// Force base value Base into a register before MI.  Return the register.
+static unsigned forceReg(MachineInstr *MI, MachineOperand &Base,
+                         const SystemZInstrInfo *TII) {
+  if (Base.isReg())
+    return Base.getReg();
+
+  MachineBasicBlock *MBB = MI->getParent();
+  MachineFunction &MF = *MBB->getParent();
+  MachineRegisterInfo &MRI = MF.getRegInfo();
+
+  unsigned Reg = MRI.createVirtualRegister(&SystemZ::ADDR64BitRegClass);
+  BuildMI(*MBB, MI, MI->getDebugLoc(), TII->get(SystemZ::LA), Reg)
+    .addOperand(Base).addImm(0).addReg(0);
+  return Reg;
 }
 
 // Implement EmitInstrWithCustomInserter for pseudo Select* instruction MI.
@@ -1978,7 +1993,7 @@ SystemZTargetLowering::emitSelect(MachineInstr *MI,
   DebugLoc DL       = MI->getDebugLoc();
 
   MachineBasicBlock *StartMBB = MBB;
-  MachineBasicBlock *JoinMBB  = splitBlockAfter(MI, MBB);
+  MachineBasicBlock *JoinMBB  = splitBlockBefore(MI, MBB);
   MachineBasicBlock *FalseMBB = emitBlockAfter(StartMBB);
 
   //  StartMBB:
@@ -1999,7 +2014,7 @@ SystemZTargetLowering::emitSelect(MachineInstr *MI,
   //   %Result = phi [ %FalseReg, FalseMBB ], [ %TrueReg, StartMBB ]
   //  ...
   MBB = JoinMBB;
-  BuildMI(*MBB, MBB->begin(), DL, TII->get(SystemZ::PHI), DestReg)
+  BuildMI(*MBB, MI, DL, TII->get(SystemZ::PHI), DestReg)
     .addReg(TrueReg).addMBB(StartMBB)
     .addReg(FalseReg).addMBB(FalseMBB);
 
@@ -2046,7 +2061,7 @@ SystemZTargetLowering::emitCondStore(MachineInstr *MI,
     CCMask ^= CCValid;
 
   MachineBasicBlock *StartMBB = MBB;
-  MachineBasicBlock *JoinMBB  = splitBlockAfter(MI, MBB);
+  MachineBasicBlock *JoinMBB  = splitBlockBefore(MI, MBB);
   MachineBasicBlock *FalseMBB = emitBlockAfter(StartMBB);
 
   //  StartMBB:
@@ -2122,7 +2137,7 @@ SystemZTargetLowering::emitAtomicLoadBinary(MachineInstr *MI,
 
   // Insert a basic block for the main loop.
   MachineBasicBlock *StartMBB = MBB;
-  MachineBasicBlock *DoneMBB  = splitBlockAfter(MI, MBB);
+  MachineBasicBlock *DoneMBB  = splitBlockBefore(MI, MBB);
   MachineBasicBlock *LoopMBB  = emitBlockAfter(StartMBB);
 
   //  StartMBB:
@@ -2244,7 +2259,7 @@ SystemZTargetLowering::emitAtomicLoadMinMax(MachineInstr *MI,
 
   // Insert 3 basic blocks for the loop.
   MachineBasicBlock *StartMBB  = MBB;
-  MachineBasicBlock *DoneMBB   = splitBlockAfter(MI, MBB);
+  MachineBasicBlock *DoneMBB   = splitBlockBefore(MI, MBB);
   MachineBasicBlock *LoopMBB   = emitBlockAfter(StartMBB);
   MachineBasicBlock *UseAltMBB = emitBlockAfter(LoopMBB);
   MachineBasicBlock *UpdateMBB = emitBlockAfter(UseAltMBB);
@@ -2351,7 +2366,7 @@ SystemZTargetLowering::emitAtomicCmpSwapW(MachineInstr *MI,
 
   // Insert 2 basic blocks for the loop.
   MachineBasicBlock *StartMBB = MBB;
-  MachineBasicBlock *DoneMBB  = splitBlockAfter(MI, MBB);
+  MachineBasicBlock *DoneMBB  = splitBlockBefore(MI, MBB);
   MachineBasicBlock *LoopMBB  = emitBlockAfter(StartMBB);
   MachineBasicBlock *SetMBB   = emitBlockAfter(LoopMBB);
 
@@ -2465,17 +2480,126 @@ SystemZTargetLowering::emitMemMemWrapper(MachineInstr *MI,
                                          MachineBasicBlock *MBB,
                                          unsigned Opcode) const {
   const SystemZInstrInfo *TII = TM.getInstrInfo();
+  MachineFunction &MF = *MBB->getParent();
+  MachineRegisterInfo &MRI = MF.getRegInfo();
   DebugLoc DL = MI->getDebugLoc();
 
-  MachineOperand DestBase = MI->getOperand(0);
+  MachineOperand DestBase = earlyUseOperand(MI->getOperand(0));
   uint64_t       DestDisp = MI->getOperand(1).getImm();
-  MachineOperand SrcBase  = MI->getOperand(2);
+  MachineOperand SrcBase  = earlyUseOperand(MI->getOperand(2));
   uint64_t       SrcDisp  = MI->getOperand(3).getImm();
   uint64_t       Length   = MI->getOperand(4).getImm();
 
-  BuildMI(*MBB, MI, DL, TII->get(Opcode))
-    .addOperand(DestBase).addImm(DestDisp).addImm(Length)
-    .addOperand(SrcBase).addImm(SrcDisp);
+  // Check for the loop form, in which operand 5 is the trip count.
+  if (MI->getNumExplicitOperands() > 5) {
+    bool HaveSingleBase = DestBase.isIdenticalTo(SrcBase);
+
+    uint64_t StartCountReg = MI->getOperand(5).getReg();
+    uint64_t StartSrcReg   = forceReg(MI, SrcBase, TII);
+    uint64_t StartDestReg  = (HaveSingleBase ? StartSrcReg :
+                              forceReg(MI, DestBase, TII));
+
+    const TargetRegisterClass *RC = &SystemZ::ADDR64BitRegClass;
+    uint64_t ThisSrcReg  = MRI.createVirtualRegister(RC);
+    uint64_t ThisDestReg = (HaveSingleBase ? ThisSrcReg :
+                            MRI.createVirtualRegister(RC));
+    uint64_t NextSrcReg  = MRI.createVirtualRegister(RC);
+    uint64_t NextDestReg = (HaveSingleBase ? NextSrcReg :
+                            MRI.createVirtualRegister(RC));
+
+    RC = &SystemZ::GR64BitRegClass;
+    uint64_t ThisCountReg = MRI.createVirtualRegister(RC);
+    uint64_t NextCountReg = MRI.createVirtualRegister(RC);
+
+    MachineBasicBlock *StartMBB = MBB;
+    MachineBasicBlock *DoneMBB = splitBlockBefore(MI, MBB);
+    MachineBasicBlock *LoopMBB = emitBlockAfter(StartMBB);
+
+    //  StartMBB:
+    //   # fall through to LoopMMB
+    MBB->addSuccessor(LoopMBB);
+
+    //  LoopMBB:
+    //   %ThisDestReg = phi [ %StartDestReg, StartMBB ],
+    //                      [ %NextDestReg, LoopMBB ]
+    //   %ThisSrcReg = phi [ %StartSrcReg, StartMBB ],
+    //                     [ %NextSrcReg, LoopMBB ]
+    //   %ThisCountReg = phi [ %StartCountReg, StartMBB ],
+    //                       [ %NextCountReg, LoopMBB ]
+    //   PFD 2, 768+DestDisp(%ThisDestReg)
+    //   Opcode DestDisp(256,%ThisDestReg), SrcDisp(%ThisSrcReg)
+    //   %NextDestReg = LA 256(%ThisDestReg)
+    //   %NextSrcReg = LA 256(%ThisSrcReg)
+    //   %NextCountReg = AGHI %ThisCountReg, -1
+    //   CGHI %NextCountReg, 0
+    //   JLH LoopMBB
+    //   # fall through to DoneMMB
+    //
+    // The AGHI, CGHI and JLH should be converted to BRCTG by later passes.
+    MBB = LoopMBB;
+
+    BuildMI(MBB, DL, TII->get(SystemZ::PHI), ThisDestReg)
+      .addReg(StartDestReg).addMBB(StartMBB)
+      .addReg(NextDestReg).addMBB(LoopMBB);
+    if (!HaveSingleBase)
+      BuildMI(MBB, DL, TII->get(SystemZ::PHI), ThisSrcReg)
+        .addReg(StartSrcReg).addMBB(StartMBB)
+        .addReg(NextSrcReg).addMBB(LoopMBB);
+    BuildMI(MBB, DL, TII->get(SystemZ::PHI), ThisCountReg)
+      .addReg(StartCountReg).addMBB(StartMBB)
+      .addReg(NextCountReg).addMBB(LoopMBB);
+    BuildMI(MBB, DL, TII->get(SystemZ::PFD))
+      .addImm(SystemZ::PFD_WRITE)
+      .addReg(ThisDestReg).addImm(DestDisp + 768).addReg(0);
+    BuildMI(MBB, DL, TII->get(Opcode))
+      .addReg(ThisDestReg).addImm(DestDisp).addImm(256)
+      .addReg(ThisSrcReg).addImm(SrcDisp);
+    BuildMI(MBB, DL, TII->get(SystemZ::LA), NextDestReg)
+      .addReg(ThisDestReg).addImm(256).addReg(0);
+    if (!HaveSingleBase)
+      BuildMI(MBB, DL, TII->get(SystemZ::LA), NextSrcReg)
+        .addReg(ThisSrcReg).addImm(256).addReg(0);
+    BuildMI(MBB, DL, TII->get(SystemZ::AGHI), NextCountReg)
+      .addReg(ThisCountReg).addImm(-1);
+    BuildMI(MBB, DL, TII->get(SystemZ::CGHI))
+      .addReg(NextCountReg).addImm(0);
+    BuildMI(MBB, DL, TII->get(SystemZ::BRC))
+      .addImm(SystemZ::CCMASK_ICMP).addImm(SystemZ::CCMASK_CMP_NE)
+      .addMBB(LoopMBB);
+    MBB->addSuccessor(LoopMBB);
+    MBB->addSuccessor(DoneMBB);
+
+    DestBase = MachineOperand::CreateReg(NextDestReg, false);
+    SrcBase = MachineOperand::CreateReg(NextSrcReg, false);
+    Length &= 255;
+    MBB = DoneMBB;
+  }
+  // Handle any remaining bytes with straight-line code.
+  while (Length > 0) {
+    uint64_t ThisLength = std::min(Length, uint64_t(256));
+    // The previous iteration might have created out-of-range displacements.
+    // Apply them using LAY if so.
+    if (!isUInt<12>(DestDisp)) {
+      unsigned Reg = MRI.createVirtualRegister(&SystemZ::ADDR64BitRegClass);
+      BuildMI(*MBB, MI, MI->getDebugLoc(), TII->get(SystemZ::LAY), Reg)
+        .addOperand(DestBase).addImm(DestDisp).addReg(0);
+      DestBase = MachineOperand::CreateReg(Reg, false);
+      DestDisp = 0;
+    }
+    if (!isUInt<12>(SrcDisp)) {
+      unsigned Reg = MRI.createVirtualRegister(&SystemZ::ADDR64BitRegClass);
+      BuildMI(*MBB, MI, MI->getDebugLoc(), TII->get(SystemZ::LAY), Reg)
+        .addOperand(SrcBase).addImm(SrcDisp).addReg(0);
+      SrcBase = MachineOperand::CreateReg(Reg, false);
+      SrcDisp = 0;
+    }
+    BuildMI(*MBB, MI, DL, TII->get(Opcode))
+      .addOperand(DestBase).addImm(DestDisp).addImm(ThisLength)
+      .addOperand(SrcBase).addImm(SrcDisp);
+    DestDisp += ThisLength;
+    SrcDisp += ThisLength;
+    Length -= ThisLength;
+  }
 
   MI->eraseFromParent();
   return MBB;
@@ -2503,7 +2627,7 @@ SystemZTargetLowering::emitStringWrapper(MachineInstr *MI,
   uint64_t End2Reg  = MRI.createVirtualRegister(RC);
 
   MachineBasicBlock *StartMBB = MBB;
-  MachineBasicBlock *DoneMBB = splitBlockAfter(MI, MBB);
+  MachineBasicBlock *DoneMBB = splitBlockBefore(MI, MBB);
   MachineBasicBlock *LoopMBB = emitBlockAfter(StartMBB);
 
   //  StartMBB:
@@ -2765,9 +2889,11 @@ EmitInstrWithCustomInserter(MachineInstr *MI, MachineBasicBlock *MBB) const {
 
   case SystemZ::ATOMIC_CMP_SWAPW:
     return emitAtomicCmpSwapW(MI, MBB);
-  case SystemZ::MVCWrapper:
+  case SystemZ::MVCSequence:
+  case SystemZ::MVCLoop:
     return emitMemMemWrapper(MI, MBB, SystemZ::MVC);
-  case SystemZ::CLCWrapper:
+  case SystemZ::CLCSequence:
+  case SystemZ::CLCLoop:
     return emitMemMemWrapper(MI, MBB, SystemZ::CLC);
   case SystemZ::CLSTLoop:
     return emitStringWrapper(MI, MBB, SystemZ::CLST);
