@@ -1396,6 +1396,28 @@ def t2LDRHT  : T2IldT<0, 0b01, "ldrht", IIC_iLoad_bh_i>;
 def t2LDRSBT : T2IldT<1, 0b00, "ldrsbt", IIC_iLoad_bh_i>;
 def t2LDRSHT : T2IldT<1, 0b01, "ldrsht", IIC_iLoad_bh_i>;
 
+class T2Ildacq<bits<4> bits23_20, bits<2> bit54, dag oops, dag iops, string opc, string asm, list<dag> pattern>
+  : Thumb2I<oops, iops, AddrModeNone, 4, NoItinerary, opc, asm, "", pattern> {
+  bits<4> Rt;
+  bits<4> addr;
+
+  let Inst{31-27} = 0b11101;
+  let Inst{26-24} = 0b000;
+  let Inst{23-20} = bits23_20;
+  let Inst{11-6} = 0b111110;
+  let Inst{5-4} = bit54;
+  let Inst{3-0} = 0b1111;
+
+  // Encode instruction operands
+  let Inst{19-16} = addr;
+  let Inst{15-12} = Rt;
+}
+
+def t2LDA : T2Ildacq<0b1101, 0b10, (outs rGPR:$Rt), (ins addr_offset_none:$addr), "lda", "\t$Rt, $addr", []>;
+def t2LDAB : T2Ildacq<0b1101, 0b00, (outs rGPR:$Rt), (ins addr_offset_none:$addr), "ldab", "\t$Rt, $addr", []>;
+def t2LDAH : T2Ildacq<0b1101, 0b01, (outs rGPR:$Rt), (ins addr_offset_none:$addr), "ldah", "\t$Rt, $addr", []>;
+
+
 // Store
 defm t2STR :T2I_st<0b10,"str", IIC_iStore_i, IIC_iStore_si, GPR,
                    BinOpFrag<(store node:$LHS, node:$RHS)>>;
@@ -1538,6 +1560,29 @@ def t2STRD_POST : T2Ii8s4post<0, 1, 0, (outs GPR:$wb),
                       t2am_imm8s4_offset:$imm),
                  IIC_iStore_d_ru, "strd", "\t$Rt, $Rt2, $addr$imm",
                  "$addr.base = $wb", []>;
+
+class T2Istrrel<bits<2> bit54, dag oops, dag iops, string opc, string asm, list<dag> pattern>
+  : Thumb2I<oops, iops, AddrModeNone, 4, NoItinerary, opc, asm, "", pattern> {
+  bits<4> Rt;
+  bits<4> addr;
+
+  let Inst{31-27} = 0b11101;
+  let Inst{26-20} = 0b0001100;
+  let Inst{11-6} = 0b111110;
+  let Inst{5-4} = bit54;
+  let Inst{3-0} = 0b1111;
+
+  // Encode instruction operands
+  let Inst{19-16} = addr;
+  let Inst{15-12} = Rt;
+}
+
+def t2STL  : T2Istrrel<0b10, (outs rGPR:$Rt), (ins addr_offset_none:$addr),
+                       "stl", "\t$Rt, $addr", []>;
+def t2STLB : T2Istrrel<0b00, (outs rGPR:$Rt), (ins addr_offset_none:$addr),
+                       "stlb", "\t$Rt, $addr", []>;
+def t2STLH : T2Istrrel<0b01, (outs rGPR:$Rt), (ins addr_offset_none:$addr),
+                       "stlh", "\t$Rt, $addr", []>;
 
 // T2Ipl (Preload Data/Instruction) signals the memory system of possible future
 // data/instruction access.
@@ -3126,15 +3171,14 @@ def t2ISB : T2I<(outs), (ins instsyncb_opt:$opt), NoItinerary,
   let Inst{3-0} = opt;
 }
 
-class T2I_ldrex<bits<2> opcod, dag oops, dag iops, AddrMode am, int sz,
+class T2I_ldrex<bits<4> opcod, dag oops, dag iops, AddrMode am, int sz,
                 InstrItinClass itin, string opc, string asm, string cstr,
                 list<dag> pattern, bits<4> rt2 = 0b1111>
   : Thumb2I<oops, iops, am, sz, itin, opc, asm, cstr, pattern> {
   let Inst{31-27} = 0b11101;
   let Inst{26-20} = 0b0001101;
   let Inst{11-8} = rt2;
-  let Inst{7-6} = 0b01;
-  let Inst{5-4} = opcod;
+  let Inst{7-4} = opcod;
   let Inst{3-0} = 0b1111;
 
   bits<4> addr;
@@ -3142,15 +3186,14 @@ class T2I_ldrex<bits<2> opcod, dag oops, dag iops, AddrMode am, int sz,
   let Inst{19-16} = addr;
   let Inst{15-12} = Rt;
 }
-class T2I_strex<bits<2> opcod, dag oops, dag iops, AddrMode am, int sz,
+class T2I_strex<bits<4> opcod, dag oops, dag iops, AddrMode am, int sz,
                 InstrItinClass itin, string opc, string asm, string cstr,
                 list<dag> pattern, bits<4> rt2 = 0b1111>
   : Thumb2I<oops, iops, am, sz, itin, opc, asm, cstr, pattern> {
   let Inst{31-27} = 0b11101;
   let Inst{26-20} = 0b0001100;
   let Inst{11-8} = rt2;
-  let Inst{7-6} = 0b01;
-  let Inst{5-4} = opcod;
+  let Inst{7-4} = opcod;
 
   bits<4> Rd;
   bits<4> addr;
@@ -3161,11 +3204,11 @@ class T2I_strex<bits<2> opcod, dag oops, dag iops, AddrMode am, int sz,
 }
 
 let mayLoad = 1 in {
-def t2LDREXB : T2I_ldrex<0b00, (outs rGPR:$Rt), (ins addr_offset_none:$addr),
+def t2LDREXB : T2I_ldrex<0b0100, (outs rGPR:$Rt), (ins addr_offset_none:$addr),
                          AddrModeNone, 4, NoItinerary,
                          "ldrexb", "\t$Rt, $addr", "",
                          [(set rGPR:$Rt, (ldrex_1 addr_offset_none:$addr))]>;
-def t2LDREXH : T2I_ldrex<0b01, (outs rGPR:$Rt), (ins addr_offset_none:$addr),
+def t2LDREXH : T2I_ldrex<0b0101, (outs rGPR:$Rt), (ins addr_offset_none:$addr),
                          AddrModeNone, 4, NoItinerary,
                          "ldrexh", "\t$Rt, $addr", "",
                          [(set rGPR:$Rt, (ldrex_2 addr_offset_none:$addr))]>;
@@ -3183,7 +3226,7 @@ def t2LDREX  : Thumb2I<(outs rGPR:$Rt), (ins t2addrmode_imm0_1020s4:$addr),
   let Inst{7-0} = addr{7-0};
 }
 let hasExtraDefRegAllocReq = 1 in
-def t2LDREXD : T2I_ldrex<0b11, (outs rGPR:$Rt, rGPR:$Rt2),
+def t2LDREXD : T2I_ldrex<0b0111, (outs rGPR:$Rt, rGPR:$Rt2),
                          (ins addr_offset_none:$addr),
                          AddrModeNone, 4, NoItinerary,
                          "ldrexd", "\t$Rt, $Rt2, $addr", "",
@@ -3191,16 +3234,48 @@ def t2LDREXD : T2I_ldrex<0b11, (outs rGPR:$Rt, rGPR:$Rt2),
   bits<4> Rt2;
   let Inst{11-8} = Rt2;
 }
+def t2LDAEXB : T2I_ldrex<0b1100, (outs rGPR:$Rt), (ins addr_offset_none:$addr),
+                         AddrModeNone, 4, NoItinerary,
+                         "ldaexb", "\t$Rt, $addr", "",
+                         []>, Requires<[IsThumb, HasV8]>;
+def t2LDAEXH : T2I_ldrex<0b1101, (outs rGPR:$Rt), (ins addr_offset_none:$addr),
+                         AddrModeNone, 4, NoItinerary,
+                         "ldaexh", "\t$Rt, $addr", "",
+                         []>, Requires<[IsThumb, HasV8]>;
+def t2LDAEX  : Thumb2I<(outs rGPR:$Rt), (ins addr_offset_none:$addr),
+                       AddrModeNone, 4, NoItinerary,
+                       "ldaex", "\t$Rt, $addr", "",
+                     []>, Requires<[IsThumb, HasV8]> {
+  bits<4> Rt;
+  bits<4> addr;
+  let Inst{31-27} = 0b11101;
+  let Inst{26-20} = 0b0001101;
+  let Inst{19-16} = addr;
+  let Inst{15-12} = Rt;
+  let Inst{11-8} = 0b1111;
+  let Inst{7-0} = 0b11101111;
+}
+let hasExtraDefRegAllocReq = 1 in
+def t2LDAEXD : T2I_ldrex<0b1111, (outs rGPR:$Rt, rGPR:$Rt2),
+                         (ins addr_offset_none:$addr),
+                         AddrModeNone, 4, NoItinerary,
+                         "ldaexd", "\t$Rt, $Rt2, $addr", "",
+                         [], {?, ?, ?, ?}>, Requires<[HasV8]> {
+  bits<4> Rt2;
+  let Inst{11-8} = Rt2;
+
+  let Inst{7} = 1;
+}
 }
 
 let mayStore = 1, Constraints = "@earlyclobber $Rd" in {
-def t2STREXB : T2I_strex<0b00, (outs rGPR:$Rd),
+def t2STREXB : T2I_strex<0b0100, (outs rGPR:$Rd),
                          (ins rGPR:$Rt, addr_offset_none:$addr),
                          AddrModeNone, 4, NoItinerary,
                          "strexb", "\t$Rd, $Rt, $addr", "",
                          [(set rGPR:$Rd, (strex_1 rGPR:$Rt,
                                                   addr_offset_none:$addr))]>;
-def t2STREXH : T2I_strex<0b01, (outs rGPR:$Rd),
+def t2STREXH : T2I_strex<0b0101, (outs rGPR:$Rd),
                          (ins rGPR:$Rt, addr_offset_none:$addr),
                          AddrModeNone, 4, NoItinerary,
                          "strexh", "\t$Rd, $Rt, $addr", "",
@@ -3224,11 +3299,47 @@ def t2STREX  : Thumb2I<(outs rGPR:$Rd), (ins rGPR:$Rt,
   let Inst{7-0} = addr{7-0};
 }
 let hasExtraSrcRegAllocReq = 1 in
-def t2STREXD : T2I_strex<0b11, (outs rGPR:$Rd),
+def t2STREXD : T2I_strex<0b0111, (outs rGPR:$Rd),
                          (ins rGPR:$Rt, rGPR:$Rt2, addr_offset_none:$addr),
                          AddrModeNone, 4, NoItinerary,
                          "strexd", "\t$Rd, $Rt, $Rt2, $addr", "", [],
                          {?, ?, ?, ?}> {
+  bits<4> Rt2;
+  let Inst{11-8} = Rt2;
+}
+def t2STLEXB : T2I_strex<0b1100, (outs rGPR:$Rd),
+                         (ins rGPR:$Rt, addr_offset_none:$addr),
+                         AddrModeNone, 4, NoItinerary,
+                         "stlexb", "\t$Rd, $Rt, $addr", "",
+                         []>, Requires<[IsThumb, HasV8]>;
+
+def t2STLEXH : T2I_strex<0b1101, (outs rGPR:$Rd),
+                         (ins rGPR:$Rt, addr_offset_none:$addr),
+                         AddrModeNone, 4, NoItinerary,
+                         "stlexh", "\t$Rd, $Rt, $addr", "",
+                         []>, Requires<[IsThumb, HasV8]>;
+
+def t2STLEX  : Thumb2I<(outs rGPR:$Rd), (ins rGPR:$Rt,
+                             addr_offset_none:$addr),
+                  AddrModeNone, 4, NoItinerary,
+                  "stlex", "\t$Rd, $Rt, $addr", "",
+                  []>, Requires<[IsThumb, HasV8]> {
+  bits<4> Rd;
+  bits<4> Rt;
+  bits<4> addr;
+  let Inst{31-27} = 0b11101;
+  let Inst{26-20} = 0b0001100;
+  let Inst{19-16} = addr;
+  let Inst{15-12} = Rt;
+  let Inst{11-4}  = 0b11111110;
+  let Inst{3-0}   = Rd;
+}
+let hasExtraSrcRegAllocReq = 1 in
+def t2STLEXD : T2I_strex<0b1111, (outs rGPR:$Rd),
+                         (ins rGPR:$Rt, rGPR:$Rt2, addr_offset_none:$addr),
+                         AddrModeNone, 4, NoItinerary,
+                         "stlexd", "\t$Rd, $Rt, $Rt2, $addr", "", [],
+                         {?, ?, ?, ?}>, Requires<[IsThumb, HasV8]> {
   bits<4> Rt2;
   let Inst{11-8} = Rt2;
 }

@@ -5201,8 +5201,9 @@ bool ARMAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
   // expressed as a GPRPair, so we have to manually merge them.
   // FIXME: We would really like to be able to tablegen'erate this.
   if (!isThumb() && Operands.size() > 4 &&
-      (Mnemonic == "ldrexd" || Mnemonic == "strexd")) {
-    bool isLoad = (Mnemonic == "ldrexd");
+      (Mnemonic == "ldrexd" || Mnemonic == "strexd" || Mnemonic == "ldaexd" ||
+       Mnemonic == "stlexd")) {
+    bool isLoad = (Mnemonic == "ldrexd" || Mnemonic == "ldaexd");
     unsigned Idx = isLoad ? 2 : 3;
     ARMOperand* Op1 = static_cast<ARMOperand*>(Operands[Idx]);
     ARMOperand* Op2 = static_cast<ARMOperand*>(Operands[Idx+1]);

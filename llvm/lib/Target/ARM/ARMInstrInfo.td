@@ -2295,6 +2295,13 @@ def LDRD : AI3ld<0b1101, 0, (outs GPR:$Rd, GPR:$dst2),
                  []>, Requires<[IsARM, HasV5TE]>;
 }
 
+def LDA : AIldracq<0b00, (outs GPR:$Rt), (ins addr_offset_none:$addr),
+                    NoItinerary, "lda", "\t$Rt, $addr", []>;
+def LDAB : AIldracq<0b10, (outs GPR:$Rt), (ins addr_offset_none:$addr),
+                    NoItinerary, "ldab", "\t$Rt, $addr", []>;
+def LDAH : AIldracq<0b11, (outs GPR:$Rt), (ins addr_offset_none:$addr),
+                    NoItinerary, "ldah", "\t$Rt, $addr", []>;
+
 // Indexed loads
 multiclass AI2_ldridx<bit isByte, string opc,
                       InstrItinClass iii, InstrItinClass iir> {
@@ -2837,6 +2844,12 @@ multiclass AI3strT<bits<4> op, string opc> {
 
 defm STRHT : AI3strT<0b1011, "strht">;
 
+def STL : AIstrrel<0b00, (outs GPR:$Rt), (ins addr_offset_none:$addr),
+                   NoItinerary, "stl", "\t$Rt, $addr", []>;
+def STLB : AIstrrel<0b10, (outs GPR:$Rt), (ins addr_offset_none:$addr),
+                    NoItinerary, "stlb", "\t$Rt, $addr", []>;
+def STLH : AIstrrel<0b11, (outs GPR:$Rt), (ins addr_offset_none:$addr),
+                    NoItinerary, "stlh", "\t$Rt, $addr", []>;
 
 //===----------------------------------------------------------------------===//
 //  Load / store multiple Instructions.
@@ -4423,8 +4436,7 @@ def strex_4 : PatFrag<(ops node:$val, node:$ptr),
 
 let mayLoad = 1 in {
 def LDREXB : AIldrex<0b10, (outs GPR:$Rt), (ins addr_offset_none:$addr),
-                     NoItinerary,
-                     "ldrexb", "\t$Rt, $addr",
+                     NoItinerary, "ldrexb", "\t$Rt, $addr",
                      [(set GPR:$Rt, (ldrex_1 addr_offset_none:$addr))]>;
 def LDREXH : AIldrex<0b11, (outs GPR:$Rt), (ins addr_offset_none:$addr),
                      NoItinerary, "ldrexh", "\t$Rt, $addr",
@@ -4433,8 +4445,20 @@ def LDREX  : AIldrex<0b00, (outs GPR:$Rt), (ins addr_offset_none:$addr),
                      NoItinerary, "ldrex", "\t$Rt, $addr",
                      [(set GPR:$Rt, (ldrex_4 addr_offset_none:$addr))]>;
 let hasExtraDefRegAllocReq = 1 in
-def LDREXD: AIldrex<0b01, (outs GPRPairOp:$Rt),(ins addr_offset_none:$addr),
+def LDREXD : AIldrex<0b01, (outs GPRPairOp:$Rt),(ins addr_offset_none:$addr),
                       NoItinerary, "ldrexd", "\t$Rt, $addr", []> {
+  let DecoderMethod = "DecodeDoubleRegLoad";
+}
+
+def LDAEXB : AIldaex<0b10, (outs GPR:$Rt), (ins addr_offset_none:$addr),
+                     NoItinerary, "ldaexb", "\t$Rt, $addr", []>;
+def LDAEXH : AIldaex<0b11, (outs GPR:$Rt), (ins addr_offset_none:$addr),
+                     NoItinerary, "ldaexh", "\t$Rt, $addr", []>;
+def LDAEX  : AIldaex<0b00, (outs GPR:$Rt), (ins addr_offset_none:$addr),
+                     NoItinerary, "ldaex", "\t$Rt, $addr", []>;
+let hasExtraDefRegAllocReq = 1 in
+def LDAEXD : AIldaex<0b01, (outs GPRPairOp:$Rt),(ins addr_offset_none:$addr),
+                      NoItinerary, "ldaexd", "\t$Rt, $addr", []> {
   let DecoderMethod = "DecodeDoubleRegLoad";
 }
 }
@@ -4455,8 +4479,22 @@ def STREXD : AIstrex<0b01, (outs GPR:$Rd),
                     NoItinerary, "strexd", "\t$Rd, $Rt, $addr", []> {
   let DecoderMethod = "DecodeDoubleRegStore";
 }
+def STLEXB: AIstlex<0b10, (outs GPR:$Rd), (ins GPR:$Rt, addr_offset_none:$addr),
+                    NoItinerary, "stlexb", "\t$Rd, $Rt, $addr",
+                    []>;
+def STLEXH: AIstlex<0b11, (outs GPR:$Rd), (ins GPR:$Rt, addr_offset_none:$addr),
+                    NoItinerary, "stlexh", "\t$Rd, $Rt, $addr",
+                    []>;
+def STLEX : AIstlex<0b00, (outs GPR:$Rd), (ins GPR:$Rt, addr_offset_none:$addr),
+                    NoItinerary, "stlex", "\t$Rd, $Rt, $addr",
+                    []>;
+let hasExtraSrcRegAllocReq = 1 in
+def STLEXD : AIstlex<0b01, (outs GPR:$Rd),
+                    (ins GPRPairOp:$Rt, addr_offset_none:$addr),
+                    NoItinerary, "stlexd", "\t$Rd, $Rt, $addr", []> {
+  let DecoderMethod = "DecodeDoubleRegStore";
 }
-
+}
 
 def CLREX : AXI<(outs), (ins), MiscFrm, NoItinerary, "clrex",
                 [(int_arm_clrex)]>,
