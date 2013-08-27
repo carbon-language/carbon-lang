@@ -239,6 +239,15 @@ def act_on_decl(declaration, comment, allowed_types):
       add_matcher('*', name, 'Matcher<*>', comment)
       return
 
+    # Parse Variadic operator matchers.
+    m = re.match(
+        r"""^.*VariadicOperatorMatcherFunc\s*([a-zA-Z]*)\s*=\s*{.*};$""",
+        declaration, flags=re.X)
+    if m:
+      name = m.groups()[0]
+      add_matcher('*', name, 'Matcher<*>, ..., Matcher<*>', comment)
+      return
+
 
     # Parse free standing matcher functions, like:
     #   Matcher<ResultType> Name(Matcher<ArgumentType> InnerMatcher) {
@@ -309,7 +318,7 @@ for line in open(MATCHERS_FILE).read().splitlines():
     declaration += ' ' + line
     if ((not line.strip()) or 
         line.rstrip()[-1] == ';' or
-        line.rstrip()[-1] == '{'):
+        (line.rstrip()[-1] == '{' and line.rstrip()[-3:] != '= {')):
       if line.strip() and line.rstrip()[-1] == '{':
         body = True
       else:

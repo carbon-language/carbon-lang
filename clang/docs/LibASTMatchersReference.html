@@ -1273,14 +1273,14 @@ which allow users to create more powerful match expressions.</p>
 <tr style="text-align:left"><th>Return type</th><th>Name</th><th>Parameters</th></tr>
 <!-- START_NARROWING_MATCHERS -->
 
-<tr><td>Matcher&lt;*&gt;</td><td class="name" onclick="toggle('allOf0')"><a name="allOf0Anchor">allOf</a></td><td>Matcher&lt;*&gt;  P1, Matcher&lt;*&gt;  P2</td></tr>
+<tr><td>Matcher&lt;*&gt;</td><td class="name" onclick="toggle('allOf0')"><a name="allOf0Anchor">allOf</a></td><td>Matcher&lt;*&gt;, ..., Matcher&lt;*&gt;</td></tr>
 <tr><td colspan="4" class="doc" id="allOf0"><pre>Matches if all given matchers match.
 
 Usable as: Any Matcher
 </pre></td></tr>
 
 
-<tr><td>Matcher&lt;*&gt;</td><td class="name" onclick="toggle('anyOf0')"><a name="anyOf0Anchor">anyOf</a></td><td>Matcher&lt;*&gt;  P1, Matcher&lt;*&gt;  P2</td></tr>
+<tr><td>Matcher&lt;*&gt;</td><td class="name" onclick="toggle('anyOf0')"><a name="anyOf0Anchor">anyOf</a></td><td>Matcher&lt;*&gt;, ..., Matcher&lt;*&gt;</td></tr>
 <tr><td colspan="4" class="doc" id="anyOf0"><pre>Matches if any of the given matchers matches.
 
 Usable as: Any Matcher
@@ -1999,7 +1999,7 @@ match expressions.</p>
 <tr style="text-align:left"><th>Return type</th><th>Name</th><th>Parameters</th></tr>
 <!-- START_TRAVERSAL_MATCHERS -->
 
-<tr><td>Matcher&lt;*&gt;</td><td class="name" onclick="toggle('eachOf0')"><a name="eachOf0Anchor">eachOf</a></td><td>Matcher&lt;*&gt;  P1, Matcher&lt;*&gt;  P2</td></tr>
+<tr><td>Matcher&lt;*&gt;</td><td class="name" onclick="toggle('eachOf0')"><a name="eachOf0Anchor">eachOf</a></td><td>Matcher&lt;*&gt;, ..., Matcher&lt;*&gt;</td></tr>
 <tr><td colspan="4" class="doc" id="eachOf0"><pre>Matches if any of the given matchers matches.
 
 Unlike anyOf, eachOf will generate a match result for each
@@ -2013,21 +2013,6 @@ The matcher:
 will generate two results binding "v", the first of which binds
 the field declaration of a, the second the field declaration of
 b.
-
-Usable as: Any Matcher
-</pre></td></tr>
-
-
-<tr><td>Matcher&lt;*&gt;</td><td class="name" onclick="toggle('findAll0')"><a name="findAll0Anchor">findAll</a></td><td>Matcher&lt;T&gt;  Matcher</td></tr>
-<tr><td colspan="4" class="doc" id="findAll0"><pre>Matches if the node or any descendant matches.
-
-Generates results for each match.
-
-For example, in:
-  class A { class B {}; class C {}; };
-The matcher:
-  recordDecl(hasName("::A"), findAll(recordDecl(isDefinition()).bind("m")))
-will generate results for A, B and C.
 
 Usable as: Any Matcher
 </pre></td></tr>
@@ -3313,6 +3298,21 @@ getDecl().
 Usable as: Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1QualType.html">QualType</a>&gt;, Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1CallExpr.html">CallExpr</a>&gt;, Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1CXXConstructExpr.html">CXXConstructExpr</a>&gt;,
   Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1MemberExpr.html">MemberExpr</a>&gt;, Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1TypedefType.html">TypedefType</a>&gt;,
   Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1TemplateSpecializationType.html">TemplateSpecializationType</a>&gt;
+</pre></td></tr>
+
+
+<tr><td>Matcher&lt;T&gt;</td><td class="name" onclick="toggle('findAll0')"><a name="findAll0Anchor">findAll</a></td><td>Matcher&lt;T&gt;  Matcher</td></tr>
+<tr><td colspan="4" class="doc" id="findAll0"><pre>Matches if the node or any descendant matches.
+
+Generates results for each match.
+
+For example, in:
+  class A { class B {}; class C {}; };
+The matcher:
+  recordDecl(hasName("::A"), findAll(recordDecl(isDefinition()).bind("m")))
+will generate results for A, B and C.
+
+Usable as: Any Matcher
 </pre></td></tr>
 
 

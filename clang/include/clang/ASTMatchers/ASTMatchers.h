@@ -1297,93 +1297,23 @@ const internal::VariadicAllOfMatcher<TypeLoc> typeLoc;
 /// \c b.
 ///
 /// Usable as: Any Matcher
-template <typename M1, typename M2>
-internal::PolymorphicMatcherWithParam2<internal::EachOfMatcher, M1, M2>
-eachOf(const M1 &P1, const M2 &P2) {
-  return internal::PolymorphicMatcherWithParam2<internal::EachOfMatcher, M1,
-                                                M2>(P1, P2);
-}
-
-/// \brief Various overloads for the anyOf matcher.
-/// @{
+const internal::VariadicOperatorMatcherFunc eachOf = {
+  internal::EachOfVariadicOperator
+};
 
 /// \brief Matches if any of the given matchers matches.
 ///
 /// Usable as: Any Matcher
-template<typename M1, typename M2>
-internal::PolymorphicMatcherWithParam2<internal::AnyOfMatcher, M1, M2>
-anyOf(const M1 &P1, const M2 &P2) {
-  return internal::PolymorphicMatcherWithParam2<internal::AnyOfMatcher,
-                                                M1, M2 >(P1, P2);
-}
-template<typename M1, typename M2, typename M3>
-internal::PolymorphicMatcherWithParam2<internal::AnyOfMatcher, M1,
-    internal::PolymorphicMatcherWithParam2<internal::AnyOfMatcher, M2, M3> >
-anyOf(const M1 &P1, const M2 &P2, const M3 &P3) {
-  return anyOf(P1, anyOf(P2, P3));
-}
-template<typename M1, typename M2, typename M3, typename M4>
-internal::PolymorphicMatcherWithParam2<internal::AnyOfMatcher, M1,
-    internal::PolymorphicMatcherWithParam2<internal::AnyOfMatcher, M2,
-        internal::PolymorphicMatcherWithParam2<internal::AnyOfMatcher,
-                                               M3, M4> > >
-anyOf(const M1 &P1, const M2 &P2, const M3 &P3, const M4 &P4) {
-  return anyOf(P1, anyOf(P2, anyOf(P3, P4)));
-}
-template<typename M1, typename M2, typename M3, typename M4, typename M5>
-internal::PolymorphicMatcherWithParam2<internal::AnyOfMatcher, M1,
-    internal::PolymorphicMatcherWithParam2<internal::AnyOfMatcher, M2,
-        internal::PolymorphicMatcherWithParam2<internal::AnyOfMatcher, M3,
-            internal::PolymorphicMatcherWithParam2<internal::AnyOfMatcher,
-                                                   M4, M5> > > >
-anyOf(const M1 &P1, const M2 &P2, const M3 &P3, const M4 &P4, const M5 &P5) {
-  return anyOf(P1, anyOf(P2, anyOf(P3, anyOf(P4, P5))));
-}
-
-/// @}
-
-/// \brief Various overloads for the allOf matcher.
-/// @{
+const internal::VariadicOperatorMatcherFunc anyOf = {
+  internal::AnyOfVariadicOperator
+};
 
 /// \brief Matches if all given matchers match.
 ///
 /// Usable as: Any Matcher
-template <typename M1, typename M2>
-internal::PolymorphicMatcherWithParam2<internal::AllOfMatcher, M1, M2>
-allOf(const M1 &P1, const M2 &P2) {
-  return internal::PolymorphicMatcherWithParam2<internal::AllOfMatcher, M1, M2>(
-      P1, P2);
-}
-template <typename M1, typename M2, typename M3>
-internal::PolymorphicMatcherWithParam2<
-    internal::AllOfMatcher, M1,
-    internal::PolymorphicMatcherWithParam2<internal::AllOfMatcher, M2, M3> >
-allOf(const M1 &P1, const M2 &P2, const M3 &P3) {
-  return allOf(P1, allOf(P2, P3));
-}
-template <typename M1, typename M2, typename M3, typename M4>
-internal::PolymorphicMatcherWithParam2<
-    internal::AllOfMatcher, M1,
-    internal::PolymorphicMatcherWithParam2<
-        internal::AllOfMatcher, M2, internal::PolymorphicMatcherWithParam2<
-                                        internal::AllOfMatcher, M3, M4> > >
-allOf(const M1 &P1, const M2 &P2, const M3 &P3, const M4 &P4) {
-  return allOf(P1, allOf(P2, P3, P4));
-}
-template <typename M1, typename M2, typename M3, typename M4, typename M5>
-internal::PolymorphicMatcherWithParam2<
-    internal::AllOfMatcher, M1,
-    internal::PolymorphicMatcherWithParam2<
-        internal::AllOfMatcher, M2,
-        internal::PolymorphicMatcherWithParam2<
-            internal::AllOfMatcher, M3,
-            internal::PolymorphicMatcherWithParam2<internal::AllOfMatcher, M4,
-                                                   M5> > > >
-allOf(const M1 &P1, const M2 &P2, const M3 &P3, const M4 &P4, const M5 &P5) {
-  return allOf(P1, allOf(P2, P3, P4, P5));
-}
-
-/// @}
+const internal::VariadicOperatorMatcherFunc allOf = {
+  internal::AllOfVariadicOperator
+};
 
 /// \brief Matches sizeof (C99), alignof (C++11) and vec_step (OpenCL)
 ///
@@ -1678,11 +1608,7 @@ forEachDescendant = {};
 ///
 /// Usable as: Any Matcher
 template <typename T>
-internal::PolymorphicMatcherWithParam2<
-    internal::EachOfMatcher, internal::Matcher<T>,
-    internal::ArgumentAdaptingMatcherFunc<
-        internal::ForEachDescendantMatcher>::Adaptor<T> >
-findAll(const internal::Matcher<T> &Matcher) {
+internal::Matcher<T> findAll(const internal::Matcher<T> &Matcher) {
   return eachOf(Matcher, forEachDescendant(Matcher));
 }
 

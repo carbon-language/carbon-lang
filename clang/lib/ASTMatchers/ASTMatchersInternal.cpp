@@ -36,6 +36,51 @@ DynTypedMatcher::~DynTypedMatcher() {}
 
 DynTypedMatcher *DynTypedMatcher::tryBind(StringRef ID) const { return NULL; }
 
+bool AllOfVariadicOperator(const ast_type_traits::DynTypedNode DynNode,
+                           ASTMatchFinder *Finder,
+                           BoundNodesTreeBuilder *Builder,
+                           ArrayRef<const DynTypedMatcher *> InnerMatchers) {
+  // allOf leads to one matcher for each alternative in the first
+  // matcher combined with each alternative in the second matcher.
+  // Thus, we can reuse the same Builder.
+  for (size_t i = 0, e = InnerMatchers.size(); i != e; ++i) {
+    if (!InnerMatchers[i]->matches(DynNode, Finder, Builder))
+      return false;
+  }
+  return true;
+}
+
+bool EachOfVariadicOperator(const ast_type_traits::DynTypedNode DynNode,
+                            ASTMatchFinder *Finder,
+                            BoundNodesTreeBuilder *Builder,
+                            ArrayRef<const DynTypedMatcher *> InnerMatchers) {
+  BoundNodesTreeBuilder Result;
+  bool Matched = false;
+  for (size_t i = 0, e = InnerMatchers.size(); i != e; ++i) {
+    BoundNodesTreeBuilder BuilderInner(*Builder);
+    if (InnerMatchers[i]->matches(DynNode, Finder, &BuilderInner)) {
+      Matched = true;
+      Result.addMatch(BuilderInner);
+    }
+  }
+  *Builder = Result;
+  return Matched;
+}
+
+bool AnyOfVariadicOperator(const ast_type_traits::DynTypedNode DynNode,
+                           ASTMatchFinder *Finder,
+                           BoundNodesTreeBuilder *Builder,
+                           ArrayRef<const DynTypedMatcher *> InnerMatchers) {
+  for (size_t i = 0, e = InnerMatchers.size(); i != e; ++i) {
+    BoundNodesTreeBuilder Result = *Builder;
+    if (InnerMatchers[i]->matches(DynNode, Finder, &Result)) {
+      *Builder = Result;
+      return true;
+    }
+  }
+  return false;
+}
+
 } // end namespace internal
 } // end namespace ast_matchers
 } // end namespace clang
