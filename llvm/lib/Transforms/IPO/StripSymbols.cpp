@@ -345,7 +345,7 @@ bool StripDeadDebugInfo::runOnModule(Module &M) {
   LLVMContext &C = M.getContext();
 
   // Find all debug info in F. This is actually overkill in terms of what we
-  // want to do, but we want to try and be as redundent as possible in the face
+  // want to do, but we want to try and be as resilient as possible in the face
   // of potential debug info changes by using the formal interfaces given to us
   // as much as possible.
   DebugInfoFinder F;
