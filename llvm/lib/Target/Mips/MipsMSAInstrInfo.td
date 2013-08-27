@@ -2536,8 +2536,8 @@ def XOR_V : XOR_V_ENC, XOR_V_DESC, Requires<[HasMSA]>;
 def XORI_B : XORI_B_ENC, XORI_B_DESC, Requires<[HasMSA]>;
 
 // Patterns.
-class MSAPat<dag pattern, dag result, Predicate pred = HasMSA> :
-  Pat<pattern, result>, Requires<[pred]>;
+class MSAPat<dag pattern, dag result, list<Predicate> pred = [HasMSA]> :
+  Pat<pattern, result>, Requires<pred>;
 
 def LD_FH : MSAPat<(v8f16 (load addr:$addr)),
                    (LD_H addr:$addr)>;
@@ -2552,3 +2552,150 @@ def ST_FW : MSAPat<(store (v4f32 MSA128W:$ws), addr:$addr),
                    (ST_W MSA128W:$ws, addr:$addr)>;
 def ST_FD : MSAPat<(store (v2f64 MSA128D:$ws), addr:$addr),
                    (ST_D MSA128D:$ws, addr:$addr)>;
+
+class MSABitconvertPat<ValueType DstVT, ValueType SrcVT,
+                       RegisterClass DstRC, list<Predicate> preds = [HasMSA]> :
+   MSAPat<(DstVT (bitconvert SrcVT:$src)),
+          (COPY_TO_REGCLASS SrcVT:$src, DstRC), preds>;
+
+// These are endian-independant because the element size doesnt change
+def : MSABitconvertPat<v8i16, v8f16, MSA128H>;
+def : MSABitconvertPat<v4i32, v4f32, MSA128W>;
+def : MSABitconvertPat<v2i64, v2f64, MSA128D>;
+def : MSABitconvertPat<v8f16, v8i16, MSA128H>;
+def : MSABitconvertPat<v4f32, v4i32, MSA128W>;
+def : MSABitconvertPat<v2f64, v2i64, MSA128D>;
+
+// Little endian bitcasts are always no-ops
+def : MSABitconvertPat<v16i8, v8i16, MSA128B, [HasMSA, IsLE]>;
+def : MSABitconvertPat<v16i8, v4i32, MSA128B, [HasMSA, IsLE]>;
+def : MSABitconvertPat<v16i8, v2i64, MSA128B, [HasMSA, IsLE]>;
+def : MSABitconvertPat<v16i8, v8f16, MSA128B, [HasMSA, IsLE]>;
+def : MSABitconvertPat<v16i8, v4f32, MSA128B, [HasMSA, IsLE]>;
+def : MSABitconvertPat<v16i8, v2f64, MSA128B, [HasMSA, IsLE]>;
+
+def : MSABitconvertPat<v8i16, v16i8, MSA128H, [HasMSA, IsLE]>;
+def : MSABitconvertPat<v8i16, v4i32, MSA128H, [HasMSA, IsLE]>;
+def : MSABitconvertPat<v8i16, v2i64, MSA128H, [HasMSA, IsLE]>;
+def : MSABitconvertPat<v8i16, v4f32, MSA128H, [HasMSA, IsLE]>;
+def : MSABitconvertPat<v8i16, v2f64, MSA128H, [HasMSA, IsLE]>;
+
+def : MSABitconvertPat<v4i32, v16i8, MSA128W, [HasMSA, IsLE]>;
+def : MSABitconvertPat<v4i32, v8i16, MSA128W, [HasMSA, IsLE]>;
+def : MSABitconvertPat<v4i32, v2i64, MSA128W, [HasMSA, IsLE]>;
+def : MSABitconvertPat<v4i32, v8f16, MSA128W, [HasMSA, IsLE]>;
+def : MSABitconvertPat<v4i32, v2f64, MSA128W, [HasMSA, IsLE]>;
+
+def : MSABitconvertPat<v2i64, v16i8, MSA128D, [HasMSA, IsLE]>;
+def : MSABitconvertPat<v2i64, v8i16, MSA128D, [HasMSA, IsLE]>;
+def : MSABitconvertPat<v2i64, v4i32, MSA128D, [HasMSA, IsLE]>;
+def : MSABitconvertPat<v2i64, v8f16, MSA128D, [HasMSA, IsLE]>;
+def : MSABitconvertPat<v2i64, v4f32, MSA128D, [HasMSA, IsLE]>;
+
+def : MSABitconvertPat<v4f32, v16i8, MSA128W, [HasMSA, IsLE]>;
+def : MSABitconvertPat<v4f32, v8i16, MSA128W, [HasMSA, IsLE]>;
+def : MSABitconvertPat<v4f32, v2i64, MSA128W, [HasMSA, IsLE]>;
+def : MSABitconvertPat<v4f32, v8f16, MSA128W, [HasMSA, IsLE]>;
+def : MSABitconvertPat<v4f32, v2f64, MSA128W, [HasMSA, IsLE]>;
+
+def : MSABitconvertPat<v2f64, v16i8, MSA128D, [HasMSA, IsLE]>;
+def : MSABitconvertPat<v2f64, v8i16, MSA128D, [HasMSA, IsLE]>;
+def : MSABitconvertPat<v2f64, v4i32, MSA128D, [HasMSA, IsLE]>;
+def : MSABitconvertPat<v2f64, v8f16, MSA128D, [HasMSA, IsLE]>;
+def : MSABitconvertPat<v2f64, v4f32, MSA128D, [HasMSA, IsLE]>;
+
+// Big endian bitcasts expand to shuffle instructions.
+// This is because bitcast is defined to be a store/load sequence and the
+// vector store/load instructions are mixed-endian with respect to the vector
+// as a whole (little endian with respect to element order, but big endian
+// elements).
+
+class MSABitconvertReverseQuartersPat<ValueType DstVT, ValueType SrcVT,
+                                      RegisterClass DstRC, MSAInst Insn,
+                                      RegisterClass ViaRC> :
+  MSAPat<(DstVT (bitconvert SrcVT:$src)),
+         (COPY_TO_REGCLASS (Insn (COPY_TO_REGCLASS SrcVT:$src, ViaRC), 27),
+                           DstRC),
+         [HasMSA, IsBE]>;
+
+class MSABitconvertReverseHalvesPat<ValueType DstVT, ValueType SrcVT,
+                                    RegisterClass DstRC, MSAInst Insn,
+                                    RegisterClass ViaRC> :
+  MSAPat<(DstVT (bitconvert SrcVT:$src)),
+         (COPY_TO_REGCLASS (Insn (COPY_TO_REGCLASS SrcVT:$src, ViaRC), 177),
+                           DstRC),
+         [HasMSA, IsBE]>;
+
+class MSABitconvertReverseBInHPat<ValueType DstVT, ValueType SrcVT,
+                                  RegisterClass DstRC> :
+  MSABitconvertReverseHalvesPat<DstVT, SrcVT, DstRC, SHF_B, MSA128B>;
+
+class MSABitconvertReverseBInWPat<ValueType DstVT, ValueType SrcVT,
+                                  RegisterClass DstRC> :
+  MSABitconvertReverseQuartersPat<DstVT, SrcVT, DstRC, SHF_B, MSA128B>;
+
+class MSABitconvertReverseBInDPat<ValueType DstVT, ValueType SrcVT,
+                                  RegisterClass DstRC> :
+  MSAPat<(DstVT (bitconvert SrcVT:$src)),
+         (COPY_TO_REGCLASS
+           (SHF_W
+             (COPY_TO_REGCLASS
+               (SHF_B (COPY_TO_REGCLASS SrcVT:$src, MSA128B), 27),
+               MSA128W), 177),
+           DstRC),
+         [HasMSA, IsBE]>;
+
+class MSABitconvertReverseHInWPat<ValueType DstVT, ValueType SrcVT,
+                                  RegisterClass DstRC> :
+  MSABitconvertReverseHalvesPat<DstVT, SrcVT, DstRC, SHF_H, MSA128H>;
+
+class MSABitconvertReverseHInDPat<ValueType DstVT, ValueType SrcVT,
+                                  RegisterClass DstRC> :
+  MSABitconvertReverseQuartersPat<DstVT, SrcVT, DstRC, SHF_H, MSA128H>;
+
+class MSABitconvertReverseWInDPat<ValueType DstVT, ValueType SrcVT,
+                                  RegisterClass DstRC> :
+  MSABitconvertReverseHalvesPat<DstVT, SrcVT, DstRC, SHF_W, MSA128W>;
+
+def : MSABitconvertReverseBInHPat<v8i16, v16i8, MSA128H>;
+def : MSABitconvertReverseBInHPat<v8f16, v16i8, MSA128H>;
+def : MSABitconvertReverseBInWPat<v4i32, v16i8, MSA128W>;
+def : MSABitconvertReverseBInWPat<v4f32, v16i8, MSA128W>;
+def : MSABitconvertReverseBInDPat<v2i64, v16i8, MSA128D>;
+def : MSABitconvertReverseBInDPat<v2f64, v16i8, MSA128D>;
+
+def : MSABitconvertReverseBInHPat<v16i8, v8i16, MSA128B>;
+def : MSABitconvertReverseHInWPat<v4i32, v8i16, MSA128W>;
+def : MSABitconvertReverseHInWPat<v4f32, v8i16, MSA128W>;
+def : MSABitconvertReverseHInDPat<v2i64, v8i16, MSA128D>;
+def : MSABitconvertReverseHInDPat<v2f64, v8i16, MSA128D>;
+
+def : MSABitconvertReverseBInHPat<v16i8, v8f16, MSA128B>;
+def : MSABitconvertReverseHInWPat<v4i32, v8f16, MSA128W>;
+def : MSABitconvertReverseHInWPat<v4f32, v8f16, MSA128W>;
+def : MSABitconvertReverseHInDPat<v2i64, v8f16, MSA128D>;
+def : MSABitconvertReverseHInDPat<v2f64, v8f16, MSA128D>;
+
+def : MSABitconvertReverseBInWPat<v16i8, v4i32, MSA128B>;
+def : MSABitconvertReverseHInWPat<v8i16, v4i32, MSA128H>;
+def : MSABitconvertReverseHInWPat<v8f16, v4i32, MSA128H>;
+def : MSABitconvertReverseWInDPat<v2i64, v4i32, MSA128D>;
+def : MSABitconvertReverseWInDPat<v2f64, v4i32, MSA128D>;
+
+def : MSABitconvertReverseBInWPat<v16i8, v4f32, MSA128B>;
+def : MSABitconvertReverseHInWPat<v8i16, v4f32, MSA128H>;
+def : MSABitconvertReverseHInWPat<v8f16, v4f32, MSA128H>;
+def : MSABitconvertReverseWInDPat<v2i64, v4f32, MSA128D>;
+def : MSABitconvertReverseWInDPat<v2f64, v4f32, MSA128D>;
+
+def : MSABitconvertReverseBInDPat<v16i8, v2i64, MSA128B>;
+def : MSABitconvertReverseHInDPat<v8i16, v2i64, MSA128H>;
+def : MSABitconvertReverseHInDPat<v8f16, v2i64, MSA128H>;
+def : MSABitconvertReverseWInDPat<v4i32, v2i64, MSA128W>;
+def : MSABitconvertReverseWInDPat<v4f32, v2i64, MSA128W>;
+
+def : MSABitconvertReverseBInDPat<v16i8, v2f64, MSA128B>;
+def : MSABitconvertReverseHInDPat<v8i16, v2f64, MSA128H>;
+def : MSABitconvertReverseHInDPat<v8f16, v2f64, MSA128H>;
+def : MSABitconvertReverseWInDPat<v4i32, v2f64, MSA128W>;
+def : MSABitconvertReverseWInDPat<v4f32, v2f64, MSA128W>;
