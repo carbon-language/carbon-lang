@@ -74,7 +74,7 @@ LTOCodeGenerator::LTOCodeGenerator()
     _linker(new Module("ld-temp.o", _context)), _target(NULL),
     _emitDwarfDebugInfo(false), _scopeRestrictionsDone(false),
     _codeModel(LTO_CODEGEN_PIC_MODEL_DYNAMIC),
-    _nativeObjectFile(NULL) {
+    _nativeObjectFile(NULL), ObjBufVect(0) {
   InitializeAllTargets();
   InitializeAllTargetMCs();
   InitializeAllAsmPrinters();
@@ -85,6 +85,7 @@ LTOCodeGenerator::~LTOCodeGenerator() {
   delete _target;
   delete _nativeObjectFile;
   delete _linker.getModule();
+  delete[] ObjBufVect;
 
   for (std::vector<char*>::iterator I = _codegenOptions.begin(),
          E = _codegenOptions.end(); I != E; ++I)
@@ -244,6 +245,23 @@ const void* LTOCodeGenerator::compile(size_t* length, std::string& errMsg) {
     return NULL;
   *length = _nativeObjectFile->getBufferSize();
   return _nativeObjectFile->getBufferStart();
+}
+
+// Currently compile() and compile_parallel() have no difference.
+NativeObjectFile *LTOCodeGenerator::compile_parallel(size_t *count,
+                                                     std::string &ErrMsg) {
+  assert(ObjBufVect == 0 && "Should be NULL");
+
+  size_t Len;
+  const void *Buf = compile(&Len, ErrMsg);
+  if (!Buf)
+    return 0;
+
+  *count = 1;
+  ObjBufVect = new NativeObjectFile[1];
+  ObjBufVect[0].content = Buf;
+  ObjBufVect[0].length = Len;
+  return ObjBufVect;
 }
 
 bool LTOCodeGenerator::determineTarget(std::string &errMsg) {
