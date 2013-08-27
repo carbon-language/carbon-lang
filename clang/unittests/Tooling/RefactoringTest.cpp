@@ -182,6 +182,25 @@ TEST(ShiftedCodePositionTest, FindsNewCodePosition) {
   EXPECT_EQ(5u, shiftedCodePosition(Replaces, 8)); //  int   i|
 }
 
+// FIXME: Remove this test case when Replacements is implemented as std::vector
+// instead of std::set. The other ReplacementTest tests will need to be updated
+// at that point as well.
+TEST(ShiftedCodePositionTest, VectorFindsNewCodePositionWithInserts) {
+  std::vector<Replacement> Replaces;
+  Replaces.push_back(Replacement("", 0, 1, ""));
+  Replaces.push_back(Replacement("", 4, 3, " "));
+  // Assume ' int   i;' is turned into 'int i;' and cursor is located at '|'.
+  EXPECT_EQ(0u, shiftedCodePosition(Replaces, 0)); // |int   i;
+  EXPECT_EQ(0u, shiftedCodePosition(Replaces, 1)); //  |nt   i;
+  EXPECT_EQ(1u, shiftedCodePosition(Replaces, 2)); //  i|t   i;
+  EXPECT_EQ(2u, shiftedCodePosition(Replaces, 3)); //  in|   i;
+  EXPECT_EQ(3u, shiftedCodePosition(Replaces, 4)); //  int|  i;
+  EXPECT_EQ(4u, shiftedCodePosition(Replaces, 5)); //  int | i;
+  EXPECT_EQ(4u, shiftedCodePosition(Replaces, 6)); //  int  |i;
+  EXPECT_EQ(4u, shiftedCodePosition(Replaces, 7)); //  int   |;
+  EXPECT_EQ(5u, shiftedCodePosition(Replaces, 8)); //  int   i|
+}
+
 TEST(ShiftedCodePositionTest, FindsNewCodePositionWithInserts) {
   Replacements Replaces;
   Replaces.insert(Replacement("", 4, 0, "\"\n\""));

@@ -203,6 +203,23 @@ unsigned shiftedCodePosition(const Replacements &Replaces, unsigned Position) {
   return NewPosition;
 }
 
+// FIXME: Remove this function when Replacements is implemented as std::vector
+// instead of std::set.
+unsigned shiftedCodePosition(const std::vector<Replacement> &Replaces,
+                             unsigned Position) {
+  unsigned NewPosition = Position;
+  for (std::vector<Replacement>::const_iterator I = Replaces.begin(),
+                                                E = Replaces.end();
+       I != E; ++I) {
+    if (I->getOffset() >= Position)
+      break;
+    if (I->getOffset() + I->getLength() > Position)
+      NewPosition += I->getOffset() + I->getLength() - Position;
+    NewPosition += I->getReplacementText().size() - I->getLength();
+  }
+  return NewPosition;
+}
+
 void deduplicate(std::vector<Replacement> &Replaces,
                  std::vector<Range> &Conflicts) {
   if (Replaces.empty())

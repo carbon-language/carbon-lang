@@ -162,6 +162,11 @@ std::string applyAllReplacements(StringRef Code, const Replacements &Replaces);
 /// applied.
 unsigned shiftedCodePosition(const Replacements& Replaces, unsigned Position);
 
+/// \brief Calculates how a code \p Position is shifted when \p Replaces are
+/// applied.
+unsigned shiftedCodePosition(const std::vector<Replacement> &Replaces,
+                             unsigned Position);
+
 /// \brief Removes duplicate Replacements and reports if Replacements conflict
 /// with one another.
 ///
