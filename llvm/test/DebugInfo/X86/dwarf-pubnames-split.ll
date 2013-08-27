@@ -1,4 +1,9 @@
 ; RUN: llc -mtriple=x86_64-pc-linux-gnu -split-dwarf=Enable %s -o - | FileCheck %s
+; Derived from:
+
+; int main (void) {
+;    return 0;
+; }
 
 ; Check that we get a symbol off of the debug_info section when using split dwarf and pubnames.
 
