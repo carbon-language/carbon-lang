@@ -193,8 +193,8 @@ void Resolver::resolveUndefines() {
       _context.searchSharedLibrariesToOverrideTentativeDefinitions();
 
   // keep looping until no more undefines were added in last loop
-  unsigned int undefineGenCount = 0xFFFFFFFF;
-  while (undefineGenCount != _symbolTable.size()) {
+  unsigned int undefineGenCount;
+  do {
     undefineGenCount = _symbolTable.size();
     std::vector<const UndefinedAtom *> undefines;
     _symbolTable.undefines(undefines);
@@ -230,7 +230,7 @@ void Resolver::resolveUndefines() {
         }
       }
     }
-  }
+  } while (undefineGenCount != _symbolTable.size());
 }
 
 
