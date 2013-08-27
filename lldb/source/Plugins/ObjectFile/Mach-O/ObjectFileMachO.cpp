@@ -2249,7 +2249,7 @@ ObjectFileMachO::ParseSymtab ()
                                                                     if (double_slash_pos != std::string::npos)
                                                                     {
                                                                         // The linker has been generating bad N_SO entries with doubled up paths
-                                                                        // in the format "%s%s" where the first stirng in the DW_AT_comp_dir,
+                                                                        // in the format "%s%s" where the first string in the DW_AT_comp_dir,
                                                                         // and the second is the directory for the source file so you end up with
                                                                         // a path that looks like "/tmp/src//tmp/src/"
                                                                         FileSpec so_dir(so_path, false);
@@ -2989,7 +2989,7 @@ ObjectFileMachO::ParseSymtab ()
                                     if (double_slash_pos != std::string::npos)
                                     {
                                         // The linker has been generating bad N_SO entries with doubled up paths
-                                        // in the format "%s%s" where the first stirng in the DW_AT_comp_dir,
+                                        // in the format "%s%s" where the first string in the DW_AT_comp_dir,
                                         // and the second is the directory for the source file so you end up with
                                         // a path that looks like "/tmp/src//tmp/src/"
                                         FileSpec so_dir(so_path, false);
