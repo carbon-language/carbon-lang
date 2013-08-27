@@ -14,4 +14,4 @@ struct C : A, B {
 
 void C::f() { }
 
-// CHECK-NOT: [ DW_TAG_subprogram ] [line 15] [def] [_ZThn{{4|8}}_N1C1fEv]
+// CHECK: metadata !"_ZThn{{4|8}}_N1C1fEv", i32 15, {{.*}} ; [ DW_TAG_subprogram ] [line 15] [def]{{$}}

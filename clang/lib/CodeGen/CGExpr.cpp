@@ -261,7 +261,8 @@ pushTemporaryCleanup(CodeGenFunction &CGF, const MaterializeTemporaryExpr *M,
     if (E->getType()->isArrayType()) {
       CleanupFn = CodeGenFunction(CGF.CGM).generateDestroyHelper(
           cast<llvm::Constant>(ReferenceTemporary), E->getType(),
-          CodeGenFunction::destroyCXXObject, CGF.getLangOpts().Exceptions);
+          CodeGenFunction::destroyCXXObject, CGF.getLangOpts().Exceptions,
+          dyn_cast_or_null<VarDecl>(M->getExtendingDecl()));
       CleanupArg = llvm::Constant::getNullValue(CGF.Int8PtrTy);
     } else {
       CleanupFn =

@@ -2450,7 +2450,7 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
   llvm::DIArray TParamsArray;
   if (!HasDecl) {
     // Use llvm function name.
-    Name = Fn->getName();
+    LinkageName = Fn->getName();
   } else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     // If there is a DISubprogram for this function available then use it.
     llvm::DenseMap<const FunctionDecl *, llvm::WeakVH>::iterator

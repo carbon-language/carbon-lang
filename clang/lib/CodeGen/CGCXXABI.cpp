@@ -227,7 +227,7 @@ void CGCXXABI::registerGlobalDtor(CodeGenFunction &CGF,
     CGM.ErrorUnsupported(&D, "non-trivial TLS destruction");
 
   // The default behavior is to use atexit.
-  CGF.registerGlobalDtorWithAtExit(dtor, addr);
+  CGF.registerGlobalDtorWithAtExit(D, dtor, addr);
 }
 
 /// Returns the adjustment, in bytes, required for the given

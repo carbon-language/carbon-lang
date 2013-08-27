@@ -22,6 +22,6 @@ void foo() {
 // CHECK-NOKEXT: [ DW_TAG_subprogram ] [line 13] [local] [def] [__cxx_global_array_dtor]
 // CHECK-NOKEXT: [ DW_TAG_subprogram ] [line 13] [local] [def] [__dtor_]
 // CHECK-NOKEXT: [ DW_TAG_subprogram ] [line 16] [local] [def] [__dtor__ZZ3foovE4stat]
-// CHECK-NOKEXT: [ DW_TAG_subprogram ] [line {{.*}}] [local] [def] [_GLOBAL__I_a]
+// CHECK-NOKEXT: [ DW_TAG_subprogram ] [line {{.*}}] [local] [def]{{$}}
 
-// CHECK-KEXT: [ DW_TAG_subprogram ] [line {{.*}}] [local] [def] [_GLOBAL__D_a]
+// CHECK-KEXT: [ DW_TAG_subprogram ] [line {{.*}}] [local] [def]{{$}}

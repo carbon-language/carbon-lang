@@ -100,9 +100,9 @@ static void EmitDeclDestroy(CodeGenFunction &CGF, const VarDecl &D,
 
   // Otherwise, the standard logic requires a helper function.
   } else {
-    function = CodeGenFunction(CGM).generateDestroyHelper(addr, type,
-                                                  CGF.getDestroyer(dtorKind),
-                                                  CGF.needsEHCleanup(dtorKind));
+    function = CodeGenFunction(CGM)
+        .generateDestroyHelper(addr, type, CGF.getDestroyer(dtorKind),
+                               CGF.needsEHCleanup(dtorKind), &D);
     argument = llvm::Constant::getNullValue(CGF.Int8PtrTy);
   }
 
@@ -161,7 +161,7 @@ CreateGlobalInitOrDestructFunction(CodeGenModule &CGM,
 
 /// Create a stub function, suitable for being passed to atexit,
 /// which passes the given address to the given destructor function.
-static llvm::Constant *createAtExitStub(CodeGenModule &CGM,
+static llvm::Constant *createAtExitStub(CodeGenModule &CGM, const VarDecl &VD,
                                         llvm::Constant *dtor,
                                         llvm::Constant *addr) {
   // Get the destructor function type, void(*)(void).
@@ -172,9 +172,9 @@ static llvm::Constant *createAtExitStub(CodeGenModule &CGM,
 
   CodeGenFunction CGF(CGM);
 
-  CGF.StartFunction(GlobalDecl(), CGM.getContext().VoidTy, fn,
-                    CGM.getTypes().arrangeNullaryFunction(),
-                    FunctionArgList(), SourceLocation());
+  CGF.StartFunction(&VD, CGM.getContext().VoidTy, fn,
+                    CGM.getTypes().arrangeNullaryFunction(), FunctionArgList(),
+                    SourceLocation());
 
   llvm::CallInst *call = CGF.Builder.CreateCall(dtor, addr);
  
@@ -189,10 +189,11 @@ static llvm::Constant *createAtExitStub(CodeGenModule &CGM,
 }
 
 /// Register a global destructor using the C atexit runtime function.
-void CodeGenFunction::registerGlobalDtorWithAtExit(llvm::Constant *dtor,
+void CodeGenFunction::registerGlobalDtorWithAtExit(const VarDecl &VD,
+                                                   llvm::Constant *dtor,
                                                    llvm::Constant *addr) {
   // Create a function which calls the destructor.
-  llvm::Constant *dtorStub = createAtExitStub(CGM, dtor, addr);
+  llvm::Constant *dtorStub = createAtExitStub(CGM, VD, dtor, addr);
 
   // extern "C" int atexit(void (*f)(void));
   llvm::FunctionType *atexitTy =
@@ -485,11 +486,9 @@ void CodeGenFunction::GenerateCXXGlobalDtorsFunc(llvm::Function *Fn,
 
 /// generateDestroyHelper - Generates a helper function which, when
 /// invoked, destroys the given object.
-llvm::Function * 
-CodeGenFunction::generateDestroyHelper(llvm::Constant *addr,
-                                       QualType type,
-                                       Destroyer *destroyer,
-                                       bool useEHCleanupForArray) {
+llvm::Function *CodeGenFunction::generateDestroyHelper(
+    llvm::Constant *addr, QualType type, Destroyer *destroyer,
+    bool useEHCleanupForArray, const VarDecl *VD) {
   FunctionArgList args;
   ImplicitParamDecl dst(0, SourceLocation(), 0, getContext().VoidPtrTy);
   args.push_back(&dst);
@@ -502,8 +501,7 @@ CodeGenFunction::generateDestroyHelper(llvm::Constant *addr,
   llvm::Function *fn = 
     CreateGlobalInitOrDestructFunction(CGM, FTy, "__cxx_global_array_dtor");
 
-  StartFunction(GlobalDecl(), getContext().VoidTy, fn, FI, args,
-                SourceLocation());
+  StartFunction(VD, getContext().VoidTy, fn, FI, args, SourceLocation());
 
   emitDestroy(addr, type, destroyer, useEHCleanupForArray);
   
