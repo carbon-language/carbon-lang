@@ -14,4 +14,4 @@ struct C : A, B {
 
 void C::f() { }
 
-// CHECK: [ DW_TAG_subprogram ] [line 15] [def] [_ZThn{{4|8}}_N1C1fEv]
+// CHECK-NOT: [ DW_TAG_subprogram ] [line 15] [def] [_ZThn{{4|8}}_N1C1fEv]

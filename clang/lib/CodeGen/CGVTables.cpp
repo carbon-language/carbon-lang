@@ -292,6 +292,7 @@ void CodeGenFunction::GenerateVarArgsThunk(
 void CodeGenFunction::GenerateThunk(llvm::Function *Fn,
                                     const CGFunctionInfo &FnInfo,
                                     GlobalDecl GD, const ThunkInfo &Thunk) {
+  DebugInfo = NULL; // debug info for thunks is not required or desired
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
   const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
   QualType ThisType = MD->getThisType(getContext());
