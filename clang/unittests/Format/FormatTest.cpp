@@ -4195,6 +4195,9 @@ TEST_F(FormatTest, FormatsBracedListsinColumnLayout) {
                "                  1, 1, 1, 1,\n"
                "                  /**/ /**/ };",
                getLLVMStyleWithColumns(39));
+  verifyFormat("return { { aaaaaaaaaaaaaaaaaaaaa }, { aaaaaaaaaaaaaaaaaaa },\n"
+               "         { aaaaaaaaaaaaaaaaaaaaa }, { aaaaaaaaaaaaaaaaa } };",
+               getLLVMStyleWithColumns(60));
 }
 
 TEST_F(FormatTest, PullTrivialFunctionDefinitionsIntoSingleLine) {

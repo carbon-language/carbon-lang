@@ -39,9 +39,13 @@ unsigned CommaSeparatedList::format(LineState &State,
       LBrace->Next->Type == TT_DesignatedInitializerPeriod)
     return 0;
 
+  // Calculate the number of code points we have to format this list. As the
+  // first token is already placed, we have to subtract it.
+  unsigned RemainingCodePoints = Style.ColumnLimit - State.Column +
+                                 State.NextToken->Previous->CodePointCount;
+
   // Find the best ColumnFormat, i.e. the best number of columns to use.
-  unsigned RemainingCharacters = Style.ColumnLimit - State.Stack.back().Indent;
-  const ColumnFormat *Format = getColumnFormat(RemainingCharacters);
+  const ColumnFormat *Format = getColumnFormat(RemainingCodePoints);
   if (!Format)
     return 0;
 
