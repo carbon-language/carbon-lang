@@ -1440,7 +1440,7 @@ let neverHasSideEffects = 1 in {
 
 multiclass sse12_vcvt_avx<bits<8> opc, RegisterClass SrcRC, RegisterClass DstRC,
                           X86MemOperand x86memop, string asm> {
-let neverHasSideEffects = 1 in {
+let neverHasSideEffects = 1, Predicates = [UseAVX] in {
   def rr : SI<opc, MRMSrcReg, (outs DstRC:$dst), (ins DstRC:$src1, SrcRC:$src),
               !strconcat(asm,"\t{$src, $src1, $dst|$dst, $src1, $src}"), []>,
            Sched<[WriteCvtI2F]>;
@@ -1452,6 +1452,7 @@ let neverHasSideEffects = 1 in {
 } // neverHasSideEffects = 1
 }
 
+let Predicates = [UseAVX] in {
 defm VCVTTSS2SI   : sse12_cvt_s<0x2C, FR32, GR32, fp_to_sint, f32mem, loadf32,
                                 "cvttss2si\t{$src, $dst|$dst, $src}",
                                 SSE_CVT_SS2SI_32>,
@@ -1485,7 +1486,7 @@ def : InstAlias<"vcvttsd2si{q}\t{$src, $dst|$dst, $src}",
                 (VCVTTSD2SI64rr GR64:$dst, FR64:$src), 0>;
 def : InstAlias<"vcvttsd2si{q}\t{$src, $dst|$dst, $src}",
                 (VCVTTSD2SI64rm GR64:$dst, f64mem:$src), 0>;
-
+}
 // The assembler can recognize rr 64-bit instructions by seeing a rxx
 // register, but the same isn't true when only using memory operands,
 // provide other assembly "l" and "q" forms to address this explicitly
@@ -1499,12 +1500,12 @@ defm VCVTSI2SD   : sse12_vcvt_avx<0x2A, GR32, FR64, i32mem, "cvtsi2sd{l}">,
 defm VCVTSI2SD64 : sse12_vcvt_avx<0x2A, GR64, FR64, i64mem, "cvtsi2sd{q}">,
                                   XD, VEX_4V, VEX_W, VEX_LIG;
 
-def : InstAlias<"vcvtsi2ss\t{$src, $src1, $dst|$dst, $src1, $src}",
+let Predicates = [UseAVX] in {
+  def : InstAlias<"vcvtsi2ss\t{$src, $src1, $dst|$dst, $src1, $src}",
                 (VCVTSI2SSrm FR64:$dst, FR64:$src1, i32mem:$src)>;
-def : InstAlias<"vcvtsi2sd\t{$src, $src1, $dst|$dst, $src1, $src}",
+  def : InstAlias<"vcvtsi2sd\t{$src, $src1, $dst|$dst, $src1, $src}",
                 (VCVTSI2SDrm FR64:$dst, FR64:$src1, i32mem:$src)>;
 
-let Predicates = [HasAVX] in {
   def : Pat<(f32 (sint_to_fp (loadi32 addr:$src))),
             (VCVTSI2SSrm (f32 (IMPLICIT_DEF)), addr:$src)>;
   def : Pat<(f32 (sint_to_fp (loadi64 addr:$src))),
@@ -1606,19 +1607,21 @@ multiclass sse12_cvt_sint_3addr<bits<8> opc, RegisterClass SrcRC,
               itins.rm>, Sched<[itins.Sched.Folded, ReadAfterLd]>;
 }
 
+let Predicates = [UseAVX] in {
 defm VCVTSD2SI : sse12_cvt_sint<0x2D, VR128, GR32,
                   int_x86_sse2_cvtsd2si, sdmem, sse_load_f64, "cvtsd2si",
                   SSE_CVT_SD2SI>, XD, VEX, VEX_LIG;
 defm VCVTSD2SI64 : sse12_cvt_sint<0x2D, VR128, GR64,
                     int_x86_sse2_cvtsd2si64, sdmem, sse_load_f64, "cvtsd2si",
                     SSE_CVT_SD2SI>, XD, VEX, VEX_W, VEX_LIG;
-
+}
 defm CVTSD2SI : sse12_cvt_sint<0x2D, VR128, GR32, int_x86_sse2_cvtsd2si,
                  sdmem, sse_load_f64, "cvtsd2si", SSE_CVT_SD2SI>, XD;
 defm CVTSD2SI64 : sse12_cvt_sint<0x2D, VR128, GR64, int_x86_sse2_cvtsd2si64,
                    sdmem, sse_load_f64, "cvtsd2si", SSE_CVT_SD2SI>, XD, REX_W;
 
 
+let Predicates = [UseAVX] in {
 defm Int_VCVTSI2SS : sse12_cvt_sint_3addr<0x2A, GR32, VR128,
           int_x86_sse_cvtsi2ss, i32mem, loadi32, "cvtsi2ss{l}",
           SSE_CVT_Scalar, 0>, XS, VEX_4V;
@@ -1633,7 +1636,7 @@ defm Int_VCVTSI2SD64 : sse12_cvt_sint_3addr<0x2A, GR64, VR128,
           int_x86_sse2_cvtsi642sd, i64mem, loadi64, "cvtsi2sd{q}",
           SSE_CVT_Scalar, 0>, XD,
           VEX_4V, VEX_W;
-
+}
 let Constraints = "$src1 = $dst" in {
   defm Int_CVTSI2SS : sse12_cvt_sint_3addr<0x2A, GR32, VR128,
                         int_x86_sse_cvtsi2ss, i32mem, loadi32,
@@ -1652,6 +1655,7 @@ let Constraints = "$src1 = $dst" in {
 /// SSE 1 Only
 
 // Aliases for intrinsics
+let Predicates = [UseAVX] in {
 defm Int_VCVTTSS2SI : sse12_cvt_sint<0x2C, VR128, GR32, int_x86_sse_cvttss2si,
                                     ssmem, sse_load_f32, "cvttss2si",
                                     SSE_CVT_SS2SI_32>, XS, VEX;
@@ -1666,6 +1670,7 @@ defm Int_VCVTTSD2SI64 : sse12_cvt_sint<0x2C, VR128, GR64,
                                   int_x86_sse2_cvttsd2si64, sdmem, sse_load_f64,
                                   "cvttsd2si", SSE_CVT_SD2SI>,
                                   XD, VEX, VEX_W;
+}
 defm Int_CVTTSS2SI : sse12_cvt_sint<0x2C, VR128, GR32, int_x86_sse_cvttss2si,
                                     ssmem, sse_load_f32, "cvttss2si",
                                     SSE_CVT_SS2SI_32>, XS;
@@ -1679,13 +1684,14 @@ defm Int_CVTTSD2SI64 : sse12_cvt_sint<0x2C, VR128, GR64,
                                   int_x86_sse2_cvttsd2si64, sdmem, sse_load_f64,
                                   "cvttsd2si", SSE_CVT_SD2SI>, XD, REX_W;
 
+let Predicates = [UseAVX] in {
 defm VCVTSS2SI   : sse12_cvt_sint<0x2D, VR128, GR32, int_x86_sse_cvtss2si,
                                   ssmem, sse_load_f32, "cvtss2si",
                                   SSE_CVT_SS2SI_32>, XS, VEX, VEX_LIG;
 defm VCVTSS2SI64 : sse12_cvt_sint<0x2D, VR128, GR64, int_x86_sse_cvtss2si64,
                                   ssmem, sse_load_f32, "cvtss2si",
                                   SSE_CVT_SS2SI_64>, XS, VEX, VEX_W, VEX_LIG;
-
+}
 defm CVTSS2SI : sse12_cvt_sint<0x2D, VR128, GR32, int_x86_sse_cvtss2si,
                                ssmem, sse_load_f32, "cvtss2si",
                                SSE_CVT_SS2SI_32>, XS;
@@ -1707,6 +1713,7 @@ defm CVTDQ2PS : sse12_cvt_p<0x5B, VR128, VR128, i128mem,
                             SSEPackedSingle, SSE_CVT_PS>,
                             TB, Requires<[UseSSE2]>;
 
+let Predicates = [UseAVX] in {
 def : InstAlias<"vcvtss2si{l}\t{$src, $dst|$dst, $src}",
                 (VCVTSS2SIrr GR32:$dst, VR128:$src), 0>;
 def : InstAlias<"vcvtss2si{l}\t{$src, $dst|$dst, $src}",
@@ -1723,6 +1730,7 @@ def : InstAlias<"vcvtsd2si{q}\t{$src, $dst|$dst, $src}",
                 (VCVTSD2SI64rr GR64:$dst, VR128:$src), 0>;
 def : InstAlias<"vcvtsd2si{q}\t{$src, $dst|$dst, $src}",
                 (VCVTSD2SI64rm GR64:$dst, sdmem:$src), 0>;
+}
 
 def : InstAlias<"cvtss2si{l}\t{$src, $dst|$dst, $src}",
                 (CVTSS2SIrr GR32:$dst, VR128:$src), 0>;
@@ -1744,7 +1752,7 @@ def : InstAlias<"cvtsd2si{q}\t{$src, $dst|$dst, $src}",
 /// SSE 2 Only
 
 // Convert scalar double to scalar single
-let neverHasSideEffects = 1 in {
+let neverHasSideEffects = 1, Predicates = [UseAVX] in {
 def VCVTSD2SSrr  : VSDI<0x5A, MRMSrcReg, (outs FR32:$dst),
                        (ins FR64:$src1, FR64:$src2),
                       "cvtsd2ss\t{$src2, $src1, $dst|$dst, $src1, $src2}", [],
@@ -1760,7 +1768,7 @@ def VCVTSD2SSrm  : I<0x5A, MRMSrcMem, (outs FR32:$dst),
 }
 
 def : Pat<(f32 (fround FR64:$src)), (VCVTSD2SSrr FR64:$src, FR64:$src)>,
-          Requires<[HasAVX]>;
+          Requires<[UseAVX]>;
 
 def CVTSD2SSrr  : SDI<0x5A, MRMSrcReg, (outs FR32:$dst), (ins FR64:$src),
                       "cvtsd2ss\t{$src, $dst|$dst, $src}",
@@ -1778,14 +1786,14 @@ def Int_VCVTSD2SSrr: I<0x5A, MRMSrcReg,
                        "vcvtsd2ss\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                        [(set VR128:$dst,
                          (int_x86_sse2_cvtsd2ss VR128:$src1, VR128:$src2))],
-                       IIC_SSE_CVT_Scalar_RR>, XD, VEX_4V, Requires<[HasAVX]>,
+                       IIC_SSE_CVT_Scalar_RR>, XD, VEX_4V, Requires<[UseAVX]>,
                        Sched<[WriteCvtF2F]>;
 def Int_VCVTSD2SSrm: I<0x5A, MRMSrcReg,
                        (outs VR128:$dst), (ins VR128:$src1, sdmem:$src2),
                        "vcvtsd2ss\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                        [(set VR128:$dst, (int_x86_sse2_cvtsd2ss
                                           VR128:$src1, sse_load_f64:$src2))],
-                       IIC_SSE_CVT_Scalar_RM>, XD, VEX_4V, Requires<[HasAVX]>,
+                       IIC_SSE_CVT_Scalar_RM>, XD, VEX_4V, Requires<[UseAVX]>,
                        Sched<[WriteCvtF2FLd, ReadAfterLd]>;
 
 let Constraints = "$src1 = $dst" in {
@@ -1807,7 +1815,7 @@ def Int_CVTSD2SSrm: I<0x5A, MRMSrcReg,
 
 // Convert scalar single to scalar double
 // SSE2 instructions with XS prefix
-let neverHasSideEffects = 1 in {
+let neverHasSideEffects = 1, Predicates = [UseAVX] in {
 def VCVTSS2SDrr : I<0x5A, MRMSrcReg, (outs FR64:$dst),
                     (ins FR32:$src1, FR32:$src2),
                     "vcvtss2sd\t{$src2, $src1, $dst|$dst, $src1, $src2}",
@@ -1824,16 +1832,16 @@ def VCVTSS2SDrm : I<0x5A, MRMSrcMem, (outs FR64:$dst),
 }
 
 def : Pat<(f64 (fextend FR32:$src)),
-    (VCVTSS2SDrr FR32:$src, FR32:$src)>, Requires<[HasAVX]>;
+    (VCVTSS2SDrr FR32:$src, FR32:$src)>, Requires<[UseAVX]>;
 def : Pat<(fextend (loadf32 addr:$src)),
-    (VCVTSS2SDrm (f32 (IMPLICIT_DEF)), addr:$src)>, Requires<[HasAVX]>;
+    (VCVTSS2SDrm (f32 (IMPLICIT_DEF)), addr:$src)>, Requires<[UseAVX]>;
 
 def : Pat<(extloadf32 addr:$src),
     (VCVTSS2SDrm (f32 (IMPLICIT_DEF)), addr:$src)>,
-    Requires<[HasAVX, OptForSize]>;
+    Requires<[UseAVX, OptForSize]>;
 def : Pat<(extloadf32 addr:$src),
     (VCVTSS2SDrr (f32 (IMPLICIT_DEF)), (VMOVSSrm addr:$src))>,
-    Requires<[HasAVX, OptForSpeed]>;
+    Requires<[UseAVX, OptForSpeed]>;
 
 def CVTSS2SDrr : I<0x5A, MRMSrcReg, (outs FR64:$dst), (ins FR32:$src),
                    "cvtss2sd\t{$src, $dst|$dst, $src}",
@@ -1861,14 +1869,14 @@ def Int_VCVTSS2SDrr: I<0x5A, MRMSrcReg,
                     "vcvtss2sd\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                     [(set VR128:$dst,
                       (int_x86_sse2_cvtss2sd VR128:$src1, VR128:$src2))],
-                    IIC_SSE_CVT_Scalar_RR>, XS, VEX_4V, Requires<[HasAVX]>,
+                    IIC_SSE_CVT_Scalar_RR>, XS, VEX_4V, Requires<[UseAVX]>,
                     Sched<[WriteCvtF2F]>;
 def Int_VCVTSS2SDrm: I<0x5A, MRMSrcMem,
                       (outs VR128:$dst), (ins VR128:$src1, ssmem:$src2),
                     "vcvtss2sd\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                     [(set VR128:$dst,
                       (int_x86_sse2_cvtss2sd VR128:$src1, sse_load_f32:$src2))],
-                    IIC_SSE_CVT_Scalar_RM>, XS, VEX_4V, Requires<[HasAVX]>,
+                    IIC_SSE_CVT_Scalar_RM>, XS, VEX_4V, Requires<[UseAVX]>,
                     Sched<[WriteCvtF2FLd, ReadAfterLd]>;
 let Constraints = "$src1 = $dst" in { // SSE2 instructions with XS prefix
 def Int_CVTSS2SDrr: I<0x5A, MRMSrcReg,
