@@ -108,7 +108,8 @@ struct ParenState {
         AvoidBinPacking(AvoidBinPacking), BreakBeforeParameter(false),
         NoLineBreak(NoLineBreak), ColonPos(0), StartOfFunctionCall(0),
         StartOfArraySubscripts(0), NestedNameSpecifierContinuation(0),
-        CallContinuation(0), VariablePos(0), ContainsLineBreak(false) {}
+        CallContinuation(0), VariablePos(0), ContainsLineBreak(false),
+        ContainsUnwrappedBuilder(0) {}
 
   /// \brief The position to which a specific parenthesis level needs to be
   /// indented.
@@ -178,6 +179,10 @@ struct ParenState {
   /// parenthesis.
   bool ContainsLineBreak;
 
+  /// \brief \c true if this \c ParenState contains multiple segments of a
+  /// builder-type call on one line.
+  bool ContainsUnwrappedBuilder;
+
   bool operator<(const ParenState &Other) const {
     if (Indent != Other.Indent)
       return Indent < Other.Indent;
@@ -207,6 +212,8 @@ struct ParenState {
       return VariablePos < Other.VariablePos;
     if (ContainsLineBreak != Other.ContainsLineBreak)
       return ContainsLineBreak < Other.ContainsLineBreak;
+    if (ContainsUnwrappedBuilder != Other.ContainsUnwrappedBuilder)
+      return ContainsUnwrappedBuilder < Other.ContainsUnwrappedBuilder;
     return false;
   }
 };

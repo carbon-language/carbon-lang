@@ -2837,9 +2837,10 @@ TEST_F(FormatTest, FormatsBuilderPattern) {
       "return llvm::StringSwitch<Reference::Kind>(name)\n"
       "           .StartsWith(\".eh_frame_hdr\", ORDER_EH_FRAMEHDR)\n"
       "           .StartsWith(\".eh_frame\", ORDER_EH_FRAME)\n"
-      "           .StartsWith(\".init\", ORDER_INIT).StartsWith(\".fini\", "
-      "ORDER_FINI)\n"
-      "           .StartsWith(\".hash\", ORDER_HASH).Default(ORDER_TEXT);\n");
+      "           .StartsWith(\".init\", ORDER_INIT)\n"
+      "           .StartsWith(\".fini\", ORDER_FINI)\n"
+      "           .StartsWith(\".hash\", ORDER_HASH)\n"
+      "           .Default(ORDER_TEXT);\n");
 
   verifyFormat("return aaaaaaaaaaaaaaaaa->aaaaa().aaaaaaaaaaaaa().aaaaaa() <\n"
                "       aaaaaaaaaaaaaaa->aaaaa().aaaaaaaaaaaaa().aaaaaa();");
@@ -2868,6 +2869,21 @@ TEST_F(FormatTest, FormatsBuilderPattern) {
       "                       this, &HandlerHolderClass::EventHandlerCBD))\n"
       "                 ->OnEvent6(NewPermanentCallback(\n"
       "                       this, &HandlerHolderClass::EventHandlerCBE)));");
+
+  verifyFormat(
+      "aaaaaaaaaaa().aaaaaaaaaaa().aaaaaaaaaaa().aaaaaaaaaaa().aaaaaaaaaaa();");
+  verifyFormat("aaaaaaaaaaaaaaa()\n"
+               "    .aaaaaaaaaaaaaaa()\n"
+               "    .aaaaaaaaaaaaaaa()\n"
+               "    .aaaaaaaaaaaaaaa()\n"
+               "    .aaaaaaaaaaaaaaa();");
+  verifyFormat("aaaaaaaaaaaaaaa.aaaaaaaaaaaaaaa()\n"
+               "    .aaaaaaaaaaaaaaa()\n"
+               "    .aaaaaaaaaaaaaaa()\n"
+               "    .aaaaaaaaaaaaaaa();");
+  verifyFormat("aaaaaaaaaaaaaaa.aaaaaaaaaaaaaaa()\n"
+               "    .aaaaaaaaaaaaaaa.aaaaaaaaaaaaaaa()\n"
+               "    .aaaaaaaaaaaaaaa();");
 }
 
 TEST_F(FormatTest, BreaksAccordingToOperatorPrecedence) {

@@ -257,6 +257,12 @@ struct FormatToken {
            Type == TT_TemplateCloser;
   }
 
+  /// \brief Returns \c true if this is a "." or "->" accessing a member.
+  bool isMemberAccess() const {
+    return isOneOf(tok::arrow, tok::period) &&
+           Type != TT_DesignatedInitializerPeriod;
+  }
+
   bool isUnaryOperator() const {
     switch (Tok.getKind()) {
     case tok::plus:
@@ -272,10 +278,12 @@ struct FormatToken {
       return false;
     }
   }
+
   bool isBinaryOperator() const {
     // Comma is a binary operator, but does not behave as such wrt. formatting.
     return getPrecedence() > prec::Comma;
   }
+
   bool isTrailingComment() const {
     return is(tok::comment) && (!Next || Next->NewlinesBefore > 0);
   }
