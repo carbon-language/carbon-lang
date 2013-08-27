@@ -911,10 +911,14 @@ static atomic_uintptr_t sigactions[kMaxSignals];
 static StaticSpinMutex sigactions_mu;
 
 static void SignalHandler(int signo) {
+  UnpoisonParam(1);
+
   typedef void (*signal_cb)(int x);
   signal_cb cb =
       (signal_cb)atomic_load(&sigactions[signo], memory_order_relaxed);
   cb(signo);
+
+  UnpoisonThreadLocalState();
 }
 
 static void SignalAction(int signo, void *si, void *uc) {
@@ -926,6 +930,8 @@ static void SignalAction(int signo, void *si, void *uc) {
   sigaction_cb cb =
       (sigaction_cb)atomic_load(&sigactions[signo], memory_order_relaxed);
   cb(signo, si, uc);
+
+  UnpoisonThreadLocalState();
 }
 
 INTERCEPTOR(int, sigaction, int signo, const __sanitizer_sigaction *act,

@@ -76,6 +76,7 @@ void ReportAtExitStatistics();
 
 // Unpoison first n function arguments.
 void UnpoisonParam(uptr n);
+void UnpoisonThreadLocalState();
 
 #define GET_MALLOC_STACK_TRACE                                     \
   StackTrace stack;                                                \

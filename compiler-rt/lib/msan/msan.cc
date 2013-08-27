@@ -230,6 +230,13 @@ void UnpoisonParam(uptr n) {
   internal_memset(__msan_param_tls, 0, n * sizeof(*__msan_param_tls));
 }
 
+void UnpoisonThreadLocalState() {
+  internal_memset(__msan_param_tls, 0, sizeof(__msan_param_tls));
+  internal_memset(__msan_retval_tls, 0, sizeof(__msan_retval_tls));
+  internal_memset(__msan_va_arg_tls, 0, sizeof(__msan_va_arg_tls));
+  __msan_va_arg_overflow_size_tls = 0;
+}
+
 }  // namespace __msan
 
 // Interface.
