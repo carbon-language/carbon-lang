@@ -1003,11 +1003,11 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
     if (!has_null && has_explicit_length && !is_special)
     {
         lldb::addr_t explicit_length_offset = 2*ptr_size;
-        if (is_mutable and not is_inline)
+        if (is_mutable && !is_inline)
             explicit_length_offset = explicit_length_offset + ptr_size; //  notInlineMutable.length;
         else if (is_inline)
             explicit_length = explicit_length + 0; // inline1.length;
-        else if (not is_inline and not is_mutable)
+        else if (!is_inline && !is_mutable)
             explicit_length_offset = explicit_length_offset + ptr_size; // notInlineImmutable1.length;
         else
             explicit_length_offset = 0;
@@ -1039,7 +1039,7 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
         location = process_sp->ReadPointerFromMemory(location, error);
         if (error.Fail())
             return false;
-        if (has_explicit_length and is_unicode)
+        if (has_explicit_length && is_unicode)
         {
             ReadUTFBufferAndDumpToStreamOptions<UTF16> options;
             options.SetConversionFunction(ConvertUTF16toUTF8);
