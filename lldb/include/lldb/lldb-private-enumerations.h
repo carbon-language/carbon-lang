@@ -51,6 +51,7 @@ typedef enum ArchitectureType
     eArchTypeInvalid,
     eArchTypeMachO,
     eArchTypeELF,
+    eArchTypeCOFF,
     kNumArchTypes
 } ArchitectureType;
 

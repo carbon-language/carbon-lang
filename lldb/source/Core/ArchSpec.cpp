@@ -14,6 +14,7 @@
 
 #include <string>
 
+#include "llvm/Support/COFF.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/MachO.h"
@@ -238,11 +239,30 @@ static const ArchDefinition g_elf_arch_def = {
     "elf",
 };
 
+static const ArchDefinitionEntry g_coff_arch_entries[] =
+{
+    { ArchSpec::eCore_x86_32_i386  , llvm::COFF::IMAGE_FILE_MACHINE_I386     , LLDB_INVALID_CPUTYPE, 0xFFFFFFFFu, 0xFFFFFFFFu }, // Intel 80386
+    { ArchSpec::eCore_ppc_generic  , llvm::COFF::IMAGE_FILE_MACHINE_POWERPC  , LLDB_INVALID_CPUTYPE, 0xFFFFFFFFu, 0xFFFFFFFFu }, // PowerPC
+    { ArchSpec::eCore_ppc_generic  , llvm::COFF::IMAGE_FILE_MACHINE_POWERPCFP, LLDB_INVALID_CPUTYPE, 0xFFFFFFFFu, 0xFFFFFFFFu }, // PowerPC (with FPU)
+    { ArchSpec::eCore_arm_generic  , llvm::COFF::IMAGE_FILE_MACHINE_ARM      , LLDB_INVALID_CPUTYPE, 0xFFFFFFFFu, 0xFFFFFFFFu }, // ARM
+    { ArchSpec::eCore_arm_armv7    , llvm::COFF::IMAGE_FILE_MACHINE_ARMV7    , LLDB_INVALID_CPUTYPE, 0xFFFFFFFFu, 0xFFFFFFFFu }, // ARMv7
+    { ArchSpec::eCore_thumb        , llvm::COFF::IMAGE_FILE_MACHINE_THUMB    , LLDB_INVALID_CPUTYPE, 0xFFFFFFFFu, 0xFFFFFFFFu }, // ARMv7
+    { ArchSpec::eCore_x86_64_x86_64, llvm::COFF::IMAGE_FILE_MACHINE_AMD64    , LLDB_INVALID_CPUTYPE, 0xFFFFFFFFu, 0xFFFFFFFFu }  // AMD64
+};
+
+static const ArchDefinition g_coff_arch_def = {
+    eArchTypeCOFF,
+    sizeof(g_coff_arch_entries)/sizeof(g_coff_arch_entries[0]),
+    g_coff_arch_entries,
+    "pe-coff",
+};
+
 //===----------------------------------------------------------------------===//
 // Table of all ArchDefinitions
 static const ArchDefinition *g_arch_definitions[] = {
     &g_macho_arch_def,
-    &g_elf_arch_def
+    &g_elf_arch_def,
+    &g_coff_arch_def
 };
 
 static const size_t k_num_arch_definitions =
