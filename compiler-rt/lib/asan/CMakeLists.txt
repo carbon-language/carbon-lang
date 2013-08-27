@@ -26,9 +26,15 @@ set(ASAN_DYLIB_SOURCES
 
 include_directories(..)
 
-set(ASAN_CFLAGS
-  ${SANITIZER_COMMON_CFLAGS}
-  -fno-rtti)
+if (NOT MSVC)
+  set(ASAN_CFLAGS
+    ${SANITIZER_COMMON_CFLAGS}
+    -fno-rtti)
+else()
+  set(ASAN_CFLAGS
+    ${SANITIZER_COMMON_CFLAGS}
+    /GR-)
+endif()
 
 set(ASAN_COMMON_DEFINITIONS
   ASAN_HAS_EXCEPTIONS=1)
@@ -38,6 +44,10 @@ if(ANDROID)
     ASAN_FLEXIBLE_MAPPING_AND_OFFSET=0
     ASAN_NEEDS_SEGV=0
     ASAN_LOW_MEMORY=1)
+elseif(MSVC)
+  list(APPEND ASAN_COMMON_DEFINITIONS
+    ASAN_FLEXIBLE_MAPPING_AND_OFFSET=0
+    ASAN_NEEDS_SEGV=0)
 else()
   list(APPEND ASAN_COMMON_DEFINITIONS
     ASAN_FLEXIBLE_MAPPING_AND_OFFSET=1
@@ -78,17 +88,32 @@ elseif(ANDROID)
   list(APPEND ASAN_RUNTIME_LIBRARIES clang_rt.asan-arm-android)
 else()
   # Otherwise, build separate libraries for each target.
+
   foreach(arch ${ASAN_SUPPORTED_ARCH})
+    set(ASAN_SOURCE_LIBS
+      $<TARGET_OBJECTS:RTInterception.${arch}>
+      $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
+      $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>)
+    if (NOT MSVC)
+      # We can't build Leak Sanitizer on Windows yet.
+      list(APPEND ASAN_SOURCE_LIBS $<TARGET_OBJECTS:RTLSanCommon.${arch}>)
+    endif()
+
     add_compiler_rt_static_runtime(clang_rt.asan-${arch} ${arch}
-      SOURCES ${ASAN_SOURCES}
-              $<TARGET_OBJECTS:RTInterception.${arch}>
-              $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
-              $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>
-              $<TARGET_OBJECTS:RTLSanCommon.${arch}>
+      SOURCES ${ASAN_SOURCES} ${ASAN_SOURCE_LIBS}
       CFLAGS ${ASAN_CFLAGS}
       DEFS ${ASAN_COMMON_DEFINITIONS}
       SYMS asan.syms)
     list(APPEND ASAN_RUNTIME_LIBRARIES clang_rt.asan-${arch})
+
+    if (WIN32)
+      add_compiler_rt_static_runtime(clang_rt.asan_dll_thunk-${arch} ${arch}
+      SOURCES asan_dll_thunk.cc
+      CFLAGS ${ASAN_CFLAGS} -DASAN_DLL_THUNK
+      DEFS ${ASAN_COMMON_DEFINITIONS}
+      SYMS asan.syms)
+      list(APPEND ASAN_RUNTIME_LIBRARIES clang_rt.asan_dll_thunk-${arch})
+    endif()
   endforeach()
 endif()
 

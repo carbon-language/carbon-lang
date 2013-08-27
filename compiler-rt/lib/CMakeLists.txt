@@ -1,12 +1,12 @@
 # First, add the subdirectories which contain feature-based runtime libraries
 # and several convenience helper libraries.
-if(CMAKE_SYSTEM_NAME MATCHES "Darwin|Linux")
+if(CMAKE_SYSTEM_NAME MATCHES "Darwin|Linux|Windows")
   # AddressSanitizer is supported on Linux and Mac OS X.
-  # Windows support is work in progress.
+  # Windows support is experimental.
   add_subdirectory(asan)
   add_subdirectory(interception)
   add_subdirectory(sanitizer_common)
-  if(NOT ANDROID)
+  if(NOT ANDROID AND NOT MSVC)
     add_subdirectory(lsan)
     add_subdirectory(profile)
     add_subdirectory(ubsan)
@@ -182,13 +182,15 @@ set(i386_SOURCES
   i386/umoddi3.S
   ${GENERIC_SOURCES})
 
-foreach(arch x86_64 i386)
-  if(CAN_TARGET_${arch})
-    add_compiler_rt_static_runtime(clang_rt.${arch} ${arch}
-      SOURCES ${${arch}_SOURCES}
-      CFLAGS "-std=c99")
-  endif()
-endforeach()
+if (NOT MSVC)
+  foreach(arch x86_64 i386)
+    if(CAN_TARGET_${arch})
+      add_compiler_rt_static_runtime(clang_rt.${arch} ${arch}
+        SOURCES ${${arch}_SOURCES}
+        CFLAGS "-std=c99")
+    endif()
+  endforeach()
+endif()
 
 # Generate configs for running lit and unit tests.
 configure_lit_site_cfg(

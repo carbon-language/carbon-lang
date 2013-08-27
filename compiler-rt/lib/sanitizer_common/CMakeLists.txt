@@ -61,9 +61,15 @@ set(SANITIZER_HEADERS
   sanitizer_symbolizer.h
   sanitizer_thread_registry.h)
 
-set(SANITIZER_CFLAGS
-  ${SANITIZER_COMMON_CFLAGS}
-  -fno-rtti)
+if (NOT MSVC)
+  set(SANITIZER_CFLAGS
+    ${SANITIZER_COMMON_CFLAGS}
+    -fno-rtti)
+else()
+  set(SANITIZER_CFLAGS
+    ${SANITIZER_COMMON_CFLAGS}
+    /GR-)
+endif()
 
 set(SANITIZER_RUNTIME_LIBRARIES)
 if(APPLE)
