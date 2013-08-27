@@ -840,25 +840,3 @@ File::ConvertOpenOptionsForPOSIXOpen (uint32_t open_options)
 
     return mode;
 }
-
-#define	O_RDONLY	0x0000		/* open for reading only */
-#define	O_WRONLY	0x0001		/* open for writing only */
-#define	O_RDWR		0x0002		/* open for reading and writing */
-#define	O_ACCMODE	0x0003		/* mask for above modes */
-#define	O_NONBLOCK	0x0004		/* no delay */
-#define	O_APPEND	0x0008		/* set append mode */
-#define	O_SYNC		0x0080		/* synch I/O file integrity */
-#define	O_SHLOCK	0x0010		/* open with shared file lock */
-#define	O_EXLOCK	0x0020		/* open with exclusive file lock */
-#define	O_ASYNC		0x0040		/* signal pgrp when data ready */
-#define	O_FSYNC		O_SYNC		/* source compatibility: do not use */
-#define O_NOFOLLOW  0x0100      /* don't follow symlinks */
-#define	O_CREAT		0x0200		/* create if nonexistant */
-#define	O_TRUNC		0x0400		/* truncate to zero length */
-#define	O_EXCL		0x0800		/* error if already exists */
-#define	O_EVTONLY	0x8000		/* descriptor requested for event notifications only */
-#define	O_NOCTTY	0x20000		/* don't assign controlling terminal */
-#define O_DIRECTORY	0x100000
-#define O_SYMLINK	0x200000	/* allow open of a symlink */
-#define O_DSYNC 	0x400000	/* synch I/O data integrity */
-#define	O_CLOEXEC	0x1000000	/* implicitly set FD_CLOEXEC */
