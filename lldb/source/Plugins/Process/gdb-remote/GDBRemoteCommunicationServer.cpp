@@ -1254,7 +1254,9 @@ GDBRemoteCommunicationServer::Handle_qPlatform_RunCommand (StringExtractorGDBRem
         return false;
     if (packet.GetChar() != ',')
         return false;
-    uint32_t timeout = packet.GetHexMaxU32(false, 32);
+    // FIXME: add timeout to qPlatform_RunCommand packet
+    // uint32_t timeout = packet.GetHexMaxU32(false, 32);
+    uint32_t timeout = 10;
     if (packet.GetChar() == ',')
         packet.GetHexByteString(working_dir);
     int status, signo;

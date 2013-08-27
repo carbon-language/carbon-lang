@@ -1949,7 +1949,8 @@ public:
     public:
         
         CommandOptions (CommandInterpreter &interpreter) :
-        Options(interpreter)
+        Options(interpreter),
+        timeout(10)
         {
         }
         
@@ -1999,7 +2000,6 @@ public:
         virtual void
         OptionParsingStarting ()
         {
-            timeout = 10;
         }
         
         // Options table: Required for subclasses of Options.
