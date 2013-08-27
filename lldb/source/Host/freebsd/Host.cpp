@@ -33,6 +33,7 @@
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Core/StreamString.h"
+#include "lldb/Core/Log.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Platform.h"
 
@@ -146,7 +147,7 @@ Host::GetOSVersion(uint32_t &major,
     if (uname(&un) < 0)
         return false;
 
-    status = sscanf(un.release, "%u.%u", &major, &minor);
+    int status = sscanf(un.release, "%u.%u", &major, &minor);
     return status == 2;
 }
 
