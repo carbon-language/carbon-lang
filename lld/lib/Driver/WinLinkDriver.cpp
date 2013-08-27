@@ -436,6 +436,15 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
     return true;
   }
 
+  // If dead-stripping is enabled, we need to add the entry symbol and
+  // symbols given by /include to the dead strip root set, so that it
+  // won't be removed from the output.
+  if (ctx.deadStrip()) {
+    ctx.addDeadStripRoot(ctx.entrySymbolName());
+    for (const StringRef symbolName : ctx.initialUndefinedSymbols())
+      ctx.addDeadStripRoot(symbolName);
+  }
+
   // Arguments after "--" are interpreted as filenames even if they
   // start with a hypen or a slash. This is not compatible with link.exe
   // but useful for us to test lld on Unix.

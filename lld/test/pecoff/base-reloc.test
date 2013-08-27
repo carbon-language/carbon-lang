@@ -19,12 +19,12 @@ BASEREL-SECTION-NEXT:  3000 00100000 0c000000 07300c30 00000000  .........0.0...
 
 NOBASEREL-SECTION-NOT: Contents of section .reloc:
 
-# RUN: lld -flavor link /out:%t1 /subsystem:console /force -- %t.obj \
-# RUN:   && llvm-readobj -file-headers %t1 \
+# RUN: lld -flavor link /out:%t1 /subsystem:console /force /opt:noref \
+# RUN:   -- %t.obj && llvm-readobj -file-headers %t1 \
 # RUN:   | FileCheck %s --check-prefix=BASEREL-HEADER
 #
-# RUN: lld -flavor link /out:%t1 /subsystem:console /force /fixed -- %t.obj \
-# RUN:   && llvm-readobj -file-headers %t1 \
+# RUN: lld -flavor link /out:%t1 /subsystem:console /force /opt:noref /fixed \
+# RUN:   -- %t.obj && llvm-readobj -file-headers %t1 \
 # RUN:   | FileCheck %s --check-prefix=NOBASEREL-HEADER
 
 BASEREL-HEADER-NOT: IMAGE_FILE_RELOCS_STRIPPED
