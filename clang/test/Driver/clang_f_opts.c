@@ -97,4 +97,5 @@
 // CHECK-NO-M-PASCAL-STRINGS-NOT: "-fpascal-strings"
 
 // RUN: %clang -### -S -O4 %s 2>&1 | FileCheck -check-prefix=CHECK-MAX-O %s
+// CHECK-MAX-O: warning: -O4 is equivalent to -O3
 // CHECK-MAX-O: -O3

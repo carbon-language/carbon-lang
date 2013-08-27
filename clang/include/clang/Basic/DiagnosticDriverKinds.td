@@ -112,6 +112,7 @@ def err_drv_unknown_objc_runtime : Error<
 def err_drv_emit_llvm_link : Error<
    "-emit-llvm cannot be used when linking">;
 
+def warn_O4_is_O3 : Warning<"-O4 is equivalent to -O3">, InGroup<Deprecated>;
 def warn_c_kext : Warning<
   "ignoring -fapple-kext which is valid for C++ and Objective-C++ only">;
 def warn_drv_input_file_unused : Warning<
