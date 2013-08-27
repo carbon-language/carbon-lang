@@ -322,36 +322,27 @@ DumpLinkerOptionsCommand(const MachOObjectFile &Obj,
 
 static int DumpLoadCommand(const MachOObjectFile &Obj,
                            MachOObjectFile::LoadCommandInfo &LCI) {
-  int Res;
   switch (LCI.C.cmd) {
   case MachO::LC_SEGMENT:
-    Res = DumpSegmentCommand(Obj, LCI);
-    break;
+    return DumpSegmentCommand(Obj, LCI);
   case MachO::LC_SEGMENT_64:
-    Res = DumpSegment64Command(Obj, LCI);
-    break;
+    return DumpSegment64Command(Obj, LCI);
   case MachO::LC_SYMTAB:
-    Res = DumpSymtabCommand(Obj);
-    break;
+    return DumpSymtabCommand(Obj);
   case MachO::LC_DYSYMTAB:
-    Res = DumpDysymtabCommand(Obj);
-    break;
+    return DumpDysymtabCommand(Obj);
   case MachO::LC_CODE_SIGNATURE:
   case MachO::LC_SEGMENT_SPLIT_INFO:
   case MachO::LC_FUNCTION_STARTS:
-    Res = DumpLinkeditDataCommand(Obj, LCI);
-    break;
+    return DumpLinkeditDataCommand(Obj, LCI);
   case MachO::LC_DATA_IN_CODE:
-    Res = DumpDataInCodeDataCommand(Obj, LCI);
-    break;
+    return DumpDataInCodeDataCommand(Obj, LCI);
   case MachO::LC_LINKER_OPTIONS:
-    Res = DumpLinkerOptionsCommand(Obj, LCI);
-    break;
+    return DumpLinkerOptionsCommand(Obj, LCI);
   default:
     Warning("unknown load command: " + Twine(LCI.C.cmd));
-    break;
+    return 0;
   }
-  return Res;
 }
 
 
