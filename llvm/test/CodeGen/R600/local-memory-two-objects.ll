@@ -1,27 +1,32 @@
-; RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck %s
-
-; TODO: Add RUN and CHECK lines for SI once this test works there
+; RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck --check-prefix=EG-CHECK %s
+; RUN: llc < %s -march=r600 -mcpu=verde | FileCheck --check-prefix=SI-CHECK %s
 
 @local_memory_two_objects.local_mem0 = internal addrspace(3) unnamed_addr global [4 x i32] zeroinitializer, align 4
 @local_memory_two_objects.local_mem1 = internal addrspace(3) unnamed_addr global [4 x i32] zeroinitializer, align 4
 
-; CHECK: @local_memory_two_objects
+; EG-CHECK: @local_memory_two_objects
 
 ; Check that the LDS size emitted correctly
-; CHECK: .long 166120
-; CHECK-NEXT: .long 8
+; EG-CHECK: .long 166120
+; EG-CHECK-NEXT: .long 8
+; SI-CHECK: .long 47180
+; SI-CHECK-NEXT: .long 32768
 
 ; Make sure the lds writes are using different addresses.
-; CHECK: LDS_WRITE {{[*]*}} {{PV|T}}[[ADDRW:[0-9]*\.[XYZW]]]
-; CHECK-NOT: LDS_WRITE {{[*]*}} T[[ADDRW]]
+; EG-CHECK: LDS_WRITE {{[*]*}} {{PV|T}}[[ADDRW:[0-9]*\.[XYZW]]]
+; EG-CHECK-NOT: LDS_WRITE {{[*]*}} T[[ADDRW]]
+; SI-CHECK: DS_WRITE_B32 0, {{VGPR[0-9]*}}, VGPR[[ADDRW:[0-9]*]]
+; SI-CHECK-NOT: DS_WRITE_B32 0, {{VGPR[0-9]*}}, VGPR[[ADDRW]]
 
 ; GROUP_BARRIER must be the last instruction in a clause
-; CHECK: GROUP_BARRIER
-; CHECK-NEXT: ALU clause
+; EG-CHECK: GROUP_BARRIER
+; EG-CHECK-NEXT: ALU clause
 
 ; Make sure the lds reads are using different addresses.
-; CHECK: LDS_READ_RET {{[*]*}} OQAP, {{PV|T}}[[ADDRR:[0-9]*\.[XYZW]]]
-; CHECK-NOT: LDS_READ_RET {{[*]*}} OQAP, T[[ADDRR]]
+; EG-CHECK: LDS_READ_RET {{[*]*}} OQAP, {{PV|T}}[[ADDRR:[0-9]*\.[XYZW]]]
+; EG-CHECK-NOT: LDS_READ_RET {{[*]*}} OQAP, T[[ADDRR]]
+; SI-CHECK: DS_READ_B32 {{VGPR[0-9]+}}, 0, [[ADDRR:VGPR[0-9]+]]
+; SI-CHECK-NOT: DS_READ_B32 {{VGPR[0-9]+}}, 0, [[ADDRR]]
 
 define void @local_memory_two_objects(i32 addrspace(1)* %out) {
 entry:
