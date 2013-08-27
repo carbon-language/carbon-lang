@@ -909,7 +909,7 @@ static void SignalHandler(int signo) {
 
 static void SignalAction(int signo, void *si, void *uc) {
   UnpoisonParam(3);
-  __msan_unpoison(si, __sanitizer::struct_sigaction_sz);
+  __msan_unpoison(si, sizeof(__sanitizer_sigaction));
   __msan_unpoison(uc, __sanitizer::ucontext_t_sz);
 
   typedef void (*sigaction_cb)(int, void *, void *);
@@ -930,21 +930,21 @@ INTERCEPTOR(int, sigaction, int signo, const __sanitizer_sigaction *act,
     __sanitizer_sigaction new_act;
     __sanitizer_sigaction *pnew_act = act ? &new_act : 0;
     if (act) {
-      internal_memcpy(pnew_act, act, __sanitizer::struct_sigaction_sz);
-      uptr cb = __sanitizer::__sanitizer_get_sigaction_sa_sigaction(pnew_act);
-      uptr new_cb =
-          __sanitizer::__sanitizer_get_sigaction_sa_siginfo(pnew_act) ?
-          (uptr)SignalAction : (uptr)SignalHandler;
+      internal_memcpy(pnew_act, act, sizeof(__sanitizer_sigaction));
+      uptr cb = (uptr)pnew_act->sa_sigaction;
+      uptr new_cb = (pnew_act->sa_flags & __sanitizer::sa_siginfo)
+                        ? (uptr)SignalAction
+                        : (uptr)SignalHandler;
       if (cb != __sanitizer::sig_ign && cb != __sanitizer::sig_dfl) {
         sigactions[signo] = cb;
-        __sanitizer::__sanitizer_set_sigaction_sa_sigaction(pnew_act, new_cb);
+        pnew_act->sa_sigaction = (void (*)(int, void *, void *))new_cb;
       }
     }
     res = REAL(sigaction)(signo, pnew_act, oldact);
     if (res == 0 && oldact) {
-      uptr cb = __sanitizer::__sanitizer_get_sigaction_sa_sigaction(oldact);
+      uptr cb = (uptr)oldact->sa_sigaction;
       if (cb != __sanitizer::sig_ign && cb != __sanitizer::sig_dfl) {
-        __sanitizer::__sanitizer_set_sigaction_sa_sigaction(oldact, old_cb);
+        oldact->sa_sigaction = (void (*)(int, void *, void *))old_cb;
       }
     }
   } else {
@@ -952,7 +952,7 @@ INTERCEPTOR(int, sigaction, int signo, const __sanitizer_sigaction *act,
   }
 
   if (res == 0 && oldact) {
-    __msan_unpoison(oldact, __sanitizer::struct_sigaction_sz);
+    __msan_unpoison(oldact, sizeof(__sanitizer_sigaction));
   }
   return res;
 }

@@ -136,25 +136,11 @@ namespace __sanitizer {
 
   uptr sig_ign = (uptr)SIG_IGN;
   uptr sig_dfl = (uptr)SIG_DFL;
+  uptr sa_siginfo = (uptr)SA_SIGINFO;
 
 #if SANITIZER_LINUX
   int e_tabsz = (int)E_TABSZ;
 #endif
-
-  uptr __sanitizer_get_sigaction_sa_sigaction(void *act) {
-    struct sigaction *a = (struct sigaction *)act;
-    // Check that sa_sigaction and sa_handler are the same.
-    CHECK((void *)&(a->sa_sigaction) == (void *)&(a->sa_handler));
-    return (uptr) a->sa_sigaction;
-  }
-  void __sanitizer_set_sigaction_sa_sigaction(void *act, uptr cb) {
-    struct sigaction *a = (struct sigaction *)act;
-    a->sa_sigaction = (void (*)(int, siginfo_t *, void *))cb;
-  }
-  bool __sanitizer_get_sigaction_sa_siginfo(void *act) {
-    struct sigaction *a = (struct sigaction *)act;
-    return a->sa_flags & SA_SIGINFO;
-  }
 
   int af_inet = (int)AF_INET;
   int af_inet6 = (int)AF_INET6;
@@ -730,9 +716,15 @@ namespace __sanitizer {
   COMPILER_CHECK(offsetof(__sanitizer_##CLASS, MEMBER) ==          \
                  offsetof(CLASS, MEMBER))
 
+// For sigaction, which is a function and struct at the same time,
+// and thus requires explicit "struct" in sizeof() expression.
+#define CHECK_STRUCT_SIZE_AND_OFFSET(CLASS, MEMBER)                       \
+  COMPILER_CHECK(sizeof(((struct __sanitizer_##CLASS *) NULL)->MEMBER) == \
+                 sizeof(((struct CLASS *) NULL)->MEMBER));                \
+  COMPILER_CHECK(offsetof(struct __sanitizer_##CLASS, MEMBER) ==          \
+                 offsetof(struct CLASS, MEMBER))
+
 COMPILER_CHECK(sizeof(__sanitizer_pthread_attr_t) >= sizeof(pthread_attr_t));
-COMPILER_CHECK(sizeof(__sanitizer::struct_sigaction_max_sz) >=
-                   sizeof(__sanitizer::struct_sigaction_sz));
 
 COMPILER_CHECK(sizeof(socklen_t) == sizeof(unsigned));
 CHECK_TYPE_SIZE(pthread_key_t);
@@ -821,7 +813,19 @@ CHECK_TYPE_SIZE(pollfd);
 CHECK_SIZE_AND_OFFSET(pollfd, fd);
 CHECK_SIZE_AND_OFFSET(pollfd, events);
 CHECK_SIZE_AND_OFFSET(pollfd, revents);
+
 CHECK_TYPE_SIZE(nfds_t);
+
+CHECK_TYPE_SIZE(sigset_t);
+
+COMPILER_CHECK(sizeof(__sanitizer_sigaction) == sizeof(struct sigaction));
+// Can't write checks for sa_handler and sa_sigaction due to them being
+// preprocessor macros.
+CHECK_STRUCT_SIZE_AND_OFFSET(sigaction, sa_mask);
+CHECK_STRUCT_SIZE_AND_OFFSET(sigaction, sa_flags);
+#if SANITIZER_LINUX
+CHECK_STRUCT_SIZE_AND_OFFSET(sigaction, sa_restorer);
+#endif
 
 #endif  // SANITIZER_LINUX || SANITIZER_MAC
 

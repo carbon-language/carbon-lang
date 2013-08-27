@@ -1976,13 +1976,13 @@ INTERCEPTOR(int, poll, __sanitizer_pollfd *fds, __sanitizer_nfds_t nfds,
 
 #if SANITIZER_INTERCEPT_PPOLL
 INTERCEPTOR(int, ppoll, __sanitizer_pollfd *fds, __sanitizer_nfds_t nfds,
-            void *timeout_ts, void *sigmask) {
+            void *timeout_ts, __sanitizer_sigset_t *sigmask) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, ppoll, fds, nfds, timeout_ts, sigmask);
   if (fds && nfds) read_pollfd(ctx, fds, nfds);
   if (timeout_ts)
     COMMON_INTERCEPTOR_READ_RANGE(ctx, timeout_ts, struct_timespec_sz);
-  if (sigmask) COMMON_INTERCEPTOR_READ_RANGE(ctx, timeout_ts, sigset_t_sz);
+  // FIXME: read sigmask when all of sigemptyset, etc are intercepted.
   int res =
       COMMON_INTERCEPTOR_BLOCK_REAL(ppoll)(fds, nfds, timeout_ts, sigmask);
   if (fds && nfds) write_pollfd(ctx, fds, nfds);

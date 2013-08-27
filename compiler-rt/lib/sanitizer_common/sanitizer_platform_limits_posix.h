@@ -25,7 +25,6 @@ namespace __sanitizer {
   extern unsigned struct_tm_sz;
   extern unsigned struct_passwd_sz;
   extern unsigned struct_group_sz;
-  extern unsigned struct_sigaction_sz;
   extern unsigned siginfo_t_sz;
   extern unsigned struct_itimerval_sz;
   extern unsigned pthread_t_sz;
@@ -33,7 +32,6 @@ namespace __sanitizer {
   extern unsigned timeval_sz;
   extern unsigned uid_t_sz;
   extern unsigned mbstate_t_sz;
-  extern unsigned sigset_t_sz;
 
 #if !SANITIZER_ANDROID
   extern unsigned ucontext_t_sz;
@@ -135,17 +133,32 @@ namespace __sanitizer {
     void *align;
   };
 
-  uptr __sanitizer_get_sigaction_sa_sigaction(void *act);
-  void __sanitizer_set_sigaction_sa_sigaction(void *act, uptr cb);
-  bool __sanitizer_get_sigaction_sa_siginfo(void *act);
+#if SANITIZER_ANDROID
+  typedef unsigned long __sanitizer_sigset_t;
+#elif SANITIZER_MAC
+  typedef unsigned __sanitizer_sigset_t;
+#elif SANITIZER_LINUX
+  struct __sanitizer_sigset_t {
+    // The size is determined by looking at sizeof of real sigset_t on linux.
+    uptr val[128 / sizeof(uptr)];
+  };
+#endif
 
-  const unsigned struct_sigaction_max_sz = 256;
-  union __sanitizer_sigaction {
-    char size[struct_sigaction_max_sz]; // NOLINT
+  struct __sanitizer_sigaction {
+    union {
+      void (*sa_handler)(int sig);
+      void (*sa_sigaction)(int sig, void *siginfo, void *uctx);
+    };
+    __sanitizer_sigset_t sa_mask;
+    int sa_flags;
+#if SANITIZER_LINUX
+    void (*sa_restorer)();
+#endif
   };
 
   extern uptr sig_ign;
   extern uptr sig_dfl;
+  extern uptr sa_siginfo;
 
 #if SANITIZER_LINUX
   extern int e_tabsz;
