@@ -354,7 +354,6 @@ public:
     InnerLoopVectorizer(OrigLoop, SE, LI, DT, DL, TLI, 1, UnrollFactor) { }
 
 private:
-  virtual void vectorizeLoop(LoopVectorizationLegality *Legal);
   virtual void scalarizeInstruction(Instruction *Instr);
   virtual void vectorizeMemoryInstruction(Instruction *Instr,
                                           LoopVectorizationLegality *Legal);
@@ -2049,18 +2048,31 @@ InnerLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
     if (RdxDesc.Kind == LoopVectorizationLegality::RK_IntegerMinMax ||
         RdxDesc.Kind == LoopVectorizationLegality::RK_FloatMinMax) {
       // MinMax reduction have the start value as their identify.
-      VectorStart = Identity = Builder.CreateVectorSplat(VF, RdxDesc.StartValue,
-                                                         "minmax.ident");
+      if (VF == 1) {
+        VectorStart = Identity = RdxDesc.StartValue;
+      } else {
+        VectorStart = Identity = Builder.CreateVectorSplat(VF,
+                                                           RdxDesc.StartValue,
+                                                           "minmax.ident");
+      }
     } else {
+      // Handle other reduction kinds:
       Constant *Iden =
-        LoopVectorizationLegality::getReductionIdentity(RdxDesc.Kind,
-                                                        VecTy->getScalarType());
-      Identity = ConstantVector::getSplat(VF, Iden);
+      LoopVectorizationLegality::getReductionIdentity(RdxDesc.Kind,
+                                                      VecTy->getScalarType());
+      if (VF == 1) {
+        Identity = Iden;
+        // This vector is the Identity vector where the first element is the
+        // incoming scalar reduction.
+        VectorStart = RdxDesc.StartValue;
+      } else {
+        Identity = ConstantVector::getSplat(VF, Iden);
 
-      // This vector is the Identity vector where the first element is the
-      // incoming scalar reduction.
-      VectorStart = Builder.CreateInsertElement(Identity,
-                                                RdxDesc.StartValue, Zero);
+        // This vector is the Identity vector where the first element is the
+        // incoming scalar reduction.
+        VectorStart = Builder.CreateInsertElement(Identity,
+                                                  RdxDesc.StartValue, Zero);
+      }
     }
 
     // Fix the vector-loop phi.
@@ -2116,37 +2128,40 @@ InnerLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
                                         ReducedPartRdx, RdxParts[part]);
     }
 
-    // VF is a power of 2 so we can emit the reduction using log2(VF) shuffles
-    // and vector ops, reducing the set of values being computed by half each
-    // round.
-    assert(isPowerOf2_32(VF) &&
-           "Reduction emission only supported for pow2 vectors!");
-    Value *TmpVec = ReducedPartRdx;
-    SmallVector<Constant*, 32> ShuffleMask(VF, 0);
-    for (unsigned i = VF; i != 1; i >>= 1) {
-      // Move the upper half of the vector to the lower half.
-      for (unsigned j = 0; j != i/2; ++j)
-        ShuffleMask[j] = Builder.getInt32(i/2 + j);
+    if (VF > 1) {
+      // VF is a power of 2 so we can emit the reduction using log2(VF) shuffles
+      // and vector ops, reducing the set of values being computed by half each
+      // round.
+      assert(isPowerOf2_32(VF) &&
+             "Reduction emission only supported for pow2 vectors!");
+      Value *TmpVec = ReducedPartRdx;
+      SmallVector<Constant*, 32> ShuffleMask(VF, 0);
+      for (unsigned i = VF; i != 1; i >>= 1) {
+        // Move the upper half of the vector to the lower half.
+        for (unsigned j = 0; j != i/2; ++j)
+          ShuffleMask[j] = Builder.getInt32(i/2 + j);
 
-      // Fill the rest of the mask with undef.
-      std::fill(&ShuffleMask[i/2], ShuffleMask.end(),
-                UndefValue::get(Builder.getInt32Ty()));
+        // Fill the rest of the mask with undef.
+        std::fill(&ShuffleMask[i/2], ShuffleMask.end(),
+                  UndefValue::get(Builder.getInt32Ty()));
 
-      Value *Shuf =
+        Value *Shuf =
         Builder.CreateShuffleVector(TmpVec,
                                     UndefValue::get(TmpVec->getType()),
                                     ConstantVector::get(ShuffleMask),
                                     "rdx.shuf");
 
-      if (Op != Instruction::ICmp && Op != Instruction::FCmp)
-        TmpVec = Builder.CreateBinOp((Instruction::BinaryOps)Op, TmpVec, Shuf,
-                                     "bin.rdx");
-      else
-        TmpVec = createMinMaxOp(Builder, RdxDesc.MinMaxKind, TmpVec, Shuf);
-    }
+        if (Op != Instruction::ICmp && Op != Instruction::FCmp)
+          TmpVec = Builder.CreateBinOp((Instruction::BinaryOps)Op, TmpVec, Shuf,
+                                       "bin.rdx");
+        else
+          TmpVec = createMinMaxOp(Builder, RdxDesc.MinMaxKind, TmpVec, Shuf);
+      }
 
-    // The result is in the first element of the vector.
-    Value *Scalar0 = Builder.CreateExtractElement(TmpVec, Builder.getInt32(0));
+      // The result is in the first element of the vector.
+      ReducedPartRdx = Builder.CreateExtractElement(TmpVec,
+                                                    Builder.getInt32(0));
+    }
 
     // Now, we need to fix the users of the reduction variable
     // inside and outside of the scalar remainder loop.
@@ -2165,7 +2180,7 @@ InnerLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
       // incoming bypass edge.
       if (LCSSAPhi->getIncomingValue(0) == RdxDesc.LoopExitInstr) {
         // Add an edge coming from the bypass.
-        LCSSAPhi->addIncoming(Scalar0, LoopMiddleBlock);
+        LCSSAPhi->addIncoming(ReducedPartRdx, LoopMiddleBlock);
         break;
       }
     }// end of the LCSSA phi scan.
@@ -2177,7 +2192,7 @@ InnerLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
     assert(IncomingEdgeBlockIdx >= 0 && "Invalid block index");
     // Pick the other block.
     int SelfEdgeBlockIdx = (IncomingEdgeBlockIdx ? 0 : 1);
-    (RdxPhi)->setIncomingValue(SelfEdgeBlockIdx, Scalar0);
+    (RdxPhi)->setIncomingValue(SelfEdgeBlockIdx, ReducedPartRdx);
     (RdxPhi)->setIncomingValue(IncomingEdgeBlockIdx, RdxDesc.LoopExitInstr);
   }// end of for each redux variable.
  
@@ -4788,155 +4803,6 @@ bool LoopVectorizationCostModel::isConsecutiveLoadOrStore(Instruction *Inst) {
   return false;
 }
 
-void
-InnerLoopUnroller::vectorizeLoop(LoopVectorizationLegality *Legal) {
-  // In order to support reduction variables we need to be able to unroll
-  // Phi nodes. Phi nodes have cycles, so we need to unroll them in two
-  // stages. See InnerLoopVectorizer::vectorizeLoop for more details.
-  PhiVector RdxPHIsToFix;
-
-  // Scan the loop in a topological order to ensure that defs are vectorized
-  // before users.
-  LoopBlocksDFS DFS(OrigLoop);
-  DFS.perform(LI);
-
-  // Unroll all of the blocks in the original loop.
-  for (LoopBlocksDFS::RPOIterator bb = DFS.beginRPO(), be = DFS.endRPO();
-       bb != be; ++bb)
-    vectorizeBlockInLoop(Legal, *bb, &RdxPHIsToFix);
-
-  // Create the 'reduced' values for each of the induction vars.
-  // The reduced values are the vector values that we scalarize and combine
-  // after the loop is finished.
-  for (PhiVector::iterator it = RdxPHIsToFix.begin(), e = RdxPHIsToFix.end();
-       it != e; ++it) {
-    PHINode *RdxPhi = *it;
-    assert(RdxPhi && "Unable to recover vectorized PHI");
-
-    // Find the reduction variable descriptor.
-    assert(Legal->getReductionVars()->count(RdxPhi) &&
-           "Unable to find the reduction variable");
-    LoopVectorizationLegality::ReductionDescriptor RdxDesc =
-    (*Legal->getReductionVars())[RdxPhi];
-
-    setDebugLocFromInst(Builder, RdxDesc.StartValue);
-
-    // We need to generate a reduction vector from the incoming scalar.
-    // To do so, we need to generate the 'identity' vector and overide
-    // one of the elements with the incoming scalar reduction. We need
-    // to do it in the vector-loop preheader.
-    Builder.SetInsertPoint(LoopBypassBlocks.front()->getTerminator());
-
-    // This is the vector-clone of the value that leaves the loop.
-    VectorParts &VectorExit = getVectorValue(RdxDesc.LoopExitInstr);
-    Type *VecTy = VectorExit[0]->getType();
-
-    // Find the reduction identity variable. Zero for addition, or, xor,
-    // one for multiplication, -1 for And.
-    Value *Identity;
-    Value *VectorStart;
-    if (RdxDesc.Kind == LoopVectorizationLegality::RK_IntegerMinMax ||
-        RdxDesc.Kind == LoopVectorizationLegality::RK_FloatMinMax) {
-      // MinMax reduction have the start value as their identify.
-      VectorStart = Identity = RdxDesc.StartValue;
-
-    } else {
-      Identity = LoopVectorizationLegality::getReductionIdentity(RdxDesc.Kind,
-                                                        VecTy->getScalarType());
-
-      // This vector is the Identity vector where the first element is the
-      // incoming scalar reduction.
-      VectorStart = RdxDesc.StartValue;
-    }
-
-    // Fix the vector-loop phi.
-    // We created the induction variable so we know that the
-    // preheader is the first entry.
-    BasicBlock *VecPreheader = Induction->getIncomingBlock(0);
-
-    // Reductions do not have to start at zero. They can start with
-    // any loop invariant values.
-    VectorParts &VecRdxPhi = WidenMap.get(RdxPhi);
-    BasicBlock *Latch = OrigLoop->getLoopLatch();
-    Value *LoopVal = RdxPhi->getIncomingValueForBlock(Latch);
-    VectorParts &Val = getVectorValue(LoopVal);
-    for (unsigned part = 0; part < UF; ++part) {
-      // Make sure to add the reduction stat value only to the
-      // first unroll part.
-      Value *StartVal = (part == 0) ? VectorStart : Identity;
-      cast<PHINode>(VecRdxPhi[part])->addIncoming(StartVal, VecPreheader);
-      cast<PHINode>(VecRdxPhi[part])->addIncoming(Val[part], LoopVectorBody);
-    }
-
-    // Before each round, move the insertion point right between
-    // the PHIs and the values we are going to write.
-    // This allows us to write both PHINodes and the extractelement
-    // instructions.
-    Builder.SetInsertPoint(LoopMiddleBlock->getFirstInsertionPt());
-
-    VectorParts RdxParts;
-    setDebugLocFromInst(Builder, RdxDesc.LoopExitInstr);
-    for (unsigned part = 0; part < UF; ++part) {
-      // This PHINode contains the vectorized reduction variable, or
-      // the initial value vector, if we bypass the vector loop.
-      VectorParts &RdxExitVal = getVectorValue(RdxDesc.LoopExitInstr);
-      PHINode *NewPhi = Builder.CreatePHI(VecTy, 2, "rdx.vec.exit.phi");
-      Value *StartVal = (part == 0) ? VectorStart : Identity;
-      for (unsigned I = 0, E = LoopBypassBlocks.size(); I != E; ++I)
-        NewPhi->addIncoming(StartVal, LoopBypassBlocks[I]);
-      NewPhi->addIncoming(RdxExitVal[part], LoopVectorBody);
-      RdxParts.push_back(NewPhi);
-    }
-
-    // Reduce all of the unrolled parts into a single vector.
-    Value *ReducedPartRdx = RdxParts[0];
-    unsigned Op = getReductionBinOp(RdxDesc.Kind);
-    setDebugLocFromInst(Builder, ReducedPartRdx);
-    for (unsigned part = 1; part < UF; ++part) {
-      if (Op != Instruction::ICmp && Op != Instruction::FCmp)
-        ReducedPartRdx = Builder.CreateBinOp((Instruction::BinaryOps)Op,
-                                             RdxParts[part], ReducedPartRdx,
-                                             "bin.rdx");
-      else
-        ReducedPartRdx = createMinMaxOp(Builder, RdxDesc.MinMaxKind,
-                                        ReducedPartRdx, RdxParts[part]);
-    }
-
-    // Now, we need to fix the users of the reduction variable
-    // inside and outside of the scalar remainder loop.
-    // We know that the loop is in LCSSA form. We need to update the
-    // PHI nodes in the exit blocks.
-    for (BasicBlock::iterator LEI = LoopExitBlock->begin(),
-         LEE = LoopExitBlock->end(); LEI != LEE; ++LEI) {
-      PHINode *LCSSAPhi = dyn_cast<PHINode>(LEI);
-      if (!LCSSAPhi) continue;
-
-      // All PHINodes need to have a single entry edge, or two if
-      // we already fixed them.
-      assert(LCSSAPhi->getNumIncomingValues() < 3 && "Invalid LCSSA PHI");
-
-      // We found our reduction value exit-PHI. Update it with the
-      // incoming bypass edge.
-      if (LCSSAPhi->getIncomingValue(0) == RdxDesc.LoopExitInstr) {
-        // Add an edge coming from the bypass.
-        LCSSAPhi->addIncoming(ReducedPartRdx, LoopMiddleBlock);
-        break;
-      }
-    }// end of the LCSSA phi scan.
-
-    // Fix the scalar loop reduction variable with the incoming reduction sum
-    // from the vector body and from the backedge value.
-    int IncomingEdgeBlockIdx =
-    (RdxPhi)->getBasicBlockIndex(OrigLoop->getLoopLatch());
-    assert(IncomingEdgeBlockIdx >= 0 && "Invalid block index");
-    // Pick the other block.
-    int SelfEdgeBlockIdx = (IncomingEdgeBlockIdx ? 0 : 1);
-    (RdxPhi)->setIncomingValue(SelfEdgeBlockIdx, ReducedPartRdx);
-    (RdxPhi)->setIncomingValue(IncomingEdgeBlockIdx, RdxDesc.LoopExitInstr);
-  }// end of for each redux variable.
-
-  fixLCSSAPHIs();
-}
 
 void InnerLoopUnroller::scalarizeInstruction(Instruction *Instr) {
   assert(!Instr->getType()->isAggregateType() && "Can't handle vectors");
