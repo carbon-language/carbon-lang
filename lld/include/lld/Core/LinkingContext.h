@@ -77,6 +77,13 @@ public:
     return _deadStripRoots;
   }
 
+  /// Add the given symbol name to the dead strip root set. Only used if
+  /// deadStrip() returns true.
+  void addDeadStripRoot(StringRef symbolName) {
+    assert(_deadStrip && "only applicable when deadstripping enabled");
+    _deadStripRoots.push_back(symbolName);
+  }
+
   /// Archive files (aka static libraries) are normally lazily loaded.  That is,
   /// object files within an archive are only loaded and linked in, if the
   /// object file contains a DefinedAtom which will replace an existing
@@ -178,7 +185,16 @@ public:
   /// \name Methods used by Drivers to configure TargetInfo
   /// @{
   void setOutputPath(StringRef str) { _outputPath = str; }
-  void setEntrySymbolName(StringRef name) { _entrySymbolName = name; }
+
+  // Set the entry symbol name. You may also need to call addDeadStripRoot() for
+  // the symbol if your platform supports dead-stripping, so that the symbol
+  // will not be removed from the output.
+  void setEntrySymbolName(StringRef name) {
+    // Entry function have to be resolved as an undefined symbol.
+    addInitialUndefinedSymbol(name);
+    _entrySymbolName = name;
+  }
+
   void setDeadStripping(bool enable) { _deadStrip = enable; }
   void setGlobalsAreDeadStripRoots(bool v) { _globalsAreDeadStripRoots = v; }
   void setSearchArchivesToOverrideTentativeDefinitions(bool search) {
@@ -214,9 +230,11 @@ public:
   }
   virtual InputGraph &inputGraph() const { return *_inputGraph; }
 
-  /// This method adds undefined symbols specified by the -u option to the
-  /// to the list of undefined symbols known to the linker. This option
-  /// essentially forces an undefined symbol to be create.
+  /// This method adds undefined symbols specified by the -u option to the to
+  /// the list of undefined symbols known to the linker. This option essentially
+  /// forces an undefined symbol to be create. You may also need to call
+  /// addDeadStripRoot() for the symbol if your platform supports dead
+  /// stripping, so that the symbol will not be removed from the output.
   void addInitialUndefinedSymbol(StringRef symbolName) {
     _initialUndefinedSymbols.push_back(symbolName);
   }

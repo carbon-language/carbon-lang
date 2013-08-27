@@ -4,10 +4,11 @@
 #
 # RUN: yaml2obj %p/Inputs/nop.obj.yaml > %t.obj
 #
-# RUN: lld -flavor link /out:%t1 /subsystem:console,3.11 -- %t.obj \
-# RUN:   && llvm-readobj -file-headers %t1 | FileCheck -check-prefix=FILE %s
+# RUN: lld -flavor link /out:%t1 /subsystem:console,3.11 /entry:_start \
+# RUN:   -- %t.obj && llvm-readobj -file-headers %t1 \
+# RUN:   | FileCheck -check-prefix=FILE %s
 #
-# RUN: lld -flavor link /out:%t1 -- %t.obj \
+# RUN: lld -flavor link /out:%t1 /entry:_start -- %t.obj \
 # RUN:   && llvm-readobj -sections %t1 | FileCheck -check-prefix=SECTIONS %s
 
 FILE: Format: COFF-i386

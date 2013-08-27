@@ -422,7 +422,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
   }
 
   // Use the default entry name if /entry option is not given.
-  if (!parsedArgs->getLastArg(OPT_entry))
+  if (ctx.entrySymbolName().empty())
     setDefaultEntrySymbolName(ctx);
 
   // Arguments after "--" are interpreted as filenames even if they

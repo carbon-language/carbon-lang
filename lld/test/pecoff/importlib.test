@@ -3,20 +3,23 @@
 #
 # RUN: yaml2obj %p/Inputs/vars-main.obj.yaml > %t.obj
 #
-# RUN: lld -flavor link /out:%t1 /subsystem:console -- %t.obj \
+# RUN: lld -flavor link /out:%t1 /subsystem:console /entry:_main -- %t.obj \
 # RUN:    %p/Inputs/vars.lib && llvm-objdump -d %t1 | FileCheck %s
 #
-# RUN: lld -flavor link /out:%t1 /subsystem:console /libpath:%p/Inputs \
-# RUN:    -- %t.obj vars.lib && llvm-objdump -d %t1 | FileCheck %s
+# RUN: lld -flavor link /out:%t1 /subsystem:console /entry:_main \
+# RUN:    /libpath:%p/Inputs -- %t.obj vars.lib && llvm-objdump -d %t1 \
+# RUN:    | FileCheck %s
 #
-# RUN: lld -flavor link /out:%t1 /subsystem:console /libpath:%p/Inputs \
-# RUN:    /defaultlib:vars.lib -- %t.obj && llvm-objdump -d %t1 | FileCheck %s
+# RUN: lld -flavor link /out:%t1 /subsystem:console /entry:_main \
+# RUN:    /libpath:%p/Inputs /defaultlib:vars.lib -- %t.obj \
+# RUN:    && llvm-objdump -d %t1 | FileCheck %s
 #
 # RUN: env LIB=%p/Inputs lld -flavor link /out:%t1 /subsystem:console \
-# RUN:    -- %t.obj vars.lib && llvm-objdump -d %t1 | FileCheck %s
+# RUN:    /entry:_main -- %t.obj vars.lib && llvm-objdump -d %t1 | FileCheck %s
 #
-# RUN: env LINK="/out:%t1 /subsystem:console -- %t.obj" lld -flavor link \
-# RUN:    %p/Inputs/vars.lib && llvm-objdump -d %t1 | FileCheck %s
+# RUN: env LINK="/out:%t1 /subsystem:console /entry:_main -- %t.obj" \
+# RUN:    lld -flavor link %p/Inputs/vars.lib && llvm-objdump -d %t1 \
+# RUN:    | FileCheck %s
 
 CHECK: Disassembly of section .text:
 CHECK-NEXT: .text:
