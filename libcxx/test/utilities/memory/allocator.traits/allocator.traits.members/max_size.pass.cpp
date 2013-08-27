@@ -12,7 +12,7 @@
 // template <class Alloc>
 // struct allocator_traits
 // {
-//     static size_type max_size(const allocator_type& a);
+//     static size_type max_size(const allocator_type& a) noexcept;
 //     ...
 // };
 
@@ -61,4 +61,10 @@ int main()
         const B<int> b = {};
         assert(std::allocator_traits<B<int> >::max_size(b) == 100);
     }
+#if __cplusplus >= 201103
+    {
+        std::allocator<int> a;
+        static_assert(noexcept(std::allocator_traits<std::allocator<int>>::max_size(a)) == true, "");
+    }
+#endif
 }

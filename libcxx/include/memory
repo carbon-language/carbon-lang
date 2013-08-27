@@ -90,7 +90,7 @@ struct allocator_traits
     template <class T>
         static void destroy(allocator_type& a, T* p);
 
-    static size_type max_size(const allocator_type& a);
+    static size_type max_size(const allocator_type& a); // noexcept in C++14
 
     static allocator_type
         select_on_container_copy_construction(const allocator_type& a);
@@ -1483,7 +1483,7 @@ struct _LIBCPP_TYPE_VIS_ONLY allocator_traits
             {__destroy(__has_destroy<allocator_type, _Tp*>(), __a, __p);}
 
     _LIBCPP_INLINE_VISIBILITY
-    static size_type max_size(const allocator_type& __a)
+    static size_type max_size(const allocator_type& __a) _NOEXCEPT
         {return __max_size(__has_max_size<const allocator_type>(), __a);}
 
     _LIBCPP_INLINE_VISIBILITY
