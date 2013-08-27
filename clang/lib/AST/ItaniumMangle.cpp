@@ -1804,7 +1804,6 @@ void CXXNameMangler::mangleQualifiers(Qualifiers Quals) {
 void CXXNameMangler::mangleRefQualifier(RefQualifierKind RefQualifier) {
   // <ref-qualifier> ::= R                # lvalue reference
   //                 ::= O                # rvalue-reference
-  // Proposal to Itanium C++ ABI list on 1/26/11
   switch (RefQualifier) {
   case RQ_None:
     break;
@@ -1987,7 +1986,6 @@ void CXXNameMangler::mangleType(const BuiltinType *T) {
 // <type>          ::= <function-type>
 // <function-type> ::= [<CV-qualifiers>] F [Y]
 //                      <bare-function-type> [<ref-qualifier>] E
-// (Proposal to cxx-abi-dev, 2012-05-11)
 void CXXNameMangler::mangleType(const FunctionProtoType *T) {
   // Mangle CV-qualifiers, if present.  These are 'this' qualifiers,
   // e.g. "const" in "int (A::*)() const".
@@ -2844,8 +2842,8 @@ recurse:
 
   case Expr::CXXThrowExprClass: {
     const CXXThrowExpr *TE = cast<CXXThrowExpr>(E);
-
-    // Proposal from David Vandervoorde, 2010.06.30
+    //  <expression> ::= tw <expression>  # throw expression
+    //               ::= tr               # rethrow
     if (TE->getSubExpr()) {
       Out << "tw";
       mangleExpression(TE->getSubExpr());
@@ -2857,8 +2855,8 @@ recurse:
 
   case Expr::CXXTypeidExprClass: {
     const CXXTypeidExpr *TIE = cast<CXXTypeidExpr>(E);
-
-    // Proposal from David Vandervoorde, 2010.06.30
+    //  <expression> ::= ti <type>        # typeid (type)
+    //               ::= te <expression>  # typeid (expression)
     if (TIE->isTypeOperand()) {
       Out << "ti";
       mangleType(TIE->getTypeOperand());
@@ -2871,8 +2869,8 @@ recurse:
 
   case Expr::CXXDeleteExprClass: {
     const CXXDeleteExpr *DE = cast<CXXDeleteExpr>(E);
-
-    // Proposal from David Vandervoorde, 2010.06.30
+    //  <expression> ::= [gs] dl <expression>  # [::] delete expr
+    //               ::= [gs] da <expression>  # [::] delete [] expr
     if (DE->isGlobalDelete()) Out << "gs";
     Out << (DE->isArrayForm() ? "da" : "dl");
     mangleExpression(DE->getArgument());
@@ -3103,8 +3101,6 @@ recurse:
     // fallthrough
 
   case Expr::CXXNullPtrLiteralExprClass: {
-    // Proposal from David Vandervoorde, 2010.06.30, as
-    // modified by ABI list discussion.
     Out << "LDnE";
     break;
   }
@@ -3269,7 +3265,6 @@ void CXXNameMangler::mangleTemplateArg(TemplateArgument A) {
   //                ::= X <expression> E    # expression
   //                ::= <expr-primary>      # simple expressions
   //                ::= J <template-arg>* E # argument pack
-  //                ::= sp <expression>     # pack expansion of (C++0x)  
   if (!A.isInstantiationDependent() || A.isDependent())
     A = Context.getASTContext().getCanonicalTemplateArgument(A);
   
@@ -3349,9 +3344,9 @@ void CXXNameMangler::mangleTemplateArg(TemplateArgument A) {
     break;
   }
   case TemplateArgument::Pack: {
-    // Note: proposal by Mike Herrick on 12/20/10
+    //  <template-arg> ::= J <template-arg>* E
     Out << 'J';
-    for (TemplateArgument::pack_iterator PA = A.pack_begin(), 
+    for (TemplateArgument::pack_iterator PA = A.pack_begin(),
                                       PAEnd = A.pack_end();
          PA != PAEnd; ++PA)
       mangleTemplateArg(*PA);
