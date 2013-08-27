@@ -190,7 +190,7 @@ static void LowerDextDins(MCInst& InstIn) {
 }
 
 /// EncodeInstruction - Emit the instruction.
-/// Size the instruction (currently only 4 bytes
+/// Size the instruction with Desc.getSize().
 void MipsMCCodeEmitter::
 EncodeInstruction(const MCInst &MI, raw_ostream &OS,
                   SmallVectorImpl<MCFixup> &Fixups) const
