@@ -363,6 +363,11 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
       ctx.setAllowRemainingUndefines(true);
       break;
 
+    case OPT_no_ref:
+      // Handle /opt:noref
+      ctx.setDeadStripping(false);
+      break;
+
     case OPT_no_nxcompat:
       // handle /nxcompat:no
       ctx.setNxCompat(false);
@@ -424,6 +429,12 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
   // Use the default entry name if /entry option is not given.
   if (ctx.entrySymbolName().empty())
     setDefaultEntrySymbolName(ctx);
+
+  // Specifying both /opt:ref and /opt:noref is an error.
+  if (parsedArgs->getLastArg(OPT_ref) && parsedArgs->getLastArg(OPT_no_ref)) {
+    diagnostics << "/opt:ref must not be specified with /opt:noref\n";
+    return true;
+  }
 
   // Arguments after "--" are interpreted as filenames even if they
   // start with a hypen or a slash. This is not compatible with link.exe

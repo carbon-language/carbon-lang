@@ -54,6 +54,7 @@ TEST_F(WinLinkParserTest, Basic) {
   EXPECT_TRUE(_context.getBaseRelocationEnabled());
   EXPECT_TRUE(_context.isTerminalServerAware());
   EXPECT_TRUE(_context.getDynamicBaseEnabled());
+  EXPECT_TRUE(_context.deadStrip());
   EXPECT_FALSE(_context.initialUndefinedSymbols().empty());
   EXPECT_EQ("_start", _context.initialUndefinedSymbols()[0]);
 }

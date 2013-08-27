@@ -30,7 +30,9 @@ public:
         _subsystem(llvm::COFF::IMAGE_SUBSYSTEM_UNKNOWN), _minOSVersion(6, 0),
         _nxCompat(true), _largeAddressAware(false),
         _baseRelocationEnabled(true), _terminalServerAware(true),
-        _dynamicBaseEnabled(true), _imageType(ImageType::IMAGE_EXE) {}
+        _dynamicBaseEnabled(true), _imageType(ImageType::IMAGE_EXE) {
+    setDeadStripping(true);
+  }
 
   struct OSVersion {
     OSVersion(int v1, int v2) : majorVersion(v1), minorVersion(v2) {}

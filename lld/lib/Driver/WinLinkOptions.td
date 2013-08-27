@@ -31,6 +31,10 @@ def incl_c : Separate<["/", "-"], "include">, Alias<incl>;
 def force : F<"force">,
     HelpText<"Allow undefined symbols when creating executables">;
 
+def ref : F<"opt:ref">;
+def no_ref : F<"opt:noref">,
+    HelpText<"Keep unreferenced symbols to be included to the output">;
+
 def nxcompat : F<"nxcompat">;
 def no_nxcompat : F<"nxcompat:no">,
     HelpText<"Disable data execution provention">;
