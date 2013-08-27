@@ -1016,7 +1016,7 @@ operator+(typename move_iterator<_Iter>::difference_type __n, const move_iterato
 template <class _Iter>
 inline _LIBCPP_INLINE_VISIBILITY
 move_iterator<_Iter>
-make_move_iterator(const _Iter& __i)
+make_move_iterator(_Iter __i)
 {
     return move_iterator<_Iter>(__i);
 }

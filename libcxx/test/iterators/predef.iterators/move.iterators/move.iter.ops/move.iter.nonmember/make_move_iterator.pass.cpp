@@ -30,10 +30,17 @@ test(It i)
 
 int main()
 {
+    {
     char s[] = "1234567890";
     test(input_iterator<char*>(s+5));
     test(forward_iterator<char*>(s+5));
     test(bidirectional_iterator<char*>(s+5));
     test(random_access_iterator<char*>(s+5));
     test(s+5);
+    }
+    {
+    int a[] = {1,2,3,4};
+    std::make_move_iterator(a+4);
+    std::make_move_iterator(a); // test for LWG issue 2061
+    }
 }
