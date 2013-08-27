@@ -8,7 +8,7 @@
 ; CHECK: DW_TAG_class_type
 ; CHECK: DW_TAG_member
 ; CHECK: badbit
-; CHECK: DW_AT_const_value [DW_FORM_data4]	(0x00000001)
+; CHECK: DW_AT_const_value [DW_FORM_sdata]      (1)
 ; CHECK-NOT: DW_AT_const_value
 ; CHECK: NULL
 

@@ -27,7 +27,7 @@
 ; even as data1. DWARF strongly urges implementations to prefer 
 ; _sdata/_udata rather than dataN
 
-; CHECK-NEXT: DW_AT_const_value [DW_FORM_data4]{{.*}}(0x00000003)
+; CHECK-NEXT: DW_AT_const_value [DW_FORM_sdata]{{.*}}(3)
 
 ; CHECK: DW_TAG_template_value_parameter
 ; CHECK-NEXT: DW_AT_type{{.*}}=> {[[INTPTR:0x[0-9a-f]*]]}
@@ -47,11 +47,11 @@
 ; CHECK-NOT: NULL
 ; CHECK: DW_TAG_template_value_parameter
 ; CHECK-NEXT: DW_AT_type{{.*}}=> {[[INT]]}
-; CHECK-NEXT: DW_AT_const_value  [DW_FORM_data4]{{.*}}(0x00000001)
+; CHECK-NEXT: DW_AT_const_value  [DW_FORM_sdata]{{.*}}(1)
 ; CHECK-NOT: NULL
 ; CHECK: DW_TAG_template_value_parameter
 ; CHECK-NEXT: DW_AT_type{{.*}}=> {[[INT]]}
-; CHECK-NEXT: DW_AT_const_value  [DW_FORM_data4]{{.*}}(0x00000002)
+; CHECK-NEXT: DW_AT_const_value  [DW_FORM_sdata]{{.*}}(2)
 
 ; CHECK: [[INTPTR]]:{{ *}}DW_TAG_pointer_type
 ; CHECK-NEXT: DW_AT_type{{.*}} => {[[INT]]}

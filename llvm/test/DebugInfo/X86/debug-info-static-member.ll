@@ -120,7 +120,7 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 ; PRESENT:      DW_TAG_member
 ; PRESENT-NEXT: DW_AT_name {{.*}} "const_c"
 ; PRESENT:      DW_AT_accessibility [DW_FORM_data1]   (0x01)
-; PRESENT:      DW_AT_const_value {{.*}} (0x00000012)
+; PRESENT:      DW_AT_const_value {{.*}} (18)
 ; While we're here, a normal member has data_member_location and
 ; accessibility attributes.
 ; PRESENT:      DW_TAG_member
@@ -173,7 +173,7 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 ; DARWINP:      DW_TAG_member
 ; DARWINP-NEXT: DW_AT_name {{.*}} "const_c"
 ; DARWINP:      DW_AT_accessibility [DW_FORM_data1]   (0x01)
-; DARWINP:      DW_AT_const_value {{.*}} (0x00000012)
+; DARWINP:      DW_AT_const_value {{.*}} (18)
 ; While we're here, a normal member has data_member_location and
 ; accessibility attributes.
 ; DARWINP:      DW_TAG_member
