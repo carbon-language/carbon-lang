@@ -261,33 +261,6 @@ TEST_F(RegistryTest, Adaptative) {
   EXPECT_FALSE(matches("void foo() { if (true) return; }", S));
 }
 
-TEST_F(RegistryTest, VariadicOp) {
-  Matcher<Decl> D = constructMatcher(
-      "anyOf", constructMatcher("recordDecl"),
-      constructMatcher("namedDecl",
-                       constructMatcher("hasName", std::string("foo"))))
-      .getTypedMatcher<Decl>();
-
-  EXPECT_TRUE(matches("void foo(){}", D));
-  EXPECT_TRUE(matches("struct Foo{};", D));
-  EXPECT_FALSE(matches("int i = 0;", D));
-
-  D = constructMatcher(
-      "allOf", constructMatcher("recordDecl"),
-      constructMatcher(
-          "namedDecl",
-          constructMatcher("anyOf",
-                           constructMatcher("hasName", std::string("Foo")),
-                           constructMatcher("hasName", std::string("Bar")))))
-      .getTypedMatcher<Decl>();
-
-  EXPECT_FALSE(matches("void foo(){}", D));
-  EXPECT_TRUE(matches("struct Foo{};", D));
-  EXPECT_FALSE(matches("int i = 0;", D));
-  EXPECT_TRUE(matches("class Bar{};", D));
-  EXPECT_FALSE(matches("class OtherBar{};", D));
-}
-
 TEST_F(RegistryTest, Errors) {
   // Incorrect argument count.
   OwningPtr<Diagnostics> Error(new Diagnostics());
@@ -311,24 +284,6 @@ TEST_F(RegistryTest, Errors) {
                                Error.get()).isNull());
   EXPECT_EQ("Incorrect type for arg 2. (Expected = Matcher<CXXRecordDecl>) != "
             "(Actual = Matcher<FunctionDecl>)",
-            Error->toString());
-
-  // Bad argument type with variadic.
-  Error.reset(new Diagnostics());
-  EXPECT_TRUE(constructMatcher("anyOf", std::string(), Error.get()).isNull());
-  EXPECT_EQ(
-      "Incorrect type for arg 1. (Expected = Matcher<>) != (Actual = String)",
-      Error->toString());
-  Error.reset(new Diagnostics());
-  EXPECT_TRUE(constructMatcher(
-      "recordDecl",
-      constructMatcher("allOf",
-                       constructMatcher("isDerivedFrom", std::string("FOO")),
-                       constructMatcher("isArrow")),
-      Error.get()).isNull());
-  EXPECT_EQ("Incorrect type for arg 1. "
-            "(Expected = Matcher<CXXRecordDecl>) != "
-            "(Actual = Matcher<CXXRecordDecl>&Matcher<MemberExpr>)",
             Error->toString());
 }
 

@@ -38,9 +38,13 @@ public:
         .str();
   }
 
-  virtual void makeTypedMatcher(MatcherOps &Ops) const {
-    if (Ops.canConstructFrom(*Matcher))
-      Ops.constructFrom(*Matcher);
+  virtual bool hasTypedMatcher(const MatcherOps &Ops) const {
+    return Ops.canConstructFrom(*Matcher);
+  }
+
+  virtual const DynTypedMatcher *getTypedMatcher(const MatcherOps &Ops) const {
+    assert(hasTypedMatcher(Ops));
+    return Matcher.get();
   }
 
 private:
@@ -76,49 +80,23 @@ public:
     return (Twine("Matcher<") + Inner + ">").str();
   }
 
-  virtual void makeTypedMatcher(MatcherOps &Ops) const {
-    const DynTypedMatcher *Found = NULL;
+  virtual bool hasTypedMatcher(const MatcherOps &Ops) const {
+    return getTypedMatcher(Ops) != NULL;
+  }
+
+  virtual const DynTypedMatcher *getTypedMatcher(const MatcherOps &Ops) const {
+    const DynTypedMatcher* Found = NULL;
     for (size_t i = 0, e = Matchers.size(); i != e; ++i) {
       if (Ops.canConstructFrom(*Matchers[i])) {
-        if (Found)
-          return;
+        if (Found) return NULL;
         Found = Matchers[i];
       }
     }
-    if (Found)
-      Ops.constructFrom(*Found);
-  }
-
-  std::vector<const DynTypedMatcher *> Matchers;
-};
-
-class VariantMatcher::VariadicOpPayload : public VariantMatcher::Payload {
-public:
-  VariadicOpPayload(ast_matchers::internal::VariadicOperatorFunction Func,
-                    ArrayRef<VariantMatcher> Args)
-      : Func(Func), Args(Args) {}
-
-  virtual bool getSingleMatcher(const DynTypedMatcher *&Out) const {
-    return false;
-  }
-
-  virtual std::string getTypeAsString() const {
-    std::string Inner;
-    for (size_t i = 0, e = Args.size(); i != e; ++i) {
-      if (i != 0)
-        Inner += "&";
-      Inner += Args[i].getTypeAsString();
-    }
-    return Inner;
-  }
-
-  virtual void makeTypedMatcher(MatcherOps &Ops) const {
-    Ops.constructVariadicOperator(Func, Args);
+    return Found;
   }
 
 private:
-  const ast_matchers::internal::VariadicOperatorFunction Func;
-  const std::vector<VariantMatcher> Args;
+  std::vector<const DynTypedMatcher *> Matchers;
 };
 
 VariantMatcher::VariantMatcher() {}
@@ -130,12 +108,6 @@ VariantMatcher VariantMatcher::SingleMatcher(const DynTypedMatcher &Matcher) {
 VariantMatcher
 VariantMatcher::PolymorphicMatcher(ArrayRef<const DynTypedMatcher *> Matchers) {
   return VariantMatcher(new PolymorphicPayload(Matchers));
-}
-
-VariantMatcher VariantMatcher::VariadicOperatorMatcher(
-    ast_matchers::internal::VariadicOperatorFunction Func,
-    ArrayRef<VariantMatcher> Args) {
-  return VariantMatcher(new VariadicOpPayload(Func, Args));
 }
 
 bool VariantMatcher::getSingleMatcher(const DynTypedMatcher *&Out) const {
