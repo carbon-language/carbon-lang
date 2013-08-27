@@ -45,6 +45,9 @@ lit.site.cfg: FORCE
 	@$(ECHOPATH) s=@CLANG_SOURCE_DIR@=$(PROJ_SRC_DIR)/..=g >> lit.tmp
 	@$(ECHOPATH) s=@CLANG_BINARY_DIR@=$(PROJ_OBJ_DIR)/..=g >> lit.tmp
 	@$(ECHOPATH) s=@TARGET_TRIPLE@=$(TARGET_TRIPLE)=g >> lit.tmp
+	@$(ECHOPATH) s=@ENABLE_CLANG_ARCMT@=$(ENABLE_CLANG_ARCMT)=g >> lit.tmp
+	@$(ECHOPATH) s=@ENABLE_CLANG_REWRITER@=$(ENABLE_CLANG_REWRITER)=g >> lit.tmp
+	@$(ECHOPATH) s=@ENABLE_CLANG_STATIC_ANALYZER@=$(ENABLE_CLANG_STATIC_ANALYZER)=g >> lit.tmp
 	@sed -f lit.tmp $(PROJ_SRC_DIR)/lit.site.cfg.in > $@
 	@-rm -f lit.tmp
 
