@@ -350,12 +350,12 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
 
     case OPT_entry:
       // handle /entry
-      ctx.setEntrySymbolName(inputArg->getValue());
+      ctx.setEntrySymbolName(ctx.allocateString(inputArg->getValue()));
       break;
 
     case OPT_libpath:
       // handle /libpath
-      ctx.appendInputSearchPath(inputArg->getValue());
+      ctx.appendInputSearchPath(ctx.allocateString(inputArg->getValue()));
       break;
 
     case OPT_force:
@@ -408,12 +408,12 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
 
     case OPT_incl:
       // handle /incl
-      ctx.addInitialUndefinedSymbol(inputArg->getValue());
+      ctx.addInitialUndefinedSymbol(ctx.allocateString(inputArg->getValue()));
       break;
 
     case OPT_out:
       // handle /out
-      ctx.setOutputPath(inputArg->getValue());
+      ctx.setOutputPath(ctx.allocateString(inputArg->getValue()));
       break;
 
     case OPT_INPUT: {
