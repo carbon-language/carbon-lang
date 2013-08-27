@@ -439,8 +439,8 @@ void MicrosoftCXXABI::BuildDestructorSignature(const CXXDestructorDecl *Dtor,
   // TODO: 'for base' flag
 
   if (Type == Dtor_Deleting) {
-    // The scalar deleting destructor takes an implicit bool parameter.
-    ArgTys.push_back(CGM.getContext().BoolTy);
+    // The scalar deleting destructor takes an implicit int parameter.
+    ArgTys.push_back(CGM.getContext().IntTy);
   }
 }
 
@@ -506,7 +506,7 @@ void MicrosoftCXXABI::BuildInstanceFunctionParams(CodeGenFunction &CGF,
       = ImplicitParamDecl::Create(Context, 0,
                                   CGF.CurGD.getDecl()->getLocation(),
                                   &Context.Idents.get("should_call_delete"),
-                                  Context.BoolTy);
+                                  Context.IntTy);
     Params.push_back(ShouldDelete);
     getStructorImplicitParamDecl(CGF) = ShouldDelete;
   }
@@ -630,7 +630,7 @@ void MicrosoftCXXABI::EmitVirtualDestructorCall(CodeGenFunction &CGF,
   assert(DtorType == Dtor_Deleting || DtorType == Dtor_Complete);
 
   // We have only one destructor in the vftable but can get both behaviors
-  // by passing an implicit bool parameter.
+  // by passing an implicit int parameter.
   const CGFunctionInfo *FInfo =
       &CGM.getTypes().arrangeCXXDestructor(Dtor, Dtor_Deleting);
   llvm::Type *Ty = CGF.CGM.getTypes().GetFunctionType(*FInfo);
@@ -639,11 +639,11 @@ void MicrosoftCXXABI::EmitVirtualDestructorCall(CodeGenFunction &CGF,
 
   ASTContext &Context = CGF.getContext();
   llvm::Value *ImplicitParam =
-      llvm::ConstantInt::get(llvm::IntegerType::getInt1Ty(CGF.getLLVMContext()),
+      llvm::ConstantInt::get(llvm::IntegerType::getInt32Ty(CGF.getLLVMContext()),
                              DtorType == Dtor_Deleting);
 
   CGF.EmitCXXMemberCall(Dtor, CallLoc, Callee, ReturnValueSlot(), This,
-                        ImplicitParam, Context.BoolTy, 0, 0);
+                        ImplicitParam, Context.IntTy, 0, 0);
 }
 
 const VBTableVector &
