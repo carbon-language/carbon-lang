@@ -22,6 +22,10 @@ int main()
 {
     typedef std::codecvt_utf8<wchar_t> Codecvt;
     typedef std::wstring_convert<Codecvt> Myconv;
+#if _LIBCPP_STD_VER > 11
+    static_assert(!std::is_convertible<std::string, Myconv>::value, "");
+    static_assert( std::is_constructible<Myconv, std::string>::value, "");
+#endif
     {
         Myconv myconv;
         try

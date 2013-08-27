@@ -30,5 +30,9 @@ int main()
         typedef std::wstring_convert<Codecvt> Myconv;
         Myconv myconv(new Codecvt);
         assert(myconv.converted() == 0);
+#if _LIBCPP_STD_VER > 11
+        static_assert(!std::is_convertible<Codecvt*, Myconv>::value, "");
+        static_assert( std::is_constructible<Myconv, Codecvt*>::value, "");
+#endif
     }
 }

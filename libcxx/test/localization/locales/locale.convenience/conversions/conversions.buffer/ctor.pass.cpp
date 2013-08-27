@@ -37,6 +37,10 @@ void  operator delete(void* p) throw()
 int main()
 {
     typedef std::wbuffer_convert<std::codecvt_utf8<wchar_t> > B;
+#if _LIBCPP_STD_VER > 11
+    static_assert(!std::is_convertible<std::streambuf*, B>::value, "");
+    static_assert( std::is_constructible<B, std::streambuf*>::value, "");
+#endif
     {
         B b;
         assert(b.rdbuf() == nullptr);
