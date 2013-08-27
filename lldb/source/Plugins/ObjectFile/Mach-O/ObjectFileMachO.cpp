@@ -523,6 +523,11 @@ ObjectFileMachO::GetModuleSpecifications (const lldb_private::FileSpec& file,
                 spec.GetArchitecture().SetArchitecture(eArchTypeMachO,
                                                        header.cputype,
                                                        header.cpusubtype);
+                if (header.filetype == HeaderFileTypePreloadedExecutable) // 0x5u MH_PRELOAD
+                {
+                    // Set OS to "unknown" - this is a standalone binary with no dyld et al
+                    spec.GetArchitecture().GetTriple().setOS (llvm::Triple::UnknownOS);
+                }
                 if (spec.GetArchitecture().IsValid())
                 {
                     GetUUID (header, data, data_offset, spec.GetUUID());
