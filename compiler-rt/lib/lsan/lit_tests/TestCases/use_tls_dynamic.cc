@@ -30,4 +30,5 @@ int main(int argc, char *argv[]) {
 // CHECK: Test alloc: [[ADDR:.*]].
 // CHECK: leaked 1337 byte object at [[ADDR]]
 // CHECK: LeakSanitizer: detected memory leaks
+// CHECK: dl-tls.c
 // CHECK: SUMMARY: LeakSanitizer:
