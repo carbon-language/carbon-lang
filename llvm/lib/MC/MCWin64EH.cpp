@@ -64,7 +64,7 @@ static void EmitAbsDifference(MCStreamer &streamer, MCSymbol *lhs,
 
 static void EmitUnwindCode(MCStreamer &streamer, MCSymbol *begin,
                            MCWin64EHInstruction &inst) {
-  uint8_t b1, b2;
+  uint8_t b2;
   uint16_t w;
   b2 = (inst.getOperation() & 0x0F);
   switch (inst.getOperation()) {
@@ -93,8 +93,7 @@ static void EmitUnwindCode(MCStreamer &streamer, MCSymbol *begin,
     streamer.EmitIntValue(b2, 1);
     break;
   case Win64EH::UOP_SetFPReg:
-    b1 = inst.getOffset() & 0xF0;
-    streamer.EmitIntValue(b1, 1);
+    EmitAbsDifference(streamer, inst.getLabel(), begin);
     streamer.EmitIntValue(b2, 1);
     break;
   case Win64EH::UOP_SaveNonVol:
