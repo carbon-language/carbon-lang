@@ -11,6 +11,7 @@ C++11 Migrator User's Manual
    UseNullptrTransform
    LoopConvertTransform
    AddOverrideTransform
+   PassByValueTransform
    ReplaceAutoPtrTransform
    MigratorUsage
 
@@ -115,5 +116,7 @@ independently enabled. The transforms currently implemented are:
 * :doc:`UseAutoTransform`
 
 * :doc:`AddOverrideTransform`
+
+* :doc:`PassByValueTransform`
 
 * :doc:`ReplaceAutoPtrTransform`
