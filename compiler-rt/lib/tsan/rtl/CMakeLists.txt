@@ -45,7 +45,8 @@ if(CAN_TARGET_x86_64 AND UNIX AND NOT APPLE)
             $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
             $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>
     CFLAGS ${TSAN_CFLAGS}
-    DEFS ${TSAN_COMMON_DEFINITIONS}
-    SYMS tsan.syms)
-  list(APPEND TSAN_RUNTIME_LIBRARIES clang_rt.tsan-${arch})
+    DEFS ${TSAN_COMMON_DEFINITIONS})
+  add_sanitizer_rt_symbols(clang_rt.tsan-${arch} tsan.syms.extra)
+  list(APPEND TSAN_RUNTIME_LIBRARIES clang_rt.tsan-${arch}
+    clang_rt.tsan-${arch}-symbols)
 endif()

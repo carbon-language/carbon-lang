@@ -1,0 +1,13 @@
+__tsan_init
+__tsan_read*
+__tsan_write*
+__tsan_vptr*
+__tsan_func*
+__tsan_atomic*
+__tsan_java*
+__tsan_unaligned*
+__tsan_release
+__tsan_acquire
+Annotate*
+WTFAnnotate*
+RunningOnValgrind

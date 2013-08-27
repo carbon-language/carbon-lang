@@ -1,5 +1,0 @@
-{
-  __tsan_*;
-  __sanitizer_syscall_pre_*;
-  __sanitizer_syscall_post_*;
-};

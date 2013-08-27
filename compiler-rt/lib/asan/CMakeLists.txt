@@ -102,16 +102,16 @@ else()
     add_compiler_rt_static_runtime(clang_rt.asan-${arch} ${arch}
       SOURCES ${ASAN_SOURCES} ${ASAN_SOURCE_LIBS}
       CFLAGS ${ASAN_CFLAGS}
-      DEFS ${ASAN_COMMON_DEFINITIONS}
-      SYMS asan.syms)
-    list(APPEND ASAN_RUNTIME_LIBRARIES clang_rt.asan-${arch})
+      DEFS ${ASAN_COMMON_DEFINITIONS})
+    add_sanitizer_rt_symbols(clang_rt.asan-${arch} asan.syms.extra)
+    list(APPEND ASAN_RUNTIME_LIBRARIES clang_rt.asan-${arch}
+      clang_rt.asan-${arch}-symbols)
 
     if (WIN32)
       add_compiler_rt_static_runtime(clang_rt.asan_dll_thunk-${arch} ${arch}
       SOURCES asan_dll_thunk.cc
       CFLAGS ${ASAN_CFLAGS} -DASAN_DLL_THUNK
-      DEFS ${ASAN_COMMON_DEFINITIONS}
-      SYMS asan.syms)
+      DEFS ${ASAN_COMMON_DEFINITIONS})
       list(APPEND ASAN_RUNTIME_LIBRARIES clang_rt.asan_dll_thunk-${arch})
     endif()
   endforeach()
