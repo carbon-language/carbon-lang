@@ -369,10 +369,7 @@ public:
                 }
             }
             
-            if (!s_regex.IsValid())
-            {
-                s_regex.Compile("[ \t]*([^ ^\t]+)[ \t]*([^ ^\t].*)?", REG_EXTENDED);
-            }
+            static RegularExpression s_regex("[ \t]*([^ ^\t]+)[ \t]*([^ ^\t].*)?", REG_EXTENDED);
             
             RegularExpression::Match matches(3);
             
@@ -412,11 +409,9 @@ protected:
     LazyBool                m_does_branch;
     bool                    m_is_valid;
     bool                    m_using_file_addr;
-    
-    static RegularExpression s_regex;
 };
 
-RegularExpression InstructionLLVMC::s_regex;
+
 
 DisassemblerLLVMC::LLVMCDisassembler::LLVMCDisassembler (const char *triple, unsigned flavor, DisassemblerLLVMC &owner):
     m_is_valid(true)
