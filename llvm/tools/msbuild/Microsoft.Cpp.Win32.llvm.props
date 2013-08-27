@@ -1,0 +1,10 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">  
+  <PropertyGroup>
+    <VCInstallDir>suppress warning</VCInstallDir>
+    <WindowsSdkDir>suppress warning</WindowsSdkDir>
+	
+    <ClangInstallDir>$(Registry:HKEY_LOCAL_MACHINE\SOFTWARE\LLVM\LLVM 3.4.svn)</ClangInstallDir>
+    <ClangInstallDir Condition="'$(ClangInstallDir)' == ''">$(Registry:HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\LLVM\LLVM 3.4.svn)</ClangInstallDir>
+    <ExecutablePath>$(ClangInstallDir)\msbuild-bin;$(ExecutablePath)</ExecutablePath>
+  </PropertyGroup>
+</Project>
