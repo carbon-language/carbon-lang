@@ -3094,9 +3094,7 @@ public:
   }
 
   virtual CallingConvCheckResult checkCallingConvention(CallingConv CC) const {
-    return (CC == CC_Default ||
-            CC == CC_C || 
-            CC == CC_IntelOclBicc) ? CCCR_OK : CCCR_Warning;
+    return (CC == CC_C || CC == CC_IntelOclBicc) ? CCCR_OK : CCCR_Warning;
   }
 
   virtual CallingConv getDefaultCallingConv(CallingConvMethodType MT) const {

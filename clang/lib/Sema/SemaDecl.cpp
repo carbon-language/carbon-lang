@@ -2201,17 +2201,11 @@ static bool canRedefineFunction(const FunctionDecl *FD,
           FD->getStorageClass() == SC_Extern);
 }
 
-/// Is the given calling convention the ABI default for the given
-/// declaration?
-static bool isABIDefaultCC(Sema &S, CallingConv CC, FunctionDecl *D) {
-  CallingConv ABIDefaultCC;
-  if (isa<CXXMethodDecl>(D) && cast<CXXMethodDecl>(D)->isInstance()) {
-    ABIDefaultCC = S.Context.getDefaultCXXMethodCallConv(D->isVariadic());
-  } else {
-    // Free C function or a static method.
-    ABIDefaultCC = (S.Context.getLangOpts().MRTD ? CC_X86StdCall : CC_C);
-  }
-  return ABIDefaultCC == CC;
+const AttributedType *Sema::getCallingConvAttributedType(QualType T) const {
+  const AttributedType *AT = T->getAs<AttributedType>();
+  while (AT && !AT->isCallingConv())
+    AT = AT->getModifiedType()->getAs<AttributedType>();
+  return AT;
 }
 
 template <typename T>
@@ -2287,9 +2281,6 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, Scope *S,
   else
     PrevDiag = diag::note_previous_declaration;
 
-  QualType OldQType = Context.getCanonicalType(Old->getType());
-  QualType NewQType = Context.getCanonicalType(New->getType());
-
   // Don't complain about this if we're in GNU89 mode and the old function
   // is an extern inline function.
   // Don't complain about specializations. They are not supposed to have
@@ -2309,53 +2300,52 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, Scope *S,
     }
   }
 
-  // If a function is first declared with a calling convention, but is
-  // later declared or defined without one, the second decl assumes the
-  // calling convention of the first.
+
+  // If a function is first declared with a calling convention, but is later
+  // declared or defined without one, all following decls assume the calling
+  // convention of the first.
   //
   // It's OK if a function is first declared without a calling convention,
   // but is later declared or defined with the default calling convention.
   //
-  // For the new decl, we have to look at the NON-canonical type to tell the
-  // difference between a function that really doesn't have a calling
-  // convention and one that is declared cdecl. That's because in
-  // canonicalization (see ASTContext.cpp), cdecl is canonicalized away
-  // because it is the default calling convention.
+  // To test if either decl has an explicit calling convention, we look for
+  // AttributedType sugar nodes on the type as written.  If they are missing or
+  // were canonicalized away, we assume the calling convention was implicit.
   //
   // Note also that we DO NOT return at this point, because we still have
   // other tests to run.
+  QualType OldQType = Context.getCanonicalType(Old->getType());
+  QualType NewQType = Context.getCanonicalType(New->getType());
   const FunctionType *OldType = cast<FunctionType>(OldQType);
-  const FunctionType *NewType = New->getType()->getAs<FunctionType>();
+  const FunctionType *NewType = cast<FunctionType>(NewQType);
   FunctionType::ExtInfo OldTypeInfo = OldType->getExtInfo();
   FunctionType::ExtInfo NewTypeInfo = NewType->getExtInfo();
   bool RequiresAdjustment = false;
-  if (OldTypeInfo.getCC() == NewTypeInfo.getCC()) {
-    // Fast path: nothing to do.
 
-  // Inherit the CC from the previous declaration if it was specified
-  // there but not here.
-  } else if (NewTypeInfo.getCC() == CC_Default) {
-    NewTypeInfo = NewTypeInfo.withCallingConv(OldTypeInfo.getCC());
-    RequiresAdjustment = true;
+  if (OldTypeInfo.getCC() != NewTypeInfo.getCC()) {
+    FunctionDecl *First = Old->getFirstDeclaration();
+    const FunctionType *FT =
+        First->getType().getCanonicalType()->castAs<FunctionType>();
+    FunctionType::ExtInfo FI = FT->getExtInfo();
+    bool NewCCExplicit = getCallingConvAttributedType(New->getType());
+    if (!NewCCExplicit) {
+      // Inherit the CC from the previous declaration if it was specified
+      // there but not here.
+      NewTypeInfo = NewTypeInfo.withCallingConv(OldTypeInfo.getCC());
+      RequiresAdjustment = true;
+    } else {
+      // Calling conventions aren't compatible, so complain.
+      bool FirstCCExplicit = getCallingConvAttributedType(First->getType());
+      Diag(New->getLocation(), diag::err_cconv_change)
+        << FunctionType::getNameForCallConv(NewTypeInfo.getCC())
+        << !FirstCCExplicit
+        << (!FirstCCExplicit ? "" :
+            FunctionType::getNameForCallConv(FI.getCC()));
 
-  // Don't complain about mismatches when the default CC is
-  // effectively the same as the explict one. Only Old decl contains correct
-  // information about storage class of CXXMethod.
-  } else if (OldTypeInfo.getCC() == CC_Default &&
-             isABIDefaultCC(*this, NewTypeInfo.getCC(), Old)) {
-    NewTypeInfo = NewTypeInfo.withCallingConv(OldTypeInfo.getCC());
-    RequiresAdjustment = true;
-
-  } else if (!Context.isSameCallConv(OldTypeInfo.getCC(),
-                                     NewTypeInfo.getCC())) {
-    // Calling conventions really aren't compatible, so complain.
-    Diag(New->getLocation(), diag::err_cconv_change)
-      << FunctionType::getNameForCallConv(NewTypeInfo.getCC())
-      << (OldTypeInfo.getCC() == CC_Default)
-      << (OldTypeInfo.getCC() == CC_Default ? "" :
-          FunctionType::getNameForCallConv(OldTypeInfo.getCC()));
-    Diag(Old->getLocation(), diag::note_previous_declaration);
-    return true;
+      // Put the note on the first decl, since it is the one that matters.
+      Diag(First->getLocation(), diag::note_previous_declaration);
+      return true;
+    }
   }
 
   // FIXME: diagnose the other way around?
@@ -6463,6 +6453,11 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
          diag::err_invalid_thread)
       << DeclSpec::getSpecifierName(TSCS);
 
+  if (DC->isRecord() &&
+      D.getDeclSpec().getStorageClassSpec() != DeclSpec::SCS_static &&
+      !D.getDeclSpec().isFriendSpecified())
+    adjustMemberFunctionCC(R);
+
   bool isFriend = false;
   FunctionTemplateDecl *FunctionTemplate = 0;
   bool isExplicitSpecialization = false;
@@ -7144,7 +7139,8 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
 
     // Turn this into a variadic function with no parameters.
     const FunctionType *FT = NewFD->getType()->getAs<FunctionType>();
-    FunctionProtoType::ExtProtoInfo EPI;
+    FunctionProtoType::ExtProtoInfo EPI(
+        Context.getDefaultCallingConvention(true, false));
     EPI.Variadic = true;
     EPI.ExtInfo = FT->getExtInfo();
 

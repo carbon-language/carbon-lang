@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple=i686-pc-unknown -fsyntax-only -verify %s -std=c++11
+// RUN: %clang_cc1 -triple=i686-pc-unknown -fsyntax-only -verify %s -std=c++11 -cxx-abi microsoft
 
 namespace PR14339 {
   class A {
@@ -28,6 +28,6 @@ namespace PR14339 {
 
   class F : public E {
   public:
-    void g();  // expected-error{{virtual function 'g' has different calling convention attributes ('void ()') than the function it overrides (which has calling convention 'void () __attribute__((stdcall))'}}
+    void g();  // expected-error{{virtual function 'g' has different calling convention attributes ('void () __attribute__((thiscall))') than the function it overrides (which has calling convention 'void () __attribute__((stdcall))'}}
   };
 }

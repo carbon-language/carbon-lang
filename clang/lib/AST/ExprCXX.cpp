@@ -196,8 +196,10 @@ CXXPseudoDestructorExpr::CXXPseudoDestructorExpr(const ASTContext &Context,
                 SourceLocation ColonColonLoc, SourceLocation TildeLoc, 
                 PseudoDestructorTypeStorage DestroyedType)
   : Expr(CXXPseudoDestructorExprClass,
-         Context.getPointerType(Context.getFunctionType(Context.VoidTy, None,
-                                         FunctionProtoType::ExtProtoInfo())),
+         Context.getPointerType(Context.getFunctionType(
+             Context.VoidTy, None,
+             FunctionProtoType::ExtProtoInfo(
+                 Context.getDefaultCallingConvention(false, true)))),
          VK_RValue, OK_Ordinary,
          /*isTypeDependent=*/(Base->isTypeDependent() ||
            (DestroyedType.getTypeSourceInfo() &&

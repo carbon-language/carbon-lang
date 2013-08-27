@@ -200,7 +200,6 @@ namespace clang {
 
   /// \brief CallingConv - Specifies the calling convention that a function uses.
   enum CallingConv {
-    CC_Default,
     CC_C,           // __attribute__((cdecl))
     CC_X86StdCall,  // __attribute__((stdcall))
     CC_X86FastCall, // __attribute__((fastcall))

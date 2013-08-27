@@ -1812,6 +1812,10 @@ template <> const TypedefType *Type::getAs() const;
 /// non-sugared type.
 template <> const TemplateSpecializationType *Type::getAs() const;
 
+/// \brief This will check for an AttributedType by removing any existing sugar
+/// until it reaches an AttributedType or a non-sugared type.
+template <> const AttributedType *Type::getAs() const;
+
 // We can do canonical leaf types faster, because we don't have to
 // worry about preserving child type decoration.
 #define TYPE(Class, Base)
@@ -2683,7 +2687,11 @@ class FunctionType : public Type {
 
     // Constructor with all defaults. Use when for example creating a
     // function know to use defaults.
-    ExtInfo() : Bits(0) {}
+    ExtInfo() : Bits(CC_C) { }
+
+    // Constructor with just the calling convention, which is an important part
+    // of the canonical type.
+    ExtInfo(CallingConv CC) : Bits(CC) { }
 
     bool getNoReturn() const { return Bits & NoReturnMask; }
     bool getProducesResult() const { return Bits & ProducesResultMask; }
@@ -2825,6 +2833,12 @@ public:
       NumExceptions(0), Exceptions(0), NoexceptExpr(0),
       ExceptionSpecDecl(0), ExceptionSpecTemplate(0),
       ConsumedArguments(0) {}
+
+    ExtProtoInfo(CallingConv CC)
+        : ExtInfo(CC), Variadic(false), HasTrailingReturn(false), TypeQuals(0),
+          ExceptionSpecType(EST_None), RefQualifier(RQ_None), NumExceptions(0),
+          Exceptions(0), NoexceptExpr(0), ExceptionSpecDecl(0),
+          ExceptionSpecTemplate(0), ConsumedArguments(0) {}
 
     FunctionType::ExtInfo ExtInfo;
     bool Variadic : 1;

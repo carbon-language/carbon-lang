@@ -1262,7 +1262,7 @@ public:
     // that when AVX types are involved: the ABI explicitly states it is
     // undefined, and it doesn't work in practice because of how the ABI
     // defines varargs anyway.
-    if (fnType->getCallConv() == CC_Default || fnType->getCallConv() == CC_C) {
+    if (fnType->getCallConv() == CC_C) {
       bool HasAVXType = false;
       for (CallArgList::const_iterator
              it = args.begin(), ie = args.end(); it != ie; ++it) {

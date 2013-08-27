@@ -1784,6 +1784,8 @@ QualType Sema::BuildMemberPointerType(QualType T, QualType Class,
     }
   }
 
+  // FIXME: Adjust member function pointer calling conventions.
+
   return Context.getMemberPointerType(T, Class.getTypePtr());
 }
 
@@ -2420,6 +2422,53 @@ static void warnAboutAmbiguousFunction(Sema &S, Declarator &D,
   }
 }
 
+/// Helper for figuring out the default CC for a function declarator type.  If
+/// this is the outermost chunk, then we can determine the CC from the
+/// declarator context.  If not, then this could be either a member function
+/// type or normal function type.
+static CallingConv
+getCCForDeclaratorChunk(Sema &S, Declarator &D,
+                        const DeclaratorChunk::FunctionTypeInfo &FTI,
+                        unsigned ChunkIndex) {
+  assert(D.getTypeObject(ChunkIndex).Kind == DeclaratorChunk::Function);
+
+  bool IsCXXInstanceMethod = false;
+
+  if (S.getLangOpts().CPlusPlus) {
+    // Look inwards through parentheses to see if this chunk will form a
+    // member pointer type or if we're the declarator.  Any type attributes
+    // between here and there will override the CC we choose here.
+    unsigned I = ChunkIndex;
+    bool FoundNonParen = false;
+    while (I && !FoundNonParen) {
+      --I;
+      if (D.getTypeObject(I).Kind != DeclaratorChunk::Paren)
+        FoundNonParen = true;
+    }
+
+    if (FoundNonParen) {
+      // If we're not the declarator, we're a regular function type unless we're
+      // in a member pointer.
+      IsCXXInstanceMethod =
+          D.getTypeObject(I).Kind == DeclaratorChunk::MemberPointer;
+    } else {
+      // We're the innermost decl chunk, so must be a function declarator.
+      assert(D.isFunctionDeclarator());
+
+      // If we're inside a record, we're declaring a method, but it could be
+      // static.
+      IsCXXInstanceMethod =
+          (D.getContext() == Declarator::MemberContext &&
+           D.getDeclSpec().getStorageClassSpec() != DeclSpec::SCS_typedef &&
+           D.getDeclSpec().getStorageClassSpec() != DeclSpec::SCS_static &&
+           !D.getDeclSpec().isFriendSpecified());
+    }
+  }
+
+  return S.Context.getDefaultCallingConvention(FTI.isVariadic,
+                                               IsCXXInstanceMethod);
+}
+
 static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
                                                 QualType declSpecType,
                                                 TypeSourceInfo *TInfo) {
@@ -2793,9 +2842,11 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
       if (FTI.isAmbiguous)
         warnAboutAmbiguousFunction(S, D, DeclType, T);
 
+      FunctionType::ExtInfo EI(getCCForDeclaratorChunk(S, D, FTI, chunkIndex));
+
       if (!FTI.NumArgs && !FTI.isVariadic && !LangOpts.CPlusPlus) {
         // Simple void foo(), where the incoming T is the result type.
-        T = Context.getFunctionNoProtoType(T);
+        T = Context.getFunctionNoProtoType(T, EI);
       } else {
         // We allow a zero-parameter variadic function in C if the
         // function is marked with the "overloadable" attribute. Scan
@@ -2820,11 +2871,12 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
           S.Diag(FTI.ArgInfo[0].IdentLoc, diag::err_ident_list_in_fn_declaration);
           D.setInvalidType(true);
           // Recover by creating a K&R-style function type.
-          T = Context.getFunctionNoProtoType(T);
+          T = Context.getFunctionNoProtoType(T, EI);
           break;
         }
 
         FunctionProtoType::ExtProtoInfo EPI;
+        EPI.ExtInfo = EI;
         EPI.Variadic = FTI.isVariadic;
         EPI.HasTrailingReturn = FTI.hasTrailingReturnType();
         EPI.TypeQuals = FTI.TypeQuals;
@@ -4414,20 +4466,19 @@ static bool handleFunctionTypeAttr(TypeProcessingState &state,
 
   const FunctionType *fn = unwrapped.get();
   CallingConv CCOld = fn->getCallConv();
-  if (S.Context.getCanonicalCallConv(CC) ==
-      S.Context.getCanonicalCallConv(CCOld)) {
-    FunctionType::ExtInfo EI= unwrapped.get()->getExtInfo().withCallingConv(CC);
-    type = unwrapped.wrap(S, S.Context.adjustFunctionType(unwrapped.get(), EI));
-    return true;
-  }
+  AttributedType::Kind CCAttrKind = getCCTypeAttrKind(attr);
 
-  if (CCOld != (S.LangOpts.MRTD ? CC_X86StdCall : CC_Default)) {
-    // Should we diagnose reapplications of the same convention?
-    S.Diag(attr.getLoc(), diag::err_attributes_are_not_compatible)
-      << FunctionType::getNameForCallConv(CC)
-      << FunctionType::getNameForCallConv(CCOld);
-    attr.setInvalid();
-    return true;
+  if (CC != CCOld) {
+    // Error out on when there's already an attribute on the type
+    // and the CCs don't match.
+    const AttributedType *AT = S.getCallingConvAttributedType(type);
+    if (AT && AT->getAttrKind() != CCAttrKind) {
+      S.Diag(attr.getLoc(), diag::err_attributes_are_not_compatible)
+        << FunctionType::getNameForCallConv(CC)
+        << FunctionType::getNameForCallConv(CCOld);
+      attr.setInvalid();
+      return true;
+    }
   }
 
   // Diagnose the use of X86 fastcall on varargs or unprototyped functions.
@@ -4463,8 +4514,36 @@ static bool handleFunctionTypeAttr(TypeProcessingState &state,
   FunctionType::ExtInfo EI = unwrapped.get()->getExtInfo().withCallingConv(CC);
   QualType Equivalent =
       unwrapped.wrap(S, S.Context.adjustFunctionType(unwrapped.get(), EI));
-  type = S.Context.getAttributedType(getCCTypeAttrKind(attr), type, Equivalent);
+  type = S.Context.getAttributedType(CCAttrKind, type, Equivalent);
   return true;
+}
+
+void Sema::adjustMemberFunctionCC(QualType &T) {
+  const FunctionType *FT = T->castAs<FunctionType>();
+  bool IsVariadic = (isa<FunctionProtoType>(FT) &&
+                     cast<FunctionProtoType>(FT)->isVariadic());
+  CallingConv CC = FT->getCallConv();
+  CallingConv DefaultCC =
+      Context.getDefaultCallingConvention(IsVariadic, /*IsCXXMethod=*/false);
+  if (CC != DefaultCC)
+    return;
+
+  // Check if there was an explicit attribute, but only look through parens.
+  // The intent is to look for an attribute on the current declarator, but not
+  // one that came from a typedef.
+  QualType R = T.IgnoreParens();
+  while (const AttributedType *AT = dyn_cast<AttributedType>(R)) {
+    if (AT->isCallingConv())
+      return;
+    R = AT->getModifiedType().IgnoreParens();
+  }
+
+  // FIXME: This loses sugar.  This should probably be fixed with an implicit
+  // AttributedType node that adjusts the convention.
+  CC = Context.getDefaultCallingConvention(IsVariadic, /*IsCXXMethod=*/true);
+  FT = Context.adjustFunctionType(FT, FT->getExtInfo().withCallingConv(CC));
+  FunctionTypeUnwrapper Unwrapped(*this, T);
+  T = Unwrapped.wrap(*this, FT);
 }
 
 /// Handle OpenCL image access qualifiers: read_only, write_only, read_write

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -mrtd -triple i386-unknown-freebsd9.0 -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -mrtd -triple i386-unknown-unknown -std=c89 -emit-llvm -o - %s | FileCheck %s
 
 void baz(int arg);
 
@@ -13,5 +13,14 @@ void foo(int arg) {
 // CHECK: declare x86_stdcallcc i32 @bar(...)
 
 // CHECK: declare x86_stdcallcc void @baz(i32)
+
+void qux(int arg, ...) { }
+// CHECK: define void @qux(i32 %arg, ...)
+
+void quux(int a1, int a2, int a3) {
+  qux(a1, a2, a3);
+}
+// CHECK-LABEL: define x86_stdcallcc void @quux
+// CHECK: call void (i32, ...)* @qux
 
 // CHECK: attributes [[NUW]] = { nounwind{{.*}} }

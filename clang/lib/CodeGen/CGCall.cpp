@@ -103,24 +103,12 @@ static const CGFunctionInfo &arrangeFreeFunctionType(CodeGenTypes &CGT,
   return arrangeLLVMFunctionInfo(CGT, prefix, FTP, FTP->getExtInfo());
 }
 
-/// Given the formal ext-info of a C++ instance method, adjust it
-/// according to the C++ ABI in effect.
-static void adjustCXXMethodInfo(CodeGenTypes &CGT,
-                                FunctionType::ExtInfo &extInfo,
-                                bool isVariadic) {
-  if (extInfo.getCC() == CC_Default) {
-    CallingConv CC = CGT.getContext().getDefaultCXXMethodCallConv(isVariadic);
-    extInfo = extInfo.withCallingConv(CC);
-  }
-}
-
 /// Arrange the argument and result information for a free function (i.e.
 /// not a C++ or ObjC instance method) of the given type.
 static const CGFunctionInfo &arrangeCXXMethodType(CodeGenTypes &CGT,
                                       SmallVectorImpl<CanQualType> &prefix,
                                             CanQual<FunctionProtoType> FTP) {
   FunctionType::ExtInfo extInfo = FTP->getExtInfo();
-  adjustCXXMethodInfo(CGT, extInfo, FTP->isVariadic());
   return arrangeLLVMFunctionInfo(CGT, prefix, FTP, extInfo);
 }
 
@@ -223,7 +211,6 @@ CodeGenTypes::arrangeCXXConstructorDeclaration(const CXXConstructorDecl *D,
     argTypes.push_back(FTP->getArgType(i));
 
   FunctionType::ExtInfo extInfo = FTP->getExtInfo();
-  adjustCXXMethodInfo(*this, extInfo, FTP->isVariadic());
   return arrangeLLVMFunctionInfo(resultType, argTypes, extInfo, required);
 }
 
@@ -247,7 +234,6 @@ CodeGenTypes::arrangeCXXDestructor(const CXXDestructorDecl *D,
   assert(FTP->isVariadic() == 0 && "dtor with formal parameters");
 
   FunctionType::ExtInfo extInfo = FTP->getExtInfo();
-  adjustCXXMethodInfo(*this, extInfo, false);
   return arrangeLLVMFunctionInfo(resultType, argTypes, extInfo,
                                  RequiredArgs::All);
 }
@@ -406,7 +392,6 @@ CodeGenTypes::arrangeCXXMethodCall(const CallArgList &args,
     argTypes.push_back(Context.getCanonicalParamType(i->Ty));
 
   FunctionType::ExtInfo info = FPT->getExtInfo();
-  adjustCXXMethodInfo(*this, info, FPT->isVariadic());
   return arrangeLLVMFunctionInfo(GetReturnType(FPT->getResultType()),
                                  argTypes, info, required);
 }

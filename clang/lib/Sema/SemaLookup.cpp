@@ -728,7 +728,7 @@ static bool LookupDirect(Sema &S, LookupResult &R, const DeclContext *DC) {
     // function to have, if it were to match the name given.
     // FIXME: Calling convention!
     FunctionProtoType::ExtProtoInfo EPI = ConvProto->getExtProtoInfo();
-    EPI.ExtInfo = EPI.ExtInfo.withCallingConv(CC_Default);
+    EPI.ExtInfo = EPI.ExtInfo.withCallingConv(CC_C);
     EPI.ExceptionSpecType = EST_None;
     EPI.NumExceptions = 0;
     QualType ExpectedType

@@ -2732,9 +2732,8 @@ ASTContext::getDependentSizedExtVectorType(QualType vecType,
 QualType
 ASTContext::getFunctionNoProtoType(QualType ResultTy,
                                    const FunctionType::ExtInfo &Info) const {
-  const CallingConv DefaultCC = Info.getCC();
-  const CallingConv CallConv = (LangOpts.MRTD && DefaultCC == CC_Default) ?
-                               CC_X86StdCall : DefaultCC;
+  const CallingConv CallConv = Info.getCC();
+
   // Unique functions, to guarantee there is only one function of a particular
   // structure.
   llvm::FoldingSetNodeID ID;
@@ -2746,11 +2745,8 @@ ASTContext::getFunctionNoProtoType(QualType ResultTy,
     return QualType(FT, 0);
 
   QualType Canonical;
-  if (!ResultTy.isCanonical() ||
-      getCanonicalCallConv(CallConv) != CallConv) {
-    Canonical =
-      getFunctionNoProtoType(getCanonicalType(ResultTy),
-                     Info.withCallingConv(getCanonicalCallConv(CallConv)));
+  if (!ResultTy.isCanonical()) {
+    Canonical = getFunctionNoProtoType(getCanonicalType(ResultTy), Info);
 
     // Get the new insert position for the node we care about.
     FunctionNoProtoType *NewIP =
@@ -2799,14 +2795,10 @@ ASTContext::getFunctionType(QualType ResultTy, ArrayRef<QualType> ArgArray,
     if (!ArgArray[i].isCanonicalAsParam())
       isCanonical = false;
 
-  const CallingConv DefaultCC = EPI.ExtInfo.getCC();
-  const CallingConv CallConv = (LangOpts.MRTD && DefaultCC == CC_Default) ?
-                               CC_X86StdCall : DefaultCC;
-
   // If this type isn't canonical, get the canonical version of it.
   // The exception spec is not part of the canonical type.
   QualType Canonical;
-  if (!isCanonical || getCanonicalCallConv(CallConv) != CallConv) {
+  if (!isCanonical) {
     SmallVector<QualType, 16> CanonicalArgs;
     CanonicalArgs.reserve(NumArgs);
     for (unsigned i = 0; i != NumArgs; ++i)
@@ -2816,8 +2808,6 @@ ASTContext::getFunctionType(QualType ResultTy, ArrayRef<QualType> ArgArray,
     CanonicalEPI.HasTrailingReturn = false;
     CanonicalEPI.ExceptionSpecType = EST_None;
     CanonicalEPI.NumExceptions = 0;
-    CanonicalEPI.ExtInfo
-      = CanonicalEPI.ExtInfo.withCallingConv(getCanonicalCallConv(CallConv));
 
     // Result types do not have ARC lifetime qualifiers.
     QualType CanResultTy = getCanonicalType(ResultTy);
@@ -2859,7 +2849,6 @@ ASTContext::getFunctionType(QualType ResultTy, ArrayRef<QualType> ArgArray,
 
   FunctionProtoType *FTP = (FunctionProtoType*) Allocate(Size, TypeAlignment);
   FunctionProtoType::ExtProtoInfo newEPI = EPI;
-  newEPI.ExtInfo = EPI.ExtInfo.withCallingConv(CallConv);
   new (FTP) FunctionProtoType(ResultTy, ArgArray, Canonical, newEPI);
   Types.push_back(FTP);
   FunctionProtoTypes.InsertNode(FTP, InsertPos);
@@ -6939,7 +6928,7 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs,
   FunctionType::ExtInfo rbaseInfo = rbase->getExtInfo();
 
   // Compatible functions must have compatible calling conventions
-  if (!isSameCallConv(lbaseInfo.getCC(), rbaseInfo.getCC()))
+  if (lbaseInfo.getCC() != rbaseInfo.getCC())
     return QualType();
 
   // Regparm is part of the calling convention.
@@ -7784,7 +7773,7 @@ QualType ASTContext::GetBuiltinType(unsigned Id,
   assert((TypeStr[0] != '.' || TypeStr[1] == 0) &&
          "'.' should only occur at end of builtin type list!");
 
-  FunctionType::ExtInfo EI;
+  FunctionType::ExtInfo EI(CC_C);
   if (BuiltinInfo.isNoReturn(Id)) EI = EI.withNoReturn(true);
 
   bool Variadic = (TypeStr[0] == '.');
@@ -7955,16 +7944,13 @@ bool ASTContext::DeclMustBeEmitted(const Decl *D) {
   return false;
 }
 
-CallingConv ASTContext::getDefaultCXXMethodCallConv(bool isVariadic) {
+CallingConv ASTContext::getDefaultCallingConvention(bool IsVariadic,
+                                                    bool IsCXXMethod) const {
   // Pass through to the C++ ABI object
-  return ABI->getDefaultMethodCallConv(isVariadic);
-}
+  if (IsCXXMethod)
+    return ABI->getDefaultMethodCallConv(IsVariadic);
 
-CallingConv ASTContext::getCanonicalCallConv(CallingConv CC) const {
-  if (CC == CC_C && !LangOpts.MRTD &&
-      getTargetInfo().getCXXABI().isMemberFunctionCCDefault())
-    return CC_Default;
-  return CC;
+  return (LangOpts.MRTD && !IsVariadic) ? CC_X86StdCall : CC_C;
 }
 
 bool ASTContext::isNearlyEmpty(const CXXRecordDecl *RD) const {

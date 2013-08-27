@@ -4435,6 +4435,21 @@ updateExceptionSpec(Sema &S, FunctionDecl *FD, const FunctionProtoType *FPT,
                                         FPT->getArgTypes(), EPI));
 }
 
+static FunctionProtoType::ExtProtoInfo getImplicitMethodEPI(Sema &S,
+                                                            CXXMethodDecl *MD) {
+  FunctionProtoType::ExtProtoInfo EPI;
+
+  // Build an exception specification pointing back at this member.
+  EPI.ExceptionSpecType = EST_Unevaluated;
+  EPI.ExceptionSpecDecl = MD;
+
+  // Set the calling convention to the default for C++ instance methods.
+  EPI.ExtInfo = EPI.ExtInfo.withCallingConv(
+      S.Context.getDefaultCallingConvention(/*IsVariadic=*/false,
+                                            /*IsCXXMethod=*/true));
+  return EPI;
+}
+
 void Sema::EvaluateImplicitExceptionSpec(SourceLocation Loc, CXXMethodDecl *MD) {
   const FunctionProtoType *FPT = MD->getType()->castAs<FunctionProtoType>();
   if (FPT->getExceptionSpecType() != EST_Unevaluated)
@@ -4631,7 +4646,9 @@ void Sema::CheckExplicitlyDefaultedSpecialMember(CXXMethodDecl *MD) {
 void Sema::CheckExplicitlyDefaultedMemberExceptionSpec(
     CXXMethodDecl *MD, const FunctionProtoType *SpecifiedType) {
   // Compute the implicit exception specification.
-  FunctionProtoType::ExtProtoInfo EPI;
+  CallingConv CC = Context.getDefaultCallingConvention(/*IsVariadic=*/false,
+                                                       /*IsCXXMethod=*/true);
+  FunctionProtoType::ExtProtoInfo EPI(CC);
   computeImplicitExceptionSpec(*this, MD->getLocation(), MD).getEPI(EPI);
   const FunctionProtoType *ImplicitType = cast<FunctionProtoType>(
     Context.getFunctionType(Context.VoidTy, None, EPI));
@@ -7891,9 +7908,7 @@ CXXConstructorDecl *Sema::DeclareImplicitDefaultConstructor(
   DefaultCon->setImplicit();
 
   // Build an exception specification pointing back at this constructor.
-  FunctionProtoType::ExtProtoInfo EPI;
-  EPI.ExceptionSpecType = EST_Unevaluated;
-  EPI.ExceptionSpecDecl = DefaultCon;
+  FunctionProtoType::ExtProtoInfo EPI = getImplicitMethodEPI(*this, DefaultCon);
   DefaultCon->setType(Context.getFunctionType(Context.VoidTy, None, EPI));
 
   // We don't need to use SpecialMemberIsTrivial here; triviality for default
@@ -8355,9 +8370,7 @@ CXXDestructorDecl *Sema::DeclareImplicitDestructor(CXXRecordDecl *ClassDecl) {
   Destructor->setImplicit();
 
   // Build an exception specification pointing back at this destructor.
-  FunctionProtoType::ExtProtoInfo EPI;
-  EPI.ExceptionSpecType = EST_Unevaluated;
-  EPI.ExceptionSpecDecl = Destructor;
+  FunctionProtoType::ExtProtoInfo EPI = getImplicitMethodEPI(*this, Destructor);
   Destructor->setType(Context.getFunctionType(Context.VoidTy, None, EPI));
 
   AddOverriddenMethods(ClassDecl, Destructor);
@@ -8861,9 +8874,8 @@ CXXMethodDecl *Sema::DeclareImplicitCopyAssignment(CXXRecordDecl *ClassDecl) {
   CopyAssignment->setImplicit();
 
   // Build an exception specification pointing back at this member.
-  FunctionProtoType::ExtProtoInfo EPI;
-  EPI.ExceptionSpecType = EST_Unevaluated;
-  EPI.ExceptionSpecDecl = CopyAssignment;
+  FunctionProtoType::ExtProtoInfo EPI =
+      getImplicitMethodEPI(*this, CopyAssignment);
   CopyAssignment->setType(Context.getFunctionType(RetType, ArgType, EPI));
 
   // Add the parameter to the operator.
@@ -9375,9 +9387,8 @@ CXXMethodDecl *Sema::DeclareImplicitMoveAssignment(CXXRecordDecl *ClassDecl) {
   MoveAssignment->setImplicit();
 
   // Build an exception specification pointing back at this member.
-  FunctionProtoType::ExtProtoInfo EPI;
-  EPI.ExceptionSpecType = EST_Unevaluated;
-  EPI.ExceptionSpecDecl = MoveAssignment;
+  FunctionProtoType::ExtProtoInfo EPI =
+      getImplicitMethodEPI(*this, MoveAssignment);
   MoveAssignment->setType(Context.getFunctionType(RetType, ArgType, EPI));
 
   // Add the parameter to the operator.
@@ -9732,9 +9743,8 @@ CXXConstructorDecl *Sema::DeclareImplicitCopyConstructor(
   CopyConstructor->setDefaulted();
 
   // Build an exception specification pointing back at this member.
-  FunctionProtoType::ExtProtoInfo EPI;
-  EPI.ExceptionSpecType = EST_Unevaluated;
-  EPI.ExceptionSpecDecl = CopyConstructor;
+  FunctionProtoType::ExtProtoInfo EPI =
+      getImplicitMethodEPI(*this, CopyConstructor);
   CopyConstructor->setType(
       Context.getFunctionType(Context.VoidTy, ArgType, EPI));
 
@@ -9922,9 +9932,8 @@ CXXConstructorDecl *Sema::DeclareImplicitMoveConstructor(
   MoveConstructor->setDefaulted();
 
   // Build an exception specification pointing back at this member.
-  FunctionProtoType::ExtProtoInfo EPI;
-  EPI.ExceptionSpecType = EST_Unevaluated;
-  EPI.ExceptionSpecDecl = MoveConstructor;
+  FunctionProtoType::ExtProtoInfo EPI =
+      getImplicitMethodEPI(*this, MoveConstructor);
   MoveConstructor->setType(
       Context.getFunctionType(Context.VoidTy, ArgType, EPI));
 
@@ -11646,27 +11655,11 @@ bool Sema::CheckOverridingFunctionAttributes(const CXXMethodDecl *New,
   if (NewCC == OldCC)
     return false;
 
-  // If either of the calling conventions are set to "default", we need to pick
-  // something more sensible based on the target. This supports code where the
-  // one method explicitly sets thiscall, and another has no explicit calling
-  // convention.
-  CallingConv Default = 
-    Context.getTargetInfo().getDefaultCallingConv(TargetInfo::CCMT_Member);
-  if (NewCC == CC_Default)
-    NewCC = Default;
-  if (OldCC == CC_Default)
-    OldCC = Default;
-
-  // If the calling conventions still don't match, then report the error
-  if (NewCC != OldCC) {
-    Diag(New->getLocation(),
-         diag::err_conflicting_overriding_cc_attributes)
-      << New->getDeclName() << New->getType() << Old->getType();
-    Diag(Old->getLocation(), diag::note_overridden_virtual_function);
-    return true;
-  }
-
-  return false;
+  Diag(New->getLocation(),
+       diag::err_conflicting_overriding_cc_attributes)
+    << New->getDeclName() << New->getType() << Old->getType();
+  Diag(Old->getLocation(), diag::note_overridden_virtual_function);
+  return true;
 }
 
 bool Sema::CheckOverridingFunctionReturnType(const CXXMethodDecl *New,

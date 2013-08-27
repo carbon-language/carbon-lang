@@ -539,7 +539,8 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
     // C++11 [expr.prim.lambda]p4:
     //   If a lambda-expression does not include a lambda-declarator, it is as 
     //   if the lambda-declarator were ().
-    FunctionProtoType::ExtProtoInfo EPI;
+    FunctionProtoType::ExtProtoInfo EPI(Context.getDefaultCallingConvention(
+        /*IsVariadic=*/false, /*IsCXXMethod=*/true));
     EPI.HasTrailingReturn = true;
     EPI.TypeQuals |= DeclSpec::TQ_const;
     QualType MethodTy = Context.getFunctionType(Context.DependentTy, None,
@@ -819,17 +820,20 @@ static void addFunctionPointerConversion(Sema &S,
   QualType FunctionTy;
   {
     FunctionProtoType::ExtProtoInfo ExtInfo = Proto->getExtProtoInfo();
+    CallingConv CC = S.Context.getDefaultCallingConvention(
+        Proto->isVariadic(), /*IsCXXMethod=*/false);
+    ExtInfo.ExtInfo = ExtInfo.ExtInfo.withCallingConv(CC);
     ExtInfo.TypeQuals = 0;
     FunctionTy = S.Context.getFunctionType(Proto->getResultType(),
                                            Proto->getArgTypes(), ExtInfo);
     FunctionPtrTy = S.Context.getPointerType(FunctionTy);
   }
-  
-  FunctionProtoType::ExtProtoInfo ExtInfo;
+
+  FunctionProtoType::ExtProtoInfo ExtInfo(S.Context.getDefaultCallingConvention(
+      /*IsVariadic=*/false, /*IsCXXMethod=*/true));
   ExtInfo.TypeQuals = Qualifiers::Const;
-  QualType ConvTy =
-    S.Context.getFunctionType(FunctionPtrTy, None, ExtInfo);
-  
+  QualType ConvTy = S.Context.getFunctionType(FunctionPtrTy, None, ExtInfo);
+
   SourceLocation Loc = IntroducerRange.getBegin();
   DeclarationName Name
     = S.Context.DeclarationNames.getCXXConversionFunctionName(
@@ -893,8 +897,9 @@ static void addBlockPointerConversion(Sema &S,
         Proto->getResultType(), Proto->getArgTypes(), ExtInfo);
     BlockPtrTy = S.Context.getBlockPointerType(FunctionTy);
   }
-  
-  FunctionProtoType::ExtProtoInfo ExtInfo;
+
+  FunctionProtoType::ExtProtoInfo ExtInfo(S.Context.getDefaultCallingConvention(
+      /*IsVariadic=*/false, /*IsCXXMethod=*/true));
   ExtInfo.TypeQuals = Qualifiers::Const;
   QualType ConvTy = S.Context.getFunctionType(BlockPtrTy, None, ExtInfo);
   

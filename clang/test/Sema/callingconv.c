@@ -56,3 +56,7 @@ PROC __attribute__((cdecl)) ctest4(const char *x) {}
 void __attribute__((pnaclcall)) pnaclfunc(float *a) {} // expected-warning {{calling convention 'pnaclcall' ignored for this target}}
 
 void __attribute__((intel_ocl_bicc)) inteloclbifunc(float *a) {}
+
+typedef void typedef_fun_t(int);
+typedef_fun_t typedef_fun; // expected-note {{previous declaration is here}}
+void __attribute__((stdcall)) typedef_fun(int x) { } // expected-error {{function declared 'stdcall' here was previously declared without calling convention}}
