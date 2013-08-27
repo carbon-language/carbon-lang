@@ -448,7 +448,7 @@ def fbracket_depth_EQ : Joined<["-"], "fbracket-depth=">, Group<f_Group>;
 def fsignaling_math : Flag<["-"], "fsignaling-math">, Group<f_Group>;
 def fno_signaling_math : Flag<["-"], "fno-signaling-math">, Group<f_Group>;
 def fsanitize_EQ : CommaJoined<["-"], "fsanitize=">, Group<f_clang_Group>,
-                   Flags<[CC1Option]>, MetaVarName<"<check>">,
+                   Flags<[CC1Option, CoreOption]>, MetaVarName<"<check>">,
                    HelpText<"Enable runtime instrumentation for bug detection: "
                             "address (memory errors) | thread (race detection) | "
                             "undefined (miscellaneous undefined behavior)">;
