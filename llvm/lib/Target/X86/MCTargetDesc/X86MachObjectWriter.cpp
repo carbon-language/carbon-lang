@@ -16,12 +16,11 @@
 #include "llvm/MC/MCMachObjectWriter.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCValue.h"
-#include "llvm/Object/MachOFormat.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"
+#include "llvm/Support/MachO.h"
 
 using namespace llvm;
-using namespace llvm::object;
 
 namespace {
 class X86MachObjectWriter : public MCMachObjectTargetWriter {
@@ -132,7 +131,7 @@ void X86MachObjectWriter::RecordX86_64Relocation(MachObjectWriter *Writer,
 
   if (Target.isAbsolute()) { // constant
     // SymbolNum of 0 indicates the absolute section.
-    Type = macho::RIT_X86_64_Unsigned;
+    Type = MachO::X86_64_RELOC_UNSIGNED;
     Index = 0;
 
     // FIXME: I believe this is broken, I don't think the linker can understand
@@ -141,7 +140,7 @@ void X86MachObjectWriter::RecordX86_64Relocation(MachObjectWriter *Writer,
     // is to use an absolute symbol (which we don't support yet).
     if (IsPCRel) {
       IsExtern = 1;
-      Type = macho::RIT_X86_64_Branch;
+      Type = MachO::X86_64_RELOC_BRANCH;
     }
   } else if (Target.getSymB()) { // A - B + constant
     const MCSymbol *A = &Target.getSymA()->getSymbol();
@@ -193,15 +192,15 @@ void X86MachObjectWriter::RecordX86_64Relocation(MachObjectWriter *Writer,
       Index = A_SD.getFragment()->getParent()->getOrdinal() + 1;
       IsExtern = 0;
     }
-    Type = macho::RIT_X86_64_Unsigned;
+    Type = MachO::X86_64_RELOC_UNSIGNED;
 
-    macho::RelocationEntry MRE;
-    MRE.Word0 = FixupOffset;
-    MRE.Word1 = ((Index     <<  0) |
-                 (IsPCRel   << 24) |
-                 (Log2Size  << 25) |
-                 (IsExtern  << 27) |
-                 (Type      << 28));
+    MachO::relocation_info MRE;
+    MRE.r_address = FixupOffset;
+    MRE.r_symbolnum = Index;
+    MRE.r_pcrel = IsPCRel;
+    MRE.r_length = Log2Size;
+    MRE.r_extern = IsExtern;
+    MRE.r_type = Type;
     Writer->addRelocation(Fragment->getParent(), MRE);
 
     if (B_Base) {
@@ -212,7 +211,7 @@ void X86MachObjectWriter::RecordX86_64Relocation(MachObjectWriter *Writer,
       Index = B_SD.getFragment()->getParent()->getOrdinal() + 1;
       IsExtern = 0;
     }
-    Type = macho::RIT_X86_64_Subtractor;
+    Type = MachO::X86_64_RELOC_SUBTRACTOR;
   } else {
     const MCSymbol *Symbol = &Target.getSymA()->getSymbol();
     MCSymbolData &SD = Asm.getSymbolData(*Symbol);
@@ -272,15 +271,15 @@ void X86MachObjectWriter::RecordX86_64Relocation(MachObjectWriter *Writer,
           // rewrite the movq to an leaq at link time if the symbol ends up in
           // the same linkage unit.
           if (unsigned(Fixup.getKind()) == X86::reloc_riprel_4byte_movq_load)
-            Type = macho::RIT_X86_64_GOTLoad;
+            Type = MachO::X86_64_RELOC_GOT_LOAD;
           else
-            Type = macho::RIT_X86_64_GOT;
+            Type = MachO::X86_64_RELOC_GOT;
         }  else if (Modifier == MCSymbolRefExpr::VK_TLVP) {
-          Type = macho::RIT_X86_64_TLV;
+          Type = MachO::X86_64_RELOC_TLV;
         }  else if (Modifier != MCSymbolRefExpr::VK_None) {
           report_fatal_error("unsupported symbol modifier in relocation");
         } else {
-          Type = macho::RIT_X86_64_Signed;
+          Type = MachO::X86_64_RELOC_SIGNED;
 
           // The Darwin x86_64 relocation format has a problem where it cannot
           // encode an address (L<foo> + <constant>) which is outside the atom
@@ -297,9 +296,9 @@ void X86MachObjectWriter::RecordX86_64Relocation(MachObjectWriter *Writer,
           // (the additional bias), but instead appear to just look at the final
           // offset.
           switch (-(Target.getConstant() + (1LL << Log2Size))) {
-          case 1: Type = macho::RIT_X86_64_Signed1; break;
-          case 2: Type = macho::RIT_X86_64_Signed2; break;
-          case 4: Type = macho::RIT_X86_64_Signed4; break;
+          case 1: Type = MachO::X86_64_RELOC_SIGNED_1; break;
+          case 2: Type = MachO::X86_64_RELOC_SIGNED_2; break;
+          case 4: Type = MachO::X86_64_RELOC_SIGNED_4; break;
           }
         }
       } else {
@@ -307,24 +306,24 @@ void X86MachObjectWriter::RecordX86_64Relocation(MachObjectWriter *Writer,
           report_fatal_error("unsupported symbol modifier in branch "
                              "relocation");
 
-        Type = macho::RIT_X86_64_Branch;
+        Type = MachO::X86_64_RELOC_BRANCH;
       }
     } else {
       if (Modifier == MCSymbolRefExpr::VK_GOT) {
-        Type = macho::RIT_X86_64_GOT;
+        Type = MachO::X86_64_RELOC_GOT;
       } else if (Modifier == MCSymbolRefExpr::VK_GOTPCREL) {
         // GOTPCREL is allowed as a modifier on non-PCrel instructions, in which
         // case all we do is set the PCrel bit in the relocation entry; this is
         // used with exception handling, for example. The source is required to
         // include any necessary offset directly.
-        Type = macho::RIT_X86_64_GOT;
+        Type = MachO::X86_64_RELOC_GOT;
         IsPCRel = 1;
       } else if (Modifier == MCSymbolRefExpr::VK_TLVP) {
         report_fatal_error("TLVP symbol modifier should have been rip-rel");
       } else if (Modifier != MCSymbolRefExpr::VK_None)
         report_fatal_error("unsupported symbol modifier in relocation");
       else
-        Type = macho::RIT_X86_64_Unsigned;
+        Type = MachO::X86_64_RELOC_UNSIGNED;
     }
   }
 
@@ -332,13 +331,13 @@ void X86MachObjectWriter::RecordX86_64Relocation(MachObjectWriter *Writer,
   FixedValue = Value;
 
   // struct relocation_info (8 bytes)
-  macho::RelocationEntry MRE;
-  MRE.Word0 = FixupOffset;
-  MRE.Word1 = ((Index     <<  0) |
-               (IsPCRel   << 24) |
-               (Log2Size  << 25) |
-               (IsExtern  << 27) |
-               (Type      << 28));
+  MachO::relocation_info MRE;
+  MRE.r_address = FixupOffset;
+  MRE.r_symbolnum = Index;
+  MRE.r_pcrel = IsPCRel;
+  MRE.r_length = Log2Size;
+  MRE.r_extern = IsExtern;
+  MRE.r_type = Type;
   Writer->addRelocation(Fragment->getParent(), MRE);
 }
 
@@ -352,7 +351,7 @@ bool X86MachObjectWriter::RecordScatteredRelocation(MachObjectWriter *Writer,
                                                     uint64_t &FixedValue) {
   uint32_t FixupOffset = Layout.getFragmentOffset(Fragment)+Fixup.getOffset();
   unsigned IsPCRel = Writer->isFixupKindPCRel(Asm, Fixup.getKind());
-  unsigned Type = macho::RIT_Vanilla;
+  unsigned Type = MachO::GENERIC_RELOC_VANILLA;
 
   // See <reloc.h>.
   const MCSymbol *A = &Target.getSymA()->getSymbol();
@@ -379,15 +378,16 @@ bool X86MachObjectWriter::RecordScatteredRelocation(MachObjectWriter *Writer,
     // Note that there is no longer any semantic difference between these two
     // relocation types from the linkers point of view, this is done solely for
     // pedantic compatibility with 'as'.
-    Type = A_SD->isExternal() ? (unsigned)macho::RIT_Difference :
-      (unsigned)macho::RIT_Generic_LocalDifference;
+    Type = A_SD->isExternal() ? (unsigned)MachO::GENERIC_RELOC_SECTDIFF :
+      (unsigned)MachO::GENERIC_RELOC_LOCAL_SECTDIFF;
     Value2 = Writer->getSymbolAddress(B_SD, Layout);
     FixedValue -= Writer->getSectionAddress(B_SD->getFragment()->getParent());
   }
 
+  MachO::scattered_relocation_info MRE;
   // Relocations are written out in reverse order, so the PAIR comes first.
-  if (Type == macho::RIT_Difference ||
-      Type == macho::RIT_Generic_LocalDifference) {
+  if (Type == MachO::GENERIC_RELOC_SECTDIFF ||
+      Type == MachO::GENERIC_RELOC_LOCAL_SECTDIFF) {
     // If the offset is too large to fit in a scattered relocation,
     // we're hosed. It's an unfortunate limitation of the MachO format.
     if (FixupOffset > 0xffffff) {
@@ -401,13 +401,12 @@ bool X86MachObjectWriter::RecordScatteredRelocation(MachObjectWriter *Writer,
       llvm_unreachable("fatal error returned?!");
     }
 
-    macho::RelocationEntry MRE;
-    MRE.Word0 = ((0         <<  0) |
-                 (macho::RIT_Pair  << 24) |
-                 (Log2Size  << 28) |
-                 (IsPCRel   << 30) |
-                 macho::RF_Scattered);
-    MRE.Word1 = Value2;
+    MRE.r_address = 0;
+    MRE.r_type = MachO::GENERIC_RELOC_PAIR;
+    MRE.r_length = Log2Size;
+    MRE.r_pcrel = IsPCRel;
+    MRE.r_scattered = 1;
+    MRE.r_value = Value2;
     Writer->addRelocation(Fragment->getParent(), MRE);
   } else {
     // If the offset is more than 24-bits, it won't fit in a scattered
@@ -421,13 +420,12 @@ bool X86MachObjectWriter::RecordScatteredRelocation(MachObjectWriter *Writer,
       return false;
   }
 
-  macho::RelocationEntry MRE;
-  MRE.Word0 = ((FixupOffset <<  0) |
-               (Type        << 24) |
-               (Log2Size    << 28) |
-               (IsPCRel     << 30) |
-               macho::RF_Scattered);
-  MRE.Word1 = Value;
+  MRE.r_address = FixupOffset;
+  MRE.r_type = Type;
+  MRE.r_length = Log2Size;
+  MRE.r_pcrel = IsPCRel;
+  MRE.r_scattered = 1;
+  MRE.r_value = Value;
   Writer->addRelocation(Fragment->getParent(), MRE);
   return true;
 }
@@ -469,13 +467,13 @@ void X86MachObjectWriter::RecordTLVPRelocation(MachObjectWriter *Writer,
   }
 
   // struct relocation_info (8 bytes)
-  macho::RelocationEntry MRE;
-  MRE.Word0 = Value;
-  MRE.Word1 = ((Index                  <<  0) |
-               (IsPCRel                << 24) |
-               (Log2Size               << 25) |
-               (1                      << 27) | // Extern
-               (macho::RIT_Generic_TLV << 28)); // Type
+  MachO::relocation_info MRE;
+  MRE.r_address = Value;
+  MRE.r_symbolnum = Index;
+  MRE.r_pcrel = IsPCRel;
+  MRE.r_length = Log2Size;
+  MRE.r_extern = 1;
+  MRE.r_type = MachO::GENERIC_RELOC_TLV;
   Writer->addRelocation(Fragment->getParent(), MRE);
 }
 
@@ -535,7 +533,7 @@ void X86MachObjectWriter::RecordX86Relocation(MachObjectWriter *Writer,
     //
     // FIXME: Currently, these are never generated (see code below). I cannot
     // find a case where they are actually emitted.
-    Type = macho::RIT_Vanilla;
+    Type = MachO::GENERIC_RELOC_VANILLA;
   } else {
     // Resolve constant variables.
     if (SD->getSymbol().isVariable()) {
@@ -566,17 +564,17 @@ void X86MachObjectWriter::RecordX86Relocation(MachObjectWriter *Writer,
     if (IsPCRel)
       FixedValue -= Writer->getSectionAddress(Fragment->getParent());
 
-    Type = macho::RIT_Vanilla;
+    Type = MachO::GENERIC_RELOC_VANILLA;
   }
 
   // struct relocation_info (8 bytes)
-  macho::RelocationEntry MRE;
-  MRE.Word0 = FixupOffset;
-  MRE.Word1 = ((Index     <<  0) |
-               (IsPCRel   << 24) |
-               (Log2Size  << 25) |
-               (IsExtern  << 27) |
-               (Type      << 28));
+  MachO::relocation_info MRE;
+  MRE.r_address = FixupOffset;
+  MRE.r_symbolnum = Index;
+  MRE.r_pcrel = IsPCRel;
+  MRE.r_length = Log2Size;
+  MRE.r_extern = IsExtern;
+  MRE.r_type = Type;
   Writer->addRelocation(Fragment->getParent(), MRE);
 }
 

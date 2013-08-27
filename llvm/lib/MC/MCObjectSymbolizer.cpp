@@ -60,13 +60,13 @@ MCMachObjectSymbolizer(MCContext &Ctx, OwningPtr<MCRelocationInfo> &RelInfo,
     if (Name == "__stubs") {
       SectionRef StubsSec = *SI;
       if (MOOF->is64Bit()) {
-        macho::Section64 S = MOOF->getSection64(StubsSec.getRawDataRefImpl());
-        StubsIndSymIndex = S.Reserved1;
-        StubSize = S.Reserved2;
+        MachO::section_64 S = MOOF->getSection64(StubsSec.getRawDataRefImpl());
+        StubsIndSymIndex = S.reserved1;
+        StubSize = S.reserved2;
       } else {
-        macho::Section S = MOOF->getSection(StubsSec.getRawDataRefImpl());
-        StubsIndSymIndex = S.Reserved1;
-        StubSize = S.Reserved2;
+        MachO::section S = MOOF->getSection(StubsSec.getRawDataRefImpl());
+        StubsIndSymIndex = S.reserved1;
+        StubSize = S.reserved2;
       }
       assert(StubSize && "Mach-O stub entry size can't be zero!");
       StubsSec.getAddress(StubsStart);
@@ -86,9 +86,8 @@ StringRef MCMachObjectSymbolizer::findExternalFunctionAt(uint64_t Addr) {
   if (StubIdx >= StubsCount)
     return StringRef();
 
-  macho::IndirectSymbolTableEntry ISTE =
+  uint32_t SymtabIdx =
     MOOF->getIndirectSymbolTableEntry(MOOF->getDysymtabLoadCommand(), StubIdx);
-  uint32_t SymtabIdx = ISTE.Index;
 
   StringRef SymName;
   symbol_iterator SI = MOOF->begin_symbols();
