@@ -348,6 +348,36 @@ private:
   std::vector<MatcherCreateCallback *> Overloads;
 };
 
+/// \brief Variadic operator marshaller function.
+class VariadicOperatorMatcherCreateCallback : public MatcherCreateCallback {
+public:
+  typedef ast_matchers::internal::VariadicOperatorFunction VarFunc;
+  VariadicOperatorMatcherCreateCallback(VarFunc Func, StringRef MatcherName)
+      : Func(Func), MatcherName(MatcherName) {}
+
+  virtual VariantMatcher run(const SourceRange &NameRange,
+                             ArrayRef<ParserValue> Args,
+                             Diagnostics *Error) const {
+    std::vector<VariantMatcher> InnerArgs;
+    for (size_t i = 0, e = Args.size(); i != e; ++i) {
+      const ParserValue &Arg = Args[i];
+      const VariantValue &Value = Arg.Value;
+      if (!Value.isMatcher()) {
+        Error->addError(Arg.Range, Error->ET_RegistryWrongArgType)
+            << (i + 1) << "Matcher<>" << Value.getTypeAsString();
+        return VariantMatcher();
+      }
+      InnerArgs.push_back(Value.getMatcher());
+    }
+    return VariantMatcher::VariadicOperatorMatcher(Func, InnerArgs);
+  }
+
+private:
+  const VarFunc Func;
+  const StringRef MatcherName;
+};
+
+
 /// Helper functions to select the appropriate marshaller functions.
 /// They detect the number of arguments, arguments types and return type.
 
@@ -408,6 +438,13 @@ AdaptativeOverloadCollector<ArgumentAdapterT, FromTypes, ToTypes>::collect(
   Out.push_back(makeMatcherAutoMarshall(
       &AdaptativeFunc::template create<typename FromTypeList::head>, Name));
   collect(typename FromTypeList::tail());
+}
+
+/// \brief Variadic operator overload.
+MatcherCreateCallback *makeMatcherAutoMarshall(
+    ast_matchers::internal::VariadicOperatorMatcherFunc Func,
+    StringRef MatcherName) {
+  return new VariadicOperatorMatcherCreateCallback(Func.Func, MatcherName);
 }
 
 }  // namespace internal

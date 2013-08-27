@@ -77,9 +77,6 @@ RegistryMaps::RegistryMaps() {
   //
   // Polymorphic + argument overload:
   // unless
-  // eachOf
-  // anyOf
-  // allOf
   // findAll
   //
   // Other:
@@ -99,6 +96,8 @@ RegistryMaps::RegistryMaps() {
 
   REGISTER_MATCHER(accessSpecDecl);
   REGISTER_MATCHER(alignOfExpr);
+  REGISTER_MATCHER(allOf);
+  REGISTER_MATCHER(anyOf);
   REGISTER_MATCHER(anything);
   REGISTER_MATCHER(argumentCountIs);
   REGISTER_MATCHER(arraySubscriptExpr);
@@ -141,6 +140,7 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(destructorDecl);
   REGISTER_MATCHER(doStmt);
   REGISTER_MATCHER(dynamicCastExpr);
+  REGISTER_MATCHER(eachOf);
   REGISTER_MATCHER(elaboratedType);
   REGISTER_MATCHER(enumConstantDecl);
   REGISTER_MATCHER(enumDecl);
