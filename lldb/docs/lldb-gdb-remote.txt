@@ -427,12 +427,28 @@ invalidate-regs
 //  Run a command in a shell on the connected remote machine.
 //
 // PRIORITY TO IMPLEMENT
-//  TODO
-//----------------------------------------------------------------------
+//  High. This command allows LLDB clients to run arbitrary shell
+//  commands on a remote host.
+//
+/----------------------------------------------------------------------
 
-send packet: TODO (see GDBRemoteCommunicationClient::RunShellCommand)
-read packet: TODO (see GDBRemoteCommunicationServer::Handle_qPlatform_RunCommand)
+The request consists of the command to be executed encoded in ASCII characters
+converted into hex bytes.
 
+The response to this packet consists of the letter F followed by the return code,
+followed by the signal number (or 0 if no signal was delivered), and escaped bytes
+of captured program output.
+
+Below is an example communication from a client sending an "ls -la" command:
+
+send packet: $qPlatform_RunCommand:6c73202d6c61,00000002#ec
+read packet: $F,00000000,00000000,total 4736
+drwxrwxr-x 16 username groupname    4096 Aug 15 21:36 .
+drwxr-xr-x 17 username groupname    4096 Aug 10 16:39 ..
+-rw-rw-r--  1 username groupname   73875 Aug 12 16:46 notes.txt
+drwxrwxr-x  5 username groupname    4096 Aug 15 21:36 source.cpp
+-rw-r--r--  1 username groupname    2792 Aug 12 16:46 a.out
+-rw-r--r--  1 username groupname    3190 Aug 12 16:46 Makefile
 
 //----------------------------------------------------------------------
 // "qHostInfo"
