@@ -29,7 +29,8 @@ template <class Elem, unsigned long Maxcode = 0x10ffff,
 class codecvt_utf8
     : public codecvt<Elem, char, mbstate_t>
 {
-    // unspecified
+    explicit codecvt_utf8(size_t refs = 0);
+    ~codecvt_utf8();
 };
 
 template <class Elem, unsigned long Maxcode = 0x10ffff,
@@ -37,7 +38,8 @@ template <class Elem, unsigned long Maxcode = 0x10ffff,
 class codecvt_utf16
     : public codecvt<Elem, char, mbstate_t>
 {
-    // unspecified
+    explicit codecvt_utf16(size_t refs = 0);
+    ~codecvt_utf16();
 };
 
 template <class Elem, unsigned long Maxcode = 0x10ffff,
@@ -45,7 +47,8 @@ template <class Elem, unsigned long Maxcode = 0x10ffff,
 class codecvt_utf8_utf16
     : public codecvt<Elem, char, mbstate_t>
 {
-    // unspecified
+    explicit codecvt_utf8_utf16(size_t refs = 0);
+    ~codecvt_utf8_utf16();
 };
 
 }  // std
