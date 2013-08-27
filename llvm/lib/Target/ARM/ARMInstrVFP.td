@@ -669,6 +669,11 @@ multiclass vrint_inst_zrx<string opc, bit op, bit op2> {
     let Inst{7} = op2;
     let Inst{16} = op;
   }
+
+  def : InstAlias<!strconcat("vrint", opc, "$p.f32.f32\t$Sd, $Sm"),
+                  (!cast<Instruction>(NAME#"S") SPR:$Sd, SPR:$Sm, pred:$p)>;
+  def : InstAlias<!strconcat("vrint", opc, "$p.f64.f64\t$Dd, $Dm"),
+                  (!cast<Instruction>(NAME#"D") DPR:$Dd, DPR:$Dm, pred:$p)>;
 }
 
 defm VRINTZ : vrint_inst_zrx<"z", 0, 1>;

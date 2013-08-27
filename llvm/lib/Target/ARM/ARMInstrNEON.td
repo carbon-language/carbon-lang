@@ -5758,9 +5758,9 @@ multiclass VRINT_FPI<string op, bits<3> op9_7, SDPatternOperator Int> {
     }
   }
 
-  def : InstAlias<!strconcat("vrint", op, ".f32.f32\t$Dd, $Dm"),
+  def : NEONInstAlias<!strconcat("vrint", op, ".f32.f32\t$Dd, $Dm"),
                   (!cast<Instruction>(NAME#"D") DPR:$Dd, DPR:$Dm)>;
-  def : InstAlias<!strconcat("vrint", op, ".f32.f32\t$Qd, $Qm"),
+  def : NEONInstAlias<!strconcat("vrint", op, ".f32.f32\t$Qd, $Qm"),
                   (!cast<Instruction>(NAME#"Q") QPR:$Qd, QPR:$Qm)>;
 }
 
