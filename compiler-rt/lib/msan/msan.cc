@@ -230,11 +230,29 @@ void UnpoisonParam(uptr n) {
   internal_memset(__msan_param_tls, 0, n * sizeof(*__msan_param_tls));
 }
 
-void UnpoisonThreadLocalState() {
+// Backup MSan runtime TLS state.
+// Implementation must be async-signal-safe.
+// Instances of this class may live on the signal handler stack, and data size
+// may be an issue.
+void ScopedThreadLocalStateBackup::Backup() {
+  va_arg_overflow_size_tls = __msan_va_arg_overflow_size_tls;
+}
+
+void ScopedThreadLocalStateBackup::Restore() {
+  // A lame implementation that only keeps essential state and resets the rest.
+  __msan_va_arg_overflow_size_tls = va_arg_overflow_size_tls;
+
   internal_memset(__msan_param_tls, 0, sizeof(__msan_param_tls));
   internal_memset(__msan_retval_tls, 0, sizeof(__msan_retval_tls));
   internal_memset(__msan_va_arg_tls, 0, sizeof(__msan_va_arg_tls));
-  __msan_va_arg_overflow_size_tls = 0;
+
+  if (__msan_get_track_origins()) {
+    internal_memset(&__msan_retval_origin_tls, 0, sizeof(__msan_retval_tls));
+    internal_memset(__msan_param_origin_tls, 0, sizeof(__msan_param_origin_tls));
+  }
+}
+
+void UnpoisonThreadLocalState() {
 }
 
 }  // namespace __msan
