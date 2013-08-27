@@ -199,6 +199,14 @@ storeRegToStack(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     Opc = Mips::SDC1;
   else if (Mips::FGR64RegClass.hasSubClassEq(RC))
     Opc = Mips::SDC164;
+  else if (RC->hasType(MVT::v16i8))
+    Opc = Mips::ST_B;
+  else if (RC->hasType(MVT::v8i16) || RC->hasType(MVT::v8f16))
+    Opc = Mips::ST_H;
+  else if (RC->hasType(MVT::v4i32) || RC->hasType(MVT::v4f32))
+    Opc = Mips::ST_W;
+  else if (RC->hasType(MVT::v2i64) || RC->hasType(MVT::v2f64))
+    Opc = Mips::ST_D;
 
   assert(Opc && "Register class not handled!");
   BuildMI(MBB, I, DL, get(Opc)).addReg(SrcReg, getKillRegState(isKill))
@@ -232,6 +240,14 @@ loadRegFromStack(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     Opc = Mips::LDC1;
   else if (Mips::FGR64RegClass.hasSubClassEq(RC))
     Opc = Mips::LDC164;
+  else if (RC->hasType(MVT::v16i8))
+    Opc = Mips::LD_B;
+  else if (RC->hasType(MVT::v8i16) || RC->hasType(MVT::v8f16))
+    Opc = Mips::LD_H;
+  else if (RC->hasType(MVT::v4i32) || RC->hasType(MVT::v4f32))
+    Opc = Mips::LD_W;
+  else if (RC->hasType(MVT::v2i64) || RC->hasType(MVT::v2f64))
+    Opc = Mips::LD_D;
 
   assert(Opc && "Register class not handled!");
   BuildMI(MBB, I, DL, get(Opc), DestReg).addFrameIndex(FI).addImm(Offset)
