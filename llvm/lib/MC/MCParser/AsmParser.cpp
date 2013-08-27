@@ -896,6 +896,10 @@ bool AsmParser::parsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) {
 const MCExpr *
 AsmParser::ApplyModifierToExpr(const MCExpr *E,
                                MCSymbolRefExpr::VariantKind Variant) {
+  // Ask the target implementation about this expression first.
+  const MCExpr *NewE = getTargetParser().applyModifierToExpr(E, Variant, Ctx);
+  if (NewE)
+    return NewE;
   // Recurse over the given expression, rebuilding it to apply the given variant
   // if there is exactly one symbol.
   switch (E->getKind()) {

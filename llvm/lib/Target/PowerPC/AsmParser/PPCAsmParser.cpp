@@ -235,6 +235,10 @@ public:
   virtual bool ParseDirective(AsmToken DirectiveID);
 
   unsigned validateTargetOperandClass(MCParsedAsmOperand *Op, unsigned Kind);
+
+  virtual const MCExpr *applyModifierToExpr(const MCExpr *E,
+                                            MCSymbolRefExpr::VariantKind,
+                                            MCContext &Ctx);
 };
 
 /// PPCOperand - Instances of this class represent a parsed PowerPC machine
@@ -1363,3 +1367,26 @@ unsigned PPCAsmParser::validateTargetOperandClass(MCParsedAsmOperand *AsmOp,
   return Match_InvalidOperand;
 }
 
+const MCExpr *
+PPCAsmParser::applyModifierToExpr(const MCExpr *E,
+                                  MCSymbolRefExpr::VariantKind Variant,
+                                  MCContext &Ctx) {
+  switch (Variant) {
+  case MCSymbolRefExpr::VK_PPC_LO:
+    return PPCMCExpr::Create(PPCMCExpr::VK_PPC_LO, E, false, Ctx);
+  case MCSymbolRefExpr::VK_PPC_HI:
+    return PPCMCExpr::Create(PPCMCExpr::VK_PPC_HI, E, false, Ctx);
+  case MCSymbolRefExpr::VK_PPC_HA:
+    return PPCMCExpr::Create(PPCMCExpr::VK_PPC_HA, E, false, Ctx);
+  case MCSymbolRefExpr::VK_PPC_HIGHER:
+    return PPCMCExpr::Create(PPCMCExpr::VK_PPC_HIGHER, E, false, Ctx);
+  case MCSymbolRefExpr::VK_PPC_HIGHERA:
+    return PPCMCExpr::Create(PPCMCExpr::VK_PPC_HIGHERA, E, false, Ctx);
+  case MCSymbolRefExpr::VK_PPC_HIGHEST:
+    return PPCMCExpr::Create(PPCMCExpr::VK_PPC_HIGHEST, E, false, Ctx);
+  case MCSymbolRefExpr::VK_PPC_HIGHESTA:
+    return PPCMCExpr::Create(PPCMCExpr::VK_PPC_HIGHESTA, E, false, Ctx);
+  default:
+    return 0;
+  }
+}

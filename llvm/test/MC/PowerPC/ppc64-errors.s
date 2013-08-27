@@ -96,3 +96,6 @@
 # CHECK-NEXT: ld 1, 32768(2)
               ld 1, 32768(2)
 
+# CHECK: error: invalid modifier 'got' (no symbols present)
+         addi 4, 3, 123@got
+# CHECK-NEXT: addi 4, 3, 123@got
