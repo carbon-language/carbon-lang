@@ -9132,7 +9132,7 @@ SDValue X86TargetLowering::LowerFNEG(SDValue Op, SelectionDAG &DAG) const {
                              MachinePointerInfo::getConstantPool(),
                              false, false, false, Alignment);
   if (VT.isVector()) {
-    MVT XORVT = VT.is128BitVector() ? MVT::v2i64 : MVT::v4i64;
+    MVT XORVT = MVT::getVectorVT(MVT::i64, VT.getSizeInBits()/64);
     return DAG.getNode(ISD::BITCAST, dl, VT,
                        DAG.getNode(ISD::XOR, dl, XORVT,
                                    DAG.getNode(ISD::BITCAST, dl, XORVT,
