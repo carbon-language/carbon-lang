@@ -5670,7 +5670,7 @@ void Sema::CodeCompleteObjCForCollection(Scope *S,
   Data.ObjCCollection = true;
   
   if (IterationVar.getAsOpaquePtr()) {
-    DeclGroupRef DG = IterationVar.getAsVal<DeclGroupRef>();
+    DeclGroupRef DG = IterationVar.get();
     for (DeclGroupRef::iterator I = DG.begin(), End = DG.end(); I != End; ++I) {
       if (*I)
         Data.IgnoreDecls.push_back(*I);

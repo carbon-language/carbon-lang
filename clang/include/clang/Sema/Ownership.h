@@ -33,8 +33,12 @@ namespace clang {
   class TemplateName;
   class TemplateParameterList;
 
-  /// OpaquePtr - This is a very simple POD type that wraps a pointer that the
-  /// Parser doesn't know about but that Sema or another client does.  The UID
+  /// \brief Wrapper for void* pointer.
+  /// \tparam PtrTy Either a pointer type like 'T*' or a type that behaves like
+  ///               a pointer.
+  ///
+  /// This is a very simple POD type that wraps a pointer that the Parser
+  /// doesn't know about but that Sema or another client does.  The PtrTy
   /// template argument is used to make sure that "Decl" pointers are not
   /// compatible with "Type" pointers for example.
   template <class PtrTy>
@@ -49,11 +53,21 @@ namespace clang {
 
     static OpaquePtr make(PtrTy P) { OpaquePtr OP; OP.set(P); return OP; }
 
-    template <typename T> T* getAs() const {
+    /// \brief Returns plain pointer to the entity pointed by this wrapper.
+    /// \tparam PointeeT Type of pointed entity.
+    ///
+    /// It is identical to getPtrAs<PointeeT*>.
+    template <typename PointeeT> PointeeT* getPtrTo() const {
       return get();
     }
 
-    template <typename T> T getAsVal() const {
+    /// \brief Returns pointer converted to the specified type.
+    /// \tparam PtrT Result pointer type.  There must be implicit conversion
+    ///              from PtrTy to PtrT.
+    ///
+    /// In contrast to getPtrTo, this method allows the return type to be
+    /// a smart pointer.
+    template <typename PtrT> PtrT getPtrAs() const {
       return get();
     }
 

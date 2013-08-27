@@ -65,7 +65,7 @@ StmtResult Sema::ActOnNullStmt(SourceLocation SemiLoc,
 
 StmtResult Sema::ActOnDeclStmt(DeclGroupPtrTy dg, SourceLocation StartLoc,
                                SourceLocation EndLoc) {
-  DeclGroupRef DG = dg.getAsVal<DeclGroupRef>();
+  DeclGroupRef DG = dg.get();
 
   // If we have an invalid decl, just return an error.
   if (DG.isNull()) return StmtError();
@@ -74,7 +74,7 @@ StmtResult Sema::ActOnDeclStmt(DeclGroupPtrTy dg, SourceLocation StartLoc,
 }
 
 void Sema::ActOnForEachDeclStmt(DeclGroupPtrTy dg) {
-  DeclGroupRef DG = dg.getAsVal<DeclGroupRef>();
+  DeclGroupRef DG = dg.get();
 
   // If we don't have a declaration, or we have an invalid declaration,
   // just return.

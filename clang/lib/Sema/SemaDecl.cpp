@@ -442,7 +442,7 @@ bool Sema::DiagnoseUnknownTypeName(IdentifierInfo *&II,
     if (isTemplateName(S, SS ? *SS : EmptySS, /*hasTemplateKeyword=*/false,
                        Name, ParsedType(), true, TemplateResult,
                        MemberOfUnknownSpecialization) == TNK_Type_template) {
-      TemplateName TplName = TemplateResult.getAsVal<TemplateName>();
+      TemplateName TplName = TemplateResult.get();
       Diag(IILoc, diag::err_template_missing_args) << TplName;
       if (TemplateDecl *TplDecl = TplName.getAsTemplateDecl()) {
         Diag(TplDecl->getLocation(), diag::note_template_decl_here)

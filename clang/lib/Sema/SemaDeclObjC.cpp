@@ -2680,7 +2680,7 @@ Decl *Sema::ActOnAtEnd(Scope *S, SourceRange AtEnd, ArrayRef<Decl *> allMethods,
   if (isInterfaceDeclKind) {
     // Reject invalid vardecls.
     for (unsigned i = 0, e = allTUVars.size(); i != e; i++) {
-      DeclGroupRef DG = allTUVars[i].getAsVal<DeclGroupRef>();
+      DeclGroupRef DG = allTUVars[i].get();
       for (DeclGroupRef::iterator I = DG.begin(), E = DG.end(); I != E; ++I)
         if (VarDecl *VDecl = dyn_cast<VarDecl>(*I)) {
           if (!VDecl->hasExternalStorage())
@@ -2691,7 +2691,7 @@ Decl *Sema::ActOnAtEnd(Scope *S, SourceRange AtEnd, ArrayRef<Decl *> allMethods,
   ActOnObjCContainerFinishDefinition();
 
   for (unsigned i = 0, e = allTUVars.size(); i != e; i++) {
-    DeclGroupRef DG = allTUVars[i].getAsVal<DeclGroupRef>();
+    DeclGroupRef DG = allTUVars[i].get();
     for (DeclGroupRef::iterator I = DG.begin(), E = DG.end(); I != E; ++I)
       (*I)->setTopLevelDeclInObjCContainer();
     Consumer.HandleTopLevelDeclInObjCContainer(DG);

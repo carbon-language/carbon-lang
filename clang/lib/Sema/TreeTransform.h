@@ -9484,7 +9484,7 @@ TreeTransform<Derived>::RebuildTemplateName(CXXScopeSpec &SS,
                                        ParsedType::make(ObjectType),
                                        /*EnteringContext=*/false,
                                        Template);
-  return Template.template getAsVal<TemplateName>();
+  return Template.get();
 }
 
 template<typename Derived>

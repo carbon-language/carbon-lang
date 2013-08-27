@@ -2113,7 +2113,7 @@ Sema::ActOnTemplateIdType(CXXScopeSpec &SS, SourceLocation TemplateKWLoc,
   if (SS.isInvalid())
     return true;
 
-  TemplateName Template = TemplateD.getAsVal<TemplateName>();
+  TemplateName Template = TemplateD.get();
 
   // Translate the parser's template argument list in our AST format.
   TemplateArgumentListInfo TemplateArgs(LAngleLoc, RAngleLoc);
@@ -2180,7 +2180,7 @@ TypeResult Sema::ActOnTagTemplateIdType(TagUseKind TUK,
                                         SourceLocation LAngleLoc,
                                         ASTTemplateArgsPtr TemplateArgsIn,
                                         SourceLocation RAngleLoc) {
-  TemplateName Template = TemplateD.getAsVal<TemplateName>();
+  TemplateName Template = TemplateD.get();
   
   // Translate the parser's template argument list in our AST format.
   TemplateArgumentListInfo TemplateArgs(LAngleLoc, RAngleLoc);
@@ -5680,7 +5680,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
     ? TemplateParameterLists[0]->getTemplateLoc() : SourceLocation();
 
   // Find the class template we're specializing
-  TemplateName Name = TemplateD.getAsVal<TemplateName>();
+  TemplateName Name = TemplateD.get();
   ClassTemplateDecl *ClassTemplate
     = dyn_cast_or_null<ClassTemplateDecl>(Name.getAsTemplateDecl());
 
@@ -6793,7 +6793,7 @@ Sema::ActOnExplicitInstantiation(Scope *S,
                                  SourceLocation RAngleLoc,
                                  AttributeList *Attr) {
   // Find the class template we're specializing
-  TemplateName Name = TemplateD.getAsVal<TemplateName>();
+  TemplateName Name = TemplateD.get();
   TemplateDecl *TD = Name.getAsTemplateDecl();
   // Check that the specialization uses the same tag kind as the
   // original template.
