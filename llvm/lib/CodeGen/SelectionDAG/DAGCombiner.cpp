@@ -2861,6 +2861,14 @@ SDValue DAGCombiner::visitAND(SDNode *N) {
     }
   }
 
+  // fold (and (or (srl N, 8), (shl N, 8)), 0xffff) -> (srl (bswap N), const)
+  if (N1C && N1C->getAPIntValue() == 0xffff && N0.getOpcode() == ISD::OR) {
+    SDValue BSwap = MatchBSwapHWordLow(N0.getNode(), N0.getOperand(0),
+                                       N0.getOperand(1), false);
+    if (BSwap.getNode())
+      return BSwap;
+  }
+
   return SDValue();
 }
 
@@ -2945,13 +2953,23 @@ SDValue DAGCombiner::MatchBSwapHWordLow(SDNode *N, SDValue N0, SDValue N1,
   if (N00 != N10)
     return SDValue();
 
-  // Make sure everything beyond the low halfword is zero since the SRL 16
-  // will clear the top bits.
+  // Make sure everything beyond the low halfword gets set to zero since the SRL
+  // 16 will clear the top bits.
   unsigned OpSizeInBits = VT.getSizeInBits();
-  if (DemandHighBits && OpSizeInBits > 16 &&
-      (!LookPassAnd0 || !LookPassAnd1) &&
-      !DAG.MaskedValueIsZero(N10, APInt::getHighBitsSet(OpSizeInBits, 16)))
-    return SDValue();
+  if (DemandHighBits && OpSizeInBits > 16) {
+    // If the left-shift isn't masked out then the only way this is a bswap is
+    // if all bits beyond the low 8 are 0. In that case the entire pattern
+    // reduces to a left shift anyway: leave it for other parts of the combiner.
+    if (!LookPassAnd0)
+      return SDValue();
+
+    // However, if the right shift isn't masked out then it might be because
+    // it's not needed. See if we can spot that too.
+    if (!LookPassAnd1 &&
+        !DAG.MaskedValueIsZero(
+            N10, APInt::getHighBitsSet(OpSizeInBits, OpSizeInBits - 16)))
+      return SDValue();
+  }
 
   SDValue Res = DAG.getNode(ISD::BSWAP, SDLoc(N), VT, N00);
   if (OpSizeInBits > 16)
