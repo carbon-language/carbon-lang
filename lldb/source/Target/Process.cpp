@@ -41,6 +41,10 @@
 #include "lldb/Target/ThreadPlan.h"
 #include "lldb/Target/ThreadPlanBase.h"
 
+#ifndef LLDB_DISABLE_POSIX
+#include <spawn.h>
+#endif
+
 using namespace lldb;
 using namespace lldb_private;
 
@@ -665,13 +669,15 @@ ProcessLaunchInfo::FileAction::Duplicate (int fd, int dup_fd)
 
 #ifndef LLDB_DISABLE_POSIX
 bool
-ProcessLaunchInfo::FileAction::AddPosixSpawnFileAction (posix_spawn_file_actions_t *file_actions,
+ProcessLaunchInfo::FileAction::AddPosixSpawnFileAction (void *_file_actions,
                                                         const FileAction *info,
                                                         Log *log, 
                                                         Error& error)
 {
     if (info == NULL)
         return false;
+
+    posix_spawn_file_actions_t *file_actions = reinterpret_cast<posix_spawn_file_actions_t *>(_file_actions);
 
     switch (info->m_action)
     {

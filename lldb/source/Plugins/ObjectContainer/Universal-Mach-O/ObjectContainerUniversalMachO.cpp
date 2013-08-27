@@ -85,7 +85,7 @@ ObjectContainerUniversalMachO::MagicBytesMatch (const DataExtractor &data)
 {
     lldb::offset_t offset = 0;
     uint32_t magic = data.GetU32(&offset);
-    return magic == UniversalMagic || magic == UniversalMagicSwapped;
+    return magic == FAT_MAGIC || magic == FAT_CIGAM;
 }
 
 ObjectContainerUniversalMachO::ObjectContainerUniversalMachO
@@ -133,7 +133,7 @@ ObjectContainerUniversalMachO::ParseHeader (lldb_private::DataExtractor &data,
     header.magic = data.GetU32(&offset);
     fat_archs.clear();
 
-    if (header.magic == UniversalMagic)
+    if (header.magic == FAT_MAGIC)
     {
 
         data.SetAddressByteSize(4);

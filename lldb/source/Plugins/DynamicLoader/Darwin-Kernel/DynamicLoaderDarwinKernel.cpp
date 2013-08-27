@@ -394,10 +394,10 @@ DynamicLoaderDarwinKernel::CheckForKernelImageAtAddress (lldb::addr_t addr, Proc
 
     Error read_error;
     uint64_t result = process->ReadUnsignedIntegerFromMemory (addr, 4, LLDB_INVALID_ADDRESS, read_error);
-    if (result != llvm::MachO::HeaderMagic64
-        && result != llvm::MachO::HeaderMagic32
-        && result != llvm::MachO::HeaderMagic32Swapped 
-        && result != llvm::MachO::HeaderMagic64Swapped)
+    if (result != llvm::MachO::MH_MAGIC_64
+        && result != llvm::MachO::MH_MAGIC
+        && result != llvm::MachO::MH_CIGAM
+        && result != llvm::MachO::MH_CIGAM_64)
     {
         return UUID();
     }
@@ -407,8 +407,8 @@ DynamicLoaderDarwinKernel::CheckForKernelImageAtAddress (lldb::addr_t addr, Proc
     if (process->DoReadMemory (addr, &header, sizeof(header), read_error) != sizeof(header))
         return UUID();
 
-    if (header.magic == llvm::MachO::HeaderMagic32Swapped ||
-        header.magic == llvm::MachO::HeaderMagic64Swapped)
+    if (header.magic == llvm::MachO::MH_CIGAM ||
+        header.magic == llvm::MachO::MH_CIGAM_64)
     {
         header.magic        = llvm::ByteSwap_32(header.magic);
         header.cputype      = llvm::ByteSwap_32(header.cputype);
@@ -420,8 +420,8 @@ DynamicLoaderDarwinKernel::CheckForKernelImageAtAddress (lldb::addr_t addr, Proc
     }
 
     // A kernel is an executable which does not have the dynamic link object flag set.
-    if (header.filetype == llvm::MachO::HeaderFileTypeExecutable
-        && (header.flags & llvm::MachO::HeaderFlagBitIsDynamicLinkObject) == 0)
+    if (header.filetype == llvm::MachO::MH_EXECUTE
+        && (header.flags & llvm::MachO::MH_DYLDLINK) == 0)
     {
         // Create a full module to get the UUID
         ModuleSP memory_module_sp = process->ReadModuleFromMemory (FileSpec ("temp_mach_kernel", false), addr);
@@ -1629,12 +1629,12 @@ DynamicLoaderDarwinKernel::GetByteOrderFromMagic (uint32_t magic)
 {
     switch (magic)
     {
-        case llvm::MachO::HeaderMagic32:
-        case llvm::MachO::HeaderMagic64:
+        case llvm::MachO::MH_MAGIC:
+        case llvm::MachO::MH_MAGIC_64:
             return lldb::endian::InlHostByteOrder();
             
-        case llvm::MachO::HeaderMagic32Swapped:
-        case llvm::MachO::HeaderMagic64Swapped:
+        case llvm::MachO::MH_CIGAM:
+        case llvm::MachO::MH_CIGAM_64:
             if (lldb::endian::InlHostByteOrder() == lldb::eByteOrderBig)
                 return lldb::eByteOrderLittle;
             else

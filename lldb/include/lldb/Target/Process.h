@@ -14,9 +14,6 @@
 
 // C Includes
 #include <limits.h>
-#ifndef LLDB_DISABLE_POSIX
-#include <spawn.h>
-#endif
 
 // C++ Includes
 #include <list>
@@ -487,7 +484,7 @@ public:
         
 #ifndef LLDB_DISABLE_POSIX
         static bool
-        AddPosixSpawnFileAction (posix_spawn_file_actions_t *file_actions,
+        AddPosixSpawnFileAction (void *file_actions,
                                  const FileAction *info,
                                  Log *log, 
                                  Error& error);

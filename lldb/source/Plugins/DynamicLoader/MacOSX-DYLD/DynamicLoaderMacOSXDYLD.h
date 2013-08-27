@@ -228,7 +228,7 @@ protected:
         {
             if (header.cputype)
             {
-                if (header.cputype & llvm::MachO::CPUArchABI64)
+                if (header.cputype & llvm::MachO::CPU_ARCH_ABI64)
                     return 8;
                 else
                     return 4;

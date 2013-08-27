@@ -11,6 +11,7 @@
 #include "lldb/Core/ConnectionMachPort.h"
 
 // C Includes
+#include <mach/mach.h>
 #include <servers/bootstrap.h>
 
 // C++ Includes

@@ -21,6 +21,8 @@
 #include "launcherXPCService/LauncherXPCService.h"
 #endif
 
+#include "llvm/Support/Host.h"
+
 #include <asl.h>
 #include <crt_externs.h>
 #include <execinfo.h>
@@ -54,9 +56,6 @@
 #include "cfcpp/CFCMutableDictionary.h"
 #include "cfcpp/CFCReleaser.h"
 #include "cfcpp/CFCString.h"
-
-#include "llvm/Support/Host.h"
-#include "llvm/Support/MachO.h"
 
 #include <objc/objc-auto.h>
 
@@ -1108,9 +1107,9 @@ GetMacOSXProcessCPUType (ProcessInstanceInfo &process_info)
         {
             switch (cpu)
             {
-                case llvm::MachO::CPUTypeI386:      sub = llvm::MachO::CPUSubType_I386_ALL;     break;
-                case llvm::MachO::CPUTypeX86_64:    sub = llvm::MachO::CPUSubType_X86_64_ALL;   break;
-                case llvm::MachO::CPUTypeARM:
+                case CPU_TYPE_I386:      sub = CPU_SUBTYPE_I386_ALL;     break;
+                case CPU_TYPE_X86_64:    sub = CPU_SUBTYPE_X86_64_ALL;   break;
+                case CPU_TYPE_ARM:
                     {
                         uint32_t cpusubtype = 0;
                         len = sizeof(cpusubtype);

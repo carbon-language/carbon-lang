@@ -146,8 +146,8 @@ ProcessMachCore::GetDynamicLoaderAddress (lldb::addr_t addr)
     Error error;
     if (DoReadMemory (addr, &header, sizeof(header), error) != sizeof(header))
         return false;
-    if (header.magic == llvm::MachO::HeaderMagic32Swapped ||
-        header.magic == llvm::MachO::HeaderMagic64Swapped)
+    if (header.magic == llvm::MachO::MH_CIGAM ||
+        header.magic == llvm::MachO::MH_CIGAM_64)
     {
         header.magic        = llvm::ByteSwap_32(header.magic);
         header.cputype      = llvm::ByteSwap_32(header.cputype);
@@ -160,8 +160,8 @@ ProcessMachCore::GetDynamicLoaderAddress (lldb::addr_t addr)
 
     // TODO: swap header if needed...
     //printf("0x%16.16" PRIx64 ": magic = 0x%8.8x, file_type= %u\n", vaddr, header.magic, header.filetype);
-    if (header.magic == llvm::MachO::HeaderMagic32 ||
-        header.magic == llvm::MachO::HeaderMagic64)
+    if (header.magic == llvm::MachO::MH_MAGIC ||
+        header.magic == llvm::MachO::MH_MAGIC_64)
     {
         // Check MH_EXECUTABLE to see if we can find the mach image
         // that contains the shared library list. The dynamic loader 
@@ -170,18 +170,18 @@ ProcessMachCore::GetDynamicLoaderAddress (lldb::addr_t addr)
         // of kexts to load
         switch (header.filetype)
         {
-        case llvm::MachO::HeaderFileTypeDynamicLinkEditor:
+        case llvm::MachO::MH_DYLINKER:
             //printf("0x%16.16" PRIx64 ": file_type = MH_DYLINKER\n", vaddr);
             // Address of dyld "struct mach_header" in the core file
             m_dyld_plugin_name = DynamicLoaderMacOSXDYLD::GetPluginNameStatic();
             m_dyld_addr = addr;
             return true;
 
-        case llvm::MachO::HeaderFileTypeExecutable:
+        case llvm::MachO::MH_EXECUTE:
             //printf("0x%16.16" PRIx64 ": file_type = MH_EXECUTE\n", vaddr);
             // Check MH_EXECUTABLE file types to see if the dynamic link object flag
             // is NOT set. If it isn't, then we have a mach_kernel.
-            if ((header.flags & llvm::MachO::HeaderFlagBitIsDynamicLinkObject) == 0)
+            if ((header.flags & llvm::MachO::MH_DYLDLINK) == 0)
             {
                 m_dyld_plugin_name = DynamicLoaderDarwinKernel::GetPluginNameStatic();
                 // Address of the mach kernel "struct mach_header" in the core file.

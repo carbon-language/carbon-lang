@@ -12,7 +12,8 @@
 #define liblldb_ConnectionMachPort_h_
 
 // C Includes
-#include <mach/mach.h>
+#include <mach/port.h>
+#include <mach/kern_return.h>
 
 // C++ Includes
 #include <string>

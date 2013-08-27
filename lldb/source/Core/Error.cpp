@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 // C Includes
-#include <errno.h>
+#include <mach/mach.h>
 
 // C++ Includes
 // Other libraries and framework includes
@@ -16,9 +16,8 @@
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Log.h"
 #include "llvm/ADT/SmallVector.h"
+#include <cerrno>
 #include <cstdarg>
-#include <cstdlib>
-#include <cstring>
 
 #if defined (__arm__) && defined (__APPLE__)
 #include <SpringBoardServices/SpringBoardServer.h>

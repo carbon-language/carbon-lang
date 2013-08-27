@@ -11,11 +11,9 @@
 #define __DCError_h__
 #if defined(__cplusplus)
 
-#if defined (__APPLE__)
-#include <mach/mach.h>
-#endif
-#include <stdint.h>
-#include <stdio.h>
+#include "llvm/Support/DataTypes.h"
+
+#include <cstdio>
 #include <string>
 
 #include "lldb/lldb-private.h"

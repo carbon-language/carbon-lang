@@ -27,12 +27,9 @@
 #endif
 
 #if defined (__APPLE__)
-
-#include <dispatch/dispatch.h>
-#include <libproc.h>
-#include <mach-o/dyld.h>
 #include <mach/mach_port.h>
-
+#include <mach/mach_init.h>
+#include <mach-o/dyld.h>
 #endif
 
 #if defined (__linux__) || defined (__FreeBSD__) || defined (__FreeBSD_kernel__)
@@ -61,7 +58,6 @@
 
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Host.h"
-#include "llvm/Support/MachO.h"
 #include "llvm/Support/raw_ostream.h"
 
 

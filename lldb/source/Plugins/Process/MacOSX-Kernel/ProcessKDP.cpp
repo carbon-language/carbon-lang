@@ -33,6 +33,8 @@
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
 
+#define USEC_PER_SEC 1000000
+
 // Project includes
 #include "ProcessKDP.h"
 #include "ProcessKDPLog.h"

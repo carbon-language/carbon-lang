@@ -124,13 +124,13 @@ ThreadKDP::CreateRegisterContextForFrame (StackFrame *frame)
         {
             switch (static_cast<ProcessKDP *>(process_sp.get())->GetCommunication().GetCPUType())
             {
-                case llvm::MachO::CPUTypeARM:
+                case llvm::MachO::CPU_TYPE_ARM:
                     reg_ctx_sp.reset (new RegisterContextKDP_arm (*this, concrete_frame_idx));
                     break;
-                case llvm::MachO::CPUTypeI386:
+                case llvm::MachO::CPU_TYPE_I386:
                     reg_ctx_sp.reset (new RegisterContextKDP_i386 (*this, concrete_frame_idx));
                     break;
-                case llvm::MachO::CPUTypeX86_64:
+                case llvm::MachO::CPU_TYPE_X86_64:
                     reg_ctx_sp.reset (new RegisterContextKDP_x86_64 (*this, concrete_frame_idx));
                     break;
                 default:
