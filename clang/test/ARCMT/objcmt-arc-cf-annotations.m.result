@@ -82,7 +82,7 @@ extern CFTypeRef CFRetain(CFTypeRef cf);
 
 CF_IMPLICIT_BRIDGING_ENABLED
 
-extern void CFRelease(CFTypeRef CF_CONSUMED cf);
+extern void CFRelease(CFTypeRef cf);
 
 CF_IMPLICIT_BRIDGING_DISABLED
 
@@ -197,13 +197,7 @@ typedef double NSTimeInterval;
 @interface NSString : NSObject <NSCopying, NSMutableCopying, NSCoding>
 - (NSUInteger)length;
 - (NSString *)stringByAppendingString:(NSString *)aString;
-
-CF_IMPLICIT_BRIDGING_ENABLED
-
 - ( const char *)UTF8String;
-
-CF_IMPLICIT_BRIDGING_DISABLED
-
 - (instancetype)initWithUTF8String:(const char *)nullTerminatedCString;
 + (instancetype)stringWithUTF8String:(const char *)nullTerminatedCString;
 @end        @class NSString, NSURL, NSError;
@@ -235,9 +229,9 @@ typedef void (*IOServiceMatchingCallback)(  void * refcon,  io_iterator_t iterat
 
 CF_IMPLICIT_BRIDGING_ENABLED
 
-io_service_t IOServiceGetMatchingService(  mach_port_t masterPort,  CFDictionaryRef CF_CONSUMED matching );
-kern_return_t IOServiceGetMatchingServices(  mach_port_t masterPort,  CFDictionaryRef CF_CONSUMED matching,  io_iterator_t * existing );
-kern_return_t IOServiceAddNotification(  mach_port_t masterPort,  const io_name_t notificationType,  CFDictionaryRef CF_CONSUMED matching,  mach_port_t wakePort,  uintptr_t reference,  io_iterator_t * notification ) __attribute__((deprecated));
+io_service_t IOServiceGetMatchingService(  mach_port_t masterPort,  CFDictionaryRef matching );
+kern_return_t IOServiceGetMatchingServices(  mach_port_t masterPort,  CFDictionaryRef matching,  io_iterator_t * existing );
+kern_return_t IOServiceAddNotification(  mach_port_t masterPort,  const io_name_t notificationType,  CFDictionaryRef matching,  mach_port_t wakePort,  uintptr_t reference,  io_iterator_t * notification ) __attribute__((deprecated));
 
 CF_IMPLICIT_BRIDGING_DISABLED
  // expected-note {{'IOServiceAddNotification' declared here}}
@@ -245,11 +239,11 @@ kern_return_t IOServiceAddMatchingNotification(  IONotificationPortRef notifyPor
 
 CF_IMPLICIT_BRIDGING_ENABLED
 
-CFMutableDictionaryRef IOServiceMatching(  const char * name ) CF_RETURNS_RETAINED;
-CFMutableDictionaryRef IOServiceNameMatching(  const char * name ) CF_RETURNS_RETAINED;
-CFMutableDictionaryRef IOBSDNameMatching(  mach_port_t masterPort,  uint32_t options,  const char * bsdName ) CF_RETURNS_RETAINED;
-CFMutableDictionaryRef IOOpenFirmwarePathMatching(  mach_port_t masterPort,  uint32_t options,  const char * path ) CF_RETURNS_RETAINED;
-CFMutableDictionaryRef IORegistryEntryIDMatching(  uint64_t entryID ) CF_RETURNS_RETAINED;
+CFMutableDictionaryRef IOServiceMatching(  const char * name );
+CFMutableDictionaryRef IOServiceNameMatching(  const char * name );
+CFMutableDictionaryRef IOBSDNameMatching(  mach_port_t masterPort,  uint32_t options,  const char * bsdName );
+CFMutableDictionaryRef IOOpenFirmwarePathMatching(  mach_port_t masterPort,  uint32_t options,  const char * path );
+CFMutableDictionaryRef IORegistryEntryIDMatching(  uint64_t entryID );
 
 CF_IMPLICIT_BRIDGING_DISABLED
 
@@ -338,7 +332,7 @@ extern CGGradientRef CGGradientRetain(CGGradientRef gradient);
 
 CF_IMPLICIT_BRIDGING_ENABLED
 
-extern void CGGradientRelease(CGGradientRef CF_CONSUMED gradient);
+extern void CGGradientRelease(CGGradientRef gradient);
 
 CF_IMPLICIT_BRIDGING_DISABLED
 
@@ -349,7 +343,7 @@ extern void CGContextDrawLinearGradient(CGContextRef context,
 
 CF_IMPLICIT_BRIDGING_ENABLED
 
-extern CGColorSpaceRef CGColorSpaceCreateDeviceRGB(void) CF_RETURNS_RETAINED;
+extern CGColorSpaceRef CGColorSpaceCreateDeviceRGB(void);
 
 CF_IMPLICIT_BRIDGING_DISABLED
 
@@ -450,7 +444,7 @@ CFDateRef f7() {
 
 CF_IMPLICIT_BRIDGING_ENABLED
 
-CFDateRef MyDateCreate() CF_RETURNS_RETAINED;
+CFDateRef MyDateCreate();
 
 CF_IMPLICIT_BRIDGING_DISABLED
 
@@ -524,7 +518,7 @@ typedef CFTypeRef CREATEFUN();
 
 CF_IMPLICIT_BRIDGING_ENABLED
 
-CFTypeRef MyCreateFun() CF_RETURNS_RETAINED;
+CFTypeRef MyCreateFun();
 
 CF_IMPLICIT_BRIDGING_DISABLED
 
@@ -828,8 +822,8 @@ typedef CFTypeRef OtherRef;
 
 CF_IMPLICIT_BRIDGING_ENABLED
 
-- (CFTypeRef)_copyCFTypeRef CF_RETURNS_RETAINED;
-- (OtherRef)_copyOtherRef CF_RETURNS_RETAINED;
+- (CFTypeRef)_copyCFTypeRef;
+- (OtherRef)_copyOtherRef;
 
 CF_IMPLICIT_BRIDGING_DISABLED
 
@@ -966,13 +960,7 @@ static void PR4230_new(void)
 typedef struct s6893565* TD6893565;
 
 @interface RDar6893565 {}
-
-CF_IMPLICIT_BRIDGING_ENABLED
-
 -(TD6893565)newThing;
-
-CF_IMPLICIT_BRIDGING_DISABLED
-
 @end
 
 @implementation RDar6893565
@@ -1391,13 +1379,7 @@ typedef NSString* MyStringTy;
 - (int) returnsAnOwnedInt NS_RETURNS_RETAINED; // expected-warning{{'ns_returns_retained' attribute only applies to methods that return an Objective-C object}}
 - (id) pseudoInit NS_CONSUMES_SELF NS_RETURNS_RETAINED;
 + (void) consume:(id) NS_CONSUMED x;
-
-CF_IMPLICIT_BRIDGING_ENABLED
-
 + (void) consume2:(id) CF_CONSUMED x;
-
-CF_IMPLICIT_BRIDGING_DISABLED
-
 @end
 
 static int ownership_attribute_doesnt_go_here NS_RETURNS_RETAINED; // expected-warning{{'ns_returns_retained' attribute only applies to functions and methods}}
@@ -1443,13 +1425,7 @@ void testattr3() {
 }
 
 void consume_ns(id NS_CONSUMED x);
-
-CF_IMPLICIT_BRIDGING_ENABLED
-
 void consume_cf(id CF_CONSUMED x);
-
-CF_IMPLICIT_BRIDGING_DISABLED
-
 
 void testattr4() {
   TestOwnershipAttr *x = [TestOwnershipAttr alloc]; // no-warning
@@ -1475,7 +1451,7 @@ void testattr4() {
 
 CF_IMPLICIT_BRIDGING_ENABLED
 
-- (CFDateRef) newCFRetainedAsCFNoAttr CF_RETURNS_RETAINED;
+- (CFDateRef) newCFRetainedAsCFNoAttr;
 
 CF_IMPLICIT_BRIDGING_DISABLED
 
@@ -1483,7 +1459,7 @@ CF_IMPLICIT_BRIDGING_DISABLED
 
 CF_IMPLICIT_BRIDGING_ENABLED
 
-- (CFDateRef) alsoReturnsRetainedAsCF CF_RETURNS_NOT_RETAINED;
+- (CFDateRef) alsoReturnsRetainedAsCF;
 
 CF_IMPLICIT_BRIDGING_DISABLED
 
@@ -1665,7 +1641,7 @@ static void rdar_8724287(CFErrorRef error)
 
 CF_IMPLICIT_BRIDGING_ENABLED
 
-extern void *CFStringCreate(void) CF_RETURNS_RETAINED;
+extern void *CFStringCreate(void);
 
 CF_IMPLICIT_BRIDGING_DISABLED
 
@@ -2009,13 +1985,7 @@ id makeCollectableNonLeak() {
 
 
 void consumeAndStopTracking(id NS_CONSUMED obj, void (^callback)(void));
-
-CF_IMPLICIT_BRIDGING_ENABLED
-
 void CFConsumeAndStopTracking(CFTypeRef CF_CONSUMED obj, void (^callback)(void));
-
-CF_IMPLICIT_BRIDGING_DISABLED
-
 
 void testConsumeAndStopTracking() {
   id retained = [@[] retain]; // +1
@@ -2133,13 +2103,7 @@ void rdar13783514(xpc_connection_t connection) {
   xpc_connection_set_finalizer_f(connection, releaseAfterXPC);
 } // no-warning
 
-
-CF_IMPLICIT_BRIDGING_ENABLED
-
 CFAttributedStringRef CFAttributedCreate(void *CFObj CF_CONSUMED) CF_RETURNS_RETAINED;
-
-CF_IMPLICIT_BRIDGING_DISABLED
-
 
 @interface Action
 @property(nonatomic) SEL action;
