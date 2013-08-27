@@ -139,12 +139,6 @@ public:
   bool isFileModifiable(const clang::SourceManager &SM,
                         const clang::SourceLocation &Loc) const;
 
-  /// \brief Whether a transformation with a risk level of \p RiskLevel is
-  /// acceptable or not.
-  bool isAcceptableRiskLevel(RiskLevel RiskLevel) const {
-    return RiskLevel <= GlobalOptions.MaxRiskLevel;
-  }
-
   /// \brief Called before parsing a translation unit for a FrontendAction.
   ///
   /// Transform uses this function to apply file overrides and start

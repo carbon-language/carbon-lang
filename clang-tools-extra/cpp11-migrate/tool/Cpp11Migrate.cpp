@@ -414,7 +414,6 @@ int main(int argc, const char **argv) {
 // These anchors are used to force the linker to link the transforms
 extern volatile int AddOverrideTransformAnchorSource;
 extern volatile int LoopConvertTransformAnchorSource;
-extern volatile int PassByValueTransformAnchorSource;
 extern volatile int ReplaceAutoPtrTransformAnchorSource;
 extern volatile int UseAutoTransformAnchorSource;
 extern volatile int UseNullptrTransformAnchorSource;
@@ -422,7 +421,6 @@ extern volatile int UseNullptrTransformAnchorSource;
 static int TransformsAnchorsDestination[] = {
   AddOverrideTransformAnchorSource,
   LoopConvertTransformAnchorSource,
-  PassByValueTransformAnchorSource,
   ReplaceAutoPtrTransformAnchorSource,
   UseAutoTransformAnchorSource,
   UseNullptrTransformAnchorSource

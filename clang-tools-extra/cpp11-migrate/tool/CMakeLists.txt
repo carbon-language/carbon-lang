@@ -19,9 +19,6 @@ list(APPEND Cpp11MigrateSources ${UseAutoSources})
 file(GLOB_RECURSE AddOverrideSources "../AddOverride/*.cpp")
 list(APPEND Cpp11MigrateSources ${AddOverrideSources})
 
-file(GLOB_RECURSE PassByValueSources "../PassByValue/*.cpp")
-list(APPEND Cpp11MigrateSources ${PassByValueSources})
-
 file(GLOB_RECURSE ReplaceAutoPtrSources "../ReplaceAutoPtr/*.cpp")
 list(APPEND Cpp11MigrateSources ${ReplaceAutoPtrSources})
 

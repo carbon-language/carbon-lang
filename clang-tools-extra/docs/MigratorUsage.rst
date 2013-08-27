@@ -141,7 +141,6 @@ General Command Line Options
   ===============  =====  ===  ====  ====
   AddOverride (1)  3.0    4.7  14    8
   LoopConvert      3.0    4.6  13    11
-  PassByValue      3.0    4.6  13    11
   ReplaceAutoPtr   3.0    4.6  13    11
   UseAuto          2.9    4.4  12    10
   UseNullptr       3.0    4.6  12.1  10
@@ -226,12 +225,6 @@ Transform-Specific Command Line Options
   If no such macro is found, ``override`` is still used. This option enables
   projects that use such macros to maintain build compatibility with non-C++11
   code.
-
-.. option:: -pass-by-value
-
-  Replace const-reference parameters by values in situations where it can be
-  beneficial.
-  See :doc:`PassByValueTransform`.
 
 .. option:: -replace-auto_ptr
 
