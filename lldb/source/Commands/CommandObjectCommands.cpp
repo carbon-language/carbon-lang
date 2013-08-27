@@ -156,9 +156,9 @@ protected:
             }
             else
             {
-                std::pair<bool,uint64_t> start_idx = {m_options.m_start_idx.OptionWasSet(),m_options.m_start_idx.GetCurrentValue()};
-                std::pair<bool,uint64_t> stop_idx = {m_options.m_stop_idx.OptionWasSet(),m_options.m_stop_idx.GetCurrentValue()};
-                std::pair<bool,uint64_t> count = {m_options.m_count.OptionWasSet(),m_options.m_count.GetCurrentValue()};
+                std::pair<bool,uint64_t> start_idx(m_options.m_start_idx.OptionWasSet(),m_options.m_start_idx.GetCurrentValue());
+                std::pair<bool,uint64_t> stop_idx(m_options.m_stop_idx.OptionWasSet(),m_options.m_stop_idx.GetCurrentValue());
+                std::pair<bool,uint64_t> count(m_options.m_count.OptionWasSet(),m_options.m_count.GetCurrentValue());
                 
                 const CommandHistory& history(m_interpreter.GetCommandHistory());
                                               
