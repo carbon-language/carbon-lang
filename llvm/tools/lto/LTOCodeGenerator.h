@@ -102,17 +102,6 @@ struct LTOCodeGenerator {
   //
   const void *compile(size_t *length, std::string &errMsg);
 
-  // Corresponding to lto_codegen_compile_parallel() API. 
-  // Generates code for merged module into an array of native object files.
-  // On success returns a pointer to an array of NativeObjectFile.  The count
-  // parameter returns the number of elements in the array.  Each element is
-  // a pointer/length for a generated mach-o/ELF buffer. The buffer is owned
-  // by the lto_code_gen_t and will be freed when lto_codegen_dispose() is
-  // called, or lto_codegen_compile() is called again. On failure, returns
-  // NULL (check lto_get_error_message() for details).
-  //
-  NativeObjectFile *compile_parallel(size_t *count, std::string &ErrMsg);
-
 private:
   void initializeLTOPasses();
 
@@ -138,7 +127,6 @@ private:
   std::vector<char*>          _codegenOptions;
   std::string                 _mCpu;
   std::string                 _nativeObjectPath;
-  NativeObjectFile *ObjBufVect;
 };
 
 #endif // LTO_CODE_GENERATOR_H

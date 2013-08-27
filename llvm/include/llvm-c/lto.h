@@ -27,7 +27,7 @@
  * @{
  */
 
-#define LTO_API_VERSION 5
+#define LTO_API_VERSION 4
 
 typedef enum {
     LTO_SYMBOL_ALIGNMENT_MASK              = 0x0000001F, /* log2 of alignment */
@@ -284,22 +284,6 @@ lto_codegen_compile(lto_code_gen_t cg, size_t* length);
 extern bool
 lto_codegen_compile_to_file(lto_code_gen_t cg, const char** name);
 
-struct NativeObjectFile {
-  const void *content;
-  size_t length;
-};
-
-/**
- * Generates code for merged module into an array of native object files.
- * On success returns a pointer to an array of NativeObjectFile.  The
- * count parameter returns the number of elements in the array.  Each
- * element is a pointer/length for a generated mach-o/ELF buffer. The
- * buffer is owned by the lto_code_gen_t and will be freed when
- * lto_codegen_dispose() is called, or lto_codegen_compile() is called again.
- * On failure, returns NULL (check lto_get_error_message() for details).
- */
-extern const struct NativeObjectFile*
-lto_codegen_compile_parallel(lto_code_gen_t cg, size_t *count);
 
 /**
  * Sets options to help debug codegen bugs.
