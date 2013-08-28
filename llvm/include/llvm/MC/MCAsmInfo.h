@@ -316,10 +316,6 @@ namespace llvm {
     /// SupportsExceptionHandling - True if target supports exception handling.
     ExceptionHandling::ExceptionsType ExceptionsType; // Defaults to None
 
-    /// DwarfUsesInlineInfoSection - True if DwarfDebugInlineSection is used to
-    /// encode inline subroutine information.
-    bool DwarfUsesInlineInfoSection;         // Defaults to false.
-
     /// DwarfUsesRelocationsAcrossSections - True if Dwarf2 output generally
     /// uses relocations for references to other .debug_* sections.
     bool DwarfUsesRelocationsAcrossSections;
@@ -557,9 +553,6 @@ namespace llvm {
         (ExceptionsType == ExceptionHandling::DwarfCFI ||
          ExceptionsType == ExceptionHandling::ARM ||
          ExceptionsType == ExceptionHandling::Win64);
-    }
-    bool doesDwarfUseInlineInfoSection() const {
-      return DwarfUsesInlineInfoSection;
     }
     bool doesDwarfUseRelocationsAcrossSections() const {
       return DwarfUsesRelocationsAcrossSections;

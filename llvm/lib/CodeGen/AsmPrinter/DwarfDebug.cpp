@@ -538,22 +538,6 @@ DIE *DwarfDebug::constructInlinedScopeDIE(CompileUnit *TheCU,
                                      TheCU->getUniqueID()));
   TheCU->addUInt(ScopeDIE, dwarf::DW_AT_call_line, 0, DL.getLineNumber());
 
-  // Track the start label for this inlined function.
-  //.debug_inlined section specification does not clearly state how
-  // to emit inlined scopes that are split into multiple instruction ranges.
-  // For now, use the first instruction range and emit low_pc/high_pc pair and
-  // corresponding the .debug_inlined section entry for this pair.
-  if (Asm->MAI->doesDwarfUseInlineInfoSection()) {
-    MCSymbol *StartLabel = getLabelBeforeInsn(Ranges.begin()->first);
-    InlineInfoMap::iterator I = InlineInfo.find(InlinedSP);
-
-    if (I == InlineInfo.end()) {
-      InlineInfo[InlinedSP].push_back(std::make_pair(StartLabel, ScopeDIE));
-      InlinedSPNodes.push_back(InlinedSP);
-    } else
-      I->second.push_back(std::make_pair(StartLabel, ScopeDIE));
-  }
-
   // Add name to the name table, we do this here because we're guaranteed
   // to have concrete versions of our DW_TAG_inlined_subprogram nodes.
   addSubprogramNames(TheCU, InlinedSP, ScopeDIE);
@@ -1090,12 +1074,6 @@ void DwarfDebug::endModule() {
     // Emit info into a debug macinfo section.
     emitDebugMacInfo();
 
-    // Emit inline info.
-    // TODO: When we don't need the option anymore we
-    // can remove all of the code that this section
-    // depends upon.
-    if (useDarwinGDBCompat())
-      emitDebugInlineInfo();
   } else {
     // TODO: Fill this in for separated debug sections and separate
     // out information into new sections.
@@ -1123,12 +1101,6 @@ void DwarfDebug::endModule() {
     // Emit DWO addresses.
     InfoHolder.emitAddresses(Asm->getObjFileLowering().getDwarfAddrSection());
 
-    // Emit inline info.
-    // TODO: When we don't need the option anymore we
-    // can remove all of the code that this section
-    // depends upon.
-    if (useDarwinGDBCompat())
-      emitDebugInlineInfo();
   }
 
   // Emit info into the dwarf accelerator table sections.
@@ -2600,83 +2572,6 @@ void DwarfDebug::emitDebugMacInfo() {
     // Start the dwarf macinfo section.
     Asm->OutStreamer.SwitchSection(LineInfo);
   }
-}
-
-// Emit inline info using following format.
-// Section Header:
-// 1. length of section
-// 2. Dwarf version number
-// 3. address size.
-//
-// Entries (one "entry" for each function that was inlined):
-//
-// 1. offset into __debug_str section for MIPS linkage name, if exists;
-//   otherwise offset into __debug_str for regular function name.
-// 2. offset into __debug_str section for regular function name.
-// 3. an unsigned LEB128 number indicating the number of distinct inlining
-// instances for the function.
-//
-// The rest of the entry consists of a {die_offset, low_pc} pair for each
-// inlined instance; the die_offset points to the inlined_subroutine die in the
-// __debug_info section, and the low_pc is the starting address for the
-// inlining instance.
-void DwarfDebug::emitDebugInlineInfo() {
-  if (!Asm->MAI->doesDwarfUseInlineInfoSection())
-    return;
-
-  if (!FirstCU)
-    return;
-
-  Asm->OutStreamer.SwitchSection(
-                        Asm->getObjFileLowering().getDwarfDebugInlineSection());
-
-  Asm->OutStreamer.AddComment("Length of Debug Inlined Information Entry");
-  Asm->EmitLabelDifference(Asm->GetTempSymbol("debug_inlined_end", 1),
-                           Asm->GetTempSymbol("debug_inlined_begin", 1), 4);
-
-  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("debug_inlined_begin", 1));
-
-  Asm->OutStreamer.AddComment("Dwarf Version");
-  Asm->EmitInt16(DwarfVersion);
-  Asm->OutStreamer.AddComment("Address Size (in bytes)");
-  Asm->EmitInt8(Asm->getDataLayout().getPointerSize());
-
-  for (SmallVectorImpl<const MDNode *>::iterator I = InlinedSPNodes.begin(),
-         E = InlinedSPNodes.end(); I != E; ++I) {
-
-    const MDNode *Node = *I;
-    InlineInfoMap::iterator II = InlineInfo.find(Node);
-    SmallVectorImpl<InlineInfoLabels> &Labels = II->second;
-    DISubprogram SP(Node);
-    StringRef LName = SP.getLinkageName();
-    StringRef Name = SP.getName();
-
-    Asm->OutStreamer.AddComment("MIPS linkage name");
-    if (LName.empty())
-      Asm->EmitSectionOffset(InfoHolder.getStringPoolEntry(Name),
-                             DwarfStrSectionSym);
-    else
-      Asm->EmitSectionOffset(
-          InfoHolder.getStringPoolEntry(Function::getRealLinkageName(LName)),
-          DwarfStrSectionSym);
-
-    Asm->OutStreamer.AddComment("Function name");
-    Asm->EmitSectionOffset(InfoHolder.getStringPoolEntry(Name),
-                           DwarfStrSectionSym);
-    Asm->EmitULEB128(Labels.size(), "Inline count");
-
-    for (SmallVectorImpl<InlineInfoLabels>::iterator LI = Labels.begin(),
-           LE = Labels.end(); LI != LE; ++LI) {
-      if (Asm->isVerbose()) Asm->OutStreamer.AddComment("DIE offset");
-      Asm->EmitInt32(LI->second->getOffset());
-
-      if (Asm->isVerbose()) Asm->OutStreamer.AddComment("low_pc");
-      Asm->OutStreamer.EmitSymbolValue(LI->first,
-                                       Asm->getDataLayout().getPointerSize());
-    }
-  }
-
-  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("debug_inlined_end", 1));
 }
 
 // DWARF5 Experimental Separate Dwarf emitters.

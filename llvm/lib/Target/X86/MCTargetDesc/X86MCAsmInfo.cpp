@@ -62,7 +62,6 @@ X86MCAsmInfoDarwin::X86MCAsmInfoDarwin(const Triple &T) {
   PCSymbol = ".";
 
   SupportsDebugInformation = true;
-  DwarfUsesInlineInfoSection = true;
   UseDataRegionDirectives = MarkedJTDataRegions;
 
   // Exceptions handling
