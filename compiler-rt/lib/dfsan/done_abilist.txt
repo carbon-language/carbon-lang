@@ -103,6 +103,7 @@ fun:read=custom
 fun:pread=custom
 fun:clock_gettime=custom
 fun:pthread_create=custom
+fun:dl_iterate_phdr=custom
 
 # TODO: custom
 fun:snprintf=discard

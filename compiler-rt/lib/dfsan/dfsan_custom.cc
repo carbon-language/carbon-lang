@@ -19,6 +19,7 @@
 
 #include <ctype.h>
 #include <dlfcn.h>
+#include <link.h>
 #include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
@@ -304,6 +305,38 @@ SANITIZER_INTERFACE_ATTRIBUTE int __dfsw_pthread_create(
     free(pci);
   *ret_label = 0;
   return rv;
+}
+
+struct dl_iterate_phdr_info {
+  int (*callback_trampoline)(void *callback, struct dl_phdr_info *info,
+                             size_t size, void *data, dfsan_label info_label,
+                             dfsan_label size_label, dfsan_label data_label,
+                             dfsan_label *ret_label);
+  void *callback;
+  void *data;
+};
+
+int dl_iterate_phdr_cb(struct dl_phdr_info *info, size_t size, void *data) {
+  dl_iterate_phdr_info *dipi = (dl_iterate_phdr_info *)data;
+  dfsan_set_label(0, *info);
+  dfsan_set_label(0, (void *)info->dlpi_name, strlen(info->dlpi_name) + 1);
+  dfsan_set_label(0, (void *)info->dlpi_phdr,
+                  sizeof(*info->dlpi_phdr) * info->dlpi_phnum);
+  dfsan_label ret_label;
+  return dipi->callback_trampoline(dipi->callback, info, size, dipi->data, 0, 0,
+                                   0, &ret_label);
+}
+
+SANITIZER_INTERFACE_ATTRIBUTE int __dfsw_dl_iterate_phdr(
+    int (*callback_trampoline)(void *callback, struct dl_phdr_info *info,
+                               size_t size, void *data, dfsan_label info_label,
+                               dfsan_label size_label, dfsan_label data_label,
+                               dfsan_label *ret_label),
+    void *callback, void *data, dfsan_label callback_label,
+    dfsan_label data_label, dfsan_label *ret_label) {
+  dl_iterate_phdr_info dipi = { callback_trampoline, callback, data };
+  *ret_label = 0;
+  return dl_iterate_phdr(dl_iterate_phdr_cb, &dipi);
 }
 
 }

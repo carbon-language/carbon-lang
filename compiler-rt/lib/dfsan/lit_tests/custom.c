@@ -3,8 +3,10 @@
 
 // Tests custom implementations of various libc functions.
 
+#define _GNU_SOURCE
 #include <sanitizer/dfsan_interface.h>
 #include <assert.h>
+#include <link.h>
 #include <pthread.h>
 #include <string.h>
 #include <stdlib.h>
@@ -17,6 +19,14 @@ void *ptcb(void *p) {
   assert(p == (void *)1);
   assert(dfsan_get_label((uintptr_t)p) == 0);
   return (void *)2;
+}
+
+int dlcb(struct dl_phdr_info *info, size_t size, void *data) {
+  assert(data == (void *)3);
+  assert(dfsan_get_label((uintptr_t)info) == 0);
+  assert(dfsan_get_label(size) == 0);
+  assert(dfsan_get_label((uintptr_t)data) == 0);
+  return 0;
 }
 
 int main(void) {
@@ -137,6 +147,8 @@ int main(void) {
   void *cbrv;
   pthread_join(pt, &cbrv);
   assert(cbrv == (void *)2);
+
+  dl_iterate_phdr(dlcb, (void *)3);
 
   return 0;
 }
