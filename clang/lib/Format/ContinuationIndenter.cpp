@@ -536,9 +536,10 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
 
   // If we encounter a closing ), ], } or >, we can remove a level from our
   // stacks.
-  if (Current.isOneOf(tok::r_paren, tok::r_square) ||
-      (Current.is(tok::r_brace) && State.NextToken != Line.First) ||
-      State.NextToken->Type == TT_TemplateCloser) {
+  if (State.Stack.size() > 1 &&
+      (Current.isOneOf(tok::r_paren, tok::r_square) ||
+       (Current.is(tok::r_brace) && State.NextToken != Line.First) ||
+       State.NextToken->Type == TT_TemplateCloser)) {
     State.Stack.pop_back();
     --State.ParenLevel;
   }
