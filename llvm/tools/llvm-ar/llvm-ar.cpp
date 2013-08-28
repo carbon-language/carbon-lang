@@ -63,19 +63,12 @@ static void failIfError(error_code EC, Twine Context = "") {
   fail(Context + ": " + EC.message());
 }
 
-// Option for compatibility with AIX, not used but must allow it to be present.
-static cl::opt<bool>
-X32Option ("X32_64", cl::Hidden,
-            cl::desc("Ignored option for compatibility with AIX"));
-
-// llvm-ar operation code and modifier flags. This must come first.
-static cl::opt<std::string>
-Options(cl::Positional, cl::Required, cl::desc("{operation}[modifiers]..."));
-
-// llvm-ar remaining positional arguments.
+// llvm-ar/llvm-ranlib remaining positional arguments.
 static cl::list<std::string>
 RestOfArgs(cl::Positional, cl::OneOrMore,
     cl::desc("[relpos] [count] <archive-file> [members]..."));
+
+std::string Options;
 
 // MoreHelp - Provide additional help output explaining the operations and
 // modifiers of llvm-ar. This object instructs the CommandLine library
@@ -156,6 +149,13 @@ static void getRelPos() {
   RestOfArgs.erase(RestOfArgs.begin());
 }
 
+static void getOptions() {
+  if(RestOfArgs.size() == 0)
+    show_help("Expected options");
+  Options = RestOfArgs[0];
+  RestOfArgs.erase(RestOfArgs.begin());
+}
+
 // getArchive - Get the archive file name from the command line
 static void getArchive() {
   if(RestOfArgs.size() == 0)
@@ -175,6 +175,7 @@ static void getMembers() {
 // operation specified. Process all modifiers and check to make sure that
 // constraints on modifier/operation pairs have not been violated.
 static ArchiveOperation parseCommandLine() {
+  getOptions();
 
   // Keep track of number of operations. We can only specify one
   // per execution.
@@ -857,6 +858,9 @@ static void performOperation(ArchiveOperation Operation,
   llvm_unreachable("Unknown operation.");
 }
 
+static int ar_main(char **argv);
+static int ranlib_main();
+
 // main - main program for llvm-ar .. see comments in the code
 int main(int argc, char **argv) {
   ToolName = argv[0];
@@ -872,15 +876,35 @@ int main(int argc, char **argv) {
     "  This program archives bitcode files into single libraries\n"
   );
 
+  if (ToolName.endswith("ar"))
+    return ar_main(argv);
+  if (ToolName.endswith("ranlib"))
+    return ranlib_main();
+  fail("Not ranlib or ar!");
+}
+
+static int performOperation(ArchiveOperation Operation);
+
+int ranlib_main() {
+  if (RestOfArgs.size() != 1)
+    fail(ToolName + "takes just one archive as argument");
+  ArchiveName = RestOfArgs[0];
+  return performOperation(CreateSymTab);
+}
+
+int ar_main(char **argv) {
   // Do our own parsing of the command line because the CommandLine utility
   // can't handle the grouped positional parameters without a dash.
   ArchiveOperation Operation = parseCommandLine();
+  return performOperation(Operation);
+}
 
+static int performOperation(ArchiveOperation Operation) {
   // Create or open the archive object.
   OwningPtr<MemoryBuffer> Buf;
   error_code EC = MemoryBuffer::getFile(ArchiveName, Buf, -1, false);
   if (EC && EC != llvm::errc::no_such_file_or_directory) {
-    errs() << argv[0] << ": error opening '" << ArchiveName
+    errs() << ToolName << ": error opening '" << ArchiveName
            << "': " << EC.message() << "!\n";
     return 1;
   }
@@ -889,7 +913,7 @@ int main(int argc, char **argv) {
     object::Archive Archive(Buf.take(), EC);
 
     if (EC) {
-      errs() << argv[0] << ": error loading '" << ArchiveName
+      errs() << ToolName << ": error loading '" << ArchiveName
              << "': " << EC.message() << "!\n";
       return 1;
     }
@@ -904,7 +928,7 @@ int main(int argc, char **argv) {
   } else {
     if (!Create) {
       // Produce a warning if we should and we're creating the archive
-      errs() << argv[0] << ": creating " << ArchiveName << "\n";
+      errs() << ToolName << ": creating " << ArchiveName << "\n";
     }
   }
 

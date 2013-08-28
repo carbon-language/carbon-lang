@@ -9,6 +9,7 @@
 
 LEVEL := ../..
 TOOLNAME := llvm-ar
+TOOLALIAS = llvm-ranlib
 LINK_COMPONENTS := bitreader support object
 
 # This tool has no plugins, optimize startup time.

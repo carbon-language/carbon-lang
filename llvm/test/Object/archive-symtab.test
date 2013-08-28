@@ -48,3 +48,12 @@ CORRUPT-NEXT: 00000016 T main
 check that the we *don't* update the symbol table.
 RUN: llvm-ar s %t.a
 RUN: llvm-nm -s %t.a | FileCheck %s --check-prefix=CORRUPT
+
+repeate the test with llvm-ranlib
+
+RUN: rm -f %t.a
+RUN: llvm-ar rcS %t.a %p/Inputs/trivial-object-test.elf-x86-64 %p/Inputs/trivial-object-test2.elf-x86-64
+RUN: llvm-nm -s %t.a | FileCheck %s --check-prefix=NOMAP
+
+RUN: llvm-ranlib %t.a
+RUN: llvm-nm -s %t.a | FileCheck %s
