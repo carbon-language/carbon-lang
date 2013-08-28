@@ -11,6 +11,8 @@
 #include "GDBRemoteCommunicationClient.h"
 
 // C Includes
+#include <sys/stat.h>
+
 // C++ Includes
 #include <sstream>
 
