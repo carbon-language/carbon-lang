@@ -14,26 +14,27 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
+#include <cctype>
 #include <map>
 
 using namespace llvm;
 using namespace llvm::opt;
 
-// Ordering on Info. The ordering is *almost* lexicographic, with two
-// exceptions. First, '\0' comes at the end of the alphabet instead of
-// the beginning (thus options precede any other options which prefix
-// them). Second, for options with the same name, the less permissive
-// version should come first; a Flag option should precede a Joined
-// option, for example.
+namespace llvm {
+namespace opt {
 
-static int StrCmpOptionName(const char *A, const char *B) {
-  char a = *A, b = *B;
+// Ordering on Info. The ordering is *almost* case-insensitive lexicographic,
+// with an exceptions. '\0' comes at the end of the alphabet instead of the
+// beginning (thus options precede any other options which prefix them).
+static int StrCmpOptionNameIgnoreCase(const char *A, const char *B) {
+  const char *X = A, *Y = B;
+  char a = tolower(*A), b = tolower(*B);
   while (a == b) {
     if (a == '\0')
       return 0;
 
-    a = *++A;
-    b = *++B;
+    a = tolower(*++X);
+    b = tolower(*++Y);
   }
 
   if (a == '\0') // A is a prefix of B.
@@ -45,21 +46,24 @@ static int StrCmpOptionName(const char *A, const char *B) {
   return (a < b) ? -1 : 1;
 }
 
-namespace llvm {
-namespace opt {
+static int StrCmpOptionName(const char *A, const char *B) {
+  if (int N = StrCmpOptionNameIgnoreCase(A, B))
+    return N;
+  return strcmp(A, B);
+}
 
 static inline bool operator<(const OptTable::Info &A, const OptTable::Info &B) {
   if (&A == &B)
     return false;
 
   if (int N = StrCmpOptionName(A.Name, B.Name))
-    return N == -1;
+    return N < 0;
 
   for (const char * const *APre = A.Prefixes,
                   * const *BPre = B.Prefixes;
                           *APre != 0 && *BPre != 0; ++APre, ++BPre) {
     if (int N = StrCmpOptionName(*APre, *BPre))
-      return N == -1;
+      return N < 0;
   }
 
   // Names are the same, check that classes are in order; exactly one
@@ -71,19 +75,21 @@ static inline bool operator<(const OptTable::Info &A, const OptTable::Info &B) {
 
 // Support lower_bound between info and an option name.
 static inline bool operator<(const OptTable::Info &I, const char *Name) {
-  return StrCmpOptionName(I.Name, Name) == -1;
+  return StrCmpOptionNameIgnoreCase(I.Name, Name) < 0;
 }
 static inline bool operator<(const char *Name, const OptTable::Info &I) {
-  return StrCmpOptionName(Name, I.Name) == -1;
+  return StrCmpOptionNameIgnoreCase(Name, I.Name) < 0;
 }
 }
 }
 
 OptSpecifier::OptSpecifier(const Option *Opt) : ID(Opt->getID()) {}
 
-OptTable::OptTable(const Info *_OptionInfos, unsigned _NumOptionInfos)
+OptTable::OptTable(const Info *_OptionInfos, unsigned _NumOptionInfos,
+                   bool _IgnoreCase)
   : OptionInfos(_OptionInfos),
     NumOptionInfos(_NumOptionInfos),
+    IgnoreCase(_IgnoreCase),
     TheInputOptionID(0),
     TheUnknownOptionID(0),
     FirstSearchableIndex(0)
@@ -170,12 +176,26 @@ static bool isInput(const llvm::StringSet<> &Prefixes, StringRef Arg) {
   return true;
 }
 
+// Returns true if X starts with Y, ignoring case.
+static bool startsWithIgnoreCase(StringRef X, StringRef Y) {
+  if (X.size() < Y.size())
+    return false;
+  return X.substr(0, Y.size()).equals_lower(Y);
+}
+
 /// \returns Matched size. 0 means no match.
-static unsigned matchOption(const OptTable::Info *I, StringRef Str) {
+static unsigned matchOption(const OptTable::Info *I, StringRef Str,
+                            bool IgnoreCase) {
   for (const char * const *Pre = I->Prefixes; *Pre != 0; ++Pre) {
     StringRef Prefix(*Pre);
-    if (Str.startswith(Prefix) && Str.substr(Prefix.size()).startswith(I->Name))
-      return Prefix.size() + StringRef(I->Name).size();
+    if (Str.startswith(Prefix)) {
+      StringRef Rest = Str.substr(Prefix.size());
+      bool Matched = IgnoreCase
+          ? startsWithIgnoreCase(Rest, I->Name)
+          : Rest.startswith(I->Name);
+      if (Matched)
+        return Prefix.size() + StringRef(I->Name).size();
+    }
   }
   return 0;
 }
@@ -210,7 +230,7 @@ Arg *OptTable::ParseOneArg(const ArgList &Args, unsigned &Index,
     unsigned ArgSize = 0;
     // Scan for first option which is a proper prefix.
     for (; Start != End; ++Start)
-      if ((ArgSize = matchOption(Start, Str)))
+      if ((ArgSize = matchOption(Start, Str, IgnoreCase)))
         break;
     if (Start == End)
       break;

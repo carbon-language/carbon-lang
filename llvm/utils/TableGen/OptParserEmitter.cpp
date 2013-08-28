@@ -13,18 +13,23 @@
 #include "llvm/ADT/Twine.h"
 #include "llvm/TableGen/Record.h"
 #include "llvm/TableGen/TableGenBackend.h"
+#include <cstring>
+#include <cctype>
 #include <map>
 
 using namespace llvm;
 
+// Ordering on Info. The logic should match with the consumer-side function in
+// llvm/Option/OptTable.h.
 static int StrCmpOptionName(const char *A, const char *B) {
-  char a = *A, b = *B;
+  const char *X = A, *Y = B;
+  char a = tolower(*A), b = tolower(*B);
   while (a == b) {
     if (a == '\0')
-      return 0;
+      return strcmp(A, B);
 
-    a = *++A;
-    b = *++B;
+    a = tolower(*++X);
+    b = tolower(*++Y);
   }
 
   if (a == '\0') // A is a prefix of B.
@@ -50,7 +55,7 @@ static int CompareOptionRecords(const void *Av, const void *Bv) {
   if (!ASent)
     if (int Cmp = StrCmpOptionName(A->getValueAsString("Name").c_str(),
                                    B->getValueAsString("Name").c_str()))
-    return Cmp;
+      return Cmp;
 
   if (!ASent) {
     std::vector<std::string> APrefixes = A->getValueAsListOfStrings("Prefixes");
