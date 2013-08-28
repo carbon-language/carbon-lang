@@ -125,10 +125,14 @@ exit:
   ret i64 %res
 }
 
-; 257 bytes is too big for a single CLC.  For now expect a call instead.
+; 257 bytes needs two CLCs.
 define i64 @f8(i8 *%src1, i8 *%src2) {
 ; CHECK-LABEL: f8:
-; CHECK: brasl %r14, memcmp@PLT
+; CHECK: clc 0(256,%r2), 0(%r3)
+; CHECK: jlh [[LABEL:\..*]]
+; CHECK: clc 256(1,%r2), 256(%r3)
+; CHECK: [[LABEL]]:
+; CHECK: ipm [[REG:%r[0-5]]]
 ; CHECK: br %r14
   %res = call i64 @memcmp(i8 *%src1, i8 *%src2, i64 257)
   ret i64 %res

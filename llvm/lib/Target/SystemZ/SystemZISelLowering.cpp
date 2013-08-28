@@ -1954,6 +1954,18 @@ static MachineBasicBlock *emitBlockAfter(MachineBasicBlock *MBB) {
   return NewMBB;
 }
 
+// Split MBB after MI and return the new block (the one that contains
+// instructions after MI).
+static MachineBasicBlock *splitBlockAfter(MachineInstr *MI,
+                                          MachineBasicBlock *MBB) {
+  MachineBasicBlock *NewMBB = emitBlockAfter(MBB);
+  NewMBB->splice(NewMBB->begin(), MBB,
+                 llvm::next(MachineBasicBlock::iterator(MI)),
+                 MBB->end());
+  NewMBB->transferSuccessorsAndUpdatePHIs(MBB);
+  return NewMBB;
+}
+
 // Split MBB before MI and return the new block (the one that contains MI).
 static MachineBasicBlock *splitBlockBefore(MachineInstr *MI,
                                            MachineBasicBlock *MBB) {
@@ -2490,6 +2502,11 @@ SystemZTargetLowering::emitMemMemWrapper(MachineInstr *MI,
   uint64_t       SrcDisp  = MI->getOperand(3).getImm();
   uint64_t       Length   = MI->getOperand(4).getImm();
 
+  // When generating more than one CLC, all but the last will need to
+  // branch to the end when a difference is found.
+  MachineBasicBlock *EndMBB = (Length > 256 && Opcode == SystemZ::CLC ?
+                               splitBlockAfter(MI, MBB) : 0);
+
   // Check for the loop form, in which operand 5 is the trip count.
   if (MI->getNumExplicitOperands() > 5) {
     bool HaveSingleBase = DestBase.isIdenticalTo(SrcBase);
@@ -2514,6 +2531,7 @@ SystemZTargetLowering::emitMemMemWrapper(MachineInstr *MI,
     MachineBasicBlock *StartMBB = MBB;
     MachineBasicBlock *DoneMBB = splitBlockBefore(MI, MBB);
     MachineBasicBlock *LoopMBB = emitBlockAfter(StartMBB);
+    MachineBasicBlock *NextMBB = (EndMBB ? emitBlockAfter(LoopMBB) : LoopMBB);
 
     //  StartMBB:
     //   # fall through to LoopMMB
@@ -2521,13 +2539,44 @@ SystemZTargetLowering::emitMemMemWrapper(MachineInstr *MI,
 
     //  LoopMBB:
     //   %ThisDestReg = phi [ %StartDestReg, StartMBB ],
-    //                      [ %NextDestReg, LoopMBB ]
+    //                      [ %NextDestReg, NextMBB ]
     //   %ThisSrcReg = phi [ %StartSrcReg, StartMBB ],
-    //                     [ %NextSrcReg, LoopMBB ]
+    //                     [ %NextSrcReg, NextMBB ]
     //   %ThisCountReg = phi [ %StartCountReg, StartMBB ],
-    //                       [ %NextCountReg, LoopMBB ]
-    //   PFD 2, 768+DestDisp(%ThisDestReg)
+    //                       [ %NextCountReg, NextMBB ]
+    //   ( PFD 2, 768+DestDisp(%ThisDestReg) )
     //   Opcode DestDisp(256,%ThisDestReg), SrcDisp(%ThisSrcReg)
+    //   ( JLH EndMBB )
+    //
+    // The prefetch is used only for MVC.  The JLH is used only for CLC.
+    MBB = LoopMBB;
+
+    BuildMI(MBB, DL, TII->get(SystemZ::PHI), ThisDestReg)
+      .addReg(StartDestReg).addMBB(StartMBB)
+      .addReg(NextDestReg).addMBB(NextMBB);
+    if (!HaveSingleBase)
+      BuildMI(MBB, DL, TII->get(SystemZ::PHI), ThisSrcReg)
+        .addReg(StartSrcReg).addMBB(StartMBB)
+        .addReg(NextSrcReg).addMBB(NextMBB);
+    BuildMI(MBB, DL, TII->get(SystemZ::PHI), ThisCountReg)
+      .addReg(StartCountReg).addMBB(StartMBB)
+      .addReg(NextCountReg).addMBB(NextMBB);
+    if (Opcode == SystemZ::MVC)
+      BuildMI(MBB, DL, TII->get(SystemZ::PFD))
+        .addImm(SystemZ::PFD_WRITE)
+        .addReg(ThisDestReg).addImm(DestDisp + 768).addReg(0);
+    BuildMI(MBB, DL, TII->get(Opcode))
+      .addReg(ThisDestReg).addImm(DestDisp).addImm(256)
+      .addReg(ThisSrcReg).addImm(SrcDisp);
+    if (EndMBB) {
+      BuildMI(MBB, DL, TII->get(SystemZ::BRC))
+        .addImm(SystemZ::CCMASK_ICMP).addImm(SystemZ::CCMASK_CMP_NE)
+        .addMBB(EndMBB);
+      MBB->addSuccessor(EndMBB);
+      MBB->addSuccessor(NextMBB);
+    }
+
+    // NextMBB:
     //   %NextDestReg = LA 256(%ThisDestReg)
     //   %NextSrcReg = LA 256(%ThisSrcReg)
     //   %NextCountReg = AGHI %ThisCountReg, -1
@@ -2536,24 +2585,8 @@ SystemZTargetLowering::emitMemMemWrapper(MachineInstr *MI,
     //   # fall through to DoneMMB
     //
     // The AGHI, CGHI and JLH should be converted to BRCTG by later passes.
-    MBB = LoopMBB;
+    MBB = NextMBB;
 
-    BuildMI(MBB, DL, TII->get(SystemZ::PHI), ThisDestReg)
-      .addReg(StartDestReg).addMBB(StartMBB)
-      .addReg(NextDestReg).addMBB(LoopMBB);
-    if (!HaveSingleBase)
-      BuildMI(MBB, DL, TII->get(SystemZ::PHI), ThisSrcReg)
-        .addReg(StartSrcReg).addMBB(StartMBB)
-        .addReg(NextSrcReg).addMBB(LoopMBB);
-    BuildMI(MBB, DL, TII->get(SystemZ::PHI), ThisCountReg)
-      .addReg(StartCountReg).addMBB(StartMBB)
-      .addReg(NextCountReg).addMBB(LoopMBB);
-    BuildMI(MBB, DL, TII->get(SystemZ::PFD))
-      .addImm(SystemZ::PFD_WRITE)
-      .addReg(ThisDestReg).addImm(DestDisp + 768).addReg(0);
-    BuildMI(MBB, DL, TII->get(Opcode))
-      .addReg(ThisDestReg).addImm(DestDisp).addImm(256)
-      .addReg(ThisSrcReg).addImm(SrcDisp);
     BuildMI(MBB, DL, TII->get(SystemZ::LA), NextDestReg)
       .addReg(ThisDestReg).addImm(256).addReg(0);
     if (!HaveSingleBase)
@@ -2599,6 +2632,22 @@ SystemZTargetLowering::emitMemMemWrapper(MachineInstr *MI,
     DestDisp += ThisLength;
     SrcDisp += ThisLength;
     Length -= ThisLength;
+    // If there's another CLC to go, branch to the end if a difference
+    // was found.
+    if (EndMBB && Length > 0) {
+      MachineBasicBlock *NextMBB = splitBlockBefore(MI, MBB);
+      BuildMI(MBB, DL, TII->get(SystemZ::BRC))
+        .addImm(SystemZ::CCMASK_ICMP).addImm(SystemZ::CCMASK_CMP_NE)
+        .addMBB(EndMBB);
+      MBB->addSuccessor(EndMBB);
+      MBB->addSuccessor(NextMBB);
+      MBB = NextMBB;
+    }
+  }
+  if (EndMBB) {
+    MBB->addSuccessor(EndMBB);
+    MBB = EndMBB;
+    MBB->addLiveIn(SystemZ::CC);
   }
 
   MI->eraseFromParent();

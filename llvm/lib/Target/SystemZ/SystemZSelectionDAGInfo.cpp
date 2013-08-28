@@ -141,6 +141,28 @@ EmitTargetCodeForMemset(SelectionDAG &DAG, SDLoc DL, SDValue Chain,
   return SDValue();
 }
 
+// Use CLC to compare [Src1, Src1 + Size) with [Src2, Src2 + Size),
+// deciding whether to use a loop or straight-line code.
+static SDValue emitCLC(SelectionDAG &DAG, SDLoc DL, SDValue Chain,
+                       SDValue Src1, SDValue Src2, uint64_t Size) {
+  SDVTList VTs = DAG.getVTList(MVT::Other, MVT::Glue);
+  EVT PtrVT = Src1.getValueType();
+  // A two-CLC sequence is a clear win over a loop, not least because it
+  // needs only one branch.  A three-CLC sequence needs the same number
+  // of branches as a loop (i.e. 2), but is shorter.  That brings us to
+  // lengths greater than 768 bytes.  It seems relatively likely that
+  // a difference will be found within the first 768 bytes, so we just
+  // optimize for the smallest number of branch instructions, in order
+  // to avoid polluting the prediction buffer too much.  A loop only ever
+  // needs 2 branches, whereas a straight-line sequence would need 3 or more.
+  if (Size > 3 * 256)
+    return DAG.getNode(SystemZISD::CLC_LOOP, DL, VTs, Chain, Src1, Src2,
+                       DAG.getConstant(Size, PtrVT),
+                       DAG.getConstant(Size / 256, PtrVT));
+  return DAG.getNode(SystemZISD::CLC, DL, VTs, Chain, Src1, Src2,
+                     DAG.getConstant(Size, PtrVT));
+}
+
 // Convert the current CC value into an integer that is 0 if CC == 0,
 // less than zero if CC == 1 and greater than zero if CC >= 2.
 // The sequence starts with IPM, which puts CC into bits 29 and 28
@@ -159,17 +181,12 @@ EmitTargetCodeForMemcmp(SelectionDAG &DAG, SDLoc DL, SDValue Chain,
                         SDValue Src1, SDValue Src2, SDValue Size,
                         MachinePointerInfo Op1PtrInfo,
                         MachinePointerInfo Op2PtrInfo) const {
-  EVT PtrVT = Src1.getValueType();
   if (ConstantSDNode *CSize = dyn_cast<ConstantSDNode>(Size)) {
     uint64_t Bytes = CSize->getZExtValue();
-    if (Bytes >= 1 && Bytes <= 0x100) {
-      // A single CLC.
-      SDVTList VTs = DAG.getVTList(MVT::Other, MVT::Glue);
-      Chain = DAG.getNode(SystemZISD::CLC, DL, VTs, Chain,
-                          Src1, Src2, Size, DAG.getConstant(0, PtrVT));
-      SDValue Glue = Chain.getValue(1);
-      return std::make_pair(addIPMSequence(DL, Glue, DAG), Chain);
-    }
+    assert(Bytes > 0 && "Caller should have handled 0-size case");
+    Chain = emitCLC(DAG, DL, Chain, Src1, Src2, Bytes);
+    SDValue Glue = Chain.getValue(1);
+    return std::make_pair(addIPMSequence(DL, Glue, DAG), Chain);
   }
   return std::make_pair(SDValue(), SDValue());
 }

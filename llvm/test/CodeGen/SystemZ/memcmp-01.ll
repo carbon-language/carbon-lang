@@ -123,11 +123,99 @@ exit:
   ret i32 %res
 }
 
-; 257 bytes is too big for a single CLC.  For now expect a call instead.
+; 257 bytes needs two CLCs.
 define i32 @f8(i8 *%src1, i8 *%src2) {
 ; CHECK-LABEL: f8:
-; CHECK: brasl %r14, memcmp@PLT
+; CHECK: clc 0(256,%r2), 0(%r3)
+; CHECK: jlh [[LABEL:\..*]]
+; CHECK: clc 256(1,%r2), 256(%r3)
+; CHECK: [[LABEL]]:
+; CHECK: ipm [[REG:%r[0-5]]]
 ; CHECK: br %r14
   %res = call i32 @memcmp(i8 *%src1, i8 *%src2, i64 257)
+  ret i32 %res
+}
+
+; Test a comparison of 258 bytes in which the CC result can be used directly.
+define void @f9(i8 *%src1, i8 *%src2, i32 *%dest) {
+; CHECK-LABEL: f9:
+; CHECK: clc 0(256,%r2), 0(%r3)
+; CHECK: jlh [[LABEL:\..*]]
+; CHECK: clc 256(1,%r2), 256(%r3)
+; CHECK: [[LABEL]]:
+; CHECK-NEXT: jl .L
+; CHECK: br %r14
+entry:
+  %res = call i32 @memcmp(i8 *%src1, i8 *%src2, i64 257)
+  %cmp = icmp slt i32 %res, 0
+  br i1 %cmp, label %exit, label %store
+
+store:
+  store i32 0, i32 *%dest
+  br label %exit
+
+exit:
+  ret void
+}
+
+; Test the largest size that can use two CLCs.
+define i32 @f10(i8 *%src1, i8 *%src2) {
+; CHECK-LABEL: f10:
+; CHECK: clc 0(256,%r2), 0(%r3)
+; CHECK: jlh [[LABEL:\..*]]
+; CHECK: clc 256(256,%r2), 256(%r3)
+; CHECK: [[LABEL]]:
+; CHECK: ipm [[REG:%r[0-5]]]
+; CHECK: br %r14
+  %res = call i32 @memcmp(i8 *%src1, i8 *%src2, i64 512)
+  ret i32 %res
+}
+
+; Test the smallest size that needs 3 CLCs.
+define i32 @f11(i8 *%src1, i8 *%src2) {
+; CHECK-LABEL: f11:
+; CHECK: clc 0(256,%r2), 0(%r3)
+; CHECK: jlh [[LABEL:\..*]]
+; CHECK: clc 256(256,%r2), 256(%r3)
+; CHECK: jlh [[LABEL]]
+; CHECK: clc 512(1,%r2), 512(%r3)
+; CHECK: [[LABEL]]:
+; CHECK: ipm [[REG:%r[0-5]]]
+; CHECK: br %r14
+  %res = call i32 @memcmp(i8 *%src1, i8 *%src2, i64 513)
+  ret i32 %res
+}
+
+; Test the largest size than can use 3 CLCs.
+define i32 @f12(i8 *%src1, i8 *%src2) {
+; CHECK-LABEL: f12:
+; CHECK: clc 0(256,%r2), 0(%r3)
+; CHECK: jlh [[LABEL:\..*]]
+; CHECK: clc 256(256,%r2), 256(%r3)
+; CHECK: jlh [[LABEL]]
+; CHECK: clc 512(256,%r2), 512(%r3)
+; CHECK: [[LABEL]]:
+; CHECK: ipm [[REG:%r[0-5]]]
+; CHECK: br %r14
+  %res = call i32 @memcmp(i8 *%src1, i8 *%src2, i64 768)
+  ret i32 %res
+}
+
+; The next size up uses a loop instead.  We leave the more complicated
+; loop tests to memcpy-01.ll, which shares the same form.
+define i32 @f13(i8 *%src1, i8 *%src2) {
+; CHECK-LABEL: f13:
+; CHECK: lghi [[COUNT:%r[0-5]]], 3
+; CHECK: [[LOOP:.L[^:]*]]:
+; CHECK: clc 0(256,%r2), 0(%r3)
+; CHECK: jlh [[LABEL:\..*]]
+; CHECK-DAG: la %r2, 256(%r2)
+; CHECK-DAG: la %r3, 256(%r3)
+; CHECK: brctg [[COUNT]], [[LOOP]]
+; CHECK: clc 0(1,%r2), 0(%r3)
+; CHECK: [[LABEL]]:
+; CHECK: ipm [[REG:%r[0-5]]]
+; CHECK: br %r14
+  %res = call i32 @memcmp(i8 *%src1, i8 *%src2, i64 769)
   ret i32 %res
 }
