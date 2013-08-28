@@ -22,6 +22,10 @@
 # CHECK:   precr_sra_r.ph.w  $25, $26, 0     # encoding: [0x7f,0x59,0x07,0xd1]
 # CHECK:   precr_sra_r.ph.w  $25, $26, 31    # encoding: [0x7f,0x59,0xff,0xd1]
 
+# CHECK:   lbux $10, $20($26)                # encoding: [0x7f,0x54,0x51,0x8a]
+# CHECK:   lhx  $11, $21($27)                # encoding: [0x7f,0x75,0x59,0x0a]
+# CHECK:   lwx  $12, $22($gp)                # encoding: [0x7f,0x96,0x60,0x0a]
+
 # CHECK:    mult $ac3, $2, $3               # encoding: [0x00,0x43,0x18,0x18]
 # CHECK:    multu $ac2, $4, $5              # encoding: [0x00,0x85,0x10,0x19]
 # CHECK:    madd $ac1, $6, $7               # encoding: [0x70,0xc7,0x08,0x00]
@@ -49,6 +53,10 @@
   precr_sra.ph.w  $24,$25,31
   precr_sra_r.ph.w  $25,$26,0
   precr_sra_r.ph.w  $25,$26,31
+
+  lbux $10, $s4($26)
+  lhx  $11, $s5($27)
+  lwx  $12, $s6($28)
 
   mult $ac3, $2, $3
   multu $ac2, $4, $5

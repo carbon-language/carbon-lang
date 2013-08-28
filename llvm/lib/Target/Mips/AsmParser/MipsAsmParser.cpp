@@ -88,6 +88,11 @@ class MipsAsmParser : public MCTargetAsmParser {
   MipsAsmParser::OperandMatchResultTy
   parseMemOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands);
 
+  bool parsePtrReg(SmallVectorImpl<MCParsedAsmOperand*> &Operands, int RegKind);
+
+  MipsAsmParser::OperandMatchResultTy
+  parsePtrReg(SmallVectorImpl<MCParsedAsmOperand*> &Operands);
+
   MipsAsmParser::OperandMatchResultTy
   parseGPR32(SmallVectorImpl<MCParsedAsmOperand*> &Operands);
 
@@ -179,6 +184,10 @@ class MipsAsmParser : public MCTargetAsmParser {
     return (STI.getFeatureBits() & Mips::FeatureFP64Bit) != 0;
   }
 
+  bool isN64() const {
+    return STI.getFeatureBits() & Mips::FeatureN64;
+  }
+
   int matchRegisterName(StringRef Symbol, bool is64BitReg);
 
   int matchCPURegisterName(StringRef Symbol);
@@ -245,6 +254,7 @@ private:
     k_Memory,
     k_PostIndexRegister,
     k_Register,
+    k_PtrReg,
     k_Token
   } Kind;
 
@@ -284,6 +294,11 @@ public:
     Inst.addOperand(MCOperand::CreateReg(getReg()));
   }
 
+  void addPtrRegOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    Inst.addOperand(MCOperand::CreateReg(getPtrReg()));
+  }
+
   void addExpr(MCInst &Inst, const MCExpr *Expr) const{
     // Add as immediate when possible.  Null MCExpr = 0.
     if (Expr == 0)
@@ -313,6 +328,7 @@ public:
   bool isImm() const { return Kind == k_Immediate; }
   bool isToken() const { return Kind == k_Token; }
   bool isMem() const { return Kind == k_Memory; }
+  bool isPtrReg() const { return Kind == k_PtrReg; }
 
   StringRef getToken() const {
     assert(Kind == k_Token && "Invalid access!");
@@ -324,8 +340,13 @@ public:
     return Reg.RegNum;
   }
 
+  unsigned getPtrReg() const {
+    assert((Kind == k_PtrReg) && "Invalid access!");
+    return Reg.RegNum;
+  }
+
   void setRegKind(RegisterKind RegKind) {
-    assert((Kind == k_Register) && "Invalid access!");
+    assert((Kind == k_Register || Kind == k_PtrReg) && "Invalid access!");
     Reg.Kind = RegKind;
   }
 
@@ -355,6 +376,14 @@ public:
 
   static MipsOperand *CreateReg(unsigned RegNum, SMLoc S, SMLoc E) {
     MipsOperand *Op = new MipsOperand(k_Register);
+    Op->Reg.RegNum = RegNum;
+    Op->StartLoc = S;
+    Op->EndLoc = E;
+    return Op;
+  }
+
+  static MipsOperand *CreatePtrReg(unsigned RegNum, SMLoc S, SMLoc E) {
+    MipsOperand *Op = new MipsOperand(k_PtrReg);
     Op->Reg.RegNum = RegNum;
     Op->StartLoc = S;
     Op->EndLoc = E;
@@ -1286,6 +1315,68 @@ MipsAsmParser::OperandMatchResultTy MipsAsmParser::parseMemOperand(
 
   Operands.push_back(MipsOperand::CreateMem(RegNo, IdVal, S, E));
   delete op;
+  return MatchOperand_Success;
+}
+
+bool
+MipsAsmParser::parsePtrReg(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
+                           int RegKind) {
+  // If the first token is not '$' we have an error.
+  if (Parser.getTok().isNot(AsmToken::Dollar))
+    return false;
+
+  SMLoc S = Parser.getTok().getLoc();
+  Parser.Lex();
+  AsmToken::TokenKind TkKind = getLexer().getKind();
+  int Reg;
+
+  if (TkKind == AsmToken::Integer) {
+    Reg = matchRegisterByNumber(Parser.getTok().getIntVal(),
+                                regKindToRegClass(RegKind));
+    if (Reg == -1)
+      return false;
+  } else if (TkKind == AsmToken::Identifier) {
+    if ((Reg = matchCPURegisterName(Parser.getTok().getString().lower())) == -1)
+      return false;
+    Reg = getReg(regKindToRegClass(RegKind), Reg);
+  } else {
+    return false;
+  }
+
+  MipsOperand *Op = MipsOperand::CreatePtrReg(Reg, S, Parser.getTok().getLoc());
+  Op->setRegKind((MipsOperand::RegisterKind)RegKind);
+  Operands.push_back(Op);
+  Parser.Lex();
+  return true;
+}
+
+MipsAsmParser::OperandMatchResultTy
+MipsAsmParser::parsePtrReg(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+  MipsOperand::RegisterKind RegKind = isN64() ? MipsOperand::Kind_GPR64 :
+                                                MipsOperand::Kind_GPR32;
+
+  // Parse index register.
+  if (!parsePtrReg(Operands, RegKind))
+    return MatchOperand_NoMatch;
+
+  // Parse '('.
+  if (Parser.getTok().isNot(AsmToken::LParen))
+    return MatchOperand_NoMatch;
+
+  Operands.push_back(MipsOperand::CreateToken("(", getLexer().getLoc()));
+  Parser.Lex();
+
+  // Parse base register.
+  if (!parsePtrReg(Operands, RegKind))
+    return MatchOperand_NoMatch;
+
+  // Parse ')'.
+  if (Parser.getTok().isNot(AsmToken::RParen))
+    return MatchOperand_NoMatch;
+
+  Operands.push_back(MipsOperand::CreateToken(")", getLexer().getLoc()));
+  Parser.Lex();
+
   return MatchOperand_Success;
 }
 

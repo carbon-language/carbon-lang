@@ -35,14 +35,18 @@ public:
   ///
   MipsDisassemblerBase(const MCSubtargetInfo &STI, const MCRegisterInfo *Info,
                        bool bigEndian) :
-    MCDisassembler(STI), RegInfo(Info), isBigEndian(bigEndian) {}
+    MCDisassembler(STI), RegInfo(Info),
+    IsN64(STI.getFeatureBits() & Mips::FeatureN64), isBigEndian(bigEndian) {}
 
   virtual ~MipsDisassemblerBase() {}
 
   const MCRegisterInfo *getRegInfo() const { return RegInfo.get(); }
 
+  bool isN64() const { return IsN64; }
+
 private:
   OwningPtr<const MCRegisterInfo> RegInfo;
+  bool IsN64;
 protected:
   bool isBigEndian;
 };
@@ -102,6 +106,11 @@ static DecodeStatus DecodeGPR32RegisterClass(MCInst &Inst,
                                              unsigned RegNo,
                                              uint64_t Address,
                                              const void *Decoder);
+
+static DecodeStatus DecodePtrRegisterClass(MCInst &Inst,
+                                           unsigned Insn,
+                                           uint64_t Address,
+                                           const void *Decoder);
 
 static DecodeStatus DecodeDSPRRegisterClass(MCInst &Inst,
                                             unsigned RegNo,
@@ -362,6 +371,16 @@ static DecodeStatus DecodeGPR32RegisterClass(MCInst &Inst,
   unsigned Reg = getReg(Decoder, Mips::GPR32RegClassID, RegNo);
   Inst.addOperand(MCOperand::CreateReg(Reg));
   return MCDisassembler::Success;
+}
+
+static DecodeStatus DecodePtrRegisterClass(MCInst &Inst,
+                                           unsigned RegNo,
+                                           uint64_t Address,
+                                           const void *Decoder) {
+  if (static_cast<const MipsDisassembler *>(Decoder)->isN64())
+    return DecodeGPR64RegisterClass(Inst, RegNo, Address, Decoder);
+
+  return DecodeGPR32RegisterClass(Inst, RegNo, Address, Decoder);
 }
 
 static DecodeStatus DecodeDSPRRegisterClass(MCInst &Inst,

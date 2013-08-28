@@ -165,6 +165,8 @@
 # CHECK:  movf.s  $f4, $f6, $fcc5         # encoding: [0x11,0x31,0x14,0x46]
 # CHECK:  luxc1   $f0, $6($5)             # encoding: [0x05,0x00,0xa6,0x4c]
 # CHECK:  suxc1   $f4, $24($5)            # encoding: [0x0d,0x20,0xb8,0x4c]
+# CHECK:  lwxc1   $f20, $12($14)          # encoding: [0x00,0x05,0xcc,0x4d]
+# CHECK:  swxc1   $f26, $18($22)          # encoding: [0x08,0xd0,0xd2,0x4e]
 
    cfc1    $a2,$0
    ctc1    $10,$31
@@ -190,5 +192,7 @@
    movt    $4, $5, $fcc4
    movf.d  $f4, $f6, $fcc2
    movf.s  $f4, $f6, $fcc5
-   luxc1 $f0, $a2($a1)
-   suxc1 $f4, $t8($a1)
+   luxc1   $f0, $a2($a1)
+   suxc1   $f4, $t8($a1)
+   lwxc1   $f20, $12($14)
+   swxc1   $f26, $s2($s6)

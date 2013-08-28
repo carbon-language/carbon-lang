@@ -348,10 +348,9 @@ class SHLL_QB_R2_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
 class LX_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
                    InstrItinClass itin> {
   dag OutOperandList = (outs GPR32Opnd:$rd);
-  dag InOperandList = (ins GPR32Opnd:$base, GPR32Opnd:$index);
+  dag InOperandList = (ins PtrRC:$base, PtrRC:$index);
   string AsmString = !strconcat(instr_asm, "\t$rd, ${index}(${base})");
-  list<dag> Pattern = [(set GPR32Opnd:$rd,
-                       (OpNode GPR32Opnd:$base, GPR32Opnd:$index))];
+  list<dag> Pattern = [(set GPR32Opnd:$rd, (OpNode iPTR:$base, iPTR:$index))];
   InstrItinClass Itinerary = itin;
   bit mayLoad = 1;
 }
