@@ -3260,7 +3260,7 @@ def t2LDAEXD : T2I_ldrex<0b1111, (outs rGPR:$Rt, rGPR:$Rt2),
                          (ins addr_offset_none:$addr),
                          AddrModeNone, 4, NoItinerary,
                          "ldaexd", "\t$Rt, $Rt2, $addr", "",
-                         [], {?, ?, ?, ?}>, Requires<[HasV8]> {
+                         [], {?, ?, ?, ?}>, Requires<[IsThumb, HasV8]> {
   bits<4> Rt2;
   let Inst{11-8} = Rt2;
 
