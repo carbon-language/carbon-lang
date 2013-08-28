@@ -666,8 +666,7 @@ unsigned ContinuationIndenter::breakProtrudingToken(const FormatToken &Current,
       assert(NewRemainingTokenColumns < RemainingTokenColumns);
       if (!DryRun)
         Token->insertBreak(LineIndex, TailOffset, Split, Whitespaces);
-      Penalty += Current.is(tok::string_literal) ? Style.PenaltyBreakString
-                                                 : Style.PenaltyBreakComment;
+      Penalty += Current.SplitPenalty;
       unsigned ColumnsUsed =
           Token->getLineLengthAfterSplit(LineIndex, TailOffset, Split.first);
       if (ColumnsUsed > getColumnLimit()) {
@@ -690,6 +689,9 @@ unsigned ContinuationIndenter::breakProtrudingToken(const FormatToken &Current,
       for (unsigned i = 0, e = State.Stack.size(); i != e; ++i)
         State.Stack[i].BreakBeforeParameter = true;
     }
+
+    Penalty += Current.is(tok::string_literal) ? Style.PenaltyBreakString
+                                               : Style.PenaltyBreakComment;
 
     State.Stack.back().LastSpace = StartColumn;
   }
