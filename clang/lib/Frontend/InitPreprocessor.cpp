@@ -29,6 +29,12 @@
 #include "llvm/Support/Path.h"
 using namespace clang;
 
+static bool MacroBodyEndsInBackslash(StringRef MacroBody) {
+  while (!MacroBody.empty() && isWhitespace(MacroBody.back()))
+    MacroBody = MacroBody.drop_back();
+  return !MacroBody.empty() && MacroBody.back() == '\\';
+}
+
 // Append a #define line to Buf for Macro.  Macro should be of the form XXX,
 // in which case we emit "#define XXX 1" or "XXX=Y z W" in which case we emit
 // "#define XXX Y z W".  To get a #define with no value, use "XXX=".
@@ -43,7 +49,14 @@ static void DefineBuiltinMacro(MacroBuilder &Builder, StringRef Macro,
     if (End != StringRef::npos)
       Diags.Report(diag::warn_fe_macro_contains_embedded_newline)
         << MacroName;
-    Builder.defineMacro(MacroName, MacroBody.substr(0, End));
+    MacroBody = MacroBody.substr(0, End);
+    // We handle macro bodies which end in a backslash by appending an extra
+    // backslash+newline.  This makes sure we don't accidentally treat the
+    // backslash as a line continuation marker.
+    if (MacroBodyEndsInBackslash(MacroBody))
+      Builder.defineMacro(MacroName, Twine(MacroBody) + "\\\n");
+    else
+      Builder.defineMacro(MacroName, MacroBody);
   } else {
     // Push "macroname 1".
     Builder.defineMacro(Macro);
