@@ -8,6 +8,7 @@ get_system_libs(LLVM_SYSTEM_LIBS_LIST)
 foreach(l ${LLVM_SYSTEM_LIBS_LIST})
   set(SYSTEM_LIBS ${SYSTEM_LIBS} "-l${l}")
 endforeach()
+string(REPLACE ";" " " SYSTEM_LIBS "${SYSTEM_LIBS}")
 
 # Use configure_file to create BuildVariables.inc.
 set(LLVM_SRC_ROOT ${LLVM_MAIN_SRC_DIR})
@@ -18,7 +19,7 @@ set(LLVM_CXXFLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_${uppercase_CMAKE_BUILD_
 set(LLVM_LDFLAGS ${CMAKE_SHARED_LINKER_FLAGS})
 set(LLVM_BUILDMODE ${CMAKE_BUILD_TYPE})
 set(LLVM_SYSTEM_LIBS ${SYSTEM_LIBS})
-set(LLVM_TARGETS_BUILT ${LLVM_TARGETS_TO_BUILD})
+string(REPLACE ";" " " LLVM_TARGETS_BUILT "${LLVM_TARGETS_TO_BUILD}")
 configure_file(${BUILDVARIABLES_SRCPATH} ${BUILDVARIABLES_OBJPATH} @ONLY)
 
 # Add the llvm-config tool.
