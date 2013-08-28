@@ -3382,8 +3382,18 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   OptSpecifier VectorizeAliasOption = EnableVec ? options::OPT_O_Group :
     options::OPT_fvectorize;
   if (Args.hasFlag(options::OPT_fvectorize, VectorizeAliasOption,
-                   options::OPT_fno_vectorize, EnableVec))
+                   options::OPT_fno_vectorize, EnableVec)) {
     CmdArgs.push_back("-vectorize-loops");
+
+    // In addition to the regular loop unrolling transformation, the loop
+    // vectorizer can also unroll loops. If no unrolling has specifically been
+    // requested, then also prevent the loop vectorizer from unrolling loops.
+    if (Args.hasFlag(options::OPT_fno_unroll_loops,
+        options::OPT_funroll_loops, false)) {
+      CmdArgs.push_back("-backend-option");
+      CmdArgs.push_back("-force-vector-unroll=1");
+    }
+  }
 
   // -fslp-vectorize is default.
   if (Args.hasFlag(options::OPT_fslp_vectorize,
