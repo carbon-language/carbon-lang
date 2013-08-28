@@ -465,8 +465,31 @@ GDBRemoteCommunication::CheckForPacket (const uint8_t *src, size_t src_len, Stri
 
             m_history.AddPacket (m_bytes.c_str(), total_length, History::ePacketTypeRecv, total_length);
 
-            packet_str.assign (m_bytes, content_start, content_length);
-            
+            // Copy the packet from m_bytes to packet_str expanding the
+            // run-length encoding in the process.
+            // Reserve enough byte for the most common case (no RLE used)
+            packet_str.reserve(m_bytes.length());
+            for (std::string::const_iterator c = m_bytes.begin() + content_start; c != m_bytes.begin() + content_start + content_length; ++c)
+            {
+                if (*c == '*')
+                {
+                    // '*' indicates RLE. Next character will give us the
+                    // repeat count and previous character is what is to be
+                    // repeated.
+                    char char_to_repeat = packet_str.back();
+                    // Number of time the previous character is repeated
+                    int repeat_count = *++c + 3 - ' ';
+                    // We have the char_to_repeat and repeat_count. Now push
+                    // it in the packet.
+                    for (int i = 0; i < repeat_count; ++i)
+                        packet_str.push_back(char_to_repeat);
+                }
+                else
+                {
+                    packet_str.push_back(*c);
+                }
+            }
+
             if (m_bytes[0] == '$')
             {
                 assert (checksum_idx < m_bytes.size());
