@@ -60,13 +60,15 @@ class ObjCMigrateAction : public WrapperFrontendAction {
   bool MigrateLiterals;
   bool MigrateSubscripting;
   bool MigrateProperty;
+  bool MigrateReadonlyProperty;
   FileRemapper Remapper;
   CompilerInstance *CompInst;
 public:
   ObjCMigrateAction(FrontendAction *WrappedAction, StringRef migrateDir,
                     bool migrateLiterals,
                     bool migrateSubscripting,
-                    bool migrateProperty);
+                    bool migrateProperty,
+                    bool migrateReadonlyProperty);
 
 protected:
   virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,StringRef InFile);

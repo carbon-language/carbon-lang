@@ -75,6 +75,7 @@ public:
   bool MigrateLiterals;
   bool MigrateSubscripting;
   bool MigrateProperty;
+  bool MigrateReadonlyProperty;
   unsigned  FileId;
   OwningPtr<NSAPI> NSAPIObj;
   OwningPtr<edit::EditedSource> Editor;
@@ -90,6 +91,7 @@ public:
                          bool migrateLiterals,
                          bool migrateSubscripting,
                          bool migrateProperty,
+                         bool migrateReadonlyProperty,
                          FileRemapper &remapper,
                          FileManager &fileMgr,
                          const PPConditionalDirectiveRecord *PPRec,
@@ -98,8 +100,9 @@ public:
   : MigrateDir(migrateDir),
     MigrateLiterals(migrateLiterals),
     MigrateSubscripting(migrateSubscripting),
-    MigrateProperty(migrateProperty), FileId(0),
-    Remapper(remapper), FileMgr(fileMgr), PPRec(PPRec), PP(PP),
+    MigrateProperty(migrateProperty), 
+    MigrateReadonlyProperty(migrateReadonlyProperty), 
+    FileId(0), Remapper(remapper), FileMgr(fileMgr), PPRec(PPRec), PP(PP),
     IsOutputFile(isOutputFile) { }
 
 protected:
@@ -131,10 +134,12 @@ ObjCMigrateAction::ObjCMigrateAction(FrontendAction *WrappedAction,
                              StringRef migrateDir,
                              bool migrateLiterals,
                              bool migrateSubscripting,
-                             bool migrateProperty)
+                             bool migrateProperty,
+                             bool migrateReadonlyProperty)
   : WrapperFrontendAction(WrappedAction), MigrateDir(migrateDir),
     MigrateLiterals(migrateLiterals), MigrateSubscripting(migrateSubscripting),
     MigrateProperty(migrateProperty),
+    MigrateReadonlyProperty(migrateReadonlyProperty),
     CompInst(0) {
   if (MigrateDir.empty())
     MigrateDir = "."; // user current directory if none is given.
@@ -151,6 +156,7 @@ ASTConsumer *ObjCMigrateAction::CreateASTConsumer(CompilerInstance &CI,
                                                        MigrateLiterals,
                                                        MigrateSubscripting,
                                                        MigrateProperty,
+                                                       MigrateReadonlyProperty,
                                                        Remapper,
                                                     CompInst->getFileManager(),
                                                        PPRec,
@@ -250,13 +256,17 @@ static bool rewriteToObjCProperty(const ObjCMethodDecl *Getter,
     PropertyString += ", getter=";
     PropertyString += PropertyNameString;
   }
+  // Property with no setter may be suggested as a 'readonly' property.
+  if (!Setter)
+    append_attr(PropertyString, "readonly");
+
   // Short circuit properties that contain the name "delegate" or "dataSource",
   // or have exact name "target" to have unsafe_unretained attribute.
   if (PropertyName.equals("target") ||
       (PropertyName.find("delegate") != StringRef::npos) ||
       (PropertyName.find("dataSource") != StringRef::npos))
     append_attr(PropertyString, "unsafe_unretained");
-  else {
+  else if (Setter) {
     const ParmVarDecl *argDecl = *Setter->param_begin();
     QualType ArgType = Context.getCanonicalType(argDecl->getType());
     Qualifiers::ObjCLifetime propertyLifetime = ArgType.getObjCLifetime();
@@ -308,10 +318,12 @@ static bool rewriteToObjCProperty(const ObjCMethodDecl *Getter,
   commit.replace(CharSourceRange::getCharRange(Getter->getLocStart(),
                                                Getter->getDeclaratorEndLoc()),
                  PropertyString);
-  SourceLocation EndLoc = Setter->getDeclaratorEndLoc();
-  // Get location past ';'
-  EndLoc = EndLoc.getLocWithOffset(1);
-  commit.remove(CharSourceRange::getCharRange(Setter->getLocStart(), EndLoc));
+  if (Setter) {
+    SourceLocation EndLoc = Setter->getDeclaratorEndLoc();
+    // Get location past ';'
+    EndLoc = EndLoc.getLocWithOffset(1);
+    commit.remove(CharSourceRange::getCharRange(Setter->getLocStart(), EndLoc));
+  }
   return true;
 }
 
@@ -320,7 +332,8 @@ void ObjCMigrateASTConsumer::migrateObjCInterfaceDecl(ASTContext &Ctx,
   for (ObjCContainerDecl::method_iterator M = D->meth_begin(), MEnd = D->meth_end();
        M != MEnd; ++M) {
     ObjCMethodDecl *Method = (*M);
-    if (Method->isPropertyAccessor() ||  Method->param_size() != 0)
+    if (Method->isPropertyAccessor() || !Method->isInstanceMethod() ||
+        Method->param_size() != 0)
       continue;
     // Is this method candidate to be a getter?
     QualType GRT = Method->getResultType();
@@ -368,7 +381,15 @@ void ObjCMigrateASTConsumer::migrateObjCInterfaceDecl(ASTContext &Ctx,
         rewriteToObjCProperty(Method, SetterMethod, *NSAPIObj, commit,
                               GetterHasIsPrefix);
         Editor->commit(commit);
-      }
+    }
+    else if (MigrateReadonlyProperty) {
+      // Try a non-void method with no argument (and no setter or property of same name
+      // as a 'readonly' property.
+      edit::Commit commit(*Editor);
+      rewriteToObjCProperty(Method, 0 /*SetterMethod*/, *NSAPIObj, commit,
+                            false /*GetterHasIsPrefix*/);
+      Editor->commit(commit);
+    }
   }
 }
 
@@ -1170,6 +1191,7 @@ ASTConsumer *MigrateSourceAction::CreateASTConsumer(CompilerInstance &CI,
                                     /*MigrateLiterals=*/true,
                                     /*MigrateSubscripting=*/true,
                                     /*MigrateProperty*/true,
+                                    /*MigrateReadonlyProperty*/true,
                                     Remapper,
                                     CI.getFileManager(),
                                     PPRec,
