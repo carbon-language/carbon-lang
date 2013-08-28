@@ -138,6 +138,7 @@ else()
   set(SANITIZER_COMMON_CFLAGS
     /MT
     /Zi
+    /Oy-
     /GS-
     /wd4722
     )
