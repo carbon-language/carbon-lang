@@ -60,6 +60,7 @@ class AFPR<bits<16> Enc, string n, list<Register> subregs>
 class AFPR64<bits<16> Enc, string n, list<Register> subregs>
   : MipsRegWithSubRegs<Enc, n, subregs> {
   let SubRegIndices = [sub_lo, sub_hi];
+  let CoveredBySubRegs = 1;
 }
 
 // Mips 128-bit (aliased) MSA Registers
@@ -294,7 +295,8 @@ def CPUSPReg : RegisterClass<"Mips", [i32], 32, (add SP)>, Unallocatable;
 // * FGR32 - 32 32-bit registers (single float only mode)
 def FGR32 : RegisterClass<"Mips", [f32], 32, (sequence "F%u", 0, 31)>;
 
-def FGRH32 : RegisterClass<"Mips", [f32], 32, (sequence "F_HI%u", 0, 31)>;
+def FGRH32 : RegisterClass<"Mips", [f32], 32, (sequence "F_HI%u", 0, 31)>,
+             Unallocatable;
 
 def AFGR64 : RegisterClass<"Mips", [f64], 64, (add
   // Return Values and Arguments
