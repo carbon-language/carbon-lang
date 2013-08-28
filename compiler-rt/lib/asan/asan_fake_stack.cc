@@ -107,11 +107,11 @@ void FakeStack::AllocateOneSizeClass(uptr size_class) {
   //       size_class, new_mem, new_mem + ClassMmapSize(size_class),
   //       ClassMmapSize(size_class));
   uptr i;
-  for (i = 0; i < ClassMmapSize(size_class);
-       i += ClassSize(size_class)) {
+  uptr size = ClassSize(size_class);
+  for (i = 0; i + size <= ClassMmapSize(size_class); i += size) {
     size_classes_[size_class].FifoPush((FakeFrame*)(new_mem + i));
   }
-  CHECK(i == ClassMmapSize(size_class));
+  CHECK_LE(i, ClassMmapSize(size_class));
   allocated_size_classes_[size_class] = new_mem;
 }
 
