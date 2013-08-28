@@ -912,19 +912,16 @@ static StaticSpinMutex sigactions_mu;
 
 static void SignalHandler(int signo) {
   ScopedThreadLocalStateBackup stlsb;
-  stlsb.Backup();
   UnpoisonParam(1);
 
   typedef void (*signal_cb)(int x);
   signal_cb cb =
       (signal_cb)atomic_load(&sigactions[signo], memory_order_relaxed);
   cb(signo);
-  stlsb.Restore();
 }
 
 static void SignalAction(int signo, void *si, void *uc) {
   ScopedThreadLocalStateBackup stlsb;
-  stlsb.Backup();
   UnpoisonParam(3);
   __msan_unpoison(si, sizeof(__sanitizer_sigaction));
   __msan_unpoison(uc, __sanitizer::ucontext_t_sz);
@@ -933,7 +930,6 @@ static void SignalAction(int signo, void *si, void *uc) {
   sigaction_cb cb =
       (sigaction_cb)atomic_load(&sigactions[signo], memory_order_relaxed);
   cb(signo, si, uc);
-  stlsb.Restore();
 }
 
 INTERCEPTOR(int, sigaction, int signo, const __sanitizer_sigaction *act,
