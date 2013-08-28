@@ -7892,13 +7892,12 @@ struct BaseIndexOffset {
     }
 
     // Inside a loop the current BASE pointer is calculated using an ADD and a
-    // MUL insruction. In this case Ptr is the actual BASE pointer.
+    // MUL instruction. In this case Ptr is the actual BASE pointer.
     // (i64 add (i64 %array_ptr)
     //          (i64 mul (i64 %induction_var)
     //                   (i64 %element_size)))
-    if (Ptr->getOperand(1)->getOpcode() == ISD::MUL) {
+    if (Ptr->getOperand(1)->getOpcode() == ISD::MUL)
       return BaseIndexOffset(Ptr, SDValue(), 0, IsIndexSignExt);
-    }
 
     // Look at Base + Index + Offset cases.
     SDValue Base = Ptr->getOperand(0);
