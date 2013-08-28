@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -emit-llvm -fms-extensions -triple=x86_64-pc-win32 -cxx-abi microsoft -g %s -o - -std=c++11 | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm -fms-extensions -triple=x86_64-unknown-unknown -g %s -o - -std=c++11 | FileCheck %s
 
 // CHECK: metadata [[TGIARGS:![0-9]*]], null} ; [ DW_TAG_structure_type ] [tmpl_guid<&__uuidof(uuid)>]
 // CHECK: [[TGIARGS]] = metadata !{metadata [[TGIARG1:![0-9]*]]}
