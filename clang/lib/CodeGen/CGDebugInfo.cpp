@@ -1123,9 +1123,12 @@ CollectCXXMemberFunctions(const CXXRecordDecl *RD, llvm::DIFile Unit,
   for(DeclContext::decl_iterator I = RD->decls_begin(),
         E = RD->decls_end(); I != E; ++I) {
     if (const CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(*I)) {
-      // Reuse the existing member function declaration if it exists
+      // Reuse the existing member function declaration if it exists.
       // It may be associated with the declaration of the type & should be
       // reused as we're building the definition.
+      //
+      // This situation can arise in the vtable-based debug info reduction where
+      // implicit members are emitted in a non-vtable TU.
       llvm::DenseMap<const FunctionDecl *, llvm::WeakVH>::iterator MI =
           SPCache.find(Method->getCanonicalDecl());
       if (MI == SPCache.end()) {
