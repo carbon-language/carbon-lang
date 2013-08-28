@@ -2844,11 +2844,11 @@ multiclass AI3strT<bits<4> op, string opc> {
 
 defm STRHT : AI3strT<0b1011, "strht">;
 
-def STL : AIstrrel<0b00, (outs GPR:$Rt), (ins addr_offset_none:$addr),
+def STL : AIstrrel<0b00, (outs), (ins GPR:$Rt, addr_offset_none:$addr),
                    NoItinerary, "stl", "\t$Rt, $addr", []>;
-def STLB : AIstrrel<0b10, (outs GPR:$Rt), (ins addr_offset_none:$addr),
+def STLB : AIstrrel<0b10, (outs), (ins GPR:$Rt, addr_offset_none:$addr),
                     NoItinerary, "stlb", "\t$Rt, $addr", []>;
-def STLH : AIstrrel<0b11, (outs GPR:$Rt), (ins addr_offset_none:$addr),
+def STLH : AIstrrel<0b11, (outs), (ins GPR:$Rt, addr_offset_none:$addr),
                     NoItinerary, "stlh", "\t$Rt, $addr", []>;
 
 //===----------------------------------------------------------------------===//

@@ -1396,8 +1396,10 @@ def t2LDRHT  : T2IldT<0, 0b01, "ldrht", IIC_iLoad_bh_i>;
 def t2LDRSBT : T2IldT<1, 0b00, "ldrsbt", IIC_iLoad_bh_i>;
 def t2LDRSHT : T2IldT<1, 0b01, "ldrsht", IIC_iLoad_bh_i>;
 
-class T2Ildacq<bits<4> bits23_20, bits<2> bit54, dag oops, dag iops, string opc, string asm, list<dag> pattern>
-  : Thumb2I<oops, iops, AddrModeNone, 4, NoItinerary, opc, asm, "", pattern> {
+class T2Ildacq<bits<4> bits23_20, bits<2> bit54, dag oops, dag iops,
+               string opc, string asm, list<dag> pattern>
+  : Thumb2I<oops, iops, AddrModeNone, 4, NoItinerary,
+            opc, asm, "", pattern>, Requires<[IsThumb, HasV8]> {
   bits<4> Rt;
   bits<4> addr;
 
@@ -1413,10 +1415,12 @@ class T2Ildacq<bits<4> bits23_20, bits<2> bit54, dag oops, dag iops, string opc,
   let Inst{15-12} = Rt;
 }
 
-def t2LDA : T2Ildacq<0b1101, 0b10, (outs rGPR:$Rt), (ins addr_offset_none:$addr), "lda", "\t$Rt, $addr", []>;
-def t2LDAB : T2Ildacq<0b1101, 0b00, (outs rGPR:$Rt), (ins addr_offset_none:$addr), "ldab", "\t$Rt, $addr", []>;
-def t2LDAH : T2Ildacq<0b1101, 0b01, (outs rGPR:$Rt), (ins addr_offset_none:$addr), "ldah", "\t$Rt, $addr", []>;
-
+def t2LDA : T2Ildacq<0b1101, 0b10, (outs rGPR:$Rt),
+                     (ins addr_offset_none:$addr), "lda", "\t$Rt, $addr", []>;
+def t2LDAB : T2Ildacq<0b1101, 0b00, (outs rGPR:$Rt),
+                      (ins addr_offset_none:$addr), "ldab", "\t$Rt, $addr", []>;
+def t2LDAH : T2Ildacq<0b1101, 0b01, (outs rGPR:$Rt),
+                      (ins addr_offset_none:$addr), "ldah", "\t$Rt, $addr", []>;
 
 // Store
 defm t2STR :T2I_st<0b10,"str", IIC_iStore_i, IIC_iStore_si, GPR,
@@ -1561,8 +1565,10 @@ def t2STRD_POST : T2Ii8s4post<0, 1, 0, (outs GPR:$wb),
                  IIC_iStore_d_ru, "strd", "\t$Rt, $Rt2, $addr$imm",
                  "$addr.base = $wb", []>;
 
-class T2Istrrel<bits<2> bit54, dag oops, dag iops, string opc, string asm, list<dag> pattern>
-  : Thumb2I<oops, iops, AddrModeNone, 4, NoItinerary, opc, asm, "", pattern> {
+class T2Istrrel<bits<2> bit54, dag oops, dag iops,
+                string opc, string asm, list<dag> pattern>
+  : Thumb2I<oops, iops, AddrModeNone, 4, NoItinerary, opc,
+            asm, "", pattern>, Requires<[IsThumb, HasV8]> {
   bits<4> Rt;
   bits<4> addr;
 
@@ -1577,11 +1583,11 @@ class T2Istrrel<bits<2> bit54, dag oops, dag iops, string opc, string asm, list<
   let Inst{15-12} = Rt;
 }
 
-def t2STL  : T2Istrrel<0b10, (outs rGPR:$Rt), (ins addr_offset_none:$addr),
+def t2STL  : T2Istrrel<0b10, (outs), (ins rGPR:$Rt, addr_offset_none:$addr),
                        "stl", "\t$Rt, $addr", []>;
-def t2STLB : T2Istrrel<0b00, (outs rGPR:$Rt), (ins addr_offset_none:$addr),
+def t2STLB : T2Istrrel<0b00, (outs), (ins rGPR:$Rt, addr_offset_none:$addr),
                        "stlb", "\t$Rt, $addr", []>;
-def t2STLH : T2Istrrel<0b01, (outs rGPR:$Rt), (ins addr_offset_none:$addr),
+def t2STLH : T2Istrrel<0b01, (outs), (ins rGPR:$Rt, addr_offset_none:$addr),
                        "stlh", "\t$Rt, $addr", []>;
 
 // T2Ipl (Preload Data/Instruction) signals the memory system of possible future
