@@ -63,6 +63,7 @@ namespace llvm {
 
     SDValue lowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) const;
     SDValue lowerINTRINSIC_W_CHAIN(SDValue Op, SelectionDAG &DAG) const;
+    SDValue lowerINTRINSIC_VOID(SDValue Op, SelectionDAG &DAG) const;
 
     MachineBasicBlock *emitBPOSGE32(MachineInstr *MI,
                                     MachineBasicBlock *BB) const;

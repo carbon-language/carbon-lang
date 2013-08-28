@@ -125,6 +125,9 @@ MipsSETargetLowering::MipsSETargetLowering(MipsTargetMachine &TM)
   setTargetDAGCombine(ISD::SUBE);
   setTargetDAGCombine(ISD::MUL);
 
+  setOperationAction(ISD::INTRINSIC_W_CHAIN, MVT::Other, Custom);
+  setOperationAction(ISD::INTRINSIC_VOID, MVT::Other, Custom);
+
   computeRegisterProperties();
 }
 
@@ -174,6 +177,7 @@ SDValue MipsSETargetLowering::LowerOperation(SDValue Op,
                                           DAG);
   case ISD::INTRINSIC_WO_CHAIN: return lowerINTRINSIC_WO_CHAIN(Op, DAG);
   case ISD::INTRINSIC_W_CHAIN:  return lowerINTRINSIC_W_CHAIN(Op, DAG);
+  case ISD::INTRINSIC_VOID:     return lowerINTRINSIC_VOID(Op, DAG);
   }
 
   return MipsTargetLowering::LowerOperation(Op, DAG);
@@ -726,9 +730,24 @@ SDValue MipsSETargetLowering::lowerINTRINSIC_WO_CHAIN(SDValue Op,
   }
 }
 
+static SDValue lowerMSALoadIntr(SDValue Op, SelectionDAG &DAG, unsigned Intr) {
+  SDLoc DL(Op);
+  SDValue ChainIn = Op->getOperand(0);
+  SDValue Address = Op->getOperand(2);
+  SDValue Offset  = Op->getOperand(3);
+  EVT ResTy = Op->getValueType(0);
+  EVT PtrTy = Address->getValueType(0);
+
+  Address = DAG.getNode(ISD::ADD, DL, PtrTy, Address, Offset);
+
+  return DAG.getLoad(ResTy, DL, ChainIn, Address, MachinePointerInfo(), false,
+                     false, false, 16);
+}
+
 SDValue MipsSETargetLowering::lowerINTRINSIC_W_CHAIN(SDValue Op,
                                                      SelectionDAG &DAG) const {
-  switch (cast<ConstantSDNode>(Op->getOperand(1))->getZExtValue()) {
+  unsigned Intr = cast<ConstantSDNode>(Op->getOperand(1))->getZExtValue();
+  switch (Intr) {
   default:
     return SDValue();
   case Intrinsic::mips_extp:
@@ -771,6 +790,47 @@ SDValue MipsSETargetLowering::lowerINTRINSIC_W_CHAIN(SDValue Op,
     return lowerDSPIntr(Op, DAG, MipsISD::DPSQX_S_W_PH);
   case Intrinsic::mips_dpsqx_sa_w_ph:
     return lowerDSPIntr(Op, DAG, MipsISD::DPSQX_SA_W_PH);
+  case Intrinsic::mips_ld_b:
+  case Intrinsic::mips_ld_h:
+  case Intrinsic::mips_ld_w:
+  case Intrinsic::mips_ld_d:
+  case Intrinsic::mips_ldx_b:
+  case Intrinsic::mips_ldx_h:
+  case Intrinsic::mips_ldx_w:
+  case Intrinsic::mips_ldx_d:
+   return lowerMSALoadIntr(Op, DAG, Intr);
+  }
+}
+
+static SDValue lowerMSAStoreIntr(SDValue Op, SelectionDAG &DAG, unsigned Intr) {
+  SDLoc DL(Op);
+  SDValue ChainIn = Op->getOperand(0);
+  SDValue Value   = Op->getOperand(2);
+  SDValue Address = Op->getOperand(3);
+  SDValue Offset  = Op->getOperand(4);
+  EVT PtrTy = Address->getValueType(0);
+
+  Address = DAG.getNode(ISD::ADD, DL, PtrTy, Address, Offset);
+
+  return DAG.getStore(ChainIn, DL, Value, Address, MachinePointerInfo(), false,
+                      false, 16);
+}
+
+SDValue MipsSETargetLowering::lowerINTRINSIC_VOID(SDValue Op,
+                                                  SelectionDAG &DAG) const {
+  unsigned Intr = cast<ConstantSDNode>(Op->getOperand(1))->getZExtValue();
+  switch (Intr) {
+  default:
+    return SDValue();
+  case Intrinsic::mips_st_b:
+  case Intrinsic::mips_st_h:
+  case Intrinsic::mips_st_w:
+  case Intrinsic::mips_st_d:
+  case Intrinsic::mips_stx_b:
+  case Intrinsic::mips_stx_h:
+  case Intrinsic::mips_stx_w:
+  case Intrinsic::mips_stx_d:
+   return lowerMSAStoreIntr(Op, DAG, Intr);
   }
 }
 

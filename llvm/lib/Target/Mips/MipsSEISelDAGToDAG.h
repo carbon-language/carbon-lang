@@ -43,6 +43,9 @@ private:
   virtual bool selectAddrRegImm(SDValue Addr, SDValue &Base,
                                 SDValue &Offset) const;
 
+  virtual bool selectAddrRegReg(SDValue Addr, SDValue &Base,
+                                SDValue &Offset) const;
+
   virtual bool selectAddrDefault(SDValue Addr, SDValue &Base,
                                  SDValue &Offset) const;
 

@@ -57,6 +57,11 @@ private:
   virtual bool selectAddrRegImm(SDValue Addr, SDValue &Base,
                                 SDValue &Offset) const;
 
+  // Complex Pattern.
+  /// (reg + reg).
+  virtual bool selectAddrRegReg(SDValue Addr, SDValue &Base,
+                                SDValue &Offset) const;
+
   /// Fall back on this function if all else fails.
   virtual bool selectAddrDefault(SDValue Addr, SDValue &Base,
                                  SDValue &Offset) const;
