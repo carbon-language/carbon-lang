@@ -910,3 +910,26 @@ namespace test40 {
   };
   void g() { f(); }
 }
+
+namespace test41 {
+  // CHECK: define linkonce_odr void @_ZN6test414funcINS_1XEEEvNS_3fooILi20ES1_EE
+  template <int i, class T> struct foo {
+    template <class T2 = T> friend void func(foo x) {}
+  };
+
+  struct X {};
+
+  void g() { func(foo<20, X>()); }
+}
+
+namespace test42 {
+  // CHECK: define linkonce_odr void @_ZN6test424funcINS_1XEEEvNS_3fooILi20ES1_EE
+  template <int i, template <class> class T> struct foo {
+    template <template <class> class T2 = T> friend void func(foo x) {}
+  };
+
+  template <class V> struct X {
+  };
+
+  void g() { func(foo<20, X>()); }
+}

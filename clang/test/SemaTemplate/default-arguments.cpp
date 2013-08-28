@@ -47,11 +47,13 @@ template<typename T> struct X1 { };
 
 template<typename T>
 struct X2 {
-  template<typename U = typename X1<T>::type> // expected-error{{no type named}}
-  struct Inner1 { };
+  template<typename U = typename X1<T>::type> // expected-error{{no type named 'type' in 'X1<int>'}} \
+                                              // expected-error{{no type named 'type' in 'X1<char>'}}
+  struct Inner1 { }; // expected-note{{template is declared here}}
   
-  template<T Value = X1<T>::value> // expected-error{{no member named 'value'}}
-  struct NonType1 { };
+  template<T Value = X1<T>::value> // expected-error{{no member named 'value' in 'X1<int>'}} \
+                                   // expected-error{{no member named 'value' in 'X1<char>'}}
+  struct NonType1 { }; // expected-note{{template is declared here}}
   
   template<T Value>
   struct Inner2 { };
@@ -67,17 +69,17 @@ struct X2 {
   };
 };
 
-X2<int> x2i;
+X2<int> x2i; // expected-note{{in instantiation of template class 'X2<int>' requested here}}
 X2<int>::Inner1<float> x2iif;
 
-X2<int>::Inner1<> x2bad; // expected-note{{instantiation of default argument}}
+X2<int>::Inner1<> x2bad; // expected-error{{too few template arguments for class template 'Inner1'}}
 
 X2<int>::NonType1<'a'> x2_nontype1;
-X2<int>::NonType1<> x2_nontype1_bad; // expected-note{{instantiation of default argument}}
+X2<int>::NonType1<> x2_nontype1_bad; // expected-error{{too few template arguments for class template 'NonType1'}}
 
 // Check multi-level substitution into template type arguments
 X2<int>::Inner3<float>::VeryInner<> vi;
-X2<char>::Inner3<int>::NonType2<> x2_deep_nontype;
+X2<char>::Inner3<int>::NonType2<> x2_deep_nontype; // expected-note{{in instantiation of template class 'X2<char>' requested here}}
 
 template<typename T, typename U>
 struct is_same { static const bool value = false; };
@@ -146,4 +148,14 @@ namespace PR16288 {
   template<typename X>
   template<typename T, typename U>
   void S<X>::f() {}
+}
+
+namespace DR1635 {
+  template <class T> struct X {
+    template <class U = typename T::type> static void f(int) {} // expected-error {{type 'int' cannot be used prior to '::' because it has no members}} \
+                                                                // expected-warning {{C++11}}
+    static void f(...) {}
+  };
+
+  int g() { X<int>::f(0); } // expected-note {{in instantiation of template class 'DR1635::X<int>' requested here}}
 }

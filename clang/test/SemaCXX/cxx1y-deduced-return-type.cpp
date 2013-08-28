@@ -399,3 +399,12 @@ namespace CurrentInstantiation {
   template<typename T> auto U<T>::f() { return T(); }
   template int U<short>::g(); // ok
 }
+
+namespace WithDefaultArgs {
+  template<typename U> struct A {
+    template<typename T = U> friend auto f(A) { return []{}; }
+  };
+  template<typename T> void f();
+  using T = decltype(f(A<int>()));
+  using T = decltype(f<int>(A<int>()));
+}

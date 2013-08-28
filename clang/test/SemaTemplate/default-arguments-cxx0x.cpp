@@ -25,3 +25,34 @@ void g1() {
   float &fr = f1(15);
   int &ir = f1(HasValue());
 }
+
+namespace PR16689 {
+  template <typename T1, typename T2> class tuple {
+  public:
+      template <typename = T2>
+      constexpr tuple() {}
+  };
+  template <class X, class... Y> struct a : public X {
+    using X::X;
+  };
+  auto x = a<tuple<int, int> >();
+}
+
+namespace PR16975 {
+  template <typename...> struct is {
+    constexpr operator bool() const { return false; }
+  };
+
+  template <typename... Types>
+  struct bar {
+    template <typename T,
+              bool = is<Types...>()>
+    bar(T);
+  };
+
+  struct baz : public bar<> {
+    using bar::bar;
+  };
+
+  baz data{0};
+}

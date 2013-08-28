@@ -1737,8 +1737,13 @@ Decl *TemplateDeclInstantiator::VisitTemplateTypeParmDecl(
                                  D->isParameterPack());
   Inst->setAccess(AS_public);
 
-  if (D->hasDefaultArgument())
-    Inst->setDefaultArgument(D->getDefaultArgumentInfo(), false);
+  if (D->hasDefaultArgument()) {
+    TypeSourceInfo *InstantiatedDefaultArg =
+        SemaRef.SubstType(D->getDefaultArgumentInfo(), TemplateArgs,
+                          D->getDefaultArgumentLoc(), D->getDeclName());
+    if (InstantiatedDefaultArg)
+      Inst->setDefaultArgument(InstantiatedDefaultArg, false);
+  }
 
   // Introduce this template parameter's instantiation into the instantiation
   // scope.
@@ -1888,7 +1893,11 @@ Decl *TemplateDeclInstantiator::VisitNonTypeTemplateParmDecl(
   if (Invalid)
     Param->setInvalidDecl();
 
-  Param->setDefaultArgument(D->getDefaultArgument(), false);
+  if (D->hasDefaultArgument()) {
+    ExprResult Value = SemaRef.SubstExpr(D->getDefaultArgument(), TemplateArgs);
+    if (!Value.isInvalid())
+      Param->setDefaultArgument(Value.get(), false);
+  }
 
   // Introduce this template parameter's instantiation into the instantiation
   // scope.
@@ -2011,7 +2020,21 @@ TemplateDeclInstantiator::VisitTemplateTemplateParmDecl(
                                              D->getPosition(),
                                              D->isParameterPack(),
                                              D->getIdentifier(), InstParams);
-  Param->setDefaultArgument(D->getDefaultArgument(), false);
+  if (D->hasDefaultArgument()) {
+    NestedNameSpecifierLoc QualifierLoc =
+        D->getDefaultArgument().getTemplateQualifierLoc();
+    QualifierLoc =
+        SemaRef.SubstNestedNameSpecifierLoc(QualifierLoc, TemplateArgs);
+    TemplateName TName = SemaRef.SubstTemplateName(
+        QualifierLoc, D->getDefaultArgument().getArgument().getAsTemplate(),
+        D->getDefaultArgument().getTemplateNameLoc(), TemplateArgs);
+    if (!TName.isNull())
+      Param->setDefaultArgument(
+          TemplateArgumentLoc(TemplateArgument(TName),
+                              D->getDefaultArgument().getTemplateQualifierLoc(),
+                              D->getDefaultArgument().getTemplateNameLoc()),
+          false);
+  }
   Param->setAccess(AS_public);
 
   // Introduce this template parameter's instantiation into the instantiation
