@@ -35,18 +35,21 @@ else()
     add_compiler_rt_static_runtime(clang_rt.ubsan-${arch} ${arch}
       SOURCES ${UBSAN_SOURCES}
       CFLAGS ${UBSAN_CFLAGS})
-    add_sanitizer_rt_symbols(clang_rt.ubsan-${arch} ubsan.syms.extra)
     # C++-specific parts of UBSan runtime. Requires a C++ ABI library.
     add_compiler_rt_static_runtime(clang_rt.ubsan_cxx-${arch} ${arch}
       SOURCES ${UBSAN_CXX_SOURCES}
       CFLAGS ${UBSAN_CFLAGS})
-    add_sanitizer_rt_symbols(clang_rt.ubsan_cxx-${arch} ubsan.syms.extra)
     list(APPEND UBSAN_RUNTIME_LIBRARIES
-           clang_rt.san-${arch}
-           clang_rt.ubsan-${arch}
-           clang_rt.ubsan-${arch}-symbols
-           clang_rt.ubsan_cxx-${arch}
-           clang_rt.ubsan_cxx-${arch}-symbols)
+      clang_rt.san-${arch}
+      clang_rt.ubsan-${arch}
+      clang_rt.ubsan_cxx-${arch})
+    if (UNIX AND NOT ${arch} STREQUAL "i386")
+      add_sanitizer_rt_symbols(clang_rt.ubsan-${arch} ubsan.syms.extra)
+      add_sanitizer_rt_symbols(clang_rt.ubsan_cxx-${arch} ubsan.syms.extra)
+      list(APPEND UBSAN_RUNTIME_LIBRARIES
+        clang_rt.ubsan-${arch}-symbols
+        clang_rt.ubsan_cxx-${arch}-symbols)
+    endif()
   endforeach()
 endif()
 

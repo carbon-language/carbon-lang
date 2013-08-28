@@ -103,9 +103,11 @@ else()
       SOURCES ${ASAN_SOURCES} ${ASAN_SOURCE_LIBS}
       CFLAGS ${ASAN_CFLAGS}
       DEFS ${ASAN_COMMON_DEFINITIONS})
-    add_sanitizer_rt_symbols(clang_rt.asan-${arch} asan.syms.extra)
-    list(APPEND ASAN_RUNTIME_LIBRARIES clang_rt.asan-${arch}
-      clang_rt.asan-${arch}-symbols)
+    list(APPEND ASAN_RUNTIME_LIBRARIES clang_rt.asan-${arch})
+    if (UNIX AND NOT ${arch} STREQUAL "i386")
+      add_sanitizer_rt_symbols(clang_rt.asan-${arch} asan.syms.extra)
+      list(APPEND ASAN_RUNTIME_LIBRARIES clang_rt.asan-${arch}-symbols)
+    endif()
 
     if (WIN32)
       add_compiler_rt_static_runtime(clang_rt.asan_dll_thunk-${arch} ${arch}
