@@ -67,6 +67,9 @@ namespace llvm {
 
     MachineBasicBlock *emitBPOSGE32(MachineInstr *MI,
                                     MachineBasicBlock *BB) const;
+    MachineBasicBlock *emitMSACBranchPseudo(MachineInstr *MI,
+                                            MachineBasicBlock *BB,
+                                            unsigned BranchOp) const;
   };
 }
 

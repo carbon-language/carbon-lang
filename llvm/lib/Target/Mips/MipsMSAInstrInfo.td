@@ -11,6 +11,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+def SDT_MipsVecCond : SDTypeProfile<1, 1, [SDTCisInt<0>, SDTCisVec<1>]>;
+
+def MipsVAllNonZero : SDNode<"MipsISD::VALL_NONZERO", SDT_MipsVecCond>;
+def MipsVAnyNonZero : SDNode<"MipsISD::VANY_NONZERO", SDT_MipsVecCond>;
+def MipsVAllZero : SDNode<"MipsISD::VALL_ZERO", SDT_MipsVecCond>;
+def MipsVAnyZero : SDNode<"MipsISD::VANY_ZERO", SDT_MipsVecCond>;
+
 def immSExt5 : ImmLeaf<i32, [{return isInt<5>(Imm);}]>;
 def immSExt10: ImmLeaf<i32, [{return isInt<10>(Imm);}]>;
 
@@ -147,7 +154,14 @@ class BNEGI_H_ENC : MSA_BIT_H_FMT<0b101, 0b001001>;
 class BNEGI_W_ENC : MSA_BIT_W_FMT<0b101, 0b001001>;
 class BNEGI_D_ENC : MSA_BIT_D_FMT<0b101, 0b001001>;
 
-class BSEL_V_ENC : MSA_VEC_FMT<0b00110, 0b011110>;
+class BNZ_B_ENC : MSA_I10_FMT<0b000, 0b00, 0b001100>;
+class BNZ_H_ENC : MSA_I10_FMT<0b000, 0b01, 0b001100>;
+class BNZ_W_ENC : MSA_I10_FMT<0b000, 0b10, 0b001100>;
+class BNZ_D_ENC : MSA_I10_FMT<0b000, 0b11, 0b001100>;
+
+class BNZ_V_ENC : MSA_VEC_FMT<0b01000, 0b011110>;
+
+class BSEL_V_ENC : MSA_VECS10_FMT<0b00110, 0b011110>;
 
 class BSELI_B_ENC : MSA_I8_FMT<0b10, 0b000001>;
 
@@ -160,6 +174,13 @@ class BSETI_B_ENC : MSA_BIT_B_FMT<0b100, 0b001001>;
 class BSETI_H_ENC : MSA_BIT_H_FMT<0b100, 0b001001>;
 class BSETI_W_ENC : MSA_BIT_W_FMT<0b100, 0b001001>;
 class BSETI_D_ENC : MSA_BIT_D_FMT<0b100, 0b001001>;
+
+class BZ_B_ENC : MSA_I10_FMT<0b001, 0b00, 0b001100>;
+class BZ_H_ENC : MSA_I10_FMT<0b001, 0b01, 0b001100>;
+class BZ_W_ENC : MSA_I10_FMT<0b001, 0b10, 0b001100>;
+class BZ_D_ENC : MSA_I10_FMT<0b001, 0b11, 0b001100>;
+
+class BZ_V_ENC : MSA_VECS10_FMT<0b01001, 0b011110>;
 
 class CEQ_B_ENC : MSA_3R_FMT<0b000, 0b00, 0b001111>;
 class CEQ_H_ENC : MSA_3R_FMT<0b000, 0b01, 0b001111>;
@@ -875,6 +896,18 @@ class MSA_3RF_4RF_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
                             RegisterClass RCWS,  RegisterClass RCWT = RCWS> :
   MSA_3R_4R_DESC_BASE<instr_asm, OpNode, itin, RCWD, RCWS, RCWT>;
 
+class MSA_CBRANCH_DESC_BASE<string instr_asm, RegisterClass RCWD> {
+  dag OutOperandList = (outs);
+  dag InOperandList = (ins RCWD:$wd, brtarget:$offset);
+  string AsmString = !strconcat(instr_asm, "\t$wd, $offset");
+  list<dag> Pattern = [];
+  InstrItinClass Itinerary = IIBranch;
+  bit isBranch = 1;
+  bit isTerminator = 1;
+  bit hasDelaySlot = 1;
+  list<Register> Defs = [AT];
+}
+
 class MSA_INSERT_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
                            InstrItinClass itin, RegisterClass RCD,
                            RegisterClass RCWS> {
@@ -1129,6 +1162,13 @@ class BNEGI_W_DESC : MSA_BIT_W_DESC_BASE<"bnegi.w", int_mips_bnegi_w,
 class BNEGI_D_DESC : MSA_BIT_D_DESC_BASE<"bnegi.d", int_mips_bnegi_d,
                                          NoItinerary, MSA128D, MSA128D>;
 
+class BNZ_B_DESC : MSA_CBRANCH_DESC_BASE<"bnz.b", MSA128B>;
+class BNZ_H_DESC : MSA_CBRANCH_DESC_BASE<"bnz.h", MSA128H>;
+class BNZ_W_DESC : MSA_CBRANCH_DESC_BASE<"bnz.w", MSA128W>;
+class BNZ_D_DESC : MSA_CBRANCH_DESC_BASE<"bnz.d", MSA128D>;
+
+class BNZ_V_DESC : MSA_CBRANCH_DESC_BASE<"bnz.v", MSA128B>;
+
 class BSEL_V_DESC : MSA_VEC_DESC_BASE<"bsel.v", int_mips_bsel_v, NoItinerary,
                                       MSA128B, MSA128B>;
 
@@ -1152,6 +1192,13 @@ class BSETI_W_DESC : MSA_BIT_W_DESC_BASE<"bseti.w", int_mips_bseti_w,
                                          NoItinerary, MSA128W, MSA128W>;
 class BSETI_D_DESC : MSA_BIT_D_DESC_BASE<"bseti.d", int_mips_bseti_d,
                                          NoItinerary, MSA128D, MSA128D>;
+
+class BZ_B_DESC : MSA_CBRANCH_DESC_BASE<"bz.b", MSA128B>;
+class BZ_H_DESC : MSA_CBRANCH_DESC_BASE<"bz.h", MSA128H>;
+class BZ_W_DESC : MSA_CBRANCH_DESC_BASE<"bz.w", MSA128W>;
+class BZ_D_DESC : MSA_CBRANCH_DESC_BASE<"bz.d", MSA128D>;
+
+class BZ_V_DESC : MSA_CBRANCH_DESC_BASE<"bz.v", MSA128B>;
 
 class CEQ_B_DESC : MSA_3R_DESC_BASE<"ceq.b", int_mips_ceq_b, NoItinerary,
                                     MSA128B, MSA128B>, IsCommutable;
@@ -2344,6 +2391,13 @@ def BNEGI_H : BNEGI_H_ENC, BNEGI_H_DESC, Requires<[HasMSA]>;
 def BNEGI_W : BNEGI_W_ENC, BNEGI_W_DESC, Requires<[HasMSA]>;
 def BNEGI_D : BNEGI_D_ENC, BNEGI_D_DESC, Requires<[HasMSA]>;
 
+def BNZ_B : BNZ_B_ENC, BNZ_B_DESC, Requires<[HasMSA]>;
+def BNZ_H : BNZ_H_ENC, BNZ_H_DESC, Requires<[HasMSA]>;
+def BNZ_W : BNZ_W_ENC, BNZ_W_DESC, Requires<[HasMSA]>;
+def BNZ_D : BNZ_D_ENC, BNZ_D_DESC, Requires<[HasMSA]>;
+
+def BNZ_V : BNZ_V_ENC, BNZ_V_DESC, Requires<[HasMSA]>;
+
 def BSEL_V : BSEL_V_ENC, BSEL_V_DESC, Requires<[HasMSA]>;
 
 def BSELI_B : BSELI_B_ENC, BSELI_B_DESC, Requires<[HasMSA]>;
@@ -2357,6 +2411,13 @@ def BSETI_B : BSETI_B_ENC, BSETI_B_DESC, Requires<[HasMSA]>;
 def BSETI_H : BSETI_H_ENC, BSETI_H_DESC, Requires<[HasMSA]>;
 def BSETI_W : BSETI_W_ENC, BSETI_W_DESC, Requires<[HasMSA]>;
 def BSETI_D : BSETI_D_ENC, BSETI_D_DESC, Requires<[HasMSA]>;
+
+def BZ_B : BZ_B_ENC, BZ_B_DESC, Requires<[HasMSA]>;
+def BZ_H : BZ_H_ENC, BZ_H_DESC, Requires<[HasMSA]>;
+def BZ_W : BZ_W_ENC, BZ_W_DESC, Requires<[HasMSA]>;
+def BZ_D : BZ_D_ENC, BZ_D_DESC, Requires<[HasMSA]>;
+
+def BZ_V : BZ_V_ENC, BZ_V_DESC, Requires<[HasMSA]>;
 
 def CEQ_B : CEQ_B_ENC, CEQ_B_DESC, Requires<[HasMSA]>;
 def CEQ_H : CEQ_H_ENC, CEQ_H_DESC, Requires<[HasMSA]>;
@@ -3117,3 +3178,35 @@ def : MSABitconvertReverseHInDPat<v8i16, v2f64, MSA128H>;
 def : MSABitconvertReverseHInDPat<v8f16, v2f64, MSA128H>;
 def : MSABitconvertReverseWInDPat<v4i32, v2f64, MSA128W>;
 def : MSABitconvertReverseWInDPat<v4f32, v2f64, MSA128W>;
+
+// Pseudos used to implement BNZ.df, and BZ.df
+
+class MSA_CBRANCH_PSEUDO_DESC_BASE<SDPatternOperator OpNode, ValueType TyNode,
+                                   RegisterClass RCWS, InstrItinClass itin> :
+  MipsPseudo<(outs GPR32:$dst),
+             (ins RCWS:$ws),
+             [(set GPR32:$dst, (OpNode (TyNode RCWS:$ws)))]> {
+  bit usesCustomInserter = 1;
+}
+
+def SNZ_B_PSEUDO : MSA_CBRANCH_PSEUDO_DESC_BASE<MipsVAllNonZero, v16i8,
+                                                MSA128B, NoItinerary>;
+def SNZ_H_PSEUDO : MSA_CBRANCH_PSEUDO_DESC_BASE<MipsVAllNonZero, v8i16,
+                                                MSA128H, NoItinerary>;
+def SNZ_W_PSEUDO : MSA_CBRANCH_PSEUDO_DESC_BASE<MipsVAllNonZero, v4i32,
+                                                MSA128W, NoItinerary>;
+def SNZ_D_PSEUDO : MSA_CBRANCH_PSEUDO_DESC_BASE<MipsVAllNonZero, v2i64,
+                                                MSA128D, NoItinerary>;
+def SNZ_V_PSEUDO : MSA_CBRANCH_PSEUDO_DESC_BASE<MipsVAnyNonZero, v16i8,
+                                                MSA128B, NoItinerary>;
+
+def SZ_B_PSEUDO : MSA_CBRANCH_PSEUDO_DESC_BASE<MipsVAllZero, v16i8,
+                                               MSA128B, NoItinerary>;
+def SZ_H_PSEUDO : MSA_CBRANCH_PSEUDO_DESC_BASE<MipsVAllZero, v8i16,
+                                               MSA128H, NoItinerary>;
+def SZ_W_PSEUDO : MSA_CBRANCH_PSEUDO_DESC_BASE<MipsVAllZero, v4i32,
+                                               MSA128W, NoItinerary>;
+def SZ_D_PSEUDO : MSA_CBRANCH_PSEUDO_DESC_BASE<MipsVAllZero, v2i64,
+                                               MSA128D, NoItinerary>;
+def SZ_V_PSEUDO : MSA_CBRANCH_PSEUDO_DESC_BASE<MipsVAnyZero, v16i8,
+                                               MSA128B, NoItinerary>;

@@ -152,6 +152,12 @@ namespace llvm {
       SETCC_DSP,
       SELECT_CC_DSP,
 
+      // Vector comparisons
+      VALL_ZERO,
+      VANY_ZERO,
+      VALL_NONZERO,
+      VANY_NONZERO,
+
       // Load/Store Left/Right nodes.
       LWL = ISD::FIRST_TARGET_MEMORY_OPCODE,
       LWR,

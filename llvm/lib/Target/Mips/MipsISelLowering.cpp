@@ -208,6 +208,10 @@ const char *MipsTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case MipsISD::SHRL_DSP:          return "MipsISD::SHRL_DSP";
   case MipsISD::SETCC_DSP:         return "MipsISD::SETCC_DSP";
   case MipsISD::SELECT_CC_DSP:     return "MipsISD::SELECT_CC_DSP";
+  case MipsISD::VALL_ZERO:         return "MipsISD::VALL_ZERO";
+  case MipsISD::VANY_ZERO:         return "MipsISD::VANY_ZERO";
+  case MipsISD::VALL_NONZERO:      return "MipsISD::VALL_NONZERO";
+  case MipsISD::VANY_NONZERO:      return "MipsISD::VANY_NONZERO";
   default:                         return NULL;
   }
 }
