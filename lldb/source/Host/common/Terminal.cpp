@@ -10,7 +10,6 @@
 #include "lldb/Host/Terminal.h"
 
 #include <fcntl.h>
-#include <unistd.h>
 #include <signal.h>
 
 #ifdef LLDB_CONFIG_TERMIOS_SUPPORTED

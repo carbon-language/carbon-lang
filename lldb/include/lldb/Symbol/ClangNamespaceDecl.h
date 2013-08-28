@@ -10,6 +10,8 @@
 #ifndef liblldb_ClangNamespaceDecl_h_
 #define liblldb_ClangNamespaceDecl_h_
 
+#include <string>
+
 #include "lldb/lldb-public.h"
 #include "lldb/Core/ClangForward.h"
 

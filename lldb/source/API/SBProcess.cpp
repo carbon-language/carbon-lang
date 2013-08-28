@@ -11,6 +11,9 @@
 
 #include "lldb/API/SBProcess.h"
 
+// C Includes
+#include <inttypes.h>
+
 #include "lldb/lldb-defines.h"
 #include "lldb/lldb-types.h"
 

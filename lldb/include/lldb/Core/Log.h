@@ -11,11 +11,9 @@
 #define liblldb_Log_h_
 
 // C Includes
-#include <stdbool.h>
 #include <stdint.h>
 #include <signal.h>
 #include <stdio.h>
-#include <unistd.h>
 
 // C++ Includes
 // Other libraries and framework includes

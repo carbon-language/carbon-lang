@@ -15,7 +15,6 @@
 #endif
 #include <string.h>
 #include <stdio.h>
-#include <unistd.h>
 
 #if 0
 // This logging is way too verbose to enable even for a log channel. 

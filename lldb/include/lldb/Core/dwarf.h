@@ -11,7 +11,6 @@
 #define DebugBase_dwarf_h_
 
 #include <stdint.h>
-#include <stdbool.h>
 
 // Get the DWARF constant defintions from llvm
 #include "llvm/Support/Dwarf.h"

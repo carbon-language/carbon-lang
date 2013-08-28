@@ -13,6 +13,7 @@
 // C Includes
 // C++ Includes
 #include <map>
+#include <functional>
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Breakpoint/BreakpointSite.h"

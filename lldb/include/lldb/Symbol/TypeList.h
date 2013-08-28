@@ -13,6 +13,7 @@
 #include "lldb/lldb-private.h"
 #include "lldb/Symbol/Type.h"
 #include <map>
+#include <functional>
 
 namespace lldb_private {
 

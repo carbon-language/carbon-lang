@@ -35,6 +35,9 @@
 // things should be defined. Currently MacOSX is being assumed by default
 // since that is what lldb was first developed for.
 
+#include <stdbool.h>
+#include <unistd.h>
+
 #ifdef _WIN32
 
 #include "lldb/Host/windows/windows.h"
@@ -57,8 +60,6 @@ namespace lldb
 #else
 
 #include <pthread.h>
-#include <stdbool.h>
-#include <unistd.h>
 
 namespace lldb {
         //----------------------------------------------------------------------

@@ -12,7 +12,6 @@
 
 // C Includes
 #include <stdint.h>
-#include <unistd.h>
 
 // C++ Includes
 #include <string>

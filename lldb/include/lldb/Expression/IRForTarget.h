@@ -19,6 +19,7 @@
 #include "llvm/Pass.h"
 
 #include <map>
+#include <functional>
 
 namespace llvm {
     class BasicBlock;

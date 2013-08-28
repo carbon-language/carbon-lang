@@ -12,7 +12,6 @@
 
 // C Includes
 #include <stdint.h>
-#include <sys/time.h>
 
 // C++ Includes
 // Other libraries and framework includes

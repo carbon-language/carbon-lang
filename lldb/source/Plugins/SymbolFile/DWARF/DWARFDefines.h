@@ -11,7 +11,6 @@
 #define SymbolFileDWARF_DWARFDefines_h_
 
 #include <stdint.h>
-#include <stdbool.h>
 #include "lldb/Core/dwarf.h"
 
 namespace lldb_private {

@@ -13,7 +13,6 @@
 
 
 #include <stdint.h>
-#include <unistd.h>
 
 namespace lldb_private {
 

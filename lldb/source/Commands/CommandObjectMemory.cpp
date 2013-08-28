@@ -12,6 +12,8 @@
 #include "CommandObjectMemory.h"
 
 // C Includes
+#include <inttypes.h>
+
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
