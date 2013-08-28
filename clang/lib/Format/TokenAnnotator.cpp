@@ -393,6 +393,8 @@ private:
         if (CurrentToken->isOneOf(tok::star, tok::amp))
           CurrentToken->Type = TT_PointerOrReference;
         consumeToken();
+        if (CurrentToken->Previous->Type == TT_BinaryOperator)
+          CurrentToken->Previous->Type = TT_OverloadedOperator;
       }
       if (CurrentToken) {
         CurrentToken->Type = TT_OverloadedOperatorLParen;
@@ -1319,7 +1321,8 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
       Right.is(tok::question))
     return true;
   if (Right.Type == TT_RangeBasedForLoopColon ||
-      Right.Type == TT_OverloadedOperatorLParen)
+      Right.Type == TT_OverloadedOperatorLParen ||
+      Right.Type == TT_OverloadedOperator)
     return false;
   if (Left.Type == TT_RangeBasedForLoopColon)
     return true;
