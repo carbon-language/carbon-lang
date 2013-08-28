@@ -20,7 +20,7 @@ using namespace llvm::opt;
 enum ID {
   OPT_INVALID = 0, // This is not an option ID.
 #define OPTION(PREFIX, NAME, ID, KIND, GROUP, ALIAS, ALIASARGS, FLAGS, PARAM, \
-               HELPTEXT, METAVAR) OPT_##ID,
+              HELPTEXT, METAVAR) OPT_##ID,
 #include "Opts.inc"
   LastOption
 #undef OPTION
@@ -48,8 +48,8 @@ static const OptTable::Info InfoTable[] = {
 namespace {
 class TestOptTable : public OptTable {
 public:
-  TestOptTable(bool IgnoreCase = false)
-    : OptTable(InfoTable, array_lengthof(InfoTable), IgnoreCase) {}
+  TestOptTable()
+    : OptTable(InfoTable, array_lengthof(InfoTable)) {}
 };
 }
 
@@ -155,26 +155,6 @@ TEST(Option, AliasArgs) {
   EXPECT_TRUE(AL->hasArg(OPT_B));
   EXPECT_EQ(AL->getAllArgValues(OPT_B)[0], "foo");
   EXPECT_EQ(AL->getAllArgValues(OPT_B)[1], "bar");
-}
-
-TEST(Option, IgnoreCase) {
-  TestOptTable T(true);
-  unsigned MAI, MAC;
-
-  const char *MyArgs[] = { "-a", "-joo" };
-  OwningPtr<InputArgList> AL(T.ParseArgs(MyArgs, array_endof(MyArgs), MAI, MAC));
-  EXPECT_TRUE(AL->hasArg(OPT_A));
-  EXPECT_TRUE(AL->hasArg(OPT_B));
-}
-
-TEST(Option, DoNotIgnoreCase) {
-  TestOptTable T;
-  unsigned MAI, MAC;
-
-  const char *MyArgs[] = { "-a", "-joo" };
-  OwningPtr<InputArgList> AL(T.ParseArgs(MyArgs, array_endof(MyArgs), MAI, MAC));
-  EXPECT_FALSE(AL->hasArg(OPT_A));
-  EXPECT_FALSE(AL->hasArg(OPT_B));
 }
 
 TEST(Option, SlurpEmpty) {
