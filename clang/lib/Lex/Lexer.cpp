@@ -2868,7 +2868,8 @@ LexNextToken:
     // If the next token is obviously a // or /* */ comment, skip it efficiently
     // too (without going through the big switch stmt).
     if (CurPtr[0] == '/' && CurPtr[1] == '/' && !inKeepCommentMode() &&
-        LangOpts.LineComment && !LangOpts.TraditionalCPP) {
+        LangOpts.LineComment &&
+        (LangOpts.CPlusPlus || !LangOpts.TraditionalCPP)) {
       if (SkipLineComment(Result, CurPtr+2))
         return; // There is a token to return.
       goto SkipIgnoredUnits;
@@ -3165,7 +3166,8 @@ LexNextToken:
       // "foo".  Check to see if the character after the second slash is a '*'.
       // If so, we will lex that as a "/" instead of the start of a comment.
       // However, we never do this if we are just preprocessing.
-      bool TreatAsComment = LangOpts.LineComment && !LangOpts.TraditionalCPP;
+      bool TreatAsComment = LangOpts.LineComment &&
+                            (LangOpts.CPlusPlus || !LangOpts.TraditionalCPP);
       if (!TreatAsComment)
         if (!(PP && PP->isPreprocessedOutput()))
           TreatAsComment = getCharAndSize(CurPtr+SizeTmp, SizeTmp2) != '*';

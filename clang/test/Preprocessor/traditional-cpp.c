@@ -3,9 +3,9 @@
  * things like using /usr/bin/cpp to preprocess non-source files. */
 
 /*
- RUN: %clang_cc1 -traditional-cpp %s -E -o %t
- RUN: FileCheck -strict-whitespace < %t %s
+ RUN: %clang_cc1 -traditional-cpp %s -E | FileCheck -strict-whitespace %s
  RUN: %clang_cc1 -traditional-cpp %s -E -C | FileCheck -check-prefix=CHECK-COMMENTS %s
+ RUN: %clang_cc1 -traditional-cpp -x c++ %s -E | FileCheck -check-prefix=CHECK-CXX %s
 */
 
 /* -traditional-cpp should eliminate all C89 comments. */
@@ -13,7 +13,9 @@
  * CHECK-COMMENTS: {{^}}/* -traditional-cpp should eliminate all C89 comments. *{{/$}}
  */
 
+/* -traditional-cpp should only eliminate "//" comments in C++ mode. */
 /* CHECK: {{^}}foo // bar{{$}}
+ * CHECK-CXX: {{^}}foo {{$}}
  */
 foo // bar
 
