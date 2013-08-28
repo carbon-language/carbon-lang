@@ -184,6 +184,12 @@ struct coff_relocation {
   support::ulittle16_t Type;
 };
 
+struct coff_aux_weak_external {
+  support::ulittle32_t TagIndex;
+  support::ulittle32_t Characteristics;
+  char Unused[10];
+};
+
 struct coff_aux_section_definition {
   support::ulittle32_t Length;
   support::ulittle16_t NumberOfRelocations;
