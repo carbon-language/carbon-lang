@@ -1,5 +1,5 @@
-; RUN: opt < %s -instcombine -S | \
-; RUN:    grep and
+; RUN: opt < %s -instcombine -S | FileCheck %s
+; CHECK: and
 
 define i64 @foo(i64 %tmp, i64 %tmp2) {
         %tmp.upgrd.1 = trunc i64 %tmp to i32            ; <i32> [#uses=1]

@@ -1,6 +1,7 @@
-; This testcase can be simplified by "realizing" that alloca can never return 
+; This testcase can be simplified by "realizing" that alloca can never return
 ; null.
-; RUN: opt < %s -instcombine -simplifycfg -S | not grep br
+; RUN: opt < %s -instcombine -simplifycfg -S | FileCheck %s
+; CHECK-NOT: br
 
 declare i32 @bitmap_clear(...)
 

@@ -1,5 +1,7 @@
-; RUN: opt < %s -instcombine -S | grep rem
+; RUN: opt < %s -instcombine -S | FileCheck %s
 ; PR1933
+
+; CHECK: rem
 
 define i32 @fold(i32 %a) {
   %s = mul i32 %a, 3

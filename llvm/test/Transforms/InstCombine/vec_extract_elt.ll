@@ -1,4 +1,5 @@
-; RUN: opt < %s -instcombine -S | not grep extractelement
+; RUN: opt < %s -instcombine -S | FileCheck %s
+; CHECK-NOT: extractelement
 
 define i32 @test(float %f) {
         %tmp7 = insertelement <4 x float> undef, float %f, i32 0                ; <<4 x float>> [#uses=1]

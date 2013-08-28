@@ -1,4 +1,6 @@
-; RUN: opt < %s -instcombine -S | not grep add
+; RUN: opt < %s -instcombine -S | FileCheck %s
+
+; CHECK-NOT: add
 
 define i32 @test(i32 %A) {
         %A.neg = sub i32 0, %A          ; <i32> [#uses=1]

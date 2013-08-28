@@ -1,4 +1,7 @@
-; RUN: opt < %s -instcombine -S | grep select | count 2
+; RUN: opt < %s -instcombine -S | FileCheck %s
+
+; CHECK: select
+; CHECK: select
 
 ; Make sure instcombine don't fold select into operands. We don't want to emit
 ; select of two integers unless it's selecting 0 / 1.

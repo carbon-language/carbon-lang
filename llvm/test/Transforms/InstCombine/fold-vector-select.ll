@@ -1,4 +1,6 @@
-; RUN: opt < %s -instcombine -S | not grep select
+; RUN: opt < %s -instcombine -S | FileCheck %s
+
+; CHECK-NOT: select
 
 define void @foo(<4 x i32> *%A, <4 x i32> *%B, <4 x i32> *%C, <4 x i32> *%D,
                  <4 x i32> *%E, <4 x i32> *%F, <4 x i32> *%G, <4 x i32> *%H,
