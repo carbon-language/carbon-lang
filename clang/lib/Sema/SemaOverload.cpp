@@ -10714,6 +10714,11 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
         Diag(OpLoc,  diag::err_ovl_no_viable_oper)
              << BinaryOperator::getOpcodeStr(Opc)
              << Args[0]->getSourceRange() << Args[1]->getSourceRange();
+        if (Args[0]->getType()->isIncompleteType()) {
+          Diag(OpLoc, diag::note_assign_lhs_incomplete)
+            << Args[0]->getType()
+            << Args[0]->getSourceRange() << Args[1]->getSourceRange();
+        }
       } else {
         // This is an erroneous use of an operator which can be overloaded by
         // a non-member function. Check for non-member operators which were

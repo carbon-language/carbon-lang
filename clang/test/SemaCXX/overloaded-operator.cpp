@@ -445,3 +445,10 @@ namespace test10 {
 struct InvalidOperatorEquals {
   InvalidOperatorEquals operator=() = delete; // expected-error {{overloaded 'operator=' must be a binary operator}}
 };
+
+namespace PR7681 {
+  template <typename PT1, typename PT2> class PointerUnion;
+  void foo(PointerUnion<int*, float*> &Result) {
+    Result = 1; // expected-error {{no viable overloaded '='}} // expected-note {{type 'PointerUnion<int *, float *>' is incomplete}}
+  }
+}
