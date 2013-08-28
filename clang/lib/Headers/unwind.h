@@ -116,13 +116,13 @@ typedef _Unwind_Reason_Code (*_Unwind_Stop_Fn)(int, _Unwind_Action,
                                                struct _Unwind_Context *,
                                                void *);
 
-typedef _Unwind_Reason_Code (*_Unwind_Personality_Fn)(int, _Unwind_Action,
-                                                      _Unwind_Exception_Class,
-                                                      struct _Unwind_Exception *,
-                                                      struct _Unwind_Context *);
+typedef _Unwind_Reason_Code (*_Unwind_Personality_Fn)(
+    int, _Unwind_Action, _Unwind_Exception_Class, struct _Unwind_Exception *,
+    struct _Unwind_Context *);
 typedef _Unwind_Personality_Fn __personality_routine;
 
-typedef _Unwind_Reason_Code (*_Unwind_Trace_Fn)(struct _Unwind_Context *, void *);
+typedef _Unwind_Reason_Code (*_Unwind_Trace_Fn)(struct _Unwind_Context *,
+                                                void *);
 
 #ifdef __arm__
 
@@ -172,8 +172,8 @@ _Unwind_Ptr _Unwind_GetRegionStart(struct _Unwind_Context *);
 #if !defined(__APPLE__) || !defined(__arm__)
 
 _Unwind_Reason_Code _Unwind_RaiseException(struct _Unwind_Exception *);
-_Unwind_Reason_Code _Unwind_ForcedUnwind(struct _Unwind_Exception *, _Unwind_Stop_Fn,
-                                         void *);
+_Unwind_Reason_Code _Unwind_ForcedUnwind(struct _Unwind_Exception *,
+                                         _Unwind_Stop_Fn, void *);
 void _Unwind_DeleteException(struct _Unwind_Exception *);
 void _Unwind_Resume(struct _Unwind_Exception *);
 _Unwind_Reason_Code _Unwind_Resume_or_Rethrow(struct _Unwind_Exception *);
@@ -188,8 +188,8 @@ typedef struct SjLj_Function_Context *_Unwind_FunctionContext_t;
 void _Unwind_SjLj_Register(_Unwind_FunctionContext_t);
 void _Unwind_SjLj_Unregister(_Unwind_FunctionContext_t);
 _Unwind_Reason_Code _Unwind_SjLj_RaiseException(struct _Unwind_Exception *);
-_Unwind_Reason_Code _Unwind_SjLj_ForcedUnwind(struct _Unwind_Exception *, _Unwind_Stop_Fn,
-                                         void *);
+_Unwind_Reason_Code _Unwind_SjLj_ForcedUnwind(struct _Unwind_Exception *,
+                                              _Unwind_Stop_Fn, void *);
 void _Unwind_SjLj_Resume(struct _Unwind_Exception *);
 _Unwind_Reason_Code _Unwind_SjLj_Resume_or_Rethrow(struct _Unwind_Exception *);
 
@@ -197,8 +197,10 @@ void *_Unwind_FindEnclosingFunction(void *);
 
 #ifdef __APPLE__
 
-_Unwind_Ptr _Unwind_GetDataRelBase(struct _Unwind_Context *) __attribute__((unavailable));
-_Unwind_Ptr _Unwind_GetTextRelBase(struct _Unwind_Context *) __attribute__((unavailable));
+_Unwind_Ptr _Unwind_GetDataRelBase(struct _Unwind_Context *)
+    __attribute__((unavailable));
+_Unwind_Ptr _Unwind_GetTextRelBase(struct _Unwind_Context *)
+    __attribute__((unavailable));
 
 /* Darwin-specific functions */
 void __register_frame(const void *);
@@ -216,7 +218,8 @@ void __register_frame_info_bases(const void *, void *, void *, void *)
 void __register_frame_info(const void *, void *) __attribute__((unavailable));
 void __register_frame_info_table_bases(const void *, void*, void *, void *)
   __attribute__((unavailable));
-void __register_frame_info_table(const void *, void *) __attribute__((unavailable));
+void __register_frame_info_table(const void *, void *)
+  __attribute__((unavailable));
 void __register_frame_table(const void *) __attribute__((unavailable));
 void __deregister_frame_info(const void *) __attribute__((unavailable));
 void __deregister_frame_info_bases(const void *)__attribute__((unavailable));
