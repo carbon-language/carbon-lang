@@ -601,8 +601,9 @@ llvm::DIType CGDebugInfo::CreateType(const PointerType *Ty,
 
 // Creates a forward declaration for a RecordDecl in the given context.
 llvm::DICompositeType
-CGDebugInfo::getOrCreateRecordFwdDecl(const RecordDecl *RD,
+CGDebugInfo::getOrCreateRecordFwdDecl(const RecordType *Ty,
                                       llvm::DIDescriptor Ctx) {
+  const RecordDecl *RD = Ty->getDecl();
   if (llvm::DIType T = getTypeOrNull(CGM.getContext().getRecordType(RD)))
     return llvm::DICompositeType(T);
   llvm::DIFile DefUnit = getOrCreateFile(RD->getLocation());
@@ -1472,7 +1473,7 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty) {
       (CXXDecl && CXXDecl->hasDefinition() && CXXDecl->isDynamicClass())) {
     llvm::DIDescriptor FDContext =
       getContextDescriptor(cast<Decl>(RD->getDeclContext()));
-    llvm::DIType RetTy = getOrCreateRecordFwdDecl(RD, FDContext);
+    llvm::DIType RetTy = getOrCreateRecordFwdDecl(Ty, FDContext);
     // FIXME: This is conservatively correct. If we return a non-forward decl
     // that's not a full definition (such as those created by
     // createContextChain) then getOrCreateType will record is as a complete
@@ -1861,7 +1862,8 @@ llvm::DIType CGDebugInfo::CreateType(const AtomicType *Ty,
 }
 
 /// CreateEnumType - get enumeration type.
-llvm::DIType CGDebugInfo::CreateEnumType(const EnumDecl *ED) {
+llvm::DIType CGDebugInfo::CreateEnumType(const EnumType* Ty) {
+  const EnumDecl *ED = Ty->getDecl();
   uint64_t Size = 0;
   uint64_t Align = 0;
   if (!ED->getTypeForDecl()->isIncompleteType()) {
@@ -2144,7 +2146,7 @@ llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty, llvm::DIFile Unit) {
   case Type::Record:
     return CreateType(cast<RecordType>(Ty));
   case Type::Enum:
-    return CreateEnumType(cast<EnumType>(Ty)->getDecl());
+    return CreateEnumType(cast<EnumType>(Ty));
   case Type::FunctionProto:
   case Type::FunctionNoProto:
     return CreateType(cast<FunctionType>(Ty), Unit);
@@ -2249,7 +2251,7 @@ llvm::DICompositeType CGDebugInfo::CreateLimitedType(const RecordType *Ty) {
   // If this is just a forward declaration, construct an appropriately
   // marked node and just return it.
   if (!RD->getDefinition())
-    return getOrCreateRecordFwdDecl(RD, RDContext);
+    return getOrCreateRecordFwdDecl(Ty, RDContext);
 
   uint64_t Size = CGM.getContext().getTypeSize(Ty);
   uint64_t Align = CGM.getContext().getTypeAlign(Ty);
