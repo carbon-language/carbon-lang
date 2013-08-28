@@ -405,15 +405,18 @@ SVal SValBuilder::evalCast(SVal val, QualType castTy, QualType originalTy) {
       return val;
     if (val.isConstant())
       return makeTruthVal(!val.isZeroConstant(), castTy);
-    if (SymbolRef Sym = val.getAsSymbol()) {
+    if (SymbolRef Sym = val.getAsSymbol(true)) {
       BasicValueFactory &BVF = getBasicValueFactory();
       // FIXME: If we had a state here, we could see if the symbol is known to
       // be zero, but we don't.
       return makeNonLoc(Sym, BO_NE, BVF.getValue(0, Sym->getType()), castTy);
     }
+    // Loc values are not always true, they could be weakly linked functions.
+    if (Optional<Loc> L = val.getAs<Loc>())
+      return evalCastFromLoc(*L, castTy);
 
-    assert(val.getAs<Loc>() || val.getAs<nonloc::LocAsInteger>());
-    return makeTruthVal(true, castTy);
+    Loc L = val.castAs<nonloc::LocAsInteger>().getLoc();
+    return evalCastFromLoc(L, castTy);
   }
 
   // For const casts, casts to void, just propagate the value.

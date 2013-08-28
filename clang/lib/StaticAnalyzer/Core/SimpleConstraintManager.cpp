@@ -68,51 +68,20 @@ bool SimpleConstraintManager::canReasonAbout(SVal X) const {
 ProgramStateRef SimpleConstraintManager::assume(ProgramStateRef state,
                                                DefinedSVal Cond,
                                                bool Assumption) {
-  if (Optional<NonLoc> NV = Cond.getAs<NonLoc>())
-    return assume(state, *NV, Assumption);
-  return assume(state, Cond.castAs<Loc>(), Assumption);
-}
+  // If we have a Loc value, cast it to a bool NonLoc first.
+  if (Optional<Loc> LV = Cond.getAs<Loc>()) {
+    SValBuilder &SVB = state->getStateManager().getSValBuilder();
+    QualType T;
+    const MemRegion *MR = LV->getAsRegion();
+    if (const TypedRegion *TR = dyn_cast_or_null<TypedRegion>(MR))
+      T = TR->getLocationType();
+    else
+      T = SVB.getContext().VoidPtrTy;
 
-ProgramStateRef SimpleConstraintManager::assume(ProgramStateRef state, Loc cond,
-                                               bool assumption) {
-  state = assumeAux(state, cond, assumption);
-  if (NotifyAssumeClients && SU)
-    return SU->processAssume(state, cond, assumption);
-  return state;
-}
-
-ProgramStateRef SimpleConstraintManager::assumeAux(ProgramStateRef state,
-                                                  Loc Cond, bool Assumption) {
-  switch (Cond.getSubKind()) {
-  default:
-    assert (false && "'Assume' not implemented for this Loc.");
-    return state;
-
-  case loc::MemRegionKind: {
-    // FIXME: Should this go into the storemanager?
-    const MemRegion *R = Cond.castAs<loc::MemRegionVal>().getRegion();
-
-    // FIXME: now we only find the first symbolic region.
-    if (const SymbolicRegion *SymR = R->getSymbolicBase()) {
-      const llvm::APSInt &zero = getBasicVals().getZeroWithPtrWidth();
-      if (Assumption)
-        return assumeSymNE(state, SymR->getSymbol(), zero, zero);
-      else
-        return assumeSymEQ(state, SymR->getSymbol(), zero, zero);
-    }
-
-    // FALL-THROUGH.
+    Cond = SVB.evalCast(*LV, SVB.getContext().BoolTy, T).castAs<DefinedSVal>();
   }
 
-  case loc::GotoLabelKind:
-    return Assumption ? state : NULL;
-
-  case loc::ConcreteIntKind: {
-    bool b = Cond.castAs<loc::ConcreteInt>().getValue() != 0;
-    bool isFeasible = b ? Assumption : !Assumption;
-    return isFeasible ? state : NULL;
-  }
-  } // end switch
+  return assume(state, Cond.castAs<NonLoc>(), Assumption);
 }
 
 ProgramStateRef SimpleConstraintManager::assume(ProgramStateRef state,
@@ -216,8 +185,8 @@ ProgramStateRef SimpleConstraintManager::assumeAux(ProgramStateRef state,
   }
 
   case nonloc::LocAsIntegerKind:
-    return assumeAux(state, Cond.castAs<nonloc::LocAsInteger>().getLoc(),
-                     Assumption);
+    return assume(state, Cond.castAs<nonloc::LocAsInteger>().getLoc(),
+                  Assumption);
   } // end switch
 }
 

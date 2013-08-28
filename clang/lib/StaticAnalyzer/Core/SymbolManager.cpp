@@ -435,6 +435,9 @@ bool SymbolReaper::isLiveRegion(const MemRegion *MR) {
   if (isa<MemSpaceRegion>(MR))
     return true;
 
+  if (isa<CodeTextRegion>(MR))
+    return true;
+
   return false;
 }
 

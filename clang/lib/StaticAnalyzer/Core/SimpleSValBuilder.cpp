@@ -137,6 +137,32 @@ SVal SimpleSValBuilder::evalCastFromLoc(Loc val, QualType castTy) {
   if (castTy->isUnionType())
     return UnknownVal();
 
+  // Casting a Loc to a bool will almost always be true,
+  // unless this is a weak function or a symbolic region.
+  if (castTy->isBooleanType()) {
+    switch (val.getSubKind()) {
+      case loc::MemRegionKind: {
+        const MemRegion *R = val.castAs<loc::MemRegionVal>().getRegion();
+        if (const FunctionTextRegion *FTR = dyn_cast<FunctionTextRegion>(R))
+          if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(FTR->getDecl()))
+            if (FD->isWeak())
+              // FIXME: Currently we are using an extent symbol here,
+              // because there are no generic region address metadata
+              // symbols to use, only content metadata.
+              return nonloc::SymbolVal(SymMgr.getExtentSymbol(FTR));
+
+        if (const SymbolicRegion *SymR = R->getSymbolicBase())
+          return nonloc::SymbolVal(SymR->getSymbol());
+
+        // FALL-THROUGH
+      }
+
+      case loc::GotoLabelKind:
+        // Labels and non symbolic memory regions are always true.
+        return makeTruthVal(true, castTy);
+    }
+  }
+
   if (castTy->isIntegralOrEnumerationType()) {
     unsigned BitWidth = Context.getTypeSize(castTy);
 
@@ -668,7 +694,7 @@ SVal SimpleSValBuilder::evalBinOpLL(ProgramStateRef state,
     if (Optional<loc::ConcreteInt> rInt = rhs.getAs<loc::ConcreteInt>()) {
       // If one of the operands is a symbol and the other is a constant,
       // build an expression for use by the constraint manager.
-      if (SymbolRef lSym = lhs.getAsLocSymbol())
+      if (SymbolRef lSym = lhs.getAsLocSymbol(true))
         return MakeSymIntVal(lSym, op, rInt->getValue(), resultTy);
 
       // Special case comparisons to NULL.
@@ -676,19 +702,14 @@ SVal SimpleSValBuilder::evalBinOpLL(ProgramStateRef state,
       // build constraints. The address of any non-symbolic region is guaranteed
       // to be non-NULL.
       if (rInt->isZeroConstant()) {
-        switch (op) {
-        default:
-          break;
-        case BO_Sub:
+        if (op == BO_Sub)
           return evalCastFromLoc(lhs, resultTy);
-        case BO_EQ:
-        case BO_LT:
-        case BO_LE:
-          return makeTruthVal(false, resultTy);
-        case BO_NE:
-        case BO_GT:
-        case BO_GE:
-          return makeTruthVal(true, resultTy);
+
+        if (BinaryOperator::isComparisonOp(op)) {
+          QualType boolType = getContext().BoolTy;
+          NonLoc l = evalCastFromLoc(lhs, boolType).castAs<NonLoc>();
+          NonLoc r = makeTruthVal(false, boolType).castAs<NonLoc>();
+          return evalBinOpNN(state, op, l, r, resultTy);
         }
       }
 

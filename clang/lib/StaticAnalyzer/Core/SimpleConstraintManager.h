@@ -36,8 +36,6 @@ public:
   ProgramStateRef assume(ProgramStateRef state, DefinedSVal Cond,
                         bool Assumption);
 
-  ProgramStateRef assume(ProgramStateRef state, Loc Cond, bool Assumption);
-
   ProgramStateRef assume(ProgramStateRef state, NonLoc Cond, bool Assumption);
 
   ProgramStateRef assumeSymRel(ProgramStateRef state,
@@ -85,10 +83,6 @@ protected:
   SymbolManager &getSymbolManager() const { return SVB.getSymbolManager(); }
 
   bool canReasonAbout(SVal X) const;
-
-  ProgramStateRef assumeAux(ProgramStateRef state,
-                                Loc Cond,
-                                bool Assumption);
 
   ProgramStateRef assumeAux(ProgramStateRef state,
                                 NonLoc Cond,
