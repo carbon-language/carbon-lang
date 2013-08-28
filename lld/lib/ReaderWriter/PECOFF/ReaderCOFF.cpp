@@ -187,8 +187,18 @@ private:
         return ec;
       _symbolName[sym] = name;
 
-      // Skip aux symbols.
-      i += sym->NumberOfAuxSymbols;
+      // Symbol may be followed by auxiliary symbol table records. The aux
+      // record can be in any format, but the size is always the same as the
+      // regular symbol. The aux record supplies additional information for the
+      // standard symbol. We do not interpret the aux record here, but just
+      // store it to _auxSymbol.
+      if (sym->NumberOfAuxSymbols > 0) {
+        const coff_symbol *aux = nullptr;
+        if (error_code ec = _obj->getAuxSymbol(i + 1, aux))
+          return ec;
+        _auxSymbol[sym] = aux;
+        i += sym->NumberOfAuxSymbols;
+      }
     }
     return error_code::success();
   }
@@ -304,18 +314,12 @@ private:
   // Cache the COMDAT attributes, which indicate whether the symbols in the
   // section can be merged or not.
   error_code cacheSectionAttributes() {
-    const llvm::object::coff_file_header *header = nullptr;
-    if (error_code ec = _obj->getHeader(header))
-      return ec;
-
     // The COMDAT section attribute is not an attribute of coff_section, but is
     // stored in the auxiliary symbol for the first symbol referring a COMDAT
     // section. It feels to me that it's unnecessarily complicated, but this is
     // how COFF works.
-    for (uint32_t i = 0, e = header->NumberOfSymbols; i != e; ++i) {
-      const coff_symbol *sym;
-      if (error_code ec = _obj->getSymbol(i, sym))
-        return ec;
+    for (auto i : _auxSymbol) {
+      const coff_symbol *sym = i.first;
       if (sym->SectionNumber == llvm::COFF::IMAGE_SYM_ABSOLUTE ||
           sym->SectionNumber == llvm::COFF::IMAGE_SYM_UNDEFINED)
         continue;
@@ -331,10 +335,8 @@ private:
 
       if (sym->NumberOfAuxSymbols == 0)
         return llvm::object::object_error::parse_failed;
-      const coff_aux_section_definition *aux = nullptr;
-      if (error_code ec = _obj->getAuxSymbol(i + 1, aux))
-        return ec;
-
+      const coff_aux_section_definition *aux = reinterpret_cast<
+          const coff_aux_section_definition *>(i.second);
       _merge[sec] = getMerge(aux);
     }
 
@@ -618,6 +620,9 @@ private:
 
   // A map from symbol to its resultant atom.
   std::map<const coff_symbol *, Atom *> _symbolAtom;
+
+  // A map from symbol to its aux symbol.
+  std::map<const coff_symbol *, const coff_symbol *> _auxSymbol;
 
   // A map from section to its atoms.
   std::map<const coff_section *, vector<COFFDefinedFileAtom *>> _sectionAtoms;
