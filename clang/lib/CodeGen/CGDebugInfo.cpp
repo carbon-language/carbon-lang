@@ -1140,6 +1140,16 @@ CollectCXXMemberFunctions(const CXXRecordDecl *RD, llvm::DIFile Unit,
           EltTys.push_back(CreateCXXMemberFunction(Method, Unit, RecordTy));
       } else
         EltTys.push_back(MI->second);
+    } else if (const FunctionTemplateDecl *FTD = dyn_cast<FunctionTemplateDecl>(*I)) {
+      // Add any template specializations that have already been seen. Like
+      // implicit member functions, these may have been added to a declaration
+      // in the case of vtable-based debug info reduction.
+      for (FunctionTemplateDecl::spec_iterator SI = FTD->spec_begin(), SE = FTD->spec_end(); SI != SE; ++SI) {
+        llvm::DenseMap<const FunctionDecl *, llvm::WeakVH>::iterator MI =
+            SPCache.find(cast<CXXMethodDecl>(*SI)->getCanonicalDecl());
+        if (MI != SPCache.end())
+          EltTys.push_back(MI->second);
+      }
     }
   }
 }

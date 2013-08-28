@@ -4,6 +4,8 @@ struct MyClass {
   template <int i> int add(int j) {
     return i + j;
   }
+  virtual void func() {
+  }
 };
 
 int add2(int x) {
@@ -14,9 +16,12 @@ inline int add3(int x) {
   return MyClass().add<3>(x); // even though add<3> is ODR used, don't emit it since we don't codegen it
 }
 
-// CHECK: metadata [[C_MEM:![0-9]*]], i32 0, null, null, null} ; [ DW_TAG_structure_type ] [MyClass]
-// CHECK: [[C_MEM]] = metadata !{metadata [[C_TEMP:![0-9]*]]}
-// CHECK: [[C_TEMP]] = {{.*}} ; [ DW_TAG_subprogram ] [line 4] [add<2>]
+// CHECK: [[C:![0-9]*]] = {{.*}}, metadata [[C_MEM:![0-9]*]], i32 0, metadata [[C]], null, null} ; [ DW_TAG_structure_type ] [MyClass]
+// CHECK: [[C_MEM]] = metadata !{metadata [[C_VPTR:![0-9]*]], metadata [[C_ADD:![0-9]*]], metadata [[C_FUNC:![0-9]*]], metadata [[C_CTOR:![0-9]*]]}
+// CHECK: [[C_VPTR]] = {{.*}} ; [ DW_TAG_member ] [_vptr$MyClass]
+// CHECK: [[C_ADD]] = {{.*}} ; [ DW_TAG_subprogram ] [line 4] [add<2>]
+// CHECK: [[C_FUNC]] = {{.*}} ; [ DW_TAG_subprogram ] [line 7] [func]
+// CHECK: [[C_CTOR]] = {{.*}} ; [ DW_TAG_subprogram ] [line 0] [MyClass]
 
 template<typename T>
 struct outer {
