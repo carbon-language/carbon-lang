@@ -44,13 +44,13 @@ set(files
   module.map
   )
 
-set(output_dir ${LLVM_BINARY_DIR}/lib/clang/${CLANG_VERSION}/include)
+set(output_dir ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/clang/${CLANG_VERSION}/include)
 
 # If we are in an IDE that has a configuration directory, we need to
 # create a second copy of the headers so that 'clang' can find them if
 # it's run from the build directory.
 if(MSVC_IDE OR XCODE)
-   set(other_output_dir ${LLVM_BINARY_DIR}/bin/lib/clang/${CLANG_VERSION}/include)
+   set(other_output_dir ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/lib/clang/${CLANG_VERSION}/include)
 endif()
 
 # Generate arm_neon.h
@@ -96,11 +96,11 @@ add_custom_target(clang-headers ALL DEPENDS ${out_files})
 set_target_properties(clang-headers PROPERTIES FOLDER "Misc")
 
 if (other_output_dir)
-	if(UNIX)
-		add_custom_command(TARGET clang-headers POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E make_directory "${LLVM_BINARY_DIR}/lib/${CMAKE_CFG_INTDIR}"
-	    	COMMAND ${CMAKE_COMMAND} -E create_symlink "${LLVM_BINARY_DIR}/bin/lib/clang" "${LLVM_BINARY_DIR}/lib/${CMAKE_CFG_INTDIR}/clang")
-	endif()
+  if(UNIX)
+    add_custom_command(TARGET clang-headers POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${CMAKE_CFG_INTDIR}"
+    COMMAND ${CMAKE_COMMAND} -E create_symlink "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/lib/clang" "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${CMAKE_CFG_INTDIR}/clang")
+  endif()
 endif ()
 
 install(FILES ${files} ${output_dir}/arm_neon.h
