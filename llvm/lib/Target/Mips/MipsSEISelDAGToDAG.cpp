@@ -66,6 +66,21 @@ void MipsSEDAGToDAGISel::addDSPCtrlRegOperands(bool IsDef, MachineInstr &MI,
     MIB.addReg(Mips::DSPEFI, Flag);
 }
 
+unsigned MipsSEDAGToDAGISel::getMSACtrlReg(const SDValue RegIdx) const {
+  switch (cast<ConstantSDNode>(RegIdx)->getZExtValue()) {
+  default:
+    llvm_unreachable("Could not map int to register");
+  case 0: return Mips::MSAIR;
+  case 1: return Mips::MSACSR;
+  case 2: return Mips::MSAAccess;
+  case 3: return Mips::MSASave;
+  case 4: return Mips::MSAModify;
+  case 5: return Mips::MSARequest;
+  case 6: return Mips::MSAMap;
+  case 7: return Mips::MSAUnmap;
+  }
+}
+
 bool MipsSEDAGToDAGISel::replaceUsesWithZeroReg(MachineRegisterInfo *MRI,
                                                 const MachineInstr& MI) {
   unsigned DstReg = 0, ZeroReg = 0;
@@ -430,6 +445,39 @@ std::pair<bool, SDNode*> MipsSEDAGToDAGISel::selectNode(SDNode *Node) {
     }
 
     return std::make_pair(true, RegOpnd);
+  }
+
+  case ISD::INTRINSIC_W_CHAIN: {
+    switch (cast<ConstantSDNode>(Node->getOperand(1))->getZExtValue()) {
+    default:
+      break;
+
+    case Intrinsic::mips_cfcmsa: {
+      SDValue ChainIn = Node->getOperand(0);
+      SDValue RegIdx = Node->getOperand(2);
+      SDValue Reg = CurDAG->getCopyFromReg(ChainIn, DL,
+                                           getMSACtrlReg(RegIdx), MVT::i32);
+      return std::make_pair(true, Reg.getNode());
+    }
+    }
+    break;
+  }
+
+  case ISD::INTRINSIC_VOID: {
+    switch (cast<ConstantSDNode>(Node->getOperand(1))->getZExtValue()) {
+    default:
+      break;
+
+    case Intrinsic::mips_ctcmsa: {
+      SDValue ChainIn = Node->getOperand(0);
+      SDValue RegIdx  = Node->getOperand(2);
+      SDValue Value   = Node->getOperand(3);
+      SDValue ChainOut = CurDAG->getCopyToReg(ChainIn, DL,
+                                              getMSACtrlReg(RegIdx), Value);
+      return std::make_pair(true, ChainOut.getNode());
+    }
+    }
+    break;
   }
 
   case MipsISD::ThreadPointer: {

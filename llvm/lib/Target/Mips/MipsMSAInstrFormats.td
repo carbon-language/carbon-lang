@@ -69,6 +69,11 @@ class MSA_3RF_FMT<bits<4> major, bits<1> df, bits<6> minor>: MSAInst {
   let Inst{5-0} = minor;
 }
 
+class MSA_ELM_FMT<bits<10> major, bits<6> minor>: MSAInst {
+  let Inst{25-16} = major;
+  let Inst{5-0} = minor;
+}
+
 class MSA_ELM_B_FMT<bits<4> major, bits<6> minor>: MSAInst {
   let Inst{25-22} = major;
   let Inst{21-20} = 0b00;

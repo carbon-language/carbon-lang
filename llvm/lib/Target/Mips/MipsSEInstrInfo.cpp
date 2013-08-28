@@ -110,6 +110,8 @@ void MipsSEInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
         .addReg(SrcReg, RegState::Implicit | getKillRegState(KillSrc));
       return;
     }
+    else if (Mips::MSACtrlRegClass.contains(SrcReg))
+      Opc = Mips::CFCMSA;
   }
   else if (Mips::GPR32RegClass.contains(SrcReg)) { // Copy from CPU Reg.
     if (Mips::CCRRegClass.contains(DestReg))
@@ -130,6 +132,8 @@ void MipsSEInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
         .addReg(DestReg, RegState::ImplicitDefine);
       return;
     }
+    else if (Mips::MSACtrlRegClass.contains(DestReg))
+      Opc = Mips::CTCMSA;
   }
   else if (Mips::FGR32RegClass.contains(DestReg, SrcReg))
     Opc = Mips::FMOV_S;

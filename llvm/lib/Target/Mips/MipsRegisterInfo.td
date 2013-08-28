@@ -231,6 +231,16 @@ let Namespace = "Mips" in {
   def DSPOutFlag : RegisterWithSubRegs<"", [DSPOutFlag16_19, DSPOutFlag20,
                                             DSPOutFlag21, DSPOutFlag22,
                                             DSPOutFlag23]>;
+
+  // MSA-ASE control registers.
+  def MSAIR : Register<"0">;
+  def MSACSR : Register<"1">;
+  def MSAAccess : Register<"2">;
+  def MSASave : Register<"3">;
+  def MSAModify : Register<"4">;
+  def MSARequest : Register<"5">;
+  def MSAMap : Register<"6">;
+  def MSAUnmap : Register<"7">;
 }
 
 //===----------------------------------------------------------------------===//
@@ -328,6 +338,9 @@ def MSA128W: RegisterClass<"Mips", [v4i32, v4f32], 128,
                            (sequence "W%u", 0, 31)>;
 def MSA128D: RegisterClass<"Mips", [v2i64, v2f64], 128,
                            (sequence "W%u", 0, 31)>;
+
+def MSACtrl: RegisterClass<"Mips", [i32], 32, (add
+  MSAIR, MSACSR, MSAAccess, MSASave, MSAModify, MSARequest, MSAMap, MSAUnmap)>;
 
 // Hi/Lo Registers
 def LO32 : RegisterClass<"Mips", [i32], 32, (add LO0)>;

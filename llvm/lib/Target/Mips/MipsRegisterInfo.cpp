@@ -167,6 +167,16 @@ getReservedRegs(const MachineFunction &MF) const {
   Reserved.set(Mips::DSPEFI);
   Reserved.set(Mips::DSPOutFlag);
 
+  // Reserve MSA control registers.
+  Reserved.set(Mips::MSAIR);
+  Reserved.set(Mips::MSACSR);
+  Reserved.set(Mips::MSAAccess);
+  Reserved.set(Mips::MSASave);
+  Reserved.set(Mips::MSAModify);
+  Reserved.set(Mips::MSARequest);
+  Reserved.set(Mips::MSAMap);
+  Reserved.set(Mips::MSAUnmap);
+
   // Reserve RA if in mips16 mode.
   if (Subtarget.inMips16Mode()) {
     Reserved.set(Mips::RA);

@@ -171,6 +171,8 @@ class CEQI_H_ENC : MSA_I5_FMT<0b000, 0b01, 0b000111>;
 class CEQI_W_ENC : MSA_I5_FMT<0b000, 0b10, 0b000111>;
 class CEQI_D_ENC : MSA_I5_FMT<0b000, 0b11, 0b000111>;
 
+class CFCMSA_ENC : MSA_ELM_FMT<0b0001111110, 0b011001>;
+
 class CLE_S_B_ENC : MSA_3R_FMT<0b100, 0b00, 0b001111>;
 class CLE_S_H_ENC : MSA_3R_FMT<0b100, 0b01, 0b001111>;
 class CLE_S_W_ENC : MSA_3R_FMT<0b100, 0b10, 0b001111>;
@@ -218,6 +220,8 @@ class COPY_S_W_ENC : MSA_ELM_W_FMT<0b0010, 0b011001>;
 class COPY_U_B_ENC : MSA_ELM_B_FMT<0b0011, 0b011001>;
 class COPY_U_H_ENC : MSA_ELM_H_FMT<0b0011, 0b011001>;
 class COPY_U_W_ENC : MSA_ELM_W_FMT<0b0011, 0b011001>;
+
+class CTCMSA_ENC : MSA_ELM_FMT<0b0000111110, 0b011001>;
 
 class DIV_S_B_ENC : MSA_3R_FMT<0b100, 0b00, 0b010010>;
 class DIV_S_H_ENC : MSA_3R_FMT<0b100, 0b01, 0b010010>;
@@ -1155,6 +1159,14 @@ class CEQI_W_DESC : MSA_SI5_DESC_BASE<"ceqi.w", int_mips_ceqi_w, NoItinerary,
 class CEQI_D_DESC : MSA_SI5_DESC_BASE<"ceqi.d", int_mips_ceqi_d, NoItinerary,
                                       MSA128D, MSA128D>;
 
+class CFCMSA_DESC {
+  dag OutOperandList = (outs GPR32:$rd);
+  dag InOperandList = (ins MSACtrl:$cs);
+  string AsmString = "cfcmsa\t$rd, $cs";
+  InstrItinClass Itinerary = NoItinerary;
+  bit hasSideEffects = 1;
+}
+
 class CLE_S_B_DESC : MSA_3R_DESC_BASE<"cle_s.b", int_mips_cle_s_b, NoItinerary,
                                       MSA128B, MSA128B>;
 class CLE_S_H_DESC : MSA_3R_DESC_BASE<"cle_s.h", int_mips_cle_s_h, NoItinerary,
@@ -1240,6 +1252,14 @@ class COPY_U_H_DESC : MSA_COPY_DESC_BASE<"copy_u.h", int_mips_copy_u_h,
                                          NoItinerary, GPR32, MSA128H>;
 class COPY_U_W_DESC : MSA_COPY_DESC_BASE<"copy_u.w", int_mips_copy_u_w,
                                          NoItinerary, GPR32, MSA128W>;
+
+class CTCMSA_DESC {
+  dag OutOperandList = (outs);
+  dag InOperandList = (ins MSACtrl:$cd, GPR32:$rs);
+  string AsmString = "ctcmsa\t$cd, $rs";
+  InstrItinClass Itinerary = NoItinerary;
+  bit hasSideEffects = 1;
+}
 
 class DIV_S_B_DESC : MSA_3R_DESC_BASE<"div_s.b", int_mips_div_s_b, NoItinerary,
                                       MSA128B, MSA128B>;
@@ -2299,6 +2319,8 @@ def CEQI_H : CEQI_H_ENC, CEQI_H_DESC, Requires<[HasMSA]>;
 def CEQI_W : CEQI_W_ENC, CEQI_W_DESC, Requires<[HasMSA]>;
 def CEQI_D : CEQI_D_ENC, CEQI_D_DESC, Requires<[HasMSA]>;
 
+def CFCMSA : CFCMSA_ENC, CFCMSA_DESC, Requires<[HasMSA]>;
+
 def CLE_S_B : CLE_S_B_ENC, CLE_S_B_DESC, Requires<[HasMSA]>;
 def CLE_S_H : CLE_S_H_ENC, CLE_S_H_DESC, Requires<[HasMSA]>;
 def CLE_S_W : CLE_S_W_ENC, CLE_S_W_DESC, Requires<[HasMSA]>;
@@ -2346,6 +2368,8 @@ def COPY_S_W : COPY_S_W_ENC, COPY_S_W_DESC, Requires<[HasMSA]>;
 def COPY_U_B : COPY_U_B_ENC, COPY_U_B_DESC, Requires<[HasMSA]>;
 def COPY_U_H : COPY_U_H_ENC, COPY_U_H_DESC, Requires<[HasMSA]>;
 def COPY_U_W : COPY_U_W_ENC, COPY_U_W_DESC, Requires<[HasMSA]>;
+
+def CTCMSA : CTCMSA_ENC, CTCMSA_DESC, Requires<[HasMSA]>;
 
 def DIV_S_B : DIV_S_B_ENC, DIV_S_B_DESC, Requires<[HasMSA]>;
 def DIV_S_H : DIV_S_H_ENC, DIV_S_H_DESC, Requires<[HasMSA]>;
