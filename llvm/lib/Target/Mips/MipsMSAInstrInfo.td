@@ -542,6 +542,8 @@ class MOD_U_H_ENC : MSA_3R_FMT<0b111, 0b01, 0b010010>;
 class MOD_U_W_ENC : MSA_3R_FMT<0b111, 0b10, 0b010010>;
 class MOD_U_D_ENC : MSA_3R_FMT<0b111, 0b11, 0b010010>;
 
+class MOVE_V_ENC : MSA_ELM_FMT<0b0010111110, 0b011001>;
+
 class MSUB_Q_H_ENC : MSA_3RF_FMT<0b0110, 0b0, 0b011100>;
 class MSUB_Q_W_ENC : MSA_3RF_FMT<0b0110, 0b1, 0b011100>;
 
@@ -1852,6 +1854,14 @@ class MOD_U_W_DESC : MSA_3R_DESC_BASE<"mod_u.w", int_mips_mod_u_w, NoItinerary,
 class MOD_U_D_DESC : MSA_3R_DESC_BASE<"mod_u.d", int_mips_mod_u_d, NoItinerary,
                                       MSA128D, MSA128D>;
 
+class MOVE_V_DESC {
+  dag OutOperandList = (outs MSA128B:$wd);
+  dag InOperandList = (ins MSA128B:$ws);
+  string AsmString = "move.v\t$wd, $ws";
+  list<dag> Pattern = [];
+  InstrItinClass Itinerary = NoItinerary;
+}
+
 class MSUB_Q_H_DESC : MSA_3RF_4RF_DESC_BASE<"msub_q.h", int_mips_msub_q_h,
                                             NoItinerary, MSA128H, MSA128H>;
 class MSUB_Q_W_DESC : MSA_3RF_4RF_DESC_BASE<"msub_q.w", int_mips_msub_q_w,
@@ -2688,6 +2698,8 @@ def MOD_U_B : MOD_U_B_ENC, MOD_U_B_DESC, Requires<[HasMSA]>;
 def MOD_U_H : MOD_U_H_ENC, MOD_U_H_DESC, Requires<[HasMSA]>;
 def MOD_U_W : MOD_U_W_ENC, MOD_U_W_DESC, Requires<[HasMSA]>;
 def MOD_U_D : MOD_U_D_ENC, MOD_U_D_DESC, Requires<[HasMSA]>;
+
+def MOVE_V : MOVE_V_ENC, MOVE_V_DESC, Requires<[HasMSA]>;
 
 def MSUB_Q_H : MSUB_Q_H_ENC, MSUB_Q_H_DESC, Requires<[HasMSA]>;
 def MSUB_Q_W : MSUB_Q_W_ENC, MSUB_Q_W_DESC, Requires<[HasMSA]>;

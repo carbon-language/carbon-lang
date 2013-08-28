@@ -1344,6 +1344,9 @@ def int_mips_mod_u_w : GCCBuiltin<"__builtin_msa_mod_u_w">,
 def int_mips_mod_u_d : GCCBuiltin<"__builtin_msa_mod_u_d">,
   Intrinsic<[llvm_v2i64_ty], [llvm_v2i64_ty, llvm_v2i64_ty], [IntrNoMem]>;
 
+def int_mips_move_v : GCCBuiltin<"__builtin_msa_move_v">,
+  Intrinsic<[llvm_v16i8_ty], [llvm_v16i8_ty], [IntrNoMem]>;
+
 def int_mips_msub_q_h : GCCBuiltin<"__builtin_msa_msub_q_h">,
   Intrinsic<[llvm_v8i16_ty], [llvm_v8i16_ty, llvm_v8i16_ty, llvm_v8i16_ty],
   [IntrNoMem]>;
