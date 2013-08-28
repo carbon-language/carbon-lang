@@ -1124,9 +1124,14 @@ CollectCXXMemberFunctions(const CXXRecordDecl *RD, llvm::DIFile Unit,
         E = RD->decls_end(); I != E; ++I) {
     if (const CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(*I)) {
       // Reuse the existing member function declaration if it exists
+      // It may be associated with the declaration of the type & should be
+      // reused as we're building the definition.
       llvm::DenseMap<const FunctionDecl *, llvm::WeakVH>::iterator MI =
           SPCache.find(Method->getCanonicalDecl());
       if (MI == SPCache.end()) {
+        // If the member is implicit, lazily create it when we see the
+        // definition, not before. (an ODR-used implicit default ctor that's
+        // never actually code generated should not produce debug info)
         if (!Method->isImplicit())
           EltTys.push_back(CreateCXXMemberFunction(Method, Unit, RecordTy));
       } else
