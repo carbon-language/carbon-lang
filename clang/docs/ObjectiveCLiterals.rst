@@ -218,12 +218,6 @@ character data is valid. Passing ``NULL`` as the character pointer will
 raise an exception at runtime. When possible, the compiler will reject
 ``NULL`` character pointers used in boxed expressions.
 
-Availability
-------------
-
-Boxed expressions will be available in clang 3.2. It is not currently
-available in any Apple compiler.
-
 Container Literals
 ==================
 
