@@ -3546,11 +3546,14 @@ void APFloat::toString(SmallVectorImpl<char> &Str,
   // Set FormatPrecision if zero.  We want to do this before we
   // truncate trailing zeros, as those are part of the precision.
   if (!FormatPrecision) {
-    // It's an interesting question whether to use the nominal
-    // precision or the active precision here for denormals.
+    // We use enough digits so the number can be round-tripped back to an
+    // APFloat. The formula comes from "How to Print Floating-Point Numbers
+    // Accurately" by Steele and White.
+    // FIXME: Using a formula based purely on the precision is conservative;
+    // we can print fewer digits depending on the actual value being printed.
 
-    // FormatPrecision = ceil(significandBits / lg_2(10))
-    FormatPrecision = (semantics->precision * 59 + 195) / 196;
+    // FormatPrecision = 2 + floor(significandBits / lg_2(10))
+    FormatPrecision = 2 + semantics->precision * 59 / 196;
   }
 
   // Ignore trailing binary zeros.
