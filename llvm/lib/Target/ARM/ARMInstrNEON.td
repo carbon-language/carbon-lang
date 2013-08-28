@@ -4143,6 +4143,25 @@ defm VQDMLAL  : N3VLInt3_HS<0, 1, 0b1001, 0, IIC_VMACi16D, IIC_VMACi32D,
                             "vqdmlal", "s", int_arm_neon_vqdmlal>;
 defm VQDMLALsl: N3VLInt3SL_HS<0, 0b0011, "vqdmlal", "s", int_arm_neon_vqdmlal>;
 
+def : Pat<(v4i32 (int_arm_neon_vqadds (v4i32 QPR:$src1),
+                     (v4i32 (int_arm_neon_vqdmull (v4i16 DPR:$Vn),
+                                                  (v4i16 DPR:$Vm))))),
+          (VQDMLALv4i32 QPR:$src1, DPR:$Vn, DPR:$Vm)>;
+def : Pat<(v2i64 (int_arm_neon_vqadds (v2i64 QPR:$src1),
+                     (v2i64 (int_arm_neon_vqdmull (v2i32 DPR:$Vn),
+                                                  (v2i32 DPR:$Vm))))),
+          (VQDMLALv2i64 QPR:$src1, DPR:$Vn, DPR:$Vm)>;
+def : Pat<(v4i32 (int_arm_neon_vqadds (v4i32 QPR:$src1),
+                     (v4i32 (int_arm_neon_vqdmull (v4i16 DPR:$Vn),
+                                (v4i16 (NEONvduplane (v4i16 DPR_8:$Vm),
+                                                     imm:$lane)))))),
+          (VQDMLALslv4i16 QPR:$src1, DPR:$Vn, DPR_8:$Vm, imm:$lane)>;
+def : Pat<(v2i64 (int_arm_neon_vqadds (v2i64 QPR:$src1),
+                     (v2i64 (int_arm_neon_vqdmull (v2i32 DPR:$Vn),
+                                (v2i32 (NEONvduplane (v2i32 DPR_VFP2:$Vm),
+                                                     imm:$lane)))))),
+          (VQDMLALslv2i32 QPR:$src1, DPR:$Vn, DPR_VFP2:$Vm, imm:$lane)>;
+
 //   VMLS     : Vector Multiply Subtract (integer and floating-point)
 defm VMLS     : N3VMulOp_QHS<1, 0, 0b1001, 0, IIC_VMACi16D, IIC_VMACi32D,
                              IIC_VMACi16Q, IIC_VMACi32Q, "vmls", "i", sub>;
@@ -4199,6 +4218,25 @@ defm VMLSLslu : N3VLMulOpSL_HS<1, 0b0110, "vmlsl", "u", NEONvmullu, sub>;
 defm VQDMLSL  : N3VLInt3_HS<0, 1, 0b1011, 0, IIC_VMACi16D, IIC_VMACi32D,
                             "vqdmlsl", "s", int_arm_neon_vqdmlsl>;
 defm VQDMLSLsl: N3VLInt3SL_HS<0, 0b111, "vqdmlsl", "s", int_arm_neon_vqdmlsl>;
+
+def : Pat<(v4i32 (int_arm_neon_vqsubs (v4i32 QPR:$src1),
+                     (v4i32 (int_arm_neon_vqdmull (v4i16 DPR:$Vn),
+                                                  (v4i16 DPR:$Vm))))),
+          (VQDMLSLv4i32 QPR:$src1, DPR:$Vn, DPR:$Vm)>;
+def : Pat<(v2i64 (int_arm_neon_vqsubs (v2i64 QPR:$src1),
+                     (v2i64 (int_arm_neon_vqdmull (v2i32 DPR:$Vn),
+                                                  (v2i32 DPR:$Vm))))),
+          (VQDMLSLv2i64 QPR:$src1, DPR:$Vn, DPR:$Vm)>;
+def : Pat<(v4i32 (int_arm_neon_vqsubs (v4i32 QPR:$src1),
+                     (v4i32 (int_arm_neon_vqdmull (v4i16 DPR:$Vn),
+                                (v4i16 (NEONvduplane (v4i16 DPR_8:$Vm),
+                                                     imm:$lane)))))),
+          (VQDMLSLslv4i16 QPR:$src1, DPR:$Vn, DPR_8:$Vm, imm:$lane)>;
+def : Pat<(v2i64 (int_arm_neon_vqsubs (v2i64 QPR:$src1),
+                     (v2i64 (int_arm_neon_vqdmull (v2i32 DPR:$Vn),
+                                (v2i32 (NEONvduplane (v2i32 DPR_VFP2:$Vm),
+                                                     imm:$lane)))))),
+          (VQDMLSLslv2i32 QPR:$src1, DPR:$Vn, DPR_VFP2:$Vm, imm:$lane)>;
 
 // Fused Vector Multiply-Accumulate and Fused Multiply-Subtract Operations.
 def  VFMAfd   : N3VDMulOp<0, 0, 0b00, 0b1100, 1, IIC_VFMACD, "vfma", "f32",
