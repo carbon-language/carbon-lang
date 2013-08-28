@@ -367,11 +367,14 @@ void ExprEngine::VisitCXXNewExpr(const CXXNewExpr *CNE, ExplodedNode *Pred,
   if (!State)
     return;
 
-  // If we're compiling with exceptions enabled, and this allocation function
-  // is not declared as non-throwing, failures /must/ be signalled by
-  // exceptions, and thus the return value will never be NULL.
+  // If this allocation function is not declared as non-throwing, failures
+  // /must/ be signalled by exceptions, and thus the return value will never be
+  // NULL. -fno-exceptions does not influence this semantics.
+  // FIXME: GCC has a -fcheck-new option, which forces it to consider the case
+  // where new can return NULL. If we end up supporting that option, we can
+  // consider adding a check for it here.
   // C++11 [basic.stc.dynamic.allocation]p3.
-  if (FD && getContext().getLangOpts().CXXExceptions) {
+  if (FD) {
     QualType Ty = FD->getType();
     if (const FunctionProtoType *ProtoType = Ty->getAs<FunctionProtoType>())
       if (!ProtoType->isNothrow(getContext()))
