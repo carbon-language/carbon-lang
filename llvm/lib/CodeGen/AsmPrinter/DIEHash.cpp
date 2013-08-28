@@ -145,6 +145,7 @@ void DIEHash::hashAttribute(AttrEntry Attr) {
 
   // TODO: Add support for additional forms.
   switch (Desc->getForm()) {
+  // TODO: We'll want to add DW_FORM_string here if we start emitting them again.
   case dwarf::DW_FORM_strp:
     addString(cast<DIEString>(Value)->getString());
     break;
