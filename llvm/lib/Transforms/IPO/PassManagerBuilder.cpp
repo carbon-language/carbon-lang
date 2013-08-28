@@ -216,22 +216,20 @@ void PassManagerBuilder::populateModulePassManager(PassManagerBase &MPM) {
 
   addExtensionsToPM(EP_ScalarOptimizerLate, MPM);
 
-  if (!LateVectorize) {
-    if (SLPVectorize)
-      MPM.add(createSLPVectorizerPass());   // Vectorize parallel scalar chains.
+  if (SLPVectorize)
+    MPM.add(createSLPVectorizerPass());   // Vectorize parallel scalar chains.
 
-    if (BBVectorize) {
-      MPM.add(createBBVectorizePass());
-      MPM.add(createInstructionCombiningPass());
-      if (OptLevel > 1 && UseGVNAfterVectorization)
-        MPM.add(createGVNPass());           // Remove redundancies
-      else
-        MPM.add(createEarlyCSEPass());      // Catch trivial redundancies
+  if (BBVectorize) {
+    MPM.add(createBBVectorizePass());
+    MPM.add(createInstructionCombiningPass());
+    if (OptLevel > 1 && UseGVNAfterVectorization)
+      MPM.add(createGVNPass());           // Remove redundancies
+    else
+      MPM.add(createEarlyCSEPass());      // Catch trivial redundancies
 
-      // BBVectorize may have significantly shortened a loop body; unroll again.
-      if (!DisableUnrollLoops)
-        MPM.add(createLoopUnrollPass());
-    }
+    // BBVectorize may have significantly shortened a loop body; unroll again.
+    if (!DisableUnrollLoops)
+      MPM.add(createLoopUnrollPass());
   }
 
   MPM.add(createAggressiveDCEPass());         // Delete dead instructions
@@ -241,7 +239,7 @@ void PassManagerBuilder::populateModulePassManager(PassManagerBase &MPM) {
   // As an experimental mode, run any vectorization passes in a separate
   // pipeline from the CGSCC pass manager that runs iteratively with the
   // inliner.
-  if (LateVectorize) {
+  if (LateVectorize && LoopVectorize) {
     // FIXME: This is a HACK! The inliner pass above implicitly creates a CGSCC
     // pass manager that we are specifically trying to avoid. To prevent this
     // we must insert a no-op module pass to reset the pass manager.
@@ -249,35 +247,9 @@ void PassManagerBuilder::populateModulePassManager(PassManagerBase &MPM) {
 
     // Add the various vectorization passes and relevant cleanup passes for
     // them since we are no longer in the middle of the main scalar pipeline.
-    if (LoopVectorize) {
-      MPM.add(createLoopVectorizePass(DisableUnrollLoops));
-
-      if (!DisableUnrollLoops)
-        MPM.add(createLoopUnrollPass());    // Unroll small loops
-
-      // FIXME: Is this necessary/useful? Should we also do SimplifyCFG?
-      MPM.add(createInstructionCombiningPass());
-    }
-
-    if (SLPVectorize) {
-      MPM.add(createSLPVectorizerPass());   // Vectorize parallel scalar chains.
-
-      // FIXME: Is this necessary/useful? Should we also do SimplifyCFG?
-      MPM.add(createInstructionCombiningPass());
-    }
-
-    if (BBVectorize) {
-      MPM.add(createBBVectorizePass());
-      MPM.add(createInstructionCombiningPass());
-      if (OptLevel > 1 && UseGVNAfterVectorization)
-        MPM.add(createGVNPass());           // Remove redundancies
-      else
-        MPM.add(createEarlyCSEPass());      // Catch trivial redundancies
-
-      // BBVectorize may have significantly shortened a loop body; unroll again.
-      if (!DisableUnrollLoops)
-        MPM.add(createLoopUnrollPass());
-    }
+    MPM.add(createLoopVectorizePass(DisableUnrollLoops));
+    MPM.add(createInstructionCombiningPass());
+    MPM.add(createCFGSimplificationPass());
   }
 
   if (!DisableUnitAtATime) {
