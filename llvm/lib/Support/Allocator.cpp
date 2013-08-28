@@ -26,6 +26,10 @@ BumpPtrAllocator::BumpPtrAllocator(size_t size, size_t threshold,
     : SlabSize(size), SizeThreshold(std::min(size, threshold)),
       Allocator(allocator), CurSlab(0), BytesAllocated(0) { }
 
+BumpPtrAllocator::BumpPtrAllocator(size_t size, size_t threshold)
+    : SlabSize(size), SizeThreshold(std::min(size, threshold)),
+      Allocator(DefaultSlabAllocator), CurSlab(0), BytesAllocated(0) { }
+
 BumpPtrAllocator::~BumpPtrAllocator() {
   DeallocateSlabs(CurSlab);
 }
@@ -166,9 +170,6 @@ void BumpPtrAllocator::PrintStats() const {
          << "Bytes wasted: " << (TotalMemory - BytesAllocated)
          << " (includes alignment, etc)\n";
 }
-
-MallocSlabAllocator BumpPtrAllocator::DefaultSlabAllocator =
-  MallocSlabAllocator();
 
 SlabAllocator::~SlabAllocator() { }
 
