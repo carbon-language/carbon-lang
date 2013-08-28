@@ -3990,6 +3990,9 @@ TEST_F(FormatTest, HandlesIncludeDirectives) {
   verifyFormat("#import \"a/b/string\"");
   verifyFormat("#import \"string.h\"");
   verifyFormat("#import \"string.h\"");
+  verifyFormat("#if __has_include(<strstream>)\n"
+               "#include <strstream>\n"
+               "#endif");
 }
 
 //===----------------------------------------------------------------------===//
