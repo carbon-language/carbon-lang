@@ -19,6 +19,7 @@
 
 #include <ctype.h>
 #include <dlfcn.h>
+#include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
@@ -270,6 +271,39 @@ __dfsw_dlopen(const char *filename, int flag, dfsan_label filename_label,
     ForEachMappedRegion(map, unpoison);
   *ret_label = 0;
   return (void *)map;
+}
+
+struct pthread_create_info {
+  void *(*start_routine_trampoline)(void *, void *, dfsan_label, dfsan_label *);
+  void *start_routine;
+  void *arg;
+};
+
+static void *pthread_create_cb(void *p) {
+  pthread_create_info pci(*(pthread_create_info *)p);
+  free(p);
+  dfsan_label ret_label;
+  return pci.start_routine_trampoline(pci.start_routine, pci.arg, 0,
+                                      &ret_label);
+}
+
+SANITIZER_INTERFACE_ATTRIBUTE int __dfsw_pthread_create(
+    pthread_t *thread, const pthread_attr_t *attr,
+    void *(*start_routine_trampoline)(void *, void *, dfsan_label,
+                                      dfsan_label *),
+    void *start_routine, void *arg, dfsan_label thread_label,
+    dfsan_label attr_label, dfsan_label start_routine_label,
+    dfsan_label arg_label, dfsan_label *ret_label) {
+  pthread_create_info *pci =
+      (pthread_create_info *)malloc(sizeof(pthread_create_info));
+  pci->start_routine_trampoline = start_routine_trampoline;
+  pci->start_routine = start_routine;
+  pci->arg = arg;
+  int rv = pthread_create(thread, attr, pthread_create_cb, (void *)pci);
+  if (rv != 0)
+    free(pci);
+  *ret_label = 0;
+  return rv;
 }
 
 }

@@ -5,12 +5,19 @@
 
 #include <sanitizer/dfsan_interface.h>
 #include <assert.h>
+#include <pthread.h>
 #include <string.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+
+void *ptcb(void *p) {
+  assert(p == (void *)1);
+  assert(dfsan_get_label((uintptr_t)p) == 0);
+  return (void *)2;
+}
 
 int main(void) {
   int i = 1;
@@ -124,6 +131,12 @@ int main(void) {
   assert(rv == sizeof(buf));
   assert(dfsan_get_label(buf[0]) == 0);
   assert(dfsan_get_label(buf[15]) == 0);
+
+  pthread_t pt;
+  pthread_create(&pt, 0, ptcb, (void *)1);
+  void *cbrv;
+  pthread_join(pt, &cbrv);
+  assert(cbrv == (void *)2);
 
   return 0;
 }
