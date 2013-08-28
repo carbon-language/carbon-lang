@@ -7284,6 +7284,46 @@
 	sy	%r0, 524287(%r15,%r1)
 	sy	%r15, 0
 
+#CHECK: tmhh	%r0, 0                  # encoding: [0xa7,0x02,0x00,0x00]
+#CHECK: tmhh	%r0, 32768              # encoding: [0xa7,0x02,0x80,0x00]
+#CHECK: tmhh	%r0, 65535              # encoding: [0xa7,0x02,0xff,0xff]
+#CHECK: tmhh	%r15, 0                 # encoding: [0xa7,0xf2,0x00,0x00]
+
+	tmhh	%r0, 0
+	tmhh	%r0, 0x8000
+	tmhh	%r0, 0xffff
+	tmhh	%r15, 0
+
+#CHECK: tmhl	%r0, 0                  # encoding: [0xa7,0x03,0x00,0x00]
+#CHECK: tmhl	%r0, 32768              # encoding: [0xa7,0x03,0x80,0x00]
+#CHECK: tmhl	%r0, 65535              # encoding: [0xa7,0x03,0xff,0xff]
+#CHECK: tmhl	%r15, 0                 # encoding: [0xa7,0xf3,0x00,0x00]
+
+	tmhl	%r0, 0
+	tmhl	%r0, 0x8000
+	tmhl	%r0, 0xffff
+	tmhl	%r15, 0
+
+#CHECK: tmlh	%r0, 0                  # encoding: [0xa7,0x00,0x00,0x00]
+#CHECK: tmlh	%r0, 32768              # encoding: [0xa7,0x00,0x80,0x00]
+#CHECK: tmlh	%r0, 65535              # encoding: [0xa7,0x00,0xff,0xff]
+#CHECK: tmlh	%r15, 0                 # encoding: [0xa7,0xf0,0x00,0x00]
+
+	tmlh	%r0, 0
+	tmlh	%r0, 0x8000
+	tmlh	%r0, 0xffff
+	tmlh	%r15, 0
+
+#CHECK: tmll	%r0, 0                  # encoding: [0xa7,0x01,0x00,0x00]
+#CHECK: tmll	%r0, 32768              # encoding: [0xa7,0x01,0x80,0x00]
+#CHECK: tmll	%r0, 65535              # encoding: [0xa7,0x01,0xff,0xff]
+#CHECK: tmll	%r15, 0                 # encoding: [0xa7,0xf1,0x00,0x00]
+
+	tmll	%r0, 0
+	tmll	%r0, 0x8000
+	tmll	%r0, 0xffff
+	tmll	%r15, 0
+
 #CHECK: x	%r0, 0                  # encoding: [0x57,0x00,0x00,0x00]
 #CHECK: x	%r0, 4095               # encoding: [0x57,0x00,0x0f,0xff]
 #CHECK: x	%r0, 0(%r1)             # encoding: [0x57,0x00,0x10,0x00]

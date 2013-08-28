@@ -1072,8 +1072,8 @@ static void adjustSubwordCmp(SelectionDAG &DAG, bool &IsUnsigned,
 // Return true if a comparison described by CCMask, CmpOp0 and CmpOp1
 // is an equality comparison that is better implemented using unsigned
 // rather than signed comparison instructions.
-static bool preferUnsignedComparison(SelectionDAG &DAG, SDValue CmpOp0,
-                                     SDValue CmpOp1, unsigned CCMask) {
+static bool preferUnsignedComparison(SDValue CmpOp0, SDValue CmpOp1,
+                                     unsigned CCMask) {
   // The test must be for equality or inequality.
   if (CCMask != SystemZ::CCMASK_CMP_EQ && CCMask != SystemZ::CCMASK_CMP_NE)
     return false;
@@ -1176,12 +1176,52 @@ static bool shouldSwapCmpOperands(SDValue Op0, SDValue Op1,
   return false;
 }
 
+// See whether the comparison (Opcode CmpOp0, CmpOp1) can be implemented
+// as a TEST UNDER MASK instruction when the condition being tested is
+// as described by CCValid and CCMask.  Update the arguments with the
+// TM version if so.
+static void adjustForTestUnderMask(unsigned &Opcode, SDValue &CmpOp0,
+                                   SDValue &CmpOp1, unsigned &CCValid,
+                                   unsigned &CCMask) {
+  // For now we just handle equality and inequality with zero.
+  if (CCMask != SystemZ::CCMASK_CMP_EQ &&
+      (CCMask ^ CCValid) != SystemZ::CCMASK_CMP_EQ)
+    return;
+  ConstantSDNode *ConstCmpOp1 = dyn_cast<ConstantSDNode>(CmpOp1);
+  if (!ConstCmpOp1 || ConstCmpOp1->getZExtValue() != 0)
+    return;
+
+  // Check whether the nonconstant input is an AND with a constant mask.
+  if (CmpOp0.getOpcode() != ISD::AND)
+    return;
+  SDValue AndOp0 = CmpOp0.getOperand(0);
+  SDValue AndOp1 = CmpOp0.getOperand(1);
+  ConstantSDNode *Mask = dyn_cast<ConstantSDNode>(AndOp1.getNode());
+  if (!Mask)
+    return;
+
+  // Check whether the mask is suitable for TMHH, TMHL, TMLH or TMLL.
+  uint64_t MaskVal = Mask->getZExtValue();
+  if (!SystemZ::isImmLL(MaskVal) && !SystemZ::isImmLH(MaskVal) &&
+      !SystemZ::isImmHL(MaskVal) && !SystemZ::isImmHH(MaskVal))
+    return;
+
+  // Go ahead and make the change.
+  Opcode = SystemZISD::TM;
+  CmpOp0 = AndOp0;
+  CmpOp1 = AndOp1;
+  CCValid = SystemZ::CCMASK_TM;
+  CCMask = (CCMask == SystemZ::CCMASK_CMP_EQ ?
+            SystemZ::CCMASK_TM_ALL_0 :
+            SystemZ::CCMASK_TM_ALL_0 ^ CCValid);
+}
+
 // Return a target node that compares CmpOp0 with CmpOp1 and stores a
 // 2-bit result in CC.  Set CCValid to the CCMASK_* of all possible
 // 2-bit results and CCMask to the subset of those results that are
 // associated with Cond.
-static SDValue emitCmp(SelectionDAG &DAG, SDValue CmpOp0, SDValue CmpOp1,
-                       ISD::CondCode Cond, unsigned &CCValid,
+static SDValue emitCmp(SelectionDAG &DAG, SDLoc DL, SDValue CmpOp0,
+                       SDValue CmpOp1, ISD::CondCode Cond, unsigned &CCValid,
                        unsigned &CCMask) {
   bool IsUnsigned = false;
   CCMask = CCMaskForCondCode(Cond);
@@ -1193,7 +1233,7 @@ static SDValue emitCmp(SelectionDAG &DAG, SDValue CmpOp0, SDValue CmpOp1,
     CCMask &= CCValid;
     adjustZeroCmp(DAG, IsUnsigned, CmpOp0, CmpOp1, CCMask);
     adjustSubwordCmp(DAG, IsUnsigned, CmpOp0, CmpOp1, CCMask);
-    if (preferUnsignedComparison(DAG, CmpOp0, CmpOp1, CCMask))
+    if (preferUnsignedComparison(CmpOp0, CmpOp1, CCMask))
       IsUnsigned = true;
   }
 
@@ -1205,9 +1245,9 @@ static SDValue emitCmp(SelectionDAG &DAG, SDValue CmpOp0, SDValue CmpOp1,
               (CCMask & SystemZ::CCMASK_CMP_UO));
   }
 
-  SDLoc DL(CmpOp0);
-  return DAG.getNode((IsUnsigned ? SystemZISD::UCMP : SystemZISD::CMP),
-                     DL, MVT::Glue, CmpOp0, CmpOp1);
+  unsigned Opcode = (IsUnsigned ? SystemZISD::UCMP : SystemZISD::CMP);
+  adjustForTestUnderMask(Opcode, CmpOp0, CmpOp1, CCValid, CCMask);
+  return DAG.getNode(Opcode, DL, MVT::Glue, CmpOp0, CmpOp1);
 }
 
 // Implement a 32-bit *MUL_LOHI operation by extending both operands to
@@ -1256,7 +1296,7 @@ SDValue SystemZTargetLowering::lowerBR_CC(SDValue Op, SelectionDAG &DAG) const {
   SDLoc DL(Op);
 
   unsigned CCValid, CCMask;
-  SDValue Flags = emitCmp(DAG, CmpOp0, CmpOp1, CC, CCValid, CCMask);
+  SDValue Flags = emitCmp(DAG, DL, CmpOp0, CmpOp1, CC, CCValid, CCMask);
   return DAG.getNode(SystemZISD::BR_CCMASK, DL, Op.getValueType(),
                      Chain, DAG.getConstant(CCValid, MVT::i32),
                      DAG.getConstant(CCMask, MVT::i32), Dest, Flags);
@@ -1272,7 +1312,7 @@ SDValue SystemZTargetLowering::lowerSELECT_CC(SDValue Op,
   SDLoc DL(Op);
 
   unsigned CCValid, CCMask;
-  SDValue Flags = emitCmp(DAG, CmpOp0, CmpOp1, CC, CCValid, CCMask);
+  SDValue Flags = emitCmp(DAG, DL, CmpOp0, CmpOp1, CC, CCValid, CCMask);
 
   SmallVector<SDValue, 5> Ops;
   Ops.push_back(TrueOp);
@@ -1908,6 +1948,7 @@ const char *SystemZTargetLowering::getTargetNodeName(unsigned Opcode) const {
     OPCODE(PCREL_WRAPPER);
     OPCODE(CMP);
     OPCODE(UCMP);
+    OPCODE(TM);
     OPCODE(BR_CCMASK);
     OPCODE(SELECT_CCMASK);
     OPCODE(ADJDYNALLOC);

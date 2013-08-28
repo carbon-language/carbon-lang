@@ -57,6 +57,13 @@ namespace llvm {
     const unsigned CCMASK_SRST_NOTFOUND = CCMASK_2;
     const unsigned CCMASK_SRST          = CCMASK_1 | CCMASK_2;
 
+    // Condition-code mask assignments for TEST UNDER MASK.
+    const unsigned CCMASK_TM_ALL_0       = CCMASK_0;
+    const unsigned CCMASK_TM_MIXED_MSB_0 = CCMASK_1;
+    const unsigned CCMASK_TM_MIXED_MSB_1 = CCMASK_2;
+    const unsigned CCMASK_TM_ALL_1       = CCMASK_3;
+    const unsigned CCMASK_TM             = CCMASK_ANY;
+
     // Mask assignments for PFD.
     const unsigned PFD_READ  = 1;
     const unsigned PFD_WRITE = 2;

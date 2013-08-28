@@ -2864,6 +2864,38 @@
 	sy	%r0, 524288
 
 #CHECK: error: invalid operand
+#CHECK: tmhh	%r0, -1
+#CHECK: error: invalid operand
+#CHECK: tmhh	%r0, 0x10000
+
+	tmhh	%r0, -1
+	tmhh	%r0, 0x10000
+
+#CHECK: error: invalid operand
+#CHECK: tmhl	%r0, -1
+#CHECK: error: invalid operand
+#CHECK: tmhl	%r0, 0x10000
+
+	tmhl	%r0, -1
+	tmhl	%r0, 0x10000
+
+#CHECK: error: invalid operand
+#CHECK: tmlh	%r0, -1
+#CHECK: error: invalid operand
+#CHECK: tmlh	%r0, 0x10000
+
+	tmlh	%r0, -1
+	tmlh	%r0, 0x10000
+
+#CHECK: error: invalid operand
+#CHECK: tmll	%r0, -1
+#CHECK: error: invalid operand
+#CHECK: tmll	%r0, 0x10000
+
+	tmll	%r0, -1
+	tmll	%r0, 0x10000
+
+#CHECK: error: invalid operand
 #CHECK: x	%r0, -1
 #CHECK: error: invalid operand
 #CHECK: x	%r0, 4096

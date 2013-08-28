@@ -45,6 +45,10 @@ namespace SystemZISD {
     // Likewise unsigned integer comparison.
     UCMP,
 
+    // Test under mask.  The first operand is ANDed with the second operand
+    // and the condition codes are set on the result.
+    TM,
+
     // Branches if a condition is true.  Operand 0 is the chain operand;
     // operand 1 is the 4-bit condition-code mask, with bit N in
     // big-endian order meaning "branch if CC=N"; operand 2 is the

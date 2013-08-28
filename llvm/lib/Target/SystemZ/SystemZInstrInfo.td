@@ -1034,6 +1034,19 @@ let mayLoad = 1, Defs = [CC] in
 let mayLoad = 1, Defs = [CC], Uses = [R0W] in
   defm CLST : StringRRE<"clst", 0xB25D, z_strcmp>;
 
+// Test under mask.
+let Defs = [CC] in {
+  let isCodeGenOnly = 1 in {
+    def TMLL32 : CompareRI<"tmll", 0xA71, z_tm, GR32, imm32ll16>;
+    def TMLH32 : CompareRI<"tmlh", 0xA70, z_tm, GR32, imm32lh16>;
+  }
+
+  def TMLL : CompareRI<"tmll", 0xA71, z_tm, GR64, imm64ll16>;
+  def TMLH : CompareRI<"tmlh", 0xA70, z_tm, GR64, imm64lh16>;
+  def TMHL : CompareRI<"tmhl", 0xA73, z_tm, GR64, imm64hl16>;
+  def TMHH : CompareRI<"tmhh", 0xA72, z_tm, GR64, imm64hh16>;
+}
+
 //===----------------------------------------------------------------------===//
 // Prefetch
 //===----------------------------------------------------------------------===//

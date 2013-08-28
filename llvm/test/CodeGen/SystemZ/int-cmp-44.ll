@@ -203,11 +203,11 @@ exit:
 ; comparisons with zero if the immediate covers the whole register.
 define i32 @f11(i32 %a, i32 %b, i32 *%dest) {
 ; CHECK-LABEL: f11:
-; CHECK: nilf %r2, 100
+; CHECK: nilf %r2, 100000001
 ; CHECK-NEXT: jl .L{{.*}}
 ; CHECK: br %r14
 entry:
-  %res = and i32 %a, 100
+  %res = and i32 %a, 100000001
   %cmp = icmp ne i32 %res, 0
   br i1 %cmp, label %exit, label %store
 
