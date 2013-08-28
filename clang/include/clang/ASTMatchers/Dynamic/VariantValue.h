@@ -50,6 +50,10 @@ class VariantMatcher {
   public:
     virtual ~MatcherOps();
     virtual bool canConstructFrom(const DynTypedMatcher &Matcher) const = 0;
+    virtual void constructFrom(const DynTypedMatcher &Matcher) = 0;
+    virtual void constructVariadicOperator(
+        ast_matchers::internal::VariadicOperatorFunction Func,
+        ArrayRef<VariantMatcher> InnerMatchers) = 0;
   };
 
   /// \brief Payload interface to be specialized by each matcher type.
@@ -60,9 +64,7 @@ class VariantMatcher {
     virtual ~Payload();
     virtual bool getSingleMatcher(const DynTypedMatcher *&Out) const = 0;
     virtual std::string getTypeAsString() const = 0;
-    virtual bool hasTypedMatcher(const MatcherOps &Ops) const = 0;
-    virtual const DynTypedMatcher *
-    getTypedMatcher(const MatcherOps &Ops) const = 0;
+    virtual void makeTypedMatcher(MatcherOps &Ops) const = 0;
   };
 
 public:
@@ -77,6 +79,13 @@ public:
   /// They should be the result of a polymorphic matcher.
   static VariantMatcher
   PolymorphicMatcher(ArrayRef<const DynTypedMatcher *> Matchers);
+
+  /// \brief Creates a 'variadic' operator matcher.
+  ///
+  /// It will bind to the appropriate type on getTypedMatcher<T>().
+  static VariantMatcher VariadicOperatorMatcher(
+      ast_matchers::internal::VariadicOperatorFunction Func,
+      ArrayRef<VariantMatcher> Args);
 
   /// \brief Makes the matcher the "null" matcher.
   void reset();
@@ -101,8 +110,9 @@ public:
   /// that can, the result would be ambiguous and false is returned.
   template <class T>
   bool hasTypedMatcher() const {
-    if (Value) return Value->hasTypedMatcher(TypedMatcherOps<T>());
-    return false;
+    TypedMatcherOps<T> Ops;
+    if (Value) Value->makeTypedMatcher(Ops);
+    return Ops.hasMatcher();
   }
 
   /// \brief Return this matcher as a \c Matcher<T>.
@@ -111,9 +121,10 @@ public:
   /// Asserts that \c hasTypedMatcher<T>() is true.
   template <class T>
   ast_matchers::internal::Matcher<T> getTypedMatcher() const {
-    assert(hasTypedMatcher<T>());
-    return ast_matchers::internal::Matcher<T>::constructFrom(
-        *Value->getTypedMatcher(TypedMatcherOps<T>()));
+    TypedMatcherOps<T> Ops;
+    Value->makeTypedMatcher(Ops);
+    assert(Ops.hasMatcher() && "hasTypedMatcher<T>() == false");
+    return Ops.matcher();
   }
 
   /// \brief String representation of the type of the value.
@@ -127,13 +138,50 @@ private:
 
   class SinglePayload;
   class PolymorphicPayload;
+  class VariadicOpPayload;
 
   template <typename T>
   class TypedMatcherOps : public MatcherOps {
   public:
+    typedef ast_matchers::internal::Matcher<T> MatcherT;
+
     virtual bool canConstructFrom(const DynTypedMatcher &Matcher) const {
-      return ast_matchers::internal::Matcher<T>::canConstructFrom(Matcher);
+      return MatcherT::canConstructFrom(Matcher);
     }
+
+    virtual void constructFrom(const DynTypedMatcher& Matcher) {
+      Out.reset(new MatcherT(MatcherT::constructFrom(Matcher)));
+    }
+
+    virtual void constructVariadicOperator(
+        ast_matchers::internal::VariadicOperatorFunction Func,
+        ArrayRef<VariantMatcher> InnerMatchers) {
+      const size_t NumArgs = InnerMatchers.size();
+      MatcherT **InnerArgs = new MatcherT *[NumArgs]();
+      bool HasError = false;
+      for (size_t i = 0; i != NumArgs; ++i) {
+        // Abort if any of the inner matchers can't be converted to
+        // Matcher<T>.
+        if (!InnerMatchers[i].hasTypedMatcher<T>()) {
+          HasError = true;
+          break;
+        }
+        InnerArgs[i] = new MatcherT(InnerMatchers[i].getTypedMatcher<T>());
+      }
+      if (!HasError) {
+        Out.reset(new MatcherT(
+            new ast_matchers::internal::VariadicOperatorMatcherInterface<T>(
+                Func, ArrayRef<const MatcherT *>(InnerArgs, NumArgs))));
+      }
+      std::for_each(InnerArgs, InnerArgs + NumArgs, llvm::deleter<MatcherT>);
+      delete[] InnerArgs;
+    }
+
+    bool hasMatcher() const { return Out.get() != NULL; }
+    const MatcherT &matcher() const { return *Out; }
+
+  private:
+    OwningPtr<MatcherT> Out;
   };
 
   IntrusiveRefCntPtr<const Payload> Value;

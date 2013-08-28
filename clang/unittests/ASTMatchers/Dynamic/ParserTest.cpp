@@ -137,9 +137,9 @@ bool matchesRange(const SourceRange &Range, unsigned StartLine,
          Range.Start.Column == StartColumn && Range.End.Column == EndColumn;
 }
 
-const DynTypedMatcher *getSingleMatcher(const VariantValue &value) {
+const DynTypedMatcher *getSingleMatcher(const VariantValue &Value) {
   const DynTypedMatcher *Out;
-  EXPECT_TRUE(value.getMatcher().getSingleMatcher(Out));
+  EXPECT_TRUE(Value.getMatcher().getSingleMatcher(Out));
   return Out;
 }
 
