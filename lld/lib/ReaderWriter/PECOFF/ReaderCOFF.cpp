@@ -221,7 +221,8 @@ private:
   void createUndefinedAtoms(const SymbolVectorT &symbols,
                             vector<const UndefinedAtom *> &result) {
     for (const coff_symbol *sym : symbols) {
-      if (sym->SectionNumber != llvm::COFF::IMAGE_SYM_UNDEFINED)
+      if (sym->SectionNumber != llvm::COFF::IMAGE_SYM_UNDEFINED ||
+          sym->Value != 0)
         continue;
       auto *atom = new (_alloc) COFFUndefinedAtom(*this, _symbolName[sym]);
       result.push_back(atom);
