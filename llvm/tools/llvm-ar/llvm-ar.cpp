@@ -876,9 +876,10 @@ int main(int argc, char **argv) {
     "  This program archives bitcode files into single libraries\n"
   );
 
-  if (ToolName.endswith("ar"))
+  StringRef Stem = sys::path::stem(ToolName);
+  if (Stem.endswith("ar"))
     return ar_main(argv);
-  if (ToolName.endswith("ranlib"))
+  if (Stem.endswith("ranlib"))
     return ranlib_main();
   fail("Not ranlib or ar!");
 }
