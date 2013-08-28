@@ -8,8 +8,10 @@ if [ "${LLVM_CHECKOUT}" == "" ]; then
 fi
 
 # Cpplint setup
-cd ${SCRIPT_DIR}
 CPPLINT=${SCRIPT_DIR}/cpplint.py
+if [ "${PYTHON_EXECUTABLE}" != "" ]; then
+  CPPLINT="${PYTHON_EXECUTABLE} ${CPPLINT}"
+fi
 
 # Filters
 # TODO: remove some of these filters

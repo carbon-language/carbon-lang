@@ -12,7 +12,8 @@ macro(add_sanitizer_rt_symbols name)
   get_target_property(libfile ${name} LOCATION)
   set(symsfile "${libfile}.syms")
   add_custom_target(${name}-symbols ALL
-    COMMAND ${SANITIZER_GEN_DYNAMIC_LIST} ${libfile} ${ARGN}
+    COMMAND ${PYTHON_EXECUTABLE}
+      ${SANITIZER_GEN_DYNAMIC_LIST} ${libfile} ${ARGN}
       > ${symsfile}
     DEPENDS ${name} ${SANITIZER_GEN_DYNAMIC_LIST} ${ARGN}
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
