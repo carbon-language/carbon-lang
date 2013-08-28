@@ -328,14 +328,11 @@ public:
   bool isTargetEnvMacho() const { return TargetTriple.isEnvironmentMachO(); }
 
   bool isTargetWin64() const {
-    // FIXME: x86_64-cygwin has not been released yet.
     return In64BitMode && TargetTriple.isOSWindows();
   }
 
   bool isTargetWin32() const {
-    // FIXME: Cygwin is included for isTargetWin64 -- should it be included
-    // here too?
-    return !In64BitMode && (isTargetMingw() || isTargetWindows());
+    return !In64BitMode && (isTargetCygMing() || isTargetWindows());
   }
 
   bool isPICStyleSet() const { return PICStyle != PICStyles::None; }
