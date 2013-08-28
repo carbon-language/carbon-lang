@@ -45,10 +45,10 @@ class StackDepotReverseMap {
 
  private:
   struct IdDescPair {
-   u32 id;
-   StackDesc *desc;
+    u32 id;
+    StackDesc *desc;
 
-   static bool IdComparator(const IdDescPair &a, const IdDescPair &b);
+    static bool IdComparator(const IdDescPair &a, const IdDescPair &b);
   };
 
   InternalMmapVector<IdDescPair> map_;

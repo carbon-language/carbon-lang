@@ -309,12 +309,12 @@ static struct sigaction old_sigactions[ARRAY_SIZE(kUnblockedSignals)];
 class StopTheWorldScope {
  public:
   StopTheWorldScope() {
-    // Glibc's sigaction() has a side-effect where it copies garbage stack values
-    // into oldact, which can cause false negatives in LSan. As a quick workaround
-    // we zero some stack space here.
+    // Glibc's sigaction() has a side-effect where it copies garbage stack
+    // values into oldact, which can cause false negatives in LSan. As a quick
+    // workaround we zero some stack space here.
     WipeStack();
-    // Block all signals that can be blocked safely, and install default handlers
-    // for the remaining signals.
+    // Block all signals that can be blocked safely, and install
+    // default handlers for the remaining signals.
     // We cannot allow user-defined handlers to run while the ThreadSuspender
     // thread is active, because they could conceivably call some libc functions
     // which modify errno (which is shared between the two threads).
@@ -355,6 +355,7 @@ class StopTheWorldScope {
     }
     sigprocmask(SIG_SETMASK, &old_sigset, &old_sigset);
   }
+
  private:
   int process_was_dumpable_;
 };

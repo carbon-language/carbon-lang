@@ -87,12 +87,12 @@ void UnpoisonThreadLocalState();
         common_flags()->fast_unwind_on_malloc)
 
 class ScopedThreadLocalStateBackup {
-public:
+ public:
   ScopedThreadLocalStateBackup() { Backup(); }
   ~ScopedThreadLocalStateBackup() { Restore(); }
   void Backup();
   void Restore();
-private:
+ private:
   u64 va_arg_overflow_size_tls;
 };
 }  // namespace __msan
