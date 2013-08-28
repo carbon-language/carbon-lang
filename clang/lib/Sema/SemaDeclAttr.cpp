@@ -4678,9 +4678,8 @@ static void handleSelectAnyAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 static void ProcessNonInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
                                           const AttributeList &Attr) {
   switch (Attr.getKind()) {
-  case AttributeList::AT_CUDADevice:  handleDeviceAttr      (S, D, Attr); break;
-  case AttributeList::AT_CUDAHost:    handleHostAttr        (S, D, Attr); break;
   case AttributeList::AT_Overloadable:handleOverloadableAttr(S, D, Attr); break;
+  case AttributeList::AT_Mode:        handleModeAttr        (S, D, Attr); break;
   default:
     break;
   }
@@ -4705,8 +4704,7 @@ static void ProcessInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
     // Ignore these, these are type attributes, handled by
     // ProcessTypeAttributes.
     break;
-  case AttributeList::AT_CUDADevice:
-  case AttributeList::AT_CUDAHost:
+  case AttributeList::AT_Mode:
   case AttributeList::AT_Overloadable:
     // Ignore, this is a non-inheritable attribute, handled
     // by ProcessNonInheritableDeclAttr.
@@ -4743,11 +4741,12 @@ static void ProcessInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
   case AttributeList::AT_Format:      handleFormatAttr      (S, D, Attr); break;
   case AttributeList::AT_FormatArg:   handleFormatArgAttr   (S, D, Attr); break;
   case AttributeList::AT_CUDAGlobal:  handleGlobalAttr      (S, D, Attr); break;
+  case AttributeList::AT_CUDADevice:  handleDeviceAttr      (S, D, Attr); break;
+  case AttributeList::AT_CUDAHost:    handleHostAttr        (S, D, Attr); break;
   case AttributeList::AT_GNUInline:   handleGNUInlineAttr   (S, D, Attr); break;
   case AttributeList::AT_CUDALaunchBounds:
     handleLaunchBoundsAttr(S, D, Attr);
     break;
-  case AttributeList::AT_Mode:        handleModeAttr        (S, D, Attr); break;
   case AttributeList::AT_Malloc:      handleMallocAttr      (S, D, Attr); break;
   case AttributeList::AT_MayAlias:    handleMayAliasAttr    (S, D, Attr); break;
   case AttributeList::AT_NoCommon:    handleNoCommonAttr    (S, D, Attr); break;
