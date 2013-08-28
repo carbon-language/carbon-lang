@@ -269,26 +269,34 @@ struct NoTTI : ImmutablePass, TargetTransformInfo {
       // Otherwise, the default basic cost is used.
       return TCC_Basic;
 
-    case Instruction::IntToPtr:
+    case Instruction::IntToPtr: {
+      if (!DL)
+        return TCC_Basic;
+
       // An inttoptr cast is free so long as the input is a legal integer type
       // which doesn't contain values outside the range of a pointer.
-      if (DL && DL->isLegalInteger(OpTy->getScalarSizeInBits()) &&
-          OpTy->getScalarSizeInBits() <= DL->getPointerSizeInBits())
+      unsigned OpSize = OpTy->getScalarSizeInBits();
+      if (DL->isLegalInteger(OpSize) &&
+          OpSize <= DL->getPointerTypeSizeInBits(Ty))
         return TCC_Free;
 
       // Otherwise it's not a no-op.
       return TCC_Basic;
+    }
+    case Instruction::PtrToInt: {
+      if (!DL)
+        return TCC_Basic;
 
-    case Instruction::PtrToInt:
       // A ptrtoint cast is free so long as the result is large enough to store
       // the pointer, and a legal integer type.
-      if (DL && DL->isLegalInteger(Ty->getScalarSizeInBits()) &&
-          Ty->getScalarSizeInBits() >= DL->getPointerSizeInBits())
+      unsigned DestSize = Ty->getScalarSizeInBits();
+      if (DL->isLegalInteger(DestSize) &&
+          DestSize >= DL->getPointerTypeSizeInBits(OpTy))
         return TCC_Free;
 
       // Otherwise it's not a no-op.
       return TCC_Basic;
-
+    }
     case Instruction::Trunc:
       // trunc to a native type is free (assuming the target has compare and
       // shift-right of the same width).
