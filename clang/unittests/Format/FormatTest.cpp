@@ -1814,7 +1814,7 @@ TEST_F(FormatTest, IndentsPPDirectiveInReducedSpace) {
   verifyFormat("#define A( \\\n    BB)", getLLVMStyleWithColumns(12));
   verifyFormat("#define A( \\\n    A, B)", getLLVMStyleWithColumns(12));
   // FIXME: We never break before the macro name.
-  verifyFormat("#define AA(\\\n    B)", getLLVMStyleWithColumns(12));
+  verifyFormat("#define AA( \\\n    B)", getLLVMStyleWithColumns(12));
 
   verifyFormat("#define A A\n#define A A");
   verifyFormat("#define A(X) A\n#define A A");
@@ -1887,9 +1887,9 @@ TEST_F(FormatTest, MacroDefinitionInsideStatement) {
 
 TEST_F(FormatTest, HashInMacroDefinition) {
   verifyFormat("#define A \\\n  b #c;", getLLVMStyleWithColumns(11));
-  verifyFormat("#define A \\\n"
-               "  {       \\\n"
-               "    f(#c);\\\n"
+  verifyFormat("#define A  \\\n"
+               "  {        \\\n"
+               "    f(#c); \\\n"
                "  }",
                getLLVMStyleWithColumns(11));
 
@@ -4396,7 +4396,7 @@ TEST_F(FormatTest, BlockComments) {
   EXPECT_EQ("/* */ /* */ /* */\n/* */ /* */ /* */",
             format("/* *//* */  /* */\n/* *//* */  /* */"));
   EXPECT_EQ("/* */ a /* */ b;", format("  /* */  a/* */  b;"));
-  EXPECT_EQ("#define A /*123*/\\\n"
+  EXPECT_EQ("#define A /*123*/ \\\n"
             "  b\n"
             "/* */\n"
             "someCall(\n"

@@ -185,19 +185,17 @@ void WhitespaceManager::alignTrailingComments(unsigned Start, unsigned End,
 }
 
 void WhitespaceManager::alignEscapedNewlines() {
-  unsigned MaxEndOfLine = 0;
+  unsigned MaxEndOfLine =
+      Style.AlignEscapedNewlinesLeft ? 0 : Style.ColumnLimit;
   unsigned StartOfMacro = 0;
   for (unsigned i = 1, e = Changes.size(); i < e; ++i) {
     Change &C = Changes[i];
     if (C.NewlinesBefore > 0) {
       if (C.ContinuesPPDirective) {
-        if (Style.AlignEscapedNewlinesLeft)
-          MaxEndOfLine = std::max(C.PreviousEndOfTokenColumn + 2, MaxEndOfLine);
-        else
-          MaxEndOfLine = Style.ColumnLimit;
+        MaxEndOfLine = std::max(C.PreviousEndOfTokenColumn + 2, MaxEndOfLine);
       } else {
         alignEscapedNewlines(StartOfMacro + 1, i, MaxEndOfLine);
-        MaxEndOfLine = 0;
+        MaxEndOfLine = Style.AlignEscapedNewlinesLeft ? 0 : Style.ColumnLimit;
         StartOfMacro = i;
       }
     }
