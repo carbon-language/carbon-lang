@@ -1227,4 +1227,10 @@ DOT_CLEANUP            = YES
 # The SEARCHENGINE tag specifies whether or not a search engine should be 
 # used. If set to NO the values of all tags below this one will be ignored.
 
-SEARCHENGINE           = NO
+SEARCHENGINE           = @enable_server_based_search@
+
+EXTERNAL_SEARCH        = @enable_external_search@
+
+EXTERNAL_SEARCH_ID     = clang
+
+EXTRA_SEARCH_MAPPINGS  = @extra_search_mappings@

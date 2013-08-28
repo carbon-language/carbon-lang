@@ -1,11 +1,36 @@
 
 if (DOXYGEN_FOUND)
 if (LLVM_ENABLE_DOXYGEN)
-  set(abs_srcdir ${LLVM_MAIN_SRC_DIR})
+  set(abs_srcdir ${CMAKE_CURRENT_SOURCE_DIR})
   set(abs_builddir ${LLVM_BINARY_DIR})
 
   if (HAVE_DOT)
     set(DOT ${LLVM_PATH_DOT})
+  endif()
+
+  if (DOXYGEN_EXTERNAL_SEARCH)
+    set(SEARCHENGINE "YES")
+    set(SERVER_BASED_SEARCH "YES")
+    set(EXTERNAL_SEARCH "YES")
+
+    set(EXTRA_SEARCH_MAPPINGS "")
+    foreach(NameAndValue ${DOXYGEN_SEARCH_MAPPINGS})
+      # Strip leading spaces
+      string(REGEX REPLACE "^[ ]+" "" NameAndValue ${NameAndValue})
+      # Find variable name
+      string(REGEX MATCH "^[^=]+" Name ${NameAndValue})
+      # Find the value
+      string(REPLACE "${Name}=" "" Value ${NameAndValue})
+      # Set the variable
+      if (NOT ${Name} EQUALS clang)
+	set(EXTRA_SEARCH_MAPPINGS "${EXTRA_SEARCH_MAPPINGS} ${LLVM_BINARY_DIR}/${NameAndValue}")
+      endif()
+    endforeach()
+  else()
+    set(SEARCHENGINE "NO")
+    set(SERVER_BASED_SEARCH "NO")
+    set(EXTERNAL_SEARCH "NO")
+    set(EXTRA_SEARCH_MAPPINGS "")
   endif()
 
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/doxygen.cfg.in
