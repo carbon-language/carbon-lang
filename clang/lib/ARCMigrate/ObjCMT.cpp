@@ -660,6 +660,11 @@ static void ReplaceWithInstancetype(const ObjCMigrateASTConsumer &ASTC,
 void ObjCMigrateASTConsumer::migrateMethodInstanceType(ASTContext &Ctx,
                                                        ObjCContainerDecl *CDecl,
                                                        ObjCMethodDecl *OM) {
+  // bail out early and do not suggest 'instancetype' when the method already 
+  // has a related result type,
+  if (OM->hasRelatedResultType())
+    return;
+
   ObjCInstanceTypeFamily OIT_Family =
     Selector::getInstTypeMethodFamily(OM->getSelector());
   
@@ -668,11 +673,15 @@ void ObjCMigrateASTConsumer::migrateMethodInstanceType(ASTContext &Ctx,
     case OIT_None:
       migrateFactoryMethod(Ctx, CDecl, OM);
       return;
+    case OIT_Array:
+      ClassName = "NSArray";
+      break;
+    case OIT_Dictionary:
+      ClassName = "NSDictionary";
+      break;
     // For methods where Clang automatically infers instancetype from the selector 
     // (e.g., all -init* methods), we should not suggest "instancetype" because it 
     // is redundant,
-    case OIT_Array:
-    case OIT_Dictionary:
     case OIT_MemManage:
       return;
     case OIT_Singleton:

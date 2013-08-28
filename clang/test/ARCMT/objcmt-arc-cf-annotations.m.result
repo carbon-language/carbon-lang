@@ -181,12 +181,12 @@ NSFastEnumerationState;
 @interface NSArray : NSObject <NSCopying, NSMutableCopying, NSCoding, NSFastEnumeration>
 - (NSUInteger)count;
 - (id)initWithObjects:(const id [])objects count:(NSUInteger)cnt;
-+ (id)arrayWithObject:(id)anObject;
-+ (id)arrayWithObjects:(const id [])objects count:(NSUInteger)cnt;
-+ (id)arrayWithObjects:(id)firstObj, ... __attribute__((sentinel(0,1)));
++ (instancetype)arrayWithObject:(id)anObject;
++ (instancetype)arrayWithObjects:(const id [])objects count:(NSUInteger)cnt;
++ (instancetype)arrayWithObjects:(id)firstObj, ... __attribute__((sentinel(0,1)));
 - (id)initWithObjects:(id)firstObj, ... __attribute__((sentinel(0,1)));
 - (id)initWithArray:(NSArray *)array;
-@end  @interface NSArray (NSArrayCreation)  + (id)array;
+@end  @interface NSArray (NSArrayCreation)  + (instancetype)array;
 @end       @interface NSAutoreleasePool : NSObject {
 }
 - (void)drain;
@@ -207,12 +207,12 @@ typedef double NSTimeInterval;
 @end   @class NSLocale, NSDate, NSCalendar, NSTimeZone, NSError, NSArray, NSMutableDictionary;
 @interface NSDictionary : NSObject <NSCopying, NSMutableCopying, NSCoding, NSFastEnumeration>
 - (NSUInteger)count;
-+ (id)dictionaryWithObjects:(NSArray *)objects forKeys:(NSArray *)keys;
-+ (id)dictionaryWithObjects:(const id [])objects forKeys:(const id <NSCopying> [])keys count:(NSUInteger)cnt;
++ (instancetype)dictionaryWithObjects:(NSArray *)objects forKeys:(NSArray *)keys;
++ (instancetype)dictionaryWithObjects:(const id [])objects forKeys:(const id <NSCopying> [])keys count:(NSUInteger)cnt;
 @end
 @interface NSMutableDictionary : NSDictionary  - (void)removeObjectForKey:(id)aKey;
 - (void)setObject:(id)anObject forKey:(id)aKey;
-@end  @interface NSMutableDictionary (NSMutableDictionaryCreation)  + (id)dictionaryWithCapacity:(NSUInteger)numItems;
+@end  @interface NSMutableDictionary (NSMutableDictionaryCreation)  + (instancetype)dictionaryWithCapacity:(NSUInteger)numItems;
 @end  typedef double CGFloat;
 struct CGSize {
 };
@@ -350,7 +350,7 @@ CF_IMPLICIT_BRIDGING_DISABLED
 
 @interface NSMutableArray : NSObject
 - (void)addObject:(id)object;
-+ (id)array;
++ (instancetype)array;
 @end
 
 // This is how NSMakeCollectable is declared in the OS X 10.8 headers.
