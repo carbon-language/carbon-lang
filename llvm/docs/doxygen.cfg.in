@@ -1081,6 +1081,8 @@ SEARCHENGINE           = @enable_searchengine@
 
 SERVER_BASED_SEARCH    = @enable_server_based_search@
 
+SEARCHENGINE_URL       = @searchengine_url@
+
 EXTERNAL_SEARCH        = @enable_external_search@
 
 EXTERNAL_SEARCH_ID     = llvm
