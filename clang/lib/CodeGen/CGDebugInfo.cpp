@@ -1862,7 +1862,7 @@ llvm::DIType CGDebugInfo::CreateType(const AtomicType *Ty,
 }
 
 /// CreateEnumType - get enumeration type.
-llvm::DIType CGDebugInfo::CreateEnumType(const EnumType* Ty) {
+llvm::DIType CGDebugInfo::CreateEnumType(const EnumType *Ty) {
   const EnumDecl *ED = Ty->getDecl();
   uint64_t Size = 0;
   uint64_t Align = 0;
