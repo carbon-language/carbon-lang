@@ -2944,12 +2944,15 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   }
   // -mkernel implies -mstrict-align; don't add the redundant option.
   if (!KernelOrKext) {
-    if (Args.hasArg(options::OPT_mno_unaligned_access)) {
-      CmdArgs.push_back("-backend-option");
-      CmdArgs.push_back("-arm-strict-align");
-    } else if (Args.hasArg(options::OPT_munaligned_access)) {
-      CmdArgs.push_back("-backend-option");
-      CmdArgs.push_back("-arm-no-strict-align");
+    if (Arg *A = Args.getLastArg(options::OPT_mno_unaligned_access,
+                                 options::OPT_munaligned_access)) {
+      if (A->getOption().matches(options::OPT_mno_unaligned_access)) {
+        CmdArgs.push_back("-backend-option");
+        CmdArgs.push_back("-arm-strict-align");
+      } else {
+        CmdArgs.push_back("-backend-option");
+        CmdArgs.push_back("-arm-no-strict-align");
+      }
     }
   }
 
