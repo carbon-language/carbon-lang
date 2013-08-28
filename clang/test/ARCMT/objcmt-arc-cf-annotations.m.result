@@ -154,8 +154,8 @@ typedef struct _NSZone NSZone;
 @protocol NSCoding  - (void)encodeWithCoder:(NSCoder *)aCoder;
 @end
 @interface NSObject <NSObject> {}
-+ (instancetype)allocWithZone:(NSZone *)zone;
-+ (instancetype)alloc;
++ (id)allocWithZone:(NSZone *)zone;
++ (id)alloc;
 + (id)new;
 - (void)dealloc;
 @end
@@ -174,19 +174,19 @@ NSFastEnumerationState;
 @end
 @interface NSNumber : NSValue
 - (char)charValue;
-- (instancetype)initWithInt:(int)value;
+- (id)initWithInt:(int)value;
 + (NSNumber *)numberWithInt:(int)value;
 @end
 @class NSString;
 @interface NSArray : NSObject <NSCopying, NSMutableCopying, NSCoding, NSFastEnumeration>
 - (NSUInteger)count;
-- (instancetype)initWithObjects:(const id [])objects count:(NSUInteger)cnt;
-+ (instancetype)arrayWithObject:(id)anObject;
-+ (instancetype)arrayWithObjects:(const id [])objects count:(NSUInteger)cnt;
-+ (instancetype)arrayWithObjects:(id)firstObj, ... __attribute__((sentinel(0,1)));
-- (instancetype)initWithObjects:(id)firstObj, ... __attribute__((sentinel(0,1)));
-- (instancetype)initWithArray:(NSArray *)array;
-@end  @interface NSArray (NSArrayCreation)  + (instancetype)array;
+- (id)initWithObjects:(const id [])objects count:(NSUInteger)cnt;
++ (id)arrayWithObject:(id)anObject;
++ (id)arrayWithObjects:(const id [])objects count:(NSUInteger)cnt;
++ (id)arrayWithObjects:(id)firstObj, ... __attribute__((sentinel(0,1)));
+- (id)initWithObjects:(id)firstObj, ... __attribute__((sentinel(0,1)));
+- (id)initWithArray:(NSArray *)array;
+@end  @interface NSArray (NSArrayCreation)  + (id)array;
 @end       @interface NSAutoreleasePool : NSObject {
 }
 - (void)drain;
@@ -198,7 +198,7 @@ typedef double NSTimeInterval;
 - (NSUInteger)length;
 - (NSString *)stringByAppendingString:(NSString *)aString;
 - ( const char *)UTF8String;
-- (instancetype)initWithUTF8String:(const char *)nullTerminatedCString;
+- (id)initWithUTF8String:(const char *)nullTerminatedCString;
 + (instancetype)stringWithUTF8String:(const char *)nullTerminatedCString;
 @end        @class NSString, NSURL, NSError;
 @interface NSData : NSObject <NSCopying, NSMutableCopying, NSCoding>  - (NSUInteger)length;
@@ -207,12 +207,12 @@ typedef double NSTimeInterval;
 @end   @class NSLocale, NSDate, NSCalendar, NSTimeZone, NSError, NSArray, NSMutableDictionary;
 @interface NSDictionary : NSObject <NSCopying, NSMutableCopying, NSCoding, NSFastEnumeration>
 - (NSUInteger)count;
-+ (instancetype)dictionaryWithObjects:(NSArray *)objects forKeys:(NSArray *)keys;
-+ (instancetype)dictionaryWithObjects:(const id [])objects forKeys:(const id <NSCopying> [])keys count:(NSUInteger)cnt;
++ (id)dictionaryWithObjects:(NSArray *)objects forKeys:(NSArray *)keys;
++ (id)dictionaryWithObjects:(const id [])objects forKeys:(const id <NSCopying> [])keys count:(NSUInteger)cnt;
 @end
 @interface NSMutableDictionary : NSDictionary  - (void)removeObjectForKey:(id)aKey;
 - (void)setObject:(id)anObject forKey:(id)aKey;
-@end  @interface NSMutableDictionary (NSMutableDictionaryCreation)  + (instancetype)dictionaryWithCapacity:(NSUInteger)numItems;
+@end  @interface NSMutableDictionary (NSMutableDictionaryCreation)  + (id)dictionaryWithCapacity:(NSUInteger)numItems;
 @end  typedef double CGFloat;
 struct CGSize {
 };
@@ -254,7 +254,7 @@ extern DADiskRef DADiskCreateFromBSDName( CFAllocatorRef allocator, DASessionRef
 extern DADiskRef DADiskCreateFromIOMedia( CFAllocatorRef allocator, DASessionRef session, io_service_t media ) CF_RETURNS_RETAINED;
 extern CFDictionaryRef DADiskCopyDescription( DADiskRef disk ) CF_RETURNS_RETAINED;
 extern DADiskRef DADiskCopyWholeDisk( DADiskRef disk ) CF_RETURNS_RETAINED;
-@interface NSTask : NSObject - (instancetype)init;
+@interface NSTask : NSObject - (id)init;
 @end                    typedef struct CGColorSpace *CGColorSpaceRef;
 typedef struct CGImage *CGImageRef;
 typedef struct CGLayer *CGLayerRef;
@@ -350,7 +350,7 @@ CF_IMPLICIT_BRIDGING_DISABLED
 
 @interface NSMutableArray : NSObject
 - (void)addObject:(id)object;
-+ (instancetype)array;
++ (id)array;
 @end
 
 // This is how NSMakeCollectable is declared in the OS X 10.8 headers.
@@ -677,7 +677,7 @@ static void rdar_6659160(char *inkind, char *inname)
 //  conventions with respect to 'return'ing ownership.
 @interface PR3677: NSObject @end
 @implementation PR3677
-+ (instancetype)allocWithZone:(NSZone *)inZone {
++ (id)allocWithZone:(NSZone *)inZone {
   return [super allocWithZone:inZone];  // no-warning
 }
 @end
@@ -846,16 +846,16 @@ CF_IMPLICIT_BRIDGING_DISABLED
 @interface RDar6320065 : NSObject {
   NSString *_foo;
 }
-- (instancetype)initReturningNewClass;
+- (id)initReturningNewClass;
 - (id)_initReturningNewClassBad;
-- (instancetype)initReturningNewClassBad2;
+- (id)initReturningNewClassBad2;
 @end
 
 @interface RDar6320065Subclass : RDar6320065
 @end
 
 @implementation RDar6320065
-- (instancetype)initReturningNewClass {
+- (id)initReturningNewClass {
   [self release];
   self = [[RDar6320065Subclass alloc] init]; // no-warning
   return self;
@@ -865,7 +865,7 @@ CF_IMPLICIT_BRIDGING_DISABLED
   [[RDar6320065Subclass alloc] init]; // expected-warning {{leak}}
   return self;
 }
-- (instancetype)initReturningNewClassBad2 {
+- (id)initReturningNewClassBad2 {
   [self release];
   self = [[RDar6320065Subclass alloc] init];
   return [self autorelease]; // expected-warning{{Object with a +0 retain count returned to caller where a +1 (owning) retain count is expected}}
@@ -1580,7 +1580,7 @@ void test_blocks_1_indirect_retain_via_call(void) {
 
 @interface Rdar8015556 : NSObject {} @end
 @implementation Rdar8015556
-- (instancetype)retain {
+- (id)retain {
   return [super retain];
 }
 @end
@@ -1796,11 +1796,11 @@ void rdar9658496() {
 
 // Support annotations with method families.
 @interface RDar10824732 : NSObject
-- (instancetype)initWithObj:(id CF_CONSUMED)obj;
+- (id)initWithObj:(id CF_CONSUMED)obj;
 @end
 
 @implementation RDar10824732
-- (instancetype)initWithObj:(id)obj {
+- (id)initWithObj:(id)obj {
   [obj release];
   return [super init];
 }
@@ -2068,12 +2068,12 @@ void testCustomReturnsNotRetained() {
 // Don't print variables which are out of the current scope.
 //===----------------------------------------------------------------------===//
 @interface MyObj12706177 : NSObject
--(instancetype)initX;
+-(id)initX;
 +(void)test12706177;
 @end
 static int Cond;
 @implementation MyObj12706177
--(instancetype)initX {
+-(id)initX {
   if (Cond)
     return 0;
   self = [super init];

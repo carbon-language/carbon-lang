@@ -668,15 +668,13 @@ void ObjCMigrateASTConsumer::migrateMethodInstanceType(ASTContext &Ctx,
     case OIT_None:
       migrateFactoryMethod(Ctx, CDecl, OM);
       return;
+    // For methods where Clang automatically infers instancetype from the selector 
+    // (e.g., all -init* methods), we should not suggest "instancetype" because it 
+    // is redundant,
     case OIT_Array:
-      ClassName = "NSArray";
-      break;
     case OIT_Dictionary:
-      ClassName = "NSDictionary";
-      break;
     case OIT_MemManage:
-      ClassName = "NSObject";
-      break;
+      return;
     case OIT_Singleton:
       migrateFactoryMethod(Ctx, CDecl, OM, OIT_Singleton);
       return;
