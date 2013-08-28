@@ -19,7 +19,11 @@ $(PROJ_OBJ_DIR)/doxygen.cfg: doxygen.cfg.in
 	  -e 's/@abs_top_srcdir@/../g' \
 	  -e 's/@DOT@/dot/g' \
 	  -e 's/@PACKAGE_VERSION@/mainline/' \
-	  -e 's/@abs_top_builddir@/../g' > $@
+	  -e 's/@abs_top_builddir@/../g' \
+	  -e 's/@enable_searchengine@/NO/g' \
+          -e 's/@enable_server_based_search@/NO/g' \
+	  -e 's/@enable_external_search@/NO/g' \
+	  -e 's/@extra_search_mappings@/NO/g' > $@
 endif
 
 include $(LEVEL)/Makefile.common

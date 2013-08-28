@@ -1,3 +1,4 @@
+
 # Doxyfile 1.7.1
 
 # This file describes the settings to be used by the documentation system
@@ -1068,7 +1069,7 @@ FORMULA_TRANSPARENT    = YES
 # typically be disabled. For large projects the javascript based search engine
 # can be slow, then enabling SERVER_BASED_SEARCH may provide a better solution.
 
-SEARCHENGINE           = NO
+SEARCHENGINE           = @enable_searchengine@
 
 # When the SERVER_BASED_SEARCH tag is enabled the search engine will be
 # implemented using a PHP enabled web server instead of at the web client
@@ -1078,7 +1079,13 @@ SEARCHENGINE           = NO
 # full text search. The disadvances is that it is more difficult to setup
 # and does not have live searching capabilities.
 
-SERVER_BASED_SEARCH    = NO
+SERVER_BASED_SEARCH    = @enable_server_based_search@
+
+EXTERNAL_SEARCH        = @enable_external_search@
+
+EXTERNAL_SEARCH_ID     = llvm
+
+EXTRA_SEARCH_MAPPINGS  = @extra_search_mappings@
 
 #---------------------------------------------------------------------------
 # configuration options related to the LaTeX output
