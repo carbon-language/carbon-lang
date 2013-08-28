@@ -68,6 +68,15 @@ TEST_F(WinLinkParserTest, UnixStyleOption) {
   EXPECT_EQ("a.obj", inputFile(0));
 }
 
+TEST_F(WinLinkParserTest, UppercaseOption) {
+  EXPECT_FALSE(parse("link.exe", "/SUBSYSTEM:CONSOLE", "/OUT:a.exe", "a.obj",
+                     nullptr));
+  EXPECT_EQ(llvm::COFF::IMAGE_SUBSYSTEM_WINDOWS_CUI, _context.getSubsystem());
+  EXPECT_EQ("a.exe", _context.outputPath());
+  EXPECT_EQ(1, inputFileCount());
+  EXPECT_EQ("a.obj", inputFile(0));
+}
+
 TEST_F(WinLinkParserTest, Mllvm) {
   EXPECT_FALSE(parse("link.exe", "-mllvm", "-debug", "a.obj", nullptr));
   const std::vector<const char *> &options = _context.llvmOptions();

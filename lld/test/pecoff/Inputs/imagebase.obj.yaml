@@ -15,10 +15,6 @@ sections:
     Characteristics: [ IMAGE_SCN_CNT_INITIALIZED_DATA, IMAGE_SCN_MEM_READ, IMAGE_SCN_MEM_WRITE ]
     Alignment:       16
     SectionData:     ""
-  - Name:            .drectve
-    Characteristics: [ IMAGE_SCN_LNK_INFO, IMAGE_SCN_LNK_REMOVE ]
-    Alignment:       2147483648
-    SectionData:     2F454E5452593A5F737461727420
 symbols:
   - Name:            .text
     Value:           0
@@ -48,12 +44,4 @@ symbols:
     SimpleType:      IMAGE_SYM_TYPE_NULL
     ComplexType:     IMAGE_SYM_DTYPE_NULL
     StorageClass:    IMAGE_SYM_CLASS_EXTERNAL
-  - Name:            .drectve
-    Value:           0
-    SectionNumber:   3
-    SimpleType:      IMAGE_SYM_TYPE_NULL
-    ComplexType:     IMAGE_SYM_DTYPE_NULL
-    StorageClass:    IMAGE_SYM_CLASS_STATIC
-    NumberOfAuxSymbols: 1
-    AuxiliaryData:   0E0000000000000000000000000000000000
 ...

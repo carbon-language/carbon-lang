@@ -60,7 +60,11 @@ static const llvm::opt::OptTable::Info infoTable[] = {
 // Create OptTable class for parsing actual command line arguments
 class WinLinkOptTable : public llvm::opt::OptTable {
 public:
-  WinLinkOptTable() : OptTable(infoTable, llvm::array_lengthof(infoTable)){}
+  // link.exe's command line options are case insensitive, unlike
+  // other driver's options for Unix.
+  WinLinkOptTable()
+      : OptTable(infoTable, llvm::array_lengthof(infoTable),
+                 /* ignoreCase */ true) {}
 };
 
 // Split the given string with spaces.
