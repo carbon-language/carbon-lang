@@ -2600,7 +2600,10 @@ static SDValue LowerATOMIC_FENCE(SDValue Op, SelectionDAG &DAG,
   ConstantSDNode *OrdN = cast<ConstantSDNode>(Op.getOperand(1));
   AtomicOrdering Ord = static_cast<AtomicOrdering>(OrdN->getZExtValue());
   unsigned Domain = ARM_MB::ISH;
-  if (Subtarget->isSwift() && Ord == Release) {
+  if (Subtarget->isMClass()) {
+    // Only a full system barrier exists in the M-class architectures.
+    Domain = ARM_MB::SY;
+  } else if (Subtarget->isSwift() && Ord == Release) {
     // Swift happens to implement ISHST barriers in a way that's compatible with
     // Release semantics but weaker than ISH so we'd be fools not to use
     // it. Beware: other processors probably don't!

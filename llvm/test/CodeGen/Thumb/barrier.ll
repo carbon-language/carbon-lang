@@ -7,7 +7,7 @@ define void @t1() {
 ; V6: blx {{_*}}sync_synchronize
 
 ; V6M-LABEL: t1:
-; V6M: dmb ish
+; V6M: dmb sy
   fence seq_cst
   ret void
 }
