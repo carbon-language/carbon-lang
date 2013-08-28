@@ -29,6 +29,7 @@ class DIEHash {
   // Collection of all attributes used in hashing a particular DIE.
   struct DIEAttrs {
     AttrEntry DW_AT_name;
+    AttrEntry DW_AT_language;
   };
 
 public:
