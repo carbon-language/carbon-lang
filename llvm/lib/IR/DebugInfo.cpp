@@ -652,7 +652,7 @@ MDString *DICompositeType::getIdentifier() const {
 #ifndef NDEBUG
 static void VerifySubsetOf(const MDNode *LHS, const MDNode *RHS) {
   for (unsigned i = 0; i != LHS->getNumOperands(); ++i) {
-    // Skip the 'empty' list (that's a single i32 0, rather than truly empty)
+    // Skip the 'empty' list (that's a single i32 0, rather than truly empty).
     if (i == 0 && isa<ConstantInt>(LHS->getOperand(i)))
       continue;
     const MDNode *E = cast<MDNode>(LHS->getOperand(i));
@@ -672,7 +672,7 @@ void DICompositeType::setTypeArray(DIArray Elements, DIArray TParams) {
   TrackingVH<MDNode> N(*this);
   if (Elements) {
 #ifndef NDEBUG
-    // Check that the new list of members contains all the old members as well
+    // Check that the new list of members contains all the old members as well.
     if (const MDNode *El = cast_or_null<MDNode>(N->getOperand(10)))
       VerifySubsetOf(El, Elements);
 #endif
