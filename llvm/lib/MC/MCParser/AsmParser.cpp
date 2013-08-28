@@ -342,7 +342,7 @@ private:
     DK_FLOAT, DK_DOUBLE, DK_ALIGN, DK_ALIGN32, DK_BALIGN, DK_BALIGNW,
     DK_BALIGNL, DK_P2ALIGN, DK_P2ALIGNW, DK_P2ALIGNL, DK_ORG, DK_FILL, DK_ENDR,
     DK_BUNDLE_ALIGN_MODE, DK_BUNDLE_LOCK, DK_BUNDLE_UNLOCK,
-    DK_ZERO, DK_EXTERN, DK_GLOBL, DK_GLOBAL, DK_INDIRECT_SYMBOL,
+    DK_ZERO, DK_EXTERN, DK_GLOBL, DK_GLOBAL,
     DK_LAZY_REFERENCE, DK_NO_DEAD_STRIP, DK_SYMBOL_RESOLVER, DK_PRIVATE_EXTERN,
     DK_REFERENCE, DK_WEAK_DEFINITION, DK_WEAK_REFERENCE,
     DK_WEAK_DEF_CAN_BE_HIDDEN, DK_COMM, DK_COMMON, DK_LCOMM, DK_ABORT,
@@ -1365,8 +1365,6 @@ bool AsmParser::ParseStatement(ParseStatementInfo &Info) {
       case DK_GLOBL:
       case DK_GLOBAL:
         return ParseDirectiveSymbolAttribute(MCSA_Global);
-      case DK_INDIRECT_SYMBOL:
-        return ParseDirectiveSymbolAttribute(MCSA_IndirectSymbol);
       case DK_LAZY_REFERENCE:
         return ParseDirectiveSymbolAttribute(MCSA_LazyReference);
       case DK_NO_DEAD_STRIP:
@@ -3755,7 +3753,6 @@ void AsmParser::initializeDirectiveKindMap() {
   DirectiveKindMap[".extern"] = DK_EXTERN;
   DirectiveKindMap[".globl"] = DK_GLOBL;
   DirectiveKindMap[".global"] = DK_GLOBAL;
-  DirectiveKindMap[".indirect_symbol"] = DK_INDIRECT_SYMBOL;
   DirectiveKindMap[".lazy_reference"] = DK_LAZY_REFERENCE;
   DirectiveKindMap[".no_dead_strip"] = DK_NO_DEAD_STRIP;
   DirectiveKindMap[".symbol_resolver"] = DK_SYMBOL_RESOLVER;

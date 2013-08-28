@@ -45,6 +45,8 @@ public:
     this->MCAsmParserExtension::Initialize(Parser);
 
     addDirectiveHandler<&DarwinAsmParser::ParseDirectiveDesc>(".desc");
+    addDirectiveHandler<&DarwinAsmParser::ParseDirectiveIndirectSymbol>(
+      ".indirect_symbol");
     addDirectiveHandler<&DarwinAsmParser::ParseDirectiveLsym>(".lsym");
     addDirectiveHandler<&DarwinAsmParser::ParseDirectiveSubsectionsViaSymbols>(
       ".subsections_via_symbols");
@@ -163,6 +165,7 @@ public:
   }
 
   bool ParseDirectiveDesc(StringRef, SMLoc);
+  bool ParseDirectiveIndirectSymbol(StringRef, SMLoc);
   bool ParseDirectiveDumpOrLoad(StringRef, SMLoc);
   bool ParseDirectiveLsym(StringRef, SMLoc);
   bool ParseDirectiveLinkerOption(StringRef, SMLoc);
@@ -411,6 +414,39 @@ bool DarwinAsmParser::ParseDirectiveDesc(StringRef, SMLoc) {
 
   // Set the n_desc field of this Symbol to this DescValue
   getStreamer().EmitSymbolDesc(Sym, DescValue);
+
+  return false;
+}
+
+/// ParseDirectiveIndirectSymbol
+///  ::= .indirect_symbol identifier
+bool DarwinAsmParser::ParseDirectiveIndirectSymbol(StringRef, SMLoc Loc) {
+  const MCSectionMachO *Current = static_cast<const MCSectionMachO*>(
+                                       getStreamer().getCurrentSection().first);
+  unsigned SectionType = Current->getType();
+  if (SectionType != MCSectionMachO::S_NON_LAZY_SYMBOL_POINTERS &&
+      SectionType != MCSectionMachO::S_LAZY_SYMBOL_POINTERS &&
+      SectionType != MCSectionMachO::S_SYMBOL_STUBS)
+    return Error(Loc, "indirect symbol not in a symbol pointer or stub "
+                      "section");
+
+  StringRef Name;
+  if (getParser().parseIdentifier(Name))
+    return TokError("expected identifier in .indirect_symbol directive");
+
+  MCSymbol *Sym = getContext().GetOrCreateSymbol(Name);
+
+  // Assembler local symbols don't make any sense here. Complain loudly.
+  if (Sym->isTemporary())
+    return TokError("non-local symbol required in directive");
+
+  if (!getStreamer().EmitSymbolAttribute(Sym, MCSA_IndirectSymbol))
+    return TokError("unable to emit indirect symbol attribute for: " + Name);
+
+  if (getLexer().isNot(AsmToken::EndOfStatement))
+    return TokError("unexpected token in '.indirect_symbol' directive");
+
+  Lex();
 
   return false;
 }

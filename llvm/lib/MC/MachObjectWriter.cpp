@@ -428,6 +428,22 @@ void MachObjectWriter::BindIndirectSymbols(MCAssembler &Asm) {
   //
   // FIXME: Revisit this when the dust settles.
 
+  // Report errors for use of .indirect_symbol not in a symbol pointer section
+  // or stub section.
+  for (MCAssembler::indirect_symbol_iterator it = Asm.indirect_symbol_begin(),
+         ie = Asm.indirect_symbol_end(); it != ie; ++it) {
+    const MCSectionMachO &Section =
+      cast<MCSectionMachO>(it->SectionData->getSection());
+
+    if (Section.getType() != MCSectionMachO::S_NON_LAZY_SYMBOL_POINTERS &&
+        Section.getType() != MCSectionMachO::S_LAZY_SYMBOL_POINTERS &&
+        Section.getType() != MCSectionMachO::S_SYMBOL_STUBS) {
+	MCSymbol &Symbol = *it->Symbol;
+	report_fatal_error("indirect symbol '" + Symbol.getName() +
+                           "' not in a symbol pointer or stub section");
+    }
+  }
+
   // Bind non lazy symbol pointers first.
   unsigned IndirectIndex = 0;
   for (MCAssembler::indirect_symbol_iterator it = Asm.indirect_symbol_begin(),
