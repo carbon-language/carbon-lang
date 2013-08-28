@@ -4791,6 +4791,10 @@ TEST_F(FormatTest, FormatObjCImplementation) {
   verifyFormat("@implementation Foo (HackStuff)\n"
                "+ (id)init {\n}\n"
                "@end");
+  verifyFormat("@implementation ObjcClass\n"
+               "- (void)method;\n"
+               "{}\n"
+               "@end");
 }
 
 TEST_F(FormatTest, FormatObjCProtocol) {

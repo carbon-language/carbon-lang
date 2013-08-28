@@ -1030,7 +1030,13 @@ void UnwrappedLineParser::parseObjCUntilAtEnd() {
       addUnwrappedLine();
       break;
     }
-    parseStructuralElement();
+    if (FormatTok->is(tok::l_brace)) {
+      parseBlock(/*MustBeDeclaration=*/false);
+      // In ObjC interfaces, nothing should be following the "}".
+      addUnwrappedLine();
+    } else {
+      parseStructuralElement();
+    }
   } while (!eof());
 }
 
