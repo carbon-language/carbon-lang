@@ -1,3 +1,6 @@
+; Test the MSA fixed-point to floating point conversion intrinsics that are
+; encoded with the 2RF instruction format.
+
 ; RUN: llc -march=mips -mattr=+msa < %s | FileCheck %s
 
 @llvm_mips_ffql_w_ARG1 = global <8 x i16> <i16 0, i16 1, i16 2, i16 3, i16 4, i16 5, i16 6, i16 7>, align 16

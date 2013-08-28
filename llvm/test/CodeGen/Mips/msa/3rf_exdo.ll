@@ -1,3 +1,6 @@
+; Test the MSA floating-point conversion intrinsics that are encoded with the
+; 3RF instruction format.
+
 ; RUN: llc -march=mips -mattr=+msa < %s | FileCheck %s
 
 @llvm_mips_fexdo_h_ARG1 = global <4 x float> <float 0.000000e+00, float 1.000000e+00, float 2.000000e+00, float 3.000000e+00>, align 16

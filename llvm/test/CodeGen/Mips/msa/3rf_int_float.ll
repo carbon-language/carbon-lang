@@ -1,3 +1,6 @@
+; Test the MSA intrinsics that are encoded with the 3RF instruction format and
+; produce an integer as a result.
+
 ; RUN: llc -march=mips -mattr=+msa < %s | FileCheck %s
 
 @llvm_mips_fceq_w_ARG1 = global <4 x float> <float 0.000000e+00, float 1.000000e+00, float 2.000000e+00, float 3.000000e+00>, align 16

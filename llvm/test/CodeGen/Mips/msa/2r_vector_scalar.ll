@@ -1,3 +1,6 @@
+; Test the MSA intrinsics that are encoded with the 2R instruction format and
+; convert scalars to vectors.
+
 ; RUN: llc -march=mips -mattr=+msa < %s | FileCheck %s
 
 @llvm_mips_fill_b_ARG1 = global i32 23, align 16

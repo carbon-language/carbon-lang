@@ -1,3 +1,5 @@
+; Test the bitcast operation for big-endian and little-endian.
+
 ; RUN: llc -march=mipsel -mattr=+msa < %s | FileCheck -check-prefix=LITENDIAN %s
 ; RUN: llc -march=mips -mattr=+msa < %s | FileCheck -check-prefix=BIGENDIAN %s
 
