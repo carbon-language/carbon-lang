@@ -3322,30 +3322,30 @@ defm RCP   : sse1_fp_unop_rw<0x53, "rcp", X86frcp, SSE_RCPS>,
              sse1_fp_unop_p_int<0x53, "rcp", int_x86_sse_rcp_ps,
                                 int_x86_avx_rcp_ps_256, SSE_RCPP>;
 
-def : Pat<(f32 (fsqrt FR32:$src)),
-          (VSQRTSSr (f32 (IMPLICIT_DEF)), FR32:$src)>, Requires<[HasAVX]>;
-def : Pat<(f32 (fsqrt (load addr:$src))),
-          (VSQRTSSm (f32 (IMPLICIT_DEF)), addr:$src)>,
-          Requires<[HasAVX, OptForSize]>;
-def : Pat<(f64 (fsqrt FR64:$src)),
-          (VSQRTSDr (f64 (IMPLICIT_DEF)), FR64:$src)>, Requires<[HasAVX]>;
-def : Pat<(f64 (fsqrt (load addr:$src))),
-          (VSQRTSDm (f64 (IMPLICIT_DEF)), addr:$src)>,
-          Requires<[HasAVX, OptForSize]>;
+let Predicates = [UseAVX] in {
+  def : Pat<(f32 (fsqrt FR32:$src)),
+            (VSQRTSSr (f32 (IMPLICIT_DEF)), FR32:$src)>, Requires<[HasAVX]>;
+  def : Pat<(f32 (fsqrt (load addr:$src))),
+            (VSQRTSSm (f32 (IMPLICIT_DEF)), addr:$src)>,
+            Requires<[HasAVX, OptForSize]>;
+  def : Pat<(f64 (fsqrt FR64:$src)),
+            (VSQRTSDr (f64 (IMPLICIT_DEF)), FR64:$src)>, Requires<[HasAVX]>;
+  def : Pat<(f64 (fsqrt (load addr:$src))),
+            (VSQRTSDm (f64 (IMPLICIT_DEF)), addr:$src)>,
+            Requires<[HasAVX, OptForSize]>;
 
-def : Pat<(f32 (X86frsqrt FR32:$src)),
-          (VRSQRTSSr (f32 (IMPLICIT_DEF)), FR32:$src)>, Requires<[HasAVX]>;
-def : Pat<(f32 (X86frsqrt (load addr:$src))),
-          (VRSQRTSSm (f32 (IMPLICIT_DEF)), addr:$src)>,
-          Requires<[HasAVX, OptForSize]>;
+  def : Pat<(f32 (X86frsqrt FR32:$src)),
+            (VRSQRTSSr (f32 (IMPLICIT_DEF)), FR32:$src)>, Requires<[HasAVX]>;
+  def : Pat<(f32 (X86frsqrt (load addr:$src))),
+            (VRSQRTSSm (f32 (IMPLICIT_DEF)), addr:$src)>,
+            Requires<[HasAVX, OptForSize]>;
 
-def : Pat<(f32 (X86frcp FR32:$src)),
-          (VRCPSSr (f32 (IMPLICIT_DEF)), FR32:$src)>, Requires<[HasAVX]>;
-def : Pat<(f32 (X86frcp (load addr:$src))),
-          (VRCPSSm (f32 (IMPLICIT_DEF)), addr:$src)>,
-          Requires<[HasAVX, OptForSize]>;
+  def : Pat<(f32 (X86frcp FR32:$src)),
+            (VRCPSSr (f32 (IMPLICIT_DEF)), FR32:$src)>, Requires<[HasAVX]>;
+  def : Pat<(f32 (X86frcp (load addr:$src))),
+            (VRCPSSm (f32 (IMPLICIT_DEF)), addr:$src)>,
+            Requires<[HasAVX, OptForSize]>;
 
-let Predicates = [HasAVX] in {
   def : Pat<(int_x86_sse_sqrt_ss VR128:$src),
             (COPY_TO_REGCLASS (VSQRTSSr (f32 (IMPLICIT_DEF)),
                                         (COPY_TO_REGCLASS VR128:$src, FR32)),
