@@ -136,6 +136,11 @@ UnitAtATime("funit-at-a-time",
             cl::init(true));
 
 static cl::opt<bool>
+DisableLoopUnrolling("disable-loop-unrolling",
+                     cl::desc("Disable loop unrolling in all relevant passes"),
+                     cl::init(false));
+
+static cl::opt<bool>
 DisableSimplifyLibCalls("disable-simplify-libcalls",
                         cl::desc("Disable simplify-libcalls"));
 
@@ -447,12 +452,13 @@ static void AddOptimizationPasses(PassManagerBase &MPM,FunctionPassManager &FPM,
     Builder.Inliner = createAlwaysInlinerPass();
   }
   Builder.DisableUnitAtATime = !UnitAtATime;
-  Builder.DisableUnrollLoops = OptLevel == 0;
+  Builder.DisableUnrollLoops = (DisableLoopUnrolling.getNumOccurrences() > 0) ?
+                               DisableLoopUnrolling : OptLevel == 0;
   
+  Builder.LoopVectorize = OptLevel > 1 && SizeLevel < 2;
+
   Builder.populateFunctionPassManager(FPM);
   Builder.populateModulePassManager(MPM);
-
-  Builder.LoopVectorize = OptLevel > 1 && SizeLevel < 2;
 }
 
 static void AddStandardCompilePasses(PassManagerBase &PM) {

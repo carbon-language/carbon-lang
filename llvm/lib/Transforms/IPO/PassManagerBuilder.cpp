@@ -196,7 +196,7 @@ void PassManagerBuilder::populateModulePassManager(PassManagerBase &MPM) {
   MPM.add(createLoopDeletionPass());          // Delete dead loops
 
   if (!LateVectorize && LoopVectorize)
-      MPM.add(createLoopVectorizePass());
+      MPM.add(createLoopVectorizePass(DisableUnrollLoops));
 
   if (!DisableUnrollLoops)
     MPM.add(createLoopUnrollPass());          // Unroll small loops
@@ -250,7 +250,7 @@ void PassManagerBuilder::populateModulePassManager(PassManagerBase &MPM) {
     // Add the various vectorization passes and relevant cleanup passes for
     // them since we are no longer in the middle of the main scalar pipeline.
     if (LoopVectorize) {
-      MPM.add(createLoopVectorizePass());
+      MPM.add(createLoopVectorizePass(DisableUnrollLoops));
 
       if (!DisableUnrollLoops)
         MPM.add(createLoopUnrollPass());    // Unroll small loops

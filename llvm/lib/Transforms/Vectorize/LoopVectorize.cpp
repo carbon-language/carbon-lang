@@ -761,9 +761,9 @@ struct LoopVectorizeHints {
   /// Vectorization unroll factor.
   unsigned Unroll;
 
-  LoopVectorizeHints(const Loop *L)
+  LoopVectorizeHints(const Loop *L, bool DisableUnrolling)
   : Width(VectorizationFactor)
-  , Unroll(VectorizationUnroll)
+  , Unroll(DisableUnrolling ? 1 : VectorizationUnroll)
   , LoopID(L->getLoopID()) {
     getHints(L);
     // The command line options override any loop metadata except for when
@@ -772,6 +772,9 @@ struct LoopVectorizeHints {
       Width = VectorizationFactor;
     if (VectorizationUnroll.getNumOccurrences() > 0)
       Unroll = VectorizationUnroll;
+
+    DEBUG(if (DisableUnrolling && Unroll == 1)
+            dbgs() << "LV: Unrolling disabled by the pass manager\n");
   }
 
   /// Return the loop vectorizer metadata prefix.
@@ -878,7 +881,8 @@ struct LoopVectorize : public LoopPass {
   /// Pass identification, replacement for typeid
   static char ID;
 
-  explicit LoopVectorize() : LoopPass(ID) {
+  explicit LoopVectorize(bool NoUnrolling = false)
+    : LoopPass(ID), DisableUnrolling(NoUnrolling) {
     initializeLoopVectorizePass(*PassRegistry::getPassRegistry());
   }
 
@@ -888,6 +892,7 @@ struct LoopVectorize : public LoopPass {
   TargetTransformInfo *TTI;
   DominatorTree *DT;
   TargetLibraryInfo *TLI;
+  bool DisableUnrolling;
 
   virtual bool runOnLoop(Loop *L, LPPassManager &LPM) {
     // We only vectorize innermost loops.
@@ -909,7 +914,7 @@ struct LoopVectorize : public LoopPass {
     DEBUG(dbgs() << "LV: Checking a loop in \"" <<
           L->getHeader()->getParent()->getName() << "\"\n");
 
-    LoopVectorizeHints Hints(L);
+    LoopVectorizeHints Hints(L, DisableUnrolling);
 
     if (Hints.Width == 1 && Hints.Unroll == 1) {
       DEBUG(dbgs() << "LV: Not vectorizing.\n");
@@ -4786,8 +4791,8 @@ INITIALIZE_PASS_DEPENDENCY(LoopSimplify)
 INITIALIZE_PASS_END(LoopVectorize, LV_NAME, lv_name, false, false)
 
 namespace llvm {
-  Pass *createLoopVectorizePass() {
-    return new LoopVectorize();
+  Pass *createLoopVectorizePass(bool NoUnrolling) {
+    return new LoopVectorize(NoUnrolling);
   }
 }
 
