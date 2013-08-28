@@ -31,12 +31,12 @@ SANITIZER_INCLUDES_LINT_FILTER=${COMMON_LINT_FILTER},-runtime/int
 cd ${LLVM_CHECKOUT}
 
 EXITSTATUS=0
-LOG=$(mktemp)
+LOG=$(mktemp -q)
 
 run_lint() {
   FILTER=$1
   shift
-  if [ "${SILENT}" == "1" ]; then
+  if [[ "${SILENT}" == "1" && "${LOG}" != "" ]]; then
     ${CPPLINT} --filter=${FILTER} "$@" 2>>$LOG
   else
     ${CPPLINT} --filter=${FILTER} "$@"
@@ -97,7 +97,8 @@ for FILE in $FILES; do
 done
 
 if [ "$EXITSTATUS" != "0" ]; then
-  cat $LOG | grep -v "Done processing" | grep -v "Total errors found"
+  cat $LOG | grep -v "Done processing" | grep -v "Total errors found" \
+    grep -v "Skipping input"
 fi
 
 exit $EXITSTATUS
