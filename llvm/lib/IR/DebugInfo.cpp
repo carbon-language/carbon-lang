@@ -655,7 +655,24 @@ void DICompositeType::setTypeArray(DIArray Elements, DIArray TParams) {
          "If you're setting the template parameters this should include a slot "
          "for that!");
   TrackingVH<MDNode> N(*this);
-  N->replaceOperandWith(10, Elements);
+  if (Elements) {
+#ifndef NDEBUG
+    // Check that we're not dropping any elements on the floor here
+    if (const MDNode *El = cast_or_null<MDNode>(N->getOperand(10))) {
+      for (unsigned i = 0; i != El->getNumOperands(); ++i) {
+        if (i == 0 && isa<ConstantInt>(El->getOperand(i)))
+          continue;
+        const MDNode *E = cast<MDNode>(El->getOperand(i));
+        bool found = false;
+        for (unsigned j = 0; !found && j != Elements.getNumElements(); ++j) {
+          found = E == Elements.getElement(j);
+        }
+        assert(found && "Losing a member during member list replacement");
+      }
+    }
+#endif
+    N->replaceOperandWith(10, Elements);
+  }
   if (TParams)
     N->replaceOperandWith(13, TParams);
   DbgNode = N;
