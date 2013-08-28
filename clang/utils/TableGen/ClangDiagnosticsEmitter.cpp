@@ -619,6 +619,8 @@ void EmitClangDiagGroups(RecordKeeper &Records, raw_ostream &OS) {
   // that are mapped to.
   OS << "\n#ifdef GET_DIAG_ARRAYS\n";
   unsigned MaxLen = 0;
+  OS << "static const int16_t DiagArrays[] = {\n"
+     << "  /* Empty */ -1,\n";
   for (std::map<std::string, GroupInfo>::const_iterator
        I = DiagsInGroup.begin(), E = DiagsInGroup.end(); I != E; ++I) {
     MaxLen = std::max(MaxLen, (unsigned)I->first.size());
@@ -626,7 +628,7 @@ void EmitClangDiagGroups(RecordKeeper &Records, raw_ostream &OS) {
 
     const std::vector<const Record*> &V = I->second.DiagsInGroup;
     if (!V.empty() || (IsPedantic && !DiagsInPedantic.empty())) {
-      OS << "static const short DiagArray" << I->second.IDNo << "[] = { ";
+      OS << "  /* DiagArray" << I->second.IDNo << " */ ";
       for (unsigned i = 0, e = V.size(); i != e; ++i)
         OS << "diag::" << V[i]->getName() << ", ";
       // Emit the diagnostics implicitly in "pedantic".
@@ -634,12 +636,20 @@ void EmitClangDiagGroups(RecordKeeper &Records, raw_ostream &OS) {
         for (unsigned i = 0, e = DiagsInPedantic.size(); i != e; ++i)
           OS << "diag::" << DiagsInPedantic[i]->getName() << ", ";
       }
-      OS << "-1 };\n";
+      OS << "-1,\n";
     }
+  }
+  OS << "};\n\n";
+
+  OS << "static const int16_t DiagSubGroups[] = {\n"
+     << "  /* Empty */ -1,\n";
+  for (std::map<std::string, GroupInfo>::const_iterator
+       I = DiagsInGroup.begin(), E = DiagsInGroup.end(); I != E; ++I) {
+    const bool IsPedantic = I->first == "pedantic";
 
     const std::vector<std::string> &SubGroups = I->second.SubGroups;
     if (!SubGroups.empty() || (IsPedantic && !GroupsInPedantic.empty())) {
-      OS << "static const short DiagSubGroup" << I->second.IDNo << "[] = { ";
+      OS << "  /* DiagSubGroup" << I->second.IDNo << " */ ";
       for (unsigned i = 0, e = SubGroups.size(); i != e; ++i) {
         std::map<std::string, GroupInfo>::const_iterator RI =
           DiagsInGroup.find(SubGroups[i]);
@@ -658,13 +668,15 @@ void EmitClangDiagGroups(RecordKeeper &Records, raw_ostream &OS) {
         }
       }
 
-      OS << "-1 };\n";
+      OS << "-1,\n";
     }
   }
+  OS << "};\n";
   OS << "#endif // GET_DIAG_ARRAYS\n\n";
 
   // Emit the table now.
   OS << "\n#ifdef GET_DIAG_TABLE\n";
+  unsigned SubGroupIndex = 1, DiagArrayIndex = 1;
   for (std::map<std::string, GroupInfo>::const_iterator
        I = DiagsInGroup.begin(), E = DiagsInGroup.end(); I != E; ++I) {
     // Group option string.
@@ -683,20 +695,31 @@ void EmitClangDiagGroups(RecordKeeper &Records, raw_ostream &OS) {
     const bool IsPedantic = I->first == "pedantic";
 
     // Diagnostics in the group.
-    const bool hasDiags = !I->second.DiagsInGroup.empty() ||
+    const std::vector<const Record*> &V = I->second.DiagsInGroup;
+    const bool hasDiags = !V.empty() ||
                           (IsPedantic && !DiagsInPedantic.empty());
-    if (!hasDiags)
-      OS << "0, ";
-    else
-      OS << "DiagArray" << I->second.IDNo << ", ";
+    if (hasDiags) {
+      OS << "/* DiagArray" << I->second.IDNo << " */ "
+         << DiagArrayIndex << ", ";
+      if (IsPedantic)
+        DiagArrayIndex += DiagsInPedantic.size();
+      DiagArrayIndex += V.size() + 1;
+    } else {
+      OS << "/* Empty */ 0, ";
+    }
 
     // Subgroups.
-    const bool hasSubGroups = !I->second.SubGroups.empty() ||
+    const std::vector<std::string> &SubGroups = I->second.SubGroups;
+    const bool hasSubGroups = !SubGroups.empty() ||
                               (IsPedantic && !GroupsInPedantic.empty());
-    if (!hasSubGroups)
-      OS << 0;
-    else
-      OS << "DiagSubGroup" << I->second.IDNo;
+    if (hasSubGroups) {
+      OS << "/* DiagSubGroup" << I->second.IDNo << " */ " << SubGroupIndex;
+      if (IsPedantic)
+        SubGroupIndex += GroupsInPedantic.size();
+      SubGroupIndex += SubGroups.size() + 1;
+    } else {
+      OS << "/* Empty */ 0";
+    }
     OS << " },\n";
   }
   OS << "#endif // GET_DIAG_TABLE\n\n";

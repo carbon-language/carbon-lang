@@ -73,6 +73,22 @@ static const GroupRecord OptionTable[] = {
 #undef GET_DIAG_TABLE
 };
 
+GroupRecord::subgroup_iterator GroupRecord::subgroup_begin() const {
+  return DiagSubGroups + SubGroups;
+}
+
+GroupRecord::subgroup_iterator GroupRecord::subgroup_end() const {
+  return 0;
+}
+
+GroupRecord::diagnostics_iterator GroupRecord::diagnostics_begin() const {
+  return DiagArrays + Members;
+}
+
+GroupRecord::diagnostics_iterator GroupRecord::diagnostics_end() const {
+  return 0;
+}
+
 llvm::ArrayRef<GroupRecord> diagtool::getDiagnosticGroups() {
   return llvm::makeArrayRef(OptionTable);
 }

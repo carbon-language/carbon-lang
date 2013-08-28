@@ -507,8 +507,8 @@ struct clang::WarningOption {
   // shorter type anyway.
   size_t NameLen;
   const char *NameStr;
-  const short *Members;
-  const short *SubGroups;
+  uint16_t Members;
+  uint16_t SubGroups;
 
   StringRef getName() const {
     return StringRef(NameStr, NameLen);
@@ -545,16 +545,14 @@ void DiagnosticIDs::getDiagnosticsInGroup(
     const WarningOption *Group,
     SmallVectorImpl<diag::kind> &Diags) const {
   // Add the members of the option diagnostic set.
-  if (const short *Member = Group->Members) {
-    for (; *Member != -1; ++Member)
-      Diags.push_back(*Member);
-  }
+  const int16_t *Member = DiagArrays + Group->Members;
+  for (; *Member != -1; ++Member)
+    Diags.push_back(*Member);
 
   // Add the members of the subgroups.
-  if (const short *SubGroups = Group->SubGroups) {
-    for (; *SubGroups != (short)-1; ++SubGroups)
-      getDiagnosticsInGroup(&OptionTable[(short)*SubGroups], Diags);
-  }
+  const int16_t *SubGroups = DiagSubGroups + Group->SubGroups;
+  for (; *SubGroups != (int16_t)-1; ++SubGroups)
+    getDiagnosticsInGroup(&OptionTable[(short)*SubGroups], Diags);
 }
 
 bool DiagnosticIDs::getDiagnosticsInGroup(
