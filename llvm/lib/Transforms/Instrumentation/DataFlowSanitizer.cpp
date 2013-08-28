@@ -307,10 +307,11 @@ FunctionType *DataFlowSanitizer::getTrampolineFunctionType(FunctionType *T) {
 FunctionType *DataFlowSanitizer::getCustomFunctionType(FunctionType *T) {
   assert(!T->isVarArg());
   llvm::SmallVector<Type *, 4> ArgTypes;
-  for (FunctionType::param_iterator i = T->param_begin(), e = T->param_end(); i != e; ++i) {
+  for (FunctionType::param_iterator i = T->param_begin(), e = T->param_end();
+       i != e; ++i) {
     FunctionType *FT;
-    if (isa<PointerType>(*i) &&
-        (FT = dyn_cast<FunctionType>(cast<PointerType>(*i)->getElementType()))) {
+    if (isa<PointerType>(*i) && (FT = dyn_cast<FunctionType>(cast<PointerType>(
+                                     *i)->getElementType()))) {
       ArgTypes.push_back(getTrampolineFunctionType(FT)->getPointerTo());
       ArgTypes.push_back(Type::getInt8PtrTy(*Ctx));
     } else {
