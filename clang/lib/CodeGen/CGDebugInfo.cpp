@@ -1122,17 +1122,14 @@ CollectCXXMemberFunctions(const CXXRecordDecl *RD, llvm::DIFile Unit,
   // the functions.
   for(DeclContext::decl_iterator I = RD->decls_begin(),
         E = RD->decls_end(); I != E; ++I) {
-    Decl *D = *I;
-    if (D->isImplicit())
-      continue;
-
-    if (const CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(D)) {
+    if (const CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(*I)) {
       // Reuse the existing member function declaration if it exists
       llvm::DenseMap<const FunctionDecl *, llvm::WeakVH>::iterator MI =
           SPCache.find(Method->getCanonicalDecl());
-      if (MI == SPCache.end())
-        EltTys.push_back(CreateCXXMemberFunction(Method, Unit, RecordTy));
-      else
+      if (MI == SPCache.end()) {
+        if (!Method->isImplicit())
+          EltTys.push_back(CreateCXXMemberFunction(Method, Unit, RecordTy));
+      } else
         EltTys.push_back(MI->second);
     }
   }
