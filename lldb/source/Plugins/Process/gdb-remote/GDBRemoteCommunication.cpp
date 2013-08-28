@@ -465,6 +465,8 @@ GDBRemoteCommunication::CheckForPacket (const uint8_t *src, size_t src_len, Stri
 
             m_history.AddPacket (m_bytes.c_str(), total_length, History::ePacketTypeRecv, total_length);
 
+            // Clear packet_str in case there is some existing data in it.
+            packet_str.clear();
             // Copy the packet from m_bytes to packet_str expanding the
             // run-length encoding in the process.
             // Reserve enough byte for the most common case (no RLE used)
