@@ -35,11 +35,8 @@ namespace diagtool {
 
 
   struct GroupRecord {
-    // Be safe with the size of 'NameLen' because we don't statically check if
-    // the size will fit in the field; the struct size won't decrease with a
-    // shorter type anyway.
-    size_t NameLen;
     const char *NameStr;
+    uint16_t NameLen;
     uint16_t Members;
     uint16_t SubGroups;
 

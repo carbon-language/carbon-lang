@@ -681,7 +681,6 @@ void EmitClangDiagGroups(RecordKeeper &Records, raw_ostream &OS) {
        I = DiagsInGroup.begin(), E = DiagsInGroup.end(); I != E; ++I) {
     // Group option string.
     OS << "  { ";
-    OS << I->first.size() << ", ";
     OS << "\"";
     if (I->first.find_first_not_of("abcdefghijklmnopqrstuvwxyz"
                                    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -690,6 +689,9 @@ void EmitClangDiagGroups(RecordKeeper &Records, raw_ostream &OS) {
                       I->first + "'");
     OS.write_escaped(I->first) << "\","
                                << std::string(MaxLen-I->first.size()+1, ' ');
+    if (I->first.size() > UINT16_MAX)
+      PrintFatalError("Diagnostic group name is too long for NameLen field.");
+    OS << I->first.size() << ", ";
 
     // Special handling for 'pedantic'.
     const bool IsPedantic = I->first == "pedantic";

@@ -94,7 +94,12 @@ static int showGroup(llvm::raw_ostream &out, StringRef RootGroup,
                      bool FlagsOnly) {
   ArrayRef<GroupRecord> AllGroups = getDiagnosticGroups();
 
-  GroupRecord Key = { RootGroup.size(), RootGroup.data(), 0, 0 };
+  if (RootGroup.size() > UINT16_MAX) {
+    llvm::errs() << "No such diagnostic group exists\n";
+    return 1;
+  }
+
+  GroupRecord Key = { RootGroup.data(), (uint16_t)RootGroup.size(), 0, 0 };
   const GroupRecord *Found =
     std::lower_bound(AllGroups.begin(), AllGroups.end(), Key);
   

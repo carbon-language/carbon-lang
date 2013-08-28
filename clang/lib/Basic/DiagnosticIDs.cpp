@@ -502,11 +502,8 @@ DiagnosticIDs::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass,
 }
 
 struct clang::WarningOption {
-  // Be safe with the size of 'NameLen' because we don't statically check if
-  // the size will fit in the field; the struct size won't decrease with a
-  // shorter type anyway.
-  size_t NameLen;
   const char *NameStr;
+  uint16_t NameLen;
   uint16_t Members;
   uint16_t SubGroups;
 
@@ -558,7 +555,9 @@ void DiagnosticIDs::getDiagnosticsInGroup(
 bool DiagnosticIDs::getDiagnosticsInGroup(
     StringRef Group,
     SmallVectorImpl<diag::kind> &Diags) const {
-  WarningOption Key = { Group.size(), Group.data(), 0, 0 };
+  if (Group.size() > UINT16_MAX)
+    return true; // Option is too long to be one in the table.
+  WarningOption Key = { Group.data(), (uint16_t)Group.size(), 0, 0 };
   const WarningOption *Found =
   std::lower_bound(OptionTable, OptionTable + OptionTableSize, Key,
                    WarningOptionCompare);
