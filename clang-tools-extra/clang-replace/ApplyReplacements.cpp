@@ -16,6 +16,7 @@
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Rewrite/Core/Rewriter.h"
+#include "clang/Tooling/ReplacementsYaml.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -192,10 +193,14 @@ bool mergeAndDeduplicate(const TUReplacements &TUs,
 }
 
 bool applyReplacements(const FileToReplacementsMap &GroupedReplacements,
-                       clang::SourceManager &SM) {
-  Rewriter Rewrites(SM, LangOptions());
+                       clang::Rewriter &Rewrites) {
 
   // Apply all changes
+  //
+  // FIXME: No longer certain GroupedReplacements is really the best kind of
+  // data structure for applying replacements. Rewriter certainly doesn't care.
+  // However, until we nail down the design of ReplacementGroups, might as well
+  // leave this as is.
   for (FileToReplacementsMap::const_iterator I = GroupedReplacements.begin(),
                                              E = GroupedReplacements.end();
        I != E; ++I) {
@@ -203,17 +208,23 @@ bool applyReplacements(const FileToReplacementsMap &GroupedReplacements,
       return false;
   }
 
-  // Write all changes to disk
-  for (Rewriter::buffer_iterator BufferI = Rewrites.buffer_begin(),
-                                 BufferE = Rewrites.buffer_end();
+  return true;
+}
+
+bool writeFiles(const clang::Rewriter &Rewrites) {
+
+  for (Rewriter::const_buffer_iterator BufferI = Rewrites.buffer_begin(),
+                                       BufferE = Rewrites.buffer_end();
        BufferI != BufferE; ++BufferI) {
+    const char *FileName =
+        Rewrites.getSourceMgr().getFileEntryForID(BufferI->first)->getName();
+
     std::string ErrorInfo;
-    const char *FileName = SM.getFileEntryForID(BufferI->first)->getName();
-    llvm::raw_fd_ostream FileStream(FileName, ErrorInfo,
-                                    llvm::sys::fs::F_Binary);
+
+    llvm::raw_fd_ostream FileStream(FileName, ErrorInfo);
     if (!ErrorInfo.empty()) {
-      errs() << "Unable to open " << FileName << " for writing\n";
-      return false;
+      errs() << "Warning: Could not write to " << FileName << "\n";
+      continue;
     }
     BufferI->second.write(FileStream);
   }

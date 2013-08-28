@@ -16,6 +16,7 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/DiagnosticOptions.h"
 #include "clang/Basic/SourceManager.h"
+#include "clang/Rewrite/Core/Rewriter.h"
 #include "llvm/Support/CommandLine.h"
 
 using namespace llvm;
@@ -81,6 +82,14 @@ int main(int argc, char **argv) {
   if (!mergeAndDeduplicate(TUs, GroupedReplacements, SM))
     return 1;
 
-  if (!applyReplacements(GroupedReplacements, SM))
+  Rewriter DestRewriter(SM, LangOptions());
+  if (!applyReplacements(GroupedReplacements, DestRewriter)) {
+    errs() << "Failed to apply all replacements. No changes made.\n";
     return 1;
+  }
+
+  if (!writeFiles(DestRewriter))
+    return 1;
+
+  return 0;
 }

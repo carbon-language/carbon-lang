@@ -16,7 +16,7 @@
 #ifndef CPP11_MIGRATE_APPLYCHANGEDESCRIPTIONS_H
 #define CPP11_MIGRATE_APPLYCHANGEDESCRIPTIONS_H
 
-#include "clang/Tooling/ReplacementsYaml.h"
+#include "clang/Tooling/Refactoring.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/system_error.h"
@@ -26,6 +26,7 @@
 namespace clang {
 
 class DiagnosticsEngine;
+class Rewriter;
 
 namespace replace {
 
@@ -82,12 +83,19 @@ bool mergeAndDeduplicate(const TUReplacements &TUs,
 ///
 /// \param[in] GroupedReplacements Deduplicated and conflict free Replacements
 /// to apply.
-/// \param[in] SM SourceManager required to construct clang::Rewriter.
+/// \param[out] Rewrites The results of applying replacements will be applied
+/// to this Rewriter.
 ///
 /// \returns \li true If all changes were applied successfully.
 ///          \li false If a replacement failed to apply.
 bool applyReplacements(const FileToReplacementsMap &GroupedReplacements,
-                       clang::SourceManager &SM);
+                       clang::Rewriter &Rewrites);
+
+/// \brief Write the contents of \c FileContents to disk. Keys of the map are
+/// filenames and values are the new contents for those files.
+///
+/// \param[in] Rewrites Rewriter containing written files to write to disk.
+bool writeFiles(const clang::Rewriter &Rewrites);
 
 /// \brief Delete the replacement files.
 ///
