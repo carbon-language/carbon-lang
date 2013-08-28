@@ -512,6 +512,11 @@ set(CPACK_RESOURCE_FILE_LICENSE "${LLVM_MAIN_SRC_DIR}/LICENSE.TXT")
 if(WIN32 AND NOT UNIX)
   set(CPACK_PACKAGE_ICON "${LLVM_MAIN_SRC_DIR}\\\\cmake\\\\nsis_logo.bmp")
   set(CPACK_NSIS_MODIFY_PATH "ON")
+  set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL "ON")
+  set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS
+    "ExecWait '$INSTDIR/tools/msbuild/install.bat'")
+  set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS
+    "ExecWait '$INSTDIR/tools/msbuild/uninstall.bat'")
 endif()
 include(CPack)
 
