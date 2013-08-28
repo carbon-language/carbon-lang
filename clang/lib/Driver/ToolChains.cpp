@@ -1021,9 +1021,18 @@ Generic_GCC::GCCInstallationDetector::GCCInstallationDetector(
 
     Prefixes.push_back(GCCToolchainDir);
   } else {
-    Prefixes.push_back(D.SysRoot);
-    Prefixes.push_back(D.SysRoot + "/usr");
+    // If we have a SysRoot, try that first.
+    if (!D.SysRoot.empty()) {
+      Prefixes.push_back(D.SysRoot);
+      Prefixes.push_back(D.SysRoot + "/usr");
+    }
+
+    // Then look for gcc installed alongside clang.
     Prefixes.push_back(D.InstalledDir + "/..");
+
+    // And finally in /usr.
+    if (D.SysRoot.empty())
+      Prefixes.push_back("/usr");
   }
 
   // Loop over the various components which exist and select the best GCC
