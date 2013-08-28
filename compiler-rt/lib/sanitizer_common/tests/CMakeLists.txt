@@ -166,3 +166,8 @@ if(ANDROID)
   # Add unit test to test suite.
   add_dependencies(SanitizerUnitTests SanitizerTest)
 endif()
+
+# Check code style as a part of check-sanitizer command.
+if(UNIX)
+  add_dependencies(SanitizerUnitTests SanitizerLintCheck)
+endif()

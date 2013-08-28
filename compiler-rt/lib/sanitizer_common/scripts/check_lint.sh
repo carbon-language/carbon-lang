@@ -5,17 +5,11 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 # Guess path to LLVM_CHECKOUT if not provided
 if [ "${LLVM_CHECKOUT}" == "" ]; then
   LLVM_CHECKOUT="${SCRIPT_DIR}/../../../../../"
-  echo "LLVM Checkout: ${LLVM_CHECKOUT}"
 fi
 
 # Cpplint setup
 cd ${SCRIPT_DIR}
-if [ ! -d cpplint ]; then
-  svn co http://google-styleguide.googlecode.com/svn/trunk/cpplint cpplint
-else
-  (cd cpplint && svn up)
-fi
-CPPLINT=${SCRIPT_DIR}/cpplint/cpplint.py
+CPPLINT=${SCRIPT_DIR}/cpplint.py
 
 # Filters
 # TODO: remove some of these filters
@@ -37,11 +31,16 @@ SANITIZER_INCLUDES_LINT_FILTER=${COMMON_LINT_FILTER},-runtime/int
 cd ${LLVM_CHECKOUT}
 
 EXITSTATUS=0
+LOG=$(mktemp)
 
 run_lint() {
   FILTER=$1
   shift
-  ${CPPLINT} --filter=${FILTER} "$@"
+  if [ "${SILENT}" == "1" ]; then
+    ${CPPLINT} --filter=${FILTER} "$@" 2>>$LOG
+  else
+    ${CPPLINT} --filter=${FILTER} "$@"
+  fi
   if [ "$?" != "0" ]; then
     EXITSTATUS=1
   fi
@@ -92,10 +91,13 @@ run_lint ${LSAN_LIT_TEST_LINT_FILTER} ${LSAN_RTL}/lit_tests/*/*.cc
 FILES=${COMMON_RTL}/*.inc
 for FILE in $FILES; do
     TMPFILE=$(mktemp -u ${FILE}.XXXXX).cc
-    echo "Checking $FILE"
     cp -f $FILE $TMPFILE && \
         run_lint ${COMMON_RTL_INC_LINT_FILTER} $TMPFILE
     rm $TMPFILE
 done
+
+if [ "$EXITSTATUS" != "0" ]; then
+  cat $LOG | grep -v "Done processing" | grep -v "Total errors found"
+fi
 
 exit $EXITSTATUS

@@ -100,6 +100,16 @@ else()
   endforeach()
 endif()
 
+# Add target to check code style for sanitizer runtimes.
+if(UNIX)
+  set(SANITIZER_LINT_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/scripts/check_lint.sh)
+  add_custom_target(SanitizerLintCheck ALL
+    COMMAND LLVM_CHECKOUT=${LLVM_MAIN_SRC_DIR} SILENT=1 ${SANITIZER_LINT_SCRIPT}
+    DEPENDS ${SANITIZER_LINT_SCRIPT}
+    COMMENT "Running lint check for sanitizer sources..."
+    VERBATIM)
+endif()
+
 # Unit tests for common sanitizer runtime.
 if(LLVM_INCLUDE_TESTS)
   add_subdirectory(tests)
