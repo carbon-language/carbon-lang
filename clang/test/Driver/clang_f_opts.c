@@ -45,7 +45,6 @@
 // CHECK-NO-UNROLL-LOOPS: "-fno-unroll-loops"
 
 // RUN: %clang -### -S -fvectorize %s 2>&1 | FileCheck -check-prefix=CHECK-VECTORIZE %s
-// RUN: %clang -### -S -fvectorize -fno-unroll-loops %s 2>&1 | FileCheck -check-prefix=CHECK-VECTORIZE-NO-UNROLL %s
 // RUN: %clang -### -S -fno-vectorize -fvectorize %s 2>&1 | FileCheck -check-prefix=CHECK-VECTORIZE %s
 // RUN: %clang -### -S -fno-vectorize %s 2>&1 | FileCheck -check-prefix=CHECK-NO-VECTORIZE %s
 // RUN: %clang -### -S -fvectorize -fno-vectorize %s 2>&1 | FileCheck -check-prefix=CHECK-NO-VECTORIZE %s
@@ -66,8 +65,6 @@
 // RUN: %clang -### -S -Oz %s 2>&1 | FileCheck -check-prefix=CHECK-NO-VECTORIZE %s
 // CHECK-VECTORIZE: "-vectorize-loops"
 // CHECK-NO-VECTORIZE-NOT: "-vectorize-loops"
-// CHECK-VECTORIZE-NOT: "-backend-option" "-force-vector-unroll=1"
-// CHECK-VECTORIZE-NO-UNROLL: "-backend-option" "-force-vector-unroll=1"
 
 // RUN: %clang -### -S -fslp-vectorize %s 2>&1 | FileCheck -check-prefix=CHECK-SLP-VECTORIZE %s
 // RUN: %clang -### -S -fno-slp-vectorize -fslp-vectorize %s 2>&1 | FileCheck -check-prefix=CHECK-SLP-VECTORIZE %s
