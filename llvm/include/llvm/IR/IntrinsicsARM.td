@@ -163,7 +163,6 @@ let Properties = [IntrNoMem, Commutative] in {
   def int_arm_neon_vrhaddu : Neon_2Arg_Intrinsic;
   def int_arm_neon_vqadds : Neon_2Arg_Intrinsic;
   def int_arm_neon_vqaddu : Neon_2Arg_Intrinsic;
-  def int_arm_neon_vaddhn : Neon_2Arg_Narrow_Intrinsic;
   def int_arm_neon_vraddhn : Neon_2Arg_Narrow_Intrinsic;
 
   // Vector Multiply.
@@ -174,10 +173,6 @@ let Properties = [IntrNoMem, Commutative] in {
   def int_arm_neon_vmullu : Neon_2Arg_Long_Intrinsic;
   def int_arm_neon_vmullp : Neon_2Arg_Long_Intrinsic;
   def int_arm_neon_vqdmull : Neon_2Arg_Long_Intrinsic;
-
-  // Vector Multiply and Accumulate/Subtract.
-  def int_arm_neon_vqdmlal : Neon_3Arg_Long_Intrinsic;
-  def int_arm_neon_vqdmlsl : Neon_3Arg_Long_Intrinsic;
 
   // Vector Maximum.
   def int_arm_neon_vmaxs : Neon_2Arg_Intrinsic;
@@ -201,7 +196,6 @@ def int_arm_neon_vhsubs : Neon_2Arg_Intrinsic;
 def int_arm_neon_vhsubu : Neon_2Arg_Intrinsic;
 def int_arm_neon_vqsubs : Neon_2Arg_Intrinsic;
 def int_arm_neon_vqsubu : Neon_2Arg_Intrinsic;
-def int_arm_neon_vsubhn : Neon_2Arg_Narrow_Intrinsic;
 def int_arm_neon_vrsubhn : Neon_2Arg_Narrow_Intrinsic;
 
 // Vector Absolute Compare.
