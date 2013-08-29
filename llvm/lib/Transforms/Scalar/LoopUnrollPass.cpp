@@ -55,8 +55,6 @@ namespace {
       CurrentAllowPartial = (P == -1) ? UnrollAllowPartial : (bool)P;
 
       UserThreshold = (T != -1) || (UnrollThreshold.getNumOccurrences() > 0);
-      UserAllowPartial = (P != -1) ||
-                         (UnrollAllowPartial.getNumOccurrences() > 0);
 
       initializeLoopUnrollPass(*PassRegistry::getPassRegistry());
     }
@@ -78,7 +76,6 @@ namespace {
     unsigned CurrentThreshold;
     bool     CurrentAllowPartial;
     bool     UserThreshold;        // CurrentThreshold is user-specified.
-    bool     UserAllowPartial;     // CurrentAllowPartial is user-specified.
 
     bool runOnLoop(Loop *L, LPPassManager &LPM);
 
@@ -148,20 +145,16 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
         << "] Loop %" << Header->getName() << "\n");
   (void)Header;
 
-  TargetTransformInfo::UnrollingPreferences UP;
-  bool HasUP = TTI.getUnrollingPreferences(UP);
-
   // Determine the current unrolling threshold.  While this is normally set
   // from UnrollThreshold, it is overridden to a smaller value if the current
   // function is marked as optimize-for-size, and the unroll threshold was
   // not user specified.
-  unsigned Threshold = (HasUP && !UserThreshold) ? UP.Threshold :
-                                                   CurrentThreshold;
+  unsigned Threshold = CurrentThreshold;
   if (!UserThreshold &&
       Header->getParent()->getAttributes().
         hasAttribute(AttributeSet::FunctionIndex,
                      Attribute::OptimizeForSize))
-    Threshold = HasUP ? UP.OptSizeThreshold : OptSizeUnrollThreshold;
+    Threshold = OptSizeUnrollThreshold;
 
   // Find trip count and trip multiple if count is not available
   unsigned TripCount = 0;
@@ -191,9 +184,6 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
     Count = TripCount;
   }
 
-  bool Runtime = (HasUP && UnrollRuntime.getNumOccurrences() == 0) ?
-                 UP.Runtime : UnrollRuntime;
-
   // Enforce the threshold.
   if (Threshold != NoThreshold) {
     unsigned NumInlineCandidates;
@@ -214,9 +204,7 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
     if (TripCount != 1 && Size > Threshold) {
       DEBUG(dbgs() << "  Too large to fully unroll with count: " << Count
             << " because size: " << Size << ">" << Threshold << "\n");
-      bool AllowPartial = (HasUP && !UserAllowPartial) ? UP.Partial :
-                                                         CurrentAllowPartial;
-      if (!AllowPartial && !(Runtime && TripCount == 0)) {
+      if (!CurrentAllowPartial && !(UnrollRuntime && TripCount == 0)) {
         DEBUG(dbgs() << "  will not try to unroll partially because "
               << "-unroll-allow-partial not given\n");
         return false;
@@ -227,7 +215,7 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
         while (Count != 0 && TripCount%Count != 0)
           Count--;
       }
-      else if (Runtime) {
+      else if (UnrollRuntime) {
         // Reduce unroll count to be a lower power-of-two value
         while (Count != 0 && Size > Threshold) {
           Count >>= 1;
@@ -243,7 +231,7 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
   }
 
   // Unroll the loop.
-  if (!UnrollLoop(L, Count, TripCount, Runtime, TripMultiple, LI, &LPM))
+  if (!UnrollLoop(L, Count, TripCount, UnrollRuntime, TripMultiple, LI, &LPM))
     return false;
 
   return true;

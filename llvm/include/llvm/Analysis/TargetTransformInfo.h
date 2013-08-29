@@ -191,20 +191,6 @@ public:
   /// incurs significant execution cost.
   virtual bool isLoweredToCall(const Function *F) const;
 
-  /// Parameters that control the generic loop unrolling transformation.
-  struct UnrollingPreferences {
-    unsigned Threshold; ///< The cost threshold for the unrolled loop.
-    unsigned OptSizeThreshold; ///< The cost threshold for the unrolled loop
-                               ///< when optimizing for size.
-    bool     Partial;   ///< Allow partial loop unrolling.
-    bool     Runtime;   ///< Perform runtime unrolling.
-  };
-
-  /// \brief Get target-customized preferences for the generic loop unrolling
-  /// transformation. Returns true if the UnrollingPreferences struct has been
-  /// initialized.
-  virtual bool getUnrollingPreferences(UnrollingPreferences &UP) const;
-
   /// @}
 
   /// \name Scalar Target Information
