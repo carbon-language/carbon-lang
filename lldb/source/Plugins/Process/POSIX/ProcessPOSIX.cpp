@@ -499,8 +499,6 @@ ProcessPOSIX::RefreshStateAfterStop()
         lldb::tid_t tid = message.GetTID();
         if (log)
             log->Printf ("ProcessPOSIX::%s(), message_queue size = %d, pid = %" PRIi64, __FUNCTION__, (int)m_message_queue.size(), tid);
-        POSIXThread *thread = static_cast<POSIXThread*>(
-            GetThreadList().FindThreadByID(tid, false).get());
 
         if (message.GetKind() == ProcessMessage::eNewThreadMessage)
         {
@@ -517,6 +515,8 @@ ProcessPOSIX::RefreshStateAfterStop()
 
         m_thread_list.RefreshStateAfterStop();
 
+        POSIXThread *thread = static_cast<POSIXThread*>(
+            GetThreadList().FindThreadByID(tid, false).get());
         if (thread)
             thread->Notify(message);
 
