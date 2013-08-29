@@ -18,6 +18,7 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/ValueHandle.h"
 
 namespace llvm {
   class BasicBlock;
@@ -65,7 +66,9 @@ namespace llvm {
     Function *ValueFn;       // llvm.dbg.value
 
     SmallVector<Value *, 4> AllEnumTypes;
-    SmallVector<Value *, 4> AllRetainTypes;
+    /// Use TrackingVH to collect RetainTypes, since they can be updated
+    /// later on.
+    SmallVector<TrackingVH<MDNode>, 4> AllRetainTypes;
     SmallVector<Value *, 4> AllSubprograms;
     SmallVector<Value *, 4> AllGVs;
     SmallVector<Value *, 4> AllImportedModules;

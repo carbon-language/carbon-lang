@@ -40,7 +40,16 @@ void DIBuilder::finalize() {
   DIArray Enums = getOrCreateArray(AllEnumTypes);
   DIType(TempEnumTypes).replaceAllUsesWith(Enums);
 
-  DIArray RetainTypes = getOrCreateArray(AllRetainTypes);
+  SmallVector<Value *, 16> RetainValues;
+  // Declarations and definitions of the same type may be retained. Some
+  // clients RAUW these pairs, leaving duplicates in the retained types
+  // list. Use a set to remove the duplicates while we transform the
+  // TrackingVHs back into Values.
+  SmallPtrSet<Value *, 16> RetainSet;
+  for (unsigned I = 0, E = AllRetainTypes.size(); I < E; I++)
+    if (RetainSet.insert(AllRetainTypes[I]))
+      RetainValues.push_back(AllRetainTypes[I]);
+  DIArray RetainTypes = getOrCreateArray(RetainValues);
   DIType(TempRetainTypes).replaceAllUsesWith(RetainTypes);
 
   DIArray SPs = getOrCreateArray(AllSubprograms);
@@ -624,6 +633,8 @@ DICompositeType DIBuilder::createClassType(DIDescriptor Context, StringRef Name,
   DICompositeType R(MDNode::get(VMContext, Elts));
   assert(R.isCompositeType() &&
          "createClassType should return a DICompositeType");
+  if (!UniqueIdentifier.empty())
+    retainType(R);
   return R;
 }
 
@@ -659,6 +670,8 @@ DICompositeType DIBuilder::createStructType(DIDescriptor Context,
   DICompositeType R(MDNode::get(VMContext, Elts));
   assert(R.isCompositeType() &&
          "createStructType should return a DICompositeType");
+  if (!UniqueIdentifier.empty())
+    retainType(R);
   return R;
 }
 
@@ -688,7 +701,10 @@ DICompositeType DIBuilder::createUnionType(DIDescriptor Scope, StringRef Name,
     NULL,
     UniqueIdentifier.empty() ? NULL : MDString::get(VMContext, UniqueIdentifier)
   };
-  return DICompositeType(MDNode::get(VMContext, Elts));
+  DICompositeType R(MDNode::get(VMContext, Elts));
+  if (!UniqueIdentifier.empty())
+    retainType(R);
+  return R;
 }
 
 /// createSubroutineType - Create subroutine type.
@@ -741,6 +757,8 @@ DICompositeType DIBuilder::createEnumerationType(
   };
   MDNode *Node = MDNode::get(VMContext, Elts);
   AllEnumTypes.push_back(Node);
+  if (!UniqueIdentifier.empty())
+    retainType(Node);
   return DICompositeType(Node);
 }
 
@@ -844,7 +862,7 @@ DIType DIBuilder::createObjectPointerType(DIType Ty) {
 /// retainType - Retain DIType in a module even if it is not referenced
 /// through debug info anchors.
 void DIBuilder::retainType(DIType T) {
-  AllRetainTypes.push_back(T);
+  AllRetainTypes.push_back(TrackingVH<MDNode>(T));
 }
 
 /// createUnspecifiedParameter - Create unspeicified type descriptor
@@ -887,6 +905,8 @@ DICompositeType DIBuilder::createForwardDecl(unsigned Tag, StringRef Name,
   DICompositeType RetTy(Node);
   assert(RetTy.isCompositeType() &&
          "createForwardDecl result should be a DIType");
+  if (!UniqueIdentifier.empty())
+    retainType(RetTy);
   return RetTy;
 }
 
