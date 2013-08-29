@@ -538,7 +538,7 @@ template <unsigned> struct __static_assert_check {};
 #endif
 
 #ifndef _LIBCPP_EXTERN_TEMPLATE
-#define _LIBCPP_EXTERN_TEMPLATE(...) extern template __VA_ARGS__;
+#define _LIBCPP_EXTERN_TEMPLATE(...)
 #endif
 
 #ifndef _LIBCPP_EXTERN_TEMPLATE2
