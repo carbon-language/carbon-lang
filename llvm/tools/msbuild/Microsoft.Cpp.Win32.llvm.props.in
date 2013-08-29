@@ -1,0 +1,9 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">  
+  <Import Project="$(VCTargetsPath)\Platforms\$(Platform)\PlatformToolsets\v100\Microsoft.Cpp.$(Platform).v100.props"/>
+
+  <PropertyGroup>
+    <LLVMInstallDir>$(Registry:HKEY_LOCAL_MACHINE\SOFTWARE\LLVM\@REG_KEY@)</LLVMInstallDir>
+    <LLVMInstallDir Condition="'$(LLVMInstallDir)' == ''">$(Registry:HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\LLVM\@REG_KEY@)</LLVMInstallDir>
+    <ExecutablePath>$(LLVMInstallDir)\msbuild-bin;$(ExecutablePath)</ExecutablePath>
+  </PropertyGroup>
+</Project>

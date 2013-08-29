@@ -1,9 +1,0 @@
-﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">  
-  <Import Project="$(VCTargetsPath)\Platforms\$(Platform)\PlatformToolsets\v100\Microsoft.Cpp.$(Platform).v100.props"/>
-
-  <PropertyGroup>
-    <ClangInstallDir>$(Registry:HKEY_LOCAL_MACHINE\SOFTWARE\LLVM\LLVM 3.4.svn)</ClangInstallDir>
-    <ClangInstallDir Condition="'$(ClangInstallDir)' == ''">$(Registry:HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\LLVM\LLVM 3.4.svn)</ClangInstallDir>
-    <ExecutablePath>$(ClangInstallDir)\msbuild-bin;$(ExecutablePath)</ExecutablePath>
-  </PropertyGroup>
-</Project>
