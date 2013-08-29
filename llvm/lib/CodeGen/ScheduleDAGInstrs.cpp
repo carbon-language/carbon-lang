@@ -640,8 +640,7 @@ void addChainDependency (AliasAnalysis *AA, const MachineFrameInfo *MFI,
                          bool isNormalMemory = false) {
   // If this is a false dependency,
   // do not add the edge, but rememeber the rejected node.
-  if (!EnableAASchedMI ||
-      MIsNeedChainEdge(AA, MFI, SUa->getInstr(), SUb->getInstr())) {
+  if (!AA || MIsNeedChainEdge(AA, MFI, SUa->getInstr(), SUb->getInstr())) {
     SDep Dep(SUa, isNormalMemory ? SDep::MayAliasMem : SDep::Barrier);
     Dep.setLatency(TrueMemOrderLatency);
     SUb->addPred(Dep);
@@ -692,6 +691,11 @@ void ScheduleDAGInstrs::initSUnits() {
 /// operands.
 void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
                                         RegPressureTracker *RPTracker) {
+  const TargetSubtargetInfo &ST = TM.getSubtarget<TargetSubtargetInfo>();
+  bool UseAA = EnableAASchedMI.getNumOccurrences() > 0 ? EnableAASchedMI
+                                                       : ST.useAA();
+  AliasAnalysis *AAForDep = UseAA ? AA : 0;
+
   // Create an SUnit for each real instruction.
   initSUnits();
 
@@ -830,20 +834,20 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
         unsigned ChainLatency = 0;
         if (AliasChain->getInstr()->mayLoad())
           ChainLatency = TrueMemOrderLatency;
-        addChainDependency(AA, MFI, SU, AliasChain, RejectMemNodes,
+        addChainDependency(AAForDep, MFI, SU, AliasChain, RejectMemNodes,
                            ChainLatency);
       }
       AliasChain = SU;
       for (unsigned k = 0, m = PendingLoads.size(); k != m; ++k)
-        addChainDependency(AA, MFI, SU, PendingLoads[k], RejectMemNodes,
+        addChainDependency(AAForDep, MFI, SU, PendingLoads[k], RejectMemNodes,
                            TrueMemOrderLatency);
       for (MapVector<const Value *, SUnit *>::iterator I = AliasMemDefs.begin(),
            E = AliasMemDefs.end(); I != E; ++I)
-        addChainDependency(AA, MFI, SU, I->second, RejectMemNodes);
+        addChainDependency(AAForDep, MFI, SU, I->second, RejectMemNodes);
       for (MapVector<const Value *, std::vector<SUnit *> >::iterator I =
            AliasMemUses.begin(), E = AliasMemUses.end(); I != E; ++I) {
         for (unsigned i = 0, e = I->second.size(); i != e; ++i)
-          addChainDependency(AA, MFI, SU, I->second[i], RejectMemNodes,
+          addChainDependency(AAForDep, MFI, SU, I->second[i], RejectMemNodes,
                              TrueMemOrderLatency);
       }
       adjustChainDeps(AA, MFI, SU, &ExitSU, RejectMemNodes,
@@ -876,7 +880,8 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
         MapVector<const Value *, SUnit *>::iterator IE =
           ((ThisMayAlias) ? AliasMemDefs.end() : NonAliasMemDefs.end());
         if (I != IE) {
-          addChainDependency(AA, MFI, SU, I->second, RejectMemNodes, 0, true);
+          addChainDependency(AAForDep, MFI, SU, I->second, RejectMemNodes,
+                             0, true);
           I->second = SU;
         } else {
           if (ThisMayAlias)
@@ -891,7 +896,7 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
           ((ThisMayAlias) ? AliasMemUses.end() : NonAliasMemUses.end());
         if (J != JE) {
           for (unsigned i = 0, e = J->second.size(); i != e; ++i)
-            addChainDependency(AA, MFI, SU, J->second[i], RejectMemNodes,
+            addChainDependency(AAForDep, MFI, SU, J->second[i], RejectMemNodes,
                                TrueMemOrderLatency, true);
           J->second.clear();
         }
@@ -900,11 +905,11 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
         // Add dependencies from all the PendingLoads, i.e. loads
         // with no underlying object.
         for (unsigned k = 0, m = PendingLoads.size(); k != m; ++k)
-          addChainDependency(AA, MFI, SU, PendingLoads[k], RejectMemNodes,
+          addChainDependency(AAForDep, MFI, SU, PendingLoads[k], RejectMemNodes,
                              TrueMemOrderLatency);
         // Add dependence on alias chain, if needed.
         if (AliasChain)
-          addChainDependency(AA, MFI, SU, AliasChain, RejectMemNodes);
+          addChainDependency(AAForDep, MFI, SU, AliasChain, RejectMemNodes);
         // But we also should check dependent instructions for the
         // SU in question.
         adjustChainDeps(AA, MFI, SU, &ExitSU, RejectMemNodes,
@@ -934,7 +939,7 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
           // potentially aliasing stores.
           for (MapVector<const Value *, SUnit *>::iterator I =
                  AliasMemDefs.begin(), E = AliasMemDefs.end(); I != E; ++I)
-            addChainDependency(AA, MFI, SU, I->second, RejectMemNodes);
+            addChainDependency(AAForDep, MFI, SU, I->second, RejectMemNodes);
 
           PendingLoads.push_back(SU);
           MayAlias = true;
@@ -956,7 +961,8 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
           MapVector<const Value *, SUnit *>::iterator IE =
             ((ThisMayAlias) ? AliasMemDefs.end() : NonAliasMemDefs.end());
           if (I != IE)
-            addChainDependency(AA, MFI, SU, I->second, RejectMemNodes, 0, true);
+            addChainDependency(AAForDep, MFI, SU, I->second, RejectMemNodes,
+                               0, true);
           if (ThisMayAlias)
             AliasMemUses[V].push_back(SU);
           else
@@ -966,7 +972,7 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
           adjustChainDeps(AA, MFI, SU, &ExitSU, RejectMemNodes, /*Latency=*/0);
         // Add dependencies on alias and barrier chains, if needed.
         if (MayAlias && AliasChain)
-          addChainDependency(AA, MFI, SU, AliasChain, RejectMemNodes);
+          addChainDependency(AAForDep, MFI, SU, AliasChain, RejectMemNodes);
         if (BarrierChain)
           BarrierChain->addPred(SDep(SU, SDep::Barrier));
       }

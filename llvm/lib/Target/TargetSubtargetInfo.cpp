@@ -35,3 +35,7 @@ bool TargetSubtargetInfo::enablePostRAScheduler(
   return false;
 }
 
+bool TargetSubtargetInfo::useAA() const {
+  return false;
+}
+

@@ -75,6 +75,10 @@ public:
   virtual void adjustSchedDependency(SUnit *def, SUnit *use,
                                      SDep& dep) const { }
 
+  /// \brief Enable use of alias analysis during code generation (during MI
+  /// scheduling, DAGCombine, etc.).
+  virtual bool useAA() const;
+
   /// \brief Reset the features for the subtarget.
   virtual void resetSubtargetFeatures(const MachineFunction *MF) { }
 };
