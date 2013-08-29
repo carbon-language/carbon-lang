@@ -165,6 +165,11 @@ TEST_F(WinLinkParserTest, Force) {
   EXPECT_TRUE(_context.allowRemainingUndefines());
 }
 
+TEST_F(WinLinkParserTest, ForceUnresolved) {
+  EXPECT_FALSE(parse("link.exe", "/force:unresolved", "a.obj", nullptr));
+  EXPECT_TRUE(_context.allowRemainingUndefines());
+}
+
 TEST_F(WinLinkParserTest, NoNxCompat) {
   EXPECT_FALSE(parse("link.exe", "/nxcompat:no", "a.obj", nullptr));
   EXPECT_FALSE(_context.isNxCompat());

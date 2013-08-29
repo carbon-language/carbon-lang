@@ -30,6 +30,7 @@ def incl_c : Separate<["/", "-"], "include">, Alias<incl>;
 
 def force : F<"force">,
     HelpText<"Allow undefined symbols when creating executables">;
+def force_unresolved : F<"force:unresolved">;
 
 def ref : F<"opt:ref">;
 def no_ref : F<"opt:noref">,

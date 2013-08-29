@@ -363,7 +363,9 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
       break;
 
     case OPT_force:
-      // handle /force
+    case OPT_force_unresolved:
+      // handle /force or /force:unresolved. We do not currently support
+      // /force:multiple.
       ctx.setAllowRemainingUndefines(true);
       break;
 
