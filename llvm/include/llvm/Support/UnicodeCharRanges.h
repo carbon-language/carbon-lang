@@ -17,82 +17,83 @@
 #include "llvm/Support/MutexGuard.h"
 #include "llvm/Support/raw_ostream.h"
 
-namespace {
+#include <algorithm>
 
+namespace llvm {
+namespace sys {
+
+/// \brief Represents a closed range of Unicode code points [Lower, Upper].
 struct UnicodeCharRange {
   uint32_t Lower;
   uint32_t Upper;
 };
-typedef llvm::ArrayRef<UnicodeCharRange> UnicodeCharSet;
 
-/// Returns true if each of the ranges in \p CharSet is a proper closed range
-/// [min, max], and if the ranges themselves are ordered and non-overlapping.
-static inline bool isValidCharSet(UnicodeCharSet CharSet) {
-#ifndef NDEBUG
-  static llvm::SmallPtrSet<const UnicodeCharRange *, 16> Validated;
-  static llvm::sys::Mutex ValidationMutex;
+inline bool operator<(uint32_t Value, UnicodeCharRange Range) {
+  return Value < Range.Lower;
+}
+inline bool operator<(UnicodeCharRange Range, uint32_t Value) {
+  return Range.Upper < Value;
+}
 
-  // Check the validation cache.
-  {
-    llvm::MutexGuard Guard(ValidationMutex);
-    if (Validated.count(CharSet.data()))
-      return true;
-  }
+/// \brief Holds a reference to an ordered array of UnicodeCharRange and allows
+/// to quickly check if a code point is contained in the set represented by this
+/// array.
+class UnicodeCharSet {
+public:
+  typedef llvm::ArrayRef<UnicodeCharRange> CharRanges;
 
-  // Walk through the ranges.
-  uint32_t Prev = 0;
-  for (UnicodeCharSet::iterator I = CharSet.begin(), E = CharSet.end();
-       I != E; ++I) {
-    if (I != CharSet.begin() && Prev >= I->Lower) {
-      DEBUG(llvm::dbgs() << "Upper bound 0x");
-      DEBUG(llvm::dbgs().write_hex(Prev));
-      DEBUG(llvm::dbgs() << " should be less than succeeding lower bound 0x");
-      DEBUG(llvm::dbgs().write_hex(I->Lower) << "\n");
-      return false;
-    }
-    if (I->Upper < I->Lower) {
-      DEBUG(llvm::dbgs() << "Upper bound 0x");
-      DEBUG(llvm::dbgs().write_hex(I->Lower));
-      DEBUG(llvm::dbgs() << " should not be less than lower bound 0x");
-      DEBUG(llvm::dbgs().write_hex(I->Upper) << "\n");
-      return false;
-    }
-    Prev = I->Upper;
-  }
-
-  // Update the validation cache.
-  {
-    llvm::MutexGuard Guard(ValidationMutex);
-    Validated.insert(CharSet.data());
-  }
+  /// \brief Constructs a UnicodeCharSet instance from an array of
+  /// UnicodeCharRanges.
+  ///
+  /// Array pointed by \p Ranges should have the lifetime at least as long as
+  /// the UnicodeCharSet instance, and should not change. Array is validated by
+  /// the constructor, so it makes sense to create as few UnicodeCharSet
+  /// instances per each array of ranges, as possible.
+#ifdef NDEBUG
+  LLVM_CONSTEXPR
 #endif
-  return true;
-}
-
-} // namespace
-
-
-/// Returns true if the Unicode code point \p C is within the set of
-/// characters specified by \p CharSet.
-LLVM_READONLY static inline bool isCharInSet(uint32_t C,
-                                             UnicodeCharSet CharSet) {
-  assert(isValidCharSet(CharSet));
-
-  size_t LowPoint = 0;
-  size_t HighPoint = CharSet.size();
-
-  // Binary search the set of char ranges.
-  while (HighPoint != LowPoint) {
-    size_t MidPoint = (HighPoint + LowPoint) / 2;
-    if (C < CharSet[MidPoint].Lower)
-      HighPoint = MidPoint;
-    else if (C > CharSet[MidPoint].Upper)
-      LowPoint = MidPoint + 1;
-    else
-      return true;
+  UnicodeCharSet(CharRanges Ranges) : Ranges(Ranges) {
+    assert(rangesAreValid());
   }
 
-  return false;
-}
+  /// \brief Returns true if the character set contains the Unicode code point
+  /// \p C.
+  bool contains(uint32_t C) const {
+    return std::binary_search(Ranges.begin(), Ranges.end(), C);
+  }
+
+private:
+  /// \brief Returns true if each of the ranges is a proper closed range
+  /// [min, max], and if the ranges themselves are ordered and non-overlapping.
+  bool rangesAreValid() const {
+    uint32_t Prev = 0;
+    for (CharRanges::const_iterator I = Ranges.begin(), E = Ranges.end();
+         I != E; ++I) {
+      if (I != Ranges.begin() && Prev >= I->Lower) {
+        DEBUG(llvm::dbgs() << "Upper bound 0x");
+        DEBUG(llvm::dbgs().write_hex(Prev));
+        DEBUG(llvm::dbgs() << " should be less than succeeding lower bound 0x");
+        DEBUG(llvm::dbgs().write_hex(I->Lower) << "\n");
+        return false;
+      }
+      if (I->Upper < I->Lower) {
+        DEBUG(llvm::dbgs() << "Upper bound 0x");
+        DEBUG(llvm::dbgs().write_hex(I->Lower));
+        DEBUG(llvm::dbgs() << " should not be less than lower bound 0x");
+        DEBUG(llvm::dbgs().write_hex(I->Upper) << "\n");
+        return false;
+      }
+      Prev = I->Upper;
+    }
+
+    return true;
+  }
+
+  const CharRanges Ranges;
+};
+
+} // namespace sys
+} // namespace llvm
+
 
 #endif // LLVM_SUPPORT_UNICODECHARRANGES_H

@@ -80,7 +80,7 @@ namespace llvm {
 
     /// Construct an ArrayRef from a C array.
     template <size_t N>
-    /*implicit*/ ArrayRef(const T (&Arr)[N])
+    /*implicit*/ LLVM_CONSTEXPR ArrayRef(const T (&Arr)[N])
       : Data(Arr), Length(N) {}
 
     /// @}

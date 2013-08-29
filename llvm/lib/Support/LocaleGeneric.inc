@@ -229,8 +229,9 @@ bool isPrint(int UCS) {
     { 0x2B735, 0x2B73F }, { 0x2B81E, 0x2F7FF }, { 0x2FA1E, 0xF0000 },
     { 0xFFFFE, 0xFFFFF }, { 0x10FFFE, 0x10FFFF }
   };
+  static const UnicodeCharSet NonPrintables(NonPrintableRanges);
 
-  return UCS >= 0 && UCS <= 0x10FFFF && !isCharInSet(UCS, NonPrintableRanges);
+  return UCS >= 0 && UCS <= 0x10FFFF && !NonPrintables.contains(UCS);
 }
 
 /// Gets the number of positions a character is likely to occupy when output
@@ -252,7 +253,7 @@ static inline int charWidth(int UCS)
   // Sorted list of non-spacing and enclosing combining mark intervals as
   // defined in "3.6 Combination" of
   // http://www.unicode.org/versions/Unicode6.2.0/UnicodeStandard-6.2.pdf
-  static const UnicodeCharRange CombiningCharacters[] = {
+  static const UnicodeCharRange CombiningCharacterRanges[] = {
     { 0x0300, 0x036F }, { 0x0483, 0x0489 }, { 0x0591, 0x05BD },
     { 0x05BF, 0x05BF }, { 0x05C1, 0x05C2 }, { 0x05C4, 0x05C5 },
     { 0x05C7, 0x05C7 }, { 0x0610, 0x061A }, { 0x064B, 0x065F },
@@ -327,11 +328,12 @@ static inline int charWidth(int UCS)
     { 0x1D17B, 0x1D182 }, { 0x1D185, 0x1D18B }, { 0x1D1AA, 0x1D1AD },
     { 0x1D242, 0x1D244 }, { 0xE0100, 0xE01EF },
   };
+  static const UnicodeCharSet CombiningCharacters(CombiningCharacterRanges);
 
-  if (isCharInSet(UCS, CombiningCharacters))
+  if (CombiningCharacters.contains(UCS))
     return 0;
 
-  static const UnicodeCharRange DoubleWidthCharacters[] = {
+  static const UnicodeCharRange DoubleWidthCharacterRanges[] = {
     // Hangul Jamo
     { 0x1100, 0x11FF },
     // Deprecated fullwidth angle brackets
@@ -352,8 +354,9 @@ static inline int charWidth(int UCS)
     // CJK Unified Ideographs
     { 0x20000, 0x2A6DF }, { 0x2A700, 0x2B81F }, { 0x2F800, 0x2FA1F }
   };
+  static const UnicodeCharSet DoubleWidthCharacters(DoubleWidthCharacterRanges);
 
-  if (isCharInSet(UCS, DoubleWidthCharacters))
+  if (DoubleWidthCharacters.contains(UCS))
     return 2;
   return 1;
 }
