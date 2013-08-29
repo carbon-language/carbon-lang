@@ -138,7 +138,7 @@ ProcessFreeBSD::UpdateThreadList(ThreadList &old_thread_list, ThreadList &new_th
     ThreadSP thread_sp (old_thread_list.FindThreadByID (pid, false));
     if (!thread_sp) {
         ProcessSP me = this->shared_from_this();
-        thread_sp.reset(new POSIXThread(me, pid));
+        thread_sp.reset(new POSIXThread(*me, pid));
         has_updated = true;
     }
 
