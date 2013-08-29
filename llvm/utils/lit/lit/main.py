@@ -73,7 +73,7 @@ class TestingProgressDisplay:
 class TestProvider:
     def __init__(self, tests, maxTime):
         self.maxTime = maxTime
-        self.iter = iter(tests)
+        self.iter = iter(range(len(tests)))
         self.lock = threading.Lock()
         self.startTime = time.time()
         self.canceled = False
@@ -101,12 +101,11 @@ class TestProvider:
         self.lock.release()
         return item
 
-class Tester(threading.Thread):
-    def __init__(self, run_instance, provider, display):
-        threading.Thread.__init__(self)
+class Tester(object):
+    def __init__(self, run_instance, provider, consumer):
         self.run_instance = run_instance
         self.provider = provider
-        self.display = display
+        self.consumer = consumer
 
     def run(self):
         while 1:
@@ -114,8 +113,10 @@ class Tester(threading.Thread):
             if item is None:
                 break
             self.runTest(item)
+        self.consumer.taskFinished()
 
-    def runTest(self, test):
+    def runTest(self, test_index):
+        test = self.run_instance.tests[test_index]
         try:
             self.run_instance.execute_test(test)
         except KeyboardInterrupt:
@@ -123,26 +124,47 @@ class Tester(threading.Thread):
             # bonkers with ctrl-c and we start forking merrily.
             print('\nCtrl-C detected, goodbye.')
             os.kill(0,9)
+        self.consumer.update(test_index, test)
+
+class ThreadResultsConsumer(object):
+    def __init__(self, display):
+        self.display = display
+
+    def update(self, test_index, test):
         self.display.update(test)
 
+    def taskFinished(self):
+        pass
+
+    def handleResults(self):
+        pass
+
+def run_one_tester(run, provider, display):
+    tester = Tester(run, provider, display)
+    tester.run()
+
 def runTests(numThreads, run, provider, display):
-    # If only using one testing thread, don't use threads at all; this lets us
+    consumer = ThreadResultsConsumer(display)
+
+    # If only using one testing thread, don't use tasks at all; this lets us
     # profile, among other things.
     if numThreads == 1:
-        t = Tester(run, provider, display)
-        t.run()
+        run_one_tester(run, provider, consumer)
         return
 
-    # Otherwise spin up the testing threads and wait for them to finish.
-    testers = [Tester(run, provider, display)
-               for i in range(numThreads)]
-    for t in testers:
+    # Start all of the tasks.
+    tasks = [threading.Thread(target=run_one_tester,
+                              args=(run, provider, consumer))
+             for i in range(numThreads)]
+    for t in tasks:
         t.start()
-    try:
-        for t in testers:
-            t.join()
-    except KeyboardInterrupt:
-        sys.exit(2)
+
+    # Allow the consumer to handle results, if necessary.
+    consumer.handleResults()
+
+    # Wait for all the tasks to complete.
+    for t in tasks:
+        t.join()
 
 def main(builtinParameters = {}):
     # Bump the GIL check interval, its more important to get any one thread to a
@@ -362,8 +384,10 @@ def main(builtinParameters = {}):
         provider.cancel()
         return True
       win32api.SetConsoleCtrlHandler(console_ctrl_handler, True)
-
-    runTests(opts.numThreads, run, provider, display)
+    try:
+        runTests(opts.numThreads, run, provider, display)
+    except KeyboardInterrupt:
+        sys.exit(2)
     display.finish()
 
     if not opts.quiet:
