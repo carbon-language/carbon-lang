@@ -700,11 +700,6 @@ void ObjCMigrateASTConsumer::migrateMethodInstanceType(ASTContext &Ctx,
     case OIT_Dictionary:
       ClassName = "NSDictionary";
       break;
-    // For methods where Clang automatically infers instancetype from the selector 
-    // (e.g., all -init* methods), we should not suggest "instancetype" because it 
-    // is redundant,
-    case OIT_MemManage:
-      return;
     case OIT_Singleton:
       migrateFactoryMethod(Ctx, CDecl, OM, OIT_Singleton);
       return;

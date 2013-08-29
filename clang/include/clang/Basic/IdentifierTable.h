@@ -586,7 +586,6 @@ enum ObjCInstanceTypeFamily {
   OIT_None,
   OIT_Array,
   OIT_Dictionary,
-  OIT_MemManage,
   OIT_Singleton
 };
 
