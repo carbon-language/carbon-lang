@@ -43,6 +43,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/FileOutputBuffer.h"
+#include "llvm/Support/Format.h"
 
 using llvm::support::ulittle16_t;
 using llvm::support::ulittle32_t;
@@ -327,6 +328,17 @@ public:
           llvm_unreachable("Unsupported relocation kind");
         }
       }
+    }
+  }
+
+  /// Print atom VAs. Used only for debugging.
+  void printAtomAddresses(uint64_t baseAddr) {
+    for (const auto *layout : _atomLayouts) {
+      const DefinedAtom *atom = cast<DefinedAtom>(layout->_atom);
+      uint64_t addr = layout->_virtualAddr;
+      llvm::dbgs() << llvm::format("0x%08llx: ", addr + baseAddr)
+                   << (atom->name().empty() ? "(anonymous)" : atom->name())
+                   << "\n";
     }
   }
 
@@ -822,6 +834,7 @@ public:
     for (const auto &chunk : _chunks)
       chunk->write(buffer->getBufferStart());
     applyAllRelocations(buffer->getBufferStart());
+    DEBUG(printAllAtomAddresses());
     return buffer->commit();
   }
 
@@ -835,6 +848,13 @@ private:
       if (AtomChunk *chunk = dyn_cast<AtomChunk>(&*cp))
         chunk->applyRelocations(bufferStart, atomRva,
                                 _PECOFFLinkingContext.getBaseAddress());
+  }
+
+  /// Print atom VAs. Used only for debugging.
+  void printAllAtomAddresses() {
+    for (auto &cp : _chunks)
+      if (AtomChunk *chunk = dyn_cast<AtomChunk>(&*cp))
+        chunk->printAtomAddresses(_PECOFFLinkingContext.getBaseAddress());
   }
 
   void addChunk(Chunk *chunk) {
