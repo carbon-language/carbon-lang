@@ -22,7 +22,6 @@
 namespace clang {
   class DiagnosticsEngine;
   class SourceLocation;
-  struct WarningOption;
 
   // Import the diagnostic enums themselves.
   namespace diag {
@@ -240,12 +239,6 @@ public:
   static StringRef getNearestWarningOption(StringRef Group);
 
 private:
-  /// \brief Get the set of all diagnostic IDs in the given group.
-  ///
-  /// \param[out] Diags - On return, the diagnostics in the group.
-  void getDiagnosticsInGroup(const WarningOption *Group,
-                             SmallVectorImpl<diag::kind> &Diags) const;
- 
   /// \brief Classify the specified diagnostic ID into a Level, consumable by
   /// the DiagnosticClient.
   /// 

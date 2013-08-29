@@ -505,17 +505,19 @@ DiagnosticIDs::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass,
 #include "clang/Basic/DiagnosticGroups.inc"
 #undef GET_DIAG_ARRAYS
 
-struct clang::WarningOption {
-  uint16_t NameOffset;
-  uint16_t Members;
-  uint16_t SubGroups;
+namespace {
+  struct WarningOption {
+    uint16_t NameOffset;
+    uint16_t Members;
+    uint16_t SubGroups;
 
-  // String is stored with a pascal-style length byte.
-  StringRef getName() const {
-    return StringRef(DiagGroupNames + NameOffset + 1,
-                     DiagGroupNames[NameOffset]);
-  }
-};
+    // String is stored with a pascal-style length byte.
+    StringRef getName() const {
+      return StringRef(DiagGroupNames + NameOffset + 1,
+                       DiagGroupNames[NameOffset]);
+    }
+  };
+}
 
 // Second the table of options, sorted by name for fast binary lookup.
 static const WarningOption OptionTable[] = {
@@ -538,9 +540,8 @@ StringRef DiagnosticIDs::getWarningOptionForDiag(unsigned DiagID) {
   return StringRef();
 }
 
-void DiagnosticIDs::getDiagnosticsInGroup(
-    const WarningOption *Group,
-    SmallVectorImpl<diag::kind> &Diags) const {
+static void getDiagnosticsInGroup(const WarningOption *Group,
+                                  SmallVectorImpl<diag::kind> &Diags) {
   // Add the members of the option diagnostic set.
   const int16_t *Member = DiagArrays + Group->Members;
   for (; *Member != -1; ++Member)
@@ -562,7 +563,7 @@ bool DiagnosticIDs::getDiagnosticsInGroup(
       Found->getName() != Group)
     return true; // Option not found.
 
-  getDiagnosticsInGroup(Found, Diags);
+  ::getDiagnosticsInGroup(Found, Diags);
   return false;
 }
 
