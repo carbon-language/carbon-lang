@@ -105,6 +105,13 @@ def X86vsext   : SDNode<"X86ISD::VSEXT",
                          SDTypeProfile<1, 1, [SDTCisVec<0>, SDTCisVec<1>,
                                               SDTCisInt<0>, SDTCisInt<1>]>>;
 
+def X86vtrunc   : SDNode<"X86ISD::VTRUNC",
+                         SDTypeProfile<1, 1, [SDTCisVec<0>, SDTCisVec<1>,
+                                              SDTCisInt<0>, SDTCisInt<1>]>>;
+def X86vtruncm   : SDNode<"X86ISD::VTRUNCM",
+                         SDTypeProfile<1, 2, [SDTCisVec<0>, SDTCisVec<1>,
+                                              SDTCisInt<0>, SDTCisInt<1>,
+                                              SDTCisVec<2>, SDTCisInt<2>]>>;
 def X86vfpext  : SDNode<"X86ISD::VFPEXT",
                         SDTypeProfile<1, 1, [SDTCisVec<0>, SDTCisVec<1>,
                                              SDTCisFP<0>, SDTCisFP<1>]>>;

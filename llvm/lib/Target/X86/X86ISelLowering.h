@@ -254,6 +254,12 @@ namespace llvm {
       // VSEXT - Vector integer signed-extend.
       VSEXT,
 
+      // VTRUNC - Vector integer truncate.
+      VTRUNC,
+
+      // VTRUNC - Vector integer truncate with mask.
+      VTRUNCM,
+
       // VFPEXT - Vector FP extend.
       VFPEXT,
 
