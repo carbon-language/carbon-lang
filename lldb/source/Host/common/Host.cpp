@@ -1318,16 +1318,14 @@ Host::GetOSKernelDescription (std::string &s)
 }
 #endif
 
-#if !defined (__APPLE__) && !defined(__linux__)
+#if !defined (__APPLE__) && !defined (__FreeBSD__) && !defined (__FreeBSD_kernel__) && !defined(__linux__)
 uint32_t
 Host::FindProcesses (const ProcessInstanceInfoMatch &match_info, ProcessInstanceInfoList &process_infos)
 {
     process_infos.Clear();
     return process_infos.GetSize();
 }
-#endif // #if !defined (__APPLE__) && !defined(__linux__)
 
-#if !defined (__APPLE__) && !defined (__FreeBSD__) && !defined (__FreeBSD_kernel__) && !defined(__linux__)
 bool
 Host::GetProcessInfo (lldb::pid_t pid, ProcessInstanceInfo &process_info)
 {
