@@ -1870,9 +1870,6 @@ void Sema::DiagnoseAmbiguousLookup(LookupResult &Result) {
       Diag((*DI)->getLocation(), diag::note_ambiguous_candidate) << *DI;
     break;
   }
-
-  default:
-    llvm_unreachable("unknown ambiguity kind");
   }
 }
 
