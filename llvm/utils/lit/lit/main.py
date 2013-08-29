@@ -7,17 +7,16 @@ See lit.pod for more information.
 """
 
 from __future__ import absolute_import
-import math, os, platform, random, re, sys, time, threading, traceback
+import math, os, platform, random, re, sys, time
 
 import lit.ProgressBar
 import lit.LitConfig
 import lit.Test
 import lit.run
 import lit.util
-
 import lit.discovery
 
-class TestingProgressDisplay:
+class TestingProgressDisplay(object):
     def __init__(self, opts, numTests, progressBar=None):
         self.opts = opts
         self.numTests = numTests
@@ -56,107 +55,6 @@ class TestingProgressDisplay:
             print("*" * 20)
 
         sys.stdout.flush()
-
-class TestProvider:
-    def __init__(self, tests, maxTime):
-        self.maxTime = maxTime
-        self.iter = iter(range(len(tests)))
-        self.lock = threading.Lock()
-        self.startTime = time.time()
-        self.canceled = False
-
-    def cancel(self):
-        self.lock.acquire()
-        self.canceled = True
-        self.lock.release()
-
-    def get(self):
-        # Check if we have run out of time.
-        if self.maxTime is not None:
-            if time.time() - self.startTime > self.maxTime:
-                return None
-
-        # Otherwise take the next test.
-        self.lock.acquire()
-        if self.canceled:
-          self.lock.release()
-          return None
-        for item in self.iter:
-            break
-        else:
-            item = None
-        self.lock.release()
-        return item
-
-class Tester(object):
-    def __init__(self, run_instance, provider, consumer):
-        self.run_instance = run_instance
-        self.provider = provider
-        self.consumer = consumer
-
-    def run(self):
-        while 1:
-            item = self.provider.get()
-            if item is None:
-                break
-            self.runTest(item)
-        self.consumer.taskFinished()
-
-    def runTest(self, test_index):
-        test = self.run_instance.tests[test_index]
-        try:
-            self.run_instance.execute_test(test)
-        except KeyboardInterrupt:
-            # This is a sad hack. Unfortunately subprocess goes
-            # bonkers with ctrl-c and we start forking merrily.
-            print('\nCtrl-C detected, goodbye.')
-            os.kill(0,9)
-        self.consumer.update(test_index, test)
-
-class ThreadResultsConsumer(object):
-    def __init__(self, display):
-        self.display = display
-        self.lock = threading.Lock()
-
-    def update(self, test_index, test):
-        self.lock.acquire()
-        try:
-            self.display.update(test)
-        finally:
-            self.lock.release()
-
-    def taskFinished(self):
-        pass
-
-    def handleResults(self):
-        pass
-
-def run_one_tester(run, provider, display):
-    tester = Tester(run, provider, display)
-    tester.run()
-
-def runTests(numThreads, run, provider, display):
-    consumer = ThreadResultsConsumer(display)
-
-    # If only using one testing thread, don't use tasks at all; this lets us
-    # profile, among other things.
-    if numThreads == 1:
-        run_one_tester(run, provider, consumer)
-        return
-
-    # Start all of the tasks.
-    tasks = [threading.Thread(target=run_one_tester,
-                              args=(run, provider, consumer))
-             for i in range(numThreads)]
-    for t in tasks:
-        t.start()
-
-    # Allow the consumer to handle results, if necessary.
-    consumer.handleResults()
-
-    # Wait for all the tasks to complete.
-    for t in tasks:
-        t.join()
 
 def main(builtinParameters = {}):
     # Bump the GIL check interval, its more important to get any one thread to a
@@ -365,30 +263,14 @@ def main(builtinParameters = {}):
 
     startTime = time.time()
     display = TestingProgressDisplay(opts, len(run.tests), progressBar)
-    provider = TestProvider(run.tests, opts.maxTime)
-
     try:
-      import win32api
-    except ImportError:
-      pass
-    else:
-      def console_ctrl_handler(type):
-        provider.cancel()
-        return True
-      win32api.SetConsoleCtrlHandler(console_ctrl_handler, True)
-    try:
-        runTests(opts.numThreads, run, provider, display)
+        run.execute_tests(display, opts.numThreads, opts.maxTime)
     except KeyboardInterrupt:
         sys.exit(2)
     display.finish()
 
     if not opts.quiet:
         print('Testing Time: %.2fs'%(time.time() - startTime))
-
-    # Update results for any tests which weren't run.
-    for test in run.tests:
-        if test.result is None:
-            test.setResult(lit.Test.Result(lit.Test.UNRESOLVED, '', 0.0))
 
     # List test results organized by kind.
     hasFailures = False
