@@ -121,6 +121,35 @@ Infrastructure
     tests, or add additional features to the internal shell handling to allow
     them to pass.
 
+5. Consider changing core to support setup vs. execute distinction.
+
+  Many of the existing test formats are cleanly divided into two phases, once
+  parses the test format and extracts XFAIL and REQUIRES information, etc., and
+  the other code actually executes the test.
+
+  We could make this distinction part of the core infrastructure and that would
+  enable a couple things:
+
+  * The REQUIREs handling could be lifted to the core, which is nice.
+
+  * This would provide a clear place to insert subtest support, because the
+    setup phase could be responsible for providing subtests back to the
+    core. That would provide part of the infrastructure to parallelize them, for
+    example, and would probably interact well with other possible features like
+    parameterized tests.
+
+  * This affords a clean implementation of --no-execute.
+
+  * One possible downside could be for test formats that cannot determine their
+    subtests without having executed the test. Supporting such formats would
+    either force the test to actually be executed in the setup stage (which
+    might be ok, as long as the API was explicitly phrased to support that), or
+    would mean we are forced into supporting subtests as return values from the
+    execute phase.
+
+  Any format can just keep all of its code in execute, presumably, so the only
+  cost of implementing this is its impact on the API and futures changes.
+
 
 Miscellaneous
 =============
