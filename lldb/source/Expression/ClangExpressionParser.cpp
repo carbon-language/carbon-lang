@@ -55,10 +55,6 @@
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/TargetSelect.h"
 
-#if defined(__FreeBSD__)
-#define USE_STANDARD_JIT
-#endif
-
 #if defined (USE_STANDARD_JIT)
 #include "llvm/ExecutionEngine/JIT.h"
 #else
