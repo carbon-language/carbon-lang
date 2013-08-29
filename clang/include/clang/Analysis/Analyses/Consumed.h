@@ -24,7 +24,9 @@
 
 namespace clang {
 namespace consumed {
-
+  
+  class ConsumedStmtVisitor;
+  
   typedef SmallVector<PartialDiagnosticAt, 1> OptionalNotes;
   typedef std::pair<PartialDiagnosticAt, OptionalNotes> DelayedDiag;
   typedef std::list<DelayedDiag> DiagList;
@@ -38,7 +40,7 @@ namespace consumed {
     /// \brief Emit the warnings and notes left by the analysis.
     virtual void emitDiagnostics() {}
 
-    /// Warn about unnecessary-test errors.
+    /// \brief Warn about unnecessary-test errors.
     /// \param VariableName -- The name of the variable that holds the unique
     /// value.
     ///
@@ -47,7 +49,7 @@ namespace consumed {
                                      StringRef VariableState,
                                      SourceLocation Loc) {}
 
-    /// Warn about use-while-consumed errors.
+    /// \brief Warn about use-while-consumed errors.
     /// \param MethodName -- The name of the method that was incorrectly
     /// invoked.
     ///
@@ -55,7 +57,7 @@ namespace consumed {
     virtual void warnUseOfTempWhileConsumed(StringRef MethodName,
                                             SourceLocation Loc) {}
 
-    /// Warn about use-in-unknown-state errors.
+    /// \brief Warn about use-in-unknown-state errors.
     /// \param MethodName -- The name of the method that was incorrectly
     /// invoked.
     ///
@@ -63,7 +65,7 @@ namespace consumed {
     virtual void warnUseOfTempInUnknownState(StringRef MethodName,
                                              SourceLocation Loc) {}
 
-    /// Warn about use-while-consumed errors.
+    /// \brief Warn about use-while-consumed errors.
     /// \param MethodName -- The name of the method that was incorrectly
     /// invoked.
     ///
@@ -75,7 +77,7 @@ namespace consumed {
                                       StringRef VariableName,
                                       SourceLocation Loc) {}
 
-    /// Warn about use-in-unknown-state errors.
+    /// \brief Warn about use-in-unknown-state errors.
     /// \param MethodName -- The name of the method that was incorrectly
     /// invoked.
     ///
@@ -104,17 +106,34 @@ namespace consumed {
     
   protected:
     
+    bool Reachable;
+    const Stmt *From;
     MapType Map;
     
   public:
+    ConsumedStateMap() : Reachable(true), From(NULL) {}
+    ConsumedStateMap(const ConsumedStateMap &Other)
+      : Reachable(Other.Reachable), From(Other.From), Map(Other.Map) {}
+    
     /// \brief Get the consumed state of a given variable.
     ConsumedState getState(const VarDecl *Var);
     
     /// \brief Merge this state map with another map.
     void intersect(const ConsumedStateMap *Other);
     
+    /// \brief Return true if this block is reachable.
+    bool isReachable() const { return Reachable; }
+    
     /// \brief Mark all variables as unknown.
     void makeUnknown();
+    
+    /// \brief Mark the block as unreachable.
+    void markUnreachable();
+    
+    /// \brief Set the source for a decision about the branching of states.
+    /// \param Source -- The statement that was the origin of a branching
+    /// decision.
+    void setSource(const Stmt *Source) { this->From = Source; }
     
     /// \brief Set the consumed state of a given variable.
     void setState(const VarDecl *Var, ConsumedState State);
@@ -144,18 +163,6 @@ namespace consumed {
     
     void markVisited(const CFGBlock *Block);
   };
-  
-  struct VarTestResult {
-    const VarDecl *Var;
-    SourceLocation Loc;
-    bool UnconsumedInTrueBranch;
-    
-    VarTestResult() : Var(NULL), Loc(), UnconsumedInTrueBranch(true) {}
-    
-    VarTestResult(const VarDecl *Var, SourceLocation Loc,
-                  bool UnconsumedInTrueBranch)
-      : Var(Var), Loc(Loc), UnconsumedInTrueBranch(UnconsumedInTrueBranch) {}
-  };
 
   /// A class that handles the analysis of uniqueness violations.
   class ConsumedAnalyzer {
@@ -169,7 +176,8 @@ namespace consumed {
     CacheMapType ConsumableTypeCache;
     
     bool hasConsumableAttributes(const CXXRecordDecl *RD);
-    void splitState(const CFGBlock *CurrBlock, const IfStmt *Terminator);
+    bool splitState(const CFGBlock *CurrBlock,
+                    const ConsumedStmtVisitor &Visitor);
     
   public:
     
