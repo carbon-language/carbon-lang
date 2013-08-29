@@ -74,6 +74,7 @@ static bool isKnownState(ConsumedState State) {
     return true;
   case CS_None:
   case CS_Unknown:
+  default:
     return false;
   }
 }
