@@ -5,7 +5,7 @@
 // RUN: clang-format -style="{lsjd}" %t.cpp 2>&1 | FileCheck -strict-whitespace -check-prefix=CHECK4 %s
 // RUN: [ ! -e %T/.clang-format ] || rm %T/.clang-format
 // RUN: clang-format -style=file %t.cpp 2>&1 | FileCheck -strict-whitespace -check-prefix=CHECK5 %s
-// RUN: echo -e "BasedOnStyle: google\nIndentWidth: 5" > %T/.clang-format
+// RUN: printf "BasedOnStyle: google\nIndentWidth: 5\n" > %T/.clang-format
 // RUN: clang-format -style=file %t.cpp 2>&1 | FileCheck -strict-whitespace -check-prefix=CHECK6 %s
 void f() {
 // CHECK1: {{^        int\* i;$}}

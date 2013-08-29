@@ -116,7 +116,7 @@ unexpected b; // expected-error@33 1-1 {{unknown type}}
 // CHECK6-NEXT:   (frontend): error reading '{{.*}}verify.c.tmp.invalid'
 // CHECK6-NEXT: 2 errors generated.
 
-// RUN: echo -e '//expected-error@2{{1}}\n#error 2' | not %clang_cc1 -verify 2>&1 | FileCheck -check-prefix=CHECK7 %s
+// RUN: printf '//expected-error@2{{1}}\n#error 2\n' | not %clang_cc1 -verify 2>&1 | FileCheck -check-prefix=CHECK7 %s
 
 //      CHECK7: error: 'error' diagnostics expected but not seen:
 // CHECK7-NEXT:   Line 2 (directive at <stdin>:1): 1
