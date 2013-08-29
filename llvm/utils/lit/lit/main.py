@@ -102,9 +102,9 @@ class TestProvider:
         return item
 
 class Tester(threading.Thread):
-    def __init__(self, litConfig, provider, display):
+    def __init__(self, run_instance, provider, display):
         threading.Thread.__init__(self)
-        self.litConfig = litConfig
+        self.run_instance = run_instance
         self.provider = provider
         self.display = display
 
@@ -116,45 +116,25 @@ class Tester(threading.Thread):
             self.runTest(item)
 
     def runTest(self, test):
-        result = None
-        startTime = time.time()
         try:
-            result = test.config.test_format.execute(test, self.litConfig)
-
-            # Support deprecated result from execute() which returned the result
-            # code and additional output as a tuple.
-            if isinstance(result, tuple):
-                code, output = result
-                result = lit.Test.Result(code, output)
-            elif not isinstance(result, lit.Test.Result):
-                raise ValueError("unexpected result from test execution")
+            self.run_instance.execute_test(test)
         except KeyboardInterrupt:
             # This is a sad hack. Unfortunately subprocess goes
             # bonkers with ctrl-c and we start forking merrily.
             print('\nCtrl-C detected, goodbye.')
             os.kill(0,9)
-        except:
-            if self.litConfig.debug:
-                raise
-            output = 'Exception during script execution:\n'
-            output += traceback.format_exc()
-            output += '\n'
-            result = lit.Test.Result(lit.Test.UNRESOLVED, output)
-        result.elapsed = time.time() - startTime
-
-        test.setResult(result)
         self.display.update(test)
 
-def runTests(numThreads, litConfig, provider, display):
+def runTests(numThreads, run, provider, display):
     # If only using one testing thread, don't use threads at all; this lets us
     # profile, among other things.
     if numThreads == 1:
-        t = Tester(litConfig, provider, display)
+        t = Tester(run, provider, display)
         t.run()
         return
 
     # Otherwise spin up the testing threads and wait for them to finish.
-    testers = [Tester(litConfig, provider, display)
+    testers = [Tester(run, provider, display)
                for i in range(numThreads)]
     for t in testers:
         t.start()
@@ -383,7 +363,7 @@ def main(builtinParameters = {}):
         return True
       win32api.SetConsoleCtrlHandler(console_ctrl_handler, True)
 
-    runTests(opts.numThreads, litConfig, provider, display)
+    runTests(opts.numThreads, run, provider, display)
     display.finish()
 
     if not opts.quiet:

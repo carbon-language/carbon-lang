@@ -5,6 +5,7 @@ Test discovery functions.
 import os
 import sys
 
+import lit.run
 from lit.TestingConfig import TestingConfig
 from lit import LitConfig, Test
 
@@ -245,7 +246,9 @@ def load_test_suite(inputs):
                                     isWindows = (platform.system()=='Windows'),
                                     params = {})
 
-    tests = find_tests_for_inputs(litConfig, inputs)
+    # Perform test discovery.
+    run = lit.run.Run(litConfig, find_tests_for_inputs(litConfig, inputs))
 
     # Return a unittest test suite which just runs the tests in order.
-    return unittest.TestSuite([LitTestCase(test, litConfig) for test in tests])
+    return unittest.TestSuite([LitTestCase(test, run)
+                               for test in run.tests])

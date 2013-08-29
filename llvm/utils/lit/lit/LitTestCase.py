@@ -11,10 +11,10 @@ class UnresolvedError(RuntimeError):
     pass
         
 class LitTestCase(unittest.TestCase):
-    def __init__(self, test, lit_config):
+    def __init__(self, test, run):
         unittest.TestCase.__init__(self)
         self._test = test
-        self._lit_config = lit_config
+        self._run = run
 
     def id(self):
         return self._test.getFullName()
@@ -23,17 +23,11 @@ class LitTestCase(unittest.TestCase):
         return self._test.getFullName()
 
     def runTest(self):
-        result = self._test.config.test_format.execute(
-            self._test, self._lit_config)
+        # Run the test.
+        self._run.execute_test(self._test)
 
-        # Support deprecated result from execute() which returned the result
-        # code and additional output as a tuple.
-        if isinstance(result, tuple):
-            code, output = result
-            result = lit.Test.Result(code, output)
-        elif not isinstance(result, lit.Test.Result):
-            raise ValueError("unexpected result from test execution")
-
+        # Adapt the result to unittest.
+        result = self._test.result
         if result.code is lit.Test.UNRESOLVED:
             raise UnresolvedError(result.output)
         elif result.code.isFailure:
