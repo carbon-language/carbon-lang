@@ -73,3 +73,6 @@ extern int z;
 # 42 "A.c"
 # 44 "A.c"
 # 49 "A.c"
+
+// CHECK: # 50 "a\n.c"
+# 50 "a\012.c"

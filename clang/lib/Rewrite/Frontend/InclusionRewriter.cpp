@@ -114,7 +114,9 @@ void InclusionRewriter::WriteLineInfo(const char *Filename, int Line,
   } else {
     // Use GNU linemarkers as described here:
     // http://gcc.gnu.org/onlinedocs/cpp/Preprocessor-Output.html
-    OS << '#' << ' ' << Line << ' ' << '"' << Filename << '"';
+    OS << '#' << ' ' << Line << ' ' << '"';
+    OS.write_escaped(Filename);
+    OS << '"';
     if (!Extra.empty())
       OS << Extra;
     if (FileType == SrcMgr::C_System)

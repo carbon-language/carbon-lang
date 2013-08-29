@@ -190,11 +190,11 @@ void PrintPPOutputPPCallbacks::WriteLineInfo(unsigned LineNo,
   // Emit #line directives or GNU line markers depending on what mode we're in.
   if (UseLineDirective) {
     OS << "#line" << ' ' << LineNo << ' ' << '"';
-    OS.write(CurFilename.data(), CurFilename.size());
+    OS.write_escaped(CurFilename);
     OS << '"';
   } else {
     OS << '#' << ' ' << LineNo << ' ' << '"';
-    OS.write(CurFilename.data(), CurFilename.size());
+    OS.write_escaped(CurFilename);
     OS << '"';
 
     if (ExtraLen)
@@ -285,7 +285,6 @@ void PrintPPOutputPPCallbacks::FileChanged(SourceLocation Loc,
 
   CurFilename.clear();
   CurFilename += UserLoc.getFilename();
-  Lexer::Stringify(CurFilename);
   FileType = NewFileType;
 
   if (DisableLineMarkers) {
