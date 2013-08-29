@@ -264,7 +264,7 @@ static void ParseTypes(Record *r, std::string &s,
 
   for (unsigned i = 0, e = s.size(); i != e; ++i, ++len) {
     if (data[len] == 'P' || data[len] == 'Q' || data[len] == 'U'
-                         || data[len] == 'H')
+                         || data[len] == 'H' || data[len] == 'S')
       continue;
 
     switch (data[len]) {
@@ -324,7 +324,10 @@ static char Narrow(const char t) {
 /// the quad-vector, polynomial, or unsigned modifiers set.
 static char ClassifyType(StringRef ty, bool &quad, bool &poly, bool &usgn) {
   unsigned off = 0;
-
+  // ignore scalar.
+  if (ty[off] == 'S') {
+    ++off;
+  }
   // remember quad.
   if (ty[off] == 'Q' || ty[off] == 'H') {
     quad = true;
@@ -689,9 +692,29 @@ static void InstructionTypeCode(const StringRef &typeStr,
   }
 }
 
+static char Insert_BHSD_Suffix(StringRef typestr){
+  unsigned off = 0;
+  if(typestr[off++] == 'S'){
+    while(typestr[off] == 'Q' || typestr[off] == 'H'||
+          typestr[off] == 'P' || typestr[off] == 'U')
+      ++off;
+    switch (typestr[off]){
+    default  : break;
+    case 'c' : return 'b';
+    case 's' : return 'h';
+    case 'i' :
+    case 'f' : return 's';
+    case 'l' :
+    case 'd' : return 'd';
+    }
+  }
+  return 0;
+}
+
 /// MangleName - Append a type or width suffix to a base neon function name,
 /// and insert a 'q' in the appropriate location if type string starts with 'Q'.
 /// E.g. turn "vst2_lane" into "vst2q_lane_f32", etc.
+/// Insert proper 'b' 'h' 's' 'd' if prefix 'S' is used.
 static std::string MangleName(const std::string &name, StringRef typestr,
                               ClassKind ck) {
   if (name == "vcvt_f32_f16")
@@ -713,9 +736,14 @@ static std::string MangleName(const std::string &name, StringRef typestr,
 
   // Insert a 'q' before the first '_' character so that it ends up before
   // _lane or _n on vector-scalar operations.
-  if (typestr.startswith("Q")) {
+  if (typestr.find("Q") != StringRef::npos) {
       size_t pos = s.find('_');
       s = s.insert(pos, "q");
+  }
+  char ins = Insert_BHSD_Suffix(typestr);
+  if(ins){
+    size_t pos = s.find('_');
+    s = s.insert(pos, &ins, 1);
   }
 
   return s;
@@ -2057,6 +2085,7 @@ NeonEmitter::genIntrinsicRangeCheckCode(raw_ostream &OS,
     std::string name = R->getValueAsString("Name");
     std::string Proto = R->getValueAsString("Prototype");
     std::string Types = R->getValueAsString("Types");
+    std::string Rename = name + "@" + Proto;
 
     // Functions with 'a' (the splat code) in the type prototype should not get
     // their own builtin as they use the non-splat variant.
@@ -2084,8 +2113,8 @@ NeonEmitter::genIntrinsicRangeCheckCode(raw_ostream &OS,
 
     // Include ARM range checks in AArch64 but only if ARM intrinsics are not
     // redefined by AArch64 to handle new types.
-    if (isA64RangeCheck && !isA64 && A64IntrinsicMap.count(name)) {
-      ClassKind &A64CK = A64IntrinsicMap[name];
+    if (isA64RangeCheck && !isA64 && A64IntrinsicMap.count(Rename)) {
+      ClassKind &A64CK = A64IntrinsicMap[Rename];
       if (A64CK == ck && ck != ClassNone)
         continue;
     }
@@ -2186,7 +2215,8 @@ NeonEmitter::genOverloadTypeCheckCode(raw_ostream &OS,
     std::string Proto = R->getValueAsString("Prototype");
     std::string Types = R->getValueAsString("Types");
     std::string name = R->getValueAsString("Name");
-
+    std::string Rename = name + "@" + Proto;
+    
     // Functions with 'a' (the splat code) in the type prototype should not get
     // their own builtin as they use the non-splat variant.
     if (Proto.find('a') != std::string::npos)
@@ -2212,8 +2242,8 @@ NeonEmitter::genOverloadTypeCheckCode(raw_ostream &OS,
     // are not redefined in AArch64 to handle new types, e.g. "vabd" is a SIntr
     // redefined in AArch64 to handle an additional 2 x f64 type.
     ClassKind ck = ClassMap[R->getSuperClasses()[1]];
-    if (isA64TypeCheck && !isA64 && A64IntrinsicMap.count(name)) {
-      ClassKind &A64CK = A64IntrinsicMap[name];
+    if (isA64TypeCheck && !isA64 && A64IntrinsicMap.count(Rename)) {
+      ClassKind &A64CK = A64IntrinsicMap[Rename];
       if (A64CK == ck && ck != ClassNone)
         continue;
     }
@@ -2316,6 +2346,7 @@ void NeonEmitter::genBuiltinsDef(raw_ostream &OS,
 
     std::string Proto = R->getValueAsString("Prototype");
     std::string name = R->getValueAsString("Name");
+    std::string Rename = name + "@" + Proto;
 
     // Functions with 'a' (the splat code) in the type prototype should not get
     // their own builtin as they use the non-splat variant.
@@ -2340,8 +2371,8 @@ void NeonEmitter::genBuiltinsDef(raw_ostream &OS,
     // Include ARM  BUILTIN() macros  in AArch64 but only if ARM intrinsics
     // are not redefined in AArch64 to handle new types, e.g. "vabd" is a SIntr
     // redefined in AArch64 to handle an additional 2 x f64 type.
-    if (isA64GenBuiltinDef && !isA64 && A64IntrinsicMap.count(name)) {
-      ClassKind &A64CK = A64IntrinsicMap[name];
+    if (isA64GenBuiltinDef && !isA64 && A64IntrinsicMap.count(Rename)) {
+      ClassKind &A64CK = A64IntrinsicMap[Rename];
       if (A64CK == ck && ck != ClassNone)
         continue;
     }
@@ -2382,9 +2413,11 @@ void NeonEmitter::runHeader(raw_ostream &OS) {
       CK = ClassMap[R->getSuperClasses()[1]];
 
     std::string Name = R->getValueAsString("Name");
-    if (A64IntrinsicMap.count(Name))
+    std::string Proto = R->getValueAsString("Prototype");
+    std::string Rename = Name + "@" + Proto;
+    if (A64IntrinsicMap.count(Rename))
       continue;
-    A64IntrinsicMap[Name] = CK;
+    A64IntrinsicMap[Rename] = CK;
   }
 
   // Generate BuiltinsARM.def for ARM
