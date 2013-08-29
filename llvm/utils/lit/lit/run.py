@@ -14,11 +14,9 @@ import lit.Test
 # Test Execution Implementation
 
 class TestProvider(object):
-    def __init__(self, tests, max_time):
-        self.max_time = max_time
+    def __init__(self, tests):
         self.iter = iter(range(len(tests)))
         self.lock = threading.Lock()
-        self.start_time = time.time()
         self.canceled = False
 
     def cancel(self):
@@ -27,16 +25,13 @@ class TestProvider(object):
         self.lock.release()
 
     def get(self):
-        # Check if we have run out of time.
-        if self.max_time is not None:
-            if time.time() - self.start_time > self.max_time:
-                return None
-
-        # Otherwise take the next test.
+        # Check if we are cancelled.
         self.lock.acquire()
         if self.canceled:
           self.lock.release()
           return None
+
+        # Otherwise take the next test.
         for item in self.iter:
             break
         else:
@@ -151,7 +146,7 @@ class Run(object):
         """
 
         # Create the test provider object.
-        provider = TestProvider(self.tests, max_time)
+        provider = TestProvider(self.tests)
 
         # Install a console-control signal handler on Windows.
         if win32api is not None:
@@ -160,8 +155,19 @@ class Run(object):
                 return True
             win32api.SetConsoleCtrlHandler(console_ctrl_handler, True)
 
+        # Install a timeout handler, if requested.
+        if max_time is not None:
+            def timeout_handler():
+                provider.cancel()
+            timeout_timer = threading.Timer(max_time, timeout_handler)
+            timeout_timer.start()
+
         # Actually execute the tests.
         self._execute_tests_with_provider(provider, display, jobs)
+
+        # Cancel the timeout handler.
+        if max_time is not None:
+            timeout_timer.cancel()
 
         # Update results for any tests which weren't run.
         for test in self.tests:
