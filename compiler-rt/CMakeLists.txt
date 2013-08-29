@@ -167,6 +167,8 @@ check_cxx_compiler_flag(-Wno-non-virtual-dtor SUPPORTS_NO_NON_VIRTUAL_DTOR_FLAG)
 if (SUPPORTS_NO_NON_VIRTUAL_DTOR_FLAG)
   list(APPEND SANITIZER_COMMON_CFLAGS -Wno-non-virtual-dtor)
 endif()
+check_cxx_compiler_flag(-Wglobal-constructors SUPPORTS_GLOBAL_CONSTRUCTORS_FLAG)
+# Not all sanitizers forbid global constructors.
 
 # Setup min Mac OS X version.
 if(APPLE)

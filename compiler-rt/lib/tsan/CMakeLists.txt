@@ -8,10 +8,14 @@ set(TSAN_CFLAGS
   ${SANITIZER_COMMON_CFLAGS}
   -fPIE
   -fno-rtti)
-# FIXME: Add support for compile flags:
-#   -Wframe-larger-than=512,
-#   -Wglobal-constructors,
-#   --sysroot=.
+
+set(TSAN_RTL_CFLAGS
+  ${TSAN_CFLAGS}
+  -Wframe-larger-than=512)
+if(SUPPORTS_GLOBAL_CONSTRUCTORS_FLAG)
+  list(APPEND TSAN_RTL_CFLAGS -Wglobal-constructors)
+endif()
+# FIXME: Add support for --sysroot=. compile flag:
 
 if("${CMAKE_BUILD_TYPE}" EQUAL "Release")
   set(TSAN_COMMON_DEFINITIONS DEBUG=0)
@@ -64,7 +68,7 @@ if(CAN_TARGET_x86_64 AND UNIX AND NOT APPLE)
             $<TARGET_OBJECTS:RTInterception.${arch}>
             $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
             $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>
-    CFLAGS ${TSAN_CFLAGS}
+    CFLAGS ${TSAN_RTL_CFLAGS}
     DEFS ${TSAN_COMMON_DEFINITIONS})
   add_sanitizer_rt_symbols(clang_rt.tsan-${arch} rtl/tsan.syms.extra)
   list(APPEND TSAN_RUNTIME_LIBRARIES clang_rt.tsan-${arch}
