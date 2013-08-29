@@ -23,10 +23,18 @@ class LitTestCase(unittest.TestCase):
         return self._test.getFullName()
 
     def runTest(self):
-        tr, output = self._test.config.test_format.execute(
+        result = self._test.config.test_format.execute(
             self._test, self._lit_config)
 
-        if tr is lit.Test.UNRESOLVED:
-            raise UnresolvedError(output)
-        elif tr.isFailure:
-            self.fail(output)
+        # Support deprecated result from execute() which returned the result
+        # code and additional output as a tuple.
+        if isinstance(result, tuple):
+            code, output = result
+            result = lit.Test.Result(code, output)
+        elif not isinstance(result, lit.Test.Result):
+            raise ValueError("unexpected result from test execution")
+
+        if result.code is lit.Test.UNRESOLVED:
+            raise UnresolvedError(result.output)
+        elif result.code.isFailure:
+            self.fail(result.output)
