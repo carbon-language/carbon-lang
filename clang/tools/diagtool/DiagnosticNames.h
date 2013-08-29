@@ -35,14 +35,11 @@ namespace diagtool {
 
 
   struct GroupRecord {
-    const char *NameStr;
-    uint16_t NameLen;
+    uint16_t NameOffset;
     uint16_t Members;
     uint16_t SubGroups;
 
-    llvm::StringRef getName() const {
-      return llvm::StringRef(NameStr, NameLen);
-    }
+    llvm::StringRef getName() const;
 
     template<typename RecordType>
     class group_iterator {
@@ -94,8 +91,8 @@ namespace diagtool {
     diagnostics_iterator diagnostics_begin() const;
     diagnostics_iterator diagnostics_end() const;
 
-    bool operator<(const GroupRecord &Other) const {
-      return getName() < Other.getName();
+    bool operator<(llvm::StringRef Other) const {
+      return getName() < Other;
     }
   };
 

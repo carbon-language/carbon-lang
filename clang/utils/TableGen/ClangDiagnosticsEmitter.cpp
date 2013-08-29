@@ -24,6 +24,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/TableGen/Error.h"
 #include "llvm/TableGen/Record.h"
+#include "llvm/TableGen/StringToOffsetTable.h"
 #include "llvm/TableGen/TableGenBackend.h"
 #include <algorithm>
 #include <cctype>
@@ -671,7 +672,20 @@ void EmitClangDiagGroups(RecordKeeper &Records, raw_ostream &OS) {
       OS << "-1,\n";
     }
   }
-  OS << "};\n";
+  OS << "};\n\n";
+
+  StringToOffsetTable GroupNames;
+  for (std::map<std::string, GroupInfo>::const_iterator
+         I = DiagsInGroup.begin(), E = DiagsInGroup.end(); I != E; ++I) {
+    // Store a pascal-style length byte at the beginning of the string.
+    std::string Name = char(I->first.size()) + I->first;
+    GroupNames.GetOrAddStringOffset(Name, false);
+  }
+
+  OS << "static const char DiagGroupNames[] = {\n";
+  GroupNames.EmitString(OS);
+  OS << "};\n\n";
+
   OS << "#endif // GET_DIAG_ARRAYS\n\n";
 
   // Emit the table now.
@@ -680,18 +694,16 @@ void EmitClangDiagGroups(RecordKeeper &Records, raw_ostream &OS) {
   for (std::map<std::string, GroupInfo>::const_iterator
        I = DiagsInGroup.begin(), E = DiagsInGroup.end(); I != E; ++I) {
     // Group option string.
-    OS << "  { ";
-    OS << "\"";
+    OS << "  { /* ";
     if (I->first.find_first_not_of("abcdefghijklmnopqrstuvwxyz"
                                    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                                    "0123456789!@#$%^*-+=:?")!=std::string::npos)
       PrintFatalError("Invalid character in diagnostic group '" +
                       I->first + "'");
-    OS.write_escaped(I->first) << "\","
-                               << std::string(MaxLen-I->first.size()+1, ' ');
-    if (I->first.size() > UINT16_MAX)
-      PrintFatalError("Diagnostic group name is too long for NameLen field.");
-    OS << I->first.size() << ", ";
+    OS << I->first << " */ " << std::string(MaxLen-I->first.size(), ' ');
+    // Store a pascal-style length byte at the beginning of the string.
+    std::string Name = char(I->first.size()) + I->first;
+    OS << GroupNames.GetOrAddStringOffset(Name, false) << ", ";
 
     // Special handling for 'pedantic'.
     const bool IsPedantic = I->first == "pedantic";
@@ -707,7 +719,7 @@ void EmitClangDiagGroups(RecordKeeper &Records, raw_ostream &OS) {
         DiagArrayIndex += DiagsInPedantic.size();
       DiagArrayIndex += V.size() + 1;
     } else {
-      OS << "/* Empty */ 0, ";
+      OS << "/* Empty */     0, ";
     }
 
     // Subgroups.
@@ -720,7 +732,7 @@ void EmitClangDiagGroups(RecordKeeper &Records, raw_ostream &OS) {
         SubGroupIndex += GroupsInPedantic.size();
       SubGroupIndex += SubGroups.size() + 1;
     } else {
-      OS << "/* Empty */ 0";
+      OS << "/* Empty */         0";
     }
     OS << " },\n";
   }
