@@ -169,22 +169,16 @@ TEST_F(RegistryTest, PolymorphicMatchers) {
   EXPECT_FALSE(matches("void f();", Func));
 
   Matcher<Decl> Anything = constructMatcher("anything").getTypedMatcher<Decl>();
-  Matcher<Decl> RecordDecl =
-      constructMatcher("recordDecl", VariantMatcher::SingleMatcher(Anything))
-          .getTypedMatcher<Decl>();
+  Matcher<Decl> RecordDecl = constructMatcher(
+      "recordDecl", constructMatcher("hasName", std::string("Foo")),
+      VariantMatcher::SingleMatcher(Anything)).getTypedMatcher<Decl>();
 
-  EXPECT_TRUE(matches("int a;", Anything));
-  EXPECT_TRUE(matches("class A {};", Anything));
-  EXPECT_TRUE(matches("void f(){};", Anything));
-  // FIXME: A couple of tests have been suppressed.
-  // I know it'd be bad with _MSC_VER here, though.
-#if !defined(_MSC_VER)
-  EXPECT_FALSE(matches("int a;", RecordDecl));
-#endif
-  EXPECT_TRUE(matches("class A {};", RecordDecl));
-#if !defined(_MSC_VER)
-  EXPECT_FALSE(matches("void f(){};", RecordDecl));
-#endif
+  EXPECT_TRUE(matches("int Foo;", Anything));
+  EXPECT_TRUE(matches("class Foo {};", Anything));
+  EXPECT_TRUE(matches("void Foo(){};", Anything));
+  EXPECT_FALSE(matches("int Foo;", RecordDecl));
+  EXPECT_TRUE(matches("class Foo {};", RecordDecl));
+  EXPECT_FALSE(matches("void Foo(){};", RecordDecl));
 }
 
 TEST_F(RegistryTest, TemplateArgument) {
@@ -263,7 +257,9 @@ TEST_F(RegistryTest, Adaptative) {
 
 TEST_F(RegistryTest, VariadicOp) {
   Matcher<Decl> D = constructMatcher(
-      "anyOf", constructMatcher("recordDecl"),
+      "anyOf",
+      constructMatcher("recordDecl",
+                       constructMatcher("hasName", std::string("Foo"))),
       constructMatcher("namedDecl",
                        constructMatcher("hasName", std::string("foo"))))
       .getTypedMatcher<Decl>();
