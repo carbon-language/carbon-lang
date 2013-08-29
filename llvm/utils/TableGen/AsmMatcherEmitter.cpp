@@ -97,7 +97,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "CodeGenTarget.h"
-#include "StringToOffsetTable.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/PointerUnion.h"
 #include "llvm/ADT/STLExtras.h"
@@ -110,6 +109,7 @@
 #include "llvm/TableGen/Error.h"
 #include "llvm/TableGen/Record.h"
 #include "llvm/TableGen/StringMatcher.h"
+#include "llvm/TableGen/StringToOffsetTable.h"
 #include "llvm/TableGen/TableGenBackend.h"
 #include <cassert>
 #include <map>
