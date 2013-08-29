@@ -33,74 +33,82 @@ SANITIZER_INCLUDES_LINT_FILTER=${COMMON_LINT_FILTER},-runtime/int
 cd ${LLVM_CHECKOUT}
 
 EXITSTATUS=0
-LOG=$(mktemp -q)
+ERROR_LOG=$(mktemp -q)
 
 run_lint() {
   FILTER=$1
   shift
-  if [[ "${SILENT}" == "1" && "${LOG}" != "" ]]; then
-    ${CPPLINT} --filter=${FILTER} "$@" 2>>$LOG
-  else
-    ${CPPLINT} --filter=${FILTER} "$@"
-  fi
+  TASK_LOG=$(mktemp -q)
+  ${CPPLINT} --filter=${FILTER} "$@" 2>$TASK_LOG
   if [ "$?" != "0" ]; then
-    EXITSTATUS=1
+    cat $TASK_LOG | grep -v "Done processing" | grep -v "Total errors found" \
+      | grep -v "Skipping input" >> $ERROR_LOG
+  fi
+  if [[ "${SILENT}" != "1" ]]; then
+    cat $TASK_LOG
   fi
 }
 
 run_lint ${LLVM_LINT_FILTER} --filter=${LLVM_LINT_FILTER} \
   lib/Transforms/Instrumentation/*Sanitizer.cpp \
-  lib/Transforms/Utils/SpecialCaseList.cpp
+  lib/Transforms/Utils/SpecialCaseList.cpp &
 
 COMPILER_RT=projects/compiler-rt
 # Headers
 SANITIZER_INCLUDES=${COMPILER_RT}/include/sanitizer
-run_lint ${SANITIZER_INCLUDES_LINT_FILTER} ${SANITIZER_INCLUDES}/*.h
+run_lint ${SANITIZER_INCLUDES_LINT_FILTER} ${SANITIZER_INCLUDES}/*.h &
 
 # Sanitizer_common
 COMMON_RTL=${COMPILER_RT}/lib/sanitizer_common
 run_lint ${COMMON_RTL_INC_LINT_FILTER} ${COMMON_RTL}/*.{cc,h} \
-                                       ${COMMON_RTL}/tests/*.cc
+                                       ${COMMON_RTL}/tests/*.cc &
 
 # Interception
 INTERCEPTION=${COMPILER_RT}/lib/interception
-run_lint ${ASAN_RTL_LINT_FILTER} ${INTERCEPTION}/*.{cc,h}
+run_lint ${ASAN_RTL_LINT_FILTER} ${INTERCEPTION}/*.{cc,h} &
 
 # ASan
 ASAN_RTL=${COMPILER_RT}/lib/asan
-run_lint ${ASAN_RTL_LINT_FILTER} ${ASAN_RTL}/*.{cc,h}
-run_lint ${ASAN_TEST_LINT_FILTER} ${ASAN_RTL}/tests/*.{cc,h}
-run_lint ${ASAN_LIT_TEST_LINT_FILTER} ${ASAN_RTL}/lit_tests/*/*.cc
+run_lint ${ASAN_RTL_LINT_FILTER} ${ASAN_RTL}/*.{cc,h} &
+run_lint ${ASAN_TEST_LINT_FILTER} ${ASAN_RTL}/tests/*.{cc,h} &
+run_lint ${ASAN_LIT_TEST_LINT_FILTER} ${ASAN_RTL}/lit_tests/*/*.cc &
 
 # TSan
 TSAN_RTL=${COMPILER_RT}/lib/tsan
-run_lint ${TSAN_RTL_LINT_FILTER} ${TSAN_RTL}/rtl/*.{cc,h}
+run_lint ${TSAN_RTL_LINT_FILTER} ${TSAN_RTL}/rtl/*.{cc,h} &
 run_lint ${TSAN_TEST_LINT_FILTER} ${TSAN_RTL}/tests/rtl/*.{cc,h} \
-                                  ${TSAN_RTL}/tests/unit/*.cc
-run_lint ${TSAN_LIT_TEST_LINT_FILTER} ${TSAN_RTL}/lit_tests/*.cc
+                                  ${TSAN_RTL}/tests/unit/*.cc &
+run_lint ${TSAN_LIT_TEST_LINT_FILTER} ${TSAN_RTL}/lit_tests/*.cc &
 
 # MSan
 MSAN_RTL=${COMPILER_RT}/lib/msan
-run_lint ${MSAN_RTL_LINT_FILTER} ${MSAN_RTL}/*.{cc,h}
+run_lint ${MSAN_RTL_LINT_FILTER} ${MSAN_RTL}/*.{cc,h} &
 
 # LSan
 LSAN_RTL=${COMPILER_RT}/lib/lsan
-run_lint ${LSAN_RTL_LINT_FILTER} ${LSAN_RTL}/*.{cc,h}
-run_lint ${LSAN_RTL_LINT_FILTER} ${LSAN_RTL}/tests/*.{cc,h}
-run_lint ${LSAN_LIT_TEST_LINT_FILTER} ${LSAN_RTL}/lit_tests/*/*.cc
+run_lint ${LSAN_RTL_LINT_FILTER} ${LSAN_RTL}/*.{cc,h} \
+                                 ${LSAN_RTL}/tests/*.{cc,h} &
+run_lint ${LSAN_LIT_TEST_LINT_FILTER} ${LSAN_RTL}/lit_tests/*/*.cc &
 
 # Misc files
 FILES=${COMMON_RTL}/*.inc
+TMPFILES=""
 for FILE in $FILES; do
     TMPFILE=$(mktemp -u ${FILE}.XXXXX).cc
-    cp -f $FILE $TMPFILE && \
-        run_lint ${COMMON_RTL_INC_LINT_FILTER} $TMPFILE
-    rm $TMPFILE
+    cp -f $FILE $TMPFILE
+    run_lint ${COMMON_RTL_INC_LINT_FILTER} $TMPFILE &
+    TMPFILES="$TMPFILES $TMPFILE"
 done
 
-if [ "$EXITSTATUS" != "0" ]; then
-  cat $LOG | grep -v "Done processing" | grep -v "Total errors found" \
-    grep -v "Skipping input"
+wait
+
+for temp in $TMPFILES; do
+  rm -f $temp
+done
+
+if [[ -s $ERROR_LOG ]]; then
+  cat $ERROR_LOG
+  exit 1
 fi
 
-exit $EXITSTATUS
+exit 0
