@@ -49,9 +49,6 @@ public:
   /// the UnicodeCharSet instance, and should not change. Array is validated by
   /// the constructor, so it makes sense to create as few UnicodeCharSet
   /// instances per each array of ranges, as possible.
-#ifdef NDEBUG
-  LLVM_CONSTEXPR
-#endif
   UnicodeCharSet(CharRanges Ranges) : Ranges(Ranges) {
     assert(rangesAreValid());
   }
