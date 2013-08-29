@@ -164,7 +164,6 @@ lldb::RegisterContextSP
 ThreadGDBRemote::CreateRegisterContextForFrame (StackFrame *frame)
 {
     lldb::RegisterContextSP reg_ctx_sp;
-    const bool read_all_registers_at_once = false;
     uint32_t concrete_frame_idx = 0;
     
     if (frame)
@@ -177,6 +176,8 @@ ThreadGDBRemote::CreateRegisterContextForFrame (StackFrame *frame)
         if (process_sp)
         {
             ProcessGDBRemote *gdb_process = static_cast<ProcessGDBRemote *>(process_sp.get());
+            // read_all_registers_at_once will be true if 'p' packet is not supported.
+            bool read_all_registers_at_once = !gdb_process->GetGDBRemote().GetpPacketSupported ();
             reg_ctx_sp.reset (new GDBRemoteRegisterContext (*this, concrete_frame_idx, gdb_process->m_register_info, read_all_registers_at_once));
         }
     }

@@ -55,6 +55,7 @@ GDBRemoteCommunicationClient::GDBRemoteCommunicationClient(bool is_platform) :
     m_supports_vCont_C (eLazyBoolCalculate),
     m_supports_vCont_s (eLazyBoolCalculate),
     m_supports_vCont_S (eLazyBoolCalculate),
+    m_supports_p (eLazyBoolCalculate),
     m_qHostInfo_is_valid (eLazyBoolCalculate),
     m_qProcessInfo_is_valid (eLazyBoolCalculate),
     m_supports_alloc_dealloc_memory (eLazyBoolCalculate),
@@ -200,6 +201,7 @@ GDBRemoteCommunicationClient::ResetDiscoverableSettings()
     m_supports_vCont_C = eLazyBoolCalculate;
     m_supports_vCont_s = eLazyBoolCalculate;
     m_supports_vCont_S = eLazyBoolCalculate;
+    m_supports_p = eLazyBoolCalculate;
     m_qHostInfo_is_valid = eLazyBoolCalculate;
     m_qProcessInfo_is_valid = eLazyBoolCalculate;
     m_supports_alloc_dealloc_memory = eLazyBoolCalculate;
@@ -295,6 +297,24 @@ GDBRemoteCommunicationClient::GetVContSupported (char flavor)
     return false;
 }
 
+// Check if the target supports 'p' packet. It sends out a 'p'
+// packet and checks the response. A normal packet will tell us
+// that support is available.
+bool
+GDBRemoteCommunicationClient::GetpPacketSupported ()
+{
+    if (m_supports_p == eLazyBoolCalculate)
+    {
+        StringExtractorGDBRemote response;
+        m_supports_p = eLazyBoolNo;
+        if (SendPacketAndWaitForResponse("p0", response, false))
+        {
+            if (response.IsNormalResponse())
+                m_supports_p = eLazyBoolYes;
+        }
+    }
+    return m_supports_p;
+}
 
 size_t
 GDBRemoteCommunicationClient::SendPacketAndWaitForResponse

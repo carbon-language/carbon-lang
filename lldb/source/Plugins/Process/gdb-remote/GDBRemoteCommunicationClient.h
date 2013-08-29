@@ -228,6 +228,9 @@ public:
     GetVContSupported (char flavor);
 
     bool
+    GetpPacketSupported ();
+
+    bool
     GetVAttachOrWaitSupported ();
     
     bool
@@ -431,6 +434,7 @@ protected:
     lldb_private::LazyBool m_watchpoints_trigger_after_instruction;
     lldb_private::LazyBool m_attach_or_wait_reply;
     lldb_private::LazyBool m_prepare_for_reg_writing_reply;
+    lldb_private::LazyBool m_supports_p;
     
     bool
         m_supports_qProcessInfoPID:1,
