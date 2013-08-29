@@ -58,8 +58,7 @@ public:
   }
   bool isTargetDarwin() const {
     Triple TT(STI.getTargetTriple());
-    Triple::OSType OS = TT.getOS();
-    return OS == Triple::Darwin || OS == Triple::MacOSX || OS == Triple::IOS;
+  	return TT.isOSDarwin();
   }
 
   unsigned getMachineSoImmOpValue(unsigned SoImm) const;

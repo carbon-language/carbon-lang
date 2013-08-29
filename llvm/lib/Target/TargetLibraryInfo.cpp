@@ -350,7 +350,7 @@ static void initialize(TargetLibraryInfo &TLI, const Triple &T,
   if (T.isMacOSX()) {
     if (T.isMacOSXVersionLT(10, 5))
       TLI.setUnavailable(LibFunc::memset_pattern16);
-  } else if (T.getOS() == Triple::IOS) {
+  } else if (T.isiOS()) {
     if (T.isOSVersionLT(3, 0))
       TLI.setUnavailable(LibFunc::memset_pattern16);
   } else {
@@ -562,7 +562,7 @@ static void initialize(TargetLibraryInfo &TLI, const Triple &T,
   }
 
   // The following functions are available on at least Linux:
-  if (T.getOS() != Triple::Linux) {
+  if (!T.isOSLinux()) {
     TLI.setUnavailable(LibFunc::dunder_strdup);
     TLI.setUnavailable(LibFunc::dunder_strtok_r);
     TLI.setUnavailable(LibFunc::dunder_isoc99_scanf);

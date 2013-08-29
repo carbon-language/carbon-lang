@@ -311,10 +311,8 @@ public:
     return (TargetTriple.getEnvironment() == Triple::ELF ||
             TargetTriple.isOSBinFormatELF());
   }
-  bool isTargetLinux() const { return TargetTriple.getOS() == Triple::Linux; }
-  bool isTargetNaCl() const {
-    return TargetTriple.getOS() == Triple::NaCl;
-  }
+  bool isTargetLinux() const { return TargetTriple.isOSLinux(); }
+  bool isTargetNaCl() const { return TargetTriple.isOSNaCl(); }
   bool isTargetNaCl32() const { return isTargetNaCl() && !is64Bit(); }
   bool isTargetNaCl64() const { return isTargetNaCl() && is64Bit(); }
   bool isTargetWindows() const { return TargetTriple.getOS() == Triple::Win32; }

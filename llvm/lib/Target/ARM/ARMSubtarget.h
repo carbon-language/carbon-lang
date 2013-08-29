@@ -275,10 +275,10 @@ public:
 
   const Triple &getTargetTriple() const { return TargetTriple; }
 
-  bool isTargetIOS() const { return TargetTriple.getOS() == Triple::IOS; }
+  bool isTargetIOS() const { return TargetTriple.isiOS(); }
   bool isTargetDarwin() const { return TargetTriple.isOSDarwin(); }
-  bool isTargetNaCl() const { return TargetTriple.getOS() == Triple::NaCl; }
-  bool isTargetLinux() const { return TargetTriple.getOS() == Triple::Linux; }
+  bool isTargetNaCl() const { return TargetTriple.isOSNaCl(); }
+  bool isTargetLinux() const { return TargetTriple.isOSLinux(); }
   bool isTargetELF() const { return !isTargetDarwin(); }
   // ARM EABI is the bare-metal EABI described in ARM ABI documents and
   // can be accessed via -target arm-none-eabi. This is NOT GNUEABI.

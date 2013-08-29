@@ -421,7 +421,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   }
 
   // Use divmod compiler-rt calls for iOS 5.0 and later.
-  if (Subtarget->getTargetTriple().getOS() == Triple::IOS &&
+  if (Subtarget->getTargetTriple().isiOS() &&
       !Subtarget->getTargetTriple().isOSVersionLT(5, 0)) {
     setLibcallName(RTLIB::SDIVREM_I32, "__divmodsi4");
     setLibcallName(RTLIB::UDIVREM_I32, "__udivmodsi4");

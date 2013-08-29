@@ -323,7 +323,7 @@ public:
     return getOS() == Triple::Win32 || getOS() == Triple::MinGW32;
   }
 
-  /// isOSWindows - Is this a "Windows" OS.
+  /// \brief Tests whether the OS is Windows.
   bool isOSWindows() const {
     return getOS() == Triple::Win32 || isOSCygMing();
   }
@@ -331,6 +331,11 @@ public:
   /// \brief Tests whether the OS is NaCl (Native Client)
   bool isOSNaCl() const {
     return getOS() == Triple::NaCl;
+  }
+
+  /// \brief Tests whether the OS is Linux.
+  bool isOSLinux() const {
+    return getOS() == Triple::Linux;
   }
 
   /// \brief Tests whether the OS uses the ELF binary format.

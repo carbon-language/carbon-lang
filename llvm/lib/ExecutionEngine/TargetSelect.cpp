@@ -91,7 +91,7 @@ TargetMachine *EngineBuilder::selectTarget(const Triple &TargetTriple,
   // FIXME: non-iOS ARM FastISel is broken with MCJIT.
   if (UseMCJIT &&
       TheTriple.getArch() == Triple::arm &&
-      TheTriple.getOS() != Triple::IOS &&
+      !TheTriple.isiOS() &&
       OptLevel == CodeGenOpt::None) {
     OptLevel = CodeGenOpt::Less;
   }
