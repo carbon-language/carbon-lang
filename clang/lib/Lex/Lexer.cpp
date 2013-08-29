@@ -1365,22 +1365,34 @@ void Lexer::SkipBytes(unsigned Bytes, bool StartOfLine) {
 }
 
 static bool isAllowedIDChar(uint32_t C, const LangOptions &LangOpts) {
-  if (LangOpts.CPlusPlus11 || LangOpts.C11)
-    return isCharInSet(C, C11AllowedIDChars);
-  else if (LangOpts.CPlusPlus)
-    return isCharInSet(C, CXX03AllowedIDChars);
-  else
-    return isCharInSet(C, C99AllowedIDChars);
+  if (LangOpts.CPlusPlus11 || LangOpts.C11) {
+    static const llvm::sys::UnicodeCharSet C11AllowedIDChars(
+        C11AllowedIDCharRanges);
+    return C11AllowedIDChars.contains(C);
+  } else if (LangOpts.CPlusPlus) {
+    static const llvm::sys::UnicodeCharSet CXX03AllowedIDChars(
+        CXX03AllowedIDCharRanges);
+    return CXX03AllowedIDChars.contains(C);
+  } else {
+    static const llvm::sys::UnicodeCharSet C99AllowedIDChars(
+        C99AllowedIDCharRanges);
+    return C99AllowedIDChars.contains(C);
+  }
 }
 
 static bool isAllowedInitiallyIDChar(uint32_t C, const LangOptions &LangOpts) {
   assert(isAllowedIDChar(C, LangOpts));
-  if (LangOpts.CPlusPlus11 || LangOpts.C11)
-    return !isCharInSet(C, C11DisallowedInitialIDChars);
-  else if (LangOpts.CPlusPlus)
+  if (LangOpts.CPlusPlus11 || LangOpts.C11) {
+    static const llvm::sys::UnicodeCharSet C11DisallowedInitialIDChars(
+        C11DisallowedInitialIDCharRanges);
+    return !C11DisallowedInitialIDChars.contains(C);
+  } else if (LangOpts.CPlusPlus) {
     return true;
-  else
-    return !isCharInSet(C, C99DisallowedInitialIDChars);
+  } else {
+    static const llvm::sys::UnicodeCharSet C99DisallowedInitialIDChars(
+        C99DisallowedInitialIDCharRanges);
+    return !C99DisallowedInitialIDChars.contains(C);
+  }
 }
 
 static inline CharSourceRange makeCharRange(Lexer &L, const char *Begin,
@@ -1399,11 +1411,15 @@ static void maybeDiagnoseIDCharCompat(DiagnosticsEngine &Diags, uint32_t C,
       CannotStartIdentifier
     };
 
-    if (!isCharInSet(C, C99AllowedIDChars)) {
+    static const llvm::sys::UnicodeCharSet C99AllowedIDChars(
+        C99AllowedIDCharRanges);
+    static const llvm::sys::UnicodeCharSet C99DisallowedInitialIDChars(
+        C99DisallowedInitialIDCharRanges);
+    if (!C99AllowedIDChars.contains(C)) {
       Diags.Report(Range.getBegin(), diag::warn_c99_compat_unicode_id)
         << Range
         << CannotAppearInIdentifier;
-    } else if (IsFirst && isCharInSet(C, C99DisallowedInitialIDChars)) {
+    } else if (IsFirst && C99DisallowedInitialIDChars.contains(C)) {
       Diags.Report(Range.getBegin(), diag::warn_c99_compat_unicode_id)
         << Range
         << CannotStartIdentifier;
@@ -1413,7 +1429,9 @@ static void maybeDiagnoseIDCharCompat(DiagnosticsEngine &Diags, uint32_t C,
   // Check C++98 compatibility.
   if (Diags.getDiagnosticLevel(diag::warn_cxx98_compat_unicode_id,
                                Range.getBegin()) > DiagnosticsEngine::Ignored) {
-    if (!isCharInSet(C, CXX03AllowedIDChars)) {
+    static const llvm::sys::UnicodeCharSet CXX03AllowedIDChars(
+        CXX03AllowedIDCharRanges);
+    if (!CXX03AllowedIDChars.contains(C)) {
       Diags.Report(Range.getBegin(), diag::warn_cxx98_compat_unicode_id)
         << Range;
     }
@@ -2695,8 +2713,10 @@ uint32_t Lexer::tryReadUCN(const char *&StartPtr, const char *SlashLoc,
 }
 
 void Lexer::LexUnicode(Token &Result, uint32_t C, const char *CurPtr) {
+  static const llvm::sys::UnicodeCharSet UnicodeWhitespaceChars(
+      UnicodeWhitespaceCharRanges);
   if (!isLexingRawMode() && !PP->isPreprocessedOutput() &&
-      isCharInSet(C, UnicodeWhitespaceChars)) {
+      UnicodeWhitespaceChars.contains(C)) {
     Diag(BufferPtr, diag::ext_unicode_whitespace)
       << makeCharRange(*this, BufferPtr, CurPtr);
 
