@@ -66,7 +66,7 @@ public:
     std::vector<std::vector<COFFDefinedAtom *>> groupedAtomsList(
         groupBySectionName(sectionToHeadAtoms));
     for (auto &groupedAtoms : groupedAtomsList)
-      connectAtomsWithLayoutEdge(groupedAtoms);
+      connectAtoms(groupedAtoms);
   }
 
 private:
@@ -106,6 +106,36 @@ private:
     for (auto &i : res)
       vec.push_back(std::move(i.second));
     return std::move(vec);
+  }
+
+  /// For each pair of atoms in the given vector, add a layout edge from the
+  /// follow-on tail of the first atom to the second atom. As a result, the
+  /// atoms in the vectors will be output as the same order as in the vector.
+  void connectAtoms(std::vector<COFFDefinedAtom *> heads) {
+    if (heads.empty())
+      return;
+    COFFDefinedAtom *tail = getTail(heads[0]);
+    for (auto i = heads.begin() + 1, e = heads.end(); i != e; ++i) {
+      COFFDefinedAtom *head = *i;
+      connectWithLayoutEdge(tail, head);
+      tail = getTail(head);
+    }
+  }
+
+  /// Follows the follow-on chain and returns the last atom.
+  COFFDefinedAtom *getTail(COFFDefinedAtom *atom) {
+    for (;;) {
+      COFFDefinedAtom *next = nullptr;
+      for (const Reference *r : *atom) {
+	if (r->kind() != lld::Reference::kindLayoutAfter)
+	  continue;
+	next = (COFFDefinedAtom *)(r->target());
+	break;
+      }
+      if (!next)
+	return atom;
+      atom = next;
+    }
   }
 };
 
