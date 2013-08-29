@@ -47,7 +47,7 @@ private:
 #if __APPLE__
     static
     const void*
-    compute_gcc_empty_string_storage() _LIBCPP_CANTTHROW
+    compute_gcc_empty_string_storage() _NOEXCEPT
     {
         void* handle = dlopen("/usr/lib/libstdc++.6.dylib", RTLD_NOLOAD);
         if (handle == 0)
@@ -57,7 +57,7 @@ private:
     
     static
     const void*
-    get_gcc_empty_string_storage() _LIBCPP_CANTTHROW
+    get_gcc_empty_string_storage() _NOEXCEPT
     {
         static const void* p = compute_gcc_empty_string_storage();
         return p;
