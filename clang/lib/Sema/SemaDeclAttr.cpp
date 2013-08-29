@@ -4675,18 +4675,20 @@ static void handleSelectAnyAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 // Top Level Sema Entry Points
 //===----------------------------------------------------------------------===//
 
-static void ProcessNonInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
-                                          const AttributeList &Attr) {
-  switch (Attr.getKind()) {
-  case AttributeList::AT_Overloadable:handleOverloadableAttr(S, D, Attr); break;
-  case AttributeList::AT_Mode:        handleModeAttr        (S, D, Attr); break;
-  default:
-    break;
-  }
-}
+/// ProcessDeclAttribute - Apply the specific attribute to the specified decl if
+/// the attribute applies to decls.  If the attribute is a type attribute, just
+/// silently ignore it if a GNU attribute.
+static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
+                                 const AttributeList &Attr,
+                                 bool IncludeCXX11Attributes) {
+  if (Attr.isInvalid())
+    return;
 
-static void ProcessInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
-                                       const AttributeList &Attr) {
+  // Ignore C++11 attributes on declarator chunks: they appertain to the type
+  // instead.
+  if (Attr.isCXX11Attribute() && !IncludeCXX11Attributes)
+    return;
+
   switch (Attr.getKind()) {
   case AttributeList::AT_IBAction:    handleIBAction(S, D, Attr); break;
   case AttributeList::AT_IBOutlet:    handleIBOutlet(S, D, Attr); break;
@@ -4703,11 +4705,6 @@ static void ProcessInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
   case AttributeList::AT_UPtr:
     // Ignore these, these are type attributes, handled by
     // ProcessTypeAttributes.
-    break;
-  case AttributeList::AT_Mode:
-  case AttributeList::AT_Overloadable:
-    // Ignore, this is a non-inheritable attribute, handled
-    // by ProcessNonInheritableDeclAttr.
     break;
   case AttributeList::AT_Alias:       handleAliasAttr       (S, D, Attr); break;
   case AttributeList::AT_Aligned:     handleAlignedAttr     (S, D, Attr); break;
@@ -4749,8 +4746,10 @@ static void ProcessInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
     break;
   case AttributeList::AT_Malloc:      handleMallocAttr      (S, D, Attr); break;
   case AttributeList::AT_MayAlias:    handleMayAliasAttr    (S, D, Attr); break;
+  case AttributeList::AT_Mode:        handleModeAttr        (S, D, Attr); break;
   case AttributeList::AT_NoCommon:    handleNoCommonAttr    (S, D, Attr); break;
   case AttributeList::AT_NonNull:     handleNonNullAttr     (S, D, Attr); break;
+  case AttributeList::AT_Overloadable:handleOverloadableAttr(S, D, Attr); break;
   case AttributeList::AT_ownership_returns:
   case AttributeList::AT_ownership_takes:
   case AttributeList::AT_ownership_holds:
@@ -5008,42 +5007,18 @@ static void ProcessInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
   }
 }
 
-/// ProcessDeclAttribute - Apply the specific attribute to the specified decl if
-/// the attribute applies to decls.  If the attribute is a type attribute, just
-/// silently ignore it if a GNU attribute.
-static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
-                                 const AttributeList &Attr,
-                                 bool NonInheritable, bool Inheritable,
-                                 bool IncludeCXX11Attributes) {
-  if (Attr.isInvalid())
-    return;
-
-  // Ignore C++11 attributes on declarator chunks: they appertain to the type
-  // instead.
-  if (Attr.isCXX11Attribute() && !IncludeCXX11Attributes)
-    return;
-
-  if (NonInheritable)
-    ProcessNonInheritableDeclAttr(S, scope, D, Attr);
-
-  if (Inheritable)
-    ProcessInheritableDeclAttr(S, scope, D, Attr);
-}
-
 /// ProcessDeclAttributeList - Apply all the decl attributes in the specified
 /// attribute list to the specified decl, ignoring any type attributes.
 void Sema::ProcessDeclAttributeList(Scope *S, Decl *D,
                                     const AttributeList *AttrList,
-                                    bool NonInheritable, bool Inheritable,
                                     bool IncludeCXX11Attributes) {
   for (const AttributeList* l = AttrList; l; l = l->getNext())
-    ProcessDeclAttribute(*this, S, D, *l, NonInheritable, Inheritable,
-                         IncludeCXX11Attributes);
+    ProcessDeclAttribute(*this, S, D, *l, IncludeCXX11Attributes);
 
   // GCC accepts
   // static int a9 __attribute__((weakref));
   // but that looks really pointless. We reject it.
-  if (Inheritable && D->hasAttr<WeakRefAttr>() && !D->hasAttr<AliasAttr>()) {
+  if (D->hasAttr<WeakRefAttr>() && !D->hasAttr<AliasAttr>()) {
     Diag(AttrList->getLoc(), diag::err_attribute_weakref_without_alias) <<
     cast<NamedDecl>(D)->getNameAsString();
     D->dropAttr<WeakRefAttr>();
@@ -5196,11 +5171,10 @@ void Sema::ProcessPragmaWeak(Scope *S, Decl *D) {
 /// ProcessDeclAttributes - Given a declarator (PD) with attributes indicated in
 /// it, apply them to D.  This is a bit tricky because PD can have attributes
 /// specified in many different places, and we need to find and apply them all.
-void Sema::ProcessDeclAttributes(Scope *S, Decl *D, const Declarator &PD,
-                                 bool NonInheritable, bool Inheritable) {
+void Sema::ProcessDeclAttributes(Scope *S, Decl *D, const Declarator &PD) {
   // Apply decl attributes from the DeclSpec if present.
   if (const AttributeList *Attrs = PD.getDeclSpec().getAttributes().getList())
-    ProcessDeclAttributeList(S, D, Attrs, NonInheritable, Inheritable);
+    ProcessDeclAttributeList(S, D, Attrs);
 
   // Walk the declarator structure, applying decl attributes that were in a type
   // position to the decl itself.  This handles cases like:
@@ -5208,12 +5182,11 @@ void Sema::ProcessDeclAttributes(Scope *S, Decl *D, const Declarator &PD,
   // when X is a decl attribute.
   for (unsigned i = 0, e = PD.getNumTypeObjects(); i != e; ++i)
     if (const AttributeList *Attrs = PD.getTypeObject(i).getAttrs())
-      ProcessDeclAttributeList(S, D, Attrs, NonInheritable, Inheritable,
-                               /*IncludeCXX11Attributes=*/false);
+      ProcessDeclAttributeList(S, D, Attrs, /*IncludeCXX11Attributes=*/false);
 
   // Finally, apply any attributes on the decl itself.
   if (const AttributeList *Attrs = PD.getAttributes())
-    ProcessDeclAttributeList(S, D, Attrs, NonInheritable, Inheritable);
+    ProcessDeclAttributeList(S, D, Attrs);
 }
 
 /// Is the given declaration allowed to use a forbidden type?

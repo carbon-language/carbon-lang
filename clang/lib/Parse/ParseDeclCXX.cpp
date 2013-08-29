@@ -2278,8 +2278,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
         ThisDecl = VT->getTemplatedDecl();
 
       if (ThisDecl && AccessAttrs)
-        Actions.ProcessDeclAttributeList(getCurScope(), ThisDecl, AccessAttrs,
-                                         false, true);
+        Actions.ProcessDeclAttributeList(getCurScope(), ThisDecl, AccessAttrs);
     }
 
     // Handle the initializer.

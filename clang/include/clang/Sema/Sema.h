@@ -2521,12 +2521,8 @@ public:
 
   void ProcessPragmaWeak(Scope *S, Decl *D);
   // Decl attributes - this routine is the top level dispatcher.
-  void ProcessDeclAttributes(Scope *S, Decl *D, const Declarator &PD,
-                             bool NonInheritable = true,
-                             bool Inheritable = true);
+  void ProcessDeclAttributes(Scope *S, Decl *D, const Declarator &PD);
   void ProcessDeclAttributeList(Scope *S, Decl *D, const AttributeList *AL,
-                                bool NonInheritable = true,
-                                bool Inheritable = true,
                                 bool IncludeCXX11Attributes = true);
   bool ProcessAccessDeclAttributeList(AccessSpecDecl *ASDecl,
                                       const AttributeList *AttrList);

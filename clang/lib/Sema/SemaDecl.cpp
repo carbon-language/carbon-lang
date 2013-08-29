@@ -6851,10 +6851,6 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
         ::new(Context) C11NoReturnAttr(D.getDeclSpec().getNoreturnSpecLoc(),
                                        Context));
 
-  // Process the non-inheritable attributes on this declaration.
-  ProcessDeclAttributes(S, NewFD, D,
-                        /*NonInheritable=*/true, /*Inheritable=*/false);
-
   // Functions returning a variably modified type violate C99 6.7.5.2p2
   // because all functions have linkage.
   if (!NewFD->isInvalidDecl() &&
@@ -6864,8 +6860,7 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
   }
 
   // Handle attributes.
-  ProcessDeclAttributes(S, NewFD, D,
-                        /*NonInheritable=*/false, /*Inheritable=*/true);
+  ProcessDeclAttributes(S, NewFD, D);
 
   QualType RetType = NewFD->getResultType();
   const CXXRecordDecl *Ret = RetType->isRecordType() ?
