@@ -142,6 +142,12 @@ def main(builtinParameters = {}):
     group.add_option("", "--show-tests", dest="showTests",
                       help="Show all discovered tests",
                       action="store_true", default=False)
+    group.add_option("", "--use-processes", dest="useProcesses",
+                      help="Run tests in parallel with processes (not threads)",
+                      action="store_true", default=False)
+    group.add_option("", "--use-threads", dest="useProcesses",
+                      help="Run tests in parallel with threads (not processes)",
+                      action="store_false", default=False)
     parser.add_option_group(group)
 
     (opts, args) = parser.parse_args()
@@ -264,7 +270,8 @@ def main(builtinParameters = {}):
     startTime = time.time()
     display = TestingProgressDisplay(opts, len(run.tests), progressBar)
     try:
-        run.execute_tests(display, opts.numThreads, opts.maxTime)
+        run.execute_tests(display, opts.numThreads, opts.maxTime,
+                          opts.useProcesses)
     except KeyboardInterrupt:
         sys.exit(2)
     display.finish()

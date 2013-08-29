@@ -113,8 +113,8 @@ Infrastructure
   module. This is currently blocked on:
 
   * The external execution mode is faster in some situations, because it avoids
-    being bottlenecked on the GIL. We could fix this by moving to a good
-    multiprocessing model.
+    being bottlenecked on the GIL. This can hopefully be obviated simply by
+    using --use-processes.
 
   * Some tests in LLVM/Clang are explicitly disabled with the internal shell
     (because they use features specific to bash). We would need to rewrite these
@@ -157,8 +157,6 @@ Miscellaneous
 * Move temp directory name into local test config.
 
 * Add --show-unsupported, don't show by default?
-
-* Optionally use multiprocessing.
 
 * Support valgrind in all configs, and LLVM style valgrind.
 
