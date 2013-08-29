@@ -191,6 +191,10 @@ add_subdirectory(include)
 set(SANITIZER_COMMON_LIT_TEST_DEPS
   clang clang-headers FileCheck count not llvm-nm llvm-symbolizer
   compiler-rt-headers)
+# Check code style when running lit tests for sanitizers.
+if(UNIX)
+  list(APPEND SANITIZER_COMMON_LIT_TEST_DEPS SanitizerLintCheck)
+endif()
 
 add_subdirectory(lib)
 
