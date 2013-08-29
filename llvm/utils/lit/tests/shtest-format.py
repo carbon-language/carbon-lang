@@ -7,6 +7,7 @@
 
 # CHECK: -- Testing:
 
+# CHECK: PASS: shtest-format :: argv0.txt
 # CHECK: FAIL: shtest-format :: external_shell/fail.txt
 # CHECK-NEXT: *** TEST 'shtest-format :: external_shell/fail.txt' FAILED ***
 # CHECK: Command Output (stdout):
@@ -68,7 +69,7 @@
 # CHECK: shtest-format :: external_shell/fail_with_bad_encoding.txt
 # CHECK: shtest-format :: fail.txt
 
-# CHECK: Expected Passes    : 3
+# CHECK: Expected Passes    : 4
 # CHECK: Expected Failures  : 3
 # CHECK: Unsupported Tests  : 2
 # CHECK: Unresolved Tests   : 1

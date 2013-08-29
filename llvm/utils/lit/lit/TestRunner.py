@@ -131,8 +131,8 @@ def executeShCmd(cmd, cfg, cwd, results):
 
         # Resolve the executable path ourselves.
         args = list(j.args)
-        args[0] = lit.util.which(args[0], cfg.environment['PATH'])
-        if not args[0]:
+        executable = lit.util.which(args[0], cfg.environment['PATH'])
+        if not executable:
             raise InternalShellError(j, '%r: command not found' % j.args[0])
 
         # Replace uses of /dev/null with temporary files.
@@ -145,6 +145,7 @@ def executeShCmd(cmd, cfg, cwd, results):
                     args[i] = f.name
 
         procs.append(subprocess.Popen(args, cwd=cwd,
+                                      executable = executable,
                                       stdin = stdin,
                                       stdout = stdout,
                                       stderr = stderr,
