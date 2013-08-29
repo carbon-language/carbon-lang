@@ -767,7 +767,7 @@ inline _LIBCPP_INLINE_VISIBILITY long double cos(long double __x) _NOEXCEPT {ret
 #endif
 
 template <class _A1>
-inline _LIBCPP_ALWAYS_INLINE _LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_integral<_A1>::value, double>::type
 cos(_A1 __x) _NOEXCEPT {return cos((double)__x);}
 
