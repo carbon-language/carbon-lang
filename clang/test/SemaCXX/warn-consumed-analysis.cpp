@@ -224,6 +224,18 @@ void testStateChangeInBranch() {
   *var;
 }
 
+void testFunctionParam(ConsumableClass<int> param) {
+  
+  if (param.isValid()) {
+    *param;
+  } else {
+    *param; // expected-warning {{invocation of method 'operator*' on object 'param' while it is in the 'consumed' state}}
+  }
+  
+  param = nullptr;
+  *param; // expected-warning {{invocation of method 'operator*' on object 'param' while it is in the 'consumed' state}}
+}
+
 void testCallingConventions() {
   ConsumableClass<int> var(42);
   

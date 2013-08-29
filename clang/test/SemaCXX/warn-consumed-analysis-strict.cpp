@@ -192,6 +192,10 @@ void testNoWarnTestFromMacroExpansion() {
   }
 }
 
+void testFunctionParam(ConsumableClass<int> param) {
+  *param; // expected-warning {{invocation of method 'operator*' on object 'param' while it is in an unknown state}}
+}
+
 void testSimpleForLoop() {
   ConsumableClass<int> var;
   

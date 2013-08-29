@@ -44,8 +44,6 @@
 //       (Deferred)
 // TODO: Test nested conditionals: A) Checking the same value multiple times,
 //       and 2) Checking different values. (Deferred)
-// TODO: Test IsFalseVisitor with values in the unknown state. (Deferred)
-// TODO: Look into combining IsFalseVisitor and TestedVarsVisitor. (Deferred)
 
 using namespace clang;
 using namespace consumed;
@@ -266,11 +264,13 @@ public:
   void VisitDeclStmt(const DeclStmt *DelcS);
   void VisitMaterializeTemporaryExpr(const MaterializeTemporaryExpr *Temp);
   void VisitMemberExpr(const MemberExpr *MExpr);
+  void VisitParmVarDecl(const ParmVarDecl *Param);
   void VisitUnaryOperator(const UnaryOperator *UOp);
   void VisitVarDecl(const VarDecl *Var);
 
-  ConsumedStmtVisitor(AnalysisDeclContext &AC, ConsumedAnalyzer &Analyzer)
-      : AC(AC), Analyzer(Analyzer), StateMap(NULL) {}
+  ConsumedStmtVisitor(AnalysisDeclContext &AC, ConsumedAnalyzer &Analyzer,
+                      ConsumedStateMap *StateMap)
+      : AC(AC), Analyzer(Analyzer), StateMap(StateMap) {}
   
   PropagationInfo getInfo(const Stmt *StmtNode) const {
     ConstInfoEntry Entry = PropagationMap.find(StmtNode);
@@ -664,6 +664,12 @@ void ConsumedStmtVisitor::VisitMemberExpr(const MemberExpr *MExpr) {
   forwardInfo(MExpr->getBase(), MExpr);
 }
 
+
+void ConsumedStmtVisitor::VisitParmVarDecl(const ParmVarDecl *Param) {
+  if (Analyzer.isConsumableType(Param->getType()))
+    StateMap->setState(Param, consumed::CS_Unknown);
+}
+
 void ConsumedStmtVisitor::VisitUnaryOperator(const UnaryOperator *UOp) {
   InfoEntry Entry = PropagationMap.find(UOp->getSubExpr()->IgnoreParens());
   if (Entry == PropagationMap.end()) return;
@@ -685,11 +691,16 @@ void ConsumedStmtVisitor::VisitUnaryOperator(const UnaryOperator *UOp) {
 
 void ConsumedStmtVisitor::VisitVarDecl(const VarDecl *Var) {
   if (Analyzer.isConsumableType(Var->getType())) {
-    PropagationInfo PInfo =
-      PropagationMap.find(Var->getInit())->second;
-    
-    StateMap->setState(Var, PInfo.isVar() ?
-      StateMap->getState(PInfo.getVar()) : PInfo.getState());
+    if (Var->hasInit()) {
+      PropagationInfo PInfo =
+        PropagationMap.find(Var->getInit())->second;
+      
+      StateMap->setState(Var, PInfo.isVar() ?
+        StateMap->getState(PInfo.getVar()) : PInfo.getState());
+      
+    } else {
+      StateMap->setState(Var, consumed::CS_Unknown);
+    }
   }
 }
 }} // end clang::consumed::ConsumedStmtVisitor
@@ -1022,7 +1033,13 @@ void ConsumedAnalyzer::run(AnalysisDeclContext &AC) {
   PostOrderCFGView *SortedGraph = AC.getAnalysis<PostOrderCFGView>();
   
   CurrStates = new ConsumedStateMap();
-  ConsumedStmtVisitor Visitor(AC, *this);
+  ConsumedStmtVisitor Visitor(AC, *this, CurrStates);
+  
+  // Add all trackable parameters to the state map.
+  for (FunctionDecl::param_const_iterator PI = D->param_begin(),
+       PE = D->param_end(); PI != PE; ++PI) {
+    Visitor.VisitParmVarDecl(*PI);
+  }
   
   // Visit all of the function's basic blocks.
   for (PostOrderCFGView::iterator I = SortedGraph->begin(),
