@@ -367,8 +367,17 @@ namespace {
 
     OptionalDiagnostic &operator<<(const APFloat &F) {
       if (Diag) {
+        // FIXME: Force the precision of the source value down so we don't
+        // print digits which are usually useless (we don't really care here if
+        // we truncate a digit by accident in edge cases).  Ideally,
+        // APFloat::toString would automatically print the shortest 
+        // representation which rounds to the correct value, but it's a bit
+        // tricky to implement.
+        unsigned precision =
+            llvm::APFloat::semanticsPrecision(F.getSemantics());
+        precision = (precision * 59 + 195) / 196;
         SmallVector<char, 32> Buffer;
-        F.toString(Buffer);
+        F.toString(Buffer, precision);
         *Diag << StringRef(Buffer.data(), Buffer.size());
       }
       return *this;
