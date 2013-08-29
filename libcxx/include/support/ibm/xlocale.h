@@ -263,8 +263,6 @@ size_t wcsxfrm_l(wchar_t *__ws1, const wchar_t *__ws2, size_t __n,
 }
 #endif // !defined(_AIX71)
 
-locale_t cloc(void);
-
 // strftime_l() is defined by POSIX. However, AIX 7.1 does not have it
 // implemented yet.
 static inline

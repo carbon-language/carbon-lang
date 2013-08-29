@@ -109,6 +109,11 @@ countof(const T * const begin, const T * const end)
 
 }
 
+#if defined(_AIX)
+// Set priority to INT_MIN + 256 + 150
+# pragma priority ( -2147483242 )
+#endif
+
 const locale::category locale::none;
 const locale::category locale::collate;
 const locale::category locale::ctype;

@@ -363,7 +363,7 @@ public:
 # else
     static const mask blank  = _CTYPE_B;
 # endif
-#elif defined(__sun__)
+#elif defined(__sun__) && defined(_AIX)
     typedef unsigned int mask;
     static const mask space  = _ISSPACE;
     static const mask print  = _ISPRINT;
