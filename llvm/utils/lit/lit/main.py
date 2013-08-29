@@ -12,6 +12,7 @@ import math, os, platform, random, re, sys, time, threading, traceback
 import lit.ProgressBar
 import lit.LitConfig
 import lit.Test
+import lit.run
 import lit.util
 
 import lit.discovery
@@ -291,12 +292,14 @@ def main(builtinParameters = {}):
         params = userParams,
         config_prefix = opts.configPrefix)
 
-    tests = lit.discovery.find_tests_for_inputs(litConfig, inputs)
+    # Perform test discovery.
+    run = lit.run.Run(litConfig,
+                      lit.discovery.find_tests_for_inputs(litConfig, inputs))
 
     if opts.showSuites or opts.showTests:
         # Aggregate the tests by suite.
         suitesAndTests = {}
-        for t in tests:
+        for t in run.tests:
             if t.suite not in suitesAndTests:
                 suitesAndTests[t.suite] = []
             suitesAndTests[t.suite].append(t)
@@ -323,7 +326,7 @@ def main(builtinParameters = {}):
         sys.exit(0)
 
     # Select and order the tests.
-    numTotalTests = len(tests)
+    numTotalTests = len(run.tests)
 
     # First, select based on the filter expression if given.
     if opts.filter:
@@ -332,26 +335,26 @@ def main(builtinParameters = {}):
         except:
             parser.error("invalid regular expression for --filter: %r" % (
                     opts.filter))
-        tests = [t for t in tests
-                 if rex.search(t.getFullName())]
+        run.tests = [t for t in run.tests
+                     if rex.search(t.getFullName())]
 
     # Then select the order.
     if opts.shuffle:
-        random.shuffle(tests)
+        random.shuffle(run.tests)
     else:
-        tests.sort(key = lambda t: t.getFullName())
+        run.tests.sort(key = lambda t: t.getFullName())
 
     # Finally limit the number of tests, if desired.
     if opts.maxTests is not None:
-        tests = tests[:opts.maxTests]
+        run.tests = run.tests[:opts.maxTests]
 
     # Don't create more threads than tests.
-    opts.numThreads = min(len(tests), opts.numThreads)
+    opts.numThreads = min(len(run.tests), opts.numThreads)
 
     extra = ''
-    if len(tests) != numTotalTests:
+    if len(run.tests) != numTotalTests:
         extra = ' of %d' % numTotalTests
-    header = '-- Testing: %d%s tests, %d threads --'%(len(tests),extra,
+    header = '-- Testing: %d%s tests, %d threads --'%(len(run.tests), extra,
                                                       opts.numThreads)
 
     progressBar = None
@@ -367,8 +370,8 @@ def main(builtinParameters = {}):
             print(header)
 
     startTime = time.time()
-    display = TestingProgressDisplay(opts, len(tests), progressBar)
-    provider = TestProvider(tests, opts.maxTime)
+    display = TestingProgressDisplay(opts, len(run.tests), progressBar)
+    provider = TestProvider(run.tests, opts.maxTime)
 
     try:
       import win32api
@@ -387,14 +390,14 @@ def main(builtinParameters = {}):
         print('Testing Time: %.2fs'%(time.time() - startTime))
 
     # Update results for any tests which weren't run.
-    for test in tests:
+    for test in run.tests:
         if test.result is None:
             test.setResult(lit.Test.Result(lit.Test.UNRESOLVED, '', 0.0))
 
     # List test results organized by kind.
     hasFailures = False
     byCode = {}
-    for test in tests:
+    for test in run.tests:
         if test.result.code not in byCode:
             byCode[test.result.code] = []
         byCode[test.result.code].append(test)
@@ -414,12 +417,12 @@ def main(builtinParameters = {}):
             print('    %s' % test.getFullName())
         sys.stdout.write('\n')
 
-    if opts.timeTests and tests:
+    if opts.timeTests and run.tests:
         # Order by time.
         test_times = [(test.getFullName(), test.result.elapsed)
-                      for test in tests]
+                      for test in run.tests]
         lit.util.printHistogram(test_times, title='Tests')
-    
+
     for name,code in (('Expected Passes    ', lit.Test.PASS),
                       ('Expected Failures  ', lit.Test.XFAIL),
                       ('Unsupported Tests  ', lit.Test.UNSUPPORTED),
