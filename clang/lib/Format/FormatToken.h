@@ -169,8 +169,17 @@ struct FormatToken {
   /// \brief If this is an opening parenthesis, how are the parameters packed?
   ParameterPackingKind PackingKind;
 
-  /// \brief The total length of the line up to and including this token.
+  /// \brief The total length of the unwrapped line up to and including this
+  /// token.
   unsigned TotalLength;
+
+  /// \brief The original column of this token, including expanded tabs.
+  /// The configured IndentWidth is used as tab width. Only tabs in whitespace
+  /// are expanded.
+  /// FIXME: This is currently only used on the first token of an unwrapped
+  /// line, and the implementation is not correct for other tokens (see the
+  /// FIXMEs in FormatTokenLexer::getNextToken()).
+  unsigned OriginalColumn;
 
   /// \brief The length of following tokens until the next natural split point,
   /// or the next token that can be broken.

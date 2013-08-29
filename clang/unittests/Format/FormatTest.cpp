@@ -5528,7 +5528,33 @@ TEST_F(FormatTest, ConfigurableUseOfTab) {
                "\t\t    parameter2); \\\n"
                "\t}",
                Tab);
-
+  EXPECT_EQ("void f() {\n"
+            "\tf();\n"
+            "\tg();\n"
+            "}",
+            format("void f() {\n"
+                   "\tf();\n"
+                   "\tg();\n"
+                   "}",
+                   0, 0, Tab));
+  EXPECT_EQ("void f() {\n"
+            "\tf();\n"
+            "\tg();\n"
+            "}",
+            format("void f() {\n"
+                   "\tf();\n"
+                   "\tg();\n"
+                   "}",
+                   16, 0, Tab));
+  EXPECT_EQ("void f() {\n"
+            "  \tf();\n"
+            "\tg();\n"
+            "}",
+            format("void f() {\n"
+                   "  \tf();\n"
+                   "  \tg();\n"
+                   "}",
+                   21, 0, Tab));
 
   // FIXME: To correctly count mixed whitespace we need to
   // also correctly count mixed whitespace in front of the comment.
