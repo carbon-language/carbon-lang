@@ -173,4 +173,27 @@ void testImmediateUseOp() {
   clang_analyzer_eval(getConstrainedFieldRefOp(getS()) == 42); // expected-warning{{TRUE}}
 }
 
+namespace EmptyClass {
+  struct Base {
+    int& x;
+
+    Base(int& x) : x(x) {}
+  };
+
+  struct Derived : public Base {
+    Derived(int& x) : Base(x) {}
+
+    void operator=(int a) { x = a; }
+  };
+
+  Derived ref(int& a) { return Derived(a); }
+
+  // There used to be a warning here, because analyzer treated Derived as empty.
+  int test() {
+    int a;
+    ref(a) = 42;
+    return a; // no warning
+  }
+}
+
 #endif

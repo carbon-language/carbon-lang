@@ -1832,10 +1832,18 @@ NonLoc RegionStoreManager::createLazyBinding(RegionBindingsConstRef B,
   return svalBuilder.makeLazyCompoundVal(StoreRef(B.asStore(), *this), R);
 }
 
+static bool isRecordEmpty(const RecordDecl *RD) {
+  if (!RD->field_empty())
+    return false;
+  if (const CXXRecordDecl *CRD = dyn_cast<CXXRecordDecl>(RD))
+    return CRD->getNumBases() == 0;
+  return true;
+}
+
 SVal RegionStoreManager::getBindingForStruct(RegionBindingsConstRef B,
                                              const TypedValueRegion *R) {
   const RecordDecl *RD = R->getValueType()->castAs<RecordType>()->getDecl();
-  if (RD->field_empty())
+  if (isRecordEmpty(RD))
     return UnknownVal();
 
   return createLazyBinding(B, R);
