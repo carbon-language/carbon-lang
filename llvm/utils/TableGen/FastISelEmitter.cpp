@@ -805,8 +805,8 @@ void FastISelMap::printFunctionDefinitions(raw_ostream &OS) {
     Operands.PrintParameters(OS);
     OS << ") {\n";
 
-    // If there are any forms of this signature available that operand on
-    // constrained forms of the immediate (e.g. 32-bit sext immediate in a
+    // If there are any forms of this signature available that operate on
+    // constrained forms of the immediate (e.g., 32-bit sext immediate in a
     // 64-bit operand), check them first.
 
     std::map<OperandsSignature, std::vector<OperandsSignature> >::iterator MI
