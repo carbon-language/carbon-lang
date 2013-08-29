@@ -530,8 +530,6 @@ void ConsumedStmtVisitor::VisitCXXMemberCallExpr(
         handleTestingFunctionCall(Call, PInfo.getVar());
       else if (MethodDecl->hasAttr<ConsumesAttr>())
         StateMap->setState(PInfo.getVar(), consumed::CS_Consumed);
-      else if (!MethodDecl->isConst())
-        StateMap->setState(PInfo.getVar(), consumed::CS_Unknown);
     }
   }
 }
@@ -626,18 +624,10 @@ void ConsumedStmtVisitor::VisitCXXOperatorCallExpr(
       checkCallability(PInfo, FunDecl, Call);
       
       if (PInfo.isVar()) {
-        if (isTestingFunction(FunDecl)) {
+        if (isTestingFunction(FunDecl))
           handleTestingFunctionCall(Call, PInfo.getVar());
-          
-        } else if (FunDecl->hasAttr<ConsumesAttr>()) {
+        else if (FunDecl->hasAttr<ConsumesAttr>())
           StateMap->setState(PInfo.getVar(), consumed::CS_Consumed);
-          
-        } else if (const CXXMethodDecl *MethodDecl =
-                     dyn_cast_or_null<CXXMethodDecl>(FunDecl)) {
-          
-          if (!MethodDecl->isConst())
-            StateMap->setState(PInfo.getVar(), consumed::CS_Unknown);
-        }
       }
     }
   }

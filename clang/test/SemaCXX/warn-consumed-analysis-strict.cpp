@@ -20,7 +20,7 @@ class ConsumableClass {
   
   ConsumableClass<T>& operator=(ConsumableClass<T>  &other);
   ConsumableClass<T>& operator=(ConsumableClass<T> &&other);
-  ConsumableClass<T>& operator=(nullptr_t);
+  ConsumableClass<T>& operator=(nullptr_t) CONSUMES;
   
   template <typename U>
   ConsumableClass<T>& operator=(ConsumableClass<U>  &other);
@@ -174,13 +174,6 @@ void testCallingConventions() {
   *var; // expected-warning {{invocation of method 'operator*' on object 'var' while it is in an unknown state}}
 }
 
-void testMoveAsignmentish() {
-  ConsumableClass<int> var;
-  
-  var = nullptr;
-  *var; // expected-warning {{invocation of method 'operator*' on object 'var' while it is in an unknown state}}
-}
-
 void testConstAndNonConstMemberFunctions() {
   ConsumableClass<int> var(42);
   
@@ -188,7 +181,7 @@ void testConstAndNonConstMemberFunctions() {
   *var;
   
   var.nonconstCall();
-  *var; // expected-warning {{invocation of method 'operator*' on object 'var' while it is in an unknown state}}
+  *var;
 }
 
 void testNoWarnTestFromMacroExpansion() {
