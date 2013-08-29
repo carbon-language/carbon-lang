@@ -72,6 +72,9 @@ typedef uintptr_t _Unwind_Ptr;
 typedef uintptr_t _Unwind_Internal_Ptr;
 typedef uint64_t _Unwind_Exception_Class;
 
+typedef intptr_t _sleb128_t;
+typedef uintptr_t _uleb128_t;
+
 struct _Unwind_Context;
 struct _Unwind_Exception;
 typedef enum {
