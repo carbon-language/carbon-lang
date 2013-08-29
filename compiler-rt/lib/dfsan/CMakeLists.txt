@@ -24,7 +24,9 @@ if(CAN_TARGET_${arch})
     SOURCES ${DFSAN_RTL_SOURCES}
             $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
             CFLAGS ${DFSAN_RTL_CFLAGS} -fPIC -DDFSAN_NOLIBC)
-  list(APPEND DFSAN_RUNTIME_LIBRARIES clang_rt.dfsan-${arch})
+  add_sanitizer_rt_symbols(clang_rt.dfsan-${arch} dfsan.syms.extra)
+  list(APPEND DFSAN_RUNTIME_LIBRARIES clang_rt.dfsan-${arch}
+                                      clang_rt.dfsan-${arch}-symbols)
 endif()
 
 add_custom_target(dfsan_abilist ALL
