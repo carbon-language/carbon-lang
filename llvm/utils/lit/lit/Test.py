@@ -5,6 +5,17 @@ import os
 class ResultCode(object):
     """Test result codes."""
 
+    # We override __new__ and __getnewargs__ to ensure that pickling still
+    # provides unique ResultCode objects in any particular instance.
+    _instances = {}
+    def __new__(cls, name, isFailure):
+        res = cls._instances.get(name)
+        if res is None:
+            cls._instances[name] = res = super(ResultCode, cls).__new__(cls)
+        return res
+    def __getnewargs__(self):
+        return (self.name, self.isFailure)
+
     def __init__(self, name, isFailure):
         self.name = name
         self.isFailure = isFailure
