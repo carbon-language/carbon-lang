@@ -599,6 +599,29 @@ llvm::DIType CGDebugInfo::CreateType(const PointerType *Ty,
                                Ty->getPointeeType(), Unit);
 }
 
+/// In C++ mode, types have linkage, so we can rely on the ODR and
+/// on their mangled names, if they're external. Otherwise, we append
+/// the CU's directory and file name.
+static void getUniqueTagTypeName(const TagType *Ty, CodeGenModule &CGM,
+                                 llvm::DICompileUnit TheCU,
+                                 SmallString<256> &FullName) {
+  // FIXME: ODR should apply to ObjC++ exactly the same wasy it does to C++.
+  // For now, only apply ODR with C++.
+  const TagDecl *TD = Ty->getDecl();
+  if (TheCU.getLanguage() != llvm::dwarf::DW_LANG_C_plus_plus ||
+      !TD->isExternallyVisible())
+    return;
+  // Microsoft Mangler does not have support for mangleCXXRTTIName yet.
+  if (CGM.getTarget().getCXXABI().isMicrosoft())
+    return;
+
+  // TODO: This is using the RTTI name. Is there a better way to get
+  // a unique string for a type?
+  llvm::raw_svector_ostream Out(FullName);
+  CGM.getCXXABI().getMangleContext().mangleCXXRTTIName(QualType(Ty, 0), Out);
+  Out.flush();
+}
+
 // Creates a forward declaration for a RecordDecl in the given context.
 llvm::DICompositeType
 CGDebugInfo::getOrCreateRecordFwdDecl(const RecordType *Ty,
@@ -621,7 +644,14 @@ CGDebugInfo::getOrCreateRecordFwdDecl(const RecordType *Ty,
   }
 
   // Create the type.
-  return DBuilder.createForwardDecl(Tag, RDName, Ctx, DefUnit, Line);
+  SmallString<256> FullName;
+  getUniqueTagTypeName(Ty, CGM, TheCU, FullName);
+  if (!FullName.empty()) {
+    QualType QTy(Ty, 0);
+    RetainedTypes.push_back(QTy.getAsOpaquePtr());
+  }
+  return DBuilder.createForwardDecl(Tag, RDName, Ctx, DefUnit, Line, 0, 0, 0,
+                                    FullName.str());
 }
 
 // Walk up the context chain and create forward decls for record decls,
@@ -1884,6 +1914,13 @@ llvm::DIType CGDebugInfo::CreateEnumType(const EnumType *Ty) {
     Align = CGM.getContext().getTypeAlign(ED->getTypeForDecl());
   }
 
+  SmallString<256> FullName;
+  getUniqueTagTypeName(Ty, CGM, TheCU, FullName);
+  if (!FullName.empty()) {
+    QualType QTy(Ty, 0);
+    RetainedTypes.push_back(QTy.getAsOpaquePtr());
+  }
+
   // If this is just a forward declaration, construct an appropriately
   // marked node and just return it.
   if (!ED->getDefinition()) {
@@ -1894,7 +1931,7 @@ llvm::DIType CGDebugInfo::CreateEnumType(const EnumType *Ty) {
     StringRef EDName = ED->getName();
     return DBuilder.createForwardDecl(llvm::dwarf::DW_TAG_enumeration_type,
                                       EDName, EDContext, DefUnit, Line, 0,
-                                      Size, Align);
+                                      Size, Align, FullName.str());
   }
 
   // Create DIEnumerator elements for each enumerator.
@@ -1920,7 +1957,7 @@ llvm::DIType CGDebugInfo::CreateEnumType(const EnumType *Ty) {
   llvm::DIType DbgTy =
     DBuilder.createEnumerationType(EnumContext, ED->getName(), DefUnit, Line,
                                    Size, Align, EltArray,
-                                   ClassTy);
+                                   ClassTy, FullName.str());
   return DbgTy;
 }
 
@@ -2270,20 +2307,28 @@ llvm::DICompositeType CGDebugInfo::CreateLimitedType(const RecordType *Ty) {
   uint64_t Align = CGM.getContext().getTypeAlign(Ty);
   llvm::DICompositeType RealDecl;
 
+  SmallString<256> FullName;
+  getUniqueTagTypeName(Ty, CGM, TheCU, FullName);
+  if (!FullName.empty()) {
+    QualType QTy(Ty, 0);
+    RetainedTypes.push_back(QTy.getAsOpaquePtr());
+  }
+
   if (RD->isUnion())
     RealDecl = DBuilder.createUnionType(RDContext, RDName, DefUnit, Line,
-                                        Size, Align, 0, llvm::DIArray());
+                                        Size, Align, 0, llvm::DIArray(), 0,
+                                        FullName.str());
   else if (RD->isClass()) {
     // FIXME: This could be a struct type giving a default visibility different
     // than C++ class type, but needs llvm metadata changes first.
     RealDecl = DBuilder.createClassType(RDContext, RDName, DefUnit, Line,
                                         Size, Align, 0, 0, llvm::DIType(),
                                         llvm::DIArray(), llvm::DIType(),
-                                        llvm::DIArray());
+                                        llvm::DIArray(), FullName.str());
   } else
     RealDecl = DBuilder.createStructType(RDContext, RDName, DefUnit, Line,
                                          Size, Align, 0, llvm::DIType(),
-                                         llvm::DIArray());
+                                         llvm::DIArray(), 0, 0, FullName.str());
 
   RegionMap[Ty->getDecl()] = llvm::WeakVH(RealDecl);
   TypeCache[QualType(Ty, 0).getAsOpaquePtr()] = RealDecl;
@@ -3290,9 +3335,17 @@ void CGDebugInfo::finalize() {
 
   // We keep our own list of retained types, because we need to look
   // up the final type in the type cache.
+  // Both createForwardDecl and createLimitedType can add the same type to
+  // RetainedTypes. A set is used to avoid duplication.
+  llvm::SmallPtrSet<void *, 16> RetainSet;
   for (std::vector<void *>::const_iterator RI = RetainedTypes.begin(),
          RE = RetainedTypes.end(); RI != RE; ++RI)
-    DBuilder.retainType(llvm::DIType(cast<llvm::MDNode>(TypeCache[*RI])));
+    if (RetainSet.insert(*RI)) {
+      llvm::DenseMap<void *, llvm::WeakVH>::iterator it =
+        TypeCache.find(*RI);
+      if (it != TypeCache.end() && it->second)
+        DBuilder.retainType(llvm::DIType(cast<llvm::MDNode>(it->second)));
+    }
 
   DBuilder.finalize();
 }

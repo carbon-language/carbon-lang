@@ -10,6 +10,6 @@ namespace PR15637 {
   Value<float> f;
 }
 
-// CHECK: {{.*}}, metadata !"Value<float>", {{.*}}, null, metadata [[TTPARAM:.*]], null} ; [ DW_TAG_union_type ] [Value<float>]
+// CHECK: {{.*}}, metadata !"Value<float>", {{.*}}, null, metadata [[TTPARAM:.*]], metadata !"_ZTSN7PR156375ValueIfEE"} ; [ DW_TAG_union_type ] [Value<float>]
 // CHECK: [[TTPARAM]] = metadata !{metadata [[PARAMS:.*]]}
 // CHECK: [[PARAMS]] = metadata !{{{.*}}metadata !"T",{{.*}}} ; [ DW_TAG_template_type_parameter ]

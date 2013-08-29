@@ -41,9 +41,11 @@ int func(bool b) {
 
 // CHECK: [[CU:![0-9]*]] = {{.*}}[[MODULES:![0-9]*]], metadata !""} ; [ DW_TAG_compile_unit ]
 // CHECK: [[FILE:![0-9]*]] {{.*}}debug-info-namespace.cpp"
+// CHECK: [[FOO:![0-9]*]] {{.*}} ; [ DW_TAG_structure_type ] [foo] [line 5, size 0, align 0, offset 0] [decl] [from ]
 // CHECK: [[FOOCPP:![0-9]*]] = metadata !{metadata !"foo.cpp", {{.*}}
 // CHECK: [[NS:![0-9]*]] = {{.*}}, metadata [[FILE2:![0-9]*]], metadata [[CTXT:![0-9]*]], {{.*}} ; [ DW_TAG_namespace ] [B] [line 1]
 // CHECK: [[CTXT]] = {{.*}}, metadata [[FILE]], null, {{.*}} ; [ DW_TAG_namespace ] [A] [line 5]
+// CHECK: [[BAR:![0-9]*]] {{.*}} ; [ DW_TAG_structure_type ] [bar] [line 6, {{.*}}] [decl] [from ]
 // CHECK: [[F1:![0-9]*]] {{.*}} ; [ DW_TAG_subprogram ] [line 4] [def] [f1]
 // CHECK: [[FUNC:![0-9]*]] {{.*}} ; [ DW_TAG_subprogram ] {{.*}} [def] [func]
 // CHECK: [[FILE2]]} ; [ DW_TAG_file_type ] [{{.*}}foo.cpp]
@@ -57,9 +59,7 @@ int func(bool b) {
 // CHECK: [[LEX1]] = metadata !{i32 {{[0-9]*}}, metadata [[FILE2]], metadata [[FUNC]], i32 {{[0-9]*}}, i32 0, i32 {{.*}}} ; [ DW_TAG_lexical_block ]
 // CHECK: [[M5]] = metadata !{i32 {{[0-9]*}}, metadata [[FUNC]], metadata [[CTXT]], i32 {{[0-9]*}}} ; [ DW_TAG_imported_module ]
 // CHECK: [[M6]] = metadata !{i32 {{[0-9]*}}, metadata [[FUNC]], metadata [[FOO:![0-9]*]], i32 23} ; [ DW_TAG_imported_declaration ]
-// CHECK: [[FOO]] {{.*}} ; [ DW_TAG_structure_type ] [foo] [line 5, size 0, align 0, offset 0] [decl] [from ]
 // CHECK: [[M7]] = metadata !{i32 {{[0-9]*}}, metadata [[FUNC]], metadata [[BAR:![0-9]*]], i32 {{[0-9]*}}} ; [ DW_TAG_imported_declaration ]
-// CHECK: [[BAR]] {{.*}} ; [ DW_TAG_structure_type ] [bar] [line 6, {{.*}}] [decl] [from ]
 // CHECK: [[M8]] = metadata !{i32 {{[0-9]*}}, metadata [[FUNC]], metadata [[F1]], i32 {{[0-9]*}}} ; [ DW_TAG_imported_declaration ]
 // CHECK: [[M9]] = metadata !{i32 {{[0-9]*}}, metadata [[FUNC]], metadata [[I]], i32 {{[0-9]*}}} ; [ DW_TAG_imported_declaration ]
 // CHECK: [[M10]] = metadata !{i32 {{[0-9]*}}, metadata [[FUNC]], metadata [[BAZ:![0-9]*]], i32 {{[0-9]*}}} ; [ DW_TAG_imported_declaration ]
