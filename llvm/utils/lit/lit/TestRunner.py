@@ -239,7 +239,7 @@ def executeScriptInternal(test, litConfig, tmpBase, commands, cwd):
             cmds.append(ShUtil.ShParser(ln, litConfig.isWindows,
                                         test.config.pipefail).parse())
         except:
-            return (Test.FAIL, "shell parser error on: %r" % ln)
+            return lit.Test.Result(Test.FAIL, "shell parser error on: %r" % ln)
 
     cmd = cmds[0]
     for c in cmds[1:]:
@@ -448,50 +448,22 @@ def parseIntegratedTestScript(test, normalize_slashes=False,
 
     # Verify the script contains a run line.
     if not script:
-        return (Test.UNRESOLVED, "Test has no run line!")
+        return lit.Test.Result(Test.UNRESOLVED, "Test has no run line!")
 
     # Check for unterminated run lines.
     if script[-1][-1] == '\\':
-        return (Test.UNRESOLVED, "Test has unterminated run lines (with '\\')")
+        return lit.Test.Result(Test.UNRESOLVED,
+                               "Test has unterminated run lines (with '\\')")
 
     # Check that we have the required features:
     missing_required_features = [f for f in requires
                                  if f not in test.config.available_features]
     if missing_required_features:
         msg = ', '.join(missing_required_features)
-        return (Test.UNSUPPORTED,
-                "Test requires the following features: %s" % msg)
+        return lit.Test.Result(Test.UNSUPPORTED,
+                               "Test requires the following features: %s" % msg)
 
     return script,tmpBase,execdir
-
-def formatTestOutput(status, out, err, exitCode, script):
-    output = """\
-Script:
---
-%s
---
-Exit Code: %d
-
-""" % ('\n'.join(script), exitCode)
-
-    # Append the stdout, if present.
-    if out:
-        output += """\
-Command Output (stdout):
---
-%s
---
-""" % (out,)
-
-    # Append the stderr, if present.
-    if err:
-        output += """\
-Command Output (stderr):
---
-%s
---
-""" % (err,)
-    return (status, output)
 
 def executeShTest(test, litConfig, useExternalSh,
                   extra_substitutions=[]):
@@ -499,13 +471,12 @@ def executeShTest(test, litConfig, useExternalSh,
         return (Test.UNSUPPORTED, 'Test is unsupported')
 
     res = parseIntegratedTestScript(test, useExternalSh, extra_substitutions)
-    if len(res) == 2:
+    if isinstance(res, lit.Test.Result):
         return res
+    if litConfig.noExecute:
+        return lit.Test.Result(Test.PASS)
 
     script, tmpBase, execdir = res
-
-    if litConfig.noExecute:
-        return (Test.PASS, '')
 
     # Create the output directory if it does not already exist.
     lit.util.mkdir_p(os.path.dirname(tmpBase))
@@ -514,7 +485,7 @@ def executeShTest(test, litConfig, useExternalSh,
         res = executeScript(test, litConfig, tmpBase, script, execdir)
     else:
         res = executeScriptInternal(test, litConfig, tmpBase, script, execdir)
-    if len(res) == 2:
+    if isinstance(res, lit.Test.Result):
         return res
 
     out,err,exitCode = res
@@ -523,4 +494,14 @@ def executeShTest(test, litConfig, useExternalSh,
     else:
         status = Test.FAIL
 
-    return formatTestOutput(status, out, err, exitCode, script)
+    # Form the output log.
+    output = """Script:\n--\n%s\n--\nExit Code: %d\n\n""" % (
+        '\n'.join(script), exitCode)
+
+    # Append the outputs, if present.
+    if out:
+        output += """Command Output (stdout):\n--\n%s\n--\n""" % (out,)
+    if err:
+        output += """Command Output (stderr):\n--\n%s\n--\n""" % (err,)
+
+    return lit.Test.Result(status, output)
