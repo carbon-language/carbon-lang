@@ -1276,11 +1276,11 @@ ASTDeclReader::VisitCXXRecordDeclImpl(CXXRecordDecl *D) {
   }
   }
 
-  // Load the key function to avoid deserializing every method so we can
+  // Lazily load the key function to avoid deserializing every method so we can
   // compute it.
   if (D->IsCompleteDefinition) {
-    if (CXXMethodDecl *Key = ReadDeclAs<CXXMethodDecl>(Record, Idx))
-      C.KeyFunctions[D] = Key;
+    if (DeclID KeyFn = ReadDeclID(Record, Idx))
+      C.KeyFunctions[D] = KeyFn;
   }
 
   return Redecl;

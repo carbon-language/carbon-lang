@@ -1,18 +1,25 @@
-// RUN: %clang_cc1 -emit-pch -o %t %s
-// RUN: %clang_cc1 -error-on-deserialized-decl S1_method -include-pch %t -emit-llvm-only %s 
+// RUN: %clang_cc1 -emit-pch -o %t.1 %s
+// RUN: %clang_cc1 -error-on-deserialized-decl S1_keyfunc -include-pch %t.1 -emit-pch -o %t.2 %s
+// RUN: %clang_cc1 -error-on-deserialized-decl S1_method -include-pch %t.2 -emit-llvm-only %s
 
-#ifndef HEADER
-#define HEADER
+#ifndef HEADER1
+#define HEADER1
 // Header.
 
 struct S1 {
-  void S1_method(); // This should not be deserialized.
+  void S1_method();
   virtual void S1_keyfunc();
 };
 
+#elif !defined(HEADER2)
+#define HEADER2
+
+// Chained PCH.
+S1 *p;
 
 #else
-// Using the header.
+
+// Using the headers.
 
 void test(S1*) {
 }

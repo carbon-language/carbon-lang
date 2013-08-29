@@ -148,7 +148,7 @@ class ASTContext : public RefCountedBase<ASTContext> {
   mutable TypeInfoMap MemoizedTypeInfo;
 
   /// \brief A cache mapping from CXXRecordDecls to key functions.
-  llvm::DenseMap<const CXXRecordDecl*, const CXXMethodDecl*> KeyFunctions;
+  llvm::DenseMap<const CXXRecordDecl*, LazyDeclPtr> KeyFunctions;
   
   /// \brief Mapping from ObjCContainers to their ObjCImplementations.
   llvm::DenseMap<ObjCContainerDecl*, ObjCImplDecl*> ObjCImpls;
