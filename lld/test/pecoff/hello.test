@@ -36,7 +36,7 @@ SECTIONS:   }
 SECTIONS:   Section {
 SECTIONS:     Number: 2
 SECTIONS:     Name: .data (2E 64 61 74 61 00 00 00)
-SECTIONS:     VirtualSize: 0x18
+SECTIONS:     VirtualSize: 0x12
 SECTIONS:     VirtualAddress: 0x2000
 SECTIONS:     RawDataSize: 512
 SECTIONS:     PointerToRawData: 0x400

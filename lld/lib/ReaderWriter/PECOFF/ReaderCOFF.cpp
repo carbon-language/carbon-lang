@@ -438,7 +438,7 @@ private:
       const uint8_t *start = secData.data() + (*si)->Value;
       // if this is the last symbol, take up the remaining data.
       const uint8_t *end = (si + 1 == se)
-          ? start + secData.size()
+          ? secData.data() + secData.size()
           : secData.data() + (*(si + 1))->Value;
       ArrayRef<uint8_t> data(start, end);
       auto *atom = new (_alloc) COFFDefinedAtom(
