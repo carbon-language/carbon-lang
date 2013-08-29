@@ -27,25 +27,25 @@ A(1,2)
 // CHECK-NEXT: {{^}}#if 0 /* expanded by -frewrite-includes */{{$}}
 // CHECK-NEXT: {{^}}#include "rewrite-includes1.h"{{$}}
 // CHECK-NEXT: {{^}}#endif /* expanded by -frewrite-includes */{{$}}
-// CHECK-NEXT: {{^}}# 1 "{{.*[/\\]Inputs[/\\]}}rewrite-includes1.h" 1{{$}}
+// CHECK-NEXT: {{^}}# 1 "{{.*[/\\]Inputs(/|\\\\)}}rewrite-includes1.h" 1{{$}}
 // CHECK-NEXT: {{^}}#if 0 /* expanded by -frewrite-includes */{{$}}
 // CHECK-NEXT: {{^}}#pragma clang system_header{{$}}
 // CHECK-NEXT: {{^}}#endif /* expanded by -frewrite-includes */{{$}}
-// CHECK-NEXT: {{^}}# 2 "{{.*[/\\]Inputs[/\\]}}rewrite-includes1.h" 3{{$}}
+// CHECK-NEXT: {{^}}# 2 "{{.*[/\\]Inputs(/|\\\\)}}rewrite-includes1.h" 3{{$}}
 // CHECK-NEXT: {{^}}included_line1{{$}}
 // CHECK-NEXT: {{^}}#if 0 /* expanded by -frewrite-includes */{{$}}
 // CHECK-NEXT: {{^}}#include "rewrite-includes2.h"{{$}}
 // CHECK-NEXT: {{^}}#endif /* expanded by -frewrite-includes */{{$}}
-// CHECK-NEXT: {{^}}# 1 "{{.*[/\\]Inputs[/\\]}}rewrite-includes2.h" 1 3{{$}}
+// CHECK-NEXT: {{^}}# 1 "{{.*[/\\]Inputs(/|\\\\)}}rewrite-includes2.h" 1 3{{$}}
 // CHECK-NEXT: {{^}}included_line2{{$}}
-// CHECK-NEXT: {{^}}# 4 "{{.*[/\\]Inputs[/\\]}}rewrite-includes1.h" 2 3{{$}}
+// CHECK-NEXT: {{^}}# 4 "{{.*[/\\]Inputs(/|\\\\)}}rewrite-includes1.h" 2 3{{$}}
 // CHECK-NEXT: {{^}}# 7 "{{.*}}rewrite-includes.c" 2{{$}}
 // CHECK-NEXT: {{^}}#ifdef FIRST{{$}}
 // CHECK-NEXT: {{^}}#define HEADER "rewrite-includes3.h"{{$}}
 // CHECK-NEXT: {{^}}#if 0 /* expanded by -frewrite-includes */{{$}}
 // CHECK-NEXT: {{^}}#include HEADER{{$}}
 // CHECK-NEXT: {{^}}#endif /* expanded by -frewrite-includes */{{$}}
-// CHECK-NEXT: {{^}}# 1 "{{.*[/\\]Inputs[/\\]}}rewrite-includes3.h" 1{{$}}
+// CHECK-NEXT: {{^}}# 1 "{{.*[/\\]Inputs(/|\\\\)}}rewrite-includes3.h" 1{{$}}
 // CHECK-NEXT: {{^}}included_line3{{$}}
 // CHECK-NEXT: {{^}}# 10 "{{.*}}rewrite-includes.c" 2{{$}}
 // CHECK-NEXT: {{^}}#else{{$}}
@@ -61,17 +61,17 @@ A(1,2)
 // CHECK-NEXT: {{^}}#/**/include /**/ "rewrite-includes5.h" /**/ {{\\}}{{$}}
 // CHECK-NEXT: {{^}} {{$}}
 // CHECK-NEXT: {{^}}#endif /* expanded by -frewrite-includes */{{$}}
-// CHECK-NEXT: {{^}}# 1 "{{.*[/\\]Inputs[/\\]}}rewrite-includes5.h" 1{{$}}
+// CHECK-NEXT: {{^}}# 1 "{{.*[/\\]Inputs(/|\\\\)}}rewrite-includes5.h" 1{{$}}
 // CHECK-NEXT: {{^}}included_line5{{$}}
 // CHECK-NEXT: {{^}}# 16 "{{.*}}rewrite-includes.c" 2{{$}}
 // CHECK-NEXT: {{^}}#if 0 /* expanded by -frewrite-includes */{{$}}
 // CHECK-NEXT: {{^}}#include "rewrite-includes6.h" // comment{{$}}
 // CHECK-NEXT: {{^}}#endif /* expanded by -frewrite-includes */{{$}}
-// CHECK-NEXT: {{^}}# 1 "{{.*[/\\]Inputs[/\\]}}rewrite-includes6.h" 1{{$}}
+// CHECK-NEXT: {{^}}# 1 "{{.*[/\\]Inputs(/|\\\\)}}rewrite-includes6.h" 1{{$}}
 // CHECK-NEXT: {{^}}#if 0 /* expanded by -frewrite-includes */{{$}}
 // CHECK-NEXT: {{^}}#pragma once{{$}}
 // CHECK-NEXT: {{^}}#endif /* expanded by -frewrite-includes */{{$}}
-// CHECK-NEXT: {{^}}# 2 "{{.*[/\\]Inputs[/\\]}}rewrite-includes6.h"{{$}}
+// CHECK-NEXT: {{^}}# 2 "{{.*[/\\]Inputs(/|\\\\)}}rewrite-includes6.h"{{$}}
 // CHECK-NEXT: {{^}}included_line6{{$}}
 // CHECK-NEXT: {{^}}# 17 "{{.*}}rewrite-includes.c" 2{{$}}
 // CHECK-NEXT: {{^}} {{$}}
@@ -83,12 +83,12 @@ A(1,2)
 // CHECK-NEXT: {{^}}#if 0 /* expanded by -frewrite-includes */{{$}}
 // CHECK-NEXT: {{^}}#include "rewrite-includes7.h"{{$}}
 // CHECK-NEXT: {{^}}#endif /* expanded by -frewrite-includes */{{$}}
-// CHECK-NEXT: {{^}}# 1 "{{.*[/\\]Inputs[/\\]}}rewrite-includes7.h" 1{{$}}
+// CHECK-NEXT: {{^}}# 1 "{{.*[/\\]Inputs(/|\\\\)}}rewrite-includes7.h" 1{{$}}
 // CHECK-NEXT: {{^}}#ifndef REWRITE_INCLUDES_7{{$}}
 // CHECK-NEXT: {{^}}#define REWRITE_INCLUDES_7{{$}}
 // CHECK-NEXT: {{^}}included_line7{{$}}
 // CHECK-NEXT: {{^}}#endif{{$}}
-// CHECK-NEXT: {{^}}# 5 "{{.*[/\\]Inputs[/\\]}}rewrite-includes7.h"{{$}}
+// CHECK-NEXT: {{^}}# 5 "{{.*[/\\]Inputs(/|\\\\)}}rewrite-includes7.h"{{$}}
 // CHECK-NEXT: {{^}}# 21 "{{.*}}rewrite-includes.c" 2{{$}}
 // CHECK-NEXT: {{^}}#if 0 /* expanded by -frewrite-includes */{{$}}
 // CHECK-NEXT: {{^}}#include "rewrite-includes7.h"{{$}}
@@ -97,15 +97,15 @@ A(1,2)
 // CHECK-NEXT: {{^}}#if 0 /* expanded by -frewrite-includes */{{$}}
 // CHECK-NEXT: {{^}}#include "rewrite-includes8.h"{{$}}
 // CHECK-NEXT: {{^}}#endif /* expanded by -frewrite-includes */{{$}}
-// CHECK-NEXT: {{^}}# 1 "{{.*[/\\]Inputs[/\\]}}rewrite-includes8.h" 1{{$}}
+// CHECK-NEXT: {{^}}# 1 "{{.*[/\\]Inputs(/|\\\\)}}rewrite-includes8.h" 1{{$}}
 // CHECK-NEXT: {{^}}#if (1)/*__has_include_next(<rewrite-includes8.h>)*/{{$}}
 // CHECK-NEXT: {{^}}#elif (0)/*__has_include(<rewrite-includes8.hfail>)*/{{$}}
-// CHECK-NEXT: {{^}}# 3 "{{.*[/\\]Inputs[/\\]}}rewrite-includes8.h"{{$}}
+// CHECK-NEXT: {{^}}# 3 "{{.*[/\\]Inputs(/|\\\\)}}rewrite-includes8.h"{{$}}
 // CHECK-NEXT: {{^}}#endif{{$}}
-// CHECK-NEXT: {{^}}# 4 "{{.*[/\\]Inputs[/\\]}}rewrite-includes8.h"{{$}}
+// CHECK-NEXT: {{^}}# 4 "{{.*[/\\]Inputs(/|\\\\)}}rewrite-includes8.h"{{$}}
 // CHECK-NEXT: {{^}}#if !(1)/*__has_include("rewrite-includes8.h")*/{{$}}
 // CHECK-NEXT: {{^}}#endif{{$}}
-// CHECK-NEXT: {{^}}# 6 "{{.*[/\\]Inputs[/\\]}}rewrite-includes8.h"{{$}}
+// CHECK-NEXT: {{^}}# 6 "{{.*[/\\]Inputs(/|\\\\)}}rewrite-includes8.h"{{$}}
 // CHECK-NEXT: {{^}}# 23 "{{.*}}rewrite-includes.c" 2{{$}}
 // CHECK-NEXT: {{^}}// ENDCOMPARE{{$}}
 
