@@ -323,8 +323,13 @@ void X86MachObjectWriter::RecordX86_64Relocation(MachObjectWriter *Writer,
         report_fatal_error("TLVP symbol modifier should have been rip-rel");
       } else if (Modifier != MCSymbolRefExpr::VK_None)
         report_fatal_error("unsupported symbol modifier in relocation");
-      else
+      else {
         Type = macho::RIT_X86_64_Unsigned;
+        unsigned Kind = Fixup.getKind();
+        if (Kind == X86::reloc_signed_4byte)
+          report_fatal_error("32-bit absolute addressing is not supported in "
+                             "64-bit mode");
+      }
     }
   }
 
