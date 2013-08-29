@@ -331,6 +331,9 @@ public:
 
   BitVector &getScheduledTrees() { return ScheduledTrees; }
 
+  /// Compute the cyclic critical path through the DAG.
+  unsigned computeCyclicCriticalPath();
+
   void viewGraph(const Twine &Name, const Twine &Title) LLVM_OVERRIDE;
   void viewGraph() LLVM_OVERRIDE;
 

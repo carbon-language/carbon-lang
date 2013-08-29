@@ -642,6 +642,90 @@ void ScheduleDAGMI::findRootsAndBiasEdges(SmallVectorImpl<SUnit*> &TopRoots,
   ExitSU.biasCriticalPath();
 }
 
+/// Compute the max cyclic critical path through the DAG. The scheduling DAG
+/// only provides the critical path for single block loops. To handle loops that
+/// span blocks, we could use the vreg path latencies provided by
+/// MachineTraceMetrics instead. However, MachineTraceMetrics is not currently
+/// available for use in the scheduler.
+///
+/// The cyclic path estimation identifies a def-use pair that crosses the back
+/// end and considers the depth and height of the nodes. For example, consider
+/// the following instruction sequence where each instruction has unit latency
+/// and defines an epomymous virtual register:
+///
+/// a->b(a,c)->c(b)->d(c)->exit
+///
+/// The cyclic critical path is a two cycles: b->c->b
+/// The acyclic critical path is four cycles: a->b->c->d->exit
+/// LiveOutHeight = height(c) = len(c->d->exit) = 2
+/// LiveOutDepth = depth(c) + 1 = len(a->b->c) + 1 = 3
+/// LiveInHeight = height(b) + 1 = len(b->c->d->exit) + 1 = 4
+/// LiveInDepth = depth(b) = len(a->b) = 1
+///
+/// LiveOutDepth - LiveInDepth = 3 - 1 = 2
+/// LiveInHeight - LiveOutHeight = 4 - 2 = 2
+/// CyclicCriticalPath = min(2, 2) = 2
+unsigned ScheduleDAGMI::computeCyclicCriticalPath() {
+  // This only applies to single block loop.
+  if (!BB->isSuccessor(BB))
+    return 0;
+
+  unsigned MaxCyclicLatency = 0;
+  // Visit each live out vreg def to find def/use pairs that cross iterations.
+  ArrayRef<unsigned> LiveOuts = RPTracker.getPressure().LiveOutRegs;
+  for (ArrayRef<unsigned>::iterator RI = LiveOuts.begin(), RE = LiveOuts.end();
+       RI != RE; ++RI) {
+    unsigned Reg = *RI;
+    if (!TRI->isVirtualRegister(Reg))
+        continue;
+    const LiveInterval &LI = LIS->getInterval(Reg);
+    const VNInfo *DefVNI = LI.getVNInfoBefore(LIS->getMBBEndIdx(BB));
+    if (!DefVNI)
+      continue;
+
+    MachineInstr *DefMI = LIS->getInstructionFromIndex(DefVNI->def);
+    const SUnit *DefSU = getSUnit(DefMI);
+    if (!DefSU)
+      continue;
+
+    unsigned LiveOutHeight = DefSU->getHeight();
+    unsigned LiveOutDepth = DefSU->getDepth() + DefSU->Latency;
+    // Visit all local users of the vreg def.
+    for (VReg2UseMap::iterator
+           UI = VRegUses.find(Reg); UI != VRegUses.end(); ++UI) {
+      if (UI->SU == &ExitSU)
+        continue;
+
+      // Only consider uses of the phi.
+      LiveRangeQuery LRQ(LI, LIS->getInstructionIndex(UI->SU->getInstr()));
+      if (!LRQ.valueIn()->isPHIDef())
+        continue;
+
+      // Assume that a path spanning two iterations is a cycle, which could
+      // overestimate in strange cases. This allows cyclic latency to be
+      // estimated as the minimum slack of the vreg's depth or height.
+      unsigned CyclicLatency = 0;
+      if (LiveOutDepth > UI->SU->getDepth())
+        CyclicLatency = LiveOutDepth - UI->SU->getDepth();
+
+      unsigned LiveInHeight = UI->SU->getHeight() + DefSU->Latency;
+      if (LiveInHeight > LiveOutHeight) {
+        if (LiveInHeight - LiveOutHeight < CyclicLatency)
+          CyclicLatency = LiveInHeight - LiveOutHeight;
+      }
+      else
+        CyclicLatency = 0;
+
+      DEBUG(dbgs() << "Cyclic Path: SU(" << DefSU->NodeNum << ") -> SU("
+            << UI->SU->NodeNum << ") = " << CyclicLatency << "c\n");
+      if (CyclicLatency > MaxCyclicLatency)
+        MaxCyclicLatency = CyclicLatency;
+    }
+  }
+  DEBUG(dbgs() << "Cyclic Critical Path: " << MaxCyclicLatency << "c\n");
+  return MaxCyclicLatency;
+}
+
 /// Identify DAG roots and setup scheduler queues.
 void ScheduleDAGMI::initQueues(ArrayRef<SUnit*> TopRoots,
                                ArrayRef<SUnit*> BotRoots) {
@@ -1557,21 +1641,39 @@ void ConvergingScheduler::releaseBottomNode(SUnit *SU) {
   Bot.releaseNode(SU, SU->BotReadyCycle);
 }
 
+/// Set IsAcyclicLatencyLimited if the acyclic path is longer than the cyclic
+/// critical path by more cycles than it takes to drain the instruction buffer.
+/// We estimate an upper bounds on in-flight instructions as:
+///
+/// CyclesPerIteration = max( CyclicPath, Loop-Resource-Height )
+/// InFlightIterations = AcyclicPath / CyclesPerIteration
+/// InFlightResources = InFlightIterations * LoopResources
+///
+/// TODO: Check execution resources in addition to IssueCount.
 void ConvergingScheduler::checkAcyclicLatency() {
   if (Rem.CyclicCritPath == 0 || Rem.CyclicCritPath >= Rem.CriticalPath)
     return;
 
+  // Scaled number of cycles per loop iteration.
+  unsigned IterCount =
+    std::max(Rem.CyclicCritPath * SchedModel->getLatencyFactor(),
+             Rem.RemIssueCount);
+  // Scaled acyclic critical path.
+  unsigned AcyclicCount = Rem.CriticalPath * SchedModel->getLatencyFactor();
+  // InFlightCount = (AcyclicPath / IterCycles) * InstrPerLoop
+  unsigned InFlightCount =
+    (AcyclicCount * Rem.RemIssueCount + IterCount-1) / IterCount;
   unsigned BufferLimit =
     SchedModel->getMicroOpBufferSize() * SchedModel->getMicroOpFactor();
-  unsigned LatencyLag = Rem.CriticalPath - Rem.CyclicCritPath;
-  Rem.IsAcyclicLatencyLimited =
-    (LatencyLag * SchedModel->getLatencyFactor()) > BufferLimit;
 
-  DEBUG(dbgs() << "BufferLimit " << BufferLimit << "u / "
-        << Rem.RemIssueCount << "u = "
-        << (BufferLimit + Rem.RemIssueCount) / Rem.RemIssueCount << " iters. "
-        << "Latency = " << LatencyLag << "c = "
-        << LatencyLag * SchedModel->getLatencyFactor() << "u\n";
+  Rem.IsAcyclicLatencyLimited = InFlightCount > BufferLimit;
+
+  DEBUG(dbgs() << "IssueCycles="
+        << Rem.RemIssueCount / SchedModel->getLatencyFactor() << "c "
+        << "IterCycles=" << IterCount / SchedModel->getLatencyFactor()
+        << "c NumIters=" << (AcyclicCount + IterCount-1) / IterCount
+        << " InFlight=" << InFlightCount / SchedModel->getMicroOpFactor()
+        << "m BufferLim=" << SchedModel->getMicroOpBufferSize() << "m\n";
         if (Rem.IsAcyclicLatencyLimited)
           dbgs() << "  ACYCLIC LATENCY LIMIT\n");
 }
@@ -1579,10 +1681,6 @@ void ConvergingScheduler::checkAcyclicLatency() {
 void ConvergingScheduler::registerRoots() {
   Rem.CriticalPath = DAG->ExitSU.getDepth();
 
-  if (EnableCyclicPath) {
-    Rem.CyclicCritPath = DAG->computeCyclicCriticalPath();
-    checkAcyclicLatency();
-  }
   // Some roots may not feed into ExitSU. Check all of them in case.
   for (std::vector<SUnit*>::const_iterator
          I = Bot.Available.begin(), E = Bot.Available.end(); I != E; ++I) {
@@ -1590,6 +1688,11 @@ void ConvergingScheduler::registerRoots() {
       Rem.CriticalPath = (*I)->getDepth();
   }
   DEBUG(dbgs() << "Critical Path: " << Rem.CriticalPath << '\n');
+
+  if (EnableCyclicPath) {
+    Rem.CyclicCritPath = DAG->computeCyclicCriticalPath();
+    checkAcyclicLatency();
+  }
 }
 
 /// Does this SU have a hazard within the current instruction group.
