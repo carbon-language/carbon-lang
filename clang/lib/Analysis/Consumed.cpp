@@ -122,17 +122,19 @@ class PropagationInfo {
     IT_BinTest,
     IT_Var
   } InfoType;
+
+  struct BinTestTy {
+    const BinaryOperator *Source;
+    EffectiveOp EOp;
+    VarTestResult LTest;
+    VarTestResult RTest;
+  };
   
   union {
     ConsumedState State;
     VarTestResult Test;
     const VarDecl *Var;
-    struct {
-      const BinaryOperator *Source;
-      EffectiveOp EOp;
-      VarTestResult LTest;
-      VarTestResult RTest;
-    } BinTest;
+    BinTestTy BinTest;
   };
   
 public:
