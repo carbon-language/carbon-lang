@@ -5340,13 +5340,53 @@ TEST_F(FormatTest, BreakStringLiterals) {
 }
 
 TEST_F(FormatTest, DontSplitStringLiteralsWithEscapedNewlines) {
-  EXPECT_EQ("aaaaaaaaaaa =\n"
-            "    \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\\n"
-            "  aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\\n"
-            "  aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\";",
-            format("aaaaaaaaaaa = \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\\n"
-                   "  aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\\n"
-                   "  aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\";"));
+  EXPECT_EQ(
+      "aaaaaaaaaaa = \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\\n"
+      "  aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\\n"
+      "  aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\";",
+      format("aaaaaaaaaaa  =  \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\\n"
+             "  aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\\n"
+             "  aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\";"));
+}
+
+TEST_F(FormatTest, CountsCharactersInMultilineRawStringLiterals) {
+  EXPECT_EQ("f(g(R\"x(raw literal)x\", a), b);",
+            format("f(g(R\"x(raw literal)x\", a), b);", getGoogleStyle()));
+  EXPECT_EQ("fffffffffff(g(R\"x(\n"
+            "multiline raw string literal xxxxxxxxxxxxxx\n"
+            ")x\",\n"
+            "              a),\n"
+            "            b);",
+            format("fffffffffff(g(R\"x(\n"
+                   "multiline raw string literal xxxxxxxxxxxxxx\n"
+                   ")x\", a), b);",
+                   getGoogleStyleWithColumns(20)));
+  EXPECT_EQ("fffffffffff(\n"
+            "    g(R\"x(qqq\n"
+            "multiline raw string literal xxxxxxxxxxxxxx\n"
+            ")x\",\n"
+            "      a),\n"
+            "    b);",
+            format("fffffffffff(g(R\"x(qqq\n"
+                   "multiline raw string literal xxxxxxxxxxxxxx\n"
+                   ")x\", a), b);",
+                   getGoogleStyleWithColumns(20)));
+
+  EXPECT_EQ("fffffffffff(R\"x(\n"
+            "multiline raw string literal xxxxxxxxxxxxxx\n"
+            ")x\");",
+            format("fffffffffff(R\"x(\n"
+                   "multiline raw string literal xxxxxxxxxxxxxx\n"
+                   ")x\");",
+                   getGoogleStyleWithColumns(20)));
+  EXPECT_EQ("fffffffffff(R\"x(\n"
+            "multiline raw string literal xxxxxxxxxxxxxx\n"
+            ")x\" +\n"
+            "            bbbbbb);",
+            format("fffffffffff(R\"x(\n"
+                   "multiline raw string literal xxxxxxxxxxxxxx\n"
+                   ")x\" + bbbbbb);",
+                   getGoogleStyleWithColumns(20)));
 }
 
 TEST_F(FormatTest, SkipsUnknownStringLiterals) {

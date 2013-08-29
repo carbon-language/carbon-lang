@@ -1024,8 +1024,7 @@ void TokenAnnotator::calculateFormattingInformation(AnnotatedLine &Line) {
     Current->CanBreakBefore =
         Current->MustBreakBefore || canBreakBefore(Line, *Current);
     if (Current->MustBreakBefore ||
-        (Current->is(tok::string_literal) &&
-         Current->TokenText.find("\\\n") != StringRef::npos))
+        (Current->is(tok::string_literal) && Current->IsMultiline))
       Current->TotalLength = Current->Previous->TotalLength + Style.ColumnLimit;
     else
       Current->TotalLength = Current->Previous->TotalLength +

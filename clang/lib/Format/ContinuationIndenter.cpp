@@ -579,6 +579,31 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
   return Penalty;
 }
 
+unsigned
+ContinuationIndenter::addMultilineStringLiteral(const FormatToken &Current,
+                                                LineState &State) {
+  StringRef Text = Current.TokenText;
+  // We can only affect layout of the first and the last line, so the penalty
+  // for all other lines is constant, and we ignore it.
+  size_t FirstLineBreak = Text.find('\n');
+  size_t LastLineBreak = Text.find_last_of('\n');
+  assert(FirstLineBreak != StringRef::npos);
+  unsigned StartColumn = State.Column - Current.CodePointCount;
+  State.Column =
+      encoding::getCodePointCount(Text.substr(LastLineBreak + 1), Encoding);
+
+  // Break before further function parameters on all levels.
+  for (unsigned i = 0, e = State.Stack.size(); i != e; ++i)
+    State.Stack[i].BreakBeforeParameter = true;
+
+  unsigned ColumnsUsed =
+      StartColumn +
+      encoding::getCodePointCount(Text.substr(0, FirstLineBreak), Encoding);
+  if (ColumnsUsed > getColumnLimit())
+    return Style.PenaltyExcessCharacter * (ColumnsUsed - getColumnLimit());
+  return 0;
+}
+
 unsigned ContinuationIndenter::breakProtrudingToken(const FormatToken &Current,
                                                     LineState &State,
                                                     bool DryRun) {
@@ -587,18 +612,17 @@ unsigned ContinuationIndenter::breakProtrudingToken(const FormatToken &Current,
 
   llvm::OwningPtr<BreakableToken> Token;
   unsigned StartColumn = State.Column - Current.CodePointCount;
-  unsigned OriginalStartColumn =
-      SourceMgr.getSpellingColumnNumber(Current.getStartOfNonWhitespace()) - 1;
 
   if (Current.is(tok::string_literal) &&
       Current.Type != TT_ImplicitStringLiteral) {
+    // Don't break string literals with (in case of non-raw strings, escaped)
+    // newlines. As clang-format must not change the string's content, it is
+    // unlikely that we'll end up with a better format.
+    if (Current.IsMultiline)
+      return addMultilineStringLiteral(Current, State);
+
     // Only break up default narrow strings.
     if (!Current.TokenText.startswith("\""))
-      return 0;
-    // Don't break string literals with escaped newlines. As clang-format must
-    // not change the string's content, it is unlikely that we'll end up with
-    // a better format.
-    if (Current.TokenText.find("\\\n") != StringRef::npos)
       return 0;
     // Exempts unterminated string literals from line breaking. The user will
     // likely want to terminate the string before any line breaking is done.
@@ -608,6 +632,9 @@ unsigned ContinuationIndenter::breakProtrudingToken(const FormatToken &Current,
     Token.reset(new BreakableStringLiteral(Current, StartColumn,
                                            Line.InPPDirective, Encoding));
   } else if (Current.Type == TT_BlockComment && Current.isTrailingComment()) {
+    unsigned OriginalStartColumn =
+        SourceMgr.getSpellingColumnNumber(Current.getStartOfNonWhitespace()) -
+        1;
     Token.reset(new BreakableBlockComment(
         Style, Current, StartColumn, OriginalStartColumn, !Current.Previous,
         Line.InPPDirective, Encoding));
@@ -621,8 +648,9 @@ unsigned ContinuationIndenter::breakProtrudingToken(const FormatToken &Current,
     // FIXME: If we want to handle them correctly, we'll need to adjust
     // leading whitespace in consecutive lines when changing indentation of
     // the first line similar to what we do with block comments.
-    StringRef::size_type EscapedNewlinePos = Current.TokenText.find("\\\n");
-    if (EscapedNewlinePos != StringRef::npos) {
+    if (Current.IsMultiline) {
+      StringRef::size_type EscapedNewlinePos = Current.TokenText.find("\\\n");
+      assert(EscapedNewlinePos != StringRef::npos);
       State.Column =
           StartColumn +
           encoding::getCodePointCount(
@@ -707,14 +735,19 @@ bool ContinuationIndenter::NextIsMultilineString(const LineState &State) {
   const FormatToken &Current = *State.NextToken;
   if (!Current.is(tok::string_literal))
     return false;
+  // We never consider raw string literals "multiline" for the purpose of
+  // AlwaysBreakBeforeMultilineStrings implementation.
+  if (Current.TokenText.startswith("R\""))
+    return false;
+  if (Current.IsMultiline)
+    return true;
   if (Current.getNextNonComment() &&
       Current.getNextNonComment()->is(tok::string_literal))
     return true; // Implicit concatenation.
   if (State.Column + Current.CodePointCount + Current.UnbreakableTailLength >
       Style.ColumnLimit)
     return true; // String will be split.
-  // String literal might have escaped newlines.
-  return Current.TokenText.find("\\\n") != StringRef::npos;
+  return false;
 }
 
 } // namespace format
