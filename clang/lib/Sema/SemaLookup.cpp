@@ -1796,9 +1796,7 @@ bool Sema::LookupParsedName(LookupResult &R, Scope *S, CXXScopeSpec *SS,
 /// from name lookup.
 ///
 /// \param Result The result of the ambiguous lookup to be diagnosed.
-///
-/// \returns true
-bool Sema::DiagnoseAmbiguousLookup(LookupResult &Result) {
+void Sema::DiagnoseAmbiguousLookup(LookupResult &Result) {
   assert(Result.isAmbiguous() && "Lookup result must be ambiguous");
 
   DeclarationName Name = Result.getLookupName();
@@ -1819,8 +1817,7 @@ bool Sema::DiagnoseAmbiguousLookup(LookupResult &Result) {
       ++Found;
 
     Diag((*Found)->getLocation(), diag::note_ambiguous_member_found);
-
-    return true;
+    break;
   }
 
   case LookupResult::AmbiguousBaseSubobjectTypes: {
@@ -1836,8 +1833,7 @@ bool Sema::DiagnoseAmbiguousLookup(LookupResult &Result) {
       if (DeclsPrinted.insert(D).second)
         Diag(D->getLocation(), diag::note_ambiguous_member_found);
     }
-
-    return true;
+    break;
   }
 
   case LookupResult::AmbiguousTagHiding: {
@@ -1863,8 +1859,7 @@ bool Sema::DiagnoseAmbiguousLookup(LookupResult &Result) {
         F.erase();
     }
     F.done();
-
-    return true;
+    break;
   }
 
   case LookupResult::AmbiguousReference: {
@@ -1873,12 +1868,12 @@ bool Sema::DiagnoseAmbiguousLookup(LookupResult &Result) {
     LookupResult::iterator DI = Result.begin(), DE = Result.end();
     for (; DI != DE; ++DI)
       Diag((*DI)->getLocation(), diag::note_ambiguous_candidate) << *DI;
-
-    return true;
-  }
+    break;
   }
 
-  llvm_unreachable("unknown ambiguity kind");
+  default:
+    llvm_unreachable("unknown ambiguity kind");
+  }
 }
 
 namespace {
