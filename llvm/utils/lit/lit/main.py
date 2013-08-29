@@ -22,22 +22,8 @@ class TestingProgressDisplay:
         self.opts = opts
         self.numTests = numTests
         self.current = None
-        self.lock = threading.Lock()
         self.progressBar = progressBar
         self.completed = 0
-
-    def update(self, test):
-        # Avoid locking overhead in quiet mode
-        if self.opts.quiet and not test.result.code.isFailure:
-            self.completed += 1
-            return
-
-        # Output lock.
-        self.lock.acquire()
-        try:
-            self.handleUpdate(test)
-        finally:
-            self.lock.release()
 
     def finish(self):
         if self.progressBar:
@@ -47,13 +33,14 @@ class TestingProgressDisplay:
         elif self.opts.succinct:
             sys.stdout.write('\n')
 
-    def handleUpdate(self, test):
+    def update(self, test):
         self.completed += 1
         if self.progressBar:
             self.progressBar.update(float(self.completed)/self.numTests,
                                     test.getFullName())
 
-        if self.opts.succinct and not test.result.code.isFailure:
+        if not test.result.code.isFailure and \
+                (self.opts.quiet or self.opts.succinct):
             return
 
         if self.progressBar:
@@ -129,9 +116,14 @@ class Tester(object):
 class ThreadResultsConsumer(object):
     def __init__(self, display):
         self.display = display
+        self.lock = threading.Lock()
 
     def update(self, test_index, test):
-        self.display.update(test)
+        self.lock.acquire()
+        try:
+            self.display.update(test)
+        finally:
+            self.lock.release()
 
     def taskFinished(self):
         pass
