@@ -346,7 +346,7 @@ Basic type descriptors
 
   !4 = metadata !{
     i32,      ;; Tag = 36 (DW_TAG_base_type)
-    metadata,;; Source directory (including trailing slash) & file pair (may be null)
+    metadata, ;; Source directory (including trailing slash) & file pair (may be null)
     metadata, ;; Reference to context
     metadata, ;; Name (may be "" for anonymous types)
     i32,      ;; Line number where defined (may be 0)
@@ -389,7 +389,7 @@ Derived type descriptors
 
   !5 = metadata !{
     i32,      ;; Tag (see below)
-    metadata,;; Source directory (including trailing slash) & file pair (may be null)
+    metadata, ;; Source directory (including trailing slash) & file pair (may be null)
     metadata, ;; Reference to context
     metadata, ;; Name (may be "" for anonymous types)
     i32,      ;; Line number where defined (may be 0)
@@ -452,7 +452,7 @@ Composite type descriptors
 
   !6 = metadata !{
     i32,      ;; Tag (see below)
-    metadata,;; Source directory (including trailing slash) & file pair (may be null)
+    metadata, ;; Source directory (including trailing slash) & file pair (may be null)
     metadata, ;; Reference to context
     metadata, ;; Name (may be "" for anonymous types)
     i32,      ;; Line number where defined (may be 0)
@@ -462,9 +462,10 @@ Composite type descriptors
     i32,      ;; Flags
     metadata, ;; Reference to type derived from
     metadata, ;; Reference to array of member descriptors
-    i32       ;; Runtime languages
+    i32,      ;; Runtime languages
     metadata, ;; Base type containing the vtable pointer for this type
-    metadata  ;; Template parameters
+    metadata, ;; Template parameters
+    metadata  ;; A unique identifier for type uniquing purpose (may be null)
   }
 
 These descriptors are used to define types that are composed of 0 or more
