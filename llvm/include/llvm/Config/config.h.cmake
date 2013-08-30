@@ -21,6 +21,9 @@
 /* Define if you want backtraces on crash */
 #cmakedefine ENABLE_BACKTRACES
 
+/* Define to enable crash overrides */
+#cmakedefine ENABLE_CRASH_OVERRIDES
+
 /* Define if position independent code is enabled */
 #cmakedefine ENABLE_PIC
 

@@ -333,7 +333,7 @@ static void PrintStackTraceSignalHandler(void *) {
 void llvm::sys::PrintStackTraceOnErrorSignal() {
   AddSignalHandler(PrintStackTraceSignalHandler, 0);
 
-#if defined(__APPLE__)
+#if defined(__APPLE__) && defined(ENABLE_CRASH_OVERRIDES)
   // Environment variable to disable any kind of crash dialog.
   if (getenv("LLVM_DISABLE_CRASH_REPORT")) {
     mach_port_t self = mach_task_self();
@@ -359,7 +359,7 @@ void llvm::sys::PrintStackTraceOnErrorSignal() {
 // the same linkage unit by just defining our own versions of the assert handler
 // and abort.
 
-#ifdef __APPLE__
+#if defined(__APPLE__) && defined(ENABLE_CRASH_OVERRIDES)
 
 #include <signal.h>
 #include <pthread.h>

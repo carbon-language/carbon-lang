@@ -800,20 +800,37 @@ esac
 AC_DEFINE_UNQUOTED([ENABLE_TIMESTAMPS],$ENABLE_TIMESTAMPS,
                    [Define if timestamp information (e.g., __DATE__) is allowed])
 
-dnl Enable embedding timestamp information into build.
+dnl Enable support for showing backtraces.
+AC_ARG_ENABLE(backtraces, AS_HELP_STRING(
+  [--enable-backtraces],
+  [Enable embedding backtraces on crash (default is YES)]),
+  [case "$enableval" in
+    yes) llvm_cv_enable_backtraces="yes" ;;
+    no)  llvm_cv_enable_backtraces="no"  ;;
+    *) AC_MSG_ERROR([Invalid setting for --enable-backtraces. Use "yes" or "no"]) ;;
+  esac],
+  llvm_cv_enable_backtraces="yes")
+if test "$llvm_cv_enable_backtraces" = "yes" ; then
+  AC_DEFINE([ENABLE_BACKTRACES],[1],
+            [Define if you want backtraces on crash])
+fi
 
-AC_ARG_ENABLE(backtraces,
-  AS_HELP_STRING([--enable-backtraces],
-                 [Enable embedding backtraces on crash (default is YES)]),,
-                 enableval=default)
-case "$enableval" in
-  yes) AC_SUBST(ENABLE_BACKTRACES,[1]) ;;
-  no)  AC_SUBST(ENABLE_BACKTRACES,[0]) ;;
-  default) AC_SUBST(ENABLE_BACKTRACES,[1]) ;;
-  *) AC_MSG_ERROR([Invalid setting for --enable-backtraces. Use "yes" or "no"]) ;;
-esac
-AC_DEFINE_UNQUOTED([ENABLE_BACKTRACES],$ENABLE_BACKTRACES,
-                   [Define if you want backtraces on crash])
+dnl Enable installing platform specific signal handling overrides, for improved
+dnl CrashRecovery support or interaction with crash reporting software. This
+dnl support may be inappropriate for some clients embedding LLVM as a library.
+AC_ARG_ENABLE(crash-overrides, AS_HELP_STRING(
+  [--enable-crash-overrides],
+  [Enable crash handling overrides (default is YES)]),
+  [case "$enableval" in
+    yes) llvm_cv_enable_crash_overrides="yes" ;;
+    no)  llvm_cv_enable_crash_overrides="no"  ;;
+    *) AC_MSG_ERROR([Invalid setting for --enable-crash-overrides. Use "yes" or "no"]) ;;
+  esac],
+  llvm_cv_enable_crash_overrides="yes")
+if test "$llvm_cv_enable_crash_overrides" = "yes" ; then
+  AC_DEFINE([ENABLE_CRASH_OVERRIDES],[1],
+            [Define to enable crash handling overrides])
+fi
 
 dnl Allow specific targets to be specified for building (or not)
 TARGETS_TO_BUILD=""
