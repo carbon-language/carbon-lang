@@ -18,7 +18,6 @@ class PlatformCommandTestCase(TestBase):
         self.expect("platform list",
             patterns = ['^Available platforms:'])
 
-    @expectedFailureFreeBSD('llvm.org/pr16699') # FreeBSD Host.cpp does not support process list
     def test_process_list(self):
         self.expect("platform process list",
             substrs = ['PID', 'ARCH', 'NAME'])
