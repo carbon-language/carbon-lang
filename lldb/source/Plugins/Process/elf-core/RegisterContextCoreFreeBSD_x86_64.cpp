@@ -12,6 +12,8 @@
 #include "lldb/Target/Thread.h"
 #include "RegisterContextCoreFreeBSD_x86_64.h"
 
+using namespace lldb_private;
+
 RegisterContextCoreFreeBSD_x86_64::RegisterContextCoreFreeBSD_x86_64(Thread &thread,
                         const DataExtractor &gpregset, const DataExtractor &fpregset)
     : RegisterContextFreeBSD_x86_64(thread, 0)

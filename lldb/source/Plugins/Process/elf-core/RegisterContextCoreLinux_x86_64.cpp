@@ -12,6 +12,8 @@
 #include "lldb/Target/Thread.h"
 #include "RegisterContextCoreLinux_x86_64.h"
 
+using namespace lldb_private;
+
 RegisterContextCoreLinux_x86_64::RegisterContextCoreLinux_x86_64(Thread &thread,
                                                 const DataExtractor &gpregset,
                                                 const DataExtractor &fpregset)

@@ -12,24 +12,22 @@
 
 #include "Plugins/Process/POSIX/RegisterContextLinux_x86_64.h"
 
-using namespace lldb_private;
-
 class RegisterContextCoreLinux_x86_64: public RegisterContextLinux_x86_64
 {
 public:
-    RegisterContextCoreLinux_x86_64 (Thread &thread, const DataExtractor &gpregset,
-                                     const DataExtractor &fpregset);
+    RegisterContextCoreLinux_x86_64 (lldb_private::Thread &thread, const lldb_private::DataExtractor &gpregset,
+                                     const lldb_private::DataExtractor &fpregset);
 
     ~RegisterContextCoreLinux_x86_64();
 
     virtual bool
-    ReadRegister(const RegisterInfo *reg_info, RegisterValue &value);
+    ReadRegister(const lldb_private::RegisterInfo *reg_info, lldb_private::RegisterValue &value);
 
     bool
     ReadAllRegisterValues(lldb::DataBufferSP &data_sp);
 
     virtual bool
-    WriteRegister(const RegisterInfo *reg_info, const RegisterValue &value);
+    WriteRegister(const lldb_private::RegisterInfo *reg_info, const lldb_private::RegisterValue &value);
 
     bool
     WriteAllRegisterValues(const lldb::DataBufferSP &data_sp);
