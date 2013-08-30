@@ -14,5 +14,6 @@
 // RUN: %clang_cl /Tc%s -### -fsanitize=address 2>&1 | FileCheck --check-prefix=ASAN %s
 // ASAN: link.exe
 // ASAN: "-debug"
+// ASAN: "-incremental:no"
 // ASAN: "{{.*}}clang_rt.asan-i386.lib"
 // ASAN: "{{.*}}cl-link{{.*}}.obj"

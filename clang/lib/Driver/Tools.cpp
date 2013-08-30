@@ -6573,6 +6573,7 @@ void visualstudio::Link::ConstructJob(Compilation &C, const JobAction &JA,
 
   if (getToolChain().getDriver().getOrParseSanitizerArgs(Args).needsAsanRt()) {
     CmdArgs.push_back(Args.MakeArgString("-debug"));
+    CmdArgs.push_back(Args.MakeArgString("-incremental:no"));
     SmallString<128> LibSanitizer(getToolChain().getDriver().ResourceDir);
     // FIXME: Handle 64-bit. Use asan_dll_thunk.dll when building a DLL.
     llvm::sys::path::append(
