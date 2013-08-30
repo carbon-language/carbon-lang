@@ -319,34 +319,6 @@ ProcessPOSIX::DoHalt(bool &caused_stop)
 }
 
 Error
-ProcessPOSIX::DoDetach(bool keep_stopped)
-{
-    Error error;
-    if (keep_stopped)
-    {
-        // FIXME: If you want to implement keep_stopped,
-        // this would be the place to do it.
-        error.SetErrorString("Detaching with keep_stopped true is not currently supported on this platform.");
-        return error;
-    }
-
-    Mutex::Locker lock(m_thread_list.GetMutex());
-
-    uint32_t thread_count = m_thread_list.GetSize(false);
-    for (uint32_t i = 0; i < thread_count; ++i)
-    {
-        POSIXThread *thread = static_cast<POSIXThread*>(
-            m_thread_list.GetThreadAtIndex(i, false).get());
-        error = m_monitor->Detach(thread->GetID());
-    }
-
-    if (error.Success())
-        SetPrivateState(eStateDetached);
-
-    return error;
-}
-
-Error
 ProcessPOSIX::DoSignal(int signal)
 {
     Error error;

@@ -70,7 +70,7 @@ public:
     DoHalt(bool &caused_stop);
 
     virtual lldb_private::Error
-    DoDetach(bool keep_stopped);
+    DoDetach(bool keep_stopped) = 0;
 
     virtual lldb_private::Error
     DoSignal(int signal);

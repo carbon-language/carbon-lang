@@ -122,6 +122,24 @@ ProcessFreeBSD::Terminate()
 {
 }
 
+Error
+ProcessFreeBSD::DoDetach(bool keep_stopped)
+{
+    Error error;
+    if (keep_stopped)
+    {
+        error.SetErrorString("Detaching with keep_stopped true is not currently supported on FreeBSD.");
+        return error;
+    }
+
+    error = m_monitor->Detach(GetID());
+
+    if (error.Success())
+        SetPrivateState(eStateDetached);
+
+    return error;
+}
+
 bool
 ProcessFreeBSD::UpdateThreadList(ThreadList &old_thread_list, ThreadList &new_thread_list)
 {
