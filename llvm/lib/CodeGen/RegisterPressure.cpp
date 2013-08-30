@@ -496,7 +496,7 @@ bool RegPressureTracker::recede(PressureDiff *PDiff) {
       // Adjust liveouts if LiveIntervals are available.
       if (RequireIntervals) {
         const LiveInterval *LI = getInterval(Reg);
-        if (LI && !LI->killedAt(SlotIdx))
+        if (LI && !LI->isKilledAtInstr(SlotIdx))
           discoverLiveOut(Reg);
       }
       increaseRegPressure(Reg);
@@ -550,7 +550,7 @@ bool RegPressureTracker::advance() {
     bool lastUse = false;
     if (RequireIntervals) {
       const LiveInterval *LI = getInterval(Reg);
-      lastUse = LI && LI->killedAt(SlotIdx);
+      lastUse = LI && LI->isKilledAtInstr(SlotIdx);
     }
     else {
       // Allocatable physregs are always single-use before register rewriting.
@@ -886,7 +886,7 @@ void RegPressureTracker::bumpDownwardPressure(const MachineInstr *MI) {
       // to be bottom-scheduled to avoid searching uses at each query.
       SlotIndex CurrIdx = getCurrSlot();
       const LiveInterval *LI = getInterval(Reg);
-      if (LI && LI->killedAt(SlotIdx)
+      if (LI && LI->isKilledAtInstr(SlotIdx)
           && !findUseBetween(Reg, CurrIdx, SlotIdx, MRI, LIS)) {
         decreaseRegPressure(Reg);
       }
