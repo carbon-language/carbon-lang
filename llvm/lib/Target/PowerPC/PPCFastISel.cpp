@@ -116,6 +116,7 @@ class PPCFastISel : public FastISel {
     bool SelectBinaryIntOp(const Instruction *I, unsigned ISDOpcode);
     bool SelectCall(const Instruction *I);
     bool SelectRet(const Instruction *I);
+    bool SelectTrunc(const Instruction *I);
     bool SelectIntExt(const Instruction *I);
 
   // Utility routines.
@@ -1667,6 +1668,34 @@ bool PPCFastISel::SelectCmp(const Instruction *I) {
   return true;
 }
 
+// Attempt to fast-select an integer truncate instruction.
+bool PPCFastISel::SelectTrunc(const Instruction *I) {
+  Value *Src  = I->getOperand(0);
+  EVT SrcVT  = TLI.getValueType(Src->getType(), true);
+  EVT DestVT = TLI.getValueType(I->getType(), true);
+
+  if (SrcVT != MVT::i64 && SrcVT != MVT::i32 && SrcVT != MVT::i16)
+    return false;
+
+  if (DestVT != MVT::i32 && DestVT != MVT::i16 && DestVT != MVT::i8)
+    return false;
+
+  unsigned SrcReg = getRegForValue(Src);
+  if (!SrcReg)
+    return false;
+
+  // The only interesting case is when we need to switch register classes.
+  if (SrcVT == MVT::i64) {
+    unsigned ResultReg = createResultReg(&PPC::GPRCRegClass);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TargetOpcode::COPY),
+            ResultReg).addReg(SrcReg, 0, PPC::sub_32);
+    SrcReg = ResultReg;
+  }
+
+  UpdateValueMap(I, SrcReg);
+  return true;
+}
+
 // Attempt to fast-select an integer extend instruction.
 bool PPCFastISel::SelectIntExt(const Instruction *I) {
   Type *DestTy = I->getType();
@@ -1743,6 +1772,8 @@ bool PPCFastISel::TargetSelectInstruction(const Instruction *I) {
       return SelectCall(I);
     case Instruction::Ret:
       return SelectRet(I);
+    case Instruction::Trunc:
+      return SelectTrunc(I);
     case Instruction::ZExt:
     case Instruction::SExt:
       return SelectIntExt(I);
