@@ -783,6 +783,8 @@ void ASTDumper::VisitRecordDecl(const RecordDecl *D) {
   dumpName(D);
   if (D->isModulePrivate())
     OS << " __module_private__";
+  if (D->isCompleteDefinition())
+    OS << " definition";
 }
 
 void ASTDumper::VisitEnumConstantDecl(const EnumConstantDecl *D) {
