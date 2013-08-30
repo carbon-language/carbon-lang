@@ -13473,6 +13473,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::BLSI:               return "X86ISD::BLSI";
   case X86ISD::BLSMSK:             return "X86ISD::BLSMSK";
   case X86ISD::BLSR:               return "X86ISD::BLSR";
+  case X86ISD::BZHI:               return "X86ISD::BZHI";
   case X86ISD::MUL_IMM:            return "X86ISD::MUL_IMM";
   case X86ISD::PTEST:              return "X86ISD::PTEST";
   case X86ISD::TESTP:              return "X86ISD::TESTP";
@@ -17279,33 +17280,64 @@ static SDValue PerformAndCombine(SDNode *N, SelectionDAG &DAG,
   if (R.getNode())
     return R;
 
-  // Create BLSI, and BLSR instructions
+  // Create BLSI, BLSR, and BZHI instructions
   // BLSI is X & (-X)
   // BLSR is X & (X-1)
-  if (Subtarget->hasBMI() && (VT == MVT::i32 || VT == MVT::i64)) {
+  // BZHI is X & ((1 << Y) - 1)
+  if (VT == MVT::i32 || VT == MVT::i64) {
     SDValue N0 = N->getOperand(0);
     SDValue N1 = N->getOperand(1);
     SDLoc DL(N);
 
-    // Check LHS for neg
-    if (N0.getOpcode() == ISD::SUB && N0.getOperand(1) == N1 &&
-        isZero(N0.getOperand(0)))
-      return DAG.getNode(X86ISD::BLSI, DL, VT, N1);
+    if (Subtarget->hasBMI()) {
+      // Check LHS for neg
+      if (N0.getOpcode() == ISD::SUB && N0.getOperand(1) == N1 &&
+          isZero(N0.getOperand(0)))
+        return DAG.getNode(X86ISD::BLSI, DL, VT, N1);
 
-    // Check RHS for neg
-    if (N1.getOpcode() == ISD::SUB && N1.getOperand(1) == N0 &&
-        isZero(N1.getOperand(0)))
-      return DAG.getNode(X86ISD::BLSI, DL, VT, N0);
+      // Check RHS for neg
+      if (N1.getOpcode() == ISD::SUB && N1.getOperand(1) == N0 &&
+          isZero(N1.getOperand(0)))
+        return DAG.getNode(X86ISD::BLSI, DL, VT, N0);
 
-    // Check LHS for X-1
-    if (N0.getOpcode() == ISD::ADD && N0.getOperand(0) == N1 &&
-        isAllOnes(N0.getOperand(1)))
-      return DAG.getNode(X86ISD::BLSR, DL, VT, N1);
+      // Check LHS for X-1
+      if (N0.getOpcode() == ISD::ADD && N0.getOperand(0) == N1 &&
+          isAllOnes(N0.getOperand(1)))
+        return DAG.getNode(X86ISD::BLSR, DL, VT, N1);
 
-    // Check RHS for X-1
-    if (N1.getOpcode() == ISD::ADD && N1.getOperand(0) == N0 &&
-        isAllOnes(N1.getOperand(1)))
-      return DAG.getNode(X86ISD::BLSR, DL, VT, N0);
+      // Check RHS for X-1
+      if (N1.getOpcode() == ISD::ADD && N1.getOperand(0) == N0 &&
+          isAllOnes(N1.getOperand(1)))
+        return DAG.getNode(X86ISD::BLSR, DL, VT, N0);
+    }
+
+    if (Subtarget->hasBMI2()) {
+      // Check for (and (add (shl 1, Y), -1), X)
+      if (N0.getOpcode() == ISD::ADD && isAllOnes(N0.getOperand(1))) {
+        SDValue N00 = N0.getOperand(0);
+        if (N00.getOpcode() == ISD::SHL) {
+          SDValue N001 = N00.getOperand(1);
+          assert(N001.getValueType() == MVT::i8 && "unexpected type");
+          ConstantSDNode *C = dyn_cast<ConstantSDNode>(N00.getOperand(0));
+          if (C && C->getZExtValue() == 1)
+            return DAG.getNode(X86ISD::BZHI, DL, VT, N1,
+                               DAG.getNode(ISD::ZERO_EXTEND, DL, VT, N001));
+        }
+      }
+
+      // Check for (and X, (add (shl 1, Y), -1))
+      if (N1.getOpcode() == ISD::ADD && isAllOnes(N1.getOperand(1))) {
+        SDValue N10 = N1.getOperand(0);
+        if (N10.getOpcode() == ISD::SHL) {
+          SDValue N101 = N10.getOperand(1);
+          assert(N101.getValueType() == MVT::i8 && "unexpected type");
+          ConstantSDNode *C = dyn_cast<ConstantSDNode>(N10.getOperand(0));
+          if (C && C->getZExtValue() == 1)
+            return DAG.getNode(X86ISD::BZHI, DL, VT, N0,
+                               DAG.getNode(ISD::ZERO_EXTEND, DL, VT, N101));
+        }
+      }
+    }
 
     return SDValue();
   }

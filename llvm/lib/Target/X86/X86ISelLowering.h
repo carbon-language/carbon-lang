@@ -295,6 +295,7 @@ namespace llvm {
       BLSI,   // BLSI - Extract lowest set isolated bit
       BLSMSK, // BLSMSK - Get mask up to lowest set bit
       BLSR,   // BLSR - Reset lowest set bit
+      BZHI,   // BZHI - Zero high bits
 
       UMUL, // LOW, HI, FLAGS = umul LHS, RHS
 
