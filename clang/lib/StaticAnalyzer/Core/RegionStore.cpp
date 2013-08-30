@@ -1843,7 +1843,7 @@ static bool isRecordEmpty(const RecordDecl *RD) {
 SVal RegionStoreManager::getBindingForStruct(RegionBindingsConstRef B,
                                              const TypedValueRegion *R) {
   const RecordDecl *RD = R->getValueType()->castAs<RecordType>()->getDecl();
-  if (isRecordEmpty(RD))
+  if (!RD->getDefinition() || isRecordEmpty(RD))
     return UnknownVal();
 
   return createLazyBinding(B, R);
