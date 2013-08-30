@@ -264,13 +264,13 @@ public:
                                             CGBuilderTy &Builder);
 
   /// EmitGlobalVariable - Emit information about a global variable.
-  void EmitGlobalVariable(llvm::GlobalVariable *GV, const VarDecl *Decl);
+  void EmitGlobalVariable(llvm::Value *VarOrInit, const VarDecl *Decl);
 
   /// EmitGlobalVariable - Emit information about an objective-c interface.
   void EmitGlobalVariable(llvm::GlobalVariable *GV, ObjCInterfaceDecl *Decl);
 
-  /// EmitGlobalVariable - Emit global variable's debug info.
-  void EmitGlobalVariable(const ValueDecl *VD, llvm::Constant *Init);
+  /// EmitEnumConstant - Emit information about an enumerator constant
+  void EmitEnumConstant(const EnumConstantDecl *ECD);
 
   /// \brief - Emit C++ using directive.
   void EmitUsingDirective(const UsingDirectiveDecl &UD);

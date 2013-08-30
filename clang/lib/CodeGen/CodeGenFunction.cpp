@@ -1376,12 +1376,27 @@ llvm::Value* CodeGenFunction::EmitVAListRef(const Expr* E) {
   return EmitLValue(E).getAddress();
 }
 
-void CodeGenFunction::EmitDeclRefExprDbgValue(const DeclRefExpr *E,
-                                              llvm::Constant *Init) {
+void CodeGenFunction::EmitValueDeclDbgValue(const ValueDecl *Val,
+                                            llvm::Constant *Init) {
   assert (Init && "Invalid DeclRefExpr initializer!");
-  if (CGDebugInfo *Dbg = getDebugInfo())
-    if (CGM.getCodeGenOpts().getDebugInfo() >= CodeGenOptions::LimitedDebugInfo)
-      Dbg->EmitGlobalVariable(E->getDecl(), Init);
+  CGDebugInfo *Dbg = getDebugInfo();
+  if (!Dbg ||
+      CGM.getCodeGenOpts().getDebugInfo() < CodeGenOptions::LimitedDebugInfo)
+    return;
+
+  // Make sure we emit a debug reference to the global variable.
+  if (const VarDecl *VD = dyn_cast<VarDecl>(Val)) {
+    // Do not duplicate DIE entry for local variables; they are not deferred
+    // like global variables are.
+    if (VD->isFileVarDecl() && !getLangOpts().EmitAllDecls &&
+        !getContext().DeclMustBeEmitted(Val))
+      Dbg->EmitGlobalVariable(Init, VD);
+
+  // Make sure we emit a debug reference to an enumerator constant.
+  } else {
+    assert(isa<EnumConstantDecl>(Val));
+    Dbg->EmitEnumConstant(dyn_cast<EnumConstantDecl>(Val));
+  }
 }
 
 CodeGenFunction::PeepholeProtection
