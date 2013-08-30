@@ -1111,15 +1111,11 @@ void DwarfDebug::endModule() {
     emitAccelTypes();
   }
 
-  // Emit info into a debug pubnames section, if requested.
-  if (HasDwarfPubSections)
+  // Emit the pubnames and pubtypes sections if requested.
+  if (HasDwarfPubSections) {
     emitDebugPubnames();
-
-  // Emit info into a debug pubtypes section.
-  // TODO: When we don't need the option anymore we can
-  // remove all of the code that adds to the table.
-  if (useDarwinGDBCompat() || HasDwarfPubSections)
     emitDebugPubTypes();
+  }
 
   // Finally emit string information into a string table.
   emitDebugStr();
