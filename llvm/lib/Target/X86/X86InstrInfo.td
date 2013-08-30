@@ -248,7 +248,6 @@ def X86xor_flag  : SDNode<"X86ISD::XOR",  SDTBinaryArithWithFlags,
                           [SDNPCommutative]>;
 def X86and_flag  : SDNode<"X86ISD::AND",  SDTBinaryArithWithFlags,
                           [SDNPCommutative]>;
-def X86andn_flag : SDNode<"X86ISD::ANDN", SDTBinaryArithWithFlags>;
 
 def X86blsi   : SDNode<"X86ISD::BLSI",   SDTIntUnaryOp>;
 def X86blsmsk : SDNode<"X86ISD::BLSMSK", SDTIntUnaryOp>;
