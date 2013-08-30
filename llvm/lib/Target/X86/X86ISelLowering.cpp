@@ -17320,8 +17320,7 @@ static SDValue PerformAndCombine(SDNode *N, SelectionDAG &DAG,
           assert(N001.getValueType() == MVT::i8 && "unexpected type");
           ConstantSDNode *C = dyn_cast<ConstantSDNode>(N00.getOperand(0));
           if (C && C->getZExtValue() == 1)
-            return DAG.getNode(X86ISD::BZHI, DL, VT, N1,
-                               DAG.getNode(ISD::ZERO_EXTEND, DL, VT, N001));
+            return DAG.getNode(X86ISD::BZHI, DL, VT, N1, N001);
         }
       }
 
@@ -17333,8 +17332,7 @@ static SDValue PerformAndCombine(SDNode *N, SelectionDAG &DAG,
           assert(N101.getValueType() == MVT::i8 && "unexpected type");
           ConstantSDNode *C = dyn_cast<ConstantSDNode>(N10.getOperand(0));
           if (C && C->getZExtValue() == 1)
-            return DAG.getNode(X86ISD::BZHI, DL, VT, N0,
-                               DAG.getNode(ISD::ZERO_EXTEND, DL, VT, N101));
+            return DAG.getNode(X86ISD::BZHI, DL, VT, N0, N101);
         }
       }
     }

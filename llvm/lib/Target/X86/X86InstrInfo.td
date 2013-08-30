@@ -252,7 +252,7 @@ def X86and_flag  : SDNode<"X86ISD::AND",  SDTBinaryArithWithFlags,
 def X86blsi   : SDNode<"X86ISD::BLSI",   SDTIntUnaryOp>;
 def X86blsmsk : SDNode<"X86ISD::BLSMSK", SDTIntUnaryOp>;
 def X86blsr   : SDNode<"X86ISD::BLSR",   SDTIntUnaryOp>;
-def X86bzhi   : SDNode<"X86ISD::BZHI",   SDTIntBinOp>;
+def X86bzhi   : SDNode<"X86ISD::BZHI",   SDTIntShiftOp>;
 
 def X86mul_imm : SDNode<"X86ISD::MUL_IMM", SDTIntBinOp>;
 
@@ -1856,14 +1856,18 @@ let Predicates = [HasBMI2], Defs = [EFLAGS] in {
                                int_x86_bmi_bzhi_64, loadi64>, VEX_W;
 }
 
-def : Pat<(X86bzhi GR32:$src1, GR32:$src2),
-          (BZHI32rr GR32:$src1, GR32:$src2)>;
-def : Pat<(X86bzhi (loadi32 addr:$src1), GR32:$src2),
-          (BZHI32rm addr:$src1, GR32:$src2)>;
-def : Pat<(X86bzhi GR64:$src1, GR64:$src2),
-          (BZHI64rr GR64:$src1, GR64:$src2)>;
-def : Pat<(X86bzhi (loadi64 addr:$src1), GR64:$src2),
-          (BZHI64rm addr:$src1, GR64:$src2)>;
+def : Pat<(X86bzhi GR32:$src1, GR8:$src2),
+          (BZHI32rr GR32:$src1,
+                    (INSERT_SUBREG (i32 (IMPLICIT_DEF)), GR8:$src2, sub_8bit))>;
+def : Pat<(X86bzhi (loadi32 addr:$src1), GR8:$src2),
+          (BZHI32rm addr:$src1,
+                    (INSERT_SUBREG (i32 (IMPLICIT_DEF)), GR8:$src2, sub_8bit))>;
+def : Pat<(X86bzhi GR64:$src1, GR8:$src2),
+          (BZHI64rr GR64:$src1,
+                    (INSERT_SUBREG (i64 (IMPLICIT_DEF)), GR8:$src2, sub_8bit))>;
+def : Pat<(X86bzhi (loadi64 addr:$src1), GR8:$src2),
+          (BZHI64rm addr:$src1,
+                    (INSERT_SUBREG (i64 (IMPLICIT_DEF)), GR8:$src2, sub_8bit))>;
 
 multiclass bmi_pdep_pext<string mnemonic, RegisterClass RC,
                          X86MemOperand x86memop, Intrinsic Int,
