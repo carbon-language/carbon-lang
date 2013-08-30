@@ -1,5 +1,4 @@
-; RUN-disabled: llc < %s -march=x86-64 -mcpu=core2 -pre-RA-sched=source -enable-misched -verify-machineinstrs | FileCheck %s
-; RUN: true
+; RUN: llc < %s -march=x86-64 -mcpu=core2 -pre-RA-sched=source -enable-misched -verify-machineinstrs | FileCheck %s
 ;
 ; Verify that misched resource/latency balancy heuristics are sane.
 
@@ -16,7 +15,7 @@ entry:
 ; Since mmult1 IR is already in good order, this effectively ensure
 ; the scheduler maintains source order.
 ;
-; CHECK: %for.body
+; CHECK-LABEL: %for.body
 ; CHECK-NOT: %rsp
 ; CHECK: imull 4
 ; CHECK-NOT: {{imull|rsp}}
@@ -46,7 +45,7 @@ entry:
 ; CHECK-NOT: {{imull|rsp}}
 ; CHECK: addl
 ; CHECK-NOT: {{imull|rsp}}
-; CHECK: %end
+; CHECK-LABEL: %end
 for.body:
   %indvars.iv42.i = phi i64 [ %indvars.iv.next43.i, %for.body ], [ 0, %entry ]
   %tmp57 = load i32* %tmp56, align 4
@@ -121,7 +120,7 @@ end:
 ; Unlike the above loop, this IR starts out bad and must be
 ; rescheduled.
 ;
-; CHECK: %for.body
+; CHECK-LABEL: %for.body
 ; CHECK-NOT: %rsp
 ; CHECK: imull 4
 ; CHECK-NOT: {{imull|rsp}}
@@ -151,7 +150,7 @@ end:
 ; CHECK-NOT: {{imull|rsp}}
 ; CHECK: addl
 ; CHECK-NOT: {{imull|rsp}}
-; CHECK: %end
+; CHECK-LABEL: %end
 define void @unrolled_mmult2(i32* %tmp55, i32* %tmp56, i32* %pre, i32* %pre94,
   i32* %pre95, i32* %pre96, i32* %pre97, i32* %pre98, i32* %pre99,
   i32* %pre100, i32* %pre101, i32* %pre102, i32* %pre103, i32* %pre104)
@@ -233,8 +232,8 @@ end:
 ; balanced heuristics are interesting here because we have resource,
 ; latency, and register limits all at once. For now, simply check that
 ; we don't use any callee-saves.
-; CHECK: @encpc1
-; CHECK: %entry
+; CHECK-LABEL: @encpc1
+; CHECK-LABEL: %entry
 ; CHECK-NOT: push
 ; CHECK-NOT: pop
 ; CHECK: ret

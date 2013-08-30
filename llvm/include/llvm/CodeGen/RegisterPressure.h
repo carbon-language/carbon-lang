@@ -112,13 +112,12 @@ public:
     assert(isValid() && "invalid PressureChange");
     return PSetID - 1;
   }
+  // If PSetID is invalid, return UINT16_MAX to give it lowest priority.
+  unsigned getPSetOrMax() const { return (PSetID - 1) & UINT16_MAX; }
 
   int getUnitInc() const { return UnitInc; }
 
   void setUnitInc(int Inc) { UnitInc = Inc; }
-
-  // If PSetID is invalid, convert to INT_MAX to give it lowest priority.
-  int getRank() const { return (PSetID - 1) & INT_MAX; }
 
   bool operator==(const PressureChange &RHS) const {
     return PSetID == RHS.PSetID && UnitInc == RHS.UnitInc;

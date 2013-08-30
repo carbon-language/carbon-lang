@@ -1,6 +1,6 @@
 ; RUN: llc < %s -march=x86-64 -mcpu=core2 -pre-RA-sched=source -enable-misched \
 ; RUN:          -misched-topdown -verify-machineinstrs \
-; RUN:     | FileCheck %s -check-prefix=TOPDOWN-disabled
+; RUN:     | FileCheck %s -check-prefix=TOPDOWN
 ; RUN: llc < %s -march=x86-64 -mcpu=core2 -pre-RA-sched=source -enable-misched \
 ; RUN:          -misched=ilpmin -verify-machineinstrs \
 ; RUN:     | FileCheck %s -check-prefix=ILPMIN
@@ -15,19 +15,19 @@
 ; been reordered with the stores. This tests the scheduler's cheap
 ; alias analysis ability (that doesn't require any AliasAnalysis pass).
 ;
-; TOPDOWN-disabled: %for.body
+; TOPDOWN-LABEL: %for.body
 ; TOPDOWN: movl %{{.*}}, (
 ; TOPDOWN: imull {{[0-9]*}}(
 ; TOPDOWN: movl %{{.*}}, 4(
 ; TOPDOWN: imull {{[0-9]*}}(
 ; TOPDOWN: movl %{{.*}}, 8(
 ; TOPDOWN: movl %{{.*}}, 12(
-; TOPDOWN: %for.end
+; TOPDOWN-LABEL: %for.end
 ;
 ; For -misched=ilpmin, verify that each expression subtree is
 ; scheduled independently, and that the imull/adds are interleaved.
 ;
-; ILPMIN: %for.body
+; ILPMIN-LABEL: %for.body
 ; ILPMIN: movl %{{.*}}, (
 ; ILPMIN: imull
 ; ILPMIN: imull
@@ -53,12 +53,12 @@
 ; ILPMIN: imull
 ; ILPMIN: addl
 ; ILPMIN: movl %{{.*}}, 12(
-; ILPMIN: %for.end
+; ILPMIN-LABEL: %for.end
 ;
 ; For -misched=ilpmax, verify that each expression subtree is
 ; scheduled independently, and that the imull/adds are clustered.
 ;
-; ILPMAX: %for.body
+; ILPMAX-LABEL: %for.body
 ; ILPMAX: movl %{{.*}}, (
 ; ILPMAX: imull
 ; ILPMAX: imull
@@ -84,7 +84,7 @@
 ; ILPMAX: addl
 ; ILPMAX: addl
 ; ILPMAX: movl %{{.*}}, 12(
-; ILPMAX: %for.end
+; ILPMAX-LABEL: %for.end
 
 define void @mmult([4 x i32]* noalias nocapture %m1, [4 x i32]* noalias nocapture %m2,
 [4 x i32]* noalias nocapture %m3) nounwind uwtable ssp {

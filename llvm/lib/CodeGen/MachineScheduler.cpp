@@ -2182,21 +2182,19 @@ static bool tryPressure(const PressureChange &TryP,
                         ConvergingScheduler::SchedCandidate &TryCand,
                         ConvergingScheduler::SchedCandidate &Cand,
                         ConvergingScheduler::CandReason Reason) {
-  if (TryP.isValid() && CandP.isValid()) {
-    // If both candidates affect the same set, go with the smallest increase.
-    if (TryP.getPSet() == CandP.getPSet()) {
-      return tryLess(TryP.getUnitInc(), CandP.getUnitInc(), TryCand, Cand,
-                     Reason);
-    }
-    // If one candidate decreases and the other increases, go with it.
-    if (tryLess(TryP.getUnitInc() < 0, CandP.getUnitInc() < 0, TryCand, Cand,
-                Reason)) {
-      return true;
-    }
+  int TryRank = TryP.getPSetOrMax();
+  int CandRank = CandP.getPSetOrMax();
+  // If both candidates affect the same set, go with the smallest increase.
+  if (TryRank == CandRank) {
+    return tryLess(TryP.getUnitInc(), CandP.getUnitInc(), TryCand, Cand,
+                   Reason);
   }
-  // If TryP has lower Rank, it has a higher priority.
-  int TryRank = TryP.getRank();
-  int CandRank = CandP.getRank();
+  // If one candidate decreases and the other increases, go with it.
+  // Invalid candidates have UnitInc==0.
+  if (tryLess(TryP.getUnitInc() < 0, CandP.getUnitInc() < 0, TryCand, Cand,
+              Reason)) {
+    return true;
+  }
   // If the candidates are decreasing pressure, reverse priority.
   if (TryP.getUnitInc() < 0)
     std::swap(TryRank, CandRank);
