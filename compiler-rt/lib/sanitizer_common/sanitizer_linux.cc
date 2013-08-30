@@ -29,7 +29,9 @@
 #include <dlfcn.h>
 #include <errno.h>
 #include <fcntl.h>
+#if !SANITIZER_ANDROID
 #include <link.h>
+#endif
 #include <pthread.h>
 #include <sched.h>
 #include <sys/mman.h>
