@@ -28,7 +28,7 @@ class NamedDecl;
 /// A POD class for pairing a NamedDecl* with an access specifier.
 /// Can be put into unions.
 class DeclAccessPair {
-  NamedDecl *Ptr; // we'd use llvm::PointerUnion, but it isn't trivial
+  uintptr_t Ptr; // we'd use llvm::PointerUnion, but it isn't trivial
 
   enum { Mask = 0x3 };
 
@@ -40,10 +40,10 @@ public:
   }
 
   NamedDecl *getDecl() const {
-    return (NamedDecl*) (~Mask & (uintptr_t) Ptr);
+    return reinterpret_cast<NamedDecl*>(~Mask & Ptr);
   }
   AccessSpecifier getAccess() const {
-    return AccessSpecifier(Mask & (uintptr_t) Ptr);
+    return AccessSpecifier(Mask & Ptr);
   }
 
   void setDecl(NamedDecl *D) {
@@ -53,8 +53,7 @@ public:
     set(getDecl(), AS);
   }
   void set(NamedDecl *D, AccessSpecifier AS) {
-    Ptr = reinterpret_cast<NamedDecl*>(uintptr_t(AS) |
-                                       reinterpret_cast<uintptr_t>(D));
+    Ptr = uintptr_t(AS) | reinterpret_cast<uintptr_t>(D);
   }
 
   operator NamedDecl*() const { return getDecl(); }
