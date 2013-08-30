@@ -1,6 +1,5 @@
 // REQUIRES: x86-64-registered-target
-// RUN: %clang_cc1 -triple x86_64-apple-darwin10  -g -fno-limit-debug-info -S %s -o %t
-// RUN: FileCheck %s < %t
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10  -g -fno-limit-debug-info -S -mllvm -generate-dwarf-pub-sections=Enable %s -o - | FileCheck %s
 
 // FIXME: This testcase shouldn't rely on assembly emission.
 //CHECK: Lpubtypes_begin[[SECNUM:[0-9]:]]
@@ -10,7 +9,7 @@
 
 class G {
 public:
-	void foo();
+  void foo();
 };
 
 void G::foo() {
