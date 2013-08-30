@@ -6242,5 +6242,14 @@ TEST_F(FormatTest, FormatsWithWebKitStyle) {
             format("if (aaaaaaaaaaaaaaa || bbbbbbbbbbbbbbb) { i++; }", Style));
 }
 
+TEST_F(FormatTest, FormatsProtocolBufferDefinitions) {
+  // It seems that clang-format can format protocol buffer definitions
+  // (see https://code.google.com/p/protobuf/).
+  verifyFormat("message SomeMessage {\n"
+               "  required int32 field1 = 1;\n"
+               "  optional string field2 = 2 [default = \"2\"]\n"
+               "}");
+}
+
 } // end namespace tooling
 } // end namespace clang

@@ -1206,7 +1206,8 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
     return Left.Type == TT_ObjCArrayLiteral && Right.isNot(tok::r_square);
   if (Right.is(tok::r_square))
     return Right.Type == TT_ObjCArrayLiteral;
-  if (Right.is(tok::l_square) && Right.Type != TT_ObjCMethodExpr)
+  if (Right.is(tok::l_square) && Right.Type != TT_ObjCMethodExpr &&
+      Left.isNot(tok::numeric_constant))
     return false;
   if (Left.is(tok::colon))
     return Left.Type != TT_ObjCMethodExpr;
