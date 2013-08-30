@@ -967,9 +967,15 @@ CodeGenFunction::tryEmitAsConstant(DeclRefExpr *refExpr) {
   // Emit as a constant.
   llvm::Constant *C = CGM.EmitConstantValue(result.Val, resultType, this);
 
-  // Make sure we emit a debug reference to the global variable or
-  // enumerator constant.
-  EmitValueDeclDbgValue(value, C);
+  // Make sure we emit a debug reference to the global variable.
+  // This should probably fire even for
+  if (isa<VarDecl>(value)) {
+    if (!getContext().DeclMustBeEmitted(cast<VarDecl>(value)))
+      EmitDeclRefExprDbgValue(refExpr, C);
+  } else {
+    assert(isa<EnumConstantDecl>(value));
+    EmitDeclRefExprDbgValue(refExpr, C);
+  }
 
   // If we emitted a reference constant, we need to dereference that.
   if (resultIsReference)

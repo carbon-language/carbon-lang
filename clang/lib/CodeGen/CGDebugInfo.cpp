@@ -3142,31 +3142,14 @@ CGDebugInfo::getOrCreateStaticDataMemberDeclarationOrNull(const VarDecl *D) {
 }
 
 /// EmitGlobalVariable - Emit information about a global variable.
-/// \param VarOrInit either the global variable itself or the initializer
-/// \param D the global declaration
-void CGDebugInfo::EmitGlobalVariable(llvm::Value *VarOrInit,
+void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
                                      const VarDecl *D) {
   assert(DebugKind >= CodeGenOptions::LimitedDebugInfo);
   // Create global variable debug descriptor.
   llvm::DIFile Unit = getOrCreateFile(D->getLocation());
   unsigned LineNo = getLineNumber(D->getLocation());
-  StringRef DeclName = D->getName();
-  StringRef LinkageName;
-  bool IsLocalToUnit = true;
 
-  // For deferred global variables, the current source location is usually
-  // where they are being referenced. Do not change the current source location
-  // to the place where they are declared, lest we get a bogus line table.
-  // FIXME: maybe we do not need to set the source location here at all.
-  if (llvm::GlobalVariable *Var = dyn_cast<llvm::GlobalVariable>(VarOrInit)) {
-    setLocation(D->getLocation());
-    IsLocalToUnit = Var->hasInternalLinkage();
-    if (D->getDeclContext() && !isa<FunctionDecl>(D->getDeclContext())
-        && !isa<ObjCMethodDecl>(D->getDeclContext()))
-      LinkageName = Var->getName();
-    if (LinkageName == DeclName)
-      LinkageName = StringRef();
-  }
+  setLocation(D->getLocation());
 
   QualType T = D->getType();
   if (T->isIncompleteArrayType()) {
@@ -3178,11 +3161,18 @@ void CGDebugInfo::EmitGlobalVariable(llvm::Value *VarOrInit,
     T = CGM.getContext().getConstantArrayType(ET, ConstVal,
                                               ArrayType::Normal, 0);
   }
+  StringRef DeclName = D->getName();
+  StringRef LinkageName;
+  if (D->getDeclContext() && !isa<FunctionDecl>(D->getDeclContext())
+      && !isa<ObjCMethodDecl>(D->getDeclContext()))
+    LinkageName = Var->getName();
+  if (LinkageName == DeclName)
+    LinkageName = StringRef();
   llvm::DIDescriptor DContext =
     getContextDescriptor(dyn_cast<Decl>(D->getDeclContext()));
   llvm::DIGlobalVariable GV = DBuilder.createStaticVariable(
       DContext, DeclName, LinkageName, Unit, LineNo, getOrCreateType(T, Unit),
-      IsLocalToUnit, VarOrInit,
+      Var->hasInternalLinkage(), Var,
       getOrCreateStaticDataMemberDeclarationOrNull(D));
   DeclCache.insert(std::make_pair(D->getCanonicalDecl(), llvm::WeakVH(GV)));
 }
@@ -3213,16 +3203,26 @@ void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
                                 Var->hasInternalLinkage(), Var);
 }
 
-/// EmitEnumConstant - Emit debug info for an enumerator constant
-void CGDebugInfo::EmitEnumConstant(const EnumConstantDecl *ECD)
-{
+/// EmitGlobalVariable - Emit global variable's debug info.
+void CGDebugInfo::EmitGlobalVariable(const ValueDecl *VD,
+                                     llvm::Constant *Init) {
   assert(DebugKind >= CodeGenOptions::LimitedDebugInfo);
-  llvm::DIFile Unit = getOrCreateFile(ECD->getLocation());
-  llvm::DIType Ty = getOrCreateType(ECD->getType(), Unit);
-
-  const EnumDecl *ED = cast<EnumDecl>(ECD->getDeclContext());
-  assert(isa<EnumType>(ED->getTypeForDecl()) && "Enum without EnumType?");
-  Ty = getOrCreateType(QualType(ED->getTypeForDecl(), 0), Unit);
+  // Create the descriptor for the variable.
+  llvm::DIFile Unit = getOrCreateFile(VD->getLocation());
+  StringRef Name = VD->getName();
+  llvm::DIType Ty = getOrCreateType(VD->getType(), Unit);
+  if (const EnumConstantDecl *ECD = dyn_cast<EnumConstantDecl>(VD)) {
+    const EnumDecl *ED = cast<EnumDecl>(ECD->getDeclContext());
+    assert(isa<EnumType>(ED->getTypeForDecl()) && "Enum without EnumType?");
+    Ty = getOrCreateType(QualType(ED->getTypeForDecl(), 0), Unit);
+  }
+  // Do not use DIGlobalVariable for enums.
+  if (Ty.getTag() == llvm::dwarf::DW_TAG_enumeration_type)
+    return;
+  llvm::DIGlobalVariable GV = DBuilder.createStaticVariable(
+      Unit, Name, Name, Unit, getLineNumber(VD->getLocation()), Ty, true, Init,
+      getOrCreateStaticDataMemberDeclarationOrNull(cast<VarDecl>(VD)));
+  DeclCache.insert(std::make_pair(VD->getCanonicalDecl(), llvm::WeakVH(GV)));
 }
 
 llvm::DIScope CGDebugInfo::getCurrentContextDescriptor(const Decl *D) {

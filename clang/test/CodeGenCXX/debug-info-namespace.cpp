@@ -39,16 +39,6 @@ int func(bool b) {
 // This should work even if 'i' and 'func' were declarations & not definitions,
 // but it doesn't yet.
 
-namespace C
-{
- const int j = 32;
-}
-
-int func2()
-{
- return C::j;
-} 
-
 // CHECK: [[CU:![0-9]*]] = {{.*}}[[MODULES:![0-9]*]], metadata !""} ; [ DW_TAG_compile_unit ]
 // CHECK: [[FILE:![0-9]*]] {{.*}}debug-info-namespace.cpp"
 // CHECK: [[FOO:![0-9]*]] {{.*}} ; [ DW_TAG_structure_type ] [foo] [line 5, size 0, align 0, offset 0] [decl] [from ]
@@ -60,8 +50,6 @@ int func2()
 // CHECK: [[FUNC:![0-9]*]] {{.*}} ; [ DW_TAG_subprogram ] {{.*}} [def] [func]
 // CHECK: [[FILE2]]} ; [ DW_TAG_file_type ] [{{.*}}foo.cpp]
 // CHECK: [[I:![0-9]*]] = {{.*}}, metadata [[NS]], metadata !"i", {{.*}} ; [ DW_TAG_variable ] [i]
-// CHECK: [[VAR:![0-9]*]] = {{.*}}, metadata [[SPACE:![0-9]*]], metadata !"j", {{.*}} ; [ DW_TAG_variable ] [j]
-// CHECK: [[SPACE]] = {{.*}}, metadata !"C", {{.*}} ; [ DW_TAG_namespace ] [C]
 // CHECK: [[MODULES]] = metadata !{metadata [[M1:![0-9]*]], metadata [[M2:![0-9]*]], metadata [[M3:![0-9]*]], metadata [[M4:![0-9]*]], metadata [[M5:![0-9]*]], metadata [[M6:![0-9]*]], metadata [[M7:![0-9]*]], metadata [[M8:![0-9]*]], metadata [[M9:![0-9]*]], metadata [[M10:![0-9]*]], metadata [[M11:![0-9]*]], metadata [[M12:![0-9]*]]}
 // CHECK: [[M1]] = metadata !{i32 {{[0-9]*}}, metadata [[CTXT]], metadata [[NS]], i32 11} ; [ DW_TAG_imported_module ]
 // CHECK: [[M2]] = metadata !{i32 {{[0-9]*}}, metadata [[CU]], metadata [[CTXT]], i32 {{[0-9]*}}} ; [ DW_TAG_imported_module ]
