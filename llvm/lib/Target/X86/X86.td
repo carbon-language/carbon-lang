@@ -206,6 +206,15 @@ def : ProcessorModel<"atom", AtomModel,
                       FeatureLEAUsesAG,
                       FeaturePadShortFunctions]>;
 
+// Silvermont.
+def : ProcessorModel<"slm", AtomModel,
+                     [ProcIntelAtom, FeatureSSE42, FeatureCMPXCHG16B,
+                      FeatureMOVBE, FeatureSlowBTMem, FeatureLeaForSP,
+                      FeatureSlowDivide,
+                      FeatureCallRegIndirect,
+                      FeatureLEAUsesAG,
+                      FeaturePadShortFunctions]>;
+
 // "Arrandale" along with corei3 and corei5
 def : ProcessorModel<"corei7", SandyBridgeModel,
                      [FeatureSSE42, FeatureCMPXCHG16B, FeatureSlowBTMem,

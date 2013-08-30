@@ -265,6 +265,11 @@ std::string sys::getHostCPUName() {
       case 54: // 32 nm Atom Midview
         return "atom";
 
+      case 55: // Intel Atom Silvermont processors
+      case 74:
+      case 77:
+        return "slm";
+
       default: return (Em64T) ? "x86-64" : "i686";
       }
     case 15: {
