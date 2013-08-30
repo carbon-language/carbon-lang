@@ -66,8 +66,8 @@ enum {
 
 // Should use NS_ENUM even though it is all power of 2.
 enum {
-  UIKOne = 0x1,
-  UIKTwo = 0x2,
+  UIKOne = 1,
+  UIKTwo = 2,
 };
 typedef NSInteger UIK;
 
@@ -77,3 +77,18 @@ typedef enum  {
     NSTickMarkLeft = NSTickMarkAbove,
     NSTickMarkRight = NSTickMarkBelow
 } NSTickMarkPosition;
+
+enum {
+    UIViewNone         = 0x0,
+    UIViewMargin       = 0x1,
+    UIViewWidth        = 0x2,
+    UIViewRightMargin  = 0x3,
+    UIViewBottomMargin = 0xbadbeef
+};
+typedef NSInteger UITableStyle;
+
+enum {
+    UIView0         = 0,
+    UIView1 = 0XBADBEEF
+};
+typedef NSInteger UIStyle;

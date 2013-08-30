@@ -528,9 +528,10 @@ static bool rewriteToNSMacroDecl(const EnumDecl *EnumDcl,
   return true;
 }
 
-static bool UseNSOptionsMacro(ASTContext &Ctx,
+static bool UseNSOptionsMacro(Preprocessor &PP, ASTContext &Ctx,
                               const EnumDecl *EnumDcl) {
   bool PowerOfTwo = true;
+  bool FoundHexdecimalEnumerator = false;
   uint64_t MaxPowerOfTwoVal = 0;
   for (EnumDecl::enumerator_iterator EI = EnumDcl->enumerator_begin(),
        EE = EnumDcl->enumerator_end(); EI != EE; ++EI) {
@@ -552,8 +553,18 @@ static bool UseNSOptionsMacro(ASTContext &Ctx,
       else if (EnumVal > MaxPowerOfTwoVal)
         MaxPowerOfTwoVal = EnumVal;
     }
+    if (!FoundHexdecimalEnumerator) {
+      SourceLocation EndLoc = Enumerator->getLocEnd();
+      Token Tok;
+      if (!PP.getRawToken(EndLoc, Tok, /*IgnoreWhiteSpace=*/true))
+        if (Tok.isLiteral() && Tok.getLength() > 2) {
+          if (const char *StringLit = Tok.getLiteralData())
+            FoundHexdecimalEnumerator =
+              (StringLit[0] == '0' && (toLowercase(StringLit[1]) == 'x'));
+        }
+    }
   }
-  return PowerOfTwo && (MaxPowerOfTwoVal > 2);
+  return FoundHexdecimalEnumerator || (PowerOfTwo && (MaxPowerOfTwoVal > 2));
 }
 
 void ObjCMigrateASTConsumer::migrateProtocolConformance(ASTContext &Ctx,   
@@ -628,7 +639,7 @@ void ObjCMigrateASTConsumer::migrateNSEnumDecl(ASTContext &Ctx,
     // Also check for typedef enum {...} TD;
     if (const EnumType *EnumTy = qt->getAs<EnumType>()) {
       if (EnumTy->getDecl() == EnumDcl) {
-        bool NSOptions = UseNSOptionsMacro(Ctx, EnumDcl);
+        bool NSOptions = UseNSOptionsMacro(PP, Ctx, EnumDcl);
         if (NSOptions) {
           if (!Ctx.Idents.get("NS_OPTIONS").hasMacroDefinition())
             return;
@@ -642,7 +653,7 @@ void ObjCMigrateASTConsumer::migrateNSEnumDecl(ASTContext &Ctx,
     }
     return;
   }
-  if (IsNSIntegerType && UseNSOptionsMacro(Ctx, EnumDcl)) {
+  if (IsNSIntegerType && UseNSOptionsMacro(PP, Ctx, EnumDcl)) {
     // We may still use NS_OPTIONS based on what we find in the enumertor list.
     IsNSIntegerType = false;
     IsNSUIntegerType = true;
