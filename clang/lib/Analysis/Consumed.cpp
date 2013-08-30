@@ -65,6 +65,13 @@ static ConsumedState invertConsumedUnconsumed(ConsumedState State) {
   llvm_unreachable("invalid enum");
 }
 
+static bool isConsumableType(const QualType &QT) {
+  if (const CXXRecordDecl *RD = QT->getAsCXXRecordDecl())
+    return RD->hasAttr<ConsumableAttr>();
+  else
+    return false;
+}
+
 static bool isKnownState(ConsumedState State) {
   switch (State) {
   case CS_Unconsumed:
@@ -475,7 +482,7 @@ void ConsumedStmtVisitor::VisitCXXConstructExpr(const CXXConstructExpr *Call) {
   ASTContext &CurrContext = AC.getASTContext();
   QualType ThisType = Constructor->getThisType(CurrContext)->getPointeeType();
   
-  if (Analyzer.isConsumableType(ThisType)) {
+  if (isConsumableType(ThisType)) {
     if (Constructor->hasAttr<ConsumesAttr>() ||
         Constructor->isDefaultConstructor()) {
       
@@ -666,7 +673,7 @@ void ConsumedStmtVisitor::VisitMemberExpr(const MemberExpr *MExpr) {
 
 
 void ConsumedStmtVisitor::VisitParmVarDecl(const ParmVarDecl *Param) {
-  if (Analyzer.isConsumableType(Param->getType()))
+  if (isConsumableType(Param->getType()))
     StateMap->setState(Param, consumed::CS_Unknown);
 }
 
@@ -690,7 +697,7 @@ void ConsumedStmtVisitor::VisitUnaryOperator(const UnaryOperator *UOp) {
 }
 
 void ConsumedStmtVisitor::VisitVarDecl(const VarDecl *Var) {
-  if (Analyzer.isConsumableType(Var->getType())) {
+  if (isConsumableType(Var->getType())) {
     if (Var->hasInit()) {
       PropagationInfo PInfo =
         PropagationMap.find(Var->getInit())->second;
@@ -889,44 +896,6 @@ void ConsumedStateMap::setState(const VarDecl *Var, ConsumedState State) {
 
 void ConsumedStateMap::remove(const VarDecl *Var) {
   Map.erase(Var);
-}
-
-bool ConsumedAnalyzer::isConsumableType(QualType Type) {
-  const CXXRecordDecl *RD =
-    dyn_cast_or_null<CXXRecordDecl>(Type->getAsCXXRecordDecl());
-  
-  if (!RD) return false;
-  
-  std::pair<CacheMapType::iterator, bool> Entry =
-    ConsumableTypeCache.insert(std::make_pair(RD, false));
-  
-  if (Entry.second)
-    Entry.first->second = hasConsumableAttributes(RD);
-  
-  return Entry.first->second;
-}
-
-// TODO: Walk the base classes to see if any of them are unique types.
-//       (Deferred)
-bool ConsumedAnalyzer::hasConsumableAttributes(const CXXRecordDecl *RD) {
-  for (CXXRecordDecl::method_iterator MI = RD->method_begin(),
-       ME = RD->method_end(); MI != ME; ++MI) {
-    
-    for (Decl::attr_iterator AI = (*MI)->attr_begin(), AE = (*MI)->attr_end();
-         AI != AE; ++AI) {
-      
-      switch ((*AI)->getKind()) {
-      case attr::CallableWhenUnconsumed:
-      case attr::TestsUnconsumed:
-        return true;
-      
-      default:
-        break;
-      }
-    }
-  }
-  
-  return false;
 }
 
 bool ConsumedAnalyzer::splitState(const CFGBlock *CurrBlock,

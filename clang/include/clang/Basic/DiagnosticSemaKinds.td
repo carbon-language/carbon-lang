@@ -2189,6 +2189,9 @@ def warn_use_while_consumed : Warning<
 def warn_use_of_temp_while_consumed : Warning<
   "invocation of method '%0' on a temporary object while it is in the "
   "'consumed' state">, InGroup<Consumed>, DefaultIgnore;
+def warn_attr_on_unconsumable_class : Warning<
+  "consumed analysis attribute is attached to class '%0' which isn't marked "
+  "as consumable">, InGroup<Consumed>, DefaultIgnore;
 
 // ConsumedStrict warnings
 def warn_use_in_unknown_state : Warning<

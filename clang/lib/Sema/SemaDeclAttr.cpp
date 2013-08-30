@@ -969,19 +969,52 @@ static void handleLocksExcludedAttr(Sema &S, Decl *D,
                                Attr.getAttributeSpellingListIndex()));
 }
 
-static void handleConsumesAttr(Sema &S, Decl *D,
-                               const AttributeList &Attr) {
+static void handleConsumableAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   if (!checkAttributeNumArgs(S, Attr, 0)) return;
 
-  if (!(isa<CXXMethodDecl>(D) || isa<CXXConstructorDecl>(D))) {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
-      << Attr.getName() << ExpectedMethod;
+  if (!isa<CXXRecordDecl>(D)) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type) <<
+      Attr.getName() << ExpectedClass;
     return;
   }
   
   D->addAttr(::new (S.Context)
+             ConsumableAttr(Attr.getRange(), S.Context,
+                            Attr.getAttributeSpellingListIndex()));
+}
+
+static bool checkForConsumableClass(Sema &S, const CXXMethodDecl *MD,
+                                        const AttributeList &Attr) {
+  ASTContext &CurrContext = S.getASTContext();
+  QualType ThisType = MD->getThisType(CurrContext)->getPointeeType();
+  
+  if (const CXXRecordDecl *RD = ThisType->getAsCXXRecordDecl()) {
+    if (!RD->hasAttr<ConsumableAttr>()) {
+      S.Diag(Attr.getLoc(), diag::warn_attr_on_unconsumable_class) <<
+        RD->getNameAsString();
+      
+      return false;
+    }
+  }
+  
+  return true;
+}
+
+static void handleConsumesAttr(Sema &S, Decl *D, const AttributeList &Attr) {
+  if (!checkAttributeNumArgs(S, Attr, 0)) return;
+
+  if (!isa<CXXMethodDecl>(D)) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type) <<
+      Attr.getName() << ExpectedMethod;
+    return;
+  }
+  
+  if (!checkForConsumableClass(S, cast<CXXMethodDecl>(D), Attr))
+    return;
+  
+  D->addAttr(::new (S.Context)
              ConsumesAttr(Attr.getRange(), S.Context,
-              Attr.getAttributeSpellingListIndex()));
+                          Attr.getAttributeSpellingListIndex()));
 }
 
 static void handleCallableWhenUnconsumedAttr(Sema &S, Decl *D,
@@ -989,14 +1022,17 @@ static void handleCallableWhenUnconsumedAttr(Sema &S, Decl *D,
   if (!checkAttributeNumArgs(S, Attr, 0)) return;
 
   if (!isa<CXXMethodDecl>(D)) {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
-      << Attr.getName() << ExpectedMethod;
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type) <<
+      Attr.getName() << ExpectedMethod;
     return;
   }
   
+  if (!checkForConsumableClass(S, cast<CXXMethodDecl>(D), Attr))
+    return;
+  
   D->addAttr(::new (S.Context)
              CallableWhenUnconsumedAttr(Attr.getRange(), S.Context,
-              Attr.getAttributeSpellingListIndex()));
+                                        Attr.getAttributeSpellingListIndex()));
 }
 
 static void handleTestsConsumedAttr(Sema &S, Decl *D,
@@ -1004,14 +1040,17 @@ static void handleTestsConsumedAttr(Sema &S, Decl *D,
   if (!checkAttributeNumArgs(S, Attr, 0)) return;
 
   if (!isa<CXXMethodDecl>(D)) {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
-      << Attr.getName() << ExpectedMethod;
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type) <<
+      Attr.getName() << ExpectedMethod;
     return;
   }
   
+  if (!checkForConsumableClass(S, cast<CXXMethodDecl>(D), Attr))
+    return;
+  
   D->addAttr(::new (S.Context)
              TestsConsumedAttr(Attr.getRange(), S.Context,
-              Attr.getAttributeSpellingListIndex()));
+                               Attr.getAttributeSpellingListIndex()));
 }
 
 static void handleTestsUnconsumedAttr(Sema &S, Decl *D,
@@ -1019,14 +1058,17 @@ static void handleTestsUnconsumedAttr(Sema &S, Decl *D,
   if (!checkAttributeNumArgs(S, Attr, 0)) return;
 
   if (!isa<CXXMethodDecl>(D)) {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
-      << Attr.getName() << ExpectedMethod;
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type) <<
+      Attr.getName() << ExpectedMethod;
     return;
   }
   
+  if (!checkForConsumableClass(S, cast<CXXMethodDecl>(D), Attr))
+    return;
+  
   D->addAttr(::new (S.Context)
              TestsUnconsumedAttr(Attr.getRange(), S.Context,
-              Attr.getAttributeSpellingListIndex()));
+                                 Attr.getAttributeSpellingListIndex()));
 }
 
 static void handleExtVectorTypeAttr(Sema &S, Scope *scope, Decl *D,
@@ -4995,6 +5037,9 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
     break;
 
   // Uniqueness analysis attributes.
+  case AttributeList::AT_Consumable:
+    handleConsumableAttr(S, D, Attr);
+    break;
   case AttributeList::AT_Consumes:
     handleConsumesAttr(S, D, Attr);
     break;

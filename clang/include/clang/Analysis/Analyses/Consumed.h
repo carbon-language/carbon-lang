@@ -167,13 +167,8 @@ namespace consumed {
   /// A class that handles the analysis of uniqueness violations.
   class ConsumedAnalyzer {
     
-    typedef llvm::DenseMap<const CXXRecordDecl *, bool> CacheMapType;
-    typedef std::pair<const CXXRecordDecl *, bool> CachePairType;
-    
     ConsumedBlockInfo BlockInfo;
     ConsumedStateMap *CurrStates;
-    
-    CacheMapType ConsumableTypeCache;
     
     bool hasConsumableAttributes(const CXXRecordDecl *RD);
     bool splitState(const CFGBlock *CurrBlock,
@@ -186,9 +181,6 @@ namespace consumed {
     ConsumedAnalyzer(ConsumedWarningsHandlerBase &WarningsHandler)
         : WarningsHandler(WarningsHandler) {}
 
-    /// \brief Check to see if the type is a consumable type.
-    bool isConsumableType(QualType Type);
-    
     /// \brief Check a function's CFG for consumed violations.
     ///
     /// We traverse the blocks in the CFG, keeping track of the state of each

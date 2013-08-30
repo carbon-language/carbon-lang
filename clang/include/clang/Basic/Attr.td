@@ -928,6 +928,11 @@ def SharedLocksRequired : InheritableAttr {
 
 // C/C++ consumed attributes.
 
+def Consumable : InheritableAttr {
+  let Spellings = [GNU<"consumable">];
+  let Subjects = [CXXRecord];
+}
+
 def CallableWhenUnconsumed : InheritableAttr {
   let Spellings = [GNU<"callable_when_unconsumed">];
   let Subjects = [CXXMethod];
@@ -938,13 +943,13 @@ def TestsUnconsumed : InheritableAttr {
   let Subjects = [CXXMethod];
 }
 
-def Consumes : InheritableAttr {
-  let Spellings = [GNU<"consumes">];
-  let Subjects = [CXXMethod, CXXConstructor];
-}
-
 def TestsConsumed : InheritableAttr {
   let Spellings = [GNU<"tests_consumed">];
+  let Subjects = [CXXMethod];
+}
+
+def Consumes : InheritableAttr {
+  let Spellings = [GNU<"consumes">];
   let Subjects = [CXXMethod];
 }
 

@@ -1,13 +1,14 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -Wconsumed -std=c++11 %s
 
 #define CALLABLE_WHEN_UNCONSUMED __attribute__ ((callable_when_unconsumed))
-#define CONSUMES __attribute__ ((consumes))
-#define TESTS_UNCONSUMED __attribute__ ((tests_unconsumed))
+#define CONSUMABLE               __attribute__ ((consumable))
+#define CONSUMES                 __attribute__ ((consumes))
+#define TESTS_UNCONSUMED         __attribute__ ((tests_unconsumed))
 
 typedef decltype(nullptr) nullptr_t;
 
 template <typename T>
-class ConsumableClass {
+class CONSUMABLE ConsumableClass {
   T var;
   
   public:
