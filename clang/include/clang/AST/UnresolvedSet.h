@@ -51,6 +51,7 @@ public:
   typedef std::iterator_traits<IteratorTy>::iterator_category iterator_category;
 
   NamedDecl *getDecl() const { return ir->getDecl(); }
+  void setDecl(NamedDecl *ND) const { return ir->setDecl(ND); }
   AccessSpecifier getAccess() const { return ir->getAccess(); }
   void setAccess(AccessSpecifier AS) { ir->setAccess(AS); }
   DeclAccessPair getPair() const { return *ir; }

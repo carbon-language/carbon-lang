@@ -55,16 +55,24 @@ namespace clang {
 
 template<typename T>
 class ASTVector {
-  T *Begin, *End, *Capacity;
+private:
+  T *Begin, *End;
+  llvm::PointerIntPair<T*, 1, bool> Capacity;
 
   void setEnd(T *P) { this->End = P; }
 
+protected:
+  // Make a tag bit available to users of this class.
+  // FIXME: This is a horrible hack.
+  bool getTag() const { return Capacity.getInt(); }
+  void setTag(bool B) { Capacity.setInt(B); }
+
 public:
   // Default ctor - Initialize to empty.
-  ASTVector() : Begin(NULL), End(NULL), Capacity(NULL) { }
+  ASTVector() : Begin(0), End(0), Capacity(0, false) {}
 
   ASTVector(const ASTContext &C, unsigned N)
-  : Begin(NULL), End(NULL), Capacity(NULL) {
+      : Begin(0), End(0), Capacity(0, false) {
     reserve(C, N);
   }
 
@@ -156,7 +164,7 @@ public:
   }
 
   void push_back(const_reference Elt, const ASTContext &C) {
-    if (End < Capacity) {
+    if (End < this->capacity_ptr()) {
     Retry:
       new (End) T(Elt);
       ++End;
@@ -167,13 +175,13 @@ public:
   }
 
   void reserve(const ASTContext &C, unsigned N) {
-    if (unsigned(Capacity-Begin) < N)
+    if (unsigned(this->capacity_ptr()-Begin) < N)
       grow(C, N);
   }
 
   /// capacity - Return the total number of elements in the currently allocated
   /// buffer.
-  size_t capacity() const { return Capacity - Begin; }
+  size_t capacity() const { return this->capacity_ptr() - Begin; }
 
   /// append - Add the specified range to the end of the SmallVector.
   ///
@@ -220,7 +228,7 @@ public:
       return this->end()-1;
     }
 
-    if (this->End < this->Capacity) {
+    if (this->End < this->capacity_ptr()) {
     Retry:
       new (this->end()) T(this->back());
       this->setEnd(this->end()+1);
@@ -365,13 +373,16 @@ private:
   }
 
 protected:
-  iterator capacity_ptr() { return (iterator)this->Capacity; }
+  const_iterator capacity_ptr() const {
+    return (iterator) Capacity.getPointer();
+  }
+  iterator capacity_ptr() { return (iterator)Capacity.getPointer(); }
 };
 
 // Define this out-of-line to dissuade the C++ compiler from inlining it.
 template <typename T>
 void ASTVector<T>::grow(const ASTContext &C, size_t MinSize) {
-  size_t CurCapacity = Capacity-Begin;
+  size_t CurCapacity = this->capacity();
   size_t CurSize = size();
   size_t NewCapacity = 2*CurCapacity;
   if (NewCapacity < MinSize)
@@ -394,7 +405,7 @@ void ASTVector<T>::grow(const ASTContext &C, size_t MinSize) {
   // ASTContext never frees any memory.
   Begin = NewElts;
   End = NewElts+CurSize;
-  Capacity = Begin+NewCapacity;
+  Capacity.setPointer(Begin+NewCapacity);
 }
 
 } // end: clang namespace

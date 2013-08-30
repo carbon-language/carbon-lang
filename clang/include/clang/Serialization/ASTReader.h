@@ -88,7 +88,7 @@ class TypeLocReader;
 struct HeaderFileInfo;
 class VersionTuple;
 class TargetOptions;
-class ASTUnresolvedSet;
+class LazyASTUnresolvedSet;
 
 /// \brief Abstract interface for callback invocations by the ASTReader.
 ///
@@ -1745,7 +1745,7 @@ public:
                            unsigned &Idx);
 
   /// \brief Read a UnresolvedSet structure.
-  void ReadUnresolvedSet(ModuleFile &F, ASTUnresolvedSet &Set,
+  void ReadUnresolvedSet(ModuleFile &F, LazyASTUnresolvedSet &Set,
                          const RecordData &Record, unsigned &Idx);
 
   /// \brief Read a C++ base specifier.

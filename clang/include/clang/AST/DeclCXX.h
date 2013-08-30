@@ -473,14 +473,14 @@ class CXXRecordDecl : public RecordDecl {
     /// inherited conversion functions).
     ///
     /// Each of the entries in this overload set is a CXXConversionDecl.
-    ASTUnresolvedSet Conversions;
+    LazyASTUnresolvedSet Conversions;
 
     /// \brief The conversion functions of this C++ class and all those
     /// inherited conversion functions that are visible in this class.
     ///
     /// Each of the entries in this overload set is a CXXConversionDecl or a
     /// FunctionTemplateDecl.
-    ASTUnresolvedSet VisibleConversions;
+    LazyASTUnresolvedSet VisibleConversions;
 
     /// \brief The declaration which defines this record.
     CXXRecordDecl *Definition;
@@ -1014,10 +1014,10 @@ public:
 
   typedef UnresolvedSetIterator conversion_iterator;
   conversion_iterator conversion_begin() const {
-    return data().Conversions.begin();
+    return data().Conversions.get(getASTContext()).begin();
   }
   conversion_iterator conversion_end() const {
-    return data().Conversions.end();
+    return data().Conversions.get(getASTContext()).end();
   }
 
   /// Removes a conversion function from this class.  The conversion

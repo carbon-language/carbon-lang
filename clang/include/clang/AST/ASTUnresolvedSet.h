@@ -22,11 +22,20 @@ namespace clang {
 
 /// \brief An UnresolvedSet-like class which uses the ASTContext's allocator.
 class ASTUnresolvedSet {
-  typedef ASTVector<DeclAccessPair> DeclsTy;
+  struct DeclsTy : ASTVector<DeclAccessPair> {
+    DeclsTy() {}
+    DeclsTy(ASTContext &C, unsigned N) : ASTVector<DeclAccessPair>(C, N) {}
+
+    bool isLazy() const { return getTag(); }
+    void setLazy(bool Lazy) { setTag(Lazy); }
+  };
+
   DeclsTy Decls;
 
   ASTUnresolvedSet(const ASTUnresolvedSet &) LLVM_DELETED_FUNCTION;
   void operator=(const ASTUnresolvedSet &) LLVM_DELETED_FUNCTION;
+
+  friend class LazyASTUnresolvedSet;
 
 public:
   ASTUnresolvedSet() {}
@@ -48,7 +57,7 @@ public:
   /// Replaces the given declaration with the new one, once.
   ///
   /// \return true if the set changed
-  bool replace(const NamedDecl* Old, NamedDecl *New, AccessSpecifier AS) {
+  bool replace(const NamedDecl *Old, NamedDecl *New, AccessSpecifier AS) {
     for (DeclsTy::iterator I = Decls.begin(), E = Decls.end(); I != E; ++I) {
       if (I->getDecl() == Old) {
         I->set(New, AS);
@@ -76,7 +85,29 @@ public:
   DeclAccessPair &operator[](unsigned I) { return Decls[I]; }
   const DeclAccessPair &operator[](unsigned I) const { return Decls[I]; }
 };
-  
+
+/// \brief An UnresolvedSet-like class that might not have been loaded from the
+/// external AST source yet.
+class LazyASTUnresolvedSet {
+  mutable ASTUnresolvedSet Impl;
+
+  void getFromExternalSource(ASTContext &C) const;
+
+public:
+  ASTUnresolvedSet &get(ASTContext &C) const {
+    if (Impl.Decls.isLazy())
+      getFromExternalSource(C);
+    return Impl;
+  }
+
+  void reserve(ASTContext &C, unsigned N) { Impl.reserve(C, N); }
+  void addLazyDecl(ASTContext &C, uintptr_t ID, AccessSpecifier AS) {
+    assert(Impl.empty() || Impl.Decls.isLazy());
+    Impl.Decls.setLazy(true);
+    Impl.addDecl(C, reinterpret_cast<NamedDecl*>(ID << 2), AS);
+  }
+};
+
 } // namespace clang
 
 #endif
