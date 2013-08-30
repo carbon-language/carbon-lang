@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,alpha.core,debug.ExprInspection -verify %s
+// RUN: %clang_cc1 -std=c++11 -analyze -analyzer-checker=core,alpha.core,debug.ExprInspection -verify %s
 void clang_analyzer_eval(bool);
 
 struct X0 { };
@@ -83,5 +83,50 @@ namespace RValues {
     // ...then, don't crash.
     clang_analyzer_eval(+(coin ? getSmallOpaque() : getSmallOpaque())); // expected-warning{{UNKNOWN}}
     clang_analyzer_eval(+(coin ? getLargeOpaque() : getLargeOpaque())); // expected-warning{{UNKNOWN}}
+  }
+}
+
+namespace SynthesizedAssignment {
+  struct A {
+    int a;
+    A& operator=(A& other) { a = -other.a; return *this; }
+    A& operator=(A&& other) { a = other.a+1; return *this; }
+  };
+
+  struct B {
+    int x;
+    A a[3];
+    B& operator=(B&) = default;
+    B& operator=(B&&) = default;
+  };
+
+  // This used to produce a warning about the iteration variable in the
+  // synthesized assignment operator being undefined.
+  void testNoWarning() {
+    B v, u;
+    u = v;
+  }
+
+  void testNoWarningMove() {
+    B v, u;
+    u = static_cast<B &&>(v);
+  }
+
+  void testConsistency() {
+    B v, u;
+    v.a[1].a = 47;
+    v.a[2].a = 42;
+    u = v;
+    clang_analyzer_eval(u.a[1].a == -47); // expected-warning{{TRUE}}
+    clang_analyzer_eval(u.a[2].a == -42); // expected-warning{{TRUE}}
+  }
+
+  void testConsistencyMove() {
+    B v, u;
+    v.a[1].a = 47;
+    v.a[2].a = 42;
+    u = static_cast<B &&>(v);
+    clang_analyzer_eval(u.a[1].a == 48); // expected-warning{{TRUE}}
+    clang_analyzer_eval(u.a[2].a == 43); // expected-warning{{TRUE}}
   }
 }

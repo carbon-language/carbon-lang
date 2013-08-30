@@ -8483,13 +8483,144 @@ void Sema::AdjustDestructorExceptionSpec(CXXRecordDecl *ClassDecl,
   // needs to be done somewhere else.
 }
 
+namespace {
+/// \brief An abstract base class for all helper classes used in building the
+//  copy/move operators. These classes serve as factory functions and help us
+//  avoid using the same Expr* in the AST twice.
+class ExprBuilder {
+  ExprBuilder(const ExprBuilder&) LLVM_DELETED_FUNCTION;
+  ExprBuilder &operator=(const ExprBuilder&) LLVM_DELETED_FUNCTION;
+
+protected:
+  static Expr *assertNotNull(Expr *E) {
+    assert(E && "Expression construction must not fail.");
+    return E;
+  }
+
+public:
+  ExprBuilder() {}
+  virtual ~ExprBuilder() {}
+
+  virtual Expr *build(Sema &S, SourceLocation Loc) const = 0;
+};
+
+class RefBuilder: public ExprBuilder {
+  VarDecl *Var;
+  QualType VarType;
+
+public:
+  virtual Expr *build(Sema &S, SourceLocation Loc) const LLVM_OVERRIDE {
+    return assertNotNull(S.BuildDeclRefExpr(Var, VarType, VK_LValue, Loc).take());
+  }
+
+  RefBuilder(VarDecl *Var, QualType VarType)
+      : Var(Var), VarType(VarType) {}
+};
+
+class ThisBuilder: public ExprBuilder {
+public:
+  virtual Expr *build(Sema &S, SourceLocation Loc) const LLVM_OVERRIDE {
+    return assertNotNull(S.ActOnCXXThis(Loc).takeAs<Expr>());
+  }
+};
+
+class CastBuilder: public ExprBuilder {
+  const ExprBuilder &Builder;
+  QualType Type;
+  ExprValueKind Kind;
+  const CXXCastPath &Path;
+
+public:
+  virtual Expr *build(Sema &S, SourceLocation Loc) const LLVM_OVERRIDE {
+    return assertNotNull(S.ImpCastExprToType(Builder.build(S, Loc), Type,
+                                             CK_UncheckedDerivedToBase, Kind,
+                                             &Path).take());
+  }
+
+  CastBuilder(const ExprBuilder &Builder, QualType Type, ExprValueKind Kind,
+              const CXXCastPath &Path)
+      : Builder(Builder), Type(Type), Kind(Kind), Path(Path) {}
+};
+
+class DerefBuilder: public ExprBuilder {
+  const ExprBuilder &Builder;
+
+public:
+  virtual Expr *build(Sema &S, SourceLocation Loc) const LLVM_OVERRIDE {
+    return assertNotNull(
+        S.CreateBuiltinUnaryOp(Loc, UO_Deref, Builder.build(S, Loc)).take());
+  }
+
+  DerefBuilder(const ExprBuilder &Builder) : Builder(Builder) {}
+};
+
+class MemberBuilder: public ExprBuilder {
+  const ExprBuilder &Builder;
+  QualType Type;
+  CXXScopeSpec SS;
+  bool IsArrow;
+  LookupResult &MemberLookup;
+
+public:
+  virtual Expr *build(Sema &S, SourceLocation Loc) const LLVM_OVERRIDE {
+    return assertNotNull(S.BuildMemberReferenceExpr(
+        Builder.build(S, Loc), Type, Loc, IsArrow, SS, SourceLocation(), 0,
+        MemberLookup, 0).take());
+  }
+
+  MemberBuilder(const ExprBuilder &Builder, QualType Type, bool IsArrow,
+                LookupResult &MemberLookup)
+      : Builder(Builder), Type(Type), IsArrow(IsArrow),
+        MemberLookup(MemberLookup) {}
+};
+
+class MoveCastBuilder: public ExprBuilder {
+  const ExprBuilder &Builder;
+
+public:
+  virtual Expr *build(Sema &S, SourceLocation Loc) const LLVM_OVERRIDE {
+    return assertNotNull(CastForMoving(S, Builder.build(S, Loc)));
+  }
+
+  MoveCastBuilder(const ExprBuilder &Builder) : Builder(Builder) {}
+};
+
+class LvalueConvBuilder: public ExprBuilder {
+  const ExprBuilder &Builder;
+
+public:
+  virtual Expr *build(Sema &S, SourceLocation Loc) const LLVM_OVERRIDE {
+    return assertNotNull(
+        S.DefaultLvalueConversion(Builder.build(S, Loc)).take());
+  }
+
+  LvalueConvBuilder(const ExprBuilder &Builder) : Builder(Builder) {}
+};
+
+class SubscriptBuilder: public ExprBuilder {
+  const ExprBuilder &Base;
+  const ExprBuilder &Index;
+
+public:
+  virtual Expr *build(Sema &S, SourceLocation Loc) const
+      LLVM_OVERRIDE {
+    return assertNotNull(S.CreateBuiltinArraySubscriptExpr(
+        Base.build(S, Loc), Loc, Index.build(S, Loc), Loc).take());
+  }
+
+  SubscriptBuilder(const ExprBuilder &Base, const ExprBuilder &Index)
+      : Base(Base), Index(Index) {}
+};
+
+} // end anonymous namespace
+
 /// When generating a defaulted copy or move assignment operator, if a field
 /// should be copied with __builtin_memcpy rather than via explicit assignments,
 /// do so. This optimization only applies for arrays of scalars, and for arrays
 /// of class type where the selected copy/move-assignment operator is trivial.
 static StmtResult
 buildMemcpyForAssignmentOp(Sema &S, SourceLocation Loc, QualType T,
-                           Expr *To, Expr *From) {
+                           const ExprBuilder &ToB, const ExprBuilder &FromB) {
   // Compute the size of the memory buffer to be copied.
   QualType SizeType = S.Context.getSizeType();
   llvm::APInt Size(S.Context.getTypeSize(SizeType),
@@ -8498,9 +8629,11 @@ buildMemcpyForAssignmentOp(Sema &S, SourceLocation Loc, QualType T,
   // Take the address of the field references for "from" and "to". We
   // directly construct UnaryOperators here because semantic analysis
   // does not permit us to take the address of an xvalue.
+  Expr *From = FromB.build(S, Loc);
   From = new (S.Context) UnaryOperator(From, UO_AddrOf,
                          S.Context.getPointerType(From->getType()),
                          VK_RValue, OK_Ordinary, Loc);
+  Expr *To = ToB.build(S, Loc);
   To = new (S.Context) UnaryOperator(To, UO_AddrOf,
                        S.Context.getPointerType(To->getType()),
                        VK_RValue, OK_Ordinary, Loc);
@@ -8566,7 +8699,7 @@ buildMemcpyForAssignmentOp(Sema &S, SourceLocation Loc, QualType T,
 /// if a memcpy should be used instead.
 static StmtResult
 buildSingleCopyAssignRecursively(Sema &S, SourceLocation Loc, QualType T,
-                                 Expr *To, Expr *From,
+                                 const ExprBuilder &To, const ExprBuilder &From,
                                  bool CopyingBaseSubobject, bool Copying,
                                  unsigned Depth = 0) {
   // C++11 [class.copy]p28:
@@ -8639,8 +8772,8 @@ buildSingleCopyAssignRecursively(Sema &S, SourceLocation Loc, QualType T,
 
     // Create the reference to operator=.
     ExprResult OpEqualRef
-      = S.BuildMemberReferenceExpr(To, T, Loc, /*isArrow=*/false, SS,
-                                   /*TemplateKWLoc=*/SourceLocation(),
+      = S.BuildMemberReferenceExpr(To.build(S, Loc), T, Loc, /*isArrow=*/false,
+                                   SS, /*TemplateKWLoc=*/SourceLocation(),
                                    /*FirstQualifierInScope=*/0,
                                    OpLookup,
                                    /*TemplateArgs=*/0,
@@ -8650,9 +8783,10 @@ buildSingleCopyAssignRecursively(Sema &S, SourceLocation Loc, QualType T,
 
     // Build the call to the assignment operator.
 
+    Expr *FromInst = From.build(S, Loc);
     ExprResult Call = S.BuildCallToMemberFunction(/*Scope=*/0,
                                                   OpEqualRef.takeAs<Expr>(),
-                                                  Loc, From, Loc);
+                                                  Loc, FromInst, Loc);
     if (Call.isInvalid())
       return StmtError();
 
@@ -8671,7 +8805,8 @@ buildSingleCopyAssignRecursively(Sema &S, SourceLocation Loc, QualType T,
   //       operator is used.
   const ConstantArrayType *ArrayTy = S.Context.getAsConstantArrayType(T);
   if (!ArrayTy) {
-    ExprResult Assignment = S.CreateBuiltinBinOp(Loc, BO_Assign, To, From);
+    ExprResult Assignment = S.CreateBuiltinBinOp(
+        Loc, BO_Assign, To.build(S, Loc), From.build(S, Loc));
     if (Assignment.isInvalid())
       return StmtError();
     return S.ActOnExprStmt(Assignment);
@@ -8704,31 +8839,28 @@ buildSingleCopyAssignRecursively(Sema &S, SourceLocation Loc, QualType T,
   llvm::APInt Zero(S.Context.getTypeSize(SizeType), 0);
   IterationVar->setInit(IntegerLiteral::Create(S.Context, Zero, SizeType, Loc));
 
-  // Create a reference to the iteration variable; we'll use this several
-  // times throughout.
-  Expr *IterationVarRef
-    = S.BuildDeclRefExpr(IterationVar, SizeType, VK_LValue, Loc).take();
-  assert(IterationVarRef && "Reference to invented variable cannot fail!");
-  Expr *IterationVarRefRVal = S.DefaultLvalueConversion(IterationVarRef).take();
-  assert(IterationVarRefRVal && "Conversion of invented variable cannot fail!");
+  // Creates a reference to the iteration variable.
+  RefBuilder IterationVarRef(IterationVar, SizeType);
+  LvalueConvBuilder IterationVarRefRVal(IterationVarRef);
 
   // Create the DeclStmt that holds the iteration variable.
   Stmt *InitStmt = new (S.Context) DeclStmt(DeclGroupRef(IterationVar),Loc,Loc);
 
   // Subscript the "from" and "to" expressions with the iteration variable.
-  From = AssertSuccess(S.CreateBuiltinArraySubscriptExpr(From, Loc,
-                                                         IterationVarRefRVal,
-                                                         Loc));
-  To = AssertSuccess(S.CreateBuiltinArraySubscriptExpr(To, Loc,
-                                                       IterationVarRefRVal,
-                                                       Loc));
-  if (!Copying) // Cast to rvalue
-    From = CastForMoving(S, From);
+  SubscriptBuilder FromIndexCopy(From, IterationVarRefRVal);
+  MoveCastBuilder FromIndexMove(FromIndexCopy);
+  const ExprBuilder *FromIndex;
+  if (Copying)
+    FromIndex = &FromIndexCopy;
+  else
+    FromIndex = &FromIndexMove;
+
+  SubscriptBuilder ToIndex(To, IterationVarRefRVal);
 
   // Build the copy/move for an individual element of the array.
   StmtResult Copy =
     buildSingleCopyAssignRecursively(S, Loc, ArrayTy->getElementType(),
-                                     To, From, CopyingBaseSubobject,
+                                     ToIndex, *FromIndex, CopyingBaseSubobject,
                                      Copying, Depth + 1);
   // Bail out if copying fails or if we determined that we should use memcpy.
   if (Copy.isInvalid() || !Copy.get())
@@ -8738,15 +8870,15 @@ buildSingleCopyAssignRecursively(Sema &S, SourceLocation Loc, QualType T,
   llvm::APInt Upper
     = ArrayTy->getSize().zextOrTrunc(S.Context.getTypeSize(SizeType));
   Expr *Comparison
-    = new (S.Context) BinaryOperator(IterationVarRefRVal,
+    = new (S.Context) BinaryOperator(IterationVarRefRVal.build(S, Loc),
                      IntegerLiteral::Create(S.Context, Upper, SizeType, Loc),
                                      BO_NE, S.Context.BoolTy,
                                      VK_RValue, OK_Ordinary, Loc, false);
 
   // Create the pre-increment of the iteration variable.
   Expr *Increment
-    = new (S.Context) UnaryOperator(IterationVarRef, UO_PreInc, SizeType,
-                                    VK_LValue, OK_Ordinary, Loc);
+    = new (S.Context) UnaryOperator(IterationVarRef.build(S, Loc), UO_PreInc,
+                                    SizeType, VK_LValue, OK_Ordinary, Loc);
 
   // Construct the loop that copies all elements of this array.
   return S.ActOnForStmt(Loc, Loc, InitStmt, 
@@ -8757,7 +8889,7 @@ buildSingleCopyAssignRecursively(Sema &S, SourceLocation Loc, QualType T,
 
 static StmtResult
 buildSingleCopyAssign(Sema &S, SourceLocation Loc, QualType T,
-                      Expr *To, Expr *From,
+                      const ExprBuilder &To, const ExprBuilder &From,
                       bool CopyingBaseSubobject, bool Copying) {
   // Maybe we should use a memcpy?
   if (T->isArrayType() && !T.isConstQualified() && !T.isVolatileQualified() &&
@@ -9014,15 +9146,11 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
   // Our location for everything implicitly-generated.
   SourceLocation Loc = CopyAssignOperator->getLocation();
   
-  // Construct a reference to the "other" object. We'll be using this 
-  // throughout the generated ASTs.
-  Expr *OtherRef = BuildDeclRefExpr(Other, OtherRefType, VK_LValue, Loc).take();
-  assert(OtherRef && "Reference to parameter cannot fail!");
-  
-  // Construct the "this" pointer. We'll be using this throughout the generated
-  // ASTs.
-  Expr *This = ActOnCXXThis(Loc).takeAs<Expr>();
-  assert(This && "Reference to this cannot fail!");
+  // Builds a DeclRefExpr for the "other" object.
+  RefBuilder OtherRef(Other, OtherRefType);
+
+  // Builds the "this" pointer.
+  ThisBuilder This;
   
   // Assign base classes.
   bool Invalid = false;
@@ -9041,24 +9169,19 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
 
     // Construct the "from" expression, which is an implicit cast to the
     // appropriately-qualified base type.
-    Expr *From = OtherRef;
-    From = ImpCastExprToType(From, Context.getQualifiedType(BaseType, OtherQuals),
-                             CK_UncheckedDerivedToBase,
-                             VK_LValue, &BasePath).take();
+    CastBuilder From(OtherRef, Context.getQualifiedType(BaseType, OtherQuals),
+                     VK_LValue, BasePath);
 
     // Dereference "this".
-    ExprResult To = CreateBuiltinUnaryOp(Loc, UO_Deref, This);
-    
-    // Implicitly cast "this" to the appropriately-qualified base type.
-    To = ImpCastExprToType(To.take(), 
-                           Context.getCVRQualifiedType(BaseType,
-                                     CopyAssignOperator->getTypeQualifiers()),
-                           CK_UncheckedDerivedToBase, 
-                           VK_LValue, &BasePath);
+    DerefBuilder DerefThis(This);
+    CastBuilder To(DerefThis,
+                   Context.getCVRQualifiedType(
+                       BaseType, CopyAssignOperator->getTypeQualifiers()),
+                   VK_LValue, BasePath);
 
     // Build the copy.
     StmtResult Copy = buildSingleCopyAssign(*this, Loc, BaseType,
-                                            To.get(), From,
+                                            To, From,
                                             /*CopyingBaseSubobject=*/true,
                                             /*Copying=*/true);
     if (Copy.isInvalid()) {
@@ -9124,20 +9247,14 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
                               LookupMemberName);
     MemberLookup.addDecl(*Field);
     MemberLookup.resolveKind();
-    ExprResult From = BuildMemberReferenceExpr(OtherRef, OtherRefType,
-                                               Loc, /*IsArrow=*/false,
-                                               SS, SourceLocation(), 0,
-                                               MemberLookup, 0);
-    ExprResult To = BuildMemberReferenceExpr(This, This->getType(),
-                                             Loc, /*IsArrow=*/true,
-                                             SS, SourceLocation(), 0,
-                                             MemberLookup, 0);
-    assert(!From.isInvalid() && "Implicit field reference cannot fail");
-    assert(!To.isInvalid() && "Implicit field reference cannot fail");
+
+    MemberBuilder From(OtherRef, OtherRefType, /*IsArrow=*/false, MemberLookup);
+
+    MemberBuilder To(This, getCurrentThisType(), /*IsArrow=*/true, MemberLookup);
 
     // Build the copy of this field.
     StmtResult Copy = buildSingleCopyAssign(*this, Loc, FieldType,
-                                            To.get(), From.get(),
+                                            To, From,
                                             /*CopyingBaseSubobject=*/false,
                                             /*Copying=*/true);
     if (Copy.isInvalid()) {
@@ -9153,7 +9270,7 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
 
   if (!Invalid) {
     // Add a "return *this;"
-    ExprResult ThisObj = CreateBuiltinUnaryOp(Loc, UO_Deref, This);
+    ExprResult ThisObj = CreateBuiltinUnaryOp(Loc, UO_Deref, This.build(*this, Loc));
     
     StmtResult Return = ActOnReturnStmt(Loc, ThisObj.get());
     if (Return.isInvalid())
@@ -9471,17 +9588,13 @@ void Sema::DefineImplicitMoveAssignment(SourceLocation CurrentLocation,
   // Our location for everything implicitly-generated.
   SourceLocation Loc = MoveAssignOperator->getLocation();
 
-  // Construct a reference to the "other" object. We'll be using this 
-  // throughout the generated ASTs.
-  Expr *OtherRef = BuildDeclRefExpr(Other, OtherRefType, VK_LValue, Loc).take();
-  assert(OtherRef && "Reference to parameter cannot fail!");
+  // Builds a reference to the "other" object.
+  RefBuilder OtherRef(Other, OtherRefType);
   // Cast to rvalue.
-  OtherRef = CastForMoving(*this, OtherRef);
+  MoveCastBuilder MoveOther(OtherRef);
 
-  // Construct the "this" pointer. We'll be using this throughout the generated
-  // ASTs.
-  Expr *This = ActOnCXXThis(Loc).takeAs<Expr>();
-  assert(This && "Reference to this cannot fail!");
+  // Builds the "this" pointer.
+  ThisBuilder This;
 
   // Assign base classes.
   bool Invalid = false;
@@ -9500,23 +9613,20 @@ void Sema::DefineImplicitMoveAssignment(SourceLocation CurrentLocation,
 
     // Construct the "from" expression, which is an implicit cast to the
     // appropriately-qualified base type.
-    Expr *From = OtherRef;
-    From = ImpCastExprToType(From, BaseType, CK_UncheckedDerivedToBase,
-                             VK_XValue, &BasePath).take();
+    CastBuilder From(OtherRef, BaseType, VK_XValue, BasePath);
 
     // Dereference "this".
-    ExprResult To = CreateBuiltinUnaryOp(Loc, UO_Deref, This);
+    DerefBuilder DerefThis(This);
 
     // Implicitly cast "this" to the appropriately-qualified base type.
-    To = ImpCastExprToType(To.take(), 
-                           Context.getCVRQualifiedType(BaseType,
-                                     MoveAssignOperator->getTypeQualifiers()),
-                           CK_UncheckedDerivedToBase, 
-                           VK_LValue, &BasePath);
+    CastBuilder To(DerefThis,
+                   Context.getCVRQualifiedType(
+                       BaseType, MoveAssignOperator->getTypeQualifiers()),
+                   VK_LValue, BasePath);
 
     // Build the move.
     StmtResult Move = buildSingleCopyAssign(*this, Loc, BaseType,
-                                            To.get(), From,
+                                            To, From,
                                             /*CopyingBaseSubobject=*/true,
                                             /*Copying=*/false);
     if (Move.isInvalid()) {
@@ -9577,29 +9687,22 @@ void Sema::DefineImplicitMoveAssignment(SourceLocation CurrentLocation,
     }
     
     // Build references to the field in the object we're copying from and to.
-    CXXScopeSpec SS; // Intentionally empty
     LookupResult MemberLookup(*this, Field->getDeclName(), Loc,
                               LookupMemberName);
     MemberLookup.addDecl(*Field);
     MemberLookup.resolveKind();
-    ExprResult From = BuildMemberReferenceExpr(OtherRef, OtherRefType,
-                                               Loc, /*IsArrow=*/false,
-                                               SS, SourceLocation(), 0,
-                                               MemberLookup, 0);
-    ExprResult To = BuildMemberReferenceExpr(This, This->getType(),
-                                             Loc, /*IsArrow=*/true,
-                                             SS, SourceLocation(), 0,
-                                             MemberLookup, 0);
-    assert(!From.isInvalid() && "Implicit field reference cannot fail");
-    assert(!To.isInvalid() && "Implicit field reference cannot fail");
+    MemberBuilder From(MoveOther, OtherRefType,
+                       /*IsArrow=*/false, MemberLookup);
+    MemberBuilder To(This, getCurrentThisType(),
+                     /*IsArrow=*/true, MemberLookup);
 
-    assert(!From.get()->isLValue() && // could be xvalue or prvalue
+    assert(!From.build(*this, Loc)->isLValue() && // could be xvalue or prvalue
         "Member reference with rvalue base must be rvalue except for reference "
         "members, which aren't allowed for move assignment.");
 
     // Build the move of this field.
     StmtResult Move = buildSingleCopyAssign(*this, Loc, FieldType,
-                                            To.get(), From.get(),
+                                            To, From,
                                             /*CopyingBaseSubobject=*/false,
                                             /*Copying=*/false);
     if (Move.isInvalid()) {
@@ -9615,7 +9718,7 @@ void Sema::DefineImplicitMoveAssignment(SourceLocation CurrentLocation,
 
   if (!Invalid) {
     // Add a "return *this;"
-    ExprResult ThisObj = CreateBuiltinUnaryOp(Loc, UO_Deref, This);
+    ExprResult ThisObj = CreateBuiltinUnaryOp(Loc, UO_Deref, This.build(*this, Loc));
     
     StmtResult Return = ActOnReturnStmt(Loc, ThisObj.get());
     if (Return.isInvalid())
