@@ -3094,7 +3094,9 @@ public:
   }
 
   virtual CallingConvCheckResult checkCallingConvention(CallingConv CC) const {
-    return (CC == CC_C || CC == CC_IntelOclBicc) ? CCCR_OK : CCCR_Warning;
+    return (CC == CC_C ||
+            CC == CC_IntelOclBicc ||
+            CC == CC_X86_64Win64) ? CCCR_OK : CCCR_Warning;
   }
 
   virtual CallingConv getDefaultCallingConv(CallingConvMethodType MT) const {
@@ -3129,6 +3131,11 @@ public:
   }
   virtual BuiltinVaListKind getBuiltinVaListKind() const {
     return TargetInfo::CharPtrBuiltinVaList;
+  }
+  virtual CallingConvCheckResult checkCallingConvention(CallingConv CC) const {
+    return (CC == CC_C ||
+            CC == CC_IntelOclBicc ||
+            CC == CC_X86_64SysV) ? CCCR_OK : CCCR_Warning;
   }
 };
 } // end anonymous namespace

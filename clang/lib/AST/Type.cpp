@@ -1568,6 +1568,8 @@ StringRef FunctionType::getNameForCallConv(CallingConv CC) {
   case CC_X86FastCall: return "fastcall";
   case CC_X86ThisCall: return "thiscall";
   case CC_X86Pascal: return "pascal";
+  case CC_X86_64Win64: return "ms_abi";
+  case CC_X86_64SysV: return "sysv_abi";
   case CC_AAPCS: return "aapcs";
   case CC_AAPCS_VFP: return "aapcs-vfp";
   case CC_PnaclCall: return "pnaclcall";
@@ -1877,6 +1879,8 @@ bool AttributedType::isCallingConv() const {
   case attr_stdcall:
   case attr_thiscall:
   case attr_pascal:
+  case attr_ms_abi:
+  case attr_sysv_abi:
   case attr_pnaclcall:
   case attr_inteloclbicc:
     return true;

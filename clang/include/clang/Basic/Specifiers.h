@@ -205,6 +205,8 @@ namespace clang {
     CC_X86FastCall, // __attribute__((fastcall))
     CC_X86ThisCall, // __attribute__((thiscall))
     CC_X86Pascal,   // __attribute__((pascal))
+    CC_X86_64Win64, // __attribute__((ms_abi))
+    CC_X86_64SysV,  // __attribute__((sysv_abi))
     CC_AAPCS,       // __attribute__((pcs("aapcs")))
     CC_AAPCS_VFP,   // __attribute__((pcs("aapcs-vfp")))
     CC_PnaclCall,   // __attribute__((pnaclcall))

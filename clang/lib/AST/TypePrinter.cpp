@@ -667,6 +667,12 @@ void TypePrinter::printFunctionProtoAfter(const FunctionProtoType *T,
     case CC_IntelOclBicc:
       OS << " __attribute__((intel_ocl_bicc))";
       break;
+    case CC_X86_64Win64:
+      OS << " __attribute__((ms_abi))";
+      break;
+    case CC_X86_64SysV:
+      OS << " __attribute__((sysv_abi))";
+      break;
     }
   }
 
@@ -1207,6 +1213,8 @@ void TypePrinter::printAttributedAfter(const AttributedType *T,
   case AttributedType::attr_stdcall: OS << "stdcall"; break;
   case AttributedType::attr_thiscall: OS << "thiscall"; break;
   case AttributedType::attr_pascal: OS << "pascal"; break;
+  case AttributedType::attr_ms_abi: OS << "ms_abi"; break;
+  case AttributedType::attr_sysv_abi: OS << "sysv_abi"; break;
   case AttributedType::attr_pcs:
   case AttributedType::attr_pcs_vfp: {
     OS << "pcs(";

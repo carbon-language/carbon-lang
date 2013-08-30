@@ -107,6 +107,8 @@ static void diagnoseBadTypeAttribute(Sema &S, const AttributeList &attr,
     case AttributeList::AT_StdCall: \
     case AttributeList::AT_ThisCall: \
     case AttributeList::AT_Pascal: \
+    case AttributeList::AT_MSABI: \
+    case AttributeList::AT_SysVABI: \
     case AttributeList::AT_Regparm: \
     case AttributeList::AT_Pcs: \
     case AttributeList::AT_PnaclCall: \
@@ -3405,6 +3407,10 @@ static AttributeList::Kind getAttrListKind(AttributedType::Kind kind) {
     return AttributeList::AT_PnaclCall;
   case AttributedType::attr_inteloclbicc:
     return AttributeList::AT_IntelOclBicc;
+  case AttributedType::attr_ms_abi:
+    return AttributeList::AT_MSABI;
+  case AttributedType::attr_sysv_abi:
+    return AttributeList::AT_SysVABI;
   case AttributedType::attr_ptr32:
     return AttributeList::AT_Ptr32;
   case AttributedType::attr_ptr64:
@@ -4386,6 +4392,10 @@ static AttributedType::Kind getCCTypeAttrKind(AttributeList &Attr) {
     return AttributedType::attr_pnaclcall;
   case AttributeList::AT_IntelOclBicc:
     return AttributedType::attr_inteloclbicc;
+  case AttributeList::AT_MSABI:
+    return AttributedType::attr_ms_abi;
+  case AttributeList::AT_SysVABI:
+    return AttributedType::attr_sysv_abi;
   }
   llvm_unreachable("unexpected attribute kind!");
 }
@@ -4468,7 +4478,7 @@ static bool handleFunctionTypeAttr(TypeProcessingState &state,
   CallingConv CCOld = fn->getCallConv();
   AttributedType::Kind CCAttrKind = getCCTypeAttrKind(attr);
 
-  if (CC != CCOld) {
+  if (CCOld != CC) {
     // Error out on when there's already an attribute on the type
     // and the CCs don't match.
     const AttributedType *AT = S.getCallingConvAttributedType(type);
