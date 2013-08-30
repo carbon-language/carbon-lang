@@ -276,11 +276,8 @@ void PassManagerBuilder::populateLTOPassManager(PassManagerBase &PM,
   // Now that composite has been compiled, scan through the module, looking
   // for a main function.  If main is defined, mark all other functions
   // internal.
-  if (Internalize) {
-    std::vector<const char*> E;
-    E.push_back("main");
-    PM.add(createInternalizePass(E));
-  }
+  if (Internalize)
+    PM.add(createInternalizePass("main"));
 
   // Propagate constants at call sites into the functions they call.  This
   // opens opportunities for globalopt (and inlining) by substituting function
@@ -321,6 +318,7 @@ void PassManagerBuilder::populateLTOPassManager(PassManagerBase &PM,
   // The IPO passes may leave cruft around.  Clean up after them.
   PM.add(createInstructionCombiningPass());
   PM.add(createJumpThreadingPass());
+
   // Break up allocas
   if (UseNewSROA)
     PM.add(createSROAPass());
@@ -334,6 +332,7 @@ void PassManagerBuilder::populateLTOPassManager(PassManagerBase &PM,
   PM.add(createLICMPass());                 // Hoist loop invariants.
   PM.add(createGVNPass(DisableGVNLoadPRE)); // Remove redundancies.
   PM.add(createMemCpyOptPass());            // Remove dead memcpys.
+
   // Nuke dead stores.
   PM.add(createDeadStoreEliminationPass());
 
