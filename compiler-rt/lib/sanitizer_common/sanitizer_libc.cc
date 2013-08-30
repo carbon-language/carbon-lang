@@ -152,8 +152,7 @@ char *internal_strncpy(char *dst, const char *src, uptr n) {
   uptr i;
   for (i = 0; i < n && src[i]; i++)
     dst[i] = src[i];
-  for (; i < n; i++)
-    dst[i] = '\0';
+  internal_memset(dst + i, '\0', n - i);
   return dst;
 }
 
