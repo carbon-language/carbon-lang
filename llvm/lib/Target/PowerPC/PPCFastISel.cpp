@@ -584,14 +584,12 @@ bool PPCFastISel::PPCEmitStore(MVT VT, unsigned SrcReg, Address &Addr) {
       .addImm(Addr.Offset).addFrameIndex(Addr.Base.FI).addMemOperand(MMO);
 
   // Base reg with offset in range.
-  } else if (UseOffset) {
-    if (Addr.Offset == 0 && Opc == PPC::STW8)
-      dbgs() << "Possible problem here.\n";
+  } else if (UseOffset)
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(Opc))
       .addReg(SrcReg).addImm(Addr.Offset).addReg(Addr.Base.Reg);
 
   // Indexed form.
-  } else {
+  else {
     // Get the RR opcode corresponding to the RI one.  FIXME: It would be
     // preferable to use the ImmToIdxMap from PPCRegisterInfo.cpp, but it
     // is hard to get at.
