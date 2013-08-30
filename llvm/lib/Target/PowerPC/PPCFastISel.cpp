@@ -109,6 +109,10 @@ class PPCFastISel : public FastISel {
     bool SelectBranch(const Instruction *I);
     bool SelectIndirectBr(const Instruction *I);
     bool SelectCmp(const Instruction *I);
+    bool SelectFPExt(const Instruction *I);
+    bool SelectFPTrunc(const Instruction *I);
+    bool SelectIToFP(const Instruction *I, bool IsSigned);
+    bool SelectFPToI(const Instruction *I, bool IsSigned);
     bool SelectBinaryIntOp(const Instruction *I, unsigned ISDOpcode);
     bool SelectRet(const Instruction *I);
     bool SelectIntExt(const Instruction *I);
@@ -135,6 +139,9 @@ class PPCFastISel : public FastISel {
                                     const TargetRegisterClass *RC);
     unsigned PPCMaterialize64BitInt(int64_t Imm,
                                     const TargetRegisterClass *RC);
+    unsigned PPCMoveToIntReg(const Instruction *I, MVT VT,
+                             unsigned SrcReg, bool IsSigned);
+    unsigned PPCMoveToFPReg(MVT VT, unsigned SrcReg, bool IsSigned);
 
   // Call handling routines.
   private:
@@ -786,6 +793,260 @@ bool PPCFastISel::PPCEmitCmp(const Value *SrcValue1, const Value *SrcValue2,
   return true;
 }
 
+// Attempt to fast-select a floating-point extend instruction.
+bool PPCFastISel::SelectFPExt(const Instruction *I) {
+  Value *Src  = I->getOperand(0);
+  EVT SrcVT  = TLI.getValueType(Src->getType(), true);
+  EVT DestVT = TLI.getValueType(I->getType(), true);
+
+  if (SrcVT != MVT::f32 || DestVT != MVT::f64)
+    return false;
+
+  unsigned SrcReg = getRegForValue(Src);
+  if (!SrcReg)
+    return false;
+
+  // No code is generated for a FP extend.
+  UpdateValueMap(I, SrcReg);
+  return true;
+}
+
+// Attempt to fast-select a floating-point truncate instruction.
+bool PPCFastISel::SelectFPTrunc(const Instruction *I) {
+  Value *Src  = I->getOperand(0);
+  EVT SrcVT  = TLI.getValueType(Src->getType(), true);
+  EVT DestVT = TLI.getValueType(I->getType(), true);
+
+  if (SrcVT != MVT::f64 || DestVT != MVT::f32)
+    return false;
+
+  unsigned SrcReg = getRegForValue(Src);
+  if (!SrcReg)
+    return false;
+
+  // Round the result to single precision.
+  unsigned DestReg = createResultReg(&PPC::F4RCRegClass);
+  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(PPC::FRSP), DestReg)
+    .addReg(SrcReg);
+
+  UpdateValueMap(I, DestReg);
+  return true;
+}
+
+// Move an i32 or i64 value in a GPR to an f64 value in an FPR.
+// FIXME: When direct register moves are implemented (see PowerISA 2.08),
+// those should be used instead of moving via a stack slot when the
+// subtarget permits.
+// FIXME: The code here is sloppy for the 4-byte case.  Can use a 4-byte
+// stack slot and 4-byte store/load sequence.  Or just sext the 4-byte
+// case to 8 bytes which produces tighter code but wastes stack space.
+unsigned PPCFastISel::PPCMoveToFPReg(MVT SrcVT, unsigned SrcReg,
+                                     bool IsSigned) {
+
+  // If necessary, extend 32-bit int to 64-bit.
+  if (SrcVT == MVT::i32) {
+    unsigned TmpReg = createResultReg(&PPC::G8RCRegClass);
+    if (!PPCEmitIntExt(MVT::i32, SrcReg, MVT::i64, TmpReg, !IsSigned))
+      return 0;
+    SrcReg = TmpReg;
+  }
+
+  // Get a stack slot 8 bytes wide, aligned on an 8-byte boundary.
+  Address Addr;
+  Addr.BaseType = Address::FrameIndexBase;
+  Addr.Base.FI = MFI.CreateStackObject(8, 8, false);
+
+  // Store the value from the GPR.
+  if (!PPCEmitStore(MVT::i64, SrcReg, Addr))
+    return 0;
+
+  // Load the integer value into an FPR.  The kind of load used depends
+  // on a number of conditions.
+  unsigned LoadOpc = PPC::LFD;
+
+  if (SrcVT == MVT::i32) {
+    Addr.Offset = 4;
+    if (!IsSigned)
+      LoadOpc = PPC::LFIWZX;
+    else if (PPCSubTarget.hasLFIWAX())
+      LoadOpc = PPC::LFIWAX;
+  }
+
+  const TargetRegisterClass *RC = &PPC::F8RCRegClass;
+  unsigned ResultReg = 0;
+  if (!PPCEmitLoad(MVT::f64, ResultReg, Addr, RC, !IsSigned, LoadOpc))
+    return 0;
+
+  return ResultReg;
+}
+
+// Attempt to fast-select an integer-to-floating-point conversion.
+bool PPCFastISel::SelectIToFP(const Instruction *I, bool IsSigned) {
+  MVT DstVT;
+  Type *DstTy = I->getType();
+  if (!isTypeLegal(DstTy, DstVT))
+    return false;
+
+  if (DstVT != MVT::f32 && DstVT != MVT::f64)
+    return false;
+
+  Value *Src = I->getOperand(0);
+  EVT SrcEVT = TLI.getValueType(Src->getType(), true);
+  if (!SrcEVT.isSimple())
+    return false;
+
+  MVT SrcVT = SrcEVT.getSimpleVT();
+
+  if (SrcVT != MVT::i8  && SrcVT != MVT::i16 &&
+      SrcVT != MVT::i32 && SrcVT != MVT::i64)
+    return false;
+
+  unsigned SrcReg = getRegForValue(Src);
+  if (SrcReg == 0)
+    return false;
+
+  // We can only lower an unsigned convert if we have the newer
+  // floating-point conversion operations.
+  if (!IsSigned && !PPCSubTarget.hasFPCVT())
+    return false;
+
+  // FIXME: For now we require the newer floating-point conversion operations
+  // (which are present only on P7 and A2 server models) when converting
+  // to single-precision float.  Otherwise we have to generate a lot of
+  // fiddly code to avoid double rounding.  If necessary, the fiddly code
+  // can be found in PPCTargetLowering::LowerINT_TO_FP().
+  if (DstVT == MVT::f32 && !PPCSubTarget.hasFPCVT())
+    return false;
+
+  // Extend the input if necessary.
+  if (SrcVT == MVT::i8 || SrcVT == MVT::i16) {
+    unsigned TmpReg = createResultReg(&PPC::G8RCRegClass);
+    if (!PPCEmitIntExt(SrcVT, SrcReg, MVT::i64, TmpReg, !IsSigned))
+      return false;
+    SrcVT = MVT::i64;
+    SrcReg = TmpReg;
+  }
+
+  // Move the integer value to an FPR.
+  unsigned FPReg = PPCMoveToFPReg(SrcVT, SrcReg, IsSigned);
+  if (FPReg == 0)
+    return false;
+
+  // Determine the opcode for the conversion.
+  const TargetRegisterClass *RC = &PPC::F8RCRegClass;
+  unsigned DestReg = createResultReg(RC);
+  unsigned Opc;
+
+  if (DstVT == MVT::f32)
+    Opc = IsSigned ? PPC::FCFIDS : PPC::FCFIDUS;
+  else
+    Opc = IsSigned ? PPC::FCFID : PPC::FCFIDU;
+
+  // Generate the convert.
+  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(Opc), DestReg)
+    .addReg(FPReg);
+
+  UpdateValueMap(I, DestReg);
+  return true;
+}
+
+// Move the floating-point value in SrcReg into an integer destination
+// register, and return the register (or zero if we can't handle it).
+// FIXME: When direct register moves are implemented (see PowerISA 2.08),
+// those should be used instead of moving via a stack slot when the
+// subtarget permits.
+unsigned PPCFastISel::PPCMoveToIntReg(const Instruction *I, MVT VT,
+                                      unsigned SrcReg, bool IsSigned) {
+  // Get a stack slot 8 bytes wide, aligned on an 8-byte boundary.
+  // Note that if have STFIWX available, we could use a 4-byte stack
+  // slot for i32, but this being fast-isel we'll just go with the
+  // easiest code gen possible.
+  Address Addr;
+  Addr.BaseType = Address::FrameIndexBase;
+  Addr.Base.FI = MFI.CreateStackObject(8, 8, false);
+
+  // Store the value from the FPR.
+  if (!PPCEmitStore(MVT::f64, SrcReg, Addr))
+    return 0;
+
+  // Reload it into a GPR.  If we want an i32, modify the address
+  // to have a 4-byte offset so we load from the right place.
+  if (VT == MVT::i32)
+    Addr.Offset = 4;
+
+  // Look at the currently assigned register for this instruction
+  // to determine the required register class.
+  unsigned AssignedReg = FuncInfo.ValueMap[I];
+  const TargetRegisterClass *RC =
+    AssignedReg ? MRI.getRegClass(AssignedReg) : 0;
+
+  unsigned ResultReg = 0;
+  if (!PPCEmitLoad(VT, ResultReg, Addr, RC, !IsSigned))
+    return 0;
+
+  return ResultReg;
+}
+
+// Attempt to fast-select a floating-point-to-integer conversion.
+bool PPCFastISel::SelectFPToI(const Instruction *I, bool IsSigned) {
+  MVT DstVT, SrcVT;
+  Type *DstTy = I->getType();
+  if (!isTypeLegal(DstTy, DstVT))
+    return false;
+
+  if (DstVT != MVT::i32 && DstVT != MVT::i64)
+    return false;
+
+  Value *Src = I->getOperand(0);
+  Type *SrcTy = Src->getType();
+  if (!isTypeLegal(SrcTy, SrcVT))
+    return false;
+
+  if (SrcVT != MVT::f32 && SrcVT != MVT::f64)
+    return false;
+
+  unsigned SrcReg = getRegForValue(Src);
+  if (SrcReg == 0)
+    return false;
+
+  // Convert f32 to f64 if necessary.  This is just a meaningless copy
+  // to get the register class right.  COPY_TO_REGCLASS is needed since
+  // a COPY from F4RC to F8RC is converted to a F4RC-F4RC copy downstream.
+  const TargetRegisterClass *InRC = MRI.getRegClass(SrcReg);
+  if (InRC == &PPC::F4RCRegClass) {
+    unsigned TmpReg = createResultReg(&PPC::F8RCRegClass);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+            TII.get(TargetOpcode::COPY_TO_REGCLASS), TmpReg)
+      .addReg(SrcReg).addImm(PPC::F8RCRegClassID);
+    SrcReg = TmpReg;
+  }
+
+  // Determine the opcode for the conversion, which takes place
+  // entirely within FPRs.
+  unsigned DestReg = createResultReg(&PPC::F8RCRegClass);
+  unsigned Opc;
+
+  if (DstVT == MVT::i32)
+    if (IsSigned)
+      Opc = PPC::FCTIWZ;
+    else
+      Opc = PPCSubTarget.hasFPCVT() ? PPC::FCTIWUZ : PPC::FCTIDZ;
+  else
+    Opc = IsSigned ? PPC::FCTIDZ : PPC::FCTIDUZ;
+
+  // Generate the convert.
+  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(Opc), DestReg)
+    .addReg(SrcReg);
+
+  // Now move the integer value from a float register to an integer register.
+  unsigned IntReg = PPCMoveToIntReg(I, DstVT, DestReg, IsSigned);
+  if (IntReg == 0)
+    return false;
+
+  UpdateValueMap(I, IntReg);
+  return true;
+}
+
 // Attempt to fast-select a binary integer operation that isn't already
 // handled automatically.
 bool PPCFastISel::SelectBinaryIntOp(const Instruction *I, unsigned ISDOpcode) {
@@ -1135,6 +1396,18 @@ bool PPCFastISel::TargetSelectInstruction(const Instruction *I) {
       return SelectBranch(I);
     case Instruction::IndirectBr:
       return SelectIndirectBr(I);
+    case Instruction::FPExt:
+      return SelectFPExt(I);
+    case Instruction::FPTrunc:
+      return SelectFPTrunc(I);
+    case Instruction::SIToFP:
+      return SelectIToFP(I, /*IsSigned*/ true);
+    case Instruction::UIToFP:
+      return SelectIToFP(I, /*IsSigned*/ false);
+    case Instruction::FPToSI:
+      return SelectFPToI(I, /*IsSigned*/ true);
+    case Instruction::FPToUI:
+      return SelectFPToI(I, /*IsSigned*/ false);
     case Instruction::Add:
       return SelectBinaryIntOp(I, ISD::ADD);
     case Instruction::Or:
