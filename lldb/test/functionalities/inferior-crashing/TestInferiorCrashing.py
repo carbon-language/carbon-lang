@@ -65,6 +65,7 @@ class CrashingInferiorTestCase(TestBase):
         self.buildDsym()
         self.inferior_crashing_step_after_break()
 
+    @skipIfFreeBSD # llvm.org/pr16684
     @skipIfLinux # due to llvm.org/pr15988 -- step over misbehaves after crash
     def test_inferior_crashing_step_after_break_dwarf(self):
         """Test that lldb functions correctly after stepping through a crash."""
