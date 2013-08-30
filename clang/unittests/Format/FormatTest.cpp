@@ -1519,6 +1519,20 @@ TEST_F(FormatTest, FormatsEnum) {
   verifyFormat("enum X f() {\n  a();\n  return 42;\n}");
 }
 
+TEST_F(FormatTest, FormatsEnumsWithErrors) {
+  verifyFormat("enum Type {\n"
+               "  One = 0;\n" // These semicolons should be commas.
+               "  Two = 1;\n"
+               "};");
+  verifyFormat("namespace n {\n"
+               "enum Type {\n"
+               "  One,\n"
+               "  Two,\n" // missing };
+               "  int i;\n"
+               "}\n"
+               "void g() {}");
+}
+
 TEST_F(FormatTest, FormatsEnumStruct) {
   verifyFormat("enum struct {\n"
                "  Zero,\n"

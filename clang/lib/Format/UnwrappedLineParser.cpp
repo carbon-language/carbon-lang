@@ -937,6 +937,7 @@ void UnwrappedLineParser::parseEnum() {
     if (FormatTok->Tok.is(tok::identifier))
       nextToken();
   }
+  bool HasError = false;
   if (FormatTok->Tok.is(tok::l_brace)) {
     if (Style.BreakBeforeBraces == FormatStyle::BS_Allman)
       addUnwrappedLine();
@@ -952,7 +953,17 @@ void UnwrappedLineParser::parseEnum() {
         addUnwrappedLine();
         nextToken();
         --Line->Level;
+        if (HasError) {
+          if (FormatTok->is(tok::semi))
+            nextToken();
+          addUnwrappedLine();
+        }
         return;
+      case tok::semi:
+        HasError = true;
+        nextToken();
+        addUnwrappedLine();
+        break;
       case tok::comma:
         nextToken();
         addUnwrappedLine();
