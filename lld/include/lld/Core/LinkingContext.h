@@ -177,11 +177,6 @@ public:
   /// trace different parts of LLVM and lld.
   const std::vector<const char *> &llvmOptions() const { return _llvmOptions; }
 
-  /// This method returns the sequence of input files for core linking to
-  /// process.
-  const std::vector<LinkerInput> &inputFiles() const { return _inputFiles; }
-  /// @}
-
   /// \name Methods used by Drivers to configure TargetInfo
   /// @{
   void setOutputPath(StringRef str) { _outputPath = str; }
@@ -218,12 +213,7 @@ public:
   }
   void setAllowShlibUndefines(bool allow) { _allowShlibUndefines = allow; }
   void setLogInputFiles(bool log) { _logInputFiles = log; }
-  void appendInputFile(StringRef path) {
-    _inputFiles.emplace_back(LinkerInput(path));
-  }
-  void appendInputFile(std::unique_ptr<llvm::MemoryBuffer> buffer) {
-    _inputFiles.emplace_back(LinkerInput(std::move(buffer)));
-  }
+
   void appendLLVMOption(const char *opt) { _llvmOptions.push_back(opt); }
   virtual void setInputGraph(std::unique_ptr<InputGraph> inputGraph) {
     _inputGraph = std::move(inputGraph);
@@ -344,7 +334,6 @@ protected:
   bool _logInputFiles;
   bool _allowShlibUndefines;
   std::vector<StringRef> _deadStripRoots;
-  std::vector<LinkerInput> _inputFiles;
   std::vector<const char *> _llvmOptions;
   std::unique_ptr<Reader> _yamlReader;
   StringRefVector _initialUndefinedSymbols;
