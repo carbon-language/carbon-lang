@@ -665,6 +665,42 @@
 // CHECK_ATOM_M64: #define __x86_64 1
 // CHECK_ATOM_M64: #define __x86_64__ 1
 //
+// RUN: %clang -march=slm -m32 -E -dM %s -o - 2>&1 \
+// RUN:     -target i386-unknown-linux \
+// RUN:   | FileCheck %s -check-prefix=CHECK_SLM_M32
+// CHECK_SLM_M32: #define __MMX__ 1
+// CHECK_SLM_M32: #define __SSE2__ 1
+// CHECK_SLM_M32: #define __SSE3__ 1
+// CHECK_SLM_M32: #define __SSE4_1__ 1
+// CHECK_SLM_M32: #define __SSE4_2__ 1
+// CHECK_SLM_M32: #define __SSE__ 1
+// CHECK_SLM_M32: #define __SSSE3__ 1
+// CHECK_SLM_M32: #define __i386 1
+// CHECK_SLM_M32: #define __i386__ 1
+// CHECK_SLM_M32: #define __slm 1
+// CHECK_SLM_M32: #define __slm__ 1
+// CHECK_SLM_M32: #define __tune_slm__ 1
+// CHECK_SLM_M32: #define i386 1
+// RUN: %clang -march=slm -m64 -E -dM %s -o - 2>&1 \
+// RUN:     -target i386-unknown-linux \
+// RUN:   | FileCheck %s -check-prefix=CHECK_SLM_M64
+// CHECK_SLM_M64: #define __MMX__ 1
+// CHECK_SLM_M64: #define __SSE2_MATH__ 1
+// CHECK_SLM_M64: #define __SSE2__ 1
+// CHECK_SLM_M64: #define __SSE3__ 1
+// CHECK_SLM_M64: #define __SSE4_1__ 1
+// CHECK_SLM_M64: #define __SSE4_2__ 1
+// CHECK_SLM_M64: #define __SSE_MATH__ 1
+// CHECK_SLM_M64: #define __SSE__ 1
+// CHECK_SLM_M64: #define __SSSE3__ 1
+// CHECK_SLM_M64: #define __amd64 1
+// CHECK_SLM_M64: #define __amd64__ 1
+// CHECK_SLM_M64: #define __slm 1
+// CHECK_SLM_M64: #define __slm__ 1
+// CHECK_SLM_M64: #define __tune_slm__ 1
+// CHECK_SLM_M64: #define __x86_64 1
+// CHECK_SLM_M64: #define __x86_64__ 1
+//
 // RUN: %clang -march=geode -m32 -E -dM %s -o - 2>&1 \
 // RUN:     -target i386-unknown-linux \
 // RUN:   | FileCheck %s -check-prefix=CHECK_GEODE_M32

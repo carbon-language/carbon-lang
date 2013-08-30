@@ -1637,6 +1637,7 @@ class X86TargetInfo : public TargetInfo {
     /// Atom processors
     //@{
     CK_Atom,
+    CK_SLM,
     //@}
 
     /// \name Nehalem
@@ -1805,6 +1806,7 @@ public:
       .Case("core2", CK_Core2)
       .Case("penryn", CK_Penryn)
       .Case("atom", CK_Atom)
+      .Case("slm", CK_SLM)
       .Case("corei7", CK_Corei7)
       .Case("corei7-avx", CK_Corei7AVX)
       .Case("core-avx-i", CK_CoreAVXi)
@@ -1880,6 +1882,7 @@ public:
     case CK_Core2:
     case CK_Penryn:
     case CK_Atom:
+    case CK_SLM:
     case CK_Corei7:
     case CK_Corei7AVX:
     case CK_CoreAVXi:
@@ -1977,6 +1980,7 @@ void X86TargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
     setFeatureEnabled(Features, "ssse3", true);
     break;
   case CK_Corei7:
+  case CK_SLM:
     setFeatureEnabled(Features, "sse4.2", true);
     break;
   case CK_Corei7AVX:
@@ -2472,6 +2476,9 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
     break;
   case CK_Atom:
     defineCPUMacros(Builder, "atom");
+    break;
+  case CK_SLM:
+    defineCPUMacros(Builder, "slm");
     break;
   case CK_Corei7:
   case CK_Corei7AVX:
