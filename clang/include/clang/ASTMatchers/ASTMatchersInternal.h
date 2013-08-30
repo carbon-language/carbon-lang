@@ -1231,8 +1231,6 @@ AnyOfVariadicOperator(const ast_type_traits::DynTypedNode DynNode,
 template<typename T>
 BindableMatcher<T> makeAllOfComposite(
     ArrayRef<const Matcher<T> *> InnerMatchers) {
-  if (InnerMatchers.empty())
-    return BindableMatcher<T>(new TrueMatcher<T>);
   return BindableMatcher<T>(new VariadicOperatorMatcherInterface<T>(
       AllOfVariadicOperator, InnerMatchers));
 }

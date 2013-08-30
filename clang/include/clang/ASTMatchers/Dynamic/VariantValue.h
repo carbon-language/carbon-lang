@@ -227,17 +227,6 @@ public:
   const VariantMatcher &getMatcher() const;
   void setMatcher(const VariantMatcher &Matcher);
 
-  /// \brief Shortcut functions.
-  template <class T>
-  bool hasTypedMatcher() const {
-    return isMatcher() && getMatcher().hasTypedMatcher<T>();
-  }
-
-  template <class T>
-  ast_matchers::internal::Matcher<T> getTypedMatcher() const {
-    return getMatcher().getTypedMatcher<T>();
-  }
-
   /// \brief String representation of the type of the value.
   std::string getTypeAsString() const;
 

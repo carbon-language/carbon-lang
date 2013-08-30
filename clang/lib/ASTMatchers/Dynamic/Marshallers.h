@@ -61,10 +61,10 @@ template <class T> struct ArgTypeTraits<ast_matchers::internal::Matcher<T> > {
             ">").str();
   }
   static bool is(const VariantValue &Value) {
-    return Value.hasTypedMatcher<T>();
+    return Value.isMatcher() && Value.getMatcher().hasTypedMatcher<T>();
   }
   static ast_matchers::internal::Matcher<T> get(const VariantValue &Value) {
-    return Value.getTypedMatcher<T>();
+    return Value.getMatcher().getTypedMatcher<T>();
   }
 };
 
@@ -94,23 +94,20 @@ public:
 /// function into a MatcherCreateCallback.
 /// The marshaller is in charge of taking the VariantValue arguments, checking
 /// their types, unpacking them and calling the underlying function.
-template <typename FuncType>
 class FixedArgCountMatcherCreateCallback : public MatcherCreateCallback {
 public:
-  /// FIXME: Use void(*)() as FuncType on this interface to remove the template
-  /// argument of this class. The marshaller can cast the function pointer back
-  /// to the original type.
-  typedef VariantMatcher (*MarshallerType)(FuncType, StringRef,
-                                           const SourceRange &,
-                                           ArrayRef<ParserValue>,
-                                           Diagnostics *);
+  typedef VariantMatcher (*MarshallerType)(void (*Func)(),
+                                           StringRef MatcherName,
+                                           const SourceRange &NameRange,
+                                           ArrayRef<ParserValue> Args,
+                                           Diagnostics *Error);
 
   /// \param Marshaller Function to unpack the arguments and call \c Func
   /// \param Func Matcher construct function. This is the function that
   ///   compile-time matcher expressions would use to create the matcher.
-  FixedArgCountMatcherCreateCallback(MarshallerType Marshaller, FuncType Func,
+  FixedArgCountMatcherCreateCallback(MarshallerType Marshaller, void (*Func)(),
                                      StringRef MatcherName)
-      : Marshaller(Marshaller), Func(Func), MatcherName(MatcherName.str()) {}
+      : Marshaller(Marshaller), Func(Func), MatcherName(MatcherName) {}
 
   VariantMatcher run(const SourceRange &NameRange, ArrayRef<ParserValue> Args,
                      Diagnostics *Error) const {
@@ -119,7 +116,7 @@ public:
 
 private:
   const MarshallerType Marshaller;
-  const FuncType Func;
+  void (* const Func)();
   const std::string MatcherName;
 };
 
@@ -188,9 +185,7 @@ static void mergePolyMatchers(const PolyMatcher &Poly,
 /// polymorphic matcher. For the former, we just construct the VariantMatcher.
 /// For the latter, we instantiate all the possible Matcher<T> of the poly
 /// matcher.
-template <typename T>
-static VariantMatcher
-outvalueToVariantMatcher(const ast_matchers::internal::Matcher<T> &Matcher) {
+static VariantMatcher outvalueToVariantMatcher(const DynTypedMatcher &Matcher) {
   return VariantMatcher::SingleMatcher(Matcher);
 }
 
@@ -207,38 +202,41 @@ static VariantMatcher outvalueToVariantMatcher(const T &PolyMatcher,
 
 /// \brief 0-arg marshaller function.
 template <typename ReturnType>
-static VariantMatcher
-matcherMarshall0(ReturnType (*Func)(), StringRef MatcherName,
-                 const SourceRange &NameRange, ArrayRef<ParserValue> Args,
-                 Diagnostics *Error) {
+static VariantMatcher matcherMarshall0(void (*Func)(), StringRef MatcherName,
+                                       const SourceRange &NameRange,
+                                       ArrayRef<ParserValue> Args,
+                                       Diagnostics *Error) {
+  typedef ReturnType (*FuncType)();
   CHECK_ARG_COUNT(0);
-  return outvalueToVariantMatcher(Func());
+  return outvalueToVariantMatcher(reinterpret_cast<FuncType>(Func)());
 }
 
 /// \brief 1-arg marshaller function.
 template <typename ReturnType, typename ArgType1>
-static VariantMatcher
-matcherMarshall1(ReturnType (*Func)(ArgType1), StringRef MatcherName,
-                 const SourceRange &NameRange, ArrayRef<ParserValue> Args,
-                 Diagnostics *Error) {
+static VariantMatcher matcherMarshall1(void (*Func)(), StringRef MatcherName,
+                                       const SourceRange &NameRange,
+                                       ArrayRef<ParserValue> Args,
+                                       Diagnostics *Error) {
+  typedef ReturnType (*FuncType)(ArgType1);
   CHECK_ARG_COUNT(1);
   CHECK_ARG_TYPE(0, ArgType1);
-  return outvalueToVariantMatcher(
-      Func(ArgTypeTraits<ArgType1>::get(Args[0].Value)));
+  return outvalueToVariantMatcher(reinterpret_cast<FuncType>(Func)(
+      ArgTypeTraits<ArgType1>::get(Args[0].Value)));
 }
 
 /// \brief 2-arg marshaller function.
 template <typename ReturnType, typename ArgType1, typename ArgType2>
-static VariantMatcher
-matcherMarshall2(ReturnType (*Func)(ArgType1, ArgType2), StringRef MatcherName,
-                 const SourceRange &NameRange, ArrayRef<ParserValue> Args,
-                 Diagnostics *Error) {
+static VariantMatcher matcherMarshall2(void (*Func)(), StringRef MatcherName,
+                                       const SourceRange &NameRange,
+                                       ArrayRef<ParserValue> Args,
+                                       Diagnostics *Error) {
+  typedef ReturnType (*FuncType)(ArgType1, ArgType2);
   CHECK_ARG_COUNT(2);
   CHECK_ARG_TYPE(0, ArgType1);
   CHECK_ARG_TYPE(1, ArgType2);
-  return outvalueToVariantMatcher(
-      Func(ArgTypeTraits<ArgType1>::get(Args[0].Value),
-           ArgTypeTraits<ArgType2>::get(Args[1].Value)));
+  return outvalueToVariantMatcher(reinterpret_cast<FuncType>(Func)(
+      ArgTypeTraits<ArgType1>::get(Args[0].Value),
+      ArgTypeTraits<ArgType2>::get(Args[1].Value)));
 }
 
 #undef CHECK_ARG_COUNT
@@ -385,16 +383,18 @@ private:
 template <typename ReturnType>
 MatcherCreateCallback *makeMatcherAutoMarshall(ReturnType (*Func)(),
                                                StringRef MatcherName) {
-  return new FixedArgCountMatcherCreateCallback<ReturnType (*)()>(
-      matcherMarshall0, Func, MatcherName);
+  return new FixedArgCountMatcherCreateCallback(
+      matcherMarshall0<ReturnType>, reinterpret_cast<void (*)()>(Func),
+      MatcherName);
 }
 
 /// \brief 1-arg overload
 template <typename ReturnType, typename ArgType1>
 MatcherCreateCallback *makeMatcherAutoMarshall(ReturnType (*Func)(ArgType1),
                                                StringRef MatcherName) {
-  return new FixedArgCountMatcherCreateCallback<ReturnType (*)(ArgType1)>(
-      matcherMarshall1, Func, MatcherName);
+  return new FixedArgCountMatcherCreateCallback(
+      matcherMarshall1<ReturnType, ArgType1>,
+      reinterpret_cast<void (*)()>(Func), MatcherName);
 }
 
 /// \brief 2-arg overload
@@ -402,8 +402,9 @@ template <typename ReturnType, typename ArgType1, typename ArgType2>
 MatcherCreateCallback *makeMatcherAutoMarshall(ReturnType (*Func)(ArgType1,
                                                                   ArgType2),
                                                StringRef MatcherName) {
-  return new FixedArgCountMatcherCreateCallback<
-      ReturnType (*)(ArgType1, ArgType2)>(matcherMarshall2, Func, MatcherName);
+  return new FixedArgCountMatcherCreateCallback(
+      matcherMarshall2<ReturnType, ArgType1, ArgType2>,
+      reinterpret_cast<void (*)()>(Func), MatcherName);
 }
 
 /// \brief Variadic overload.
