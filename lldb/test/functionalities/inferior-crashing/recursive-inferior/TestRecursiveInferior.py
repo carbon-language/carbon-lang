@@ -66,6 +66,7 @@ class CrashingRecursiveInferiorTestCase(TestBase):
         self.buildDsym()
         self.recursive_inferior_crashing_step_after_break()
 
+    @skipIfLinux # due to llvm.org/pr15988 -- step over misbehaves after crash
     def test_recursive_inferior_crashing_step_after_break_dwarf(self):
         """Test that lldb functions correctly after stepping through a crash."""
         self.buildDwarf()
