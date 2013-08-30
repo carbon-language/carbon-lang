@@ -28,6 +28,7 @@ namespace llvm {
   class MachineDominatorTree;
   class LiveIntervals;
   class RegPressureTracker;
+  class PressureDiffs;
 
   /// An individual mapping from virtual register number to SUnit.
   struct VReg2SUnit {
@@ -195,7 +196,8 @@ namespace llvm {
 
     /// buildSchedGraph - Build SUnits from the MachineBasicBlock that we are
     /// input.
-    void buildSchedGraph(AliasAnalysis *AA, RegPressureTracker *RPTracker = 0);
+    void buildSchedGraph(AliasAnalysis *AA, RegPressureTracker *RPTracker = 0,
+                         PressureDiffs *PDiffs = 0);
 
     /// addSchedBarrierDeps - Add dependencies from instructions in the current
     /// list of instructions being scheduled to scheduling barrier. We want to

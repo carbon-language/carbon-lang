@@ -690,7 +690,8 @@ void ScheduleDAGInstrs::initSUnits() {
 /// DAG builder is an efficient place to do it because it already visits
 /// operands.
 void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
-                                        RegPressureTracker *RPTracker) {
+                                        RegPressureTracker *RPTracker,
+                                        PressureDiffs *PDiffs) {
   const TargetSubtargetInfo &ST = TM.getSubtarget<TargetSubtargetInfo>();
   bool UseAA = EnableAASchedMI.getNumOccurrences() > 0 ? EnableAASchedMI
                                                        : ST.useAA();
@@ -698,6 +699,9 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
 
   // Create an SUnit for each real instruction.
   initSUnits();
+
+  if (PDiffs)
+    PDiffs->init(SUnits.size());
 
   // We build scheduling units by walking a block's instruction list from bottom
   // to top.
@@ -746,16 +750,17 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
       DbgMI = MI;
       continue;
     }
+    SUnit *SU = MISUnitMap[MI];
+    assert(SU && "No SUnit mapped to this MI");
+
     if (RPTracker) {
-      RPTracker->recede();
+      PressureDiff *PDiff = PDiffs ? &(*PDiffs)[SU->NodeNum] : 0;
+      RPTracker->recede(PDiff);
       assert(RPTracker->getPos() == prior(MII) && "RPTracker can't find MI");
     }
 
     assert((CanHandleTerminators || (!MI->isTerminator() && !MI->isLabel())) &&
            "Cannot schedule terminators or labels!");
-
-    SUnit *SU = MISUnitMap[MI];
-    assert(SU && "No SUnit mapped to this MI");
 
     // Add register-based dependencies (data, anti, and output).
     bool HasVRegDef = false;

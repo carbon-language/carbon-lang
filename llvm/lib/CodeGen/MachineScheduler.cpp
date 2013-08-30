@@ -505,13 +505,13 @@ void ScheduleDAGMI::initRegPressure() {
       DEBUG(dbgs() << TRI->getRegPressureSetName(i)
             << " Limit " << Limit
             << " Actual " << RegionPressure[i] << "\n");
-      RegionCriticalPSets.push_back(PressureElement(i, 0));
+      RegionCriticalPSets.push_back(PressureChange(i));
     }
   }
   DEBUG(dbgs() << "Excess PSets: ";
         for (unsigned i = 0, e = RegionCriticalPSets.size(); i != e; ++i)
           dbgs() << TRI->getRegPressureSetName(
-            RegionCriticalPSets[i].PSetID) << " ";
+            RegionCriticalPSets[i].getPSet()) << " ";
         dbgs() << "\n");
 }
 
@@ -520,10 +520,10 @@ void ScheduleDAGMI::initRegPressure() {
 void ScheduleDAGMI::
 updateScheduledPressure(const std::vector<unsigned> &NewMaxPressure) {
   for (unsigned i = 0, e = RegionCriticalPSets.size(); i < e; ++i) {
-    unsigned ID = RegionCriticalPSets[i].PSetID;
-    int &MaxUnits = RegionCriticalPSets[i].UnitIncrease;
-    if ((int)NewMaxPressure[ID] > MaxUnits)
-      MaxUnits = NewMaxPressure[ID];
+    unsigned ID = RegionCriticalPSets[i].getPSet();
+    if ((int)NewMaxPressure[ID] > RegionCriticalPSets[i].getUnitInc()
+        && NewMaxPressure[ID] <= INT16_MAX)
+      RegionCriticalPSets[i].setUnitInc(NewMaxPressure[ID]);
   }
   DEBUG(
     for (unsigned i = 0, e = NewMaxPressure.size(); i < e; ++i) {
@@ -599,7 +599,7 @@ void ScheduleDAGMI::buildDAGWithRegPressure() {
     RPTracker.recede();
 
   // Build the DAG, and compute current register pressure.
-  buildSchedGraph(AA, &RPTracker);
+  buildSchedGraph(AA, &RPTracker, &SUPressureDiffs);
 
   // Initialize top/bottom trackers after computing region pressure.
   initRegPressure();
@@ -2177,26 +2177,28 @@ static bool tryGreater(int TryVal, int CandVal,
   return false;
 }
 
-static bool tryPressure(const PressureElement &TryP,
-                        const PressureElement &CandP,
+static bool tryPressure(const PressureChange &TryP,
+                        const PressureChange &CandP,
                         ConvergingScheduler::SchedCandidate &TryCand,
                         ConvergingScheduler::SchedCandidate &Cand,
                         ConvergingScheduler::CandReason Reason) {
-  // If both candidates affect the same set, go with the smallest increase.
-  if (TryP.PSetID == CandP.PSetID) {
-    return tryLess(TryP.UnitIncrease, CandP.UnitIncrease, TryCand, Cand,
-                   Reason);
-  }
-  // If one candidate decreases and the other increases, go with it.
-  if (tryLess(TryP.UnitIncrease < 0, CandP.UnitIncrease < 0, TryCand, Cand,
-              Reason)) {
-    return true;
+  if (TryP.isValid() && CandP.isValid()) {
+    // If both candidates affect the same set, go with the smallest increase.
+    if (TryP.getPSet() == CandP.getPSet()) {
+      return tryLess(TryP.getUnitInc(), CandP.getUnitInc(), TryCand, Cand,
+                     Reason);
+    }
+    // If one candidate decreases and the other increases, go with it.
+    if (tryLess(TryP.getUnitInc() < 0, CandP.getUnitInc() < 0, TryCand, Cand,
+                Reason)) {
+      return true;
+    }
   }
   // If TryP has lower Rank, it has a higher priority.
-  int TryRank = TryP.PSetRank();
-  int CandRank = CandP.PSetRank();
+  int TryRank = TryP.getRank();
+  int CandRank = CandP.getRank();
   // If the candidates are decreasing pressure, reverse priority.
-  if (TryP.UnitIncrease < 0)
+  if (TryP.getUnitInc() < 0)
     std::swap(TryRank, CandRank);
   return tryGreater(TryRank, CandRank, TryCand, Cand, Reason);
 }
@@ -2277,9 +2279,31 @@ void ConvergingScheduler::tryCandidate(SchedCandidate &Cand,
                                        RegPressureTracker &TempTracker) {
 
   // Always initialize TryCand's RPDelta.
-  TempTracker.getMaxPressureDelta(TryCand.SU->getInstr(), TryCand.RPDelta,
-                                  DAG->getRegionCriticalPSets(),
-                                  DAG->getRegPressure().MaxSetPressure);
+  if (Zone.isTop()) {
+    TempTracker.getMaxDownwardPressureDelta(
+      TryCand.SU->getInstr(),
+      TryCand.RPDelta,
+      DAG->getRegionCriticalPSets(),
+      DAG->getRegPressure().MaxSetPressure);
+  }
+  else {
+    if (VerifyScheduling) {
+      TempTracker.getMaxUpwardPressureDelta(
+        TryCand.SU->getInstr(),
+        &DAG->getPressureDiff(TryCand.SU),
+        TryCand.RPDelta,
+        DAG->getRegionCriticalPSets(),
+        DAG->getRegPressure().MaxSetPressure);
+    }
+    else {
+      RPTracker.getUpwardPressureDelta(
+        TryCand.SU->getInstr(),
+        DAG->getPressureDiff(TryCand.SU),
+        TryCand.RPDelta,
+        DAG->getRegionCriticalPSets(),
+        DAG->getRegPressure().MaxSetPressure);
+    }
+  }
 
   // Initialize the candidate if needed.
   if (!Cand.isValid()) {
@@ -2385,7 +2409,7 @@ const char *ConvergingScheduler::getReasonStr(
 }
 
 void ConvergingScheduler::traceCandidate(const SchedCandidate &Cand) {
-  PressureElement P;
+  PressureChange P;
   unsigned ResIdx = 0;
   unsigned Latency = 0;
   switch (Cand.Reason) {
@@ -2421,8 +2445,8 @@ void ConvergingScheduler::traceCandidate(const SchedCandidate &Cand) {
   }
   dbgs() << "  SU(" << Cand.SU->NodeNum << ") " << getReasonStr(Cand.Reason);
   if (P.isValid())
-    dbgs() << " " << TRI->getRegPressureSetName(P.PSetID)
-           << ":" << P.UnitIncrease << " ";
+    dbgs() << " " << TRI->getRegPressureSetName(P.getPSet())
+           << ":" << P.getUnitInc() << " ";
   else
     dbgs() << "      ";
   if (ResIdx)

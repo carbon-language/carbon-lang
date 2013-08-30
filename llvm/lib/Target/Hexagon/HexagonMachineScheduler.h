@@ -233,7 +233,7 @@ protected:
                                SchedCandidate &Candidate);
 #ifndef NDEBUG
   void traceCandidate(const char *Label, const ReadyQueue &Q, SUnit *SU,
-                      PressureElement P = PressureElement());
+                      PressureChange P = PressureChange());
 #endif
 };
 

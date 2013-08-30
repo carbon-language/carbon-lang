@@ -1,6 +1,6 @@
 ; RUN: llc < %s -march=x86-64 -mcpu=core2 -pre-RA-sched=source -enable-misched \
 ; RUN:          -misched-topdown -verify-machineinstrs \
-; RUN:     | FileCheck %s -check-prefix=TOPDOWN
+; RUN:     | FileCheck %s -check-prefix=TOPDOWN-disabled
 ; RUN: llc < %s -march=x86-64 -mcpu=core2 -pre-RA-sched=source -enable-misched \
 ; RUN:          -misched=ilpmin -verify-machineinstrs \
 ; RUN:     | FileCheck %s -check-prefix=ILPMIN
@@ -15,7 +15,7 @@
 ; been reordered with the stores. This tests the scheduler's cheap
 ; alias analysis ability (that doesn't require any AliasAnalysis pass).
 ;
-; TOPDOWN: %for.body
+; TOPDOWN-disabled: %for.body
 ; TOPDOWN: movl %{{.*}}, (
 ; TOPDOWN: imull {{[0-9]*}}(
 ; TOPDOWN: movl %{{.*}}, 4(
