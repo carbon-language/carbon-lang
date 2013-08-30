@@ -17,7 +17,7 @@
 #define CPP11_MIGRATE_TRANSFORM_H
 
 #include "Core/IncludeExcludeInfo.h"
-#include "clang/Tooling/Refactoring.h"
+#include "Core/Refactoring.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Registry.h"
@@ -51,6 +51,12 @@ class MatchFinder;
 } // namespace clang
 
 class FileOverrides;
+
+
+// \brief Maps main source file names to a TranslationUnitReplacements
+// structure storing replacements for that translation unit.
+typedef llvm::StringMap<clang::tooling::TranslationUnitReplacements>
+TUReplacementsMap;
 
 /// \brief To group transforms' options together when printing the help.
 extern llvm::cl::OptionCategory TransformsOptionsCategory;
@@ -99,7 +105,7 @@ public:
   /// SourcePaths and should take precedence over content of files on disk.
   /// Upon return, \p ResultStates shall contain the result of performing this
   /// transform on the files listed in \p SourcePaths.
-  virtual int apply(FileOverrides &InputStates,
+  virtual int apply(const FileOverrides &InputStates,
                     const clang::tooling::CompilationDatabase &Database,
                     const std::vector<std::string> &SourcePaths) = 0;
 
@@ -172,6 +178,17 @@ public:
   /// \brief Return an iterator to the start of collected timing data.
   TimingVec::const_iterator timing_end() const { return Timings.end(); }
 
+  /// \brief Add a Replacement to the list for the current translation unit.
+  ///
+  /// \returns \li true on success
+  ///          \li false if there is no current translation unit
+  bool addReplacementForCurrentTU(const clang::tooling::Replacement &R);
+
+  /// \brief Accessor to Replacements across all transformed translation units.
+  const TUReplacementsMap &getAllReplacements() const {
+    return Replacements;
+  }
+
 protected:
 
   void setAcceptedChanges(unsigned Changes) {
@@ -195,16 +212,12 @@ protected:
   /// created with.
   const TransformOptions &Options() { return GlobalOptions; }
 
-  /// \brief Provide access for subclasses for the container to store
-  /// translation unit replacements.
-  clang::tooling::Replacements &getReplacements() { return Replace; }
-
   /// \brief Affords a subclass to provide file contents overrides before
   /// applying frontend actions.
   ///
   /// It is an error not to call this function before calling ClangTool::run()
   /// with the factory provided by createActionFactory().
-  void setOverrides(FileOverrides &Overrides) {
+  void setOverrides(const FileOverrides &Overrides) {
     this->Overrides = &Overrides;
   }
 
@@ -219,8 +232,8 @@ protected:
 private:
   const std::string Name;
   const TransformOptions &GlobalOptions;
-  FileOverrides *Overrides;
-  clang::tooling::Replacements Replace;
+  const FileOverrides *Overrides;
+  TUReplacementsMap Replacements;
   std::string CurrentSource;
   TimingVec Timings;
   unsigned AcceptedChanges;

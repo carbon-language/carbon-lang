@@ -18,7 +18,7 @@ public:
   TransformA(const TransformOptions &Options)
       : Transform("TransformA", Options) {}
 
-  virtual int apply(FileOverrides &,
+  virtual int apply(const FileOverrides &,
                     const tooling::CompilationDatabase &,
                     const std::vector<std::string> &) {
     return 0;
@@ -34,7 +34,7 @@ public:
   TransformB(const TransformOptions &Options)
       : Transform("TransformB", Options) {}
 
-  virtual int apply(FileOverrides &,
+  virtual int apply(const FileOverrides &,
                     const tooling::CompilationDatabase &,
                     const std::vector<std::string> &) {
     return 0;

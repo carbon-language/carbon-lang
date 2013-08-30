@@ -21,15 +21,14 @@ using namespace clang;
 using namespace clang::tooling;
 using namespace clang::ast_matchers;
 
-int PassByValueTransform::apply(
-    FileOverrides &InputStates, const tooling::CompilationDatabase &Database,
-    const std::vector<std::string> &SourcePaths) {
+int PassByValueTransform::apply(const FileOverrides &InputStates,
+                                const tooling::CompilationDatabase &Database,
+                                const std::vector<std::string> &SourcePaths) {
   ClangTool Tool(Database, SourcePaths);
   unsigned AcceptedChanges = 0;
   unsigned RejectedChanges = 0;
   MatchFinder Finder;
-  ConstructorParamReplacer Replacer(getReplacements(), AcceptedChanges,
-                                    RejectedChanges,
+  ConstructorParamReplacer Replacer(AcceptedChanges, RejectedChanges,
                                     /*Owner=*/ *this);
 
   Finder.addMatcher(makePassByValueCtorParamMatcher(), &Replacer);

@@ -30,9 +30,7 @@ public:
     if (!SyntaxOnlyAction::BeginSourceFileAction(CI, Filename))
       return false;
 
-    FileOverrides::const_iterator I = Overrides.find(Filename);
-    if (I != Overrides.end())
-      I->second->applyOverrides(CI.getSourceManager());
+    Overrides.applyOverrides(CI.getSourceManager());
 
     return true;
   }

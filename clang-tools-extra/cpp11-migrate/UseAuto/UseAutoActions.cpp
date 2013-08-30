@@ -73,7 +73,7 @@ void IteratorReplacer::run(const MatchFinder::MatchResult &Result) {
   // iterators but something to keep in mind in the future.
 
   CharSourceRange Range(TL.getSourceRange(), true);
-  Replace.insert(tooling::Replacement(SM, Range, "auto"));
+  Owner.addReplacementForCurrentTU(tooling::Replacement(SM, Range, "auto"));
   ++AcceptedChanges;
 }
 
@@ -131,8 +131,9 @@ void NewReplacer::run(const MatchFinder::MatchResult &Result) {
   for (std::vector<SourceLocation>::iterator I = StarLocations.begin(),
                                              E = StarLocations.end();
        I != E; ++I) {
-    Replace.insert(tooling::Replacement(SM, *I, 1, ""));
+    Owner.addReplacementForCurrentTU(tooling::Replacement(SM, *I, 1, ""));
   }
+
   // FIXME: There is, however, one case we can address: when the VarDecl
   // pointee is the same as the initializer, just more CV-qualified. However,
   // TypeLoc information is not reliable where CV qualifiers are concerned so
@@ -141,6 +142,6 @@ void NewReplacer::run(const MatchFinder::MatchResult &Result) {
       FirstDecl->getTypeSourceInfo()->getTypeLoc().getSourceRange(), true);
   // Space after 'auto' to handle cases where the '*' in the pointer type
   // is next to the identifier. This avoids changing 'int *p' into 'autop'.
-  Replace.insert(tooling::Replacement(SM, Range, "auto "));
+  Owner.addReplacementForCurrentTU(tooling::Replacement(SM, Range, "auto "));
   ++AcceptedChanges;
 }

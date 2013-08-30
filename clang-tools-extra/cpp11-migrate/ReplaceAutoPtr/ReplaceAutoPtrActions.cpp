@@ -66,7 +66,7 @@ void AutoPtrReplacer::run(const MatchFinder::MatchResult &Result) {
   if (!checkTokenIsAutoPtr(IdentifierLoc, SM, LangOptions()))
     return;
 
-  Replace.insert(
+  Owner.addReplacementForCurrentTU(
       Replacement(SM, IdentifierLoc, strlen("auto_ptr"), "unique_ptr"));
   ++AcceptedChanges;
 }
@@ -101,7 +101,8 @@ void OwnershipTransferFixer::run(const MatchFinder::MatchResult &Result) {
   if (!Owner.isFileModifiable(SM, Range.getBegin()))
     return;
 
-  Replace.insert(Replacement(SM, Range.getBegin(), 0, "std::move("));
-  Replace.insert(Replacement(SM, Range.getEnd(), 0, ")"));
+  Owner.addReplacementForCurrentTU(
+      Replacement(SM, Range.getBegin(), 0, "std::move("));
+  Owner.addReplacementForCurrentTU(Replacement(SM, Range.getEnd(), 0, ")"));
   AcceptedChanges += 2;
 }

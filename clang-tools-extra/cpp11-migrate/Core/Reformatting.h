@@ -16,9 +16,10 @@
 #ifndef CPP11_MIGRATE_REFORMATTING_H
 #define CPP11_MIGRATE_REFORMATTING_H
 
+#include "Core/Refactoring.h"
 #include "clang/Format/Format.h"
 
-class SourceOverrides;
+class FileOverrides;
 class ChangedRanges;
 
 class Reformatter {
@@ -27,31 +28,30 @@ public:
 
   /// \brief Reformat the changes made to the file overrides.
   ///
-  /// \param Overrides Overriden source files to reformat. Note that since only
-  /// the changes are reformatted, file change tracking has to be enabled.
-  /// \param SM A SourceManager where the overridens files can be found.
+  /// This function will apply the state of files stored in \c FileState to \c
+  /// SM.
   ///
-  /// \sa \c SourceOverrides::isTrackingFileChanges()
-  void reformatChanges(SourceOverrides &Overrides, clang::SourceManager &SM);
-
-  /// \brief Overload of \c reformatChanges() providing it's own
-  /// \c SourceManager.
-  void reformatChanges(SourceOverrides &Overrides);
+  /// \param[in] FileState Files to reformat.
+  /// \param[in] SM SourceManager for access to source files.
+  /// \param[out] Replaces Container to store all reformatting replacements.
+  void reformatChanges(const FileOverrides &FileState, clang::SourceManager &SM,
+                       clang::tooling::ReplacementsVec &Replaces);
 
   /// \brief Produce a list of replacements to apply on \p FileName, only the
   /// ranges in \p Changes are replaced.
   ///
-  /// Since this routine use \c clang::format::reformat() the rules that applies
-  /// on the ranges are identical:
+  /// Since this routine use \c clang::format::reformat() the rules that
+  /// function applies to ranges also apply here.
   ///
-  /// \par
-  /// Each range is extended on either end to its next bigger logic
-  /// unit, i.e. everything that might influence its formatting or might be
-  /// influenced by its formatting.
-  /// -- \c clang::format::reformat()
-  clang::tooling::Replacements reformatSingleFile(llvm::StringRef FileName,
-                                                  const ChangedRanges &Changes,
-                                                  clang::SourceManager &SM);
+  /// \param[in] FileName Name of file to reformat.
+  /// \param[in] Changes Description of where changes were made to the file.
+  /// \param[in] SM SourceManager required to create replacements.
+  /// \param[out] FormatReplacements New reformatting replacements are appended
+  /// to this container.
+  void reformatSingleFile(const llvm::StringRef FileName,
+                          const ChangedRanges &Changes,
+                          clang::SourceManager &SM,
+                          clang::tooling::ReplacementsVec &FormatReplacements);
 
 private:
   clang::format::FormatStyle Style;

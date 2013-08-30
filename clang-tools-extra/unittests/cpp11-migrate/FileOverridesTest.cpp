@@ -8,56 +8,34 @@
 //===----------------------------------------------------------------------===//
 
 #include "Core/FileOverrides.h"
+#include "Core/Refactoring.h"
 #include "gtest/gtest.h"
 #include "VirtualFileHelper.h"
+#include "clang/Rewrite/Core/Rewriter.h"
 
 using namespace clang;
 using namespace clang::tooling;
 
-TEST(SourceOverridesTest, Interface) {
-  llvm::StringRef FileName = "<test-file>";
-  VirtualFileHelper VFHelper;
-  VFHelper.mapFile(
-      FileName,
-      "std::vector<such_a_long_name_for_a_type>::const_iterator long_type =\n"
-      "    vec.begin();\n");
-  SourceOverrides Overrides(FileName, /*TrackFileChanges=*/false);
-
-  EXPECT_EQ(FileName, Overrides.getMainFileName());
-  EXPECT_FALSE(Overrides.isSourceOverriden());
-  EXPECT_FALSE(Overrides.isTrackingFileChanges());
-
-  Replacements Replaces;
-  unsigned ReplacementLength =
-      strlen("std::vector<such_a_long_name_for_a_type>::const_iterator");
-  Replaces.insert(
-      Replacement(FileName, 0, ReplacementLength, "auto"));
-  Overrides.applyReplacements(Replaces, VFHelper.getNewSourceManager());
-  EXPECT_TRUE(Overrides.isSourceOverriden());
-
-  std::string ExpectedContent = "auto long_type =\n"
-                                "    vec.begin();\n";
-  EXPECT_EQ(ExpectedContent, Overrides.getMainFileContent());
-}
-
-namespace {
-Replacement makeReplacement(unsigned Offset, unsigned Length,
-                            unsigned ReplacementLength) {
-  return Replacement("", Offset, Length, std::string(ReplacementLength, '~'));
+static Replacement makeReplacement(unsigned Offset, unsigned Length,
+                                   unsigned ReplacementLength,
+                                   llvm::StringRef FilePath) {
+  return Replacement(FilePath, Offset, Length,
+                     std::string(ReplacementLength, '~'));
 }
 
 // generate a set of replacements containing one element
-Replacements makeReplacements(unsigned Offset, unsigned Length,
-                              unsigned ReplacementLength) {
-  Replacements Replaces;
-  Replaces.insert(makeReplacement(Offset, Length, ReplacementLength));
+static ReplacementsVec makeReplacements(unsigned Offset, unsigned Length,
+                                        unsigned ReplacementLength,
+                                        llvm::StringRef FilePath = "~") {
+  ReplacementsVec Replaces;
+  Replaces.push_back(
+      makeReplacement(Offset, Length, ReplacementLength, FilePath));
   return Replaces;
 }
 
-bool equalRanges(Range A, Range B) {
+static bool equalRanges(Range A, Range B) {
   return A.getOffset() == B.getOffset() && A.getLength() == B.getLength();
 }
-} // end anonymous namespace
 
 TEST(ChangedRangesTest, adjustChangedRangesShrink) {
   ChangedRanges Changes;
@@ -138,4 +116,72 @@ TEST(ChangedRangesTest, adjustChangedRangesRangeResized) {
   ExpectedChanges[0] = Range(2, 5);
   EXPECT_TRUE(
       std::equal(Changes.begin(), Changes.end(), ExpectedChanges, equalRanges));
+}
+
+TEST(FileOverridesTest, applyOverrides) {
+
+  // Set up initial state
+  VirtualFileHelper VFHelper;
+
+  SmallString<128> fileAPath("fileA.cpp");
+  ASSERT_FALSE(llvm::sys::fs::make_absolute(fileAPath));
+  SmallString<128> fileBPath("fileB.cpp");
+  ASSERT_FALSE(llvm::sys::fs::make_absolute(fileBPath));
+  VFHelper.mapFile(fileAPath, "Content A");
+  VFHelper.mapFile(fileBPath, "Content B");
+  SourceManager &SM = VFHelper.getNewSourceManager();
+
+  // Fill a Rewriter with changes
+  Rewriter Rewrites(SM, LangOptions());
+  ReplacementsVec R(1, Replacement(fileAPath, 0, 7, "Stuff"));
+  ASSERT_TRUE(applyAllReplacements(R, Rewrites));
+
+  FileOverrides Overrides;
+  Overrides.updateState(Rewrites);
+  
+  const FileOverrides::FileStateMap &State = Overrides.getState();
+  
+  // Ensure state updated
+  ASSERT_TRUE(State.end() == State.find(fileBPath));
+  ASSERT_TRUE(State.begin() == State.find(fileAPath));
+  ASSERT_EQ("Stuff A", State.begin()->getValue());
+
+  Overrides.applyOverrides(SM);
+
+  const FileEntry *EntryA = SM.getFileManager().getFile(fileAPath);
+  FileID IdA = SM.translateFile(EntryA);
+  ASSERT_FALSE(IdA.isInvalid());
+
+  // Ensure the contents of the buffer matches what we'd expect.
+  const llvm::MemoryBuffer *BufferA = SM.getBuffer(IdA);
+  ASSERT_FALSE(0 == BufferA);
+  ASSERT_EQ("Stuff A", BufferA->getBuffer());
+}
+
+TEST(FileOverridesTest, adjustChangedRanges) {
+  SmallString<128> fileAPath("fileA.cpp");
+  ASSERT_FALSE(llvm::sys::fs::make_absolute(fileAPath));
+  SmallString<128> fileBPath("fileB.cpp");
+  ASSERT_FALSE(llvm::sys::fs::make_absolute(fileBPath));
+
+  replace::FileToReplacementsMap GroupedReplacements;
+  GroupedReplacements[fileAPath] = makeReplacements(0, 5, 4, fileAPath);
+  GroupedReplacements[fileBPath] = makeReplacements(10, 0, 6, fileBPath);
+
+  FileOverrides Overrides;
+
+  const FileOverrides::ChangeMap &Map = Overrides.getChangedRanges();
+
+  ASSERT_TRUE(Map.empty());
+
+  Overrides.adjustChangedRanges(GroupedReplacements);
+
+  ASSERT_TRUE(Map.end() != Map.find(fileAPath));
+  ASSERT_TRUE(Map.end() != Map.find(fileBPath));
+  const Range &RA = *Map.find(fileAPath)->second.begin();
+  EXPECT_EQ(0u, RA.getOffset());
+  EXPECT_EQ(4u, RA.getLength());
+  const Range &RB = *Map.find(fileBPath)->second.begin();
+  EXPECT_EQ(10u, RB.getOffset());
+  EXPECT_EQ(6u, RB.getLength());
 }

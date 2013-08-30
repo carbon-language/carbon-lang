@@ -100,13 +100,8 @@ bool Transform::isFileModifiable(const SourceManager &SM,
 bool Transform::handleBeginSource(CompilerInstance &CI, StringRef Filename) {
   assert(Overrides != 0 && "Subclass transform didn't provide InputState");
 
-  CurrentSource = Filename.str();
-
-  FileOverrides::const_iterator I = Overrides->find(CurrentSource);
-  if (I != Overrides->end())
-    I->second->applyOverrides(CI.getSourceManager());
-
-  Replace.clear();
+  Overrides->applyOverrides(CI.getSourceManager());
+  CurrentSource = Filename;
 
   if (Options().EnableTiming) {
     Timings.push_back(std::make_pair(Filename.str(), llvm::TimeRecord()));
@@ -116,17 +111,26 @@ bool Transform::handleBeginSource(CompilerInstance &CI, StringRef Filename) {
 }
 
 void Transform::handleEndSource() {
-  if (!getReplacements().empty()) {
-    SourceOverrides &SO = Overrides->getOrCreate(CurrentSource);
-    SO.applyReplacements(getReplacements());
-  }
-
+  CurrentSource.clear();
   if (Options().EnableTiming)
     Timings.back().second += llvm::TimeRecord::getCurrentTime(false);
 }
 
 void Transform::addTiming(llvm::StringRef Label, llvm::TimeRecord Duration) {
   Timings.push_back(std::make_pair(Label.str(), Duration));
+}
+
+bool
+Transform::addReplacementForCurrentTU(const clang::tooling::Replacement &R) {
+  if (CurrentSource.empty())
+    return false;
+
+  TranslationUnitReplacements &TU = Replacements[CurrentSource];
+  if (TU.MainSourceFile.empty())
+    TU.MainSourceFile = CurrentSource;
+  TU.Replacements.push_back(R);
+
+  return true;
 }
 
 FrontendActionFactory *Transform::createActionFactory(MatchFinder &Finder) {

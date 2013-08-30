@@ -151,17 +151,21 @@ void ConstructorParamReplacer::run(const MatchFinder::MatchResult &Result) {
   const tooling::Replacement &IncludeReplace =
       IncludeManager->addAngledInclude(STDMoveFile, "utility");
   if (IncludeReplace.isApplicable()) {
-    Replaces.insert(IncludeReplace);
+    Owner.addReplacementForCurrentTU(IncludeReplace);
     AcceptedChanges++;
   }
 
   // const-ref params becomes values (const Foo & -> Foo)
-  Replaces.insert(ParamReplaces.begin(), ParamReplaces.end());
+  for (const Replacement *I = ParamReplaces.begin(), *E = ParamReplaces.end();
+       I != E; ++I) {
+    Owner.addReplacementForCurrentTU(*I);
+  }
   AcceptedChanges += ParamReplaces.size();
 
   // move the value in the init-list
-  Replaces.insert(Replacement(
+  Owner.addReplacementForCurrentTU(Replacement(
       SM, Initializer->getLParenLoc().getLocWithOffset(1), 0, "std::move("));
-  Replaces.insert(Replacement(SM, Initializer->getRParenLoc(), 0, ")"));
+  Owner.addReplacementForCurrentTU(
+      Replacement(SM, Initializer->getRParenLoc(), 0, ")"));
   AcceptedChanges += 2;
 }
