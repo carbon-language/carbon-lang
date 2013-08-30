@@ -87,7 +87,7 @@ MipsSETargetLowering::MipsSETargetLowering(MipsTargetMachine &TM)
     addMSAType(MVT::v2f64, &Mips::MSA128DRegClass);
   }
 
-  if (!TM.Options.UseSoftFloat) {
+  if (!Subtarget->mipsSEUsesSoftFloat()) {
     addRegisterClass(MVT::f32, &Mips::FGR32RegClass);
 
     // When dealing with single precision only, use libcalls

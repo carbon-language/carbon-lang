@@ -430,6 +430,21 @@ static void createFPFnStub(Function *F, Module *M, FPParamVariant PV,
   new UnreachableInst(FStub->getContext(), BB);
 }
 
+//
+// remove the use-soft-float attribute
+//
+static void removeUseSoftFloat(Function &F) {
+  AttributeSet A;
+  DEBUG(errs() << "removing -use-soft-float\n");
+  A = A.addAttribute(F.getContext(), AttributeSet::FunctionIndex,
+                     "use-soft-float", "false");
+  F.removeAttributes(AttributeSet::FunctionIndex, A);
+  if (F.hasFnAttribute("use-soft-float")) {
+    DEBUG(errs() << "still has -use-soft-float\n");
+  }
+  F.addAttributes(AttributeSet::FunctionIndex, A);
+}
+
 namespace llvm {
 
 //
@@ -453,6 +468,11 @@ bool Mips16HardFloat::runOnModule(Module &M) {
   DEBUG(errs() << "Run on Module Mips16HardFloat\n");
   bool Modified = false;
   for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F) {
+    if (F->hasFnAttribute("nomips16") &&
+        F->hasFnAttribute("use-soft-float")) {
+      removeUseSoftFloat(*F);
+      continue;
+    }
     if (F->isDeclaration() || F->hasFnAttribute("mips16_fp_stub") ||
         F->hasFnAttribute("nomips16")) continue;
     Modified |= fixupFPReturnAndCall(*F, &M, Subtarget);

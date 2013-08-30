@@ -155,3 +155,6 @@ void MipsSubtarget::resetSubtarget(MachineFunction *MF) {
   }
 }
 
+bool MipsSubtarget::mipsSEUsesSoftFloat() const {
+  return TM->Options.UseSoftFloat && !InMips16HardFloat;
+}
