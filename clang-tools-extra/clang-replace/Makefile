@@ -10,6 +10,6 @@
 CLANG_LEVEL := ../../..
 include $(CLANG_LEVEL)/../../Makefile.config
 
-DIRS = lib/Replace tool
+DIRS = lib/Tooling tool
 
 include $(CLANG_LEVEL)/Makefile
