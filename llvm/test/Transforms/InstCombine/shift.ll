@@ -744,3 +744,39 @@ define i32 @test62(i32 %x) {
 ; CHECK-LABEL: @test62(
 ; CHECK: ashr exact i32 %x, 3
 }
+
+; PR17026
+; CHECK-LABEL: @test63(
+; CHECK-NOT: sh
+; CHECK: ret
+define void @test63(i128 %arg) {
+bb:
+  br i1 undef, label %bb1, label %bb12
+
+bb1:                                              ; preds = %bb11, %bb
+  br label %bb2
+
+bb2:                                              ; preds = %bb7, %bb1
+  br i1 undef, label %bb3, label %bb7
+
+bb3:                                              ; preds = %bb2
+  %tmp = lshr i128 %arg, 36893488147419103232
+  %tmp4 = shl i128 %tmp, 0
+  %tmp5 = or i128 %tmp4, undef
+  %tmp6 = trunc i128 %tmp5 to i16
+  br label %bb8
+
+bb7:                                              ; preds = %bb2
+  br i1 undef, label %bb8, label %bb2
+
+bb8:                                              ; preds = %bb7, %bb3
+  %tmp9 = phi i16 [ %tmp6, %bb3 ], [ undef, %bb7 ]
+  %tmp10 = icmp eq i16 %tmp9, 0
+  br i1 %tmp10, label %bb11, label %bb12
+
+bb11:                                             ; preds = %bb8
+  br i1 undef, label %bb1, label %bb12
+
+bb12:                                             ; preds = %bb11, %bb8, %bb
+  ret void
+}

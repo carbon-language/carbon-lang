@@ -845,21 +845,26 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
 Value *InstCombiner::SimplifyShrShlDemandedBits(Instruction *Shr,
   Instruction *Shl, APInt DemandedMask, APInt &KnownZero, APInt &KnownOne) {
 
-  unsigned ShlAmt = cast<ConstantInt>(Shl->getOperand(1))->getZExtValue();
-  unsigned ShrAmt = cast<ConstantInt>(Shr->getOperand(1))->getZExtValue();
+  const APInt &ShlOp1 = cast<ConstantInt>(Shl->getOperand(1))->getValue();
+  const APInt &ShrOp1 = cast<ConstantInt>(Shr->getOperand(1))->getValue();
+  if (!ShlOp1 || !ShrOp1)
+      return 0; // Noop.
+
+  Value *VarX = Shr->getOperand(0);
+  Type *Ty = VarX->getType();
+  unsigned BitWidth = Ty->getIntegerBitWidth();
+  if (ShlOp1.uge(BitWidth) || ShrOp1.uge(BitWidth))
+    return 0; // Undef.
+
+  unsigned ShlAmt = ShlOp1.getZExtValue();
+  unsigned ShrAmt = ShrOp1.getZExtValue();
 
   KnownOne.clearAllBits();
   KnownZero = APInt::getBitsSet(KnownZero.getBitWidth(), 0, ShlAmt-1);
   KnownZero &= DemandedMask;
 
-  if (ShlAmt == 0 || ShrAmt == 0)
-    return 0;
-
-  Value *VarX = Shr->getOperand(0);
-  Type *Ty = VarX->getType();
-
-  APInt BitMask1(APInt::getAllOnesValue(Ty->getIntegerBitWidth()));
-  APInt BitMask2(APInt::getAllOnesValue(Ty->getIntegerBitWidth()));
+  APInt BitMask1(APInt::getAllOnesValue(BitWidth));
+  APInt BitMask2(APInt::getAllOnesValue(BitWidth));
 
   bool isLshr = (Shr->getOpcode() == Instruction::LShr);
   BitMask1 = isLshr ? (BitMask1.lshr(ShrAmt) << ShlAmt) :
