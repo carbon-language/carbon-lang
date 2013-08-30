@@ -1186,8 +1186,8 @@ void ASTDeclReader::ReadCXXDefinitionData(
   Reader.ReadUnresolvedSet(F, Data.Conversions, Record, Idx);
   Reader.ReadUnresolvedSet(F, Data.VisibleConversions, Record, Idx);
   assert(Data.Definition && "Data.Definition should be already set!");
-  Data.FirstFriend = Record[Idx++];
-  
+  Data.FirstFriend = ReadDeclID(Record, Idx);
+
   if (Data.IsLambda) {
     typedef LambdaExpr::Capture Capture;
     CXXRecordDecl::LambdaDefinitionData &Lambda
@@ -1339,7 +1339,7 @@ void ASTDeclReader::VisitFriendDecl(FriendDecl *D) {
     D->Friend = GetTypeSourceInfo(Record, Idx);
   for (unsigned i = 0; i != D->NumTPLists; ++i)
     D->getTPLists()[i] = Reader.ReadTemplateParameterList(F, Record, Idx);
-  D->NextFriend = Record[Idx++];
+  D->NextFriend = ReadDeclID(Record, Idx);
   D->UnsupportedFriend = (Record[Idx++] != 0);
   D->FriendLoc = ReadSourceLocation(Record, Idx);
 }

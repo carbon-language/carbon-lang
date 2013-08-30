@@ -222,6 +222,10 @@ module diag_pragma {
   header "diag_pragma.h"
 }
 
+module dummy {
+  header "dummy.h"
+}
+
 module builtin {
   header "builtin.h"
   explicit module sub {
