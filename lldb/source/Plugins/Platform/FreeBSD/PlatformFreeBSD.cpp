@@ -236,8 +236,7 @@ PlatformFreeBSD::ResolveExecutable (const FileSpec &exe_file,
             }
         }
     }
-    
-    
+
     if (error.Success())
     {
         ModuleSpec module_spec (resolved_exe_file, exe_arch);
@@ -294,12 +293,7 @@ PlatformFreeBSD::ResolveExecutable (const FileSpec &exe_file,
             }
         }
     }
-    else
-    {
-        error.SetErrorStringWithFormat ("'%s' does not exist",
-                                        exe_file.GetPath().c_str());
-    }
-    
+
     return error;
 }
 
