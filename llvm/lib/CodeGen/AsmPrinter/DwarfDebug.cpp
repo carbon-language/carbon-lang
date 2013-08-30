@@ -2545,15 +2545,15 @@ void DwarfDebug::emitDebugLoc() {
 // Emit visible names into a debug aranges section.
 void DwarfDebug::emitDebugARanges() {
   // Start the dwarf aranges section.
-  Asm->OutStreamer.SwitchSection(
-                          Asm->getObjFileLowering().getDwarfARangesSection());
+  Asm->OutStreamer
+      .SwitchSection(Asm->getObjFileLowering().getDwarfARangesSection());
 }
 
 // Emit visible names into a debug ranges section.
 void DwarfDebug::emitDebugRanges() {
   // Start the dwarf ranges section.
-  Asm->OutStreamer.SwitchSection(
-    Asm->getObjFileLowering().getDwarfRangesSection());
+  Asm->OutStreamer
+      .SwitchSection(Asm->getObjFileLowering().getDwarfRangesSection());
   unsigned char Size = Asm->getDataLayout().getPointerSize();
   for (SmallVectorImpl<const MCSymbol *>::iterator
          I = DebugRangeSymbols.begin(), E = DebugRangeSymbols.end();
