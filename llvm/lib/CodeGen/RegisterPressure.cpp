@@ -399,10 +399,9 @@ static void collectPDiff(PressureDiff &PDiff, RegisterOperands &RegOpers,
                          const MachineRegisterInfo *MRI) {
   assert(!PDiff.begin()->isValid() && "stale PDiff");
 
-  for (unsigned i = 0, e = RegOpers.Defs.size(); i != e; ++i) {
-    if (!containsReg(RegOpers.Uses, RegOpers.Defs[i]))
-      PDiff.addPressureChange(RegOpers.Defs[i], true, MRI);
-  }
+  for (unsigned i = 0, e = RegOpers.Defs.size(); i != e; ++i)
+    PDiff.addPressureChange(RegOpers.Defs[i], true, MRI);
+
   for (unsigned i = 0, e = RegOpers.Uses.size(); i != e; ++i)
     PDiff.addPressureChange(RegOpers.Uses[i], false, MRI);
 }
@@ -437,9 +436,13 @@ void RegPressureTracker::discoverLiveOut(unsigned Reg) {
   increaseSetPressure(P.MaxSetPressure, MRI->getPressureSets(Reg));
 }
 
-/// Recede across the previous instruction.
-/// Record the pressure difference if it is provided.
-bool RegPressureTracker::recede(PressureDiff *PDiff) {
+/// Recede across the previous instruction. If LiveUses is provided, record any
+/// RegUnits that are made live by the current instruction's uses. This includes
+/// registers that are both defined and used by the instruction.  If a pressure
+/// difference pointer is provided record the changes is pressure caused by this
+/// instruction independent of liveness.
+bool RegPressureTracker::recede(SmallVectorImpl<unsigned> *LiveUses,
+                                PressureDiff *PDiff) {
   // Check for the top of the analyzable region.
   if (CurrPos == MBB->begin()) {
     closeRegion();
@@ -496,11 +499,16 @@ bool RegPressureTracker::recede(PressureDiff *PDiff) {
       // Adjust liveouts if LiveIntervals are available.
       if (RequireIntervals) {
         const LiveInterval *LI = getInterval(Reg);
-        if (LI && !LI->isKilledAtInstr(SlotIdx))
-          discoverLiveOut(Reg);
+        // Check if this LR is killed and not redefined here.
+        if (LI && !LI->isKilledAtInstr(SlotIdx)
+            && !LI->isDefinedByInstr(SlotIdx)) {
+            discoverLiveOut(Reg);
+        }
       }
       increaseRegPressure(Reg);
       LiveRegs.insert(Reg);
+      if (LiveUses && !containsReg(*LiveUses, Reg))
+        LiveUses->push_back(Reg);
     }
   }
   if (TrackUntiedDefs) {
@@ -773,22 +781,10 @@ getMaxUpwardPressureDelta(const MachineInstr *MI, PressureDiff *PDiff,
 /// @param MaxPressureLimit Is the max pressure within the region, not
 /// necessarily at the current position.
 void RegPressureTracker::
-getUpwardPressureDelta(const MachineInstr *MI, /*const*/ PressureDiff &PDiff1,
+getUpwardPressureDelta(const MachineInstr *MI, /*const*/ PressureDiff &PDiff,
                        RegPressureDelta &Delta,
                        ArrayRef<PressureChange> CriticalPSets,
                        ArrayRef<unsigned> MaxPressureLimit) const {
-  RegisterOperands RegOpers(TRI, MRI, /*IgnoreDead=*/true);
-  collectOperands(MI, RegOpers);
-
-  // Decrease the pressure change for live uses.
-  PressureDiff PDiff = PDiff1;
-  for (unsigned i = 0, e = RegOpers.Uses.size(); i != e; ++i) {
-    if (LiveRegs.contains(RegOpers.Uses[i]))
-      PDiff.addPressureChange(RegOpers.Uses[i], true, MRI);
-  }
-
-  // Now directly query pressure from PDiff. Everything above this can be
-  // cached and updated independent of the query.
   unsigned CritIdx = 0, CritEnd = CriticalPSets.size();
   for (PressureDiff::const_iterator
          PDiffI = PDiff.begin(), PDiffE = PDiff.end();

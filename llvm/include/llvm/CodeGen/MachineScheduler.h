@@ -221,7 +221,9 @@ protected:
 
   MachineBasicBlock::iterator LiveRegionEnd;
 
-  // Map each SU to its summary of pressure changes.
+  // Map each SU to its summary of pressure changes. This array is updated for
+  // liveness during bottom-up scheduling. Top-down scheduling may proceed but
+  // has no affect on the pressure diffs.
   PressureDiffs SUPressureDiffs;
 
   /// Register pressure in this region computed by initRegPressure.
@@ -375,6 +377,8 @@ protected:
   // Lesser helpers...
 
   void initRegPressure();
+
+  void updatePressureDiffs(ArrayRef<unsigned> LiveUses);
 
   void updateScheduledPressure(const std::vector<unsigned> &NewMaxPressure);
 

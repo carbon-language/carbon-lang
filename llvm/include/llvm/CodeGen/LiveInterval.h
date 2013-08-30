@@ -296,6 +296,12 @@ namespace llvm {
       return r != end() && r->end.getBaseIndex() == BaseIdx;
     }
 
+    /// Return true if a live range starts at the instruction at this index.
+    bool isDefinedByInstr(SlotIndex index) const {
+      const_iterator r = find(index.getDeadSlot());
+      return r != end() && r->end.getBaseIndex() == index.getBaseIndex();
+    }
+
     /// getLiveRangeContaining - Return the live range that contains the
     /// specified index, or null if there is none.
     const LiveRange *getLiveRangeContaining(SlotIndex Idx) const {

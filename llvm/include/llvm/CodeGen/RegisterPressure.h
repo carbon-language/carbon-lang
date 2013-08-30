@@ -311,7 +311,7 @@ public:
   SlotIndex getCurrSlot() const;
 
   /// Recede across the previous instruction.
-  bool recede(PressureDiff *PDiff = 0);
+  bool recede(SmallVectorImpl<unsigned> *LiveUses = 0, PressureDiff *PDiff = 0);
 
   /// Advance across the current instruction.
   bool advance();

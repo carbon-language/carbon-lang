@@ -408,7 +408,13 @@ void ScheduleDAGInstrs::addVRegUseDeps(SUnit *SU, unsigned OperIdx) {
   unsigned Reg = MI->getOperand(OperIdx).getReg();
 
   // Record this local VReg use.
-  VRegUses.insert(VReg2SUnit(Reg, SU));
+  VReg2UseMap::iterator UI = VRegUses.find(Reg);
+  for (; UI != VRegUses.end(); ++UI) {
+    if (UI->SU == SU)
+      break;
+  }
+  if (UI == VRegUses.end())
+    VRegUses.insert(VReg2SUnit(Reg, SU));
 
   // Lookup this operand's reaching definition.
   assert(LIS && "vreg dependencies requires LiveIntervals");
@@ -755,7 +761,7 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
 
     if (RPTracker) {
       PressureDiff *PDiff = PDiffs ? &(*PDiffs)[SU->NodeNum] : 0;
-      RPTracker->recede(PDiff);
+      RPTracker->recede(/*LiveUses=*/0, PDiff);
       assert(RPTracker->getPos() == prior(MII) && "RPTracker can't find MI");
     }
 
