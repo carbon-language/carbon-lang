@@ -141,8 +141,11 @@ bool InternalizePass::runOnModule(Module &M) {
         !I->hasLocalLinkage() &&  // Can't already have internal linkage
         !ExternalNames.count(I->getName())) {// Not marked to keep external?
       I->setLinkage(GlobalValue::InternalLinkage);
-      // Remove a callgraph edge from the external node to this function.
-      if (ExternalNode) ExternalNode->removeOneAbstractEdgeTo((*CG)[I]);
+
+      if (ExternalNode)
+        // Remove a callgraph edge from the external node to this function.
+        ExternalNode->removeOneAbstractEdgeTo((*CG)[I]);
+
       Changed = true;
       ++NumFunctions;
       DEBUG(dbgs() << "Internalizing func " << I->getName() << "\n");
