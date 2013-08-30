@@ -649,7 +649,7 @@ void ScheduleDAGMI::findRootsAndBiasEdges(SmallVectorImpl<SUnit*> &TopRoots,
 /// available for use in the scheduler.
 ///
 /// The cyclic path estimation identifies a def-use pair that crosses the back
-/// end and considers the depth and height of the nodes. For example, consider
+/// edge and considers the depth and height of the nodes. For example, consider
 /// the following instruction sequence where each instruction has unit latency
 /// and defines an epomymous virtual register:
 ///
