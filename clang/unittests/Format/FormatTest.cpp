@@ -2212,14 +2212,11 @@ TEST_F(FormatTest, PutEmptyBlocksIntoOneLine) {
 // Line break tests.
 //===----------------------------------------------------------------------===//
 
-TEST_F(FormatTest, FormatsAwesomeMethodCall) {
+TEST_F(FormatTest, PreventConfusingIndents) {
   verifyFormat(
       "SomeLongMethodName(SomeReallyLongMethod(CallOtherReallyLongMethod(\n"
       "                       parameter, parameter, parameter)),\n"
       "                   SecondLongCall(parameter));");
-}
-
-TEST_F(FormatTest, PreventConfusingIndents) {
   verifyFormat(
       "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
       "    aaaaaaaaaaaaaaaaaaaaaaaa(\n"
@@ -2723,6 +2720,12 @@ TEST_F(FormatTest, BreaksDesireably) {
       "aaaaaaaaaaaaaaaaa(\n"
       "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,\n"
       "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa);");
+
+  // Indent consistently indenpendent of call expression.
+  verifyFormat("aaaaaaaaaaa(bbbbbbbbbbbbbbbbbbbbbbbbb.ccccccccccccccccc(\n"
+               "    dddddddddddddddddddddddddddddd));\n"
+               "aaaaaaaaaaa(bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb(\n"
+               "    dddddddddddddddddddddddddddddd));");
 
   // This test case breaks on an incorrect memoization, i.e. an optimization not
   // taking into account the StopAt value.
@@ -5259,7 +5262,7 @@ TEST_F(FormatTest, BreakStringLiterals) {
                    getLLVMStyleWithColumns(20)));
   EXPECT_EQ(
       "f(\"one two\".split(\n"
-      "      variable));",
+      "    variable));",
       format("f(\"one two\".split(variable));", getLLVMStyleWithColumns(20)));
   EXPECT_EQ("f(\"one two three four five six \"\n"
             "  \"seven\".split(\n"

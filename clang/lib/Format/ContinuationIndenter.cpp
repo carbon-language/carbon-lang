@@ -410,13 +410,12 @@ unsigned ContinuationIndenter::addTokenToState(LineState &State, bool Newline,
       //   OuterFunction(InnerFunctionCall(
       //       ParameterToInnerFunction),
       //                 SecondParameterToOuterFunction);
-      bool HasMultipleParameters = !Current.FakeLParens.empty();
       bool HasTrailingCall = false;
       if (Previous.MatchingParen) {
         const FormatToken *Next = Previous.MatchingParen->getNextNonComment();
         HasTrailingCall = Next && Next->isMemberAccess();
       }
-      if (HasMultipleParameters ||
+      if (startsBinaryExpression(Current) ||
           (HasTrailingCall &&
            State.Stack[State.Stack.size() - 2].CallContinuation == 0))
         State.Stack.back().LastSpace = State.Column;
