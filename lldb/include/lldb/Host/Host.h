@@ -473,11 +473,7 @@ public:
                      int *signo_ptr,                // Pass NULL if you don't want the signal that caused the process to exit
                      std::string *command_output,   // Pass NULL if you don't want the command output
                      uint32_t timeout_sec,
-#ifdef __FreeBSD__
                      const char *shell = "/bin/sh"
-#else
-                     const char *shell = "/bin/bash"
-#endif
                     );
     
     static lldb::DataBufferSP
