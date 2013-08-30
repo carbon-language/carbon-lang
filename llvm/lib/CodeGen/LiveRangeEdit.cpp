@@ -278,7 +278,7 @@ void LiveRangeEdit::eliminateDeadDef(MachineInstr *MI, ToShrinkSet &ToShrink) {
     // Always shrink COPY uses that probably come from live range splitting.
     if (MI->readsVirtualRegister(Reg) &&
         (MI->isCopy() || MOI->isDef() || MRI.hasOneNonDBGUse(Reg) ||
-         LI.isKilledAtInstr(Idx)))
+         LiveRangeQuery(LI, Idx).isKill()))
       ToShrink.insert(&LI);
 
     // Remove defined value.

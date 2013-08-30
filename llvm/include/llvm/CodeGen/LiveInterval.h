@@ -287,21 +287,6 @@ namespace llvm {
       return r != end() && r->start <= index;
     }
 
-    /// Return true if a live range ends at the instruction at this index. Note
-    /// that the kill point is not contained in the half-open live range. It is
-    /// usually the EarlyClobber or Register slot following its last use.
-    bool isKilledAtInstr(SlotIndex index) const {
-      SlotIndex BaseIdx = index.getBaseIndex();
-      const_iterator r = find(BaseIdx);
-      return r != end() && r->end.getBaseIndex() == BaseIdx;
-    }
-
-    /// Return true if a live range starts at the instruction at this index.
-    bool isDefinedByInstr(SlotIndex index) const {
-      const_iterator r = find(index.getDeadSlot());
-      return r != end() && r->end.getBaseIndex() == index.getBaseIndex();
-    }
-
     /// getLiveRangeContaining - Return the live range that contains the
     /// specified index, or null if there is none.
     const LiveRange *getLiveRangeContaining(SlotIndex Idx) const {

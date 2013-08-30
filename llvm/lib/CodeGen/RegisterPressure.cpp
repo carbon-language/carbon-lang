@@ -500,8 +500,9 @@ bool RegPressureTracker::recede(SmallVectorImpl<unsigned> *LiveUses,
       if (RequireIntervals) {
         const LiveInterval *LI = getInterval(Reg);
         // Check if this LR is killed and not redefined here.
-        if (LI && !LI->isKilledAtInstr(SlotIdx)
-            && !LI->isDefinedByInstr(SlotIdx)) {
+        if (LI) {
+          LiveRangeQuery LRQ(*LI, SlotIdx);
+          if (!LRQ.isKill() && !LRQ.valueDefined())
             discoverLiveOut(Reg);
         }
       }
@@ -558,7 +559,7 @@ bool RegPressureTracker::advance() {
     bool lastUse = false;
     if (RequireIntervals) {
       const LiveInterval *LI = getInterval(Reg);
-      lastUse = LI && LI->isKilledAtInstr(SlotIdx);
+      lastUse = LI && LiveRangeQuery(*LI, SlotIdx).isKill();
     }
     else {
       // Allocatable physregs are always single-use before register rewriting.
@@ -882,9 +883,10 @@ void RegPressureTracker::bumpDownwardPressure(const MachineInstr *MI) {
       // to be bottom-scheduled to avoid searching uses at each query.
       SlotIndex CurrIdx = getCurrSlot();
       const LiveInterval *LI = getInterval(Reg);
-      if (LI && LI->isKilledAtInstr(SlotIdx)
-          && !findUseBetween(Reg, CurrIdx, SlotIdx, MRI, LIS)) {
-        decreaseRegPressure(Reg);
+      if (LI) {
+        LiveRangeQuery LRQ(*LI, SlotIdx);
+        if (LRQ.isKill() && !findUseBetween(Reg, CurrIdx, SlotIdx, MRI, LIS))
+          decreaseRegPressure(Reg);
       }
     }
     else if (!TargetRegisterInfo::isVirtualRegister(Reg)) {
