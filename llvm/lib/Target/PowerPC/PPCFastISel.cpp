@@ -1294,7 +1294,7 @@ void PPCFastISel::finishCall(MVT RetVT, SmallVectorImpl<unsigned> &UsedRegs,
       CopyVT = MVT::i64;
 
     unsigned SourcePhysReg = VA.getLocReg();
-    unsigned ResultReg;
+    unsigned ResultReg = 0;
 
     if (RetVT == CopyVT) {
       const TargetRegisterClass *CpyRC = TLI.getRegClassFor(CopyVT);
@@ -1323,6 +1323,7 @@ void PPCFastISel::finishCall(MVT RetVT, SmallVectorImpl<unsigned> &UsedRegs,
         .addReg(SourcePhysReg);
     }
 
+    assert(ResultReg && "ResultReg unset!");
     UsedRegs.push_back(SourcePhysReg);
     UpdateValueMap(I, ResultReg);
   }
