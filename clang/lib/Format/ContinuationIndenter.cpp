@@ -187,7 +187,9 @@ bool ContinuationIndenter::mustBreak(const LineState &State) {
       State.ParenLevel == 0)
     return true;
   if (startsSegmentOfBuilderTypeCall(Current) &&
-      State.Stack.back().CallContinuation != 0)
+      (State.Stack.back().CallContinuation != 0 ||
+       (State.Stack.back().BreakBeforeParameter &&
+        State.Stack.back().ContainsUnwrappedBuilder)))
     return true;
   return false;
 }

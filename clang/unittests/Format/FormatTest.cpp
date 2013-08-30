@@ -2890,6 +2890,9 @@ TEST_F(FormatTest, FormatsBuilderPattern) {
   verifyFormat("aaaaaaaaaaaaaaa.aaaaaaaaaaaaaaa()\n"
                "    .aaaaaaaaaaaaaaa.aaaaaaaaaaaaaaa()\n"
                "    .aaaaaaaaaaaaaaa();");
+  verifyFormat("aaaaaaaaaaaaa->aaaaaaaaaaaaaaaaaaaaaaaa()\n"
+               "    ->aaaaaaaaaaaaaae(0)\n"
+               "    ->aaaaaaaaaaaaaaa();");
 }
 
 TEST_F(FormatTest, BreaksAccordingToOperatorPrecedence) {
