@@ -1,0 +1,59 @@
+# RUN: llvm-mc --disassemble %s -triple=x86_64 | FileCheck %s
+
+# CHECK: lock
+# CHECK-NEXT:	orl	$16, %fs:776
+0xf0 0x64 0x83 0x0c 0x25 0x08 0x03 0x00 0x00 0x10
+
+# CHECK: movq	%fs:768, %rdi
+0x64 0x48 0x8b 0x3c 0x25 0x00 0x03 0x00 0x00
+
+# CHECK: rep
+# CHECK-NEXT:		stosq
+0xf3 0x48 0xab
+
+# CHECK: rep
+# CHECK-NEXT:		stosl
+0xf3 0x67 0x48 0xab
+
+# CHECK: movl 32(%rbp), %eax
+0x8b 0x45 0x20
+
+# CHECK: movl %es:32(%rbp), %eax
+0x26 0x8b 0x45 0x20
+
+# CHECK: movl %es:32(%rbp), %eax
+0x2e 0x26 0x8b 0x45 0x20
+
+# Test that multiple prefixes stack.
+#    (todo- the correct disassembly is actually more like "es movl %cs:32(%rbp), %eax"
+#    but we don't support that)
+# CHECK: movl %cs:32(%rbp), %eax
+0x26 0x2e 0x8b 0x45 0x20
+
+# Test that 0xf3 as part of the opcode works.
+# CHECK: cvtdq2pd	(%rax), %xmm0
+0xf3 0x0f 0xe6 0x00
+
+# CHECK: pause
+0xf3 0x90
+
+# CHECK: nop
+0x90
+
+# CHECK: 		lock
+# CHECK-NEXT:	nop
+0xf0 0x90
+
+# Test that multiple redundant prefixes work (redundant, but valid x86).
+# CHECK: rep
+# CHECK-NEXT: rep
+# CHECK-NEXT: stosq
+0xf3 0xf3 0x48 0xab
+
+# Test that a prefix on it's own works. It's debatable as to if this is 
+# something that is considered valid, but however as LLVM's own disassembler
+# has decided to disassemble prefixes as being separate opcodes, it therefore 
+# should be capable of re-consuming it's own output.
+# CHECK: rep
+0xf3
+# ***IMPORTANT ^-- this must be at the end of the file to be a valid test *** 
