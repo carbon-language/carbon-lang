@@ -567,15 +567,15 @@ SourceManager::File::CalculateLineOffsets (uint32_t line)
 
                 // Push a 1 at index zero to indicate the file has been completely indexed.
                 m_offsets.push_back(UINT32_MAX);
-                register const char *s;
+                const char *s;
                 for (s = start; s < end; ++s)
                 {
-                    register char curr_ch = *s;
+                    char curr_ch = *s;
                     if (is_newline_char (curr_ch))
                     {
                         if (s + 1 < end)
                         {
-                            register char next_ch = s[1];
+                            char next_ch = s[1];
                             if (is_newline_char (next_ch))
                             {
                                 if (curr_ch != next_ch)

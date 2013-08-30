@@ -1336,12 +1336,12 @@ static float half2float (uint16_t half)
     if( 0 == (v & 0x7c00))
     {
         u.u = v & 0x80007FFFU;
-        return u.f * 0x1.0p125f;
+        return u.f * ldexpf(1, 125);
     }
     
     v <<= 13;
     u.u = v | 0x70000000U;
-    return u.f * 0x1.0p-112f;
+    return u.f * ldexpf(1, -112);
 }
 
 lldb::offset_t

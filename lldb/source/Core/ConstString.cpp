@@ -259,8 +259,8 @@ int
 ConstString::Compare (const ConstString& lhs, const ConstString& rhs)
 {
     // If the iterators are the same, this is the same string
-    register const char *lhs_cstr = lhs.m_string;
-    register const char *rhs_cstr = rhs.m_string;
+    const char *lhs_cstr = lhs.m_string;
+    const char *rhs_cstr = rhs.m_string;
     if (lhs_cstr == rhs_cstr)
         return 0;
     if (lhs_cstr && rhs_cstr)

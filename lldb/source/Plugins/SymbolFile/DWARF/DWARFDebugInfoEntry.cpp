@@ -151,8 +151,8 @@ DWARFDebugInfoEntry::FastExtract
         m_has_children = abbrevDecl->HasChildren();
         // Skip all data in the .debug_info for the attributes
         const uint32_t numAttributes = abbrevDecl->NumAttributes();
-        register uint32_t i;
-        register dw_form_t form;
+        uint32_t i;
+        dw_form_t form;
         for (i=0; i<numAttributes; ++i)
         {
             form = abbrevDecl->GetFormByIndexUnchecked(i);
@@ -166,7 +166,7 @@ DWARFDebugInfoEntry::FastExtract
                 do
                 {
                     form_is_indirect = false;
-                    register uint32_t form_size = 0;
+                    uint32_t form_size = 0;
                     switch (form)
                     {
                     // Blocks if inlined data that have a length field and the data bytes
@@ -332,7 +332,7 @@ DWARFDebugInfoEntry::Extract
                         do
                         {
                             form_is_indirect = false;
-                            register uint32_t form_size = 0;
+                            uint32_t form_size = 0;
                             switch (form)
                             {
                             // Blocks if inlined data that have a length field and the data bytes

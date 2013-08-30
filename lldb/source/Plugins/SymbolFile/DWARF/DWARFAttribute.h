@@ -28,7 +28,7 @@ public:
     dw_form_t   get_form() const { return (dw_form_t)m_attr_form; }
     void        get(dw_attr_t& attr, dw_form_t& form)  const
     {
-        register uint32_t attr_form = m_attr_form;
+        uint32_t attr_form = m_attr_form;
         attr = attr_form >> 16;
         form = (dw_form_t)attr_form;
     }

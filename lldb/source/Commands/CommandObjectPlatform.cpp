@@ -2190,7 +2190,6 @@ RecurseCopy_Callback (void *baton,
         case FileSpec::eFileTypeInvalid:
         case FileSpec::eFileTypeOther:
         case FileSpec::eFileTypeUnknown:
-        default:
             rc_baton->error.SetErrorStringWithFormat("invalid file detected during copy: %s/%s", spec.GetDirectory().GetCString(), spec.GetFilename().GetCString());
             return FileSpec::eEnumerateDirectoryResultQuit; // got an error, bail out
             break;
