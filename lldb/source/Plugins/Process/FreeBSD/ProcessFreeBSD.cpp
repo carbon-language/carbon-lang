@@ -145,10 +145,9 @@ ProcessFreeBSD::UpdateThreadList(ThreadList &old_thread_list, ThreadList &new_th
 {
     Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_THREAD));
     if (log && log->GetMask().Test(POSIX_LOG_VERBOSE))
-        log->Printf ("ProcessFreeBSD::%s() (pid = %i)", __FUNCTION__, GetID());
+        log->Printf ("ProcessFreeBSD::%s() (pid = %" PRIu64 ")", __FUNCTION__, GetID());
 
     bool has_updated = false;
-    const tid_t tid = Host::GetCurrentThreadID();
     const lldb::pid_t pid = GetID();
     // Update the process thread list with this new thread.
     // FIXME: We should be using tid, not pid.
@@ -161,7 +160,7 @@ ProcessFreeBSD::UpdateThreadList(ThreadList &old_thread_list, ThreadList &new_th
     }
 
     if (log && log->GetMask().Test(POSIX_LOG_VERBOSE))
-        log->Printf ("ProcessFreeBSD::%s() updated tid = %i", __FUNCTION__, pid);
+        log->Printf ("ProcessFreeBSD::%s() updated tid = %" PRIu64, __FUNCTION__, pid);
 
     new_thread_list.AddThread(thread_sp);
 
