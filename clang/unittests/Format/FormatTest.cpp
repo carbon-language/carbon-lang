@@ -2841,12 +2841,12 @@ TEST_F(FormatTest, AdaptiveOnePerLineFormatting) {
 TEST_F(FormatTest, FormatsBuilderPattern) {
   verifyFormat(
       "return llvm::StringSwitch<Reference::Kind>(name)\n"
-      "           .StartsWith(\".eh_frame_hdr\", ORDER_EH_FRAMEHDR)\n"
-      "           .StartsWith(\".eh_frame\", ORDER_EH_FRAME)\n"
-      "           .StartsWith(\".init\", ORDER_INIT)\n"
-      "           .StartsWith(\".fini\", ORDER_FINI)\n"
-      "           .StartsWith(\".hash\", ORDER_HASH)\n"
-      "           .Default(ORDER_TEXT);\n");
+      "    .StartsWith(\".eh_frame_hdr\", ORDER_EH_FRAMEHDR)\n"
+      "    .StartsWith(\".eh_frame\", ORDER_EH_FRAME)\n"
+      "    .StartsWith(\".init\", ORDER_INIT)\n"
+      "    .StartsWith(\".fini\", ORDER_FINI)\n"
+      "    .StartsWith(\".hash\", ORDER_HASH)\n"
+      "    .Default(ORDER_TEXT);\n");
 
   verifyFormat("return aaaaaaaaaaaaaaaaa->aaaaa().aaaaaaaaaaaaa().aaaaaa() <\n"
                "       aaaaaaaaaaaaaaa->aaaaa().aaaaaaaaaaaaa().aaaaaa();");
