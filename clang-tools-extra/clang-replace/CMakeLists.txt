@@ -7,7 +7,7 @@ set(LLVM_LINK_COMPONENTS
   )
 
 add_clang_library(clangReplace
-  ApplyReplacements.cpp
+  lib/Tooling/ApplyReplacements.cpp
   )
 target_link_libraries(clangReplace
   clangTooling
@@ -15,5 +15,8 @@ target_link_libraries(clangReplace
   clangRewriteFrontend
   )
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  include
+  )
 add_subdirectory(tool)

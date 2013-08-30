@@ -1,4 +1,4 @@
-//===-- Core/ApplyChangeDescriptions.cpp ----------------------------------===//
+//===-- ApplyReplacements.cpp - Apply and deduplicate replacements --------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,11 +8,13 @@
 //===----------------------------------------------------------------------===//
 ///
 /// \file
-/// \brief This file provides the implementation for finding and applying change
-/// description files.
+/// \brief This file provides the implementation for deduplicating, detecting
+/// conflicts in, and applying collections of Replacements.
+///
+/// FIXME: Use Diagnostics for output instead of llvm::errs().
 ///
 //===----------------------------------------------------------------------===//
-#include "ApplyReplacements.h"
+#include "clang-replace/Tooling/ApplyReplacements.h"
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Rewrite/Core/Rewriter.h"
@@ -31,6 +33,7 @@ static void eatDiagnostics(const SMDiagnostic &, void *) {}
 
 namespace clang {
 namespace replace {
+
 
 llvm::error_code
 collectReplacementsFromDirectory(const llvm::StringRef Directory,
@@ -172,8 +175,6 @@ static bool deduplicateAndDetectConflicts(FileToReplacementsMap &Replacements,
 bool mergeAndDeduplicate(const TUReplacements &TUs,
                          FileToReplacementsMap &GroupedReplacements,
                          clang::SourceManager &SM) {
-
-  // FIXME: Use Diagnostics for output
 
   // Group all replacements by target file.
   for (TUReplacements::const_iterator TUI = TUs.begin(), TUE = TUs.end();

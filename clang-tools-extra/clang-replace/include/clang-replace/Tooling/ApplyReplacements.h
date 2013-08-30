@@ -1,4 +1,4 @@
-//===-- Core/ApplyChangeDescriptions.h --------------------------*- C++ -*-===//
+//===-- ApplyReplacements.h - Deduplicate and apply replacements -- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,13 +8,13 @@
 //===----------------------------------------------------------------------===//
 ///
 /// \file
-/// \brief This file provides the interface for finding and applying change
-/// description files.
+/// \brief This file provides the interface for deduplicating, detecting
+/// conflicts in, and applying collections of Replacements.
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef CPP11_MIGRATE_APPLYCHANGEDESCRIPTIONS_H
-#define CPP11_MIGRATE_APPLYCHANGEDESCRIPTIONS_H
+#ifndef LLVM_CLANG_APPLYREPLACEMENTS_H
+#define LLVM_CLANG_APPLYREPLACEMENTS_H
 
 #include "clang/Tooling/Refactoring.h"
 #include "llvm/ADT/StringMap.h"
@@ -111,4 +111,4 @@ bool deleteReplacementFiles(const TUReplacementFiles &Files,
 } // end namespace replace
 } // end namespace clang
 
-#endif // CPP11_MIGRATE_APPLYCHANGEDESCRIPTIONS_H
+#endif // LLVM_CLANG_APPLYREPLACEMENTS_H

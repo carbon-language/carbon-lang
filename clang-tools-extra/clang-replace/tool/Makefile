@@ -25,4 +25,4 @@ USEDLIBS = clangReplace.a clangFormat.a clangTooling.a clangFrontend.a \
 
 include $(CLANG_LEVEL)/Makefile
 
-CPP.Flags += -I$(PROJ_SRC_DIR)/..
+CPP.Flags += -I$(PROJ_SRC_DIR)/../include

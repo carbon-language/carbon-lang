@@ -1,3 +1,4 @@
+
 ##===- clang-replace/Makefile ------------------------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
@@ -7,9 +8,8 @@
 #
 ##===----------------------------------------------------------------------===##
 
-CLANG_LEVEL := ../../..
+CLANG_LEVEL := ../../../../..
+LIBRARYNAME := clangReplace
 include $(CLANG_LEVEL)/../../Makefile.config
-
-DIRS = lib/Replace tool
-
 include $(CLANG_LEVEL)/Makefile
+CPP.Flags += -I$(PROJ_SRC_DIR)/../../include
