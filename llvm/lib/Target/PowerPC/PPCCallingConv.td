@@ -42,6 +42,17 @@ def RetCC_PPC : CallingConv<[
 // logic.  FIXME: See if the logic can be simplified with use of CCs.
 // This may require some extensions to current table generation.
 
+// Simple calling convention for 64-bit ELF PowerPC fast isel.
+// Only handle ints and floats.  All ints are promoted to i64.
+// Vector types and quadword ints are not handled.
+def CC_PPC64_ELF_FIS : CallingConv<[
+  CCIfType<[i8],  CCPromoteToType<i64>>,
+  CCIfType<[i16], CCPromoteToType<i64>>,
+  CCIfType<[i32], CCPromoteToType<i64>>,
+  CCIfType<[i64], CCAssignToReg<[X3, X4, X5, X6, X7, X8, X9, X10]>>,
+  CCIfType<[f32, f64], CCAssignToReg<[F1, F2, F3, F4, F5, F6, F7, F8]>>
+]>;
+
 // Simple return-value convention for 64-bit ELF PowerPC fast isel.
 // All small ints are promoted to i64.  Vector types, quadword ints,
 // and multiple register returns are "supported" to avoid compile

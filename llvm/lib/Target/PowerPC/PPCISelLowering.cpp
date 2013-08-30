@@ -1813,8 +1813,7 @@ SDValue PPCTargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG,
 // Function whose sole purpose is to kill compiler warnings 
 // stemming from unused functions included from PPCGenCallingConv.inc.
 CCAssignFn *PPCTargetLowering::useFastISelCCs(unsigned Flag) const {
-  /* One of these will be CC_PPC64_ELF_FIS in a future patch. */
-  return Flag ? RetCC_PPC64_ELF_FIS : RetCC_PPC64_ELF_FIS;
+  return Flag ? CC_PPC64_ELF_FIS : RetCC_PPC64_ELF_FIS;
 }
 
 bool llvm::CC_PPC32_SVR4_Custom_Dummy(unsigned &ValNo, MVT &ValVT, MVT &LocVT,

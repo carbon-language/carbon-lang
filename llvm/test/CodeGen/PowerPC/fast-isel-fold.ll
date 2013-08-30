@@ -4,6 +4,40 @@
 @b = global i16 2, align 2
 @c = global i32 4, align 4
 
+define void @t1() nounwind uwtable ssp {
+; ELF64: t1
+  %1 = load i8* @a, align 1
+  call void @foo1(i8 zeroext %1)
+; ELF64: lbz
+; ELF64-NOT: rldicl
+; ELF64-NOT: rlwinm
+  ret void
+}
+
+define void @t2() nounwind uwtable ssp {
+; ELF64: t2
+  %1 = load i16* @b, align 2
+  call void @foo2(i16 zeroext %1)
+; ELF64: lhz
+; ELF64-NOT: rldicl
+; ELF64-NOT: rlwinm
+  ret void
+}
+
+define void @t2a() nounwind uwtable ssp {
+; ELF64: t2a
+  %1 = load i32* @c, align 4
+  call void @foo3(i32 zeroext %1)
+; ELF64: lwz
+; ELF64-NOT: rldicl
+; ELF64-NOT: rlwinm
+  ret void
+}
+
+declare void @foo1(i8 zeroext)
+declare void @foo2(i16 zeroext)
+declare void @foo3(i32 zeroext)
+
 define i32 @t3() nounwind uwtable ssp {
 ; ELF64: t3
   %1 = load i8* @a, align 1

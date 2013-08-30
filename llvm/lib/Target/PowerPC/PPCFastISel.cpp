@@ -114,6 +114,7 @@ class PPCFastISel : public FastISel {
     bool SelectIToFP(const Instruction *I, bool IsSigned);
     bool SelectFPToI(const Instruction *I, bool IsSigned);
     bool SelectBinaryIntOp(const Instruction *I, unsigned ISDOpcode);
+    bool SelectCall(const Instruction *I);
     bool SelectRet(const Instruction *I);
     bool SelectIntExt(const Instruction *I);
 
@@ -145,6 +146,17 @@ class PPCFastISel : public FastISel {
 
   // Call handling routines.
   private:
+    bool processCallArgs(SmallVectorImpl<Value*> &Args,
+                         SmallVectorImpl<unsigned> &ArgRegs,
+                         SmallVectorImpl<MVT> &ArgVTs,
+                         SmallVectorImpl<ISD::ArgFlagsTy> &ArgFlags,
+                         SmallVectorImpl<unsigned> &RegArgs,
+                         CallingConv::ID CC,
+                         unsigned &NumBytes,
+                         bool IsVarArg);
+    void finishCall(MVT RetVT, SmallVectorImpl<unsigned> &UsedRegs,
+                    const Instruction *I, CallingConv::ID CC,
+                    unsigned &NumBytes, bool IsVarArg);
     CCAssignFn *usePPC32CCs(unsigned Flag);
 
   private:
@@ -1150,6 +1162,316 @@ bool PPCFastISel::SelectBinaryIntOp(const Instruction *I, unsigned ISDOpcode) {
   return true;
 }
 
+// Handle arguments to a call that we're attempting to fast-select.
+// Return false if the arguments are too complex for us at the moment.
+bool PPCFastISel::processCallArgs(SmallVectorImpl<Value*> &Args,
+                                  SmallVectorImpl<unsigned> &ArgRegs,
+                                  SmallVectorImpl<MVT> &ArgVTs,
+                                  SmallVectorImpl<ISD::ArgFlagsTy> &ArgFlags,
+                                  SmallVectorImpl<unsigned> &RegArgs,
+                                  CallingConv::ID CC,
+                                  unsigned &NumBytes,
+                                  bool IsVarArg) {
+  SmallVector<CCValAssign, 16> ArgLocs;
+  CCState CCInfo(CC, IsVarArg, *FuncInfo.MF, TM, ArgLocs, *Context);
+  CCInfo.AnalyzeCallOperands(ArgVTs, ArgFlags, CC_PPC64_ELF_FIS);
+
+  // Bail out if we can't handle any of the arguments.
+  for (unsigned I = 0, E = ArgLocs.size(); I != E; ++I) {
+    CCValAssign &VA = ArgLocs[I];
+    MVT ArgVT = ArgVTs[VA.getValNo()];
+
+    // Skip vector arguments for now, as well as long double and
+    // uint128_t, and anything that isn't passed in a register.
+    if (ArgVT.isVector() || ArgVT.getSizeInBits() > 64 ||
+        !VA.isRegLoc() || VA.needsCustom())
+      return false;
+
+    // Skip bit-converted arguments for now.
+    if (VA.getLocInfo() == CCValAssign::BCvt)
+      return false;
+  }
+
+  // Get a count of how many bytes are to be pushed onto the stack.
+  NumBytes = CCInfo.getNextStackOffset();
+
+  // Issue CALLSEQ_START.
+  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+          TII.get(TII.getCallFrameSetupOpcode()))
+    .addImm(NumBytes);
+
+  // Prepare to assign register arguments.  Every argument uses up a
+  // GPR protocol register even if it's passed in a floating-point
+  // register.
+  unsigned NextGPR = PPC::X3;
+  unsigned NextFPR = PPC::F1;
+
+  // Process arguments.
+  for (unsigned I = 0, E = ArgLocs.size(); I != E; ++I) {
+    CCValAssign &VA = ArgLocs[I];
+    unsigned Arg = ArgRegs[VA.getValNo()];
+    MVT ArgVT = ArgVTs[VA.getValNo()];
+
+    // Handle argument promotion and bitcasts.
+    switch (VA.getLocInfo()) {
+      default:
+        llvm_unreachable("Unknown loc info!");
+      case CCValAssign::Full:
+        break;
+      case CCValAssign::SExt: {
+        MVT DestVT = VA.getLocVT();
+        const TargetRegisterClass *RC =
+          (DestVT == MVT::i64) ? &PPC::G8RCRegClass : &PPC::GPRCRegClass;
+        unsigned TmpReg = createResultReg(RC);
+        if (!PPCEmitIntExt(ArgVT, Arg, DestVT, TmpReg, /*IsZExt*/false))
+          llvm_unreachable("Failed to emit a sext!");
+        ArgVT = DestVT;
+        Arg = TmpReg;
+        break;
+      }
+      case CCValAssign::AExt:
+      case CCValAssign::ZExt: {
+        MVT DestVT = VA.getLocVT();
+        const TargetRegisterClass *RC =
+          (DestVT == MVT::i64) ? &PPC::G8RCRegClass : &PPC::GPRCRegClass;
+        unsigned TmpReg = createResultReg(RC);
+        if (!PPCEmitIntExt(ArgVT, Arg, DestVT, TmpReg, /*IsZExt*/true))
+          llvm_unreachable("Failed to emit a zext!");
+        ArgVT = DestVT;
+        Arg = TmpReg;
+        break;
+      }
+      case CCValAssign::BCvt: {
+        // FIXME: Not yet handled.
+        llvm_unreachable("Should have bailed before getting here!");
+        break;
+      }
+    }
+
+    // Copy this argument to the appropriate register.
+    unsigned ArgReg;
+    if (ArgVT == MVT::f32 || ArgVT == MVT::f64) {
+      ArgReg = NextFPR++;
+      ++NextGPR;
+    } else
+      ArgReg = NextGPR++;
+      
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TargetOpcode::COPY),
+            ArgReg).addReg(Arg);
+    RegArgs.push_back(ArgReg);
+  }
+
+  return true;
+}
+
+// For a call that we've determined we can fast-select, finish the
+// call sequence and generate a copy to obtain the return value (if any).
+void PPCFastISel::finishCall(MVT RetVT, SmallVectorImpl<unsigned> &UsedRegs,
+                             const Instruction *I, CallingConv::ID CC,
+                             unsigned &NumBytes, bool IsVarArg) {
+  // Issue CallSEQ_END.
+  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+          TII.get(TII.getCallFrameDestroyOpcode()))
+    .addImm(NumBytes).addImm(0);
+
+  // Next, generate a copy to obtain the return value.
+  // FIXME: No multi-register return values yet, though I don't foresee
+  // any real difficulties there.
+  if (RetVT != MVT::isVoid) {
+    SmallVector<CCValAssign, 16> RVLocs;
+    CCState CCInfo(CC, IsVarArg, *FuncInfo.MF, TM, RVLocs, *Context);
+    CCInfo.AnalyzeCallResult(RetVT, RetCC_PPC64_ELF_FIS);
+    CCValAssign &VA = RVLocs[0];
+    assert(RVLocs.size() == 1 && "No support for multi-reg return values!");
+    assert(VA.isRegLoc() && "Can only return in registers!");
+
+    MVT DestVT = VA.getValVT();
+    MVT CopyVT = DestVT;
+
+    // Ints smaller than a register still arrive in a full 64-bit
+    // register, so make sure we recognize this.
+    if (RetVT == MVT::i8 || RetVT == MVT::i16 || RetVT == MVT::i32)
+      CopyVT = MVT::i64;
+
+    unsigned SourcePhysReg = VA.getLocReg();
+    unsigned ResultReg;
+
+    if (RetVT == CopyVT) {
+      const TargetRegisterClass *CpyRC = TLI.getRegClassFor(CopyVT);
+      ResultReg = createResultReg(CpyRC);
+
+      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+              TII.get(TargetOpcode::COPY), ResultReg)
+        .addReg(SourcePhysReg);
+
+    // If necessary, round the floating result to single precision.
+    } else if (CopyVT == MVT::f64) {
+      ResultReg = createResultReg(TLI.getRegClassFor(RetVT));
+      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(PPC::FRSP),
+              ResultReg).addReg(SourcePhysReg);
+
+    // If only the low half of a general register is needed, generate
+    // a GPRC copy instead of a G8RC copy.  (EXTRACT_SUBREG can't be
+    // used along the fast-isel path (not lowered), and downstream logic
+    // also doesn't like a direct subreg copy on a physical reg.)
+    } else if (RetVT == MVT::i8 || RetVT == MVT::i16 || RetVT == MVT::i32) {
+      ResultReg = createResultReg(&PPC::GPRCRegClass);
+      // Convert physical register from G8RC to GPRC.
+      SourcePhysReg -= PPC::X0 - PPC::R0;
+      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+              TII.get(TargetOpcode::COPY), ResultReg)
+        .addReg(SourcePhysReg);
+    }
+
+    UsedRegs.push_back(SourcePhysReg);
+    UpdateValueMap(I, ResultReg);
+  }
+}
+
+// Attempt to fast-select a call instruction.
+bool PPCFastISel::SelectCall(const Instruction *I) {
+  const CallInst *CI = cast<CallInst>(I);
+  const Value *Callee = CI->getCalledValue();
+
+  // Can't handle inline asm.
+  if (isa<InlineAsm>(Callee))
+    return false;
+
+  // Allow SelectionDAG isel to handle tail calls.
+  if (CI->isTailCall())
+    return false;
+
+  // Obtain calling convention.
+  ImmutableCallSite CS(CI);
+  CallingConv::ID CC = CS.getCallingConv();
+
+  PointerType *PT = cast<PointerType>(CS.getCalledValue()->getType());
+  FunctionType *FTy = cast<FunctionType>(PT->getElementType());
+  bool IsVarArg = FTy->isVarArg();
+
+  // Not ready for varargs yet.
+  if (IsVarArg)
+    return false;
+
+  // Handle simple calls for now, with legal return types and
+  // those that can be extended.
+  Type *RetTy = I->getType();
+  MVT RetVT;
+  if (RetTy->isVoidTy())
+    RetVT = MVT::isVoid;
+  else if (!isTypeLegal(RetTy, RetVT) && RetVT != MVT::i16 &&
+           RetVT != MVT::i8)
+    return false;
+
+  // FIXME: No multi-register return values yet.
+  if (RetVT != MVT::isVoid && RetVT != MVT::i8 && RetVT != MVT::i16 &&
+      RetVT != MVT::i32 && RetVT != MVT::i64 && RetVT != MVT::f32 &&
+      RetVT != MVT::f64) {
+    SmallVector<CCValAssign, 16> RVLocs;
+    CCState CCInfo(CC, IsVarArg, *FuncInfo.MF, TM, RVLocs, *Context);
+    CCInfo.AnalyzeCallResult(RetVT, RetCC_PPC64_ELF_FIS);
+    if (RVLocs.size() > 1)
+      return false;
+  }
+
+  // Bail early if more than 8 arguments, as we only currently
+  // handle arguments passed in registers.
+  unsigned NumArgs = CS.arg_size();
+  if (NumArgs > 8)
+    return false;
+
+  // Set up the argument vectors.
+  SmallVector<Value*, 8> Args;
+  SmallVector<unsigned, 8> ArgRegs;
+  SmallVector<MVT, 8> ArgVTs;
+  SmallVector<ISD::ArgFlagsTy, 8> ArgFlags;
+
+  Args.reserve(NumArgs);
+  ArgRegs.reserve(NumArgs);
+  ArgVTs.reserve(NumArgs);
+  ArgFlags.reserve(NumArgs);
+
+  for (ImmutableCallSite::arg_iterator II = CS.arg_begin(), IE = CS.arg_end();
+       II != IE; ++II) {
+    // FIXME: ARM does something for intrinsic calls here, check into that.
+
+    unsigned AttrIdx = II - CS.arg_begin() + 1;
+    
+    // Only handle easy calls for now.  It would be reasonably easy
+    // to handle <= 8-byte structures passed ByVal in registers, but we
+    // have to ensure they are right-justified in the register.
+    if (CS.paramHasAttr(AttrIdx, Attribute::InReg) ||
+        CS.paramHasAttr(AttrIdx, Attribute::StructRet) ||
+        CS.paramHasAttr(AttrIdx, Attribute::Nest) ||
+        CS.paramHasAttr(AttrIdx, Attribute::ByVal))
+      return false;
+
+    ISD::ArgFlagsTy Flags;
+    if (CS.paramHasAttr(AttrIdx, Attribute::SExt))
+      Flags.setSExt();
+    if (CS.paramHasAttr(AttrIdx, Attribute::ZExt))
+      Flags.setZExt();
+
+    Type *ArgTy = (*II)->getType();
+    MVT ArgVT;
+    if (!isTypeLegal(ArgTy, ArgVT) && ArgVT != MVT::i16 && ArgVT != MVT::i8)
+      return false;
+
+    if (ArgVT.isVector())
+      return false;
+
+    unsigned Arg = getRegForValue(*II);
+    if (Arg == 0)
+      return false;
+
+    unsigned OriginalAlignment = TD.getABITypeAlignment(ArgTy);
+    Flags.setOrigAlign(OriginalAlignment);
+
+    Args.push_back(*II);
+    ArgRegs.push_back(Arg);
+    ArgVTs.push_back(ArgVT);
+    ArgFlags.push_back(Flags);
+  }
+
+  // Process the arguments.
+  SmallVector<unsigned, 8> RegArgs;
+  unsigned NumBytes;
+
+  if (!processCallArgs(Args, ArgRegs, ArgVTs, ArgFlags,
+                       RegArgs, CC, NumBytes, IsVarArg))
+    return false;
+
+  // FIXME: No handling for function pointers yet.  This requires
+  // implementing the function descriptor (OPD) setup.
+  const GlobalValue *GV = dyn_cast<GlobalValue>(Callee);
+  if (!GV)
+    return false;
+
+  // Build direct call with NOP for TOC restore.
+  // FIXME: We can and should optimize away the NOP for local calls.
+  MachineInstrBuilder MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                                    TII.get(PPC::BL8_NOP));
+  // Add callee.
+  MIB.addGlobalAddress(GV);
+
+  // Add implicit physical register uses to the call.
+  for (unsigned II = 0, IE = RegArgs.size(); II != IE; ++II)
+    MIB.addReg(RegArgs[II], RegState::Implicit);
+
+  // Add a register mask with the call-preserved registers.  Proper
+  // defs for return values will be added by setPhysRegsDeadExcept().
+  MIB.addRegMask(TRI.getCallPreservedMask(CC));
+
+  // Finish off the call including any return values.
+  SmallVector<unsigned, 4> UsedRegs;
+  finishCall(RetVT, UsedRegs, I, CC, NumBytes, IsVarArg);
+
+  // Set all unused physregs defs as dead.
+  static_cast<MachineInstr *>(MIB)->setPhysRegsDeadExcept(UsedRegs, TRI);
+
+  return true;
+}
+
 // Attempt to fast-select a return instruction.
 bool PPCFastISel::SelectRet(const Instruction *I) {
 
@@ -1414,6 +1736,10 @@ bool PPCFastISel::TargetSelectInstruction(const Instruction *I) {
       return SelectBinaryIntOp(I, ISD::OR);
     case Instruction::Sub:
       return SelectBinaryIntOp(I, ISD::SUB);
+    case Instruction::Call:
+      if (dyn_cast<IntrinsicInst>(I))
+        return false;
+      return SelectCall(I);
     case Instruction::Ret:
       return SelectRet(I);
     case Instruction::ZExt:
@@ -1490,7 +1816,6 @@ unsigned PPCFastISel::PPCMaterializeGV(const GlobalValue *GV, MVT VT) {
     // If GV is an alias, use the aliasee for determining thread-locality.
     if (const GlobalAlias *GA = dyn_cast<GlobalAlias>(GV))
       GVar = dyn_cast_or_null<GlobalVariable>(GA->resolveAliasedGlobal(false));
-    assert((GVar || isa<Function>(GV)) && "Unexpected GV subclass!");
   }
 
   // FIXME: We don't yet handle the complexity of TLS.
