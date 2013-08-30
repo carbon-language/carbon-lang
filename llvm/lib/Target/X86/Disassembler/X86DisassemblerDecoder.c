@@ -305,6 +305,7 @@ static int readPrefixes(struct InternalInstruction* insn) {
   BOOL prefixGroups[4] = { FALSE };
   uint64_t prefixLocation;
   uint8_t byte = 0;
+  uint8_t nextByte;
 
   BOOL hasAdSize = FALSE;
   BOOL hasOpSize = FALSE;
@@ -325,7 +326,6 @@ static int readPrefixes(struct InternalInstruction* insn) {
     if (insn->readerCursor - 1 == insn->startLocation && byte == 0xf0)
       break;
 
-    uint8_t nextByte;
     if (insn->readerCursor - 1 == insn->startLocation
         && (byte == 0xf2 || byte == 0xf3)
         && !lookAtByte(insn, &nextByte))
