@@ -815,9 +815,9 @@ void LoopFixer::doConversion(ASTContext *Context,
       // the declaration of the alias variable. This is probably a bug.
       ReplacementText = ";";
 
-    Owner.addReplacementForCurrentTU(Replacement(
-        Context->getSourceManager(),
-        CharSourceRange::getTokenRange(ReplaceRange), ReplacementText));
+    Replace->insert(Replacement(Context->getSourceManager(),
+                                CharSourceRange::getTokenRange(ReplaceRange),
+                                ReplacementText));
     // No further replacements are made to the loop, since the iterator or index
     // was used exactly once - in the initialization of AliasVar.
   } else {
@@ -830,9 +830,10 @@ void LoopFixer::doConversion(ASTContext *Context,
          I != E; ++I) {
       std::string ReplaceText = I->IsArrow ? VarName + "." : VarName;
       ReplacedVarRanges->insert(std::make_pair(TheLoop, IndexVar));
-      Owner.addReplacementForCurrentTU(
+      Replace->insert(
           Replacement(Context->getSourceManager(),
-                      CharSourceRange::getTokenRange(I->Range), ReplaceText));
+                      CharSourceRange::getTokenRange(I->Range),
+                      ReplaceText));
     }
   }
 
@@ -861,9 +862,9 @@ void LoopFixer::doConversion(ASTContext *Context,
   std::string TypeString = AutoRefType.getAsString();
   std::string Range = ("(" + TypeString + " " + VarName + " : "
                            + MaybeDereference + ContainerString + ")").str();
-  Owner.addReplacementForCurrentTU(
-      Replacement(Context->getSourceManager(),
-                  CharSourceRange::getTokenRange(ParenRange), Range));
+  Replace->insert(Replacement(Context->getSourceManager(),
+                              CharSourceRange::getTokenRange(ParenRange),
+                              Range));
   GeneratedDecls->insert(make_pair(TheLoop, VarName));
 }
 

@@ -34,7 +34,6 @@ add_dependencies(cpp11-migrate
   )
 
 target_link_libraries(cpp11-migrate
-  clangReplace
   migrateCore
   )
 

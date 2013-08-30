@@ -22,23 +22,39 @@
 
 using namespace clang;
 
-void Reformatter::reformatChanges(const FileOverrides &FileStates,
-                                  clang::SourceManager &SM,
-                                  clang::tooling::ReplacementsVec &Replaces) {
-  FileStates.applyOverrides(SM);
+void Reformatter::reformatChanges(SourceOverrides &Overrides) {
+  llvm::IntrusiveRefCntPtr<clang::DiagnosticOptions> DiagOpts(
+      new DiagnosticOptions());
+  DiagnosticsEngine Diagnostics(
+      llvm::IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs()),
+      DiagOpts.getPtr());
+  FileManager Files((FileSystemOptions()));
+  SourceManager SM(Diagnostics, Files);
 
-  for (FileOverrides::ChangeMap::const_iterator
-           I = FileStates.getChangedRanges().begin(),
-           E = FileStates.getChangedRanges().end();
-       I != E; ++I) {
-    reformatSingleFile(I->getKey(), I->getValue(), SM, Replaces);
-  }
+  reformatChanges(Overrides, SM);
 }
 
-void Reformatter::reformatSingleFile(
-    const llvm::StringRef FileName, const ChangedRanges &Changes,
-    SourceManager &SM, clang::tooling::ReplacementsVec &FormatReplacements) {
+void Reformatter::reformatChanges(SourceOverrides &Overrides,
+                                  clang::SourceManager &SM) {
+  tooling::Replacements Replaces;
+  Overrides.applyOverrides(SM);
+  if (Overrides.isSourceOverriden())
+    Replaces = reformatSingleFile(Overrides.getMainFileName(),
+                                  Overrides.getChangedRanges(), SM);
 
+  for (HeaderOverrides::const_iterator I = Overrides.headers_begin(),
+                                       E = Overrides.headers_end();
+       I != E; ++I) {
+    const HeaderOverride &Header = I->getValue();
+    const tooling::Replacements &HeaderReplaces =
+        reformatSingleFile(Header.getHeaderPath(), Header.getChanges(), SM);
+    Replaces.insert(HeaderReplaces.begin(), HeaderReplaces.end());
+  }
+  Overrides.applyReplacements(Replaces, SM);
+}
+
+tooling::Replacements Reformatter::reformatSingleFile(
+    llvm::StringRef FileName, const ChangedRanges &Changes, SourceManager &SM) {
   const clang::FileEntry *Entry = SM.getFileManager().getFile(FileName);
   assert(Entry && "expected an existing file");
 
@@ -56,7 +72,5 @@ void Reformatter::reformatSingleFile(
   }
 
   Lexer Lex(ID, SM.getBuffer(ID), SM, getFormattingLangOpts(Style.Standard));
-  const tooling::Replacements &R =
-      format::reformat(Style, Lex, SM, ReformatRanges);
-  std::copy(R.begin(), R.end(), std::back_inserter(FormatReplacements));
+  return format::reformat(Style, Lex, SM, ReformatRanges);
 }

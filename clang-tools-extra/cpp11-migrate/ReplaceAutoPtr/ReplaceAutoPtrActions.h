@@ -25,8 +25,9 @@ class Transform;
 /// using declarations.
 class AutoPtrReplacer : public clang::ast_matchers::MatchFinder::MatchCallback {
 public:
-  AutoPtrReplacer(unsigned &AcceptedChanges, Transform &Owner)
-      : AcceptedChanges(AcceptedChanges), Owner(Owner) {}
+  AutoPtrReplacer(clang::tooling::Replacements &Replace,
+                  unsigned &AcceptedChanges, const Transform &Owner)
+      : Replace(Replace), AcceptedChanges(AcceptedChanges), Owner(Owner) {}
 
   /// \brief Entry point to the callback called when matches are made.
   virtual void run(const clang::ast_matchers::MatchFinder::MatchResult &Result)
@@ -62,8 +63,9 @@ private:
                       const clang::SourceManager &SM);
 
 private:
+  clang::tooling::Replacements &Replace;
   unsigned &AcceptedChanges;
-  Transform &Owner;
+  const Transform &Owner;
 };
 
 /// \brief The callback to be used to fix the ownership transfers of
@@ -84,16 +86,18 @@ private:
 class OwnershipTransferFixer
     : public clang::ast_matchers::MatchFinder::MatchCallback {
 public:
-  OwnershipTransferFixer(unsigned &AcceptedChanges, Transform &Owner)
-      : AcceptedChanges(AcceptedChanges), Owner(Owner) {}
+  OwnershipTransferFixer(clang::tooling::Replacements &Replace,
+                         unsigned &AcceptedChanges, const Transform &Owner)
+      : Replace(Replace), AcceptedChanges(AcceptedChanges), Owner(Owner) {}
 
   /// \brief Entry point to the callback called when matches are made.
   virtual void run(const clang::ast_matchers::MatchFinder::MatchResult &Result)
       LLVM_OVERRIDE;
 
 private:
+  clang::tooling::Replacements &Replace;
   unsigned &AcceptedChanges;
-  Transform &Owner;
+  const Transform &Owner;
 };
 
 #endif // CPP11_MIGRATE_REPLACE_AUTO_PTR_ACTIONS_H

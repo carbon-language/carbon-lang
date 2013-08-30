@@ -11,4 +11,4 @@ LIBRARYNAME := migrateCore
 
 include $(CLANG_LEVEL)/Makefile
 
-CPP.Flags += -I$(PROJ_SRC_DIR)/.. -I$(PROJ_SRC_DIR)/../../clang-replace/include
+CPP.Flags += -I$(PROJ_SRC_DIR)/..

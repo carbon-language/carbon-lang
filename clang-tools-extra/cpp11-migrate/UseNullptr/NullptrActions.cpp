@@ -47,7 +47,7 @@ bool isReplaceableRange(SourceLocation StartLoc, SourceLocation EndLoc,
 /// \brief Replaces the provided range with the text "nullptr", but only if
 /// the start and end location are both in main file.
 /// Returns true if and only if a replacement was made.
-void ReplaceWithNullptr(Transform &Owner, SourceManager &SM,
+void ReplaceWithNullptr(tooling::Replacements &Replace, SourceManager &SM,
                         SourceLocation StartLoc, SourceLocation EndLoc) {
   CharSourceRange Range(SourceRange(StartLoc, EndLoc), true);
   // Add a space if nullptr follows an alphanumeric character. This happens
@@ -55,11 +55,9 @@ void ReplaceWithNullptr(Transform &Owner, SourceManager &SM,
   // parentheses and right beside a return statement.
   SourceLocation PreviousLocation = StartLoc.getLocWithOffset(-1);
   if (isAlphanumeric(*FullSourceLoc(PreviousLocation, SM).getCharacterData()))
-    Owner.addReplacementForCurrentTU(
-        tooling::Replacement(SM, Range, " nullptr"));
+    Replace.insert(tooling::Replacement(SM, Range, " nullptr"));
   else
-    Owner.addReplacementForCurrentTU(
-        tooling::Replacement(SM, Range, "nullptr"));
+    Replace.insert(tooling::Replacement(SM, Range, "nullptr"));
 }
 
 /// \brief Returns the name of the outermost macro.
@@ -155,9 +153,10 @@ private:
 /// ambiguities.
 class CastSequenceVisitor : public RecursiveASTVisitor<CastSequenceVisitor> {
 public:
-  CastSequenceVisitor(ASTContext &Context, const UserMacroNames &UserNullMacros,
-                      unsigned &AcceptedChanges, Transform &Owner)
-      : SM(Context.getSourceManager()), Context(Context),
+  CastSequenceVisitor(tooling::Replacements &R, ASTContext &Context,
+                      const UserMacroNames &UserNullMacros,
+                      unsigned &AcceptedChanges, const Transform &Owner)
+      : Replace(R), SM(Context.getSourceManager()), Context(Context),
         UserNullMacros(UserNullMacros), AcceptedChanges(AcceptedChanges),
         Owner(Owner), FirstSubExpr(0), PruneSubtree(false) {}
 
@@ -197,7 +196,7 @@ public:
                        FileLocEnd = SM.getFileLoc(EndLoc);
         if (isReplaceableRange(FileLocStart, FileLocEnd, SM, Owner) &&
             allArgUsesValid(C)) {
-          ReplaceWithNullptr(Owner, SM, FileLocStart, FileLocEnd);
+          ReplaceWithNullptr(Replace, SM, FileLocStart, FileLocEnd);
           ++AcceptedChanges;
         }
         return skipSubTree();
@@ -221,7 +220,7 @@ public:
       if (!isReplaceableRange(StartLoc, EndLoc, SM, Owner)) {
         return skipSubTree();
       }
-      ReplaceWithNullptr(Owner, SM, StartLoc, EndLoc);
+      ReplaceWithNullptr(Replace, SM, StartLoc, EndLoc);
       ++AcceptedChanges;
 
       return skipSubTree();
@@ -418,19 +417,21 @@ private:
   }
 
 private:
+  tooling::Replacements &Replace;
   SourceManager &SM;
   ASTContext &Context;
   const UserMacroNames &UserNullMacros;
   unsigned &AcceptedChanges;
-  Transform &Owner;
+  const Transform &Owner;
   Expr *FirstSubExpr;
   bool PruneSubtree;
 };
 } // namespace
 
-NullptrFixer::NullptrFixer(unsigned &AcceptedChanges, RiskLevel,
-                           Transform &Owner)
-    : AcceptedChanges(AcceptedChanges), Owner(Owner) {
+NullptrFixer::NullptrFixer(clang::tooling::Replacements &Replace,
+                           unsigned &AcceptedChanges, RiskLevel,
+                           const Transform &Owner)
+    : Replace(Replace), AcceptedChanges(AcceptedChanges), Owner(Owner) {
   if (!UserNullMacroNames.empty()) {
     llvm::StringRef S = UserNullMacroNames;
     S.split(UserNullMacros, ",");
@@ -444,7 +445,7 @@ void NullptrFixer::run(const ast_matchers::MatchFinder::MatchResult &Result) {
   // Given an implicit null-ptr cast or an explicit cast with an implicit
   // null-to-pointer cast within use CastSequenceVisitor to identify sequences
   // of explicit casts that can be converted into 'nullptr'.
-  CastSequenceVisitor Visitor(*Result.Context, UserNullMacros, AcceptedChanges,
-                              Owner);
+  CastSequenceVisitor Visitor(Replace, *Result.Context, UserNullMacros,
+                              AcceptedChanges, Owner);
   Visitor.TraverseStmt(const_cast<CastExpr *>(NullCast));
 }

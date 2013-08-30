@@ -41,11 +41,12 @@ enum LoopFixerKind {
 class LoopFixer : public clang::ast_matchers::MatchFinder::MatchCallback {
  public:
    LoopFixer(StmtAncestorASTVisitor *ParentFinder,
+             clang::tooling::Replacements *Replace,
              StmtGeneratedVarNameMap *GeneratedDecls,
              ReplacedVarsMap *ReplacedVarRanges, unsigned *AcceptedChanges,
              unsigned *DeferredChanges, unsigned *RejectedChanges,
-             RiskLevel MaxRisk, LoopFixerKind FixerKind, Transform &Owner)
-       : ParentFinder(ParentFinder),
+             RiskLevel MaxRisk, LoopFixerKind FixerKind, const Transform &Owner)
+       : ParentFinder(ParentFinder), Replace(Replace),
          GeneratedDecls(GeneratedDecls), ReplacedVarRanges(ReplacedVarRanges),
          AcceptedChanges(AcceptedChanges), DeferredChanges(DeferredChanges),
          RejectedChanges(RejectedChanges), MaxRisk(MaxRisk),
@@ -56,6 +57,7 @@ class LoopFixer : public clang::ast_matchers::MatchFinder::MatchCallback {
 
  private:
   StmtAncestorASTVisitor *ParentFinder;
+  clang::tooling::Replacements *Replace;
   StmtGeneratedVarNameMap *GeneratedDecls;
   ReplacedVarsMap *ReplacedVarRanges;
   unsigned *AcceptedChanges;
@@ -63,7 +65,7 @@ class LoopFixer : public clang::ast_matchers::MatchFinder::MatchCallback {
   unsigned *RejectedChanges;
   RiskLevel MaxRisk;
   LoopFixerKind FixerKind;
-  Transform &Owner;
+  const Transform &Owner;
 
   /// \brief Computes the changes needed to convert a given for loop, and
   /// applies it.

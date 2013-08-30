@@ -28,31 +28,34 @@ TEST(UniqueHeaderName, testUniqueHeaderName) {
   append(SourceFile, "project/lib/feature.cpp");
   native(SourceFile.str().str(), SourceFile);
 
-  llvm::SmallString<128> FullActualPath;
+  llvm::SmallString<128> HeaderFile(TmpDir);
+  append(HeaderFile, "project/include/feature.h");
+  native(HeaderFile.str().str(), HeaderFile);
+
+  llvm::SmallString<128> ExpectedName("^feature.cpp_feature.h_[0-9a-f]{2}_[0-9a-f]{2}_[0-9a-f]{2}_[0-9a-f]{2}_[0-9a-f]{2}_[0-9a-f]{2}.yaml$");
+
+  llvm::SmallString<128> ActualName;
   llvm::SmallString<128> Error;
   bool Result =
-      generateReplacementsFileName(SourceFile, FullActualPath, Error);
+      generateReplacementsFileName(SourceFile, HeaderFile, ActualName, Error);
 
   ASSERT_TRUE(Result);
   EXPECT_TRUE(Error.empty());
 
   // We need to check the directory name and filename separately since on
   // Windows, the path separator is '\' which is a regex escape character.
-  llvm::SmallString<128> ExpectedPath =
-      llvm::sys::path::parent_path(SourceFile);
-  llvm::SmallString<128> ActualPath =
-      llvm::sys::path::parent_path(FullActualPath);
-  llvm::SmallString<128> ActualName =
-      llvm::sys::path::filename(FullActualPath);
+  llvm::SmallString<128> ExpectedHeaderPath =
+      llvm::sys::path::parent_path(HeaderFile);
+  llvm::SmallString<128> ActualHeaderPath =
+      llvm::sys::path::parent_path(ActualName);
+  llvm::SmallString<128> ActualHeaderName =
+      llvm::sys::path::filename(ActualName);
 
-  EXPECT_STREQ(ExpectedPath.c_str(), ActualPath.c_str());
+  EXPECT_STREQ(ExpectedHeaderPath.c_str(), ActualHeaderPath.c_str());
 
-  llvm::StringRef ExpectedName =
-      "^feature.cpp_[0-9a-f]{2}_[0-9a-f]{2}_[0-9a-f]{2}_[0-9a-f]{2}_["
-      "0-9a-f]{2}_[0-9a-f]{2}.yaml$";
   llvm::Regex R(ExpectedName);
-  ASSERT_TRUE(R.match(ActualName))
-      << "ExpectedName: " << ExpectedName.data()
+  ASSERT_TRUE(R.match(ActualHeaderName))
+      << "ExpectedName: " << ExpectedName.c_str()
       << "\nActualName: " << ActualName.c_str();
   ASSERT_TRUE(Error.empty()) << "Error: " << Error.c_str();
 }

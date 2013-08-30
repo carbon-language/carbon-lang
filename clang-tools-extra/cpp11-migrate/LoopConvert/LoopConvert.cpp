@@ -24,7 +24,7 @@ using clang::ast_matchers::MatchFinder;
 using namespace clang::tooling;
 using namespace clang;
 
-int LoopConvertTransform::apply(const FileOverrides &InputStates,
+int LoopConvertTransform::apply(FileOverrides &InputStates,
                                 const CompilationDatabase &Database,
                                 const std::vector<std::string> &SourcePaths) {
   ClangTool LoopTool(Database, SourcePaths);
@@ -37,20 +37,20 @@ int LoopConvertTransform::apply(const FileOverrides &InputStates,
   unsigned RejectedChanges = 0;
 
   MatchFinder Finder;
-  LoopFixer ArrayLoopFixer(&ParentFinder, &GeneratedDecls, &ReplacedVars,
-                           &AcceptedChanges, &DeferredChanges, &RejectedChanges,
-                           Options().MaxRiskLevel, LFK_Array,
+  LoopFixer ArrayLoopFixer(&ParentFinder, &getReplacements(), &GeneratedDecls,
+                           &ReplacedVars, &AcceptedChanges, &DeferredChanges,
+                           &RejectedChanges, Options().MaxRiskLevel, LFK_Array,
                            /*Owner=*/ *this);
   Finder.addMatcher(makeArrayLoopMatcher(), &ArrayLoopFixer);
-  LoopFixer IteratorLoopFixer(&ParentFinder, &GeneratedDecls, &ReplacedVars,
-                              &AcceptedChanges, &DeferredChanges,
-                              &RejectedChanges, Options().MaxRiskLevel,
-                              LFK_Iterator, /*Owner=*/ *this);
+  LoopFixer IteratorLoopFixer(
+      &ParentFinder, &getReplacements(), &GeneratedDecls, &ReplacedVars,
+      &AcceptedChanges, &DeferredChanges, &RejectedChanges,
+      Options().MaxRiskLevel, LFK_Iterator, /*Owner=*/ *this);
   Finder.addMatcher(makeIteratorLoopMatcher(), &IteratorLoopFixer);
-  LoopFixer PseudoarrrayLoopFixer(&ParentFinder, &GeneratedDecls, &ReplacedVars,
-                                  &AcceptedChanges, &DeferredChanges,
-                                  &RejectedChanges, Options().MaxRiskLevel,
-                                  LFK_PseudoArray, /*Owner=*/ *this);
+  LoopFixer PseudoarrrayLoopFixer(
+      &ParentFinder, &getReplacements(), &GeneratedDecls, &ReplacedVars,
+      &AcceptedChanges, &DeferredChanges, &RejectedChanges,
+      Options().MaxRiskLevel, LFK_PseudoArray, /*Owner=*/ *this);
   Finder.addMatcher(makePseudoArrayLoopMatcher(), &PseudoarrrayLoopFixer);
 
   setOverrides(InputStates);

@@ -95,7 +95,6 @@ void AddOverrideFixer::run(const MatchFinder::MatchResult &Result) {
     if (!MacroName.empty())
       ReplacementText = (" " + MacroName).str();
   }
-  Owner.addReplacementForCurrentTU(
-      tooling::Replacement(SM, StartLoc, 0, ReplacementText));
+  Replace.insert(tooling::Replacement(SM, StartLoc, 0, ReplacementText));
   ++AcceptedChanges;
 }

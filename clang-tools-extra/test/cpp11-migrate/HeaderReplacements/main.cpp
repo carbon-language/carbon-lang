@@ -1,30 +1,44 @@
 // The following block tests the following:
-//   - Only 1 file is generated per translation unit
+//   - Only 1 file is generated per translation unit and header file
 //   - Replacements are written in YAML that matches the expected YAML file
-// The test is run in %T/SerializeTest so it's easy to create a clean test
-// directory.
-//
-// RUN: rm -rf %T/SerializeTest
-// RUN: mkdir -p %T/SerializeTest
-// RUN: cp %S/main.cpp %S/common.cpp %S/common.h %T/SerializeTest
-// RUN: cpp11-migrate -loop-convert -headers -serialize-replacements -include=%T/SerializeTest %T/SerializeTest/main.cpp %T/SerializeTest/common.cpp --
-// Check that only 1 file is generated per translation unit
-// RUN: ls -1 %T/SerializeTest | FileCheck %s --check-prefix=MAIN_CPP
-// RUN: ls -1 %T/SerializeTest | FileCheck %s --check-prefix=COMMON_CPP
+// RUN: rm -rf %t/Test
+// RUN: mkdir -p %t/Test
+// RUN: cp %S/main.cpp %S/common.cpp %S/common.h %t/Test
+// RUN: cpp11-migrate -loop-convert -headers -yaml-only -include=%t/Test %t/Test/main.cpp %t/Test/common.cpp --
+// Check that only 1 file is generated per translation unit and header file.
+// RUN: ls -1 %t/Test | FileCheck %s --check-prefix=MAIN_CPP
+// RUN: ls -1 %t/Test | FileCheck %s --check-prefix=COMMON_CPP
+// RUN: cp %S/common.h.yaml %t/Test/main.cpp_common.h.yaml
 // We need to put the build path to the expected YAML file to diff against the generated one.
-// RUN: sed -e 's#$(path)#%/T/SerializeTest#g' %S/main_expected.yaml > %T/SerializeTest/main_expected.yaml
-// RUN: sed -i -e 's#\\#/#g' %T/SerializeTest/main.cpp_*.yaml
-// RUN: diff -b %T/SerializeTest/main_expected.yaml %T/SerializeTest/main.cpp_*.yaml
-// RUN: sed -e 's#$(path)#%/T/SerializeTest#g' %S/common_expected.yaml > %T/SerializeTest/common_expected.yaml
-// RUN: sed -i -e 's#\\#/#g' %T/SerializeTest/common.cpp_*.yaml
-// RUN: diff -b %T/SerializeTest/common_expected.yaml %T/SerializeTest/common.cpp_*.yaml
+// RUN: sed -e 's#$(path)#%/t/Test#g' %S/common.h.yaml > %t/Test/main.cpp_common.h.yaml
+// RUN: sed -i -e 's#\\#/#g' %t/Test/main.cpp_common.h_*.yaml
+// RUN: diff -b %t/Test/main.cpp_common.h.yaml %t/Test/main.cpp_common.h_*.yaml
+// RUN: sed -e 's#$(path)#%/t/Test#g' -e 's#main.cpp"#common.cpp"#g' %S/common.h.yaml > %t/Test/common.cpp_common.h.yaml
+// RUN: sed -i -e 's#\\#/#g' %t/Test/common.cpp_common.h_*.yaml
+// RUN: diff -b %t/Test/common.cpp_common.h.yaml %t/Test/common.cpp_common.h_*.yaml
 //
-// The following are for FileCheck when used on output of 'ls'. See above.
-// MAIN_CPP: {{^main.cpp_.*.yaml$}}
-// MAIN_CPP-NOT: {{main.cpp_.*.yaml}}
+// The following block tests the following:
+//   - YAML files are written only when -headers is used
+// RUN: rm -rf %t/Test
+// RUN: mkdir -p %t/Test
+// RUN: cp %S/main.cpp %S/common.cpp %S/common.h %t/Test
+// RUN: cpp11-migrate -loop-convert -headers -yaml-only -include=%t/Test %t/Test/main.cpp --
+// RUN: cpp11-migrate -loop-convert %t/Test/common.cpp --
+// Check that only one YAML file is generated from main.cpp and common.h and not from common.cpp and common.h since -header is not specified
+// RUN: ls -1 %t/Test | FileCheck %s --check-prefix=MAIN_CPP
+// RUN: ls -1 %t/Test | FileCheck %s --check-prefix=NO_COMMON
+// We need to put the build path to the expected YAML file to diff against the generated one.
+// RUN: sed -e 's#$(path)#%/t/Test#g' %S/common.h.yaml > %t/Test/main.cpp_common.h.yaml
+// RUN: sed -i -e 's#\\#/#g' %t/Test/main.cpp_common.h_*.yaml
+// RUN: diff -b %t/Test/main.cpp_common.h.yaml %t/Test/main.cpp_common.h_*.yaml
 //
-// COMMON_CPP:     {{^common.cpp_.*.yaml$}}
-// COMMON_CPP-NOT: {{common.cpp_.*.yaml}}
+// MAIN_CPP: {{^main.cpp_common.h_.*.yaml$}}
+// MAIN_CPP-NOT: {{main.cpp_common.h_.*.yaml}}
+//
+// COMMON_CPP:     {{^common.cpp_common.h_.*.yaml$}}
+// COMMON_CPP-NOT: {{common.cpp_common.h_.*.yaml}}
+//
+// NO_COMMON-NOT: {{common.cpp_common.h_.*.yaml}}
 
 #include "common.h"
 

@@ -31,7 +31,7 @@ public:
       : Transform("AddOverride", Options) {}
 
   /// \see Transform::run().
-  virtual int apply(const FileOverrides &InputStates,
+  virtual int apply(FileOverrides &InputStates,
                     const clang::tooling::CompilationDatabase &Database,
                     const std::vector<std::string> &SourcePaths) LLVM_OVERRIDE;
 

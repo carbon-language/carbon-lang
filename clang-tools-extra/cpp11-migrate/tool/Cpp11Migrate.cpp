@@ -21,14 +21,9 @@
 #include "Core/Transform.h"
 #include "Core/Transforms.h"
 #include "Core/Reformatting.h"
-#include "clang/Basic/Diagnostic.h"
-#include "clang/Basic/DiagnosticOptions.h"
-#include "clang/Basic/SourceManager.h"
 #include "clang/Frontend/FrontendActions.h"
-#include "clang/Rewrite/Core/Rewriter.h"
 #include "clang/Tooling/CommonOptionsParser.h"
 #include "clang/Tooling/Tooling.h"
-#include "clang-replace/Tooling/ApplyReplacements.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -127,12 +122,12 @@ static cl::opt<bool, /*ExternalStorage=*/true> EnableHeaderModifications(
     cl::location(GlobalOptions.EnableHeaderModifications),
     cl::init(false));
 
-static cl::opt<bool>
-SerializeReplacements("serialize-replacements",
-                      cl::Hidden, // Associated with -headers
-                      cl::desc("Serialize translation unit replacements to "
-                               "disk instead of changing files."),
-                      cl::init(false));
+static cl::opt<bool> YAMLOnly("yaml-only",
+                              cl::Hidden, // Associated with -headers
+                              cl::desc("Don't change headers on disk. Write "
+                                       "changes to change description files "
+                                       "only."),
+                              cl::init(false));
 
 cl::opt<std::string> SupportedCompilers(
     "for-compilers", cl::value_desc("string"),
@@ -230,68 +225,6 @@ static Reformatter *handleFormatStyle(const char *ProgName, bool &Error) {
   return 0;
 }
 
-/// \brief Use \c ChangesReformatter to reformat all changed regions of all
-/// files stored in \c Overrides and write the result to disk.
-///
-/// \returns \li true if reformatting replacements were successfully applied
-///              without conflicts and all files were successfully written to
-///              disk.
-///          \li false if reformatting could not be successfully applied or
-///              if at least one file failed to write to disk.
-bool reformat(Reformatter &ChangesReformatter, const FileOverrides &Overrides,
-              DiagnosticsEngine &Diagnostics) {
-  FileManager Files((FileSystemOptions()));
-  SourceManager SM(Diagnostics, Files);
-
-  replace::TUReplacements AllReplacements(1);
-  ChangesReformatter.reformatChanges(Overrides, SM,
-                                     AllReplacements.front().Replacements);
-
-  replace::FileToReplacementsMap GroupedReplacements;
-  if (!replace::mergeAndDeduplicate(AllReplacements, GroupedReplacements, SM)) {
-    llvm::errs() << "Warning: Reformatting produced conflicts.\n";
-    return false;
-  }
-
-  Rewriter DestRewriter(SM, LangOptions());
-  if (!replace::applyReplacements(GroupedReplacements, DestRewriter)) {
-    llvm::errs() << "Warning: Failed to apply reformatting conflicts!\n";
-    return false;
-  }
-
-  return replace::writeFiles(DestRewriter);
-}
-
-bool serializeReplacements(const replace::TUReplacements &Replacements) {
-  bool Errors = false;
-  for (replace::TUReplacements::const_iterator I = Replacements.begin(),
-                                               E = Replacements.end();
-       I != E; ++I) {
-    llvm::SmallString<128> ReplacementsFileName;
-    llvm::SmallString<64> Error;
-    bool Result = generateReplacementsFileName(I->MainSourceFile,
-                                               ReplacementsFileName, Error);
-    if (!Result) {
-      llvm::errs() << "Failed to generate replacements filename:" << Error
-                   << "\n";
-      Errors = true;
-      continue;
-    }
-
-    std::string ErrorInfo;
-    llvm::raw_fd_ostream ReplacementsFile(ReplacementsFileName.c_str(),
-                                          ErrorInfo, llvm::sys::fs::F_Binary);
-    if (!ErrorInfo.empty()) {
-      llvm::errs() << "Error opening file: " << ErrorInfo << "\n";
-      Errors = true;
-      continue;
-    }
-    llvm::yaml::Output YAML(ReplacementsFile);
-    YAML << const_cast<TranslationUnitReplacements &>(*I);
-  }
-  return !Errors;
-}
-
 int main(int argc, const char **argv) {
   llvm::sys::PrintStackTraceOnErrorSignal();
   Transforms TransformManager;
@@ -347,15 +280,6 @@ int main(int argc, const char **argv) {
 
   TransformManager.createSelectedTransforms(GlobalOptions, RequiredVersions);
 
-  llvm::IntrusiveRefCntPtr<clang::DiagnosticOptions> DiagOpts(
-      new DiagnosticOptions());
-  DiagnosticsEngine Diagnostics(
-      llvm::IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs()),
-      DiagOpts.getPtr());
-
-  // FIXME: Make this DiagnosticsEngine available to all Transforms probably via
-  // GlobalOptions.
-
   if (TransformManager.begin() == TransformManager.end()) {
     if (SupportedCompilers.empty())
       llvm::errs() << argv[0] << ": no selected transforms\n";
@@ -365,22 +289,21 @@ int main(int argc, const char **argv) {
     return 1;
   }
 
-  // If SerializeReplacements is requested, then change reformatting must be
-  // turned off and only one transform should be requested. Reformatting is
-  // basically another transform so even if there's only one other transform,
-  // the reformatting pass would make two.
-  if (SerializeReplacements &&
-      (std::distance(TransformManager.begin(), TransformManager.end()) > 1 ||
-       ChangesReformatter)) {
-    llvm::errs() << "Serialization of replacements requested for multiple "
+  if (std::distance(TransformManager.begin(), TransformManager.end()) > 1 &&
+      YAMLOnly) {
+    llvm::errs() << "Header change description files requested for multiple "
                     "transforms.\nChanges from only one transform can be "
-                    "serialized.\n";
+                    "recorded in a change description file.\n";
     return 1;
   }
 
+  // if reformatting is enabled we wants to track file changes so that it's
+  // possible to reformat them.
+  bool TrackReplacements = static_cast<bool>(ChangesReformatter);
+  FileOverrides FileStates(TrackReplacements);
   SourcePerfData PerfData;
-  FileOverrides FileStates;
 
+  // Apply transforms.
   for (Transforms::const_iterator I = TransformManager.begin(),
                                   E = TransformManager.end();
        I != E; ++I) {
@@ -403,66 +326,78 @@ int main(int argc, const char **argv) {
       }
       llvm::outs() << "\n";
     }
-
-    // Collect all TranslationUnitReplacements generated from the translation
-    // units the transform worked on and store them in AllReplacements.
-    replace::TUReplacements AllReplacements;
-    const TUReplacementsMap &ReplacementsMap = T->getAllReplacements();
-    const TranslationUnitReplacements &(
-        TUReplacementsMap::value_type::*getValue)() const =
-        &TUReplacementsMap::value_type::getValue;
-    std::transform(ReplacementsMap.begin(), ReplacementsMap.end(),
-                   std::back_inserter(AllReplacements),
-                   std::mem_fun_ref(getValue));
-
-    if (SerializeReplacements)
-      serializeReplacements(AllReplacements);
-
-    FileManager Files((FileSystemOptions()));
-    SourceManager SM(Diagnostics, Files);
-
-    // Make sure SourceManager is updated to have the same initial state as the
-    // transforms.
-    FileStates.applyOverrides(SM);
-
-    replace::FileToReplacementsMap GroupedReplacements;
-    if (!replace::mergeAndDeduplicate(AllReplacements, GroupedReplacements,
-                                      SM)) {
-      llvm::outs() << "Transform " << T->getName()
-                   << " resulted in conflicts. Discarding all "
-                   << "replacements.\n";
-      continue;
-    }
-
-    // Apply replacements and update FileStates with new state.
-    Rewriter DestRewriter(SM, LangOptions());
-    if (!replace::applyReplacements(GroupedReplacements, DestRewriter)) {
-      llvm::outs() << "Some replacements failed to apply. Discarding "
-                      "all replacements.\n";
-      continue;
-    }
-
-    // Update contents of files in memory to serve as initial state for next
-    // transform.
-    FileStates.updateState(DestRewriter);
-
-    // Update changed ranges for reformatting
-    if (ChangesReformatter)
-      FileStates.adjustChangedRanges(GroupedReplacements);
   }
 
-  // Skip writing final file states to disk if we were asked to serialize
-  // replacements. Otherwise reformat changes if reformatting is enabled. If
-  // not enabled or if reformatting fails write un-formated changes to disk
-  // instead. reformat() takes care of writing successfully formatted changes.
-  if (!SerializeReplacements &&
-      (!ChangesReformatter ||
-       !reformat(*ChangesReformatter, FileStates, Diagnostics)))
-    FileStates.writeToDisk(Diagnostics);
+  // Reformat changes if a reformatter is provided.
+  if (ChangesReformatter)
+    for (FileOverrides::const_iterator I = FileStates.begin(),
+                                       E = FileStates.end();
+         I != E; ++I) {
+      SourceOverrides &Overrides = *I->second;
+      ChangesReformatter->reformatChanges(Overrides);
+    }
 
   if (FinalSyntaxCheck)
     if (!doSyntaxCheck(*Compilations, SourcePaths, FileStates))
       return 1;
+
+  // Write results to file.
+  for (FileOverrides::const_iterator I = FileStates.begin(),
+                                     E = FileStates.end();
+       I != E; ++I) {
+    const SourceOverrides &Overrides = *I->second;
+    if (Overrides.isSourceOverriden()) {
+      std::string ErrorInfo;
+      std::string MainFileName = I->getKey();
+      llvm::raw_fd_ostream FileStream(MainFileName.c_str(), ErrorInfo,
+                                      llvm::sys::fs::F_Binary);
+      FileStream << Overrides.getMainFileContent();
+    }
+
+    for (HeaderOverrides::const_iterator HeaderI = Overrides.headers_begin(),
+                                         HeaderE = Overrides.headers_end();
+         HeaderI != HeaderE; ++HeaderI) {
+      std::string ErrorInfo;
+      if (YAMLOnly) {
+        // Replacements for header files need to be written in a YAML file for
+        // every transform and will be merged together with an external tool.
+        llvm::SmallString<128> ReplacementsHeaderName;
+        llvm::SmallString<64> Error;
+        bool Result =
+            generateReplacementsFileName(I->getKey(), HeaderI->getKey().data(),
+                                         ReplacementsHeaderName, Error);
+        if (!Result) {
+          llvm::errs() << "Failed to generate replacements filename:" << Error
+                       << "\n";
+          continue;
+        }
+
+        llvm::raw_fd_ostream ReplacementsFile(
+            ReplacementsHeaderName.c_str(), ErrorInfo, llvm::sys::fs::F_Binary);
+        if (!ErrorInfo.empty()) {
+          llvm::errs() << "Error opening file: " << ErrorInfo << "\n";
+          continue;
+        }
+        llvm::yaml::Output YAML(ReplacementsFile);
+        YAML << const_cast<TranslationUnitReplacements &>(
+                    HeaderI->getValue().getReplacements());
+      } else {
+        // If -yaml-only was not specified, then change headers on disk.
+        // FIXME: This is transitional behaviour. Remove this functionality
+        // when header change description tool is ready.
+        assert(!HeaderI->second.getContentOverride().empty() &&
+               "A header override should not be empty");
+        std::string HeaderFileName = HeaderI->getKey();
+        llvm::raw_fd_ostream HeaderStream(HeaderFileName.c_str(), ErrorInfo,
+                                          llvm::sys::fs::F_Binary);
+        if (!ErrorInfo.empty()) {
+          llvm::errs() << "Error opening file: " << ErrorInfo << "\n";
+          continue;
+        }
+        HeaderStream << HeaderI->second.getContentOverride();
+      }
+    }
+  }
 
   // Report execution times.
   if (GlobalOptions.EnableTiming && !PerfData.empty()) {
