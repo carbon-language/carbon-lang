@@ -108,6 +108,7 @@ class PPCFastISel : public FastISel {
     bool SelectStore(const Instruction *I);
     bool SelectBranch(const Instruction *I);
     bool SelectIndirectBr(const Instruction *I);
+    bool SelectCmp(const Instruction *I);
     bool SelectBinaryIntOp(const Instruction *I, unsigned ISDOpcode);
     bool SelectRet(const Instruction *I);
     bool SelectIntExt(const Instruction *I);
@@ -1062,6 +1063,23 @@ bool PPCFastISel::SelectIndirectBr(const Instruction *I) {
   for (unsigned i = 0, e = IB->getNumSuccessors(); i != e; ++i)
     FuncInfo.MBB->addSuccessor(FuncInfo.MBBMap[IB->getSuccessor(i)]);
 
+  return true;
+}
+
+// Attempt to fast-select a compare instruction.
+bool PPCFastISel::SelectCmp(const Instruction *I) {
+  const CmpInst *CI = cast<CmpInst>(I);
+  Optional<PPC::Predicate> OptPPCPred = getComparePred(CI->getPredicate());
+  if (!OptPPCPred)
+    return false;
+
+  unsigned CondReg = createResultReg(&PPC::CRRCRegClass);
+
+  if (!PPCEmitCmp(CI->getOperand(0), CI->getOperand(1), CI->isUnsigned(),
+                  CondReg))
+    return false;
+
+  UpdateValueMap(I, CondReg);
   return true;
 }
 
