@@ -19,7 +19,6 @@ class CPPThisTestCase(TestBase):
         self.static_method_commands()
 
     #rdar://problem/9962849
-    @expectedFailureFreeBSD('llvm.org/pr16697') # Expression fails with 'there is no JIT compiled function'
     @expectedFailureGcc # llvm.org/pr15439 The 'this' pointer isn't available during expression evaluation when stopped in an inlined member function.
     @expectedFailureIcc # ICC doesn't emit correct DWARF inline debug info for inlined member functions
     @dwarf_test
