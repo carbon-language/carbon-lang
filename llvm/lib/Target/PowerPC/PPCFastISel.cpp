@@ -52,7 +52,7 @@ typedef struct Address {
     int FI;
   } Base;
 
-  int Offset;
+  long Offset;
 
   // Innocuous defaults for our address.
   Address()
@@ -90,21 +90,45 @@ class PPCFastISel : public FastISel {
                                      const LoadInst *LI);
     virtual bool FastLowerArguments();
     virtual unsigned FastEmit_i(MVT Ty, MVT RetTy, unsigned Opc, uint64_t Imm);
+    virtual unsigned FastEmitInst_ri(unsigned MachineInstOpcode,
+                                     const TargetRegisterClass *RC,
+                                     unsigned Op0, bool Op0IsKill,
+                                     uint64_t Imm);
+    virtual unsigned FastEmitInst_r(unsigned MachineInstOpcode,
+                                    const TargetRegisterClass *RC,
+                                    unsigned Op0, bool Op0IsKill);
+    virtual unsigned FastEmitInst_rr(unsigned MachineInstOpcode,
+                                     const TargetRegisterClass *RC,
+                                     unsigned Op0, bool Op0IsKill,
+                                     unsigned Op1, bool Op1IsKill);
 
   // Instruction selection routines.
   private:
+    bool SelectLoad(const Instruction *I);
+    bool SelectStore(const Instruction *I);
     bool SelectBranch(const Instruction *I);
     bool SelectIndirectBr(const Instruction *I);
+    bool SelectBinaryIntOp(const Instruction *I, unsigned ISDOpcode);
     bool SelectRet(const Instruction *I);
     bool SelectIntExt(const Instruction *I);
 
   // Utility routines.
   private:
+    bool isTypeLegal(Type *Ty, MVT &VT);
+    bool isLoadTypeLegal(Type *Ty, MVT &VT);
     bool PPCEmitCmp(const Value *Src1Value, const Value *Src2Value,
                     bool isZExt, unsigned DestReg);
+    bool PPCEmitLoad(MVT VT, unsigned &ResultReg, Address &Addr,
+                     const TargetRegisterClass *RC, bool IsZExt = true,
+                     unsigned FP64LoadOpc = PPC::LFD);
+    bool PPCEmitStore(MVT VT, unsigned SrcReg, Address &Addr);
+    bool PPCComputeAddress(const Value *Obj, Address &Addr);
+    void PPCSimplifyAddress(Address &Addr, MVT VT, bool &UseOffset,
+                            unsigned &IndexReg);
     bool PPCEmitIntExt(MVT SrcVT, unsigned SrcReg, MVT DestVT,
                            unsigned DestReg, bool IsZExt);
     unsigned PPCMaterializeFP(const ConstantFP *CFP, MVT VT);
+    unsigned PPCMaterializeGV(const GlobalValue *GV, MVT VT);
     unsigned PPCMaterializeInt(const Constant *C, MVT VT);
     unsigned PPCMaterialize32BitInt(int64_t Imm,
                                     const TargetRegisterClass *RC);
@@ -185,6 +209,439 @@ static Optional<PPC::Predicate> getComparePred(CmpInst::Predicate Pred) {
     case CmpInst::FCMP_UNO:
       return PPC::PRED_UN;
   }
+}
+
+// Determine whether the type Ty is simple enough to be handled by
+// fast-isel, and return its equivalent machine type in VT.
+// FIXME: Copied directly from ARM -- factor into base class?
+bool PPCFastISel::isTypeLegal(Type *Ty, MVT &VT) {
+  EVT Evt = TLI.getValueType(Ty, true);
+
+  // Only handle simple types.
+  if (Evt == MVT::Other || !Evt.isSimple()) return false;
+  VT = Evt.getSimpleVT();
+
+  // Handle all legal types, i.e. a register that will directly hold this
+  // value.
+  return TLI.isTypeLegal(VT);
+}
+
+// Determine whether the type Ty is simple enough to be handled by
+// fast-isel as a load target, and return its equivalent machine type in VT.
+bool PPCFastISel::isLoadTypeLegal(Type *Ty, MVT &VT) {
+  if (isTypeLegal(Ty, VT)) return true;
+
+  // If this is a type than can be sign or zero-extended to a basic operation
+  // go ahead and accept it now.
+  if (VT == MVT::i8 || VT == MVT::i16 || VT == MVT::i32) {
+    return true;
+  }
+
+  return false;
+}
+
+// Given a value Obj, create an Address object Addr that represents its
+// address.  Return false if we can't handle it.
+bool PPCFastISel::PPCComputeAddress(const Value *Obj, Address &Addr) {
+  const User *U = NULL;
+  unsigned Opcode = Instruction::UserOp1;
+  if (const Instruction *I = dyn_cast<Instruction>(Obj)) {
+    // Don't walk into other basic blocks unless the object is an alloca from
+    // another block, otherwise it may not have a virtual register assigned.
+    if (FuncInfo.StaticAllocaMap.count(static_cast<const AllocaInst *>(Obj)) ||
+        FuncInfo.MBBMap[I->getParent()] == FuncInfo.MBB) {
+      Opcode = I->getOpcode();
+      U = I;
+    }
+  } else if (const ConstantExpr *C = dyn_cast<ConstantExpr>(Obj)) {
+    Opcode = C->getOpcode();
+    U = C;
+  }
+
+  switch (Opcode) {
+    default:
+      break;
+    case Instruction::BitCast:
+      // Look through bitcasts.
+      return PPCComputeAddress(U->getOperand(0), Addr);
+    case Instruction::IntToPtr:
+      // Look past no-op inttoptrs.
+      if (TLI.getValueType(U->getOperand(0)->getType()) == TLI.getPointerTy())
+        return PPCComputeAddress(U->getOperand(0), Addr);
+      break;
+    case Instruction::PtrToInt:
+      // Look past no-op ptrtoints.
+      if (TLI.getValueType(U->getType()) == TLI.getPointerTy())
+        return PPCComputeAddress(U->getOperand(0), Addr);
+      break;
+    case Instruction::GetElementPtr: {
+      Address SavedAddr = Addr;
+      long TmpOffset = Addr.Offset;
+
+      // Iterate through the GEP folding the constants into offsets where
+      // we can.
+      gep_type_iterator GTI = gep_type_begin(U);
+      for (User::const_op_iterator II = U->op_begin() + 1, IE = U->op_end();
+           II != IE; ++II, ++GTI) {
+        const Value *Op = *II;
+        if (StructType *STy = dyn_cast<StructType>(*GTI)) {
+          const StructLayout *SL = TD.getStructLayout(STy);
+          unsigned Idx = cast<ConstantInt>(Op)->getZExtValue();
+          TmpOffset += SL->getElementOffset(Idx);
+        } else {
+          uint64_t S = TD.getTypeAllocSize(GTI.getIndexedType());
+          for (;;) {
+            if (const ConstantInt *CI = dyn_cast<ConstantInt>(Op)) {
+              // Constant-offset addressing.
+              TmpOffset += CI->getSExtValue() * S;
+              break;
+            }
+            if (isa<AddOperator>(Op) &&
+                (!isa<Instruction>(Op) ||
+                 FuncInfo.MBBMap[cast<Instruction>(Op)->getParent()]
+                 == FuncInfo.MBB) &&
+                isa<ConstantInt>(cast<AddOperator>(Op)->getOperand(1))) {
+              // An add (in the same block) with a constant operand. Fold the
+              // constant.
+              ConstantInt *CI =
+              cast<ConstantInt>(cast<AddOperator>(Op)->getOperand(1));
+              TmpOffset += CI->getSExtValue() * S;
+              // Iterate on the other operand.
+              Op = cast<AddOperator>(Op)->getOperand(0);
+              continue;
+            }
+            // Unsupported
+            goto unsupported_gep;
+          }
+        }
+      }
+
+      // Try to grab the base operand now.
+      Addr.Offset = TmpOffset;
+      if (PPCComputeAddress(U->getOperand(0), Addr)) return true;
+
+      // We failed, restore everything and try the other options.
+      Addr = SavedAddr;
+
+      unsupported_gep:
+      break;
+    }
+    case Instruction::Alloca: {
+      const AllocaInst *AI = cast<AllocaInst>(Obj);
+      DenseMap<const AllocaInst*, int>::iterator SI =
+        FuncInfo.StaticAllocaMap.find(AI);
+      if (SI != FuncInfo.StaticAllocaMap.end()) {
+        Addr.BaseType = Address::FrameIndexBase;
+        Addr.Base.FI = SI->second;
+        return true;
+      }
+      break;
+    }
+  }
+
+  // FIXME: References to parameters fall through to the behavior
+  // below.  They should be able to reference a frame index since
+  // they are stored to the stack, so we can get "ld rx, offset(r1)"
+  // instead of "addi ry, r1, offset / ld rx, 0(ry)".  Obj will
+  // just contain the parameter.  Try to handle this with a FI.
+
+  // Try to get this in a register if nothing else has worked.
+  if (Addr.Base.Reg == 0)
+    Addr.Base.Reg = getRegForValue(Obj);
+
+  // Prevent assignment of base register to X0, which is inappropriate
+  // for loads and stores alike.
+  if (Addr.Base.Reg != 0)
+    MRI.setRegClass(Addr.Base.Reg, &PPC::G8RC_and_G8RC_NOX0RegClass);
+
+  return Addr.Base.Reg != 0;
+}
+
+// Fix up some addresses that can't be used directly.  For example, if
+// an offset won't fit in an instruction field, we may need to move it
+// into an index register.
+void PPCFastISel::PPCSimplifyAddress(Address &Addr, MVT VT, bool &UseOffset,
+                                     unsigned &IndexReg) {
+
+  // Check whether the offset fits in the instruction field.
+  if (!isInt<16>(Addr.Offset))
+    UseOffset = false;
+
+  // If this is a stack pointer and the offset needs to be simplified then
+  // put the alloca address into a register, set the base type back to
+  // register and continue. This should almost never happen.
+  if (!UseOffset && Addr.BaseType == Address::FrameIndexBase) {
+    unsigned ResultReg = createResultReg(&PPC::G8RC_and_G8RC_NOX0RegClass);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(PPC::ADDI8),
+            ResultReg).addFrameIndex(Addr.Base.FI).addImm(0);
+    Addr.Base.Reg = ResultReg;
+    Addr.BaseType = Address::RegBase;
+  }
+
+  if (!UseOffset) {
+    IntegerType *OffsetTy = ((VT == MVT::i32) ? Type::getInt32Ty(*Context)
+                             : Type::getInt64Ty(*Context));
+    const ConstantInt *Offset =
+      ConstantInt::getSigned(OffsetTy, (int64_t)(Addr.Offset));
+    IndexReg = PPCMaterializeInt(Offset, MVT::i64);
+    assert(IndexReg && "Unexpected error in PPCMaterializeInt!");
+  }
+}
+
+// Emit a load instruction if possible, returning true if we succeeded,
+// otherwise false.  See commentary below for how the register class of
+// the load is determined. 
+bool PPCFastISel::PPCEmitLoad(MVT VT, unsigned &ResultReg, Address &Addr,
+                              const TargetRegisterClass *RC,
+                              bool IsZExt, unsigned FP64LoadOpc) {
+  unsigned Opc;
+  bool UseOffset = true;
+
+  // If ResultReg is given, it determines the register class of the load.
+  // Otherwise, RC is the register class to use.  If the result of the
+  // load isn't anticipated in this block, both may be zero, in which
+  // case we must make a conservative guess.  In particular, don't assign
+  // R0 or X0 to the result register, as the result may be used in a load,
+  // store, add-immediate, or isel that won't permit this.  (Though
+  // perhaps the spill and reload of live-exit values would handle this?)
+  const TargetRegisterClass *UseRC =
+    (ResultReg ? MRI.getRegClass(ResultReg) :
+     (RC ? RC :
+      (VT == MVT::f64 ? &PPC::F8RCRegClass :
+       (VT == MVT::f32 ? &PPC::F4RCRegClass :
+        (VT == MVT::i64 ? &PPC::G8RC_and_G8RC_NOX0RegClass :
+         &PPC::GPRC_and_GPRC_NOR0RegClass)))));
+
+  bool Is32BitInt = UseRC->hasSuperClassEq(&PPC::GPRCRegClass);
+
+  switch (VT.SimpleTy) {
+    default: // e.g., vector types not handled
+      return false;
+    case MVT::i8:
+      Opc = Is32BitInt ? PPC::LBZ : PPC::LBZ8;
+      break;
+    case MVT::i16:
+      Opc = (IsZExt ?
+             (Is32BitInt ? PPC::LHZ : PPC::LHZ8) : 
+             (Is32BitInt ? PPC::LHA : PPC::LHA8));
+      break;
+    case MVT::i32:
+      Opc = (IsZExt ? 
+             (Is32BitInt ? PPC::LWZ : PPC::LWZ8) :
+             (Is32BitInt ? PPC::LWA_32 : PPC::LWA));
+      if ((Opc == PPC::LWA || Opc == PPC::LWA_32) && ((Addr.Offset & 3) != 0))
+        UseOffset = false;
+      break;
+    case MVT::i64:
+      Opc = PPC::LD;
+      assert(UseRC->hasSuperClassEq(&PPC::G8RCRegClass) && 
+             "64-bit load with 32-bit target??");
+      UseOffset = ((Addr.Offset & 3) == 0);
+      break;
+    case MVT::f32:
+      Opc = PPC::LFS;
+      break;
+    case MVT::f64:
+      Opc = FP64LoadOpc;
+      break;
+  }
+
+  // If necessary, materialize the offset into a register and use
+  // the indexed form.  Also handle stack pointers with special needs.
+  unsigned IndexReg = 0;
+  PPCSimplifyAddress(Addr, VT, UseOffset, IndexReg);
+  if (ResultReg == 0)
+    ResultReg = createResultReg(UseRC);
+
+  // Note: If we still have a frame index here, we know the offset is
+  // in range, as otherwise PPCSimplifyAddress would have converted it
+  // into a RegBase.
+  if (Addr.BaseType == Address::FrameIndexBase) {
+
+    MachineMemOperand *MMO =
+      FuncInfo.MF->getMachineMemOperand(
+        MachinePointerInfo::getFixedStack(Addr.Base.FI, Addr.Offset),
+        MachineMemOperand::MOLoad, MFI.getObjectSize(Addr.Base.FI),
+        MFI.getObjectAlignment(Addr.Base.FI));
+
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(Opc), ResultReg)
+      .addImm(Addr.Offset).addFrameIndex(Addr.Base.FI).addMemOperand(MMO);
+
+  // Base reg with offset in range.
+  } else if (UseOffset) {
+
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(Opc), ResultReg)
+      .addImm(Addr.Offset).addReg(Addr.Base.Reg);
+
+  // Indexed form.
+  } else {
+    // Get the RR opcode corresponding to the RI one.  FIXME: It would be
+    // preferable to use the ImmToIdxMap from PPCRegisterInfo.cpp, but it
+    // is hard to get at.
+    switch (Opc) {
+      default:        llvm_unreachable("Unexpected opcode!");
+      case PPC::LBZ:    Opc = PPC::LBZX;    break;
+      case PPC::LBZ8:   Opc = PPC::LBZX8;   break;
+      case PPC::LHZ:    Opc = PPC::LHZX;    break;
+      case PPC::LHZ8:   Opc = PPC::LHZX8;   break;
+      case PPC::LHA:    Opc = PPC::LHAX;    break;
+      case PPC::LHA8:   Opc = PPC::LHAX8;   break;
+      case PPC::LWZ:    Opc = PPC::LWZX;    break;
+      case PPC::LWZ8:   Opc = PPC::LWZX8;   break;
+      case PPC::LWA:    Opc = PPC::LWAX;    break;
+      case PPC::LWA_32: Opc = PPC::LWAX_32; break;
+      case PPC::LD:     Opc = PPC::LDX;     break;
+      case PPC::LFS:    Opc = PPC::LFSX;    break;
+      case PPC::LFD:    Opc = PPC::LFDX;    break;
+    }
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(Opc), ResultReg)
+      .addReg(Addr.Base.Reg).addReg(IndexReg);
+  }
+
+  return true;
+}
+
+// Attempt to fast-select a load instruction.
+bool PPCFastISel::SelectLoad(const Instruction *I) {
+  // FIXME: No atomic loads are supported.
+  if (cast<LoadInst>(I)->isAtomic())
+    return false;
+
+  // Verify we have a legal type before going any further.
+  MVT VT;
+  if (!isLoadTypeLegal(I->getType(), VT))
+    return false;
+
+  // See if we can handle this address.
+  Address Addr;
+  if (!PPCComputeAddress(I->getOperand(0), Addr))
+    return false;
+
+  // Look at the currently assigned register for this instruction
+  // to determine the required register class.  This is necessary
+  // to constrain RA from using R0/X0 when this is not legal.
+  unsigned AssignedReg = FuncInfo.ValueMap[I];
+  const TargetRegisterClass *RC =
+    AssignedReg ? MRI.getRegClass(AssignedReg) : 0;
+
+  unsigned ResultReg = 0;
+  if (!PPCEmitLoad(VT, ResultReg, Addr, RC))
+    return false;
+  UpdateValueMap(I, ResultReg);
+  return true;
+}
+
+// Emit a store instruction to store SrcReg at Addr.
+bool PPCFastISel::PPCEmitStore(MVT VT, unsigned SrcReg, Address &Addr) {
+  assert(SrcReg && "Nothing to store!");
+  unsigned Opc;
+  bool UseOffset = true;
+
+  const TargetRegisterClass *RC = MRI.getRegClass(SrcReg);
+  bool Is32BitInt = RC->hasSuperClassEq(&PPC::GPRCRegClass);
+
+  switch (VT.SimpleTy) {
+    default: // e.g., vector types not handled
+      return false;
+    case MVT::i8:
+      Opc = Is32BitInt ? PPC::STB : PPC::STB8;
+      break;
+    case MVT::i16:
+      Opc = Is32BitInt ? PPC::STH : PPC::STH8;
+      break;
+    case MVT::i32:
+      assert(Is32BitInt && "Not GPRC for i32??");
+      Opc = PPC::STW;
+      break;
+    case MVT::i64:
+      Opc = PPC::STD;
+      UseOffset = ((Addr.Offset & 3) == 0);
+      break;
+    case MVT::f32:
+      Opc = PPC::STFS;
+      break;
+    case MVT::f64:
+      Opc = PPC::STFD;
+      break;
+  }
+
+  // If necessary, materialize the offset into a register and use
+  // the indexed form.  Also handle stack pointers with special needs.
+  unsigned IndexReg = 0;
+  PPCSimplifyAddress(Addr, VT, UseOffset, IndexReg);
+
+  // Note: If we still have a frame index here, we know the offset is
+  // in range, as otherwise PPCSimplifyAddress would have converted it
+  // into a RegBase.
+  if (Addr.BaseType == Address::FrameIndexBase) {
+    MachineMemOperand *MMO =
+      FuncInfo.MF->getMachineMemOperand(
+        MachinePointerInfo::getFixedStack(Addr.Base.FI, Addr.Offset),
+        MachineMemOperand::MOStore, MFI.getObjectSize(Addr.Base.FI),
+        MFI.getObjectAlignment(Addr.Base.FI));
+
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(Opc)).addReg(SrcReg)
+      .addImm(Addr.Offset).addFrameIndex(Addr.Base.FI).addMemOperand(MMO);
+
+  // Base reg with offset in range.
+  } else if (UseOffset) {
+    if (Addr.Offset == 0 && Opc == PPC::STW8)
+      dbgs() << "Possible problem here.\n";
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(Opc))
+      .addReg(SrcReg).addImm(Addr.Offset).addReg(Addr.Base.Reg);
+
+  // Indexed form.
+  } else {
+    // Get the RR opcode corresponding to the RI one.  FIXME: It would be
+    // preferable to use the ImmToIdxMap from PPCRegisterInfo.cpp, but it
+    // is hard to get at.
+    switch (Opc) {
+      default:        llvm_unreachable("Unexpected opcode!");
+      case PPC::STB:  Opc = PPC::STBX;  break;
+      case PPC::STH : Opc = PPC::STHX;  break;
+      case PPC::STW : Opc = PPC::STWX;  break;
+      case PPC::STB8: Opc = PPC::STBX8; break;
+      case PPC::STH8: Opc = PPC::STHX8; break;
+      case PPC::STW8: Opc = PPC::STWX8; break;
+      case PPC::STD:  Opc = PPC::STDX;  break;
+      case PPC::STFS: Opc = PPC::STFSX; break;
+      case PPC::STFD: Opc = PPC::STFDX; break;
+    }
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(Opc))
+      .addReg(SrcReg).addReg(Addr.Base.Reg).addReg(IndexReg);
+  }
+
+  return true;
+}
+
+// Attempt to fast-select a store instruction.
+bool PPCFastISel::SelectStore(const Instruction *I) {
+  Value *Op0 = I->getOperand(0);
+  unsigned SrcReg = 0;
+
+  // FIXME: No atomics loads are supported.
+  if (cast<StoreInst>(I)->isAtomic())
+    return false;
+
+  // Verify we have a legal type before going any further.
+  MVT VT;
+  if (!isLoadTypeLegal(Op0->getType(), VT))
+    return false;
+
+  // Get the value to be stored into a register.
+  SrcReg = getRegForValue(Op0);
+  if (SrcReg == 0)
+    return false;
+
+  // See if we can handle this address.
+  Address Addr;
+  if (!PPCComputeAddress(I->getOperand(1), Addr))
+    return false;
+
+  if (!PPCEmitStore(VT, SrcReg, Addr))
+    return false;
+
+  return true;
 }
 
 // Attempt to fast-select a branch instruction.
@@ -327,6 +784,109 @@ bool PPCFastISel::PPCEmitCmp(const Value *SrcValue1, const Value *SrcValue2,
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(CmpOpc), DestReg)
       .addReg(SrcReg1).addImm(Imm);
 
+  return true;
+}
+
+// Attempt to fast-select a binary integer operation that isn't already
+// handled automatically.
+bool PPCFastISel::SelectBinaryIntOp(const Instruction *I, unsigned ISDOpcode) {
+  EVT DestVT  = TLI.getValueType(I->getType(), true);
+
+  // We can get here in the case when we have a binary operation on a non-legal
+  // type and the target independent selector doesn't know how to handle it.
+  if (DestVT != MVT::i16 && DestVT != MVT::i8)
+    return false;
+
+  // Look at the currently assigned register for this instruction
+  // to determine the required register class.  If there is no register,
+  // make a conservative choice (don't assign R0).
+  unsigned AssignedReg = FuncInfo.ValueMap[I];
+  const TargetRegisterClass *RC =
+    (AssignedReg ? MRI.getRegClass(AssignedReg) :
+     &PPC::GPRC_and_GPRC_NOR0RegClass);
+  bool IsGPRC = RC->hasSuperClassEq(&PPC::GPRCRegClass);
+
+  unsigned Opc;
+  switch (ISDOpcode) {
+    default: return false;
+    case ISD::ADD:
+      Opc = IsGPRC ? PPC::ADD4 : PPC::ADD8;
+      break;
+    case ISD::OR:
+      Opc = IsGPRC ? PPC::OR : PPC::OR8;
+      break;
+    case ISD::SUB:
+      Opc = IsGPRC ? PPC::SUBF : PPC::SUBF8;
+      break;
+  }
+
+  unsigned ResultReg = createResultReg(RC ? RC : &PPC::G8RCRegClass);
+  unsigned SrcReg1 = getRegForValue(I->getOperand(0));
+  if (SrcReg1 == 0) return false;
+
+  // Handle case of small immediate operand.
+  if (const ConstantInt *ConstInt = dyn_cast<ConstantInt>(I->getOperand(1))) {
+    const APInt &CIVal = ConstInt->getValue();
+    int Imm = (int)CIVal.getSExtValue();
+    bool UseImm = true;
+    if (isInt<16>(Imm)) {
+      switch (Opc) {
+        default:
+          llvm_unreachable("Missing case!");
+        case PPC::ADD4:
+          Opc = PPC::ADDI;
+          MRI.setRegClass(SrcReg1, &PPC::GPRC_and_GPRC_NOR0RegClass);
+          break;
+        case PPC::ADD8:
+          Opc = PPC::ADDI8;
+          MRI.setRegClass(SrcReg1, &PPC::G8RC_and_G8RC_NOX0RegClass);
+          break;
+        case PPC::OR:
+          Opc = PPC::ORI;
+          break;
+        case PPC::OR8:
+          Opc = PPC::ORI8;
+          break;
+        case PPC::SUBF:
+          if (Imm == -32768)
+            UseImm = false;
+          else {
+            Opc = PPC::ADDI;
+            MRI.setRegClass(SrcReg1, &PPC::GPRC_and_GPRC_NOR0RegClass);
+            Imm = -Imm;
+          }
+          break;
+        case PPC::SUBF8:
+          if (Imm == -32768)
+            UseImm = false;
+          else {
+            Opc = PPC::ADDI8;
+            MRI.setRegClass(SrcReg1, &PPC::G8RC_and_G8RC_NOX0RegClass);
+            Imm = -Imm;
+          }
+          break;
+      }
+
+      if (UseImm) {
+        BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(Opc), ResultReg)
+          .addReg(SrcReg1).addImm(Imm);
+        UpdateValueMap(I, ResultReg);
+        return true;
+      }
+    }
+  }
+
+  // Reg-reg case.
+  unsigned SrcReg2 = getRegForValue(I->getOperand(1));
+  if (SrcReg2 == 0) return false;
+
+  // Reverse operands for subtract-from.
+  if (ISDOpcode == ISD::SUB)
+    std::swap(SrcReg1, SrcReg2);
+
+  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(Opc), ResultReg)
+    .addReg(SrcReg1).addReg(SrcReg2);
+  UpdateValueMap(I, ResultReg);
   return true;
 }
 
@@ -551,10 +1111,20 @@ bool PPCFastISel::SelectIntExt(const Instruction *I) {
 bool PPCFastISel::TargetSelectInstruction(const Instruction *I) {
 
   switch (I->getOpcode()) {
+    case Instruction::Load:
+      return SelectLoad(I);
+    case Instruction::Store:
+      return SelectStore(I);
     case Instruction::Br:
       return SelectBranch(I);
     case Instruction::IndirectBr:
       return SelectIndirectBr(I);
+    case Instruction::Add:
+      return SelectBinaryIntOp(I, ISD::ADD);
+    case Instruction::Or:
+      return SelectBinaryIntOp(I, ISD::OR);
+    case Instruction::Sub:
+      return SelectBinaryIntOp(I, ISD::SUB);
     case Instruction::Ret:
       return SelectRet(I);
     case Instruction::ZExt:
@@ -606,6 +1176,68 @@ unsigned PPCFastISel::PPCMaterializeFP(const ConstantFP *CFP, MVT VT) {
       .addConstantPoolIndex(Idx, 0, PPCII::MO_TOC_LO)
       .addReg(TmpReg)
       .addMemOperand(MMO);
+  }
+
+  return DestReg;
+}
+
+// Materialize the address of a global value into a register, and return
+// the register number (or zero if we failed to handle it).
+unsigned PPCFastISel::PPCMaterializeGV(const GlobalValue *GV, MVT VT) {
+  assert(VT == MVT::i64 && "Non-address!");
+  const TargetRegisterClass *RC = &PPC::G8RC_and_G8RC_NOX0RegClass;
+  unsigned DestReg = createResultReg(RC);
+
+  // Global values may be plain old object addresses, TLS object
+  // addresses, constant pool entries, or jump tables.  How we generate
+  // code for these may depend on small, medium, or large code model.
+  CodeModel::Model CModel = TM.getCodeModel();
+
+  // FIXME: Jump tables are not yet required because fast-isel doesn't
+  // handle switches; if that changes, we need them as well.  For now,
+  // what follows assumes everything's a generic (or TLS) global address.
+  const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV);
+  if (!GVar) {
+    // If GV is an alias, use the aliasee for determining thread-locality.
+    if (const GlobalAlias *GA = dyn_cast<GlobalAlias>(GV))
+      GVar = dyn_cast_or_null<GlobalVariable>(GA->resolveAliasedGlobal(false));
+    assert((GVar || isa<Function>(GV)) && "Unexpected GV subclass!");
+  }
+
+  // FIXME: We don't yet handle the complexity of TLS.
+  bool IsTLS = GVar && GVar->isThreadLocal();
+  if (IsTLS)
+    return 0;
+
+  // For small code model, generate a simple TOC load.
+  if (CModel == CodeModel::Small || CModel == CodeModel::JITDefault)
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(PPC::LDtoc), DestReg)
+      .addGlobalAddress(GV).addReg(PPC::X2);
+  else {
+    // If the address is an externally defined symbol, a symbol with
+    // common or externally available linkage, a function address, or a
+    // jump table address (not yet needed), or if we are generating code
+    // for large code model, we generate:
+    //       LDtocL(GV, ADDIStocHA(%X2, GV))
+    // Otherwise we generate:
+    //       ADDItocL(ADDIStocHA(%X2, GV), GV)
+    // Either way, start with the ADDIStocHA:
+    unsigned HighPartReg = createResultReg(RC);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(PPC::ADDIStocHA),
+            HighPartReg).addReg(PPC::X2).addGlobalAddress(GV);
+
+    // !GVar implies a function address.  An external variable is one
+    // without an initializer.
+    // If/when switches are implemented, jump tables should be handled
+    // on the "if" path here.
+    if (CModel == CodeModel::Large || !GVar || !GVar->hasInitializer() ||
+        GVar->hasCommonLinkage() || GVar->hasAvailableExternallyLinkage())
+      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(PPC::LDtocL),
+              DestReg).addGlobalAddress(GV).addReg(HighPartReg);
+    else
+      // Otherwise generate the ADDItocL.
+      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(PPC::ADDItocL),
+              DestReg).addReg(HighPartReg).addGlobalAddress(GV);
   }
 
   return DestReg;
@@ -743,6 +1375,8 @@ unsigned PPCFastISel::TargetMaterializeConstant(const Constant *C) {
 
   if (const ConstantFP *CFP = dyn_cast<ConstantFP>(C))
     return PPCMaterializeFP(CFP, VT);
+  else if (const GlobalValue *GV = dyn_cast<GlobalValue>(C))
+    return PPCMaterializeGV(GV, VT);
   else if (isa<ConstantInt>(C))
     return PPCMaterializeInt(C, VT);
   // TBD: Global values.
@@ -756,10 +1390,82 @@ unsigned PPCFastISel::TargetMaterializeAlloca(const AllocaInst *AI) {
   return AI && 0;
 }
 
-// Fold loads into extends when possible.  TBD.
+// Fold loads into extends when possible.
+// FIXME: We can have multiple redundant extend/trunc instructions
+// following a load.  The folding only picks up one.  Extend this
+// to check subsequent instructions for the same pattern and remove
+// them.  Thus ResultReg should be the def reg for the last redundant
+// instruction in a chain, and all intervening instructions can be
+// removed from parent.  Change test/CodeGen/PowerPC/fast-isel-fold.ll
+// to add ELF64-NOT: rldicl to the appropriate tests when this works.
 bool PPCFastISel::tryToFoldLoadIntoMI(MachineInstr *MI, unsigned OpNo,
                                       const LoadInst *LI) {
-  return MI && OpNo && LI && false;
+  // Verify we have a legal type before going any further.
+  MVT VT;
+  if (!isLoadTypeLegal(LI->getType(), VT))
+    return false;
+
+  // Combine load followed by zero- or sign-extend.
+  bool IsZExt = false;
+  switch(MI->getOpcode()) {
+    default:
+      return false;
+
+    case PPC::RLDICL:
+    case PPC::RLDICL_32_64: {
+      IsZExt = true;
+      unsigned MB = MI->getOperand(3).getImm();
+      if ((VT == MVT::i8 && MB <= 56) ||
+          (VT == MVT::i16 && MB <= 48) ||
+          (VT == MVT::i32 && MB <= 32))
+        break;
+      return false;
+    }
+
+    case PPC::RLWINM:
+    case PPC::RLWINM8: {
+      IsZExt = true;
+      unsigned MB = MI->getOperand(3).getImm();
+      if ((VT == MVT::i8 && MB <= 24) ||
+          (VT == MVT::i16 && MB <= 16))
+        break;
+      return false;
+    }
+
+    case PPC::EXTSB:
+    case PPC::EXTSB8:
+    case PPC::EXTSB8_32_64:
+      /* There is no sign-extending load-byte instruction. */
+      return false;
+
+    case PPC::EXTSH:
+    case PPC::EXTSH8:
+    case PPC::EXTSH8_32_64: {
+      if (VT != MVT::i16 && VT != MVT::i8)
+        return false;
+      break;
+    }
+
+    case PPC::EXTSW:
+    case PPC::EXTSW_32_64: {
+      if (VT != MVT::i32 && VT != MVT::i16 && VT != MVT::i8)
+        return false;
+      break;
+    }
+  }
+
+  // See if we can handle this address.
+  Address Addr;
+  if (!PPCComputeAddress(LI->getOperand(0), Addr))
+    return false;
+
+  unsigned ResultReg = MI->getOperand(0).getReg();
+
+  if (!PPCEmitLoad(VT, ResultReg, Addr, 0, IsZExt))
+    return false;
+
+  MI->eraseFromParent();
+  return true;
 }
 
 // Attempt to lower call arguments in a faster way than done by
@@ -789,6 +1495,62 @@ unsigned PPCFastISel::FastEmit_i(MVT Ty, MVT VT, unsigned Opc, uint64_t Imm) {
     return PPCMaterialize64BitInt(Imm, RC);
   else
     return PPCMaterialize32BitInt(Imm, RC);
+}
+
+// Override for ADDI and ADDI8 to set the correct register class
+// on RHS operand 0.  The automatic infrastructure naively assumes
+// GPRC for i32 and G8RC for i64; the concept of "no R0" is lost
+// for these cases.  At the moment, none of the other automatically
+// generated RI instructions require special treatment.  However, once
+// SelectSelect is implemented, "isel" requires similar handling.
+//
+// Also be conservative about the output register class.  Avoid
+// assigning R0 or X0 to the output register for GPRC and G8RC
+// register classes, as any such result could be used in ADDI, etc.,
+// where those regs have another meaning.
+unsigned PPCFastISel::FastEmitInst_ri(unsigned MachineInstOpcode,
+                                      const TargetRegisterClass *RC,
+                                      unsigned Op0, bool Op0IsKill,
+                                      uint64_t Imm) {
+  if (MachineInstOpcode == PPC::ADDI)
+    MRI.setRegClass(Op0, &PPC::GPRC_and_GPRC_NOR0RegClass);
+  else if (MachineInstOpcode == PPC::ADDI8)
+    MRI.setRegClass(Op0, &PPC::G8RC_and_G8RC_NOX0RegClass);
+
+  const TargetRegisterClass *UseRC =
+    (RC == &PPC::GPRCRegClass ? &PPC::GPRC_and_GPRC_NOR0RegClass :
+     (RC == &PPC::G8RCRegClass ? &PPC::G8RC_and_G8RC_NOX0RegClass : RC));
+
+  return FastISel::FastEmitInst_ri(MachineInstOpcode, UseRC,
+                                   Op0, Op0IsKill, Imm);
+}
+
+// Override for instructions with one register operand to avoid use of
+// R0/X0.  The automatic infrastructure isn't aware of the context so
+// we must be conservative.
+unsigned PPCFastISel::FastEmitInst_r(unsigned MachineInstOpcode,
+                                     const TargetRegisterClass* RC,
+                                     unsigned Op0, bool Op0IsKill) {
+  const TargetRegisterClass *UseRC =
+    (RC == &PPC::GPRCRegClass ? &PPC::GPRC_and_GPRC_NOR0RegClass :
+     (RC == &PPC::G8RCRegClass ? &PPC::G8RC_and_G8RC_NOX0RegClass : RC));
+
+  return FastISel::FastEmitInst_r(MachineInstOpcode, UseRC, Op0, Op0IsKill);
+}
+
+// Override for instructions with two register operands to avoid use
+// of R0/X0.  The automatic infrastructure isn't aware of the context
+// so we must be conservative.
+unsigned PPCFastISel::FastEmitInst_rr(unsigned MachineInstOpcode,
+                                      const TargetRegisterClass* RC,
+                                      unsigned Op0, bool Op0IsKill,
+                                      unsigned Op1, bool Op1IsKill) {
+  const TargetRegisterClass *UseRC =
+    (RC == &PPC::GPRCRegClass ? &PPC::GPRC_and_GPRC_NOR0RegClass :
+     (RC == &PPC::G8RCRegClass ? &PPC::G8RC_and_G8RC_NOX0RegClass : RC));
+
+  return FastISel::FastEmitInst_rr(MachineInstOpcode, UseRC, Op0, Op0IsKill,
+                                   Op1, Op1IsKill);
 }
 
 namespace llvm {
