@@ -15,7 +15,7 @@ typedef NS_ENUM(NSInteger, wibble) {
 };
 
 
-typedef NS_OPTIONS(NSUInteger, UITableViewCellStyle) {
+typedef NS_ENUM(NSUInteger, UITableViewCellStyle) {
     UIViewAutoresizingNone                 = 0,
     UIViewAutoresizingFlexibleLeftMargin,
     UIViewAutoresizingFlexibleWidth,
@@ -91,4 +91,22 @@ typedef NS_OPTIONS(NSUInteger, UIStyle) {
     UIView0         = 0,
     UIView1 = 0XBADBEEF
 };
+
+
+typedef NS_ENUM(NSUInteger, NSBitmapImageFileType) {
+    NSTIFFFileType,
+    NSBMPFileType,
+    NSGIFFileType,
+    NSJPEGFileType,
+    NSPNGFileType,
+    NSJPEG2000FileType
+};
+
+
+typedef NS_ENUM(NSUInteger, NSAlertStyle) {
+    NSWarningAlertStyle = 0,
+    NSInformationalAlertStyle = 1,
+    NSCriticalAlertStyle = 2
+};
+
 

@@ -92,3 +92,21 @@ enum {
     UIView1 = 0XBADBEEF
 };
 typedef NSInteger UIStyle;
+
+enum {
+    NSTIFFFileType,
+    NSBMPFileType,
+    NSGIFFileType,
+    NSJPEGFileType,
+    NSPNGFileType,
+    NSJPEG2000FileType
+};
+typedef NSUInteger NSBitmapImageFileType;
+
+enum {
+    NSWarningAlertStyle = 0,
+    NSInformationalAlertStyle = 1,
+    NSCriticalAlertStyle = 2
+};
+typedef NSUInteger NSAlertStyle;
+
