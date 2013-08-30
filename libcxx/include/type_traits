@@ -1446,7 +1446,8 @@ __is_destructible_test(_Tp&);
 false_type
 __is_destructible_test(__any);
 
-template <class _Tp, bool = is_void<_Tp>::value || is_abstract<_Tp>::value>
+template <class _Tp, bool = is_void<_Tp>::value || is_abstract<_Tp>::value
+                                                || is_function<_Tp>::value>
 struct __destructible_imp
     : public common_type
         <

@@ -57,6 +57,8 @@ struct A
     ~A();
 };
 
+typedef void (Function) ();
+
 int main()
 {
     test_is_destructible<A>();
@@ -77,4 +79,5 @@ int main()
 #if __has_feature(cxx_access_control_sfinae) 
     test_is_not_destructible<NotEmpty>();
 #endif
+    test_is_not_destructible<Function>();
 }
