@@ -211,7 +211,7 @@ void *_ReturnAddress(void);
 unsigned int _rorx_u32(unsigned int, const unsigned int);
 int __cdecl _rdrand16_step(unsigned short *);
 int __cdecl _rdrand32_step(unsigned int *);
-unsigned int __cdecl _rotl(unsigned int _Value, int_Shift);
+unsigned int __cdecl _rotl(unsigned int _Value, int _Shift);
 unsigned short _rotl16(unsigned short _Value, unsigned char _Shift);
 unsigned __int64 __cdecl _rotl64(unsigned __int64 _Value, int _Shift);
 unsigned char _rotl8(unsigned char _Value, unsigned char _Shift);
