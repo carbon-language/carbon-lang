@@ -37,7 +37,7 @@ static void HandleMSP430InterruptAttr(Decl *d,
 
     // FIXME: Check for decl - it should be void ()(void).
 
-    Expr *NumParamsExpr = static_cast<Expr *>(Attr.getArg(0));
+    Expr *NumParamsExpr = static_cast<Expr *>(Attr.getArgAsExpr(0));
     llvm::APSInt NumParams(32);
     if (!NumParamsExpr->isIntegerConstantExpr(NumParams, S.Context)) {
       S.Diag(Attr.getLoc(), diag::err_attribute_argument_type)
@@ -235,7 +235,7 @@ namespace {
 
 static void HandleMips16Attr(Decl *D, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
-  if (Attr.hasParameterOrArguments()) {
+  if (Attr.getNumArgs()) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)
       << Attr.getName() << 0;
     return;
@@ -252,7 +252,7 @@ static void HandleMips16Attr(Decl *D, const AttributeList &Attr, Sema &S) {
 
 static void HandleNoMips16Attr(Decl *D, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
-  if (Attr.hasParameterOrArguments()) {
+  if (Attr.getNumArgs()) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)
       << Attr.getName() << 0;
     return;

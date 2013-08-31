@@ -87,6 +87,8 @@ void test1(A *a) {
 + (id)alloc;
 - (id)initWithInt: (int) i;
 - (id)myInit __attribute__((objc_method_family(init)));
+- (id)myBadInit __attribute__((objc_method_family(12)));  // expected-error {{'objc_method_family' attribute requires parameter 1 to be an identifier}}
+
 @end
 
 void rdar8861761() {

@@ -81,10 +81,11 @@ static void diagnoseBadTypeAttribute(Sema &S, const AttributeList &attr,
   StringRef name = attr.getName()->getName();
 
   // The GC attributes are usually written with macros;  special-case them.
-  if (useExpansionLoc && loc.isMacroID() && attr.getParameterName()) {
-    if (attr.getParameterName()->isStr("strong")) {
+  IdentifierInfo *II = attr.isArgIdent(0) ? attr.getArgAsIdent(0)->Ident : 0;
+  if (useExpansionLoc && loc.isMacroID() && II) {
+    if (II->isStr("strong")) {
       if (S.findMacroSpelling(loc, "__strong")) name = "__strong";
-    } else if (attr.getParameterName()->isStr("weak")) {
+    } else if (II->isStr("weak")) {
       if (S.findMacroSpelling(loc, "__weak")) name = "__weak";
     }
   }
@@ -3291,13 +3292,18 @@ static void transferARCOwnershipToDeclaratorChunk(TypeProcessingState &state,
   case Qualifiers::OCL_Autoreleasing: attrStr = "autoreleasing"; break;
   }
 
+  IdentifierLoc *Arg = new (S.Context) IdentifierLoc;
+  Arg->Ident = &S.Context.Idents.get(attrStr);
+  Arg->Loc = SourceLocation();
+
+  ArgsUnion Args(Arg);
+
   // If there wasn't one, add one (with an invalid source location
   // so that we don't make an AttributedType for it).
   AttributeList *attr = D.getAttributePool()
     .create(&S.Context.Idents.get("objc_ownership"), SourceLocation(),
             /*scope*/ 0, SourceLocation(),
-            &S.Context.Idents.get(attrStr), SourceLocation(),
-            /*args*/ 0, 0, AttributeList::AS_GNU);
+            /*args*/ &Args, 1, AttributeList::AS_GNU);
   spliceAttrIntoList(*attr, chunk.getAttrListRef());
 
   // TODO: mark whether we did this inference?
@@ -3435,10 +3441,10 @@ static void fillAttributedTypeLoc(AttributedTypeLoc TL,
   }
 
   TL.setAttrNameLoc(attrs->getLoc());
-  if (TL.hasAttrExprOperand())
-    TL.setAttrExprOperand(attrs->getArg(0));
-  else if (TL.hasAttrEnumOperand())
-    TL.setAttrEnumOperandLoc(attrs->getParameterLoc());
+  if (TL.hasAttrExprOperand() && attrs->isArgExpr(0))
+    TL.setAttrExprOperand(attrs->getArgAsExpr(0));
+  else if (TL.hasAttrEnumOperand() && attrs->isArgIdent(0))
+    TL.setAttrEnumOperandLoc(attrs->getArgAsIdent(0)->Loc);
 
   // FIXME: preserve this information to here.
   if (TL.hasAttrOperand())
@@ -3902,7 +3908,7 @@ static void HandleAddressSpaceTypeAttribute(QualType &Type,
     Attr.setInvalid();
     return;
   }
-  Expr *ASArgExpr = static_cast<Expr *>(Attr.getArg(0));
+  Expr *ASArgExpr = static_cast<Expr *>(Attr.getArgAsExpr(0));
   llvm::APSInt addrSpace(32);
   if (ASArgExpr->isTypeDependent() || ASArgExpr->isValueDependent() ||
       !ASArgExpr->isIntegerConstantExpr(addrSpace, S.Context)) {
@@ -4002,7 +4008,7 @@ static bool handleObjCOwnershipTypeAttr(TypeProcessingState &state,
   if (AttrLoc.isMacroID())
     AttrLoc = S.getSourceManager().getImmediateExpansionRange(AttrLoc).first;
 
-  if (!attr.getParameterName()) {
+  if (!attr.isArgIdent(0)) {
     S.Diag(AttrLoc, diag::err_attribute_argument_type)
       << attr.getName() << AANT_ArgumentString;
     attr.setInvalid();
@@ -4014,18 +4020,19 @@ static bool handleObjCOwnershipTypeAttr(TypeProcessingState &state,
   if (!S.getLangOpts().ObjCAutoRefCount)
     return true;
 
+  IdentifierInfo *II = attr.getArgAsIdent(0)->Ident;
   Qualifiers::ObjCLifetime lifetime;
-  if (attr.getParameterName()->isStr("none"))
+  if (II->isStr("none"))
     lifetime = Qualifiers::OCL_ExplicitNone;
-  else if (attr.getParameterName()->isStr("strong"))
+  else if (II->isStr("strong"))
     lifetime = Qualifiers::OCL_Strong;
-  else if (attr.getParameterName()->isStr("weak"))
+  else if (II->isStr("weak"))
     lifetime = Qualifiers::OCL_Weak;
-  else if (attr.getParameterName()->isStr("autoreleasing"))
+  else if (II->isStr("autoreleasing"))
     lifetime = Qualifiers::OCL_Autoreleasing;
   else {
     S.Diag(AttrLoc, diag::warn_attribute_type_not_supported)
-      << "objc_ownership" << attr.getParameterName();
+      << "objc_ownership" << II;
     attr.setInvalid();
     return true;
   }
@@ -4136,28 +4143,30 @@ static bool handleObjCGCTypeAttr(TypeProcessingState &state,
     attr.setInvalid();
     return true;
   }
-
+  
   // Check the attribute arguments.
-  if (!attr.getParameterName()) {
+  if (!attr.isArgIdent(0)) {
     S.Diag(attr.getLoc(), diag::err_attribute_argument_type)
       << attr.getName() << AANT_ArgumentString;
     attr.setInvalid();
     return true;
   }
   Qualifiers::GC GCAttr;
-  if (attr.getNumArgs() != 0) {
+  if (attr.getNumArgs() > 1) {
     S.Diag(attr.getLoc(), diag::err_attribute_wrong_number_arguments)
       << attr.getName() << 1;
     attr.setInvalid();
     return true;
   }
-  if (attr.getParameterName()->isStr("weak"))
+
+  IdentifierInfo *II = attr.getArgAsIdent(0)->Ident;
+  if (II->isStr("weak"))
     GCAttr = Qualifiers::Weak;
-  else if (attr.getParameterName()->isStr("strong"))
+  else if (II->isStr("strong"))
     GCAttr = Qualifiers::Strong;
   else {
     S.Diag(attr.getLoc(), diag::warn_attribute_type_not_supported)
-      << "objc_gc" << attr.getParameterName();
+      << "objc_gc" << II;
     attr.setInvalid();
     return true;
   }
@@ -4383,7 +4392,7 @@ static AttributedType::Kind getCCTypeAttrKind(AttributeList &Attr) {
     return AttributedType::attr_pascal;
   case AttributeList::AT_Pcs: {
     // We know attr is valid so it can only have one of two strings args.
-    StringLiteral *Str = cast<StringLiteral>(Attr.getArg(0));
+    StringLiteral *Str = cast<StringLiteral>(Attr.getArgAsExpr(0));
     return llvm::StringSwitch<AttributedType::Kind>(Str->getString())
         .Case("aapcs", AttributedType::attr_pcs)
         .Case("aapcs-vfp", AttributedType::attr_pcs_vfp);
@@ -4567,7 +4576,7 @@ static void HandleOpenCLImageAccessAttribute(QualType& CurType,
     Attr.setInvalid();
     return;
   }
-  Expr *sizeExpr = static_cast<Expr *>(Attr.getArg(0));
+  Expr *sizeExpr = static_cast<Expr *>(Attr.getArgAsExpr(0));
   llvm::APSInt arg(32);
   if (sizeExpr->isTypeDependent() || sizeExpr->isValueDependent() ||
       !sizeExpr->isIntegerConstantExpr(arg, S.Context)) {
@@ -4609,7 +4618,7 @@ static void HandleVectorSizeAttr(QualType& CurType, const AttributeList &Attr,
     Attr.setInvalid();
     return;
   }
-  Expr *sizeExpr = static_cast<Expr *>(Attr.getArg(0));
+  Expr *sizeExpr = static_cast<Expr *>(Attr.getArgAsExpr(0));
   llvm::APSInt vecSize(32);
   if (sizeExpr->isTypeDependent() || sizeExpr->isValueDependent() ||
       !sizeExpr->isIntegerConstantExpr(vecSize, S.Context)) {
@@ -4661,14 +4670,21 @@ static void HandleVectorSizeAttr(QualType& CurType, const AttributeList &Attr,
 static void HandleExtVectorTypeAttr(QualType &CurType,
                                     const AttributeList &Attr,
                                     Sema &S) {
+  // check the attribute arguments.
+  if (Attr.getNumArgs() != 1) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)
+      << Attr.getName() << 1;
+    return;
+  }
+
   Expr *sizeExpr;
 
   // Special case where the argument is a template id.
-  if (Attr.getParameterName()) {
+  if (Attr.isArgIdent(0)) {
     CXXScopeSpec SS;
     SourceLocation TemplateKWLoc;
     UnqualifiedId id;
-    id.setIdentifier(Attr.getParameterName(), Attr.getLoc());
+    id.setIdentifier(Attr.getArgAsIdent(0)->Ident, Attr.getLoc());
 
     ExprResult Size = S.ActOnIdExpression(S.getCurScope(), SS, TemplateKWLoc,
                                           id, false, false);
@@ -4677,13 +4693,7 @@ static void HandleExtVectorTypeAttr(QualType &CurType,
 
     sizeExpr = Size.get();
   } else {
-    // check the attribute arguments.
-    if (Attr.getNumArgs() != 1) {
-      S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)
-        << Attr.getName() << 1;
-      return;
-    }
-    sizeExpr = Attr.getArg(0);
+    sizeExpr = Attr.getArgAsExpr(0);
   }
 
   // Create the vector type.
@@ -4746,7 +4756,7 @@ static void HandleNeonVectorTypeAttr(QualType& CurType,
     return;
   }
   // The number of elements must be an ICE.
-  Expr *numEltsExpr = static_cast<Expr *>(Attr.getArg(0));
+  Expr *numEltsExpr = static_cast<Expr *>(Attr.getArgAsExpr(0));
   llvm::APSInt numEltsInt(32);
   if (numEltsExpr->isTypeDependent() || numEltsExpr->isValueDependent() ||
       !numEltsExpr->isIntegerConstantExpr(numEltsInt, S.Context)) {

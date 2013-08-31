@@ -7,7 +7,7 @@ struct A {};
 typedef struct A *MPI_Datatype;
 
 int wrong1(void *buf, MPI_Datatype datatype)
-    __attribute__(( pointer_with_type_tag )); // expected-error {{attribute requires parameter 1 to be an identifier}}
+    __attribute__(( pointer_with_type_tag )); // expected-error {{'pointer_with_type_tag' attribute requires parameter 1 to be an identifier}}
 
 int wrong2(void *buf, MPI_Datatype datatype)
     __attribute__(( pointer_with_type_tag(mpi,0,7) )); // expected-error {{attribute parameter 2 is out of bounds}}
@@ -39,7 +39,7 @@ int wrong10(double buf, MPI_Datatype type)
 
 
 extern struct A datatype_wrong1
-    __attribute__(( type_tag_for_datatype )); // expected-error {{attribute requires parameter 1 to be an identifier}}
+    __attribute__(( type_tag_for_datatype )); // expected-error {{'type_tag_for_datatype' attribute requires parameter 1 to be an identifier}}
 
 extern struct A datatype_wrong2
     __attribute__(( type_tag_for_datatype(mpi,1,2) )); // expected-error {{expected a type}}

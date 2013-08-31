@@ -25,7 +25,7 @@ size_t AttributeList::allocated_size() const {
     return AttributeFactory::TypeTagForDatatypeAllocSize;
   else if (IsProperty)
     return AttributeFactory::PropertyAllocSize;
-  return (sizeof(AttributeList) + NumArgs * sizeof(Expr*));
+  return (sizeof(AttributeList) + NumArgs * sizeof(ArgsUnion));
 }
 
 AttributeFactory::AttributeFactory() {
@@ -98,10 +98,9 @@ void AttributePool::takePool(AttributeList *pool) {
 AttributeList *
 AttributePool::createIntegerAttribute(ASTContext &C, IdentifierInfo *Name,
                                       SourceLocation TokLoc, int Arg) {
-  Expr *IArg = IntegerLiteral::Create(C, llvm::APInt(32, (uint64_t) Arg),
+  ArgsUnion IArg = IntegerLiteral::Create(C, llvm::APInt(32, (uint64_t) Arg),
                                       C.IntTy, TokLoc);
-  return create(Name, TokLoc, 0, TokLoc, 0, TokLoc, &IArg, 1,
-                AttributeList::AS_GNU);
+  return create(Name, TokLoc, 0, TokLoc, &IArg, 1, AttributeList::AS_GNU);
 }
 
 #include "clang/Sema/AttrParsedAttrKinds.inc"

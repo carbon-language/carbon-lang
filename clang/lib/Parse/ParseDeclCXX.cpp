@@ -987,8 +987,8 @@ void Parser::ParseMicrosoftInheritanceClassAttributes(ParsedAttributes &attrs) {
          Tok.is(tok::kw___virtual_inheritance)) {
     IdentifierInfo *AttrName = Tok.getIdentifierInfo();
     SourceLocation AttrNameLoc = ConsumeToken();
-    attrs.addNew(AttrName, AttrNameLoc, 0, AttrNameLoc, 0,
-                 SourceLocation(), 0, 0, AttributeList::AS_GNU);
+    attrs.addNew(AttrName, AttrNameLoc, 0, AttrNameLoc, 0, 0,
+                 AttributeList::AS_GNU);
   }
 }
 
@@ -3245,8 +3245,7 @@ void Parser::ParseCXX11AttributeSpecifier(ParsedAttributes &attrs,
       attrs.addNew(AttrName,
                    SourceRange(ScopeLoc.isValid() ? ScopeLoc : AttrLoc,
                                AttrLoc),
-                   ScopeName, ScopeLoc, 0,
-                   SourceLocation(), 0, 0, AttributeList::AS_CXX11);
+                   ScopeName, ScopeLoc, 0, 0, AttributeList::AS_CXX11);
 
     if (Tok.is(tok::ellipsis)) {
       ConsumeToken();

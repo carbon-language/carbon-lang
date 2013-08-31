@@ -6,4 +6,4 @@ constant long b __attribute__((endian(device))) = 100;
 
 constant long c __attribute__((endian(none))) = 100; // expected-warning {{unknown endian 'none'}}
 
-void func() __attribute__((endian(host))); // expected-warning {{endian attribute only applies to variables}}
+void func() __attribute__((endian(host))); // expected-warning {{'endian' attribute only applies to variables}}
