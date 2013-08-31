@@ -35,6 +35,8 @@ test(const FromDuration& df, const ToDuration& d)
     }
 }
 
+#if _LIBCPP_STD_VER > 11
+
 template<class FromDuration, long long From, class ToDuration, long long To>
 void test_constexpr ()
 {
@@ -48,6 +50,8 @@ void test_constexpr ()
     }
 
 }
+
+#endif
 
 int main()
 {
