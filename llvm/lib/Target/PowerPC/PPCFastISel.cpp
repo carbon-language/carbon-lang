@@ -37,6 +37,25 @@
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetMachine.h"
 
+//===----------------------------------------------------------------------===//
+//
+// TBD:
+//   FastLowerArguments: Handle simple cases.
+//   PPCMaterializeGV: Handle TLS.
+//   SelectCall: Handle function pointers.
+//   SelectCall: Handle multi-register return values.
+//   SelectCall: Optimize away nops for local calls.
+//   processCallArgs: Handle bit-converted arguments.
+//   finishCall: Handle multi-register return values.
+//   PPCComputeAddress: Handle parameter references as FrameIndex's.
+//   PPCEmitCmp: Handle immediate as operand 1.
+//   SelectCall: Handle small byval arguments.
+//   SelectIntrinsicCall: Implement.
+//   SelectSelect: Implement.
+//   Consider factoring isTypeLegal into the base class.
+//   Implement switches and jump tables.
+//
+//===----------------------------------------------------------------------===//
 using namespace llvm;
 
 namespace {
@@ -1651,23 +1670,6 @@ bool PPCFastISel::SelectIndirectBr(const Instruction *I) {
   return true;
 }
 
-// Attempt to fast-select a compare instruction.
-bool PPCFastISel::SelectCmp(const Instruction *I) {
-  const CmpInst *CI = cast<CmpInst>(I);
-  Optional<PPC::Predicate> OptPPCPred = getComparePred(CI->getPredicate());
-  if (!OptPPCPred)
-    return false;
-
-  unsigned CondReg = createResultReg(&PPC::CRRCRegClass);
-
-  if (!PPCEmitCmp(CI->getOperand(0), CI->getOperand(1), CI->isUnsigned(),
-                  CondReg))
-    return false;
-
-  UpdateValueMap(I, CondReg);
-  return true;
-}
-
 // Attempt to fast-select an integer truncate instruction.
 bool PPCFastISel::SelectTrunc(const Instruction *I) {
   Value *Src  = I->getOperand(0);
@@ -2025,15 +2027,30 @@ unsigned PPCFastISel::TargetMaterializeConstant(const Constant *C) {
     return PPCMaterializeGV(GV, VT);
   else if (isa<ConstantInt>(C))
     return PPCMaterializeInt(C, VT);
-  // TBD: Global values.
 
   return 0;
 }
 
 // Materialize the address created by an alloca into a register, and
-// return the register number (or zero if we failed to handle it).  TBD.
+// return the register number (or zero if we failed to handle it).
 unsigned PPCFastISel::TargetMaterializeAlloca(const AllocaInst *AI) {
-  return AI && 0;
+  // Don't handle dynamic allocas.
+  if (!FuncInfo.StaticAllocaMap.count(AI)) return 0;
+
+  MVT VT;
+  if (!isLoadTypeLegal(AI->getType(), VT)) return 0;
+
+  DenseMap<const AllocaInst*, int>::iterator SI =
+    FuncInfo.StaticAllocaMap.find(AI);
+
+  if (SI != FuncInfo.StaticAllocaMap.end()) {
+    unsigned ResultReg = createResultReg(&PPC::G8RC_and_G8RC_NOX0RegClass);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(PPC::ADDI8),
+            ResultReg).addFrameIndex(SI->second).addImm(0);
+    return ResultReg;
+  }
+
+  return 0;
 }
 
 // Fold loads into extends when possible.
