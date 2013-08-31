@@ -328,6 +328,7 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
       case 16: RegClassID = UseVReg ? AMDGPU::VReg_512RegClassID :
                                       AMDGPU::SReg_512RegClassID;
         break;
+      default: llvm_unreachable("Do not know how to lower this BUILD_VECTOR");
       }
     } else {
       // BUILD_VECTOR was lowered into an IMPLICIT_DEF + 4 INSERT_SUBREG
