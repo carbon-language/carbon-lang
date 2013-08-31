@@ -159,6 +159,22 @@ public:
   /// Get the entry symbol name
   virtual StringRef entrySymbolName() const;
 
+  /// add to the list of initializer functions
+  void addInitFunction(StringRef name) { _initFunctions.push_back(name); }
+
+  /// add to the list of finalizer functions
+  void addFiniFunction(StringRef name) { _finiFunctions.push_back(name); }
+
+  /// Return the list of initializer symbols that are specified in the
+  /// linker command line, using the -init option.
+  range<const StringRef *> initFunctions() const {
+    return _initFunctions;
+  }
+
+  /// Return the list of finalizer symbols that are specified in the
+  /// linker command line, using the -fini option.
+  range<const StringRef *> finiFunctions() const { return _finiFunctions; }
+
 private:
   ELFLinkingContext() LLVM_DELETED_FUNCTION;
 
@@ -189,6 +205,8 @@ protected:
   std::unique_ptr<Writer> _writer;
   std::unique_ptr<Reader> _linkerScriptReader;
   StringRef _dynamicLinkerPath;
+  StringRefVector _initFunctions;
+  StringRefVector _finiFunctions;
 };
 } // end namespace lld
 

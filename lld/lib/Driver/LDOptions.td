@@ -18,6 +18,13 @@ multiclass smDash<string opt1, string opt2, string help> {
       Alias<!cast<Option>(opt1)>;
 }
 
+// Support -<option>,-<option>=
+multiclass dashEq<string opt1, string opt2, string help> {
+  def "" : Separate<["-"], opt1>, HelpText<help>;
+  def opt2_eq : Separate<["-"], opt2#"=">,
+      Alias<!cast<Option>(opt1)>;
+}
+
 defm e : smDash<"e", "entry",
          "Name of entry point symbol">;
 
@@ -101,6 +108,12 @@ def as_needed : Flag<["--"], "as-needed">,
 def no_as_needed : Flag<["--"], "no-as-needed">,
     HelpText<"This option restores the default behavior"
              " of adding DT_NEEDED entries">;
+
+defm init: dashEq<"init", "init",
+                 "Specify an initializer function">;
+
+defm fini: dashEq<"fini", "fini",
+                 "Specify a finalizer function">;
 
 // extensions
 def emit_yaml : Flag<["-"], "emit-yaml">, 

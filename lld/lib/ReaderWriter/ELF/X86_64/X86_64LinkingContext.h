@@ -75,6 +75,9 @@ public:
     }
   }
 
+  /// \brief Create Internal files for Init/Fini
+  std::vector<std::unique_ptr<File>> createInternalFiles();
+
   virtual ErrorOr<Reference::Kind> relocKindFromString(StringRef str) const;
   virtual ErrorOr<std::string> stringFromRelocKind(Reference::Kind kind) const;
 };

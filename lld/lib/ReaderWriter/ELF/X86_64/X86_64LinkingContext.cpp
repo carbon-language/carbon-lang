@@ -29,6 +29,7 @@ using namespace llvm::ELF;
 
 // .got values
 const uint8_t x86_64GotAtomContent[8] = { 0 };
+const uint8_t x86_64InitFiniAtomContent[8] = { 0 };
 
 // .plt value (entry 0)
 const uint8_t x86_64Plt0AtomContent[16] = {
@@ -393,7 +394,68 @@ public:
       const_cast<Reference &>(ref).setTarget(getSharedGOT(sla));
   }
 };
+
+// X86_64InitFini Atom
+class X86_64InitAtom : public InitFiniAtom {
+public:
+  X86_64InitAtom(const File &f, StringRef function)
+      : InitFiniAtom(f, ".init_array") {
+#ifndef NDEBUG
+    _name = "__init_fn";
+    _name += function;
+#endif
+  }
+  virtual ArrayRef<uint8_t> rawContent() const {
+    return ArrayRef<uint8_t>(x86_64InitFiniAtomContent, 8);
+  }
+};
+
+class X86_64FiniAtom : public InitFiniAtom {
+public:
+  X86_64FiniAtom(const File &f, StringRef function)
+      : InitFiniAtom(f, ".fini_array") {
+#ifndef NDEBUG
+    _name = "__fini_fn_";
+    _name += function;
+#endif
+  }
+  virtual ArrayRef<uint8_t> rawContent() const {
+    return ArrayRef<uint8_t>(x86_64InitFiniAtomContent, 8);
+  }
+};
+
+class X86_64InitFiniFile : public SimpleFile {
+public:
+  X86_64InitFiniFile(const ELFLinkingContext &context):
+    SimpleFile(context, "command line option -init/-fini")
+  {}
+
+  void addInitFunction(StringRef name) {
+    Atom *initFunctionAtom = new (_allocator) SimpleUndefinedAtom(*this, name);
+    X86_64InitAtom *initAtom =
+           (new (_allocator) X86_64InitAtom(*this, name));
+    initAtom->addReference(llvm::ELF::R_X86_64_64, 0, initFunctionAtom, 0);
+    initAtom->setOrdinal(_ordinal++);
+    addAtom(*initFunctionAtom);
+    addAtom(*initAtom);
+  }
+
+  void addFiniFunction(StringRef name) {
+    Atom *finiFunctionAtom = new (_allocator) SimpleUndefinedAtom(*this, name);
+    X86_64FiniAtom *finiAtom =
+           (new (_allocator) X86_64FiniAtom(*this, name));
+    finiAtom->addReference(llvm::ELF::R_X86_64_64, 0, finiFunctionAtom, 0);
+    finiAtom->setOrdinal(_ordinal++);
+    addAtom(*finiFunctionAtom);
+    addAtom(*finiAtom);
+  }
+
+private:
+  llvm::BumpPtrAllocator _allocator;
+};
+
 } // end anon namespace
+
 
 void elf::X86_64LinkingContext::addPasses(PassManager &pm) const {
   switch (_outputFileType) {
@@ -412,6 +474,20 @@ void elf::X86_64LinkingContext::addPasses(PassManager &pm) const {
     llvm_unreachable("Unhandled output file type");
   }
   ELFLinkingContext::addPasses(pm);
+}
+
+std::vector<std::unique_ptr<File>>
+  elf::X86_64LinkingContext::createInternalFiles(){
+  std::vector<std::unique_ptr<File> > result =
+    ELFLinkingContext::createInternalFiles();
+  std::unique_ptr<X86_64InitFiniFile>
+    initFiniFile(new X86_64InitFiniFile(*this));
+  for (auto ai:initFunctions())
+    initFiniFile->addInitFunction(ai);
+  for (auto ai:finiFunctions())
+    initFiniFile->addFiniFunction(ai);
+  result.push_back(std::move(initFiniFile));
+  return result;
 }
 
 #define LLD_CASE(name) .Case(#name, llvm::ELF::name)
@@ -497,3 +573,4 @@ elf::X86_64LinkingContext::stringFromRelocKind(Reference::Kind kind) const {
 
   return make_error_code(yaml_reader_error::illegal_value);
 }
+

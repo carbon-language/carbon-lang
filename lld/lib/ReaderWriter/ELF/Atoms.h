@@ -879,6 +879,39 @@ public:
   virtual ArrayRef<uint8_t> rawContent() const { return ArrayRef<uint8_t>(); }
 };
 
+class InitFiniAtom : public SimpleDefinedAtom {
+  StringRef _section;
+
+public:
+  InitFiniAtom(const File &f, StringRef secName)
+      : SimpleDefinedAtom(f), _section(secName) {
+  }
+
+  virtual Scope scope() const { return scopeGlobal; }
+
+  virtual SectionChoice sectionChoice() const { return sectionCustomRequired; }
+
+  virtual StringRef customSectionName() const { return _section; }
+
+  virtual ContentType contentType() const { return typeStub; }
+
+  virtual uint64_t size() const { return rawContent().size(); }
+
+  virtual ContentPermissions permissions() const { return permRW_; }
+
+  virtual ArrayRef<uint8_t> rawContent() const = 0;
+
+  virtual Alignment alignment() const { return size(); }
+
+#ifndef NDEBUG
+  virtual StringRef name() const { return _name; }
+
+  std::string _name;
+#else
+  virtual StringRef name() const { return ""; }
+#endif
+};
+
 } // end namespace elf
 } // end namespace lld
 

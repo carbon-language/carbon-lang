@@ -230,6 +230,14 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
       ctx->addInitialUndefinedSymbol(inputArg->getValue());
       break;
 
+    case OPT_init:
+      ctx->addInitFunction(inputArg->getValue());
+      break;
+
+    case OPT_fini:
+      ctx->addFiniFunction(inputArg->getValue());
+      break;
+
     case OPT_emit_yaml:
       if (!_outputOptionSet)
         ctx->setOutputPath("-");
