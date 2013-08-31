@@ -157,6 +157,7 @@ class PressureDiffs {
   unsigned Max;
 public:
   PressureDiffs(): PDiffArray(0), Size(0), Max(0) {}
+  ~PressureDiffs() { free(PDiffArray); }
 
   void init(unsigned N);
 
