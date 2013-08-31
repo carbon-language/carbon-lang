@@ -177,13 +177,26 @@ priorNonDebug(MachineBasicBlock::iterator I,
 
 /// If this iterator is a debug value, increment until reaching the End or a
 /// non-debug instruction.
-static MachineBasicBlock::iterator
-nextIfDebug(MachineBasicBlock::iterator I, MachineBasicBlock::iterator End) {
+static MachineBasicBlock::const_iterator
+nextIfDebug(MachineBasicBlock::const_iterator I,
+            MachineBasicBlock::const_iterator End) {
   for(; I != End; ++I) {
     if (!I->isDebugValue())
       break;
   }
   return I;
+}
+
+/// Non-const version.
+static MachineBasicBlock::iterator
+nextIfDebug(MachineBasicBlock::iterator I,
+            MachineBasicBlock::const_iterator End) {
+  // Cast the return value to nonconst MachineInstr, then cast to an
+  // instr_iterator, which does not check for null, finally return a
+  // bundle_iterator.
+  return MachineBasicBlock::instr_iterator(
+    const_cast<MachineInstr*>(
+      &*nextIfDebug(MachineBasicBlock::const_iterator(I), End)));
 }
 
 /// Top-level MachineScheduler pass driver.
@@ -565,10 +578,12 @@ void ScheduleDAGMI::updatePressureDiffs(ArrayRef<unsigned> LiveUses) {
     // instruction's live-out.
     const LiveInterval &LI = LIS->getInterval(Reg);
     VNInfo *VNI;
-    if (BotRPTracker.getPos() == BB->end())
+    MachineBasicBlock::const_iterator I =
+      nextIfDebug(BotRPTracker.getPos(), BB->end());
+    if (I == BB->end())
       VNI = LI.getVNInfoBefore(LIS->getMBBEndIdx(BB));
     else {
-      LiveRangeQuery LRQ(LI, LIS->getInstructionIndex(BotRPTracker.getPos()));
+      LiveRangeQuery LRQ(LI, LIS->getInstructionIndex(I));
       VNI = LRQ.valueIn();
     }
     // RegisterPressureTracker guarantees that readsReg is true for LiveUses.
