@@ -10,7 +10,7 @@
 #ifndef LLD_READER_WRITER_ELF_HEXAGON_EXECUTABLE_ATOM_H
 #define LLD_READER_WRITER_ELF_HEXAGON_EXECUTABLE_ATOM_H
 
-#include "ExecutableAtoms.h"
+#include "File.h"
 
 namespace lld {
 namespace elf {

@@ -289,6 +289,8 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
     return true;
   }
 
+  inputGraph->addInternalFile(ctx->createInternalFiles());
+
   if (ctx->outputYAML())
     inputGraph->dump(diagnostics);
 

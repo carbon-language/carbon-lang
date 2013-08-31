@@ -17,25 +17,15 @@
 #include "llvm/ADT/StringSet.h"
 
 #include "DefaultLayout.h"
+#include "File.h"
 #include "TargetLayout.h"
-#include "ExecutableAtoms.h"
 
 namespace lld {
 namespace elf {
 using namespace llvm;
 using namespace llvm::object;
 
-template<class ELFT>
-class OutputELFWriter;
-
-/// \brief This acts as a internal file that the linker uses to add
-/// undefined symbols that are defined by using the linker options such
-/// as -u, or --defsym option.
-template <class ELFT> class LinkerInternalFile : public CRuntimeFile<ELFT> {
-public:
-  LinkerInternalFile(const ELFLinkingContext &context)
-      : CRuntimeFile<ELFT>(context, "Linker Internal File") {};
-};
+template <class ELFT> class OutputELFWriter;
 
 //===----------------------------------------------------------------------===//
 //  OutputELFWriter Class
@@ -123,7 +113,6 @@ protected:
   LLD_UNIQUE_BUMP_PTR(HashSection<ELFT>) _hashTable;
   llvm::StringSet<> _soNeeded;
   /// @}
-  LinkerInternalFile<ELFT> _linkerInternalFile;
 };
 
 //===----------------------------------------------------------------------===//
@@ -131,8 +120,7 @@ protected:
 //===----------------------------------------------------------------------===//
 template <class ELFT>
 OutputELFWriter<ELFT>::OutputELFWriter(const ELFLinkingContext &context)
-    : _context(context), _targetHandler(context.getTargetHandler<ELFT>()),
-      _linkerInternalFile(context) {
+    : _context(context), _targetHandler(context.getTargetHandler<ELFT>()) {
   _layout = &_targetHandler.targetLayout();
 }
 
@@ -238,12 +226,6 @@ template <class ELFT>
 void OutputELFWriter<ELFT>::addFiles(InputFiles &inputFiles) {
   // Add all input Files that are defined by the target
   _targetHandler.addFiles(inputFiles);
-  // Add all symbols that are specified by the -u option
-  // as part of the command line argument to lld
-  for (auto ai : _context.initialUndefinedSymbols())
-    _linkerInternalFile.addUndefinedAtom(ai);
-  // Make the linker internal file to be the first file
-  inputFiles.prependFile(_linkerInternalFile);
 }
 
 template <class ELFT> void OutputELFWriter<ELFT>::createDefaultSections() {

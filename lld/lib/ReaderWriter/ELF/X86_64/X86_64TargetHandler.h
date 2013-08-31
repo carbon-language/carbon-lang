@@ -11,6 +11,7 @@
 #define LLD_READER_WRITER_ELF_X86_64_TARGET_HANDLER_H
 
 #include "DefaultTargetHandler.h"
+#include "File.h"
 #include "X86_64RelocationHandler.h"
 #include "TargetLayout.h"
 

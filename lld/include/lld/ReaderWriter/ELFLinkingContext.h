@@ -10,9 +10,11 @@
 #ifndef LLD_READER_WRITER_ELF_LINKER_CONTEXT_H
 #define LLD_READER_WRITER_ELF_LINKER_CONTEXT_H
 
+#include "lld/Core/LinkingContext.h"
 #include "lld/Core/PassManager.h"
 #include "lld/Core/Pass.h"
-#include "lld/Core/LinkingContext.h"
+#include "lld/Core/range.h"
+
 #include "lld/ReaderWriter/Reader.h"
 #include "lld/ReaderWriter/Writer.h"
 
@@ -38,11 +40,11 @@ public:
 class ELFLinkingContext : public LinkingContext {
 public:
   enum class OutputMagic : uint8_t {
-    DEFAULT,    // The default mode, no specific magic set
-        NMAGIC, // Disallow shared libraries and dont align sections
-                // PageAlign Data, Mark Text Segment/Data segment RW
-        OMAGIC  // Disallow shared libraries and dont align sections,
-                // Mark Text Segment/Data segment RW
+    DEFAULT, // The default mode, no specific magic set
+    NMAGIC,  // Disallow shared libraries and dont align sections
+             // PageAlign Data, Mark Text Segment/Data segment RW
+    OMAGIC   // Disallow shared libraries and dont align sections,
+             // Mark Text Segment/Data segment RW
   };
   llvm::Triple getTriple() const { return _triple; }
   virtual bool is64Bits() const;
@@ -154,6 +156,9 @@ public:
   StringRef searchLibrary(StringRef libName,
                           const std::vector<StringRef> &searchPath) const;
 
+  /// Get the entry symbol name
+  virtual StringRef entrySymbolName() const;
+
 private:
   ELFLinkingContext() LLVM_DELETED_FUNCTION;
 
@@ -161,6 +166,9 @@ protected:
   ELFLinkingContext(llvm::Triple, std::unique_ptr<TargetHandlerBase>);
 
   virtual Writer &writer() const;
+
+  /// Method to create a internal file for an undefined symbol
+  virtual std::unique_ptr<File> createUndefinedSymbolFile();
 
   uint16_t _outputFileType; // e.g ET_EXEC
   llvm::Triple _triple;

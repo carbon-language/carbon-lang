@@ -53,11 +53,28 @@ bool PECOFFLinkingContext::validateImpl(raw_ostream &diagnostics) {
   return false;
 }
 
-void PECOFFLinkingContext::addImplicitFiles(InputFiles &files) const {
-  // Add a pseudo file for "/include" linker option.
-  auto *undefFile = new (_alloc) coff::UndefinedSymbolFile(*this);
-  files.prependFile(*undefFile);
+std::unique_ptr<File> PECOFFLinkingContext::createEntrySymbolFile() {
+  if (entrySymbolName().empty())
+    return nullptr;
+  std::unique_ptr<SimpleFile> entryFile(
+      new SimpleFile(*this, "command line option /entry"));
+  entryFile->addAtom(
+      *(new (_allocator) SimpleUndefinedAtom(*entryFile, entrySymbolName())));
+  return std::move(entryFile);
+}
 
+std::unique_ptr<File> PECOFFLinkingContext::createUndefinedSymbolFile() {
+  if (_initialUndefinedSymbols.empty())
+    return nullptr;
+  std::unique_ptr<SimpleFile> undefinedSymFile(
+      new SimpleFile(*this, "command line option /c (or) /include"));
+  for (auto undefSymStr : _initialUndefinedSymbols)
+    undefinedSymFile->addAtom(*(new (_allocator) SimpleUndefinedAtom(
+                                   *undefinedSymFile, undefSymStr)));
+  return std::move(undefinedSymFile);
+}
+
+void PECOFFLinkingContext::addImplicitFiles(InputFiles &files) const {
   auto *linkerFile = new (_alloc) coff::LinkerGeneratedSymbolFile(*this);
   files.appendFile(*linkerFile);
 }

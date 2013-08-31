@@ -34,19 +34,18 @@ class LinkingContext;
 /// nodes in the input graph contains Input elements. The InputElements are
 /// either Input Files or Control Options. The Input Files represent each Input
 /// File to the linker and the control option specify what the linker needs
-/// to do when it processes the option. Each InputElement that is part of the
-/// Graph has also an Ordinal value associated with it. The ordinal value is
-/// needed for components to figure out the relative position of the arguments
-/// that appeared in the Command Line. One such example is adding the list of
-/// dynamic dynamic libraries to the DT_NEEDED list with the ELF Flavor. The
-/// InputElements also have a weight function that can be used to determine the
-/// weight of the file, for statistical purposes. The InputGraph also would
-/// contain a set of General options that are processed by the linker, which
-/// control the output
+/// to do when it processes the option.
+/// Each InputElement that is part of the Graph has an Ordinal value
+/// associated with it. The ordinal value is needed for the Writer to figure out
+/// the relative position of the arguments that appeared in the Command Line.
+/// InputElements have a weight function that can be used to determine the
+/// weight of the file, for statistical purposes.
 class InputGraph {
 public:
   typedef std::vector<std::unique_ptr<InputElement> > InputElementVectorT;
   typedef InputElementVectorT::iterator InputElementIterT;
+  typedef std::vector<std::unique_ptr<File> > FileVectorT;
+  typedef FileVectorT::iterator FileIterT;
 
   /// \brief Initialize the inputgraph
   InputGraph() : _ordinal(0), _numElements(0), _numFiles(0) {}
@@ -66,16 +65,27 @@ public:
   /// Total number of InputElements
   virtual int64_t numElements() const { return _numElements; }
 
+  /// Total number of Internal files
+  virtual int64_t numInternalFiles() const { return _internalFiles.size(); }
+
   /// \brief Do postprocessing of the InputGraph if there is a need for the
   /// to provide additional information to the user, also rearranges
   /// InputElements by their ordinals. If an user wants to place an input file
   /// at the desired position, the user can do that
   virtual void doPostProcess();
 
-  /// \brief Iterators
-  InputElementIterT begin() { return _inputArgs.begin(); }
+  virtual void addInternalFile(std::vector<std::unique_ptr<File> > inputFiles) {
+    for (auto &ai : inputFiles)
+      _internalFiles.push_back(std::move(ai));
+  }
 
-  InputElementIterT end() { return _inputArgs.end(); }
+  range<FileIterT> internalFiles() {
+    return make_range(_internalFiles.begin(), _internalFiles.end());
+  }
+
+  range<InputElementIterT> inputElements() {
+    return make_range(_inputArgs.begin(), _inputArgs.end());
+  }
 
   /// \brief Validate the input graph
   virtual bool validate();
@@ -90,6 +100,8 @@ public:
 private:
   // Input arguments
   InputElementVectorT _inputArgs;
+  // Extra Input files
+  FileVectorT _internalFiles;
   // Ordinals
   int64_t _ordinal;
   // Total number of InputElements
@@ -103,9 +115,9 @@ private:
 class InputElement {
 public:
   /// Each input element in the graph can be a File or a control
-  enum class Kind : uint8_t {
-    Control,  // Represents a type associated with ControlNodes
-        File, // Represents a type associated with File Nodes
+  enum class Kind : uint8_t{
+    Control, // Represents a type associated with ControlNodes
+    File     // Represents a type associated with File Nodes
   };
 
   /// \brief Initialize the Input Element, The ordinal value of an input Element
@@ -147,9 +159,9 @@ class ControlNode : public InputElement {
 public:
   /// A control node could be of several types supported by InputGraph
   /// Future kinds of Control node could be added
-  enum class ControlKind : uint8_t {
-    Simple,   // Represents a simple control node
-        Group // Represents a type associated with ControlNodes
+  enum class ControlKind : uint8_t{
+    Simple, // Represents a simple control node
+    Group   // Represents a type associated with ControlNodes
   };
 
   ControlNode(ControlNode::ControlKind controlKind =

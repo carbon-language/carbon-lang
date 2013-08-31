@@ -52,7 +52,7 @@ bool Driver::link(const LinkingContext &context, raw_ostream &diagnostics) {
   std::atomic<bool> fail(false);
   TaskGroup tg;
   std::vector<std::unique_ptr<LinkerInput> > linkerInputs;
-  for (auto &ie : inputGraph) {
+  for (auto &ie : inputGraph.inputElements()) {
     if (ie->kind() == InputElement::Kind::File) {
       FileNode *fileNode = (llvm::dyn_cast<FileNode>)(ie.get());
       linkerInputs.push_back(std::move(fileNode->createLinkerInput(context)));
@@ -79,6 +79,10 @@ bool Driver::link(const LinkingContext &context, raw_ostream &diagnostics) {
     return true;
 
   InputFiles inputs;
+
+  for (auto &f : inputGraph.internalFiles())
+    inputs.appendFile(*f.get());
+
   for (auto &f : files)
     inputs.appendFiles(f);
 

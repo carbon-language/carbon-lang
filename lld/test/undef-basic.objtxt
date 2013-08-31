@@ -1,0 +1,22 @@
+# RUN: lld -flavor gnu -u undefinedsymbol -e entrysymbol %s -emit-yaml \
+# RUN: --noinhibit-exec | FileCheck %s
+
+#
+# Test that we are able to add undefined atoms from the command line
+#
+
+---
+absolute-atoms:
+    - name:              putchar
+      value:             0xFFFF0040
+      
+    - name:              reset
+      value:             0xFFFF0080
+
+...
+
+
+# CHECK: undefined-atoms:
+# CHECK:   - name:            entrysymbol
+# CHECK:   - name:            undefinedsymbol
+# CHECK:     can-be-null:     at-buildtime

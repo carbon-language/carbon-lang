@@ -8,7 +8,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "lld/Core/LinkingContext.h"
+#include "lld/Core/InputFiles.h"
 #include "lld/ReaderWriter/Writer.h"
+#include "lld/ReaderWriter/Simple.h"
 
 #include "llvm/ADT/Triple.h"
 
@@ -48,6 +50,39 @@ error_code LinkingContext::writeFile(const File &linkedFile) const {
 
 void LinkingContext::addImplicitFiles(InputFiles &inputs) const {
   this->writer().addFiles(inputs);
+}
+
+std::unique_ptr<File> LinkingContext::createEntrySymbolFile() {
+  if (entrySymbolName().empty())
+    return nullptr;
+  std::unique_ptr<SimpleFile> entryFile(
+      new SimpleFile(*this, "command line option -entry"));
+  entryFile->addAtom(
+      *(new (_allocator) SimpleUndefinedAtom(*entryFile, entrySymbolName())));
+  return std::move(entryFile);
+}
+
+std::unique_ptr<File> LinkingContext::createUndefinedSymbolFile() {
+  if (_initialUndefinedSymbols.empty())
+    return nullptr;
+  std::unique_ptr<SimpleFile> undefinedSymFile(
+      new SimpleFile(*this, "command line option -u"));
+  for (auto undefSymStr : _initialUndefinedSymbols)
+    undefinedSymFile->addAtom(*(new (_allocator) SimpleUndefinedAtom(
+                                   *undefinedSymFile, undefSymStr)));
+  return std::move(undefinedSymFile);
+}
+
+std::vector<std::unique_ptr<File> > LinkingContext::createInternalFiles() {
+  std::vector<std::unique_ptr<File> > result;
+  std::unique_ptr<File> internalFile;
+  internalFile = createEntrySymbolFile();
+  if (internalFile)
+    result.push_back(std::move(internalFile));
+  internalFile = createUndefinedSymbolFile();
+  if (internalFile)
+    result.push_back(std::move(internalFile));
+  return result;
 }
 
 void LinkingContext::addPasses(PassManager &pm) const {}

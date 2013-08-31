@@ -53,7 +53,7 @@ public:
 
   /// Name of symbol linker should use as "entry point" to program,
   /// usually "main" or "start".
-  StringRef entrySymbolName() const { return _entrySymbolName; }
+  virtual StringRef entrySymbolName() const { return _entrySymbolName; }
 
   /// Whether core linking should remove Atoms not reachable by following
   /// References from the entry point Atom or from all global scope Atoms
@@ -184,9 +184,7 @@ public:
   // Set the entry symbol name. You may also need to call addDeadStripRoot() for
   // the symbol if your platform supports dead-stripping, so that the symbol
   // will not be removed from the output.
-  void setEntrySymbolName(StringRef name) {
-    // Entry function have to be resolved as an undefined symbol.
-    addInitialUndefinedSymbol(name);
+  virtual void setEntrySymbolName(StringRef name) {
     _entrySymbolName = name;
   }
 
@@ -233,6 +231,12 @@ public:
   typedef std::vector<StringRef> StringRefVector;
   typedef StringRefVector::iterator StringRefVectorIter;
   typedef StringRefVector::const_iterator StringRefVectorConstIter;
+
+  /// Create linker internal files containing atoms for the linker to include
+  /// during link. Flavors can override this function in their LinkingContext
+  /// to add more internal files. These internal files are positioned before
+  /// the actual input files.
+  virtual std::vector<std::unique_ptr<lld::File> > createInternalFiles();
 
   /// Return the list of undefined symbols that are specified in the
   /// linker command line, using the -u option.
@@ -320,6 +324,12 @@ protected:
   /// Abstract method to lazily instantiate the Writer.
   virtual Writer &writer() const = 0;
 
+  /// Method to create a internal file for the entry symbol
+  virtual std::unique_ptr<File> createEntrySymbolFile();
+
+  /// Method to create a internal file for an undefined symbol
+  virtual std::unique_ptr<File> createUndefinedSymbolFile();
+
   StringRef _outputPath;
   StringRef _entrySymbolName;
   bool _deadStrip;
@@ -338,6 +348,7 @@ protected:
   std::unique_ptr<Reader> _yamlReader;
   StringRefVector _initialUndefinedSymbols;
   std::unique_ptr<InputGraph> _inputGraph;
+  llvm::BumpPtrAllocator _allocator;
 
 private:
   /// Validate the subclass bits. Only called by validate.

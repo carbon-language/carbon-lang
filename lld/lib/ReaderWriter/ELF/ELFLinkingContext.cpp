@@ -9,6 +9,7 @@
 
 #include "lld/ReaderWriter/ELFLinkingContext.h"
 
+#include "File.h"
 #include "TargetHandler.h"
 #include "Targets.h"
 
@@ -22,6 +23,17 @@
 #include "llvm/Support/Path.h"
 
 namespace lld {
+
+class CommandLineUndefinedAtom : public SimpleUndefinedAtom {
+public:
+  CommandLineUndefinedAtom(const File &f, StringRef name)
+      : SimpleUndefinedAtom(f, name) {}
+
+  virtual CanBeNull canBeNull() const {
+    return CanBeNull::canBeNullAtBuildtime;
+  }
+};
+
 ELFLinkingContext::ELFLinkingContext(
     llvm::Triple triple, std::unique_ptr<TargetHandlerBase> targetHandler)
     : _outputFileType(elf::ET_EXEC), _triple(triple),
@@ -29,8 +41,7 @@ ELFLinkingContext::ELFLinkingContext(
       _isStaticExecutable(false), _outputYAML(false), _noInhibitExec(false),
       _mergeCommonStrings(false), _runLayoutPass(true),
       _useShlibUndefines(false), _dynamicLinkerArg(false),
-      _noAllowDynamicLibraries(false),
-      _outputMagic(OutputMagic::DEFAULT) {}
+      _noAllowDynamicLibraries(false), _outputMagic(OutputMagic::DEFAULT) {}
 
 bool ELFLinkingContext::is64Bits() const { return getTriple().isArch64Bit(); }
 
@@ -59,11 +70,13 @@ uint16_t ELFLinkingContext::getOutputMachine() const {
   }
 }
 
-bool ELFLinkingContext::validateImpl(raw_ostream &diagnostics) {
-  if (_outputFileType == elf::ET_EXEC && _entrySymbolName.empty()) {
-    _entrySymbolName = "_start";
-  }
+StringRef ELFLinkingContext::entrySymbolName() const {
+  if (_outputFileType == elf::ET_EXEC && _entrySymbolName.empty())
+    return "_start";
+  return _entrySymbolName;
+}
 
+bool ELFLinkingContext::validateImpl(raw_ostream &diagnostics) {
   _elfReader = createReaderELF(*this);
   _linkerScriptReader.reset(new ReaderLinkerScript(*this));
   _writer = _outputYAML ? createWriterYAML(*this) : createWriterELF(*this);
@@ -155,6 +168,17 @@ StringRef ELFLinkingContext::searchLibrary(
       return (*(new (_alloc) std::string(pathref.str())));
   }
   return libName;
+}
+
+std::unique_ptr<File> ELFLinkingContext::createUndefinedSymbolFile() {
+  if (_initialUndefinedSymbols.empty())
+    return nullptr;
+  std::unique_ptr<SimpleFile> undefinedSymFile(
+      new SimpleFile(*this, "command line option -u"));
+  for (auto undefSymStr : _initialUndefinedSymbols)
+    undefinedSymFile->addAtom(*(new (_allocator) CommandLineUndefinedAtom(
+                                   *undefinedSymFile, undefSymStr)));
+  return std::move(undefinedSymFile);
 }
 
 } // end namespace lld

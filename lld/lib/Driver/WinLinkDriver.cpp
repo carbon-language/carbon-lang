@@ -471,6 +471,11 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
     return true;
   }
 
+  // A list of undefined symbols will be added to the input
+  // file list to force the core linker to try to resolve
+  // the undefined symbols.
+  inputGraph.addInternalFile(ctx.createInternalFiles());
+
   // If /out option was not specified, the default output file name is
   // constructed by replacing an extension of the first input file
   // with ".exe".

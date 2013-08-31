@@ -1,5 +1,5 @@
 RUN: lld -flavor gnu -target hexagon -emit-yaml %p/Inputs/quickdata-test.elf-hexagon \
-RUN:  | FileCheck %s -check-prefix hexagon
+RUN: --noinhibit-exec | FileCheck %s -check-prefix hexagon
 
 hexagon:  - name:            ac1
 hexagon:    scope:           global

@@ -111,23 +111,5 @@ private:
   MemberFile _memberFile;
 };
 
-/// An instance of UndefinedSymbolFile has a list of undefined symbols
-/// specified by "/include" command line option. This will be added to the
-/// input file list to force the core linker to try to resolve the undefined
-/// symbols.
-class UndefinedSymbolFile : public SimpleFile {
-public:
-  UndefinedSymbolFile(const LinkingContext &ctx)
-      : SimpleFile(ctx, "Linker Internal File") {
-    for (StringRef symbol : ctx.initialUndefinedSymbols()) {
-      UndefinedAtom *atom = new (_alloc) coff::COFFUndefinedAtom(*this, symbol);
-      addAtom(*atom);
-    }
-  }
-
-private:
-  llvm::BumpPtrAllocator _alloc;
-};
-
 } // end namespace coff
 } // end namespace lld

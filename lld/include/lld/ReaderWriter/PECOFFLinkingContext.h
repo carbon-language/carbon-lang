@@ -122,6 +122,13 @@ public:
     return false;
   }
 
+protected:
+  /// Method to create a internal file for the entry symbol
+  virtual std::unique_ptr<File> createEntrySymbolFile();
+
+  /// Method to create a internal file for an undefined symbol
+  virtual std::unique_ptr<File> createUndefinedSymbolFile();
+
 private:
   // The start address for the program. The default value for the executable is
   // 0x400000, but can be altered using -base command line option.
