@@ -10,12 +10,17 @@
 #ifndef LLD_CORE_INPUT_FILES_H_
 #define LLD_CORE_INPUT_FILES_H_
 
-#include "lld/Core/File.h"
+#include "llvm/ADT/StringRef.h"
 
 #include <memory>
 #include <vector>
 
 namespace lld {
+class AbsoluteAtom;
+class DefinedAtom;
+class SharedLibraryAtom;
+class UndefinedAtom;
+class File;
 
 /// This InputFiles class manages access to all input files to the linker.
 ///
@@ -54,11 +59,11 @@ public:
   virtual void forEachInitialAtom(Handler &) const;
 
   /// @brief searches libraries for name
-  virtual bool searchLibraries(  StringRef name
-                               , bool searchSharedLibs
-                               , bool searchArchives
-                               , bool dataSymbolOnly
-                               , Handler &) const;
+  virtual bool searchLibraries(llvm::StringRef name,
+                               bool searchSharedLibs
+                               bool searchArchives
+                               bool dataSymbolOnly
+                               Handler &) const;
 
 protected:
   void handleFile(const File *file, InputFiles::Handler &handler) const;
