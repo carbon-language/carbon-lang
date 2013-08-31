@@ -60,9 +60,9 @@ public:
 
   /// @brief searches libraries for name
   virtual bool searchLibraries(llvm::StringRef name,
-                               bool searchSharedLibs
-                               bool searchArchives
-                               bool dataSymbolOnly
+                               bool searchSharedLibs,
+                               bool searchArchives,
+                               bool dataSymbolOnly,
                                Handler &) const;
 
 protected:
