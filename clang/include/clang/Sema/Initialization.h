@@ -86,6 +86,10 @@ public:
     /// \brief The entity being initialized is a function parameter; function
     /// is member of group of audited CF APIs.
     EK_Parameter_CF_Audited
+
+    // Note: err_init_conversion_failed in DiagnosticSemaKinds.td uses this
+    // enum as an index for its first %select.  When modifying this list,
+    // that diagnostic text needs to be updated as well.
   };
   
 private:
