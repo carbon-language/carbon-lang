@@ -2815,8 +2815,6 @@ def err_template_linkage : Error<"templates must have C++ linkage">;
 def err_template_typedef : Error<"a typedef cannot be a template">;
 def err_template_unnamed_class : Error<
   "cannot declare a class template with no name">;
-def err_var_template_unnamed_class : Error<
-  "cannot declare a variable template with no name">;
 def err_template_param_list_different_arity : Error<
   "%select{too few|too many}0 template parameters in template "
   "%select{|template parameter }1redeclaration">;
@@ -3131,8 +3129,6 @@ def err_partial_spec_fully_specialized : Error<
   "partial specialization of %0 does not use any of its template parameters">;
 
 // C++ Variable Template Partial Specialization
-def err_var_default_arg_in_partial_spec : Error<
-  "default template argument in a variable template partial specialization">;
 def err_var_partial_spec_redeclared : Error<
   "variable template partial specialization %0 cannot be redefined">;
 def note_var_prev_partial_spec_here : Note<
@@ -5117,8 +5113,6 @@ def err_invalid_declarator_in_block : Error<
   "definition or redeclaration of %0 not allowed inside a block">;
 def err_not_tag_in_scope : Error<
   "no %select{struct|interface|union|class|enum}0 named %1 in %2">;
-def err_not_var_in_scope : Error<
-  "no variable template named %0 in %1">;
 
 def err_no_typeid_with_fno_rtti : Error<
   "cannot use typeid with -fno-rtti">;
