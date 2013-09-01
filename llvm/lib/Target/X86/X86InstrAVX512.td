@@ -2923,6 +2923,69 @@ defm VPMOVSXDQZ: avx512_extend<0x25, "vpmovsxdq", VR512, VR256X, X86vsext,
                              EVEX_CD8<32, CD8VH>;
 
 //===----------------------------------------------------------------------===//
+// GATHER - SCATTER Operations
+
+multiclass avx512_gather<bits<8> opc, string OpcodeStr, RegisterClass KRC,
+                       RegisterClass RC, X86MemOperand memop> {
+let mayLoad = 1,
+  Constraints = "@earlyclobber $dst, $src1 = $dst, $mask = $mask_wb" in
+  def rm  : AVX5128I<opc, MRMSrcMem, (outs RC:$dst, KRC:$mask_wb),
+            (ins RC:$src1, KRC:$mask, memop:$src2),
+            !strconcat(OpcodeStr,
+            "\t{$src2, ${dst}{${mask}}|${dst}{${mask}}, $src2}"),
+            []>, EVEX, EVEX_K;
+}
+defm VGATHERDPDZ : avx512_gather<0x92, "vgatherdpd", VK8WM, VR512, vy64xmem>,
+                                 EVEX_V512, VEX_W, EVEX_CD8<64, CD8VT1>;
+defm VGATHERDPSZ : avx512_gather<0x92, "vgatherdps", VK16WM, VR512, vz32mem>,
+                                 EVEX_V512, EVEX_CD8<32, CD8VT1>;
+
+defm VGATHERQPDZ : avx512_gather<0x93, "vgatherqpd", VK8WM, VR512, vz64mem>,
+                                 EVEX_V512, VEX_W, EVEX_CD8<64, CD8VT1>;
+defm VGATHERQPSZ : avx512_gather<0x93, "vgatherqps", VK8WM, VR256X, vz64mem>,
+                                 EVEX_V512, EVEX_CD8<32, CD8VT1>;
+  
+defm VPGATHERDQZ : avx512_gather<0x90, "vpgatherdq", VK8WM, VR512,  vy64xmem>,
+                                 EVEX_V512, VEX_W, EVEX_CD8<64, CD8VT1>;
+defm VPGATHERDDZ : avx512_gather<0x90, "vpgatherdd", VK16WM, VR512, vz32mem>,
+                                 EVEX_V512, EVEX_CD8<32, CD8VT1>;
+
+defm VPGATHERQQZ : avx512_gather<0x91, "vpgatherqq", VK8WM, VR512,  vz64mem>,
+                                 EVEX_V512, VEX_W, EVEX_CD8<64, CD8VT1>;
+defm VPGATHERQDZ : avx512_gather<0x91, "vpgatherqd", VK8WM, VR256X,  vz64mem>,
+                                 EVEX_V512, EVEX_CD8<32, CD8VT1>;
+
+multiclass avx512_scatter<bits<8> opc, string OpcodeStr, RegisterClass KRC,
+                       RegisterClass RC, X86MemOperand memop> {
+let mayStore = 1, Constraints = "$mask = $mask_wb" in
+  def mr  : AVX5128I<opc, MRMDestMem, (outs KRC:$mask_wb),
+            (ins memop:$dst, KRC:$mask, RC:$src2),
+            !strconcat(OpcodeStr,
+            "\t{$src2, ${dst}{${mask}}|${dst}{${mask}}, $src2}"),
+            []>, EVEX, EVEX_K;
+}
+
+defm VSCATTERDPDZ : avx512_scatter<0xA2, "vscatterdpd", VK8WM, VR512, vy64xmem>,
+                                   EVEX_V512, VEX_W, EVEX_CD8<64, CD8VT1>;
+defm VSCATTERDPSZ : avx512_scatter<0xA2, "vscatterdps", VK16WM, VR512, vz32mem>,
+                                   EVEX_V512, EVEX_CD8<32, CD8VT1>;
+
+defm VSCATTERQPDZ : avx512_scatter<0xA3, "vscatterqpd", VK8WM, VR512, vz64mem>,
+                                   EVEX_V512, VEX_W, EVEX_CD8<64, CD8VT1>;
+defm VSCATTERQPSZ : avx512_scatter<0xA3, "vscatterqps", VK8WM, VR256X, vz64mem>,
+                                   EVEX_V512, EVEX_CD8<32, CD8VT1>;
+  
+defm VPSCATTERDQZ : avx512_scatter<0xA0, "vpscatterdq", VK8WM, VR512, vy64xmem>,
+                                   EVEX_V512, VEX_W, EVEX_CD8<64, CD8VT1>;
+defm VPSCATTERDDZ : avx512_scatter<0xA0, "vpscatterdd", VK16WM, VR512, vz32mem>,
+                                   EVEX_V512, EVEX_CD8<32, CD8VT1>;
+
+defm VPSCATTERQQZ : avx512_scatter<0xA1, "vpscatterqq", VK8WM, VR512, vz64mem>,
+                                  EVEX_V512, VEX_W, EVEX_CD8<64, CD8VT1>;
+defm VPSCATTERQDZ : avx512_scatter<0xA1, "vpscatterqd", VK8WM, VR256X, vz64mem>,
+                                  EVEX_V512, EVEX_CD8<32, CD8VT1>;
+
+//===----------------------------------------------------------------------===//
 // VSHUFPS - VSHUFPD Operations
 
 multiclass avx512_shufp<RegisterClass RC, X86MemOperand x86memop,

@@ -1445,6 +1445,7 @@ void X86TargetLowering::resetOperationActions() {
   // We want to custom lower some of our intrinsics.
   setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::Other, Custom);
   setOperationAction(ISD::INTRINSIC_W_CHAIN, MVT::Other, Custom);
+  setOperationAction(ISD::INTRINSIC_VOID, MVT::Other, Custom);
 
   // Only custom-lower 64-bit SADDO and friends on 64-bit because we don't
   // handle type legalization for these operations here.
@@ -11623,7 +11624,87 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
   }
 }
 
-static SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, SelectionDAG &DAG) {
+static SDValue getGatherNode(unsigned Opc, SDValue Op, SelectionDAG &DAG,
+                             SDValue Base, SDValue Index,
+                             SDValue ScaleOp, SDValue Chain,
+                             const X86Subtarget * Subtarget) {
+  SDLoc dl(Op);
+  ConstantSDNode *C = dyn_cast<ConstantSDNode>(ScaleOp);
+  assert(C && "Invalid scale type");
+  SDValue Scale = DAG.getTargetConstant(C->getZExtValue(), MVT::i8);
+  SDValue Src = getZeroVector(Op.getValueType(), Subtarget, DAG, dl); 
+  EVT MaskVT = MVT::getVectorVT(MVT::i1, 
+                                Index.getValueType().getVectorNumElements());
+  SDValue MaskInReg = DAG.getConstant(~0, MaskVT);
+  SDVTList VTs = DAG.getVTList(Op.getValueType(), MaskVT, MVT::Other);
+  SDValue Disp = DAG.getTargetConstant(0, MVT::i32);
+  SDValue Segment = DAG.getRegister(0, MVT::i32);
+  SDValue Ops[] = {Src, MaskInReg, Base, Scale, Index, Disp, Segment, Chain};
+  SDNode *Res = DAG.getMachineNode(Opc, dl, VTs, Ops);
+  SDValue RetOps[] = { SDValue(Res, 0), SDValue(Res, 2) };
+  return DAG.getMergeValues(RetOps, array_lengthof(RetOps), dl);
+}
+
+static SDValue getMGatherNode(unsigned Opc, SDValue Op, SelectionDAG &DAG,
+                              SDValue Src, SDValue Mask, SDValue Base,
+                              SDValue Index, SDValue ScaleOp, SDValue Chain,
+                              const X86Subtarget * Subtarget) {
+  SDLoc dl(Op);
+  ConstantSDNode *C = dyn_cast<ConstantSDNode>(ScaleOp);
+  assert(C && "Invalid scale type");
+  SDValue Scale = DAG.getTargetConstant(C->getZExtValue(), MVT::i8);
+  EVT MaskVT = MVT::getVectorVT(MVT::i1,
+                                Index.getValueType().getVectorNumElements());
+  SDValue MaskInReg = DAG.getNode(ISD::BITCAST, dl, MaskVT, Mask);
+  SDVTList VTs = DAG.getVTList(Op.getValueType(), MaskVT, MVT::Other);
+  SDValue Disp = DAG.getTargetConstant(0, MVT::i32);
+  SDValue Segment = DAG.getRegister(0, MVT::i32);
+  if (Src.getOpcode() == ISD::UNDEF)
+    Src = getZeroVector(Op.getValueType(), Subtarget, DAG, dl); 
+  SDValue Ops[] = {Src, MaskInReg, Base, Scale, Index, Disp, Segment, Chain};
+  SDNode *Res = DAG.getMachineNode(Opc, dl, VTs, Ops);
+  SDValue RetOps[] = { SDValue(Res, 0), SDValue(Res, 2) };
+  return DAG.getMergeValues(RetOps, array_lengthof(RetOps), dl);
+}
+
+static SDValue getScatterNode(unsigned Opc, SDValue Op, SelectionDAG &DAG,
+                              SDValue Src, SDValue Base, SDValue Index,
+                              SDValue ScaleOp, SDValue Chain) {
+  SDLoc dl(Op);
+  ConstantSDNode *C = dyn_cast<ConstantSDNode>(ScaleOp);
+  assert(C && "Invalid scale type");
+  SDValue Scale = DAG.getTargetConstant(C->getZExtValue(), MVT::i8);
+  SDValue Disp = DAG.getTargetConstant(0, MVT::i32);
+  SDValue Segment = DAG.getRegister(0, MVT::i32);
+  EVT MaskVT = MVT::getVectorVT(MVT::i1,
+                                Index.getValueType().getVectorNumElements());
+  SDValue MaskInReg = DAG.getConstant(~0, MaskVT);
+  SDVTList VTs = DAG.getVTList(MaskVT, MVT::Other);
+  SDValue Ops[] = {Base, Scale, Index, Disp, Segment, MaskInReg, Src, Chain};
+  SDNode *Res = DAG.getMachineNode(Opc, dl, VTs, Ops);
+  return SDValue(Res, 1);
+}
+
+static SDValue getMScatterNode(unsigned Opc, SDValue Op, SelectionDAG &DAG,
+                               SDValue Src, SDValue Mask, SDValue Base,
+                               SDValue Index, SDValue ScaleOp, SDValue Chain) {
+  SDLoc dl(Op);
+  ConstantSDNode *C = dyn_cast<ConstantSDNode>(ScaleOp);
+  assert(C && "Invalid scale type");
+  SDValue Scale = DAG.getTargetConstant(C->getZExtValue(), MVT::i8);
+  SDValue Disp = DAG.getTargetConstant(0, MVT::i32);
+  SDValue Segment = DAG.getRegister(0, MVT::i32);
+  EVT MaskVT = MVT::getVectorVT(MVT::i1,
+                                Index.getValueType().getVectorNumElements());
+  SDValue MaskInReg = DAG.getNode(ISD::BITCAST, dl, MaskVT, Mask);
+  SDVTList VTs = DAG.getVTList(MaskVT, MVT::Other);
+  SDValue Ops[] = {Base, Scale, Index, Disp, Segment, MaskInReg, Src, Chain};
+  SDNode *Res = DAG.getMachineNode(Opc, dl, VTs, Ops);
+  return SDValue(Res, 1);
+}
+
+static SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, const X86Subtarget *Subtarget,
+                                      SelectionDAG &DAG) {
   SDLoc dl(Op);
   unsigned IntNo = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
   switch (IntNo) {
@@ -11658,7 +11739,144 @@ static SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, SelectionDAG &DAG) {
     return DAG.getNode(ISD::MERGE_VALUES, dl, Op->getVTList(), Result, isValid,
                        SDValue(Result.getNode(), 2));
   }
-
+  //int_gather(index, base, scale);
+  case Intrinsic::x86_avx512_gather_qpd_512:
+  case Intrinsic::x86_avx512_gather_qps_512:
+  case Intrinsic::x86_avx512_gather_dpd_512:
+  case Intrinsic::x86_avx512_gather_qpi_512:
+  case Intrinsic::x86_avx512_gather_qpq_512:
+  case Intrinsic::x86_avx512_gather_dpq_512:
+  case Intrinsic::x86_avx512_gather_dps_512:
+  case Intrinsic::x86_avx512_gather_dpi_512: {
+    unsigned Opc;
+    switch (IntNo) {
+      default: llvm_unreachable("Unexpected intrinsic!");
+      case Intrinsic::x86_avx512_gather_qps_512: Opc = X86::VGATHERQPSZrm; break;
+      case Intrinsic::x86_avx512_gather_qpd_512: Opc = X86::VGATHERQPDZrm; break;
+      case Intrinsic::x86_avx512_gather_dpd_512: Opc = X86::VGATHERDPDZrm; break;
+      case Intrinsic::x86_avx512_gather_dps_512: Opc = X86::VGATHERDPSZrm; break;
+      case Intrinsic::x86_avx512_gather_qpi_512: Opc = X86::VPGATHERQDZrm; break;
+      case Intrinsic::x86_avx512_gather_qpq_512: Opc = X86::VPGATHERQQZrm; break;
+      case Intrinsic::x86_avx512_gather_dpi_512: Opc = X86::VPGATHERDDZrm; break;
+      case Intrinsic::x86_avx512_gather_dpq_512: Opc = X86::VPGATHERDQZrm; break;
+    }
+    SDValue Chain = Op.getOperand(0);
+    SDValue Index = Op.getOperand(2);
+    SDValue Base  = Op.getOperand(3);
+    SDValue Scale = Op.getOperand(4);
+    return getGatherNode(Opc, Op, DAG, Base, Index, Scale, Chain, Subtarget);
+  }
+  //int_gather_mask(v1, mask, index, base, scale);
+  case Intrinsic::x86_avx512_gather_qps_mask_512:
+  case Intrinsic::x86_avx512_gather_qpd_mask_512:
+  case Intrinsic::x86_avx512_gather_dpd_mask_512:
+  case Intrinsic::x86_avx512_gather_dps_mask_512:
+  case Intrinsic::x86_avx512_gather_qpi_mask_512:
+  case Intrinsic::x86_avx512_gather_qpq_mask_512:
+  case Intrinsic::x86_avx512_gather_dpi_mask_512:
+  case Intrinsic::x86_avx512_gather_dpq_mask_512: {
+    unsigned Opc;
+    switch (IntNo) {
+      default: llvm_unreachable("Unexpected intrinsic!");
+      case Intrinsic::x86_avx512_gather_qps_mask_512: 
+        Opc = X86::VGATHERQPSZrm; break;
+      case Intrinsic::x86_avx512_gather_qpd_mask_512:
+        Opc = X86::VGATHERQPDZrm; break;
+      case Intrinsic::x86_avx512_gather_dpd_mask_512:
+        Opc = X86::VGATHERDPDZrm; break;
+      case Intrinsic::x86_avx512_gather_dps_mask_512:
+        Opc = X86::VGATHERDPSZrm; break;
+      case Intrinsic::x86_avx512_gather_qpi_mask_512:
+        Opc = X86::VPGATHERQDZrm; break;
+      case Intrinsic::x86_avx512_gather_qpq_mask_512:
+        Opc = X86::VPGATHERQQZrm; break;
+      case Intrinsic::x86_avx512_gather_dpi_mask_512:
+        Opc = X86::VPGATHERDDZrm; break;
+      case Intrinsic::x86_avx512_gather_dpq_mask_512:
+        Opc = X86::VPGATHERDQZrm; break;
+    }
+    SDValue Chain = Op.getOperand(0);
+    SDValue Src   = Op.getOperand(2);
+    SDValue Mask  = Op.getOperand(3);
+    SDValue Index = Op.getOperand(4);
+    SDValue Base  = Op.getOperand(5);
+    SDValue Scale = Op.getOperand(6);
+    return getMGatherNode(Opc, Op, DAG, Src, Mask, Base, Index, Scale, Chain,
+                          Subtarget);
+  }
+  //int_scatter(base, index, v1, scale);
+  case Intrinsic::x86_avx512_scatter_qpd_512:
+  case Intrinsic::x86_avx512_scatter_qps_512:
+  case Intrinsic::x86_avx512_scatter_dpd_512:
+  case Intrinsic::x86_avx512_scatter_qpi_512:
+  case Intrinsic::x86_avx512_scatter_qpq_512:
+  case Intrinsic::x86_avx512_scatter_dpq_512:
+  case Intrinsic::x86_avx512_scatter_dps_512:
+  case Intrinsic::x86_avx512_scatter_dpi_512: {
+    unsigned Opc;
+    switch (IntNo) {
+      default: llvm_unreachable("Unexpected intrinsic!");
+      case Intrinsic::x86_avx512_scatter_qpd_512: 
+        Opc = X86::VSCATTERQPDZmr; break;
+      case Intrinsic::x86_avx512_scatter_qps_512:
+        Opc = X86::VSCATTERQPSZmr; break;
+      case Intrinsic::x86_avx512_scatter_dpd_512:
+        Opc = X86::VSCATTERDPDZmr; break;
+      case Intrinsic::x86_avx512_scatter_dps_512:
+        Opc = X86::VSCATTERDPSZmr; break;
+      case Intrinsic::x86_avx512_scatter_qpi_512:
+        Opc = X86::VPSCATTERQDZmr; break;
+      case Intrinsic::x86_avx512_scatter_qpq_512:
+        Opc = X86::VPSCATTERQQZmr; break;
+      case Intrinsic::x86_avx512_scatter_dpq_512:
+        Opc = X86::VPSCATTERDQZmr; break;
+      case Intrinsic::x86_avx512_scatter_dpi_512:
+        Opc = X86::VPSCATTERDDZmr; break;
+    }
+    SDValue Chain = Op.getOperand(0);
+    SDValue Base  = Op.getOperand(2);
+    SDValue Index = Op.getOperand(3);
+    SDValue Src   = Op.getOperand(4);
+    SDValue Scale = Op.getOperand(5);
+    return getScatterNode(Opc, Op, DAG, Src, Base, Index, Scale, Chain);
+  }
+  //int_scatter_mask(base, mask, index, v1, scale);
+  case Intrinsic::x86_avx512_scatter_qps_mask_512:
+  case Intrinsic::x86_avx512_scatter_qpd_mask_512:
+  case Intrinsic::x86_avx512_scatter_dpd_mask_512:
+  case Intrinsic::x86_avx512_scatter_dps_mask_512:
+  case Intrinsic::x86_avx512_scatter_qpi_mask_512:
+  case Intrinsic::x86_avx512_scatter_qpq_mask_512:
+  case Intrinsic::x86_avx512_scatter_dpi_mask_512:
+  case Intrinsic::x86_avx512_scatter_dpq_mask_512: {
+    unsigned Opc;
+    switch (IntNo) {
+      default: llvm_unreachable("Unexpected intrinsic!");
+      case Intrinsic::x86_avx512_scatter_qpd_mask_512: 
+        Opc = X86::VSCATTERQPDZmr; break;
+      case Intrinsic::x86_avx512_scatter_qps_mask_512:
+        Opc = X86::VSCATTERQPSZmr; break;
+      case Intrinsic::x86_avx512_scatter_dpd_mask_512:
+        Opc = X86::VSCATTERDPDZmr; break;
+      case Intrinsic::x86_avx512_scatter_dps_mask_512:
+        Opc = X86::VSCATTERDPSZmr; break;
+      case Intrinsic::x86_avx512_scatter_qpi_mask_512:
+        Opc = X86::VPSCATTERQDZmr; break;
+      case Intrinsic::x86_avx512_scatter_qpq_mask_512:
+        Opc = X86::VPSCATTERQQZmr; break;
+      case Intrinsic::x86_avx512_scatter_dpq_mask_512:
+        Opc = X86::VPSCATTERDQZmr; break;
+      case Intrinsic::x86_avx512_scatter_dpi_mask_512:
+        Opc = X86::VPSCATTERDDZmr; break;
+    }
+    SDValue Chain = Op.getOperand(0);
+    SDValue Base  = Op.getOperand(2);
+    SDValue Mask  = Op.getOperand(3);
+    SDValue Index = Op.getOperand(4);
+    SDValue Src   = Op.getOperand(5);
+    SDValue Scale = Op.getOperand(6);
+    return getMScatterNode(Opc, Op, DAG, Src, Mask, Base, Index, Scale, Chain);
+  }
   // XTEST intrinsics.
   case Intrinsic::x86_xtest: {
     SDVTList VTs = DAG.getVTList(Op->getValueType(0), MVT::Other);
@@ -13093,7 +13311,8 @@ SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::VAARG:              return LowerVAARG(Op, DAG);
   case ISD::VACOPY:             return LowerVACOPY(Op, Subtarget, DAG);
   case ISD::INTRINSIC_WO_CHAIN: return LowerINTRINSIC_WO_CHAIN(Op, DAG);
-  case ISD::INTRINSIC_W_CHAIN:  return LowerINTRINSIC_W_CHAIN(Op, DAG);
+  case ISD::INTRINSIC_VOID:
+  case ISD::INTRINSIC_W_CHAIN:  return LowerINTRINSIC_W_CHAIN(Op, Subtarget, DAG);
   case ISD::RETURNADDR:         return LowerRETURNADDR(Op, DAG);
   case ISD::FRAMEADDR:          return LowerFRAMEADDR(Op, DAG);
   case ISD::FRAME_TO_ARGS_OFFSET:
