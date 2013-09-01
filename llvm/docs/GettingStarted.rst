@@ -459,15 +459,6 @@ The files are as follows, with *x.y* marking the version number:
 
   Source release for the LLVM test-suite.
 
-``llvm-gcc-4.2-x.y.source.tar.gz``
-
-  Source release of the llvm-gcc-4.2 front end.  See README.LLVM in the root
-  directory for build instructions.
-
-``llvm-gcc-4.2-x.y-platform.tar.gz``
-
-  Binary release of the llvm-gcc-4.2 front end for a specific platform.
-
 .. _checkout:
 
 Checkout LLVM from Subversion
