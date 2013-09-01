@@ -195,6 +195,13 @@ A documentation comment that uses all Doxygen features in a preferred way:
   /// \returns true on success.
   bool fooBar(bool Baz, StringRef Quux, std::vector<int> &Result);
 
+Don't duplicate the documentation comment in the header file and in the
+implementation file.  Put the documentation comments for public APIs into the
+header file.  Documentation comments for private APIs can go to the
+implementation file.  In any case, implementation files can include additional
+comments (not necessarily in Doxygen markup) to explain implementation details
+as needed.
+
 Don't duplicate function or class name at the beginning of the comment.
 For humans it is obvious which function or class is being documented;
 automatic documentation processing tools are smart enough to bind the comment
