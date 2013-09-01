@@ -104,7 +104,7 @@ static void DumpDataInCode(const char *bytes, uint64_t Size,
   uint64_t Value;
 
   switch (Kind) {
-  case macho::Data:
+  case MachO::DICE_KIND_DATA:
     switch (Size) {
     case 4:
       Value = bytes[3] << 24 |
@@ -125,16 +125,16 @@ static void DumpDataInCode(const char *bytes, uint64_t Size,
     }
     outs() << "\t@ KIND_DATA\n";
     break;
-  case macho::JumpTable8:
+  case MachO::DICE_KIND_JUMP_TABLE8:
     Value = bytes[0];
     outs() << "\t.byte " << Value << "\t@ KIND_JUMP_TABLE8";
     break;
-  case macho::JumpTable16:
+  case MachO::DICE_KIND_JUMP_TABLE16:
     Value = bytes[1] << 8 |
             bytes[0];
     outs() << "\t.short " << Value << "\t@ KIND_JUMP_TABLE16";
     break;
-  case macho::JumpTable32:
+  case MachO::DICE_KIND_JUMP_TABLE32:
     Value = bytes[3] << 24 |
             bytes[2] << 16 |
             bytes[1] << 8 |
@@ -148,7 +148,7 @@ static void DumpDataInCode(const char *bytes, uint64_t Size,
 }
 
 static void
-getSectionsAndSymbols(const macho::Header Header,
+getSectionsAndSymbols(const MachO::mach_header Header,
                       MachOObjectFile *MachOObj,
                       std::vector<SectionRef> &Sections,
                       std::vector<SymbolRef> &Symbols,
@@ -171,25 +171,25 @@ getSectionsAndSymbols(const macho::Header Header,
     MachOObj->getFirstLoadCommandInfo();
   bool BaseSegmentAddressSet = false;
   for (unsigned i = 0; ; ++i) {
-    if (Command.C.Type == macho::LCT_FunctionStarts) {
+    if (Command.C.cmd == MachO::LC_FUNCTION_STARTS) {
       // We found a function starts segment, parse the addresses for later
       // consumption.
-      macho::LinkeditDataLoadCommand LLC =
+      MachO::linkedit_data_command LLC =
         MachOObj->getLinkeditDataLoadCommand(Command);
 
-      MachOObj->ReadULEB128s(LLC.DataOffset, FoundFns);
+      MachOObj->ReadULEB128s(LLC.dataoff, FoundFns);
     }
-    else if (Command.C.Type == macho::LCT_Segment) {
-      macho::SegmentLoadCommand SLC =
+    else if (Command.C.cmd == MachO::LC_SEGMENT) {
+      MachO::segment_command SLC =
         MachOObj->getSegmentLoadCommand(Command);
-      StringRef SegName = SLC.Name;
+      StringRef SegName = SLC.segname;
       if(!BaseSegmentAddressSet && SegName != "__PAGEZERO") {
         BaseSegmentAddressSet = true;
-        BaseSegmentAddress = SLC.VMAddress;
+        BaseSegmentAddress = SLC.vmaddr;
       }
     }
 
-    if (i == Header.NumLoadCommands - 1)
+    if (i == Header.ncmds - 1)
       break;
     else
       Command = MachOObj->getNextLoadCommandInfo(Command);
@@ -244,7 +244,7 @@ static void DisassembleInputMachO2(StringRef Filename,
 
   outs() << '\n' << Filename << ":\n\n";
 
-  macho::Header Header = MachOOF->getHeader();
+  MachO::mach_header Header = MachOOF->getHeader();
 
   // FIXME: FoundFns isn't used anymore. Using symbols/LC_FUNCTION_STARTS to
   // determine function locations will eventually go in MCObjectDisassembler.
@@ -267,7 +267,7 @@ static void DisassembleInputMachO2(StringRef Filename,
 
   // Build a data in code table that is sorted on by the address of each entry.
   uint64_t BaseAddress = 0;
-  if (Header.FileType == macho::HFT_Object)
+  if (Header.filetype == MachO::MH_OBJECT)
     Sections[0].getAddress(BaseAddress);
   else
     BaseAddress = BaseSegmentAddress;

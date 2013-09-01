@@ -180,7 +180,7 @@ bool RuntimeDyldMachO::resolveI386Relocation(uint8_t *LocalAddress,
   switch (Type) {
   default:
     llvm_unreachable("Invalid relocation type!");
-  case macho::RIT_Vanilla: {
+  case MachO::GENERIC_RELOC_VANILLA: {
     uint8_t *p = LocalAddress;
     uint64_t ValueToWrite = Value + Addend;
     for (unsigned i = 0; i < Size; ++i) {
@@ -189,9 +189,9 @@ bool RuntimeDyldMachO::resolveI386Relocation(uint8_t *LocalAddress,
     }
     return false;
   }
-  case macho::RIT_Difference:
-  case macho::RIT_Generic_LocalDifference:
-  case macho::RIT_Generic_PreboundLazyPointer:
+  case MachO::GENERIC_RELOC_SECTDIFF:
+  case MachO::GENERIC_RELOC_LOCAL_SECTDIFF:
+  case MachO::GENERIC_RELOC_PB_LA_PTR:
     return Error("Relocation type not implemented yet!");
   }
 }
@@ -213,12 +213,12 @@ bool RuntimeDyldMachO::resolveX86_64Relocation(uint8_t *LocalAddress,
   switch(Type) {
   default:
     llvm_unreachable("Invalid relocation type!");
-  case macho::RIT_X86_64_Signed1:
-  case macho::RIT_X86_64_Signed2:
-  case macho::RIT_X86_64_Signed4:
-  case macho::RIT_X86_64_Signed:
-  case macho::RIT_X86_64_Unsigned:
-  case macho::RIT_X86_64_Branch: {
+  case MachO::X86_64_RELOC_SIGNED_1:
+  case MachO::X86_64_RELOC_SIGNED_2:
+  case MachO::X86_64_RELOC_SIGNED_4:
+  case MachO::X86_64_RELOC_SIGNED:
+  case MachO::X86_64_RELOC_UNSIGNED:
+  case MachO::X86_64_RELOC_BRANCH: {
     Value += Addend;
     // Mask in the target value a byte at a time (we don't have an alignment
     // guarantee for the target address, so this is safest).
@@ -229,10 +229,10 @@ bool RuntimeDyldMachO::resolveX86_64Relocation(uint8_t *LocalAddress,
     }
     return false;
   }
-  case macho::RIT_X86_64_GOTLoad:
-  case macho::RIT_X86_64_GOT:
-  case macho::RIT_X86_64_Subtractor:
-  case macho::RIT_X86_64_TLV:
+  case MachO::X86_64_RELOC_GOT_LOAD:
+  case MachO::X86_64_RELOC_GOT:
+  case MachO::X86_64_RELOC_SUBTRACTOR:
+  case MachO::X86_64_RELOC_TLV:
     return Error("Relocation type not implemented yet!");
   }
 }
@@ -257,7 +257,7 @@ bool RuntimeDyldMachO::resolveARMRelocation(uint8_t *LocalAddress,
   switch(Type) {
   default:
     llvm_unreachable("Invalid relocation type!");
-  case macho::RIT_Vanilla: {
+  case MachO::ARM_RELOC_VANILLA: {
     // Mask in the target value a byte at a time (we don't have an alignment
     // guarantee for the target address, so this is safest).
     uint8_t *p = (uint8_t*)LocalAddress;
@@ -267,7 +267,7 @@ bool RuntimeDyldMachO::resolveARMRelocation(uint8_t *LocalAddress,
     }
     break;
   }
-  case macho::RIT_ARM_Branch24Bit: {
+  case MachO::ARM_RELOC_BR24: {
     // Mask the value into the target address. We know instructions are
     // 32-bit aligned, so we can do it all at once.
     uint32_t *p = (uint32_t*)LocalAddress;
@@ -283,14 +283,14 @@ bool RuntimeDyldMachO::resolveARMRelocation(uint8_t *LocalAddress,
     *p = (*p & ~0xffffff) | Value;
     break;
   }
-  case macho::RIT_ARM_ThumbBranch22Bit:
-  case macho::RIT_ARM_ThumbBranch32Bit:
-  case macho::RIT_ARM_Half:
-  case macho::RIT_ARM_HalfDifference:
-  case macho::RIT_Pair:
-  case macho::RIT_Difference:
-  case macho::RIT_ARM_LocalDifference:
-  case macho::RIT_ARM_PreboundLazyPointer:
+  case MachO::ARM_THUMB_RELOC_BR22:
+  case MachO::ARM_THUMB_32BIT_BRANCH:
+  case MachO::ARM_RELOC_HALF:
+  case MachO::ARM_RELOC_HALF_SECTDIFF:
+  case MachO::ARM_RELOC_PAIR:
+  case MachO::ARM_RELOC_SECTDIFF:
+  case MachO::ARM_RELOC_LOCAL_SECTDIFF:
+  case MachO::ARM_RELOC_PB_LA_PTR:
     return Error("Relocation type not implemented yet!");
   }
   return false;
@@ -304,7 +304,7 @@ void RuntimeDyldMachO::processRelocationRef(unsigned SectionID,
                                             StubMap &Stubs) {
   const ObjectFile *OF = Obj.getObjectFile();
   const MachOObjectFile *MachO = static_cast<const MachOObjectFile*>(OF);
-  macho::RelocationEntry RE = MachO->getRelocation(RelI.getRawDataRefImpl());
+  MachO::any_relocation_info RE= MachO->getRelocation(RelI.getRawDataRefImpl());
 
   uint32_t RelType = MachO->getAnyRelocationType(RE);
 
@@ -359,8 +359,8 @@ void RuntimeDyldMachO::processRelocationRef(unsigned SectionID,
     Value.Addend = Addend - Addr;
   }
 
-  if (Arch == Triple::x86_64 && (RelType == macho::RIT_X86_64_GOT ||
-                                 RelType == macho::RIT_X86_64_GOTLoad)) {
+  if (Arch == Triple::x86_64 && (RelType == MachO::X86_64_RELOC_GOT ||
+                                 RelType == MachO::X86_64_RELOC_GOT_LOAD)) {
     assert(IsPCRel);
     assert(Size == 2);
     StubMap::const_iterator i = Stubs.find(Value);
@@ -371,7 +371,7 @@ void RuntimeDyldMachO::processRelocationRef(unsigned SectionID,
       Stubs[Value] = Section.StubOffset;
       uint8_t *GOTEntry = Section.Address + Section.StubOffset;
       RelocationEntry RE(SectionID, Section.StubOffset,
-                         macho::RIT_X86_64_Unsigned, 0, false, 3);
+                         MachO::X86_64_RELOC_UNSIGNED, 0, false, 3);
       if (Value.SymbolName)
         addRelocationForSymbol(RE, Value.SymbolName);
       else
@@ -380,9 +380,9 @@ void RuntimeDyldMachO::processRelocationRef(unsigned SectionID,
       Addr = GOTEntry;
     }
     resolveRelocation(Section, Offset, (uint64_t)Addr,
-                      macho::RIT_X86_64_Unsigned, Value.Addend, true, 2);
+                      MachO::X86_64_RELOC_UNSIGNED, Value.Addend, true, 2);
   } else if (Arch == Triple::arm &&
-             (RelType & 0xf) == macho::RIT_ARM_Branch24Bit) {
+             (RelType & 0xf) == MachO::ARM_RELOC_BR24) {
     // This is an ARM branch relocation, need to use a stub function.
 
     //  Look up for existing stub.
@@ -397,7 +397,7 @@ void RuntimeDyldMachO::processRelocationRef(unsigned SectionID,
       uint8_t *StubTargetAddr = createStubFunction(Section.Address +
                                                    Section.StubOffset);
       RelocationEntry RE(SectionID, StubTargetAddr - Section.Address,
-                         macho::RIT_Vanilla, Value.Addend);
+                         MachO::GENERIC_RELOC_VANILLA, Value.Addend);
       if (Value.SymbolName)
         addRelocationForSymbol(RE, Value.SymbolName);
       else
