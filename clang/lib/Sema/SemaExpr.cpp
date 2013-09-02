@@ -5444,9 +5444,18 @@ QualType Sema::CheckConditionalOperands(ExprResult &Cond, ExprResult &LHS,
   VK = VK_RValue;
   OK = OK_Ordinary;
 
+  // First, check the condition.
   Cond = UsualUnaryConversions(Cond.take());
   if (Cond.isInvalid())
     return QualType();
+  if (checkCondition(*this, Cond.get()))
+    return QualType();
+
+  // Now check the two expressions.
+  if (LHS.get()->getType()->isVectorType() ||
+      RHS.get()->getType()->isVectorType())
+    return CheckVectorOperands(LHS, RHS, QuestionLoc, /*isCompAssign*/false);
+
   UsualArithmeticConversions(LHS, RHS);
   if (LHS.isInvalid() || RHS.isInvalid())
     return QualType();
@@ -5454,14 +5463,6 @@ QualType Sema::CheckConditionalOperands(ExprResult &Cond, ExprResult &LHS,
   QualType CondTy = Cond.get()->getType();
   QualType LHSTy = LHS.get()->getType();
   QualType RHSTy = RHS.get()->getType();
-
-  // first, check the condition.
-  if (checkCondition(*this, Cond.get()))
-    return QualType();
-
-  // Now check the two expressions.
-  if (LHSTy->isVectorType() || RHSTy->isVectorType())
-    return CheckVectorOperands(LHS, RHS, QuestionLoc, /*isCompAssign*/false);
 
   // If the condition is a vector, and both operands are scalar,
   // attempt to implicity convert them to the vector type to act like the

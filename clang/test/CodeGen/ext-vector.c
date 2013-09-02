@@ -291,3 +291,13 @@ int4 test15(uint4 V0) {
 void test16(float2 a, float2 b) {
   float2 t0 = (a + b) / 2;
 } 
+
+typedef char char16 __attribute__((ext_vector_type(16)));
+
+// CHECK: @test17
+void test17(void) {
+  char16 valA;
+  char valB;
+  char valC;
+  char16 destVal = valC ? valA : valB;
+}
