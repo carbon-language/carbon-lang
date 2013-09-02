@@ -375,7 +375,9 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     { X86::VMOVAPSYrr,  X86::VMOVAPSYmr,    TB_FOLDED_STORE | TB_ALIGN_32 },
     { X86::VMOVDQAYrr,  X86::VMOVDQAYmr,    TB_FOLDED_STORE | TB_ALIGN_32 },
     { X86::VMOVUPDYrr,  X86::VMOVUPDYmr,    TB_FOLDED_STORE },
-    { X86::VMOVUPSYrr,  X86::VMOVUPSYmr,    TB_FOLDED_STORE }
+    { X86::VMOVUPSYrr,  X86::VMOVUPSYmr,    TB_FOLDED_STORE },
+    // AVX-512 foldable instructions
+    { X86::VMOVPDI2DIZrr,X86::VMOVPDI2DIZmr,  TB_FOLDED_STORE }
   };
 
   for (unsigned i = 0, e = array_lengthof(OpTbl0); i != e; ++i) {
@@ -581,6 +583,14 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     { X86::TZCNT16rr,       X86::TZCNT16rm,           0 },
     { X86::TZCNT32rr,       X86::TZCNT32rm,           0 },
     { X86::TZCNT64rr,       X86::TZCNT64rm,           0 },
+
+    // AVX-512 foldable instructions
+    { X86::VMOV64toPQIZrr,  X86::VMOVQI2PQIZrm,       0 },
+    { X86::VMOVDI2SSZrr,    X86::VMOVDI2SSZrm,        0 },
+    { X86::VMOVDQA32rr,     X86::VMOVDQA32rm,          TB_ALIGN_64 },
+    { X86::VMOVDQA64rr,     X86::VMOVDQA64rm,          TB_ALIGN_64 },
+    { X86::VMOVDQU32rr,     X86::VMOVDQU32rm,          0 },
+    { X86::VMOVDQU64rr,     X86::VMOVDQU64rm,          0 },
   };
 
   for (unsigned i = 0, e = array_lengthof(OpTbl1); i != e; ++i) {
@@ -1180,12 +1190,35 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     { X86::PEXT64rr,          X86::PEXT64rm,            0 },
 
     // AVX-512 foldable instructions
+    { X86::VPADDDZrr,         X86::VPADDDZrm,           0 },
+    { X86::VPADDQZrr,         X86::VPADDQZrm,           0 },
+    { X86::VADDPSZrr,         X86::VADDPSZrm,           0 },
+    { X86::VADDPDZrr,         X86::VADDPDZrm,           0 },
+    { X86::VSUBPSZrr,         X86::VSUBPSZrm,           0 },
+    { X86::VSUBPDZrr,         X86::VSUBPDZrm,           0 },
+    { X86::VMULPSZrr,         X86::VMULPSZrm,           0 },
+    { X86::VMULPDZrr,         X86::VMULPDZrm,           0 },
+    { X86::VDIVPSZrr,         X86::VDIVPSZrm,           0 },
+    { X86::VDIVPDZrr,         X86::VDIVPDZrm,           0 },
+    { X86::VMINPSZrr,         X86::VMINPSZrm,           0 },
+    { X86::VMINPDZrr,         X86::VMINPDZrm,           0 },
+    { X86::VMAXPSZrr,         X86::VMAXPSZrm,           0 },
+    { X86::VMAXPDZrr,         X86::VMAXPDZrm,           0 },
     { X86::VPERMPDZri,        X86::VPERMPDZmi,          0 },
     { X86::VPERMPSZrr,        X86::VPERMPSZrm,          0 },
     { X86::VPERMI2Drr,        X86::VPERMI2Drm,          0 },
     { X86::VPERMI2Qrr,        X86::VPERMI2Qrm,          0 },
     { X86::VPERMI2PSrr,       X86::VPERMI2PSrm,         0 },
     { X86::VPERMI2PDrr,       X86::VPERMI2PDrm,         0 },
+    { X86::VPSLLVDZrr,        X86::VPSLLVDZrm,          0 },
+    { X86::VPSLLVQZrr,        X86::VPSLLVQZrm,          0 },
+    { X86::VPSRAVDZrr,        X86::VPSRAVDZrm,          0 },
+    { X86::VPSRLVDZrr,        X86::VPSRLVDZrm,          0 },
+    { X86::VPSRLVQZrr,        X86::VPSRLVQZrm,          0 },
+    { X86::VSHUFPDZrri,       X86::VSHUFPDZrmi,         0 },
+    { X86::VSHUFPSZrri,       X86::VSHUFPSZrmi,         0 },
+    { X86::VALIGNQrri,        X86::VALIGNQrmi,          0 },
+    { X86::VALIGNDrri,        X86::VALIGNDrmi,          0 },
   };
 
   for (unsigned i = 0, e = array_lengthof(OpTbl2); i != e; ++i) {
@@ -4010,6 +4043,8 @@ static bool hasPartialRegUpdate(unsigned Opcode) {
   case X86::Int_VCVTSD2SSrr:
   case X86::VCVTSS2SDrr:
   case X86::Int_VCVTSS2SDrr:
+  case X86::VCVTSD2SSZrr:
+  case X86::VCVTSS2SDZrr:
   case X86::VRCPSSr:
   case X86::VROUNDSDr:
   case X86::VROUNDSDr_Int:
@@ -5064,6 +5099,15 @@ bool X86InstrInfo::isHighLatencyDef(int opc) const {
   case X86::VSQRTSSm:
   case X86::VSQRTSSm_Int:
   case X86::VSQRTSSr:
+
+  case X86::VGATHERQPSZrm:
+  case X86::VGATHERQPDZrm:
+  case X86::VGATHERDPDZrm:
+  case X86::VGATHERDPSZrm:
+  case X86::VPGATHERQDZrm:
+  case X86::VPGATHERQQZrm:
+  case X86::VPGATHERDDZrm:
+  case X86::VPGATHERDQZrm:  
     return true;
   }
 }

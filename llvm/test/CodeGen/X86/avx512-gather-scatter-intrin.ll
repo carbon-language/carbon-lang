@@ -10,7 +10,7 @@ declare void @llvm.x86.avx512.scatter.qps.mask.512 (i8*, i8, <8 x i64>, <8 x flo
 declare <8 x double> @llvm.x86.avx512.gather.qpd.mask.512 (<8 x double>, i8, <8 x i64>, i8*, i32)
 declare void @llvm.x86.avx512.scatter.qpd.mask.512 (i8*, i8, <8 x i64>, <8 x double>, i32)
 
-;CHECK: gather_mask_dps
+;CHECK-LABEL: gather_mask_dps
 ;CHECK: kmovw
 ;CHECK: vgatherdps
 ;CHECK: vpadd
@@ -23,7 +23,7 @@ define void @gather_mask_dps(<16 x i32> %ind, <16 x float> %src, i16 %mask, i8* 
   ret void
 }
 
-;CHECK: gather_mask_dpd
+;CHECK-LABEL: gather_mask_dpd
 ;CHECK: kmovw
 ;CHECK: vgatherdpd
 ;CHECK: vpadd
@@ -36,7 +36,7 @@ define void @gather_mask_dpd(<8 x i32> %ind, <8 x double> %src, i8 %mask, i8* %b
   ret void
 }
 
-;CHECK: gather_mask_qps
+;CHECK-LABEL: gather_mask_qps
 ;CHECK: kmovw
 ;CHECK: vgatherqps
 ;CHECK: vpadd
@@ -49,7 +49,7 @@ define void @gather_mask_qps(<8 x i64> %ind, <8 x float> %src, i8 %mask, i8* %ba
   ret void
 }
 
-;CHECK: gather_mask_qpd
+;CHECK-LABEL: gather_mask_qpd
 ;CHECK: kmovw
 ;CHECK: vgatherqpd
 ;CHECK: vpadd
@@ -74,7 +74,7 @@ declare void @llvm.x86.avx512.scatter.qpi.mask.512 (i8*, i8, <8 x i64>, <8 x i32
 declare <8 x i64> @llvm.x86.avx512.gather.qpq.mask.512 (<8 x i64>, i8, <8 x i64>, i8*, i32)
 declare void @llvm.x86.avx512.scatter.qpq.mask.512 (i8*, i8, <8 x i64>, <8 x i64>, i32)
 
-;CHECK: gather_mask_dd
+;CHECK-LABEL: gather_mask_dd
 ;CHECK: kmovw
 ;CHECK: vpgatherdd
 ;CHECK: vpadd
@@ -87,7 +87,7 @@ define void @gather_mask_dd(<16 x i32> %ind, <16 x i32> %src, i16 %mask, i8* %ba
   ret void
 }
 
-;CHECK: gather_mask_qd
+;CHECK-LABEL: gather_mask_qd
 ;CHECK: kmovw
 ;CHECK: vpgatherqd
 ;CHECK: vpadd
@@ -100,7 +100,7 @@ define void @gather_mask_qd(<8 x i64> %ind, <8 x i32> %src, i8 %mask, i8* %base,
   ret void
 }
 
-;CHECK: gather_mask_qq
+;CHECK-LABEL: gather_mask_qq
 ;CHECK: kmovw
 ;CHECK: vpgatherqq
 ;CHECK: vpadd
@@ -113,7 +113,7 @@ define void @gather_mask_qq(<8 x i64> %ind, <8 x i64> %src, i8 %mask, i8* %base,
   ret void
 }
 
-;CHECK: gather_mask_dq
+;CHECK-LABEL: gather_mask_dq
 ;CHECK: kmovw
 ;CHECK: vpgatherdq
 ;CHECK: vpadd
@@ -135,7 +135,7 @@ declare void @llvm.x86.avx512.scatter.qps.512 (i8*, <8 x i64>, <8 x float>, i32)
 declare <8 x double> @llvm.x86.avx512.gather.qpd.512 (<8 x i64>, i8*, i32)
 declare void @llvm.x86.avx512.scatter.qpd.512 (i8*, <8 x i64>, <8 x double>, i32)
 
-;CHECK: gather_dps
+;CHECK-LABEL: gather_dps
 ;CHECK: kxnorw
 ;CHECK: vgatherdps
 ;CHECK: vscatterdps
@@ -147,7 +147,7 @@ define void @gather_dps(<16 x i32> %ind, i8* %base, i8* %stbuf)  {
   ret void
 }
 
-;CHECK: gather_qps
+;CHECK-LABEL: gather_qps
 ;CHECK: kxnorw
 ;CHECK: vgatherqps
 ;CHECK: vscatterqps
@@ -159,7 +159,7 @@ define void @gather_qps(<8 x i64> %ind, i8* %base, i8* %stbuf)  {
   ret void
 }
 
-;CHECK: gather_qpd
+;CHECK-LABEL: gather_qpd
 ;CHECK: kxnorw
 ;CHECK: vgatherqpd
 ;CHECK: vpadd
@@ -184,7 +184,7 @@ declare void @llvm.x86.avx512.scatter.qpi.512 (i8*, <8 x i64>, <8 x i32>, i32)
 declare <8 x i64> @llvm.x86.avx512.gather.qpq.512 (<8 x i64>, i8*, i32)
 declare void @llvm.x86.avx512.scatter.qpq.512 (i8*, <8 x i64>, <8 x i64>, i32)
 
-;CHECK: gather_dpi
+;CHECK-LABEL: gather_dpi
 ;CHECK: kxnorw
 ;CHECK: vpgatherdd
 ;CHECK: vpscatterdd
@@ -196,7 +196,8 @@ define void @gather_dpi(<16 x i32> %ind, i8* %base, i8* %stbuf)  {
   ret void
 }
 
-;CHECK: gather_qpq
+;CHECK-LABEL: gather_qpq
+;CHECK: vpxord  %zmm
 ;CHECK: kxnorw
 ;CHECK: vpgatherqq
 ;CHECK: vpadd
@@ -209,7 +210,8 @@ define void @gather_qpq(<8 x i64> %ind, i8* %base, i8* %stbuf)  {
   ret void
 }
 
-;CHECK: gather_qpi
+;CHECK-LABEL: gather_qpi
+;CHECK: vpxor %ymm
 ;CHECK: kxnorw
 ;CHECK: vpgatherqd
 ;CHECK: vpadd
