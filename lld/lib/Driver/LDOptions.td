@@ -48,6 +48,7 @@ def soname : Separate<["-"], "soname">;
 
 def static : Flag<["-"], "static">;
 def shared : Flag<["-"], "shared">;
+def Bshareable : Flag<["-"], "Bshareable">, Alias<shared>;
 def start_group : Flag<["--"], "start-group">;
 def end_group : Flag<["--"], "end-group">;
 def build_id : Flag<["--"], "build-id">;
