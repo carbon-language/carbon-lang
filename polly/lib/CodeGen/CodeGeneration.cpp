@@ -930,10 +930,8 @@ void ClastStmtCodeGen::codegen(const clast_guard *g) {
 
   LoopInfo &LI = P->getAnalysis<LoopInfo>();
   Loop *L = LI.getLoopFor(CondBB);
-  if (L) {
+  if (L)
     L->addBasicBlockToLoop(ThenBB, LI.getBase());
-    L->addBasicBlockToLoop(MergeBB, LI.getBase());
-  }
 
   codegen(g->then);
 
