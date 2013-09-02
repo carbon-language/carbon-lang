@@ -12,8 +12,10 @@
 // RUN: %clangxx_asan -fsanitize-blacklist=%tmp -O3 %s -o %t \
 // RUN: %p/Helpers/blacklist-extra.cc && %t 2>&1
 
-// badGlobal is accessed improperly, but we blacklisted it.
-int badGlobal;
+// badGlobal is accessed improperly, but we blacklisted it. Align
+// it to make sure memory past the end of badGlobal will be in
+// the same page.
+__attribute__((aligned(16))) int badGlobal;
 int readBadGlobal() {
   return (&badGlobal)[1];
 }
