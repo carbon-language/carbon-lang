@@ -49,6 +49,43 @@ target_link_libraries(cxx ${libraries})
 append_if(compile_flags LIBCXX_HAS_FPIC_FLAG -fPIC)
 append_if(link_flags LIBCXX_HAS_NODEFAULTLIBS_FLAG -nodefaultlibs)
 
+if ( APPLE )
+  if ( CMAKE_OSX_DEPLOYMENT_TARGET STREQUAL "10.6" )
+    list(APPEND compile_flags "-U__STRICT_ANSI__")
+    list(APPEND link_flags
+      "-compatibility_version 1"
+      "-current_version ${LIBCXX_VERSION}"
+      "-install_name /usr/lib/libc++.1.dylib"
+      "-Wl,-reexport_library,/usr/lib/libc++abi.dylib"
+      "-Wl,-unexported_symbols_list,${CMAKE_CURRENT_SOURCE_DIR}/libc++unexp.exp"
+      "/usr/lib/libSystem.B.dylib")
+  else()
+    if ( ${CMAKE_OSX_SYSROOT} )
+      list(FIND ${CMAKE_OSX_ARCHITECTURES} "armv7" OSX_HAS_ARMV7)
+      if (OSX_HAS_ARMV7)
+        set(OSX_RE_EXPORT_LINE
+          "${CMAKE_OSX_SYSROOT}/usr/lib/libc++abi.dylib"
+          "-Wl,-reexported_symbols_list,${CMAKE_CURRENT_SOURCE_DIR}/libc++sjlj-abi.exp")
+      else()
+        set(OSX_RE_EXPORT_LINE
+          "-Wl,-reexport_library,${CMAKE_OSX_SYSROOT}/usr/lib/libc++abi.dylib")
+      endif()
+    else()
+      set (OSX_RE_EXPORT_LINE "/usr/lib/libc++abi.dylib -Wl,-reexported_symbols_list,${CMAKE_CURRENT_SOURCE_DIR}/libc++abi${LIBCXX_LIBCPPABI_VERSION}.exp")
+    endif()
+
+    list(APPEND link_flags
+      "-compatibility_version 1"
+      "-install_name /usr/lib/libc++.1.dylib"
+      "-Wl,-unexported_symbols_list,${CMAKE_CURRENT_SOURCE_DIR}/libc++unexp.exp"
+      "${OSX_RE_EXPORT_LINE}"
+      "-Wl,-force_symbols_not_weak_list,${CMAKE_CURRENT_SOURCE_DIR}/notweak.exp"
+      "-Wl,-force_symbols_weak_list,${CMAKE_CURRENT_SOURCE_DIR}/weak.exp")
+  endif()
+endif()
+
+string(REPLACE ";" " " link_flags "${link_flags}")
+
 set_target_properties(cxx
   PROPERTIES
     COMPILE_FLAGS "${compile_flags}"
