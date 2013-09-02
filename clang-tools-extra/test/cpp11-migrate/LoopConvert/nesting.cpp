@@ -63,7 +63,7 @@ void f() {
   }
   // The inner loop is also convertible, but doesn't need to be converted
   // immediately. Update this test when that changes!
-  // CHECK: for (auto const & elem : NestS) {
+  // CHECK: for (const auto & elem : NestS) {
   // CHECK-NEXT: for (S::const_iterator SI = (elem).begin(), SE = (elem).end(); SI != SE; ++SI) {
   // CHECK-NEXT: printf("%d", *SI);
 }

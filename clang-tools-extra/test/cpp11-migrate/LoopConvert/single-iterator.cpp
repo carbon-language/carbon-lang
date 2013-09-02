@@ -124,14 +124,14 @@ void different_type() {
   for (S::const_iterator it = s.begin(); it != s.end(); ++it) {
     printf("s has value %d\n", (*it).x);
   }
-  // CHECK: for (auto const & elem : s)
+  // CHECK: for (const auto & elem : s)
   // CHECK-NEXT: printf("s has value %d\n", (elem).x);
 
   S *ps;
   for (S::const_iterator it = ps->begin(); it != ps->end(); ++it) {
     printf("s has value %d\n", (*it).x);
   }
-  // CHECK: for (auto const & p : *ps)
+  // CHECK: for (const auto & p : *ps)
   // CHECK-NEXT: printf("s has value %d\n", (p).x);
 
   // v.begin() returns a user-defined type 'iterator' which, since it's
