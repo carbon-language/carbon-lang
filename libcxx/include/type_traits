@@ -1378,8 +1378,10 @@ template <class ..._Tp> using common_type_t = typename common_type<_Tp...>::type
 
 // is_assignable
 
+template<typename, typename T> struct __select_2nd { typedef T type; };
+
 template <class _Tp, class _Arg>
-decltype((_VSTD::declval<_Tp>() = _VSTD::declval<_Arg>(), true_type()))
+typename __select_2nd<decltype((_VSTD::declval<_Tp>() = _VSTD::declval<_Arg>())), true_type>::type
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 __is_assignable_test(_Tp&&, _Arg&&);
 #else
@@ -1968,8 +1970,6 @@ class _LIBCPP_TYPE_VIS_ONLY result_of<_Fn(_A0, _A1, _A2)>
 // template <class T, class... Args> struct is_constructible;
 
 //      main is_constructible test
-
-template<typename, typename T> struct __select_2nd { typedef T type; };
 
 template <class _Tp, class ..._Args>
 typename __select_2nd<decltype(_VSTD::move(_Tp(_VSTD::declval<_Args>()...))), true_type>::type
@@ -3257,6 +3257,27 @@ struct underlying_type
 };
 
 #endif // _LIBCXX_UNDERLYING_TYPE
+
+#ifndef _LIBCPP_HAS_NO_ADVANCED_SFINAE
+
+template <class _Tp>
+struct __has_operator_addressof_imp
+{
+    template <class>
+        static auto __test(__any) -> false_type;
+    template <class _Up>
+        static auto __test(_Up* __u)
+            -> typename __select_2nd<decltype(__u->operator&()), true_type>::type;
+
+    static const bool value = decltype(__test<_Tp>(nullptr))::value;
+};
+
+template <class _Tp>
+struct __has_operator_addressof
+    : public integral_constant<bool, __has_operator_addressof_imp<_Tp>::value>
+{};
+
+#endif  // _LIBCPP_HAS_NO_ADVANCED_SFINAE
 
 _LIBCPP_END_NAMESPACE_STD
 
