@@ -1,5 +1,5 @@
-; RUN: llc -mtriple=armv7-apple-ios6.0 -mcpu=swift < %s | FileCheck %s
-; RUN: llc -mtriple=armv7-apple-ios6.0 < %s | FileCheck %s --check-prefix=CHECK-STRICT-ATOMIC
+; RUN: llc -mtriple=armv7-apple-ios6.0 < %s | FileCheck %s
+; RUN: llc -mtriple=armv7-apple-ios6.0 -mcpu=generic < %s | FileCheck %s --check-prefix=CHECK-STRICT-ATOMIC
 
 ; Release operations only need the store barrier provided by a "dmb ishst",
 
