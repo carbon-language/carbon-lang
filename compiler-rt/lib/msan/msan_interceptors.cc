@@ -139,6 +139,31 @@ INTERCEPTOR(int, posix_memalign, void **memptr, SIZE_T alignment, SIZE_T size) {
   return 0;
 }
 
+INTERCEPTOR(void *, memalign, SIZE_T boundary, SIZE_T size) {
+  GET_MALLOC_STACK_TRACE;
+  CHECK_EQ(boundary & (boundary - 1), 0);
+  void *ptr = MsanReallocate(&stack, 0, size, boundary, false);
+  return ptr;
+}
+
+INTERCEPTOR(void *, valloc, SIZE_T size) {
+  GET_MALLOC_STACK_TRACE;
+  void *ptr = MsanReallocate(&stack, 0, size, GetPageSizeCached(), false);
+  return ptr;
+}
+
+INTERCEPTOR(void *, pvalloc, SIZE_T size) {
+  GET_MALLOC_STACK_TRACE;
+  uptr PageSize = GetPageSizeCached();
+  size = RoundUpTo(size, PageSize);
+  if (size == 0) {
+    // pvalloc(0) should allocate one page.
+    size = PageSize;
+  }
+  void *ptr = MsanReallocate(&stack, 0, size, PageSize, false);
+  return ptr;
+}
+
 INTERCEPTOR(void, free, void *ptr) {
   ENSURE_MSAN_INITED();
   if (ptr == 0) return;
@@ -1188,6 +1213,9 @@ void InitializeInterceptors() {
   INTERCEPT_FUNCTION(mmap);
   INTERCEPT_FUNCTION(mmap64);
   INTERCEPT_FUNCTION(posix_memalign);
+  INTERCEPT_FUNCTION(memalign);
+  INTERCEPT_FUNCTION(valloc);
+  INTERCEPT_FUNCTION(pvalloc);
   INTERCEPT_FUNCTION(malloc);
   INTERCEPT_FUNCTION(calloc);
   INTERCEPT_FUNCTION(realloc);
