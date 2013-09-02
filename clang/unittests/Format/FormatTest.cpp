@@ -525,6 +525,10 @@ TEST_F(FormatTest, FormatsSwitchStatement) {
                "  case a:          \\\n"
                "    foo = b;       \\\n"
                "  }", getLLVMStyleWithColumns(20));
+  verifyFormat("#define OPERATION_CASE(name)           \\\n"
+               "  case OP_name:                        \\\n"
+               "    return operations::Operation##name\n",
+               getLLVMStyleWithColumns(40));
 
   verifyGoogleFormat("switch (x) {\n"
                      "  case 1:\n"

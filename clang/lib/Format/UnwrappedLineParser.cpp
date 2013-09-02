@@ -235,8 +235,9 @@ void UnwrappedLineParser::parseLevel(bool HasOpeningBrace) {
       break;
     case tok::kw_default:
     case tok::kw_case:
-      if (!SwitchLabelEncountered)
-        Line->Level += Style.IndentCaseLabels;
+      if (!SwitchLabelEncountered &&
+          (Style.IndentCaseLabels || (Line->InPPDirective && Line->Level == 1)))
+        ++Line->Level;
       SwitchLabelEncountered = true;
       parseStructuralElement();
       break;
@@ -864,8 +865,6 @@ void UnwrappedLineParser::parseDoWhile() {
 }
 
 void UnwrappedLineParser::parseLabel() {
-  if (FormatTok->Tok.isNot(tok::colon))
-    return;
   nextToken();
   unsigned OldLineLevel = Line->Level;
   if (Line->Level > 1 || (!Line->InPPDirective && Line->Level > 0))
