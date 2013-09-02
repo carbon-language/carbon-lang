@@ -55,7 +55,7 @@ void f() {
 
   auto *fail1 = 0; // expected-error {{variable 'fail1' with type 'auto *' has incompatible initializer of type 'int'}}
   int **p;
-  const auto **fail2(p); // expected-error {{variable 'fail2' with type 'auto const **' has incompatible initializer of type 'int **'}}
+  const auto **fail2(p); // expected-error {{variable 'fail2' with type 'const auto **' has incompatible initializer of type 'int **'}}
 }
 
 struct S {

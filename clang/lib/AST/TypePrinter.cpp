@@ -167,6 +167,7 @@ bool TypePrinter::canPrefixQualifiers(const Type *T,
     TC = Subst->getReplacementType()->getTypeClass();
   
   switch (TC) {
+    case Type::Auto:
     case Type::Builtin:
     case Type::Complex:
     case Type::UnresolvedUsing:
@@ -217,7 +218,6 @@ bool TypePrinter::canPrefixQualifiers(const Type *T,
     case Type::Attributed:
     case Type::PackExpansion:
     case Type::SubstTemplateTypeParm:
-    case Type::Auto:
       CanPrefixQualifiers = false;
       break;
   }
