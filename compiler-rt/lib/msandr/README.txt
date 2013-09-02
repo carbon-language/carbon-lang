@@ -6,7 +6,8 @@ Building:
      (svn co https://dynamorio.googlecode.com/svn/trunk dr && \
       cd dr && mkdir build && cd build && \
       cmake -DDR_EXT_DRMGR_STATIC=ON -DDR_EXT_DRSYMS_STATIC=ON \
-            -DDR_EXT_DRUTIL_STATIC=ON -DDR_EXT_DRWRAP_STATIC=ON .. && \
+            -DDR_EXT_DRUTIL_STATIC=ON -DDR_EXT_DRWRAP_STATIC=ON \
+            -DDR_EXT_DRX_STATIC=ON .. && \
       make -j10 && make install)
 
   2. Download and build DrMemory (for DrSyscall extension)
