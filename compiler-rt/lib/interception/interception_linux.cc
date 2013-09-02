@@ -15,7 +15,6 @@
 #ifdef __linux__
 #include "interception.h"
 
-#include <stddef.h>  // for NULL
 #include <dlfcn.h>   // for dlsym
 
 namespace __interception {
@@ -24,6 +23,11 @@ bool GetRealFunctionAddress(const char *func_name, uptr *func_addr,
   *func_addr = (uptr)dlsym(RTLD_NEXT, func_name);
   return real == wrapper;
 }
+
+void *GetFuncAddrVer(const char *func_name, const char *ver) {
+  return dlvsym(RTLD_NEXT, func_name, ver);
+}
+
 }  // namespace __interception
 
 
