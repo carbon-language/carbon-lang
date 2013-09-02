@@ -39,28 +39,27 @@ std::string StrError(int errnum) {
   char buffer[MaxErrStrLen];
   buffer[0] = '\0';
   std::string str;
+  if (errnum == 0)
+    return str;
+
 #ifdef HAVE_STRERROR_R
   // strerror_r is thread-safe.
-  if (errnum)
-# if defined(__GLIBC__) && defined(_GNU_SOURCE)
-    // glibc defines its own incompatible version of strerror_r
-    // which may not use the buffer supplied.
-    str = strerror_r(errnum,buffer,MaxErrStrLen-1);
-# else
-    strerror_r(errnum,buffer,MaxErrStrLen-1);
-    str = buffer;
-# endif
+#if defined(__GLIBC__) && defined(_GNU_SOURCE)
+  // glibc defines its own incompatible version of strerror_r
+  // which may not use the buffer supplied.
+  str = strerror_r(errnum, buffer, MaxErrStrLen - 1);
+#else
+  strerror_r(errnum, buffer, MaxErrStrLen - 1);
+  str = buffer;
+#endif
 #elif HAVE_DECL_STRERROR_S // "Windows Secure API"
-    if (errnum) {
-      strerror_s(buffer, MaxErrStrLen - 1, errnum);
-      str = buffer;
-    }
+  strerror_s(buffer, MaxErrStrLen - 1, errnum);
+  str = buffer;
 #elif defined(HAVE_STRERROR)
   // Copy the thread un-safe result of strerror into
   // the buffer as fast as possible to minimize impact
   // of collision of strerror in multiple threads.
-  if (errnum)
-    str = strerror(errnum);
+  str = strerror(errnum);
 #else
   // Strange that this system doesn't even have strerror
   // but, oh well, just use a generic message
