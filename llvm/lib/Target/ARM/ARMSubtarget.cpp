@@ -133,13 +133,8 @@ void ARMSubtarget::resetSubtargetFeatures(const MachineFunction *MF) {
 }
 
 void ARMSubtarget::resetSubtargetFeatures(StringRef CPU, StringRef FS) {
-  if (CPUString.empty()) {
-    if (isTargetIOS() && !getTargetTriple().isOSVersionLT(6))
-      // Default to Swift for iOS 6 or later versions.
-      CPUString = "swift";
-    else
-      CPUString = "generic";
-  }
+  if (CPUString.empty())
+    CPUString = "generic";
 
   // Insert the architecture feature derived from the target triple into the
   // feature string. This is important for setting features that are implied

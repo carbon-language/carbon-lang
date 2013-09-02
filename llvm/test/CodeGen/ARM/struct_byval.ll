@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=armv7-apple-ios6.0 -mcpu=generic| FileCheck %s
+; RUN: llc < %s -mtriple=armv7-apple-ios6.0 | FileCheck %s
 
 ; rdar://9877866
 %struct.SmallStruct = type { i32, [8 x i32], [37 x i8] }
