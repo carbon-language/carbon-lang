@@ -38,6 +38,7 @@ option(LIBCXX_ENABLE_PEDANTIC "Compile with pedantic enabled." ON)
 option(LIBCXX_ENABLE_WERROR "Fail and stop if a warning is triggered." OFF)
 option(LIBCXX_ENABLE_CXX0X "Enable -std=c++0x and use of c++0x language features if the compiler supports it." ON)
 option(LIBCXX_ENABLE_SHARED "Build libc++ as a shared library." ON)
+option(LIBCXX_INSTALL_SUPPORT_HEADERS "Install libc++ support headers." ON)
 
 set(CXXABIS none libcxxabi libcxxrt libsupc++)
 if (NOT DEFINED LIBCXX_CXX_ABI)
