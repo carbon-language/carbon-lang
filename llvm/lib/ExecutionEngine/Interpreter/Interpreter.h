@@ -179,6 +179,9 @@ public:
 
   void visitVAArgInst(VAArgInst &I);
   void visitExtractElementInst(ExtractElementInst &I);
+  void visitInsertElementInst(InsertElementInst &I);
+  void visitShuffleVectorInst(ShuffleVectorInst &I);
+
   void visitInstruction(Instruction &I) {
     errs() << I << "\n";
     llvm_unreachable("Instruction not interpretable yet!");

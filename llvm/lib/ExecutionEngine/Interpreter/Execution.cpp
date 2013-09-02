@@ -786,19 +786,30 @@ void Interpreter::visitBinaryOperator(BinaryOperator &I) {
 }
 
 static GenericValue executeSelectInst(GenericValue Src1, GenericValue Src2,
-                                      GenericValue Src3) {
-  return Src1.IntVal == 0 ? Src3 : Src2;
+                                      GenericValue Src3, const Type *Ty) {
+    GenericValue Dest;
+    if(Ty->isVectorTy()) {
+      assert(Src1.AggregateVal.size() == Src2.AggregateVal.size());
+      assert(Src2.AggregateVal.size() == Src3.AggregateVal.size());
+      Dest.AggregateVal.resize( Src1.AggregateVal.size() );
+      for (size_t i = 0; i < Src1.AggregateVal.size(); ++i)
+        Dest.AggregateVal[i] = (Src1.AggregateVal[i].IntVal == 0) ?
+          Src3.AggregateVal[i] : Src2.AggregateVal[i];
+    } else {
+      Dest = (Src1.IntVal == 0) ? Src3 : Src2;
+    }
+    return Dest;
 }
 
 void Interpreter::visitSelectInst(SelectInst &I) {
   ExecutionContext &SF = ECStack.back();
+  const Type * Ty = I.getOperand(0)->getType();
   GenericValue Src1 = getOperandValue(I.getOperand(0), SF);
   GenericValue Src2 = getOperandValue(I.getOperand(1), SF);
   GenericValue Src3 = getOperandValue(I.getOperand(2), SF);
-  GenericValue R = executeSelectInst(Src1, Src2, Src3);
+  GenericValue R = executeSelectInst(Src1, Src2, Src3, Ty);
   SetValue(&I, R, SF);
 }
-
 
 //===----------------------------------------------------------------------===//
 //                     Terminator Instruction Implementations
@@ -1793,10 +1804,115 @@ void Interpreter::visitExtractElementInst(ExtractElementInst &I) {
   SetValue(&I, Dest, SF);
 }
 
+void Interpreter::visitInsertElementInst(InsertElementInst &I) {
+  ExecutionContext &SF = ECStack.back();
+  Type *Ty = I.getType();
+
+  if(!(Ty->isVectorTy()) )
+    llvm_unreachable("Unhandled dest type for insertelement instruction");
+
+  GenericValue Src1 = getOperandValue(I.getOperand(0), SF);
+  GenericValue Src2 = getOperandValue(I.getOperand(1), SF);
+  GenericValue Src3 = getOperandValue(I.getOperand(2), SF);
+  GenericValue Dest;
+
+  Type *TyContained = Ty->getContainedType(0);
+
+  const unsigned indx = unsigned(Src3.IntVal.getZExtValue());
+  Dest.AggregateVal = Src1.AggregateVal;
+
+  if(Src1.AggregateVal.size() <= indx)
+      llvm_unreachable("Invalid index in insertelement instruction");
+  switch (TyContained->getTypeID()) {
+    default:
+      llvm_unreachable("Unhandled dest type for insertelement instruction");
+    case Type::IntegerTyID:
+      Dest.AggregateVal[indx].IntVal = Src2.IntVal;
+      break;
+    case Type::FloatTyID:
+      Dest.AggregateVal[indx].FloatVal = Src2.FloatVal;
+      break;
+    case Type::DoubleTyID:
+      Dest.AggregateVal[indx].DoubleVal = Src2.DoubleVal;
+      break;
+  }
+  SetValue(&I, Dest, SF);
+}
+
+void Interpreter::visitShuffleVectorInst(ShuffleVectorInst &I){
+  ExecutionContext &SF = ECStack.back();
+
+  Type *Ty = I.getType();
+  if(!(Ty->isVectorTy()))
+    llvm_unreachable("Unhandled dest type for shufflevector instruction");
+
+  GenericValue Src1 = getOperandValue(I.getOperand(0), SF);
+  GenericValue Src2 = getOperandValue(I.getOperand(1), SF);
+  GenericValue Src3 = getOperandValue(I.getOperand(2), SF);
+  GenericValue Dest;
+
+  // There is no need to check types of src1 and src2, because the compiled
+  // bytecode can't contain different types for src1 and src2 for a
+  // shufflevector instruction.
+
+  Type *TyContained = Ty->getContainedType(0);
+  unsigned src1Size = (unsigned)Src1.AggregateVal.size();
+  unsigned src2Size = (unsigned)Src2.AggregateVal.size();
+  unsigned src3Size = (unsigned)Src3.AggregateVal.size();
+
+  Dest.AggregateVal.resize(src3Size);
+
+  switch (TyContained->getTypeID()) {
+    default:
+      llvm_unreachable("Unhandled dest type for insertelement instruction");
+      break;
+    case Type::IntegerTyID:
+      for( unsigned i=0; i<src3Size; i++) {
+        unsigned j = Src3.AggregateVal[i].IntVal.getZExtValue();
+        if(j < src1Size)
+          Dest.AggregateVal[i].IntVal = Src1.AggregateVal[j].IntVal;
+        else if(j < src1Size + src2Size)
+          Dest.AggregateVal[i].IntVal = Src2.AggregateVal[j-src1Size].IntVal;
+        else
+          // The selector may not be greater than sum of lengths of first and
+          // second operands and llasm should not allow situation like
+          // %tmp = shufflevector <2 x i32> <i32 3, i32 4>, <2 x i32> undef,
+          //                      <2 x i32> < i32 0, i32 5 >,
+          // where i32 5 is invalid, but let it be additional check here:
+          llvm_unreachable("Invalid mask in shufflevector instruction");
+      }
+      break;
+    case Type::FloatTyID:
+      for( unsigned i=0; i<src3Size; i++) {
+        unsigned j = Src3.AggregateVal[i].IntVal.getZExtValue();
+        if(j < src1Size)
+          Dest.AggregateVal[i].FloatVal = Src1.AggregateVal[j].FloatVal;
+        else if(j < src1Size + src2Size)
+          Dest.AggregateVal[i].FloatVal = Src2.AggregateVal[j-src1Size].FloatVal;
+        else
+          llvm_unreachable("Invalid mask in shufflevector instruction");
+        }
+      break;
+    case Type::DoubleTyID:
+      for( unsigned i=0; i<src3Size; i++) {
+        unsigned j = Src3.AggregateVal[i].IntVal.getZExtValue();
+        if(j < src1Size)
+          Dest.AggregateVal[i].DoubleVal = Src1.AggregateVal[j].DoubleVal;
+        else if(j < src1Size + src2Size)
+          Dest.AggregateVal[i].DoubleVal =
+            Src2.AggregateVal[j-src1Size].DoubleVal;
+        else
+          llvm_unreachable("Invalid mask in shufflevector instruction");
+      }
+      break;
+  }
+  SetValue(&I, Dest, SF);
+}
+
 GenericValue Interpreter::getConstantExprValue (ConstantExpr *CE,
                                                 ExecutionContext &SF) {
   switch (CE->getOpcode()) {
-  case Instruction::Trunc:   
+  case Instruction::Trunc:
       return executeTruncInst(CE->getOperand(0), CE->getType(), SF);
   case Instruction::ZExt:
       return executeZExtInst(CE->getOperand(0), CE->getType(), SF);
@@ -1832,7 +1948,8 @@ GenericValue Interpreter::getConstantExprValue (ConstantExpr *CE,
   case Instruction::Select:
     return executeSelectInst(getOperandValue(CE->getOperand(0), SF),
                              getOperandValue(CE->getOperand(1), SF),
-                             getOperandValue(CE->getOperand(2), SF));
+                             getOperandValue(CE->getOperand(2), SF),
+                             CE->getOperand(0)->getType());
   default :
     break;
   }
