@@ -52,18 +52,16 @@ struct AsanStats {
   // Default ctor for thread-local stats.
   AsanStats();
 
-  // Prints formatted stats to stderr.
-  void Print();
+  void Print();  // Prints formatted stats to stderr.
+  void Clear();
+  void MergeFrom(const AsanStats *stats);
 };
 
 // Returns stats for GetCurrentThread(), or stats for fake "unknown thread"
 // if GetCurrentThread() returns 0.
 AsanStats &GetCurrentThreadStats();
-// Flushes all thread-local stats to accumulated stats, and makes
-// a copy of accumulated stats.
-void GetAccumulatedStats(AsanStats *stats);
-// Flushes a given stats into accumulated stats.
-void FlushToAccumulatedStats(AsanStats *stats);
+// Flushes a given stats into accumulated stats of dead threads.
+void FlushToDeadThreadStats(AsanStats *stats);
 
 // A cross-platform equivalent of malloc_statistics_t on Mac OS.
 struct AsanMallocStats {

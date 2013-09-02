@@ -97,7 +97,7 @@ void AsanThread::Destroy() {
   }
 
   asanThreadRegistry().FinishThread(tid());
-  FlushToAccumulatedStats(&stats_);
+  FlushToDeadThreadStats(&stats_);
   // We also clear the shadow on thread destruction because
   // some code may still be executing in later TSD destructors
   // and we don't want it to have any poisoned stack.

@@ -21,6 +21,10 @@
 namespace __asan {
 
 AsanStats::AsanStats() {
+  Clear();
+}
+
+void AsanStats::Clear() {
   CHECK(REAL(memset));
   REAL(memset)(this, 0, sizeof(AsanStats));
 }
@@ -54,7 +58,69 @@ void AsanStats::Print() {
              malloc_large, malloc_small_slow);
 }
 
+void AsanStats::MergeFrom(const AsanStats *stats) {
+  uptr *dst_ptr = reinterpret_cast<uptr*>(this);
+  const uptr *src_ptr = reinterpret_cast<const uptr*>(stats);
+  uptr num_fields = sizeof(*this) / sizeof(uptr);
+  for (uptr i = 0; i < num_fields; i++)
+    dst_ptr[i] += src_ptr[i];
+}
+
 static BlockingMutex print_lock(LINKER_INITIALIZED);
+
+static AsanStats unknown_thread_stats(LINKER_INITIALIZED);
+static AsanStats dead_threads_stats(LINKER_INITIALIZED);
+static BlockingMutex dead_threads_stats_lock(LINKER_INITIALIZED);
+// Required for malloc_zone_statistics() on OS X. This can't be stored in
+// per-thread AsanStats.
+static uptr max_malloced_memory;
+
+static void MergeThreadStats(ThreadContextBase *tctx_base, void *arg) {
+  AsanStats *accumulated_stats = reinterpret_cast<AsanStats*>(arg);
+  AsanThreadContext *tctx = static_cast<AsanThreadContext*>(tctx_base);
+  if (AsanThread *t = tctx->thread)
+    accumulated_stats->MergeFrom(&t->stats());
+}
+
+static void GetAccumulatedStats(AsanStats *stats) {
+  stats->Clear();
+  {
+    ThreadRegistryLock l(&asanThreadRegistry());
+    asanThreadRegistry()
+        .RunCallbackForEachThreadLocked(MergeThreadStats, stats);
+  }
+  stats->MergeFrom(&unknown_thread_stats);
+  {
+    BlockingMutexLock lock(&dead_threads_stats_lock);
+    stats->MergeFrom(&dead_threads_stats);
+  }
+  // This is not very accurate: we may miss allocation peaks that happen
+  // between two updates of accumulated_stats_. For more accurate bookkeeping
+  // the maximum should be updated on every malloc(), which is unacceptable.
+  if (max_malloced_memory < stats->malloced) {
+    max_malloced_memory = stats->malloced;
+  }
+}
+
+void FlushToDeadThreadStats(AsanStats *stats) {
+  BlockingMutexLock lock(&dead_threads_stats_lock);
+  dead_threads_stats.MergeFrom(stats);
+  stats->Clear();
+}
+
+void FillMallocStatistics(AsanMallocStats *malloc_stats) {
+  AsanStats stats;
+  GetAccumulatedStats(&stats);
+  malloc_stats->blocks_in_use = stats.mallocs;
+  malloc_stats->size_in_use = stats.malloced;
+  malloc_stats->max_size_in_use = max_malloced_memory;
+  malloc_stats->size_allocated = stats.mmaped;
+}
+
+AsanStats &GetCurrentThreadStats() {
+  AsanThread *t = GetCurrentThread();
+  return (t) ? t->stats() : unknown_thread_stats;
+}
 
 static void PrintAccumulatedStats() {
   AsanStats stats;
@@ -68,100 +134,36 @@ static void PrintAccumulatedStats() {
   PrintInternalAllocatorStats();
 }
 
-static AsanStats unknown_thread_stats(LINKER_INITIALIZED);
-static AsanStats accumulated_stats(LINKER_INITIALIZED);
-// Required for malloc_zone_statistics() on OS X. This can't be stored in
-// per-thread AsanStats.
-static uptr max_malloced_memory;
-static BlockingMutex acc_stats_lock(LINKER_INITIALIZED);
-
-static void FlushToAccumulatedStatsUnlocked(AsanStats *stats) {
-  acc_stats_lock.CheckLocked();
-  uptr *dst = (uptr*)&accumulated_stats;
-  uptr *src = (uptr*)stats;
-  uptr num_fields = sizeof(*stats) / sizeof(uptr);
-  for (uptr i = 0; i < num_fields; i++) {
-    dst[i] += src[i];
-    src[i] = 0;
-  }
-}
-
-static void FlushThreadStats(ThreadContextBase *tctx_base, void *arg) {
-  AsanThreadContext *tctx = static_cast<AsanThreadContext*>(tctx_base);
-  if (AsanThread *t = tctx->thread)
-    FlushToAccumulatedStatsUnlocked(&t->stats());
-}
-
-static void UpdateAccumulatedStatsUnlocked() {
-  acc_stats_lock.CheckLocked();
-  {
-    ThreadRegistryLock l(&asanThreadRegistry());
-    asanThreadRegistry().RunCallbackForEachThreadLocked(FlushThreadStats, 0);
-  }
-  FlushToAccumulatedStatsUnlocked(&unknown_thread_stats);
-  // This is not very accurate: we may miss allocation peaks that happen
-  // between two updates of accumulated_stats_. For more accurate bookkeeping
-  // the maximum should be updated on every malloc(), which is unacceptable.
-  if (max_malloced_memory < accumulated_stats.malloced) {
-    max_malloced_memory = accumulated_stats.malloced;
-  }
-}
-
-void FlushToAccumulatedStats(AsanStats *stats) {
-  BlockingMutexLock lock(&acc_stats_lock);
-  FlushToAccumulatedStatsUnlocked(stats);
-}
-
-void GetAccumulatedStats(AsanStats *stats) {
-  BlockingMutexLock lock(&acc_stats_lock);
-  UpdateAccumulatedStatsUnlocked();
-  internal_memcpy(stats, &accumulated_stats, sizeof(accumulated_stats));
-}
-
-void FillMallocStatistics(AsanMallocStats *malloc_stats) {
-  BlockingMutexLock lock(&acc_stats_lock);
-  UpdateAccumulatedStatsUnlocked();
-  malloc_stats->blocks_in_use = accumulated_stats.mallocs;
-  malloc_stats->size_in_use = accumulated_stats.malloced;
-  malloc_stats->max_size_in_use = max_malloced_memory;
-  malloc_stats->size_allocated = accumulated_stats.mmaped;
-}
-
-AsanStats &GetCurrentThreadStats() {
-  AsanThread *t = GetCurrentThread();
-  return (t) ? t->stats() : unknown_thread_stats;
-}
-
 }  // namespace __asan
 
 // ---------------------- Interface ---------------- {{{1
 using namespace __asan;  // NOLINT
 
 uptr __asan_get_current_allocated_bytes() {
-  BlockingMutexLock lock(&acc_stats_lock);
-  UpdateAccumulatedStatsUnlocked();
-  uptr malloced = accumulated_stats.malloced;
-  uptr freed = accumulated_stats.freed;
+  AsanStats stats;
+  GetAccumulatedStats(&stats);
+  uptr malloced = stats.malloced;
+  uptr freed = stats.freed;
   // Return sane value if malloced < freed due to racy
   // way we update accumulated stats.
   return (malloced > freed) ? malloced - freed : 1;
 }
 
 uptr __asan_get_heap_size() {
-  BlockingMutexLock lock(&acc_stats_lock);
-  UpdateAccumulatedStatsUnlocked();
-  return accumulated_stats.mmaped - accumulated_stats.munmaped;
+  AsanStats stats;
+  GetAccumulatedStats(&stats);
+  return stats.mmaped - stats.munmaped;
 }
 
 uptr __asan_get_free_bytes() {
-  BlockingMutexLock lock(&acc_stats_lock);
-  UpdateAccumulatedStatsUnlocked();
-  uptr total_free = accumulated_stats.mmaped
-                  - accumulated_stats.munmaped
-                  + accumulated_stats.really_freed
-                  + accumulated_stats.really_freed_redzones;
-  uptr total_used = accumulated_stats.malloced
-                  + accumulated_stats.malloced_redzones;
+  AsanStats stats;
+  GetAccumulatedStats(&stats);
+  uptr total_free = stats.mmaped
+                  - stats.munmaped
+                  + stats.really_freed
+                  + stats.really_freed_redzones;
+  uptr total_used = stats.malloced
+                  + stats.malloced_redzones;
   // Return sane value if total_free < total_used due to racy
   // way we update accumulated stats.
   return (total_free > total_used) ? total_free - total_used : 1;
