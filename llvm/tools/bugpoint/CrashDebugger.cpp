@@ -195,10 +195,10 @@ namespace {
 }
 
 bool ReduceCrashingFunctions::TestFuncs(std::vector<Function*> &Funcs) {
-
-  //if main isn't present, claim there is no problem
-  if (KeepMain && find(Funcs.begin(), Funcs.end(),
-                       BD.getProgram()->getFunction("main")) == Funcs.end())
+  // If main isn't present, claim there is no problem.
+  if (KeepMain && std::find(Funcs.begin(), Funcs.end(),
+                            BD.getProgram()->getFunction("main")) ==
+                      Funcs.end())
     return false;
 
   // Clone the program to try hacking it apart...
