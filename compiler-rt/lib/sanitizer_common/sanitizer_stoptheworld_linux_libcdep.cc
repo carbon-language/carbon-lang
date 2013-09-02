@@ -14,12 +14,12 @@
 
 
 #include "sanitizer_platform.h"
-#if SANITIZER_LINUX
+#if SANITIZER_LINUX && defined(__x86_64__)
 
 #include "sanitizer_stoptheworld.h"
 
 #include <errno.h>
-#include <sched.h> // for clone
+#include <sched.h> // for CLONE_* definitions
 #include <stddef.h>
 #include <sys/prctl.h> // for PR_* definitions
 #include <sys/ptrace.h> // for PTRACE_* definitions
@@ -71,7 +71,6 @@
 // after it has exited. The following functions are used in this manner:
 // sigdelset()
 // sigprocmask()
-// clone()
 
 COMPILER_CHECK(sizeof(SuspendedThreadID) == sizeof(pid_t));
 
@@ -371,11 +370,14 @@ void StopTheWorld(StopTheWorldCallback callback, void *argument) {
   // Block the execution of TracerThread until after we have set ptrace
   // permissions.
   tracer_thread_argument.mutex.Lock();
-  pid_t tracer_pid = clone(TracerThread, tracer_stack.Bottom(),
-                           CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_UNTRACED,
-                           &tracer_thread_argument);
-  if (tracer_pid < 0) {
-    Report("Failed spawning a tracer thread (errno %d).\n", errno);
+  uptr tracer_pid = internal_clone(
+      TracerThread, tracer_stack.Bottom(),
+      CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_UNTRACED,
+      &tracer_thread_argument, 0 /* parent_tidptr */, 0 /* newtls */, 0
+      /* child_tidptr */);
+  int local_errno = 0;
+  if (internal_iserror(tracer_pid, &local_errno)) {
+    Report("Failed spawning a tracer thread (errno %d).\n", local_errno);
     tracer_thread_argument.mutex.Unlock();
   } else {
     // On some systems we have to explicitly declare that we want to be traced
@@ -390,9 +392,8 @@ void StopTheWorld(StopTheWorldCallback callback, void *argument) {
     // At this point, any signal will either be blocked or kill us, so waitpid
     // should never return (and set errno) while the tracer thread is alive.
     uptr waitpid_status = internal_waitpid(tracer_pid, NULL, __WALL);
-    int wperrno;
-    if (internal_iserror(waitpid_status, &wperrno))
-      Report("Waiting on the tracer thread failed (errno %d).\n", wperrno);
+    if (internal_iserror(waitpid_status, &local_errno))
+      Report("Waiting on the tracer thread failed (errno %d).\n", local_errno);
   }
 }
 
@@ -448,4 +449,4 @@ uptr SuspendedThreadsList::RegisterCount() {
 }
 }  // namespace __sanitizer
 
-#endif  // SANITIZER_LINUX
+#endif  // SANITIZER_LINUX && defined(__x86_64__)

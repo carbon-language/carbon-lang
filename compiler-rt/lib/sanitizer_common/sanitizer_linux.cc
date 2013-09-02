@@ -679,6 +679,69 @@ void ForEachMappedRegion(link_map *map, void (*cb)(const void *, uptr)) {
 }
 #endif
 
+#if defined(__x86_64__)
+// We cannot use glibc's clone wrapper, because it messes with the child
+// task's TLS. It writes the PID and TID of the child task to its thread
+// descriptor, but in our case the child task shares the thread descriptor with
+// the parent (because we don't know how to allocate a new thread
+// descriptor to keep glibc happy). So the stock version of clone(), when
+// used with CLONE_VM, would end up corrupting the parent's thread descriptor.
+uptr internal_clone(int (*fn)(void *), void *child_stack, int flags, void *arg,
+                    int *parent_tidptr, void *newtls, int *child_tidptr) {
+  long long res;
+  if (!fn || !child_stack)
+    return -EINVAL;
+  CHECK_EQ(0, (uptr)child_stack % 16);
+  child_stack = (char *)child_stack - 2 * sizeof(void *);
+  ((void **)child_stack)[0] = (void *)(uptr)fn;
+  ((void **)child_stack)[1] = arg;
+  __asm__ __volatile__(
+                       /* %rax = syscall(%rax = __NR_clone,
+                        *                %rdi = flags,
+                        *                %rsi = child_stack,
+                        *                %rdx = parent_tidptr,
+                        *                %r8  = new_tls,
+                        *                %r10 = child_tidptr)
+                        */
+                       "movq   %6,%%r8\n"
+                       "movq   %7,%%r10\n"
+                       ".cfi_endproc\n"
+                       "syscall\n"
+
+                       /* if (%rax != 0)
+                        *   return;
+                        */
+                       "testq  %%rax,%%rax\n"
+                       "jnz    1f\n"
+
+                       /* In the child. Terminate unwind chain. */
+                       ".cfi_startproc\n"
+                       ".cfi_undefined %%rip;\n"
+                       "xorq   %%rbp,%%rbp\n"
+
+                       /* Call "fn(arg)". */
+                       "popq   %%rax\n"
+                       "popq   %%rdi\n"
+                       "call   *%%rax\n"
+
+                       /* Call _exit(%rax). */
+                       "movq   %%rax,%%rdi\n"
+                       "movq   %2,%%rax\n"
+                       "syscall\n"
+
+                       /* Return to parent. */
+                     "1:\n"
+                       : "=a" (res)
+                       : "a"(__NR_clone), "i"(__NR_exit),
+                         "S"(child_stack),
+                         "D"(flags),
+                         "d"(parent_tidptr),
+                         "r"(newtls),
+                         "r"(child_tidptr)
+                       : "rsp", "memory", "r8", "r10", "r11", "rcx");
+  return res;
+}
+#endif  // defined(__x86_64__)
 }  // namespace __sanitizer
 
 #endif  // SANITIZER_LINUX

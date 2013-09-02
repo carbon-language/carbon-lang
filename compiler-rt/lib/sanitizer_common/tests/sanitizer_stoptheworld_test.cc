@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "sanitizer_common/sanitizer_platform.h"
-#if SANITIZER_LINUX
+#if SANITIZER_LINUX && defined(__x86_64__)
 
 #include "sanitizer_common/sanitizer_stoptheworld.h"
 #include "gtest/gtest.h"
@@ -191,4 +191,4 @@ TEST(StopTheWorld, SuspendThreadsAdvanced) {
 
 }  // namespace __sanitizer
 
-#endif  // SANITIZER_LINUX
+#endif  // SANITIZER_LINUX && defined(__x86_64__)

@@ -29,6 +29,10 @@ uptr internal_getdents(fd_t fd, struct linux_dirent *dirp, unsigned int count);
 uptr internal_prctl(int option, uptr arg2, uptr arg3, uptr arg4, uptr arg5);
 uptr internal_sigaltstack(const struct sigaltstack* ss,
                           struct sigaltstack* oss);
+#ifdef __x86_64__
+uptr internal_clone(int (*fn)(void *), void *child_stack, int flags, void *arg,
+                    int *parent_tidptr, void *newtls, int *child_tidptr);
+#endif
 
 // This class reads thread IDs from /proc/<pid>/task using only syscalls.
 class ThreadLister {
