@@ -64,7 +64,7 @@ LineRanges("lines", cl::desc("<start line>:<end line> - format a range of\n"
 static cl::opt<std::string>
     Style("style",
           cl::desc("Coding style, currently supports:\n"
-                   "  LLVM, Google, Chromium, Mozilla.\n"
+                   "  LLVM, Google, Chromium, Mozilla, WebKit.\n"
                    "Use -style=file to load style configuration from\n"
                    ".clang-format file located in one of the parent\n"
                    "directories of the source file (or current\n"

@@ -54,7 +54,7 @@ to format C/C++/Obj-C code.
                                Can only be used with one input file.
     -output-replacements-xml - Output replacements as XML.
     -style=<string>          - Coding style, currently supports:
-                                 LLVM, Google, Chromium, Mozilla.
+                                 LLVM, Google, Chromium, Mozilla, WebKit.
                                Use -style=file to load style configuration from
                                .clang-format file located in one of the parent
                                directories of the source file (or current
@@ -139,12 +139,13 @@ a unified diff and reformats all contained lines with :program:`clang-format`.
 
   usage: clang-format-diff.py [-h] [-p P] [-style STYLE]
 
-  Reformat changed lines in diff
+  Reformat changed lines in diff.
 
   optional arguments:
     -h, --help    show this help message and exit
     -p P          strip the smallest prefix containing P slashes
-    -style STYLE  formatting style to apply (LLVM, Google, Chromium)
+    -style STYLE  formatting style to apply (LLVM, Google, Chromium, Mozilla,
+                  WebKit)
 
 So to reformat all the lines in the latest :program:`git` commit, just do:
 
