@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=thumbv7s-apple-ios3.0.0 | FileCheck %s
+; RUN: llc < %s -mtriple=thumbv7s-apple-ios3.0.0 -mcpu=generic | FileCheck %s
 
 ; PR15525
 ; CHECK-LABEL: test1:

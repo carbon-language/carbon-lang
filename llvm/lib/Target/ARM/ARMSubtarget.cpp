@@ -133,8 +133,13 @@ void ARMSubtarget::resetSubtargetFeatures(const MachineFunction *MF) {
 }
 
 void ARMSubtarget::resetSubtargetFeatures(StringRef CPU, StringRef FS) {
-  if (CPUString.empty())
-    CPUString = "generic";
+  if (CPUString.empty()) {
+    if (isTargetIOS() && TargetTriple.getArchName().endswith("v7s"))
+      // Default to the Swift CPU when targeting armv7s/thumbv7s.
+      CPUString = "swift";
+    else
+      CPUString = "generic";
+  }
 
   // Insert the architecture feature derived from the target triple into the
   // feature string. This is important for setting features that are implied
