@@ -3625,6 +3625,8 @@ TEST_F(FormatTest, UnderstandsOverloadedOperators) {
 
   verifyGoogleFormat("operator void*();");
   verifyGoogleFormat("operator SomeType<SomeType<int>>();");
+
+  verifyFormat("using A::operator+;");
 }
 
 TEST_F(FormatTest, UnderstandsNewAndDelete) {
