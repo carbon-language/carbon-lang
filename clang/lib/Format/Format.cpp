@@ -596,10 +596,16 @@ private:
     FormatTok->CodePointCount =
         encoding::getCodePointCount(FormatTok->TokenText, Encoding);
 
-    if (FormatTok->isOneOf(tok::string_literal, tok::comment) &&
-        FormatTok->TokenText.find('\n') != StringRef::npos)
-      FormatTok->IsMultiline = true;
-
+    if (FormatTok->isOneOf(tok::string_literal, tok::comment)) {
+      StringRef Text = FormatTok->TokenText;
+      size_t FirstNewlinePos = Text.find('\n');
+      if (FirstNewlinePos != StringRef::npos) {
+        FormatTok->CodePointsInFirstLine = encoding::getCodePointCount(
+            Text.substr(0, FirstNewlinePos), Encoding);
+        FormatTok->CodePointsInLastLine = encoding::getCodePointCount(
+            Text.substr(Text.find_last_of('\n') + 1), Encoding);
+      }
+    }
     // FIXME: Add the CodePointCount to Column.
     FormatTok->WhitespaceRange = SourceRange(
         WhitespaceStart, WhitespaceStart.getLocWithOffset(WhitespaceLength));

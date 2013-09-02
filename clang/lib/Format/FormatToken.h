@@ -80,9 +80,9 @@ class TokenRole;
 /// whitespace characters preceeding it.
 struct FormatToken {
   FormatToken()
-      : NewlinesBefore(0), HasUnescapedNewline(false), IsMultiline(false),
-        LastNewlineOffset(0), CodePointCount(0), IsFirst(false),
-        MustBreakBefore(false), IsUnterminatedLiteral(false),
+      : NewlinesBefore(0), HasUnescapedNewline(false), LastNewlineOffset(0),
+        CodePointCount(0), CodePointsInFirstLine(0), CodePointsInLastLine(0),
+        IsFirst(false), MustBreakBefore(false), IsUnterminatedLiteral(false),
         BlockKind(BK_Unknown), Type(TT_Unknown), SpacesRequiredBefore(0),
         CanBreakBefore(false), ClosesTemplateDeclaration(false),
         ParameterCount(0), PackingKind(PPK_Inconclusive), TotalLength(0),
@@ -104,9 +104,6 @@ struct FormatToken {
   /// Token.
   bool HasUnescapedNewline;
 
-  /// \brief Whether the token text contains newlines (escaped or not).
-  bool IsMultiline;
-
   /// \brief The range of the whitespace immediately preceeding the \c Token.
   SourceRange WhitespaceRange;
 
@@ -117,6 +114,19 @@ struct FormatToken {
   /// \brief The length of the non-whitespace parts of the token in CodePoints.
   /// We need this to correctly measure number of columns a token spans.
   unsigned CodePointCount;
+
+  /// \brief Contains the number of code points in the first line of a
+  /// multi-line string literal or comment. Zero if there's no newline in the
+  /// token.
+  unsigned CodePointsInFirstLine;
+
+  /// \brief Contains the number of code points in the last line of a
+  /// multi-line string literal or comment. Can be zero for line comments.
+  unsigned CodePointsInLastLine;
+
+  /// \brief Returns \c true if the token text contains newlines (escaped or
+  /// not).
+  bool isMultiline() const { return CodePointsInFirstLine != 0; }
 
   /// \brief Indicates that this is the first token.
   bool IsFirst;

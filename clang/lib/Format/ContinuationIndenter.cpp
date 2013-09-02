@@ -583,23 +583,16 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
 unsigned
 ContinuationIndenter::addMultilineStringLiteral(const FormatToken &Current,
                                                 LineState &State) {
-  StringRef Text = Current.TokenText;
-  // We can only affect layout of the first and the last line, so the penalty
-  // for all other lines is constant, and we ignore it.
-  size_t FirstLineBreak = Text.find('\n');
-  size_t LastLineBreak = Text.find_last_of('\n');
-  assert(FirstLineBreak != StringRef::npos);
-  unsigned StartColumn = State.Column - Current.CodePointCount;
-  State.Column =
-      encoding::getCodePointCount(Text.substr(LastLineBreak + 1), Encoding);
-
   // Break before further function parameters on all levels.
   for (unsigned i = 0, e = State.Stack.size(); i != e; ++i)
     State.Stack[i].BreakBeforeParameter = true;
 
   unsigned ColumnsUsed =
-      StartColumn +
-      encoding::getCodePointCount(Text.substr(0, FirstLineBreak), Encoding);
+      State.Column - Current.CodePointCount + Current.CodePointsInFirstLine;
+  // We can only affect layout of the first and the last line, so the penalty
+  // for all other lines is constant, and we ignore it.
+  State.Column = Current.CodePointsInLastLine;
+
   if (ColumnsUsed > getColumnLimit())
     return Style.PenaltyExcessCharacter * (ColumnsUsed - getColumnLimit());
   return 0;
@@ -619,7 +612,7 @@ unsigned ContinuationIndenter::breakProtrudingToken(const FormatToken &Current,
     // Don't break string literals with (in case of non-raw strings, escaped)
     // newlines. As clang-format must not change the string's content, it is
     // unlikely that we'll end up with a better format.
-    if (Current.IsMultiline)
+    if (Current.isMultiline())
       return addMultilineStringLiteral(Current, State);
 
     // Only break up default narrow strings.
@@ -649,14 +642,8 @@ unsigned ContinuationIndenter::breakProtrudingToken(const FormatToken &Current,
     // FIXME: If we want to handle them correctly, we'll need to adjust
     // leading whitespace in consecutive lines when changing indentation of
     // the first line similar to what we do with block comments.
-    if (Current.IsMultiline) {
-      StringRef::size_type EscapedNewlinePos = Current.TokenText.find("\\\n");
-      assert(EscapedNewlinePos != StringRef::npos);
-      State.Column =
-          StartColumn +
-          encoding::getCodePointCount(
-              Current.TokenText.substr(0, EscapedNewlinePos), Encoding) +
-          1;
+    if (Current.isMultiline()) {
+      State.Column = StartColumn + Current.CodePointsInFirstLine;
       return 0;
     }
 
@@ -740,7 +727,7 @@ bool ContinuationIndenter::NextIsMultilineString(const LineState &State) {
   // AlwaysBreakBeforeMultilineStrings implementation.
   if (Current.TokenText.startswith("R\""))
     return false;
-  if (Current.IsMultiline)
+  if (Current.isMultiline())
     return true;
   if (Current.getNextNonComment() &&
       Current.getNextNonComment()->is(tok::string_literal))
