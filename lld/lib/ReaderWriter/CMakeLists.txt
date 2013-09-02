@@ -16,4 +16,5 @@ add_lld_library(lldReaderWriter
 
 target_link_libraries(lldReaderWriter
   lldCore
+  lldPasses
   )
