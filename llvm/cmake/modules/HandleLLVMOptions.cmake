@@ -240,6 +240,10 @@ macro(append_common_sanitizer_flags)
       NOT uppercase_CMAKE_BUILD_TYPE STREQUAL "RELWITHDEBINFO")
     add_flag_if_supported("-gline-tables-only")
   endif()
+  # Use -O1 even in debug mode, otherwise sanitizers slowdown is too large.
+  if (uppercase_CMAKE_BUILD_TYPE STREQUAL "DEBUG")
+    add_flag_if_supported("-O1")
+  endif()
 endmacro()
 
 # Turn on sanitizers if necessary.
