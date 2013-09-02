@@ -15,13 +15,13 @@ to format C/C++/Obj-C code.
 
 .. code-block:: console
 
-  $ clang-format --help
+  $ clang-format -help
   OVERVIEW: A tool to format C/C++/Obj-C code.
 
   If no arguments are specified, it formats the code from standard input
   and writes the result to the standard output.
-  If <file>s are given, it reformats the files. If -i is specified 
-  together with <file>s, the files are edited in-place. Otherwise, the 
+  If <file>s are given, it reformats the files. If -i is specified
+  together with <file>s, the files are edited in-place. Otherwise, the
   result is written to the standard output.
 
   USAGE: clang-format [options] [<file> ...]
@@ -30,6 +30,8 @@ to format C/C++/Obj-C code.
 
   Clang-format options:
 
+    -cursor=<uint>           - The position of the cursor when invoking
+                               clang-format from an editor integration
     -dump-config             - Dump configuration options to stdout and exit.
                                Can be used with -style option.
     -i                       - Inplace edit <file>s, if specified.
@@ -39,6 +41,12 @@ to format C/C++/Obj-C code.
                                When only a single -offset is specified without
                                -length, clang-format will format up to the end
                                of the file.
+                               Can only be used with one input file.
+    -lines=<string>          - <start line>:<end line> - format a range of
+                               lines (both 1-based).
+                               Multiple ranges can be formatted by specifying
+                               several -lines arguments.
+                               Can't be used with -offset and -length.
                                Can only be used with one input file.
     -offset=<uint>           - Format a range starting at this byte offset.
                                Multiple ranges can be formatted by specifying
