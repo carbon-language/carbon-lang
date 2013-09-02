@@ -73,7 +73,7 @@ def merge_strings : Flag<["--"], "merge-strings">,
 
 
 def no_allow_shlib_undefs : Flag<["--"], "no-allow-shlib-undefined">,
-    HelpText<"Donot allow undefined symbols from dynamic"
+    HelpText<"Do not allow undefined symbols from dynamic"
              " library when creating executables">;
 
 def allow_shlib_undefs : Flag<["--"], "allow-shlib-undefined">,
