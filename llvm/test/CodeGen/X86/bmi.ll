@@ -111,6 +111,23 @@ define i32 @bextr32_load(i32* %x, i32 %y) nounwind readnone {
 
 declare i32 @llvm.x86.bmi.bextr.32(i32, i32) nounwind readnone
 
+define i32 @bextr32b(i32 %x) nounwind uwtable readnone ssp {
+  %1 = lshr i32 %x, 4
+  %2 = and i32 %1, 4095
+  ret i32 %2
+; CHECK-LABEL: bextr32b:
+; CHECK: bextrl
+}
+
+define i32 @bextr32b_load(i32* %x) nounwind uwtable readnone ssp {
+  %1 = load i32* %x
+  %2 = lshr i32 %1, 4
+  %3 = and i32 %2, 4095
+  ret i32 %3
+; CHECK-LABEL: bextr32b_load:
+; CHECK: bextrl {{.*}}, ({{.*}}), {{.*}}
+}
+
 define i64 @bextr64(i64 %x, i64 %y) nounwind readnone {
   %tmp = tail call i64 @llvm.x86.bmi.bextr.64(i64 %x, i64 %y)
   ret i64 %tmp
@@ -119,6 +136,14 @@ define i64 @bextr64(i64 %x, i64 %y) nounwind readnone {
 }
 
 declare i64 @llvm.x86.bmi.bextr.64(i64, i64) nounwind readnone
+
+define i64 @bextr64b(i64 %x) nounwind uwtable readnone ssp {
+  %1 = lshr i64 %x, 4
+  %2 = and i64 %1, 4095
+  ret i64 %2
+; CHECK-LABEL: bextr64b:
+; CHECK: bextrq
+}
 
 define i32 @bzhi32(i32 %x, i32 %y) nounwind readnone {
   %tmp = tail call i32 @llvm.x86.bmi.bzhi.32(i32 %x, i32 %y)

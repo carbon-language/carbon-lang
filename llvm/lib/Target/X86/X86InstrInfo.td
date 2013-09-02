@@ -253,6 +253,7 @@ def X86blsi   : SDNode<"X86ISD::BLSI",   SDTIntUnaryOp>;
 def X86blsmsk : SDNode<"X86ISD::BLSMSK", SDTIntUnaryOp>;
 def X86blsr   : SDNode<"X86ISD::BLSR",   SDTIntUnaryOp>;
 def X86bzhi   : SDNode<"X86ISD::BZHI",   SDTIntShiftOp>;
+def X86bextr  : SDNode<"X86ISD::BEXTR",  SDTIntShiftOp>;
 
 def X86mul_imm : SDNode<"X86ISD::MUL_IMM", SDTIntBinOp>;
 
@@ -1868,6 +1869,15 @@ def : Pat<(X86bzhi GR64:$src1, GR8:$src2),
 def : Pat<(X86bzhi (loadi64 addr:$src1), GR8:$src2),
           (BZHI64rm addr:$src1,
                     (INSERT_SUBREG (i64 (IMPLICIT_DEF)), GR8:$src2, sub_8bit))>;
+
+def : Pat<(X86bextr GR32:$src1, GR32:$src2),
+          (BEXTR32rr GR32:$src1, GR32:$src2)>;
+def : Pat<(X86bextr (loadi32 addr:$src1), GR32:$src2),
+          (BEXTR32rm addr:$src1, GR32:$src2)>;
+def : Pat<(X86bextr GR64:$src1, GR64:$src2),
+          (BEXTR64rr GR64:$src1, GR64:$src2)>;
+def : Pat<(X86bextr (loadi64 addr:$src1), GR64:$src2),
+          (BEXTR64rm addr:$src1, GR64:$src2)>;
 
 multiclass bmi_pdep_pext<string mnemonic, RegisterClass RC,
                          X86MemOperand x86memop, Intrinsic Int,
