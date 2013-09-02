@@ -44,7 +44,8 @@ unsigned SparcInstrInfo::isLoadFromStackSlot(const MachineInstr *MI,
   if (MI->getOpcode() == SP::LDri ||
       MI->getOpcode() == SP::LDXri ||
       MI->getOpcode() == SP::LDFri ||
-      MI->getOpcode() == SP::LDDFri) {
+      MI->getOpcode() == SP::LDDFri ||
+      MI->getOpcode() == SP::LDQFri) {
     if (MI->getOperand(1).isFI() && MI->getOperand(2).isImm() &&
         MI->getOperand(2).getImm() == 0) {
       FrameIndex = MI->getOperand(1).getIndex();
@@ -64,7 +65,8 @@ unsigned SparcInstrInfo::isStoreToStackSlot(const MachineInstr *MI,
   if (MI->getOpcode() == SP::STri ||
       MI->getOpcode() == SP::STXri ||
       MI->getOpcode() == SP::STFri ||
-      MI->getOpcode() == SP::STDFri) {
+      MI->getOpcode() == SP::STDFri ||
+      MI->getOpcode() == SP::STQFri) {
     if (MI->getOperand(0).isFI() && MI->getOperand(1).isImm() &&
         MI->getOperand(1).getImm() == 0) {
       FrameIndex = MI->getOperand(0).getIndex();
@@ -273,6 +275,16 @@ void SparcInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                                  MachineBasicBlock::iterator I, DebugLoc DL,
                                  unsigned DestReg, unsigned SrcReg,
                                  bool KillSrc) const {
+  unsigned numSubRegs = 0;
+  unsigned movOpc     = 0;
+  const unsigned *subRegIdx = 0;
+
+  const unsigned DFP_FP_SubRegsIdx[]  = { SP::sub_even, SP::sub_odd };
+  const unsigned QFP_DFP_SubRegsIdx[] = { SP::sub_even64, SP::sub_odd64 };
+  const unsigned QFP_FP_SubRegsIdx[]  = { SP::sub_even, SP::sub_odd,
+                                          SP::sub_odd64_then_sub_even,
+                                          SP::sub_odd64_then_sub_odd };
+
   if (SP::IntRegsRegClass.contains(DestReg, SrcReg))
     BuildMI(MBB, I, DL, get(SP::ORrr), DestReg).addReg(SP::G0)
       .addReg(SrcReg, getKillRegState(KillSrc));
@@ -285,23 +297,47 @@ void SparcInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
         .addReg(SrcReg, getKillRegState(KillSrc));
     } else {
       // Use two FMOVS instructions.
-      const TargetRegisterInfo *TRI = &getRegisterInfo();
-      MachineInstr *MovMI = 0;
-      unsigned subRegIdx[] = {SP::sub_even, SP::sub_odd};
-      for (unsigned i = 0; i != 2; ++i) {
-        unsigned Dst = TRI->getSubReg(DestReg, subRegIdx[i]);
-        unsigned Src = TRI->getSubReg(SrcReg,  subRegIdx[i]);
-        assert(Dst && Src && "Bad sub-register");
-
-        MovMI = BuildMI(MBB, I, DL, get(SP::FMOVS), Dst).addReg(Src);
+      subRegIdx  = DFP_FP_SubRegsIdx;
+      numSubRegs = 2;
+      movOpc     = SP::FMOVS;
+    }
+  } else if (SP::QFPRegsRegClass.contains(DestReg, SrcReg)) {
+    if (Subtarget.isV9()) {
+      if (Subtarget.hasHardQuad()) {
+        BuildMI(MBB, I, DL, get(SP::FMOVQ), DestReg)
+          .addReg(SrcReg, getKillRegState(KillSrc));
+      } else {
+        // Use two FMOVD instructions.
+        subRegIdx  = QFP_DFP_SubRegsIdx;
+        numSubRegs = 2;
+        movOpc     = SP::FMOVD;
       }
-      // Add implicit super-register defs and kills to the last MovMI.
-      MovMI->addRegisterDefined(DestReg, TRI);
-      if (KillSrc)
-        MovMI->addRegisterKilled(SrcReg, TRI);
+    } else {
+      // Use four FMOVS instructions.
+      subRegIdx  = QFP_FP_SubRegsIdx;
+      numSubRegs = 4;
+      movOpc     = SP::FMOVS;
     }
   } else
     llvm_unreachable("Impossible reg-to-reg copy");
+
+  if (numSubRegs == 0 || subRegIdx == 0 || movOpc == 0)
+    return;
+
+  const TargetRegisterInfo *TRI = &getRegisterInfo();
+  MachineInstr *MovMI = 0;
+
+  for (unsigned i = 0; i != numSubRegs; ++i) {
+    unsigned Dst = TRI->getSubReg(DestReg, subRegIdx[i]);
+    unsigned Src = TRI->getSubReg(SrcReg,  subRegIdx[i]);
+    assert(Dst && Src && "Bad sub-register");
+
+    MovMI = BuildMI(MBB, I, DL, get(movOpc), Dst).addReg(Src);
+  }
+  // Add implicit super-register defs and kills to the last MovMI.
+  MovMI->addRegisterDefined(DestReg, TRI);
+  if (KillSrc)
+    MovMI->addRegisterKilled(SrcReg, TRI);
 }
 
 void SparcInstrInfo::
@@ -321,7 +357,7 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                              MFI.getObjectAlignment(FI));
 
   // On the order of operands here: think "[FrameIdx + 0] = SrcReg".
-  if (RC == &SP::I64RegsRegClass)
+ if (RC == &SP::I64RegsRegClass)
     BuildMI(MBB, I, DL, get(SP::STXri)).addFrameIndex(FI).addImm(0)
       .addReg(SrcReg, getKillRegState(isKill)).addMemOperand(MMO);
   else if (RC == &SP::IntRegsRegClass)
@@ -330,8 +366,13 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
   else if (RC == &SP::FPRegsRegClass)
     BuildMI(MBB, I, DL, get(SP::STFri)).addFrameIndex(FI).addImm(0)
       .addReg(SrcReg,  getKillRegState(isKill)).addMemOperand(MMO);
-  else if (RC == &SP::DFPRegsRegClass)
+  else if (SP::DFPRegsRegClass.hasSubClassEq(RC))
     BuildMI(MBB, I, DL, get(SP::STDFri)).addFrameIndex(FI).addImm(0)
+      .addReg(SrcReg,  getKillRegState(isKill)).addMemOperand(MMO);
+  else if (SP::QFPRegsRegClass.hasSubClassEq(RC))
+    // Use STQFri irrespective of its legality. If STQ is not legal, it will be
+    // lowered into two STDs in eliminateFrameIndex.
+    BuildMI(MBB, I, DL, get(SP::STQFri)).addFrameIndex(FI).addImm(0)
       .addReg(SrcReg,  getKillRegState(isKill)).addMemOperand(MMO);
   else
     llvm_unreachable("Can't store this register to stack slot");
@@ -362,8 +403,13 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
   else if (RC == &SP::FPRegsRegClass)
     BuildMI(MBB, I, DL, get(SP::LDFri), DestReg).addFrameIndex(FI).addImm(0)
       .addMemOperand(MMO);
-  else if (RC == &SP::DFPRegsRegClass)
+  else if (SP::DFPRegsRegClass.hasSubClassEq(RC))
     BuildMI(MBB, I, DL, get(SP::LDDFri), DestReg).addFrameIndex(FI).addImm(0)
+      .addMemOperand(MMO);
+  else if (SP::QFPRegsRegClass.hasSubClassEq(RC))
+    // Use LDQFri irrespective of its legality. If LDQ is not legal, it will be
+    // lowered into two LDDs in eliminateFrameIndex.
+    BuildMI(MBB, I, DL, get(SP::LDQFri), DestReg).addFrameIndex(FI).addImm(0)
       .addMemOperand(MMO);
   else
     llvm_unreachable("Can't load this register from stack slot");

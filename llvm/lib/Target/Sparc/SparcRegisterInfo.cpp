@@ -87,6 +87,35 @@ SparcRegisterInfo::getPointerRegClass(const MachineFunction &MF,
   return Subtarget.is64Bit() ? &SP::I64RegsRegClass : &SP::IntRegsRegClass;
 }
 
+static void replaceFI(MachineFunction &MF,
+                      MachineBasicBlock::iterator II,
+                      MachineInstr &MI,
+                      DebugLoc dl,
+                      unsigned FIOperandNum, int Offset,
+                      unsigned FramePtr)
+{
+  // Replace frame index with a frame pointer reference.
+  if (Offset >= -4096 && Offset <= 4095) {
+    // If the offset is small enough to fit in the immediate field, directly
+    // encode it.
+    MI.getOperand(FIOperandNum).ChangeToRegister(FramePtr, false);
+    MI.getOperand(FIOperandNum + 1).ChangeToImmediate(Offset);
+  } else {
+    // Otherwise, emit a G1 = SETHI %hi(offset).  FIXME: it would be better to
+    // scavenge a register here instead of reserving G1 all of the time.
+    const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
+    unsigned OffHi = (unsigned)Offset >> 10U;
+    BuildMI(*MI.getParent(), II, dl, TII.get(SP::SETHIi), SP::G1).addImm(OffHi);
+    // Emit G1 = G1 + I6
+    BuildMI(*MI.getParent(), II, dl, TII.get(SP::ADDrr), SP::G1).addReg(SP::G1)
+      .addReg(FramePtr);
+    // Insert: G1+%lo(offset) into the user.
+    MI.getOperand(FIOperandNum).ChangeToRegister(SP::G1, false);
+    MI.getOperand(FIOperandNum + 1).ChangeToImmediate(Offset & ((1 << 10)-1));
+  }
+}
+
+
 void
 SparcRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
                                        int SPAdj, unsigned FIOperandNum,
@@ -111,25 +140,37 @@ SparcRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     Offset += (stackSize) ? Subtarget.getAdjustedFrameSize(stackSize) : 0 ;
   }
 
-  // Replace frame index with a frame pointer reference.
-  if (Offset >= -4096 && Offset <= 4095) {
-    // If the offset is small enough to fit in the immediate field, directly
-    // encode it.
-    MI.getOperand(FIOperandNum).ChangeToRegister(FramePtr, false);
-    MI.getOperand(FIOperandNum + 1).ChangeToImmediate(Offset);
-  } else {
-    // Otherwise, emit a G1 = SETHI %hi(offset).  FIXME: it would be better to
-    // scavenge a register here instead of reserving G1 all of the time.
-    const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
-    unsigned OffHi = (unsigned)Offset >> 10U;
-    BuildMI(*MI.getParent(), II, dl, TII.get(SP::SETHIi), SP::G1).addImm(OffHi);
-    // Emit G1 = G1 + I6
-    BuildMI(*MI.getParent(), II, dl, TII.get(SP::ADDrr), SP::G1).addReg(SP::G1)
-      .addReg(FramePtr);
-    // Insert: G1+%lo(offset) into the user.
-    MI.getOperand(FIOperandNum).ChangeToRegister(SP::G1, false);
-    MI.getOperand(FIOperandNum + 1).ChangeToImmediate(Offset & ((1 << 10)-1));
+  if (!Subtarget.isV9() || !Subtarget.hasHardQuad()) {
+    if (MI.getOpcode() == SP::STQFri) {
+      const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
+      unsigned SrcReg = MI.getOperand(2).getReg();
+      unsigned SrcEvenReg = getSubReg(SrcReg, SP::sub_even64);
+      unsigned SrcOddReg  = getSubReg(SrcReg, SP::sub_odd64);
+      MachineInstr *StMI =
+        BuildMI(*MI.getParent(), II, dl, TII.get(SP::STDFri))
+        .addReg(FramePtr).addImm(0).addReg(SrcEvenReg);
+      replaceFI(MF, II, *StMI, dl, 0, Offset, FramePtr);
+      MI.setDesc(TII.get(SP::STDFri));
+      MI.getOperand(2).setReg(SrcOddReg);
+      Offset += 8;
+    } else if (MI.getOpcode() == SP::LDQFri) {
+      const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
+      unsigned DestReg     = MI.getOperand(0).getReg();
+      unsigned DestEvenReg = getSubReg(DestReg, SP::sub_even64);
+      unsigned DestOddReg  = getSubReg(DestReg, SP::sub_odd64);
+      MachineInstr *StMI =
+        BuildMI(*MI.getParent(), II, dl, TII.get(SP::LDDFri), DestEvenReg)
+        .addReg(FramePtr).addImm(0);
+      replaceFI(MF, II, *StMI, dl, 1, Offset, FramePtr);
+
+      MI.setDesc(TII.get(SP::LDDFri));
+      MI.getOperand(0).setReg(DestOddReg);
+      Offset += 8;
+    }
   }
+
+  replaceFI(MF, II, MI, dl, FIOperandNum, Offset, FramePtr);
+
 }
 
 unsigned SparcRegisterInfo::getFrameRegister(const MachineFunction &MF) const {
