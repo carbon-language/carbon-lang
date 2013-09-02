@@ -19,9 +19,10 @@ import subprocess
 # Change this to the full path if clang-format is not on the path.
 binary = 'clang-format'
 
-# Change this to format according to other formatting styles
-# (see clang-format -help).
-style = 'LLVM'
+# Change this to format according to other formatting styles. See the output of
+# 'clang-format --help' for a list of supported styles. The default looks for
+# a '.clang-format' file to indicate the style that should be used.
+style = 'file'
 
 class ClangFormatCommand(sublime_plugin.TextCommand):
   def run(self, edit):

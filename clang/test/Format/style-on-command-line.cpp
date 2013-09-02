@@ -4,9 +4,8 @@
 // RUN: clang-format -style="{BasedOnStyle: invalid, IndentWidth: 7}" %t.cpp 2>&1 | FileCheck -strict-whitespace -check-prefix=CHECK3 %s
 // RUN: clang-format -style="{lsjd}" %t.cpp 2>&1 | FileCheck -strict-whitespace -check-prefix=CHECK4 %s
 // RUN: [ ! -e %T/.clang-format ] || rm %T/.clang-format
-// RUN: clang-format -style=file %t.cpp 2>&1 | FileCheck -strict-whitespace -check-prefix=CHECK5 %s
 // RUN: printf "BasedOnStyle: google\nIndentWidth: 5\n" > %T/.clang-format
-// RUN: clang-format -style=file %t.cpp 2>&1 | FileCheck -strict-whitespace -check-prefix=CHECK6 %s
+// RUN: clang-format -style=file %t.cpp 2>&1 | FileCheck -strict-whitespace -check-prefix=CHECK5 %s
 void f() {
 // CHECK1: {{^        int\* i;$}}
 // CHECK2: {{^       int \*i;$}}
@@ -15,9 +14,7 @@ void f() {
 // CHECK3: {{^  int \*i;$}}
 // CHECK4: Error parsing -style: Invalid argument, using LLVM style
 // CHECK4: {{^  int \*i;$}}
-// CHECK5: Can't find usable .clang-format, using LLVM style
-// CHECK5: {{^  int \*i;$}}
-// CHECK6: {{^     int\* i;$}}
+// CHECK5: {{^     int\* i;$}}
 int*i;
 int j;
 }

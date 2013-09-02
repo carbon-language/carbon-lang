@@ -36,7 +36,7 @@
   (let* ((orig-windows (get-buffer-window-list (current-buffer)))
          (orig-window-starts (mapcar #'window-start orig-windows))
          (orig-point (point))
-         (style "LLVM"))
+         (style "file"))
     (unwind-protect
         (call-process-region (point-min) (point-max) clang-format-binary t t nil
                              "-offset" (number-to-string (1- begin))
