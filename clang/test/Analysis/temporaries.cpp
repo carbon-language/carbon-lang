@@ -1,5 +1,6 @@
 // RUN: %clang_cc1 -analyze -analyzer-checker=core,debug.ExprInspection -verify -w -std=c++03 %s
 // RUN: %clang_cc1 -analyze -analyzer-checker=core,debug.ExprInspection -verify -w -std=c++11 %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,debug.ExprInspection -verify -w -analyzer-config cfg-temporary-dtors=true %s -DTEMPORARY_DTORS
 
 extern bool clang_analyzer_eval(bool);
 
@@ -123,23 +124,76 @@ namespace destructors {
     }
   }
 
-  void testConsistency(int i) {
-    struct NoReturnDtor {
-      ~NoReturnDtor() __attribute__((noreturn));
-    };
-    extern bool check(const NoReturnDtor &);
-    
+#ifdef TEMPORARY_DTORS
+  struct NoReturnDtor {
+    ~NoReturnDtor() __attribute__((noreturn));
+  };
+
+  void noReturnTemp(int *x) {
+    if (! x) NoReturnDtor();
+    *x = 47; // no warning
+  }
+
+  void noReturnInline(int **x) {
+    NoReturnDtor();
+  }
+
+  void callNoReturn() {
+    int *x;
+    noReturnInline(&x);
+    *x = 47; // no warning
+  }
+
+  extern bool check(const NoReturnDtor &);
+
+  void testConsistencyIf(int i) {
     if (i == 5 && (i == 4 || i == 5 || check(NoReturnDtor())))
       clang_analyzer_eval(true); // expected-warning{{TRUE}}
 
     if (i != 5)
       return;
     if (i == 5 && (i == 4 || check(NoReturnDtor()) || i == 5)) {
-      // FIXME: Should be no-warning, because the noreturn destructor should
-      // fire on all paths.
-      clang_analyzer_eval(true); // expected-warning{{TRUE}}
+      clang_analyzer_eval(true); // no warning, unreachable code
     }
   }
+
+  void testConsistencyTernary(int i) {
+    (i == 5 && (i == 4 || check(NoReturnDtor()) || i == 5)) ? 1 : 0;
+
+    clang_analyzer_eval(true);  // expected-warning{{TRUE}}
+
+    if (i != 5)
+      return;
+
+    (i == 5 && (i == 4 || check(NoReturnDtor()) || i == 5)) ? 1 : 0;
+
+    clang_analyzer_eval(true); // no warning, unreachable code
+  }
+
+  void testConsistencyNested(int i) {
+    extern bool compute(bool);
+
+    if (i == 5 && (i == 4 || i == 5 || check(NoReturnDtor())))
+      clang_analyzer_eval(true);  // expected-warning{{TRUE}}
+
+    if (i != 5)
+      return;
+
+    if (compute(i == 5 &&
+                (i == 4 || compute(true) ||
+                 compute(i == 5 && (i == 4 || check(NoReturnDtor()))))) ||
+        i != 4) {
+      clang_analyzer_eval(true); // expected-warning{{TRUE}}
+    }
+
+    if (compute(i == 5 &&
+                (i == 4 || i == 4 ||
+                 compute(i == 5 && (i == 4 || check(NoReturnDtor()))))) ||
+        i != 4) {
+      clang_analyzer_eval(true); // no warning, unreachable code
+    }
+  }
+#endif // TEMPORARY_DTORS
 }
 
 void testStaticMaterializeTemporaryExpr() {

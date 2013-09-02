@@ -3765,8 +3765,9 @@ static void print_elem(raw_ostream &OS, StmtPrinterHelper* Helper,
 
   } else if (Optional<CFGTemporaryDtor> TE = E.getAs<CFGTemporaryDtor>()) {
     const CXXBindTemporaryExpr *BT = TE->getBindTemporaryExpr();
-    OS << "~" << BT->getType()->getAsCXXRecordDecl()->getName() << "()";
-    OS << " (Temporary object destructor)\n";
+    OS << "~";
+    BT->getType().print(OS, PrintingPolicy(Helper->getLangOpts()));
+    OS << "() (Temporary object destructor)\n";
   }
 }
 
