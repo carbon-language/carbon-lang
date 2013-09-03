@@ -8,9 +8,9 @@ void FuncOverload(int arg) {}
 void FuncOverload(char *arg) {}
 
 namespace Namespace1 {
-  void FuncNameSpace() {}
+void FuncNameSpace() {}
 }
 
 namespace Namespace2 {
-  void FuncNameSpace() {}
+void FuncNameSpace() {}
 }
