@@ -55,7 +55,12 @@ bool Driver::link(const LinkingContext &context, raw_ostream &diagnostics) {
   for (auto &ie : inputGraph.inputElements()) {
     if (ie->kind() == InputElement::Kind::File) {
       FileNode *fileNode = (llvm::dyn_cast<FileNode>)(ie.get());
-      linkerInputs.push_back(std::move(fileNode->createLinkerInput(context)));
+      auto linkerInput = fileNode->createLinkerInput(context);
+      if (!linkerInput) {
+        llvm::outs() << fileNode->errStr(error_code(linkerInput)) << "\n";
+        return true;
+      }
+      linkerInputs.push_back(std::move(*fileNode->createLinkerInput(context)));
     }
   }
   for (const auto &input : linkerInputs) {

@@ -36,7 +36,8 @@ protected:
   std::string inputFile(unsigned index) {
     const InputElement &inputElement = linkingContext()->inputGraph()[index];
     if (inputElement.kind() == InputElement::Kind::File)
-      return (llvm::dyn_cast<FileNode>(&inputElement))->path(*linkingContext());
+      return *(llvm::dyn_cast<FileNode>(&inputElement))
+                  ->path(*linkingContext());
     llvm_unreachable("not handling other types of input files");
   }
 

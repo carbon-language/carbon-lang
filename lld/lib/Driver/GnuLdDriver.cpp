@@ -71,16 +71,36 @@ public:
 
 } // namespace
 
-std::unique_ptr<lld::LinkerInput>
+llvm::ErrorOr<std::unique_ptr<lld::LinkerInput> >
 ELFFileNode::createLinkerInput(const LinkingContext &ctx) {
-  std::unique_ptr<LinkerInput> inputFile(new LinkerInput(path(ctx)));
+  auto filePath = path(ctx);
+  if (!filePath &&
+      error_code(filePath) == llvm::errc::no_such_file_or_directory)
+    return make_error_code(llvm::errc::no_such_file_or_directory);
+  std::unique_ptr<LinkerInput> inputFile(new LinkerInput(*filePath));
   inputFile->setAsNeeded(_asNeeded);
   inputFile->setForceLoad(_isWholeArchive);
   return std::move(inputFile);
 }
 
-StringRef ELFFileNode::path(const LinkingContext &) const {
+llvm::ErrorOr<StringRef> ELFFileNode::path(const LinkingContext &) const {
+  if (!_isDashlPrefix)
+    return _path;
   return _elfLinkingContext.searchLibrary(_path, _libraryPaths);
+}
+
+std::string ELFFileNode::errStr(llvm::error_code errc) {
+  std::string errorMsg;
+  if (errc == llvm::errc::no_such_file_or_directory) {
+    if (_isDashlPrefix)
+      errorMsg = (Twine("Unable to find library -l") + _path).str();
+    else
+      errorMsg = (Twine("Unable to find file ") + _path).str();
+  }
+  else {
+    return "Unknown Error";
+  }
+  return std::move(errorMsg);
 }
 
 bool GnuLdDriver::linkELF(int argc, const char *argv[],
@@ -278,9 +298,9 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
     case OPT_INPUT:
     case OPT_l: {
       std::unique_ptr<InputElement> inputFile =
-          std::move(std::unique_ptr<InputElement>(
-              new ELFFileNode(*ctx, inputArg->getValue(), searchPath,
-                              isWholeArchive, asNeeded)));
+          std::move(std::unique_ptr<InputElement>(new ELFFileNode(
+              *ctx, inputArg->getValue(), searchPath, isWholeArchive, asNeeded,
+              inputArg->getOption().getID() == OPT_l)));
       if (controlNodeStack.empty())
         inputGraph->addInputElement(std::move(inputFile));
       else

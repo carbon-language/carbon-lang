@@ -1,0 +1,4 @@
+# Tests the functionality of library not found
+RUN: not lld -flavor gnu -lfn | FileCheck %s
+
+CHECK: Unable to find library -lfn

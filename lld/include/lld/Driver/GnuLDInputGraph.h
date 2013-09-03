@@ -26,10 +26,11 @@ namespace lld {
 class ELFFileNode : public FileNode {
 public:
   ELFFileNode(ELFLinkingContext &ctx, StringRef path,
-              std::vector<StringRef> searchPath,
-              bool isWholeArchive = false, bool asNeeded = false)
+              std::vector<StringRef> searchPath, bool isWholeArchive = false,
+              bool asNeeded = false, bool dashlPrefix = false)
       : FileNode(path), _elfLinkingContext(ctx),
-        _isWholeArchive(isWholeArchive), _asNeeded(asNeeded) {
+        _isWholeArchive(isWholeArchive), _asNeeded(asNeeded),
+        _isDashlPrefix(dashlPrefix) {
     std::copy(searchPath.begin(), searchPath.end(),
               std::back_inserter(_libraryPaths));
   }
@@ -38,17 +39,20 @@ public:
     return a->kind() == InputElement::Kind::File;
   }
 
-  virtual StringRef path(const LinkingContext &ctx) const;
+  virtual llvm::ErrorOr<StringRef> path(const LinkingContext &ctx) const;
 
-  virtual std::unique_ptr<lld::LinkerInput>
+  virtual llvm::ErrorOr<std::unique_ptr<lld::LinkerInput> >
   createLinkerInput(const lld::LinkingContext &);
 
   /// \brief validates the Input Element
   virtual bool validate() { return true; }
 
+  /// \brief create an error string for printing purposes
+  virtual std::string errStr(llvm::error_code);
+
   /// \brief Dump the Input Element
   virtual bool dump(raw_ostream &diagnostics) {
-    diagnostics << "Name    : " << path(_elfLinkingContext) << "\n";
+    diagnostics << "Name    : " << *path(_elfLinkingContext) << "\n";
     diagnostics << "Type    : "
                 << "ELF File"
                 << "\n";
@@ -67,9 +71,11 @@ public:
   }
 
 private:
+  llvm::BumpPtrAllocator _alloc;
   ELFLinkingContext &_elfLinkingContext;
-  bool _isWholeArchive : 1;
-  bool _asNeeded : 1;
+  bool _isWholeArchive;
+  bool _asNeeded;
+  bool _isDashlPrefix;
   std::vector<StringRef> _libraryPaths;
 };
 
@@ -82,10 +88,10 @@ public:
     return a->kind() == InputElement::Kind::Control;
   }
 
-  virtual std::unique_ptr<lld::LinkerInput>
+  virtual llvm::ErrorOr<std::unique_ptr<lld::LinkerInput> >
   createLinkerInput(const lld::LinkingContext &) {
     // FIXME : create a linker input to handle groups
-    return nullptr;
+    return llvm::make_error_code(llvm::errc::no_such_file_or_directory);
   }
 
   /// \brief Validate the options

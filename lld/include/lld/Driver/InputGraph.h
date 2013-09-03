@@ -198,7 +198,7 @@ public:
   InputGraph::InputElementIterT end() { return _elements.end(); }
 
   /// \brief Create a lld::File node from the FileNode
-  virtual std::unique_ptr<LinkerInput>
+  virtual llvm::ErrorOr<std::unique_ptr<lld::LinkerInput> >
   createLinkerInput(const LinkingContext &targetInfo) = 0;
 
 private:
@@ -214,7 +214,9 @@ public:
   FileNode(StringRef path, int64_t ordinal = -1)
       : InputElement(InputElement::Kind::File, ordinal), _path(path) {}
 
-  virtual StringRef path(const LinkingContext &) const { return _path; }
+  virtual llvm::ErrorOr<StringRef> path(const LinkingContext &) const {
+    return _path;
+  }
 
   virtual ~FileNode() {}
 
@@ -223,8 +225,13 @@ public:
     return a->kind() == InputElement::Kind::File;
   }
 
+  /// \brief create an error string for printing purposes
+  virtual std::string errStr(llvm::error_code) {
+    llvm_unreachable("not handling errors");
+  }
+
   /// \brief Create a lld::File node from the FileNode
-  virtual std::unique_ptr<LinkerInput>
+  virtual llvm::ErrorOr<std::unique_ptr<lld::LinkerInput> >
   createLinkerInput(const LinkingContext &targetInfo) = 0;
 
 protected:
@@ -248,7 +255,7 @@ public:
     return true;
   }
 
-  virtual std::unique_ptr<lld::LinkerInput>
+  virtual llvm::ErrorOr<std::unique_ptr<lld::LinkerInput> >
   createLinkerInput(const lld::LinkingContext &) = 0;
 };
 

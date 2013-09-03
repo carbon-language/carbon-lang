@@ -153,8 +153,9 @@ public:
   virtual void setNoAllowDynamicLibraries() { _noAllowDynamicLibraries = true; }
 
   /// Searches directories for a match on the input File
-  StringRef searchLibrary(StringRef libName,
-                          const std::vector<StringRef> &searchPath) const;
+  llvm::ErrorOr<std::string>
+  searchLibrary(StringRef libName,
+                const std::vector<StringRef> &searchPath) const;
 
   /// Get the entry symbol name
   virtual StringRef entrySymbolName() const;

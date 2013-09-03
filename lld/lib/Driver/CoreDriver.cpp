@@ -67,9 +67,9 @@ public:
 
 namespace lld {
 
-std::unique_ptr<lld::LinkerInput>
+llvm::ErrorOr<std::unique_ptr<lld::LinkerInput> >
 COREFileNode::createLinkerInput(const LinkingContext &info) {
-  return std::unique_ptr<LinkerInput>(new LinkerInput(path(info)));
+  return std::unique_ptr<LinkerInput>(new LinkerInput(*path(info)));
 }
 
 bool CoreDriver::link(int argc, const char *argv[], raw_ostream &diagnostics) {

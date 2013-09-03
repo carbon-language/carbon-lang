@@ -140,7 +140,7 @@ ELFLinkingContext::create(llvm::Triple triple) {
   }
 }
 
-StringRef ELFLinkingContext::searchLibrary(
+llvm::ErrorOr<std::string> ELFLinkingContext::searchLibrary(
     StringRef libName, const std::vector<StringRef> &searchPath) const {
   bool foundFile = false;
   StringRef pathref;
@@ -178,7 +178,10 @@ StringRef ELFLinkingContext::searchLibrary(
     if (foundFile)
       return (*(new (_alloc) std::string(pathref.str())));
   }
-  return libName;
+  if (!llvm::sys::fs::exists(libName))
+    return llvm::make_error_code(llvm::errc::no_such_file_or_directory);
+
+  return std::string(libName);
 }
 
 std::unique_ptr<File> ELFLinkingContext::createUndefinedSymbolFile() {

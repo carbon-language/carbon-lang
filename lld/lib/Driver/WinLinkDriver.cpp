@@ -210,17 +210,17 @@ std::unique_ptr<llvm::opt::InputArgList> parseArgs(int argc, const char *argv[],
 
 } // namespace
 
-std::unique_ptr<lld::LinkerInput>
+llvm::ErrorOr<std::unique_ptr<lld::LinkerInput> >
 PECOFFFileNode::createLinkerInput(const LinkingContext &ctx) {
-  return std::unique_ptr<LinkerInput>(new LinkerInput(path(ctx)));
+  return std::unique_ptr<LinkerInput>(new LinkerInput(*path(ctx)));
 }
 
-std::unique_ptr<lld::LinkerInput>
+llvm::ErrorOr<std::unique_ptr<lld::LinkerInput> >
 PECOFFLibraryNode::createLinkerInput(const LinkingContext &ctx) {
-  return std::unique_ptr<LinkerInput>(new LinkerInput(path(ctx)));
+  return std::unique_ptr<LinkerInput>(new LinkerInput(*path(ctx)));
 }
 
-StringRef PECOFFFileNode::path(const LinkingContext &) const {
+llvm::ErrorOr<StringRef> PECOFFFileNode::path(const LinkingContext &) const {
   if (_path.endswith(".lib"))
     return _ctx.searchLibraryFile(_path);
   if (llvm::sys::path::extension(_path).empty())
@@ -228,7 +228,7 @@ StringRef PECOFFFileNode::path(const LinkingContext &) const {
   return _path;
 }
 
-StringRef PECOFFLibraryNode::path(const LinkingContext &) const {
+llvm::ErrorOr<StringRef> PECOFFLibraryNode::path(const LinkingContext &) const {
   if (!_path.endswith(".lib"))
     return _ctx.searchLibraryFile(_ctx.allocateString(_path.str() + ".lib"));
   return _ctx.searchLibraryFile(_path);
@@ -484,7 +484,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
   // with ".exe".
   if (ctx.outputPath().empty()) {
     SmallString<128> firstInputFilePath =
-        (llvm::dyn_cast<FileNode>(&((inputGraph)[0])))->path(ctx);
+        *(llvm::dyn_cast<FileNode>(&((inputGraph)[0])))->path(ctx);
     (llvm::sys::path::replace_extension(firstInputFilePath, ".exe"));
     ctx.setOutputPath(ctx.allocateString(firstInputFilePath.str()));
   }
