@@ -30,8 +30,8 @@ int main()
 {
 #if _LIBCPP_STD_VER > 11
 
-	static_assert((std::is_class<std::in_place_t>::value), "");
-	static_assert((std::is_empty<std::in_place_t>::value), "");
+    static_assert((std::is_class<std::in_place_t>::value), "");
+    static_assert((std::is_empty<std::in_place_t>::value), "");
     
     static_assert(test(std::in_place) == 3, "");
 #endif

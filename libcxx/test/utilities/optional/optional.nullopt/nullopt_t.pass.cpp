@@ -29,10 +29,10 @@ test(const std::nullopt_t&)
 int main()
 {
 #if _LIBCPP_STD_VER > 11
-	static_assert((std::is_class<std::nullopt_t>::value), "");
-	static_assert((std::is_empty<std::nullopt_t>::value), "");
-	static_assert((std::is_literal_type<std::nullopt_t>::value), "");
-	static_assert((!std::is_default_constructible<std::nullopt_t>::value), "");
+    static_assert((std::is_class<std::nullopt_t>::value), "");
+    static_assert((std::is_empty<std::nullopt_t>::value), "");
+    static_assert((std::is_literal_type<std::nullopt_t>::value), "");
+    static_assert((!std::is_default_constructible<std::nullopt_t>::value), "");
     
     static_assert(test(std::nullopt) == 3, "");
 #endif
