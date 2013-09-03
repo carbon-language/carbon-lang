@@ -18,6 +18,11 @@
 // Modularize takes as argument a file name for a file containing the
 // newline-separated list of headers to check with respect to each other.
 // Lines beginning with '#' and empty lines are ignored.
+// Header file names followed by a colon and other space-separated
+// file names will include those extra files as dependencies.
+// The file names can be relative or full paths, but must be on the
+// same line.
+//
 // Modularize also accepts regular front-end arguments.
 //
 // Usage:   modularize [-prefix (optional header path prefix)]
@@ -72,29 +77,22 @@
 //
 // See PreprocessorTracker.cpp for additional details.
 //
-// Future directions:
+// Current problems:
 //
-// Basically, we want to add new checks for whatever we can check with respect
-// to checking headers for module'ability.
+// Modularize has problems with C++:
 //
-// Some ideas:
+// 1. Modularize doesn't distinguish class of the same name in
+// different namespaces.  The result is erroneous duplicate definition errors.
 //
-// 1. Add options to disable any of the checks, in case
-// there is some problem with them, or the messages get too verbose.
+// 2. Modularize doesn't distinguish between a regular class and a template
+// class of the same name.
 //
-// 2. Try to figure out the preprocessor conditional directives that
-// contribute to problems and tie them to the inconsistent definitions.
+// Other problems:
 //
-// 3. Check for correct and consistent usage of extern "C" {} and other
-// directives. Warn about #include inside extern "C" {}.
+// 3. There seem to be a lot of spurious "not always provided" messages,
+// and many duplicates of these.
 //
-// 4. There seem to be a lot of spurious "not always provided" messages,
-// and many duplicates of these, which seem to occur when something is
-// defined within a preprocessor conditional block, even if the conditional
-// always evaluates the same in the stand-alone case.  Perhaps we could
-// collapse the duplicates, and add an option for disabling the test (see #4).
-//
-// 5. There are some legitimate uses of preprocessor macros that
+// 4. There are some legitimate uses of preprocessor macros that
 // modularize will flag as errors, such as repeatedly #include'ing
 // a file and using interleaving defined/undefined macros
 // to change declarations in the included file.  Is there a way
@@ -102,7 +100,25 @@
 // to ignore.  Otherwise you can just exclude the file, after checking
 // for legitimate errors.
 //
-// 6. What else?
+// Future directions:
+//
+// Basically, we want to add new checks for whatever we can check with respect
+// to checking headers for module'ability.
+//
+// Some ideas:
+//
+// 1. Fix the C++ and other problems.
+//
+// 2. Add options to disable any of the checks, in case
+// there is some problem with them, or the messages get too verbose.
+//
+// 3. Try to figure out the preprocessor conditional directives that
+// contribute to problems and tie them to the inconsistent definitions.
+//
+// 4. Check for correct and consistent usage of extern "C" {} and other
+// directives. Warn about #include inside extern "C" {}.
+//
+// 5. What else?
 //
 // General clean-up and refactoring:
 //
@@ -116,6 +132,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/Basic/SourceManager.h"
+#include "clang/Driver/Options.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/Lex/Preprocessor.h"
@@ -123,7 +140,12 @@
 #include "clang/Tooling/Tooling.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/Config/config.h"
+#include "llvm/Option/Arg.h"
+#include "llvm/Option/ArgList.h"
+#include "llvm/Option/OptTable.h"
+#include "llvm/Option/Option.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -135,9 +157,12 @@
 #include <vector>
 #include "PreprocessorTracker.h"
 
-using namespace clang::tooling;
 using namespace clang;
+using namespace clang::driver;
+using namespace clang::driver::options;
+using namespace clang::tooling;
 using namespace llvm;
+using namespace llvm::opt;
 using namespace Modularize;
 
 // Option to specify a file name for a list of header files to check.
@@ -158,13 +183,19 @@ cl::opt<std::string> HeaderPrefix(
         " If not specified,"
         " the files are considered to be relative to the header list file."));
 
-// Read the header list file and collect the header file names.
-error_code getHeaderFileNames(SmallVectorImpl<std::string> &HeaderFileNames,
-                              StringRef ListFileName, StringRef HeaderPrefix) {
+typedef SmallVector<std::string, 4> DependentsVector;
+typedef StringMap<DependentsVector> DependencyMap;
 
+// Read the header list file and collect the header file names and
+// optional dependencies.
+error_code getHeaderFileNames(SmallVectorImpl<std::string> &HeaderFileNames,
+                              DependencyMap &Dependencies,
+                              StringRef ListFileName, StringRef HeaderPrefix) {
   // By default, use the path component of the list file name.
   SmallString<256> HeaderDirectory(ListFileName);
   sys::path::remove_filename(HeaderDirectory);
+  SmallString<256> CurrentDirectory;
+  sys::fs::current_path(CurrentDirectory);
 
   // Get the prefix if we have one.
   if (HeaderPrefix.size() != 0)
@@ -184,24 +215,93 @@ error_code getHeaderFileNames(SmallVectorImpl<std::string> &HeaderFileNames,
   for (SmallVectorImpl<StringRef>::iterator I = Strings.begin(),
                                             E = Strings.end();
        I != E; ++I) {
-    StringRef Line = (*I).trim();
+    StringRef Line = I->trim();
     // Ignore comments and empty lines.
     if (Line.empty() || (Line[0] == '#'))
       continue;
+    std::pair<StringRef, StringRef> TargetAndDependents = Line.split(':');
     SmallString<256> HeaderFileName;
     // Prepend header file name prefix if it's not absolute.
-    if (sys::path::is_absolute(Line))
-      HeaderFileName = Line;
+    if (sys::path::is_absolute(TargetAndDependents.first))
+      llvm::sys::path::native(TargetAndDependents.first, HeaderFileName);
     else {
-      HeaderFileName = HeaderDirectory;
-      sys::path::append(HeaderFileName, Line);
+      if (HeaderDirectory.size() != 0)
+        HeaderFileName = HeaderDirectory;
+      else
+        HeaderFileName = CurrentDirectory;
+      sys::path::append(HeaderFileName, TargetAndDependents.first);
+      llvm::sys::path::native(HeaderFileName.str(), HeaderFileName);
     }
-    // Save the resulting header file path.
+    // Handle optional dependencies.
+    DependentsVector Dependents;
+    SmallVector<StringRef, 4> DependentsList;
+    TargetAndDependents.second.split(DependentsList, " ", -1, false);
+    int Count = DependentsList.size();
+    for (int Index = 0; Index < Count; ++Index) {
+      SmallString<256> Dependent;
+      if (sys::path::is_absolute(DependentsList[Index]))
+        Dependent = DependentsList[Index];
+      else {
+        if (HeaderDirectory.size() != 0)
+          Dependent = HeaderDirectory;
+        else
+          Dependent = CurrentDirectory;
+        sys::path::append(Dependent, DependentsList[Index]);
+      }
+      llvm::sys::path::native(Dependent.str(), Dependent);
+      Dependents.push_back(Dependent.str());
+    }
+    // Save the resulting header file path and dependencies.
     HeaderFileNames.push_back(HeaderFileName.str());
+    Dependencies[HeaderFileName.str()] = Dependents;
   }
 
   return error_code::success();
 }
+
+// Helper function for finding the input file in an arguments list.
+llvm::StringRef findInputFile(const CommandLineArguments &CLArgs) {
+  OwningPtr<OptTable> Opts(createDriverOptTable());
+  const unsigned IncludedFlagsBitmask = options::CC1Option;
+  unsigned MissingArgIndex, MissingArgCount;
+  SmallVector<const char *, 256> Argv;
+  for (CommandLineArguments::const_iterator I = CLArgs.begin(),
+                                            E = CLArgs.end();
+       I != E; ++I)
+    Argv.push_back(I->c_str());
+  OwningPtr<InputArgList> Args(
+      Opts->ParseArgs(Argv.data(), Argv.data() + Argv.size(), MissingArgIndex,
+                      MissingArgCount, IncludedFlagsBitmask));
+  std::vector<std::string> Inputs = Args->getAllArgValues(OPT_INPUT);
+  return Inputs.back();
+}
+
+// We provide this derivation to add in "-include (file)" arguments for header
+// dependencies.
+class AddDependenciesAdjuster : public ArgumentsAdjuster {
+public:
+  AddDependenciesAdjuster(DependencyMap &Dependencies)
+      : Dependencies(Dependencies) {}
+
+private:
+  // Callback for adjusting commandline arguments.
+  CommandLineArguments Adjust(const CommandLineArguments &Args) {
+    llvm::StringRef InputFile = findInputFile(Args);
+    DependentsVector &FileDependents = Dependencies[InputFile];
+    int Count = FileDependents.size();
+    if (Count == 0)
+      return Args;
+    CommandLineArguments NewArgs(Args);
+    for (int Index = 0; Index < Count; ++Index) {
+      NewArgs.push_back("-include");
+      std::string File(std::string("\"") + FileDependents[Index] +
+                       std::string("\""));
+      NewArgs.push_back(FileDependents[Index]);
+    }
+    return NewArgs;
+  }
+  DependencyMap &Dependencies;
+};
 
 // FIXME: The Location class seems to be something that we might
 // want to design to be applicable to a wider range of tools, and stick it
@@ -517,9 +617,11 @@ int main(int Argc, const char **Argv) {
     return 1;
   }
 
-  // Get header file names.
+  // Get header file names and dependencies.
   SmallVector<std::string, 32> Headers;
-  if (error_code EC = getHeaderFileNames(Headers, ListFileName, HeaderPrefix)) {
+  DependencyMap Dependencies;
+  if (error_code EC = getHeaderFileNames(Headers, Dependencies, ListFileName,
+                                         HeaderPrefix)) {
     errs() << Argv[0] << ": error: Unable to get header list '" << ListFileName
            << "': " << EC.message() << '\n';
     return 1;
@@ -538,6 +640,7 @@ int main(int Argc, const char **Argv) {
   // Parse all of the headers, detecting duplicates.
   EntityMap Entities;
   ClangTool Tool(*Compilations, Headers);
+  Tool.appendArgumentsAdjuster(new AddDependenciesAdjuster(Dependencies));
   int HadErrors =
       Tool.run(new ModularizeFrontendActionFactory(Entities, *PPTracker));
 
