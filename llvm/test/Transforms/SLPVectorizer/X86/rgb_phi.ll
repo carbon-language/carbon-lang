@@ -3,6 +3,8 @@
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:128:128-n8:16:32-S128"
 target triple = "i386-apple-macosx10.9.0"
 
+; We disable the vectorization of <3 x float> for now
+
 ; float foo(float *A) {
 ;
 ;   float R = A[0];
@@ -19,14 +21,14 @@ target triple = "i386-apple-macosx10.9.0"
 
 ;CHECK-LABEL: @foo(
 ;CHECK: br
-;CHECK: phi <3 x float>
-;CHECK: fmul <3 x float>
-;CHECK: fadd <3 x float>
+;CHECK-NOT: phi <3 x float>
+;CHECK-NOT: fmul <3 x float>
+;CHECK-NOT: fadd <3 x float>
 ; At the moment we don't sink extractelements.
 ;CHECK: br
-;CHECK: extractelement
-;CHECK: extractelement
-;CHECK: extractelement
+;CHECK-NOT: extractelement
+;CHECK-NOT: extractelement
+;CHECK-NOT: extractelement
 ;CHECK: ret
 
 define float @foo(float* nocapture readonly %A) {

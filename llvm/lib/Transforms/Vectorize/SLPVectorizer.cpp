@@ -1781,28 +1781,53 @@ bool SLPVectorizer::tryToVectorizeList(ArrayRef<Value *> VL, BoUpSLP &R) {
   // Check that all of the parts are scalar instructions of the same type.
   Instruction *I0 = dyn_cast<Instruction>(VL[0]);
   if (!I0)
-    return 0;
+    return false;
 
   unsigned Opcode0 = I0->getOpcode();
+  
+  Type *Ty0 = I0->getType();
+  unsigned Sz = DL->getTypeSizeInBits(Ty0);
+  unsigned VF = MinVecRegSize / Sz;
 
   for (int i = 0, e = VL.size(); i < e; ++i) {
     Type *Ty = VL[i]->getType();
     if (Ty->isAggregateType() || Ty->isVectorTy())
-      return 0;
+      return false;
     Instruction *Inst = dyn_cast<Instruction>(VL[i]);
     if (!Inst || Inst->getOpcode() != Opcode0)
-      return 0;
+      return false;
   }
 
-  R.buildTree(VL);
-  int Cost = R.getTreeCost();
+  bool Changed = false;
+    
+  for (unsigned i = 0, e = VL.size(); i < e; ++i) {
+    unsigned OpsWidth = 0;
+      
+    if (i + VF > e) 
+      OpsWidth = e - i;
+    else
+      OpsWidth = VF;
 
-  if (Cost >= -SLPCostThreshold)
-    return false;
+    if (!isPowerOf2_32(OpsWidth) || OpsWidth < 2)
+      break;
 
-  DEBUG(dbgs() << "SLP: Vectorizing pair at cost:" << Cost << ".\n");
-  R.vectorizeTree();
-  return true;
+    DEBUG(dbgs() << "SLP: Analyzing " << OpsWidth << " operations " << "\n");
+    ArrayRef<Value *> Ops = VL.slice(i, OpsWidth);
+      
+    R.buildTree(Ops);
+    int Cost = R.getTreeCost();
+       
+    if (Cost < -SLPCostThreshold) {
+      DEBUG(dbgs() << "SLP: Vectorizing pair at cost:" << Cost << ".\n");
+      R.vectorizeTree();
+        
+      // Move to the next bundle.
+      i += VF - 1;
+      Changed = true;
+    }
+  }
+    
+  return Changed; 
 }
 
 bool SLPVectorizer::tryToVectorize(BinaryOperator *V, BoUpSLP &R) {

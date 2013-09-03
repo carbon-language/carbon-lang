@@ -95,11 +95,92 @@ for.end:                                          ; preds = %for.body
   ret i32 0
 }
 
+; float foo3(float *A) {
+;
+;   float R = A[0];
+;   float G = A[1];
+;   float B = A[2];
+;   float Y = A[3];
+;   float P = A[4];
+;   for (int i=0; i < 121; i+=3) {
+;     R+=A[i+0]*7;
+;     G+=A[i+1]*8;
+;     B+=A[i+2]*9;
+;     Y+=A[i+3]*10;
+;     P+=A[i+4]*11;
+;   }
+;
+;   return R+G+B+Y+P;
+; }
+
+;CHECK: foo3
+;CHECK: phi <4 x float>
+;CHECK: fmul <4 x float>
+;CHECK: fadd <4 x float>
+;CHECK-NOT: phi <5 x float>
+;CHECK-NOT: fmul <5 x float>
+;CHECK-NOT: fadd <5 x float>
+
+define float @foo3(float* nocapture readonly %A) #0 {
+entry:
+  %0 = load float* %A, align 4
+  %arrayidx1 = getelementptr inbounds float* %A, i64 1
+  %1 = load float* %arrayidx1, align 4
+  %arrayidx2 = getelementptr inbounds float* %A, i64 2
+  %2 = load float* %arrayidx2, align 4
+  %arrayidx3 = getelementptr inbounds float* %A, i64 3
+  %3 = load float* %arrayidx3, align 4
+  %arrayidx4 = getelementptr inbounds float* %A, i64 4
+  %4 = load float* %arrayidx4, align 4
+  br label %for.body
+
+for.body:                                         ; preds = %for.body, %entry
+  %5 = phi float [ %1, %entry ], [ %11, %for.body ]
+  %6 = phi float [ %0, %entry ], [ %9, %for.body ]
+  %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
+  %P.056 = phi float [ %4, %entry ], [ %add26, %for.body ]
+  %Y.055 = phi float [ %3, %entry ], [ %add21, %for.body ]
+  %B.054 = phi float [ %2, %entry ], [ %add16, %for.body ]
+  %G.053 = phi float [ %1, %entry ], [ %add11, %for.body ]
+  %R.052 = phi float [ %0, %entry ], [ %add6, %for.body ]
+  %mul = fmul float %6, 7.000000e+00
+  %add6 = fadd float %R.052, %mul
+  %mul10 = fmul float %5, 8.000000e+00
+  %add11 = fadd float %G.053, %mul10
+  %7 = add nsw i64 %indvars.iv, 2
+  %arrayidx14 = getelementptr inbounds float* %A, i64 %7
+  %8 = load float* %arrayidx14, align 4
+  %mul15 = fmul float %8, 9.000000e+00
+  %add16 = fadd float %B.054, %mul15
+  %indvars.iv.next = add nuw nsw i64 %indvars.iv, 3
+  %arrayidx19 = getelementptr inbounds float* %A, i64 %indvars.iv.next
+  %9 = load float* %arrayidx19, align 4
+  %mul20 = fmul float %9, 1.000000e+01
+  %add21 = fadd float %Y.055, %mul20
+  %10 = add nsw i64 %indvars.iv, 4
+  %arrayidx24 = getelementptr inbounds float* %A, i64 %10
+  %11 = load float* %arrayidx24, align 4
+  %mul25 = fmul float %11, 1.100000e+01
+  %add26 = fadd float %P.056, %mul25
+  %12 = trunc i64 %indvars.iv.next to i32
+  %cmp = icmp slt i32 %12, 121
+  br i1 %cmp, label %for.body, label %for.end
+
+for.end:                                          ; preds = %for.body
+  %add28 = fadd float %add6, %add11
+  %add29 = fadd float %add28, %add16
+  %add30 = fadd float %add29, %add21
+  %add31 = fadd float %add30, %add26
+  ret float %add31
+}
+
 define void @test(x86_fp80* %i1, x86_fp80* %i2, x86_fp80* %o) {
 ; CHECK-LABEL: @test(
 ;
 ; Test that we correctly recognize the discontiguous memory in arrays where the
 ; size is less than the alignment, and through various different GEP formations.
+;
+; We disable the vectorization of x86_fp80 for now. 
 
 entry:
   %i1.0 = load x86_fp80* %i1, align 16
@@ -107,8 +188,8 @@ entry:
   %i1.1 = load x86_fp80* %i1.gep1, align 16
 ; CHECK: load x86_fp80*
 ; CHECK: load x86_fp80*
-; CHECK: insertelement <2 x x86_fp80>
-; CHECK: insertelement <2 x x86_fp80>
+; CHECK-NOT: insertelement <2 x x86_fp80>
+; CHECK_NOT: insertelement <2 x x86_fp80>
   br i1 undef, label %then, label %end
 
 then:
@@ -118,16 +199,16 @@ then:
   %i2.1 = load x86_fp80* %i2.gep1, align 16
 ; CHECK: load x86_fp80*
 ; CHECK: load x86_fp80*
-; CHECK: insertelement <2 x x86_fp80>
-; CHECK: insertelement <2 x x86_fp80>
+; CHECK-NOT: insertelement <2 x x86_fp80>
+; CHECK-NOT: insertelement <2 x x86_fp80>
   br label %end
 
 end:
   %phi0 = phi x86_fp80 [ %i1.0, %entry ], [ %i2.0, %then ]
   %phi1 = phi x86_fp80 [ %i1.1, %entry ], [ %i2.1, %then ]
-; CHECK: phi <2 x x86_fp80>
-; CHECK: extractelement <2 x x86_fp80>
-; CHECK: extractelement <2 x x86_fp80>
+; CHECK-NOT: phi <2 x x86_fp80>
+; CHECK-NOT: extractelement <2 x x86_fp80>
+; CHECK-NOT: extractelement <2 x x86_fp80>
   store x86_fp80 %phi0, x86_fp80* %o, align 16
   %o.gep1 = getelementptr inbounds x86_fp80* %o, i64 1
   store x86_fp80 %phi1, x86_fp80* %o.gep1, align 16
