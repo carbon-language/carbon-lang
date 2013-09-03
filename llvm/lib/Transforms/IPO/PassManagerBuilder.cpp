@@ -33,7 +33,7 @@ RunLoopVectorization("vectorize-loops",
                      cl::desc("Run the Loop vectorization passes"));
 
 static cl::opt<bool>
-LateVectorization("late-vectorize", cl::init(false), cl::Hidden,
+LateVectorization("late-vectorize", cl::init(true), cl::Hidden,
                   cl::desc("Run the vectorization pasess late in the pass "
                            "pipeline (after the inliner)"));
 
