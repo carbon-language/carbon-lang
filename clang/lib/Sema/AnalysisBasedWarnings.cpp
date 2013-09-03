@@ -1445,11 +1445,23 @@ public:
     }
   }
   
-  /// Warn about unnecessary-test errors.
-  /// \param VariableName -- The name of the variable that holds the unique
-  /// value.
-  ///
-  /// \param Loc -- The SourceLocation of the unnecessary test.
+  void warnReturnTypestateForUnconsumableType(SourceLocation Loc,
+                                              StringRef TypeName) {
+    PartialDiagnosticAt Warning(Loc, S.PDiag(
+      diag::warn_return_typestate_for_unconsumable_type) << TypeName);
+    
+    Warnings.push_back(DelayedDiag(Warning, OptionalNotes()));
+  }
+  
+  void warnReturnTypestateMismatch(SourceLocation Loc, StringRef ExpectedState,
+                                   StringRef ObservedState) {
+                                    
+    PartialDiagnosticAt Warning(Loc, S.PDiag(
+      diag::warn_return_typestate_mismatch) << ExpectedState << ObservedState);
+    
+    Warnings.push_back(DelayedDiag(Warning, OptionalNotes()));
+  }
+  
   void warnUnnecessaryTest(StringRef VariableName, StringRef VariableState,
                            SourceLocation Loc) {
 
@@ -1459,11 +1471,6 @@ public:
     Warnings.push_back(DelayedDiag(Warning, OptionalNotes()));
   }
   
-  /// Warn about use-while-consumed errors.
-  /// \param MethodName -- The name of the method that was incorrectly
-  /// invoked.
-  /// 
-  /// \param Loc -- The SourceLocation of the method invocation.
   void warnUseOfTempWhileConsumed(StringRef MethodName, SourceLocation Loc) {
                                                     
     PartialDiagnosticAt Warning(Loc, S.PDiag(
@@ -1472,11 +1479,6 @@ public:
     Warnings.push_back(DelayedDiag(Warning, OptionalNotes()));
   }
   
-  /// Warn about use-in-unknown-state errors.
-  /// \param MethodName -- The name of the method that was incorrectly
-  /// invoked.
-  ///
-  /// \param Loc -- The SourceLocation of the method invocation.
   void warnUseOfTempInUnknownState(StringRef MethodName, SourceLocation Loc) {
   
     PartialDiagnosticAt Warning(Loc, S.PDiag(
@@ -1485,14 +1487,6 @@ public:
     Warnings.push_back(DelayedDiag(Warning, OptionalNotes()));
   }
   
-  /// Warn about use-while-consumed errors.
-  /// \param MethodName -- The name of the method that was incorrectly
-  /// invoked.
-  ///
-  /// \param VariableName -- The name of the variable that holds the unique
-  /// value.
-  ///
-  /// \param Loc -- The SourceLocation of the method invocation.
   void warnUseWhileConsumed(StringRef MethodName, StringRef VariableName,
                             SourceLocation Loc) {
   
@@ -1502,14 +1496,6 @@ public:
     Warnings.push_back(DelayedDiag(Warning, OptionalNotes()));
   }
   
-  /// Warn about use-in-unknown-state errors.
-  /// \param MethodName -- The name of the method that was incorrectly
-  /// invoked.
-  ///
-  /// \param VariableName -- The name of the variable that holds the unique
-  /// value.
-  ///
-  /// \param Loc -- The SourceLocation of the method invocation.
   void warnUseInUnknownState(StringRef MethodName, StringRef VariableName,
                              SourceLocation Loc) {
 

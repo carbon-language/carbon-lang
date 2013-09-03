@@ -39,10 +39,28 @@ namespace consumed {
 
     /// \brief Emit the warnings and notes left by the analysis.
     virtual void emitDiagnostics() {}
-
+    
+    // FIXME: This can be removed when the attr propagation fix for templated
+    //        classes lands.
+    /// \brief Warn about return typestates set for unconsumable types.
+    /// 
+    /// \param Loc -- The location of the attributes.
+    ///
+    /// \param TypeName -- The name of the unconsumable type.
+    virtual void warnReturnTypestateForUnconsumableType(SourceLocation Loc,
+                                                        StringRef TypeName) {}
+    
+    /// \brief Warn about return typestate mismatches.
+    /// \param Loc -- The SourceLocation of the return statement.
+    virtual void warnReturnTypestateMismatch(SourceLocation Loc,
+                                             StringRef ExpectedState,
+                                             StringRef ObservedState) {}
+    
     /// \brief Warn about unnecessary-test errors.
     /// \param VariableName -- The name of the variable that holds the unique
     /// value.
+    ///
+    /// \param VariableState -- The known state of the value.
     ///
     /// \param Loc -- The SourceLocation of the unnecessary test.
     virtual void warnUnnecessaryTest(StringRef VariableName,
@@ -170,6 +188,8 @@ namespace consumed {
     ConsumedBlockInfo BlockInfo;
     ConsumedStateMap *CurrStates;
     
+    ConsumedState ExpectedReturnState;
+    
     bool hasConsumableAttributes(const CXXRecordDecl *RD);
     bool splitState(const CFGBlock *CurrBlock,
                     const ConsumedStmtVisitor &Visitor);
@@ -181,6 +201,8 @@ namespace consumed {
     ConsumedAnalyzer(ConsumedWarningsHandlerBase &WarningsHandler)
         : WarningsHandler(WarningsHandler) {}
 
+    ConsumedState getExpectedReturnState() const { return ExpectedReturnState; }
+    
     /// \brief Check a function's CFG for consumed violations.
     ///
     /// We traverse the blocks in the CFG, keeping track of the state of each

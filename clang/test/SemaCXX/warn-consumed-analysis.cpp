@@ -3,6 +3,7 @@
 #define CALLABLE_WHEN_UNCONSUMED __attribute__ ((callable_when_unconsumed))
 #define CONSUMABLE               __attribute__ ((consumable))
 #define CONSUMES                 __attribute__ ((consumes))
+#define RETURN_TYPESTATE(State)  __attribute__ ((return_typestate(State)))
 #define TESTS_UNCONSUMED         __attribute__ ((tests_unconsumed))
 
 typedef decltype(nullptr) nullptr_t;
@@ -13,10 +14,10 @@ class CONSUMABLE ConsumableClass {
   
   public:
   ConsumableClass();
-  ConsumableClass(nullptr_t p) CONSUMES;
-  ConsumableClass(T val);
-  ConsumableClass(ConsumableClass<T> &other);
-  ConsumableClass(ConsumableClass<T> &&other);
+  ConsumableClass(nullptr_t p) RETURN_TYPESTATE(consumed);
+  ConsumableClass(T val) RETURN_TYPESTATE(unconsumed);
+  ConsumableClass(ConsumableClass<T> &other) RETURN_TYPESTATE(unconsumed);
+  ConsumableClass(ConsumableClass<T> &&other) RETURN_TYPESTATE(unconsumed);
   
   ConsumableClass<T>& operator=(ConsumableClass<T>  &other);
   ConsumableClass<T>& operator=(ConsumableClass<T> &&other);
@@ -47,6 +48,16 @@ void baf1(const ConsumableClass<int> &var);
 void baf2(const ConsumableClass<int> *var);
 
 void baf3(ConsumableClass<int> &&var);
+
+ConsumableClass<int> returnsUnconsumed() RETURN_TYPESTATE(unconsumed);
+ConsumableClass<int> returnsUnconsumed() {
+  return ConsumableClass<int>(); // expected-warning {{return value not in expected state; expected 'unconsumed', observed 'consumed'}}
+}
+
+ConsumableClass<int> returnsConsumed() RETURN_TYPESTATE(consumed);
+ConsumableClass<int> returnsConsumed() {
+  return ConsumableClass<int>();
+}
 
 void testInitialization() {
   ConsumableClass<int> var0;
@@ -250,6 +261,16 @@ void testCallingConventions() {
   *var;
   
   baf3(static_cast<ConsumableClass<int>&&>(var));  
+  *var; // expected-warning {{invocation of method 'operator*' on object 'var' while it is in the 'consumed' state}}
+}
+
+void testReturnStates() {
+  ConsumableClass<int> var;
+  
+  var = returnsUnconsumed();
+  *var;
+  
+  var = returnsConsumed();
   *var; // expected-warning {{invocation of method 'operator*' on object 'var' while it is in the 'consumed' state}}
 }
 

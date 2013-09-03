@@ -31,6 +31,7 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/raw_ostream.h"
 
+// TODO: Add notes about the actual and expected state for 
 // TODO: Correctly identify unreachable blocks when chaining boolean operators.
 // TODO: Warn about unreachable code.
 // TODO: Switch to using a bitmap to track unreachable blocks.
@@ -86,6 +87,19 @@ static bool isKnownState(ConsumedState State) {
 
 static bool isTestingFunction(const FunctionDecl *FunDecl) {
   return FunDecl->hasAttr<TestsUnconsumedAttr>();
+}
+
+static ConsumedState mapReturnTypestateAttrState(
+  const ReturnTypestateAttr *RTSAttr) {
+  
+  switch (RTSAttr->getState()) {
+  case ReturnTypestateAttr::Unknown:
+    return CS_Unknown;
+  case ReturnTypestateAttr::Unconsumed:
+    return CS_Unconsumed;
+  case ReturnTypestateAttr::Consumed:
+    return CS_Consumed;
+  }
 }
 
 static StringRef stateToString(ConsumedState State) {
@@ -256,6 +270,8 @@ class ConsumedStmtVisitor : public ConstStmtVisitor<ConsumedStmtVisitor> {
   void forwardInfo(const Stmt *From, const Stmt *To);
   void handleTestingFunctionCall(const CallExpr *Call, const VarDecl *Var);
   bool isLikeMoveAssignment(const CXXMethodDecl *MethodDecl);
+  void propagateReturnType(const Stmt *Call, const FunctionDecl *Fun,
+                           QualType ReturnType);
   
 public:
 
@@ -272,6 +288,7 @@ public:
   void VisitMaterializeTemporaryExpr(const MaterializeTemporaryExpr *Temp);
   void VisitMemberExpr(const MemberExpr *MExpr);
   void VisitParmVarDecl(const ParmVarDecl *Param);
+  void VisitReturnStmt(const ReturnStmt *Ret);
   void VisitUnaryOperator(const UnaryOperator *UOp);
   void VisitVarDecl(const VarDecl *Var);
 
@@ -373,6 +390,24 @@ bool ConsumedStmtVisitor::isLikeMoveAssignment(
           MethodDecl->getParamDecl(0)->getType()->isRValueReferenceType());
 }
 
+void ConsumedStmtVisitor::propagateReturnType(const Stmt *Call,
+                                              const FunctionDecl *Fun,
+                                              QualType ReturnType) {
+  if (isConsumableType(ReturnType)) {
+    
+    ConsumedState ReturnState;
+    
+    if (Fun->hasAttr<ReturnTypestateAttr>())
+      ReturnState = mapReturnTypestateAttrState(
+        Fun->getAttr<ReturnTypestateAttr>());
+    else
+      ReturnState = CS_Unknown;
+    
+    PropagationMap.insert(PairType(Call,
+      PropagationInfo(ReturnState)));
+  }
+}
+
 void ConsumedStmtVisitor::Visit(const Stmt *StmtNode) {
   
   ConstStmtVisitor<ConsumedStmtVisitor>::Visit(StmtNode);
@@ -469,6 +504,8 @@ void ConsumedStmtVisitor::VisitCallExpr(const CallExpr *Call) {
         StateMap->setState(PInfo.getVar(), consumed::CS_Unknown);
       }
     }
+    
+    propagateReturnType(Call, FunDecl, FunDecl->getCallResultType());
   }
 }
 
@@ -483,8 +520,7 @@ void ConsumedStmtVisitor::VisitCXXConstructExpr(const CXXConstructExpr *Call) {
   QualType ThisType = Constructor->getThisType(CurrContext)->getPointeeType();
   
   if (isConsumableType(ThisType)) {
-    if (Constructor->hasAttr<ConsumesAttr>() ||
-        Constructor->isDefaultConstructor()) {
+    if (Constructor->isDefaultConstructor()) {
       
       PropagationMap.insert(PairType(Call,
         PropagationInfo(consumed::CS_Consumed)));
@@ -513,8 +549,7 @@ void ConsumedStmtVisitor::VisitCXXConstructExpr(const CXXConstructExpr *Call) {
         PropagationMap.insert(PairType(Call, Entry->second));
       
     } else {
-      PropagationMap.insert(PairType(Call,
-        PropagationInfo(consumed::CS_Unconsumed)));
+      propagateReturnType(Call, Constructor, ThisType);
     }
   }
 }
@@ -675,6 +710,24 @@ void ConsumedStmtVisitor::VisitMemberExpr(const MemberExpr *MExpr) {
 void ConsumedStmtVisitor::VisitParmVarDecl(const ParmVarDecl *Param) {
   if (isConsumableType(Param->getType()))
     StateMap->setState(Param, consumed::CS_Unknown);
+}
+
+void ConsumedStmtVisitor::VisitReturnStmt(const ReturnStmt *Ret) {
+  if (ConsumedState ExpectedState = Analyzer.getExpectedReturnState()) {
+    InfoEntry Entry = PropagationMap.find(Ret->getRetValue());
+    
+    if (Entry != PropagationMap.end()) {
+      assert(Entry->second.isState() || Entry->second.isVar());
+       
+      ConsumedState RetState = Entry->second.isState() ?
+        Entry->second.getState() : StateMap->getState(Entry->second.getVar());
+        
+      if (RetState != ExpectedState)
+        Analyzer.WarningsHandler.warnReturnTypestateMismatch(
+          Ret->getReturnLoc(), stateToString(ExpectedState),
+          stateToString(RetState));
+    }
+  }
 }
 
 void ConsumedStmtVisitor::VisitUnaryOperator(const UnaryOperator *UOp) {
@@ -996,6 +1049,53 @@ void ConsumedAnalyzer::run(AnalysisDeclContext &AC) {
   const FunctionDecl *D = dyn_cast_or_null<FunctionDecl>(AC.getDecl());
   
   if (!D) return;
+  
+  // FIXME: This should be removed when template instantiation propagates
+  //        attributes at template specialization definition, not declaration.
+  //        When it is removed the test needs to be enabled in SemaDeclAttr.cpp.
+  QualType ReturnType;
+  if (const CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(D)) {
+    ASTContext &CurrContext = AC.getASTContext();
+    ReturnType = Constructor->getThisType(CurrContext)->getPointeeType();
+    
+  } else {
+    ReturnType = D->getCallResultType();
+  }
+  
+  // Determine the expected return value.
+  if (D->hasAttr<ReturnTypestateAttr>()) {
+    
+    ReturnTypestateAttr *RTSAttr = D->getAttr<ReturnTypestateAttr>();
+    
+    const CXXRecordDecl *RD = ReturnType->getAsCXXRecordDecl();
+    if (!RD || !RD->hasAttr<ConsumableAttr>()) {
+        // FIXME: This branch can be removed with the code above.
+        WarningsHandler.warnReturnTypestateForUnconsumableType(
+          RTSAttr->getLocation(), ReturnType.getAsString());
+        ExpectedReturnState = CS_None;
+        
+    } else {
+      switch (RTSAttr->getState()) {
+      case ReturnTypestateAttr::Unknown:
+        ExpectedReturnState = CS_Unknown;
+        break;
+        
+      case ReturnTypestateAttr::Unconsumed:
+        ExpectedReturnState = CS_Unconsumed;
+        break;
+        
+      case ReturnTypestateAttr::Consumed:
+        ExpectedReturnState = CS_Consumed;
+        break;
+      }
+    }
+    
+  } else if (isConsumableType(ReturnType)) {
+    ExpectedReturnState = CS_Unknown;
+      
+  } else {
+    ExpectedReturnState = CS_None;
+  }
   
   BlockInfo = ConsumedBlockInfo(AC.getCFG());
   

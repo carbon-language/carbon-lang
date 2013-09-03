@@ -953,6 +953,14 @@ def Consumes : InheritableAttr {
   let Subjects = [CXXMethod];
 }
 
+def ReturnTypestate : InheritableAttr {
+  let Spellings = [GNU<"return_typestate">];
+  let Subjects = [Function];
+  let Args = [EnumArgument<"State", "ConsumedState",
+                           ["unknown", "consumed", "unconsumed"],
+                           ["Unknown", "Consumed", "Unconsumed"]>];
+}
+
 // Type safety attributes for `void *' pointers and type tags.
 
 def ArgumentWithTypeTag : InheritableAttr {
