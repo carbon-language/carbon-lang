@@ -48,6 +48,13 @@ bool PECOFFLinkingContext::validateImpl(raw_ostream &diagnostics) {
     return true;
   }
 
+  // It's an error if the base address is not multiple of 64K.
+  if (_baseAddress & 0xffff) {
+    diagnostics << "Base address have to be multiple of 64K, but got "
+                << _baseAddress << "\n";
+    return true;
+  }
+
   _reader = createReaderPECOFF(*this);
   _writer = createWriterPECOFF(*this);
   return false;

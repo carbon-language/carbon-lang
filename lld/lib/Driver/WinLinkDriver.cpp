@@ -290,13 +290,6 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
       // Currently we just ignore the value of size parameter.
       if (parseMemoryOption(inputArg->getValue(), addr, size))
         return true;
-      // It's an error if the base address is not multiple of 64K.
-      // TODO: move this to validation of LinkingContext
-      if (addr & 0xffff) {
-        diagnostics << "Base address have to be multiple of 64K, but got "
-                    << addr << "\n";
-        return true;
-      }
       ctx.setBaseAddress(addr);
       break;
     case OPT_stack: {

@@ -9,3 +9,9 @@
 DEFAULT: ImageBase: 0x400000
 
 BASE: ImageBase: 0x800000
+
+
+# RUN: not lld -flavor link /base:3 -- %t.obj >& %t.log
+# RUN: FileCheck -check-prefix=ERROR %s < %t.log
+
+ERROR: Base address have to be multiple of 64K, but got 3
