@@ -559,6 +559,9 @@ getLocationForCaller(const StackFrameContext *SFC,
     return PathDiagnosticLocation::createEnd(Dtor.getTriggerStmt(),
                                              SM, CallerCtx);
   }
+  case CFGElement::DeleteDtor: {
+    llvm_unreachable("not yet implemented!");
+  }
   case CFGElement::BaseDtor:
   case CFGElement::MemberDtor: {
     const AnalysisDeclContext *CallerInfo = CallerCtx->getAnalysisDeclContext();

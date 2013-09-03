@@ -203,6 +203,8 @@ public:
 
   void ProcessAutomaticObjDtor(const CFGAutomaticObjDtor D, 
                                ExplodedNode *Pred, ExplodedNodeSet &Dst);
+  void ProcessDeleteDtor(const CFGDeleteDtor D,
+                         ExplodedNode *Pred, ExplodedNodeSet &Dst);
   void ProcessBaseDtor(const CFGBaseDtor D,
                        ExplodedNode *Pred, ExplodedNodeSet &Dst);
   void ProcessMemberDtor(const CFGMemberDtor D,

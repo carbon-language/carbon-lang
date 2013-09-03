@@ -287,6 +287,7 @@ void ExprEngine::processCFGElement(const CFGElement E, ExplodedNode *Pred,
       ProcessInitializer(E.castAs<CFGInitializer>().getInitializer(), Pred);
       return;
     case CFGElement::AutomaticObjectDtor:
+    case CFGElement::DeleteDtor:
     case CFGElement::BaseDtor:
     case CFGElement::MemberDtor:
     case CFGElement::TemporaryDtor:
@@ -535,6 +536,9 @@ void ExprEngine::ProcessImplicitDtor(const CFGImplicitDtor D,
   case CFGElement::TemporaryDtor:
     ProcessTemporaryDtor(D.castAs<CFGTemporaryDtor>(), Pred, Dst);
     break;
+  case CFGElement::DeleteDtor:
+    ProcessDeleteDtor(D.castAs<CFGDeleteDtor>(), Pred, Dst);
+    break;
   default:
     llvm_unreachable("Unexpected dtor kind.");
   }
@@ -560,6 +564,12 @@ void ExprEngine::ProcessAutomaticObjDtor(const CFGAutomaticObjDtor Dtor,
 
   VisitCXXDestructor(varType, Region, Dtor.getTriggerStmt(), /*IsBase=*/ false,
                      Pred, Dst);
+}
+
+void ExprEngine::ProcessDeleteDtor(const CFGDeleteDtor Dtor,
+                                   ExplodedNode *Pred,
+                                   ExplodedNodeSet &Dst) {
+  //TODO: Handle DeleteDtor
 }
 
 void ExprEngine::ProcessBaseDtor(const CFGBaseDtor D,

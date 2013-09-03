@@ -43,6 +43,8 @@ namespace clang {
   class PrinterHelper;
   class LangOptions;
   class ASTContext;
+  class CXXRecordDecl;
+  class CXXDeleteExpr;
 
 /// CFGElement - Represents a top-level expression in a basic block.
 class CFGElement {
@@ -53,6 +55,7 @@ public:
     Initializer,
     // dtor kind
     AutomaticObjectDtor,
+    DeleteDtor,
     BaseDtor,
     MemberDtor,
     TemporaryDtor,
@@ -182,6 +185,31 @@ private:
   CFGAutomaticObjDtor() {}
   static bool isKind(const CFGElement &elem) {
     return elem.getKind() == AutomaticObjectDtor;
+  }
+};
+
+/// CFGDeleteDtor - Represents C++ object destructor generated
+/// from a call to delete.
+class CFGDeleteDtor : public CFGImplicitDtor {
+public:
+  CFGDeleteDtor(const CXXRecordDecl *RD, const CXXDeleteExpr *DE)
+      : CFGImplicitDtor(DeleteDtor, RD, DE) {}
+
+  const CXXRecordDecl *getCXXRecordDecl() const {
+    return static_cast<CXXRecordDecl*>(Data1.getPointer());
+  }
+
+  // Get Delete expression which triggered the destructor call.
+  const CXXDeleteExpr *getDeleteExpr() {
+    return static_cast<CXXDeleteExpr *>(Data2.getPointer());
+  }
+
+
+private:
+  friend class CFGElement;
+  CFGDeleteDtor() {}
+  static bool isKind(const CFGElement &elem) {
+    return elem.getKind() == DeleteDtor;
   }
 };
 
@@ -562,6 +590,10 @@ public:
 
   void appendAutomaticObjDtor(VarDecl *VD, Stmt *S, BumpVectorContext &C) {
     Elements.push_back(CFGAutomaticObjDtor(VD, S), C);
+  }
+
+  void appendDeleteDtor(CXXRecordDecl *RD, CXXDeleteExpr *DE, BumpVectorContext &C) {
+    Elements.push_back(CFGDeleteDtor(RD, DE), C);
   }
 
   // Destructors must be inserted in reversed order. So insertion is in two
