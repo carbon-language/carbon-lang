@@ -1,6 +1,7 @@
 # Checks functionality of dynamic executables
 RUN: lld -flavor gnu -target x86_64-linux %p/Inputs/use-shared.x86-64 \
-RUN:   %p/Inputs/shared.so-x86-64 -o %t -e main --allow-shlib-undefined
+RUN:   %p/Inputs/shared.so-x86-64 -o %t -e main --allow-shlib-undefined \
+RUN:   -rpath /l1:/l2 -rpath /l3
 RUN: lld -flavor gnu -target x86_64-linux %p/Inputs/use-shared.x86-64 \
 RUN:   %p/Inputs/shared.so-x86-64 -emit-yaml -o %t2 --allow-shlib-undefined \
 RUN: --noinhibit-exec
@@ -59,7 +60,7 @@ CHECK-NEXT:     Binding: Global
 CHECK-NEXT:     Type: Function
 CHECK:        }
 
-CHECK: DynamicSection [ (14 entries)
+CHECK: DynamicSection [ (15 entries)
 CHECK:   Tag                Type                 Name/Value
 CHECK:   0x0000000000000004 HASH
 CHECK:   0x0000000000000005 STRTAB
@@ -74,5 +75,6 @@ CHECK:   0x0000000000000003 PLTGOT
 CHECK:   0x0000000000000014 PLTREL RELA
 CHECK:   0x0000000000000017 JMPREL
 CHECK:   0x0000000000000001 NEEDED SharedLibrary (shared.so-x86-64)
+CHECK:   0x000000000000000F RPATH /l1:/l2:/l3
 CHECK:   0x0000000000000000 NULL               0x0
 CHECK: ]

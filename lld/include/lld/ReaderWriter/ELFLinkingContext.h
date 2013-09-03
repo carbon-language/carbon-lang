@@ -180,6 +180,14 @@ public:
     _sysrootPath = path;
   }
 
+  void addRpath(StringRef path) {
+   _rpathList.push_back(path);
+  }
+
+  range<const StringRef *> getRpathList() const {
+    return _rpathList;
+  }
+
 private:
   ELFLinkingContext() LLVM_DELETED_FUNCTION;
 
@@ -213,6 +221,7 @@ protected:
   StringRefVector _initFunctions;
   StringRefVector _finiFunctions;
   StringRef _sysrootPath;
+  StringRefVector _rpathList;
 };
 } // end namespace lld
 
