@@ -304,8 +304,8 @@ static Instruction *InstCombineLoadCast(InstCombiner &IC, LoadInst &LI,
         if (Constant *CSrc = dyn_cast<Constant>(CastOp))
           if (ASrcTy->getNumElements() != 0) {
             Type *IdxTy = TD
-                        ? TD->getIntPtrType(LI.getContext())
-                        : Type::getInt64Ty(LI.getContext());
+                        ? TD->getIntPtrType(SrcTy)
+                        : Type::getInt64Ty(SrcTy->getContext());
             Value *Idx = Constant::getNullValue(IdxTy);
             Value *Idxs[2] = { Idx, Idx };
             CastOp = ConstantExpr::getGetElementPtr(CSrc, Idxs);
