@@ -1744,11 +1744,22 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
   void visitSelectInst(SelectInst& I) {
     IRBuilder<> IRB(&I);
     // a = select b, c, d
-    // Sa = (sext Sb) | (select b, Sc, Sd)
     Value *S = IRB.CreateSelect(I.getCondition(), getShadow(I.getTrueValue()),
                                 getShadow(I.getFalseValue()));
-    Value *S2 = IRB.CreateSExt(getShadow(I.getCondition()), S->getType());
-    setShadow(&I, IRB.CreateOr(S, S2, "_msprop"));
+    if (I.getType()->isAggregateType()) {
+      // To avoid "sign extending" i1 to an arbitrary aggregate type, we just do
+      // an extra "select". This results in much more compact IR.
+      // Sa = select Sb, poisoned, (select b, Sc, Sd)
+      S = IRB.CreateSelect(getShadow(I.getCondition()),
+                           getPoisonedShadow(getShadowTy(I.getType())), S,
+                           "_msprop_select_agg");
+    } else {
+      // Sa = (sext Sb) | (select b, Sc, Sd)
+      S = IRB.CreateOr(
+          S, IRB.CreateSExt(getShadow(I.getCondition()), S->getType()),
+          "_msprop_select");
+    }
+    setShadow(&I, S);
     if (MS.TrackOrigins) {
       // Origins are always i32, so any vector conditions must be flattened.
       // FIXME: consider tracking vector origins for app vectors?

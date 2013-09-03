@@ -290,6 +290,19 @@ entry:
 ; CHECK-ORIGINS: ret <8 x i16>
 
 
+define { i64, i64 } @SelectStruct(i1 zeroext %x, { i64, i64 } %a, { i64, i64 } %b) readnone sanitize_memory {
+entry:
+  %c = select i1 %x, { i64, i64 } %a, { i64, i64 } %b
+  ret { i64, i64 } %c
+}
+
+; CHECK: @SelectStruct
+; CHECK: select i1 {{.*}}, { i64, i64 }
+; CHECK-NEXT: select i1 {{.*}}, { i64, i64 } { i64 -1, i64 -1 }, { i64, i64 }
+; CHECK-NEXT: select i1 {{.*}}, { i64, i64 }
+; CHECK: ret { i64, i64 }
+
+
 define i8* @IntToPtr(i64 %x) nounwind uwtable readnone sanitize_memory {
 entry:
   %0 = inttoptr i64 %x to i8*
