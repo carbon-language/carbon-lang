@@ -21,6 +21,19 @@
 #include "tsan_mman.h"
 #include "tsan_platform.h"
 
+// Suppressions for true/false positives in standard libraries.
+static const char *const std_suppressions =
+// Libstdc++ 4.4 has data races in std::string.
+// See http://crbug.com/181502 for an example.
+"race:^_M_rep$\n"
+"race:^_M_is_leaked$\n"
+
+// False positive when using std <thread>.
+// Happens because we miss atomic synchronization in libstdc++.
+// See http://llvm.org/bugs/show_bug.cgi?id=17066 for details.
+"race:std::_Sp_counted_ptr_inplace<std::thread::_Impl\n"
+;
+
 // Can be overriden in frontend.
 #ifndef TSAN_GO
 extern "C" const char *WEAK __tsan_default_suppressions() {
@@ -72,6 +85,7 @@ void InitializeSuppressions() {
 #ifndef TSAN_GO
   supp = __tsan_default_suppressions();
   g_ctx->Parse(supp);
+  g_ctx->Parse(std_suppressions);
 #endif
 }
 
