@@ -27,9 +27,9 @@ namespace llvm {
   class LLVMContext;
   struct EVT;
 
-  /// MVT - Machine Value Type.  Every type that is supported natively by some
-  /// processor targeted by LLVM occurs here.  This means that any legal value
-  /// type can be represented by a MVT.
+  /// MVT - Machine Value Type. Every type that is supported natively by some
+  /// processor targeted by LLVM occurs here. This means that any legal value
+  /// type can be represented by an MVT.
   class MVT {
   public:
     enum SimpleValueType {
