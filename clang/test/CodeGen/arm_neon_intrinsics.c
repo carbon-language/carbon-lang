@@ -4439,7 +4439,7 @@ uint32x4_t test_vmlaq_n_u32(uint32x4_t a, uint32x4_t b, uint32_t c) {
 }
 
 // CHECK: test_vmlaq_n_f32
-// CHECK: vmul.f32 q{{[0-9]+}}, q{{[0-9]+}}, q{{[0-9]+}}
+// CHECK: vmul.f32 q{{[0-9]+}}, q{{[0-9]+}}, d{{[0-9]+}}[0]
 // CHECK: vadd.f32
 float32x4_t test_vmlaq_n_f32(float32x4_t a, float32x4_t b, float32_t c) {
   return vmlaq_n_f32(a, b, c);
@@ -4739,7 +4739,7 @@ uint32x4_t test_vmlsq_n_u32(uint32x4_t a, uint32x4_t b, uint32_t c) {
 }
 
 // CHECK: test_vmlsq_n_f32
-// CHECK: vmul.f32 q{{[0-9]+}}, q{{[0-9]+}}, q{{[0-9]+}}
+// CHECK: vmul.f32 q{{[0-9]+}}, q{{[0-9]+}}, d{{[0-9]+}}[0]
 // CHECK: vsub.f32
 float32x4_t test_vmlsq_n_f32(float32x4_t a, float32x4_t b, float32_t c) {
   return vmlsq_n_f32(a, b, c);
@@ -5248,7 +5248,7 @@ int32x4_t test_vmulq_n_s32(int32x4_t a, int32_t b) {
 }
 
 // CHECK: test_vmulq_n_f32
-// CHECK: vmul.f32 q{{[0-9]+}}, q{{[0-9]+}}, q{{[0-9]+}}
+// CHECK: vmul.f32 q{{[0-9]+}}, q{{[0-9]+}}, d{{[0-9]+}}[0]
 float32x4_t test_vmulq_n_f32(float32x4_t a, float32_t b) {
   return vmulq_n_f32(a, b);
 }
