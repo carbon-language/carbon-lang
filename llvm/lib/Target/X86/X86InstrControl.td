@@ -49,10 +49,12 @@ let isTerminator = 1, isReturn = 1, isBarrier = 1,
 let isBarrier = 1, isBranch = 1, isTerminator = 1, SchedRW = [WriteJump] in {
   def JMP_4 : Ii32PCRel<0xE9, RawFrm, (outs), (ins brtarget:$dst),
                         "jmp\t$dst", [(br bb:$dst)], IIC_JMP_REL>;
+  let hasSideEffects = 0 in
   def JMP_1 : Ii8PCRel<0xEB, RawFrm, (outs), (ins brtarget8:$dst),
                        "jmp\t$dst", [], IIC_JMP_REL>;
   // FIXME : Intel syntax for JMP64pcrel32 such that it is not ambiguious
   // with JMP_1.
+  let hasSideEffects = 0 in
   def JMP64pcrel32 : I<0xE9, RawFrm, (outs), (ins brtarget:$dst),
                        "jmpq\t$dst", [], IIC_JMP_REL>;
 }
@@ -60,6 +62,7 @@ let isBarrier = 1, isBranch = 1, isTerminator = 1, SchedRW = [WriteJump] in {
 // Conditional Branches.
 let isBranch = 1, isTerminator = 1, Uses = [EFLAGS], SchedRW = [WriteJump] in {
   multiclass ICBr<bits<8> opc1, bits<8> opc4, string asm, PatFrag Cond> {
+    let hasSideEffects = 0 in
     def _1 : Ii8PCRel <opc1, RawFrm, (outs), (ins brtarget8:$dst), asm, [],
                        IIC_Jcc>;
     def _4 : Ii32PCRel<opc4, RawFrm, (outs), (ins brtarget:$dst), asm,
@@ -85,7 +88,7 @@ defm JLE : ICBr<0x7E, 0x8E, "jle\t$dst", X86_COND_LE>;
 defm JG  : ICBr<0x7F, 0x8F, "jg\t$dst" , X86_COND_G>;
 
 // jcx/jecx/jrcx instructions.
-let isBranch = 1, isTerminator = 1, SchedRW = [WriteJump] in {
+let isBranch = 1, isTerminator = 1, hasSideEffects = 0, SchedRW = [WriteJump] in {
   // These are the 32-bit versions of this instruction for the asmparser.  In
   // 32-bit mode, the address size prefix is jcxz and the unprefixed version is
   // jecxz.
