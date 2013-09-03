@@ -61,6 +61,9 @@ public:
       return false;
     }
   }
+
+  /// \brief Create Internal files for Init/Fini
+  std::vector<std::unique_ptr<File>> createInternalFiles();
 };
 
 } // elf
