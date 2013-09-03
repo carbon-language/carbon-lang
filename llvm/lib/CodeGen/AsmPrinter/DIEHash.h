@@ -81,10 +81,10 @@ class DIEHash {
   };
 
 public:
-  /// \brief Computes the ODR signature
+  /// \brief Computes the ODR signature.
   uint64_t computeDIEODRSignature(DIE *Die);
 
-  /// \brief Computes the CU signature
+  /// \brief Computes the CU signature.
   uint64_t computeCUSignature(DIE *Die);
 
   // Helper routines to process parts of a DIE.
