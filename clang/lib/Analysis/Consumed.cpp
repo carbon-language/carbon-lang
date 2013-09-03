@@ -89,9 +89,9 @@ static bool isTestingFunction(const FunctionDecl *FunDecl) {
   return FunDecl->hasAttr<TestsUnconsumedAttr>();
 }
 
-static ConsumedState mapReturnTypestateAttrState(
-  const ReturnTypestateAttr *RTSAttr) {
-  
+static ConsumedState
+mapReturnTypestateAttrState(const ReturnTypestateAttr *RTSAttr) {
+
   switch (RTSAttr->getState()) {
   case ReturnTypestateAttr::Unknown:
     return CS_Unknown;
@@ -100,6 +100,7 @@ static ConsumedState mapReturnTypestateAttrState(
   case ReturnTypestateAttr::Consumed:
     return CS_Consumed;
   }
+  llvm_unreachable("invalid enum");
 }
 
 static StringRef stateToString(ConsumedState State) {
