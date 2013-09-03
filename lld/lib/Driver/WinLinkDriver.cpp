@@ -307,7 +307,8 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
         return true;
       ctx.setStackReserve(reserve);
       ctx.setStackCommit(commit);
-    } break;
+      break;
+    }
     case OPT_heap: {
       // Parse /heap command line option
       uint64_t reserve;
@@ -316,7 +317,8 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
         return true;
       ctx.setHeapReserve(reserve);
       ctx.setHeapCommit(commit);
-    } break;
+      break;
+    }
     case OPT_subsystem: {
       // Parse /subsystem command line option. The form of /subsystem is
       // "subsystem_name[,majorOSVersion[.minorOSVersion]]".
@@ -344,7 +346,8 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
         return true;
       }
       ctx.setSubsystem(subsystem);
-    } break;
+      break;
+    }
 
     case OPT_failifmismatch:
       if (handleFailIfMismatchOption(inputArg->getValue(), failIfMismatchMap,
@@ -422,10 +425,10 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
       ctx.setOutputPath(ctx.allocateString(inputArg->getValue()));
       break;
 
-    case OPT_INPUT: {
+    case OPT_INPUT:
       inputGraph.addInputElement(std::unique_ptr<InputElement>(
           new PECOFFFileNode(ctx, inputArg->getValue())));
-    } break;
+      break;
 
     default:
       break;

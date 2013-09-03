@@ -142,10 +142,10 @@ bool CoreDriver::parse(int argc, const char *argv[], CoreLinkingContext &ctx,
       ctx.addPassNamed(inputArg->getValue());
       break;
 
-    case OPT_INPUT: {
+    case OPT_INPUT:
       inputGraph->addInputElement(std::unique_ptr<InputElement>(
           new COREFileNode(ctx, inputArg->getValue())));
-    } break;
+      break;
 
     default:
       break;

@@ -266,7 +266,8 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
       (llvm::dyn_cast<ControlNode>)(controlNodeStack.top())
           ->processControlEnter();
       inputGraph->addInputElement(std::move(controlStart));
-    } break;
+      break;
+    }
 
     case OPT_end_group:
       (llvm::dyn_cast<ControlNode>)(controlNodeStack.top())
@@ -285,7 +286,8 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
       else
         (llvm::dyn_cast<ControlNode>)(controlNodeStack.top())
             ->processInputElement(std::move(inputFile));
-    } break;
+      break;
+    }
 
     default:
       break;
