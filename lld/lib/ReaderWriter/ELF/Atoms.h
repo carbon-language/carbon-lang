@@ -893,7 +893,7 @@ public:
 
   virtual StringRef customSectionName() const { return _section; }
 
-  virtual ContentType contentType() const { return typeStub; }
+  virtual ContentType contentType() const { return typeData; }
 
   virtual uint64_t size() const { return rawContent().size(); }
 
