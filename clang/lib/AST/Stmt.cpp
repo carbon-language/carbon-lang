@@ -706,7 +706,7 @@ ObjCForCollectionStmt::ObjCForCollectionStmt(Stmt *Elem, Expr *Collect,
                                              SourceLocation RPL)
 : Stmt(ObjCForCollectionStmtClass) {
   SubExprs[ELEM] = Elem;
-  SubExprs[COLLECTION] = reinterpret_cast<Stmt*>(Collect);
+  SubExprs[COLLECTION] = Collect;
   SubExprs[BODY] = Body;
   ForLoc = FCL;
   RParenLoc = RPL;
@@ -790,8 +790,8 @@ CXXForRangeStmt::CXXForRangeStmt(DeclStmt *Range, DeclStmt *BeginEndStmt,
   : Stmt(CXXForRangeStmtClass), ForLoc(FL), ColonLoc(CL), RParenLoc(RPL) {
   SubExprs[RANGE] = Range;
   SubExprs[BEGINEND] = BeginEndStmt;
-  SubExprs[COND] = reinterpret_cast<Stmt*>(Cond);
-  SubExprs[INC] = reinterpret_cast<Stmt*>(Inc);
+  SubExprs[COND] = Cond;
+  SubExprs[INC] = Inc;
   SubExprs[LOOPVAR] = LoopVar;
   SubExprs[BODY] = Body;
 }
@@ -822,7 +822,7 @@ IfStmt::IfStmt(const ASTContext &C, SourceLocation IL, VarDecl *var, Expr *cond,
   : Stmt(IfStmtClass), IfLoc(IL), ElseLoc(EL)
 {
   setConditionVariable(C, var);
-  SubExprs[COND] = reinterpret_cast<Stmt*>(cond);
+  SubExprs[COND] = cond;
   SubExprs[THEN] = then;
   SubExprs[ELSE] = elsev;
 }
@@ -853,8 +853,8 @@ ForStmt::ForStmt(const ASTContext &C, Stmt *Init, Expr *Cond, VarDecl *condVar,
 {
   SubExprs[INIT] = Init;
   setConditionVariable(C, condVar);
-  SubExprs[COND] = reinterpret_cast<Stmt*>(Cond);
-  SubExprs[INC] = reinterpret_cast<Stmt*>(Inc);
+  SubExprs[COND] = Cond;
+  SubExprs[INC] = Inc;
   SubExprs[BODY] = Body;
 }
 
@@ -881,7 +881,7 @@ SwitchStmt::SwitchStmt(const ASTContext &C, VarDecl *Var, Expr *cond)
   : Stmt(SwitchStmtClass), FirstCase(0), AllEnumCasesCovered(0)
 {
   setConditionVariable(C, Var);
-  SubExprs[COND] = reinterpret_cast<Stmt*>(cond);
+  SubExprs[COND] = cond;
   SubExprs[BODY] = NULL;
 }
 
@@ -914,7 +914,7 @@ WhileStmt::WhileStmt(const ASTContext &C, VarDecl *Var, Expr *cond, Stmt *body,
                      SourceLocation WL)
   : Stmt(WhileStmtClass) {
   setConditionVariable(C, Var);
-  SubExprs[COND] = reinterpret_cast<Stmt*>(cond);
+  SubExprs[COND] = cond;
   SubExprs[BODY] = body;
   WhileLoc = WL;
 }
@@ -986,7 +986,7 @@ SEHExceptStmt::SEHExceptStmt(SourceLocation Loc,
   : Stmt(SEHExceptStmtClass),
     Loc(Loc)
 {
-  Children[FILTER_EXPR] = reinterpret_cast<Stmt*>(FilterExpr);
+  Children[FILTER_EXPR] = FilterExpr;
   Children[BLOCK]       = Block;
 }
 
