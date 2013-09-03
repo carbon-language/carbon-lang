@@ -60,7 +60,11 @@ bool Driver::link(const LinkingContext &context, raw_ostream &diagnostics) {
         llvm::outs() << fileNode->errStr(error_code(linkerInput)) << "\n";
         return true;
       }
-      linkerInputs.push_back(std::move(*fileNode->createLinkerInput(context)));
+      linkerInputs.push_back(std::move(*linkerInput));
+    }
+    else {
+      llvm_unreachable("Not handling other types of InputElements");
+      return true;
     }
   }
   for (const auto &input : linkerInputs) {
