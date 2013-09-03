@@ -69,14 +69,14 @@
 /// debugging. The current debugging model is "process centric" where
 /// all threads must be stopped when any thread is stopped; when
 /// hitting software breakpoints we must disable the breakpoint by
-/// restoring the original breakpoint opcde, single stepping and 
+/// restoring the original breakpoint opcode, single stepping and
 /// restoring the breakpoint trap. If all threads were allowed to run
 /// then other threads could miss the breakpoint. 
 ///
 /// This class centralizes the code that usually is done in separate 
 /// code paths in a debugger (single step prediction, finding save
 /// restore locations of registers for unwinding stack frame variables)
-/// and emulating the intruction is just a bonus.
+/// and emulating the instruction is just a bonus.
 //----------------------------------------------------------------------
 
 namespace lldb_private {
