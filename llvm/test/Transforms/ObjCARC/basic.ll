@@ -1357,55 +1357,6 @@ C:
   ret void
 }
 
-; Optimize objc_retainBlock.
-
-; CHECK-LABEL: define void @test23(
-; CHECK-NOT: @objc_
-; CHECK: }
-%block0 = type { i64, i64, i8*, i8* }
-%block1 = type { i8**, i32, i32, i32 (%struct.__block_literal_1*)*, %block0* }
-%struct.__block_descriptor = type { i64, i64 }
-%struct.__block_literal_1 = type { i8**, i32, i32, i8**, %struct.__block_descriptor* }
-@__block_holder_tmp_1 = external constant %block1
-define void @test23() {
-entry:
-  %0 = call i8* @objc_retainBlock(i8* bitcast (%block1* @__block_holder_tmp_1 to i8*)) nounwind, !clang.arc.copy_on_escape !0
-  call void @bar(i32 ()* bitcast (%block1* @__block_holder_tmp_1 to i32 ()*))
-  call void @bar(i32 ()* bitcast (%block1* @__block_holder_tmp_1 to i32 ()*))
-  call void @objc_release(i8* bitcast (%block1* @__block_holder_tmp_1 to i8*)) nounwind
-  ret void
-}
-
-; Don't optimize objc_retainBlock, but do strength reduce it.
-
-; CHECK: define void @test23b(i8* %p) {
-; CHECK: @objc_retain
-; CHECK: @objc_release
-; CHECK: }
-define void @test23b(i8* %p) {
-entry:
-  %0 = call i8* @objc_retainBlock(i8* %p) nounwind, !clang.arc.copy_on_escape !0
-  call void @callee()
-  call void @use_pointer(i8* %p)
-  call void @objc_release(i8* %p) nounwind
-  ret void
-}
-
-; Don't optimize objc_retainBlock, because there's no copy_on_escape metadata.
-
-; CHECK-LABEL: define void @test23c(
-; CHECK: @objc_retainBlock
-; CHECK: @objc_release
-; CHECK: }
-define void @test23c() {
-entry:
-  %0 = call i8* @objc_retainBlock(i8* bitcast (%block1* @__block_holder_tmp_1 to i8*)) nounwind
-  call void @bar(i32 ()* bitcast (%block1* @__block_holder_tmp_1 to i32 ()*))
-  call void @bar(i32 ()* bitcast (%block1* @__block_holder_tmp_1 to i32 ()*))
-  call void @objc_release(i8* bitcast (%block1* @__block_holder_tmp_1 to i8*)) nounwind
-  ret void
-}
-
 ; Any call can decrement a retain count.
 
 ; CHECK-LABEL: define void @test24(

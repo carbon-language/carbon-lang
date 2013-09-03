@@ -196,7 +196,7 @@ end:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 define void @phinode_use_cycle(i8* %block) uwtable optsize ssp {
-; CHECK: define void @phinode_use_cycle(i8* %block)
+; CHECK-LABEL: define void @phinode_use_cycle(i8* %block)
 entry:
   br label %for.body
 
