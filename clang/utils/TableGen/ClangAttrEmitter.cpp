@@ -1005,6 +1005,7 @@ void EmitClangAttrExprArgsList(RecordKeeper &Records, raw_ostream &OS) {
           .Case("DefaultIntArgument", true)
           .Case("IntArgument", true)
           .Case("ExprArgument", true)
+          .Case("StringArgument", true)
           .Case("UnsignedArgument", true)
           .Case("VariadicUnsignedArgument", true)
           .Case("VariadicExprArgument", true)

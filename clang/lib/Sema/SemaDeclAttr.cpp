@@ -3177,8 +3177,9 @@ static void handleInitPriorityAttr(Sema &S, Decl *D,
                               Attr.getAttributeSpellingListIndex()));
 }
 
-FormatAttr *Sema::mergeFormatAttr(Decl *D, SourceRange Range, StringRef Format,
-                                  int FormatIdx, int FirstArg,
+FormatAttr *Sema::mergeFormatAttr(Decl *D, SourceRange Range,
+                                  IdentifierInfo *Format, int FormatIdx,
+                                  int FirstArg,
                                   unsigned AttrSpellingListIndex) {
   // Check whether we already have an equivalent format attribute.
   for (specific_attr_iterator<FormatAttr>
@@ -3197,8 +3198,8 @@ FormatAttr *Sema::mergeFormatAttr(Decl *D, SourceRange Range, StringRef Format,
     }
   }
 
-  return ::new (Context) FormatAttr(Range, Context, Format, FormatIdx, FirstArg,
-                                    AttrSpellingListIndex);
+  return ::new (Context) FormatAttr(Range, Context, Format, FormatIdx,
+                                    FirstArg, AttrSpellingListIndex);
 }
 
 /// Handle __attribute__((format(type,idx,firstarg))) attributes based on
@@ -3229,8 +3230,11 @@ static void handleFormatAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   StringRef Format = II->getName();
 
   // Normalize the argument, __foo__ becomes foo.
-  if (Format.startswith("__") && Format.endswith("__"))
+  if (Format.startswith("__") && Format.endswith("__")) {
     Format = Format.substr(2, Format.size() - 4);
+    // If we've modified the string name, we need a new identifier for it.
+    II = &S.Context.Idents.get(Format);
+  }
 
   // Check for supported formats.
   FormatAttrKind Kind = getFormatAttrKind(Format);
@@ -3336,7 +3340,7 @@ static void handleFormatAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     return;
   }
 
-  FormatAttr *NewAttr = S.mergeFormatAttr(D, Attr.getRange(), Format,
+  FormatAttr *NewAttr = S.mergeFormatAttr(D, Attr.getRange(), II,
                                           Idx.getZExtValue(),
                                           FirstArg.getZExtValue(),
                                           Attr.getAttributeSpellingListIndex());
