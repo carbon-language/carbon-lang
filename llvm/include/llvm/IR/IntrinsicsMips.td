@@ -1682,67 +1682,67 @@ def int_mips_stx_d : GCCBuiltin<"__builtin_msa_stx_d">,
   [IntrReadWriteArgMem]>;
 
 def int_mips_subs_s_b : GCCBuiltin<"__builtin_msa_subs_s_b">,
-  Intrinsic<[llvm_v16i8_ty], [llvm_v16i8_ty, llvm_v16i8_ty], [Commutative]>;
+  Intrinsic<[llvm_v16i8_ty], [llvm_v16i8_ty, llvm_v16i8_ty], [IntrNoMem]>;
 def int_mips_subs_s_h : GCCBuiltin<"__builtin_msa_subs_s_h">,
-  Intrinsic<[llvm_v8i16_ty], [llvm_v8i16_ty, llvm_v8i16_ty], [Commutative]>;
+  Intrinsic<[llvm_v8i16_ty], [llvm_v8i16_ty, llvm_v8i16_ty], [IntrNoMem]>;
 def int_mips_subs_s_w : GCCBuiltin<"__builtin_msa_subs_s_w">,
-  Intrinsic<[llvm_v4i32_ty], [llvm_v4i32_ty, llvm_v4i32_ty], [Commutative]>;
+  Intrinsic<[llvm_v4i32_ty], [llvm_v4i32_ty, llvm_v4i32_ty], [IntrNoMem]>;
 def int_mips_subs_s_d : GCCBuiltin<"__builtin_msa_subs_s_d">,
-  Intrinsic<[llvm_v2i64_ty], [llvm_v2i64_ty, llvm_v2i64_ty], [Commutative]>;
+  Intrinsic<[llvm_v2i64_ty], [llvm_v2i64_ty, llvm_v2i64_ty], [IntrNoMem]>;
 
 def int_mips_subs_u_b : GCCBuiltin<"__builtin_msa_subs_u_b">,
-  Intrinsic<[llvm_v16i8_ty], [llvm_v16i8_ty, llvm_v16i8_ty], [Commutative]>;
+  Intrinsic<[llvm_v16i8_ty], [llvm_v16i8_ty, llvm_v16i8_ty], [IntrNoMem]>;
 def int_mips_subs_u_h : GCCBuiltin<"__builtin_msa_subs_u_h">,
-  Intrinsic<[llvm_v8i16_ty], [llvm_v8i16_ty, llvm_v8i16_ty], [Commutative]>;
+  Intrinsic<[llvm_v8i16_ty], [llvm_v8i16_ty, llvm_v8i16_ty], [IntrNoMem]>;
 def int_mips_subs_u_w : GCCBuiltin<"__builtin_msa_subs_u_w">,
-  Intrinsic<[llvm_v4i32_ty], [llvm_v4i32_ty, llvm_v4i32_ty], [Commutative]>;
+  Intrinsic<[llvm_v4i32_ty], [llvm_v4i32_ty, llvm_v4i32_ty], [IntrNoMem]>;
 def int_mips_subs_u_d : GCCBuiltin<"__builtin_msa_subs_u_d">,
-  Intrinsic<[llvm_v2i64_ty], [llvm_v2i64_ty, llvm_v2i64_ty], [Commutative]>;
+  Intrinsic<[llvm_v2i64_ty], [llvm_v2i64_ty, llvm_v2i64_ty], [IntrNoMem]>;
 
 def int_mips_subsus_u_b : GCCBuiltin<"__builtin_msa_subsus_u_b">,
-  Intrinsic<[llvm_v16i8_ty], [llvm_v16i8_ty, llvm_v16i8_ty], [Commutative]>;
+  Intrinsic<[llvm_v16i8_ty], [llvm_v16i8_ty, llvm_v16i8_ty], [IntrNoMem]>;
 def int_mips_subsus_u_h : GCCBuiltin<"__builtin_msa_subsus_u_h">,
-  Intrinsic<[llvm_v8i16_ty], [llvm_v8i16_ty, llvm_v8i16_ty], [Commutative]>;
+  Intrinsic<[llvm_v8i16_ty], [llvm_v8i16_ty, llvm_v8i16_ty], [IntrNoMem]>;
 def int_mips_subsus_u_w : GCCBuiltin<"__builtin_msa_subsus_u_w">,
-  Intrinsic<[llvm_v4i32_ty], [llvm_v4i32_ty, llvm_v4i32_ty], [Commutative]>;
+  Intrinsic<[llvm_v4i32_ty], [llvm_v4i32_ty, llvm_v4i32_ty], [IntrNoMem]>;
 def int_mips_subsus_u_d : GCCBuiltin<"__builtin_msa_subsus_u_d">,
-  Intrinsic<[llvm_v2i64_ty], [llvm_v2i64_ty, llvm_v2i64_ty], [Commutative]>;
+  Intrinsic<[llvm_v2i64_ty], [llvm_v2i64_ty, llvm_v2i64_ty], [IntrNoMem]>;
 
 def int_mips_subsuu_s_b : GCCBuiltin<"__builtin_msa_subsuu_s_b">,
-  Intrinsic<[llvm_v16i8_ty], [llvm_v16i8_ty, llvm_v16i8_ty], [Commutative]>;
+  Intrinsic<[llvm_v16i8_ty], [llvm_v16i8_ty, llvm_v16i8_ty], [IntrNoMem]>;
 def int_mips_subsuu_s_h : GCCBuiltin<"__builtin_msa_subsuu_s_h">,
-  Intrinsic<[llvm_v8i16_ty], [llvm_v8i16_ty, llvm_v8i16_ty], [Commutative]>;
+  Intrinsic<[llvm_v8i16_ty], [llvm_v8i16_ty, llvm_v8i16_ty], [IntrNoMem]>;
 def int_mips_subsuu_s_w : GCCBuiltin<"__builtin_msa_subsuu_s_w">,
-  Intrinsic<[llvm_v4i32_ty], [llvm_v4i32_ty, llvm_v4i32_ty], [Commutative]>;
+  Intrinsic<[llvm_v4i32_ty], [llvm_v4i32_ty, llvm_v4i32_ty], [IntrNoMem]>;
 def int_mips_subsuu_s_d : GCCBuiltin<"__builtin_msa_subsuu_s_d">,
-  Intrinsic<[llvm_v2i64_ty], [llvm_v2i64_ty, llvm_v2i64_ty], [Commutative]>;
+  Intrinsic<[llvm_v2i64_ty], [llvm_v2i64_ty, llvm_v2i64_ty], [IntrNoMem]>;
 
 def int_mips_subv_b : GCCBuiltin<"__builtin_msa_subv_b">,
-  Intrinsic<[llvm_v16i8_ty], [llvm_v16i8_ty, llvm_v16i8_ty], [Commutative]>;
+  Intrinsic<[llvm_v16i8_ty], [llvm_v16i8_ty, llvm_v16i8_ty], [IntrNoMem]>;
 def int_mips_subv_h : GCCBuiltin<"__builtin_msa_subv_h">,
-  Intrinsic<[llvm_v8i16_ty], [llvm_v8i16_ty, llvm_v8i16_ty], [Commutative]>;
+  Intrinsic<[llvm_v8i16_ty], [llvm_v8i16_ty, llvm_v8i16_ty], [IntrNoMem]>;
 def int_mips_subv_w : GCCBuiltin<"__builtin_msa_subv_w">,
-  Intrinsic<[llvm_v4i32_ty], [llvm_v4i32_ty, llvm_v4i32_ty], [Commutative]>;
+  Intrinsic<[llvm_v4i32_ty], [llvm_v4i32_ty, llvm_v4i32_ty], [IntrNoMem]>;
 def int_mips_subv_d : GCCBuiltin<"__builtin_msa_subv_d">,
-  Intrinsic<[llvm_v2i64_ty], [llvm_v2i64_ty, llvm_v2i64_ty], [Commutative]>;
+  Intrinsic<[llvm_v2i64_ty], [llvm_v2i64_ty, llvm_v2i64_ty], [IntrNoMem]>;
 
 def int_mips_subvi_b : GCCBuiltin<"__builtin_msa_subvi_b">,
-  Intrinsic<[llvm_v16i8_ty], [llvm_v16i8_ty, llvm_i32_ty], [Commutative]>;
+  Intrinsic<[llvm_v16i8_ty], [llvm_v16i8_ty, llvm_i32_ty], [IntrNoMem]>;
 def int_mips_subvi_h : GCCBuiltin<"__builtin_msa_subvi_h">,
-  Intrinsic<[llvm_v8i16_ty], [llvm_v8i16_ty, llvm_i32_ty], [Commutative]>;
+  Intrinsic<[llvm_v8i16_ty], [llvm_v8i16_ty, llvm_i32_ty], [IntrNoMem]>;
 def int_mips_subvi_w : GCCBuiltin<"__builtin_msa_subvi_w">,
-  Intrinsic<[llvm_v4i32_ty], [llvm_v4i32_ty, llvm_i32_ty], [Commutative]>;
+  Intrinsic<[llvm_v4i32_ty], [llvm_v4i32_ty, llvm_i32_ty], [IntrNoMem]>;
 def int_mips_subvi_d : GCCBuiltin<"__builtin_msa_subvi_d">,
-  Intrinsic<[llvm_v2i64_ty], [llvm_v2i64_ty, llvm_i32_ty], [Commutative]>;
+  Intrinsic<[llvm_v2i64_ty], [llvm_v2i64_ty, llvm_i32_ty], [IntrNoMem]>;
 
 def int_mips_vshf_b : GCCBuiltin<"__builtin_msa_vshf_b">,
-  Intrinsic<[llvm_v16i8_ty], [llvm_v16i8_ty, llvm_v16i8_ty], [Commutative]>;
+  Intrinsic<[llvm_v16i8_ty], [llvm_v16i8_ty, llvm_v16i8_ty], [IntrNoMem]>;
 def int_mips_vshf_h : GCCBuiltin<"__builtin_msa_vshf_h">,
-  Intrinsic<[llvm_v8i16_ty], [llvm_v8i16_ty, llvm_v8i16_ty], [Commutative]>;
+  Intrinsic<[llvm_v8i16_ty], [llvm_v8i16_ty, llvm_v8i16_ty], [IntrNoMem]>;
 def int_mips_vshf_w : GCCBuiltin<"__builtin_msa_vshf_w">,
-  Intrinsic<[llvm_v4i32_ty], [llvm_v4i32_ty, llvm_v4i32_ty], [Commutative]>;
+  Intrinsic<[llvm_v4i32_ty], [llvm_v4i32_ty, llvm_v4i32_ty], [IntrNoMem]>;
 def int_mips_vshf_d : GCCBuiltin<"__builtin_msa_vshf_d">,
-  Intrinsic<[llvm_v2i64_ty], [llvm_v2i64_ty, llvm_v2i64_ty], [Commutative]>;
+  Intrinsic<[llvm_v2i64_ty], [llvm_v2i64_ty, llvm_v2i64_ty], [IntrNoMem]>;
 
 def int_mips_xor_v : GCCBuiltin<"__builtin_msa_xor_v">,
   Intrinsic<[llvm_v16i8_ty], [llvm_v16i8_ty, llvm_v16i8_ty], [IntrNoMem]>;
