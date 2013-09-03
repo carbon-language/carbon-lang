@@ -54,7 +54,7 @@ GDBRemoteRegisterContext::GDBRemoteRegisterContext
     // Make a heap based buffer that is big enough to store all registers
     DataBufferSP reg_data_sp(new DataBufferHeap (reg_info.GetRegisterDataByteSize(), 0));
     m_reg_data.SetData (reg_data_sp);
-
+    m_reg_data.SetByteOrder(thread.GetProcess()->GetByteOrder());
 }
 
 //----------------------------------------------------------------------
