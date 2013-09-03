@@ -723,6 +723,10 @@ static void printValue(const ELFFile<ELFT> *O, uint64_t Type, uint64_t Value,
   case DT_SONAME:
     OS << "LibrarySoname (" << O->getDynamicString(Value) << ")";
     break;
+  case DT_RPATH:
+  case DT_RUNPATH:
+    OS << O->getDynamicString(Value);
+    break;
   }
 }
 
