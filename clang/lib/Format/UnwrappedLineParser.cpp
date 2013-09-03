@@ -640,11 +640,85 @@ void UnwrappedLineParser::parseStructuralElement() {
         parseBracedList();
       }
       break;
+    case tok::l_square:
+      tryToParseLambda();
+      break;
     default:
       nextToken();
       break;
     }
   } while (!eof());
+}
+
+void UnwrappedLineParser::tryToParseLambda() {
+  if (!tryToParseLambdaIntroducer()) {
+    return;
+  }
+  if (FormatTok->is(tok::l_paren)) {
+    parseParens();
+  }
+
+  while (FormatTok->isNot(tok::l_brace)) {
+    switch (FormatTok->Tok.getKind()) {
+      case tok::l_brace:
+        break;
+        return;
+      case tok::l_paren:
+        parseParens();
+        break;
+      case tok::semi:
+      case tok::equal:
+      case tok::eof:
+        return;
+      default:
+        nextToken();
+        break;
+    }
+  }
+  nextToken();
+  {
+    ScopedLineState LineState(*this);
+    ScopedDeclarationState DeclarationState(*Line, DeclarationScopeStack,
+                                            /*MustBeDeclaration=*/false);
+    Line->Level += 1;
+    parseLevel(/*HasOpeningBrace=*/true);
+    Line->Level -= 1;
+  }
+  nextToken();
+}
+
+bool UnwrappedLineParser::tryToParseLambdaIntroducer() {
+  nextToken();
+  if (FormatTok->is(tok::equal)) {
+    nextToken();
+    if (FormatTok->is(tok::r_square)) return true;
+    if (FormatTok->isNot(tok::comma)) return false;
+    nextToken();
+  } else if (FormatTok->is(tok::amp)) {
+    nextToken();
+    if (FormatTok->is(tok::r_square)) return true;
+    if (!FormatTok->isOneOf(tok::comma, tok::identifier)) {
+      return false;
+    }
+    if (FormatTok->is(tok::comma)) nextToken();
+  } else if (FormatTok->is(tok::r_square)) {
+    nextToken();
+    return true;
+  }
+  do {
+    if (FormatTok->is(tok::amp)) nextToken();
+    if (!FormatTok->isOneOf(tok::identifier, tok::kw_this)) return false;
+    nextToken();
+    if (FormatTok->is(tok::comma)) {
+      nextToken();
+    } else if (FormatTok->is(tok::r_square)) {
+      nextToken();
+      return true;
+    } else {
+      return false;
+    }
+  } while (!eof());
+  return false;
 }
 
 bool UnwrappedLineParser::tryToParseBracedList() {
@@ -667,6 +741,9 @@ void UnwrappedLineParser::parseBracedList() {
     // here, otherwise our bail-out scenarios below break. The better solution
     // might be to just implement a more or less complete expression parser.
     switch (FormatTok->Tok.getKind()) {
+      case tok::l_square:
+        tryToParseLambda();
+        break;
     case tok::l_brace:
       parseBracedList();
       break;
@@ -710,6 +787,9 @@ void UnwrappedLineParser::parseReturn() {
       nextToken();
       addUnwrappedLine();
       return;
+    case tok::l_square:
+      tryToParseLambda();
+      break;
     default:
       nextToken();
       break;

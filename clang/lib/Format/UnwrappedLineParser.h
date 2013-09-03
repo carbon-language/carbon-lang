@@ -93,6 +93,8 @@ private:
   void parseObjCUntilAtEnd();
   void parseObjCInterfaceOrImplementation();
   void parseObjCProtocol();
+  void tryToParseLambda();
+  bool tryToParseLambdaIntroducer();
   void addUnwrappedLine();
   bool eof() const;
   void nextToken();
