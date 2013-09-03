@@ -532,10 +532,8 @@ void __asan_init() {
   InitializeAllocator();
 
   // Start symbolizer process if necessary.
-  const char* external_symbolizer = common_flags()->external_symbolizer_path;
-  if (common_flags()->symbolize && external_symbolizer &&
-      external_symbolizer[0]) {
-    InitializeExternalSymbolizer(external_symbolizer);
+  if (common_flags()->symbolize) {
+    InitializeExternalSymbolizer(common_flags()->external_symbolizer_path);
   }
 
   // On Linux AsanThread::ThreadStart() calls malloc() that's why asan_inited

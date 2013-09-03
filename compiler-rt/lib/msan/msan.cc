@@ -324,8 +324,9 @@ void __msan_init() {
   }
 
   const char *external_symbolizer = common_flags()->external_symbolizer_path;
+  bool symbolizer_started = InitializeExternalSymbolizer(external_symbolizer);
   if (external_symbolizer && external_symbolizer[0]) {
-    CHECK(InitializeExternalSymbolizer(external_symbolizer));
+    CHECK(symbolizer_started);
   }
 
   GetThreadStackTopAndBottom(/* at_initialization */true,

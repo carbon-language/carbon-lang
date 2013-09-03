@@ -345,6 +345,11 @@ class Symbolizer {
   }
 
   bool InitializeExternalSymbolizer(const char *path_to_symbolizer) {
+    if (!path_to_symbolizer || path_to_symbolizer[0] == '\0') {
+      path_to_symbolizer = FindPathToBinary("llvm-symbolizer");
+      if (!path_to_symbolizer)
+        return false;
+    }
     int input_fd, output_fd;
     if (!StartSymbolizerSubprocess(path_to_symbolizer, &input_fd, &output_fd))
       return false;

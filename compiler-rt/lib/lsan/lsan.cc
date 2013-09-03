@@ -25,8 +25,7 @@ namespace __lsan {
 static void InitializeCommonFlags() {
   CommonFlags *cf = common_flags();
   cf->external_symbolizer_path = GetEnv("LSAN_SYMBOLIZER_PATH");
-  cf->symbolize = (cf->external_symbolizer_path &&
-      cf->external_symbolizer_path[0]);
+  cf->symbolize = true;
   cf->strip_path_prefix = "";
   cf->fast_unwind_on_malloc = true;
   cf->malloc_context_size = 30;
@@ -53,10 +52,8 @@ void Init() {
   SetCurrentThread(tid);
 
   // Start symbolizer process if necessary.
-  const char* external_symbolizer = common_flags()->external_symbolizer_path;
-  if (common_flags()->symbolize && external_symbolizer &&
-      external_symbolizer[0]) {
-    InitializeExternalSymbolizer(external_symbolizer);
+  if (common_flags()->symbolize) {
+    InitializeExternalSymbolizer(common_flags()->external_symbolizer_path);
   }
 
   InitCommonLsan();

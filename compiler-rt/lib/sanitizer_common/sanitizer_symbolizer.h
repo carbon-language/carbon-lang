@@ -79,7 +79,8 @@ const char *Demangle(const char *name);
 const char *DemangleCXXABI(const char *name);
 
 // Starts external symbolizer program in a subprocess. Sanitizer communicates
-// with external symbolizer via pipes.
+// with external symbolizer via pipes. If path_to_symbolizer is NULL or empty,
+// tries to look for llvm-symbolizer in PATH.
 bool InitializeExternalSymbolizer(const char *path_to_symbolizer);
 
 const int kSymbolizerStartupTimeMillis = 10;
