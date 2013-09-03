@@ -88,7 +88,7 @@ protected: // Can only create subclasses.
   MCTargetAsmParser();
 
   /// AvailableFeatures - The current set of available features.
-  unsigned AvailableFeatures;
+  uint64_t AvailableFeatures;
 
   /// ParsingInlineAsm - Are we parsing ms-style inline assembly?
   bool ParsingInlineAsm;
@@ -100,8 +100,8 @@ protected: // Can only create subclasses.
 public:
   virtual ~MCTargetAsmParser();
 
-  unsigned getAvailableFeatures() const { return AvailableFeatures; }
-  void setAvailableFeatures(unsigned Value) { AvailableFeatures = Value; }
+  uint64_t getAvailableFeatures() const { return AvailableFeatures; }
+  void setAvailableFeatures(uint64_t Value) { AvailableFeatures = Value; }
 
   bool isParsingInlineAsm () { return ParsingInlineAsm; }
   void setParsingInlineAsm (bool Value) { ParsingInlineAsm = Value; }
