@@ -1053,24 +1053,28 @@ TSAN_INTERCEPTOR(int, pthread_rwlock_unlock, void *m) {
 
 TSAN_INTERCEPTOR(int, pthread_cond_init_2_3_2, void *c, void *a) {
   SCOPED_TSAN_INTERCEPTOR(pthread_cond_init_2_3_2, c, a);
+  MemoryWrite(thr, pc, (uptr)c, kSizeLog1);
   int res = REAL(pthread_cond_init_2_3_2)(c, a);
   return res;
 }
 
 TSAN_INTERCEPTOR(int, pthread_cond_destroy_2_3_2, void *c) {
   SCOPED_TSAN_INTERCEPTOR(pthread_cond_destroy_2_3_2, c);
+  MemoryWrite(thr, pc, (uptr)c, kSizeLog1);
   int res = REAL(pthread_cond_destroy_2_3_2)(c);
   return res;
 }
 
 TSAN_INTERCEPTOR(int, pthread_cond_signal_2_3_2, void *c) {
   SCOPED_TSAN_INTERCEPTOR(pthread_cond_signal_2_3_2, c);
+  MemoryRead(thr, pc, (uptr)c, kSizeLog1);
   int res = REAL(pthread_cond_signal_2_3_2)(c);
   return res;
 }
 
 TSAN_INTERCEPTOR(int, pthread_cond_broadcast_2_3_2, void *c) {
   SCOPED_TSAN_INTERCEPTOR(pthread_cond_broadcast_2_3_2, c);
+  MemoryRead(thr, pc, (uptr)c, kSizeLog1);
   int res = REAL(pthread_cond_broadcast_2_3_2)(c);
   return res;
 }
@@ -1078,6 +1082,7 @@ TSAN_INTERCEPTOR(int, pthread_cond_broadcast_2_3_2, void *c) {
 TSAN_INTERCEPTOR(int, pthread_cond_wait_2_3_2, void *c, void *m) {
   SCOPED_TSAN_INTERCEPTOR(pthread_cond_wait_2_3_2, c, m);
   MutexUnlock(thr, pc, (uptr)m);
+  MemoryRead(thr, pc, (uptr)c, kSizeLog1);
   int res = REAL(pthread_cond_wait_2_3_2)(c, m);
   MutexLock(thr, pc, (uptr)m);
   return res;
@@ -1087,6 +1092,7 @@ TSAN_INTERCEPTOR(int, pthread_cond_timedwait_2_3_2, void *c, void *m,
     void *abstime) {
   SCOPED_TSAN_INTERCEPTOR(pthread_cond_timedwait_2_3_2, c, m, abstime);
   MutexUnlock(thr, pc, (uptr)m);
+  MemoryRead(thr, pc, (uptr)c, kSizeLog1);
   int res = REAL(pthread_cond_timedwait_2_3_2)(c, m, abstime);
   MutexLock(thr, pc, (uptr)m);
   return res;
