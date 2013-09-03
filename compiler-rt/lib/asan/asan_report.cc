@@ -118,7 +118,7 @@ static void PrintShadowBytes(const char *before, u8 *bytes,
   for (uptr i = 0; i < n; i++) {
     u8 *p = bytes + i;
     const char *before = p == guilty ? "[" :
-        p - 1 == guilty ? "" : " ";
+        (p - 1 == guilty && i != 0) ? "" : " ";
     const char *after = p == guilty ? "]" : "";
     PrintShadowByte(before, *p, after);
   }
