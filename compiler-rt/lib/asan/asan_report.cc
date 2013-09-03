@@ -44,20 +44,6 @@ void AppendToErrorMessageBuffer(const char *buffer) {
 }
 
 // ---------------------- Decorator ------------------------------ {{{1
-bool PrintsToTtyCached() {
-  // FIXME: Add proper Windows support to AnsiColorDecorator and re-enable color
-  // printing on Windows.
-  if (SANITIZER_WINDOWS)
-    return 0;
-
-  static int cached = 0;
-  static bool prints_to_tty;
-  if (!cached) {  // Ok wrt threads since we are printing only from one thread.
-    prints_to_tty = PrintsToTty();
-    cached = 1;
-  }
-  return prints_to_tty;
-}
 class Decorator: private __sanitizer::AnsiColorDecorator {
  public:
   Decorator() : __sanitizer::AnsiColorDecorator(PrintsToTtyCached()) { }

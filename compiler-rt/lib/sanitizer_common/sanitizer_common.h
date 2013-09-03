@@ -107,6 +107,8 @@ void SetLowLevelAllocateCallback(LowLevelAllocateCallback callback);
 // IO
 void RawWrite(const char *buffer);
 bool PrintsToTty();
+// Caching version of PrintsToTty(). Not thread-safe.
+bool PrintsToTtyCached();
 void Printf(const char *format, ...);
 void Report(const char *format, ...);
 void SetPrintfAndReportCallback(void (*callback)(const char *));

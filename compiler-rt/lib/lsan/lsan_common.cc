@@ -21,6 +21,7 @@
 #include "sanitizer_common/sanitizer_stacktrace.h"
 #include "sanitizer_common/sanitizer_stoptheworld.h"
 #include "sanitizer_common/sanitizer_suppressions.h"
+#include "sanitizer_common/sanitizer_report_decorator.h"
 
 #if CAN_SANITIZE_LEAKS
 namespace __lsan {
@@ -95,6 +96,14 @@ void InitCommonLsan() {
   InitializeSuppressions();
   InitializePlatformSpecificModules();
 }
+
+class Decorator: private __sanitizer::AnsiColorDecorator {
+ public:
+  Decorator() : __sanitizer::AnsiColorDecorator(PrintsToTtyCached()) { }
+  const char *Error() { return Red(); }
+  const char *Leak() { return Blue(); }
+  const char *End() { return Default(); }
+};
 
 static inline bool CanBeAHeapPointer(uptr p) {
   // Since our heap is located in mmap-ed memory, we can assume a sensible lower
@@ -372,10 +381,13 @@ void DoLeakCheck() {
   }
   uptr have_unsuppressed = param.leak_report.ApplySuppressions();
   if (have_unsuppressed) {
+    Decorator d;
     Printf("\n"
            "================================================================="
            "\n");
+    Printf("%s", d.Error());
     Report("ERROR: LeakSanitizer: detected memory leaks\n");
+    Printf("%s", d.End());
     param.leak_report.PrintLargest(flags()->max_leaks);
   }
   if (have_unsuppressed || (flags()->verbosity >= 1)) {
@@ -460,11 +472,14 @@ void LeakReport::PrintLargest(uptr num_leaks_to_print) {
     Printf("The %zu largest leak(s):\n", num_leaks_to_print);
   InternalSort(&leaks_, leaks_.size(), LeakComparator);
   uptr leaks_printed = 0;
+  Decorator d;
   for (uptr i = 0; i < leaks_.size(); i++) {
     if (leaks_[i].is_suppressed) continue;
+    Printf("%s", d.Leak());
     Printf("%s leak of %zu byte(s) in %zu object(s) allocated from:\n",
            leaks_[i].is_directly_leaked ? "Direct" : "Indirect",
            leaks_[i].total_size, leaks_[i].hit_count);
+    Printf("%s", d.End());
     PrintStackTraceById(leaks_[i].stack_trace_id);
     Printf("\n");
     leaks_printed++;

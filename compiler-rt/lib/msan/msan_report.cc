@@ -25,16 +25,6 @@ using namespace __sanitizer;
 
 namespace __msan {
 
-static bool PrintsToTtyCached() {
-  static int cached = 0;
-  static bool prints_to_tty;
-  if (!cached) {  // Ok wrt threads since we are printing only from one thread.
-    prints_to_tty = PrintsToTty();
-    cached = 1;
-  }
-  return prints_to_tty;
-}
-
 class Decorator: private __sanitizer::AnsiColorDecorator {
  public:
   Decorator() : __sanitizer::AnsiColorDecorator(PrintsToTtyCached()) { }
@@ -119,6 +109,5 @@ void ReportAtExitStatistics() {
   Printf("MemorySanitizer: %d warnings reported.\n", msan_report_count);
   Printf("%s", d.End());
 }
-
 
 }  // namespace __msan
