@@ -1,5 +1,5 @@
 get_filename_component(ClangReplaceLocation
-  "${CMAKE_CURRENT_SOURCE_DIR}/../clang-replace/include" ABSOLUTE)
+  "${CMAKE_CURRENT_SOURCE_DIR}/../clang-apply-replacements/include" ABSOLUTE)
 
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}

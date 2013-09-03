@@ -14,7 +14,7 @@
 /// FIXME: Use Diagnostics for output instead of llvm::errs().
 ///
 //===----------------------------------------------------------------------===//
-#include "clang-replace/Tooling/ApplyReplacements.h"
+#include "clang-apply-replacements/Tooling/ApplyReplacements.h"
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Rewrite/Core/Rewriter.h"

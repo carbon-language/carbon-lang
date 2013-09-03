@@ -17,7 +17,7 @@
 #define CPP11_MIGRATE_FILE_OVERRIDES_H
 
 #include "Core/Refactoring.h"
-#include "clang-replace/Tooling/ApplyReplacements.h"
+#include "clang-apply-replacements/Tooling/ApplyReplacements.h"
 #include "clang/Tooling/ReplacementsYaml.h"
 #include "llvm/ADT/StringMap.h"
 

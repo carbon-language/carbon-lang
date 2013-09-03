@@ -1,4 +1,4 @@
-//===-- ClangReplaceMain.cpp - Main file for clang-replace tool -----------===//
+//===-- ClangApplyReplacementsMain.cpp - Main file for the tool -----------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,11 +8,12 @@
 //===----------------------------------------------------------------------===//
 ///
 /// \file
-/// \brief This file provides the main function for the clang-replace tool.
+/// \brief This file provides the main function for the
+/// clang-apply-replacements tool.
 ///
 //===----------------------------------------------------------------------===//
 
-#include "clang-replace/Tooling/ApplyReplacements.h"
+#include "clang-apply-replacements/Tooling/ApplyReplacements.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/DiagnosticOptions.h"
 #include "clang/Basic/SourceManager.h"

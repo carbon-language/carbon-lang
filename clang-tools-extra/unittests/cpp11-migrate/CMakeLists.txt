@@ -5,7 +5,7 @@ set(LLVM_LINK_COMPONENTS
 get_filename_component(CPP11_MIGRATE_SOURCE_DIR
   ${CMAKE_CURRENT_SOURCE_DIR}/../../cpp11-migrate REALPATH)
 get_filename_component(ClangReplaceLocation
-  "${CMAKE_CURRENT_SOURCE_DIR}/../../clang-replace/include" REALPATH)
+  "${CMAKE_CURRENT_SOURCE_DIR}/../../clang-apply-replacements/include" REALPATH)
 include_directories(
   ${CPP11_MIGRATE_SOURCE_DIR}
   ${ClangReplaceLocation}
