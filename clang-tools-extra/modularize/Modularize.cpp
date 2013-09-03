@@ -403,9 +403,8 @@ public:
         isa<NamespaceAliasDecl>(ND) ||
         isa<ClassTemplateSpecializationDecl>(ND) || isa<UsingDecl>(ND) ||
         isa<ClassTemplateDecl>(ND) || isa<TemplateTypeParmDecl>(ND) ||
-        isa<TypeAliasTemplateDecl>(ND) ||
-        isa<UsingShadowDecl>(ND) || isa<FunctionDecl>(ND) ||
-        isa<FunctionTemplateDecl>(ND) ||
+        isa<TypeAliasTemplateDecl>(ND) || isa<UsingShadowDecl>(ND) ||
+        isa<FunctionDecl>(ND) || isa<FunctionTemplateDecl>(ND) ||
         (isa<TagDecl>(ND) &&
          !cast<TagDecl>(ND)->isThisDeclarationADefinition()))
       return true;

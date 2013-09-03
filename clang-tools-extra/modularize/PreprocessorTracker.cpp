@@ -76,7 +76,7 @@
 // the expanded macro value, a PPItemKey representing the file/line/column
 // where the macro was defined, a handle to a string representing the source
 // line containing the macro definition, and a vector of InclusionPathHandle
-// values that represents the hierarchies of include files for each case 
+// values that represents the hierarchies of include files for each case
 // where the particular header containing the macro reference was referenced
 // or included.
 
@@ -189,7 +189,7 @@
 // has two ConditionalExpansionInstance objects, it means there was a
 // conflict, meaning the conditional expression evaluated differently in
 // one or more cases.
-// 
+//
 // After modularize has performed all the compilations, it enters a phase
 // of error reporting. This new feature adds to this reporting phase calls
 // to the PreprocessorTracker's reportInconsistentMacros and
@@ -1023,8 +1023,7 @@ public:
           getSourceLine(PP, InstanceLoc) + "\n";
       ConditionalExpansions[InstanceKey] =
           ConditionalTracker(DirectiveKind, ConditionValue,
-                             ConditionUnexpandedHandle,
-                             InclusionPathHandle);
+                             ConditionUnexpandedHandle, InclusionPathHandle);
     } else {
       // We've seen the conditional before.  Get its tracker.
       ConditionalTracker &CondTracker = I->second;
@@ -1202,14 +1201,12 @@ void PreprocessorCallbacks::FileChanged(
   case EnterFile:
     PPTracker.handleHeaderEntry(PP, getSourceLocationFile(PP, Loc));
     break;
-  case ExitFile:
-    {
-      const clang::FileEntry *F =
+  case ExitFile: {
+    const clang::FileEntry *F =
         PP.getSourceManager().getFileEntryForID(PrevFID);
-      if (F != NULL)
-        PPTracker.handleHeaderExit(F->getName());
-    }
-    break;
+    if (F != NULL)
+      PPTracker.handleHeaderExit(F->getName());
+  } break;
   case SystemHeaderPragma:
   case RenameFile:
     break;
