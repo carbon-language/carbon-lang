@@ -185,8 +185,6 @@ public:
   // the symbol if your platform supports dead-stripping, so that the symbol
   // will not be removed from the output.
   void setEntrySymbolName(StringRef name) {
-    // Entry function have to be resolved as an undefined symbol.
-    addInitialUndefinedSymbol(name);
     _entrySymbolName = name;
   }
 
