@@ -137,8 +137,6 @@ class InternalDebugOpt : Group<internal_debug_Group>,
   Flags<[DriverOption, HelpHidden]>;
 def ccc_install_dir : Separate<["-"], "ccc-install-dir">, InternalDebugOpt,
   HelpText<"Simulate installation in the given directory">;
-def ccc_print_options : Flag<["-"], "ccc-print-options">, InternalDebugOpt,
-  HelpText<"Dump parsed command line arguments">;
 def ccc_print_phases : Flag<["-"], "ccc-print-phases">, InternalDebugOpt,
   HelpText<"Dump list of actions to perform">;
 def ccc_print_bindings : Flag<["-"], "ccc-print-bindings">, InternalDebugOpt,

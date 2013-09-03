@@ -318,9 +318,6 @@ public:
   /// \param ShowHidden - Show hidden options.
   void PrintHelp(bool ShowHidden) const;
 
-  /// PrintOptions - Print the list of arguments.
-  void PrintOptions(const llvm::opt::ArgList &Args) const;
-
   /// PrintVersion - Print the driver version.
   void PrintVersion(const Compilation &C, raw_ostream &OS) const;
 

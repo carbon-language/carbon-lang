@@ -1,11 +1,14 @@
-// RUN: %clang -ccc-print-options \
-// RUN:  --save-temps --undefine-macro=FOO --undefine-macro FOO \
-// RUN: --param=FOO --output=FOO 2> %t
-// RUN: FileCheck --check-prefix=CHECK-OPTIONS < %t %s
+// RUN: %clang -### -S \
+// RUN:  --save-temps --undefine-macro=FOO --undefine-macro BAR \
+// RUN: --param=FOO --output=FOO %s 2>&1 | \
+// RUN: FileCheck %s
 
-// CHECK-OPTIONS: Option 0 - Name: "-ccc-print-options", Values: {}
-// CHECK-OPTIONS: Option 1 - Name: "-save-temps", Values: {}
-// CHECK-OPTIONS: Option 2 - Name: "-U", Values: {"FOO"}
-// CHECK-OPTIONS: Option 3 - Name: "-U", Values: {"FOO"}
-// CHECK-OPTIONS: Option 4 - Name: "--param", Values: {"FOO"}
-// CHECK-OPTIONS: Option 5 - Name: "-o", Values: {"FOO"}
+// CHECK: "-cc1"
+// CHECK: "-E"
+// CHECK: "-U" "FOO"
+// CHECK: "-U" "BAR"
+// CHECK: "-o" "option-aliases.i"
+
+// CHECK-NEXT: "-cc1"
+// CHECK: "-S"
+// CHECK: "-o" "FOO"

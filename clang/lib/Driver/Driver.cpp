@@ -58,7 +58,7 @@ Driver::Driver(StringRef ClangExecutable,
     CCPrintOptionsFilename(0), CCPrintHeadersFilename(0),
     CCLogDiagnosticsFilename(0),
     CCCPrintBindings(false),
-    CCPrintOptions(false), CCPrintHeaders(false), CCLogDiagnostics(false),
+    CCPrintHeaders(false), CCLogDiagnostics(false),
     CCGenDiagnostics(false), CCCGenericGCCName(""), CheckInputsExist(true),
     CCCUsePCH(true), SuppressMissingInputWarning(false) {
 
@@ -327,7 +327,7 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
   // FIXME: What are we going to do with -V and -b?
 
   // FIXME: This stuff needs to go into the Compilation, not the driver.
-  bool CCCPrintOptions, CCCPrintActions;
+  bool CCCPrintActions;
 
   InputArgList *Args = ParseArgStrings(ArgList.slice(1));
 
@@ -343,7 +343,6 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
   // should be outside in the client; the parts that aren't should have proper
   // options, either by introducing new ones or by overloading gcc ones like -V
   // or -b.
-  CCCPrintOptions = Args->hasArg(options::OPT_ccc_print_options);
   CCCPrintActions = Args->hasArg(options::OPT_ccc_print_phases);
   CCCPrintBindings = Args->hasArg(options::OPT_ccc_print_bindings);
   if (const Arg *A = Args->getLastArg(options::OPT_ccc_gcc_name))
@@ -386,12 +385,6 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
 
   // The compilation takes ownership of Args.
   Compilation *C = new Compilation(*this, TC, Args, TranslatedArgs);
-
-  // FIXME: This behavior shouldn't be here.
-  if (CCCPrintOptions) {
-    PrintOptions(C->getInputArgs());
-    return C;
-  }
 
   if (!HandleImmediateArgs(*C))
     return C;
@@ -639,23 +632,6 @@ int Driver::ExecuteCompilation(const Compilation &C,
     }
   }
   return 0;
-}
-
-void Driver::PrintOptions(const ArgList &Args) const {
-  unsigned i = 0;
-  for (ArgList::const_iterator it = Args.begin(), ie = Args.end();
-       it != ie; ++it, ++i) {
-    Arg *A = *it;
-    llvm::errs() << "Option " << i << " - "
-                 << "Name: \"" << A->getOption().getPrefixedName() << "\", "
-                 << "Values: {";
-    for (unsigned j = 0; j < A->getNumValues(); ++j) {
-      if (j)
-        llvm::errs() << ", ";
-      llvm::errs() << '"' << A->getValue(j) << '"';
-    }
-    llvm::errs() << "}\n";
-  }
 }
 
 void Driver::PrintHelp(bool ShowHidden) const {
