@@ -125,6 +125,13 @@ char* internal_strchr(const char *s, int c) {
   }
 }
 
+char *internal_strchrnul(const char *s, int c) {
+  char *res = internal_strchr(s, c);
+  if (!res)
+    res = (char*)s + internal_strlen(s);
+  return res;
+}
+
 char *internal_strrchr(const char *s, int c) {
   const char *res = 0;
   for (uptr i = 0; s[i]; i++) {

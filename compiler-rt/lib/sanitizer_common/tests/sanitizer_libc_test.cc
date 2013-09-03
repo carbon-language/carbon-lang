@@ -115,3 +115,10 @@ TEST(SanitizerCommon, FileOps) {
   internal_close(fd);
 }
 
+TEST(SanitizerCommon, InternalStrFunctions) {
+  const char *haystack = "haystack";
+  EXPECT_EQ(haystack + 2, internal_strchr(haystack, 'y'));
+  EXPECT_EQ(haystack + 2, internal_strchrnul(haystack, 'y'));
+  EXPECT_EQ(0, internal_strchr(haystack, 'z'));
+  EXPECT_EQ(haystack + 8, internal_strchrnul(haystack, 'z'));
+}
