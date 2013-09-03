@@ -112,7 +112,7 @@ private:
   SectionToAtomsT;
 
 public:
-  FileCOFF(const LinkingContext &context,
+  FileCOFF(const PECOFFLinkingContext &context,
            std::unique_ptr<llvm::MemoryBuffer> mb, error_code &ec)
       : File(mb->getBufferIdentifier(), kindObject), _context(context) {
     llvm::OwningPtr<llvm::object::Binary> bin;
@@ -602,7 +602,7 @@ private:
       ArrayRef<uint8_t> contents;
       if (error_code ec = _obj->getSectionContents(section, contents))
         return ec;
-      _directives = std::move(ArrayRefToString(contents));
+      _directives = _context.allocateString(ArrayRefToString(contents));
     }
     return error_code::success();
   }
@@ -614,7 +614,7 @@ private:
   atom_collection_vector<AbsoluteAtom> _absoluteAtoms;
 
   // The contents of .drectve section.
-  std::string _directives;
+  StringRef _directives;
 
   // A map from symbol to its name. All symbols should be in this map except
   // unnamed ones.
@@ -638,7 +638,7 @@ private:
            std::map<uint32_t, COFFDefinedAtom *>> _definedAtomLocations;
 
   mutable llvm::BumpPtrAllocator _alloc;
-  const LinkingContext &_context;
+  const PECOFFLinkingContext &_context;
 };
 
 class BumpPtrStringSaver : public llvm::cl::StringSaver {
@@ -714,7 +714,8 @@ private:
                            std::vector<std::unique_ptr<File>> &result) const {
     // Parse the memory buffer as PECOFF file.
     error_code ec;
-    std::unique_ptr<FileCOFF> file(new FileCOFF(_context, std::move(mb), ec));
+    std::unique_ptr<FileCOFF> file(
+        new FileCOFF(_PECOFFLinkingContext, std::move(mb), ec));
     if (ec)
       return ec;
 
