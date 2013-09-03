@@ -21,6 +21,7 @@ class ELFLinkingContext;
 class File;
 class LinkerInput;
 class LinkingContext;
+class PECOFFLinkingContext;
 
 /// \brief An abstract class for reading object files, library files, and
 /// executable files.
@@ -54,7 +55,7 @@ typedef ErrorOr<Reader &> ReaderFunc(const LinkerInput &);
 std::unique_ptr<Reader> createReaderELF(const ELFLinkingContext &);
 std::unique_ptr<Reader> createReaderMachO(const LinkingContext &);
 std::unique_ptr<Reader> createReaderNative(const LinkingContext &);
-std::unique_ptr<Reader> createReaderPECOFF(const LinkingContext &);
+std::unique_ptr<Reader> createReaderPECOFF(PECOFFLinkingContext &);
 std::unique_ptr<Reader> createReaderYAML(const LinkingContext &);
 } // end namespace lld
 

@@ -14,6 +14,7 @@
 
 #include "lld/Core/File.h"
 #include "lld/Driver/Driver.h"
+#include "lld/ReaderWriter/PECOFFLinkingContext.h"
 #include "lld/ReaderWriter/Reader.h"
 #include "lld/ReaderWriter/ReaderArchive.h"
 
@@ -655,8 +656,9 @@ private:
 
 class ReaderCOFF : public Reader {
 public:
-  explicit ReaderCOFF(const LinkingContext &context)
-      : Reader(context), _readerArchive(context, *this) {}
+  explicit ReaderCOFF(PECOFFLinkingContext &context)
+      : Reader(context), _readerArchive(context, *this),
+        _PECOFFLinkingContext(context) {}
 
   error_code parseFile(std::unique_ptr<MemoryBuffer> &mb,
                        std::vector<std::unique_ptr<File>> &result) const {
@@ -681,12 +683,6 @@ private:
       llvm::dbgs() << ".drectve: " << directives << "\n";
     });
 
-    // Remove const from _context.
-    // FIXME: Rename LinkingContext -> LinkingContext and treat it a mutable
-    // object
-    // in the core linker.
-    PECOFFLinkingContext *targetInfo = (PECOFFLinkingContext *)&_context;
-
     // Split the string into tokens, as the shell would do for argv.
     SmallVector<const char *, 16> tokens;
     tokens.push_back("link");  // argv[0] is the command name. Will be ignored.
@@ -699,7 +695,8 @@ private:
     const char **argv = &tokens[0];
     std::string errorMessage;
     llvm::raw_string_ostream stream(errorMessage);
-    bool parseFailed = WinLinkDriver::parse(argc, argv, *targetInfo, stream);
+    bool parseFailed = WinLinkDriver::parse(
+        argc, argv, _PECOFFLinkingContext, stream);
     stream.flush();
 
     // Print error message if error.
@@ -741,13 +738,14 @@ private:
   }
 
   ReaderArchive _readerArchive;
+  PECOFFLinkingContext &_PECOFFLinkingContext;
   mutable BumpPtrStringSaver _stringSaver;
 };
 
 } // end namespace anonymous
 
 namespace lld {
-std::unique_ptr<Reader> createReaderPECOFF(const LinkingContext &context) {
+std::unique_ptr<Reader> createReaderPECOFF(PECOFFLinkingContext &context) {
   return std::unique_ptr<Reader>(new ReaderCOFF(context));
 }
 }
