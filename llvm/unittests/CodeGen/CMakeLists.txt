@@ -4,10 +4,10 @@ set(LLVM_LINK_COMPONENTS
   support
   )
 
-set(DebugInfoSources
+set(CodeGenSources
   DIEHashTest.cpp
   )
 
-add_llvm_unittest(DebugInfoTests
-  ${DebugInfoSources}
+add_llvm_unittest(CodeGenTests
+  ${CodeGenSources}
   )
