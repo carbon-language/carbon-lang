@@ -218,6 +218,9 @@ ProcessMessage::PrintKind(Kind kind)
     case eInvalidMessage:
         str = "eInvalidMessage";
         break;
+    case eAttachMessage:
+        str = "eAttachMessage";
+        break;
     case eExitMessage:
         str = "eExitMessage";
         break;

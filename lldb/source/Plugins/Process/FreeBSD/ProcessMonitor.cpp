@@ -855,7 +855,6 @@ ProcessMonitor::Launch(LaunchArgs *args)
 {
     ProcessMonitor *monitor = args->m_monitor;
     ProcessFreeBSD &process = monitor->GetProcess();
-    lldb::ProcessSP processSP = process.shared_from_this();
     const char **argv = args->m_argv;
     const char **envp = args->m_envp;
     const char *stdin_path = args->m_stdin_path;
@@ -867,9 +866,6 @@ ProcessMonitor::Launch(LaunchArgs *args)
     const size_t err_len = 1024;
     char err_str[err_len];
     lldb::pid_t pid;
-
-    lldb::ThreadSP inferior;
-    Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_PROCESS));
 
     // Propagate the environment if one is not supplied.
     if (envp == NULL || envp[0] == NULL)
@@ -1002,14 +998,7 @@ ProcessMonitor::Launch(LaunchArgs *args)
     if (!EnsureFDFlags(monitor->m_terminal_fd, O_NONBLOCK, args->m_error))
         goto FINISH;
 
-    // Update the process thread list with this new thread.
-    inferior.reset(process.CreateNewPOSIXThread(*processSP, pid));
-    if (log)
-        log->Printf ("ProcessMonitor::%s() adding pid = %" PRIu64, __FUNCTION__, pid);
-    process.GetThreadList().AddThread(inferior);
-
-    // Let our process instance know the thread has stopped.
-    process.SendMessage(ProcessMessage::Trace(pid));
+    process.SendMessage(ProcessMessage::Attach(pid));
 
 FINISH:
     return args->m_error.Success();
@@ -1059,9 +1048,6 @@ ProcessMonitor::Attach(AttachArgs *args)
 
     ProcessMonitor *monitor = args->m_monitor;
     ProcessFreeBSD &process = monitor->GetProcess();
-    lldb::ProcessSP processSP = process.shared_from_this();
-    ThreadList &tl = process.GetThreadList();
-    lldb::ThreadSP inferior;
 
     if (pid <= 1)
     {
@@ -1084,14 +1070,9 @@ ProcessMonitor::Attach(AttachArgs *args)
         goto FINISH;
     }
 
-    // Update the process thread list with the attached thread.
-    inferior.reset(process.CreateNewPOSIXThread(*processSP, pid));
-    tl.AddThread(inferior);
+    process.SendMessage(ProcessMessage::Attach(pid));
 
-    // Let our process instance know the thread has stopped.
-    process.SendMessage(ProcessMessage::Trace(pid));
-
- FINISH:
+FINISH:
     return args->m_error.Success();
 }
 

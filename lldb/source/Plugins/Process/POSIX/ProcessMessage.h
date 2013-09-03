@@ -23,6 +23,7 @@ public:
     enum Kind
     {
         eInvalidMessage,
+        eAttachMessage,
         eExitMessage,
         eLimboMessage,
         eSignalMessage,
@@ -78,6 +79,11 @@ public:
     Kind GetKind() const { return m_kind; }
 
     lldb::tid_t GetTID() const { return m_tid; }
+
+    /// Indicates that the process @p pid has successfully attached.
+    static ProcessMessage Attach(lldb::pid_t pid) {
+        return ProcessMessage(pid, eAttachMessage);
+    }
 
     /// Indicates that the thread @p tid is about to exit with status @p status.
     static ProcessMessage Limbo(lldb::tid_t tid, int status) {

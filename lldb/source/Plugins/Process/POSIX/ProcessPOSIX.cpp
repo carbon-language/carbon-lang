@@ -367,6 +367,10 @@ ProcessPOSIX::SendMessage(const ProcessMessage &message)
     case ProcessMessage::eInvalidMessage:
         return;
 
+    case ProcessMessage::eAttachMessage:
+        SetPrivateState(eStateStopped);
+        return;
+
     case ProcessMessage::eLimboMessage:
         assert(thread);
         thread->SetState(eStateStopped);
