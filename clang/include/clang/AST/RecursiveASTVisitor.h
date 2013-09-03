@@ -2346,14 +2346,9 @@ bool RecursiveASTVisitor<Derived>::VisitOMPDefaultClause(OMPDefaultClause *C) {
     TraverseStmt(*I);
 
 template<typename Derived>
-bool RecursiveASTVisitor<Derived>::VisitOMPPrivateClause(OMPPrivateClause *C) {
+bool RecursiveASTVisitor<Derived>::VisitOMPPrivateClause(
+                                                      OMPPrivateClause *C) {
   PROCESS_OMP_CLAUSE_LIST(OMPPrivateClause, C)
-  return true;
-}
-
-template<typename Derived>
-bool RecursiveASTVisitor<Derived>::VisitOMPSharedClause(OMPSharedClause *C) {
-  PROCESS_OMP_CLAUSE_LIST(OMPSharedClause, C)
   return true;
 }
 

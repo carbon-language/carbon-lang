@@ -614,14 +614,6 @@ void OMPClausePrinter::VisitOMPPrivateClause(OMPPrivateClause *Node) {
   }
 }
 
-void OMPClausePrinter::VisitOMPSharedClause(OMPSharedClause *Node) {
-  if (!Node->varlist_empty()) {
-    OS << "shared";
-    PROCESS_OMP_CLAUSE_LIST(OMPSharedClause, Node, '(')
-    OS << ")";
-  }
-}
-
 #undef PROCESS_OMP_CLAUSE_LIST
 }
 

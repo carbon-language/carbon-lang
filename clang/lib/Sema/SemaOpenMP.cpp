@@ -27,325 +27,6 @@
 #include "clang/Sema/ScopeInfo.h"
 using namespace clang;
 
-//===----------------------------------------------------------------------===//
-// Stack of data-sharing attributes for variables
-//===----------------------------------------------------------------------===//
-
-namespace {
-/// \brief Default data sharing attributes, which can be applied to directive.
-enum DefaultDataSharingAttributes {
-  DSA_unspecified = 0,   /// \brief Data sharing attribute not specified.
-  DSA_none = 1 << 0,     /// \brief Default data sharing attribute 'none'.
-  DSA_shared = 1 << 1    /// \brief Default data sharing attribute 'shared'.
-};
-
-/// \brief Stack for tracking declarations used in OpenMP directives and
-/// clauses and their data-sharing attributes.
-class DSAStackTy {
-public:
-  struct DSAVarData {
-    OpenMPDirectiveKind DKind;
-    OpenMPClauseKind CKind;
-    DeclRefExpr *RefExpr;
-    DSAVarData() : DKind(OMPD_unknown), CKind(OMPC_unknown), RefExpr(0) { }
-  };
-private:
-  struct DSAInfo {
-    OpenMPClauseKind Attributes;
-    DeclRefExpr *RefExpr;
-  };
-  typedef llvm::SmallDenseMap<VarDecl *, DSAInfo, 64> DeclSAMapTy;
-
-  struct SharingMapTy {
-    DeclSAMapTy SharingMap;
-    DefaultDataSharingAttributes DefaultAttr;
-    OpenMPDirectiveKind Directive;
-    DeclarationNameInfo DirectiveName;
-    Scope *CurScope;
-    SharingMapTy(OpenMPDirectiveKind DKind,
-                 const DeclarationNameInfo &Name,
-                 Scope *CurScope)
-      : SharingMap(), DefaultAttr(DSA_unspecified), Directive(DKind),
-        DirectiveName(Name), CurScope(CurScope) { }
-    SharingMapTy()
-      : SharingMap(), DefaultAttr(DSA_unspecified),
-        Directive(OMPD_unknown), DirectiveName(),
-        CurScope(0) { }
-  };
-
-  typedef SmallVector<SharingMapTy, 64> StackTy;
-
-  /// \brief Stack of used declaration and their data-sharing attributes.
-  StackTy Stack;
-  Sema &Actions;
-
-  typedef SmallVector<SharingMapTy, 8>::reverse_iterator reverse_iterator;
-
-  DSAVarData getDSA(StackTy::reverse_iterator Iter, VarDecl *D);
-public:
-  explicit DSAStackTy(Sema &S) : Stack(1), Actions(S) { }
-
-  void push(OpenMPDirectiveKind DKind, const DeclarationNameInfo &DirName,
-            Scope *CurScope) {
-    Stack.push_back(SharingMapTy(DKind, DirName, CurScope));
-  }
-
-  void pop() {
-    assert(Stack.size() > 1 && "Data-sharing attributes stack is empty!");
-    Stack.pop_back();
-  }
-
-  /// \brief Adds explicit data sharing attribute to the specified declaration.
-  void addDSA(VarDecl *D, DeclRefExpr *E, OpenMPClauseKind A);
-
-  /// \brief Checks if the variable is a local for OpenMP region.
-  bool isOpenMPLocal(VarDecl *D);
-
-  /// \brief Returns data sharing attributes from top of the stack for the
-  /// specified declaration.
-  DSAVarData getTopDSA(VarDecl *D);
-  /// \brief Returns data-sharing attributes for the specified declaration.
-  DSAVarData getImplicitDSA(VarDecl *D);
-
-  /// \brief Returns currently analyzed directive.
-  OpenMPDirectiveKind getCurrentDirective() const {
-    return Stack.back().Directive;
-  }
-
-  /// \brief Set default data sharing attribute to none.
-  void setDefaultDSANone() { Stack.back().DefaultAttr = DSA_none; }
-  /// \brief Set default data sharing attribute to shared.
-  void setDefaultDSAShared() { Stack.back().DefaultAttr = DSA_shared; }
-
-  DefaultDataSharingAttributes getDefaultDSA() const {
-    return Stack.back().DefaultAttr;
-  }
-
-  Scope *getCurScope() { return Stack.back().CurScope; }
-};
-} // end anonymous namespace.
-
-DSAStackTy::DSAVarData DSAStackTy::getDSA(StackTy::reverse_iterator Iter,
-                                          VarDecl *D) {
-  DSAVarData DVar;
-  if (Iter == Stack.rend() - 1) {
-    // OpenMP [2.9.1.1, Data-sharing Attribute Rules for Variables Referenced
-    // in a region but not in construct]
-    //  File-scope or namespace-scope variables referenced in called routines
-    //  in the region are shared unless they appear in a threadprivate
-    //  directive.
-    // TODO
-    if (!D->isFunctionOrMethodVarDecl())
-      DVar.CKind = OMPC_shared;
-
-    return DVar;
-  }
-  DVar.DKind = Iter->Directive;
-  // Explicitly specified attributes and local variables with predetermined
-  // attributes.
-  if (Iter->SharingMap.count(D)) {
-    DVar.RefExpr = Iter->SharingMap[D].RefExpr;
-    DVar.CKind = Iter->SharingMap[D].Attributes;
-    return DVar;
-  }
-
-  // OpenMP [2.9.1.1, Data-sharing Attribute Rules for Variables Referenced
-  // in a Construct, C/C++, implicitly determined, p.1]
-  //  In a parallel or task construct, the data-sharing attributes of these
-  //  variables are determined by the default clause, if present.
-  switch (Iter->DefaultAttr) {
-  case DSA_shared:
-    DVar.CKind = OMPC_shared;
-    return DVar;
-  case DSA_none:
-    return DVar;
-  case DSA_unspecified:
-    // OpenMP [2.9.1.1, Data-sharing Attribute Rules for Variables Referenced
-    // in a Construct, implicitly determined, p.2]
-    //  In a parallel construct, if no default clause is present, these
-    //  variables are shared.
-    if (DVar.DKind == OMPD_parallel) {
-      DVar.CKind = OMPC_shared;
-      return DVar;
-    }
-
-    // OpenMP [2.9.1.1, Data-sharing Attribute Rules for Variables Referenced
-    // in a Construct, implicitly determined, p.4]
-    //  In a task construct, if no default clause is present, a variable that in
-    //  the enclosing context is determined to be shared by all implicit tasks
-    //  bound to the current team is shared.
-    // TODO
-    if (DVar.DKind == OMPD_task) {
-      DSAVarData DVarTemp;
-      for (StackTy::reverse_iterator I = Iter + 1,
-                                     EE = Stack.rend() - 1;
-           I != EE; ++I) {
-        // OpenMP [2.9.1.1, Data-sharing Attribute Rules for Variables Referenced
-        // in a Construct, implicitly determined, p.6]
-        //  In a task construct, if no default clause is present, a variable
-        //  whose data-sharing attribute is not determined by the rules above is
-        //  firstprivate.
-        DVarTemp = getDSA(I, D);
-        if (DVarTemp.CKind != OMPC_shared) {
-          DVar.RefExpr = 0;
-          DVar.DKind = OMPD_task;
-          DVar.CKind = OMPC_unknown;
-          // TODO: should return OMPC_firstprivate
-          return DVar;
-        }
-        if (I->Directive == OMPD_parallel) break;
-      }
-      DVar.DKind = OMPD_task;
-      // TODO: Should return OMPC_firstprivate instead of OMPC_unknown.
-      DVar.CKind =
-        (DVarTemp.CKind == OMPC_unknown) ? OMPC_unknown : OMPC_shared;
-      return DVar;
-    }
-  }
-  // OpenMP [2.9.1.1, Data-sharing Attribute Rules for Variables Referenced
-  // in a Construct, implicitly determined, p.3]
-  //  For constructs other than task, if no default clause is present, these
-  //  variables inherit their data-sharing attributes from the enclosing
-  //  context.
-  return getDSA(Iter + 1, D);
-}
-
-void DSAStackTy::addDSA(VarDecl *D, DeclRefExpr *E, OpenMPClauseKind A) {
-  if (A == OMPC_threadprivate) {
-    Stack[0].SharingMap[D].Attributes = A;
-    Stack[0].SharingMap[D].RefExpr = E;
-  } else {
-    assert(Stack.size() > 1 && "Data-sharing attributes stack is empty");
-    Stack.back().SharingMap[D].Attributes = A;
-    Stack.back().SharingMap[D].RefExpr = E;
-  }
-}
-
-bool DSAStackTy::isOpenMPLocal(VarDecl *D) {
-  Scope *CurScope = getCurScope();
-  while (CurScope && !CurScope->isDeclScope(D))
-    CurScope = CurScope->getParent();
-  while (CurScope && !CurScope->isOpenMPDirectiveScope())
-    CurScope = CurScope->getParent();
-  bool isOpenMPLocal = !!CurScope;
-  if (!isOpenMPLocal) {
-    CurScope = getCurScope();
-    while (CurScope && !CurScope->isOpenMPDirectiveScope())
-      CurScope = CurScope->getParent();
-    isOpenMPLocal =
-      CurScope &&
-      isa<CapturedDecl>(D->getDeclContext()) &&
-      static_cast<DeclContext *>(
-        CurScope->getFnParent()->getEntity())->Encloses(D->getDeclContext());
-  }
-  return isOpenMPLocal;
-}
-
-DSAStackTy::DSAVarData DSAStackTy::getTopDSA(VarDecl *D) {
-  DSAVarData DVar;
-
-  // OpenMP [2.9.1.1, Data-sharing Attribute Rules for Variables Referenced
-  // in a Construct, C/C++, predetermined, p.1]
-  //  Variables appearing in threadprivate directives are threadprivate.
-  if (D->getTLSKind() != VarDecl::TLS_None) {
-    DVar.CKind = OMPC_threadprivate;
-    return DVar;
-  }
-  if (Stack[0].SharingMap.count(D)) {
-    DVar.RefExpr = Stack[0].SharingMap[D].RefExpr;
-    DVar.CKind = OMPC_threadprivate;
-    return DVar;
-  }
-
-  // OpenMP [2.9.1.1, Data-sharing Attribute Rules for Variables Referenced
-  // in a Construct, C/C++, predetermined, p.1]
-  // Variables with automatic storage duration that are declared in a scope
-  // inside the construct are private.
-  if (isOpenMPLocal(D) && D->isLocalVarDecl() &&
-      (D->getStorageClass() == SC_Auto ||
-       D->getStorageClass() == SC_None)) {
-    DVar.CKind = OMPC_private;
-    return DVar;
-  }
-
-  // OpenMP [2.9.1.1, Data-sharing Attribute Rules for Variables Referenced
-  // in a Construct, C/C++, predetermined, p.4]
-  //  Static data memebers are shared.
-  if (D->isStaticDataMember()) {
-    // Variables with const-qualified type having no mutable member may be
-    // listed in a firstprivate clause, even if they are static data members.
-    // TODO:
-    DVar.CKind = OMPC_shared;
-    return DVar;
-  }
-
-  QualType Type = D->getType().getNonReferenceType().getCanonicalType();
-  bool IsConstant = Type.isConstant(Actions.getASTContext());
-  while (Type->isArrayType()) {
-    QualType ElemType = cast<ArrayType>(Type.getTypePtr())->getElementType();
-    Type = ElemType.getNonReferenceType().getCanonicalType();
-  }
-  // OpenMP [2.9.1.1, Data-sharing Attribute Rules for Variables Referenced
-  // in a Construct, C/C++, predetermined, p.6]
-  //  Variables with const qualified type having no mutable member are
-  //  shared.
-  CXXRecordDecl *RD = Actions.getLangOpts().CPlusPlus ?
-                                Type->getAsCXXRecordDecl() : 0;
-  if (IsConstant &&
-      !(Actions.getLangOpts().CPlusPlus && RD && RD->hasMutableFields())) {
-    // Variables with const-qualified type having no mutable member may be
-    // listed in a firstprivate clause, even if they are static data members.
-    // TODO
-    DVar.CKind = OMPC_shared;
-    return DVar;
-  }
-
-  // OpenMP [2.9.1.1, Data-sharing Attribute Rules for Variables Referenced
-  // in a Construct, C/C++, predetermined, p.7]
-  //  Variables with static storage duration that are declared in a scope
-  //  inside the construct are shared.
-  if (isOpenMPLocal(D) && D->isStaticLocal()) {
-    DVar.CKind = OMPC_shared;
-    return DVar;
-  }
-
-  // Explicitly specified attributes and local variables with predetermined
-  // attributes.
-  if (Stack.back().SharingMap.count(D)) {
-    DVar.RefExpr = Stack.back().SharingMap[D].RefExpr;
-    DVar.CKind = Stack.back().SharingMap[D].Attributes;
-  }
-
-  return DVar;
-}
-
-DSAStackTy::DSAVarData DSAStackTy::getImplicitDSA(VarDecl *D) {
-  return getDSA(Stack.rbegin() + 1, D);
-}
-
-void Sema::InitDataSharingAttributesStack() {
-  VarDataSharingAttributesStack = new DSAStackTy(*this);
-}
-
-#define DSAStack static_cast<DSAStackTy *>(VarDataSharingAttributesStack)
-
-void Sema::DestroyDataSharingAttributesStack() {
-  delete DSAStack;
-}
-
-void Sema::StartOpenMPDSABlock(OpenMPDirectiveKind DKind,
-                               const DeclarationNameInfo &DirName,
-                               Scope *CurScope) {
-  DSAStack->push(DKind, DirName, CurScope);
-  PushExpressionEvaluationContext(PotentiallyEvaluated);
-}
-
-void Sema::EndOpenMPDSABlock(Stmt *CurDirective) {
-  DSAStack->pop();
-  DiscardCleanupsInEvaluationContext();
-  PopExpressionEvaluationContext();
-}
-
 namespace {
 
 class VarDeclFilterCCC : public CorrectionCandidateCallback {
@@ -449,7 +130,6 @@ ExprResult Sema::ActOnOpenMPIdExpression(Scope *CurScope,
 
   QualType ExprType = VD->getType().getNonReferenceType();
   ExprResult DE = BuildDeclRefExpr(VD, ExprType, VK_RValue, Id.getLoc());
-  DSAStack->addDSA(VD, cast<DeclRefExpr>(DE.get()), OMPC_threadprivate);
   return DE;
 }
 
@@ -512,93 +192,12 @@ OMPThreadPrivateDecl *Sema::CheckOMPThreadPrivateDecl(
                                                Loc, Vars);
 }
 
-namespace {
-class DSAAttrChecker : public StmtVisitor<DSAAttrChecker, void> {
-  DSAStackTy *Stack;
-  Sema &Actions;
-  bool ErrorFound;
-  CapturedStmt *CS;
-public:
-  void VisitDeclRefExpr(DeclRefExpr *E) {
-    if(VarDecl *VD = dyn_cast<VarDecl>(E->getDecl())) {
-      if (VD->isImplicit() && VD->hasAttr<UnusedAttr>()) return;
-      // Skip internally declared variables.
-      if (VD->isLocalVarDecl() && !CS->capturesVariable(VD)) return;
-
-      SourceLocation ELoc = E->getExprLoc();
-
-      OpenMPDirectiveKind DKind = Stack->getCurrentDirective();
-      DSAStackTy::DSAVarData DVar = Stack->getTopDSA(VD);
-      if (DVar.CKind != OMPC_unknown) {
-        if (DKind == OMPD_task && DVar.CKind != OMPC_shared &&
-            DVar.CKind != OMPC_threadprivate && !DVar.RefExpr)
-          // TODO: should be marked as firstprivate.
-          ;
-        return;
-      }
-      // The default(none) clause requires that each variable that is referenced
-      // in the construct, and does not have a predetermined data-sharing
-      // attribute, must have its data-sharing attribute explicitly determined
-      // by being listed in a data-sharing attribute clause.
-      if (DVar.CKind == OMPC_unknown && Stack->getDefaultDSA() == DSA_none &&
-          (DKind == OMPD_parallel || DKind == OMPD_task)) {
-        ErrorFound = true;
-        Actions.Diag(ELoc, diag::err_omp_no_dsa_for_variable) << VD;
-        return;
-      }
-
-      // OpenMP [2.9.3.6, Restrictions, p.2]
-      //  A list item that appears in a reduction clause of the innermost
-      //  enclosing worksharing or parallel construct may not be accessed in an
-      //  explicit task.
-      // TODO:
-
-      // Define implicit data-sharing attributes for task.
-      DVar = Stack->getImplicitDSA(VD);
-      if (DKind == OMPD_task && DVar.CKind != OMPC_shared) {
-        // TODO: should be marked as firstprivate.
-      }
-    }
-  }
-  void VisitOMPExecutableDirective(OMPExecutableDirective *S) {
-    for (ArrayRef<OMPClause *>::iterator I = S->clauses().begin(),
-                                         E = S->clauses().end();
-         I != E; ++I)
-      if (OMPClause *C = *I)
-        for (StmtRange R = C->children(); R; ++R)
-          if (Stmt *Child = *R)
-            Visit(Child);
-  }
-  void VisitStmt(Stmt *S) {
-    for (Stmt::child_iterator I = S->child_begin(), E = S->child_end();
-         I != E; ++I)
-      if (Stmt *Child = *I)
-        if (!isa<OMPExecutableDirective>(Child))
-          Visit(Child);
-    }
-
-  bool isErrorFound() { return ErrorFound; }
-
-  DSAAttrChecker(DSAStackTy *S, Sema &Actions, CapturedStmt *CS)
-    : Stack(S), Actions(Actions), ErrorFound(false), CS(CS) { }
-};
-}
-
 StmtResult Sema::ActOnOpenMPExecutableDirective(OpenMPDirectiveKind Kind,
                                                 ArrayRef<OMPClause *> Clauses,
                                                 Stmt *AStmt,
                                                 SourceLocation StartLoc,
                                                 SourceLocation EndLoc) {
-  assert(AStmt && isa<CapturedStmt>(AStmt) && "Captured statement expected");
-
   StmtResult Res = StmtError();
-
-  // Check default data sharing attributes for referenced variables.
-  DSAAttrChecker DSAChecker(DSAStack, *this, cast<CapturedStmt>(AStmt));
-  DSAChecker.Visit(cast<CapturedStmt>(AStmt)->getCapturedStmt());
-  if (DSAChecker.isErrorFound())
-    return StmtError();
-
   switch (Kind) {
   case OMPD_parallel:
     Res = ActOnOpenMPParallelDirective(Clauses, AStmt, StartLoc, EndLoc);
@@ -632,12 +231,11 @@ OMPClause *Sema::ActOnOpenMPSimpleClause(OpenMPClauseKind Kind,
   OMPClause *Res = 0;
   switch (Kind) {
   case OMPC_default:
-    Res =
-      ActOnOpenMPDefaultClause(static_cast<OpenMPDefaultClauseKind>(Argument),
-                               ArgumentLoc, StartLoc, LParenLoc, EndLoc);
+    Res = ActOnOpenMPDefaultClause(
+                             static_cast<OpenMPDefaultClauseKind>(Argument),
+                             ArgumentLoc, StartLoc, LParenLoc, EndLoc);
     break;
   case OMPC_private:
-  case OMPC_shared:
   case OMPC_threadprivate:
   case OMPC_unknown:
   case NUM_OPENMP_CLAUSES:
@@ -674,16 +272,6 @@ OMPClause *Sema::ActOnOpenMPDefaultClause(OpenMPDefaultClauseKind Kind,
       << Values << getOpenMPClauseName(OMPC_default);
     return 0;
   }
-  switch (Kind) {
-  case OMPC_DEFAULT_none:
-    DSAStack->setDefaultDSANone();
-    break;
-  case OMPC_DEFAULT_shared:
-    DSAStack->setDefaultDSAShared();
-    break;
-  default:
-    break;
-  }
   return new (Context) OMPDefaultClause(Kind, KindKwLoc, StartLoc, LParenLoc,
                                         EndLoc);
 }
@@ -697,9 +285,6 @@ OMPClause *Sema::ActOnOpenMPVarListClause(OpenMPClauseKind Kind,
   switch (Kind) {
   case OMPC_private:
     Res = ActOnOpenMPPrivateClause(VarList, StartLoc, LParenLoc, EndLoc);
-    break;
-  case OMPC_shared:
-    Res = ActOnOpenMPSharedClause(VarList, StartLoc, LParenLoc, EndLoc);
     break;
   case OMPC_default:
   case OMPC_threadprivate:
@@ -811,29 +396,6 @@ OMPClause *Sema::ActOnOpenMPPrivateClause(ArrayRef<Expr *> VarList,
       }
     }
 
-    // OpenMP [2.9.1.1, Data-sharing Attribute Rules for Variables Referenced
-    // in a Construct]
-    //  Variables with the predetermined data-sharing attributes may not be
-    //  listed in data-sharing attributes clauses, except for the cases
-    //  listed below. For these exceptions only, listing a predetermined
-    //  variable in a data-sharing attribute clause is allowed and overrides
-    //  the variable's predetermined data-sharing attributes.
-    DSAStackTy::DSAVarData DVar = DSAStack->getTopDSA(VD);
-    if (DVar.CKind != OMPC_unknown && DVar.CKind != OMPC_private) {
-      Diag(ELoc, diag::err_omp_wrong_dsa)
-         << getOpenMPClauseName(DVar.CKind)
-         << getOpenMPClauseName(OMPC_private);
-      if (DVar.RefExpr) {
-        Diag(DVar.RefExpr->getExprLoc(), diag::note_omp_explicit_dsa)
-             << getOpenMPClauseName(DVar.CKind);
-      } else {
-        Diag(VD->getLocation(), diag::note_omp_predetermined_dsa)
-             << getOpenMPClauseName(DVar.CKind);
-      }
-      continue;
-    }
-
-    DSAStack->addDSA(VD, DE, OMPC_private);
     Vars.push_back(DE);
   }
 
@@ -842,65 +404,3 @@ OMPClause *Sema::ActOnOpenMPPrivateClause(ArrayRef<Expr *> VarList,
   return OMPPrivateClause::Create(Context, StartLoc, LParenLoc, EndLoc, Vars);
 }
 
-OMPClause *Sema::ActOnOpenMPSharedClause(ArrayRef<Expr *> VarList,
-                                         SourceLocation StartLoc,
-                                         SourceLocation LParenLoc,
-                                         SourceLocation EndLoc) {
-  SmallVector<Expr *, 8> Vars;
-  for (ArrayRef<Expr *>::iterator I = VarList.begin(), E = VarList.end();
-       I != E; ++I) {
-    if (*I && isa<DependentScopeDeclRefExpr>(*I)) {
-      // It will be analyzed later.
-      Vars.push_back(*I);
-      continue;
-    }
-
-    SourceLocation ELoc = (*I)->getExprLoc();
-    // OpenMP [2.1, C/C++]
-    //  A list item is a variable name.
-    // OpenMP  [2.9.3.4, Restrictions, p.1]
-    //  A variable that is part of another variable (as an array or
-    //  structure element) cannot appear in a private clause.
-    DeclRefExpr *DE = dyn_cast<DeclRefExpr>(*I);
-    if (!DE || !isa<VarDecl>(DE->getDecl())) {
-      Diag(ELoc, diag::err_omp_expected_var_name)
-        << (*I)->getSourceRange();
-      continue;
-    }
-    Decl *D = DE->getDecl();
-    VarDecl *VD = cast<VarDecl>(D);
-
-    QualType Type = VD->getType();
-    if (Type->isDependentType() || Type->isInstantiationDependentType()) {
-      // It will be analyzed later.
-      Vars.push_back(DE);
-      continue;
-    }
-
-    // OpenMP [2.9.1.1, Data-sharing Attribute Rules for Variables Referenced
-    // in a Construct]
-    //  Variables with the predetermined data-sharing attributes may not be
-    //  listed in data-sharing attributes clauses, except for the cases
-    //  listed below. For these exceptions only, listing a predetermined
-    //  variable in a data-sharing attribute clause is allowed and overrides
-    //  the variable's predetermined data-sharing attributes.
-    DSAStackTy::DSAVarData DVar = DSAStack->getTopDSA(VD);
-    if (DVar.CKind != OMPC_unknown && DVar.CKind != OMPC_shared && DVar.RefExpr) {
-      Diag(ELoc, diag::err_omp_wrong_dsa)
-         << getOpenMPClauseName(DVar.CKind)
-         << getOpenMPClauseName(OMPC_shared);
-      Diag(DVar.RefExpr->getExprLoc(), diag::note_omp_explicit_dsa)
-           << getOpenMPClauseName(DVar.CKind);
-      continue;
-    }
-
-    DSAStack->addDSA(VD, DE, OMPC_shared);
-    Vars.push_back(DE);
-  }
-
-  if (Vars.empty()) return 0;
-
-  return OMPSharedClause::Create(Context, StartLoc, LParenLoc, EndLoc, Vars);
-}
-
-#undef DSAStack

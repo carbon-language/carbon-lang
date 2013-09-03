@@ -136,10 +136,8 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
   case Stmt::SwitchStmtClass:   EmitSwitchStmt(cast<SwitchStmt>(*S));     break;
   case Stmt::GCCAsmStmtClass:   // Intentional fall-through.
   case Stmt::MSAsmStmtClass:    EmitAsmStmt(cast<AsmStmt>(*S));           break;
-  case Stmt::CapturedStmtClass: {
-    const CapturedStmt *CS = cast<CapturedStmt>(S);
-    EmitCapturedStmt(*CS, CS->getCapturedRegionKind());
-    }
+  case Stmt::CapturedStmtClass:
+    EmitCapturedStmt(cast<CapturedStmt>(*S), CR_Default);
     break;
   case Stmt::ObjCAtTryStmtClass:
     EmitObjCAtTryStmt(cast<ObjCAtTryStmt>(*S));

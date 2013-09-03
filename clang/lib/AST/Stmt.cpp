@@ -1111,16 +1111,6 @@ bool CapturedStmt::capturesVariable(const VarDecl *Var) const {
   return false;
 }
 
-StmtRange OMPClause::children() {
-  switch(getClauseKind()) {
-  default : break;
-#define OPENMP_CLAUSE(Name, Class)                                       \
-  case OMPC_ ## Name : return static_cast<Class *>(this)->children();
-#include "clang/Basic/OpenMPKinds.def"
-  }
-  llvm_unreachable("unknown OMPClause");
-}
-
 OMPPrivateClause *OMPPrivateClause::Create(const ASTContext &C,
                                            SourceLocation StartLoc,
                                            SourceLocation LParenLoc,
@@ -1139,26 +1129,6 @@ OMPPrivateClause *OMPPrivateClause::CreateEmpty(const ASTContext &C,
   void *Mem = C.Allocate(sizeof(OMPPrivateClause) + sizeof(Expr *) * N,
                          llvm::alignOf<OMPPrivateClause>());
   return new (Mem) OMPPrivateClause(N);
-}
-
-OMPSharedClause *OMPSharedClause::Create(const ASTContext &C,
-                                         SourceLocation StartLoc,
-                                         SourceLocation LParenLoc,
-                                         SourceLocation EndLoc,
-                                         ArrayRef<Expr *> VL) {
-  void *Mem = C.Allocate(sizeof(OMPSharedClause) + sizeof(Expr *) * VL.size(),
-                         llvm::alignOf<OMPSharedClause>());
-  OMPSharedClause *Clause = new (Mem) OMPSharedClause(StartLoc, LParenLoc,
-                                                      EndLoc, VL.size());
-  Clause->setVarRefs(VL);
-  return Clause;
-}
-
-OMPSharedClause *OMPSharedClause::CreateEmpty(const ASTContext &C,
-                                              unsigned N) {
-  void *Mem = C.Allocate(sizeof(OMPSharedClause) + sizeof(Expr *) * N,
-                         llvm::alignOf<OMPSharedClause>());
-  return new (Mem) OMPSharedClause(N);
 }
 
 void OMPExecutableDirective::setClauses(ArrayRef<OMPClause *> Clauses) {

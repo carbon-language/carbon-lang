@@ -90,8 +90,7 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
     AccessCheckingSFINAE(false), InNonInstantiationSFINAEContext(false),
     NonInstantiationEntries(0), ArgumentPackSubstitutionIndex(-1),
     CurrentInstantiationScope(0), TyposCorrected(0),
-    AnalysisWarnings(*this), VarDataSharingAttributesStack(0), CurScope(0),
-    Ident_super(0), Ident___float128(0)
+    AnalysisWarnings(*this), CurScope(0), Ident_super(0), Ident___float128(0)
 {
   TUScope = 0;
 
@@ -114,9 +113,6 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
                                           false, 0, false));
 
   FunctionScopes.push_back(new FunctionScopeInfo(Diags));
-
-  // Initilization of data sharing attributes stack for OpenMP
-  InitDataSharingAttributesStack();
 }
 
 void Sema::Initialize() {
@@ -203,9 +199,6 @@ Sema::~Sema() {
   // If Sema's ExternalSource is the multiplexer - we own it.
   if (isMultiplexExternalSource)
     delete ExternalSource;
-
-  // Destroys data sharing attributes stack for OpenMP
-  DestroyDataSharingAttributesStack();
 }
 
 /// makeUnavailableInSystemHeader - There is an error in the current

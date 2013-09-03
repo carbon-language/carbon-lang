@@ -272,9 +272,6 @@ void OMPClauseProfiler::VisitOMPDefaultClause(const OMPDefaultClause *C) { }
 void OMPClauseProfiler::VisitOMPPrivateClause(const OMPPrivateClause *C) {
   PROCESS_OMP_CLAUSE_LIST(OMPPrivateClause, C)
 }
-void OMPClauseProfiler::VisitOMPSharedClause(const OMPSharedClause *C) {
-  PROCESS_OMP_CLAUSE_LIST(OMPSharedClause, C)
-}
 #undef PROCESS_OMP_CLAUSE_LIST
 }
 
