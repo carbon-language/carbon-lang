@@ -483,90 +483,17 @@ encodeCompactUnwindRegistersWithFrame(unsigned SavedRegs[CU_NUM_SAVED_REGS],
   return RegEnc;
 }
 
-uint32_t X86FrameLowering::getCompactUnwindEncoding(MachineFunction &MF) const {
-  const X86RegisterInfo *RegInfo = TM.getRegisterInfo();
-  unsigned FramePtr = RegInfo->getFrameRegister(MF);
-  unsigned StackPtr = RegInfo->getStackRegister();
-
-  bool Is64Bit = STI.is64Bit();
-  bool HasFP = hasFP(MF);
-
-  unsigned SavedRegs[CU_NUM_SAVED_REGS] = { 0, 0, 0, 0, 0, 0 };
-  unsigned SavedRegIdx = 0;
-
-  unsigned OffsetSize = (Is64Bit ? 8 : 4);
-
-  unsigned PushInstr = (Is64Bit ? X86::PUSH64r : X86::PUSH32r);
-  unsigned PushInstrSize = 1;
-  unsigned MoveInstr = (Is64Bit ? X86::MOV64rr : X86::MOV32rr);
-  unsigned MoveInstrSize = (Is64Bit ? 3 : 2);
-  unsigned SubtractInstrIdx = (Is64Bit ? 3 : 2);
-
-  unsigned StackDivide = (Is64Bit ? 8 : 4);
-
-  unsigned InstrOffset = 0;
-  unsigned StackAdjust = 0;
-  unsigned StackSize = 0;
-
-  MachineBasicBlock &MBB = MF.front(); // Prologue is in entry BB.
-  bool ExpectEnd = false;
-  for (MachineBasicBlock::iterator
-         MBBI = MBB.begin(), MBBE = MBB.end(); MBBI != MBBE; ++MBBI) {
-    MachineInstr &MI = *MBBI;
-    unsigned Opc = MI.getOpcode();
-    if (Opc == X86::PROLOG_LABEL) continue;
-    if (!MI.getFlag(MachineInstr::FrameSetup)) break;
-
-    // We don't exect any more prolog instructions.
-    if (ExpectEnd) return CU::UNWIND_MODE_DWARF;
-
-    if (Opc == PushInstr) {
-      // If there are too many saved registers, we cannot use compact encoding.
-      if (SavedRegIdx >= CU_NUM_SAVED_REGS) return CU::UNWIND_MODE_DWARF;
-
-      unsigned Reg = MI.getOperand(0).getReg();
-      if (Reg == (Is64Bit ? X86::RAX : X86::EAX)) {
-        ExpectEnd = true;
-        continue;
-      }
-
-      SavedRegs[SavedRegIdx++] = MI.getOperand(0).getReg();
-      StackAdjust += OffsetSize;
-      InstrOffset += PushInstrSize;
-    } else if (Opc == MoveInstr) {
-      unsigned SrcReg = MI.getOperand(1).getReg();
-      unsigned DstReg = MI.getOperand(0).getReg();
-
-      if (DstReg != FramePtr || SrcReg != StackPtr)
-        return CU::UNWIND_MODE_DWARF;
-
-      StackAdjust = 0;
-      memset(SavedRegs, 0, sizeof(SavedRegs));
-      SavedRegIdx = 0;
-      InstrOffset += MoveInstrSize;
-    } else if (Opc == X86::SUB64ri32 || Opc == X86::SUB64ri8 ||
-               Opc == X86::SUB32ri || Opc == X86::SUB32ri8) {
-      if (StackSize)
-        // We already have a stack size.
-        return CU::UNWIND_MODE_DWARF;
-
-      if (!MI.getOperand(0).isReg() ||
-          MI.getOperand(0).getReg() != MI.getOperand(1).getReg() ||
-          MI.getOperand(0).getReg() != StackPtr || !MI.getOperand(2).isImm())
-        // We need this to be a stack adjustment pointer. Something like:
-        //
-        //   %RSP<def> = SUB64ri8 %RSP, 48
-        return CU::UNWIND_MODE_DWARF;
-
-      StackSize = MI.getOperand(2).getImm() / StackDivide;
-      SubtractInstrIdx += InstrOffset;
-      ExpectEnd = true;
-    }
-  }
-
+static uint32_t
+doCompactUnwindEncoding(unsigned SavedRegs[CU_NUM_SAVED_REGS],
+                        unsigned StackSize, unsigned StackAdjust,
+                        unsigned SubtractInstrIdx, unsigned SavedRegIdx,
+                        bool Is64Bit, bool HasFP) {
   // Encode that we are using EBP/RBP as the frame pointer.
+  unsigned StackDivide = (Is64Bit ? 8 : 4);
   uint32_t CompactUnwindEncoding = 0;
+
   StackAdjust /= StackDivide;
+
   if (HasFP) {
     if ((StackAdjust & 0xFF) != StackAdjust)
       // Offset was too big for compact encoding.
@@ -620,6 +547,90 @@ uint32_t X86FrameLowering::getCompactUnwindEncoding(MachineFunction &MF) const {
   }
 
   return CompactUnwindEncoding;
+}
+
+uint32_t X86FrameLowering::getCompactUnwindEncoding(MachineFunction &MF) const {
+  const X86RegisterInfo *RegInfo = TM.getRegisterInfo();
+  unsigned FramePtr = RegInfo->getFrameRegister(MF);
+  unsigned StackPtr = RegInfo->getStackRegister();
+
+  bool Is64Bit = STI.is64Bit();
+
+  unsigned SavedRegs[CU_NUM_SAVED_REGS] = { 0, 0, 0, 0, 0, 0 };
+  unsigned SavedRegIdx = 0;
+
+  unsigned OffsetSize = (Is64Bit ? 8 : 4);
+
+  unsigned PushInstr = (Is64Bit ? X86::PUSH64r : X86::PUSH32r);
+  unsigned PushInstrSize = 1;
+  unsigned MoveInstr = (Is64Bit ? X86::MOV64rr : X86::MOV32rr);
+  unsigned MoveInstrSize = (Is64Bit ? 3 : 2);
+  unsigned SubtractInstrIdx = (Is64Bit ? 3 : 2);
+
+  unsigned StackDivide = (Is64Bit ? 8 : 4);
+
+  unsigned InstrOffset = 0;
+  unsigned StackAdjust = 0;
+  unsigned StackSize = 0;
+
+  bool ExpectEnd = false;
+  for (MachineBasicBlock::iterator MBBI = MF.front().begin(),
+         MBBE = MF.front().end(); MBBI != MBBE; ++MBBI) {
+    MachineInstr &MI = *MBBI;
+    unsigned Opc = MI.getOpcode();
+    if (Opc == X86::PROLOG_LABEL) continue;
+    if (!MI.getFlag(MachineInstr::FrameSetup)) break;
+
+    // We don't exect any more prolog instructions.
+    if (ExpectEnd) return CU::UNWIND_MODE_DWARF;
+
+    if (Opc == PushInstr) {
+      // If there are too many saved registers, we cannot use compact encoding.
+      if (SavedRegIdx >= CU_NUM_SAVED_REGS) return CU::UNWIND_MODE_DWARF;
+
+      unsigned Reg = MI.getOperand(0).getReg();
+      if (Reg == (Is64Bit ? X86::RAX : X86::EAX)) {
+        ExpectEnd = true;
+        continue;
+      }
+
+      SavedRegs[SavedRegIdx++] = MI.getOperand(0).getReg();
+      StackAdjust += OffsetSize;
+      InstrOffset += PushInstrSize;
+    } else if (Opc == MoveInstr) {
+      unsigned SrcReg = MI.getOperand(1).getReg();
+      unsigned DstReg = MI.getOperand(0).getReg();
+
+      if (DstReg != FramePtr || SrcReg != StackPtr)
+        return CU::UNWIND_MODE_DWARF;
+
+      StackAdjust = 0;
+      memset(SavedRegs, 0, sizeof(SavedRegs));
+      SavedRegIdx = 0;
+      InstrOffset += MoveInstrSize;
+    } else if (Opc == X86::SUB64ri32 || Opc == X86::SUB64ri8 ||
+               Opc == X86::SUB32ri || Opc == X86::SUB32ri8) {
+      if (StackSize)
+        // We already have a stack size.
+        return CU::UNWIND_MODE_DWARF;
+
+      if (!MI.getOperand(0).isReg() ||
+          MI.getOperand(0).getReg() != MI.getOperand(1).getReg() ||
+          MI.getOperand(0).getReg() != StackPtr || !MI.getOperand(2).isImm())
+        // We need this to be a stack adjustment pointer. Something like:
+        //
+        //   %RSP<def> = SUB64ri8 %RSP, 48
+        return CU::UNWIND_MODE_DWARF;
+
+      StackSize = MI.getOperand(2).getImm() / StackDivide;
+      SubtractInstrIdx += InstrOffset;
+      ExpectEnd = true;
+    }
+  }
+
+  return doCompactUnwindEncoding(SavedRegs, StackSize, StackAdjust,
+                                 SubtractInstrIdx, SavedRegIdx,
+                                 Is64Bit, hasFP(MF));
 }
 
 /// usesTheStack - This function checks if any of the users of EFLAGS
