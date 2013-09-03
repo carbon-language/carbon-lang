@@ -154,12 +154,13 @@ void X86MachObjectWriter::RecordX86_64Relocation(MachObjectWriter *Writer,
     // Neither symbol can be modified.
     if (Target.getSymA()->getKind() != MCSymbolRefExpr::VK_None ||
         Target.getSymB()->getKind() != MCSymbolRefExpr::VK_None)
-      report_fatal_error("unsupported relocation of modified symbol");
+      report_fatal_error("unsupported relocation of modified symbol", false);
 
     // We don't support PCrel relocations of differences. Darwin 'as' doesn't
     // implement most of these correctly.
     if (IsPCRel)
-      report_fatal_error("unsupported pc-relative relocation of difference");
+      report_fatal_error("unsupported pc-relative relocation of difference",
+                         false);
 
     // The support for the situation where one or both of the symbols would
     // require a local relocation is handled just like if the symbols were
@@ -172,12 +173,13 @@ void X86MachObjectWriter::RecordX86_64Relocation(MachObjectWriter *Writer,
     // single SIGNED relocation); reject it for now.  Except the case where both
     // symbols don't have a base, equal but both NULL.
     if (A_Base == B_Base && A_Base)
-      report_fatal_error("unsupported relocation with identical base");
+      report_fatal_error("unsupported relocation with identical base", false);
 
     // A subtraction expression where both symbols are undefined is a
     // non-relocatable expression.
     if (A->isUndefined() && B->isUndefined())
-      report_fatal_error("unsupported relocation with subtraction expression");
+      report_fatal_error("unsupported relocation with subtraction expression",
+                         false);
 
     Value += Writer->getSymbolAddress(&A_SD, Layout) -
       (A_Base == NULL ? 0 : Writer->getSymbolAddress(A_Base, Layout));
@@ -256,11 +258,11 @@ void X86MachObjectWriter::RecordX86_64Relocation(MachObjectWriter *Writer,
         return;
       } else {
         report_fatal_error("unsupported relocation of variable '" +
-                           Symbol->getName() + "'");
+                           Symbol->getName() + "'", false);
       }
     } else {
       report_fatal_error("unsupported relocation of undefined symbol '" +
-                         Symbol->getName() + "'");
+                         Symbol->getName() + "'", false);
     }
 
     MCSymbolRefExpr::VariantKind Modifier = Target.getSymA()->getKind();
@@ -277,7 +279,8 @@ void X86MachObjectWriter::RecordX86_64Relocation(MachObjectWriter *Writer,
         }  else if (Modifier == MCSymbolRefExpr::VK_TLVP) {
           Type = MachO::X86_64_RELOC_TLV;
         }  else if (Modifier != MCSymbolRefExpr::VK_None) {
-          report_fatal_error("unsupported symbol modifier in relocation");
+          report_fatal_error("unsupported symbol modifier in relocation",
+                             false);
         } else {
           Type = MachO::X86_64_RELOC_SIGNED;
 
@@ -304,7 +307,7 @@ void X86MachObjectWriter::RecordX86_64Relocation(MachObjectWriter *Writer,
       } else {
         if (Modifier != MCSymbolRefExpr::VK_None)
           report_fatal_error("unsupported symbol modifier in branch "
-                             "relocation");
+                             "relocation", false);
 
         Type = MachO::X86_64_RELOC_BRANCH;
       }
@@ -319,15 +322,16 @@ void X86MachObjectWriter::RecordX86_64Relocation(MachObjectWriter *Writer,
         Type = MachO::X86_64_RELOC_GOT;
         IsPCRel = 1;
       } else if (Modifier == MCSymbolRefExpr::VK_TLVP) {
-        report_fatal_error("TLVP symbol modifier should have been rip-rel");
+        report_fatal_error("TLVP symbol modifier should have been rip-rel",
+                           false);
       } else if (Modifier != MCSymbolRefExpr::VK_None)
-        report_fatal_error("unsupported symbol modifier in relocation");
+        report_fatal_error("unsupported symbol modifier in relocation", false);
       else {
         Type = MachO::X86_64_RELOC_UNSIGNED;
         unsigned Kind = Fixup.getKind();
         if (Kind == X86::reloc_signed_4byte)
           report_fatal_error("32-bit absolute addressing is not supported in "
-                             "64-bit mode");
+                             "64-bit mode", false);
       }
     }
   }
@@ -364,7 +368,8 @@ bool X86MachObjectWriter::RecordScatteredRelocation(MachObjectWriter *Writer,
 
   if (!A_SD->getFragment())
     report_fatal_error("symbol '" + A->getName() +
-                       "' can not be undefined in a subtraction expression");
+                       "' can not be undefined in a subtraction expression",
+                       false);
 
   uint32_t Value = Writer->getSymbolAddress(A_SD, Layout);
   uint64_t SecAddr = Writer->getSectionAddress(A_SD->getFragment()->getParent());
@@ -376,7 +381,8 @@ bool X86MachObjectWriter::RecordScatteredRelocation(MachObjectWriter *Writer,
 
     if (!B_SD->getFragment())
       report_fatal_error("symbol '" + B->getSymbol().getName() +
-                         "' can not be undefined in a subtraction expression");
+                         "' can not be undefined in a subtraction expression",
+                         false);
 
     // Select the appropriate difference relocation type.
     //
