@@ -1,0 +1,9 @@
+# REQUIRES: debug
+# Verify that entry atom will not be dead-stripped.
+
+# RUN: yaml2obj %p/Inputs/main.obj.yaml > %t.obj
+# RUN: lld -flavor link /mllvm -debug-only=WriterPECOFF /out:%t.exe \
+# RUN:   /subsystem:console /entry:_main /force -- %t.obj >& %t.log
+# RUN: FileCheck %s < %t.log
+
+CHECK: : _main

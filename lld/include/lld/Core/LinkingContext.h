@@ -184,7 +184,9 @@ public:
   // Set the entry symbol name. You may also need to call addDeadStripRoot() for
   // the symbol if your platform supports dead-stripping, so that the symbol
   // will not be removed from the output.
-  virtual void setEntrySymbolName(StringRef name) {
+  void setEntrySymbolName(StringRef name) {
+    // Entry function have to be resolved as an undefined symbol.
+    addInitialUndefinedSymbol(name);
     _entrySymbolName = name;
   }
 
