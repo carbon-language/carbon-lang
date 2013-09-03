@@ -1176,6 +1176,98 @@ static bool shouldSwapCmpOperands(SDValue Op0, SDValue Op1,
   return false;
 }
 
+// Check whether the CC value produced by TEST UNDER MASK is descriptive
+// enough to handle an AND with Mask followed by a comparison of type Opcode
+// with CmpVal.  CCMask says which comparison result is being tested and
+// BitSize is the number of bits in the operands.  Return the CC mask that
+// should be used for the TEST UNDER MASK result, or 0 if the condition is
+// too complex.
+static unsigned getTestUnderMaskCond(unsigned BitSize, unsigned Opcode,
+                                     unsigned CCMask, uint64_t Mask,
+                                     uint64_t CmpVal) {
+  assert(Mask != 0 && "ANDs with zero should have been removed by now");
+
+  // Work out the masks for the lowest and highest bits.
+  unsigned HighShift = 63 - countLeadingZeros(Mask);
+  uint64_t High = uint64_t(1) << HighShift;
+  uint64_t Low = uint64_t(1) << countTrailingZeros(Mask);
+
+  // Signed ordered comparisons are effectively unsigned if the sign
+  // bit is dropped.
+  bool EffectivelyUnsigned = (Opcode == SystemZISD::UCMP
+                              || HighShift < BitSize - 1);
+
+  // Check for equality comparisons with 0, or the equivalent.
+  if (CmpVal == 0) {
+    if (CCMask == SystemZ::CCMASK_CMP_EQ)
+      return SystemZ::CCMASK_TM_ALL_0;
+    if (CCMask == SystemZ::CCMASK_CMP_NE)
+      return SystemZ::CCMASK_TM_SOME_1;
+  }
+  if (EffectivelyUnsigned && CmpVal <= Low) {
+    if (CCMask == SystemZ::CCMASK_CMP_LT)
+      return SystemZ::CCMASK_TM_ALL_0;
+    if (CCMask == SystemZ::CCMASK_CMP_GE)
+      return SystemZ::CCMASK_TM_SOME_1;
+  }
+  if (EffectivelyUnsigned && CmpVal < Low) {
+    if (CCMask == SystemZ::CCMASK_CMP_LE)
+      return SystemZ::CCMASK_TM_ALL_0;
+    if (CCMask == SystemZ::CCMASK_CMP_GT)
+      return SystemZ::CCMASK_TM_SOME_1;
+  }
+
+  // Check for equality comparisons with the mask, or the equivalent.
+  if (CmpVal == Mask) {
+    if (CCMask == SystemZ::CCMASK_CMP_EQ)
+      return SystemZ::CCMASK_TM_ALL_1;
+    if (CCMask == SystemZ::CCMASK_CMP_NE)
+      return SystemZ::CCMASK_TM_SOME_0;
+  }
+  if (EffectivelyUnsigned && CmpVal >= Mask - Low && CmpVal < Mask) {
+    if (CCMask == SystemZ::CCMASK_CMP_GT)
+      return SystemZ::CCMASK_TM_ALL_1;
+    if (CCMask == SystemZ::CCMASK_CMP_LE)
+      return SystemZ::CCMASK_TM_SOME_0;
+  }
+  if (EffectivelyUnsigned && CmpVal > Mask - Low && CmpVal <= Mask) {
+    if (CCMask == SystemZ::CCMASK_CMP_GE)
+      return SystemZ::CCMASK_TM_ALL_1;
+    if (CCMask == SystemZ::CCMASK_CMP_LT)
+      return SystemZ::CCMASK_TM_SOME_0;
+  }
+
+  // Check for ordered comparisons with the top bit.
+  if (EffectivelyUnsigned && CmpVal >= Mask - High && CmpVal < High) {
+    if (CCMask == SystemZ::CCMASK_CMP_LE)
+      return SystemZ::CCMASK_TM_MSB_0;
+    if (CCMask == SystemZ::CCMASK_CMP_GT)
+      return SystemZ::CCMASK_TM_MSB_1;
+  }
+  if (EffectivelyUnsigned && CmpVal > Mask - High && CmpVal <= High) {
+    if (CCMask == SystemZ::CCMASK_CMP_LT)
+      return SystemZ::CCMASK_TM_MSB_0;
+    if (CCMask == SystemZ::CCMASK_CMP_GE)
+      return SystemZ::CCMASK_TM_MSB_1;
+  }
+
+  // If there are just two bits, we can do equality checks for Low and High
+  // as well.
+  if (Mask == Low + High) {
+    if (CCMask == SystemZ::CCMASK_CMP_EQ && CmpVal == Low)
+      return SystemZ::CCMASK_TM_MIXED_MSB_0;
+    if (CCMask == SystemZ::CCMASK_CMP_NE && CmpVal == Low)
+      return SystemZ::CCMASK_TM_MIXED_MSB_0 ^ SystemZ::CCMASK_ANY;
+    if (CCMask == SystemZ::CCMASK_CMP_EQ && CmpVal == High)
+      return SystemZ::CCMASK_TM_MIXED_MSB_1;
+    if (CCMask == SystemZ::CCMASK_CMP_NE && CmpVal == High)
+      return SystemZ::CCMASK_TM_MIXED_MSB_1 ^ SystemZ::CCMASK_ANY;
+  }
+
+  // Looks like we've exhausted our options.
+  return 0;
+}
+
 // See whether the comparison (Opcode CmpOp0, CmpOp1) can be implemented
 // as a TEST UNDER MASK instruction when the condition being tested is
 // as described by CCValid and CCMask.  Update the arguments with the
@@ -1183,12 +1275,9 @@ static bool shouldSwapCmpOperands(SDValue Op0, SDValue Op1,
 static void adjustForTestUnderMask(unsigned &Opcode, SDValue &CmpOp0,
                                    SDValue &CmpOp1, unsigned &CCValid,
                                    unsigned &CCMask) {
-  // For now we just handle equality and inequality with zero.
-  if (CCMask != SystemZ::CCMASK_CMP_EQ &&
-      (CCMask ^ CCValid) != SystemZ::CCMASK_CMP_EQ)
-    return;
+  // Check that we have a comparison with a constant.
   ConstantSDNode *ConstCmpOp1 = dyn_cast<ConstantSDNode>(CmpOp1);
-  if (!ConstCmpOp1 || ConstCmpOp1->getZExtValue() != 0)
+  if (!ConstCmpOp1)
     return;
 
   // Check whether the nonconstant input is an AND with a constant mask.
@@ -1206,14 +1295,20 @@ static void adjustForTestUnderMask(unsigned &Opcode, SDValue &CmpOp0,
       !SystemZ::isImmHL(MaskVal) && !SystemZ::isImmHH(MaskVal))
     return;
 
+  // Check whether the combination of mask, comparison value and comparison
+  // type are suitable.
+  unsigned BitSize = CmpOp0.getValueType().getSizeInBits();
+  unsigned NewCCMask = getTestUnderMaskCond(BitSize, Opcode, CCMask, MaskVal,
+                                            ConstCmpOp1->getZExtValue());
+  if (!NewCCMask)
+    return;
+
   // Go ahead and make the change.
   Opcode = SystemZISD::TM;
   CmpOp0 = AndOp0;
   CmpOp1 = AndOp1;
   CCValid = SystemZ::CCMASK_TM;
-  CCMask = (CCMask == SystemZ::CCMASK_CMP_EQ ?
-            SystemZ::CCMASK_TM_ALL_0 :
-            SystemZ::CCMASK_TM_ALL_0 ^ CCValid);
+  CCMask = NewCCMask;
 }
 
 // Return a target node that compares CmpOp0 with CmpOp1 and stores a

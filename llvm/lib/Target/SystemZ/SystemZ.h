@@ -62,6 +62,10 @@ namespace llvm {
     const unsigned CCMASK_TM_MIXED_MSB_0 = CCMASK_1;
     const unsigned CCMASK_TM_MIXED_MSB_1 = CCMASK_2;
     const unsigned CCMASK_TM_ALL_1       = CCMASK_3;
+    const unsigned CCMASK_TM_SOME_0      = CCMASK_TM_ALL_1 ^ CCMASK_ANY;
+    const unsigned CCMASK_TM_SOME_1      = CCMASK_TM_ALL_0 ^ CCMASK_ANY;
+    const unsigned CCMASK_TM_MSB_0       = CCMASK_0 | CCMASK_1;
+    const unsigned CCMASK_TM_MSB_1       = CCMASK_2 | CCMASK_3;
     const unsigned CCMASK_TM             = CCMASK_ANY;
 
     // Mask assignments for PFD.
