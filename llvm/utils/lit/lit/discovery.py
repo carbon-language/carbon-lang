@@ -2,6 +2,7 @@
 Test discovery functions.
 """
 
+import copy
 import os
 import sys
 
@@ -90,7 +91,7 @@ def getLocalConfig(ts, path_in_suite, litConfig, cache):
 
         # Otherwise, copy the current config and load the local configuration
         # file into it.
-        config = parent.clone()
+        config = copy.copy(parent)
         if litConfig.debug:
             litConfig.note('loading local config %r' % cfgpath)
         config.load_from_path(cfgpath, litConfig)

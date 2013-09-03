@@ -114,17 +114,6 @@ class TestingConfig:
         self.available_features = set(available_features)
         self.pipefail = pipefail
 
-    def clone(self):
-        # FIXME: Chain implementations?
-        #
-        # FIXME: Allow extra parameters?
-        return TestingConfig(self, self.name, self.suffixes, self.test_format,
-                             self.environment, self.substitutions,
-                             self.unsupported,
-                             self.test_exec_root, self.test_source_root,
-                             self.excludes, self.available_features,
-                             self.pipefail)
-
     def finish(self, litConfig):
         """finish() - Finish this config object, after loading is complete."""
 
