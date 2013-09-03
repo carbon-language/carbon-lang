@@ -295,13 +295,13 @@ struct StackVarDescr {
   uptr beg;
   uptr size;
   const char *name_pos;
-  s64 name_len;
+  uptr name_len;
 };
 
 bool DescribeAddressIfStack(uptr addr, uptr access_size) {
   AsanThread *t = FindThreadByStackAddress(addr);
   if (!t) return false;
-  const s64 kBufSize = 4095;
+  const uptr kBufSize = 4095;
   char buf[kBufSize];
   uptr offset = 0;
   uptr frame_pc = 0;
@@ -340,19 +340,19 @@ bool DescribeAddressIfStack(uptr addr, uptr access_size) {
   PrintStack(&alloca_stack);
   // Report the number of stack objects.
   char *p;
-  s64 n_objects = internal_simple_strtoll(frame_descr, &p, 10);
+  u64 n_objects = (uptr)internal_simple_strtoll(frame_descr, &p, 10);
   CHECK_GT(n_objects, 0);
   Printf("  This frame has %zu object(s):\n", n_objects);
 
   // Report all objects in this frame.
   InternalScopedBuffer<StackVarDescr> vars(n_objects);
-  for (s64 i = 0; i < n_objects; i++) {
-    s64 beg, size;
-    s64 len;
-    beg  = internal_simple_strtoll(p, &p, 10);
-    size = internal_simple_strtoll(p, &p, 10);
-    len  = internal_simple_strtoll(p, &p, 10);
-    if (beg <= 0 || size <= 0 || len < 0 || *p != ' ') {
+  for (uptr i = 0; i < n_objects; i++) {
+    uptr beg, size;
+    uptr len;
+    beg  = (uptr)internal_simple_strtoll(p, &p, 10);
+    size = (uptr)internal_simple_strtoll(p, &p, 10);
+    len  = (uptr)internal_simple_strtoll(p, &p, 10);
+    if (beg == 0 || size == 0 || *p != ' ') {
       Printf("AddressSanitizer can't parse the stack frame "
                  "descriptor: |%s|\n", frame_descr);
       break;
@@ -364,7 +364,7 @@ bool DescribeAddressIfStack(uptr addr, uptr access_size) {
     vars[i].name_len = len;
     p += len;
   }
-  for (s64 i = 0; i < n_objects; i++) {
+  for (uptr i = 0; i < n_objects; i++) {
     buf[0] = 0;
     internal_strncat(buf, vars[i].name_pos,
                      static_cast<uptr>(Min(kBufSize, vars[i].name_len)));
