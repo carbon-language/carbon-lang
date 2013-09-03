@@ -403,6 +403,30 @@ static bool IsDecimal(char c) {
   return c >= '0' && c <= '9';
 }
 
+static bool IsHex(char c) {
+  return (c >= '0' && c <= '9')
+      || (c >= 'a' && c <= 'f');
+}
+
+static uptr ReadHex(const char *p) {
+  uptr v = 0;
+  for (; IsHex(p[0]); p++) {
+    if (p[0] >= '0' && p[0] <= '9')
+      v = v * 16 + p[0] - '0';
+    else
+      v = v * 16 + p[0] - 'a' + 10;
+  }
+  return v;
+}
+
+static uptr ReadDecimal(const char *p) {
+  uptr v = 0;
+  for (; IsDecimal(p[0]); p++)
+    v = v * 10 + p[0] - '0';
+  return v;
+}
+
+
 bool MemoryMappingLayout::Next(uptr *start, uptr *end, uptr *offset,
                                char filename[], uptr filename_size,
                                uptr *protection) {
@@ -471,6 +495,30 @@ bool MemoryMappingLayout::GetObjectNameAndOffset(uptr addr, uptr *offset,
                                                  uptr *protection) {
   return IterateForObjectNameAndOffset(addr, offset, filename, filename_size,
                                        protection);
+}
+
+void GetMemoryProfile(fill_profile_f cb, uptr *stats, uptr stats_size) {
+  char *smaps = 0;
+  uptr smaps_cap = 0;
+  uptr smaps_len = ReadFileToBuffer("/proc/self/smaps",
+      &smaps, &smaps_cap, 64<<20);
+  uptr total = 0;
+  uptr start = 0;
+  bool file = false;
+  const char *pos = smaps;
+  while (pos < smaps + smaps_len) {
+    if (IsHex(pos[0])) {
+      start = ReadHex(pos);
+      for (; *pos != '/' && *pos > '\n'; pos++) {}
+      file = *pos == '/';
+    } else if (internal_strncmp(pos, "Rss:", 4) == 0) {
+      for (; *pos < '0' || *pos > '9'; pos++) {}
+      uptr rss = ReadDecimal(pos) * 1024;
+      cb(start, rss, file, stats, stats_size);
+    }
+    while (*pos++ != '\n') {}
+  }
+  UnmapOrDie(smaps, smaps_cap);
 }
 
 enum MutexState {
