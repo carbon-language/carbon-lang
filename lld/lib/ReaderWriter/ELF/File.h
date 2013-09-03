@@ -735,7 +735,7 @@ private:
   int64_t _ordinal;
 
   /// \brief the cached options relevant while reading the ELF File
-  bool _doStringsMerge : 1;
+  bool _doStringsMerge;
 };
 
 /// \brief All atoms are owned by a File. To add linker specific atoms

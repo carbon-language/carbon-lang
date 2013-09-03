@@ -98,8 +98,8 @@ public:
 private:
   mutable std::unique_ptr<llvm::MemoryBuffer> _buffer;
   std::string _file;
-  bool _isForceLoad : 1;
-  bool _asNeeded : 1;
+  bool _isForceLoad;
+  bool _asNeeded;
 };
 
 } // namespace lld
