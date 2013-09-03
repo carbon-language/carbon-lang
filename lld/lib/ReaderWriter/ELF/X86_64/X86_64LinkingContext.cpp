@@ -401,13 +401,14 @@ public:
   X86_64InitAtom(const File &f, StringRef function)
       : InitFiniAtom(f, ".init_array") {
 #ifndef NDEBUG
-    _name = "__init_fn";
+    _name = "__init_fn_";
     _name += function;
 #endif
   }
   virtual ArrayRef<uint8_t> rawContent() const {
     return ArrayRef<uint8_t>(x86_64InitFiniAtomContent, 8);
   }
+  virtual Alignment alignment() const { return Alignment(3); }
 };
 
 class X86_64FiniAtom : public InitFiniAtom {
@@ -422,6 +423,8 @@ public:
   virtual ArrayRef<uint8_t> rawContent() const {
     return ArrayRef<uint8_t>(x86_64InitFiniAtomContent, 8);
   }
+
+  virtual Alignment alignment() const { return Alignment(3); }
 };
 
 class X86_64InitFiniFile : public SimpleFile {
