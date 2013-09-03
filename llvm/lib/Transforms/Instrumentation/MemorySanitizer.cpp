@@ -1743,9 +1743,12 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
 
   void visitSelectInst(SelectInst& I) {
     IRBuilder<> IRB(&I);
-    setShadow(&I,  IRB.CreateSelect(I.getCondition(),
-              getShadow(I.getTrueValue()), getShadow(I.getFalseValue()),
-              "_msprop"));
+    // a = select b, c, d
+    // Sa = (sext Sb) | (select b, Sc, Sd)
+    Value *S = IRB.CreateSelect(I.getCondition(), getShadow(I.getTrueValue()),
+                                getShadow(I.getFalseValue()));
+    Value *S2 = IRB.CreateSExt(getShadow(I.getCondition()), S->getType());
+    setShadow(&I, IRB.CreateOr(S, S2, "_msprop"));
     if (MS.TrackOrigins) {
       // Origins are always i32, so any vector conditions must be flattened.
       // FIXME: consider tracking vector origins for app vectors?

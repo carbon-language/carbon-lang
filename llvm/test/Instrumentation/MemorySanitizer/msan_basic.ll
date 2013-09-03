@@ -260,6 +260,8 @@ entry:
 
 ; CHECK: @Select
 ; CHECK: select
+; CHECK-NEXT: sext i1 {{.*}} to i32
+; CHECK-NEXT: or i32
 ; CHECK-NEXT: select
 ; CHECK: ret i32
 
@@ -273,6 +275,13 @@ entry:
   %cond = select <8 x i1> %c, <8 x i16> %a, <8 x i16> %b
   ret <8 x i16> %cond
 }
+
+; CHECK: @SelectVector
+; CHECK: select <8 x i1>
+; CHECK-NEXT: sext <8 x i1> {{.*}} to <8 x i16>
+; CHECK-NEXT: or <8 x i16>
+; CHECK-NEXT: select <8 x i1>
+; CHECK: ret <8 x i16>
 
 ; CHECK-ORIGINS: @SelectVector
 ; CHECK-ORIGINS: bitcast <8 x i1> {{.*}} to i8
