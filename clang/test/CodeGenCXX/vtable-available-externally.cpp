@@ -2,18 +2,10 @@
 // RUN: FileCheck --check-prefix=CHECK-TEST1 %s < %t
 // RUN: FileCheck --check-prefix=CHECK-TEST2 %s < %t
 // RUN: FileCheck --check-prefix=CHECK-TEST5 %s < %t
-// RUN: FileCheck --check-prefix=CHECK-TEST7 %s < %t
 
 #include <typeinfo>
 
-// Test1::A's key function (f) is not defined in this translation
-// unit, but in order to devirtualize calls, we emit the v-table with
-// available_externally linkage.
-//
-// There's no real reason to do this to the RTTI, though.
-
-// CHECK-TEST1: @_ZTVN5Test11AE = available_externally
-// CHECK-TEST1: @_ZTIN5Test11AE = external constant i8*
+// CHECK-TEST1: @_ZTVN5Test11AE = external unnamed_addr constant
 namespace Test1 {
 
 struct A {
@@ -159,14 +151,4 @@ struct c11 : c10, c1{
 struct c28 : virtual c11{
   void f6 ();
 };
-
-// CHECK-TEST7-LABEL: define void @_ZN5Test79check_c28Ev
-// CHECK-TEST7: call void @_ZN5Test73c282f6Ev
-// CHECK-TEST7: ret void
-void check_c28 () {
-  c28 obj;
-  c11 *ptr = &obj;
-  ptr->f6 ();
-}
-
 }

@@ -148,13 +148,13 @@ void use_F() {
 // F<int> is an explicit template instantiation declaration without a
 // key function, so its vtable should have external linkage.
 // CHECK-DAG: @_ZTV1FIiE = external unnamed_addr constant
-// CHECK-OPT-DAG: @_ZTV1FIiE = available_externally unnamed_addr constant
+// CHECK-OPT-DAG: @_ZTV1FIiE = external unnamed_addr constant
 
 // E<int> is an explicit template instantiation declaration. It has a
 // key function that is not instantiated, so we should only reference
 // its vtable, not define it.
 // CHECK-DAG: @_ZTV1EIiE = external unnamed_addr constant
-// CHECK-OPT-DAG: @_ZTV1EIiE = available_externally unnamed_addr constant
+// CHECK-OPT-DAG: @_ZTV1EIiE = external unnamed_addr constant
 
 // The anonymous struct for e has no linkage, so the vtable should have
 // internal linkage.
@@ -202,17 +202,14 @@ void use_H() {
 }
 
 // I<int> has an explicit instantiation declaration and needs a VTT and
-// construction vtables. We emit the VTT available_externally, but point it at
-// internal construction vtables because there is no way to form a reference to
-// the real construction vtables.
+// construction vtables.
 
 // CHECK-DAG: @_ZTV1IIiE = external unnamed_addr constant
 // CHECK-DAG: @_ZTT1IIiE = external unnamed_addr constant
 // CHECK-NOT: @_ZTC1IIiE
 //
-// CHECK-OPT-DAG: @_ZTV1IIiE = available_externally unnamed_addr constant
-// CHECK-OPT-DAG: @_ZTT1IIiE = available_externally unnamed_addr constant {{.*}} @_ZTC1IIiE0_6VBase2
-// CHECK-OPT-DAG: @_ZTC1IIiE0_6VBase2 = internal unnamed_addr constant
+// CHECK-OPT-DAG: @_ZTV1IIiE = external unnamed_addr constant
+// CHECK-OPT-DAG: @_ZTT1IIiE = external unnamed_addr constant
 struct VBase1 { virtual void f(); }; struct VBase2 : virtual VBase1 {};
 template<typename T>
 struct I : VBase2 {};

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -I%S -triple=x86_64-apple-darwin10 -emit-llvm -O3 -o - | FileCheck %s
+// RUN: %clang_cc1 %s -I%S -triple=x86_64-apple-darwin10 -emit-llvm-only -O3
 
 // Check that we don't assert on this case.
 namespace Test1 {
@@ -56,15 +56,6 @@ struct C : A, B {
 
 static void f(B* b) {
   b->f();
-}
-
-// CHECK-LABEL: define void @_ZN5Test21fEv()
-// CHECK: call void @_ZN5Test21C1fEv
-// CHECK: ret void
-// CHECK-LABEL: define available_externally void @_ZThn16_N5Test21C1fEv
-void f() {
-  C c;
-  f(&c);
 }
 
 }

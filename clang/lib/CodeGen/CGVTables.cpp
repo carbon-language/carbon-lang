@@ -753,12 +753,7 @@ CodeGenModule::getVTableLinkage(const CXXRecordDecl *RD) {
     switch (keyFunction->getTemplateSpecializationKind()) {
       case TSK_Undeclared:
       case TSK_ExplicitSpecialization:
-        // When compiling with optimizations turned on, we emit all vtables,
-        // even if the key function is not defined in the current translation
-        // unit. If this is the case, use available_externally linkage.
-        if (!def && CodeGenOpts.OptimizationLevel)
-          return llvm::GlobalVariable::AvailableExternallyLinkage;
-
+        assert(def && "Should not have been asked to emit this");
         if (keyFunction->isInlined())
           return !Context.getLangOpts().AppleKext ?
                    llvm::GlobalVariable::LinkOnceODRLinkage :
@@ -777,9 +772,7 @@ CodeGenModule::getVTableLinkage(const CXXRecordDecl *RD) {
                  llvm::Function::InternalLinkage;
   
       case TSK_ExplicitInstantiationDeclaration:
-        return !Context.getLangOpts().AppleKext ?
-                 llvm::GlobalVariable::AvailableExternallyLinkage :
-                 llvm::Function::InternalLinkage;
+        llvm_unreachable("Should not have been asked to emit this");
     }
   }
 
@@ -795,7 +788,7 @@ CodeGenModule::getVTableLinkage(const CXXRecordDecl *RD) {
     return llvm::GlobalVariable::LinkOnceODRLinkage;
 
   case TSK_ExplicitInstantiationDeclaration:
-    return llvm::GlobalVariable::AvailableExternallyLinkage;
+    llvm_unreachable("Should not have been asked to emit this");
 
   case TSK_ExplicitInstantiationDefinition:
       return llvm::GlobalVariable::WeakODRLinkage;
@@ -897,16 +890,6 @@ bool CodeGenVTables::isVTableExternal(const CXXRecordDecl *RD) {
 /// we define that v-table?
 static bool shouldEmitVTableAtEndOfTranslationUnit(CodeGenModule &CGM,
                                                    const CXXRecordDecl *RD) {
-  // If we're building with optimization, we always emit v-tables
-  // since that allows for virtual function calls to be devirtualized.
-  // If the v-table is defined strongly elsewhere, this definition
-  // will be emitted available_externally.
-  //
-  // However, we don't want to do this in -fapple-kext mode, because
-  // kext mode does not permit devirtualization.
-  if (CGM.getCodeGenOpts().OptimizationLevel && !CGM.getLangOpts().AppleKext)
-    return true;
-
   return !CGM.getVTables().isVTableExternal(RD);
 }
 
