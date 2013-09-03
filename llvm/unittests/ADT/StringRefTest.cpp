@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Hashing.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/raw_ostream.h"
@@ -477,6 +478,32 @@ TEST(StringRefTest, getAsUnsignedIntegerBadStrings) {
   }
 }
 
+static const char *join_input[] = { "a", "b", "c" };
+static const char join_result1[] = "a";
+static const char join_result2[] = "a:b:c";
+static const char join_result3[] = "a::b::c";
 
+TEST(StringRefTest, joinStrings) {
+  std::vector<StringRef> v1;
+  std::vector<std::string> v2;
+  for (size_t i = 0; i < array_lengthof(join_input); ++i) {
+    v1.push_back(join_input[i]);
+    v2.push_back(join_input[i]);
+  }
+
+  bool v1_join1 = join(v1.begin(), v1.begin() + 1, ":") == join_result1;
+  EXPECT_TRUE(v1_join1);
+  bool v1_join2 = join(v1.begin(), v1.end(), ":") == join_result2;
+  EXPECT_TRUE(v1_join2);
+  bool v1_join3 = join(v1.begin(), v1.end(), "::") == join_result3;
+  EXPECT_TRUE(v1_join3);
+
+  bool v2_join1 = join(v2.begin(), v2.begin() + 1, ":") == join_result1;
+  EXPECT_TRUE(v2_join1);
+  bool v2_join2 = join(v2.begin(), v2.end(), ":") == join_result2;
+  EXPECT_TRUE(v2_join2);
+  bool v2_join3 = join(v2.begin(), v2.end(), "::") == join_result3;
+  EXPECT_TRUE(v2_join3);
+}
 
 } // end anonymous namespace
