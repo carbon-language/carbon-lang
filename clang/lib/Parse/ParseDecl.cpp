@@ -100,18 +100,21 @@ static bool isAttributeLateParsed(const IdentifierInfo &II) {
 ///          typequal
 ///          storageclass
 ///
-/// FIXME: The GCC grammar/code for this construct implies we need two
-/// token lookahead. Comment from gcc: "If they start with an identifier
-/// which is followed by a comma or close parenthesis, then the arguments
-/// start with that identifier; otherwise they are an expression list."
+/// Whether an attribute takes an 'identifier' is determined by the
+/// attrib-name. GCC's behavior here is not worth imitating:
 ///
-/// GCC does not require the ',' between attribs in an attribute-list.
+///  * In C mode, if the attribute argument list starts with an identifier
+///    followed by a ',' or an ')', and the identifier doesn't resolve to
+///    a type, it is parsed as an identifier. If the attribute actually
+///    wanted an expression, it's out of luck (but it turns out that no
+///    attributes work that way, because C constant expressions are very
+///    limited).
+///  * In C++ mode, if the attribute argument list starts with an identifier,
+///    and the attribute *wants* an identifier, it is parsed as an identifier.
+///    At block scope, any additional tokens between the identifier and the
+///    ',' or ')' are ignored, otherwise they produce a parse error.
 ///
-/// At the moment, I am not doing 2 token lookahead. I am also unaware of
-/// any attributes that don't work (based on my limited testing). Most
-/// attributes are very simple in practice. Until we find a bug, I don't see
-/// a pressing need to implement the 2 token lookahead.
-
+/// We follow the C++ model, but don't allow junk after the identifier.
 void Parser::ParseGNUAttributes(ParsedAttributes &attrs,
                                 SourceLocation *endLoc,
                                 LateParsedAttrList *LateAttrs) {
@@ -262,8 +265,8 @@ void Parser::ParseGNUAttributeArgs(IdentifierInfo *AttrName,
       TypeParsed = true;
       break;
     }
-    // If the attribute has all expression arguments, and not a "parameter",
-    // break out to handle it below.
+    // If this attribute doesn't want an 'identifier' argument, then this
+    // argument should be parsed as an expression.
     if (attributeHasExprArgs(*AttrName))
       break;
 
