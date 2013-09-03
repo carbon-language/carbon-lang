@@ -154,7 +154,7 @@ Instruction *InstCombiner::visitAllocaInst(AllocaInst &AI) {
   // Ensure that the alloca array size argument has type intptr_t, so that
   // any casting is exposed early.
   if (TD) {
-    Type *IntPtrTy = TD->getIntPtrType(AI.getContext());
+    Type *IntPtrTy = TD->getIntPtrType(AI.getType());
     if (AI.getArraySize()->getType() != IntPtrTy) {
       Value *V = Builder->CreateIntCast(AI.getArraySize(),
                                         IntPtrTy, false);
@@ -181,7 +181,7 @@ Instruction *InstCombiner::visitAllocaInst(AllocaInst &AI) {
       // insert our getelementptr instruction...
       //
       Type *IdxTy = TD
-                  ? TD->getIntPtrType(AI.getContext())
+                  ? TD->getIntPtrType(AI.getType())
                   : Type::getInt64Ty(AI.getContext());
       Value *NullIdx = Constant::getNullValue(IdxTy);
       Value *Idx[2] = { NullIdx, NullIdx };
