@@ -87,6 +87,9 @@ public:
   /// \brief Computes the CU signature.
   uint64_t computeCUSignature(DIE *Die);
 
+  /// \brief Computes the type signature.
+  uint64_t computeTypeSignature(DIE *Die);
+
   // Helper routines to process parts of a DIE.
 private:
   /// \brief Adds the parent context of \param Die to the hash.

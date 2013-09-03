@@ -422,7 +422,27 @@ uint64_t DIEHash::computeDIEODRSignature(DIE *Die) {
 /// This is based on the type signature computation given in section 7.27 of the
 /// DWARF4 standard. It is an md5 hash of the flattened description of the DIE
 /// with the inclusion of the full CU and all top level CU entities.
+// TODO: Initialize the type chain at 0 instead of 1 for CU signatures.
 uint64_t DIEHash::computeCUSignature(DIE *Die) {
+
+  // Hash the DIE.
+  computeHash(Die);
+
+  // Now return the result.
+  MD5::MD5Result Result;
+  Hash.final(Result);
+
+  // ... take the least significant 8 bytes and return those. Our MD5
+  // implementation always returns its results in little endian, swap bytes
+  // appropriately.
+  return *reinterpret_cast<support::ulittle64_t *>(Result + 8);
+}
+
+/// This is based on the type signature computation given in section 7.27 of the
+/// DWARF4 standard. It is an md5 hash of the flattened description of the DIE
+/// with the inclusion of additional forms not specifically called out in the
+/// standard.
+uint64_t DIEHash::computeTypeSignature(DIE *Die) {
 
   // Hash the DIE.
   computeHash(Die);
