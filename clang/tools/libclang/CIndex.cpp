@@ -1936,6 +1936,9 @@ void OMPClauseEnqueue::VisitOMPDefaultClause(const OMPDefaultClause *C) { }
 void OMPClauseEnqueue::VisitOMPPrivateClause(const OMPPrivateClause *C) {
   PROCESS_OMP_CLAUSE_LIST(OMPPrivateClause, C)
 }
+void OMPClauseEnqueue::VisitOMPSharedClause(const OMPSharedClause *C) {
+  PROCESS_OMP_CLAUSE_LIST(OMPSharedClause, C)
+}
 #undef PROCESS_OMP_CLAUSE_LIST
 }
 void EnqueueVisitor::EnqueueChildren(const OMPClause *S) {
