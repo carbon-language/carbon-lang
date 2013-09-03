@@ -13,7 +13,7 @@
 #include <string>
 #include <queue>
 
-#if defined(__FreeBSD__) || defined(__linux__)
+#if defined(__FreeBSD__)
 #include <readline/readline.h>
 #else
 #include <editline/readline.h>
