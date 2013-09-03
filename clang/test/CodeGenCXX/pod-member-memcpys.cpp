@@ -112,28 +112,28 @@ CALL_AO(PackedMembers)
 // CHECK: call void @llvm.memcpy.p0i8.p0i8.i64({{.*}}i64 16, i32 4{{.*}})
 // CHECK: call %struct.NonPOD* @_ZN6NonPODaSERKS_
 // CHECK: call void @llvm.memcpy.p0i8.p0i8.i64({{.*}}i64 16, i32 4{{.*}})
-// CHECK: ret %struct.Basic* %this
+// CHECK: ret %struct.Basic*
 
 // PODMember copy-assignment:
 // CHECK-LABEL: define linkonce_odr %struct.PODMember* @_ZN9PODMemberaSERKS_(%struct.PODMember* %this, %struct.PODMember*)
 // CHECK: call void @llvm.memcpy.p0i8.p0i8.i64({{.*}}i64 32, i32 4{{.*}})
 // CHECK: call %struct.NonPOD* @_ZN6NonPODaSERKS_
 // CHECK: call void @llvm.memcpy.p0i8.p0i8.i64({{.*}}i64 16, i32 4{{.*}})
-// CHECK: ret %struct.PODMember* %this
+// CHECK: ret %struct.PODMember*
 
 // PODLikeMember copy-assignment:
 // CHECK-LABEL: define linkonce_odr %struct.PODLikeMember* @_ZN13PODLikeMemberaSERKS_(%struct.PODLikeMember* %this, %struct.PODLikeMember*)
 // CHECK: call void @llvm.memcpy.p0i8.p0i8.i64({{.*}}i64 32, i32 4{{.*}})
 // CHECK: call %struct.NonPOD* @_ZN6NonPODaSERKS_
 // CHECK: call void @llvm.memcpy.p0i8.p0i8.i64({{.*}}i64 16, i32 4{{.*}})
-// CHECK: ret %struct.PODLikeMember* %this
+// CHECK: ret %struct.PODLikeMember*
 
 // ArrayMember copy-assignment:
 // CHECK-LABEL: define linkonce_odr %struct.ArrayMember* @_ZN11ArrayMemberaSERKS_(%struct.ArrayMember* %this, %struct.ArrayMember*)
 // CHECK: call void @llvm.memcpy.p0i8.p0i8.i64({{.*}}i64 64, i32 4{{.*}})
 // CHECK: call %struct.NonPOD* @_ZN6NonPODaSERKS_
 // CHECK: call void @llvm.memcpy.p0i8.p0i8.i64({{.*}}i64 64, i32 4{{.*}})
-// CHECK: ret %struct.ArrayMember* %this
+// CHECK: ret %struct.ArrayMember*
 
 // VolatileMember copy-assignment:
 // CHECK-LABEL: define linkonce_odr %struct.VolatileMember* @_ZN14VolatileMemberaSERKS_(%struct.VolatileMember* %this, %struct.VolatileMember*)
@@ -142,27 +142,27 @@ CALL_AO(PackedMembers)
 // CHECK: store volatile i32 {{.*}}, align 4
 // CHECK: call %struct.NonPOD* @_ZN6NonPODaSERKS_
 // CHECK: call void @llvm.memcpy.p0i8.p0i8.i64({{.*}}i64 16, i32 4{{.*}})
-// CHECK: ret %struct.VolatileMember* %this
+// CHECK: ret %struct.VolatileMember*
 
 // BitfieldMember copy-assignment:
 // CHECK-LABEL: define linkonce_odr %struct.BitfieldMember* @_ZN14BitfieldMemberaSERKS_(%struct.BitfieldMember* %this, %struct.BitfieldMember*)
 // CHECK: call void @llvm.memcpy.p0i8.p0i8.i64({{.*}}i64 16, i32 4{{.*}})
 // CHECK: call %struct.NonPOD* @_ZN6NonPODaSERKS_
 // CHECK: call void @llvm.memcpy.p0i8.p0i8.i64({{.*}}i64 3, i32 1{{.*}})
-// CHECK: ret %struct.BitfieldMember* %this
+// CHECK: ret %struct.BitfieldMember*
 
 // InnerClass copy-assignment:
 // CHECK-LABEL: define linkonce_odr %struct.InnerClassMember* @_ZN16InnerClassMemberaSERKS_(%struct.InnerClassMember* %this, %struct.InnerClassMember*)
 // CHECK: call void @llvm.memcpy.p0i8.p0i8.i64({{.*}}i64 32, i32 4{{.*}})
 // CHECK: call %struct.NonPOD* @_ZN6NonPODaSERKS_
 // CHECK: call void @llvm.memcpy.p0i8.p0i8.i64({{.*}}i64 16, i32 4{{.*}})
-// CHECK: ret %struct.InnerClassMember* %this
+// CHECK: ret %struct.InnerClassMember*
 
 // PackedMembers copy-assignment:
 // CHECK-LABEL: define linkonce_odr %struct.PackedMembers* @_ZN13PackedMembersaSERKS_(%struct.PackedMembers* %this, %struct.PackedMembers*)
 // CHECK: call %struct.NonPOD* @_ZN6NonPODaSERKS_
 // CHECK: call void @llvm.memcpy.p0i8.p0i8.i64({{.*}}i64 16, i32 1{{.*}})
-// CHECK: ret %struct.PackedMembers* %this
+// CHECK: ret %struct.PackedMembers*
 
 // COPY-CONSTRUCTORS:
 
