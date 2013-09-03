@@ -116,6 +116,9 @@ defm init: dashEq<"init", "init",
 defm fini: dashEq<"fini", "fini",
                  "Specify a finalizer function">;
 
+def sysroot : Joined<["--"], "sysroot=">,
+    HelpText<"Set the system root">;
+
 // extensions
 def emit_yaml : Flag<["-"], "emit-yaml">, 
     HelpText<"Write YAML instead of ELF">;

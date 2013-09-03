@@ -289,6 +289,10 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
       break;
     }
 
+    case OPT_sysroot:
+      ctx->setSysroot(inputArg->getValue());
+      break;
+
     default:
       break;
     } // end switch on option ID

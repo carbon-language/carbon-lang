@@ -41,7 +41,8 @@ ELFLinkingContext::ELFLinkingContext(
       _isStaticExecutable(false), _outputYAML(false), _noInhibitExec(false),
       _mergeCommonStrings(false), _runLayoutPass(true),
       _useShlibUndefines(false), _dynamicLinkerArg(false),
-      _noAllowDynamicLibraries(false), _outputMagic(OutputMagic::DEFAULT) {}
+      _noAllowDynamicLibraries(false), _outputMagic(OutputMagic::DEFAULT),
+      _sysrootPath("") {}
 
 bool ELFLinkingContext::is64Bits() const { return getTriple().isArch64Bit(); }
 
@@ -147,7 +148,12 @@ StringRef ELFLinkingContext::searchLibrary(
     // Search for dynamic library
     if (!_isStaticExecutable) {
       SmallString<128> dynlibPath;
-      dynlibPath.assign(dir);
+      if (dir.startswith("=/")) {
+        dynlibPath.assign(_sysrootPath);
+        dynlibPath.append(dir.substr(1));
+      } else {
+        dynlibPath.assign(dir);
+      }
       llvm::sys::path::append(dynlibPath, Twine("lib") + libName + ".so");
       pathref = dynlibPath.str();
       if (llvm::sys::fs::exists(pathref)) {
@@ -157,7 +163,12 @@ StringRef ELFLinkingContext::searchLibrary(
     // Search for static libraries too
     if (!foundFile) {
       SmallString<128> archivefullPath;
-      archivefullPath.assign(dir);
+      if (dir.startswith("=/")) {
+        archivefullPath.assign(_sysrootPath);
+        archivefullPath.append(dir.substr(1));
+      } else {
+        archivefullPath.assign(dir);
+      }
       llvm::sys::path::append(archivefullPath, Twine("lib") + libName + ".a");
       pathref = archivefullPath.str();
       if (llvm::sys::fs::exists(pathref)) {

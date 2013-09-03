@@ -175,6 +175,11 @@ public:
   /// linker command line, using the -fini option.
   range<const StringRef *> finiFunctions() const { return _finiFunctions; }
 
+  /// \brief Set path to the system root
+  void setSysroot(StringRef path) {
+    _sysrootPath = path;
+  }
+
 private:
   ELFLinkingContext() LLVM_DELETED_FUNCTION;
 
@@ -207,6 +212,7 @@ protected:
   StringRef _dynamicLinkerPath;
   StringRefVector _initFunctions;
   StringRefVector _finiFunctions;
+  StringRef _sysrootPath;
 };
 } // end namespace lld
 
