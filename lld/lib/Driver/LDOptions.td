@@ -44,6 +44,7 @@ def m : Separate<["-"], "m">;
 def z : Separate<["-"], "z">;
 def t : Flag<["-"], "t">;
 def rpath : Separate<["-"], "rpath">;
+def rpath_link : Separate<["-"], "rpath-link">;
 def soname : Separate<["-"], "soname">;
 
 def static : Flag<["-"], "static">;

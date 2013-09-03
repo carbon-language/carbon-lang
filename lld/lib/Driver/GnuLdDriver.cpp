@@ -317,6 +317,14 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
       break;
     }
 
+    case OPT_rpath_link: {
+      SmallVector<StringRef, 2> rpaths;
+      StringRef(inputArg->getValue()).split(rpaths, ":");
+      for (auto path : rpaths)
+        ctx->addRpathLink(path);
+      break;
+    }
+
     case OPT_sysroot:
       ctx->setSysroot(inputArg->getValue());
       break;

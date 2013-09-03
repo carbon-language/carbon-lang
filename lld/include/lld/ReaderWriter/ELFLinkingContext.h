@@ -189,6 +189,14 @@ public:
     return _rpathList;
   }
 
+  void addRpathLink(StringRef path) {
+   _rpathLinkList.push_back(path);
+  }
+
+  range<const StringRef *> getRpathLinkList() const {
+    return _rpathLinkList;
+  }
+
 private:
   ELFLinkingContext() LLVM_DELETED_FUNCTION;
 
@@ -223,6 +231,7 @@ protected:
   StringRefVector _finiFunctions;
   StringRef _sysrootPath;
   StringRefVector _rpathList;
+  StringRefVector _rpathLinkList;
 };
 } // end namespace lld
 
