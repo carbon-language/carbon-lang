@@ -1480,6 +1480,23 @@ bool Parser::TryAnnotateTypeOrScopeToken(bool EnteringContext, bool NeedType) {
           && "Cannot be a type or scope token!");
 
   if (Tok.is(tok::kw_typename)) {
+    // MSVC lets you do stuff like:
+    //   typename typedef T_::D D;
+    //
+    // We will consume the typedef token here and put it back after we have
+    // parsed the first identifier, transforming it into something more like:
+    //   typename T_::D typedef D;
+    if (getLangOpts().MicrosoftMode && NextToken().is(tok::kw_typedef)) {
+      Token TypedefToken;
+      PP.Lex(TypedefToken);
+      bool Result = TryAnnotateTypeOrScopeToken(EnteringContext, NeedType);
+      PP.EnterToken(Tok);
+      Tok = TypedefToken;
+      if (!Result)
+        Diag(Tok.getLocation(), diag::warn_expected_qualified_after_typename);
+      return Result;
+    }
+
     // Parse a C++ typename-specifier, e.g., "typename T::type".
     //
     //   typename-specifier:
@@ -1498,7 +1515,7 @@ bool Parser::TryAnnotateTypeOrScopeToken(bool EnteringContext, bool NeedType) {
         // Attempt to recover by skipping the invalid 'typename'
         if (Tok.is(tok::annot_decltype) ||
             (!TryAnnotateTypeOrScopeToken(EnteringContext, NeedType) &&
-            Tok.isAnnotation())) {
+             Tok.isAnnotation())) {
           unsigned DiagID = diag::err_expected_qualified_after_typename;
           // MS compatibility: MSVC permits using known types with typename.
           // e.g. "typedef typename T* pointer_type"

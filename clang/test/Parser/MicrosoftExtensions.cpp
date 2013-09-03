@@ -152,7 +152,9 @@ void missing_template_keyword(){
 
 
 
-class AAAA { };
+class AAAA {
+   typedef int D;
+};
 
 template <typename T>
 class SimpleTemplate {};
@@ -174,6 +176,12 @@ void redundant_typename() {
    int k = typename var;// expected-error {{expected a qualified name after 'typename'}}
 }
 
+template <typename T>
+struct TypenameWrongPlace {
+  typename typedef T::D D;// expected-warning {{expected a qualified name after 'typename'}}
+};
+
+extern TypenameWrongPlace<AAAA> PR16925;
 
 __interface MicrosoftInterface;
 __interface MicrosoftInterface {
