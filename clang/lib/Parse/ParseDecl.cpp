@@ -13,7 +13,6 @@
 
 #include "clang/Parse/Parser.h"
 #include "RAIIObjectsForParser.h"
-#include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/Basic/AddressSpaces.h"
 #include "clang/Basic/CharInfo.h"
@@ -187,6 +186,15 @@ static bool attributeHasExprArgs(const IdentifierInfo &II) {
            .Default(false);
 }
 
+IdentifierLoc *Parser::ParseIdentifierLoc() {
+  assert(Tok.is(tok::identifier) && "expected an identifier");
+  IdentifierLoc *IL = IdentifierLoc::create(Actions.Context,
+                                            Tok.getLocation(),
+                                            Tok.getIdentifierInfo());
+  ConsumeToken();
+  return IL;
+}
+
 /// Parse the arguments to a parameterized GNU attribute or
 /// a C++11 attribute in "gnu" namespace.
 void Parser::ParseGNUAttributeArgs(IdentifierInfo *AttrName,
@@ -259,10 +267,7 @@ void Parser::ParseGNUAttributeArgs(IdentifierInfo *AttrName,
     if (attributeHasExprArgs(*AttrName))
       break;
 
-    IdentifierLoc *Param = ::new (Actions.Context) IdentifierLoc;
-    Param->Ident = Tok.getIdentifierInfo();
-    Param->Loc = ConsumeToken();
-    ArgExprs.push_back(Param);
+    ArgExprs.push_back(ParseIdentifierLoc());
   } break;
 
   default:
@@ -828,10 +833,7 @@ void Parser::ParseAvailabilityAttribute(IdentifierInfo &Availability,
     SkipUntil(tok::r_paren);
     return;
   }
-
-  IdentifierLoc *Platform = new (Actions.Context) IdentifierLoc;
-  Platform->Ident = Tok.getIdentifierInfo();
-  Platform->Loc = ConsumeToken();
+  IdentifierLoc *Platform = ParseIdentifierLoc();
 
   // Parse the ',' following the platform name.
   if (ExpectAndConsume(tok::comma, diag::err_expected_comma, "", tok::r_paren))
@@ -1202,9 +1204,7 @@ void Parser::ParseTypeTagForDatatypeAttribute(IdentifierInfo &AttrName,
     T.skipToEnd();
     return;
   }
-  IdentifierLoc *ArgumentKind = new (Actions.Context) IdentifierLoc;
-  ArgumentKind->Ident = Tok.getIdentifierInfo();
-  ArgumentKind->Loc = ConsumeToken();
+  IdentifierLoc *ArgumentKind = ParseIdentifierLoc();
 
   if (Tok.isNot(tok::comma)) {
     Diag(Tok, diag::err_expected_comma);
