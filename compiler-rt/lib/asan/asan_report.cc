@@ -340,7 +340,7 @@ bool DescribeAddressIfStack(uptr addr, uptr access_size) {
   PrintStack(&alloca_stack);
   // Report the number of stack objects.
   char *p;
-  u64 n_objects = (uptr)internal_simple_strtoll(frame_descr, &p, 10);
+  uptr n_objects = (uptr)internal_simple_strtoll(frame_descr, &p, 10);
   CHECK_GT(n_objects, 0);
   Printf("  This frame has %zu object(s):\n", n_objects);
 
@@ -369,7 +369,7 @@ bool DescribeAddressIfStack(uptr addr, uptr access_size) {
     internal_strncat(buf, vars[i].name_pos,
                      static_cast<uptr>(Min(kBufSize, vars[i].name_len)));
     uptr prev_var_end = i ? vars[i - 1].beg + vars[i - 1].size : 0;
-    uptr next_var_beg = i < n_objects - 1 ? vars[i + 1].beg : ~(0UL);
+    uptr next_var_beg = i + 1 < n_objects ? vars[i + 1].beg : ~(0UL);
     PrintAccessAndVarIntersection(buf, vars[i].beg, vars[i].size,
                                   offset, access_size,
                                   prev_var_end, next_var_beg);
