@@ -88,6 +88,10 @@
 // RUN: %clang_cl /Zs -### -- %s 2>&1 | FileCheck -check-prefix=Zs %s
 // Zs: -fsyntax-only
 
+// We forward any unrecognized -W diagnostic options to cc1.
+// RUN: %clang_cl -Wunused-pragmas -### -- %s 2>&1 | FileCheck -check-prefix=WJoined %s
+// WJoined: "-cc1"
+// WJoined: "-Wunused-pragmas"
 
 // Ignored options. Check that we don't get "unused during compilation" errors.
 // (/Zs is for syntax-only, /WX is for -Werror)
