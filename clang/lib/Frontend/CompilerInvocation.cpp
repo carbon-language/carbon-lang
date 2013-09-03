@@ -334,8 +334,8 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
   else if (Args.hasArg(OPT_gdwarf_4))
     Opts.DwarfVersion = 4;
   else if (Opts.getDebugInfo() != CodeGenOptions::NoDebugInfo)
-    // Default Dwarf version is 3 if we are generating debug information.
-    Opts.DwarfVersion = 3;
+    // Default Dwarf version is 4 if we are generating debug information.
+    Opts.DwarfVersion = 4;
 
   Opts.DisableLLVMOpts = Args.hasArg(OPT_disable_llvm_optzns);
   Opts.DisableRedZone = Args.hasArg(OPT_disable_red_zone);

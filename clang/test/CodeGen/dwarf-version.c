@@ -10,5 +10,5 @@ int main (void) {
 // CHECK: metadata !{i32 2, metadata !"Dwarf Version", i32 2}
 // VER3: metadata !{i32 2, metadata !"Dwarf Version", i32 3}
 // VER4: metadata !{i32 2, metadata !"Dwarf Version", i32 4}
-// LINUX: metadata !{i32 2, metadata !"Dwarf Version", i32 3}
+// LINUX: metadata !{i32 2, metadata !"Dwarf Version", i32 4}
 // DARWIN: metadata !{i32 2, metadata !"Dwarf Version", i32 2}
