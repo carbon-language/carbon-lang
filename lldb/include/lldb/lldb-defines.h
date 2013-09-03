@@ -33,6 +33,7 @@
 // LLDB defines
 //----------------------------------------------------------------------
 #define LLDB_GENERIC_ERROR              UINT32_MAX
+#define LLDB_DEFAULT_SHELL              "/bin/sh"
 
 //----------------------------------------------------------------------
 // Breakpoints

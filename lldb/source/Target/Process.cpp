@@ -816,7 +816,7 @@ ProcessLaunchCommandOptions::SetOptionValue (uint32_t option_idx, const char *op
             if (option_arg && option_arg[0])
                 launch_info.SetShell (option_arg);
             else
-                launch_info.SetShell ("/bin/bash");
+                launch_info.SetShell (LLDB_DEFAULT_SHELL);
             break;
             
         case 'v':

@@ -362,7 +362,7 @@ command and pipe it through another command then you must also start a shell.
 For example:
 
 <pre>
-    child = pexpect.spawn('/bin/bash -c "ls -l | grep LOG &gt; log_list.txt"')
+    child = pexpect.spawn('/bin/sh -c "ls -l | grep LOG &gt; log_list.txt"')
     child.expect(pexpect.EOF)
 </pre>
 
@@ -373,7 +373,7 @@ the previous example:
 
 <pre>
     shell_cmd = 'ls -l | grep LOG &gt; log_list.txt'
-    child = pexpect.spawn ('/bin/bash', ['-c', shell_cmd])
+    child = pexpect.spawn ('/bin/sh', ['-c', shell_cmd])
     child.expect (pexpect.EOF)
 </pre>
 

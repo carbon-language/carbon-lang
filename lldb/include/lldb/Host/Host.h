@@ -473,8 +473,7 @@ public:
                      int *signo_ptr,                // Pass NULL if you don't want the signal that caused the process to exit
                      std::string *command_output,   // Pass NULL if you don't want the command output
                      uint32_t timeout_sec,
-                     const char *shell = "/bin/sh"
-                    );
+                     const char *shell = LLDB_DEFAULT_SHELL);
     
     static lldb::DataBufferSP
     GetAuxvData (lldb_private::Process *process);
