@@ -57,7 +57,9 @@ public:
       if (i->st_shndx == llvm::ELF::SHN_ABS)
         continue;
 
-      if (useShlibUndefines && (i->st_shndx == llvm::ELF::SHN_UNDEF)) {
+      if (i->st_shndx == llvm::ELF::SHN_UNDEF) {
+        if (!useShlibUndefines)
+          continue;
         // Create an undefined atom.
         if (!name->empty()) {
           auto *newAtom =
