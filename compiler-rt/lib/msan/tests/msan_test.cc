@@ -2925,6 +2925,13 @@ TEST(MemorySanitizer, CallocOverflow) {
   EXPECT_EQ(0L, Ident(p));
 }
 
+TEST(MemorySanitizer, Select) {
+  int x;
+  int volatile* p = &x;
+  int z = *p ? 1 : 0;
+  EXPECT_POISONED(z);
+}
+
 TEST(MemorySanitizerStress, DISABLED_MallocStackTrace) {
   RecursiveMalloc(22);
 }
