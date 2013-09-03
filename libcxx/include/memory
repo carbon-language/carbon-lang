@@ -496,8 +496,8 @@ public:
     long use_count() const noexcept;
     bool expired() const noexcept;
     shared_ptr<T> lock() const noexcept;
-    template<class U> bool owner_before(shared_ptr<U> const& b);
-    template<class U> bool owner_before(weak_ptr<U> const& b);
+    template<class U> bool owner_before(shared_ptr<U> const& b) const;
+    template<class U> bool owner_before(weak_ptr<U> const& b) const;
 };
 
 // weak_ptr specialized algorithms:
