@@ -10,6 +10,7 @@
 // This file is a part of ThreadSanitizer/AddressSanitizer runtime.
 //
 //===----------------------------------------------------------------------===//
+#include "sanitizer_common/sanitizer_allocator_internal.h"
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_libc.h"
 #include "sanitizer_common/sanitizer_platform.h"
@@ -172,5 +173,14 @@ TEST(SanitizerCommon, InternalBinarySearch) {
 
   ASSERT_EQ(InternalBinarySearch(arr, 0, kSize, 7, UptrLess), kSize + 1);
 }
+
+#if SANITIZER_LINUX
+TEST(SanitizerCommon, FindPathToBinary) {
+  char *true_path = FindPathToBinary("true");
+  EXPECT_NE((char*)0, internal_strstr(true_path, "/bin/true"));
+  InternalFree(true_path);
+  EXPECT_EQ(0, FindPathToBinary("unexisting_binary.ergjeorj"));
+}
+#endif
 
 }  // namespace __sanitizer
