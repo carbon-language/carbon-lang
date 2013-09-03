@@ -502,7 +502,6 @@ void GetMemoryProfile(fill_profile_f cb, uptr *stats, uptr stats_size) {
   uptr smaps_cap = 0;
   uptr smaps_len = ReadFileToBuffer("/proc/self/smaps",
       &smaps, &smaps_cap, 64<<20);
-  uptr total = 0;
   uptr start = 0;
   bool file = false;
   const char *pos = smaps;
