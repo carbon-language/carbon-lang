@@ -35,6 +35,7 @@ void Func2(char *x) {
   // CHECK: WRITE of size 1 {{.*}} thread T0
   // CHECK:     #0{{.*}}Func2{{.*}}stack-use-after-return.cc:[[@LINE-2]]
   // CHECK: is located in stack of thread T0 at offset
+  // CHECK: 'local' <== Memory access at offset 32 is inside this variable
 }
 
 int main(int argc, char **argv) {
