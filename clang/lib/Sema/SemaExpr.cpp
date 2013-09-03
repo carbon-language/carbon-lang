@@ -10236,7 +10236,7 @@ ExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
     computeNRVO(Body, getCurBlock());
   
   BlockExpr *Result = new (Context) BlockExpr(BSI->TheDecl, BlockTy);
-  const AnalysisBasedWarnings::Policy &WP = AnalysisWarnings.getDefaultPolicy();
+  AnalysisBasedWarnings::Policy WP = AnalysisWarnings.getDefaultPolicy();
   PopFunctionScopeInfo(&WP, Result->getBlockDecl(), Result);
 
   // If the block isn't obviously global, i.e. it captures anything at
