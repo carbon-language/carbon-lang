@@ -25,11 +25,10 @@ class Transform;
 ///
 class AddOverrideFixer : public clang::ast_matchers::MatchFinder::MatchCallback {
 public:
-  AddOverrideFixer(clang::tooling::Replacements &Replace,
-                   unsigned &AcceptedChanges, bool DetectMacros,
-                   const Transform &Owner)
-      : Replace(Replace), AcceptedChanges(AcceptedChanges),
-        DetectMacros(DetectMacros), Owner(Owner) {}
+  AddOverrideFixer(unsigned &AcceptedChanges, bool DetectMacros,
+                   Transform &Owner)
+      : AcceptedChanges(AcceptedChanges), DetectMacros(DetectMacros),
+        Owner(Owner) {}
 
   /// \brief Entry point to the callback called when matches are made.
   virtual void run(const clang::ast_matchers::MatchFinder::MatchResult &Result);
@@ -38,10 +37,9 @@ public:
 
 private:
   clang::Preprocessor *PP;
-  clang::tooling::Replacements &Replace;
   unsigned &AcceptedChanges;
   bool DetectMacros;
-  const Transform &Owner;
+  Transform &Owner;
 };
 
 #endif // CPP11_MIGRATE_ADD_OVERRIDE_ACTIONS_H

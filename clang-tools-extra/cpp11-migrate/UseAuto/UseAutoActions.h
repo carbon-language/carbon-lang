@@ -25,36 +25,32 @@
 class IteratorReplacer
     : public clang::ast_matchers::MatchFinder::MatchCallback {
 public:
-  IteratorReplacer(clang::tooling::Replacements &Replace,
-                   unsigned &AcceptedChanges, RiskLevel, const Transform &Owner)
-      : Replace(Replace), AcceptedChanges(AcceptedChanges), Owner(Owner) {}
+  IteratorReplacer(unsigned &AcceptedChanges, RiskLevel, Transform &Owner)
+      : AcceptedChanges(AcceptedChanges), Owner(Owner) {}
 
   /// \brief Entry point to the callback called when matches are made.
   virtual void run(const clang::ast_matchers::MatchFinder::MatchResult &Result)
       LLVM_OVERRIDE;
 
 private:
-  clang::tooling::Replacements &Replace;
   unsigned &AcceptedChanges;
-  const Transform &Owner;
+  Transform &Owner;
 };
 
 /// \brief The callback used when replacing type specifiers of variable
 /// declarations initialized by a C++ new expression.
 class NewReplacer : public clang::ast_matchers::MatchFinder::MatchCallback {
 public:
-  NewReplacer(clang::tooling::Replacements &Replace, unsigned &AcceptedChanges,
-              RiskLevel, const Transform &Owner)
-      : Replace(Replace), AcceptedChanges(AcceptedChanges), Owner(Owner) {}
+  NewReplacer(unsigned &AcceptedChanges, RiskLevel, Transform &Owner)
+      : AcceptedChanges(AcceptedChanges), Owner(Owner) {}
 
   /// \brief Entry point to the callback called when matches are made.
   virtual void run(const clang::ast_matchers::MatchFinder::MatchResult &Result)
       LLVM_OVERRIDE;
 
 private:
-  clang::tooling::Replacements &Replace;
   unsigned &AcceptedChanges;
-  const Transform &Owner;
+  Transform &Owner;
 };
 
 #endif // CPP11_MIGRATE_USE_AUTO_ACTIONS_H

@@ -29,13 +29,13 @@ static cl::opt<bool> DetectMacros(
     cl::desc("Detect and use macros that expand to the 'override' keyword."),
     cl::cat(TransformsOptionsCategory));
 
-int AddOverrideTransform::apply(FileOverrides &InputStates,
+int AddOverrideTransform::apply(const FileOverrides &InputStates,
                                 const CompilationDatabase &Database,
                                 const std::vector<std::string> &SourcePaths) {
   ClangTool AddOverrideTool(Database, SourcePaths);
   unsigned AcceptedChanges = 0;
   MatchFinder Finder;
-  AddOverrideFixer Fixer(getReplacements(), AcceptedChanges, DetectMacros,
+  AddOverrideFixer Fixer(AcceptedChanges, DetectMacros,
                          /*Owner=*/ *this);
   Finder.addMatcher(makeCandidateForOverrideAttrMatcher(), &Fixer);
 

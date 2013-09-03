@@ -51,11 +51,10 @@ class IncludeDirectives;
 class ConstructorParamReplacer
     : public clang::ast_matchers::MatchFinder::MatchCallback {
 public:
-  ConstructorParamReplacer(clang::tooling::Replacements &Replaces,
-                           unsigned &AcceptedChanges, unsigned &RejectedChanges,
-                           const Transform &Owner)
-      : Replaces(Replaces), AcceptedChanges(AcceptedChanges),
-        RejectedChanges(RejectedChanges), Owner(Owner), IncludeManager(0) {}
+  ConstructorParamReplacer(unsigned &AcceptedChanges, unsigned &RejectedChanges,
+                           Transform &Owner)
+      : AcceptedChanges(AcceptedChanges), RejectedChanges(RejectedChanges),
+        Owner(Owner), IncludeManager(0) {}
 
   void setIncludeDirectives(IncludeDirectives *Includes) {
     IncludeManager = Includes;
@@ -66,10 +65,9 @@ private:
   virtual void run(const clang::ast_matchers::MatchFinder::MatchResult &Result)
       LLVM_OVERRIDE;
 
-  clang::tooling::Replacements &Replaces;
   unsigned &AcceptedChanges;
   unsigned &RejectedChanges;
-  const Transform &Owner;
+  Transform &Owner;
   IncludeDirectives *IncludeManager;
 };
 

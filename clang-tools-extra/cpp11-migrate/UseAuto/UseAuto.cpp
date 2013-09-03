@@ -20,7 +20,7 @@ using clang::ast_matchers::MatchFinder;
 using namespace clang;
 using namespace clang::tooling;
 
-int UseAutoTransform::apply(FileOverrides &InputStates,
+int UseAutoTransform::apply(const FileOverrides &InputStates,
                             const clang::tooling::CompilationDatabase &Database,
                             const std::vector<std::string> &SourcePaths) {
   ClangTool UseAutoTool(Database, SourcePaths);
@@ -28,10 +28,11 @@ int UseAutoTransform::apply(FileOverrides &InputStates,
   unsigned AcceptedChanges = 0;
 
   MatchFinder Finder;
-  IteratorReplacer ReplaceIterators(getReplacements(), AcceptedChanges,
-                                    Options().MaxRiskLevel, /*Owner=*/ *this);
-  NewReplacer ReplaceNew(getReplacements(), AcceptedChanges,
-                         Options().MaxRiskLevel, /*Owner=*/ *this);
+  ReplacementsVec Replaces;
+  IteratorReplacer ReplaceIterators(AcceptedChanges, Options().MaxRiskLevel,
+                                    /*Owner=*/ *this);
+  NewReplacer ReplaceNew(AcceptedChanges, Options().MaxRiskLevel,
+                         /*Owner=*/ *this);
 
   Finder.addMatcher(makeIteratorDeclMatcher(), &ReplaceIterators);
   Finder.addMatcher(makeDeclWithNewMatcher(), &ReplaceNew);

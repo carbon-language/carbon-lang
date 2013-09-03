@@ -22,16 +22,14 @@ using namespace clang::tooling;
 using namespace clang::ast_matchers;
 
 int
-ReplaceAutoPtrTransform::apply(FileOverrides &InputStates,
+ReplaceAutoPtrTransform::apply(const FileOverrides &InputStates,
                                const CompilationDatabase &Database,
                                const std::vector<std::string> &SourcePaths) {
   ClangTool Tool(Database, SourcePaths);
   unsigned AcceptedChanges = 0;
   MatchFinder Finder;
-  AutoPtrReplacer Replacer(getReplacements(), AcceptedChanges,
-                           /*Owner=*/*this);
-  OwnershipTransferFixer Fixer(getReplacements(), AcceptedChanges,
-                                   /*Owner=*/*this);
+  AutoPtrReplacer Replacer(AcceptedChanges, /*Owner=*/ *this);
+  OwnershipTransferFixer Fixer(AcceptedChanges, /*Owner=*/ *this);
 
   Finder.addMatcher(makeAutoPtrTypeLocMatcher(), &Replacer);
   Finder.addMatcher(makeAutoPtrUsingDeclMatcher(), &Replacer);

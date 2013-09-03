@@ -58,7 +58,7 @@ public:
       : Transform("PassByValue", Options), Replacer(0) {}
 
   /// \see Transform::apply().
-  virtual int apply(FileOverrides &InputStates,
+  virtual int apply(const FileOverrides &InputStates,
                     const clang::tooling::CompilationDatabase &Database,
                     const std::vector<std::string> &SourcePaths) LLVM_OVERRIDE;
 
