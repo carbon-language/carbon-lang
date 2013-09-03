@@ -6,8 +6,11 @@
 #define RETURN_TYPESTATE(State)  __attribute__ ((return_typestate(State)))
 #define TESTS_UNCONSUMED         __attribute__ ((tests_unconsumed))
 
-// FIXME: This warning is not generated if it appears bellow the AttrTester0
-//        class declaration.  Why?
+// FIXME: This test is here because the warning is issued by the Consumed
+//        analysis, not SemaDeclAttr.  The analysis won't run after an error
+//        has been issued.  Once the attribute propagation for template
+//        instantiation has been fixed, this can be moved somewhere else and the
+//        definition can be removed.
 int returnTypestateForUnconsumable() RETURN_TYPESTATE(consumed); // expected-warning {{return state set for an unconsumable type 'int'}}
 int returnTypestateForUnconsumable() {
   return 0;
