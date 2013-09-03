@@ -267,6 +267,11 @@ let Uses = [ICC], usesCustomInserter = 1 in {
    : Pseudo<(outs DFPRegs:$dst), (ins DFPRegs:$T, DFPRegs:$F, i32imm:$Cond),
             "; SELECT_CC_DFP_ICC PSEUDO!",
             [(set f64:$dst, (SPselecticc f64:$T, f64:$F, imm:$Cond))]>;
+
+  def SELECT_CC_QFP_ICC
+   : Pseudo<(outs QFPRegs:$dst), (ins QFPRegs:$T, QFPRegs:$F, i32imm:$Cond),
+            "; SELECT_CC_QFP_ICC PSEUDO!",
+            [(set f128:$dst, (SPselecticc f128:$T, f128:$F, imm:$Cond))]>;
 }
 
 let usesCustomInserter = 1, Uses = [FCC] in {
@@ -284,6 +289,10 @@ let usesCustomInserter = 1, Uses = [FCC] in {
    : Pseudo<(outs DFPRegs:$dst), (ins DFPRegs:$T, DFPRegs:$F, i32imm:$Cond),
             "; SELECT_CC_DFP_FCC PSEUDO!",
             [(set f64:$dst, (SPselectfcc f64:$T, f64:$F, imm:$Cond))]>;
+  def SELECT_CC_QFP_FCC
+   : Pseudo<(outs QFPRegs:$dst), (ins QFPRegs:$T, QFPRegs:$F, i32imm:$Cond),
+            "; SELECT_CC_QFP_FCC PSEUDO!",
+            [(set f128:$dst, (SPselectfcc f128:$T, f128:$F, imm:$Cond))]>;
 }
 
 
