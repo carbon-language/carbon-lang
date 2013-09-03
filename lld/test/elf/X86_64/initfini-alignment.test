@@ -1,0 +1,12 @@
+# This tests the functionality that lld is able to create
+# init_array/fini_array sections in the output ELF with the
+# right alignment
+
+RUN: lld -flavor gnu -target x86_64-linux %p/Inputs/initfini-option.o  \
+RUN: -init init -fini fini --noinhibit-exec -o %t
+RUN: llvm-readobj -s %t | FileCheck %s
+
+CHECK:    Name: .init_array (80)
+CHECK:    AddressAlignment: 8
+CHECK:    Name: .fini_array (92)
+CHECK:    AddressAlignment: 8
