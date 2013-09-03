@@ -128,9 +128,6 @@ def driver_mode : Joined<["--"], "driver-mode=">, Group<internal_driver_Group>,
 def ccc_gcc_name : Separate<["-"], "ccc-gcc-name">, InternalDriverOpt,
   HelpText<"Name for native GCC compiler">,
   MetaVarName<"<gcc-path>">;
-def ccc_clang_archs : Separate<["-"], "ccc-clang-archs">, InternalDriverOpt,
-  HelpText<"Comma separate list of architectures to use the clang compiler for">,
-  MetaVarName<"<arch-list>">;
 def ccc_pch_is_pch : Flag<["-"], "ccc-pch-is-pch">, InternalDriverOpt,
   HelpText<"Use lazy PCH for precompiled headers">;
 def ccc_pch_is_pth : Flag<["-"], "ccc-pch-is-pth">, InternalDriverOpt,
@@ -151,8 +148,6 @@ def ccc_arcmt_check : Flag<["-"], "ccc-arcmt-check">, InternalDriverOpt,
   HelpText<"Check for ARC migration issues that need manual handling">;
 def ccc_arcmt_modify : Flag<["-"], "ccc-arcmt-modify">, InternalDriverOpt,
   HelpText<"Apply modifications to files to conform to ARC">;
-def ccc_arrmt_check : Flag<["-"], "ccc-arrmt-check">, Alias<ccc_arcmt_check>;
-def ccc_arrmt_modify : Flag<["-"], "ccc-arrmt-modify">, Alias<ccc_arcmt_modify>;
 def ccc_arcmt_migrate : Separate<["-"], "ccc-arcmt-migrate">, InternalDriverOpt,
   HelpText<"Apply modifications and produces temporary files that conform to ARC">;
 def arcmt_migrate_report_output : Separate<["-"], "arcmt-migrate-report-output">,
