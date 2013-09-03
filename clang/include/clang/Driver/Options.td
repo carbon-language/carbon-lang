@@ -61,7 +61,6 @@ def M_Group               : OptionGroup<"<M group>">, Group<CompileOnly_Group>;
 def T_Group               : OptionGroup<"<T group>">;
 def O_Group               : OptionGroup<"<O group>">, Group<CompileOnly_Group>;
 def W_Group               : OptionGroup<"<W group>">, Group<CompileOnly_Group>;
-def X_Group               : OptionGroup<"<X group>">;
 def d_Group               : OptionGroup<"<d group>">;
 def f_Group               : OptionGroup<"<f group>">, Group<CompileOnly_Group>;
 def f_clang_Group         : OptionGroup<"<f (clang-only) group>">, Group<CompileOnly_Group>;
