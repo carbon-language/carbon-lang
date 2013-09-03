@@ -285,6 +285,14 @@ public:
   /// compatible with T.
   static Matcher<T> constructFrom(const DynTypedMatcher &Other) {
     assert(canConstructFrom(Other));
+    return constructFromUnsafe(Other);
+  }
+
+  /// \brief Same as constructFrom(), but does not check that the underlying
+  ///   matcher can handle a value of T.
+  ///
+  /// If it is not compatible, then this matcher will never match anything.
+  static Matcher<T> constructFromUnsafe(const DynTypedMatcher &Other) {
     return Matcher<T>(new WrappedMatcher(Other));
   }
 
@@ -922,27 +930,6 @@ public:
   }
 };
 
-/// \brief Provides a MatcherInterface<T> for a Matcher<To> that matches if T is
-/// dyn_cast'able into To and the given Matcher<To> matches on the dyn_cast'ed
-/// node.
-template <typename T, typename To>
-class DynCastMatcher : public MatcherInterface<T> {
-public:
-  explicit DynCastMatcher(const Matcher<To> &InnerMatcher)
-      : InnerMatcher(InnerMatcher) {}
-
-  virtual bool matches(const T &Node,
-                       ASTMatchFinder *Finder,
-                       BoundNodesTreeBuilder *Builder) const {
-    const To *InnerMatchValue = dyn_cast<To>(&Node);
-    return InnerMatchValue != NULL &&
-      InnerMatcher.matches(*InnerMatchValue, Finder, Builder);
-  }
-
-private:
-  const Matcher<To> InnerMatcher;
-};
-
 /// \brief Matcher<T> that wraps an inner Matcher<T> and binds the matched node
 /// to an ID if the inner matcher matches on the node.
 template <typename T>
@@ -975,7 +962,8 @@ private:
 template <typename T>
 class BindableMatcher : public Matcher<T> {
 public:
-  BindableMatcher(MatcherInterface<T> *Implementation)
+  explicit BindableMatcher(const Matcher<T> &M) : Matcher<T>(M) {}
+  explicit BindableMatcher(MatcherInterface<T> *Implementation)
     : Matcher<T>(Implementation) {}
 
   /// \brief Returns a matcher that will bind the matched node on a match.
@@ -1244,8 +1232,8 @@ BindableMatcher<T> makeAllOfComposite(
 template<typename T, typename InnerT>
 BindableMatcher<T> makeDynCastAllOfComposite(
     ArrayRef<const Matcher<InnerT> *> InnerMatchers) {
-  return BindableMatcher<T>(new DynCastMatcher<T, InnerT>(
-    makeAllOfComposite(InnerMatchers)));
+  return BindableMatcher<T>(
+      Matcher<T>::constructFromUnsafe(makeAllOfComposite(InnerMatchers)));
 }
 
 /// \brief Matches nodes of type T that have at least one descendant node of
