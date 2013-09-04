@@ -1041,7 +1041,7 @@ inline Argument_match<Opnd_t> m_Argument(const Opnd_t &Op) {
 /// Intrinsic matchers.
 struct IntrinsicID_match {
   unsigned ID;
-  IntrinsicID_match(unsigned IntrID) : ID(IntrID) { }
+  IntrinsicID_match(Intrinsic::ID IntrID) : ID(IntrID) { }
 
   template<typename OpTy>
   bool match(OpTy *V) {
@@ -1080,29 +1080,29 @@ struct m_Intrinsic_Ty<T0, T1, T2, T3> {
 
 /// Match intrinsic calls like this:
 ///   m_Intrinsic<Intrinsic::fabs>(m_Value(X))
-template <unsigned IntrID>
+template <Intrinsic::ID IntrID>
 inline IntrinsicID_match
 m_Intrinsic() { return IntrinsicID_match(IntrID); }
 
-template<unsigned IntrID, typename T0>
+template<Intrinsic::ID IntrID, typename T0>
 inline typename m_Intrinsic_Ty<T0>::Ty
 m_Intrinsic(const T0 &Op0) {
   return m_CombineAnd(m_Intrinsic<IntrID>(), m_Argument<0>(Op0));
 }
 
-template<unsigned IntrID, typename T0, typename T1>
+template<Intrinsic::ID IntrID, typename T0, typename T1>
 inline typename m_Intrinsic_Ty<T0, T1>::Ty
 m_Intrinsic(const T0 &Op0, const T1 &Op1) {
   return m_CombineAnd(m_Intrinsic<IntrID>(Op0), m_Argument<1>(Op1));
 }
 
-template<unsigned IntrID, typename T0, typename T1, typename T2>
+template<Intrinsic::ID IntrID, typename T0, typename T1, typename T2>
 inline typename m_Intrinsic_Ty<T0, T1, T2>::Ty
 m_Intrinsic(const T0 &Op0, const T1 &Op1, const T2 &Op2) {
   return m_CombineAnd(m_Intrinsic<IntrID>(Op0, Op1), m_Argument<2>(Op2));
 }
 
-template<unsigned IntrID, typename T0, typename T1, typename T2, typename T3>
+template<Intrinsic::ID IntrID, typename T0, typename T1, typename T2, typename T3>
 inline typename m_Intrinsic_Ty<T0, T1, T2, T3>::Ty
 m_Intrinsic(const T0 &Op0, const T1 &Op1, const T2 &Op2, const T3 &Op3) {
   return m_CombineAnd(m_Intrinsic<IntrID>(Op0, Op1, Op2), m_Argument<3>(Op3));
