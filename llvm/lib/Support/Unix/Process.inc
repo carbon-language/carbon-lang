@@ -88,8 +88,8 @@ TimeValue self_process::get_system_time() const {
   return getRUsageTimes().second;
 }
 
-// On Cygwin, getpagesize() returns 64k and offset in mmap(3) should be
-// aligned to its pagesize.
+// On Cygwin, getpagesize() returns 64k(AllocationGranularity) and
+// offset in mmap(3) should be aligned to the AllocationGranularity.
 static unsigned getPageSize() {
 #if defined(HAVE_GETPAGESIZE)
   const int page_size = ::getpagesize();

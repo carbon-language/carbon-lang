@@ -83,6 +83,8 @@ static unsigned getPageSize() {
   // that LLVM ought to run as 64-bits on a 64-bit system, anyway.
   SYSTEM_INFO info;
   GetSystemInfo(&info);
+  // FIXME: FileOffset in MapViewOfFile() should be aligned to not dwPageSize,
+  // but dwAllocationGranularity.
   return static_cast<unsigned>(info.dwPageSize);
 }
 
