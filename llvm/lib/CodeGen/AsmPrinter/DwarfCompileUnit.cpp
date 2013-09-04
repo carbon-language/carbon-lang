@@ -100,7 +100,7 @@ int64_t CompileUnit::getDefaultLowerBound() const {
 
 /// addFlag - Add a flag that is true.
 void CompileUnit::addFlag(DIE *Die, uint16_t Attribute) {
-  if (DD->getDwarfVersion() >= 4)
+  if (!DD->useDarwinGDBCompat())
     Die->addValue(Attribute, dwarf::DW_FORM_flag_present,
                   DIEIntegerOne);
   else
@@ -1242,6 +1242,17 @@ DIE *CompileUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
   // Add function template parameters.
   addTemplateParams(*SPDie, SP.getTemplateParams());
 
+  // Unfortunately this code needs to stay here instead of below the
+  // AT_specification code in order to work around a bug in older
+  // gdbs that requires the linkage name to resolve multiple template
+  // functions.
+  // TODO: Remove this set of code when we get rid of the old gdb
+  // compatibility.
+  StringRef LinkageName = SP.getLinkageName();
+  if (!LinkageName.empty() && DD->useDarwinGDBCompat())
+    addString(SPDie, dwarf::DW_AT_MIPS_linkage_name,
+              GlobalValue::getRealLinkageName(LinkageName));
+
   // If this DIE is going to refer declaration info using AT_specification
   // then there is no need to add other attributes.
   if (DeclDie) {
@@ -1253,8 +1264,7 @@ DIE *CompileUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
   }
 
   // Add the linkage name if we have one.
-  StringRef LinkageName = SP.getLinkageName();
-  if (!LinkageName.empty())
+  if (!LinkageName.empty() && !DD->useDarwinGDBCompat())
     addString(SPDie, dwarf::DW_AT_MIPS_linkage_name,
               GlobalValue::getRealLinkageName(LinkageName));
 
@@ -1449,15 +1459,21 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
     } else {
       addBlock(VariableDIE, dwarf::DW_AT_location, 0, Block);
     }
-    // Add the linkage name.
+    // Add linkage name.
     StringRef LinkageName = GV.getLinkageName();
-    if (!LinkageName.empty())
+    if (!LinkageName.empty()) {
       // From DWARF4: DIEs to which DW_AT_linkage_name may apply include:
       // TAG_common_block, TAG_constant, TAG_entry_point, TAG_subprogram and
       // TAG_variable.
       addString(IsStaticMember && VariableSpecDIE ?
                 VariableSpecDIE : VariableDIE, dwarf::DW_AT_MIPS_linkage_name,
                 GlobalValue::getRealLinkageName(LinkageName));
+      // In compatibility mode with older gdbs we put the linkage name on both
+      // the TAG_variable DIE and on the TAG_member DIE.
+      if (IsStaticMember && VariableSpecDIE && DD->useDarwinGDBCompat())
+        addString(VariableDIE, dwarf::DW_AT_MIPS_linkage_name,
+                  GlobalValue::getRealLinkageName(LinkageName));
+    }
   } else if (const ConstantInt *CI =
              dyn_cast_or_null<ConstantInt>(GV.getConstant())) {
     // AT_const_value was added when the static member was created. To avoid
