@@ -350,8 +350,8 @@ int main(int argc_, const char **argv_) {
   // If the clang binary happens to be named cl.exe for compatibility reasons,
   // use clang-cl.exe as the prefix to avoid confusion between clang and MSVC.
   StringRef ExeBasename(llvm::sys::path::filename(Path));
-  if (ExeBasename.trim().equals_lower("cl.exe"))
-    ExeBasename = "clang-cl.exe";
+  if (ExeBasename.equals_lower("cl.exe"))
+    ExeBasename = "clang cl.exe";
   DiagClient->setPrefix(ExeBasename);
 
   IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
