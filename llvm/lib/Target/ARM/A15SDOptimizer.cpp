@@ -657,6 +657,13 @@ bool A15SDOptimizer::runOnInstruction(MachineInstr *MI) {
         Modified = true;
         for (SmallVectorImpl<MachineOperand *>::const_iterator I = Uses.begin(),
                E = Uses.end(); I != E; ++I) {
+          // Make sure to constrain the register class of the new register to
+          // match what we're replacing. Otherwise we can optimize a DPR_VFP2
+          // reference into a plain DPR, and that will end poorly. NewReg is
+          // always virtual here, so there will always be a matching subclass
+          // to find.
+          MRI->constrainRegClass(NewReg, MRI->getRegClass((*I)->getReg()));
+
           DEBUG(dbgs() << "Replacing operand "
                        << **I << " with "
                        << PrintReg(NewReg) << "\n");
