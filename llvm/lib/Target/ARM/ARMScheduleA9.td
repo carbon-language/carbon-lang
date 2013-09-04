@@ -1879,6 +1879,10 @@ def CortexA9Itineraries : ProcessorItineraries<
 // The following definitions describe the simpler per-operand machine model.
 // This works with MachineScheduler and will eventually replace itineraries.
 
+class A9WriteLMOpsListType<list<WriteSequence> writes> {
+  list <WriteSequence> Writes = writes;
+  SchedMachineModel SchedModel = ?;
+}
 
 // Cortex-A9 machine model for scheduling and other instruction cost heuristics.
 def CortexA9Model : SchedMachineModel {
@@ -2011,7 +2015,7 @@ def A9WriteAdr#NumAddr : WriteSequence<[A9WriteAdr], NumAddr>;
 
 // Define a predicate to select the LDM based on number of memory addresses.
 def A9LMAdr#NumAddr#Pred :
-  SchedPredicate<"TII->getNumLDMAddresses(MI) == "#NumAddr>;
+  SchedPredicate<"(TII->getNumLDMAddresses(MI)+1)/2 == "#NumAddr>;
 
 } // foreach NumAddr
 
@@ -2054,48 +2058,30 @@ def A9WriteL#NumAddr#Hi : WriteSequence<
 //===----------------------------------------------------------------------===//
 // LDM: Load multiple into 32-bit integer registers.
 
+def A9WriteLMOpsList : A9WriteLMOpsListType<
+                 [A9WriteL1, A9WriteL1Hi,
+                  A9WriteL2, A9WriteL2Hi,
+                  A9WriteL3, A9WriteL3Hi,
+                  A9WriteL4, A9WriteL4Hi,
+                  A9WriteL5, A9WriteL5Hi,
+                  A9WriteL6, A9WriteL6Hi,
+                  A9WriteL7, A9WriteL7Hi,
+                  A9WriteL8, A9WriteL8Hi]>;
+
 // A9WriteLM variants expand into a pair of writes for each 64-bit
 // value loaded. When the number of registers is odd, the last
 // A9WriteLnHi is naturally ignored because the instruction has no
 // following def operands.  These variants take no issue resource, so
 // they may need to be part of a WriteSequence that includes A9WriteIssue.
 def A9WriteLM : SchedWriteVariant<[
-  SchedVar<A9LMAdr1Pred, [A9WriteL1, A9WriteL1Hi]>,
-  SchedVar<A9LMAdr2Pred, [A9WriteL1, A9WriteL1Hi,
-                          A9WriteL2, A9WriteL2Hi]>,
-  SchedVar<A9LMAdr3Pred, [A9WriteL1, A9WriteL1Hi,
-                          A9WriteL2, A9WriteL2Hi,
-                          A9WriteL3, A9WriteL3Hi]>,
-  SchedVar<A9LMAdr4Pred, [A9WriteL1, A9WriteL1Hi,
-                          A9WriteL2, A9WriteL2Hi,
-                          A9WriteL3, A9WriteL3Hi,
-                          A9WriteL4, A9WriteL4Hi]>,
-  SchedVar<A9LMAdr5Pred, [A9WriteL1, A9WriteL1Hi,
-                          A9WriteL2, A9WriteL2Hi,
-                          A9WriteL3, A9WriteL3Hi,
-                          A9WriteL4, A9WriteL4Hi,
-                          A9WriteL5, A9WriteL5Hi]>,
-  SchedVar<A9LMAdr6Pred, [A9WriteL1, A9WriteL1Hi,
-                          A9WriteL2, A9WriteL2Hi,
-                          A9WriteL3, A9WriteL3Hi,
-                          A9WriteL4, A9WriteL4Hi,
-                          A9WriteL5, A9WriteL5Hi,
-                          A9WriteL6, A9WriteL6Hi]>,
-  SchedVar<A9LMAdr7Pred, [A9WriteL1, A9WriteL1Hi,
-                          A9WriteL2, A9WriteL2Hi,
-                          A9WriteL3, A9WriteL3Hi,
-                          A9WriteL4, A9WriteL4Hi,
-                          A9WriteL5, A9WriteL5Hi,
-                          A9WriteL6, A9WriteL6Hi,
-                          A9WriteL7, A9WriteL7Hi]>,
-  SchedVar<A9LMAdr8Pred, [A9WriteL1, A9WriteL1Hi,
-                          A9WriteL2, A9WriteL2Hi,
-                          A9WriteL3, A9WriteL3Hi,
-                          A9WriteL4, A9WriteL4Hi,
-                          A9WriteL5, A9WriteL5Hi,
-                          A9WriteL6, A9WriteL6Hi,
-                          A9WriteL7, A9WriteL7Hi,
-                          A9WriteL8, A9WriteL8Hi]>,
+  SchedVar<A9LMAdr1Pred, A9WriteLMOpsList.Writes[0-1]>,
+  SchedVar<A9LMAdr2Pred, A9WriteLMOpsList.Writes[0-3]>,
+  SchedVar<A9LMAdr3Pred, A9WriteLMOpsList.Writes[0-5]>,
+  SchedVar<A9LMAdr4Pred, A9WriteLMOpsList.Writes[0-7]>,
+  SchedVar<A9LMAdr5Pred, A9WriteLMOpsList.Writes[0-9]>,
+  SchedVar<A9LMAdr6Pred, A9WriteLMOpsList.Writes[0-11]>,
+  SchedVar<A9LMAdr7Pred, A9WriteLMOpsList.Writes[0-13]>,
+  SchedVar<A9LMAdr8Pred, A9WriteLMOpsList.Writes[0-15]>,
   // For unknown LDMs, define the maximum number of writes, but only
   // make the first two consume resources.
   SchedVar<A9LMUnknownPred, [A9WriteL1, A9WriteL1Hi,
@@ -2177,49 +2163,39 @@ def A9WriteLMfp#NumAddr#Hi : WriteSequence<
 // pair of writes for each 64-bit data loaded. When the number of
 // registers is odd, the last WriteLMfpnHi is naturally ignored because
 // the instruction has no following def operands.
+
+def A9WriteLMfpPostRAOpsList : A9WriteLMOpsListType<
+                 [A9WriteLMfp1, A9WriteLMfp2,       // 0-1
+                  A9WriteLMfp3, A9WriteLMfp4,       // 2-3
+                  A9WriteLMfp5, A9WriteLMfp6,       // 4-5
+                  A9WriteLMfp7, A9WriteLMfp8,       // 6-7
+                  A9WriteLMfp1Hi,                   // 8-8
+                  A9WriteLMfp2Hi, A9WriteLMfp2Hi,   // 9-10
+                  A9WriteLMfp3Hi, A9WriteLMfp3Hi,   // 11-12
+                  A9WriteLMfp4Hi, A9WriteLMfp4Hi,   // 13-14
+                  A9WriteLMfp5Hi, A9WriteLMfp5Hi,   // 15-16
+                  A9WriteLMfp6Hi, A9WriteLMfp6Hi,   // 17-18
+                  A9WriteLMfp7Hi, A9WriteLMfp7Hi,   // 19-20
+                  A9WriteLMfp8Hi, A9WriteLMfp8Hi]>; // 21-22
+
 def A9WriteLMfpPostRA : SchedWriteVariant<[
-  SchedVar<A9LMAdr1Pred, [A9WriteLMfp1, A9WriteLMfp1Hi]>,
-  SchedVar<A9LMAdr2Pred, [A9WriteLMfp1, A9WriteLMfp1Hi,
-                          A9WriteLMfp2, A9WriteLMfp2Hi]>,
-  SchedVar<A9LMAdr3Pred, [A9WriteLMfp1, A9WriteLMfp1Hi,
-                          A9WriteLMfp2, A9WriteLMfp2Hi,
-                          A9WriteLMfp3, A9WriteLMfp3Hi]>,
-  SchedVar<A9LMAdr4Pred, [A9WriteLMfp1, A9WriteLMfp1Hi,
-                          A9WriteLMfp2, A9WriteLMfp2Hi,
-                          A9WriteLMfp3, A9WriteLMfp3Hi,
-                          A9WriteLMfp4, A9WriteLMfp4Hi]>,
-  SchedVar<A9LMAdr5Pred, [A9WriteLMfp1, A9WriteLMfp1Hi,
-                          A9WriteLMfp2, A9WriteLMfp2Hi,
-                          A9WriteLMfp3, A9WriteLMfp3Hi,
-                          A9WriteLMfp4, A9WriteLMfp4Hi,
-                          A9WriteLMfp5, A9WriteLMfp5Hi]>,
-  SchedVar<A9LMAdr6Pred, [A9WriteLMfp1, A9WriteLMfp1Hi,
-                          A9WriteLMfp2, A9WriteLMfp2Hi,
-                          A9WriteLMfp3, A9WriteLMfp3Hi,
-                          A9WriteLMfp4, A9WriteLMfp4Hi,
-                          A9WriteLMfp5, A9WriteLMfp5Hi,
-                          A9WriteLMfp6, A9WriteLMfp6Hi]>,
-  SchedVar<A9LMAdr7Pred, [A9WriteLMfp1, A9WriteLMfp1Hi,
-                          A9WriteLMfp2, A9WriteLMfp2Hi,
-                          A9WriteLMfp3, A9WriteLMfp3Hi,
-                          A9WriteLMfp4, A9WriteLMfp4Hi,
-                          A9WriteLMfp5, A9WriteLMfp5Hi,
-                          A9WriteLMfp6, A9WriteLMfp6Hi,
-                          A9WriteLMfp7, A9WriteLMfp7Hi]>,
-  SchedVar<A9LMAdr8Pred, [A9WriteLMfp1, A9WriteLMfp1Hi,
-                          A9WriteLMfp2, A9WriteLMfp2Hi,
-                          A9WriteLMfp3, A9WriteLMfp3Hi,
-                          A9WriteLMfp4, A9WriteLMfp4Hi,
-                          A9WriteLMfp5, A9WriteLMfp5Hi,
-                          A9WriteLMfp6, A9WriteLMfp6Hi,
-                          A9WriteLMfp7, A9WriteLMfp7Hi,
-                          A9WriteLMfp8, A9WriteLMfp8Hi]>,
+  SchedVar<A9LMAdr1Pred, A9WriteLMfpPostRAOpsList.Writes[0-0, 8-8]>,
+  SchedVar<A9LMAdr2Pred, A9WriteLMfpPostRAOpsList.Writes[0-1, 9-10]>,
+  SchedVar<A9LMAdr3Pred, A9WriteLMfpPostRAOpsList.Writes[0-2, 10-12]>,
+  SchedVar<A9LMAdr4Pred, A9WriteLMfpPostRAOpsList.Writes[0-3, 11-14]>,
+  SchedVar<A9LMAdr5Pred, A9WriteLMfpPostRAOpsList.Writes[0-4, 12-16]>,
+  SchedVar<A9LMAdr6Pred, A9WriteLMfpPostRAOpsList.Writes[0-5, 13-18]>,
+  SchedVar<A9LMAdr7Pred, A9WriteLMfpPostRAOpsList.Writes[0-6, 14-20]>,
+  SchedVar<A9LMAdr8Pred, A9WriteLMfpPostRAOpsList.Writes[0-7, 15-22]>,
   // For unknown LDMs, define the maximum number of writes, but only
-  // make the first two consume resources.
-  SchedVar<A9LMUnknownPred, [A9WriteLMfp1, A9WriteLMfp1Hi,
-                             A9WriteLMfp2, A9WriteLMfp2Hi,
-                             A9WriteLMfp3Hi, A9WriteLMfp3Hi,
-                             A9WriteLMfp4Hi, A9WriteLMfp4Hi,
+  // make the first two consume resources. We are optimizing for the case
+  // where the operands are DPRs, and this determines the first eight
+  // types. The remaining eight types are filled to cover the case
+  // where the operands are SPRs.
+  SchedVar<A9LMUnknownPred, [A9WriteLMfp1, A9WriteLMfp2,
+                             A9WriteLMfp3Hi, A9WriteLMfp4Hi,
+                             A9WriteLMfp5Hi, A9WriteLMfp6Hi,
+                             A9WriteLMfp7Hi, A9WriteLMfp8Hi,
                              A9WriteLMfp5Hi, A9WriteLMfp5Hi,
                              A9WriteLMfp6Hi, A9WriteLMfp6Hi,
                              A9WriteLMfp7Hi, A9WriteLMfp7Hi,
