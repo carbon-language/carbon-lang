@@ -2681,6 +2681,7 @@ SUnit *ConvergingScheduler::pickNode(bool &IsTopNode) {
         SchedCandidate TopCand(NoPolicy);
         pickNodeFromQueue(Top, DAG->getTopRPTracker(), TopCand);
         assert(TopCand.Reason != NoCand && "failed to find a candidate");
+        tracePick(TopCand, true);
         SU = TopCand.SU;
       }
       IsTopNode = true;
@@ -2692,6 +2693,7 @@ SUnit *ConvergingScheduler::pickNode(bool &IsTopNode) {
         SchedCandidate BotCand(NoPolicy);
         pickNodeFromQueue(Bot, DAG->getBotRPTracker(), BotCand);
         assert(BotCand.Reason != NoCand && "failed to find a candidate");
+        tracePick(BotCand, false);
         SU = BotCand.SU;
       }
       IsTopNode = false;
