@@ -108,7 +108,8 @@ public:
   /// Uses Windows style link command line options to fill in options struct.
   /// Returns true iff there was an error.
   static bool parse(int argc, const char *argv[], PECOFFLinkingContext &info,
-                    raw_ostream &diagnostics = llvm::errs());
+                    raw_ostream &diagnostics = llvm::errs(),
+                    bool isDirective = false);
 
 private:
   WinLinkDriver() LLVM_DELETED_FUNCTION;

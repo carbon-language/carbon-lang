@@ -696,7 +696,7 @@ private:
     std::string errorMessage;
     llvm::raw_string_ostream stream(errorMessage);
     bool parseFailed = WinLinkDriver::parse(
-        argc, argv, _PECOFFLinkingContext, stream);
+        argc, argv, _PECOFFLinkingContext, stream, /*isDirective*/true);
     stream.flush();
 
     // Print error message if error.

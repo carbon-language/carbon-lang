@@ -14,7 +14,7 @@ sections:
   - Name:            .drectve
     Characteristics: [ IMAGE_SCN_LNK_INFO, IMAGE_SCN_LNK_REMOVE ]
     Alignment:       2147483648
-    SectionData:     2f73756273797374656d3a636f6e736f6c652c34322e31393500
+    SectionData:     2f73756273797374656d3a636f6e736f6c652c34322e313935202d3f666f6f00
 symbols:
   - Name:            .text
     Value:           0

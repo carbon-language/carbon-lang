@@ -183,14 +183,16 @@ void setDefaultEntrySymbolName(PECOFFLinkingContext &context) {
 
 // Parses the given command line options and returns the result. Returns NULL if
 // there's an error in the options.
-std::unique_ptr<llvm::opt::InputArgList> parseArgs(int argc, const char *argv[],
-                                                   raw_ostream &diagnostics) {
+std::unique_ptr<llvm::opt::InputArgList>
+parseArgs(int argc, const char *argv[], raw_ostream &diagnostics,
+          bool isDirective) {
   // Parse command line options using WinLinkOptions.td
   std::unique_ptr<llvm::opt::InputArgList> parsedArgs;
   WinLinkOptTable table;
   unsigned missingIndex;
   unsigned missingCount;
-  parsedArgs.reset(table.ParseArgs(&argv[1], &argv[argc], missingIndex, missingCount));
+  parsedArgs.reset(table.ParseArgs(&argv[1], &argv[argc],
+                                   missingIndex, missingCount));
   if (missingCount) {
     diagnostics << "error: missing arg value for '"
                 << parsedArgs->getArgString(missingIndex) << "' expected "
@@ -198,13 +200,16 @@ std::unique_ptr<llvm::opt::InputArgList> parseArgs(int argc, const char *argv[],
     return nullptr;
   }
 
-  // Show warning for unknown arguments
+  // Show warning for unknown arguments. In .drectve section, unknown options
+  // starting with "-?" are silently ignored. This is a COFF's feature to embed a
+  // new linker option to an object file while keeping backward compatibility.
   for (auto it = parsedArgs->filtered_begin(OPT_UNKNOWN),
             ie = parsedArgs->filtered_end(); it != ie; ++it) {
-    diagnostics << "warning: ignoring unknown argument: "
-                << (*it)->getAsString(*parsedArgs) << "\n";
+    StringRef arg = (*it)->getAsString(*parsedArgs);
+    if (isDirective && arg.startswith("-?"))
+      continue;
+    diagnostics << "warning: ignoring unknown argument: " << arg << "\n";
   }
-
   return parsedArgs;
 }
 
@@ -244,12 +249,12 @@ bool WinLinkDriver::linkPECOFF(int argc, const char *argv[],
   return link(context, diagnostics);
 }
 
-bool WinLinkDriver::parse(int argc, const char *argv[],
-                          PECOFFLinkingContext &ctx, raw_ostream &diagnostics) {
+bool WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
+                          raw_ostream &diagnostics, bool isDirective) {
   std::map<StringRef, StringRef> failIfMismatchMap;
   // Parse the options.
   std::unique_ptr<llvm::opt::InputArgList> parsedArgs = parseArgs(
-      argc, argv, diagnostics);
+      argc, argv, diagnostics, isDirective);
   if (!parsedArgs)
     return true;
 

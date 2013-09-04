@@ -2,11 +2,11 @@ include "llvm/Option/OptParser.td"
 
 // link.exe accepts options starting with either a dash or a slash.
 
-class F<string name> : Flag<["/", "-"], name>;
+class F<string name> : Flag<["/", "-", "-?"], name>;
 
 multiclass P<string name, string help> {
-  def "" : Joined<["/", "-"], name#":">, HelpText<help>;
-  def _c : Separate<["/", "-"], name>, Alias<!cast<Option>(name)>;
+  def "" : Joined<["/", "-", "-?"], name#":">, HelpText<help>;
+  def _c : Separate<["/", "-", "-?"], name>, Alias<!cast<Option>(name)>;
 }
 
 defm base    : P<"base", "Base address of the program">;
