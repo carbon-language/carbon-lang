@@ -3,11 +3,14 @@
 ;
 ; Verify that register pressure heuristics are working in MachineScheduler.
 ;
-; When we enable subtree scheduling heuristics on X86, we may need a
-; flag to disable it for this test case.
+; We can further reduce spills in this case with a global register
+; pressure heuristic, like sethi-ullman numbers or biasing toward
+; scheduled subtrees. However, these heuristics are marginally
+; beneficial on x86_64 and exacerbate register pressure in other
+; more complex cases.
 ;
 ; CHECK: @wrap_mul4
-; CHECK: 22 regalloc - Number of spills inserted
+; CHECK: 23 regalloc - Number of spills inserted
 
 define void @wrap_mul4(double* nocapture %Out, [4 x double]* nocapture %A, [4 x double]* nocapture %B) #0 {
 entry:
