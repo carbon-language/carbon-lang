@@ -1090,11 +1090,12 @@ void ObjCMigrateASTConsumer::migrateAddMethodAnnotation(
       (MethodDecl->param_begin() == MethodDecl->param_end()))
     return;
   
-  bool ReturnCFAudited = false;
   if (!MethodIsReturnAnnotated) {
     RetEffect Ret = CE.getReturnValue();
-    if (Ret.getObjKind() == RetEffect::CF && (Ret.isOwned() || Ret.notOwned()))
-      ReturnCFAudited = true;
+    if (Ret.getObjKind() == RetEffect::CF && (Ret.isOwned() || Ret.notOwned())) {
+      AddCFAnnotations(Ctx, CE, MethodDecl, false);
+      return;
+    }
     else if (!AuditedType(MethodDecl->getResultType()))
       return;
   }
@@ -1103,26 +1104,16 @@ void ObjCMigrateASTConsumer::migrateAddMethodAnnotation(
   // Now, how about argument types.
   llvm::ArrayRef<ArgEffect> AEArgs = CE.getArgs();
   unsigned i = 0;
-  bool ArgCFAudited = false;
   for (ObjCMethodDecl::param_const_iterator pi = MethodDecl->param_begin(),
        pe = MethodDecl->param_end(); pi != pe; ++pi, ++i) {
     const ParmVarDecl *pd = *pi;
     ArgEffect AE = AEArgs[i];
-    if (AE == DecRef /*CFConsumed annotated*/ || AE == IncRef) {
-      if ((AE == DecRef && !pd->getAttr<CFConsumedAttr>()) ||
-          AE == IncRef)
-        ArgCFAudited = true;
-    }
-    else {
-      QualType AT = pd->getType();
-      if (!AuditedType(AT)) {
-        AddCFAnnotations(Ctx, CE, MethodDecl, MethodIsReturnAnnotated);
-        return;
-      }
+    if ((AE == DecRef && !pd->getAttr<CFConsumedAttr>()) || AE == IncRef ||
+        !AuditedType(pd->getType())) {
+      AddCFAnnotations(Ctx, CE, MethodDecl, MethodIsReturnAnnotated);
+      return;
     }
   }
-  if (ReturnCFAudited || ArgCFAudited)
-    AddCFAnnotations(Ctx, CE, MethodDecl, MethodIsReturnAnnotated);
   return;
 }
 
