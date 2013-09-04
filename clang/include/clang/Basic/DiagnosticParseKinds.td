@@ -616,7 +616,7 @@ def warn_cxx98_compat_extern_template : Warning<
   InGroup<CXX98CompatPedantic>, DefaultIgnore;
 def warn_static_inline_explicit_inst_ignored : Warning<
   "ignoring '%select{static|inline}0' keyword on explicit template "
-  "instantiation">;
+  "instantiation">, InGroup<DiagGroup<"static-inline-explicit-instantiation">>;
   
 // Constructor template diagnostics.
 def err_out_of_line_constructor_template_id : Error<
