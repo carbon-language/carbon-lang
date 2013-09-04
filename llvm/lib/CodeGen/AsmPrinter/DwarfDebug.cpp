@@ -85,14 +85,6 @@ DwarfAccelTables("dwarf-accel-tables", cl::Hidden,
                  cl::init(Default));
 
 static cl::opt<DefaultOnOff>
-DarwinGDBCompat("darwin-gdb-compat", cl::Hidden,
-                cl::desc("Compatibility with Darwin gdb."),
-                cl::values(clEnumVal(Default, "Default for platform"),
-                           clEnumVal(Enable, "Enabled"),
-                           clEnumVal(Disable, "Disabled"), clEnumValEnd),
-                cl::init(Default));
-
-static cl::opt<DefaultOnOff>
 SplitDwarf("split-dwarf", cl::Hidden,
            cl::desc("Output prototype dwarf split debug info."),
            cl::values(clEnumVal(Default, "Default for platform"),
@@ -205,11 +197,6 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
   // for Darwin by default, pubnames by default for non-Darwin,
   // and handle split dwarf.
   bool IsDarwin = Triple(A->getTargetTriple()).isOSDarwin();
-
-  if (DarwinGDBCompat == Default)
-    IsDarwinGDBCompat = IsDarwin;
-  else
-    IsDarwinGDBCompat = DarwinGDBCompat == Enable;
 
   if (DwarfAccelTables == Default)
     HasDwarfAccelTables = IsDarwin;
@@ -1898,10 +1885,10 @@ void DwarfDebug::emitSectionLabels() {
   DwarfLineSectionSym =
     emitSectionSym(Asm, TLOF.getDwarfLineSection(), "section_line");
   emitSectionSym(Asm, TLOF.getDwarfLocSection());
-  if (HasDwarfPubSections)
+  if (HasDwarfPubSections) {
     emitSectionSym(Asm, TLOF.getDwarfPubNamesSection());
-  if (useDarwinGDBCompat() || HasDwarfPubSections)
     emitSectionSym(Asm, TLOF.getDwarfPubTypesSection());
+  }
   DwarfStrSectionSym =
     emitSectionSym(Asm, TLOF.getDwarfStrSection(), "info_string");
   if (useSplitDwarf()) {
