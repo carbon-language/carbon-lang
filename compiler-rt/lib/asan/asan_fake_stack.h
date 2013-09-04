@@ -81,12 +81,12 @@ class FakeStack {
   uptr StackSize() const { return stack_size_; }
 
  private:
-  static const uptr kMinStackFrameSizeLog = 9;  // Min frame is 512B.
+  static const uptr kMinStackFrameSizeLog = 7;  // Min frame is 128B.
   static const uptr kMaxStackFrameSizeLog = 16;  // Max stack frame is 64K.
   static const uptr kMaxStackMallocSize = 1 << kMaxStackFrameSizeLog;
   static const uptr kNumberOfSizeClasses =
       kMaxStackFrameSizeLog - kMinStackFrameSizeLog + 1;
-  static const uptr kMaxRecursionDepth = 15000;
+  static const uptr kMaxRecursionDepth = 60000;
 
   bool AddrIsInSizeClass(uptr addr, uptr size_class);
 
@@ -110,7 +110,7 @@ class FakeStack {
   FakeFrameLifo<kMaxRecursionDepth> call_stack_;
 };
 
-COMPILER_CHECK(sizeof(FakeStack) <= (1 << 17));
+COMPILER_CHECK(sizeof(FakeStack) <= (1 << 19));
 
 }  // namespace __asan
 

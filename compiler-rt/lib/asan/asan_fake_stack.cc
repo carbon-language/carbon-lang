@@ -102,10 +102,12 @@ void FakeStack::AllocateOneSizeClass(uptr size_class) {
   CHECK(ClassMmapSize(size_class) >= GetPageSizeCached());
   uptr new_mem = (uptr)MmapOrDie(
       ClassMmapSize(size_class), __FUNCTION__);
-  // Printf("T%d new_mem[%zu]: %p-%p mmap %zu\n",
-  //       GetCurrentThread()->tid(),
-  //       size_class, new_mem, new_mem + ClassMmapSize(size_class),
-  //       ClassMmapSize(size_class));
+  if (0) {
+    Printf("T%d new_mem[%zu]: %p-%p mmap %zu\n",
+           GetCurrentThread()->tid(),
+           size_class, new_mem, new_mem + ClassMmapSize(size_class),
+           ClassMmapSize(size_class));
+  }
   uptr i;
   uptr size = ClassSize(size_class);
   for (i = 0; i + size <= ClassMmapSize(size_class); i += size) {
