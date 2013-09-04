@@ -2818,15 +2818,6 @@ struct ILPOrder {
 
 /// \brief Schedule based on the ILP metric.
 class ILPScheduler : public MachineSchedStrategy {
-  /// In case all subtrees are eventually connected to a common root through
-  /// data dependence (e.g. reduction), place an upper limit on their size.
-  ///
-  /// FIXME: A subtree limit is generally good, but in the situation commented
-  /// above, where multiple similar subtrees feed a common root, we should
-  /// only split at a point where the resulting subtrees will be balanced.
-  /// (a motivating test case must be found).
-  static const unsigned SubtreeLimit = 16;
-
   ScheduleDAGMI *DAG;
   ILPOrder Cmp;
 
