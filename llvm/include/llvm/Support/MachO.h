@@ -417,6 +417,15 @@ namespace llvm {
       X86_64_RELOC_TLV             = 9
     };
 
+    // Values for segment_command.initprot.
+    // From <mach/vm_prot.h>
+    enum {
+      VM_PROT_READ    = 0x1,
+      VM_PROT_WRITE   = 0x2,
+      VM_PROT_EXECUTE = 0x4
+    };
+
+
     // Structs from <mach-o/loader.h>
 
     struct mach_header {

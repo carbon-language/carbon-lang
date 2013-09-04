@@ -185,8 +185,10 @@ void MachObjectWriter::WriteSegmentLoadCommand(unsigned NumSections,
     Write32(SectionDataStartOffset); // file offset
     Write32(SectionDataSize); // file size
   }
-  Write32(0x7); // maxprot
-  Write32(0x7); // initprot
+  // maxprot
+  Write32(MachO::VM_PROT_READ | MachO::VM_PROT_WRITE | MachO::VM_PROT_EXECUTE); 
+  // initprot
+  Write32(MachO::VM_PROT_READ | MachO::VM_PROT_WRITE | MachO::VM_PROT_EXECUTE); 
   Write32(NumSections);
   Write32(0); // flags
 
