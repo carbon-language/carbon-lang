@@ -7,7 +7,7 @@ Add-Override Transform
 The Add-Override Transform adds the ``override`` specifier to member
 functions that override a virtual function in a base class and that
 don't already have the specifier. The transform is enabled with the 
-:option:`-add-override` option of :program:`cpp11-migrate`.
+:option:`-add-override` option of :program:`clang-modernize`.
 For example:
 
 .. code-block:: c++
@@ -33,7 +33,7 @@ expand to the ``override`` keyword when compiling with C++11 features enabled.
 To maintain compatibility with non-C++11 builds, the Add-Override Transform
 supports detection and use of these macros instead of using the ``override``
 keyword directly. Specify ``-override-macros`` on the command line to the
-Migrator to enable this behavior.
+Modernizer to enable this behavior.
 
 
 Known Limitations

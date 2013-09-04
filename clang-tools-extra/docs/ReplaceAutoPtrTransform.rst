@@ -9,7 +9,7 @@ The Replace-AutoPtr Transform replaces the uses of the deprecated class
 ownership, done by the copy-constructor and the assignment operator, is changed
 to match ``std::unique_ptr`` usage by using explicit calls to ``std::move()``.
 The transform is enabled with the :option:`-replace-auto_ptr` option of
-:program:`cpp11-migrate`.
+:program:`clang-modernize`.
 
 Migration example:
 

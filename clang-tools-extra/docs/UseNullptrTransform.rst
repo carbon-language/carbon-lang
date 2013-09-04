@@ -7,7 +7,7 @@ Use-Nullptr Transform
 The Use-Nullptr Transform is a transformation to convert the usage of null
 pointer constants (eg. ``NULL``, ``0``) to use the new C++11 ``nullptr``
 keyword. The transform is enabled with the :option:`-use-nullptr` option of
-:program:`cpp11-migrate`.
+:program:`clang-modernize`.
 
 Example
 =======
@@ -63,7 +63,7 @@ using the command-line
 
 .. code-block:: bash
 
-  cpp11-migrate -use-nullptr -user-null-macros=MY_NULL foo.cpp
+  clang-modernize -use-nullptr -user-null-macros=MY_NULL foo.cpp
 
 
 transforms to:

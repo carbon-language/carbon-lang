@@ -7,7 +7,7 @@ Use-Auto Transform
 The Use-Auto Transform is responsible for using the ``auto`` type specifier for
 variable declarations to *improve code readability and maintainability*. The
 transform is enabled with the :option:`-use-auto` option of
-:program:`cpp11-migrate`. For example:
+:program:`clang-modernize`. For example:
 
 .. code-block:: c++
 

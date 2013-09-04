@@ -12,7 +12,7 @@ CLANG_LEVEL := ../..
 include $(CLANG_LEVEL)/../../Makefile.config
 
 PARALLEL_DIRS := remove-cstr-calls tool-template modularize
-DIRS := clang-apply-replacements cpp11-migrate clang-tidy unittests
+DIRS := clang-apply-replacements clang-modernize clang-tidy unittests
 
 include $(CLANG_LEVEL)/Makefile
 

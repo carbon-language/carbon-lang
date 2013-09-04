@@ -15,7 +15,7 @@ Contents
 .. toctree::
    :maxdepth: 1
 
-   cpp11-migrate
+   clang-modernize
 
 
 Doxygen Documentation

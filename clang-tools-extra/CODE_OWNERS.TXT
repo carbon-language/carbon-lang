@@ -10,4 +10,4 @@ beautification by scripts.  The fields are: name (N), email (E), web-address
 
 N: Edwin Vane
 E: edwin.vane@intel.com
-D: cpp11-migrate
+D: clang-modernize

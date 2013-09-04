@@ -10,6 +10,6 @@
 CLANG_LEVEL := ../../..
 include $(CLANG_LEVEL)/../../Makefile.config
 
-PARALLEL_DIRS := cpp11-migrate clang-tidy
+PARALLEL_DIRS := clang-modernize clang-tidy
 
 include $(CLANG_LEVEL)/Makefile

@@ -6,7 +6,7 @@ Loop Convert Transform
 
 The Loop Convert Transform is a transformation to convert ``for(...; ...;
 ...)`` loops to use the new range-based loops in C++11. The transform is enabled
-with the :option:`-loop-convert` option of :program:`cpp11-migrate`.
+with the :option:`-loop-convert` option of :program:`clang-modernize`.
 
 Three kinds of loops can be converted:
 

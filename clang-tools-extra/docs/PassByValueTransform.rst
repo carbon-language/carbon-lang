@@ -44,7 +44,7 @@ necessary.
 
 Example::
 
-  $ cpp11-migrate -pass-by-value ctor.cpp
+  $ clang-modernize -pass-by-value ctor.cpp
 
 **ctor.cpp**
 
