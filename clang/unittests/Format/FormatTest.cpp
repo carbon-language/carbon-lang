@@ -6262,37 +6262,37 @@ TEST_F(FormatTest, FormatsLambdas) {
   // parsing of the unwrapped lines doesn't regress.
   verifyFormat(
       "int c = [b]() mutable {\n"
-      "  return [&b]{\n"
+      "  return [&b] {\n"
       "    return b++;\n"
       "  }();\n"
       "}();\n");
   verifyFormat(
-      "int c = [&]{\n"
-      "  [ = ]{\n"
+      "int c = [&] {\n"
+      "  [=] {\n"
       "    return b++;\n"
       "  }();\n"
       "}();\n");
   verifyFormat(
-      "int c = [ &, &a, a]{\n"
-      "  [ =, c, &d]{\n"
+      "int c = [&, &a, a] {\n"
+      "  [=, c, &d] {\n"
       "    return b++;\n"
       "  }();\n"
       "}();\n");
   verifyFormat(
-      "int c = [&a, &a, a]{\n"
-      "  [ =, a, b, &c]{\n"
+      "int c = [&a, &a, a] {\n"
+      "  [=, a, b, &c] {\n"
       "    return b++;\n"
       "  }();\n"
       "}();\n");
   verifyFormat(
-      "auto c = {[&a, &a, a]{\n"
-      "  [ =, a, b, &c]{\n"
+      "auto c = {[&a, &a, a] {\n"
+      "  [=, a, b, &c] {\n"
       "    return b++;\n"
       "  }();\n"
       "} }\n");
   verifyFormat(
-      "auto c = {[&a, &a, a]{\n"
-      "  [ =, a, b, &c]{\n"
+      "auto c = {[&a, &a, a] {\n"
+      "  [=, a, b, &c] {\n"
       "  }();\n"
       "} }\n");
 }

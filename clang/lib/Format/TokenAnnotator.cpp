@@ -624,7 +624,9 @@ private:
         Current.Type = determineIncrementUsage(Current);
       } else if (Current.is(tok::exclaim)) {
         Current.Type = TT_UnaryOperator;
-      } else if (Current.isBinaryOperator()) {
+      } else if (Current.isBinaryOperator() &&
+                 (!Current.Previous ||
+                  Current.Previous->isNot(tok::l_square))) {
         Current.Type = TT_BinaryOperator;
       } else if (Current.is(tok::comment)) {
         if (Current.TokenText.startswith("//"))
@@ -1188,6 +1190,8 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
     return false;
   if (Right.is(tok::ellipsis))
     return false;
+  if (Left.is(tok::l_square) && Right.is(tok::amp))
+    return false;
   if (Right.Type == TT_PointerOrReference)
     return Left.Tok.isLiteral() ||
            ((Left.Type != TT_PointerOrReference) && Left.isNot(tok::l_paren) &&
@@ -1236,7 +1240,8 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
     return !Left.isOneOf(tok::l_paren, tok::l_square, tok::at) &&
            (Left.isNot(tok::colon) || Left.Type != TT_ObjCMethodExpr);
   if (Left.isOneOf(tok::identifier, tok::greater, tok::r_square) &&
-      Right.is(tok::l_brace) && Right.getNextNonComment())
+      Right.is(tok::l_brace) && Right.getNextNonComment() &&
+      Right.BlockKind != BK_Block)
     return false;
   if (Left.is(tok::period) || Right.is(tok::period))
     return false;

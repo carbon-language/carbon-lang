@@ -278,13 +278,11 @@ void UnwrappedLineParser::calculateBraceTypes() {
       if (!LBraceStack.empty()) {
         if (LBraceStack.back()->BlockKind == BK_Unknown) {
           // If there is a comma, semicolon or right paren after the closing
-          // brace, we assume this is a braced initializer list.
-
-          // FIXME: Note that this currently works only because we do not
-          // use the brace information while inside a braced init list.
-          // Thus, if the parent is a braced init list, we consider all
-          // brace blocks inside it braced init list. That works good enough
-          // for now, but we will need to fix it to correctly handle lambdas.
+          // brace, we assume this is a braced initializer list.  Note that
+          // regardless how we mark inner braces here, we will overwrite the
+          // BlockKind later if we parse a braced list (where all blocks inside
+          // are by default braced lists), or when we explicitly detect blocks
+          // (for example while parsing lambdas).
           //
           // We exclude + and - as they can be ObjC visibility modifiers.
           if (NextTok->isOneOf(tok::comma, tok::semi, tok::r_paren,
@@ -315,12 +313,13 @@ void UnwrappedLineParser::calculateBraceTypes() {
     }
     Tok = NextTok;
     Position += ReadTokens;
-  } while (Tok->Tok.isNot(tok::eof));
+  } while (Tok->Tok.isNot(tok::eof) && !LBraceStack.empty());
   // Assume other blocks for all unclosed opening braces.
   for (unsigned i = 0, e = LBraceStack.size(); i != e; ++i) {
     if (LBraceStack[i]->BlockKind == BK_Unknown)
       LBraceStack[i]->BlockKind = BK_Block;
   }
+
   FormatTok = Tokens->setPosition(StoredPosition);
 }
 
@@ -675,6 +674,7 @@ void UnwrappedLineParser::tryToParseLambda() {
         break;
     }
   }
+  FormatTok->BlockKind = BK_Block;
   nextToken();
   {
     ScopedLineState LineState(*this);
@@ -745,6 +745,9 @@ void UnwrappedLineParser::parseBracedList() {
         tryToParseLambda();
         break;
     case tok::l_brace:
+      // Assume there are no blocks inside a braced init list apart
+      // from the ones we explicitly parse out (like lambdas).
+      FormatTok->BlockKind = BK_BracedInit;
       parseBracedList();
       break;
     case tok::r_brace:
