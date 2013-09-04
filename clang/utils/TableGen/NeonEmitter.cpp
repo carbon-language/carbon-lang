@@ -91,7 +91,10 @@ enum OpKind {
   OpAbdl,
   OpAba,
   OpAbal,
-  OpDiv
+  OpDiv,
+  OpLongHi,
+  OpNarrowHi,
+  OpMovlHi
 };
 
 enum ClassKind {
@@ -208,6 +211,9 @@ public:
     OpMap["OP_ABA"]   = OpAba;
     OpMap["OP_ABAL"]  = OpAbal;
     OpMap["OP_DIV"] = OpDiv;
+    OpMap["OP_LONG_HI"] = OpLongHi;
+    OpMap["OP_NARROW_HI"] = OpNarrowHi;
+    OpMap["OP_MOVL_HI"] = OpMovlHi;
 
     Record *SI = R.getClass("SInst");
     Record *II = R.getClass("IInst");
@@ -374,6 +380,8 @@ static char ModType(const char mod, char type, bool &quad, bool &poly,
       poly = false;
       if (type == 'f')
         type = 'i';
+      if (type == 'd')
+        type = 'l';
       break;
     case 'f':
       if (type == 'h')
@@ -421,6 +429,10 @@ static char ModType(const char mod, char type, bool &quad, bool &poly,
     case 'e':
       type = Narrow(type);
       usgn = true;
+      break;
+    case 'm':
+      type = Narrow(type);
+      quad = false;
       break;
     default:
       break;
@@ -1305,6 +1317,15 @@ static std::string SplatLane(unsigned nElts, const std::string &vec,
   return s;
 }
 
+static std::string RemoveHigh(const std::string &name) {
+  std::string s = name;
+  std::size_t found = s.find("_high_");
+  if (found == std::string::npos)
+    PrintFatalError("name should contain \"_high_\" for high intrinsics");
+  s.replace(found, 5, "");
+  return s;
+}
+
 static unsigned GetNumElements(StringRef typestr, bool &quad) {
   quad = false;
   bool dummy = false;
@@ -1328,8 +1349,8 @@ static unsigned GetNumElements(StringRef typestr, bool &quad) {
 }
 
 // Generate the definition for this intrinsic, e.g. "a + b" for OpAdd.
-static std::string GenOpString(OpKind op, const std::string &proto,
-                               StringRef typestr) {
+static std::string GenOpString(const std::string &name, OpKind op,
+                               const std::string &proto, StringRef typestr) {
   bool quad;
   unsigned nElts = GetNumElements(typestr, quad);
   bool define = UseMacro(proto);
@@ -1559,6 +1580,27 @@ static std::string GenOpString(OpKind op, const std::string &proto,
   case OpDiv:
     s += "__a / __b;";
     break;
+  case OpMovlHi: {
+    s = TypeString(proto[1], typestr.drop_front()) + " __a1 = " +
+        MangleName("vget_high", typestr, ClassS) + "(__a);\n  " + s;
+    s += "(" + ts + ")" + MangleName("vshll_n", typestr, ClassS);
+    s += "(__a1, 0);";
+    break;
+  }
+  case OpLongHi: {
+    // Another local variable __a1 is needed for calling a Macro,
+    // or using __a will have naming conflict when Macro expanding.
+    s += TypeString(proto[1], typestr.drop_front()) + " __a1 = " +
+         MangleName("vget_high", typestr, ClassS) + "(__a); \\\n";
+    s += "  (" + ts + ")" + MangleName(RemoveHigh(name), typestr, ClassS) +
+         "(__a1, __b);";
+    break;
+  }
+  case OpNarrowHi: {
+    s += "(" + ts + ")" + MangleName("vcombine", typestr, ClassS) + "(__a, " +
+         MangleName(RemoveHigh(name), typestr, ClassS) + "(__b, __c));";
+    break;
+  }
   default:
     PrintFatalError("unknown OpKind!");
   }
@@ -1796,7 +1838,7 @@ static std::string GenIntrinsic(const std::string &name,
     s += " {\n  ";
 
   if (kind != OpNone)
-    s += GenOpString(kind, proto, outTypeStr);
+    s += GenOpString(name, kind, proto, outTypeStr);
   else
     s += GenBuiltin(name, proto, outTypeStr, classKind);
   if (define)
@@ -2124,9 +2166,15 @@ NeonEmitter::genIntrinsicRangeCheckCode(raw_ostream &OS,
 
       if (R->getValueAsBit("isVCVT_N")) {
         // VCVT between floating- and fixed-point values takes an immediate
-        // in the range 1 to 32.
+        // in the range [1, 32] for f32, or [1, 64] for f64.
         ck = ClassB;
-        rangestr = "l = 1; u = 31"; // upper bound = l + u
+        if (name.find("32") != std::string::npos)
+          rangestr = "l = 1; u = 31"; // upper bound = l + u
+        else if (name.find("64") != std::string::npos)
+          rangestr = "l = 1; u = 63";
+        else
+          PrintFatalError(R->getLoc(),
+              "Fixed point convert name should contains \"32\" or \"64\"");
       } else if (Proto.find('s') == std::string::npos) {
         // Builtins which are overloaded by type will need to have their upper
         // bound computed at Sema time based on the type constant.
