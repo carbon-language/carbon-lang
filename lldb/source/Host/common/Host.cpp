@@ -203,7 +203,7 @@ MonitorChildProcessThreadFunction (void *arg)
             {
                 signal = WTERMSIG(status);
                 status_cstr = "SIGNALED";
-                if (wait_pid == pid) {
+                if (wait_pid == abs(pid)) {
                     exited = true;
                     exit_status = -1;
                 }
@@ -236,7 +236,7 @@ MonitorChildProcessThreadFunction (void *arg)
                         callback_return = callback (callback_baton, wait_pid, exited, signal, exit_status);
                     
                     // If our process exited, then this thread should exit
-                    if (exited && wait_pid == pid)
+                    if (exited && wait_pid == abs(pid))
                     {
                         if (log)
                             log->Printf ("%s (arg = %p) thread exiting because pid received exit signal...", __FUNCTION__, arg);

@@ -1448,6 +1448,12 @@ ProcessMonitor::MonitorCallback(void *callback_baton,
                 log->Printf ("ProcessMonitor::%s() GetSignalInfo failed: %s, tid = %" PRIu64 ", signal = %d, status = %d", 
                               __FUNCTION__, strerror(ptrace_err), pid, signal, status);
             stop_monitoring = pid == monitor->m_process->GetID();
+            // If we are going to stop monitoring, we need to notify our process object
+            if (stop_monitoring)
+            {
+                message = ProcessMessage::Exit(pid, status);
+                process->SendMessage(message);
+            }
         }
     }
     else {
