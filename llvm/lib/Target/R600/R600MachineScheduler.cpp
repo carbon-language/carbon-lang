@@ -9,7 +9,6 @@
 //
 /// \file
 /// \brief R600 Machine Scheduler interface
-// TODO: Scheduling is optimised for VLIW4 arch, modify it to support TRANS slot
 //
 //===----------------------------------------------------------------------===//
 
@@ -29,6 +28,7 @@ void R600SchedStrategy::initialize(ScheduleDAGMI *dag) {
   DAG = dag;
   TII = static_cast<const R600InstrInfo*>(DAG->TII);
   TRI = static_cast<const R600RegisterInfo*>(DAG->TRI);
+  VLIW5 = !DAG->MF.getTarget().getSubtarget<AMDGPUSubtarget>().hasCaymanISA();
   MRI = &DAG->MRI;
   CurInstKind = IDOther;
   CurEmitted = 0;
@@ -342,14 +342,16 @@ int R600SchedStrategy::getInstKind(SUnit* SU) {
   }
 }
 
-SUnit *R600SchedStrategy::PopInst(std::vector<SUnit *> &Q) {
+SUnit *R600SchedStrategy::PopInst(std::vector<SUnit *> &Q, bool AnyALU) {
   if (Q.empty())
     return NULL;
   for (std::vector<SUnit *>::reverse_iterator It = Q.rbegin(), E = Q.rend();
       It != E; ++It) {
     SUnit *SU = *It;
     InstructionsGroupCandidate.push_back(SU->getInstr());
-    if (TII->fitsConstReadLimitations(InstructionsGroupCandidate)) {
+    if (TII->fitsConstReadLimitations(InstructionsGroupCandidate)
+        && (!AnyALU || !TII->isVectorOnly(SU->getInstr()))
+    ) {
       InstructionsGroupCandidate.pop_back();
       Q.erase((It + 1).base());
       return SU;
@@ -373,6 +375,8 @@ void R600SchedStrategy::PrepareNextSlot() {
   DEBUG(dbgs() << "New Slot\n");
   assert (OccupedSlotsMask && "Slot wasn't filled");
   OccupedSlotsMask = 0;
+//  if (HwGen == AMDGPUSubtarget::NORTHERN_ISLANDS)
+//    OccupedSlotsMask |= 16;
   InstructionsGroupCandidate.clear();
   LoadAlu();
 }
@@ -409,12 +413,12 @@ void R600SchedStrategy::AssignSlot(MachineInstr* MI, unsigned Slot) {
   }
 }
 
-SUnit *R600SchedStrategy::AttemptFillSlot(unsigned Slot) {
+SUnit *R600SchedStrategy::AttemptFillSlot(unsigned Slot, bool AnyAlu) {
   static const AluKind IndexToID[] = {AluT_X, AluT_Y, AluT_Z, AluT_W};
-  SUnit *SlotedSU = PopInst(AvailableAlus[IndexToID[Slot]]);
+  SUnit *SlotedSU = PopInst(AvailableAlus[IndexToID[Slot]], AnyAlu);
   if (SlotedSU)
     return SlotedSU;
-  SUnit *UnslotedSU = PopInst(AvailableAlus[AluAny]);
+  SUnit *UnslotedSU = PopInst(AvailableAlus[AluAny], AnyAlu);
   if (UnslotedSU)
     AssignSlot(UnslotedSU->getInstr(), Slot);
   return UnslotedSU;
@@ -434,30 +438,35 @@ SUnit* R600SchedStrategy::pickAlu() {
       // Bottom up scheduling : predX must comes first
       if (!AvailableAlus[AluPredX].empty()) {
         OccupedSlotsMask |= 31;
-        return PopInst(AvailableAlus[AluPredX]);
+        return PopInst(AvailableAlus[AluPredX], false);
       }
       // Flush physical reg copies (RA will discard them)
       if (!AvailableAlus[AluDiscarded].empty()) {
         OccupedSlotsMask |= 31;
-        return PopInst(AvailableAlus[AluDiscarded]);
+        return PopInst(AvailableAlus[AluDiscarded], false);
       }
       // If there is a T_XYZW alu available, use it
       if (!AvailableAlus[AluT_XYZW].empty()) {
         OccupedSlotsMask |= 15;
-        return PopInst(AvailableAlus[AluT_XYZW]);
+        return PopInst(AvailableAlus[AluT_XYZW], false);
       }
     }
     bool TransSlotOccuped = OccupedSlotsMask & 16;
-    if (!TransSlotOccuped) {
+    if (!TransSlotOccuped && VLIW5) {
       if (!AvailableAlus[AluTrans].empty()) {
         OccupedSlotsMask |= 16;
-        return PopInst(AvailableAlus[AluTrans]);
+        return PopInst(AvailableAlus[AluTrans], false);
+      }
+      SUnit *SU = AttemptFillSlot(3, true);
+      if (SU) {
+        OccupedSlotsMask |= 16;
+        return SU;
       }
     }
     for (int Chan = 3; Chan > -1; --Chan) {
       bool isOccupied = OccupedSlotsMask & (1 << Chan);
       if (!isOccupied) {
-        SUnit *SU = AttemptFillSlot(Chan);
+        SUnit *SU = AttemptFillSlot(Chan, false);
         if (SU) {
           OccupedSlotsMask |= (1 << Chan);
           InstructionsGroupCandidate.push_back(SU->getInstr());
