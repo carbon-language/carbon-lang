@@ -2677,13 +2677,24 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     Args.AddLastArg(CmdArgs, options::OPT_trigraphs);
   }
 
-  // Map the bizarre '-Wwrite-strings' flag to a more sensible
-  // '-fconst-strings'; this better indicates its actual behavior.
-  if (Args.hasFlag(options::OPT_Wwrite_strings, options::OPT_Wno_write_strings,
-                   false)) {
-    // For perfect compatibility with GCC, we do this even in the presence of
-    // '-w'. This flag names something other than a warning for GCC.
-    CmdArgs.push_back("-fconst-strings");
+  // GCC's behavior for -Wwrite-strings is a bit strange:
+  //  * In C, this "warning flag" changes the types of string literals from
+  //    'char[N]' to 'const char[N]', and thus triggers an unrelated warning
+  //    for the discarded qualifier.
+  //  * In C++, this is just a normal warning flag.
+  //
+  // Implementing this warning correctly in C is hard, so we follow GCC's
+  // behavior for now. FIXME: Directly diagnose uses of a string literal as
+  // a non-const char* in C, rather than using this crude hack.
+  if (!types::isCXX(InputType)) {
+    // FIXME: This should behave just like a warning flag, and thus should also
+    // respect -Weverything, -Wno-everything, -Werror=write-strings, and so on.
+    Arg *WriteStrings =
+        Args.getLastArg(options::OPT_Wwrite_strings,
+                        options::OPT_Wno_write_strings, options::OPT_w);
+    if (WriteStrings &&
+        WriteStrings->getOption().matches(options::OPT_Wwrite_strings))
+      CmdArgs.push_back("-fconst-strings");
   }
 
   // GCC provides a macro definition '__DEPRECATED' when -Wdeprecated is active
