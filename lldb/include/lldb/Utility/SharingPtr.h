@@ -12,6 +12,7 @@
 
 #include <algorithm>
 #include <memory>
+#include "llvm/Support/Atomic.h"
 
 //#define ENABLE_SP_LOGGING 1 // DON'T CHECK THIS LINE IN UNLESS COMMENTED OUT
 #if defined (ENABLE_SP_LOGGING)
@@ -28,14 +29,14 @@ template <class T>
 inline T
 increment(T& t)
 {
-    return __sync_add_and_fetch(&t, 1);
+    return llvm::sys::AtomicIncrement((llvm::sys::cas_flag*)&t);
 }
 
 template <class T>
 inline T
 decrement(T& t)
 {
-    return __sync_add_and_fetch(&t, -1);
+    return llvm::sys::AtomicDecrement((llvm::sys::cas_flag*)&t);
 }
 
 class shared_count

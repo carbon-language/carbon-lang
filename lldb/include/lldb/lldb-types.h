@@ -40,16 +40,15 @@
 
 #ifdef _WIN32
 
-#include "lldb/Host/windows/windows.h"
 #include <process.h>
 
 namespace lldb
 {
-    typedef CRITICAL_SECTION    mutex_t;
-    typedef CONDITION_VARIABLE  condition_t;
+    typedef void*               mutex_t;
+    typedef void*               condition_t;
     typedef void*               rwlock_t;
     typedef uintptr_t           thread_t;                   // Host thread type
-    typedef DWORD               thread_key_t;
+    typedef uint32_t            thread_key_t;
     typedef void *              thread_arg_t;               // Host thread argument type
     typedef unsigned            thread_result_t;            // Host thread result type
     typedef thread_result_t     (*thread_func_t)(void *);   // Host thread function type

@@ -40,7 +40,7 @@ public:
     TimeValue();
     TimeValue(const TimeValue& rhs);
     TimeValue(const struct timespec& ts);
-    TimeValue(const struct timeval& tv);
+    explicit TimeValue(uint32_t seconds, uint32_t nanos = 0);
     ~TimeValue();
 
     //------------------------------------------------------------------
@@ -64,9 +64,6 @@ public:
     struct timespec
     GetAsTimeSpec () const;
 
-    struct timeval
-    GetAsTimeVal () const;
-
     bool
     IsValid () const;
 
@@ -84,6 +81,23 @@ public:
     
     void
     Dump (Stream *s, uint32_t width = 0) const;
+
+    /// Returns only the seconds component of the TimeValue. The nanoseconds
+    /// portion is ignored. No rounding is performed.
+    /// @brief Retrieve the seconds component
+    uint32_t seconds() const { return m_nano_seconds / NanoSecPerSec; }
+
+    /// Returns only the nanoseconds component of the TimeValue. The seconds
+    /// portion is ignored.
+    /// @brief Retrieve the nanoseconds component.
+    uint32_t nanoseconds() const { return m_nano_seconds % NanoSecPerSec; }
+
+    /// Returns only the fractional portion of the TimeValue rounded down to the
+    /// nearest microsecond (divide by one thousand).
+    /// @brief Retrieve the fractional part as microseconds;
+    uint32_t microseconds() const {
+        return (m_nano_seconds % NanoSecPerSec) / NanoSecPerMicroSec;
+    }
 
 protected:
     //------------------------------------------------------------------

@@ -1,6 +1,7 @@
 #ifdef _WIN32
 
 #include "lldb/Host/ProcessRunLock.h"
+#include "lldb/Host/windows/windows.h"
 
 namespace lldb_private {
 

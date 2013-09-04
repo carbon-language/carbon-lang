@@ -16,6 +16,7 @@
 
 #include "lldb/Core/ConnectionFileDescriptor.h"
 #include "lldb/Host/Config.h"
+#include "lldb/Host/SocketAddress.h"
 
 // C Includes
 #include <errno.h>
@@ -32,6 +33,11 @@
 #include <sys/un.h>
 #include <termios.h>
 #include <unistd.h>
+#endif
+#ifdef _WIN32
+#include "lldb/Host/windows/windows.h"
+#include <winsock2.h>
+#include <WS2tcpip.h>
 #endif
 
 // C++ Includes
@@ -87,7 +93,7 @@ ConnectionFileDescriptor::ConnectionFileDescriptor () :
     m_fd_recv (-1),
     m_fd_send_type (eFDTypeFile),
     m_fd_recv_type (eFDTypeFile),
-    m_udp_send_sockaddr (),
+    m_udp_send_sockaddr (new SocketAddress()),
     m_should_close_fd (false), 
     m_socket_timeout_usec(0),
     m_pipe_read(-1),
@@ -106,7 +112,7 @@ ConnectionFileDescriptor::ConnectionFileDescriptor (int fd, bool owns_fd) :
     m_fd_recv (fd),
     m_fd_send_type (eFDTypeFile),
     m_fd_recv_type (eFDTypeFile),
-    m_udp_send_sockaddr (),
+    m_udp_send_sockaddr (new SocketAddress()),
     m_should_close_fd (owns_fd),
     m_socket_timeout_usec(0),
     m_pipe_read(-1),
@@ -568,15 +574,15 @@ ConnectionFileDescriptor::Write (const void *src, size_t src_len, ConnectionStat
             break;
             
         case eFDTypeSocketUDP:  // Unconnected UDP socket requiring sendto/recvfrom
-            assert (m_udp_send_sockaddr.GetFamily() != 0);
+            assert (m_udp_send_sockaddr->GetFamily() != 0);
             do
             {
                 bytes_sent = ::sendto (m_fd_send, 
                                        (char*)src, 
                                        src_len, 
                                        0, 
-                                       m_udp_send_sockaddr, 
-                                       m_udp_send_sockaddr.GetLength());
+                                       *m_udp_send_sockaddr,
+                                       m_udp_send_sockaddr->GetLength());
             } while (bytes_sent < 0 && errno == EINTR);
             break;
     }
@@ -686,7 +692,8 @@ ConnectionFileDescriptor::BytesAvailable (uint32_t timeout_usec, Error *error_pt
     {
         TimeValue time_value;
         time_value.OffsetWithMicroSeconds (timeout_usec);
-        tv = time_value.GetAsTimeVal();
+        tv.tv_sec = time_value.seconds();
+        tv.tv_usec = time_value.microseconds();
         tv_ptr = &tv;
     }
     
@@ -836,7 +843,8 @@ ConnectionFileDescriptor::BytesAvailable (uint32_t timeout_usec, Error *error_pt
     {
         TimeValue time_value;
         time_value.OffsetWithMicroSeconds (timeout_usec);
-        tv = time_value.GetAsTimeVal();
+        tv.tv_sec = time_value.seconds();
+        tv.tv_usec = time_value.microseconds();
         tv_ptr = &tv;
     }
     
@@ -1446,7 +1454,7 @@ ConnectionFileDescriptor::ConnectUDP (const char *host_and_port, Error *error_pt
         
         if (m_fd_send != -1)
         {
-            m_udp_send_sockaddr = service_info_ptr;
+            *m_udp_send_sockaddr = service_info_ptr;
             break;
         }
         else

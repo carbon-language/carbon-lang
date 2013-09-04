@@ -110,6 +110,10 @@
 #define LLDB_OPT_SET_10                 (1U << 9)
 #define LLDB_OPT_SET_FROM_TO(A, B)      (((1U << (B)) - 1) ^ (((1U << (A))-1) >> 1))
 
+#ifdef _WIN32
+#define MAX_PATH 260
+#endif
+
 #if defined(__cplusplus)
 
 //----------------------------------------------------------------------

@@ -23,6 +23,8 @@
 #include "lldb/DataFormatters/TypeCategory.h"
 #include "lldb/DataFormatters/TypeCategoryMap.h"
 
+#include "llvm/Support/Atomic.h"
+
 namespace lldb_private {
     
 // this file (and its. cpp) contain the low-level implementation of LLDB Data Visualization
@@ -191,7 +193,7 @@ public:
     void
     Changed ()
     {
-        __sync_add_and_fetch(&m_last_revision, +1);
+        llvm::sys::AtomicIncrement(&m_last_revision);
         m_format_cache.Clear ();
     }
     
@@ -209,7 +211,7 @@ private:
     FormatCache m_format_cache;
     ValueNavigator m_value_nav;
     NamedSummariesMap m_named_summaries_map;
-    uint32_t m_last_revision;
+    llvm::sys::cas_flag m_last_revision;
     TypeCategoryMap m_categories_map;
     
     ConstString m_default_category_name;

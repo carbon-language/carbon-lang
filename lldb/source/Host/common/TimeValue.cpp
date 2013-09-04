@@ -43,8 +43,8 @@ TimeValue::TimeValue(const struct timespec& ts) :
 {
 }
 
-TimeValue::TimeValue(const struct timeval& tv) :
-    m_nano_seconds ((uint64_t) tv.tv_sec * NanoSecPerSec + (uint64_t) tv.tv_usec * NanoSecPerMicroSec)
+TimeValue::TimeValue(uint32_t seconds, uint32_t nanos) :
+    m_nano_seconds((uint64_t) seconds * NanoSecPerSec + nanos)
 {
 }
 
@@ -85,15 +85,6 @@ TimeValue::GetAsTimeSpec () const
     return ts;
 }
 
-struct timeval
-TimeValue::GetAsTimeVal () const
-{
-    struct timeval tv;
-    tv.tv_sec = m_nano_seconds / NanoSecPerSec;
-    tv.tv_usec = (m_nano_seconds % NanoSecPerSec) / NanoSecPerMicroSec;
-    return tv;
-}
-
 void
 TimeValue::Clear ()
 {
@@ -127,9 +118,12 @@ TimeValue::OffsetWithNanoSeconds (uint64_t nsec)
 TimeValue
 TimeValue::Now()
 {
+    uint32_t seconds, nanoseconds;
     struct timeval tv;
     gettimeofday(&tv, NULL);
-    TimeValue now(tv);
+    seconds = tv.tv_sec;
+    nanoseconds = tv.tv_usec * NanoSecPerMicroSec;
+    TimeValue now(seconds, nanoseconds);
     return now;
 }
 

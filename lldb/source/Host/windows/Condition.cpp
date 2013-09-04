@@ -11,6 +11,7 @@
 
 #include "lldb/Host/Condition.h"
 #include "lldb/Host/TimeValue.h"
+#include "lldb/Host/windows/windows.h"
 
 
 using namespace lldb_private;
@@ -24,7 +25,8 @@ using namespace lldb_private;
 Condition::Condition () :
     m_condition()
 {
-    InitializeConditionVariable(&m_condition);
+    m_condition = static_cast<PCONDITION_VARIABLE>(malloc(sizeof(CONDITION_VARIABLE)));
+    InitializeConditionVariable(static_cast<PCONDITION_VARIABLE>(m_condition));
 }
 
 //----------------------------------------------------------------------
@@ -34,6 +36,7 @@ Condition::Condition () :
 //----------------------------------------------------------------------
 Condition::~Condition ()
 {
+    free(m_condition);
 }
 
 //----------------------------------------------------------------------
@@ -42,7 +45,7 @@ Condition::~Condition ()
 int
 Condition::Broadcast ()
 {
-    WakeAllConditionVariable(&m_condition);
+    WakeAllConditionVariable(static_cast<PCONDITION_VARIABLE>(m_condition));
     return 0;
 }
 
@@ -52,7 +55,7 @@ Condition::Broadcast ()
 int
 Condition::Signal ()
 {
-    WakeConditionVariable(&m_condition);
+    WakeConditionVariable(static_cast<PCONDITION_VARIABLE>(m_condition));
     return 0;
 }
 
@@ -80,7 +83,7 @@ Condition::Wait (Mutex &mutex, const TimeValue *abstime, bool *timed_out)
         wait = wval;
     }
 
-    int err = SleepConditionVariableCS(&m_condition, &mutex.m_mutex, wait);
+    int err = SleepConditionVariableCS(static_cast<PCONDITION_VARIABLE>(m_condition), static_cast<PCRITICAL_SECTION>(mutex.m_mutex), wait);
 
     if (timed_out != NULL)
     {

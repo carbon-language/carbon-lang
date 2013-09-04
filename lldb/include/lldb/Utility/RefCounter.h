@@ -11,6 +11,7 @@
 #define liblldb_RefCounter_h_
 
 #include "lldb/lldb-public.h"
+#include "llvm/Support/Atomic.h"
 
 namespace lldb_utility {
 
@@ -39,14 +40,14 @@ private:
     inline T
     increment(T* t)
     {
-        return __sync_fetch_and_add(t, 1);
+        return llvm::sys::AtomicIncrement((llvm::sys::cas_flag*)&t);
     }
     
     template <class T>
     inline T
     decrement(T* t)
     {
-        return __sync_fetch_and_add(t, -1);
+        return llvm::sys::AtomicDecrement((llvm::sys::cas_flag*)&t);
     }
     
 };

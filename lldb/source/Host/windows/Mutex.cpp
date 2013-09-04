@@ -9,6 +9,7 @@
 
 #include "lldb/Host/Mutex.h"
 #include "lldb/Host/Host.h"
+#include "lldb/Host/windows/windows.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -33,7 +34,8 @@ using namespace lldb_private;
 Mutex::Mutex () :
     m_mutex()
 {
-    InitializeCriticalSection(&m_mutex);
+    m_mutex = static_cast<PCRITICAL_SECTION>(malloc(sizeof(CRITICAL_SECTION)));
+    InitializeCriticalSection(static_cast<PCRITICAL_SECTION>(m_mutex));
 }
 
 //----------------------------------------------------------------------
@@ -44,7 +46,8 @@ Mutex::Mutex () :
 Mutex::Mutex (Mutex::Type type) :
     m_mutex()
 {
-    InitializeCriticalSection(&m_mutex);
+    m_mutex = static_cast<PCRITICAL_SECTION>(malloc(sizeof(CRITICAL_SECTION)));
+    InitializeCriticalSection(static_cast<PCRITICAL_SECTION>(m_mutex));
 }
 
 //----------------------------------------------------------------------
@@ -54,7 +57,8 @@ Mutex::Mutex (Mutex::Type type) :
 //----------------------------------------------------------------------
 Mutex::~Mutex()
 {
-    DeleteCriticalSection(&m_mutex);
+    DeleteCriticalSection(static_cast<PCRITICAL_SECTION>(m_mutex));
+    free(m_mutex);
 }
 
 //----------------------------------------------------------------------
@@ -68,9 +72,9 @@ Mutex::~Mutex()
 int
 Mutex::Lock()
 {
-    DEBUG_LOG ("[%4.4" PRIx64 "/%4.4" PRIx64 "] pthread_mutex_lock (%p)...\n", Host::GetCurrentProcessID(), Host::GetCurrentThreadID(), &m_mutex);
+    DEBUG_LOG ("[%4.4" PRIx64 "/%4.4" PRIx64 "] pthread_mutex_lock (%p)...\n", Host::GetCurrentProcessID(), Host::GetCurrentThreadID(), m_mutex);
 
-    EnterCriticalSection(&m_mutex);
+    EnterCriticalSection(static_cast<PCRITICAL_SECTION>(m_mutex));
     return 0;
 }
 
@@ -85,7 +89,7 @@ Mutex::Lock()
 int
 Mutex::TryLock(const char *failure_message)
 {
-    return TryEnterCriticalSection(&m_mutex) == 0;
+    return TryEnterCriticalSection(static_cast<PCRITICAL_SECTION>(m_mutex)) == 0;
 }
 
 //----------------------------------------------------------------------
@@ -100,6 +104,6 @@ Mutex::TryLock(const char *failure_message)
 int
 Mutex::Unlock()
 {
-    LeaveCriticalSection(&m_mutex);
+    LeaveCriticalSection(static_cast<PCRITICAL_SECTION>(m_mutex));
     return 0;
 }
