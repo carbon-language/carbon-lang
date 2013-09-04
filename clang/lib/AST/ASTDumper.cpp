@@ -249,6 +249,7 @@ namespace  {
     void VisitAttributedStmt(const AttributedStmt *Node);
     void VisitLabelStmt(const LabelStmt *Node);
     void VisitGotoStmt(const GotoStmt *Node);
+    void VisitCXXCatchStmt(const CXXCatchStmt *Node);
 
     // Exprs
     void VisitExpr(const Expr *Node);
@@ -1459,6 +1460,11 @@ void ASTDumper::VisitGotoStmt(const GotoStmt *Node) {
   VisitStmt(Node);
   OS << " '" << Node->getLabel()->getName() << "'";
   dumpPointer(Node->getLabel());
+}
+
+void ASTDumper::VisitCXXCatchStmt(const CXXCatchStmt *Node) {
+  VisitStmt(Node);
+  dumpDecl(Node->getExceptionDecl());
 }
 
 //===----------------------------------------------------------------------===//
