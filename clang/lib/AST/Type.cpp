@@ -738,9 +738,9 @@ bool Type::isSignedIntegerOrEnumerationType() const {
 
 bool Type::hasSignedIntegerRepresentation() const {
   if (const VectorType *VT = dyn_cast<VectorType>(CanonicalType))
-    return VT->getElementType()->isSignedIntegerType();
+    return VT->getElementType()->isSignedIntegerOrEnumerationType();
   else
-    return isSignedIntegerType();
+    return isSignedIntegerOrEnumerationType();
 }
 
 /// isUnsignedIntegerType - Return true if this is an integer type that is
@@ -778,9 +778,9 @@ bool Type::isUnsignedIntegerOrEnumerationType() const {
 
 bool Type::hasUnsignedIntegerRepresentation() const {
   if (const VectorType *VT = dyn_cast<VectorType>(CanonicalType))
-    return VT->getElementType()->isUnsignedIntegerType();
+    return VT->getElementType()->isUnsignedIntegerOrEnumerationType();
   else
-    return isUnsignedIntegerType();
+    return isUnsignedIntegerOrEnumerationType();
 }
 
 bool Type::isFloatingType() const {
