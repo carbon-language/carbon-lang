@@ -889,7 +889,7 @@ namespace {
                       const MCSymbol &cieStart,
                       const MCDwarfFrameInfo &frame);
     void EmitCFIInstructions(MCStreamer &streamer,
-                             const std::vector<MCCFIInstruction> &Instrs,
+                             ArrayRef<MCCFIInstruction> Instrs,
                              MCSymbol *BaseLabel);
     void EmitCFIInstruction(MCStreamer &Streamer,
                             const MCCFIInstruction &Instr);
@@ -1091,7 +1091,7 @@ void FrameEmitterImpl::EmitCFIInstruction(MCStreamer &Streamer,
 /// EmitFrameMoves - Emit frame instructions to describe the layout of the
 /// frame.
 void FrameEmitterImpl::EmitCFIInstructions(MCStreamer &streamer,
-                                    const std::vector<MCCFIInstruction> &Instrs,
+                                           ArrayRef<MCCFIInstruction> Instrs,
                                            MCSymbol *BaseLabel) {
   for (unsigned i = 0, N = Instrs.size(); i < N; ++i) {
     const MCCFIInstruction &Instr = Instrs[i];
