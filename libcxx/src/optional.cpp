@@ -14,11 +14,11 @@ namespace std  // purposefully not using versioning namespace
 
 #ifdef _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
 
-bad_optional_access::~bad_optional_access() {}
+bad_optional_access::~bad_optional_access() _NOEXCEPT {}
 
 #else
 
-bad_optional_access::~bad_optional_access() = default;
+bad_optional_access::~bad_optional_access() _NOEXCEPT = default;
 
 #endif
 
