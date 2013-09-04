@@ -6258,8 +6258,6 @@ TEST_F(FormatTest, FormatsProtocolBufferDefinitions) {
 }
 
 TEST_F(FormatTest, FormatsLambdas) {
-  // FIXME: The formatting is incorrect; this test currently checks that
-  // parsing of the unwrapped lines doesn't regress.
   verifyFormat(
       "int c = [b]() mutable {\n"
       "  return [&b] {\n"
@@ -6295,6 +6293,22 @@ TEST_F(FormatTest, FormatsLambdas) {
       "  [=, a, b, &c] {\n"
       "  }();\n"
       "} }\n");
+  verifyFormat(
+      "void f() {\n"
+      "  other(x.begin(), x.end(), [&](int, int) {\n"
+      "    return 1;\n"
+      "  });\n"
+      "}\n");
+  // FIXME: The formatting is incorrect; this test currently checks that
+  // parsing of the unwrapped lines doesn't regress.
+  verifyFormat(
+      "void f() {\n"
+      "  other(x.begin(), //\n"
+      "        x.end(),   //\n"
+      "                     [&](int, int) {\n"
+      "    return 1;\n"
+      "  });\n"
+      "}\n");
 }
 
 } // end namespace tooling
