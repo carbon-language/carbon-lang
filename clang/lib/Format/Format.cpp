@@ -36,7 +36,9 @@ template <>
 struct ScalarEnumerationTraits<clang::format::FormatStyle::LanguageStandard> {
   static void enumeration(IO &IO,
                           clang::format::FormatStyle::LanguageStandard &Value) {
+    IO.enumCase(Value, "Cpp03", clang::format::FormatStyle::LS_Cpp03);
     IO.enumCase(Value, "C++03", clang::format::FormatStyle::LS_Cpp03);
+    IO.enumCase(Value, "Cpp11", clang::format::FormatStyle::LS_Cpp11);
     IO.enumCase(Value, "C++11", clang::format::FormatStyle::LS_Cpp11);
     IO.enumCase(Value, "Auto", clang::format::FormatStyle::LS_Auto);
   }

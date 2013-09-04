@@ -6001,6 +6001,8 @@ TEST_F(FormatTest, ParsesConfiguration) {
   CHECK_PARSE("IndentWidth: 32", IndentWidth, 32u);
 
   Style.Standard = FormatStyle::LS_Auto;
+  CHECK_PARSE("Standard: Cpp03", Standard, FormatStyle::LS_Cpp03);
+  CHECK_PARSE("Standard: Cpp11", Standard, FormatStyle::LS_Cpp11);
   CHECK_PARSE("Standard: C++03", Standard, FormatStyle::LS_Cpp03);
   CHECK_PARSE("Standard: C++11", Standard, FormatStyle::LS_Cpp11);
   CHECK_PARSE("Standard: Auto", Standard, FormatStyle::LS_Auto);
