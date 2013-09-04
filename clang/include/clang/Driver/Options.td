@@ -1195,7 +1195,6 @@ def undef : Flag<["-"], "undef">, Group<u_Group>, Flags<[CC1Option]>,
   HelpText<"undef all system defines">;
 def unexported__symbols__list : Separate<["-"], "unexported_symbols_list">;
 def u : JoinedOrSeparate<["-"], "u">, Group<u_Group>;
-def use_gold_plugin : Flag<["-"], "use-gold-plugin">;
 def v : Flag<["-"], "v">, Flags<[CC1Option]>,
   HelpText<"Show commands to run and use verbose output">;
 def verify : Flag<["-"], "verify">, Flags<[DriverOption,CC1Option]>,

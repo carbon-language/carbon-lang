@@ -3571,8 +3571,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // Claim ignored clang-cl options.
   Args.ClaimAllArgs(options::OPT_cl_ignored_Group);
 
-  // Disable warnings for clang -E -use-gold-plugin -emit-llvm foo.c
-  Args.ClaimAllArgs(options::OPT_use_gold_plugin);
+  // Disable warnings for clang -E -emit-llvm foo.c
   Args.ClaimAllArgs(options::OPT_emit_llvm);
 }
 
@@ -3763,8 +3762,6 @@ void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
   Args.ClaimAllArgs(options::OPT_w);
   // and "clang -emit-llvm -c foo.s"
   Args.ClaimAllArgs(options::OPT_emit_llvm);
-  // and "clang -use-gold-plugin -c foo.s"
-  Args.ClaimAllArgs(options::OPT_use_gold_plugin);
 
   // Invoke ourselves in -cc1as mode.
   //
@@ -6186,7 +6183,7 @@ void gnutools::Link::ConstructJob(Compilation &C, const JobAction &JA,
   // Tell the linker to load the plugin. This has to come before AddLinkerInputs
   // as gold requires -plugin to come before any -plugin-opt that -Wl might
   // forward.
-  if (D.IsUsingLTO(Args) || Args.hasArg(options::OPT_use_gold_plugin)) {
+  if (D.IsUsingLTO(Args)) {
     CmdArgs.push_back("-plugin");
     std::string Plugin = ToolChain.getDriver().Dir + "/../lib/LLVMgold.so";
     CmdArgs.push_back(Args.MakeArgString(Plugin));
