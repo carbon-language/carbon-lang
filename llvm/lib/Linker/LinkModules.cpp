@@ -746,6 +746,7 @@ bool ModuleLinker::linkAppendingVarProto(GlobalVariable *DstGV,
 bool ModuleLinker::linkGlobalProto(GlobalVariable *SGV) {
   GlobalValue *DGV = getLinkedToGlobal(SGV);
   llvm::Optional<GlobalValue::VisibilityTypes> NewVisibility;
+  bool HasUnnamedAddr = SGV->hasUnnamedAddr();
 
   if (DGV) {
     // Concatenation of appending linkage variables is magic and handled later.
@@ -755,6 +756,7 @@ bool ModuleLinker::linkGlobalProto(GlobalVariable *SGV) {
     // Determine whether linkage of these two globals follows the source
     // module's definition or the destination module's definition.
     GlobalValue::LinkageTypes NewLinkage = GlobalValue::InternalLinkage;
+    HasUnnamedAddr = HasUnnamedAddr && DGV->hasUnnamedAddr();
     GlobalValue::VisibilityTypes NV;
     bool LinkFromSrc = false;
     if (getLinkageResult(DGV, SGV, NewLinkage, NV, LinkFromSrc))
@@ -768,10 +770,11 @@ bool ModuleLinker::linkGlobalProto(GlobalVariable *SGV) {
       if (GlobalVariable *DGVar = dyn_cast<GlobalVariable>(DGV))
         if (DGVar->isDeclaration() && SGV->isConstant() && !DGVar->isConstant())
           DGVar->setConstant(true);
-      
-      // Set calculated linkage and visibility.
+
+      // Set calculated linkage, visibility and unnamed_addr.
       DGV->setLinkage(NewLinkage);
       DGV->setVisibility(*NewVisibility);
+      DGV->setUnnamedAddr(HasUnnamedAddr);
 
       // Make sure to remember this mapping.
       ValueMap[SGV] = ConstantExpr::getBitCast(DGV,TypeMap.get(SGV->getType()));
@@ -797,6 +800,7 @@ bool ModuleLinker::linkGlobalProto(GlobalVariable *SGV) {
   copyGVAttributes(NewDGV, SGV);
   if (NewVisibility)
     NewDGV->setVisibility(*NewVisibility);
+  NewDGV->setUnnamedAddr(HasUnnamedAddr);
 
   if (DGV) {
     DGV->replaceAllUsesWith(ConstantExpr::getBitCast(NewDGV, DGV->getType()));
