@@ -704,7 +704,11 @@ bool ModuleLinker::linkAppendingVarProto(GlobalVariable *DstGV,
   if (DstGV->getVisibility() != SrcGV->getVisibility())
     return emitError(
             "Appending variables with different visibility need to be linked!");
-  
+
+  if (DstGV->hasUnnamedAddr() != SrcGV->hasUnnamedAddr())
+    return emitError(
+        "Appending variables with different unnamed_addr need to be linked!");
+
   if (DstGV->getSection() != SrcGV->getSection())
     return emitError(
           "Appending variables with different section name need to be linked!");
