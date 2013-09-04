@@ -174,7 +174,7 @@ TEST(SanitizerCommon, InternalBinarySearch) {
   ASSERT_EQ(InternalBinarySearch(arr, 0, kSize, 7, UptrLess), kSize + 1);
 }
 
-#if SANITIZER_LINUX
+#if SANITIZER_LINUX && !SANITIZER_ANDROID
 TEST(SanitizerCommon, FindPathToBinary) {
   char *true_path = FindPathToBinary("true");
   EXPECT_NE((char*)0, internal_strstr(true_path, "/bin/true"));
