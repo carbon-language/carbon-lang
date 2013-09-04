@@ -53,6 +53,9 @@ static cl::opt<unsigned> MISchedCutoff("misched-cutoff", cl::Hidden,
 static bool ViewMISchedDAGs = false;
 #endif // NDEBUG
 
+static cl::opt<bool> EnableRegPressure("misched-regpressure", cl::Hidden,
+  cl::desc("Enable register pressure scheduling."), cl::init(true));
+
 static cl::opt<bool> EnableCyclicPath("misched-cyclicpath", cl::Hidden,
   cl::desc("Enable cyclic critical path analysis."), cl::init(false));
 
@@ -477,6 +480,8 @@ void ScheduleDAGMI::enterRegion(MachineBasicBlock *bb,
 {
   ScheduleDAGInstrs::enterRegion(bb, begin, end, regioninstrs);
 
+  ShouldTrackPressure = EnableRegPressure;
+
   // For convenience remember the end of the liveness region.
   LiveRegionEnd =
     (RegionEnd == bb->end()) ? RegionEnd : llvm::next(RegionEnd);
@@ -657,6 +662,13 @@ void ScheduleDAGMI::schedule() {
 
 /// Build the DAG and setup three register pressure trackers.
 void ScheduleDAGMI::buildDAGWithRegPressure() {
+  if (!ShouldTrackPressure) {
+    RPTracker.reset();
+    RegionCriticalPSets.clear();
+    buildSchedGraph(AA);
+    return;
+  }
+
   // Initialize the register pressure tracker used by buildSchedGraph.
   RPTracker.init(&MF, RegClassInfo, LIS, BB, LiveRegionEnd,
                  /*TrackUntiedDefs=*/true);
@@ -820,11 +832,13 @@ void ScheduleDAGMI::initQueues(ArrayRef<SUnit*> TopRoots,
   SchedImpl->registerRoots();
 
   // Advance past initial DebugValues.
-  assert(TopRPTracker.getPos() == RegionBegin && "bad initial Top tracker");
   CurrentTop = nextIfDebug(RegionBegin, RegionEnd);
-  TopRPTracker.setPos(CurrentTop);
-
   CurrentBottom = RegionEnd;
+
+  if (ShouldTrackPressure) {
+    assert(TopRPTracker.getPos() == RegionBegin && "bad initial Top tracker");
+    TopRPTracker.setPos(CurrentTop);
+  }
 }
 
 /// Move an instruction and update register pressure.
@@ -841,10 +855,12 @@ void ScheduleDAGMI::scheduleMI(SUnit *SU, bool IsTopNode) {
       TopRPTracker.setPos(MI);
     }
 
-    // Update top scheduled pressure.
-    TopRPTracker.advance();
-    assert(TopRPTracker.getPos() == CurrentTop && "out of sync");
-    updateScheduledPressure(TopRPTracker.getPressure().MaxSetPressure);
+    if (ShouldTrackPressure) {
+      // Update top scheduled pressure.
+      TopRPTracker.advance();
+      assert(TopRPTracker.getPos() == CurrentTop && "out of sync");
+      updateScheduledPressure(TopRPTracker.getPressure().MaxSetPressure);
+    }
   }
   else {
     assert(SU->isBottomReady() && "node still has unscheduled dependencies");
@@ -860,12 +876,14 @@ void ScheduleDAGMI::scheduleMI(SUnit *SU, bool IsTopNode) {
       moveInstruction(MI, CurrentBottom);
       CurrentBottom = MI;
     }
-    // Update bottom scheduled pressure.
-    SmallVector<unsigned, 8> LiveUses;
-    BotRPTracker.recede(&LiveUses);
-    assert(BotRPTracker.getPos() == CurrentBottom && "out of sync");
-    updatePressureDiffs(LiveUses);
-    updateScheduledPressure(BotRPTracker.getPressure().MaxSetPressure);
+    if (ShouldTrackPressure) {
+      // Update bottom scheduled pressure.
+      SmallVector<unsigned, 8> LiveUses;
+      BotRPTracker.recede(&LiveUses);
+      assert(BotRPTracker.getPos() == CurrentBottom && "out of sync");
+      updatePressureDiffs(LiveUses);
+      updateScheduledPressure(BotRPTracker.getPressure().MaxSetPressure);
+    }
   }
 }
 

@@ -153,6 +153,24 @@ const LiveInterval *RegPressureTracker::getInterval(unsigned Reg) const {
   return LIS->getCachedRegUnit(Reg);
 }
 
+void RegPressureTracker::reset() {
+  MBB = 0;
+  LIS = 0;
+
+  CurrSetPressure.clear();
+  LiveThruPressure.clear();
+  P.MaxSetPressure.clear();
+
+  if (RequireIntervals)
+    static_cast<IntervalPressure&>(P).reset();
+  else
+    static_cast<RegionPressure&>(P).reset();
+
+  LiveRegs.PhysRegs.clear();
+  LiveRegs.VirtRegs.clear();
+  UntiedDefs.clear();
+}
+
 /// Setup the RegPressureTracker.
 ///
 /// TODO: Add support for pressure without LiveIntervals.
@@ -163,6 +181,8 @@ void RegPressureTracker::init(const MachineFunction *mf,
                               MachineBasicBlock::const_iterator pos,
                               bool ShouldTrackUntiedDefs)
 {
+  reset();
+
   MF = mf;
   TRI = MF->getTarget().getRegisterInfo();
   RCI = rci;
@@ -177,19 +197,11 @@ void RegPressureTracker::init(const MachineFunction *mf,
 
   CurrPos = pos;
   CurrSetPressure.assign(TRI->getNumRegPressureSets(), 0);
-  LiveThruPressure.clear();
 
-  if (RequireIntervals)
-    static_cast<IntervalPressure&>(P).reset();
-  else
-    static_cast<RegionPressure&>(P).reset();
   P.MaxSetPressure = CurrSetPressure;
 
-  LiveRegs.PhysRegs.clear();
   LiveRegs.PhysRegs.setUniverse(TRI->getNumRegs());
-  LiveRegs.VirtRegs.clear();
   LiveRegs.VirtRegs.setUniverse(MRI->getNumVirtRegs());
-  UntiedDefs.clear();
   if (TrackUntiedDefs)
     UntiedDefs.setUniverse(MRI->getNumVirtRegs());
 }

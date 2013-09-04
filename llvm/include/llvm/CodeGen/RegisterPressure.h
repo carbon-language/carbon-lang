@@ -288,6 +288,8 @@ public:
     MF(0), TRI(0), RCI(0), LIS(0), MBB(0), P(rp), RequireIntervals(false),
     TrackUntiedDefs(false) {}
 
+  void reset();
+
   void init(const MachineFunction *mf, const RegisterClassInfo *rci,
             const LiveIntervals *lis, const MachineBasicBlock *mbb,
             MachineBasicBlock::const_iterator pos,
