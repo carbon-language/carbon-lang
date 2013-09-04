@@ -832,16 +832,7 @@ void UnwrappedLineParser::parseParens() {
       return;
     case tok::l_brace: {
       if (!tryToParseBracedList()) {
-        nextToken();
-        {
-          ScopedLineState LineState(*this);
-          ScopedDeclarationState DeclarationState(*Line, DeclarationScopeStack,
-                                                  /*MustBeDeclaration=*/false);
-          Line->Level += 1;
-          parseLevel(/*HasOpeningBrace=*/true);
-          Line->Level -= 1;
-        }
-        nextToken();
+        parseChildBlock();
       }
       break;
     }
