@@ -177,7 +177,7 @@ ThreadGDBRemote::CreateRegisterContextForFrame (StackFrame *frame)
         {
             ProcessGDBRemote *gdb_process = static_cast<ProcessGDBRemote *>(process_sp.get());
             // read_all_registers_at_once will be true if 'p' packet is not supported.
-            bool read_all_registers_at_once = !gdb_process->GetGDBRemote().GetpPacketSupported ();
+            bool read_all_registers_at_once = !gdb_process->GetGDBRemote().GetpPacketSupported (GetID());
             reg_ctx_sp.reset (new GDBRemoteRegisterContext (*this, concrete_frame_idx, gdb_process->m_register_info, read_all_registers_at_once));
         }
     }

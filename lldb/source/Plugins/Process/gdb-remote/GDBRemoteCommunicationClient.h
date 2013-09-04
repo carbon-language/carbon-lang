@@ -228,7 +228,7 @@ public:
     GetVContSupported (char flavor);
 
     bool
-    GetpPacketSupported ();
+    GetpPacketSupported (lldb::tid_t tid);
 
     bool
     GetVAttachOrWaitSupported ();

@@ -300,14 +300,22 @@ GDBRemoteCommunicationClient::GetVContSupported (char flavor)
 // Check if the target supports 'p' packet. It sends out a 'p'
 // packet and checks the response. A normal packet will tell us
 // that support is available.
+//
+// Takes a valid thread ID because p needs to apply to a thread.
 bool
-GDBRemoteCommunicationClient::GetpPacketSupported ()
+GDBRemoteCommunicationClient::GetpPacketSupported (lldb::tid_t tid)
 {
     if (m_supports_p == eLazyBoolCalculate)
     {
         StringExtractorGDBRemote response;
         m_supports_p = eLazyBoolNo;
-        if (SendPacketAndWaitForResponse("p0", response, false))
+        char packet[256];
+        if (GetThreadSuffixSupported())
+            snprintf(packet, sizeof(packet), "p0;thread:%" PRIx64 ";", tid);
+        else
+            snprintf(packet, sizeof(packet), "p0");
+        
+        if (SendPacketAndWaitForResponse(packet, response, false))
         {
             if (response.IsNormalResponse())
                 m_supports_p = eLazyBoolYes;
