@@ -79,20 +79,16 @@
 //
 // Some ideas:
 //
-// 1. Add options to disable any of the checks, in case
+// 1. Check for and warn about "#include" directives inside 'extern "C/C++" {}'
+// and "namespace (name) {}" blocks.
+//
+// 2. Omit duplicate "not always provided" messages
+//
+// 3. Add options to disable any of the checks, in case
 // there is some problem with them, or the messages get too verbose.
 //
-// 2. Try to figure out the preprocessor conditional directives that
+// 4. Try to figure out the preprocessor conditional directives that
 // contribute to problems and tie them to the inconsistent definitions.
-//
-// 3. Check for correct and consistent usage of extern "C" {} and other
-// directives. Warn about #include inside extern "C" {}.
-//
-// 4. There seem to be a lot of spurious "not always provided" messages,
-// and many duplicates of these, which seem to occur when something is
-// defined within a preprocessor conditional block, even if the conditional
-// always evaluates the same in the stand-alone case.  Perhaps we could
-// collapse the duplicates, and add an option for disabling the test (see #4).
 //
 // 5. There are some legitimate uses of preprocessor macros that
 // modularize will flag as errors, such as repeatedly #include'ing
