@@ -1,3 +1,4 @@
+//===-- MCMachOStreamer.cpp - MachO Streamer ------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
