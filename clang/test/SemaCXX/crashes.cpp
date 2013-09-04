@@ -171,3 +171,50 @@ namespace test3 {
     int& x = dimenX.*sides;
   }
 }
+
+namespace pr16964 {
+  template<typename> struct bs {
+    bs();
+    static int* member();
+    member();  // expected-error{{C++ requires a type specifier for all declarations}}
+    static member();  // expected-error{{C++ requires a type specifier for all declarations}}
+    static int* member(int);
+  };
+
+  template<typename T> bs<T>::bs() { member; }
+
+  bs<int> test() {
+    return bs<int>();
+  }
+}
+
+namespace pr12791 {
+  template<class _Alloc> class allocator {};
+  template<class _CharT> struct char_traits;
+  struct input_iterator_tag {};
+  struct forward_iterator_tag : public input_iterator_tag {};
+
+  template<typename _CharT, typename _Traits, typename _Alloc> struct basic_string {
+    struct _Alloc_hider : _Alloc {};
+    mutable _Alloc_hider _M_dataplus;
+    template<class _InputIterator> basic_string(_InputIterator __beg, _InputIterator __end, const _Alloc& __a = _Alloc());
+    template<class _InIterator> static _CharT* _S_construct(_InIterator __beg, _InIterator __end, const _Alloc& __a, input_iterator_tag);
+    template<class _FwdIterator> static _CharT* _S_construct(_FwdIterator __beg, _FwdIterator __end, const _Alloc& __a, forward_iterator_tag);
+    static _CharT* _S_construct(size_type __req, _CharT __c, const _Alloc& __a); // expected-error{{unknown type name 'size_type'}}
+  };
+
+  template<typename _CharT, typename _Traits, typename _Alloc>
+  template<typename _InputIterator>
+  basic_string<_CharT, _Traits, _Alloc>:: basic_string(_InputIterator __beg, _InputIterator __end, const _Alloc& __a)
+  : _M_dataplus(_S_construct(__beg, __end, __a), __a) {}
+
+  template<typename _CharT, typename _Traits = char_traits<_CharT>, typename _Alloc = allocator<_CharT> > struct basic_stringbuf {
+    typedef _CharT char_type;
+    typedef basic_string<char_type, _Traits, _Alloc> __string_type;
+    typedef typename __string_type::size_type __size_type;
+    __string_type str() const {__string_type((char_type*)0,(char_type*)0);}
+  };
+
+  template class basic_stringbuf<char>;
+}
+

@@ -7742,8 +7742,10 @@ TreeTransform<Derived>::TransformUnresolvedLookupExpr(
       // This can happen because of dependent hiding.
       if (isa<UsingShadowDecl>(*I))
         continue;
-      else
+      else {
+        R.clear();
         return ExprError();
+      }
     }
 
     // Expand using declarations.
@@ -7778,8 +7780,10 @@ TreeTransform<Derived>::TransformUnresolvedLookupExpr(
       = cast_or_null<CXXRecordDecl>(getDerived().TransformDecl(
                                                             Old->getNameLoc(),
                                                         Old->getNamingClass()));
-    if (!NamingClass)
+    if (!NamingClass) {
+      R.clear();
       return ExprError();
+    }
 
     R.setNamingClass(NamingClass);
   }
@@ -7797,8 +7801,10 @@ TreeTransform<Derived>::TransformUnresolvedLookupExpr(
   if (Old->hasExplicitTemplateArgs() &&
       getDerived().TransformTemplateArguments(Old->getTemplateArgs(),
                                               Old->getNumTemplateArgs(),
-                                              TransArgs))
+                                              TransArgs)) {
+    R.clear();
     return ExprError();
+  }
 
   return getDerived().RebuildTemplateIdExpr(SS, TemplateKWLoc, R,
                                             Old->requiresADL(), &TransArgs);
