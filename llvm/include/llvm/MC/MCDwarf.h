@@ -315,15 +315,14 @@ private:
 
 public:
   /// \brief .cfi_def_cfa defines a rule for computing CFA as: take address from
-  /// \param Register and add \param Offset to it.
+  /// Register and add Offset to it.
   static MCCFIInstruction createDefCfa(MCSymbol *L, unsigned Register,
                                        int Offset) {
     return MCCFIInstruction(OpDefCfa, L, Register, -Offset, "");
   }
 
   /// \brief .cfi_def_cfa_register modifies a rule for computing CFA. From now
-  /// on \param Register will be used instead of the old one. Offset remains the
-  /// same.
+  /// on Register will be used instead of the old one. Offset remains the same.
   static MCCFIInstruction createDefCfaRegister(MCSymbol *L, unsigned Register) {
     return MCCFIInstruction(OpDefCfaRegister, L, Register, 0, "");
   }
@@ -342,16 +341,16 @@ public:
     return MCCFIInstruction(OpAdjustCfaOffset, L, 0, Adjustment, "");
   }
 
-  /// \brief .cfi_offset Previous value of \param Register is saved at offset
-  /// \param Offset from CFA.
+  /// \brief .cfi_offset Previous value of Register is saved at offset Offset
+  /// from CFA.
   static MCCFIInstruction createOffset(MCSymbol *L, unsigned Register,
                                        int Offset) {
     return MCCFIInstruction(OpOffset, L, Register, Offset, "");
   }
 
-  /// \brief .cfi_rel_offset Previous value of \param Register is saved at
-  /// offset \param Offset from the current CFA register. This is transformed to
-  /// .cfi_offset using the known displacement of the CFA register from the CFA.
+  /// \brief .cfi_rel_offset Previous value of Register is saved at offset
+  /// Offset from the current CFA register. This is transformed to .cfi_offset
+  /// using the known displacement of the CFA register from the CFA.
   static MCCFIInstruction createRelOffset(MCSymbol *L, unsigned Register,
                                           int Offset) {
     return MCCFIInstruction(OpRelOffset, L, Register, Offset, "");
@@ -364,21 +363,21 @@ public:
     return MCCFIInstruction(OpRegister, L, Register1, Register2);
   }
 
-  /// \brief .cfi_restore says that the rule for \param Register is now the same
-  /// as it was at the beginning of the function, after all initial instructions
-  /// added by .cfi_startproc were executed.
+  /// \brief .cfi_restore says that the rule for Register is now the same as it
+  /// was at the beginning of the function, after all initial instructions added
+  /// by .cfi_startproc were executed.
   static MCCFIInstruction createRestore(MCSymbol *L, unsigned Register) {
     return MCCFIInstruction(OpRestore, L, Register, 0, "");
   }
 
-  /// \brief .cfi_undefined From now on the previous value of \param Register
-  /// can't be restored anymore.
+  /// \brief .cfi_undefined From now on the previous value of Register can't be
+  /// restored anymore.
   static MCCFIInstruction createUndefined(MCSymbol *L, unsigned Register) {
     return MCCFIInstruction(OpUndefined, L, Register, 0, "");
   }
 
-  /// \brief .cfi_same_value Current value of \param Register is the same as
-  /// in the previous frame. I.e., no restoration is needed.
+  /// \brief .cfi_same_value Current value of Register is the same as in the
+  /// previous frame. I.e., no restoration is needed.
   static MCCFIInstruction createSameValue(MCSymbol *L, unsigned Register) {
     return MCCFIInstruction(OpSameValue, L, Register, 0, "");
   }
