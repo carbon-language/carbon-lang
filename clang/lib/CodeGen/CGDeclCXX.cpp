@@ -276,12 +276,13 @@ CodeGenModule::EmitCXXGlobalVarDeclInitFunc(const VarDecl *D,
     OrderGlobalInits Key(order, PrioritizedCXXGlobalInits.size());
     PrioritizedCXXGlobalInits.push_back(std::make_pair(Key, Fn));
     DelayedCXXInitPosition.erase(D);
-  } else if (D->getInstantiatedFromStaticDataMember()) {
+  } else if (D->getTemplateSpecializationKind() != TSK_ExplicitSpecialization &&
+             D->getTemplateSpecializationKind() != TSK_Undeclared) {
     // C++ [basic.start.init]p2:
-    //   Defnitions of explicitly specialized class template static data members
-    //   have ordered initialization. Other class template static data members
-    //   (i.e., implicitly or explicitly instantiated specializations) have
-    //   unordered initialization.
+    //   Definitions of explicitly specialized class template static data
+    //   members have ordered initialization. Other class template static data
+    //   members (i.e., implicitly or explicitly instantiated specializations)
+    //   have unordered initialization.
     //
     // As a consequence, we can put them into their own llvm.global_ctors entry.
     // This should allow GlobalOpt to fire more often, and allow us to implement
