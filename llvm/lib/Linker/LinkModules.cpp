@@ -756,12 +756,12 @@ bool ModuleLinker::linkGlobalProto(GlobalVariable *SGV) {
     // Determine whether linkage of these two globals follows the source
     // module's definition or the destination module's definition.
     GlobalValue::LinkageTypes NewLinkage = GlobalValue::InternalLinkage;
-    HasUnnamedAddr = HasUnnamedAddr && DGV->hasUnnamedAddr();
     GlobalValue::VisibilityTypes NV;
     bool LinkFromSrc = false;
     if (getLinkageResult(DGV, SGV, NewLinkage, NV, LinkFromSrc))
       return true;
     NewVisibility = NV;
+    HasUnnamedAddr = HasUnnamedAddr && DGV->hasUnnamedAddr();
 
     // If we're not linking from the source, then keep the definition that we
     // have.
@@ -817,6 +817,7 @@ bool ModuleLinker::linkGlobalProto(GlobalVariable *SGV) {
 bool ModuleLinker::linkFunctionProto(Function *SF) {
   GlobalValue *DGV = getLinkedToGlobal(SF);
   llvm::Optional<GlobalValue::VisibilityTypes> NewVisibility;
+  bool HasUnnamedAddr = SF->hasUnnamedAddr();
 
   if (DGV) {
     GlobalValue::LinkageTypes NewLinkage = GlobalValue::InternalLinkage;
@@ -825,11 +826,13 @@ bool ModuleLinker::linkFunctionProto(Function *SF) {
     if (getLinkageResult(DGV, SF, NewLinkage, NV, LinkFromSrc))
       return true;
     NewVisibility = NV;
+    HasUnnamedAddr = HasUnnamedAddr && DGV->hasUnnamedAddr();
 
     if (!LinkFromSrc) {
       // Set calculated linkage
       DGV->setLinkage(NewLinkage);
       DGV->setVisibility(*NewVisibility);
+      DGV->setUnnamedAddr(HasUnnamedAddr);
 
       // Make sure to remember this mapping.
       ValueMap[SF] = ConstantExpr::getBitCast(DGV, TypeMap.get(SF->getType()));
@@ -857,6 +860,7 @@ bool ModuleLinker::linkFunctionProto(Function *SF) {
   copyGVAttributes(NewDF, SF);
   if (NewVisibility)
     NewDF->setVisibility(*NewVisibility);
+  NewDF->setUnnamedAddr(HasUnnamedAddr);
 
   if (DGV) {
     // Any uses of DF need to change to NewDF, with cast.
