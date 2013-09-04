@@ -66,6 +66,7 @@ private:
   void parseFile();
   void parseLevel(bool HasOpeningBrace);
   void parseBlock(bool MustBeDeclaration, bool AddLevel = true);
+  void parseChildBlock();
   void parsePPDirective();
   void parsePPDefine();
   void parsePPIf();

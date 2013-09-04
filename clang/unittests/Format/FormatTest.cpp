@@ -6311,5 +6311,16 @@ TEST_F(FormatTest, FormatsLambdas) {
       "}\n");
 }
 
+TEST_F(FormatTest, FormatsBlocks) {
+  // FIXME: Make whitespace formatting consistent. Ask a ObjC dev how
+  // it would ideally look.
+  verifyFormat("[operation setCompletionBlock:^{\n"
+               "  [self onOperationDone];\n"
+               "}];\n");
+  verifyFormat("int i = {[operation setCompletionBlock : ^{\n"
+               "  [self onOperationDone];\n"
+               "}] };\n");
+}
+
 } // end namespace tooling
 } // end namespace clang

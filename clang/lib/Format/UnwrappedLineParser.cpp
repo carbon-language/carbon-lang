@@ -346,6 +346,20 @@ void UnwrappedLineParser::parseBlock(bool MustBeDeclaration, bool AddLevel) {
   Line->Level = InitialLevel;
 }
 
+void UnwrappedLineParser::parseChildBlock() {
+  FormatTok->BlockKind = BK_Block;
+  nextToken();
+  {
+    ScopedLineState LineState(*this);
+    ScopedDeclarationState DeclarationState(*Line, DeclarationScopeStack,
+                                            /*MustBeDeclaration=*/false);
+    Line->Level += 1;
+    parseLevel(/*HasOpeningBrace=*/true);
+    Line->Level -= 1;
+  }
+  nextToken();
+}
+
 void UnwrappedLineParser::parsePPDirective() {
   assert(FormatTok->Tok.is(tok::hash) && "'#' expected");
   ScopedMacroState MacroState(*Line, Tokens, FormatTok, StructuralError);
@@ -591,6 +605,12 @@ void UnwrappedLineParser::parseStructuralElement() {
     case tok::l_paren:
       parseParens();
       break;
+    case tok::caret:
+      nextToken();
+      if (FormatTok->is(tok::l_brace)) {
+        parseChildBlock();
+      }
+      break;
     case tok::l_brace:
       if (!tryToParseBracedList()) {
         // A block outside of parentheses must be the last part of a
@@ -674,17 +694,7 @@ void UnwrappedLineParser::tryToParseLambda() {
         break;
     }
   }
-  FormatTok->BlockKind = BK_Block;
-  nextToken();
-  {
-    ScopedLineState LineState(*this);
-    ScopedDeclarationState DeclarationState(*Line, DeclarationScopeStack,
-                                            /*MustBeDeclaration=*/false);
-    Line->Level += 1;
-    parseLevel(/*HasOpeningBrace=*/true);
-    Line->Level -= 1;
-  }
-  nextToken();
+  parseChildBlock();
 }
 
 bool UnwrappedLineParser::tryToParseLambdaIntroducer() {
@@ -741,9 +751,15 @@ void UnwrappedLineParser::parseBracedList() {
     // here, otherwise our bail-out scenarios below break. The better solution
     // might be to just implement a more or less complete expression parser.
     switch (FormatTok->Tok.getKind()) {
-      case tok::l_square:
-        tryToParseLambda();
-        break;
+    case tok::caret:
+      nextToken();
+      if (FormatTok->is(tok::l_brace)) {
+        parseChildBlock();
+      }
+      break;
+    case tok::l_square:
+      tryToParseLambda();
+      break;
     case tok::l_brace:
       // Assume there are no blocks inside a braced init list apart
       // from the ones we explicitly parse out (like lambdas).
