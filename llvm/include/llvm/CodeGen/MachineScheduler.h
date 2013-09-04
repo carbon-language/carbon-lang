@@ -271,6 +271,9 @@ public:
 
   virtual ~ScheduleDAGMI();
 
+  /// Return true if register pressure tracking is enabled.
+  bool shouldTrackPressure() const { return ShouldTrackPressure; }
+
   /// Add a postprocessing step to the DAG builder.
   /// Mutations are applied in the order that they are added after normal DAG
   /// building and before MachineSchedStrategy initialization.

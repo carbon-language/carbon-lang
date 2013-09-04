@@ -185,9 +185,6 @@ void ScheduleDAGInstrs::enterRegion(MachineBasicBlock *bb,
   RegionBegin = begin;
   RegionEnd = end;
   NumRegionInstrs = regioninstrs;
-  MISUnitMap.clear();
-
-  ScheduleDAG::clearDAG();
 }
 
 /// Close the current scheduling region. Don't clear any state in case the
@@ -702,6 +699,9 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
   bool UseAA = EnableAASchedMI.getNumOccurrences() > 0 ? EnableAASchedMI
                                                        : ST.useAA();
   AliasAnalysis *AAForDep = UseAA ? AA : 0;
+
+  MISUnitMap.clear();
+  ScheduleDAG::clearDAG();
 
   // Create an SUnit for each real instruction.
   initSUnits();

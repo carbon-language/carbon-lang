@@ -2363,30 +2363,32 @@ void ConvergingScheduler::tryCandidate(SchedCandidate &Cand,
                                        const RegPressureTracker &RPTracker,
                                        RegPressureTracker &TempTracker) {
 
-  // Always initialize TryCand's RPDelta.
-  if (Zone.isTop()) {
-    TempTracker.getMaxDownwardPressureDelta(
-      TryCand.SU->getInstr(),
-      TryCand.RPDelta,
-      DAG->getRegionCriticalPSets(),
-      DAG->getRegPressure().MaxSetPressure);
-  }
-  else {
-    if (VerifyScheduling) {
-      TempTracker.getMaxUpwardPressureDelta(
+  if (DAG->shouldTrackPressure()) {
+    // Always initialize TryCand's RPDelta.
+    if (Zone.isTop()) {
+      TempTracker.getMaxDownwardPressureDelta(
         TryCand.SU->getInstr(),
-        &DAG->getPressureDiff(TryCand.SU),
         TryCand.RPDelta,
         DAG->getRegionCriticalPSets(),
         DAG->getRegPressure().MaxSetPressure);
     }
     else {
-      RPTracker.getUpwardPressureDelta(
-        TryCand.SU->getInstr(),
-        DAG->getPressureDiff(TryCand.SU),
-        TryCand.RPDelta,
-        DAG->getRegionCriticalPSets(),
-        DAG->getRegPressure().MaxSetPressure);
+      if (VerifyScheduling) {
+        TempTracker.getMaxUpwardPressureDelta(
+          TryCand.SU->getInstr(),
+          &DAG->getPressureDiff(TryCand.SU),
+          TryCand.RPDelta,
+          DAG->getRegionCriticalPSets(),
+          DAG->getRegPressure().MaxSetPressure);
+      }
+      else {
+        RPTracker.getUpwardPressureDelta(
+          TryCand.SU->getInstr(),
+          DAG->getPressureDiff(TryCand.SU),
+          TryCand.RPDelta,
+          DAG->getRegionCriticalPSets(),
+          DAG->getRegPressure().MaxSetPressure);
+      }
     }
   }
 
@@ -2403,8 +2405,9 @@ void ConvergingScheduler::tryCandidate(SchedCandidate &Cand,
 
   // Avoid exceeding the target's limit. If signed PSetID is negative, it is
   // invalid; convert it to INT_MAX to give it lowest priority.
-  if (tryPressure(TryCand.RPDelta.Excess, Cand.RPDelta.Excess, TryCand, Cand,
-                  RegExcess))
+  if (DAG->shouldTrackPressure() && tryPressure(TryCand.RPDelta.Excess,
+                                                Cand.RPDelta.Excess,
+                                                TryCand, Cand, RegExcess))
     return;
 
   // For loops that are acyclic path limited, aggressively schedule for latency.
@@ -2412,8 +2415,9 @@ void ConvergingScheduler::tryCandidate(SchedCandidate &Cand,
     return;
 
   // Avoid increasing the max critical pressure in the scheduled region.
-  if (tryPressure(TryCand.RPDelta.CriticalMax, Cand.RPDelta.CriticalMax,
-                  TryCand, Cand, RegCritical))
+  if (DAG->shouldTrackPressure() && tryPressure(TryCand.RPDelta.CriticalMax,
+                                                Cand.RPDelta.CriticalMax,
+                                                TryCand, Cand, RegCritical))
     return;
 
   // Keep clustered nodes together to encourage downstream peephole
@@ -2435,8 +2439,9 @@ void ConvergingScheduler::tryCandidate(SchedCandidate &Cand,
     return;
   }
   // Avoid increasing the max pressure of the entire region.
-  if (tryPressure(TryCand.RPDelta.CurrentMax, Cand.RPDelta.CurrentMax,
-                  TryCand, Cand, RegMax))
+  if (DAG->shouldTrackPressure() && tryPressure(TryCand.RPDelta.CurrentMax,
+                                                Cand.RPDelta.CurrentMax,
+                                                TryCand, Cand, RegMax))
     return;
 
   // Avoid critical resource consumption and balance the schedule.
