@@ -2753,7 +2753,7 @@ static ScheduleDAGInstrs *createConvergingSched(MachineSchedContext *C) {
   // data and pass it to later mutations. Have a single mutation that gathers
   // the interesting nodes in one pass.
   DAG->addMutation(new CopyConstrain(DAG->TII, DAG->TRI));
-  if (EnableLoadCluster)
+  if (EnableLoadCluster && DAG->TII->enableClusterLoads())
     DAG->addMutation(new LoadClusterMutation(DAG->TII, DAG->TRI));
   if (EnableMacroFusion)
     DAG->addMutation(new MacroFusion(DAG->TII));

@@ -615,6 +615,8 @@ public:
     return false;
   }
 
+  virtual bool enableClusterLoads() const { return false; }
+
   virtual bool shouldClusterLoads(MachineInstr *FirstLdSt,
                                   MachineInstr *SecondLdSt,
                                   unsigned NumLoads) const {
