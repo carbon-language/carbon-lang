@@ -4,7 +4,7 @@
 /* Check that we get one load for each simple assign and two for the
    compound assign (load the old value before the add then load again
    to store back). Also check that our g0 pattern is good. */
-// RUN: %clang_cc1 -triple i386-unknown-unknown -O0 -emit-llvm -o %t %s
+// RUN: %clang_cc1 -triple i386-unknown-unknown -emit-llvm -o %t %s
 // RUN: grep 'load ' %t | count 5
 // RUN: grep "@g0" %t | count 4
 

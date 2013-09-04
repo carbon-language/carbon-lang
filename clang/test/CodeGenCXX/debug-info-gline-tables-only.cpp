@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -O0 -gline-tables-only -S -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 %s -gline-tables-only -S -emit-llvm -o - | FileCheck %s
 // Checks that clang with "-gline-tables-only" doesn't emit debug info
 // for variables and types.
 

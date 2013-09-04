@@ -1,4 +1,4 @@
-/* RUN: %clang_cc1 %s -emit-llvm -o - -O0 | grep zeroinitializer | count 1
+/* RUN: %clang_cc1 %s -emit-llvm -o - | grep zeroinitializer | count 1
 
 The FE must not generate padding here between array elements.  PR 2533. */
 

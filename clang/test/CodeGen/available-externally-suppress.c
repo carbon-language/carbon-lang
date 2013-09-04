@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm -o - -O0 -triple x86_64-apple-darwin10 %s | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm -o - -triple x86_64-apple-darwin10 %s | FileCheck %s
 
 // Ensure that we don't emit available_externally functions at -O0.
 int x;

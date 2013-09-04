@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -emit-llvm -O0 -o - | not grep sabrina
+// RUN: %clang_cc1 %s -emit-llvm -o - | not grep sabrina
 
 static inline int sabrina (void) __attribute__((always_inline));
 static inline int sabrina (void)

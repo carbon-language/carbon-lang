@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm -O0 -g %s -o /dev/null
+// RUN: %clang_cc1 -emit-llvm -g %s -o /dev/null
 // PR 7104
 
 struct A {

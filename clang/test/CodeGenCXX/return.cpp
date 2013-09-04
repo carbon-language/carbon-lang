@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm -O0 -o - %s | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm -o - %s | FileCheck %s
 // RUN: %clang_cc1 -emit-llvm -O -o - %s | FileCheck %s --check-prefix=CHECK-OPT
 
 // CHECK:     @_Z9no_return

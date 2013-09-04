@@ -9,7 +9,7 @@
   #endif
 #endif
 
-// RUN: %clang_cc1 -Eonly %s -DOPT_O0 -O0 -verify
+// RUN: %clang_cc1 -Eonly %s -DOPT_O0 -verify
 #ifdef OPT_O0
   // expected-no-diagnostics
   #ifdef __OPTIMIZE__

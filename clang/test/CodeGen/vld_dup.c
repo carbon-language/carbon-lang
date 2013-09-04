@@ -1,7 +1,7 @@
 // REQUIRES: arm-registered-target
 // RUN: %clang_cc1 -triple armv7a-linux-gnueabi \
 // RUN:   -target-cpu cortex-a8 \
-// RUN:   -emit-llvm -O0 -o - %s | FileCheck %s
+// RUN:   -emit-llvm -o - %s | FileCheck %s
 #include <arm_neon.h>
 int main(){
     int32_t v0[3];

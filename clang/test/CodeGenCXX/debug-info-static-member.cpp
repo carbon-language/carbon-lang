@@ -1,4 +1,4 @@
-// RUN: %clangxx -target x86_64-unknown-unknown -g -O0 %s -emit-llvm -S -o - | FileCheck %s
+// RUN: %clangxx -target x86_64-unknown-unknown -g %s -emit-llvm -S -o - | FileCheck %s
 // PR14471
 
 enum X {

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm %s -O0 -o -
+// RUN: %clang_cc1 -emit-llvm %s -o -
 // PR1378
 
 typedef float v4sf __attribute__((vector_size(16)));

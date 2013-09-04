@@ -1,9 +1,9 @@
 // Test CodeGen for Security Check Overflow Builtins.
 // rdar://13421498
 
-// RUN: %clang_cc1 -triple "i686-unknown-unknown"   -emit-llvm -x c %s -o - -O0 | FileCheck %s
-// RUN: %clang_cc1 -triple "x86_64-unknown-unknown" -emit-llvm -x c %s -o - -O0 | FileCheck %s
-// RUN: %clang_cc1 -triple "x86_64-mingw32"         -emit-llvm -x c %s -o - -O0 | FileCheck %s
+// RUN: %clang_cc1 -triple "i686-unknown-unknown"   -emit-llvm -x c %s -o - | FileCheck %s
+// RUN: %clang_cc1 -triple "x86_64-unknown-unknown" -emit-llvm -x c %s -o - | FileCheck %s
+// RUN: %clang_cc1 -triple "x86_64-mingw32"         -emit-llvm -x c %s -o - | FileCheck %s
 
 extern unsigned UnsignedErrorCode;
 extern unsigned long UnsignedLongErrorCode;

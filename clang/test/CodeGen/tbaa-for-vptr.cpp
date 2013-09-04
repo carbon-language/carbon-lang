@@ -1,8 +1,8 @@
-// RUN: %clang_cc1 -emit-llvm -o - -O0 -fsanitize=thread %s | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm -o - -fsanitize=thread %s | FileCheck %s
 // RUN: %clang_cc1 -emit-llvm -o - -O1 %s | FileCheck %s
 // RUN: %clang_cc1 -emit-llvm -o - -O1  -relaxed-aliasing -fsanitize=thread %s | FileCheck %s
 //
-// RUN: %clang_cc1 -emit-llvm -o - -O0 %s | FileCheck %s --check-prefix=NOTBAA
+// RUN: %clang_cc1 -emit-llvm -o - %s | FileCheck %s --check-prefix=NOTBAA
 // RUN: %clang_cc1 -emit-llvm -o - -O2  -relaxed-aliasing %s | FileCheck %s --check-prefix=NOTBAA
 //
 // Check that we generate TBAA for vtable pointer loads and stores.

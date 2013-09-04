@@ -1,5 +1,5 @@
 // REQUIRES: ppc64-registered-target
-// RUN: %clang_cc1 -O0 -triple powerpc64-unknown-linux-gnu -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple powerpc64-unknown-linux-gnu -emit-llvm -o - %s | FileCheck %s
 
 typedef struct s1 { float f; } Sf;
 typedef struct s2 { double d; } Sd;

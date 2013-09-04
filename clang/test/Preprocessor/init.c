@@ -144,7 +144,7 @@
 // NONFRAGILE:#define __OBJC2__ 1
 //
 //
-// RUN: %clang_cc1 -O0 -E -dM < /dev/null | FileCheck -check-prefix O0 %s
+// RUN: %clang_cc1 -E -dM < /dev/null | FileCheck -check-prefix O0 %s
 //
 // O0:#define __NO_INLINE__ 1
 // O0-NOT:#define __OPTIMIZE_SIZE__

@@ -1,5 +1,5 @@
 // REQUIRES: ppc64-registered-target
-// RUN: %clang_cc1 -O0 -triple powerpc64-unknown-linux-gnu -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple powerpc64-unknown-linux-gnu -emit-llvm -o - %s | FileCheck %s
 
 void f1(int x) { return; }
 // CHECK: define void @f1(i32 signext %x) [[NUW:#[0-9]+]]
