@@ -161,12 +161,8 @@ DIType DbgVariable::getType() const {
 /// Return Dwarf Version by checking module flags.
 static unsigned getDwarfVersionFromModule(const Module *M) {
   Value *Val = M->getModuleFlag("Dwarf Version");
-  // If we don't have a value in the module go ahead and use the default in
-  // dwarf::DWARF_VERSION.
-  // FIXME: Apple ld has a problem parsing compilation units that specify a
-  // dwarf version of greater than 3.
   if (!Val)
-    return Triple(M->getTargetTriple()).isOSDarwin() ? 3 : dwarf::DWARF_VERSION;
+    return dwarf::DWARF_VERSION;
   return cast<ConstantInt>(Val)->getZExtValue();
 }
 
