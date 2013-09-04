@@ -70,8 +70,7 @@ InternalizePass::InternalizePass()
   initializeInternalizePassPass(*PassRegistry::getPassRegistry());
   if (!APIFile.empty())           // If a filename is specified, use it.
     LoadFile(APIFile.c_str());
-  if (!APIList.empty())           // If a list is specified, use it as well.
-    ExternalNames.insert(APIList.begin(), APIList.end());
+  ExternalNames.insert(APIList.begin(), APIList.end());
 }
 
 InternalizePass::InternalizePass(ArrayRef<const char *> exportList)
