@@ -488,6 +488,26 @@ static unsigned getTypeOfMaskedICmp(Value* A, Value* B, Value* C,
   return result;
 }
 
+/// Convert an analysis of a masked ICmp into its equivalent if all boolean
+/// operations had the opposite sense. Since each "NotXXX" flag (recording !=)
+/// is adjacent to the corresponding normal flag (recording ==), this just
+/// involves swapping those bits over.
+static unsigned conjugateICmpMask(unsigned Mask) {
+  unsigned NewMask;
+  NewMask = (Mask & (FoldMskICmp_AMask_AllOnes | FoldMskICmp_BMask_AllOnes |
+                     FoldMskICmp_Mask_AllZeroes | FoldMskICmp_AMask_Mixed |
+                     FoldMskICmp_BMask_Mixed))
+            << 1;
+
+  NewMask |=
+      (Mask & (FoldMskICmp_AMask_NotAllOnes | FoldMskICmp_BMask_NotAllOnes |
+               FoldMskICmp_Mask_NotAllZeroes | FoldMskICmp_AMask_NotMixed |
+               FoldMskICmp_BMask_NotMixed))
+      >> 1;
+
+  return NewMask;
+}
+
 /// decomposeBitTestICmp - Decompose an icmp into the form ((X & Y) pred Z)
 /// if possible. The returned predicate is either == or !=. Returns false if
 /// decomposition fails.
@@ -618,8 +638,7 @@ static unsigned foldLogOpOfMaskedICmpsHelper(Value*& A,
 /// foldLogOpOfMaskedICmps:
 /// try to fold (icmp(A & B) ==/!= C) &/| (icmp(A & D) ==/!= E)
 /// into a single (icmp(A & X) ==/!= Y)
-static Value* foldLogOpOfMaskedICmps(ICmpInst *LHS, ICmpInst *RHS,
-                                     ICmpInst::Predicate NEWCC,
+static Value* foldLogOpOfMaskedICmps(ICmpInst *LHS, ICmpInst *RHS, bool IsAnd,
                                      llvm::InstCombiner::BuilderTy* Builder) {
   Value *A = 0, *B = 0, *C = 0, *D = 0, *E = 0;
   ICmpInst::Predicate LHSCC = LHS->getPredicate(), RHSCC = RHS->getPredicate();
@@ -629,8 +648,24 @@ static Value* foldLogOpOfMaskedICmps(ICmpInst *LHS, ICmpInst *RHS,
   assert(ICmpInst::isEquality(LHSCC) && ICmpInst::isEquality(RHSCC) &&
          "foldLogOpOfMaskedICmpsHelper must return an equality predicate.");
 
-  if (NEWCC == ICmpInst::ICMP_NE)
-    mask >>= 1; // treat "Not"-states as normal states
+  // In full generality:
+  //     (icmp (A & B) Op C) | (icmp (A & D) Op E)
+  // ==  ![ (icmp (A & B) !Op C) & (icmp (A & D) !Op E) ]
+  //
+  // If the latter can be converted into (icmp (A & X) Op Y) then the former is
+  // equivalent to (icmp (A & X) !Op Y).
+  //
+  // Therefore, we can pretend for the rest of this function that we're dealing
+  // with the conjunction, provided we flip the sense of any comparisons (both
+  // input and output).
+
+  // In most cases we're going to produce an EQ for the "&&" case.
+  ICmpInst::Predicate NEWCC = IsAnd ? ICmpInst::ICMP_EQ : ICmpInst::ICMP_NE;
+  if (!IsAnd) {
+    // Convert the masking analysis into its equivalent with negated
+    // comparisons.
+    mask = conjugateICmpMask(mask);
+  }
 
   if (mask & FoldMskICmp_Mask_AllZeroes) {
     // (icmp eq (A & B), 0) & (icmp eq (A & D), 0)
@@ -657,6 +692,40 @@ static Value* foldLogOpOfMaskedICmps(ICmpInst *LHS, ICmpInst *RHS,
     Value* newAnd = Builder->CreateAnd(A, newAnd1);
     return Builder->CreateICmp(NEWCC, newAnd, A);
   }
+
+  // Remaining cases assume at least that B and D are constant, and depend on
+  // their actual values. This isn't strictly, necessary, just a "handle the
+  // easy cases for now" decision.
+  ConstantInt *BCst = dyn_cast<ConstantInt>(B);
+  if (BCst == 0) return 0;
+  ConstantInt *DCst = dyn_cast<ConstantInt>(D);
+  if (DCst == 0) return 0;
+
+  if (mask & (FoldMskICmp_Mask_NotAllZeroes | FoldMskICmp_BMask_NotAllOnes)) {
+    // (icmp ne (A & B), 0) & (icmp ne (A & D), 0) and
+    // (icmp ne (A & B), B) & (icmp ne (A & D), D)
+    //     -> (icmp ne (A & B), 0) or (icmp ne (A & D), 0)
+    // Only valid if one of the masks is a superset of the other (check "B&D" is
+    // the same as either B or D).
+    APInt NewMask = BCst->getValue() & DCst->getValue();
+
+    if (NewMask == BCst->getValue())
+      return LHS;
+    else if (NewMask == DCst->getValue())
+      return RHS;
+  }
+  if (mask & FoldMskICmp_AMask_NotAllOnes) {
+    // (icmp ne (A & B), B) & (icmp ne (A & D), D)
+    //     -> (icmp ne (A & B), A) or (icmp ne (A & D), A)
+    // Only valid if one of the masks is a superset of the other (check "B|D" is
+    // the same as either B or D).
+    APInt NewMask = BCst->getValue() | DCst->getValue();
+
+    if (NewMask == BCst->getValue())
+      return LHS;
+    else if (NewMask == DCst->getValue())
+      return RHS;
+  }
   if (mask & FoldMskICmp_BMask_Mixed) {
     // (icmp eq (A & B), C) & (icmp eq (A & D), E)
     // We already know that B & C == C && D & E == E.
@@ -665,14 +734,9 @@ static Value* foldLogOpOfMaskedICmps(ICmpInst *LHS, ICmpInst *RHS,
     // contradict, then we can transform to
     // -> (icmp eq (A & (B|D)), (C|E))
     // Currently, we only handle the case of B, C, D, and E being constant.
-    ConstantInt *BCst = dyn_cast<ConstantInt>(B);
-    if (BCst == 0) return 0;
-    ConstantInt *DCst = dyn_cast<ConstantInt>(D);
-    if (DCst == 0) return 0;
     // we can't simply use C and E, because we might actually handle
     //   (icmp ne (A & B), B) & (icmp eq (A & D), D)
     // with B and D, having a single bit set
-
     ConstantInt *CCst = dyn_cast<ConstantInt>(C);
     if (CCst == 0) return 0;
     if (LHSCC != NEWCC)
@@ -715,7 +779,7 @@ Value *InstCombiner::FoldAndOfICmps(ICmpInst *LHS, ICmpInst *RHS) {
   }
 
   // handle (roughly):  (icmp eq (A & B), C) & (icmp eq (A & D), E)
-  if (Value *V = foldLogOpOfMaskedICmps(LHS, RHS, ICmpInst::ICMP_EQ, Builder))
+  if (Value *V = foldLogOpOfMaskedICmps(LHS, RHS, true, Builder))
     return V;
 
   // This only handles icmp of constants: (icmp1 A, C1) & (icmp2 B, C2).
@@ -1479,7 +1543,7 @@ Value *InstCombiner::FoldOrOfICmps(ICmpInst *LHS, ICmpInst *RHS) {
 
   // handle (roughly):
   // (icmp ne (A & B), C) | (icmp ne (A & D), E)
-  if (Value *V = foldLogOpOfMaskedICmps(LHS, RHS, ICmpInst::ICMP_NE, Builder))
+  if (Value *V = foldLogOpOfMaskedICmps(LHS, RHS, false, Builder))
     return V;
 
   Value *Val = LHS->getOperand(0), *Val2 = RHS->getOperand(0);

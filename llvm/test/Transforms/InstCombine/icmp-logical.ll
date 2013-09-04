@@ -1,0 +1,122 @@
+; RUN: opt -instcombine -S -o - %s | FileCheck %s
+
+define i1 @masked_and_notallzeroes(i32 %A) {
+; CHECK-LABEL: @masked_and_notallzeroes
+; CHECK: [[MASK:%.*]] = and i32 %A, 7
+; CHECK: icmp ne i32 [[MASK]], 0
+; CHECK-NOT: and i32 %A, 39
+; CHECK: ret i1
+
+  %mask1 = and i32 %A, 7
+  %tst1 = icmp ne i32 %mask1, 0
+
+  %mask2 = and i32 %A, 39
+  %tst2 = icmp ne i32 %mask2, 0
+
+  %res = and i1 %tst1, %tst2
+  ret i1 %res
+}
+
+define i1 @masked_or_allzeroes(i32 %A) {
+; CHECK-LABEL: @masked_or_allzeroes
+; CHECK: [[MASK:%.*]] = and i32 %A, 7
+; CHECK: icmp eq i32 [[MASK]], 0
+; CHECK-NOT: and i32 %A, 39
+; CHECK: ret i1
+
+  %mask1 = and i32 %A, 7
+  %tst1 = icmp eq i32 %mask1, 0
+
+  %mask2 = and i32 %A, 39
+  %tst2 = icmp eq i32 %mask2, 0
+
+  %res = or i1 %tst1, %tst2
+  ret i1 %res
+}
+
+define i1 @masked_and_notallones(i32 %A) {
+; CHECK-LABEL: @masked_and_notallones
+; CHECK: [[MASK:%.*]] = and i32 %A, 7
+; CHECK: icmp ne i32 [[MASK]], 7
+; CHECK-NOT: and i32 %A, 39
+; CHECK: ret i1
+
+  %mask1 = and i32 %A, 7
+  %tst1 = icmp ne i32 %mask1, 7
+
+  %mask2 = and i32 %A, 39
+  %tst2 = icmp ne i32 %mask2, 39
+
+  %res = and i1 %tst1, %tst2
+  ret i1 %res
+}
+
+define i1 @masked_or_allones(i32 %A) {
+; CHECK-LABEL: @masked_or_allones
+; CHECK: [[MASK:%.*]] = and i32 %A, 7
+; CHECK: icmp eq i32 [[MASK]], 7
+; CHECK-NOT: and i32 %A, 39
+; CHECK: ret i1
+
+  %mask1 = and i32 %A, 7
+  %tst1 = icmp eq i32 %mask1, 7
+
+  %mask2 = and i32 %A, 39
+  %tst2 = icmp eq i32 %mask2, 39
+
+  %res = or i1 %tst1, %tst2
+  ret i1 %res
+}
+
+define i1 @masked_and_notA(i32 %A) {
+; CHECK-LABEL: @masked_and_notA
+; CHECK: [[MASK:%.*]] = and i32 %A, 39
+; CHECK: icmp ne i32 [[MASK]], %A
+; CHECK-NOT: and i32 %A, 7
+; CHECK: ret i1
+
+  %mask1 = and i32 %A, 7
+  %tst1 = icmp ne i32 %mask1, %A
+
+  %mask2 = and i32 %A, 39
+  %tst2 = icmp ne i32 %mask2, %A
+
+  %res = and i1 %tst1, %tst2
+  ret i1 %res
+}
+
+define i1 @masked_or_A(i32 %A) {
+; CHECK-LABEL: @masked_or_A
+; CHECK: [[MASK:%.*]] = and i32 %A, 39
+; CHECK: icmp eq i32 [[MASK]], %A
+; CHECK-NOT: and i32 %A, 7
+; CHECK: ret i1
+
+  %mask1 = and i32 %A, 7
+  %tst1 = icmp eq i32 %mask1, %A
+
+  %mask2 = and i32 %A, 39
+  %tst2 = icmp eq i32 %mask2, %A
+
+  %res = or i1 %tst1, %tst2
+  ret i1 %res
+}
+
+define i1 @masked_or_allzeroes_notoptimised(i32 %A) {
+; CHECK-LABEL: @masked_or_allzeroes_notoptimised
+; CHECK: [[MASK:%.*]] = and i32 %A, 15
+; CHECK: icmp eq i32 [[MASK]], 0
+; CHECK: [[MASK:%.*]] = and i32 %A, 39
+; CHECK: icmp eq i32 [[MASK]], 0
+; CHECK: ret i1
+
+  %mask1 = and i32 %A, 15
+  %tst1 = icmp eq i32 %mask1, 0
+
+  %mask2 = and i32 %A, 39
+  %tst2 = icmp eq i32 %mask2, 0
+
+  %res = or i1 %tst1, %tst2
+  ret i1 %res
+}
+
