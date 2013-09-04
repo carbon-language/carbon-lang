@@ -16,8 +16,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef CPP11_MIGRATE_LOOP_MATCHERS_H
-#define CPP11_MIGRATE_LOOP_MATCHERS_H
+#ifndef CLANG_MODERNIZE_LOOP_MATCHERS_H
+#define CLANG_MODERNIZE_LOOP_MATCHERS_H
 
 #include "clang/ASTMatchers/ASTMatchers.h"
 
@@ -39,4 +39,4 @@ clang::ast_matchers::StatementMatcher makeArrayLoopMatcher();
 clang::ast_matchers::StatementMatcher makeIteratorLoopMatcher();
 clang::ast_matchers::StatementMatcher makePseudoArrayLoopMatcher();
 
-#endif // CPP11_MIGRATE_LOOP_MATCHERS_H
+#endif // CLANG_MODERNIZE_LOOP_MATCHERS_H

@@ -13,8 +13,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef CPP11_MIGRATE_PERFSUPPORT_H
-#define CPP11_MIGRATE_PERFSUPPORT_H
+#ifndef CLANG_MODERNIZE_PERFSUPPORT_H
+#define CLANG_MODERNIZE_PERFSUPPORT_H
 
 #include "Transform.h"
 #include "llvm/ADT/StringRef.h"
@@ -54,4 +54,4 @@ void writePerfDataJSON(
 /// Dump a SourcePerfData map to llvm::errs().
 extern void dumpPerfData(const SourcePerfData &Data);
 
-#endif // CPP11_MIGRATE_PERFSUPPORT_H
+#endif // CLANG_MODERNIZE_PERFSUPPORT_H

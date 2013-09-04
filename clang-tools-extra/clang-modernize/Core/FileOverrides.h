@@ -13,8 +13,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef CPP11_MIGRATE_FILE_OVERRIDES_H
-#define CPP11_MIGRATE_FILE_OVERRIDES_H
+#ifndef CLANG_MODERNIZE_FILE_OVERRIDES_H
+#define CLANG_MODERNIZE_FILE_OVERRIDES_H
 
 #include "Core/Refactoring.h"
 #include "clang-apply-replacements/Tooling/ApplyReplacements.h"
@@ -126,4 +126,4 @@ bool generateReplacementsFileName(const llvm::StringRef MainSourceFile,
                                   llvm::SmallVectorImpl<char> &Result,
                                   llvm::SmallVectorImpl<char> &Error);
 
-#endif // CPP11_MIGRATE_FILE_OVERRIDES_H
+#endif // CLANG_MODERNIZE_FILE_OVERRIDES_H

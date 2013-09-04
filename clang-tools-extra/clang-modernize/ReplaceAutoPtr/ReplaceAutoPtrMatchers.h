@@ -13,8 +13,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef CPP11_MIGRATE_REPLACE_AUTO_PTR_MATCHERS_H
-#define CPP11_MIGRATE_REPLACE_AUTO_PTR_MATCHERS_H
+#ifndef CLANG_MODERNIZE_REPLACE_AUTO_PTR_MATCHERS_H
+#define CLANG_MODERNIZE_REPLACE_AUTO_PTR_MATCHERS_H
 
 #include "clang/ASTMatchers/ASTMatchers.h"
 
@@ -61,4 +61,4 @@ clang::ast_matchers::DeclarationMatcher makeAutoPtrUsingDeclMatcher();
 /// \endcode
 clang::ast_matchers::StatementMatcher makeTransferOwnershipExprMatcher();
 
-#endif // CPP11_MIGRATE_REPLACE_AUTO_PTR_MATCHERS_H
+#endif // CLANG_MODERNIZE_REPLACE_AUTO_PTR_MATCHERS_H

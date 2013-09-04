@@ -14,8 +14,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef CPP11_MIGRATE_TRANSFORMS_H
-#define CPP11_MIGRATE_TRANSFORMS_H
+#ifndef CLANG_MODERNIZE_TRANSFORMS_H
+#define CLANG_MODERNIZE_TRANSFORMS_H
 
 #include "llvm/Support/CommandLine.h"
 #include "llvm/ADT/StringRef.h"
@@ -79,4 +79,4 @@ private:
   OptionMap Options;
 };
 
-#endif // CPP11_MIGRATE_TRANSFORMS_H
+#endif // CLANG_MODERNIZE_TRANSFORMS_H

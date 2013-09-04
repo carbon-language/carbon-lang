@@ -13,8 +13,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef CPP11_MIGRATE_ADD_OVERRIDE_MATCHERS_H
-#define CPP11_MIGRATE_ADD_OVERRIDE_MATCHERS_H
+#ifndef CLANG_MODERNIZE_ADD_OVERRIDE_MATCHERS_H
+#define CLANG_MODERNIZE_ADD_OVERRIDE_MATCHERS_H
 
 #include "clang/ASTMatchers/ASTMatchers.h"
 
@@ -25,4 +25,4 @@ extern const char *MethodId;
 /// candidates for adding the override attribute.
 clang::ast_matchers::DeclarationMatcher makeCandidateForOverrideAttrMatcher();
 
-#endif // CPP11_MIGRATE_ADD_OVERRIDE_MATCHERS_H
+#endif // CLANG_MODERNIZE_ADD_OVERRIDE_MATCHERS_H

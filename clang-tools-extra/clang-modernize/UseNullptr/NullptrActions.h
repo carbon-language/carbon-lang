@@ -13,8 +13,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef CPP11_MIGRATE_NULLPTR_ACTIONS_H
-#define CPP11_MIGRATE_NULLPTR_ACTIONS_H
+#ifndef CLANG_MODERNIZE_NULLPTR_ACTIONS_H
+#define CLANG_MODERNIZE_NULLPTR_ACTIONS_H
 
 #include "Core/Transform.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
@@ -38,4 +38,4 @@ private:
   Transform &Owner;
 };
 
-#endif // CPP11_MIGRATE_NULLPTR_ACTIONS_H
+#endif // CLANG_MODERNIZE_NULLPTR_ACTIONS_H

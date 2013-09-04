@@ -13,8 +13,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef CPP11_MIGRATE_REFORMATTING_H
-#define CPP11_MIGRATE_REFORMATTING_H
+#ifndef CLANG_MODERNIZE_REFORMATTING_H
+#define CLANG_MODERNIZE_REFORMATTING_H
 
 #include "Core/Refactoring.h"
 #include "clang/Format/Format.h"
@@ -57,4 +57,4 @@ private:
   clang::format::FormatStyle Style;
 };
 
-#endif // CPP11_MIGRATE_REFORMATTING_H
+#endif // CLANG_MODERNIZE_REFORMATTING_H

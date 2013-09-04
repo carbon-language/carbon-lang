@@ -13,8 +13,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef CPP11_MIGRATE_REPLACE_AUTO_PTR_H
-#define CPP11_MIGRATE_REPLACE_AUTO_PTR_H
+#ifndef CLANG_MODERNIZE_REPLACE_AUTO_PTR_H
+#define CLANG_MODERNIZE_REPLACE_AUTO_PTR_H
 
 #include "Core/Transform.h"
 #include "llvm/Support/Compiler.h"
@@ -52,4 +52,4 @@ public:
                     const std::vector<std::string> &SourcePaths) LLVM_OVERRIDE;
 };
 
-#endif // CPP11_MIGRATE_REPLACE_AUTO_PTR_H
+#endif // CLANG_MODERNIZE_REPLACE_AUTO_PTR_H

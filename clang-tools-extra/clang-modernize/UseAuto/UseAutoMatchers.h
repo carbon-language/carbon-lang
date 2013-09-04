@@ -13,8 +13,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef CPP11_MIGRATE_USE_AUTO_MATCHERS_H
-#define CPP11_MIGRATE_USE_AUTO_MATCHERS_H
+#ifndef CLANG_MODERNIZE_USE_AUTO_MATCHERS_H
+#define CLANG_MODERNIZE_USE_AUTO_MATCHERS_H
 
 #include "clang/ASTMatchers/ASTMatchers.h"
 
@@ -31,4 +31,4 @@ clang::ast_matchers::StatementMatcher makeIteratorDeclMatcher();
 /// initialized by a C++ new expression.
 clang::ast_matchers::StatementMatcher makeDeclWithNewMatcher();
 
-#endif // CPP11_MIGRATE_USE_AUTO_MATCHERS_H
+#endif // CLANG_MODERNIZE_USE_AUTO_MATCHERS_H

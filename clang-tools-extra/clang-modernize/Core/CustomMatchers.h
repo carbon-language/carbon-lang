@@ -13,8 +13,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef CPP11_MIGRATE_CUSTOMMATCHERS_H
-#define CPP11_MIGRATE_CUSTOMMATCHERS_H
+#ifndef CLANG_MODERNIZE_CUSTOMMATCHERS_H
+#define CLANG_MODERNIZE_CUSTOMMATCHERS_H
 
 #include "clang/ASTMatchers/ASTMatchers.h"
 
@@ -56,4 +56,4 @@ AST_MATCHER(Decl, isFromStdNamespace) {
 } // namespace ast_matchers
 } // namespace clang
 
-#endif // CPP11_MIGRATE_CUSTOMMATCHERS_H
+#endif // CLANG_MODERNIZE_CUSTOMMATCHERS_H

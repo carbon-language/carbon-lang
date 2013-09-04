@@ -13,8 +13,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef CPP11_MIGRATE_INCLUDEEXCLUDEINFO_H
-#define CPP11_MIGRATE_INCLUDEEXCLUDEINFO_H
+#ifndef CLANG_MODERNIZE_INCLUDEEXCLUDEINFO_H
+#define CLANG_MODERNIZE_INCLUDEEXCLUDEINFO_H
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/system_error.h"
@@ -53,4 +53,4 @@ private:
   std::vector<std::string> ExcludeList;
 };
 
-#endif // CPP11_MIGRATE_INCLUDEEXCLUDEINFO_H
+#endif // CLANG_MODERNIZE_INCLUDEEXCLUDEINFO_H

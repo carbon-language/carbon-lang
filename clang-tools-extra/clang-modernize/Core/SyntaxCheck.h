@@ -13,8 +13,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef CPP11_MIGRATE_SYNTAX_CHECK_H
-#define CPP11_MIGRATE_SYNTAX_CHECK_H
+#ifndef CLANG_MODERNIZE_SYNTAX_CHECK_H
+#define CLANG_MODERNIZE_SYNTAX_CHECK_H
 
 #include <string>
 #include <vector>
@@ -35,4 +35,4 @@ extern bool doSyntaxCheck(const clang::tooling::CompilationDatabase &Database,
                           const std::vector<std::string> &SourcePaths,
                           const FileOverrides &Overrides);
 
-#endif // CPP11_MIGRATE_SYNTAX_CHECK_H
+#endif // CLANG_MODERNIZE_SYNTAX_CHECK_H

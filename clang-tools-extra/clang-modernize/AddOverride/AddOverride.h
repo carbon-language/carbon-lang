@@ -15,8 +15,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef CPP11_MIGRATE_ADD_OVERRIDE_H
-#define CPP11_MIGRATE_ADD_OVERRIDE_H
+#ifndef CLANG_MODERNIZE_ADD_OVERRIDE_H
+#define CLANG_MODERNIZE_ADD_OVERRIDE_H
 
 #include "Core/Transform.h"
 #include "llvm/Support/Compiler.h"
@@ -42,4 +42,4 @@ private:
   AddOverrideFixer *Fixer;
 };
 
-#endif // CPP11_MIGRATE_ADD_OVERRIDE_H
+#endif // CLANG_MODERNIZE_ADD_OVERRIDE_H

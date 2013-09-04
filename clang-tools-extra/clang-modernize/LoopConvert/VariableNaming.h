@@ -14,8 +14,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CPP11_MIGRATE_VARIABLE_NAMING_H
-#define CPP11_MIGRATE_VARIABLE_NAMING_H
+#ifndef CLANG_MODERNIZE_VARIABLE_NAMING_H
+#define CLANG_MODERNIZE_VARIABLE_NAMING_H
 
 #include "StmtAncestor.h"
 #include "clang/AST/ASTContext.h"
@@ -56,4 +56,4 @@ class VariableNamer {
   bool declarationExists(llvm::StringRef Symbol);
 };
 
-#endif // CPP11_MIGRATE_VARIABLE_NAMING_H
+#endif // CLANG_MODERNIZE_VARIABLE_NAMING_H

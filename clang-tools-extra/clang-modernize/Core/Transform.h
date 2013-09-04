@@ -13,8 +13,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef CPP11_MIGRATE_TRANSFORM_H
-#define CPP11_MIGRATE_TRANSFORM_H
+#ifndef CLANG_MODERNIZE_TRANSFORM_H
+#define CLANG_MODERNIZE_TRANSFORM_H
 
 #include "Core/IncludeExcludeInfo.h"
 #include "Core/Refactoring.h"
@@ -341,4 +341,4 @@ protected:
 
 typedef llvm::Registry<TransformFactory> TransformFactoryRegistry;
 
-#endif // CPP11_MIGRATE_TRANSFORM_H
+#endif // CLANG_MODERNIZE_TRANSFORM_H

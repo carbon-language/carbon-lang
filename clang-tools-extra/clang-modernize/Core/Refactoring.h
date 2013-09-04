@@ -14,8 +14,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef CPP11_MIGRATE_REPLACEMENTS_VEC_H
-#define CPP11_MIGRATE_REPLACEMENTS_VEC_H
+#ifndef CLANG_MODERNIZE_REPLACEMENTS_VEC_H
+#define CLANG_MODERNIZE_REPLACEMENTS_VEC_H
 
 #include "clang/Tooling/Refactoring.h"
 
@@ -28,4 +28,4 @@ typedef std::vector<clang::tooling::Replacement> ReplacementsVec;
 }
 }
 
-#endif // CPP11_MIGRATE_REPLACEMENTS_VEC_H
+#endif // CLANG_MODERNIZE_REPLACEMENTS_VEC_H

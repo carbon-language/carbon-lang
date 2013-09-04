@@ -13,8 +13,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef CPP11_MIGRATE_PASS_BY_VALUE_ACTIONS_H
-#define CPP11_MIGRATE_PASS_BY_VALUE_ACTIONS_H
+#ifndef CLANG_MODERNIZE_PASS_BY_VALUE_ACTIONS_H
+#define CLANG_MODERNIZE_PASS_BY_VALUE_ACTIONS_H
 
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/Tooling/Refactoring.h"
@@ -71,4 +71,4 @@ private:
   IncludeDirectives *IncludeManager;
 };
 
-#endif // CPP11_MIGRATE_PASS_BY_VALUE_ACTIONS_H
+#endif // CLANG_MODERNIZE_PASS_BY_VALUE_ACTIONS_H

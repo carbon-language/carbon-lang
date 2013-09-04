@@ -13,8 +13,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef CPP11_MIGRATE_PASS_BY_VALUE_H
-#define CPP11_MIGRATE_PASS_BY_VALUE_H
+#ifndef CLANG_MODERNIZE_PASS_BY_VALUE_H
+#define CLANG_MODERNIZE_PASS_BY_VALUE_H
 
 #include "Core/Transform.h"
 #include "Core/IncludeDirectives.h"
@@ -71,4 +71,4 @@ private:
   ConstructorParamReplacer *Replacer;
 };
 
-#endif // CPP11_MIGRATE_PASS_BY_VALUE_H
+#endif // CLANG_MODERNIZE_PASS_BY_VALUE_H

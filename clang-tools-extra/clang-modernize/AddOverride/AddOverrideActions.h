@@ -13,8 +13,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef CPP11_MIGRATE_ADD_OVERRIDE_ACTIONS_H
-#define CPP11_MIGRATE_ADD_OVERRIDE_ACTIONS_H
+#ifndef CLANG_MODERNIZE_ADD_OVERRIDE_ACTIONS_H
+#define CLANG_MODERNIZE_ADD_OVERRIDE_ACTIONS_H
 
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/Tooling/Refactoring.h"
@@ -42,4 +42,4 @@ private:
   Transform &Owner;
 };
 
-#endif // CPP11_MIGRATE_ADD_OVERRIDE_ACTIONS_H
+#endif // CLANG_MODERNIZE_ADD_OVERRIDE_ACTIONS_H

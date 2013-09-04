@@ -13,8 +13,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef CPP11_MIGRATE_LOOP_ACTIONS_H
-#define CPP11_MIGRATE_LOOP_ACTIONS_H
+#ifndef CLANG_MODERNIZE_LOOP_ACTIONS_H
+#define CLANG_MODERNIZE_LOOP_ACTIONS_H
 
 #include "StmtAncestor.h"
 #include "Core/Transform.h"
@@ -102,4 +102,4 @@ class LoopFixer : public clang::ast_matchers::MatchFinder::MatchCallback {
                                               const clang::ForStmt *TheLoop);
 };
 
-#endif // CPP11_MIGRATE_LOOP_ACTIONS_H
+#endif // CLANG_MODERNIZE_LOOP_ACTIONS_H

@@ -13,8 +13,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef CPP11_MIGRATE_INCLUDE_DIRECTIVES_H
-#define CPP11_MIGRATE_INCLUDE_DIRECTIVES_H
+#ifndef CLANG_MODERNIZE_INCLUDE_DIRECTIVES_H
+#define CLANG_MODERNIZE_INCLUDE_DIRECTIVES_H
 
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Tooling/Refactoring.h"
@@ -138,4 +138,4 @@ private:
   HeaderToGuardMap HeaderToGuard;
 };
 
-#endif // CPP11_MIGRATE_INCLUDE_DIRECTIVES_H
+#endif // CLANG_MODERNIZE_INCLUDE_DIRECTIVES_H

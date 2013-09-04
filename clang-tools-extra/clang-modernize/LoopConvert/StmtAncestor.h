@@ -13,8 +13,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef CPP11_MIGRATE_STMT_ANCESTOR_H
-#define CPP11_MIGRATE_STMT_ANCESTOR_H
+#ifndef CLANG_MODERNIZE_STMT_ANCESTOR_H
+#define CLANG_MODERNIZE_STMT_ANCESTOR_H
 
 #include "clang/AST/RecursiveASTVisitor.h"
 
@@ -198,4 +198,4 @@ private:
   bool VisitTypeLoc(clang::TypeLoc TL);
 };
 
-#endif // CPP11_MIGRATE_STMT_ANCESTOR_H
+#endif // CLANG_MODERNIZE_STMT_ANCESTOR_H
