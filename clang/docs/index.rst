@@ -53,6 +53,7 @@ Using Clang Tools
    ClangTools
    ClangCheck
    ClangFormat
+   ClangFormatStyleOptions
 
 Design Documents
 ================

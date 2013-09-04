@@ -70,6 +70,20 @@ to format C/C++/Obj-C code.
     -version                 - Display the version of this program
 
 
+When the desired code formatting style is different from the available options,
+the style can be customized using the ``-style="{key: value, ...}"`` option or
+by putting your style configuration to the ``.clang-format`` file in your
+project's directory and using ``clang-format -style=file``.
+
+An easy way to create the ``.clang-format`` file is:
+
+.. code-block:: console
+
+  clang-format -style=llvm -dump-config > .clang-format
+
+Available style options are described in :doc:`ClangFormatStyleOptions`.
+
+
 Vim Integration
 ===============
 
