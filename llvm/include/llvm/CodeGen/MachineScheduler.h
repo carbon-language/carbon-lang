@@ -107,6 +107,10 @@ class MachineSchedStrategy {
 public:
   virtual ~MachineSchedStrategy() {}
 
+  /// Check if pressure tracking is needed before building the DAG and
+  /// initializing this strategy.
+  virtual bool shouldTrackPressure(unsigned NumRegionInstrs) { return true; }
+
   /// Initialize the strategy after building the DAG for a new region.
   virtual void initialize(ScheduleDAGMI *DAG) = 0;
 
@@ -271,8 +275,8 @@ public:
 
   virtual ~ScheduleDAGMI();
 
-  /// Return true if register pressure tracking is enabled.
-  bool shouldTrackPressure() const { return ShouldTrackPressure; }
+  /// \brief Return true if register pressure tracking is enabled.
+  bool isTrackingPressure() const { return ShouldTrackPressure; }
 
   /// Add a postprocessing step to the DAG builder.
   /// Mutations are applied in the order that they are added after normal DAG

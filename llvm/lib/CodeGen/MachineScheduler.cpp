@@ -480,7 +480,8 @@ void ScheduleDAGMI::enterRegion(MachineBasicBlock *bb,
 {
   ScheduleDAGInstrs::enterRegion(bb, begin, end, regioninstrs);
 
-  ShouldTrackPressure = EnableRegPressure;
+  ShouldTrackPressure =
+    EnableRegPressure && SchedImpl->shouldTrackPressure(regioninstrs);
 
   // For convenience remember the end of the liveness region.
   LiveRegionEnd =
@@ -1583,6 +1584,7 @@ public:
   };
 
 private:
+  const MachineSchedContext *Context;
   ScheduleDAGMI *DAG;
   const TargetSchedModel *SchedModel;
   const TargetRegisterInfo *TRI;
@@ -1600,8 +1602,11 @@ public:
     LogMaxQID = 2
   };
 
-  ConvergingScheduler():
-    DAG(0), SchedModel(0), TRI(0), Top(TopQID, "TopQ"), Bot(BotQID, "BotQ") {}
+  ConvergingScheduler(const MachineSchedContext *C):
+    Context(C), DAG(0), SchedModel(0), TRI(0),
+    Top(TopQID, "TopQ"), Bot(BotQID, "BotQ") {}
+
+  virtual bool shouldTrackPressure(unsigned NumRegionInstrs);
 
   virtual void initialize(ScheduleDAGMI *dag);
 
@@ -1667,6 +1672,16 @@ init(ScheduleDAGMI *dag, const TargetSchedModel *smodel, SchedRemainder *rem) {
   Rem = rem;
   if (SchedModel->hasInstrSchedModel())
     ExecutedResCounts.resize(SchedModel->getNumProcResourceKinds());
+}
+
+/// Avoid setting up the register pressure tracker for small regions to save
+/// compile time. As a rough heuristic, only track pressure when the number
+/// of schedulable instructions exceeds half the integer register file.
+bool ConvergingScheduler::shouldTrackPressure(unsigned NumRegionInstrs) {
+  unsigned NIntRegs = Context->RegClassInfo->getNumAllocatableRegs(
+    Context->MF->getTarget().getTargetLowering()->getRegClassFor(MVT::i32));
+
+  return NumRegionInstrs > (NIntRegs / 2);
 }
 
 void ConvergingScheduler::initialize(ScheduleDAGMI *dag) {
@@ -2371,7 +2386,7 @@ void ConvergingScheduler::tryCandidate(SchedCandidate &Cand,
                                        const RegPressureTracker &RPTracker,
                                        RegPressureTracker &TempTracker) {
 
-  if (DAG->shouldTrackPressure()) {
+  if (DAG->isTrackingPressure()) {
     // Always initialize TryCand's RPDelta.
     if (Zone.isTop()) {
       TempTracker.getMaxDownwardPressureDelta(
@@ -2413,9 +2428,9 @@ void ConvergingScheduler::tryCandidate(SchedCandidate &Cand,
 
   // Avoid exceeding the target's limit. If signed PSetID is negative, it is
   // invalid; convert it to INT_MAX to give it lowest priority.
-  if (DAG->shouldTrackPressure() && tryPressure(TryCand.RPDelta.Excess,
-                                                Cand.RPDelta.Excess,
-                                                TryCand, Cand, RegExcess))
+  if (DAG->isTrackingPressure() && tryPressure(TryCand.RPDelta.Excess,
+                                               Cand.RPDelta.Excess,
+                                               TryCand, Cand, RegExcess))
     return;
 
   // For loops that are acyclic path limited, aggressively schedule for latency.
@@ -2423,9 +2438,9 @@ void ConvergingScheduler::tryCandidate(SchedCandidate &Cand,
     return;
 
   // Avoid increasing the max critical pressure in the scheduled region.
-  if (DAG->shouldTrackPressure() && tryPressure(TryCand.RPDelta.CriticalMax,
-                                                Cand.RPDelta.CriticalMax,
-                                                TryCand, Cand, RegCritical))
+  if (DAG->isTrackingPressure() && tryPressure(TryCand.RPDelta.CriticalMax,
+                                               Cand.RPDelta.CriticalMax,
+                                               TryCand, Cand, RegCritical))
     return;
 
   // Keep clustered nodes together to encourage downstream peephole
@@ -2447,9 +2462,9 @@ void ConvergingScheduler::tryCandidate(SchedCandidate &Cand,
     return;
   }
   // Avoid increasing the max pressure of the entire region.
-  if (DAG->shouldTrackPressure() && tryPressure(TryCand.RPDelta.CurrentMax,
-                                                Cand.RPDelta.CurrentMax,
-                                                TryCand, Cand, RegMax))
+  if (DAG->isTrackingPressure() && tryPressure(TryCand.RPDelta.CurrentMax,
+                                               Cand.RPDelta.CurrentMax,
+                                               TryCand, Cand, RegMax))
     return;
 
   // Avoid critical resource consumption and balance the schedule.
@@ -2744,9 +2759,7 @@ void ConvergingScheduler::schedNode(SUnit *SU, bool IsTopNode) {
 /// Create the standard converging machine scheduler. This will be used as the
 /// default scheduler if the target does not set a default.
 static ScheduleDAGInstrs *createConvergingSched(MachineSchedContext *C) {
-  assert((!ForceTopDown || !ForceBottomUp) &&
-         "-misched-topdown incompatible with -misched-bottomup");
-  ScheduleDAGMI *DAG = new ScheduleDAGMI(C, new ConvergingScheduler());
+  ScheduleDAGMI *DAG = new ScheduleDAGMI(C, new ConvergingScheduler(C));
   // Register DAG post-processors.
   //
   // FIXME: extend the mutation API to allow earlier mutations to instantiate
