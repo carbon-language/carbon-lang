@@ -169,7 +169,7 @@ namespace llvm {
       S_THREAD_LOCAL_REGULAR                = 0x11u,
       S_THREAD_LOCAL_ZEROFILL               = 0x12u,
       S_THREAD_LOCAL_VARIABLES              = 0x13u,
-      S_THREAD_LOCA_VARIABLE_POINTERS       = 0x14u,
+      S_THREAD_LOCAL_VARIABLE_POINTERS      = 0x14u,
       S_THREAD_LOCAL_INIT_FUNCTION_POINTERS = 0x15u
     };
 
