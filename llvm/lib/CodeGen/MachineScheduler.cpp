@@ -3010,7 +3010,7 @@ struct DOTGraphTraits<ScheduleDAGMI*> : public DefaultDOTGraphTraits {
   }
 
   static bool isNodeHidden(const SUnit *Node) {
-    return (Node->NumPreds > 10 || Node->NumSuccs > 10);
+    return (Node->Preds.size() > 10 || Node->Succs.size() > 10);
   }
 
   static bool hasNodeAddressLabel(const SUnit *Node,
