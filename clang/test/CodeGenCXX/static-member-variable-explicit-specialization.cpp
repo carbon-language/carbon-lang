@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -triple=x86_64-apple-darwin10 -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 %s -std=c++1y -triple=x86_64-apple-darwin10 -emit-llvm -o - | FileCheck %s
 // CHECK: ; ModuleID
 
 extern "C" int foo();
@@ -12,11 +12,13 @@ template<> int A<char>::a;
 // CHECK: @_ZN1AIbE1aE = global i32 10
 template<> int A<bool>::a = 10;
 
-// CHECK: @llvm.global_ctors = appending global [5 x { i32, void ()* }]
+// CHECK: @llvm.global_ctors = appending global [7 x { i32, void ()* }]
 // CHECK: [{ i32, void ()* } { i32 65535, void ()* @[[unordered1:[^ ]*]] },
 // CHECK:  { i32, void ()* } { i32 65535, void ()* @[[unordered2:[^ ]*]] },
 // CHECK:  { i32, void ()* } { i32 65535, void ()* @[[unordered3:[^ ]*]] },
 // CHECK:  { i32, void ()* } { i32 65535, void ()* @[[unordered4:[^ ]*]] },
+// CHECK:  { i32, void ()* } { i32 65535, void ()* @[[unordered5:[^ ]*]] },
+// CHECK:  { i32, void ()* } { i32 65535, void ()* @[[unordered6:[^ ]*]] },
 // CHECK:  { i32, void ()* } { i32 65535, void ()* @_GLOBAL__I_a }]
 
 template int A<short>::a;  // Unordered
@@ -37,6 +39,19 @@ template short x<short>;  // Unordered
 template<> int x<int> = foo();
 int e = x<char>; // Unordered
 
+namespace ns {
+template <typename T> struct a {
+  static int i;
+};
+template<typename T> int a<T>::i = foo();
+template struct a<int>;
+
+struct b {
+  template <typename T> static T i;
+};
+template<typename T> T b::i<T> = foo();
+template int b::i<int>;
+}
 // CHECK: define internal void @[[unordered1]]
 // CHECK: call i32 @foo()
 // CHECK: store {{.*}} @_ZN1AIsE1aE
@@ -49,10 +64,20 @@ int e = x<char>; // Unordered
 
 // CHECK: define internal void @[[unordered3]]
 // CHECK: call i32 @foo()
-// CHECK: store {{.*}} @_ZN1AIvE1aE
+// CHECK: store {{.*}} @_ZN2ns1aIiE1iE
 // CHECK: ret
 
 // CHECK: define internal void @[[unordered4]]
+// CHECK: call i32 @foo()
+// CHECK: store {{.*}} @_ZN2ns1b1iIiEE
+// CHECK: ret
+
+// CHECK: define internal void @[[unordered5]]
+// CHECK: call i32 @foo()
+// CHECK: store {{.*}} @_ZN1AIvE1aE
+// CHECK: ret
+
+// CHECK: define internal void @[[unordered6]]
 // CHECK: call i32 @foo()
 // CHECK: store {{.*}} @_Z1xIcE
 // CHECK: ret

@@ -2761,8 +2761,13 @@ void CodeGenModule::EmitObjCIvarInitializations(ObjCImplementationDecl *D) {
 /// EmitNamespace - Emit all declarations in a namespace.
 void CodeGenModule::EmitNamespace(const NamespaceDecl *ND) {
   for (RecordDecl::decl_iterator I = ND->decls_begin(), E = ND->decls_end();
-       I != E; ++I)
+       I != E; ++I) {
+    if (const VarDecl *VD = dyn_cast<VarDecl>(*I))
+      if (VD->getTemplateSpecializationKind() != TSK_ExplicitSpecialization &&
+          VD->getTemplateSpecializationKind() != TSK_Undeclared)
+        continue;
     EmitTopLevelDecl(*I);
+  }
 }
 
 // EmitLinkageSpec - Emit all declarations in a linkage spec.
