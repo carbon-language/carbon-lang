@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CPP11_MIGRATE_UNITTESTS_UTILITY_H
-#define CPP11_MIGRATE_UNITTESTS_UTILITY_H
+#ifndef CLANG_MODERNIZE_UNITTESTS_UTILITY_H
+#define CLANG_MODERNIZE_UNITTESTS_UTILITY_H
 
 // FIXME: copied from unittests/Support/Path.cpp
 #define ASSERT_NO_ERROR(x)                                                     \
@@ -22,4 +22,4 @@
   } else {                                                                     \
   }
 
-#endif // CPP11_MIGRATE_UNITTESTS_UTILITY_H
+#endif // CLANG_MODERNIZE_UNITTESTS_UTILITY_H

@@ -12,8 +12,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef CPP11_MIGRATE_VIRTUAL_FILE_HELPER_H
-#define CPP11_MIGRATE_VIRTUAL_FILE_HELPER_H
+#ifndef CLANG_MODERNIZE_VIRTUAL_FILE_HELPER_H
+#define CLANG_MODERNIZE_VIRTUAL_FILE_HELPER_H
 
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/DiagnosticOptions.h"
@@ -78,4 +78,4 @@ private:
 
 } // end namespace clang
 
-#endif // CPP11_MIGRATE_VIRTUAL_FILE_HELPER_H
+#endif // CLANG_MODERNIZE_VIRTUAL_FILE_HELPER_H
