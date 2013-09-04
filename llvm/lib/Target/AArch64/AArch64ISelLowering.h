@@ -19,7 +19,7 @@
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/Target/TargetLowering.h"
-
+#include "llvm/IR/Intrinsics.h"
 
 namespace llvm {
 namespace AArch64ISD {
@@ -135,7 +135,11 @@ namespace AArch64ISD {
     NEON_TST,
 
     // Operation for the immediate in vector shift
-    NEON_DUPIMM
+    NEON_DUPIMM,
+
+    // Vector saturating shift
+    NEON_QSHLs,
+    NEON_QSHLu
   };
 }
 

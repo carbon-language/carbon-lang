@@ -845,12 +845,12 @@
 // Vector Saturating Shift Left (Signed and Unsigned Integer)
 //----------------------------------------------------------------------
         // Mismatched vector types
-        sqshl v0.2s, v15.2s, v16.2d
+        sqshl v0.2s, v15.4s, v16.2d
         uqshl v1.8b, v25.4h, v6.8h
 
 // CHECK-ERROR: error: invalid operand for instruction
-// CHECK-ERROR:        sqshl v0.2s, v15.2s, v16.2d
-// CHECK-ERROR:                                 ^
+// CHECK-ERROR:        sqshl v0.2s, v15.4s, v16.2d 
+// CHECK-ERROR:                         ^
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR:        uqshl v1.8b, v25.4h, v6.8h
 // CHECK-ERROR:                         ^
@@ -1287,4 +1287,724 @@
 // CHECK-ERROR: error: expected integer in range [0, 31]
 // CHECK-ERROR:        ushll2 v0.2d, v1.4s, #33
 // CHECK-ERROR:                             ^
+
+
+//------------------------------------------------------------------------------
+// Vector shift right by immediate
+//------------------------------------------------------------------------------
+         sshr v0.8b, v1.8h, #3
+         sshr v0.4h, v1.4s, #3
+         sshr v0.2s, v1.2d, #3
+         sshr v0.16b, v1.16b, #9
+         sshr v0.8h, v1.8h, #17
+         sshr v0.4s, v1.4s, #33
+         sshr v0.2d, v1.2d, #65
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         sshr v0.8b, v1.8h, #3
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         sshr v0.4h, v1.4s, #3
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         sshr v0.2s, v1.2d, #3
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: expected integer in range [1, 8]
+// CHECK-ERROR:         sshr v0.16b, v1.16b, #9
+// CHECK-ERROR:                              ^
+// CHECK-ERROR: error: expected integer in range [1, 16]
+// CHECK-ERROR:         sshr v0.8h, v1.8h, #17
+// CHECK-ERROR:                            ^
+// CHECK-ERROR: error: expected integer in range [1, 32]
+// CHECK-ERROR:         sshr v0.4s, v1.4s, #33
+// CHECK-ERROR:                            ^
+// CHECK-ERROR: error: expected integer in range [1, 64]
+// CHECK-ERROR:         sshr v0.2d, v1.2d, #65
+// CHECK-ERROR:                            ^
+
+//------------------------------------------------------------------------------
+// Vector  shift right by immediate
+//------------------------------------------------------------------------------
+         ushr v0.8b, v1.8h, #3
+         ushr v0.4h, v1.4s, #3
+         ushr v0.2s, v1.2d, #3
+         ushr v0.16b, v1.16b, #9
+         ushr v0.8h, v1.8h, #17
+         ushr v0.4s, v1.4s, #33
+         ushr v0.2d, v1.2d, #65
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         ushr v0.8b, v1.8h, #3
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         ushr v0.4h, v1.4s, #3
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         ushr v0.2s, v1.2d, #3
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: expected integer in range [1, 8]
+// CHECK-ERROR:         ushr v0.16b, v1.16b, #9
+// CHECK-ERROR:                              ^
+// CHECK-ERROR: error: expected integer in range [1, 16]
+// CHECK-ERROR:         ushr v0.8h, v1.8h, #17
+// CHECK-ERROR:                            ^
+// CHECK-ERROR: error: expected integer in range [1, 32]
+// CHECK-ERROR:         ushr v0.4s, v1.4s, #33
+// CHECK-ERROR:                            ^
+// CHECK-ERROR: error: expected integer in range [1, 64]
+// CHECK-ERROR:         ushr v0.2d, v1.2d, #65
+// CHECK-ERROR:                            ^
+
+//------------------------------------------------------------------------------
+// Vector shift right and accumulate by immediate
+//------------------------------------------------------------------------------
+         ssra v0.8b, v1.8h, #3
+         ssra v0.4h, v1.4s, #3
+         ssra v0.2s, v1.2d, #3
+         ssra v0.16b, v1.16b, #9
+         ssra v0.8h, v1.8h, #17
+         ssra v0.4s, v1.4s, #33
+         ssra v0.2d, v1.2d, #65
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         ssra v0.8b, v1.8h, #3
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         ssra v0.4h, v1.4s, #3
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         ssra v0.2s, v1.2d, #3
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: expected integer in range [1, 8]
+// CHECK-ERROR:         ssra v0.16b, v1.16b, #9
+// CHECK-ERROR:                              ^
+// CHECK-ERROR: error: expected integer in range [1, 16]
+// CHECK-ERROR:         ssra v0.8h, v1.8h, #17
+// CHECK-ERROR:                            ^
+// CHECK-ERROR: error: expected integer in range [1, 32]
+// CHECK-ERROR:         ssra v0.4s, v1.4s, #33
+// CHECK-ERROR:                            ^
+// CHECK-ERROR: error: expected integer in range [1, 64]
+// CHECK-ERROR:         ssra v0.2d, v1.2d, #65
+// CHECK-ERROR:                            ^
+
+//------------------------------------------------------------------------------
+// Vector  shift right and accumulate by immediate
+//------------------------------------------------------------------------------
+         usra v0.8b, v1.8h, #3
+         usra v0.4h, v1.4s, #3
+         usra v0.2s, v1.2d, #3
+         usra v0.16b, v1.16b, #9
+         usra v0.8h, v1.8h, #17
+         usra v0.4s, v1.4s, #33
+         usra v0.2d, v1.2d, #65
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         usra v0.8b, v1.8h, #3
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         usra v0.4h, v1.4s, #3
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         usra v0.2s, v1.2d, #3
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: expected integer in range [1, 8]
+// CHECK-ERROR:         usra v0.16b, v1.16b, #9
+// CHECK-ERROR:                              ^
+// CHECK-ERROR: error: expected integer in range [1, 16]
+// CHECK-ERROR:         usra v0.8h, v1.8h, #17
+// CHECK-ERROR:                            ^
+// CHECK-ERROR: error: expected integer in range [1, 32]
+// CHECK-ERROR:         usra v0.4s, v1.4s, #33
+// CHECK-ERROR:                            ^
+// CHECK-ERROR: error: expected integer in range [1, 64]
+// CHECK-ERROR:         usra v0.2d, v1.2d, #65
+// CHECK-ERROR:                            ^
+
+//------------------------------------------------------------------------------
+// Vector rounding shift right by immediate
+//------------------------------------------------------------------------------
+         srshr v0.8b, v1.8h, #3
+         srshr v0.4h, v1.4s, #3
+         srshr v0.2s, v1.2d, #3
+         srshr v0.16b, v1.16b, #9
+         srshr v0.8h, v1.8h, #17
+         srshr v0.4s, v1.4s, #33
+         srshr v0.2d, v1.2d, #65
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         srshr v0.8b, v1.8h, #3
+// CHECK-ERROR:                         ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         srshr v0.4h, v1.4s, #3
+// CHECK-ERROR:                         ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         srshr v0.2s, v1.2d, #3
+// CHECK-ERROR:                         ^
+// CHECK-ERROR: error: expected integer in range [1, 8]
+// CHECK-ERROR:         srshr v0.16b, v1.16b, #9
+// CHECK-ERROR:                               ^
+// CHECK-ERROR: error: expected integer in range [1, 16]
+// CHECK-ERROR:         srshr v0.8h, v1.8h, #17
+// CHECK-ERROR:                             ^
+// CHECK-ERROR: error: expected integer in range [1, 32]
+// CHECK-ERROR:         srshr v0.4s, v1.4s, #33
+// CHECK-ERROR:                             ^
+// CHECK-ERROR: error: expected integer in range [1, 64]
+// CHECK-ERROR:         srshr v0.2d, v1.2d, #65
+// CHECK-ERROR:                             ^
+
+//------------------------------------------------------------------------------
+// Vecotr rounding shift right by immediate
+//------------------------------------------------------------------------------
+         urshr v0.8b, v1.8h, #3
+         urshr v0.4h, v1.4s, #3
+         urshr v0.2s, v1.2d, #3
+         urshr v0.16b, v1.16b, #9
+         urshr v0.8h, v1.8h, #17
+         urshr v0.4s, v1.4s, #33
+         urshr v0.2d, v1.2d, #65
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         urshr v0.8b, v1.8h, #3
+// CHECK-ERROR:                         ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         urshr v0.4h, v1.4s, #3
+// CHECK-ERROR:                         ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         urshr v0.2s, v1.2d, #3
+// CHECK-ERROR:                         ^
+// CHECK-ERROR: error: expected integer in range [1, 8]
+// CHECK-ERROR:         urshr v0.16b, v1.16b, #9
+// CHECK-ERROR:                               ^
+// CHECK-ERROR: error: expected integer in range [1, 16]
+// CHECK-ERROR:         urshr v0.8h, v1.8h, #17
+// CHECK-ERROR:                             ^
+// CHECK-ERROR: error: expected integer in range [1, 32]
+// CHECK-ERROR:         urshr v0.4s, v1.4s, #33
+// CHECK-ERROR:                             ^
+// CHECK-ERROR: error: expected integer in range [1, 64]
+// CHECK-ERROR:         urshr v0.2d, v1.2d, #65
+// CHECK-ERROR:                             ^
+
+//------------------------------------------------------------------------------
+// Vector rounding shift right and accumulate by immediate
+//------------------------------------------------------------------------------
+         srsra v0.8b, v1.8h, #3
+         srsra v0.4h, v1.4s, #3
+         srsra v0.2s, v1.2d, #3
+         srsra v0.16b, v1.16b, #9
+         srsra v0.8h, v1.8h, #17
+         srsra v0.4s, v1.4s, #33
+         srsra v0.2d, v1.2d, #65
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         srsra v0.8b, v1.8h, #3
+// CHECK-ERROR:                         ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         srsra v0.4h, v1.4s, #3
+// CHECK-ERROR:                         ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         srsra v0.2s, v1.2d, #3
+// CHECK-ERROR:                         ^
+// CHECK-ERROR: error: expected integer in range [1, 8]
+// CHECK-ERROR:         srsra v0.16b, v1.16b, #9
+// CHECK-ERROR:                               ^
+// CHECK-ERROR: error: expected integer in range [1, 16]
+// CHECK-ERROR:         srsra v0.8h, v1.8h, #17
+// CHECK-ERROR:                             ^
+// CHECK-ERROR: error: expected integer in range [1, 32]
+// CHECK-ERROR:         srsra v0.4s, v1.4s, #33
+// CHECK-ERROR:                             ^
+// CHECK-ERROR: error: expected integer in range [1, 64]
+// CHECK-ERROR:         srsra v0.2d, v1.2d, #65
+// CHECK-ERROR:                             ^
+
+//------------------------------------------------------------------------------
+// Vector rounding shift right and accumulate by immediate
+//------------------------------------------------------------------------------
+         ursra v0.8b, v1.8h, #3
+         ursra v0.4h, v1.4s, #3
+         ursra v0.2s, v1.2d, #3
+         ursra v0.16b, v1.16b, #9
+         ursra v0.8h, v1.8h, #17
+         ursra v0.4s, v1.4s, #33
+         ursra v0.2d, v1.2d, #65
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         ursra v0.8b, v1.8h, #3
+// CHECK-ERROR:                         ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         ursra v0.4h, v1.4s, #3
+// CHECK-ERROR:                         ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         ursra v0.2s, v1.2d, #3
+// CHECK-ERROR:                         ^
+// CHECK-ERROR: error: expected integer in range [1, 8]
+// CHECK-ERROR:         ursra v0.16b, v1.16b, #9
+// CHECK-ERROR:                               ^
+// CHECK-ERROR: error: expected integer in range [1, 16]
+// CHECK-ERROR:         ursra v0.8h, v1.8h, #17
+// CHECK-ERROR:                             ^
+// CHECK-ERROR: error: expected integer in range [1, 32]
+// CHECK-ERROR:         ursra v0.4s, v1.4s, #33
+// CHECK-ERROR:                             ^
+// CHECK-ERROR: error: expected integer in range [1, 64]
+// CHECK-ERROR:         ursra v0.2d, v1.2d, #65
+// CHECK-ERROR:                             ^
+
+//------------------------------------------------------------------------------
+// Vector shift right and insert by immediate
+//------------------------------------------------------------------------------
+         sri v0.8b, v1.8h, #3
+         sri v0.4h, v1.4s, #3
+         sri v0.2s, v1.2d, #3
+         sri v0.16b, v1.16b, #9
+         sri v0.8h, v1.8h, #17
+         sri v0.4s, v1.4s, #33
+         sri v0.2d, v1.2d, #65
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         sri v0.8b, v1.8h, #3
+// CHECK-ERROR:                       ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         sri v0.4h, v1.4s, #3
+// CHECK-ERROR:                       ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         sri v0.2s, v1.2d, #3
+// CHECK-ERROR:                       ^
+// CHECK-ERROR: error: expected integer in range [1, 8]
+// CHECK-ERROR:         sri v0.16b, v1.16b, #9
+// CHECK-ERROR:                             ^
+// CHECK-ERROR: error: expected integer in range [1, 16]
+// CHECK-ERROR:         sri v0.8h, v1.8h, #17
+// CHECK-ERROR:                           ^
+// CHECK-ERROR: error: expected integer in range [1, 32]
+// CHECK-ERROR:         sri v0.4s, v1.4s, #33
+// CHECK-ERROR:                           ^
+// CHECK-ERROR: error: expected integer in range [1, 64]
+// CHECK-ERROR:         sri v0.2d, v1.2d, #65
+// CHECK-ERROR:                           ^
+
+//------------------------------------------------------------------------------
+// Vector shift left and insert by immediate
+//------------------------------------------------------------------------------
+         sli v0.8b, v1.8h, #3
+         sli v0.4h, v1.4s, #3
+         sli v0.2s, v1.2d, #3
+         sli v0.16b, v1.16b, #8
+         sli v0.8h, v1.8h, #16
+         sli v0.4s, v1.4s, #32
+         sli v0.2d, v1.2d, #64
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         sli v0.8b, v1.8h, #3
+// CHECK-ERROR:                       ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         sli v0.4h, v1.4s, #3
+// CHECK-ERROR:                       ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         sli v0.2s, v1.2d, #3
+// CHECK-ERROR:                       ^
+// CHECK-ERROR: error: expected integer in range [0, 7]
+// CHECK-ERROR:         sli v0.16b, v1.16b, #8
+// CHECK-ERROR:                             ^
+// CHECK-ERROR: error: expected integer in range [0, 15]
+// CHECK-ERROR:         sli v0.8h, v1.8h, #16
+// CHECK-ERROR:                           ^
+// CHECK-ERROR: error: expected integer in range [0, 31]
+// CHECK-ERROR:         sli v0.4s, v1.4s, #32
+// CHECK-ERROR:                           ^
+// CHECK-ERROR: error: expected integer in range [0, 63]
+// CHECK-ERROR:         sli v0.2d, v1.2d, #64
+// CHECK-ERROR:                           ^
+
+//------------------------------------------------------------------------------
+// Vector saturating shift left unsigned by immediate
+//------------------------------------------------------------------------------
+         sqshlu v0.8b, v1.8h, #3
+         sqshlu v0.4h, v1.4s, #3
+         sqshlu v0.2s, v1.2d, #3
+         sqshlu v0.16b, v1.16b, #8
+         sqshlu v0.8h, v1.8h, #16
+         sqshlu v0.4s, v1.4s, #32
+         sqshlu v0.2d, v1.2d, #64
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         sqshlu v0.8b, v1.8h, #3
+// CHECK-ERROR:                          ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         sqshlu v0.4h, v1.4s, #3
+// CHECK-ERROR:                          ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         sqshlu v0.2s, v1.2d, #3
+// CHECK-ERROR:                          ^
+// CHECK-ERROR: error: expected integer in range [0, 7]
+// CHECK-ERROR:         sqshlu v0.16b, v1.16b, #8
+// CHECK-ERROR:                                ^
+// CHECK-ERROR: error: expected integer in range [0, 15]
+// CHECK-ERROR:         sqshlu v0.8h, v1.8h, #16
+// CHECK-ERROR:                              ^
+// CHECK-ERROR: error: expected integer in range [0, 31]
+// CHECK-ERROR:         sqshlu v0.4s, v1.4s, #32
+// CHECK-ERROR:                              ^
+// CHECK-ERROR: error: expected integer in range [0, 63]
+// CHECK-ERROR:         sqshlu v0.2d, v1.2d, #64
+// CHECK-ERROR:                              ^
+
+//------------------------------------------------------------------------------
+// Vector saturating shift left by immediate
+//------------------------------------------------------------------------------
+         sqshl v0.8b, v1.8h, #3
+         sqshl v0.4h, v1.4s, #3
+         sqshl v0.2s, v1.2d, #3
+         sqshl v0.16b, v1.16b, #8
+         sqshl v0.8h, v1.8h, #16
+         sqshl v0.4s, v1.4s, #32
+         sqshl v0.2d, v1.2d, #64
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         sqshl v0.8b, v1.8h, #3
+// CHECK-ERROR:                         ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         sqshl v0.4h, v1.4s, #3
+// CHECK-ERROR:                         ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         sqshl v0.2s, v1.2d, #3
+// CHECK-ERROR:                         ^
+// CHECK-ERROR: error: expected integer in range [0, 7]
+// CHECK-ERROR:         sqshl v0.16b, v1.16b, #8
+// CHECK-ERROR:                               ^
+// CHECK-ERROR: error: expected integer in range [0, 15]
+// CHECK-ERROR:         sqshl v0.8h, v1.8h, #16
+// CHECK-ERROR:                             ^
+// CHECK-ERROR: error: expected integer in range [0, 31]
+// CHECK-ERROR:         sqshl v0.4s, v1.4s, #32
+// CHECK-ERROR:                             ^
+// CHECK-ERROR: error: expected integer in range [0, 63]
+// CHECK-ERROR:         sqshl v0.2d, v1.2d, #64
+// CHECK-ERROR:                             ^
+
+//------------------------------------------------------------------------------
+// Vector saturating shift left by immediate
+//------------------------------------------------------------------------------
+         uqshl v0.8b, v1.8h, #3
+         uqshl v0.4h, v1.4s, #3
+         uqshl v0.2s, v1.2d, #3
+         uqshl v0.16b, v1.16b, #8
+         uqshl v0.8h, v1.8h, #16
+         uqshl v0.4s, v1.4s, #32
+         uqshl v0.2d, v1.2d, #64
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         uqshl v0.8b, v1.8h, #3
+// CHECK-ERROR:                         ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         uqshl v0.4h, v1.4s, #3
+// CHECK-ERROR:                         ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         uqshl v0.2s, v1.2d, #3
+// CHECK-ERROR:                         ^
+// CHECK-ERROR: error: expected integer in range [0, 7]
+// CHECK-ERROR:         uqshl v0.16b, v1.16b, #8
+// CHECK-ERROR:                               ^
+// CHECK-ERROR: error: expected integer in range [0, 15]
+// CHECK-ERROR:         uqshl v0.8h, v1.8h, #16
+// CHECK-ERROR:                             ^
+// CHECK-ERROR: error: expected integer in range [0, 31]
+// CHECK-ERROR:         uqshl v0.4s, v1.4s, #32
+// CHECK-ERROR:                             ^
+// CHECK-ERROR: error: expected integer in range [0, 63]
+// CHECK-ERROR:         uqshl v0.2d, v1.2d, #64
+// CHECK-ERROR:                             ^
+
+//------------------------------------------------------------------------------
+// Vector shift right narrow by immediate
+//------------------------------------------------------------------------------
+         shrn v0.8b, v1.8b, #3
+         shrn v0.4h, v1.4h, #3
+         shrn v0.2s, v1.2s, #3
+         shrn2 v0.16b, v1.8h, #17
+         shrn2 v0.8h, v1.4s, #33
+         shrn2 v0.4s, v1.2d, #65
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         shrn v0.8b, v1.8b, #3
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         shrn v0.4h, v1.4h, #3
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         shrn v0.2s, v1.2s, #3
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: expected integer in range [1, 8]
+// CHECK-ERROR:         shrn2 v0.16b, v1.8h, #17
+// CHECK-ERROR:                              ^
+// CHECK-ERROR: error: expected integer in range [1, 16]
+// CHECK-ERROR:         shrn2 v0.8h, v1.4s, #33
+// CHECK-ERROR:                             ^
+// CHECK-ERROR: error: expected integer in range [1, 32]
+// CHECK-ERROR:         shrn2 v0.4s, v1.2d, #65
+// CHECK-ERROR:                             ^
+
+//------------------------------------------------------------------------------
+// Vector saturating shift right unsigned narrow by immediate
+//------------------------------------------------------------------------------
+         sqshrun v0.8b, v1.8b, #3
+         sqshrun v0.4h, v1.4h, #3
+         sqshrun v0.2s, v1.2s, #3
+         sqshrun2 v0.16b, v1.8h, #17
+         sqshrun2 v0.8h, v1.4s, #33
+         sqshrun2 v0.4s, v1.2d, #65
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         sqshrun v0.8b, v1.8b, #3
+// CHECK-ERROR:                           ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         sqshrun v0.4h, v1.4h, #3
+// CHECK-ERROR:                           ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         sqshrun v0.2s, v1.2s, #3
+// CHECK-ERROR:                           ^
+// CHECK-ERROR: error: expected integer in range [1, 8]
+// CHECK-ERROR:         sqshrun2 v0.16b, v1.8h, #17
+// CHECK-ERROR:                                 ^
+// CHECK-ERROR: error: expected integer in range [1, 16]
+// CHECK-ERROR:         sqshrun2 v0.8h, v1.4s, #33
+// CHECK-ERROR:                                ^
+// CHECK-ERROR: error: expected integer in range [1, 32]
+// CHECK-ERROR:         sqshrun2 v0.4s, v1.2d, #65
+// CHECK-ERROR:                                ^
+
+//------------------------------------------------------------------------------
+// Vector rounding shift right narrow by immediate
+//------------------------------------------------------------------------------
+         rshrn v0.8b, v1.8b, #3
+         rshrn v0.4h, v1.4h, #3
+         rshrn v0.2s, v1.2s, #3
+         rshrn2 v0.16b, v1.8h, #17
+         rshrn2 v0.8h, v1.4s, #33
+         rshrn2 v0.4s, v1.2d, #65
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         rshrn v0.8b, v1.8b, #3
+// CHECK-ERROR:                         ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         rshrn v0.4h, v1.4h, #3
+// CHECK-ERROR:                         ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         rshrn v0.2s, v1.2s, #3
+// CHECK-ERROR:                         ^
+// CHECK-ERROR: error: expected integer in range [1, 8]
+// CHECK-ERROR:         rshrn2 v0.16b, v1.8h, #17
+// CHECK-ERROR:                               ^
+// CHECK-ERROR: error: expected integer in range [1, 16]
+// CHECK-ERROR:         rshrn2 v0.8h, v1.4s, #33
+// CHECK-ERROR:                              ^
+// CHECK-ERROR: error: expected integer in range [1, 32]
+// CHECK-ERROR:         rshrn2 v0.4s, v1.2d, #65
+// CHECK-ERROR:                              ^
+
+//------------------------------------------------------------------------------
+// Vector saturating shift right rounded unsigned narrow by immediate
+//------------------------------------------------------------------------------
+         sqrshrun v0.8b, v1.8b, #3
+         sqrshrun v0.4h, v1.4h, #3
+         sqrshrun v0.2s, v1.2s, #3
+         sqrshrun2 v0.16b, v1.8h, #17
+         sqrshrun2 v0.8h, v1.4s, #33
+         sqrshrun2 v0.4s, v1.2d, #65
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         sqrshrun v0.8b, v1.8b, #3
+// CHECK-ERROR:                            ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         sqrshrun v0.4h, v1.4h, #3
+// CHECK-ERROR:                            ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         sqrshrun v0.2s, v1.2s, #3
+// CHECK-ERROR:                            ^
+// CHECK-ERROR: error: expected integer in range [1, 8]
+// CHECK-ERROR:         sqrshrun2 v0.16b, v1.8h, #17
+// CHECK-ERROR:                                  ^
+// CHECK-ERROR: error: expected integer in range [1, 16]
+// CHECK-ERROR:         sqrshrun2 v0.8h, v1.4s, #33
+// CHECK-ERROR:                                 ^
+// CHECK-ERROR: error: expected integer in range [1, 32]
+// CHECK-ERROR:         sqrshrun2 v0.4s, v1.2d, #65
+// CHECK-ERROR:                                 ^
+
+//------------------------------------------------------------------------------
+// Vector saturating shift right narrow by immediate
+//------------------------------------------------------------------------------
+         sqshrn v0.8b, v1.8b, #3
+         sqshrn v0.4h, v1.4h, #3
+         sqshrn v0.2s, v1.2s, #3
+         sqshrn2 v0.16b, v1.8h, #17
+         sqshrn2 v0.8h, v1.4s, #33
+         sqshrn2 v0.4s, v1.2d, #65
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         sqshrn v0.8b, v1.8b, #3
+// CHECK-ERROR:                          ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         sqshrn v0.4h, v1.4h, #3
+// CHECK-ERROR:                          ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         sqshrn v0.2s, v1.2s, #3
+// CHECK-ERROR:                          ^
+// CHECK-ERROR: error: expected integer in range [1, 8]
+// CHECK-ERROR:         sqshrn2 v0.16b, v1.8h, #17
+// CHECK-ERROR:                                ^
+// CHECK-ERROR: error: expected integer in range [1, 16]
+// CHECK-ERROR:         sqshrn2 v0.8h, v1.4s, #33
+// CHECK-ERROR:                               ^
+// CHECK-ERROR: error: expected integer in range [1, 32]
+// CHECK-ERROR:         sqshrn2 v0.4s, v1.2d, #65
+// CHECK-ERROR:                               ^
+
+//------------------------------------------------------------------------------
+// Vector saturating shift right narrow by immediate
+//------------------------------------------------------------------------------
+         uqshrn v0.8b, v1.8b, #3
+         uqshrn v0.4h, v1.4h, #3
+         uqshrn v0.2s, v1.2s, #3
+         uqshrn2 v0.16b, v1.8h, #17
+         uqshrn2 v0.8h, v1.4s, #33
+         uqshrn2 v0.4s, v1.2d, #65
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         uqshrn v0.8b, v1.8b, #3
+// CHECK-ERROR:                          ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         uqshrn v0.4h, v1.4h, #3
+// CHECK-ERROR:                          ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         uqshrn v0.2s, v1.2s, #3
+// CHECK-ERROR:                          ^
+// CHECK-ERROR: error: expected integer in range [1, 8]
+// CHECK-ERROR:         uqshrn2 v0.16b, v1.8h, #17
+// CHECK-ERROR:                                ^
+// CHECK-ERROR: error: expected integer in range [1, 16]
+// CHECK-ERROR:         uqshrn2 v0.8h, v1.4s, #33
+// CHECK-ERROR:                               ^
+// CHECK-ERROR: error: expected integer in range [1, 32]
+// CHECK-ERROR:         uqshrn2 v0.4s, v1.2d, #65
+// CHECK-ERROR:                               ^
+
+//------------------------------------------------------------------------------
+// Vector saturating shift right rounded narrow by immediate
+//------------------------------------------------------------------------------
+         sqrshrn v0.8b, v1.8b, #3
+         sqrshrn v0.4h, v1.4h, #3
+         sqrshrn v0.2s, v1.2s, #3
+         sqrshrn2 v0.16b, v1.8h, #17
+         sqrshrn2 v0.8h, v1.4s, #33
+         sqrshrn2 v0.4s, v1.2d, #65
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         sqrshrn v0.8b, v1.8b, #3
+// CHECK-ERROR:                           ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         sqrshrn v0.4h, v1.4h, #3
+// CHECK-ERROR:                           ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         sqrshrn v0.2s, v1.2s, #3
+// CHECK-ERROR:                           ^
+// CHECK-ERROR: error: expected integer in range [1, 8]
+// CHECK-ERROR:         sqrshrn2 v0.16b, v1.8h, #17
+// CHECK-ERROR:                                 ^
+// CHECK-ERROR: error: expected integer in range [1, 16]
+// CHECK-ERROR:         sqrshrn2 v0.8h, v1.4s, #33
+// CHECK-ERROR:                                ^
+// CHECK-ERROR: error: expected integer in range [1, 32]
+// CHECK-ERROR:         sqrshrn2 v0.4s, v1.2d, #65
+// CHECK-ERROR:                                ^
+
+//------------------------------------------------------------------------------
+// Vector saturating shift right rounded narrow by immediate
+//------------------------------------------------------------------------------
+         uqrshrn v0.8b, v1.8b, #3
+         uqrshrn v0.4h, v1.4h, #3
+         uqrshrn v0.2s, v1.2s, #3
+         uqrshrn2 v0.16b, v1.8h, #17
+         uqrshrn2 v0.8h, v1.4s, #33
+         uqrshrn2 v0.4s, v1.2d, #65
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         uqrshrn v0.8b, v1.8b, #3
+// CHECK-ERROR:                           ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         uqrshrn v0.4h, v1.4h, #3
+// CHECK-ERROR:                           ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         uqrshrn v0.2s, v1.2s, #3
+// CHECK-ERROR:                           ^
+// CHECK-ERROR: error: expected integer in range [1, 8]
+// CHECK-ERROR:         uqrshrn2 v0.16b, v1.8h, #17
+// CHECK-ERROR:                                 ^
+// CHECK-ERROR: error: expected integer in range [1, 16]
+// CHECK-ERROR:         uqrshrn2 v0.8h, v1.4s, #33
+// CHECK-ERROR:                                ^
+// CHECK-ERROR: error: expected integer in range [1, 32]
+// CHECK-ERROR:         uqrshrn2 v0.4s, v1.2d, #65
+// CHECK-ERROR:                                ^
+
+//------------------------------------------------------------------------------
+// Fixed-point convert to floating-point
+//------------------------------------------------------------------------------
+         scvtf v0.2s, v1.2d, #3
+         scvtf v0.4s, v1.4h, #3
+         scvtf v0.2d, v1.2s, #3
+         ucvtf v0.2s, v1.2s, #33
+         ucvtf v0.4s, v1.4s, #33
+         ucvtf v0.2d, v1.2d, #65
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         scvtf v0.2s, v1.2d, #3
+// CHECK-ERROR:                         ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         scvtf v0.4s, v1.4h, #3
+// CHECK-ERROR:                         ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         scvtf v0.2d, v1.2s, #3
+// CHECK-ERROR:                         ^
+// CHECK-ERROR: error: expected integer in range [1, 32]
+// CHECK-ERROR:         ucvtf v0.2s, v1.2s, #33
+// CHECK-ERROR:                             ^
+// CHECK-ERROR: error: expected integer in range [1, 32]
+// CHECK-ERROR:         ucvtf v0.4s, v1.4s, #33
+// CHECK-ERROR:                             ^
+// CHECK-ERROR: error: expected integer in range [1, 64]
+// CHECK-ERROR:         ucvtf v0.2d, v1.2d, #65
+// CHECK-ERROR:                             ^
+
+//------------------------------------------------------------------------------
+// Floating-point convert to fixed-point
+//------------------------------------------------------------------------------
+         fcvtzs v0.2s, v1.2d, #3
+         fcvtzs v0.4s, v1.4h, #3
+         fcvtzs v0.2d, v1.2s, #3
+         fcvtzu v0.2s, v1.2s, #33
+         fcvtzu v0.4s, v1.4s, #33
+         fcvtzu v0.2d, v1.2d, #65
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fcvtzs v0.2s, v1.2d, #3
+// CHECK-ERROR:                          ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fcvtzs v0.4s, v1.4h, #3
+// CHECK-ERROR:                          ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         fcvtzs v0.2d, v1.2s, #3
+// CHECK-ERROR:                          ^
+// CHECK-ERROR: error: expected integer in range [1, 32]
+// CHECK-ERROR:         fcvtzu v0.2s, v1.2s, #33
+// CHECK-ERROR:                              ^
+// CHECK-ERROR: error: expected integer in range [1, 32]
+// CHECK-ERROR:         fcvtzu v0.4s, v1.4s, #33
+// CHECK-ERROR:                              ^
+// CHECK-ERROR: error: expected integer in range [1, 64]
+// CHECK-ERROR:         fcvtzu v0.2d, v1.2d, #65
+// CHECK-ERROR:                              ^
 

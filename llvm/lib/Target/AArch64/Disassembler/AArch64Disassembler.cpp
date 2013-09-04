@@ -113,6 +113,18 @@ static DecodeStatus DecodeFPZeroOperand(llvm::MCInst &Inst,
                                         uint64_t Address,
                                         const void *Decoder);
 
+static DecodeStatus DecodeShiftRightImm8(MCInst &Inst, unsigned Val,
+                                         uint64_t Address, const void *Decoder);
+static DecodeStatus DecodeShiftRightImm16(MCInst &Inst, unsigned Val,
+                                          uint64_t Address,
+                                          const void *Decoder);
+static DecodeStatus DecodeShiftRightImm32(MCInst &Inst, unsigned Val,
+                                          uint64_t Address,
+                                          const void *Decoder);
+static DecodeStatus DecodeShiftRightImm64(MCInst &Inst, unsigned Val,
+                                          uint64_t Address,
+                                          const void *Decoder);
+
 template<int RegWidth>
 static DecodeStatus DecodeMoveWideImmOperand(llvm::MCInst &Inst,
                                              unsigned FullImm,
@@ -413,7 +425,33 @@ static DecodeStatus DecodeFPZeroOperand(llvm::MCInst &Inst,
   return MCDisassembler::Success;
 }
 
+static DecodeStatus DecodeShiftRightImm8(MCInst &Inst, unsigned Val,
+                                         uint64_t Address,
+                                         const void *Decoder) {
+  Inst.addOperand(MCOperand::CreateImm(8 - Val));
+  return MCDisassembler::Success;
+}
 
+static DecodeStatus DecodeShiftRightImm16(MCInst &Inst, unsigned Val,
+                                          uint64_t Address,
+                                          const void *Decoder) {
+  Inst.addOperand(MCOperand::CreateImm(16 - Val));
+  return MCDisassembler::Success;
+}
+
+static DecodeStatus DecodeShiftRightImm32(MCInst &Inst, unsigned Val,
+                                          uint64_t Address,
+                                          const void *Decoder) {
+  Inst.addOperand(MCOperand::CreateImm(32 - Val));
+  return MCDisassembler::Success;
+}
+
+static DecodeStatus DecodeShiftRightImm64(MCInst &Inst, unsigned Val,
+                                          uint64_t Address,
+                                          const void *Decoder) {
+  Inst.addOperand(MCOperand::CreateImm(64 - Val));
+  return MCDisassembler::Success;
+}
 
 template<int RegWidth>
 static DecodeStatus DecodeMoveWideImmOperand(llvm::MCInst &Inst,

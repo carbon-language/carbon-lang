@@ -38,4 +38,32 @@ def int_aarch64_neon_vpminnm : Neon_2Arg_Intrinsic;
 
 // Vector Multiply Extended (Floating Point)
 def int_aarch64_neon_vmulx : Neon_2Arg_Intrinsic;
+
+class Neon_N2V_Intrinsic
+  : Intrinsic<[llvm_anyvector_ty], [LLVMMatchType<0>, llvm_i32_ty],
+              [IntrNoMem]>;
+class Neon_N3V_Intrinsic
+  : Intrinsic<[llvm_anyvector_ty],
+              [LLVMMatchType<0>, LLVMMatchType<0>, llvm_i32_ty],
+              [IntrNoMem]>;
+class Neon_N2V_Narrow_Intrinsic
+  : Intrinsic<[llvm_anyvector_ty],
+              [LLVMExtendedElementVectorType<0>, llvm_i32_ty],
+              [IntrNoMem]>;
+
+// Vector rounding shift right by immediate (Signed)
+def int_aarch64_neon_vsrshr : Neon_N2V_Intrinsic;
+def int_aarch64_neon_vurshr : Neon_N2V_Intrinsic;
+def int_aarch64_neon_vsqshlu : Neon_N2V_Intrinsic;
+
+def int_aarch64_neon_vsri : Neon_N3V_Intrinsic;
+def int_aarch64_neon_vsli : Neon_N3V_Intrinsic;
+
+def int_aarch64_neon_vsqshrun : Neon_N2V_Narrow_Intrinsic;
+def int_aarch64_neon_vrshrn : Neon_N2V_Narrow_Intrinsic;
+def int_aarch64_neon_vsqrshrun : Neon_N2V_Narrow_Intrinsic;
+def int_aarch64_neon_vsqshrn : Neon_N2V_Narrow_Intrinsic;
+def int_aarch64_neon_vuqshrn : Neon_N2V_Narrow_Intrinsic;
+def int_aarch64_neon_vsqrshrn : Neon_N2V_Narrow_Intrinsic;
+def int_aarch64_neon_vuqrshrn : Neon_N2V_Narrow_Intrinsic;
 }

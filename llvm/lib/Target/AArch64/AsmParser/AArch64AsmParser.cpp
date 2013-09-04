@@ -664,6 +664,25 @@ public:
     return !ShiftExtend.ImplicitAmount && ShiftExtend.Amount <= 4;
   }
 
+  // if 0 < value <= w, return true
+  bool isShrFixedWidth(int w) const {
+    if (!isImm())
+      return false;
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    if (!CE)
+      return false;
+    int64_t Value = CE->getValue();
+    return Value > 0 && Value <= w;
+  }
+
+  bool isShrImm8() const { return isShrFixedWidth(8); }
+
+  bool isShrImm16() const { return isShrFixedWidth(16); }
+
+  bool isShrImm32() const { return isShrFixedWidth(32); }
+
+  bool isShrImm64() const { return isShrFixedWidth(64); }
+
   bool isNeonMovImmShiftLSL() const {
     if (!isShiftOrExtend())
       return false;
@@ -2240,6 +2259,18 @@ bool AArch64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   case Match_Width64:
     return Error(((AArch64Operand*)Operands[ErrorInfo])->getStartLoc(),
                  "expected integer in range [<lsb>, 63]");
+  case Match_ShrImm8:
+    return Error(((AArch64Operand *)Operands[ErrorInfo])->getStartLoc(),
+                 "expected integer in range [1, 8]");
+  case Match_ShrImm16:
+    return Error(((AArch64Operand *)Operands[ErrorInfo])->getStartLoc(),
+                 "expected integer in range [1, 16]");
+  case Match_ShrImm32:
+    return Error(((AArch64Operand *)Operands[ErrorInfo])->getStartLoc(),
+                 "expected integer in range [1, 32]");
+  case Match_ShrImm64:
+    return Error(((AArch64Operand *)Operands[ErrorInfo])->getStartLoc(),
+                 "expected integer in range [1, 64]");
   }
 
   llvm_unreachable("Implement any new match types added!");

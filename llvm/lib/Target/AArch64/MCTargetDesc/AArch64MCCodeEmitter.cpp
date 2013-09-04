@@ -59,6 +59,14 @@ public:
   unsigned getBitfield64LSLOpValue(const MCInst &MI, unsigned OpIdx,
                                    SmallVectorImpl<MCFixup> &Fixups) const;
 
+  unsigned getShiftRightImm8(const MCInst &MI, unsigned Op,
+                             SmallVectorImpl<MCFixup> &Fixups) const;
+  unsigned getShiftRightImm16(const MCInst &MI, unsigned Op,
+                              SmallVectorImpl<MCFixup> &Fixups) const;
+  unsigned getShiftRightImm32(const MCInst &MI, unsigned Op,
+                              SmallVectorImpl<MCFixup> &Fixups) const;
+  unsigned getShiftRightImm64(const MCInst &MI, unsigned Op,
+                              SmallVectorImpl<MCFixup> &Fixups) const;
 
   // Labels are handled mostly the same way: a symbol is needed, and
   // just gets some fixup attached.
@@ -310,6 +318,25 @@ AArch64MCCodeEmitter::getBitfield64LSLOpValue(const MCInst &MI, unsigned OpIdx,
   return ((64 - MO.getImm()) & 0x3f) | (63 - MO.getImm()) << 6;
 }
 
+unsigned AArch64MCCodeEmitter::getShiftRightImm8(
+    const MCInst &MI, unsigned Op, SmallVectorImpl<MCFixup> &Fixups) const {
+  return 8 - MI.getOperand(Op).getImm();
+}
+
+unsigned AArch64MCCodeEmitter::getShiftRightImm16(
+    const MCInst &MI, unsigned Op, SmallVectorImpl<MCFixup> &Fixups) const {
+  return 16 - MI.getOperand(Op).getImm();
+}
+
+unsigned AArch64MCCodeEmitter::getShiftRightImm32(
+    const MCInst &MI, unsigned Op, SmallVectorImpl<MCFixup> &Fixups) const {
+  return 32 - MI.getOperand(Op).getImm();
+}
+
+unsigned AArch64MCCodeEmitter::getShiftRightImm64(
+    const MCInst &MI, unsigned Op, SmallVectorImpl<MCFixup> &Fixups) const {
+  return 64 - MI.getOperand(Op).getImm();
+}
 
 template<AArch64::Fixups fixupDesired> unsigned
 AArch64MCCodeEmitter::getLabelOpValue(const MCInst &MI,

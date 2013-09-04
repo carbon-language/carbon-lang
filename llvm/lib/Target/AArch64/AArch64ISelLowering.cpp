@@ -77,7 +77,10 @@ AArch64TargetLowering::AArch64TargetLowering(AArch64TargetMachine &TM)
 
   setTargetDAGCombine(ISD::AND);
   setTargetDAGCombine(ISD::SRA);
+  setTargetDAGCombine(ISD::SRL);
   setTargetDAGCombine(ISD::SHL);
+
+  setTargetDAGCombine(ISD::INTRINSIC_WO_CHAIN);
 
   // AArch64 does not have i1 loads, or much of anything for i1 really.
   setLoadExtAction(ISD::SEXTLOAD, MVT::i1, Promote);
@@ -282,6 +285,8 @@ AArch64TargetLowering::AArch64TargetLowering(AArch64TargetMachine &TM)
     setOperationAction(ISD::BUILD_VECTOR, MVT::v2f32, Custom);
     setOperationAction(ISD::BUILD_VECTOR, MVT::v4f32, Custom);
     setOperationAction(ISD::BUILD_VECTOR, MVT::v2f64, Custom);
+
+    setOperationAction(ISD::CONCAT_VECTORS, MVT::v2i64, Legal);
 
     setOperationAction(ISD::SETCC, MVT::v8i8, Custom);
     setOperationAction(ISD::SETCC, MVT::v16i8, Custom);
@@ -834,6 +839,12 @@ const char *AArch64TargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "AArch64ISD::NEON_CMPZ";
   case AArch64ISD::NEON_TST:
     return "AArch64ISD::NEON_TST";
+  case AArch64ISD::NEON_DUPIMM:
+    return "AArch64ISD::NEON_DUPIMM";
+  case AArch64ISD::NEON_QSHLs:
+    return "AArch64ISD::NEON_QSHLs";
+  case AArch64ISD::NEON_QSHLu:
+    return "AArch64ISD::NEON_QSHLu";
   default:
     return NULL;
   }
@@ -3257,7 +3268,7 @@ static bool getVShiftImm(SDValue Op, unsigned ElementBits, int64_t &Cnt) {
 
 /// Check if this is a valid build_vector for the immediate operand of
 /// a vector shift left operation.  That value must be in the range:
-/// 0 <= Value < ElementBits for a left shift
+/// 0 <= Value < ElementBits
 static bool isVShiftLImm(SDValue Op, EVT VT, int64_t &Cnt) {
   assert(VT.isVector() && "vector shift count is not a vector type");
   unsigned ElementBits = VT.getVectorElementType().getSizeInBits();
@@ -3266,10 +3277,25 @@ static bool isVShiftLImm(SDValue Op, EVT VT, int64_t &Cnt) {
   return (Cnt >= 0 && Cnt < ElementBits);
 }
 
-static SDValue PerformSHLCombine(SDNode *N, TargetLowering::DAGCombinerInfo &DCI,
+/// Check if this is a valid build_vector for the immediate operand of a
+/// vector shift right operation. The value must be in the range:
+///   1 <= Value <= ElementBits
+static bool isVShiftRImm(SDValue Op, EVT VT, int64_t &Cnt) {
+  assert(VT.isVector() && "vector shift count is not a vector type");
+  unsigned ElementBits = VT.getVectorElementType().getSizeInBits();
+  if (!getVShiftImm(Op, ElementBits, Cnt))
+    return false;
+  return (Cnt >= 1 && Cnt <= ElementBits);
+}
+
+/// Checks for immediate versions of vector shifts and lowers them.
+static SDValue PerformShiftCombine(SDNode *N,
+                                   TargetLowering::DAGCombinerInfo &DCI,
                                    const AArch64Subtarget *ST) {
   SelectionDAG &DAG = DCI.DAG;
   EVT VT = N->getValueType(0);
+  if (N->getOpcode() == ISD::SRA && (VT == MVT::i32 || VT == MVT::i64))
+    return PerformSRACombine(N, DCI);
 
   // Nothing to be done for scalar shifts.
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
@@ -3278,10 +3304,54 @@ static SDValue PerformSHLCombine(SDNode *N, TargetLowering::DAGCombinerInfo &DCI
 
   assert(ST->hasNEON() && "unexpected vector shift");
   int64_t Cnt;
-  if (isVShiftLImm(N->getOperand(1), VT, Cnt)) {
-    SDValue RHS = DAG.getNode(AArch64ISD::NEON_DUPIMM, SDLoc(N->getOperand(0)),
-                              VT, DAG.getConstant(Cnt, MVT::i32));
-    return DAG.getNode(ISD::SHL, SDLoc(N), VT, N->getOperand(0), RHS);
+
+  switch (N->getOpcode()) {
+  default:
+    llvm_unreachable("unexpected shift opcode");
+
+  case ISD::SHL:
+    if (isVShiftLImm(N->getOperand(1), VT, Cnt)) {
+      SDValue RHS =
+          DAG.getNode(AArch64ISD::NEON_DUPIMM, SDLoc(N->getOperand(1)), VT,
+                      DAG.getConstant(Cnt, MVT::i32));
+      return DAG.getNode(ISD::SHL, SDLoc(N), VT, N->getOperand(0), RHS);
+    }
+    break;
+
+  case ISD::SRA:
+  case ISD::SRL:
+    if (isVShiftRImm(N->getOperand(1), VT, Cnt)) {
+      SDValue RHS =
+          DAG.getNode(AArch64ISD::NEON_DUPIMM, SDLoc(N->getOperand(1)), VT,
+                      DAG.getConstant(Cnt, MVT::i32));
+      return DAG.getNode(N->getOpcode(), SDLoc(N), VT, N->getOperand(0), RHS);
+    }
+    break;
+  }
+
+  return SDValue();
+}
+
+/// ARM-specific DAG combining for intrinsics.
+static SDValue PerformIntrinsicCombine(SDNode *N, SelectionDAG &DAG) {
+  unsigned IntNo = cast<ConstantSDNode>(N->getOperand(0))->getZExtValue();
+
+  switch (IntNo) {
+  default:
+    // Don't do anything for most intrinsics.
+    break;
+
+  case Intrinsic::arm_neon_vqshifts:
+  case Intrinsic::arm_neon_vqshiftu:
+    EVT VT = N->getOperand(1).getValueType();
+    int64_t Cnt;
+    if (!isVShiftLImm(N->getOperand(2), VT, Cnt))
+      break;
+    unsigned VShiftOpc = (IntNo == Intrinsic::arm_neon_vqshifts)
+                             ? AArch64ISD::NEON_QSHLs
+                             : AArch64ISD::NEON_QSHLu;
+    return DAG.getNode(VShiftOpc, SDLoc(N), N->getValueType(0),
+                       N->getOperand(1), DAG.getConstant(Cnt, MVT::i32));
   }
 
   return SDValue();
@@ -3294,8 +3364,12 @@ AArch64TargetLowering::PerformDAGCombine(SDNode *N,
   default: break;
   case ISD::AND: return PerformANDCombine(N, DCI);
   case ISD::OR: return PerformORCombine(N, DCI, getSubtarget());
-  case ISD::SRA: return PerformSRACombine(N, DCI);
-  case ISD::SHL: return PerformSHLCombine(N, DCI, getSubtarget());
+  case ISD::SHL:
+  case ISD::SRA:
+  case ISD::SRL:
+    return PerformShiftCombine(N, DCI, getSubtarget());
+  case ISD::INTRINSIC_WO_CHAIN:
+    return PerformIntrinsicCombine(N, DCI.DAG);
   }
   return SDValue();
 }
