@@ -76,3 +76,23 @@ entry:
    %ret = select i1 %cond, i32 %a, i32 %b
    ret i32 %ret
 }
+
+; HARD-LABEL: f128_compare2
+; HARD:       fcmpq
+; HARD:       fb{{ule|g}}
+
+; SOFT-LABEL: f128_compare2
+; SOFT:       _Q_cmp
+; SOFT:       cmp
+
+define i32 @f128_compare2() {
+entry:
+  %0 = fcmp ogt fp128 undef, 0xL00000000000000000000000000000000
+  br i1 %0, label %"5", label %"7"
+
+"5":                                              ; preds = %entry
+  ret i32 0
+
+"7":                                              ; preds = %entry
+  ret i32 1
+}

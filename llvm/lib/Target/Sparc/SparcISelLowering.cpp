@@ -1816,7 +1816,7 @@ SparcTargetLowering::LowerF128Compare(SDValue LHS, SDValue RHS,
     return DAG.getNode(SPISD::CMPICC, DL, MVT::Glue, Result, RHS);
   }
   case SPCC::FCC_ULE: {
-    SDValue RHS = DAG.getTargetConstant(2, LHS.getValueType());
+    SDValue RHS = DAG.getTargetConstant(2, Result.getValueType());
     SPCC = SPCC::ICC_NE;
     return DAG.getNode(SPISD::CMPICC, DL, MVT::Glue, Result, RHS);
   }
