@@ -99,6 +99,27 @@ void InternalizePass::LoadFile(const char *Filename) {
   }
 }
 
+static bool shouldInternalize(const GlobalValue &GV,
+                              const std::set<std::string> &ExternalNames) {
+  // Function must be defined here
+  if (GV.isDeclaration())
+    return false;
+
+  // Available externally is really just a "declaration with a body".
+  if (GV.hasAvailableExternallyLinkage())
+    return false;
+
+  // Already has internal linkage
+  if (GV.hasLocalLinkage())
+    return false;
+
+  // Marked to keep external?
+  if (ExternalNames.count(GV.getName()))
+    return false;
+
+  return true;
+}
+
 bool InternalizePass::runOnModule(Module &M) {
   CallGraph *CG = getAnalysisIfAvailable<CallGraph>();
   CallGraphNode *ExternalNode = CG ? CG->getExternalCallingNode() : 0;
@@ -124,22 +145,20 @@ bool InternalizePass::runOnModule(Module &M) {
 
   // Mark all functions not in the api as internal.
   // FIXME: maybe use private linkage?
-  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-    if (!I->isDeclaration() &&         // Function must be defined here
-        // Available externally is really just a "declaration with a body".
-        !I->hasAvailableExternallyLinkage() &&
-        !I->hasLocalLinkage() &&  // Can't already have internal linkage
-        !ExternalNames.count(I->getName())) {// Not marked to keep external?
-      I->setLinkage(GlobalValue::InternalLinkage);
+  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
+    if (!shouldInternalize(*I, ExternalNames))
+      continue;
 
-      if (ExternalNode)
-        // Remove a callgraph edge from the external node to this function.
-        ExternalNode->removeOneAbstractEdgeTo((*CG)[I]);
+    I->setLinkage(GlobalValue::InternalLinkage);
 
-      Changed = true;
-      ++NumFunctions;
-      DEBUG(dbgs() << "Internalizing func " << I->getName() << "\n");
-    }
+    if (ExternalNode)
+      // Remove a callgraph edge from the external node to this function.
+      ExternalNode->removeOneAbstractEdgeTo((*CG)[I]);
+
+    Changed = true;
+    ++NumFunctions;
+    DEBUG(dbgs() << "Internalizing func " << I->getName() << "\n");
+  }
 
   // Never internalize the llvm.used symbol.  It is used to implement
   // attribute((used)).
@@ -163,29 +182,27 @@ bool InternalizePass::runOnModule(Module &M) {
   // internal as well.
   // FIXME: maybe use private linkage?
   for (Module::global_iterator I = M.global_begin(), E = M.global_end();
-       I != E; ++I)
-    if (!I->isDeclaration() && !I->hasLocalLinkage() &&
-        // Available externally is really just a "declaration with a body".
-        !I->hasAvailableExternallyLinkage() &&
-        !ExternalNames.count(I->getName())) {
-      I->setLinkage(GlobalValue::InternalLinkage);
-      Changed = true;
-      ++NumGlobals;
-      DEBUG(dbgs() << "Internalized gvar " << I->getName() << "\n");
-    }
+       I != E; ++I) {
+    if (!shouldInternalize(*I, ExternalNames))
+      continue;
+
+    I->setLinkage(GlobalValue::InternalLinkage);
+    Changed = true;
+    ++NumGlobals;
+    DEBUG(dbgs() << "Internalized gvar " << I->getName() << "\n");
+  }
 
   // Mark all aliases that are not in the api as internal as well.
   for (Module::alias_iterator I = M.alias_begin(), E = M.alias_end();
-       I != E; ++I)
-    if (!I->isDeclaration() && !I->hasInternalLinkage() &&
-        // Available externally is really just a "declaration with a body".
-        !I->hasAvailableExternallyLinkage() &&
-        !ExternalNames.count(I->getName())) {
-      I->setLinkage(GlobalValue::InternalLinkage);
-      Changed = true;
-      ++NumAliases;
-      DEBUG(dbgs() << "Internalized alias " << I->getName() << "\n");
-    }
+       I != E; ++I) {
+    if (!shouldInternalize(*I, ExternalNames))
+      continue;
+
+    I->setLinkage(GlobalValue::InternalLinkage);
+    Changed = true;
+    ++NumAliases;
+    DEBUG(dbgs() << "Internalized alias " << I->getName() << "\n");
+  }
 
   return Changed;
 }
