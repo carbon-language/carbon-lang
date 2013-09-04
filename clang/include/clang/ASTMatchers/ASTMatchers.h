@@ -1625,7 +1625,7 @@ internal::Matcher<T> findAll(const internal::Matcher<T> &Matcher) {
 /// Usable as: Any Matcher
 const internal::ArgumentAdaptingMatcherFunc<
     internal::HasParentMatcher, internal::TypeList<Decl, Stmt>,
-    internal::TypeList<Decl, Stmt> > hasParent = {};
+    internal::TypeList<Decl, Stmt> > LLVM_ATTRIBUTE_UNUSED hasParent = {};
 
 /// \brief Matches AST nodes that have an ancestor that matches the provided
 /// matcher.
@@ -1640,7 +1640,7 @@ const internal::ArgumentAdaptingMatcherFunc<
 /// Usable as: Any Matcher
 const internal::ArgumentAdaptingMatcherFunc<
     internal::HasAncestorMatcher, internal::TypeList<Decl, Stmt>,
-    internal::TypeList<Decl, Stmt> > hasAncestor = {};
+    internal::TypeList<Decl, Stmt> > LLVM_ATTRIBUTE_UNUSED hasAncestor = {};
 
 /// \brief Matches if the provided matcher does not match.
 ///
