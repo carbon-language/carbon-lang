@@ -6,9 +6,10 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-//  This file defines the TypeLoc interface and subclasses.
-//
+///
+/// \file
+/// \brief Defines the clang::TypeLoc interface and its subclasses.
+///
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CLANG_AST_TYPELOC_H
@@ -34,8 +35,8 @@ namespace clang {
 
 /// \brief Base wrapper for a particular "section" of type source info.
 ///
-/// A client should use the TypeLoc subclasses through cast/dyn_cast in order to
-/// get at the actual information.
+/// A client should use the TypeLoc subclasses through castAs()/getAs()
+/// in order to get at the actual information.
 class TypeLoc {
 protected:
   // The correctness of this relies on the property that, for Type *Ty,
@@ -46,6 +47,8 @@ protected:
 public:
   /// \brief Convert to the specified TypeLoc type, asserting that this TypeLoc
   /// is of the desired type.
+  ///
+  /// \pre T::isKind(*this)
   template<typename T>
   T castAs() const {
     assert(T::isKind(*this));
