@@ -335,7 +335,7 @@ public:
     return MCCFIInstruction(OpDefCfaOffset, L, 0, -Offset, "");
   }
 
-  /// \brief .cfi_adjust_cfa_offset Same as .cfi_def_cfa_offset, but \param
+  /// \brief .cfi_adjust_cfa_offset Same as .cfi_def_cfa_offset, but
   /// Offset is a relative value that is added/subtracted from the previous
   /// offset.
   static MCCFIInstruction createAdjustCfaOffset(MCSymbol *L, int Adjustment) {
@@ -357,8 +357,8 @@ public:
     return MCCFIInstruction(OpRelOffset, L, Register, Offset, "");
   }
 
-  /// \brief .cfi_register Previous value of \param Register1 is saved in
-  /// register \param Register2.
+  /// \brief .cfi_register Previous value of Register1 is saved in
+  /// register Register2.
   static MCCFIInstruction createRegister(MCSymbol *L, unsigned Register1,
                                          unsigned Register2) {
     return MCCFIInstruction(OpRegister, L, Register1, Register2);
