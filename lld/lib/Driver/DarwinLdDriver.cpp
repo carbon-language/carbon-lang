@@ -34,29 +34,29 @@
 
 namespace {
 
-// Create enum with OPT_xxx values for each option in DarwinOptions.td
+// Create enum with OPT_xxx values for each option in DarwinLdOptions.td
 enum DarwinOpt {
   OPT_INVALID = 0,
 #define OPTION(PREFIX, NAME, ID, KIND, GROUP, ALIAS, ALIASARGS, FLAGS, PARAM, \
                HELP, META) \
           OPT_##ID,
-#include "DarwinOptions.inc"
+#include "DarwinLdOptions.inc"
   LastOption
 #undef OPTION
 };
 
-// Create prefix string literals used in DarwinOptions.td
+// Create prefix string literals used in DarwinLdOptions.td
 #define PREFIX(NAME, VALUE) const char *const NAME[] = VALUE;
-#include "DarwinOptions.inc"
+#include "DarwinLdOptions.inc"
 #undef PREFIX
 
-// Create table mapping all options defined in DarwinOptions.td
+// Create table mapping all options defined in DarwinLdOptions.td
 static const llvm::opt::OptTable::Info infoTable[] = {
 #define OPTION(PREFIX, NAME, ID, KIND, GROUP, ALIAS, ALIASARGS, FLAGS, PARAM, \
                HELPTEXT, METAVAR)   \
   { PREFIX, NAME, HELPTEXT, METAVAR, OPT_##ID, llvm::opt::Option::KIND##Class, \
     PARAM, FLAGS, OPT_##GROUP, OPT_##ALIAS, ALIASARGS },
-#include "DarwinOptions.inc"
+#include "DarwinLdOptions.inc"
 #undef OPTION
 };
 
@@ -89,7 +89,7 @@ bool DarwinLdDriver::linkMachO(int argc, const char *argv[],
 
 bool DarwinLdDriver::parse(int argc, const char *argv[],
                            MachOLinkingContext &ctx, raw_ostream &diagnostics) {
-  // Parse command line options using DarwinOptions.td
+  // Parse command line options using DarwinLdOptions.td
   std::unique_ptr<llvm::opt::InputArgList> parsedArgs;
   DarwinLdOptTable table;
   unsigned missingIndex;
@@ -226,5 +226,3 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
 }
 
 } // namespace lld
-
-

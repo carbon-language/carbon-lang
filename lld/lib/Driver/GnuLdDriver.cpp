@@ -36,29 +36,29 @@ using namespace lld;
 
 namespace {
 
-// Create enum with OPT_xxx values for each option in LDOptions.td
-enum LDOpt {
+// Create enum with OPT_xxx values for each option in GnuLdOptions.td
+enum GnuLdOpt {
   OPT_INVALID = 0,
 #define OPTION(PREFIX, NAME, ID, KIND, GROUP, ALIAS, ALIASARGS, FLAGS, PARAM, \
                HELP, META) \
           OPT_##ID,
-#include "LDOptions.inc"
+#include "GnuLdOptions.inc"
   LastOption
 #undef OPTION
 };
 
-// Create prefix string literals used in LDOptions.td
+// Create prefix string literals used in GnuLdOptions.td
 #define PREFIX(NAME, VALUE) const char *const NAME[] = VALUE;
-#include "LDOptions.inc"
+#include "GnuLdOptions.inc"
 #undef PREFIX
 
-// Create table mapping all options defined in LDOptions.td
+// Create table mapping all options defined in GnuLdOptions.td
 static const llvm::opt::OptTable::Info infoTable[] = {
 #define OPTION(PREFIX, NAME, ID, KIND, GROUP, ALIAS, ALIASARGS, FLAGS, PARAM, \
                HELPTEXT, METAVAR)   \
   { PREFIX, NAME, HELPTEXT, METAVAR, OPT_##ID, llvm::opt::Option::KIND##Class, \
     PARAM, FLAGS, OPT_##GROUP, OPT_##ALIAS, ALIASARGS },
-#include "LDOptions.inc"
+#include "GnuLdOptions.inc"
 #undef OPTION
 };
 
@@ -118,7 +118,7 @@ bool GnuLdDriver::linkELF(int argc, const char *argv[],
 bool GnuLdDriver::parse(int argc, const char *argv[],
                         std::unique_ptr<ELFLinkingContext> &context,
                         raw_ostream &diagnostics) {
-  // Parse command line options using LDOptions.td
+  // Parse command line options using GnuLdOptions.td
   std::unique_ptr<llvm::opt::InputArgList> parsedArgs;
   GnuLdOptTable table;
   unsigned missingIndex;

@@ -1,9 +1,9 @@
 include "llvm/Option/OptParser.td"
 
-def target : Separate<["-"], "target">,     
+def target : Separate<["-"], "target">,
     MetaVarName<"<triple>">,
     HelpText<"Target triple to link for">;
-  
+
 def mllvm : Separate<["-"], "mllvm">,
     HelpText<"Options to pass to LLVM">;
 
@@ -28,10 +28,10 @@ multiclass dashEq<string opt1, string opt2, string help> {
 defm e : smDash<"e", "entry",
          "Name of entry point symbol">;
 
-def output : Separate<["-"], "o">, 
+def output : Separate<["-"], "o">,
     MetaVarName<"<path>">,
     HelpText<"Path to file to write output">;
-    
+
 def relocatable : Flag<["--"], "relocatable">;
 def relocatable_r : Flag<["-"], "r">, Alias<relocatable>;
 
@@ -57,10 +57,10 @@ def eh_frame_hdr : Flag<["--"], "eh-frame-hdr">;
 
 def help : Flag<["--"], "help">;
 
-def L : Joined<["-"], "L">, 
+def L : Joined<["-"], "L">,
     MetaVarName<"<dir>">,
     HelpText<"Directory to search for libraries">;
-def l : Joined<["-"], "l">, 
+def l : Joined<["-"], "l">,
     MetaVarName<"<libName>">,
     HelpText<"Root name of library to use">;
 def hash_style : Joined <["--"], "hash-style=">;
@@ -121,7 +121,7 @@ def sysroot : Joined<["--"], "sysroot=">,
     HelpText<"Set the system root">;
 
 // extensions
-def emit_yaml : Flag<["-"], "emit-yaml">, 
+def emit_yaml : Flag<["-"], "emit-yaml">,
     HelpText<"Write YAML instead of ELF">;
 def whole_archive: Flag<["--"], "whole-archive">,
     HelpText<"Force load of all members in a static library">;
