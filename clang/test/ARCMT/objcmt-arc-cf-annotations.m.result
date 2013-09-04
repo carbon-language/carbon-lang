@@ -175,15 +175,15 @@ NSFastEnumerationState;
 @interface NSNumber : NSValue
 - (char)charValue;
 - (id)initWithInt:(int)value;
-+ (NSNumber *)numberWithInt:(int)value;
++ (NSNumber *)numberWithInt:(int)value NS_RETURNS_NOT_RETAINED;
 @end
 @class NSString;
 @interface NSArray : NSObject <NSCopying, NSMutableCopying, NSCoding, NSFastEnumeration>
 - (NSUInteger)count;
 - (id)initWithObjects:(const id [])objects count:(NSUInteger)cnt;
-+ (instancetype)arrayWithObject:(id)anObject;
-+ (instancetype)arrayWithObjects:(const id [])objects count:(NSUInteger)cnt;
-+ (instancetype)arrayWithObjects:(id)firstObj, ... __attribute__((sentinel(0,1)));
++ (instancetype)arrayWithObject:(id)anObject NS_RETURNS_NOT_RETAINED;
++ (instancetype)arrayWithObjects:(const id [])objects count:(NSUInteger)cnt NS_RETURNS_NOT_RETAINED;
++ (instancetype)arrayWithObjects:(id)firstObj, ... __attribute__((sentinel(0,1))) NS_RETURNS_NOT_RETAINED;
 - (id)initWithObjects:(id)firstObj, ... __attribute__((sentinel(0,1)));
 - (id)initWithArray:(NSArray *)array;
 @end  @interface NSArray (NSArrayCreation)  + (instancetype)array;
@@ -196,19 +196,19 @@ typedef double NSTimeInterval;
 @end            typedef unsigned short unichar;
 @interface NSString : NSObject <NSCopying, NSMutableCopying, NSCoding>
 - (NSUInteger)length;
-- (NSString *)stringByAppendingString:(NSString *)aString;
+- (NSString *)stringByAppendingString:(NSString *)aString NS_RETURNS_NOT_RETAINED;
 - ( const char *)UTF8String;
 - (id)initWithUTF8String:(const char *)nullTerminatedCString;
-+ (instancetype)stringWithUTF8String:(const char *)nullTerminatedCString;
++ (instancetype)stringWithUTF8String:(const char *)nullTerminatedCString NS_RETURNS_NOT_RETAINED;
 @end        @class NSString, NSURL, NSError;
 @interface NSData : NSObject <NSCopying, NSMutableCopying, NSCoding>  - (NSUInteger)length;
-+ (instancetype)dataWithBytesNoCopy:(void *)bytes length:(NSUInteger)length;
-+ (instancetype)dataWithBytesNoCopy:(void *)bytes length:(NSUInteger)length freeWhenDone:(BOOL)b;
++ (instancetype)dataWithBytesNoCopy:(void *)bytes length:(NSUInteger)length NS_RETURNS_NOT_RETAINED;
++ (instancetype)dataWithBytesNoCopy:(void *)bytes length:(NSUInteger)length freeWhenDone:(BOOL)b NS_RETURNS_NOT_RETAINED;
 @end   @class NSLocale, NSDate, NSCalendar, NSTimeZone, NSError, NSArray, NSMutableDictionary;
 @interface NSDictionary : NSObject <NSCopying, NSMutableCopying, NSCoding, NSFastEnumeration>
 - (NSUInteger)count;
-+ (instancetype)dictionaryWithObjects:(NSArray *)objects forKeys:(NSArray *)keys;
-+ (instancetype)dictionaryWithObjects:(const id [])objects forKeys:(const id <NSCopying> [])keys count:(NSUInteger)cnt;
++ (instancetype)dictionaryWithObjects:(NSArray *)objects forKeys:(NSArray *)keys NS_RETURNS_NOT_RETAINED;
++ (instancetype)dictionaryWithObjects:(const id [])objects forKeys:(const id <NSCopying> [])keys count:(NSUInteger)cnt NS_RETURNS_NOT_RETAINED;
 @end
 @interface NSMutableDictionary : NSDictionary  - (void)removeObjectForKey:(id)aKey;
 - (void)setObject:(id)anObject forKey:(id)aKey;
@@ -350,7 +350,7 @@ CF_IMPLICIT_BRIDGING_DISABLED
 
 @interface NSMutableArray : NSObject
 - (void)addObject:(id)object;
-+ (instancetype)array;
++ (instancetype)array NS_RETURNS_NOT_RETAINED;
 @end
 
 // This is how NSMakeCollectable is declared in the OS X 10.8 headers.
@@ -895,8 +895,8 @@ int RDar6320065_test() {
 //===----------------------------------------------------------------------===//
 
 @interface RDar6859457 : NSObject {}
-- (NSString*) NoCopyString;
-- (NSString*) noCopyString;
+- (NSString*) NoCopyString NS_RETURNS_NOT_RETAINED;
+- (NSString*) noCopyString NS_RETURNS_NOT_RETAINED;
 @end
 
 @implementation RDar6859457 
@@ -1332,7 +1332,7 @@ void rdar7265711_b(RDar7265711 *x) {
 //===----------------------------------------------------------------------===//
 
 @interface NSCursor : NSObject
-+ (NSCursor *)dragCopyCursor;
++ (NSCursor *)dragCopyCursor NS_RETURNS_NOT_RETAINED;
 @end
 
 void rdar7306898(void) {
@@ -1368,7 +1368,7 @@ typedef NSString* MyStringTy;
 - (NSString*) returnsAnOwnedCFString  CF_RETURNS_RETAINED; // no-warning
 - (MyStringTy) returnsAnOwnedTypedString NS_RETURNS_RETAINED; // no-warning
 - (NSString*) newString NS_RETURNS_NOT_RETAINED; // no-warning
-- (NSString*) newString_auto NS_RETURNS_AUTORELEASED; // no-warning
+- (NSString*) newString_auto NS_RETURNS_AUTORELEASED NS_RETURNS_NOT_RETAINED; // no-warning
 - (NSString*) newStringNoAttr;
 - (int) returnsAnOwnedInt NS_RETURNS_RETAINED; // expected-warning{{'ns_returns_retained' attribute only applies to methods that return an Objective-C object}}
 - (id) pseudoInit NS_CONSUMES_SELF NS_RETURNS_RETAINED;
@@ -1443,7 +1443,7 @@ void testattr4() {
 - (CFDateRef) returnsCFRetainedAsCF CF_RETURNS_RETAINED;
 - (CFDateRef) newCFRetainedAsCF CF_RETURNS_NOT_RETAINED;
 - (CFDateRef) newCFRetainedAsCFNoAttr CF_RETURNS_RETAINED;
-- (NSDate*) alsoReturnsRetained;
+- (NSDate*) alsoReturnsRetained NS_RETURNS_NOT_RETAINED;
 - (CFDateRef) alsoReturnsRetainedAsCF CF_RETURNS_NOT_RETAINED;
 - (NSDate*) returnsNSRetained NS_RETURNS_RETAINED;
 @end
@@ -1579,7 +1579,7 @@ void r8272168() {
 // Test case for <rdar://problem/8356342>, which in the past triggered
 // a false positive.
 @interface RDar8356342
-- (NSDate*) rdar8356342:(NSDate *)inValue;
+- (NSDate*) rdar8356342:(NSDate *)inValue NS_RETURNS_NOT_RETAINED;
 @end
 
 @implementation RDar8356342
@@ -1806,7 +1806,7 @@ int IOClose(void *context);
 @end
 
 @interface radar10973977 : NSObject
-- (id<SInS>)inputS;
+- (id<SInS>)inputS NS_RETURNS_NOT_RETAINED;
 - (void)reader;
 @end
 
@@ -1825,7 +1825,7 @@ int IOClose(void *context);
 // Object escapes through a selector callback: radar://11398514
 extern id NSApp;
 @interface MySheetController
-- (id<SInS>)inputS;
+- (id<SInS>)inputS NS_RETURNS_NOT_RETAINED;
 - (void)showDoSomethingSheetAction:(id)action;
 - (void)sheetDidEnd:(NSWindow *)sheet returnCode:(int)returnCode contextInfo:(void *)contextInfo;
 @end
@@ -2090,6 +2090,6 @@ CFAttributedStringRef CFAttributedCreate(void *CFObj CF_CONSUMED) CF_RETURNS_RET
 @interface Action
 @property(nonatomic) SEL action;
 
-@property(nonatomic, unsafe_unretained) id target;
+@property(nonatomic, unsafe_unretained) id target NS_RETURNS_NOT_RETAINED;
 
 @end

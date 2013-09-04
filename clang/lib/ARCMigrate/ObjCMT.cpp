@@ -940,14 +940,23 @@ void ObjCMigrateASTConsumer::AddCFAnnotations(ASTContext &Ctx,
   if (!ResultAnnotated) {
     RetEffect Ret = CE.getReturnValue();
     const char *AnnotationString = 0;
-    if (Ret.getObjKind() == RetEffect::CF && Ret.isOwned()) {
-      if (Ctx.Idents.get("CF_RETURNS_RETAINED").hasMacroDefinition())
+    if (Ret.getObjKind() == RetEffect::CF) {
+      if (Ret.isOwned() &&
+          Ctx.Idents.get("CF_RETURNS_RETAINED").hasMacroDefinition())
         AnnotationString = " CF_RETURNS_RETAINED";
-    }
-    else if (Ret.getObjKind() == RetEffect::CF && Ret.notOwned()) {
-      if (Ctx.Idents.get("CF_RETURNS_NOT_RETAINED").hasMacroDefinition())
+      else if (Ret.notOwned() &&
+               Ctx.Idents.get("CF_RETURNS_NOT_RETAINED").hasMacroDefinition())
         AnnotationString = " CF_RETURNS_NOT_RETAINED";
     }
+    else if (Ret.getObjKind() == RetEffect::ObjC) {
+      if (Ret.isOwned() &&
+          Ctx.Idents.get("NS_RETURNS_RETAINED").hasMacroDefinition())
+        AnnotationString = " NS_RETURNS_RETAINED";
+      else if (Ret.notOwned() &&
+               Ctx.Idents.get("NS_RETURNS_NOT_RETAINED").hasMacroDefinition())
+        AnnotationString = " NS_RETURNS_NOT_RETAINED";
+    }
+    
     if (AnnotationString) {
       edit::Commit commit(*Editor);
       commit.insertAfterToken(FuncDecl->getLocEnd(), AnnotationString);
@@ -966,6 +975,12 @@ void ObjCMigrateASTConsumer::AddCFAnnotations(ASTContext &Ctx,
       commit.insertBefore(pd->getLocation(), "CF_CONSUMED ");
       Editor->commit(commit);
     }
+    else if (AE == DecRefMsg && !pd->getAttr<NSConsumedAttr>() &&
+             Ctx.Idents.get("NS_CONSUMED").hasMacroDefinition()) {
+      edit::Commit commit(*Editor);
+      commit.insertBefore(pd->getLocation(), "NS_CONSUMED ");
+      Editor->commit(commit);
+    }
   }
 }
 
@@ -979,7 +994,9 @@ ObjCMigrateASTConsumer::CF_BRIDGING_KIND
     
   CallEffects CE  = CallEffects::getEffect(FuncDecl);
   bool FuncIsReturnAnnotated = (FuncDecl->getAttr<CFReturnsRetainedAttr>() ||
-                                FuncDecl->getAttr<CFReturnsNotRetainedAttr>());
+                                FuncDecl->getAttr<CFReturnsNotRetainedAttr>() ||
+                                FuncDecl->getAttr<NSReturnsRetainedAttr>() ||
+                                FuncDecl->getAttr<NSReturnsNotRetainedAttr>());
   
   // Trivial case of when funciton is annotated and has no argument.
   if (FuncIsReturnAnnotated && FuncDecl->getNumParams() == 0)
@@ -1046,14 +1063,23 @@ void ObjCMigrateASTConsumer::AddCFAnnotations(ASTContext &Ctx,
   if (!ResultAnnotated) {
     RetEffect Ret = CE.getReturnValue();
     const char *AnnotationString = 0;
-    if (Ret.getObjKind() == RetEffect::CF && Ret.isOwned()) {
-      if (Ctx.Idents.get("CF_RETURNS_RETAINED").hasMacroDefinition())
+    if (Ret.getObjKind() == RetEffect::CF) {
+      if (Ret.isOwned() &&
+          Ctx.Idents.get("CF_RETURNS_RETAINED").hasMacroDefinition())
         AnnotationString = " CF_RETURNS_RETAINED";
-    }
-    else if (Ret.getObjKind() == RetEffect::CF && Ret.notOwned()) {
-      if (Ctx.Idents.get("CF_RETURNS_NOT_RETAINED").hasMacroDefinition())
+      else if (Ret.notOwned() &&
+               Ctx.Idents.get("CF_RETURNS_NOT_RETAINED").hasMacroDefinition())
         AnnotationString = " CF_RETURNS_NOT_RETAINED";
     }
+    else if (Ret.getObjKind() == RetEffect::ObjC) {
+      if (Ret.isOwned() &&
+          Ctx.Idents.get("NS_RETURNS_RETAINED").hasMacroDefinition())
+        AnnotationString = " NS_RETURNS_RETAINED";
+      else if (Ret.notOwned() &&
+               Ctx.Idents.get("NS_RETURNS_NOT_RETAINED").hasMacroDefinition())
+        AnnotationString = " NS_RETURNS_NOT_RETAINED";
+    }
+    
     if (AnnotationString) {
       edit::Commit commit(*Editor);
       commit.insertBefore(MethodDecl->getLocEnd(), AnnotationString);
@@ -1078,12 +1104,14 @@ void ObjCMigrateASTConsumer::AddCFAnnotations(ASTContext &Ctx,
 void ObjCMigrateASTConsumer::migrateAddMethodAnnotation(
                                             ASTContext &Ctx,
                                             const ObjCMethodDecl *MethodDecl) {
-  if (MethodDecl->hasBody())
+  if (MethodDecl->hasBody() || MethodDecl->isImplicit())
     return;
   
   CallEffects CE  = CallEffects::getEffect(MethodDecl);
   bool MethodIsReturnAnnotated = (MethodDecl->getAttr<CFReturnsRetainedAttr>() ||
-                                  MethodDecl->getAttr<CFReturnsNotRetainedAttr>());
+                                  MethodDecl->getAttr<CFReturnsNotRetainedAttr>() ||
+                                  MethodDecl->getAttr<NSReturnsRetainedAttr>() ||
+                                  MethodDecl->getAttr<NSReturnsNotRetainedAttr>());
   
   // Trivial case of when funciton is annotated and has no argument.
   if (MethodIsReturnAnnotated &&
@@ -1092,7 +1120,9 @@ void ObjCMigrateASTConsumer::migrateAddMethodAnnotation(
   
   if (!MethodIsReturnAnnotated) {
     RetEffect Ret = CE.getReturnValue();
-    if (Ret.getObjKind() == RetEffect::CF && (Ret.isOwned() || Ret.notOwned())) {
+    if ((Ret.getObjKind() == RetEffect::CF ||
+         Ret.getObjKind() == RetEffect::ObjC) &&
+        (Ret.isOwned() || Ret.notOwned())) {
       AddCFAnnotations(Ctx, CE, MethodDecl, false);
       return;
     }
