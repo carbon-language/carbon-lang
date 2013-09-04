@@ -1527,7 +1527,8 @@ AST_MATCHER_P(CXXRecordDecl, hasMethod, internal::Matcher<CXXMethodDecl>,
 /// ChildT must be an AST base type.
 ///
 /// Usable as: Any Matcher
-const internal::ArgumentAdaptingMatcherFunc<internal::HasMatcher> has = {};
+const internal::ArgumentAdaptingMatcherFunc<internal::HasMatcher>
+LLVM_ATTRIBUTE_UNUSED has = {};
 
 /// \brief Matches AST nodes that have descendant AST nodes that match the
 /// provided matcher.
@@ -1544,7 +1545,7 @@ const internal::ArgumentAdaptingMatcherFunc<internal::HasMatcher> has = {};
 ///
 /// Usable as: Any Matcher
 const internal::ArgumentAdaptingMatcherFunc<internal::HasDescendantMatcher>
-hasDescendant = {};
+LLVM_ATTRIBUTE_UNUSED hasDescendant = {};
 
 /// \brief Matches AST nodes that have child AST nodes that match the
 /// provided matcher.
@@ -1562,8 +1563,8 @@ hasDescendant = {};
 /// matches instead of only on the first one.
 ///
 /// Usable as: Any Matcher
-const internal::ArgumentAdaptingMatcherFunc<internal::ForEachMatcher> forEach =
-    {};
+const internal::ArgumentAdaptingMatcherFunc<internal::ForEachMatcher>
+LLVM_ATTRIBUTE_UNUSED forEach = {};
 
 /// \brief Matches AST nodes that have descendant AST nodes that match the
 /// provided matcher.
@@ -1590,7 +1591,7 @@ const internal::ArgumentAdaptingMatcherFunc<internal::ForEachMatcher> forEach =
 ///
 /// Usable as: Any Matcher
 const internal::ArgumentAdaptingMatcherFunc<internal::ForEachDescendantMatcher>
-forEachDescendant = {};
+LLVM_ATTRIBUTE_UNUSED forEachDescendant = {};
 
 /// \brief Matches if the node or any descendant matches.
 ///
