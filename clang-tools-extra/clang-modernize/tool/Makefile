@@ -15,7 +15,7 @@ TOOLNAME = clang-modernize
 # No plugins, optimize startup time.
 TOOL_NO_EXPORTS = 1
 
-SOURCES = Cpp11Migrate.cpp
+SOURCES = ClangModernize.cpp
 
 # FIXME: All these gross relative paths will go away once transforms are lib-ified.
 
