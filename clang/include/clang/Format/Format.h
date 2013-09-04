@@ -49,7 +49,7 @@ struct FormatStyle {
   /// \brief The penalty for each character outside of the column limit.
   unsigned PenaltyExcessCharacter;
 
-  /// \brief The penalty for breaking before the first "<<".
+  /// \brief The penalty for breaking before the first \c <<.
   unsigned PenaltyBreakFirstLessLess;
 
   /// \brief Set whether & and * bind to the type as opposed to the variable.
@@ -58,29 +58,38 @@ struct FormatStyle {
   /// \brief If \c true, analyze the formatted file for the most common binding.
   bool DerivePointerBinding;
 
-  /// \brief The extra indent or outdent of access modifiers (e.g.: public:).
+  /// \brief The extra indent or outdent of access modifiers, e.g. \c public:.
   int AccessModifierOffset;
 
+  /// \brief Supported language standards.
   enum LanguageStandard {
+    /// Use C++03-compatible syntax.
     LS_Cpp03,
+    /// Use features of C++11 (e.g. \c A<A<int>> instead of
+    /// <tt>A<A<int> ></tt>).
     LS_Cpp11,
+    /// Automatic detection based on the input.
     LS_Auto
   };
 
-  /// \brief Format compatible with this standard, e.g. use \c A<A<int> >
-  /// instead of \c A<A<int>> for LS_Cpp03.
+  /// \brief Format compatible with this standard, e.g. use
+  /// <tt>A<A<int> ></tt> instead of \c A<A<int>> for LS_Cpp03.
   LanguageStandard Standard;
 
   /// \brief Indent case labels one level from the switch statement.
   ///
-  /// When false, use the same indentation level as for the switch statement.
+  /// When \c false, use the same indentation level as for the switch statement.
   /// Switch statement body is always indented one level more than case labels.
   bool IndentCaseLabels;
 
+  /// \brief Different ways to indent namespace contents.
   enum NamespaceIndentationKind {
-    NI_None,  // Don't indent in namespaces.
-    NI_Inner, // Indent only in inner namespaces (nested in other namespaces).
-    NI_All    // Indent in all namespaces.
+    /// Don't indent in namespaces.
+    NI_None,
+    /// Indent only in inner namespaces (nested in other namespaces).
+    NI_Inner,
+    /// Indent in all namespaces.
+    NI_All
   };
 
   /// \brief The indentation used for namespaces.
@@ -89,11 +98,11 @@ struct FormatStyle {
   /// \brief The number of spaces to before trailing line comments.
   unsigned SpacesBeforeTrailingComments;
 
-  /// \brief If false, a function call's or function definition's parameters
+  /// \brief If \c false, a function call's or function definition's parameters
   /// will either all be on the same line or will have one line each.
   bool BinPackParameters;
 
-  /// \brief If true, clang-format detects whether function calls and
+  /// \brief If \c true, clang-format detects whether function calls and
   /// definitions are formatted with one parameter per line.
   ///
   /// Each call can be bin-packed, one-per-line or inconclusive. If it is
@@ -121,14 +130,16 @@ struct FormatStyle {
   /// the commas with the colon.
   bool BreakConstructorInitializersBeforeComma;
 
-  /// \brief If true, "if (a) return;" can be put on a single line.
+  /// \brief If \c true, <tt>if (a) return;</tt> can be put on a single
+  /// line.
   bool AllowShortIfStatementsOnASingleLine;
 
-  /// \brief If true, "while (true) continue;" can be put on a single line.
+  /// \brief If \c true, <tt>while (true) continue;</tt> can be put on a
+  /// single line.
   bool AllowShortLoopsOnASingleLine;
 
   /// \brief Add a space in front of an Objective-C protocol list, i.e. use
-  /// Foo <Protocol> instead of Foo<Protocol>.
+  /// <tt>Foo <Protocol></tt> instead of \c Foo<Protocol>.
   bool ObjCSpaceBeforeProtocolList;
 
   /// \brief If \c true, aligns trailing comments.
@@ -145,15 +156,15 @@ struct FormatStyle {
   /// initializer lists.
   unsigned ConstructorInitializerIndentWidth;
 
-  /// \brief If \c true, always break after the \c template<...> of a template
-  /// declaration.
+  /// \brief If \c true, always break after the <tt>template<...></tt> of a
+  /// template declaration.
   bool AlwaysBreakTemplateDeclarations;
 
   /// \brief If \c true, always break before multiline string literals.
   bool AlwaysBreakBeforeMultilineStrings;
 
-  /// \brief If true, \c IndentWidth consecutive spaces will be replaced with
-  /// tab characters.
+  /// \brief If \c true, \c IndentWidth consecutive spaces will be replaced
+  /// with tab characters.
   bool UseTab;
 
   /// \brief If \c true, binary operators will be placed after line breaks.
@@ -168,7 +179,7 @@ struct FormatStyle {
     BS_Linux,
     /// Like \c Attach, but break before function definitions.
     BS_Stroustrup,
-    /// Always break before braces
+    /// Always break before braces.
     BS_Allman
   };
 
@@ -185,7 +196,7 @@ struct FormatStyle {
   ///
   /// Fundamentally, C++11 braced lists are formatted exactly like function
   /// calls would be formatted in their place. If the braced list follows a name
-  /// (e.g. a type or variable name), clang-format formats as if the "{}" were
+  /// (e.g. a type or variable name), clang-format formats as if the \c {} were
   /// the parentheses of a function call with that name. If there is no name,
   /// a zero-length name is assumed.
   bool Cpp11BracedListStyle;
@@ -280,7 +291,7 @@ FormatStyle getWebKitStyle();
 /// Currently supported names: LLVM, Google, Chromium, Mozilla. Names are
 /// compared case-insensitively.
 ///
-/// Returns true if the Style has been set.
+/// Returns \c true if the Style has been set.
 bool getPredefinedStyle(StringRef Name, FormatStyle *Style);
 
 /// \brief Parse configuration from YAML-formatted text.
