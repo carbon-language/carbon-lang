@@ -41,7 +41,7 @@ namespace dwarf {
 
 //===----------------------------------------------------------------------===//
 // Dwarf constants as gleaned from the DWARF Debugging Information Format V.4
-// reference manual http://dwarf.freestandards.org .
+// reference manual http://dwarf.freestandards.org.
 //
 
 // Do not mix the following two enumerations sets.  DW_TAG_invalid changes the
@@ -56,6 +56,7 @@ enum llvm_dwarf_constants {
 
   DW_TAG_user_base = 0x1000,            // Recommended base for user tags.
 
+  DWARF_VERSION = 4,                    // Default dwarf version we output.
   DW_CIE_VERSION = 1,                   // Common frame information version.
   DW_PUBTYPES_VERSION = 2,              // Section version number for .debug_pubtypes.
   DW_PUBNAMES_VERSION = 2               // Section version number for .debug_pubnames.
@@ -69,8 +70,6 @@ const uint64_t DW64_CIE_ID = UINT64_MAX;
 
 
 enum dwarf_constants {
-  DWARF_VERSION = 4,
-
   // Tags
   DW_TAG_array_type = 0x01,
   DW_TAG_class_type = 0x02,
