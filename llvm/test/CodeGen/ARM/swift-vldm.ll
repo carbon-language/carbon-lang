@@ -4,25 +4,25 @@
 ; so that there usage becomes unbeneficial on swift.
 
 ; CHECK-LABEL: test_vldm
-; CHECK: vldmia  r1, {d18, d19, d20}
-; CHECK-NOT: vldmia  r1, {d17, d18, d19, d20}
+; CHECK: vldmia r{{[0-9]+}}, {d2, d3, d4}
+; CHECK-NOT: vldmia r{{[0-9]+}}, {d1, d2, d3, d4}
 
-define double @test_vldm(double %a, double %b, double* nocapture %x) {
+declare fastcc void @force_register(double %d0, double %d1, double %d2, double %d3, double %d4) 
+
+define void @test_vldm(double* %x, double * %y) {
 entry:
-  %mul73 = fmul double %a, %b
   %addr1 = getelementptr double * %x, i32 1
   %addr2 = getelementptr double * %x, i32 2
   %addr3 = getelementptr double * %x, i32 3
-  %load0 = load double * %x
-  %load1 = load double * %addr1
-  %load2 = load double * %addr2
-  %load3 = load double * %addr3
-  %sub = fsub double %mul73, %load1
-  %mul = fmul double %mul73, %load0
-  %add = fadd double %mul73, %load2
-  %div = fdiv double %mul73, %load3
-  %red = fadd double %sub, %mul
-  %red2 = fadd double %div, %add
-  %red3 = fsub double %red, %red2
-  ret double %red3
+  %d0 = load double * %y
+  %d1 = load double * %x
+  %d2 = load double * %addr1
+  %d3 = load double * %addr2
+  %d4 = load double * %addr3
+  ; We are trying to force x[0-3] in register d1 to d4 so that we can test we
+  ; don't form a "vldmia rX, {d1, d2, d3, d4}".
+  ; We are relying on the calling convention and that register allocation
+  ; properly coalesces registers.
+  call fastcc void @force_register(double %d0, double %d1, double %d2, double %d3, double %d4)
+  ret void
 }
