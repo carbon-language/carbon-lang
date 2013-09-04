@@ -143,17 +143,12 @@ DIType DbgVariable::getType() const {
     DIType subType = Ty;
     uint16_t tag = Ty.getTag();
 
-    if (tag == dwarf::DW_TAG_pointer_type) {
-      DIDerivedType DTy = DIDerivedType(Ty);
-      subType = DTy.getTypeDerivedFrom();
-    }
+    if (tag == dwarf::DW_TAG_pointer_type)
+      subType = DIDerivedType(Ty).getTypeDerivedFrom();
 
-    DICompositeType blockStruct = DICompositeType(subType);
-    DIArray Elements = blockStruct.getTypeArray();
-
+    DIArray Elements = DICompositeType(subType).getTypeArray();
     for (unsigned i = 0, N = Elements.getNumElements(); i < N; ++i) {
-      DIDescriptor Element = Elements.getElement(i);
-      DIDerivedType DT = DIDerivedType(Element);
+      DIDerivedType DT = DIDerivedType(Elements.getElement(i));
       if (getName() == DT.getName())
         return (DT.getTypeDerivedFrom());
     }
