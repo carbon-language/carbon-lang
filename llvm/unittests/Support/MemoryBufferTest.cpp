@@ -65,6 +65,28 @@ TEST_F(MemoryBufferTest, get) {
   EXPECT_EQ("this is some data", data);
 }
 
+TEST_F(MemoryBufferTest, NullTerminator4K) {
+  // Test that a file with size that is a multiple of the page size can be null
+  // terminated correctly by MemoryBuffer.
+  int TestFD;
+  SmallString<64> TestPath;
+  sys::fs::createTemporaryFile("MemoryBufferTest_NullTerminator4K", "temp",
+                               TestFD, TestPath);
+  raw_fd_ostream OF(TestFD, true, /*unbuffered=*/true);
+  for (unsigned i = 0; i < 4096 / 16; ++i) {
+    OF << "0123456789abcdef";
+  }
+  OF.close();
+
+  OwningPtr<MemoryBuffer> MB;
+  error_code EC = MemoryBuffer::getFile(TestPath, MB);
+  ASSERT_FALSE(EC);
+
+  const char *BufData = MB->getBufferStart();
+  EXPECT_EQ('f', BufData[4095]);
+  EXPECT_EQ('\0', BufData[4096]);
+}
+
 TEST_F(MemoryBufferTest, copy) {
   // copy with no name
   OwningBuffer MBC1(MemoryBuffer::getMemBufferCopy(data));
