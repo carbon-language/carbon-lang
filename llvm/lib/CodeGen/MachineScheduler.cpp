@@ -1470,7 +1470,7 @@ public:
 
     void reset() {
       // A new HazardRec is created for each DAG and owned by SchedBoundary.
-      // Detroying and reconstructing it is very expensive though. So keep
+      // Destroying and reconstructing it is very expensive though. So keep
       // invalid, placeholder HazardRecs.
       if (HazardRec && HazardRec->isEnabled()) {
         delete HazardRec;
