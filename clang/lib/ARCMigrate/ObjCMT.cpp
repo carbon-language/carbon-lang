@@ -69,8 +69,8 @@ class ObjCMigrateASTConsumer : public ASTConsumer {
   
   void migrateARCSafeAnnotation(ASTContext &Ctx, ObjCContainerDecl *CDecl);
   
-  CF_BRIDGING_KIND migrateAddMethodAnnotation(ASTContext &Ctx,
-                                              const ObjCMethodDecl *MethodDecl);
+  void migrateAddMethodAnnotation(ASTContext &Ctx,
+                                  const ObjCMethodDecl *MethodDecl);
 public:
   std::string MigrateDir;
   bool MigrateLiterals;
@@ -909,25 +909,27 @@ void ObjCMigrateASTConsumer::migrateCFAnnotation(ASTContext &Ctx, const Decl *De
   }
   
   // Finction must be annotated first.
-  CF_BRIDGING_KIND AuditKind;
-  if (const FunctionDecl *FuncDecl = dyn_cast<FunctionDecl>(Decl))
-    AuditKind = migrateAddFunctionAnnotation(Ctx, FuncDecl);
-  else
-    AuditKind = migrateAddMethodAnnotation(Ctx, cast<ObjCMethodDecl>(Decl));
-  if (AuditKind == CF_BRIDGING_ENABLE) {
-    CFFunctionIBCandidates.push_back(Decl);
-    if (!FileId)
-      FileId = PP.getSourceManager().getFileID(Decl->getLocation()).getHashValue();
-  }
-  else if (AuditKind == CF_BRIDGING_MAY_INCLUDE) {
-    if (!CFFunctionIBCandidates.empty()) {
+  if (const FunctionDecl *FuncDecl = dyn_cast<FunctionDecl>(Decl)) {
+    CF_BRIDGING_KIND AuditKind = migrateAddFunctionAnnotation(Ctx, FuncDecl);
+    if (AuditKind == CF_BRIDGING_ENABLE) {
       CFFunctionIBCandidates.push_back(Decl);
       if (!FileId)
         FileId = PP.getSourceManager().getFileID(Decl->getLocation()).getHashValue();
     }
+    else if (AuditKind == CF_BRIDGING_MAY_INCLUDE) {
+      if (!CFFunctionIBCandidates.empty()) {
+        CFFunctionIBCandidates.push_back(Decl);
+        if (!FileId)
+          FileId = PP.getSourceManager().getFileID(Decl->getLocation()).getHashValue();
+      }
+    }
+    else
+      AnnotateImplicitBridging(Ctx);
   }
-  else
+  else {
+    migrateAddMethodAnnotation(Ctx, cast<ObjCMethodDecl>(Decl));
     AnnotateImplicitBridging(Ctx);
+  }
 }
 
 void ObjCMigrateASTConsumer::AddCFAnnotations(ASTContext &Ctx,
@@ -942,7 +944,7 @@ void ObjCMigrateASTConsumer::AddCFAnnotations(ASTContext &Ctx,
       if (Ctx.Idents.get("CF_RETURNS_RETAINED").hasMacroDefinition())
         AnnotationString = " CF_RETURNS_RETAINED";
     }
-    else if (Ret.getObjKind() == RetEffect::CF && !Ret.isOwned()) {
+    else if (Ret.getObjKind() == RetEffect::CF && Ret.notOwned()) {
       if (Ctx.Idents.get("CF_RETURNS_NOT_RETAINED").hasMacroDefinition())
         AnnotationString = " CF_RETURNS_NOT_RETAINED";
     }
@@ -987,7 +989,7 @@ ObjCMigrateASTConsumer::CF_BRIDGING_KIND
   if (!FuncIsReturnAnnotated) {
     RetEffect Ret = CE.getReturnValue();
     if (Ret.getObjKind() == RetEffect::CF &&
-        (Ret.isOwned() || !Ret.isOwned()))
+        (Ret.isOwned() || Ret.notOwned()))
       ReturnCFAudited = true;
     else if (!AuditedType(FuncDecl->getResultType()))
       return CF_BRIDGING_NONE;
@@ -1048,7 +1050,7 @@ void ObjCMigrateASTConsumer::AddCFAnnotations(ASTContext &Ctx,
       if (Ctx.Idents.get("CF_RETURNS_RETAINED").hasMacroDefinition())
         AnnotationString = " CF_RETURNS_RETAINED";
     }
-    else if (Ret.getObjKind() == RetEffect::CF && !Ret.isOwned()) {
+    else if (Ret.getObjKind() == RetEffect::CF && Ret.notOwned()) {
       if (Ctx.Idents.get("CF_RETURNS_NOT_RETAINED").hasMacroDefinition())
         AnnotationString = " CF_RETURNS_NOT_RETAINED";
     }
@@ -1073,12 +1075,11 @@ void ObjCMigrateASTConsumer::AddCFAnnotations(ASTContext &Ctx,
   }
 }
 
-ObjCMigrateASTConsumer::CF_BRIDGING_KIND
-  ObjCMigrateASTConsumer::migrateAddMethodAnnotation(
+void ObjCMigrateASTConsumer::migrateAddMethodAnnotation(
                                             ASTContext &Ctx,
                                             const ObjCMethodDecl *MethodDecl) {
   if (MethodDecl->hasBody())
-    return CF_BRIDGING_NONE;
+    return;
   
   CallEffects CE  = CallEffects::getEffect(MethodDecl);
   bool MethodIsReturnAnnotated = (MethodDecl->getAttr<CFReturnsRetainedAttr>() ||
@@ -1087,15 +1088,15 @@ ObjCMigrateASTConsumer::CF_BRIDGING_KIND
   // Trivial case of when funciton is annotated and has no argument.
   if (MethodIsReturnAnnotated &&
       (MethodDecl->param_begin() == MethodDecl->param_end()))
-    return CF_BRIDGING_NONE;
+    return;
   
   bool ReturnCFAudited = false;
   if (!MethodIsReturnAnnotated) {
     RetEffect Ret = CE.getReturnValue();
-    if (Ret.getObjKind() == RetEffect::CF && (Ret.isOwned() || !Ret.isOwned()))
+    if (Ret.getObjKind() == RetEffect::CF && (Ret.isOwned() || Ret.notOwned()))
       ReturnCFAudited = true;
     else if (!AuditedType(MethodDecl->getResultType()))
-      return CF_BRIDGING_NONE;
+      return;
   }
   
   // At this point result type is either annotated or audited.
@@ -1108,23 +1109,21 @@ ObjCMigrateASTConsumer::CF_BRIDGING_KIND
     const ParmVarDecl *pd = *pi;
     ArgEffect AE = AEArgs[i];
     if (AE == DecRef /*CFConsumed annotated*/ || AE == IncRef) {
-      if (AE == DecRef && !pd->getAttr<CFConsumedAttr>())
-        ArgCFAudited = true;
-      else if (AE == IncRef)
+      if ((AE == DecRef && !pd->getAttr<CFConsumedAttr>()) ||
+          AE == IncRef)
         ArgCFAudited = true;
     }
     else {
       QualType AT = pd->getType();
       if (!AuditedType(AT)) {
         AddCFAnnotations(Ctx, CE, MethodDecl, MethodIsReturnAnnotated);
-        return CF_BRIDGING_NONE;
+        return;
       }
     }
   }
   if (ReturnCFAudited || ArgCFAudited)
-    return CF_BRIDGING_ENABLE;
-  
-  return CF_BRIDGING_MAY_INCLUDE;
+    AddCFAnnotations(Ctx, CE, MethodDecl, MethodIsReturnAnnotated);
+  return;
 }
 
 namespace {

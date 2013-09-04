@@ -153,6 +153,10 @@ public:
     K == OwnedWhenTrackedReceiver;
   }
   
+  bool notOwned() const {
+    return K == NotOwnedSymbol || K == ARCNotOwnedSymbol;
+  }
+  
   bool operator==(const RetEffect &Other) const {
     return K == Other.K && O == Other.O;
   }

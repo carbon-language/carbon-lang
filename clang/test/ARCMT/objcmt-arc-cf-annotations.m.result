@@ -819,14 +819,8 @@ void rdar_6866843() {
 typedef CFTypeRef OtherRef;
 
 @interface RDar6877235 : NSObject {}
-
-CF_IMPLICIT_BRIDGING_ENABLED
-
-- (CFTypeRef)_copyCFTypeRef;
-- (OtherRef)_copyOtherRef;
-
-CF_IMPLICIT_BRIDGING_DISABLED
-
+- (CFTypeRef)_copyCFTypeRef CF_RETURNS_RETAINED;
+- (OtherRef)_copyOtherRef CF_RETURNS_RETAINED;
 @end
 
 @implementation RDar6877235
@@ -1448,21 +1442,9 @@ void testattr4() {
 - (NSDate*) returnsCFRetained CF_RETURNS_RETAINED;
 - (CFDateRef) returnsCFRetainedAsCF CF_RETURNS_RETAINED;
 - (CFDateRef) newCFRetainedAsCF CF_RETURNS_NOT_RETAINED;
-
-CF_IMPLICIT_BRIDGING_ENABLED
-
-- (CFDateRef) newCFRetainedAsCFNoAttr;
-
-CF_IMPLICIT_BRIDGING_DISABLED
-
+- (CFDateRef) newCFRetainedAsCFNoAttr CF_RETURNS_RETAINED;
 - (NSDate*) alsoReturnsRetained;
-
-CF_IMPLICIT_BRIDGING_ENABLED
-
-- (CFDateRef) alsoReturnsRetainedAsCF;
-
-CF_IMPLICIT_BRIDGING_DISABLED
-
+- (CFDateRef) alsoReturnsRetainedAsCF CF_RETURNS_NOT_RETAINED;
 - (NSDate*) returnsNSRetained NS_RETURNS_RETAINED;
 @end
 
