@@ -1,7 +1,7 @@
 // RUN: %clangxx -O0 -g %s -o %t -c
 // RUN: %clangxx %t -o %t.out
 // RUN: %test_debuginfo %s %t.out
-// XFAIL: *
+// XFAIL: darwin
 
 // DEBUGGER: delete breakpoints
 // DEBUGGER: break static-member.cpp:33
