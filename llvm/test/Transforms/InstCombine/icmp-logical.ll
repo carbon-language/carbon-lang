@@ -120,3 +120,33 @@ define i1 @masked_or_allzeroes_notoptimised(i32 %A) {
   ret i1 %res
 }
 
+define i1 @nomask_lhs(i32 %in) {
+; CHECK-LABEL: @nomask_lhs
+; CHECK: [[MASK:%.*]] = and i32 %in, 1
+; CHECK: icmp eq i32 [[MASK]], 0
+; CHECK-NOT: icmp
+; CHECK: ret i1
+  %tst1 = icmp eq i32 %in, 0
+
+  %masked = and i32 %in, 1
+  %tst2 = icmp eq i32 %masked, 0
+
+  %val = or i1 %tst1, %tst2
+  ret i1 %val
+}
+
+
+define i1 @nomask_rhs(i32 %in) {
+; CHECK-LABEL: @nomask_rhs
+; CHECK: [[MASK:%.*]] = and i32 %in, 1
+; CHECK: icmp eq i32 [[MASK]], 0
+; CHECK-NOT: icmp
+; CHECK: ret i1
+  %masked = and i32 %in, 1
+  %tst1 = icmp eq i32 %masked, 0
+
+  %tst2 = icmp eq i32 %in, 0
+
+  %val = or i1 %tst1, %tst2
+  ret i1 %val
+}

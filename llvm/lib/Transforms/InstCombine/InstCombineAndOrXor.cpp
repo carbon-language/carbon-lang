@@ -568,14 +568,22 @@ static unsigned foldLogOpOfMaskedICmpsHelper(Value*& A,
     L21 = L22 = L1 = 0;
   } else {
     // Look for ANDs in the LHS icmp.
-    if (match(L1, m_And(m_Value(L11), m_Value(L12)))) {
-      if (!match(L2, m_And(m_Value(L21), m_Value(L22))))
-        L21 = L22 = 0;
-    } else {
-      if (!match(L2, m_And(m_Value(L11), m_Value(L12))))
-        return 0;
-      std::swap(L1, L2);
+    if (!L1->getType()->isIntegerTy()) {
+      // You can icmp pointers, for example. They really aren't masks.
+      L11 = L12 = 0;
+    } else if (!match(L1, m_And(m_Value(L11), m_Value(L12)))) {
+      // Any icmp can be viewed as being trivially masked; if it allows us to
+      // remove one, it's worth it.
+      L11 = L1;
+      L12 = Constant::getAllOnesValue(L1->getType());
+    }
+
+    if (!L2->getType()->isIntegerTy()) {
+      // You can icmp pointers, for example. They really aren't masks.
       L21 = L22 = 0;
+    } else if (!match(L2, m_And(m_Value(L21), m_Value(L22)))) {
+      L21 = L2;
+      L22 = Constant::getAllOnesValue(L2->getType());
     }
   }
 
@@ -596,7 +604,14 @@ static unsigned foldLogOpOfMaskedICmpsHelper(Value*& A,
       return 0;
     }
     E = R2; R1 = 0; ok = true;
-  } else if (match(R1, m_And(m_Value(R11), m_Value(R12)))) {
+  } else if (R1->getType()->isIntegerTy()) {
+    if (!match(R1, m_And(m_Value(R11), m_Value(R12)))) {
+      // As before, model no mask as a trivial mask if it'll let us do an
+      // optimisation.
+      R11 = R1;
+      R12 = Constant::getAllOnesValue(R1->getType());
+    }
+
     if (R11 == L11 || R11 == L12 || R11 == L21 || R11 == L22) {
       A = R11; D = R12; E = R2; ok = true;
     } else if (R12 == L11 || R12 == L12 || R12 == L21 || R12 == L22) {
@@ -609,7 +624,12 @@ static unsigned foldLogOpOfMaskedICmpsHelper(Value*& A,
     return 0;
 
   // Look for ANDs in on the right side of the RHS icmp.
-  if (!ok && match(R2, m_And(m_Value(R11), m_Value(R12)))) {
+  if (!ok && R2->getType()->isIntegerTy()) {
+    if (!match(R2, m_And(m_Value(R11), m_Value(R12)))) {
+      R11 = R2;
+      R12 = Constant::getAllOnesValue(R2->getType());
+    }
+
     if (R11 == L11 || R11 == L12 || R11 == L21 || R11 == L22) {
       A = R11; D = R12; E = R1; ok = true;
     } else if (R12 == L11 || R12 == L12 || R12 == L21 || R12 == L22) {
