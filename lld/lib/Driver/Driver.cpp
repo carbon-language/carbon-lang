@@ -64,7 +64,6 @@ bool Driver::link(const LinkingContext &context, raw_ostream &diagnostics) {
     }
     else {
       llvm_unreachable("Not handling other types of InputElements");
-      return true;
     }
   }
   for (const auto &input : linkerInputs) {
