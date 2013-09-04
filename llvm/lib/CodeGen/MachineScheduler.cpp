@@ -1469,13 +1469,16 @@ public:
 
     void reset() {
       // A new HazardRec is created for each DAG and owned by SchedBoundary.
-      delete HazardRec;
-
+      // Detroying and reconstructing it is very expensive though. So keep
+      // invalid, placeholder HazardRecs.
+      if (HazardRec && HazardRec->isEnabled()) {
+        delete HazardRec;
+        HazardRec = 0;
+      }
       Available.clear();
       Pending.clear();
       CheckPending = false;
       NextSUs.clear();
-      HazardRec = 0;
       CurrCycle = 0;
       CurrMOps = 0;
       MinReadyCycle = UINT_MAX;
@@ -1681,9 +1684,14 @@ void ConvergingScheduler::initialize(ScheduleDAGMI *dag) {
   // are disabled, then these HazardRecs will be disabled.
   const InstrItineraryData *Itin = SchedModel->getInstrItineraries();
   const TargetMachine &TM = DAG->MF.getTarget();
-  Top.HazardRec = TM.getInstrInfo()->CreateTargetMIHazardRecognizer(Itin, DAG);
-  Bot.HazardRec = TM.getInstrInfo()->CreateTargetMIHazardRecognizer(Itin, DAG);
-
+  if (!Top.HazardRec) {
+    Top.HazardRec =
+      TM.getInstrInfo()->CreateTargetMIHazardRecognizer(Itin, DAG);
+  }
+  if (!Bot.HazardRec) {
+    Bot.HazardRec =
+      TM.getInstrInfo()->CreateTargetMIHazardRecognizer(Itin, DAG);
+  }
   assert((!ForceTopDown || !ForceBottomUp) &&
          "-misched-topdown incompatible with -misched-bottomup");
 }
