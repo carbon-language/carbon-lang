@@ -340,6 +340,9 @@ Layout::SectionOrder DefaultLayout<ELFT>::getSectionOrder(
   case DefinedAtom::typeStub:
     return ORDER_PLT;
 
+  case DefinedAtom::typeNote:
+    return ORDER_NOTE;
+
   case DefinedAtom::typeThreadData:
     return ORDER_TDATA;
   case DefinedAtom::typeThreadZeroFill:

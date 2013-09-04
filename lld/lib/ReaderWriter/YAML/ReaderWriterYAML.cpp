@@ -491,6 +491,7 @@ struct ScalarEnumerationTraits<lld::DefinedAtom::ContentType> {
                           lld::DefinedAtom::typeThreadData);
     io.enumCase(value, "thread-zero-fill",
                           lld::DefinedAtom::typeThreadZeroFill);
+    io.enumCase(value, "note", lld::DefinedAtom::typeNote);
   }
 };
 

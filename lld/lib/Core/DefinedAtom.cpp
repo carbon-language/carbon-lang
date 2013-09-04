@@ -41,6 +41,7 @@ DefinedAtom::ContentPermissions DefinedAtom::permissions(ContentType type) {
   case typeLiteral16:
   case typeDTraceDOF:
   case typeCompactUnwindInfo:
+  case typeNote:
     return permR__;
 
   case typeData:
