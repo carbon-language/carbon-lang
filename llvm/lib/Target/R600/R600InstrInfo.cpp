@@ -336,6 +336,8 @@ R600InstrInfo::ExtractSrcs(MachineInstr *MI,
 static std::vector<std::pair<int, unsigned> >
 Swizzle(std::vector<std::pair<int, unsigned> > Src,
         R600InstrInfo::BankSwizzle Swz) {
+  if (Src[0] == Src[1])
+    Src[1].first = -1;
   switch (Swz) {
   case R600InstrInfo::ALU_VEC_012_SCL_210:
     break;
