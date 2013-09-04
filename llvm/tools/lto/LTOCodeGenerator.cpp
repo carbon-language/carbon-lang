@@ -70,11 +70,9 @@ const char* LTOCodeGenerator::getVersionString() {
 }
 
 LTOCodeGenerator::LTOCodeGenerator()
-  : _context(getGlobalContext()),
-    _linker(new Module("ld-temp.o", _context)), _target(NULL),
-    _emitDwarfDebugInfo(false), _scopeRestrictionsDone(false),
-    _codeModel(LTO_CODEGEN_PIC_MODEL_DYNAMIC),
-    _nativeObjectFile(NULL) {
+    : Context(getGlobalContext()), Linker(new Module("ld-temp.o", Context)),
+      TargetMach(NULL), EmitDwarfDebugInfo(false), ScopeRestrictionsDone(false),
+      CodeModel(LTO_CODEGEN_PIC_MODEL_DYNAMIC), NativeObjectFile(NULL) {
   InitializeAllTargets();
   InitializeAllTargetMCs();
   InitializeAllAsmPrinters();
@@ -82,12 +80,13 @@ LTOCodeGenerator::LTOCodeGenerator()
 }
 
 LTOCodeGenerator::~LTOCodeGenerator() {
-  delete _target;
-  delete _nativeObjectFile;
-  delete _linker.getModule();
+  delete TargetMach;
+  delete NativeObjectFile;
+  delete Linker.getModule();
 
-  for (std::vector<char*>::iterator I = _codegenOptions.begin(),
-         E = _codegenOptions.end(); I != E; ++I)
+  for (std::vector<char *>::iterator I = CodegenOptions.begin(),
+                                     E = CodegenOptions.end();
+       I != E; ++I)
     free(*I);
 }
 
@@ -122,11 +121,11 @@ void LTOCodeGenerator::initializeLTOPasses() {
 }
 
 bool LTOCodeGenerator::addModule(LTOModule* mod, std::string& errMsg) {
-  bool ret = _linker.linkInModule(mod->getLLVVMModule(), &errMsg);
+  bool ret = Linker.linkInModule(mod->getLLVVMModule(), &errMsg);
 
   const std::vector<const char*> &undefs = mod->getAsmUndefinedRefs();
   for (int i = 0, e = undefs.size(); i != e; ++i)
-    _asmUndefinedRefs[undefs[i]] = 1;
+    AsmUndefinedRefs[undefs[i]] = 1;
 
   return !ret;
 }
@@ -134,11 +133,11 @@ bool LTOCodeGenerator::addModule(LTOModule* mod, std::string& errMsg) {
 void LTOCodeGenerator::setDebugInfo(lto_debug_model debug) {
   switch (debug) {
   case LTO_DEBUG_MODEL_NONE:
-    _emitDwarfDebugInfo = false;
+    EmitDwarfDebugInfo = false;
     return;
 
   case LTO_DEBUG_MODEL_DWARF:
-    _emitDwarfDebugInfo = true;
+    EmitDwarfDebugInfo = true;
     return;
   }
   llvm_unreachable("Unknown debug format!");
@@ -149,7 +148,7 @@ void LTOCodeGenerator::setCodePICModel(lto_codegen_model model) {
   case LTO_CODEGEN_PIC_MODEL_STATIC:
   case LTO_CODEGEN_PIC_MODEL_DYNAMIC:
   case LTO_CODEGEN_PIC_MODEL_DYNAMIC_NO_PIC:
-    _codeModel = model;
+    CodeModel = model;
     return;
   }
   llvm_unreachable("Unknown PIC model!");
@@ -173,7 +172,7 @@ bool LTOCodeGenerator::writeMergedModules(const char *path,
   }
 
   // write bitcode to it
-  WriteBitcodeToFile(_linker.getModule(), Out.os());
+  WriteBitcodeToFile(Linker.getModule(), Out.os());
   Out.os().close();
 
   if (Out.os().has_error()) {
@@ -214,8 +213,8 @@ bool LTOCodeGenerator::compile_to_file(const char** name, std::string& errMsg) {
     return false;
   }
 
-  _nativeObjectPath = Filename.c_str();
-  *name = _nativeObjectPath.c_str();
+  NativeObjectPath = Filename.c_str();
+  *name = NativeObjectPath.c_str();
   return true;
 }
 
@@ -225,37 +224,37 @@ const void* LTOCodeGenerator::compile(size_t* length, std::string& errMsg) {
     return NULL;
 
   // remove old buffer if compile() called twice
-  delete _nativeObjectFile;
+  delete NativeObjectFile;
 
   // read .o file into memory buffer
   OwningPtr<MemoryBuffer> BuffPtr;
   if (error_code ec = MemoryBuffer::getFile(name, BuffPtr, -1, false)) {
     errMsg = ec.message();
-    sys::fs::remove(_nativeObjectPath);
+    sys::fs::remove(NativeObjectPath);
     return NULL;
   }
-  _nativeObjectFile = BuffPtr.take();
+  NativeObjectFile = BuffPtr.take();
 
   // remove temp files
-  sys::fs::remove(_nativeObjectPath);
+  sys::fs::remove(NativeObjectPath);
 
   // return buffer, unless error
-  if (_nativeObjectFile == NULL)
+  if (NativeObjectFile == NULL)
     return NULL;
-  *length = _nativeObjectFile->getBufferSize();
-  return _nativeObjectFile->getBufferStart();
+  *length = NativeObjectFile->getBufferSize();
+  return NativeObjectFile->getBufferStart();
 }
 
 bool LTOCodeGenerator::determineTarget(std::string &errMsg) {
-  if (_target != NULL)
+  if (TargetMach != NULL)
     return true;
 
   // if options were requested, set them
-  if (!_codegenOptions.empty())
-    cl::ParseCommandLineOptions(_codegenOptions.size(),
-                                const_cast<char **>(&_codegenOptions[0]));
+  if (!CodegenOptions.empty())
+    cl::ParseCommandLineOptions(CodegenOptions.size(),
+                                const_cast<char **>(&CodegenOptions[0]));
 
-  std::string TripleStr = _linker.getModule()->getTargetTriple();
+  std::string TripleStr = Linker.getModule()->getTargetTriple();
   if (TripleStr.empty())
     TripleStr = sys::getDefaultTargetTriple();
   llvm::Triple Triple(TripleStr);
@@ -268,7 +267,7 @@ bool LTOCodeGenerator::determineTarget(std::string &errMsg) {
   // The relocation model is actually a static member of TargetMachine and
   // needs to be set before the TargetMachine is instantiated.
   Reloc::Model RelocModel = Reloc::Default;
-  switch (_codeModel) {
+  switch (CodeModel) {
   case LTO_CODEGEN_PIC_MODEL_STATIC:
     RelocModel = Reloc::Static;
     break;
@@ -285,17 +284,17 @@ bool LTOCodeGenerator::determineTarget(std::string &errMsg) {
   Features.getDefaultSubtargetFeatures(Triple);
   std::string FeatureStr = Features.getString();
   // Set a default CPU for Darwin triples.
-  if (_mCpu.empty() && Triple.isOSDarwin()) {
+  if (MCpu.empty() && Triple.isOSDarwin()) {
     if (Triple.getArch() == llvm::Triple::x86_64)
-      _mCpu = "core2";
+      MCpu = "core2";
     else if (Triple.getArch() == llvm::Triple::x86)
-      _mCpu = "yonah";
+      MCpu = "yonah";
   }
   TargetOptions Options;
   LTOModule::getTargetOptions(Options);
-  _target = march->createTargetMachine(TripleStr, _mCpu, FeatureStr, Options,
-                                       RelocModel, CodeModel::Default,
-                                       CodeGenOpt::Aggressive);
+  TargetMach = march->createTargetMachine(TripleStr, MCpu, FeatureStr, Options,
+                                          RelocModel, CodeModel::Default,
+                                          CodeGenOpt::Aggressive);
   return true;
 }
 
@@ -309,9 +308,9 @@ applyRestriction(GlobalValue &GV,
 
   if (GV.isDeclaration())
     return;
-  if (_mustPreserveSymbols.count(Buffer))
+  if (MustPreserveSymbols.count(Buffer))
     mustPreserveList.push_back(GV.getName().data());
-  if (_asmUndefinedRefs.count(Buffer))
+  if (AsmUndefinedRefs.count(Buffer))
     asmUsed.insert(&GV);
 }
 
@@ -327,16 +326,18 @@ static void findUsedValues(GlobalVariable *LLVMUsed,
 }
 
 void LTOCodeGenerator::applyScopeRestrictions() {
-  if (_scopeRestrictionsDone) return;
-  Module *mergedModule = _linker.getModule();
+  if (ScopeRestrictionsDone)
+    return;
+  Module *mergedModule = Linker.getModule();
 
   // Start off with a verification pass.
   PassManager passes;
   passes.add(createVerifierPass());
 
   // mark which symbols can not be internalized
-  MCContext Context(_target->getMCAsmInfo(), _target->getRegisterInfo(), NULL);
-  Mangler mangler(Context, _target);
+  MCContext MContext(TargetMach->getMCAsmInfo(), TargetMach->getRegisterInfo(),
+                     NULL);
+  Mangler mangler(MContext, TargetMach);
   std::vector<const char*> mustPreserveList;
   SmallPtrSet<GlobalValue*, 8> asmUsed;
 
@@ -357,7 +358,7 @@ void LTOCodeGenerator::applyScopeRestrictions() {
     LLVMCompilerUsed->eraseFromParent();
 
   if (!asmUsed.empty()) {
-    llvm::Type *i8PTy = llvm::Type::getInt8PtrTy(_context);
+    llvm::Type *i8PTy = llvm::Type::getInt8PtrTy(Context);
     std::vector<Constant*> asmUsed2;
     for (SmallPtrSet<GlobalValue*, 16>::const_iterator i = asmUsed.begin(),
            e = asmUsed.end(); i !=e; ++i) {
@@ -381,7 +382,7 @@ void LTOCodeGenerator::applyScopeRestrictions() {
   // apply scope restrictions
   passes.run(*mergedModule);
 
-  _scopeRestrictionsDone = true;
+  ScopeRestrictionsDone = true;
 }
 
 /// Optimize merged modules using various IPO passes
@@ -390,7 +391,7 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
   if (!this->determineTarget(errMsg))
     return false;
 
-  Module* mergedModule = _linker.getModule();
+  Module *mergedModule = Linker.getModule();
 
   // Mark which symbols can not be internalized
   this->applyScopeRestrictions();
@@ -402,8 +403,8 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
   passes.add(createVerifierPass());
 
   // Add an appropriate DataLayout instance for this module...
-  passes.add(new DataLayout(*_target->getDataLayout()));
-  _target->addAnalysisPasses(passes);
+  passes.add(new DataLayout(*TargetMach->getDataLayout()));
+  TargetMach->addAnalysisPasses(passes);
 
   // Enabling internalize here would use its AllButMain variant. It
   // keeps only main if it exists and does nothing for libraries. Instead
@@ -419,8 +420,8 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
 
   PassManager codeGenPasses;
 
-  codeGenPasses.add(new DataLayout(*_target->getDataLayout()));
-  _target->addAnalysisPasses(codeGenPasses);
+  codeGenPasses.add(new DataLayout(*TargetMach->getDataLayout()));
+  TargetMach->addAnalysisPasses(codeGenPasses);
 
   formatted_raw_ostream Out(out);
 
@@ -428,8 +429,8 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
   // the ObjCARCContractPass must be run, so do it unconditionally here.
   codeGenPasses.add(createObjCARCContractPass());
 
-  if (_target->addPassesToEmitFile(codeGenPasses, Out,
-                                   TargetMachine::CGFT_ObjectFile)) {
+  if (TargetMach->addPassesToEmitFile(codeGenPasses, Out,
+                                      TargetMachine::CGFT_ObjectFile)) {
     errMsg = "target file type not supported";
     return false;
   }
@@ -450,8 +451,8 @@ void LTOCodeGenerator::setCodeGenDebugOptions(const char *options) {
        !o.first.empty(); o = getToken(o.second)) {
     // ParseCommandLineOptions() expects argv[0] to be program name. Lazily add
     // that.
-    if (_codegenOptions.empty())
-      _codegenOptions.push_back(strdup("libLTO"));
-    _codegenOptions.push_back(strdup(o.first.str().c_str()));
+    if (CodegenOptions.empty())
+      CodegenOptions.push_back(strdup("libLTO"));
+    CodegenOptions.push_back(strdup(o.first.str().c_str()));
   }
 }

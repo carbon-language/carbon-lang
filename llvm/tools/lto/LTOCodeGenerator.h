@@ -67,11 +67,9 @@ struct LTOCodeGenerator {
   void setDebugInfo(lto_debug_model);
   void setCodePICModel(lto_codegen_model);
 
-  void setCpu(const char* mCpu) { _mCpu = mCpu; }
+  void setCpu(const char *mCpu) { MCpu = mCpu; }
 
-  void addMustPreserveSymbol(const char* sym) {
-    _mustPreserveSymbols[sym] = 1;
-  }
+  void addMustPreserveSymbol(const char *sym) { MustPreserveSymbols[sym] = 1; }
 
   // To pass options to the driver and optimization passes. These options are
   // not necessarily for debugging purpose (The function name is misleading).
@@ -115,18 +113,18 @@ private:
 
   typedef llvm::StringMap<uint8_t> StringSet;
 
-  llvm::LLVMContext&          _context;
-  llvm::Linker                _linker;
-  llvm::TargetMachine*        _target;
-  bool                        _emitDwarfDebugInfo;
-  bool                        _scopeRestrictionsDone;
-  lto_codegen_model           _codeModel;
-  StringSet                   _mustPreserveSymbols;
-  StringSet                   _asmUndefinedRefs;
-  llvm::MemoryBuffer*         _nativeObjectFile;
-  std::vector<char*>          _codegenOptions;
-  std::string                 _mCpu;
-  std::string                 _nativeObjectPath;
+  llvm::LLVMContext &Context;
+  llvm::Linker Linker;
+  llvm::TargetMachine *TargetMach;
+  bool EmitDwarfDebugInfo;
+  bool ScopeRestrictionsDone;
+  lto_codegen_model CodeModel;
+  StringSet MustPreserveSymbols;
+  StringSet AsmUndefinedRefs;
+  llvm::MemoryBuffer *NativeObjectFile;
+  std::vector<char *> CodegenOptions;
+  std::string MCpu;
+  std::string NativeObjectPath;
 };
 
 #endif // LTO_CODE_GENERATOR_H
