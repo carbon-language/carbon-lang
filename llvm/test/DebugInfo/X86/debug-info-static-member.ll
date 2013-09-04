@@ -151,7 +151,6 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 ; DARWINP:      DW_AT_external
 ; DARWINP:      DW_AT_declaration
 ; DARWINP:      DW_AT_accessibility [DW_FORM_data1]   (0x03)
-; DARWINP:      DW_AT_MIPS_linkage_name {{.*}} "_ZN1C1aE"
 ; DARWINP:      DW_TAG_member
 ; DARWINP-NEXT: DW_AT_name {{.*}} "const_a"
 ; DARWINP:      DW_AT_external
@@ -161,7 +160,6 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 ; DARWINP:      0x[[DECL_B:[0-9a-f]+]]: DW_TAG_member
 ; DARWINP-NEXT: DW_AT_name {{.*}} "b"
 ; DARWINP:      DW_AT_accessibility [DW_FORM_data1]   (0x02)
-; DARWINP:      DW_AT_MIPS_linkage_name {{.*}} "_ZN1C1bE"
 ; DARWINP:      DW_TAG_member
 ; DARWINP-NEXT: DW_AT_name {{.*}} "const_b"
 ; DARWINP:      DW_AT_accessibility [DW_FORM_data1]   (0x02)
@@ -169,7 +167,6 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 ; DARWINP:      0x[[DECL_C:[0-9a-f]+]]: DW_TAG_member
 ; DARWINP-NEXT: DW_AT_name {{.*}} "c"
 ; DARWINP:      DW_AT_accessibility [DW_FORM_data1]   (0x01)
-; DARWINP:      DW_AT_MIPS_linkage_name {{.*}} "_ZN1C1cE"
 ; DARWINP:      DW_TAG_member
 ; DARWINP-NEXT: DW_AT_name {{.*}} "const_c"
 ; DARWINP:      DW_AT_accessibility [DW_FORM_data1]   (0x01)
