@@ -19,7 +19,6 @@ add_llvm_unittest(SupportTests
   FileOutputBufferTest.cpp
   IntegersSubsetTest.cpp
   LeakDetectorTest.cpp
-  LocaleTest.cpp
   LockFileManagerTest.cpp
   ManagedStatic.cpp
   MathExtrasTest.cpp
@@ -32,6 +31,7 @@ add_llvm_unittest(SupportTests
   RegexTest.cpp
   SwapByteOrderTest.cpp
   TimeValueTest.cpp
+  UnicodeTest.cpp
   ValueHandleTest.cpp
   YAMLIOTest.cpp
   YAMLParserTest.cpp

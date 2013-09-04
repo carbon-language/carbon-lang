@@ -54,6 +54,7 @@ add_llvm_library(LLVMSupport
   ToolOutputFile.cpp
   Triple.cpp
   Twine.cpp
+  Unicode.cpp
   YAMLParser.cpp
   YAMLTraits.cpp
   raw_os_ostream.cpp

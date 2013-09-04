@@ -1,4 +1,4 @@
-//===- llvm/Support/LocaleGeneric.inc - Locale-dependent stuff  -*- C++ -*-===//
+//===- llvm/Support/Unicode.cpp - Unicode character properties  -*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,41 +7,20 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements llvm::sys::locale::columnWidth and
-// llvm::sys::locale::isPrint functions for UTF-8 locales.
+// This file implements functions that allow querying certain properties of
+// Unicode characters.
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/ADT/ArrayRef.h"
+#include "llvm/Support/Unicode.h"
 #include "llvm/Support/ConvertUTF.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/UnicodeCharRanges.h"
 
 namespace llvm {
 namespace sys {
-namespace locale {
+namespace unicode {
 
-enum ColumnWidthErrors {
-  ErrorInvalidUTF8 = -2,
-  ErrorNonPrintableCharacter = -1
-};
-
-/// Determines if a character is likely to be displayed correctly on the
-/// terminal. Exact implementation would have to depend on the specific
-/// terminal, so we define the semantic that should be suitable for generic case
-/// of a terminal capable to output Unicode characters.
-/// All characters from the Unicode codepoint range are considered printable
-/// except for:
-///   * C0 and C1 control character ranges;
-///   * default ignorable code points as per 5.21 of
-///     http://www.unicode.org/versions/Unicode6.2.0/UnicodeStandard-6.2.pdf
-///     except for U+00AD SOFT HYPHEN, as it's actually displayed on most
-///     terminals;
-///   * format characters (category = Cf);
-///   * surrogates (category = Cs);
-///   * unassigned characters (category = Cn).
-/// \return true if the character is considered printable.
-bool isPrint(int UCS) {
+bool isPrintable(int UCS) {
   // Sorted list of non-overlapping intervals of code points that are not
   // supposed to be printable.
   static const UnicodeCharRange NonPrintableRanges[] = {
@@ -241,13 +220,13 @@ bool isPrint(int UCS) {
 /// with a generic Unicode-capable terminal.
 /// \return Character width:
 ///   * ErrorNonPrintableCharacter (-1) for non-printable characters (as
-///     identified by isPrint);
+///     identified by isPrintable);
 ///   * 0 for non-spacing and enclosing combining marks;
 ///   * 2 for CJK characters excluding halfwidth forms;
 ///   * 1 for all remaining characters.
 static inline int charWidth(int UCS)
 {
-  if (!isPrint(UCS))
+  if (!isPrintable(UCS))
     return ErrorNonPrintableCharacter;
 
   // Sorted list of non-spacing and enclosing combining mark intervals as
@@ -361,7 +340,7 @@ static inline int charWidth(int UCS)
   return 1;
 }
 
-int columnWidth(StringRef Text) {
+int columnWidthUTF8(StringRef Text) {
   unsigned ColumnWidth = 0;
   unsigned Length;
   for (size_t i = 0, e = Text.size(); i < e; i += Length) {
@@ -382,6 +361,7 @@ int columnWidth(StringRef Text) {
   return ColumnWidth;
 }
 
-}
-}
-}
+} // namespace unicode
+} // namespace sys
+} // namespace llvm
+
