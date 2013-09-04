@@ -122,9 +122,6 @@ public:
   static bool isAvailableExternallyLinkage(LinkageTypes Linkage) {
     return Linkage == AvailableExternallyLinkage;
   }
-  static bool isLinkOnceODRLinkage(LinkageTypes Linkage) {
-    return Linkage == LinkOnceODRLinkage;
-  }
   static bool isLinkOnceLinkage(LinkageTypes Linkage) {
     return Linkage == LinkOnceAnyLinkage ||
            Linkage == LinkOnceODRLinkage ||
@@ -204,9 +201,6 @@ public:
   bool hasExternalLinkage() const { return isExternalLinkage(Linkage); }
   bool hasAvailableExternallyLinkage() const {
     return isAvailableExternallyLinkage(Linkage);
-  }
-  bool hasLinkOnceODRLinkage() const {
-    return isLinkOnceODRLinkage(Linkage);
   }
   bool hasLinkOnceLinkage() const {
     return isLinkOnceLinkage(Linkage);
