@@ -7,7 +7,7 @@
 #
 ##===----------------------------------------------------------------------===##
 CLANG_LEVEL := ../../../..
-LIBRARYNAME := migrateCore
+LIBRARYNAME := modernizeCore
 
 include $(CLANG_LEVEL)/Makefile
 

@@ -36,7 +36,7 @@ SOURCES += $(addprefix ../ReplaceAutoPtr/,$(notdir $(wildcard $(PROJ_SRC_DIR)/..
 BUILT_SOURCES += $(ObjDir)/../ReplaceAutoPtr/.objdir
 
 LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser bitreader support mc mcparser option
-USEDLIBS = migrateCore.a clangFormat.a clangApplyReplacements.a clangTooling.a clangFrontend.a \
+USEDLIBS = modernizeCore.a clangFormat.a clangApplyReplacements.a clangTooling.a clangFrontend.a \
 	   clangSerialization.a clangDriver.a clangRewriteFrontend.a \
 	   clangRewriteCore.a clangParse.a clangSema.a clangAnalysis.a \
 	   clangAST.a clangASTMatchers.a clangEdit.a clangLex.a clangBasic.a

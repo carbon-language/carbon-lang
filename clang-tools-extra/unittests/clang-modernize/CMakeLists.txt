@@ -22,7 +22,7 @@ add_extra_unittest(Cpp11MigrateTests
   )
 
 target_link_libraries(Cpp11MigrateTests
-  migrateCore
+  modernizeCore
   clangFormat
   clangTooling
   clangBasic
