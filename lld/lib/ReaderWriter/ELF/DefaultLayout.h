@@ -53,7 +53,8 @@ public:
   enum DefaultSectionOrder {
     ORDER_NOT_DEFINED = 0,
     ORDER_INTERP = 10,
-    ORDER_NOTE = 20,
+    ORDER_RO_NOTE = 15,
+    ORDER_RW_NOTE = 20,
     ORDER_HASH = 30,
     ORDER_DYNAMIC_SYMBOLS = 40,
     ORDER_DYNAMIC_STRINGS = 50,
@@ -118,7 +119,7 @@ public:
   // For example : PT_TLS, we have two sections .tdata/.tbss
   // that are part of PT_TLS, we need to create this additional
   // segment only once
-  typedef int64_t AdditionalSegmentKey;
+  typedef std::pair<int64_t, int64_t> AdditionalSegmentKey;
   // The segments are created using
   // SegmentName, Segment flags
   typedef std::pair<StringRef, int64_t> SegmentKey;
@@ -132,6 +133,16 @@ public:
       return llvm::hash_combine(k.first, k.second);
     }
   };
+
+  class AdditionalSegmentHashKey {
+  public:
+    int64_t operator() (int64_t segmentType, int64_t segmentFlag) const {
+      // k.first = SegmentName
+      // k.second = SegmentFlags
+      return llvm::hash_combine(segmentType, segmentFlag);
+    }
+  };
+
 
   // Merged Sections contain the map of Sectionnames to a vector of sections,
   // that have been merged to form a single section
@@ -340,8 +351,11 @@ Layout::SectionOrder DefaultLayout<ELFT>::getSectionOrder(
   case DefinedAtom::typeStub:
     return ORDER_PLT;
 
-  case DefinedAtom::typeNote:
-    return ORDER_NOTE;
+  case DefinedAtom::typeRONote:
+      return ORDER_RO_NOTE;
+
+  case DefinedAtom::typeRWNote:
+      return ORDER_RW_NOTE;
 
   case DefinedAtom::typeThreadData:
     return ORDER_TDATA;
@@ -407,7 +421,8 @@ Layout::SegmentType DefaultLayout<ELFT>::getSegmentType(
   case ORDER_EH_FRAMEHDR:
     return llvm::ELF::PT_LOAD;
 
-  case ORDER_NOTE:
+  case ORDER_RO_NOTE:
+  case ORDER_RW_NOTE:
     return llvm::ELF::PT_NOTE;
 
   case ORDER_DYNAMIC:
@@ -453,7 +468,8 @@ bool DefaultLayout<ELFT>::hasOutputSegment(Section<ELFT> *section) {
   case ORDER_EH_FRAMEHDR:
   case ORDER_TDATA:
   case ORDER_TBSS:
-  case ORDER_NOTE:
+  case ORDER_RO_NOTE:
+  case ORDER_RW_NOTE:
   case ORDER_DYNAMIC:
   case ORDER_CTORS:
   case ORDER_DTORS:
@@ -601,8 +617,9 @@ template <class ELFT> void DefaultLayout<ELFT>::assignSectionsToSegments() {
         // We need a seperate segment for sections that dont have
         // the segment type to be PT_LOAD
         if (segmentType != llvm::ELF::PT_LOAD) {
+          const AdditionalSegmentKey key(segmentType, lookupSectionFlag);
           const std::pair<AdditionalSegmentKey, Segment<ELFT> *>
-          additionalSegment(segmentType, nullptr);
+          additionalSegment(key, nullptr);
           std::pair<typename AdditionalSegmentMapT::iterator, bool>
           additionalSegmentInsert(
               _additionalSegmentMap.insert(additionalSegment));

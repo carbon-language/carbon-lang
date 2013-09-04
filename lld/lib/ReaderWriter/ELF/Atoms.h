@@ -296,9 +296,6 @@ public:
     if (_symbol->st_shndx == llvm::ELF::SHN_COMMON)
       return _contentType = typeZeroFill;
 
-    if (_section->sh_type == llvm::ELF::SHT_NOTE)
-      return _contentType = typeNote;
-
     switch (_section->sh_type) {
     case llvm::ELF::SHT_PROGBITS:
       flags &= ~llvm::ELF::SHF_ALLOC;
@@ -317,6 +314,17 @@ public:
         break;
       default:
         ret = typeCode;
+        break;
+      }
+      break;
+    case llvm::ELF::SHT_NOTE:
+      flags &= ~llvm::ELF::SHF_ALLOC;
+      switch (flags) {
+      case llvm::ELF::SHF_WRITE:
+        ret = typeRWNote;
+        break;
+      default:
+        ret = typeRONote;
         break;
       }
       break;
@@ -410,6 +418,7 @@ public:
 
     case llvm::ELF::SHT_DYNAMIC:
     case llvm::ELF::SHT_PROGBITS:
+    case llvm::ELF::SHT_NOTE:
       flags &= ~llvm::ELF::SHF_ALLOC;
       flags &= ~llvm::ELF::SHF_GROUP;
       switch (flags) {
@@ -438,9 +447,6 @@ public:
     case llvm::ELF::SHT_INIT_ARRAY:
     case llvm::ELF::SHT_FINI_ARRAY:
       return _permissions = permRW_;
-
-    case llvm::ELF::SHT_NOTE:
-      return _permissions = permR__;
 
     default:
       return _permissions = perm___;

@@ -41,7 +41,7 @@ DefinedAtom::ContentPermissions DefinedAtom::permissions(ContentType type) {
   case typeLiteral16:
   case typeDTraceDOF:
   case typeCompactUnwindInfo:
-  case typeNote:
+  case typeRONote:
     return permR__;
 
   case typeData:
@@ -53,6 +53,7 @@ DefinedAtom::ContentPermissions DefinedAtom::permissions(ContentType type) {
   case typeLazyDylibPointer:
   case typeThunkTLV:
   case typeDataDirectoryEntry:
+  case typeRWNote:
     return permRW_;
 
   case typeGOT:

@@ -156,7 +156,8 @@ public:
       this->_type = SHT_NOBITS;
       break;
 
-    case DefinedAtom::typeNote:
+    case DefinedAtom::typeRONote:
+    case DefinedAtom::typeRWNote:
       this->_type = SHT_NOTE;
       break;
     }
@@ -285,7 +286,8 @@ const lld::AtomLayout &AtomSection<ELFT>::appendAtom(const Atom *atom) {
     case DefinedAtom::typeStub:
     case DefinedAtom::typeResolver:
     case DefinedAtom::typeThreadData:
-    case DefinedAtom::typeNote:
+    case DefinedAtom::typeRONote:
+    case DefinedAtom::typeRWNote:
       _atoms.push_back(new (_alloc) lld::AtomLayout(atom, fOffset, 0));
       this->_fsize = fOffset + definedAtom->size();
       this->_msize = mOffset + definedAtom->size();

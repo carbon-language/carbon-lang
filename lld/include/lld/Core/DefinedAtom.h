@@ -147,7 +147,8 @@ public:
     typeDataDirectoryEntry, // linker created for data directory header [PECOFF]
     typeThreadZeroFill,     // Uninitialized thread local data(TBSS) [ELF]
     typeThreadData,         // Initialized thread local data(TDATA) [ELF]
-    typeNote,               // Identifies note sections [ELF]
+    typeRONote,             // Identifies readonly note sections [ELF]
+    typeRWNote,             // Identifies readwrite note sections [ELF]
   };
 
   // Permission bits for atoms and segments. The order of these values are
