@@ -300,18 +300,18 @@ bool LTOCodeGenerator::determineTarget(std::string &errMsg) {
 
 void LTOCodeGenerator::
 applyRestriction(GlobalValue &GV,
-                 std::vector<const char*> &mustPreserveList,
-                 SmallPtrSet<GlobalValue*, 8> &asmUsed,
-                 Mangler &mangler) {
+                 std::vector<const char*> &MustPreserveList,
+                 SmallPtrSet<GlobalValue*, 8> &AsmUsed,
+                 Mangler &Mangler) {
   SmallString<64> Buffer;
-  mangler.getNameWithPrefix(Buffer, &GV, false);
+  Mangler.getNameWithPrefix(Buffer, &GV, false);
 
   if (GV.isDeclaration())
     return;
   if (MustPreserveSymbols.count(Buffer))
-    mustPreserveList.push_back(GV.getName().data());
+    MustPreserveList.push_back(GV.getName().data());
   if (AsmUndefinedRefs.count(Buffer))
-    asmUsed.insert(&GV);
+    AsmUsed.insert(&GV);
 }
 
 static void findUsedValues(GlobalVariable *LLVMUsed,
@@ -337,31 +337,31 @@ void LTOCodeGenerator::applyScopeRestrictions() {
   // mark which symbols can not be internalized
   MCContext MContext(TargetMach->getMCAsmInfo(), TargetMach->getRegisterInfo(),
                      NULL);
-  Mangler mangler(MContext, TargetMach);
-  std::vector<const char*> mustPreserveList;
-  SmallPtrSet<GlobalValue*, 8> asmUsed;
+  Mangler Mangler(MContext, TargetMach);
+  std::vector<const char*> MustPreserveList;
+  SmallPtrSet<GlobalValue*, 8> AsmUsed;
 
   for (Module::iterator f = mergedModule->begin(),
          e = mergedModule->end(); f != e; ++f)
-    applyRestriction(*f, mustPreserveList, asmUsed, mangler);
+    applyRestriction(*f, MustPreserveList, AsmUsed, Mangler);
   for (Module::global_iterator v = mergedModule->global_begin(),
          e = mergedModule->global_end(); v !=  e; ++v)
-    applyRestriction(*v, mustPreserveList, asmUsed, mangler);
+    applyRestriction(*v, MustPreserveList, AsmUsed, Mangler);
   for (Module::alias_iterator a = mergedModule->alias_begin(),
          e = mergedModule->alias_end(); a != e; ++a)
-    applyRestriction(*a, mustPreserveList, asmUsed, mangler);
+    applyRestriction(*a, MustPreserveList, AsmUsed, Mangler);
 
   GlobalVariable *LLVMCompilerUsed =
     mergedModule->getGlobalVariable("llvm.compiler.used");
-  findUsedValues(LLVMCompilerUsed, asmUsed);
+  findUsedValues(LLVMCompilerUsed, AsmUsed);
   if (LLVMCompilerUsed)
     LLVMCompilerUsed->eraseFromParent();
 
-  if (!asmUsed.empty()) {
+  if (!AsmUsed.empty()) {
     llvm::Type *i8PTy = llvm::Type::getInt8PtrTy(Context);
     std::vector<Constant*> asmUsed2;
-    for (SmallPtrSet<GlobalValue*, 16>::const_iterator i = asmUsed.begin(),
-           e = asmUsed.end(); i !=e; ++i) {
+    for (SmallPtrSet<GlobalValue*, 16>::const_iterator i = AsmUsed.begin(),
+           e = AsmUsed.end(); i !=e; ++i) {
       GlobalValue *GV = *i;
       Constant *c = ConstantExpr::getBitCast(GV, i8PTy);
       asmUsed2.push_back(c);
@@ -377,7 +377,7 @@ void LTOCodeGenerator::applyScopeRestrictions() {
     LLVMCompilerUsed->setSection("llvm.metadata");
   }
 
-  passes.add(createInternalizePass(mustPreserveList));
+  passes.add(createInternalizePass(MustPreserveList));
 
   // apply scope restrictions
   passes.run(*mergedModule);

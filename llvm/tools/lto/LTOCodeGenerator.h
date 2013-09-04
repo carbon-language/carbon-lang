@@ -106,9 +106,9 @@ private:
   bool generateObjectFile(llvm::raw_ostream &out, std::string &errMsg);
   void applyScopeRestrictions();
   void applyRestriction(llvm::GlobalValue &GV,
-                        std::vector<const char*> &mustPreserveList,
-                        llvm::SmallPtrSet<llvm::GlobalValue*, 8> &asmUsed,
-                        llvm::Mangler &mangler);
+                        std::vector<const char*> &MustPreserveList,
+                        llvm::SmallPtrSet<llvm::GlobalValue*, 8> &AsmUsed,
+                        llvm::Mangler &Mangler);
   bool determineTarget(std::string &errMsg);
 
   typedef llvm::StringMap<uint8_t> StringSet;

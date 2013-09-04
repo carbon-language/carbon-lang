@@ -50,7 +50,7 @@ namespace {
   public:
     static char ID; // Pass identification, replacement for typeid
     explicit InternalizePass();
-    explicit InternalizePass(ArrayRef<const char *> exportList);
+    explicit InternalizePass(ArrayRef<const char *> ExportList);
     void LoadFile(const char *Filename);
     virtual bool runOnModule(Module &M);
 
@@ -73,11 +73,11 @@ InternalizePass::InternalizePass()
   ExternalNames.insert(APIList.begin(), APIList.end());
 }
 
-InternalizePass::InternalizePass(ArrayRef<const char *> exportList)
+InternalizePass::InternalizePass(ArrayRef<const char *> ExportList)
   : ModulePass(ID){
   initializeInternalizePassPass(*PassRegistry::getPassRegistry());
-  for(ArrayRef<const char *>::const_iterator itr = exportList.begin();
-        itr != exportList.end(); itr++) {
+  for(ArrayRef<const char *>::const_iterator itr = ExportList.begin();
+        itr != ExportList.end(); itr++) {
     ExternalNames.insert(*itr);
   }
 }
@@ -210,6 +210,6 @@ ModulePass *llvm::createInternalizePass() {
   return new InternalizePass();
 }
 
-ModulePass *llvm::createInternalizePass(ArrayRef<const char *> el) {
-  return new InternalizePass(el);
+ModulePass *llvm::createInternalizePass(ArrayRef<const char *> ExportList) {
+  return new InternalizePass(ExportList);
 }
