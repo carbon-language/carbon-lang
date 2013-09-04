@@ -28,34 +28,36 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 ; An empty array should not have an AT_upper_bound attribute. But an array of 1
 ; should.
 
-; CHECK:      0x00000074:   DW_TAG_base_type [5]  
-; CHECK-NEXT: DW_AT_name [DW_FORM_strp]  ( .debug_str[0x00000043] = "int")
+; CHECK:      DW_TAG_base_type [5]
+; CHECK-NEXT: DW_AT_name [DW_FORM_strp]  ( .debug_str[{{.*}}] = "int")
 ; CHECK-NEXT: DW_AT_encoding [DW_FORM_data1]   (0x05)
 ; CHECK-NEXT: DW_AT_byte_size [DW_FORM_data1]  (0x04)
 
 ; int[1]:
-; CHECK:      0x00000082:   DW_TAG_array_type [7] *
-; CHECK-NEXT: DW_AT_type [DW_FORM_ref4]    (cu + 0x0074 => {0x00000074})
-; CHECK:      0x00000087:     DW_TAG_subrange_type [8]
-; CHECK-NEXT: DW_AT_type [DW_FORM_ref4]  (cu + 0x007b => {0x0000007b})
+; CHECK:      DW_TAG_array_type [7] *
+; CHECK-NEXT: DW_AT_type [DW_FORM_ref4]
+; CHECK:      DW_TAG_subrange_type [8]
+; CHECK-NEXT: DW_AT_type [DW_FORM_ref4]
 ; CHECK-NEXT: DW_AT_upper_bound [DW_FORM_data1]  (0x00)
 
 ; int foo::b[1]:
-; CHECK:      0x000000a5:     DW_TAG_member [10]
-; CHECK-NEXT: DW_AT_name [DW_FORM_strp]  ( .debug_str[0x00000050] = "b")
-; CHECK-NEXT: DW_AT_type [DW_FORM_ref4]  (cu + 0x0082 => {0x00000082})
+; CHECK:      DW_TAG_member [10]
+; CHECK:      DW_TAG_member [10]
+; CHECK-NEXT: DW_AT_name [DW_FORM_strp]  ( .debug_str[{{.*}}] = "b")
+; CHECK-NEXT: DW_AT_type [DW_FORM_ref4]
 
 ; int[0]:
-; CHECK:      0x000000b5:   DW_TAG_array_type [7] *
-; CHECK-NEXT: DW_AT_type [DW_FORM_ref4]    (cu + 0x0074 => {0x00000074})
-; CHECK:      0x000000ba:     DW_TAG_subrange_type [11]
-; CHECK-NEXT: DW_AT_type [DW_FORM_ref4]  (cu + 0x007b => {0x0000007b})
+; CHECK:      DW_TAG_array_type [7] *
+; CHECK-NEXT: DW_AT_type [DW_FORM_ref4]
+; CHECK:      DW_TAG_subrange_type [11]
+; CHECK-NEXT: DW_AT_type [DW_FORM_ref4]
 ; CHECK-NOT:  DW_AT_upper_bound
 
 ; int bar::b[0]:
-; CHECK:      0x000000d7:     DW_TAG_member [10]
-; CHECK-NEXT: DW_AT_name [DW_FORM_strp]  ( .debug_str[0x00000050] = "b")
-; CHECK-NEXT: DW_AT_type [DW_FORM_ref4]  (cu + 0x00b5 => {0x000000b5})
+; CHECK:      DW_TAG_member [10]
+; CHECK:      DW_TAG_member [10]
+; CHECK-NEXT: DW_AT_name [DW_FORM_strp]  ( .debug_str[{{.*}}] = "b")
+; CHECK-NEXT: DW_AT_type [DW_FORM_ref4]
 
 !llvm.dbg.cu = !{!0}
 

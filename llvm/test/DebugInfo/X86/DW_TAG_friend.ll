@@ -3,10 +3,10 @@
 
 ; Check that the friend tag is there and is followed by a DW_AT_friend that has a reference back.
 
-; CHECK: 0x00000032:   DW_TAG_class_type [4]
-; CHECK: 0x00000077:   DW_TAG_class_type [4]
-; CHECK: 0x000000a0:     DW_TAG_friend [9]  
-; CHECK:                   DW_AT_friend [DW_FORM_ref4]   (cu + 0x0032 => {0x00000032})
+; CHECK: [[BACK:0x[0-9a-f]*]]:   DW_TAG_class_type [4]
+; CHECK-NEXT: DW_AT_name [DW_FORM_strp]       ( .debug_str[{{.*}}] = "A")
+; CHECK: DW_TAG_friend [9]
+; CHECK-NEXT: DW_AT_friend [DW_FORM_ref4]   (cu + 0x0032 => {[[BACK]]})
 
 
 %class.A = type { i32 }

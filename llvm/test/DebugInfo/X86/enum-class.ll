@@ -29,12 +29,12 @@
 !22 = metadata !{metadata !"foo.cpp", metadata !"/Users/echristo/tmp"}
 
 ; CHECK: DW_TAG_enumeration_type [3]
-; CHECK: DW_AT_type [DW_FORM_ref4]      (cu + 0x0026 => {0x00000026})
+; CHECK: DW_AT_type [DW_FORM_ref4]
 ; CHECK: DW_AT_enum_class [DW_FORM_flag]    (0x01)
 ; CHECK: DW_AT_name [DW_FORM_strp]      ( .debug_str[{{.*}}] = "A")
 
 ; CHECK: DW_TAG_enumeration_type [3] *
-; CHECK: DW_AT_type [DW_FORM_ref4]      (cu + 0x0057 => {0x00000057})
+; CHECK: DW_AT_type [DW_FORM_ref4]
 ; CHECK: DW_AT_enum_class [DW_FORM_flag]    (0x01)
 ; CHECK: DW_AT_name [DW_FORM_strp]          ( .debug_str[{{.*}}] = "B")
 
