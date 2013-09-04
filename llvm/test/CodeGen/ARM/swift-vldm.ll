@@ -1,7 +1,8 @@
 ; RUN: llc < %s -mcpu=swift -mtriple=armv7s-apple-ios | FileCheck %s
 
-; vldm with registers not aligned with q registers need more micro-ops so that
-; so that there usage becomes unbeneficial on swift.
+; Check that we avoid producing vldm instructions using d registers that
+; begin in the most-significant half of a q register. These require more
+; micro-ops on swift and so aren't worth combining.
 
 ; CHECK-LABEL: test_vldm
 ; CHECK: vldmia r{{[0-9]+}}, {d2, d3, d4}
@@ -19,7 +20,7 @@ entry:
   %d2 = load double * %addr1
   %d3 = load double * %addr2
   %d4 = load double * %addr3
-  ; We are trying to force x[0-3] in register d1 to d4 so that we can test we
+  ; We are trying to force x[0-3] in registers d1 to d4 so that we can test we
   ; don't form a "vldmia rX, {d1, d2, d3, d4}".
   ; We are relying on the calling convention and that register allocation
   ; properly coalesces registers.
