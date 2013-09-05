@@ -22,5 +22,10 @@
 #undef LoadImage
 #undef GetUserName
 #undef far
+#undef near
+#undef FAR
+#undef NEAR
+#define FAR
+#define NEAR
 
 #endif  // LLDB_lldb_windows_h_
