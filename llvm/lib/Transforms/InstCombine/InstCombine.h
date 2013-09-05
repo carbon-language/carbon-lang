@@ -271,7 +271,7 @@ public:
     if (&I == V)
       V = UndefValue::get(I.getType());
 
-    DEBUG(errs() << "IC: Replacing " << I << "\n"
+    DEBUG(dbgs() << "IC: Replacing " << I << "\n"
                     "    with " << *V << '\n');
 
     I.replaceAllUsesWith(V);
@@ -283,7 +283,7 @@ public:
   // instruction.  Instead, visit methods should return the value returned by
   // this function.
   Instruction *EraseInstFromFunction(Instruction &I) {
-    DEBUG(errs() << "IC: ERASE " << I << '\n');
+    DEBUG(dbgs() << "IC: ERASE " << I << '\n');
 
     assert(I.use_empty() && "Cannot erase instruction that is used!");
     // Make sure that we reprocess all operands now that we reduced their
