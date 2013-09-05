@@ -102,6 +102,8 @@ TargetInfo::~TargetInfo() {}
 const char *TargetInfo::getTypeName(IntType T) {
   switch (T) {
   default: llvm_unreachable("not an integer!");
+  case SignedChar:       return "char";
+  case UnsignedChar:     return "unsigned char";
   case SignedShort:      return "short";
   case UnsignedShort:    return "unsigned short";
   case SignedInt:        return "int";
@@ -118,10 +120,12 @@ const char *TargetInfo::getTypeName(IntType T) {
 const char *TargetInfo::getTypeConstantSuffix(IntType T) {
   switch (T) {
   default: llvm_unreachable("not an integer!");
+  case SignedChar:
   case SignedShort:
   case SignedInt:        return "";
   case SignedLong:       return "L";
   case SignedLongLong:   return "LL";
+  case UnsignedChar:
   case UnsignedShort:
   case UnsignedInt:      return "U";
   case UnsignedLong:     return "UL";
@@ -134,6 +138,8 @@ const char *TargetInfo::getTypeConstantSuffix(IntType T) {
 unsigned TargetInfo::getTypeWidth(IntType T) const {
   switch (T) {
   default: llvm_unreachable("not an integer!");
+  case SignedChar:
+  case UnsignedChar:     return getCharWidth();
   case SignedShort:
   case UnsignedShort:    return getShortWidth();
   case SignedInt:
@@ -145,11 +151,48 @@ unsigned TargetInfo::getTypeWidth(IntType T) const {
   };
 }
 
+TargetInfo::IntType TargetInfo::getIntTypeByWidth(
+    unsigned BitWidth, bool IsSigned) const {
+  if (getCharWidth() == BitWidth)
+    return IsSigned ? SignedChar : UnsignedChar;
+  if (getShortWidth() == BitWidth)
+    return IsSigned ? SignedShort : UnsignedShort;
+  if (getIntWidth() == BitWidth)
+    return IsSigned ? SignedInt : UnsignedInt;
+  if (getLongWidth() == BitWidth)
+    return IsSigned ? SignedLong : UnsignedLong;
+  if (getLongLongWidth() == BitWidth)
+    return IsSigned ? SignedLongLong : UnsignedLongLong;
+  return NoInt;
+}
+
+TargetInfo::RealType TargetInfo::getRealTypeByWidth(unsigned BitWidth) const {
+  if (getFloatWidth() == BitWidth)
+    return Float;
+  if (getDoubleWidth() == BitWidth)
+    return Double;
+
+  switch (BitWidth) {
+  case 96:
+    if (&getLongDoubleFormat() == &llvm::APFloat::x87DoubleExtended)
+      return LongDouble;
+    break;
+  case 128:
+    if (&getLongDoubleFormat() == &llvm::APFloat::PPCDoubleDouble)
+      return LongDouble;
+    break;
+  }
+
+  return NoFloat;
+}
+
 /// getTypeAlign - Return the alignment (in bits) of the specified integer type
 /// enum. For example, SignedInt -> getIntAlign().
 unsigned TargetInfo::getTypeAlign(IntType T) const {
   switch (T) {
   default: llvm_unreachable("not an integer!");
+  case SignedChar:
+  case UnsignedChar:     return getCharAlign();
   case SignedShort:
   case UnsignedShort:    return getShortAlign();
   case SignedInt:
@@ -166,11 +209,13 @@ unsigned TargetInfo::getTypeAlign(IntType T) const {
 bool TargetInfo::isTypeSigned(IntType T) {
   switch (T) {
   default: llvm_unreachable("not an integer!");
+  case SignedChar:
   case SignedShort:
   case SignedInt:
   case SignedLong:
   case SignedLongLong:
     return true;
+  case UnsignedChar:
   case UnsignedShort:
   case UnsignedInt:
   case UnsignedLong:

@@ -112,6 +112,8 @@ public:
   ///===---- Target Data Type Query Methods -------------------------------===//
   enum IntType {
     NoInt = 0,
+    SignedChar,
+    UnsignedChar,
     SignedShort,
     UnsignedShort,
     SignedInt,
@@ -123,6 +125,7 @@ public:
   };
 
   enum RealType {
+    NoFloat = 255,
     Float = 0,
     Double,
     LongDouble
@@ -219,6 +222,12 @@ public:
   ///
   /// For example, SignedInt -> getIntWidth().
   unsigned getTypeWidth(IntType T) const;
+
+  /// \brief Return integer type with specified width.
+  IntType getIntTypeByWidth(unsigned BitWidth, bool IsSigned) const;
+
+  /// \brief Return floating point type with specified width.
+  RealType getRealTypeByWidth(unsigned BitWidth) const;
 
   /// \brief Return the alignment (in bits) of the specified integer type enum.
   ///

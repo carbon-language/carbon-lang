@@ -6314,6 +6314,8 @@ ASTContext::getSubstTemplateTemplateParmPack(TemplateTemplateParmDecl *Param,
 CanQualType ASTContext::getFromTargetType(unsigned Type) const {
   switch (Type) {
   case TargetInfo::NoInt: return CanQualType();
+  case TargetInfo::SignedChar: return SignedCharTy;
+  case TargetInfo::UnsignedChar: return UnsignedCharTy;
   case TargetInfo::SignedShort: return ShortTy;
   case TargetInfo::UnsignedShort: return UnsignedShortTy;
   case TargetInfo::SignedInt: return IntTy;
@@ -7988,6 +7990,38 @@ size_t ASTContext::getSideTableAllocatedMemory() const {
          llvm::capacity_in_bytes(Types) +
          llvm::capacity_in_bytes(VariableArrayTypes) +
          llvm::capacity_in_bytes(ClassScopeSpecializationPattern);
+}
+
+/// getIntTypeForBitwidth -
+/// sets integer QualTy according to specified details:
+/// bitwidth, signed/unsigned.
+/// Returns empty type if there is no appropriate target types.
+QualType ASTContext::getIntTypeForBitwidth(unsigned DestWidth,
+                                           unsigned Signed) const {
+  TargetInfo::IntType Ty = getTargetInfo().getIntTypeByWidth(DestWidth, Signed);
+  CanQualType QualTy = getFromTargetType(Ty);
+  if (!QualTy && DestWidth == 128)
+    return Signed ? Int128Ty : UnsignedInt128Ty;
+  return QualTy;
+}
+
+/// getRealTypeForBitwidth -
+/// sets floating point QualTy according to specified bitwidth.
+/// Returns empty type if there is no appropriate target types.
+QualType ASTContext::getRealTypeForBitwidth(unsigned DestWidth) const {
+  TargetInfo::RealType Ty = getTargetInfo().getRealTypeByWidth(DestWidth);
+  switch (Ty) {
+  case TargetInfo::Float:
+    return FloatTy;
+  case TargetInfo::Double:
+    return DoubleTy;
+  case TargetInfo::LongDouble:
+    return LongDoubleTy;
+  case TargetInfo::NoFloat:
+    return QualType();
+  }
+
+  llvm_unreachable("Unhandled TargetInfo::RealType value");
 }
 
 void ASTContext::setManglingNumber(const NamedDecl *ND, unsigned Number) {

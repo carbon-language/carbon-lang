@@ -480,6 +480,17 @@ public:
 
   const TargetInfo &getTargetInfo() const { return *Target; }
   
+  /// getIntTypeForBitwidth -
+  /// sets integer QualTy according to specified details:
+  /// bitwidth, signed/unsigned.
+  /// Returns empty type if there is no appropriate target types.
+  QualType getIntTypeForBitwidth(unsigned DestWidth,
+                                 unsigned Signed) const;
+  /// getRealTypeForBitwidth -
+  /// sets floating point QualTy according to specified bitwidth.
+  /// Returns empty type if there is no appropriate target types.
+  QualType getRealTypeForBitwidth(unsigned DestWidth) const;
+
   bool AtomicUsesUnsupportedLibcall(const AtomicExpr *E) const;
   
   const LangOptions& getLangOpts() const { return LangOpts; }
