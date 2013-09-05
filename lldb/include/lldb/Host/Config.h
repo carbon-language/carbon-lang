@@ -26,6 +26,10 @@
 
 #include "lldb/Host/mingw/Config.h"
 
+#elif defined(_MSC_VER)
+
+#include "lldb/Host/msvc/Config.h"
+
 #else
 
 #error undefined platform
