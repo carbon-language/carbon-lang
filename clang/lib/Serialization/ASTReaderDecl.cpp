@@ -2840,7 +2840,9 @@ void ASTDeclReader::UpdateDecl(Decl *D, ModuleFile &ModuleFile,
     }
 
     case UPD_DECL_MARKED_USED: {
-      D->markUsed(Reader.getContext());
+      // FIXME: This doesn't send the right notifications if there are
+      // ASTMutationListeners other than an ASTWriter.
+      D->setIsUsed(true);
       break;
     }
     }
