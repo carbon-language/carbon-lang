@@ -158,7 +158,8 @@ namespace llvm {
   /// Represents reference to a DIType, abstracts over direct and
   /// identifier-based metadata type references.
   class DITypeRef {
-    friend DITypeRef DIDescriptor::getFieldAs<DITypeRef>(unsigned Elt) const;
+    template <typename DescTy>
+    friend DescTy DIDescriptor::getFieldAs(unsigned Elt) const;
 
     /// TypeVal can be either a MDNode or a MDString, in the latter,
     /// MDString specifies the type identifier.
