@@ -996,7 +996,8 @@ ObjCMigrateASTConsumer::CF_BRIDGING_KIND
   bool FuncIsReturnAnnotated = (FuncDecl->getAttr<CFReturnsRetainedAttr>() ||
                                 FuncDecl->getAttr<CFReturnsNotRetainedAttr>() ||
                                 FuncDecl->getAttr<NSReturnsRetainedAttr>() ||
-                                FuncDecl->getAttr<NSReturnsNotRetainedAttr>());
+                                FuncDecl->getAttr<NSReturnsNotRetainedAttr>() ||
+                                FuncDecl->getAttr<NSReturnsAutoreleasedAttr>());
   
   // Trivial case of when funciton is annotated and has no argument.
   if (FuncIsReturnAnnotated && FuncDecl->getNumParams() == 0)
@@ -1072,12 +1073,24 @@ void ObjCMigrateASTConsumer::AddCFAnnotations(ASTContext &Ctx,
         AnnotationString = " CF_RETURNS_NOT_RETAINED";
     }
     else if (Ret.getObjKind() == RetEffect::ObjC) {
-      if (Ret.isOwned() &&
-          Ctx.Idents.get("NS_RETURNS_RETAINED").hasMacroDefinition())
-        AnnotationString = " NS_RETURNS_RETAINED";
-      else if (Ret.notOwned() &&
-               Ctx.Idents.get("NS_RETURNS_NOT_RETAINED").hasMacroDefinition())
-        AnnotationString = " NS_RETURNS_NOT_RETAINED";
+      ObjCMethodFamily OMF = MethodDecl->getMethodFamily();
+      switch (OMF) {
+        case clang::OMF_alloc:
+        case clang::OMF_new:
+        case clang::OMF_copy:
+        case clang::OMF_init:
+        case clang::OMF_mutableCopy:
+          break;
+          
+        default:
+          if (Ret.isOwned() &&
+              Ctx.Idents.get("NS_RETURNS_RETAINED").hasMacroDefinition())
+            AnnotationString = " NS_RETURNS_RETAINED";
+          else if (Ret.notOwned() &&
+                   Ctx.Idents.get("NS_RETURNS_NOT_RETAINED").hasMacroDefinition())
+            AnnotationString = " NS_RETURNS_NOT_RETAINED";
+          break;
+      }
     }
     
     if (AnnotationString) {
@@ -1111,7 +1124,18 @@ void ObjCMigrateASTConsumer::migrateAddMethodAnnotation(
   bool MethodIsReturnAnnotated = (MethodDecl->getAttr<CFReturnsRetainedAttr>() ||
                                   MethodDecl->getAttr<CFReturnsNotRetainedAttr>() ||
                                   MethodDecl->getAttr<NSReturnsRetainedAttr>() ||
-                                  MethodDecl->getAttr<NSReturnsNotRetainedAttr>());
+                                  MethodDecl->getAttr<NSReturnsNotRetainedAttr>() ||
+                                  MethodDecl->getAttr<NSReturnsAutoreleasedAttr>());
+  
+  if (CE.getReceiver() ==  DecRefMsg &&
+      !MethodDecl->getAttr<NSConsumesSelfAttr>() &&
+      MethodDecl->getMethodFamily() != OMF_init &&
+      MethodDecl->getMethodFamily() != OMF_release &&
+      Ctx.Idents.get("NS_CONSUMES_SELF").hasMacroDefinition()) {
+    edit::Commit commit(*Editor);
+    commit.insertBefore(MethodDecl->getLocEnd(), " NS_CONSUMES_SELF");
+    Editor->commit(commit);
+  }
   
   // Trivial case of when funciton is annotated and has no argument.
   if (MethodIsReturnAnnotated &&
