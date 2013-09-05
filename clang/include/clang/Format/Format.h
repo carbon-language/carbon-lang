@@ -149,8 +149,11 @@ struct FormatStyle {
   /// Otherwise puts them into the right-most column.
   bool AlignEscapedNewlinesLeft;
 
-  /// \brief The number of characters to use for indentation.
+  /// \brief The number of columns to use for indentation.
   unsigned IndentWidth;
+
+  /// \brief The number of columns used for tab stops.
+  unsigned TabWidth;
 
   /// \brief The number of characters to use for indentation of constructor
   /// initializer lists.

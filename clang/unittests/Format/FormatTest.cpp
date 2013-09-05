@@ -5638,9 +5638,41 @@ TEST_F(FormatTest, ConfigurableUseOfTab) {
                    "}",
                    21, 0, Tab));
 
+  Tab.TabWidth = 4;
+  Tab.IndentWidth = 8;
+  verifyFormat("class TabWidth4Indent8 {\n"
+               "\t\tvoid f() {\n"
+               "\t\t\t\tsomeFunction(parameter1,\n"
+               "\t\t\t\t\t\t\t parameter2);\n"
+               "\t\t}\n"
+               "};",
+               Tab);
+
+  Tab.TabWidth = 4;
+  Tab.IndentWidth = 4;
+  verifyFormat("class TabWidth4Indent4 {\n"
+               "\tvoid f() {\n"
+               "\t\tsomeFunction(parameter1,\n"
+               "\t\t\t\t\t parameter2);\n"
+               "\t}\n"
+               "};",
+               Tab);
+
+  Tab.TabWidth = 8;
+  Tab.IndentWidth = 4;
+  verifyFormat("class TabWidth8Indent4 {\n"
+               "    void f() {\n"
+               "\tsomeFunction(parameter1,\n"
+               "\t\t     parameter2);\n"
+               "    }\n"
+               "};",
+               Tab);
+
   // FIXME: To correctly count mixed whitespace we need to
   // also correctly count mixed whitespace in front of the comment.
-  //
+
+  // Tab.TabWidth = 8;
+  // Tab.IndentWidth = 8;
   // EXPECT_EQ("/*\n"
   //           "\t      a\t\tcomment\n"
   //           "\t      in multiple lines\n"
@@ -6074,15 +6106,15 @@ TEST_F(FormatTest, CountsUTF8CharactersProperly) {
   verifyFormat("\"Однажды в студёную зимнюю пору...\"",
                getLLVMStyleWithColumns(35));
   verifyFormat("\"一 二 三 四 五 六 七 八 九 十\"",
-               getLLVMStyleWithColumns(21));
+               getLLVMStyleWithColumns(31));
   verifyFormat("// Однажды в студёную зимнюю пору...",
                getLLVMStyleWithColumns(36));
   verifyFormat("// 一 二 三 四 五 六 七 八 九 十",
-               getLLVMStyleWithColumns(22));
+               getLLVMStyleWithColumns(32));
   verifyFormat("/* Однажды в студёную зимнюю пору... */",
                getLLVMStyleWithColumns(39));
   verifyFormat("/* 一 二 三 四 五 六 七 八 九 十 */",
-               getLLVMStyleWithColumns(25));
+               getLLVMStyleWithColumns(35));
 }
 
 TEST_F(FormatTest, SplitsUTF8Strings) {
@@ -6093,11 +6125,29 @@ TEST_F(FormatTest, SplitsUTF8Strings) {
       "\"пору,\"",
       format("\"Однажды, в студёную зимнюю пору,\"",
              getLLVMStyleWithColumns(13)));
-  EXPECT_EQ("\"一 二 三 四 \"\n"
-            "\"五 六 七 八 \"\n"
-            "\"九 十\"",
-            format("\"一 二 三 四 五 六 七 八 九 十\"",
-                   getLLVMStyleWithColumns(10)));
+  EXPECT_EQ("\"一 二 三 \"\n"
+            "\"四 五六 \"\n"
+            "\"七 八 九 \"\n"
+            "\"十\"",
+            format("\"一 二 三 四 五六 七 八 九 十\"",
+                   getLLVMStyleWithColumns(11)));
+  EXPECT_EQ("\"一\t二 \"\n"
+            "\"\t三 \"\n"
+            "\"四 五\t六 \"\n"
+            "\"\t七 \"\n"
+            "\"八九十\tqq\"",
+            format("\"一\t二 \t三 四 五\t六 \t七 八九十\tqq\"",
+                   getLLVMStyleWithColumns(11)));
+}
+
+
+TEST_F(FormatTest, HandlesDoubleWidthCharsInMultiLineStrings) {
+  EXPECT_EQ("const char *sssss =\n"
+            "    \"一二三四五六七八\\\n"
+            " 九 十\";",
+            format("const char *sssss = \"一二三四五六七八\\\n"
+                   " 九 十\";",
+                   getLLVMStyleWithColumns(30)));
 }
 
 TEST_F(FormatTest, SplitsUTF8LineComments) {
@@ -6109,9 +6159,9 @@ TEST_F(FormatTest, SplitsUTF8LineComments) {
                    getLLVMStyleWithColumns(13)));
   EXPECT_EQ("// 一二三\n"
             "// 四五六七\n"
-            "// 八\n"
-            "// 九 十",
-            format("// 一二三 四五六七 八  九 十", getLLVMStyleWithColumns(6)));
+            "// 八  九\n"
+            "// 十",
+            format("// 一二三 四五六七 八  九 十", getLLVMStyleWithColumns(9)));
 }
 
 TEST_F(FormatTest, SplitsUTF8BlockComments) {
@@ -6126,17 +6176,19 @@ TEST_F(FormatTest, SplitsUTF8BlockComments) {
             format("/* Гляжу, поднимается медленно в гору\n"
                    " * Лошадка, везущая хворосту воз. */",
                    getLLVMStyleWithColumns(13)));
-  EXPECT_EQ("/* 一二三\n"
-            " * 四五六七\n"
-            " * 八\n"
-            " * 九 十\n"
-            " */",
-            format("/* 一二三 四五六七 八  九 十 */", getLLVMStyleWithColumns(6)));
+  EXPECT_EQ(
+      "/* 一二三\n"
+      " * 四五六七\n"
+      " * 八  九\n"
+      " * 十  */",
+      format("/* 一二三 四五六七 八  九 十  */", getLLVMStyleWithColumns(9)));
   EXPECT_EQ("/* 𝓣𝓮𝓼𝓽 𝔣𝔬𝔲𝔯\n"
             " * 𝕓𝕪𝕥𝕖\n"
             " * 𝖀𝕿𝕱-𝟠 */",
             format("/* 𝓣𝓮𝓼𝓽 𝔣𝔬𝔲𝔯 𝕓𝕪𝕥𝕖 𝖀𝕿𝕱-𝟠 */", getLLVMStyleWithColumns(12)));
 }
+
+#endif // _MSC_VER
 
 TEST_F(FormatTest, ConstructorInitializerIndentWidth) {
   FormatStyle Style = getLLVMStyle();
@@ -6184,8 +6236,6 @@ TEST_F(FormatTest, ConstructorInitializerIndentWidth) {
                ", c(c) {}",
                Style);
 }
-
-#endif
 
 TEST_F(FormatTest, FormatsWithWebKitStyle) {
   FormatStyle Style = getWebKitStyle();

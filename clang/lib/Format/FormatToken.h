@@ -83,7 +83,7 @@ class AnnotatedLine;
 struct FormatToken {
   FormatToken()
       : NewlinesBefore(0), HasUnescapedNewline(false), LastNewlineOffset(0),
-        CodePointCount(0), CodePointsInFirstLine(0), CodePointsInLastLine(0),
+        CodePointCount(0), FirstLineColumnWidth(0), LastLineColumnWidth(0),
         IsFirst(false), MustBreakBefore(false), IsUnterminatedLiteral(false),
         BlockKind(BK_Unknown), Type(TT_Unknown), SpacesRequiredBefore(0),
         CanBreakBefore(false), ClosesTemplateDeclaration(false),
@@ -120,15 +120,15 @@ struct FormatToken {
   /// \brief Contains the number of code points in the first line of a
   /// multi-line string literal or comment. Zero if there's no newline in the
   /// token.
-  unsigned CodePointsInFirstLine;
+  unsigned FirstLineColumnWidth;
 
   /// \brief Contains the number of code points in the last line of a
   /// multi-line string literal or comment. Can be zero for line comments.
-  unsigned CodePointsInLastLine;
+  unsigned LastLineColumnWidth;
 
   /// \brief Returns \c true if the token text contains newlines (escaped or
   /// not).
-  bool isMultiline() const { return CodePointsInFirstLine != 0; }
+  bool isMultiline() const { return FirstLineColumnWidth != 0; }
 
   /// \brief Indicates that this is the first token.
   bool IsFirst;

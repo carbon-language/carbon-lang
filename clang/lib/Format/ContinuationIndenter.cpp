@@ -623,10 +623,10 @@ ContinuationIndenter::addMultilineStringLiteral(const FormatToken &Current,
     State.Stack[i].BreakBeforeParameter = true;
 
   unsigned ColumnsUsed =
-      State.Column - Current.CodePointCount + Current.CodePointsInFirstLine;
+      State.Column - Current.CodePointCount + Current.FirstLineColumnWidth;
   // We can only affect layout of the first and the last line, so the penalty
   // for all other lines is constant, and we ignore it.
-  State.Column = Current.CodePointsInLastLine;
+  State.Column = Current.LastLineColumnWidth;
 
   if (ColumnsUsed > getColumnLimit(State))
     return Style.PenaltyExcessCharacter * (ColumnsUsed - getColumnLimit(State));
@@ -659,14 +659,14 @@ unsigned ContinuationIndenter::breakProtrudingToken(const FormatToken &Current,
       return 0;
 
     Token.reset(new BreakableStringLiteral(
-        Current, StartColumn, State.Line->InPPDirective, Encoding));
+        Current, StartColumn, State.Line->InPPDirective, Encoding, Style));
   } else if (Current.Type == TT_BlockComment && Current.isTrailingComment()) {
     unsigned OriginalStartColumn =
         SourceMgr.getSpellingColumnNumber(Current.getStartOfNonWhitespace()) -
         1;
     Token.reset(new BreakableBlockComment(
-        Style, Current, StartColumn, OriginalStartColumn, !Current.Previous,
-        State.Line->InPPDirective, Encoding));
+        Current, StartColumn, OriginalStartColumn, !Current.Previous,
+        State.Line->InPPDirective, Encoding, Style));
   } else if (Current.Type == TT_LineComment &&
              (Current.Previous == NULL ||
               Current.Previous->Type != TT_ImplicitStringLiteral)) {
@@ -678,12 +678,12 @@ unsigned ContinuationIndenter::breakProtrudingToken(const FormatToken &Current,
     // leading whitespace in consecutive lines when changing indentation of
     // the first line similar to what we do with block comments.
     if (Current.isMultiline()) {
-      State.Column = StartColumn + Current.CodePointsInFirstLine;
+      State.Column = StartColumn + Current.FirstLineColumnWidth;
       return 0;
     }
 
-    Token.reset(new BreakableLineComment(Current, StartColumn,
-                                         State.Line->InPPDirective, Encoding));
+    Token.reset(new BreakableLineComment(
+        Current, StartColumn, State.Line->InPPDirective, Encoding, Style));
   } else {
     return 0;
   }

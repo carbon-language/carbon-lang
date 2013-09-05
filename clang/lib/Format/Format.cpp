@@ -136,6 +136,7 @@ template <> struct MappingTraits<clang::format::FormatStyle> {
     IO.mapOptional("Cpp11BracedListStyle", Style.Cpp11BracedListStyle);
     IO.mapOptional("Standard", Style.Standard);
     IO.mapOptional("IndentWidth", Style.IndentWidth);
+    IO.mapOptional("TabWidth", Style.TabWidth);
     IO.mapOptional("UseTab", Style.UseTab);
     IO.mapOptional("BreakBeforeBraces", Style.BreakBeforeBraces);
     IO.mapOptional("IndentFunctionDeclarationAfterType",
@@ -184,6 +185,7 @@ FormatStyle getLLVMStyle() {
   LLVMStyle.IndentCaseLabels = false;
   LLVMStyle.IndentFunctionDeclarationAfterType = false;
   LLVMStyle.IndentWidth = 2;
+  LLVMStyle.TabWidth = 8;
   LLVMStyle.MaxEmptyLinesToKeep = 1;
   LLVMStyle.NamespaceIndentation = FormatStyle::NI_None;
   LLVMStyle.ObjCSpaceBeforeProtocolList = true;
@@ -225,6 +227,7 @@ FormatStyle getGoogleStyle() {
   GoogleStyle.IndentCaseLabels = true;
   GoogleStyle.IndentFunctionDeclarationAfterType = true;
   GoogleStyle.IndentWidth = 2;
+  GoogleStyle.TabWidth = 8;
   GoogleStyle.MaxEmptyLinesToKeep = 1;
   GoogleStyle.NamespaceIndentation = FormatStyle::NI_None;
   GoogleStyle.ObjCSpaceBeforeProtocolList = false;
@@ -629,7 +632,7 @@ private:
           ++Column;
           break;
         case '\t':
-          Column += Style.IndentWidth - Column % Style.IndentWidth;
+          Column += Style.TabWidth - Column % Style.TabWidth;
           break;
         default:
           ++Column;
@@ -681,10 +684,12 @@ private:
       StringRef Text = FormatTok->TokenText;
       size_t FirstNewlinePos = Text.find('\n');
       if (FirstNewlinePos != StringRef::npos) {
-        FormatTok->CodePointsInFirstLine = encoding::getCodePointCount(
-            Text.substr(0, FirstNewlinePos), Encoding);
-        FormatTok->CodePointsInLastLine = encoding::getCodePointCount(
-            Text.substr(Text.find_last_of('\n') + 1), Encoding);
+        // FIXME: Handle embedded tabs.
+        FormatTok->FirstLineColumnWidth = encoding::columnWidthWithTabs(
+            Text.substr(0, FirstNewlinePos), 0, Style.TabWidth, Encoding);
+        FormatTok->LastLineColumnWidth = encoding::columnWidthWithTabs(
+            Text.substr(Text.find_last_of('\n') + 1), 0, Style.TabWidth,
+            Encoding);
       }
     }
     // FIXME: Add the CodePointCount to Column.
