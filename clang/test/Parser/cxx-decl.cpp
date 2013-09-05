@@ -187,6 +187,21 @@ namespace PR15017 {
 // Ensure we produce at least some diagnostic for attributes in C++98.
 [[]] struct S; // expected-error 2{{}}
 
+namespace test7 {
+  struct Foo {
+    void a();
+    void b();
+  };
+
+  void Foo::
+  // Comment!
+  a() {}
+
+
+  void Foo::  // expected-error {{expected unqualified-id}}
+  // Comment!
+}
+
 namespace PR5066 {
   template<typename T> struct X {};
   X<int N> x; // expected-error {{type-id cannot have a name}}
