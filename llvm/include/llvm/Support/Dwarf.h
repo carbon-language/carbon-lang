@@ -46,7 +46,7 @@ namespace dwarf {
 // Do not mix the following two enumerations sets.  DW_TAG_invalid changes the
 // enumeration base type.
 
-enum llvm_dwarf_constants {
+enum LLVMConstants {
   // llvm mock tags
   DW_TAG_invalid = ~0U, // Tag for invalid results.
 
@@ -66,7 +66,7 @@ enum llvm_dwarf_constants {
 const uint32_t DW_CIE_ID = UINT32_MAX;
 const uint64_t DW64_CIE_ID = UINT64_MAX;
 
-enum dwarf_constants {
+enum Constants {
   // Tags
   DW_TAG_array_type = 0x01,
   DW_TAG_class_type = 0x02,
