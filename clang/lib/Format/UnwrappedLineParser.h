@@ -33,7 +33,7 @@ struct UnwrappedLineNode;
 /// \c UnwrappedLineFormatter. The key property is that changing the formatting
 /// within an unwrapped line does not affect any other unwrapped lines.
 struct UnwrappedLine {
-  UnwrappedLine() : Level(0), InPPDirective(false), MustBeDeclaration(false) {}
+  UnwrappedLine();
 
   // FIXME: Don't use std::list here.
   /// \brief The \c Tokens comprising this \c UnwrappedLine.
@@ -171,6 +171,9 @@ struct UnwrappedLineNode {
   FormatToken *Tok;
   SmallVector<UnwrappedLine, 0> Children;
 };
+
+inline UnwrappedLine::UnwrappedLine()
+    : Level(0), InPPDirective(false), MustBeDeclaration(false) {}
 
 } // end namespace format
 } // end namespace clang
