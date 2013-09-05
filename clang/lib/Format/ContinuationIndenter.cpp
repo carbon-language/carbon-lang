@@ -267,7 +267,8 @@ unsigned ContinuationIndenter::addTokenToState(LineState &State, bool Newline,
         State.Column = State.Stack.back().Indent;
         State.Stack.back().ColonPos = State.Column + Current.CodePointCount;
       }
-    } else if (Current.is(tok::l_square) && Current.Type != TT_ObjCMethodExpr) {
+    } else if (Current.is(tok::l_square) && Current.Type != TT_ObjCMethodExpr &&
+               Current.Type != TT_LambdaLSquare) {
       if (State.Stack.back().StartOfArraySubscripts != 0)
         State.Column = State.Stack.back().StartOfArraySubscripts;
       else

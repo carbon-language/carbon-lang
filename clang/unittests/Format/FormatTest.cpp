@@ -6295,12 +6295,10 @@ TEST_F(FormatTest, FormatsLambdas) {
   verifyFormat("void f() {\n"
                "  other(x.begin(), x.end(), [&](int, int) { return 1; });\n"
                "}\n");
-  // FIXME: The formatting is incorrect; this test currently checks that
-  // parsing of the unwrapped lines doesn't regress.
   verifyFormat("void f() {\n"
                "  other(x.begin(), //\n"
                "        x.end(),   //\n"
-               "                     [&](int, int) { return 1; });\n"
+               "        [&](int, int) { return 1; });\n"
                "}\n");
 }
 

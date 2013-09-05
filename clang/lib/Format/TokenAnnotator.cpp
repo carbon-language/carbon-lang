@@ -201,7 +201,8 @@ private:
 
     while (CurrentToken != NULL) {
       if (CurrentToken->is(tok::r_square)) {
-        if (CurrentToken->Next && CurrentToken->Next->is(tok::l_paren)) {
+        if (CurrentToken->Next && CurrentToken->Next->is(tok::l_paren) &&
+            Left->Type == TT_ObjCMethodExpr) {
           // An ObjC method call is rarely followed by an open parenthesis.
           // FIXME: Do we incorrectly label ":" with this?
           StartsObjCMethodExpr = false;

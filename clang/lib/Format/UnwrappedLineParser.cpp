@@ -676,27 +676,22 @@ void UnwrappedLineParser::parseStructuralElement() {
 void UnwrappedLineParser::tryToParseLambda() {
   assert(FormatTok->is(tok::l_square));
   FormatToken &LSquare = *FormatTok;
-  if (!tryToParseLambdaIntroducer()) {
+  if (!tryToParseLambdaIntroducer())
     return;
-  }
-  if (FormatTok->is(tok::l_paren)) {
-    parseParens();
-  }
 
   while (FormatTok->isNot(tok::l_brace)) {
     switch (FormatTok->Tok.getKind()) {
-      case tok::l_brace:
-        break;
-      case tok::l_paren:
-        parseParens();
-        break;
-      case tok::semi:
-      case tok::equal:
-      case tok::eof:
-        return;
-      default:
-        nextToken();
-        break;
+    case tok::l_brace:
+      break;
+    case tok::l_paren:
+      parseParens();
+      break;
+    case tok::identifier:
+    case tok::kw_mutable:
+      nextToken();
+      break;
+    default:
+      return;
     }
   }
   LSquare.Type = TT_LambdaLSquare;
@@ -707,23 +702,33 @@ bool UnwrappedLineParser::tryToParseLambdaIntroducer() {
   nextToken();
   if (FormatTok->is(tok::equal)) {
     nextToken();
-    if (FormatTok->is(tok::r_square)) return true;
-    if (FormatTok->isNot(tok::comma)) return false;
+    if (FormatTok->is(tok::r_square)) {
+      nextToken();
+      return true;
+    }
+    if (FormatTok->isNot(tok::comma))
+      return false;
     nextToken();
   } else if (FormatTok->is(tok::amp)) {
     nextToken();
-    if (FormatTok->is(tok::r_square)) return true;
+    if (FormatTok->is(tok::r_square)) {
+      nextToken();
+      return true;
+    }
     if (!FormatTok->isOneOf(tok::comma, tok::identifier)) {
       return false;
     }
-    if (FormatTok->is(tok::comma)) nextToken();
+    if (FormatTok->is(tok::comma))
+      nextToken();
   } else if (FormatTok->is(tok::r_square)) {
     nextToken();
     return true;
   }
   do {
-    if (FormatTok->is(tok::amp)) nextToken();
-    if (!FormatTok->isOneOf(tok::identifier, tok::kw_this)) return false;
+    if (FormatTok->is(tok::amp))
+      nextToken();
+    if (!FormatTok->isOneOf(tok::identifier, tok::kw_this))
+      return false;
     nextToken();
     if (FormatTok->is(tok::comma)) {
       nextToken();
@@ -836,6 +841,9 @@ void UnwrappedLineParser::parseParens() {
     case tok::r_brace:
       // A "}" inside parenthesis is an error if there wasn't a matching "{".
       return;
+    case tok::l_square:
+      tryToParseLambda();
+      break;
     case tok::l_brace: {
       if (!tryToParseBracedList()) {
         parseChildBlock();
@@ -1195,7 +1203,7 @@ static void printDebugInfo(const UnwrappedLine &Line, StringRef Prefix = "") {
   for (std::list<UnwrappedLineNode>::const_iterator I = Line.Tokens.begin(),
                                                     E = Line.Tokens.end();
        I != E; ++I) {
-    llvm::dbgs() << I->Tok->Tok.getName() << " ";
+    llvm::dbgs() << I->Tok->Tok.getName() << "[" << I->Tok->Type << "] ";
   }
   for (std::list<UnwrappedLineNode>::const_iterator I = Line.Tokens.begin(),
                                                     E = Line.Tokens.end();
