@@ -743,6 +743,7 @@ public:
   virtual void AddedObjCPropertyInClassExtension(const ObjCPropertyDecl *Prop,
                                             const ObjCPropertyDecl *OrigProp,
                                             const ObjCCategoryDecl *ClassExt);
+  void DeclarationMarkedUsed(const Decl *D) LLVM_OVERRIDE;
 };
 
 /// \brief AST and semantic-analysis consumer that generates a

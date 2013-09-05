@@ -377,7 +377,7 @@ void ASTDeclReader::VisitDecl(Decl *D) {
     D->setAttrsImpl(Attrs, Reader.getContext());
   }
   D->setImplicit(Record[Idx++]);
-  D->setUsed(Record[Idx++]);
+  D->setIsUsed(Record[Idx++]);
   D->setReferenced(Record[Idx++]);
   D->setTopLevelDeclInObjCContainer(Record[Idx++]);
   D->setAccess((AccessSpecifier)Record[Idx++]);
@@ -2836,6 +2836,11 @@ void ASTDeclReader::UpdateDecl(Decl *D, ModuleFile &ModuleFile,
       FunctionDecl *FD = cast<FunctionDecl>(D);
       Reader.Context.adjustDeducedFunctionResultType(
           FD, Reader.readType(ModuleFile, Record, Idx));
+      break;
+    }
+
+    case UPD_DECL_MARKED_USED: {
+      D->markUsed(Reader.getContext());
       break;
     }
     }

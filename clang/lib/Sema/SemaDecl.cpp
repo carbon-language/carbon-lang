@@ -2739,8 +2739,7 @@ bool Sema::MergeCompatibleFunctionDecls(FunctionDecl *New, FunctionDecl *Old,
     New->setPure();
 
   // Merge "used" flag.
-  if (Old->isUsed(false))
-    New->setUsed();
+  New->setIsUsed(Old->isUsed(false));
 
   // Merge attributes from the parameters.  These can mismatch with K&R
   // declarations.
@@ -3050,8 +3049,7 @@ void Sema::MergeVarDecl(VarDecl *New, LookupResult &Previous) {
   }
 
   // Merge "used" flag.
-  if (Old->isUsed(false))
-    New->setUsed();
+  New->setIsUsed(Old->isUsed(false));
 
   // Keep a chain of previous declarations.
   New->setPreviousDeclaration(Old);

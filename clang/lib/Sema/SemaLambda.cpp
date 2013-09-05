@@ -1105,7 +1105,7 @@ ExprResult Sema::BuildBlockForLambdaConversion(SourceLocation CurrentLocation,
         Lambda->lookup(
           Context.DeclarationNames.getCXXOperatorName(OO_Call)).front());
   CallOperator->setReferenced();
-  CallOperator->setUsed();
+  CallOperator->markUsed(Context);
 
   ExprResult Init = PerformCopyInitialization(
                       InitializedEntity::InitializeBlock(ConvLocation, 

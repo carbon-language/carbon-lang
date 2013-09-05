@@ -9623,7 +9623,7 @@ ExprResult Sema::ActOnUnaryOp(Scope *S, SourceLocation OpLoc,
 /// ActOnAddrLabel - Parse the GNU address of label extension: "&&foo".
 ExprResult Sema::ActOnAddrLabel(SourceLocation OpLoc, SourceLocation LabLoc,
                                 LabelDecl *TheDecl) {
-  TheDecl->setUsed();
+  TheDecl->markUsed(Context);
   // Create the AST node.  The address of a label always has type 'void*'.
   return Owned(new (Context) AddrLabelExpr(OpLoc, LabLoc, TheDecl,
                                        Context.getPointerType(Context.VoidTy)));
@@ -11097,7 +11097,7 @@ void Sema::MarkFunctionReferenced(SourceLocation Loc, FunctionDecl *Func) {
   // decl in the middle of a decl chain. We loop to maintain the invariant
   // that once a decl is used, all decls after it are also used.
   for (FunctionDecl *F = Func->getMostRecentDecl();; F = F->getPreviousDecl()) {
-    F->setUsed(true);
+    F->markUsed(Context);
     if (F == Func)
       break;
   }
@@ -11172,7 +11172,7 @@ static ExprResult captureInCapturedRegion(Sema &S, CapturedRegionScopeInfo *RSI,
   Expr *Ref = new (S.Context) DeclRefExpr(Var, RefersToEnclosingLocal,
                                           DeclRefType, VK_LValue, Loc);
   Var->setReferenced(true);
-  Var->setUsed(true);
+  Var->markUsed(S.Context);
 
   return Ref;
 }
@@ -11214,7 +11214,7 @@ static ExprResult captureInLambda(Sema &S, LambdaScopeInfo *LSI,
   Expr *Ref = new (S.Context) DeclRefExpr(Var, RefersToEnclosingLocal, 
                                           DeclRefType, VK_LValue, Loc);
   Var->setReferenced(true);
-  Var->setUsed(true);
+  Var->markUsed(S.Context);
 
   // When the field has array type, create index variables for each
   // dimension of the array. We use these index variables to subscript
@@ -11660,7 +11660,7 @@ static void MarkVarDeclODRUsed(Sema &SemaRef, VarDecl *Var,
 
   SemaRef.tryCaptureVariable(Var, Loc);
 
-  Var->setUsed(true);
+  Var->markUsed(SemaRef.Context);
 }
 
 void Sema::UpdateMarkingForLValueToRValue(Expr *E) {

@@ -4314,6 +4314,7 @@ void ASTWriter::ResolveDeclUpdatesBlocks() {
         break;
 
       case UPD_CXX_INSTANTIATED_STATIC_DATA_MEMBER:
+      case UPD_DECL_MARKED_USED:
         ++Idx;
         break;
 
@@ -5369,4 +5370,13 @@ void ASTWriter::AddedObjCPropertyInClassExtension(const ObjCPropertyDecl *Prop,
     return; // Declaration not imported from PCH.
 
   RewriteDecl(D);
+}
+
+void ASTWriter::DeclarationMarkedUsed(const Decl *D) {
+  assert(!WritingAST && "Already writing the AST!");
+  if (!D->isFromASTFile())
+    return;
+
+  UpdateRecord &Record = DeclUpdates[D];
+  Record.push_back(UPD_DECL_MARKED_USED);
 }

@@ -7951,7 +7951,7 @@ void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
   SourceLocation Loc = Constructor->getLocation();
   Constructor->setBody(new (Context) CompoundStmt(Loc));
 
-  Constructor->setUsed();
+  Constructor->markUsed(Context);
   MarkVTableUsed(CurrentLocation, ClassDecl);
 
   if (ASTMutationListener *L = getASTMutationListener()) {
@@ -8289,7 +8289,7 @@ void Sema::DefineInheritingConstructor(SourceLocation CurrentLocation,
   SourceLocation Loc = Constructor->getLocation();
   Constructor->setBody(new (Context) CompoundStmt(Loc));
 
-  Constructor->setUsed();
+  Constructor->markUsed(Context);
   MarkVTableUsed(CurrentLocation, ClassDecl);
 
   if (ASTMutationListener *L = getASTMutationListener()) {
@@ -8421,7 +8421,7 @@ void Sema::DefineImplicitDestructor(SourceLocation CurrentLocation,
 
   SourceLocation Loc = Destructor->getLocation();
   Destructor->setBody(new (Context) CompoundStmt(Loc));
-  Destructor->setUsed();
+  Destructor->markUsed(Context);
   MarkVTableUsed(CurrentLocation, ClassDecl);
 
   if (ASTMutationListener *L = getASTMutationListener()) {
@@ -9117,7 +9117,7 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
   if (getLangOpts().CPlusPlus11 && CopyAssignOperator->isImplicit())
     diagnoseDeprecatedCopyOperation(*this, CopyAssignOperator, CurrentLocation);
 
-  CopyAssignOperator->setUsed();
+  CopyAssignOperator->markUsed(Context);
 
   SynthesizedFunctionScope Scope(*this, CopyAssignOperator);
   DiagnosticErrorTrap Trap(Diags);
@@ -9562,7 +9562,7 @@ void Sema::DefineImplicitMoveAssignment(SourceLocation CurrentLocation,
     return;
   }
   
-  MoveAssignOperator->setUsed();
+  MoveAssignOperator->markUsed(Context);
 
   SynthesizedFunctionScope Scope(*this, MoveAssignOperator);
   DiagnosticErrorTrap Trap(Diags);
@@ -9915,7 +9915,7 @@ void Sema::DefineImplicitCopyConstructor(SourceLocation CurrentLocation,
         /*isStmtExpr=*/ false).takeAs<Stmt>());
   }
 
-  CopyConstructor->setUsed();
+  CopyConstructor->markUsed(Context);
   if (ASTMutationListener *L = getASTMutationListener()) {
     L->CompletedImplicitDefinition(CopyConstructor);
   }
@@ -10101,7 +10101,7 @@ void Sema::DefineImplicitMoveConstructor(SourceLocation CurrentLocation,
         /*isStmtExpr=*/ false).takeAs<Stmt>());
   }
 
-  MoveConstructor->setUsed();
+  MoveConstructor->markUsed(Context);
 
   if (ASTMutationListener *L = getASTMutationListener()) {
     L->CompletedImplicitDefinition(MoveConstructor);
@@ -10119,7 +10119,7 @@ static void markLambdaCallOperatorUsed(Sema &S, CXXRecordDecl *Lambda) {
         Lambda->lookup(
           S.Context.DeclarationNames.getCXXOperatorName(OO_Call)).front());
   CallOperator->setReferenced();
-  CallOperator->setUsed();
+  CallOperator->markUsed(S.Context);
 }
 
 void Sema::DefineImplicitLambdaToFunctionPointerConversion(
@@ -10131,7 +10131,7 @@ void Sema::DefineImplicitLambdaToFunctionPointerConversion(
   // Make sure that the lambda call operator is marked used.
   markLambdaCallOperatorUsed(*this, Lambda);
   
-  Conv->setUsed();
+  Conv->markUsed(Context);
   
   SynthesizedFunctionScope Scope(*this, Conv);
   DiagnosticErrorTrap Trap(Diags);
@@ -10150,7 +10150,7 @@ void Sema::DefineImplicitLambdaToFunctionPointerConversion(
     
   // Fill in the __invoke function with a dummy implementation. IR generation
   // will fill in the actual details.
-  Invoke->setUsed();
+  Invoke->markUsed(Context);
   Invoke->setReferenced();
   Invoke->setBody(new (Context) CompoundStmt(Conv->getLocation()));
   
@@ -10164,7 +10164,7 @@ void Sema::DefineImplicitLambdaToBlockPointerConversion(
        SourceLocation CurrentLocation,
        CXXConversionDecl *Conv) 
 {
-  Conv->setUsed();
+  Conv->markUsed(Context);
   
   SynthesizedFunctionScope Scope(*this, Conv);
   DiagnosticErrorTrap Trap(Diags);

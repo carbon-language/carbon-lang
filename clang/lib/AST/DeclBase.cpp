@@ -291,6 +291,16 @@ bool Decl::isUsed(bool CheckUsedAttr) const {
   return false; 
 }
 
+void Decl::markUsed(ASTContext &C) {
+  if (Used)
+    return;
+
+  if (C.getASTMutationListener())
+    C.getASTMutationListener()->DeclarationMarkedUsed(this);
+
+  Used = true;
+}
+
 bool Decl::isReferenced() const { 
   if (Referenced)
     return true;

@@ -3352,7 +3352,7 @@ void Sema::BuildVariableInstantiation(
   NewVar->setAccess(OldVar->getAccess());
 
   if (!OldVar->isStaticDataMember()) {
-    NewVar->setUsed(OldVar->isUsed(false));
+    NewVar->setIsUsed(OldVar->isUsed(false));
     NewVar->setReferenced(OldVar->isReferenced());
   }
 

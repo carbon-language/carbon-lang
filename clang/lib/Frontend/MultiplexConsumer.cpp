@@ -107,6 +107,8 @@ public:
   virtual void AddedObjCPropertyInClassExtension(const ObjCPropertyDecl *Prop,
                                             const ObjCPropertyDecl *OrigProp,
                                             const ObjCCategoryDecl *ClassExt);
+  void DeclarationMarkedUsed(const Decl *D) LLVM_OVERRIDE;
+
 private:
   std::vector<ASTMutationListener*> Listeners;
 };
@@ -174,6 +176,10 @@ void MultiplexASTMutationListener::AddedObjCPropertyInClassExtension(
                                              const ObjCCategoryDecl *ClassExt) {
   for (size_t i = 0, e = Listeners.size(); i != e; ++i)
     Listeners[i]->AddedObjCPropertyInClassExtension(Prop, OrigProp, ClassExt);
+}
+void MultiplexASTMutationListener::DeclarationMarkedUsed(const Decl *D) {
+  for (size_t i = 0, e = Listeners.size(); i != e; ++i)
+    Listeners[i]->DeclarationMarkedUsed(D);
 }
 
 }  // end namespace clang

@@ -90,6 +90,11 @@ public:
                                             const ObjCPropertyDecl *OrigProp,
                                             const ObjCCategoryDecl *ClassExt) {}
 
+  /// \brief A declaration is marked used which was not previously marked used.
+  ///
+  /// \param D the declaration marked used
+  virtual void DeclarationMarkedUsed(const Decl *D) {}
+
   // NOTE: If new methods are added they should also be added to
   // MultiplexASTMutationListener.
 };

@@ -500,7 +500,16 @@ public:
   /// whether the function is used.
   bool isUsed(bool CheckUsedAttr = true) const;
 
-  void setUsed(bool U = true) { Used = U; }
+  /// \brief Set whether the declaration is used, in the sense of odr-use.
+  ///
+  /// This should only be used immediately after creating a declaration.
+  void setIsUsed(bool U) { Used = U; }
+
+  /// \brief Mark the declaration used, in the sense of odr-use.
+  ///
+  /// This notifies any mutation listeners in addition to setting a bit
+  /// indicating the declaration is used.
+  void markUsed(ASTContext &C);
 
   /// \brief Whether this declaration was referenced.
   bool isReferenced() const;
