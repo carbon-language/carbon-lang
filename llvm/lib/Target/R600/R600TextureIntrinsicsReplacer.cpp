@@ -94,9 +94,8 @@ class R600TextureIntrinsicsReplacer :
     }
 
     if (TextureType == TEXTURE_CUBE_ARRAY ||
-        TextureType == TEXTURE_SHADOWCUBE_ARRAY) {
+        TextureType == TEXTURE_SHADOWCUBE_ARRAY)
       CT[2] = 0;
-    }
 
     if (TextureType == TEXTURE_1D_ARRAY ||
         TextureType == TEXTURE_SHADOW1D_ARRAY) {
@@ -115,9 +114,8 @@ class R600TextureIntrinsicsReplacer :
         TextureType == TEXTURE_SHADOW2D ||
         TextureType == TEXTURE_SHADOWRECT ||
         TextureType == TEXTURE_SHADOW1D_ARRAY) &&
-        !(hasLOD && useShadowVariant)) {
+        !(hasLOD && useShadowVariant))
       SrcSelect[3] = 2;
-    }
   }
 
   void ReplaceCallInst(CallInst &I, FunctionType *FT, const char *Name,
@@ -260,9 +258,9 @@ public:
   }
 
   void visitCallInst(CallInst &I) {
-    if (!I.getCalledFunction()) {
+    if (!I.getCalledFunction())
       return;
-    }
+
     StringRef Name = I.getCalledFunction()->getName();
     if (Name == "llvm.AMDGPU.tex") {
       ReplaceTexIntrinsic(I, false, TexSign, "llvm.R600.tex", "llvm.R600.texc");
