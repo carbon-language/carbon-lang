@@ -219,7 +219,7 @@ def Ofast : Joined<["-"], "Ofast">, Group<O_Group>, Flags<[CC1Option]>;
 def P : Flag<["-"], "P">, Flags<[CC1Option]>,
   HelpText<"Disable linemarker output in -E mode">;
 def Qn : Flag<["-"], "Qn">;
-def Qunused_arguments : Flag<["-"], "Qunused-arguments">, Flags<[DriverOption]>,
+def Qunused_arguments : Flag<["-"], "Qunused-arguments">, Flags<[DriverOption, CoreOption]>,
   HelpText<"Don't emit warning for unused driver arguments">;
 def Q : Flag<["-"], "Q">;
 def R : Flag<["-"], "R">;

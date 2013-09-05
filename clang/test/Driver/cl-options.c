@@ -98,6 +98,10 @@
 // RUN: %clang_cl /Zs /WX /analyze- /errorReport:foo /nologo /Ob1 /Ob2 -- %s
 // RUN: %clang_cl /Zs /WX /Zc:forScope /Zc:wchar_t /wd1234 -- %s
 
+// Support ignoring warnings about unused arguments.
+// RUN: %clang_cl /Abracadabra -Qunused-arguments -### -- %s 2>&1 | FileCheck -check-prefix=UNUSED %s
+// UNUSED-NOT: warning
+
 
 // Unsupported but parsed options. Check that we don't error on them.
 // (/Zs is for syntax-only)
