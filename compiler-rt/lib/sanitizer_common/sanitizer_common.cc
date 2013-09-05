@@ -26,16 +26,19 @@ uptr GetPageSizeCached() {
   return PageSize;
 }
 
-static bool log_to_file = false;  // Set to true by __sanitizer_set_report_path
 
 // By default, dump to stderr. If |log_to_file| is true and |report_fd_pid|
 // isn't equal to the current PID, try to obtain file descriptor by opening
 // file "report_path_prefix.<PID>".
 fd_t report_fd = kStderrFd;
-static char report_path_prefix[4096];  // Set via __sanitizer_set_report_path.
+
+// Set via __sanitizer_set_report_path.
+bool log_to_file = false;
+char report_path_prefix[sizeof(report_path_prefix)];
+
 // PID of process that opened |report_fd|. If a fork() occurs, the PID of the
 // child thread will be different from |report_fd_pid|.
-static uptr report_fd_pid = 0;
+uptr report_fd_pid = 0;
 
 static DieCallbackType DieCallback;
 void SetDieCallback(DieCallbackType callback) {
@@ -66,36 +69,6 @@ void NORETURN CheckFailed(const char *file, int line, const char *cond,
   Report("Sanitizer CHECK failed: %s:%d %s (%lld, %lld)\n", file, line, cond,
                                                             v1, v2);
   Die();
-}
-
-void MaybeOpenReportFile() {
-  if (!log_to_file || (report_fd_pid == internal_getpid())) return;
-  InternalScopedBuffer<char> report_path_full(4096);
-  internal_snprintf(report_path_full.data(), report_path_full.size(),
-                    "%s.%d", report_path_prefix, internal_getpid());
-  uptr openrv = OpenFile(report_path_full.data(), true);
-  if (internal_iserror(openrv)) {
-    report_fd = kStderrFd;
-    log_to_file = false;
-    Report("ERROR: Can't open file: %s\n", report_path_full.data());
-    Die();
-  }
-  if (report_fd != kInvalidFd) {
-    // We're in the child. Close the parent's log.
-    internal_close(report_fd);
-  }
-  report_fd = openrv;
-  report_fd_pid = internal_getpid();
-}
-
-void RawWrite(const char *buffer) {
-  static const char *kRawWriteError = "RawWrite can't output requested buffer!";
-  uptr length = (uptr)internal_strlen(buffer);
-  MaybeOpenReportFile();
-  if (length != internal_write(report_fd, buffer, length)) {
-    internal_write(report_fd, kRawWriteError, internal_strlen(kRawWriteError));
-    Die();
-  }
 }
 
 uptr ReadFileToBuffer(const char *file_name, char **buff,

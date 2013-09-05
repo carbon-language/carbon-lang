@@ -116,6 +116,9 @@ void SetPrintfAndReportCallback(void (*callback)(const char *));
 extern StaticSpinMutex CommonSanitizerReportMutex;
 void MaybeOpenReportFile();
 extern fd_t report_fd;
+extern bool log_to_file;
+extern char report_path_prefix[4096];
+extern uptr report_fd_pid;
 
 uptr OpenFile(const char *filename, bool write);
 // Opens the file 'file_name" and reads up to 'max_len' bytes.

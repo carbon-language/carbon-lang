@@ -197,6 +197,37 @@ char *FindPathToBinary(const char *name) {
   return 0;
 }
 
+void MaybeOpenReportFile() {
+  if (!log_to_file || (report_fd_pid == internal_getpid())) return;
+  InternalScopedBuffer<char> report_path_full(4096);
+  internal_snprintf(report_path_full.data(), report_path_full.size(),
+                    "%s.%d", report_path_prefix, internal_getpid());
+  uptr openrv = OpenFile(report_path_full.data(), true);
+  if (internal_iserror(openrv)) {
+    report_fd = kStderrFd;
+    log_to_file = false;
+    Report("ERROR: Can't open file: %s\n", report_path_full.data());
+    Die();
+  }
+  if (report_fd != kInvalidFd) {
+    // We're in the child. Close the parent's log.
+    internal_close(report_fd);
+  }
+  report_fd = openrv;
+  report_fd_pid = internal_getpid();
+}
+
+void RawWrite(const char *buffer) {
+  static const char *kRawWriteError =
+      "RawWrite can't output requested buffer!\n";
+  uptr length = (uptr)internal_strlen(buffer);
+  MaybeOpenReportFile();
+  if (length != internal_write(report_fd, buffer, length)) {
+    internal_write(report_fd, kRawWriteError, internal_strlen(kRawWriteError));
+    Die();
+  }
+}
+
 }  // namespace __sanitizer
 
 #endif  // SANITIZER_LINUX || SANITIZER_MAC

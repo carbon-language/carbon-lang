@@ -398,6 +398,24 @@ void GetStackTrace(StackTrace *stack, uptr max_s, uptr pc, uptr bp,
     stack->trace[i] = (uptr)tmp[i + offset];
 }
 
+void MaybeOpenReportFile() {
+  // Windows doesn't have native fork, and we don't support Cygwin or other
+  // environments that try to fake it, so the initial report_fd will always be
+  // correct.
+}
+
+void RawWrite(const char *buffer) {
+  static const char *kRawWriteError =
+      "RawWrite can't output requested buffer!\n";
+  uptr length = (uptr)internal_strlen(buffer);
+  if (length != internal_write(report_fd, buffer, length)) {
+    // stderr may be closed, but we may be able to print to the debugger
+    // instead.  This is the case when launching a program from Visual Studio,
+    // and the following routine should write to its console.
+    OutputDebugStringA(buffer);
+  }
+}
+
 }  // namespace __sanitizer
 
 #endif  // _WIN32
