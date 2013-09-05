@@ -32,10 +32,6 @@
 
 #include "lldb/lldb-private-log.h"
 
-#include "lldb/Symbol/ClangASTType.h"
-#include "lldb/Symbol/ClangASTContext.h"
-#include "lldb/Symbol/Type.h"
-
 #include "lldb/Target/ABI.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Process.h"
