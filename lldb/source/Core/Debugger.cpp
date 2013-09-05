@@ -821,7 +821,6 @@ Debugger::GetSelectedExecutionContext ()
         }
     }
     return exe_ctx;
-
 }
 
 InputReaderSP 
@@ -1720,7 +1719,6 @@ FormatPromptRecurse
                                     do_deref_pointer = false;
                                 }
                                 
-                                // <rdar://problem/11338654>
                                 // we do not want to use the summary for a bitfield of type T:n
                                 // if we were originally dealing with just a T - that would get
                                 // us into an endless recursion
