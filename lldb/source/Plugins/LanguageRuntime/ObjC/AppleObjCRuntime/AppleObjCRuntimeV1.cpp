@@ -173,39 +173,6 @@ AppleObjCRuntimeV1::CreateObjectChecker(const char *name)
     return new ClangUtilityFunction(buf->contents, name);
 }
 
-// this code relies on the assumption that an Objective-C object always starts
-// with an ISA at offset 0.
-//ObjCLanguageRuntime::ObjCISA
-//AppleObjCRuntimeV1::GetISA(ValueObject& valobj)
-//{
-//    ClangASTType valobj_clang_type = valobj.GetClangType();
-////    if (valobj_clang_type.GetMinimumLanguage() != eLanguageTypeObjC)
-////        return 0;
-//    
-//    // if we get an invalid VO (which might still happen when playing around
-//    // with pointers returned by the expression parser, don't consider this
-//    // a valid ObjC object)
-//    if (!valobj.GetClangType().IsValid())
-//        return 0;
-//    
-//    addr_t isa_pointer = valobj.GetPointerValue();
-//    
-//    ExecutionContext exe_ctx (valobj.GetExecutionContextRef());
-//    
-//    Process *process = exe_ctx.GetProcessPtr();
-//    if (process)
-//    {
-//        uint8_t pointer_size = process->GetAddressByteSize();
-//        
-//        Error error;
-//        return process->ReadUnsignedIntegerFromMemory (isa_pointer,
-//                                                       pointer_size,
-//                                                       0,
-//                                                       error);
-//    }
-//    return 0;
-//}
-
 AppleObjCRuntimeV1::ClassDescriptorV1::ClassDescriptorV1 (ValueObject &isa_pointer)
 {
     Initialize (isa_pointer.GetValueAsUnsigned(0),
