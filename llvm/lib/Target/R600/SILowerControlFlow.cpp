@@ -488,6 +488,7 @@ bool SILowerControlFlowPass::runOnMachineFunction(MachineFunction &MF) {
           NeedWQM = true;
           // Fall through
         case AMDGPU::DS_WRITE_B32:
+        case AMDGPU::DS_ADD_U32_RTN:
           NeedM0 = true;
           break;
 

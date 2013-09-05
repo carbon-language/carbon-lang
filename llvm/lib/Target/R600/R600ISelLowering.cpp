@@ -109,16 +109,24 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
 
   switch (MI->getOpcode()) {
   default:
-    if (TII->get(MI->getOpcode()).TSFlags & R600_InstFlag::LDS_1A) {
-      MachineInstrBuilder NewMI = BuildMI(*BB, I, BB->findDebugLoc(I),
-                                          TII->get(MI->getOpcode()),
-                                          AMDGPU::OQAP);
+    if (TII->isLDSInstr(MI->getOpcode()) &&
+        TII->getOperandIdx(MI->getOpcode(), AMDGPU::OpName::dst) != -1) {
+      int DstIdx = TII->getOperandIdx(MI->getOpcode(), AMDGPU::OpName::dst);
+      assert(DstIdx != -1);
+      MachineInstrBuilder NewMI;
+      if (!MRI.use_empty(MI->getOperand(DstIdx).getReg())) {
+        NewMI = BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(MI->getOpcode()),
+                        AMDGPU::OQAP);
+        TII->buildDefaultInstruction(*BB, I, AMDGPU::MOV,
+                                     MI->getOperand(0).getReg(),
+                                     AMDGPU::OQAP);
+      } else {
+        NewMI = BuildMI(*BB, I, BB->findDebugLoc(I),
+                        TII->get(AMDGPU::getLDSNoRetOp(MI->getOpcode())));
+      }
       for (unsigned i = 1, e = MI->getNumOperands(); i < e; ++i) {
         NewMI.addOperand(MI->getOperand(i));
       }
-      TII->buildDefaultInstruction(*BB, I, AMDGPU::MOV,
-                                   MI->getOperand(0).getReg(),
-                                   AMDGPU::OQAP);
     } else {
       return AMDGPUTargetLowering::EmitInstrWithCustomInserter(MI, BB);
     }

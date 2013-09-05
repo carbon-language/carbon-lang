@@ -1626,21 +1626,37 @@ class R600_LDS_1A <bits<6> lds_op, string name, list<dag> pattern> : R600_LDS <
   let DisableEncoding = "$dst";
 }
 
-class R600_LDS_1A1D <bits<6> lds_op, string name, list<dag> pattern> :
+class R600_LDS_1A1D <bits<6> lds_op, dag outs, string name, list<dag> pattern,
+                     string dst =""> :
     R600_LDS <
-  lds_op,
-  (outs),
+  lds_op, outs,
   (ins R600_Reg32:$src0, REL:$src0_rel, SEL:$src0_sel,
        R600_Reg32:$src1, REL:$src1_rel, SEL:$src1_sel,
        LAST:$last, R600_Pred:$pred_sel,
        BANK_SWIZZLE:$bank_swizzle),
-  "  "#name#" $last $src0$src0_rel, $src1$src1_rel, $pred_sel",
+  "  "#name#" $last "#dst#"$src0$src0_rel, $src1$src1_rel, $pred_sel",
   pattern
   > {
+
+  field string BaseOp;
 
   let src2 = 0;
   let src2_rel = 0;
   let LDS_1A1D = 1;
+}
+
+class R600_LDS_1A1D_NORET <bits<6> lds_op, string name, list<dag> pattern> :
+    R600_LDS_1A1D <lds_op, (outs), name, pattern> {
+  let BaseOp = name;
+}
+
+class R600_LDS_1A1D_RET <bits<6> lds_op, string name, list<dag> pattern> :
+    R600_LDS_1A1D <lds_op,  (outs R600_Reg32:$dst), name##"_RET", pattern, "OQAP, "> {
+
+  let BaseOp = name;
+  let usesCustomInserter = 1;
+  let DisableEncoding = "$dst";
+  let Defs = [OQAP];
 }
 
 class R600_LDS_1A2D <bits<6> lds_op, string name, list<dag> pattern> :
@@ -1656,14 +1672,18 @@ class R600_LDS_1A2D <bits<6> lds_op, string name, list<dag> pattern> :
   let LDS_1A2D = 1;
 }
 
-def LDS_WRITE : R600_LDS_1A1D <0xD, "LDS_WRITE",
+def LDS_ADD : R600_LDS_1A1D_NORET <0x0, "LDS_ADD", [] >;
+def LDS_WRITE : R600_LDS_1A1D_NORET <0xD, "LDS_WRITE",
   [(local_store (i32 R600_Reg32:$src1), R600_Reg32:$src0)]
 >;
-def LDS_BYTE_WRITE : R600_LDS_1A1D<0x12, "LDS_BYTE_WRITE",
+def LDS_BYTE_WRITE : R600_LDS_1A1D_NORET<0x12, "LDS_BYTE_WRITE",
   [(truncstorei8_local i32:$src1, i32:$src0)]
 >;
-def LDS_SHORT_WRITE : R600_LDS_1A1D<0x13, "LDS_SHORT_WRITE",
+def LDS_SHORT_WRITE : R600_LDS_1A1D_NORET<0x13, "LDS_SHORT_WRITE",
   [(truncstorei16_local i32:$src1, i32:$src0)]
+>;
+def LDS_ADD_RET : R600_LDS_1A1D_RET <0x20, "LDS_ADD",
+  [(set i32:$dst, (atomic_load_add_local i32:$src0, i32:$src1))]
 >;
 def LDS_READ_RET : R600_LDS_1A <0x32, "LDS_READ_RET",
   [(set (i32 R600_Reg32:$dst), (local_load R600_Reg32:$src0))]
@@ -2428,3 +2448,11 @@ def : BitConvert <v4i32, v4f32, R600_Reg128>;
 def : DwordAddrPat  <i32, R600_Reg32>;
 
 } // End isR600toCayman Predicate
+
+def getLDSNoRetOp : InstrMapping {
+  let FilterClass = "R600_LDS_1A1D";
+  let RowFields = ["BaseOp"];
+  let ColFields = ["DisableEncoding"];
+  let KeyCol = ["$dst"];
+  let ValueCols = [[""""]];
+}

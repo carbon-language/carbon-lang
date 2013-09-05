@@ -391,6 +391,7 @@ defm V_CMPX_CLASS_F64 : VOPC_64 <0x000000b8, "V_CMPX_CLASS_F64">;
 
 } // End isCompare = 1
 
+def DS_ADD_U32_RTN : DS_1A1D_RET <0x20, "DS_ADD_U32_RTN", VReg_32>;
 def DS_WRITE_B32 : DS_Store_Helper <0x0000000d, "DS_WRITE_B32", VReg_32>;
 def DS_WRITE_B8 : DS_Store_Helper <0x00000001e, "DS_WRITE_B8", VReg_32>;
 def DS_WRITE_B16 : DS_Store_Helper <0x00000001f, "DS_WRITE_B16", VReg_32>;
@@ -1774,6 +1775,9 @@ class DSWritePat <DS inst, ValueType vt, PatFrag frag> : Pat <
 def : DSWritePat <DS_WRITE_B8, i32, truncstorei8_local>;
 def : DSWritePat <DS_WRITE_B16, i32, truncstorei16_local>;
 def : DSWritePat <DS_WRITE_B32, i32, local_store>;
+
+def : Pat <(atomic_load_add_local i32:$ptr, i32:$val),
+           (DS_ADD_U32_RTN 0, $ptr, $val, 0, 0)>;
 
 /********** ================== **********/
 /**********   SMRD Patterns    **********/

@@ -362,6 +362,18 @@ class DS_Store_Helper <bits<8> op, string asm, RegisterClass regClass> : DS <
   let vdst = 0;
 }
 
+class DS_1A1D_RET <bits<8> op, string asm, RegisterClass rc> : DS <
+  op,
+  (outs rc:$vdst),
+  (ins i1imm:$gds, VReg_32:$addr, VReg_32:$data0, i8imm:$offset0,
+       i8imm:$offset1),
+  asm#" $gds, $vdst, $addr, $data0, $offset0, $offset1, [M0]",
+  []> {
+  let mayStore = 1;
+  let mayLoad = 1;
+  let data1 = 0;
+}
+
 class MTBUF_Store_Helper <bits<3> op, string asm, RegisterClass regClass> : MTBUF <
   op,
   (outs),

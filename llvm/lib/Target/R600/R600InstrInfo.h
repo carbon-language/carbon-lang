@@ -275,6 +275,12 @@ namespace llvm {
   void clearFlag(MachineInstr *MI, unsigned Operand, unsigned Flag) const;
 };
 
+namespace AMDGPU {
+
+int getLDSNoRetOp(uint16_t Opcode);
+
+} //End namespace AMDGPU
+
 } // End llvm namespace
 
 #endif // R600INSTRINFO_H_
