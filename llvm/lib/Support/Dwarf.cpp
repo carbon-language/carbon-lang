@@ -59,8 +59,8 @@ const char *llvm::dwarf::TagString(unsigned Tag) {
   case DW_TAG_namelist_item:             return "DW_TAG_namelist_item";
   case DW_TAG_packed_type:               return "DW_TAG_packed_type";
   case DW_TAG_subprogram:                return "DW_TAG_subprogram";
-  case DW_TAG_template_type_parameter:  return "DW_TAG_template_type_parameter";
-  case DW_TAG_template_value_parameter:return "DW_TAG_template_value_parameter";
+  case DW_TAG_template_type_parameter:   return "DW_TAG_template_type_parameter";
+  case DW_TAG_template_value_parameter:  return "DW_TAG_template_value_parameter";
   case DW_TAG_thrown_type:               return "DW_TAG_thrown_type";
   case DW_TAG_try_block:                 return "DW_TAG_try_block";
   case DW_TAG_variant_part:              return "DW_TAG_variant_part";
