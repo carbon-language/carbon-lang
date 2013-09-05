@@ -114,6 +114,7 @@ CXXRecordDecl *CXXRecordDecl::CreateLambda(const ASTContext &C, DeclContext *DC,
   R->IsBeingDefined = true;
   R->DefinitionData = new (C) struct LambdaDefinitionData(R, Info, Dependent);
   R->MayHaveOutOfDateDef = false;
+  R->setImplicit(true);
   C.getTypeDeclType(R, /*PrevDecl=*/0);
   return R;
 }
