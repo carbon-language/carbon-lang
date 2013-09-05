@@ -278,6 +278,30 @@ public:
   }
 };
 
+// GNU/kFreeBSD Target
+template<typename Target>
+class KFreeBSDTargetInfo : public OSTargetInfo<Target> {
+protected:
+  virtual void getOSDefines(const LangOptions &Opts, const llvm::Triple &Triple,
+                            MacroBuilder &Builder) const {
+    // GNU/kFreeBSD defines; list based off of gcc output
+
+    DefineStd(Builder, "unix", Opts);
+    Builder.defineMacro("__FreeBSD_kernel__");
+    Builder.defineMacro("__GLIBC__");
+    Builder.defineMacro("__ELF__");
+    if (Opts.POSIXThreads)
+      Builder.defineMacro("_REENTRANT");
+    if (Opts.CPlusPlus)
+      Builder.defineMacro("_GNU_SOURCE");
+  }
+public:
+  KFreeBSDTargetInfo(const std::string &triple)
+    : OSTargetInfo<Target>(triple) {
+    this->UserLabelPrefix = "";
+  }
+};
+
 // Minix Target
 template<typename Target>
 class MinixTargetInfo : public OSTargetInfo<Target> {
@@ -5470,6 +5494,8 @@ static TargetInfo *AllocateTarget(const llvm::Triple &Triple) {
       return new BitrigI386TargetInfo(Triple);
     case llvm::Triple::FreeBSD:
       return new FreeBSDTargetInfo<X86_32TargetInfo>(Triple);
+    case llvm::Triple::KFreeBSD:
+      return new KFreeBSDTargetInfo<X86_32TargetInfo>(Triple);
     case llvm::Triple::Minix:
       return new MinixTargetInfo<X86_32TargetInfo>(Triple);
     case llvm::Triple::Solaris:
@@ -5509,6 +5535,8 @@ static TargetInfo *AllocateTarget(const llvm::Triple &Triple) {
       return new BitrigX86_64TargetInfo(Triple);
     case llvm::Triple::FreeBSD:
       return new FreeBSDTargetInfo<X86_64TargetInfo>(Triple);
+    case llvm::Triple::KFreeBSD:
+      return new KFreeBSDTargetInfo<X86_64TargetInfo>(Triple);
     case llvm::Triple::Solaris:
       return new SolarisTargetInfo<X86_64TargetInfo>(Triple);
     case llvm::Triple::MinGW32:
