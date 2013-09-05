@@ -24,24 +24,6 @@
 
 using namespace llvm;
 
-const char *DwarfAccelTable::Atom::AtomTypeString(enum AtomType AT) {
-  switch (AT) {
-  case eAtomTypeNULL:
-    return "eAtomTypeNULL";
-  case eAtomTypeDIEOffset:
-    return "eAtomTypeDIEOffset";
-  case eAtomTypeCUOffset:
-    return "eAtomTypeCUOffset";
-  case eAtomTypeTag:
-    return "eAtomTypeTag";
-  case eAtomTypeNameFlags:
-    return "eAtomTypeNameFlags";
-  case eAtomTypeTypeFlags:
-    return "eAtomTypeTypeFlags";
-  }
-  llvm_unreachable("invalid AtomType!");
-}
-
 // The length of the header data is always going to be 4 + 4 + 4*NumAtoms.
 DwarfAccelTable::DwarfAccelTable(ArrayRef<DwarfAccelTable::Atom> atomList)
     : Header(8 + (atomList.size() * 4)), HeaderData(atomList),
@@ -134,7 +116,7 @@ void DwarfAccelTable::EmitHeader(AsmPrinter *Asm) {
   Asm->EmitInt32(HeaderData.Atoms.size());
   for (size_t i = 0; i < HeaderData.Atoms.size(); i++) {
     Atom A = HeaderData.Atoms[i];
-    Asm->OutStreamer.AddComment(Atom::AtomTypeString(A.type));
+    Asm->OutStreamer.AddComment(dwarf::AtomTypeString(A.type));
     Asm->EmitInt16(A.type);
     Asm->OutStreamer.AddComment(dwarf::FormEncodingString(A.form));
     Asm->EmitInt16(A.form);

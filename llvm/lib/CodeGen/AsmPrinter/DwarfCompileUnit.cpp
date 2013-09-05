@@ -796,8 +796,7 @@ DIE *CompileUnit::getOrCreateTypeDIE(const MDNode *TyNode) {
       IsImplementation = (CT.getRunTimeLang() == 0) ||
         CT.isObjcClassComplete();
     }
-    unsigned Flags = IsImplementation ?
-                     DwarfAccelTable::eTypeFlagClassIsImplementation : 0;
+    unsigned Flags = IsImplementation ? dwarf::DW_FLAG_type_implementation : 0;
     addAccelType(Ty.getName(), std::make_pair(TyDIE, Flags));
   }
 

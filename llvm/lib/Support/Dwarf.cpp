@@ -723,3 +723,19 @@ const char *llvm::dwarf::CallFrameString(unsigned Encoding) {
   }
   return 0;
 }
+
+const char *llvm::dwarf::AtomTypeString(unsigned AT) {
+  switch (AT) {
+  case dwarf::DW_ATOM_null:
+    return "DW_ATOM_null";
+  case dwarf::DW_ATOM_die_offset:
+    return "DW_ATOM_die_offset";
+  case DW_ATOM_cu_offset:
+    return "DW_ATOM_cu_offset";
+  case DW_ATOM_die_tag:
+    return "DW_ATOM_die_tag";
+  case DW_ATOM_type_flags:
+    return "DW_ATOM_type_flags";
+  }
+  return 0;
+}

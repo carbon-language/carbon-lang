@@ -67,10 +67,6 @@ class DwarfUnits;
 
 class DwarfAccelTable {
 
-  enum HashFunctionType {
-    eHashFunctionDJB = 0u
-  };
-
   static uint32_t HashDJB(StringRef Str) {
     uint32_t h = 5381;
     for (unsigned i = 0, e = Str.size(); i != e; ++i)
@@ -96,8 +92,9 @@ class DwarfAccelTable {
     static const uint32_t MagicHash = 0x48415348;
 
     TableHeader(uint32_t data_len)
-        : magic(MagicHash), version(1), hash_function(eHashFunctionDJB),
-          bucket_count(0), hashes_count(0), header_data_len(data_len) {}
+        : magic(MagicHash), version(1),
+          hash_function(dwarf::DW_hash_function_djb), bucket_count(0),
+          hashes_count(0), header_data_len(data_len) {}
 
 #ifndef NDEBUG
     void print(raw_ostream &O) {
@@ -123,37 +120,17 @@ public:
   // uint32_t die_offset_base
   // uint32_t atom_count
   // atom_count Atoms
-  enum AtomType {
-    eAtomTypeNULL = 0u,
-    eAtomTypeDIEOffset = 1u, // DIE offset, check form for encoding
-    eAtomTypeCUOffset = 2u,  // DIE offset of the compiler unit header that
-                             // contains the item in question
-    eAtomTypeTag = 3u,       // DW_TAG_xxx value, should be encoded as
-                             // DW_FORM_data1 (if no tags exceed 255) or
-                             // DW_FORM_data2.
-    eAtomTypeNameFlags = 4u, // Flags from enum NameFlags
-    eAtomTypeTypeFlags = 5u  // Flags from enum TypeFlags
-  };
-
-  enum TypeFlags {
-    eTypeFlagClassMask = 0x0000000fu,
-
-    // Always set for C++, only set for ObjC if this is the
-    // @implementation for a class.
-    eTypeFlagClassIsImplementation = (1u << 1)
-  };
 
   // Make these public so that they can be used as a general interface to
   // the class.
   struct Atom {
-    AtomType type; // enum AtomType
+    uint16_t type; // enum AtomType
     uint16_t form; // DWARF DW_FORM_ defines
 
-    Atom(AtomType type, uint16_t form) : type(type), form(form) {}
-    static const char *AtomTypeString(enum AtomType);
+    Atom(uint16_t type, uint16_t form) : type(type), form(form) {}
 #ifndef NDEBUG
     void print(raw_ostream &O) {
-      O << "Type: " << AtomTypeString(type) << "\n"
+      O << "Type: " << dwarf::AtomTypeString(type) << "\n"
         << "Form: " << dwarf::FormEncodingString(form) << "\n";
     }
     void dump() { print(dbgs()); }

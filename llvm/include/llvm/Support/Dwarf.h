@@ -763,6 +763,32 @@ const char *MacinfoString(unsigned Encoding);
 /// CallFrameString - Return the string for the specified call frame instruction
 /// encodings.
 const char *CallFrameString(unsigned Encoding);
+
+// Constants for the DWARF5 Accelerator Table Proposal
+enum AcceleratorTable {
+  // Data layout descriptors.
+  DW_ATOM_null = 0u,       // Marker as the end of a list of atoms.
+  DW_ATOM_die_offset = 1u, // DIE offset in the debug_info section.
+  DW_ATOM_cu_offset = 2u,  // Offset of the compile unit header that contains the
+                          // item in question.
+  DW_ATOM_die_tag = 3u,    // A tag entry.
+  DW_ATOM_type_flags = 4u, // Set of flags for a type.
+
+  // DW_ATOM_type_flags values.
+
+  // Always set for C++, only set for ObjC if this is the @implementation for a
+  // class.
+  DW_FLAG_type_implementation = 2u,
+
+  // Hash functions.
+
+  // Daniel J. Bernstein hash.
+  DW_hash_function_djb = 0u
+};
+
+/// AtomTypeString - Return the string for the specified Atom type.
+const char *AtomTypeString(unsigned Atom);
+
 } // End of namespace dwarf
 
 } // End of namespace llvm
