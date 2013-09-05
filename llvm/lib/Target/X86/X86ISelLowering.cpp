@@ -16419,13 +16419,14 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
   SDValue LHS = N->getOperand(1);
   SDValue RHS = N->getOperand(2);
   EVT VT = LHS.getValueType();
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
 
   // If we have SSE[12] support, try to form min/max nodes. SSE min/max
   // instructions match the semantics of the common C idiom x<y?x:y but not
   // x<=y?x:y, because of how they handle negative zero (which can be
   // ignored in unsafe-math mode).
   if (Cond.getOpcode() == ISD::SETCC && VT.isFloatingPoint() &&
-      VT != MVT::f80 && DAG.getTargetLoweringInfo().isTypeLegal(VT) &&
+      VT != MVT::f80 && TLI.isTypeLegal(VT) &&
       (Subtarget->hasSSE2() ||
        (Subtarget->hasSSE1() && VT.getScalarType() == MVT::f32))) {
     ISD::CondCode CC = cast<CondCodeSDNode>(Cond.getOperand(2))->get();
@@ -16578,8 +16579,6 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
       DCI.AddToWorklist(Cond.getNode());
       return DAG.getNode(N->getOpcode(), DL, OpVT, Cond, LHS, RHS);
     }
-    else
-      return SDValue();
   }
   // If this is a select between two integer constants, try to do some
   // optimizations.
@@ -16705,9 +16704,12 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
     }
   }
 
+  // Early exit check
+  if (!TLI.isTypeLegal(VT))
+    return SDValue();
+
   // Match VSELECTs into subs with unsigned saturation.
-  if (!DCI.isBeforeLegalize() &&
-      N->getOpcode() == ISD::VSELECT && Cond.getOpcode() == ISD::SETCC &&
+  if (N->getOpcode() == ISD::VSELECT && Cond.getOpcode() == ISD::SETCC &&
       // psubus is available in SSE2 and AVX2 for i8 and i16 vectors.
       ((Subtarget->hasSSE2() && (VT == MVT::v16i8 || VT == MVT::v8i16)) ||
        (Subtarget->hasAVX2() && (VT == MVT::v32i8 || VT == MVT::v16i16)))) {
@@ -16761,14 +16763,14 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
   }
 
   // Try to match a min/max vector operation.
-  if (!DCI.isBeforeLegalize() &&
-      N->getOpcode() == ISD::VSELECT && Cond.getOpcode() == ISD::SETCC)
+  if (N->getOpcode() == ISD::VSELECT && Cond.getOpcode() == ISD::SETCC)
     if (unsigned Op = matchIntegerMINMAX(Cond, VT, LHS, RHS, DAG, Subtarget))
       return DAG.getNode(Op, DL, N->getValueType(0), LHS, RHS);
 
   // Simplify vector selection if the selector will be produced by CMPP*/PCMP*.
-  if (!DCI.isBeforeLegalize() && N->getOpcode() == ISD::VSELECT &&
-      Cond.getOpcode() == ISD::SETCC) {
+  if (N->getOpcode() == ISD::VSELECT && Cond.getOpcode() == ISD::SETCC &&
+      // Check if SETCC has already been promoted
+      TLI.getSetCCResultType(*DAG.getContext(), VT) == Cond.getValueType()) {
 
     assert(Cond.getValueType().isVector() &&
            "vector select expects a vector selector!");
@@ -16815,7 +16817,6 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
   // matched by one of the SSE/AVX BLEND instructions. These instructions only
   // depend on the highest bit in each word. Try to use SimplifyDemandedBits
   // to simplify previous instructions.
-  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
   if (N->getOpcode() == ISD::VSELECT && DCI.isBeforeLegalizeOps() &&
       !DCI.isBeforeLegalize() && TLI.isOperationLegal(ISD::VSELECT, VT)) {
     unsigned BitWidth = Cond.getValueType().getScalarType().getSizeInBits();

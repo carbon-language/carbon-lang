@@ -104,8 +104,7 @@ define <8 x float> @test10(<8 x float> %x, <8 x float> %y) nounwind {
 }
 
 ; CHECK-LABEL: test11_unsigned
-; CHECK: vpcmpnleud %zmm
-; CHECK: vpblendmd  %zmm
+; CHECK: vpmaxud
 ; CHECK: ret
 define <8 x i32> @test11_unsigned(<8 x i32> %x, <8 x i32> %y) nounwind {
   %mask = icmp ugt <8 x i32> %x, %y
