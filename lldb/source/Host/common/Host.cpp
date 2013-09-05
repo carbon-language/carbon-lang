@@ -22,6 +22,10 @@
 #include <grp.h>
 #include <netdb.h>
 #include <pwd.h>
+#endif
+
+#if !defined (__GNU__) && !defined (_WIN32)
+// Does not exist under GNU/HURD or Windows
 #include <sys/sysctl.h>
 #endif
 
