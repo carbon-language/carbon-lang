@@ -873,9 +873,7 @@ namespace {
 
     void setSectionStart(const MCSymbol *Label) { SectionStart = Label; }
 
-    /// EmitCompactUnwind - Emit the unwind information in a compact way. If
-    /// we're successful, return 'true'. Otherwise, return 'false' and it will
-    /// emit the normal CIE and FDE.
+    /// EmitCompactUnwind - Emit the unwind information in a compact way.
     void EmitCompactUnwind(MCStreamer &streamer,
                            const MCDwarfFrameInfo &frame);
 
@@ -1113,9 +1111,7 @@ void FrameEmitterImpl::EmitCFIInstructions(MCStreamer &streamer,
   }
 }
 
-/// EmitCompactUnwind - Emit the unwind information in a compact way. If we're
-/// successful, return 'true'. Otherwise, return 'false' and it will emit the
-/// normal CIE and FDE.
+/// EmitCompactUnwind - Emit the unwind information in a compact way.
 void FrameEmitterImpl::EmitCompactUnwind(MCStreamer &Streamer,
                                          const MCDwarfFrameInfo &Frame) {
   MCContext &Context = Streamer.getContext();
