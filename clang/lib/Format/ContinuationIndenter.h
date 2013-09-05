@@ -35,14 +35,13 @@ public:
   /// \brief Constructs a \c ContinuationIndenter to format \p Line starting in
   /// column \p FirstIndent.
   ContinuationIndenter(const FormatStyle &Style, SourceManager &SourceMgr,
-                       const AnnotatedLine &Line, unsigned FirstIndent,
                        WhitespaceManager &Whitespaces,
                        encoding::Encoding Encoding,
                        bool BinPackInconclusiveFunctions);
 
-  /// \brief Get the initial state, i.e. the state after placing the line's
-  /// first token.
-  LineState getInitialState();
+  /// \brief Get the initial state, i.e. the state after placing \p Line's
+  /// first token at \p FirstIndent.
+  LineState getInitialState(unsigned FirstIndent, const AnnotatedLine *Line);
 
   // FIXME: canBreak and mustBreak aren't strictly indentation-related. Find a
   // better home.
@@ -65,7 +64,7 @@ public:
 
   /// \brief Get the column limit for this line. This is the style's column
   /// limit, potentially reduced for preprocessor definitions.
-  unsigned getColumnLimit() const;
+  unsigned getColumnLimit(const LineState &State) const;
 
 private:
   /// \brief Mark the next token as consumed in \p State and modify its stacks
@@ -101,8 +100,6 @@ private:
 
   FormatStyle Style;
   SourceManager &SourceMgr;
-  const AnnotatedLine &Line;
-  const unsigned FirstIndent;
   WhitespaceManager &Whitespaces;
   encoding::Encoding Encoding;
   bool BinPackInconclusiveFunctions;
@@ -270,6 +267,14 @@ struct LineState {
   ///
   /// FIXME: Come up with a better algorithm instead.
   bool IgnoreStackForComparison;
+
+  /// \brief The indent of the first token.
+  unsigned FirstIndent;
+
+  /// \brief The line that is being formatted.
+  ///
+  /// Does not need to be considered for memoization because it doesn't change.
+  const AnnotatedLine *Line;
 
   /// \brief Comparison operator to be able to used \c LineState in \c map.
   bool operator<(const LineState &Other) const {

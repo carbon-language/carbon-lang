@@ -24,6 +24,8 @@
 namespace clang {
 namespace format {
 
+struct UnwrappedLineNode;
+
 /// \brief An unwrapped line is a sequence of \c Token, that we would like to
 /// put on a single line if there was no column limit.
 ///
@@ -35,7 +37,7 @@ struct UnwrappedLine {
 
   // FIXME: Don't use std::list here.
   /// \brief The \c Tokens comprising this \c UnwrappedLine.
-  std::list<FormatToken *> Tokens;
+  std::list<UnwrappedLineNode> Tokens;
 
   /// \brief The indent level of the \c UnwrappedLine.
   unsigned Level;
@@ -119,18 +121,18 @@ private:
   bool MustBreakBeforeNextToken;
 
   // The parsed lines. Only added to through \c CurrentLines.
-  std::vector<UnwrappedLine> Lines;
+  SmallVector<UnwrappedLine, 8> Lines;
 
   // Preprocessor directives are parsed out-of-order from other unwrapped lines.
   // Thus, we need to keep a list of preprocessor directives to be reported
   // after an unwarpped line that has been started was finished.
-  std::vector<UnwrappedLine> PreprocessorDirectives;
+  SmallVector<UnwrappedLine, 4> PreprocessorDirectives;
 
   // New unwrapped lines are added via CurrentLines.
   // Usually points to \c &Lines. While parsing a preprocessor directive when
   // there is an unfinished previous unwrapped line, will point to
   // \c &PreprocessorDirectives.
-  std::vector<UnwrappedLine> *CurrentLines;
+  SmallVectorImpl<UnwrappedLine> *CurrentLines;
 
   // We store for each line whether it must be a declaration depending on
   // whether we are in a compound statement or not.
@@ -160,6 +162,14 @@ private:
   SmallVector<PPBranchKind, 16> PPStack;
 
   friend class ScopedLineState;
+};
+
+struct UnwrappedLineNode {
+  UnwrappedLineNode() : Tok(NULL) {}
+  UnwrappedLineNode(FormatToken *Tok) : Tok(Tok) {}
+
+  FormatToken *Tok;
+  SmallVector<UnwrappedLine, 0> Children;
 };
 
 } // end namespace format

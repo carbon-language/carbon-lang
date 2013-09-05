@@ -110,7 +110,7 @@ TEST_F(FormatTest, MessUp) {
 // Basic function tests.
 //===----------------------------------------------------------------------===//
 
-TEST_F(FormatTest, DoesNotChangeCorrectlyFormatedCode) {
+TEST_F(FormatTest, DoesNotChangeCorrectlyFormattedCode) {
   EXPECT_EQ(";", format(";"));
 }
 
@@ -1496,7 +1496,9 @@ TEST_F(FormatTest, FormatsClasses) {
                "                     public G {};");
 
   verifyFormat("class\n"
-               "    ReallyReallyLongClassName {\n};",
+               "    ReallyReallyLongClassName {\n"
+               "  int i;\n"
+               "};",
                getLLVMStyleWithColumns(32));
 }
 
@@ -2184,23 +2186,37 @@ TEST_F(FormatTest, LayoutStatementsAroundPreprocessorDirectives) {
 }
 
 TEST_F(FormatTest, LayoutBlockInsideParens) {
+  EXPECT_EQ("functionCall({ int i; });", format(" functionCall ( {int i;} );"));
   EXPECT_EQ("functionCall({\n"
             "  int i;\n"
+            "  int j;\n"
             "});",
-            format(" functionCall ( {int i;} );"));
-
-  // FIXME: This is bad, find a better and more generic solution.
+            format(" functionCall ( {int i;int j;} );"));
   EXPECT_EQ("functionCall({\n"
-            "  int i;\n"
-            "},\n"
+            "               int i;\n"
+            "               int j;\n"
+            "             },\n"
             "             aaaa, bbbb, cccc);",
-            format(" functionCall ( {int i;},  aaaa,   bbbb, cccc);"));
+            format(" functionCall ( {int i;int j;},  aaaa,   bbbb, cccc);"));
+  EXPECT_EQ("functionCall(aaaa, bbbb, { int i; });",
+            format(" functionCall (aaaa,   bbbb, {int i;});"));
+  EXPECT_EQ("functionCall(aaaa, bbbb, {\n"
+            "  int i;\n"
+            "  int j;\n"
+            "});",
+            format(" functionCall (aaaa,   bbbb, {int i;int j;});"));
+  EXPECT_EQ("functionCall(aaaa, bbbb, { int i; });",
+            format(" functionCall (aaaa,   bbbb, {int i;});"));
   verifyFormat(
       "Aaa({\n"
-      "  int i;\n"
-      "},\n"
+      "      int i; // break\n"
+      "    },\n"
       "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb,\n"
       "                                     ccccccccccccccccc));");
+  verifyFormat("DEBUG({\n"
+               "  if (a)\n"
+               "    f();\n"
+               "});");
 }
 
 TEST_F(FormatTest, LayoutBlockInsideStatement) {
@@ -3681,7 +3697,7 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
   verifyGoogleFormat("return sizeof(int**);");
   verifyIndependentOfContext("Type **A = static_cast<Type **>(P);");
   verifyGoogleFormat("Type** A = static_cast<Type**>(P);");
-  verifyFormat("auto a = [](int **&, int ***) {\n};");
+  verifyFormat("auto a = [](int **&, int ***) {};");
 
   verifyIndependentOfContext("InvalidRegions[*R] = 0;");
 
@@ -3865,7 +3881,7 @@ TEST_F(FormatTest, FormatsCasts) {
   verifyFormat("f(foo).b;");
   verifyFormat("f(foo)(b);");
   verifyFormat("f(foo)[b];");
-  verifyFormat("[](foo) {\n  return 4;\n}(bar);");
+  verifyFormat("[](foo) { return 4; }(bar);");
   verifyFormat("(*funptr)(foo)[4];");
   verifyFormat("funptrs[4](foo)[4];");
   verifyFormat("void f(int *);");
@@ -6260,68 +6276,40 @@ TEST_F(FormatTest, FormatsProtocolBufferDefinitions) {
 }
 
 TEST_F(FormatTest, FormatsLambdas) {
-  verifyFormat(
-      "int c = [b]() mutable {\n"
-      "  return [&b] {\n"
-      "    return b++;\n"
-      "  }();\n"
-      "}();\n");
-  verifyFormat(
-      "int c = [&] {\n"
-      "  [=] {\n"
-      "    return b++;\n"
-      "  }();\n"
-      "}();\n");
-  verifyFormat(
-      "int c = [&, &a, a] {\n"
-      "  [=, c, &d] {\n"
-      "    return b++;\n"
-      "  }();\n"
-      "}();\n");
-  verifyFormat(
-      "int c = [&a, &a, a] {\n"
-      "  [=, a, b, &c] {\n"
-      "    return b++;\n"
-      "  }();\n"
-      "}();\n");
-  verifyFormat(
-      "auto c = {[&a, &a, a] {\n"
-      "  [=, a, b, &c] {\n"
-      "    return b++;\n"
-      "  }();\n"
-      "} }\n");
-  verifyFormat(
-      "auto c = {[&a, &a, a] {\n"
-      "  [=, a, b, &c] {\n"
-      "  }();\n"
-      "} }\n");
-  verifyFormat(
-      "void f() {\n"
-      "  other(x.begin(), x.end(), [&](int, int) {\n"
-      "    return 1;\n"
-      "  });\n"
-      "}\n");
+  verifyFormat("int c = [b]() mutable {\n"
+               "  return [&b] { return b++; }();\n"
+               "}();\n");
+  verifyFormat("int c = [&] {\n"
+               "  [=] { return b++; }();\n"
+               "}();\n");
+  verifyFormat("int c = [&, &a, a] {\n"
+               "  [=, c, &d] { return b++; }();\n"
+               "}();\n");
+  verifyFormat("int c = [&a, &a, a] {\n"
+               "  [=, a, b, &c] { return b++; }();\n"
+               "}();\n");
+  verifyFormat("auto c = { [&a, &a, a] {\n"
+               "  [=, a, b, &c] { return b++; }();\n"
+               "} }\n");
+  verifyFormat("auto c = { [&a, &a, a] { [=, a, b, &c] { }(); } }\n");
+  verifyFormat("void f() {\n"
+               "  other(x.begin(), x.end(), [&](int, int) { return 1; });\n"
+               "}\n");
   // FIXME: The formatting is incorrect; this test currently checks that
   // parsing of the unwrapped lines doesn't regress.
-  verifyFormat(
-      "void f() {\n"
-      "  other(x.begin(), //\n"
-      "        x.end(),   //\n"
-      "                     [&](int, int) {\n"
-      "    return 1;\n"
-      "  });\n"
-      "}\n");
+  verifyFormat("void f() {\n"
+               "  other(x.begin(), //\n"
+               "        x.end(),   //\n"
+               "                     [&](int, int) { return 1; });\n"
+               "}\n");
 }
 
 TEST_F(FormatTest, FormatsBlocks) {
   // FIXME: Make whitespace formatting consistent. Ask a ObjC dev how
   // it would ideally look.
-  verifyFormat("[operation setCompletionBlock:^{\n"
-               "  [self onOperationDone];\n"
-               "}];\n");
-  verifyFormat("int i = {[operation setCompletionBlock : ^{\n"
-               "  [self onOperationDone];\n"
-               "}] };\n");
+  verifyFormat("[operation setCompletionBlock:^{ [self onOperationDone]; }];");
+  verifyFormat("int i = {[operation setCompletionBlock : ^{ [self "
+               "onOperationDone]; }] };");
 }
 
 } // end namespace tooling

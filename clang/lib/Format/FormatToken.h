@@ -36,6 +36,7 @@ enum TokenType {
   TT_InlineASMColon,
   TT_InheritanceColon,
   TT_FunctionTypeLParen,
+  TT_LambdaLSquare,
   TT_LineComment,
   TT_ObjCArrayLiteral,
   TT_ObjCBlockLParen,
@@ -75,6 +76,7 @@ enum ParameterPackingKind {
 };
 
 class TokenRole;
+class AnnotatedLine;
 
 /// \brief A wrapper around a \c Token storing information about the
 /// whitespace characters preceeding it.
@@ -334,6 +336,8 @@ struct FormatToken {
 
   FormatToken *Previous;
   FormatToken *Next;
+
+  SmallVector<AnnotatedLine *, 1> Children;
 
 private:
   // Disallow copying.

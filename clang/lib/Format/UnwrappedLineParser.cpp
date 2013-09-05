@@ -122,9 +122,12 @@ class ScopedLineState {
 public:
   ScopedLineState(UnwrappedLineParser &Parser,
                   bool SwitchToPreprocessorLines = false)
-      : Parser(Parser), SwitchToPreprocessorLines(SwitchToPreprocessorLines) {
+      : Parser(Parser) {
+    OriginalLines = Parser.CurrentLines;
     if (SwitchToPreprocessorLines)
       Parser.CurrentLines = &Parser.PreprocessorDirectives;
+    else if (!Parser.Line->Tokens.empty())
+      Parser.CurrentLines = &Parser.Line->Tokens.back().Children;
     PreBlockLine = Parser.Line.take();
     Parser.Line.reset(new UnwrappedLine());
     Parser.Line->Level = PreBlockLine->Level;
@@ -137,16 +140,16 @@ public:
     }
     assert(Parser.Line->Tokens.empty());
     Parser.Line.reset(PreBlockLine);
-    Parser.MustBreakBeforeNextToken = true;
-    if (SwitchToPreprocessorLines)
-      Parser.CurrentLines = &Parser.Lines;
+    if (Parser.CurrentLines == &Parser.PreprocessorDirectives)
+      Parser.MustBreakBeforeNextToken = true;
+    Parser.CurrentLines = OriginalLines;
   }
 
 private:
   UnwrappedLineParser &Parser;
-  const bool SwitchToPreprocessorLines;
 
   UnwrappedLine *PreBlockLine;
+  SmallVectorImpl<UnwrappedLine> *OriginalLines;
 };
 
 namespace {
@@ -191,7 +194,8 @@ bool UnwrappedLineParser::parse() {
   Tokens = &TokenSource;
   readToken();
   parseFile();
-  for (std::vector<UnwrappedLine>::iterator I = Lines.begin(), E = Lines.end();
+  for (SmallVectorImpl<UnwrappedLine>::iterator I = Lines.begin(),
+                                                E = Lines.end();
        I != E; ++I) {
     Callback.consumeUnwrappedLine(*I);
   }
@@ -670,6 +674,8 @@ void UnwrappedLineParser::parseStructuralElement() {
 }
 
 void UnwrappedLineParser::tryToParseLambda() {
+  assert(FormatTok->is(tok::l_square));
+  FormatToken &LSquare = *FormatTok;
   if (!tryToParseLambdaIntroducer()) {
     return;
   }
@@ -681,7 +687,6 @@ void UnwrappedLineParser::tryToParseLambda() {
     switch (FormatTok->Tok.getKind()) {
       case tok::l_brace:
         break;
-        return;
       case tok::l_paren:
         parseParens();
         break;
@@ -694,6 +699,7 @@ void UnwrappedLineParser::tryToParseLambda() {
         break;
     }
   }
+  LSquare.Type = TT_LambdaLSquare;
   parseChildBlock();
 }
 
@@ -1183,23 +1189,39 @@ void UnwrappedLineParser::parseObjCProtocol() {
   parseObjCUntilAtEnd();
 }
 
+static void printDebugInfo(const UnwrappedLine &Line, StringRef Prefix = "") {
+  llvm::dbgs() << Prefix << "Line(" << Line.Level << ")"
+               << (Line.InPPDirective ? " MACRO" : "") << ": ";
+  for (std::list<UnwrappedLineNode>::const_iterator I = Line.Tokens.begin(),
+                                                    E = Line.Tokens.end();
+       I != E; ++I) {
+    llvm::dbgs() << I->Tok->Tok.getName() << " ";
+  }
+  for (std::list<UnwrappedLineNode>::const_iterator I = Line.Tokens.begin(),
+                                                    E = Line.Tokens.end();
+       I != E; ++I) {
+    const UnwrappedLineNode &Node = *I;
+    for (SmallVectorImpl<UnwrappedLine>::const_iterator
+             I = Node.Children.begin(),
+             E = Node.Children.end();
+         I != E; ++I) {
+      printDebugInfo(*I, "\nChild: ");
+    }
+  }
+  llvm::dbgs() << "\n";
+}
+
 void UnwrappedLineParser::addUnwrappedLine() {
   if (Line->Tokens.empty())
     return;
   DEBUG({
-    llvm::dbgs() << "Line(" << Line->Level << ")"
-                 << (Line->InPPDirective ? " MACRO" : "") << ": ";
-    for (std::list<FormatToken *>::iterator I = Line->Tokens.begin(),
-                                            E = Line->Tokens.end();
-         I != E; ++I) {
-      llvm::dbgs() << (*I)->Tok.getName() << " ";
-    }
-    llvm::dbgs() << "\n";
+    if (CurrentLines == &Lines)
+      printDebugInfo(*Line);
   });
   CurrentLines->push_back(*Line);
   Line->Tokens.clear();
   if (CurrentLines == &Lines && !PreprocessorDirectives.empty()) {
-    for (std::vector<UnwrappedLine>::iterator
+    for (SmallVectorImpl<UnwrappedLine>::iterator
              I = PreprocessorDirectives.begin(),
              E = PreprocessorDirectives.end();
          I != E; ++I) {
@@ -1273,9 +1295,9 @@ void UnwrappedLineParser::readToken() {
 }
 
 void UnwrappedLineParser::pushToken(FormatToken *Tok) {
-  Line->Tokens.push_back(Tok);
+  Line->Tokens.push_back(UnwrappedLineNode(Tok));
   if (MustBreakBeforeNextToken) {
-    Line->Tokens.back()->MustBreakBefore = true;
+    Line->Tokens.back().Tok->MustBreakBefore = true;
     MustBreakBeforeNextToken = false;
   }
 }
