@@ -26,25 +26,30 @@ using namespace llvm;
 
 const char *DwarfAccelTable::Atom::AtomTypeString(enum AtomType AT) {
   switch (AT) {
-  case eAtomTypeNULL: return "eAtomTypeNULL";
-  case eAtomTypeDIEOffset: return "eAtomTypeDIEOffset";
-  case eAtomTypeCUOffset: return "eAtomTypeCUOffset";
-  case eAtomTypeTag: return "eAtomTypeTag";
-  case eAtomTypeNameFlags: return "eAtomTypeNameFlags";
-  case eAtomTypeTypeFlags: return "eAtomTypeTypeFlags";
+  case eAtomTypeNULL:
+    return "eAtomTypeNULL";
+  case eAtomTypeDIEOffset:
+    return "eAtomTypeDIEOffset";
+  case eAtomTypeCUOffset:
+    return "eAtomTypeCUOffset";
+  case eAtomTypeTag:
+    return "eAtomTypeTag";
+  case eAtomTypeNameFlags:
+    return "eAtomTypeNameFlags";
+  case eAtomTypeTypeFlags:
+    return "eAtomTypeTypeFlags";
   }
   llvm_unreachable("invalid AtomType!");
 }
 
 // The length of the header data is always going to be 4 + 4 + 4*NumAtoms.
-DwarfAccelTable::DwarfAccelTable(ArrayRef<DwarfAccelTable::Atom> atomList) :
-  Header(8 + (atomList.size() * 4)),
-  HeaderData(atomList),
-  Entries(Allocator) { }
+DwarfAccelTable::DwarfAccelTable(ArrayRef<DwarfAccelTable::Atom> atomList)
+    : Header(8 + (atomList.size() * 4)), HeaderData(atomList),
+      Entries(Allocator) {}
 
-DwarfAccelTable::~DwarfAccelTable() { }
+DwarfAccelTable::~DwarfAccelTable() {}
 
-void DwarfAccelTable::AddName(StringRef Name, DIE* die, char Flags) {
+void DwarfAccelTable::AddName(StringRef Name, DIE *die, char Flags) {
   assert(Data.empty() && "Already finalized!");
   // If the string is in the list already then add this die to the list
   // otherwise add a new one.
@@ -59,13 +64,16 @@ void DwarfAccelTable::ComputeBucketCount(void) {
     uniques[i] = Data[i]->HashValue;
   array_pod_sort(uniques.begin(), uniques.end());
   std::vector<uint32_t>::iterator p =
-    std::unique(uniques.begin(), uniques.end());
+      std::unique(uniques.begin(), uniques.end());
   uint32_t num = std::distance(uniques.begin(), p);
 
   // Then compute the bucket size, minimum of 1 bucket.
-  if (num > 1024) Header.bucket_count = num/4;
-  if (num > 16) Header.bucket_count = num/2;
-  else Header.bucket_count = num > 0 ? num : 1;
+  if (num > 1024)
+    Header.bucket_count = num / 4;
+  if (num > 16)
+    Header.bucket_count = num / 2;
+  else
+    Header.bucket_count = num > 0 ? num : 1;
 
   Header.hashes_count = num;
 }
@@ -78,13 +86,13 @@ static bool compareDIEs(const DwarfAccelTable::HashDataContents *A,
 
 void DwarfAccelTable::FinalizeTable(AsmPrinter *Asm, StringRef Prefix) {
   // Create the individual hash data outputs.
-  for (StringMap<DataArray>::iterator
-         EI = Entries.begin(), EE = Entries.end(); EI != EE; ++EI) {
+  for (StringMap<DataArray>::iterator EI = Entries.begin(), EE = Entries.end();
+       EI != EE; ++EI) {
 
     // Unique the entries.
     std::stable_sort(EI->second.begin(), EI->second.end(), compareDIEs);
     EI->second.erase(std::unique(EI->second.begin(), EI->second.end()),
-                       EI->second.end());
+                     EI->second.end());
 
     HashData *Entry = new (Allocator) HashData(EI->getKey(), EI->second);
     Data.push_back(Entry);
@@ -152,7 +160,8 @@ void DwarfAccelTable::EmitBuckets(AsmPrinter *Asm) {
 void DwarfAccelTable::EmitHashes(AsmPrinter *Asm) {
   for (size_t i = 0, e = Buckets.size(); i < e; ++i) {
     for (HashList::const_iterator HI = Buckets[i].begin(),
-           HE = Buckets[i].end(); HI != HE; ++HI) {
+                                  HE = Buckets[i].end();
+         HI != HE; ++HI) {
       Asm->OutStreamer.AddComment("Hash in Bucket " + Twine(i));
       Asm->EmitInt32((*HI)->HashValue);
     }
@@ -166,13 +175,13 @@ void DwarfAccelTable::EmitHashes(AsmPrinter *Asm) {
 void DwarfAccelTable::EmitOffsets(AsmPrinter *Asm, MCSymbol *SecBegin) {
   for (size_t i = 0, e = Buckets.size(); i < e; ++i) {
     for (HashList::const_iterator HI = Buckets[i].begin(),
-           HE = Buckets[i].end(); HI != HE; ++HI) {
+                                  HE = Buckets[i].end();
+         HI != HE; ++HI) {
       Asm->OutStreamer.AddComment("Offset in Bucket " + Twine(i));
       MCContext &Context = Asm->OutStreamer.getContext();
-      const MCExpr *Sub =
-        MCBinaryExpr::CreateSub(MCSymbolRefExpr::Create((*HI)->Sym, Context),
-                                MCSymbolRefExpr::Create(SecBegin, Context),
-                                Context);
+      const MCExpr *Sub = MCBinaryExpr::CreateSub(
+          MCSymbolRefExpr::Create((*HI)->Sym, Context),
+          MCSymbolRefExpr::Create(SecBegin, Context), Context);
       Asm->OutStreamer.EmitValue(Sub, sizeof(uint32_t));
     }
   }
@@ -185,7 +194,8 @@ void DwarfAccelTable::EmitData(AsmPrinter *Asm, DwarfUnits *D) {
   uint64_t PrevHash = UINT64_MAX;
   for (size_t i = 0, e = Buckets.size(); i < e; ++i) {
     for (HashList::const_iterator HI = Buckets[i].begin(),
-           HE = Buckets[i].end(); HI != HE; ++HI) {
+                                  HE = Buckets[i].end();
+         HI != HE; ++HI) {
       // Remember to emit the label for our offset.
       Asm->OutStreamer.EmitLabel((*HI)->Sym);
       Asm->OutStreamer.AddComment((*HI)->Str);
@@ -193,8 +203,9 @@ void DwarfAccelTable::EmitData(AsmPrinter *Asm, DwarfUnits *D) {
                              D->getStringPoolSym());
       Asm->OutStreamer.AddComment("Num DIEs");
       Asm->EmitInt32((*HI)->Data.size());
-      for (ArrayRef<HashDataContents*>::const_iterator
-             DI = (*HI)->Data.begin(), DE = (*HI)->Data.end();
+      for (ArrayRef<HashDataContents *>::const_iterator
+               DI = (*HI)->Data.begin(),
+               DE = (*HI)->Data.end();
            DI != DE; ++DI) {
         // Emit the DIE offset
         Asm->EmitInt32((*DI)->Die->getOffset());
@@ -214,8 +225,7 @@ void DwarfAccelTable::EmitData(AsmPrinter *Asm, DwarfUnits *D) {
 }
 
 // Emit the entire data structure to the output file.
-void DwarfAccelTable::Emit(AsmPrinter *Asm, MCSymbol *SecBegin,
-                           DwarfUnits *D) {
+void DwarfAccelTable::Emit(AsmPrinter *Asm, MCSymbol *SecBegin, DwarfUnits *D) {
   // Emit the header.
   EmitHeader(Asm);
 
@@ -239,11 +249,12 @@ void DwarfAccelTable::print(raw_ostream &O) {
   HeaderData.print(O);
 
   O << "Entries: \n";
-  for (StringMap<DataArray>::const_iterator
-         EI = Entries.begin(), EE = Entries.end(); EI != EE; ++EI) {
+  for (StringMap<DataArray>::const_iterator EI = Entries.begin(),
+                                            EE = Entries.end();
+       EI != EE; ++EI) {
     O << "Name: " << EI->getKeyData() << "\n";
     for (DataArray::const_iterator DI = EI->second.begin(),
-           DE = EI->second.end();
+                                   DE = EI->second.end();
          DI != DE; ++DI)
       (*DI)->print(O);
   }
@@ -251,14 +262,14 @@ void DwarfAccelTable::print(raw_ostream &O) {
   O << "Buckets and Hashes: \n";
   for (size_t i = 0, e = Buckets.size(); i < e; ++i)
     for (HashList::const_iterator HI = Buckets[i].begin(),
-           HE = Buckets[i].end(); HI != HE; ++HI)
+                                  HE = Buckets[i].end();
+         HI != HE; ++HI)
       (*HI)->print(O);
 
   O << "Data: \n";
-    for (std::vector<HashData*>::const_iterator
-           DI = Data.begin(), DE = Data.end(); DI != DE; ++DI)
-      (*DI)->print(O);
-
-
+  for (std::vector<HashData *>::const_iterator DI = Data.begin(),
+                                               DE = Data.end();
+       DI != DE; ++DI)
+    (*DI)->print(O);
 }
 #endif
