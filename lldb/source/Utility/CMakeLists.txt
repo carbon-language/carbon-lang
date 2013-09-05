@@ -5,7 +5,6 @@ add_lldb_library(lldbUtility
   KQueue.cpp
   PseudoTerminal.cpp
   Range.cpp
-  RefCounter.cpp
   SharingPtr.cpp
   StringExtractor.cpp
   StringExtractorGDBRemote.cpp

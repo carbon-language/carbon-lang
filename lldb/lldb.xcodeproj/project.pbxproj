@@ -536,7 +536,6 @@
 		945E8D80152F6AB40019BCCD /* StreamGDBRemote.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 945E8D7F152F6AB40019BCCD /* StreamGDBRemote.cpp */; };
 		9452573A16262D0200325455 /* SBDeclaration.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9452573916262D0200325455 /* SBDeclaration.cpp */; };
 		9456F2241616671900656F91 /* DynamicLibrary.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9456F2211616644B00656F91 /* DynamicLibrary.cpp */; };
-		94611EB213CCA4A4003A22AF /* RefCounter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94611EB113CCA4A4003A22AF /* RefCounter.cpp */; };
 		9461569A14E358A6003A195C /* SBTypeFilter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9461568A14E35621003A195C /* SBTypeFilter.cpp */; };
 		9461569B14E358A6003A195C /* SBTypeFormat.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9461568B14E35621003A195C /* SBTypeFormat.cpp */; };
 		9461569C14E358A6003A195C /* SBTypeSummary.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9461568C14E35621003A195C /* SBTypeSummary.cpp */; };
@@ -1583,8 +1582,6 @@
 		9452573916262D0200325455 /* SBDeclaration.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBDeclaration.cpp; path = source/API/SBDeclaration.cpp; sourceTree = "<group>"; };
 		9456F2211616644B00656F91 /* DynamicLibrary.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DynamicLibrary.cpp; sourceTree = "<group>"; };
 		9456F2231616645A00656F91 /* DynamicLibrary.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = DynamicLibrary.h; path = include/lldb/Host/DynamicLibrary.h; sourceTree = "<group>"; };
-		94611EAF13CCA363003A22AF /* RefCounter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RefCounter.h; path = include/lldb/Utility/RefCounter.h; sourceTree = "<group>"; };
-		94611EB113CCA4A4003A22AF /* RefCounter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RefCounter.cpp; path = source/Utility/RefCounter.cpp; sourceTree = "<group>"; };
 		9461568614E355F2003A195C /* SBTypeFilter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SBTypeFilter.h; path = include/lldb/API/SBTypeFilter.h; sourceTree = "<group>"; };
 		9461568714E355F2003A195C /* SBTypeFormat.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SBTypeFormat.h; path = include/lldb/API/SBTypeFormat.h; sourceTree = "<group>"; };
 		9461568814E355F2003A195C /* SBTypeSummary.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SBTypeSummary.h; path = include/lldb/API/SBTypeSummary.h; sourceTree = "<group>"; };
@@ -2417,8 +2414,6 @@
 				94031A9F13CF5B3D00DCFF3C /* PriorityPointerPair.h */,
 				2682F16B115EDA0D00CCFF99 /* PseudoTerminal.h */,
 				2682F16A115EDA0D00CCFF99 /* PseudoTerminal.cpp */,
-				94611EAF13CCA363003A22AF /* RefCounter.h */,
-				94611EB113CCA4A4003A22AF /* RefCounter.cpp */,
 				261B5A5211C3F2AD00AABD0A /* SharingPtr.cpp */,
 				4C2FAE2E135E3A70001EDE44 /* SharedCluster.h */,
 				261B5A5311C3F2AD00AABD0A /* SharingPtr.h */,
@@ -4312,7 +4307,6 @@
 				9463D4CD13B1798800C230D4 /* CommandObjectType.cpp in Sources */,
 				49D8FB3913B5598F00411094 /* ClangASTImporter.cpp in Sources */,
 				26ED3D6D13C563810017D45E /* OptionGroupVariable.cpp in Sources */,
-				94611EB213CCA4A4003A22AF /* RefCounter.cpp in Sources */,
 				94031A9E13CF486700DCFF3C /* InputReaderEZ.cpp in Sources */,
 				2642FBAE13D003B400ED6808 /* CommunicationKDP.cpp in Sources */,
 				2642FBB013D003B400ED6808 /* ProcessKDP.cpp in Sources */,
