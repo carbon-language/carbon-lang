@@ -651,6 +651,7 @@ lldb::OptionValueSP
 OptionValueProperties::DeepCopy () const
 {
     assert(!"this shouldn't happen");
+    return lldb::OptionValueSP();
 }
 
 const Property *
