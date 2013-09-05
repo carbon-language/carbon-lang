@@ -1618,23 +1618,23 @@ Stmt *RewriteModernObjC::RewritePropertyOrImplicitGetter(PseudoObjectExpr *Pseud
 }
 
 /// SynthCountByEnumWithState - To print:
-/// ((unsigned int (*)
-///  (id, SEL, struct __objcFastEnumerationState *, id *, unsigned int))
+/// ((NSUInteger (*)
+///  (id, SEL, struct __objcFastEnumerationState *, id *, NSUInteger))
 ///  (void *)objc_msgSend)((id)l_collection,
 ///                        sel_registerName(
 ///                          "countByEnumeratingWithState:objects:count:"),
 ///                        &enumState,
-///                        (id *)__rw_items, (unsigned int)16)
+///                        (id *)__rw_items, (NSUInteger)16)
 ///
 void RewriteModernObjC::SynthCountByEnumWithState(std::string &buf) {
-  buf += "((unsigned int (*) (id, SEL, struct __objcFastEnumerationState *, "
-  "id *, unsigned int))(void *)objc_msgSend)";
+  buf += "((_WIN_NSUInteger (*) (id, SEL, struct __objcFastEnumerationState *, "
+  "id *, _WIN_NSUInteger))(void *)objc_msgSend)";
   buf += "\n\t\t";
   buf += "((id)l_collection,\n\t\t";
   buf += "sel_registerName(\"countByEnumeratingWithState:objects:count:\"),";
   buf += "\n\t\t";
   buf += "&enumState, "
-         "(id *)__rw_items, (unsigned int)16)";
+         "(id *)__rw_items, (_WIN_NSUInteger)16)";
 }
 
 /// RewriteBreakStmt - Rewrite for a break-stmt inside an ObjC2's foreach
@@ -1694,7 +1694,7 @@ Stmt *RewriteModernObjC::RewriteContinueStmt(ContinueStmt *S) {
 ///   struct __objcFastEnumerationState enumState = { 0 };
 ///   id __rw_items[16];
 ///   id l_collection = (id)collection;
-///   unsigned long limit = [l_collection countByEnumeratingWithState:&enumState
+///   NSUInteger limit = [l_collection countByEnumeratingWithState:&enumState
 ///                                       objects:__rw_items count:16];
 /// if (limit) {
 ///   unsigned long startMutations = *enumState.mutationsPtr;
@@ -1707,8 +1707,8 @@ Stmt *RewriteModernObjC::RewriteContinueStmt(ContinueStmt *S) {
 ///             stmts;
 ///             __continue_label: ;
 ///        } while (counter < limit);
-///   } while (limit = [l_collection countByEnumeratingWithState:&enumState
-///                                  objects:__rw_items count:16]);
+///   } while ((limit = [l_collection countByEnumeratingWithState:&enumState
+///                                  objects:__rw_items count:16]));
 ///   elem = nil;
 ///   __break_label: ;
 ///  }
@@ -1791,15 +1791,15 @@ Stmt *RewriteModernObjC::RewriteObjCForCollectionStmt(ObjCForCollectionStmt *S,
   // unsigned long limit = [l_collection countByEnumeratingWithState:&enumState
   //                                   objects:__rw_items count:16];
   // which is synthesized into:
-  // unsigned int limit =
-  // ((unsigned int (*)
-  //  (id, SEL, struct __objcFastEnumerationState *, id *, unsigned int))
+  // NSUInteger limit =
+  // ((NSUInteger (*)
+  //  (id, SEL, struct __objcFastEnumerationState *, id *, NSUInteger))
   //  (void *)objc_msgSend)((id)l_collection,
   //                        sel_registerName(
   //                          "countByEnumeratingWithState:objects:count:"),
   //                        (struct __objcFastEnumerationState *)&state,
-  //                        (id *)__rw_items, (unsigned int)16);
-  buf += "unsigned long limit =\n\t\t";
+  //                        (id *)__rw_items, (NSUInteger)16);
+  buf += "_WIN_NSUInteger limit =\n\t\t";
   SynthCountByEnumWithState(buf);
   buf += ";\n\t";
   /// if (limit) {
@@ -1826,8 +1826,8 @@ Stmt *RewriteModernObjC::RewriteObjCForCollectionStmt(ObjCForCollectionStmt *S,
 
   ///            __continue_label: ;
   ///        } while (counter < limit);
-  ///   } while (limit = [l_collection countByEnumeratingWithState:&enumState
-  ///                                  objects:__rw_items count:16]);
+  ///   } while ((limit = [l_collection countByEnumeratingWithState:&enumState
+  ///                                  objects:__rw_items count:16]));
   ///   elem = nil;
   ///   __break_label: ;
   ///  }
@@ -1841,9 +1841,9 @@ Stmt *RewriteModernObjC::RewriteObjCForCollectionStmt(ObjCForCollectionStmt *S,
   buf += ": ;";
   buf += "\n\t\t";
   buf += "} while (counter < limit);\n\t";
-  buf += "} while (limit = ";
+  buf += "} while ((limit = ";
   SynthCountByEnumWithState(buf);
-  buf += ");\n\t";
+  buf += "));\n\t";
   buf += elementName;
   buf += " = ((";
   buf += elementTypeAsString;
@@ -6166,6 +6166,11 @@ void RewriteModernObjC::Initialize(ASTContext &context) {
   Preamble += "__OBJC_RW_DLLIMPORT int objc_sync_enter( struct objc_object *);\n";
   Preamble += "__OBJC_RW_DLLIMPORT int objc_sync_exit( struct objc_object *);\n";
   Preamble += "__OBJC_RW_DLLIMPORT Protocol *objc_getProtocol(const char *);\n";
+  Preamble += "#ifdef _WIN64\n";
+  Preamble += "typedef unsigned long long  _WIN_NSUInteger;\n";
+  Preamble += "#else\n";
+  Preamble += "typedef unsigned int _WIN_NSUInteger;\n";
+  Preamble += "#endif\n";
   Preamble += "#ifndef __FASTENUMERATIONSTATE\n";
   Preamble += "struct __objcFastEnumerationState {\n\t";
   Preamble += "unsigned long state;\n\t";
