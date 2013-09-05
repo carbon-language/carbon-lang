@@ -240,14 +240,6 @@ def rGPR : RegisterClass<"ARM", [i32], 32, (sub GPR, SP, PC)> {
   }];
 }
 
-// jtGPR - Jump Table General Purpose Registers.
-// Used by the Thumb2 instructions to prevent Thumb2 jump tables
-// from using the LR. The implementation of the jump table uses a mov pc, rA
-// type instruction to jump into the table. Use of the LR register (as in
-// mov pc, lr) can cause the ARM branch predictor to think it is returning
-// from a function instead. This causes a mispredict and a pipe flush. 
-def jtGPR : RegisterClass<"ARM", [i32], 32, (sub rGPR, LR)>;
-
 // Thumb registers are R0-R7 normally. Some instructions can still use
 // the general GPR register class above (MOV, e.g.)
 def tGPR : RegisterClass<"ARM", [i32], 32, (trunc GPR, 8)>;

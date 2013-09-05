@@ -152,13 +152,7 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     // gsub_0, but needs an extra constraint for gsub_1 (which could be sp
     // otherwise).
     MachineRegisterInfo *MRI = &MF.getRegInfo();
-    const TargetRegisterClass* TargetClass = TRI->getMatchingSuperRegClass(RC,
-                                &ARM::rGPRRegClass,
-                                ARM::gsub_1);
-    assert(TargetClass && "No Matching GPRPair with gsub_1 in rGPRRegClass");
-    const TargetRegisterClass* ConstrainedClass =
-                                MRI->constrainRegClass(SrcReg, TargetClass);
-    assert(ConstrainedClass && "Couldn't constrain the register class");
+    MRI->constrainRegClass(SrcReg, &ARM::GPRPair_with_gsub_1_in_rGPRRegClass);
 
     MachineInstrBuilder MIB = BuildMI(MBB, I, DL, get(ARM::t2STRDi8));
     AddDReg(MIB, SrcReg, ARM::gsub_0, getKillRegState(isKill), TRI);
@@ -199,13 +193,7 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     // gsub_0, but needs an extra constraint for gsub_1 (which could be sp
     // otherwise).
     MachineRegisterInfo *MRI = &MF.getRegInfo();
-    const TargetRegisterClass* TargetClass = TRI->getMatchingSuperRegClass(RC,
-                                &ARM::rGPRRegClass,
-                                ARM::gsub_1);
-    assert(TargetClass && "No Matching GPRPair with gsub_1 in rGPRRegClass");
-    const TargetRegisterClass* ConstrainedClass =
-                                MRI->constrainRegClass(DestReg, TargetClass);
-    assert(ConstrainedClass && "Couldn't constrain the register class");
+    MRI->constrainRegClass(DestReg, &ARM::GPRPair_with_gsub_1_in_rGPRRegClass);
 
     MachineInstrBuilder MIB = BuildMI(MBB, I, DL, get(ARM::t2LDRDi8));
     AddDReg(MIB, DestReg, ARM::gsub_0, RegState::DefineNoRead, TRI);
