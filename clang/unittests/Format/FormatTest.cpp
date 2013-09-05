@@ -6300,6 +6300,9 @@ TEST_F(FormatTest, FormatsLambdas) {
                "        x.end(),   //\n"
                "        [&](int, int) { return 1; });\n"
                "}\n");
+
+  // Not lambdas.
+  verifyFormat("constexpr char hello[]{ \"hello\" };");
 }
 
 TEST_F(FormatTest, FormatsBlocks) {

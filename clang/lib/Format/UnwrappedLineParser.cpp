@@ -674,6 +674,12 @@ void UnwrappedLineParser::parseStructuralElement() {
 }
 
 void UnwrappedLineParser::tryToParseLambda() {
+  // FIXME: This is a dirty way to access the previous token. Find a better
+  // solution.
+  if (!Line->Tokens.empty() && Line->Tokens.back().Tok->is(tok::identifier)) {
+    nextToken();
+    return;
+  }
   assert(FormatTok->is(tok::l_square));
   FormatToken &LSquare = *FormatTok;
   if (!tryToParseLambdaIntroducer())
