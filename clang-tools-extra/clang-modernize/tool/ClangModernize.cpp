@@ -238,7 +238,7 @@ static Reformatter *handleFormatStyle(const char *ProgName, bool &Error) {
 ///              disk.
 ///          \li false if reformatting could not be successfully applied or
 ///              if at least one file failed to write to disk.
-bool reformat(Reformatter &ChangesReformatter, const FileOverrides &Overrides,
+void reformat(Reformatter &ChangesReformatter, FileOverrides &Overrides,
               DiagnosticsEngine &Diagnostics) {
   FileManager Files((FileSystemOptions()));
   SourceManager SM(Diagnostics, Files);
@@ -250,16 +250,16 @@ bool reformat(Reformatter &ChangesReformatter, const FileOverrides &Overrides,
   replace::FileToReplacementsMap GroupedReplacements;
   if (!replace::mergeAndDeduplicate(AllReplacements, GroupedReplacements, SM)) {
     llvm::errs() << "Warning: Reformatting produced conflicts.\n";
-    return false;
+    return;
   }
 
   Rewriter DestRewriter(SM, LangOptions());
   if (!replace::applyReplacements(GroupedReplacements, DestRewriter)) {
     llvm::errs() << "Warning: Failed to apply reformatting conflicts!\n";
-    return false;
+    return;
   }
 
-  return replace::writeFiles(DestRewriter);
+  Overrides.updateState(DestRewriter);
 }
 
 bool serializeReplacements(const replace::TUReplacements &Replacements) {
@@ -452,13 +452,12 @@ int main(int argc, const char **argv) {
   }
 
   // Skip writing final file states to disk if we were asked to serialize
-  // replacements. Otherwise reformat changes if reformatting is enabled. If
-  // not enabled or if reformatting fails write un-formated changes to disk
-  // instead. reformat() takes care of writing successfully formatted changes.
-  if (!SerializeReplacements &&
-      (!ChangesReformatter ||
-       !reformat(*ChangesReformatter, FileStates, Diagnostics)))
+  // replacements. Otherwise reformat changes if reformatting is enabled.
+  if (!SerializeReplacements) {
+    if (ChangesReformatter)
+       reformat(*ChangesReformatter, FileStates, Diagnostics);
     FileStates.writeToDisk(Diagnostics);
+  }
 
   if (FinalSyntaxCheck)
     if (!doSyntaxCheck(*Compilations, SourcePaths, FileStates))
