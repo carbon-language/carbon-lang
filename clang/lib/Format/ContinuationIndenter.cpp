@@ -511,6 +511,21 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
     bool AvoidBinPacking;
     if (Current.is(tok::l_brace)) {
       if (Current.MatchingParen && Current.BlockKind == BK_Block) {
+        // If this is an l_brace starting a nested block, we pretend (wrt. to
+        // indentation) that we already consumed the corresponding r_brace.
+        // Thus, we remove all ParenStates caused bake fake parentheses that end
+        // at the r_brace. The net effect of this is that we don't indent
+        // relative to the l_brace, if the nested block is the last parameter of
+        // a function. For example, this formats:
+        //
+        //   SomeFunction(a, [] {
+        //     f();  // break
+        //   });
+        //
+        // instead of:
+        //   SomeFunction(a, [] {
+        //                        f();  // break
+        //                      });
         for (unsigned i = 0; i != Current.MatchingParen->FakeRParens; ++i)
           State.Stack.pop_back();
         NewIndent = State.Stack.back().LastSpace;
@@ -565,6 +580,8 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
   // Remove scopes created by fake parenthesis.
   if (Current.isNot(tok::r_brace) ||
       (Current.MatchingParen && Current.MatchingParen->BlockKind != BK_Block)) {
+    // Don't remove FakeRParens attached to r_braces that surround nested blocks
+    // as they will have been removed early (see above).
     for (unsigned i = 0, e = Current.FakeRParens; i != e; ++i) {
       unsigned VariablePos = State.Stack.back().VariablePos;
       State.Stack.pop_back();

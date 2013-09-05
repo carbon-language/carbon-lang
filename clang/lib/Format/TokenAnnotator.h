@@ -66,7 +66,6 @@ public:
     for (unsigned i = 0, e = Children.size(); i != e; ++i) {
       delete Children[i];
     }
-    Children.clear();
   }
 
   FormatToken *First;

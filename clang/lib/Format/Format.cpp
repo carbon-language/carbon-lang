@@ -489,8 +489,8 @@ private:
     ++Count;
   }
 
-  /// \brief Format all children of \p Tok assuming the parent is indented to
-  /// \p ParentIndent.
+  /// \brief If the \p State's next token is an r_brace closing a nested block,
+  /// format the nested block before it.
   ///
   /// Returns \c true if all children could be placed successfully and adapts
   /// \p Penalty as well as \p State. If \p DryRun is false, also directly
@@ -514,7 +514,9 @@ private:
     const FormatToken &LBrace = *State.NextToken->Previous;
     if (LBrace.isNot(tok::l_brace) || LBrace.BlockKind != BK_Block ||
         LBrace.Children.size() == 0)
-      return true; // The previous token does not open a block. Nothing to do.
+      // The previous token does not open a block. Nothing to do. We don't
+      // assert so that we can simply call this function for all tokens.
+      return true; 
 
     if (NewLine) {
       unsigned ParentIndent = State.Stack.back().Indent;
@@ -734,7 +736,6 @@ public:
     for (unsigned i = 0, e = AnnotatedLines.size(); i != e; ++i) {
       delete AnnotatedLines[i];
     }
-    AnnotatedLines.clear();
   }
 
   tooling::Replacements format() {
