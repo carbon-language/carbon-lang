@@ -48,6 +48,11 @@ SparcRegisterInfo::getCallPreservedMask(CallingConv::ID CC) const {
   return CSR_RegMask;
 }
 
+const uint32_t*
+SparcRegisterInfo::getRTCallPreservedMask(CallingConv::ID CC) const {
+  return RTCSR_RegMask;
+}
+
 BitVector SparcRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   BitVector Reserved(getNumRegs());
   // FIXME: G1 reserved for now for large imm generation by frame code.

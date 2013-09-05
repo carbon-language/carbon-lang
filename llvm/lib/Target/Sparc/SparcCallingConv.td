@@ -123,3 +123,8 @@ def CSR : CalleeSavedRegs<(add)> {
   let OtherPreserved = (add (sequence "I%u", 0, 7),
                             (sequence "L%u", 0, 7));
 }
+
+// Callee-saved registers for calls with ReturnsTwice attribute.
+def RTCSR : CalleeSavedRegs<(add)> {
+  let OtherPreserved = (add I6, I7);
+}

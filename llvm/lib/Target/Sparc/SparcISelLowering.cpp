@@ -14,6 +14,7 @@
 
 #include "SparcISelLowering.h"
 #include "SparcMachineFunctionInfo.h"
+#include "SparcRegisterInfo.h"
 #include "SparcTargetMachine.h"
 #include "MCTargetDesc/SparcBaseInfo.h"
 #include "llvm/CodeGen/CallingConvLower.h"
@@ -648,6 +649,27 @@ SparcTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   return LowerCall_32(CLI, InVals);
 }
 
+static bool hasReturnsTwiceAttr(SelectionDAG &DAG, SDValue Callee,
+                                     ImmutableCallSite *CS) {
+  if (CS)
+    return CS->hasFnAttr(Attribute::ReturnsTwice);
+
+  const Function *CalleeFn = 0;
+  if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
+    CalleeFn = dyn_cast<Function>(G->getGlobal());
+  } else if (ExternalSymbolSDNode *E =
+             dyn_cast<ExternalSymbolSDNode>(Callee)) {
+    const Function *Fn = DAG.getMachineFunction().getFunction();
+    const Module *M = Fn->getParent();
+    const char *CalleeName = E->getSymbol();
+    CalleeFn = M->getFunction(CalleeName);
+  }
+
+  if (!CalleeFn)
+    return false;
+  return CalleeFn->hasFnAttribute(Attribute::ReturnsTwice);
+}
+
 // Lower a call for the 32-bit ABI.
 SDValue
 SparcTargetLowering::LowerCall_32(TargetLowering::CallLoweringInfo &CLI,
@@ -861,6 +883,7 @@ SparcTargetLowering::LowerCall_32(TargetLowering::CallLoweringInfo &CLI,
   }
 
   unsigned SRetArgSize = (hasStructRetAttr)? getSRetArgSize(DAG, Callee):0;
+  bool hasReturnsTwice = hasReturnsTwiceAttr(DAG, Callee, CLI.CS);
 
   // If the callee is a GlobalAddress node (quite common, every direct call is)
   // turn it into a TargetGlobalAddress node so that legalize doesn't hack it.
@@ -882,8 +905,11 @@ SparcTargetLowering::LowerCall_32(TargetLowering::CallLoweringInfo &CLI,
                                   RegsToPass[i].second.getValueType()));
 
   // Add a register mask operand representing the call-preserved registers.
-  const TargetRegisterInfo *TRI = getTargetMachine().getRegisterInfo();
-  const uint32_t *Mask = TRI->getCallPreservedMask(CallConv);
+  const SparcRegisterInfo *TRI =
+    ((const SparcTargetMachine&)getTargetMachine()).getRegisterInfo();
+  const uint32_t *Mask = ((hasReturnsTwice)
+                          ? TRI->getRTCallPreservedMask(CallConv)
+                          : TRI->getCallPreservedMask(CallConv));
   assert(Mask && "Missing call preserved mask for calling convention");
   Ops.push_back(DAG.getRegisterMask(Mask));
 
@@ -1125,6 +1151,7 @@ SparcTargetLowering::LowerCall_64(TargetLowering::CallLoweringInfo &CLI,
   // turn it into a TargetGlobalAddress node so that legalize doesn't hack it.
   // Likewise ExternalSymbol -> TargetExternalSymbol.
   SDValue Callee = CLI.Callee;
+  bool hasReturnsTwice = hasReturnsTwiceAttr(DAG, Callee, CLI.CS);
   if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
     Callee = DAG.getTargetGlobalAddress(G->getGlobal(), DL, getPointerTy());
   else if (ExternalSymbolSDNode *E = dyn_cast<ExternalSymbolSDNode>(Callee))
@@ -1139,8 +1166,11 @@ SparcTargetLowering::LowerCall_64(TargetLowering::CallLoweringInfo &CLI,
                                   RegsToPass[i].second.getValueType()));
 
   // Add a register mask operand representing the call-preserved registers.
-  const TargetRegisterInfo *TRI = getTargetMachine().getRegisterInfo();
-  const uint32_t *Mask = TRI->getCallPreservedMask(CLI.CallConv);
+  const SparcRegisterInfo *TRI =
+    ((const SparcTargetMachine&)getTargetMachine()).getRegisterInfo();
+  const uint32_t *Mask = ((hasReturnsTwice)
+                          ? TRI->getRTCallPreservedMask(CLI.CallConv)
+                          : TRI->getCallPreservedMask(CLI.CallConv));
   assert(Mask && "Missing call preserved mask for calling convention");
   Ops.push_back(DAG.getRegisterMask(Mask));
 

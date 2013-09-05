@@ -34,6 +34,8 @@ struct SparcRegisterInfo : public SparcGenRegisterInfo {
   const uint16_t *getCalleeSavedRegs(const MachineFunction *MF = 0) const;
   const uint32_t* getCallPreservedMask(CallingConv::ID CC) const;
 
+  const uint32_t* getRTCallPreservedMask(CallingConv::ID CC) const;
+
   BitVector getReservedRegs(const MachineFunction &MF) const;
 
   const TargetRegisterClass *getPointerRegClass(const MachineFunction &MF,
