@@ -260,6 +260,9 @@ public:
   }
 
   void visitCallInst(CallInst &I) {
+    if (!I.getCalledFunction()) {
+      return;
+    }
     StringRef Name = I.getCalledFunction()->getName();
     if (Name == "llvm.AMDGPU.tex") {
       ReplaceTexIntrinsic(I, false, TexSign, "llvm.R600.tex", "llvm.R600.texc");
