@@ -50,8 +50,6 @@ protected:
   const LinkingContext &_context;
 };
 
-typedef ErrorOr<Reader &> ReaderFunc(const LinkerInput &);
-
 std::unique_ptr<Reader> createReaderELF(const ELFLinkingContext &);
 std::unique_ptr<Reader> createReaderMachO(const LinkingContext &);
 std::unique_ptr<Reader> createReaderNative(const LinkingContext &);
