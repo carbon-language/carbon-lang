@@ -31,7 +31,6 @@ class TargetWatchAddressAPITestCase(TestBase):
         self.do_set_watchaddress()
 
     @expectedFailureFreeBSD('llvm.org/pr16706') # Watchpoints fail on FreeBSD
-    @skipIfLinux # llvm.org/pr14323 - skip due to incomplete multi-threaded debug support
     @python_api_test
     @dwarf_test
     def test_watch_address_with_dwarf(self):

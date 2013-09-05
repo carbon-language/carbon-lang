@@ -53,7 +53,6 @@ class RegisterCommandsTestCase(TestBase):
         self.convenience_registers_with_process_attach(test_16bit_regs=False)
 
     @expectedFailureLinux("llvm.org/pr14600") # Linux doesn't support 16-bit convenience registers
-    @skipIfLinux # llvm.org/pr16301 LLDB occasionally exits with SIGABRT 
     def test_convenience_registers_16bit_with_process_attach(self):
         """Test convenience registers after a 'process attach'."""
         if not self.getArchitecture() in ['x86_64']:
