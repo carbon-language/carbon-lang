@@ -446,6 +446,7 @@ define void @load_const_addrspace_f32(float addrspace(1)* %out, float addrspace(
 ; R600-CHECK: @load_i8_local
 ; R600-CHECK: LDS_UBYTE_READ_RET
 ; SI-CHECK: @load_i8_local
+; SI-CHECK-NOT: S_WQM_B64
 ; SI-CHECK: DS_READ_U8
 define void @load_i8_local(i32 addrspace(1)* %out, i8 addrspace(3)* %in) {
   %1 = load i8 addrspace(3)* %in
@@ -458,6 +459,7 @@ define void @load_i8_local(i32 addrspace(1)* %out, i8 addrspace(3)* %in) {
 ; R600-CHECK: LDS_UBYTE_READ_RET
 ; R600-CHECK: ASHR
 ; SI-CHECK: @load_i8_sext_local
+; SI-CHECK-NOT: S_WQM_B64
 ; SI-CHECK: DS_READ_I8
 define void @load_i8_sext_local(i32 addrspace(1)* %out, i8 addrspace(3)* %in) {
 entry:
@@ -471,6 +473,7 @@ entry:
 ; R600-CHECK: LDS_UBYTE_READ_RET
 ; R600-CHECK: LDS_UBYTE_READ_RET
 ; SI-CHECK: @load_v2i8_local
+; SI-CHECK-NOT: S_WQM_B64
 ; SI-CHECK: DS_READ_U8
 ; SI-CHECK: DS_READ_U8
 define void @load_v2i8_local(<2 x i32> addrspace(1)* %out, <2 x i8> addrspace(3)* %in) {
@@ -487,6 +490,7 @@ entry:
 ; R600-CHECK-DAG: ASHR
 ; R600-CHECK-DAG: ASHR
 ; SI-CHECK: @load_v2i8_sext_local
+; SI-CHECK-NOT: S_WQM_B64
 ; SI-CHECK: DS_READ_I8
 ; SI-CHECK: DS_READ_I8
 define void @load_v2i8_sext_local(<2 x i32> addrspace(1)* %out, <2 x i8> addrspace(3)* %in) {
@@ -503,6 +507,7 @@ entry:
 ; R600-CHECK: LDS_UBYTE_READ_RET
 ; R600-CHECK: LDS_UBYTE_READ_RET
 ; SI-CHECK: @load_v4i8_local
+; SI-CHECK-NOT: S_WQM_B64
 ; SI-CHECK: DS_READ_U8
 ; SI-CHECK: DS_READ_U8
 ; SI-CHECK: DS_READ_U8
@@ -525,6 +530,7 @@ entry:
 ; R600-CHECK-DAG: ASHR
 ; R600-CHECK-DAG: ASHR
 ; SI-CHECK: @load_v4i8_sext_local
+; SI-CHECK-NOT: S_WQM_B64
 ; SI-CHECK: DS_READ_I8
 ; SI-CHECK: DS_READ_I8
 ; SI-CHECK: DS_READ_I8
@@ -541,6 +547,7 @@ entry:
 ; R600-CHECK: @load_i16_local
 ; R600-CHECK: LDS_USHORT_READ_RET
 ; SI-CHECK: @load_i16_local
+; SI-CHECK-NOT: S_WQM_B64
 ; SI-CHECK: DS_READ_U16
 define void @load_i16_local(i32 addrspace(1)* %out, i16 addrspace(3)* %in) {
 entry:
@@ -554,6 +561,7 @@ entry:
 ; R600-CHECK: LDS_USHORT_READ_RET
 ; R600-CHECK: ASHR
 ; SI-CHECK: @load_i16_sext_local
+; SI-CHECK-NOT: S_WQM_B64
 ; SI-CHECK: DS_READ_I16
 define void @load_i16_sext_local(i32 addrspace(1)* %out, i16 addrspace(3)* %in) {
 entry:
@@ -567,6 +575,7 @@ entry:
 ; R600-CHECK: LDS_USHORT_READ_RET
 ; R600-CHECK: LDS_USHORT_READ_RET
 ; SI-CHECK: @load_v2i16_local
+; SI-CHECK-NOT: S_WQM_B64
 ; SI-CHECK: DS_READ_U16
 ; SI-CHECK: DS_READ_U16
 define void @load_v2i16_local(<2 x i32> addrspace(1)* %out, <2 x i16> addrspace(3)* %in) {
@@ -583,6 +592,7 @@ entry:
 ; R600-CHECK-DAG: ASHR
 ; R600-CHECK-DAG: ASHR
 ; SI-CHECK: @load_v2i16_sext_local
+; SI-CHECK-NOT: S_WQM_B64
 ; SI-CHECK: DS_READ_I16
 ; SI-CHECK: DS_READ_I16
 define void @load_v2i16_sext_local(<2 x i32> addrspace(1)* %out, <2 x i16> addrspace(3)* %in) {
@@ -599,6 +609,7 @@ entry:
 ; R600-CHECK: LDS_USHORT_READ_RET
 ; R600-CHECK: LDS_USHORT_READ_RET
 ; SI-CHECK: @load_v4i16_local
+; SI-CHECK-NOT: S_WQM_B64
 ; SI-CHECK: DS_READ_U16
 ; SI-CHECK: DS_READ_U16
 ; SI-CHECK: DS_READ_U16
@@ -621,6 +632,7 @@ entry:
 ; R600-CHECK-DAG: ASHR
 ; R600-CHECK-DAG: ASHR
 ; SI-CHECK: @load_v4i16_sext_local
+; SI-CHECK-NOT: S_WQM_B64
 ; SI-CHECK: DS_READ_I16
 ; SI-CHECK: DS_READ_I16
 ; SI-CHECK: DS_READ_I16
@@ -637,6 +649,7 @@ entry:
 ; R600-CHECK: @load_i32_local
 ; R600-CHECK: LDS_READ_RET
 ; SI-CHECK: @load_i32_local
+; SI-CHECK-NOT: S_WQM_B64
 ; SI-CHECK: DS_READ_B32
 define void @load_i32_local(i32 addrspace(1)* %out, i32 addrspace(3)* %in) {
 entry:

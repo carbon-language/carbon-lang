@@ -409,6 +409,7 @@ void SILowerControlFlowPass::IndirectDst(MachineInstr &MI) {
 bool SILowerControlFlowPass::runOnMachineFunction(MachineFunction &MF) {
   TII = MF.getTarget().getInstrInfo();
   TRI = MF.getTarget().getRegisterInfo();
+  SIMachineFunctionInfo *MFI = MF.getInfo<SIMachineFunctionInfo>();
 
   bool HaveKill = false;
   bool NeedM0 = false;
@@ -508,7 +509,7 @@ bool SILowerControlFlowPass::runOnMachineFunction(MachineFunction &MF) {
             AMDGPU::M0).addImm(0xffffffff);
   }
 
-  if (NeedWQM) {
+  if (NeedWQM && MFI->ShaderType != ShaderType::COMPUTE) {
     MachineBasicBlock &MBB = MF.front();
     BuildMI(MBB, MBB.getFirstNonPHI(), DebugLoc(), TII->get(AMDGPU::S_WQM_B64),
             AMDGPU::EXEC).addReg(AMDGPU::EXEC);
