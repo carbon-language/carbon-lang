@@ -4,6 +4,9 @@
 // Note: %s must be preceded by --, otherwise it may be interpreted as a
 // command-line option, e.g. on Mac where %s is commonly under /Users.
 
+// RUN: %clang_cl /c -### -- %s 2>&1 | FileCheck -check-prefix=DEFAULT %s
+// DEFAULT: "-o" "cl-outputs.obj"
+
 // RUN: %clang_cl /Foa -### -- %s 2>&1 | FileCheck -check-prefix=FoNAME %s
 // FoNAME:  "-o" "a.obj"
 

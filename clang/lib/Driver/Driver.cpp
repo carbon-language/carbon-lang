@@ -1670,7 +1670,7 @@ const char *Driver::GetNamedOutputPath(Compilation &C,
     } else
       NamedOutput = DefaultImageName.c_str();
   } else {
-    const char *Suffix = types::getTypeTempSuffix(JA.getType());
+    const char *Suffix = types::getTypeTempSuffix(JA.getType(), IsCLMode());
     assert(Suffix && "All types used for output should have a suffix.");
 
     std::string::size_type End = std::string::npos;
