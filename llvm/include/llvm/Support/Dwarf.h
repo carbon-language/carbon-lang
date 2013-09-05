@@ -18,23 +18,22 @@
 
 #include "llvm/Support/DataTypes.h"
 
-
 namespace llvm {
 
 //===----------------------------------------------------------------------===//
 // Debug info constants.
 
 enum {
-  LLVMDebugVersion = (12 << 16),        // Current version of debug information.
-  LLVMDebugVersion11 = (11 << 16),      // Constant for version 11.
-  LLVMDebugVersion10 = (10 << 16),      // Constant for version 10.
-  LLVMDebugVersion9 = (9 << 16),        // Constant for version 9.
-  LLVMDebugVersion8 = (8 << 16),        // Constant for version 8.
-  LLVMDebugVersion7 = (7 << 16),        // Constant for version 7.
-  LLVMDebugVersion6 = (6 << 16),        // Constant for version 6.
-  LLVMDebugVersion5 = (5 << 16),        // Constant for version 5.
-  LLVMDebugVersion4 = (4 << 16),        // Constant for version 4.
-  LLVMDebugVersionMask = 0xffff0000     // Mask for version number.
+  LLVMDebugVersion = (12 << 16),    // Current version of debug information.
+  LLVMDebugVersion11 = (11 << 16),  // Constant for version 11.
+  LLVMDebugVersion10 = (10 << 16),  // Constant for version 10.
+  LLVMDebugVersion9 = (9 << 16),    // Constant for version 9.
+  LLVMDebugVersion8 = (8 << 16),    // Constant for version 8.
+  LLVMDebugVersion7 = (7 << 16),    // Constant for version 7.
+  LLVMDebugVersion6 = (6 << 16),    // Constant for version 6.
+  LLVMDebugVersion5 = (5 << 16),    // Constant for version 5.
+  LLVMDebugVersion4 = (4 << 16),    // Constant for version 4.
+  LLVMDebugVersionMask = 0xffff0000 // Mask for version number.
 };
 
 namespace dwarf {
@@ -49,25 +48,23 @@ namespace dwarf {
 
 enum llvm_dwarf_constants {
   // llvm mock tags
-  DW_TAG_invalid = ~0U,                 // Tag for invalid results.
+  DW_TAG_invalid = ~0U, // Tag for invalid results.
 
-  DW_TAG_auto_variable = 0x100,         // Tag for local (auto) variables.
-  DW_TAG_arg_variable = 0x101,          // Tag for argument variables.
+  DW_TAG_auto_variable = 0x100, // Tag for local (auto) variables.
+  DW_TAG_arg_variable = 0x101,  // Tag for argument variables.
 
-  DW_TAG_user_base = 0x1000,            // Recommended base for user tags.
+  DW_TAG_user_base = 0x1000, // Recommended base for user tags.
 
-  DWARF_VERSION = 4,                    // Default dwarf version we output.
-  DW_CIE_VERSION = 1,                   // Common frame information version.
-  DW_PUBTYPES_VERSION = 2,              // Section version number for .debug_pubtypes.
-  DW_PUBNAMES_VERSION = 2               // Section version number for .debug_pubnames.
+  DWARF_VERSION = 4,       // Default dwarf version we output.
+  DW_CIE_VERSION = 1,      // Common frame information version.
+  DW_PUBTYPES_VERSION = 2, // Section version number for .debug_pubtypes.
+  DW_PUBNAMES_VERSION = 2  // Section version number for .debug_pubnames.
 };
-
 
 // Special ID values that distinguish a CIE from a FDE in DWARF CFI.
 // Not inside an enum because a 64-bit value is needed.
 const uint32_t DW_CIE_ID = UINT32_MAX;
 const uint64_t DW64_CIE_ID = UINT64_MAX;
-
 
 enum dwarf_constants {
   // Tags
