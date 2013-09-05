@@ -970,7 +970,7 @@ public:
   // modifiers
   /// Goes up one level if Level > 0.
   void pop() {
-    assert(State && "Cannot pop and end itertor!");
+    assert(State && "Cannot pop an end iterator!");
     assert(State->Level > 0 && "Cannot pop an iterator with level < 1");
 
     const directory_iterator end_itr;
