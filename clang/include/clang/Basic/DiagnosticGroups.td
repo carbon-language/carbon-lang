@@ -28,6 +28,7 @@ def ArrayBoundsPointerArithmetic : DiagGroup<"array-bounds-pointer-arithmetic">;
 def Availability : DiagGroup<"availability">;
 def Section : DiagGroup<"section">;
 def AutoImport : DiagGroup<"auto-import">;
+def GNUBinaryLiteral : DiagGroup<"gnu-binary-literal">;
 def BitFieldConstantConversion : DiagGroup<"bitfield-constant-conversion">;
 def ConstantConversion :
   DiagGroup<"constant-conversion", [ BitFieldConstantConversion ] >;
@@ -152,6 +153,7 @@ def OverloadedShiftOpParentheses: DiagGroup<"overloaded-shift-op-parentheses">;
 def DanglingElse: DiagGroup<"dangling-else">;
 def DanglingField : DiagGroup<"dangling-field">;
 def DistributedObjectModifiers : DiagGroup<"distributed-object-modifiers">;
+def GNUImaginaryConstant : DiagGroup<"gnu-imaginary-constant">;
 def IgnoredQualifiers : DiagGroup<"ignored-qualifiers">;
 def : DiagGroup<"import">;
 def IncompatiblePointerTypesDiscardsQualifiers 
@@ -369,6 +371,8 @@ def VLAExtension : DiagGroup<"vla-extension">;
 def VolatileRegisterVar : DiagGroup<"volatile-register-var">;
 def Visibility : DiagGroup<"visibility">;
 def ZeroLengthArray : DiagGroup<"zero-length-array">;
+def GNUZeroLineDirective : DiagGroup<"gnu-zero-line-directive">;
+def GNUZeroVariadicMacroArguments : DiagGroup<"gnu-zero-variadic-macro-arguments">;
 
 // GCC calls -Wdeprecated-writable-strings -Wwrite-strings.
 def GCCWriteStrings : DiagGroup<"write-strings" , [DeprecatedWritableStr]>;
@@ -535,14 +539,15 @@ def C11 : DiagGroup<"c11-extensions">;
 def C99 : DiagGroup<"c99-extensions">;
 
 // A warning group for warnings about GCC extensions.
-def GNU : DiagGroup<"gnu", [GNUAlignofExpression, GNUCaseRange,
-                            GNUComplexInteger,
+def GNU : DiagGroup<"gnu", [GNUAlignofExpression, GNUBinaryLiteral,
+                            GNUCaseRange, GNUComplexInteger,
                             GNUConditionalOmittedOperand,
                             GNUDesignator, GNUEmptyInitializer,
                             VLAExtension,
-                            GNULabelsAsValue,
+                            GNUImaginaryConstant, GNULabelsAsValue,
                             GNUStatementExpression, GNUStaticFloatInit,
-                            ZeroLengthArray]>;
+                            ZeroLengthArray,
+                            GNUZeroLineDirective, GNUZeroVariadicMacroArguments]>;
 // A warning group for warnings about code that clang accepts but gcc doesn't.
 def GccCompat : DiagGroup<"gcc-compat">;
 

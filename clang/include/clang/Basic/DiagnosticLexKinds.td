@@ -167,7 +167,7 @@ def err_multichar_utf_character_literal : Error<
   "Unicode character literals may not contain multiple characters">;
 def err_exponent_has_no_digits : Error<"exponent has no digits">;
 def ext_imaginary_constant : Extension<
-  "imaginary constants are a GNU extension">, InGroup<GNU>;
+  "imaginary constants are a GNU extension">, InGroup<GNUImaginaryConstant>;
 def err_hexconstant_requires_exponent : Error<
   "hexadecimal floating constants require an exponent">;
 def err_hexconstant_requires_digits : Error<
@@ -175,7 +175,7 @@ def err_hexconstant_requires_digits : Error<
 def ext_hexconstant_invalid : Extension<
   "hexadecimal floating constants are a C99 feature">, InGroup<C99>;
 def ext_binary_literal : Extension<
-  "binary integer literals are a GNU extension">, InGroup<GNU>;
+  "binary integer literals are a GNU extension">, InGroup<GNUBinaryLiteral>;
 def ext_binary_literal_cxx1y : Extension<
   "binary integer literals are a C++1y extension">, InGroup<CXX1y>;
 def warn_cxx11_compat_binary_literal : Warning<
@@ -322,7 +322,7 @@ def ext_embedded_directive : Extension<
   InGroup<DiagGroup<"embedded-directive">>;
 def ext_missing_varargs_arg : Extension<
   "must specify at least one argument for '...' parameter of variadic macro">,
-  InGroup<GNU>;
+  InGroup<GNUZeroVariadicMacroArguments>;
 def ext_empty_fnmacro_arg : Extension<
   "empty macro arguments are a C99 feature">, InGroup<C99>;
 def warn_cxx98_compat_empty_fnmacro_arg : Warning<
@@ -457,7 +457,7 @@ def err_paste_at_start : Error<
   "'##' cannot appear at start of macro expansion">;
 def err_paste_at_end : Error<"'##' cannot appear at end of macro expansion">;
 def ext_paste_comma : Extension<
-  "token pasting of ',' and __VA_ARGS__ is a GNU extension">, InGroup<GNU>;
+  "token pasting of ',' and __VA_ARGS__ is a GNU extension">, InGroup<GNUZeroVariadicMacroArguments>;
 def err_unterm_macro_invoc : Error<
   "unterminated function-like macro invocation">;
 def err_too_many_args_in_macro_invoc : Error<
@@ -482,7 +482,7 @@ def err_pp_line_requires_integer : Error<
   "#line directive requires a positive integer argument">;
 def ext_pp_line_zero : Extension<
   "#line directive with zero argument is a GNU extension">, 
-  InGroup<GNU>;
+  InGroup<GNUZeroLineDirective>;
 def err_pp_line_invalid_filename : Error<
   "invalid filename for #line directive">;
 def warn_pp_line_decimal : Warning<
