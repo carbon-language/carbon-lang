@@ -1233,7 +1233,7 @@ let neverHasSideEffects = 1, isReMaterializable = 1 in
 def t2LEApcrel   : t2PseudoInst<(outs rGPR:$Rd), (ins i32imm:$label, pred:$p),
                                 4, IIC_iALUi, []>, Sched<[WriteALU, ReadALU]>;
 let hasSideEffects = 1 in
-def t2LEApcrelJT : t2PseudoInst<(outs rGPR:$Rd),
+def t2LEApcrelJT : t2PseudoInst<(outs jtGPR:$Rd),
                                 (ins i32imm:$label, nohash_imm:$id, pred:$p),
                                 4, IIC_iALUi,
                                 []>, Sched<[WriteALU, ReadALU]>;
