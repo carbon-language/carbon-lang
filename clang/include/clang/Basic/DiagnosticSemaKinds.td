@@ -1538,6 +1538,9 @@ def err_auto_fn_virtual : Error<
 // C++11 override control
 def override_keyword_only_allowed_on_virtual_member_functions : Error<
   "only virtual member functions can be marked '%0'">;
+def override_keyword_hides_virtual_member_function : Error<
+  "non-virtual member function marked '%0' hides virtual member "
+  "%select{function|functions}1">;
 def err_function_marked_override_not_overriding : Error<
   "%0 marked 'override' but does not override any member functions">;
 def err_class_marked_final_used_as_base : Error<

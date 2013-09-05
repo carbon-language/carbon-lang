@@ -1700,37 +1700,61 @@ bool Sema::ActOnAccessSpecifier(AccessSpecifier Access,
 }
 
 /// CheckOverrideControl - Check C++11 override control semantics.
-void Sema::CheckOverrideControl(Decl *D) {
+void Sema::CheckOverrideControl(NamedDecl *D) {
   if (D->isInvalidDecl())
     return;
 
-  const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(D);
+  // We only care about "override" and "final" declarations.
+  if (!D->hasAttr<OverrideAttr>() && !D->hasAttr<FinalAttr>())
+    return;
 
-  // Do we know which functions this declaration might be overriding?
-  bool OverridesAreKnown = !MD ||
-      (!MD->getParent()->hasAnyDependentBases() &&
-       !MD->getType()->isDependentType());
+  CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(D);
 
-  if (!MD || !MD->isVirtual()) {
-    if (OverridesAreKnown) {
+  // We can't check dependent instance methods.
+  if (MD && MD->isInstance() &&
+      (MD->getParent()->hasAnyDependentBases() ||
+       MD->getType()->isDependentType()))
+    return;
+
+  if (MD && !MD->isVirtual()) {
+    // If we have a non-virtual method, check if if hides a virtual method.
+    // (In that case, it's most likely the method has the wrong type.)
+    SmallVector<CXXMethodDecl *, 8> OverloadedMethods;
+    FindHiddenVirtualMethods(MD, OverloadedMethods);
+
+    if (!OverloadedMethods.empty()) {
       if (OverrideAttr *OA = D->getAttr<OverrideAttr>()) {
         Diag(OA->getLocation(),
-             diag::override_keyword_only_allowed_on_virtual_member_functions)
-          << "override" << FixItHint::CreateRemoval(OA->getLocation());
-        D->dropAttr<OverrideAttr>();
-      }
-      if (FinalAttr *FA = D->getAttr<FinalAttr>()) {
+             diag::override_keyword_hides_virtual_member_function)
+          << "override" << (OverloadedMethods.size() > 1);
+      } else if (FinalAttr *FA = D->getAttr<FinalAttr>()) {
         Diag(FA->getLocation(),
-             diag::override_keyword_only_allowed_on_virtual_member_functions)
-          << "final" << FixItHint::CreateRemoval(FA->getLocation());
-        D->dropAttr<FinalAttr>();
+             diag::override_keyword_hides_virtual_member_function)
+            << "final" << (OverloadedMethods.size() > 1);
       }
+      NoteHiddenVirtualMethods(MD, OverloadedMethods);
+      MD->setInvalidDecl();
+      return;
+    }
+    // Fall through into the general case diagnostic.
+    // FIXME: We might want to attempt typo correction here.
+  }
+
+  if (!MD || !MD->isVirtual()) {
+    if (OverrideAttr *OA = D->getAttr<OverrideAttr>()) {
+      Diag(OA->getLocation(),
+           diag::override_keyword_only_allowed_on_virtual_member_functions)
+        << "override" << FixItHint::CreateRemoval(OA->getLocation());
+      D->dropAttr<OverrideAttr>();
+    }
+    if (FinalAttr *FA = D->getAttr<FinalAttr>()) {
+      Diag(FA->getLocation(),
+           diag::override_keyword_only_allowed_on_virtual_member_functions)
+        << "final" << FixItHint::CreateRemoval(FA->getLocation());
+      D->dropAttr<FinalAttr>();
     }
     return;
   }
-
-  if (!OverridesAreKnown)
-    return;
 
   // C++11 [class.virtual]p5:
   //   If a virtual function is marked with the virt-specifier override and
@@ -4222,7 +4246,7 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
       // See if a method overloads virtual methods in a base
       // class without overriding any.
       if (!M->isStatic())
-        DiagnoseHiddenVirtualMethods(Record, *M);
+        DiagnoseHiddenVirtualMethods(*M);
 
       // Check whether the explicitly-defaulted special members are valid.
       if (!M->isInvalidDecl() && M->isExplicitlyDefaulted())
@@ -5604,12 +5628,10 @@ static void AddMostOverridenMethods(const CXXMethodDecl *MD,
     AddMostOverridenMethods(*I, Methods);
 }
 
-/// \brief See if a method overloads virtual methods in a base class without
+/// \brief Check if a method overloads virtual methods in a base class without
 /// overriding any.
-void Sema::DiagnoseHiddenVirtualMethods(CXXRecordDecl *DC, CXXMethodDecl *MD) {
-  if (Diags.getDiagnosticLevel(diag::warn_overloaded_virtual,
-                               MD->getLocation()) == DiagnosticsEngine::Ignored)
-    return;
+void Sema::FindHiddenVirtualMethods(CXXMethodDecl *MD,
+                          SmallVectorImpl<CXXMethodDecl*> &OverloadedMethods) {
   if (!MD->getDeclName().isIdentifier())
     return;
 
@@ -5622,6 +5644,7 @@ void Sema::DiagnoseHiddenVirtualMethods(CXXRecordDecl *DC, CXXMethodDecl *MD) {
 
   // Keep the base methods that were overriden or introduced in the subclass
   // by 'using' in a set. A base method not in this set is hidden.
+  CXXRecordDecl *DC = MD->getParent();
   DeclContext::lookup_result R = DC->lookup(MD->getDeclName());
   for (DeclContext::lookup_iterator I = R.begin(), E = R.end(); I != E; ++I) {
     NamedDecl *ND = *I;
@@ -5631,18 +5654,38 @@ void Sema::DiagnoseHiddenVirtualMethods(CXXRecordDecl *DC, CXXMethodDecl *MD) {
       AddMostOverridenMethods(MD, Data.OverridenAndUsingBaseMethods);
   }
 
-  if (DC->lookupInBases(&FindHiddenVirtualMethod, &Data, Paths) &&
-      !Data.OverloadedMethods.empty()) {
-    Diag(MD->getLocation(), diag::warn_overloaded_virtual)
-      << MD << (Data.OverloadedMethods.size() > 1);
+  if (DC->lookupInBases(&FindHiddenVirtualMethod, &Data, Paths))
+    OverloadedMethods = Data.OverloadedMethods;
+}
 
-    for (unsigned i = 0, e = Data.OverloadedMethods.size(); i != e; ++i) {
-      CXXMethodDecl *overloadedMD = Data.OverloadedMethods[i];
-      PartialDiagnostic PD = PDiag(
-           diag::note_hidden_overloaded_virtual_declared_here) << overloadedMD;
-      HandleFunctionTypeMismatch(PD, MD->getType(), overloadedMD->getType());
-      Diag(overloadedMD->getLocation(), PD);
-    }
+void Sema::NoteHiddenVirtualMethods(CXXMethodDecl *MD,
+                          SmallVectorImpl<CXXMethodDecl*> &OverloadedMethods) {
+  for (unsigned i = 0, e = OverloadedMethods.size(); i != e; ++i) {
+    CXXMethodDecl *overloadedMD = OverloadedMethods[i];
+    PartialDiagnostic PD = PDiag(
+         diag::note_hidden_overloaded_virtual_declared_here) << overloadedMD;
+    HandleFunctionTypeMismatch(PD, MD->getType(), overloadedMD->getType());
+    Diag(overloadedMD->getLocation(), PD);
+  }
+}
+
+/// \brief Diagnose methods which overload virtual methods in a base class
+/// without overriding any.
+void Sema::DiagnoseHiddenVirtualMethods(CXXMethodDecl *MD) {
+  if (MD->isInvalidDecl())
+    return;
+
+  if (Diags.getDiagnosticLevel(diag::warn_overloaded_virtual,
+                               MD->getLocation()) == DiagnosticsEngine::Ignored)
+    return;
+
+  SmallVector<CXXMethodDecl *, 8> OverloadedMethods;
+  FindHiddenVirtualMethods(MD, OverloadedMethods);
+  if (!OverloadedMethods.empty()) {
+    Diag(MD->getLocation(), diag::warn_overloaded_virtual)
+      << MD << (OverloadedMethods.size() > 1);
+
+    NoteHiddenVirtualMethods(MD, OverloadedMethods);
   }
 }
 

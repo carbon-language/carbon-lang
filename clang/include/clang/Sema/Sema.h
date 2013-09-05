@@ -1490,7 +1490,11 @@ public:
   bool CheckConstexprFunctionDecl(const FunctionDecl *FD);
   bool CheckConstexprFunctionBody(const FunctionDecl *FD, Stmt *Body);
 
-  void DiagnoseHiddenVirtualMethods(CXXRecordDecl *DC, CXXMethodDecl *MD);
+  void DiagnoseHiddenVirtualMethods(CXXMethodDecl *MD);
+  void FindHiddenVirtualMethods(CXXMethodDecl *MD,
+                          SmallVectorImpl<CXXMethodDecl*> &OverloadedMethods);
+  void NoteHiddenVirtualMethods(CXXMethodDecl *MD,
+                          SmallVectorImpl<CXXMethodDecl*> &OverloadedMethods);
   // Returns true if the function declaration is a redeclaration
   bool CheckFunctionDeclaration(Scope *S,
                                 FunctionDecl *NewFD, LookupResult &Previous,
@@ -4807,7 +4811,7 @@ public:
   bool CheckPureMethod(CXXMethodDecl *Method, SourceRange InitRange);
 
   /// CheckOverrideControl - Check C++11 override control semantics.
-  void CheckOverrideControl(Decl *D);
+  void CheckOverrideControl(NamedDecl *D);
 
   /// CheckForFunctionMarkedFinal - Checks whether a virtual member function
   /// overrides a virtual member function marked 'final', according to

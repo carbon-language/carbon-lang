@@ -130,3 +130,23 @@ namespace MemberOfUnknownSpecialization {
   // expected-note@+1 {{in instantiation of}}
   A<double>::C c3;
 }
+
+namespace DiagnosticsQOI {
+  struct X {
+    virtual ~X();
+    virtual void foo(int x); // expected-note {{hidden overloaded virtual function}}
+    virtual void bar(int x); // expected-note 2 {{hidden overloaded virtual function}}
+    virtual void bar(float x); // expected-note 2 {{hidden overloaded virtual function}}
+  };
+
+  struct Y : X {
+    void foo(int x, int y) override; // expected-error {{non-virtual member function marked 'override' hides virtual member function}}
+    void bar(double) override; // expected-error {{non-virtual member function marked 'override' hides virtual member functions}}
+    void bar(long double) final; // expected-error {{non-virtual member function marked 'final' hides virtual member functions}}
+  };
+  
+  template<typename T>
+  struct Z : T {
+    static void foo() override; // expected-error {{only virtual member functions can be marked 'override'}}
+  };
+}
