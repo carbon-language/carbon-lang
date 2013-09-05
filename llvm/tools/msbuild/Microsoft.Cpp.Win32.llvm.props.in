@@ -5,5 +5,6 @@
     <LLVMInstallDir>$(Registry:HKEY_LOCAL_MACHINE\SOFTWARE\LLVM\@REG_KEY@)</LLVMInstallDir>
     <LLVMInstallDir Condition="'$(LLVMInstallDir)' == ''">$(Registry:HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\LLVM\@REG_KEY@)</LLVMInstallDir>
     <ExecutablePath>$(LLVMInstallDir)\msbuild-bin;$(ExecutablePath)</ExecutablePath>
+    <LibraryPath>$(LLVMInstallDir)\lib\clang\3.4\lib\windows;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
 </Project>
