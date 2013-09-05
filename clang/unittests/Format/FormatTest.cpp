@@ -1573,6 +1573,13 @@ TEST_F(FormatTest, FormatsEnumClass) {
   verifyFormat("enum class X f() {\n  a();\n  return 42;\n}");
 }
 
+TEST_F(FormatTest, FormatsEnumTypes) {
+  verifyFormat("enum X : int {\n"
+               "  A,\n"
+               "  B\n"
+               "};");
+}
+
 TEST_F(FormatTest, FormatsBitfields) {
   verifyFormat("struct Bitfields {\n"
                "  unsigned sClass : 8;\n"

@@ -1035,9 +1035,7 @@ void UnwrappedLineParser::parseEnum() {
   if (FormatTok->Tok.is(tok::kw_class) ||
       FormatTok->Tok.is(tok::kw_struct))
       nextToken();
-  if (FormatTok->Tok.is(tok::identifier) ||
-      FormatTok->Tok.is(tok::kw___attribute) ||
-      FormatTok->Tok.is(tok::kw___declspec)) {
+  while (FormatTok->Tok.getIdentifierInfo() || FormatTok->Tok.is(tok::colon)) {
     nextToken();
     // We can have macros or attributes in between 'enum' and the enum name.
     if (FormatTok->Tok.is(tok::l_paren)) {
