@@ -1341,7 +1341,7 @@ Windows
 
 Experimental supports are on Cygming.
 
-See also `Microsoft Extensions <c_ms>`.
+See also :ref:`Microsoft Extensions <c_ms>`.
 
 Cygwin
 """"""
