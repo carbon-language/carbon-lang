@@ -144,10 +144,14 @@ void X86MachObjectWriter::RecordX86_64Relocation(MachObjectWriter *Writer,
     }
   } else if (Target.getSymB()) { // A - B + constant
     const MCSymbol *A = &Target.getSymA()->getSymbol();
+    if (A->isTemporary())
+      A = &A->AliasedSymbol();
     MCSymbolData &A_SD = Asm.getSymbolData(*A);
     const MCSymbolData *A_Base = Asm.getAtom(&A_SD);
 
     const MCSymbol *B = &Target.getSymB()->getSymbol();
+    if (B->isTemporary())
+      B = &B->AliasedSymbol();
     MCSymbolData &B_SD = Asm.getSymbolData(*B);
     const MCSymbolData *B_Base = Asm.getAtom(&B_SD);
 
