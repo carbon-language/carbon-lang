@@ -1201,7 +1201,8 @@ void UnwrappedLineParser::parseObjCProtocol() {
   parseObjCUntilAtEnd();
 }
 
-static void printDebugInfo(const UnwrappedLine &Line, StringRef Prefix = "") {
+LLVM_ATTRIBUTE_UNUSED static void printDebugInfo(const UnwrappedLine &Line,
+                                                 StringRef Prefix = "") {
   llvm::dbgs() << Prefix << "Line(" << Line.Level << ")"
                << (Line.InPPDirective ? " MACRO" : "") << ": ";
   for (std::list<UnwrappedLineNode>::const_iterator I = Line.Tokens.begin(),
