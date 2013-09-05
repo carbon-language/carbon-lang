@@ -16,7 +16,6 @@
 #include "lldb/lldb-private.h"
 #include "lldb/Core/Address.h"
 #include "lldb/Core/Mangled.h"
-#include "lldb/Symbol/ClangASTType.h"
 #include "lldb/Symbol/LineEntry.h"
 
 namespace lldb_private {
