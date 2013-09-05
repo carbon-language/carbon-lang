@@ -246,12 +246,18 @@ SDValue AMDGPUTargetLowering::LowerGlobalAddress(AMDGPUMachineFunction* MFI,
   assert(G->getOffset() == 0 &&
          "Do not know what to do with an non-zero offset");
 
-  unsigned Offset = MFI->LDSSize;
   const GlobalValue *GV = G->getGlobal();
-  uint64_t Size = TD->getTypeAllocSize(GV->getType()->getElementType());
 
-  // XXX: Account for alignment?
-  MFI->LDSSize += Size;
+  unsigned Offset;
+  if (MFI->LocalMemoryObjects.count(GV) == 0) {
+    uint64_t Size = TD->getTypeAllocSize(GV->getType()->getElementType());
+    Offset = MFI->LDSSize;
+    MFI->LocalMemoryObjects[GV] = Offset;
+    // XXX: Account for alignment?
+    MFI->LDSSize += Size;
+  } else {
+    Offset = MFI->LocalMemoryObjects[GV];
+  }
 
   return DAG.getConstant(Offset, getPointerTy(G->getAddressSpace()));
 }
