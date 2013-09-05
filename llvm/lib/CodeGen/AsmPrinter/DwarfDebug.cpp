@@ -823,6 +823,7 @@ void DwarfDebug::beginModule() {
   NamedMDNode *CU_Nodes = M->getNamedMetadata("llvm.dbg.cu");
   if (!CU_Nodes)
     return;
+  TypeIdentifierMap = generateDITypeIdentifierMap(CU_Nodes);
 
   // Emit initial sections so we can reference labels later.
   emitSectionLabels();
@@ -2630,4 +2631,9 @@ void DwarfDebug::emitDebugStrDWO() {
   const MCSymbol *StrSym = DwarfStrSectionSym;
   InfoHolder.emitStrings(Asm->getObjFileLowering().getDwarfStrDWOSection(),
                          OffSec, StrSym);
+}
+
+/// Find the MDNode for the given type reference.
+MDNode *DwarfDebug::resolve(DITypeRef TRef) const {
+  return TRef.resolve(TypeIdentifierMap);
 }

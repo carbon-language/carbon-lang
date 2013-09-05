@@ -450,6 +450,9 @@ class DwarfDebug {
   // Holder for the skeleton information.
   DwarfUnits SkeletonHolder;
 
+  // Maps from a type identifier to the actual MDNode.
+  DITypeIdentifierMap TypeIdentifierMap;
+
 private:
 
   void addScopeVariable(LexicalScope *LS, DbgVariable *Var);
@@ -679,6 +682,10 @@ public:
 
   /// Returns the Dwarf Version.
   unsigned getDwarfVersion() const { return DwarfVersion; }
+
+  /// Find the MDNode for the given type reference.
+  MDNode *resolve(DITypeRef TRef) const;
+
 };
 } // End of namespace llvm
 
