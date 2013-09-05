@@ -1,6 +1,6 @@
 @ New ARMv8 T32 encodings
 
-@ RUN: llvm-mc -triple thumbv8 -show-encoding < %s | FileCheck %s --check-prefix=CHECK-V8
+@ RUN: not llvm-mc -triple thumbv8 -show-encoding -mattr=+db < %s | FileCheck %s --check-prefix=CHECK-V8
 @ RUN: not llvm-mc -triple thumbv7 -show-encoding < %s 2>&1 | FileCheck %s --check-prefix=CHECK-V7
 
 @ HLT
@@ -34,3 +34,38 @@
 @ CHECK-V7: error: instruction requires: armv8
 @ CHECK-V7: error: instruction requires: armv8
 @ CHECK-V7: error: instruction requires: armv8
+
+@------------------------------------------------------------------------------
+@ DMB (v8 barriers)
+@------------------------------------------------------------------------------
+        dmb ishld
+        dmb oshld
+        dmb nshld
+        dmb ld
+        dmb #20
+
+@ CHECK-V8: dmb ishld @ encoding: [0xbf,0xf3,0x59,0x8f]
+@ CHECK-V8: dmb oshld @ encoding: [0xbf,0xf3,0x51,0x8f]
+@ CHECK-V8: dmb nshld @ encoding: [0xbf,0xf3,0x55,0x8f]
+@ CHECK-V8: dmb ld @ encoding: [0xbf,0xf3,0x5d,0x8f]
+@ CHECK-V7: error: invalid operand for instruction
+@ CHECK-V7: error: invalid operand for instruction
+@ CHECK-V7: error: invalid operand for instruction
+@ CHECK-V7: error: invalid operand for instruction
+@ CHECK-V7: error: immediate value out of range
+
+@------------------------------------------------------------------------------
+@ DSB (v8 barriers)
+@------------------------------------------------------------------------------
+        dsb ishld
+        dsb oshld
+        dsb nshld
+        dsb ld
+
+@ CHECK-V8: dsb ishld @ encoding: [0xbf,0xf3,0x49,0x8f]
+@ CHECK-V8: dsb oshld @ encoding: [0xbf,0xf3,0x41,0x8f]
+@ CHECK-V8: dsb nshld @ encoding: [0xbf,0xf3,0x45,0x8f]
+@ CHECK-V8: dsb ld @ encoding: [0xbf,0xf3,0x4d,0x8f]
+@ CHECK-V7: error: invalid operand for instruction
+@ CHECK-V7: error: invalid operand for instruction
+@ CHECK-V7: error: invalid operand for instruction

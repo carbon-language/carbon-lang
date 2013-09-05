@@ -1,4 +1,4 @@
-# RUN: llvm-mc -disassemble -triple armv8 -show-encoding < %s | FileCheck %s
+# RUN: llvm-mc -disassemble -triple armv8 -mattr=+db -show-encoding < %s | FileCheck %s
 
 # New v8 ARM instructions
 
@@ -9,3 +9,12 @@
 
 0x7f 0xff 0x0f 0xe1
 # CHECK: hlt #65535
+
+0x59 0xf0 0x7f 0xf5
+0x51 0xf0 0x7f 0xf5
+0x55 0xf0 0x7f 0xf5
+0x5d 0xf0 0x7f 0xf5
+# CHECK: dmb ishld
+# CHECK: dmb oshld
+# CHECK: dmb nshld
+# CHECK: dmb ld

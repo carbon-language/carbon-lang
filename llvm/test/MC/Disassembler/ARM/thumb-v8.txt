@@ -1,4 +1,4 @@
-# RUN: llvm-mc -disassemble -triple thumbv8 -show-encoding < %s | FileCheck %s
+# RUN: llvm-mc -disassemble -triple thumbv8 -mattr=+db -show-encoding < %s | FileCheck %s
 
 0x80 0xba
 # CHECK: hlt #0
@@ -16,3 +16,13 @@
 
 0x8f 0xf7 0x03 0x80 
 # CHECK: dcps3
+
+0xbf 0xf3 0x59 0x8f
+0xbf 0xf3 0x51 0x8f
+0xbf 0xf3 0x55 0x8f
+0xbf 0xf3 0x5d 0x8f
+
+# CHECK: dmb ishld
+# CHECK: dmb oshld
+# CHECK: dmb nshld
+# CHECK: dmb ld
