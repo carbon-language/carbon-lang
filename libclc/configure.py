@@ -49,7 +49,7 @@ if not includedir:
 
 pkgconfigdir = options.pkgconfigdir
 if not pkgconfigdir:
-  pkgconfigdir = os.path.join(prefix, 'lib/pkgconfig')
+  pkgconfigdir = os.path.join(prefix, 'share/pkgconfig')
 
 def llvm_config(args):
   try:
