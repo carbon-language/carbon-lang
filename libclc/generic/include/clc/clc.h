@@ -99,4 +99,8 @@
 #include <clc/synchronization/cl_mem_fence_flags.h>
 #include <clc/synchronization/barrier.h>
 
+/* 6.11.11 Atomic Functins */
+#include <clc/atomic/atomic_add.h>
+#include <clc/atomic/atomic_inc.h>
+
 #pragma OPENCL EXTENSION all : disable

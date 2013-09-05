@@ -1,3 +1,4 @@
+atomic/atomic_impl.ll
 convert.cl
 geometric/cross.cl
 geometric/dot.cl
