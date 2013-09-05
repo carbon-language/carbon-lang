@@ -2,6 +2,8 @@
 @ RUN: FileCheck --check-prefix=CHECK-ERRORS < %t %s
 @ RUN: not llvm-mc -triple=thumbv5-apple-darwin < %s 2> %t
 @ RUN: FileCheck --check-prefix=CHECK-ERRORS-V5 < %t %s
+@ RUN: not llvm-mc -triple=thumbv8 < %s 2> %t
+@ RUN: FileCheck --check-prefix=CHECK-ERRORS-V8 < %t %s
 
 @ Check for various assembly diagnostic messages on invalid input.
 
@@ -37,6 +39,19 @@ error: invalid operand for instruction
 error: invalid operand for instruction
         bkpt #-1
              ^
+
+@ Out of range immediates for v8 HLT instruction.
+        hlt #64
+        hlt #-1
+@CHECK-ERRORS: error: instruction requires: armv8 arm-mode
+@CHECK-ERRORS:        hlt #64
+@CHECK-ERRORS:        ^
+@CHECK-ERRORS-V8: error: instruction requires: arm-mode
+@CHECK-ERRORS-V8:         hlt #64
+@CHECK-ERRORS-V8:              ^
+@CHECK-ERRORS: error: invalid operand for instruction
+@CHECK-ERRORS:         hlt #-1
+@CHECK-ERRORS:              ^
 
 @ Invalid writeback and register lists for LDM
         ldm r2!, {r5, r8}

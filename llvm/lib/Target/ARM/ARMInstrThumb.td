@@ -300,6 +300,13 @@ def tBKPT : T1I<(outs), (ins imm0_255:$val), NoItinerary, "bkpt\t$val",
   let Inst{7-0} = val;
 }
 
+def tHLT : T1I<(outs), (ins imm0_63:$val), NoItinerary, "hlt\t$val",
+                []>, T1Encoding<0b101110>, Requires<[IsThumb, HasV8]> {
+  let Inst{9-6} = 0b1010;
+  bits<6> val;
+  let Inst{5-0} = val;
+}
+
 def tSETEND : T1I<(outs), (ins setend_op:$end), NoItinerary, "setend\t$end",
                   []>, T1Encoding<0b101101> {
   bits<1> end;

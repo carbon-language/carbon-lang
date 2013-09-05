@@ -1,0 +1,11 @@
+# RUN: llvm-mc -disassemble -triple armv8 -show-encoding < %s | FileCheck %s
+
+# New v8 ARM instructions
+
+# HLT
+
+0x70 0x00 0x00 0xe1
+# CHECK: hlt #0
+
+0x7f 0xff 0x0f 0xe1
+# CHECK: hlt #65535

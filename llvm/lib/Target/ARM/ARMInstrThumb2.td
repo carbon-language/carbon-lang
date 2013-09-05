@@ -3645,6 +3645,20 @@ def t2SMC : T2I<(outs), (ins imm0_15:$opt), NoItinerary, "smc", "\t$opt",
   let Inst{19-16} = opt;
 }
 
+class T2DCPS<bits<2> opt, string opc>
+  : T2I<(outs), (ins), NoItinerary, opc, "", []>, Requires<[IsThumb2, HasV8]> {
+  let Inst{31-27} = 0b11110;
+  let Inst{26-20} = 0b1111000;
+  let Inst{19-16} = 0b1111;
+  let Inst{15-12} = 0b1000;
+  let Inst{11-2} = 0b0000000000;
+  let Inst{1-0} = opt;
+}
+
+def t2DCPS1 : T2DCPS<0b01, "dcps1">;
+def t2DCPS2 : T2DCPS<0b10, "dcps2">;
+def t2DCPS3 : T2DCPS<0b11, "dcps3">;
+
 class T2SRS<bits<2> Op, bit W, dag oops, dag iops, InstrItinClass itin,
             string opc, string asm, list<dag> pattern>
   : T2I<oops, iops, itin, opc, asm, pattern> {
