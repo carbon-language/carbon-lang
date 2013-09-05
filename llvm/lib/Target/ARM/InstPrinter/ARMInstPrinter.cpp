@@ -677,7 +677,7 @@ void ARMInstPrinter::printBitfieldInvMaskImmOperand(const MCInst *MI,
 void ARMInstPrinter::printMemBOption(const MCInst *MI, unsigned OpNum,
                                      raw_ostream &O) {
   unsigned val = MI->getOperand(OpNum).getImm();
-  O << ARM_MB::MemBOptToString(val);
+  O << ARM_MB::MemBOptToString(val, (getAvailableFeatures() & ARM::HasV8Ops));
 }
 
 void ARMInstPrinter::printInstSyncBOption(const MCInst *MI, unsigned OpNum,

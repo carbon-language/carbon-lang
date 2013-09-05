@@ -3155,7 +3155,7 @@ def t2MOVCCi32imm
 // memory barriers protect the atomic sequences
 let hasSideEffects = 1 in {
 def t2DMB : T2I<(outs), (ins memb_opt:$opt), NoItinerary,
-                "dmb", "\t$opt", [(ARMMemBarrier (i32 imm:$opt))]>,
+                "dmb", "\t$opt", [(int_arm_dmb (i32 imm0_15:$opt))]>,
                 Requires<[HasDB]> {
   bits<4> opt;
   let Inst{31-4} = 0xf3bf8f5;
@@ -3164,7 +3164,8 @@ def t2DMB : T2I<(outs), (ins memb_opt:$opt), NoItinerary,
 }
 
 def t2DSB : T2I<(outs), (ins memb_opt:$opt), NoItinerary,
-                "dsb", "\t$opt", []>, Requires<[HasDB]> {
+                "dsb", "\t$opt", [(int_arm_dsb (i32 imm0_15:$opt))]>,
+                Requires<[HasDB]> {
   bits<4> opt;
   let Inst{31-4} = 0xf3bf8f4;
   let Inst{3-0} = opt;

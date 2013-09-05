@@ -2521,7 +2521,7 @@ void ARMOperand::print(raw_ostream &OS) const {
     getImm()->print(OS);
     break;
   case k_MemBarrierOpt:
-    OS << "<ARM_MB::" << MemBOptToString(getMemBarrierOpt()) << ">";
+    OS << "<ARM_MB::" << MemBOptToString(getMemBarrierOpt(), false) << ">";
     break;
   case k_InstSyncBarrierOpt:
     OS << "<ARM_ISB::" << InstSyncBOptToString(getInstSyncBarrierOpt()) << ">";
@@ -3466,17 +3466,26 @@ parseMemBarrierOptOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
     Opt = StringSwitch<unsigned>(OptStr.slice(0, OptStr.size()).lower())
       .Case("sy",    ARM_MB::SY)
       .Case("st",    ARM_MB::ST)
+      .Case("ld",    ARM_MB::LD)
       .Case("sh",    ARM_MB::ISH)
       .Case("ish",   ARM_MB::ISH)
       .Case("shst",  ARM_MB::ISHST)
       .Case("ishst", ARM_MB::ISHST)
+      .Case("ishld", ARM_MB::ISHLD)
       .Case("nsh",   ARM_MB::NSH)
       .Case("un",    ARM_MB::NSH)
       .Case("nshst", ARM_MB::NSHST)
+      .Case("nshld", ARM_MB::NSHLD)
       .Case("unst",  ARM_MB::NSHST)
       .Case("osh",   ARM_MB::OSH)
       .Case("oshst", ARM_MB::OSHST)
+      .Case("oshld", ARM_MB::OSHLD)
       .Default(~0U);
+
+    // ishld, oshld, nshld and ld are only available from ARMv8.
+    if (!hasV8Ops() && (Opt == ARM_MB::ISHLD || Opt == ARM_MB::OSHLD ||
+                        Opt == ARM_MB::NSHLD || Opt == ARM_MB::LD))
+      Opt = ~0U;
 
     if (Opt == ~0U)
       return MatchOperand_NoMatch;
