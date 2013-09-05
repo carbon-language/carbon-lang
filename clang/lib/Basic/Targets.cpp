@@ -296,8 +296,7 @@ protected:
       Builder.defineMacro("_GNU_SOURCE");
   }
 public:
-  KFreeBSDTargetInfo(const std::string &triple)
-    : OSTargetInfo<Target>(triple) {
+  KFreeBSDTargetInfo(const llvm::Triple &Triple) : OSTargetInfo<Target>(Triple) {
     this->UserLabelPrefix = "";
   }
 };
