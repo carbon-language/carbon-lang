@@ -482,6 +482,15 @@ INTERCEPTOR(uptr, strlen, const char *s) {
   return length;
 }
 
+INTERCEPTOR(uptr, wcslen, const wchar_t *s) {
+  uptr length = REAL(wcslen)(s);
+  if (!asan_init_is_running) {
+    ENSURE_ASAN_INITED();
+    ASAN_READ_RANGE(s, (length + 1) * sizeof(wchar_t));
+  }
+  return length;
+}
+
 INTERCEPTOR(char*, strncpy, char *to, const char *from, uptr size) {
   ENSURE_ASAN_INITED();
   if (flags()->replace_str) {
@@ -680,6 +689,7 @@ void InitializeAsanInterceptors() {
   ASAN_INTERCEPT_FUNC(strchr);
   ASAN_INTERCEPT_FUNC(strcpy);  // NOLINT
   ASAN_INTERCEPT_FUNC(strlen);
+  ASAN_INTERCEPT_FUNC(wcslen);
   ASAN_INTERCEPT_FUNC(strncat);
   ASAN_INTERCEPT_FUNC(strncpy);
 #if ASAN_INTERCEPT_STRDUP

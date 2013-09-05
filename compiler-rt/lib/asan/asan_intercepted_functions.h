@@ -99,6 +99,7 @@ char* strchr(const char *str, int c);
 int strcmp(const char *s1, const char* s2);
 char* strcpy(char *to, const char* from);  // NOLINT
 uptr strlen(const char *s);
+uptr wcslen(const wchar_t *s);
 char* strncat(char *to, const char* from, uptr size);
 int strncmp(const char *s1, const char* s2, uptr size);
 char* strncpy(char *to, const char* from, uptr size);
