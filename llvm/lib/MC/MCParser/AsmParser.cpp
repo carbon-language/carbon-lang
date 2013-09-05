@@ -2550,17 +2550,21 @@ bool AsmParser::ParseDirectiveFile(SMLoc DirectiveLoc) {
     return TokError("unexpected token in '.file' directive");
 
   // Usually the directory and filename together, otherwise just the directory.
-  StringRef Path = getTok().getString();
-  Path = Path.substr(1, Path.size()-2);
+  // Allow the strings to have escaped octal character sequence.
+  std::string Path = getTok().getString();
+  if (parseEscapedString(Path))
+    return true;
   Lex();
 
   StringRef Directory;
   StringRef Filename;
+  std::string FilenameData;
   if (getLexer().is(AsmToken::String)) {
     if (FileNumber == -1)
       return TokError("explicit path specified, but no file number");
-    Filename = getTok().getString();
-    Filename = Filename.substr(1, Filename.size()-2);
+    if (parseEscapedString(FilenameData))
+      return true;
+    Filename = FilenameData;
     Directory = Path;
     Lex();
   } else {
@@ -3496,15 +3500,15 @@ bool AsmParser::ParseDirectiveInclude() {
   if (getLexer().isNot(AsmToken::String))
     return TokError("expected string in '.include' directive");
 
-  std::string Filename = getTok().getString();
+  // Allow the strings to have escaped octal character sequence.
+  std::string Filename;
+  if (parseEscapedString(Filename))
+    return true;
   SMLoc IncludeLoc = getLexer().getLoc();
   Lex();
 
   if (getLexer().isNot(AsmToken::EndOfStatement))
     return TokError("unexpected token in '.include' directive");
-
-  // Strip the quotes.
-  Filename = Filename.substr(1, Filename.size()-2);
 
   // Attempt to switch the lexer to the included file before consuming the end
   // of statement to avoid losing it when we switch.
@@ -3522,15 +3526,15 @@ bool AsmParser::ParseDirectiveIncbin() {
   if (getLexer().isNot(AsmToken::String))
     return TokError("expected string in '.incbin' directive");
 
-  std::string Filename = getTok().getString();
+  // Allow the strings to have escaped octal character sequence.
+  std::string Filename;
+  if (parseEscapedString(Filename))
+    return true;
   SMLoc IncbinLoc = getLexer().getLoc();
   Lex();
 
   if (getLexer().isNot(AsmToken::EndOfStatement))
     return TokError("unexpected token in '.incbin' directive");
-
-  // Strip the quotes.
-  Filename = Filename.substr(1, Filename.size()-2);
 
   // Attempt to process the included file.
   if (ProcessIncbinFile(Filename)) {
