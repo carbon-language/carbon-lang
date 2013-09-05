@@ -54,8 +54,8 @@ CommandObjectHelp::~CommandObjectHelp()
 OptionDefinition
 CommandObjectHelp::CommandOptions::g_option_table[] =
 {
-    { LLDB_OPT_SET_ALL, false, "show-aliases", 'a', no_argument, NULL, 0, eArgTypeNone,         "Show aliases in the command list."},
-    { LLDB_OPT_SET_ALL, false, "hide-user-commands", 'u', no_argument, NULL, 0, eArgTypeNone,         "Hide user-defined commands from the list."},
+    { LLDB_OPT_SET_ALL, false, "show-aliases", 'a', OptionParser::eNoArgument, NULL, 0, eArgTypeNone,         "Show aliases in the command list."},
+    { LLDB_OPT_SET_ALL, false, "hide-user-commands", 'u', OptionParser::eNoArgument, NULL, 0, eArgTypeNone,         "Hide user-defined commands from the list."},
     { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 

@@ -85,10 +85,10 @@ OptionGroupPlatform::OptionParsingStarting (CommandInterpreter &interpreter)
 static OptionDefinition
 g_option_table[] =
 {
-    { LLDB_OPT_SET_ALL, false, "platform", 'p', required_argument, NULL, 0, eArgTypePlatform, "Specify name of the platform to use for this target, creating the platform if necessary."},
-    { LLDB_OPT_SET_ALL, false, "version" , 'v', required_argument, NULL, 0, eArgTypeNone, "Specify the initial SDK version to use prior to connecting." },
-    { LLDB_OPT_SET_ALL, false, "build"   , 'b', required_argument, NULL, 0, eArgTypeNone, "Specify the initial SDK build number." },
-    { LLDB_OPT_SET_ALL, false, "sysroot" , 'S', required_argument, NULL, 0, eArgTypeFilename, "Specify the SDK root directory that contains a root of all remote system files." }
+    { LLDB_OPT_SET_ALL, false, "platform", 'p', OptionParser::eRequiredArgument, NULL, 0, eArgTypePlatform, "Specify name of the platform to use for this target, creating the platform if necessary."},
+    { LLDB_OPT_SET_ALL, false, "version" , 'v', OptionParser::eRequiredArgument, NULL, 0, eArgTypeNone, "Specify the initial SDK version to use prior to connecting." },
+    { LLDB_OPT_SET_ALL, false, "build"   , 'b', OptionParser::eRequiredArgument, NULL, 0, eArgTypeNone, "Specify the initial SDK build number." },
+    { LLDB_OPT_SET_ALL, false, "sysroot" , 'S', OptionParser::eRequiredArgument, NULL, 0, eArgTypeFilename, "Specify the SDK root directory that contains a root of all remote system files." }
 };
 
 const OptionDefinition*

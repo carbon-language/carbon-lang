@@ -11,8 +11,6 @@
 #define liblldb_Command_h_
 
 // C Includes
-#include <getopt.h>
-
 // C++ Includes
 #include <list>
 #include <string>
@@ -24,6 +22,7 @@
 #include "lldb/lldb-private-types.h"
 #include "lldb/lldb-types.h"
 #include "lldb/Core/Error.h"
+#include "lldb/Host/OptionParser.h"
 
 namespace lldb_private {
 
@@ -319,7 +318,7 @@ public:
     ParseOptions (Options &options);
     
     size_t
-    FindArgumentIndexForOption (struct option *long_options, int long_options_index);
+    FindArgumentIndexForOption (Option *long_options, int long_options_index);
     
     bool
     IsPositionalArgument (const char *arg);

@@ -10,10 +10,6 @@
 #include "lldb/lldb-python.h"
 
 // C Includes
-#ifdef _WIN32
-#define _BSD_SOURCE // Required so that getopt.h defines optreset
-#endif
-#include <getopt.h>
 #include <cstdlib>
 // C++ Includes
 // Other libraries and framework includes
@@ -624,7 +620,7 @@ Args::ParseOptions (Options &options)
 {
     StreamString sstr;
     Error error;
-    struct option *long_options = options.GetLongOptions();
+    Option *long_options = options.GetLongOptions();
     if (long_options == NULL)
     {
         error.SetErrorStringWithFormat("invalid long options");
@@ -641,24 +637,19 @@ Args::ParseOptions (Options &options)
                 switch (long_options[i].has_arg)
                 {
                 default:
-                case no_argument:                       break;
-                case required_argument: sstr << ':';    break;
-                case optional_argument: sstr << "::";   break;
+                case OptionParser::eNoArgument:                       break;
+                case OptionParser::eRequiredArgument: sstr << ':';    break;
+                case OptionParser::eOptionalArgument: sstr << "::";   break;
                 }
             }
         }
     }
-#ifdef __GLIBC__
-    optind = 0;
-#else
-    optreset = 1;
-    optind = 1;
-#endif
+    OptionParser::Prepare();
     int val;
     while (1)
     {
         int long_options_index = -1;
-        val = ::getopt_long_only(GetArgumentCount(),
+        val = OptionParser::Parse(GetArgumentCount(),
                                  GetArgumentVector(),
                                  sstr.GetData(),
                                  long_options,
@@ -696,7 +687,7 @@ Args::ParseOptions (Options &options)
         if (long_options_index >= 0)
         {
             error = options.SetOptionValue(long_options_index,
-                                           long_options[long_options_index].has_arg == no_argument ? NULL : optarg);
+                                           long_options[long_options_index].has_arg == OptionParser::eNoArgument ? NULL : OptionParser::GetOptionArgument());
         }
         else
         {
@@ -707,7 +698,7 @@ Args::ParseOptions (Options &options)
     }
 
     // Update our ARGV now that get options has consumed all the options
-    m_argv.erase(m_argv.begin(), m_argv.begin() + optind);
+    m_argv.erase(m_argv.begin(), m_argv.begin() + OptionParser::GetOptionIndex());
     UpdateArgsAfterOptionParsing ();
     return error;
 }
@@ -1226,7 +1217,7 @@ Args::LongestCommonPrefix (std::string &common_prefix)
 }
 
 size_t
-Args::FindArgumentIndexForOption (struct option *long_options, int long_options_index)
+Args::FindArgumentIndexForOption (Option *long_options, int long_options_index)
 {
     char short_buffer[3];
     char long_buffer[255];
@@ -1278,7 +1269,7 @@ Args::ParseAliasOptions (Options &options,
 {
     StreamString sstr;
     int i;
-    struct option *long_options = options.GetLongOptions();
+    Option *long_options = options.GetLongOptions();
 
     if (long_options == NULL)
     {
@@ -1295,29 +1286,24 @@ Args::ParseAliasOptions (Options &options,
             switch (long_options[i].has_arg)
             {
                 default:
-                case no_argument:
+                case OptionParser::eNoArgument:
                     break;
-                case required_argument:
+                case OptionParser::eRequiredArgument:
                     sstr << ":";
                     break;
-                case optional_argument:
+                case OptionParser::eOptionalArgument:
                     sstr << "::";
                     break;
             }
         }
     }
 
-#ifdef __GLIBC__
-    optind = 0;
-#else
-    optreset = 1;
-    optind = 1;
-#endif
+    OptionParser::Prepare();
     int val;
     while (1)
     {
         int long_options_index = -1;
-        val = ::getopt_long_only (GetArgumentCount(),
+        val = OptionParser::Parse (GetArgumentCount(),
                                   GetArgumentVector(),
                                   sstr.GetData(),
                                   long_options,
@@ -1361,17 +1347,17 @@ Args::ParseAliasOptions (Options &options,
 
             switch (long_options[long_options_index].has_arg)
             {
-            case no_argument:
+            case OptionParser::eNoArgument:
                 option_arg_vector->push_back (OptionArgPair (std::string (option_str.GetData()), 
-                                                             OptionArgValue (no_argument, "<no-argument>")));
+                                                             OptionArgValue (OptionParser::eNoArgument, "<no-argument>")));
                 result.SetStatus (eReturnStatusSuccessFinishNoResult);
                 break;
-            case required_argument:
-                if (optarg != NULL)
+            case OptionParser::eRequiredArgument:
+                if (OptionParser::GetOptionArgument() != NULL)
                 {
                     option_arg_vector->push_back (OptionArgPair (std::string (option_str.GetData()),
-                                                                 OptionArgValue (required_argument, 
-                                                                                 std::string (optarg))));
+                                                                 OptionArgValue (OptionParser::eRequiredArgument,
+                                                                                 std::string (OptionParser::GetOptionArgument()))));
                     result.SetStatus (eReturnStatusSuccessFinishNoResult);
                 }
                 else
@@ -1381,18 +1367,18 @@ Args::ParseAliasOptions (Options &options,
                     result.SetStatus (eReturnStatusFailed);
                 }
                 break;
-            case optional_argument:
-                if (optarg != NULL)
+            case OptionParser::eOptionalArgument:
+                if (OptionParser::GetOptionArgument() != NULL)
                 {
                     option_arg_vector->push_back (OptionArgPair (std::string (option_str.GetData()),
-                                                                 OptionArgValue (optional_argument, 
-                                                                                 std::string (optarg))));
+                                                                 OptionArgValue (OptionParser::eOptionalArgument,
+                                                                                 std::string (OptionParser::GetOptionArgument()))));
                     result.SetStatus (eReturnStatusSuccessFinishNoResult);
                 }
                 else
                 {
                     option_arg_vector->push_back (OptionArgPair (std::string (option_str.GetData()),
-                                                                 OptionArgValue (optional_argument, "<no-argument>")));
+                                                                 OptionArgValue (OptionParser::eOptionalArgument, "<no-argument>")));
                     result.SetStatus (eReturnStatusSuccessFinishNoResult);
                 }
                 break;
@@ -1424,10 +1410,10 @@ Args::ParseAliasOptions (Options &options,
                         raw_input_string.erase (pos, strlen (tmp_arg));
                 }
                 ReplaceArgumentAtIndex (idx, "");
-                if ((long_options[long_options_index].has_arg != no_argument)
-                    && (optarg != NULL)
+                if ((long_options[long_options_index].has_arg != OptionParser::eNoArgument)
+                    && (OptionParser::GetOptionArgument() != NULL)
                     && (idx+1 < GetArgumentCount())
-                    && (strcmp (optarg, GetArgumentAtIndex(idx+1)) == 0))
+                    && (strcmp (OptionParser::GetOptionArgument(), GetArgumentAtIndex(idx+1)) == 0))
                 {
                     if (raw_input_string.size() > 0)
                     {
@@ -1455,7 +1441,7 @@ Args::ParseArgsForCompletion
 )
 {
     StreamString sstr;
-    struct option *long_options = options.GetLongOptions();
+    Option *long_options = options.GetLongOptions();
     option_element_vector.clear();
 
     if (long_options == NULL)
@@ -1475,31 +1461,26 @@ Args::ParseArgsForCompletion
             switch (long_options[i].has_arg)
             {
                 default:
-                case no_argument:
+                case OptionParser::eNoArgument:
                     break;
-                case required_argument:
+                case OptionParser::eRequiredArgument:
                     sstr << ":";
                     break;
-                case optional_argument:
+                case OptionParser::eOptionalArgument:
                     sstr << "::";
                     break;
             }
         }
     }
 
-#ifdef __GLIBC__
-    optind = 0;
-#else
-    optreset = 1;
-    optind = 1;
-#endif
-    opterr = 0;
+    OptionParser::Prepare();
+    OptionParser::EnableError(false);
 
     int val;
     const OptionDefinition *opt_defs = options.GetDefinitions();
 
-    // Fooey... getopt_long_only permutes the GetArgumentVector to move the options to the front.
-    // So we have to build another Arg and pass that to getopt_long_only so it doesn't
+    // Fooey... OptionParser::Parse permutes the GetArgumentVector to move the options to the front.
+    // So we have to build another Arg and pass that to OptionParser::Parse so it doesn't
     // change the one we have.
 
     std::vector<const char *> dummy_vec (GetArgumentVector(), GetArgumentVector() + GetArgumentCount() + 1);
@@ -1512,7 +1493,7 @@ Args::ParseArgsForCompletion
         bool missing_argument = false;
         int long_options_index = -1;
         
-        val = ::getopt_long_only (dummy_vec.size() - 1,
+        val = OptionParser::Parse (dummy_vec.size() - 1,
                                   (char *const *) &dummy_vec.front(),
                                   sstr.GetData(),
                                   long_options,
@@ -1530,18 +1511,18 @@ Args::ParseArgsForCompletion
             // Handling the "--" is a little tricky, since that may mean end of options or arguments, or the
             // user might want to complete options by long name.  I make this work by checking whether the
             // cursor is in the "--" argument, and if so I assume we're completing the long option, otherwise
-            // I let it pass to getopt_long_only which will terminate the option parsing.
+            // I let it pass to OptionParser::Parse which will terminate the option parsing.
             // Note, in either case we continue parsing the line so we can figure out what other options
             // were passed.  This will be useful when we come to restricting completions based on what other
             // options we've seen on the line.
 
-            if (optind < dummy_vec.size() - 1 
-                && (strcmp (dummy_vec[optind-1], "--") == 0))
+            if (OptionParser::GetOptionIndex() < dummy_vec.size() - 1
+                && (strcmp (dummy_vec[OptionParser::GetOptionIndex()-1], "--") == 0))
             {
-                dash_dash_pos = optind - 1;
-                if (optind - 1 == cursor_index)
+                dash_dash_pos = OptionParser::GetOptionIndex() - 1;
+                if (OptionParser::GetOptionIndex() - 1 == cursor_index)
                 {
-                    option_element_vector.push_back (OptionArgElement (OptionArgElement::eBareDoubleDash, optind - 1, 
+                    option_element_vector.push_back (OptionArgElement (OptionArgElement::eBareDoubleDash, OptionParser::GetOptionIndex() - 1,
                                                                    OptionArgElement::eBareDoubleDash));
                     continue;
                 }
@@ -1553,7 +1534,7 @@ Args::ParseArgsForCompletion
         }
         else if (val == '?')
         {
-            option_element_vector.push_back (OptionArgElement (OptionArgElement::eUnrecognizedArg, optind - 1, 
+            option_element_vector.push_back (OptionArgElement (OptionArgElement::eUnrecognizedArg, OptionParser::GetOptionIndex() - 1,
                                                                OptionArgElement::eUnrecognizedArg));
             continue;
         }
@@ -1564,7 +1545,7 @@ Args::ParseArgsForCompletion
         else if (val == ':')
         {
             // This is a missing argument.
-            val = optopt;
+            val = OptionParser::GetOptionErrorCause();
             missing_argument = true;
         }
 
@@ -1602,51 +1583,51 @@ Args::ParseArgsForCompletion
 
             switch (long_options[long_options_index].has_arg)
             {
-            case no_argument:
-                option_element_vector.push_back (OptionArgElement (opt_defs_index, optind - 1, 0));
+            case OptionParser::eNoArgument:
+                option_element_vector.push_back (OptionArgElement (opt_defs_index, OptionParser::GetOptionIndex() - 1, 0));
                 break;
-            case required_argument:
-                if (optarg != NULL)
+            case OptionParser::eRequiredArgument:
+                if (OptionParser::GetOptionArgument() != NULL)
                 {
                     int arg_index;
                     if (missing_argument)
                         arg_index = -1;
                     else
-                        arg_index = optind - 1;
+                        arg_index = OptionParser::GetOptionIndex() - 1;
 
-                    option_element_vector.push_back (OptionArgElement (opt_defs_index, optind - 2, arg_index));
+                    option_element_vector.push_back (OptionArgElement (opt_defs_index, OptionParser::GetOptionIndex() - 2, arg_index));
                 }
                 else
                 {
-                    option_element_vector.push_back (OptionArgElement (opt_defs_index, optind - 1, -1));
+                    option_element_vector.push_back (OptionArgElement (opt_defs_index, OptionParser::GetOptionIndex() - 1, -1));
                 }
                 break;
-            case optional_argument:
-                if (optarg != NULL)
+            case OptionParser::eOptionalArgument:
+                if (OptionParser::GetOptionArgument() != NULL)
                 {
-                    option_element_vector.push_back (OptionArgElement (opt_defs_index, optind - 2, optind - 1));
+                    option_element_vector.push_back (OptionArgElement (opt_defs_index, OptionParser::GetOptionIndex() - 2, OptionParser::GetOptionIndex() - 1));
                 }
                 else
                 {
-                    option_element_vector.push_back (OptionArgElement (opt_defs_index, optind - 2, optind - 1));
+                    option_element_vector.push_back (OptionArgElement (opt_defs_index, OptionParser::GetOptionIndex() - 2, OptionParser::GetOptionIndex() - 1));
                 }
                 break;
             default:
                 // The options table is messed up.  Here we'll just continue
-                option_element_vector.push_back (OptionArgElement (OptionArgElement::eUnrecognizedArg, optind - 1, 
+                option_element_vector.push_back (OptionArgElement (OptionArgElement::eUnrecognizedArg, OptionParser::GetOptionIndex() - 1,
                                                                    OptionArgElement::eUnrecognizedArg));
                 break;
             }
         }
         else
         {
-            option_element_vector.push_back (OptionArgElement (OptionArgElement::eUnrecognizedArg, optind - 1, 
+            option_element_vector.push_back (OptionArgElement (OptionArgElement::eUnrecognizedArg, OptionParser::GetOptionIndex() - 1,
                                                                OptionArgElement::eUnrecognizedArg));
         }
     }
     
     // Finally we have to handle the case where the cursor index points at a single "-".  We want to mark that in
-    // the option_element_vector, but only if it is not after the "--".  But it turns out that getopt_long_only just ignores
+    // the option_element_vector, but only if it is not after the "--".  But it turns out that OptionParser::Parse just ignores
     // an isolated "-".  So we have to look it up by hand here.  We only care if it is AT the cursor position.
     
     if ((dash_dash_pos == -1 || cursor_index < dash_dash_pos)

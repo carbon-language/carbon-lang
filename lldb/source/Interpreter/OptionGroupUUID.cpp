@@ -30,7 +30,7 @@ OptionGroupUUID::~OptionGroupUUID ()
 static OptionDefinition
 g_option_table[] =
 {
-    { LLDB_OPT_SET_1 , false, "uuid", 'u', required_argument, NULL, 0, eArgTypeNone, "A module UUID value."},
+    { LLDB_OPT_SET_1 , false, "uuid", 'u', OptionParser::eRequiredArgument, NULL, 0, eArgTypeNone, "A module UUID value."},
 };
 
 uint32_t

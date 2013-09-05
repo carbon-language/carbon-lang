@@ -11,8 +11,6 @@
 
 #include <string>
 #include <vector>
-
-#include <getopt.h>
 #include <stdlib.h>
 
 #include "CommandObjectScript.h"
@@ -1326,9 +1324,9 @@ CommandInterpreter::BuildAliasResult (const char *alias_name,
                 else
                 {
                     result_str.Printf (" %s", option.c_str());
-                    if (value_type != optional_argument)
+                    if (value_type != OptionParser::eOptionalArgument)
                         result_str.Printf (" ");
-                    if (value.compare ("<no_argument>") != 0)
+                    if (value.compare ("<OptionParser::eNoArgument>") != 0)
                     {
                         int index = GetOptionArgumentPosition (value.c_str());
                         if (index == 0)
@@ -2295,7 +2293,7 @@ CommandInterpreter::BuildAliasCommandArgs (CommandObject *alias_cmd_obj,
             }
             else
             {
-                if (value_type != optional_argument)
+                if (value_type != OptionParser::eOptionalArgument)
                     new_args.AppendArgument (option.c_str());
                 if (value.compare ("<no-argument>") != 0)
                 {
@@ -2303,7 +2301,7 @@ CommandInterpreter::BuildAliasCommandArgs (CommandObject *alias_cmd_obj,
                     if (index == 0)
                     {
                         // value was NOT a positional argument; must be a real value
-                        if (value_type != optional_argument)
+                        if (value_type != OptionParser::eOptionalArgument)
                             new_args.AppendArgument (value.c_str());
                         else
                         {
@@ -2330,7 +2328,7 @@ CommandInterpreter::BuildAliasCommandArgs (CommandObject *alias_cmd_obj,
                             raw_input_string = raw_input_string.erase (strpos, strlen (cmd_args.GetArgumentAtIndex (index)));
                         }
 
-                        if (value_type != optional_argument)
+                        if (value_type != OptionParser::eOptionalArgument)
                             new_args.AppendArgument (cmd_args.GetArgumentAtIndex (index));
                         else
                         {

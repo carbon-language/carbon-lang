@@ -850,23 +850,23 @@ Platform::GetLocalCacheDirectory ()
 static OptionDefinition
 g_rsync_option_table[] =
 {
-    {   LLDB_OPT_SET_ALL, false, "rsync"                  , 'r', no_argument,       NULL, 0, eArgTypeNone         , "Enable rsync." },
-    {   LLDB_OPT_SET_ALL, false, "rsync-opts"             , 'R', required_argument, NULL, 0, eArgTypeCommandName  , "Platform-specific options required for rsync to work." },
-    {   LLDB_OPT_SET_ALL, false, "rsync-prefix"           , 'P', required_argument, NULL, 0, eArgTypeCommandName  , "Platform-specific rsync prefix put before the remote path." },
-    {   LLDB_OPT_SET_ALL, false, "ignore-remote-hostname" , 'i', no_argument,       NULL, 0, eArgTypeNone         , "Do not automatically fill in the remote hostname when composing the rsync command." },
+    {   LLDB_OPT_SET_ALL, false, "rsync"                  , 'r', OptionParser::eNoArgument,       NULL, 0, eArgTypeNone         , "Enable rsync." },
+    {   LLDB_OPT_SET_ALL, false, "rsync-opts"             , 'R', OptionParser::eRequiredArgument, NULL, 0, eArgTypeCommandName  , "Platform-specific options required for rsync to work." },
+    {   LLDB_OPT_SET_ALL, false, "rsync-prefix"           , 'P', OptionParser::eRequiredArgument, NULL, 0, eArgTypeCommandName  , "Platform-specific rsync prefix put before the remote path." },
+    {   LLDB_OPT_SET_ALL, false, "ignore-remote-hostname" , 'i', OptionParser::eNoArgument,       NULL, 0, eArgTypeNone         , "Do not automatically fill in the remote hostname when composing the rsync command." },
 };
 
 static OptionDefinition
 g_ssh_option_table[] =
 {
-    {   LLDB_OPT_SET_ALL, false, "ssh"                    , 's', no_argument,       NULL, 0, eArgTypeNone         , "Enable SSH." },
-    {   LLDB_OPT_SET_ALL, false, "ssh-opts"               , 'S', required_argument, NULL, 0, eArgTypeCommandName  , "Platform-specific options required for SSH to work." },
+    {   LLDB_OPT_SET_ALL, false, "ssh"                    , 's', OptionParser::eNoArgument,       NULL, 0, eArgTypeNone         , "Enable SSH." },
+    {   LLDB_OPT_SET_ALL, false, "ssh-opts"               , 'S', OptionParser::eRequiredArgument, NULL, 0, eArgTypeCommandName  , "Platform-specific options required for SSH to work." },
 };
 
 static OptionDefinition
 g_caching_option_table[] =
 {
-    {   LLDB_OPT_SET_ALL, false, "local-cache-dir"        , 'c', required_argument, NULL, 0, eArgTypePath         , "Path in which to store local copies of files." },
+    {   LLDB_OPT_SET_ALL, false, "local-cache-dir"        , 'c', OptionParser::eRequiredArgument, NULL, 0, eArgTypePath         , "Path in which to store local copies of files." },
 };
 
 OptionGroupPlatformRSync::OptionGroupPlatformRSync ()

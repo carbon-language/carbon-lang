@@ -14,7 +14,6 @@
 #include <string>
 #include <map>
 
-#include <getopt.h>
 #include <stdlib.h>
 #include <ctype.h>
 

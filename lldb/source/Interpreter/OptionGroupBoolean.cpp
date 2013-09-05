@@ -30,7 +30,7 @@ OptionGroupBoolean::OptionGroupBoolean (uint32_t usage_mask,
     m_option_definition.required = required;
     m_option_definition.long_option = long_option;
     m_option_definition.short_option = short_option;
-    m_option_definition.option_has_arg = no_argument_toggle_default ? no_argument : required_argument;
+    m_option_definition.option_has_arg = no_argument_toggle_default ? OptionParser::eNoArgument : OptionParser::eRequiredArgument;
     m_option_definition.enum_values = NULL;
     m_option_definition.completion_type = 0;
     m_option_definition.argument_type = eArgTypeBoolean;
@@ -47,7 +47,7 @@ OptionGroupBoolean::SetOptionValue (CommandInterpreter &interpreter,
                                     const char *option_arg)
 {
     Error error;
-    if (m_option_definition.option_has_arg == no_argument)
+    if (m_option_definition.option_has_arg == OptionParser::eNoArgument)
     {
         // Not argument, toggle the default value and mark the option as having been set
         m_value.SetCurrentValue (!m_value.GetDefaultValue());

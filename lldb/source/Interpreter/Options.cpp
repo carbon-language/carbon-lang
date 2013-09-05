@@ -256,7 +256,7 @@ Options::NumCommandOptions ()
     return i;
 }
 
-struct option *
+Option *
 Options::GetLongOptions ()
 {
     // Check to see if this has already been done.
@@ -444,13 +444,13 @@ PrintOption (const OptionDefinition &opt_def,
         strm.Printf ("--%s", opt_def.long_option);
     switch (opt_def.option_has_arg)
     {
-        case no_argument:
+        case OptionParser::eNoArgument:
             break;
-        case required_argument:
+        case OptionParser::eRequiredArgument:
             strm.Printf (" <%s>", CommandObject::GetArgumentName (opt_def.argument_type));
             break;
             
-        case optional_argument:
+        case OptionParser::eOptionalArgument:
             strm.Printf ("%s[<%s>]",
                          show_short_option ? "" : "=",
                          CommandObject::GetArgumentName (opt_def.argument_type));
@@ -529,7 +529,7 @@ Options::GenerateOptionUsage
                 // Add current option to the end of out_stream.
 
                 if (opt_defs[i].required == true && 
-                    opt_defs[i].option_has_arg == no_argument)
+                    opt_defs[i].option_has_arg == OptionParser::eNoArgument)
                 {
                     options.insert (opt_defs[i].short_option);
                 }
@@ -560,7 +560,7 @@ Options::GenerateOptionUsage
                 // Add current option to the end of out_stream.
 
                 if (opt_defs[i].required == false &&
-                    opt_defs[i].option_has_arg == no_argument)
+                    opt_defs[i].option_has_arg == OptionParser::eNoArgument)
                 {
                     options.insert (opt_defs[i].short_option);
                 }
@@ -591,7 +591,7 @@ Options::GenerateOptionUsage
         {
             if (opt_defs[i].usage_mask & opt_set_mask && isprint8(opt_defs[i].short_option))
             {
-                if (opt_defs[i].required && opt_defs[i].option_has_arg != no_argument)
+                if (opt_defs[i].required && opt_defs[i].option_has_arg != OptionParser::eNoArgument)
                     PrintOption (opt_defs[i], eDisplayBestOption, " ", NULL, true, strm);
             }
         }
@@ -604,7 +604,7 @@ Options::GenerateOptionUsage
             {
                 // Add current option to the end of out_stream.
 
-                if (!opt_defs[i].required && opt_defs[i].option_has_arg != no_argument)
+                if (!opt_defs[i].required && opt_defs[i].option_has_arg != OptionParser::eNoArgument)
                     PrintOption (opt_defs[i], eDisplayBestOption, " ", NULL, true, strm);
             }
         }

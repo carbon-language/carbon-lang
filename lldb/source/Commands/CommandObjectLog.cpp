@@ -215,15 +215,15 @@ protected:
 OptionDefinition
 CommandObjectLogEnable::CommandOptions::g_option_table[] =
 {
-{ LLDB_OPT_SET_1, false, "file",       'f', required_argument, NULL, 0, eArgTypeFilename,   "Set the destination file to log to."},
-{ LLDB_OPT_SET_1, false, "threadsafe", 't', no_argument,       NULL, 0, eArgTypeNone,        "Enable thread safe logging to avoid interweaved log lines." },
-{ LLDB_OPT_SET_1, false, "verbose",    'v', no_argument,       NULL, 0, eArgTypeNone,       "Enable verbose logging." },
-{ LLDB_OPT_SET_1, false, "debug",      'g', no_argument,       NULL, 0, eArgTypeNone,       "Enable debug logging." },
-{ LLDB_OPT_SET_1, false, "sequence",   's', no_argument,       NULL, 0, eArgTypeNone,       "Prepend all log lines with an increasing integer sequence id." },
-{ LLDB_OPT_SET_1, false, "timestamp",  'T', no_argument,       NULL, 0, eArgTypeNone,       "Prepend all log lines with a timestamp." },
-{ LLDB_OPT_SET_1, false, "pid-tid",    'p', no_argument,       NULL, 0, eArgTypeNone,       "Prepend all log lines with the process and thread ID that generates the log line." },
-{ LLDB_OPT_SET_1, false, "thread-name",'n', no_argument,       NULL, 0, eArgTypeNone,       "Prepend all log lines with the thread name for the thread that generates the log line." },
-{ LLDB_OPT_SET_1, false, "stack",      'S', no_argument,       NULL, 0, eArgTypeNone,       "Append a stack backtrace to each log line." },
+{ LLDB_OPT_SET_1, false, "file",       'f', OptionParser::eRequiredArgument, NULL, 0, eArgTypeFilename,   "Set the destination file to log to."},
+{ LLDB_OPT_SET_1, false, "threadsafe", 't', OptionParser::eNoArgument,       NULL, 0, eArgTypeNone,        "Enable thread safe logging to avoid interweaved log lines." },
+{ LLDB_OPT_SET_1, false, "verbose",    'v', OptionParser::eNoArgument,       NULL, 0, eArgTypeNone,       "Enable verbose logging." },
+{ LLDB_OPT_SET_1, false, "debug",      'g', OptionParser::eNoArgument,       NULL, 0, eArgTypeNone,       "Enable debug logging." },
+{ LLDB_OPT_SET_1, false, "sequence",   's', OptionParser::eNoArgument,       NULL, 0, eArgTypeNone,       "Prepend all log lines with an increasing integer sequence id." },
+{ LLDB_OPT_SET_1, false, "timestamp",  'T', OptionParser::eNoArgument,       NULL, 0, eArgTypeNone,       "Prepend all log lines with a timestamp." },
+{ LLDB_OPT_SET_1, false, "pid-tid",    'p', OptionParser::eNoArgument,       NULL, 0, eArgTypeNone,       "Prepend all log lines with the process and thread ID that generates the log line." },
+{ LLDB_OPT_SET_1, false, "thread-name",'n', OptionParser::eNoArgument,       NULL, 0, eArgTypeNone,       "Prepend all log lines with the thread name for the thread that generates the log line." },
+{ LLDB_OPT_SET_1, false, "stack",      'S', OptionParser::eNoArgument,       NULL, 0, eArgTypeNone,       "Append a stack backtrace to each log line." },
 { 0, false, NULL,                       0,  0,                 NULL, 0, eArgTypeNone,       NULL }
 };
 

@@ -11,7 +11,6 @@
 #define liblldb_Options_h_
 
 // C Includes
-#include <getopt.h>
 
 // C++ Includes
 #include <set>
@@ -141,7 +140,7 @@ public:
     /// @see Args::ParseOptions (Options&)
     /// @see man getopt_long_only
     //------------------------------------------------------------------
-    struct option *
+    Option *
     GetLongOptions ();
 
     // This gets passed the short option as an integer...
@@ -309,7 +308,7 @@ protected:
     typedef std::vector<OptionSet> OptionSetVector;
 
     CommandInterpreter &m_interpreter;
-    std::vector<struct option> m_getopt_table;
+    std::vector<Option> m_getopt_table;
     OptionSet m_seen_options;
     OptionSetVector m_required_options;
     OptionSetVector m_optional_options;

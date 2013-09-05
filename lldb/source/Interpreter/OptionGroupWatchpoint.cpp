@@ -40,8 +40,8 @@ static OptionEnumValueElement g_watch_size[] =
 static OptionDefinition
 g_option_table[] =
 {
-    { LLDB_OPT_SET_1, false, "watch", 'w', required_argument, g_watch_type, 0, eArgTypeWatchType, "Specify the type of watching to perform."},
-    { LLDB_OPT_SET_1, false, "xsize", 'x', required_argument, g_watch_size, 0, eArgTypeByteSize, "Number of bytes to use to watch a region."}
+    { LLDB_OPT_SET_1, false, "watch", 'w', OptionParser::eRequiredArgument, g_watch_type, 0, eArgTypeWatchType, "Specify the type of watching to perform."},
+    { LLDB_OPT_SET_1, false, "xsize", 'x', OptionParser::eRequiredArgument, g_watch_size, 0, eArgTypeByteSize, "Number of bytes to use to watch a region."}
 };
 
 

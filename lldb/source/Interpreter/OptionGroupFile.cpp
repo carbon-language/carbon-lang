@@ -30,7 +30,7 @@ OptionGroupFile::OptionGroupFile (uint32_t usage_mask,
     m_option_definition.required = required;
     m_option_definition.long_option = long_option;
     m_option_definition.short_option = short_option;
-    m_option_definition.option_has_arg = required_argument;
+    m_option_definition.option_has_arg = OptionParser::eRequiredArgument;
     m_option_definition.enum_values = NULL;
     m_option_definition.completion_type = completion_type;
     m_option_definition.argument_type = argument_type;
@@ -70,7 +70,7 @@ OptionGroupFileList::OptionGroupFileList (uint32_t usage_mask,
     m_option_definition.required = required;
     m_option_definition.long_option = long_option;
     m_option_definition.short_option = short_option;
-    m_option_definition.option_has_arg = required_argument;
+    m_option_definition.option_has_arg = OptionParser::eRequiredArgument;
     m_option_definition.enum_values = NULL;
     m_option_definition.completion_type = completion_type;
     m_option_definition.argument_type = argument_type;
