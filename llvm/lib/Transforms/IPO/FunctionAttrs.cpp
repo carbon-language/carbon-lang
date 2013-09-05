@@ -136,6 +136,7 @@ namespace {
 char FunctionAttrs::ID = 0;
 INITIALIZE_PASS_BEGIN(FunctionAttrs, "functionattrs",
                 "Deduce function attributes", false, false)
+INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
 INITIALIZE_AG_DEPENDENCY(CallGraph)
 INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfo)
 INITIALIZE_PASS_END(FunctionAttrs, "functionattrs",
