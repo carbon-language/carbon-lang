@@ -13,8 +13,26 @@
 #include "tsan_report.h"
 #include "tsan_platform.h"
 #include "tsan_rtl.h"
+#include "sanitizer_common/sanitizer_report_decorator.h"
 
 namespace __tsan {
+
+class Decorator: private __sanitizer::AnsiColorDecorator {
+ public:
+  Decorator() : __sanitizer::AnsiColorDecorator(PrintsToTtyCached()) { }
+  const char *Warning()    { return Red(); }
+  const char *EndWarning() { return Default(); }
+  const char *Access()     { return Blue(); }
+  const char *EndAccess()  { return Default(); }
+  const char *ThreadDescription()    { return Cyan(); }
+  const char *EndThreadDescription() { return Default(); }
+  const char *Location()   { return Green(); }
+  const char *EndLocation() { return Default(); }
+  const char *Sleep()   { return Yellow(); }
+  const char *EndSleep() { return Default(); }
+  const char *Mutex()   { return Magenta(); }
+  const char *EndMutex() { return Default(); }
+};
 
 ReportDesc::ReportDesc()
     : stacks(MBlockReportStack)
@@ -97,18 +115,24 @@ static const char *MopDesc(bool first, bool write, bool atomic) {
 }
 
 static void PrintMop(const ReportMop *mop, bool first) {
+  Decorator d;
   char thrbuf[kThreadBufSize];
+  Printf("%s", d.Access());
   Printf("  %s of size %d at %p by %s",
       MopDesc(first, mop->write, mop->atomic),
       mop->size, (void*)mop->addr,
       thread_name(thrbuf, mop->tid));
   PrintMutexSet(mop->mset);
   Printf(":\n");
+  Printf("%s", d.EndAccess());
   PrintStack(mop->stack);
 }
 
 static void PrintLocation(const ReportLocation *loc) {
+  Decorator d;
   char thrbuf[kThreadBufSize];
+  bool print_stack = false;
+  Printf("%s", d.Location());
   if (loc->type == ReportLocationGlobal) {
     Printf("  Location is global '%s' of size %zu at %zx (%s+%p)\n\n",
                loc->name, loc->size, loc->addr, loc->module, loc->offset);
@@ -116,7 +140,7 @@ static void PrintLocation(const ReportLocation *loc) {
     char thrbuf[kThreadBufSize];
     Printf("  Location is heap block of size %zu at %p allocated by %s:\n",
         loc->size, loc->addr, thread_name(thrbuf, loc->tid));
-    PrintStack(loc->stack);
+    print_stack = true;
   } else if (loc->type == ReportLocationStack) {
     Printf("  Location is stack of %s.\n\n", thread_name(thrbuf, loc->tid));
   } else if (loc->type == ReportLocationTLS) {
@@ -124,22 +148,32 @@ static void PrintLocation(const ReportLocation *loc) {
   } else if (loc->type == ReportLocationFD) {
     Printf("  Location is file descriptor %d created by %s at:\n",
         loc->fd, thread_name(thrbuf, loc->tid));
-    PrintStack(loc->stack);
+    print_stack = true;
   }
+  Printf("%s", d.EndLocation());
+  if (print_stack)
+    PrintStack(loc->stack);
 }
 
 static void PrintMutex(const ReportMutex *rm) {
+  Decorator d;
   if (rm->destroyed) {
+    Printf("%s", d.Mutex());
     Printf("  Mutex M%llu is already destroyed.\n\n", rm->id);
+    Printf("%s", d.EndMutex());
   } else {
+    Printf("%s", d.Mutex());
     Printf("  Mutex M%llu created at:\n", rm->id);
+    Printf("%s", d.EndMutex());
     PrintStack(rm->stack);
   }
 }
 
 static void PrintThread(const ReportThread *rt) {
+  Decorator d;
   if (rt->id == 0)  // Little sense in describing the main thread.
     return;
+  Printf("%s", d.ThreadDescription());
   Printf("  Thread T%d", rt->id);
   if (rt->name && rt->name[0] != '\0')
     Printf(" '%s'", rt->name);
@@ -150,11 +184,15 @@ static void PrintThread(const ReportThread *rt) {
   if (rt->stack)
     Printf(" at:");
   Printf("\n");
+  Printf("%s", d.EndThreadDescription());
   PrintStack(rt->stack);
 }
 
 static void PrintSleep(const ReportStack *s) {
+  Decorator d;
+  Printf("%s", d.Sleep());
   Printf("  As if synchronized via sleep:\n");
+  Printf("%s", d.EndSleep());
   PrintStack(s);
 }
 
@@ -177,10 +215,13 @@ ReportStack *SkipTsanInternalFrames(ReportStack *ent) {
 }
 
 void PrintReport(const ReportDesc *rep) {
+  Decorator d;
   Printf("==================\n");
   const char *rep_typ_str = ReportTypeString(rep->typ);
+  Printf("%s", d.Warning());
   Printf("WARNING: ThreadSanitizer: %s (pid=%d)\n", rep_typ_str,
          (int)internal_getpid());
+  Printf("%s", d.EndWarning());
 
   for (uptr i = 0; i < rep->stacks.Size(); i++) {
     if (i)
