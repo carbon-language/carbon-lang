@@ -35,13 +35,12 @@
 namespace {
 
 // Create enum with OPT_xxx values for each option in DarwinLdOptions.td
-enum DarwinOpt {
+enum {
   OPT_INVALID = 0,
 #define OPTION(PREFIX, NAME, ID, KIND, GROUP, ALIAS, ALIASARGS, FLAGS, PARAM, \
                HELP, META) \
           OPT_##ID,
 #include "DarwinLdOptions.inc"
-  LastOption
 #undef OPTION
 };
 

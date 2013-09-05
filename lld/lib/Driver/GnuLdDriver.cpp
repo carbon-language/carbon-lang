@@ -33,17 +33,15 @@
 
 using namespace lld;
 
-
 namespace {
 
 // Create enum with OPT_xxx values for each option in GnuLdOptions.td
-enum GnuLdOpt {
+enum {
   OPT_INVALID = 0,
 #define OPTION(PREFIX, NAME, ID, KIND, GROUP, ALIAS, ALIASARGS, FLAGS, PARAM, \
                HELP, META) \
           OPT_##ID,
 #include "GnuLdOptions.inc"
-  LastOption
 #undef OPTION
 };
 
