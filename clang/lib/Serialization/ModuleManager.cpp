@@ -62,11 +62,13 @@ ModuleManager::addModule(StringRef FileName, ModuleKind Type,
   // Look for the file entry. This only fails if the expected size or
   // modification time differ.
   const FileEntry *Entry;
-  if (lookupModuleFile(FileName, ExpectedSize, ExpectedModTime, Entry))
+  if (lookupModuleFile(FileName, ExpectedSize, ExpectedModTime, Entry)) {
+    ErrorStr = "module file out of date";
     return OutOfDate;
+  }
 
   if (!Entry && FileName != "-") {
-    ErrorStr = "file not found";
+    ErrorStr = "module file not found";
     return Missing;
   }
 
