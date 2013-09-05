@@ -66,18 +66,37 @@ multiclass InsertMem<string type, Instruction insn, RegisterOperand cls,
             (insn cls:$src1, mode:$src2)>;
 }
 
-// Use MVC instruction INSN for a load of type LOAD followed by a store
-// of type STORE.  VT is the type of the intermediate register and LENGTH
-// is the number of bytes to copy (which may be smaller than VT).
-multiclass MVCLoadStore<SDPatternOperator load, SDPatternOperator store,
-                        ValueType vt, Instruction insn, bits<5> length> {
-  def Pat : PatFrag<(ops node:$dest, node:$src),
-                    (store (vt (load node:$src)), node:$dest),
-                    [{ return storeLoadCanUseMVC(N); }]>;
-
-  def : Pat<(!cast<SDPatternOperator>(NAME##"Pat") bdaddr12only:$dest,
-                                                   bdaddr12only:$src),
+// Try to use MVC instruction INSN for a load of type LOAD followed by a store
+// of the same size.  VT is the type of the intermediate (legalized) value and
+// LENGTH is the number of bytes loaded by LOAD.
+multiclass MVCLoadStore<SDPatternOperator load, ValueType vt, Instruction insn,
+                        bits<5> length> {
+  def : Pat<(mvc_store (vt (load bdaddr12only:$src)), bdaddr12only:$dest),
             (insn bdaddr12only:$dest, bdaddr12only:$src, length)>;
+}
+
+// Use NC-like instruction INSN for block_op operation OPERATOR.
+// The other operand is a load of type LOAD, which accesses LENGTH bytes.
+// VT is the intermediate legalized type in which the binary operation
+// is actually done.
+multiclass BinaryLoadStore<SDPatternOperator operator, SDPatternOperator load,
+                           ValueType vt, Instruction insn, bits<5> length> {
+  def : Pat<(operator (vt (load bdaddr12only:$src)), bdaddr12only:$dest),
+            (insn bdaddr12only:$dest, bdaddr12only:$src, length)>;
+}
+
+// A convenient way of generating all block peepholes for a particular
+// LOAD/VT/LENGTH combination.
+multiclass BlockLoadStore<SDPatternOperator load, ValueType vt,
+                          Instruction mvc, Instruction nc, Instruction oc,
+                          Instruction xc, bits<5> length> {
+  defm : MVCLoadStore<load, vt, mvc, length>;
+  defm : BinaryLoadStore<block_and1, load, vt, nc, length>;
+  defm : BinaryLoadStore<block_and2, load, vt, nc, length>;
+  defm : BinaryLoadStore<block_or1,  load, vt, oc, length>;
+  defm : BinaryLoadStore<block_or2,  load, vt, oc, length>;
+  defm : BinaryLoadStore<block_xor1, load, vt, xc, length>;
+  defm : BinaryLoadStore<block_xor2, load, vt, xc, length>;
 }
 
 // Record that INSN is a LOAD AND TEST that can be used to compare

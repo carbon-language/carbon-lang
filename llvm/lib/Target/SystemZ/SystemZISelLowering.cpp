@@ -2054,6 +2054,12 @@ const char *SystemZTargetLowering::getTargetNodeName(unsigned Opcode) const {
     OPCODE(UDIVREM64);
     OPCODE(MVC);
     OPCODE(MVC_LOOP);
+    OPCODE(NC);
+    OPCODE(NC_LOOP);
+    OPCODE(OC);
+    OPCODE(OC_LOOP);
+    OPCODE(XC);
+    OPCODE(XC_LOOP);
     OPCODE(CLC);
     OPCODE(CLC_LOOP);
     OPCODE(STRCMP);
@@ -3077,6 +3083,15 @@ EmitInstrWithCustomInserter(MachineInstr *MI, MachineBasicBlock *MBB) const {
   case SystemZ::MVCSequence:
   case SystemZ::MVCLoop:
     return emitMemMemWrapper(MI, MBB, SystemZ::MVC);
+  case SystemZ::NCSequence:
+  case SystemZ::NCLoop:
+    return emitMemMemWrapper(MI, MBB, SystemZ::NC);
+  case SystemZ::OCSequence:
+  case SystemZ::OCLoop:
+    return emitMemMemWrapper(MI, MBB, SystemZ::OC);
+  case SystemZ::XCSequence:
+  case SystemZ::XCLoop:
+    return emitMemMemWrapper(MI, MBB, SystemZ::XC);
   case SystemZ::CLCSequence:
   case SystemZ::CLCLoop:
     return emitMemMemWrapper(MI, MBB, SystemZ::CLC);

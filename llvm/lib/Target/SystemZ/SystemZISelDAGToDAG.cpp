@@ -290,7 +290,14 @@ class SystemZDAGToDAGISel : public SelectionDAGISel {
   SDNode *splitLargeImmediate(unsigned Opcode, SDNode *Node, SDValue Op0,
                               uint64_t UpperVal, uint64_t LowerVal);
 
+  // N is a (store (load Y), X) pattern.  Return true if it can use an MVC
+  // from Y to X.
   bool storeLoadCanUseMVC(SDNode *N) const;
+
+  // N is a (store (op (load A[0]), (load A[1])), X) pattern.  Return true
+  // if A[1 - I] == X and if N can use a block operation like NC from A[I]
+  // to X.
+  bool storeLoadCanUseBlockBinary(SDNode *N, unsigned I) const;
 
 public:
   SystemZDAGToDAGISel(SystemZTargetMachine &TM, CodeGenOpt::Level OptLevel)
@@ -925,34 +932,27 @@ SDNode *SystemZDAGToDAGISel::splitLargeImmediate(unsigned Opcode, SDNode *Node,
   return Or.getNode();
 }
 
-// N is a (store (load ...), ...) pattern.  Return true if it can use MVC.
-bool SystemZDAGToDAGISel::storeLoadCanUseMVC(SDNode *N) const {
-  StoreSDNode *Store = cast<StoreSDNode>(N);
-  LoadSDNode *Load = cast<LoadSDNode>(Store->getValue().getNode());
-
-  // MVC is logically a bytewise copy, so can't be used for volatile accesses.
-  if (Load->isVolatile() || Store->isVolatile())
+// Return true if Load and Store:
+// - are loads and stores of the same size;
+// - do not partially overlap; and
+// - can be decomposed into what are logically individual character accesses
+//   without changing the semantics.
+static bool canUseBlockOperation(StoreSDNode *Store, LoadSDNode *Load,
+                                 AliasAnalysis *AA) {
+  // Check that the two memory operands have the same size.
+  if (Load->getMemoryVT() != Store->getMemoryVT())
     return false;
 
-  // Prefer not to use MVC if either address can use ... RELATIVE LONG
-  // instructions.
-  assert(Load->getMemoryVT() == Store->getMemoryVT() &&
-         "Should already have checked that the types match");
-  uint64_t Size = Load->getMemoryVT().getStoreSize();
-  if (Size > 1 && Size <= 8) {
-    // Prefer LHRL, LRL and LGRL.
-    if (Load->getBasePtr().getOpcode() == SystemZISD::PCREL_WRAPPER)
-      return false;
-    // Prefer STHRL, STRL and STGRL.
-    if (Store->getBasePtr().getOpcode() == SystemZISD::PCREL_WRAPPER)
-      return false;
-  }
+  // Volatility stops an access from being decomposed.
+  if (Load->isVolatile() || Store->isVolatile())
+    return false;
 
   // There's no chance of overlap if the load is invariant.
   if (Load->isInvariant())
     return true;
 
   // If both operands are aligned, they must be equal or not overlap.
+  uint64_t Size = Load->getMemoryVT().getStoreSize();
   if (Load->getAlignment() >= Size && Store->getAlignment() >= Size)
     return true;
 
@@ -966,6 +966,37 @@ bool SystemZDAGToDAGISel::storeLoadCanUseMVC(SDNode *N) const {
   int64_t End2 = Store->getSrcValueOffset() + Size;
   return !AA->alias(AliasAnalysis::Location(V1, End1, Load->getTBAAInfo()),
                     AliasAnalysis::Location(V2, End2, Store->getTBAAInfo()));
+}
+
+bool SystemZDAGToDAGISel::storeLoadCanUseMVC(SDNode *N) const {
+  StoreSDNode *Store = cast<StoreSDNode>(N);
+  LoadSDNode *Load = cast<LoadSDNode>(Store->getValue());
+
+  // Prefer not to use MVC if either address can use ... RELATIVE LONG
+  // instructions.
+  uint64_t Size = Load->getMemoryVT().getStoreSize();
+  if (Size > 1 && Size <= 8) {
+    // Prefer LHRL, LRL and LGRL.
+    if (Load->getBasePtr().getOpcode() == SystemZISD::PCREL_WRAPPER)
+      return false;
+    // Prefer STHRL, STRL and STGRL.
+    if (Store->getBasePtr().getOpcode() == SystemZISD::PCREL_WRAPPER)
+      return false;
+  }
+
+  return canUseBlockOperation(Store, Load, AA);
+}
+
+bool SystemZDAGToDAGISel::storeLoadCanUseBlockBinary(SDNode *N,
+                                                     unsigned I) const {
+  StoreSDNode *StoreA = cast<StoreSDNode>(N);
+  LoadSDNode *LoadA = cast<LoadSDNode>(StoreA->getValue().getOperand(1 - I));
+  LoadSDNode *LoadB = cast<LoadSDNode>(StoreA->getValue().getOperand(I));
+  if (LoadA->isVolatile() ||
+      LoadA->getMemoryVT() != StoreA->getMemoryVT() ||
+      LoadA->getBasePtr() != StoreA->getBasePtr())
+    return false;
+  return canUseBlockOperation(StoreA, LoadB, AA);
 }
 
 SDNode *SystemZDAGToDAGISel::Select(SDNode *Node) {

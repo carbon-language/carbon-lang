@@ -86,9 +86,9 @@ def : CopySign128<FP64,  (CPSDRdd (EXTRACT_SUBREG FP128:$src1, subreg_high),
 def : CopySign128<FP128, (CPSDRdd (EXTRACT_SUBREG FP128:$src1, subreg_high),
                                   (EXTRACT_SUBREG FP128:$src2, subreg_high))>;
 
-defm LoadStoreF32  : MVCLoadStore<load, store, f32,  MVCSequence, 4>;
-defm LoadStoreF64  : MVCLoadStore<load, store, f64,  MVCSequence, 8>;
-defm LoadStoreF128 : MVCLoadStore<load, store, f128, MVCSequence, 16>;
+defm LoadStoreF32  : MVCLoadStore<load, f32,  MVCSequence, 4>;
+defm LoadStoreF64  : MVCLoadStore<load, f64,  MVCSequence, 8>;
+defm LoadStoreF128 : MVCLoadStore<load, f128, MVCSequence, 16>;
 
 //===----------------------------------------------------------------------===//
 // Load instructions

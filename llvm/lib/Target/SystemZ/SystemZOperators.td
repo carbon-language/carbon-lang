@@ -131,6 +131,18 @@ def z_mvc               : SDNode<"SystemZISD::MVC", SDT_ZMemMemLength,
                                  [SDNPHasChain, SDNPMayStore, SDNPMayLoad]>;
 def z_mvc_loop          : SDNode<"SystemZISD::MVC_LOOP", SDT_ZMemMemLoop,
                                  [SDNPHasChain, SDNPMayStore, SDNPMayLoad]>;
+def z_nc                : SDNode<"SystemZISD::NC", SDT_ZMemMemLength,
+                                  [SDNPHasChain, SDNPMayStore, SDNPMayLoad]>;
+def z_nc_loop           : SDNode<"SystemZISD::NC_LOOP", SDT_ZMemMemLoop,
+                                  [SDNPHasChain, SDNPMayStore, SDNPMayLoad]>;
+def z_oc                : SDNode<"SystemZISD::OC", SDT_ZMemMemLength,
+                                  [SDNPHasChain, SDNPMayStore, SDNPMayLoad]>;
+def z_oc_loop           : SDNode<"SystemZISD::OC_LOOP", SDT_ZMemMemLoop,
+                                  [SDNPHasChain, SDNPMayStore, SDNPMayLoad]>;
+def z_xc                : SDNode<"SystemZISD::XC", SDT_ZMemMemLength,
+                                  [SDNPHasChain, SDNPMayStore, SDNPMayLoad]>;
+def z_xc_loop           : SDNode<"SystemZISD::XC_LOOP", SDT_ZMemMemLoop,
+                                  [SDNPHasChain, SDNPMayStore, SDNPMayLoad]>;
 def z_clc               : SDNode<"SystemZISD::CLC", SDT_ZMemMemLength,
                                  [SDNPHasChain, SDNPOutGlue, SDNPMayLoad]>;
 def z_clc_loop          : SDNode<"SystemZISD::CLC_LOOP", SDT_ZMemMemLoop,
@@ -223,6 +235,31 @@ def nonvolatile_store         : NonvolatileStore<store>;
 def nonvolatile_truncstorei8  : NonvolatileStore<truncstorei8>;
 def nonvolatile_truncstorei16 : NonvolatileStore<truncstorei16>;
 def nonvolatile_truncstorei32 : NonvolatileStore<truncstorei32>;
+
+// A store of a load that can be implemented using MVC.
+def mvc_store : PatFrag<(ops node:$value, node:$addr),
+                        (unindexedstore node:$value, node:$addr),
+                        [{ return storeLoadCanUseMVC(N); }]>;
+
+// Binary read-modify-write operations on memory in which the other
+// operand is also memory and for which block operations like NC can
+// be used.  There are two patterns for each operator, depending on
+// which operand contains the "other" load.
+multiclass block_op<SDPatternOperator operator> {
+  def "1" : PatFrag<(ops node:$value, node:$addr),
+                    (unindexedstore (operator node:$value,
+                                              (unindexedload node:$addr)),
+                                    node:$addr),
+                    [{ return storeLoadCanUseBlockBinary(N, 0); }]>;
+  def "2" : PatFrag<(ops node:$value, node:$addr),
+                    (unindexedstore (operator (unindexedload node:$addr),
+                                              node:$value),
+                                    node:$addr),
+                    [{ return storeLoadCanUseBlockBinary(N, 1); }]>;
+}
+defm block_and : block_op<and>;
+defm block_or  : block_op<or>;
+defm block_xor : block_op<xor>;
 
 // Insertions.
 def inserti8 : PatFrag<(ops node:$src1, node:$src2),

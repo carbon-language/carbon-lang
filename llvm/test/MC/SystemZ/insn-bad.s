@@ -2051,6 +2051,50 @@
 	n	%r0, -1
 	n	%r0, 4096
 
+#CHECK: error: missing length in address
+#CHECK: nc	0, 0
+#CHECK: error: missing length in address
+#CHECK: nc	0(%r1), 0(%r1)
+#CHECK: error: invalid use of length addressing
+#CHECK: nc	0(1,%r1), 0(2,%r1)
+#CHECK: error: invalid operand
+#CHECK: nc	0(0,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: nc	0(257,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: nc	-1(1,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: nc	4096(1,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: nc	0(1,%r1), -1(%r1)
+#CHECK: error: invalid operand
+#CHECK: nc	0(1,%r1), 4096(%r1)
+#CHECK: error: %r0 used in an address
+#CHECK: nc	0(1,%r0), 0(%r1)
+#CHECK: error: %r0 used in an address
+#CHECK: nc	0(1,%r1), 0(%r0)
+#CHECK: error: invalid use of indexed addressing
+#CHECK: nc	0(%r1,%r2), 0(%r1)
+#CHECK: error: invalid use of indexed addressing
+#CHECK: nc	0(1,%r2), 0(%r1,%r2)
+#CHECK: error: unknown token in expression
+#CHECK: nc	0(-), 0
+
+	nc	0, 0
+	nc	0(%r1), 0(%r1)
+	nc	0(1,%r1), 0(2,%r1)
+	nc	0(0,%r1), 0(%r1)
+	nc	0(257,%r1), 0(%r1)
+	nc	-1(1,%r1), 0(%r1)
+	nc	4096(1,%r1), 0(%r1)
+	nc	0(1,%r1), -1(%r1)
+	nc	0(1,%r1), 4096(%r1)
+	nc	0(1,%r0), 0(%r1)
+	nc	0(1,%r1), 0(%r0)
+	nc	0(%r1,%r2), 0(%r1)
+	nc	0(1,%r2), 0(%r1,%r2)
+	nc	0(-), 0
+
 #CHECK: error: invalid operand
 #CHECK: ng	%r0, -524289
 #CHECK: error: invalid operand
@@ -2166,6 +2210,50 @@
 
 	o	%r0, -1
 	o	%r0, 4096
+
+#CHECK: error: missing length in address
+#CHECK: oc	0, 0
+#CHECK: error: missing length in address
+#CHECK: oc	0(%r1), 0(%r1)
+#CHECK: error: invalid use of length addressing
+#CHECK: oc	0(1,%r1), 0(2,%r1)
+#CHECK: error: invalid operand
+#CHECK: oc	0(0,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: oc	0(257,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: oc	-1(1,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: oc	4096(1,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: oc	0(1,%r1), -1(%r1)
+#CHECK: error: invalid operand
+#CHECK: oc	0(1,%r1), 4096(%r1)
+#CHECK: error: %r0 used in an address
+#CHECK: oc	0(1,%r0), 0(%r1)
+#CHECK: error: %r0 used in an address
+#CHECK: oc	0(1,%r1), 0(%r0)
+#CHECK: error: invalid use of indexed addressing
+#CHECK: oc	0(%r1,%r2), 0(%r1)
+#CHECK: error: invalid use of indexed addressing
+#CHECK: oc	0(1,%r2), 0(%r1,%r2)
+#CHECK: error: unknown token in expression
+#CHECK: oc	0(-), 0
+
+	oc	0, 0
+	oc	0(%r1), 0(%r1)
+	oc	0(1,%r1), 0(2,%r1)
+	oc	0(0,%r1), 0(%r1)
+	oc	0(257,%r1), 0(%r1)
+	oc	-1(1,%r1), 0(%r1)
+	oc	4096(1,%r1), 0(%r1)
+	oc	0(1,%r1), -1(%r1)
+	oc	0(1,%r1), 4096(%r1)
+	oc	0(1,%r0), 0(%r1)
+	oc	0(1,%r1), 0(%r0)
+	oc	0(%r1,%r2), 0(%r1)
+	oc	0(1,%r2), 0(%r1,%r2)
+	oc	0(-), 0
 
 #CHECK: error: invalid operand
 #CHECK: og	%r0, -524289
@@ -2902,6 +2990,50 @@
 
 	x	%r0, -1
 	x	%r0, 4096
+
+#CHECK: error: missing length in address
+#CHECK: xc	0, 0
+#CHECK: error: missing length in address
+#CHECK: xc	0(%r1), 0(%r1)
+#CHECK: error: invalid use of length addressing
+#CHECK: xc	0(1,%r1), 0(2,%r1)
+#CHECK: error: invalid operand
+#CHECK: xc	0(0,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: xc	0(257,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: xc	-1(1,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: xc	4096(1,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: xc	0(1,%r1), -1(%r1)
+#CHECK: error: invalid operand
+#CHECK: xc	0(1,%r1), 4096(%r1)
+#CHECK: error: %r0 used in an address
+#CHECK: xc	0(1,%r0), 0(%r1)
+#CHECK: error: %r0 used in an address
+#CHECK: xc	0(1,%r1), 0(%r0)
+#CHECK: error: invalid use of indexed addressing
+#CHECK: xc	0(%r1,%r2), 0(%r1)
+#CHECK: error: invalid use of indexed addressing
+#CHECK: xc	0(1,%r2), 0(%r1,%r2)
+#CHECK: error: unknown token in expression
+#CHECK: xc	0(-), 0
+
+	xc	0, 0
+	xc	0(%r1), 0(%r1)
+	xc	0(1,%r1), 0(2,%r1)
+	xc	0(0,%r1), 0(%r1)
+	xc	0(257,%r1), 0(%r1)
+	xc	-1(1,%r1), 0(%r1)
+	xc	4096(1,%r1), 0(%r1)
+	xc	0(1,%r1), -1(%r1)
+	xc	0(1,%r1), 4096(%r1)
+	xc	0(1,%r0), 0(%r1)
+	xc	0(1,%r1), 0(%r0)
+	xc	0(%r1,%r2), 0(%r1)
+	xc	0(1,%r2), 0(%r1,%r2)
+	xc	0(-), 0
 
 #CHECK: error: invalid operand
 #CHECK: xg	%r0, -524289

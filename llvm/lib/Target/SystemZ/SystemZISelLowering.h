@@ -93,6 +93,14 @@ namespace SystemZISD {
     // The value of X is passed as an additional operand.
     MVC_LOOP,
 
+    // Similar to MVC and MVC_LOOP, but for logic operations (AND, OR, XOR).
+    NC,
+    NC_LOOP,
+    OC,
+    OC_LOOP,
+    XC,
+    XC_LOOP,
+
     // Use CLC to compare two blocks of memory, with the same comments
     // as for MVC and MVC_LOOP.
     CLC,
