@@ -1418,7 +1418,6 @@ ClangExpressionDeclMap::GetVariableValue (VariableSP &var,
         return false;
     }
     
-    // commented out because of <rdar://problem/11024417>
     ASTContext *ast = var_type->GetClangASTContext().getASTContext();
 
     if (!ast)
