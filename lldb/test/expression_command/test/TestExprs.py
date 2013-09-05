@@ -51,9 +51,9 @@ class BasicExprCommandsTestCase(TestBase):
             patterns = ["\(unsigned long long\) \$.* = 2"])
         # (unsigned long long) $1 = 2
 
-        self.expect("expression 2.234f",
-            patterns = ["\(float\) \$.* = 2\.234"])
-        # (float) $2 = 2.234
+        self.expect("expression 0.5f",
+            patterns = ["\(float\) \$.* = 0\.5"])
+        # (float) $2 = 0.5
 
         self.expect("expression 2.234",
             patterns = ["\(double\) \$.* = 2\.234"])
