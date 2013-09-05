@@ -80,7 +80,6 @@ ClangFunction::ClangFunction
     m_function_ptr (&function),
     m_function_addr (),
     m_function_return_type (),
-    m_clang_ast_context (ast_context),
     m_wrapper_function_name ("__lldb_function_caller"),
     m_wrapper_struct_name ("__lldb_caller_struct"),
     m_wrapper_args_addrs (),
