@@ -148,7 +148,16 @@ namespace LLVM.ClangFormat
             // Thus, we:
             // 1. Start the process - clang-format.exe will start to read the input from the
             //    standard input.
-            process.Start();
+            try
+            {
+                process.Start();
+            }
+            catch (Exception e)
+            {
+                throw new Exception(
+                    "Cannot execute " + process.StartInfo.FileName + ".\n\"" + 
+                    e.Message + "\".\nPlease make sure it is on the PATH.");
+            }
             // 2. We write everything to the standard output - this cannot block, as clang-format
             //    reads the full standard input before analyzing it without writing anything to the
             //    standard output.
