@@ -7472,6 +7472,22 @@ static void diagnoseLogicalNotOnLHSofComparison(Sema &S, ExprResult &LHS,
       << FixItHint::CreateInsertion(SecondClose, ")");
 }
 
+// Get the decl for a simple expression: a reference to a variable,
+// an implicit C++ field reference, or an implicit ObjC ivar reference.
+static ValueDecl *getCompareDecl(Expr *E) {
+  if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(E))
+    return DR->getDecl();
+  if (ObjCIvarRefExpr* Ivar = dyn_cast<ObjCIvarRefExpr>(E)) {
+    if (Ivar->isFreeIvar())
+      return Ivar->getDecl();
+  }
+  if (MemberExpr* Mem = dyn_cast<MemberExpr>(E)) {
+    if (Mem->isImplicitAccess())
+      return Mem->getMemberDecl();
+  }
+  return 0;
+}
+
 // C99 6.5.8, C++ [expr.rel]
 QualType Sema::CheckCompareOperands(ExprResult &LHS, ExprResult &RHS,
                                     SourceLocation Loc, unsigned OpaqueOpc,
@@ -7508,37 +7524,34 @@ QualType Sema::CheckCompareOperands(ExprResult &LHS, ExprResult &RHS,
     // obvious cases in the definition of the template anyways. The idea is to
     // warn when the typed comparison operator will always evaluate to the same
     // result.
-    if (DeclRefExpr* DRL = dyn_cast<DeclRefExpr>(LHSStripped)) {
-      if (DeclRefExpr* DRR = dyn_cast<DeclRefExpr>(RHSStripped)) {
-        if (DRL->getDecl() == DRR->getDecl() &&
-            !IsWithinTemplateSpecialization(DRL->getDecl())) {
-          DiagRuntimeBehavior(Loc, 0, PDiag(diag::warn_comparison_always)
-                              << 0 // self-
-                              << (Opc == BO_EQ
-                                  || Opc == BO_LE
-                                  || Opc == BO_GE));
-        } else if (LHSType->isArrayType() && RHSType->isArrayType() &&
-                   !DRL->getDecl()->getType()->isReferenceType() &&
-                   !DRR->getDecl()->getType()->isReferenceType()) {
-            // what is it always going to eval to?
-            char always_evals_to;
-            switch(Opc) {
-            case BO_EQ: // e.g. array1 == array2
-              always_evals_to = 0; // false
-              break;
-            case BO_NE: // e.g. array1 != array2
-              always_evals_to = 1; // true
-              break;
-            default:
-              // best we can say is 'a constant'
-              always_evals_to = 2; // e.g. array1 <= array2
-              break;
-            }
-            DiagRuntimeBehavior(Loc, 0, PDiag(diag::warn_comparison_always)
-                                << 1 // array
-                                << always_evals_to);
+    ValueDecl *DL = getCompareDecl(LHSStripped);
+    ValueDecl *DR = getCompareDecl(RHSStripped);
+    if (DL && DR && DL == DR && !IsWithinTemplateSpecialization(DL)) {
+      DiagRuntimeBehavior(Loc, 0, PDiag(diag::warn_comparison_always)
+                          << 0 // self-
+                          << (Opc == BO_EQ
+                              || Opc == BO_LE
+                              || Opc == BO_GE));
+    } else if (DL && DR && LHSType->isArrayType() && RHSType->isArrayType() &&
+               !DL->getType()->isReferenceType() &&
+               !DR->getType()->isReferenceType()) {
+        // what is it always going to eval to?
+        char always_evals_to;
+        switch(Opc) {
+        case BO_EQ: // e.g. array1 == array2
+          always_evals_to = 0; // false
+          break;
+        case BO_NE: // e.g. array1 != array2
+          always_evals_to = 1; // true
+          break;
+        default:
+          // best we can say is 'a constant'
+          always_evals_to = 2; // e.g. array1 <= array2
+          break;
         }
-      }
+        DiagRuntimeBehavior(Loc, 0, PDiag(diag::warn_comparison_always)
+                            << 1 // array
+                            << always_evals_to);
     }
 
     if (isa<CastExpr>(LHSStripped))
