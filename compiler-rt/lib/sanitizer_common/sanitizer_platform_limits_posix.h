@@ -82,7 +82,7 @@ namespace __sanitizer {
     uptr *oldlenp;
     void *newval;
     uptr newlen;
-    unsigned long __unused[4];
+    unsigned long ___unused[4];
   };
 #endif // SANITIZER_LINUX
 
