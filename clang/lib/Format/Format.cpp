@@ -665,7 +665,7 @@ private:
     if (FormatTok->Tok.is(tok::comment)) {
       // FIXME: Add the trimmed whitespace to Column.
       StringRef UntrimmedText = FormatTok->TokenText;
-      FormatTok->TokenText = FormatTok->TokenText.rtrim();
+      FormatTok->TokenText = FormatTok->TokenText.rtrim(" \t\v\f");
       TrailingWhitespace = UntrimmedText.size() - FormatTok->TokenText.size();
     } else if (FormatTok->Tok.is(tok::raw_identifier)) {
       IdentifierInfo &Info = IdentTable.get(FormatTok->TokenText);

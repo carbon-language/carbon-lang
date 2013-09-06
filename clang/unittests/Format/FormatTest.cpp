@@ -789,6 +789,8 @@ TEST_F(FormatTest, RemovesTrailingWhitespaceOfComments) {
   EXPECT_EQ("int aaaaaaa, bbbbbbb; // comment",
             format("int aaaaaaa, bbbbbbb; // comment                   ",
                    getLLVMStyleWithColumns(33)));
+  EXPECT_EQ("// comment\\\n", format("// comment\\\n  \t \v   \f   "));
+  EXPECT_EQ("// comment    \\\n", format("// comment    \\\n  \t \v   \f   "));
 }
 
 TEST_F(FormatTest, UnderstandsBlockComments) {
