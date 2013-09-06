@@ -2469,14 +2469,14 @@ void ConvergingScheduler::tryCandidate(SchedCandidate &Cand,
                                                TryCand, Cand, RegExcess))
     return;
 
-  // For loops that are acyclic path limited, aggressively schedule for latency.
-  if (Rem.IsAcyclicLatencyLimited && tryLatency(TryCand, Cand, Zone))
-    return;
-
   // Avoid increasing the max critical pressure in the scheduled region.
   if (DAG->isTrackingPressure() && tryPressure(TryCand.RPDelta.CriticalMax,
                                                Cand.RPDelta.CriticalMax,
                                                TryCand, Cand, RegCritical))
+    return;
+
+  // For loops that are acyclic path limited, aggressively schedule for latency.
+  if (Rem.IsAcyclicLatencyLimited && tryLatency(TryCand, Cand, Zone))
     return;
 
   // Keep clustered nodes together to encourage downstream peephole
