@@ -75,18 +75,6 @@ void DIBuilder::finalize() {
   DIType(TempImportedModules).replaceAllUsesWith(IMs);
 }
 
-/// Use the type identifier instead of the actual MDNode if possible,
-/// to help type uniquing. This function returns the identifier if it
-/// exists for the given type, otherwise returns the MDNode.
-static Value *getTypeIdentifier(DIType T) {
-  if (!T.isCompositeType())
-    return T;
-  DICompositeType DTy(T);
-  if (!DTy.getIdentifier())
-    return T;
-  return DTy.getIdentifier();
-}
-
 /// getNonCompileUnitScope - If N is compile unit return NULL otherwise return
 /// N.
 static MDNode *getNonCompileUnitScope(MDNode *N) {
@@ -334,7 +322,7 @@ DIDerivedType DIBuilder::createMemberPointerType(DIType PointeeTy,
     ConstantInt::get(Type::getInt64Ty(VMContext), 0), // Offset
     ConstantInt::get(Type::getInt32Ty(VMContext), 0), // Flags
     PointeeTy,
-    getTypeIdentifier(Base)
+    Base.generateRef()
   };
   return DIDerivedType(MDNode::get(VMContext, Elts));
 }

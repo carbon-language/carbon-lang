@@ -707,6 +707,17 @@ void DICompositeType::addMember(DIDescriptor D) {
   setTypeArray(DIArray(MDNode::get(DbgNode->getContext(), M)));
 }
 
+/// Generate a reference to this DIType. Uses the type identifier instead
+/// of the actual MDNode if possible, to help type uniquing.
+DITypeRef DIType::generateRef() {
+  if (!isCompositeType())
+    return DITypeRef(*this);
+  DICompositeType DTy(DbgNode);
+  if (!DTy.getIdentifier())
+    return DITypeRef(*this);
+  return DITypeRef(DTy.getIdentifier());
+}
+
 /// \brief Set the containing type.
 void DICompositeType::setContainingType(DICompositeType ContainingType) {
   TrackingVH<MDNode> N(*this);
