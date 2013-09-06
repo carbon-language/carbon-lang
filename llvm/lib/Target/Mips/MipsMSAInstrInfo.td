@@ -927,14 +927,14 @@ class MSA_INSERT_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
 }
 
 class MSA_INSVE_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
-                          RegisterClass RCD, RegisterClass RCWS,
+                          RegisterClass RCWD, RegisterClass RCWS = RCWD,
                           InstrItinClass itin = NoItinerary> {
-  dag OutOperandList = (outs RCD:$wd);
-  dag InOperandList = (ins RCD:$wd_in, uimm6:$n, RCWS:$ws);
+  dag OutOperandList = (outs RCWD:$wd);
+  dag InOperandList = (ins RCWD:$wd_in, uimm6:$n, RCWS:$ws);
   string AsmString = !strconcat(instr_asm, "\t$wd[$n], $ws[0]");
-  list<dag> Pattern = [(set RCD:$wd, (OpNode RCD:$wd_in,
-                                             immZExt6:$n,
-                                             RCWS:$ws))];
+  list<dag> Pattern = [(set RCWD:$wd, (OpNode RCWD:$wd_in,
+                                              immZExt6:$n,
+                                              RCWS:$ws))];
   InstrItinClass Itinerary = itin;
   string Constraints = "$wd = $wd_in";
 }
@@ -1571,14 +1571,10 @@ class INSERT_H_DESC : MSA_INSERT_DESC_BASE<"insert.h", int_mips_insert_h,
 class INSERT_W_DESC : MSA_INSERT_DESC_BASE<"insert.w", int_mips_insert_w,
                                            MSA128W, GPR32>;
 
-class INSVE_B_DESC : MSA_INSVE_DESC_BASE<"insve.b", int_mips_insve_b,
-                                         MSA128B, MSA128B>;
-class INSVE_H_DESC : MSA_INSVE_DESC_BASE<"insve.h", int_mips_insve_h,
-                                         MSA128H, MSA128H>;
-class INSVE_W_DESC : MSA_INSVE_DESC_BASE<"insve.w", int_mips_insve_w,
-                                         MSA128W, MSA128W>;
-class INSVE_D_DESC : MSA_INSVE_DESC_BASE<"insve.d", int_mips_insve_d,
-                                         MSA128D, MSA128D>;
+class INSVE_B_DESC : MSA_INSVE_DESC_BASE<"insve.b", int_mips_insve_b, MSA128B>;
+class INSVE_H_DESC : MSA_INSVE_DESC_BASE<"insve.h", int_mips_insve_h, MSA128H>;
+class INSVE_W_DESC : MSA_INSVE_DESC_BASE<"insve.w", int_mips_insve_w, MSA128W>;
+class INSVE_D_DESC : MSA_INSVE_DESC_BASE<"insve.d", int_mips_insve_d, MSA128D>;
 
 class LD_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
                    ValueType TyNode, RegisterClass RCWD,
