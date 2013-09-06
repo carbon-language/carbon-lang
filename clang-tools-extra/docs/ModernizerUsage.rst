@@ -54,6 +54,32 @@ General Command Line Options
 
 .. _Ninja: http://martine.github.io/ninja/
 
+.. option:: -include=<path1>,<path2>,...,<pathN>
+
+  Use this option to indicate which directories contain files that can be
+  changed by the modernizer. Inidividual files may be specified if desired.
+  Multiple paths can be specified as a comma-separated list. Sources mentioned
+  explicitly on the command line are always included so this option controls
+  which other files (e.g. headers) may be changed while transforming
+  translation units.
+
+.. option:: -exclude=<path1>,<path2>,...,<pathN>
+
+  Used with ``-include`` to provide finer control over which files and
+  directories can be transformed. Individual files and files within directories
+  specified by this option **will not** be transformed. Multiple paths can be
+  specified as a comma-separated list.
+
+.. option:: -include-from=<filename>
+
+  Like ``-include`` but read paths from the given file. Paths should be one per
+  line.
+
+.. option:: -exclude-from=<filename>
+
+  Like ``-exclude`` but read paths from the given file. Paths are listed one
+  per line.
+
 .. option:: -risk=<risk-level>
 
   Some transformations may cause a change in semantics. In such cases the

@@ -99,22 +99,20 @@ static cl::opt<std::string> TimingDirectoryName(
                      "directory. Default: ./migrate_perf"),
     cl::init(NoTiming), cl::ValueOptional, cl::value_desc("directory name"));
 
-// TODO: Remove cl::Hidden when functionality for acknowledging include/exclude
-// options are implemented in the tool.
 static cl::opt<std::string>
-IncludePaths("include", cl::Hidden,
+IncludePaths("include",
              cl::desc("Comma seperated list of paths to consider to be "
                       "transformed"));
 static cl::opt<std::string>
-ExcludePaths("exclude", cl::Hidden,
+ExcludePaths("exclude",
              cl::desc("Comma seperated list of paths that can not "
                       "be transformed"));
 static cl::opt<std::string>
-IncludeFromFile("include-from", cl::Hidden, cl::value_desc("filename"),
+IncludeFromFile("include-from", cl::value_desc("filename"),
                 cl::desc("File containing a list of paths to consider to "
                          "be transformed"));
 static cl::opt<std::string>
-ExcludeFromFile("exclude-from", cl::Hidden, cl::value_desc("filename"),
+ExcludeFromFile("exclude-from", cl::value_desc("filename"),
                 cl::desc("File containing a list of paths that can not be "
                          "transforms"));
 
