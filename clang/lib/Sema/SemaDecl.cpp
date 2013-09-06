@@ -2382,9 +2382,11 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, Scope *S,
   }
   
   if (RequiresAdjustment) {
-    NewType = Context.adjustFunctionType(NewType, NewTypeInfo);
-    New->setType(QualType(NewType, 0));
+    const FunctionType *AdjustedType = New->getType()->getAs<FunctionType>();
+    AdjustedType = Context.adjustFunctionType(AdjustedType, NewTypeInfo);
+    New->setType(QualType(AdjustedType, 0));
     NewQType = Context.getCanonicalType(New->getType());
+    NewType = cast<FunctionType>(NewQType);
   }
 
   // If this redeclaration makes the function inline, we may need to add it to

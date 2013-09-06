@@ -34,3 +34,8 @@ template<typename T> struct U {
 
 template<typename T> U<T>::~U() noexcept(true) {} // expected-error {{exception specification in declaration does not match previous declaration}}
 template<typename T> void U<T>::operator delete(void*) noexcept(false) {} // expected-error {{exception specification in declaration does not match previous declaration}}
+
+
+// Make sure this restriction interacts properly with __attribute__((noreturn))
+void __attribute__ ((__noreturn__)) PR17110(int status) throw();
+void PR17110(int status) throw();
