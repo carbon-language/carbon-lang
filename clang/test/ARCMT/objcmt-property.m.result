@@ -3,6 +3,10 @@
 // RUN: c-arcmt-test -mt-migrate-directory %t | arcmt-test -verify-transformed-files %s.result
 // RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fsyntax-only -x objective-c -fobjc-runtime-has-weak -fobjc-arc -fobjc-default-synthesize-properties %s.result
 
+#define WEBKIT_OBJC_METHOD_ANNOTATION(ANNOTATION) ANNOTATION
+#define WEAK_IMPORT_ATTRIBUTE __attribute__((objc_arc_weak_reference_unavailable))
+#define AVAILABLE_WEBKIT_VERSION_3_0_AND_LATER
+
 typedef char BOOL;
 @class NSString;
 @protocol NSCopying @end
@@ -92,4 +96,7 @@ typedef char BOOL;
 @property(nonatomic, readonly) int Length;
 @property(nonatomic, readonly) id object;
 + (double) D;
+@property(nonatomic, readonly) void * JSObject WEBKIT_OBJC_METHOD_ANNOTATION(AVAILABLE_WEBKIT_VERSION_3_0_AND_LATER);
 @end
+
+
