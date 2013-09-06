@@ -17,6 +17,7 @@
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/DebugInfo.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/ValueHandle.h"
 
@@ -288,7 +289,7 @@ namespace llvm {
                                     uint64_t SizeInBits, uint64_t AlignInBits,
                                     uint64_t OffsetInBits, unsigned Flags,
                                     DIType DerivedFrom, DIArray Elements,
-                                    MDNode *VTableHolder = 0,
+                                    DIType VTableHolder = NULL,
                                     MDNode *TemplateParms = 0,
                                     StringRef UniqueIdentifier = StringRef());
 
@@ -308,7 +309,7 @@ namespace llvm {
                                      uint64_t SizeInBits, uint64_t AlignInBits,
                                      unsigned Flags, DIType DerivedFrom,
                                      DIArray Elements, unsigned RunTimeLang = 0,
-                                     MDNode *VTableHolder = 0,
+                                     DIType VTableHolder = NULL,
                                      StringRef UniqueIdentifier = StringRef());
 
     /// createUnionType - Create debugging information entry for an union.
@@ -586,7 +587,7 @@ namespace llvm {
                               DICompositeType Ty, bool isLocalToUnit,
                               bool isDefinition,
                               unsigned Virtuality = 0, unsigned VTableIndex = 0,
-                              MDNode *VTableHolder = 0,
+                              DIType VTableHolder = NULL,
                               unsigned Flags = 0,
                               bool isOptimized = false,
                               Function *Fn = 0,
