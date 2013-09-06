@@ -1418,8 +1418,7 @@ IsProfitableToFoldIntoAddressingMode(Instruction *I, ExtAddrMode &AMBefore,
     Value *Address = User->getOperand(OpNo);
     if (!Address->getType()->isPointerTy())
       return false;
-    Type *AddressAccessTy =
-      cast<PointerType>(Address->getType())->getElementType();
+    Type *AddressAccessTy = Address->getType()->getPointerElementType();
 
     // Do a match against the root of this address, ignoring profitability. This
     // will tell us if the addressing mode for the memory operation will

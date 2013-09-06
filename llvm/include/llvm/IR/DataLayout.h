@@ -451,7 +451,7 @@ inline uint64_t DataLayout::getTypeSizeInBits(Type *Ty) const {
   case Type::LabelTyID:
     return getPointerSizeInBits(0);
   case Type::PointerTyID:
-    return getPointerSizeInBits(cast<PointerType>(Ty)->getAddressSpace());
+    return getPointerSizeInBits(Ty->getPointerAddressSpace());
   case Type::ArrayTyID: {
     ArrayType *ATy = cast<ArrayType>(Ty);
     return ATy->getNumElements() *
@@ -461,7 +461,7 @@ inline uint64_t DataLayout::getTypeSizeInBits(Type *Ty) const {
     // Get the layout annotation... which is lazily created on demand.
     return getStructLayout(cast<StructType>(Ty))->getSizeInBits();
   case Type::IntegerTyID:
-    return cast<IntegerType>(Ty)->getBitWidth();
+    return Ty->getIntegerBitWidth();
   case Type::HalfTyID:
     return 16;
   case Type::FloatTyID:

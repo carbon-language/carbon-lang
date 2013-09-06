@@ -294,7 +294,7 @@ static bool CollectSingleShuffleElements(Value *V, Value *LHS, Value *RHS,
                                          SmallVectorImpl<Constant*> &Mask) {
   assert(V->getType() == LHS->getType() && V->getType() == RHS->getType() &&
          "Invalid CollectSingleShuffleElements");
-  unsigned NumElts = cast<VectorType>(V->getType())->getNumElements();
+  unsigned NumElts = V->getType()->getVectorNumElements();
 
   if (isa<UndefValue>(V)) {
     Mask.assign(NumElts, UndefValue::get(Type::getInt32Ty(V->getContext())));

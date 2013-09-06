@@ -3160,7 +3160,7 @@ static bool TurnSwitchRangeIntoICmp(SwitchInst *SI, IRBuilder<> &Builder) {
 /// and use it to remove dead cases.
 static bool EliminateDeadSwitchCases(SwitchInst *SI) {
   Value *Cond = SI->getCondition();
-  unsigned Bits = cast<IntegerType>(Cond->getType())->getBitWidth();
+  unsigned Bits = Cond->getType()->getIntegerBitWidth();
   APInt KnownZero(Bits, 0), KnownOne(Bits, 0);
   ComputeMaskedBits(Cond, KnownZero, KnownOne);
 
