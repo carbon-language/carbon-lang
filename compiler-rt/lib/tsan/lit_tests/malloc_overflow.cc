@@ -1,4 +1,7 @@
-// RUN: %clangxx_tsan -O1 %s -o %t && %t 2>&1 | FileCheck %s
+// XFAIL: *
+// FIXME: https://code.google.com/p/thread-sanitizer/issues/detail?id=29
+// RUN: %clangxx_tsan -O1 %s -o %t
+// RUN: TSAN_OPTIONS=allocator_may_return_null=1 %t 2>&1 | FileCheck %s
 #include <stdio.h>
 #include <stdlib.h>
 
