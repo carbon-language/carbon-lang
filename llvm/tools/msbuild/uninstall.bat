@@ -5,30 +5,24 @@ echo Uninstalling MSVC integration...
 REM CD to the directory of this batch file.
 cd /d %~dp0
 
-REM Search for the MSBuild toolsets directory.
 SET D="%ProgramFiles%\MSBuild\Microsoft.Cpp\v4.0\Platforms\Win32\PlatformToolsets"
-IF EXIST %D% GOTO FOUND_MSBUILD
+IF EXIST %D%\LLVM-vs2010 del %D%\LLVM-vs2010\Microsoft.Cpp.Win32.LLVM-vs2010.props
+IF EXIST %D%\LLVM-vs2010 del %D%\LLVM-vs2010\Microsoft.Cpp.Win32.LLVM-vs2010.targets
+IF EXIST %D%\LLVM-vs2010 rmdir %D%\LLVM-vs2010
+
 SET D="%ProgramFiles(x86)%\MSBuild\Microsoft.Cpp\v4.0\Platforms\Win32\PlatformToolsets"
-IF EXIST %D% GOTO FOUND_MSBUILD
+IF EXIST %D%\LLVM-vs2010 del %D%\LLVM-vs2010\Microsoft.Cpp.Win32.LLVM-vs2010.props
+IF EXIST %D%\LLVM-vs2010 del %D%\LLVM-vs2010\Microsoft.Cpp.Win32.LLVM-vs2010.targets
+IF EXIST %D%\LLVM-vs2010 rmdir %D%\LLVM-vs2010
 
-echo Failed to find MSBuild toolsets directory.
-goto FAILED
+SET D="%ProgramFiles%\MSBuild\Microsoft.Cpp\v4.0\V110\Platforms\Win32\PlatformToolsets"
+IF EXIST %D%\LLVM-vs2012 del %D%\LLVM-vs2012\Microsoft.Cpp.Win32.LLVM-vs2012.props
+IF EXIST %D%\LLVM-vs2012 del %D%\LLVM-vs2012\Microsoft.Cpp.Win32.LLVM-vs2012.targets
+IF EXIST %D%\LLVM-vs2012 rmdir %D%\LLVM-vs2012
 
-:FOUND_MSBUILD
-
-del %D%\llvm\Microsoft.Cpp.Win32.llvm.props
-IF NOT %ERRORLEVEL% == 0 GOTO FAILED
-del %D%\llvm\Microsoft.Cpp.Win32.llvm.targets
-IF NOT %ERRORLEVEL% == 0 GOTO FAILED
-rmdir %D%\llvm
-IF NOT %ERRORLEVEL% == 0 GOTO FAILED
+SET D="%ProgramFiles(x86)%\MSBuild\Microsoft.Cpp\v4.0\V110\Platforms\Win32\PlatformToolsets"
+IF EXIST %D%\LLVM-vs2012 del %D%\LLVM-vs2012\Microsoft.Cpp.Win32.LLVM-vs2012.props
+IF EXIST %D%\LLVM-vs2012 del %D%\LLVM-vs2012\Microsoft.Cpp.Win32.LLVM-vs2012.targets
+IF EXIST %D%\LLVM-vs2012 rmdir %D%\LLVM-vs2012
 
 echo Done!
-goto END
-
-:FAILED
-echo MSVC integration uninstall failed.
-pause
-goto END
-
-:END
