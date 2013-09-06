@@ -358,8 +358,8 @@ namespace llvm {
     void setTypeArray(DIArray Elements, DIArray TParams = DIArray());
     void addMember(DIDescriptor D);
     unsigned getRunTimeLang() const { return getUnsignedField(11); }
-    DICompositeType getContainingType() const {
-      return getFieldAs<DICompositeType>(12);
+    DITypeRef getContainingType() const {
+      return getFieldAs<DITypeRef>(12);
     }
     void setContainingType(DICompositeType ContainingType);
     DIArray getTemplateParams() const { return getFieldAs<DIArray>(13); }

@@ -1083,7 +1083,7 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
     if (CTy.isAppleBlockExtension())
       addFlag(&Buffer, dwarf::DW_AT_APPLE_block);
 
-    DICompositeType ContainingType = CTy.getContainingType();
+    DICompositeType ContainingType(DD->resolve(CTy.getContainingType()));
     if (DIDescriptor(ContainingType).isCompositeType())
       addDIEEntry(&Buffer, dwarf::DW_AT_containing_type, dwarf::DW_FORM_ref4,
                   getOrCreateTypeDIE(DIType(ContainingType)));
