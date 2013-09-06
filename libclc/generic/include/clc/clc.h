@@ -101,6 +101,8 @@
 
 /* 6.11.11 Atomic Functins */
 #include <clc/atomic/atomic_add.h>
+#include <clc/atomic/atomic_dec.h>
 #include <clc/atomic/atomic_inc.h>
+#include <clc/atomic/atomic_sub.h>
 
 #pragma OPENCL EXTENSION all : disable
