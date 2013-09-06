@@ -62,7 +62,7 @@ TEST(AddressSanitizer, StrLenOOBTest) {
 }
 
 TEST(AddressSanitizer, WcsLenTest) {
-  EXPECT_EQ(0, wcslen(Ident(L"")));
+  EXPECT_EQ(0U, wcslen(Ident(L"")));
   size_t hello_len = 13;
   size_t hello_size = (hello_len + 1) * sizeof(wchar_t);
   EXPECT_EQ(hello_len, wcslen(Ident(L"Hello, World!")));
