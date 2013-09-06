@@ -25,10 +25,14 @@ SystemZSelectionDAGInfo(const SystemZTargetMachine &TM)
 SystemZSelectionDAGInfo::~SystemZSelectionDAGInfo() {
 }
 
-// Use MVC to copy Size bytes from Src to Dest, deciding whether to use
-// a loop or straight-line code.
-static SDValue emitMVC(SelectionDAG &DAG, SDLoc DL, SDValue Chain,
-                       SDValue Dst, SDValue Src, uint64_t Size) {
+// Decide whether it is best to use a loop or straight-line code for
+// a block operation of Size bytes with source address Src and destination
+// address Dest.  Sequence is the opcode to use for straight-line code
+// (such as MVC) and Loop is the opcode to use for loops (such as MVC_LOOP).
+// Return the chain for the completed operation.
+static SDValue emitMemMem(SelectionDAG &DAG, SDLoc DL, unsigned Sequence,
+                          unsigned Loop, SDValue Chain, SDValue Dst,
+                          SDValue Src, uint64_t Size) {
   EVT PtrVT = Src.getValueType();
   // The heuristic we use is to prefer loops for anything that would
   // require 7 or more MVCs.  With these kinds of sizes there isn't
@@ -42,10 +46,10 @@ static SDValue emitMVC(SelectionDAG &DAG, SDLoc DL, SDValue Chain,
   // The next value up, 6 * 256, can be implemented in the same
   // number of straight-line MVCs as 6 * 256 - 1.
   if (Size > 6 * 256)
-    return DAG.getNode(SystemZISD::MVC_LOOP, DL, MVT::Other, Chain, Dst, Src,
+    return DAG.getNode(Loop, DL, MVT::Other, Chain, Dst, Src,
                        DAG.getConstant(Size, PtrVT),
                        DAG.getConstant(Size / 256, PtrVT));
-  return DAG.getNode(SystemZISD::MVC, DL, MVT::Other, Chain, Dst, Src,
+  return DAG.getNode(Sequence, DL, MVT::Other, Chain, Dst, Src,
                      DAG.getConstant(Size, PtrVT));
 }
 
@@ -59,7 +63,8 @@ EmitTargetCodeForMemcpy(SelectionDAG &DAG, SDLoc DL, SDValue Chain,
     return SDValue();
 
   if (ConstantSDNode *CSize = dyn_cast<ConstantSDNode>(Size))
-    return emitMVC(DAG, DL, Chain, Dst, Src, CSize->getZExtValue());
+    return emitMemMem(DAG, DL, SystemZISD::MVC, SystemZISD::MVC_LOOP,
+                      Chain, Dst, Src, CSize->getZExtValue());
   return SDValue();
 }
 
@@ -130,13 +135,21 @@ EmitTargetCodeForMemset(SelectionDAG &DAG, SDLoc DL, SDValue Chain,
       }
     }
     assert(Bytes >= 2 && "Should have dealt with 0- and 1-byte cases already");
+
+    // Handle the special case of a memset of 0, which can use XC.
+    ConstantSDNode *CByte = dyn_cast<ConstantSDNode>(Byte);
+    if (CByte && CByte->getZExtValue() == 0)
+      return emitMemMem(DAG, DL, SystemZISD::XC, SystemZISD::XC_LOOP,
+                        Chain, Dst, Dst, Bytes);
+
     // Copy the byte to the first location and then use MVC to copy
     // it to the rest.
     Chain = DAG.getStore(Chain, DL, Byte, Dst, DstPtrInfo,
                          false, false, Align);
     SDValue DstPlus1 = DAG.getNode(ISD::ADD, DL, PtrVT, Dst,
                                    DAG.getConstant(1, PtrVT));
-    return emitMVC(DAG, DL, Chain, DstPlus1, Dst, Bytes - 1);
+    return emitMemMem(DAG, DL, SystemZISD::MVC, SystemZISD::MVC_LOOP,
+                      Chain, DstPlus1, Dst, Bytes - 1);
   }
   return SDValue();
 }

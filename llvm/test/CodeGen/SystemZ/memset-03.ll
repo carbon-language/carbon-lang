@@ -140,8 +140,7 @@ define void @f14(i8 *%dest) {
 ; 7 bytes, i32 version.
 define void @f15(i8 *%dest) {
 ; CHECK-LABEL: f15:
-; CHECK: mvi 0(%r2), 0
-; CHECK: mvc 1(6,%r2), 0(%r2)
+; CHECK: xc 0(7,%r2), 0(%r2)
 ; CHECK: br %r14
   call void @llvm.memset.p0i8.i32(i8 *%dest, i8 0, i32 7, i32 1, i1 false)
   ret void
@@ -150,8 +149,7 @@ define void @f15(i8 *%dest) {
 ; 7 bytes, i64 version.
 define void @f16(i8 *%dest) {
 ; CHECK-LABEL: f16:
-; CHECK: mvi 0(%r2), 0
-; CHECK: mvc 1(6,%r2), 0(%r2)
+; CHECK: xc 0(7,%r2), 0(%r2)
 ; CHECK: br %r14
   call void @llvm.memset.p0i8.i64(i8 *%dest, i8 0, i64 7, i32 1, i1 false)
   ret void
@@ -218,8 +216,7 @@ define void @f22(i8 *%dest) {
 ; 11 bytes, i32 version.
 define void @f23(i8 *%dest) {
 ; CHECK-LABEL: f23:
-; CHECK: mvi 0(%r2), 0
-; CHECK: mvc 1(10,%r2), 0(%r2)
+; CHECK: xc 0(11,%r2), 0(%r2)
 ; CHECK: br %r14
   call void @llvm.memset.p0i8.i32(i8 *%dest, i8 0, i32 11, i32 1, i1 false)
   ret void
@@ -228,8 +225,7 @@ define void @f23(i8 *%dest) {
 ; 11 bytes, i64 version.
 define void @f24(i8 *%dest) {
 ; CHECK-LABEL: f24:
-; CHECK: mvi 0(%r2), 0
-; CHECK: mvc 1(10,%r2), 0(%r2)
+; CHECK: xc 0(11,%r2), 0(%r2)
 ; CHECK: br %r14
   call void @llvm.memset.p0i8.i64(i8 *%dest, i8 0, i64 11, i32 1, i1 false)
   ret void
@@ -258,8 +254,7 @@ define void @f26(i8 *%dest) {
 ; 13 bytes, i32 version.
 define void @f27(i8 *%dest) {
 ; CHECK-LABEL: f27:
-; CHECK: mvi 0(%r2), 0
-; CHECK: mvc 1(12,%r2), 0(%r2)
+; CHECK: xc 0(13,%r2), 0(%r2)
 ; CHECK: br %r14
   call void @llvm.memset.p0i8.i32(i8 *%dest, i8 0, i32 13, i32 1, i1 false)
   ret void
@@ -268,8 +263,7 @@ define void @f27(i8 *%dest) {
 ; 13 bytes, i64 version.
 define void @f28(i8 *%dest) {
 ; CHECK-LABEL: f28:
-; CHECK: mvi 0(%r2), 0
-; CHECK: mvc 1(12,%r2), 0(%r2)
+; CHECK: xc 0(13,%r2), 0(%r2)
 ; CHECK: br %r14
   call void @llvm.memset.p0i8.i64(i8 *%dest, i8 0, i64 13, i32 1, i1 false)
   ret void
@@ -278,8 +272,7 @@ define void @f28(i8 *%dest) {
 ; 14 bytes, i32 version.
 define void @f29(i8 *%dest) {
 ; CHECK-LABEL: f29:
-; CHECK: mvi 0(%r2), 0
-; CHECK: mvc 1(13,%r2), 0(%r2)
+; CHECK: xc 0(14,%r2), 0(%r2)
 ; CHECK: br %r14
   call void @llvm.memset.p0i8.i32(i8 *%dest, i8 0, i32 14, i32 1, i1 false)
   ret void
@@ -288,8 +281,7 @@ define void @f29(i8 *%dest) {
 ; 14 bytes, i64 version.
 define void @f30(i8 *%dest) {
 ; CHECK-LABEL: f30:
-; CHECK: mvi 0(%r2), 0
-; CHECK: mvc 1(13,%r2), 0(%r2)
+; CHECK: xc 0(14,%r2), 0(%r2)
 ; CHECK: br %r14
   call void @llvm.memset.p0i8.i64(i8 *%dest, i8 0, i64 14, i32 1, i1 false)
   ret void
@@ -298,8 +290,7 @@ define void @f30(i8 *%dest) {
 ; 15 bytes, i32 version.
 define void @f31(i8 *%dest) {
 ; CHECK-LABEL: f31:
-; CHECK: mvi 0(%r2), 0
-; CHECK: mvc 1(14,%r2), 0(%r2)
+; CHECK: xc 0(15,%r2), 0(%r2)
 ; CHECK: br %r14
   call void @llvm.memset.p0i8.i32(i8 *%dest, i8 0, i32 15, i32 1, i1 false)
   ret void
@@ -308,8 +299,7 @@ define void @f31(i8 *%dest) {
 ; 15 bytes, i64 version.
 define void @f32(i8 *%dest) {
 ; CHECK-LABEL: f32:
-; CHECK: mvi 0(%r2), 0
-; CHECK: mvc 1(14,%r2), 0(%r2)
+; CHECK: xc 0(15,%r2), 0(%r2)
 ; CHECK: br %r14
   call void @llvm.memset.p0i8.i64(i8 *%dest, i8 0, i64 15, i32 1, i1 false)
   ret void
@@ -338,8 +328,7 @@ define void @f34(i8 *%dest) {
 ; 17 bytes, i32 version.
 define void @f35(i8 *%dest) {
 ; CHECK-LABEL: f35:
-; CHECK: mvi 0(%r2), 0
-; CHECK: mvc 1(16,%r2), 0(%r2)
+; CHECK: xc 0(17,%r2), 0(%r2)
 ; CHECK: br %r14
   call void @llvm.memset.p0i8.i32(i8 *%dest, i8 0, i32 17, i32 1, i1 false)
   ret void
@@ -348,51 +337,46 @@ define void @f35(i8 *%dest) {
 ; 17 bytes, i64 version.
 define void @f36(i8 *%dest) {
 ; CHECK-LABEL: f36:
-; CHECK: mvi 0(%r2), 0
-; CHECK: mvc 1(16,%r2), 0(%r2)
+; CHECK: xc 0(17,%r2), 0(%r2)
 ; CHECK: br %r14
   call void @llvm.memset.p0i8.i64(i8 *%dest, i8 0, i64 17, i32 1, i1 false)
   ret void
 }
 
-; 257 bytes, i32 version.
+; 256 bytes, i32 version.
 define void @f37(i8 *%dest) {
 ; CHECK-LABEL: f37:
-; CHECK: mvi 0(%r2), 0
-; CHECK: mvc 1(256,%r2), 0(%r2)
+; CHECK: xc 0(256,%r2), 0(%r2)
+; CHECK: br %r14
+  call void @llvm.memset.p0i8.i32(i8 *%dest, i8 0, i32 256, i32 1, i1 false)
+  ret void
+}
+
+; 256 bytes, i64 version.
+define void @f38(i8 *%dest) {
+; CHECK-LABEL: f38:
+; CHECK: xc 0(256,%r2), 0(%r2)
+; CHECK: br %r14
+  call void @llvm.memset.p0i8.i64(i8 *%dest, i8 0, i64 256, i32 1, i1 false)
+  ret void
+}
+
+; 257 bytes, i32 version.  We need two MVCs.
+define void @f39(i8 *%dest) {
+; CHECK-LABEL: f39:
+; CHECK: xc 0(256,%r2), 0(%r2)
+; CHECK: xc 256(1,%r2), 256(%r2)
 ; CHECK: br %r14
   call void @llvm.memset.p0i8.i32(i8 *%dest, i8 0, i32 257, i32 1, i1 false)
   ret void
 }
 
 ; 257 bytes, i64 version.
-define void @f38(i8 *%dest) {
-; CHECK-LABEL: f38:
-; CHECK: mvi 0(%r2), 0
-; CHECK: mvc 1(256,%r2), 0(%r2)
-; CHECK: br %r14
-  call void @llvm.memset.p0i8.i64(i8 *%dest, i8 0, i64 257, i32 1, i1 false)
-  ret void
-}
-
-; 258 bytes, i32 version.  We need two MVCs.
-define void @f39(i8 *%dest) {
-; CHECK-LABEL: f39:
-; CHECK: mvi 0(%r2), 0
-; CHECK: mvc 1(256,%r2), 0(%r2)
-; CHECK: mvc 257(1,%r2), 256(%r2)
-; CHECK: br %r14
-  call void @llvm.memset.p0i8.i32(i8 *%dest, i8 0, i32 258, i32 1, i1 false)
-  ret void
-}
-
-; 258 bytes, i64 version.
 define void @f40(i8 *%dest) {
 ; CHECK-LABEL: f40:
-; CHECK: mvi 0(%r2), 0
-; CHECK: mvc 1(256,%r2), 0(%r2)
-; CHECK: mvc 257(1,%r2), 256(%r2)
+; CHECK: xc 0(256,%r2), 0(%r2)
+; CHECK: xc 256(1,%r2), 256(%r2)
 ; CHECK: br %r14
-  call void @llvm.memset.p0i8.i64(i8 *%dest, i8 0, i64 258, i32 1, i1 false)
+  call void @llvm.memset.p0i8.i64(i8 *%dest, i8 0, i64 257, i32 1, i1 false)
   ret void
 }
