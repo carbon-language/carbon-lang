@@ -1673,6 +1673,7 @@ class R600_LDS_1A2D <bits<6> lds_op, string name, list<dag> pattern> :
 }
 
 def LDS_ADD : R600_LDS_1A1D_NORET <0x0, "LDS_ADD", [] >;
+def LDS_SUB : R600_LDS_1A1D_NORET <0x1, "LDS_SUB", [] >;
 def LDS_WRITE : R600_LDS_1A1D_NORET <0xD, "LDS_WRITE",
   [(local_store (i32 R600_Reg32:$src1), R600_Reg32:$src0)]
 >;
@@ -1684,6 +1685,9 @@ def LDS_SHORT_WRITE : R600_LDS_1A1D_NORET<0x13, "LDS_SHORT_WRITE",
 >;
 def LDS_ADD_RET : R600_LDS_1A1D_RET <0x20, "LDS_ADD",
   [(set i32:$dst, (atomic_load_add_local i32:$src0, i32:$src1))]
+>;
+def LDS_SUB_RET : R600_LDS_1A1D_RET <0x21, "LDS_SUB",
+  [(set i32:$dst, (atomic_load_sub_local i32:$src0, i32:$src1))]
 >;
 def LDS_READ_RET : R600_LDS_1A <0x32, "LDS_READ_RET",
   [(set (i32 R600_Reg32:$dst), (local_load R600_Reg32:$src0))]

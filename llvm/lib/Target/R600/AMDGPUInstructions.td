@@ -196,6 +196,11 @@ def atomic_load_add_local : PatFrag<(ops node:$ptr, node:$value),
   return dyn_cast<MemSDNode>(N)->getAddressSpace() == AMDGPUAS::LOCAL_ADDRESS;
 }]>;
 
+def atomic_load_sub_local : PatFrag<(ops node:$ptr, node:$value),
+                                    (atomic_load_sub node:$ptr, node:$value), [{
+  return dyn_cast<MemSDNode>(N)->getAddressSpace() == AMDGPUAS::LOCAL_ADDRESS;
+}]>;
+
 def mskor_global : PatFrag<(ops node:$val, node:$ptr),
                             (AMDGPUstore_mskor node:$val, node:$ptr), [{
   return dyn_cast<MemSDNode>(N)->getAddressSpace() == AMDGPUAS::GLOBAL_ADDRESS;
