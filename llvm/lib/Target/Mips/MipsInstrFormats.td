@@ -321,7 +321,7 @@ class SLTI_FM<bits<6> op> : StdArch {
   let Inst{15-0}  = imm16;
 }
 
-class MFLO_FM<bits<6> funct> {
+class MFLO_FM<bits<6> funct> : StdArch {
   bits<5> rd;
 
   bits<32> Inst;
@@ -333,7 +333,7 @@ class MFLO_FM<bits<6> funct> {
   let Inst{5-0}   = funct;
 }
 
-class MTLO_FM<bits<6> funct> {
+class MTLO_FM<bits<6> funct> : StdArch {
   bits<5> rs;
 
   bits<32> Inst;

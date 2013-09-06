@@ -119,4 +119,14 @@ let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
                   CMov_F_I_FM_MM<0x25>;
   def MOVF_I_MM : MMRel, CMov_F_I_FT<"movf", GPR32Opnd, IIAlu>,
                   CMov_F_I_FM_MM<0x5>;
+
+  /// Move to/from HI/LO
+  def MTHI_MM : MMRel, MoveToLOHI<"mthi", GPR32Opnd, [HI0]>,
+                MTLO_FM_MM<0x0b5>;
+  def MTLO_MM : MMRel, MoveToLOHI<"mtlo", GPR32Opnd, [LO0]>,
+                MTLO_FM_MM<0x0f5>;
+  def MFHI_MM : MMRel, MoveFromLOHI<"mfhi", GPR32Opnd, [HI0]>,
+                MFLO_FM_MM<0x035>;
+  def MFLO_MM : MMRel, MoveFromLOHI<"mflo", GPR32Opnd, [LO0]>,
+                MFLO_FM_MM<0x075>;
 }
