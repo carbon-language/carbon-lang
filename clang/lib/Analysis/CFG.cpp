@@ -1899,9 +1899,12 @@ CFGBlock *CFGBuilder::VisitReturnStmt(ReturnStmt *R) {
   // Create the new block.
   Block = createBlock(false);
 
-  // The Exit block is the only successor.
   addAutomaticObjDtors(ScopePos, LocalScope::const_iterator(), R);
-  addSuccessor(Block, &cfg->getExit());
+
+  // If the one of the destructors does not return, we already have the Exit
+  // block as a successor.
+  if (!Block->hasNoReturnElement())
+    addSuccessor(Block, &cfg->getExit());
 
   // Add the return statement to the block.  This may create new blocks if R
   // contains control-flow (short-circuit operations).

@@ -144,3 +144,40 @@ void test_deleteArraydtor() {
   A *a = new A[5];
   delete[] a;
 }
+
+
+namespace NoReturnSingleSuccessor {
+  struct A {
+    A();
+    ~A();
+  };
+
+  struct B : public A {
+    B();
+    ~B() __attribute__((noreturn));
+  };
+
+// CHECK: ENTRY
+// CHECK: 1: 1
+// CHECK-NEXT: 2: return
+// CHECK-NEXT: ~B() (Implicit destructor)
+// CHECK-NEXT: Preds (1)
+// CHECK-NEXT: Succs (1): B0
+  int test1(int *x) {
+    B b;
+    if (x)
+      return 1;
+  }
+
+// CHECK: ENTRY
+// CHECK: 1: 1
+// CHECK-NEXT: 2: return
+// CHECK-NEXT: destructor
+// CHECK-NEXT: Preds (1)
+// CHECK-NEXT: Succs (1): B0
+  int test2(int *x) {
+    const A& a = B();
+    if (x)
+      return 1;
+  }
+}
