@@ -577,8 +577,10 @@ void ScheduleDAGMI::updatePressureDiffs(ArrayRef<unsigned> LiveUses) {
   for (unsigned LUIdx = 0, LUEnd = LiveUses.size(); LUIdx != LUEnd; ++LUIdx) {
     /// FIXME: Currently assuming single-use physregs.
     unsigned Reg = LiveUses[LUIdx];
+    DEBUG(dbgs() << "  LiveReg: " << PrintVRegOrUnit(Reg, TRI) << "\n");
     if (!TRI->isVirtualRegister(Reg))
       continue;
+
     // This may be called before CurrentBottom has been initialized. However,
     // BotRPTracker must have a valid position. We want the value live into the
     // instruction or live out of the block, so ask for the previous
@@ -598,6 +600,8 @@ void ScheduleDAGMI::updatePressureDiffs(ArrayRef<unsigned> LiveUses) {
     for (VReg2UseMap::iterator
            UI = VRegUses.find(Reg); UI != VRegUses.end(); ++UI) {
       SUnit *SU = UI->SU;
+      DEBUG(dbgs() << "  UpdateRegP: SU(" << SU->NodeNum << ") "
+            << *SU->getInstr());
       // If this use comes before the reaching def, it cannot be a last use, so
       // descrease its pressure change.
       if (!SU->isScheduled && SU != &ExitSU) {
