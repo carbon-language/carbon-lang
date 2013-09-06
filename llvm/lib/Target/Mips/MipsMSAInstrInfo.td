@@ -830,7 +830,7 @@ class MSA_SI5_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
 }
 
 class MSA_I8_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
-                       RegisterClass RCWD, RegisterClass RCWS,
+                       RegisterClass RCWD, RegisterClass RCWS = RCWD,
                        InstrItinClass itin = NoItinerary> {
   dag OutOperandList = (outs RCWD:$wd);
   dag InOperandList = (ins RCWS:$ws, uimm8:$u8);
@@ -1003,8 +1003,7 @@ class ADDVI_D_DESC : MSA_I5_DESC_BASE<"addvi.d", int_mips_addvi_d, MSA128D>;
 class AND_V_DESC : MSA_VEC_DESC_BASE<"and.v", int_mips_and_v,
                                      MSA128B, MSA128B>;
 
-class ANDI_B_DESC : MSA_I8_DESC_BASE<"andi.b", int_mips_andi_b,
-                                     MSA128B, MSA128B>;
+class ANDI_B_DESC : MSA_I8_DESC_BASE<"andi.b", int_mips_andi_b, MSA128B>;
 
 class ASUB_S_B_DESC : MSA_3R_DESC_BASE<"asub_s.b", int_mips_asub_s_b, MSA128B>;
 class ASUB_S_H_DESC : MSA_3R_DESC_BASE<"asub_s.h", int_mips_asub_s_h, MSA128H>;
@@ -1093,14 +1092,12 @@ class BINSRI_D_DESC : MSA_BIT_D_DESC_BASE<"binsri.d", int_mips_binsri_d,
 class BMNZ_V_DESC : MSA_VEC_DESC_BASE<"bmnz.v", int_mips_bmnz_v,
                                       MSA128B, MSA128B>;
 
-class BMNZI_B_DESC : MSA_I8_DESC_BASE<"bmnzi.b", int_mips_bmnzi_b,
-                                      MSA128B, MSA128B>;
+class BMNZI_B_DESC : MSA_I8_DESC_BASE<"bmnzi.b", int_mips_bmnzi_b, MSA128B>;
 
 class BMZ_V_DESC : MSA_VEC_DESC_BASE<"bmz.v", int_mips_bmz_v,
                                      MSA128B, MSA128B>;
 
-class BMZI_B_DESC : MSA_I8_DESC_BASE<"bmzi.b", int_mips_bmzi_b,
-                                     MSA128B, MSA128B>;
+class BMZI_B_DESC : MSA_I8_DESC_BASE<"bmzi.b", int_mips_bmzi_b, MSA128B>;
 
 class BNEG_B_DESC : MSA_3R_DESC_BASE<"bneg.b", int_mips_bneg_b, MSA128B>;
 class BNEG_H_DESC : MSA_3R_DESC_BASE<"bneg.h", int_mips_bneg_h, MSA128H>;
@@ -1122,8 +1119,7 @@ class BNZ_V_DESC : MSA_CBRANCH_DESC_BASE<"bnz.v", MSA128B>;
 class BSEL_V_DESC : MSA_VEC_DESC_BASE<"bsel.v", int_mips_bsel_v,
                                       MSA128B, MSA128B>;
 
-class BSELI_B_DESC : MSA_I8_DESC_BASE<"bseli.b", int_mips_bseli_b,
-                                      MSA128B, MSA128B>;
+class BSELI_B_DESC : MSA_I8_DESC_BASE<"bseli.b", int_mips_bseli_b, MSA128B>;
 
 class BSET_B_DESC : MSA_3R_DESC_BASE<"bset.b", int_mips_bset_b, MSA128B>;
 class BSET_H_DESC : MSA_3R_DESC_BASE<"bset.h", int_mips_bset_h, MSA128H>;
@@ -1829,14 +1825,12 @@ class NLZC_D_DESC : MSA_2R_DESC_BASE<"nlzc.d", int_mips_nlzc_d,
 class NOR_V_DESC : MSA_VEC_DESC_BASE<"nor.v", int_mips_nor_v,
                                      MSA128B, MSA128B>;
 
-class NORI_B_DESC : MSA_I8_DESC_BASE<"nori.b", int_mips_nori_b,
-                                     MSA128B, MSA128B>;
+class NORI_B_DESC : MSA_I8_DESC_BASE<"nori.b", int_mips_nori_b, MSA128B>;
 
 class OR_V_DESC : MSA_VEC_DESC_BASE<"or.v", int_mips_or_v,
                                     MSA128B, MSA128B>;
 
-class ORI_B_DESC : MSA_I8_DESC_BASE<"ori.b", int_mips_ori_b,
-                                    MSA128B, MSA128B>;
+class ORI_B_DESC : MSA_I8_DESC_BASE<"ori.b", int_mips_ori_b, MSA128B>;
 
 class PCKEV_B_DESC : MSA_3R_DESC_BASE<"pckev.b", int_mips_pckev_b, MSA128B>;
 class PCKEV_H_DESC : MSA_3R_DESC_BASE<"pckev.h", int_mips_pckev_h, MSA128H>;
@@ -1867,12 +1861,9 @@ class SAT_U_H_DESC : MSA_BIT_H_DESC_BASE<"sat_u.h", int_mips_sat_u_h, MSA128H>;
 class SAT_U_W_DESC : MSA_BIT_W_DESC_BASE<"sat_u.w", int_mips_sat_u_w, MSA128W>;
 class SAT_U_D_DESC : MSA_BIT_D_DESC_BASE<"sat_u.d", int_mips_sat_u_d, MSA128D>;
 
-class SHF_B_DESC : MSA_I8_DESC_BASE<"shf.b", int_mips_shf_b,
-                                    MSA128B, MSA128B>;
-class SHF_H_DESC : MSA_I8_DESC_BASE<"shf.h", int_mips_shf_h,
-                                    MSA128H, MSA128H>;
-class SHF_W_DESC : MSA_I8_DESC_BASE<"shf.w", int_mips_shf_w,
-                                    MSA128W, MSA128W>;
+class SHF_B_DESC : MSA_I8_DESC_BASE<"shf.b", int_mips_shf_b, MSA128B>;
+class SHF_H_DESC : MSA_I8_DESC_BASE<"shf.h", int_mips_shf_h, MSA128H>;
+class SHF_W_DESC : MSA_I8_DESC_BASE<"shf.w", int_mips_shf_w, MSA128W>;
 
 class SLD_B_DESC : MSA_3R_DESC_BASE<"sld.b", int_mips_sld_b, MSA128B>;
 class SLD_H_DESC : MSA_3R_DESC_BASE<"sld.h", int_mips_sld_h, MSA128H>;
@@ -2030,8 +2021,8 @@ class VSHF_D_DESC : MSA_3R_DESC_BASE<"vshf.d", int_mips_vshf_d, MSA128D>;
 class XOR_V_DESC : MSA_VEC_DESC_BASE<"xor.v", int_mips_xor_v,
                                      MSA128B, MSA128B>;
 
-class XORI_B_DESC : MSA_I8_DESC_BASE<"xori.b", int_mips_xori_b,
-                                     MSA128B, MSA128B>;
+class XORI_B_DESC : MSA_I8_DESC_BASE<"xori.b", int_mips_xori_b, MSA128B>;
+
 // Instruction defs.
 def ADD_A_B : ADD_A_B_ENC, ADD_A_B_DESC, Requires<[HasMSA]>;
 def ADD_A_H : ADD_A_H_ENC, ADD_A_H_DESC, Requires<[HasMSA]>;
