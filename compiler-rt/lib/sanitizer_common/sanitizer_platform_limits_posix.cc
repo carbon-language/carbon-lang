@@ -58,6 +58,7 @@
 #include <linux/soundcard.h>
 #include <linux/sysctl.h>
 #include <linux/utsname.h>
+#include <linux/posix_types.h>
 #endif
 
 #if !SANITIZER_ANDROID
@@ -863,6 +864,14 @@ CHECK_SIZE_AND_OFFSET(__sysctl_args, oldval);
 CHECK_SIZE_AND_OFFSET(__sysctl_args, oldlenp);
 CHECK_SIZE_AND_OFFSET(__sysctl_args, newval);
 CHECK_SIZE_AND_OFFSET(__sysctl_args, newlen);
+
+CHECK_TYPE_SIZE(__kernel_uid_t);
+CHECK_TYPE_SIZE(__kernel_gid_t);
+CHECK_TYPE_SIZE(__kernel_old_uid_t);
+CHECK_TYPE_SIZE(__kernel_old_gid_t);
+CHECK_TYPE_SIZE(__kernel_off_t);
+CHECK_TYPE_SIZE(__kernel_loff_t);
+CHECK_TYPE_SIZE(__kernel_fd_set);
 #endif
 
 #endif  // SANITIZER_LINUX || SANITIZER_MAC

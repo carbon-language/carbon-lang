@@ -284,7 +284,8 @@ POST_SYSCALL(getsid)(long res, long pid) {}
 
 PRE_SYSCALL(getgroups)(long gidsetsize, void *grouplist) {}
 
-POST_SYSCALL(getgroups)(long res, long gidsetsize, __kernel_gid_t *grouplist) {
+POST_SYSCALL(getgroups)(long res, long gidsetsize,
+                        __sanitizer___kernel_gid_t *grouplist) {
   if (res >= 0) {
     if (grouplist) POST_WRITE(grouplist, res * sizeof(*grouplist));
   }
@@ -330,11 +331,12 @@ PRE_SYSCALL(setsid)() {}
 
 POST_SYSCALL(setsid)(long res) {}
 
-PRE_SYSCALL(setgroups)(long gidsetsize, __kernel_gid_t *grouplist) {
+PRE_SYSCALL(setgroups)(long gidsetsize, __sanitizer___kernel_gid_t *grouplist) {
   if (grouplist) POST_WRITE(grouplist, gidsetsize * sizeof(*grouplist));
 }
 
-POST_SYSCALL(setgroups)(long res, long gidsetsize, __kernel_gid_t *grouplist) {}
+POST_SYSCALL(setgroups)(long res, long gidsetsize,
+                        __sanitizer___kernel_gid_t *grouplist) {}
 
 PRE_SYSCALL(acct)(const void *name) {
   if (name)
@@ -1267,7 +1269,7 @@ POST_SYSCALL(io_cancel)(long res, long ctx_id, void *iocb, void *result) {
 PRE_SYSCALL(sendfile)(long out_fd, long in_fd, void *offset, long count) {}
 
 POST_SYSCALL(sendfile)(long res, long out_fd, long in_fd,
-                       __kernel_off_t *offset, long count) {
+                       __sanitizer___kernel_off_t *offset, long count) {
   if (res >= 0) {
     if (offset) POST_WRITE(offset, sizeof(*offset));
   }
@@ -1276,7 +1278,7 @@ POST_SYSCALL(sendfile)(long res, long out_fd, long in_fd,
 PRE_SYSCALL(sendfile64)(long out_fd, long in_fd, void *offset, long count) {}
 
 POST_SYSCALL(sendfile64)(long res, long out_fd, long in_fd,
-                         __kernel_loff_t *offset, long count) {
+                         __sanitizer___kernel_loff_t *offset, long count) {
   if (res >= 0) {
     if (offset) POST_WRITE(offset, sizeof(*offset));
   }
@@ -1388,8 +1390,9 @@ POST_SYSCALL(setresuid16)(long res, long ruid, long euid, long suid) {}
 
 PRE_SYSCALL(getresuid16)(void *ruid, void *euid, void *suid) {}
 
-POST_SYSCALL(getresuid16)(long res, __kernel_old_uid_t *ruid,
-                          __kernel_old_uid_t *euid, __kernel_old_uid_t *suid) {
+POST_SYSCALL(getresuid16)(long res, __sanitizer___kernel_old_uid_t *ruid,
+                          __sanitizer___kernel_old_uid_t *euid,
+                          __sanitizer___kernel_old_uid_t *suid) {
   if (res >= 0) {
     if (ruid) POST_WRITE(ruid, sizeof(*ruid));
     if (euid) POST_WRITE(euid, sizeof(*euid));
@@ -1403,8 +1406,9 @@ POST_SYSCALL(setresgid16)(long res, long rgid, long egid, long sgid) {}
 
 PRE_SYSCALL(getresgid16)(void *rgid, void *egid, void *sgid) {}
 
-POST_SYSCALL(getresgid16)(long res, __kernel_old_gid_t *rgid,
-                          __kernel_old_gid_t *egid, __kernel_old_gid_t *sgid) {
+POST_SYSCALL(getresgid16)(long res, __sanitizer___kernel_old_gid_t *rgid,
+                          __sanitizer___kernel_old_gid_t *egid,
+                          __sanitizer___kernel_old_gid_t *sgid) {
   if (res >= 0) {
     if (rgid) POST_WRITE(rgid, sizeof(*rgid));
     if (egid) POST_WRITE(egid, sizeof(*egid));
@@ -1420,21 +1424,23 @@ PRE_SYSCALL(setfsgid16)(long gid) {}
 
 POST_SYSCALL(setfsgid16)(long res, long gid) {}
 
-PRE_SYSCALL(getgroups16)(long gidsetsize, __kernel_old_gid_t *grouplist) {}
+PRE_SYSCALL(getgroups16)(long gidsetsize,
+                         __sanitizer___kernel_old_gid_t *grouplist) {}
 
 POST_SYSCALL(getgroups16)(long res, long gidsetsize,
-                          __kernel_old_gid_t *grouplist) {
+                          __sanitizer___kernel_old_gid_t *grouplist) {
   if (res >= 0) {
     if (grouplist) POST_WRITE(grouplist, res * sizeof(*grouplist));
   }
 }
 
-PRE_SYSCALL(setgroups16)(long gidsetsize, __kernel_old_gid_t *grouplist) {
+PRE_SYSCALL(setgroups16)(long gidsetsize,
+                         __sanitizer___kernel_old_gid_t *grouplist) {
   if (grouplist) POST_WRITE(grouplist, gidsetsize * sizeof(*grouplist));
 }
 
 POST_SYSCALL(setgroups16)(long res, long gidsetsize,
-                          __kernel_old_gid_t *grouplist) {}
+                          __sanitizer___kernel_old_gid_t *grouplist) {}
 
 PRE_SYSCALL(getuid16)() {}
 
@@ -1807,11 +1813,13 @@ POST_SYSCALL(poll)(long res, __sanitizer_pollfd *ufds, long nfds,
   }
 }
 
-PRE_SYSCALL(select)(long n, __kernel_fd_set *inp, __kernel_fd_set *outp,
-                    __kernel_fd_set *exp, void *tvp) {}
+PRE_SYSCALL(select)(long n, __sanitizer___kernel_fd_set *inp,
+                    __sanitizer___kernel_fd_set *outp,
+                    __sanitizer___kernel_fd_set *exp, void *tvp) {}
 
-POST_SYSCALL(select)(long res, long n, __kernel_fd_set *inp,
-                     __kernel_fd_set *outp, __kernel_fd_set *exp, void *tvp) {
+POST_SYSCALL(select)(long res, long n, __sanitizer___kernel_fd_set *inp,
+                     __sanitizer___kernel_fd_set *outp,
+                     __sanitizer___kernel_fd_set *exp, void *tvp) {
   if (res >= 0) {
     if (inp) POST_WRITE(inp, sizeof(*inp));
     if (outp) POST_WRITE(outp, sizeof(*outp));
@@ -2587,11 +2595,14 @@ POST_SYSCALL(old_readdir)(long res, long arg0, void *arg1, long arg2) {
   // Missing definition of 'struct old_linux_dirent'.
 }
 
-PRE_SYSCALL(pselect6)(long arg0, __kernel_fd_set *arg1, __kernel_fd_set *arg2,
-                      __kernel_fd_set *arg3, void *arg4, void *arg5) {}
+PRE_SYSCALL(pselect6)(long arg0, __sanitizer___kernel_fd_set *arg1,
+                      __sanitizer___kernel_fd_set *arg2,
+                      __sanitizer___kernel_fd_set *arg3, void *arg4,
+                      void *arg5) {}
 
-POST_SYSCALL(pselect6)(long res, long arg0, __kernel_fd_set *arg1,
-                       __kernel_fd_set *arg2, __kernel_fd_set *arg3, void *arg4,
+POST_SYSCALL(pselect6)(long res, long arg0, __sanitizer___kernel_fd_set *arg1,
+                       __sanitizer___kernel_fd_set *arg2,
+                       __sanitizer___kernel_fd_set *arg3, void *arg4,
                        void *arg5) {
   if (res >= 0) {
     if (arg1) POST_WRITE(arg1, sizeof(*arg1));

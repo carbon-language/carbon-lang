@@ -17,12 +17,6 @@
 
 #include "sanitizer_platform.h"
 
-#if SANITIZER_LINUX
-// This header is limited to declaration of __kernel_*_t, which are unlikely to
-// conflict with any sanitizer declarations.
-#include <linux/posix_types.h>
-#endif
-
 namespace __sanitizer {
   extern unsigned struct_utsname_sz;
   extern unsigned struct_stat_sz;
@@ -164,6 +158,23 @@ namespace __sanitizer {
     unsigned short d_reclen;
     // more fields that we don't care about
   };
+#endif
+
+#if SANITIZER_LINUX
+#ifdef _LP64
+  typedef unsigned __sanitizer___kernel_uid_t;
+  typedef unsigned __sanitizer___kernel_gid_t;
+#else
+  typedef unsigned short  __sanitizer___kernel_uid_t;
+  typedef unsigned short __sanitizer___kernel_gid_t;
+#endif
+  typedef unsigned short __sanitizer___kernel_old_uid_t;
+  typedef unsigned short __sanitizer___kernel_old_gid_t;
+  typedef long __sanitizer___kernel_off_t;
+  typedef long long __sanitizer___kernel_loff_t;
+  typedef struct {
+    unsigned long fds_bits[1024 / (8 * sizeof(long))];
+  } __sanitizer___kernel_fd_set;
 #endif
 
   // This thing depends on the platform. We are only interested in the upper
