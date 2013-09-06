@@ -890,8 +890,8 @@ class MSA_3R_4R_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
 }
 
 class MSA_3RF_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
-                        RegisterClass RCWD, RegisterClass RCWS,
-                        RegisterClass RCWT = RCWS,
+                        RegisterClass RCWD, RegisterClass RCWS = RCWD,
+                        RegisterClass RCWT = RCWD,
                         InstrItinClass itin = NoItinerary> :
   MSA_3R_DESC_BASE<instr_asm, OpNode, RCWD, RCWS, RCWT, itin>;
 
@@ -1300,25 +1300,19 @@ class DPSUB_U_W_DESC : MSA_3R_4R_DESC_BASE<"dpsub_u.w", int_mips_dpsub_u_w,
 class DPSUB_U_D_DESC : MSA_3R_4R_DESC_BASE<"dpsub_u.d", int_mips_dpsub_u_d,
                                            MSA128D, MSA128W, MSA128W>;
 
-class FADD_W_DESC : MSA_3RF_DESC_BASE<"fadd.w", int_mips_fadd_w,
-                                      MSA128W, MSA128W>,
+class FADD_W_DESC : MSA_3RF_DESC_BASE<"fadd.w", int_mips_fadd_w, MSA128W>,
                                       IsCommutable;
-class FADD_D_DESC : MSA_3RF_DESC_BASE<"fadd.d", int_mips_fadd_d,
-                                      MSA128D, MSA128D>,
+class FADD_D_DESC : MSA_3RF_DESC_BASE<"fadd.d", int_mips_fadd_d, MSA128D>,
                                       IsCommutable;
 
-class FCAF_W_DESC : MSA_3RF_DESC_BASE<"fcaf.w", int_mips_fcaf_w,
-                                      MSA128W, MSA128W>,
+class FCAF_W_DESC : MSA_3RF_DESC_BASE<"fcaf.w", int_mips_fcaf_w, MSA128W>,
                                       IsCommutable;
-class FCAF_D_DESC : MSA_3RF_DESC_BASE<"fcaf.d", int_mips_fcaf_d,
-                                      MSA128D, MSA128D>,
+class FCAF_D_DESC : MSA_3RF_DESC_BASE<"fcaf.d", int_mips_fcaf_d, MSA128D>,
                                       IsCommutable;
 
-class FCEQ_W_DESC : MSA_3RF_DESC_BASE<"fceq.w", int_mips_fceq_w,
-                                      MSA128W, MSA128W>,
+class FCEQ_W_DESC : MSA_3RF_DESC_BASE<"fceq.w", int_mips_fceq_w, MSA128W>,
                                       IsCommutable;
-class FCEQ_D_DESC : MSA_3RF_DESC_BASE<"fceq.d", int_mips_fceq_d,
-                                      MSA128D, MSA128D>,
+class FCEQ_D_DESC : MSA_3RF_DESC_BASE<"fceq.d", int_mips_fceq_d, MSA128D>,
                                       IsCommutable;
 
 class FCLASS_W_DESC : MSA_2RF_DESC_BASE<"fclass.w", int_mips_fclass_w,
@@ -1326,79 +1320,57 @@ class FCLASS_W_DESC : MSA_2RF_DESC_BASE<"fclass.w", int_mips_fclass_w,
 class FCLASS_D_DESC : MSA_2RF_DESC_BASE<"fclass.d", int_mips_fclass_d,
                                         MSA128D>;
 
-class FCLE_W_DESC : MSA_3RF_DESC_BASE<"fcle.w", int_mips_fcle_w,
-                                      MSA128W, MSA128W>;
-class FCLE_D_DESC : MSA_3RF_DESC_BASE<"fcle.d", int_mips_fcle_d,
-                                      MSA128D, MSA128D>;
+class FCLE_W_DESC : MSA_3RF_DESC_BASE<"fcle.w", int_mips_fcle_w, MSA128W>;
+class FCLE_D_DESC : MSA_3RF_DESC_BASE<"fcle.d", int_mips_fcle_d, MSA128D>;
 
-class FCLT_W_DESC : MSA_3RF_DESC_BASE<"fclt.w", int_mips_fclt_w,
-                                      MSA128W, MSA128W>;
-class FCLT_D_DESC : MSA_3RF_DESC_BASE<"fclt.d", int_mips_fclt_d,
-                                      MSA128D, MSA128D>;
+class FCLT_W_DESC : MSA_3RF_DESC_BASE<"fclt.w", int_mips_fclt_w, MSA128W>;
+class FCLT_D_DESC : MSA_3RF_DESC_BASE<"fclt.d", int_mips_fclt_d, MSA128D>;
 
-class FCNE_W_DESC : MSA_3RF_DESC_BASE<"fcne.w", int_mips_fcne_w,
-                                      MSA128W, MSA128W>,
+class FCNE_W_DESC : MSA_3RF_DESC_BASE<"fcne.w", int_mips_fcne_w, MSA128W>,
                                       IsCommutable;
-class FCNE_D_DESC : MSA_3RF_DESC_BASE<"fcne.d", int_mips_fcne_d,
-                                      MSA128D, MSA128D>,
+class FCNE_D_DESC : MSA_3RF_DESC_BASE<"fcne.d", int_mips_fcne_d, MSA128D>,
                                       IsCommutable;
 
-class FCOR_W_DESC : MSA_3RF_DESC_BASE<"fcor.w", int_mips_fcor_w,
-                                      MSA128W, MSA128W>,
+class FCOR_W_DESC : MSA_3RF_DESC_BASE<"fcor.w", int_mips_fcor_w, MSA128W>,
                                       IsCommutable;
-class FCOR_D_DESC : MSA_3RF_DESC_BASE<"fcor.d", int_mips_fcor_d,
-                                      MSA128D, MSA128D>,
+class FCOR_D_DESC : MSA_3RF_DESC_BASE<"fcor.d", int_mips_fcor_d, MSA128D>,
                                       IsCommutable;
 
-class FCUEQ_W_DESC : MSA_3RF_DESC_BASE<"fcueq.w", int_mips_fcueq_w,
-                                       MSA128W, MSA128W>,
+class FCUEQ_W_DESC : MSA_3RF_DESC_BASE<"fcueq.w", int_mips_fcueq_w, MSA128W>,
                                        IsCommutable;
-class FCUEQ_D_DESC : MSA_3RF_DESC_BASE<"fcueq.d", int_mips_fcueq_d,
-                                       MSA128D, MSA128D>,
+class FCUEQ_D_DESC : MSA_3RF_DESC_BASE<"fcueq.d", int_mips_fcueq_d, MSA128D>,
                                        IsCommutable;
 
-class FCULE_W_DESC : MSA_3RF_DESC_BASE<"fcule.w", int_mips_fcule_w,
-                                       MSA128W, MSA128W>,
+class FCULE_W_DESC : MSA_3RF_DESC_BASE<"fcule.w", int_mips_fcule_w, MSA128W>,
                                        IsCommutable;
-class FCULE_D_DESC : MSA_3RF_DESC_BASE<"fcule.d", int_mips_fcule_d,
-                                       MSA128D, MSA128D>,
+class FCULE_D_DESC : MSA_3RF_DESC_BASE<"fcule.d", int_mips_fcule_d, MSA128D>,
                                        IsCommutable;
 
-class FCULT_W_DESC : MSA_3RF_DESC_BASE<"fcult.w", int_mips_fcult_w,
-                                       MSA128W, MSA128W>,
+class FCULT_W_DESC : MSA_3RF_DESC_BASE<"fcult.w", int_mips_fcult_w, MSA128W>,
                                        IsCommutable;
-class FCULT_D_DESC : MSA_3RF_DESC_BASE<"fcult.d", int_mips_fcult_d,
-                                       MSA128D, MSA128D>,
+class FCULT_D_DESC : MSA_3RF_DESC_BASE<"fcult.d", int_mips_fcult_d, MSA128D>,
                                        IsCommutable;
 
-class FCUN_W_DESC : MSA_3RF_DESC_BASE<"fcun.w", int_mips_fcun_w,
-                                      MSA128W, MSA128W>,
+class FCUN_W_DESC : MSA_3RF_DESC_BASE<"fcun.w", int_mips_fcun_w, MSA128W>,
                                       IsCommutable;
-class FCUN_D_DESC : MSA_3RF_DESC_BASE<"fcun.d", int_mips_fcun_d,
-                                      MSA128D, MSA128D>,
+class FCUN_D_DESC : MSA_3RF_DESC_BASE<"fcun.d", int_mips_fcun_d, MSA128D>,
                                       IsCommutable;
 
-class FCUNE_W_DESC : MSA_3RF_DESC_BASE<"fcune.w", int_mips_fcune_w,
-                                       MSA128W, MSA128W>,
+class FCUNE_W_DESC : MSA_3RF_DESC_BASE<"fcune.w", int_mips_fcune_w, MSA128W>,
                                        IsCommutable;
-class FCUNE_D_DESC : MSA_3RF_DESC_BASE<"fcune.d", int_mips_fcune_d,
-                                       MSA128D, MSA128D>,
+class FCUNE_D_DESC : MSA_3RF_DESC_BASE<"fcune.d", int_mips_fcune_d, MSA128D>,
                                        IsCommutable;
 
-class FDIV_W_DESC : MSA_3RF_DESC_BASE<"fdiv.w", int_mips_fdiv_w,
-                                      MSA128W, MSA128W>;
-class FDIV_D_DESC : MSA_3RF_DESC_BASE<"fdiv.d", int_mips_fdiv_d,
-                                      MSA128D, MSA128D>;
+class FDIV_W_DESC : MSA_3RF_DESC_BASE<"fdiv.w", int_mips_fdiv_w, MSA128W>;
+class FDIV_D_DESC : MSA_3RF_DESC_BASE<"fdiv.d", int_mips_fdiv_d, MSA128D>;
 
 class FEXDO_H_DESC : MSA_3RF_DESC_BASE<"fexdo.h", int_mips_fexdo_h,
-                                       MSA128H, MSA128W>;
+                                       MSA128H, MSA128W, MSA128W>;
 class FEXDO_W_DESC : MSA_3RF_DESC_BASE<"fexdo.w", int_mips_fexdo_w,
-                                       MSA128W, MSA128D>;
+                                       MSA128W, MSA128D, MSA128D>;
 
-class FEXP2_W_DESC : MSA_3RF_DESC_BASE<"fexp2.w", int_mips_fexp2_w,
-                                       MSA128W, MSA128W>;
-class FEXP2_D_DESC : MSA_3RF_DESC_BASE<"fexp2.d", int_mips_fexp2_d,
-                                       MSA128D, MSA128D>;
+class FEXP2_W_DESC : MSA_3RF_DESC_BASE<"fexp2.w", int_mips_fexp2_w, MSA128W>;
+class FEXP2_D_DESC : MSA_3RF_DESC_BASE<"fexp2.d", int_mips_fexp2_d, MSA128D>;
 
 class FEXUPL_W_DESC : MSA_2RF_DESC_BASE<"fexupl.w", int_mips_fexupl_w,
                                         MSA128W, MSA128H>;
@@ -1445,35 +1417,29 @@ class FMADD_W_DESC : MSA_3RF_4RF_DESC_BASE<"fmadd.w", int_mips_fmadd_w,
 class FMADD_D_DESC : MSA_3RF_4RF_DESC_BASE<"fmadd.d", int_mips_fmadd_d,
                                            MSA128D, MSA128D>;
 
-class FMAX_W_DESC : MSA_3RF_DESC_BASE<"fmax.w", int_mips_fmax_w,
-                                      MSA128W, MSA128W>;
-class FMAX_D_DESC : MSA_3RF_DESC_BASE<"fmax.d", int_mips_fmax_d,
-                                      MSA128D, MSA128D>;
+class FMAX_W_DESC : MSA_3RF_DESC_BASE<"fmax.w", int_mips_fmax_w, MSA128W>;
+class FMAX_D_DESC : MSA_3RF_DESC_BASE<"fmax.d", int_mips_fmax_d, MSA128D>;
 
 class FMAX_A_W_DESC : MSA_3RF_DESC_BASE<"fmax_a.w", int_mips_fmax_a_w,
-                                        MSA128W, MSA128W>;
+                                        MSA128W>;
 class FMAX_A_D_DESC : MSA_3RF_DESC_BASE<"fmax_a.d", int_mips_fmax_a_d,
-                                        MSA128D, MSA128D>;
+                                        MSA128D>;
 
-class FMIN_W_DESC : MSA_3RF_DESC_BASE<"fmin.w", int_mips_fmin_w,
-                                      MSA128W, MSA128W>;
-class FMIN_D_DESC : MSA_3RF_DESC_BASE<"fmin.d", int_mips_fmin_d,
-                                      MSA128D, MSA128D>;
+class FMIN_W_DESC : MSA_3RF_DESC_BASE<"fmin.w", int_mips_fmin_w, MSA128W>;
+class FMIN_D_DESC : MSA_3RF_DESC_BASE<"fmin.d", int_mips_fmin_d, MSA128D>;
 
 class FMIN_A_W_DESC : MSA_3RF_DESC_BASE<"fmin_a.w", int_mips_fmin_a_w,
-                                        MSA128W, MSA128W>;
+                                        MSA128W>;
 class FMIN_A_D_DESC : MSA_3RF_DESC_BASE<"fmin_a.d", int_mips_fmin_a_d,
-                                        MSA128D, MSA128D>;
+                                        MSA128D>;
 
 class FMSUB_W_DESC : MSA_3RF_4RF_DESC_BASE<"fmsub.w", int_mips_fmsub_w,
                                            MSA128W, MSA128W>;
 class FMSUB_D_DESC : MSA_3RF_4RF_DESC_BASE<"fmsub.d", int_mips_fmsub_d,
                                            MSA128D, MSA128D>;
 
-class FMUL_W_DESC : MSA_3RF_DESC_BASE<"fmul.w", int_mips_fmul_w,
-                                      MSA128W, MSA128W>;
-class FMUL_D_DESC : MSA_3RF_DESC_BASE<"fmul.d", int_mips_fmul_d,
-                                      MSA128D, MSA128D>;
+class FMUL_W_DESC : MSA_3RF_DESC_BASE<"fmul.w", int_mips_fmul_w, MSA128W>;
+class FMUL_D_DESC : MSA_3RF_DESC_BASE<"fmul.d", int_mips_fmul_d, MSA128D>;
 
 class FRINT_W_DESC : MSA_2RF_DESC_BASE<"frint.w", int_mips_frint_w, MSA128W>;
 class FRINT_D_DESC : MSA_2RF_DESC_BASE<"frint.d", int_mips_frint_d, MSA128D>;
@@ -1486,68 +1452,44 @@ class FRSQRT_W_DESC : MSA_2RF_DESC_BASE<"frsqrt.w", int_mips_frsqrt_w,
 class FRSQRT_D_DESC : MSA_2RF_DESC_BASE<"frsqrt.d", int_mips_frsqrt_d,
                                         MSA128D>;
 
-class FSAF_W_DESC : MSA_3RF_DESC_BASE<"fsaf.w", int_mips_fsaf_w,
-                                      MSA128W, MSA128W>;
-class FSAF_D_DESC : MSA_3RF_DESC_BASE<"fsaf.d", int_mips_fsaf_d,
-                                      MSA128D, MSA128D>;
+class FSAF_W_DESC : MSA_3RF_DESC_BASE<"fsaf.w", int_mips_fsaf_w, MSA128W>;
+class FSAF_D_DESC : MSA_3RF_DESC_BASE<"fsaf.d", int_mips_fsaf_d, MSA128D>;
 
-class FSEQ_W_DESC : MSA_3RF_DESC_BASE<"fseq.w", int_mips_fseq_w,
-                                      MSA128W, MSA128W>;
-class FSEQ_D_DESC : MSA_3RF_DESC_BASE<"fseq.d", int_mips_fseq_d,
-                                      MSA128D, MSA128D>;
+class FSEQ_W_DESC : MSA_3RF_DESC_BASE<"fseq.w", int_mips_fseq_w, MSA128W>;
+class FSEQ_D_DESC : MSA_3RF_DESC_BASE<"fseq.d", int_mips_fseq_d, MSA128D>;
 
-class FSLE_W_DESC : MSA_3RF_DESC_BASE<"fsle.w", int_mips_fsle_w,
-                                      MSA128W, MSA128W>;
-class FSLE_D_DESC : MSA_3RF_DESC_BASE<"fsle.d", int_mips_fsle_d,
-                                      MSA128D, MSA128D>;
+class FSLE_W_DESC : MSA_3RF_DESC_BASE<"fsle.w", int_mips_fsle_w, MSA128W>;
+class FSLE_D_DESC : MSA_3RF_DESC_BASE<"fsle.d", int_mips_fsle_d, MSA128D>;
 
-class FSLT_W_DESC : MSA_3RF_DESC_BASE<"fslt.w", int_mips_fslt_w,
-                                      MSA128W, MSA128W>;
-class FSLT_D_DESC : MSA_3RF_DESC_BASE<"fslt.d", int_mips_fslt_d,
-                                      MSA128D, MSA128D>;
+class FSLT_W_DESC : MSA_3RF_DESC_BASE<"fslt.w", int_mips_fslt_w, MSA128W>;
+class FSLT_D_DESC : MSA_3RF_DESC_BASE<"fslt.d", int_mips_fslt_d, MSA128D>;
 
-class FSNE_W_DESC : MSA_3RF_DESC_BASE<"fsne.w", int_mips_fsne_w,
-                                      MSA128W, MSA128W>;
-class FSNE_D_DESC : MSA_3RF_DESC_BASE<"fsne.d", int_mips_fsne_d,
-                                      MSA128D, MSA128D>;
+class FSNE_W_DESC : MSA_3RF_DESC_BASE<"fsne.w", int_mips_fsne_w, MSA128W>;
+class FSNE_D_DESC : MSA_3RF_DESC_BASE<"fsne.d", int_mips_fsne_d, MSA128D>;
 
-class FSOR_W_DESC : MSA_3RF_DESC_BASE<"fsor.w", int_mips_fsor_w,
-                                      MSA128W, MSA128W>;
-class FSOR_D_DESC : MSA_3RF_DESC_BASE<"fsor.d", int_mips_fsor_d,
-                                      MSA128D, MSA128D>;
+class FSOR_W_DESC : MSA_3RF_DESC_BASE<"fsor.w", int_mips_fsor_w, MSA128W>;
+class FSOR_D_DESC : MSA_3RF_DESC_BASE<"fsor.d", int_mips_fsor_d, MSA128D>;
 
 class FSQRT_W_DESC : MSA_2RF_DESC_BASE<"fsqrt.w", int_mips_fsqrt_w, MSA128W>;
 class FSQRT_D_DESC : MSA_2RF_DESC_BASE<"fsqrt.d", int_mips_fsqrt_d, MSA128D>;
 
-class FSUB_W_DESC : MSA_3RF_DESC_BASE<"fsub.w", int_mips_fsub_w,
-                                      MSA128W, MSA128W>;
-class FSUB_D_DESC : MSA_3RF_DESC_BASE<"fsub.d", int_mips_fsub_d,
-                                      MSA128D, MSA128D>;
+class FSUB_W_DESC : MSA_3RF_DESC_BASE<"fsub.w", int_mips_fsub_w, MSA128W>;
+class FSUB_D_DESC : MSA_3RF_DESC_BASE<"fsub.d", int_mips_fsub_d, MSA128D>;
 
-class FSUEQ_W_DESC : MSA_3RF_DESC_BASE<"fsueq.w", int_mips_fsueq_w,
-                                       MSA128W, MSA128W>;
-class FSUEQ_D_DESC : MSA_3RF_DESC_BASE<"fsueq.d", int_mips_fsueq_d,
-                                       MSA128D, MSA128D>;
+class FSUEQ_W_DESC : MSA_3RF_DESC_BASE<"fsueq.w", int_mips_fsueq_w, MSA128W>;
+class FSUEQ_D_DESC : MSA_3RF_DESC_BASE<"fsueq.d", int_mips_fsueq_d, MSA128D>;
 
-class FSULE_W_DESC : MSA_3RF_DESC_BASE<"fsule.w", int_mips_fsule_w,
-                                       MSA128W, MSA128W>;
-class FSULE_D_DESC : MSA_3RF_DESC_BASE<"fsule.d", int_mips_fsule_d,
-                                       MSA128D, MSA128D>;
+class FSULE_W_DESC : MSA_3RF_DESC_BASE<"fsule.w", int_mips_fsule_w, MSA128W>;
+class FSULE_D_DESC : MSA_3RF_DESC_BASE<"fsule.d", int_mips_fsule_d, MSA128D>;
 
-class FSULT_W_DESC : MSA_3RF_DESC_BASE<"fsult.w", int_mips_fsult_w,
-                                       MSA128W, MSA128W>;
-class FSULT_D_DESC : MSA_3RF_DESC_BASE<"fsult.d", int_mips_fsult_d,
-                                       MSA128D, MSA128D>;
+class FSULT_W_DESC : MSA_3RF_DESC_BASE<"fsult.w", int_mips_fsult_w, MSA128W>;
+class FSULT_D_DESC : MSA_3RF_DESC_BASE<"fsult.d", int_mips_fsult_d, MSA128D>;
 
-class FSUN_W_DESC : MSA_3RF_DESC_BASE<"fsun.w", int_mips_fsun_w,
-                                      MSA128W, MSA128W>;
-class FSUN_D_DESC : MSA_3RF_DESC_BASE<"fsun.d", int_mips_fsun_d,
-                                      MSA128D, MSA128D>;
+class FSUN_W_DESC : MSA_3RF_DESC_BASE<"fsun.w", int_mips_fsun_w, MSA128W>;
+class FSUN_D_DESC : MSA_3RF_DESC_BASE<"fsun.d", int_mips_fsun_d, MSA128D>;
 
-class FSUNE_W_DESC : MSA_3RF_DESC_BASE<"fsune.w", int_mips_fsune_w,
-                                       MSA128W, MSA128W>;
-class FSUNE_D_DESC : MSA_3RF_DESC_BASE<"fsune.d", int_mips_fsune_d,
-                                       MSA128D, MSA128D>;
+class FSUNE_W_DESC : MSA_3RF_DESC_BASE<"fsune.w", int_mips_fsune_w, MSA128W>;
+class FSUNE_D_DESC : MSA_3RF_DESC_BASE<"fsune.d", int_mips_fsune_d, MSA128D>;
 
 class FTRUNC_S_W_DESC : MSA_2RF_DESC_BASE<"ftrunc_s.w", int_mips_ftrunc_s_w,
                                           MSA128W>;
@@ -1570,9 +1512,9 @@ class FTINT_U_D_DESC : MSA_2RF_DESC_BASE<"ftint_u.d", int_mips_ftint_u_d,
                                          MSA128D>;
 
 class FTQ_H_DESC : MSA_3RF_DESC_BASE<"ftq.h", int_mips_ftq_h,
-                                     MSA128H, MSA128W>;
+                                     MSA128H, MSA128W, MSA128W>;
 class FTQ_W_DESC : MSA_3RF_DESC_BASE<"ftq.w", int_mips_ftq_w,
-                                     MSA128W, MSA128D>;
+                                     MSA128W, MSA128D, MSA128D>;
 
 class HADD_S_H_DESC : MSA_3R_DESC_BASE<"hadd_s.h", int_mips_hadd_s_h, MSA128H,
                                        MSA128B, MSA128B>;
@@ -1773,15 +1715,13 @@ class MSUBV_H_DESC : MSA_3R_4R_DESC_BASE<"msubv.h", int_mips_msubv_h, MSA128H>;
 class MSUBV_W_DESC : MSA_3R_4R_DESC_BASE<"msubv.w", int_mips_msubv_w, MSA128W>;
 class MSUBV_D_DESC : MSA_3R_4R_DESC_BASE<"msubv.d", int_mips_msubv_d, MSA128D>;
 
-class MUL_Q_H_DESC : MSA_3RF_DESC_BASE<"mul_q.h", int_mips_mul_q_h,
-                                       MSA128H, MSA128H>;
-class MUL_Q_W_DESC : MSA_3RF_DESC_BASE<"mul_q.w", int_mips_mul_q_w,
-                                       MSA128W, MSA128W>;
+class MUL_Q_H_DESC : MSA_3RF_DESC_BASE<"mul_q.h", int_mips_mul_q_h, MSA128H>;
+class MUL_Q_W_DESC : MSA_3RF_DESC_BASE<"mul_q.w", int_mips_mul_q_w, MSA128W>;
 
 class MULR_Q_H_DESC : MSA_3RF_DESC_BASE<"mulr_q.h", int_mips_mulr_q_h,
-                                        MSA128H, MSA128H>;
+                                        MSA128H>;
 class MULR_Q_W_DESC : MSA_3RF_DESC_BASE<"mulr_q.w", int_mips_mulr_q_w,
-                                        MSA128W, MSA128W>;
+                                        MSA128W>;
 
 class MULV_B_DESC : MSA_3R_DESC_BASE<"mulv.b", int_mips_mulv_b, MSA128B>;
 class MULV_H_DESC : MSA_3R_DESC_BASE<"mulv.h", int_mips_mulv_h, MSA128H>;
