@@ -458,6 +458,25 @@ TypeBasedAliasAnalysis::getModRefInfo(ImmutableCallSite CS1,
   return AliasAnalysis::getModRefInfo(CS1, CS2);
 }
 
+bool MDNode::isTBAAVtableAccess() const {
+  if (!EnableStructPathTBAA) {
+    if (getNumOperands() < 1) return false;
+    if (MDString *Tag1 = dyn_cast<MDString>(getOperand(0))) {
+      if (Tag1->getString() == "vtable pointer") return true;
+    }
+    return false;
+  }
+
+  // For struct-path aware TBAA, we use the access type of the tag.
+  if (getNumOperands() < 2) return false;
+  MDNode *Tag = cast_or_null<MDNode>(getOperand(1));
+  if (!Tag) return false;
+  if (MDString *Tag1 = dyn_cast<MDString>(Tag->getOperand(0))) {
+    if (Tag1->getString() == "vtable pointer") return true;
+  }
+  return false;  
+}
+
 MDNode *MDNode::getMostGenericTBAA(MDNode *A, MDNode *B) {
   if (!A || !B)
     return NULL;

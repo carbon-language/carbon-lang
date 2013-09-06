@@ -161,6 +161,9 @@ public:
     return V->getValueID() == MDNodeVal;
   }
 
+  /// Check whether MDNode is a vtable access.
+  bool isTBAAVtableAccess() const;
+
   /// Methods for metadata merging.
   static MDNode *getMostGenericTBAA(MDNode *A, MDNode *B);
   static MDNode *getMostGenericFPMath(MDNode *A, MDNode *B);

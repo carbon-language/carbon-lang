@@ -240,12 +240,8 @@ bool ThreadSanitizer::doInitialization(Module &M) {
 }
 
 static bool isVtableAccess(Instruction *I) {
-  if (MDNode *Tag = I->getMetadata(LLVMContext::MD_tbaa)) {
-    if (Tag->getNumOperands() < 1) return false;
-    if (MDString *Tag1 = dyn_cast<MDString>(Tag->getOperand(0))) {
-      if (Tag1->getString() == "vtable pointer") return true;
-    }
-  }
+  if (MDNode *Tag = I->getMetadata(LLVMContext::MD_tbaa))
+    return Tag->isTBAAVtableAccess();
   return false;
 }
 
