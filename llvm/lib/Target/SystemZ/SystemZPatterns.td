@@ -103,4 +103,4 @@ multiclass BlockLoadStore<SDPatternOperator load, ValueType vt,
 // registers in CLS against zero.  The instruction has separate R1 and R2
 // operands, but they must be the same when the instruction is used like this.
 class CompareZeroFP<Instruction insn, RegisterOperand cls>
-  : Pat<(z_cmp cls:$reg, (fpimm0)), (insn cls:$reg, cls:$reg)>;
+  : Pat<(z_fcmp cls:$reg, (fpimm0)), (insn cls:$reg, cls:$reg)>;

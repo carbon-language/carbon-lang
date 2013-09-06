@@ -15,6 +15,9 @@ def SDT_CallSeqEnd          : SDCallSeqEnd<[SDTCisVT<0, i64>,
                                             SDTCisVT<1, i64>]>;
 def SDT_ZCall               : SDTypeProfile<0, -1, [SDTCisPtrTy<0>]>;
 def SDT_ZCmp                : SDTypeProfile<0, 2, [SDTCisSameAs<0, 1>]>;
+def SDT_ZICmp               : SDTypeProfile<0, 3,
+                                            [SDTCisSameAs<0, 1>,
+                                             SDTCisVT<2, i32>]>;
 def SDT_ZBRCCMask           : SDTypeProfile<0, 3,
                                             [SDTCisVT<0, i8>,
                                              SDTCisVT<1, i8>,
@@ -94,8 +97,8 @@ def z_sibcall           : SDNode<"SystemZISD::SIBCALL", SDT_ZCall,
                                  [SDNPHasChain, SDNPOutGlue, SDNPOptInGlue,
                                   SDNPVariadic]>;
 def z_pcrel_wrapper     : SDNode<"SystemZISD::PCREL_WRAPPER", SDT_ZWrapPtr, []>;
-def z_cmp               : SDNode<"SystemZISD::CMP", SDT_ZCmp, [SDNPOutGlue]>;
-def z_ucmp              : SDNode<"SystemZISD::UCMP", SDT_ZCmp, [SDNPOutGlue]>;
+def z_icmp              : SDNode<"SystemZISD::ICMP", SDT_ZICmp, [SDNPOutGlue]>;
+def z_fcmp              : SDNode<"SystemZISD::FCMP", SDT_ZCmp, [SDNPOutGlue]>;
 def z_tm                : SDNode<"SystemZISD::TM", SDT_ZCmp, [SDNPOutGlue]>;
 def z_br_ccmask         : SDNode<"SystemZISD::BR_CCMASK", SDT_ZBRCCMask,
                                  [SDNPHasChain, SDNPInGlue]>;
@@ -162,6 +165,16 @@ def z_prefetch          : SDNode<"SystemZISD::PREFETCH", SDT_ZPrefetch,
 //===----------------------------------------------------------------------===//
 // Pattern fragments
 //===----------------------------------------------------------------------===//
+
+// Signed and unsigned comparisons.
+def z_scmp : PatFrag<(ops node:$a, node:$b), (z_icmp node:$a, node:$b, imm), [{
+  unsigned Type = cast<ConstantSDNode>(N->getOperand(2))->getZExtValue();
+  return Type != SystemZICMP::UnsignedOnly;
+}]>;
+def z_ucmp : PatFrag<(ops node:$a, node:$b), (z_icmp node:$a, node:$b, imm), [{
+  unsigned Type = cast<ConstantSDNode>(N->getOperand(2))->getZExtValue();
+  return Type != SystemZICMP::SignedOnly;
+}]>;
 
 // Register sign-extend operations.  Sub-32-bit values are represented as i32s.
 def sext8  : PatFrag<(ops node:$src), (sext_inreg node:$src, i8)>;

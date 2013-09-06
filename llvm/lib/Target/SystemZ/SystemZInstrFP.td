@@ -349,12 +349,12 @@ def DDB : BinaryRXE<"ddb", 0xED1D, fdiv, FP64, load, 8>;
 //===----------------------------------------------------------------------===//
 
 let Defs = [CC], CCValues = 0xF in {
-  def CEBR : CompareRRE<"ceb", 0xB309, z_cmp, FP32,  FP32>;
-  def CDBR : CompareRRE<"cdb", 0xB319, z_cmp, FP64,  FP64>;
-  def CXBR : CompareRRE<"cxb", 0xB349, z_cmp, FP128, FP128>;
+  def CEBR : CompareRRE<"ceb", 0xB309, z_fcmp, FP32,  FP32>;
+  def CDBR : CompareRRE<"cdb", 0xB319, z_fcmp, FP64,  FP64>;
+  def CXBR : CompareRRE<"cxb", 0xB349, z_fcmp, FP128, FP128>;
 
-  def CEB : CompareRXE<"ceb", 0xED09, z_cmp, FP32, load, 4>;
-  def CDB : CompareRXE<"cdb", 0xED19, z_cmp, FP64, load, 8>;
+  def CEB : CompareRXE<"ceb", 0xED09, z_fcmp, FP32, load, 4>;
+  def CDB : CompareRXE<"cdb", 0xED19, z_fcmp, FP64, load, 8>;
 }
 
 //===----------------------------------------------------------------------===//

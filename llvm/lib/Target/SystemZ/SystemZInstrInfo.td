@@ -954,39 +954,41 @@ let Defs = [CC] in {
 // Comparison
 //===----------------------------------------------------------------------===//
 
-// Signed comparisons.
+// Signed comparisons.  We put these before the unsigned comparisons because
+// some of the signed forms have COMPARE AND BRANCH equivalents whereas none
+// of the unsigned forms do.
 let Defs = [CC], CCValues = 0xE in {
   // Comparison with a register.
-  def CR   : CompareRR <"c",   0x19,   z_cmp,     GR32, GR32>;
+  def CR   : CompareRR <"c",   0x19,   z_scmp,    GR32, GR32>;
   def CGFR : CompareRRE<"cgf", 0xB930, null_frag, GR64, GR32>;
-  def CGR  : CompareRRE<"cg",  0xB920, z_cmp,     GR64, GR64>;
+  def CGR  : CompareRRE<"cg",  0xB920, z_scmp,    GR64, GR64>;
 
   // Comparison with a signed 16-bit immediate.
-  def CHI  : CompareRI<"chi",  0xA7E, z_cmp, GR32, imm32sx16>;
-  def CGHI : CompareRI<"cghi", 0xA7F, z_cmp, GR64, imm64sx16>;
+  def CHI  : CompareRI<"chi",  0xA7E, z_scmp, GR32, imm32sx16>;
+  def CGHI : CompareRI<"cghi", 0xA7F, z_scmp, GR64, imm64sx16>;
 
   // Comparison with a signed 32-bit immediate.
-  def CFI  : CompareRIL<"cfi",  0xC2D, z_cmp, GR32, simm32>;
-  def CGFI : CompareRIL<"cgfi", 0xC2C, z_cmp, GR64, imm64sx32>;
+  def CFI  : CompareRIL<"cfi",  0xC2D, z_scmp, GR32, simm32>;
+  def CGFI : CompareRIL<"cgfi", 0xC2C, z_scmp, GR64, imm64sx32>;
 
   // Comparison with memory.
-  defm CH    : CompareRXPair<"ch", 0x49, 0xE379, z_cmp, GR32, sextloadi16, 2>;
-  defm C     : CompareRXPair<"c",  0x59, 0xE359, z_cmp, GR32, load, 4>;
-  def  CGH   : CompareRXY<"cgh", 0xE334, z_cmp, GR64, sextloadi16, 2>;
-  def  CGF   : CompareRXY<"cgf", 0xE330, z_cmp, GR64, sextloadi32, 4>;
-  def  CG    : CompareRXY<"cg",  0xE320, z_cmp, GR64, load, 8>;
-  def  CHRL  : CompareRILPC<"chrl",  0xC65, z_cmp, GR32, aligned_sextloadi16>;
-  def  CRL   : CompareRILPC<"crl",   0xC6D, z_cmp, GR32, aligned_load>;
-  def  CGHRL : CompareRILPC<"cghrl", 0xC64, z_cmp, GR64, aligned_sextloadi16>;
-  def  CGFRL : CompareRILPC<"cgfrl", 0xC6C, z_cmp, GR64, aligned_sextloadi32>;
-  def  CGRL  : CompareRILPC<"cgrl",  0xC68, z_cmp, GR64, aligned_load>;
+  defm CH    : CompareRXPair<"ch", 0x49, 0xE379, z_scmp, GR32, sextloadi16, 2>;
+  defm C     : CompareRXPair<"c",  0x59, 0xE359, z_scmp, GR32, load, 4>;
+  def  CGH   : CompareRXY<"cgh", 0xE334, z_scmp, GR64, sextloadi16, 2>;
+  def  CGF   : CompareRXY<"cgf", 0xE330, z_scmp, GR64, sextloadi32, 4>;
+  def  CG    : CompareRXY<"cg",  0xE320, z_scmp, GR64, load, 8>;
+  def  CHRL  : CompareRILPC<"chrl",  0xC65, z_scmp, GR32, aligned_sextloadi16>;
+  def  CRL   : CompareRILPC<"crl",   0xC6D, z_scmp, GR32, aligned_load>;
+  def  CGHRL : CompareRILPC<"cghrl", 0xC64, z_scmp, GR64, aligned_sextloadi16>;
+  def  CGFRL : CompareRILPC<"cgfrl", 0xC6C, z_scmp, GR64, aligned_sextloadi32>;
+  def  CGRL  : CompareRILPC<"cgrl",  0xC68, z_scmp, GR64, aligned_load>;
 
   // Comparison between memory and a signed 16-bit immediate.
-  def CHHSI : CompareSIL<"chhsi", 0xE554, z_cmp, sextloadi16, imm32sx16>;
-  def CHSI  : CompareSIL<"chsi",  0xE55C, z_cmp, load,        imm32sx16>;
-  def CGHSI : CompareSIL<"cghsi", 0xE558, z_cmp, load,        imm64sx16>;
+  def CHHSI : CompareSIL<"chhsi", 0xE554, z_scmp, sextloadi16, imm32sx16>;
+  def CHSI  : CompareSIL<"chsi",  0xE55C, z_scmp, load,        imm32sx16>;
+  def CGHSI : CompareSIL<"cghsi", 0xE558, z_scmp, load,        imm64sx16>;
 }
-defm : SXB<z_cmp, GR64, CGFR>;
+defm : SXB<z_scmp, GR64, CGFR>;
 
 // Unsigned comparisons.
 let Defs = [CC], CCValues = 0xE, IsLogical = 1 in {
