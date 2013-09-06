@@ -1999,8 +1999,7 @@ bool RegisterCoalescer::joinVirtRegs(CoalescerPair &CP) {
     LIS->shrinkToUses(&LIS->getInterval(ShrinkRegs.pop_back_val()));
 
   // Join RHS into LHS.
-  LHS.join(RHS, LHSVals.getAssignments(), RHSVals.getAssignments(), NewVNInfo,
-           MRI);
+  LHS.join(RHS, LHSVals.getAssignments(), RHSVals.getAssignments(), NewVNInfo);
 
   // Kill flags are going to be wrong if the live ranges were overlapping.
   // Eventually, we should simply clear all kill flags when computing live

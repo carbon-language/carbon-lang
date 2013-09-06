@@ -370,8 +370,7 @@ namespace llvm {
     void join(LiveInterval &Other,
               const int *ValNoAssignments,
               const int *RHSValNoAssignments,
-              SmallVectorImpl<VNInfo *> &NewVNInfo,
-              MachineRegisterInfo *MRI);
+              SmallVectorImpl<VNInfo *> &NewVNInfo);
 
     /// True iff this live range is a single segment that lies between the
     /// specified boundaries, exclusively. Vregs live across a backedge are not

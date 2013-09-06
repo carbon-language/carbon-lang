@@ -415,8 +415,7 @@ void LiveInterval::removeValNo(VNInfo *ValNo) {
 void LiveInterval::join(LiveInterval &Other,
                         const int *LHSValNoAssignments,
                         const int *RHSValNoAssignments,
-                        SmallVectorImpl<VNInfo *> &NewVNInfo,
-                        MachineRegisterInfo *MRI) {
+                        SmallVectorImpl<VNInfo *> &NewVNInfo) {
   verify();
 
   // Determine if any of our live range values are mapped.  This is uncommon, so
