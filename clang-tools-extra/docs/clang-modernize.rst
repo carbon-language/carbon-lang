@@ -14,6 +14,8 @@ Clang C++ Modernizer User's Manual
    PassByValueTransform
    ReplaceAutoPtrTransform
    ModernizerUsage
+   cpp11-migrate
+   MigratorUsage
 
 :program:`clang-modernize` is a standalone tool used to automatically convert
 C++ code written against old standards to use features of the newest C++
