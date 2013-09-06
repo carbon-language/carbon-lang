@@ -2337,6 +2337,12 @@ bool RecursiveASTVisitor<Derived>::VisitOMPPrivateClause(OMPPrivateClause *C) {
   return true;
 }
 
+template<typename Derived>
+bool RecursiveASTVisitor<Derived>::VisitOMPSharedClause(OMPSharedClause *C) {
+  PROCESS_OMP_CLAUSE_LIST(OMPSharedClause, C)
+  return true;
+}
+
 #undef PROCESS_OMP_CLAUSE_LIST
 
 // FIXME: look at the following tricky-seeming exprs to see if we

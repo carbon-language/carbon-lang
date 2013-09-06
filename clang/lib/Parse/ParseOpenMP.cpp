@@ -84,11 +84,14 @@ StmtResult Parser::ParseOpenMPDeclarativeOrExecutableDirective() {
   SmallVector<OMPClause *, 5> Clauses;
   SmallVector<llvm::PointerIntPair<OMPClause *, 1, bool>, NUM_OPENMP_CLAUSES>
                                                FirstClauses(NUM_OPENMP_CLAUSES);
-  const unsigned ScopeFlags = Scope::FnScope | Scope::DeclScope;
+  const unsigned ScopeFlags = Scope::FnScope | Scope::DeclScope |
+                              Scope::OpenMPDirectiveScope;
   SourceLocation Loc = ConsumeToken(), EndLoc;
   OpenMPDirectiveKind DKind = Tok.isAnnotation() ?
                                   OMPD_unknown :
                                   getOpenMPDirectiveKind(PP.getSpelling(Tok));
+  // Name of critical directive.
+  DeclarationNameInfo DirName;
   StmtResult Directive = StmtError();
 
   switch (DKind) {
@@ -111,6 +114,9 @@ StmtResult Parser::ParseOpenMPDeclarativeOrExecutableDirective() {
     break;
   case OMPD_parallel: {
     ConsumeToken();
+
+    Actions.StartOpenMPDSABlock(DKind, DirName, Actions.getCurScope());
+
     while (Tok.isNot(tok::annot_pragma_openmp_end)) {
       OpenMPClauseKind CKind = Tok.isAnnotation() ?
                                   OMPC_unknown :
@@ -138,7 +144,7 @@ StmtResult Parser::ParseOpenMPDeclarativeOrExecutableDirective() {
     {
       // The body is a block scope like in Lambdas and Blocks.
       Sema::CompoundScopeRAII CompoundScope(Actions);
-      Actions.ActOnCapturedRegionStart(Loc, getCurScope(), CR_Default, 1);
+      Actions.ActOnCapturedRegionStart(Loc, getCurScope(), CR_OpenMP, 1);
       Actions.ActOnStartOfCompoundStmt();
       // Parse statement
       AssociatedStmt = ParseStatement();
@@ -157,6 +163,7 @@ StmtResult Parser::ParseOpenMPDeclarativeOrExecutableDirective() {
                                                          Loc, EndLoc);
 
     // Exit scope.
+    Actions.EndOpenMPDSABlock(Directive.get());
     OMPDirectiveScope.Exit();
     }
     break;
@@ -245,7 +252,7 @@ bool Parser::ParseOpenMPSimpleVarList(OpenMPDirectiveKind Kind,
 /// \brief Parsing of OpenMP clauses.
 ///
 ///    clause:
-///       default-clause|private-clause
+///       default-clause|private-clause|shared-clause
 ///
 OMPClause *Parser::ParseOpenMPClause(OpenMPDirectiveKind DKind,
                                      OpenMPClauseKind CKind, bool FirstClause) {
@@ -271,6 +278,7 @@ OMPClause *Parser::ParseOpenMPClause(OpenMPDirectiveKind DKind,
     Clause = ParseOpenMPSimpleClause(CKind);
     break;
   case OMPC_private:
+  case OMPC_shared:
     Clause = ParseOpenMPVarListClause(CKind);
     break;
   case OMPC_unknown:
@@ -322,6 +330,8 @@ OMPClause *Parser::ParseOpenMPSimpleClause(OpenMPClauseKind Kind) {
 ///
 ///    private-clause:
 ///       'private' '(' list ')'
+///    shared-clause:
+///       'shared' '(' list ')'
 ///
 OMPClause *Parser::ParseOpenMPVarListClause(OpenMPClauseKind Kind) {
   SourceLocation Loc = Tok.getLocation();
