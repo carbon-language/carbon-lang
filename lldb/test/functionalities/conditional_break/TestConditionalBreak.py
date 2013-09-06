@@ -40,7 +40,6 @@ class ConditionalBreakTestCase(TestBase):
         self.simulate_conditional_break_by_user()
 
     @dwarf_test
-    @skipIfLinux # due to two assertion failures introduced by r174793: ProcessPOSIX.cpp:223 (assertion 'state == eStateStopped || state == eStateCrashed') and POSIXThread.cpp:254 (assertion 'bp_site')
     def test_with_dwarf_command(self):
         """Simulate a user using lldb commands to break on c() if called from a()."""
         self.buildDwarf()
