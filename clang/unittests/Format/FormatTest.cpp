@@ -2495,6 +2495,10 @@ TEST_F(FormatTest, ConstructorInitializers) {
   verifyFormat("Constructor(int Parameter = 0)\n"
                "    : aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaa),\n"
                "      aaaaaaaaaaaa(aaaaaaaaaaaaaaaaa) {}");
+  verifyFormat("Constructor()\n"
+               "    : aaaaaaaaaaaaaaaaaaaa(a), bbbbbbbbbbbbbbbbbbbbbbbb(b) {\n"
+               "}",
+               getLLVMStyleWithColumns(60));
 
   // Here a line could be saved by splitting the second initializer onto two
   // lines, but that is not desireable.

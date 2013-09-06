@@ -225,7 +225,12 @@ unsigned ContinuationIndenter::addTokenToState(LineState &State, bool Newline,
       Penalty += Style.PenaltyBreakFirstLessLess;
 
     if (Current.is(tok::r_brace)) {
-      State.Column = State.Stack[State.Stack.size() - 2].LastSpace;
+      if (Current.MatchingParen &&
+          (Current.MatchingParen->BlockKind == BK_BracedInit ||
+           !Current.MatchingParen->Children.empty()))
+        State.Column = State.Stack[State.Stack.size() - 2].LastSpace;
+      else
+        State.Column = State.FirstIndent;
     } else if (Current.is(tok::string_literal) &&
                State.StartOfStringLiteral != 0) {
       State.Column = State.StartOfStringLiteral;
