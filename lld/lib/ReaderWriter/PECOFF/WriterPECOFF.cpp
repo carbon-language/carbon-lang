@@ -342,15 +342,20 @@ public:
     }
   }
 
-  /// List all the relocation sites that need to be fixed up if image base is
-  /// relocated. Such relocation types are DIR32 and DIR32NB on i386. REL32 does
-  /// not be (and should not be) fixed up because it's PC-relative.
+  /// List all virtual addresses (and not relative virtual addresses) that need
+  /// to be fixed up if image base is relocated. The only relocation type that
+  /// needs to be fixed is DIR32 on i386. REL32 is not (and should not be)
+  /// fixed up because it's PC-relative.
   void addBaseRelocations(std::vector<uint64_t> &relocSites) {
+    // TODO: llvm-objdump doesn't support parsing the base relocation table, so
+    // we can't really test this at the moment. As a temporary solution, we
+    // should output debug messages with atom names and addresses so that we
+    // can inspect relocations, and fix the tests (base-reloc.test, maybe
+    // others) to use those messages.
     for (const auto *layout : _atomLayouts) {
       const DefinedAtom *atom = cast<DefinedAtom>(layout->_atom);
       for (const Reference *ref : *atom)
-        if (ref->kind() == llvm::COFF::IMAGE_REL_I386_DIR32 ||
-            ref->kind() == llvm::COFF::IMAGE_REL_I386_DIR32NB)
+        if (ref->kind() == llvm::COFF::IMAGE_REL_I386_DIR32)
           relocSites.push_back(layout->_virtualAddr + ref->offsetInAtom());
     }
   }
