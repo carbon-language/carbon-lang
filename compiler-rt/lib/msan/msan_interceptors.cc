@@ -794,7 +794,8 @@ INTERCEPTOR(SSIZE_T, recvfrom, int fd, void *buf, SIZE_T len, int flags,
 }
 
 INTERCEPTOR(void *, calloc, SIZE_T nmemb, SIZE_T size) {
-  if (CallocShouldReturnNullDueToOverflow(size, nmemb)) return 0;
+  if (CallocShouldReturnNullDueToOverflow(size, nmemb))
+    return AllocatorReturnNull();
   GET_MALLOC_STACK_TRACE;
   if (!msan_inited) {
     // Hack: dlsym calls calloc before REAL(calloc) is retrieved from dlsym.
