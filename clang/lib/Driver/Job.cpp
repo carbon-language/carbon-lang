@@ -32,8 +32,3 @@ JobList::~JobList() {
 void JobList::clear() {
   DeleteContainerPointers(Jobs);
 }
-
-void Job::addCommand(Command *C) {
-  cast<JobList>(this)->addJob(C);
-}
-

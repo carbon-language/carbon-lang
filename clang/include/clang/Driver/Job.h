@@ -38,10 +38,6 @@ public:
   virtual ~Job();
 
   JobClass getKind() const { return Kind; }
-
-  /// addCommand - Append a command to the current job, which must be
-  /// either a piped job or a job list.
-  void addCommand(Command *C);
 };
 
   /// Command - An executable path/name and argument vector to
