@@ -248,7 +248,7 @@ def brtarget    : Operand<OtherVT> {
 def calltarget  : Operand<iPTR> {
   let EncoderMethod = "getJumpTargetOpValue";
 }
-def calltarget64: Operand<i64>;
+
 def simm16      : Operand<i32> {
   let DecoderMethod= "DecodeSimm16";
 }
@@ -447,14 +447,6 @@ class LoadUpper<string opstr, RegisterOperand RO, Operand Imm>:
          [], IIArith, FrmI>, IsAsCheapAsAMove {
   let neverHasSideEffects = 1;
   let isReMaterializable = 1;
-}
-
-class FMem<bits<6> op, dag outs, dag ins, string asmstr, list<dag> pattern,
-          InstrItinClass itin>: FFI<op, outs, ins, asmstr, pattern> {
-  bits<21> addr;
-  let Inst{25-21} = addr{20-16};
-  let Inst{15-0}  = addr{15-0};
-  let DecoderMethod = "DecodeMem";
 }
 
 // Memory Load/Store
