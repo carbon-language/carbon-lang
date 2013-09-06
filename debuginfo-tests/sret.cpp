@@ -5,9 +5,10 @@
 // DEBUGGER: break 62
 // DEBUGGER: r
 // DEBUGGER: p a
-// CHECK: $1 = {
-// CHECK:  _vptr$A =
-// CHECK:  m_int = 12
+// CHECK: ${{[0-9]+}} = {
+// LLDB does not print artificial members.
+// CHECK-NEXT:  {{(_vptr\$A =)|(m_int = 12)}}
+// CHECK-NEXT:  {{(m_int = 12)|(})}}
 
 class A
 {

@@ -6,7 +6,7 @@
 // gdb crashes in such cases.
 
 // DEBUGGER: ptype foo
-// CHECK: type = int (void)
+// CHECK: int (void)
 
 int foo() {
   struct Local {
