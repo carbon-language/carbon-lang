@@ -67,6 +67,7 @@
 #include <clc/integer/clz.h>
 #include <clc/integer/hadd.h>
 #include <clc/integer/mad24.h>
+#include <clc/integer/mad_hi.h>
 #include <clc/integer/mul24.h>
 #include <clc/integer/mul_hi.h>
 #include <clc/integer/rhadd.h>
