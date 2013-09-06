@@ -121,7 +121,7 @@ ThreadPlanStepOverRange::ShouldStop (Event *event_ptr)
             // in so I left out the target check.  And sometimes the module comes in as the .o file from the
             // inlined range, so I left that out too...
             
-            bool older_ctx_is_equivalent = true;
+            bool older_ctx_is_equivalent = false;
             if (m_addr_context.comp_unit)
             {
                 if (m_addr_context.comp_unit == older_context.comp_unit)
