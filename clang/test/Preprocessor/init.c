@@ -2934,6 +2934,10 @@
 // SPARC64-OBSD:#define __INTMAX_TYPE__ long long int
 // SPARC64-OBSD:#define __UINTMAX_TYPE__ long long unsigned int
 //
+// RUN: %clang_cc1 -E -dM -ffreestanding -triple=x86_64-pc-kfreebsd-gnu < /dev/null | FileCheck -check-prefix KFREEBSD-DEFINE %s
+// KFREEBSD-DEFINE:#define __FreeBSD_kernel__ 1
+// KFREEBSD-DEFINE:#define __GLIBC__ 1
+//
 // RUN: %clang_cc1 -x c++ -triple i686-pc-linux-gnu -fobjc-runtime=gcc -E -dM < /dev/null | FileCheck -check-prefix GNUSOURCE %s
 // GNUSOURCE:#define _GNU_SOURCE 1
 // 
