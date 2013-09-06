@@ -53,7 +53,9 @@ int main(int argc, char **argv) {
     x = (char*)realloc(t, size);
     assert(*t == 42);
   }
-  fprintf(stderr, "x: %p\n", x);
+  // The NULL pointer is printed differently on different systems, while (long)0
+  // is always the same.
+  fprintf(stderr, "x: %lx\n", (long)x);
   return x != 0;
 }
 // CHECK-mCRASH: malloc:
@@ -68,12 +70,12 @@ int main(int argc, char **argv) {
 // CHECK-mrCRASH: AddressSanitizer's allocator is terminating the process
 
 // CHECK-mNULL: malloc:
-// CHECK-mNULL: x: (nil)
+// CHECK-mNULL: x: 0
 // CHECK-cNULL: calloc:
-// CHECK-cNULL: x: (nil)
+// CHECK-cNULL: x: 0
 // CHECK-coNULL: calloc-overflow:
-// CHECK-coNULL: x: (nil)
+// CHECK-coNULL: x: 0
 // CHECK-rNULL: realloc:
-// CHECK-rNULL: x: (nil)
+// CHECK-rNULL: x: 0
 // CHECK-mrNULL: realloc-after-malloc:
-// CHECK-mrNULL: x: (nil)
+// CHECK-mrNULL: x: 0
