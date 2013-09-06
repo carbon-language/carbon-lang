@@ -6399,6 +6399,8 @@ TEST_F(FormatTest, FormatsLambdas) {
 
   // Not lambdas.
   verifyFormat("constexpr char hello[]{ \"hello\" };");
+  verifyFormat("double &operator[](int i) { return 0; }\n"
+               "int i;");
 }
 
 TEST_F(FormatTest, FormatsBlocks) {

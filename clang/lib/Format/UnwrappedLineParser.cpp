@@ -676,7 +676,8 @@ void UnwrappedLineParser::parseStructuralElement() {
 void UnwrappedLineParser::tryToParseLambda() {
   // FIXME: This is a dirty way to access the previous token. Find a better
   // solution.
-  if (!Line->Tokens.empty() && Line->Tokens.back().Tok->is(tok::identifier)) {
+  if (!Line->Tokens.empty() &&
+      Line->Tokens.back().Tok->isOneOf(tok::identifier, tok::kw_operator)) {
     nextToken();
     return;
   }
