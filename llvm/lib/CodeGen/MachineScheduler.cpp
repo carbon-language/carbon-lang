@@ -566,7 +566,8 @@ updateScheduledPressure(const std::vector<unsigned> &NewMaxPressure) {
       unsigned Limit = RegClassInfo->getRegPressureSetLimit(i);
       if (NewMaxPressure[i] > Limit ) {
         dbgs() << "  " << TRI->getRegPressureSetName(i) << ": "
-               << NewMaxPressure[i] << " > " << Limit << "\n";
+               << NewMaxPressure[i] << " > " << Limit << "(+ "
+               << BotRPTracker.getLiveThru()[i] << " livethru)\n";
       }
     });
 }
@@ -2454,6 +2455,10 @@ void ConvergingScheduler::tryCandidate(SchedCandidate &Cand,
       }
     }
   }
+  DEBUG(if (TryCand.RPDelta.Excess.isValid())
+          dbgs() << "  SU(" << TryCand.SU->NodeNum << ") "
+                 << TRI->getRegPressureSetName(TryCand.RPDelta.Excess.getPSet())
+                 << ":" << TryCand.RPDelta.Excess.getUnitInc() << "\n");
 
   // Initialize the candidate if needed.
   if (!Cand.isValid()) {
@@ -2614,7 +2619,7 @@ void ConvergingScheduler::traceCandidate(const SchedCandidate &Cand) {
 }
 #endif
 
-/// Pick the best candidate from the top queue.
+/// Pick the best candidate from the queue.
 ///
 /// TODO: getMaxPressureDelta results can be mostly cached for each SUnit during
 /// DAG building. To adjust for the current scheduling location we need to
