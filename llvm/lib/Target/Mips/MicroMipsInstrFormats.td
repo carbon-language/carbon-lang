@@ -123,3 +123,18 @@ class LWL_FM_MM<bits<4> funct> {
   let Inst{15-12} = funct;
   let Inst{11-0}  = addr{11-0};
 }
+
+class CMov_F_I_FM_MM<bits<7> func> : MMArch {
+  bits<5> rd;
+  bits<5> rs;
+  bits<3> fcc;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0x15;
+  let Inst{25-21} = rd;
+  let Inst{20-16} = rs;
+  let Inst{15-13} = fcc;
+  let Inst{12-6}  = func;
+  let Inst{5-0}   = 0x3b;
+}

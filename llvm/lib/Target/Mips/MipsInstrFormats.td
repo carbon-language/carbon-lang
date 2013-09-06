@@ -730,7 +730,7 @@ class CMov_I_F_FM<bits<6> funct, bits<5> fmt> {
   let Inst{5-0} = funct;
 }
 
-class CMov_F_I_FM<bit tf> {
+class CMov_F_I_FM<bit tf> : StdArch {
   bits<5> rd;
   bits<5> rs;
   bits<3> fcc;

@@ -19,7 +19,7 @@
 class CMov_I_I_FT<string opstr, RegisterOperand CRC, RegisterOperand DRC,
                   InstrItinClass Itin> :
   InstSE<(outs DRC:$rd), (ins DRC:$rs, CRC:$rt, DRC:$F),
-         !strconcat(opstr, "\t$rd, $rs, $rt"), [], Itin, FrmFR> {
+         !strconcat(opstr, "\t$rd, $rs, $rt"), [], Itin, FrmFR, opstr> {
   let Constraints = "$F = $rd";
 }
 
@@ -37,7 +37,7 @@ class CMov_F_I_FT<string opstr, RegisterOperand RC, InstrItinClass Itin,
   InstSE<(outs RC:$rd), (ins RC:$rs, FCCRegsOpnd:$fcc, RC:$F),
          !strconcat(opstr, "\t$rd, $rs, $fcc"),
          [(set RC:$rd, (OpNode RC:$rs, FCCRegsOpnd:$fcc, RC:$F))],
-         Itin, FrmFR> {
+         Itin, FrmFR, opstr> {
   let Constraints = "$F = $rd";
 }
 
@@ -103,7 +103,7 @@ multiclass MovnPats<RegisterClass CRC, RegisterClass DRC, Instruction MOVNInst,
 }
 
 // Instantiation of instructions.
-def MOVZ_I_I : CMov_I_I_FT<"movz", GPR32Opnd, GPR32Opnd, NoItinerary>,
+def MOVZ_I_I : MMRel, CMov_I_I_FT<"movz", GPR32Opnd, GPR32Opnd, NoItinerary>,
                ADD_FM<0, 0xa>;
 
 let Predicates = [HasStdEnc], isCodeGenOnly = 1 in {
@@ -115,8 +115,8 @@ let Predicates = [HasStdEnc], isCodeGenOnly = 1 in {
                                   NoItinerary>, ADD_FM<0, 0xa>;
 }
 
-def MOVN_I_I       : CMov_I_I_FT<"movn", GPR32Opnd, GPR32Opnd,
-                                  NoItinerary>, ADD_FM<0, 0xb>;
+def MOVN_I_I       : MMRel, CMov_I_I_FT<"movn", GPR32Opnd, GPR32Opnd,
+                     NoItinerary>, ADD_FM<0, 0xb>;
 
 let Predicates = [HasStdEnc], isCodeGenOnly = 1 in {
   def MOVN_I_I64   : CMov_I_I_FT<"movn", GPR32Opnd, GPR64Opnd,
@@ -161,14 +161,14 @@ let Predicates = [IsFP64bit, HasStdEnc], DecoderNamespace = "Mips64" in {
   }
 }
 
-def MOVT_I : CMov_F_I_FT<"movt", GPR32Opnd, IIArith, MipsCMovFP_T>,
+def MOVT_I : MMRel, CMov_F_I_FT<"movt", GPR32Opnd, IIArith, MipsCMovFP_T>,
              CMov_F_I_FM<1>;
 
 let isCodeGenOnly = 1 in
 def MOVT_I64 : CMov_F_I_FT<"movt", GPR64Opnd, IIArith, MipsCMovFP_T>,
                CMov_F_I_FM<1>, Requires<[HasMips64, HasStdEnc]>;
 
-def MOVF_I : CMov_F_I_FT<"movf", GPR32Opnd, IIArith, MipsCMovFP_F>,
+def MOVF_I : MMRel, CMov_F_I_FT<"movf", GPR32Opnd, IIArith, MipsCMovFP_F>,
              CMov_F_I_FM<0>;
 
 let isCodeGenOnly = 1 in
