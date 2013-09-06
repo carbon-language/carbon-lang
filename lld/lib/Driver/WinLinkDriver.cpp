@@ -165,19 +165,17 @@ void processLibEnv(PECOFFLinkingContext &context) {
       context.appendInputSearchPath(context.allocateString(path));
 }
 
-// Sets a default entry point symbol name depending on context image type and
+// Returns a default entry point symbol name depending on context image type and
 // subsystem. These default names are MS CRT compliant.
-void setDefaultEntrySymbolName(PECOFFLinkingContext &context) {
-  if (context.getImageType() == PECOFFLinkingContext::ImageType::IMAGE_DLL) {
-    context.setEntrySymbolName("__DllMainCRTStartup");
-  } else {
-    llvm::COFF::WindowsSubsystem subsystem = context.getSubsystem();
-    if (subsystem == llvm::COFF::WindowsSubsystem::IMAGE_SUBSYSTEM_WINDOWS_GUI)
-      context.setEntrySymbolName("_WinMainCRTStartup");
-    else if (subsystem ==
-      llvm::COFF::WindowsSubsystem::IMAGE_SUBSYSTEM_WINDOWS_CUI)
-      context.setEntrySymbolName("_mainCRTStartup");
-  }
+StringRef getDefaultEntrySymbolName(PECOFFLinkingContext &context) {
+  if (context.getImageType() == PECOFFLinkingContext::ImageType::IMAGE_DLL)
+    return "__DllMainCRTStartup";
+  llvm::COFF::WindowsSubsystem subsystem = context.getSubsystem();
+  if (subsystem == llvm::COFF::WindowsSubsystem::IMAGE_SUBSYSTEM_WINDOWS_GUI)
+    return "_WinMainCRTStartup";
+  if (subsystem == llvm::COFF::WindowsSubsystem::IMAGE_SUBSYSTEM_WINDOWS_CUI)
+    return "_mainCRTStartup";
+  return "";
 }
 
 // Parses the given command line options and returns the result. Returns NULL if
@@ -434,7 +432,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ct
 
   // Use the default entry name if /entry option is not given.
   if (ctx.entrySymbolName().empty())
-    setDefaultEntrySymbolName(ctx);
+    ctx.setEntrySymbolName(getDefaultEntrySymbolName(ctx));
 
   // Specifying both /opt:ref and /opt:noref is an error.
   if (parsedArgs->getLastArg(OPT_ref) && parsedArgs->getLastArg(OPT_no_ref)) {
