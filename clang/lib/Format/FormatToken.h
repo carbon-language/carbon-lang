@@ -89,9 +89,10 @@ struct FormatToken {
         CanBreakBefore(false), ClosesTemplateDeclaration(false),
         ParameterCount(0), PackingKind(PPK_Inconclusive), TotalLength(0),
         UnbreakableTailLength(0), BindingStrength(0), SplitPenalty(0),
-        LongestObjCSelectorName(0), FakeRParens(0), LastInChainOfCalls(false),
-        PartOfMultiVariableDeclStmt(false), MatchingParen(NULL), Previous(NULL),
-        Next(NULL) {}
+        LongestObjCSelectorName(0), FakeRParens(0),
+        StartsBinaryExpression(false), EndsBinaryExpression(false),
+        LastInChainOfCalls(false), PartOfMultiVariableDeclStmt(false),
+        MatchingParen(NULL), Previous(NULL), Next(NULL) {}
 
   /// \brief The \c Token.
   Token Tok;
@@ -220,6 +221,12 @@ struct FormatToken {
   SmallVector<prec::Level, 4> FakeLParens;
   /// \brief Insert this many fake ) after this token for correct indentation.
   unsigned FakeRParens;
+
+  /// \brief \c true if this token starts a binary expression, i.e. has at least
+  /// one fake l_paren with a precedence greater than prec::Unknown.
+  bool StartsBinaryExpression;
+  /// \brief \c true if this token ends a binary expression.
+  bool EndsBinaryExpression;
 
   /// \brief Is this the last "." or "->" in a builder-type call?
   bool LastInChainOfCalls;

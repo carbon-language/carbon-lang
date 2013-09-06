@@ -2341,6 +2341,10 @@ TEST_F(FormatTest, LineBreakingInBinaryExpressions) {
       "if (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
       "        aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) == 5) {\n"
       "}");
+  verifyFormat(
+      "if (aaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaa(\n"
+      "        aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) == 5) {\n"
+      "}");
   // Even explicit parentheses stress the precedence enough to make the
   // additional break unnecessary.
   verifyFormat(

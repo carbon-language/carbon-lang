@@ -928,8 +928,13 @@ private:
 
   void addFakeParenthesis(FormatToken *Start, prec::Level Precedence) {
     Start->FakeLParens.push_back(Precedence);
-    if (Current)
+    if (Precedence > prec::Unknown)
+      Start->StartsBinaryExpression = true;
+    if (Current) {
       ++Current->Previous->FakeRParens;
+      if (Precedence > prec::Unknown)
+        Current->Previous->EndsBinaryExpression = true;
+    }
   }
 
   /// \brief Parse unary operator expressions and surround them with fake

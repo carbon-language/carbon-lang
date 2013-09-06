@@ -38,15 +38,6 @@ static unsigned getLengthToMatchingParen(const FormatToken &Tok) {
   return End->TotalLength - Tok.TotalLength + 1;
 }
 
-// Returns \c true if \c Tok starts a binary expression.
-static bool startsBinaryExpression(const FormatToken &Tok) {
-  for (unsigned i = 0, e = Tok.FakeLParens.size(); i != e; ++i) {
-    if (Tok.FakeLParens[i] > prec::Unknown)
-      return true;
-  }
-  return false;
-}
-
 // Returns \c true if \c Tok is the "." or "->" of a call and starts the next
 // segment of a builder type call.
 static bool startsSegmentOfBuilderTypeCall(const FormatToken &Tok) {
@@ -156,7 +147,7 @@ bool ContinuationIndenter::mustBreak(const LineState &State) {
                         Previous.Previous &&
                         Previous.Previous->Type != TT_BinaryOperator; // For >>.
     bool LHSIsBinaryExpr =
-        Previous.Previous && Previous.Previous->FakeRParens > 0;
+        Previous.Previous && Previous.Previous->EndsBinaryExpression;
     if (Previous.Type == TT_BinaryOperator &&
         (!IsComparison || LHSIsBinaryExpr) &&
         Current.Type != TT_BinaryOperator && // For >>.
@@ -394,7 +385,7 @@ unsigned ContinuationIndenter::addTokenToState(LineState &State, bool Newline,
               Previous.Type == TT_UnaryOperator ||
               Previous.Type == TT_CtorInitializerColon) &&
              (Previous.getPrecedence() != prec::Assignment ||
-              startsBinaryExpression(Current)))
+              Current.StartsBinaryExpression))
       // Always indent relative to the RHS of the expression unless this is a
       // simple assignment without binary expression on the RHS. Also indent
       // relative to unary operators and the colons of constructor initializers.
@@ -455,7 +446,7 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
   }
 
   // If return returns a binary expression, align after it.
-  if (Current.is(tok::kw_return) && startsBinaryExpression(Current))
+  if (Current.is(tok::kw_return) && Current.StartsBinaryExpression)
     State.Stack.back().LastSpace = State.Column + 7;
 
   // In ObjC method declaration we align on the ":" of parameters, but we need
