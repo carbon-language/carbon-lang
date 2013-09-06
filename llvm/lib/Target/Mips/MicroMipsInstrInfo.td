@@ -19,6 +19,7 @@ class LoadLeftRightMM<string opstr, SDNode OpNode, RegisterOperand RO,
          !strconcat(opstr, "\t$rt, $addr"),
          [(set RO:$rt, (OpNode addrimm12:$addr, RO:$src))],
          NoItinerary, FrmI> {
+  let DecoderMethod = "DecodeMemMMImm12";
   string Constraints = "$src = $rt";
 }
 
@@ -26,7 +27,9 @@ class StoreLeftRightMM<string opstr, SDNode OpNode, RegisterOperand RO,
                        Operand MemOpnd>:
   InstSE<(outs), (ins RO:$rt, MemOpnd:$addr),
          !strconcat(opstr, "\t$rt, $addr"),
-         [(OpNode RO:$rt, addrimm12:$addr)], NoItinerary, FrmI>;
+         [(OpNode RO:$rt, addrimm12:$addr)], NoItinerary, FrmI> {
+  let DecoderMethod = "DecodeMemMMImm12";
+}
 
 let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
   /// Arithmetic Instructions (ALU Immediate)
@@ -86,14 +89,16 @@ let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
                  SRLV_FM_MM<0xd0, 0>;
 
   /// Load and Store Instructions - aligned
-  def LB_MM  : Load<"lb", GPR32Opnd, sextloadi8>, MMRel, LW_FM_MM<0x7>;
-  def LBu_MM : Load<"lbu", GPR32Opnd, zextloadi8>, MMRel, LW_FM_MM<0x5>;
-  def LH_MM  : Load<"lh", GPR32Opnd, sextloadi16>, MMRel, LW_FM_MM<0xf>;
-  def LHu_MM : Load<"lhu", GPR32Opnd, zextloadi16>, MMRel, LW_FM_MM<0xd>;
-  def LW_MM  : Load<"lw", GPR32Opnd>, MMRel, LW_FM_MM<0x3f>;
-  def SB_MM  : Store<"sb", GPR32Opnd, truncstorei8>, MMRel, LW_FM_MM<0x6>;
-  def SH_MM  : Store<"sh", GPR32Opnd, truncstorei16>, MMRel, LW_FM_MM<0xe>;
-  def SW_MM  : Store<"sw", GPR32Opnd>, MMRel, LW_FM_MM<0x3e>;
+  let DecoderMethod = "DecodeMemMMImm16" in {
+    def LB_MM  : Load<"lb", GPR32Opnd>, MMRel, LW_FM_MM<0x7>;
+    def LBu_MM : Load<"lbu", GPR32Opnd>, MMRel, LW_FM_MM<0x5>;
+    def LH_MM  : Load<"lh", GPR32Opnd>, MMRel, LW_FM_MM<0xf>;
+    def LHu_MM : Load<"lhu", GPR32Opnd>, MMRel, LW_FM_MM<0xd>;
+    def LW_MM  : Load<"lw", GPR32Opnd>, MMRel, LW_FM_MM<0x3f>;
+    def SB_MM  : Store<"sb", GPR32Opnd>, MMRel, LW_FM_MM<0x6>;
+    def SH_MM  : Store<"sh", GPR32Opnd>, MMRel, LW_FM_MM<0xe>;
+    def SW_MM  : Store<"sw", GPR32Opnd>, MMRel, LW_FM_MM<0x3e>;
+  }
 
   /// Load and Store Instructions - unaligned
   def LWL_MM : LoadLeftRightMM<"lwl", MipsLWL, GPR32Opnd, mem_mm_12>,
