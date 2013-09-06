@@ -479,8 +479,8 @@ bool WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ct
   // with ".exe".
   if (ctx.outputPath().empty()) {
     SmallString<128> firstInputFilePath =
-        *(llvm::dyn_cast<FileNode>(&((inputGraph)[0])))->path(ctx);
-    (llvm::sys::path::replace_extension(firstInputFilePath, ".exe"));
+        *llvm::dyn_cast<FileNode>(&inputGraph[0])->path(ctx);
+    llvm::sys::path::replace_extension(firstInputFilePath, ".exe");
     ctx.setOutputPath(ctx.allocateString(firstInputFilePath.str()));
   }
 
