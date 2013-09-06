@@ -1925,720 +1925,720 @@ class XOR_V_DESC : MSA_VEC_DESC_BASE<"xor.v", int_mips_xor_v, MSA128B>;
 class XORI_B_DESC : MSA_I8_DESC_BASE<"xori.b", int_mips_xori_b, MSA128B>;
 
 // Instruction defs.
-def ADD_A_B : ADD_A_B_ENC, ADD_A_B_DESC, Requires<[HasMSA]>;
-def ADD_A_H : ADD_A_H_ENC, ADD_A_H_DESC, Requires<[HasMSA]>;
-def ADD_A_W : ADD_A_W_ENC, ADD_A_W_DESC, Requires<[HasMSA]>;
-def ADD_A_D : ADD_A_D_ENC, ADD_A_D_DESC, Requires<[HasMSA]>;
-
-def ADDS_A_B : ADDS_A_B_ENC, ADDS_A_B_DESC, Requires<[HasMSA]>;
-def ADDS_A_H : ADDS_A_H_ENC, ADDS_A_H_DESC, Requires<[HasMSA]>;
-def ADDS_A_W : ADDS_A_W_ENC, ADDS_A_W_DESC, Requires<[HasMSA]>;
-def ADDS_A_D : ADDS_A_D_ENC, ADDS_A_D_DESC, Requires<[HasMSA]>;
-
-def ADDS_S_B : ADDS_S_B_ENC, ADDS_S_B_DESC, Requires<[HasMSA]>;
-def ADDS_S_H : ADDS_S_H_ENC, ADDS_S_H_DESC, Requires<[HasMSA]>;
-def ADDS_S_W : ADDS_S_W_ENC, ADDS_S_W_DESC, Requires<[HasMSA]>;
-def ADDS_S_D : ADDS_S_D_ENC, ADDS_S_D_DESC, Requires<[HasMSA]>;
-
-def ADDS_U_B : ADDS_U_B_ENC, ADDS_U_B_DESC, Requires<[HasMSA]>;
-def ADDS_U_H : ADDS_U_H_ENC, ADDS_U_H_DESC, Requires<[HasMSA]>;
-def ADDS_U_W : ADDS_U_W_ENC, ADDS_U_W_DESC, Requires<[HasMSA]>;
-def ADDS_U_D : ADDS_U_D_ENC, ADDS_U_D_DESC, Requires<[HasMSA]>;
-
-def ADDV_B : ADDV_B_ENC, ADDV_B_DESC, Requires<[HasMSA]>;
-def ADDV_H : ADDV_H_ENC, ADDV_H_DESC, Requires<[HasMSA]>;
-def ADDV_W : ADDV_W_ENC, ADDV_W_DESC, Requires<[HasMSA]>;
-def ADDV_D : ADDV_D_ENC, ADDV_D_DESC, Requires<[HasMSA]>;
-
-def ADDVI_B : ADDVI_B_ENC, ADDVI_B_DESC, Requires<[HasMSA]>;
-def ADDVI_H : ADDVI_H_ENC, ADDVI_H_DESC, Requires<[HasMSA]>;
-def ADDVI_W : ADDVI_W_ENC, ADDVI_W_DESC, Requires<[HasMSA]>;
-def ADDVI_D : ADDVI_D_ENC, ADDVI_D_DESC, Requires<[HasMSA]>;
-
-def AND_V : AND_V_ENC, AND_V_DESC, Requires<[HasMSA]>;
-
-def ANDI_B : ANDI_B_ENC, ANDI_B_DESC, Requires<[HasMSA]>;
-
-def ASUB_S_B : ASUB_S_B_ENC, ASUB_S_B_DESC, Requires<[HasMSA]>;
-def ASUB_S_H : ASUB_S_H_ENC, ASUB_S_H_DESC, Requires<[HasMSA]>;
-def ASUB_S_W : ASUB_S_W_ENC, ASUB_S_W_DESC, Requires<[HasMSA]>;
-def ASUB_S_D : ASUB_S_D_ENC, ASUB_S_D_DESC, Requires<[HasMSA]>;
-
-def ASUB_U_B : ASUB_U_B_ENC, ASUB_U_B_DESC, Requires<[HasMSA]>;
-def ASUB_U_H : ASUB_U_H_ENC, ASUB_U_H_DESC, Requires<[HasMSA]>;
-def ASUB_U_W : ASUB_U_W_ENC, ASUB_U_W_DESC, Requires<[HasMSA]>;
-def ASUB_U_D : ASUB_U_D_ENC, ASUB_U_D_DESC, Requires<[HasMSA]>;
-
-def AVE_S_B : AVE_S_B_ENC, AVE_S_B_DESC, Requires<[HasMSA]>;
-def AVE_S_H : AVE_S_H_ENC, AVE_S_H_DESC, Requires<[HasMSA]>;
-def AVE_S_W : AVE_S_W_ENC, AVE_S_W_DESC, Requires<[HasMSA]>;
-def AVE_S_D : AVE_S_D_ENC, AVE_S_D_DESC, Requires<[HasMSA]>;
-
-def AVE_U_B : AVE_U_B_ENC, AVE_U_B_DESC, Requires<[HasMSA]>;
-def AVE_U_H : AVE_U_H_ENC, AVE_U_H_DESC, Requires<[HasMSA]>;
-def AVE_U_W : AVE_U_W_ENC, AVE_U_W_DESC, Requires<[HasMSA]>;
-def AVE_U_D : AVE_U_D_ENC, AVE_U_D_DESC, Requires<[HasMSA]>;
-
-def AVER_S_B : AVER_S_B_ENC, AVER_S_B_DESC, Requires<[HasMSA]>;
-def AVER_S_H : AVER_S_H_ENC, AVER_S_H_DESC, Requires<[HasMSA]>;
-def AVER_S_W : AVER_S_W_ENC, AVER_S_W_DESC, Requires<[HasMSA]>;
-def AVER_S_D : AVER_S_D_ENC, AVER_S_D_DESC, Requires<[HasMSA]>;
-
-def AVER_U_B : AVER_U_B_ENC, AVER_U_B_DESC, Requires<[HasMSA]>;
-def AVER_U_H : AVER_U_H_ENC, AVER_U_H_DESC, Requires<[HasMSA]>;
-def AVER_U_W : AVER_U_W_ENC, AVER_U_W_DESC, Requires<[HasMSA]>;
-def AVER_U_D : AVER_U_D_ENC, AVER_U_D_DESC, Requires<[HasMSA]>;
-
-def BCLR_B : BCLR_B_ENC, BCLR_B_DESC, Requires<[HasMSA]>;
-def BCLR_H : BCLR_H_ENC, BCLR_H_DESC, Requires<[HasMSA]>;
-def BCLR_W : BCLR_W_ENC, BCLR_W_DESC, Requires<[HasMSA]>;
-def BCLR_D : BCLR_D_ENC, BCLR_D_DESC, Requires<[HasMSA]>;
-
-def BCLRI_B : BCLRI_B_ENC, BCLRI_B_DESC, Requires<[HasMSA]>;
-def BCLRI_H : BCLRI_H_ENC, BCLRI_H_DESC, Requires<[HasMSA]>;
-def BCLRI_W : BCLRI_W_ENC, BCLRI_W_DESC, Requires<[HasMSA]>;
-def BCLRI_D : BCLRI_D_ENC, BCLRI_D_DESC, Requires<[HasMSA]>;
-
-def BINSL_B : BINSL_B_ENC, BINSL_B_DESC, Requires<[HasMSA]>;
-def BINSL_H : BINSL_H_ENC, BINSL_H_DESC, Requires<[HasMSA]>;
-def BINSL_W : BINSL_W_ENC, BINSL_W_DESC, Requires<[HasMSA]>;
-def BINSL_D : BINSL_D_ENC, BINSL_D_DESC, Requires<[HasMSA]>;
-
-def BINSLI_B : BINSLI_B_ENC, BINSLI_B_DESC, Requires<[HasMSA]>;
-def BINSLI_H : BINSLI_H_ENC, BINSLI_H_DESC, Requires<[HasMSA]>;
-def BINSLI_W : BINSLI_W_ENC, BINSLI_W_DESC, Requires<[HasMSA]>;
-def BINSLI_D : BINSLI_D_ENC, BINSLI_D_DESC, Requires<[HasMSA]>;
-
-def BINSR_B : BINSR_B_ENC, BINSR_B_DESC, Requires<[HasMSA]>;
-def BINSR_H : BINSR_H_ENC, BINSR_H_DESC, Requires<[HasMSA]>;
-def BINSR_W : BINSR_W_ENC, BINSR_W_DESC, Requires<[HasMSA]>;
-def BINSR_D : BINSR_D_ENC, BINSR_D_DESC, Requires<[HasMSA]>;
-
-def BINSRI_B : BINSRI_B_ENC, BINSRI_B_DESC, Requires<[HasMSA]>;
-def BINSRI_H : BINSRI_H_ENC, BINSRI_H_DESC, Requires<[HasMSA]>;
-def BINSRI_W : BINSRI_W_ENC, BINSRI_W_DESC, Requires<[HasMSA]>;
-def BINSRI_D : BINSRI_D_ENC, BINSRI_D_DESC, Requires<[HasMSA]>;
-
-def BMNZ_V : BMNZ_V_ENC, BMNZ_V_DESC, Requires<[HasMSA]>;
-
-def BMNZI_B : BMNZI_B_ENC, BMNZI_B_DESC, Requires<[HasMSA]>;
-
-def BMZ_V : BMZ_V_ENC, BMZ_V_DESC, Requires<[HasMSA]>;
-
-def BMZI_B : BMZI_B_ENC, BMZI_B_DESC, Requires<[HasMSA]>;
-
-def BNEG_B : BNEG_B_ENC, BNEG_B_DESC, Requires<[HasMSA]>;
-def BNEG_H : BNEG_H_ENC, BNEG_H_DESC, Requires<[HasMSA]>;
-def BNEG_W : BNEG_W_ENC, BNEG_W_DESC, Requires<[HasMSA]>;
-def BNEG_D : BNEG_D_ENC, BNEG_D_DESC, Requires<[HasMSA]>;
-
-def BNEGI_B : BNEGI_B_ENC, BNEGI_B_DESC, Requires<[HasMSA]>;
-def BNEGI_H : BNEGI_H_ENC, BNEGI_H_DESC, Requires<[HasMSA]>;
-def BNEGI_W : BNEGI_W_ENC, BNEGI_W_DESC, Requires<[HasMSA]>;
-def BNEGI_D : BNEGI_D_ENC, BNEGI_D_DESC, Requires<[HasMSA]>;
-
-def BNZ_B : BNZ_B_ENC, BNZ_B_DESC, Requires<[HasMSA]>;
-def BNZ_H : BNZ_H_ENC, BNZ_H_DESC, Requires<[HasMSA]>;
-def BNZ_W : BNZ_W_ENC, BNZ_W_DESC, Requires<[HasMSA]>;
-def BNZ_D : BNZ_D_ENC, BNZ_D_DESC, Requires<[HasMSA]>;
-
-def BNZ_V : BNZ_V_ENC, BNZ_V_DESC, Requires<[HasMSA]>;
-
-def BSEL_V : BSEL_V_ENC, BSEL_V_DESC, Requires<[HasMSA]>;
-
-def BSELI_B : BSELI_B_ENC, BSELI_B_DESC, Requires<[HasMSA]>;
-
-def BSET_B : BSET_B_ENC, BSET_B_DESC, Requires<[HasMSA]>;
-def BSET_H : BSET_H_ENC, BSET_H_DESC, Requires<[HasMSA]>;
-def BSET_W : BSET_W_ENC, BSET_W_DESC, Requires<[HasMSA]>;
-def BSET_D : BSET_D_ENC, BSET_D_DESC, Requires<[HasMSA]>;
-
-def BSETI_B : BSETI_B_ENC, BSETI_B_DESC, Requires<[HasMSA]>;
-def BSETI_H : BSETI_H_ENC, BSETI_H_DESC, Requires<[HasMSA]>;
-def BSETI_W : BSETI_W_ENC, BSETI_W_DESC, Requires<[HasMSA]>;
-def BSETI_D : BSETI_D_ENC, BSETI_D_DESC, Requires<[HasMSA]>;
-
-def BZ_B : BZ_B_ENC, BZ_B_DESC, Requires<[HasMSA]>;
-def BZ_H : BZ_H_ENC, BZ_H_DESC, Requires<[HasMSA]>;
-def BZ_W : BZ_W_ENC, BZ_W_DESC, Requires<[HasMSA]>;
-def BZ_D : BZ_D_ENC, BZ_D_DESC, Requires<[HasMSA]>;
-
-def BZ_V : BZ_V_ENC, BZ_V_DESC, Requires<[HasMSA]>;
-
-def CEQ_B : CEQ_B_ENC, CEQ_B_DESC, Requires<[HasMSA]>;
-def CEQ_H : CEQ_H_ENC, CEQ_H_DESC, Requires<[HasMSA]>;
-def CEQ_W : CEQ_W_ENC, CEQ_W_DESC, Requires<[HasMSA]>;
-def CEQ_D : CEQ_D_ENC, CEQ_D_DESC, Requires<[HasMSA]>;
-
-def CEQI_B : CEQI_B_ENC, CEQI_B_DESC, Requires<[HasMSA]>;
-def CEQI_H : CEQI_H_ENC, CEQI_H_DESC, Requires<[HasMSA]>;
-def CEQI_W : CEQI_W_ENC, CEQI_W_DESC, Requires<[HasMSA]>;
-def CEQI_D : CEQI_D_ENC, CEQI_D_DESC, Requires<[HasMSA]>;
-
-def CFCMSA : CFCMSA_ENC, CFCMSA_DESC, Requires<[HasMSA]>;
-
-def CLE_S_B : CLE_S_B_ENC, CLE_S_B_DESC, Requires<[HasMSA]>;
-def CLE_S_H : CLE_S_H_ENC, CLE_S_H_DESC, Requires<[HasMSA]>;
-def CLE_S_W : CLE_S_W_ENC, CLE_S_W_DESC, Requires<[HasMSA]>;
-def CLE_S_D : CLE_S_D_ENC, CLE_S_D_DESC, Requires<[HasMSA]>;
+def ADD_A_B : ADD_A_B_ENC, ADD_A_B_DESC;
+def ADD_A_H : ADD_A_H_ENC, ADD_A_H_DESC;
+def ADD_A_W : ADD_A_W_ENC, ADD_A_W_DESC;
+def ADD_A_D : ADD_A_D_ENC, ADD_A_D_DESC;
+
+def ADDS_A_B : ADDS_A_B_ENC, ADDS_A_B_DESC;
+def ADDS_A_H : ADDS_A_H_ENC, ADDS_A_H_DESC;
+def ADDS_A_W : ADDS_A_W_ENC, ADDS_A_W_DESC;
+def ADDS_A_D : ADDS_A_D_ENC, ADDS_A_D_DESC;
+
+def ADDS_S_B : ADDS_S_B_ENC, ADDS_S_B_DESC;
+def ADDS_S_H : ADDS_S_H_ENC, ADDS_S_H_DESC;
+def ADDS_S_W : ADDS_S_W_ENC, ADDS_S_W_DESC;
+def ADDS_S_D : ADDS_S_D_ENC, ADDS_S_D_DESC;
+
+def ADDS_U_B : ADDS_U_B_ENC, ADDS_U_B_DESC;
+def ADDS_U_H : ADDS_U_H_ENC, ADDS_U_H_DESC;
+def ADDS_U_W : ADDS_U_W_ENC, ADDS_U_W_DESC;
+def ADDS_U_D : ADDS_U_D_ENC, ADDS_U_D_DESC;
+
+def ADDV_B : ADDV_B_ENC, ADDV_B_DESC;
+def ADDV_H : ADDV_H_ENC, ADDV_H_DESC;
+def ADDV_W : ADDV_W_ENC, ADDV_W_DESC;
+def ADDV_D : ADDV_D_ENC, ADDV_D_DESC;
+
+def ADDVI_B : ADDVI_B_ENC, ADDVI_B_DESC;
+def ADDVI_H : ADDVI_H_ENC, ADDVI_H_DESC;
+def ADDVI_W : ADDVI_W_ENC, ADDVI_W_DESC;
+def ADDVI_D : ADDVI_D_ENC, ADDVI_D_DESC;
+
+def AND_V : AND_V_ENC, AND_V_DESC;
+
+def ANDI_B : ANDI_B_ENC, ANDI_B_DESC;
+
+def ASUB_S_B : ASUB_S_B_ENC, ASUB_S_B_DESC;
+def ASUB_S_H : ASUB_S_H_ENC, ASUB_S_H_DESC;
+def ASUB_S_W : ASUB_S_W_ENC, ASUB_S_W_DESC;
+def ASUB_S_D : ASUB_S_D_ENC, ASUB_S_D_DESC;
+
+def ASUB_U_B : ASUB_U_B_ENC, ASUB_U_B_DESC;
+def ASUB_U_H : ASUB_U_H_ENC, ASUB_U_H_DESC;
+def ASUB_U_W : ASUB_U_W_ENC, ASUB_U_W_DESC;
+def ASUB_U_D : ASUB_U_D_ENC, ASUB_U_D_DESC;
+
+def AVE_S_B : AVE_S_B_ENC, AVE_S_B_DESC;
+def AVE_S_H : AVE_S_H_ENC, AVE_S_H_DESC;
+def AVE_S_W : AVE_S_W_ENC, AVE_S_W_DESC;
+def AVE_S_D : AVE_S_D_ENC, AVE_S_D_DESC;
+
+def AVE_U_B : AVE_U_B_ENC, AVE_U_B_DESC;
+def AVE_U_H : AVE_U_H_ENC, AVE_U_H_DESC;
+def AVE_U_W : AVE_U_W_ENC, AVE_U_W_DESC;
+def AVE_U_D : AVE_U_D_ENC, AVE_U_D_DESC;
+
+def AVER_S_B : AVER_S_B_ENC, AVER_S_B_DESC;
+def AVER_S_H : AVER_S_H_ENC, AVER_S_H_DESC;
+def AVER_S_W : AVER_S_W_ENC, AVER_S_W_DESC;
+def AVER_S_D : AVER_S_D_ENC, AVER_S_D_DESC;
+
+def AVER_U_B : AVER_U_B_ENC, AVER_U_B_DESC;
+def AVER_U_H : AVER_U_H_ENC, AVER_U_H_DESC;
+def AVER_U_W : AVER_U_W_ENC, AVER_U_W_DESC;
+def AVER_U_D : AVER_U_D_ENC, AVER_U_D_DESC;
+
+def BCLR_B : BCLR_B_ENC, BCLR_B_DESC;
+def BCLR_H : BCLR_H_ENC, BCLR_H_DESC;
+def BCLR_W : BCLR_W_ENC, BCLR_W_DESC;
+def BCLR_D : BCLR_D_ENC, BCLR_D_DESC;
+
+def BCLRI_B : BCLRI_B_ENC, BCLRI_B_DESC;
+def BCLRI_H : BCLRI_H_ENC, BCLRI_H_DESC;
+def BCLRI_W : BCLRI_W_ENC, BCLRI_W_DESC;
+def BCLRI_D : BCLRI_D_ENC, BCLRI_D_DESC;
+
+def BINSL_B : BINSL_B_ENC, BINSL_B_DESC;
+def BINSL_H : BINSL_H_ENC, BINSL_H_DESC;
+def BINSL_W : BINSL_W_ENC, BINSL_W_DESC;
+def BINSL_D : BINSL_D_ENC, BINSL_D_DESC;
+
+def BINSLI_B : BINSLI_B_ENC, BINSLI_B_DESC;
+def BINSLI_H : BINSLI_H_ENC, BINSLI_H_DESC;
+def BINSLI_W : BINSLI_W_ENC, BINSLI_W_DESC;
+def BINSLI_D : BINSLI_D_ENC, BINSLI_D_DESC;
+
+def BINSR_B : BINSR_B_ENC, BINSR_B_DESC;
+def BINSR_H : BINSR_H_ENC, BINSR_H_DESC;
+def BINSR_W : BINSR_W_ENC, BINSR_W_DESC;
+def BINSR_D : BINSR_D_ENC, BINSR_D_DESC;
+
+def BINSRI_B : BINSRI_B_ENC, BINSRI_B_DESC;
+def BINSRI_H : BINSRI_H_ENC, BINSRI_H_DESC;
+def BINSRI_W : BINSRI_W_ENC, BINSRI_W_DESC;
+def BINSRI_D : BINSRI_D_ENC, BINSRI_D_DESC;
+
+def BMNZ_V : BMNZ_V_ENC, BMNZ_V_DESC;
+
+def BMNZI_B : BMNZI_B_ENC, BMNZI_B_DESC;
+
+def BMZ_V : BMZ_V_ENC, BMZ_V_DESC;
+
+def BMZI_B : BMZI_B_ENC, BMZI_B_DESC;
+
+def BNEG_B : BNEG_B_ENC, BNEG_B_DESC;
+def BNEG_H : BNEG_H_ENC, BNEG_H_DESC;
+def BNEG_W : BNEG_W_ENC, BNEG_W_DESC;
+def BNEG_D : BNEG_D_ENC, BNEG_D_DESC;
+
+def BNEGI_B : BNEGI_B_ENC, BNEGI_B_DESC;
+def BNEGI_H : BNEGI_H_ENC, BNEGI_H_DESC;
+def BNEGI_W : BNEGI_W_ENC, BNEGI_W_DESC;
+def BNEGI_D : BNEGI_D_ENC, BNEGI_D_DESC;
+
+def BNZ_B : BNZ_B_ENC, BNZ_B_DESC;
+def BNZ_H : BNZ_H_ENC, BNZ_H_DESC;
+def BNZ_W : BNZ_W_ENC, BNZ_W_DESC;
+def BNZ_D : BNZ_D_ENC, BNZ_D_DESC;
+
+def BNZ_V : BNZ_V_ENC, BNZ_V_DESC;
+
+def BSEL_V : BSEL_V_ENC, BSEL_V_DESC;
+
+def BSELI_B : BSELI_B_ENC, BSELI_B_DESC;
+
+def BSET_B : BSET_B_ENC, BSET_B_DESC;
+def BSET_H : BSET_H_ENC, BSET_H_DESC;
+def BSET_W : BSET_W_ENC, BSET_W_DESC;
+def BSET_D : BSET_D_ENC, BSET_D_DESC;
+
+def BSETI_B : BSETI_B_ENC, BSETI_B_DESC;
+def BSETI_H : BSETI_H_ENC, BSETI_H_DESC;
+def BSETI_W : BSETI_W_ENC, BSETI_W_DESC;
+def BSETI_D : BSETI_D_ENC, BSETI_D_DESC;
+
+def BZ_B : BZ_B_ENC, BZ_B_DESC;
+def BZ_H : BZ_H_ENC, BZ_H_DESC;
+def BZ_W : BZ_W_ENC, BZ_W_DESC;
+def BZ_D : BZ_D_ENC, BZ_D_DESC;
+
+def BZ_V : BZ_V_ENC, BZ_V_DESC;
+
+def CEQ_B : CEQ_B_ENC, CEQ_B_DESC;
+def CEQ_H : CEQ_H_ENC, CEQ_H_DESC;
+def CEQ_W : CEQ_W_ENC, CEQ_W_DESC;
+def CEQ_D : CEQ_D_ENC, CEQ_D_DESC;
+
+def CEQI_B : CEQI_B_ENC, CEQI_B_DESC;
+def CEQI_H : CEQI_H_ENC, CEQI_H_DESC;
+def CEQI_W : CEQI_W_ENC, CEQI_W_DESC;
+def CEQI_D : CEQI_D_ENC, CEQI_D_DESC;
+
+def CFCMSA : CFCMSA_ENC, CFCMSA_DESC;
+
+def CLE_S_B : CLE_S_B_ENC, CLE_S_B_DESC;
+def CLE_S_H : CLE_S_H_ENC, CLE_S_H_DESC;
+def CLE_S_W : CLE_S_W_ENC, CLE_S_W_DESC;
+def CLE_S_D : CLE_S_D_ENC, CLE_S_D_DESC;
 
-def CLE_U_B : CLE_U_B_ENC, CLE_U_B_DESC, Requires<[HasMSA]>;
-def CLE_U_H : CLE_U_H_ENC, CLE_U_H_DESC, Requires<[HasMSA]>;
-def CLE_U_W : CLE_U_W_ENC, CLE_U_W_DESC, Requires<[HasMSA]>;
-def CLE_U_D : CLE_U_D_ENC, CLE_U_D_DESC, Requires<[HasMSA]>;
-
-def CLEI_S_B : CLEI_S_B_ENC, CLEI_S_B_DESC, Requires<[HasMSA]>;
-def CLEI_S_H : CLEI_S_H_ENC, CLEI_S_H_DESC, Requires<[HasMSA]>;
-def CLEI_S_W : CLEI_S_W_ENC, CLEI_S_W_DESC, Requires<[HasMSA]>;
-def CLEI_S_D : CLEI_S_D_ENC, CLEI_S_D_DESC, Requires<[HasMSA]>;
+def CLE_U_B : CLE_U_B_ENC, CLE_U_B_DESC;
+def CLE_U_H : CLE_U_H_ENC, CLE_U_H_DESC;
+def CLE_U_W : CLE_U_W_ENC, CLE_U_W_DESC;
+def CLE_U_D : CLE_U_D_ENC, CLE_U_D_DESC;
+
+def CLEI_S_B : CLEI_S_B_ENC, CLEI_S_B_DESC;
+def CLEI_S_H : CLEI_S_H_ENC, CLEI_S_H_DESC;
+def CLEI_S_W : CLEI_S_W_ENC, CLEI_S_W_DESC;
+def CLEI_S_D : CLEI_S_D_ENC, CLEI_S_D_DESC;
 
-def CLEI_U_B : CLEI_U_B_ENC, CLEI_U_B_DESC, Requires<[HasMSA]>;
-def CLEI_U_H : CLEI_U_H_ENC, CLEI_U_H_DESC, Requires<[HasMSA]>;
-def CLEI_U_W : CLEI_U_W_ENC, CLEI_U_W_DESC, Requires<[HasMSA]>;
-def CLEI_U_D : CLEI_U_D_ENC, CLEI_U_D_DESC, Requires<[HasMSA]>;
+def CLEI_U_B : CLEI_U_B_ENC, CLEI_U_B_DESC;
+def CLEI_U_H : CLEI_U_H_ENC, CLEI_U_H_DESC;
+def CLEI_U_W : CLEI_U_W_ENC, CLEI_U_W_DESC;
+def CLEI_U_D : CLEI_U_D_ENC, CLEI_U_D_DESC;
 
-def CLT_S_B : CLT_S_B_ENC, CLT_S_B_DESC, Requires<[HasMSA]>;
-def CLT_S_H : CLT_S_H_ENC, CLT_S_H_DESC, Requires<[HasMSA]>;
-def CLT_S_W : CLT_S_W_ENC, CLT_S_W_DESC, Requires<[HasMSA]>;
-def CLT_S_D : CLT_S_D_ENC, CLT_S_D_DESC, Requires<[HasMSA]>;
+def CLT_S_B : CLT_S_B_ENC, CLT_S_B_DESC;
+def CLT_S_H : CLT_S_H_ENC, CLT_S_H_DESC;
+def CLT_S_W : CLT_S_W_ENC, CLT_S_W_DESC;
+def CLT_S_D : CLT_S_D_ENC, CLT_S_D_DESC;
 
-def CLT_U_B : CLT_U_B_ENC, CLT_U_B_DESC, Requires<[HasMSA]>;
-def CLT_U_H : CLT_U_H_ENC, CLT_U_H_DESC, Requires<[HasMSA]>;
-def CLT_U_W : CLT_U_W_ENC, CLT_U_W_DESC, Requires<[HasMSA]>;
-def CLT_U_D : CLT_U_D_ENC, CLT_U_D_DESC, Requires<[HasMSA]>;
+def CLT_U_B : CLT_U_B_ENC, CLT_U_B_DESC;
+def CLT_U_H : CLT_U_H_ENC, CLT_U_H_DESC;
+def CLT_U_W : CLT_U_W_ENC, CLT_U_W_DESC;
+def CLT_U_D : CLT_U_D_ENC, CLT_U_D_DESC;
 
-def CLTI_S_B : CLTI_S_B_ENC, CLTI_S_B_DESC, Requires<[HasMSA]>;
-def CLTI_S_H : CLTI_S_H_ENC, CLTI_S_H_DESC, Requires<[HasMSA]>;
-def CLTI_S_W : CLTI_S_W_ENC, CLTI_S_W_DESC, Requires<[HasMSA]>;
-def CLTI_S_D : CLTI_S_D_ENC, CLTI_S_D_DESC, Requires<[HasMSA]>;
+def CLTI_S_B : CLTI_S_B_ENC, CLTI_S_B_DESC;
+def CLTI_S_H : CLTI_S_H_ENC, CLTI_S_H_DESC;
+def CLTI_S_W : CLTI_S_W_ENC, CLTI_S_W_DESC;
+def CLTI_S_D : CLTI_S_D_ENC, CLTI_S_D_DESC;
 
-def CLTI_U_B : CLTI_U_B_ENC, CLTI_U_B_DESC, Requires<[HasMSA]>;
-def CLTI_U_H : CLTI_U_H_ENC, CLTI_U_H_DESC, Requires<[HasMSA]>;
-def CLTI_U_W : CLTI_U_W_ENC, CLTI_U_W_DESC, Requires<[HasMSA]>;
-def CLTI_U_D : CLTI_U_D_ENC, CLTI_U_D_DESC, Requires<[HasMSA]>;
+def CLTI_U_B : CLTI_U_B_ENC, CLTI_U_B_DESC;
+def CLTI_U_H : CLTI_U_H_ENC, CLTI_U_H_DESC;
+def CLTI_U_W : CLTI_U_W_ENC, CLTI_U_W_DESC;
+def CLTI_U_D : CLTI_U_D_ENC, CLTI_U_D_DESC;
 
-def COPY_S_B : COPY_S_B_ENC, COPY_S_B_DESC, Requires<[HasMSA]>;
-def COPY_S_H : COPY_S_H_ENC, COPY_S_H_DESC, Requires<[HasMSA]>;
-def COPY_S_W : COPY_S_W_ENC, COPY_S_W_DESC, Requires<[HasMSA]>;
+def COPY_S_B : COPY_S_B_ENC, COPY_S_B_DESC;
+def COPY_S_H : COPY_S_H_ENC, COPY_S_H_DESC;
+def COPY_S_W : COPY_S_W_ENC, COPY_S_W_DESC;
 
-def COPY_U_B : COPY_U_B_ENC, COPY_U_B_DESC, Requires<[HasMSA]>;
-def COPY_U_H : COPY_U_H_ENC, COPY_U_H_DESC, Requires<[HasMSA]>;
-def COPY_U_W : COPY_U_W_ENC, COPY_U_W_DESC, Requires<[HasMSA]>;
+def COPY_U_B : COPY_U_B_ENC, COPY_U_B_DESC;
+def COPY_U_H : COPY_U_H_ENC, COPY_U_H_DESC;
+def COPY_U_W : COPY_U_W_ENC, COPY_U_W_DESC;
 
-def CTCMSA : CTCMSA_ENC, CTCMSA_DESC, Requires<[HasMSA]>;
+def CTCMSA : CTCMSA_ENC, CTCMSA_DESC;
 
-def DIV_S_B : DIV_S_B_ENC, DIV_S_B_DESC, Requires<[HasMSA]>;
-def DIV_S_H : DIV_S_H_ENC, DIV_S_H_DESC, Requires<[HasMSA]>;
-def DIV_S_W : DIV_S_W_ENC, DIV_S_W_DESC, Requires<[HasMSA]>;
-def DIV_S_D : DIV_S_D_ENC, DIV_S_D_DESC, Requires<[HasMSA]>;
+def DIV_S_B : DIV_S_B_ENC, DIV_S_B_DESC;
+def DIV_S_H : DIV_S_H_ENC, DIV_S_H_DESC;
+def DIV_S_W : DIV_S_W_ENC, DIV_S_W_DESC;
+def DIV_S_D : DIV_S_D_ENC, DIV_S_D_DESC;
 
-def DIV_U_B : DIV_U_B_ENC, DIV_U_B_DESC, Requires<[HasMSA]>;
-def DIV_U_H : DIV_U_H_ENC, DIV_U_H_DESC, Requires<[HasMSA]>;
-def DIV_U_W : DIV_U_W_ENC, DIV_U_W_DESC, Requires<[HasMSA]>;
-def DIV_U_D : DIV_U_D_ENC, DIV_U_D_DESC, Requires<[HasMSA]>;
+def DIV_U_B : DIV_U_B_ENC, DIV_U_B_DESC;
+def DIV_U_H : DIV_U_H_ENC, DIV_U_H_DESC;
+def DIV_U_W : DIV_U_W_ENC, DIV_U_W_DESC;
+def DIV_U_D : DIV_U_D_ENC, DIV_U_D_DESC;
 
-def DOTP_S_B : DOTP_S_B_ENC, DOTP_S_B_DESC, Requires<[HasMSA]>;
-def DOTP_S_H : DOTP_S_H_ENC, DOTP_S_H_DESC, Requires<[HasMSA]>;
-def DOTP_S_W : DOTP_S_W_ENC, DOTP_S_W_DESC, Requires<[HasMSA]>;
-def DOTP_S_D : DOTP_S_D_ENC, DOTP_S_D_DESC, Requires<[HasMSA]>;
+def DOTP_S_B : DOTP_S_B_ENC, DOTP_S_B_DESC;
+def DOTP_S_H : DOTP_S_H_ENC, DOTP_S_H_DESC;
+def DOTP_S_W : DOTP_S_W_ENC, DOTP_S_W_DESC;
+def DOTP_S_D : DOTP_S_D_ENC, DOTP_S_D_DESC;
 
-def DOTP_U_B : DOTP_U_B_ENC, DOTP_U_B_DESC, Requires<[HasMSA]>;
-def DOTP_U_H : DOTP_U_H_ENC, DOTP_U_H_DESC, Requires<[HasMSA]>;
-def DOTP_U_W : DOTP_U_W_ENC, DOTP_U_W_DESC, Requires<[HasMSA]>;
-def DOTP_U_D : DOTP_U_D_ENC, DOTP_U_D_DESC, Requires<[HasMSA]>;
+def DOTP_U_B : DOTP_U_B_ENC, DOTP_U_B_DESC;
+def DOTP_U_H : DOTP_U_H_ENC, DOTP_U_H_DESC;
+def DOTP_U_W : DOTP_U_W_ENC, DOTP_U_W_DESC;
+def DOTP_U_D : DOTP_U_D_ENC, DOTP_U_D_DESC;
 
-def DPADD_S_H : DPADD_S_H_ENC, DPADD_S_H_DESC, Requires<[HasMSA]>;
-def DPADD_S_W : DPADD_S_W_ENC, DPADD_S_W_DESC, Requires<[HasMSA]>;
-def DPADD_S_D : DPADD_S_D_ENC, DPADD_S_D_DESC, Requires<[HasMSA]>;
+def DPADD_S_H : DPADD_S_H_ENC, DPADD_S_H_DESC;
+def DPADD_S_W : DPADD_S_W_ENC, DPADD_S_W_DESC;
+def DPADD_S_D : DPADD_S_D_ENC, DPADD_S_D_DESC;
 
-def DPADD_U_H : DPADD_U_H_ENC, DPADD_U_H_DESC, Requires<[HasMSA]>;
-def DPADD_U_W : DPADD_U_W_ENC, DPADD_U_W_DESC, Requires<[HasMSA]>;
-def DPADD_U_D : DPADD_U_D_ENC, DPADD_U_D_DESC, Requires<[HasMSA]>;
+def DPADD_U_H : DPADD_U_H_ENC, DPADD_U_H_DESC;
+def DPADD_U_W : DPADD_U_W_ENC, DPADD_U_W_DESC;
+def DPADD_U_D : DPADD_U_D_ENC, DPADD_U_D_DESC;
 
-def DPSUB_S_H : DPSUB_S_H_ENC, DPSUB_S_H_DESC, Requires<[HasMSA]>;
-def DPSUB_S_W : DPSUB_S_W_ENC, DPSUB_S_W_DESC, Requires<[HasMSA]>;
-def DPSUB_S_D : DPSUB_S_D_ENC, DPSUB_S_D_DESC, Requires<[HasMSA]>;
+def DPSUB_S_H : DPSUB_S_H_ENC, DPSUB_S_H_DESC;
+def DPSUB_S_W : DPSUB_S_W_ENC, DPSUB_S_W_DESC;
+def DPSUB_S_D : DPSUB_S_D_ENC, DPSUB_S_D_DESC;
 
-def DPSUB_U_H : DPSUB_U_H_ENC, DPSUB_U_H_DESC, Requires<[HasMSA]>;
-def DPSUB_U_W : DPSUB_U_W_ENC, DPSUB_U_W_DESC, Requires<[HasMSA]>;
-def DPSUB_U_D : DPSUB_U_D_ENC, DPSUB_U_D_DESC, Requires<[HasMSA]>;
+def DPSUB_U_H : DPSUB_U_H_ENC, DPSUB_U_H_DESC;
+def DPSUB_U_W : DPSUB_U_W_ENC, DPSUB_U_W_DESC;
+def DPSUB_U_D : DPSUB_U_D_ENC, DPSUB_U_D_DESC;
 
-def FADD_W : FADD_W_ENC, FADD_W_DESC, Requires<[HasMSA]>;
-def FADD_D : FADD_D_ENC, FADD_D_DESC, Requires<[HasMSA]>;
+def FADD_W : FADD_W_ENC, FADD_W_DESC;
+def FADD_D : FADD_D_ENC, FADD_D_DESC;
 
-def FCAF_W : FCAF_W_ENC, FCAF_W_DESC, Requires<[HasMSA]>;
-def FCAF_D : FCAF_D_ENC, FCAF_D_DESC, Requires<[HasMSA]>;
+def FCAF_W : FCAF_W_ENC, FCAF_W_DESC;
+def FCAF_D : FCAF_D_ENC, FCAF_D_DESC;
 
-def FCEQ_W : FCEQ_W_ENC, FCEQ_W_DESC, Requires<[HasMSA]>;
-def FCEQ_D : FCEQ_D_ENC, FCEQ_D_DESC, Requires<[HasMSA]>;
+def FCEQ_W : FCEQ_W_ENC, FCEQ_W_DESC;
+def FCEQ_D : FCEQ_D_ENC, FCEQ_D_DESC;
 
-def FCLE_W : FCLE_W_ENC, FCLE_W_DESC, Requires<[HasMSA]>;
-def FCLE_D : FCLE_D_ENC, FCLE_D_DESC, Requires<[HasMSA]>;
+def FCLE_W : FCLE_W_ENC, FCLE_W_DESC;
+def FCLE_D : FCLE_D_ENC, FCLE_D_DESC;
 
-def FCLT_W : FCLT_W_ENC, FCLT_W_DESC, Requires<[HasMSA]>;
-def FCLT_D : FCLT_D_ENC, FCLT_D_DESC, Requires<[HasMSA]>;
+def FCLT_W : FCLT_W_ENC, FCLT_W_DESC;
+def FCLT_D : FCLT_D_ENC, FCLT_D_DESC;
 
-def FCLASS_W : FCLASS_W_ENC, FCLASS_W_DESC, Requires<[HasMSA]>;
-def FCLASS_D : FCLASS_D_ENC, FCLASS_D_DESC, Requires<[HasMSA]>;
+def FCLASS_W : FCLASS_W_ENC, FCLASS_W_DESC;
+def FCLASS_D : FCLASS_D_ENC, FCLASS_D_DESC;
 
-def FCNE_W : FCNE_W_ENC, FCNE_W_DESC, Requires<[HasMSA]>;
-def FCNE_D : FCNE_D_ENC, FCNE_D_DESC, Requires<[HasMSA]>;
+def FCNE_W : FCNE_W_ENC, FCNE_W_DESC;
+def FCNE_D : FCNE_D_ENC, FCNE_D_DESC;
 
-def FCOR_W : FCOR_W_ENC, FCOR_W_DESC, Requires<[HasMSA]>;
-def FCOR_D : FCOR_D_ENC, FCOR_D_DESC, Requires<[HasMSA]>;
+def FCOR_W : FCOR_W_ENC, FCOR_W_DESC;
+def FCOR_D : FCOR_D_ENC, FCOR_D_DESC;
 
-def FCUEQ_W : FCUEQ_W_ENC, FCUEQ_W_DESC, Requires<[HasMSA]>;
-def FCUEQ_D : FCUEQ_D_ENC, FCUEQ_D_DESC, Requires<[HasMSA]>;
+def FCUEQ_W : FCUEQ_W_ENC, FCUEQ_W_DESC;
+def FCUEQ_D : FCUEQ_D_ENC, FCUEQ_D_DESC;
 
-def FCULE_W : FCULE_W_ENC, FCULE_W_DESC, Requires<[HasMSA]>;
-def FCULE_D : FCULE_D_ENC, FCULE_D_DESC, Requires<[HasMSA]>;
+def FCULE_W : FCULE_W_ENC, FCULE_W_DESC;
+def FCULE_D : FCULE_D_ENC, FCULE_D_DESC;
 
-def FCULT_W : FCULT_W_ENC, FCULT_W_DESC, Requires<[HasMSA]>;
-def FCULT_D : FCULT_D_ENC, FCULT_D_DESC, Requires<[HasMSA]>;
+def FCULT_W : FCULT_W_ENC, FCULT_W_DESC;
+def FCULT_D : FCULT_D_ENC, FCULT_D_DESC;
 
-def FCUN_W : FCUN_W_ENC, FCUN_W_DESC, Requires<[HasMSA]>;
-def FCUN_D : FCUN_D_ENC, FCUN_D_DESC, Requires<[HasMSA]>;
+def FCUN_W : FCUN_W_ENC, FCUN_W_DESC;
+def FCUN_D : FCUN_D_ENC, FCUN_D_DESC;
 
-def FCUNE_W : FCUNE_W_ENC, FCUNE_W_DESC, Requires<[HasMSA]>;
-def FCUNE_D : FCUNE_D_ENC, FCUNE_D_DESC, Requires<[HasMSA]>;
+def FCUNE_W : FCUNE_W_ENC, FCUNE_W_DESC;
+def FCUNE_D : FCUNE_D_ENC, FCUNE_D_DESC;
 
-def FDIV_W : FDIV_W_ENC, FDIV_W_DESC, Requires<[HasMSA]>;
-def FDIV_D : FDIV_D_ENC, FDIV_D_DESC, Requires<[HasMSA]>;
+def FDIV_W : FDIV_W_ENC, FDIV_W_DESC;
+def FDIV_D : FDIV_D_ENC, FDIV_D_DESC;
 
-def FEXDO_H : FEXDO_H_ENC, FEXDO_H_DESC, Requires<[HasMSA]>;
-def FEXDO_W : FEXDO_W_ENC, FEXDO_W_DESC, Requires<[HasMSA]>;
+def FEXDO_H : FEXDO_H_ENC, FEXDO_H_DESC;
+def FEXDO_W : FEXDO_W_ENC, FEXDO_W_DESC;
 
-def FEXP2_W : FEXP2_W_ENC, FEXP2_W_DESC, Requires<[HasMSA]>;
-def FEXP2_D : FEXP2_D_ENC, FEXP2_D_DESC, Requires<[HasMSA]>;
+def FEXP2_W : FEXP2_W_ENC, FEXP2_W_DESC;
+def FEXP2_D : FEXP2_D_ENC, FEXP2_D_DESC;
 
-def FEXUPL_W : FEXUPL_W_ENC, FEXUPL_W_DESC, Requires<[HasMSA]>;
-def FEXUPL_D : FEXUPL_D_ENC, FEXUPL_D_DESC, Requires<[HasMSA]>;
+def FEXUPL_W : FEXUPL_W_ENC, FEXUPL_W_DESC;
+def FEXUPL_D : FEXUPL_D_ENC, FEXUPL_D_DESC;
 
-def FEXUPR_W : FEXUPR_W_ENC, FEXUPR_W_DESC, Requires<[HasMSA]>;
-def FEXUPR_D : FEXUPR_D_ENC, FEXUPR_D_DESC, Requires<[HasMSA]>;
+def FEXUPR_W : FEXUPR_W_ENC, FEXUPR_W_DESC;
+def FEXUPR_D : FEXUPR_D_ENC, FEXUPR_D_DESC;
 
-def FFINT_S_W : FFINT_S_W_ENC, FFINT_S_W_DESC, Requires<[HasMSA]>;
-def FFINT_S_D : FFINT_S_D_ENC, FFINT_S_D_DESC, Requires<[HasMSA]>;
+def FFINT_S_W : FFINT_S_W_ENC, FFINT_S_W_DESC;
+def FFINT_S_D : FFINT_S_D_ENC, FFINT_S_D_DESC;
 
-def FFINT_U_W : FFINT_U_W_ENC, FFINT_U_W_DESC, Requires<[HasMSA]>;
-def FFINT_U_D : FFINT_U_D_ENC, FFINT_U_D_DESC, Requires<[HasMSA]>;
+def FFINT_U_W : FFINT_U_W_ENC, FFINT_U_W_DESC;
+def FFINT_U_D : FFINT_U_D_ENC, FFINT_U_D_DESC;
 
-def FFQL_W : FFQL_W_ENC, FFQL_W_DESC, Requires<[HasMSA]>;
-def FFQL_D : FFQL_D_ENC, FFQL_D_DESC, Requires<[HasMSA]>;
+def FFQL_W : FFQL_W_ENC, FFQL_W_DESC;
+def FFQL_D : FFQL_D_ENC, FFQL_D_DESC;
 
-def FFQR_W : FFQR_W_ENC, FFQR_W_DESC, Requires<[HasMSA]>;
-def FFQR_D : FFQR_D_ENC, FFQR_D_DESC, Requires<[HasMSA]>;
+def FFQR_W : FFQR_W_ENC, FFQR_W_DESC;
+def FFQR_D : FFQR_D_ENC, FFQR_D_DESC;
 
-def FILL_B : FILL_B_ENC, FILL_B_DESC, Requires<[HasMSA]>;
-def FILL_H : FILL_H_ENC, FILL_H_DESC, Requires<[HasMSA]>;
-def FILL_W : FILL_W_ENC, FILL_W_DESC, Requires<[HasMSA]>;
+def FILL_B : FILL_B_ENC, FILL_B_DESC;
+def FILL_H : FILL_H_ENC, FILL_H_DESC;
+def FILL_W : FILL_W_ENC, FILL_W_DESC;
 
-def FLOG2_W : FLOG2_W_ENC, FLOG2_W_DESC, Requires<[HasMSA]>;
-def FLOG2_D : FLOG2_D_ENC, FLOG2_D_DESC, Requires<[HasMSA]>;
+def FLOG2_W : FLOG2_W_ENC, FLOG2_W_DESC;
+def FLOG2_D : FLOG2_D_ENC, FLOG2_D_DESC;
 
-def FMADD_W : FMADD_W_ENC, FMADD_W_DESC, Requires<[HasMSA]>;
-def FMADD_D : FMADD_D_ENC, FMADD_D_DESC, Requires<[HasMSA]>;
+def FMADD_W : FMADD_W_ENC, FMADD_W_DESC;
+def FMADD_D : FMADD_D_ENC, FMADD_D_DESC;
 
-def FMAX_W : FMAX_W_ENC, FMAX_W_DESC, Requires<[HasMSA]>;
-def FMAX_D : FMAX_D_ENC, FMAX_D_DESC, Requires<[HasMSA]>;
+def FMAX_W : FMAX_W_ENC, FMAX_W_DESC;
+def FMAX_D : FMAX_D_ENC, FMAX_D_DESC;
 
-def FMAX_A_W : FMAX_A_W_ENC, FMAX_A_W_DESC, Requires<[HasMSA]>;
-def FMAX_A_D : FMAX_A_D_ENC, FMAX_A_D_DESC, Requires<[HasMSA]>;
+def FMAX_A_W : FMAX_A_W_ENC, FMAX_A_W_DESC;
+def FMAX_A_D : FMAX_A_D_ENC, FMAX_A_D_DESC;
 
-def FMIN_W : FMIN_W_ENC, FMIN_W_DESC, Requires<[HasMSA]>;
-def FMIN_D : FMIN_D_ENC, FMIN_D_DESC, Requires<[HasMSA]>;
+def FMIN_W : FMIN_W_ENC, FMIN_W_DESC;
+def FMIN_D : FMIN_D_ENC, FMIN_D_DESC;
 
-def FMIN_A_W : FMIN_A_W_ENC, FMIN_A_W_DESC, Requires<[HasMSA]>;
-def FMIN_A_D : FMIN_A_D_ENC, FMIN_A_D_DESC, Requires<[HasMSA]>;
+def FMIN_A_W : FMIN_A_W_ENC, FMIN_A_W_DESC;
+def FMIN_A_D : FMIN_A_D_ENC, FMIN_A_D_DESC;
 
-def FMSUB_W : FMSUB_W_ENC, FMSUB_W_DESC, Requires<[HasMSA]>;
-def FMSUB_D : FMSUB_D_ENC, FMSUB_D_DESC, Requires<[HasMSA]>;
+def FMSUB_W : FMSUB_W_ENC, FMSUB_W_DESC;
+def FMSUB_D : FMSUB_D_ENC, FMSUB_D_DESC;
 
-def FMUL_W : FMUL_W_ENC, FMUL_W_DESC, Requires<[HasMSA]>;
-def FMUL_D : FMUL_D_ENC, FMUL_D_DESC, Requires<[HasMSA]>;
+def FMUL_W : FMUL_W_ENC, FMUL_W_DESC;
+def FMUL_D : FMUL_D_ENC, FMUL_D_DESC;
 
-def FRINT_W : FRINT_W_ENC, FRINT_W_DESC, Requires<[HasMSA]>;
-def FRINT_D : FRINT_D_ENC, FRINT_D_DESC, Requires<[HasMSA]>;
+def FRINT_W : FRINT_W_ENC, FRINT_W_DESC;
+def FRINT_D : FRINT_D_ENC, FRINT_D_DESC;
 
-def FRCP_W : FRCP_W_ENC, FRCP_W_DESC, Requires<[HasMSA]>;
-def FRCP_D : FRCP_D_ENC, FRCP_D_DESC, Requires<[HasMSA]>;
+def FRCP_W : FRCP_W_ENC, FRCP_W_DESC;
+def FRCP_D : FRCP_D_ENC, FRCP_D_DESC;
 
-def FRSQRT_W : FRSQRT_W_ENC, FRSQRT_W_DESC, Requires<[HasMSA]>;
-def FRSQRT_D : FRSQRT_D_ENC, FRSQRT_D_DESC, Requires<[HasMSA]>;
+def FRSQRT_W : FRSQRT_W_ENC, FRSQRT_W_DESC;
+def FRSQRT_D : FRSQRT_D_ENC, FRSQRT_D_DESC;
 
-def FSAF_W : FSAF_W_ENC, FSAF_W_DESC, Requires<[HasMSA]>;
-def FSAF_D : FSAF_D_ENC, FSAF_D_DESC, Requires<[HasMSA]>;
+def FSAF_W : FSAF_W_ENC, FSAF_W_DESC;
+def FSAF_D : FSAF_D_ENC, FSAF_D_DESC;
 
-def FSEQ_W : FSEQ_W_ENC, FSEQ_W_DESC, Requires<[HasMSA]>;
-def FSEQ_D : FSEQ_D_ENC, FSEQ_D_DESC, Requires<[HasMSA]>;
+def FSEQ_W : FSEQ_W_ENC, FSEQ_W_DESC;
+def FSEQ_D : FSEQ_D_ENC, FSEQ_D_DESC;
 
-def FSLE_W : FSLE_W_ENC, FSLE_W_DESC, Requires<[HasMSA]>;
-def FSLE_D : FSLE_D_ENC, FSLE_D_DESC, Requires<[HasMSA]>;
+def FSLE_W : FSLE_W_ENC, FSLE_W_DESC;
+def FSLE_D : FSLE_D_ENC, FSLE_D_DESC;
 
-def FSLT_W : FSLT_W_ENC, FSLT_W_DESC, Requires<[HasMSA]>;
-def FSLT_D : FSLT_D_ENC, FSLT_D_DESC, Requires<[HasMSA]>;
+def FSLT_W : FSLT_W_ENC, FSLT_W_DESC;
+def FSLT_D : FSLT_D_ENC, FSLT_D_DESC;
 
-def FSNE_W : FSNE_W_ENC, FSNE_W_DESC, Requires<[HasMSA]>;
-def FSNE_D : FSNE_D_ENC, FSNE_D_DESC, Requires<[HasMSA]>;
+def FSNE_W : FSNE_W_ENC, FSNE_W_DESC;
+def FSNE_D : FSNE_D_ENC, FSNE_D_DESC;
 
-def FSOR_W : FSOR_W_ENC, FSOR_W_DESC, Requires<[HasMSA]>;
-def FSOR_D : FSOR_D_ENC, FSOR_D_DESC, Requires<[HasMSA]>;
+def FSOR_W : FSOR_W_ENC, FSOR_W_DESC;
+def FSOR_D : FSOR_D_ENC, FSOR_D_DESC;
 
-def FSQRT_W : FSQRT_W_ENC, FSQRT_W_DESC, Requires<[HasMSA]>;
-def FSQRT_D : FSQRT_D_ENC, FSQRT_D_DESC, Requires<[HasMSA]>;
+def FSQRT_W : FSQRT_W_ENC, FSQRT_W_DESC;
+def FSQRT_D : FSQRT_D_ENC, FSQRT_D_DESC;
 
-def FSUB_W : FSUB_W_ENC, FSUB_W_DESC, Requires<[HasMSA]>;
-def FSUB_D : FSUB_D_ENC, FSUB_D_DESC, Requires<[HasMSA]>;
+def FSUB_W : FSUB_W_ENC, FSUB_W_DESC;
+def FSUB_D : FSUB_D_ENC, FSUB_D_DESC;
 
-def FSUEQ_W : FSUEQ_W_ENC, FSUEQ_W_DESC, Requires<[HasMSA]>;
-def FSUEQ_D : FSUEQ_D_ENC, FSUEQ_D_DESC, Requires<[HasMSA]>;
+def FSUEQ_W : FSUEQ_W_ENC, FSUEQ_W_DESC;
+def FSUEQ_D : FSUEQ_D_ENC, FSUEQ_D_DESC;
 
-def FSULE_W : FSULE_W_ENC, FSULE_W_DESC, Requires<[HasMSA]>;
-def FSULE_D : FSULE_D_ENC, FSULE_D_DESC, Requires<[HasMSA]>;
+def FSULE_W : FSULE_W_ENC, FSULE_W_DESC;
+def FSULE_D : FSULE_D_ENC, FSULE_D_DESC;
 
-def FSULT_W : FSULT_W_ENC, FSULT_W_DESC, Requires<[HasMSA]>;
-def FSULT_D : FSULT_D_ENC, FSULT_D_DESC, Requires<[HasMSA]>;
+def FSULT_W : FSULT_W_ENC, FSULT_W_DESC;
+def FSULT_D : FSULT_D_ENC, FSULT_D_DESC;
 
-def FSUN_W : FSUN_W_ENC, FSUN_W_DESC, Requires<[HasMSA]>;
-def FSUN_D : FSUN_D_ENC, FSUN_D_DESC, Requires<[HasMSA]>;
+def FSUN_W : FSUN_W_ENC, FSUN_W_DESC;
+def FSUN_D : FSUN_D_ENC, FSUN_D_DESC;
 
-def FSUNE_W : FSUNE_W_ENC, FSUNE_W_DESC, Requires<[HasMSA]>;
-def FSUNE_D : FSUNE_D_ENC, FSUNE_D_DESC, Requires<[HasMSA]>;
+def FSUNE_W : FSUNE_W_ENC, FSUNE_W_DESC;
+def FSUNE_D : FSUNE_D_ENC, FSUNE_D_DESC;
 
-def FTRUNC_S_W : FTRUNC_S_W_ENC, FTRUNC_S_W_DESC, Requires<[HasMSA]>;
-def FTRUNC_S_D : FTRUNC_S_D_ENC, FTRUNC_S_D_DESC, Requires<[HasMSA]>;
+def FTRUNC_S_W : FTRUNC_S_W_ENC, FTRUNC_S_W_DESC;
+def FTRUNC_S_D : FTRUNC_S_D_ENC, FTRUNC_S_D_DESC;
 
-def FTRUNC_U_W : FTRUNC_U_W_ENC, FTRUNC_U_W_DESC, Requires<[HasMSA]>;
-def FTRUNC_U_D : FTRUNC_U_D_ENC, FTRUNC_U_D_DESC, Requires<[HasMSA]>;
+def FTRUNC_U_W : FTRUNC_U_W_ENC, FTRUNC_U_W_DESC;
+def FTRUNC_U_D : FTRUNC_U_D_ENC, FTRUNC_U_D_DESC;
 
-def FTINT_S_W : FTINT_S_W_ENC, FTINT_S_W_DESC, Requires<[HasMSA]>;
-def FTINT_S_D : FTINT_S_D_ENC, FTINT_S_D_DESC, Requires<[HasMSA]>;
+def FTINT_S_W : FTINT_S_W_ENC, FTINT_S_W_DESC;
+def FTINT_S_D : FTINT_S_D_ENC, FTINT_S_D_DESC;
 
-def FTINT_U_W : FTINT_U_W_ENC, FTINT_U_W_DESC, Requires<[HasMSA]>;
-def FTINT_U_D : FTINT_U_D_ENC, FTINT_U_D_DESC, Requires<[HasMSA]>;
+def FTINT_U_W : FTINT_U_W_ENC, FTINT_U_W_DESC;
+def FTINT_U_D : FTINT_U_D_ENC, FTINT_U_D_DESC;
 
-def FTQ_H : FTQ_H_ENC, FTQ_H_DESC, Requires<[HasMSA]>;
-def FTQ_W : FTQ_W_ENC, FTQ_W_DESC, Requires<[HasMSA]>;
+def FTQ_H : FTQ_H_ENC, FTQ_H_DESC;
+def FTQ_W : FTQ_W_ENC, FTQ_W_DESC;
 
-def HADD_S_H : HADD_S_H_ENC, HADD_S_H_DESC, Requires<[HasMSA]>;
-def HADD_S_W : HADD_S_W_ENC, HADD_S_W_DESC, Requires<[HasMSA]>;
-def HADD_S_D : HADD_S_D_ENC, HADD_S_D_DESC, Requires<[HasMSA]>;
+def HADD_S_H : HADD_S_H_ENC, HADD_S_H_DESC;
+def HADD_S_W : HADD_S_W_ENC, HADD_S_W_DESC;
+def HADD_S_D : HADD_S_D_ENC, HADD_S_D_DESC;
 
-def HADD_U_H : HADD_U_H_ENC, HADD_U_H_DESC, Requires<[HasMSA]>;
-def HADD_U_W : HADD_U_W_ENC, HADD_U_W_DESC, Requires<[HasMSA]>;
-def HADD_U_D : HADD_U_D_ENC, HADD_U_D_DESC, Requires<[HasMSA]>;
+def HADD_U_H : HADD_U_H_ENC, HADD_U_H_DESC;
+def HADD_U_W : HADD_U_W_ENC, HADD_U_W_DESC;
+def HADD_U_D : HADD_U_D_ENC, HADD_U_D_DESC;
 
-def HSUB_S_H : HSUB_S_H_ENC, HSUB_S_H_DESC, Requires<[HasMSA]>;
-def HSUB_S_W : HSUB_S_W_ENC, HSUB_S_W_DESC, Requires<[HasMSA]>;
-def HSUB_S_D : HSUB_S_D_ENC, HSUB_S_D_DESC, Requires<[HasMSA]>;
+def HSUB_S_H : HSUB_S_H_ENC, HSUB_S_H_DESC;
+def HSUB_S_W : HSUB_S_W_ENC, HSUB_S_W_DESC;
+def HSUB_S_D : HSUB_S_D_ENC, HSUB_S_D_DESC;
 
-def HSUB_U_H : HSUB_U_H_ENC, HSUB_U_H_DESC, Requires<[HasMSA]>;
-def HSUB_U_W : HSUB_U_W_ENC, HSUB_U_W_DESC, Requires<[HasMSA]>;
-def HSUB_U_D : HSUB_U_D_ENC, HSUB_U_D_DESC, Requires<[HasMSA]>;
+def HSUB_U_H : HSUB_U_H_ENC, HSUB_U_H_DESC;
+def HSUB_U_W : HSUB_U_W_ENC, HSUB_U_W_DESC;
+def HSUB_U_D : HSUB_U_D_ENC, HSUB_U_D_DESC;
 
-def ILVEV_B : ILVEV_B_ENC, ILVEV_B_DESC, Requires<[HasMSA]>;
-def ILVEV_H : ILVEV_H_ENC, ILVEV_H_DESC, Requires<[HasMSA]>;
-def ILVEV_W : ILVEV_W_ENC, ILVEV_W_DESC, Requires<[HasMSA]>;
-def ILVEV_D : ILVEV_D_ENC, ILVEV_D_DESC, Requires<[HasMSA]>;
+def ILVEV_B : ILVEV_B_ENC, ILVEV_B_DESC;
+def ILVEV_H : ILVEV_H_ENC, ILVEV_H_DESC;
+def ILVEV_W : ILVEV_W_ENC, ILVEV_W_DESC;
+def ILVEV_D : ILVEV_D_ENC, ILVEV_D_DESC;
 
-def ILVL_B : ILVL_B_ENC, ILVL_B_DESC, Requires<[HasMSA]>;
-def ILVL_H : ILVL_H_ENC, ILVL_H_DESC, Requires<[HasMSA]>;
-def ILVL_W : ILVL_W_ENC, ILVL_W_DESC, Requires<[HasMSA]>;
-def ILVL_D : ILVL_D_ENC, ILVL_D_DESC, Requires<[HasMSA]>;
+def ILVL_B : ILVL_B_ENC, ILVL_B_DESC;
+def ILVL_H : ILVL_H_ENC, ILVL_H_DESC;
+def ILVL_W : ILVL_W_ENC, ILVL_W_DESC;
+def ILVL_D : ILVL_D_ENC, ILVL_D_DESC;
 
-def ILVOD_B : ILVOD_B_ENC, ILVOD_B_DESC, Requires<[HasMSA]>;
-def ILVOD_H : ILVOD_H_ENC, ILVOD_H_DESC, Requires<[HasMSA]>;
-def ILVOD_W : ILVOD_W_ENC, ILVOD_W_DESC, Requires<[HasMSA]>;
-def ILVOD_D : ILVOD_D_ENC, ILVOD_D_DESC, Requires<[HasMSA]>;
+def ILVOD_B : ILVOD_B_ENC, ILVOD_B_DESC;
+def ILVOD_H : ILVOD_H_ENC, ILVOD_H_DESC;
+def ILVOD_W : ILVOD_W_ENC, ILVOD_W_DESC;
+def ILVOD_D : ILVOD_D_ENC, ILVOD_D_DESC;
 
-def ILVR_B : ILVR_B_ENC, ILVR_B_DESC, Requires<[HasMSA]>;
-def ILVR_H : ILVR_H_ENC, ILVR_H_DESC, Requires<[HasMSA]>;
-def ILVR_W : ILVR_W_ENC, ILVR_W_DESC, Requires<[HasMSA]>;
-def ILVR_D : ILVR_D_ENC, ILVR_D_DESC, Requires<[HasMSA]>;
+def ILVR_B : ILVR_B_ENC, ILVR_B_DESC;
+def ILVR_H : ILVR_H_ENC, ILVR_H_DESC;
+def ILVR_W : ILVR_W_ENC, ILVR_W_DESC;
+def ILVR_D : ILVR_D_ENC, ILVR_D_DESC;
 
-def INSERT_B : INSERT_B_ENC, INSERT_B_DESC, Requires<[HasMSA]>;
-def INSERT_H : INSERT_H_ENC, INSERT_H_DESC, Requires<[HasMSA]>;
-def INSERT_W : INSERT_W_ENC, INSERT_W_DESC, Requires<[HasMSA]>;
+def INSERT_B : INSERT_B_ENC, INSERT_B_DESC;
+def INSERT_H : INSERT_H_ENC, INSERT_H_DESC;
+def INSERT_W : INSERT_W_ENC, INSERT_W_DESC;
 
-def INSVE_B : INSVE_B_ENC, INSVE_B_DESC, Requires<[HasMSA]>;
-def INSVE_H : INSVE_H_ENC, INSVE_H_DESC, Requires<[HasMSA]>;
-def INSVE_W : INSVE_W_ENC, INSVE_W_DESC, Requires<[HasMSA]>;
-def INSVE_D : INSVE_D_ENC, INSVE_D_DESC, Requires<[HasMSA]>;
+def INSVE_B : INSVE_B_ENC, INSVE_B_DESC;
+def INSVE_H : INSVE_H_ENC, INSVE_H_DESC;
+def INSVE_W : INSVE_W_ENC, INSVE_W_DESC;
+def INSVE_D : INSVE_D_ENC, INSVE_D_DESC;
 
-def LD_B: LD_B_ENC, LD_B_DESC, Requires<[HasMSA]>;
-def LD_H: LD_H_ENC, LD_H_DESC, Requires<[HasMSA]>;
-def LD_W: LD_W_ENC, LD_W_DESC, Requires<[HasMSA]>;
-def LD_D: LD_D_ENC, LD_D_DESC, Requires<[HasMSA]>;
+def LD_B: LD_B_ENC, LD_B_DESC;
+def LD_H: LD_H_ENC, LD_H_DESC;
+def LD_W: LD_W_ENC, LD_W_DESC;
+def LD_D: LD_D_ENC, LD_D_DESC;
 
-def LDI_B : LDI_B_ENC, LDI_B_DESC, Requires<[HasMSA]>;
-def LDI_H : LDI_H_ENC, LDI_H_DESC, Requires<[HasMSA]>;
-def LDI_W : LDI_W_ENC, LDI_W_DESC, Requires<[HasMSA]>;
+def LDI_B : LDI_B_ENC, LDI_B_DESC;
+def LDI_H : LDI_H_ENC, LDI_H_DESC;
+def LDI_W : LDI_W_ENC, LDI_W_DESC;
 
-def LDX_B: LDX_B_ENC, LDX_B_DESC, Requires<[HasMSA]>;
-def LDX_H: LDX_H_ENC, LDX_H_DESC, Requires<[HasMSA]>;
-def LDX_W: LDX_W_ENC, LDX_W_DESC, Requires<[HasMSA]>;
-def LDX_D: LDX_D_ENC, LDX_D_DESC, Requires<[HasMSA]>;
+def LDX_B: LDX_B_ENC, LDX_B_DESC;
+def LDX_H: LDX_H_ENC, LDX_H_DESC;
+def LDX_W: LDX_W_ENC, LDX_W_DESC;
+def LDX_D: LDX_D_ENC, LDX_D_DESC;
 
-def MADD_Q_H : MADD_Q_H_ENC, MADD_Q_H_DESC, Requires<[HasMSA]>;
-def MADD_Q_W : MADD_Q_W_ENC, MADD_Q_W_DESC, Requires<[HasMSA]>;
+def MADD_Q_H : MADD_Q_H_ENC, MADD_Q_H_DESC;
+def MADD_Q_W : MADD_Q_W_ENC, MADD_Q_W_DESC;
 
-def MADDR_Q_H : MADDR_Q_H_ENC, MADDR_Q_H_DESC, Requires<[HasMSA]>;
-def MADDR_Q_W : MADDR_Q_W_ENC, MADDR_Q_W_DESC, Requires<[HasMSA]>;
+def MADDR_Q_H : MADDR_Q_H_ENC, MADDR_Q_H_DESC;
+def MADDR_Q_W : MADDR_Q_W_ENC, MADDR_Q_W_DESC;
 
-def MADDV_B : MADDV_B_ENC, MADDV_B_DESC, Requires<[HasMSA]>;
-def MADDV_H : MADDV_H_ENC, MADDV_H_DESC, Requires<[HasMSA]>;
-def MADDV_W : MADDV_W_ENC, MADDV_W_DESC, Requires<[HasMSA]>;
-def MADDV_D : MADDV_D_ENC, MADDV_D_DESC, Requires<[HasMSA]>;
+def MADDV_B : MADDV_B_ENC, MADDV_B_DESC;
+def MADDV_H : MADDV_H_ENC, MADDV_H_DESC;
+def MADDV_W : MADDV_W_ENC, MADDV_W_DESC;
+def MADDV_D : MADDV_D_ENC, MADDV_D_DESC;
 
-def MAX_A_B : MAX_A_B_ENC, MAX_A_B_DESC, Requires<[HasMSA]>;
-def MAX_A_H : MAX_A_H_ENC, MAX_A_H_DESC, Requires<[HasMSA]>;
-def MAX_A_W : MAX_A_W_ENC, MAX_A_W_DESC, Requires<[HasMSA]>;
-def MAX_A_D : MAX_A_D_ENC, MAX_A_D_DESC, Requires<[HasMSA]>;
+def MAX_A_B : MAX_A_B_ENC, MAX_A_B_DESC;
+def MAX_A_H : MAX_A_H_ENC, MAX_A_H_DESC;
+def MAX_A_W : MAX_A_W_ENC, MAX_A_W_DESC;
+def MAX_A_D : MAX_A_D_ENC, MAX_A_D_DESC;
 
-def MAX_S_B : MAX_S_B_ENC, MAX_S_B_DESC, Requires<[HasMSA]>;
-def MAX_S_H : MAX_S_H_ENC, MAX_S_H_DESC, Requires<[HasMSA]>;
-def MAX_S_W : MAX_S_W_ENC, MAX_S_W_DESC, Requires<[HasMSA]>;
-def MAX_S_D : MAX_S_D_ENC, MAX_S_D_DESC, Requires<[HasMSA]>;
+def MAX_S_B : MAX_S_B_ENC, MAX_S_B_DESC;
+def MAX_S_H : MAX_S_H_ENC, MAX_S_H_DESC;
+def MAX_S_W : MAX_S_W_ENC, MAX_S_W_DESC;
+def MAX_S_D : MAX_S_D_ENC, MAX_S_D_DESC;
 
-def MAX_U_B : MAX_U_B_ENC, MAX_U_B_DESC, Requires<[HasMSA]>;
-def MAX_U_H : MAX_U_H_ENC, MAX_U_H_DESC, Requires<[HasMSA]>;
-def MAX_U_W : MAX_U_W_ENC, MAX_U_W_DESC, Requires<[HasMSA]>;
-def MAX_U_D : MAX_U_D_ENC, MAX_U_D_DESC, Requires<[HasMSA]>;
+def MAX_U_B : MAX_U_B_ENC, MAX_U_B_DESC;
+def MAX_U_H : MAX_U_H_ENC, MAX_U_H_DESC;
+def MAX_U_W : MAX_U_W_ENC, MAX_U_W_DESC;
+def MAX_U_D : MAX_U_D_ENC, MAX_U_D_DESC;
 
-def MAXI_S_B : MAXI_S_B_ENC, MAXI_S_B_DESC, Requires<[HasMSA]>;
-def MAXI_S_H : MAXI_S_H_ENC, MAXI_S_H_DESC, Requires<[HasMSA]>;
-def MAXI_S_W : MAXI_S_W_ENC, MAXI_S_W_DESC, Requires<[HasMSA]>;
-def MAXI_S_D : MAXI_S_D_ENC, MAXI_S_D_DESC, Requires<[HasMSA]>;
+def MAXI_S_B : MAXI_S_B_ENC, MAXI_S_B_DESC;
+def MAXI_S_H : MAXI_S_H_ENC, MAXI_S_H_DESC;
+def MAXI_S_W : MAXI_S_W_ENC, MAXI_S_W_DESC;
+def MAXI_S_D : MAXI_S_D_ENC, MAXI_S_D_DESC;
 
-def MAXI_U_B : MAXI_U_B_ENC, MAXI_U_B_DESC, Requires<[HasMSA]>;
-def MAXI_U_H : MAXI_U_H_ENC, MAXI_U_H_DESC, Requires<[HasMSA]>;
-def MAXI_U_W : MAXI_U_W_ENC, MAXI_U_W_DESC, Requires<[HasMSA]>;
-def MAXI_U_D : MAXI_U_D_ENC, MAXI_U_D_DESC, Requires<[HasMSA]>;
+def MAXI_U_B : MAXI_U_B_ENC, MAXI_U_B_DESC;
+def MAXI_U_H : MAXI_U_H_ENC, MAXI_U_H_DESC;
+def MAXI_U_W : MAXI_U_W_ENC, MAXI_U_W_DESC;
+def MAXI_U_D : MAXI_U_D_ENC, MAXI_U_D_DESC;
 
-def MIN_A_B : MIN_A_B_ENC, MIN_A_B_DESC, Requires<[HasMSA]>;
-def MIN_A_H : MIN_A_H_ENC, MIN_A_H_DESC, Requires<[HasMSA]>;
-def MIN_A_W : MIN_A_W_ENC, MIN_A_W_DESC, Requires<[HasMSA]>;
-def MIN_A_D : MIN_A_D_ENC, MIN_A_D_DESC, Requires<[HasMSA]>;
+def MIN_A_B : MIN_A_B_ENC, MIN_A_B_DESC;
+def MIN_A_H : MIN_A_H_ENC, MIN_A_H_DESC;
+def MIN_A_W : MIN_A_W_ENC, MIN_A_W_DESC;
+def MIN_A_D : MIN_A_D_ENC, MIN_A_D_DESC;
 
-def MIN_S_B : MIN_S_B_ENC, MIN_S_B_DESC, Requires<[HasMSA]>;
-def MIN_S_H : MIN_S_H_ENC, MIN_S_H_DESC, Requires<[HasMSA]>;
-def MIN_S_W : MIN_S_W_ENC, MIN_S_W_DESC, Requires<[HasMSA]>;
-def MIN_S_D : MIN_S_D_ENC, MIN_S_D_DESC, Requires<[HasMSA]>;
+def MIN_S_B : MIN_S_B_ENC, MIN_S_B_DESC;
+def MIN_S_H : MIN_S_H_ENC, MIN_S_H_DESC;
+def MIN_S_W : MIN_S_W_ENC, MIN_S_W_DESC;
+def MIN_S_D : MIN_S_D_ENC, MIN_S_D_DESC;
 
-def MIN_U_B : MIN_U_B_ENC, MIN_U_B_DESC, Requires<[HasMSA]>;
-def MIN_U_H : MIN_U_H_ENC, MIN_U_H_DESC, Requires<[HasMSA]>;
-def MIN_U_W : MIN_U_W_ENC, MIN_U_W_DESC, Requires<[HasMSA]>;
-def MIN_U_D : MIN_U_D_ENC, MIN_U_D_DESC, Requires<[HasMSA]>;
+def MIN_U_B : MIN_U_B_ENC, MIN_U_B_DESC;
+def MIN_U_H : MIN_U_H_ENC, MIN_U_H_DESC;
+def MIN_U_W : MIN_U_W_ENC, MIN_U_W_DESC;
+def MIN_U_D : MIN_U_D_ENC, MIN_U_D_DESC;
 
-def MINI_S_B : MINI_S_B_ENC, MINI_S_B_DESC, Requires<[HasMSA]>;
-def MINI_S_H : MINI_S_H_ENC, MINI_S_H_DESC, Requires<[HasMSA]>;
-def MINI_S_W : MINI_S_W_ENC, MINI_S_W_DESC, Requires<[HasMSA]>;
-def MINI_S_D : MINI_S_D_ENC, MINI_S_D_DESC, Requires<[HasMSA]>;
+def MINI_S_B : MINI_S_B_ENC, MINI_S_B_DESC;
+def MINI_S_H : MINI_S_H_ENC, MINI_S_H_DESC;
+def MINI_S_W : MINI_S_W_ENC, MINI_S_W_DESC;
+def MINI_S_D : MINI_S_D_ENC, MINI_S_D_DESC;
 
-def MINI_U_B : MINI_U_B_ENC, MINI_U_B_DESC, Requires<[HasMSA]>;
-def MINI_U_H : MINI_U_H_ENC, MINI_U_H_DESC, Requires<[HasMSA]>;
-def MINI_U_W : MINI_U_W_ENC, MINI_U_W_DESC, Requires<[HasMSA]>;
-def MINI_U_D : MINI_U_D_ENC, MINI_U_D_DESC, Requires<[HasMSA]>;
+def MINI_U_B : MINI_U_B_ENC, MINI_U_B_DESC;
+def MINI_U_H : MINI_U_H_ENC, MINI_U_H_DESC;
+def MINI_U_W : MINI_U_W_ENC, MINI_U_W_DESC;
+def MINI_U_D : MINI_U_D_ENC, MINI_U_D_DESC;
 
-def MOD_S_B : MOD_S_B_ENC, MOD_S_B_DESC, Requires<[HasMSA]>;
-def MOD_S_H : MOD_S_H_ENC, MOD_S_H_DESC, Requires<[HasMSA]>;
-def MOD_S_W : MOD_S_W_ENC, MOD_S_W_DESC, Requires<[HasMSA]>;
-def MOD_S_D : MOD_S_D_ENC, MOD_S_D_DESC, Requires<[HasMSA]>;
+def MOD_S_B : MOD_S_B_ENC, MOD_S_B_DESC;
+def MOD_S_H : MOD_S_H_ENC, MOD_S_H_DESC;
+def MOD_S_W : MOD_S_W_ENC, MOD_S_W_DESC;
+def MOD_S_D : MOD_S_D_ENC, MOD_S_D_DESC;
 
-def MOD_U_B : MOD_U_B_ENC, MOD_U_B_DESC, Requires<[HasMSA]>;
-def MOD_U_H : MOD_U_H_ENC, MOD_U_H_DESC, Requires<[HasMSA]>;
-def MOD_U_W : MOD_U_W_ENC, MOD_U_W_DESC, Requires<[HasMSA]>;
-def MOD_U_D : MOD_U_D_ENC, MOD_U_D_DESC, Requires<[HasMSA]>;
+def MOD_U_B : MOD_U_B_ENC, MOD_U_B_DESC;
+def MOD_U_H : MOD_U_H_ENC, MOD_U_H_DESC;
+def MOD_U_W : MOD_U_W_ENC, MOD_U_W_DESC;
+def MOD_U_D : MOD_U_D_ENC, MOD_U_D_DESC;
 
-def MOVE_V : MOVE_V_ENC, MOVE_V_DESC, Requires<[HasMSA]>;
+def MOVE_V : MOVE_V_ENC, MOVE_V_DESC;
 
-def MSUB_Q_H : MSUB_Q_H_ENC, MSUB_Q_H_DESC, Requires<[HasMSA]>;
-def MSUB_Q_W : MSUB_Q_W_ENC, MSUB_Q_W_DESC, Requires<[HasMSA]>;
+def MSUB_Q_H : MSUB_Q_H_ENC, MSUB_Q_H_DESC;
+def MSUB_Q_W : MSUB_Q_W_ENC, MSUB_Q_W_DESC;
 
-def MSUBR_Q_H : MSUBR_Q_H_ENC, MSUBR_Q_H_DESC, Requires<[HasMSA]>;
-def MSUBR_Q_W : MSUBR_Q_W_ENC, MSUBR_Q_W_DESC, Requires<[HasMSA]>;
+def MSUBR_Q_H : MSUBR_Q_H_ENC, MSUBR_Q_H_DESC;
+def MSUBR_Q_W : MSUBR_Q_W_ENC, MSUBR_Q_W_DESC;
 
-def MSUBV_B : MSUBV_B_ENC, MSUBV_B_DESC, Requires<[HasMSA]>;
-def MSUBV_H : MSUBV_H_ENC, MSUBV_H_DESC, Requires<[HasMSA]>;
-def MSUBV_W : MSUBV_W_ENC, MSUBV_W_DESC, Requires<[HasMSA]>;
-def MSUBV_D : MSUBV_D_ENC, MSUBV_D_DESC, Requires<[HasMSA]>;
+def MSUBV_B : MSUBV_B_ENC, MSUBV_B_DESC;
+def MSUBV_H : MSUBV_H_ENC, MSUBV_H_DESC;
+def MSUBV_W : MSUBV_W_ENC, MSUBV_W_DESC;
+def MSUBV_D : MSUBV_D_ENC, MSUBV_D_DESC;
 
-def MUL_Q_H : MUL_Q_H_ENC, MUL_Q_H_DESC, Requires<[HasMSA]>;
-def MUL_Q_W : MUL_Q_W_ENC, MUL_Q_W_DESC, Requires<[HasMSA]>;
+def MUL_Q_H : MUL_Q_H_ENC, MUL_Q_H_DESC;
+def MUL_Q_W : MUL_Q_W_ENC, MUL_Q_W_DESC;
 
-def MULR_Q_H : MULR_Q_H_ENC, MULR_Q_H_DESC, Requires<[HasMSA]>;
-def MULR_Q_W : MULR_Q_W_ENC, MULR_Q_W_DESC, Requires<[HasMSA]>;
+def MULR_Q_H : MULR_Q_H_ENC, MULR_Q_H_DESC;
+def MULR_Q_W : MULR_Q_W_ENC, MULR_Q_W_DESC;
 
-def MULV_B : MULV_B_ENC, MULV_B_DESC, Requires<[HasMSA]>;
-def MULV_H : MULV_H_ENC, MULV_H_DESC, Requires<[HasMSA]>;
-def MULV_W : MULV_W_ENC, MULV_W_DESC, Requires<[HasMSA]>;
-def MULV_D : MULV_D_ENC, MULV_D_DESC, Requires<[HasMSA]>;
+def MULV_B : MULV_B_ENC, MULV_B_DESC;
+def MULV_H : MULV_H_ENC, MULV_H_DESC;
+def MULV_W : MULV_W_ENC, MULV_W_DESC;
+def MULV_D : MULV_D_ENC, MULV_D_DESC;
 
-def NLOC_B : NLOC_B_ENC, NLOC_B_DESC, Requires<[HasMSA]>;
-def NLOC_H : NLOC_H_ENC, NLOC_H_DESC, Requires<[HasMSA]>;
-def NLOC_W : NLOC_W_ENC, NLOC_W_DESC, Requires<[HasMSA]>;
-def NLOC_D : NLOC_D_ENC, NLOC_D_DESC, Requires<[HasMSA]>;
+def NLOC_B : NLOC_B_ENC, NLOC_B_DESC;
+def NLOC_H : NLOC_H_ENC, NLOC_H_DESC;
+def NLOC_W : NLOC_W_ENC, NLOC_W_DESC;
+def NLOC_D : NLOC_D_ENC, NLOC_D_DESC;
 
-def NLZC_B : NLZC_B_ENC, NLZC_B_DESC, Requires<[HasMSA]>;
-def NLZC_H : NLZC_H_ENC, NLZC_H_DESC, Requires<[HasMSA]>;
-def NLZC_W : NLZC_W_ENC, NLZC_W_DESC, Requires<[HasMSA]>;
-def NLZC_D : NLZC_D_ENC, NLZC_D_DESC, Requires<[HasMSA]>;
+def NLZC_B : NLZC_B_ENC, NLZC_B_DESC;
+def NLZC_H : NLZC_H_ENC, NLZC_H_DESC;
+def NLZC_W : NLZC_W_ENC, NLZC_W_DESC;
+def NLZC_D : NLZC_D_ENC, NLZC_D_DESC;
 
-def NOR_V : NOR_V_ENC, NOR_V_DESC, Requires<[HasMSA]>;
+def NOR_V : NOR_V_ENC, NOR_V_DESC;
 
-def NORI_B : NORI_B_ENC, NORI_B_DESC, Requires<[HasMSA]>;
+def NORI_B : NORI_B_ENC, NORI_B_DESC;
 
-def OR_V : OR_V_ENC, OR_V_DESC, Requires<[HasMSA]>;
+def OR_V : OR_V_ENC, OR_V_DESC;
 
-def ORI_B : ORI_B_ENC, ORI_B_DESC, Requires<[HasMSA]>;
+def ORI_B : ORI_B_ENC, ORI_B_DESC;
 
-def PCKEV_B : PCKEV_B_ENC, PCKEV_B_DESC, Requires<[HasMSA]>;
-def PCKEV_H : PCKEV_H_ENC, PCKEV_H_DESC, Requires<[HasMSA]>;
-def PCKEV_W : PCKEV_W_ENC, PCKEV_W_DESC, Requires<[HasMSA]>;
-def PCKEV_D : PCKEV_D_ENC, PCKEV_D_DESC, Requires<[HasMSA]>;
+def PCKEV_B : PCKEV_B_ENC, PCKEV_B_DESC;
+def PCKEV_H : PCKEV_H_ENC, PCKEV_H_DESC;
+def PCKEV_W : PCKEV_W_ENC, PCKEV_W_DESC;
+def PCKEV_D : PCKEV_D_ENC, PCKEV_D_DESC;
 
-def PCKOD_B : PCKOD_B_ENC, PCKOD_B_DESC, Requires<[HasMSA]>;
-def PCKOD_H : PCKOD_H_ENC, PCKOD_H_DESC, Requires<[HasMSA]>;
-def PCKOD_W : PCKOD_W_ENC, PCKOD_W_DESC, Requires<[HasMSA]>;
-def PCKOD_D : PCKOD_D_ENC, PCKOD_D_DESC, Requires<[HasMSA]>;
+def PCKOD_B : PCKOD_B_ENC, PCKOD_B_DESC;
+def PCKOD_H : PCKOD_H_ENC, PCKOD_H_DESC;
+def PCKOD_W : PCKOD_W_ENC, PCKOD_W_DESC;
+def PCKOD_D : PCKOD_D_ENC, PCKOD_D_DESC;
 
-def PCNT_B : PCNT_B_ENC, PCNT_B_DESC, Requires<[HasMSA]>;
-def PCNT_H : PCNT_H_ENC, PCNT_H_DESC, Requires<[HasMSA]>;
-def PCNT_W : PCNT_W_ENC, PCNT_W_DESC, Requires<[HasMSA]>;
-def PCNT_D : PCNT_D_ENC, PCNT_D_DESC, Requires<[HasMSA]>;
+def PCNT_B : PCNT_B_ENC, PCNT_B_DESC;
+def PCNT_H : PCNT_H_ENC, PCNT_H_DESC;
+def PCNT_W : PCNT_W_ENC, PCNT_W_DESC;
+def PCNT_D : PCNT_D_ENC, PCNT_D_DESC;
 
-def SAT_S_B : SAT_S_B_ENC, SAT_S_B_DESC, Requires<[HasMSA]>;
-def SAT_S_H : SAT_S_H_ENC, SAT_S_H_DESC, Requires<[HasMSA]>;
-def SAT_S_W : SAT_S_W_ENC, SAT_S_W_DESC, Requires<[HasMSA]>;
-def SAT_S_D : SAT_S_D_ENC, SAT_S_D_DESC, Requires<[HasMSA]>;
+def SAT_S_B : SAT_S_B_ENC, SAT_S_B_DESC;
+def SAT_S_H : SAT_S_H_ENC, SAT_S_H_DESC;
+def SAT_S_W : SAT_S_W_ENC, SAT_S_W_DESC;
+def SAT_S_D : SAT_S_D_ENC, SAT_S_D_DESC;
 
-def SAT_U_B : SAT_U_B_ENC, SAT_U_B_DESC, Requires<[HasMSA]>;
-def SAT_U_H : SAT_U_H_ENC, SAT_U_H_DESC, Requires<[HasMSA]>;
-def SAT_U_W : SAT_U_W_ENC, SAT_U_W_DESC, Requires<[HasMSA]>;
-def SAT_U_D : SAT_U_D_ENC, SAT_U_D_DESC, Requires<[HasMSA]>;
+def SAT_U_B : SAT_U_B_ENC, SAT_U_B_DESC;
+def SAT_U_H : SAT_U_H_ENC, SAT_U_H_DESC;
+def SAT_U_W : SAT_U_W_ENC, SAT_U_W_DESC;
+def SAT_U_D : SAT_U_D_ENC, SAT_U_D_DESC;
 
-def SHF_B : SHF_B_ENC, SHF_B_DESC, Requires<[HasMSA]>;
-def SHF_H : SHF_H_ENC, SHF_H_DESC, Requires<[HasMSA]>;
-def SHF_W : SHF_W_ENC, SHF_W_DESC, Requires<[HasMSA]>;
+def SHF_B : SHF_B_ENC, SHF_B_DESC;
+def SHF_H : SHF_H_ENC, SHF_H_DESC;
+def SHF_W : SHF_W_ENC, SHF_W_DESC;
 
-def SLD_B : SLD_B_ENC, SLD_B_DESC, Requires<[HasMSA]>;
-def SLD_H : SLD_H_ENC, SLD_H_DESC, Requires<[HasMSA]>;
-def SLD_W : SLD_W_ENC, SLD_W_DESC, Requires<[HasMSA]>;
-def SLD_D : SLD_D_ENC, SLD_D_DESC, Requires<[HasMSA]>;
+def SLD_B : SLD_B_ENC, SLD_B_DESC;
+def SLD_H : SLD_H_ENC, SLD_H_DESC;
+def SLD_W : SLD_W_ENC, SLD_W_DESC;
+def SLD_D : SLD_D_ENC, SLD_D_DESC;
 
-def SLDI_B : SLDI_B_ENC, SLDI_B_DESC, Requires<[HasMSA]>;
-def SLDI_H : SLDI_H_ENC, SLDI_H_DESC, Requires<[HasMSA]>;
-def SLDI_W : SLDI_W_ENC, SLDI_W_DESC, Requires<[HasMSA]>;
-def SLDI_D : SLDI_D_ENC, SLDI_D_DESC, Requires<[HasMSA]>;
+def SLDI_B : SLDI_B_ENC, SLDI_B_DESC;
+def SLDI_H : SLDI_H_ENC, SLDI_H_DESC;
+def SLDI_W : SLDI_W_ENC, SLDI_W_DESC;
+def SLDI_D : SLDI_D_ENC, SLDI_D_DESC;
 
-def SLL_B : SLL_B_ENC, SLL_B_DESC, Requires<[HasMSA]>;
-def SLL_H : SLL_H_ENC, SLL_H_DESC, Requires<[HasMSA]>;
-def SLL_W : SLL_W_ENC, SLL_W_DESC, Requires<[HasMSA]>;
-def SLL_D : SLL_D_ENC, SLL_D_DESC, Requires<[HasMSA]>;
+def SLL_B : SLL_B_ENC, SLL_B_DESC;
+def SLL_H : SLL_H_ENC, SLL_H_DESC;
+def SLL_W : SLL_W_ENC, SLL_W_DESC;
+def SLL_D : SLL_D_ENC, SLL_D_DESC;
 
-def SLLI_B : SLLI_B_ENC, SLLI_B_DESC, Requires<[HasMSA]>;
-def SLLI_H : SLLI_H_ENC, SLLI_H_DESC, Requires<[HasMSA]>;
-def SLLI_W : SLLI_W_ENC, SLLI_W_DESC, Requires<[HasMSA]>;
-def SLLI_D : SLLI_D_ENC, SLLI_D_DESC, Requires<[HasMSA]>;
+def SLLI_B : SLLI_B_ENC, SLLI_B_DESC;
+def SLLI_H : SLLI_H_ENC, SLLI_H_DESC;
+def SLLI_W : SLLI_W_ENC, SLLI_W_DESC;
+def SLLI_D : SLLI_D_ENC, SLLI_D_DESC;
 
-def SPLAT_B : SPLAT_B_ENC, SPLAT_B_DESC, Requires<[HasMSA]>;
-def SPLAT_H : SPLAT_H_ENC, SPLAT_H_DESC, Requires<[HasMSA]>;
-def SPLAT_W : SPLAT_W_ENC, SPLAT_W_DESC, Requires<[HasMSA]>;
-def SPLAT_D : SPLAT_D_ENC, SPLAT_D_DESC, Requires<[HasMSA]>;
+def SPLAT_B : SPLAT_B_ENC, SPLAT_B_DESC;
+def SPLAT_H : SPLAT_H_ENC, SPLAT_H_DESC;
+def SPLAT_W : SPLAT_W_ENC, SPLAT_W_DESC;
+def SPLAT_D : SPLAT_D_ENC, SPLAT_D_DESC;
 
-def SPLATI_B : SPLATI_B_ENC, SPLATI_B_DESC, Requires<[HasMSA]>;
-def SPLATI_H : SPLATI_H_ENC, SPLATI_H_DESC, Requires<[HasMSA]>;
-def SPLATI_W : SPLATI_W_ENC, SPLATI_W_DESC, Requires<[HasMSA]>;
-def SPLATI_D : SPLATI_D_ENC, SPLATI_D_DESC, Requires<[HasMSA]>;
+def SPLATI_B : SPLATI_B_ENC, SPLATI_B_DESC;
+def SPLATI_H : SPLATI_H_ENC, SPLATI_H_DESC;
+def SPLATI_W : SPLATI_W_ENC, SPLATI_W_DESC;
+def SPLATI_D : SPLATI_D_ENC, SPLATI_D_DESC;
 
-def SRA_B : SRA_B_ENC, SRA_B_DESC, Requires<[HasMSA]>;
-def SRA_H : SRA_H_ENC, SRA_H_DESC, Requires<[HasMSA]>;
-def SRA_W : SRA_W_ENC, SRA_W_DESC, Requires<[HasMSA]>;
-def SRA_D : SRA_D_ENC, SRA_D_DESC, Requires<[HasMSA]>;
+def SRA_B : SRA_B_ENC, SRA_B_DESC;
+def SRA_H : SRA_H_ENC, SRA_H_DESC;
+def SRA_W : SRA_W_ENC, SRA_W_DESC;
+def SRA_D : SRA_D_ENC, SRA_D_DESC;
 
-def SRAI_B : SRAI_B_ENC, SRAI_B_DESC, Requires<[HasMSA]>;
-def SRAI_H : SRAI_H_ENC, SRAI_H_DESC, Requires<[HasMSA]>;
-def SRAI_W : SRAI_W_ENC, SRAI_W_DESC, Requires<[HasMSA]>;
-def SRAI_D : SRAI_D_ENC, SRAI_D_DESC, Requires<[HasMSA]>;
+def SRAI_B : SRAI_B_ENC, SRAI_B_DESC;
+def SRAI_H : SRAI_H_ENC, SRAI_H_DESC;
+def SRAI_W : SRAI_W_ENC, SRAI_W_DESC;
+def SRAI_D : SRAI_D_ENC, SRAI_D_DESC;
 
-def SRAR_B : SRAR_B_ENC, SRAR_B_DESC, Requires<[HasMSA]>;
-def SRAR_H : SRAR_H_ENC, SRAR_H_DESC, Requires<[HasMSA]>;
-def SRAR_W : SRAR_W_ENC, SRAR_W_DESC, Requires<[HasMSA]>;
-def SRAR_D : SRAR_D_ENC, SRAR_D_DESC, Requires<[HasMSA]>;
+def SRAR_B : SRAR_B_ENC, SRAR_B_DESC;
+def SRAR_H : SRAR_H_ENC, SRAR_H_DESC;
+def SRAR_W : SRAR_W_ENC, SRAR_W_DESC;
+def SRAR_D : SRAR_D_ENC, SRAR_D_DESC;
 
-def SRARI_B : SRARI_B_ENC, SRARI_B_DESC, Requires<[HasMSA]>;
-def SRARI_H : SRARI_H_ENC, SRARI_H_DESC, Requires<[HasMSA]>;
-def SRARI_W : SRARI_W_ENC, SRARI_W_DESC, Requires<[HasMSA]>;
-def SRARI_D : SRARI_D_ENC, SRARI_D_DESC, Requires<[HasMSA]>;
+def SRARI_B : SRARI_B_ENC, SRARI_B_DESC;
+def SRARI_H : SRARI_H_ENC, SRARI_H_DESC;
+def SRARI_W : SRARI_W_ENC, SRARI_W_DESC;
+def SRARI_D : SRARI_D_ENC, SRARI_D_DESC;
 
-def SRL_B : SRL_B_ENC, SRL_B_DESC, Requires<[HasMSA]>;
-def SRL_H : SRL_H_ENC, SRL_H_DESC, Requires<[HasMSA]>;
-def SRL_W : SRL_W_ENC, SRL_W_DESC, Requires<[HasMSA]>;
-def SRL_D : SRL_D_ENC, SRL_D_DESC, Requires<[HasMSA]>;
+def SRL_B : SRL_B_ENC, SRL_B_DESC;
+def SRL_H : SRL_H_ENC, SRL_H_DESC;
+def SRL_W : SRL_W_ENC, SRL_W_DESC;
+def SRL_D : SRL_D_ENC, SRL_D_DESC;
 
-def SRLI_B : SRLI_B_ENC, SRLI_B_DESC, Requires<[HasMSA]>;
-def SRLI_H : SRLI_H_ENC, SRLI_H_DESC, Requires<[HasMSA]>;
-def SRLI_W : SRLI_W_ENC, SRLI_W_DESC, Requires<[HasMSA]>;
-def SRLI_D : SRLI_D_ENC, SRLI_D_DESC, Requires<[HasMSA]>;
+def SRLI_B : SRLI_B_ENC, SRLI_B_DESC;
+def SRLI_H : SRLI_H_ENC, SRLI_H_DESC;
+def SRLI_W : SRLI_W_ENC, SRLI_W_DESC;
+def SRLI_D : SRLI_D_ENC, SRLI_D_DESC;
 
-def SRLR_B : SRLR_B_ENC, SRLR_B_DESC, Requires<[HasMSA]>;
-def SRLR_H : SRLR_H_ENC, SRLR_H_DESC, Requires<[HasMSA]>;
-def SRLR_W : SRLR_W_ENC, SRLR_W_DESC, Requires<[HasMSA]>;
-def SRLR_D : SRLR_D_ENC, SRLR_D_DESC, Requires<[HasMSA]>;
+def SRLR_B : SRLR_B_ENC, SRLR_B_DESC;
+def SRLR_H : SRLR_H_ENC, SRLR_H_DESC;
+def SRLR_W : SRLR_W_ENC, SRLR_W_DESC;
+def SRLR_D : SRLR_D_ENC, SRLR_D_DESC;
 
-def SRLRI_B : SRLRI_B_ENC, SRLRI_B_DESC, Requires<[HasMSA]>;
-def SRLRI_H : SRLRI_H_ENC, SRLRI_H_DESC, Requires<[HasMSA]>;
-def SRLRI_W : SRLRI_W_ENC, SRLRI_W_DESC, Requires<[HasMSA]>;
-def SRLRI_D : SRLRI_D_ENC, SRLRI_D_DESC, Requires<[HasMSA]>;
+def SRLRI_B : SRLRI_B_ENC, SRLRI_B_DESC;
+def SRLRI_H : SRLRI_H_ENC, SRLRI_H_DESC;
+def SRLRI_W : SRLRI_W_ENC, SRLRI_W_DESC;
+def SRLRI_D : SRLRI_D_ENC, SRLRI_D_DESC;
 
-def ST_B: ST_B_ENC, ST_B_DESC, Requires<[HasMSA]>;
-def ST_H: ST_H_ENC, ST_H_DESC, Requires<[HasMSA]>;
-def ST_W: ST_W_ENC, ST_W_DESC, Requires<[HasMSA]>;
-def ST_D: ST_D_ENC, ST_D_DESC, Requires<[HasMSA]>;
+def ST_B: ST_B_ENC, ST_B_DESC;
+def ST_H: ST_H_ENC, ST_H_DESC;
+def ST_W: ST_W_ENC, ST_W_DESC;
+def ST_D: ST_D_ENC, ST_D_DESC;
 
-def STX_B: STX_B_ENC, STX_B_DESC, Requires<[HasMSA]>;
-def STX_H: STX_H_ENC, STX_H_DESC, Requires<[HasMSA]>;
-def STX_W: STX_W_ENC, STX_W_DESC, Requires<[HasMSA]>;
-def STX_D: STX_D_ENC, STX_D_DESC, Requires<[HasMSA]>;
+def STX_B: STX_B_ENC, STX_B_DESC;
+def STX_H: STX_H_ENC, STX_H_DESC;
+def STX_W: STX_W_ENC, STX_W_DESC;
+def STX_D: STX_D_ENC, STX_D_DESC;
 
-def SUBS_S_B : SUBS_S_B_ENC, SUBS_S_B_DESC, Requires<[HasMSA]>;
-def SUBS_S_H : SUBS_S_H_ENC, SUBS_S_H_DESC, Requires<[HasMSA]>;
-def SUBS_S_W : SUBS_S_W_ENC, SUBS_S_W_DESC, Requires<[HasMSA]>;
-def SUBS_S_D : SUBS_S_D_ENC, SUBS_S_D_DESC, Requires<[HasMSA]>;
+def SUBS_S_B : SUBS_S_B_ENC, SUBS_S_B_DESC;
+def SUBS_S_H : SUBS_S_H_ENC, SUBS_S_H_DESC;
+def SUBS_S_W : SUBS_S_W_ENC, SUBS_S_W_DESC;
+def SUBS_S_D : SUBS_S_D_ENC, SUBS_S_D_DESC;
 
-def SUBS_U_B : SUBS_U_B_ENC, SUBS_U_B_DESC, Requires<[HasMSA]>;
-def SUBS_U_H : SUBS_U_H_ENC, SUBS_U_H_DESC, Requires<[HasMSA]>;
-def SUBS_U_W : SUBS_U_W_ENC, SUBS_U_W_DESC, Requires<[HasMSA]>;
-def SUBS_U_D : SUBS_U_D_ENC, SUBS_U_D_DESC, Requires<[HasMSA]>;
+def SUBS_U_B : SUBS_U_B_ENC, SUBS_U_B_DESC;
+def SUBS_U_H : SUBS_U_H_ENC, SUBS_U_H_DESC;
+def SUBS_U_W : SUBS_U_W_ENC, SUBS_U_W_DESC;
+def SUBS_U_D : SUBS_U_D_ENC, SUBS_U_D_DESC;
 
-def SUBSUS_U_B : SUBSUS_U_B_ENC, SUBSUS_U_B_DESC, Requires<[HasMSA]>;
-def SUBSUS_U_H : SUBSUS_U_H_ENC, SUBSUS_U_H_DESC, Requires<[HasMSA]>;
-def SUBSUS_U_W : SUBSUS_U_W_ENC, SUBSUS_U_W_DESC, Requires<[HasMSA]>;
-def SUBSUS_U_D : SUBSUS_U_D_ENC, SUBSUS_U_D_DESC, Requires<[HasMSA]>;
+def SUBSUS_U_B : SUBSUS_U_B_ENC, SUBSUS_U_B_DESC;
+def SUBSUS_U_H : SUBSUS_U_H_ENC, SUBSUS_U_H_DESC;
+def SUBSUS_U_W : SUBSUS_U_W_ENC, SUBSUS_U_W_DESC;
+def SUBSUS_U_D : SUBSUS_U_D_ENC, SUBSUS_U_D_DESC;
 
-def SUBSUU_S_B : SUBSUU_S_B_ENC, SUBSUU_S_B_DESC, Requires<[HasMSA]>;
-def SUBSUU_S_H : SUBSUU_S_H_ENC, SUBSUU_S_H_DESC, Requires<[HasMSA]>;
-def SUBSUU_S_W : SUBSUU_S_W_ENC, SUBSUU_S_W_DESC, Requires<[HasMSA]>;
-def SUBSUU_S_D : SUBSUU_S_D_ENC, SUBSUU_S_D_DESC, Requires<[HasMSA]>;
+def SUBSUU_S_B : SUBSUU_S_B_ENC, SUBSUU_S_B_DESC;
+def SUBSUU_S_H : SUBSUU_S_H_ENC, SUBSUU_S_H_DESC;
+def SUBSUU_S_W : SUBSUU_S_W_ENC, SUBSUU_S_W_DESC;
+def SUBSUU_S_D : SUBSUU_S_D_ENC, SUBSUU_S_D_DESC;
 
-def SUBV_B : SUBV_B_ENC, SUBV_B_DESC, Requires<[HasMSA]>;
-def SUBV_H : SUBV_H_ENC, SUBV_H_DESC, Requires<[HasMSA]>;
-def SUBV_W : SUBV_W_ENC, SUBV_W_DESC, Requires<[HasMSA]>;
-def SUBV_D : SUBV_D_ENC, SUBV_D_DESC, Requires<[HasMSA]>;
+def SUBV_B : SUBV_B_ENC, SUBV_B_DESC;
+def SUBV_H : SUBV_H_ENC, SUBV_H_DESC;
+def SUBV_W : SUBV_W_ENC, SUBV_W_DESC;
+def SUBV_D : SUBV_D_ENC, SUBV_D_DESC;
 
-def SUBVI_B : SUBVI_B_ENC, SUBVI_B_DESC, Requires<[HasMSA]>;
-def SUBVI_H : SUBVI_H_ENC, SUBVI_H_DESC, Requires<[HasMSA]>;
-def SUBVI_W : SUBVI_W_ENC, SUBVI_W_DESC, Requires<[HasMSA]>;
-def SUBVI_D : SUBVI_D_ENC, SUBVI_D_DESC, Requires<[HasMSA]>;
+def SUBVI_B : SUBVI_B_ENC, SUBVI_B_DESC;
+def SUBVI_H : SUBVI_H_ENC, SUBVI_H_DESC;
+def SUBVI_W : SUBVI_W_ENC, SUBVI_W_DESC;
+def SUBVI_D : SUBVI_D_ENC, SUBVI_D_DESC;
 
-def VSHF_B : VSHF_B_ENC, VSHF_B_DESC, Requires<[HasMSA]>;
-def VSHF_H : VSHF_H_ENC, VSHF_H_DESC, Requires<[HasMSA]>;
-def VSHF_W : VSHF_W_ENC, VSHF_W_DESC, Requires<[HasMSA]>;
-def VSHF_D : VSHF_D_ENC, VSHF_D_DESC, Requires<[HasMSA]>;
+def VSHF_B : VSHF_B_ENC, VSHF_B_DESC;
+def VSHF_H : VSHF_H_ENC, VSHF_H_DESC;
+def VSHF_W : VSHF_W_ENC, VSHF_W_DESC;
+def VSHF_D : VSHF_D_ENC, VSHF_D_DESC;
 
-def XOR_V : XOR_V_ENC, XOR_V_DESC, Requires<[HasMSA]>;
+def XOR_V : XOR_V_ENC, XOR_V_DESC;
 
-def XORI_B : XORI_B_ENC, XORI_B_DESC, Requires<[HasMSA]>;
+def XORI_B : XORI_B_ENC, XORI_B_DESC;
 
 // Patterns.
 class MSAPat<dag pattern, dag result, list<Predicate> pred = [HasMSA]> :
