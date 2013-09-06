@@ -54,11 +54,11 @@ entry:
 !3 = metadata !{metadata !5, metadata !10, metadata !20}
 !5 = metadata !{i32 786478, metadata !6, metadata !6, metadata !"foo", metadata !"foo", metadata !"_Z3fooi", i32 7, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, i32 (i32)* @_Z3fooi, null, null, metadata !1, i32 7} ; [ DW_TAG_subprogram ] [line 7] [def] [foo]
 !6 = metadata !{i32 786473, metadata !37} ; [ DW_TAG_file_type ]
-!7 = metadata !{i32 786453, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !8, i32 0, i32 0, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!7 = metadata !{i32 786453, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !8, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !8 = metadata !{metadata !9}
 !9 = metadata !{i32 786468, null, null, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
 !10 = metadata !{i32 786478, metadata !6, null, metadata !"A", metadata !"A", metadata !"_ZN1AC1Ev", i32 3, metadata !11, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, void (%class.A*)* @_ZN1AC1Ev, null, metadata !17, metadata !1, i32 3} ; [ DW_TAG_subprogram ] [line 3] [def] [A]
-!11 = metadata !{i32 786453, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !12, i32 0, i32 0, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!11 = metadata !{i32 786453, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !12, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !12 = metadata !{null, metadata !13}
 !13 = metadata !{i32 786447, i32 0, metadata !"", i32 0, i32 0, i64 64, i64 64, i64 0, i32 1088, metadata !14} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from A]
 !14 = metadata !{i32 786434, metadata !37, null, metadata !"A", i32 1, i64 32, i64 32, i32 0, i32 0, null, metadata !15, i32 0, null, null, null} ; [ DW_TAG_class_type ] [A] [line 1, size 32, align 32, offset 0] [def] [from ]

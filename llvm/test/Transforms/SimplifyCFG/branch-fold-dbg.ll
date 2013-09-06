@@ -41,10 +41,10 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 
 !llvm.dbg.sp = !{!0}
 
-!0 = metadata !{i32 589870, metadata !15, metadata !1, metadata !"foo", metadata !"foo", metadata !"", i32 231, metadata !3, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 false, void (i32)* @foo, null, null, null, i32 0} ; [ DW_TAG_subprogram ]
+!0 = metadata !{i32 589870, metadata !15, metadata !1, metadata !"foo", metadata !"foo", metadata !"", i32 231, metadata !3, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, void (i32)* @foo, null, null, null, i32 0} ; [ DW_TAG_subprogram ] [line 231] [def] [scope 0] [foo]
 !1 = metadata !{i32 589865, metadata !15} ; [ DW_TAG_file_type ]
 !2 = metadata !{i32 589841, metadata !15, i32 12, metadata !"clang (trunk 129006)", i1 true, metadata !"", i32 0, metadata !4, metadata !4, null, null, null, metadata !""} ; [ DW_TAG_compile_unit ]
-!3 = metadata !{i32 589845, metadata !15, metadata !1, metadata !"", i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !4, i32 0, i32 0, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!3 = metadata !{i32 589845, metadata !15, metadata !1, metadata !"", i32 0, i64 0, i64 0, i32 0, i32 0, null, metadata !4, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !4 = metadata !{null}
 !5 = metadata !{i32 131, i32 2, metadata !0, null}
 !6 = metadata !{i32 134, i32 2, metadata !0, null}

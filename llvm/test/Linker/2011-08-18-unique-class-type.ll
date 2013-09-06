@@ -23,9 +23,9 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 !1 = metadata !{metadata !2}
 !2 = metadata !{i32 0}
 !3 = metadata !{metadata !5}
-!5 = metadata !{i32 720942, metadata !16, metadata !6, metadata !"foo", metadata !"foo", metadata !"_Z3fooN2N11AE", i32 4, metadata !7, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 false, void ()* @_Z3fooN2N11AE, null, null, null, i32 0} ; [ DW_TAG_subprogram ]
+!5 = metadata !{i32 720942, metadata !16, metadata !6, metadata !"foo", metadata !"foo", metadata !"_Z3fooN2N11AE", i32 4, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, void ()* @_Z3fooN2N11AE, null, null, null, i32 0} ; [ DW_TAG_subprogram ] [line 4] [def] [scope 0] [foo]
 !6 = metadata !{i32 720937, metadata !16} ; [ DW_TAG_file_type ]
-!7 = metadata !{i32 720917, metadata !16, metadata !6, metadata !"", i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !8, i32 0, i32 0, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!7 = metadata !{i32 720917, metadata !16, metadata !6, metadata !"", i32 0, i64 0, i64 0, i32 0, i32 0, null, metadata !8, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !8 = metadata !{null}
 !9 = metadata !{i32 721153, metadata !5, metadata !"mya", metadata !6, i32 16777220, metadata !10, i32 0, i32 0} ; [ DW_TAG_arg_variable ]
 !10 = metadata !{i32 720898, metadata !17, metadata !11, metadata !"A", i32 3, i64 8, i64 8, i32 0, i32 0, null, metadata !2, i32 0, null, null, null} ; [ DW_TAG_class_type ] [A] [line 3, size 8, align 8, offset 0] [def] [from ]

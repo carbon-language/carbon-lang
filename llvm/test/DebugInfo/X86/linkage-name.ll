@@ -31,7 +31,7 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 !3 = metadata !{metadata !5}
 !5 = metadata !{i32 786478, metadata !6, null, metadata !"a", metadata !"a", metadata !"_ZN1A1aEi", i32 5, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, i32 (%class.A*, i32)* @_ZN1A1aEi, null, metadata !13, metadata !16, i32 5} ; [ DW_TAG_subprogram ]
 !6 = metadata !{i32 786473, metadata !28} ; [ DW_TAG_file_type ]
-!7 = metadata !{i32 786453, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !8, i32 0, i32 0, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!7 = metadata !{i32 786453, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !8, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !8 = metadata !{metadata !9, metadata !10, metadata !9}
 !9 = metadata !{i32 786468, null, null, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
 !10 = metadata !{i32 786447, i32 0, metadata !"", i32 0, i32 0, i64 64, i64 64, i64 0, i32 64, metadata !11} ; [ DW_TAG_pointer_type ]

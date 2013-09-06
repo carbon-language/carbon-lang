@@ -79,10 +79,10 @@ for.end:
 
 !llvm.dbg.sp = !{!0}
 
-!0 = metadata !{i32 589870, metadata !18, metadata !1, metadata !"tak", metadata !"tak", metadata !"", i32 32, metadata !3, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 false, i32 (i32, i32, i32)* @tak, null, null, null, i32 0} ; [ DW_TAG_subprogram ]
+!0 = metadata !{i32 589870, metadata !18, metadata !1, metadata !"tak", metadata !"tak", metadata !"", i32 32, metadata !3, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, i32 (i32, i32, i32)* @tak, null, null, null, i32 0} ; [ DW_TAG_subprogram ] [line 32] [def] [scope 0] [tak]
 !1 = metadata !{i32 589865, metadata !18} ; [ DW_TAG_file_type ]
 !2 = metadata !{i32 589841, metadata !18, i32 12, metadata !"clang version 2.9 (trunk 125492)", i1 true, metadata !"", i32 0, metadata !19, metadata !19, null, null, null, metadata !""} ; [ DW_TAG_compile_unit ]
-!3 = metadata !{i32 589845, metadata !18, metadata !1, metadata !"", i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !4, i32 0, i32 0, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!3 = metadata !{i32 589845, metadata !18, metadata !1, metadata !"", i32 0, i64 0, i64 0, i32 0, i32 0, null, metadata !4, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !4 = metadata !{metadata !5}
 !5 = metadata !{i32 589860, null, metadata !2, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
 !6 = metadata !{i32 590081, metadata !0, metadata !"x", metadata !1, i32 32, metadata !5, i32 0} ; [ DW_TAG_arg_variable ]

@@ -80,7 +80,7 @@ define internal void @"__24-[Main initWithContext:]_block_invoke_2"(i8* %.block_
 !0 = metadata !{i32 786449, metadata !107, i32 16, metadata !"clang version 3.3 ", i1 false, metadata !"", i32 2, metadata !2, metadata !4, metadata !23, metadata !15,  metadata !15, metadata !""} ; [ DW_TAG_compile_unit ] [llvm/tools/clang/test/CodeGenObjC/debug-info-block-captured-self.m] [DW_LANG_ObjC]
 !1 = metadata !{i32 786473, metadata !107} ; [ DW_TAG_file_type ]
 !2 = metadata !{metadata !3}
-!3 = metadata !{i32 786436, metadata !107, null, metadata !"", i32 20, i64 32, i64 32, i32 0, i32 0, null, metadata !4, i32 0, i32 0, null, null} ; [ DW_TAG_enumeration_type ] [line 20, size 32, align 32, offset 0] [def] [from ]
+!3 = metadata !{i32 786436, metadata !107, null, metadata !"", i32 20, i64 32, i64 32, i32 0, i32 0, null, metadata !4, i32 0, null, null, null} ; [ DW_TAG_enumeration_type ] [line 20, size 32, align 32, offset 0] [def] [from ]
 !4 = metadata !{}
 !15 = metadata !{i32 0}
 !23 = metadata !{metadata !38, metadata !42}
@@ -91,9 +91,9 @@ define internal void @"__24-[Main initWithContext:]_block_invoke_2"(i8* %.block_
 !31 = metadata !{i32 786445, metadata !107, metadata !29, metadata !"isa", i32 0, i64 64, i64 0, i64 0, i32 0, metadata !32} ; [ DW_TAG_member ] [isa] [line 0, size 64, align 0, offset 0] [from ]
 !32 = metadata !{i32 786447, null, null, metadata !"", i32 0, i64 64, i64 0, i64 0, i32 0, metadata !33} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 0, offset 0] [from objc_class]
 !33 = metadata !{i32 786451, metadata !107, null, metadata !"objc_class", i32 0, i64 0, i64 0, i32 0, i32 4, null, null, i32 0, null, null, null} ; [ DW_TAG_structure_type ] [objc_class] [line 0, size 0, align 0, offset 0] [decl] [from ]
-!34 = metadata !{i32 786451, metadata !107, null, metadata !"Main", i32 23, i64 0, i64 0, i32 0, i32 1092, i32 0, i32 0, i32 16, null, null, null} ; [ DW_TAG_structure_type ] [Main] [line 23, size 0, align 0, offset 0] [artificial] [decl] [from ]
+!34 = metadata !{i32 786451, metadata !107, null, metadata !"Main", i32 23, i64 0, i64 0, i32 0, i32 1092, null, i32 0, i32 16, null, null, null} ; [ DW_TAG_structure_type ] [Main] [line 23, size 0, align 0, offset 0] [artificial] [decl] [from ]
 !38 = metadata !{i32 786478, metadata !1, metadata !1, metadata !"__24-[Main initWithContext:]_block_invoke", metadata !"__24-[Main initWithContext:]_block_invoke", metadata !"", i32 33, metadata !39, i1 true, i1 true, i32 0, i32 0, null, i32 256, i1 false, void (i8*, i8*)* @"__24-[Main initWithContext:]_block_invoke", null, null, metadata !15, i32 33} ; [ DW_TAG_subprogram ] [line 33] [local] [def] [__24-[Main initWithContext:]_block_invoke]
-!39 = metadata !{i32 786453, null, null, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !40, i32 0, i32 0, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!39 = metadata !{i32 786453, null, null, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !40, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !40 = metadata !{null, metadata !41, metadata !27}
 !41 = metadata !{i32 786447, null, null, metadata !"", i32 0, i64 64, i64 64, i64 0, i32 0, null} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from ]
 !42 = metadata !{i32 786478, metadata !1, metadata !1, metadata !"__24-[Main initWithContext:]_block_invoke_2", metadata !"__24-[Main initWithContext:]_block_invoke_2", metadata !"", i32 35, metadata !39, i1 true, i1 true, i32 0, i32 0, null, i32 256, i1 false, void (i8*, i8*)* @"__24-[Main initWithContext:]_block_invoke_2", null, null, metadata !15, i32 35} ; [ DW_TAG_subprogram ] [line 35] [local] [def] [__24-[Main initWithContext:]_block_invoke_2]

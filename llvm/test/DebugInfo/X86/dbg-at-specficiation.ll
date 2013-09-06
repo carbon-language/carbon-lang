@@ -12,7 +12,7 @@
 !3 = metadata !{metadata !5}
 !5 = metadata !{i32 720948, i32 0, null, metadata !"a", metadata !"a", metadata !"", metadata !6, i32 1, metadata !7, i32 0, i32 1, [10 x i32]* @a, null} ; [ DW_TAG_variable ]
 !6 = metadata !{i32 720937, metadata !11} ; [ DW_TAG_file_type ]
-!7 = metadata !{i32 720897, null, metadata !"", null, i32 0, i64 320, i64 32, i32 0, i32 0, metadata !8, metadata !9, i32 0, i32 0, null, null} ; [ DW_TAG_array_type ] [line 0, size 320, align 32, offset 0] [from int]
+!7 = metadata !{i32 720897, null, metadata !"", null, i32 0, i64 320, i64 32, i32 0, i32 0, metadata !8, metadata !9, i32 0, null, null, null} ; [ DW_TAG_array_type ] [line 0, size 320, align 32, offset 0] [from int]
 !8 = metadata !{i32 720932, null, null, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
 !9 = metadata !{metadata !10}
 !10 = metadata !{i32 720929, i64 0, i64 10}        ; [ DW_TAG_subrange_type ]

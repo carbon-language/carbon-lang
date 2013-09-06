@@ -34,7 +34,7 @@ declare void @llvm.stackrestore(i8*) nounwind
 !3 = metadata !{metadata !5}
 !5 = metadata !{i32 786478, metadata !26, metadata !0, metadata !"foo", metadata !"foo", metadata !"", i32 6, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, i32 (i32*)* @foo, null, null, metadata !12, i32 0} ; [ DW_TAG_subprogram ]
 !6 = metadata !{i32 786473, metadata !26} ; [ DW_TAG_file_type ]
-!7 = metadata !{i32 786453, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !8, i32 0, i32 0, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!7 = metadata !{i32 786453, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !8, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !8 = metadata !{metadata !9, metadata !10}
 !9 = metadata !{i32 786468, null, null, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
 !10 = metadata !{i32 786447, null, metadata !"", null, i32 0, i64 64, i64 64, i64 0, i32 0, metadata !11} ; [ DW_TAG_pointer_type ]
@@ -46,7 +46,7 @@ declare void @llvm.stackrestore(i8*) nounwind
 !16 = metadata !{i32 7, i32 13, metadata !17, null}
 !17 = metadata !{i32 786443, metadata !26, metadata !5, i32 6, i32 1, i32 0} ; [ DW_TAG_lexical_block ]
 !18 = metadata !{i32 786688, metadata !17, metadata !"a", metadata !6, i32 7, metadata !19, i32 0, i32 0} ; [ DW_TAG_auto_variable ]
-!19 = metadata !{i32 786433, null, metadata !"", null, i32 0, i64 0, i64 8, i32 0, i32 0, metadata !20, metadata !21, i32 0, i32 0, null, null} ; [ DW_TAG_array_type ] [line 0, size 0, align 8, offset 0] [from char]
+!19 = metadata !{i32 786433, null, metadata !"", null, i32 0, i64 0, i64 8, i32 0, i32 0, metadata !20, metadata !21, i32 0, null, null, null} ; [ DW_TAG_array_type ] [line 0, size 0, align 8, offset 0] [from char]
 !20 = metadata !{i32 786468, null, null, metadata !"char", i32 0, i64 8, i64 8, i64 0, i32 0, i32 6} ; [ DW_TAG_base_type ]
 !21 = metadata !{metadata !22}
 !22 = metadata !{i32 786465, i64 0, i64 -1}        ; [ DW_TAG_subrange_type ]
