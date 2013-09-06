@@ -281,3 +281,8 @@ int v5()[[gnu::unused]]; // expected-warning {{attribute 'unused' ignored}}
 [[attribute_declaration]]; // expected-warning {{unknown attribute 'attribute_declaration' ignored}}
 [[noreturn]]; // expected-error {{'noreturn' attribute only applies to functions and methods}}
 [[carries_dependency]]; // expected-error {{'carries_dependency' attribute only applies to functions, methods, and parameters}}
+
+class A {
+  A([[gnu::unused]] int a);
+};
+A::A([[gnu::unused]] int a) {}

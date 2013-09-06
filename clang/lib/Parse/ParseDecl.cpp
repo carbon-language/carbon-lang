@@ -4234,6 +4234,15 @@ bool Parser::isConstructorDeclarator() {
     return true;
   }
 
+  // A C++11 attribute here signals that we have a constructor, and is an
+  // attribute on the first constructor parameter.
+  if (getLangOpts().CPlusPlus11 &&
+      isCXX11AttributeSpecifier(/*Disambiguate*/ false,
+                                /*OuterMightBeMessageSend*/ true)) {
+    TPA.Revert();
+    return true;
+  }
+
   // If we need to, enter the specified scope.
   DeclaratorScopeObj DeclScopeObj(*this, SS);
   if (SS.isSet() && Actions.ShouldEnterDeclaratorScope(getCurScope(), SS))
