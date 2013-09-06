@@ -215,6 +215,7 @@ def runScanBuild(Dir, SBOutputDir, PBuildLogFile):
         SBCommandFile = open(BuildScriptPath, "r")
         SBPrefix = "scan-build " + SBOptions + " "
         for Command in SBCommandFile:
+            Command = Command.strip()
             # If using 'make', auto imply a -jX argument
             # to speed up analysis.  xcodebuild will
             # automatically use the maximum number of cores.
