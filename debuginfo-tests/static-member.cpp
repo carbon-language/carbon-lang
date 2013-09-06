@@ -7,7 +7,7 @@
 // DEBUGGER: break static-member.cpp:33
 // DEBUGGER: r
 // DEBUGGER: ptype C
-// CHECK:      type = {{struct|class}} C {
+// CHECK:      {{struct|class}} C {
 // CHECK:      static const int a;
 // CHECK-NEXT: static int b;
 // CHECK-NEXT: static int c;

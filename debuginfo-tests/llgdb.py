@@ -79,7 +79,7 @@ for command in args.script:
     if not cmd:
         continue
 
-    print '> %s'% command
+    print '> %s'% command[:-1]
 
     try:
         if re.match('^r|(run)$', cmd[0]):
@@ -87,11 +87,17 @@ for command in args.script:
             launchinfo = lldb.SBLaunchInfo([])
             launchinfo.SetWorkingDirectory(os.getcwd())
             process = target.Launch(launchinfo, error)
+            print error
             if not process or error.fail:
-                print error
                 state = process.GetState()
                 print "State = %d" % state
-                print "Could not launch process."
+                print """
+ERROR: Could not launch process.
+NOTE: There are several resons why this may happen:
+  * Root needs to run "DevToolsSecurity --enable".
+  * We launched ("run") more than one process simultaneously.
+    (cf. rdar://problem/14929651)
+"""
                 sys.exit(1)
 
         elif re.match('^b|(break)$', cmd[0]) and len(cmd) == 2:
@@ -101,7 +107,7 @@ for command in args.script:
                 print target.BreakpointCreateByLocation(mainfile, int(cmd[1]))
             else:
                 # b file:line
-                file, line = cmd.split(':')
+                file, line = cmd[1].split(':')
                 print target.BreakpointCreateByLocation(file, int(line))
 
         elif re.match('^ptype$', cmd[0]) and len(cmd) == 2:
@@ -122,8 +128,9 @@ for command in args.script:
             print target.EvaluateExpression(' '.join(cmd[1:]), opts)
 
         elif re.match('^p|(print)$', cmd[0]) and len(cmd) > 1:
-            opts = lldb.SBExpressionOptions()
-            print target.EvaluateExpression(' '.join(cmd[1:]), opts)
+            thread = process.GetThreadAtIndex(0)
+            frame = thread.GetFrameAtIndex(0)
+            print frame.EvaluateExpression(' '.join(cmd[1:]))
 
         elif re.match('^q|(quit)$', cmd[0]):
             sys.exit(0)
