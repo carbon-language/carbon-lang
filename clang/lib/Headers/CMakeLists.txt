@@ -12,6 +12,7 @@ set(files
   fmaintrin.h
   immintrin.h
   iso646.h
+  Intrin.h
   limits.h
   lzcntintrin.h
   mm3dnow.h
