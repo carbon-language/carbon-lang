@@ -129,4 +129,10 @@ let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
                 MFLO_FM_MM<0x035>;
   def MFLO_MM : MMRel, MoveFromLOHI<"mflo", GPR32Opnd, [LO0]>,
                 MFLO_FM_MM<0x075>;
+
+  /// Multiply Add/Sub Instructions
+  def MADD_MM  : MMRel, MArithR<"madd", 1>, MULT_FM_MM<0x32c>;
+  def MADDU_MM : MMRel, MArithR<"maddu", 1>, MULT_FM_MM<0x36c>;
+  def MSUB_MM  : MMRel, MArithR<"msub">, MULT_FM_MM<0x3ac>;
+  def MSUBU_MM : MMRel, MArithR<"msubu">, MULT_FM_MM<0x3ec>;
 }

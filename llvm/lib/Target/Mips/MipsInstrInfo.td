@@ -413,7 +413,7 @@ class ArithLogicI<string opstr, Operand Od, RegisterOperand RO,
 // Arithmetic Multiply ADD/SUB
 class MArithR<string opstr, bit isComm = 0> :
   InstSE<(outs), (ins GPR32Opnd:$rs, GPR32Opnd:$rt),
-         !strconcat(opstr, "\t$rs, $rt"), [], IIImult, FrmR> {
+         !strconcat(opstr, "\t$rs, $rt"), [], IIImult, FrmR, opstr> {
   let Defs = [HI0, LO0];
   let Uses = [HI0, LO0];
   let isCommutable = isComm;
@@ -1044,10 +1044,10 @@ def NOP : PseudoSE<(outs), (ins), []>, PseudoInstExpansion<(SLL ZERO, ZERO, 0)>;
 def LEA_ADDiu : EffectiveAddress<"addiu", GPR32Opnd>, LW_FM<9>;
 
 // MADD*/MSUB*
-def MADD  : MArithR<"madd", 1>, MULT_FM<0x1c, 0>;
-def MADDU : MArithR<"maddu", 1>, MULT_FM<0x1c, 1>;
-def MSUB  : MArithR<"msub">, MULT_FM<0x1c, 4>;
-def MSUBU : MArithR<"msubu">, MULT_FM<0x1c, 5>;
+def MADD  : MMRel, MArithR<"madd", 1>, MULT_FM<0x1c, 0>;
+def MADDU : MMRel, MArithR<"maddu", 1>, MULT_FM<0x1c, 1>;
+def MSUB  : MMRel, MArithR<"msub">, MULT_FM<0x1c, 4>;
+def MSUBU : MMRel, MArithR<"msubu">, MULT_FM<0x1c, 5>;
 def PseudoMADD  : MAddSubPseudo<MADD, MipsMAdd>;
 def PseudoMADDU : MAddSubPseudo<MADDU, MipsMAddu>;
 def PseudoMSUB  : MAddSubPseudo<MSUB, MipsMSub>;
