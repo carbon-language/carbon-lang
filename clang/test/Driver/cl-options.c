@@ -96,7 +96,7 @@
 // Ignored options. Check that we don't get "unused during compilation" errors.
 // (/Zs is for syntax-only, /WX is for -Werror)
 // RUN: %clang_cl /Zs /WX /analyze- /errorReport:foo /nologo /Ob1 /Ob2 -- %s
-// RUN: %clang_cl /Zs /WX /Zc:forScope /Zc:wchar_t /wd1234 -- %s
+// RUN: %clang_cl /Zs /WX /Zc:forScope /Zc:wchar_t /wd1234 /RTC1 -- %s
 
 // Support ignoring warnings about unused arguments.
 // RUN: %clang_cl /Abracadabra -Qunused-arguments -### -- %s 2>&1 | FileCheck -check-prefix=UNUSED %s
@@ -107,7 +107,7 @@
 // (/Zs is for syntax-only)
 // RUN: %clang_cl /Zs /EHsc /Fdfoo /fp:precise /Gd /GL /GL- -- %s 2>&1
 // RUN: %clang_cl /Zs /Gm /Gm- /GS /Gy /Gy- /GZ -- %s 2>&1
-// RUN: %clang_cl /Zs /RTC1 /wfoo /Zc:wchar_t- -- %s 2>&1
+// RUN: %clang_cl /Zs /wfoo /Zc:wchar_t- -- %s 2>&1
 // RUN: %clang_cl /Zs /ZI /Zi /MP -- %s 2>&1
 
 
