@@ -5,7 +5,7 @@
 // RUN: grep -Ev "// *[A-Z-]+:" %s > %t.cpp
 // RUN: grep -Ev "// *[A-Z-]+:" %S/Inputs/basic.h > %T/Inputs/basic.h
 // RUN: grep -Ev "// *[A-Z-]+:" %S/Inputs/memory_stub.h > %T/Inputs/memory_stub.h
-// RUN: clang-modernize -headers -include=%T -replace-auto_ptr %t.cpp -- \
+// RUN: clang-modernize -include=%T -replace-auto_ptr %t.cpp -- \
 // RUN:               -std=c++11 -I %T
 // RUN: FileCheck -input-file=%t.cpp %s
 // RUN: FileCheck -input-file=%T/Inputs/basic.h %S/Inputs/basic.h
@@ -15,7 +15,7 @@
 // RUN: grep -Ev "// *[A-Z-]+:" %s > %t.cpp
 // RUN: grep -Ev "// *[A-Z-]+:" %S/Inputs/basic.h > %T/Inputs/basic.h
 // RUN: grep -Ev "// *[A-Z-]+:" %S/Inputs/memory_stub.h > %T/Inputs/memory_stub.h
-// RUN: clang-modernize -headers -include=%T -replace-auto_ptr %t.cpp -- \
+// RUN: clang-modernize -include=%T -replace-auto_ptr %t.cpp -- \
 // RUN:               -DUSE_INLINE_NAMESPACE=1 -std=c++11 -I %T
 // RUN: FileCheck -input-file=%t.cpp %s
 // RUN: FileCheck -input-file=%T/Inputs/basic.h %S/Inputs/basic.h

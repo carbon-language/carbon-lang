@@ -118,18 +118,9 @@ ExcludeFromFile("exclude-from", cl::Hidden, cl::value_desc("filename"),
                 cl::desc("File containing a list of paths that can not be "
                          "transforms"));
 
-// Header modifications will probably be always on eventually. For now, they
-// need to be explicitly enabled.
-static cl::opt<bool, /*ExternalStorage=*/true> EnableHeaderModifications(
-    "headers",
-    cl::Hidden, // Experimental feature for now.
-    cl::desc("Enable modifications to headers"),
-    cl::location(GlobalOptions.EnableHeaderModifications),
-    cl::init(false));
-
 static cl::opt<bool>
 SerializeReplacements("serialize-replacements",
-                      cl::Hidden, // Associated with -headers
+                      cl::Hidden,
                       cl::desc("Serialize translation unit replacements to "
                                "disk instead of changing files."),
                       cl::init(false));
@@ -336,14 +327,11 @@ int main(int argc, const char **argv) {
   if (CmdSwitchError)
     return 1;
 
-  // Populate the ModifiableHeaders structure if header modifications are
-  // enabled.
-  if (GlobalOptions.EnableHeaderModifications) {
-    GlobalOptions.ModifiableHeaders
-        .readListFromString(IncludePaths, ExcludePaths);
-    GlobalOptions.ModifiableHeaders
-        .readListFromFile(IncludeFromFile, ExcludeFromFile);
-  }
+  // Populate the ModifiableHeaders structure.
+  GlobalOptions.ModifiableHeaders
+      .readListFromString(IncludePaths, ExcludePaths);
+  GlobalOptions.ModifiableHeaders
+      .readListFromFile(IncludeFromFile, ExcludeFromFile);
 
   TransformManager.createSelectedTransforms(GlobalOptions, RequiredVersions);
 

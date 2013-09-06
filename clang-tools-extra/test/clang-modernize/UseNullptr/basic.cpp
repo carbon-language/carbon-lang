@@ -1,13 +1,9 @@
 // RUN: mkdir -p %T/Inputs
 // RUN: grep -Ev "// *[A-Z-]+:" %s > %t.cpp
 // RUN: grep -Ev "// *[A-Z-]+:" %S/Inputs/basic.h > %T/Inputs/basic.h
-// RUN: clang-modernize -use-nullptr %t.cpp -- -std=c++98 -I %T -Wno-non-literal-null-conversion
+// RUN: clang-modernize -use-nullptr -include=%T %t.cpp -- -std=c++98 -I %T -Wno-non-literal-null-conversion
 // RUN: FileCheck -input-file=%t.cpp %s
 // RUN: FileCheck -input-file=%T/Inputs/basic.h %S/Inputs/basic.h
-// RUN: grep -Ev "// *[A-Z-]+:" %s > %t.cpp
-// RUN: grep -Ev "// *[A-Z-]+:" %S/Inputs/basic.h > %T/Inputs/basic.h
-// RUN: clang-modernize -headers -include=%T -use-nullptr %t.cpp -- -std=c++98 -I %T -Wno-non-literal-null-conversion
-// RUN: FileCheck -check-prefix=HEADERS -input-file=%T/Inputs/basic.h %S/Inputs/basic.h
 
 #include "Inputs/basic.h"
 

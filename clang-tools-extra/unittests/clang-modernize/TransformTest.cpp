@@ -191,8 +191,8 @@ TEST(Transform, Timings) {
 class ModifiableCallback
     : public clang::ast_matchers::MatchFinder::MatchCallback {
 public:
-  ModifiableCallback(const Transform &Owner, bool HeadersModifiable)
-      : Owner(Owner), HeadersModifiable(HeadersModifiable) {}
+  ModifiableCallback(const Transform &Owner)
+      : Owner(Owner) {}
 
   virtual void
   run(const clang::ast_matchers::MatchFinder::MatchResult &Result) {
@@ -209,11 +209,9 @@ public:
     else if (Decl->getName().equals("c"))
       EXPECT_FALSE(Owner.isFileModifiable(SM, Decl->getLocStart()));
 
-    // Decl 'b' comes from an included header. It should be modifiable only if
-    // header modifications are allowed.
+    // Decl 'b' comes from an included header.
     else if (Decl->getName().equals("b"))
-      EXPECT_EQ(HeadersModifiable,
-                Owner.isFileModifiable(SM, Decl->getLocStart()));
+      EXPECT_TRUE(Owner.isFileModifiable(SM, Decl->getLocStart()));
 
     // Make sure edge cases are handled gracefully (they should never be
     // allowed).
@@ -223,7 +221,6 @@ public:
 
 private:
   const Transform &Owner;
-  bool HeadersModifiable;
 };
 
 TEST(Transform, isFileModifiable) {
@@ -282,25 +279,10 @@ TEST(Transform, isFileModifiable) {
   Tool.mapVirtualFile(HeaderFile, "int b;");
   Tool.mapVirtualFile(HeaderBFile, "int c;");
 
-  // Run tests with header modifications turned off.
-  {
-    SCOPED_TRACE("Header Modifications are OFF");
-    Options.EnableHeaderModifications = false;
-    DummyTransform T("dummy", Options);
-    MatchFinder Finder;
-    Finder.addMatcher(varDecl().bind("decl"), new ModifiableCallback(T, false));
-    Tool.run(tooling::newFrontendActionFactory(&Finder));
-  }
-
-  // Run again with header modifications turned on.
-  {
-    SCOPED_TRACE("Header Modifications are ON");
-    Options.EnableHeaderModifications = true;
-    DummyTransform T("dummy", Options);
-    MatchFinder Finder;
-    Finder.addMatcher(varDecl().bind("decl"), new ModifiableCallback(T, true));
-    Tool.run(tooling::newFrontendActionFactory(&Finder));
-  }
+  DummyTransform T("dummy", Options);
+  MatchFinder Finder;
+  Finder.addMatcher(varDecl().bind("decl"), new ModifiableCallback(T));
+  Tool.run(tooling::newFrontendActionFactory(&Finder));
 }
 
 TEST(VersionTest, Interface) {

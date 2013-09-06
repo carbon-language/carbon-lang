@@ -4,7 +4,7 @@
 // RUN: mkdir -p %T/Inputs
 // RUN: grep -Ev "// *[A-Z-]+:" %s > %t.cpp
 // RUN: grep -Ev "// *[A-Z-]+:" %S/Inputs/no_yaml.h > %T/Inputs/no_yaml.h
-// RUN: clang-modernize -loop-convert %t.cpp -headers -include=%T/Inputs -- -I %T/Inputs/no_yaml.h
+// RUN: clang-modernize -loop-convert %t.cpp -include=%T/Inputs -- -I %T/Inputs/no_yaml.h
 // RUN: FileCheck --input-file=%t.cpp %s
 // RUN: FileCheck --input-file=%T/Inputs/no_yaml.h %S/Inputs/no_yaml.h
 // RUN: ls -1 %T | FileCheck %s --check-prefix=NO_YAML

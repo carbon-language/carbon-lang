@@ -87,9 +87,6 @@ bool Transform::isFileModifiable(const SourceManager &SM,
   if (SM.isWrittenInMainFile(Loc))
     return true;
 
-  if (!GlobalOptions.EnableHeaderModifications)
-    return false;
-
   const FileEntry *FE = SM.getFileEntryForID(SM.getFileID(Loc));
   if (!FE)
     return false;
