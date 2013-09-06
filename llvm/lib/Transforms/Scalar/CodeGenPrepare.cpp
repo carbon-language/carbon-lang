@@ -1035,7 +1035,7 @@ bool AddressingModeMatcher::MatchOperationAddr(User *AddrInst, unsigned Opcode,
   case Instruction::IntToPtr:
     // This inttoptr is a no-op if the integer type is pointer sized.
     if (TLI.getValueType(AddrInst->getOperand(0)->getType()) ==
-        TLI.getPointerTy())
+        TLI.getPointerTy(AddrInst->getType()->getPointerAddressSpace()))
       return MatchAddr(AddrInst->getOperand(0), Depth);
     return false;
   case Instruction::BitCast:
@@ -1573,9 +1573,7 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
   } else {
     DEBUG(dbgs() << "CGP: SINKING nonlocal addrmode: " << AddrMode << " for "
                  << *MemoryInst);
-    Type *IntPtrTy =
-          TLI->getDataLayout()->getIntPtrType(AccessTy->getContext());
-
+    Type *IntPtrTy = TLI->getDataLayout()->getIntPtrType(Addr->getType());
     Value *Result = 0;
 
     // Start with the base register. Do this first so that subsequent address
