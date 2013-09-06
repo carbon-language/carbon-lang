@@ -520,7 +520,7 @@ private:
         LBrace.Children.size() == 0)
       // The previous token does not open a block. Nothing to do. We don't
       // assert so that we can simply call this function for all tokens.
-      return true; 
+      return true;
 
     if (NewLine) {
       unsigned ParentIndent = State.Stack.back().Indent;
@@ -624,7 +624,7 @@ private:
           ++FormatTok->NewlinesBefore;
           // FIXME: This is technically incorrect, as it could also
           // be a literal backslash at the end of the line.
-          if (i == 0 || FormatTok->TokenText[i-1] != '\\')
+          if (i == 0 || FormatTok->TokenText[i - 1] != '\\')
             FormatTok->HasUnescapedNewline = true;
           FormatTok->LastNewlineOffset = WhitespaceLength + i + 1;
           Column = 0;

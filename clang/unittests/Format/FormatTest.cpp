@@ -2970,6 +2970,10 @@ TEST_F(FormatTest, FormatsBuilderPattern) {
   verifyFormat("aaaaaaaaaaaaa->aaaaaaaaaaaaaaaaaaaaaaaa()\n"
                "    ->aaaaaaaaaaaaaae(0)\n"
                "    ->aaaaaaaaaaaaaaa();");
+
+  // Prefer not to break after empty parentheses.
+  verifyFormat("FirstToken->WhitespaceRange.getBegin().getLocWithOffset(\n"
+               "    First->LastNewlineOffset);");
 }
 
 TEST_F(FormatTest, BreaksAccordingToOperatorPrecedence) {

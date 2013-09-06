@@ -1137,7 +1137,8 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
     return 2;
 
   if (Right.isMemberAccess()) {
-    if (Left.isOneOf(tok::r_paren, tok::r_square))
+    if (Left.isOneOf(tok::r_paren, tok::r_square) && Left.MatchingParen &&
+        Left.MatchingParen->ParameterCount > 0)
       return 20; // Should be smaller than breaking at a nested comma.
     return 150;
   }
