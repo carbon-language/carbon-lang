@@ -101,15 +101,39 @@ public:
 
 class ScheduleDAGMI;
 
+/// Define a generic scheduling policy for targets that don't provide their own
+/// MachineSchedStrategy. This can be overriden for each scheduling region
+/// before building the DAG.
+struct MachineSchedPolicy {
+  // Allow the scheduler to disable register pressure tracking.
+  bool ShouldTrackPressure;
+
+  // Allow the scheduler to force top-down or bottom-up scheduling. If neither
+  // is true, the scheduler runs in both directions and converges.
+  bool OnlyTopDown;
+  bool OnlyBottomUp;
+
+  MachineSchedPolicy():
+    ShouldTrackPressure(false), OnlyTopDown(false), OnlyBottomUp(false) {}
+};
+
 /// MachineSchedStrategy - Interface to the scheduling algorithm used by
 /// ScheduleDAGMI.
+///
+/// Initialization sequence:
+///   initPolicy -> shouldTrackPressure -> initialize(DAG) -> registerRoots
 class MachineSchedStrategy {
 public:
   virtual ~MachineSchedStrategy() {}
 
+  /// Optionally override the per-region scheduling policy.
+  virtual void initPolicy(MachineBasicBlock::iterator Begin,
+                          MachineBasicBlock::iterator End,
+                          unsigned NumRegionInstrs) {}
+
   /// Check if pressure tracking is needed before building the DAG and
-  /// initializing this strategy.
-  virtual bool shouldTrackPressure(unsigned NumRegionInstrs) { return true; }
+  /// initializing this strategy. Called after initPolicy.
+  virtual bool shouldTrackPressure() const { return true; }
 
   /// Initialize the strategy after building the DAG for a new region.
   virtual void initialize(ScheduleDAGMI *DAG) = 0;

@@ -25,6 +25,7 @@ class SDep;
 class SUnit;
 class TargetRegisterClass;
 class TargetSchedModel;
+struct MachineSchedPolicy;
 template <typename T> class SmallVectorImpl;
 
 //===----------------------------------------------------------------------===//
@@ -61,6 +62,16 @@ public:
   /// This currently replaces the SelectionDAG scheduler with the "source" order
   /// scheduler. It does not yet disable the postRA scheduler.
   virtual bool enableMachineScheduler() const;
+
+  /// \brief Override generic scheduling policy within a region.
+  ///
+  /// This is a convenient way for targets that don't provide any custom
+  /// scheduling heuristics (no custom MachineSchedStrategy) to make
+  /// changes to the generic scheduling policy.
+  virtual void overrideSchedPolicy(MachineSchedPolicy &Policy,
+                                   MachineInstr *begin,
+                                   MachineInstr *end,
+                                   unsigned NumRegionInstrs) const {}
 
   // enablePostRAScheduler - If the target can benefit from post-regalloc
   // scheduling and the specified optimization level meets the requirement

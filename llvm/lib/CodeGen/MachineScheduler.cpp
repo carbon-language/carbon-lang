@@ -480,12 +480,13 @@ void ScheduleDAGMI::enterRegion(MachineBasicBlock *bb,
 {
   ScheduleDAGInstrs::enterRegion(bb, begin, end, regioninstrs);
 
-  ShouldTrackPressure =
-    EnableRegPressure && SchedImpl->shouldTrackPressure(regioninstrs);
-
   // For convenience remember the end of the liveness region.
   LiveRegionEnd =
     (RegionEnd == bb->end()) ? RegionEnd : llvm::next(RegionEnd);
+
+  SchedImpl->initPolicy(begin, end, regioninstrs);
+
+  ShouldTrackPressure = SchedImpl->shouldTrackPressure();
 }
 
 // Setup the register pressure trackers for the top scheduled top and bottom
@@ -1594,12 +1595,7 @@ private:
   SchedBoundary Top;
   SchedBoundary Bot;
 
-  // Allow the driver to force top-down or bottom-up scheduling. If neither is
-  // true, the scheduler runs in both directions and converges. For generic
-  // targets, we default to bottom-up, because it's simpler and more
-  // compile-time optimizations have been implemented in that direction.
-  bool OnlyBottomUp;
-  bool OnlyTopDown;
+  MachineSchedPolicy RegionPolicy;
 public:
   /// SUnit::NodeQueueId: 0 (none), 1 (top), 2 (bot), 3 (both)
   enum {
@@ -1610,10 +1606,13 @@ public:
 
   ConvergingScheduler(const MachineSchedContext *C):
     Context(C), DAG(0), SchedModel(0), TRI(0),
-    Top(TopQID, "TopQ"), Bot(BotQID, "BotQ"),
-    OnlyBottomUp(true), OnlyTopDown(false) {}
+    Top(TopQID, "TopQ"), Bot(BotQID, "BotQ") {}
 
-  virtual bool shouldTrackPressure(unsigned NumRegionInstrs);
+  virtual void initPolicy(MachineBasicBlock::iterator Begin,
+                          MachineBasicBlock::iterator End,
+                          unsigned NumRegionInstrs);
+
+  bool shouldTrackPressure() const { return RegionPolicy.ShouldTrackPressure; }
 
   virtual void initialize(ScheduleDAGMI *dag);
 
@@ -1681,14 +1680,46 @@ init(ScheduleDAGMI *dag, const TargetSchedModel *smodel, SchedRemainder *rem) {
     ExecutedResCounts.resize(SchedModel->getNumProcResourceKinds());
 }
 
-/// Avoid setting up the register pressure tracker for small regions to save
-/// compile time. As a rough heuristic, only track pressure when the number
-/// of schedulable instructions exceeds half the integer register file.
-bool ConvergingScheduler::shouldTrackPressure(unsigned NumRegionInstrs) {
-  unsigned NIntRegs = Context->RegClassInfo->getNumAllocatableRegs(
-    Context->MF->getTarget().getTargetLowering()->getRegClassFor(MVT::i32));
+/// Initialize the per-region scheduling policy.
+void ConvergingScheduler::initPolicy(MachineBasicBlock::iterator Begin,
+                                     MachineBasicBlock::iterator End,
+                                     unsigned NumRegionInstrs) {
+  const TargetMachine &TM = Context->MF->getTarget();
 
-  return NumRegionInstrs > (NIntRegs / 2);
+  // Avoid setting up the register pressure tracker for small regions to save
+  // compile time. As a rough heuristic, only track pressure when the number of
+  // schedulable instructions exceeds half the integer register file.
+  unsigned NIntRegs = Context->RegClassInfo->getNumAllocatableRegs(
+    TM.getTargetLowering()->getRegClassFor(MVT::i32));
+
+  RegionPolicy.ShouldTrackPressure = NumRegionInstrs > (NIntRegs / 2);
+
+  // For generic targets, we default to bottom-up, because it's simpler and more
+  // compile-time optimizations have been implemented in that direction.
+  RegionPolicy.OnlyBottomUp = true;
+
+  // Allow the subtarget to override default policy.
+  const TargetSubtargetInfo &ST = TM.getSubtarget<TargetSubtargetInfo>();
+  ST.overrideSchedPolicy(RegionPolicy, Begin, End, NumRegionInstrs);
+
+  // After subtarget overrides, apply command line options.
+  if (!EnableRegPressure)
+    RegionPolicy.ShouldTrackPressure = false;
+
+  // Check -misched-topdown/bottomup can force or unforce scheduling direction.
+  // e.g. -misched-bottomup=false allows scheduling in both directions.
+  assert((!ForceTopDown || !ForceBottomUp) &&
+         "-misched-topdown incompatible with -misched-bottomup");
+  if (ForceBottomUp.getNumOccurrences() > 0) {
+    RegionPolicy.OnlyBottomUp = ForceBottomUp;
+    if (RegionPolicy.OnlyBottomUp)
+      RegionPolicy.OnlyTopDown = false;
+  }
+  if (ForceTopDown.getNumOccurrences() > 0) {
+    RegionPolicy.OnlyTopDown = ForceTopDown;
+    if (RegionPolicy.OnlyTopDown)
+      RegionPolicy.OnlyBottomUp = false;
+  }
 }
 
 void ConvergingScheduler::initialize(ScheduleDAGMI *dag) {
@@ -1713,21 +1744,6 @@ void ConvergingScheduler::initialize(ScheduleDAGMI *dag) {
   if (!Bot.HazardRec) {
     Bot.HazardRec =
       TM.getInstrInfo()->CreateTargetMIHazardRecognizer(Itin, DAG);
-  }
-  assert((!ForceTopDown || !ForceBottomUp) &&
-         "-misched-topdown incompatible with -misched-bottomup");
-
-  // Check -misched-topdown/bottomup can force or unforce scheduling direction.
-  // e.g. -misched-bottomup=false allows scheduling in both directions.
-  if (ForceBottomUp.getNumOccurrences() > 0) {
-    OnlyBottomUp = ForceBottomUp;
-    if (OnlyBottomUp)
-      OnlyTopDown = false;
-  }
-  if (ForceTopDown.getNumOccurrences() > 0) {
-    OnlyTopDown = ForceTopDown;
-    if (OnlyTopDown)
-      OnlyBottomUp = false;
   }
 }
 
@@ -2694,7 +2710,7 @@ SUnit *ConvergingScheduler::pickNode(bool &IsTopNode) {
   }
   SUnit *SU;
   do {
-    if (OnlyTopDown) {
+    if (RegionPolicy.OnlyTopDown) {
       SU = Top.pickOnlyChoice();
       if (!SU) {
         CandPolicy NoPolicy;
@@ -2706,7 +2722,7 @@ SUnit *ConvergingScheduler::pickNode(bool &IsTopNode) {
       }
       IsTopNode = true;
     }
-    else if (OnlyBottomUp) {
+    else if (RegionPolicy.OnlyBottomUp) {
       SU = Bot.pickOnlyChoice();
       if (!SU) {
         CandPolicy NoPolicy;
