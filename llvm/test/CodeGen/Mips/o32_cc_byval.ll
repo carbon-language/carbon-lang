@@ -10,22 +10,23 @@
 
 define void @f1() nounwind {
 entry:
-; CHECK: lw  $[[R1:[0-9]+]], %got(f1.s1)
-; CHECK: addiu $[[R0:[0-9]+]], $[[R1]], %lo(f1.s1)
-; CHECK: lw  $[[R7:[0-9]+]], 12($[[R0]])
-; CHECK: lw  $[[R3:[0-9]+]], 16($[[R0]])
-; CHECK: lw  $[[R4:[0-9]+]], 20($[[R0]])
-; CHECK: lw  $[[R5:[0-9]+]], 24($[[R0]])
-; CHECK: lw  $[[R6:[0-9]+]], 28($[[R0]])
-; CHECK: sw  $[[R6]], 36($sp)
-; CHECK: sw  $[[R5]], 32($sp)
-; CHECK: sw  $[[R4]], 28($sp)
-; CHECK: sw  $[[R3]], 24($sp)
-; CHECK: sw  $[[R7]], 20($sp)
-; CHECK: lw  $[[R2:[0-9]+]], 8($[[R0]])
-; CHECK: sw  $[[R2]], 16($sp)
-; CHECK: lw  $6, %lo(f1.s1)($[[R1]])
-; CHECK: lw  $7, 4($[[R0]])
+; CHECK-LABEL: f1:
+; CHECK-DAG: lw  $[[R1:[0-9]+]], %got(f1.s1)
+; CHECK-DAG: addiu $[[R0:[0-9]+]], $[[R1]], %lo(f1.s1)
+; CHECK-DAG: lw  $[[R7:[0-9]+]], 12($[[R0]])
+; CHECK-DAG: lw  $[[R3:[0-9]+]], 16($[[R0]])
+; CHECK-DAG: lw  $[[R4:[0-9]+]], 20($[[R0]])
+; CHECK-DAG: lw  $[[R5:[0-9]+]], 24($[[R0]])
+; CHECK-DAG: lw  $[[R6:[0-9]+]], 28($[[R0]])
+; CHECK-DAG: sw  $[[R6]], 36($sp)
+; CHECK-DAG: sw  $[[R5]], 32($sp)
+; CHECK-DAG: sw  $[[R4]], 28($sp)
+; CHECK-DAG: sw  $[[R3]], 24($sp)
+; CHECK-DAG: sw  $[[R7]], 20($sp)
+; CHECK-DAG: lw  $[[R2:[0-9]+]], 8($[[R0]])
+; CHECK-DAG: sw  $[[R2]], 16($sp)
+; CHECK-DAG: lw  $6, %lo(f1.s1)($[[R1]])
+; CHECK-DAG: lw  $7, 4($[[R0]])
   %agg.tmp10 = alloca %struct.S3, align 4
   call void @callee1(float 2.000000e+01, %struct.S1* byval bitcast (%0* @f1.s1 to %struct.S1*)) nounwind
   call void @callee2(%struct.S2* byval @f1.s2) nounwind

@@ -135,16 +135,16 @@ def SD    : Store<"sd", GPR64Opnd, store, IIStore>, LW_FM<0x3f>;
 
 /// load/store left/right
 let isCodeGenOnly = 1 in {
-def LWL64 : LoadLeftRight<"lwl", MipsLWL, GPR64Opnd>, LW_FM<0x22>;
-def LWR64 : LoadLeftRight<"lwr", MipsLWR, GPR64Opnd>, LW_FM<0x26>;
-def SWL64 : StoreLeftRight<"swl", MipsSWL, GPR64Opnd>, LW_FM<0x2a>;
-def SWR64 : StoreLeftRight<"swr", MipsSWR, GPR64Opnd>, LW_FM<0x2e>;
+def LWL64 : LoadLeftRight<"lwl", MipsLWL, GPR64Opnd, IILoad>, LW_FM<0x22>;
+def LWR64 : LoadLeftRight<"lwr", MipsLWR, GPR64Opnd, IILoad>, LW_FM<0x26>;
+def SWL64 : StoreLeftRight<"swl", MipsSWL, GPR64Opnd, IIStore>, LW_FM<0x2a>;
+def SWR64 : StoreLeftRight<"swr", MipsSWR, GPR64Opnd, IIStore>, LW_FM<0x2e>;
 }
 
-def LDL   : LoadLeftRight<"ldl", MipsLDL, GPR64Opnd>, LW_FM<0x1a>;
-def LDR   : LoadLeftRight<"ldr", MipsLDR, GPR64Opnd>, LW_FM<0x1b>;
-def SDL   : StoreLeftRight<"sdl", MipsSDL, GPR64Opnd>, LW_FM<0x2c>;
-def SDR   : StoreLeftRight<"sdr", MipsSDR, GPR64Opnd>, LW_FM<0x2d>;
+def LDL   : LoadLeftRight<"ldl", MipsLDL, GPR64Opnd, IILoad>, LW_FM<0x1a>;
+def LDR   : LoadLeftRight<"ldr", MipsLDR, GPR64Opnd, IILoad>, LW_FM<0x1b>;
+def SDL   : StoreLeftRight<"sdl", MipsSDL, GPR64Opnd, IIStore>, LW_FM<0x2c>;
+def SDR   : StoreLeftRight<"sdr", MipsSDR, GPR64Opnd, IIStore>, LW_FM<0x2d>;
 
 /// Load-linked, Store-conditional
 def LLD : LLBase<"lld", GPR64Opnd>, LW_FM<0x34>;

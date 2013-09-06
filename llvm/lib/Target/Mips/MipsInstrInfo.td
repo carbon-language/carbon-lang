@@ -461,7 +461,7 @@ class FMem<bits<6> op, dag outs, dag ins, string asmstr, list<dag> pattern,
 class Load<string opstr, DAGOperand RO, SDPatternOperator OpNode = null_frag,
            InstrItinClass Itin = NoItinerary, ComplexPattern Addr = addr> :
   InstSE<(outs RO:$rt), (ins mem:$addr), !strconcat(opstr, "\t$rt, $addr"),
-         [(set RO:$rt, (OpNode Addr:$addr))], NoItinerary, FrmI, opstr> {
+         [(set RO:$rt, (OpNode Addr:$addr))], Itin, FrmI, opstr> {
   let DecoderMethod = "DecodeMem";
   let canFoldAsLoad = 1;
   let mayLoad = 1;
@@ -470,24 +470,26 @@ class Load<string opstr, DAGOperand RO, SDPatternOperator OpNode = null_frag,
 class Store<string opstr, DAGOperand RO, SDPatternOperator OpNode = null_frag,
             InstrItinClass Itin = NoItinerary, ComplexPattern Addr = addr> :
   InstSE<(outs), (ins RO:$rt, mem:$addr), !strconcat(opstr, "\t$rt, $addr"),
-         [(OpNode RO:$rt, Addr:$addr)], NoItinerary, FrmI, opstr> {
+         [(OpNode RO:$rt, Addr:$addr)], Itin, FrmI, opstr> {
   let DecoderMethod = "DecodeMem";
   let mayStore = 1;
 }
 
 // Load/Store Left/Right
 let canFoldAsLoad = 1 in
-class LoadLeftRight<string opstr, SDNode OpNode, RegisterOperand RO> :
+class LoadLeftRight<string opstr, SDNode OpNode, RegisterOperand RO,
+                    InstrItinClass Itin> :
   InstSE<(outs RO:$rt), (ins mem:$addr, RO:$src),
          !strconcat(opstr, "\t$rt, $addr"),
-         [(set RO:$rt, (OpNode addr:$addr, RO:$src))], NoItinerary, FrmI> {
+         [(set RO:$rt, (OpNode addr:$addr, RO:$src))], Itin, FrmI> {
   let DecoderMethod = "DecodeMem";
   string Constraints = "$src = $rt";
 }
 
-class StoreLeftRight<string opstr, SDNode OpNode, RegisterOperand RO> :
+class StoreLeftRight<string opstr, SDNode OpNode, RegisterOperand RO,
+                     InstrItinClass Itin> :
   InstSE<(outs), (ins RO:$rt, mem:$addr), !strconcat(opstr, "\t$rt, $addr"),
-         [(OpNode RO:$rt, addr:$addr)], NoItinerary, FrmI> {
+         [(OpNode RO:$rt, addr:$addr)], Itin, FrmI> {
   let DecoderMethod = "DecodeMem";
 }
 
@@ -925,10 +927,10 @@ def SH  : Store<"sh", GPR32Opnd, truncstorei16, IIStore>, MMRel, LW_FM<0x29>;
 def SW  : Store<"sw", GPR32Opnd, store, IIStore>, MMRel, LW_FM<0x2b>;
 
 /// load/store left/right
-def LWL : LoadLeftRight<"lwl", MipsLWL, GPR32Opnd>, LW_FM<0x22>;
-def LWR : LoadLeftRight<"lwr", MipsLWR, GPR32Opnd>, LW_FM<0x26>;
-def SWL : StoreLeftRight<"swl", MipsSWL, GPR32Opnd>, LW_FM<0x2a>;
-def SWR : StoreLeftRight<"swr", MipsSWR, GPR32Opnd>, LW_FM<0x2e>;
+def LWL : LoadLeftRight<"lwl", MipsLWL, GPR32Opnd, IILoad>, LW_FM<0x22>;
+def LWR : LoadLeftRight<"lwr", MipsLWR, GPR32Opnd, IILoad>, LW_FM<0x26>;
+def SWL : StoreLeftRight<"swl", MipsSWL, GPR32Opnd, IIStore>, LW_FM<0x2a>;
+def SWR : StoreLeftRight<"swr", MipsSWR, GPR32Opnd, IIStore>, LW_FM<0x2e>;
 
 def SYNC : SYNC_FT, SYNC_FM;
 def TEQ : TEQ_FT<"teq", GPR32Opnd>, TEQ_FM<0x34>;

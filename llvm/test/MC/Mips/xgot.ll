@@ -14,10 +14,10 @@ entry:
 ; CHECK:     0x{{[0-9,A-F]+}} R_MIPS_LO16
 ; CHECK:     0x{{[0-9,A-F]+}} R_MIPS_GOT_HI16
 ; CHECK:     0x{{[0-9,A-F]+}} R_MIPS_GOT_LO16
-; CHECK:     0x{{[0-9,A-F]+}} R_MIPS_GOT
-; CHECK:     0x{{[0-9,A-F]+}} R_MIPS_LO16
 ; CHECK:     0x{{[0-9,A-F]+}} R_MIPS_CALL_HI16
 ; CHECK:     0x{{[0-9,A-F]+}} R_MIPS_CALL_LO16
+; CHECK:     0x{{[0-9,A-F]+}} R_MIPS_GOT
+; CHECK:     0x{{[0-9,A-F]+}} R_MIPS_LO16
 ; CHECK: ]
 
   %0 = load i32* @ext_1, align 4

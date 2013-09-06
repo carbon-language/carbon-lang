@@ -103,28 +103,28 @@ multiclass MovnPats<RegisterClass CRC, RegisterClass DRC, Instruction MOVNInst,
 }
 
 // Instantiation of instructions.
-def MOVZ_I_I : MMRel, CMov_I_I_FT<"movz", GPR32Opnd, GPR32Opnd, NoItinerary>,
+def MOVZ_I_I : MMRel, CMov_I_I_FT<"movz", GPR32Opnd, GPR32Opnd, IIArith>,
                ADD_FM<0, 0xa>;
 
 let Predicates = [HasStdEnc], isCodeGenOnly = 1 in {
-  def MOVZ_I_I64   : CMov_I_I_FT<"movz", GPR32Opnd, GPR64Opnd,
-                                  NoItinerary>, ADD_FM<0, 0xa>;
-  def MOVZ_I64_I   : CMov_I_I_FT<"movz", GPR64Opnd, GPR32Opnd,
-                                  NoItinerary>, ADD_FM<0, 0xa>;
-  def MOVZ_I64_I64 : CMov_I_I_FT<"movz", GPR64Opnd, GPR64Opnd,
-                                  NoItinerary>, ADD_FM<0, 0xa>;
+  def MOVZ_I_I64   : CMov_I_I_FT<"movz", GPR32Opnd, GPR64Opnd, IIArith>,
+                     ADD_FM<0, 0xa>;
+  def MOVZ_I64_I   : CMov_I_I_FT<"movz", GPR64Opnd, GPR32Opnd, IIArith>,
+                     ADD_FM<0, 0xa>;
+  def MOVZ_I64_I64 : CMov_I_I_FT<"movz", GPR64Opnd, GPR64Opnd, IIArith>,
+                     ADD_FM<0, 0xa>;
 }
 
-def MOVN_I_I       : MMRel, CMov_I_I_FT<"movn", GPR32Opnd, GPR32Opnd,
-                     NoItinerary>, ADD_FM<0, 0xb>;
+def MOVN_I_I       : MMRel, CMov_I_I_FT<"movn", GPR32Opnd, GPR32Opnd, IIArith>,
+                     ADD_FM<0, 0xb>;
 
 let Predicates = [HasStdEnc], isCodeGenOnly = 1 in {
-  def MOVN_I_I64   : CMov_I_I_FT<"movn", GPR32Opnd, GPR64Opnd,
-                                  NoItinerary>, ADD_FM<0, 0xb>;
-  def MOVN_I64_I   : CMov_I_I_FT<"movn", GPR64Opnd, GPR32Opnd,
-                                  NoItinerary>, ADD_FM<0, 0xb>;
-  def MOVN_I64_I64 : CMov_I_I_FT<"movn", GPR64Opnd, GPR64Opnd,
-                                  NoItinerary>, ADD_FM<0, 0xb>;
+  def MOVN_I_I64   : CMov_I_I_FT<"movn", GPR32Opnd, GPR64Opnd, IIArith>,
+                     ADD_FM<0, 0xb>;
+  def MOVN_I64_I   : CMov_I_I_FT<"movn", GPR64Opnd, GPR32Opnd, IIArith>,
+                     ADD_FM<0, 0xb>;
+  def MOVN_I64_I64 : CMov_I_I_FT<"movn", GPR64Opnd, GPR64Opnd, IIArith>,
+                     ADD_FM<0, 0xb>;
 }
 
 def MOVZ_I_S : CMov_I_F_FT<"movz.s", GPR32Opnd, FGR32Opnd, IIFmove>,
