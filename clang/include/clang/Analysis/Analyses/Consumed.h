@@ -190,6 +190,8 @@ namespace consumed {
     
     ConsumedState ExpectedReturnState;
     
+    void determineExpectedReturnState(AnalysisDeclContext &AC,
+                                      const FunctionDecl *D);
     bool hasConsumableAttributes(const CXXRecordDecl *RD);
     bool splitState(const CFGBlock *CurrBlock,
                     const ConsumedStmtVisitor &Visitor);

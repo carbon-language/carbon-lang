@@ -968,7 +968,30 @@ static void handleLocksExcludedAttr(Sema &S, Decl *D,
 }
 
 static void handleConsumableAttr(Sema &S, Decl *D, const AttributeList &Attr) {
-  if (!checkAttributeNumArgs(S, Attr, 0)) return;
+  if (!checkAttributeNumArgs(S, Attr, 1))
+    return;
+
+  ConsumableAttr::ConsumedState DefaultState;
+
+  if (Attr.isArgIdent(0)) {
+    StringRef Param = Attr.getArgAsIdent(0)->Ident->getName();
+
+    if (Param == "unknown")
+      DefaultState = ConsumableAttr::Unknown;
+    else if (Param == "consumed")
+      DefaultState = ConsumableAttr::Consumed;
+    else if (Param == "unconsumed")
+      DefaultState = ConsumableAttr::Unconsumed;
+    else {
+      S.Diag(Attr.getLoc(), diag::warn_unknown_consumed_state) << Param;
+      return;
+    }
+
+  } else {
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_type)
+        << Attr.getName() << AANT_ArgumentIdentifier;
+    return;
+  }
 
   if (!isa<CXXRecordDecl>(D)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type) <<
@@ -977,7 +1000,7 @@ static void handleConsumableAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   }
   
   D->addAttr(::new (S.Context)
-             ConsumableAttr(Attr.getRange(), S.Context,
+             ConsumableAttr(Attr.getRange(), S.Context, DefaultState,
                             Attr.getAttributeSpellingListIndex()));
 }
 

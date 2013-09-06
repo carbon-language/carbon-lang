@@ -931,6 +931,9 @@ def SharedLocksRequired : InheritableAttr {
 def Consumable : InheritableAttr {
   let Spellings = [GNU<"consumable">];
   let Subjects = [CXXRecord];
+  let Args = [EnumArgument<"DefaultState", "ConsumedState",
+                           ["unknown", "consumed", "unconsumed"],
+                           ["Unknown", "Consumed", "Unconsumed"]>];
 }
 
 def CallableWhenUnconsumed : InheritableAttr {

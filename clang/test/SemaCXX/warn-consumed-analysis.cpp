@@ -1,23 +1,23 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -Wconsumed -std=c++11 %s
 
 #define CALLABLE_WHEN_UNCONSUMED __attribute__ ((callable_when_unconsumed))
-#define CONSUMABLE               __attribute__ ((consumable))
+#define CONSUMABLE(state)        __attribute__ ((consumable(state)))
 #define CONSUMES                 __attribute__ ((consumes))
-#define RETURN_TYPESTATE(State)  __attribute__ ((return_typestate(State)))
+#define RETURN_TYPESTATE(state)  __attribute__ ((return_typestate(state)))
 #define TESTS_UNCONSUMED         __attribute__ ((tests_unconsumed))
 
 typedef decltype(nullptr) nullptr_t;
 
 template <typename T>
-class CONSUMABLE ConsumableClass {
+class CONSUMABLE(unconsumed) ConsumableClass {
   T var;
   
   public:
   ConsumableClass();
   ConsumableClass(nullptr_t p) RETURN_TYPESTATE(consumed);
   ConsumableClass(T val) RETURN_TYPESTATE(unconsumed);
-  ConsumableClass(ConsumableClass<T> &other) RETURN_TYPESTATE(unconsumed);
-  ConsumableClass(ConsumableClass<T> &&other) RETURN_TYPESTATE(unconsumed);
+  ConsumableClass(ConsumableClass<T> &other);
+  ConsumableClass(ConsumableClass<T> &&other);
   
   ConsumableClass<T>& operator=(ConsumableClass<T>  &other);
   ConsumableClass<T>& operator=(ConsumableClass<T> &&other);
@@ -49,7 +49,6 @@ void baf2(const ConsumableClass<int> *var);
 
 void baf3(ConsumableClass<int> &&var);
 
-ConsumableClass<int> returnsUnconsumed() RETURN_TYPESTATE(unconsumed);
 ConsumableClass<int> returnsUnconsumed() {
   return ConsumableClass<int>(); // expected-warning {{return value not in expected state; expected 'unconsumed', observed 'consumed'}}
 }
@@ -241,7 +240,7 @@ void testFunctionParam(ConsumableClass<int> param) {
   if (param.isValid()) {
     *param;
   } else {
-    *param; // expected-warning {{invocation of method 'operator*' on object 'param' while it is in the 'consumed' state}}
+    *param;
   }
   
   param = nullptr;
