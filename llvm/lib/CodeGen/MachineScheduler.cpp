@@ -3064,7 +3064,11 @@ struct DOTGraphTraits<ScheduleDAGMI*> : public DefaultDOTGraphTraits {
   static std::string getNodeLabel(const SUnit *SU, const ScheduleDAG *G) {
     std::string Str;
     raw_string_ostream SS(Str);
-    SS << "SU(" << SU->NodeNum << ')';
+    const SchedDFSResult *DFS =
+      static_cast<const ScheduleDAGMI*>(G)->getDFSResult();
+    SS << "SU:" << SU->NodeNum;
+    if (DFS)
+      SS << " I:" << DFS->getNumInstrs(SU);
     return SS.str();
   }
   static std::string getNodeDescription(const SUnit *SU, const ScheduleDAG *G) {
