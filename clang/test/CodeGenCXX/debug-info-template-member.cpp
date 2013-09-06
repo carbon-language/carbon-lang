@@ -23,6 +23,13 @@ inline int add3(int x) {
 // CHECK: [[FOO_FUNC_PARAMS]] = metadata !{null, metadata !{{[0-9]*}}, metadata [[OUTER_FOO_INNER:![0-9]*]]}
 // CHECK: [[OUTER_FOO_INNER]] = {{.*}} ; [ DW_TAG_structure_type ] [inner]
 
+// CHECK: metadata [[VIRT_MEM:![0-9]*]], i32 0, metadata !{{[0-9]*}}, metadata [[VIRT_TEMP_PARAM:![0-9]*]], metadata !"_ZTS4virtI4elemE"} ; [ DW_TAG_structure_type ] [virt<elem>] {{.*}} [def]
+// CHECK: [[ELEM:![0-9]*]] = {{.*}}, metadata [[ELEM_MEM:![0-9]*]], i32 0, null, null, metadata !"_ZTS4elem"} ; [ DW_TAG_structure_type ] [elem] {{.*}} [def]
+// CHECK: [[ELEM_MEM]] = metadata !{metadata [[ELEM_X:![0-9]*]]}
+// CHECK: [[ELEM_X]] = {{.*}} ; [ DW_TAG_member ] [x] {{.*}} [static] [from virt<elem>]
+// CHECK: [[VIRT_TEMP_PARAM]] = metadata !{metadata [[VIRT_T:![0-9]*]]}
+// CHECK: [[VIRT_T]] = {{.*}}, metadata !"T", metadata [[ELEM]], {{.*}} ; [ DW_TAG_template_type_parameter ]
+
 // CHECK: [[C:![0-9]*]] = {{.*}}, metadata [[C_MEM:![0-9]*]], i32 0, metadata [[C]], null, metadata !"_ZTS7MyClass"} ; [ DW_TAG_structure_type ] [MyClass]
 // CHECK: [[C_MEM]] = metadata !{metadata [[C_VPTR:![0-9]*]], metadata [[C_ADD:![0-9]*]], metadata [[C_FUNC:![0-9]*]], metadata [[C_CTOR:![0-9]*]]}
 // CHECK: [[C_VPTR]] = {{.*}} ; [ DW_TAG_member ] [_vptr$MyClass]
@@ -52,3 +59,19 @@ inline void func() {
 outer<foo>::inner x;
 
 // CHECK: metadata [[OUTER_FOO_INNER]], i32 {{[0-9]*}}, i32 {{[0-9]*}}, %"struct.outer<foo>::inner"* @x, {{.*}} ; [ DW_TAG_variable ] [x]
+
+template <typename T>
+struct virt {
+  T* values;
+  virtual ~virt();
+};
+struct elem {
+  static virt<elem> x; // ensure that completing 'elem' will require/completing 'virt<elem>'
+};
+inline void f1() {
+  elem e; // ensure 'elem' is required to be complete when it is emitted as a template argument for 'virt<elem>'
+};
+void f2() {
+  virt<elem> d; // emit 'virt<elem>'
+}
+

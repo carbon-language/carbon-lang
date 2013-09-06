@@ -650,32 +650,6 @@ CGDebugInfo::getOrCreateRecordFwdDecl(const RecordType *Ty,
                                     FullName);
 }
 
-// Walk up the context chain and create forward decls for record decls,
-// and normal descriptors for namespaces.
-llvm::DIDescriptor CGDebugInfo::createContextChain(const Decl *Context) {
-  if (!Context)
-    return TheCU;
-
-  // See if we already have the parent.
-  llvm::DenseMap<const Decl *, llvm::WeakVH>::iterator
-    I = RegionMap.find(Context);
-  if (I != RegionMap.end()) {
-    llvm::Value *V = I->second;
-    return llvm::DIDescriptor(dyn_cast_or_null<llvm::MDNode>(V));
-  }
-
-  // Check namespace.
-  if (const NamespaceDecl *NSDecl = dyn_cast<NamespaceDecl>(Context))
-    return llvm::DIDescriptor(getOrCreateNameSpace(NSDecl));
-
-  if (const RecordDecl *RD = dyn_cast<RecordDecl>(Context))
-    if (!RD->isDependentType())
-      return getOrCreateLimitedType(
-          CGM.getContext().getRecordType(RD)->castAs<RecordType>(),
-          getOrCreateMainFile());
-  return TheCU;
-}
-
 llvm::DIType CGDebugInfo::CreatePointerLikeType(unsigned Tag,
                                                 const Type *Ty,
                                                 QualType PointeeTy,
@@ -1507,20 +1481,23 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty) {
   // `completeRequiredType`.
   // If the type is dynamic, only emit the definition in TUs that require class
   // data. This is handled by `completeClassData`.
-  if ((DebugKind <= CodeGenOptions::LimitedDebugInfo &&
+  llvm::DICompositeType T(getTypeOrNull(QualType(Ty, 0)));
+  // If we've already emitted the type, just use that, even if it's only a
+  // declaration. The completeType, completeRequiredType, and completeClassData
+  // callbacks will handle promoting the declaration to a definition.
+  if (T ||
+      (DebugKind <= CodeGenOptions::LimitedDebugInfo &&
+       // Under -flimit-debug-info, emit only a declaration unless the type is
+       // required to be complete.
        !RD->isCompleteDefinitionRequired() && CGM.getLangOpts().CPlusPlus) ||
-      (CXXDecl && CXXDecl->hasDefinition() && CXXDecl->isDynamicClass())) {
+      // If the class is dynamic, only emit a declaration. A definition will be
+      // emitted whenever the vtable is emitted.
+      (CXXDecl && CXXDecl->hasDefinition() && CXXDecl->isDynamicClass()) || T) {
     llvm::DIDescriptor FDContext =
       getContextDescriptor(cast<Decl>(RD->getDeclContext()));
-    llvm::DIType RetTy = getOrCreateRecordFwdDecl(Ty, FDContext);
-    // FIXME: This is conservatively correct. If we return a non-forward decl
-    // that's not a full definition (such as those created by
-    // createContextChain) then getOrCreateType will record is as a complete
-    // type and we'll never record all its members. But this means we're
-    // emitting full debug info in TUs where GCC successfully emits a partial
-    // definition of the type.
-    if (RetTy.isForwardDecl())
-      return RetTy;
+    if (!T)
+      T = getOrCreateRecordFwdDecl(Ty, FDContext);
+    return T;
   }
 
   return CreateTypeDefinition(Ty);
@@ -2271,10 +2248,7 @@ llvm::DICompositeType CGDebugInfo::CreateLimitedType(const RecordType *Ty) {
   StringRef RDName = getClassName(RD);
 
   llvm::DIDescriptor RDContext;
-  if (DebugKind == CodeGenOptions::LimitedDebugInfo)
-    RDContext = createContextChain(cast<Decl>(RD->getDeclContext()));
-  else
-    RDContext = getContextDescriptor(cast<Decl>(RD->getDeclContext()));
+  RDContext = getContextDescriptor(cast<Decl>(RD->getDeclContext()));
 
   // If we ended up creating the type during the context chain construction,
   // just return that.
