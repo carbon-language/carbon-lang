@@ -218,3 +218,10 @@ namespace deleted_copy {
 
   std::initializer_list<X> x{1}; // expected-error {{invokes deleted constructor}}
 }
+
+namespace RefVersusInitList {
+  struct S {};
+  void f(const S &) = delete;
+  void f(std::initializer_list<S>);
+  void g(S s) { f({S()}); }
+}

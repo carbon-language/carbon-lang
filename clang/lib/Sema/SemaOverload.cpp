@@ -509,6 +509,11 @@ void UserDefinedConversionSequence::DebugPrint() const {
 /// error. Useful for debugging overloading issues.
 void ImplicitConversionSequence::DebugPrint() const {
   raw_ostream &OS = llvm::errs();
+  if (isListInitializationSequence()) {
+    OS << "List-initialization sequence: ";
+    if (isStdInitializerListElement())
+      OS << "Worst std::initializer_list element conversion: ";
+  }
   switch (ConversionKind) {
   case StandardConversion:
     OS << "Standard conversion: ";
@@ -4524,11 +4529,13 @@ TryListConversion(Sema &S, InitListExpr *From, QualType ToType,
         = S.CompareReferenceRelationship(From->getLocStart(), T1, T2, dummy1,
                                          dummy2, dummy3);
 
-      if (RefRelationship >= Sema::Ref_Related)
-        return TryReferenceInit(S, Init, ToType,
-                                /*FIXME:*/From->getLocStart(),
-                                SuppressUserConversions,
-                                /*AllowExplicit=*/false);
+      if (RefRelationship >= Sema::Ref_Related) {
+        Result = TryReferenceInit(S, Init, ToType, /*FIXME*/From->getLocStart(),
+                                  SuppressUserConversions,
+                                  /*AllowExplicit=*/false);
+        Result.setListInitializationSequence();
+        return Result;
+      }
     }
 
     // Otherwise, we bind the reference to a temporary created from the
