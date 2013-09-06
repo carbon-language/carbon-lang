@@ -598,14 +598,19 @@ public:
   ExprResult TransformDependentScopeDeclRefExpr(DependentScopeDeclRefExpr *E,
                                                 bool IsAddressOfOperand);
 
+// FIXME: We use LLVM_ATTRIBUTE_NOINLINE because inlining causes a ridiculous
+// amount of stack usage with clang.
 #define STMT(Node, Parent)                        \
+  LLVM_ATTRIBUTE_NOINLINE \
   StmtResult Transform##Node(Node *S);
 #define EXPR(Node, Parent)                        \
+  LLVM_ATTRIBUTE_NOINLINE \
   ExprResult Transform##Node(Node *E);
 #define ABSTRACT_STMT(Stmt)
 #include "clang/AST/StmtNodes.inc"
 
 #define OPENMP_CLAUSE(Name, Class)                        \
+  LLVM_ATTRIBUTE_NOINLINE \
   OMPClause *Transform ## Class(Class *S);
 #include "clang/Basic/OpenMPKinds.def"
 
