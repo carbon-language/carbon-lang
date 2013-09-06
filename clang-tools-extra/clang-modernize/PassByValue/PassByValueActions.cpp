@@ -113,16 +113,20 @@ void ConstructorParamReplacer::run(const MatchFinder::MatchResult &Result) {
   collectParamDecls(Ctor, ParamDecl, AllParamDecls);
 
   // Generate all replacements for the params.
-  llvm::SmallVector<Replacement, 2> ParamReplaces(AllParamDecls.size());
+  llvm::SmallVector<Replacement, 2> ParamReplaces;
   for (unsigned I = 0, E = AllParamDecls.size(); I != E; ++I) {
     TypeLoc ParamTL = AllParamDecls[I]->getTypeSourceInfo()->getTypeLoc();
+    ReferenceTypeLoc RefTL = ParamTL.getAs<ReferenceTypeLoc>();
     SourceRange Range(AllParamDecls[I]->getLocStart(), ParamTL.getLocEnd());
     CharSourceRange CharRange = Lexer::makeFileCharRange(
         CharSourceRange::getTokenRange(Range), SM, LangOptions());
-    TypeLoc ValueTypeLoc = ParamTL;
+
+    // do not generate a replacement when the parameter is already a value
+    if (RefTL.isNull())
+      continue;
+
     // transform non-value parameters (e.g: const-ref) to values
-    if (!ParamTL.getNextTypeLoc().isNull())
-      ValueTypeLoc = ParamTL.getNextTypeLoc();
+    TypeLoc ValueTypeLoc = RefTL.getPointeeLoc();
     llvm::SmallString<32> ValueStr = Lexer::getSourceText(
         CharSourceRange::getTokenRange(ValueTypeLoc.getSourceRange()), SM,
         LangOptions());
@@ -136,7 +140,7 @@ void ConstructorParamReplacer::run(const MatchFinder::MatchResult &Result) {
     // 'const Foo &param' -> 'Foo param'
     //  ~~~~~~~~~~~           ~~~^
     ValueStr += ' ';
-    ParamReplaces[I] = Replacement(SM, CharRange, ValueStr);
+    ParamReplaces.push_back(Replacement(SM, CharRange, ValueStr));
   }
 
   // Reject the changes if the the risk level is not acceptable.

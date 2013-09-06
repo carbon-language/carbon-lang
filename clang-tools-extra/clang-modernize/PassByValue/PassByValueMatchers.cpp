@@ -63,6 +63,14 @@ AST_MATCHER(CXXConstructorDecl, isNonDeletedCopyConstructor) {
 using namespace clang;
 using namespace clang::ast_matchers;
 
+static TypeMatcher constRefType() {
+  return lValueReferenceType(pointee(isConstQualified()));
+}
+
+static TypeMatcher nonConstValueType() {
+  return qualType(unless(anyOf(referenceType(), isConstQualified())));
+}
+
 DeclarationMatcher makePassByValueCtorParamMatcher() {
   return constructorDecl(
       forEachConstructorInitializer(ctorInitializer(
@@ -71,7 +79,13 @@ DeclarationMatcher makePassByValueCtorParamMatcher() {
           // is generated instead of a CXXConstructExpr, filtering out templates
           // automatically for us.
           withInitializer(constructExpr(
-              has(declRefExpr(to(parmVarDecl().bind(PassByValueParamId)))),
+              has(declRefExpr(to(
+                  parmVarDecl(hasType(qualType(
+                                  // match only const-ref or a non-const value
+                                  // parameters, rvalues and const-values
+                                  // shouldn't be modified.
+                                  anyOf(constRefType(), nonConstValueType()))))
+                      .bind(PassByValueParamId)))),
               hasDeclaration(constructorDecl(
                   isNonDeletedCopyConstructor(),
                   hasDeclContext(recordDecl(isMoveConstructible())))))))

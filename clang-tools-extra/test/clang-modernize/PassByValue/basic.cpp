@@ -150,7 +150,7 @@ struct O {
 // Test with a const-value parameter
 struct P {
   P(const Movable M) : M(M) {}
-  // CHECK: P(Movable M) : M(std::move(M)) {}
+  // CHECK: P(const Movable M) : M(M) {}
   Movable M;
 };
 
@@ -165,4 +165,21 @@ struct Q {
   Movable B;
   Movable C;
   double D;
+};
+
+// Test that value-parameters with a nested name specifier are left as-is
+namespace ns_R {
+typedef ::Movable RMovable;
+}
+struct R {
+  R(ns_R::RMovable M) : M(M) {}
+  // CHECK: R(ns_R::RMovable M) : M(std::move(M)) {}
+  ns_R::RMovable M;
+};
+
+// Test with rvalue parameter
+struct S {
+  S(Movable &&M) : M(M) {}
+  // CHECK: S(Movable &&M) : M(M) {}
+  Movable M;
 };
