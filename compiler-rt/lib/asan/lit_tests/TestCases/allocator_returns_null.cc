@@ -8,6 +8,8 @@
 // RUN: ASAN_OPTIONS=allocator_may_return_null=1     %t malloc 2>&1 | FileCheck %s --check-prefix=CHECK-mNULL
 // RUN: ASAN_OPTIONS=allocator_may_return_null=0 not %t calloc 2>&1 | FileCheck %s --check-prefix=CHECK-cCRASH
 // RUN: ASAN_OPTIONS=allocator_may_return_null=1     %t calloc 2>&1 | FileCheck %s --check-prefix=CHECK-cNULL
+// RUN: ASAN_OPTIONS=allocator_may_return_null=0 not %t calloc-overflow 2>&1 | FileCheck %s --check-prefix=CHECK-coCRASH
+// RUN: ASAN_OPTIONS=allocator_may_return_null=1     %t calloc-overflow 2>&1 | FileCheck %s --check-prefix=CHECK-coNULL
 // RUN: ASAN_OPTIONS=allocator_may_return_null=0 not %t realloc 2>&1 | FileCheck %s --check-prefix=CHECK-rCRASH
 // RUN: ASAN_OPTIONS=allocator_may_return_null=1     %t realloc 2>&1 | FileCheck %s --check-prefix=CHECK-rNULL
 // RUN: ASAN_OPTIONS=allocator_may_return_null=0 not %t realloc-after-malloc 2>&1 | FileCheck %s --check-prefix=CHECK-mrCRASH
@@ -32,6 +34,14 @@ int main(int argc, char **argv) {
     x = (char*)calloc(size / 4, 4);
   }
 
+  if (!strcmp(argv[1], "calloc-overflow")) {
+    fprintf(stderr, "calloc-overflow:\n");
+    volatile size_t kMaxSizeT = std::numeric_limits<size_t>::max();
+    size_t kArraySize = 4096;
+    volatile size_t kArraySize2 = kMaxSizeT / kArraySize + 10;
+    x = (char*)calloc(kArraySize, kArraySize2);
+  }
+
   if (!strcmp(argv[1], "realloc")) {
     fprintf(stderr, "realloc:\n");
     x = (char*)realloc(0, size);
@@ -50,6 +60,8 @@ int main(int argc, char **argv) {
 // CHECK-mCRASH: AddressSanitizer's allocator is terminating the process
 // CHECK-cCRASH: calloc:
 // CHECK-cCRASH: AddressSanitizer's allocator is terminating the process
+// CHECK-coCRASH: calloc-overflow:
+// CHECK-coCRASH: AddressSanitizer's allocator is terminating the process
 // CHECK-rCRASH: realloc:
 // CHECK-rCRASH: AddressSanitizer's allocator is terminating the process
 // CHECK-mrCRASH: realloc-after-malloc:
@@ -59,6 +71,8 @@ int main(int argc, char **argv) {
 // CHECK-mNULL: x: (nil)
 // CHECK-cNULL: calloc:
 // CHECK-cNULL: x: (nil)
+// CHECK-coNULL: calloc-overflow:
+// CHECK-coNULL: x: (nil)
 // CHECK-rNULL: realloc:
 // CHECK-rNULL: x: (nil)
 // CHECK-mrNULL: realloc-after-malloc:
