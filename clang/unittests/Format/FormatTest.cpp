@@ -1591,6 +1591,10 @@ TEST_F(FormatTest, FormatsEnumTypes) {
                "  A,\n"
                "  B\n"
                "};");
+  verifyFormat("enum X : std::uint32_t {\n"
+               "  A,\n"
+               "  B\n"
+               "};");
 }
 
 TEST_F(FormatTest, FormatsBitfields) {
