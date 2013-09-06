@@ -783,9 +783,12 @@ class MFC3OP<string asmstr, RegisterOperand RO> :
   InstSE<(outs RO:$rt, RO:$rd, uimm16:$sel), (ins),
          !strconcat(asmstr, "\t$rt, $rd, $sel"), [], NoItinerary, FrmFR>;
 
-let isBarrier = 1, isTerminator = 1, isCodeGenOnly = 1 in
-def TRAP : InstSE<(outs), (ins), "break", [(trap)], NoItinerary, FrmOther> {
-   let Inst = 0x0000000d;
+class TrapBase<Instruction RealInst>
+  : PseudoSE<(outs), (ins), [(trap)], NoItinerary>,
+    PseudoInstExpansion<(RealInst 0, 0)> {
+  let isBarrier = 1;
+  let isTerminator = 1;
+  let isCodeGenOnly = 1;
 }
 
 //===----------------------------------------------------------------------===//
@@ -941,6 +944,7 @@ def TNEI : TEQI_FT<"tnei", GPR32Opnd>, TEQI_FM<0xe>;
 
 def BREAK : BRK_FT<"break">, BRK_FM<0xd>;
 def SYSCALL : SYS_FT<"syscall">, SYS_FM<0xc>;
+def TRAP : TrapBase<BREAK>;
 
 def ERET : ER_FT<"eret">, ER_FM<0x18>;
 def DERET : ER_FT<"deret">, ER_FM<0x1f>;

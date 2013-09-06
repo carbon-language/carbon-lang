@@ -327,6 +327,10 @@ bool MipsCodeEmitter::expandPseudos(MachineBasicBlock::instr_iterator &MI,
     BuildMI(MBB, &*MI, MI->getDebugLoc(), II->get(Mips::BEQ)).addReg(Mips::ZERO)
       .addReg(Mips::ZERO).addOperand(MI->getOperand(0));
     break;
+  case Mips::TRAP:
+    BuildMI(MBB, &*MI, MI->getDebugLoc(), II->get(Mips::BREAK)).addImm(0)
+      .addImm(0);
+    break;
   case Mips::JALRPseudo:
     BuildMI(MBB, &*MI, MI->getDebugLoc(), II->get(Mips::JALR), Mips::RA)
       .addReg(MI->getOperand(0).getReg());
