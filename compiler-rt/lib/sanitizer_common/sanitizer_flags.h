@@ -45,6 +45,8 @@ struct CommonFlags {
   // detect_leaks=false, or if __lsan_do_leak_check() is called before the
   // handler has a chance to run.
   bool leak_check_at_exit;
+  // If false, the allocator will crash instead of returning 0 on out-of-memory.
+  bool allocator_may_return_null;
 };
 
 extern CommonFlags common_flags_dont_use_directly;

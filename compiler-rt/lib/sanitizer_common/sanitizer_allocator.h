@@ -23,6 +23,9 @@
 
 namespace __sanitizer {
 
+// Depending on allocator_may_return_null either return 0 or crash.
+void *AllocatorReturnNull();
+
 // SizeClassMap maps allocation sizes into size classes and back.
 // Class 0 corresponds to size 0.
 // Classes 1 - 16 correspond to sizes 16 to 256 (size = class_id * 16).
@@ -941,7 +944,7 @@ class LargeMmapAllocator {
     uptr map_size = RoundUpMapSize(size);
     if (alignment > page_size_)
       map_size += alignment;
-    if (map_size < size) return 0;  // Overflow.
+    if (map_size < size) return AllocatorReturnNull();  // Overflow.
     uptr map_beg = reinterpret_cast<uptr>(
         MmapOrDie(map_size, "LargeMmapAllocator"));
     MapUnmapCallback().OnMap(map_beg, map_size);
@@ -1176,7 +1179,7 @@ class CombinedAllocator {
     if (size == 0)
       size = 1;
     if (size + alignment < size)
-      return 0;
+      return AllocatorReturnNull();
     if (alignment > 8)
       size = RoundUpTo(size, alignment);
     void *res;

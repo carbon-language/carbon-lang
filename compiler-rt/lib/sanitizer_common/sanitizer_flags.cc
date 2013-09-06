@@ -31,6 +31,7 @@ void ParseCommonFlagsFromString(const char *str) {
   ParseFlag(str, &f->log_path, "log_path");
   ParseFlag(str, &f->detect_leaks, "detect_leaks");
   ParseFlag(str, &f->leak_check_at_exit, "leak_check_at_exit");
+  ParseFlag(str, &f->allocator_may_return_null, "allocator_may_return_null");
 }
 
 static bool GetFlagValue(const char *env, const char *name,

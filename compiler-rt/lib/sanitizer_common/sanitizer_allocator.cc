@@ -14,6 +14,7 @@
 #include "sanitizer_allocator.h"
 #include "sanitizer_allocator_internal.h"
 #include "sanitizer_common.h"
+#include "sanitizer_flags.h"
 
 namespace __sanitizer {
 
@@ -137,6 +138,16 @@ bool CallocShouldReturnNullDueToOverflow(uptr size, uptr n) {
   if (!size) return false;
   uptr max = (uptr)-1L;
   return (max / size) < n;
+}
+
+void *AllocatorReturnNull() {
+  if (common_flags()->allocator_may_return_null)
+    return 0;
+  Report("%s's allocator is terminating the process instead of returning 0\n",
+         SanitizerToolName);
+  Report("If you don't like this behavior set allocator_may_return_null=1\n");
+  CHECK(0);
+  return 0;
 }
 
 }  // namespace __sanitizer

@@ -345,7 +345,7 @@ static void *Allocate(uptr size, uptr alignment, StackTrace *stack,
   if (size > kMaxAllowedMallocSize || needed_size > kMaxAllowedMallocSize) {
     Report("WARNING: AddressSanitizer failed to allocate %p bytes\n",
            (void*)size);
-    return 0;
+    return AllocatorReturnNull();
   }
 
   AsanThread *t = GetCurrentThread();

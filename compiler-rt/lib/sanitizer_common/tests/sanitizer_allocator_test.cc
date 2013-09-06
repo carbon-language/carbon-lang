@@ -14,6 +14,7 @@
 #include "sanitizer_common/sanitizer_allocator.h"
 #include "sanitizer_common/sanitizer_allocator_internal.h"
 #include "sanitizer_common/sanitizer_common.h"
+#include "sanitizer_common/sanitizer_flags.h"
 
 #include "sanitizer_test_utils.h"
 
@@ -416,11 +417,19 @@ void TestCombinedAllocator() {
   memset(&cache, 0, sizeof(cache));
   a->InitCache(&cache);
 
+  bool allocator_may_return_null = common_flags()->allocator_may_return_null;
+  common_flags()->allocator_may_return_null = true;
   EXPECT_EQ(a->Allocate(&cache, -1, 1), (void*)0);
   EXPECT_EQ(a->Allocate(&cache, -1, 1024), (void*)0);
   EXPECT_EQ(a->Allocate(&cache, (uptr)-1 - 1024, 1), (void*)0);
   EXPECT_EQ(a->Allocate(&cache, (uptr)-1 - 1024, 1024), (void*)0);
   EXPECT_EQ(a->Allocate(&cache, (uptr)-1 - 1023, 1024), (void*)0);
+
+  common_flags()->allocator_may_return_null = false;
+  EXPECT_DEATH(a->Allocate(&cache, -1, 1),
+               "allocator is terminating the process");
+  // Restore the original value.
+  common_flags()->allocator_may_return_null = allocator_may_return_null;
 
   const uptr kNumAllocs = 100000;
   const uptr kNumIter = 10;
