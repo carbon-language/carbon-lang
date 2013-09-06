@@ -8,6 +8,7 @@ set(SANITIZER_SOURCES
   sanitizer_libc.cc
   sanitizer_linux.cc
   sanitizer_mac.cc
+  sanitizer_platform_limits_linux.cc
   sanitizer_platform_limits_posix.cc
   sanitizer_posix.cc
   sanitizer_printf.cc

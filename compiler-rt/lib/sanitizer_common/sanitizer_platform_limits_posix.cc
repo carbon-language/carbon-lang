@@ -36,6 +36,7 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#include <sys/times.h>
 #include <sys/types.h>
 #include <sys/utsname.h>
 #include <termios.h>
@@ -43,6 +44,7 @@
 #include <wchar.h>
 
 #if SANITIZER_LINUX
+#include <utime.h>
 #include <sys/mount.h>
 #include <sys/ptrace.h>
 #include <sys/sysinfo.h>
@@ -54,6 +56,8 @@
 #include <linux/input.h>
 #include <linux/ioctl.h>
 #include <linux/soundcard.h>
+#include <linux/sysctl.h>
+#include <linux/utsname.h>
 #endif
 
 #if !SANITIZER_ANDROID
@@ -62,6 +66,7 @@
 
 #if SANITIZER_LINUX && !SANITIZER_ANDROID
 #include <glob.h>
+#include <mqueue.h>
 #include <net/if_ppp.h>
 #include <netax25/ax25.h>
 #include <netipx/ipx.h>
@@ -69,7 +74,10 @@
 #include <scsi/scsi.h>
 #include <sys/mtio.h>
 #include <sys/kd.h>
+#include <sys/shm.h>
+#include <sys/timex.h>
 #include <sys/user.h>
+#include <sys/ustat.h>
 #include <linux/cyclades.h>
 #include <linux/if_eql.h>
 #include <linux/if_plip.h>
@@ -78,6 +86,7 @@
 #include <linux/mroute6.h>
 #include <linux/scc.h>
 #include <linux/serial.h>
+#include <sys/msg.h>
 #endif // SANITIZER_LINUX && !SANITIZER_ANDROID
 
 #if SANITIZER_ANDROID
@@ -91,6 +100,8 @@
 #include <link.h>
 #include <sys/vfs.h>
 #include <sys/epoll.h>
+// #include <asm/stat.h>
+#include <linux/capability.h>
 #endif // SANITIZER_LINUX
 
 #if SANITIZER_MAC
@@ -116,6 +127,10 @@ namespace __sanitizer {
   unsigned uid_t_sz = sizeof(uid_t);
   unsigned mbstate_t_sz = sizeof(mbstate_t);
   unsigned sigset_t_sz = sizeof(sigset_t);
+  unsigned struct_timezone_sz = sizeof(struct timezone);
+  unsigned struct_tms_sz = sizeof(struct tms);
+  unsigned struct_sigevent_sz = sizeof(struct sigevent);
+  unsigned struct_sched_param_sz = sizeof(struct sched_param);
 
 #if !SANITIZER_ANDROID
   unsigned ucontext_t_sz = sizeof(ucontext_t);
@@ -127,11 +142,24 @@ namespace __sanitizer {
   unsigned struct_epoll_event_sz = sizeof(struct epoll_event);
   unsigned struct_sysinfo_sz = sizeof(struct sysinfo);
   unsigned struct_timespec_sz = sizeof(struct timespec);
+  unsigned __user_cap_header_struct_sz =
+      sizeof(struct __user_cap_header_struct);
+  unsigned __user_cap_data_struct_sz = sizeof(struct __user_cap_data_struct);
+  unsigned struct_utimbuf_sz = sizeof(struct utimbuf);
+  unsigned struct_new_utsname_sz = sizeof(struct new_utsname);
+  unsigned struct_old_utsname_sz = sizeof(struct old_utsname);
+  unsigned struct_oldold_utsname_sz = sizeof(struct oldold_utsname);
+  unsigned struct_itimerspec_sz = sizeof(struct itimerspec);
+  unsigned struct_ustat_sz = sizeof(struct ustat);
 #endif // SANITIZER_LINUX
 
 #if SANITIZER_LINUX && !SANITIZER_ANDROID
   unsigned struct_rlimit64_sz = sizeof(struct rlimit64);
   unsigned struct_statfs64_sz = sizeof(struct statfs64);
+  unsigned struct_timex_sz = sizeof(struct timex);
+  unsigned struct_msqid_ds_sz = sizeof(struct msqid_ds);
+  unsigned struct_shmid_ds_sz = sizeof(struct shmid_ds);
+  unsigned struct_mq_attr_sz = sizeof(struct mq_attr);
 #endif // SANITIZER_LINUX && !SANITIZER_ANDROID
 
   uptr sig_ign = (uptr)SIG_IGN;
@@ -827,5 +855,14 @@ CHECK_STRUCT_SIZE_AND_OFFSET(sigaction, sa_flags);
 CHECK_STRUCT_SIZE_AND_OFFSET(sigaction, sa_restorer);
 #endif
 
-#endif  // SANITIZER_LINUX || SANITIZER_MAC
+#if SANITIZER_LINUX
+CHECK_TYPE_SIZE(__sysctl_args);
+CHECK_SIZE_AND_OFFSET(__sysctl_args, name);
+CHECK_SIZE_AND_OFFSET(__sysctl_args, nlen);
+CHECK_SIZE_AND_OFFSET(__sysctl_args, oldval);
+CHECK_SIZE_AND_OFFSET(__sysctl_args, oldlenp);
+CHECK_SIZE_AND_OFFSET(__sysctl_args, newval);
+CHECK_SIZE_AND_OFFSET(__sysctl_args, newlen);
+#endif
 
+#endif  // SANITIZER_LINUX || SANITIZER_MAC

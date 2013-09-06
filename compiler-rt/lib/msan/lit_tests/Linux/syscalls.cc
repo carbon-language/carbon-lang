@@ -7,6 +7,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <sys/stat.h>
+
 #include <sanitizer/linux_syscall_hooks.h>
 #include <sanitizer/msan_interface.h>
 
@@ -16,6 +18,7 @@
 int main(int argc, char *argv[]) {
   char buf[1000];
   const int kTen = 10;
+  const int kFortyTwo = 42;
   memset(buf, 0, sizeof(buf));
   __msan_unpoison(buf, sizeof(buf));
   __sanitizer_syscall_pre_recvmsg(0, buf, 0);
@@ -63,6 +66,16 @@ int main(int argc, char *argv[]) {
   __msan_poison(buf, sizeof(buf));
   __sanitizer_syscall_post_read(5, 42, buf, 10);
   assert(__msan_test_shadow(buf, sizeof(buf)) == 5);
+
+  __msan_poison(buf, sizeof(buf));
+  __sanitizer_syscall_post_newfstatat(0, 5, "/path/to/file", buf, 0);
+  assert(__msan_test_shadow(buf, sizeof(buf)) == sizeof(struct stat));
+
+  __msan_poison(buf, sizeof(buf));
+  int prio = 0;
+  __sanitizer_syscall_post_mq_timedreceive(kFortyTwo, 5, buf, sizeof(buf), &prio, 0);
+  assert(__msan_test_shadow(buf, sizeof(buf)) == kFortyTwo);
+  assert(__msan_test_shadow(&prio, sizeof(prio)) == -1);
   
   return 0;
 }
