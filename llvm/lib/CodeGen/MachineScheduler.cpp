@@ -484,6 +484,8 @@ void ScheduleDAGMI::enterRegion(MachineBasicBlock *bb,
   LiveRegionEnd =
     (RegionEnd == bb->end()) ? RegionEnd : llvm::next(RegionEnd);
 
+  SUPressureDiffs.clear();
+
   SchedImpl->initPolicy(begin, end, regioninstrs);
 
   ShouldTrackPressure = SchedImpl->shouldTrackPressure();
@@ -551,25 +553,30 @@ void ScheduleDAGMI::initRegPressure() {
         dbgs() << "\n");
 }
 
-// FIXME: When the pressure tracker deals in pressure differences then we won't
-// iterate over all RegionCriticalPSets[i].
 void ScheduleDAGMI::
-updateScheduledPressure(const std::vector<unsigned> &NewMaxPressure) {
-  for (unsigned i = 0, e = RegionCriticalPSets.size(); i < e; ++i) {
-    unsigned ID = RegionCriticalPSets[i].getPSet();
-    if ((int)NewMaxPressure[ID] > RegionCriticalPSets[i].getUnitInc()
-        && NewMaxPressure[ID] <= INT16_MAX)
-      RegionCriticalPSets[i].setUnitInc(NewMaxPressure[ID]);
+updateScheduledPressure(const SUnit *SU,
+                        const std::vector<unsigned> &NewMaxPressure) {
+  const PressureDiff &PDiff = getPressureDiff(SU);
+  unsigned CritIdx = 0, CritEnd = RegionCriticalPSets.size();
+  for (PressureDiff::const_iterator I = PDiff.begin(), E = PDiff.end();
+       I != E; ++I) {
+    if (!I->isValid())
+      break;
+    unsigned ID = I->getPSet();
+    while (CritIdx != CritEnd && RegionCriticalPSets[CritIdx].getPSet() < ID)
+      ++CritIdx;
+    if (CritIdx != CritEnd && RegionCriticalPSets[CritIdx].getPSet() == ID) {
+      if ((int)NewMaxPressure[ID] > RegionCriticalPSets[CritIdx].getUnitInc()
+          && NewMaxPressure[ID] <= INT16_MAX)
+        RegionCriticalPSets[CritIdx].setUnitInc(NewMaxPressure[ID]);
+    }
+    unsigned Limit = RegClassInfo->getRegPressureSetLimit(ID);
+    if (NewMaxPressure[ID] >= Limit - 2) {
+      DEBUG(dbgs() << "  " << TRI->getRegPressureSetName(ID) << ": "
+            << NewMaxPressure[ID] << " > " << Limit << "(+ "
+            << BotRPTracker.getLiveThru()[ID] << " livethru)\n");
+    }
   }
-  DEBUG(
-    for (unsigned i = 0, e = NewMaxPressure.size(); i < e; ++i) {
-      unsigned Limit = RegClassInfo->getRegPressureSetLimit(i);
-      if (NewMaxPressure[i] > Limit ) {
-        dbgs() << "  " << TRI->getRegPressureSetName(i) << ": "
-               << NewMaxPressure[i] << " > " << Limit << "(+ "
-               << BotRPTracker.getLiveThru()[i] << " livethru)\n";
-      }
-    });
 }
 
 /// Update the PressureDiff array for liveness after scheduling this
@@ -866,7 +873,7 @@ void ScheduleDAGMI::scheduleMI(SUnit *SU, bool IsTopNode) {
       // Update top scheduled pressure.
       TopRPTracker.advance();
       assert(TopRPTracker.getPos() == CurrentTop && "out of sync");
-      updateScheduledPressure(TopRPTracker.getPressure().MaxSetPressure);
+      updateScheduledPressure(SU, TopRPTracker.getPressure().MaxSetPressure);
     }
   }
   else {
@@ -888,8 +895,8 @@ void ScheduleDAGMI::scheduleMI(SUnit *SU, bool IsTopNode) {
       SmallVector<unsigned, 8> LiveUses;
       BotRPTracker.recede(&LiveUses);
       assert(BotRPTracker.getPos() == CurrentBottom && "out of sync");
+      updateScheduledPressure(SU, BotRPTracker.getPressure().MaxSetPressure);
       updatePressureDiffs(LiveUses);
-      updateScheduledPressure(BotRPTracker.getPressure().MaxSetPressure);
     }
   }
 }

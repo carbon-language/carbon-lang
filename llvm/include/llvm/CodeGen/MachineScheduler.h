@@ -413,7 +413,8 @@ protected:
 
   void updatePressureDiffs(ArrayRef<unsigned> LiveUses);
 
-  void updateScheduledPressure(const std::vector<unsigned> &NewMaxPressure);
+  void updateScheduledPressure(const SUnit *SU,
+                               const std::vector<unsigned> &NewMaxPressure);
 
   bool checkSchedLimit();
 

@@ -145,6 +145,8 @@ public:
   typedef const PressureChange* const_iterator;
   iterator begin() { return &PressureChanges[0]; }
   iterator end() { return &PressureChanges[MaxPSets]; }
+  const_iterator begin() const { return &PressureChanges[0]; }
+  const_iterator end() const { return &PressureChanges[MaxPSets]; }
 
   void addPressureChange(unsigned RegUnit, bool IsDec,
                          const MachineRegisterInfo *MRI);
@@ -158,6 +160,8 @@ class PressureDiffs {
 public:
   PressureDiffs(): PDiffArray(0), Size(0), Max(0) {}
   ~PressureDiffs() { free(PDiffArray); }
+
+  void clear() { Size = 0; }
 
   void init(unsigned N);
 
