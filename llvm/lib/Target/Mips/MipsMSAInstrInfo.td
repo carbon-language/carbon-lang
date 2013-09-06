@@ -896,8 +896,8 @@ class MSA_3RF_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
   MSA_3R_DESC_BASE<instr_asm, OpNode, RCWD, RCWS, RCWT, itin>;
 
 class MSA_3RF_4RF_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
-                            RegisterClass RCWD, RegisterClass RCWS,
-                            RegisterClass RCWT = RCWS,
+                            RegisterClass RCWD, RegisterClass RCWS = RCWD,
+                            RegisterClass RCWT = RCWD,
                             InstrItinClass itin = NoItinerary> :
   MSA_3R_4R_DESC_BASE<instr_asm, OpNode, RCWD, RCWS, RCWT, itin>;
 
@@ -1413,9 +1413,9 @@ class FLOG2_W_DESC : MSA_2RF_DESC_BASE<"flog2.w", int_mips_flog2_w, MSA128W>;
 class FLOG2_D_DESC : MSA_2RF_DESC_BASE<"flog2.d", int_mips_flog2_d, MSA128D>;
 
 class FMADD_W_DESC : MSA_3RF_4RF_DESC_BASE<"fmadd.w", int_mips_fmadd_w,
-                                           MSA128W, MSA128W>;
+                                           MSA128W>;
 class FMADD_D_DESC : MSA_3RF_4RF_DESC_BASE<"fmadd.d", int_mips_fmadd_d,
-                                           MSA128D, MSA128D>;
+                                           MSA128D>;
 
 class FMAX_W_DESC : MSA_3RF_DESC_BASE<"fmax.w", int_mips_fmax_w, MSA128W>;
 class FMAX_D_DESC : MSA_3RF_DESC_BASE<"fmax.d", int_mips_fmax_d, MSA128D>;
@@ -1434,9 +1434,9 @@ class FMIN_A_D_DESC : MSA_3RF_DESC_BASE<"fmin_a.d", int_mips_fmin_a_d,
                                         MSA128D>;
 
 class FMSUB_W_DESC : MSA_3RF_4RF_DESC_BASE<"fmsub.w", int_mips_fmsub_w,
-                                           MSA128W, MSA128W>;
+                                           MSA128W>;
 class FMSUB_D_DESC : MSA_3RF_4RF_DESC_BASE<"fmsub.d", int_mips_fmsub_d,
-                                           MSA128D, MSA128D>;
+                                           MSA128D>;
 
 class FMUL_W_DESC : MSA_3RF_DESC_BASE<"fmul.w", int_mips_fmul_w, MSA128W>;
 class FMUL_D_DESC : MSA_3RF_DESC_BASE<"fmul.d", int_mips_fmul_d, MSA128D>;
@@ -1618,14 +1618,14 @@ class LDX_W_DESC : LDX_DESC_BASE<"ldx.w", load, v4i32, MSA128W>;
 class LDX_D_DESC : LDX_DESC_BASE<"ldx.d", load, v2i64, MSA128D>;
 
 class MADD_Q_H_DESC : MSA_3RF_4RF_DESC_BASE<"madd_q.h", int_mips_madd_q_h,
-                                            MSA128H, MSA128H>;
+                                            MSA128H>;
 class MADD_Q_W_DESC : MSA_3RF_4RF_DESC_BASE<"madd_q.w", int_mips_madd_q_w,
-                                            MSA128W, MSA128W>;
+                                            MSA128W>;
 
 class MADDR_Q_H_DESC : MSA_3RF_4RF_DESC_BASE<"maddr_q.h", int_mips_maddr_q_h,
-                                             MSA128H, MSA128H>;
+                                             MSA128H>;
 class MADDR_Q_W_DESC : MSA_3RF_4RF_DESC_BASE<"maddr_q.w", int_mips_maddr_q_w,
-                                             MSA128W, MSA128W>;
+                                             MSA128W>;
 
 class MADDV_B_DESC : MSA_3R_4R_DESC_BASE<"maddv.b", int_mips_maddv_b, MSA128B>;
 class MADDV_H_DESC : MSA_3R_4R_DESC_BASE<"maddv.h", int_mips_maddv_h, MSA128H>;
@@ -1701,14 +1701,14 @@ class MOVE_V_DESC {
 }
 
 class MSUB_Q_H_DESC : MSA_3RF_4RF_DESC_BASE<"msub_q.h", int_mips_msub_q_h,
-                                            MSA128H, MSA128H>;
+                                            MSA128H>;
 class MSUB_Q_W_DESC : MSA_3RF_4RF_DESC_BASE<"msub_q.w", int_mips_msub_q_w,
-                                            MSA128W, MSA128W>;
+                                            MSA128W>;
 
 class MSUBR_Q_H_DESC : MSA_3RF_4RF_DESC_BASE<"msubr_q.h", int_mips_msubr_q_h,
-                                             MSA128H, MSA128H>;
+                                             MSA128H>;
 class MSUBR_Q_W_DESC : MSA_3RF_4RF_DESC_BASE<"msubr_q.w", int_mips_msubr_q_w,
-                                             MSA128W, MSA128W>;
+                                             MSA128W>;
 
 class MSUBV_B_DESC : MSA_3R_4R_DESC_BASE<"msubv.b", int_mips_msubv_b, MSA128B>;
 class MSUBV_H_DESC : MSA_3R_4R_DESC_BASE<"msubv.h", int_mips_msubv_h, MSA128H>;
