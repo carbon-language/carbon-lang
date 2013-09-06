@@ -82,6 +82,16 @@ DefinedAtom::ContentPermissions getPermissions(const coff_section *section) {
   return DefinedAtom::perm___;
 }
 
+/// Returns the alignment of the section. The contents of the section must be
+/// aligned by this value in the resulting executable/DLL.
+DefinedAtom::Alignment getAlignment(const coff_section *section) {
+  if (section->Characteristics & llvm::COFF::IMAGE_SCN_TYPE_NO_PAD)
+    return DefinedAtom::Alignment(0);
+  // Bit [20:24] contains section alignment information.
+  int powerOf2 = (section->Characteristics >> 20) & 0xf;
+  return DefinedAtom::Alignment(powerOf2);
+}
+
 DefinedAtom::Merge getMerge(const coff_aux_section_definition *auxsym) {
   switch (auxsym->Selection) {
     case llvm::COFF::IMAGE_COMDAT_SELECT_NODUPLICATES:
@@ -449,6 +459,10 @@ private:
       _symbolAtom[*si] = atom;
       _definedAtomLocations[section][(*si)->Value] = atom;
     }
+
+    // Finally, set alignment to the first atom so that the section contents
+    // will be aligned as specified by the object section header.
+    _definedAtomLocations[section][0]->setAlignment(getAlignment(section));
     return error_code::success();
   }
 

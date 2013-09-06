@@ -470,6 +470,11 @@ public:
   }
 
   void appendAtom(const DefinedAtom *atom) {
+    // Atom may have to be at a proper alignment boundary. If so, move the
+    // pointer to make a room after the last atom before adding new one.
+    _size = llvm::RoundUpToAlignment(_size, 1 << atom->alignment().powerOf2);
+
+    // Create an AtomLayout and move the current pointer.
     auto *layout = new (_alloc) AtomLayout(atom, _size, _size);
     _atomLayouts.push_back(layout);
     _size += atom->size();

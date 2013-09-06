@@ -149,17 +149,20 @@ public:
                       ContentPermissions perms, uint64_t ordinal)
       : COFFBaseDefinedAtom(file, name, Kind::File), _sectionName(sectionName),
         _scope(scope), _contentType(contentType), _permissions(perms),
-        _ordinal(ordinal) {}
+        _ordinal(ordinal), _alignment(1) {}
 
   static bool classof(const COFFBaseDefinedAtom *atom) {
     return atom->getKind() == Kind::File;
   }
+
+  void setAlignment(Alignment val) { _alignment = val; };
 
   virtual StringRef getSectionName() const { return _sectionName; }
   virtual Scope scope() const { return _scope; }
   virtual ContentType contentType() const { return _contentType; }
   virtual ContentPermissions permissions() const { return _permissions; }
   virtual uint64_t ordinal() const { return _ordinal; }
+  virtual Alignment alignment() const { return _alignment; }
 
 private:
   StringRef _sectionName;
@@ -167,6 +170,7 @@ private:
   ContentType _contentType;
   ContentPermissions _permissions;
   uint64_t _ordinal;
+  Alignment _alignment;
   std::vector<std::unique_ptr<COFFReference>> _references;
 };
 
