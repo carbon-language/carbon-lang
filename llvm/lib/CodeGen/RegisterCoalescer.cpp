@@ -583,8 +583,6 @@ bool RegisterCoalescer::removeCopyByCommutingDef(const CoalescerPair &CP,
   if (!BValNo || BValNo->def != CopyIdx)
     return false;
 
-  assert(BValNo->def == CopyIdx && "Copy doesn't define the value?");
-
   // AValNo is the value number in A that defines the copy, A3 in the example.
   VNInfo *AValNo = IntA.getVNInfoAt(CopyIdx.getRegSlot(true));
   assert(AValNo && "COPY source not live");
