@@ -87,8 +87,10 @@ DefinedAtom::ContentPermissions getPermissions(const coff_section *section) {
 DefinedAtom::Alignment getAlignment(const coff_section *section) {
   if (section->Characteristics & llvm::COFF::IMAGE_SCN_TYPE_NO_PAD)
     return DefinedAtom::Alignment(0);
-  // Bit [20:24] contains section alignment information.
-  int powerOf2 = (section->Characteristics >> 20) & 0xf;
+  // Bit [20:24] contains section alignment information. We need to decrease
+  // the value stored by 1 in order to get the real exponent (e.g, ALIGN_1BYTE
+  // is 0x00100000, but the exponent should be 0)
+  int powerOf2 = ((section->Characteristics >> 20) & 0xf) - 1;
   return DefinedAtom::Alignment(powerOf2);
 }
 
