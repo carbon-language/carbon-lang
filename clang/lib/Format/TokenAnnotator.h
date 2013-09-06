@@ -71,7 +71,7 @@ public:
   FormatToken *First;
   FormatToken *Last;
 
-  std::vector<AnnotatedLine *> Children;
+  SmallVector<AnnotatedLine *, 0> Children;
 
   LineType Type;
   unsigned Level;
@@ -92,6 +92,11 @@ class TokenAnnotator {
 public:
   TokenAnnotator(const FormatStyle &Style, IdentifierInfo &Ident_in)
       : Style(Style), Ident_in(Ident_in) {}
+
+  /// \brief Adapts the indent levels of comment lines to the indent of the
+  /// subsequent line.
+  // FIXME: Can/should this be done in the UnwrappedLineParser?
+  void setCommentLineLevels(SmallVectorImpl<AnnotatedLine *> &Lines);
 
   void annotate(AnnotatedLine &Line);
   void calculateFormattingInformation(AnnotatedLine &Line);

@@ -63,7 +63,8 @@ ContinuationIndenter::ContinuationIndenter(const FormatStyle &Style,
       BinPackInconclusiveFunctions(BinPackInconclusiveFunctions) {}
 
 LineState ContinuationIndenter::getInitialState(unsigned FirstIndent,
-                                                const AnnotatedLine *Line) {
+                                                const AnnotatedLine *Line,
+                                                bool DryRun) {
   LineState State;
   State.FirstIndent = FirstIndent;
   State.Column = FirstIndent;
@@ -80,8 +81,7 @@ LineState ContinuationIndenter::getInitialState(unsigned FirstIndent,
   State.IgnoreStackForComparison = false;
 
   // The first token has already been indented and thus consumed.
-  moveStateToNextToken(State, /*DryRun=*/false,
-                       /*Newline=*/false);
+  moveStateToNextToken(State, DryRun, /*Newline=*/false);
   return State;
 }
 

@@ -564,6 +564,17 @@ TEST_F(FormatTest, FormatsSwitchStatement) {
                      "  }\n"
                      "#undef OPERATION_CASE\n"
                      "}");
+  verifyFormat("DEBUG({\n"
+               "  switch (x) {\n"
+               "  case A:\n"
+               "    f();\n"
+               "    break;\n"
+               "  // On B:\n"
+               "  case B:\n"
+               "    g();\n"
+               "    break;\n"
+               "  }\n"
+               "});");
 }
 
 TEST_F(FormatTest, FormatsLabels) {
@@ -2241,6 +2252,24 @@ TEST_F(FormatTest, LayoutNestedBlocks) {
                "  for (int i = 0; i < 10; ++i)\n"
                "    return;\n"
                "}");
+  verifyFormat("call(parameter, {\n"
+               "  something();\n"
+               "  // Comment using all columns.\n"
+               "  somethingelse();\n"
+               "});",
+               getLLVMStyleWithColumns(40));
+  EXPECT_EQ("call(parameter, {\n"
+            "  something();\n"
+            "  // Comment too\n"
+            "  // looooooooooong.\n"
+            "  somethingElse();\n"
+            "});",
+            format("call(parameter, {\n"
+                   "  something();\n"
+                   "  // Comment too looooooooooong.\n"
+                   "  somethingElse();\n"
+                   "});",
+                   getLLVMStyleWithColumns(29)));
 }
 
 TEST_F(FormatTest, PutEmptyBlocksIntoOneLine) {

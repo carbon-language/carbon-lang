@@ -328,7 +328,8 @@ public:
   /// \brief Formats the line starting at \p State, simply keeping all of the
   /// input's line breaking decisions.
   void format(unsigned FirstIndent, const AnnotatedLine *Line) {
-    LineState State = Indenter->getInitialState(FirstIndent, Line);
+    LineState State =
+        Indenter->getInitialState(FirstIndent, Line, /*DryRun=*/false);
     while (State.NextToken != NULL) {
       bool Newline =
           Indenter->mustBreak(State) ||
@@ -353,7 +354,7 @@ public:
   ///
   /// If \p DryRun is \c false, directly applies the changes.
   unsigned format(unsigned FirstIndent, bool DryRun = false) {
-    LineState State = Indenter->getInitialState(FirstIndent, &Line);
+    LineState State = Indenter->getInitialState(FirstIndent, &Line, DryRun);
 
     // If the ObjC method declaration does not fit on a line, we should format
     // it with one arg per line.
@@ -757,25 +758,14 @@ public:
       Annotator.calculateFormattingInformation(*AnnotatedLines[i]);
     }
 
-    // Adapt level to the next line if this is a comment.
-    // FIXME: Can/should this be done in the UnwrappedLineParser?
-    const AnnotatedLine *NextNonCommentLine = NULL;
-    for (unsigned i = AnnotatedLines.size() - 1; i > 0; --i) {
-      if (NextNonCommentLine && AnnotatedLines[i]->First->is(tok::comment) &&
-          !AnnotatedLines[i]->First->Next)
-        AnnotatedLines[i]->Level = NextNonCommentLine->Level;
-      else
-        NextNonCommentLine = AnnotatedLines[i]->First->isNot(tok::r_brace)
-                                 ? AnnotatedLines[i]
-                                 : NULL;
-    }
+    Annotator.setCommentLineLevels(AnnotatedLines);
 
     std::vector<int> IndentForLevel;
     bool PreviousLineWasTouched = false;
     const FormatToken *PreviousLineLastToken = 0;
     bool FormatPPDirective = false;
-    for (std::vector<AnnotatedLine *>::iterator I = AnnotatedLines.begin(),
-                                                E = AnnotatedLines.end();
+    for (SmallVectorImpl<AnnotatedLine *>::iterator I = AnnotatedLines.begin(),
+                                                    E = AnnotatedLines.end();
          I != E; ++I) {
       const AnnotatedLine &TheLine = **I;
       const FormatToken *FirstTok = TheLine.First;
@@ -827,7 +817,8 @@ public:
           ColumnLimit = getColumnLimit(TheLine.InPPDirective);
 
         if (TheLine.Last->TotalLength + Indent <= ColumnLimit) {
-          LineState State = Indenter.getInitialState(Indent, &TheLine);
+          LineState State =
+              Indenter.getInitialState(Indent, &TheLine, /*DryRun=*/false);
           while (State.NextToken != NULL)
             Indenter.addTokenToState(State, false, false);
         } else if (Style.ColumnLimit == 0) {
@@ -954,8 +945,8 @@ private:
   /// This will change \c Line and \c AnnotatedLine to contain the merged line,
   /// if possible; note that \c I will be incremented when lines are merged.
   void tryFitMultipleLinesInOne(unsigned Indent,
-                                std::vector<AnnotatedLine *>::iterator &I,
-                                std::vector<AnnotatedLine *>::iterator E) {
+                                SmallVectorImpl<AnnotatedLine *>::iterator &I,
+                                SmallVectorImpl<AnnotatedLine *>::iterator E) {
     // We can never merge stuff if there are trailing line comments.
     AnnotatedLine *TheLine = *I;
     if (TheLine->Last->Type == TT_LineComment)
@@ -988,8 +979,8 @@ private:
     }
   }
 
-  void tryMergeSimplePPDirective(std::vector<AnnotatedLine *>::iterator &I,
-                                 std::vector<AnnotatedLine *>::iterator E,
+  void tryMergeSimplePPDirective(SmallVectorImpl<AnnotatedLine *>::iterator &I,
+                                 SmallVectorImpl<AnnotatedLine *>::iterator E,
                                  unsigned Limit) {
     if (Limit == 0)
       return;
@@ -1004,9 +995,10 @@ private:
     join(Line, **(++I));
   }
 
-  void tryMergeSimpleControlStatement(std::vector<AnnotatedLine *>::iterator &I,
-                                      std::vector<AnnotatedLine *>::iterator E,
-                                      unsigned Limit) {
+  void
+  tryMergeSimpleControlStatement(SmallVectorImpl<AnnotatedLine *>::iterator &I,
+                                 SmallVectorImpl<AnnotatedLine *>::iterator E,
+                                 unsigned Limit) {
     if (Limit == 0)
       return;
     if (Style.BreakBeforeBraces == FormatStyle::BS_Allman &&
@@ -1031,8 +1023,8 @@ private:
     join(Line, **(++I));
   }
 
-  void tryMergeSimpleBlock(std::vector<AnnotatedLine *>::iterator &I,
-                           std::vector<AnnotatedLine *>::iterator E,
+  void tryMergeSimpleBlock(SmallVectorImpl<AnnotatedLine *>::iterator &I,
+                           SmallVectorImpl<AnnotatedLine *>::iterator E,
                            unsigned Limit) {
     // No merging if the brace already is on the next line.
     if (Style.BreakBeforeBraces != FormatStyle::BS_Attach)
@@ -1086,7 +1078,7 @@ private:
     }
   }
 
-  bool nextTwoLinesFitInto(std::vector<AnnotatedLine *>::iterator I,
+  bool nextTwoLinesFitInto(SmallVectorImpl<AnnotatedLine *>::iterator I,
                            unsigned Limit) {
     return 1 + (*(I + 1))->Last->TotalLength + 1 +
                (*(I + 2))->Last->TotalLength <=
@@ -1126,8 +1118,8 @@ private:
     return touchesRanges(LineRange);
   }
 
-  bool touchesPPDirective(std::vector<AnnotatedLine *>::iterator I,
-                          std::vector<AnnotatedLine *>::iterator E) {
+  bool touchesPPDirective(SmallVectorImpl<AnnotatedLine *>::iterator I,
+                          SmallVectorImpl<AnnotatedLine *>::iterator E) {
     for (; I != E; ++I) {
       if ((*I)->First->HasUnescapedNewline)
         return false;
@@ -1186,7 +1178,7 @@ private:
   SourceManager &SourceMgr;
   WhitespaceManager Whitespaces;
   std::vector<CharSourceRange> Ranges;
-  std::vector<AnnotatedLine *> AnnotatedLines;
+  SmallVector<AnnotatedLine *, 16> AnnotatedLines;
 
   encoding::Encoding Encoding;
   bool BinPackInconclusiveFunctions;

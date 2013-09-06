@@ -41,7 +41,8 @@ public:
 
   /// \brief Get the initial state, i.e. the state after placing \p Line's
   /// first token at \p FirstIndent.
-  LineState getInitialState(unsigned FirstIndent, const AnnotatedLine *Line);
+  LineState getInitialState(unsigned FirstIndent, const AnnotatedLine *Line,
+                            bool DryRun);
 
   // FIXME: canBreak and mustBreak aren't strictly indentation-related. Find a
   // better home.

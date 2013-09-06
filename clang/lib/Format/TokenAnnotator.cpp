@@ -974,9 +974,26 @@ private:
 
 } // end anonymous namespace
 
+void
+TokenAnnotator::setCommentLineLevels(SmallVectorImpl<AnnotatedLine *> &Lines) {
+  if (Lines.empty())
+    return;
+
+  const AnnotatedLine *NextNonCommentLine = NULL;
+  for (unsigned i = Lines.size() - 1; i > 0; --i) {
+    if (NextNonCommentLine && Lines[i]->First->is(tok::comment) &&
+        !Lines[i]->First->Next)
+      Lines[i]->Level = NextNonCommentLine->Level;
+    else
+      NextNonCommentLine =
+          Lines[i]->First->isNot(tok::r_brace) ? Lines[i] : NULL;
+  }
+}
+
 void TokenAnnotator::annotate(AnnotatedLine &Line) {
-  for (std::vector<AnnotatedLine *>::iterator I = Line.Children.begin(),
-                                              E = Line.Children.end();
+  setCommentLineLevels(Line.Children);
+  for (SmallVectorImpl<AnnotatedLine *>::iterator I = Line.Children.begin(),
+                                                  E = Line.Children.end();
        I != E; ++I) {
     annotate(**I);
   }
@@ -1056,8 +1073,8 @@ void TokenAnnotator::calculateFormattingInformation(AnnotatedLine &Line) {
 
   DEBUG({ printDebugInfo(Line); });
 
-  for (std::vector<AnnotatedLine *>::iterator I = Line.Children.begin(),
-                                              E = Line.Children.end();
+  for (SmallVectorImpl<AnnotatedLine *>::iterator I = Line.Children.begin(),
+                                                  E = Line.Children.end();
        I != E; ++I) {
     calculateFormattingInformation(**I);
   }
