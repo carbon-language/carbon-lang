@@ -816,6 +816,22 @@ LIBBUILTIN(NSLog, "vG.", "fp:0:", "Foundation/NSObjCRuntime.h", OBJC_LANG)
 LIBBUILTIN(NSLogv, "vGa", "fP:0:", "Foundation/NSObjCRuntime.h", OBJC_LANG)
 
 // Builtin math library functions
+LIBBUILTIN(atan2, "ddd", "fne", "math.h", ALL_LANGUAGES)
+LIBBUILTIN(atan2f, "fff", "fne", "math.h", ALL_LANGUAGES)
+LIBBUILTIN(atan2l, "LdLdLd", "fne", "math.h", ALL_LANGUAGES)
+
+LIBBUILTIN(copysign, "ddd", "fnc", "math.h", ALL_LANGUAGES)
+LIBBUILTIN(copysignf, "fff", "fnc", "math.h", ALL_LANGUAGES)
+LIBBUILTIN(copysignl, "LdLdLd", "fnc", "math.h", ALL_LANGUAGES)
+
+LIBBUILTIN(fabs, "dd", "fnc", "math.h", ALL_LANGUAGES)
+LIBBUILTIN(fabsf, "ff", "fnc", "math.h", ALL_LANGUAGES)
+LIBBUILTIN(fabsl, "LdLd", "fnc", "math.h", ALL_LANGUAGES)
+
+LIBBUILTIN(pow, "ddd", "fne", "math.h", ALL_LANGUAGES)
+LIBBUILTIN(powf, "fff", "fne", "math.h", ALL_LANGUAGES)
+LIBBUILTIN(powl, "LdLdLd", "fne", "math.h", ALL_LANGUAGES)
+
 LIBBUILTIN(acos, "dd", "fne", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(acosf, "ff", "fne", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(acosl, "LdLd", "fne", "math.h", ALL_LANGUAGES)
@@ -828,25 +844,9 @@ LIBBUILTIN(atan, "dd", "fne", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(atanf, "ff", "fne", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(atanl, "LdLd", "fne", "math.h", ALL_LANGUAGES)
 
-LIBBUILTIN(atan2, "ddd", "fne", "math.h", ALL_LANGUAGES)
-LIBBUILTIN(atan2f, "fff", "fne", "math.h", ALL_LANGUAGES)
-LIBBUILTIN(atan2l, "LdLdLd", "fne", "math.h", ALL_LANGUAGES)
-
 LIBBUILTIN(ceil, "dd", "fnc", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(ceilf, "ff", "fnc", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(ceill, "LdLd", "fnc", "math.h", ALL_LANGUAGES)
-
-LIBBUILTIN(cimag, "dXd", "fnc", "complex.h", ALL_LANGUAGES)
-LIBBUILTIN(cimagf, "fXf", "fnc", "complex.h", ALL_LANGUAGES)
-LIBBUILTIN(cimagl, "LdXLd", "fnc", "complex.h", ALL_LANGUAGES)
-
-LIBBUILTIN(creal, "dXd", "fnc", "complex.h", ALL_LANGUAGES)
-LIBBUILTIN(crealf, "fXf", "fnc", "complex.h", ALL_LANGUAGES)
-LIBBUILTIN(creall, "LdXLd", "fnc", "complex.h", ALL_LANGUAGES)
-
-LIBBUILTIN(copysign, "ddd", "fnc", "math.h", ALL_LANGUAGES)
-LIBBUILTIN(copysignf, "fff", "fnc", "math.h", ALL_LANGUAGES)
-LIBBUILTIN(copysignl, "LdLdLd", "fnc", "math.h", ALL_LANGUAGES)
 
 LIBBUILTIN(cos, "dd", "fne", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(cosf, "ff", "fne", "math.h", ALL_LANGUAGES)
@@ -859,10 +859,6 @@ LIBBUILTIN(expl, "LdLd", "fne", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(exp2, "dd", "fne", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(exp2f, "ff", "fne", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(exp2l, "LdLd", "fne", "math.h", ALL_LANGUAGES)
-
-LIBBUILTIN(fabs, "dd", "fnc", "math.h", ALL_LANGUAGES)
-LIBBUILTIN(fabsf, "ff", "fnc", "math.h", ALL_LANGUAGES)
-LIBBUILTIN(fabsl, "LdLd", "fnc", "math.h", ALL_LANGUAGES)
 
 LIBBUILTIN(floor, "dd", "fnc", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(floorf, "ff", "fnc", "math.h", ALL_LANGUAGES)
@@ -896,10 +892,6 @@ LIBBUILTIN(nearbyint, "dd", "fnc", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(nearbyintf, "ff", "fnc", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(nearbyintl, "LdLd", "fnc", "math.h", ALL_LANGUAGES)
 
-LIBBUILTIN(pow, "ddd", "fne", "math.h", ALL_LANGUAGES)
-LIBBUILTIN(powf, "fff", "fne", "math.h", ALL_LANGUAGES)
-LIBBUILTIN(powl, "LdLdLd", "fne", "math.h", ALL_LANGUAGES)
-
 LIBBUILTIN(rint, "dd", "fnc", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(rintf, "ff", "fnc", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(rintl, "LdLd", "fnc", "math.h", ALL_LANGUAGES)
@@ -923,6 +915,14 @@ LIBBUILTIN(tanl, "LdLd", "fne", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(trunc, "dd", "fnc", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(truncf, "ff", "fnc", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(truncl, "LdLd", "fnc", "math.h", ALL_LANGUAGES)
+
+LIBBUILTIN(cimag, "dXd", "fnc", "complex.h", ALL_LANGUAGES)
+LIBBUILTIN(cimagf, "fXf", "fnc", "complex.h", ALL_LANGUAGES)
+LIBBUILTIN(cimagl, "LdXLd", "fnc", "complex.h", ALL_LANGUAGES)
+
+LIBBUILTIN(creal, "dXd", "fnc", "complex.h", ALL_LANGUAGES)
+LIBBUILTIN(crealf, "fXf", "fnc", "complex.h", ALL_LANGUAGES)
+LIBBUILTIN(creall, "LdXLd", "fnc", "complex.h", ALL_LANGUAGES)
 
 // Blocks runtime Builtin math library functions
 LIBBUILTIN(_Block_object_assign, "vv*vC*iC", "f", "Blocks.h", ALL_LANGUAGES)
