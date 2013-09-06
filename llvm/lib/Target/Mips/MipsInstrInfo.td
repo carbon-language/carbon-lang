@@ -542,9 +542,9 @@ class JumpFJ<DAGOperand opnd, string opstr, SDPatternOperator operator,
 }
 
 // Unconditional branch
-class UncondBranch<string opstr> :
-  InstSE<(outs), (ins brtarget:$offset), !strconcat(opstr, "\t$offset"),
-         [(br bb:$offset)], IIBranch, FrmI> {
+class UncondBranch<Instruction BEQInst> :
+  PseudoSE<(outs), (ins brtarget:$offset), [(br bb:$offset)], IIBranch>,
+  PseudoInstExpansion<(BEQInst ZERO, ZERO, brtarget:$offset)> {
   let isBranch = 1;
   let isTerminator = 1;
   let isBarrier = 1;
@@ -966,13 +966,13 @@ def SC : SCBase<"sc", GPR32Opnd>, LW_FM<0x38>;
 def J       : JumpFJ<jmptarget, "j", br, bb>, FJ<2>,
               Requires<[RelocStatic, HasStdEnc]>, IsBranch;
 def JR      : IndirectBranch<GPR32Opnd>, MTLO_FM<8>;
-def B       : UncondBranch<"b">, B_FM;
 def BEQ     : CBranch<"beq", seteq, GPR32Opnd>, BEQ_FM<4>;
 def BNE     : CBranch<"bne", setne, GPR32Opnd>, BEQ_FM<5>;
 def BGEZ    : CBranchZero<"bgez", setge, GPR32Opnd>, BGEZ_FM<1, 1>;
 def BGTZ    : CBranchZero<"bgtz", setgt, GPR32Opnd>, BGEZ_FM<7, 0>;
 def BLEZ    : CBranchZero<"blez", setle, GPR32Opnd>, BGEZ_FM<6, 0>;
 def BLTZ    : CBranchZero<"bltz", setlt, GPR32Opnd>, BGEZ_FM<1, 0>;
+def B       : UncondBranch<BEQ>;
 
 def JAL  : JumpLink<"jal">, FJ<3>;
 def JALR : JumpLinkReg<"jalr", GPR32Opnd>, JALR_FM;
@@ -1100,6 +1100,7 @@ def : InstAlias<"mfc0 $rt, $rd", (MFC0 GPR32Opnd:$rt, GPR32Opnd:$rd, 0), 0>;
 def : InstAlias<"mtc0 $rt, $rd", (MTC0 GPR32Opnd:$rt, GPR32Opnd:$rd, 0), 0>;
 def : InstAlias<"mfc2 $rt, $rd", (MFC2 GPR32Opnd:$rt, GPR32Opnd:$rd, 0), 0>;
 def : InstAlias<"mtc2 $rt, $rd", (MTC2 GPR32Opnd:$rt, GPR32Opnd:$rd, 0), 0>;
+def : InstAlias<"b $offset", (BEQ ZERO, ZERO, brtarget:$offset), 0>;
 def : InstAlias<"bnez $rs,$offset",
                 (BNE GPR32Opnd:$rs, ZERO, brtarget:$offset), 0>;
 def : InstAlias<"beqz $rs,$offset",
