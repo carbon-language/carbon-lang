@@ -987,13 +987,13 @@ class ADDS_U_D_DESC : MSA_3R_DESC_BASE<"adds_u.d", int_mips_adds_u_d, MSA128D>,
                       IsCommutable;
 
 class ADDV_B_DESC : MSA_3R_DESC_BASE<"addv.b", int_mips_addv_b, MSA128B>,
-                                     IsCommutable;
+                    IsCommutable;
 class ADDV_H_DESC : MSA_3R_DESC_BASE<"addv.h", int_mips_addv_h, MSA128H>,
-                                     IsCommutable;
+                    IsCommutable;
 class ADDV_W_DESC : MSA_3R_DESC_BASE<"addv.w", int_mips_addv_w, MSA128W>,
-                                     IsCommutable;
+                    IsCommutable;
 class ADDV_D_DESC : MSA_3R_DESC_BASE<"addv.d", int_mips_addv_d, MSA128D>,
-                                     IsCommutable;
+                    IsCommutable;
 
 class ADDVI_B_DESC : MSA_I5_DESC_BASE<"addvi.b", int_mips_addvi_b, MSA128B>;
 class ADDVI_H_DESC : MSA_I5_DESC_BASE<"addvi.h", int_mips_addvi_h, MSA128H>;
@@ -1135,13 +1135,13 @@ class BZ_D_DESC : MSA_CBRANCH_DESC_BASE<"bz.d", MSA128D>;
 class BZ_V_DESC : MSA_CBRANCH_DESC_BASE<"bz.v", MSA128B>;
 
 class CEQ_B_DESC : MSA_3R_DESC_BASE<"ceq.b", int_mips_ceq_b, MSA128B>,
-                                    IsCommutable;
+                   IsCommutable;
 class CEQ_H_DESC : MSA_3R_DESC_BASE<"ceq.h", int_mips_ceq_h, MSA128H>,
-                                    IsCommutable;
+                   IsCommutable;
 class CEQ_W_DESC : MSA_3R_DESC_BASE<"ceq.w", int_mips_ceq_w, MSA128W>,
-                                    IsCommutable;
+                   IsCommutable;
 class CEQ_D_DESC : MSA_3R_DESC_BASE<"ceq.d", int_mips_ceq_d, MSA128D>,
-                                    IsCommutable;
+                   IsCommutable;
 
 class CEQI_B_DESC : MSA_SI5_DESC_BASE<"ceqi.b", int_mips_ceqi_b, MSA128B>;
 class CEQI_H_DESC : MSA_SI5_DESC_BASE<"ceqi.h", int_mips_ceqi_h, MSA128H>;
@@ -1264,23 +1264,23 @@ class DOTP_U_D_DESC : MSA_3R_DESC_BASE<"dotp_u.d", int_mips_dotp_u_d, MSA128D>,
 
 class DPADD_S_H_DESC : MSA_3R_4R_DESC_BASE<"dpadd_s.h", int_mips_dpadd_s_h,
                                            MSA128H, MSA128B, MSA128B>,
-                                           IsCommutable;
+                       IsCommutable;
 class DPADD_S_W_DESC : MSA_3R_4R_DESC_BASE<"dpadd_s.w", int_mips_dpadd_s_w,
                                            MSA128W, MSA128H, MSA128H>,
-                                           IsCommutable;
+                       IsCommutable;
 class DPADD_S_D_DESC : MSA_3R_4R_DESC_BASE<"dpadd_s.d", int_mips_dpadd_s_d,
                                            MSA128D, MSA128W, MSA128W>,
-                                           IsCommutable;
+                       IsCommutable;
 
 class DPADD_U_H_DESC : MSA_3R_4R_DESC_BASE<"dpadd_u.h", int_mips_dpadd_u_h,
                                            MSA128H, MSA128B, MSA128B>,
-                                           IsCommutable;
+                       IsCommutable;
 class DPADD_U_W_DESC : MSA_3R_4R_DESC_BASE<"dpadd_u.w", int_mips_dpadd_u_w,
                                            MSA128W, MSA128H, MSA128H>,
-                                           IsCommutable;
+                       IsCommutable;
 class DPADD_U_D_DESC : MSA_3R_4R_DESC_BASE<"dpadd_u.d", int_mips_dpadd_u_d,
                                            MSA128D, MSA128W, MSA128W>,
-                                           IsCommutable;
+                       IsCommutable;
 
 class DPSUB_S_H_DESC : MSA_3R_4R_DESC_BASE<"dpsub_s.h", int_mips_dpsub_s_h,
                                            MSA128H, MSA128B, MSA128B>;
@@ -1297,19 +1297,19 @@ class DPSUB_U_D_DESC : MSA_3R_4R_DESC_BASE<"dpsub_u.d", int_mips_dpsub_u_d,
                                            MSA128D, MSA128W, MSA128W>;
 
 class FADD_W_DESC : MSA_3RF_DESC_BASE<"fadd.w", int_mips_fadd_w, MSA128W>,
-                                      IsCommutable;
+                    IsCommutable;
 class FADD_D_DESC : MSA_3RF_DESC_BASE<"fadd.d", int_mips_fadd_d, MSA128D>,
-                                      IsCommutable;
+                    IsCommutable;
 
 class FCAF_W_DESC : MSA_3RF_DESC_BASE<"fcaf.w", int_mips_fcaf_w, MSA128W>,
-                                      IsCommutable;
+                    IsCommutable;
 class FCAF_D_DESC : MSA_3RF_DESC_BASE<"fcaf.d", int_mips_fcaf_d, MSA128D>,
-                                      IsCommutable;
+                    IsCommutable;
 
 class FCEQ_W_DESC : MSA_3RF_DESC_BASE<"fceq.w", int_mips_fceq_w, MSA128W>,
-                                      IsCommutable;
+                    IsCommutable;
 class FCEQ_D_DESC : MSA_3RF_DESC_BASE<"fceq.d", int_mips_fceq_d, MSA128D>,
-                                      IsCommutable;
+                    IsCommutable;
 
 class FCLASS_W_DESC : MSA_2RF_DESC_BASE<"fclass.w", int_mips_fclass_w,
                                         MSA128W>;
@@ -1323,39 +1323,39 @@ class FCLT_W_DESC : MSA_3RF_DESC_BASE<"fclt.w", int_mips_fclt_w, MSA128W>;
 class FCLT_D_DESC : MSA_3RF_DESC_BASE<"fclt.d", int_mips_fclt_d, MSA128D>;
 
 class FCNE_W_DESC : MSA_3RF_DESC_BASE<"fcne.w", int_mips_fcne_w, MSA128W>,
-                                      IsCommutable;
+                    IsCommutable;
 class FCNE_D_DESC : MSA_3RF_DESC_BASE<"fcne.d", int_mips_fcne_d, MSA128D>,
-                                      IsCommutable;
+                    IsCommutable;
 
 class FCOR_W_DESC : MSA_3RF_DESC_BASE<"fcor.w", int_mips_fcor_w, MSA128W>,
-                                      IsCommutable;
+                    IsCommutable;
 class FCOR_D_DESC : MSA_3RF_DESC_BASE<"fcor.d", int_mips_fcor_d, MSA128D>,
-                                      IsCommutable;
+                    IsCommutable;
 
 class FCUEQ_W_DESC : MSA_3RF_DESC_BASE<"fcueq.w", int_mips_fcueq_w, MSA128W>,
-                                       IsCommutable;
+                     IsCommutable;
 class FCUEQ_D_DESC : MSA_3RF_DESC_BASE<"fcueq.d", int_mips_fcueq_d, MSA128D>,
-                                       IsCommutable;
+                     IsCommutable;
 
 class FCULE_W_DESC : MSA_3RF_DESC_BASE<"fcule.w", int_mips_fcule_w, MSA128W>,
-                                       IsCommutable;
+                     IsCommutable;
 class FCULE_D_DESC : MSA_3RF_DESC_BASE<"fcule.d", int_mips_fcule_d, MSA128D>,
-                                       IsCommutable;
+                     IsCommutable;
 
 class FCULT_W_DESC : MSA_3RF_DESC_BASE<"fcult.w", int_mips_fcult_w, MSA128W>,
-                                       IsCommutable;
+                     IsCommutable;
 class FCULT_D_DESC : MSA_3RF_DESC_BASE<"fcult.d", int_mips_fcult_d, MSA128D>,
-                                       IsCommutable;
+                     IsCommutable;
 
 class FCUN_W_DESC : MSA_3RF_DESC_BASE<"fcun.w", int_mips_fcun_w, MSA128W>,
-                                      IsCommutable;
+                    IsCommutable;
 class FCUN_D_DESC : MSA_3RF_DESC_BASE<"fcun.d", int_mips_fcun_d, MSA128D>,
-                                      IsCommutable;
+                    IsCommutable;
 
 class FCUNE_W_DESC : MSA_3RF_DESC_BASE<"fcune.w", int_mips_fcune_w, MSA128W>,
-                                       IsCommutable;
+                     IsCommutable;
 class FCUNE_D_DESC : MSA_3RF_DESC_BASE<"fcune.d", int_mips_fcune_d, MSA128D>,
-                                       IsCommutable;
+                     IsCommutable;
 
 class FDIV_W_DESC : MSA_3RF_DESC_BASE<"fdiv.w", int_mips_fdiv_w, MSA128W>;
 class FDIV_D_DESC : MSA_3RF_DESC_BASE<"fdiv.d", int_mips_fdiv_d, MSA128D>;
