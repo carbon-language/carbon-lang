@@ -810,7 +810,7 @@ class MSA_COPY_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
 }
 
 class MSA_I5_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
-                       RegisterClass RCWD, RegisterClass RCWS,
+                       RegisterClass RCWD, RegisterClass RCWS = RCWD,
                        InstrItinClass itin = NoItinerary> {
   dag OutOperandList = (outs RCWD:$wd);
   dag InOperandList = (ins RCWS:$ws, uimm5:$u5);
@@ -820,7 +820,7 @@ class MSA_I5_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
 }
 
 class MSA_SI5_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
-                       RegisterClass RCWD, RegisterClass RCWS,
+                       RegisterClass RCWD, RegisterClass RCWS = RCWD,
                        InstrItinClass itin = NoItinerary> {
   dag OutOperandList = (outs RCWD:$wd);
   dag InOperandList = (ins RCWS:$ws, simm5:$s5);
@@ -995,14 +995,10 @@ class ADDV_W_DESC : MSA_3R_DESC_BASE<"addv.w", int_mips_addv_w, MSA128W>,
 class ADDV_D_DESC : MSA_3R_DESC_BASE<"addv.d", int_mips_addv_d, MSA128D>,
                                      IsCommutable;
 
-class ADDVI_B_DESC : MSA_I5_DESC_BASE<"addvi.b", int_mips_addvi_b, MSA128B,
-                                      MSA128B>;
-class ADDVI_H_DESC : MSA_I5_DESC_BASE<"addvi.h", int_mips_addvi_h, MSA128H,
-                                      MSA128H>;
-class ADDVI_W_DESC : MSA_I5_DESC_BASE<"addvi.w", int_mips_addvi_w, MSA128W,
-                                      MSA128W>;
-class ADDVI_D_DESC : MSA_I5_DESC_BASE<"addvi.d", int_mips_addvi_d, MSA128D,
-                                      MSA128D>;
+class ADDVI_B_DESC : MSA_I5_DESC_BASE<"addvi.b", int_mips_addvi_b, MSA128B>;
+class ADDVI_H_DESC : MSA_I5_DESC_BASE<"addvi.h", int_mips_addvi_h, MSA128H>;
+class ADDVI_W_DESC : MSA_I5_DESC_BASE<"addvi.w", int_mips_addvi_w, MSA128W>;
+class ADDVI_D_DESC : MSA_I5_DESC_BASE<"addvi.d", int_mips_addvi_d, MSA128D>;
 
 class AND_V_DESC : MSA_VEC_DESC_BASE<"and.v", int_mips_and_v,
                                      MSA128B, MSA128B>;
@@ -1155,14 +1151,10 @@ class CEQ_W_DESC : MSA_3R_DESC_BASE<"ceq.w", int_mips_ceq_w, MSA128W>,
 class CEQ_D_DESC : MSA_3R_DESC_BASE<"ceq.d", int_mips_ceq_d, MSA128D>,
                                     IsCommutable;
 
-class CEQI_B_DESC : MSA_SI5_DESC_BASE<"ceqi.b", int_mips_ceqi_b,
-                                      MSA128B, MSA128B>;
-class CEQI_H_DESC : MSA_SI5_DESC_BASE<"ceqi.h", int_mips_ceqi_h,
-                                      MSA128H, MSA128H>;
-class CEQI_W_DESC : MSA_SI5_DESC_BASE<"ceqi.w", int_mips_ceqi_w,
-                                      MSA128W, MSA128W>;
-class CEQI_D_DESC : MSA_SI5_DESC_BASE<"ceqi.d", int_mips_ceqi_d,
-                                      MSA128D, MSA128D>;
+class CEQI_B_DESC : MSA_SI5_DESC_BASE<"ceqi.b", int_mips_ceqi_b, MSA128B>;
+class CEQI_H_DESC : MSA_SI5_DESC_BASE<"ceqi.h", int_mips_ceqi_h, MSA128H>;
+class CEQI_W_DESC : MSA_SI5_DESC_BASE<"ceqi.w", int_mips_ceqi_w, MSA128W>;
+class CEQI_D_DESC : MSA_SI5_DESC_BASE<"ceqi.d", int_mips_ceqi_d, MSA128D>;
 
 class CFCMSA_DESC {
   dag OutOperandList = (outs GPR32:$rd);
@@ -1183,22 +1175,22 @@ class CLE_U_W_DESC : MSA_3R_DESC_BASE<"cle_u.w", int_mips_cle_u_w, MSA128W>;
 class CLE_U_D_DESC : MSA_3R_DESC_BASE<"cle_u.d", int_mips_cle_u_d, MSA128D>;
 
 class CLEI_S_B_DESC : MSA_SI5_DESC_BASE<"clei_s.b", int_mips_clei_s_b,
-                                        MSA128B, MSA128B>;
+                                        MSA128B>;
 class CLEI_S_H_DESC : MSA_SI5_DESC_BASE<"clei_s.h", int_mips_clei_s_h,
-                                        MSA128H, MSA128H>;
+                                        MSA128H>;
 class CLEI_S_W_DESC : MSA_SI5_DESC_BASE<"clei_s.w", int_mips_clei_s_w,
-                                        MSA128W, MSA128W>;
+                                        MSA128W>;
 class CLEI_S_D_DESC : MSA_SI5_DESC_BASE<"clei_s.d", int_mips_clei_s_d,
-                                        MSA128D, MSA128D>;
+                                        MSA128D>;
 
 class CLEI_U_B_DESC : MSA_SI5_DESC_BASE<"clei_u.b", int_mips_clei_u_b,
-                                        MSA128B, MSA128B>;
+                                        MSA128B>;
 class CLEI_U_H_DESC : MSA_SI5_DESC_BASE<"clei_u.h", int_mips_clei_u_h,
-                                        MSA128H, MSA128H>;
+                                        MSA128H>;
 class CLEI_U_W_DESC : MSA_SI5_DESC_BASE<"clei_u.w", int_mips_clei_u_w,
-                                        MSA128W, MSA128W>;
+                                        MSA128W>;
 class CLEI_U_D_DESC : MSA_SI5_DESC_BASE<"clei_u.d", int_mips_clei_u_d,
-                                        MSA128D, MSA128D>;
+                                        MSA128D>;
 
 class CLT_S_B_DESC : MSA_3R_DESC_BASE<"clt_s.b", int_mips_clt_s_b, MSA128B>;
 class CLT_S_H_DESC : MSA_3R_DESC_BASE<"clt_s.h", int_mips_clt_s_h, MSA128H>;
@@ -1211,22 +1203,22 @@ class CLT_U_W_DESC : MSA_3R_DESC_BASE<"clt_u.w", int_mips_clt_u_w, MSA128W>;
 class CLT_U_D_DESC : MSA_3R_DESC_BASE<"clt_u.d", int_mips_clt_u_d, MSA128D>;
 
 class CLTI_S_B_DESC : MSA_SI5_DESC_BASE<"clti_s.b", int_mips_clti_s_b,
-                                        MSA128B, MSA128B>;
+                                        MSA128B>;
 class CLTI_S_H_DESC : MSA_SI5_DESC_BASE<"clti_s.h", int_mips_clti_s_h,
-                                        MSA128H, MSA128H>;
+                                        MSA128H>;
 class CLTI_S_W_DESC : MSA_SI5_DESC_BASE<"clti_s.w", int_mips_clti_s_w,
-                                        MSA128W, MSA128W>;
+                                        MSA128W>;
 class CLTI_S_D_DESC : MSA_SI5_DESC_BASE<"clti_s.d", int_mips_clti_s_d,
-                                        MSA128D, MSA128D>;
+                                        MSA128D>;
 
 class CLTI_U_B_DESC : MSA_SI5_DESC_BASE<"clti_u.b", int_mips_clti_u_b,
-                                        MSA128B, MSA128B>;
+                                        MSA128B>;
 class CLTI_U_H_DESC : MSA_SI5_DESC_BASE<"clti_u.h", int_mips_clti_u_h,
-                                        MSA128H, MSA128H>;
+                                        MSA128H>;
 class CLTI_U_W_DESC : MSA_SI5_DESC_BASE<"clti_u.w", int_mips_clti_u_w,
-                                        MSA128W, MSA128W>;
+                                        MSA128W>;
 class CLTI_U_D_DESC : MSA_SI5_DESC_BASE<"clti_u.d", int_mips_clti_u_d,
-                                        MSA128D, MSA128D>;
+                                        MSA128D>;
 
 class COPY_S_B_DESC : MSA_COPY_DESC_BASE<"copy_s.b", int_mips_copy_s_b,
                                          GPR32, MSA128B>;
@@ -1729,23 +1721,15 @@ class MAX_U_H_DESC : MSA_3R_DESC_BASE<"max_u.h", int_mips_max_u_h, MSA128H>;
 class MAX_U_W_DESC : MSA_3R_DESC_BASE<"max_u.w", int_mips_max_u_w, MSA128W>;
 class MAX_U_D_DESC : MSA_3R_DESC_BASE<"max_u.d", int_mips_max_u_d, MSA128D>;
 
-class MAXI_S_B_DESC : MSA_I5_DESC_BASE<"maxi_s.b", int_mips_maxi_s_b,
-                                       MSA128B, MSA128B>;
-class MAXI_S_H_DESC : MSA_I5_DESC_BASE<"maxi_s.h", int_mips_maxi_s_h,
-                                       MSA128H, MSA128H>;
-class MAXI_S_W_DESC : MSA_I5_DESC_BASE<"maxi_s.w", int_mips_maxi_s_w,
-                                       MSA128W, MSA128W>;
-class MAXI_S_D_DESC : MSA_I5_DESC_BASE<"maxi_s.d", int_mips_maxi_s_d,
-                                       MSA128D, MSA128D>;
+class MAXI_S_B_DESC : MSA_I5_DESC_BASE<"maxi_s.b", int_mips_maxi_s_b, MSA128B>;
+class MAXI_S_H_DESC : MSA_I5_DESC_BASE<"maxi_s.h", int_mips_maxi_s_h, MSA128H>;
+class MAXI_S_W_DESC : MSA_I5_DESC_BASE<"maxi_s.w", int_mips_maxi_s_w, MSA128W>;
+class MAXI_S_D_DESC : MSA_I5_DESC_BASE<"maxi_s.d", int_mips_maxi_s_d, MSA128D>;
 
-class MAXI_U_B_DESC : MSA_I5_DESC_BASE<"maxi_u.b", int_mips_maxi_u_b,
-                                       MSA128B, MSA128B>;
-class MAXI_U_H_DESC : MSA_I5_DESC_BASE<"maxi_u.h", int_mips_maxi_u_h,
-                                       MSA128H, MSA128H>;
-class MAXI_U_W_DESC : MSA_I5_DESC_BASE<"maxi_u.w", int_mips_maxi_u_w,
-                                       MSA128W, MSA128W>;
-class MAXI_U_D_DESC : MSA_I5_DESC_BASE<"maxi_u.d", int_mips_maxi_u_d,
-                                       MSA128D, MSA128D>;
+class MAXI_U_B_DESC : MSA_I5_DESC_BASE<"maxi_u.b", int_mips_maxi_u_b, MSA128B>;
+class MAXI_U_H_DESC : MSA_I5_DESC_BASE<"maxi_u.h", int_mips_maxi_u_h, MSA128H>;
+class MAXI_U_W_DESC : MSA_I5_DESC_BASE<"maxi_u.w", int_mips_maxi_u_w, MSA128W>;
+class MAXI_U_D_DESC : MSA_I5_DESC_BASE<"maxi_u.d", int_mips_maxi_u_d, MSA128D>;
 
 class MIN_A_B_DESC : MSA_3R_DESC_BASE<"min_a.b", int_mips_min_a_b, MSA128B>;
 class MIN_A_H_DESC : MSA_3R_DESC_BASE<"min_a.h", int_mips_min_a_h, MSA128H>;
@@ -1762,23 +1746,15 @@ class MIN_U_H_DESC : MSA_3R_DESC_BASE<"min_u.h", int_mips_min_u_h, MSA128H>;
 class MIN_U_W_DESC : MSA_3R_DESC_BASE<"min_u.w", int_mips_min_u_w, MSA128W>;
 class MIN_U_D_DESC : MSA_3R_DESC_BASE<"min_u.d", int_mips_min_u_d, MSA128D>;
 
-class MINI_S_B_DESC : MSA_I5_DESC_BASE<"mini_s.b", int_mips_mini_s_b,
-                                       MSA128B, MSA128B>;
-class MINI_S_H_DESC : MSA_I5_DESC_BASE<"mini_s.h", int_mips_mini_s_h,
-                                       MSA128H, MSA128H>;
-class MINI_S_W_DESC : MSA_I5_DESC_BASE<"mini_s.w", int_mips_mini_s_w,
-                                       MSA128W, MSA128W>;
-class MINI_S_D_DESC : MSA_I5_DESC_BASE<"mini_s.d", int_mips_mini_s_d,
-                                       MSA128D, MSA128D>;
+class MINI_S_B_DESC : MSA_I5_DESC_BASE<"mini_s.b", int_mips_mini_s_b, MSA128B>;
+class MINI_S_H_DESC : MSA_I5_DESC_BASE<"mini_s.h", int_mips_mini_s_h, MSA128H>;
+class MINI_S_W_DESC : MSA_I5_DESC_BASE<"mini_s.w", int_mips_mini_s_w, MSA128W>;
+class MINI_S_D_DESC : MSA_I5_DESC_BASE<"mini_s.d", int_mips_mini_s_d, MSA128D>;
 
-class MINI_U_B_DESC : MSA_I5_DESC_BASE<"mini_u.b", int_mips_mini_u_b,
-                                       MSA128B, MSA128B>;
-class MINI_U_H_DESC : MSA_I5_DESC_BASE<"mini_u.h", int_mips_mini_u_h,
-                                       MSA128H, MSA128H>;
-class MINI_U_W_DESC : MSA_I5_DESC_BASE<"mini_u.w", int_mips_mini_u_w,
-                                       MSA128W, MSA128W>;
-class MINI_U_D_DESC : MSA_I5_DESC_BASE<"mini_u.d", int_mips_mini_u_d,
-                                       MSA128D, MSA128D>;
+class MINI_U_B_DESC : MSA_I5_DESC_BASE<"mini_u.b", int_mips_mini_u_b, MSA128B>;
+class MINI_U_H_DESC : MSA_I5_DESC_BASE<"mini_u.h", int_mips_mini_u_h, MSA128H>;
+class MINI_U_W_DESC : MSA_I5_DESC_BASE<"mini_u.w", int_mips_mini_u_w, MSA128W>;
+class MINI_U_D_DESC : MSA_I5_DESC_BASE<"mini_u.d", int_mips_mini_u_d, MSA128D>;
 
 class MOD_S_B_DESC : MSA_3R_DESC_BASE<"mod_s.b", int_mips_mod_s_b, MSA128B>;
 class MOD_S_H_DESC : MSA_3R_DESC_BASE<"mod_s.h", int_mips_mod_s_h, MSA128H>;
@@ -2041,14 +2017,10 @@ class SUBV_H_DESC : MSA_3R_DESC_BASE<"subv.h", int_mips_subv_h, MSA128H>;
 class SUBV_W_DESC : MSA_3R_DESC_BASE<"subv.w", int_mips_subv_w, MSA128W>;
 class SUBV_D_DESC : MSA_3R_DESC_BASE<"subv.d", int_mips_subv_d, MSA128D>;
 
-class SUBVI_B_DESC : MSA_I5_DESC_BASE<"subvi.b", int_mips_subvi_b,
-                                      MSA128B, MSA128B>;
-class SUBVI_H_DESC : MSA_I5_DESC_BASE<"subvi.h", int_mips_subvi_h,
-                                      MSA128H, MSA128H>;
-class SUBVI_W_DESC : MSA_I5_DESC_BASE<"subvi.w", int_mips_subvi_w,
-                                      MSA128W, MSA128W>;
-class SUBVI_D_DESC : MSA_I5_DESC_BASE<"subvi.d", int_mips_subvi_d,
-                                      MSA128D, MSA128D>;
+class SUBVI_B_DESC : MSA_I5_DESC_BASE<"subvi.b", int_mips_subvi_b, MSA128B>;
+class SUBVI_H_DESC : MSA_I5_DESC_BASE<"subvi.h", int_mips_subvi_h, MSA128H>;
+class SUBVI_W_DESC : MSA_I5_DESC_BASE<"subvi.w", int_mips_subvi_w, MSA128W>;
+class SUBVI_D_DESC : MSA_I5_DESC_BASE<"subvi.d", int_mips_subvi_d, MSA128D>;
 
 class VSHF_B_DESC : MSA_3R_DESC_BASE<"vshf.b", int_mips_vshf_b, MSA128B>;
 class VSHF_H_DESC : MSA_3R_DESC_BASE<"vshf.h", int_mips_vshf_h, MSA128H>;
