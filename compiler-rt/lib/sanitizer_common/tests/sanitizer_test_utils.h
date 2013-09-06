@@ -36,14 +36,14 @@ typedef __int64          int64_t;
 #define __has_feature(x) 0
 #endif
 
-#ifndef ATTRIBUTE_NO_ADDRESS_SAFETY_ANALYSIS
+#ifndef ATTRIBUTE_NO_SANITIZE_ADDRESS
 # if __has_feature(address_sanitizer) || defined(__SANITIZE_ADDRESS__)
-#  define ATTRIBUTE_NO_ADDRESS_SAFETY_ANALYSIS \
+#  define ATTRIBUTE_NO_SANITIZE_ADDRESS \
     __attribute__((no_sanitize_address))
 # else
-#  define ATTRIBUTE_NO_ADDRESS_SAFETY_ANALYSIS
+#  define ATTRIBUTE_NO_SANITIZE_ADDRESS
 # endif
-#endif  // ATTRIBUTE_NO_ADDRESS_SAFETY_ANALYSIS
+#endif  // ATTRIBUTE_NO_SANITIZE_ADDRESS
 
 #if __LP64__ || defined(_WIN64)
 #  define SANITIZER_WORDSIZE 64

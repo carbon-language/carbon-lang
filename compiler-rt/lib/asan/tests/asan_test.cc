@@ -1081,15 +1081,15 @@ TEST(AddressSanitizer, LargeStructCopyTest) {
   *Ident(&a) = *Ident(&a);
 }
 
-ATTRIBUTE_NO_ADDRESS_SAFETY_ANALYSIS
-static void NoAddressSafety() {
+ATTRIBUTE_NO_SANITIZE_ADDRESS
+static void NoSanitizeAddress() {
   char *foo = new char[10];
   Ident(foo)[10] = 0;
   delete [] foo;
 }
 
-TEST(AddressSanitizer, AttributeNoAddressSafetyTest) {
-  Ident(NoAddressSafety)();
+TEST(AddressSanitizer, AttributeNoSanitizeAddressTest) {
+  Ident(NoSanitizeAddress)();
 }
 
 // It doesn't work on Android, as calls to new/delete go through malloc/free.
