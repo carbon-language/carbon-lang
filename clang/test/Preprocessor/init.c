@@ -2938,9 +2938,13 @@
 // KFREEBSD-DEFINE:#define __FreeBSD_kernel__ 1
 // KFREEBSD-DEFINE:#define __GLIBC__ 1
 //
+// RUN: %clang_cc1 -E -dM -ffreestanding -triple=i686-pc-kfreebsd-gnu < /dev/null | FileCheck -check-prefix KFREEBSDI686-DEFINE %s
+// KFREEBSDI686-DEFINE:#define __FreeBSD_kernel__ 1
+// KFREEBSDI686-DEFINE:#define __GLIBC__ 1
+//
 // RUN: %clang_cc1 -x c++ -triple i686-pc-linux-gnu -fobjc-runtime=gcc -E -dM < /dev/null | FileCheck -check-prefix GNUSOURCE %s
 // GNUSOURCE:#define _GNU_SOURCE 1
-// 
+//
 // RUN: %clang_cc1 -x c++ -std=c++98 -fno-rtti -E -dM < /dev/null | FileCheck -check-prefix NORTTI %s
 // NORTTI: __GXX_ABI_VERSION
 // NORTTI-NOT:#define __GXX_RTTI
@@ -2948,6 +2952,7 @@
 //
 // RUN: %clang_cc1 -triple arm-linux-androideabi -E -dM < /dev/null | FileCheck -check-prefix ANDROID %s
 // ANDROID: __ANDROID__ 1
+//
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=powerpc64-unknown-freebsd < /dev/null | FileCheck -check-prefix PPC64-FREEBSD %s
 // PPC64-FREEBSD-NOT: #define __LONG_DOUBLE_128__ 1
 //
