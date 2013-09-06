@@ -124,3 +124,64 @@ define <4 x i32> @v4i32_icmp_ule(<4 x i32> %a, <4 x i32> %b) nounwind readnone s
 ; AVX: pcmpeqd %xmm1, %xmm0, %xmm0
 }
 
+; At one point we were incorrectly constant-folding a setcc to 0x1 instead of
+; 0xff, leading to a constpool load. The instruction doesn't matter here, but it
+; should set all bits to 1.
+define <16 x i8> @test_setcc_constfold_vi8(<16 x i8> %l, <16 x i8> %r) {
+  %test1 = icmp eq <16 x i8> %l, %r
+  %mask1 = sext <16 x i1> %test1 to <16 x i8>
+
+  %test2 = icmp ne <16 x i8> %l, %r
+  %mask2 = sext <16 x i1> %test2 to <16 x i8>
+
+  %res = or <16 x i8> %mask1, %mask2
+  ret <16 x i8> %res
+; SSE2-LABEL: test_setcc_constfold_vi8:
+; SSE2: pcmpeqd %xmm0, %xmm0
+
+; SSE41-LABEL: test_setcc_constfold_vi8:
+; SSE41: pcmpeqd %xmm0, %xmm0
+
+; AVX-LABEL: test_setcc_constfold_vi8:
+; AVX: vpcmpeqd %xmm0, %xmm0, %xmm0
+}
+
+; Make sure sensible results come from doing extension afterwards
+define <16 x i8> @test_setcc_constfold_vi1(<16 x i8> %l, <16 x i8> %r) {
+  %test1 = icmp eq <16 x i8> %l, %r
+  %test2 = icmp ne <16 x i8> %l, %r
+
+  %res = or <16 x i1> %test1, %test2
+  %mask = sext <16 x i1> %res to <16 x i8>
+  ret <16 x i8> %mask
+; SSE2-LABEL: test_setcc_constfold_vi1:
+; SSE2: pcmpeqd %xmm0, %xmm0
+
+; SSE41-LABEL: test_setcc_constfold_vi1:
+; SSE41: pcmpeqd %xmm0, %xmm0
+
+; AVX-LABEL: test_setcc_constfold_vi1:
+; AVX: vpcmpeqd %xmm0, %xmm0, %xmm0
+}
+
+
+; 64-bit case is also particularly important, as the constant "-1" is probably
+; just 32-bits wide.
+define <2 x i64> @test_setcc_constfold_vi64(<2 x i64> %l, <2 x i64> %r) {
+  %test1 = icmp eq <2 x i64> %l, %r
+  %mask1 = sext <2 x i1> %test1 to <2 x i64>
+
+  %test2 = icmp ne <2 x i64> %l, %r
+  %mask2 = sext <2 x i1> %test2 to <2 x i64>
+
+  %res = or <2 x i64> %mask1, %mask2
+  ret <2 x i64> %res
+; SSE2-LABEL: test_setcc_constfold_vi64:
+; SSE2: pcmpeqd %xmm0, %xmm0
+
+; SSE41-LABEL: test_setcc_constfold_vi64:
+; SSE41: pcmpeqd %xmm0, %xmm0
+
+; AVX-LABEL: test_setcc_constfold_vi64:
+; AVX: vpcmpeqd %xmm0, %xmm0, %xmm0
+}

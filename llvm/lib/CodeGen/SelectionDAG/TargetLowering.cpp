@@ -1080,7 +1080,11 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
   case ISD::SETFALSE:
   case ISD::SETFALSE2: return DAG.getConstant(0, VT);
   case ISD::SETTRUE:
-  case ISD::SETTRUE2:  return DAG.getConstant(1, VT);
+  case ISD::SETTRUE2: {
+    TargetLowering::BooleanContent Cnt = getBooleanContents(VT.isVector());
+    return DAG.getConstant(
+        Cnt == TargetLowering::ZeroOrNegativeOneBooleanContent ? -1ULL : 1, VT);
+  }
   }
 
   // Ensure that the constant occurs on the RHS, and fold constant
