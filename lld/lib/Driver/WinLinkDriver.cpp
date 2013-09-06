@@ -314,6 +314,15 @@ bool WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ct
       ctx.setHeapCommit(commit);
       break;
     }
+    case OPT_machine: {
+      StringRef platform = inputArg->getValue();
+      if (!platform.equals_lower("x64")) {
+        diagnostics << "error: LLD does not support non-x64 platform, "
+                    << "but got /machine:" << platform << "\n";
+        return true;
+      }
+      break;
+    }
     case OPT_subsystem: {
       // Parse /subsystem command line option. The form of /subsystem is
       // "subsystem_name[,majorOSVersion[.minorOSVersion]]".

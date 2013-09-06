@@ -19,6 +19,7 @@ defm libpath : P<"libpath", "Additional library search path">;
 defm mllvm   : P<"mllvm", "Options to pass to LLVM">;
 defm out     : P<"out", "Path to file to write output">;
 defm stack   : P<"stack", "Size of the stack">;
+defm machine : P<"machine", "Specify target platform">;
 defm subsystem : P<"subsystem", "Specify subsystem">;
 
 // We cannot use multiclass P because class name "incl" is different

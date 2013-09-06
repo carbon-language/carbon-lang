@@ -106,6 +106,14 @@ TEST_F(WinLinkParserTest, Libpath) {
   EXPECT_EQ("dir2", paths[1]);
 }
 
+TEST_F(WinLinkParserTest, MachineX64) {
+  EXPECT_FALSE(parse("link.exe", "/machine:x64", "a.obj", nullptr));
+}
+
+TEST_F(WinLinkParserTest, MachineArm) {
+  EXPECT_TRUE(parse("link.exe", "/machine:arm", "a.obj", nullptr));
+}
+
 TEST_F(WinLinkParserTest, MinMajorOSVersion) {
   EXPECT_FALSE(parse("link.exe", "/subsystem:windows,3", "foo.o", nullptr));
   EXPECT_EQ(llvm::COFF::IMAGE_SUBSYSTEM_WINDOWS_GUI, _context.getSubsystem());
