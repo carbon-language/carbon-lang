@@ -527,11 +527,11 @@ bool RegisterCoalescer::hasOtherReachingDefs(LiveInterval &IntA,
   for (LiveInterval::iterator AI = IntA.begin(), AE = IntA.end();
        AI != AE; ++AI) {
     if (AI->valno != AValNo) continue;
-    LiveInterval::Ranges::iterator BI =
-      std::upper_bound(IntB.ranges.begin(), IntB.ranges.end(), AI->start);
-    if (BI != IntB.ranges.begin())
+    LiveInterval::iterator BI =
+      std::upper_bound(IntB.begin(), IntB.end(), AI->start);
+    if (BI != IntB.begin())
       --BI;
-    for (; BI != IntB.ranges.end() && AI->end >= BI->start; ++BI) {
+    for (; BI != IntB.end() && AI->end >= BI->start; ++BI) {
       if (BI->valno == BValNo)
         continue;
       if (BI->start <= AI->start && BI->end > AI->start)
@@ -1089,8 +1089,8 @@ bool RegisterCoalescer::joinCopy(MachineInstr *CopyMI, bool &Again) {
     });
 
     // When possible, let DstReg be the larger interval.
-    if (!CP.isPartial() && LIS->getInterval(CP.getSrcReg()).ranges.size() >
-                           LIS->getInterval(CP.getDstReg()).ranges.size())
+    if (!CP.isPartial() && LIS->getInterval(CP.getSrcReg()).size() >
+                           LIS->getInterval(CP.getDstReg()).size())
       CP.flip();
   }
 

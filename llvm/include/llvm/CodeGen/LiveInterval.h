@@ -194,6 +194,10 @@ namespace llvm {
       ranges.clear();
     }
 
+    size_t size() const {
+      return ranges.size();
+    }
+
     bool hasAtLeastOneValue() const { return !valnos.empty(); }
 
     bool containsOneValue() const { return valnos.size() == 1; }
@@ -439,9 +443,9 @@ namespace llvm {
 
   private:
 
-    Ranges::iterator addRangeFrom(LiveRange LR, Ranges::iterator From);
-    void extendIntervalEndTo(Ranges::iterator I, SlotIndex NewEnd);
-    Ranges::iterator extendIntervalStartTo(Ranges::iterator I, SlotIndex NewStr);
+    iterator addRangeFrom(LiveRange LR, iterator From);
+    void extendIntervalEndTo(iterator I, SlotIndex NewEnd);
+    iterator extendIntervalStartTo(iterator I, SlotIndex NewStr);
     void markValNoForDeletion(VNInfo *V);
 
     LiveInterval& operator=(const LiveInterval& rhs) LLVM_DELETED_FUNCTION;

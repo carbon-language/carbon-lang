@@ -38,7 +38,7 @@ LiveInterval::iterator LiveInterval::find(SlotIndex Pos) {
   if (empty() || Pos >= endIndex())
     return end();
   iterator I = begin();
-  size_t Len = ranges.size();
+  size_t Len = size();
   do {
     size_t Mid = Len >> 1;
     if (Pos < I[Mid].end)
@@ -108,13 +108,13 @@ bool LiveInterval::overlapsFrom(const LiveInterval& other,
 
   if (i->start < j->start) {
     i = std::upper_bound(i, ie, j->start);
-    if (i != ranges.begin()) --i;
+    if (i != begin()) --i;
   } else if (j->start < i->start) {
     ++StartPos;
     if (StartPos != other.end() && StartPos->start <= i->start) {
       assert(StartPos < other.end() && i < end());
       j = std::upper_bound(j, je, i->start);
-      if (j != other.ranges.begin()) --j;
+      if (j != other.begin()) --j;
     }
   } else {
     return true;
@@ -219,13 +219,13 @@ void LiveInterval::RenumberValues() {
 /// specified by I to end at the specified endpoint.  To do this, we should
 /// merge and eliminate all ranges that this will overlap with.  The iterator is
 /// not invalidated.
-void LiveInterval::extendIntervalEndTo(Ranges::iterator I, SlotIndex NewEnd) {
-  assert(I != ranges.end() && "Not a valid interval!");
+void LiveInterval::extendIntervalEndTo(iterator I, SlotIndex NewEnd) {
+  assert(I != end() && "Not a valid interval!");
   VNInfo *ValNo = I->valno;
 
   // Search for the first interval that we can't merge with.
-  Ranges::iterator MergeTo = llvm::next(I);
-  for (; MergeTo != ranges.end() && NewEnd >= MergeTo->end; ++MergeTo) {
+  iterator MergeTo = llvm::next(I);
+  for (; MergeTo != end() && NewEnd >= MergeTo->end; ++MergeTo) {
     assert(MergeTo->valno == ValNo && "Cannot merge with differing values!");
   }
 
@@ -234,7 +234,7 @@ void LiveInterval::extendIntervalEndTo(Ranges::iterator I, SlotIndex NewEnd) {
 
   // If the newly formed range now touches the range after it and if they have
   // the same value number, merge the two ranges into one range.
-  if (MergeTo != ranges.end() && MergeTo->start <= I->end &&
+  if (MergeTo != end() && MergeTo->start <= I->end &&
       MergeTo->valno == ValNo) {
     I->end = MergeTo->end;
     ++MergeTo;
@@ -248,15 +248,15 @@ void LiveInterval::extendIntervalEndTo(Ranges::iterator I, SlotIndex NewEnd) {
 /// extendIntervalStartTo - This method is used when we want to extend the range
 /// specified by I to start at the specified endpoint.  To do this, we should
 /// merge and eliminate all ranges that this will overlap with.
-LiveInterval::Ranges::iterator
-LiveInterval::extendIntervalStartTo(Ranges::iterator I, SlotIndex NewStart) {
-  assert(I != ranges.end() && "Not a valid interval!");
+LiveInterval::iterator
+LiveInterval::extendIntervalStartTo(iterator I, SlotIndex NewStart) {
+  assert(I != end() && "Not a valid interval!");
   VNInfo *ValNo = I->valno;
 
   // Search for the first interval that we can't merge with.
-  Ranges::iterator MergeTo = I;
+  iterator MergeTo = I;
   do {
-    if (MergeTo == ranges.begin()) {
+    if (MergeTo == begin()) {
       I->start = NewStart;
       ranges.erase(MergeTo, I);
       return I;
@@ -283,11 +283,11 @@ LiveInterval::extendIntervalStartTo(Ranges::iterator I, SlotIndex NewStart) {
 LiveInterval::iterator
 LiveInterval::addRangeFrom(LiveRange LR, iterator From) {
   SlotIndex Start = LR.start, End = LR.end;
-  iterator it = std::upper_bound(From, ranges.end(), Start);
+  iterator it = std::upper_bound(From, end(), Start);
 
   // If the inserted interval starts in the middle or right at the end of
   // another interval, just extend that interval to contain the range of LR.
-  if (it != ranges.begin()) {
+  if (it != begin()) {
     iterator B = prior(it);
     if (LR.valno == B->valno) {
       if (B->start <= Start && B->end >= Start) {
@@ -305,7 +305,7 @@ LiveInterval::addRangeFrom(LiveRange LR, iterator From) {
 
   // Otherwise, if this range ends in the middle of, or right next to, another
   // interval, merge it into that interval.
-  if (it != ranges.end()) {
+  if (it != end()) {
     if (LR.valno == it->valno) {
       if (it->start <= End) {
         it = extendIntervalStartTo(it, Start);
@@ -351,8 +351,8 @@ VNInfo *LiveInterval::extendInBlock(SlotIndex StartIdx, SlotIndex Kill) {
 void LiveInterval::removeRange(SlotIndex Start, SlotIndex End,
                                bool RemoveDeadValNo) {
   // Find the LiveRange containing this span.
-  Ranges::iterator I = find(Start);
-  assert(I != ranges.end() && "Range is not in interval!");
+  iterator I = find(Start);
+  assert(I != end() && "Range is not in interval!");
   assert(I->containsRange(Start, End) && "Range is not entirely in interval!");
 
   // If the span we are removing is at the start of the LiveRange, adjust it.
@@ -398,8 +398,8 @@ void LiveInterval::removeRange(SlotIndex Start, SlotIndex End,
 /// Also remove the value# from value# list.
 void LiveInterval::removeValNo(VNInfo *ValNo) {
   if (empty()) return;
-  Ranges::iterator I = ranges.end();
-  Ranges::iterator E = ranges.begin();
+  iterator I = end();
+  iterator E = begin();
   do {
     --I;
     if (I->valno == ValNo)
@@ -597,8 +597,7 @@ void LiveInterval::print(raw_ostream &OS) const {
   if (empty())
     OS << "EMPTY";
   else {
-    for (LiveInterval::Ranges::const_iterator I = ranges.begin(),
-           E = ranges.end(); I != E; ++I) {
+    for (const_iterator I = begin(), E = end(); I != E; ++I) {
       OS << *I;
       assert(I->valno == getValNumInfo(I->valno->id) && "Bad VNInfo");
     }
@@ -790,7 +789,7 @@ void LiveRangeUpdater::add(LiveRange Seg) {
   // Finally, append to LI or Spills.
   if (WriteI == E) {
     LI->ranges.push_back(Seg);
-    WriteI = ReadI = LI->ranges.end();
+    WriteI = ReadI = LI->end();
   } else
     Spills.push_back(Seg);
 }
@@ -842,7 +841,7 @@ void LiveRangeUpdater::flush() {
     size_t WritePos = WriteI - LI->begin();
     LI->ranges.insert(ReadI, Spills.size() - GapSize, LiveRange());
     // This also invalidated ReadI, but it is recomputed below.
-    WriteI = LI->ranges.begin() + WritePos;
+    WriteI = LI->begin() + WritePos;
   } else {
     // Shrink the gap if necessary.
     LI->ranges.erase(WriteI + Spills.size(), ReadI);
