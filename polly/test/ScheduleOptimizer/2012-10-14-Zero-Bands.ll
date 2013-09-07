@@ -24,4 +24,4 @@ return:
 }
 
 ; CHECK: Calculated schedule:
-; CHECK: { Stmt_if_then[] -> [] }
+; CHECK-NOT: Stmt_if_then
