@@ -62,7 +62,7 @@ debugger.SkipLLDBInitFiles(args.n)
 debugger.SetAsync(False)
 
 # Create a target from a file and arch.
-_, _, _, _, arch = os.uname()
+arch = os.popen("file "+args.target).read().split()[-1]
 target = debugger.CreateTargetWithFileAndArch(args.target, arch)
 
 if not target:
