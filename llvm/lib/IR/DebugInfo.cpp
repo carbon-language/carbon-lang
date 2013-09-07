@@ -524,7 +524,7 @@ bool DISubprogram::Verify() const {
   if (!fieldIsMDNode(DbgNode, 7))
     return false;
   // Containing type @ field 12.
-  if (!fieldIsMDNode(DbgNode, 12))
+  if (!fieldIsTypeRef(DbgNode, 12))
     return false;
   return DbgNode->getNumOperands() == 20;
 }

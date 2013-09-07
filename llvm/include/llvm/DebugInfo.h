@@ -426,8 +426,8 @@ namespace llvm {
     unsigned getVirtuality() const { return getUnsignedField(10); }
     unsigned getVirtualIndex() const { return getUnsignedField(11); }
 
-    DICompositeType getContainingType() const {
-      return getFieldAs<DICompositeType>(12);
+    DITypeRef getContainingType() const {
+      return getFieldAs<DITypeRef>(12);
     }
 
     unsigned getFlags() const {
