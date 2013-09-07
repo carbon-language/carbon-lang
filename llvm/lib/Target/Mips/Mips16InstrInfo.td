@@ -220,7 +220,7 @@ class FEXT_RRI_A16_mem_ins<bits<1> op, string asmstr, Operand MemOpnd,
 // EXT-SHIFT instruction format
 //
 class FEXT_SHIFT16_ins<bits<2> _f, string asmstr, InstrItinClass itin>:
-  FEXT_SHIFT16<_f, (outs CPU16Regs:$rx), (ins CPU16Regs:$ry, shamt:$sa),
+  FEXT_SHIFT16<_f, (outs CPU16Regs:$rx), (ins CPU16Regs:$ry, uimm5:$sa),
                !strconcat(asmstr, "\t$rx, $ry, $sa"), [], itin>;
 
 //

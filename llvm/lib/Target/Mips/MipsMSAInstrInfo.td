@@ -29,10 +29,6 @@ def uimm4 : Operand<i32> {
   let PrintMethod = "printUnsignedImm";
 }
 
-def uimm6 : Operand<i32> {
-  let PrintMethod = "printUnsignedImm";
-}
-
 def uimm8 : Operand<i32> {
   let PrintMethod = "printUnsignedImm";
 }

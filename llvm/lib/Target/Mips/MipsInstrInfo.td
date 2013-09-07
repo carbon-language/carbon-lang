@@ -263,10 +263,13 @@ def uimm10      : Operand<i32> {
 }
 
 def simm16_64   : Operand<i64>;
-def shamt       : Operand<i32>;
 
 // Unsigned Operand
 def uimm5       : Operand<i32> {
+  let PrintMethod = "printUnsignedImm";
+}
+
+def uimm6 : Operand<i32> {
   let PrintMethod = "printUnsignedImm";
 }
 
@@ -737,18 +740,20 @@ class ReadHardware<RegisterOperand CPURegOperand, RegisterOperand RO> :
          IIArith, FrmR>;
 
 // Ext and Ins
-class ExtBase<string opstr, RegisterOperand RO>:
-  InstSE<(outs RO:$rt), (ins RO:$rs, uimm16:$pos, size_ext:$size),
+class ExtBase<string opstr, RegisterOperand RO, Operand PosOpnd,
+              SDPatternOperator Op = null_frag>:
+  InstSE<(outs RO:$rt), (ins RO:$rs, PosOpnd:$pos, size_ext:$size),
          !strconcat(opstr, " $rt, $rs, $pos, $size"),
-         [(set RO:$rt, (MipsExt RO:$rs, imm:$pos, imm:$size))], NoItinerary,
+         [(set RO:$rt, (Op RO:$rs, imm:$pos, imm:$size))], NoItinerary,
          FrmR> {
   let Predicates = [HasMips32r2, HasStdEnc];
 }
 
-class InsBase<string opstr, RegisterOperand RO>:
-  InstSE<(outs RO:$rt), (ins RO:$rs, uimm16:$pos, size_ins:$size, RO:$src),
+class InsBase<string opstr, RegisterOperand RO, Operand PosOpnd,
+              SDPatternOperator Op = null_frag>:
+  InstSE<(outs RO:$rt), (ins RO:$rs, PosOpnd:$pos, size_ins:$size, RO:$src),
          !strconcat(opstr, " $rt, $rs, $pos, $size"),
-         [(set RO:$rt, (MipsIns RO:$rs, imm:$pos, imm:$size, RO:$src))],
+         [(set RO:$rt, (Op RO:$rs, imm:$pos, imm:$size, RO:$src))],
          NoItinerary, FrmR> {
   let Predicates = [HasMips32r2, HasStdEnc];
   let Constraints = "$src = $rt";
@@ -888,11 +893,11 @@ def XOR   : MMRel, ArithLogicR<"xor", GPR32Opnd, 1, IILogic, xor>,
 def NOR   : MMRel, LogicNOR<"nor", GPR32Opnd>, ADD_FM<0, 0x27>;
 
 /// Shift Instructions
-def SLL  : MMRel, shift_rotate_imm<"sll", shamt, GPR32Opnd, shl, immZExt5>,
+def SLL  : MMRel, shift_rotate_imm<"sll", uimm5, GPR32Opnd, shl, immZExt5>,
            SRA_FM<0, 0>;
-def SRL  : MMRel, shift_rotate_imm<"srl", shamt, GPR32Opnd, srl, immZExt5>,
+def SRL  : MMRel, shift_rotate_imm<"srl", uimm5, GPR32Opnd, srl, immZExt5>,
            SRA_FM<2, 0>;
-def SRA  : MMRel, shift_rotate_imm<"sra", shamt, GPR32Opnd, sra, immZExt5>,
+def SRA  : MMRel, shift_rotate_imm<"sra", uimm5, GPR32Opnd, sra, immZExt5>,
            SRA_FM<3, 0>;
 def SLLV : MMRel, shift_rotate_reg<"sllv", GPR32Opnd, shl>, SRLV_FM<4, 0>;
 def SRLV : MMRel, shift_rotate_reg<"srlv", GPR32Opnd, srl>, SRLV_FM<6, 0>;
@@ -900,7 +905,7 @@ def SRAV : MMRel, shift_rotate_reg<"srav", GPR32Opnd, sra>, SRLV_FM<7, 0>;
 
 // Rotate Instructions
 let Predicates = [HasMips32r2, HasStdEnc] in {
-  def ROTR  : MMRel, shift_rotate_imm<"rotr", shamt, GPR32Opnd, rotr,
+  def ROTR  : MMRel, shift_rotate_imm<"rotr", uimm5, GPR32Opnd, rotr,
                                       immZExt5>,
               SRA_FM<2, 1>;
   def ROTRV : MMRel, shift_rotate_reg<"rotrv", GPR32Opnd, rotr>,
@@ -1053,8 +1058,8 @@ def PseudoMSUBU : MAddSubPseudo<MSUBU, MipsMSubu>;
 
 def RDHWR : ReadHardware<GPR32Opnd, HWRegsOpnd>, RDHWR_FM;
 
-def EXT : ExtBase<"ext", GPR32Opnd>, EXT_FM<0>;
-def INS : InsBase<"ins", GPR32Opnd>, EXT_FM<4>;
+def EXT : ExtBase<"ext", GPR32Opnd, uimm5, MipsExt>, EXT_FM<0>;
+def INS : InsBase<"ins", GPR32Opnd, uimm5, MipsIns>, EXT_FM<4>;
 
 /// Move Control Registers From/To CPU Registers
 def MFC0 : MFC3OP<"mfc0", GPR32Opnd>, MFC3OP_FM<0x10, 0>;
@@ -1121,7 +1126,7 @@ def  : InstAlias<"tne $rs, $rt", (TNE GPR32Opnd:$rs, GPR32Opnd:$rt, 0), 1>;
 class LoadImm32< string instr_asm, Operand Od, RegisterOperand RO> :
   MipsAsmPseudoInst<(outs RO:$rt), (ins Od:$imm32),
                      !strconcat(instr_asm, "\t$rt, $imm32")> ;
-def LoadImm32Reg : LoadImm32<"li", shamt,GPR32Opnd>;
+def LoadImm32Reg : LoadImm32<"li", uimm5, GPR32Opnd>;
 
 class LoadAddress<string instr_asm, Operand MemOpnd, RegisterOperand RO> :
   MipsAsmPseudoInst<(outs RO:$rt), (ins MemOpnd:$addr),
@@ -1131,7 +1136,7 @@ def LoadAddr32Reg : LoadAddress<"la", mem, GPR32Opnd>;
 class LoadAddressImm<string instr_asm, Operand Od, RegisterOperand RO> :
   MipsAsmPseudoInst<(outs RO:$rt), (ins Od:$imm32),
                      !strconcat(instr_asm, "\t$rt, $imm32")> ;
-def LoadAddr32Imm : LoadAddressImm<"la", shamt,GPR32Opnd>;
+def LoadAddr32Imm : LoadAddressImm<"la", uimm5, GPR32Opnd>;
 
 
 

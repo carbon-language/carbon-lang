@@ -299,7 +299,7 @@ class PRECR_SRA_PH_W_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
                                InstrItinClass itin, RegisterOperand ROT,
                                RegisterOperand ROS = ROT> {
   dag OutOperandList = (outs ROT:$rt);
-  dag InOperandList = (ins ROS:$rs, shamt:$sa, ROS:$src);
+  dag InOperandList = (ins ROS:$rs, uimm5:$sa, ROS:$src);
   string AsmString = !strconcat(instr_asm, "\t$rt, $rs, $sa");
   list<dag> Pattern = [(set ROT:$rt, (OpNode ROS:$src, ROS:$rs, immZExt5:$sa))];
   InstrItinClass Itinerary = itin;
@@ -368,7 +368,7 @@ class ADDUH_QB_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
 class APPEND_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
                        SDPatternOperator ImmOp, InstrItinClass itin> {
   dag OutOperandList = (outs GPR32Opnd:$rt);
-  dag InOperandList = (ins GPR32Opnd:$rs, shamt:$sa, GPR32Opnd:$src);
+  dag InOperandList = (ins GPR32Opnd:$rs, uimm5:$sa, GPR32Opnd:$src);
   string AsmString = !strconcat(instr_asm, "\t$rt, $rs, $sa");
   list<dag> Pattern =  [(set GPR32Opnd:$rt,
                         (OpNode GPR32Opnd:$src, GPR32Opnd:$rs, ImmOp:$sa))];
