@@ -41,6 +41,7 @@ public:
     deque() noexcept(is_nothrow_default_constructible<allocator_type>::value);
     explicit deque(const allocator_type& a);
     explicit deque(size_type n);
+    explicit deque(size_type n, const Allocator& a); // C++14
     deque(size_type n, const value_type& v);
     deque(size_type n, const value_type& v, const allocator_type& a);
     template <class InputIterator>
@@ -1209,6 +1210,9 @@ public:
         {}
     _LIBCPP_INLINE_VISIBILITY deque(const allocator_type& __a) : __base(__a) {}
     explicit deque(size_type __n);
+#if _LIBCPP_STD_VER > 11
+    explicit deque(size_type __n, const _Allocator& __a);
+#endif
     deque(size_type __n, const value_type& __v);
     deque(size_type __n, const value_type& __v, const allocator_type& __a);
     template <class _InputIter>
@@ -1430,6 +1434,16 @@ deque<_Tp, _Allocator>::deque(size_type __n)
     if (__n > 0)
         __append(__n);
 }
+
+#if _LIBCPP_STD_VER > 11
+template <class _Tp, class _Allocator>
+deque<_Tp, _Allocator>::deque(size_type __n, const _Allocator& __a)
+    : __base(__a)
+{
+    if (__n > 0)
+        __append(__n);
+}
+#endif
 
 template <class _Tp, class _Allocator>
 deque<_Tp, _Allocator>::deque(size_type __n, const value_type& __v)

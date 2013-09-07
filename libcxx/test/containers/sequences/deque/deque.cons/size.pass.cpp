@@ -20,7 +20,29 @@
 
 template <class T, class Allocator>
 void
-test(unsigned n)
+test2(unsigned n)
+{
+#if _LIBCPP_STD_VER > 11
+    typedef std::deque<T, Allocator> C;
+    typedef typename C::const_iterator const_iterator;
+    assert(DefaultOnly::count == 0);
+    {
+    C d(n, Allocator());
+    assert(DefaultOnly::count == n);
+    assert(d.size() == n);
+    assert(distance(d.begin(), d.end()) == d.size());
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    for (const_iterator i = d.begin(), e = d.end(); i != e; ++i)
+        assert(*i == T());
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    }
+    assert(DefaultOnly::count == 0);
+#endif
+}
+
+template <class T, class Allocator>
+void
+test1(unsigned n)
 {
     typedef std::deque<T, Allocator> C;
     typedef typename C::const_iterator const_iterator;
@@ -38,6 +60,29 @@ test(unsigned n)
     assert(DefaultOnly::count == 0);
 }
 
+template <class T, class Allocator>
+void
+test3(unsigned n, Allocator const &alloc = Allocator())
+{
+#if _LIBCPP_STD_VER > 11
+    typedef std::deque<T, Allocator> C;
+    typedef typename C::const_iterator const_iterator;
+    {
+    C d(n, alloc);
+    assert(d.size() == n);
+    assert(d.get_allocator() == alloc);
+    }
+#endif
+}
+
+template <class T, class Allocator>
+void
+test(unsigned n)
+{
+    test1<T, Allocator> ( n );
+    test2<T, Allocator> ( n );
+}
+
 int main()
 {
     test<DefaultOnly, std::allocator<DefaultOnly> >(0);
@@ -52,8 +97,17 @@ int main()
     test<DefaultOnly, std::allocator<DefaultOnly> >(4095);
     test<DefaultOnly, std::allocator<DefaultOnly> >(4096);
     test<DefaultOnly, std::allocator<DefaultOnly> >(4097);
-    test<DefaultOnly, stack_allocator<DefaultOnly, 4096> >(4095);
+
+    test1<DefaultOnly, stack_allocator<DefaultOnly, 4096> >(4095);
+
 #if __cplusplus >= 201103L
     test<DefaultOnly, min_allocator<DefaultOnly> >(4095);
 #endif
+
+#if _LIBCPP_STD_VER > 11
+    test3<DefaultOnly, std::allocator<DefaultOnly>> (1023);
+    test3<int, std::allocator<int>>(1);
+    test3<int, min_allocator<int>> (3);
+#endif
+
 }
