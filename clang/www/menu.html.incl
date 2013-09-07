@@ -49,14 +49,13 @@
 
   <div class="submenu">
     <label>Quick Links</label>
-    <a href="http://test.minormatter.com/~ddunbar/clang-cov/">Testing Coverage</a>
-    <a href="http://test.minormatter.com/~ddunbar/references.html">Spec. References</a>
+    <a href="http://buildd-clang.debian.net/coverage/">Testing Coverage</a>
   </div>
   
   <div class="submenu">
     <label>Clang Events</label>
     <a href="http://llvm.org/devmtg/2009-10/">October 2009</a>
-    <a href="http://llvm.org/devmtg/2010-11/">November 2010</a> 
+    <a href="http://llvm.org/devmtg/2010-11/">November 2010</a>
   </div>
 
 </div>
