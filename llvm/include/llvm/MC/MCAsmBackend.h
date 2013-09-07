@@ -32,6 +32,7 @@ class raw_ostream;
 class MCAsmBackend {
   MCAsmBackend(const MCAsmBackend &) LLVM_DELETED_FUNCTION;
   void operator=(const MCAsmBackend &) LLVM_DELETED_FUNCTION;
+
 protected: // Can only create subclasses.
   MCAsmBackend();
 
@@ -42,7 +43,7 @@ public:
   virtual ~MCAsmBackend();
 
   /// lifetime management
-  virtual void reset() { }
+  virtual void reset() {}
 
   /// createObjectWriter - Create a new MCObjectWriter instance for use by the
   /// assembler backend to emit the final object file.
@@ -50,7 +51,7 @@ public:
 
   /// createELFObjectTargetWriter - Create a new ELFObjectTargetWriter to enable
   /// non-standard ELFObjectWriters.
-  virtual  MCELFObjectTargetWriter *createELFObjectTargetWriter() const {
+  virtual MCELFObjectTargetWriter *createELFObjectTargetWriter() const {
     llvm_unreachable("createELFObjectTargetWriter is not supported by asm "
                      "backend");
   }
@@ -71,9 +72,7 @@ public:
 
   /// hasDataInCodeSupport - Check whether this target implements data-in-code
   /// markers. If not, data region directives will be ignored.
-  bool hasDataInCodeSupport() const {
-    return HasDataInCodeSupport;
-  }
+  bool hasDataInCodeSupport() const { return HasDataInCodeSupport; }
 
   /// doesSectionRequireSymbols - Check whether the given section requires that
   /// all symbols (even temporaries) have symbol table entries.
@@ -128,8 +127,7 @@ public:
 
   /// fixupNeedsRelaxation - Target specific predicate for whether a given
   /// fixup requires the associated instruction to be relaxed.
-  virtual bool fixupNeedsRelaxation(const MCFixup &Fixup,
-                                    uint64_t Value,
+  virtual bool fixupNeedsRelaxation(const MCFixup &Fixup, uint64_t Value,
                                     const MCRelaxableFragment *DF,
                                     const MCAsmLayout &Layout) const = 0;
 
