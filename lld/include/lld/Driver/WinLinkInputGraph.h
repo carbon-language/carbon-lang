@@ -37,9 +37,6 @@ public:
 
   virtual llvm::ErrorOr<StringRef> path(const LinkingContext &ctx) const;
 
-  virtual llvm::ErrorOr<std::unique_ptr<lld::LinkerInput> >
-  createLinkerInput(const lld::LinkingContext &);
-
   /// \brief validates the Input Element
   virtual bool validate() { return true; }
 
@@ -61,9 +58,6 @@ public:
   }
 
   virtual llvm::ErrorOr<StringRef> path(const LinkingContext &ctx) const;
-
-  virtual llvm::ErrorOr<std::unique_ptr<lld::LinkerInput> >
-  createLinkerInput(const lld::LinkingContext &);
 
   /// \brief validates the Input Element
   virtual bool validate() { return true; }

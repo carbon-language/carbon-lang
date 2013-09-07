@@ -1350,7 +1350,7 @@ class ReaderYAML : public Reader {
 public:
   ReaderYAML(const LinkingContext &context) : Reader(context) {}
 
-  error_code parseFile(std::unique_ptr<MemoryBuffer> &mb,
+  error_code parseFile(LinkerInput &input,
                        std::vector<std::unique_ptr<File>> &result) const {
     // Note: we do not take ownership of the MemoryBuffer.  That is
     // because yaml may produce multiple File objects, so there is no
@@ -1361,7 +1361,7 @@ public:
 
     // Create YAML Input parser.
     ContextInfo context(_context);
-    llvm::yaml::Input yin(mb->getBuffer(), &context);
+    llvm::yaml::Input yin(input.getBuffer().getBuffer(), &context);
 
     // Fill vector with File objects created by parsing yaml.
     std::vector<const lld::File*> createdFiles;

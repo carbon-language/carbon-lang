@@ -54,3 +54,18 @@ bool InputGraph::dump(raw_ostream &diagnostics) {
       return false;
   return true;
 }
+
+llvm::ErrorOr<std::unique_ptr<lld::LinkerInput> >
+FileNode::createLinkerInput(const LinkingContext &ctx) {
+  auto filePath = path(ctx);
+  if (!filePath &&
+      error_code(filePath) == llvm::errc::no_such_file_or_directory)
+    return make_error_code(llvm::errc::no_such_file_or_directory);
+  OwningPtr<llvm::MemoryBuffer> opmb;
+  if (error_code ec = llvm::MemoryBuffer::getFileOrSTDIN(*filePath, opmb))
+    return ec;
+
+  std::unique_ptr<MemoryBuffer> mb(opmb.take());
+
+  return std::unique_ptr<LinkerInput>(new LinkerInput(std::move(mb), *filePath));
+}

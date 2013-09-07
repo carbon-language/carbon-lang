@@ -34,9 +34,6 @@ public:
     return a->kind() == InputElement::Kind::File;
   }
 
-  virtual llvm::ErrorOr<std::unique_ptr<lld::LinkerInput> >
-  createLinkerInput(const lld::LinkingContext &);
-
   /// \brief validates the Input Element
   virtual bool validate() {
     (void)_ctx;

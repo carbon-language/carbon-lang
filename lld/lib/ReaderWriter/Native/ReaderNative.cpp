@@ -239,11 +239,11 @@ public:
   /// Instantiates a File object from a native object file.  Ownership
   /// of the MemoryBuffer is transfered to the resulting File object.
   static error_code make(const LinkingContext &context,
-                         std::unique_ptr<llvm::MemoryBuffer> &mb,
-                         StringRef path,
+                         LinkerInput &input,
                          std::vector<std::unique_ptr<lld::File>> &result) {
     const uint8_t *const base =
-        reinterpret_cast<const uint8_t *>(mb->getBufferStart());
+        reinterpret_cast<const uint8_t *>(input.getBuffer().getBufferStart());
+    StringRef path(input.getBuffer().getBufferIdentifier());
     const NativeFileHeader* const header =
                        reinterpret_cast<const NativeFileHeader*>(base);
     const NativeChunk *const chunks =
@@ -253,7 +253,7 @@ public:
       return make_error_code(native_reader_error::unknown_file_format);
 
     // make sure mapped file contains all needed data
-    const size_t fileSize = mb->getBufferSize();
+    const size_t fileSize = input.getBuffer().getBufferSize();
     if ( header->fileSize > fileSize )
       return make_error_code(native_reader_error::file_too_short);
 
@@ -263,7 +263,8 @@ public:
                                  << header->chunkCount << "\n");
 
     // instantiate NativeFile object and add values to it as found
-    std::unique_ptr<File> file(new File(context, std::move(mb), path));
+    std::unique_ptr<File> file(new File(context, std::move(input.takeBuffer()),
+                                        path));
 
     // process each chunk
     for (uint32_t i = 0; i < header->chunkCount; ++i) {
@@ -912,9 +913,9 @@ public:
   Reader(const LinkingContext &context) : lld::Reader(context) {}
 
   virtual error_code
-  parseFile(std::unique_ptr<MemoryBuffer> &mb,
+  parseFile(LinkerInput &input,
             std::vector<std::unique_ptr<lld::File>> &result) const {
-    return File::make(_context, mb, mb->getBufferIdentifier(), result);
+    return File::make(_context, input, result);
   }
 };
 } // end namespace native

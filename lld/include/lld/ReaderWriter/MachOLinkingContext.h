@@ -33,7 +33,7 @@ public:
   virtual bool validateImpl(raw_ostream &diagnostics);
 
   virtual error_code
-  parseFile(std::unique_ptr<MemoryBuffer> &mb,
+  parseFile(LinkerInput &input,
             std::vector<std::unique_ptr<File> > &result) const;
 
   uint32_t getCPUType() const;

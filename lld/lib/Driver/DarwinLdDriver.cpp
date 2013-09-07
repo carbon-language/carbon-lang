@@ -70,11 +70,6 @@ public:
 
 namespace lld {
 
-llvm::ErrorOr<std::unique_ptr<lld::LinkerInput> >
-MachOFileNode::createLinkerInput(const LinkingContext &ctx) {
-  return std::unique_ptr<LinkerInput>(new LinkerInput(*path(ctx)));
-}
-
 bool DarwinLdDriver::linkMachO(int argc, const char *argv[],
                                raw_ostream &diagnostics) {
   MachOLinkingContext ctx;

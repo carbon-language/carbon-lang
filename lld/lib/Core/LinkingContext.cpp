@@ -33,17 +33,6 @@ bool LinkingContext::validate(raw_ostream &diagnostics) {
   return validateImpl(diagnostics);
 }
 
-error_code
-LinkingContext::readFile(StringRef path,
-                         std::vector<std::unique_ptr<File>> &result) const {
-  OwningPtr<llvm::MemoryBuffer> opmb;
-  if (error_code ec = llvm::MemoryBuffer::getFileOrSTDIN(path, opmb))
-    return ec;
-
-  std::unique_ptr<MemoryBuffer> mb(opmb.take());
-  return this->parseFile(mb, result);
-}
-
 error_code LinkingContext::writeFile(const File &linkedFile) const {
   return this->writer().writeFile(linkedFile, _outputPath);
 }

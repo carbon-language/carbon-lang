@@ -71,13 +71,12 @@ public:
 
 llvm::ErrorOr<std::unique_ptr<lld::LinkerInput> >
 ELFFileNode::createLinkerInput(const LinkingContext &ctx) {
-  auto filePath = path(ctx);
-  if (!filePath &&
-      error_code(filePath) == llvm::errc::no_such_file_or_directory)
-    return make_error_code(llvm::errc::no_such_file_or_directory);
-  std::unique_ptr<LinkerInput> inputFile(new LinkerInput(*filePath));
-  inputFile->setAsNeeded(_asNeeded);
-  inputFile->setForceLoad(_isWholeArchive);
+  auto inputFile(FileNode::createLinkerInput(ctx));
+
+  if (inputFile) {
+    (*inputFile)->setAsNeeded(_asNeeded);
+    (*inputFile)->setForceLoad(_isWholeArchive);
+  }
   return std::move(inputFile);
 }
 

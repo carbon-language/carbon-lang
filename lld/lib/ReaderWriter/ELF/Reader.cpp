@@ -81,21 +81,22 @@ public:
   ELFReader(const ELFLinkingContext &ctx)
       : lld::Reader(ctx), _elfLinkingContext(ctx), _readerArchive(ctx, *this) {}
 
-  error_code parseFile(std::unique_ptr<MemoryBuffer> &mb,
+  error_code parseFile(LinkerInput &input,
                        std::vector<std::unique_ptr<File>> &result) const {
     using llvm::object::ELFType;
+    llvm::MemoryBuffer &mb(input.getBuffer());
     llvm::sys::fs::file_magic FileType =
-        llvm::sys::fs::identify_magic(mb->getBuffer());
+        llvm::sys::fs::identify_magic(mb.getBuffer());
 
     std::size_t MaxAlignment =
-        1ULL << llvm::countTrailingZeros(uintptr_t(mb->getBufferStart()));
+        1ULL << llvm::countTrailingZeros(uintptr_t(mb.getBufferStart()));
 
     llvm::error_code ec;
     switch (FileType) {
     case llvm::sys::fs::file_magic::elf_relocatable: {
       std::unique_ptr<File> f(createELF<ELFFileCreateELFTraits>(
-          getElfArchType(&*mb), MaxAlignment, _elfLinkingContext, std::move(mb),
-          ec));
+          getElfArchType(&mb), MaxAlignment, _elfLinkingContext,
+          std::move(input.takeBuffer()), ec));
       if (ec)
         return ec;
       result.push_back(std::move(f));
@@ -107,15 +108,15 @@ public:
       if (!_elfLinkingContext.allowLinkWithDynamicLibraries())
         return llvm::make_error_code(llvm::errc::executable_format_error);
       auto f = createELF<DynamicFileCreateELFTraits>(
-          getElfArchType(&*mb), MaxAlignment, _elfLinkingContext,
-          std::move(mb));
+          getElfArchType(&mb), MaxAlignment, _elfLinkingContext,
+          std::move(input.takeBuffer()));
       if (!f)
         return f;
       result.push_back(std::move(*f));
       break;
     }
     case llvm::sys::fs::file_magic::archive:
-      ec = _readerArchive.parseFile(mb, result);
+      ec = _readerArchive.parseFile(input, result);
       break;
     default:
       return llvm::make_error_code(llvm::errc::executable_format_error);

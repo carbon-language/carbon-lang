@@ -47,8 +47,8 @@ public:
       return nullptr;
     if (_context.logInputFiles())
       llvm::outs() << buff->getBufferIdentifier() << "\n";
-    std::unique_ptr<MemoryBuffer> mb(buff.take());
-    if (_context.parseFile(mb, result))
+    LinkerInput newInput(std::unique_ptr<MemoryBuffer>(buff.take()), _input);
+    if (_context.parseFile(newInput, result))
       return nullptr;
 
     assert(result.size() == 1);
@@ -122,6 +122,7 @@ protected:
   }
 
 private:
+  LinkerInput                               _input;
   std::unique_ptr<llvm::object::Archive>    _archive;
   atom_collection_vector<DefinedAtom>       _definedAtoms;
   atom_collection_vector<UndefinedAtom>     _undefinedAtoms;
@@ -132,10 +133,11 @@ private:
 public:
   /// only subclasses of ArchiveLibraryFile can be instantiated
   FileArchive(const LinkingContext &context,
-              std::unique_ptr<llvm::MemoryBuffer> mb, error_code &ec)
-      : ArchiveLibraryFile(context, mb->getBufferIdentifier()) {
+              LinkerInput &input, error_code &ec)
+      : ArchiveLibraryFile(context, input.getBuffer().getBufferIdentifier()),
+        _input(std::move(input)) {
     std::unique_ptr<llvm::object::Archive> archive_obj(
-        new llvm::object::Archive(mb.release(), ec));
+        new llvm::object::Archive(_input.takeBuffer().release(), ec));
     if (ec)
       return;
     _archive.swap(archive_obj);
@@ -159,12 +161,12 @@ public:
 
 // Returns a vector of Files that are contained in the archive file
 // pointed to by the MemoryBuffer
-error_code ReaderArchive::parseFile(std::unique_ptr<llvm::MemoryBuffer> &mb,
+error_code ReaderArchive::parseFile(LinkerInput &input,
                             std::vector<std::unique_ptr<File>> &result) const {
   error_code ec;
 
   if (_context.forceLoadAllArchives()) {
-    _archive.reset(new llvm::object::Archive(mb.release(), ec));
+    _archive.reset(new llvm::object::Archive(input.takeBuffer().release(), ec));
     if (ec)
       return ec;
 
@@ -176,12 +178,13 @@ error_code ReaderArchive::parseFile(std::unique_ptr<llvm::MemoryBuffer> &mb,
       std::unique_ptr<MemoryBuffer> mbc(buff.take());
       if (_context.logInputFiles())
         llvm::outs() << buff->getBufferIdentifier() << "\n";
-      if ((ec = _context.parseFile(mbc, result)))
+      LinkerInput newInput(std::move(mbc), input);
+      if ((ec = _context.parseFile(newInput, result)))
         return ec;
     }
   } else {
     std::unique_ptr<File> f;
-    f.reset(new FileArchive(_context, std::move(mb), ec));
+    f.reset(new FileArchive(_context, input, ec));
     if (ec)
       return ec;
 

@@ -18,7 +18,7 @@
 
 #include "lld/Core/File.h"
 #include "lld/Core/LLVM.h"
-#include "lld/Driver/LinkerInput.h"
+#include "lld/Core/LinkerInput.h"
 #include "llvm/Support/raw_ostream.h"
 
 #include <memory>
@@ -232,7 +232,7 @@ public:
 
   /// \brief Create a lld::File node from the FileNode
   virtual llvm::ErrorOr<std::unique_ptr<lld::LinkerInput> >
-  createLinkerInput(const LinkingContext &targetInfo) = 0;
+  createLinkerInput(const LinkingContext &targetInfo);
 
 protected:
   StringRef _path;

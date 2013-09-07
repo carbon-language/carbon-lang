@@ -212,16 +212,6 @@ parseArgs(int argc, const char *argv[], raw_ostream &diagnostics,
 
 } // namespace
 
-llvm::ErrorOr<std::unique_ptr<lld::LinkerInput> >
-PECOFFFileNode::createLinkerInput(const LinkingContext &ctx) {
-  return std::unique_ptr<LinkerInput>(new LinkerInput(*path(ctx)));
-}
-
-llvm::ErrorOr<std::unique_ptr<lld::LinkerInput> >
-PECOFFLibraryNode::createLinkerInput(const LinkingContext &ctx) {
-  return std::unique_ptr<LinkerInput>(new LinkerInput(*path(ctx)));
-}
-
 llvm::ErrorOr<StringRef> PECOFFFileNode::path(const LinkingContext &) const {
   if (_path.endswith(".lib"))
     return _ctx.searchLibraryFile(_path);

@@ -11,8 +11,8 @@
 
 #include "gtest/gtest.h"
 
+#include "lld/Core/LinkerInput.h"
 #include "lld/Driver/Driver.h"
-#include "lld/Driver/LinkerInput.h"
 
 #include "llvm/Support/raw_ostream.h"
 

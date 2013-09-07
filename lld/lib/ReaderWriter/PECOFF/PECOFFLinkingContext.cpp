@@ -28,9 +28,9 @@ namespace lld {
 namespace {} // anonymous namespace
 
 error_code PECOFFLinkingContext::parseFile(
-    std::unique_ptr<MemoryBuffer> &mb,
+    LinkerInput &input,
     std::vector<std::unique_ptr<File>> &result) const {
-  return _reader->parseFile(mb, result);
+  return _reader->parseFile(input, result);
 }
 
 bool PECOFFLinkingContext::validateImpl(raw_ostream &diagnostics) {

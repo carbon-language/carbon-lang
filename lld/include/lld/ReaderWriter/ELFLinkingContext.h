@@ -87,7 +87,7 @@ public:
   }
 
   virtual error_code
-  parseFile(std::unique_ptr<MemoryBuffer> &mb,
+  parseFile(LinkerInput &input,
             std::vector<std::unique_ptr<File> > &result) const;
 
   static std::unique_ptr<ELFLinkingContext> create(llvm::Triple);

@@ -676,14 +676,15 @@ public:
       : Reader(context), _readerArchive(context, *this),
         _PECOFFLinkingContext(context) {}
 
-  error_code parseFile(std::unique_ptr<MemoryBuffer> &mb,
+  error_code parseFile(LinkerInput &input,
                        std::vector<std::unique_ptr<File>> &result) const {
-    StringRef magic(mb->getBufferStart(), mb->getBufferSize());
+    StringRef magic(input.getBuffer().getBufferStart(), input.getBuffer().getBufferSize());
     llvm::sys::fs::file_magic fileType = llvm::sys::fs::identify_magic(magic);
+    if (fileType == llvm::sys::fs::file_magic::archive)
+      return _readerArchive.parseFile(input, result);
+    std::unique_ptr<MemoryBuffer> mb(input.takeBuffer());
     if (fileType == llvm::sys::fs::file_magic::coff_object)
       return parseCOFFFile(mb, result);
-    if (fileType == llvm::sys::fs::file_magic::archive)
-      return _readerArchive.parseFile(mb, result);
     return lld::coff::parseCOFFImportLibrary(_context, mb, result);
   }
 

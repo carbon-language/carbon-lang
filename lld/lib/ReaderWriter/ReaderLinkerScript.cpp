@@ -19,7 +19,7 @@ using namespace script;
 namespace {
 class LinkerScriptFile : public File {
 public:
-  static ErrorOr<std::unique_ptr<LinkerScriptFile>>
+  static ErrorOr<std::unique_ptr<LinkerScriptFile> >
   create(const LinkingContext &context,
          std::unique_ptr<llvm::MemoryBuffer> mb) {
     std::unique_ptr<LinkerScriptFile> file(
@@ -56,9 +56,7 @@ public:
     return _absoluteAtoms;
   }
 
-  const LinkerScript *getScript() {
-    return _script;
-  }
+  const LinkerScript *getScript() { return _script; }
 
 private:
   LinkerScriptFile(const LinkingContext &context,
@@ -79,9 +77,8 @@ private:
 
 namespace lld {
 error_code ReaderLinkerScript::parseFile(
-    std::unique_ptr<llvm::MemoryBuffer> &mb,
-    std::vector<std::unique_ptr<File>> &result) const {
-  auto lsf = LinkerScriptFile::create(_context, std::move(mb));
+    LinkerInput &input, std::vector<std::unique_ptr<File> > &result) const {
+  auto lsf = LinkerScriptFile::create(_context, input.takeBuffer());
   if (!lsf)
     return lsf;
   const LinkerScript *ls = (*lsf)->getScript();
@@ -89,7 +86,15 @@ error_code ReaderLinkerScript::parseFile(
   for (const auto &c : ls->_commands) {
     if (auto group = dyn_cast<lld::script::Group>(c))
       for (const auto &path : group->getPaths()) {
-        if (error_code ec = _context.readFile(path._path, result))
+        OwningPtr<llvm::MemoryBuffer> opmb;
+        if (error_code ec =
+                llvm::MemoryBuffer::getFileOrSTDIN(path._path, opmb))
+          return ec;
+
+        LinkerInput newInput(std::unique_ptr<llvm::MemoryBuffer>(opmb.take()),
+                             input);
+
+        if (error_code ec = _context.parseFile(newInput, result))
           return ec;
       }
   }

@@ -45,40 +45,37 @@ class LinkerInput {
   LinkerInput(const LinkerInput &) LLVM_DELETED_FUNCTION;
 
 public:
-  explicit LinkerInput(StringRef file)
-      : _file(file), _isForceLoad(false), _asNeeded(false) {}
+  explicit LinkerInput(std::unique_ptr<llvm::MemoryBuffer> buffer,
+                       StringRef userPath)
+      : _buffer(std::move(buffer)), _userPath(userPath), _isForceLoad(false),
+        _asNeeded(false) {}
 
-  explicit LinkerInput(std::unique_ptr<llvm::MemoryBuffer> buffer)
-      : _buffer(std::move(buffer)), _file(_buffer->getBufferIdentifier()),
-        _isForceLoad(false), _asNeeded(false) {}
+  explicit LinkerInput(std::unique_ptr<llvm::MemoryBuffer> buffer,
+                       const LinkerInput &other)
+      : _buffer(std::move(buffer)), _userPath(other.getUserPath()),
+        _isForceLoad(other.isForceLoad()), _asNeeded(other.asNeeded()) {}
 
   LinkerInput(LinkerInput &&other)
-      : _buffer(std::move(other._buffer)), _file(std::move(other._file)),
+      : _buffer(std::move(other._buffer)), _userPath(std::move(other._userPath)),
         _isForceLoad(other.isForceLoad()), _asNeeded(other.asNeeded()) {}
 
   LinkerInput &operator=(LinkerInput &&rhs) {
     _buffer = std::move(rhs._buffer);
-    _file = std::move(rhs._file);
+    _userPath = std::move(rhs._userPath);
+    _isForceLoad = rhs.isForceLoad();
+    _asNeeded = rhs.asNeeded();
     return *this;
   }
 
-  ErrorOr<llvm::MemoryBuffer&> getBuffer() const {
-    if (!_buffer) {
-      llvm::OwningPtr<llvm::MemoryBuffer> buf;
-      if (error_code ec = llvm::MemoryBuffer::getFileOrSTDIN(_file, buf))
-        return ec;
-      _buffer.reset(buf.take());
-    }
+  StringRef getUserPath() const { return _userPath; }
 
+  llvm::MemoryBuffer &getBuffer() const {
+    assert(_buffer);
     return *_buffer;
   }
 
-  StringRef getPath() const {
-    return _file;
-  }
-
   std::unique_ptr<llvm::MemoryBuffer> takeBuffer() {
-    getBuffer();
+    assert(_buffer);
     return std::move(_buffer);
   }
 
@@ -96,8 +93,8 @@ public:
   bool asNeeded() const { return _asNeeded; }
 
 private:
-  mutable std::unique_ptr<llvm::MemoryBuffer> _buffer;
-  std::string _file;
+  std::unique_ptr<llvm::MemoryBuffer> _buffer;
+  std::string _userPath;
   bool _isForceLoad;
   bool _asNeeded;
 };

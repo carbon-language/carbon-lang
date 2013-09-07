@@ -68,11 +68,11 @@ bool Driver::link(const LinkingContext &context, raw_ostream &diagnostics) {
   }
   for (const auto &input : linkerInputs) {
     if (context.logInputFiles())
-      llvm::outs() << input->getPath() << "\n";
+      llvm::outs() << input->getUserPath() << "\n";
 
     tg.spawn([ &, index]{
-      if (error_code ec = context.readFile(input->getPath(), files[index])) {
-        diagnostics << "Failed to read file: " << input->getPath() << ": "
+      if (error_code ec = context.parseFile(*input, files[index])) {
+        diagnostics << "Failed to read file: " << input->getUserPath() << ": "
                     << ec.message() << "\n";
         fail = true;
         return;

@@ -28,7 +28,7 @@ public:
   virtual ErrorOr<std::string> stringFromRelocKind(Reference::Kind kind) const;
 
   virtual error_code
-  parseFile(std::unique_ptr<MemoryBuffer> &mb,
+  parseFile(LinkerInput &input,
             std::vector<std::unique_ptr<File> > &result) const;
 
   void addPassNamed(StringRef name) { _passNames.push_back(name); }

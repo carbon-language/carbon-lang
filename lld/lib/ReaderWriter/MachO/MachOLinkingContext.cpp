@@ -234,13 +234,13 @@ void MachOLinkingContext::addPasses(PassManager &pm) const {
 }
 
 error_code MachOLinkingContext::parseFile(
-    std::unique_ptr<MemoryBuffer> &mb,
+    LinkerInput &input,
     std::vector<std::unique_ptr<File>> &result) const {
   //  if (!_machoReader)
   //    _machoReader = createReaderMachO(*this);
-  //  error_code ec = _machoReader->parseFile(mb,result);
+  //  error_code ec = _machoReader->parseFile(input,result);
   //  if (ec) {
-  return _yamlReader->parseFile(mb, result);
+  return _yamlReader->parseFile(input, result);
   //  }
 
   return error_code::success();

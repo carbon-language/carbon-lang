@@ -288,12 +288,11 @@ void CoreLinkingContext::addPasses(PassManager &pm) const {
   }
 }
 
-error_code CoreLinkingContext::parseFile(
-    std::unique_ptr<MemoryBuffer> &mb,
+error_code CoreLinkingContext::parseFile(LinkerInput &input,
     std::vector<std::unique_ptr<File>> &result) const {
   if (!_reader)
     _reader = createReaderYAML(*this);
-  return _reader->parseFile(mb, result);
+  return _reader->parseFile(input, result);
 }
 
 Writer &CoreLinkingContext::writer() const {
