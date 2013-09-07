@@ -10,7 +10,7 @@
 #include "lldb/Host/OptionParser.h"
 
 #ifdef _MSC_VER
-#include "../windows/getopt.inc"
+#include "../windows/msvc/getopt.inc"
 #else
 #ifdef _WIN32
 #define _BSD_SOURCE // Required so that getopt.h defines optreset

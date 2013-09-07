@@ -46,7 +46,7 @@ int vasprintf(char **ret, const char *fmt, va_list ap)
     return len;
 }
 
-char * strcasestr(const char *s, const char* find)
+char* strcasestr(const char *s, const char* find)
 {
     char c, sc;
     size_t len;
@@ -144,3 +144,66 @@ char* realpath(const char * name, char * resolved)
 
     return retname;
 }
+
+#ifdef _MSC_VER
+
+char* basename(char *path)
+{
+    char* l1 = strrchr(path, '\\');
+    char* l2 = strrchr(path, '/');
+    if (l2 > l1) l1 = l2;
+    if (!l1) return path; // no base name
+    return &l1[1];
+}
+
+char* getcwd(char* path, int max)
+{
+    if (GetCurrentDirectory(max, path) == 0)
+        return path;
+    return NULL;
+}
+
+char *dirname(char *path)
+{
+    char* l1 = strrchr(path, '\\');
+    char* l2 = strrchr(path, '/');
+    if (l2 > l1) l1 = l2;
+    if (!l1) return NULL; // no dir name
+    *l1 = 0;
+    return path;
+}
+
+int strcasecmp(const char* s1, const char* s2)
+{
+  while (*s1 != '\0' && tolower(*s1) == tolower(*s2))
+    {
+      s1++;
+      s2++;
+    }
+
+  return tolower(*(unsigned char *) s1) - tolower(*(unsigned char *) s2);
+}
+
+int strncasecmp(const char* s1, const char* s2, size_t n)
+{
+  if (n == 0)
+    return 0;
+
+  while (n-- != 0 && tolower(*s1) == tolower(*s2))
+    {
+      if (n == 0 || *s1 == '\0' || *s2 == '\0')
+        break;
+      s1++;
+      s2++;
+    }
+
+  return tolower(*(unsigned char *) s1) - tolower(*(unsigned char *) s2);
+}
+
+int usleep(uint32_t useconds)
+{
+	Sleep(useconds / 1000);
+	return 0;
+}
+
+#endif // _MSC_VER

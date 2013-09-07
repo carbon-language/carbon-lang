@@ -40,4 +40,42 @@ char* realpath(const char * name, char * resolved);
 #define S_IRWXG  0
 #define S_IRWXO  0
 
+#ifdef _MSC_VER
+
+#include <stdint.h>
+#include <io.h>
+typedef unsigned short mode_t;
+typedef uint32_t pid_t;
+
+int usleep(uint32_t useconds);
+
+char* getcwd(char* path, int max);
+char* basename(char *path);
+char *dirname(char *path);
+
+int strcasecmp(const char* s1, const char* s2);
+int strncasecmp(const char* s1, const char* s2, size_t n);
+
+
+#define PATH_MAX MAX_PATH
+#define STDIN_FILENO  0
+#define STDOUT_FILENO 1
+#define STDERR_FILENO 2
+
+#define __PRETTY_FUNCTION__ __FUNCSIG__
+
+#define S_IFDIR  _S_IFDIR
+#define S_ISDIR(mode)  (((mode) & S_IFMT) == S_IFDIR)
+
+#define snprintf _snprintf
+
+// timespec
+struct timespec
+{
+    time_t tv_sec;
+    long   tv_nsec;
+};
+
+#endif
+
 #endif  // LLDB_lldb_win32_h_
