@@ -2,7 +2,7 @@
   <div>
     <a href="http://llvm.org/">LLVM Home</a>
   </div>
-  
+
   <div class="submenu">
     <label>Clang Info</label>
     <a href="/index.html">About</a>
@@ -23,13 +23,13 @@
     <a href="/docs/InternalsManual.html">Clang&nbsp;Internals</a>
     <a href="/hacking.html">Hacking on Clang</a>
   </div>
-  
+
   <div class="submenu">
     <label>Clang Tools</label>
     <a href="http://clang-analyzer.llvm.org">Automatic Bug-Finding</a>
     <a href="/docs/Tooling.html">Writing Clang Tools</a>
   </div>
-  
+
   <div class="submenu">
     <label>Communication</label>
     <a href="http://lists.cs.uiuc.edu/mailman/listinfo/cfe-users">cfe-users List</a>
@@ -51,11 +51,12 @@
     <label>Quick Links</label>
     <a href="http://buildd-clang.debian.net/coverage/">Testing Coverage</a>
   </div>
-  
+
   <div class="submenu">
     <label>Clang Events</label>
     <a href="http://llvm.org/devmtg/2009-10/">October 2009</a>
     <a href="http://llvm.org/devmtg/2010-11/">November 2010</a>
+    <a href="http://llvm.org/devmtg/">LLVM events</a>
   </div>
 
 </div>
