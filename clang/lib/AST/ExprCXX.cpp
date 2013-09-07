@@ -67,6 +67,7 @@ UuidAttr *CXXUuidofExpr::GetUuidAttrOfType(QualType QT,
   if (!RD)
     return 0;
 
+  // __uuidof can grab UUIDs from template arguments.
   if (ClassTemplateSpecializationDecl *CTSD =
           dyn_cast<ClassTemplateSpecializationDecl>(RD)) {
     const TemplateArgumentList &TAL = CTSD->getTemplateArgs();
@@ -103,12 +104,13 @@ UuidAttr *CXXUuidofExpr::GetUuidAttrOfType(QualType QT,
     }
 
     return UuidForRD;
-  } else
-    for (CXXRecordDecl::redecl_iterator I = RD->redecls_begin(),
-                                        E = RD->redecls_end();
-         I != E; ++I)
-      if (UuidAttr *Uuid = I->getAttr<UuidAttr>())
-        return Uuid;
+  }
+
+  for (CXXRecordDecl::redecl_iterator I = RD->redecls_begin(),
+                                      E = RD->redecls_end();
+       I != E; ++I)
+    if (UuidAttr *Uuid = I->getAttr<UuidAttr>())
+      return Uuid;
 
   return 0;
 }
