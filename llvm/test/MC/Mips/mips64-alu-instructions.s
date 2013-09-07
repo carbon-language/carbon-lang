@@ -1,4 +1,4 @@
-# RUN: llvm-mc %s -triple=mipsel-unknown-linux -show-encoding -mcpu=mips64r2 | FileCheck %s
+# RUN: llvm-mc %s -triple=mips64el-unknown-linux -show-encoding -mcpu=mips64r2 | FileCheck %s
 # Check that the assembler can handle the documented syntax
 # for arithmetic and logical instructions.
 #------------------------------------------------------------------------------
@@ -73,6 +73,8 @@
 # CHECK:  daddiu  $9, $6, -15001  # encoding: [0x67,0xc5,0xc9,0x64]
 # CHECK:  daddiu  $9, $9, -15001  # encoding: [0x67,0xc5,0x29,0x65]
 # CHECK:  daddu   $9, $6, $7      # encoding: [0x2d,0x48,0xc7,0x00]
+# CHECK:  drotr   $9, $6, 20      # encoding: [0x3a,0x4d,0x26,0x00]
+# CHECK:  drotr32 $9, $6, 52      # encoding: [0x3e,0x4d,0x26,0x00]
 # CHECK:  madd   $6, $7          # encoding: [0x00,0x00,0xc7,0x70]
 # CHECK:  maddu  $6, $7          # encoding: [0x01,0x00,0xc7,0x70]
 # CHECK:  msub   $6, $7          # encoding: [0x04,0x00,0xc7,0x70]
@@ -94,6 +96,8 @@
     daddiu  $9,$6,-15001
     daddiu  $9,-15001
     daddu   $9,$6,$7
+    drotr   $9, $6, 20
+    drotr32 $9, $6, 52
     madd   $6,$7
     maddu  $6,$7
     msub   $6,$7

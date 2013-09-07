@@ -155,6 +155,9 @@ static void LowerLargeShift(MCInst& Inst) {
   case Mips::DSRA:
     Inst.setOpcode(Mips::DSRA32);
     return;
+  case Mips::DROTR:
+    Inst.setOpcode(Mips::DROTR32);
+    return;
   }
 }
 
@@ -206,6 +209,7 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   case Mips::DSLL:
   case Mips::DSRL:
   case Mips::DSRA:
+  case Mips::DROTR:
     LowerLargeShift(TmpInst);
     break;
     // Double extract instruction is chosen by pos and size operands

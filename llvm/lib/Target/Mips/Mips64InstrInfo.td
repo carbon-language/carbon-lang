@@ -111,6 +111,7 @@ let Predicates = [HasMips64r2, HasStdEnc] in {
                SRA_FM<0x3a, 1>;
   def DROTRV : shift_rotate_reg<"drotrv", GPR64Opnd, rotr>,
                SRLV_FM<0x16, 1>;
+  def DROTR32 : shift_rotate_imm<"drotr32", uimm5, GPR64Opnd>, SRA_FM<0x3e, 1>;
 }
 
 /// Load and Store Instructions
