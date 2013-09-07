@@ -25,6 +25,11 @@ static cl::opt<bool>
 EnableMipsTailCalls("enable-mips-tail-calls", cl::Hidden,
                     cl::desc("MIPS: Enable tail calls."), cl::init(false));
 
+static cl::opt<bool> NoDPLoadStore("mno-ldc1-sdc1", cl::init(false),
+                                   cl::desc("Expand double precision loads and "
+                                            "stores to their single precision "
+                                            "counterparts"));
+
 MipsSETargetLowering::MipsSETargetLowering(MipsTargetMachine &TM)
   : MipsTargetLowering(TM) {
   // Set up the register classes
@@ -129,6 +134,11 @@ MipsSETargetLowering::MipsSETargetLowering(MipsTargetMachine &TM)
   setOperationAction(ISD::INTRINSIC_W_CHAIN, MVT::Other, Custom);
   setOperationAction(ISD::INTRINSIC_VOID, MVT::Other, Custom);
 
+  if (NoDPLoadStore) {
+    setOperationAction(ISD::LOAD, MVT::f64, Custom);
+    setOperationAction(ISD::STORE, MVT::f64, Custom);
+  }
+
   computeRegisterProperties();
 }
 
@@ -168,6 +178,8 @@ MipsSETargetLowering::allowsUnalignedMemoryAccesses(EVT VT, bool *Fast) const {
 SDValue MipsSETargetLowering::LowerOperation(SDValue Op,
                                              SelectionDAG &DAG) const {
   switch(Op.getOpcode()) {
+  case ISD::LOAD:  return lowerLOAD(Op, DAG);
+  case ISD::STORE: return lowerSTORE(Op, DAG);
   case ISD::SMUL_LOHI: return lowerMulDiv(Op, MipsISD::Mult, true, true, DAG);
   case ISD::UMUL_LOHI: return lowerMulDiv(Op, MipsISD::Multu, true, true, DAG);
   case ISD::MULHS:     return lowerMulDiv(Op, MipsISD::Mult, false, true, DAG);
@@ -609,6 +621,68 @@ getOpndList(SmallVectorImpl<SDValue> &Ops,
 
   MipsTargetLowering::getOpndList(Ops, RegsToPass, IsPICCall, GlobalOrExternal,
                                   InternalLinkage, CLI, Callee, Chain);
+}
+
+SDValue MipsSETargetLowering::lowerLOAD(SDValue Op, SelectionDAG &DAG) const {
+  LoadSDNode &Nd = *cast<LoadSDNode>(Op);
+
+  if (Nd.getMemoryVT() != MVT::f64 || !NoDPLoadStore)
+    return MipsTargetLowering::lowerLOAD(Op, DAG);
+
+  // Replace a double precision load with two i32 loads and a buildpair64.
+  SDLoc DL(Op);
+  SDValue Ptr = Nd.getBasePtr(), Chain = Nd.getChain();
+  EVT PtrVT = Ptr.getValueType();
+
+  // i32 load from lower address.
+  SDValue Lo = DAG.getLoad(MVT::i32, DL, Chain, Ptr,
+                           MachinePointerInfo(), Nd.isVolatile(),
+                           Nd.isNonTemporal(), Nd.isInvariant(),
+                           Nd.getAlignment());
+
+  // i32 load from higher address.
+  Ptr = DAG.getNode(ISD::ADD, DL, PtrVT, Ptr, DAG.getConstant(4, PtrVT));
+  SDValue Hi = DAG.getLoad(MVT::i32, DL, Lo.getValue(1), Ptr,
+                           MachinePointerInfo(), Nd.isVolatile(),
+                           Nd.isNonTemporal(), Nd.isInvariant(),
+                           Nd.getAlignment());
+
+  if (!Subtarget->isLittle())
+    std::swap(Lo, Hi);
+
+  SDValue BP = DAG.getNode(MipsISD::BuildPairF64, DL, MVT::f64, Lo, Hi);
+  SDValue Ops[2] = {BP, Hi.getValue(1)};
+  return DAG.getMergeValues(Ops, 2, DL);
+}
+
+SDValue MipsSETargetLowering::lowerSTORE(SDValue Op, SelectionDAG &DAG) const {
+  StoreSDNode &Nd = *cast<StoreSDNode>(Op);
+
+  if (Nd.getMemoryVT() != MVT::f64 || !NoDPLoadStore)
+    return MipsTargetLowering::lowerSTORE(Op, DAG);
+
+  // Replace a double precision store with two extractelement64s and i32 stores.
+  SDLoc DL(Op);
+  SDValue Val = Nd.getValue(), Ptr = Nd.getBasePtr(), Chain = Nd.getChain();
+  EVT PtrVT = Ptr.getValueType();
+  SDValue Lo = DAG.getNode(MipsISD::ExtractElementF64, DL, MVT::i32,
+                           Val, DAG.getConstant(0, MVT::i32));
+  SDValue Hi = DAG.getNode(MipsISD::ExtractElementF64, DL, MVT::i32,
+                           Val, DAG.getConstant(1, MVT::i32));
+
+  if (!Subtarget->isLittle())
+    std::swap(Lo, Hi);
+
+  // i32 store to lower address.
+  Chain = DAG.getStore(Chain, DL, Lo, Ptr, MachinePointerInfo(),
+                       Nd.isVolatile(), Nd.isNonTemporal(), Nd.getAlignment(),
+                       Nd.getTBAAInfo());
+
+  // i32 store to higher address.
+  Ptr = DAG.getNode(ISD::ADD, DL, PtrVT, Ptr, DAG.getConstant(4, PtrVT));
+  return DAG.getStore(Chain, DL, Hi, Ptr, MachinePointerInfo(),
+                      Nd.isVolatile(), Nd.isNonTemporal(), Nd.getAlignment(),
+                      Nd.getTBAAInfo());
 }
 
 SDValue MipsSETargetLowering::lowerMulDiv(SDValue Op, unsigned NewOpc,

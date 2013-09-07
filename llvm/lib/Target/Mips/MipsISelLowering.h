@@ -329,6 +329,9 @@ namespace llvm {
       SmallVector<ByValArgInfo, 2> ByValArgs;
     };
   protected:
+    SDValue lowerLOAD(SDValue Op, SelectionDAG &DAG) const;
+    SDValue lowerSTORE(SDValue Op, SelectionDAG &DAG) const;
+
     // Subtarget Info
     const MipsSubtarget *Subtarget;
 
@@ -366,8 +369,6 @@ namespace llvm {
     SDValue lowerShiftLeftParts(SDValue Op, SelectionDAG& DAG) const;
     SDValue lowerShiftRightParts(SDValue Op, SelectionDAG& DAG,
                                  bool IsSRA) const;
-    SDValue lowerLOAD(SDValue Op, SelectionDAG &DAG) const;
-    SDValue lowerSTORE(SDValue Op, SelectionDAG &DAG) const;
     SDValue lowerADD(SDValue Op, SelectionDAG &DAG) const;
     SDValue lowerFP_TO_SINT(SDValue Op, SelectionDAG &DAG) const;
 
