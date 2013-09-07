@@ -62,7 +62,7 @@ entry:
 }
 
 
-; CHECK-LE-PIC-DAG-LABEL: test_ldxc1:
+; LE-PIC-LABEL: test_ldxc1:
 ; LE-PIC-DAG: lw $[[R0:[0-9]+]], 0(${{[0-9]+}})
 ; LE-PIC-DAG: lw $[[R1:[0-9]+]], 4(${{[0-9]+}})
 ; LE-PIC-DAG: mtc1 $[[R0]], $f0
@@ -77,7 +77,7 @@ entry:
   ret double %0
 }
 
-; LE-PIC-DAG-LABEL: test_sdxc1:
+; LE-PIC-LABEL: test_sdxc1:
 ; LE-PIC-DAG: mfc1 $[[R0:[0-9]+]], $f12
 ; LE-PIC-DAG: mfc1 $[[R1:[0-9]+]], $f13
 ; LE-PIC-DAG: sw $[[R0]], 0(${{[0-9]+}})
