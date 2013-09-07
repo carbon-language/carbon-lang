@@ -5129,8 +5129,8 @@ PerformConstructorInitialization(Sema &S,
       new (S.Context) CXXTemporaryObjectExpr(S.Context, Constructor,
                                              TSInfo, ConstructorArgs,
                                              ParenOrBraceRange,
-                                             IsListInitialization,
                                              HadMultipleCandidates,
+                                             IsListInitialization,
                                              ConstructorInitRequiresZeroInit));
   } else {
     CXXConstructExpr::ConstructionKind ConstructKind =
