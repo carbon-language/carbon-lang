@@ -62,7 +62,8 @@ debugger.SkipLLDBInitFiles(args.n)
 debugger.SetAsync(False)
 
 # Create a target from a file and arch.
-target = debugger.CreateTargetWithFileAndArch(args.target, lldb.LLDB_ARCH_DEFAULT)
+_, _, _, _, arch = os.uname()
+target = debugger.CreateTargetWithFileAndArch(args.target, arch)
 
 if not target:
     print "Could not create target", args.target
