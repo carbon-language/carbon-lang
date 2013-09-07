@@ -28,8 +28,6 @@ define i8* @bar(i8* %x) {
 
 ; RUN: not llvm-as <%s 2>&1  | FileCheck -check-prefix=CHECK-BAD %s
 
-; CHECK-BAD: Attribute 'builtin' can only be used in a call to a function with the 'nobuiltin' attribute.
-; CHECK-BAD-NEXT: %y = call i8* @lar(i8* %x) #1
 ; CHECK-BAD: Attribute 'builtin' can only be applied to a callsite.
 ; CHECK-BAD-NEXT: i8* (i8*)* @car
 ; CHECK-BAD: Attribute 'builtin' can only be applied to a callsite.

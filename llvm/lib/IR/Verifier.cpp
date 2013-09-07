@@ -1553,14 +1553,6 @@ void Verifier::VerifyCallSite(CallSite CS) {
               "Function has metadata parameter but isn't an intrinsic", I);
   }
 
-  // If the call site has the 'builtin' attribute, verify that it's applied to a
-  // direct call to a function with the 'nobuiltin' attribute.
-  if (CS.hasFnAttr(Attribute::Builtin))
-    Assert1(CS.getCalledFunction() &&
-            CS.getCalledFunction()->hasFnAttribute(Attribute::NoBuiltin),
-            "Attribute 'builtin' can only be used in a call to a function with "
-            "the 'nobuiltin' attribute.", I);
-
   visitInstruction(*I);
 }
 
