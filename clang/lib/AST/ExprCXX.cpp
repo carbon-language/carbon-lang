@@ -53,7 +53,8 @@ QualType CXXUuidofExpr::getTypeOperand() const {
 }
 
 // static
-UuidAttr *CXXUuidofExpr::GetUuidAttrOfType(QualType QT) {
+UuidAttr *CXXUuidofExpr::GetUuidAttrOfType(QualType QT,
+                                           bool *RDHasMultipleGUIDsPtr) {
   // Optionally remove one level of pointer, reference or array indirection.
   const Type *Ty = QT.getTypePtr();
   if (QT->isPointerType() || QT->isReferenceType())
@@ -63,11 +64,51 @@ UuidAttr *CXXUuidofExpr::GetUuidAttrOfType(QualType QT) {
 
   // Loop all record redeclaration looking for an uuid attribute.
   CXXRecordDecl *RD = Ty->getAsCXXRecordDecl();
-  for (CXXRecordDecl::redecl_iterator I = RD->redecls_begin(),
-       E = RD->redecls_end(); I != E; ++I) {
-    if (UuidAttr *Uuid = I->getAttr<UuidAttr>())
-      return Uuid;
-  }
+  if (!RD)
+    return 0;
+
+  if (ClassTemplateSpecializationDecl *CTSD =
+          dyn_cast<ClassTemplateSpecializationDecl>(RD)) {
+    const TemplateArgumentList &TAL = CTSD->getTemplateArgs();
+    UuidAttr *UuidForRD = 0;
+
+    for (unsigned I = 0, N = TAL.size(); I != N; ++I) {
+      const TemplateArgument &TA = TAL[I];
+      bool SeenMultipleGUIDs = false;
+
+      UuidAttr *UuidForTA = 0;
+      if (TA.getKind() == TemplateArgument::Type)
+        UuidForTA = GetUuidAttrOfType(TA.getAsType(), &SeenMultipleGUIDs);
+      else if (TA.getKind() == TemplateArgument::Declaration)
+        UuidForTA =
+            GetUuidAttrOfType(TA.getAsDecl()->getType(), &SeenMultipleGUIDs);
+
+      // If the template argument has a UUID, there are three cases:
+      //  - This is the first UUID seen for this RecordDecl.
+      //  - This is a different UUID than previously seed for this RecordDecl.
+      //  - This is the same UUID than previously seed for this RecordDecl.
+      if (UuidForTA) {
+        if (!UuidForRD)
+          UuidForRD = UuidForTA;
+        else if (UuidForRD != UuidForTA)
+          SeenMultipleGUIDs = true;
+      }
+
+      // Seeing multiple UUIDs means that we couldn't find a UUID
+      if (SeenMultipleGUIDs) {
+        if (RDHasMultipleGUIDsPtr)
+          *RDHasMultipleGUIDsPtr = true;
+        return 0;
+      }
+    }
+
+    return UuidForRD;
+  } else
+    for (CXXRecordDecl::redecl_iterator I = RD->redecls_begin(),
+                                        E = RD->redecls_end();
+         I != E; ++I)
+      if (UuidAttr *Uuid = I->getAttr<UuidAttr>())
+        return Uuid;
 
   return 0;
 }

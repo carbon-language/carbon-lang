@@ -116,6 +116,25 @@ COM_CLASS_TEMPLATE_REF<int, __uuidof(struct_with_uuid)> good_template_arg;
 
 COM_CLASS_TEMPLATE<int, __uuidof(struct_with_uuid)> bad_template_arg; // expected-error {{non-type template argument of type 'const _GUID' is not a constant expression}}
 
+namespace PR16911 {
+struct __declspec(uuid("{12345678-1234-1234-1234-1234567890aB}")) uuid;
+struct __declspec(uuid("{12345678-1234-1234-1234-1234567890aB}")) uuid2;
+
+template <typename T, typename T2>
+struct thing {
+};
+
+struct empty {};
+struct inher : public thing<empty, uuid2> {};
+
+struct __declspec(uuid("{12345678-1234-1234-1234-1234567890aB}")) uuid;
+const struct _GUID *w = &__uuidof(inher); // expected-error{{cannot call operator __uuidof on a type with no GUID}}
+const struct _GUID *x = &__uuidof(thing<uuid, inher>);
+const struct _GUID *y = &__uuidof(thing<uuid2, uuid>); // expected-error{{cannot call operator __uuidof on a type with multiple GUIDs}}
+thing<uuid2, uuid> thing_obj = thing<uuid2, uuid>();
+const struct _GUID *z = &__uuidof(thing_obj); // expected-error{{cannot call operator __uuidof on a type with multiple GUIDs}}
+}
+
 class CtorCall {
 public:
   CtorCall& operator=(const CtorCall& that);
