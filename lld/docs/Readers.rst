@@ -74,7 +74,7 @@ some temporary object.
 
 The key method to implement in a reader is::
 
-  virtual error_code parseFile(std::unique_ptr<MemoryBuffer> mb,
+  virtual error_code parseFile(LinkerInput &input,
                                std::vector<std::unique_ptr<File>> &result);
 
 It takes a memory buffer (which contains the contents of the object file
@@ -86,12 +86,6 @@ simple a File pointer) because some file formats allow multiple object
 
 Memory Ownership
 ----------------
-
-If parseFile() is successful, it either passes ownership of the MemoryBuffer
-to the File object, or it deletes the MemoryBuffer.  The former is done if the
-Atoms contain pointers into the MemoryBuffer (e.g. StringRefs for symbols
-or ArrayRefs for section content).  If parseFile() fails, the MemoryBuffer
-must be deleted by the Reader.
 
 Atoms are always owned by their File object. During core linking when Atoms
 are coalesced or stripped away, core linking does not delete them.
