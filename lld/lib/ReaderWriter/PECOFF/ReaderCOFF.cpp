@@ -51,11 +51,11 @@ namespace {
 // Converts the COFF symbol attribute to the LLD's atom attribute.
 Atom::Scope getScope(const coff_symbol *symbol) {
   switch (symbol->StorageClass) {
-    case llvm::COFF::IMAGE_SYM_CLASS_EXTERNAL:
-      return Atom::scopeGlobal;
-    case llvm::COFF::IMAGE_SYM_CLASS_STATIC:
-    case llvm::COFF::IMAGE_SYM_CLASS_LABEL:
-      return Atom::scopeTranslationUnit;
+  case llvm::COFF::IMAGE_SYM_CLASS_EXTERNAL:
+    return Atom::scopeGlobal;
+  case llvm::COFF::IMAGE_SYM_CLASS_STATIC:
+  case llvm::COFF::IMAGE_SYM_CLASS_LABEL:
+    return Atom::scopeTranslationUnit;
   }
   llvm_unreachable("Unknown scope");
 }
@@ -96,22 +96,22 @@ DefinedAtom::Alignment getAlignment(const coff_section *section) {
 
 DefinedAtom::Merge getMerge(const coff_aux_section_definition *auxsym) {
   switch (auxsym->Selection) {
-    case llvm::COFF::IMAGE_COMDAT_SELECT_NODUPLICATES:
-      return DefinedAtom::mergeNo;
-    case llvm::COFF::IMAGE_COMDAT_SELECT_ANY:
-      return DefinedAtom::mergeAsWeakAndAddressUsed;
-    case llvm::COFF::IMAGE_COMDAT_SELECT_SAME_SIZE:
-    case llvm::COFF::IMAGE_COMDAT_SELECT_EXACT_MATCH:
-    case llvm::COFF::IMAGE_COMDAT_SELECT_ASSOCIATIVE:
-    case llvm::COFF::IMAGE_COMDAT_SELECT_LARGEST:
-    case llvm::COFF::IMAGE_COMDAT_SELECT_NEWEST:
-      // FIXME: These attributes has more complicated semantics than the regular
-      // weak symbol. These are mapped to mergeAsWeakAndAddressUsed for now
-      // because the core linker does not support them yet. We eventually have
-      // to implement them for full COFF support.
-      return DefinedAtom::mergeAsWeakAndAddressUsed;
-    default:
-      llvm_unreachable("Unknown merge type");
+  case llvm::COFF::IMAGE_COMDAT_SELECT_NODUPLICATES:
+    return DefinedAtom::mergeNo;
+  case llvm::COFF::IMAGE_COMDAT_SELECT_ANY:
+    return DefinedAtom::mergeAsWeakAndAddressUsed;
+  case llvm::COFF::IMAGE_COMDAT_SELECT_SAME_SIZE:
+  case llvm::COFF::IMAGE_COMDAT_SELECT_EXACT_MATCH:
+  case llvm::COFF::IMAGE_COMDAT_SELECT_ASSOCIATIVE:
+  case llvm::COFF::IMAGE_COMDAT_SELECT_LARGEST:
+  case llvm::COFF::IMAGE_COMDAT_SELECT_NEWEST:
+    // FIXME: These attributes has more complicated semantics than the regular
+    // weak symbol. These are mapped to mergeAsWeakAndAddressUsed for now
+    // because the core linker does not support them yet. We eventually have
+    // to implement them for full COFF support.
+    return DefinedAtom::mergeAsWeakAndAddressUsed;
+  default:
+    llvm_unreachable("Unknown merge type");
   }
 }
 
@@ -120,7 +120,7 @@ private:
   typedef vector<const coff_symbol *> SymbolVectorT;
   typedef std::map<const coff_section *, SymbolVectorT> SectionToSymbolsT;
   typedef std::map<const StringRef, Atom *> SymbolNameToAtomT;
-  typedef std::map<const coff_section *, vector<COFFDefinedFileAtom *>>
+  typedef std::map<const coff_section *, vector<COFFDefinedFileAtom *> >
   SectionToAtomsT;
 
 public:
@@ -222,8 +222,8 @@ private:
     for (const coff_symbol *sym : symbols) {
       if (sym->SectionNumber != llvm::COFF::IMAGE_SYM_ABSOLUTE)
         continue;
-      auto *atom = new (_alloc) COFFAbsoluteAtom(
-          *this, _symbolName[sym], getScope(sym), sym->Value);
+      auto *atom = new (_alloc)
+          COFFAbsoluteAtom(*this, _symbolName[sym], getScope(sym), sym->Value);
 
       result.push_back(atom);
       _symbolAtom[sym] = atom;
@@ -277,9 +277,9 @@ private:
           sym->Value > 0) {
         StringRef name = _symbolName[sym];
         uint32_t size = sym->Value;
-        auto *atom = new (_alloc) COFFBSSAtom(
-            *this, name, getScope(sym), DefinedAtom::permRW_,
-            DefinedAtom::mergeAsWeakAndAddressUsed, size, 0);
+        auto *atom = new (_alloc)
+            COFFBSSAtom(*this, name, getScope(sym), DefinedAtom::permRW_,
+                        DefinedAtom::mergeAsWeakAndAddressUsed, size, 0);
         result.push_back(atom);
         continue;
       }
@@ -349,8 +349,8 @@ private:
 
       if (sym->NumberOfAuxSymbols == 0)
         return llvm::object::object_error::parse_failed;
-      const coff_aux_section_definition *aux = reinterpret_cast<
-          const coff_aux_section_definition *>(i.second);
+      const coff_aux_section_definition *aux =
+          reinterpret_cast<const coff_aux_section_definition *>(i.second);
       _merge[sec] = getMerge(aux);
     }
 
@@ -372,13 +372,14 @@ private:
   AtomizeDefinedSymbolsInSection(const coff_section *section,
                                  vector<const coff_symbol *> &symbols,
                                  vector<COFFDefinedFileAtom *> &atoms) {
-    // Sort symbols by position.
-    std::stable_sort(symbols.begin(), symbols.end(),
-      // For some reason MSVC fails to allow the lambda in this context with a
-      // "illegal use of local type in type instantiation". MSVC is clearly
-      // wrong here. Force a conversion to function pointer to work around.
-      static_cast<bool(*)(const coff_symbol*, const coff_symbol*)>(
-        [](const coff_symbol *a, const coff_symbol *b) -> bool {
+      // Sort symbols by position.
+    std::stable_sort(
+        symbols.begin(), symbols.end(),
+        // For some reason MSVC fails to allow the lambda in this context with a
+        // "illegal use of local type in type instantiation". MSVC is clearly
+        // wrong here. Force a conversion to function pointer to work around.
+        static_cast<bool (*)(const coff_symbol *, const coff_symbol *)>(
+                [](const coff_symbol * a, const coff_symbol * b)->bool {
       return a->Value < b->Value;
     }));
 
@@ -393,9 +394,8 @@ private:
         llvm::COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA) {
       for (auto si = symbols.begin(), se = symbols.end(); si != se; ++si) {
         const coff_symbol *sym = *si;
-        uint32_t size = (si + 1 == se)
-            ? section->SizeOfRawData - sym->Value
-            : si[1]->Value - sym->Value;
+        uint32_t size = (si + 1 == se) ? section->SizeOfRawData - sym->Value
+                                       : si[1]->Value - sym->Value;
         auto *atom = new (_alloc) COFFBSSAtom(
             *this, _symbolName[sym], getScope(sym), getPermissions(section),
             DefinedAtom::mergeAsWeakAndAddressUsed, size, ++ordinal);
@@ -427,9 +427,9 @@ private:
     // Create an atom for the entire section.
     if (symbols.empty()) {
       ArrayRef<uint8_t> data(secData.data(), secData.size());
-      auto *atom = new (_alloc) COFFDefinedAtom(
-          *this, "", sectionName, Atom::scopeTranslationUnit, type, perms,
-          _merge[section], data, 0);
+      auto *atom = new (_alloc)
+          COFFDefinedAtom(*this, "", sectionName, Atom::scopeTranslationUnit,
+                          type, perms, _merge[section], data, 0);
       atoms.push_back(atom);
       _definedAtomLocations[section][0] = atom;
       return error_code::success();
@@ -440,9 +440,9 @@ private:
     if (symbols[0]->Value != 0) {
       uint64_t size = symbols[0]->Value;
       ArrayRef<uint8_t> data(secData.data(), size);
-      auto *atom = new (_alloc) COFFDefinedAtom(
-          *this, "", sectionName, Atom::scopeTranslationUnit, type, perms,
-          _merge[section], data, ++ordinal);
+      auto *atom = new (_alloc)
+          COFFDefinedAtom(*this, "", sectionName, Atom::scopeTranslationUnit,
+                          type, perms, _merge[section], data, ++ordinal);
       atoms.push_back(atom);
       _definedAtomLocations[section][0] = atom;
     }
@@ -450,13 +450,12 @@ private:
     for (auto si = symbols.begin(), se = symbols.end(); si != se; ++si) {
       const uint8_t *start = secData.data() + (*si)->Value;
       // if this is the last symbol, take up the remaining data.
-      const uint8_t *end = (si + 1 == se)
-          ? secData.data() + secData.size()
-          : secData.data() + (*(si + 1))->Value;
+      const uint8_t *end = (si + 1 == se) ? secData.data() + secData.size()
+                                          : secData.data() + (*(si + 1))->Value;
       ArrayRef<uint8_t> data(start, end);
-      auto *atom = new (_alloc) COFFDefinedAtom(
-          *this, _symbolName[*si], sectionName, getScope(*si), type, perms,
-          _merge[section], data, ++ordinal);
+      auto *atom = new (_alloc)
+          COFFDefinedAtom(*this, _symbolName[*si], sectionName, getScope(*si),
+                          type, perms, _merge[section], data, ++ordinal);
       atoms.push_back(atom);
       _symbolAtom[*si] = atom;
       _definedAtomLocations[section][(*si)->Value] = atom;
@@ -583,7 +582,8 @@ private:
         return error_code::success();
       }
     }
-    // Section was not found, but it's not an error. This method returns an error
+    // Section was not found, but it's not an error. This method returns an
+    // error
     // only when there's a read error.
     return error_code::success();
   }
@@ -643,15 +643,15 @@ private:
   std::map<const coff_symbol *, const coff_symbol *> _auxSymbol;
 
   // A map from section to its atoms.
-  std::map<const coff_section *, vector<COFFDefinedFileAtom *>> _sectionAtoms;
+  std::map<const coff_section *, vector<COFFDefinedFileAtom *> > _sectionAtoms;
 
   // A map to get whether the section allows its contents to be merged or not.
   std::map<const coff_section *, DefinedAtom::Merge> _merge;
 
   // A sorted map to find an atom from a section and an offset within
   // the section.
-  std::map<const coff_section *,
-           std::map<uint32_t, COFFDefinedAtom *>> _definedAtomLocations;
+  std::map<const coff_section *, std::map<uint32_t, COFFDefinedAtom *> >
+  _definedAtomLocations;
 
   mutable llvm::BumpPtrAllocator _alloc;
   const PECOFFLinkingContext &_context;
@@ -677,8 +677,9 @@ public:
         _PECOFFLinkingContext(context) {}
 
   error_code parseFile(LinkerInput &input,
-                       std::vector<std::unique_ptr<File>> &result) const {
-    StringRef magic(input.getBuffer().getBufferStart(), input.getBuffer().getBufferSize());
+                       std::vector<std::unique_ptr<File> > &result) const {
+    StringRef magic(input.getBuffer().getBufferStart(),
+                    input.getBuffer().getBufferSize());
     llvm::sys::fs::file_magic fileType = llvm::sys::fs::identify_magic(magic);
     if (fileType == llvm::sys::fs::file_magic::archive)
       return _readerArchive.parseFile(input, result);
@@ -702,7 +703,7 @@ private:
 
     // Split the string into tokens, as the shell would do for argv.
     SmallVector<const char *, 16> tokens;
-    tokens.push_back("link");  // argv[0] is the command name. Will be ignored.
+    tokens.push_back("link"); // argv[0] is the command name. Will be ignored.
     llvm::cl::TokenizeWindowsCommandLine(directives, _stringSaver, tokens);
     tokens.push_back(nullptr);
 
@@ -712,14 +713,14 @@ private:
     const char **argv = &tokens[0];
     std::string errorMessage;
     llvm::raw_string_ostream stream(errorMessage);
-    bool parseFailed = WinLinkDriver::parse(
-        argc, argv, _PECOFFLinkingContext, stream, /*isDirective*/true);
+    bool parseFailed = WinLinkDriver::parse(argc, argv, _PECOFFLinkingContext,
+                                            stream, /*isDirective*/ true);
     stream.flush();
 
     // Print error message if error.
     if (parseFailed) {
-      auto msg = Twine("Failed to parse '") + directives + "': "
-          + errorMessage + "\n";
+      auto msg =
+          Twine("Failed to parse '") + directives + "': " + errorMessage + "\n";
       llvm::report_fatal_error(msg);
     }
     if (!errorMessage.empty()) {
@@ -728,7 +729,7 @@ private:
   }
 
   error_code parseCOFFFile(std::unique_ptr<MemoryBuffer> &mb,
-                           std::vector<std::unique_ptr<File>> &result) const {
+                           std::vector<std::unique_ptr<File> > &result) const {
     // Parse the memory buffer as PECOFF file.
     error_code ec;
     std::unique_ptr<FileCOFF> file(
