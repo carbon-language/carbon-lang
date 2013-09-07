@@ -447,8 +447,8 @@ SourceLocation CXXConstructExpr::getLocEnd() const {
   if (isa<CXXTemporaryObjectExpr>(this))
     return cast<CXXTemporaryObjectExpr>(this)->getLocEnd();
 
-  if (ParenRange.isValid())
-    return ParenRange.getEnd();
+  if (ParenOrBraceRange.isValid())
+    return ParenOrBraceRange.getEnd();
 
   SourceLocation End = Loc;
   for (unsigned I = getNumArgs(); I > 0; --I) {
@@ -761,7 +761,7 @@ CXXTemporaryObjectExpr::CXXTemporaryObjectExpr(const ASTContext &C,
                                                CXXConstructorDecl *Cons,
                                                TypeSourceInfo *Type,
                                                ArrayRef<Expr*> Args,
-                                               SourceRange parenRange,
+                                               SourceRange ParenOrBraceRange,
                                                bool HadMultipleCandidates,
                                                bool ListInitialization,
                                                bool ZeroInitialization)
@@ -771,7 +771,7 @@ CXXTemporaryObjectExpr::CXXTemporaryObjectExpr(const ASTContext &C,
                      Cons, false, Args,
                      HadMultipleCandidates,
                      ListInitialization, ZeroInitialization,
-                     CXXConstructExpr::CK_Complete, parenRange),
+                     CXXConstructExpr::CK_Complete, ParenOrBraceRange),
     Type(Type) {
 }
 
@@ -780,7 +780,7 @@ SourceLocation CXXTemporaryObjectExpr::getLocStart() const {
 }
 
 SourceLocation CXXTemporaryObjectExpr::getLocEnd() const {
-  return getParenRange().getEnd();
+  return getParenOrBraceRange().getEnd();
 }
 
 CXXConstructExpr *CXXConstructExpr::Create(const ASTContext &C, QualType T,
@@ -791,12 +791,12 @@ CXXConstructExpr *CXXConstructExpr::Create(const ASTContext &C, QualType T,
                                            bool ListInitialization,
                                            bool ZeroInitialization,
                                            ConstructionKind ConstructKind,
-                                           SourceRange ParenRange) {
+                                           SourceRange ParenOrBraceRange) {
   return new (C) CXXConstructExpr(C, CXXConstructExprClass, T, Loc, D, 
                                   Elidable, Args,
                                   HadMultipleCandidates, ListInitialization,
                                   ZeroInitialization, ConstructKind,
-                                  ParenRange);
+                                  ParenOrBraceRange);
 }
 
 CXXConstructExpr::CXXConstructExpr(const ASTContext &C, StmtClass SC,
@@ -807,12 +807,13 @@ CXXConstructExpr::CXXConstructExpr(const ASTContext &C, StmtClass SC,
                                    bool ListInitialization,
                                    bool ZeroInitialization,
                                    ConstructionKind ConstructKind,
-                                   SourceRange ParenRange)
+                                   SourceRange ParenOrBraceRange)
   : Expr(SC, T, VK_RValue, OK_Ordinary,
          T->isDependentType(), T->isDependentType(),
          T->isInstantiationDependentType(),
          T->containsUnexpandedParameterPack()),
-    Constructor(D), Loc(Loc), ParenRange(ParenRange),  NumArgs(args.size()),
+    Constructor(D), Loc(Loc), ParenOrBraceRange(ParenOrBraceRange),
+    NumArgs(args.size()),
     Elidable(elidable), HadMultipleCandidates(HadMultipleCandidates),
     ListInitialization(ListInitialization),
     ZeroInitialization(ZeroInitialization),

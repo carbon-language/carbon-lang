@@ -5066,7 +5066,9 @@ PerformConstructorInitialization(Sema &S,
                                  MultiExprArg Args,
                                  const InitializationSequence::Step& Step,
                                  bool &ConstructorInitRequiresZeroInit,
-                                 bool IsListInitialization) {
+                                 bool IsListInitialization,
+                                 SourceLocation LBraceLoc,
+                                 SourceLocation RBraceLoc) {
   unsigned NumArgs = Args.size();
   CXXConstructorDecl *Constructor
     = cast<CXXConstructorDecl>(Step.Function.Function);
@@ -5118,14 +5120,16 @@ PerformConstructorInitialization(Sema &S,
     TypeSourceInfo *TSInfo = Entity.getTypeSourceInfo();
     if (!TSInfo)
       TSInfo = S.Context.getTrivialTypeSourceInfo(Entity.getType(), Loc);
-    SourceRange ParenRange;
-    if (Kind.getKind() != InitializationKind::IK_DirectList)
-      ParenRange = Kind.getParenRange();
+    SourceRange ParenOrBraceRange =
+      (Kind.getKind() == InitializationKind::IK_DirectList)
+      ? SourceRange(LBraceLoc, RBraceLoc)
+      : Kind.getParenRange();
 
     CurInit = S.Owned(
       new (S.Context) CXXTemporaryObjectExpr(S.Context, Constructor,
                                              TSInfo, ConstructorArgs,
-                                             ParenRange, IsListInitialization,
+                                             ParenOrBraceRange,
+                                             IsListInitialization,
                                              HadMultipleCandidates,
                                              ConstructorInitRequiresZeroInit));
   } else {
@@ -5913,7 +5917,9 @@ InitializationSequence::Perform(Sema &S,
                                                                    Entity,
                                                  Kind, Arg, *Step,
                                                ConstructorInitRequiresZeroInit,
-                                               /*IsListInitialization*/ true);
+                                               /*IsListInitialization*/ true,
+                                               InitList->getLBraceLoc(),
+                                               InitList->getRBraceLoc());
       break;
     }
 
@@ -5947,7 +5953,9 @@ InitializationSequence::Perform(Sema &S,
                                                                  : Entity,
                                                  Kind, Args, *Step,
                                                ConstructorInitRequiresZeroInit,
-                                               /*IsListInitialization*/ false);
+                                               /*IsListInitialization*/ false,
+                                               /*LBraceLoc*/ SourceLocation(),
+                                               /*RBraceLoc*/ SourceLocation());
       break;
     }
 

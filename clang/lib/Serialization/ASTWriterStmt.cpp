@@ -1148,7 +1148,7 @@ void ASTStmtWriter::VisitCXXConstructExpr(CXXConstructExpr *E) {
   Record.push_back(E->isListInitialization());
   Record.push_back(E->requiresZeroInitialization());
   Record.push_back(E->getConstructionKind()); // FIXME: stable encoding
-  Writer.AddSourceRange(E->getParenRange(), Record);
+  Writer.AddSourceRange(E->getParenOrBraceRange(), Record);
   Code = serialization::EXPR_CXX_CONSTRUCT;
 }
 

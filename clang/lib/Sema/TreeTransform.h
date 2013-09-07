@@ -2760,7 +2760,7 @@ ExprResult TreeTransform<Derived>::TransformInitializer(Expr *Init,
                                         Construct->getType());
 
   // Build a ParenListExpr to represent anything else.
-  SourceRange Parens = Construct->getParenRange();
+  SourceRange Parens = Construct->getParenOrBraceRange();
   return getDerived().RebuildParenListExpr(Parens.getBegin(), NewArgs,
                                            Parens.getEnd());
 }
@@ -8176,7 +8176,7 @@ TreeTransform<Derived>::TransformCXXConstructExpr(CXXConstructExpr *E) {
                                               E->isListInitialization(),
                                               E->requiresZeroInitialization(),
                                               E->getConstructionKind(),
-                                              E->getParenRange());
+                                              E->getParenOrBraceRange());
 }
 
 /// \brief Transform a C++ temporary-binding expression.

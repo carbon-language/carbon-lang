@@ -211,6 +211,15 @@ TEST(CXXFunctionalCastExpr, SourceRange) {
       functionalCastExpr(), Lang_CXX11));
 }
 
+TEST(CXXTemporaryObjectExpr, SourceRange) {
+  RangeVerifier<CXXTemporaryObjectExpr> Verifier;
+  Verifier.expectRange(2, 6, 2, 12);
+  EXPECT_TRUE(Verifier.match(
+      "struct A { A(int, int); };\n"
+      "A a( A{0, 0} );",
+      temporaryObjectExpr(), Lang_CXX11));
+}
+
 TEST(CXXUnresolvedConstructExpr, SourceRange) {
   RangeVerifier<CXXUnresolvedConstructExpr> Verifier;
   Verifier.expectRange(3, 10, 3, 12);
