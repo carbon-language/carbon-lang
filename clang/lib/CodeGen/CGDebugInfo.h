@@ -179,7 +179,7 @@ class CGDebugInfo {
                                uint64_t sizeInBitsOverride, SourceLocation loc,
                                AccessSpecifier AS, uint64_t offsetInBits,
                                llvm::DIFile tunit,
-                               llvm::DIDescriptor scope);
+                               llvm::DIScope scope);
 
   // Helpers for collecting fields of a record.
   void CollectRecordLambdaFields(const CXXRecordDecl *CXXDecl,

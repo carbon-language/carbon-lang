@@ -788,7 +788,7 @@ llvm::DIType CGDebugInfo::createFieldType(StringRef name,
                                           AccessSpecifier AS,
                                           uint64_t offsetInBits,
                                           llvm::DIFile tunit,
-                                          llvm::DIDescriptor scope) {
+                                          llvm::DIScope scope) {
   llvm::DIType debugType = getOrCreateType(type, tunit);
 
   // Get the location for the field.
