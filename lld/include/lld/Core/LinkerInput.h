@@ -47,22 +47,22 @@ class LinkerInput {
 public:
   explicit LinkerInput(std::unique_ptr<llvm::MemoryBuffer> buffer,
                        StringRef userPath)
-      : _buffer(std::move(buffer)), _userPath(userPath), _isForceLoad(false),
+      : _buffer(std::move(buffer)), _userPath(userPath), _isWholeArchive(false),
         _asNeeded(false) {}
 
   explicit LinkerInput(std::unique_ptr<llvm::MemoryBuffer> buffer,
                        const LinkerInput &other)
       : _buffer(std::move(buffer)), _userPath(other.getUserPath()),
-        _isForceLoad(other.isForceLoad()), _asNeeded(other.asNeeded()) {}
+        _isWholeArchive(other.isWholeArchive()), _asNeeded(other.asNeeded()) {}
 
   LinkerInput(LinkerInput &&other)
       : _buffer(std::move(other._buffer)), _userPath(std::move(other._userPath)),
-        _isForceLoad(other.isForceLoad()), _asNeeded(other.asNeeded()) {}
+        _isWholeArchive(other.isWholeArchive()), _asNeeded(other.asNeeded()) {}
 
   LinkerInput &operator=(LinkerInput &&rhs) {
     _buffer = std::move(rhs._buffer);
     _userPath = std::move(rhs._userPath);
-    _isForceLoad = rhs.isForceLoad();
+    _isWholeArchive = rhs.isWholeArchive();
     _asNeeded = rhs.asNeeded();
     return *this;
   }
@@ -81,9 +81,9 @@ public:
 
   /// \brief forceLoad is a positional option which when set, requires all
   /// members in an archive to be force loaded
-  void setForceLoad(bool forceLoad) { _isForceLoad = forceLoad; }
+  void setWholeArchive(bool isWholeArchive) { _isWholeArchive = isWholeArchive; }
 
-  bool isForceLoad() const { return _isForceLoad; }
+  bool isWholeArchive() const { return _isWholeArchive; }
 
   /// \brief asneeded is a positional option which when set for a file
   /// makes the file to be needed at runtime only if its resolving
@@ -95,7 +95,7 @@ public:
 private:
   std::unique_ptr<llvm::MemoryBuffer> _buffer;
   std::string _userPath;
-  bool _isForceLoad;
+  bool _isWholeArchive;
   bool _asNeeded;
 };
 

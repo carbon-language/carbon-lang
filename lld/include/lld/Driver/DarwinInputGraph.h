@@ -28,12 +28,15 @@ namespace lld {
 /// \brief Represents a MachO File
 class MachOFileNode : public FileNode {
 public:
-  MachOFileNode(MachOLinkingContext &ctx, StringRef path)
-      : FileNode(path), _ctx(ctx) {}
+  MachOFileNode(MachOLinkingContext &ctx, StringRef path, bool isWholeArchive)
+      : FileNode(path), _ctx(ctx), _isWholeArchive(isWholeArchive) {}
 
   static inline bool classof(const InputElement *a) {
     return a->kind() == InputElement::Kind::File;
   }
+
+  virtual llvm::ErrorOr<std::unique_ptr<lld::LinkerInput> >
+  createLinkerInput(const lld::LinkingContext &);
 
   /// \brief validates the Input Element
   virtual bool validate() {
@@ -46,6 +49,7 @@ public:
 
 private:
   const MachOLinkingContext &_ctx;
+  bool _isWholeArchive;
 };
 
 } // namespace lld

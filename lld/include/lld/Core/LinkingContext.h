@@ -87,13 +87,6 @@ public:
   /// Archive files (aka static libraries) are normally lazily loaded.  That is,
   /// object files within an archive are only loaded and linked in, if the
   /// object file contains a DefinedAtom which will replace an existing
-  /// UndefinedAtom.  If this method returns true, core linking will actively
-  /// load every member object file from every archive.
-  bool forceLoadAllArchives() const { return _forceLoadAllArchives; }
-
-  /// Archive files (aka static libraries) are normally lazily loaded.  That is,
-  /// object files within an archive are only loaded and linked in, if the
-  /// object file contains a DefinedAtom which will replace an existing
   /// UndefinedAtom.  If this method returns true, core linking will also look
   /// for archive members to replace existing tentative definitions in addition
   /// to replacing undefines. Note: a "tentative definition" (also called a
@@ -202,7 +195,6 @@ public:
   void setWarnIfCoalesableAtomsHaveDifferentLoadName(bool warn) {
     _warnIfCoalesableAtomsHaveDifferentLoadName = warn;
   }
-  void setForceLoadAllArchives(bool force) { _forceLoadAllArchives = force; }
   void setPrintRemainingUndefines(bool print) {
     _printRemainingUndefines = print;
   }
@@ -329,7 +321,6 @@ protected:
   bool _searchSharedLibrariesToOverrideTentativeDefinitions;
   bool _warnIfCoalesableAtomsHaveDifferentCanBeNull;
   bool _warnIfCoalesableAtomsHaveDifferentLoadName;
-  bool _forceLoadAllArchives;
   bool _printRemainingUndefines;
   bool _allowRemainingUndefines;
   bool _logInputFiles;

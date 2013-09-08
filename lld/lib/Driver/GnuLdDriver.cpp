@@ -75,7 +75,7 @@ ELFFileNode::createLinkerInput(const LinkingContext &ctx) {
 
   if (inputFile) {
     (*inputFile)->setAsNeeded(_asNeeded);
-    (*inputFile)->setForceLoad(_isWholeArchive);
+    (*inputFile)->setWholeArchive(_isWholeArchive);
   }
   return std::move(inputFile);
 }
@@ -202,10 +202,6 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
 
     case OPT_merge_strings:
       ctx->setMergeCommonStrings(true);
-      break;
-
-    case OPT_all_load:
-      ctx->setForceLoadAllArchives(true);
       break;
 
     case OPT_t:

@@ -165,7 +165,7 @@ error_code ReaderArchive::parseFile(LinkerInput &input,
                             std::vector<std::unique_ptr<File>> &result) const {
   error_code ec;
 
-  if (_context.forceLoadAllArchives()) {
+  if (input.isWholeArchive()) {
     _archive.reset(new llvm::object::Archive(input.takeBuffer().release(), ec));
     if (ec)
       return ec;

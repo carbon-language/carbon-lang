@@ -92,16 +92,6 @@ TEST_F(DarwinLdParserTest, DeadStripRootsDylib) {
   EXPECT_TRUE(_context.globalsAreDeadStripRoots());
 }
 
-TEST_F(DarwinLdParserTest, ForceLoadArchive) {
-  EXPECT_FALSE(parse("ld","-all_load", "foo.o", nullptr));
-  EXPECT_TRUE(_context.forceLoadAllArchives());
-}
-
-TEST_F(DarwinLdParserTest, NoForceLoadArchive) {
-  EXPECT_FALSE(parse("ld", "foo.o", nullptr));
-  EXPECT_FALSE(_context.forceLoadAllArchives());
-}
-
 TEST_F(DarwinLdParserTest, Arch) {
   EXPECT_FALSE(parse("ld", "-arch", "x86_64", "foo.o", nullptr));
   EXPECT_EQ(MachOLinkingContext::arch_x86_64, _context.arch());

@@ -22,7 +22,7 @@ LinkingContext::LinkingContext()
       _searchSharedLibrariesToOverrideTentativeDefinitions(false),
       _warnIfCoalesableAtomsHaveDifferentCanBeNull(false),
       _warnIfCoalesableAtomsHaveDifferentLoadName(false),
-      _forceLoadAllArchives(false), _printRemainingUndefines(true),
+      _printRemainingUndefines(true),
       _allowRemainingUndefines(false), _logInputFiles(false),
       _allowShlibUndefines(false) {}
 

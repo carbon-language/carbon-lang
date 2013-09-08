@@ -127,6 +127,3 @@ def whole_archive: Flag<["--"], "whole-archive">,
     HelpText<"Force load of all members in a static library">;
 def no_whole_archive: Flag<["--"], "no-whole-archive">,
     HelpText<"Restores the default behavior of loading archive members">;
-
-def all_load : Flag<["-"], "all_load">,
-        HelpText<"Forces all members of all static libraries to be loaded">;
