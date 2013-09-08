@@ -60,7 +60,7 @@ int main()
     }
 #if _LIBCPP_STD_VER > 11
     {
-    	typedef std::list<int, min_allocator<int> > C;
+        typedef std::list<int, min_allocator<int> > C;
         C l(3, min_allocator<int> ());
         assert(l.size() == 3);
         assert(std::distance(l.begin(), l.end()) == 3);
