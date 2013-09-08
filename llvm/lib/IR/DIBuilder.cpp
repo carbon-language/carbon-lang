@@ -714,7 +714,7 @@ DIBuilder::createSubroutineType(DIFile File, DIArray ParameterTypes) {
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_subroutine_type),
     Constant::getNullValue(Type::getInt32Ty(VMContext)),
-    Constant::getNullValue(Type::getInt32Ty(VMContext)),
+    NULL,
     MDString::get(VMContext, ""),
     ConstantInt::get(Type::getInt32Ty(VMContext), 0),
     ConstantInt::get(Type::getInt64Ty(VMContext), 0),
@@ -818,12 +818,8 @@ DIType DIBuilder::createArtificialType(DIType Ty) {
   SmallVector<Value *, 9> Elts;
   MDNode *N = Ty;
   assert (N && "Unexpected input DIType!");
-  for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
-    if (Value *V = N->getOperand(i))
-      Elts.push_back(V);
-    else
-      Elts.push_back(Constant::getNullValue(Type::getInt32Ty(VMContext)));
-  }
+  for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
+    Elts.push_back(N->getOperand(i));
 
   unsigned CurFlags = Ty.getFlags();
   CurFlags = CurFlags | DIType::FlagArtificial;
@@ -843,12 +839,8 @@ DIType DIBuilder::createObjectPointerType(DIType Ty) {
   SmallVector<Value *, 9> Elts;
   MDNode *N = Ty;
   assert (N && "Unexpected input DIType!");
-  for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
-    if (Value *V = N->getOperand(i))
-      Elts.push_back(V);
-    else
-      Elts.push_back(Constant::getNullValue(Type::getInt32Ty(VMContext)));
-  }
+  for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
+    Elts.push_back(N->getOperand(i));
 
   unsigned CurFlags = Ty.getFlags();
   CurFlags = CurFlags | (DIType::FlagObjectPointer | DIType::FlagArtificial);
