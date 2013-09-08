@@ -66,7 +66,7 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 !3 = metadata !{metadata !5}
 !5 = metadata !{i32 786478, metadata !6, metadata !6, metadata !"func", metadata !"func", metadata !"", i32 11, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 0, i1 false, i32 ()* @func, null, null, metadata !1, i32 11} ; [ DW_TAG_subprogram ] [line 11] [def] [func]
 !6 = metadata !{i32 786473, metadata !32} ; [ DW_TAG_file_type ]
-!7 = metadata !{i32 786453, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !8, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!7 = metadata !{i32 786453, i32 0, null, i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !8, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !8 = metadata !{metadata !9}
 !9 = metadata !{i32 786468, null, null, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
 !10 = metadata !{i32 786688, metadata !11, metadata !"my_foo", metadata !6, i32 12, metadata !12, i32 0, i32 0} ; [ DW_TAG_auto_variable ] [my_foo] [line 12]

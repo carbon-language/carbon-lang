@@ -39,7 +39,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !6 = metadata !{i32 786478, metadata !32, null, metadata !"fn", metadata !"fn", metadata !"_Z2fnx", i32 6, metadata !3, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 true, i1 (i64)* @_Z2fnx, null, null, metadata !31, i32 6} ; [ DW_TAG_subprogram ] [line 6] [def] [fn]
 !7 = metadata !{i32 786689, metadata !1, metadata !"LHS", metadata !2, i32 16777218, metadata !8, i32 0, i32 0} ; [ DW_TAG_arg_variable ]
 !8 = metadata !{i32 786448, metadata !0, null, null, i32 0, i64 32, i64 32, i64 0, i32 0, metadata !9} ; [ DW_TAG_reference_type ]
-!9 = metadata !{i32 786470, metadata !0, metadata !"", null, i32 0, i64 0, i64 0, i64 0, i32 0, metadata !10} ; [ DW_TAG_const_type ]
+!9 = metadata !{i32 786470, metadata !0, null, null, i32 0, i64 0, i64 0, i64 0, i32 0, metadata !10} ; [ DW_TAG_const_type ]
 !10 = metadata !{i32 786468, null, metadata !0, metadata !"long long int", i32 0, i64 64, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
 !11 = metadata !{i32 786689, metadata !1, metadata !"RHS", metadata !2, i32 33554434, metadata !8, i32 0, i32 0} ; [ DW_TAG_arg_variable ]
 !12 = metadata !{i32 786689, metadata !6, metadata !"a", metadata !2, i32 16777222, metadata !10, i32 0, i32 0} ; [ DW_TAG_arg_variable ]

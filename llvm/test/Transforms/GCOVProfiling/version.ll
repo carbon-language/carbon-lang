@@ -23,7 +23,7 @@ define void @test() {
 !4 = metadata !{metadata !5}
 !5 = metadata !{i32 786478, metadata !10, metadata !6, metadata !"test", metadata !"test", metadata !"", i32 1, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, void ()* @test, null, null, metadata !3, i32 1} ; [ DW_TAG_subprogram ] [line 1] [def] [test]
 !6 = metadata !{i32 786473, metadata !10} ; [ DW_TAG_file_type ]
-!7 = metadata !{i32 786453, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !3, i32 0, i32 0} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!7 = metadata !{i32 786453, i32 0, null, i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !3, i32 0, i32 0} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !8 = metadata !{i32 1, i32 0, metadata !5, null}
 ;; !9 is added through the echo line at the top.
 !10 = metadata !{metadata !"<stdin>", metadata !"."}

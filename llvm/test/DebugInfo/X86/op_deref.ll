@@ -70,7 +70,7 @@ declare void @llvm.stackrestore(i8*) nounwind
 !3 = metadata !{metadata !5}
 !5 = metadata !{i32 786478, metadata !28, metadata !6, metadata !"testVLAwithSize", metadata !"testVLAwithSize", metadata !"", i32 1, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, void (i32)* @testVLAwithSize, null, null, metadata !1, i32 2} ; [ DW_TAG_subprogram ]
 !6 = metadata !{i32 786473, metadata !28} ; [ DW_TAG_file_type ]
-!7 = metadata !{i32 786453, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !8, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!7 = metadata !{i32 786453, i32 0, null, i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !8, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !8 = metadata !{null, metadata !9}
 !9 = metadata !{i32 786468, null, null, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
 !10 = metadata !{i32 786689, metadata !5, metadata !"s", metadata !6, i32 16777217, metadata !9, i32 0, i32 0} ; [ DW_TAG_arg_variable ]

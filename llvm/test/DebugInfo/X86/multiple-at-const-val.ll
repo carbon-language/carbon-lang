@@ -45,7 +45,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !32 = metadata !{i32 786472, metadata !"_S_os_ostate_end", i64 65536} ; [ DW_TAG_enumerator ] [_S_os_ostate_end :: 65536]
 !49 = metadata !{i32 786434, metadata !1801, metadata !4, metadata !"os_base", i32 200, i64 1728, i64 64, i32 0, i32 0, null, metadata !50, i32 0, metadata !49, null, null} ; [ DW_TAG_class_type ] [os_base] [line 200, size 1728, align 64, offset 0] [def] [from ]
 !50 = metadata !{metadata !77}
-!54 = metadata !{i32 786453, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !55, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!54 = metadata !{i32 786453, i32 0, null, i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !55, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !55 = metadata !{metadata !56}
 !56 = metadata !{i32 786468, null, null, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
 !77 = metadata !{i32 786445, metadata !1801, metadata !49, metadata !"badbit", i32 331, i64 0, i64 0, i64 0, i32 4096, metadata !78, i32 1} ; [ DW_TAG_member ]
