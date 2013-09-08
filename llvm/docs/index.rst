@@ -66,6 +66,7 @@ representation.
 
    CMake
    HowToBuildOnARM
+   HowToCrossCompileLLVM
    CommandGuide/index
    GettingStarted
    GettingStartedVS
@@ -94,6 +95,9 @@ representation.
 
 :doc:`HowToBuildOnARM`
    Notes on building and testing LLVM/Clang on ARM.
+
+:doc:`HowToCrossCompileLLVM`
+   Notes on cross-building and testing LLVM/Clang.
 
 :doc:`GettingStartedVS`
    An addendum to the main Getting Started guide for those using Visual Studio
