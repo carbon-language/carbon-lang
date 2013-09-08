@@ -3643,7 +3643,7 @@ def MOVDQUrm :   I<0x6F, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),
                  XS, Requires<[UseSSE2]>;
 }
 
-let mayStore = 1, SchedRW = [WriteStore] in {
+let mayStore = 1, neverHasSideEffects = 1, SchedRW = [WriteStore] in {
 def MOVDQAmr : PDI<0x7F, MRMDestMem, (outs), (ins i128mem:$dst, VR128:$src),
                    "movdqa\t{$src, $dst|$dst, $src}",
                    [/*(alignedstore (v2i64 VR128:$src), addr:$dst)*/],

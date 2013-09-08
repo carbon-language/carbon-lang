@@ -1216,7 +1216,7 @@ def MOV8rr_NOREX : I<0x88, MRMDestReg,
                      (outs GR8_NOREX:$dst), (ins GR8_NOREX:$src),
                      "mov{b}\t{$src, $dst|$dst, $src}  # NOREX", [], IIC_MOV>,
                    Sched<[WriteMove]>;
-let mayStore = 1 in
+let mayStore = 1, neverHasSideEffects = 1 in
 def MOV8mr_NOREX : I<0x88, MRMDestMem,
                      (outs), (ins i8mem_NOREX:$dst, GR8_NOREX:$src),
                      "mov{b}\t{$src, $dst|$dst, $src}  # NOREX", [],
