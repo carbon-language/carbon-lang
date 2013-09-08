@@ -127,8 +127,8 @@ X86TTI::PopcntSupportKind X86TTI::getPopcntSupport(unsigned TyWidth) const {
   assert(isPowerOf2_32(TyWidth) && "Ty width must be power of 2");
   // TODO: Currently the __builtin_popcount() implementation using SSE3
   //   instructions is inefficient. Once the problem is fixed, we should
-  //   call ST->hasSSE3() instead of ST->hasSSE4().
-  return ST->hasSSE41() ? PSK_FastHardware : PSK_Software;
+  //   call ST->hasSSE3() instead of ST->hasPOPCNT().
+  return ST->hasPOPCNT() ? PSK_FastHardware : PSK_Software;
 }
 
 unsigned X86TTI::getNumberOfRegisters(bool Vector) const {
