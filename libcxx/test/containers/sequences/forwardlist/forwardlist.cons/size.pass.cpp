@@ -25,7 +25,7 @@ void check_allocator(unsigned n, Allocator const &alloc = Allocator())
     typedef std::forward_list<T, Allocator> C;
     C d(n, alloc);
     assert(d.get_allocator() == alloc);
-    assert(std::distance(l.begin(), l.end()) == 3);
+    assert(std::distance(l.begin(), l.end()) == n);
 #endif
 }
 

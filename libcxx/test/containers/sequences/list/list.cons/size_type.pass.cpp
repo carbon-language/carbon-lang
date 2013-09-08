@@ -27,7 +27,7 @@ test3(unsigned n, Allocator const &alloc = Allocator())
     {
     C d(n, alloc);
     assert(d.size() == n);
-    assert(std::distance(d.begin(), d.end()) == 3);
+    assert(std::distance(d.begin(), d.end()) == n);
     assert(d.get_allocator() == alloc);
     }
 #endif
