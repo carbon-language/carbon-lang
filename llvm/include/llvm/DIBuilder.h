@@ -191,7 +191,7 @@ namespace llvm {
     /// @param Flags        Flags to encode member attribute, e.g. private
     /// @param Ty           Parent type.
     DIDerivedType
-    createMemberType(DIDescriptor Scope, StringRef Name, DIFile File,
+    createMemberType(DIScope Scope, StringRef Name, DIFile File,
                      unsigned LineNo, uint64_t SizeInBits, uint64_t AlignInBits,
                      uint64_t OffsetInBits, unsigned Flags, DIType Ty);
 

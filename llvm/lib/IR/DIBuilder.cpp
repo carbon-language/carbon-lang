@@ -410,7 +410,7 @@ DIDerivedType DIBuilder::createInheritance(
 
 /// createMemberType - Create debugging information entry for a member.
 DIDerivedType DIBuilder::createMemberType(
-    DIDescriptor Scope, StringRef Name, DIFile File, unsigned LineNumber,
+    DIScope Scope, StringRef Name, DIFile File, unsigned LineNumber,
     uint64_t SizeInBits, uint64_t AlignInBits, uint64_t OffsetInBits,
     unsigned Flags, DIType Ty) {
   // TAG_member is encoded in DIDerivedType format.
