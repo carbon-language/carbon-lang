@@ -25,6 +25,7 @@ int main() {
     _exit(1);
   }
   write(1, "Passed\n", sizeof("Passed\n"));
+  free(y);
   // CHECK: FreeHook
   // CHECK: Passed
   return 0;
