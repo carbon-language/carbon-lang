@@ -33,6 +33,7 @@ int main() {
     ++count;
   } while (result != NULL);
   fprintf(stderr, "read %d entries\n", count);
+  closedir(d);
   // CHECK: test1: reading the {{.*}} directory...
   // CHECK-NOT: stack-buffer-overflow
   // CHECK: read {{.*}} entries
@@ -51,6 +52,7 @@ int main() {
     ++count;
   } while (result64 != NULL);
   fprintf(stderr, "read %d entries\n", count);
+  closedir(d);
   // CHECK: test2: reading the {{.*}} directory...
   // CHECK-NOT: stack-buffer-overflow
   // CHECK: read {{.*}} entries

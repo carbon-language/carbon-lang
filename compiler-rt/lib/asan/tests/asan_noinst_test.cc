@@ -654,6 +654,7 @@ TEST(AddressSanitizerInterface, PoisoningStressTest) {
       }
     }
   }
+  free(arr);
 }
 
 TEST(AddressSanitizerInterface, PoisonedRegion) {

@@ -70,6 +70,7 @@ TEST(AddressSanitizer, WcsLenTest) {
   memcpy(heap_string, L"Hello, World!", hello_size);
   EXPECT_EQ(hello_len, Ident(wcslen(heap_string)));
   EXPECT_DEATH(Ident(wcslen(heap_string + 14)), RightOOBReadMessage(0));
+  free(heap_string);
 }
 
 #ifndef __APPLE__

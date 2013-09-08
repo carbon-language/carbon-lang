@@ -22,6 +22,7 @@ int main(int argc, char *argv[]) {
   assert(globbuf.gl_pathc == 2);
   printf("%zu\n", strlen(globbuf.gl_pathv[0]));
   printf("%zu\n", strlen(globbuf.gl_pathv[1]));
+  globfree(&globbuf);
   printf("PASS\n");
   // CHECK: PASS
   return 0;

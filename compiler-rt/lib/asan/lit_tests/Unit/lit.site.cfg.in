@@ -11,3 +11,6 @@ config.name = 'AddressSanitizer-Unit'
 # it as build directory with ASan unit tests.
 config.test_exec_root = "@ASAN_BINARY_DIR@/tests"
 config.test_source_root = config.test_exec_root
+
+if config.host_os == 'Linux':
+  config.environment['ASAN_OPTIONS'] = 'detect_leaks=1'
