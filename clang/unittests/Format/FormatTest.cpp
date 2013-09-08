@@ -2276,6 +2276,19 @@ TEST_F(FormatTest, LayoutNestedBlocks) {
                    "  somethingElse();\n"
                    "});",
                    getLLVMStyleWithColumns(29)));
+  EXPECT_EQ("DEBUG({ int i; });", format("DEBUG({ int   i; });"));
+  EXPECT_EQ("DEBUG({\n"
+            "  int i;\n"
+            "\n"
+            "  // comment\n"
+            "  int j;\n"
+            "});",
+            format("DEBUG({\n"
+                   "  int  i;\n"
+                   "\n"
+                   "  // comment\n"
+                   "  int  j;\n"
+                   "});"));
 }
 
 TEST_F(FormatTest, PutEmptyBlocksIntoOneLine) {
@@ -6395,7 +6408,7 @@ TEST_F(FormatTest, FormatsLambdas) {
   verifyFormat("auto c = { [&a, &a, a] {\n"
                "  [=, a, b, &c] { return b++; }();\n"
                "} }\n");
-  verifyFormat("auto c = { [&a, &a, a] { [=, a, b, &c] { }(); } }\n");
+  verifyFormat("auto c = { [&a, &a, a] { [=, a, b, &c] {}(); } }\n");
   verifyFormat("void f() {\n"
                "  other(x.begin(), x.end(), [&](int, int) { return 1; });\n"
                "}\n");

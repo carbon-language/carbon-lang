@@ -530,10 +530,14 @@ private:
            I != E; ++I) {
         unsigned Indent =
             ParentIndent + ((*I)->Level - Line.Level) * Style.IndentWidth;
-        if (!DryRun)
+        if (!DryRun) {
+          unsigned Newlines = std::min((*I)->First->NewlinesBefore,
+                                       Style.MaxEmptyLinesToKeep + 1);
+          Newlines = std::max(1u, Newlines);
           Whitespaces->replaceWhitespace(
-              *(*I)->First, /*Newlines=*/1, /*Spaces=*/Indent,
+              *(*I)->First, Newlines, /*Spaces=*/Indent,
               /*StartOfTokenColumn=*/Indent, Line.InPPDirective);
+        }
         UnwrappedLineFormatter Formatter(Indenter, Whitespaces, Style, **I);
         Penalty += Formatter.format(Indent, DryRun);
       }
@@ -552,6 +556,9 @@ private:
                                      /*Newlines=*/0, /*Spaces=*/1,
                                      /*StartOfTokenColumn=*/State.Column,
                                      State.Line->InPPDirective);
+      UnwrappedLineFormatter Formatter(Indenter, Whitespaces, Style,
+                                       *LBrace.Children[0]);
+      Penalty += Formatter.format(State.Column + 1, DryRun);
     }
 
     State.Column += 1 + LBrace.Children[0]->Last->TotalLength;
