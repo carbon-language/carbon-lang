@@ -57,7 +57,7 @@ static cl::opt<bool> EnableRegPressure("misched-regpressure", cl::Hidden,
   cl::desc("Enable register pressure scheduling."), cl::init(true));
 
 static cl::opt<bool> EnableCyclicPath("misched-cyclicpath", cl::Hidden,
-  cl::desc("Enable cyclic critical path analysis."), cl::init(false));
+  cl::desc("Enable cyclic critical path analysis."), cl::init(true));
 
 static cl::opt<bool> EnableLoadCluster("misched-cluster", cl::Hidden,
   cl::desc("Enable load clustering."), cl::init(true));
