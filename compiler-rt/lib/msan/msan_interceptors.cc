@@ -602,6 +602,22 @@ INTERCEPTOR(int, __fxstat64, int magic, int fd, void *buf) {
   return res;
 }
 
+INTERCEPTOR(int, __fxstatat, int magic, int fd, char *pathname, void *buf,
+            int flags) {
+  ENSURE_MSAN_INITED();
+  int res = REAL(__fxstatat)(magic, fd, pathname, buf, flags);
+  if (!res) __msan_unpoison(buf, __sanitizer::struct_stat_sz);
+  return res;
+}
+
+INTERCEPTOR(int, __fxstatat64, int magic, int fd, char *pathname, void *buf,
+            int flags) {
+  ENSURE_MSAN_INITED();
+  int res = REAL(__fxstatat64)(magic, fd, pathname, buf, flags);
+  if (!res) __msan_unpoison(buf, __sanitizer::struct_stat64_sz);
+  return res;
+}
+
 INTERCEPTOR(int, __xstat, int magic, char *path, void *buf) {
   ENSURE_MSAN_INITED();
   int res = REAL(__xstat)(magic, path, buf);
@@ -1274,9 +1290,11 @@ void InitializeInterceptors() {
   INTERCEPT_FUNCTION(gettimeofday);
   INTERCEPT_FUNCTION(fcvt);
   INTERCEPT_FUNCTION(__fxstat);
+  INTERCEPT_FUNCTION(__fxstatat);
   INTERCEPT_FUNCTION(__xstat);
   INTERCEPT_FUNCTION(__lxstat);
   INTERCEPT_FUNCTION(__fxstat64);
+  INTERCEPT_FUNCTION(__fxstatat64);
   INTERCEPT_FUNCTION(__xstat64);
   INTERCEPT_FUNCTION(__lxstat64);
   INTERCEPT_FUNCTION(pipe);

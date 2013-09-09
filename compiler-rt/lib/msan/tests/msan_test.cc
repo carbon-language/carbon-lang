@@ -672,6 +672,18 @@ TEST(MemorySanitizer, stat) {
   EXPECT_NOT_POISONED(st->st_size);
 }
 
+TEST(MemorySanitizer, fstatat) {
+  struct stat* st = new struct stat;
+  int dirfd = open("/proc/self", O_RDONLY);
+  assert(dirfd > 0);
+  int res = fstatat(dirfd, "stat", st, 0);
+  assert(!res);
+  EXPECT_NOT_POISONED(st->st_dev);
+  EXPECT_NOT_POISONED(st->st_mode);
+  EXPECT_NOT_POISONED(st->st_size);
+  close(dirfd);
+}
+
 TEST(MemorySanitizer, statfs) {
   struct statfs* st = new struct statfs;
   int res = statfs("/", st);
