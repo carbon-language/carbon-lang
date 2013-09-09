@@ -1549,6 +1549,9 @@ static void handleWeakRefAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   // static ((alias ("y"), weakref)).
   // Should we? How to check that weakref is before or after alias?
 
+  // FIXME: it would be good for us to keep the WeakRefAttr as-written instead
+  // of transforming it into an AliasAttr.  The WeakRefAttr never uses the
+  // StringRef parameter it was given anyway.
   if (Attr.isArgExpr(0)) {
     Expr *Arg = Attr.getArgAsExpr(0);
     Arg = Arg->IgnoreParenCasts();
