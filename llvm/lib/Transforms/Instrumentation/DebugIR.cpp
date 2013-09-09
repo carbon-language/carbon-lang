@@ -25,6 +25,7 @@
 #include "llvm/InstVisitor.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Instruction.h"
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Transforms/Instrumentation.h"
 #include "llvm/Transforms/Utils/Cloning.h"

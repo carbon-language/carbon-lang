@@ -2491,7 +2491,10 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
     case bitc::FUNC_CODE_INST_SWITCH: { // SWITCH: [opty, op0, op1, ...]
       // Check magic
       if ((Record[0] >> 16) == SWITCH_INST_MAGIC) {
-        // New SwitchInst format with case ranges.
+        // "New" SwitchInst format with case ranges. The changes to write this
+        // format were reverted but we still recognize bitcode that uses it.
+        // Hopefully someday we will have support for case ranges and can use
+        // this format again.
 
         Type *OpTy = getTypeByID(Record[1]);
         unsigned ValueBitWidth = cast<IntegerType>(OpTy)->getBitWidth();
@@ -2508,7 +2511,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
 
         unsigned CurIdx = 5;
         for (unsigned i = 0; i != NumCases; ++i) {
-          IntegersSubsetToBB CaseBuilder;
+          SmallVector<ConstantInt*, 1> CaseVals;
           unsigned NumItems = Record[CurIdx++];
           for (unsigned ci = 0; ci != NumItems; ++ci) {
             bool isSingleNumber = Record[CurIdx++];
@@ -2528,20 +2531,22 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
               APInt High =
                   ReadWideAPInt(makeArrayRef(&Record[CurIdx], ActiveWords),
                                 ValueBitWidth);
-
-              CaseBuilder.add(IntItem::fromType(OpTy, Low),
-                              IntItem::fromType(OpTy, High));
               CurIdx += ActiveWords;
+
+              // FIXME: It is not clear whether values in the range should be
+              // compared as signed or unsigned values. The partially
+              // implemented changes that used this format in the past used
+              // unsigned comparisons.
+              for ( ; Low.ule(High); ++Low)
+                CaseVals.push_back(ConstantInt::get(Context, Low));
             } else
-              CaseBuilder.add(IntItem::fromType(OpTy, Low));
+              CaseVals.push_back(ConstantInt::get(Context, Low));
           }
           BasicBlock *DestBB = getBasicBlock(Record[CurIdx++]);
-          IntegersSubset Case = CaseBuilder.getCase();
-          SI->addCase(Case, DestBB);
+          for (SmallVector<ConstantInt*, 1>::iterator cvi = CaseVals.begin(),
+                 cve = CaseVals.end(); cvi != cve; ++cvi)
+            SI->addCase(*cvi, DestBB);
         }
-        uint16_t Hash = SI->hash();
-        if (Hash != (Record[0] & 0xFFFF))
-          return Error("Invalid SWITCH record");
         I = SI;
         break;
       }

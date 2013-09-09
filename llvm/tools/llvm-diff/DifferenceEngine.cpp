@@ -316,15 +316,15 @@ class FunctionDifferenceEngine {
 
       bool Difference = false;
 
-      DenseMap<Constant*, BasicBlock*> LCases;
+      DenseMap<ConstantInt*,BasicBlock*> LCases;
       
       for (SwitchInst::CaseIt I = LI->case_begin(), E = LI->case_end();
            I != E; ++I)
-        LCases[I.getCaseValueEx()] = I.getCaseSuccessor();
+        LCases[I.getCaseValue()] = I.getCaseSuccessor();
         
       for (SwitchInst::CaseIt I = RI->case_begin(), E = RI->case_end();
            I != E; ++I) {
-        IntegersSubset CaseValue = I.getCaseValueEx();
+        ConstantInt *CaseValue = I.getCaseValue();
         BasicBlock *LCase = LCases[CaseValue];
         if (LCase) {
           if (TryUnify) tryUnify(LCase, I.getCaseSuccessor());
@@ -336,7 +336,7 @@ class FunctionDifferenceEngine {
         }
       }
       if (!Difference)
-        for (DenseMap<Constant*, BasicBlock*>::iterator
+        for (DenseMap<ConstantInt*,BasicBlock*>::iterator
                I = LCases.begin(), E = LCases.end(); I != E; ++I) {
           if (Complain)
             Engine.logf("left switch has extra case %l") << I->first;

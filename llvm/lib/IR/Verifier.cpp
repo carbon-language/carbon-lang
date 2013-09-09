@@ -1168,27 +1168,12 @@ void Verifier::visitSwitchInst(SwitchInst &SI) {
   // Check to make sure that all of the constants in the switch instruction
   // have the same type as the switched-on value.
   Type *SwitchTy = SI.getCondition()->getType();
-  IntegerType *IntTy = cast<IntegerType>(SwitchTy);
-  IntegersSubsetToBB Mapping;
-  std::map<IntegersSubset::Range, unsigned> RangeSetMap;
+  SmallPtrSet<ConstantInt*, 32> Constants;
   for (SwitchInst::CaseIt i = SI.case_begin(), e = SI.case_end(); i != e; ++i) {
-    IntegersSubset CaseRanges = i.getCaseValueEx();
-    for (unsigned ri = 0, rie = CaseRanges.getNumItems(); ri < rie; ++ri) {
-      IntegersSubset::Range r = CaseRanges.getItem(ri);
-      Assert1(((const APInt&)r.getLow()).getBitWidth() == IntTy->getBitWidth(),
-              "Switch constants must all be same type as switch value!", &SI);
-      Assert1(((const APInt&)r.getHigh()).getBitWidth() == IntTy->getBitWidth(),
-              "Switch constants must all be same type as switch value!", &SI);
-      Mapping.add(r);
-      RangeSetMap[r] = i.getCaseIndex();
-    }
-  }
-
-  IntegersSubsetToBB::RangeIterator errItem;
-  if (!Mapping.verify(errItem)) {
-    unsigned CaseIndex = RangeSetMap[errItem->first];
-    SwitchInst::CaseIt i(&SI, CaseIndex);
-    Assert2(false, "Duplicate integer as switch case", &SI, i.getCaseValueEx());
+    Assert1(i.getCaseValue()->getType() == SwitchTy,
+            "Switch constants must all be same type as switch value!", &SI);
+    Assert2(Constants.insert(i.getCaseValue()),
+            "Duplicate integer as switch case", &SI, i.getCaseValue());
   }
 
   visitTerminatorInst(SI);

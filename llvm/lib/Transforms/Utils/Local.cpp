@@ -196,33 +196,28 @@ bool llvm::ConstantFoldTerminator(BasicBlock *BB, bool DeleteDeadConditions,
       // Otherwise, we can fold this switch into a conditional branch
       // instruction if it has only one non-default destination.
       SwitchInst::CaseIt FirstCase = SI->case_begin();
-      IntegersSubset& Case = FirstCase.getCaseValueEx();
-      if (Case.isSingleNumber()) {
-        // FIXME: Currently work with ConstantInt based numbers.
-        Value *Cond = Builder.CreateICmpEQ(SI->getCondition(),
-             Case.getSingleNumber(0).toConstantInt(),
-            "cond");
+      Value *Cond = Builder.CreateICmpEQ(SI->getCondition(),
+          FirstCase.getCaseValue(), "cond");
 
-        // Insert the new branch.
-        BranchInst *NewBr = Builder.CreateCondBr(Cond,
-                                FirstCase.getCaseSuccessor(),
-                                SI->getDefaultDest());
-        MDNode* MD = SI->getMetadata(LLVMContext::MD_prof);
-        if (MD && MD->getNumOperands() == 3) {
-          ConstantInt *SICase = dyn_cast<ConstantInt>(MD->getOperand(2));
-          ConstantInt *SIDef = dyn_cast<ConstantInt>(MD->getOperand(1));
-          assert(SICase && SIDef);
-          // The TrueWeight should be the weight for the single case of SI.
-          NewBr->setMetadata(LLVMContext::MD_prof,
-                 MDBuilder(BB->getContext()).
-                 createBranchWeights(SICase->getValue().getZExtValue(),
-                                     SIDef->getValue().getZExtValue()));
-        }
-
-        // Delete the old switch.
-        SI->eraseFromParent();
-        return true;
+      // Insert the new branch.
+      BranchInst *NewBr = Builder.CreateCondBr(Cond,
+                                               FirstCase.getCaseSuccessor(),
+                                               SI->getDefaultDest());
+      MDNode* MD = SI->getMetadata(LLVMContext::MD_prof);
+      if (MD && MD->getNumOperands() == 3) {
+        ConstantInt *SICase = dyn_cast<ConstantInt>(MD->getOperand(2));
+        ConstantInt *SIDef = dyn_cast<ConstantInt>(MD->getOperand(1));
+        assert(SICase && SIDef);
+        // The TrueWeight should be the weight for the single case of SI.
+        NewBr->setMetadata(LLVMContext::MD_prof,
+                        MDBuilder(BB->getContext()).
+                        createBranchWeights(SICase->getValue().getZExtValue(),
+                                            SIDef->getValue().getZExtValue()));
       }
+
+      // Delete the old switch.
+      SI->eraseFromParent();
+      return true;
     }
     return false;
   }
