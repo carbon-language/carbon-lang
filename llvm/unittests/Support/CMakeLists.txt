@@ -17,7 +17,6 @@ add_llvm_unittest(SupportTests
   EndianTest.cpp
   ErrorOrTest.cpp
   FileOutputBufferTest.cpp
-  IntegersSubsetTest.cpp
   LeakDetectorTest.cpp
   LockFileManagerTest.cpp
   ManagedStatic.cpp
