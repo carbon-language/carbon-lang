@@ -75,7 +75,7 @@ MachOFileNode::createLinkerInput(const LinkingContext &ctx) {
   auto inputFile(FileNode::createLinkerInput(ctx));
 
   if (inputFile)
-    (*inputFile)->setWholeArchive(false);
+    (*inputFile)->setWholeArchive(_isWholeArchive);
   return std::move(inputFile);
 }
 
