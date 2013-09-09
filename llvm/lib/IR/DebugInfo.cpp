@@ -785,6 +785,29 @@ Value *DITemplateValueParameter::getValue() const {
   return getField(DbgNode, 4);
 }
 
+// If the current node has a parent scope then return that,
+// else return an empty scope.
+DIScopeRef DIScope::getContext() const {
+
+  if (isType())
+    return DIType(DbgNode).getContext();
+
+  if (isSubprogram())
+    return DIScopeRef(DISubprogram(DbgNode).getContext());
+
+  if (isLexicalBlock())
+    return DIScopeRef(DILexicalBlock(DbgNode).getContext());
+
+  if (isLexicalBlockFile())
+    return DIScopeRef(DILexicalBlockFile(DbgNode).getContext());
+
+  if (isNameSpace())
+    return DIScopeRef(DINameSpace(DbgNode).getContext());
+
+  assert((isFile() || isCompileUnit()) && "Unhandled type of scope.");
+  return DIScopeRef(NULL);
+}
+
 StringRef DIScope::getFilename() const {
   if (!DbgNode)
     return StringRef();

@@ -919,7 +919,7 @@ static bool isTypeUnitScoped(DIType Ty, const DwarfDebug *DD) {
     // Don't generate a hash for anything scoped inside a function.
     if (Parent.isSubprogram())
       return false;
-    Parent = DD->getScopeContext(Parent);
+    Parent = DD->resolve(Parent.getContext());
   }
   return true;
 }

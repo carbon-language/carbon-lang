@@ -200,6 +200,9 @@ namespace llvm {
   public:
     explicit DIScope(const MDNode *N = 0) : DIDescriptor (N) {}
 
+    /// Gets the parent scope for this scope node or returns a
+    /// default constructed scope.
+    DIScopeRef getContext() const;
     StringRef getFilename() const;
     StringRef getDirectory() const;
 
@@ -213,6 +216,7 @@ namespace llvm {
   class DIScopeRef {
     template <typename DescTy>
     friend DescTy DIDescriptor::getFieldAs(unsigned Elt) const;
+    friend DIScopeRef DIScope::getContext() const;
 
     /// Val can be either a MDNode or a MDString, in the latter,
     /// MDString specifies the type identifier.

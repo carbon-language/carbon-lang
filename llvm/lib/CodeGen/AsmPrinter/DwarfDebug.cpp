@@ -2649,26 +2649,3 @@ void DwarfDebug::emitDebugStrDWO() {
 DIScope DwarfDebug::resolve(DIScopeRef SRef) const {
   return SRef.resolve(TypeIdentifierMap);
 }
-
-// If the current node has a parent scope then return that,
-// else return an empty scope.
-DIScope DwarfDebug::getScopeContext(DIScope S) const {
-
-  if (S.isType())
-    return resolve(DIType(S).getContext());
-
-  if (S.isSubprogram())
-    return DISubprogram(S).getContext();
-
-  if (S.isLexicalBlock())
-    return DILexicalBlock(S).getContext();
-
-  if (S.isLexicalBlockFile())
-    return DILexicalBlockFile(S).getContext();
-
-  if (S.isNameSpace())
-    return DINameSpace(S).getContext();
-
-  assert((S.isFile() || S.isCompileUnit()) && "Unhandled type of scope.");
-  return DIScope();
-}

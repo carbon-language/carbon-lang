@@ -690,9 +690,6 @@ public:
   /// or another context nested inside a subprogram.
   bool isSubprogramContext(const MDNode *Context);
 
-  /// Gets the parent scope for this scope node or returns a
-  /// default constructed scope.
-  DIScope getScopeContext(DIScope S) const;
 };
 } // End of namespace llvm
 
