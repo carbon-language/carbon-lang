@@ -411,7 +411,6 @@ namespace {
                                            SourceLocation EndLoc=SourceLocation());
     
     Expr *SynthMsgSendStretCallExpr(FunctionDecl *MsgSendStretFlavor,
-                                        QualType msgSendType, 
                                         QualType returnType, 
                                         SmallVectorImpl<QualType> &ArgTypes,
                                         SmallVectorImpl<Expr*> &MsgExprs,
@@ -3183,7 +3182,6 @@ void RewriteModernObjC::RewriteLineDirective(const Decl *D) {
 /// starting with receiver.
 /// Method - Method being rewritten.
 Expr *RewriteModernObjC::SynthMsgSendStretCallExpr(FunctionDecl *MsgSendStretFlavor,
-                                                 QualType msgSendType, 
                                                  QualType returnType, 
                                                  SmallVectorImpl<QualType> &ArgTypes,
                                                  SmallVectorImpl<Expr*> &MsgExprs,
@@ -3199,6 +3197,7 @@ Expr *RewriteModernObjC::SynthMsgSendStretCallExpr(FunctionDecl *MsgSendStretFla
   std::string name = "__Stret"; name += utostr(stretCount);
   std::string str = 
     "extern \"C\" void * __cdecl memset(void *_Dst, int _Val, size_t _Size);\n";
+  str += "namespace {\n";
   str += "struct "; str += name;
   str += " {\n\t";
   str += name;
@@ -3217,9 +3216,27 @@ Expr *RewriteModernObjC::SynthMsgSendStretCallExpr(FunctionDecl *MsgSendStretFla
   }
   
   str += ") {\n";
-  str += "\t  if (receiver == 0)\n";
+  str += "\t  unsigned size = sizeof(";
+  str += returnType.getAsString(Context->getPrintingPolicy()); str += ");\n";
+  
+  str += "\t  if (size == 1 || size == 2 || size == 4 || size == 8)\n";
+  
+  str += "\t    s = (("; str += castType.getAsString(Context->getPrintingPolicy());
+  str += ")(void *)objc_msgSend)(receiver, sel";
+  for (unsigned i = 2; i < ArgTypes.size(); i++) {
+    str += ", arg"; str += utostr(i);
+  }
+  // could be vararg.
+  for (unsigned i = ArgTypes.size(); i < MsgExprs.size(); i++) {
+    str += ", arg"; str += utostr(i);
+  }
+  str+= ");\n";
+  
+  str += "\t  else if (receiver == 0)\n";
   str += "\t    memset((void*)&s, 0, sizeof(s));\n";
   str += "\t  else\n";
+  
+  
   str += "\t    s = (("; str += castType.getAsString(Context->getPrintingPolicy());
   str += ")(void *)objc_msgSend_stret)(receiver, sel";
   for (unsigned i = 2; i < ArgTypes.size(); i++) {
@@ -3229,12 +3246,13 @@ Expr *RewriteModernObjC::SynthMsgSendStretCallExpr(FunctionDecl *MsgSendStretFla
   for (unsigned i = ArgTypes.size(); i < MsgExprs.size(); i++) {
     str += ", arg"; str += utostr(i);
   }
-  
   str += ");\n";
+  
+  
   str += "\t}\n";
   str += "\t"; str += returnType.getAsString(Context->getPrintingPolicy());
   str += " s;\n";
-  str += "};\n\n";
+  str += "};\n};\n\n";
   SourceLocation FunLocStart;
   if (CurFunctionDef)
     FunLocStart = getFunctionSourceLocation(*this, CurFunctionDef);
@@ -3651,39 +3669,11 @@ Stmt *RewriteModernObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
     // expression which dictate which one to envoke depending on size of
     // method's return type.
 
-    Expr *STCE = SynthMsgSendStretCallExpr(MsgSendStretFlavor, 
-                                           msgSendType, returnType, 
+    Expr *STCE = SynthMsgSendStretCallExpr(MsgSendStretFlavor,
+                                           returnType,
                                            ArgTypes, MsgExprs,
                                            Exp->getMethodDecl());
-
-    // Build sizeof(returnType)
-    UnaryExprOrTypeTraitExpr *sizeofExpr =
-       new (Context) UnaryExprOrTypeTraitExpr(UETT_SizeOf,
-                                 Context->getTrivialTypeSourceInfo(returnType),
-                                 Context->getSizeType(), SourceLocation(),
-                                 SourceLocation());
-    // (sizeof(returnType) <= 8 ? objc_msgSend(...) : objc_msgSend_stret(...))
-    // FIXME: Value of 8 is base on ppc32/x86 ABI for the most common cases.
-    // For X86 it is more complicated and some kind of target specific routine
-    // is needed to decide what to do.
-    unsigned IntSize =
-      static_cast<unsigned>(Context->getTypeSize(Context->IntTy));
-    IntegerLiteral *limit = IntegerLiteral::Create(*Context,
-                                                   llvm::APInt(IntSize, 8),
-                                                   Context->IntTy,
-                                                   SourceLocation());
-    BinaryOperator *lessThanExpr = 
-      new (Context) BinaryOperator(sizeofExpr, limit, BO_LE, Context->IntTy,
-                                   VK_RValue, OK_Ordinary, SourceLocation(),
-                                   false);
-    // (sizeof(returnType) <= 8 ? objc_msgSend(...) : objc_msgSend_stret(...))
-    ConditionalOperator *CondExpr =
-      new (Context) ConditionalOperator(lessThanExpr,
-                                        SourceLocation(), CE,
-                                        SourceLocation(), STCE,
-                                        returnType, VK_RValue, OK_Ordinary);
-    ReplacingStmt = new (Context) ParenExpr(SourceLocation(), SourceLocation(), 
-                                            CondExpr);
+    ReplacingStmt = STCE;
   }
   // delete Exp; leak for now, see RewritePropertyOrImplicitSetter() usage for more info.
   return ReplacingStmt;
