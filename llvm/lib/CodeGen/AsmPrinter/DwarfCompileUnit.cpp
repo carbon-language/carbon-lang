@@ -1435,7 +1435,7 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
     // Do not create specification DIE if context is either compile unit
     // or a subprogram.
     if (GVContext && GV.isDefinition() && !GVContext.isCompileUnit() &&
-        !GVContext.isFile() && !isSubprogramContext(GVContext)) {
+        !GVContext.isFile() && !DD->isSubprogramContext(GVContext)) {
       // Create specification DIE.
       VariableSpecDIE = new DIE(dwarf::DW_TAG_variable);
       addDIEEntry(VariableSpecDIE, dwarf::DW_AT_specification,

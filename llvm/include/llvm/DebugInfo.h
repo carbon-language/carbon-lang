@@ -729,10 +729,6 @@ namespace llvm {
   /// getDICompositeType - Find underlying composite type.
   DICompositeType getDICompositeType(DIType T);
 
-  /// isSubprogramContext - Return true if Context is either a subprogram
-  /// or another context nested inside a subprogram.
-  bool isSubprogramContext(const MDNode *Context);
-
   /// getOrInsertFnSpecificMDNode - Return a NameMDNode that is suitable
   /// to hold function specific information.
   NamedMDNode *getOrInsertFnSpecificMDNode(Module &M, DISubprogram SP);

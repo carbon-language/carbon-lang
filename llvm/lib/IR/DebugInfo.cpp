@@ -942,19 +942,6 @@ DICompositeType llvm::getDICompositeType(DIType T) {
   return DICompositeType();
 }
 
-/// isSubprogramContext - Return true if Context is either a subprogram
-/// or another context nested inside a subprogram.
-bool llvm::isSubprogramContext(const MDNode *Context) {
-  if (!Context)
-    return false;
-  DIDescriptor D(Context);
-  if (D.isSubprogram())
-    return true;
-  if (D.isType())
-    return isSubprogramContext(DIType(Context).getContext());
-  return false;
-}
-
 /// Update DITypeIdentifierMap by going through retained types of each CU.
 DITypeIdentifierMap llvm::generateDITypeIdentifierMap(
                               const NamedMDNode *CU_Nodes) {
