@@ -645,7 +645,7 @@ SDValue MipsSETargetLowering::lowerLOAD(SDValue Op, SelectionDAG &DAG) const {
   SDValue Hi = DAG.getLoad(MVT::i32, DL, Lo.getValue(1), Ptr,
                            MachinePointerInfo(), Nd.isVolatile(),
                            Nd.isNonTemporal(), Nd.isInvariant(),
-                           Nd.getAlignment());
+                           std::min(Nd.getAlignment(), 4U));
 
   if (!Subtarget->isLittle())
     std::swap(Lo, Hi);
@@ -681,8 +681,8 @@ SDValue MipsSETargetLowering::lowerSTORE(SDValue Op, SelectionDAG &DAG) const {
   // i32 store to higher address.
   Ptr = DAG.getNode(ISD::ADD, DL, PtrVT, Ptr, DAG.getConstant(4, PtrVT));
   return DAG.getStore(Chain, DL, Hi, Ptr, MachinePointerInfo(),
-                      Nd.isVolatile(), Nd.isNonTemporal(), Nd.getAlignment(),
-                      Nd.getTBAAInfo());
+                      Nd.isVolatile(), Nd.isNonTemporal(),
+                      std::min(Nd.getAlignment(), 4U), Nd.getTBAAInfo());
 }
 
 SDValue MipsSETargetLowering::lowerMulDiv(SDValue Op, unsigned NewOpc,
