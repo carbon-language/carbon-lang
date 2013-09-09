@@ -120,9 +120,8 @@ createReplacementInstr(ConstantExpr *CE, Instruction *Instr) {
                                      CE->getOperand(0), CE->getType(),
                                      CE->getName()));
     default:
-      assert(0 && "Unhandled constant expression!\n");
+      llvm_unreachable("Unhandled constant expression!\n");
   }
-  llvm_unreachable("Unhandled constant expression!\n");
 }
 
 static bool replaceConstantExprOp(ConstantExpr *CE) {
