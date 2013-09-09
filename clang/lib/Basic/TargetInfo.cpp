@@ -233,6 +233,35 @@ void TargetInfo::setForcedLangOptions(LangOptions &Opts) {
     UseBitFieldTypeAlignment = false;
   if (Opts.ShortWChar)
     WCharType = UnsignedShort;
+
+  if (Opts.OpenCL) {
+    // OpenCL C requires specific widths for types, irrespective of
+    // what these normally are for the target.
+    // We also define long long and long double here, although the
+    // OpenCL standard only mentions these as "reserved".
+    IntWidth = IntAlign = 32;
+    LongWidth = LongAlign = 64;
+    LongLongWidth = LongLongAlign = 128;
+    HalfWidth = HalfAlign = 16;
+    FloatWidth = FloatAlign = 32;
+    DoubleWidth = DoubleAlign = 64;
+    LongDoubleWidth = LongDoubleAlign = 128;
+
+    assert(PointerWidth == 32 || PointerWidth == 64);
+    bool is32BitArch = PointerWidth == 32;
+    SizeType = is32BitArch ? UnsignedInt : UnsignedLong;
+    PtrDiffType = is32BitArch ? SignedInt : SignedLong;
+    IntPtrType = is32BitArch ? SignedInt : SignedLong;
+
+    IntMaxType = SignedLongLong;
+    UIntMaxType = UnsignedLongLong;
+    Int64Type = SignedLong;
+
+    HalfFormat = &llvm::APFloat::IEEEhalf;
+    FloatFormat = &llvm::APFloat::IEEEsingle;
+    DoubleFormat = &llvm::APFloat::IEEEdouble;
+    LongDoubleFormat = &llvm::APFloat::IEEEquad;
+  }
 }
 
 //===----------------------------------------------------------------------===//

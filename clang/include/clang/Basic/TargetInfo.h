@@ -354,11 +354,11 @@ public:
   unsigned getUnwindWordWidth() const { return getPointerWidth(0); }
 
   /// \brief Return the "preferred" register width on this target.
-  uint64_t getRegisterWidth() const {
+  unsigned getRegisterWidth() const {
     // Currently we assume the register width on the target matches the pointer
     // width, we can introduce a new variable for this if/when some target wants
     // it.
-    return LongWidth; 
+    return PointerWidth;
   }
 
   /// \brief Returns the default value of the __USER_LABEL_PREFIX__ macro,
