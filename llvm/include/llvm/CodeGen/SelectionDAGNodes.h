@@ -372,7 +372,7 @@ public:
   /// \<target\>ISD namespace).
   bool isTargetOpcode() const { return NodeType >= ISD::BUILTIN_OP_END; }
 
-  /// isTargetMemoryOpcode - Test if this node has a target-specific 
+  /// isTargetMemoryOpcode - Test if this node has a target-specific
   /// memory-referencing opcode (in the \<target\>ISD namespace and
   /// greater than FIRST_TARGET_MEMORY_OPCODE).
   bool isTargetMemoryOpcode() const {
@@ -520,7 +520,9 @@ public:
   /// isPredecessorOf - Return true if this node is a predecessor of N.
   /// NOTE: Implemented on top of hasPredecessor and every bit as
   /// expensive. Use carefully.
-  bool isPredecessorOf(const SDNode *N) const { return N->hasPredecessor(this); }
+  bool isPredecessorOf(const SDNode *N) const {
+    return N->hasPredecessor(this);
+  }
 
   /// hasPredecessor - Return true if N is a predecessor of this node.
   /// N is either an operand of this node, or can be reached by recursively
@@ -901,7 +903,8 @@ inline void SDUse::setNode(SDNode *N) {
 class UnarySDNode : public SDNode {
   SDUse Op;
 public:
-  UnarySDNode(unsigned Opc, unsigned Order, DebugLoc dl, SDVTList VTs, SDValue X)
+  UnarySDNode(unsigned Opc, unsigned Order, DebugLoc dl, SDVTList VTs,
+              SDValue X)
     : SDNode(Opc, Order, dl, VTs) {
     InitOperands(&Op, X);
   }
@@ -912,7 +915,8 @@ public:
 class BinarySDNode : public SDNode {
   SDUse Ops[2];
 public:
-  BinarySDNode(unsigned Opc, unsigned Order, DebugLoc dl, SDVTList VTs, SDValue X, SDValue Y)
+  BinarySDNode(unsigned Opc, unsigned Order, DebugLoc dl, SDVTList VTs,
+               SDValue X, SDValue Y)
     : SDNode(Opc, Order, dl, VTs) {
     InitOperands(Ops, X, Y);
   }
@@ -966,14 +970,15 @@ public:
   MemSDNode(unsigned Opc, unsigned Order, DebugLoc dl, SDVTList VTs,
             EVT MemoryVT, MachineMemOperand *MMO);
 
-  MemSDNode(unsigned Opc, unsigned Order, DebugLoc dl, SDVTList VTs, const SDValue *Ops,
+  MemSDNode(unsigned Opc, unsigned Order, DebugLoc dl, SDVTList VTs,
+            const SDValue *Ops,
             unsigned NumOps, EVT MemoryVT, MachineMemOperand *MMO);
 
   bool readMem() const { return MMO->isLoad(); }
   bool writeMem() const { return MMO->isStore(); }
 
   /// Returns alignment and volatility of the memory access
-  unsigned getOriginalAlignment() const { 
+  unsigned getOriginalAlignment() const {
     return MMO->getBaseAlignment();
   }
   unsigned getAlignment() const {
@@ -1090,7 +1095,8 @@ public:
   // Swp:    swap value
   // SrcVal: address to update as a Value (used for MemOperand)
   // Align:  alignment of memory
-  AtomicSDNode(unsigned Opc, unsigned Order, DebugLoc dl, SDVTList VTL, EVT MemVT,
+  AtomicSDNode(unsigned Opc, unsigned Order, DebugLoc dl, SDVTList VTL,
+               EVT MemVT,
                SDValue Chain, SDValue Ptr,
                SDValue Cmp, SDValue Swp, MachineMemOperand *MMO,
                AtomicOrdering Ordering, SynchronizationScope SynchScope)
@@ -1098,7 +1104,8 @@ public:
     InitAtomic(Ordering, SynchScope);
     InitOperands(Ops, Chain, Ptr, Cmp, Swp);
   }
-  AtomicSDNode(unsigned Opc, unsigned Order, DebugLoc dl, SDVTList VTL, EVT MemVT,
+  AtomicSDNode(unsigned Opc, unsigned Order, DebugLoc dl, SDVTList VTL,
+               EVT MemVT,
                SDValue Chain, SDValue Ptr,
                SDValue Val, MachineMemOperand *MMO,
                AtomicOrdering Ordering, SynchronizationScope SynchScope)
@@ -1106,7 +1113,8 @@ public:
     InitAtomic(Ordering, SynchScope);
     InitOperands(Ops, Chain, Ptr, Val);
   }
-  AtomicSDNode(unsigned Opc, unsigned Order, DebugLoc dl, SDVTList VTL, EVT MemVT,
+  AtomicSDNode(unsigned Opc, unsigned Order, DebugLoc dl, SDVTList VTL,
+               EVT MemVT,
                SDValue Chain, SDValue Ptr,
                MachineMemOperand *MMO,
                AtomicOrdering Ordering, SynchronizationScope SynchScope)
@@ -1286,8 +1294,9 @@ class GlobalAddressSDNode : public SDNode {
   int64_t Offset;
   unsigned char TargetFlags;
   friend class SelectionDAG;
-  GlobalAddressSDNode(unsigned Opc, unsigned Order, DebugLoc DL, const GlobalValue *GA, EVT VT,
-                      int64_t o, unsigned char TargetFlags);
+  GlobalAddressSDNode(unsigned Opc, unsigned Order, DebugLoc DL,
+                      const GlobalValue *GA, EVT VT, int64_t o,
+                      unsigned char TargetFlags);
 public:
 
   const GlobalValue *getGlobal() const { return TheGlobal; }
@@ -1351,21 +1360,22 @@ class ConstantPoolSDNode : public SDNode {
   friend class SelectionDAG;
   ConstantPoolSDNode(bool isTarget, const Constant *c, EVT VT, int o,
                      unsigned Align, unsigned char TF)
-    : SDNode(isTarget ? ISD::TargetConstantPool : ISD::ConstantPool, 0, DebugLoc(),
-             getSDVTList(VT)), Offset(o), Alignment(Align), TargetFlags(TF) {
+    : SDNode(isTarget ? ISD::TargetConstantPool : ISD::ConstantPool, 0,
+             DebugLoc(), getSDVTList(VT)), Offset(o), Alignment(Align),
+             TargetFlags(TF) {
     assert(Offset >= 0 && "Offset is too large");
     Val.ConstVal = c;
   }
   ConstantPoolSDNode(bool isTarget, MachineConstantPoolValue *v,
                      EVT VT, int o, unsigned Align, unsigned char TF)
-    : SDNode(isTarget ? ISD::TargetConstantPool : ISD::ConstantPool, 0, DebugLoc(),
-             getSDVTList(VT)), Offset(o), Alignment(Align), TargetFlags(TF) {
+    : SDNode(isTarget ? ISD::TargetConstantPool : ISD::ConstantPool, 0,
+             DebugLoc(), getSDVTList(VT)), Offset(o), Alignment(Align),
+             TargetFlags(TF) {
     assert(Offset >= 0 && "Offset is too large");
     Val.MachineCPVal = v;
     Offset |= 1 << (sizeof(unsigned)*CHAR_BIT-1);
   }
 public:
-  
 
   bool isMachineConstantPoolEntry() const {
     return Offset < 0;
@@ -1427,8 +1437,8 @@ class BasicBlockSDNode : public SDNode {
   /// blocks out of order when they're jumped to, which makes it a bit
   /// harder.  Let's see if we need it first.
   explicit BasicBlockSDNode(MachineBasicBlock *mbb)
-    : SDNode(ISD::BasicBlock, 0, DebugLoc(), getSDVTList(MVT::Other)), MBB(mbb) {
-  }
+    : SDNode(ISD::BasicBlock, 0, DebugLoc(), getSDVTList(MVT::Other)), MBB(mbb)
+  {}
 public:
 
   MachineBasicBlock *getBasicBlock() const { return MBB; }
@@ -1481,21 +1491,21 @@ public:
     return N->getOpcode() == ISD::SRCVALUE;
   }
 };
-  
+
 class MDNodeSDNode : public SDNode {
   const MDNode *MD;
   friend class SelectionDAG;
   explicit MDNodeSDNode(const MDNode *md)
-  : SDNode(ISD::MDNODE_SDNODE, 0, DebugLoc(), getSDVTList(MVT::Other)), MD(md) {}
+  : SDNode(ISD::MDNODE_SDNODE, 0, DebugLoc(), getSDVTList(MVT::Other)), MD(md)
+  {}
 public:
-  
+
   const MDNode *getMD() const { return MD; }
-  
+
   static bool classof(const SDNode *N) {
     return N->getOpcode() == ISD::MDNODE_SDNODE;
   }
 };
-
 
 class RegisterSDNode : public SDNode {
   unsigned Reg;
@@ -1568,7 +1578,7 @@ public:
 class ExternalSymbolSDNode : public SDNode {
   const char *Symbol;
   unsigned char TargetFlags;
-  
+
   friend class SelectionDAG;
   ExternalSymbolSDNode(bool isTarget, const char *Sym, unsigned char TF, EVT VT)
     : SDNode(isTarget ? ISD::TargetExternalSymbol : ISD::ExternalSymbol,
@@ -1600,14 +1610,15 @@ public:
     return N->getOpcode() == ISD::CONDCODE;
   }
 };
-  
+
 /// CvtRndSatSDNode - NOTE: avoid using this node as this may disappear in the
 /// future and most targets don't support it.
 class CvtRndSatSDNode : public SDNode {
   ISD::CvtCode CvtCode;
   friend class SelectionDAG;
-  explicit CvtRndSatSDNode(EVT VT, unsigned Order, DebugLoc dl, const SDValue *Ops,
-                           unsigned NumOps, ISD::CvtCode Code)
+  explicit CvtRndSatSDNode(EVT VT, unsigned Order, DebugLoc dl,
+                           const SDValue *Ops, unsigned NumOps,
+                           ISD::CvtCode Code)
     : SDNode(ISD::CONVERT_RNDSAT, Order, dl, getSDVTList(VT), Ops, NumOps),
       CvtCode(Code) {
     assert(NumOps == 5 && "wrong number of operations");
@@ -1649,9 +1660,10 @@ class LSBaseSDNode : public MemSDNode {
    */
   SDUse Ops[4];
 public:
-  LSBaseSDNode(ISD::NodeType NodeTy, unsigned Order, DebugLoc dl, SDValue *Operands,
-               unsigned numOperands, SDVTList VTs, ISD::MemIndexedMode AM,
-               EVT MemVT, MachineMemOperand *MMO)
+  LSBaseSDNode(ISD::NodeType NodeTy, unsigned Order, DebugLoc dl,
+               SDValue *Operands, unsigned numOperands,
+               SDVTList VTs, ISD::MemIndexedMode AM, EVT MemVT,
+               MachineMemOperand *MMO)
     : MemSDNode(NodeTy, Order, dl, VTs, MemVT, MMO) {
     SubclassData |= AM << 2;
     assert(getAddressingMode() == AM && "MemIndexedMode encoding error!");
