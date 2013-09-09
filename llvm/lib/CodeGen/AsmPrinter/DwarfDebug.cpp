@@ -2633,7 +2633,7 @@ void DwarfDebug::emitDebugStrDWO() {
                          OffSec, StrSym);
 }
 
-/// Find the MDNode for the given type reference.
-MDNode *DwarfDebug::resolve(DITypeRef TRef) const {
-  return TRef.resolve(TypeIdentifierMap);
+/// Find the MDNode for the given scope reference.
+DIScope DwarfDebug::resolve(DIScopeRef SRef) const {
+  return SRef.resolve(TypeIdentifierMap);
 }

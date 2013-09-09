@@ -683,8 +683,8 @@ public:
   /// Returns the Dwarf Version.
   unsigned getDwarfVersion() const { return DwarfVersion; }
 
-  /// Find the MDNode for the given type reference.
-  MDNode *resolve(DITypeRef TRef) const;
+  /// Find the MDNode for the given scope reference.
+  DIScope resolve(DIScopeRef SRef) const;
 
 };
 } // End of namespace llvm

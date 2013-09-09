@@ -426,15 +426,24 @@ static bool fieldIsMDString(const MDNode *DbgNode, unsigned Elt) {
   return !Fld || isa<MDString>(Fld);
 }
 
-/// Check if a value can be a TypeRef.
+/// Check if a value can be a reference to a type.
 static bool isTypeRef(const Value *Val) {
-  return !Val || isa<MDString>(Val) || isa<MDNode>(Val);
+  return !Val ||
+         (isa<MDString>(Val) && !cast<MDString>(Val)->getString().empty()) ||
+         (isa<MDNode>(Val) && DIType(cast<MDNode>(Val)).isType());
 }
 
-/// Check if a field at position Elt of a MDNode can be a TypeRef.
+/// Check if a field at position Elt of a MDNode can be a reference to a type.
 static bool fieldIsTypeRef(const MDNode *DbgNode, unsigned Elt) {
   Value *Fld = getField(DbgNode, Elt);
   return isTypeRef(Fld);
+}
+
+/// Check if a value can be a ScopeRef.
+static bool isScopeRef(const Value *Val) {
+  return !Val ||
+         (isa<MDString>(Val) && !cast<MDString>(Val)->getString().empty()) ||
+         (isa<MDNode>(Val) && DIScope(cast<MDNode>(Val)).isScope());
 }
 
 /// Verify - Verify that a type descriptor is well formed.
@@ -710,13 +719,13 @@ void DICompositeType::addMember(DIDescriptor D) {
 
 /// Generate a reference to this DIType. Uses the type identifier instead
 /// of the actual MDNode if possible, to help type uniquing.
-DITypeRef DIType::generateRef() {
+Value *DIScope::generateRef() {
   if (!isCompositeType())
-    return DITypeRef(*this);
+    return *this;
   DICompositeType DTy(DbgNode);
   if (!DTy.getIdentifier())
-    return DITypeRef(*this);
-  return DITypeRef(DTy.getIdentifier());
+    return *this;
+  return DTy.getIdentifier();
 }
 
 /// \brief Set the containing type.
@@ -1428,33 +1437,30 @@ void DIVariable::printExtendedName(raw_ostream &OS) const {
   }
 }
 
-DITypeRef::DITypeRef(const Value *V) : TypeVal(V) {
-  assert(isTypeRef(V) && "DITypeRef should be a MDString or MDNode");
+DIScopeRef::DIScopeRef(const Value *V) : Val(V) {
+  assert(isScopeRef(V) && "DIScopeRef should be a MDString or MDNode");
 }
 
 /// Given a DITypeIdentifierMap, tries to find the corresponding
-/// DIType for a DITypeRef.
-DIType DITypeRef::resolve(const DITypeIdentifierMap &Map) const {
-  if (!TypeVal)
-    return NULL;
+/// DIScope for a DIScopeRef.
+DIScope DIScopeRef::resolve(const DITypeIdentifierMap &Map) const {
+  if (!Val)
+    return DIScope();
 
-  if (const MDNode *MD = dyn_cast<MDNode>(TypeVal)) {
-    assert(DIType(MD).isType() &&
-           "MDNode in DITypeRef should be a DIType.");
-    return MD;
-  }
+  if (const MDNode *MD = dyn_cast<MDNode>(Val))
+    return DIScope(MD);
 
-  const MDString *MS = cast<MDString>(TypeVal);
+  const MDString *MS = cast<MDString>(Val);
   // Find the corresponding MDNode.
   DITypeIdentifierMap::const_iterator Iter = Map.find(MS);
   assert(Iter != Map.end() && "Identifier not in the type map?");
   assert(DIType(Iter->second).isType() &&
          "MDNode in DITypeIdentifierMap should be a DIType.");
-  return Iter->second;
+  return DIScope(Iter->second);
 }
 
-/// Specialize getFieldAs to handle fields that are references to DITypes.
+/// Specialize getFieldAs to handle fields that are references to DIScopes.
 template <>
-DITypeRef DIDescriptor::getFieldAs<DITypeRef>(unsigned Elt) const {
-  return DITypeRef(getField(DbgNode, Elt));
+DIScopeRef DIDescriptor::getFieldAs<DIScopeRef>(unsigned Elt) const {
+  return DIScopeRef(getField(DbgNode, Elt));
 }
