@@ -79,7 +79,7 @@ XCoreTargetLowering::XCoreTargetLowering(XCoreTargetMachine &XTM)
 
   setStackPointerRegisterToSaveRestore(XCore::SP);
 
-  setSchedulingPreference(Sched::RegPressure);
+  setSchedulingPreference(Sched::Source);
 
   // Use i32 for setcc operations results (slt, sgt, ...).
   setBooleanContents(ZeroOrOneBooleanContent);
