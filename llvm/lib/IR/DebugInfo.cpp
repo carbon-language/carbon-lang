@@ -246,11 +246,12 @@ bool DIDescriptor::isScope() const {
   case dwarf::DW_TAG_lexical_block:
   case dwarf::DW_TAG_subprogram:
   case dwarf::DW_TAG_namespace:
+  case dwarf::DW_TAG_file_type:
     return true;
   default:
     break;
   }
-  return false;
+  return isType();
 }
 
 /// isTemplateTypeParameter - Return true if the specified tag is
