@@ -48,6 +48,7 @@ def rpath_link : Separate<["-"], "rpath-link">;
 def soname : Separate<["-"], "soname">;
 
 def static : Flag<["-"], "static">;
+def Bstatic : Flag<["-"], "Bstatic">, Alias<static>;
 def shared : Flag<["-"], "shared">;
 def Bshareable : Flag<["-"], "Bshareable">, Alias<shared>;
 def start_group : Flag<["--"], "start-group">;
