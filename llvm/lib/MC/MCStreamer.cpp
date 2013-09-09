@@ -74,11 +74,10 @@ raw_ostream &MCStreamer::GetCommentOS() {
 }
 
 void MCStreamer::generateCompactUnwindEncodings(MCAsmBackend *MAB) {
-  if (!MAB) return;
   for (std::vector<MCDwarfFrameInfo>::iterator I = FrameInfos.begin(),
          E = FrameInfos.end(); I != E; ++I)
     I->CompactUnwindEncoding =
-      MAB->generateCompactUnwindEncoding(I->Instructions);
+      (MAB ? MAB->generateCompactUnwindEncoding(I->Instructions) : 0);
 }
 
 void MCStreamer::EmitDwarfSetLineAddr(int64_t LineDelta,
