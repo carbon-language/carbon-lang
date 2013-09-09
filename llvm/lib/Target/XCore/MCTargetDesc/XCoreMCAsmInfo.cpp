@@ -23,7 +23,6 @@ XCoreMCAsmInfo::XCoreMCAsmInfo(StringRef TT) {
     
   PrivateGlobalPrefix = ".L";
   AscizDirective = ".asciiz";
-  WeakDefDirective = "\t.weak\t";
   WeakRefDirective = "\t.weak\t";
 
   // Debug
