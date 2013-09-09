@@ -3133,7 +3133,7 @@ CFGBlock *CFGBuilder::VisitCXXDeleteExpr(CXXDeleteExpr *DE,
   DTy = DTy.getNonReferenceType();
   CXXRecordDecl *RD = Context->getBaseElementType(DTy)->getAsCXXRecordDecl();
   if (RD) {
-    if (!RD->hasTrivialDestructor())
+    if (RD->isCompleteDefinition() && !RD->hasTrivialDestructor())
       appendDeleteDtor(Block, RD, DE);
   }
 
