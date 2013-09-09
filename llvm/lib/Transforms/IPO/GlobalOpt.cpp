@@ -2046,11 +2046,14 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
 
     // Otherwise, if the global was not a boolean, we can shrink it to be a
     // boolean.
-    if (Constant *SOVConstant = dyn_cast<Constant>(GS.StoredOnceValue))
-      if (TryToShrinkGlobalToBoolean(GV, SOVConstant)) {
-        ++NumShrunkToBool;
-        return true;
+    if (Constant *SOVConstant = dyn_cast<Constant>(GS.StoredOnceValue)) {
+      if (GS.Ordering == NotAtomic) {
+        if (TryToShrinkGlobalToBoolean(GV, SOVConstant)) {
+          ++NumShrunkToBool;
+          return true;
+        }
       }
+    }
   }
 
   return false;
