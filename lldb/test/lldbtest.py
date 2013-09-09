@@ -1444,6 +1444,12 @@ class Base(unittest2.TestCase):
         else:
             return self.lib_dir
 
+    def getLibcPlusPlusLibs(self):
+        if sys.platform.startswith('freebsd'):
+            return ['libc++.so.1']
+        else:
+            return ['libc++.1.dylib','libc++abi.dylib']
+
 class TestBase(Base):
     """
     This abstract base class is meant to be subclassed.  It provides default

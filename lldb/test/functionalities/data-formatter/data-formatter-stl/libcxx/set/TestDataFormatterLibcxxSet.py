@@ -55,7 +55,7 @@ class LibcxxSetDataFormatterTestCase(TestBase):
         # Execute the cleanup function during test case tear down.
         self.addTearDownHook(cleanup)
 
-        self.expect('image list',substrs=['libc++.1.dylib','libc++abi.dylib'])
+        self.expect('image list', substrs = self.getLibcPlusPlusLibs())
 
         self.expect("frame variable ii",substrs = ["size=0","{}"])
         self.runCmd("continue")

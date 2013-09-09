@@ -57,7 +57,7 @@ class LibcxxIteratorDataFormatterTestCase(TestBase):
         # Execute the cleanup function during test case tear down.
         self.addTearDownHook(cleanup)
 
-        self.expect('image list',substrs=['libc++.1.dylib','libc++abi.dylib'])
+        self.expect('image list', substrs = self.getLibcPlusPlusLibs())
 
         self.expect('frame variable ivI', substrs = ['item = 3'])
         self.expect('expr ivI', substrs = ['item = 3'])
