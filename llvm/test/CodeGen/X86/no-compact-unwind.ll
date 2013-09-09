@@ -2,7 +2,7 @@
 ; RUN:  | llvm-objdump -triple x86_64-apple-macosx10.8.0 -s - \
 ; RUN:  | FileCheck -check-prefix=CU %s
 ; RUN: llc < %s -mtriple x86_64-apple-darwin11 \
-; RUN:  | llvm-mc -filetype=obj \
+; RUN:  | llvm-mc -filetype=obj -o - \
 ; RUN:  | llvm-objdump -triple x86_64-apple-darwin11 -s - \
 ; RUN:  | FileCheck -check-prefix=FROM-ASM %s
 
