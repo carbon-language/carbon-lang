@@ -1109,7 +1109,7 @@ void DwarfDebug::endModule() {
 
   // Emit the pubnames and pubtypes sections if requested.
   if (HasDwarfPubSections) {
-    emitDebugPubnames();
+    emitDebugPubNames();
     emitDebugPubTypes();
   }
 
@@ -2252,9 +2252,9 @@ void DwarfDebug::emitAccelTypes() {
   AT.Emit(Asm, SectionBegin, &InfoHolder);
 }
 
-/// emitDebugPubnames - Emit visible names into a debug pubnames section.
+/// emitDebugPubNames - Emit visible names into a debug pubnames section.
 ///
-void DwarfDebug::emitDebugPubnames() {
+void DwarfDebug::emitDebugPubNames() {
   const MCSection *ISec = Asm->getObjFileLowering().getDwarfInfoSection();
 
   typedef DenseMap<const MDNode*, CompileUnit*> CUMapType;

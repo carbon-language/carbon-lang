@@ -527,7 +527,7 @@ private:
   void emitAccelTypes();
 
   /// \brief Emit visible names into a debug pubnames section.
-  void emitDebugPubnames();
+  void emitDebugPubNames();
 
   /// \brief Emit visible types into a debug pubtypes section.
   void emitDebugPubTypes();
