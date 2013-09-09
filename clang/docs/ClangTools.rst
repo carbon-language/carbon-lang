@@ -125,7 +125,7 @@ Ideas for new Tools
   ``foo`` is a standard container.  We could also detect similar patterns for
   arrays.
 * ``make_shared`` / ``make_unique`` conversion.  Part of this transformation
-can be incorporated into the ``auto`` transformation.  Will convert
+  can be incorporated into the ``auto`` transformation.  Will convert
 
   .. code-block:: c++
 

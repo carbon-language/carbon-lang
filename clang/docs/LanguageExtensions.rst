@@ -1682,6 +1682,7 @@ Clang provides overloaded builtins giving direct access to the three key ARM
 instructions for implementing atomic operations.
 
 .. code-block:: c
+
   T __builtin_arm_ldrex(const volatile T *addr);
   int __builtin_arm_strex(T val, volatile T *addr);
   void __builtin_arm_clrex(void);
