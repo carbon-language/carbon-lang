@@ -38,7 +38,7 @@ public:
         noexcept(is_nothrow_default_constructible<allocator_type>::value);
     explicit forward_list(const allocator_type& a);
     explicit forward_list(size_type n);
-    explicit forward_list(size_type n, const Allocator& a); // C++14
+    explicit forward_list(size_type n, const allocator_type& a); // C++14
     forward_list(size_type n, const value_type& v);
     forward_list(size_type n, const value_type& v, const allocator_type& a);
     template <class InputIterator>

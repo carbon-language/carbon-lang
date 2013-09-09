@@ -40,7 +40,7 @@ public:
         noexcept(is_nothrow_default_constructible<allocator_type>::value);
     explicit list(const allocator_type& a);
     explicit list(size_type n);
-    explicit list(size_type n, const Allocator& a); // C++14
+    explicit list(size_type n, const allocator_type& a); // C++14
     list(size_type n, const value_type& value);
     list(size_type n, const value_type& value, const allocator_type& a);
     template <class Iter>
