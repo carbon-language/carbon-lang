@@ -1,4 +1,5 @@
 ; RUN: llc < %s -mtriple=thumbv7-apple-ios -mcpu=cortex-a8 | FileCheck %s
+; RUN: llc < %s -mtriple=thumbv8 | FileCheck -check-prefix=CHECK-V8 %s
 ; rdar://13782395
 
 define i32 @t1(i32 %a, i32 %b, i8** %retaddr) {
@@ -100,6 +101,27 @@ KBBlockZero.exit:                                 ; preds = %bb2.i
 ; CHECK: [[LABEL]]:
 ; CHECK-NEXT: subs r0, r1, r0
 ; CHECK-NEXT: bx lr
+
+; CHECK-V8-LABEL: wrapDistance:
+; CHECK-V8: cmp r1, #59
+; CHECK-V8-NEXT: bgt
+; CHECK-V8-NEXT: %if.then
+; CHECK-V8-NEXT: subs r0, r2, #1
+; CHECK-V8-NEXT: bx lr
+; CHECK-V8-NEXT: %if.else
+; CHECK-V8-NEXT: subs [[REG:r[0-9]+]], #120
+; CHECK-V8-NEXT: cmp [[REG]], r1
+; CHECK-V8-NEXT: bge
+; CHECK-V8-NEXT: %if.else
+; CHECK-V8-NEXT: cmp r0, #119
+; CHECK-V8-NEXT: bgt
+; CHECK-V8-NEXT: %if.then4
+; CHECK-V8-NEXT: adds r0, r1, #1
+; CHECK-V8-NEXT: bx lr
+; CHECK-V8-NEXT: %if.end5
+; CHECK-V8-NEXT: subs r0, r1, r0
+; CHECK-V8-NEXT: bx lr
+
 define i32 @wrapDistance(i32 %tx, i32 %sx, i32 %w) {
 entry:
   %cmp = icmp slt i32 %sx, 60

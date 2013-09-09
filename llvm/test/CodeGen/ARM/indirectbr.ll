@@ -1,6 +1,7 @@
 ; RUN: llc < %s -relocation-model=pic -mtriple=armv6-apple-darwin | FileCheck %s -check-prefix=ARM
 ; RUN: llc < %s -relocation-model=pic -mtriple=thumbv6-apple-darwin | FileCheck %s -check-prefix=THUMB
 ; RUN: llc < %s -relocation-model=static -mtriple=thumbv7-apple-darwin | FileCheck %s -check-prefix=THUMB2
+; RUN: llc < %s -relocation-model=static -mtriple=thumbv8-apple-darwin | FileCheck %s -check-prefix=THUMB2
 
 @nextaddr = global i8* null                       ; <i8**> [#uses=2]
 @C.0.2070 = private constant [5 x i8*] [i8* blockaddress(@foo, %L1), i8* blockaddress(@foo, %L2), i8* blockaddress(@foo, %L3), i8* blockaddress(@foo, %L4), i8* blockaddress(@foo, %L5)] ; <[5 x i8*]*> [#uses=1]
@@ -48,14 +49,17 @@ L2:                                               ; preds = %L3, %bb2
 
 L1:                                               ; preds = %L2, %bb2
   %res.3 = phi i32 [ %phitmp, %L2 ], [ 2, %bb2 ]  ; <i32> [#uses=1]
+; ARM-LABEL: %L1
 ; ARM: ldr [[R1:r[0-9]+]], LCPI
 ; ARM: add [[R1b:r[0-9]+]], pc, [[R1]]
 ; ARM: str [[R1b]]
+; THUMB-LABEL: %L1
 ; THUMB: ldr
 ; THUMB: add
 ; THUMB: ldr [[R2:r[0-9]+]], LCPI
 ; THUMB: add [[R2]], pc
 ; THUMB: str [[R2]]
+; THUMB2-LABEL: %L1
 ; THUMB2: ldr [[R2:r[0-9]+]], LCPI
 ; THUMB2-NEXT: str{{(.w)?}} [[R2]]
   store i8* blockaddress(@foo, %L5), i8** @nextaddr, align 4

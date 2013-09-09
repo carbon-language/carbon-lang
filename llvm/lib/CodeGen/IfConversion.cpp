@@ -666,32 +666,29 @@ void IfConverter::ScanInstructions(BBInfo &BBI) {
     bool isPredicated = TII->isPredicated(I);
     bool isCondBr = BBI.IsBrAnalyzable && I->isConditionalBranch();
 
-    if (!isCondBr) {
-      if (!isPredicated) {
-        BBI.NonPredSize++;
-        unsigned ExtraPredCost = 0;
-        unsigned NumCycles = TII->getInstrLatency(InstrItins, &*I,
-                                                  &ExtraPredCost);
-        if (NumCycles > 1)
-          BBI.ExtraCost += NumCycles-1;
-        BBI.ExtraCost2 += ExtraPredCost;
-      } else if (!AlreadyPredicated) {
-        // FIXME: This instruction is already predicated before the
-        // if-conversion pass. It's probably something like a conditional move.
-        // Mark this block unpredicable for now.
-        BBI.IsUnpredicable = true;
-        return;
-      }
+    // A conditional branch is not predicable, but it may be eliminated.
+    if (isCondBr)
+      continue;
+
+    if (!isPredicated) {
+      BBI.NonPredSize++;
+      unsigned ExtraPredCost = 0;
+      unsigned NumCycles = TII->getInstrLatency(InstrItins, &*I,
+                                                &ExtraPredCost);
+      if (NumCycles > 1)
+        BBI.ExtraCost += NumCycles-1;
+      BBI.ExtraCost2 += ExtraPredCost;
+    } else if (!AlreadyPredicated) {
+      // FIXME: This instruction is already predicated before the
+      // if-conversion pass. It's probably something like a conditional move.
+      // Mark this block unpredicable for now.
+      BBI.IsUnpredicable = true;
+      return;
     }
 
     if (BBI.ClobbersPred && !isPredicated) {
       // Predicate modification instruction should end the block (except for
       // already predicated instructions and end of block branches).
-      if (isCondBr) {
-        // A conditional branch is not predicable, but it may be eliminated.
-        continue;
-      }
-
       // Predicate may have been modified, the subsequent (currently)
       // unpredicated instructions cannot be correctly predicated.
       BBI.IsUnpredicable = true;

@@ -1,6 +1,7 @@
 ; RUN: llc < %s -march=arm | FileCheck -check-prefix=ARM %s
 ; RUN: llc < %s -march=thumb | FileCheck -check-prefix=THUMB %s
 ; RUN: llc < %s -march=thumb -mattr=+thumb2 | FileCheck -check-prefix=T2 %s
+; RUN: llc < %s -mtriple=thumbv8 | FileCheck -check-prefix=V8 %s
 
 ; FIXME: The -march=thumb test doesn't change if -disable-peephole is specified.
 
@@ -39,6 +40,17 @@ tailrecurse:                                      ; preds = %sw.bb, %entry
   br i1 %tst, label %sw.bb, label %tailrecurse.switch
 
 tailrecurse.switch:                               ; preds = %tailrecurse
+; V8-LABEL: %tailrecurse.switch
+; V8: cmp
+; V8-NEXT: beq
+; V8-NEXT: %tailrecurse.switch
+; V8: cmp
+; V8-NEXT: beq
+; V8-NEXT: %tailrecurse.switch
+; V8: cmp
+; V8-NEXT: beq
+; V8-NEXT: b	
+; The trailing space in the last line checks that the branch is unconditional
   switch i32 %and, label %sw.epilog [
     i32 1, label %sw.bb
     i32 3, label %sw.bb6
@@ -73,6 +85,7 @@ sw.epilog:                                        ; preds = %tailrecurse.switch
 ; ARM: bar
 ; THUMB: bar
 ; T2: bar
+; V8-LABEL: bar:
 define internal zeroext i8 @bar(%struct.S* %x, %struct.S* nocapture %y) nounwind readonly {
 entry:
   %0 = getelementptr inbounds %struct.S* %x, i32 0, i32 1, i32 0
@@ -81,22 +94,32 @@ entry:
 ; ARM: ands
 ; THUMB: ands
 ; T2: ands
+; V8: ands
+; V8-NEXT: beq
   %3 = and i32 %2, 112
   %4 = icmp eq i32 %3, 0
   br i1 %4, label %return, label %bb
 
 bb:                                               ; preds = %entry
+; V8-NEXT: %bb
   %5 = getelementptr inbounds %struct.S* %y, i32 0, i32 1, i32 0
   %6 = load i8* %5, align 1
   %7 = zext i8 %6 to i32
 ; ARM: andsne
 ; THUMB: ands
 ; T2: andsne
+; V8: ands
+; V8-NEXT: beq
   %8 = and i32 %7, 112
   %9 = icmp eq i32 %8, 0
   br i1 %9, label %return, label %bb2
 
 bb2:                                              ; preds = %bb
+; V8-NEXT: %bb2
+; V8-NEXT: cmp
+; V8-NEXT: it	ne
+; V8-NEXT: cmpne
+; V8-NEXT: bne
   %10 = icmp eq i32 %3, 16
   %11 = icmp eq i32 %8, 16
   %or.cond = or i1 %10, %11

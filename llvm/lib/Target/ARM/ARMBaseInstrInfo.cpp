@@ -513,6 +513,74 @@ bool ARMBaseInstrInfo::DefinesPredicate(MachineInstr *MI,
   return Found;
 }
 
+static bool isV8EligibleForIT(MachineInstr *MI) {
+  switch (MI->getOpcode()) {
+  default:
+    return false;
+  case ARM::tADC:
+  case ARM::tADDi3:
+  case ARM::tADDi8:
+  case ARM::tADDrSPi:
+  case ARM::tADDrr:
+  case ARM::tAND:
+  case ARM::tASRri:
+  case ARM::tASRrr:
+  case ARM::tBIC:
+  case ARM::tCMNz:
+  case ARM::tCMPi8:
+  case ARM::tCMPr:
+  case ARM::tEOR:
+  case ARM::tLDRBi:
+  case ARM::tLDRBr:
+  case ARM::tLDRHi:
+  case ARM::tLDRHr:
+  case ARM::tLDRSB:
+  case ARM::tLDRSH:
+  case ARM::tLDRi:
+  case ARM::tLDRr:
+  case ARM::tLDRspi:
+  case ARM::tLSLri:
+  case ARM::tLSLrr:
+  case ARM::tLSRri:
+  case ARM::tLSRrr:
+  case ARM::tMOVi8:
+  case ARM::tMUL:
+  case ARM::tMVN:
+  case ARM::tORR:
+  case ARM::tROR:
+  case ARM::tRSB:
+  case ARM::tSBC:
+  case ARM::tSTRBi:
+  case ARM::tSTRBr:
+  case ARM::tSTRHi:
+  case ARM::tSTRHr:
+  case ARM::tSTRi:
+  case ARM::tSTRr:
+  case ARM::tSTRspi:
+  case ARM::tSUBi3:
+  case ARM::tSUBi8:
+  case ARM::tSUBrr:
+  case ARM::tTST:
+    return true;
+// there are some "conditionally deprecated" opcodes
+  case ARM::tADDspr:
+    return MI->getOperand(2).getReg() != ARM::PC;
+  case ARM::tADDrSP:
+  case ARM::tBX:
+  case ARM::tBLXr:
+  // ADD PC, SP and BLX PC were always unpredictable,
+  // now on top of it they're deprecated
+    return MI->getOperand(0).getReg() != ARM::PC;
+  case ARM::tADDhirr:
+    return MI->getOperand(0).getReg() != ARM::PC &&
+           MI->getOperand(2).getReg() != ARM::PC;
+  case ARM::tCMPhir:
+  case ARM::tMOVr:
+    return MI->getOperand(0).getReg() != ARM::PC &&
+           MI->getOperand(1).getReg() != ARM::PC;
+  }
+}
+
 /// isPredicable - Return true if the specified instruction can be predicated.
 /// By default, this returns true for every instruction with a
 /// PredicateOperand.
@@ -520,11 +588,17 @@ bool ARMBaseInstrInfo::isPredicable(MachineInstr *MI) const {
   if (!MI->isPredicable())
     return false;
 
-  if ((MI->getDesc().TSFlags & ARMII::DomainMask) == ARMII::DomainNEON) {
-    ARMFunctionInfo *AFI =
-      MI->getParent()->getParent()->getInfo<ARMFunctionInfo>();
-    return AFI->isThumb2Function();
+  ARMFunctionInfo *AFI =
+    MI->getParent()->getParent()->getInfo<ARMFunctionInfo>();
+
+  if (AFI->isThumb2Function()) {
+    if (getSubtarget().hasV8Ops())
+      return isV8EligibleForIT(MI);
+  } else { // non-Thumb
+    if ((MI->getDesc().TSFlags & ARMII::DomainMask) == ARMII::DomainNEON)
+      return false;
   }
+
   return true;
 }
 
