@@ -125,6 +125,10 @@ protected:
   const MCSection *DwarfStrOffDWOSection;
   const MCSection *DwarfAddrSection;
 
+  /// Sections for newer gnu pubnames and pubtypes.
+  const MCSection *DwarfGnuPubNamesSection;
+  const MCSection *DwarfGnuPubTypesSection;
+
   // Extra TLS Variable Data section.  If the target needs to put additional
   // information for a TLS variable, it'll go here.
   const MCSection *TLSExtraDataSection;
@@ -223,6 +227,12 @@ public:
   const MCSection *getDwarfFrameSection() const { return DwarfFrameSection; }
   const MCSection *getDwarfPubNamesSection() const{return DwarfPubNamesSection;}
   const MCSection *getDwarfPubTypesSection() const{return DwarfPubTypesSection;}
+  const MCSection *getDwarfGnuPubNamesSection() const {
+    return DwarfGnuPubNamesSection;
+  }
+  const MCSection *getDwarfGnuPubTypesSection() const {
+    return DwarfGnuPubTypesSection;
+  }
   const MCSection *getDwarfDebugInlineSection() const {
     return DwarfDebugInlineSection;
   }
