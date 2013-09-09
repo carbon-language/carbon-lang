@@ -82,12 +82,12 @@ fi
 set -x
 
 for FILE in ../src/*.cpp; do
-	$CXX -c -g -O3 $RC_CFLAGS $EXTRA_FLAGS -I../include $FILE
+	$CXX -c -g -O3 $RC_CFLAGS $EXTRA_FLAGS -I../include $OPTIONS $FILE
 done
 case $TRIPLE in
   *-*-mingw*)
   for FILE in ../src/support/win32/*.cpp; do
-    $CXX -c -g -Os $RC_CFLAGS $EXTRA_FLAGS -I../include $FILE
+    $CXX -c -g -Os $RC_CFLAGS $EXTRA_FLAGS -I../include $OPTIONS $FILE
   done
   ;;
 esac
