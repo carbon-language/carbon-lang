@@ -913,19 +913,19 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DIDerivedType DTy) {
 
 /// Return true if the type is appropriately scoped to be contained inside
 /// its own type unit.
-static bool isTypeUnitScoped(DIType Ty) {
+static bool isTypeUnitScoped(DIType Ty, const DwarfDebug *DD) {
   DIScope Parent = Ty.getContext();
   while (Parent) {
     // Don't generate a hash for anything scoped inside a function.
     if (Parent.isSubprogram())
       return false;
-    Parent = Parent.getContext();
+    Parent = DD->getScopeContext(Parent);
   }
   return true;
 }
 
 /// Return true if the type should be split out into a type unit.
-static bool shouldCreateTypeUnit(DICompositeType CTy) {
+static bool shouldCreateTypeUnit(DICompositeType CTy, const DwarfDebug *DD) {
   uint16_t Tag = CTy.getTag();
 
   switch (Tag) {
@@ -936,7 +936,7 @@ static bool shouldCreateTypeUnit(DICompositeType CTy) {
     // If this is a class, structure, union, or enumeration type
     // that is not a declaration, is a type definition, and not scoped
     // inside a function then separate this out as a type unit.
-    if (CTy.isForwardDecl() || !isTypeUnitScoped(CTy))
+    if (CTy.isForwardDecl() || !isTypeUnitScoped(CTy, DD))
       return 0;
     return 1;
   default:
@@ -1138,7 +1138,7 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
   }
   // If this is a type applicable to a type unit it then add it to the
   // list of types we'll compute a hash for later.
-  if (shouldCreateTypeUnit(CTy))
+  if (shouldCreateTypeUnit(CTy, DD))
     DD->addTypeUnitType(&Buffer);
 }
 

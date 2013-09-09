@@ -200,9 +200,6 @@ namespace llvm {
   public:
     explicit DIScope(const MDNode *N = 0) : DIDescriptor (N) {}
 
-    /// Gets the parent scope for this scope node or returns a
-    /// default constructed scope.
-    DIScope getContext() const;
     StringRef getFilename() const;
     StringRef getDirectory() const;
 
