@@ -1,13 +1,13 @@
-=======
-Modules
-=======
-
-.. contents::
-   :local:
+======================
+Modules (EXPERIMENTAL)
+======================
 
 .. warning::
    The functionality described on this page is still experimental! Please
    try it out and send us bug reports!
+
+.. contents::
+   :local:
 
 Introduction
 ============
