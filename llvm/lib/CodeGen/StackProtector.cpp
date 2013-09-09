@@ -29,6 +29,7 @@
 #include "llvm/IR/Function.h"
 #include "llvm/IR/GlobalValue.h"
 #include "llvm/IR/GlobalVariable.h"
+#include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Intrinsics.h"
@@ -134,7 +135,7 @@ bool StackProtector::runOnFunction(Function &Fn) {
     Fn.getAttributes().getAttribute(AttributeSet::FunctionIndex,
                                     "stack-protector-buffer-size");
   if (Attr.isStringAttribute())
-    SSPBufferSize = atoi(Attr.getValueAsString().data());
+    Attr.getValueAsString().getAsInteger(10, SSPBufferSize);
 
   ++NumFunProtected;
   return InsertStackProtectors();
@@ -365,16 +366,11 @@ static bool CreatePrologue(Function *F, Module *M, ReturnInst *RI,
     StackGuardVar = M->getOrInsertGlobal("__stack_chk_guard", PtrTy);
   }
 
-  BasicBlock &Entry = F->getEntryBlock();
-  Instruction *InsPt = &Entry.front();
-
-  AI = new AllocaInst(PtrTy, "StackGuardSlot", InsPt);
-  LoadInst *LI = new LoadInst(StackGuardVar, "StackGuard", false, InsPt);
-
-  Value *Args[] = { LI, AI };
-  CallInst::
-    Create(Intrinsic::getDeclaration(M, Intrinsic::stackprotector),
-           Args, "", InsPt);
+  IRBuilder<> B(&F->getEntryBlock().front());
+  AI = B.CreateAlloca(PtrTy, 0, "StackGuardSlot");
+  LoadInst *LI = B.CreateLoad(StackGuardVar, "StackGuard");
+  B.CreateCall2(Intrinsic::getDeclaration(M, Intrinsic::stackprotector), LI,
+                AI);
 
   return SupportsSelectionDAGSP;
 }
@@ -420,8 +416,7 @@ bool StackProtector::InsertStackProtectors() {
 
       Function *Intrinsic =
         Intrinsic::getDeclaration(M, Intrinsic::stackprotectorcheck);
-      Value *Args[] = { StackGuardVar };
-      CallInst::Create(Intrinsic, Args, "", InsertionPt);
+      CallInst::Create(Intrinsic, StackGuardVar, "", InsertionPt);
 
     } else {
       // If we do not support SelectionDAG based tail calls, generate IR level
@@ -471,10 +466,11 @@ bool StackProtector::InsertStackProtectors() {
       NewBB->moveAfter(BB);
 
       // Generate the stack protector instructions in the old basic block.
-      LoadInst *LI1 = new LoadInst(StackGuardVar, "", false, BB);
-      LoadInst *LI2 = new LoadInst(AI, "", true, BB);
-      ICmpInst *Cmp = new ICmpInst(*BB, CmpInst::ICMP_EQ, LI1, LI2, "");
-      BranchInst::Create(NewBB, FailBB, Cmp, BB);
+      IRBuilder<> B(BB);
+      LoadInst *LI1 = B.CreateLoad(StackGuardVar);
+      LoadInst *LI2 = B.CreateLoad(AI);
+      Value *Cmp = B.CreateICmpEQ(LI1, LI2);
+      B.CreateCondBr(Cmp, NewBB, FailBB);
     }
   }
 
@@ -491,29 +487,18 @@ bool StackProtector::InsertStackProtectors() {
 BasicBlock *StackProtector::CreateFailBB() {
   LLVMContext &Context = F->getContext();
   BasicBlock *FailBB = BasicBlock::Create(Context, "CallStackCheckFailBlk", F);
+  IRBuilder<> B(FailBB);
   if (Trip.getOS() == llvm::Triple::OpenBSD) {
     Constant *StackChkFail = M->getOrInsertFunction(
         "__stack_smash_handler", Type::getVoidTy(Context),
         Type::getInt8PtrTy(Context), NULL);
 
-    Constant *NameStr = ConstantDataArray::getString(Context, F->getName());
-    Constant *FuncName =
-        new GlobalVariable(*M, NameStr->getType(), true,
-                           GlobalVariable::PrivateLinkage, NameStr, "SSH");
-
-    SmallVector<Constant *, 2> IdxList;
-    IdxList.push_back(ConstantInt::get(Type::getInt8Ty(Context), 0));
-    IdxList.push_back(ConstantInt::get(Type::getInt8Ty(Context), 0));
-
-    SmallVector<Value *, 1> Args;
-    Args.push_back(ConstantExpr::getGetElementPtr(FuncName, IdxList));
-
-    CallInst::Create(StackChkFail, Args, "", FailBB);
+    B.CreateCall(StackChkFail, B.CreateGlobalStringPtr(F->getName(), "SSH"));
   } else {
     Constant *StackChkFail = M->getOrInsertFunction(
         "__stack_chk_fail", Type::getVoidTy(Context), NULL);
-    CallInst::Create(StackChkFail, "", FailBB);
+    B.CreateCall(StackChkFail);
   }
-  new UnreachableInst(Context, FailBB);
+  B.CreateUnreachable();
   return FailBB;
 }
