@@ -134,6 +134,8 @@ public:
     return *W64UnwindInfos[i];
   }
 
+  void generateCompactUnwindEncodings(MCAsmBackend &MAB);
+
   /// @name Assembly File Formatting.
   /// @{
 

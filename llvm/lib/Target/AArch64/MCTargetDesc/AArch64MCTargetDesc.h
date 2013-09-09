@@ -43,8 +43,9 @@ MCCodeEmitter *createAArch64MCCodeEmitter(const MCInstrInfo &MCII,
 MCObjectWriter *createAArch64ELFObjectWriter(raw_ostream &OS,
                                              uint8_t OSABI);
 
-MCAsmBackend *createAArch64AsmBackend(const Target &T, StringRef TT,
-                                      StringRef CPU);
+MCAsmBackend *createAArch64AsmBackend(const Target &T,
+                                      const MCRegisterInfo &MRI,
+                                      StringRef TT, StringRef CPU);
 
 } // End llvm namespace
 

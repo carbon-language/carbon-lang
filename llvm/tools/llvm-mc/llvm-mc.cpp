@@ -432,7 +432,7 @@ int main(int argc, char **argv) {
     MCAsmBackend *MAB = 0;
     if (ShowEncoding) {
       CE = TheTarget->createMCCodeEmitter(*MCII, *MRI, *STI, Ctx);
-      MAB = TheTarget->createMCAsmBackend(TripleName, MCPU);
+      MAB = TheTarget->createMCAsmBackend(*MRI, TripleName, MCPU);
     }
     bool UseCFI = !DisableCFI;
     Str.reset(TheTarget->createAsmStreamer(Ctx, FOS, /*asmverbose*/true,
@@ -446,7 +446,7 @@ int main(int argc, char **argv) {
   } else {
     assert(FileType == OFT_ObjectFile && "Invalid file type!");
     MCCodeEmitter *CE = TheTarget->createMCCodeEmitter(*MCII, *MRI, *STI, Ctx);
-    MCAsmBackend *MAB = TheTarget->createMCAsmBackend(TripleName, MCPU);
+    MCAsmBackend *MAB = TheTarget->createMCAsmBackend(*MRI, TripleName, MCPU);
     Str.reset(TheTarget->createMCObjectStreamer(TripleName, Ctx, *MAB,
                                                 FOS, CE, RelaxAll,
                                                 NoExecStack));

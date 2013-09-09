@@ -10,7 +10,9 @@
 #ifndef LLVM_MC_MCASMBACKEND_H
 #define LLVM_MC_MCASMBACKEND_H
 
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/MC/MCDirectives.h"
+#include "llvm/MC/MCDwarf.h"
 #include "llvm/MC/MCFixup.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -158,6 +160,12 @@ public:
   /// handleAssemblerFlag - Handle any target-specific assembler flags.
   /// By default, do nothing.
   virtual void handleAssemblerFlag(MCAssemblerFlag Flag) {}
+
+  /// \brief Generate the compact unwind encoding for the CFI instructions.
+  virtual unsigned
+  generateCompactUnwindEncoding(ArrayRef<MCCFIInstruction>) const {
+    return 0;
+  }
 };
 
 } // End llvm namespace

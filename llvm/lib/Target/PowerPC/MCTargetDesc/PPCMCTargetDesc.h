@@ -40,7 +40,8 @@ MCCodeEmitter *createPPCMCCodeEmitter(const MCInstrInfo &MCII,
                                       const MCSubtargetInfo &STI,
                                       MCContext &Ctx);
 
-MCAsmBackend *createPPCAsmBackend(const Target &T, StringRef TT, StringRef CPU);
+MCAsmBackend *createPPCAsmBackend(const Target &T, const MCRegisterInfo &MRI,
+                                  StringRef TT, StringRef CPU);
 
 /// createPPCELFObjectWriter - Construct an PPC ELF object writer.
 MCObjectWriter *createPPCELFObjectWriter(raw_ostream &OS,

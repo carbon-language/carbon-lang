@@ -1,4 +1,6 @@
-; RUN: llc < %s -mtriple x86_64-apple-macosx10.8.0 -disable-cfi | FileCheck %s
+; RUN: llc < %s -mtriple x86_64-apple-macosx10.8.0 -filetype=obj -o - \
+; RUN:  | llvm-objdump -triple x86_64-apple-macosx10.8.0 -s - \
+; RUN:  | FileCheck %s
 
 %"struct.dyld::MappedRanges" = type { [400 x %struct.anon], %"struct.dyld::MappedRanges"* }
 %struct.anon = type { %class.ImageLoader*, i64, i64 }
@@ -13,12 +15,11 @@ declare void @OSMemoryBarrier() optsize
 ; compact unwind encodings for this function. This then defaults to using the
 ; DWARF EH frame.
 ;
-; CHECK: .section __LD,__compact_unwind,regular,debug
-; CHECK: .quad _func
-; CHECK: .long 67108864                ## Compact Unwind Encoding: 0x4000000
-; CHECK: .quad 0                       ## Personality Function
-; CHECK: .quad 0                       ## LSDA
+; CHECK:      Contents of section __compact_unwind:
+; CHECK-NEXT: 0048 00000000 00000000 42000000 00000004
+; CHECK-NEXT: 0058 00000000 00000000 00000000 00000000
 ;
+
 define void @func(%class.ImageLoader* %image) optsize ssp uwtable {
 entry:
   br label %for.cond1.preheader

@@ -1,18 +1,21 @@
-; RUN: llc < %s -disable-cfi -disable-fp-elim -mtriple x86_64-apple-darwin11 | FileCheck %s
+; RUN: llc < %s -disable-fp-elim -mtriple x86_64-apple-darwin11 | FileCheck -check-prefix=ASM %s
+; RUN: llc < %s -disable-fp-elim -mtriple x86_64-apple-darwin11 -filetype=obj -o - \
+; RUN:  | llvm-objdump -triple x86_64-apple-darwin11 -s - \
+; RUN:  | FileCheck -check-prefix=CU %s
 
 %ty = type { i8* }
 
 @gv = external global i32
 
 ; This is aligning the stack with a push of a random register.
-; CHECK: pushq %rax
+; ASM: pushq %rax
 
 ; Even though we can't encode %rax into the compact unwind, We still want to be
 ; able to generate a compact unwind encoding in this particular case.
 ;
-; CHECK: __LD,__compact_unwind
-; CHECK: _foo ## Range Start
-; CHECK: 16842753 ## Compact Unwind Encoding: 0x1010001
+; CU:      Contents of section __compact_unwind:
+; CU-NEXT: 0020 00000000 00000000 1e000000 01000101
+; CU-NEXT: 0030 00000000 00000000 00000000 00000000
 
 define i8* @foo(i64 %size) {
   %addr = alloca i64, align 8

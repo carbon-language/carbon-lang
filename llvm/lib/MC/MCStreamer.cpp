@@ -10,6 +10,7 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/MC/MCAsmBackend.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
@@ -70,6 +71,14 @@ const MCExpr *MCStreamer::ForceExpAbs(const MCExpr* Expr) {
 raw_ostream &MCStreamer::GetCommentOS() {
   // By default, discard comments.
   return nulls();
+}
+
+void MCStreamer::generateCompactUnwindEncodings(MCAsmBackend &MAB) {
+  for (std::vector<MCDwarfFrameInfo>::iterator I = FrameInfos.begin(),
+         E = FrameInfos.end(); I != E; ++I)
+    if (!I->CompactUnwindEncoding)
+      I->CompactUnwindEncoding =
+        MAB.generateCompactUnwindEncoding(I->Instructions);
 }
 
 void MCStreamer::EmitDwarfSetLineAddr(int64_t LineDelta,

@@ -178,7 +178,7 @@ bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
     MCAsmBackend *MAB = 0;
     if (ShowMCEncoding) {
       MCE = getTarget().createMCCodeEmitter(MII, MRI, STI, *Context);
-      MAB = getTarget().createMCAsmBackend(getTargetTriple(), TargetCPU);
+      MAB = getTarget().createMCAsmBackend(MRI, getTargetTriple(), TargetCPU);
     }
 
     MCStreamer *S = getTarget().createAsmStreamer(*Context, Out,
@@ -197,7 +197,7 @@ bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
     // emission fails.
     MCCodeEmitter *MCE = getTarget().createMCCodeEmitter(MII, MRI, STI,
                                                          *Context);
-    MCAsmBackend *MAB = getTarget().createMCAsmBackend(getTargetTriple(),
+    MCAsmBackend *MAB = getTarget().createMCAsmBackend(MRI, getTargetTriple(),
                                                        TargetCPU);
     if (MCE == 0 || MAB == 0)
       return true;
@@ -271,7 +271,8 @@ bool LLVMTargetMachine::addPassesToEmitMC(PassManagerBase &PM,
   const MCSubtargetInfo &STI = getSubtarget<MCSubtargetInfo>();
   MCCodeEmitter *MCE = getTarget().createMCCodeEmitter(*getInstrInfo(), MRI,
                                                        STI, *Ctx);
-  MCAsmBackend *MAB = getTarget().createMCAsmBackend(getTargetTriple(), TargetCPU);
+  MCAsmBackend *MAB = getTarget().createMCAsmBackend(MRI, getTargetTriple(),
+                                                     TargetCPU);
   if (MCE == 0 || MAB == 0)
     return true;
 

@@ -660,7 +660,9 @@ public:
 
 } // end anonymous namespace
 
-MCAsmBackend *llvm::createARMAsmBackend(const Target &T, StringRef TT, StringRef CPU) {
+MCAsmBackend *llvm::createARMAsmBackend(const Target &T,
+                                        const MCRegisterInfo &MRI,
+                                        StringRef TT, StringRef CPU) {
   Triple TheTriple(TT);
 
   if (TheTriple.isOSDarwin()) {

@@ -578,8 +578,8 @@ static uint64_t adjustFixupValue(unsigned Kind, uint64_t Value) {
 }
 
 MCAsmBackend *
-llvm::createAArch64AsmBackend(const Target &T, StringRef TT, StringRef CPU) {
+llvm::createAArch64AsmBackend(const Target &T, const MCRegisterInfo &MRI,
+                              StringRef TT, StringRef CPU) {
   Triple TheTriple(TT);
-
   return new ELFAArch64AsmBackend(T, TT, TheTriple.getOS());
 }

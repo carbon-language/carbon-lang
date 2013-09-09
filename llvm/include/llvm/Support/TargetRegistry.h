@@ -104,6 +104,7 @@ namespace llvm {
     typedef AsmPrinter *(*AsmPrinterCtorTy)(TargetMachine &TM,
                                             MCStreamer &Streamer);
     typedef MCAsmBackend *(*MCAsmBackendCtorTy)(const Target &T,
+                                                const MCRegisterInfo &MRI,
                                                 StringRef TT,
                                                 StringRef CPU);
     typedef MCTargetAsmParser *(*MCAsmParserCtorTy)(MCSubtargetInfo &STI,
@@ -373,10 +374,11 @@ namespace llvm {
     /// createMCAsmBackend - Create a target specific assembly parser.
     ///
     /// \param Triple The target triple string.
-    MCAsmBackend *createMCAsmBackend(StringRef Triple, StringRef CPU) const {
+    MCAsmBackend *createMCAsmBackend(const MCRegisterInfo &MRI,
+                                     StringRef Triple, StringRef CPU) const {
       if (!MCAsmBackendCtorFn)
         return 0;
-      return MCAsmBackendCtorFn(*this, Triple, CPU);
+      return MCAsmBackendCtorFn(*this, MRI, Triple, CPU);
     }
 
     /// createMCAsmParser - Create a target specific assembly parser.
@@ -1118,9 +1120,10 @@ namespace llvm {
     }
 
   private:
-    static MCAsmBackend *Allocator(const Target &T, StringRef Triple,
-                                   StringRef CPU) {
-      return new MCAsmBackendImpl(T, Triple, CPU);
+    static MCAsmBackend *Allocator(const Target &T,
+                                   const MCRegisterInfo &MRI,
+                                   StringRef Triple, StringRef CPU) {
+      return new MCAsmBackendImpl(T, MRI, Triple, CPU);
     }
   };
 

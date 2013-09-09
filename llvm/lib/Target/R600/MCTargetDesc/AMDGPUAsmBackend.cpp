@@ -95,7 +95,9 @@ public:
 
 } // end anonymous namespace
 
-MCAsmBackend *llvm::createAMDGPUAsmBackend(const Target &T, StringRef TT,
+MCAsmBackend *llvm::createAMDGPUAsmBackend(const Target &T,
+                                           const MCRegisterInfo &MRI,
+                                           StringRef TT,
                                            StringRef CPU) {
   return new ELFAMDGPUAsmBackend(T);
 }
