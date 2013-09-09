@@ -84,6 +84,10 @@ class RegisterCommandsTestCase(TestBase):
         self.platform = ""
         if sys.platform.startswith("darwin"):
             self.platform = "" # TODO: add support for "log enable darwin registers"
+
+        if sys.platform.startswith("freebsd"):
+            self.platform = "freebsd"
+
         if sys.platform.startswith("linux"):
             self.platform = "linux"
 
