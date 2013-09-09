@@ -531,9 +531,9 @@ public:
       DSAStackTy::DSAVarData DVar = Stack->getTopDSA(VD);
       if (DVar.CKind != OMPC_unknown) {
         if (DKind == OMPD_task && DVar.CKind != OMPC_shared &&
-            DVar.CKind != OMPC_threadprivate && !DVar.RefExpr)
+            DVar.CKind != OMPC_threadprivate && !DVar.RefExpr) {
           // TODO: should be marked as firstprivate.
-          ;
+        }
         return;
       }
       // The default(none) clause requires that each variable that is referenced
