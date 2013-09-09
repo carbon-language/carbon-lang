@@ -1271,3 +1271,68 @@ define i1 @icmp_sub_-1_X_uge_4(i32 %X) {
   %cmp = icmp uge i32 %sub, 4
   ret i1 %cmp
 }
+
+; CHECK-LABEL: @icmp_swap_operands_for_cse
+; CHECK: [[CMP:%[a-z0-9]+]] = icmp ult i32 %X, %Y
+; CHECK-NEXT: br i1 [[CMP]], label %true, label %false
+; CHECK: ret i1
+define i1 @icmp_swap_operands_for_cse(i32 %X, i32 %Y) {
+entry:
+  %sub = sub i32 %X, %Y
+  %cmp = icmp ugt i32 %Y, %X
+  br i1 %cmp, label %true, label %false
+true:
+  %restrue = trunc i32 %sub to i1
+  br label %end
+false:
+  %shift = lshr i32 %sub, 4
+  %resfalse = trunc i32 %shift to i1
+  br label %end
+end:
+  %res = phi i1 [%restrue, %true], [%resfalse, %false]
+  ret i1 %res
+}
+
+; CHECK-LABEL: @icmp_swap_operands_for_cse2
+; CHECK: [[CMP:%[a-z0-9]+]] = icmp ult i32 %X, %Y
+; CHECK-NEXT: br i1 [[CMP]], label %true, label %false
+; CHECK: ret i1
+define i1 @icmp_swap_operands_for_cse2(i32 %X, i32 %Y) {
+entry:
+  %cmp = icmp ugt i32 %Y, %X
+  br i1 %cmp, label %true, label %false
+true:
+  %sub = sub i32 %X, %Y
+  %sub1 = sub i32 %X, %Y
+  %add = add i32 %sub, %sub1
+  %restrue = trunc i32 %add to i1
+  br label %end
+false:
+  %sub2 = sub i32 %Y, %X
+  %resfalse = trunc i32 %sub2 to i1
+  br label %end
+end:
+  %res = phi i1 [%restrue, %true], [%resfalse, %false]
+  ret i1 %res
+}
+
+; CHECK-LABEL: @icmp_do_not_swap_operands_for_cse
+; CHECK: [[CMP:%[a-z0-9]+]] = icmp ugt i32 %Y, %X
+; CHECK-NEXT: br i1 [[CMP]], label %true, label %false
+; CHECK: ret i1
+define i1 @icmp_do_not_swap_operands_for_cse(i32 %X, i32 %Y) {
+entry:
+  %cmp = icmp ugt i32 %Y, %X
+  br i1 %cmp, label %true, label %false
+true:
+  %sub = sub i32 %X, %Y
+  %restrue = trunc i32 %sub to i1
+  br label %end
+false:
+  %sub2 = sub i32 %Y, %X
+  %resfalse = trunc i32 %sub2 to i1
+  br label %end
+end:
+  %res = phi i1 [%restrue, %true], [%resfalse, %false]
+  ret i1 %res
+}
