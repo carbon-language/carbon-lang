@@ -178,7 +178,8 @@ TargetInfo::RealType TargetInfo::getRealTypeByWidth(unsigned BitWidth) const {
       return LongDouble;
     break;
   case 128:
-    if (&getLongDoubleFormat() == &llvm::APFloat::PPCDoubleDouble)
+    if (&getLongDoubleFormat() == &llvm::APFloat::PPCDoubleDouble ||
+        &getLongDoubleFormat() == &llvm::APFloat::IEEEquad)
       return LongDouble;
     break;
   }
