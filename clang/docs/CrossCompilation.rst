@@ -1,5 +1,5 @@
 ===================================================================
-Cross-compilation using Clang/LLVM
+Cross-compilation using Clang
 ===================================================================
 
 Introduction
