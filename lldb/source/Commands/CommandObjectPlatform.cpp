@@ -531,7 +531,7 @@ class CommandObjectPlatformMkDir : public CommandObjectParsed
 public:
     CommandObjectPlatformMkDir (CommandInterpreter &interpreter) :
     CommandObjectParsed (interpreter,
-                         "platform shell",
+                         "platform mkdir",
                          "Make a new directory on the remote end.",
                          NULL,
                          0),
@@ -2023,9 +2023,18 @@ public:
     {
     }
     
+    virtual
+    Options *
+    GetOptions ()
+    {
+        return &m_options;
+    }
+    
     virtual bool
     DoExecute (const char *raw_command_line, CommandReturnObject &result)
     {
+        m_options.NotifyOptionParsingStarting();
+        
         const char* expr = NULL;
 
         // Print out an usage syntax on an empty command line.
@@ -2117,6 +2126,7 @@ OptionDefinition
 CommandObjectPlatformShell::CommandOptions::g_option_table[] =
 {
     { LLDB_OPT_SET_ALL, false, "timeout",      't', OptionParser::eRequiredArgument, NULL, 0, eArgTypeValue,    "Seconds to wait for the remote host to finish running the command."},
+    { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
 struct RecurseCopyBaton
