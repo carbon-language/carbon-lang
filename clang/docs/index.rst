@@ -27,6 +27,11 @@ Using Clang as a Compiler
    Modules
    FAQ
 
+.. toctree::
+   :hidden:
+
+   LeakSanitizer
+
 Using Clang as a Library
 ========================
 
