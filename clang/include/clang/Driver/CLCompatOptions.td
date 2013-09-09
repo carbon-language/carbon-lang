@@ -143,6 +143,7 @@ def _SLASH_Gy : CLFlag<"Gy">;
 def _SLASH_Gy_ : CLFlag<"Gy-">;
 def _SLASH_GZ : CLFlag<"GZ">;
 def _SLASH_MP : CLJoined<"MP">;
+def _SLASH_o : CLJoinedOrSeparate<"o">;
 def _SLASH_w : CLJoined<"w">;
 def _SLASH_Za : CLFlag<"Za">;
 def _SLASH_Zc : CLJoined<"Zc:">;

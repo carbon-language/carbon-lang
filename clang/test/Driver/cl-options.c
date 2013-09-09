@@ -107,6 +107,7 @@
 // (/Zs is for syntax-only)
 // RUN: %clang_cl /Zs /EHsc /Fdfoo /fp:precise /Gd /GL /GL- -- %s 2>&1
 // RUN: %clang_cl /Zs /Gm /Gm- /GS /Gy /Gy- /GZ -- %s 2>&1
+// RUN: %clang_cl /Zs /ofoo.obj /o foo.obj -- %s 2>&1
 // RUN: %clang_cl /Zs /wfoo /Zc:wchar_t- -- %s 2>&1
 // RUN: %clang_cl /Zs /ZI /Zi /MP -- %s 2>&1
 
