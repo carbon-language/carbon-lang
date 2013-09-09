@@ -83,6 +83,7 @@ representation.
    Passes
    YamlIO
    GetElementPtr
+   MCJITDesignAndImplementation
 
 :doc:`GettingStarted`
    Discusses how to get up and running quickly with the LLVM infrastructure.
@@ -322,6 +323,7 @@ Information about LLVM's development process.
    LLVMBuild
    HowToReleaseLLVM
    Packaging
+   ReleaseProcess
 
 :doc:`DeveloperPolicy`
    The LLVM project's policy towards developers and their contributions.
