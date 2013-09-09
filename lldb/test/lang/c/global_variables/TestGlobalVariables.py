@@ -28,8 +28,8 @@ class GlobalVariablesTestCase(TestBase):
         TestBase.setUp(self)
         # Find the line number to break inside main().
         self.line = line_number('main.c', '// Set break point at this line.')
-        if sys.platform.startswith("linux"):
-            # On Linux, LD_LIBRARY_PATH must be set so the shared libraries are found on startup
+        if sys.platform.startswith("freebsd") or sys.platform.startswith("linux"):
+            # LD_LIBRARY_PATH must be set so the shared libraries are found on startup
             if "LD_LIBRARY_PATH" in os.environ:
                 self.runCmd("settings set target.env-vars " + self.dylibPath + "=" + os.environ["LD_LIBRARY_PATH"] + ":" + os.getcwd())
             else:
