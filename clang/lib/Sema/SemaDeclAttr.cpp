@@ -2438,9 +2438,10 @@ static void handleVisibilityAttr(Sema &S, Decl *D, const AttributeList &Attr,
   if (!checkAttributeNumArgs(S, Attr, 1))
     return;
 
-  Expr *Arg = Attr.getArgAsExpr(0);
-  Arg = Arg->IgnoreParenCasts();
-  StringLiteral *Str = dyn_cast<StringLiteral>(Arg);
+  // Check that the argument is a string literal.
+  StringLiteral *Str = 0;
+  if (Attr.isArgExpr(0))
+    Str = dyn_cast<StringLiteral>(Attr.getArgAsExpr(0)->IgnoreParenCasts());
 
   if (!Str || !Str->isAscii()) {
     S.Diag(Attr.getLoc(), diag::err_attribute_argument_type)
