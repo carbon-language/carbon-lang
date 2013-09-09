@@ -3736,8 +3736,9 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
         {
             FindFunctions (name, m_function_fullname_index, sc_list);
 
-            // Temporary workaround for global/anonymous namespace functions on linux
-#if defined (__linux__)
+            // FIXME Temporary workaround for global/anonymous namespace
+            // functions on FreeBSD and Linux
+#if defined (__FreeBSD__) || defined (__linux__)
             // If we didn't find any functions in the global namespace try
             // looking in the basename index but ignore any returned
             // functions that have a namespace (ie. mangled names starting with 
