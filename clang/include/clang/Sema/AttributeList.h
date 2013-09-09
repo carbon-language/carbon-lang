@@ -463,6 +463,10 @@ public:
   /// defined in Attr.td. This index is used by an attribute
   /// to pretty print itself.
   unsigned getAttributeSpellingListIndex() const;
+
+  bool hasCustomParsing() const;
+  unsigned getMinArgs() const;
+  unsigned getMaxArgs() const;
 };
 
 /// A factory, from which one makes pools, from which one creates

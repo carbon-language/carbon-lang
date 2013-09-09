@@ -60,6 +60,7 @@ add_dependencies(clangSema
   ClangAttrList
   ClangAttrParsedAttrList
   ClangAttrParsedAttrKinds
+  ClangAttrParsedAttrImpl
   ClangAttrSpellingListIndex
   ClangAttrTemplateInstantiate
   ClangCommentNodes

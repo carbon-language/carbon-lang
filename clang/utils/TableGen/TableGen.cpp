@@ -34,6 +34,7 @@ enum ActionType {
   GenClangAttrLateParsedList,
   GenClangAttrTemplateInstantiate,
   GenClangAttrParsedAttrList,
+  GenClangAttrParsedAttrImpl,
   GenClangAttrParsedAttrKinds,
   GenClangAttrDump,
   GenClangDiagsDefs,
@@ -81,12 +82,15 @@ cl::opt<ActionType> Action(
         clEnumValN(GenClangAttrTemplateInstantiate,
                    "gen-clang-attr-template-instantiate",
                    "Generate a clang template instantiate code"),
-        clEnumValN(GenClangAttrParsedAttrList,
-                   "gen-clang-attr-parsed-attr-list",
-                   "Generate a clang parsed attribute list"),
-        clEnumValN(GenClangAttrParsedAttrKinds,
-                   "gen-clang-attr-parsed-attr-kinds",
-                   "Generate a clang parsed attribute kinds"),
+                    clEnumValN(GenClangAttrParsedAttrList,
+                               "gen-clang-attr-parsed-attr-list",
+                               "Generate a clang parsed attribute list"),
+                    clEnumValN(GenClangAttrParsedAttrImpl,
+                               "gen-clang-attr-parsed-attr-impl",
+                               "Generate the clang parsed attribute helpers"),
+                    clEnumValN(GenClangAttrParsedAttrKinds,
+                               "gen-clang-attr-parsed-attr-kinds",
+                               "Generate a clang parsed attribute kinds"),
         clEnumValN(GenClangAttrDump, "gen-clang-attr-dump",
                    "Generate clang attribute dumper"),
         clEnumValN(GenClangDiagsDefs, "gen-clang-diags-defs",
@@ -166,6 +170,9 @@ bool ClangTableGenMain(raw_ostream &OS, RecordKeeper &Records) {
     break;
   case GenClangAttrParsedAttrList:
     EmitClangAttrParsedAttrList(Records, OS);
+    break;
+  case GenClangAttrParsedAttrImpl:
+    EmitClangAttrParsedAttrImpl(Records, OS);
     break;
   case GenClangAttrParsedAttrKinds:
     EmitClangAttrParsedAttrKinds(Records, OS);

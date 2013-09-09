@@ -42,39 +42,40 @@ def NonBitField : SubsetSubject<Field, "non-bit field",
                                 [{!S->isBitField()}]>;
 
 // A single argument to an attribute
-class Argument<string name> {
+class Argument<string name, bit optional> {
   string Name = name;
+  bit Optional = optional;
 }
 
-class BoolArgument<string name> : Argument<name>;
-class IdentifierArgument<string name> : Argument<name>;
-class IntArgument<string name> : Argument<name>;
-class StringArgument<string name> : Argument<name>;
-class ExprArgument<string name> : Argument<name>;
-class FunctionArgument<string name> : Argument<name>;
-class TypeArgument<string name> : Argument<name>;
-class UnsignedArgument<string name> : Argument<name>;
-class SourceLocArgument<string name> : Argument<name>;
-class VariadicUnsignedArgument<string name> : Argument<name>;
-class VariadicExprArgument<string name> : Argument<name>;
+class BoolArgument<string name, bit opt = 0> : Argument<name, opt>;
+class IdentifierArgument<string name, bit opt = 0> : Argument<name, opt>;
+class IntArgument<string name, bit opt = 0> : Argument<name, opt>;
+class StringArgument<string name, bit opt = 0> : Argument<name, opt>;
+class ExprArgument<string name, bit opt = 0> : Argument<name, opt>;
+class FunctionArgument<string name, bit opt = 0> : Argument<name, opt>;
+class TypeArgument<string name, bit opt = 0> : Argument<name, opt>;
+class UnsignedArgument<string name, bit opt = 0> : Argument<name, opt>;
+class SourceLocArgument<string name, bit opt = 0> : Argument<name, opt>;
+class VariadicUnsignedArgument<string name> : Argument<name, 1>;
+class VariadicExprArgument<string name> : Argument<name, 1>;
 
 // A version of the form major.minor[.subminor].
-class VersionArgument<string name> : Argument<name>;
+class VersionArgument<string name, bit opt = 0> : Argument<name, opt>;
 
 // This one's a doozy, so it gets its own special type
 // It can be an unsigned integer, or a type. Either can
 // be dependent.
-class AlignedArgument<string name> : Argument<name>;
+class AlignedArgument<string name, bit opt = 0> : Argument<name, opt>;
 
 // An integer argument with a default value
-class DefaultIntArgument<string name, int default> : IntArgument<name> {
+class DefaultIntArgument<string name, int default> : IntArgument<name, 1> {
   int Default = default;
 }
 
 // This argument is more complex, it includes the enumerator type name,
 // a list of strings to accept, and a list of enumerators to map them to.
 class EnumArgument<string name, string type, list<string> values,
-                         list<string> enums> : Argument<name> {
+                   list<string> enums, bit opt = 0> : Argument<name, opt> {
   string Type = type;
   list<string> Values = values;
   list<string> Enums = enums;
@@ -122,6 +123,10 @@ class Attr {
   bit Ignored = 0;
   // Set to true if each of the spellings is a distinct attribute.
   bit DistinctSpellings = 0;
+  // Set to true if the attribute's parsing does not match its semantic
+  // content. Eg) It parses 3 args, but semantically takes 4 args.  Opts out of
+  // common attribute error checking.
+  bit HasCustomParsing = 0;
   // Any additional text that should be included verbatim in the class.
   code AdditionalMembers = [{}];
 }
@@ -168,7 +173,7 @@ def Aligned : InheritableAttr {
   let Spellings = [GNU<"aligned">, Declspec<"align">, CXX11<"gnu", "aligned">,
                    Keyword<"alignas">, Keyword<"_Alignas">];
   let Subjects = [NonBitField, NormalVar, Tag];
-  let Args = [AlignedArgument<"Alignment">];
+  let Args = [AlignedArgument<"Alignment", 1>];
   let Accessors = [Accessor<"isGNU", [GNU<"aligned">, CXX11<"gnu","aligned">]>,
                    Accessor<"isC11", [Keyword<"_Alignas">]>,
                    Accessor<"isAlignas", [Keyword<"alignas">,
@@ -223,6 +228,7 @@ def Availability : InheritableAttr {
              .Case("macosx", "OS X")
              .Default(llvm::StringRef());
 } }];
+  let HasCustomParsing = 1;
 }
 
 def Blocks : InheritableAttr {
@@ -296,7 +302,7 @@ def Const : InheritableAttr {
 
 def Constructor : InheritableAttr {
   let Spellings = [GNU<"constructor">, CXX11<"gnu", "constructor">];
-  let Args = [IntArgument<"Priority">];
+  let Args = [IntArgument<"Priority", 1>];
 }
 
 def CUDAConstant : InheritableAttr {
@@ -346,12 +352,12 @@ def OpenCLImageAccess : Attr {
 
 def Deprecated : InheritableAttr {
   let Spellings = [GNU<"deprecated">, CXX11<"gnu", "deprecated">];
-  let Args = [StringArgument<"Message">];
+  let Args = [StringArgument<"Message", 1>];
 }
 
 def Destructor : InheritableAttr {
   let Spellings = [GNU<"destructor">, CXX11<"gnu", "destructor">];
-  let Args = [IntArgument<"Priority">];
+  let Args = [IntArgument<"Priority", 1>];
 }
 
 def ExtVectorType : Attr {
@@ -409,7 +415,7 @@ def IBOutlet : InheritableAttr {
 
 def IBOutletCollection : InheritableAttr {
   let Spellings = [GNU<"iboutletcollection">];
-  let Args = [TypeArgument<"Interface">, SourceLocArgument<"InterfaceLoc">];
+  let Args = [TypeArgument<"Interface", 1>, SourceLocArgument<"InterfaceLoc">];
 }
 
 def Malloc : InheritableAttr {
@@ -513,7 +519,7 @@ def NoThrow : InheritableAttr {
 def NSBridged : InheritableAttr {
   let Spellings = [GNU<"ns_bridged">];
   let Subjects = [Record];
-  let Args = [IdentifierArgument<"BridgedType">];
+  let Args = [IdentifierArgument<"BridgedType", 1>];
 }
 
 def NSReturnsRetained : InheritableAttr {
@@ -678,7 +684,7 @@ def TransparentUnion : InheritableAttr {
 
 def Unavailable : InheritableAttr {
   let Spellings = [GNU<"unavailable">];
-  let Args = [StringArgument<"Message">];
+  let Args = [StringArgument<"Message", 1>];
 }
 
 def ArcWeakrefUnavailable : InheritableAttr {
@@ -724,6 +730,7 @@ def VectorSize : TypeAttr {
 def VecTypeHint : InheritableAttr {
   let Spellings = [GNU<"vec_type_hint">];
   let Args = [TypeArgument<"TypeHint">, SourceLocArgument<"TypeLoc">];
+  let HasCustomParsing = 1;
 }
 
 def Visibility : InheritableAttr {
@@ -768,6 +775,8 @@ def WeakImport : InheritableAttr {
 
 def WeakRef : InheritableAttr {
   let Spellings = [GNU<"weakref">, CXX11<"gnu", "weakref">];
+  // A WeakRef that has an argument is treated as being an AliasAttr
+  let Args = [StringArgument<"Aliasee", 1>];
 }
 
 def X86ForceAlignArgPointer : InheritableAttr, TargetSpecificAttr {
@@ -969,6 +978,7 @@ def ArgumentWithTypeTag : InheritableAttr {
               UnsignedArgument<"TypeTagIdx">,
               BoolArgument<"IsPointer">];
   let Subjects = [Function];
+  let HasCustomParsing = 1;
 }
 
 def TypeTagForDatatype : InheritableAttr {
@@ -978,6 +988,7 @@ def TypeTagForDatatype : InheritableAttr {
               BoolArgument<"LayoutCompatible">,
               BoolArgument<"MustBeNull">];
   let Subjects = [Var];
+  let HasCustomParsing = 1;
 }
 
 // Microsoft-related attributes

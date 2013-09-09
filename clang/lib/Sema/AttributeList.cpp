@@ -145,3 +145,28 @@ unsigned AttributeList::getAttributeSpellingListIndex() const {
 
 }
 
+struct ParsedAttrInfo {
+  unsigned NumArgs : 4;
+  unsigned OptArgs : 4;
+  unsigned HasCustomParsing : 1;
+};
+
+namespace {
+  #include "clang/Sema/AttrParsedAttrImpl.inc"
+}
+
+const ParsedAttrInfo& getInfo(const AttributeList& A) {
+  return AttrInfoMap[A.getKind()];
+}
+
+unsigned AttributeList::getMinArgs() const {
+  return getInfo(*this).NumArgs;
+}
+
+unsigned AttributeList::getMaxArgs() const {
+  return getMinArgs() + getInfo(*this).OptArgs;
+}
+
+bool AttributeList::hasCustomParsing() const {
+  return getInfo(*this).HasCustomParsing;
+}

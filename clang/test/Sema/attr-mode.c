@@ -13,11 +13,12 @@ int i16_2_test[sizeof(i16_1) == 2 ? 1 : -1];
 typedef float f64 __attribute((mode(DF)));
 int f64_test[sizeof(f64) == 8 ? 1 : -1];
 
-typedef int invalid_1 __attribute((mode)); // expected-error{{'mode' attribute requires an identifier}}
-typedef int invalid_2 __attribute((mode())); // expected-error{{'mode' attribute requires an identifier}}
+typedef int invalid_1 __attribute((mode)); // expected-error{{'mode' attribute takes one argument}}
+typedef int invalid_2 __attribute((mode())); // expected-error{{'mode' attribute takes one argument}}
 typedef int invalid_3 __attribute((mode(II))); // expected-error{{unknown machine mode}}
 typedef struct {int i,j,k;} invalid_4 __attribute((mode(SI))); // expected-error{{mode attribute only supported for integer and floating-point types}}
 typedef float invalid_5 __attribute((mode(SI))); // expected-error{{type of machine mode does not match type of base type}}
+typedef int invalid_6 __attribute__((mode(12)));  // expected-error{{'mode' attribute requires an identifier}}
 
 typedef unsigned unwind_word __attribute((mode(unwind_word)));
 
