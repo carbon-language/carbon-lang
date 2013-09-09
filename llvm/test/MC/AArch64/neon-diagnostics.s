@@ -2008,3 +2008,742 @@
 // CHECK-ERROR:         fcvtzu v0.2d, v1.2d, #65
 // CHECK-ERROR:                              ^
 
+//----------------------------------------------------------------------
+// Vector operation on 3 operands with different types
+//----------------------------------------------------------------------
+
+        // Mismatched and invalid vector types
+        saddl v0.8h, v1.8h, v2.8b
+        saddl v0.4s, v1.4s, v2.4h
+        saddl v0.2d, v1.2d, v2.2s
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        saddl v0.8h, v1.8h, v2.8b
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        saddl v0.4s, v1.4s, v2.4h
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        saddl v0.2d, v1.2d, v2.2s
+// CHECK-ERROR:                        ^
+
+        saddl2 v0.4s, v1.8s, v2.8h
+        saddl2 v0.8h, v1.16h, v2.16b
+        saddl2 v0.2d, v1.4d, v2.4s
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        saddl2 v0.4s, v1.8s, v2.8h
+// CHECK-ERROR:                      ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        saddl2 v0.8h, v1.16h, v2.16b
+// CHECK-ERROR:                      ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        saddl2 v0.2d, v1.4d, v2.4s
+// CHECK-ERROR:                      ^
+
+        uaddl v0.8h, v1.8h, v2.8b
+        uaddl v0.4s, v1.4s, v2.4h
+        uaddl v0.2d, v1.2d, v2.2s
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        uaddl v0.8h, v1.8h, v2.8b
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        uaddl v0.4s, v1.4s, v2.4h
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        uaddl v0.2d, v1.2d, v2.2s
+// CHECK-ERROR:                        ^
+
+        uaddl2 v0.8h, v1.16h, v2.16b
+        uaddl2 v0.4s, v1.8s, v2.8h
+        uaddl2 v0.2d, v1.4d, v2.4s
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        uaddl2 v0.8h, v1.16h, v2.16b
+// CHECK-ERROR:                      ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        uaddl2 v0.4s, v1.8s, v2.8h
+// CHECK-ERROR:                      ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        uaddl2 v0.2d, v1.4d, v2.4s
+// CHECK-ERROR:                      ^
+
+        ssubl v0.8h, v1.8h, v2.8b
+        ssubl v0.4s, v1.4s, v2.4h
+        ssubl v0.2d, v1.2d, v2.2s
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        ssubl v0.8h, v1.8h, v2.8b
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        ssubl v0.4s, v1.4s, v2.4h
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        ssubl v0.2d, v1.2d, v2.2s
+// CHECK-ERROR:                        ^
+
+        ssubl2 v0.8h, v1.16h, v2.16b
+        ssubl2 v0.4s, v1.8s, v2.8h
+        ssubl2 v0.2d, v1.4d, v2.4s
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        ssubl2 v0.8h, v1.16h, v2.16b
+// CHECK-ERROR:                      ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        ssubl2 v0.4s, v1.8s, v2.8h
+// CHECK-ERROR:                      ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        ssubl2 v0.2d, v1.4d, v2.4s
+// CHECK-ERROR:                      ^
+
+        usubl v0.8h, v1.8h, v2.8b
+        usubl v0.4s, v1.4s, v2.4h
+        usubl v0.2d, v1.2d, v2.2s
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        usubl v0.8h, v1.8h, v2.8b
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        usubl v0.4s, v1.4s, v2.4h
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        usubl v0.2d, v1.2d, v2.2s
+// CHECK-ERROR:                        ^
+
+        usubl2 v0.8h, v1.16h, v2.16b
+        usubl2 v0.4s, v1.8s, v2.8h
+        usubl2 v0.2d, v1.4d, v2.4s
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        usubl2 v0.8h, v1.16h, v2.16b
+// CHECK-ERROR:                      ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        usubl2 v0.4s, v1.8s, v2.8h
+// CHECK-ERROR:                      ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        usubl2 v0.2d, v1.4d, v2.4s
+// CHECK-ERROR:                      ^
+
+        sabal v0.8h, v1.8h, v2.8b
+        sabal v0.4s, v1.4s, v2.4h
+        sabal v0.2d, v1.2d, v2.2s
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        sabal v0.8h, v1.8h, v2.8b
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        sabal v0.4s, v1.4s, v2.4h
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        sabal v0.2d, v1.2d, v2.2s
+// CHECK-ERROR:                        ^
+
+        sabal2 v0.8h, v1.16h, v2.16b
+        sabal2 v0.4s, v1.8s, v2.8h
+        sabal2 v0.2d, v1.4d, v2.4s
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        sabal2 v0.8h, v1.16h, v2.16b
+// CHECK-ERROR:                      ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        sabal2 v0.4s, v1.8s, v2.8h
+// CHECK-ERROR:                      ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        sabal2 v0.2d, v1.4d, v2.4s
+// CHECK-ERROR:                      ^
+
+        uabal v0.8h, v1.8h, v2.8b
+        uabal v0.4s, v1.4s, v2.4h
+        uabal v0.2d, v1.2d, v2.2s
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        uabal v0.8h, v1.8h, v2.8b
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        uabal v0.4s, v1.4s, v2.4h
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        uabal v0.2d, v1.2d, v2.2s
+// CHECK-ERROR:                        ^
+
+        uabal2 v0.8h, v1.16h, v2.16b
+        uabal2 v0.4s, v1.8s, v2.8h
+        uabal2 v0.2d, v1.4d, v2.4s
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        uabal2 v0.8h, v1.16h, v2.16b
+// CHECK-ERROR:                      ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        uabal2 v0.4s, v1.8s, v2.8h
+// CHECK-ERROR:                      ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        uabal2 v0.2d, v1.4d, v2.4s
+// CHECK-ERROR:                      ^
+
+        sabdl v0.8h, v1.8h, v2.8b
+        sabdl v0.4s, v1.4s, v2.4h
+        sabdl v0.2d, v1.2d, v2.2s
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        sabdl v0.8h, v1.8h, v2.8b
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        sabdl v0.4s, v1.4s, v2.4h
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        sabdl v0.2d, v1.2d, v2.2s
+// CHECK-ERROR:                        ^
+
+        sabdl2 v0.8h, v1.16h, v2.16b
+        sabdl2 v0.4s, v1.8s, v2.8h
+        sabdl2 v0.2d, v1.4d, v2.4s
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        sabdl2 v0.8h, v1.16h, v2.16b
+// CHECK-ERROR:                      ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        sabdl2 v0.4s, v1.8s, v2.8h
+// CHECK-ERROR:                      ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        sabdl2 v0.2d, v1.4d, v2.4s
+// CHECK-ERROR:                      ^
+
+        uabdl v0.8h, v1.8h, v2.8b
+        uabdl v0.4s, v1.4s, v2.4h
+        uabdl v0.2d, v1.2d, v2.2s
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        uabdl v0.8h, v1.8h, v2.8b
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        uabdl v0.4s, v1.4s, v2.4h
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        uabdl v0.2d, v1.2d, v2.2s
+// CHECK-ERROR:                        ^
+
+        uabdl2 v0.8h, v1.16h, v2.16b
+        uabdl2 v0.4s, v1.8s, v2.8h
+        uabdl2 v0.2d, v1.4d, v2.4s
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        uabdl2 v0.8h, v1.16h, v2.16b
+// CHECK-ERROR:                      ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        uabdl2 v0.4s, v1.8s, v2.8h
+// CHECK-ERROR:                      ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        uabdl2 v0.2d, v1.4d, v2.4s
+// CHECK-ERROR:                      ^
+
+        smlal v0.8h, v1.8h, v2.8b
+        smlal v0.4s, v1.4s, v2.4h
+        smlal v0.2d, v1.2d, v2.2s
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        smlal v0.8h, v1.8h, v2.8b
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        smlal v0.4s, v1.4s, v2.4h
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        smlal v0.2d, v1.2d, v2.2s
+// CHECK-ERROR:                        ^
+
+        smlal2 v0.8h, v1.16h, v2.16b
+        smlal2 v0.4s, v1.8s, v2.8h
+        smlal2 v0.2d, v1.4d, v2.4s
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        smlal2 v0.8h, v1.16h, v2.16b
+// CHECK-ERROR:                      ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        smlal2 v0.4s, v1.8s, v2.8h
+// CHECK-ERROR:                      ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        smlal2 v0.2d, v1.4d, v2.4s
+// CHECK-ERROR:                      ^
+
+        umlal v0.8h, v1.8h, v2.8b
+        umlal v0.4s, v1.4s, v2.4h
+        umlal v0.2d, v1.2d, v2.2s
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        umlal v0.8h, v1.8h, v2.8b
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        umlal v0.4s, v1.4s, v2.4h
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        umlal v0.2d, v1.2d, v2.2s
+// CHECK-ERROR:                        ^
+
+        umlal2 v0.8h, v1.16h, v2.16b
+        umlal2 v0.4s, v1.8s, v2.8h
+        umlal2 v0.2d, v1.4d, v2.4s
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        umlal2 v0.8h, v1.16h, v2.16b
+// CHECK-ERROR:                      ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        umlal2 v0.4s, v1.8s, v2.8h
+// CHECK-ERROR:                      ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        umlal2 v0.2d, v1.4d, v2.4s
+// CHECK-ERROR:                      ^
+
+        smlsl v0.8h, v1.8h, v2.8b
+        smlsl v0.4s, v1.4s, v2.4h
+        smlsl v0.2d, v1.2d, v2.2s
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        smlsl v0.8h, v1.8h, v2.8b
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        smlsl v0.4s, v1.4s, v2.4h
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        smlsl v0.2d, v1.2d, v2.2s
+// CHECK-ERROR:                        ^
+
+        smlsl2 v0.8h, v1.16h, v2.16b
+        smlsl2 v0.4s, v1.8s, v2.8h
+        smlsl2 v0.2d, v1.4d, v2.4s
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        smlsl2 v0.8h, v1.16h, v2.16b
+// CHECK-ERROR:                      ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        smlsl2 v0.4s, v1.8s, v2.8h
+// CHECK-ERROR:                      ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        smlsl2 v0.2d, v1.4d, v2.4s
+// CHECK-ERROR:                      ^
+
+        umlsl v0.8h, v1.8h, v2.8b
+        umlsl v0.4s, v1.4s, v2.4h
+        umlsl v0.2d, v1.2d, v2.2s
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        umlsl v0.8h, v1.8h, v2.8b
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        umlsl v0.4s, v1.4s, v2.4h
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        umlsl v0.2d, v1.2d, v2.2s
+// CHECK-ERROR:                        ^
+
+        umlsl2 v0.8h, v1.16h, v2.16b
+        umlsl2 v0.4s, v1.8s, v2.8h
+        umlsl2 v0.2d, v1.4d, v2.4s
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        umlsl2 v0.8h, v1.16h, v2.16b
+// CHECK-ERROR:                      ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        umlsl2 v0.4s, v1.8s, v2.8h
+// CHECK-ERROR:                      ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        umlsl2 v0.2d, v1.4d, v2.4s
+// CHECK-ERROR:                      ^
+
+        smull v0.8h, v1.8h, v2.8b
+        smull v0.4s, v1.4s, v2.4h
+        smull v0.2d, v1.2d, v2.2s
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        smull v0.8h, v1.8h, v2.8b
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        smull v0.4s, v1.4s, v2.4h
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        smull v0.2d, v1.2d, v2.2s
+// CHECK-ERROR:                        ^
+
+        smull2 v0.8h, v1.16h, v2.16b
+        smull2 v0.4s, v1.8s, v2.8h
+        smull2 v0.2d, v1.4d, v2.4s
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        smull2 v0.8h, v1.16h, v2.16b
+// CHECK-ERROR:                      ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        smull2 v0.4s, v1.8s, v2.8h
+// CHECK-ERROR:                      ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        smull2 v0.2d, v1.4d, v2.4s
+// CHECK-ERROR:                      ^
+
+        umull v0.8h, v1.8h, v2.8b
+        umull v0.4s, v1.4s, v2.4h
+        umull v0.2d, v1.2d, v2.2s
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        umull v0.8h, v1.8h, v2.8b
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        umull v0.4s, v1.4s, v2.4h
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        umull v0.2d, v1.2d, v2.2s
+// CHECK-ERROR:                        ^
+
+        umull2 v0.8h, v1.16h, v2.16b
+        umull2 v0.4s, v1.8s, v2.8h
+        umull2 v0.2d, v1.4d, v2.4s
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        umull2 v0.8h, v1.16h, v2.16b
+// CHECK-ERROR:                      ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        umull2 v0.4s, v1.8s, v2.8h
+// CHECK-ERROR:                      ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        umull2 v0.2d, v1.4d, v2.4s
+// CHECK-ERROR:                      ^
+
+//------------------------------------------------------------------------------
+// Long - Variant 2
+//------------------------------------------------------------------------------
+
+        sqdmlal v0.4s, v1.4s, v2.4h
+        sqdmlal v0.2d, v1.2d, v2.2s
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        sqdmlal v0.4s, v1.4s, v2.4h
+// CHECK-ERROR:                          ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        sqdmlal v0.2d, v1.2d, v2.2s
+// CHECK-ERROR:                          ^
+
+        sqdmlal2 v0.4s, v1.8s, v2.8h
+        sqdmlal2 v0.2d, v1.4d, v2.4s
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        sqdmlal2 v0.4s, v1.8s, v2.8h
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        sqdmlal2 v0.2d, v1.4d, v2.4s
+// CHECK-ERROR:                        ^
+
+        // Mismatched vector types
+        sqdmlal v0.8h, v1.8b, v2.8b
+        sqdmlal2 v0.8h, v1.16b, v2.16b
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        sqdmlal v0.8h, v1.8b, v2.8b
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        sqdmlal2 v0.8h, v1.16b, v2.16b
+// CHECK-ERROR:                    ^
+
+        sqdmlsl v0.4s, v1.4s, v2.4h
+        sqdmlsl v0.2d, v1.2d, v2.2s
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        sqdmlsl v0.4s, v1.4s, v2.4h
+// CHECK-ERROR:                          ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        sqdmlsl v0.2d, v1.2d, v2.2s
+// CHECK-ERROR:                          ^
+
+        sqdmlsl2 v0.4s, v1.8s, v2.8h
+        sqdmlsl2 v0.2d, v1.4d, v2.4s
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        sqdmlsl2 v0.4s, v1.8s, v2.8h
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        sqdmlsl2 v0.2d, v1.4d, v2.4s
+// CHECK-ERROR:                        ^
+
+        // Mismatched vector types
+        sqdmlsl v0.8h, v1.8b, v2.8b
+        sqdmlsl2 v0.8h, v1.16b, v2.16b
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        sqdmlsl v0.8h, v1.8b, v2.8b
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        sqdmlsl2 v0.8h, v1.16b, v2.16b
+// CHECK-ERROR:                    ^
+
+
+        sqdmull v0.4s, v1.4s, v2.4h
+        sqdmull v0.2d, v1.2d, v2.2s
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        sqdmull v0.4s, v1.4s, v2.4h
+// CHECK-ERROR:                          ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        sqdmull v0.2d, v1.2d, v2.2s
+// CHECK-ERROR:                          ^
+
+        sqdmull2 v0.4s, v1.8s, v2.8h
+        sqdmull2 v0.2d, v1.4d, v2.4s
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        sqdmull2 v0.4s, v1.8s, v2.8h
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        sqdmull2 v0.2d, v1.4d, v2.4s
+// CHECK-ERROR:                        ^
+
+        // Mismatched vector types
+        sqdmull v0.8h, v1.8b, v2.8b
+        sqdmull2 v0.8h, v1.16b, v2.16b
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        sqdmull v0.8h, v1.8b, v2.8b
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        sqdmull2 v0.8h, v1.16b, v2.16b
+// CHECK-ERROR:                    ^
+
+
+//------------------------------------------------------------------------------
+// Long - Variant 3
+//------------------------------------------------------------------------------
+
+        pmull v0.8h, v1.8h, v2.8b
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        pmull v0.8h, v1.8h, v2.8b
+// CHECK-ERROR:                        ^
+
+        // Mismatched vector types
+        pmull v0.4s, v1.4h, v2.4h
+        pmull v0.2d, v1.2s, v2.2s
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        pmull v0.4s, v1.4h, v2.4h
+// CHECK-ERROR:                 ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        pmull v0.2d, v1.2s, v2.2s
+// CHECK-ERROR:                 ^
+
+
+        pmull2 v0.8h, v1.16h, v2.16b
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        pmull2 v0.8h, v1.16h, v2.16b
+// CHECK-ERROR:                      ^
+
+        // Mismatched vector types
+        pmull2 v0.4s, v1.8h v2.8h
+        pmull2 v0.2d, v1.4s, v2.4s
+
+// CHECK-ERROR: error: expected comma before next operand
+// CHECK-ERROR:        pmull2 v0.4s, v1.8h v2.8h
+// CHECK-ERROR:                            ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        pmull2 v0.2d, v1.4s, v2.4s
+// CHECK-ERROR:                  ^
+
+//------------------------------------------------------------------------------
+// Widen
+//------------------------------------------------------------------------------
+
+        saddw v0.8h, v1.8h, v2.8h
+        saddw v0.4s, v1.4s, v2.4s
+        saddw v0.2d, v1.2d, v2.2d
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        saddw v0.8h, v1.8h, v2.8h
+// CHECK-ERROR:                               ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        saddw v0.4s, v1.4s, v2.4s
+// CHECK-ERROR:                               ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        saddw v0.2d, v1.2d, v2.2d
+// CHECK-ERROR:                               ^
+
+        saddw2 v0.8h, v1.8h, v2.16h
+        saddw2 v0.4s, v1.4s, v2.8s
+        saddw2 v0.2d, v1.2d, v2.4d
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        saddw2 v0.8h, v1.8h, v2.16h
+// CHECK-ERROR:                             ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        saddw2 v0.4s, v1.4s, v2.8s
+// CHECK-ERROR:                             ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        saddw2 v0.2d, v1.2d, v2.4d
+// CHECK-ERROR:                             ^
+
+        uaddw v0.8h, v1.8h, v2.8h
+        uaddw v0.4s, v1.4s, v2.4s
+        uaddw v0.2d, v1.2d, v2.2d
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        uaddw v0.8h, v1.8h, v2.8h
+// CHECK-ERROR:                               ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        uaddw v0.4s, v1.4s, v2.4s
+// CHECK-ERROR:                               ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        uaddw v0.2d, v1.2d, v2.2d
+// CHECK-ERROR:                               ^
+
+        uaddw2 v0.8h, v1.8h, v2.16h
+        uaddw2 v0.4s, v1.4s, v2.8s
+        uaddw2 v0.2d, v1.2d, v2.4d
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        uaddw2 v0.8h, v1.8h, v2.16h
+// CHECK-ERROR:                             ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        uaddw2 v0.4s, v1.4s, v2.8s
+// CHECK-ERROR:                             ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        uaddw2 v0.2d, v1.2d, v2.4d
+// CHECK-ERROR:                             ^
+
+        ssubw v0.8h, v1.8h, v2.8h
+        ssubw v0.4s, v1.4s, v2.4s
+        ssubw v0.2d, v1.2d, v2.2d
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        ssubw v0.8h, v1.8h, v2.8h
+// CHECK-ERROR:                               ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        ssubw v0.4s, v1.4s, v2.4s
+// CHECK-ERROR:                               ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        ssubw v0.2d, v1.2d, v2.2d
+// CHECK-ERROR:                               ^
+
+        ssubw2 v0.8h, v1.8h, v2.16h
+        ssubw2 v0.4s, v1.4s, v2.8s
+        ssubw2 v0.2d, v1.2d, v2.4d
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        ssubw2 v0.8h, v1.8h, v2.16h
+// CHECK-ERROR:                             ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        ssubw2 v0.4s, v1.4s, v2.8s
+// CHECK-ERROR:                             ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        ssubw2 v0.2d, v1.2d, v2.4d
+// CHECK-ERROR:                             ^
+
+        usubw v0.8h, v1.8h, v2.8h
+        usubw v0.4s, v1.4s, v2.4s
+        usubw v0.2d, v1.2d, v2.2d
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        usubw v0.8h, v1.8h, v2.8h
+// CHECK-ERROR:                               ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        usubw v0.4s, v1.4s, v2.4s
+// CHECK-ERROR:                               ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        usubw v0.2d, v1.2d, v2.2d
+// CHECK-ERROR:                               ^
+
+        usubw2 v0.8h, v1.8h, v2.16h
+        usubw2 v0.4s, v1.4s, v2.8s
+        usubw2 v0.2d, v1.2d, v2.4d
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        usubw2 v0.8h, v1.8h, v2.16h
+// CHECK-ERROR:                             ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        usubw2 v0.4s, v1.4s, v2.8s
+// CHECK-ERROR:                             ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        usubw2 v0.2d, v1.2d, v2.4d
+// CHECK-ERROR:                             ^
+
+//------------------------------------------------------------------------------
+// Narrow
+//------------------------------------------------------------------------------
+
+        addhn v0.8b, v1.8h, v2.8d
+        addhn v0.4h, v1.4s, v2.4h
+        addhn v0.2s, v1.2d, v2.2s
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        addhn v0.8b, v1.8h, v2.8d
+// CHECK-ERROR:                            ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        addhn v0.4h, v1.4s, v2.4h
+// CHECK-ERROR:                               ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        addhn v0.2s, v1.2d, v2.2s
+// CHECK-ERROR:                               ^
+
+        addhn2 v0.16b, v1.8h, v2.8b
+        addhn2 v0.8h, v1.4s, v2.4h
+        addhn2 v0.4s, v1.2d, v2.2s
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        addhn2 v0.16b, v1.8h, v2.8b
+// CHECK-ERROR:                                 ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        addhn2 v0.8h, v1.4s, v2.4h
+// CHECK-ERROR:                                ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        addhn2 v0.4s, v1.2d, v2.2s
+// CHECK-ERROR:                                ^
+
+        raddhn v0.8b, v1.8h, v2.8b
+        raddhn v0.4h, v1.4s, v2.4h
+        raddhn v0.2s, v1.2d, v2.2s
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        raddhn v0.8b, v1.8h, v2.8b
+// CHECK-ERROR:                                ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        raddhn v0.4h, v1.4s, v2.4h
+// CHECK-ERROR:                                ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        raddhn v0.2s, v1.2d, v2.2s
+// CHECK-ERROR:                                ^
+
+        raddhn2 v0.16b, v1.8h, v2.8b
+        raddhn2 v0.8h, v1.4s, v2.4h
+        raddhn2 v0.4s, v1.2d, v2.2s
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        raddhn2 v0.16b, v1.8h, v2.8b
+// CHECK-ERROR:                                  ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        raddhn2 v0.8h, v1.4s, v2.4h
+// CHECK-ERROR:                                 ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        raddhn2 v0.4s, v1.2d, v2.2s
+// CHECK-ERROR:                                 ^
+
+        rsubhn v0.8b, v1.8h, v2.8b
+        rsubhn v0.4h, v1.4s, v2.4h
+        rsubhn v0.2s, v1.2d, v2.2s
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        rsubhn v0.8b, v1.8h, v2.8b
+// CHECK-ERROR:                                ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        rsubhn v0.4h, v1.4s, v2.4h
+// CHECK-ERROR:                                ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        rsubhn v0.2s, v1.2d, v2.2s
+// CHECK-ERROR:                                ^
+
+        rsubhn2 v0.16b, v1.8h, v2.8b
+        rsubhn2 v0.8h, v1.4s, v2.4h
+        rsubhn2 v0.4s, v1.2d, v2.2s
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        rsubhn2 v0.16b, v1.8h, v2.8b
+// CHECK-ERROR:                                  ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        rsubhn2 v0.8h, v1.4s, v2.4h
+// CHECK-ERROR:                                 ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        rsubhn2 v0.4s, v1.2d, v2.2s
+// CHECK-ERROR:                                 ^
+

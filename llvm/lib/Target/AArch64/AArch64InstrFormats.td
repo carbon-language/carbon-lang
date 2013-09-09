@@ -990,6 +990,26 @@ class NeonI_3VSame<bit q, bit u, bits<2> size, bits<5> opcode,
   // Inherit Rd in 4-0
 }
 
+// Format AdvSIMD 3 vector registers with different vector type
+class NeonI_3VDiff<bit q, bit u, bits<2> size, bits<4> opcode,
+                   dag outs, dag ins, string asmstr,
+                   list<dag> patterns, InstrItinClass itin>
+  : A64InstRdnm<outs, ins, asmstr, patterns, itin>
+{
+  let Inst{31} = 0b0;
+  let Inst{30} = q;
+  let Inst{29} = u;
+  let Inst{28-24} = 0b01110;
+  let Inst{23-22} = size;
+  let Inst{21} = 0b1;
+   // Inherit Rm in 20-16
+  let Inst{15-12} = opcode;
+  let Inst{11} = 0b0;
+  let Inst{10} = 0b0;
+  // Inherit Rn in 9-5
+  // Inherit Rd in 4-0
+}
+
 // Format AdvSIMD 1 vector register with modified immediate
 class NeonI_1VModImm<bit q, bit op,
                      dag outs, dag ins, string asmstr,
