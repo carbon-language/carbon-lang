@@ -40,15 +40,22 @@ enum OpKind {
   OpUnavailable,
   OpAdd,
   OpAddl,
+  OpAddlHi,
   OpAddw,
+  OpAddwHi,
   OpSub,
   OpSubl,
+  OpSublHi,
   OpSubw,
+  OpSubwHi,
   OpMul,
   OpMla,
   OpMlal,
+  OpMullHi,
+  OpMlalHi,
   OpMls,
   OpMlsl,
+  OpMlslHi,
   OpMulN,
   OpMlaN,
   OpMlsN,
@@ -88,9 +95,18 @@ enum OpKind {
   OpRev32,
   OpRev64,
   OpReinterpret,
+  OpAddhnHi,
+  OpRAddhnHi,
+  OpSubhnHi,
+  OpRSubhnHi,
   OpAbdl,
+  OpAbdlHi,
   OpAba,
   OpAbal,
+  OpAbalHi,
+  OpQDMullHi,
+  OpQDMlalHi,
+  OpQDMlslHi,
   OpDiv,
   OpLongHi,
   OpNarrowHi,
@@ -159,15 +175,22 @@ public:
     OpMap["OP_UNAVAILABLE"] = OpUnavailable;
     OpMap["OP_ADD"]   = OpAdd;
     OpMap["OP_ADDL"]  = OpAddl;
+    OpMap["OP_ADDLHi"] = OpAddlHi;
     OpMap["OP_ADDW"]  = OpAddw;
+    OpMap["OP_ADDWHi"] = OpAddwHi;
     OpMap["OP_SUB"]   = OpSub;
     OpMap["OP_SUBL"]  = OpSubl;
+    OpMap["OP_SUBLHi"] = OpSublHi;
     OpMap["OP_SUBW"]  = OpSubw;
+    OpMap["OP_SUBWHi"] = OpSubwHi;
     OpMap["OP_MUL"]   = OpMul;
     OpMap["OP_MLA"]   = OpMla;
     OpMap["OP_MLAL"]  = OpMlal;
+    OpMap["OP_MULLHi"]  = OpMullHi;
+    OpMap["OP_MLALHi"]  = OpMlalHi;
     OpMap["OP_MLS"]   = OpMls;
     OpMap["OP_MLSL"]  = OpMlsl;
+    OpMap["OP_MLSLHi"] = OpMlslHi;
     OpMap["OP_MUL_N"] = OpMulN;
     OpMap["OP_MLA_N"] = OpMlaN;
     OpMap["OP_MLS_N"] = OpMlsN;
@@ -207,9 +230,18 @@ public:
     OpMap["OP_REV32"] = OpRev32;
     OpMap["OP_REV64"] = OpRev64;
     OpMap["OP_REINT"] = OpReinterpret;
+    OpMap["OP_ADDHNHi"] = OpAddhnHi;
+    OpMap["OP_RADDHNHi"] = OpRAddhnHi;
+    OpMap["OP_SUBHNHi"] = OpSubhnHi;
+    OpMap["OP_RSUBHNHi"] = OpRSubhnHi;
     OpMap["OP_ABDL"]  = OpAbdl;
+    OpMap["OP_ABDLHi"] = OpAbdlHi;
     OpMap["OP_ABA"]   = OpAba;
     OpMap["OP_ABAL"]  = OpAbal;
+    OpMap["OP_ABALHi"] = OpAbalHi;
+    OpMap["OP_QDMULLHi"] = OpQDMullHi;
+    OpMap["OP_QDMLALHi"] = OpQDMlalHi;
+    OpMap["OP_QDMLSLHi"] = OpQDMlslHi;
     OpMap["OP_DIV"] = OpDiv;
     OpMap["OP_LONG_HI"] = OpLongHi;
     OpMap["OP_NARROW_HI"] = OpNarrowHi;
@@ -326,6 +358,29 @@ static char Narrow(const char t) {
   }
 }
 
+static std::string GetNarrowTypestr(StringRef ty)
+{
+  std::string s;
+  for (size_t i = 0, end = ty.size(); i < end; i++) {
+    switch (ty[i]) {
+      case 's':
+        s += 'c';
+        break;
+      case 'i':
+        s += 's';
+        break;
+      case 'l':
+        s += 'i';
+        break;
+      default:
+        s += ty[i];
+        break;
+    }
+  }
+
+  return s;
+}
+
 /// For a particular StringRef, return the base type code, and whether it has
 /// the quad-vector, polynomial, or unsigned modifiers set.
 static char ClassifyType(StringRef ty, bool &quad, bool &poly, bool &usgn) {
@@ -425,6 +480,10 @@ static char ModType(const char mod, char type, bool &quad, bool &poly,
       type = Narrow(type);
       if (type == 'h')
         quad = false;
+      break;
+    case 'q':
+      type = Narrow(type);
+      quad = true;
       break;
     case 'e':
       type = Narrow(type);
@@ -1286,10 +1345,57 @@ static std::string GenMacroLocals(const std::string &proto, StringRef typestr) {
 }
 
 // Use the vmovl builtin to sign-extend or zero-extend a vector.
-static std::string Extend(StringRef typestr, const std::string &a) {
-  std::string s;
-  s = MangleName("vmovl", typestr, ClassS);
+static std::string Extend(StringRef typestr, const std::string &a, bool h=0) {
+  std::string s, high;
+  high = h ? "_high" : "";
+  s = MangleName("vmovl" + high, typestr, ClassS);
   s += "(" + a + ")";
+  return s;
+}
+
+// Get the high 64-bit part of a vector
+static std::string GetHigh(const std::string &a, StringRef typestr) {
+  std::string s;
+  s = MangleName("vget_high", typestr, ClassS);
+  s += "(" + a + ")";
+  return s;
+}
+
+// Gen operation with two operands and get high 64-bit for both of two operands.
+static std::string Gen2OpWith2High(StringRef typestr,
+                                   const std::string &op,
+                                   const std::string &a,
+                                   const std::string &b) {
+  std::string s;
+  std::string Op1 = GetHigh(a, typestr);
+  std::string Op2 = GetHigh(b, typestr);
+  s = MangleName(op, typestr, ClassS);
+  s += "(" + Op1 + ", " + Op2 + ");";
+  return s;
+}
+
+// Gen operation with three operands and get high 64-bit of the latter 
+// two operands.
+static std::string Gen3OpWith2High(StringRef typestr,
+                                   const std::string &op,
+                                   const std::string &a,
+                                   const std::string &b,
+                                   const std::string &c) {
+  std::string s;
+  std::string Op1 = GetHigh(b, typestr);
+  std::string Op2 = GetHigh(c, typestr);
+  s = MangleName(op, typestr, ClassS);
+  s += "(" + a + ", " + Op1 + ", " + Op2 + ");";
+  return s;
+}
+
+// Gen combine operation by putting a on low 64-bit, and b on high 64-bit.
+static std::string GenCombine(std::string typestr,
+                              const std::string &a,
+                              const std::string &b) {
+  std::string s;
+  s = MangleName("vcombine", typestr, ClassS);
+  s += "(" + a + ", " + b + ")";
   return s;
 }
 
@@ -1368,8 +1474,14 @@ static std::string GenOpString(const std::string &name, OpKind op,
   case OpAddl:
     s += Extend(typestr, "__a") + " + " + Extend(typestr, "__b") + ";";
     break;
+  case OpAddlHi:
+    s += Extend(typestr, "__a", 1) + " + " + Extend(typestr, "__b", 1) + ";";
+    break;
   case OpAddw:
     s += "__a + " + Extend(typestr, "__b") + ";";
+    break;
+  case OpAddwHi:
+    s += "__a + " + Extend(typestr, "__b", 1) + ";";
     break;
   case OpSub:
     s += "__a - __b;";
@@ -1377,8 +1489,14 @@ static std::string GenOpString(const std::string &name, OpKind op,
   case OpSubl:
     s += Extend(typestr, "__a") + " - " + Extend(typestr, "__b") + ";";
     break;
+  case OpSublHi:
+    s += Extend(typestr, "__a", 1) + " - " + Extend(typestr, "__b", 1) + ";";
+    break;
   case OpSubw:
     s += "__a - " + Extend(typestr, "__b") + ";";
+    break;
+  case OpSubwHi:
+    s += "__a - " + Extend(typestr, "__b", 1) + ";";
     break;
   case OpMulN:
     s += "__a * " + Duplicate(nElts, typestr, "__b") + ";";
@@ -1413,6 +1531,12 @@ static std::string GenOpString(const std::string &name, OpKind op,
   case OpMlal:
     s += "__a + " + MangleName("vmull", typestr, ClassS) + "(__b, __c);";
     break;
+  case OpMullHi:
+    s += Gen2OpWith2High(typestr, "vmull", "__a", "__b");
+    break;
+  case OpMlalHi:
+    s += Gen3OpWith2High(typestr, "vmlal", "__a", "__b", "__c");
+    break;
   case OpMlsN:
     s += "__a - (__b * " + Duplicate(nElts, typestr, "__c") + ");";
     break;
@@ -1432,6 +1556,9 @@ static std::string GenOpString(const std::string &name, OpKind op,
     break;
   case OpMlsl:
     s += "__a - " + MangleName("vmull", typestr, ClassS) + "(__b, __c);";
+    break;
+  case OpMlslHi:
+    s += Gen3OpWith2High(typestr, "vmlsl", "__a", "__b", "__c");
     break;
   case OpQDMullLane:
     s += MangleName("vqdmull", typestr, ClassS) + "(__a, " +
@@ -1560,23 +1687,51 @@ static std::string GenOpString(const std::string &name, OpKind op,
     }
     break;
   }
+  case OpAbdlHi:
+    s += Gen2OpWith2High(typestr, "vabdl", "__a", "__b");
+    break;
+  case OpAddhnHi: {
+    std::string addhn = MangleName("vaddhn", typestr, ClassS) + "(__b, __c)";
+    s += GenCombine(GetNarrowTypestr(typestr), "__a", addhn);
+    s += ";";
+    break;
+  }
+  case OpRAddhnHi: {
+    std::string raddhn = MangleName("vraddhn", typestr, ClassS) + "(__b, __c)";
+    s += GenCombine(GetNarrowTypestr(typestr), "__a", raddhn);
+    s += ";";
+    break;
+  }
+  case OpSubhnHi: {
+    std::string subhn = MangleName("vsubhn", typestr, ClassS) + "(__b, __c)";
+    s += GenCombine(GetNarrowTypestr(typestr), "__a", subhn);
+    s += ";";
+    break;
+  }
+  case OpRSubhnHi: {
+    std::string rsubhn = MangleName("vrsubhn", typestr, ClassS) + "(__b, __c)";
+    s += GenCombine(GetNarrowTypestr(typestr), "__a", rsubhn);
+    s += ";";
+    break;
+  }
   case OpAba:
     s += "__a + " + MangleName("vabd", typestr, ClassS) + "(__b, __c);";
     break;
-  case OpAbal: {
-    s += "__a + ";
-    std::string abd = MangleName("vabd", typestr, ClassS) + "(__b, __c)";
-    if (typestr[0] != 'U') {
-      // vabd results are always unsigned and must be zero-extended.
-      std::string utype = "U" + typestr.str();
-      s += "(" + TypeString(proto[0], typestr) + ")";
-      abd = "(" + TypeString('d', utype) + ")" + abd;
-      s += Extend(utype, abd) + ";";
-    } else {
-      s += Extend(typestr, abd) + ";";
-    }
+  case OpAbal:
+    s += "__a + " + MangleName("vabdl", typestr, ClassS) + "(__b, __c);";
     break;
-  }
+  case OpAbalHi:
+    s += Gen3OpWith2High(typestr, "vabal", "__a", "__b", "__c");
+    break;
+  case OpQDMullHi:
+    s += Gen2OpWith2High(typestr, "vqdmull", "__a", "__b");
+    break;
+  case OpQDMlalHi:
+    s += Gen3OpWith2High(typestr, "vqdmlal", "__a", "__b", "__c");
+    break;
+  case OpQDMlslHi:
+    s += Gen3OpWith2High(typestr, "vqdmlsl", "__a", "__b", "__c");
+    break;
   case OpDiv:
     s += "__a / __b;";
     break;
@@ -1993,6 +2148,7 @@ void NeonEmitter::run(raw_ostream &OS) {
   emitIntrinsic(OS, Records.getDef("VMOVL"), EmittedMap);
   emitIntrinsic(OS, Records.getDef("VMULL"), EmittedMap);
   emitIntrinsic(OS, Records.getDef("VABD"), EmittedMap);
+  emitIntrinsic(OS, Records.getDef("VABDL"), EmittedMap);
 
   // ARM intrinsics must be emitted before AArch64 intrinsics to ensure
   // common intrinsics appear only once in the output stream.
@@ -2013,6 +2169,10 @@ void NeonEmitter::run(raw_ostream &OS) {
 
   // Emit AArch64-specific intrinsics.
   OS << "#ifdef __aarch64__\n";
+
+  emitIntrinsic(OS, Records.getDef("VMOVL_HIGH"), EmittedMap);
+  emitIntrinsic(OS, Records.getDef("VMULL_HIGH"), EmittedMap);
+  emitIntrinsic(OS, Records.getDef("VABDL_HIGH"), EmittedMap);
 
   for (unsigned i = 0, e = RV.size(); i != e; ++i) {
     Record *R = RV[i];

@@ -18,15 +18,22 @@ def OP_NONE  : Op;
 def OP_UNAVAILABLE : Op;
 def OP_ADD   : Op;
 def OP_ADDL  : Op;
+def OP_ADDLHi : Op;
 def OP_ADDW  : Op;
+def OP_ADDWHi : Op;
 def OP_SUB   : Op;
 def OP_SUBL  : Op;
+def OP_SUBLHi : Op;
 def OP_SUBW  : Op;
+def OP_SUBWHi : Op;
 def OP_MUL   : Op;
 def OP_MLA   : Op;
 def OP_MLAL  : Op;
+def OP_MULLHi : Op;
+def OP_MLALHi : Op;
 def OP_MLS   : Op;
 def OP_MLSL  : Op;
+def OP_MLSLHi : Op;
 def OP_MUL_N : Op;
 def OP_MLA_N : Op;
 def OP_MLS_N : Op;
@@ -66,9 +73,18 @@ def OP_REV64 : Op;
 def OP_REV32 : Op;
 def OP_REV16 : Op;
 def OP_REINT : Op;
+def OP_ADDHNHi : Op;
+def OP_RADDHNHi : Op;
+def OP_SUBHNHi : Op;
+def OP_RSUBHNHi : Op;
 def OP_ABDL  : Op;
+def OP_ABDLHi : Op;
 def OP_ABA   : Op;
 def OP_ABAL  : Op;
+def OP_ABALHi : Op;
+def OP_QDMULLHi : Op;
+def OP_QDMLALHi : Op;
+def OP_QDMLSLHi : Op;
 def OP_DIV  : Op;
 def OP_LONG_HI : Op;
 def OP_NARROW_HI : Op;
@@ -133,6 +149,7 @@ class NoTestOpInst<string n, string p, string t, Op o> : Inst<n, p, t, o> {}
 // w: double width elements, same num elts
 // n: double width elements, half num elts
 // h: half width elements, double num elts
+// q: half width elements, quad num elts
 // e: half width elements, double num elts, unsigned
 // m: half width elements, same num elts
 // i: constant int
@@ -588,6 +605,29 @@ def CVTF_N_F64   : SInst<"vcvt_n_f64", "fdi", "QlQUl">;
 def FCVTZS_N_S64 : SInst<"vcvt_n_s64", "xdi", "Qd">;
 def FCVTZS_N_U64 : SInst<"vcvt_n_u64", "udi", "Qd">;
 }
+
+////////////////////////////////////////////////////////////////////////////////
+// 3VDiff class using high 64-bit in operands
+def VADDL_HIGH   : SOpInst<"vaddl_high", "wkk", "csiUcUsUi", OP_ADDLHi>;
+def VADDW_HIGH   : SOpInst<"vaddw_high", "wwk", "csiUcUsUi", OP_ADDWHi>;
+def VSUBL_HIGH   : SOpInst<"vsubl_high", "wkk", "csiUcUsUi", OP_SUBLHi>;
+def VSUBW_HIGH   : SOpInst<"vsubw_high", "wwk", "csiUcUsUi", OP_SUBWHi>;
+
+def VABDL_HIGH   : SOpInst<"vabdl_high", "wkk",  "csiUcUsUi", OP_ABDLHi>;
+def VABAL_HIGH   : SOpInst<"vabal_high", "wwkk", "csiUcUsUi", OP_ABALHi>;
+
+def VMULL_HIGH   : SOpInst<"vmull_high", "wkk", "csiUcUsUiPc", OP_MULLHi>;
+def VMLAL_HIGH   : SOpInst<"vmlal_high", "wwkk", "csiUcUsUi", OP_MLALHi>;
+def VMLSL_HIGH   : SOpInst<"vmlsl_high", "wwkk", "csiUcUsUi", OP_MLSLHi>;
+
+def VADDHN_HIGH  : SOpInst<"vaddhn_high", "qhkk", "silUsUiUl", OP_ADDHNHi>;
+def VRADDHN_HIGH : SOpInst<"vraddhn_high", "qhkk", "silUsUiUl", OP_RADDHNHi>;
+def VSUBHN_HIGH  : SOpInst<"vsubhn_high", "qhkk", "silUsUiUl", OP_SUBHNHi>;
+def VRSUBHN_HIGH : SOpInst<"vrsubhn_high", "qhkk", "silUsUiUl", OP_RSUBHNHi>;
+
+def VQDMULL_HIGH : SOpInst<"vqdmull_high", "wkk", "si", OP_QDMULLHi>;
+def VQDMLAL_HIGH : SOpInst<"vqdmlal_high", "wwkk", "si", OP_QDMLALHi>;
+def VQDMLSL_HIGH : SOpInst<"vqdmlsl_high", "wwkk", "si", OP_QDMLSLHi>;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Scalar Arithmetic

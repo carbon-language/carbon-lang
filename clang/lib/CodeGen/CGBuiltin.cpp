@@ -1840,6 +1840,22 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
     return EmitARMBuiltinExpr(ARM::BI__builtin_neon_vqrshl_v, E);
   case AArch64::BI__builtin_neon_vqrshlq_v:
     return EmitARMBuiltinExpr(ARM::BI__builtin_neon_vqrshlq_v, E);
+  case AArch64::BI__builtin_neon_vaddhn_v:
+    return EmitARMBuiltinExpr(ARM::BI__builtin_neon_vaddhn_v, E);
+  case AArch64::BI__builtin_neon_vraddhn_v:
+    return EmitARMBuiltinExpr(ARM::BI__builtin_neon_vraddhn_v, E);
+  case AArch64::BI__builtin_neon_vsubhn_v:
+    return EmitARMBuiltinExpr(ARM::BI__builtin_neon_vsubhn_v, E);
+  case AArch64::BI__builtin_neon_vrsubhn_v:
+    return EmitARMBuiltinExpr(ARM::BI__builtin_neon_vrsubhn_v, E);
+  case AArch64::BI__builtin_neon_vmull_v:
+    return EmitARMBuiltinExpr(ARM::BI__builtin_neon_vmull_v, E);
+  case AArch64::BI__builtin_neon_vqdmull_v:
+    return EmitARMBuiltinExpr(ARM::BI__builtin_neon_vqdmull_v, E);
+  case AArch64::BI__builtin_neon_vqdmlal_v:
+    return EmitARMBuiltinExpr(ARM::BI__builtin_neon_vqdmlal_v, E);
+  case AArch64::BI__builtin_neon_vqdmlsl_v:
+    return EmitARMBuiltinExpr(ARM::BI__builtin_neon_vqdmlsl_v, E);
   case AArch64::BI__builtin_neon_vmax_v:
     return EmitARMBuiltinExpr(ARM::BI__builtin_neon_vmax_v, E);
   case AArch64::BI__builtin_neon_vmaxq_v:
