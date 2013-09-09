@@ -789,6 +789,23 @@ enum AcceleratorTable {
 /// AtomTypeString - Return the string for the specified Atom type.
 const char *AtomTypeString(unsigned Atom);
 
+// Constants for the GNU pubnames/pubtypes extensions supporting gdb index.
+enum GDBIndex {
+  // Special value to indicate no attributes are present.
+  GDB_INDEX_SYMBOL_KIND_NONE = 0,
+  GDB_INDEX_SYMBOL_KIND_TYPE = 1,
+  GDB_INDEX_SYMBOL_KIND_VARIABLE = 2,
+  GDB_INDEX_SYMBOL_KIND_FUNCTION = 3,
+  GDB_INDEX_SYMBOL_KIND_OTHER = 4,
+  // 3 unused bits.
+  GDB_INDEX_SYMBOL_KIND_UNUSED5 = 5,
+  GDB_INDEX_SYMBOL_KIND_UNUSED6 = 6,
+  GDB_INDEX_SYMBOL_KIND_UNUSED7 = 7
+};
+
+/// GDBIndexTypeString - Return the string for the specified index type.
+const char *GDBIndexTypeString(unsigned Kind);
+
 } // End of namespace dwarf
 
 } // End of namespace llvm

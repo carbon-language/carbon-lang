@@ -739,3 +739,26 @@ const char *llvm::dwarf::AtomTypeString(unsigned AT) {
   }
   return 0;
 }
+
+const char *llvm::dwarf::GDBIndexTypeString(unsigned Kind) {
+  switch (Kind) {
+  case GDB_INDEX_SYMBOL_KIND_NONE:
+    return "case GDB_INDEX_SYMBOL_KIND_NONE";
+  case GDB_INDEX_SYMBOL_KIND_TYPE:
+    return "case GDB_INDEX_SYMBOL_KIND_TYPE";
+  case GDB_INDEX_SYMBOL_KIND_VARIABLE:
+    return "case GDB_INDEX_SYMBOL_KIND_VARIABLE";
+  case GDB_INDEX_SYMBOL_KIND_FUNCTION:
+    return "case GDB_INDEX_SYMBOL_KIND_FUNCTION";
+  case GDB_INDEX_SYMBOL_KIND_OTHER:
+    return "case GDB_INDEX_SYMBOL_KIND_OTHER";
+  // 3 unused bits.
+  case GDB_INDEX_SYMBOL_KIND_UNUSED5:
+    return "case GDB_INDEX_SYMBOL_KIND_UNUSED5";
+  case GDB_INDEX_SYMBOL_KIND_UNUSED6:
+    return "case GDB_INDEX_SYMBOL_KIND_UNUSED6";
+  case GDB_INDEX_SYMBOL_KIND_UNUSED7:
+    return "case GDB_INDEX_SYMBOL_KIND_UNUSED7";
+  }
+  return 0;
+}
