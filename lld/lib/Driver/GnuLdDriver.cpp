@@ -14,7 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "lld/Driver/Driver.h"
-#include "lld/Driver/GnuLDInputGraph.h"
+#include "lld/Driver/GnuLdInputGraph.h"
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/STLExtras.h"
