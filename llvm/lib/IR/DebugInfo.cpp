@@ -446,12 +446,18 @@ static bool isScopeRef(const Value *Val) {
          (isa<MDNode>(Val) && DIScope(cast<MDNode>(Val)).isScope());
 }
 
+/// Check if a field at position Elt of a MDNode can be a ScopeRef.
+static bool fieldIsScopeRef(const MDNode *DbgNode, unsigned Elt) {
+  Value *Fld = getField(DbgNode, Elt);
+  return isScopeRef(Fld);
+}
+
 /// Verify - Verify that a type descriptor is well formed.
 bool DIType::Verify() const {
   if (!isType())
     return false;
   // Make sure Context @ field 2 is MDNode.
-  if (!fieldIsMDNode(DbgNode, 2))
+  if (!fieldIsScopeRef(DbgNode, 2))
     return false;
 
   // FIXME: Sink this into the various subclass verifies.
@@ -956,11 +962,13 @@ void DebugInfoFinder::reset() {
   TYs.clear();
   Scopes.clear();
   NodesSeen.clear();
+  TypeIdentifierMap.clear();
 }
 
 /// processModule - Process entire module and collect debug info.
 void DebugInfoFinder::processModule(const Module &M) {
   if (NamedMDNode *CU_Nodes = M.getNamedMetadata("llvm.dbg.cu")) {
+    TypeIdentifierMap = generateDITypeIdentifierMap(CU_Nodes);
     for (unsigned i = 0, e = CU_Nodes->getNumOperands(); i != e; ++i) {
       DICompileUnit CU(CU_Nodes->getOperand(i));
       addCompileUnit(CU);
@@ -1010,7 +1018,7 @@ void DebugInfoFinder::processLocation(DILocation Loc) {
 void DebugInfoFinder::processType(DIType DT) {
   if (!addType(DT))
     return;
-  processScope(DT.getContext());
+  processScope(DT.getContext().resolve(TypeIdentifierMap));
   if (DT.isCompositeType()) {
     DICompositeType DCT(DT);
     processType(DCT.getTypeDerivedFrom());

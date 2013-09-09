@@ -367,6 +367,7 @@ char BasicBlockPassPrinter::ID = 0;
 struct BreakpointPrinter : public ModulePass {
   raw_ostream &Out;
   static char ID;
+  DITypeIdentifierMap TypeIdentifierMap;
 
   BreakpointPrinter(raw_ostream &out)
     : ModulePass(ID), Out(out) {
@@ -382,13 +383,18 @@ struct BreakpointPrinter : public ModulePass {
     } else if (Context.isType()) {
       DIType TY(Context);
       if (!TY.getName().empty()) {
-        getContextName(TY.getContext(), N);
+        getContextName(TY.getContext().resolve(TypeIdentifierMap), N);
         N = N + TY.getName().str() + "::";
       }
     }
   }
 
   virtual bool runOnModule(Module &M) {
+    TypeIdentifierMap.clear();
+    NamedMDNode *CU_Nodes = M.getNamedMetadata("llvm.dbg.cu");
+    if (CU_Nodes)
+      TypeIdentifierMap = generateDITypeIdentifierMap(CU_Nodes);
+
     StringSet<> Processed;
     if (NamedMDNode *NMD = M.getNamedMetadata("llvm.dbg.sp"))
       for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {

@@ -341,7 +341,7 @@ bool DwarfDebug::isSubprogramContext(const MDNode *Context) {
   if (D.isSubprogram())
     return true;
   if (D.isType())
-    return isSubprogramContext(DIType(Context).getContext());
+    return isSubprogramContext(resolve(DIType(Context).getContext()));
   return false;
 }
 
@@ -2656,7 +2656,7 @@ DIScope DwarfDebug::resolve(DIScopeRef SRef) const {
 DIScope DwarfDebug::getScopeContext(DIScope S) const {
 
   if (S.isType())
-    return DIType(S).getContext();
+    return resolve(DIType(S).getContext());
 
   if (S.isSubprogram())
     return DISubprogram(S).getContext();

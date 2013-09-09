@@ -237,7 +237,7 @@ namespace llvm {
     /// Verify - Verify that a type descriptor is well formed.
     bool Verify() const;
 
-    DIScope getContext() const          { return getFieldAs<DIScope>(2); }
+    DIScopeRef getContext() const       { return getFieldAs<DIScopeRef>(2); }
     StringRef getName() const           { return getStringField(3);     }
     unsigned getLineNumber() const      { return getUnsignedField(4); }
     uint64_t getSizeInBits() const      { return getUInt64Field(5); }
@@ -820,6 +820,7 @@ namespace llvm {
     SmallVector<MDNode *, 8> TYs;  // Types
     SmallVector<MDNode *, 8> Scopes; // Scopes
     SmallPtrSet<MDNode *, 64> NodesSeen;
+    DITypeIdentifierMap TypeIdentifierMap;
   };
 } // end namespace llvm
 

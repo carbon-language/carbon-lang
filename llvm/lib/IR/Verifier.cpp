@@ -170,6 +170,8 @@ namespace {
       Finder.reset();
 
       DL = getAnalysisIfAvailable<DataLayout>();
+      if (!DisableDebugInfoVerifier)
+        Finder.processModule(M);
 
       // We must abort before returning back to the pass manager, or else the
       // pass manager may try to run other passes on the broken module.
@@ -2305,8 +2307,6 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
 void Verifier::verifyDebugInfo(Module &M) {
   // Verify Debug Info.
   if (!DisableDebugInfoVerifier) {
-    Finder.processModule(M);
-
     for (DebugInfoFinder::iterator I = Finder.compile_unit_begin(),
          E = Finder.compile_unit_end(); I != E; ++I)
       Assert1(DICompileUnit(*I).Verify(), "DICompileUnit does not Verify!", *I);

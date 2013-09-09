@@ -417,7 +417,7 @@ DIDerivedType DIBuilder::createMemberType(
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_member),
     File.getFileNode(),
-    getNonCompileUnitScope(Scope),
+    DIScope(getNonCompileUnitScope(Scope)).generateRef(),
     MDString::get(VMContext, Name),
     ConstantInt::get(Type::getInt32Ty(VMContext), LineNumber),
     ConstantInt::get(Type::getInt64Ty(VMContext), SizeInBits),

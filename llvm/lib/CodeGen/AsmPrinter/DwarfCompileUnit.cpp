@@ -800,7 +800,7 @@ DIE *CompileUnit::getOrCreateTypeDIE(const MDNode *TyNode) {
     addAccelType(Ty.getName(), std::make_pair(TyDIE, Flags));
   }
 
-  addToContextOwner(TyDIE, Ty.getContext());
+  addToContextOwner(TyDIE, DD->resolve(Ty.getContext()));
   return TyDIE;
 }
 
@@ -832,7 +832,7 @@ void CompileUnit::addType(DIE *Entity, DIType Ty, uint16_t Attribute) {
 /// addGlobalType - Add a new global type to the compile unit.
 ///
 void CompileUnit::addGlobalType(DIType Ty) {
-  DIDescriptor Context = Ty.getContext();
+  DIDescriptor Context = DD->resolve(Ty.getContext());
   if (Ty.isCompositeType() && !Ty.getName().empty() && !Ty.isForwardDecl()
       && (!Context || Context.isCompileUnit() || Context.isFile()
           || Context.isNameSpace()))
@@ -914,7 +914,7 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DIDerivedType DTy) {
 /// Return true if the type is appropriately scoped to be contained inside
 /// its own type unit.
 static bool isTypeUnitScoped(DIType Ty, const DwarfDebug *DD) {
-  DIScope Parent = Ty.getContext();
+  DIScope Parent = DD->resolve(Ty.getContext());
   while (Parent) {
     // Don't generate a hash for anything scoped inside a function.
     if (Parent.isSubprogram())
@@ -1088,7 +1088,7 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
       addDIEEntry(&Buffer, dwarf::DW_AT_containing_type, dwarf::DW_FORM_ref4,
                   getOrCreateTypeDIE(DIType(ContainingType)));
     else
-      addToContextOwner(&Buffer, CTy.getContext());
+      addToContextOwner(&Buffer, DD->resolve(CTy.getContext()));
 
     if (CTy.isObjcClassComplete())
       addFlag(&Buffer, dwarf::DW_AT_APPLE_objc_complete_type);
@@ -1373,7 +1373,7 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
     // We need the declaration DIE that is in the static member's class.
     // But that class might not exist in the DWARF yet.
     // Creating the class will create the static member decl DIE.
-    getOrCreateContextDIE(SDMDecl.getContext());
+    getOrCreateContextDIE(DD->resolve(SDMDecl.getContext()));
     VariableDIE = getDIE(SDMDecl);
     assert(VariableDIE && "Static member decl has no context?");
     IsStaticMember = true;
