@@ -2506,7 +2506,7 @@ Sema::SpecialMemberOverloadResult *Sema::LookupSpecialMember(CXXRecordDecl *RD,
   SmallVector<NamedDecl *, 8> Candidates(R.begin(), R.end());
 
   for (SmallVectorImpl<NamedDecl *>::iterator I = Candidates.begin(),
-                                         E = Candidates.end();
+                                              E = Candidates.end();
        I != E; ++I) {
     NamedDecl *Cand = *I;
 

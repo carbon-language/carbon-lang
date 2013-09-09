@@ -1450,7 +1450,7 @@ public:
   ClassTemplateSpecializationDecl *getMostRecentDecl() {
     CXXRecordDecl *Recent
         = cast<CXXRecordDecl>(CXXRecordDecl::getMostRecentDecl());
-    if (!isa<ClassTemplateSpecializationDecl>(Recent)) {
+    while (!isa<ClassTemplateSpecializationDecl>(Recent)) {
       // FIXME: Does injected class name need to be in the redeclarations chain?
       assert(Recent->isInjectedClassName() && Recent->getPreviousDecl());
       Recent = Recent->getPreviousDecl();

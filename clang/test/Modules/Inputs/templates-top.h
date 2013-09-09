@@ -15,3 +15,7 @@ template <typename T> class A::WhereAmI {
 public:
   static void func() {}
 };
+
+template<typename T> struct Outer {
+  struct Inner {};
+};

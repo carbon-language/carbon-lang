@@ -27,3 +27,5 @@ void triggerPendingInstantiation() {
 }
 
 void redeclDefinitionEmit(){}
+
+typedef Outer<int>::Inner OuterIntInner_left;

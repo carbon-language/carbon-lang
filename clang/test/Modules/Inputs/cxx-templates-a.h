@@ -24,3 +24,9 @@ template<typename T> void PerformDelayedLookup(T &t) {
 template<typename T> void PerformDelayedLookupInDefaultArgument(T &t, int a = (FoundByADL(T()), 0)) {}
 
 template<typename T> struct RedeclaredAsFriend {};
+
+void use_some_template_a() {
+  SomeTemplate<char[2]> a;
+  SomeTemplate<char[1]> b, c;
+  b = c;
+}

@@ -35,6 +35,12 @@ struct RedeclareTemplateAsFriend {
   friend struct RedeclaredAsFriend;
 };
 
+void use_some_template_b() {
+  SomeTemplate<char[1]> a;
+  SomeTemplate<char[2]> b, c;
+  b = c;
+}
+
 @import cxx_templates_a;
 template<typename T> void UseDefinedInBImplIndirectly(T &v) {
   PerformDelayedLookup(v);

@@ -32,5 +32,10 @@ void testRedeclDefinition() {
   redeclDefinitionEmit();
 }
 
+// These three are all the same type.
+typedef OuterIntInner_left OuterIntInner;
+typedef OuterIntInner_right OuterIntInner;
+typedef Outer<int>::Inner OuterIntInner;
+
 // CHECK: call {{.*pendingInstantiation}}
 // CHECK: call {{.*redeclDefinitionEmit}}
