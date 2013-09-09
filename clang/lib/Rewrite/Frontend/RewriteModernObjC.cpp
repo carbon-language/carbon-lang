@@ -103,7 +103,7 @@ namespace {
     FunctionDecl *GetSuperClassFunctionDecl;
     FunctionDecl *SelGetUidFunctionDecl;
     FunctionDecl *CFStringFunctionDecl;
-    FunctionDecl *SuperContructorFunctionDecl;
+    FunctionDecl *SuperConstructorFunctionDecl;
     FunctionDecl *CurFunctionDef;
 
     /* Misc. containers needed for meta-data rewrite. */
@@ -431,7 +431,7 @@ namespace {
     void SynthGetMetaClassFunctionDecl();
     void SynthGetSuperClassFunctionDecl();
     void SynthSelGetUidFunctionDecl();
-    void SynthSuperContructorFunctionDecl();
+    void SynthSuperConstructorFunctionDecl();
     
     // Rewriting metadata
     template<typename MethodIterator>
@@ -686,7 +686,7 @@ void RewriteModernObjC::InitializeCommon(ASTContext &context) {
   ProtocolTypeDecl = 0;
   ConstantStringDecl = 0;
   BcLabelCount = 0;
-  SuperContructorFunctionDecl = 0;
+  SuperConstructorFunctionDecl = 0;
   NumObjCStringLiterals = 0;
   PropParentMap = 0;
   CurrentBody = 0;
@@ -2447,9 +2447,9 @@ void RewriteModernObjC::RewriteBlockLiteralFunctionDecl(FunctionDecl *FD) {
   InsertText(FunLocStart, FdStr);
 }
 
-// SynthSuperContructorFunctionDecl - id __rw_objc_super(id obj, id super);
-void RewriteModernObjC::SynthSuperContructorFunctionDecl() {
-  if (SuperContructorFunctionDecl)
+// SynthSuperConstructorFunctionDecl - id __rw_objc_super(id obj, id super);
+void RewriteModernObjC::SynthSuperConstructorFunctionDecl() {
+  if (SuperConstructorFunctionDecl)
     return;
   IdentifierInfo *msgSendIdent = &Context->Idents.get("__rw_objc_super");
   SmallVector<QualType, 16> ArgTys;
@@ -2459,7 +2459,7 @@ void RewriteModernObjC::SynthSuperContructorFunctionDecl() {
   ArgTys.push_back(argT);
   QualType msgSendType = getSimpleFunctionType(Context->getObjCIdType(),
                                                ArgTys);
-  SuperContructorFunctionDecl = FunctionDecl::Create(*Context, TUDecl,
+  SuperConstructorFunctionDecl = FunctionDecl::Create(*Context, TUDecl,
                                                      SourceLocation(),
                                                      SourceLocation(),
                                                      msgSendIdent, msgSendType,
@@ -3357,9 +3357,9 @@ Stmt *RewriteModernObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
     Expr *SuperRep;
 
     if (LangOpts.MicrosoftExt) {
-      SynthSuperContructorFunctionDecl();
-      // Simulate a contructor call...
-      DeclRefExpr *DRE = new (Context) DeclRefExpr(SuperContructorFunctionDecl,
+      SynthSuperConstructorFunctionDecl();
+      // Simulate a constructor call...
+      DeclRefExpr *DRE = new (Context) DeclRefExpr(SuperConstructorFunctionDecl,
                                                    false, superType, VK_LValue,
                                                    SourceLocation());
       SuperRep = new (Context) CallExpr(*Context, DRE, InitExprs,
@@ -3465,9 +3465,9 @@ Stmt *RewriteModernObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
     Expr *SuperRep;
 
     if (LangOpts.MicrosoftExt) {
-      SynthSuperContructorFunctionDecl();
-      // Simulate a contructor call...
-      DeclRefExpr *DRE = new (Context) DeclRefExpr(SuperContructorFunctionDecl,
+      SynthSuperConstructorFunctionDecl();
+      // Simulate a constructor call...
+      DeclRefExpr *DRE = new (Context) DeclRefExpr(SuperConstructorFunctionDecl,
                                                    false, superType, VK_LValue,
                                                    SourceLocation());
       SuperRep = new (Context) CallExpr(*Context, DRE, InitExprs,
@@ -5474,7 +5474,7 @@ Stmt *RewriteModernObjC::SynthBlockInitExpr(BlockExpr *Exp,
   FunctionDecl *FD;
   Expr *NewRep;
 
-  // Simulate a contructor call...
+  // Simulate a constructor call...
   std::string Tag;
   
   if (GlobalBlockExpr)

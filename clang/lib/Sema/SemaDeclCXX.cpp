@@ -9937,7 +9937,7 @@ void Sema::DefineImplicitCopyConstructor(SourceLocation CurrentLocation,
   assert(ClassDecl && "DefineImplicitCopyConstructor - invalid constructor");
 
   // C++11 [class.copy]p7:
-  //   The [definition of an implicitly declared copy constructro] is
+  //   The [definition of an implicitly declared copy constructor] is
   //   deprecated if the class has a user-declared copy assignment operator
   //   or a user-declared destructor.
   if (getLangOpts().CPlusPlus11 && CopyConstructor->isImplicit())

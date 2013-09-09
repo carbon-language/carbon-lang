@@ -3017,7 +3017,7 @@ IsUserDefinedConversion(Sema &S, Expr *From, QualType ToType,
       unsigned NumArgs = 1;
       bool ListInitializing = false;
       if (InitListExpr *InitList = dyn_cast<InitListExpr>(From)) {
-        // But first, see if there is an init-list-contructor that will work.
+        // But first, see if there is an init-list-constructor that will work.
         OverloadingResult Result = IsInitializerListConstructorConversion(
             S, From, ToType, ToRecordDecl, User, CandidateSet, AllowExplicit);
         if (Result != OR_No_Viable_Function)

@@ -482,7 +482,7 @@ def main():
     if not opts.useRandomSeed:
         random.seed(opts.seed)
 
-    # Contruct type generator
+    # Construct type generator
     builtins = []
     if opts.useBuiltins:
         ints = []

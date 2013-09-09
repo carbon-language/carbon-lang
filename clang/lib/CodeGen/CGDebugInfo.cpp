@@ -158,7 +158,7 @@ llvm::DIScope CGDebugInfo::getContextDescriptor(const Decl *Context) {
 }
 
 /// getFunctionName - Get function name for the given FunctionDecl. If the
-/// name is constructred on demand (e.g. C++ destructor) then the name
+/// name is constructed on demand (e.g. C++ destructor) then the name
 /// is stored on the side.
 StringRef CGDebugInfo::getFunctionName(const FunctionDecl *FD) {
   assert (FD && "Invalid FunctionDecl!");

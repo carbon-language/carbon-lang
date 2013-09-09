@@ -361,7 +361,7 @@ private:
   getOrCreateStaticDataMemberDeclarationOrNull(const VarDecl *D);
 
   /// getFunctionName - Get function name for the given FunctionDecl. If the
-  /// name is constructred on demand (e.g. C++ destructor) then the name
+  /// name is constructed on demand (e.g. C++ destructor) then the name
   /// is stored on the side.
   StringRef getFunctionName(const FunctionDecl *FD);
 

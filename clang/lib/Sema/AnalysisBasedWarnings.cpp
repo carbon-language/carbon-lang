@@ -1587,7 +1587,7 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
   AnalysisDeclContext AC(/* AnalysisDeclContextManager */ 0, D);
 
   // Don't generate EH edges for CallExprs as we'd like to avoid the n^2
-  // explosion for destrutors that can result and the compile time hit.
+  // explosion for destructors that can result and the compile time hit.
   AC.getCFGBuildOptions().PruneTriviallyFalseEdges = true;
   AC.getCFGBuildOptions().AddEHEdges = false;
   AC.getCFGBuildOptions().AddInitializers = true;

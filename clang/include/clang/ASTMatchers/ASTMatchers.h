@@ -2110,7 +2110,7 @@ AST_MATCHER_P(CXXCtorInitializer, withInitializer,
       InnerMatcher.matches(*NodeAsExpr, Finder, Builder));
 }
 
-/// \brief Matches a contructor initializer if it is explicitly written in
+/// \brief Matches a constructor initializer if it is explicitly written in
 /// code (as opposed to implicitly added by the compiler).
 ///
 /// Given

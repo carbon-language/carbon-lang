@@ -175,7 +175,7 @@ CodeGenTypes::arrangeCXXMethodType(const CXXRecordDecl *RD,
 /// constructor or destructor.
 const CGFunctionInfo &
 CodeGenTypes::arrangeCXXMethodDeclaration(const CXXMethodDecl *MD) {
-  assert(!isa<CXXConstructorDecl>(MD) && "wrong method for contructors!");
+  assert(!isa<CXXConstructorDecl>(MD) && "wrong method for constructors!");
   assert(!isa<CXXDestructorDecl>(MD) && "wrong method for destructors!");
 
   CanQual<FunctionProtoType> prototype = GetFormalType(MD);
