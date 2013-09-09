@@ -387,6 +387,16 @@ private:
   /// invalid then use current location.
   /// \param Force  Assume DebugColumnInfo option is true.
   unsigned getColumnNumber(SourceLocation Loc, bool Force=false);
+
+  /// internString - Allocate a copy of \p A using the DebugInfoNames allocator
+  /// and return a reference to it. If multiple arguments are given the strings
+  /// are concatenated.
+  StringRef internString(StringRef A, StringRef B = StringRef()) {
+    char *Data = DebugInfoNames.Allocate<char>(A.size() + B.size());
+    std::memcpy(Data, A.data(), A.size());
+    std::memcpy(Data + A.size(), B.data(), B.size());
+    return StringRef(Data, A.size() + B.size());
+  }
 };
 
 /// NoLocation - An RAII object that temporarily disables debug

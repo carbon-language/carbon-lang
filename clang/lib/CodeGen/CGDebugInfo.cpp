@@ -184,10 +184,7 @@ StringRef CGDebugInfo::getFunctionName(const FunctionDecl *FD) {
   }
 
   // Copy this name on the side and use its reference.
-  OS.flush();
-  char *StrPtr = DebugInfoNames.Allocate<char>(NS.size());
-  memcpy(StrPtr, NS.data(), NS.size());
-  return StringRef(StrPtr, NS.size());
+  return internString(OS.str());
 }
 
 StringRef CGDebugInfo::getObjCMethodName(const ObjCMethodDecl *OMD) {
@@ -215,18 +212,13 @@ StringRef CGDebugInfo::getObjCMethodName(const ObjCMethodDecl *OMD) {
   }
   OS << ' ' << OMD->getSelector().getAsString() << ']';
 
-  char *StrPtr = DebugInfoNames.Allocate<char>(OS.tell());
-  memcpy(StrPtr, MethodName.begin(), OS.tell());
-  return StringRef(StrPtr, OS.tell());
+  return internString(OS.str());
 }
 
 /// getSelectorName - Return selector name. This is used for debugging
 /// info.
 StringRef CGDebugInfo::getSelectorName(Selector S) {
-  const std::string &SName = S.getAsString();
-  char *StrPtr = DebugInfoNames.Allocate<char>(SName.size());
-  memcpy(StrPtr, SName.data(), SName.size());
-  return StringRef(StrPtr, SName.size());
+  return internString(S.getAsString());
 }
 
 /// getClassName - Get class name including template argument list.
@@ -259,11 +251,7 @@ CGDebugInfo::getClassName(const RecordDecl *RD) {
   }
 
   // Copy this name on the side and use its reference.
-  size_t Length = Name.size() + TemplateArgList.size();
-  char *StrPtr = DebugInfoNames.Allocate<char>(Length);
-  memcpy(StrPtr, Name.data(), Name.size());
-  memcpy(StrPtr + Name.size(), TemplateArgList.data(), TemplateArgList.size());
-  return StringRef(StrPtr, Length);
+  return internString(Name, TemplateArgList);
 }
 
 /// getOrCreateFile - Get the file debug info descriptor for the input location.
@@ -333,9 +321,7 @@ StringRef CGDebugInfo::getCurrentDirname() {
     return CWDName;
   SmallString<256> CWD;
   llvm::sys::fs::current_path(CWD);
-  char *CompDirnamePtr = DebugInfoNames.Allocate<char>(CWD.size());
-  memcpy(CompDirnamePtr, CWD.data(), CWD.size());
-  return CWDName = StringRef(CompDirnamePtr, CWD.size());
+  return CWDName = internString(CWD);
 }
 
 /// CreateCompileUnit - Create new compile unit.
@@ -359,15 +345,11 @@ void CGDebugInfo::CreateCompileUnit() {
   }
 
   // Save filename string.
-  char *FilenamePtr = DebugInfoNames.Allocate<char>(MainFileName.length());
-  memcpy(FilenamePtr, MainFileName.c_str(), MainFileName.length());
-  StringRef Filename(FilenamePtr, MainFileName.length());
+  StringRef Filename = internString(MainFileName);
 
   // Save split dwarf file string.
   std::string SplitDwarfFile = CGM.getCodeGenOpts().SplitDwarfFile;
-  char *SplitDwarfPtr = DebugInfoNames.Allocate<char>(SplitDwarfFile.length());
-  memcpy(SplitDwarfPtr, SplitDwarfFile.c_str(), SplitDwarfFile.length());
-  StringRef SplitDwarfFilename(SplitDwarfPtr, SplitDwarfFile.length());
+  StringRef SplitDwarfFilename = internString(SplitDwarfFile);
 
   unsigned LangTag;
   const LangOptions &LO = CGM.getLangOpts();
@@ -1389,13 +1371,8 @@ llvm::DIType CGDebugInfo::getOrCreateVTablePtrType(llvm::DIFile Unit) {
 
 /// getVTableName - Get vtable name for the given Class.
 StringRef CGDebugInfo::getVTableName(const CXXRecordDecl *RD) {
-  // Construct gdb compatible name name.
-  std::string Name = "_vptr$" + RD->getNameAsString();
-
-  // Copy this name on the side and use its reference.
-  char *StrPtr = DebugInfoNames.Allocate<char>(Name.length());
-  memcpy(StrPtr, Name.data(), Name.length());
-  return StringRef(StrPtr, Name.length());
+  // Copy the gdb compatible name on the side and use its reference.
+  return internString("_vptr$", RD->getNameAsString());
 }
 
 
