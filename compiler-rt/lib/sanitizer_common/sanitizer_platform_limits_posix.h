@@ -165,7 +165,7 @@ namespace __sanitizer {
   typedef unsigned __sanitizer___kernel_uid_t;
   typedef unsigned __sanitizer___kernel_gid_t;
 #else
-  typedef unsigned short  __sanitizer___kernel_uid_t;
+  typedef unsigned short __sanitizer___kernel_uid_t;
   typedef unsigned short __sanitizer___kernel_gid_t;
 #endif
   typedef unsigned short __sanitizer___kernel_old_uid_t;
