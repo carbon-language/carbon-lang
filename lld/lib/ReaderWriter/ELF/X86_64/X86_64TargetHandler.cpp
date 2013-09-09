@@ -21,5 +21,7 @@ X86_64TargetHandler::X86_64TargetHandler(X86_64LinkingContext &context)
 void X86_64TargetHandler::addFiles(InputFiles &f) {
   _gotFile.addAtom(*new (_gotFile._alloc) GLOBAL_OFFSET_TABLEAtom(_gotFile));
   _gotFile.addAtom(*new (_gotFile._alloc) TLSGETADDRAtom(_gotFile));
+  if (_context.isDynamic())
+    _gotFile.addAtom(*new (_gotFile._alloc) DYNAMICAtom(_gotFile));
   f.appendFile(_gotFile);
 }

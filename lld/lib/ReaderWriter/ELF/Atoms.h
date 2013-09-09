@@ -891,6 +891,31 @@ public:
   virtual ArrayRef<uint8_t> rawContent() const { return ArrayRef<uint8_t>(); }
 };
 
+class DYNAMICAtom : public SimpleDefinedAtom {
+public:
+  DYNAMICAtom(const File &f) : SimpleDefinedAtom(f) {}
+
+  virtual StringRef name() const { return "_DYNAMIC"; }
+
+  virtual Scope scope() const { return scopeLinkageUnit; }
+
+  virtual Merge merge() const { return mergeNo; }
+
+  virtual SectionChoice sectionChoice() const { return sectionCustomRequired; }
+
+  virtual StringRef customSectionName() const { return ".dynamic"; }
+
+  virtual ContentType contentType() const { return typeData; }
+
+  virtual uint64_t size() const { return 0; }
+
+  virtual ContentPermissions permissions() const { return permRW_; }
+
+  virtual Alignment alignment() const { return Alignment(0); }
+
+  virtual ArrayRef<uint8_t> rawContent() const { return ArrayRef<uint8_t>(); }
+};
+
 class InitFiniAtom : public SimpleDefinedAtom {
   StringRef _section;
 
