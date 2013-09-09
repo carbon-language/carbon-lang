@@ -75,6 +75,10 @@ typedef struct __CFDictionary * CFMutableDictionaryRef;
 
 typedef struct CGImage *CGImageRef;
 
+typedef struct OpaqueJSValue* JSObjectRef;
+
+typedef JSObjectRef TTJSObjectRef;
+
 CF_IMPLICIT_BRIDGING_DISABLED
 
 @interface I
@@ -93,4 +97,10 @@ CF_IMPLICIT_BRIDGING_DISABLED
 
 @interface NSMutableData
 - (void *)mutableBytes  __attribute__((deprecated)) __attribute__((unavailable)) NS_RETURNS_INNER_POINTER;
+@end
+
+@interface JS
+- (JSObjectRef)JSObject; 
+- (TTJSObjectRef)JSObject1;
+- (JSObjectRef*)JSObject2 NS_RETURNS_INNER_POINTER;
 @end
