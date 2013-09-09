@@ -1807,12 +1807,14 @@ INTERCEPTOR(char *, strerror_r, int errnum, char *buf, SIZE_T buflen) {
   //    writes message to buf.
   //  * GNU version returns message pointer, which points to either buf or some
   //    static storage.
-  if (!res) {
+  SIZE_T posix_res = (SIZE_T)res;
+  if (posix_res < 1024 || posix_res > (SIZE_T) - 1024) {
     // POSIX version. Spec is not clear on whether buf is NULL-terminated.
+    // At least on OSX, buf contents are valid even when the call fails.
     SIZE_T sz = internal_strnlen(buf, buflen);
     if (sz < buflen) ++sz;
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, buf, sz);
-  } else if ((SIZE_T)res < (SIZE_T) - 1024) {
+  } else {
     // GNU version.
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, res, REAL(strlen)(res) + 1);
   }
