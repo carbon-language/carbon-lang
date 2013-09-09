@@ -6,8 +6,10 @@
 
 @class Def;
 Def *def;
-class Def2;
+class Def2; // expected-note {{forward decl}}
 Def2 *def2;
+namespace Def3NS { class Def3; } // expected-note {{forward decl}}
+Def3NS::Def3 *def3;
 
 @interface Unrelated
 - defMethod;
@@ -39,5 +41,9 @@ void testDef() {
 }
 
 void testDef2() {
-  def2->func();
+  // FIXME: These should both work, since we've (implicitly) imported
+  // decldef.Def here, but they don't, because nothing has triggered the lazy
+  // loading of the definitions of these classes.
+  def2->func(); // expected-error {{incomplete}}
+  def3->func(); // expected-error {{incomplete}}
 }

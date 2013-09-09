@@ -75,3 +75,10 @@ void testAnonymousNotMerged() {
 
 // expected-note@Inputs/namespaces-right.h:60 {{passing argument to parameter here}}
 // expected-note@Inputs/namespaces-right.h:67 {{passing argument to parameter here}}
+
+// Test that bringing in one name from an overload set does not hide the rest.
+void testPartialImportOfOverloadSet() {
+  void (*p)() = N13::p;
+  p();
+  N13::f(0);
+}

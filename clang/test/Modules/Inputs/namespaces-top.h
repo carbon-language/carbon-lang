@@ -12,3 +12,8 @@ namespace N3 {
 
 namespace N12 { }
 
+namespace N13 {
+  void f();
+  int f(int);
+  void (*p)() = &f;
+}

@@ -5070,6 +5070,14 @@ bool Sema::RequireCompleteTypeImpl(SourceLocation Loc, QualType T,
     return false;
   }
 
+  // FIXME: If there's an unimported definition of this type in a module (for
+  // instance, because we forward declared it, then imported the definition),
+  // import that definition now.
+  // FIXME: What about other cases where an import extends a redeclaration
+  // chain for a declaration that can be accessed through a mechanism other
+  // than name lookup (eg, referenced in a template, or a variable whose type
+  // could be completed by the module)?
+
   const TagType *Tag = T->getAs<TagType>();
   const ObjCInterfaceType *IFace = 0;
 

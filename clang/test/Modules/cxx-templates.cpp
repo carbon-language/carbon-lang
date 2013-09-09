@@ -82,10 +82,7 @@ typedef SomeTemplate<int&> SomeTemplateIntRef;
 SomeTemplate<char*> some_template_char_ptr;
 SomeTemplate<char&> some_template_char_ref;
 
-// FIXME: There should only be two 'f's here.
 // CHECK-GLOBAL:      DeclarationName 'f'
-// CHECK-GLOBAL-NEXT: |-FunctionTemplate {{.*}} 'f'
-// CHECK-GLOBAL-NEXT: |-FunctionTemplate {{.*}} 'f'
 // CHECK-GLOBAL-NEXT: |-FunctionTemplate {{.*}} 'f'
 // CHECK-GLOBAL-NEXT: `-FunctionTemplate {{.*}} 'f'
 
