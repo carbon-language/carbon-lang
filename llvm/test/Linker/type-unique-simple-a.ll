@@ -5,7 +5,6 @@
 ; Content of header files:
 ; struct Base {
 ;   int a;
-;   //Base *b;
 ; };
 ; Content of foo.cpp:
 ; 
