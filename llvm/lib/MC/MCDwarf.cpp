@@ -1415,9 +1415,10 @@ namespace llvm {
   };
 }
 
-void MCDwarfFrameEmitter::Emit(MCStreamer &Streamer,
-                               bool UsingCFI,
-                               bool IsEH) {
+void MCDwarfFrameEmitter::Emit(MCStreamer &Streamer, MCAsmBackend *MAB,
+                               bool UsingCFI, bool IsEH) {
+  Streamer.generateCompactUnwindEncodings(MAB);
+
   MCContext &Context = Streamer.getContext();
   const MCObjectFileInfo *MOFI = Context.getObjectFileInfo();
   FrameEmitterImpl Emitter(UsingCFI, IsEH);

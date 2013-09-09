@@ -23,6 +23,7 @@
 #include <vector>
 
 namespace llvm {
+class MCAsmBackend;
 class MCContext;
 class MCSection;
 class MCStreamer;
@@ -449,7 +450,8 @@ public:
   //
   // This emits the frame info section.
   //
-  static void Emit(MCStreamer &streamer, bool usingCFI, bool isEH);
+  static void Emit(MCStreamer &streamer, MCAsmBackend *MAB,
+                   bool usingCFI, bool isEH);
   static void EmitAdvanceLoc(MCStreamer &Streamer, uint64_t AddrDelta);
   static void EncodeAdvanceLoc(MCContext &Context, uint64_t AddrDelta,
                                raw_ostream &OS);

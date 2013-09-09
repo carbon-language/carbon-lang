@@ -528,7 +528,7 @@ void MCELFStreamer::EmitBundleUnlock() {
 }
 
 void MCELFStreamer::FinishImpl() {
-  EmitFrames(true);
+  EmitFrames(NULL, true);
 
   for (std::vector<LocalCommon>::const_iterator i = LocalCommons.begin(),
                                                 e = LocalCommons.end();

@@ -175,12 +175,11 @@ bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
 
     // Create a code emitter if asked to show the encoding.
     MCCodeEmitter *MCE = 0;
-    MCAsmBackend *MAB = 0;
-    if (ShowMCEncoding) {
+    if (ShowMCEncoding)
       MCE = getTarget().createMCCodeEmitter(MII, MRI, STI, *Context);
-      MAB = getTarget().createMCAsmBackend(MRI, getTargetTriple(), TargetCPU);
-    }
 
+    MCAsmBackend *MAB = getTarget().createMCAsmBackend(MRI, getTargetTriple(),
+                                                       TargetCPU);
     MCStreamer *S = getTarget().createAsmStreamer(*Context, Out,
                                                   getVerboseAsm(),
                                                   hasMCUseLoc(),

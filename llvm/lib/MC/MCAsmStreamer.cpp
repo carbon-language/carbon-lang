@@ -1421,8 +1421,9 @@ void MCAsmStreamer::FinishImpl() {
     MCGenDwarfInfo::Emit(this, LineSectionSymbol);
 
   if (!UseCFI)
-    EmitFrames(false);
+    EmitFrames(AsmBackend.get(), false);
 }
+
 MCStreamer *llvm::createAsmStreamer(MCContext &Context,
                                     formatted_raw_ostream &OS,
                                     bool isVerboseAsm, bool useLoc,

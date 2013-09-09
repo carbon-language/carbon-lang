@@ -104,7 +104,7 @@ protected:
   virtual void EmitCFIStartProcImpl(MCDwarfFrameInfo &Frame);
   void RecordProcEnd(MCDwarfFrameInfo &Frame);
   virtual void EmitCFIEndProcImpl(MCDwarfFrameInfo &CurFrame);
-  void EmitFrames(bool usingCFI);
+  void EmitFrames(MCAsmBackend *MAB, bool usingCFI);
 
   MCWin64EHUnwindInfo *getCurrentW64UnwindInfo() {
     return CurrentW64UnwindInfo;
@@ -134,7 +134,7 @@ public:
     return *W64UnwindInfos[i];
   }
 
-  void generateCompactUnwindEncodings(MCAsmBackend &MAB);
+  void generateCompactUnwindEncodings(MCAsmBackend *MAB);
 
   /// @name Assembly File Formatting.
   /// @{
