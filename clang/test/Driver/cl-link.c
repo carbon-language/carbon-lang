@@ -18,8 +18,8 @@
 // ASAN: "{{.*}}clang_rt.asan-i386.lib"
 // ASAN: "{{.*}}cl-link{{.*}}.obj"
 
-// RUN: %clang_cl /LD -### %s 2>&1 | FileCheck --check-prefix=DLL %s
-// RUN: %clang_cl /LDd -### %s 2>&1 | FileCheck --check-prefix=DLL %s
+// RUN: %clang_cl /LD -### /Tc%s 2>&1 | FileCheck --check-prefix=DLL %s
+// RUN: %clang_cl /LDd -### /Tc%s 2>&1 | FileCheck --check-prefix=DLL %s
 // DLL: link.exe
 // "-dll"
 
