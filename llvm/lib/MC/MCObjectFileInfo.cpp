@@ -605,12 +605,12 @@ void MCObjectFileInfo::InitCOFFMCObjectFileInfo(Triple T) {
                         COFF::IMAGE_SCN_MEM_DISCARDABLE |
                         COFF::IMAGE_SCN_MEM_READ,
                         SectionKind::getMetadata());
-  DwarfPubNamesSection =
+  DwarfGnuPubNamesSection =
     Ctx->getCOFFSection(".debug_gnu_pubnames",
                         COFF::IMAGE_SCN_MEM_DISCARDABLE |
                         COFF::IMAGE_SCN_MEM_READ,
                         SectionKind::getMetadata());
-  DwarfPubTypesSection =
+  DwarfGnuPubTypesSection =
     Ctx->getCOFFSection(".debug_gnu_pubtypes",
                         COFF::IMAGE_SCN_MEM_DISCARDABLE |
                         COFF::IMAGE_SCN_MEM_READ,
