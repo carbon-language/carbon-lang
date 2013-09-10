@@ -154,6 +154,47 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
   if (parsedArgs->getLastArg(OPT_all_load))
     globalWholeArchive = true;
 
+  // Handle -install_name
+  if (llvm::opt::Arg *installName = parsedArgs->getLastArg(OPT_install_name))
+    ctx.setInstallName(installName->getValue());
+
+  // Handle -mark_dead_strippable_dylib
+  if (parsedArgs->getLastArg(OPT_mark_dead_strippable_dylib))
+    ctx.setDeadStrippableDylib(true);
+
+  // Handle -compatibility_version and -current_version
+  if (llvm::opt::Arg *vers =
+          parsedArgs->getLastArg(OPT_compatibility_version)) {
+    if (ctx.outputFileType() != mach_o::MH_DYLIB) {
+      diagnostics
+          << "error: -compatibility_version can only be used with -dylib\n";
+      return true;
+    }
+    uint32_t parsedVers;
+    if (MachOLinkingContext::parsePackedVersion(vers->getValue(), parsedVers)) {
+      diagnostics << "error: -compatibility_version value is malformed\n";
+      return true;
+    }
+    ctx.setCompatibilityVersion(parsedVers);
+  }
+
+  if (llvm::opt::Arg *vers = parsedArgs->getLastArg(OPT_current_version)) {
+    if (ctx.outputFileType() != mach_o::MH_DYLIB) {
+      diagnostics << "-current_version can only be used with -dylib\n";
+      return true;
+    }
+    uint32_t parsedVers;
+    if (MachOLinkingContext::parsePackedVersion(vers->getValue(), parsedVers)) {
+      diagnostics << "error: -current_version value is malformed\n";
+      return true;
+    }
+    ctx.setCurrentVersion(parsedVers);
+  }
+
+  // Handle -bundle_loader
+  if (llvm::opt::Arg *loader = parsedArgs->getLastArg(OPT_bundle_loader))
+    ctx.setBundleLoader(loader->getValue());
+
   // Handle -arch xxx
   if (llvm::opt::Arg *archStr = parsedArgs->getLastArg(OPT_arch)) {
     ctx.setArch(MachOLinkingContext::archFromName(archStr->getValue()));

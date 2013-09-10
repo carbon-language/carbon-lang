@@ -169,4 +169,56 @@ TEST_F(DarwinLdParserTest, iOS_Simulator6) {
   EXPECT_TRUE(_context.minOS("", "6.0"));
 }
 
+TEST_F(DarwinLdParserTest, compatibilityVersion) {
+  EXPECT_FALSE(
+      parse("ld", "-dylib", "-compatibility_version", "1.2.3", "a.o", nullptr));
+  EXPECT_EQ(_context.compatibilityVersion(), 0x10203U);
+}
+
+TEST_F(DarwinLdParserTest, compatibilityVersionInvalidType) {
+  EXPECT_TRUE(parse("ld", "-bundle", "-compatibility_version", "1.2.3", "a.o",
+                    nullptr));
+}
+
+TEST_F(DarwinLdParserTest, compatibilityVersionInvalidValue) {
+  EXPECT_TRUE(parse("ld", "-bundle", "-compatibility_version", "1,2,3", "a.o",
+                    nullptr));
+}
+
+TEST_F(DarwinLdParserTest, currentVersion) {
+  EXPECT_FALSE(
+      parse("ld", "-dylib", "-current_version", "1.2.3", "a.o", nullptr));
+  EXPECT_EQ(_context.currentVersion(), 0x10203U);
+}
+
+TEST_F(DarwinLdParserTest, currentVersionInvalidType) {
+  EXPECT_TRUE(
+      parse("ld", "-bundle", "-current_version", "1.2.3", "a.o", nullptr));
+}
+
+TEST_F(DarwinLdParserTest, currentVersionInvalidValue) {
+  EXPECT_TRUE(
+      parse("ld", "-bundle", "-current_version", "1,2,3", "a.o", nullptr));
+}
+
+TEST_F(DarwinLdParserTest, bundleLoader) {
+  EXPECT_FALSE(
+      parse("ld", "-bundle", "-bundle_loader", "/bin/ls", "a.o", nullptr));
+  EXPECT_EQ(_context.bundleLoader(), "/bin/ls");
+}
+
+TEST_F(DarwinLdParserTest, bundleLoaderInvalidType) {
+  EXPECT_TRUE(parse("ld", "-bundle_loader", "/bin/ls", "a.o", nullptr));
+}
+
+TEST_F(DarwinLdParserTest, deadStrippableDylib) {
+  EXPECT_FALSE(
+      parse("ld", "-dylib", "-mark_dead_strippable_dylib", "a.o", nullptr));
+  EXPECT_EQ(true, _context.deadStrippableDylib());
+}
+
+TEST_F(DarwinLdParserTest, deadStrippableDylibInvalidType) {
+  EXPECT_TRUE(parse("ld", "-mark_dead_strippable_dylib", "a.o", nullptr));
+}
+
 }  // end anonymous namespace

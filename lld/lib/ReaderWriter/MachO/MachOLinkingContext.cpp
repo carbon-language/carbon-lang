@@ -124,7 +124,8 @@ uint32_t MachOLinkingContext::cpuSubtypeFromArch(Arch arch) {
 MachOLinkingContext::MachOLinkingContext()
     : _outputFileType(mach_o::MH_EXECUTE), _outputFileTypeStatic(false),
       _doNothing(false), _arch(arch_unknown), _os(OS::macOSX), _osMinVersion(0),
-      _pageZeroSize(0x1000), _kindHandler(nullptr) {}
+      _pageZeroSize(0x1000), _compatibilityVersion(0), _currentVersion(0),
+      _deadStrippableDylib(false), _kindHandler(nullptr) {}
 
 MachOLinkingContext::~MachOLinkingContext() {}
 
@@ -202,6 +203,29 @@ bool MachOLinkingContext::validateImpl(raw_ostream &diagnostics) {
       if (addUnixThreadLoadCommand())
         _entrySymbolName = "start";
     }
+  }
+
+  if (_currentVersion && _outputFileType != mach_o::MH_DYLIB) {
+    diagnostics << "error: -current_version can only be used with dylibs\n";
+    return true;
+  }
+
+  if (_compatibilityVersion && _outputFileType != mach_o::MH_DYLIB) {
+    diagnostics
+        << "error: -compatibility_version can only be used with dylibs\n";
+    return true;
+  }
+
+  if (_deadStrippableDylib && _outputFileType != mach_o::MH_DYLIB) {
+    diagnostics
+        << "error: -mark_dead_strippable_dylib can only be used with dylibs.\n";
+    return true;
+  }
+
+  if (!_bundleLoader.empty() && outputFileType() != mach_o::MH_BUNDLE) {
+    diagnostics
+        << "error: -bundle_loader can only be used with Mach-O bundles\n";
+    return true;
   }
 
   return false;

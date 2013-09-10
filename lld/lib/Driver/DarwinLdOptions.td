@@ -37,6 +37,30 @@ def entry : Separate<["-"], "e">, HelpText<"entry symbol name">,Group<grp_main>;
 
 // dylib executable options
 def grp_dylib : OptionGroup<"opts">, HelpText<"DYLIB EXECUTABLE OPTIONS">;
+def install_name : Separate<["-"], "install_name">,
+    HelpText<"The dylib's install name">, Group<grp_dylib>;
+def mark_dead_strippable_dylib : Flag<["-"], "mark_dead_strippable_dylib">,
+    HelpText<"Marks the dylib as having no side effects during initialization">,
+    Group<grp_dylib>;
+def compatibility_version : Separate<["-"], "compatibility_version">,
+    HelpText<"The dylib's compatibility version">, Group<grp_dylib>;
+def current_version : Separate<["-"], "current_version">,
+    HelpText<"The dylib's current version">, Group<grp_dylib>;
+
+// dylib executable options - compatibility aliases
+def dylib_install_name : Separate<["-"], "dylib_install_name">,
+    Alias<install_name>;
+def dylib_compatibility_version :
+    Separate<["-"], "dylib_compatibility_version">,
+    Alias<compatibility_version>;
+def dylib_current_version : Separate<["-"], "dylib_current_version">,
+    Alias<current_version>;
+
+// bundle executable options
+def grp_bundle : OptionGroup<"opts">, HelpText<"BUNDLE EXECUTABLE OPTIONS">;
+def bundle_loader : Separate<["-"], "bundle_loader">,
+    HelpText<"The executable that will be loading this Mach-O bundle">,
+    Group<grp_bundle>;
 
 // library options
 def grp_libs : OptionGroup<"libs">, HelpText<"LIBRARY OPTIONS">;
