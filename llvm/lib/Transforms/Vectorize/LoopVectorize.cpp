@@ -2175,7 +2175,7 @@ InnerLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
     for (BasicBlock::iterator LEI = LoopExitBlock->begin(),
          LEE = LoopExitBlock->end(); LEI != LEE; ++LEI) {
       PHINode *LCSSAPhi = dyn_cast<PHINode>(LEI);
-      if (!LCSSAPhi) continue;
+      if (!LCSSAPhi) break;
 
       // All PHINodes need to have a single entry edge, or two if
       // we already fixed them.
@@ -2208,7 +2208,7 @@ void InnerLoopVectorizer::fixLCSSAPHIs() {
   for (BasicBlock::iterator LEI = LoopExitBlock->begin(),
        LEE = LoopExitBlock->end(); LEI != LEE; ++LEI) {
     PHINode *LCSSAPhi = dyn_cast<PHINode>(LEI);
-    if (!LCSSAPhi) continue;
+    if (!LCSSAPhi) break;
     if (LCSSAPhi->getNumIncomingValues() == 1)
       LCSSAPhi->addIncoming(UndefValue::get(LCSSAPhi->getType()),
                             LoopMiddleBlock);
