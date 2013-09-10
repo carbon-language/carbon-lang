@@ -58,14 +58,11 @@ condition codes.  For example, we could use LCDFR instead of LCDBR.
 
 --
 
-We don't optimize block memory operations, except using single MVCs
-for memcpy and single CLCs for memcmp.
+We only use MVC, XC and CLC for constant-length block operations.
+We could extend them to variable-length operations too,
+using EXECUTE RELATIVE LONG.
 
-It's definitely worth using things like NC, XC and OC with
-constant lengths.  MVCIN may be worthwhile too.
-
-We should probably implement general memcpy using MVC with EXECUTE.
-Likewise memcmp and CLC.  MVCLE and CLCLE could be useful too.
+MVCIN, MVCLE and CLCLE may be worthwhile too.
 
 --
 
@@ -93,8 +90,7 @@ We don't use the halfword forms of LOAD REVERSED and STORE REVERSED
 
 --
 
-We could take advantage of the various ... UNDER MASK instructions,
-such as ICM and STCM.
+We don't use ICM or STCM.
 
 --
 
