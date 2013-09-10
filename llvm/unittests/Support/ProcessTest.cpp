@@ -39,11 +39,11 @@ TEST(ProcessTest, SelfProcess) {
   EXPECT_GT(TimeValue::MaxTime, process::get_self()->get_wall_time());
 }
 
-#ifdef LLVM_ON_WIN32
+#ifdef _MSC_VER
 #define setenv(name, var, ignore) _putenv_s(name, var)
 #endif
 
-#if HAVE_SETENV || defined(LLVM_ON_WIN32)
+#if HAVE_SETENV || _MSC_VER
 TEST(ProcessTest, Basic) {
   setenv("__LLVM_TEST_ENVIRON_VAR__", "abc", true);
   Optional<std::string> val(Process::GetEnv("__LLVM_TEST_ENVIRON_VAR__"));
