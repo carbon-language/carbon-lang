@@ -3765,6 +3765,7 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
   verifyIndependentOfContext("Type **A = static_cast<Type **>(P);");
   verifyGoogleFormat("Type** A = static_cast<Type**>(P);");
   verifyFormat("auto a = [](int **&, int ***) {};");
+  verifyFormat("typedef typeof(int(int, int)) *MyFunc;");
 
   verifyIndependentOfContext("InvalidRegions[*R] = 0;");
 

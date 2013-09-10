@@ -745,6 +745,11 @@ private:
     if (NextToken->is(tok::l_square))
       return TT_PointerOrReference;
 
+    if (PrevToken->is(tok::r_paren) && PrevToken->MatchingParen &&
+        PrevToken->MatchingParen->Previous &&
+        PrevToken->MatchingParen->Previous->is(tok::kw_typeof))
+      return TT_PointerOrReference;
+
     if (PrevToken->Tok.isLiteral() ||
         PrevToken->isOneOf(tok::r_paren, tok::r_square) ||
         NextToken->Tok.isLiteral() || NextToken->isUnaryOperator())
