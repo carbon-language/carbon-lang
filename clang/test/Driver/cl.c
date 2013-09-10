@@ -30,5 +30,6 @@
 // DEFAULT: -fapple-kext
 // CL-NOT: -fapple-kext
 
-// RUN: %clang_cl /c -### -- %s 2>&1 | FileCheck -check-prefix=ABI %s
-// ABI: "-cxx-abi" "microsoft"
+// RUN: %clang_cl /c -### -- %s 2>&1 | FileCheck -check-prefix=COMPILE %s
+// COMPILE: "-cxx-abi" "microsoft"
+// COMPILE: "-fdiagnostics-format" "msvc"
