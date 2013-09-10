@@ -1596,7 +1596,7 @@ private:
 };
 
 ObjCLanguageRuntime::ClassDescriptorSP
-AppleObjCRuntimeV2::GetClassDescriptor (ObjCISA isa)
+AppleObjCRuntimeV2::GetClassDescriptorFromISA (ObjCISA isa)
 {
     ObjCLanguageRuntime::ClassDescriptorSP class_descriptor_sp;
     if (m_non_pointer_isa_cache_ap.get())
@@ -1633,7 +1633,7 @@ AppleObjCRuntimeV2::GetClassDescriptor (ValueObject& valobj)
                 ObjCISA isa = process->ReadPointerFromMemory(isa_pointer, error);
                 if (isa != LLDB_INVALID_ADDRESS)
                 {
-                    objc_class_sp = ObjCLanguageRuntime::GetClassDescriptorFromISA (isa);
+                    objc_class_sp = GetClassDescriptorFromISA (isa);
                     if (isa && !objc_class_sp)
                     {
                         Log *log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS));
@@ -2598,7 +2598,7 @@ AppleObjCRuntimeV2::TaggedPointerVendorRuntimeAssisted::GetClassDescriptor (lldb
         uintptr_t slot_data = process->ReadPointerFromMemory(slot_ptr, error);
         if (error.Fail() || slot_data == 0 || slot_data == LLDB_INVALID_ADDRESS)
             return nullptr;
-        actual_class_descriptor_sp = m_runtime.GetClassDescriptor(slot_data);
+        actual_class_descriptor_sp = m_runtime.GetClassDescriptorFromISA((ObjCISA)slot_data);
         if (!actual_class_descriptor_sp)
             return ObjCLanguageRuntime::ClassDescriptorSP();
         m_cache[slot] = actual_class_descriptor_sp;
