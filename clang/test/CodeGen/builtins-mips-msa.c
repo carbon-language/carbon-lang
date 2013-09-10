@@ -256,12 +256,10 @@ void test(void) {
   v4u32_r = __builtin_msa_div_u_w(v4u32_a, v4u32_b); // CHECK: call <4  x i32> @llvm.mips.div.u.w(
   v2u64_r = __builtin_msa_div_u_d(v2u64_a, v2u64_b); // CHECK: call <2  x i64> @llvm.mips.div.u.d(
 
-  v16i8_r = __builtin_msa_dotp_s_b(v16i8_a, v16i8_b); // CHECK: call <16 x i8>  @llvm.mips.dotp.s.b(
   v8i16_r = __builtin_msa_dotp_s_h(v8i16_a, v8i16_b); // CHECK: call <8  x i16> @llvm.mips.dotp.s.h(
   v4i32_r = __builtin_msa_dotp_s_w(v4i32_a, v4i32_b); // CHECK: call <4  x i32> @llvm.mips.dotp.s.w(
   v2i64_r = __builtin_msa_dotp_s_d(v2i64_a, v2i64_b); // CHECK: call <2  x i64> @llvm.mips.dotp.s.d(
 
-  v16u8_r = __builtin_msa_dotp_u_b(v16u8_a, v16u8_b); // CHECK: call <16 x i8>  @llvm.mips.dotp.u.b(
   v8u16_r = __builtin_msa_dotp_u_h(v8u16_a, v8u16_b); // CHECK: call <8  x i16> @llvm.mips.dotp.u.h(
   v4u32_r = __builtin_msa_dotp_u_w(v4u32_a, v4u32_b); // CHECK: call <4  x i32> @llvm.mips.dotp.u.w(
   v2u64_r = __builtin_msa_dotp_u_d(v2u64_a, v2u64_b); // CHECK: call <2  x i64> @llvm.mips.dotp.u.d(
