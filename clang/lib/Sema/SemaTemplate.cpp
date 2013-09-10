@@ -6415,12 +6415,15 @@ bool Sema::CheckFunctionTemplateSpecialization(
         }
       }
 
-      // Ignore differences in calling convention until decl merging.
+      // Ignore differences in calling convention and noreturn until decl
+      // merging.
       const FunctionProtoType *TmplFT =
           TmplFD->getType()->castAs<FunctionProtoType>();
-      if (FPT->getCallConv() != TmplFT->getCallConv()) {
+      if (FPT->getCallConv() != TmplFT->getCallConv() ||
+          FPT->getNoReturnAttr() != TmplFT->getNoReturnAttr()) {
         FunctionProtoType::ExtProtoInfo EPI = FPT->getExtProtoInfo();
         EPI.ExtInfo = EPI.ExtInfo.withCallingConv(TmplFT->getCallConv());
+        EPI.ExtInfo = EPI.ExtInfo.withNoReturn(TmplFT->getNoReturnAttr());
         FT = Context.getFunctionType(FPT->getResultType(), FPT->getArgTypes(),
                                      EPI);
       }
