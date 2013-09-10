@@ -1404,6 +1404,10 @@ MipsAsmParser::parseRegs(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
       RegNum = matchFPURegisterName(RegName);
       if (RegKind == MipsOperand::Kind_AFGR64Regs)
         RegNum /= 2;
+      else if (RegKind == MipsOperand::Kind_FGRH32Regs
+               && !isFP64())
+        if (RegNum != -1 && RegNum %2 != 0)
+          Warning(S, "Float register should be even.");
       break;
     case MipsOperand::Kind_FCCRegs:
       RegNum = matchFCCRegisterName(RegName);
