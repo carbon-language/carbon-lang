@@ -140,21 +140,20 @@ BreakpointResolverFileLine::SearchCallback
         // Next go through and see if there are line table entries that are contiguous, and if so keep only the
         // first of the contiguous range:
         
-        lldb::addr_t last_end_addr = LLDB_INVALID_ADDRESS;
         current_idx = 0;
+        std::map<Block *, lldb::addr_t> blocks_with_breakpoints;
+        
         while (current_idx < tmp_sc_list.GetSize())
         {
             if (tmp_sc_list.GetContextAtIndex(current_idx, sc))
             {
-                lldb::addr_t start_file_addr = sc.line_entry.range.GetBaseAddress().GetFileAddress();
-                lldb::addr_t end_file_addr   = start_file_addr + sc.line_entry.range.GetByteSize();
-                
-                if (start_file_addr == last_end_addr)
+                if (blocks_with_breakpoints.find (sc.block) != blocks_with_breakpoints.end())
                     tmp_sc_list.RemoveContextAtIndex(current_idx);
                 else
+                {
+                    blocks_with_breakpoints.insert (std::pair<Block *, lldb::addr_t>(sc.block, sc.line_entry.range.GetBaseAddress().GetFileAddress()));
                     current_idx++;
-
-                last_end_addr = end_file_addr;
+                }
             }
         }
         
