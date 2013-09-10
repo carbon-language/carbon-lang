@@ -1037,14 +1037,16 @@ let mayLoad = 1, Defs = [CC], Uses = [R0W] in
 // Test under mask.
 let Defs = [CC] in {
   let isCodeGenOnly = 1 in {
-    def TMLL32 : CompareRI<"tmll", 0xA71, z_tm, GR32, imm32ll16>;
-    def TMLH32 : CompareRI<"tmlh", 0xA70, z_tm, GR32, imm32lh16>;
+    def TMLL32 : CompareRI<"tmll", 0xA71, z_tm_reg, GR32, imm32ll16>;
+    def TMLH32 : CompareRI<"tmlh", 0xA70, z_tm_reg, GR32, imm32lh16>;
   }
 
-  def TMLL : CompareRI<"tmll", 0xA71, z_tm, GR64, imm64ll16>;
-  def TMLH : CompareRI<"tmlh", 0xA70, z_tm, GR64, imm64lh16>;
-  def TMHL : CompareRI<"tmhl", 0xA73, z_tm, GR64, imm64hl16>;
-  def TMHH : CompareRI<"tmhh", 0xA72, z_tm, GR64, imm64hh16>;
+  def TMLL : CompareRI<"tmll", 0xA71, z_tm_reg, GR64, imm64ll16>;
+  def TMLH : CompareRI<"tmlh", 0xA70, z_tm_reg, GR64, imm64lh16>;
+  def TMHL : CompareRI<"tmhl", 0xA73, z_tm_reg, GR64, imm64hl16>;
+  def TMHH : CompareRI<"tmhh", 0xA72, z_tm_reg, GR64, imm64hh16>;
+
+  defm TM : CompareSIPair<"tm", 0x91, 0xEB51, z_tm_mem, anyextloadi8, imm32zx8>;
 }
 
 //===----------------------------------------------------------------------===//

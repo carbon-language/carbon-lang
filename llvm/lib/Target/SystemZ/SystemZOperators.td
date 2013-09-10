@@ -99,7 +99,7 @@ def z_sibcall           : SDNode<"SystemZISD::SIBCALL", SDT_ZCall,
 def z_pcrel_wrapper     : SDNode<"SystemZISD::PCREL_WRAPPER", SDT_ZWrapPtr, []>;
 def z_icmp              : SDNode<"SystemZISD::ICMP", SDT_ZICmp, [SDNPOutGlue]>;
 def z_fcmp              : SDNode<"SystemZISD::FCMP", SDT_ZCmp, [SDNPOutGlue]>;
-def z_tm                : SDNode<"SystemZISD::TM", SDT_ZCmp, [SDNPOutGlue]>;
+def z_tm                : SDNode<"SystemZISD::TM", SDT_ZICmp, [SDNPOutGlue]>;
 def z_br_ccmask         : SDNode<"SystemZISD::BR_CCMASK", SDT_ZBRCCMask,
                                  [SDNPHasChain, SDNPInGlue]>;
 def z_select_ccmask     : SDNode<"SystemZISD::SELECT_CCMASK", SDT_ZSelectCCMask,
@@ -175,6 +175,10 @@ def z_ucmp : PatFrag<(ops node:$a, node:$b), (z_icmp node:$a, node:$b, imm), [{
   unsigned Type = cast<ConstantSDNode>(N->getOperand(2))->getZExtValue();
   return Type != SystemZICMP::SignedOnly;
 }]>;
+
+// Register- and memory-based TEST UNDER MASK.
+def z_tm_reg : PatFrag<(ops node:$a, node:$b), (z_tm node:$a, node:$b, imm)>;
+def z_tm_mem : PatFrag<(ops node:$a, node:$b), (z_tm node:$a, node:$b, 0)>;
 
 // Register sign-extend operations.  Sub-32-bit values are represented as i32s.
 def sext8  : PatFrag<(ops node:$src), (sext_inreg node:$src, i8)>;

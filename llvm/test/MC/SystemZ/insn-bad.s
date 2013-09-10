@@ -2952,6 +2952,23 @@
 	sy	%r0, 524288
 
 #CHECK: error: invalid operand
+#CHECK: tm	-1, 0
+#CHECK: error: invalid operand
+#CHECK: tm	4096, 0
+#CHECK: error: invalid use of indexed addressing
+#CHECK: tm	0(%r1,%r2), 0
+#CHECK: error: invalid operand
+#CHECK: tm	0, -1
+#CHECK: error: invalid operand
+#CHECK: tm	0, 256
+
+	tm	-1, 0
+	tm	4096, 0
+	tm	0(%r1,%r2), 0
+	tm	0, -1
+	tm	0, 256
+
+#CHECK: error: invalid operand
 #CHECK: tmhh	%r0, -1
 #CHECK: error: invalid operand
 #CHECK: tmhh	%r0, 0x10000
@@ -2982,6 +2999,23 @@
 
 	tmll	%r0, -1
 	tmll	%r0, 0x10000
+
+#CHECK: error: invalid operand
+#CHECK: tmy	-524289, 0
+#CHECK: error: invalid operand
+#CHECK: tmy	524288, 0
+#CHECK: error: invalid use of indexed addressing
+#CHECK: tmy	0(%r1,%r2), 0
+#CHECK: error: invalid operand
+#CHECK: tmy	0, -1
+#CHECK: error: invalid operand
+#CHECK: tmy	0, 256
+
+	tmy	-524289, 0
+	tmy	524288, 0
+	tmy	0(%r1,%r2), 0
+	tmy	0, -1
+	tmy	0, 256
 
 #CHECK: error: invalid operand
 #CHECK: x	%r0, -1

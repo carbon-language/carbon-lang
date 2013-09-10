@@ -46,7 +46,10 @@ namespace SystemZISD {
     FCMP,
 
     // Test under mask.  The first operand is ANDed with the second operand
-    // and the condition codes are set on the result.
+    // and the condition codes are set on the result.  The third operand is
+    // a boolean that is true if the condition codes need to distinguish
+    // between CCMASK_TM_MIXED_MSB_0 and CCMASK_TM_MIXED_MSB_1 (which the
+    // register forms do but the memory forms don't).
     TM,
 
     // Branches if a condition is true.  Operand 0 is the chain operand;

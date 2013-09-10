@@ -1226,13 +1226,13 @@ static unsigned getTestUnderMaskCond(unsigned BitSize, unsigned CCMask,
   return 0;
 }
 
-// See whether the comparison (Opcode CmpOp0, CmpOp1) can be implemented
-// as a TEST UNDER MASK instruction when the condition being tested is
-// as described by CCValid and CCMask.  Update the arguments with the
-// TM version if so.
+// See whether the comparison (Opcode CmpOp0, CmpOp1, ICmpType) can be
+// implemented as a TEST UNDER MASK instruction when the condition being
+// tested is as described by CCValid and CCMask.  Update the arguments
+// with the TM version if so.
 static void adjustForTestUnderMask(unsigned &Opcode, SDValue &CmpOp0,
                                    SDValue &CmpOp1, unsigned &CCValid,
-                                   unsigned &CCMask, unsigned ICmpType) {
+                                   unsigned &CCMask, unsigned &ICmpType) {
   // Check that we have a comparison with a constant.
   ConstantSDNode *ConstCmpOp1 = dyn_cast<ConstantSDNode>(CmpOp1);
   if (!ConstCmpOp1)
@@ -1266,6 +1266,8 @@ static void adjustForTestUnderMask(unsigned &Opcode, SDValue &CmpOp0,
   Opcode = SystemZISD::TM;
   CmpOp0 = AndOp0;
   CmpOp1 = AndOp1;
+  ICmpType = (bool(NewCCMask & SystemZ::CCMASK_TM_MIXED_MSB_0) !=
+              bool(NewCCMask & SystemZ::CCMASK_TM_MIXED_MSB_1));
   CCValid = SystemZ::CCMASK_TM;
   CCMask = NewCCMask;
 }
@@ -1315,7 +1317,7 @@ static SDValue emitCmp(const SystemZTargetMachine &TM, SelectionDAG &DAG,
   }
 
   adjustForTestUnderMask(Opcode, CmpOp0, CmpOp1, CCValid, CCMask, ICmpType);
-  if (Opcode == SystemZISD::ICMP)
+  if (Opcode == SystemZISD::ICMP || Opcode == SystemZISD::TM)
     return DAG.getNode(Opcode, DL, MVT::Glue, CmpOp0, CmpOp1,
                        DAG.getConstant(ICmpType, MVT::i32));
   return DAG.getNode(Opcode, DL, MVT::Glue, CmpOp0, CmpOp1);
