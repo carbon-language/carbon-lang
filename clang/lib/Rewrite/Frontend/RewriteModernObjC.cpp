@@ -58,7 +58,6 @@ namespace {
       BLOCK_IS_GLOBAL =         (1 << 28),
       BLOCK_HAS_DESCRIPTOR =    (1 << 29)
     };
-    static const int OBJC_ABI_VERSION = 7;
     
     Rewriter Rewrite;
     DiagnosticsEngine &Diags;
