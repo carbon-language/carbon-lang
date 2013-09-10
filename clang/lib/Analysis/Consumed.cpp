@@ -1103,12 +1103,16 @@ bool ConsumedAnalyzer::splitState(const CFGBlock *CurrBlock,
 
 void ConsumedAnalyzer::run(AnalysisDeclContext &AC) {
   const FunctionDecl *D = dyn_cast_or_null<FunctionDecl>(AC.getDecl());
+  if (!D)
+    return;
   
-  if (!D) return;
+  CFG *CFGraph = AC.getCFG();
+  if (!CFGraph)
+    return;
   
   determineExpectedReturnState(AC, D);
   
-  BlockInfo = ConsumedBlockInfo(AC.getCFG());
+  BlockInfo = ConsumedBlockInfo(CFGraph);
   
   PostOrderCFGView *SortedGraph = AC.getAnalysis<PostOrderCFGView>();
   
