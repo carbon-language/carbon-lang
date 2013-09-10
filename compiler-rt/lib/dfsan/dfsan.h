@@ -29,6 +29,18 @@ inline const dfsan_label *shadow_for(const void *ptr) {
   return shadow_for(const_cast<void *>(ptr));
 }
 
+struct Flags {
+  // Whether to warn on unimplemented functions.
+  bool warn_unimplemented;
+  // Whether to warn on non-zero labels.
+  bool warn_nonzero_labels;
+};
+
+extern Flags flags_data;
+inline Flags &flags() {
+  return flags_data;
+}
+
 }  // namespace __dfsan
 
 #endif  // DFSAN_H

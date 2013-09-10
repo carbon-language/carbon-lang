@@ -22,6 +22,7 @@
 #include "sanitizer/dfsan_interface.h"
 #include "sanitizer_common/sanitizer_atomic.h"
 #include "sanitizer_common/sanitizer_common.h"
+#include "sanitizer_common/sanitizer_flags.h"
 #include "sanitizer_common/sanitizer_libc.h"
 
 #include "dfsan/dfsan.h"
@@ -35,6 +36,8 @@ static const uptr kNumLabels = 1 << (sizeof(dfsan_label) * 8);
 
 static atomic_dfsan_label __dfsan_last_label;
 static dfsan_label_info __dfsan_label_info[kNumLabels];
+
+Flags __dfsan::flags_data;
 
 SANITIZER_INTERFACE_ATTRIBUTE THREADLOCAL dfsan_label __dfsan_retval_tls;
 SANITIZER_INTERFACE_ATTRIBUTE THREADLOCAL dfsan_label __dfsan_arg_tls[64];
@@ -132,14 +135,18 @@ dfsan_label __dfsan_union_load(const dfsan_label *ls, size_t n) {
 
 extern "C" SANITIZER_INTERFACE_ATTRIBUTE
 void __dfsan_unimplemented(char *fname) {
-  Report("WARNING: DataFlowSanitizer: call to uninstrumented function %s\n",
-         fname);
+  if (flags().warn_unimplemented)
+    Report("WARNING: DataFlowSanitizer: call to uninstrumented function %s\n",
+           fname);
 }
 
 // Use '-mllvm -dfsan-debug-nonzero-labels' and break on this function
 // to try to figure out where labels are being introduced in a nominally
 // label-free program.
-extern "C" SANITIZER_INTERFACE_ATTRIBUTE void __dfsan_nonzero_label() {}
+extern "C" SANITIZER_INTERFACE_ATTRIBUTE void __dfsan_nonzero_label() {
+  if (flags().warn_nonzero_labels)
+    Report("WARNING: DataFlowSanitizer: saw nonzero label\n");
+}
 
 // Like __dfsan_union, but for use from the client or custom functions.  Hence
 // the equality comparison is done here before calling __dfsan_union.
@@ -222,6 +229,14 @@ dfsan_label dfsan_has_label_with_desc(dfsan_label label, const char *desc) {
   }
 }
 
+static void InitializeFlags(Flags &f, const char *env) {
+  f.warn_unimplemented = true;
+  f.warn_nonzero_labels = false;
+
+  ParseFlag(env, &f.warn_unimplemented, "warn_unimplemented");
+  ParseFlag(env, &f.warn_nonzero_labels, "warn_nonzero_labels");
+}
+
 #ifdef DFSAN_NOLIBC
 extern "C" void dfsan_init() {
 #else
@@ -237,6 +252,8 @@ static void dfsan_init(int argc, char **argv, char **envp) {
   uptr init_addr = (uptr)&dfsan_init;
   if (!(init_addr >= kUnusedAddr && init_addr < kAppAddr))
     Mprotect(kUnusedAddr, kAppAddr - kUnusedAddr);
+
+  InitializeFlags(flags(), GetEnv("DFSAN_OPTIONS"));
 
   InitializeInterceptors();
 }
