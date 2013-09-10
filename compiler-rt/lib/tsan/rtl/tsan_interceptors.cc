@@ -67,7 +67,6 @@ extern "C" void __libc_free(void *ptr);
 extern "C" int mallopt(int param, int value);
 const int PTHREAD_MUTEX_RECURSIVE = 1;
 const int PTHREAD_MUTEX_RECURSIVE_NP = 1;
-const int kPthreadAttrSize = 56;
 const int EINVAL = 22;
 const int EBUSY = 16;
 const int EPOLL_CTL_ADD = 1;
