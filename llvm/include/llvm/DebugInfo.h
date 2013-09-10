@@ -17,6 +17,7 @@
 #ifndef LLVM_DEBUGINFO_H
 #define LLVM_DEBUGINFO_H
 
+#include "llvm/Support/Casting.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
@@ -46,7 +47,7 @@ namespace llvm {
   class DILexicalBlockFile;
   class DIVariable;
   class DIType;
-  class DIScopeRef;
+  class DIScope;
   class DIObjCProperty;
 
   /// Maps from type identifier to the actual MDNode.
@@ -56,9 +57,10 @@ namespace llvm {
   /// This should not be stored in a container, because the underlying MDNode
   /// may change in certain situations.
   class DIDescriptor {
-    // Befriends DIScopeRef so DIScopeRef can befriend the protected member
-    // function: getFieldAs<DIScopeRef>.
-    friend class DIScopeRef;
+    // Befriends DIRef so DIRef can befriend the protected member
+    // function: getFieldAs<DIRef>.
+    template <typename T>
+    friend class DIRef;
   public:
     enum {
       FlagPrivate            = 1 << 0,
@@ -151,10 +153,6 @@ namespace llvm {
     void dump() const;
   };
 
-  /// npecialize getFieldAs to handle fields that are references to DIScopes.
-  template <>
-  DIScopeRef DIDescriptor::getFieldAs<DIScopeRef>(unsigned Elt) const;
-
   /// DISubrange - This is used to represent ranges, for array bounds.
   class DISubrange : public DIDescriptor {
     friend class DIDescriptor;
@@ -192,6 +190,10 @@ namespace llvm {
     bool Verify() const;
   };
 
+  template <typename T>
+  class DIRef;
+  typedef DIRef<DIScope> DIScopeRef;
+
   /// DIScope - A base class for various scopes.
   class DIScope : public DIDescriptor {
   protected:
@@ -208,23 +210,7 @@ namespace llvm {
 
     /// Generate a reference to this DIScope. Uses the type identifier instead
     /// of the actual MDNode if possible, to help type uniquing.
-    Value *generateRef();
-  };
-
-  /// Represents reference to a DIScope, abstracts over direct and
-  /// identifier-based metadata scope references.
-  class DIScopeRef {
-    template <typename DescTy>
-    friend DescTy DIDescriptor::getFieldAs(unsigned Elt) const;
-    friend DIScopeRef DIScope::getContext() const;
-
-    /// Val can be either a MDNode or a MDString, in the latter,
-    /// MDString specifies the type identifier.
-    const Value *Val;
-    explicit DIScopeRef(const Value *V);
-  public:
-    DIScope resolve(const DITypeIdentifierMap &Map) const;
-    operator Value *() const { return const_cast<Value*>(Val); }
+    DIScopeRef generateRef();
   };
 
   /// DIType - This is a wrapper for a type.
@@ -241,7 +227,7 @@ namespace llvm {
     /// Verify - Verify that a type descriptor is well formed.
     bool Verify() const;
 
-    DIScopeRef getContext() const       { return getFieldAs<DIScopeRef>(2); }
+    DIScopeRef getContext() const;
     StringRef getName() const           { return getStringField(3);     }
     unsigned getLineNumber() const      { return getUnsignedField(4); }
     uint64_t getSizeInBits() const      { return getUInt64Field(5); }
@@ -297,6 +283,53 @@ namespace llvm {
     void replaceAllUsesWith(MDNode *D);
   };
 
+  /// Represents reference to a DIDescriptor, abstracts over direct and
+  /// identifier-based metadata references.
+  template <typename T>
+  class DIRef {
+    template <typename DescTy>
+    friend DescTy DIDescriptor::getFieldAs(unsigned Elt) const;
+    friend DIScopeRef DIScope::getContext() const;
+    friend DIScopeRef DIScope::generateRef();
+
+    /// Val can be either a MDNode or a MDString, in the latter,
+    /// MDString specifies the type identifier.
+    const Value *Val;
+    explicit DIRef(const Value *V);
+  public:
+    T resolve(const DITypeIdentifierMap &Map) const {
+      if (!Val)
+        return T();
+
+      if (const MDNode *MD = dyn_cast<MDNode>(Val))
+        return T(MD);
+
+      const MDString *MS = cast<MDString>(Val);
+      // Find the corresponding MDNode.
+      DITypeIdentifierMap::const_iterator Iter = Map.find(MS);
+      assert(Iter != Map.end() && "Identifier not in the type map?");
+      assert(DIType(Iter->second).isType() &&
+             "MDNode in DITypeIdentifierMap should be a DIType.");
+      return T(Iter->second);
+    }
+    operator Value *() const { return const_cast<Value*>(Val); }
+  };
+
+  /// Specialize getFieldAs to handle fields that are references to DIScopes.
+  template <>
+  DIScopeRef DIDescriptor::getFieldAs<DIScopeRef>(unsigned Elt) const;
+  /// Specialize DIRef constructor for DIScopeRef.
+  template <>
+  DIRef<DIScope>::DIRef(const Value *V);
+
+  typedef DIRef<DIType> DITypeRef;
+  /// Specialize getFieldAs to handle fields that are references to DITypes.
+  template <>
+  DITypeRef DIDescriptor::getFieldAs<DITypeRef>(unsigned Elt) const;
+  /// Specialize DIRef constructor for DITypeRef.
+  template <>
+  DIRef<DIType>::DIRef(const Value *V);
+
   /// DIBasicType - A basic type, like 'int' or 'float'.
   class DIBasicType : public DIType {
   public:
@@ -328,9 +361,9 @@ namespace llvm {
     /// associated with one.
     MDNode *getObjCProperty() const;
 
-    DIScopeRef getClassType() const {
+    DITypeRef getClassType() const {
       assert(getTag() == dwarf::DW_TAG_ptr_to_member_type);
-      return getFieldAs<DIScopeRef>(10);
+      return getFieldAs<DITypeRef>(10);
     }
 
     Constant *getConstant() const {
@@ -358,8 +391,8 @@ namespace llvm {
     void setTypeArray(DIArray Elements, DIArray TParams = DIArray());
     void addMember(DIDescriptor D);
     unsigned getRunTimeLang() const { return getUnsignedField(11); }
-    DIScopeRef getContainingType() const {
-      return getFieldAs<DIScopeRef>(12);
+    DITypeRef getContainingType() const {
+      return getFieldAs<DITypeRef>(12);
     }
     void setContainingType(DICompositeType ContainingType);
     DIArray getTemplateParams() const { return getFieldAs<DIArray>(13); }
@@ -426,8 +459,8 @@ namespace llvm {
     unsigned getVirtuality() const { return getUnsignedField(10); }
     unsigned getVirtualIndex() const { return getUnsignedField(11); }
 
-    DIScopeRef getContainingType() const {
-      return getFieldAs<DIScopeRef>(12);
+    DITypeRef getContainingType() const {
+      return getFieldAs<DITypeRef>(12);
     }
 
     unsigned getFlags() const {

@@ -2644,8 +2644,3 @@ void DwarfDebug::emitDebugStrDWO() {
   InfoHolder.emitStrings(Asm->getObjFileLowering().getDwarfStrDWOSection(),
                          OffSec, StrSym);
 }
-
-/// Find the MDNode for the given scope reference.
-DIScope DwarfDebug::resolve(DIScopeRef SRef) const {
-  return SRef.resolve(TypeIdentifierMap);
-}

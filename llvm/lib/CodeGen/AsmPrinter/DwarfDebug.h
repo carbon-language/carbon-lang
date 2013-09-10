@@ -684,7 +684,10 @@ public:
   unsigned getDwarfVersion() const { return DwarfVersion; }
 
   /// Find the MDNode for the given scope reference.
-  DIScope resolve(DIScopeRef SRef) const;
+  template <typename T>
+  T resolve(DIRef<T> Ref) const {
+    return Ref.resolve(TypeIdentifierMap);
+  }
 
   /// isSubprogramContext - Return true if Context is either a subprogram
   /// or another context nested inside a subprogram.

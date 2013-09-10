@@ -725,13 +725,13 @@ void DICompositeType::addMember(DIDescriptor D) {
 
 /// Generate a reference to this DIType. Uses the type identifier instead
 /// of the actual MDNode if possible, to help type uniquing.
-Value *DIScope::generateRef() {
+DIScopeRef DIScope::generateRef() {
   if (!isCompositeType())
-    return *this;
+    return DIScopeRef(*this);
   DICompositeType DTy(DbgNode);
   if (!DTy.getIdentifier())
-    return *this;
-  return DTy.getIdentifier();
+    return DIScopeRef(*this);
+  return DIScopeRef(DTy.getIdentifier());
 }
 
 /// \brief Set the containing type.
@@ -1432,30 +1432,27 @@ void DIVariable::printExtendedName(raw_ostream &OS) const {
   }
 }
 
-DIScopeRef::DIScopeRef(const Value *V) : Val(V) {
+/// Specialize constructor to make sure it has the correct type.
+template <>
+DIRef<DIScope>::DIRef(const Value *V) : Val(V) {
   assert(isScopeRef(V) && "DIScopeRef should be a MDString or MDNode");
 }
-
-/// Given a DITypeIdentifierMap, tries to find the corresponding
-/// DIScope for a DIScopeRef.
-DIScope DIScopeRef::resolve(const DITypeIdentifierMap &Map) const {
-  if (!Val)
-    return DIScope();
-
-  if (const MDNode *MD = dyn_cast<MDNode>(Val))
-    return DIScope(MD);
-
-  const MDString *MS = cast<MDString>(Val);
-  // Find the corresponding MDNode.
-  DITypeIdentifierMap::const_iterator Iter = Map.find(MS);
-  assert(Iter != Map.end() && "Identifier not in the type map?");
-  assert(DIType(Iter->second).isType() &&
-         "MDNode in DITypeIdentifierMap should be a DIType.");
-  return DIScope(Iter->second);
+template <>
+DIRef<DIType>::DIRef(const Value *V) : Val(V) {
+  assert(isTypeRef(V) && "DITypeRef should be a MDString or MDNode");
 }
 
 /// Specialize getFieldAs to handle fields that are references to DIScopes.
 template <>
 DIScopeRef DIDescriptor::getFieldAs<DIScopeRef>(unsigned Elt) const {
   return DIScopeRef(getField(DbgNode, Elt));
+}
+/// Specialize getFieldAs to handle fields that are references to DITypes.
+template <>
+DITypeRef DIDescriptor::getFieldAs<DITypeRef>(unsigned Elt) const {
+  return DITypeRef(getField(DbgNode, Elt));
+}
+
+DIScopeRef DIType::getContext() const {
+  return getFieldAs<DIScopeRef>(2);
 }
