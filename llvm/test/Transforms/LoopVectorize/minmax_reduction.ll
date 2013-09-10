@@ -515,7 +515,7 @@ for.end:
   ret float %max.red.0
 }
 
-; CHECK: @unordered_max_red
+; CHECK-LABEL: @unordered_max_red_float(
 ; CHECK: fcmp ugt <2 x float>
 ; CHECK: select <2 x i1>
 ; CHECK: middle.block
@@ -567,7 +567,7 @@ for.end:
   ret float %max.red.0
 }
 
-; CHECK: @inverted_unordered_max_red
+; CHECK-LABEL: @inverted_unordered_max_red_float(
 ; CHECK: fcmp ult <2 x float>
 ; CHECK: select <2 x i1>
 ; CHECK: middle.block
@@ -726,7 +726,7 @@ for.end:
   ret float %min.red.0
 }
 
-; CHECK: @unordered_min_red
+; CHECK-LABEL: @unordered_min_red_float(
 ; CHECK: fcmp ult <2 x float>
 ; CHECK: select <2 x i1>
 ; CHECK: middle.block
@@ -778,7 +778,7 @@ for.end:
   ret float %min.red.0
 }
 
-; CHECK: @inverted_unordered_min_red
+; CHECK-LABEL: @inverted_unordered_min_red_float(
 ; CHECK: fcmp ugt <2 x float>
 ; CHECK: select <2 x i1>
 ; CHECK: middle.block
@@ -882,4 +882,4 @@ for.end:
 }
 
 
-attributes #0 = { "no-nans-fp-math"="true" } 
+attributes #0 = { "no-nans-fp-math"="true" }
