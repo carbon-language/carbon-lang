@@ -402,6 +402,37 @@ uptr InternalBinarySearch(const Container &v, uptr first, uptr last,
   return not_found;
 }
 
+// Represents a binary loaded into virtual memory (e.g. this can be an
+// executable or a shared object).
+class LoadedModule {
+ public:
+  LoadedModule(const char *module_name, uptr base_address);
+  void addAddressRange(uptr beg, uptr end);
+  bool containsAddress(uptr address) const;
+
+  const char *full_name() const { return full_name_; }
+  uptr base_address() const { return base_address_; }
+
+ private:
+  struct AddressRange {
+    uptr beg;
+    uptr end;
+  };
+  char *full_name_;
+  uptr base_address_;
+  static const uptr kMaxNumberOfAddressRanges = 6;
+  AddressRange ranges_[kMaxNumberOfAddressRanges];
+  uptr n_ranges_;
+};
+
+// OS-dependent function that fills array with descriptions of at most
+// "max_modules" currently loaded modules. Returns the number of
+// initialized modules. If filter is nonzero, ignores modules for which
+// filter(full_name) is false.
+typedef bool (*string_predicate_t)(const char *);
+uptr GetListOfModules(LoadedModule *modules, uptr max_modules,
+                      string_predicate_t filter);
+
 }  // namespace __sanitizer
 
 #endif  // SANITIZER_COMMON_H

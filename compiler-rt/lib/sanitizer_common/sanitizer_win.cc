@@ -218,6 +218,11 @@ void Abort() {
   _exit(-1);  // abort is not NORETURN on Windows.
 }
 
+uptr GetListOfModules(LoadedModule *modules, uptr max_modules,
+                      string_predicate_t filter) {
+  UNIMPLEMENTED();
+};
+
 #ifndef SANITIZER_GO
 int Atexit(void (*function)(void)) {
   return atexit(function);

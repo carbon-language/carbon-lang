@@ -28,7 +28,8 @@ Location __ubsan::getCallerLocation(uptr CallerLoc) {
   uptr Loc = StackTrace::GetPreviousInstructionPc(CallerLoc);
 
   AddressInfo Info;
-  if (!SymbolizeCode(Loc, &Info, 1) || !Info.module || !*Info.module)
+  if (!getSymbolizer()->SymbolizeCode(Loc, &Info, 1) ||
+      !Info.module || !*Info.module)
     return Location(Loc);
 
   if (!Info.file)
@@ -109,7 +110,7 @@ static void renderText(const char *Message, const Diag::Arg *Args) {
         Printf("%s", A.String);
         break;
       case Diag::AK_Mangled: {
-        Printf("'%s'", Demangle(A.String));
+        Printf("'%s'", getSymbolizer()->Demangle(A.String));
         break;
       }
       case Diag::AK_SInt:

@@ -14,29 +14,15 @@
 
 #include "sanitizer_platform.h"
 #if SANITIZER_WINDOWS
-#include <windows.h>
-
 #include "sanitizer_internal_defs.h"
 #include "sanitizer_symbolizer.h"
 
 namespace __sanitizer {
 
-bool StartSymbolizerSubprocess(const char *path_to_symbolizer,
-                               int *input_fd, int *output_fd) {
-  UNIMPLEMENTED();
-}
+static SymbolizerInterface win_symbolizer;  // Linker initialized.
 
-uptr GetListOfModules(LoadedModule *modules, uptr max_modules,
-                      string_predicate_t filter) {
-  UNIMPLEMENTED();
-};
-
-void SymbolizerPrepareForSandboxing() {
-  // Do nothing on Windows.
-}
-
-const char *DemangleCXXABI(const char *name) {
-  return name;
+SymbolizerInterface *getSymbolizer() {
+  return &win_symbolizer;
 }
 
 }  // namespace __sanitizer

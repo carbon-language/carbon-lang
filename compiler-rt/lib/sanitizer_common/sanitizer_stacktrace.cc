@@ -86,10 +86,10 @@ void StackTrace::PrintStack(const uptr *addr, uptr size,
         frame_num++;
       }
     }
-    if (symbolize && addr_frames_num == 0 && &SymbolizeCode) {
+    if (symbolize && addr_frames_num == 0 && &getSymbolizer) {
       // Use our own (online) symbolizer, if necessary.
-      addr_frames_num = SymbolizeCode(pc, addr_frames.data(),
-                                      addr_frames.size());
+      addr_frames_num = getSymbolizer()->SymbolizeCode(
+          pc, addr_frames.data(), addr_frames.size());
       for (uptr j = 0; j < addr_frames_num; j++) {
         AddressInfo &info = addr_frames[j];
         PrintStackFramePrefix(frame_num, pc);

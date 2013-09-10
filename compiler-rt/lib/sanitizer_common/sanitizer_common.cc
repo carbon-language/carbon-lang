@@ -146,6 +146,27 @@ void ReportErrorSummary(const char *error_type, const char *file,
   __sanitizer_report_error_summary(buff.data());
 }
 
+LoadedModule::LoadedModule(const char *module_name, uptr base_address) {
+  full_name_ = internal_strdup(module_name);
+  base_address_ = base_address;
+  n_ranges_ = 0;
+}
+
+void LoadedModule::addAddressRange(uptr beg, uptr end) {
+  CHECK_LT(n_ranges_, kMaxNumberOfAddressRanges);
+  ranges_[n_ranges_].beg = beg;
+  ranges_[n_ranges_].end = end;
+  n_ranges_++;
+}
+
+bool LoadedModule::containsAddress(uptr address) const {
+  for (uptr i = 0; i < n_ranges_; i++) {
+    if (ranges_[i].beg <= address && address < ranges_[i].end)
+      return true;
+  }
+  return false;
+}
+
 }  // namespace __sanitizer
 
 using namespace __sanitizer;  // NOLINT

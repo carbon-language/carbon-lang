@@ -310,7 +310,7 @@ void PrepareForSandboxing() {
   // cached mappings.
   MemoryMappingLayout::CacheMemoryMappings();
   // Same for /proc/self/exe in the symbolizer.
-  SymbolizerPrepareForSandboxing();
+  getSymbolizer()->PrepareForSandboxing();
 }
 
 // ----------------- sanitizer_procmaps.h
@@ -674,6 +674,39 @@ uptr GetPageSize() {
 #else
   return sysconf(_SC_PAGESIZE);  // EXEC_PAGESIZE may not be trustworthy.
 #endif
+}
+
+static char proc_self_exe_cache_str[kMaxPathLength];
+static uptr proc_self_exe_cache_len = 0;
+
+uptr ReadBinaryName(/*out*/char *buf, uptr buf_len) {
+  uptr module_name_len = internal_readlink(
+      "/proc/self/exe", buf, buf_len);
+  int readlink_error;
+  if (internal_iserror(buf_len, &readlink_error)) {
+    if (proc_self_exe_cache_len) {
+      // If available, use the cached module name.
+      CHECK_LE(proc_self_exe_cache_len, buf_len);
+      internal_strncpy(buf, proc_self_exe_cache_str, buf_len);
+      module_name_len = internal_strlen(proc_self_exe_cache_str);
+    } else {
+      // We can't read /proc/self/exe for some reason, assume the name of the
+      // binary is unknown.
+      Report("WARNING: readlink(\"/proc/self/exe\") failed with errno %d, "
+             "some stack frames may not be symbolized\n", readlink_error);
+      module_name_len = internal_snprintf(buf, buf_len, "/proc/self/exe");
+    }
+    CHECK_LT(module_name_len, buf_len);
+    buf[module_name_len] = '\0';
+  }
+  return module_name_len;
+}
+
+void CacheBinaryName() {
+  if (!proc_self_exe_cache_len) {
+    proc_self_exe_cache_len =
+        ReadBinaryName(proc_self_exe_cache_str, kMaxPathLength);
+  }
 }
 
 // Match full names of the form /path/to/base_name{-,.}*
