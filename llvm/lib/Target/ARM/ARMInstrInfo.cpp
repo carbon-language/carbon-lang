@@ -136,8 +136,12 @@ namespace {
       unsigned GlobalBaseReg = AFI->getGlobalBaseReg();
       Opc = TM->getSubtarget<ARMSubtarget>().isThumb2() ? ARM::tPICADD
                                                         : ARM::PICADD;
-      BuildMI(FirstMBB, MBBI, DL, TII.get(ARM::tPICADD), GlobalBaseReg)
-          .addReg(TempReg).addImm(ARMPCLabelIndex);
+      MIB = BuildMI(FirstMBB, MBBI, DL, TII.get(Opc), GlobalBaseReg)
+                .addReg(TempReg)
+                .addImm(ARMPCLabelIndex);
+      if (Opc == ARM::PICADD)
+        AddDefaultPred(MIB);
+
 
       return true;
     }
