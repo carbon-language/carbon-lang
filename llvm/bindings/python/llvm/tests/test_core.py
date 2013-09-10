@@ -21,3 +21,7 @@ class TestCore(TestBase):
         with self.assertRaises(Exception):
             MemoryBuffer(filename="/hopefully/this/path/doesnt/exist")
 
+    def test_memory_buffer_len(self):
+        source = self.get_test_file()
+        m = MemoryBuffer(filename=source)
+        self.assertEqual(len(m), 50)

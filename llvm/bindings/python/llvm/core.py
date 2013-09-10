@@ -83,10 +83,16 @@ class MemoryBuffer(LLVMObject):
 
         LLVMObject.__init__(self, memory, disposer=lib.LLVMDisposeMemoryBuffer)
 
+    def __len__(self):
+        return lib.LLVMGetBufferSize(self)
+
 def register_library(library):
+    # Memory buffer declarations
     library.LLVMCreateMemoryBufferWithContentsOfFile.argtypes = [c_char_p,
             POINTER(c_object_p), POINTER(c_char_p)]
     library.LLVMCreateMemoryBufferWithContentsOfFile.restype = bool
+
+    library.LLVMGetBufferSize.argtypes = [MemoryBuffer]
 
     library.LLVMDisposeMemoryBuffer.argtypes = [MemoryBuffer]
 
