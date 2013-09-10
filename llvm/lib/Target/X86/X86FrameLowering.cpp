@@ -408,7 +408,7 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
   unsigned FramePtr = RegInfo->getFrameRegister(MF);
   unsigned StackPtr = RegInfo->getStackRegister();
   unsigned BasePtr = RegInfo->getBaseRegister();
-  DebugLoc DL = MBB.findDebugLoc(MBBI);
+  DebugLoc DL;
 
   // If we're forcing a stack realignment we can't rely on just the frame
   // info, we need to know the ABI stack alignment as well in case we
