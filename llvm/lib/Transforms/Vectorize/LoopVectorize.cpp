@@ -864,15 +864,18 @@ private:
     unsigned Val = C->getZExtValue();
 
     if (Hint == "width") {
-      assert(isPowerOf2_32(Val) && Val <= MaxVectorWidth &&
-             "Invalid width metadata");
-      Width = Val;
+      if (isPowerOf2_32(Val) && Val <= MaxVectorWidth)
+        Width = Val;
+      else
+        DEBUG(dbgs() << "LV: ignoring invalid width hint metadata");
     } else if (Hint == "unroll") {
-      assert(isPowerOf2_32(Val) && Val <= MaxUnrollFactor &&
-             "Invalid unroll metadata");
-      Unroll = Val;
-    } else
+      if (isPowerOf2_32(Val) && Val <= MaxUnrollFactor)
+        Unroll = Val;
+      else
+        DEBUG(dbgs() << "LV: ignoring invalid unroll hint metadata");
+    } else {
       DEBUG(dbgs() << "LV: ignoring unknown hint " << Hint);
+    }
   }
 };
 
