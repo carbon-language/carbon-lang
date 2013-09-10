@@ -170,8 +170,12 @@ public:
                              raw_ostream &);
   virtual void mangleReferenceTemporary(const VarDecl *, raw_ostream &);
   virtual void mangleStaticGuardVariable(const VarDecl *D, raw_ostream &Out);
+  virtual void mangleDynamicInitializer(const VarDecl *D, raw_ostream &Out);
   virtual void mangleDynamicAtExitDestructor(const VarDecl *D,
                                              raw_ostream &Out);
+
+private:
+  void mangleInitFiniStub(const VarDecl *D, raw_ostream &Out, char CharCode);
 };
 
 }
@@ -1941,15 +1945,27 @@ void MicrosoftMangleContext::mangleStaticGuardVariable(const VarDecl *VD,
   Mangler.getStream() << (Visible ? "@51" : "@4IA");
 }
 
+void MicrosoftMangleContext::mangleInitFiniStub(const VarDecl *D,
+                                                raw_ostream &Out,
+                                                char CharCode) {
+  MicrosoftCXXNameMangler Mangler(*this, Out);
+  Mangler.getStream() << "\01??__" << CharCode;
+  Mangler.mangleName(D);
+  // This is the function class mangling.  These stubs are global, non-variadic,
+  // cdecl functions that return void and take no args.
+  Mangler.getStream() << "YAXXZ";
+}
+
+void MicrosoftMangleContext::mangleDynamicInitializer(const VarDecl *D,
+                                                      raw_ostream &Out) {
+  // <initializer-name> ::= ?__E <name> YAXXZ
+  mangleInitFiniStub(D, Out, 'E');
+}
+
 void MicrosoftMangleContext::mangleDynamicAtExitDestructor(const VarDecl *D,
                                                            raw_ostream &Out) {
-  // <destructor-name> ::= ?__F <postfix> YAXXZ
-  MicrosoftCXXNameMangler Mangler(*this, Out);
-  Mangler.getStream() << "\01??__F";
-  Mangler.mangleName(D);
-  // This is the mangling of the function type of the stub, which is a global,
-  // non-variadic, cdecl function that returns void and takes no args.
-  Mangler.getStream() << "YAXXZ";
+  // <destructor-name> ::= ?__F <name> YAXXZ
+  mangleInitFiniStub(D, Out, 'F');
 }
 
 MangleContext *clang::createMicrosoftMangleContext(ASTContext &Context,

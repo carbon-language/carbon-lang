@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -emit-llvm %s -o - -cxx-abi microsoft -triple=i386-pc-win32 | FileCheck %s
 
 // CHECK: @llvm.global_ctors = appending global [2 x { i32, void ()* }]
-// CHECK: [{ i32, void ()* } { i32 65535, void ()* [[INIT_foo:@.*global_var.*]] },
+// CHECK: [{ i32, void ()* } { i32 65535, void ()* @"\01??__Efoo@?$B@H@@YAXXZ" },
 // CHECK:  { i32, void ()* } { i32 65535, void ()* @_GLOBAL__I_a }]
 
 struct S {
@@ -11,7 +11,7 @@ struct S {
 
 S s;
 
-// CHECK: define internal void [[INIT_s:@.*global_var.*]] [[NUW:#[0-9]+]]
+// CHECK: define internal void @"\01??__Es@@YAXXZ"() [[NUW:#[0-9]+]]
 // CHECK: %{{[.0-9A-Z_a-z]+}} = call x86_thiscallcc %struct.S* @"\01??0S@@QAE@XZ"
 // CHECK: call i32 @atexit(void ()* @"\01??__Fs@@YAXXZ")
 // CHECK: ret void
@@ -134,7 +134,7 @@ void force_usage() {
   (void)B<int>::foo;  // (void) - force usage
 }
 
-// CHECK: define internal void [[INIT_foo]]() [[NUW]]
+// CHECK: define internal void @"\01??__Efoo@?$B@H@@YAXXZ"() [[NUW]]
 // CHECK: %{{[.0-9A-Z_a-z]+}} = call x86_thiscallcc %class.A* @"\01??0A@@QAE@XZ"
 // CHECK: call i32 @atexit(void ()* @"\01??__Ffoo@?$B@H@@YAXXZ")
 // CHECK: ret void
@@ -148,7 +148,7 @@ void force_usage() {
 // CHECK: ret void
 
 // CHECK: define internal void @_GLOBAL__I_a() [[NUW]] {
-// CHECK: call void [[INIT_s]]
+// CHECK: call void @"\01??__Es@@YAXXZ"()
 // CHECK: ret void
 
 // CHECK: attributes [[NUW]] = { nounwind }

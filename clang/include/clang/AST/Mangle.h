@@ -141,6 +141,9 @@ public:
 
   virtual void mangleStaticGuardVariable(const VarDecl *D,
                                          raw_ostream &Out) = 0;
+
+  virtual void mangleDynamicInitializer(const VarDecl *D, raw_ostream &Out) = 0;
+
   virtual void mangleDynamicAtExitDestructor(const VarDecl *D,
                                              raw_ostream &Out) = 0;
 

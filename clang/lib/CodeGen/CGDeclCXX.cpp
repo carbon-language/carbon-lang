@@ -259,10 +259,15 @@ CodeGenModule::EmitCXXGlobalVarDeclInitFunc(const VarDecl *D,
                                             llvm::GlobalVariable *Addr,
                                             bool PerformInit) {
   llvm::FunctionType *FTy = llvm::FunctionType::get(VoidTy, false);
+  SmallString<256> FnName;
+  {
+    llvm::raw_svector_ostream Out(FnName);
+    getCXXABI().getMangleContext().mangleDynamicInitializer(D, Out);
+  }
 
   // Create a variable initialization function.
   llvm::Function *Fn =
-    CreateGlobalInitOrDestructFunction(*this, FTy, "__cxx_global_var_init");
+      CreateGlobalInitOrDestructFunction(*this, FTy, FnName.str());
 
   CodeGenFunction(*this).GenerateCXXGlobalVarDeclInitFunc(Fn, D, Addr,
                                                           PerformInit);

@@ -153,6 +153,7 @@ public:
                      raw_ostream &);
 
   void mangleStaticGuardVariable(const VarDecl *D, raw_ostream &);
+  void mangleDynamicInitializer(const VarDecl *D, raw_ostream &Out);
   void mangleDynamicAtExitDestructor(const VarDecl *D, raw_ostream &Out);
   void mangleItaniumThreadLocalInit(const VarDecl *D, raw_ostream &);
   void mangleItaniumThreadLocalWrapper(const VarDecl *D, raw_ostream &);
@@ -3699,6 +3700,14 @@ void ItaniumMangleContext::mangleStaticGuardVariable(const VarDecl *D,
   CXXNameMangler Mangler(*this, Out);
   Mangler.getStream() << "_ZGV";
   Mangler.mangleName(D);
+}
+
+void ItaniumMangleContext::mangleDynamicInitializer(const VarDecl *MD,
+                                                    raw_ostream &Out) {
+  // These symbols are internal in the Itanium ABI, so the names don't matter.
+  // Clang has traditionally used this symbol and allowed LLVM to adjust it to
+  // avoid duplicate symbols.
+  Out << "__cxx_global_var_init";
 }
 
 void ItaniumMangleContext::mangleDynamicAtExitDestructor(const VarDecl *D,
