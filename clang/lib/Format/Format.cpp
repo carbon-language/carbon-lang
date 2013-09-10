@@ -656,8 +656,6 @@ private:
     // In case the token starts with escaped newlines, we want to
     // take them into account as whitespace - this pattern is quite frequent
     // in macro definitions.
-    // FIXME: What do we want to do with other escaped spaces, and escaped
-    // spaces or newlines in the middle of tokens?
     // FIXME: Add a more explicit test.
     while (FormatTok->TokenText.size() > 1 && FormatTok->TokenText[0] == '\\' &&
            FormatTok->TokenText[1] == '\n') {
@@ -692,25 +690,26 @@ private:
 
     StringRef Text = FormatTok->TokenText;
     size_t FirstNewlinePos = Text.find('\n');
-    if (FirstNewlinePos != StringRef::npos) {
+    if (FirstNewlinePos == StringRef::npos) {
+      // FIXME: ColumnWidth actually depends on the start column, we need to
+      // take this into account when the token is moved.
+      FormatTok->ColumnWidth =
+          encoding::columnWidthWithTabs(Text, Column, Style.TabWidth, Encoding);
+      Column += FormatTok->ColumnWidth;
+    } else {
       FormatTok->IsMultiline = true;
+      // FIXME: ColumnWidth actually depends on the start column, we need to
+      // take this into account when the token is moved.
+      FormatTok->ColumnWidth = encoding::columnWidthWithTabs(
+          Text.substr(0, FirstNewlinePos), Column, Style.TabWidth, Encoding);
+
       // The last line of the token always starts in column 0.
       // Thus, the length can be precomputed even in the presence of tabs.
       FormatTok->LastLineColumnWidth = encoding::columnWidthWithTabs(
           Text.substr(Text.find_last_of('\n') + 1), 0, Style.TabWidth,
           Encoding);
-      Text = Text.substr(0, FirstNewlinePos);
+      Column = FormatTok->LastLineColumnWidth;
     }
-
-    // FIXME: ColumnWidth actually depends on the start column, we need to
-    // take this into account when the token is moved.
-    FormatTok->ColumnWidth =
-        encoding::columnWidthWithTabs(Text, Column, Style.TabWidth, Encoding);
-
-    // FIXME: For multi-line tokens this should be LastLineColumnWidth.
-    // For line comments this should probably be zero. But before changing,
-    // we need good tests for this.
-    Column += FormatTok->ColumnWidth;
 
     return FormatTok;
   }

@@ -5736,9 +5736,6 @@ TEST_F(FormatTest, ConfigurableUseOfTab) {
                "};",
                Tab);
 
-  // FIXME: To correctly count mixed whitespace we need to
-  // also correctly count mixed whitespace in front of the comment.
-
   Tab.TabWidth = 8;
   Tab.IndentWidth = 8;
   EXPECT_EQ("/*\n"
@@ -5793,6 +5790,39 @@ TEST_F(FormatTest, ConfigurableUseOfTab) {
                    "\t */\n"
                    "\t int i;\n"
                    "}"));
+}
+
+TEST_F(FormatTest, CalculatesOriginalColumn) {
+  EXPECT_EQ("\"qqqqqqqqqqqqqqqqqqqqqqqqqq\\\n"
+            "q\"; /* some\n"
+            "       comment */",
+            format("  \"qqqqqqqqqqqqqqqqqqqqqqqqqq\\\n"
+                   "q\"; /* some\n"
+                   "       comment */",
+                   getLLVMStyle()));
+  EXPECT_EQ("// qqqqqqqqqqqqqqqqqqqqqqqqqq\n"
+            "/* some\n"
+            "   comment */",
+            format("// qqqqqqqqqqqqqqqqqqqqqqqqqq\n"
+                   " /* some\n"
+                   "    comment */",
+                   getLLVMStyle()));
+  EXPECT_EQ("// qqqqqqqqqqqqqqqqqqqqqqqqqq\\\n"
+            "qqq\n"
+            "/* some\n"
+            "   comment */",
+            format("// qqqqqqqqqqqqqqqqqqqqqqqqqq\\\n"
+                   "qqq\n"
+                   " /* some\n"
+                   "    comment */",
+                   getLLVMStyle()));
+  EXPECT_EQ("inttt qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq\\\n"
+            "wwww; /* some\n"
+            "         comment */",
+            format("  inttt qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq\\\n"
+                   "wwww; /* some\n"
+                   "         comment */",
+                   getLLVMStyle()));
 }
 
 TEST_F(FormatTest, ConfigurableSpaceAfterControlStatementKeyword) {

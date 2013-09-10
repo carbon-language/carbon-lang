@@ -611,9 +611,8 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
   return Penalty;
 }
 
-unsigned
-ContinuationIndenter::addMultilineStringLiteral(const FormatToken &Current,
-                                                LineState &State) {
+unsigned ContinuationIndenter::addMultilineToken(const FormatToken &Current,
+                                                 LineState &State) {
   // Break before further function parameters on all levels.
   for (unsigned i = 0, e = State.Stack.size(); i != e; ++i)
     State.Stack[i].BreakBeforeParameter = true;
@@ -631,6 +630,11 @@ ContinuationIndenter::addMultilineStringLiteral(const FormatToken &Current,
 unsigned ContinuationIndenter::breakProtrudingToken(const FormatToken &Current,
                                                     LineState &State,
                                                     bool DryRun) {
+  // Don't break multi-line tokens other than block comments. Instead, just
+  // update the state.
+  if (Current.Type != TT_BlockComment && Current.IsMultiline)
+    return addMultilineToken(Current, State);
+
   if (!Current.isOneOf(tok::string_literal, tok::comment))
     return 0;
 
@@ -639,12 +643,6 @@ unsigned ContinuationIndenter::breakProtrudingToken(const FormatToken &Current,
 
   if (Current.is(tok::string_literal) &&
       Current.Type != TT_ImplicitStringLiteral) {
-    // Don't break string literals with (in case of non-raw strings, escaped)
-    // newlines. As clang-format must not change the string's content, it is
-    // unlikely that we'll end up with a better format.
-    if (Current.IsMultiline)
-      return addMultilineStringLiteral(Current, State);
-
     // Only break up default narrow strings.
     if (!Current.TokenText.startswith("\""))
       return 0;
@@ -662,16 +660,6 @@ unsigned ContinuationIndenter::breakProtrudingToken(const FormatToken &Current,
   } else if (Current.Type == TT_LineComment &&
              (Current.Previous == NULL ||
               Current.Previous->Type != TT_ImplicitStringLiteral)) {
-    // Don't break line comments with escaped newlines. These look like
-    // separate line comments, but in fact contain a single line comment with
-    // multiple lines including leading whitespace and the '//' markers.
-    //
-    // FIXME: If we want to handle them correctly, we'll need to adjust
-    // leading whitespace in consecutive lines when changing indentation of
-    // the first line similar to what we do with block comments.
-    if (Current.IsMultiline)
-      return 0;
-
     Token.reset(new BreakableLineComment(
         Current, StartColumn, State.Line->InPPDirective, Encoding, Style));
   } else {
