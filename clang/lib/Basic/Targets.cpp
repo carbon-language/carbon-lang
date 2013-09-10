@@ -2133,7 +2133,7 @@ void X86TargetInfo::setSSELevel(llvm::StringMap<bool> &Features,
     case AVX:
       Features["avx"] = true;
     case SSE42:
-      Features["popcnt"] = Features["sse4.2"] = true;
+      Features["sse4.2"] = true;
     case SSE41:
       Features["sse4.1"] = true;
     case SSSE3:
@@ -2166,7 +2166,7 @@ void X86TargetInfo::setSSELevel(llvm::StringMap<bool> &Features,
   case SSE41:
     Features["sse4.1"] = false;
   case SSE42:
-    Features["popcnt"] = Features["sse4.2"] = false;
+    Features["sse4.2"] = false;
   case AVX:
     Features["fma"] = Features["avx"] = false;
     setXOPLevel(Features, FMA4, false);
@@ -2404,6 +2404,15 @@ bool X86TargetInfo::HandleTargetFeatures(std::vector<std::string> &Features,
         .Case("sse4a", SSE4A)
         .Default(NoXOP);
     XOPLevel = std::max(XOPLevel, XLevel);
+  }
+
+  // Enable popcnt if sse4.2 is enabled and popcnt is not explicitly disabled.
+  // Can't do this earlier because we need to be able to explicitly enable
+  // popcnt and still disable sse4.2.
+  if (!HasPOPCNT && SSELevel >= SSE42 &&
+      std::find(Features.begin(), Features.end(), "-popcnt") == Features.end()){
+    HasPOPCNT = true;
+    Features.push_back("+popcnt");
   }
 
   // LLVM doesn't have a separate switch for fpmath, so only accept it if it
