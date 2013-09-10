@@ -789,7 +789,7 @@ struct StrPBrkOpt : public LibCallOptimization {
     // Constant folding.
     if (HasS1 && HasS2) {
       size_t I = S1.find_first_of(S2);
-      if (I == std::string::npos) // No match.
+      if (I == StringRef::npos) // No match.
         return Constant::getNullValue(CI->getType());
 
       return B.CreateGEP(CI->getArgOperand(0), B.getInt64(I), "strpbrk");
@@ -927,7 +927,7 @@ struct StrStrOpt : public LibCallOptimization {
 
     // If both strings are known, constant fold it.
     if (HasStr1 && HasStr2) {
-      std::string::size_type Offset = SearchStr.find(ToFindStr);
+      size_t Offset = SearchStr.find(ToFindStr);
 
       if (Offset == StringRef::npos) // strstr("foo", "bar") -> null
         return Constant::getNullValue(CI->getType());
@@ -1384,7 +1384,7 @@ struct PrintFOpt : public LibCallOptimization {
 
     // printf("foo\n") --> puts("foo")
     if (FormatStr[FormatStr.size()-1] == '\n' &&
-        FormatStr.find('%') == std::string::npos) {  // no format characters.
+        FormatStr.find('%') == StringRef::npos) { // No format characters.
       // Create a string literal with no \n on it.  We expect the constant merge
       // pass to be run after this pass, to merge duplicate strings.
       FormatStr = FormatStr.drop_back();
