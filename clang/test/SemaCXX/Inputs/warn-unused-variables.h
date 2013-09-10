@@ -7,5 +7,7 @@ class A {};
 
 class B {
   static A a;
+  static A b;
+  static const int x = sizeof(b);
 };
 }

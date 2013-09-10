@@ -1,6 +1,41 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -Wunused -Wunused-member-function -Wno-c++11-extensions -std=c++98 %s
 // RUN: %clang_cc1 -fsyntax-only -verify -Wunused -Wunused-member-function -std=c++11 %s
 
+#ifdef HEADER
+
+static void headerstatic() {}  // expected-warning{{unused}}
+static inline void headerstaticinline() {}
+
+namespace {
+  void headeranon() {}  // expected-warning{{unused}}
+  inline void headerinlineanon() {}
+}
+
+namespace test7
+{
+  template<typename T>
+  static inline void foo(T) { }
+
+  // This should not emit an unused-function warning since it inherits
+  // the static storage type from the base template.
+  template<>
+  inline void foo(int) {  }
+
+  // Partial specialization
+  template<typename T, typename U>
+  static inline void bar(T, U) { }
+
+  template<typename U>
+  inline void bar(int, U) { }
+
+  template<>
+  inline void bar(int, int) { }
+};
+
+#else
+#define HEADER
+#include "warn-unused-filescoped.cpp"
+
 static void f1(); // expected-warning{{unused}}
 
 namespace {
@@ -37,8 +72,10 @@ namespace {
 
 void S::m3() { }  // expected-warning{{unused}}
 
-static inline void f4() { }
-const unsigned int cx = 0;
+static inline void f4() { }  // expected-warning{{unused}}
+const unsigned int cx = 0; // expected-warning{{unused}}
+const unsigned int cy = 0;
+int f5() { return cy; }
 
 static int x1;  // expected-warning{{unused}}
 
@@ -98,7 +135,7 @@ namespace test5 {
   // FIXME: We should produce warnings for both of these.
   static const int m = n;
   int x = sizeof(m);
-  static const double d = 0.0;
+  static const double d = 0.0; // expected-warning{{not needed and will not be emitted}}
   int y = sizeof(d);
 }
 
@@ -133,27 +170,6 @@ namespace test6 {
   };
 }
 
-namespace test7
-{
-  template<typename T>
-  static inline void foo(T) { }
-
-  // This should not emit an unused-function warning since it inherits
-  // the static storage type from the base template.
-  template<>
-  inline void foo(int) {  }
-
-  // Partial specialization
-  template<typename T, typename U>
-  static inline void bar(T, U) { }
-
-  template<typename U>
-  inline void bar(int, U) { }
-
-  template<>
-  inline void bar(int, int) { }
-};
-
 namespace pr14776 {
   namespace {
     struct X {};
@@ -161,3 +177,5 @@ namespace pr14776 {
   X a = X(); // expected-warning {{unused variable 'a'}}
   auto b = X(); // expected-warning {{unused variable 'b'}}
 }
+
+#endif
