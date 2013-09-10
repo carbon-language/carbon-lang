@@ -97,6 +97,7 @@ typedef char BOOL;
 - (id) object;
 + (double) D;
 - (void *)JSObject WEBKIT_OBJC_METHOD_ANNOTATION(AVAILABLE_WEBKIT_VERSION_3_0_AND_LATER);
+- (BOOL)isIgnoringInteractionEvents;
 @end
 
 

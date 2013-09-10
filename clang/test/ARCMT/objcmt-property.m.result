@@ -89,7 +89,7 @@ typedef char BOOL;
 @property(nonatomic, readonly) id isAnObject;
 - (void)setAnObject : (id) object;
 
-@property(nonatomic, readonly) BOOL isinValid;
+@property(nonatomic, getter=isinValid, readonly) BOOL inValid;
 - (void) setInValid : (BOOL) arg;
 
 - (void) Nothing;
@@ -97,6 +97,7 @@ typedef char BOOL;
 @property(nonatomic, readonly) id object;
 + (double) D;
 @property(nonatomic, readonly) void * JSObject WEBKIT_OBJC_METHOD_ANNOTATION(AVAILABLE_WEBKIT_VERSION_3_0_AND_LATER);
+@property(nonatomic, getter=isIgnoringInteractionEvents, readonly) BOOL ignoringInteractionEvents;
 @end
 
 

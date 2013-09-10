@@ -770,7 +770,7 @@ bool ObjCMigrateASTConsumer::migrateProperty(ASTContext &Ctx,
     // as a 'readonly' property.
     edit::Commit commit(*Editor);
     rewriteToObjCProperty(Method, 0 /*SetterMethod*/, *NSAPIObj, commit,
-                          false /*GetterHasIsPrefix*/);
+                          GetterHasIsPrefix);
     Editor->commit(commit);
     return true;
   }
