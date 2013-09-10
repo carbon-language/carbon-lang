@@ -179,28 +179,6 @@ declare <2 x i64> @llvm.mips.div.u.d(<2 x i64>, <2 x i64>) nounwind
 ; CHECK: st.d
 ; CHECK: .size llvm_mips_div_u_d_test
 ;
-@llvm_mips_dotp_s_b_ARG1 = global <16 x i8> <i8 0, i8 1, i8 2, i8 3, i8 4, i8 5, i8 6, i8 7, i8 8, i8 9, i8 10, i8 11, i8 12, i8 13, i8 14, i8 15>, align 16
-@llvm_mips_dotp_s_b_ARG2 = global <16 x i8> <i8 16, i8 17, i8 18, i8 19, i8 20, i8 21, i8 22, i8 23, i8 24, i8 25, i8 26, i8 27, i8 28, i8 29, i8 30, i8 31>, align 16
-@llvm_mips_dotp_s_b_RES  = global <16 x i8> <i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0>, align 16
-
-define void @llvm_mips_dotp_s_b_test() nounwind {
-entry:
-  %0 = load <16 x i8>* @llvm_mips_dotp_s_b_ARG1
-  %1 = load <16 x i8>* @llvm_mips_dotp_s_b_ARG2
-  %2 = tail call <16 x i8> @llvm.mips.dotp.s.b(<16 x i8> %0, <16 x i8> %1)
-  store <16 x i8> %2, <16 x i8>* @llvm_mips_dotp_s_b_RES
-  ret void
-}
-
-declare <16 x i8> @llvm.mips.dotp.s.b(<16 x i8>, <16 x i8>) nounwind
-
-; CHECK: llvm_mips_dotp_s_b_test:
-; CHECK: ld.b
-; CHECK: ld.b
-; CHECK: dotp_s.b
-; CHECK: st.b
-; CHECK: .size llvm_mips_dotp_s_b_test
-;
 @llvm_mips_dotp_s_h_ARG1 = global <8 x i16> <i16 0, i16 1, i16 2, i16 3, i16 4, i16 5, i16 6, i16 7>, align 16
 @llvm_mips_dotp_s_h_ARG2 = global <8 x i16> <i16 8, i16 9, i16 10, i16 11, i16 12, i16 13, i16 14, i16 15>, align 16
 @llvm_mips_dotp_s_h_RES  = global <8 x i16> <i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0>, align 16
@@ -266,28 +244,6 @@ declare <2 x i64> @llvm.mips.dotp.s.d(<2 x i64>, <2 x i64>) nounwind
 ; CHECK: dotp_s.d
 ; CHECK: st.d
 ; CHECK: .size llvm_mips_dotp_s_d_test
-;
-@llvm_mips_dotp_u_b_ARG1 = global <16 x i8> <i8 0, i8 1, i8 2, i8 3, i8 4, i8 5, i8 6, i8 7, i8 8, i8 9, i8 10, i8 11, i8 12, i8 13, i8 14, i8 15>, align 16
-@llvm_mips_dotp_u_b_ARG2 = global <16 x i8> <i8 16, i8 17, i8 18, i8 19, i8 20, i8 21, i8 22, i8 23, i8 24, i8 25, i8 26, i8 27, i8 28, i8 29, i8 30, i8 31>, align 16
-@llvm_mips_dotp_u_b_RES  = global <16 x i8> <i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0>, align 16
-
-define void @llvm_mips_dotp_u_b_test() nounwind {
-entry:
-  %0 = load <16 x i8>* @llvm_mips_dotp_u_b_ARG1
-  %1 = load <16 x i8>* @llvm_mips_dotp_u_b_ARG2
-  %2 = tail call <16 x i8> @llvm.mips.dotp.u.b(<16 x i8> %0, <16 x i8> %1)
-  store <16 x i8> %2, <16 x i8>* @llvm_mips_dotp_u_b_RES
-  ret void
-}
-
-declare <16 x i8> @llvm.mips.dotp.u.b(<16 x i8>, <16 x i8>) nounwind
-
-; CHECK: llvm_mips_dotp_u_b_test:
-; CHECK: ld.b
-; CHECK: ld.b
-; CHECK: dotp_u.b
-; CHECK: st.b
-; CHECK: .size llvm_mips_dotp_u_b_test
 ;
 @llvm_mips_dotp_u_h_ARG1 = global <8 x i16> <i16 0, i16 1, i16 2, i16 3, i16 4, i16 5, i16 6, i16 7>, align 16
 @llvm_mips_dotp_u_h_ARG2 = global <8 x i16> <i16 8, i16 9, i16 10, i16 11, i16 12, i16 13, i16 14, i16 15>, align 16

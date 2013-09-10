@@ -813,8 +813,6 @@ def int_mips_div_u_w : GCCBuiltin<"__builtin_msa_div_u_w">,
 def int_mips_div_u_d : GCCBuiltin<"__builtin_msa_div_u_d">,
   Intrinsic<[llvm_v2i64_ty], [llvm_v2i64_ty, llvm_v2i64_ty], [IntrNoMem]>;
 
-def int_mips_dotp_s_b : GCCBuiltin<"__builtin_msa_dotp_s_b">,
-  Intrinsic<[llvm_v16i8_ty], [llvm_v16i8_ty, llvm_v16i8_ty], [IntrNoMem]>;
 def int_mips_dotp_s_h : GCCBuiltin<"__builtin_msa_dotp_s_h">,
   Intrinsic<[llvm_v8i16_ty], [llvm_v8i16_ty, llvm_v8i16_ty], [IntrNoMem]>;
 def int_mips_dotp_s_w : GCCBuiltin<"__builtin_msa_dotp_s_w">,
@@ -822,8 +820,6 @@ def int_mips_dotp_s_w : GCCBuiltin<"__builtin_msa_dotp_s_w">,
 def int_mips_dotp_s_d : GCCBuiltin<"__builtin_msa_dotp_s_d">,
   Intrinsic<[llvm_v2i64_ty], [llvm_v2i64_ty, llvm_v2i64_ty], [IntrNoMem]>;
 
-def int_mips_dotp_u_b : GCCBuiltin<"__builtin_msa_dotp_u_b">,
-  Intrinsic<[llvm_v16i8_ty], [llvm_v16i8_ty, llvm_v16i8_ty], [IntrNoMem]>;
 def int_mips_dotp_u_h : GCCBuiltin<"__builtin_msa_dotp_u_h">,
   Intrinsic<[llvm_v8i16_ty], [llvm_v8i16_ty, llvm_v8i16_ty], [IntrNoMem]>;
 def int_mips_dotp_u_w : GCCBuiltin<"__builtin_msa_dotp_u_w">,

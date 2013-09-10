@@ -250,12 +250,10 @@ class DIV_U_H_ENC : MSA_3R_FMT<0b101, 0b01, 0b010010>;
 class DIV_U_W_ENC : MSA_3R_FMT<0b101, 0b10, 0b010010>;
 class DIV_U_D_ENC : MSA_3R_FMT<0b101, 0b11, 0b010010>;
 
-class DOTP_S_B_ENC : MSA_3R_FMT<0b000, 0b00, 0b010011>;
 class DOTP_S_H_ENC : MSA_3R_FMT<0b000, 0b01, 0b010011>;
 class DOTP_S_W_ENC : MSA_3R_FMT<0b000, 0b10, 0b010011>;
 class DOTP_S_D_ENC : MSA_3R_FMT<0b000, 0b11, 0b010011>;
 
-class DOTP_U_B_ENC : MSA_3R_FMT<0b001, 0b00, 0b010011>;
 class DOTP_U_H_ENC : MSA_3R_FMT<0b001, 0b01, 0b010011>;
 class DOTP_U_W_ENC : MSA_3R_FMT<0b001, 0b10, 0b010011>;
 class DOTP_U_D_ENC : MSA_3R_FMT<0b001, 0b11, 0b010011>;
@@ -1240,8 +1238,6 @@ class DIV_U_H_DESC : MSA_3R_DESC_BASE<"div_u.h", int_mips_div_u_h, MSA128H>;
 class DIV_U_W_DESC : MSA_3R_DESC_BASE<"div_u.w", int_mips_div_u_w, MSA128W>;
 class DIV_U_D_DESC : MSA_3R_DESC_BASE<"div_u.d", int_mips_div_u_d, MSA128D>;
 
-class DOTP_S_B_DESC : MSA_3R_DESC_BASE<"dotp_s.b", int_mips_dotp_s_b, MSA128B>,
-                                       IsCommutable;
 class DOTP_S_H_DESC : MSA_3R_DESC_BASE<"dotp_s.h", int_mips_dotp_s_h, MSA128H>,
                       IsCommutable;
 class DOTP_S_W_DESC : MSA_3R_DESC_BASE<"dotp_s.w", int_mips_dotp_s_w, MSA128W>,
@@ -1249,8 +1245,6 @@ class DOTP_S_W_DESC : MSA_3R_DESC_BASE<"dotp_s.w", int_mips_dotp_s_w, MSA128W>,
 class DOTP_S_D_DESC : MSA_3R_DESC_BASE<"dotp_s.d", int_mips_dotp_s_d, MSA128D>,
                       IsCommutable;
 
-class DOTP_U_B_DESC : MSA_3R_DESC_BASE<"dotp_u.b", int_mips_dotp_u_b, MSA128B>,
-                                       IsCommutable;
 class DOTP_U_H_DESC : MSA_3R_DESC_BASE<"dotp_u.h", int_mips_dotp_u_h, MSA128H>,
                       IsCommutable;
 class DOTP_U_W_DESC : MSA_3R_DESC_BASE<"dotp_u.w", int_mips_dotp_u_w, MSA128W>,
@@ -2133,12 +2127,10 @@ def DIV_U_H : DIV_U_H_ENC, DIV_U_H_DESC;
 def DIV_U_W : DIV_U_W_ENC, DIV_U_W_DESC;
 def DIV_U_D : DIV_U_D_ENC, DIV_U_D_DESC;
 
-def DOTP_S_B : DOTP_S_B_ENC, DOTP_S_B_DESC;
 def DOTP_S_H : DOTP_S_H_ENC, DOTP_S_H_DESC;
 def DOTP_S_W : DOTP_S_W_ENC, DOTP_S_W_DESC;
 def DOTP_S_D : DOTP_S_D_ENC, DOTP_S_D_DESC;
 
-def DOTP_U_B : DOTP_U_B_ENC, DOTP_U_B_DESC;
 def DOTP_U_H : DOTP_U_H_ENC, DOTP_U_H_DESC;
 def DOTP_U_W : DOTP_U_W_ENC, DOTP_U_W_DESC;
 def DOTP_U_D : DOTP_U_D_ENC, DOTP_U_D_DESC;
