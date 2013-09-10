@@ -16,6 +16,7 @@
 #include "clang/AST/Attr.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclCXX.h"
+#include "clang/AST/MangleNumberingContext.h"
 #include "clang/AST/RecordLayout.h"
 #include "clang/AST/Type.h"
 #include "clang/Basic/TargetInfo.h"
@@ -23,6 +24,22 @@
 using namespace clang;
 
 namespace {
+
+/// \brief Numbers things which need to correspond across multiple TUs.
+/// Typically these are things like static locals, lambdas, or blocks.
+class MicrosoftNumberingContext : public MangleNumberingContext {
+  unsigned NumStaticLocals;
+
+public:
+  MicrosoftNumberingContext() : NumStaticLocals(0) { }
+
+  /// Static locals are numbered by source order.
+  virtual unsigned getManglingNumber(const VarDecl *VD) {
+    assert(VD->isStaticLocal());
+    return ++NumStaticLocals;
+  }
+};
+
 class MicrosoftCXXABI : public CXXABI {
   ASTContext &Context;
 public:
@@ -51,6 +68,10 @@ public:
     return Layout.getNonVirtualSize() == PointerSize ||
       Layout.getNonVirtualSize() == PointerSize * 2;
   }    
+
+  MangleNumberingContext *createMangleNumberingContext() const {
+    return new MicrosoftNumberingContext();
+  }
 };
 }
 

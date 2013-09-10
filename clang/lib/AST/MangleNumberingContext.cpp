@@ -38,11 +38,6 @@ MangleNumberingContext::getManglingNumber(const BlockDecl *BD) {
 }
 
 unsigned
-MangleNumberingContext::getManglingNumber(const VarDecl *VD) {
-  return ++VarManglingNumbers[VD->getIdentifier()];
-}
-
-unsigned
 MangleNumberingContext::getManglingNumber(const TagDecl *TD) {
   return ++TagManglingNumbers[TD->getIdentifier()];
 }

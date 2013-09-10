@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 #include "clang/Sema/DeclSpec.h"
 #include "clang/AST/ExprCXX.h"
+#include "clang/Basic/TargetInfo.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Sema/Initialization.h"
 #include "clang/Sema/Lookup.h"
@@ -114,10 +115,19 @@ Sema::getCurrentMangleNumberContext(const DeclContext *DC,
     //  -- the in-class initializers of class members
   case DefaultArgument:
     //  -- default arguments appearing in class definitions
-    return &ExprEvalContexts.back().getMangleNumberingContext();
+    return &ExprEvalContexts.back().getMangleNumberingContext(Context);
   }
 
   llvm_unreachable("unexpected context");
+}
+
+MangleNumberingContext &
+Sema::ExpressionEvaluationContextRecord::getMangleNumberingContext(
+    ASTContext &Ctx) {
+  assert(ManglingContextDecl && "Need to have a context declaration");
+  if (!MangleNumbering)
+    MangleNumbering = Ctx.createMangleNumberingContext();
+  return *MangleNumbering;
 }
 
 CXXMethodDecl *Sema::startLambdaDefinition(CXXRecordDecl *Class,

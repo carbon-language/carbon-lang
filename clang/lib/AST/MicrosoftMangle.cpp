@@ -92,6 +92,7 @@ public:
                   QualifierMangleMode QMM = QMM_Mangle);
   void mangleFunctionType(const FunctionType *T, const FunctionDecl *D,
                           bool IsStructor, bool IsInstMethod);
+  void manglePostfix(const DeclContext *DC, bool NoFunction = false);
 
 private:
   void disableBackReferences() { UseNameBackReferences = false; }
@@ -100,7 +101,6 @@ private:
   }
   void mangleUnqualifiedName(const NamedDecl *ND, DeclarationName Name);
   void mangleSourceName(const IdentifierInfo *II);
-  void manglePostfix(const DeclContext *DC, bool NoFunction=false);
   void mangleOperatorName(OverloadedOperatorKind OO, SourceLocation Loc);
   void mangleCXXDtorType(CXXDtorType T);
   void mangleQualifiers(Qualifiers Quals, bool IsMember);
@@ -168,8 +168,10 @@ public:
                              raw_ostream &);
   virtual void mangleCXXDtor(const CXXDestructorDecl *D, CXXDtorType Type,
                              raw_ostream &);
-  virtual void mangleReferenceTemporary(const clang::VarDecl *,
-                                        raw_ostream &);
+  virtual void mangleReferenceTemporary(const VarDecl *, raw_ostream &);
+  virtual void mangleStaticGuardVariable(const VarDecl *D, raw_ostream &Out);
+  virtual void mangleDynamicAtExitDestructor(const VarDecl *D,
+                                             raw_ostream &Out);
 };
 
 }
@@ -1912,11 +1914,42 @@ void MicrosoftMangleContext::mangleCXXDtor(const CXXDestructorDecl *D,
   MicrosoftCXXNameMangler mangler(*this, Out, D, Type);
   mangler.mangle(D);
 }
-void MicrosoftMangleContext::mangleReferenceTemporary(const clang::VarDecl *VD,
+void MicrosoftMangleContext::mangleReferenceTemporary(const VarDecl *VD,
                                                       raw_ostream &) {
   unsigned DiagID = getDiags().getCustomDiagID(DiagnosticsEngine::Error,
     "cannot mangle this reference temporary yet");
   getDiags().Report(VD->getLocation(), DiagID);
+}
+
+void MicrosoftMangleContext::mangleStaticGuardVariable(const VarDecl *VD,
+                                                       raw_ostream &Out) {
+  // <guard-name> ::= ?_B <postfix> @51
+  //              ::= ?$S <guard-num> @ <postfix> @4IA
+
+  // The first mangling is what MSVC uses to guard static locals in inline
+  // functions.  It uses a different mangling in external functions to support
+  // guarding more than 32 variables.  MSVC rejects inline functions with more
+  // than 32 static locals.  We don't fully implement the second mangling
+  // because those guards are not externally visible, and instead use LLVM's
+  // default renaming when creating a new guard variable.
+  MicrosoftCXXNameMangler Mangler(*this, Out);
+
+  bool Visible = VD->isExternallyVisible();
+  // <operator-name> ::= ?_B # local static guard
+  Mangler.getStream() << (Visible ? "\01??_B" : "\01?$S1@");
+  Mangler.manglePostfix(VD->getDeclContext());
+  Mangler.getStream() << (Visible ? "@51" : "@4IA");
+}
+
+void MicrosoftMangleContext::mangleDynamicAtExitDestructor(const VarDecl *D,
+                                                           raw_ostream &Out) {
+  // <destructor-name> ::= ?__F <postfix> YAXXZ
+  MicrosoftCXXNameMangler Mangler(*this, Out);
+  Mangler.getStream() << "\01??__F";
+  Mangler.mangleName(D);
+  // This is the mangling of the function type of the stub, which is a global,
+  // non-variadic, cdecl function that returns void and takes no args.
+  Mangler.getStream() << "YAXXZ";
 }
 
 MangleContext *clang::createMicrosoftMangleContext(ASTContext &Context,

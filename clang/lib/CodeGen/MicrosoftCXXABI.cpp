@@ -305,6 +305,18 @@ public:
 private:
   /// VBTables - All the vbtables which have been referenced.
   llvm::DenseMap<const CXXRecordDecl *, VBTableVector> VBTablesMap;
+
+  /// Info on the global variable used to guard initialization of static locals.
+  /// The BitIndex field is only used for externally invisible declarations.
+  struct GuardInfo {
+    GuardInfo() : Guard(0), BitIndex(0) {}
+    llvm::GlobalVariable *Guard;
+    unsigned BitIndex;
+  };
+
+  /// Map from DeclContext to the current guard variable.  We assume that the
+  /// AST is visited in source code order.
+  llvm::DenseMap<const DeclContext *, GuardInfo> GuardVariableMap;
 };
 
 }
@@ -727,17 +739,86 @@ llvm::Value* MicrosoftCXXABI::InitializeArrayCookie(CodeGenFunction &CGF,
 }
 
 void MicrosoftCXXABI::EmitGuardedInit(CodeGenFunction &CGF, const VarDecl &D,
-                                      llvm::GlobalVariable *DeclPtr,
+                                      llvm::GlobalVariable *GV,
                                       bool PerformInit) {
-  // FIXME: this code was only tested for global initialization.
-  // Not sure whether we want thread-safe static local variables as VS
-  // doesn't make them thread-safe.
+  // MSVC always uses an i32 bitfield to guard initialization, which is *not*
+  // threadsafe.  Since the user may be linking in inline functions compiled by
+  // cl.exe, there's no reason to provide a false sense of security by using
+  // critical sections here.
 
   if (D.getTLSKind())
     CGM.ErrorUnsupported(&D, "dynamic TLS initialization");
 
-  // Emit the initializer and add a global destructor if appropriate.
-  CGF.EmitCXXGlobalVarDeclInit(D, DeclPtr, PerformInit);
+  CGBuilderTy &Builder = CGF.Builder;
+  llvm::IntegerType *GuardTy = CGF.Int32Ty;
+  llvm::ConstantInt *Zero = llvm::ConstantInt::get(GuardTy, 0);
+
+  // Get the guard variable for this function if we have one already.
+  GuardInfo &GI = GuardVariableMap[D.getDeclContext()];
+
+  unsigned BitIndex;
+  if (D.isExternallyVisible()) {
+    // Externally visible variables have to be numbered in Sema to properly
+    // handle unreachable VarDecls.
+    BitIndex = getContext().getManglingNumber(&D);
+    assert(BitIndex > 0);
+    BitIndex--;
+  } else {
+    // Non-externally visible variables are numbered here in CodeGen.
+    BitIndex = GI.BitIndex++;
+  }
+
+  if (BitIndex >= 32) {
+    if (D.isExternallyVisible())
+      ErrorUnsupportedABI(CGF, "more than 32 guarded initializations");
+    BitIndex %= 32;
+    GI.Guard = 0;
+  }
+
+  // Lazily create the i32 bitfield for this function.
+  if (!GI.Guard) {
+    // Mangle the name for the guard.
+    SmallString<256> GuardName;
+    {
+      llvm::raw_svector_ostream Out(GuardName);
+      getMangleContext().mangleStaticGuardVariable(&D, Out);
+      Out.flush();
+    }
+
+    // Create the guard variable with a zero-initializer.  Just absorb linkage
+    // and visibility from the guarded variable.
+    GI.Guard = new llvm::GlobalVariable(CGM.getModule(), GuardTy, false,
+                                     GV->getLinkage(), Zero, GuardName.str());
+    GI.Guard->setVisibility(GV->getVisibility());
+  } else {
+    assert(GI.Guard->getLinkage() == GV->getLinkage() &&
+           "static local from the same function had different linkage");
+  }
+
+  // Pseudo code for the test:
+  // if (!(GuardVar & MyGuardBit)) {
+  //   GuardVar |= MyGuardBit;
+  //   ... initialize the object ...;
+  // }
+
+  // Test our bit from the guard variable.
+  llvm::ConstantInt *Bit = llvm::ConstantInt::get(GuardTy, 1U << BitIndex);
+  llvm::LoadInst *LI = Builder.CreateLoad(GI.Guard);
+  llvm::Value *IsInitialized =
+      Builder.CreateICmpNE(Builder.CreateAnd(LI, Bit), Zero);
+  llvm::BasicBlock *InitBlock = CGF.createBasicBlock("init");
+  llvm::BasicBlock *EndBlock = CGF.createBasicBlock("init.end");
+  Builder.CreateCondBr(IsInitialized, EndBlock, InitBlock);
+
+  // Set our bit in the guard variable and emit the initializer and add a global
+  // destructor if appropriate.
+  CGF.EmitBlock(InitBlock);
+  Builder.CreateStore(Builder.CreateOr(LI, Bit), GI.Guard);
+  CGF.EmitCXXGlobalVarDeclInit(D, GV, PerformInit);
+  Builder.CreateBr(EndBlock);
+
+  // Continue.
+  CGF.EmitBlock(EndBlock);
 }
 
 // Member pointer helpers.

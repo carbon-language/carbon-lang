@@ -25,6 +25,7 @@
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExternalASTSource.h"
 #include "clang/AST/Mangle.h"
+#include "clang/AST/MangleNumberingContext.h"
 #include "clang/AST/RecordLayout.h"
 #include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/AST/TypeLoc.h"
@@ -766,6 +767,12 @@ ASTContext::~ASTContext() {
                                                     AEnd = DeclAttrs.end();
        A != AEnd; ++A)
     A->second->~AttrVec();
+
+  for (llvm::DenseMap<const DeclContext *, MangleNumberingContext *>::iterator
+           I = MangleNumberingContexts.begin(),
+           E = MangleNumberingContexts.end();
+       I != E; ++I)
+    delete I->second;
 }
 
 void ASTContext::AddDeallocation(void (*Callback)(void*), void *Data) {
@@ -8037,7 +8044,15 @@ unsigned ASTContext::getManglingNumber(const NamedDecl *ND) const {
 
 MangleNumberingContext &
 ASTContext::getManglingNumberContext(const DeclContext *DC) {
-  return MangleNumberingContexts[DC];
+  assert(LangOpts.CPlusPlus);  // We don't need mangling numbers for plain C.
+  MangleNumberingContext *&MCtx = MangleNumberingContexts[DC];
+  if (!MCtx)
+    MCtx = createMangleNumberingContext();
+  return *MCtx;
+}
+
+MangleNumberingContext *ASTContext::createMangleNumberingContext() const {
+  return ABI->createMangleNumberingContext();
 }
 
 void ASTContext::setParameterIndex(const ParmVarDecl *D, unsigned int index) {

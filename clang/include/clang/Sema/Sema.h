@@ -703,12 +703,7 @@ public:
 
     /// \brief Retrieve the mangling numbering context, used to consistently
     /// number constructs like lambdas for mangling.
-    MangleNumberingContext &getMangleNumberingContext() {
-      assert(ManglingContextDecl && "Need to have a context declaration");
-      if (!MangleNumbering)
-        MangleNumbering = new MangleNumberingContext;
-      return *MangleNumbering;
-    }
+    MangleNumberingContext &getMangleNumberingContext(ASTContext &Ctx);
 
     bool isUnevaluated() const {
       return Context == Unevaluated || Context == UnevaluatedAbstract;

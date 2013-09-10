@@ -19,7 +19,6 @@
 #include "clang/AST/CanonicalType.h"
 #include "clang/AST/CommentCommandTraits.h"
 #include "clang/AST/Decl.h"
-#include "clang/AST/MangleNumberingContext.h"
 #include "clang/AST/NestedNameSpecifier.h"
 #include "clang/AST/PrettyPrinter.h"
 #include "clang/AST/RawCommentList.h"
@@ -59,6 +58,7 @@ namespace clang {
   class SelectorTable;
   class TargetInfo;
   class CXXABI;
+  class MangleNumberingContext;
   // Decls
   class MangleContext;
   class ObjCIvarDecl;
@@ -353,7 +353,7 @@ private:
   /// \brief Mapping from each declaration context to its corresponding
   /// mangling numbering context (used for constructs like lambdas which
   /// need to be consistently numbered for the mangler).
-  llvm::DenseMap<const DeclContext *, MangleNumberingContext>
+  llvm::DenseMap<const DeclContext *, MangleNumberingContext *>
       MangleNumberingContexts;
 
   /// \brief Side-table of mangling numbers for declarations which rarely
@@ -2118,6 +2118,8 @@ public:
   /// \brief Retrieve the context for computing mangling numbers in the given
   /// DeclContext.
   MangleNumberingContext &getManglingNumberContext(const DeclContext *DC);
+
+  MangleNumberingContext *createMangleNumberingContext() const;
 
   /// \brief Used by ParmVarDecl to store on the side the
   /// index of the parameter when it exceeds the size of the normal bitfield.

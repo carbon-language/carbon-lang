@@ -20,6 +20,7 @@
 #include "CXXABI.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclCXX.h"
+#include "clang/AST/MangleNumberingContext.h"
 #include "clang/AST/RecordLayout.h"
 #include "clang/AST/Type.h"
 #include "clang/Basic/TargetInfo.h"
@@ -27,6 +28,19 @@
 using namespace clang;
 
 namespace {
+
+/// \brief Keeps track of the mangled names of lambda expressions and block
+/// literals within a particular context.
+class ItaniumNumberingContext : public MangleNumberingContext {
+  llvm::DenseMap<IdentifierInfo*, unsigned> VarManglingNumbers;
+
+public:
+  /// Variable decls are numbered by identifier.
+  virtual unsigned getManglingNumber(const VarDecl *VD) {
+    return ++VarManglingNumbers[VD->getIdentifier()];
+  }
+};
+
 class ItaniumCXXABI : public CXXABI {
 protected:
   ASTContext &Context;
@@ -60,6 +74,10 @@ public:
     CharUnits PointerSize = 
       Context.toCharUnitsFromBits(Context.getTargetInfo().getPointerWidth(0));
     return Layout.getNonVirtualSize() == PointerSize;
+  }
+
+  virtual MangleNumberingContext *createMangleNumberingContext() const {
+    return new ItaniumNumberingContext();
   }
 };
 

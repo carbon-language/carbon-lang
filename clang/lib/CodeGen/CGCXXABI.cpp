@@ -212,13 +212,6 @@ llvm::Value *CGCXXABI::readArrayCookieImpl(CodeGenFunction &CGF,
   return llvm::ConstantInt::get(CGF.SizeTy, 0);
 }
 
-void CGCXXABI::EmitGuardedInit(CodeGenFunction &CGF,
-                               const VarDecl &D,
-                               llvm::GlobalVariable *GV,
-                               bool PerformInit) {
-  ErrorUnsupportedABI(CGF, "static local variable initialization");
-}
-
 void CGCXXABI::registerGlobalDtor(CodeGenFunction &CGF,
                                   const VarDecl &D,
                                   llvm::Constant *dtor,

@@ -33,10 +33,11 @@ class VarDecl;
 class MangleNumberingContext 
     : public RefCountedBase<MangleNumberingContext> {
   llvm::DenseMap<const Type *, unsigned> ManglingNumbers;
-  llvm::DenseMap<IdentifierInfo*, unsigned> VarManglingNumbers;
   llvm::DenseMap<IdentifierInfo*, unsigned> TagManglingNumbers;
 
 public:
+  virtual ~MangleNumberingContext() {}
+
   /// \brief Retrieve the mangling number of a new lambda expression with the
   /// given call operator within this context.
   unsigned getManglingNumber(const CXXMethodDecl *CallOperator);
@@ -47,7 +48,7 @@ public:
 
   /// \brief Retrieve the mangling number of a static local variable within
   /// this context.
-  unsigned getManglingNumber(const VarDecl *VD);
+  virtual unsigned getManglingNumber(const VarDecl *VD) = 0;
 
   /// \brief Retrieve the mangling number of a static local variable within
   /// this context.
