@@ -13,7 +13,6 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#include <cstdlib>
 #include <sstream>
 #include <map>
 
@@ -21,11 +20,13 @@
 #include "lld/Driver/WinLinkInputGraph.h"
 #include "lld/ReaderWriter/PECOFFLinkingContext.h"
 
+#include "llvm/ADT/Optional.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Option/Arg.h"
 #include "llvm/Option/Option.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/Process.h"
 
 namespace lld {
 
@@ -67,7 +68,7 @@ public:
 };
 
 // Split the given string with spaces.
-std::vector<std::string> splitArgList(std::string str) {
+std::vector<std::string> splitArgList(const std::string &str) {
   std::stringstream stream(str);
   std::istream_iterator<std::string> begin(stream);
   std::istream_iterator<std::string> end;
@@ -146,8 +147,9 @@ std::vector<const char *> processLinkEnv(PECOFFLinkingContext &context,
   ret.push_back(argv[0]);
 
   // Add arguments specified by the LINK environment variable.
-  if (char *envp = ::getenv("LINK"))
-    for (std::string &arg : splitArgList(envp))
+  llvm::Optional<std::string> env = llvm::sys::Process::GetEnv("LINK");
+  if (env.hasValue())
+    for (std::string &arg : splitArgList(*env))
       ret.push_back(context.allocateString(arg).data());
 
   // Add the rest of arguments passed via the command line.
@@ -160,8 +162,9 @@ std::vector<const char *> processLinkEnv(PECOFFLinkingContext &context,
 // Process "LIB" environment variable. The variable contains a list of search
 // paths separated by semicolons.
 void processLibEnv(PECOFFLinkingContext &context) {
-  if (char *envp = ::getenv("LIB"))
-    for (StringRef path : splitPathList(envp))
+  llvm::Optional<std::string> env = llvm::sys::Process::GetEnv("LIB");
+  if (env.hasValue())
+    for (StringRef path : splitPathList(*env))
       context.appendInputSearchPath(context.allocateString(path));
 }
 
