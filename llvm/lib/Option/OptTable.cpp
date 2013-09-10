@@ -46,6 +46,35 @@ static int StrCmpOptionNameIgnoreCase(const char *A, const char *B) {
   return (a < b) ? -1 : 1;
 }
 
+#ifndef NDEBUG
+static int StrCmpOptionName(const char *A, const char *B) {
+  if (int N = StrCmpOptionNameIgnoreCase(A, B))
+    return N;
+  return strcmp(A, B);
+}
+
+static inline bool operator<(const OptTable::Info &A, const OptTable::Info &B) {
+  if (&A == &B)
+    return false;
+
+  if (int N = StrCmpOptionName(A.Name, B.Name))
+    return N < 0;
+
+  for (const char * const *APre = A.Prefixes,
+                  * const *BPre = B.Prefixes;
+                          *APre != 0 && *BPre != 0; ++APre, ++BPre) {
+    if (int N = StrCmpOptionName(*APre, *BPre))
+      return N < 0;
+  }
+
+  // Names are the same, check that classes are in order; exactly one
+  // should be joined, and it should succeed the other.
+  assert(((A.Kind == Option::JoinedClass) ^ (B.Kind == Option::JoinedClass)) &&
+         "Unexpected classes for options with same name.");
+  return B.Kind == Option::JoinedClass;
+}
+#endif
+
 // Support lower_bound between info and an option name.
 static inline bool operator<(const OptTable::Info &I, const char *Name) {
   return StrCmpOptionNameIgnoreCase(I.Name, Name) < 0;
