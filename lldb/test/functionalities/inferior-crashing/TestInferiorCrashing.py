@@ -26,6 +26,7 @@ class CrashingInferiorTestCase(TestBase):
         self.buildDsym()
         self.inferior_crashing_registers()
 
+    @expectedFailureFreeBSD('llvm.org/pr17184')
     def test_inferior_crashing_register_dwarf(self):
         """Test that lldb reliably reads registers from the inferior after crashing (command)."""
         self.buildDwarf()
@@ -43,6 +44,7 @@ class CrashingInferiorTestCase(TestBase):
         self.buildDsym()
         self.inferior_crashing_expr()
 
+    @expectedFailureFreeBSD('llvm.org/pr17184')
     def test_inferior_crashing_expr_dwarf(self):
         """Test that the lldb expression interpreter can read from the inferior after crashing (command)."""
         self.buildDwarf()
@@ -54,6 +56,7 @@ class CrashingInferiorTestCase(TestBase):
         self.buildDsym()
         self.inferior_crashing_step()
 
+    @expectedFailureFreeBSD('llvm.org/pr17184')
     def test_inferior_crashing_step_dwarf(self):
         """Test that stepping after a crash behaves correctly."""
         self.buildDwarf()
@@ -78,6 +81,7 @@ class CrashingInferiorTestCase(TestBase):
         self.buildDsym()
         self.inferior_crashing_expr_step_expr()
 
+    @expectedFailureFreeBSD('llvm.org/pr17184')
     @expectedFailureLinux # due to llvm.org/pr15989 -- expression fails after crash and step
     def test_inferior_crashing_expr_step_and_expr_dwarf(self):
         """Test that lldb expressions work before and after stepping after a crash."""
