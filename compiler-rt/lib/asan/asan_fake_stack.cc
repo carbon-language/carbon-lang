@@ -17,20 +17,20 @@
 
 namespace __asan {
 
-bool FakeStack::AddrIsInSizeClass(uptr addr, uptr size_class) {
-  uptr mem = allocated_size_classes_[size_class];
-  uptr size = ClassMmapSize(size_class);
+bool FakeStack::AddrIsInSizeClass(uptr addr, uptr class_id) {
+  uptr mem = allocated_size_classes_[class_id];
+  uptr size = ClassMmapSize(class_id);
   bool res = mem && addr >= mem && addr < mem + size;
   return res;
 }
 
 uptr FakeStack::AddrIsInFakeStack(uptr addr) {
-  for (uptr size_class = 0; size_class < kNumberOfSizeClasses; size_class++) {
-    if (!AddrIsInSizeClass(addr, size_class)) continue;
-    uptr size_class_first_ptr = allocated_size_classes_[size_class];
-    uptr size = ClassSize(size_class);
+  for (uptr class_id = 0; class_id < kNumberOfSizeClasses; class_id++) {
+    if (!AddrIsInSizeClass(addr, class_id)) continue;
+    uptr size_class_first_ptr = allocated_size_classes_[class_id];
+    uptr size = ClassSize(class_id);
     CHECK_LE(size_class_first_ptr, addr);
-    CHECK_GT(size_class_first_ptr + ClassMmapSize(size_class), addr);
+    CHECK_GT(size_class_first_ptr + ClassMmapSize(class_id), addr);
     return size_class_first_ptr + ((addr - size_class_first_ptr) / size) * size;
   }
   return 0;
@@ -91,42 +91,42 @@ void FakeStack::Cleanup() {
   }
 }
 
-uptr FakeStack::ClassMmapSize(uptr size_class) {
+uptr FakeStack::ClassMmapSize(uptr class_id) {
   // Limit allocation size to ClassSize * MaxDepth when running with unlimited
   // stack.
-  return RoundUpTo(Min(ClassSize(size_class) * kMaxRecursionDepth, stack_size_),
+  return RoundUpTo(Min(ClassSize(class_id) * kMaxRecursionDepth, stack_size_),
                    GetPageSizeCached());
 }
 
-void FakeStack::AllocateOneSizeClass(uptr size_class) {
-  CHECK(ClassMmapSize(size_class) >= GetPageSizeCached());
+void FakeStack::AllocateOneSizeClass(uptr class_id) {
+  CHECK(ClassMmapSize(class_id) >= GetPageSizeCached());
   uptr new_mem = (uptr)MmapOrDie(
-      ClassMmapSize(size_class), __FUNCTION__);
+      ClassMmapSize(class_id), __FUNCTION__);
   if (0) {
     Printf("T%d new_mem[%zu]: %p-%p mmap %zu\n",
            GetCurrentThread()->tid(),
-           size_class, new_mem, new_mem + ClassMmapSize(size_class),
-           ClassMmapSize(size_class));
+           class_id, new_mem, new_mem + ClassMmapSize(class_id),
+           ClassMmapSize(class_id));
   }
   uptr i;
-  uptr size = ClassSize(size_class);
-  for (i = 0; i + size <= ClassMmapSize(size_class); i += size) {
-    size_classes_[size_class].FifoPush((FakeFrame*)(new_mem + i));
+  uptr size = ClassSize(class_id);
+  for (i = 0; i + size <= ClassMmapSize(class_id); i += size) {
+    size_classes_[class_id].FifoPush((FakeFrame*)(new_mem + i));
   }
-  CHECK_LE(i, ClassMmapSize(size_class));
-  allocated_size_classes_[size_class] = new_mem;
+  CHECK_LE(i, ClassMmapSize(class_id));
+  allocated_size_classes_[class_id] = new_mem;
 }
 
-ALWAYS_INLINE uptr FakeStack::AllocateStack(uptr size, uptr real_stack) {
-  if (!alive_) return real_stack;
+ALWAYS_INLINE uptr
+FakeStack::AllocateStack(uptr class_id, uptr size, uptr real_stack) {
   CHECK(size <= kMaxStackMallocSize && size > 1);
-  uptr size_class = ComputeSizeClass(size);
-  if (!allocated_size_classes_[size_class]) {
-    AllocateOneSizeClass(size_class);
+  if (!alive_) return real_stack;
+  if (!allocated_size_classes_[class_id]) {
+    AllocateOneSizeClass(class_id);
   }
-  FakeFrame *fake_frame = size_classes_[size_class].FifoPop();
+  FakeFrame *fake_frame = size_classes_[class_id].FifoPop();
   CHECK(fake_frame);
-  fake_frame->size_minus_one = size - 1;
+  fake_frame->class_id = class_id;
   fake_frame->real_stack = real_stack;
   while (FakeFrame *top = call_stack_.top()) {
     if (top->real_stack > real_stack) break;
@@ -141,29 +141,23 @@ ALWAYS_INLINE uptr FakeStack::AllocateStack(uptr size, uptr real_stack) {
 
 ALWAYS_INLINE void FakeStack::DeallocateFrame(FakeFrame *fake_frame) {
   CHECK(alive_);
-  uptr size = static_cast<uptr>(fake_frame->size_minus_one + 1);
-  uptr size_class = ComputeSizeClass(size);
-  CHECK(allocated_size_classes_[size_class]);
+  uptr class_id = static_cast<uptr>(fake_frame->class_id);
+  CHECK(allocated_size_classes_[class_id]);
   uptr ptr = (uptr)fake_frame;
-  CHECK(AddrIsInSizeClass(ptr, size_class));
-  CHECK(AddrIsInSizeClass(ptr + size - 1, size_class));
-  size_classes_[size_class].FifoPush(fake_frame);
+  CHECK(AddrIsInSizeClass(ptr, class_id));
+  size_classes_[class_id].FifoPush(fake_frame);
 }
 
-ALWAYS_INLINE void FakeStack::OnFree(uptr ptr, uptr size, uptr real_stack) {
+ALWAYS_INLINE void FakeStack::OnFree(uptr ptr, uptr class_id, uptr size,
+                                     uptr real_stack) {
   FakeFrame *fake_frame = (FakeFrame*)ptr;
   CHECK_EQ(fake_frame->magic, kRetiredStackFrameMagic);
   CHECK_NE(fake_frame->descr, 0);
-  CHECK_EQ(fake_frame->size_minus_one, size - 1);
+  CHECK_EQ(fake_frame->class_id, class_id);
   PoisonShadow(ptr, size, kAsanStackAfterReturnMagic);
 }
 
-}  // namespace __asan
-
-// ---------------------- Interface ---------------- {{{1
-using namespace __asan;  // NOLINT
-
-uptr __asan_stack_malloc(uptr size, uptr real_stack) {
+ALWAYS_INLINE uptr OnMalloc(uptr class_id, uptr size, uptr real_stack) {
   if (!flags()->use_fake_stack) return real_stack;
   AsanThread *t = GetCurrentThread();
   if (!t) {
@@ -171,14 +165,39 @@ uptr __asan_stack_malloc(uptr size, uptr real_stack) {
     return real_stack;
   }
   t->LazyInitFakeStack();
-  uptr ptr = t->fake_stack()->AllocateStack(size, real_stack);
+  uptr ptr = t->fake_stack()->AllocateStack(class_id, size, real_stack);
   // Printf("__asan_stack_malloc %p %zu %p\n", ptr, size, real_stack);
   return ptr;
 }
 
-void __asan_stack_free(uptr ptr, uptr size, uptr real_stack) {
+ALWAYS_INLINE void OnFree(uptr ptr, uptr class_id, uptr size, uptr real_stack) {
   if (!flags()->use_fake_stack) return;
   if (ptr != real_stack) {
-    FakeStack::OnFree(ptr, size, real_stack);
+    FakeStack::OnFree(ptr, class_id, size, real_stack);
   }
 }
+
+}  // namespace __asan
+
+// ---------------------- Interface ---------------- {{{1
+#define DEFINE_STACK_MALLOC_FREE_WITH_CLASS_ID(class_id)                       \
+  extern "C" SANITIZER_INTERFACE_ATTRIBUTE uptr                                \
+  __asan_stack_malloc_##class_id(uptr size, uptr real_stack) {                 \
+    return __asan::OnMalloc(class_id, size, real_stack);                       \
+  }                                                                            \
+  extern "C" SANITIZER_INTERFACE_ATTRIBUTE void __asan_stack_free_##class_id(  \
+      uptr ptr, uptr size, uptr real_stack) {                                  \
+    __asan::OnFree(ptr, class_id, size, real_stack);                           \
+  }
+
+DEFINE_STACK_MALLOC_FREE_WITH_CLASS_ID(0)
+DEFINE_STACK_MALLOC_FREE_WITH_CLASS_ID(1)
+DEFINE_STACK_MALLOC_FREE_WITH_CLASS_ID(2)
+DEFINE_STACK_MALLOC_FREE_WITH_CLASS_ID(3)
+DEFINE_STACK_MALLOC_FREE_WITH_CLASS_ID(4)
+DEFINE_STACK_MALLOC_FREE_WITH_CLASS_ID(5)
+DEFINE_STACK_MALLOC_FREE_WITH_CLASS_ID(6)
+DEFINE_STACK_MALLOC_FREE_WITH_CLASS_ID(7)
+DEFINE_STACK_MALLOC_FREE_WITH_CLASS_ID(8)
+DEFINE_STACK_MALLOC_FREE_WITH_CLASS_ID(9)
+DEFINE_STACK_MALLOC_FREE_WITH_CLASS_ID(10)

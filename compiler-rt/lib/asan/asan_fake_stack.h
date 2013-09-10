@@ -23,7 +23,7 @@ struct FakeFrame {
   uptr descr;  // Modified by the instrumented code.
   uptr pc;     // Modified by the instrumented code.
   u64 real_stack     : 48;
-  u64 size_minus_one : 16;
+  u64 class_id : 16;
   // End of the first 32 bytes.
   // The rest should not be used when the frame is active.
   FakeFrame *next;
@@ -74,33 +74,36 @@ class FakeStack {
   void Init(uptr stack_size);
   void StopUsingFakeStack() { alive_ = false; }
   void Cleanup();
-  uptr AllocateStack(uptr size, uptr real_stack);
-  static void OnFree(uptr ptr, uptr size, uptr real_stack);
+  uptr AllocateStack(uptr class_id, uptr size, uptr real_stack);
+  static void OnFree(uptr ptr, uptr class_id, uptr size, uptr real_stack);
   // Return the bottom of the maped region.
   uptr AddrIsInFakeStack(uptr addr);
   uptr StackSize() const { return stack_size_; }
 
+  static uptr ComputeSizeClass(uptr alloc_size);
+
+  static uptr ClassSize(uptr class_id) {
+    return 1UL << (class_id + kMinStackFrameSizeLog);
+  }
+
  private:
-  static const uptr kMinStackFrameSizeLog = 7;  // Min frame is 128B.
+  static const uptr kMinStackFrameSizeLog = 6;  // Min frame is 64B.
   static const uptr kMaxStackFrameSizeLog = 16;  // Max stack frame is 64K.
-  static const uptr kMaxStackMallocSize = 1 << kMaxStackFrameSizeLog;
   static const uptr kNumberOfSizeClasses =
       kMaxStackFrameSizeLog - kMinStackFrameSizeLog + 1;
+  // Must match the number of uses of DEFINE_STACK_MALLOC_FREE_WITH_CLASS_ID
+  COMPILER_CHECK(kNumberOfSizeClasses == 11);
+  static const uptr kMaxStackMallocSize = 1 << kMaxStackFrameSizeLog;
   static const uptr kMaxRecursionDepth = 60000;
 
-  bool AddrIsInSizeClass(uptr addr, uptr size_class);
+  bool AddrIsInSizeClass(uptr addr, uptr class_id);
 
   // Each size class should be large enough to hold all frames.
-  uptr ClassMmapSize(uptr size_class);
-
-  uptr ClassSize(uptr size_class) {
-    return 1UL << (size_class + kMinStackFrameSizeLog);
-  }
+  uptr ClassMmapSize(uptr class_id);
 
   void DeallocateFrame(FakeFrame *fake_frame);
 
-  uptr ComputeSizeClass(uptr alloc_size);
-  void AllocateOneSizeClass(uptr size_class);
+  void AllocateOneSizeClass(uptr class_id);
 
   uptr stack_size_;
   bool   alive_;

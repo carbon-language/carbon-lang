@@ -58,15 +58,6 @@ extern "C" {
   SANITIZER_INTERFACE_ATTRIBUTE
   void __asan_after_dynamic_init();
 
-  // These two functions are used by the instrumented code in the
-  // use-after-return mode. __asan_stack_malloc allocates size bytes of
-  // fake stack and __asan_stack_free poisons it. real_stack is a pointer to
-  // the real stack region.
-  SANITIZER_INTERFACE_ATTRIBUTE
-  uptr __asan_stack_malloc(uptr size, uptr real_stack);
-  SANITIZER_INTERFACE_ATTRIBUTE
-  void __asan_stack_free(uptr ptr, uptr size, uptr real_stack);
-
   // These two functions are used by instrumented code in the
   // use-after-scope mode. They mark memory for local variables as
   // unaddressable when they leave scope and addressable before the

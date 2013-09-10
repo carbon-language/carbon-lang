@@ -305,8 +305,6 @@ static NOINLINE void force_interface_symbols() {
     case 25: __asan_poison_memory_region(0, 0); break;
     case 26: __asan_unpoison_memory_region(0, 0); break;
     case 27: __asan_set_error_exit_code(0); break;
-    case 28: __asan_stack_free(0, 0, 0); break;
-    case 29: __asan_stack_malloc(0, 0); break;
     case 30: __asan_before_dynamic_init(0); break;
     case 31: __asan_after_dynamic_init(); break;
     case 32: __asan_poison_stack_memory(0, 0); break;
@@ -375,6 +373,7 @@ static void PrintAddressSpaceLayout() {
   }
   Printf("\n");
   Printf("red_zone=%zu\n", (uptr)flags()->redzone);
+  Printf("quarantine_size=%zuM\n", (uptr)flags()->quarantine_size >> 20);
   Printf("malloc_context_size=%zu\n",
          (uptr)common_flags()->malloc_context_size);
 

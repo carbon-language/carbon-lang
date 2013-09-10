@@ -7,6 +7,7 @@
 // RUN:    | grep -v "__asan_free_hook" \
 // RUN:    | grep -v "__asan_symbolize" \
 // RUN:    | grep -v "__asan_default_options" \
+// RUN:    | grep -v "__asan_stack_" \
 // RUN:    | grep -v "__asan_on_error" > %t.symbols
 // RUN: cat %p/../../../asan_interface_internal.h \
 // RUN:    | sed "s/\/\/.*//" | sed "s/typedef.*//" \
