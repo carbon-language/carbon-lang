@@ -140,6 +140,36 @@ void Process::PreventCoreFiles() {
                SEM_NOOPENFILEERRORBOX);
 }
 
+/// Returns the environment variable \arg Name's value as a string encoded in
+/// UTF-8. \arg Name is assumed to be in UTF-8 encoding.
+Optional<std::string> Process::GetEnv(StringRef Name) {
+  // Convert the argument to UTF-16 to pass it to _wgetenv().
+  SmallVector<wchar_t, 128> NameUTF16;
+  if (error_code ec = windows::UTF8ToUTF16(Name, NameUTF16))
+    return None;
+
+  // Environment variable can be encoded in non-UTF8 encoding, and there's no
+  // way to know what the encoding is. The only reliable way to look up
+  // multibyte environment variable is to use GetEnvironmentVariableW().
+  std::vector<wchar_t> Buf(16);
+  size_t Size = 0;
+  for (;;) {
+    Size = GetEnvironmentVariableW(&NameUTF16[0], &Buf[0], Buf.size());
+    if (Size < Buf.size())
+      break;
+    // Try again with larger buffer.
+    Buf.resize(Size + 1);
+  }
+  if (Size == 0)
+    return None;
+
+  // Convert the result from UTF-16 to UTF-8.
+  SmallVector<char, 128> Res;
+  if (error_code ec = windows::UTF16ToUTF8(&Buf[0], Size, Res))
+    return None;
+  return std::string(&Res[0]);
+}
+
 bool Process::StandardInIsUserInput() {
   return FileDescriptorIsDisplayed(0);
 }

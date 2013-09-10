@@ -37,6 +37,9 @@ typedef int errno_t;
 
 using namespace llvm;
 
+using llvm::sys::windows::UTF8ToUTF16;
+using llvm::sys::windows::UTF16ToUTF8;
+
 namespace {
   typedef BOOLEAN (WINAPI *PtrCreateSymbolicLinkW)(
     /*__in*/ LPCWSTR lpSymlinkFileName,
@@ -46,61 +49,6 @@ namespace {
   PtrCreateSymbolicLinkW create_symbolic_link_api = PtrCreateSymbolicLinkW(
     ::GetProcAddress(::GetModuleHandleA("kernel32.dll"),
                      "CreateSymbolicLinkW"));
-
-  error_code UTF8ToUTF16(StringRef utf8, SmallVectorImpl<wchar_t> &utf16) {
-    int len = ::MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS,
-                                    utf8.begin(), utf8.size(),
-                                    utf16.begin(), 0);
-
-    if (len == 0)
-      return windows_error(::GetLastError());
-
-    utf16.reserve(len + 1);
-    utf16.set_size(len);
-
-    len = ::MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS,
-                                    utf8.begin(), utf8.size(),
-                                    utf16.begin(), utf16.size());
-
-    if (len == 0)
-      return windows_error(::GetLastError());
-
-    // Make utf16 null terminated.
-    utf16.push_back(0);
-    utf16.pop_back();
-
-    return error_code::success();
-  }
-
-  error_code UTF16ToUTF8(const wchar_t *utf16, size_t utf16_len,
-                               SmallVectorImpl<char> &utf8) {
-    // Get length.
-    int len = ::WideCharToMultiByte(CP_UTF8, 0,
-                                    utf16, utf16_len,
-                                    utf8.begin(), 0,
-                                    NULL, NULL);
-
-    if (len == 0)
-      return windows_error(::GetLastError());
-
-    utf8.reserve(len);
-    utf8.set_size(len);
-
-    // Now do the actual conversion.
-    len = ::WideCharToMultiByte(CP_UTF8, 0,
-                                utf16, utf16_len,
-                                utf8.data(), utf8.size(),
-                                NULL, NULL);
-
-    if (len == 0)
-      return windows_error(::GetLastError());
-
-    // Make utf8 null terminated.
-    utf8.push_back(0);
-    utf8.pop_back();
-
-    return error_code::success();
-  }
 
   error_code TempDir(SmallVectorImpl<wchar_t> &result) {
   retry_temp_dir:
@@ -1092,7 +1040,64 @@ error_code openFileForWrite(const Twine &Name, int &ResultFD,
   ResultFD = FD;
   return error_code::success();
 }
-
 } // end namespace fs
+
+namespace windows {
+llvm::error_code UTF8ToUTF16(llvm::StringRef utf8,
+                             llvm::SmallVectorImpl<wchar_t> &utf16) {
+  int len = ::MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS,
+                                  utf8.begin(), utf8.size(),
+                                  utf16.begin(), 0);
+
+  if (len == 0)
+    return llvm::windows_error(::GetLastError());
+
+  utf16.reserve(len + 1);
+  utf16.set_size(len);
+
+  len = ::MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS,
+                              utf8.begin(), utf8.size(),
+                              utf16.begin(), utf16.size());
+
+  if (len == 0)
+    return llvm::windows_error(::GetLastError());
+
+  // Make utf16 null terminated.
+  utf16.push_back(0);
+  utf16.pop_back();
+
+  return llvm::error_code::success();
+}
+
+llvm::error_code UTF16ToUTF8(const wchar_t *utf16, size_t utf16_len,
+                             llvm::SmallVectorImpl<char> &utf8) {
+  // Get length.
+  int len = ::WideCharToMultiByte(CP_UTF8, 0,
+                                  utf16, utf16_len,
+                                  utf8.begin(), 0,
+                                  NULL, NULL);
+
+  if (len == 0)
+    return llvm::windows_error(::GetLastError());
+
+  utf8.reserve(len);
+  utf8.set_size(len);
+
+  // Now do the actual conversion.
+  len = ::WideCharToMultiByte(CP_UTF8, 0,
+                              utf16, utf16_len,
+                              utf8.data(), utf8.size(),
+                              NULL, NULL);
+
+  if (len == 0)
+    return llvm::windows_error(::GetLastError());
+
+  // Make utf8 null terminated.
+  utf8.push_back(0);
+  utf8.pop_back();
+
+  return llvm::error_code::success();
+}
+} // end namespace windows
 } // end namespace sys
 } // end namespace llvm

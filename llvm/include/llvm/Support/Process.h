@@ -25,11 +25,14 @@
 #ifndef LLVM_SUPPORT_PROCESS_H
 #define LLVM_SUPPORT_PROCESS_H
 
+#include "llvm/ADT/Optional.h"
 #include "llvm/Config/llvm-config.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/TimeValue.h"
 
 namespace llvm {
+class StringRef;
+
 namespace sys {
 
 class self_process;
@@ -160,6 +163,10 @@ public:
   /// occur when a program fails.
   /// @brief Prevent core file generation.
   static void PreventCoreFiles();
+
+  // This function returns the environment variable \arg name's value as a UTF-8
+  // string. \arg Name is assumed to be in UTF-8 encoding too.
+  static Optional<std::string> GetEnv(StringRef name);
 
   /// This function determines if the standard input is connected directly
   /// to a user's input (keyboard probably), rather than coming from a file

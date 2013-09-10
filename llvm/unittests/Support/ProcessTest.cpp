@@ -39,4 +39,32 @@ TEST(ProcessTest, SelfProcess) {
   EXPECT_GT(TimeValue::MaxTime, process::get_self()->get_wall_time());
 }
 
+#ifdef LLVM_ON_WIN32
+#define setenv(name, var, ignore) _putenv_s(name, var)
+#endif
+
+#if HAVE_SETENV || defined(LLVM_ON_WIN32)
+TEST(ProcessTest, Basic) {
+  setenv("__LLVM_TEST_ENVIRON_VAR__", "abc", true);
+  Optional<std::string> val(Process::GetEnv("__LLVM_TEST_ENVIRON_VAR__"));
+  EXPECT_TRUE(val.hasValue());
+  EXPECT_STREQ("abc", val->c_str());
+}
+
+TEST(ProcessTest, None) {
+  Optional<std::string> val(
+      Process::GetEnv("__LLVM_TEST_ENVIRON_NO_SUCH_VAR__"));
+  EXPECT_FALSE(val.hasValue());
+}
+#endif
+
+#ifdef LLVM_ON_WIN32
+TEST(ProcessTest, Wchar) {
+  SetEnvironmentVariableW(L"__LLVM_TEST_ENVIRON_VAR__", L"abcdefghijklmnopqrs");
+  Optional<std::string> val(Process::GetEnv("__LLVM_TEST_ENVIRON_VAR__"));
+  EXPECT_TRUE(val.hasValue());
+  EXPECT_STREQ("abcdefghijklmnopqrs", val->c_str());
+}
+#endif
+
 } // end anonymous namespace
