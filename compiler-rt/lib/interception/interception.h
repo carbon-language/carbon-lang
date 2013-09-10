@@ -130,7 +130,10 @@ const interpose_substitution substitution_##func_name[] \
 #  define WRAPPER_NAME(x) "wrap_"#x
 #  define INTERCEPTOR_ATTRIBUTE
 # endif
-# define DECLARE_WRAPPER(ret_type, func, ...)
+# define DECLARE_WRAPPER(ret_type, func, ...) \
+    extern "C" ret_type func(__VA_ARGS__);
+# define DECLARE_WRAPPER_WINAPI(ret_type, func, ...) \
+    extern "C" __declspec(dllimport) ret_type __stdcall func(__VA_ARGS__);
 #else
 # define WRAP(x) __interceptor_ ## x
 # define WRAPPER_NAME(x) "__interceptor_" #x
@@ -211,7 +214,7 @@ const interpose_substitution substitution_##func_name[] \
     namespace __interception { \
       FUNC_TYPE(func) PTR_TO_REAL(func); \
     } \
-    DECLARE_WRAPPER(ret_type, func, __VA_ARGS__) \
+    DECLARE_WRAPPER_WINAPI(ret_type, func, __VA_ARGS__) \
     extern "C" \
     INTERCEPTOR_ATTRIBUTE \
     ret_type __stdcall WRAP(func)(__VA_ARGS__)
