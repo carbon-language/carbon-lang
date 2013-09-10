@@ -25,16 +25,8 @@ using lld::mach_o::KindHandler;
 
 namespace lld {
 
-MachOLinkingContext::PackedVersion::PackedVersion(StringRef str) {
-  if (parse(str, *this))
-    llvm_unreachable("bad version string");
-}
-
-/// Construct 32-bit PackedVersion from string "X.Y.Z" where
-/// bits are xxxx.yy.zz.  Largest number is 65535.255.255
-bool MachOLinkingContext::PackedVersion::parse(
-    StringRef str, MachOLinkingContext::PackedVersion &result) {
-  result._value = 0;
+bool MachOLinkingContext::parsePackedVersion(StringRef str, uint32_t &result) {
+  result = 0;
 
   if (str.empty())
     return false;
@@ -47,14 +39,14 @@ bool MachOLinkingContext::PackedVersion::parse(
     return true;
   if (num > 65535)
     return true;
-  result._value = num << 16;
+  result = num << 16;
 
   if (parts.size() > 1) {
     if (llvm::getAsUnsignedInteger(parts[1], 10, num))
       return true;
     if (num > 255)
       return true;
-    result._value |= (num << 8);
+    result |= (num << 8);
   }
 
   if (parts.size() > 2) {
@@ -62,25 +54,10 @@ bool MachOLinkingContext::PackedVersion::parse(
       return true;
     if (num > 255)
       return true;
-    result._value |= num;
+    result |= num;
   }
 
   return false;
-}
-
-bool MachOLinkingContext::PackedVersion::
-operator<(const PackedVersion &rhs) const {
-  return _value < rhs._value;
-}
-
-bool MachOLinkingContext::PackedVersion::
-operator>=(const PackedVersion &rhs) const {
-  return _value >= rhs._value;
-}
-
-bool MachOLinkingContext::PackedVersion::
-operator==(const PackedVersion &rhs) const {
-  return _value == rhs._value;
 }
 
 struct ArchInfo {
@@ -146,8 +123,8 @@ uint32_t MachOLinkingContext::cpuSubtypeFromArch(Arch arch) {
 
 MachOLinkingContext::MachOLinkingContext()
     : _outputFileType(mach_o::MH_EXECUTE), _outputFileTypeStatic(false),
-      _doNothing(false), _arch(arch_unknown), _os(OS::macOSX),
-      _osMinVersion("0.0"), _pageZeroSize(0x1000), _kindHandler(nullptr) {}
+      _doNothing(false), _arch(arch_unknown), _os(OS::macOSX), _osMinVersion(0),
+      _pageZeroSize(0x1000), _kindHandler(nullptr) {}
 
 MachOLinkingContext::~MachOLinkingContext() {}
 
@@ -172,11 +149,19 @@ bool MachOLinkingContext::outputTypeHasEntry() const {
 
 bool MachOLinkingContext::minOS(StringRef mac, StringRef iOS) const {
   switch (_os) {
-  case OS::macOSX:
-    return (_osMinVersion >= PackedVersion(mac));
+  case OS::macOSX: {
+    uint32_t parsedVersion;
+    if (parsePackedVersion(mac, parsedVersion))
+      return false;
+    return _osMinVersion >= parsedVersion;
+  }
   case OS::iOS:
-  case OS::iOS_simulator:
-    return (_osMinVersion >= PackedVersion(iOS));
+  case OS::iOS_simulator: {
+    uint32_t parsedVersion;
+    if (parsePackedVersion(iOS, parsedVersion))
+      return false;
+    return _osMinVersion >= parsedVersion;
+  }
   }
   llvm_unreachable("target not configured for iOS or MacOSX");
 }
@@ -224,7 +209,7 @@ bool MachOLinkingContext::validateImpl(raw_ostream &diagnostics) {
 
 bool MachOLinkingContext::setOS(OS os, StringRef minOSVersion) {
   _os = os;
-  return PackedVersion::parse(minOSVersion, _osMinVersion);
+  return parsePackedVersion(minOSVersion, _osMinVersion);
 }
 
 void MachOLinkingContext::addPasses(PassManager &pm) const {

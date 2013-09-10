@@ -77,29 +77,19 @@ public:
   static uint32_t cpuTypeFromArch(Arch arch);
   static uint32_t cpuSubtypeFromArch(Arch arch);
 
+  /// Construct 32-bit value from string "X.Y.Z" where
+  /// bits are xxxx.yy.zz.  Largest number is 65535.255.255
+  static bool parsePackedVersion(StringRef str, uint32_t &result);
+
 private:
   virtual Writer &writer() const;
-
-  /// 32-bit packed encoding of "X.Y.Z" where nibbles are xxxx.yy.zz.
-  struct PackedVersion {
-    PackedVersion(StringRef);
-    static bool parse(StringRef, PackedVersion &);
-    bool operator<(const PackedVersion &) const;
-    bool operator>=(const PackedVersion &) const;
-    bool operator==(const PackedVersion &) const;
-
-  private:
-    PackedVersion(uint32_t v) : _value(v) {}
-
-    uint32_t _value;
-  };
 
   uint32_t _outputFileType;   // e.g MH_EXECUTE
   bool _outputFileTypeStatic; // Disambiguate static vs dynamic prog
   bool _doNothing;            // for -help and -v which just print info
   Arch _arch;
   OS _os;
-  PackedVersion _osMinVersion;
+  uint32_t _osMinVersion;
   uint64_t _pageZeroSize;
   mutable std::unique_ptr<mach_o::KindHandler> _kindHandler;
   mutable std::unique_ptr<Reader> _machoReader;
