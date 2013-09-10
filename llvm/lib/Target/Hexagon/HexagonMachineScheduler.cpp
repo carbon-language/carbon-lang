@@ -457,9 +457,7 @@ static SUnit *getSingleUnscheduledSucc(SUnit *SU) {
 // Constants used to denote relative importance of
 // heuristic components for cost computation.
 static const unsigned PriorityOne = 200;
-static const unsigned PriorityTwo = 100;
 static const unsigned PriorityThree = 50;
-static const unsigned PriorityFour = 20;
 static const unsigned ScaleTwo = 10;
 static const unsigned FactorOne = 2;
 

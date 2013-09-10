@@ -120,7 +120,9 @@ class RAGreedy : public MachineFunctionPass,
     RS_Done
   };
 
+#ifndef NDEBUG
   static const char *const StageName[];
+#endif
 
   // RegInfo - Keep additional information about each live range.
   struct RegInfo {

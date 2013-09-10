@@ -389,7 +389,6 @@ signed ResourcePriorityQueue::regPressureDelta(SUnit *SU, bool RawPressure) {
 // Constants used to denote relative importance of
 // heuristic components for cost computation.
 static const unsigned PriorityOne = 200;
-static const unsigned PriorityTwo = 100;
 static const unsigned PriorityThree = 50;
 static const unsigned PriorityFour = 15;
 static const unsigned PriorityFive = 5;

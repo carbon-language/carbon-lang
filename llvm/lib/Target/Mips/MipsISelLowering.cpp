@@ -2224,8 +2224,6 @@ static bool CC_MipsO32_FP64(unsigned ValNo, MVT ValVT,
 //                  Call Calling Convention Implementation
 //===----------------------------------------------------------------------===//
 
-static const unsigned O32IntRegsSize = 4;
-
 // Return next O32 integer argument register.
 static unsigned getNextIntArgReg(unsigned Reg) {
   assert((Reg == Mips::A0) || (Reg == Mips::A2));

@@ -39,8 +39,6 @@
 
 using namespace llvm;
 
-const unsigned Hexagon_MAX_RET_SIZE = 64;
-
 static cl::opt<bool>
 EmitJumpTables("hexagon-emit-jump-tables", cl::init(true), cl::Hidden,
                cl::desc("Control jump table emission on Hexagon target"));
