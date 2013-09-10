@@ -136,4 +136,8 @@ macro(add_tablegen target project)
   if( LLVM_ENABLE_THREADS AND HAVE_LIBPTHREAD AND NOT BEOS )
     target_link_libraries(${target} pthread)
   endif()
+
+  if (${project} STREQUAL LLVM AND NOT LLVM_INSTALL_TOOLCHAIN_ONLY)
+    install(TARGETS ${target} RUNTIME DESTINATION bin)
+  endif()
 endmacro()
