@@ -39,24 +39,54 @@
 // RUN: %clang_cl -### -- %s 2>&1 | FileCheck -check-prefix=DEFAULTEXE %s
 // DEFAULTEXE: cl-outputs.exe
 
+// RUN: %clang_cl /LD -### -- %s 2>&1 | FileCheck -check-prefix=DEFAULTDLL %s
+// RUN: %clang_cl /LDd -### -- %s 2>&1 | FileCheck -check-prefix=DEFAULTDLL %s
+// DEFAULTDLL: "-out:cl-outputs.dll"
+// DEFAULTDLL: "-implib:cl-outputs.lib"
+
 // RUN: %clang_cl /Fefoo -### -- %s 2>&1 | FileCheck -check-prefix=FeNOEXT %s
-// FeNOEXT: foo.exe
+// FeNOEXT: "-out:foo.exe"
+
+// RUN: %clang_cl /Fefoo /LD -### -- %s 2>&1 | FileCheck -check-prefix=FeNOEXTDLL %s
+// RUN: %clang_cl /Fefoo /LDd -### -- %s 2>&1 | FileCheck -check-prefix=FeNOEXTDLL %s
+// FeNOEXTDLL: "-out:foo.dll"
+// FeNOEXTDLL: "-implib:foo.lib"
 
 // RUN: %clang_cl /Fefoo.ext -### -- %s 2>&1 | FileCheck -check-prefix=FeEXT %s
-// FeEXT: foo.ext
+// FeEXT: "-out:foo.ext"
+
+// RUN: %clang_cl /LD /Fefoo.ext -### -- %s 2>&1 | FileCheck -check-prefix=FeEXTDLL %s
+// RUN: %clang_cl /LDd /Fefoo.ext -### -- %s 2>&1 | FileCheck -check-prefix=FeEXTDLL %s
+// FeEXTDLL: "-out:foo.ext"
+// FeEXTDLL: "-implib:foo.lib"
 
 // RUN: %clang_cl /Fefoo.dir/ -### -- %s 2>&1 | FileCheck -check-prefix=FeDIR %s
-// FeDIR: foo.dir{{[/\\]+}}cl-outputs.exe
+// FeDIR: "-out:foo.dir{{[/\\]+}}cl-outputs.exe"
+
+// RUN: %clang_cl /LD /Fefoo.dir/ -### -- %s 2>&1 | FileCheck -check-prefix=FeDIRDLL %s
+// RUN: %clang_cl /LDd /Fefoo.dir/ -### -- %s 2>&1 | FileCheck -check-prefix=FeDIRDLL %s
+// FeDIRDLL: "-out:foo.dir{{[/\\]+}}cl-outputs.dll"
+// FeDIRDLL: "-implib:foo.dir{{[/\\]+}}cl-outputs.lib"
 
 // RUN: %clang_cl /Fefoo.dir/a -### -- %s 2>&1 | FileCheck -check-prefix=FeDIRNAME %s
-// FeDIRNAME: foo.dir{{[/\\]+}}a.exe
+// FeDIRNAME: "-out:foo.dir{{[/\\]+}}a.exe"
+
+// RUN: %clang_cl /LD /Fefoo.dir/a -### -- %s 2>&1 | FileCheck -check-prefix=FeDIRNAMEDLL %s
+// RUN: %clang_cl /LDd /Fefoo.dir/a -### -- %s 2>&1 | FileCheck -check-prefix=FeDIRNAMEDLL %s
+// FeDIRNAMEDLL: "-out:foo.dir{{[/\\]+}}a.dll"
+// FeDIRNAMEDLL: "-implib:foo.dir{{[/\\]+}}a.lib"
 
 // RUN: %clang_cl /Fefoo.dir/a.ext -### -- %s 2>&1 | FileCheck -check-prefix=FeDIRNAMEEXT %s
-// FeDIRNAMEEXT: foo.dir{{[/\\]+}}a.ext
+// FeDIRNAMEEXT: "-out:foo.dir{{[/\\]+}}a.ext"
+
+// RUN: %clang_cl /LD /Fefoo.dir/a.ext -### -- %s 2>&1 | FileCheck -check-prefix=FeDIRNAMEEXTDLL %s
+// RUN: %clang_cl /LDd /Fefoo.dir/a.ext -### -- %s 2>&1 | FileCheck -check-prefix=FeDIRNAMEEXTDLL %s
+// FeDIRNAMEEXTDLL: "-out:foo.dir{{[/\\]+}}a.ext"
+// FeDIRNAMEEXTDLL: "-implib:foo.dir{{[/\\]+}}a.lib"
 
 // RUN: %clang_cl /Fe -### 2>&1 | FileCheck -check-prefix=FeMISSINGARG %s
 // FeMISSINGARG: error: argument to '/Fe' is missing (expected 1 value)
 
 // RUN: %clang_cl /Fefoo /Febar -### -- %s 2>&1 | FileCheck -check-prefix=FeOVERRIDE %s
 // FeOVERRIDE: warning: overriding '/Fefoo' option with '/Febar'
-// FeOVERRIDE: bar.exe
+// FeOVERRIDE: "-out:bar.exe"

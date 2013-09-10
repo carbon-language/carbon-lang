@@ -1585,9 +1585,11 @@ void Driver::BuildJobsForAction(Compilation &C,
 static const char *MakeCLOutputFilename(const ArgList &Args, StringRef ArgValue,
                                         StringRef BaseName, types::ID FileType) {
   SmallString<128> Filename = ArgValue;
-  assert(!ArgValue.empty() && "Output filename argument must not be empty.");
   
-  if (llvm::sys::path::is_separator(Filename.back())) {
+  if (ArgValue.empty()) {
+    // If the argument is empty, output to BaseName in the current dir.
+    Filename = BaseName;
+  } else if (llvm::sys::path::is_separator(Filename.back())) {
     // If the argument is a directory, output to BaseName in that dir.
     llvm::sys::path::append(Filename, BaseName);
   }
@@ -1595,6 +1597,13 @@ static const char *MakeCLOutputFilename(const ArgList &Args, StringRef ArgValue,
   if (!llvm::sys::path::has_extension(ArgValue)) {
     // If the argument didn't provide an extension, then set it.
     const char *Extension = types::getTypeTempSuffix(FileType, true);
+
+    if (FileType == types::TY_Image &&
+        Args.hasArg(options::OPT__SLASH_LD, options::OPT__SLASH_LDd)) {
+      // The output file is a dll.
+      Extension = "dll";
+    }
+
     llvm::sys::path::replace_extension(Filename, Extension);
   }
 
@@ -1656,12 +1665,11 @@ const char *Driver::GetNamedOutputPath(Compilation &C,
     StringRef Val = C.getArgs().getLastArg(options::OPT__SLASH_Fe)->getValue();
     NamedOutput = MakeCLOutputFilename(C.getArgs(), Val, BaseName,
                                        types::TY_Image);
-  } else if (JA.getType() == types::TY_Image) {    
+  } else if (JA.getType() == types::TY_Image) {
     if (IsCLMode()) {
       // clang-cl uses BaseName for the executable name.
-      SmallString<128> Filename = BaseName;
-      llvm::sys::path::replace_extension(Filename, "exe");
-      NamedOutput = C.getArgs().MakeArgString(Filename.c_str());
+      NamedOutput = MakeCLOutputFilename(C.getArgs(), "", BaseName,
+                                         types::TY_Image);
     } else if (MultipleArchs && BoundArch) {
       SmallString<128> Output(DefaultImageName.c_str());
       Output += "-";

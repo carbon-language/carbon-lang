@@ -99,6 +99,8 @@ def _SLASH_Fe : CLJoined<"Fe">,
 def _SLASH_Fo : CLJoined<"Fo">,
   HelpText<"Set output object file, or directory (ends in / or \\)">,
   MetaVarName<"<file or directory>">;
+def _SLASH_LD : CLFlag<"LD">, HelpText<"Create DLL">;
+def _SLASH_LDd : CLFlag<"LDd">, HelpText<"Create debug DLL">;
 def _SLASH_link : CLRemainingArgs<"link">,
   HelpText<"Forward options to the linker">, MetaVarName<"<options>">;
 def _SLASH_MD : CLFlag<"MD">,

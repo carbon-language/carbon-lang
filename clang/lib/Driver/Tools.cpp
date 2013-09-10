@@ -3714,6 +3714,11 @@ ObjCRuntime Clang::AddObjCRuntimeArgs(const ArgList &args,
 void Clang::AddClangCLArgs(const ArgList &Args, ArgStringList &CmdArgs) const {
   unsigned RTOptionID = options::OPT__SLASH_MT;
 
+  if (Args.hasArg(options::OPT__SLASH_LDd))
+    // The /LDd option implies /MTd. The dependent lib part can be overridden,
+    // but defining _DEBUG is sticky.
+    RTOptionID = options::OPT__SLASH_MTd;
+
   if (Arg *A = Args.getLastArg(options::OPT__SLASH_MD,
                                options::OPT__SLASH_MDd,
                                options::OPT__SLASH_MT,
@@ -3723,6 +3728,8 @@ void Clang::AddClangCLArgs(const ArgList &Args, ArgStringList &CmdArgs) const {
 
   switch(RTOptionID) {
     case options::OPT__SLASH_MD:
+      if (Args.hasArg(options::OPT__SLASH_LDd))
+        CmdArgs.push_back("-D_DEBUG");
       CmdArgs.push_back("-D_MT");
       CmdArgs.push_back("-D_DLL");
       CmdArgs.push_back("--dependent-lib=msvcrt");
@@ -3734,6 +3741,8 @@ void Clang::AddClangCLArgs(const ArgList &Args, ArgStringList &CmdArgs) const {
       CmdArgs.push_back("--dependent-lib=msvcrtd");
       break;
     case options::OPT__SLASH_MT:
+      if (Args.hasArg(options::OPT__SLASH_LDd))
+        CmdArgs.push_back("-D_DEBUG");
       CmdArgs.push_back("-D_MT");
       CmdArgs.push_back("--dependent-lib=libcmt");
       break;
@@ -6584,13 +6593,29 @@ void visualstudio::Link::ConstructJob(Compilation &C, const JobAction &JA,
 
   CmdArgs.push_back("-nologo");
 
+  bool DLL = Args.hasArg(options::OPT__SLASH_LD, options::OPT__SLASH_LDd);
+
+  if (DLL) {
+    CmdArgs.push_back(Args.MakeArgString("-dll"));
+
+    SmallString<128> ImplibName(Output.getFilename());
+    llvm::sys::path::replace_extension(ImplibName, "lib");
+    CmdArgs.push_back(Args.MakeArgString(std::string("-implib:") +
+                                         ImplibName.str()));
+  }
+
   if (getToolChain().getDriver().getOrParseSanitizerArgs(Args).needsAsanRt()) {
     CmdArgs.push_back(Args.MakeArgString("-debug"));
     CmdArgs.push_back(Args.MakeArgString("-incremental:no"));
     SmallString<128> LibSanitizer(getToolChain().getDriver().ResourceDir);
-    // FIXME: Handle 64-bit. Use asan_dll_thunk.dll when building a DLL.
-    llvm::sys::path::append(
-        LibSanitizer, "lib", "windows", "clang_rt.asan-i386.lib");
+    llvm::sys::path::append(LibSanitizer, "lib", "windows");
+    if (DLL) {
+      // FIXME: Not sure what the final name of the thunk lib is.
+      llvm::sys::path::append(LibSanitizer, "clang_rt.asan-i386-dll_thunk.lib");
+    } else {
+      llvm::sys::path::append(LibSanitizer, "clang_rt.asan-i386.lib");
+    }
+    // FIXME: Handle 64-bit.
     CmdArgs.push_back(Args.MakeArgString(LibSanitizer));
   }
 

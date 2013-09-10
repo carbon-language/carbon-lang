@@ -17,3 +17,17 @@
 // ASAN: "-incremental:no"
 // ASAN: "{{.*}}clang_rt.asan-i386.lib"
 // ASAN: "{{.*}}cl-link{{.*}}.obj"
+
+// RUN: %clang_cl /LD -### %s 2>&1 | FileCheck --check-prefix=DLL %s
+// RUN: %clang_cl /LDd -### %s 2>&1 | FileCheck --check-prefix=DLL %s
+// DLL: link.exe
+// "-dll"
+
+// RUN: %clang_cl /LD /Tc%s -### -fsanitize=address 2>&1 | FileCheck --check-prefix=ASAN-DLL %s
+// RUN: %clang_cl /LDd /Tc%s -### -fsanitize=address 2>&1 | FileCheck --check-prefix=ASAN-DLL %s
+// ASAN-DLL: link.exe
+// ASAN-DLL: "-dll"
+// ASAN-DLL: "-debug"
+// ASAN-DLL: "-incremental:no"
+// ASAN-DLL: "{{.*}}clang_rt.asan-i386-dll_thunk.lib"
+// ASAN-DLL: "{{.*}}cl-link{{.*}}.obj"

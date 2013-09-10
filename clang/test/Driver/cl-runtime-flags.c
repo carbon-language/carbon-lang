@@ -20,6 +20,7 @@
 // CHECK-MT: "--dependent-lib=oldnames"
 
 // RUN: %clang_cl -### /MTd -- %s 2>&1 | FileCheck -check-prefix=CHECK-MTd %s
+// RUN: %clang_cl -### /LD /MTd -- %s 2>&1 | FileCheck -check-prefix=CHECK-MTd %s
 // CHECK-MTd: "-D_DEBUG"
 // CHECK-MTd: "-D_MT"
 // CHECK-MTd-NOT: "-D_DLL"
@@ -39,3 +40,47 @@
 // CHECK-MDd: "-D_DLL"
 // CHECK-MDd: "--dependent-lib=msvcrtd"
 // CHECK-MDd: "--dependent-lib=oldnames"
+
+// RUN: %clang_cl -### /LD -- %s 2>&1 | FileCheck -check-prefix=CHECK-LD %s
+// RUN: %clang_cl -### /LD /MT -- %s 2>&1 | FileCheck -check-prefix=CHECK-LD %s
+// CHECK-LD-NOT: "-D_DEBUG"
+// CHECK-LD: "-D_MT"
+// CHECK-LD-NOT: "-D_DLL"
+// CHECK-LD: "--dependent-lib=libcmt"
+
+// RUN: %clang_cl -### /LDd -- %s 2>&1 | FileCheck -check-prefix=CHECK-LDd %s
+// RUN: %clang_cl -### /LDd /MTd -- %s 2>&1 | FileCheck -check-prefix=CHECK-LDd %s
+// CHECK-LDd: "-D_DEBUG"
+// CHECK-LDd: "-D_MT"
+// CHECK-LDd-NOT: "-D_DLL"
+// CHECK-LDd: "--dependent-lib=libcmtd"
+
+// RUN: %clang_cl -### /LDd /MT -- %s 2>&1 | FileCheck -check-prefix=CHECK-LDdMT %s
+// RUN: %clang_cl -### /MT /LDd -- %s 2>&1 | FileCheck -check-prefix=CHECK-LDdMT %s
+// CHECK-LDdMT: "-D_DEBUG"
+// CHECK-LDdMT: "-D_MT"
+// CHECK-LDdMT-NOT: "-D_DLL"
+// CHECK-LDdMT: "--dependent-lib=libcmt"
+
+// RUN: %clang_cl -### /LD /MD -- %s 2>&1 | FileCheck -check-prefix=CHECK-LDMD %s
+// RUN: %clang_cl -### /MD /LD -- %s 2>&1 | FileCheck -check-prefix=CHECK-LDMD %s
+// CHECK-LDMD-NOT: "-D_DEBUG"
+// CHECK-LDMD: "-D_MT"
+// CHECK-LDMD: "-D_DLL"
+// CHECK-LDMD: "--dependent-lib=msvcrt"
+
+// RUN: %clang_cl -### /LDd /MD -- %s 2>&1 | FileCheck -check-prefix=CHECK-LDdMD %s
+// RUN: %clang_cl -### /MD /LDd -- %s 2>&1 | FileCheck -check-prefix=CHECK-LDdMD %s
+// CHECK-LDdMD: "-D_DEBUG"
+// CHECK-LDdMD: "-D_MT"
+// CHECK-LDdMD: "-D_DLL"
+// CHECK-LDdMD: "--dependent-lib=msvcrt"
+
+// RUN: %clang_cl -### /LD /MDd -- %s 2>&1 | FileCheck -check-prefix=CHECK-LDMDd %s
+// RUN: %clang_cl -### /MDd /LD -- %s 2>&1 | FileCheck -check-prefix=CHECK-LDMDd %s
+// RUN: %clang_cl -### /LDd /MDd -- %s 2>&1 | FileCheck -check-prefix=CHECK-LDMDd %s
+// RUN: %clang_cl -### /MDd /LDd -- %s 2>&1 | FileCheck -check-prefix=CHECK-LDMDd %s
+// CHECK-LDMDd: "-D_DEBUG"
+// CHECK-LDMDd: "-D_MT"
+// CHECK-LDMDd: "-D_DLL"
+// CHECK-LDMDd: "--dependent-lib=msvcrtd"
