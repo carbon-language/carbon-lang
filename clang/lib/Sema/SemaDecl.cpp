@@ -1220,14 +1220,6 @@ bool Sema::ShouldWarnIfUnusedFileScopedDecl(const DeclaratorDecl *D) const {
     if (!isMainFileLoc(*this, VD->getLocation()))
       return false;
 
-    // If a variable usable in constant expressions is referenced,
-    // don't warn if it isn't used: if the value of a variable is required
-    // for the computation of a constant expression, it doesn't make sense to
-    // warn even if the variable isn't odr-used.  (isReferenced doesn't
-    // precisely reflect that, but it's a decent approximation.)
-    if (VD->isReferenced() && VD->isUsableInConstantExpressions(Context))
-      return false;
-
     if (Context.DeclMustBeEmitted(VD))
       return false;
 

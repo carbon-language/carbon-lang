@@ -358,6 +358,15 @@ static bool ShouldRemoveFromUnused(Sema *SemaRef, const DeclaratorDecl *D) {
   }
 
   if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
+    // If a variable usable in constant expressions is referenced,
+    // don't warn if it isn't used: if the value of a variable is required
+    // for the computation of a constant expression, it doesn't make sense to
+    // warn even if the variable isn't odr-used.  (isReferenced doesn't
+    // precisely reflect that, but it's a decent approximation.)
+    if (VD->isReferenced() &&
+        VD->isUsableInConstantExpressions(SemaRef->Context))
+      return true;
+
     // UnusedFileScopedDecls stores the first declaration.
     // The declaration may have become definition so check again.
     const VarDecl *DeclToCheck = VD->getDefinition();

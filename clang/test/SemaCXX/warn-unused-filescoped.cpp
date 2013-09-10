@@ -178,4 +178,13 @@ namespace pr14776 {
   auto b = X(); // expected-warning {{unused variable 'b'}}
 }
 
+namespace UndefinedInternalStaticMember {
+  namespace {
+    struct X {
+      static const unsigned x = 3;
+      int y[x];
+    };
+  }
+}
+
 #endif
