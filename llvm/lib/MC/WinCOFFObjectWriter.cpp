@@ -190,17 +190,6 @@ static inline void write_uint32_le(void *Data, uint32_t const &Value) {
   Ptr[3] = (Value & 0xFF000000) >> 24;
 }
 
-static inline void write_uint16_le(void *Data, uint16_t const &Value) {
-  uint8_t *Ptr = reinterpret_cast<uint8_t *>(Data);
-  Ptr[0] = (Value & 0x00FF) >> 0;
-  Ptr[1] = (Value & 0xFF00) >> 8;
-}
-
-static inline void write_uint8_le(void *Data, uint8_t const &Value) {
-  uint8_t *Ptr = reinterpret_cast<uint8_t *>(Data);
-  Ptr[0] = (Value & 0xFF) >> 0;
-}
-
 //------------------------------------------------------------------------------
 // Symbol class implementation
 

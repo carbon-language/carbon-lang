@@ -30,10 +30,6 @@
 using namespace llvm;
 
 // helper functions. FIXME: Eliminate.
-static inline bool isImmUs(unsigned val) {
-  return val <= 11;
-}
-
 static inline bool isImmU6(unsigned val) {
   return val < (1 << 6);
 }

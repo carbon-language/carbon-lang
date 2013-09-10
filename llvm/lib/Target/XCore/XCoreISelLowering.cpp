@@ -259,11 +259,6 @@ LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) const
   return GA;
 }
 
-static inline SDValue BuildGetId(SelectionDAG &DAG, SDLoc dl) {
-  return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, MVT::i32,
-                     DAG.getConstant(Intrinsic::xcore_getid, MVT::i32));
-}
-
 SDValue XCoreTargetLowering::
 LowerBlockAddress(SDValue Op, SelectionDAG &DAG) const
 {
