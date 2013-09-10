@@ -599,8 +599,7 @@ SDValue VectorLegalizer::ExpandSELECT(SDValue Op) {
     return DAG.UnrollVectorOp(Op.getNode());
 
   // Generate a mask operand.
-  EVT MaskTy = TLI.getSetCCResultType(*DAG.getContext(), VT);
-  assert(MaskTy.isVector() && "Invalid CC type");
+  EVT MaskTy = VT.changeVectorElementTypeToInteger();
   assert(MaskTy.getSizeInBits() == Op1.getValueType().getSizeInBits()
          && "Invalid mask size");
 
