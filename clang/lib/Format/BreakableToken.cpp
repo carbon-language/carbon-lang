@@ -337,8 +337,10 @@ void BreakableBlockComment::adjustWhitespace(unsigned LineIndex,
   // if leading tabs are intermixed with spaces, that is not a high priority.
 
   // Adjust the start column uniformly accross all lines.
-  StartOfLineColumn[LineIndex] =
-      std::max<int>(0, Whitespace.size() + IndentDelta);
+  StartOfLineColumn[LineIndex] = std::max<int>(
+      0,
+      encoding::columnWidthWithTabs(Whitespace, 0, Style.TabWidth, Encoding) +
+          IndentDelta);
 }
 
 unsigned BreakableBlockComment::getLineCount() const { return Lines.size(); }

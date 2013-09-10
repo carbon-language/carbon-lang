@@ -326,10 +326,10 @@ private:
                  Line.First->Type == TT_ObjCMethodSpecifier) {
         Tok->Type = TT_ObjCMethodExpr;
         Tok->Previous->Type = TT_ObjCSelectorName;
-        if (Tok->Previous->CodePointCount >
+        if (Tok->Previous->ColumnWidth >
             Contexts.back().LongestObjCSelectorName) {
           Contexts.back().LongestObjCSelectorName =
-              Tok->Previous->CodePointCount;
+              Tok->Previous->ColumnWidth;
         }
         if (Contexts.back().FirstObjCSelectorName == NULL)
           Contexts.back().FirstObjCSelectorName = Tok->Previous;
@@ -1022,7 +1022,8 @@ void TokenAnnotator::annotate(AnnotatedLine &Line) {
 }
 
 void TokenAnnotator::calculateFormattingInformation(AnnotatedLine &Line) {
-  Line.First->TotalLength = Line.First->CodePointCount;
+  Line.First->TotalLength =
+      Line.First->IsMultiline ? Style.ColumnLimit : Line.First->ColumnWidth;
   if (!Line.First->Next)
     return;
   FormatToken *Current = Line.First->Next;
@@ -1055,11 +1056,11 @@ void TokenAnnotator::calculateFormattingInformation(AnnotatedLine &Line) {
     Current->CanBreakBefore =
         Current->MustBreakBefore || canBreakBefore(Line, *Current);
     if (Current->MustBreakBefore || !Current->Children.empty() ||
-        (Current->is(tok::string_literal) && Current->isMultiline()))
+        Current->IsMultiline)
       Current->TotalLength = Current->Previous->TotalLength + Style.ColumnLimit;
     else
       Current->TotalLength = Current->Previous->TotalLength +
-                             Current->CodePointCount +
+                             Current->ColumnWidth +
                              Current->SpacesRequiredBefore;
     // FIXME: Only calculate this if CanBreakBefore is true once static
     // initializers etc. are sorted out.
@@ -1095,7 +1096,7 @@ void TokenAnnotator::calculateUnbreakableTailLengths(AnnotatedLine &Line) {
       UnbreakableTailLength = 0;
     } else {
       UnbreakableTailLength +=
-          Current->CodePointCount + Current->SpacesRequiredBefore;
+          Current->ColumnWidth + Current->SpacesRequiredBefore;
     }
     Current = Current->Previous;
   }

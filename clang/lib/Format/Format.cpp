@@ -610,7 +610,7 @@ private:
       FormatTok->WhitespaceRange =
           SourceRange(GreaterLocation, GreaterLocation);
       FormatTok->TokenText = ">";
-      FormatTok->CodePointCount = 1;
+      FormatTok->ColumnWidth = 1;
       GreaterStashed = false;
       return FormatTok;
     }
@@ -666,6 +666,10 @@ private:
       Column = 0;
       FormatTok->TokenText = FormatTok->TokenText.substr(2);
     }
+
+    FormatTok->WhitespaceRange = SourceRange(
+        WhitespaceStart, WhitespaceStart.getLocWithOffset(WhitespaceLength));
+
     FormatTok->OriginalColumn = Column;
 
     TrailingWhitespace = 0;
@@ -685,24 +689,29 @@ private:
     }
 
     // Now FormatTok is the next non-whitespace token.
-    FormatTok->CodePointCount =
-        encoding::getCodePointCount(FormatTok->TokenText, Encoding);
 
-    if (FormatTok->isOneOf(tok::string_literal, tok::comment)) {
-      StringRef Text = FormatTok->TokenText;
-      size_t FirstNewlinePos = Text.find('\n');
-      if (FirstNewlinePos != StringRef::npos) {
-        // FIXME: Handle embedded tabs.
-        FormatTok->FirstLineColumnWidth = encoding::columnWidthWithTabs(
-            Text.substr(0, FirstNewlinePos), 0, Style.TabWidth, Encoding);
-        FormatTok->LastLineColumnWidth = encoding::columnWidthWithTabs(
-            Text.substr(Text.find_last_of('\n') + 1), 0, Style.TabWidth,
-            Encoding);
-      }
+    StringRef Text = FormatTok->TokenText;
+    size_t FirstNewlinePos = Text.find('\n');
+    if (FirstNewlinePos != StringRef::npos) {
+      FormatTok->IsMultiline = true;
+      // The last line of the token always starts in column 0.
+      // Thus, the length can be precomputed even in the presence of tabs.
+      FormatTok->LastLineColumnWidth = encoding::columnWidthWithTabs(
+          Text.substr(Text.find_last_of('\n') + 1), 0, Style.TabWidth,
+          Encoding);
+      Text = Text.substr(0, FirstNewlinePos);
     }
-    // FIXME: Add the CodePointCount to Column.
-    FormatTok->WhitespaceRange = SourceRange(
-        WhitespaceStart, WhitespaceStart.getLocWithOffset(WhitespaceLength));
+
+    // FIXME: ColumnWidth actually depends on the start column, we need to
+    // take this into account when the token is moved.
+    FormatTok->ColumnWidth =
+        encoding::columnWidthWithTabs(Text, Column, Style.TabWidth, Encoding);
+
+    // FIXME: For multi-line tokens this should be LastLineColumnWidth.
+    // For line comments this should probably be zero. But before changing,
+    // we need good tests for this.
+    Column += FormatTok->ColumnWidth;
+
     return FormatTok;
   }
 

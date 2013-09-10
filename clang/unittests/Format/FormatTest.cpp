@@ -5738,33 +5738,48 @@ TEST_F(FormatTest, ConfigurableUseOfTab) {
   // FIXME: To correctly count mixed whitespace we need to
   // also correctly count mixed whitespace in front of the comment.
 
-  // Tab.TabWidth = 8;
-  // Tab.IndentWidth = 8;
-  // EXPECT_EQ("/*\n"
-  //           "\t      a\t\tcomment\n"
-  //           "\t      in multiple lines\n"
-  //           "       */",
-  //           format("   /*\t \t \n"
-  //                  " \t \t a\t\tcomment\t \t\n"
-  //                  " \t \t in multiple lines\t\n"
-  //                  " \t  */",
-  //                  Tab));
-  // Tab.UseTab = false;
-  // EXPECT_EQ("/*\n"
-  //           "              a\t\tcomment\n"
-  //           "              in multiple lines\n"
-  //           "       */",
-  //           format("   /*\t \t \n"
-  //                  " \t \t a\t\tcomment\t \t\n"
-  //                  " \t \t in multiple lines\t\n"
-  //                  " \t  */",
-  //                  Tab));
-  // EXPECT_EQ("/* some\n"
-  //           "   comment */",
-  //          format(" \t \t /* some\n"
-  //                 " \t \t    comment */",
-  //                 Tab));
+  Tab.TabWidth = 8;
+  Tab.IndentWidth = 8;
+  EXPECT_EQ("/*\n"
+            "\t      a\t\tcomment\n"
+            "\t      in multiple lines\n"
+            "       */",
+            format("   /*\t \t \n"
+                   " \t \t a\t\tcomment\t \t\n"
+                   " \t \t in multiple lines\t\n"
+                   " \t  */",
+                   Tab));
+  Tab.UseTab = false;
+  EXPECT_EQ("/*\n"
+            "              a\t\tcomment\n"
+            "              in multiple lines\n"
+            "       */",
+            format("   /*\t \t \n"
+                   " \t \t a\t\tcomment\t \t\n"
+                   " \t \t in multiple lines\t\n"
+                   " \t  */",
+                   Tab));
+  EXPECT_EQ("/* some\n"
+            "   comment */",
+           format(" \t \t /* some\n"
+                  " \t \t    comment */",
+                  Tab));
+  EXPECT_EQ("int a; /* some\n"
+            "   comment */",
+           format(" \t \t int a; /* some\n"
+                  " \t \t    comment */",
+                  Tab));
 
+  EXPECT_EQ("int a; /* some\n"
+            "comment */",
+           format(" \t \t int\ta; /* some\n"
+                  " \t \t    comment */",
+                  Tab));
+  EXPECT_EQ("f(\"\t\t\"); /* some\n"
+            "    comment */",
+           format(" \t \t f(\"\t\t\"); /* some\n"
+                  " \t \t    comment */",
+                  Tab));
   EXPECT_EQ("{\n"
             "  /*\n"
             "   * Comment\n"

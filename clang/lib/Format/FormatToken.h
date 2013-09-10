@@ -83,7 +83,7 @@ class AnnotatedLine;
 struct FormatToken {
   FormatToken()
       : NewlinesBefore(0), HasUnescapedNewline(false), LastNewlineOffset(0),
-        CodePointCount(0), FirstLineColumnWidth(0), LastLineColumnWidth(0),
+        ColumnWidth(0), LastLineColumnWidth(0), IsMultiline(false),
         IsFirst(false), MustBreakBefore(false), IsUnterminatedLiteral(false),
         BlockKind(BK_Unknown), Type(TT_Unknown), SpacesRequiredBefore(0),
         CanBreakBefore(false), ClosesTemplateDeclaration(false),
@@ -114,22 +114,17 @@ struct FormatToken {
   /// whitespace (relative to \c WhiteSpaceStart). 0 if there is no '\n'.
   unsigned LastNewlineOffset;
 
-  /// \brief The length of the non-whitespace parts of the token in CodePoints.
+  /// \brief The width of the non-whitespace parts of the token (or its first
+  /// line for multi-line tokens) in columns.
   /// We need this to correctly measure number of columns a token spans.
-  unsigned CodePointCount;
+  unsigned ColumnWidth;
 
-  /// \brief Contains the number of code points in the first line of a
-  /// multi-line string literal or comment. Zero if there's no newline in the
+  /// \brief Contains the width in columns of the last line of a multi-line
   /// token.
-  unsigned FirstLineColumnWidth;
-
-  /// \brief Contains the number of code points in the last line of a
-  /// multi-line string literal or comment. Can be zero for line comments.
   unsigned LastLineColumnWidth;
 
-  /// \brief Returns \c true if the token text contains newlines (escaped or
-  /// not).
-  bool isMultiline() const { return FirstLineColumnWidth != 0; }
+  /// \brief Whether the token text contains newlines (escaped or not).
+  bool IsMultiline;
 
   /// \brief Indicates that this is the first token.
   bool IsFirst;
@@ -189,12 +184,8 @@ struct FormatToken {
   /// token.
   unsigned TotalLength;
 
-  /// \brief The original column of this token, including expanded tabs.
-  /// The configured IndentWidth is used as tab width. Only tabs in whitespace
-  /// are expanded.
-  /// FIXME: This is currently only used on the first token of an unwrapped
-  /// line, and the implementation is not correct for other tokens (see the
-  /// FIXMEs in FormatTokenLexer::getNextToken()).
+  /// \brief The original 0-based column of this token, including expanded tabs.
+  /// The configured TabWidth is used as tab width.
   unsigned OriginalColumn;
 
   /// \brief The length of following tokens until the next natural split point,
