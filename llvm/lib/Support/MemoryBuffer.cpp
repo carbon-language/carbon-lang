@@ -177,7 +177,7 @@ error_code MemoryBuffer::getFileOrSTDIN(StringRef Filename,
 //===----------------------------------------------------------------------===//
 
 namespace {
-/// \brief Memorry maps a file descriptor using sys::fs::mapped_file_region.
+/// \brief Memory maps a file descriptor using sys::fs::mapped_file_region.
 ///
 /// This handles converting the offset into a legal offset on the platform.
 class MemoryBufferMMapFile : public MemoryBuffer {
