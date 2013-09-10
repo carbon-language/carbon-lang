@@ -230,14 +230,15 @@ void TempScopInfo::buildLoopBounds(TempScop &Scop) {
 void TempScopInfo::buildAffineCondition(Value &V, bool inverted,
                                         Comparison **Comp) const {
   if (ConstantInt *C = dyn_cast<ConstantInt>(&V)) {
-    // If this is always true condition, we will create 0 == 0,
-    // otherwise we will create 0 != 0.
+    // If this is always true condition, we will create 0 <= 1,
+    // otherwise we will create 0 >= 1.
     const SCEV *LHS = SE->getConstant(C->getType(), 0);
+    const SCEV *RHS = SE->getConstant(C->getType(), 1);
 
     if (C->isOne() == inverted)
-      *Comp = new Comparison(LHS, LHS, ICmpInst::ICMP_NE);
+      *Comp = new Comparison(LHS, RHS, ICmpInst::ICMP_SLE);
     else
-      *Comp = new Comparison(LHS, LHS, ICmpInst::ICMP_EQ);
+      *Comp = new Comparison(LHS, RHS, ICmpInst::ICMP_SGE);
 
     return;
   }
