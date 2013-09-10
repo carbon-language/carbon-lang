@@ -576,10 +576,20 @@ class Symbolizer : public SymbolizerInterface {
   InternalSymbolizer *internal_symbolizer_;  // Leaked.
 };
 
-static Symbolizer symbolizer;  // Linker initialized.
+static ALIGNED(64) char symbolizer_placeholder[sizeof(Symbolizer)];
+static Symbolizer *symbolizer;
 
 SymbolizerInterface *getSymbolizer() {
-  return &symbolizer;
+  static atomic_uint8_t initialized;
+  static StaticSpinMutex init_mu;
+  if (atomic_load(&initialized, memory_order_acquire) == 0) {
+    SpinMutexLock l(&init_mu);
+    if (atomic_load(&initialized, memory_order_relaxed) == 0) {
+      symbolizer = new(symbolizer_placeholder) Symbolizer();
+      atomic_store(&initialized, 1, memory_order_release);
+    }
+  }
+  return symbolizer;
 }
 
 }  // namespace __sanitizer
