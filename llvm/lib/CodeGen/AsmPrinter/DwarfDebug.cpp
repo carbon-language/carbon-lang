@@ -2284,6 +2284,7 @@ void DwarfDebug::emitAccelTypes() {
 ///
 void DwarfDebug::emitDebugPubNames() {
   const MCSection *ISec = Asm->getObjFileLowering().getDwarfInfoSection();
+  const MCSection *PSec = Asm->getObjFileLowering().getDwarfPubNamesSection();
 
   typedef DenseMap<const MDNode*, CompileUnit*> CUMapType;
   for (CUMapType::iterator I = CUMap.begin(), E = CUMap.end(); I != E; ++I) {
@@ -2294,8 +2295,7 @@ void DwarfDebug::emitDebugPubNames() {
       continue;
 
     // Start the dwarf pubnames section.
-    Asm->OutStreamer
-        .SwitchSection(Asm->getObjFileLowering().getDwarfPubNamesSection());
+    Asm->OutStreamer.SwitchSection(PSec);
 
     Asm->OutStreamer.AddComment("Length of Public Names Info");
     Asm->EmitLabelDifference(Asm->GetTempSymbol("pubnames_end", ID),
