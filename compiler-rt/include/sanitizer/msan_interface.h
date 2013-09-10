@@ -27,10 +27,10 @@ extern "C" {
 
 
   /* Set raw origin for the memory range. */
-  void __msan_set_origin(const void *a, size_t size, uint32_t origin);
+  void __msan_set_origin(const volatile void *a, size_t size, uint32_t origin);
 
   /* Get raw origin for an address. */
-  uint32_t __msan_get_origin(const void *a);
+  uint32_t __msan_get_origin(const volatile void *a);
 
   /* Returns non-zero if tracking origins. */
   int __msan_get_track_origins();
@@ -39,18 +39,19 @@ extern "C" {
   uint32_t __msan_get_umr_origin();
 
   /* Make memory region fully initialized (without changing its contents). */
-  void __msan_unpoison(const void *a, size_t size);
+  void __msan_unpoison(const volatile void *a, size_t size);
 
   /* Make memory region fully uninitialized (without changing its contents). */
-  void __msan_poison(const void *a, size_t size);
+  void __msan_poison(const volatile void *a, size_t size);
 
   /* Make memory region partially uninitialized (without changing its contents).
    */
-  void __msan_partial_poison(const void* data, void* shadow, size_t size);
+  void __msan_partial_poison(const volatile void *data, void *shadow,
+                             size_t size);
 
   /* Returns the offset of the first (at least partially) poisoned byte in the
      memory range, or -1 if the whole range is good. */
-  intptr_t __msan_test_shadow(const void *x, size_t size);
+  intptr_t __msan_test_shadow(const volatile void *x, size_t size);
 
   /* Set exit code when error(s) were detected.
      Value of 0 means don't change the program exit code. */
@@ -70,7 +71,7 @@ extern "C" {
 
   /* Print shadow and origin for the memory range to stdout in a human-readable
      format. */
-  void __msan_print_shadow(const void *x, size_t size);
+  void __msan_print_shadow(const volatile void *x, size_t size);
 
   /* Print current function arguments shadow and origin to stdout in a
      human-readable format. */
@@ -81,7 +82,7 @@ extern "C" {
 
   /* Tell MSan about newly allocated memory (ex.: custom allocator).
      Memory will be marked uninitialized, with origin at the call site. */
-  void __msan_allocated_memory(const void* data, size_t size);
+  void __msan_allocated_memory(const volatile void* data, size_t size);
 
   /* This function may be optionally provided by user and should return
      a string containing Msan runtime options. See msan_flags.h for details. */
@@ -99,11 +100,11 @@ extern "C" {
 
   /* Returns true if p was returned by the Msan allocator and
      is not yet freed. */
-  int __msan_get_ownership(const void *p);
+  int __msan_get_ownership(const volatile void *p);
 
   /* Returns the number of bytes reserved for the pointer p.
      Requires (get_ownership(p) == true) or (p == 0). */
-  size_t __msan_get_allocated_size(const void *p);
+  size_t __msan_get_allocated_size(const volatile void *p);
 
   /* Number of bytes, allocated and not yet freed by the application. */
   size_t __msan_get_current_allocated_bytes();
@@ -131,8 +132,8 @@ extern "C" {
        allocation of "size" bytes, which returned "ptr".
      __msan_free_hook(ptr) is called immediately before
        deallocation of "ptr". */
-  void __msan_malloc_hook(void *ptr, size_t size);
-  void __msan_free_hook(void *ptr);
+  void __msan_malloc_hook(const volatile void *ptr, size_t size);
+  void __msan_free_hook(const volatile void *ptr);
 
 #else  // __has_feature(memory_sanitizer)
 
