@@ -1,5 +1,8 @@
 ; REQUIRES: object-emission
 
+; FIXME: llvm-dwarfdump doesn't handle PECOFF.
+; XFAIL: cygwin,mingw32,win32
+
 ; RUN: llc -generate-dwarf-pub-sections=Enable -filetype=obj -o %t.o < %s
 ; RUN: llvm-dwarfdump -debug-dump=pubnames %t.o | FileCheck %s
 ; ModuleID = 'dwarf-public-names.cpp'
