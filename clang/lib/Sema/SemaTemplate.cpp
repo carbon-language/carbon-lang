@@ -6456,7 +6456,7 @@ bool Sema::CheckFunctionTemplateSpecialization(
 
   // Find the most specialized function template.
   UnresolvedSetIterator Result = getMostSpecialized(
-      Candidates.begin(), Candidates.end(), FailedCandidates, TPOC_Other, 0,
+      Candidates.begin(), Candidates.end(), FailedCandidates,
       FD->getLocation(),
       PDiag(diag::err_function_template_spec_no_match) << FD->getDeclName(),
       PDiag(diag::err_function_template_spec_ambiguous)
@@ -7384,7 +7384,7 @@ DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
 
   // Find the most specialized function template specialization.
   UnresolvedSetIterator Result = getMostSpecialized(
-      Matches.begin(), Matches.end(), FailedCandidates, TPOC_Other, 0,
+      Matches.begin(), Matches.end(), FailedCandidates,
       D.getIdentifierLoc(),
       PDiag(diag::err_explicit_instantiation_not_known) << Name,
       PDiag(diag::err_explicit_instantiation_ambiguous) << Name,

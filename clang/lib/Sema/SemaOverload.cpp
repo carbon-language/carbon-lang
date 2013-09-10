@@ -9491,7 +9491,7 @@ private:
     // TODO: It looks like FailedCandidates does not serve much purpose
     // here, since the no_viable diagnostic has index 0.
     UnresolvedSetIterator Result = S.getMostSpecialized(
-        MatchesCopy.begin(), MatchesCopy.end(), FailedCandidates, TPOC_Other, 0,
+        MatchesCopy.begin(), MatchesCopy.end(), FailedCandidates,
         SourceExpr->getLocStart(), S.PDiag(),
         S.PDiag(diag::err_addr_ovl_ambiguous) << Matches[0]
                                                      .second->getDeclName(),

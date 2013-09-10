@@ -4311,7 +4311,6 @@ static bool isSameTemplate(TemplateDecl *T1, TemplateDecl *T2) {
 UnresolvedSetIterator Sema::getMostSpecialized(
     UnresolvedSetIterator SpecBegin, UnresolvedSetIterator SpecEnd,
     TemplateSpecCandidateSet &FailedCandidates,
-    TemplatePartialOrderingContext TPOC, unsigned NumCallArguments,
     SourceLocation Loc, const PartialDiagnostic &NoneDiag,
     const PartialDiagnostic &AmbigDiag, const PartialDiagnostic &CandidateDiag,
     bool Complain, QualType TargetType) {
@@ -4337,7 +4336,7 @@ UnresolvedSetIterator Sema::getMostSpecialized(
       = cast<FunctionDecl>(*I)->getPrimaryTemplate();
     assert(Challenger && "Not a function template specialization?");
     if (isSameTemplate(getMoreSpecializedTemplate(BestTemplate, Challenger,
-                                                  Loc, TPOC, NumCallArguments),
+                                                  Loc, TPOC_Other, 0),
                        Challenger)) {
       Best = I;
       BestTemplate = Challenger;
@@ -4352,7 +4351,7 @@ UnresolvedSetIterator Sema::getMostSpecialized(
       = cast<FunctionDecl>(*I)->getPrimaryTemplate();
     if (I != Best &&
         !isSameTemplate(getMoreSpecializedTemplate(BestTemplate, Challenger,
-                                                   Loc, TPOC, NumCallArguments),
+                                                   Loc, TPOC_Other, 0),
                         BestTemplate)) {
       Ambiguous = true;
       break;
