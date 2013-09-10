@@ -146,7 +146,7 @@ SANITIZER_INTERFACE_ATTRIBUTE
 uptr __msan_get_estimated_allocated_size(uptr size);
 
 SANITIZER_INTERFACE_ATTRIBUTE
-bool __msan_get_ownership(const void *p);
+int __msan_get_ownership(const void *p);
 
 SANITIZER_INTERFACE_ATTRIBUTE
 uptr __msan_get_allocated_size(const void *p);

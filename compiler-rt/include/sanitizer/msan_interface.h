@@ -99,7 +99,7 @@ extern "C" {
 
   /* Returns true if p was returned by the Msan allocator and
      is not yet freed. */
-  bool __msan_get_ownership(const void *p);
+  int __msan_get_ownership(const void *p);
 
   /* Returns the number of bytes reserved for the pointer p.
      Requires (get_ownership(p) == true) or (p == 0). */

@@ -149,7 +149,7 @@ uptr __msan_get_estimated_allocated_size(uptr size) {
   return size;
 }
 
-bool __msan_get_ownership(const void *p) {
+int __msan_get_ownership(const void *p) {
   return AllocationSize(p) != 0;
 }
 

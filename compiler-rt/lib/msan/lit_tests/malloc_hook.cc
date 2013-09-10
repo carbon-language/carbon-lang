@@ -4,7 +4,7 @@
 #include <unistd.h>
 
 extern "C" {
-bool __msan_get_ownership(const void *p);
+int __msan_get_ownership(const void *p);
 
 void *global_ptr;
 
