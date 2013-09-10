@@ -13,7 +13,7 @@ class TestCore(TestBase):
         self.assertEqual(op, OpCode.Ret)
 
     def test_memory_buffer_create_from_file(self):
-        source = self.get_test_binary()
+        source = self.get_test_file()
 
         MemoryBuffer(filename=source)
 
