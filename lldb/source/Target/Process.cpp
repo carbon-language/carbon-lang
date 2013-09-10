@@ -489,7 +489,8 @@ bool
 ProcessLaunchInfo::ConvertArgumentsForLaunchingInShell (Error &error,
                                                         bool localhost,
                                                         bool will_debug,
-                                                        bool first_arg_is_full_shell_command)
+                                                        bool first_arg_is_full_shell_command,
+                                                        int32_t num_resumes)
 {
     error.Clear();
 
@@ -571,14 +572,14 @@ ProcessLaunchInfo::ConvertArgumentsForLaunchingInShell (Error &error,
                     // 1 - stop in shell
                     // 2 - stop in /usr/bin/arch
                     // 3 - then we will stop in our program
-                    SetResumeCount(2);
+                    SetResumeCount(num_resumes + 1);
                 }
                 else
                 {
                     // Set the resume count to 1:
                     // 1 - stop in shell
                     // 2 - then we will stop in our program
-                    SetResumeCount(1);
+                    SetResumeCount(num_resumes);
                 }
             }
         

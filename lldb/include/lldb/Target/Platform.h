@@ -726,6 +726,12 @@ namespace lldb_private {
         CalculateMD5 (const FileSpec& file_spec,
                       uint64_t &low,
                       uint64_t &high);
+        
+        virtual int32_t
+        GetResumeCountForShell (const char *shell)
+        {
+            return 1;
+        }
                 
     protected:
         bool m_is_host;

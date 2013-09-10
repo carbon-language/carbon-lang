@@ -1224,3 +1224,28 @@ PlatformDarwin::GetEnvironment (StringList &env)
     }
     return Host::GetEnvironment(env);
 }
+
+int32_t
+PlatformDarwin::GetResumeCountForShell (const char *shell)
+{
+    const char *shell_name = strrchr (shell, '/');
+    if (shell_name == NULL)
+        shell_name = shell;
+    else
+        shell_name++;
+    
+    if (strcmp (shell_name, "sh") == 0)
+    {
+        // /bin/sh re-exec's itself as /bin/bash requiring another resume.
+        return 2;
+    }
+    else if (strcmp (shell_name, "csh") == 0
+            || strcmp (shell_name, "tcsh") == 0
+            || strcmp (shell_name, "zsh") == 0)
+    {
+        // csh and tcsh always seem to re-exec themselves.
+        return 2;
+    }
+    else
+        return 1;
+}

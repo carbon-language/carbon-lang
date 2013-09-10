@@ -664,10 +664,12 @@ Platform::LaunchProcess (ProcessLaunchInfo &launch_info)
             const bool is_localhost = true;
             const bool will_debug = launch_info.GetFlags().Test(eLaunchFlagDebug);
             const bool first_arg_is_full_shell_command = false;
+            uint32_t num_resumes = GetResumeCountForShell (launch_info.GetShell());
             if (!launch_info.ConvertArgumentsForLaunchingInShell (error,
                                                                   is_localhost,
                                                                   will_debug,
-                                                                  first_arg_is_full_shell_command))
+                                                                  first_arg_is_full_shell_command,
+                                                                  num_resumes))
                 return error;
         }
 

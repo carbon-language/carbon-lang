@@ -1432,7 +1432,8 @@ Host::RunShellCommand (const char *command,
         launch_info.ConvertArgumentsForLaunchingInShell (error,
                                                          localhost,
                                                          will_debug,
-                                                         first_arg_is_full_shell_command);
+                                                         first_arg_is_full_shell_command,
+                                                         0);
     }
     else
     {
