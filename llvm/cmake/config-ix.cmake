@@ -300,6 +300,20 @@ endif()
 find_package(LibXml2)
 if (LIBXML2_FOUND)
   set(CLANG_HAVE_LIBXML 1)
+  # When cross-compiling, liblzma is not detected as a dependency for libxml2,
+  # which makes linking c-index-test fail. But for native builds, all libraries
+  # are installed and checked by CMake before Makefiles are generated and everything
+  # works according to the plan. However, if a -llzma is added to native builds,
+  # an additional requirement on the static liblzma.a is required, but will not
+  # be checked by CMake, breaking native compilation.
+  # Since this is only pertinent to cross-compilations, and there's no way CMake
+  # can check for every foreign library on every OS, we add the dep and warn the dev.
+  if ( DEFINED CMAKE_CROSSCOMPILING )
+    if (NOT PC_LIBXML_VERSION VERSION_LESS "2.8.0")
+      message(STATUS "Adding LZMA as a dep to XML2 for cross-compilation, make sure liblzma.a is available.")
+      set(LIBXML2_LIBRARIES ${LIBXML2_LIBRARIES} "-llzma")
+    endif ()
+  endif ( CMAKE_CROSSCOMPILING )
 endif ()
 
 include(CheckCXXCompilerFlag)
