@@ -1286,6 +1286,8 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
     return false;
   if (Left.Type == TT_BlockComment && Left.TokenText.endswith("=*/"))
     return false;
+  if (Right.is(tok::hash) && Left.is(tok::identifier) && Left.TokenText == "L")
+    return false;
   return true;
 }
 
