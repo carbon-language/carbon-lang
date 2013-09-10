@@ -21,7 +21,8 @@ binary = 'clang-format'
 
 # Change this to format according to other formatting styles. See the output of
 # 'clang-format --help' for a list of supported styles. The default looks for
-# a '.clang-format' file to indicate the style that should be used.
+# a '.clang-format' or '_clang-format' file to indicate the style that should be
+# used.
 style = 'file'
 
 class ClangFormatCommand(sublime_plugin.TextCommand):

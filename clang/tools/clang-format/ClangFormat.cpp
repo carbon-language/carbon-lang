@@ -132,12 +132,22 @@ FormatStyle getStyle(StringRef StyleName, StringRef FileName) {
        !Directory.empty();
        Directory = llvm::sys::path::parent_path(Directory)) {
     SmallString<128> ConfigFile(Directory);
+
     llvm::sys::path::append(ConfigFile, ".clang-format");
     DEBUG(llvm::dbgs() << "Trying " << ConfigFile << "...\n");
     bool IsFile = false;
     // Ignore errors from is_regular_file: we only need to know if we can read
     // the file or not.
     llvm::sys::fs::is_regular_file(Twine(ConfigFile), IsFile);
+
+    if (!IsFile) {
+      // Try _clang-format too, since dotfiles are not commonly used on Windows.
+      ConfigFile = Directory;
+      llvm::sys::path::append(ConfigFile, "_clang-format");
+      DEBUG(llvm::dbgs() << "Trying " << ConfigFile << "...\n");
+      llvm::sys::fs::is_regular_file(Twine(ConfigFile), IsFile);
+    }
+
     if (IsFile) {
       OwningPtr<MemoryBuffer> Text;
       if (error_code ec = MemoryBuffer::getFile(ConfigFile, Text)) {

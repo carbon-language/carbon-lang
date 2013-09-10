@@ -37,11 +37,12 @@ namespace LLVM.ClangFormat
         [DisplayName("Style")]
         [Description("Coding style, currently supports:\n" +
                      "  - Predefined styles ('LLVM', 'Google', 'Chromium', 'Mozilla').\n" +
-                     "  - 'File' to search for a YAML .clang-format configuration.\n" +
+                     "  - 'File' to search for a YAML .clang-format or _clang-format\n" +
+                     "    configuration file.\n" +
                      "  - A YAML configuration snippet.\n\n" +
                      "'File':\n" +
-                     "  Searches for a .clang-format configuration in the source file's\n" +
-                     "  directory and its parents.\n\n" +
+                     "  Searches for a .clang-format or _clang-format configuration file\n" +
+                     "  in the source file's directory and its parents.\n\n" +
                      "YAML configuration snippet:\n" +
                      "  The content of a .clang-format configuration file, as string.\n" +
                      "  Example: '{BasedOnStyle: \"LLVM\", IndentWidth: 8}'\n\n" +
