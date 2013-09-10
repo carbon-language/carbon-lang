@@ -424,18 +424,34 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(CompileUnit *SPCU,
   return SPDie;
 }
 
+bool DwarfDebug::isLexicalScopeDIENull(LexicalScope *Scope) {
+  if (Scope->isAbstractScope())
+    return false;
+
+  const SmallVectorImpl<InsnRange> &Ranges = Scope->getRanges();
+  if (Ranges.empty())
+    return true;
+
+  if (Ranges.size() > 1)
+    return false;
+
+  SmallVectorImpl<InsnRange>::const_iterator RI = Ranges.begin();
+  MCSymbol *End = getLabelAfterInsn(RI->second);
+  return !End;
+}
+
 // Construct new DW_TAG_lexical_block for this scope and attach
 // DW_AT_low_pc/DW_AT_high_pc labels.
 DIE *DwarfDebug::constructLexicalScopeDIE(CompileUnit *TheCU,
                                           LexicalScope *Scope) {
+  if (isLexicalScopeDIENull(Scope))
+    return 0;
+
   DIE *ScopeDIE = new DIE(dwarf::DW_TAG_lexical_block);
   if (Scope->isAbstractScope())
     return ScopeDIE;
 
   const SmallVectorImpl<InsnRange> &Ranges = Scope->getRanges();
-  if (Ranges.empty())
-    return 0;
-
   // If we have multiple ranges, emit them into the range section.
   if (Ranges.size() > 1) {
     // .debug_range section has not been laid out yet. Emit offset in
@@ -460,8 +476,7 @@ DIE *DwarfDebug::constructLexicalScopeDIE(CompileUnit *TheCU,
   SmallVectorImpl<InsnRange>::const_iterator RI = Ranges.begin();
   MCSymbol *Start = getLabelBeforeInsn(RI->first);
   MCSymbol *End = getLabelAfterInsn(RI->second);
-
-  if (End == 0) return 0;
+  assert(End && "End label should not be null!");
 
   assert(Start->isDefined() && "Invalid starting label for an inlined scope!");
   assert(End->isDefined() && "Invalid end label for an inlined scope!");
@@ -540,19 +555,9 @@ DIE *DwarfDebug::constructInlinedScopeDIE(CompileUnit *TheCU,
   return ScopeDIE;
 }
 
-// Construct a DIE for this scope.
-DIE *DwarfDebug::constructScopeDIE(CompileUnit *TheCU, LexicalScope *Scope) {
-  if (!Scope || !Scope->getScopeNode())
-    return NULL;
-
-  DIScope DS(Scope->getScopeNode());
-  // Early return to avoid creating dangling variable|scope DIEs.
-  if (!Scope->getInlinedAt() && DS.isSubprogram() && Scope->isAbstractScope() &&
-      !TheCU->getDIE(DS))
-    return NULL;
-
-  SmallVector<DIE *, 8> Children;
-  DIE *ObjectPointer = NULL;
+DIE *DwarfDebug::createScopeChildrenDIE(CompileUnit *TheCU, LexicalScope *Scope,
+                                        SmallVectorImpl<DIE*> &Children) {
+    DIE *ObjectPointer = NULL;
 
   // Collect arguments for current function.
   if (LScopes.isCurrentFunctionScope(Scope))
@@ -576,6 +581,20 @@ DIE *DwarfDebug::constructScopeDIE(CompileUnit *TheCU, LexicalScope *Scope) {
   for (unsigned j = 0, M = Scopes.size(); j < M; ++j)
     if (DIE *Nested = constructScopeDIE(TheCU, Scopes[j]))
       Children.push_back(Nested);
+  return ObjectPointer;
+}
+
+// Construct a DIE for this scope.
+DIE *DwarfDebug::constructScopeDIE(CompileUnit *TheCU, LexicalScope *Scope) {
+  if (!Scope || !Scope->getScopeNode())
+    return NULL;
+
+  DIScope DS(Scope->getScopeNode());
+
+  SmallVector<DIE *, 8> Children;
+  DIE *ObjectPointer = NULL;
+  bool ChildrenCreated = false;
+
   DIE *ScopeDIE = NULL;
   if (Scope->getInlinedAt())
     ScopeDIE = constructInlinedScopeDIE(TheCU, Scope);
@@ -591,6 +610,12 @@ DIE *DwarfDebug::constructScopeDIE(CompileUnit *TheCU, LexicalScope *Scope) {
       ScopeDIE = updateSubprogramScopeDIE(TheCU, DS);
   }
   else {
+    if (isLexicalScopeDIENull(Scope))
+      return NULL;
+    // We create children only when we know the scope DIE is not going to be
+    // null.
+    ObjectPointer = createScopeChildrenDIE(TheCU, Scope, Children);
+    ChildrenCreated = true;
     // There is no need to emit empty lexical block DIE.
     std::pair<ImportedEntityMap::const_iterator,
               ImportedEntityMap::const_iterator> Range = std::equal_range(
@@ -600,15 +625,19 @@ DIE *DwarfDebug::constructScopeDIE(CompileUnit *TheCU, LexicalScope *Scope) {
     if (Children.empty() && Range.first == Range.second)
       return NULL;
     ScopeDIE = constructLexicalScopeDIE(TheCU, Scope);
+    assert(ScopeDIE && "Scope DIE should not be null.");
     for (ImportedEntityMap::const_iterator i = Range.first; i != Range.second;
          ++i)
       constructImportedEntityDIE(TheCU, i->second, ScopeDIE);
   }
 
   if (!ScopeDIE) {
-    std::for_each(Children.begin(), Children.end(), deleter<DIE>);
+    assert(Children.empty() &&
+           "We create children only when the scope DIE is not null.");
     return NULL;
   }
+  if (!ChildrenCreated)
+    ObjectPointer = createScopeChildrenDIE(TheCU, Scope, Children);
 
   // Add children
   for (SmallVectorImpl<DIE *>::iterator I = Children.begin(),
