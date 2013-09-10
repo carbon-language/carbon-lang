@@ -5127,8 +5127,6 @@ namespace {
     0     // cuda_shared
   };
   class SPIRTargetInfo : public TargetInfo {
-    static const char * const GCCRegNames[];
-    static const Builtin::Info BuiltinInfo[];
   public:
     SPIRTargetInfo(const llvm::Triple &Triple) : TargetInfo(Triple) {
       assert(getTriple().getOS() == llvm::Triple::UnknownOS &&
