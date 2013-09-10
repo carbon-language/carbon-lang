@@ -111,7 +111,7 @@ namespace {
       unsigned Tag;
       unsigned IntValue;
       StringRef StringValue;
-    } AttributeItem;
+    };
 
     MCObjectStreamer &Streamer;
     StringRef CurrentVendor;
