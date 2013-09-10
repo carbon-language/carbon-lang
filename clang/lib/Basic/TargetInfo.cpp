@@ -248,10 +248,10 @@ void TargetInfo::setForcedLangOptions(LangOptions &Opts) {
     LongDoubleWidth = LongDoubleAlign = 128;
 
     assert(PointerWidth == 32 || PointerWidth == 64);
-    bool is32BitArch = PointerWidth == 32;
-    SizeType = is32BitArch ? UnsignedInt : UnsignedLong;
-    PtrDiffType = is32BitArch ? SignedInt : SignedLong;
-    IntPtrType = is32BitArch ? SignedInt : SignedLong;
+    bool Is32BitArch = PointerWidth == 32;
+    SizeType = Is32BitArch ? UnsignedInt : UnsignedLong;
+    PtrDiffType = Is32BitArch ? SignedInt : SignedLong;
+    IntPtrType = Is32BitArch ? SignedInt : SignedLong;
 
     IntMaxType = SignedLongLong;
     UIntMaxType = UnsignedLongLong;
