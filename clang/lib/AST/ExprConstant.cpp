@@ -6570,6 +6570,15 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
         if (!HandleSizeof(Info, E->getExprLoc(), ElementType, ElementSize))
           return false;
 
+        // As an extension, a type may have zero size (empty struct or union in
+        // C, array of zero length). Pointer subtraction in such cases has
+        // undefined behavior, so is not constant.
+        if (ElementSize.isZero()) {
+          Info.Diag(E, diag::note_constexpr_pointer_subtraction_zero_size)
+            << ElementType;
+          return false;
+        }
+
         // FIXME: LLVM and GCC both compute LHSOffset - RHSOffset at runtime,
         // and produce incorrect results when it overflows. Such behavior
         // appears to be non-conforming, but is common, so perhaps we should

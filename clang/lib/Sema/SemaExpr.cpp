@@ -7041,6 +7041,18 @@ QualType Sema::CheckSubtractionOperands(ExprResult &LHS, ExprResult &RHS,
                                                LHS.get(), RHS.get()))
         return QualType();
 
+      // The pointee type may have zero size.  As an extension, a structure or
+      // union may have zero size or an array may have zero length.  In this
+      // case subtraction does not make sense.
+      if (!rpointee->isVoidType() && !rpointee->isFunctionType()) {
+        CharUnits ElementSize = Context.getTypeSizeInChars(rpointee);
+        if (ElementSize.isZero()) {
+          Diag(Loc,diag::warn_sub_ptr_zero_size_types)
+            << rpointee.getUnqualifiedType()
+            << LHS.get()->getSourceRange() << RHS.get()->getSourceRange();
+        }
+      }
+
       if (CompLHSTy) *CompLHSTy = LHS.get()->getType();
       return Context.getPointerDiffType();
     }
