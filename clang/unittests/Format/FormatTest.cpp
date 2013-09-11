@@ -3825,6 +3825,7 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
                "}");
   verifyFormat("for (int i = a * a; i < 10; ++i) {\n}");
   verifyFormat("for (int i = 0; i < a * a; ++i) {\n}");
+  verifyGoogleFormat("for (int i = 0; i * 2 < z; i *= 2) {\n}");
 
   verifyFormat("#define MACRO     \\\n"
                "  int *i = a * b; \\\n"

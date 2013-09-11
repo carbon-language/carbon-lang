@@ -574,7 +574,7 @@ private:
         (!Current.Previous || Current.Previous->isNot(tok::kw_operator))) {
       Contexts.back().IsExpression = true;
       for (FormatToken *Previous = Current.Previous;
-           Previous && Previous->isNot(tok::comma);
+           Previous && !Previous->isOneOf(tok::comma, tok::semi);
            Previous = Previous->Previous) {
         if (Previous->is(tok::r_square))
           Previous = Previous->MatchingParen;
