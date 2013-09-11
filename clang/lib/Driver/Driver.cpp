@@ -1011,8 +1011,8 @@ void Driver::BuildInputs(const ToolChain &TC, const DerivedArgList &Args,
     Arg *Previous = *it++;
     bool ShowNote = false;
     while (it != ie) {
-      Diag(clang::diag::warn_drv_overriding_t_option) << Previous->getSpelling()
-          << (*it)->getSpelling();
+      Diag(clang::diag::warn_drv_overriding_flag_option)
+          << Previous->getSpelling() << (*it)->getSpelling();
       Previous = *it++;
       ShowNote = true;
     }

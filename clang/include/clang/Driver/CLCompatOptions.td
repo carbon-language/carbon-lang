@@ -93,6 +93,8 @@ def _SLASH_Zs : CLFlag<"Zs">, HelpText<"Syntax-check only">,
 
 // Non-aliases:
 
+def _SLASH_M_Group : OptionGroup<"</M group>">, Group<cl_Group>;
+
 def _SLASH_Fe : CLJoined<"Fe">,
   HelpText<"Set output executable file or directory (ends in / or \\)">,
   MetaVarName<"<file or directory>">;
@@ -103,12 +105,14 @@ def _SLASH_LD : CLFlag<"LD">, HelpText<"Create DLL">;
 def _SLASH_LDd : CLFlag<"LDd">, HelpText<"Create debug DLL">;
 def _SLASH_link : CLRemainingArgs<"link">,
   HelpText<"Forward options to the linker">, MetaVarName<"<options>">;
-def _SLASH_MD : CLFlag<"MD">,
-  HelpText<"Use DLL run-time">;
-def _SLASH_MDd : CLFlag<"MDd">,
-  HelpText<"Use DLL debug run-time">;
-def _SLASH_MT : CLFlag<"MT">, HelpText<"Use static run-time">;
-def _SLASH_MTd : CLFlag<"MTd">, HelpText<"Use static debug run-time">;
+def _SLASH_MD : Option<["/", "-"], "MD", KIND_FLAG>, Group<_SLASH_M_Group>,
+  Flags<[CLOption, DriverOption]>, HelpText<"Use DLL run-time">;
+def _SLASH_MDd : Option<["/", "-"], "MDd", KIND_FLAG>, Group<_SLASH_M_Group>,
+  Flags<[CLOption, DriverOption]>, HelpText<"Use DLL debug run-time">;
+def _SLASH_MT : Option<["/", "-"], "MT", KIND_FLAG>, Group<_SLASH_M_Group>,
+  Flags<[CLOption, DriverOption]>, HelpText<"Use static run-time">;
+def _SLASH_MTd : Option<["/", "-"], "MTd", KIND_FLAG>, Group<_SLASH_M_Group>,
+  Flags<[CLOption, DriverOption]>, HelpText<"Use static debug run-time">;
 def _SLASH_Tc : CLJoinedOrSeparate<"Tc">, HelpText<"Specify a C source file">,
   MetaVarName<"<filename>">;
 def _SLASH_TC : CLFlag<"TC">, HelpText<"Treat all source files as C">;

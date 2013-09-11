@@ -141,7 +141,7 @@ def warn_ignoring_ftabstop_value : Warning<
 def warn_drv_overriding_joined_option : Warning<
   "overriding '%0%1' option with '%2%3'">,
   InGroup<DiagGroup<"overriding-fo-option">>;
-def warn_drv_overriding_t_option : Warning<
+def warn_drv_overriding_flag_option : Warning<
   "overriding '%0' option with '%1'">,
   InGroup<DiagGroup<"overriding-t-option">>;
 def warn_drv_treating_input_as_cxx : Warning<
