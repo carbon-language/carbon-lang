@@ -160,6 +160,8 @@ addMSAIntType(MVT::SimpleValueType Ty, const TargetRegisterClass *RC) {
   setOperationAction(ISD::STORE, Ty, Legal);
 
   setOperationAction(ISD::ADD, Ty, Legal);
+  setOperationAction(ISD::SDIV, Ty, Legal);
+  setOperationAction(ISD::UDIV, Ty, Legal);
 }
 
 void MipsSETargetLowering::
@@ -877,6 +879,16 @@ SDValue MipsSETargetLowering::lowerINTRINSIC_WO_CHAIN(SDValue Op,
     return lowerMSABranchIntr(Op, DAG, MipsISD::VALL_ZERO);
   case Intrinsic::mips_bz_v:
     return lowerMSABranchIntr(Op, DAG, MipsISD::VANY_ZERO);
+  case Intrinsic::mips_div_s_b:
+  case Intrinsic::mips_div_s_h:
+  case Intrinsic::mips_div_s_w:
+  case Intrinsic::mips_div_s_d:
+    return lowerMSABinaryIntr(Op, DAG, ISD::SDIV);
+  case Intrinsic::mips_div_u_b:
+  case Intrinsic::mips_div_u_h:
+  case Intrinsic::mips_div_u_w:
+  case Intrinsic::mips_div_u_d:
+    return lowerMSABinaryIntr(Op, DAG, ISD::UDIV);
   }
 }
 

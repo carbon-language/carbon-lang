@@ -1225,15 +1225,15 @@ class CTCMSA_DESC {
   bit hasSideEffects = 1;
 }
 
-class DIV_S_B_DESC : MSA_3R_DESC_BASE<"div_s.b", int_mips_div_s_b, MSA128B>;
-class DIV_S_H_DESC : MSA_3R_DESC_BASE<"div_s.h", int_mips_div_s_h, MSA128H>;
-class DIV_S_W_DESC : MSA_3R_DESC_BASE<"div_s.w", int_mips_div_s_w, MSA128W>;
-class DIV_S_D_DESC : MSA_3R_DESC_BASE<"div_s.d", int_mips_div_s_d, MSA128D>;
+class DIV_S_B_DESC : MSA_3R_DESC_BASE<"div_s.b", sdiv, MSA128B>;
+class DIV_S_H_DESC : MSA_3R_DESC_BASE<"div_s.h", sdiv, MSA128H>;
+class DIV_S_W_DESC : MSA_3R_DESC_BASE<"div_s.w", sdiv, MSA128W>;
+class DIV_S_D_DESC : MSA_3R_DESC_BASE<"div_s.d", sdiv, MSA128D>;
 
-class DIV_U_B_DESC : MSA_3R_DESC_BASE<"div_u.b", int_mips_div_u_b, MSA128B>;
-class DIV_U_H_DESC : MSA_3R_DESC_BASE<"div_u.h", int_mips_div_u_h, MSA128H>;
-class DIV_U_W_DESC : MSA_3R_DESC_BASE<"div_u.w", int_mips_div_u_w, MSA128W>;
-class DIV_U_D_DESC : MSA_3R_DESC_BASE<"div_u.d", int_mips_div_u_d, MSA128D>;
+class DIV_U_B_DESC : MSA_3R_DESC_BASE<"div_u.b", udiv, MSA128B>;
+class DIV_U_H_DESC : MSA_3R_DESC_BASE<"div_u.h", udiv, MSA128H>;
+class DIV_U_W_DESC : MSA_3R_DESC_BASE<"div_u.w", udiv, MSA128W>;
+class DIV_U_D_DESC : MSA_3R_DESC_BASE<"div_u.d", udiv, MSA128D>;
 
 class DOTP_S_H_DESC : MSA_3R_DESC_BASE<"dotp_s.h", int_mips_dotp_s_h, MSA128H,
                                        MSA128B, MSA128B>, IsCommutable;
