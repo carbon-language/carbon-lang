@@ -1238,19 +1238,19 @@ class DIV_U_H_DESC : MSA_3R_DESC_BASE<"div_u.h", int_mips_div_u_h, MSA128H>;
 class DIV_U_W_DESC : MSA_3R_DESC_BASE<"div_u.w", int_mips_div_u_w, MSA128W>;
 class DIV_U_D_DESC : MSA_3R_DESC_BASE<"div_u.d", int_mips_div_u_d, MSA128D>;
 
-class DOTP_S_H_DESC : MSA_3R_DESC_BASE<"dotp_s.h", int_mips_dotp_s_h, MSA128H>,
-                      IsCommutable;
-class DOTP_S_W_DESC : MSA_3R_DESC_BASE<"dotp_s.w", int_mips_dotp_s_w, MSA128W>,
-                      IsCommutable;
-class DOTP_S_D_DESC : MSA_3R_DESC_BASE<"dotp_s.d", int_mips_dotp_s_d, MSA128D>,
-                      IsCommutable;
+class DOTP_S_H_DESC : MSA_3R_DESC_BASE<"dotp_s.h", int_mips_dotp_s_h, MSA128H,
+                                       MSA128B, MSA128B>, IsCommutable;
+class DOTP_S_W_DESC : MSA_3R_DESC_BASE<"dotp_s.w", int_mips_dotp_s_w, MSA128W,
+                                       MSA128H, MSA128H>, IsCommutable;
+class DOTP_S_D_DESC : MSA_3R_DESC_BASE<"dotp_s.d", int_mips_dotp_s_d, MSA128D,
+                                       MSA128W, MSA128W>, IsCommutable;
 
-class DOTP_U_H_DESC : MSA_3R_DESC_BASE<"dotp_u.h", int_mips_dotp_u_h, MSA128H>,
-                      IsCommutable;
-class DOTP_U_W_DESC : MSA_3R_DESC_BASE<"dotp_u.w", int_mips_dotp_u_w, MSA128W>,
-                      IsCommutable;
-class DOTP_U_D_DESC : MSA_3R_DESC_BASE<"dotp_u.d", int_mips_dotp_u_d, MSA128D>,
-                      IsCommutable;
+class DOTP_U_H_DESC : MSA_3R_DESC_BASE<"dotp_u.h", int_mips_dotp_u_h, MSA128H,
+                                       MSA128B, MSA128B>, IsCommutable;
+class DOTP_U_W_DESC : MSA_3R_DESC_BASE<"dotp_u.w", int_mips_dotp_u_w, MSA128W,
+                                       MSA128H, MSA128H>, IsCommutable;
+class DOTP_U_D_DESC : MSA_3R_DESC_BASE<"dotp_u.d", int_mips_dotp_u_d, MSA128D,
+                                       MSA128W, MSA128W>, IsCommutable;
 
 class DPADD_S_H_DESC : MSA_3R_4R_DESC_BASE<"dpadd_s.h", int_mips_dpadd_s_h,
                                            MSA128H, MSA128B, MSA128B>,
