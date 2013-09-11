@@ -2831,40 +2831,44 @@ static void handlePureAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 }
 
 static void handleCleanupAttr(Sema &S, Decl *D, const AttributeList &Attr) {
-  if (!Attr.isArgIdent(0)) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)
-      << Attr.getName() << 1;
-    return;
-  }
-  
   VarDecl *VD = dyn_cast<VarDecl>(D);
-
   if (!VD || !VD->hasLocalStorage()) {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << "cleanup";
+    S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << Attr.getName();
     return;
   }
 
-  IdentifierLoc *IL = Attr.getArgAsIdent(0);
+  Expr *E = Attr.getArgAsExpr(0);
+  SourceLocation Loc = E->getExprLoc();
+  FunctionDecl *FD = 0;
+  DeclarationNameInfo NI;
 
-  // Look up the function
-  // FIXME: Lookup probably isn't looking in the right place
-  NamedDecl *CleanupDecl
-    = S.LookupSingleName(S.TUScope, IL->Ident, IL->Loc,
-                         Sema::LookupOrdinaryName);
-  if (!CleanupDecl) {
-    S.Diag(IL->Loc, diag::err_attribute_cleanup_arg_not_found) << IL->Ident;
-    return;
-  }
+  // gcc only allows for simple identifiers. Since we support more than gcc, we
+  // will warn the user.
+  if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E)) {
+    if (DRE->hasQualifier())
+      S.Diag(Loc, diag::warn_cleanup_ext);
+    FD = dyn_cast<FunctionDecl>(DRE->getDecl());
+    NI = DRE->getNameInfo();
+    if (!FD) {
+      S.Diag(Loc, diag::err_attribute_cleanup_arg_not_function) << 1
+        << NI.getName();
+      return;
+    }
+  } else if (UnresolvedLookupExpr *ULE = dyn_cast<UnresolvedLookupExpr>(E)) {
+    if (ULE->hasExplicitTemplateArgs())
+      S.Diag(Loc, diag::warn_cleanup_ext);
 
-  FunctionDecl *FD = dyn_cast<FunctionDecl>(CleanupDecl);
-  if (!FD) {
-    S.Diag(IL->Loc, diag::err_attribute_cleanup_arg_not_function) << IL->Ident;
+    // This will diagnose the case where the function cannot be found.
+    FD = S.ResolveSingleFunctionTemplateSpecialization(ULE, true);
+    NI = ULE->getNameInfo();
+  } else {
+    S.Diag(Loc, diag::err_attribute_cleanup_arg_not_function) << 0;
     return;
   }
 
   if (FD->getNumParams() != 1) {
-    S.Diag(IL->Loc, diag::err_attribute_cleanup_func_must_take_one_arg)
-      << IL->Ident;
+    S.Diag(Loc, diag::err_attribute_cleanup_func_must_take_one_arg)
+      << NI.getName();
     return;
   }
 
@@ -2874,16 +2878,14 @@ static void handleCleanupAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   QualType ParamTy = FD->getParamDecl(0)->getType();
   if (S.CheckAssignmentConstraints(FD->getParamDecl(0)->getLocation(),
                                    ParamTy, Ty) != Sema::Compatible) {
-    S.Diag(IL->Loc, diag::err_attribute_cleanup_func_arg_incompatible_type) <<
-      IL->Ident << ParamTy << Ty;
+    S.Diag(Loc, diag::err_attribute_cleanup_func_arg_incompatible_type)
+      << NI.getName() << ParamTy << Ty;
     return;
   }
 
   D->addAttr(::new (S.Context)
              CleanupAttr(Attr.getRange(), S.Context, FD,
                          Attr.getAttributeSpellingListIndex()));
-  S.MarkFunctionReferenced(IL->Loc, FD);
-  S.DiagnoseUseOfDecl(FD, IL->Loc);
 }
 
 /// Handle __attribute__((format_arg((idx)))) attribute based on

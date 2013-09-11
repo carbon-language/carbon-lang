@@ -1069,6 +1069,7 @@ void EmitClangAttrExprArgsList(RecordKeeper &Records, raw_ostream &OS) {
           .Case("AlignedArgument", true)
           .Case("BoolArgument", true)
           .Case("DefaultIntArgument", true)
+          .Case("FunctionArgument", true)
           .Case("IntArgument", true)
           .Case("ExprArgument", true)
           .Case("StringArgument", true)

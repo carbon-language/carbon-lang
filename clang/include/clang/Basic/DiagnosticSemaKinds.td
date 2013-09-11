@@ -2350,10 +2350,14 @@ def err_attribute_sentinel_less_than_zero : Error<
   "'sentinel' parameter 1 less than zero">;
 def err_attribute_sentinel_not_zero_or_one : Error<
   "'sentinel' parameter 2 not 0 or 1">;
+def warn_cleanup_ext : Warning<
+  "GCC does not allow the 'cleanup' attribute argument to be anything other "
+  "than a simple identifier">, 
+  InGroup<GccCompat>;
 def err_attribute_cleanup_arg_not_found : Error<
   "'cleanup' argument %0 not found">;
 def err_attribute_cleanup_arg_not_function : Error<
-  "'cleanup' argument %0 is not a function">;
+  "'cleanup' argument %select{|%1 }0is not a function">;
 def err_attribute_cleanup_func_must_take_one_arg : Error<
   "'cleanup' function %0 must take 1 parameter">;
 def err_attribute_cleanup_func_arg_incompatible_type : Error<

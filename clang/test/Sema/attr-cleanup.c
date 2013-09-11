@@ -2,18 +2,18 @@
 
 void c1(int *a);
 
-extern int g1 __attribute((cleanup(c1))); // expected-warning {{cleanup attribute ignored}}
-int g2 __attribute((cleanup(c1))); // expected-warning {{cleanup attribute ignored}}
-static int g3 __attribute((cleanup(c1))); // expected-warning {{cleanup attribute ignored}}
+extern int g1 __attribute((cleanup(c1))); // expected-warning {{'cleanup' attribute ignored}}
+int g2 __attribute((cleanup(c1))); // expected-warning {{'cleanup' attribute ignored}}
+static int g3 __attribute((cleanup(c1))); // expected-warning {{'cleanup' attribute ignored}}
 
 void t1()
 {
     int v1 __attribute((cleanup)); // expected-error {{'cleanup' attribute takes one argument}}
     int v2 __attribute((cleanup(1, 2))); // expected-error {{'cleanup' attribute takes one argument}}
 
-    static int v3 __attribute((cleanup(c1))); // expected-warning {{cleanup attribute ignored}}
+    static int v3 __attribute((cleanup(c1))); // expected-warning {{'cleanup' attribute ignored}}
 
-    int v4 __attribute((cleanup(h))); // expected-error {{'cleanup' argument 'h' not found}}
+    int v4 __attribute((cleanup(h))); // expected-error {{use of undeclared identifier 'h'}}
 
     int v5 __attribute((cleanup(c1)));
     int v6 __attribute((cleanup(v3))); // expected-error {{'cleanup' argument 'v3' is not a function}}
@@ -41,4 +41,8 @@ void t4() {
 void c5(void*) __attribute__((deprecated));  // expected-note{{'c5' declared here}}
 void t5() {
   int i __attribute__((cleanup(c5)));  // expected-warning {{'c5' is deprecated}}
+}
+
+void t6(void) {
+  int i __attribute__((cleanup((void *)0)));  // expected-error {{'cleanup' argument is not a function}}
 }
