@@ -20,6 +20,7 @@ from ctypes import c_char_p
 __all__ = [
     "lib",
     "MemoryBuffer",
+    "Context",
     "PassRegistry"
 ]
 
@@ -87,6 +88,19 @@ class MemoryBuffer(LLVMObject):
     def __len__(self):
         return lib.LLVMGetBufferSize(self)
 
+class Context(LLVMObject):
+
+    def __init__(self, context=None):
+        if context is None:
+            context = lib.LLVMContextCreate()
+            LLVMObject.__init__(self, context, disposer=lib.LLVMContextDispose)
+        else:
+            LLVMObject.__init__(self, context)
+
+    @classmethod
+    def GetGlobalContext(cls):
+        return Context(lib.LLVMGetGlobalContext())
+
 class PassRegistry(LLVMObject):
     """Represents an opaque pass registry object."""
 
@@ -139,6 +153,16 @@ def register_library(library):
     library.LLVMGetGlobalPassRegistry.argtypes = []
     library.LLVMGetGlobalPassRegistry.restype = c_object_p
 
+    # Context declarations.
+    library.LLVMContextCreate.argtypes = []
+    library.LLVMContextCreate.restype = c_object_p
+
+    library.LLVMContextDispose.argtypes = [Context]
+    library.LLVMContextDispose.restype = None
+
+    library.LLVMGetGlobalContext.argtypes = []
+    library.LLVMGetGlobalContext.restype = c_object_p
+
     # Memory buffer declarations
     library.LLVMCreateMemoryBufferWithContentsOfFile.argtypes = [c_char_p,
             POINTER(c_object_p), POINTER(c_char_p)]
@@ -153,6 +177,7 @@ def register_enumerations():
         OpCode.register(name, value)
 
 def initialize_llvm():
+    c = Context.GetGlobalContext()
     p = PassRegistry()
     lib.LLVMInitializeCore(p)
     lib.LLVMInitializeTransformUtils(p)

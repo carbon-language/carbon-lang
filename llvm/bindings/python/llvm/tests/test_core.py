@@ -2,6 +2,7 @@ from .base import TestBase
 from ..core import OpCode
 from ..core import MemoryBuffer
 from ..core import PassRegistry
+from ..core import Context
 
 class TestCore(TestBase):
     def test_opcode(self):
@@ -29,3 +30,6 @@ class TestCore(TestBase):
 
     def test_create_passregistry(self):
         PassRegistry()
+
+    def test_create_context(self):
+        Context.GetGlobalContext()
