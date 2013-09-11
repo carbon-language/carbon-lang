@@ -6310,7 +6310,7 @@ Syntax:
 
 ::
 
-      declare void %llvm.va_start(i8* <arglist>)
+      declare void @llvm.va_start(i8* <arglist>)
 
 Overview:
 """""""""
