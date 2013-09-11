@@ -1452,7 +1452,3 @@ template <>
 DITypeRef DIDescriptor::getFieldAs<DITypeRef>(unsigned Elt) const {
   return DITypeRef(getField(DbgNode, Elt));
 }
-
-DIScopeRef DIType::getContext() const {
-  return getFieldAs<DIScopeRef>(2);
-}

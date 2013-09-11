@@ -193,6 +193,7 @@ namespace llvm {
   template <typename T>
   class DIRef;
   typedef DIRef<DIScope> DIScopeRef;
+  typedef DIRef<DIType> DITypeRef;
 
   /// DIScope - A base class for various scopes.
   class DIScope : public DIDescriptor {
@@ -213,6 +214,52 @@ namespace llvm {
     DIScopeRef generateRef();
   };
 
+  /// Represents reference to a DIDescriptor, abstracts over direct and
+  /// identifier-based metadata references.
+  template <typename T>
+  class DIRef {
+    template <typename DescTy>
+    friend DescTy DIDescriptor::getFieldAs(unsigned Elt) const;
+    friend DIScopeRef DIScope::getContext() const;
+    friend DIScopeRef DIScope::generateRef();
+
+    /// Val can be either a MDNode or a MDString, in the latter,
+    /// MDString specifies the type identifier.
+    const Value *Val;
+    explicit DIRef(const Value *V);
+  public:
+    T resolve(const DITypeIdentifierMap &Map) const {
+      if (!Val)
+        return T();
+
+      if (const MDNode *MD = dyn_cast<MDNode>(Val))
+        return T(MD);
+
+      const MDString *MS = cast<MDString>(Val);
+      // Find the corresponding MDNode.
+      DITypeIdentifierMap::const_iterator Iter = Map.find(MS);
+      assert(Iter != Map.end() && "Identifier not in the type map?");
+      assert(DIDescriptor(Iter->second).isType() &&
+             "MDNode in DITypeIdentifierMap should be a DIType.");
+      return T(Iter->second);
+    }
+    operator Value *() const { return const_cast<Value*>(Val); }
+  };
+
+  /// Specialize getFieldAs to handle fields that are references to DIScopes.
+  template <>
+  DIScopeRef DIDescriptor::getFieldAs<DIScopeRef>(unsigned Elt) const;
+  /// Specialize DIRef constructor for DIScopeRef.
+  template <>
+  DIRef<DIScope>::DIRef(const Value *V);
+
+  /// Specialize getFieldAs to handle fields that are references to DITypes.
+  template <>
+  DITypeRef DIDescriptor::getFieldAs<DITypeRef>(unsigned Elt) const;
+  /// Specialize DIRef constructor for DITypeRef.
+  template <>
+  DIRef<DIType>::DIRef(const Value *V);
+
   /// DIType - This is a wrapper for a type.
   /// FIXME: Types should be factored much better so that CV qualifiers and
   /// others do not require a huge and empty descriptor full of zeros.
@@ -227,7 +274,7 @@ namespace llvm {
     /// Verify - Verify that a type descriptor is well formed.
     bool Verify() const;
 
-    DIScopeRef getContext() const;
+    DIScopeRef getContext() const       { return getFieldAs<DIScopeRef>(2); }
     StringRef getName() const           { return getStringField(3);     }
     unsigned getLineNumber() const      { return getUnsignedField(4); }
     uint64_t getSizeInBits() const      { return getUInt64Field(5); }
@@ -282,53 +329,6 @@ namespace llvm {
     void replaceAllUsesWith(DIDescriptor &D);
     void replaceAllUsesWith(MDNode *D);
   };
-
-  /// Represents reference to a DIDescriptor, abstracts over direct and
-  /// identifier-based metadata references.
-  template <typename T>
-  class DIRef {
-    template <typename DescTy>
-    friend DescTy DIDescriptor::getFieldAs(unsigned Elt) const;
-    friend DIScopeRef DIScope::getContext() const;
-    friend DIScopeRef DIScope::generateRef();
-
-    /// Val can be either a MDNode or a MDString, in the latter,
-    /// MDString specifies the type identifier.
-    const Value *Val;
-    explicit DIRef(const Value *V);
-  public:
-    T resolve(const DITypeIdentifierMap &Map) const {
-      if (!Val)
-        return T();
-
-      if (const MDNode *MD = dyn_cast<MDNode>(Val))
-        return T(MD);
-
-      const MDString *MS = cast<MDString>(Val);
-      // Find the corresponding MDNode.
-      DITypeIdentifierMap::const_iterator Iter = Map.find(MS);
-      assert(Iter != Map.end() && "Identifier not in the type map?");
-      assert(DIType(Iter->second).isType() &&
-             "MDNode in DITypeIdentifierMap should be a DIType.");
-      return T(Iter->second);
-    }
-    operator Value *() const { return const_cast<Value*>(Val); }
-  };
-
-  /// Specialize getFieldAs to handle fields that are references to DIScopes.
-  template <>
-  DIScopeRef DIDescriptor::getFieldAs<DIScopeRef>(unsigned Elt) const;
-  /// Specialize DIRef constructor for DIScopeRef.
-  template <>
-  DIRef<DIScope>::DIRef(const Value *V);
-
-  typedef DIRef<DIType> DITypeRef;
-  /// Specialize getFieldAs to handle fields that are references to DITypes.
-  template <>
-  DITypeRef DIDescriptor::getFieldAs<DITypeRef>(unsigned Elt) const;
-  /// Specialize DIRef constructor for DITypeRef.
-  template <>
-  DIRef<DIType>::DIRef(const Value *V);
 
   /// DIBasicType - A basic type, like 'int' or 'float'.
   class DIBasicType : public DIType {
