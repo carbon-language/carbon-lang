@@ -72,11 +72,6 @@ namespace {
 }
 
 namespace llvm {
-// SimpleValue is POD.
-template<> struct isPodLike<SimpleValue> {
-  static const bool value = true;
-};
-
 template<> struct DenseMapInfo<SimpleValue> {
   static inline SimpleValue getEmptyKey() {
     return DenseMapInfo<Instruction*>::getEmptyKey();
@@ -220,11 +215,6 @@ namespace {
 }
 
 namespace llvm {
-  // CallValue is POD.
-  template<> struct isPodLike<CallValue> {
-    static const bool value = true;
-  };
-
   template<> struct DenseMapInfo<CallValue> {
     static inline CallValue getEmptyKey() {
       return DenseMapInfo<Instruction*>::getEmptyKey();

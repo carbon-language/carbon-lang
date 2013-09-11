@@ -604,8 +604,6 @@ namespace llvm {
              LHS.Width == RHS.Width;
     }
   };
-  template <>
-  struct isPodLike<LoweredPHIRecord> { static const bool value = true; };
 }
 
 
