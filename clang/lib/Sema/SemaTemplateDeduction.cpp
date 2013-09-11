@@ -3979,7 +3979,7 @@ static bool isAtLeastAsSpecializedAs(Sema &S,
                                      FunctionTemplateDecl *FT1,
                                      FunctionTemplateDecl *FT2,
                                      TemplatePartialOrderingContext TPOC,
-                                     unsigned NumCallArguments,
+                                     unsigned NumCallArguments1,
     SmallVectorImpl<RefParamPartialOrderingComparison> *RefParamComparisons) {
   FunctionDecl *FD1 = FT1->getTemplatedDecl();
   FunctionDecl *FD2 = FT2->getTemplatedDecl();
@@ -3995,19 +3995,13 @@ static bool isAtLeastAsSpecializedAs(Sema &S,
   //   The types used to determine the ordering depend on the context in which
   //   the partial ordering is done:
   TemplateDeductionInfo Info(Loc);
-  CXXMethodDecl *Method1 = 0;
-  CXXMethodDecl *Method2 = 0;
-  bool IsNonStatic2 = false;
-  bool IsNonStatic1 = false;
-  unsigned Skip2 = 0;
+  SmallVector<QualType, 4> Args2;
   switch (TPOC) {
   case TPOC_Call: {
     //   - In the context of a function call, the function parameter types are
     //     used.
-    Method1 = dyn_cast<CXXMethodDecl>(FD1);
-    Method2 = dyn_cast<CXXMethodDecl>(FD2);
-    IsNonStatic1 = Method1 && !Method1->isStatic();
-    IsNonStatic2 = Method2 && !Method2->isStatic();
+    CXXMethodDecl *Method1 = dyn_cast<CXXMethodDecl>(FD1);
+    CXXMethodDecl *Method2 = dyn_cast<CXXMethodDecl>(FD2);
 
     // C++11 [temp.func.order]p3:
     //   [...] If only one of the function templates is a non-static
@@ -4026,26 +4020,39 @@ static bool isAtLeastAsSpecializedAs(Sema &S,
     // first argument of the free function, which seems to match
     // existing practice.
     SmallVector<QualType, 4> Args1;
-    unsigned Skip1 = !S.getLangOpts().CPlusPlus11 && IsNonStatic2 && !Method1;
-    if (S.getLangOpts().CPlusPlus11 && IsNonStatic1 && !Method2)
-      AddImplicitObjectParameterType(S.Context, Method1, Args1);
+
+    unsigned Skip1 = 0, Skip2 = 0;
+    unsigned NumComparedArguments = NumCallArguments1;
+
+    if (!Method2 && Method1 && !Method1->isStatic()) {
+      if (S.getLangOpts().CPlusPlus11) {
+        // Compare 'this' from Method1 against first parameter from Method2.
+        AddImplicitObjectParameterType(S.Context, Method1, Args1);
+        ++NumComparedArguments;
+      } else
+        // Ignore first parameter from Method2.
+        ++Skip2;
+    } else if (!Method1 && Method2 && !Method2->isStatic()) {
+      if (S.getLangOpts().CPlusPlus11)
+        // Compare 'this' from Method2 against first parameter from Method1.
+        AddImplicitObjectParameterType(S.Context, Method2, Args2);
+      else
+        // Ignore first parameter from Method1.
+        ++Skip1;
+    }
+
     Args1.insert(Args1.end(),
                  Proto1->arg_type_begin() + Skip1, Proto1->arg_type_end());
-
-    SmallVector<QualType, 4> Args2;
-    Skip2 = !S.getLangOpts().CPlusPlus11 && IsNonStatic1 && !Method2;
-    if (S.getLangOpts().CPlusPlus11 && IsNonStatic2 && !Method1)
-      AddImplicitObjectParameterType(S.Context, Method2, Args2);
     Args2.insert(Args2.end(),
                  Proto2->arg_type_begin() + Skip2, Proto2->arg_type_end());
 
     // C++ [temp.func.order]p5:
     //   The presence of unused ellipsis and default arguments has no effect on
     //   the partial ordering of function templates.
-    if (Args1.size() > NumCallArguments)
-      Args1.resize(NumCallArguments);
-    if (Args2.size() > NumCallArguments)
-      Args2.resize(NumCallArguments);
+    if (Args1.size() > NumComparedArguments)
+      Args1.resize(NumComparedArguments);
+    if (Args2.size() > NumComparedArguments)
+      Args2.resize(NumComparedArguments);
     if (DeduceTemplateArguments(S, TemplateParams, Args2.data(), Args2.size(),
                                 Args1.data(), Args1.size(), Info, Deduced,
                                 TDF_None, /*PartialOrdering=*/true,
@@ -4099,20 +4106,12 @@ static bool isAtLeastAsSpecializedAs(Sema &S,
   // Figure out which template parameters were used.
   llvm::SmallBitVector UsedParameters(TemplateParams->size());
   switch (TPOC) {
-  case TPOC_Call: {
-    unsigned NumParams = std::min(NumCallArguments,
-                                  std::min(Proto1->getNumArgs(),
-                                           Proto2->getNumArgs()));
-    if (S.getLangOpts().CPlusPlus11 && IsNonStatic2 && !IsNonStatic1)
-      ::MarkUsedTemplateParameters(S.Context, Method2->getThisType(S.Context),
-                                   false,
-                                   TemplateParams->getDepth(), UsedParameters);
-    for (unsigned I = Skip2; I < NumParams; ++I)
-      ::MarkUsedTemplateParameters(S.Context, Proto2->getArgType(I), false,
+  case TPOC_Call:
+    for (unsigned I = 0, N = Args2.size(); I != N; ++I)
+      ::MarkUsedTemplateParameters(S.Context, Args2[I], false,
                                    TemplateParams->getDepth(),
                                    UsedParameters);
     break;
-  }
 
   case TPOC_Conversion:
     ::MarkUsedTemplateParameters(S.Context, Proto2->getResultType(), false,
@@ -4167,8 +4166,11 @@ static bool isVariadicFunctionTemplate(FunctionTemplateDecl *FunTmpl) {
 /// \param TPOC the context in which we are performing partial ordering of
 /// function templates.
 ///
-/// \param NumCallArguments The number of arguments in a call, used only
-/// when \c TPOC is \c TPOC_Call.
+/// \param NumCallArguments1 The number of arguments in the call to FT1, used
+/// only when \c TPOC is \c TPOC_Call.
+///
+/// \param NumCallArguments2 The number of arguments in the call to FT2, used
+/// only when \c TPOC is \c TPOC_Call.
 ///
 /// \returns the more specialized function template. If neither
 /// template is more specialized, returns NULL.
@@ -4177,12 +4179,13 @@ Sema::getMoreSpecializedTemplate(FunctionTemplateDecl *FT1,
                                  FunctionTemplateDecl *FT2,
                                  SourceLocation Loc,
                                  TemplatePartialOrderingContext TPOC,
-                                 unsigned NumCallArguments) {
+                                 unsigned NumCallArguments1,
+                                 unsigned NumCallArguments2) {
   SmallVector<RefParamPartialOrderingComparison, 4> RefParamComparisons;
   bool Better1 = isAtLeastAsSpecializedAs(*this, Loc, FT1, FT2, TPOC,
-                                          NumCallArguments, 0);
+                                          NumCallArguments1, 0);
   bool Better2 = isAtLeastAsSpecializedAs(*this, Loc, FT2, FT1, TPOC,
-                                          NumCallArguments,
+                                          NumCallArguments2,
                                           &RefParamComparisons);
 
   if (Better1 != Better2) // We have a clear winner
@@ -4336,7 +4339,7 @@ UnresolvedSetIterator Sema::getMostSpecialized(
       = cast<FunctionDecl>(*I)->getPrimaryTemplate();
     assert(Challenger && "Not a function template specialization?");
     if (isSameTemplate(getMoreSpecializedTemplate(BestTemplate, Challenger,
-                                                  Loc, TPOC_Other, 0),
+                                                  Loc, TPOC_Other, 0, 0),
                        Challenger)) {
       Best = I;
       BestTemplate = Challenger;
@@ -4351,7 +4354,7 @@ UnresolvedSetIterator Sema::getMostSpecialized(
       = cast<FunctionDecl>(*I)->getPrimaryTemplate();
     if (I != Best &&
         !isSameTemplate(getMoreSpecializedTemplate(BestTemplate, Challenger,
-                                                   Loc, TPOC_Other, 0),
+                                                   Loc, TPOC_Other, 0, 0),
                         BestTemplate)) {
       Ambiguous = true;
       break;
