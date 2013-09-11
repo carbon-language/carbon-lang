@@ -78,3 +78,25 @@ class TestCore(TestBase):
             self.assertEqual(f.name, functions[i])
             f.dump()
 
+    def test_function_basicblock_iteration(self):
+        m = parse_bitcode(MemoryBuffer(filename=self.get_test_bc()))
+        i = 0
+        
+        bb_list = ['b1', 'b2', 'end']
+        
+        f = m.first
+        while f.name != "f6":
+            f = f.next
+        
+        # Forward
+        for bb in f:
+            self.assertEqual(bb.name, bb_list[i])
+            bb.dump()
+            i += 1
+        
+        # Backwards
+        for bb in reversed(f):
+            i -= 1
+            self.assertEqual(bb.name, bb_list[i])
+            bb.dump()
+
