@@ -340,7 +340,7 @@ class C : public A, public B // align=16
 // offset. The pointer before subtraction doesn't need to be aligned for
 // the destination type.
 
-// CHECK-LABEL-LABEL: define void @_Z16downcast_pointerP1B(%class.B* %b)
+// CHECK-LABEL: define void @_Z16downcast_pointerP1B(%class.B* %b)
 void downcast_pointer(B *b) {
   (void) static_cast<C*>(b);
   // Alignment check from EmitTypeCheck(TCK_DowncastPointer, ...)
@@ -357,7 +357,7 @@ void downcast_pointer(B *b) {
   // CHECK-NEXT: br i1 [[AND]]
 }
 
-// CHECK-LABEL-LABEL: define void @_Z18downcast_referenceR1B(%class.B* %b)
+// CHECK-LABEL: define void @_Z18downcast_referenceR1B(%class.B* %b)
 void downcast_reference(B &b) {
   (void) static_cast<C&>(b);
   // Alignment check from EmitTypeCheck(TCK_DowncastReference, ...)
@@ -370,6 +370,89 @@ void downcast_reference(B &b) {
   // AND the alignment test with the objectsize test.
   // CHECK-NEXT: [[AND:%[0-9]*]] = and i1 {{.*}}, [[TEST]]
   // CHECK-NEXT: br i1 [[AND]]
+}
+
+namespace CopyValueRepresentation {
+  // CHECK-LABEL: define {{.*}} @_ZN23CopyValueRepresentation2S3aSERKS0_
+  // CHECK-NOT: call {{.*}} @__ubsan_handle_load_invalid_value
+  // CHECK-LABEL: define {{.*}} @_ZN23CopyValueRepresentation2S4aSEOS0_
+  // CHECK-NOT: call {{.*}} @__ubsan_handle_load_invalid_value
+  // CHECK-LABEL: define {{.*}} @_ZN23CopyValueRepresentation2S5C2ERKS0_
+  // CHECK-NOT: call {{.*}} __ubsan_handle_load_invalid_value
+  // CHECK-LABEL: define {{.*}} @_ZN23CopyValueRepresentation2S2C2ERKS0_
+  // CHECK: __ubsan_handle_load_invalid_value
+  // CHECK-LABEL: define {{.*}} @_ZN23CopyValueRepresentation2S1C2ERKS0_
+  // CHECK-NOT: call {{.*}} __ubsan_handle_load_invalid_value
+
+  struct CustomCopy { CustomCopy(); CustomCopy(const CustomCopy&); };
+  struct S1 {
+    CustomCopy CC;
+    bool b;
+  };
+  void callee1(S1);
+  void test1() {
+    S1 s11;
+    callee1(s11);
+    S1 s12;
+    s12 = s11;
+  }
+
+  static bool some_global_bool;
+  struct ExprCopy {
+    ExprCopy();
+    ExprCopy(const ExprCopy&, bool b = some_global_bool);
+  };
+  struct S2 {
+    ExprCopy EC;
+    bool b;
+  };
+  void callee2(S2);
+  void test2(void) {
+    S2 s21;
+    callee2(s21);
+    S2 s22;
+    s22 = s21;
+  }
+
+  struct CustomAssign { CustomAssign &operator=(const CustomAssign&); };
+  struct S3 {
+    CustomAssign CA;
+    bool b;
+  };
+  void test3() {
+    S3 x, y;
+    x = y;
+  }
+
+  struct CustomMove {
+    CustomMove();
+    CustomMove(const CustomMove&&);
+    CustomMove &operator=(const CustomMove&&);
+  };
+  struct S4 {
+    CustomMove CM;
+    bool b;
+  };
+  void test4() {
+    S4 x, y;
+    x = static_cast<S4&&>(y);
+  }
+
+  struct EnumCustomCopy {
+    EnumCustomCopy();
+    EnumCustomCopy(const EnumCustomCopy&);
+  };
+  struct S5 {
+    EnumCustomCopy ECC;
+    bool b;
+  };
+  void callee5(S5);
+  void test5() {
+    S5 s51;
+    callee5(s51);
+    S5 s52;
+    s52 = s51;
+  }
 }
 
 // CHECK: attributes [[NR_NUW]] = { noreturn nounwind }

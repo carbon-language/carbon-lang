@@ -741,6 +741,29 @@ void CodeGenFunction::EmitConstructorBody(FunctionArgList &Args) {
 }
 
 namespace {
+  /// RAII object to indicate that codegen is copying the value representation
+  /// instead of the object representation. Useful when copying a struct or
+  /// class which has uninitialized members and we're only performing
+  /// lvalue-to-rvalue conversion on the object but not its members.
+  class CopyingValueRepresentation {
+  public:
+    explicit CopyingValueRepresentation(CodeGenFunction &CGF)
+        : CGF(CGF), SO(*CGF.SanOpts), OldSanOpts(CGF.SanOpts) {
+      SO.Bool = false;
+      SO.Enum = false;
+      CGF.SanOpts = &SO;
+    }
+    ~CopyingValueRepresentation() {
+      CGF.SanOpts = OldSanOpts;
+    }
+  private:
+    CodeGenFunction &CGF;
+    SanitizerOptions SO;
+    const SanitizerOptions *OldSanOpts;
+  };
+}
+
+namespace {
   class FieldMemcpyizer {
   public:
     FieldMemcpyizer(CodeGenFunction &CGF, const CXXRecordDecl *ClassDecl,
@@ -939,9 +962,10 @@ namespace {
       if (AggregatedInits.size() <= 1) {
         // This memcpy is too small to be worthwhile. Fall back on default
         // codegen.
-        for (unsigned i = 0; i < AggregatedInits.size(); ++i) {
+        if (!AggregatedInits.empty()) {
+          CopyingValueRepresentation CVR(CGF);
           EmitMemberInitializer(CGF, ConstructorDecl->getParent(),
-                                AggregatedInits[i], ConstructorDecl, Args);
+                                AggregatedInits[0], ConstructorDecl, Args);
         }
         reset();
         return;
@@ -980,8 +1004,8 @@ namespace {
   private:
 
     // Returns the memcpyable field copied by the given statement, if one
-    // exists. Otherwise r
-    FieldDecl* getMemcpyableField(Stmt *S) {
+    // exists. Otherwise returns null.
+    FieldDecl *getMemcpyableField(Stmt *S) {
       if (!AssignmentsMemcpyable)
         return 0;
       if (BinaryOperator *BO = dyn_cast<BinaryOperator>(S)) {
@@ -1075,8 +1099,10 @@ namespace {
 
     void emitAggregatedStmts() {
       if (AggregatedStmts.size() <= 1) {
-        for (unsigned i = 0; i < AggregatedStmts.size(); ++i)
-          CGF.EmitStmt(AggregatedStmts[i]);
+        if (!AggregatedStmts.empty()) {
+          CopyingValueRepresentation CVR(CGF);
+          CGF.EmitStmt(AggregatedStmts[0]);
+        }
         reset();
       }
 
@@ -1672,8 +1698,7 @@ CodeGenFunction::EmitSynthesizedCXXCopyCtorCall(const CXXConstructorDecl *D,
     EmitAggregateCopy(This, Src, (*ArgBeg)->getType());
     return;
   }
-  llvm::Value *Callee = CGM.GetAddrOfCXXConstructor(D, 
-                                                    clang::Ctor_Complete);
+  llvm::Value *Callee = CGM.GetAddrOfCXXConstructor(D, clang::Ctor_Complete);
   assert(D->isInstance() &&
          "Trying to emit a member call expr on a static method!");
   
