@@ -206,7 +206,7 @@ static int map_file() {
   fseek(output_file, 0L, SEEK_END);
   file_size = ftell(output_file);
 
-  /* A size of 0 is invaild to `mmap'. Return a fail here, but don't issue an
+  /* A size of 0 is invalid to `mmap'. Return a fail here, but don't issue an
    * error message because it should "just work" for the user. */
   if (file_size == 0)
     return -1;
