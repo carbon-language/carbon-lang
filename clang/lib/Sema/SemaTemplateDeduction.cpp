@@ -4289,12 +4289,6 @@ static bool isSameTemplate(TemplateDecl *T1, TemplateDecl *T2) {
 /// \param SpecEnd the end iterator of the function template
 /// specializations, paired with \p SpecBegin.
 ///
-/// \param TPOC the partial ordering context to use to compare the function
-/// template specializations.
-///
-/// \param NumCallArguments The number of arguments in a call, used only
-/// when \c TPOC is \c TPOC_Call.
-///
 /// \param Loc the location where the ambiguity or no-specializations
 /// diagnostic should occur.
 ///
