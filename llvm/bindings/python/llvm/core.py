@@ -20,6 +20,7 @@ from ctypes import c_uint
 
 __all__ = [
     "lib",
+    "OpCode",
     "MemoryBuffer",
     "Module",
     "Context",
