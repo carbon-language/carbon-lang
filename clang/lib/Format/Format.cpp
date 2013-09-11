@@ -631,7 +631,9 @@ private:
           ++FormatTok->NewlinesBefore;
           // FIXME: This is technically incorrect, as it could also
           // be a literal backslash at the end of the line.
-          if (i == 0 || FormatTok->TokenText[i - 1] != '\\')
+          if (i == 0 || (FormatTok->TokenText[i - 1] != '\\' &&
+                         (FormatTok->TokenText[i - 1] != '\r' || i == 1 ||
+                          FormatTok->TokenText[i - 2] != '\\')))
             FormatTok->HasUnescapedNewline = true;
           FormatTok->LastNewlineOffset = WhitespaceLength + i + 1;
           Column = 0;
@@ -745,8 +747,8 @@ public:
   Formatter(const FormatStyle &Style, Lexer &Lex, SourceManager &SourceMgr,
             const std::vector<CharSourceRange> &Ranges)
       : Style(Style), Lex(Lex), SourceMgr(SourceMgr),
-        Whitespaces(SourceMgr, Style), Ranges(Ranges),
-        Encoding(encoding::detectEncoding(Lex.getBuffer())) {
+        Whitespaces(SourceMgr, Style, inputUsesCRLF(Lex.getBuffer())),
+        Ranges(Ranges), Encoding(encoding::detectEncoding(Lex.getBuffer())) {
     DEBUG(llvm::dbgs() << "File encoding: "
                        << (Encoding == encoding::Encoding_UTF8 ? "UTF8"
                                                                : "unknown")
@@ -883,6 +885,10 @@ public:
   }
 
 private:
+  static bool inputUsesCRLF(StringRef Text) {
+    return Text.count('\r') * 2 > Text.count('\n');
+  }
+
   void deriveLocalStyle() {
     unsigned CountBoundToVariable = 0;
     unsigned CountBoundToType = 0;

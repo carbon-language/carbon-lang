@@ -37,8 +37,9 @@ namespace format {
 /// There may be multiple calls to \c breakToken for a given token.
 class WhitespaceManager {
 public:
-  WhitespaceManager(SourceManager &SourceMgr, const FormatStyle &Style)
-      : SourceMgr(SourceMgr), Style(Style) {}
+  WhitespaceManager(SourceManager &SourceMgr, const FormatStyle &Style,
+                    bool UseCRLF)
+      : SourceMgr(SourceMgr), Style(Style), UseCRLF(UseCRLF) {}
 
   /// \brief Replaces the whitespace in front of \p Tok. Only call once for
   /// each \c AnnotatedToken.
@@ -152,16 +153,17 @@ private:
 
   /// \brief Stores \p Text as the replacement for the whitespace in \p Range.
   void storeReplacement(const SourceRange &Range, StringRef Text);
-  std::string getNewlineText(unsigned Newlines, unsigned Spaces);
-  std::string getNewlineText(unsigned Newlines, unsigned Spaces,
-                             unsigned PreviousEndOfTokenColumn,
-                             unsigned EscapedNewlineColumn);
-  std::string getIndentText(unsigned Spaces);
+  void appendNewlineText(std::string &Text, unsigned Newlines);
+  void appendNewlineText(std::string &Text, unsigned Newlines,
+                         unsigned PreviousEndOfTokenColumn,
+                         unsigned EscapedNewlineColumn);
+  void appendIndentText(std::string &Text, unsigned Spaces);
 
   SmallVector<Change, 16> Changes;
   SourceManager &SourceMgr;
   tooling::Replacements Replaces;
   const FormatStyle &Style;
+  bool UseCRLF;
 };
 
 } // namespace format
