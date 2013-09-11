@@ -40,15 +40,14 @@ void IO::setContext(void *Context) {
 //  Input
 //===----------------------------------------------------------------------===//
 
-Input::Input(StringRef InputContent, void *Ctxt) 
-  : IO(Ctxt), 
+Input::Input(StringRef InputContent, void *Ctxt)
+  : IO(Ctxt),
     Strm(new Stream(InputContent, SrcMgr)),
     CurrentNode(NULL) {
   DocIterator = Strm->begin();
 }
 
 Input::~Input() {
-  
 }
 
 error_code Input::error() {
@@ -550,9 +549,9 @@ bool Output::canElideEmptySequence() {
   // if the key/value is the only thing in the map and the map is used in
   // a sequence.  This detects if the this sequence is the first key/value
   // in map that itself is embedded in a sequnce.
-  if (StateStack.size() < 2) 
+  if (StateStack.size() < 2)
     return true;
-  if (StateStack.back() != inMapFirstKey) 
+  if (StateStack.back() != inMapFirstKey)
     return true;
   return (StateStack[StateStack.size()-2] != inSeq);
 }

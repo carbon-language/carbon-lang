@@ -657,9 +657,9 @@ TEST(YAMLIO, TestReadWriteMyFlowSequence) {
     map.numbers.push_back(1024);
 
     llvm::raw_string_ostream ostr(intermediate);
-    Output yout(ostr); 
+    Output yout(ostr);
     yout << map;
-    
+
     // Verify sequences were written in flow style
     ostr.flush();
     llvm::StringRef flowOut(intermediate);
@@ -1403,7 +1403,7 @@ TEST(YAMLIO, SequenceElideTest) {
   Input yin(intermediate);
   OptionalTestSeq Seq2;
   yin >> Seq2;
-  
+
   EXPECT_FALSE(yin.error());
 
   EXPECT_EQ(4UL, Seq2.Tests.size());
