@@ -160,7 +160,13 @@ addMSAIntType(MVT::SimpleValueType Ty, const TargetRegisterClass *RC) {
   setOperationAction(ISD::STORE, Ty, Legal);
 
   setOperationAction(ISD::ADD, Ty, Legal);
+  setOperationAction(ISD::CTLZ, Ty, Legal);
+  setOperationAction(ISD::MUL, Ty, Legal);
   setOperationAction(ISD::SDIV, Ty, Legal);
+  setOperationAction(ISD::SHL, Ty, Legal);
+  setOperationAction(ISD::SRA, Ty, Legal);
+  setOperationAction(ISD::SRL, Ty, Legal);
+  setOperationAction(ISD::SUB, Ty, Legal);
   setOperationAction(ISD::UDIV, Ty, Legal);
 }
 
@@ -930,6 +936,36 @@ SDValue MipsSETargetLowering::lowerINTRINSIC_WO_CHAIN(SDValue Op,
   case Intrinsic::mips_fsub_w:
   case Intrinsic::mips_fsub_d:
     return lowerMSABinaryIntr(Op, DAG, ISD::FSUB);
+  case Intrinsic::mips_mulv_b:
+  case Intrinsic::mips_mulv_h:
+  case Intrinsic::mips_mulv_w:
+  case Intrinsic::mips_mulv_d:
+    return lowerMSABinaryIntr(Op, DAG, ISD::MUL);
+  case Intrinsic::mips_nlzc_b:
+  case Intrinsic::mips_nlzc_h:
+  case Intrinsic::mips_nlzc_w:
+  case Intrinsic::mips_nlzc_d:
+    return lowerMSAUnaryIntr(Op, DAG, ISD::CTLZ);
+  case Intrinsic::mips_sll_b:
+  case Intrinsic::mips_sll_h:
+  case Intrinsic::mips_sll_w:
+  case Intrinsic::mips_sll_d:
+    return lowerMSABinaryIntr(Op, DAG, ISD::SHL);
+  case Intrinsic::mips_sra_b:
+  case Intrinsic::mips_sra_h:
+  case Intrinsic::mips_sra_w:
+  case Intrinsic::mips_sra_d:
+    return lowerMSABinaryIntr(Op, DAG, ISD::SRA);
+  case Intrinsic::mips_srl_b:
+  case Intrinsic::mips_srl_h:
+  case Intrinsic::mips_srl_w:
+  case Intrinsic::mips_srl_d:
+    return lowerMSABinaryIntr(Op, DAG, ISD::SRL);
+  case Intrinsic::mips_subv_b:
+  case Intrinsic::mips_subv_h:
+  case Intrinsic::mips_subv_w:
+  case Intrinsic::mips_subv_d:
+    return lowerMSABinaryIntr(Op, DAG, ISD::SUB);
   }
 }
 

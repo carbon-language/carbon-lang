@@ -178,6 +178,70 @@ declare <2 x i64> @llvm.mips.sll.d(<2 x i64>, <2 x i64>) nounwind
 ; CHECK: sll.d
 ; CHECK: st.d
 ; CHECK: .size llvm_mips_sll_d_test
+
+define void @sll_b_test() nounwind {
+entry:
+  %0 = load <16 x i8>* @llvm_mips_sll_b_ARG1
+  %1 = load <16 x i8>* @llvm_mips_sll_b_ARG2
+  %2 = shl <16 x i8> %0, %1
+  store <16 x i8> %2, <16 x i8>* @llvm_mips_sll_b_RES
+  ret void
+}
+
+; CHECK: sll_b_test:
+; CHECK: ld.b
+; CHECK: ld.b
+; CHECK: sll.b
+; CHECK: st.b
+; CHECK: .size sll_b_test
+
+define void @sll_h_test() nounwind {
+entry:
+  %0 = load <8 x i16>* @llvm_mips_sll_h_ARG1
+  %1 = load <8 x i16>* @llvm_mips_sll_h_ARG2
+  %2 = shl <8 x i16> %0, %1
+  store <8 x i16> %2, <8 x i16>* @llvm_mips_sll_h_RES
+  ret void
+}
+
+; CHECK: sll_h_test:
+; CHECK: ld.h
+; CHECK: ld.h
+; CHECK: sll.h
+; CHECK: st.h
+; CHECK: .size sll_h_test
+
+define void @sll_w_test() nounwind {
+entry:
+  %0 = load <4 x i32>* @llvm_mips_sll_w_ARG1
+  %1 = load <4 x i32>* @llvm_mips_sll_w_ARG2
+  %2 = shl <4 x i32> %0, %1
+  store <4 x i32> %2, <4 x i32>* @llvm_mips_sll_w_RES
+  ret void
+}
+
+; CHECK: sll_w_test:
+; CHECK: ld.w
+; CHECK: ld.w
+; CHECK: sll.w
+; CHECK: st.w
+; CHECK: .size sll_w_test
+
+define void @sll_d_test() nounwind {
+entry:
+  %0 = load <2 x i64>* @llvm_mips_sll_d_ARG1
+  %1 = load <2 x i64>* @llvm_mips_sll_d_ARG2
+  %2 = shl <2 x i64> %0, %1
+  store <2 x i64> %2, <2 x i64>* @llvm_mips_sll_d_RES
+  ret void
+}
+
+; CHECK: sll_d_test:
+; CHECK: ld.d
+; CHECK: ld.d
+; CHECK: sll.d
+; CHECK: st.d
+; CHECK: .size sll_d_test
 ;
 @llvm_mips_sra_b_ARG1 = global <16 x i8> <i8 0, i8 1, i8 2, i8 3, i8 4, i8 5, i8 6, i8 7, i8 8, i8 9, i8 10, i8 11, i8 12, i8 13, i8 14, i8 15>, align 16
 @llvm_mips_sra_b_ARG2 = global <16 x i8> <i8 16, i8 17, i8 18, i8 19, i8 20, i8 21, i8 22, i8 23, i8 24, i8 25, i8 26, i8 27, i8 28, i8 29, i8 30, i8 31>, align 16
@@ -267,6 +331,71 @@ declare <2 x i64> @llvm.mips.sra.d(<2 x i64>, <2 x i64>) nounwind
 ; CHECK: st.d
 ; CHECK: .size llvm_mips_sra_d_test
 ;
+
+define void @sra_b_test() nounwind {
+entry:
+  %0 = load <16 x i8>* @llvm_mips_sra_b_ARG1
+  %1 = load <16 x i8>* @llvm_mips_sra_b_ARG2
+  %2 = ashr <16 x i8> %0, %1
+  store <16 x i8> %2, <16 x i8>* @llvm_mips_sra_b_RES
+  ret void
+}
+
+; CHECK: sra_b_test:
+; CHECK: ld.b
+; CHECK: ld.b
+; CHECK: sra.b
+; CHECK: st.b
+; CHECK: .size sra_b_test
+
+define void @sra_h_test() nounwind {
+entry:
+  %0 = load <8 x i16>* @llvm_mips_sra_h_ARG1
+  %1 = load <8 x i16>* @llvm_mips_sra_h_ARG2
+  %2 = ashr <8 x i16> %0, %1
+  store <8 x i16> %2, <8 x i16>* @llvm_mips_sra_h_RES
+  ret void
+}
+
+; CHECK: sra_h_test:
+; CHECK: ld.h
+; CHECK: ld.h
+; CHECK: sra.h
+; CHECK: st.h
+; CHECK: .size sra_h_test
+
+define void @sra_w_test() nounwind {
+entry:
+  %0 = load <4 x i32>* @llvm_mips_sra_w_ARG1
+  %1 = load <4 x i32>* @llvm_mips_sra_w_ARG2
+  %2 = ashr <4 x i32> %0, %1
+  store <4 x i32> %2, <4 x i32>* @llvm_mips_sra_w_RES
+  ret void
+}
+
+; CHECK: sra_w_test:
+; CHECK: ld.w
+; CHECK: ld.w
+; CHECK: sra.w
+; CHECK: st.w
+; CHECK: .size sra_w_test
+
+define void @sra_d_test() nounwind {
+entry:
+  %0 = load <2 x i64>* @llvm_mips_sra_d_ARG1
+  %1 = load <2 x i64>* @llvm_mips_sra_d_ARG2
+  %2 = ashr <2 x i64> %0, %1
+  store <2 x i64> %2, <2 x i64>* @llvm_mips_sra_d_RES
+  ret void
+}
+
+; CHECK: sra_d_test:
+; CHECK: ld.d
+; CHECK: ld.d
+; CHECK: sra.d
+; CHECK: st.d
+; CHECK: .size sra_d_test
+
 @llvm_mips_srar_b_ARG1 = global <16 x i8> <i8 0, i8 1, i8 2, i8 3, i8 4, i8 5, i8 6, i8 7, i8 8, i8 9, i8 10, i8 11, i8 12, i8 13, i8 14, i8 15>, align 16
 @llvm_mips_srar_b_ARG2 = global <16 x i8> <i8 16, i8 17, i8 18, i8 19, i8 20, i8 21, i8 22, i8 23, i8 24, i8 25, i8 26, i8 27, i8 28, i8 29, i8 30, i8 31>, align 16
 @llvm_mips_srar_b_RES  = global <16 x i8> <i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0>, align 16
@@ -531,6 +660,71 @@ declare <2 x i64> @llvm.mips.srlr.d(<2 x i64>, <2 x i64>) nounwind
 ; CHECK: st.d
 ; CHECK: .size llvm_mips_srlr_d_test
 ;
+
+define void @srl_b_test() nounwind {
+entry:
+  %0 = load <16 x i8>* @llvm_mips_srl_b_ARG1
+  %1 = load <16 x i8>* @llvm_mips_srl_b_ARG2
+  %2 = lshr <16 x i8> %0, %1
+  store <16 x i8> %2, <16 x i8>* @llvm_mips_srl_b_RES
+  ret void
+}
+
+; CHECK: srl_b_test:
+; CHECK: ld.b
+; CHECK: ld.b
+; CHECK: srl.b
+; CHECK: st.b
+; CHECK: .size srl_b_test
+
+define void @srl_h_test() nounwind {
+entry:
+  %0 = load <8 x i16>* @llvm_mips_srl_h_ARG1
+  %1 = load <8 x i16>* @llvm_mips_srl_h_ARG2
+  %2 = lshr <8 x i16> %0, %1
+  store <8 x i16> %2, <8 x i16>* @llvm_mips_srl_h_RES
+  ret void
+}
+
+; CHECK: srl_h_test:
+; CHECK: ld.h
+; CHECK: ld.h
+; CHECK: srl.h
+; CHECK: st.h
+; CHECK: .size srl_h_test
+
+define void @srl_w_test() nounwind {
+entry:
+  %0 = load <4 x i32>* @llvm_mips_srl_w_ARG1
+  %1 = load <4 x i32>* @llvm_mips_srl_w_ARG2
+  %2 = lshr <4 x i32> %0, %1
+  store <4 x i32> %2, <4 x i32>* @llvm_mips_srl_w_RES
+  ret void
+}
+
+; CHECK: srl_w_test:
+; CHECK: ld.w
+; CHECK: ld.w
+; CHECK: srl.w
+; CHECK: st.w
+; CHECK: .size srl_w_test
+
+define void @srl_d_test() nounwind {
+entry:
+  %0 = load <2 x i64>* @llvm_mips_srl_d_ARG1
+  %1 = load <2 x i64>* @llvm_mips_srl_d_ARG2
+  %2 = lshr <2 x i64> %0, %1
+  store <2 x i64> %2, <2 x i64>* @llvm_mips_srl_d_RES
+  ret void
+}
+
+; CHECK: srl_d_test:
+; CHECK: ld.d
+; CHECK: ld.d
+; CHECK: srl.d
+; CHECK: st.d
+; CHECK: .size srl_d_test
+
 @llvm_mips_subs_s_b_ARG1 = global <16 x i8> <i8 0, i8 1, i8 2, i8 3, i8 4, i8 5, i8 6, i8 7, i8 8, i8 9, i8 10, i8 11, i8 12, i8 13, i8 14, i8 15>, align 16
 @llvm_mips_subs_s_b_ARG2 = global <16 x i8> <i8 16, i8 17, i8 18, i8 19, i8 20, i8 21, i8 22, i8 23, i8 24, i8 25, i8 26, i8 27, i8 28, i8 29, i8 30, i8 31>, align 16
 @llvm_mips_subs_s_b_RES  = global <16 x i8> <i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0>, align 16
@@ -970,4 +1164,69 @@ declare <2 x i64> @llvm.mips.subv.d(<2 x i64>, <2 x i64>) nounwind
 ; CHECK: subv.d
 ; CHECK: st.d
 ; CHECK: .size llvm_mips_subv_d_test
+;
+
+define void @subv_b_test() nounwind {
+entry:
+  %0 = load <16 x i8>* @llvm_mips_subv_b_ARG1
+  %1 = load <16 x i8>* @llvm_mips_subv_b_ARG2
+  %2 = sub <16 x i8> %0, %1
+  store <16 x i8> %2, <16 x i8>* @llvm_mips_subv_b_RES
+  ret void
+}
+
+; CHECK: subv_b_test:
+; CHECK: ld.b
+; CHECK: ld.b
+; CHECK: subv.b
+; CHECK: st.b
+; CHECK: .size subv_b_test
+
+define void @subv_h_test() nounwind {
+entry:
+  %0 = load <8 x i16>* @llvm_mips_subv_h_ARG1
+  %1 = load <8 x i16>* @llvm_mips_subv_h_ARG2
+  %2 = sub <8 x i16> %0, %1
+  store <8 x i16> %2, <8 x i16>* @llvm_mips_subv_h_RES
+  ret void
+}
+
+; CHECK: subv_h_test:
+; CHECK: ld.h
+; CHECK: ld.h
+; CHECK: subv.h
+; CHECK: st.h
+; CHECK: .size subv_h_test
+
+define void @subv_w_test() nounwind {
+entry:
+  %0 = load <4 x i32>* @llvm_mips_subv_w_ARG1
+  %1 = load <4 x i32>* @llvm_mips_subv_w_ARG2
+  %2 = sub <4 x i32> %0, %1
+  store <4 x i32> %2, <4 x i32>* @llvm_mips_subv_w_RES
+  ret void
+}
+
+; CHECK: subv_w_test:
+; CHECK: ld.w
+; CHECK: ld.w
+; CHECK: subv.w
+; CHECK: st.w
+; CHECK: .size subv_w_test
+
+define void @subv_d_test() nounwind {
+entry:
+  %0 = load <2 x i64>* @llvm_mips_subv_d_ARG1
+  %1 = load <2 x i64>* @llvm_mips_subv_d_ARG2
+  %2 = sub <2 x i64> %0, %1
+  store <2 x i64> %2, <2 x i64>* @llvm_mips_subv_d_RES
+  ret void
+}
+
+; CHECK: subv_d_test:
+; CHECK: ld.d
+; CHECK: ld.d
+; CHECK: subv.d
+; CHECK: st.d
+; CHECK: .size subv_d_test
 ;

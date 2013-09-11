@@ -794,4 +794,68 @@ declare <2 x i64> @llvm.mips.mulv.d(<2 x i64>, <2 x i64>) nounwind
 ; CHECK: mulv.d
 ; CHECK: st.d
 ; CHECK: .size llvm_mips_mulv_d_test
+
+define void @mulv_b_test() nounwind {
+entry:
+  %0 = load <16 x i8>* @llvm_mips_mulv_b_ARG1
+  %1 = load <16 x i8>* @llvm_mips_mulv_b_ARG2
+  %2 = mul <16 x i8> %0, %1
+  store <16 x i8> %2, <16 x i8>* @llvm_mips_mulv_b_RES
+  ret void
+}
+
+; CHECK: mulv_b_test:
+; CHECK: ld.b
+; CHECK: ld.b
+; CHECK: mulv.b
+; CHECK: st.b
+; CHECK: .size mulv_b_test
+
+define void @mulv_h_test() nounwind {
+entry:
+  %0 = load <8 x i16>* @llvm_mips_mulv_h_ARG1
+  %1 = load <8 x i16>* @llvm_mips_mulv_h_ARG2
+  %2 = mul <8 x i16> %0, %1
+  store <8 x i16> %2, <8 x i16>* @llvm_mips_mulv_h_RES
+  ret void
+}
+
+; CHECK: mulv_h_test:
+; CHECK: ld.h
+; CHECK: ld.h
+; CHECK: mulv.h
+; CHECK: st.h
+; CHECK: .size mulv_h_test
+
+define void @mulv_w_test() nounwind {
+entry:
+  %0 = load <4 x i32>* @llvm_mips_mulv_w_ARG1
+  %1 = load <4 x i32>* @llvm_mips_mulv_w_ARG2
+  %2 = mul <4 x i32> %0, %1
+  store <4 x i32> %2, <4 x i32>* @llvm_mips_mulv_w_RES
+  ret void
+}
+
+; CHECK: mulv_w_test:
+; CHECK: ld.w
+; CHECK: ld.w
+; CHECK: mulv.w
+; CHECK: st.w
+; CHECK: .size mulv_w_test
+
+define void @mulv_d_test() nounwind {
+entry:
+  %0 = load <2 x i64>* @llvm_mips_mulv_d_ARG1
+  %1 = load <2 x i64>* @llvm_mips_mulv_d_ARG2
+  %2 = mul <2 x i64> %0, %1
+  store <2 x i64> %2, <2 x i64>* @llvm_mips_mulv_d_RES
+  ret void
+}
+
+; CHECK: mulv_d_test:
+; CHECK: ld.d
+; CHECK: ld.d
+; CHECK: mulv.d
+; CHECK: st.d
+; CHECK: .size mulv_d_test
 ;
