@@ -728,7 +728,7 @@ namespace lldb_private {
                       uint64_t &high);
         
         virtual int32_t
-        GetResumeCountForShell (const char *shell)
+        GetResumeCountForLaunchInfo (ProcessLaunchInfo &launch_info)
         {
             return 1;
         }

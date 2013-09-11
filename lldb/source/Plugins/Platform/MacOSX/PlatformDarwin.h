@@ -118,7 +118,7 @@ public:
     x86GetSupportedArchitectureAtIndex (uint32_t idx, lldb_private::ArchSpec &arch);
     
     virtual int32_t
-    GetResumeCountForShell (const char *shell);
+    GetResumeCountForLaunchInfo (lldb_private::ProcessLaunchInfo &launch_info);
 
 protected:
     virtual lldb_private::Error

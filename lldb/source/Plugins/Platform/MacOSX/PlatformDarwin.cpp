@@ -1226,8 +1226,12 @@ PlatformDarwin::GetEnvironment (StringList &env)
 }
 
 int32_t
-PlatformDarwin::GetResumeCountForShell (const char *shell)
+PlatformDarwin::GetResumeCountForLaunchInfo (ProcessLaunchInfo &launch_info)
 {
+    const char *shell = launch_info.GetShell();
+    if (shell == NULL)
+        return 1;
+        
     const char *shell_name = strrchr (shell, '/');
     if (shell_name == NULL)
         shell_name = shell;
@@ -1237,7 +1241,18 @@ PlatformDarwin::GetResumeCountForShell (const char *shell)
     if (strcmp (shell_name, "sh") == 0)
     {
         // /bin/sh re-exec's itself as /bin/bash requiring another resume.
-        return 2;
+        // But it only does this if the COMMAND_MODE environment variable
+        // is set to "legacy".
+        char * const *envp = (char * const*)launch_info.GetEnvironmentEntries().GetConstArgumentVector();
+        if (envp != NULL)
+        {
+            for (int i = 0; envp[i] != NULL; i++)
+            {
+                if (strcmp (envp[i], "COMMAND_MODE=legacy" ) == 0)
+                    return 2;
+            }
+        }
+        return 1;
     }
     else if (strcmp (shell_name, "csh") == 0
             || strcmp (shell_name, "tcsh") == 0
