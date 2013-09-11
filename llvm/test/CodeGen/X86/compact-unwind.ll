@@ -1,8 +1,8 @@
-; RUN: llc < %s -disable-fp-elim -mtriple x86_64-apple-darwin11 | FileCheck -check-prefix=ASM %s
-; RUN: llc < %s -disable-fp-elim -mtriple x86_64-apple-darwin11 -filetype=obj -o - \
+; RUN: llc < %s -disable-fp-elim -mtriple x86_64-apple-darwin11 -mcpu corei7 | FileCheck -check-prefix=ASM %s
+; RUN: llc < %s -disable-fp-elim -mtriple x86_64-apple-darwin11 -mcpu corei7 -filetype=obj -o - \
 ; RUN:  | llvm-objdump -triple x86_64-apple-darwin11 -s - \
 ; RUN:  | FileCheck -check-prefix=CU %s
-; RUN: llc < %s -disable-fp-elim -mtriple x86_64-apple-darwin11 \
+; RUN: llc < %s -disable-fp-elim -mtriple x86_64-apple-darwin11 -mcpu corei7 \
 ; RUN:  | llvm-mc -triple x86_64-apple-darwin11 -filetype=obj -o - \
 ; RUN:  | llvm-objdump -triple x86_64-apple-darwin11 -s - \
 ; RUN:  | FileCheck -check-prefix=FROM-ASM %s

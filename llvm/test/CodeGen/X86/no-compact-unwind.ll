@@ -1,7 +1,7 @@
-; RUN: llc < %s -mtriple x86_64-apple-macosx10.8.0 -filetype=obj -o - \
+; RUN: llc < %s -mtriple x86_64-apple-macosx10.8.0 -mcpu corei7 -filetype=obj -o - \
 ; RUN:  | llvm-objdump -triple x86_64-apple-macosx10.8.0 -s - \
 ; RUN:  | FileCheck -check-prefix=CU %s
-; RUN: llc < %s -mtriple x86_64-apple-darwin11 \
+; RUN: llc < %s -mtriple x86_64-apple-darwin11 -mcpu corei7 \
 ; RUN:  | llvm-mc -triple x86_64-apple-darwin11 -filetype=obj -o - \
 ; RUN:  | llvm-objdump -triple x86_64-apple-darwin11 -s - \
 ; RUN:  | FileCheck -check-prefix=FROM-ASM %s
