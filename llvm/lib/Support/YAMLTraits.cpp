@@ -15,6 +15,7 @@
 #include "llvm/Support/YAMLParser.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cstring>
+#include <cctype>
 using namespace llvm;
 using namespace yaml;
 
@@ -508,9 +509,20 @@ void Output::endBitSetScalar() {
 }
 
 void Output::scalarString(StringRef &S) {
+  const char ScalarSafeChars[] = "abcdefghijklmnopqrstuvwxyz"
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-/^., \t";
+
   this->newLineCheck();
-  if (S.find('\n') == StringRef::npos) {
-    // No embedded new-line chars, just print string.
+  if (S.empty()) {
+    // Print '' for the empty string because leaving the field empty is not
+    // allowed.
+    this->outputUpToEndOfLine("''");
+    return;
+  }
+  if (S.find_first_not_of(ScalarSafeChars) == StringRef::npos &&
+      !isspace(S.front()) && !isspace(S.back())) {
+    // If the string consists only of safe characters, print it out without
+    // quotes.
     this->outputUpToEndOfLine(S);
     return;
   }
