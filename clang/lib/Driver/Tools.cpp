@@ -6613,8 +6613,7 @@ void visualstudio::Link::ConstructJob(Compilation &C, const JobAction &JA,
     SmallString<128> LibSanitizer(getToolChain().getDriver().ResourceDir);
     llvm::sys::path::append(LibSanitizer, "lib", "windows");
     if (DLL) {
-      // FIXME: Not sure what the final name of the thunk lib is.
-      llvm::sys::path::append(LibSanitizer, "clang_rt.asan-i386-dll_thunk.lib");
+      llvm::sys::path::append(LibSanitizer, "clang_rt.asan_dll_thunk-i386.lib");
     } else {
       llvm::sys::path::append(LibSanitizer, "clang_rt.asan-i386.lib");
     }

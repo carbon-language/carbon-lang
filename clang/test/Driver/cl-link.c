@@ -29,5 +29,5 @@
 // ASAN-DLL: "-dll"
 // ASAN-DLL: "-debug"
 // ASAN-DLL: "-incremental:no"
-// ASAN-DLL: "{{.*}}clang_rt.asan-i386-dll_thunk.lib"
+// ASAN-DLL: "{{.*}}clang_rt.asan_dll_thunk-i386.lib"
 // ASAN-DLL: "{{.*}}cl-link{{.*}}.obj"
