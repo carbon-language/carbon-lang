@@ -36,34 +36,34 @@ TEST(ReplacementsYamlTest, serializesReplacements) {
 
   // NOTE: If this test starts to fail for no obvious reason, check whitespace.
   ASSERT_STREQ("---\n"
-               "MainSourceFile:  \"/path/to/source.cpp\"\n"
-               "Context:         \"some context\"\n"
+               "MainSourceFile:  /path/to/source.cpp\n"
+               "Context:         some context\n"
                "Replacements:    \n" // Extra whitespace here!
-               "  - FilePath:        \"/path/to/file1.h\"\n"
+               "  - FilePath:        /path/to/file1.h\n"
                "    Offset:          232\n"
                "    Length:          56\n"
-               "    ReplacementText: \"replacement #1\"\n"
-               "  - FilePath:        \"/path/to/file2.h\"\n"
+               "    ReplacementText: 'replacement #1'\n"
+               "  - FilePath:        /path/to/file2.h\n"
                "    Offset:          301\n"
                "    Length:          2\n"
-               "    ReplacementText: \"replacement #2\"\n"
+               "    ReplacementText: 'replacement #2'\n"
                "...\n",
                YamlContentStream.str().c_str());
 }
 
 TEST(ReplacementsYamlTest, deserializesReplacements) {
   std::string YamlContent = "---\n"
-                            "MainSourceFile:      \"/path/to/source.cpp\"\n"
-                            "Context:             \"some context\"\n"
+                            "MainSourceFile:      /path/to/source.cpp\n"
+                            "Context:             some context\n"
                             "Replacements:\n"
-                            "  - FilePath:        \"/path/to/file1.h\"\n"
+                            "  - FilePath:        /path/to/file1.h\n"
                             "    Offset:          232\n"
                             "    Length:          56\n"
-                            "    ReplacementText: \"replacement #1\"\n"
-                            "  - FilePath:        \"/path/to/file2.h\"\n"
+                            "    ReplacementText: 'replacement #1'\n"
+                            "  - FilePath:        /path/to/file2.h\n"
                             "    Offset:          301\n"
                             "    Length:          2\n"
-                            "    ReplacementText: \"replacement #2\"\n"
+                            "    ReplacementText: 'replacement #2'\n"
                             "...\n";
   TranslationUnitReplacements DocActual;
   yaml::Input YAML(YamlContent);
@@ -85,12 +85,12 @@ TEST(ReplacementsYamlTest, deserializesReplacements) {
 TEST(ReplacementsYamlTest, deserializesWithoutContext) {
   // Make sure a doc can be read without the context field.
   std::string YamlContent = "---\n"
-                            "MainSourceFile:      \"/path/to/source.cpp\"\n"
+                            "MainSourceFile:      /path/to/source.cpp\n"
                             "Replacements:\n"
-                            "  - FilePath:        \"target_file.h\"\n"
+                            "  - FilePath:        target_file.h\n"
                             "    Offset:          1\n"
                             "    Length:          10\n"
-                            "    ReplacementText: \"replacement\"\n"
+                            "    ReplacementText: replacement\n"
                             "...\n";
   TranslationUnitReplacements DocActual;
   yaml::Input YAML(YamlContent);

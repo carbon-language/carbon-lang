@@ -29,10 +29,7 @@ namespace yaml {
 /// \brief ScalarTraits to read/write std::string objects.
 template <> struct ScalarTraits<std::string> {
   static void output(const std::string &Val, void *, llvm::raw_ostream &Out) {
-    // We need to put quotes around the string to make sure special characters
-    // in the string is not treated as YAML tokens.
-    std::string NormalizedVal = std::string("\"") + Val + std::string("\"");
-    Out << NormalizedVal;
+    Out << Val;
   }
 
   static StringRef input(StringRef Scalar, void *, std::string &Val) {
