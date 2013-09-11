@@ -556,7 +556,10 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
 
   setInsertFencesForAtomic(true);
 
-  setSchedulingPreference(Sched::Hybrid);
+  if (Subtarget->enableMachineScheduler())
+    setSchedulingPreference(Sched::Source);
+  else
+    setSchedulingPreference(Sched::Hybrid);
 
   computeRegisterProperties();
 
@@ -7853,7 +7856,7 @@ bool PPCTargetLowering::isFMAFasterThanFMulAndFAdd(EVT VT) const {
 }
 
 Sched::Preference PPCTargetLowering::getSchedulingPreference(SDNode *N) const {
-  if (DisableILPPref)
+  if (DisableILPPref || PPCSubTarget.enableMachineScheduler())
     return TargetLowering::getSchedulingPreference(N);
 
   return Sched::ILP;

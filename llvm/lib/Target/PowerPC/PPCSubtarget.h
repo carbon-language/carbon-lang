@@ -207,6 +207,14 @@ public:
   bool enablePostRAScheduler(CodeGenOpt::Level OptLevel,
                              TargetSubtargetInfo::AntiDepBreakMode& Mode,
                              RegClassVector& CriticalPathRCs) const;
+
+  // Scheduling customization.
+  bool enableMachineScheduler() const;
+  void overrideSchedPolicy(MachineSchedPolicy &Policy,
+                           MachineInstr *begin,
+                           MachineInstr *end,
+                           unsigned NumRegionInstrs) const;
+  bool useAA() const;
 };
 } // End llvm namespace
 
