@@ -106,6 +106,15 @@ class Value(LLVMObject):
 
     def dump(self):
         lib.LLVMDumpValue(self)
+    
+    def get_operand(self, i):
+        return Value(lib.LLVMGetOperand(self, i))
+    
+    def set_operand(self, i, v):
+        return lib.LLVMSetOperand(self, i, v)
+    
+    def __len__(self):
+        return lib.LLVMGetNumOperands(self)
 
 class Module(LLVMObject):
     """Represents the top-level structure of an llvm program in an opaque object."""
@@ -264,12 +273,26 @@ class BasicBlock(LLVMObject):
         i = lib.LLVMGetLastInstruction(self)
         return i and Instruction(i)
 
+    def __as_value(self):
+        return Value(lib.LLVMBasicBlockAsValue(self))
+    
     @property
     def name(self):
-        return lib.LLVMGetValueName(Value(lib.LLVMBasicBlockAsValue(self)))
+        return lib.LLVMGetValueName(self.__as_value())
 
     def dump(self):
-        lib.LLVMDumpValue(Value(lib.LLVMBasicBlockAsValue(self)))
+        lib.LLVMDumpValue(self.__as_value())
+
+    def get_operand(self, i):
+        return Value(lib.LLVMGetOperand(self.__as_value(),
+                                        i))
+    
+    def set_operand(self, i, v):
+        return lib.LLVMSetOperand(self.__as_value(),
+                                  i, v)
+    
+    def __len__(self):
+        return lib.LLVMGetNumOperands(self.__as_value())
 
     class __inst_iterator(object):
         def __init__(self, bb, reverse=False):            
@@ -447,6 +470,15 @@ def register_library(library):
 
     library.LLVMDumpValue.argtypes = [Value]
     library.LLVMDumpValue.restype = None
+
+    library.LLVMGetOperand.argtypes = [Value, c_uint]
+    library.LLVMGetOperand.restype = c_object_p
+
+    library.LLVMSetOperand.argtypes = [Value, Value, c_uint]
+    library.LLVMSetOperand.restype = None
+
+    library.LLVMGetNumOperands.argtypes = [Value]
+    library.LLVMGetNumOperands.restype = c_uint
 
     # Basic Block Declarations.
     library.LLVMGetFirstBasicBlock.argtypes = [Function]

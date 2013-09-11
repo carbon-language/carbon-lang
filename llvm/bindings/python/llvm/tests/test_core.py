@@ -115,9 +115,13 @@ class TestCore(TestBase):
         for inst in bb:
             self.assertEqual(inst.name, inst_list[i][0])
             self.assertEqual(inst.opcode, inst_list[i][1])
+            for op in range(len(inst)):
+                o = inst.get_operand(op)
+                print o.name
+                o.dump()
             inst.dump()
             i += 1
-        
+
         # Backwards
         for inst in reversed(bb):
             i -= 1
