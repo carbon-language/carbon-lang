@@ -4,6 +4,7 @@ from ..core import MemoryBuffer
 from ..core import PassRegistry
 from ..core import Context
 from ..core import Module
+from ..bit_reader import parse_bitcode
 
 class TestCore(TestBase):
     def test_opcode(self):
@@ -61,3 +62,19 @@ class TestCore(TestBase):
         m.target = target
         m.print_module_to_file("test2.ll")
     
+    def test_module_function_iteration(self):
+        m = parse_bitcode(MemoryBuffer(filename=self.get_test_bc()))
+        i = 0
+        functions = ["f", "f2", "f3", "f4", "f5", "f6", "g1", "g2", "h1", "h2",
+                     "h3"]
+        # Forward
+        for f in m:
+            self.assertEqual(f.name, functions[i])
+            f.dump()
+            i += 1
+        # Backwards
+        for f in reversed(m):
+            i -= 1
+            self.assertEqual(f.name, functions[i])
+            f.dump()
+

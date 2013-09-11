@@ -23,6 +23,8 @@ __all__ = [
     "OpCode",
     "MemoryBuffer",
     "Module",
+    "Value",
+    "Function",
     "Context",
     "PassRegistry"
 ]
@@ -91,6 +93,18 @@ class MemoryBuffer(LLVMObject):
     def __len__(self):
         return lib.LLVMGetBufferSize(self)
 
+class Value(LLVMObject):
+    
+    def __init__(self, value):
+        LLVMObject.__init__(self, value)
+
+    @property
+    def name(self):
+        return lib.LLVMGetValueName(self)
+
+    def dump(self):
+        lib.LLVMDumpValue(self)
+
 class Module(LLVMObject):
     """Represents the top-level structure of an llvm program in an opaque object."""
 
@@ -124,6 +138,42 @@ class Module(LLVMObject):
     def dump(self):
         lib.LLVMDumpModule(self)
 
+    class __function_iterator(object):
+        def __init__(self, module, reverse=False):
+            self.module = module
+            self.reverse = reverse
+            if self.reverse:
+                self.function = self.module.last
+            else:
+                self.function = self.module.first
+        
+        def __iter__(self):
+            return self
+        
+        def next(self):
+            if not isinstance(self.function, Function):
+                raise StopIteration("")
+            result = self.function
+            if self.reverse:
+                self.function = self.function.prev
+            else:
+                self.function = self.function.next
+            return result
+    
+    def __iter__(self):
+        return Module.__function_iterator(self)
+
+    def __reversed__(self):
+        return Module.__function_iterator(self, reverse=True)
+
+    @property
+    def first(self):
+        return Function(lib.LLVMGetFirstFunction(self))
+
+    @property
+    def last(self):
+        return Function(lib.LLVMGetLastFunction(self))
+
     def print_module_to_file(self, filename):
         out = c_char_p(None)
         # Result is inverted so 0 means everything was ok.
@@ -131,6 +181,21 @@ class Module(LLVMObject):
         if result:
             raise RuntimeError("LLVM Error: %s" % out.value)
 
+class Function(Value):
+
+    def __init__(self, value):
+        Value.__init__(self, value)
+    
+    @property
+    def next(self):
+        f = lib.LLVMGetNextFunction(self)
+        return f and Function(f)
+    
+    @property
+    def prev(self):
+        f = lib.LLVMGetPreviousFunction(self)
+        return f and Function(f)
+    
 class Context(LLVMObject):
 
     def __init__(self, context=None):
@@ -240,6 +305,25 @@ def register_library(library):
     library.LLVMPrintModuleToFile.argtypes = [Module, c_char_p,
                                               POINTER(c_char_p)]
     library.LLVMPrintModuleToFile.restype = bool
+
+    library.LLVMGetFirstFunction.argtypes = [Module]
+    library.LLVMGetFirstFunction.restype = c_object_p
+
+    library.LLVMGetLastFunction.argtypes = [Module]
+    library.LLVMGetLastFunction.restype = c_object_p
+
+    library.LLVMGetNextFunction.argtypes = [Function]
+    library.LLVMGetNextFunction.restype = c_object_p
+
+    library.LLVMGetPreviousFunction.argtypes = [Function]
+    library.LLVMGetPreviousFunction.restype = c_object_p
+
+    # Value declarations.
+    library.LLVMGetValueName.argtypes = [Value]
+    library.LLVMGetValueName.restype = c_char_p
+
+    library.LLVMDumpValue.argtypes = [Value]
+    library.LLVMDumpValue.restype = None
 
 def register_enumerations():
     for name, value in enumerations.OpCodes:
