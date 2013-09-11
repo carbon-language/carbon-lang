@@ -2323,8 +2323,6 @@ def warn_attribute_protected_visibility :
   Warning<"target does not support 'protected' visibility; using 'default'">,
   InGroup<DiagGroup<"unsupported-visibility">>;
 def err_mismatched_visibility: Error<"visibility does not match previous declaration">;
-def warn_attribute_unknown_endian : Warning<"unknown endian '%0'">,
-  InGroup<IgnoredAttributes>;
 def note_previous_attribute : Note<"previous attribute is here">;
 def err_unknown_machine_mode : Error<"unknown machine mode %0">;
 def err_unsupported_machine_mode : Error<"unsupported machine mode %0">;
@@ -2354,8 +2352,6 @@ def warn_cleanup_ext : Warning<
   "GCC does not allow the 'cleanup' attribute argument to be anything other "
   "than a simple identifier">, 
   InGroup<GccCompat>;
-def err_attribute_cleanup_arg_not_found : Error<
-  "'cleanup' argument %0 not found">;
 def err_attribute_cleanup_arg_not_function : Error<
   "'cleanup' argument %select{|%1 }0is not a function">;
 def err_attribute_cleanup_func_must_take_one_arg : Error<
