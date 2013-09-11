@@ -18,6 +18,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/Format.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/TableGen/Error.h"
 #include "llvm/TableGen/Record.h"
@@ -657,7 +658,10 @@ public:
 
   void addCond(const std::string &C) { Conds.push_back(C); }
 
-  void addOperand(StringRef Op, unsigned Idx) { OpMap[Op] = Idx; }
+  void addOperand(StringRef Op, unsigned Idx) {
+    assert(Idx < 0xFF && "Index too large!");
+    OpMap[Op] = Idx;
+  }
   unsigned getOpIndex(StringRef Op) { return OpMap[Op]; }
   bool isOpMapped(StringRef Op) { return OpMap.find(Op) != OpMap.end(); }
 
@@ -681,12 +685,35 @@ public:
 
     O << ") {\n";
     O.indent(6) << "// " << Result << "\n";
-    O.indent(6) << "AsmString = \"" << AsmString << "\";\n";
 
-    for (std::map<StringRef, unsigned>::iterator
-           I = OpMap.begin(), E = OpMap.end(); I != E; ++I)
-      O.indent(6) << "OpMap.push_back(std::make_pair(\"" << I->first << "\", "
-                  << I->second << "));\n";
+    // Directly mangle mapped operands into the string. Each operand is
+    // identified by a '$' sign followed by a byte identifying the number of the
+    // operand. We add one to the index to avoid zero bytes.
+    std::pair<StringRef, StringRef> ASM = StringRef(AsmString).split(' ');
+    SmallString<128> OutString = ASM.first;
+    if (!ASM.second.empty()) {
+      raw_svector_ostream OS(OutString);
+      OS << ' ';
+      for (StringRef::iterator I = ASM.second.begin(), E = ASM.second.end();
+           I != E;) {
+        OS << *I;
+        if (*I == '$') {
+          StringRef::iterator Start = ++I;
+          while (I != E &&
+                 ((*I >= 'a' && *I <= 'z') || (*I >= 'A' && *I <= 'Z') ||
+                  (*I >= '0' && *I <= '9') || *I == '_'))
+            ++I;
+          StringRef Name(Start, I - Start);
+          assert(isOpMapped(Name) && "Unmapped operand!");
+          OS << format("\\x%02X", (unsigned char)getOpIndex(Name) + 1);
+        } else {
+          ++I;
+        }
+      }
+    }
+
+    // Emit the string.
+    O.indent(6) << "AsmString = \"" << OutString.str() << "\";\n";
 
     O.indent(6) << "break;\n";
     O.indent(4) << '}';
@@ -720,19 +747,6 @@ public:
 };
 
 } // end anonymous namespace
-
-static void EmitGetMapOperandNumber(raw_ostream &O) {
-  O << "static unsigned getMapOperandNumber("
-    << "const SmallVectorImpl<std::pair<StringRef, unsigned> > &OpMap,\n";
-  O << "                                    StringRef Name) {\n";
-  O << "  for (SmallVectorImpl<std::pair<StringRef, unsigned> >::"
-    << "const_iterator\n";
-  O << "         I = OpMap.begin(), E = OpMap.end(); I != E; ++I)\n";
-  O << "    if (I->first == Name)\n";
-  O << "      return I->second;\n";
-  O << "  llvm_unreachable(\"Operand not in map!\");\n";
-  O << "}\n\n";
-}
 
 static unsigned CountNumOperands(StringRef AsmString) {
   unsigned NumOps = 0;
@@ -955,11 +969,8 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
     return;
   }
 
-  EmitGetMapOperandNumber(O);
-
   O << HeaderO.str();
-  O.indent(2) << "StringRef AsmString;\n";
-  O.indent(2) << "SmallVector<std::pair<StringRef, unsigned>, 4> OpMap;\n";
+  O.indent(2) << "const char *AsmString;\n";
   O.indent(2) << "switch (MI->getOpcode()) {\n";
   O.indent(2) << "default: return false;\n";
   O << CasesO.str();
@@ -967,27 +978,21 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
 
   // Code that prints the alias, replacing the operands with the ones from the
   // MCInst.
-  O << "  std::pair<StringRef, StringRef> ASM = AsmString.split(' ');\n";
-  O << "  OS << '\\t' << ASM.first;\n";
+  O << "  unsigned I = 0;\n";
+  O << "  while (AsmString[I] != ' ' && AsmString[I] != '\\0')\n";
+  O << "    ++I;\n";
+  O << "  OS << '\\t' << StringRef(AsmString, I);\n";
 
-  O << "  if (!ASM.second.empty()) {\n";
+  O << "  if (AsmString[I] != '\\0') {\n";
   O << "    OS << '\\t';\n";
-  O << "    for (StringRef::iterator\n";
-  O << "         I = ASM.second.begin(), E = ASM.second.end(); I != E; ) {\n";
-  O << "      if (*I == '$') {\n";
-  O << "        StringRef::iterator Start = ++I;\n";
-  O << "        while (I != E &&\n";
-  O << "               ((*I >= 'a' && *I <= 'z') ||\n";
-  O << "                (*I >= 'A' && *I <= 'Z') ||\n";
-  O << "                (*I >= '0' && *I <= '9') ||\n";
-  O << "                *I == '_'))\n";
-  O << "          ++I;\n";
-  O << "        StringRef Name(Start, I - Start);\n";
-  O << "        printOperand(MI, getMapOperandNumber(OpMap, Name), OS);\n";
+  O << "    do {\n";
+  O << "      if (AsmString[I] == '$') {\n";
+  O << "        ++I;\n";
+  O << "        printOperand(MI, unsigned(AsmString[I++]) - 1, OS);\n";
   O << "      } else {\n";
-  O << "        OS << *I++;\n";
+  O << "        OS << AsmString[I++];\n";
   O << "      }\n";
-  O << "    }\n";
+  O << "    } while (AsmString[I] != '\\0');\n";
   O << "  }\n\n";
 
   O << "  return true;\n";
