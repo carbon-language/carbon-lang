@@ -1097,13 +1097,16 @@ bool QualType::isTriviallyCopyableType(ASTContext &Context) const {
     }        
   }
 
-  // C++0x [basic.types]p9
+  // C++11 [basic.types]p9
   //   Scalar types, trivially copyable class types, arrays of such types, and
-  //   cv-qualified versions of these types are collectively called trivial
-  //   types.
+  //   non-volatile const-qualified versions of these types are collectively
+  //   called trivially copyable types.
 
   QualType CanonicalType = getCanonicalType();
   if (CanonicalType->isDependentType())
+    return false;
+
+  if (CanonicalType.isVolatileQualified())
     return false;
 
   // Return false for incomplete types after skipping any incomplete array types

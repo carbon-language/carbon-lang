@@ -1038,7 +1038,8 @@ ExprResult Sema::SemaAtomicOpsOverloaded(ExprResult TheCallResult,
     return ExprError();
   }
 
-  if (!IsC11 && !AtomTy.isTriviallyCopyableType(Context)) {
+  if (!IsC11 && !AtomTy.isTriviallyCopyableType(Context) &&
+      !AtomTy->isScalarType()) {
     // For GNU atomics, require a trivially-copyable type. This is not part of
     // the GNU atomics specification, but we enforce it for sanity.
     Diag(DRE->getLocStart(), diag::err_atomic_op_needs_trivial_copy)

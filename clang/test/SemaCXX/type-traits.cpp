@@ -1072,6 +1072,9 @@ void is_trivially_copyable2()
   int t31[F(__is_trivially_copyable(SuperNonTrivialStruct))];
   int t32[F(__is_trivially_copyable(NonTCStruct))];
   int t33[F(__is_trivially_copyable(ExtDefaulted))];
+
+  int t34[T(__is_trivially_copyable(const int))];
+  int t35[F(__is_trivially_copyable(volatile int))];
 }
 
 struct CStruct {
