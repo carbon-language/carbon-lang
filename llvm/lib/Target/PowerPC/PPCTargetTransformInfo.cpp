@@ -77,6 +77,7 @@ public:
   /// \name Scalar TTI Implementations
   /// @{
   virtual PopcntSupportKind getPopcntSupport(unsigned TyWidth) const;
+  virtual void getUnrollingPreferences(Loop *L, UnrollingPreferences &UP) const;
 
   /// @}
 
@@ -127,6 +128,14 @@ PPCTTI::PopcntSupportKind PPCTTI::getPopcntSupport(unsigned TyWidth) const {
   if (ST->hasPOPCNTD() && TyWidth <= 64)
     return PSK_FastHardware;
   return PSK_Software;
+}
+
+void PPCTTI::getUnrollingPreferences(Loop *L, UnrollingPreferences &UP) const {
+  if (ST->getDarwinDirective() == PPC::DIR_A2) {
+    // The A2 is in-order with a deep pipeline, and concatenation unrolling
+    // helps expose latency-hiding opportunities to the instruction scheduler.
+    UP.Partial = UP.Runtime = true;
+  }
 }
 
 unsigned PPCTTI::getNumberOfRegisters(bool Vector) const {
