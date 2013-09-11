@@ -1,6 +1,7 @@
 from .base import TestBase
 from ..core import OpCode
 from ..core import MemoryBuffer
+from ..core import PassRegistry
 
 class TestCore(TestBase):
     def test_opcode(self):
@@ -25,3 +26,6 @@ class TestCore(TestBase):
         source = self.get_test_file()
         m = MemoryBuffer(filename=source)
         self.assertEqual(len(m), 50)
+
+    def test_create_passregistry(self):
+        PassRegistry()

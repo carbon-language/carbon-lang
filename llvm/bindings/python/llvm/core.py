@@ -20,6 +20,7 @@ from ctypes import c_char_p
 __all__ = [
     "lib",
     "MemoryBuffer",
+    "PassRegistry"
 ]
 
 lib = get_library()
@@ -86,7 +87,58 @@ class MemoryBuffer(LLVMObject):
     def __len__(self):
         return lib.LLVMGetBufferSize(self)
 
+class PassRegistry(LLVMObject):
+    """Represents an opaque pass registry object."""
+
+    def __init__(self):
+        LLVMObject.__init__(self,
+                            lib.LLVMGetGlobalPassRegistry())
+
 def register_library(library):
+    # Initialization/Shutdown declarations.
+    library.LLVMInitializeCore.argtypes = [PassRegistry]
+    library.LLVMInitializeCore.restype = None
+
+    library.LLVMInitializeTransformUtils.argtypes = [PassRegistry]
+    library.LLVMInitializeTransformUtils.restype = None
+
+    library.LLVMInitializeScalarOpts.argtypes = [PassRegistry]
+    library.LLVMInitializeScalarOpts.restype = None
+
+    library.LLVMInitializeObjCARCOpts.argtypes = [PassRegistry]
+    library.LLVMInitializeObjCARCOpts.restype = None
+
+    library.LLVMInitializeVectorization.argtypes = [PassRegistry]
+    library.LLVMInitializeVectorization.restype = None
+
+    library.LLVMInitializeInstCombine.argtypes = [PassRegistry]
+    library.LLVMInitializeInstCombine.restype = None
+
+    library.LLVMInitializeIPO.argtypes = [PassRegistry]
+    library.LLVMInitializeIPO.restype = None
+
+    library.LLVMInitializeInstrumentation.argtypes = [PassRegistry]
+    library.LLVMInitializeInstrumentation.restype = None
+
+    library.LLVMInitializeAnalysis.argtypes = [PassRegistry]
+    library.LLVMInitializeAnalysis.restype = None
+
+    library.LLVMInitializeIPA.argtypes = [PassRegistry]
+    library.LLVMInitializeIPA.restype = None
+
+    library.LLVMInitializeCodeGen.argtypes = [PassRegistry]
+    library.LLVMInitializeCodeGen.restype = None
+
+    library.LLVMInitializeTarget.argtypes = [PassRegistry]
+    library.LLVMInitializeTarget.restype = None
+
+    library.LLVMShutdown.argtypes = []
+    library.LLVMShutdown.restype = None
+
+    # Pass Registry declarations.
+    library.LLVMGetGlobalPassRegistry.argtypes = []
+    library.LLVMGetGlobalPassRegistry.restype = c_object_p
+
     # Memory buffer declarations
     library.LLVMCreateMemoryBufferWithContentsOfFile.argtypes = [c_char_p,
             POINTER(c_object_p), POINTER(c_char_p)]
@@ -100,5 +152,21 @@ def register_enumerations():
     for name, value in enumerations.OpCodes:
         OpCode.register(name, value)
 
+def initialize_llvm():
+    p = PassRegistry()
+    lib.LLVMInitializeCore(p)
+    lib.LLVMInitializeTransformUtils(p)
+    lib.LLVMInitializeScalarOpts(p)
+    lib.LLVMInitializeObjCARCOpts(p)
+    lib.LLVMInitializeVectorization(p)
+    lib.LLVMInitializeInstCombine(p)
+    lib.LLVMInitializeIPO(p)
+    lib.LLVMInitializeInstrumentation(p)
+    lib.LLVMInitializeAnalysis(p)
+    lib.LLVMInitializeIPA(p)
+    lib.LLVMInitializeCodeGen(p)
+    lib.LLVMInitializeTarget(p)
+
 register_library(lib)
 register_enumerations()
+initialize_llvm()
