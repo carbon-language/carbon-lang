@@ -1571,7 +1571,7 @@ template<typename T> struct DerivedB : BaseA<T> { };
 template<typename T> struct CrazyDerived : T { };
 
 
-class class_forward; // expected-note {{forward declaration of 'class_forward'}}
+class class_forward; // expected-note 2 {{forward declaration of 'class_forward'}}
 
 template <typename Base, typename Derived>
 void isBaseOfT() {
@@ -1770,6 +1770,8 @@ void is_trivial()
   { int arr[F(__is_trivial(cvoid))]; }
 }
 
+template<typename T> struct TriviallyConstructibleTemplate {};
+
 void trivial_checks()
 {
   { int arr[T(__is_trivially_copyable(int))]; }
@@ -1847,6 +1849,11 @@ void trivial_checks()
                                             const ExtDefaulted &)))]; }
   { int arr[F((__is_trivially_constructible(ExtDefaulted,
                                             ExtDefaulted &&)))]; }
+
+  { int arr[T((__is_trivially_constructible(TriviallyConstructibleTemplate<int>)))]; }
+  { int arr[F((__is_trivially_constructible(class_forward)))]; } // expected-error {{incomplete type 'class_forward' used in type trait expression}}
+  { int arr[F((__is_trivially_constructible(class_forward[])))]; }
+  { int arr[F((__is_trivially_constructible(void)))]; }
 
   { int arr[T((__is_trivially_assignable(int&, int)))]; }
   { int arr[T((__is_trivially_assignable(int&, int&)))]; }
