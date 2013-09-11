@@ -54,7 +54,7 @@ libtsan:
 
 tsan_test: $(UNIT_TEST_OBJ) $(RTL_TEST_OBJ) \
            $(SANITIZER_COMMON_TESTS_OBJ) $(LIBTSAN) $(GTEST_LIB)
-	$(CXX) $^ -o $@ $(LDFLAGS)
+	$(CXX) -Wl,--whole-archive $^ -Wl,--no-whole-archive -o $@ $(LDFLAGS)
 
 test: libtsan tsan_test
 
