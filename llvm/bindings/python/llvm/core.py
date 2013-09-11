@@ -26,6 +26,7 @@ __all__ = [
     "Value",
     "Function",
     "BasicBlock",
+    "Instruction",
     "Context",
     "PassRegistry"
 ]
@@ -254,11 +255,69 @@ class BasicBlock(LLVMObject):
         return b and BasicBlock(b)
     
     @property
+    def first(self):
+        i = lib.LLVMGetFirstInstruction(self)
+        return i and Instruction(i)
+
+    @property
+    def last(self):
+        i = lib.LLVMGetLastInstruction(self)
+        return i and Instruction(i)
+
+    @property
     def name(self):
         return lib.LLVMGetValueName(Value(lib.LLVMBasicBlockAsValue(self)))
 
     def dump(self):
         lib.LLVMDumpValue(Value(lib.LLVMBasicBlockAsValue(self)))
+
+    class __inst_iterator(object):
+        def __init__(self, bb, reverse=False):            
+            self.bb = bb
+            self.reverse = reverse
+            if self.reverse:
+                self.inst = self.bb.last
+            else:
+                self.inst = self.bb.first
+        
+        def __iter__(self):
+            return self
+        
+        def next(self):
+            if not isinstance(self.inst, Instruction):
+                raise StopIteration("")
+            result = self.inst
+            if self.reverse:
+                self.inst = self.inst.prev
+            else:
+                self.inst = self.inst.next
+            return result
+    
+    def __iter__(self):
+        return BasicBlock.__inst_iterator(self)
+
+    def __reversed__(self):
+        return BasicBlock.__inst_iterator(self, reverse=True)
+
+
+class Instruction(Value):
+
+    def __init__(self, value):
+        Value.__init__(self, value)
+
+    @property
+    def next(self):
+        i = lib.LLVMGetNextInstruction(self)
+        return i and Instruction(i)
+
+    @property
+    def prev(self):
+        i = lib.LLVMGetPreviousInstruction(self)
+        return i and Instruction(i)
+
+    @property
+    def opcode(self):
+        return OpCode.from_value(lib.LLVMGetInstructionOpcode(self))
 
 class Context(LLVMObject):
 
@@ -402,11 +461,27 @@ def register_library(library):
     library.LLVMGetPreviousBasicBlock.argtypes = [BasicBlock]
     library.LLVMGetPreviousBasicBlock.restype = c_object_p
 
+    library.LLVMGetFirstInstruction.argtypes = [BasicBlock]
+    library.LLVMGetFirstInstruction.restype = c_object_p
+
+    library.LLVMGetLastInstruction.argtypes = [BasicBlock]
+    library.LLVMGetLastInstruction.restype = c_object_p
+
     library.LLVMBasicBlockAsValue.argtypes = [BasicBlock]
     library.LLVMBasicBlockAsValue.restype = c_object_p
 
     library.LLVMCountBasicBlocks.argtypes = [Function]
     library.LLVMCountBasicBlocks.restype = c_uint
+
+    # Instruction Declarations.
+    library.LLVMGetNextInstruction.argtypes = [Instruction]
+    library.LLVMGetNextInstruction.restype = c_object_p
+
+    library.LLVMGetPreviousInstruction.argtypes = [Instruction]
+    library.LLVMGetPreviousInstruction.restype = c_object_p
+
+    library.LLVMGetInstructionOpcode.argtypes = [Instruction]
+    library.LLVMGetInstructionOpcode.restype = c_uint
 
 def register_enumerations():
     for name, value in enumerations.OpCodes:

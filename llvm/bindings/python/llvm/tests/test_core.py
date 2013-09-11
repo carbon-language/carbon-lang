@@ -100,3 +100,27 @@ class TestCore(TestBase):
             self.assertEqual(bb.name, bb_list[i])
             bb.dump()
 
+    def test_basicblock_instruction_iteration(self):
+        m = parse_bitcode(MemoryBuffer(filename=self.get_test_bc()))
+        i = 0
+        
+        inst_list = [('arg1', OpCode.ExtractValue),
+                     ('arg2', OpCode.ExtractValue),
+                     ('', OpCode.Call),
+                     ('', OpCode.Ret)]
+        
+        bb = m.first.first
+
+        # Forward
+        for inst in bb:
+            self.assertEqual(inst.name, inst_list[i][0])
+            self.assertEqual(inst.opcode, inst_list[i][1])
+            inst.dump()
+            i += 1
+        
+        # Backwards
+        for inst in reversed(bb):
+            i -= 1
+            self.assertEqual(inst.name, inst_list[i][0])
+            self.assertEqual(inst.opcode, inst_list[i][1])
+            inst.dump()
