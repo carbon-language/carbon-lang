@@ -92,5 +92,38 @@ int main()
     assert(m.key_comp() == Cmp(4));
     assert(m.get_allocator() == A());
     }
+#if _LIBCPP_STD_VER > 11
+    {
+    typedef test_compare<std::less<int> > C;
+    typedef std::pair<const int, double> V;
+    typedef min_allocator<V> A;
+    typedef std::multimap<int, double, C, A> M;
+    A a;
+    M m ({ {1, 1},
+           {1, 1.5},
+           {1, 2},
+           {2, 1},
+           {2, 1.5},
+           {2, 2},
+           {3, 1},
+           {3, 1.5},
+           {3, 2}
+          }, a);
+
+    assert(m.size() == 9);
+    assert(distance(m.begin(), m.end()) == 9);
+    M::const_iterator i = m.cbegin();
+    assert(*i == V(1, 1));
+    assert(*++i == V(1, 1.5));
+    assert(*++i == V(1, 2));
+    assert(*++i == V(2, 1));
+    assert(*++i == V(2, 1.5));
+    assert(*++i == V(2, 2));
+    assert(*++i == V(3, 1));
+    assert(*++i == V(3, 1.5));
+    assert(*++i == V(3, 2));
+    assert(m.get_allocator() == a);
+    }
+#endif
 #endif
 }

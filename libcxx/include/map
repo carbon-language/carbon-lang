@@ -77,7 +77,12 @@ public:
     map(map&& m, const allocator_type& a);
     map(initializer_list<value_type> il, const key_compare& comp = key_compare());
     map(initializer_list<value_type> il, const key_compare& comp, const allocator_type& a);
-    ~map();
+    template <class InputIterator>
+        map(InputIterator first, InputIterator last, const allocator_type& a)
+            : map(first, last, Compare(), a) {}  // C++14
+    map(initializer_list<value_type> il, const allocator_type& a)
+        : map(il, Compare(), a) {}  // C++14
+   ~map();
 
     map& operator=(const map& m);
     map& operator=(map&& m)
@@ -273,6 +278,11 @@ public:
     multimap(initializer_list<value_type> il, const key_compare& comp = key_compare());
     multimap(initializer_list<value_type> il, const key_compare& comp,
              const allocator_type& a);
+    template <class InputIterator>
+        multimap(InputIterator first, InputIterator last, const allocator_type& a)
+            : multimap(first, last, Compare(), a) {} // C++14
+    multimap(initializer_list<value_type> il, const allocator_type& a)
+        : multimap(il, Compare(), a) {} // C++14
     ~multimap();
 
     multimap& operator=(const multimap& m);
@@ -827,6 +837,13 @@ public:
             insert(__f, __l);
         }
 
+#if _LIBCPP_STD_VER > 11
+    template <class _InputIterator>
+    _LIBCPP_INLINE_VISIBILITY 
+    map(_InputIterator __f, _InputIterator __l, const allocator_type& __a)
+        : map(__f, __l, key_compare(), __a) {}
+#endif
+
     _LIBCPP_INLINE_VISIBILITY
     map(const map& __m)
         : __tree_(__m.__tree_)
@@ -884,6 +901,12 @@ public:
         {
             insert(__il.begin(), __il.end());
         }
+
+#if _LIBCPP_STD_VER > 11
+    _LIBCPP_INLINE_VISIBILITY 
+    map(initializer_list<value_type> __il, const allocator_type& __a)
+        : map(__il, key_compare(), __a) {}
+#endif
 
     _LIBCPP_INLINE_VISIBILITY
     map& operator=(initializer_list<value_type> __il)
@@ -1586,6 +1609,13 @@ public:
             insert(__f, __l);
         }
 
+#if _LIBCPP_STD_VER > 11
+    template <class _InputIterator>
+    _LIBCPP_INLINE_VISIBILITY 
+    multimap(_InputIterator __f, _InputIterator __l, const allocator_type& __a)
+        : multimap(__f, __l, key_compare(), __a) {}
+#endif
+
     _LIBCPP_INLINE_VISIBILITY
     multimap(const multimap& __m)
         : __tree_(__m.__tree_.value_comp(),
@@ -1644,6 +1674,12 @@ public:
         {
             insert(__il.begin(), __il.end());
         }
+
+#if _LIBCPP_STD_VER > 11
+    _LIBCPP_INLINE_VISIBILITY 
+    multimap(initializer_list<value_type> __il, const allocator_type& __a)
+        : multimap(__il, key_compare(), __a) {}
+#endif
 
     _LIBCPP_INLINE_VISIBILITY
     multimap& operator=(initializer_list<value_type> __il)
