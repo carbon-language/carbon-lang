@@ -2143,8 +2143,6 @@ void X86TargetInfo::setSSELevel(llvm::StringMap<bool> &Features,
     case SSE2:
       Features["sse2"] = true;
     case SSE1:
-      if (!Features.count("mmx"))
-        setMMXLevel(Features, MMX, Enabled);
       Features["sse"] = true;
     case NoSSE:
       break;
@@ -2427,10 +2425,14 @@ bool X86TargetInfo::HandleTargetFeatures(std::vector<std::string> &Features,
 
   // Don't tell the backend if we're turning off mmx; it will end up disabling
   // SSE, which we don't want.
+  // Additionally, if SSE is enabled and mmx is not explicitly disabled,
+  // then enable MMX.
   std::vector<std::string>::iterator it;
   it = std::find(Features.begin(), Features.end(), "-mmx");
   if (it != Features.end())
     Features.erase(it);
+  else if (SSELevel > NoSSE)
+    MMX3DNowLevel = std::max(MMX3DNowLevel, MMX);
   return true;
 }
 
