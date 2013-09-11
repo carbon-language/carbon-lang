@@ -722,7 +722,7 @@ public:
   }
 
   /// \brief Generate the compact unwind encoding for the CFI instructions.
-  virtual unsigned
+  virtual uint32_t
   generateCompactUnwindEncoding(ArrayRef<MCCFIInstruction> Instrs) const {
     return SupportsCU ? generateCompactUnwindEncodingImpl(Instrs) : 0;
   }
@@ -777,7 +777,7 @@ public:
   }
 
   /// \brief Generate the compact unwind encoding for the CFI instructions.
-  virtual unsigned
+  virtual uint32_t
   generateCompactUnwindEncoding(ArrayRef<MCCFIInstruction> Instrs) const {
     return SupportsCU ? generateCompactUnwindEncodingImpl(Instrs) : 0;
   }

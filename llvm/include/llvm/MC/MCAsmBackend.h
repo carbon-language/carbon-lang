@@ -162,7 +162,7 @@ public:
   virtual void handleAssemblerFlag(MCAssemblerFlag Flag) {}
 
   /// \brief Generate the compact unwind encoding for the CFI instructions.
-  virtual unsigned
+  virtual uint32_t
   generateCompactUnwindEncoding(ArrayRef<MCCFIInstruction>) const {
     return 0;
   }
