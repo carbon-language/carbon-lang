@@ -1776,6 +1776,14 @@ bool RecursiveASTVisitor<Derived>::TraverseFunctionHelper(FunctionDecl *D) {
   // including exception specifications.
   if (TypeSourceInfo *TSI = D->getTypeSourceInfo()) {
     TRY_TO(TraverseTypeLoc(TSI->getTypeLoc()));
+  } else if (getDerived().shouldVisitImplicitCode()) {
+    // Visit parameter variable declarations of the implicit function
+    // if the traverser is visiting implicit code. Parameter variable
+    // declarations do not have valid TypeSourceInfo, so to visit them
+    // we need to traverse the declarations explicitly.
+    for (FunctionDecl::param_const_iterator I = D->param_begin(),
+                                            E = D->param_end(); I != E; ++I)
+      TRY_TO(TraverseDecl(*I));
   }
 
   if (CXXConstructorDecl *Ctor = dyn_cast<CXXConstructorDecl>(D)) {

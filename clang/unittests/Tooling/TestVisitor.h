@@ -31,7 +31,7 @@ namespace clang {
 /// This is a drop-in replacement for RecursiveASTVisitor itself, with the
 /// additional capability of running it over a snippet of code.
 ///
-/// Visits template instantiations (but not implicit code) by default.
+/// Visits template instantiations and implicit code by default.
 template <typename T>
 class TestVisitor : public RecursiveASTVisitor<T> {
 public:
@@ -53,6 +53,10 @@ public:
   }
 
   bool shouldVisitTemplateInstantiations() const {
+    return true;
+  }
+
+  bool shouldVisitImplicitCode() const {
     return true;
   }
 

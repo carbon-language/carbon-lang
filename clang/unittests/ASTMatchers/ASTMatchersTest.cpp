@@ -1361,8 +1361,12 @@ TEST(Matcher, References) {
                       ReferenceClassX));
   EXPECT_TRUE(
       matches("class X {}; void y(X y) { const X &x = y; }", ReferenceClassX));
+  // The match here is on the implicit copy constructor code for
+  // class X, not on code 'X x = y'.
   EXPECT_TRUE(
-      notMatches("class X {}; void y(X y) { X x = y; }", ReferenceClassX));
+      matches("class X {}; void y(X y) { X x = y; }", ReferenceClassX));
+  EXPECT_TRUE(
+      notMatches("class X {}; extern X x;", ReferenceClassX));
   EXPECT_TRUE(
       notMatches("class X {}; void y(X *y) { X *&x = y; }", ReferenceClassX));
 }
