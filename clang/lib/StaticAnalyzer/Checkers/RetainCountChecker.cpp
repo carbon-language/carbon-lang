@@ -417,8 +417,6 @@ template <> struct DenseMapInfo<ObjCSummaryKey> {
   }
 
 };
-template <>
-struct isPodLike<ObjCSummaryKey> { static const bool value = true; };
 } // end llvm namespace
 
 namespace {
