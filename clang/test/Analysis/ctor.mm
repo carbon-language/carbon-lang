@@ -626,6 +626,30 @@ namespace ZeroInitialization {
       // initialized twice.
     }
   };
+
+  class Empty {
+  public:
+    Empty();
+  };
+
+  class PairContainer : public Empty {
+    raw_pair p;
+  public:
+    PairContainer() : Empty(), p() {
+      // This previously caused a crash because the empty base class looked
+      // like an initialization of 'p'.
+    }
+    PairContainer(int) : Empty(), p() {
+      // Test inlining something else here.
+    }
+  };
+
+  class PairContainerContainer {
+    int padding;
+    PairContainer pc;
+  public:
+    PairContainerContainer() : pc(1) {}
+  };
 }
 
 namespace InitializerList {

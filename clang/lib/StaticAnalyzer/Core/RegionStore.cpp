@@ -422,11 +422,20 @@ public: // Part of public interface to class.
   // BindDefault is only used to initialize a region with a default value.
   StoreRef BindDefault(Store store, const MemRegion *R, SVal V) {
     RegionBindingsRef B = getRegionBindings(store);
-    assert(!B.lookup(R, BindingKey::Default));
     assert(!B.lookup(R, BindingKey::Direct));
-    return StoreRef(B.addBinding(R, BindingKey::Default, V)
-                     .asImmutableMap()
-                     .getRootWithoutRetain(), *this);
+
+    BindingKey Key = BindingKey::Make(R, BindingKey::Default);
+    if (B.lookup(Key)) {
+      const SubRegion *SR = cast<SubRegion>(R);
+      assert(SR->getAsOffset().getOffset() ==
+             SR->getSuperRegion()->getAsOffset().getOffset() &&
+             "A default value must come from a super-region");
+      B = removeSubRegionBindings(B, SR);
+    } else {
+      B = B.addBinding(Key, V);
+    }
+
+    return StoreRef(B.asImmutableMap().getRootWithoutRetain(), *this);
   }
 
   /// Attempt to extract the fields of \p LCV and bind them to the struct region
