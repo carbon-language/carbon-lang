@@ -45,6 +45,38 @@ declare <2 x double> @llvm.mips.fadd.d(<2 x double>, <2 x double>) nounwind
 ; CHECK: fadd.d
 ; CHECK: st.d
 ; CHECK: .size llvm_mips_fadd_d_test
+
+define void @fadd_w_test() nounwind {
+entry:
+  %0 = load <4 x float>* @llvm_mips_fadd_w_ARG1
+  %1 = load <4 x float>* @llvm_mips_fadd_w_ARG2
+  %2 = fadd <4 x float> %0, %1
+  store <4 x float> %2, <4 x float>* @llvm_mips_fadd_w_RES
+  ret void
+}
+
+; CHECK: fadd_w_test:
+; CHECK: ld.w
+; CHECK: ld.w
+; CHECK: fadd.w
+; CHECK: st.w
+; CHECK: .size fadd_w_test
+
+define void @fadd_d_test() nounwind {
+entry:
+  %0 = load <2 x double>* @llvm_mips_fadd_d_ARG1
+  %1 = load <2 x double>* @llvm_mips_fadd_d_ARG2
+  %2 = fadd <2 x double> %0, %1
+  store <2 x double> %2, <2 x double>* @llvm_mips_fadd_d_RES
+  ret void
+}
+
+; CHECK: fadd_d_test:
+; CHECK: ld.d
+; CHECK: ld.d
+; CHECK: fadd.d
+; CHECK: st.d
+; CHECK: .size fadd_d_test
 ;
 @llvm_mips_fdiv_w_ARG1 = global <4 x float> <float 0.000000e+00, float 1.000000e+00, float 2.000000e+00, float 3.000000e+00>, align 16
 @llvm_mips_fdiv_w_ARG2 = global <4 x float> <float 4.000000e+00, float 5.000000e+00, float 6.000000e+00, float 7.000000e+00>, align 16
@@ -89,6 +121,38 @@ declare <2 x double> @llvm.mips.fdiv.d(<2 x double>, <2 x double>) nounwind
 ; CHECK: fdiv.d
 ; CHECK: st.d
 ; CHECK: .size llvm_mips_fdiv_d_test
+
+define void @fdiv_w_test() nounwind {
+entry:
+  %0 = load <4 x float>* @llvm_mips_fdiv_w_ARG1
+  %1 = load <4 x float>* @llvm_mips_fdiv_w_ARG2
+  %2 = fdiv <4 x float> %0, %1
+  store <4 x float> %2, <4 x float>* @llvm_mips_fdiv_w_RES
+  ret void
+}
+
+; CHECK: fdiv_w_test:
+; CHECK: ld.w
+; CHECK: ld.w
+; CHECK: fdiv.w
+; CHECK: st.w
+; CHECK: .size fdiv_w_test
+
+define void @fdiv_d_test() nounwind {
+entry:
+  %0 = load <2 x double>* @llvm_mips_fdiv_d_ARG1
+  %1 = load <2 x double>* @llvm_mips_fdiv_d_ARG2
+  %2 = fdiv <2 x double> %0, %1
+  store <2 x double> %2, <2 x double>* @llvm_mips_fdiv_d_RES
+  ret void
+}
+
+; CHECK: fdiv_d_test:
+; CHECK: ld.d
+; CHECK: ld.d
+; CHECK: fdiv.d
+; CHECK: st.d
+; CHECK: .size fdiv_d_test
 ;
 @llvm_mips_fmin_w_ARG1 = global <4 x float> <float 0.000000e+00, float 1.000000e+00, float 2.000000e+00, float 3.000000e+00>, align 16
 @llvm_mips_fmin_w_ARG2 = global <4 x float> <float 4.000000e+00, float 5.000000e+00, float 6.000000e+00, float 7.000000e+00>, align 16
@@ -309,6 +373,38 @@ declare <2 x double> @llvm.mips.fmul.d(<2 x double>, <2 x double>) nounwind
 ; CHECK: fmul.d
 ; CHECK: st.d
 ; CHECK: .size llvm_mips_fmul_d_test
+
+define void @fmul_w_test() nounwind {
+entry:
+  %0 = load <4 x float>* @llvm_mips_fmul_w_ARG1
+  %1 = load <4 x float>* @llvm_mips_fmul_w_ARG2
+  %2 = fmul <4 x float> %0, %1
+  store <4 x float> %2, <4 x float>* @llvm_mips_fmul_w_RES
+  ret void
+}
+
+; CHECK: fmul_w_test:
+; CHECK: ld.w
+; CHECK: ld.w
+; CHECK: fmul.w
+; CHECK: st.w
+; CHECK: .size fmul_w_test
+
+define void @fmul_d_test() nounwind {
+entry:
+  %0 = load <2 x double>* @llvm_mips_fmul_d_ARG1
+  %1 = load <2 x double>* @llvm_mips_fmul_d_ARG2
+  %2 = fmul <2 x double> %0, %1
+  store <2 x double> %2, <2 x double>* @llvm_mips_fmul_d_RES
+  ret void
+}
+
+; CHECK: fmul_d_test:
+; CHECK: ld.d
+; CHECK: ld.d
+; CHECK: fmul.d
+; CHECK: st.d
+; CHECK: .size fmul_d_test
 ;
 @llvm_mips_fsub_w_ARG1 = global <4 x float> <float 0.000000e+00, float 1.000000e+00, float 2.000000e+00, float 3.000000e+00>, align 16
 @llvm_mips_fsub_w_ARG2 = global <4 x float> <float 4.000000e+00, float 5.000000e+00, float 6.000000e+00, float 7.000000e+00>, align 16
@@ -354,3 +450,35 @@ declare <2 x double> @llvm.mips.fsub.d(<2 x double>, <2 x double>) nounwind
 ; CHECK: st.d
 ; CHECK: .size llvm_mips_fsub_d_test
 ;
+
+define void @fsub_w_test() nounwind {
+entry:
+  %0 = load <4 x float>* @llvm_mips_fsub_w_ARG1
+  %1 = load <4 x float>* @llvm_mips_fsub_w_ARG2
+  %2 = fsub <4 x float> %0, %1
+  store <4 x float> %2, <4 x float>* @llvm_mips_fsub_w_RES
+  ret void
+}
+
+; CHECK: fsub_w_test:
+; CHECK: ld.w
+; CHECK: ld.w
+; CHECK: fsub.w
+; CHECK: st.w
+; CHECK: .size fsub_w_test
+
+define void @fsub_d_test() nounwind {
+entry:
+  %0 = load <2 x double>* @llvm_mips_fsub_d_ARG1
+  %1 = load <2 x double>* @llvm_mips_fsub_d_ARG2
+  %2 = fsub <2 x double> %0, %1
+  store <2 x double> %2, <2 x double>* @llvm_mips_fsub_d_RES
+  ret void
+}
+
+; CHECK: fsub_d_test:
+; CHECK: ld.d
+; CHECK: ld.d
+; CHECK: fsub.d
+; CHECK: st.d
+; CHECK: .size fsub_d_test
