@@ -953,6 +953,8 @@ processLoopStridedStore(Value *DestPtr, unsigned StoreSize,
   Value *SplatValue = isBytewiseValue(StoredVal);
   Constant *PatternValue = 0;
 
+  unsigned DestAS = DestPtr->getType()->getPointerAddressSpace();
+
   // If we're allowed to form a memset, and the stored value would be acceptable
   // for memset, use it.
   if (SplatValue && TLI->has(LibFunc::memset) &&
@@ -961,8 +963,10 @@ processLoopStridedStore(Value *DestPtr, unsigned StoreSize,
       CurLoop->isLoopInvariant(SplatValue)) {
     // Keep and use SplatValue.
     PatternValue = 0;
-  } else if (TLI->has(LibFunc::memset_pattern16) &&
+  } else if (DestAS == 0 &&
+             TLI->has(LibFunc::memset_pattern16) &&
              (PatternValue = getMemSetPatternValue(StoredVal, *TD))) {
+    // Don't create memset_pattern16s with address spaces.
     // It looks like we can use PatternValue!
     SplatValue = 0;
   } else {
@@ -978,14 +982,15 @@ processLoopStridedStore(Value *DestPtr, unsigned StoreSize,
   IRBuilder<> Builder(Preheader->getTerminator());
   SCEVExpander Expander(*SE, "loop-idiom");
 
+  Type *DestInt8PtrTy = Builder.getInt8PtrTy(DestAS);
+
   // Okay, we have a strided store "p[i]" of a splattable value.  We can turn
   // this into a memset in the loop preheader now if we want.  However, this
   // would be unsafe to do if there is anything else in the loop that may read
   // or write to the aliased location.  Check for any overlap by generating the
   // base pointer and checking the region.
-  unsigned AddrSpace = cast<PointerType>(DestPtr->getType())->getAddressSpace();
   Value *BasePtr =
-    Expander.expandCodeFor(Ev->getStart(), Builder.getInt8PtrTy(AddrSpace),
+    Expander.expandCodeFor(Ev->getStart(), DestInt8PtrTy,
                            Preheader->getTerminator());
 
   if (mayLoopAccessLocation(BasePtr, AliasAnalysis::ModRef,
@@ -1001,7 +1006,7 @@ processLoopStridedStore(Value *DestPtr, unsigned StoreSize,
 
   // The # stored bytes is (BECount+1)*Size.  Expand the trip count out to
   // pointer size if it isn't already.
-  Type *IntPtr = TD->getIntPtrType(DestPtr->getContext());
+  Type *IntPtr = Builder.getIntPtrTy(TD, DestAS);
   BECount = SE->getTruncateOrZeroExtend(BECount, IntPtr);
 
   const SCEV *NumBytesS = SE->getAddExpr(BECount, SE->getConstant(IntPtr, 1),
@@ -1021,11 +1026,15 @@ processLoopStridedStore(Value *DestPtr, unsigned StoreSize,
                                    NumBytes,
                                    StoreAlignment);
   } else {
+    // Everything is emitted in default address space
+    Type *Int8PtrTy = DestInt8PtrTy;
+
     Module *M = TheStore->getParent()->getParent()->getParent();
     Value *MSP = M->getOrInsertFunction("memset_pattern16",
                                         Builder.getVoidTy(),
-                                        Builder.getInt8PtrTy(),
-                                        Builder.getInt8PtrTy(), IntPtr,
+                                        Int8PtrTy,
+                                        Int8PtrTy,
+                                        IntPtr,
                                         (void*)0);
 
     // Otherwise we should form a memset_pattern16.  PatternValue is known to be
@@ -1035,7 +1044,7 @@ processLoopStridedStore(Value *DestPtr, unsigned StoreSize,
                                             PatternValue, ".memset_pattern");
     GV->setUnnamedAddr(true); // Ok to merge these.
     GV->setAlignment(16);
-    Value *PatternPtr = ConstantExpr::getBitCast(GV, Builder.getInt8PtrTy());
+    Value *PatternPtr = ConstantExpr::getBitCast(GV, Int8PtrTy);
     NewCall = Builder.CreateCall3(MSP, BasePtr, PatternPtr, NumBytes);
   }
 
@@ -1111,17 +1120,17 @@ processLoopStoreOfLoopLoad(StoreInst *SI, unsigned StoreSize,
 
   // The # stored bytes is (BECount+1)*Size.  Expand the trip count out to
   // pointer size if it isn't already.
-  Type *IntPtr = TD->getIntPtrType(SI->getContext());
-  BECount = SE->getTruncateOrZeroExtend(BECount, IntPtr);
+  Type *IntPtrTy = Builder.getIntPtrTy(TD, SI->getPointerAddressSpace());
+  BECount = SE->getTruncateOrZeroExtend(BECount, IntPtrTy);
 
-  const SCEV *NumBytesS = SE->getAddExpr(BECount, SE->getConstant(IntPtr, 1),
+  const SCEV *NumBytesS = SE->getAddExpr(BECount, SE->getConstant(IntPtrTy, 1),
                                          SCEV::FlagNUW);
   if (StoreSize != 1)
-    NumBytesS = SE->getMulExpr(NumBytesS, SE->getConstant(IntPtr, StoreSize),
+    NumBytesS = SE->getMulExpr(NumBytesS, SE->getConstant(IntPtrTy, StoreSize),
                                SCEV::FlagNUW);
 
   Value *NumBytes =
-    Expander.expandCodeFor(NumBytesS, IntPtr, Preheader->getTerminator());
+    Expander.expandCodeFor(NumBytesS, IntPtrTy, Preheader->getTerminator());
 
   CallInst *NewCall =
     Builder.CreateMemCpy(StoreBasePtr, LoadBasePtr, NumBytes,
