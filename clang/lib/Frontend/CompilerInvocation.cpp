@@ -32,6 +32,7 @@
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/Process.h"
 #include "llvm/Support/system_error.h"
 #include <sys/stat.h>
 using namespace clang;
@@ -542,6 +543,8 @@ bool clang::ParseDiagnosticArgs(DiagnosticOptions &Opts, ArgList &Args,
   Opts.ShowFixits = !Args.hasArg(OPT_fno_diagnostics_fixit_info);
   Opts.ShowLocation = !Args.hasArg(OPT_fno_show_source_location);
   Opts.ShowOptionNames = Args.hasArg(OPT_fdiagnostics_show_option);
+
+  llvm::sys::Process::UseANSIEscapeCodes(Args.hasArg(OPT_fansi_escape_codes));
 
   // Default behavior is to not to show note include stacks.
   Opts.ShowNoteIncludeStack = false;

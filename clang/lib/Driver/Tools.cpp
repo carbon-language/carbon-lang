@@ -3370,6 +3370,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       (ShowColors == Colors_Auto && llvm::sys::Process::StandardErrHasColors()))
     CmdArgs.push_back("-fcolor-diagnostics");
 
+  if (Args.hasArg(options::OPT_fansi_escape_codes))
+    CmdArgs.push_back("-fansi-escape-codes");
+
   if (!Args.hasFlag(options::OPT_fshow_source_location,
                     options::OPT_fno_show_source_location))
     CmdArgs.push_back("-fno-show-source-location");

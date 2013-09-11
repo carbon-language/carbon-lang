@@ -235,6 +235,11 @@ output format of the diagnostics that it generates.
                 ^
                 //
 
+**-fansi-escape-codes**
+   Controls whether ANSI escape codes are used instead of the Windows Console
+   API to output colored diagnostics. This option is only used on Windows and
+   defaults to off.
+
 .. option:: -fdiagnostics-format=clang/msvc/vi
 
    Changes diagnostic output format to better match IDEs and command line tools.

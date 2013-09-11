@@ -51,3 +51,7 @@
 // RUN: %clang -fcolor-diagnostics -fdiagnostics-color=auto -### -c %s 2>&1 \
 // RUN:     | FileCheck --check-prefix=CHECK-CD_DCE_AUTO_S %s
 // CHECK-CD_DCE_AUTO_S-NOT: clang{{.*}}" "-fcolor-diagnostics"
+
+// RUN: %clang -fansi-escape-codes -### -c %s 2>&1 \
+// RUN:     | FileCheck --check-prefix=CHECK-AEC %s
+// CHECK-AEC: clang{{.*}}" "-fansi-escape-codes"

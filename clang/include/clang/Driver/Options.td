@@ -370,6 +370,8 @@ def fcolor_diagnostics : Flag<["-"], "fcolor-diagnostics">, Group<f_Group>, Flag
   HelpText<"Use colors in diagnostics">;
 def fdiagnostics_color : Flag<["-"], "fdiagnostics-color">, Group<f_Group>;
 def fdiagnostics_color_EQ : Joined<["-"], "fdiagnostics-color=">, Group<f_Group>;
+def fansi_escape_codes : Flag<["-"], "fansi-escape-codes">, Group<f_Group>, Flags<[CC1Option]>,
+  HelpText<"Use ANSI escape codes for diagnostics">;
 def fcomment_block_commands : CommaJoined<["-"], "fcomment-block-commands=">, Group<f_clang_Group>, Flags<[CC1Option]>,
   HelpText<"Treat each comma separated argument in <arg> as a documentation comment block command">,
   MetaVarName<"<arg>">;
