@@ -1,3 +1,7 @@
+// This file contains code and checks, that should work on any platform.
+// There's a set of additional checks for systems with proper support of UTF-8
+// on the standard output in fixit-unicode-with-utf8-output.c.
+
 // RUN: not %clang_cc1 -fsyntax-only %s 2>&1 | FileCheck -strict-whitespace %s
 // RUN: not %clang_cc1 -fsyntax-only -fdiagnostics-parseable-fixits %s 2>&1 | FileCheck -check-prefix=CHECK-MACHINE %s
 
@@ -16,8 +20,8 @@ void test1() {
 // CHECK: {{^              \^}}
 // CHECK: {{^              ;}}
 
-// CHECK-MACHINE: fix-it:"{{.*}}fixit-unicode.c":{[[@LINE-8]]:15-[[@LINE-8]]:18}:""
-// CHECK-MACHINE: fix-it:"{{.*}}fixit-unicode.c":{[[@LINE-9]]:15-[[@LINE-9]]:15}:";"
+// CHECK-MACHINE: fix-it:"{{.*}}":{[[@LINE-8]]:15-[[@LINE-8]]:18}:""
+// CHECK-MACHINE: fix-it:"{{.*}}":{[[@LINE-9]]:15-[[@LINE-9]]:15}:";"
 }
 
 
@@ -32,7 +36,7 @@ void test2() {
 // because different systems will render the delta differently (either as a
 // character, or as <U+2206>.) The fixit should line up with the %d regardless.
 
-// CHECK-MACHINE: fix-it:"{{.*}}fixit-unicode.c":{[[@LINE-9]]:16-[[@LINE-9]]:18}:"%ld"
+// CHECK-MACHINE: fix-it:"{{.*}}":{[[@LINE-9]]:16-[[@LINE-9]]:18}:"%ld"
 }
 
 void test3() {
@@ -47,6 +51,11 @@ void test3() {
 // CHECK: {{^          \^}}
 // CHECK: {{^          ss.+ss}}
 // CHECK-MACHINE: fix-it:"{{.*}}":{[[@LINE-3]]:11-[[@LINE-3]]:17}:"ss\340\270\201ss"
+
+  int s一二三 = 42;
+  int b一二三四五六七 = ss一二三; // expected-error{{use of undeclared identifier 'ss一二三'; did you mean 's一二三'?}}
+// CHECK-MACHINE: fix-it:"{{.*}}":{[[@LINE-1]]:32-[[@LINE-1]]:43}:"s\344\270\200\344\272\214\344\270\211"
+
 
   int sssssssssก = 42;
   int c = sssssssss; // expected-error{{use of undeclared identifier 'sssssssss'; did you mean 'sssssssssก'?}}
