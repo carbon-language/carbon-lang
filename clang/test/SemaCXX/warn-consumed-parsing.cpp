@@ -39,7 +39,7 @@ class CONSUMABLE(unknown) AttrTester1 {
   bool testsUnconsumed()        TESTS_UNCONSUMED;
 };
 
-AttrTester1 returnTypestateTester0() RETURN_TYPESTATE(not_a_state); // expected-warning {{unknown consumed analysis state 'not_a_state'}}
+AttrTester1 returnTypestateTester0() RETURN_TYPESTATE(not_a_state); // expected-warning {{'return_typestate' attribute argument not supported: 'not_a_state'}}
 AttrTester1 returnTypestateTester1() RETURN_TYPESTATE(42); // expected-error {{'return_typestate' attribute requires an identifier}}
 
 class AttrTester2 {

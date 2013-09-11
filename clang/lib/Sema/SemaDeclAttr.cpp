@@ -947,19 +947,13 @@ static void handleConsumableAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   ConsumableAttr::ConsumedState DefaultState;
 
   if (Attr.isArgIdent(0)) {
-    StringRef Param = Attr.getArgAsIdent(0)->Ident->getName();
-
-    if (Param == "unknown")
-      DefaultState = ConsumableAttr::Unknown;
-    else if (Param == "consumed")
-      DefaultState = ConsumableAttr::Consumed;
-    else if (Param == "unconsumed")
-      DefaultState = ConsumableAttr::Unconsumed;
-    else {
-      S.Diag(Attr.getLoc(), diag::warn_unknown_consumed_state) << Param;
+    IdentifierLoc *IL = Attr.getArgAsIdent(0);
+    if (!ConsumableAttr::ConvertStrToConsumedState(IL->Ident->getName(),
+                                                   DefaultState)) {
+      S.Diag(IL->Loc, diag::warn_attribute_type_not_supported)
+        << Attr.getName() << IL->Ident;
       return;
     }
-
   } else {
     S.Diag(Attr.getLoc(), diag::err_attribute_argument_type)
         << Attr.getName() << AANT_ArgumentIdentifier;
@@ -1062,19 +1056,13 @@ static void handleReturnTypestateAttr(Sema &S, Decl *D,
   ReturnTypestateAttr::ConsumedState ReturnState;
   
   if (Attr.isArgIdent(0)) {
-    StringRef Param = Attr.getArgAsIdent(0)->Ident->getName();
-    
-    if (Param == "unknown") {
-      ReturnState = ReturnTypestateAttr::Unknown;
-    } else if (Param == "consumed") {
-      ReturnState = ReturnTypestateAttr::Consumed;
-    } else if (Param == "unconsumed") {
-      ReturnState = ReturnTypestateAttr::Unconsumed;
-    } else {
-      S.Diag(Attr.getLoc(), diag::warn_unknown_consumed_state) << Param;
+    IdentifierLoc *IL = Attr.getArgAsIdent(0);
+    if (!ReturnTypestateAttr::ConvertStrToConsumedState(IL->Ident->getName(),
+                                                        ReturnState)) {
+      S.Diag(IL->Loc, diag::warn_attribute_type_not_supported)
+        << Attr.getName() << IL->Ident;
       return;
     }
-    
   } else {
     S.Diag(Attr.getLoc(), diag::err_attribute_argument_type) <<
       Attr.getName() << AANT_ArgumentIdentifier;
@@ -2340,25 +2328,18 @@ static void handleVisibilityAttr(Sema &S, Decl *D, const AttributeList &Attr,
 
   StringRef TypeStr = Str->getString();
   VisibilityAttr::VisibilityType type;
-  
-  if (TypeStr == "default")
-    type = VisibilityAttr::Default;
-  else if (TypeStr == "hidden")
-    type = VisibilityAttr::Hidden;
-  else if (TypeStr == "internal")
-    type = VisibilityAttr::Hidden; // FIXME
-  else if (TypeStr == "protected") {
-    // Complain about attempts to use protected visibility on targets
-    // (like Darwin) that don't support it.
-    if (!S.Context.getTargetInfo().hasProtectedVisibility()) {
-      S.Diag(Attr.getLoc(), diag::warn_attribute_protected_visibility);
-      type = VisibilityAttr::Default;
-    } else {
-      type = VisibilityAttr::Protected;
-    }
-  } else {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_unknown_visibility) << TypeStr;
+  if (!VisibilityAttr::ConvertStrToVisibilityType(TypeStr, type)) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_type_not_supported)
+      << Attr.getName() << TypeStr;
     return;
+  }
+  
+  // Complain about attempts to use protected visibility on targets
+  // (like Darwin) that don't support it.
+  if (type == VisibilityAttr::Protected &&
+      !S.Context.getTargetInfo().hasProtectedVisibility()) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_protected_visibility);
+    type = VisibilityAttr::Default;
   }
 
   unsigned Index = Attr.getAttributeSpellingListIndex();
@@ -2388,31 +2369,16 @@ static void handleObjCMethodFamilyAttr(Sema &S, Decl *decl,
       << Attr.getName() << 1 << AANT_ArgumentIdentifier;
     return;
   }
-  
-  IdentifierLoc *IL = Attr.getArgAsIdent(0);
 
-  StringRef param = IL->Ident->getName();
-  ObjCMethodFamilyAttr::FamilyKind family;
-  if (param == "none")
-    family = ObjCMethodFamilyAttr::OMF_None;
-  else if (param == "alloc")
-    family = ObjCMethodFamilyAttr::OMF_alloc;
-  else if (param == "copy")
-    family = ObjCMethodFamilyAttr::OMF_copy;
-  else if (param == "init")
-    family = ObjCMethodFamilyAttr::OMF_init;
-  else if (param == "mutableCopy")
-    family = ObjCMethodFamilyAttr::OMF_mutableCopy;
-  else if (param == "new")
-    family = ObjCMethodFamilyAttr::OMF_new;
-  else {
-    // Just warn and ignore it.  This is future-proof against new
-    // families being used in system headers.
-    S.Diag(IL->Loc, diag::warn_unknown_method_family);
+  IdentifierLoc *IL = Attr.getArgAsIdent(0);
+  ObjCMethodFamilyAttr::FamilyKind F;
+  if (!ObjCMethodFamilyAttr::ConvertStrToFamilyKind(IL->Ident->getName(), F)) {
+    S.Diag(IL->Loc, diag::warn_attribute_type_not_supported) << Attr.getName()
+      << IL->Ident;
     return;
   }
 
-  if (family == ObjCMethodFamilyAttr::OMF_init && 
+  if (F == ObjCMethodFamilyAttr::OMF_init && 
       !method->getResultType()->isObjCObjectPointerType()) {
     S.Diag(method->getLocation(), diag::err_init_method_bad_return_type)
       << method->getResultType();
@@ -2421,7 +2387,7 @@ static void handleObjCMethodFamilyAttr(Sema &S, Decl *decl,
   }
 
   method->addAttr(new (S.Context) ObjCMethodFamilyAttr(Attr.getRange(),
-                                                       S.Context, family));
+                                                       S.Context, F));
 }
 
 static void handleObjCExceptionAttr(Sema &S, Decl *D,
@@ -2488,11 +2454,9 @@ static void handleBlocksAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 
   IdentifierInfo *II = Attr.getArgAsIdent(0)->Ident;
   BlocksAttr::BlockType type;
-  if (II->isStr("byref"))
-    type = BlocksAttr::ByRef;
-  else {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_type_not_supported) << "blocks"
-      << II;
+  if (!BlocksAttr::ConvertStrToBlockType(II->getName(), type)) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_type_not_supported)
+      << Attr.getName() << II;
     return;
   }
 

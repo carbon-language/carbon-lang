@@ -134,6 +134,8 @@ namespace {
     virtual void writeDump(raw_ostream &OS) const = 0;
     virtual void writeDumpChildren(raw_ostream &OS) const {}
     virtual void writeHasChildren(raw_ostream &OS) const { OS << "false"; }
+
+    virtual bool isEnumArg() const { return false; }
   };
 
   class SimpleArgument : public Argument {
@@ -524,6 +526,8 @@ namespace {
       assert(!uniques.empty());
     }
 
+    bool isEnumArg() const { return true; }
+
     void writeAccessors(raw_ostream &OS) const {
       OS << "  " << type << " get" << getUpperName() << "() const {\n";
       OS << "    return " << getLowerName() << ";\n";
@@ -582,6 +586,22 @@ namespace {
         OS << "      break;\n";
       }
       OS << "    }\n";
+    }
+
+    void writeConversion(raw_ostream &OS) const {
+      OS << "  static bool ConvertStrTo" << type << "(StringRef Val, ";
+      OS << type << " &Out) {\n";
+      OS << "    Optional<" << type << "> R = llvm::StringSwitch<Optional<";
+      OS << type << "> >(Val)\n";
+      for (size_t I = 0; I < enums.size(); ++I) {
+        OS << "      .Case(\"" << values[I] << "\", ";
+        OS << getAttrName() << "Attr::" << enums[I] << ")\n";
+      }
+      OS << "      .Default(Optional<" << type << ">());\n";
+      OS << "    if (R) {\n";
+      OS << "      Out = *R;\n      return true;\n    }\n";
+      OS << "    return false;\n";
+      OS << "  }\n";
     }
   };
 
@@ -1027,6 +1047,11 @@ void EmitClangAttrClass(RecordKeeper &Records, raw_ostream &OS) {
     for (ai = Args.begin(); ai != ae; ++ai) {
       (*ai)->writeAccessors(OS);
       OS << "\n\n";
+
+      if ((*ai)->isEnumArg()) {
+        EnumArgument *EA = (EnumArgument *)*ai;
+        EA->writeConversion(OS);
+      }
     }
 
     OS << R.getValueAsString("AdditionalMembers");

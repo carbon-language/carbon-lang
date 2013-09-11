@@ -4012,7 +4012,7 @@ static bool handleObjCOwnershipTypeAttr(TypeProcessingState &state,
     lifetime = Qualifiers::OCL_Autoreleasing;
   else {
     S.Diag(AttrLoc, diag::warn_attribute_type_not_supported)
-      << "objc_ownership" << II;
+      << attr.getName() << II;
     attr.setInvalid();
     return true;
   }
@@ -4146,7 +4146,7 @@ static bool handleObjCGCTypeAttr(TypeProcessingState &state,
     GCAttr = Qualifiers::Strong;
   else {
     S.Diag(attr.getLoc(), diag::warn_attribute_type_not_supported)
-      << "objc_gc" << II;
+      << attr.getName() << II;
     attr.setInvalid();
     return true;
   }
