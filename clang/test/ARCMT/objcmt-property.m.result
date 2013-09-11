@@ -98,6 +98,14 @@ typedef char BOOL;
 + (double) D;
 @property(nonatomic, readonly) void * JSObject WEBKIT_OBJC_METHOD_ANNOTATION(AVAILABLE_WEBKIT_VERSION_3_0_AND_LATER);
 @property(nonatomic, getter=isIgnoringInteractionEvents, readonly) BOOL ignoringInteractionEvents;
+
+@property(nonatomic, getter=getStringValue, retain) NSString * stringValue;
+@property(nonatomic, getter=getCounterValue, readonly) BOOL counterValue;
+
+@property(nonatomic, getter=getns_dixtionary, readonly) NSDictionary * ns_dixtionary;
+
+- (BOOL)is3bar; // watch out
+- (NSString *)get3foo; // watch out
 @end
 
 
