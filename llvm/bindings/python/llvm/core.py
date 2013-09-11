@@ -16,10 +16,12 @@ from . import enumerations
 from ctypes import POINTER
 from ctypes import byref
 from ctypes import c_char_p
+from ctypes import c_uint
 
 __all__ = [
     "lib",
     "MemoryBuffer",
+    "Module",
     "Context",
     "PassRegistry"
 ]
@@ -87,6 +89,45 @@ class MemoryBuffer(LLVMObject):
 
     def __len__(self):
         return lib.LLVMGetBufferSize(self)
+
+class Module(LLVMObject):
+    """Represents the top-level structure of an llvm program in an opaque object."""
+
+    def __init__(self, module, name=None, context=None):
+        LLVMObject.__init__(self, module, disposer=lib.LLVMDisposeModule)
+
+    @classmethod
+    def CreateWithName(cls, module_id):
+        m = Module(lib.LLVMModuleCreateWithName(module_id))
+        c = Context.GetGlobalContext().take_ownership(m)
+        return m
+
+    @property
+    def data_layout(self):
+        return lib.LLVMGetDataLayout(self)
+
+    @data_layout.setter
+    def data_layout(self, new_data_layout):
+        """new_data_layout is a string."""
+        lib.LLVMSetDataLayout(self, new_data_layout)
+
+    @property
+    def target(self):
+        return lib.LLVMGetTarget(self)
+
+    @target.setter
+    def target(self, new_target):
+        """new_target is a string."""
+        lib.LLVMSetTarget(self, new_target)
+
+    def dump(self):
+        lib.LLVMDumpModule(self)
+
+    def print_module_to_file(self, filename):
+        out = c_char_p(None)
+        result = lib.LLVMPrintModuleToFile(self, filename, byref(out))
+        if not result:
+            raise RuntimeError("LLVM Error: %s" % out.value)
 
 class Context(LLVMObject):
 
@@ -171,6 +212,32 @@ def register_library(library):
     library.LLVMGetBufferSize.argtypes = [MemoryBuffer]
 
     library.LLVMDisposeMemoryBuffer.argtypes = [MemoryBuffer]
+
+    # Module declarations
+    library.LLVMModuleCreateWithName.argtypes = [c_char_p]
+    library.LLVMModuleCreateWithName.restype = c_object_p
+
+    library.LLVMDisposeModule.argtypes = [Module]
+    library.LLVMDisposeModule.restype = None
+
+    library.LLVMGetDataLayout.argtypes = [Module]
+    library.LLVMGetDataLayout.restype = c_char_p
+
+    library.LLVMSetDataLayout.argtypes = [Module, c_char_p]
+    library.LLVMSetDataLayout.restype = None
+
+    library.LLVMGetTarget.argtypes = [Module]
+    library.LLVMGetTarget.restype = c_char_p
+
+    library.LLVMSetTarget.argtypes = [Module, c_char_p]
+    library.LLVMSetTarget.restype = None
+
+    library.LLVMDumpModule.argtypes = [Module]
+    library.LLVMDumpModule.restype = None
+
+    library.LLVMPrintModuleToFile.argtypes = [Module, c_char_p,
+                                              POINTER(c_char_p)]
+    library.LLVMPrintModuleToFile.restype = bool
 
 def register_enumerations():
     for name, value in enumerations.OpCodes:

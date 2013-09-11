@@ -3,6 +3,7 @@ from ..core import OpCode
 from ..core import MemoryBuffer
 from ..core import PassRegistry
 from ..core import Context
+from ..core import Module
 
 class TestCore(TestBase):
     def test_opcode(self):
@@ -33,3 +34,29 @@ class TestCore(TestBase):
 
     def test_create_context(self):
         Context.GetGlobalContext()
+
+    def test_create_module_with_name(self):
+        # Make sure we can not create a module without a LLVMModuleRef.
+        with self.assertRaises(RuntimeError):
+            m = Module()
+        m = Module.CreateWithName("test-module")
+
+    def test_module_getset_datalayout(self):
+        m = Module.CreateWithName("test-module")
+        dl = "e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:32:64-v128:32:128-a0:0:32-n32-S32"
+        m.datalayout = dl
+        self.assertEqual(m.datalayout, dl)
+
+    def test_module_getset_target(self):
+        m = Module.CreateWithName("test-module")
+        m.target = "thumbv7-apple-ios5.0.0"
+        self.assertEqual(m.target, target)
+
+    def test_module_print_module_to_file(self):
+        m = Module.CreateWithName("test")
+        dl = "e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:32:64-v128:32:128-a0:0:32-n32-S32"
+        m.datalayout = dl
+        target = "thumbv7-apple-ios5.0.0"
+        m.target = target
+        m.print_module_to_file("test2.ll")
+    
