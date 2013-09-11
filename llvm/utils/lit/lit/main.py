@@ -45,15 +45,28 @@ class TestingProgressDisplay(object):
         if self.progressBar:
             self.progressBar.clear()
 
-        print('%s: %s (%d of %d)' % (test.result.code.name, test.getFullName(),
+        # Show the test result line.
+        test_name = test.getFullName()
+        print('%s: %s (%d of %d)' % (test.result.code.name, test_name,
                                      self.completed, self.numTests))
 
+        # Show the test failure output, if requested.
         if test.result.code.isFailure and self.opts.showOutput:
             print("%s TEST '%s' FAILED %s" % ('*'*20, test.getFullName(),
                                               '*'*20))
             print(test.result.output)
             print("*" * 20)
 
+        # Report test metrics, if present.
+        if test.result.metrics:
+            print("%s TEST '%s' RESULTS %s" % ('*'*10, test.getFullName(),
+                                               '*'*10))
+            items = sorted(test.result.metrics.items())
+            for metric_name, value in items:
+                print('%s: %s ' % (metric_name, value.format()))
+            print("*" * 10)
+
+        # Ensure the output is flushed.
         sys.stdout.flush()
 
 def main(builtinParameters = {}):

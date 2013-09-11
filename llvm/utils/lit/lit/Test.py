@@ -1,6 +1,6 @@
 import os
 
-# Test results.
+# Test result codes.
 
 class ResultCode(object):
     """Test result codes."""
@@ -31,6 +31,28 @@ XPASS       = ResultCode('XPASS', True)
 UNRESOLVED  = ResultCode('UNRESOLVED', True)
 UNSUPPORTED = ResultCode('UNSUPPORTED', False)
 
+# Test metric values.
+
+class MetricValue(object):
+    def format(self):
+        raise RuntimeError("abstract method")
+
+class IntMetricValue(MetricValue):
+    def __init__(self, value):
+        self.value = value
+
+    def format(self):
+        return str(self.value)
+
+class RealMetricValue(MetricValue):
+    def __init__(self, value):
+        self.value = value
+
+    def format(self):
+        return '%.4f' % self.value
+
+# Test results.
+
 class Result(object):
     """Wrapper for the results of executing an individual test."""
 
@@ -41,6 +63,25 @@ class Result(object):
         self.output = output
         # The wall timing to execute the test, if timing.
         self.elapsed = elapsed
+        # The metrics reported by this test.
+        self.metrics = {}
+
+    def addMetric(self, name, value):
+        """
+        addMetric(name, value)
+
+        Attach a test metric to the test result, with the given name and list of
+        values. It is an error to attempt to attach the metrics with the same
+        name multiple times.
+
+        Each value must be an instance of a MetricValue subclass.
+        """
+        if name in self.metrics:
+            raise ValueError("result already includes metrics for %r" % (
+                    name,))
+        if not isinstance(value, MetricValue):
+            raise TypeError("unexpected metric value: %r" % (value,))
+        self.metrics[name] = value
 
 # Test classes.
 
