@@ -216,6 +216,12 @@ public:
   /// terminal, this function returns false.
   static bool StandardErrHasColors();
 
+  /// Enables or disables whether ANSI escape sequences are used to output
+  /// colors. This only has an effect on Windows.
+  /// Note: Setting this option is not thread-safe and should only be done
+  /// during initialization.
+  static void UseANSIEscapeCodes(bool enable);
+
   /// Whether changing colors requires the output to be flushed.
   /// This is needed on systems that don't support escape sequences for
   /// changing colors.

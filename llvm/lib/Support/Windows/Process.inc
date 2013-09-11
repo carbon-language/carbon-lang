@@ -216,6 +216,11 @@ bool Process::StandardErrHasColors() {
   return FileDescriptorHasColors(2);
 }
 
+static bool UseANSI = false;
+void Process::UseANSIEscapeCodes(bool enable) {
+  UseANSI = enable;
+}
+
 namespace {
 class DefaultColors
 {
@@ -237,10 +242,12 @@ DefaultColors defaultColors;
 }
 
 bool Process::ColorNeedsFlush() {
-  return true;
+  return !UseANSI;
 }
 
 const char *Process::OutputBold(bool bg) {
+  if (UseANSI) return "\033[1m";
+
   WORD colors = DefaultColors::GetCurrentColor();
   if (bg)
     colors |= BACKGROUND_INTENSITY;
@@ -251,6 +258,8 @@ const char *Process::OutputBold(bool bg) {
 }
 
 const char *Process::OutputColor(char code, bool bold, bool bg) {
+  if (UseANSI) return colorcodes[bg?1:0][bold?1:0][code&7];
+
   WORD colors;
   if (bg) {
     colors = ((code&1) ? BACKGROUND_RED : 0) |
@@ -276,6 +285,8 @@ static WORD GetConsoleTextAttribute(HANDLE hConsoleOutput) {
 }
 
 const char *Process::OutputReverse() {
+  if (UseANSI) return "\033[7m";
+
   const WORD attributes
    = GetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE));
 
@@ -302,6 +313,7 @@ const char *Process::OutputReverse() {
 }
 
 const char *Process::ResetColor() {
+  if (UseANSI) return "\033[0m";
   SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), defaultColors());
   return 0;
 }
