@@ -125,7 +125,7 @@ private:
 #undef TYPE
   
   void mangleType(const TagDecl *TD);
-  void mangleDecayedArrayType(const ArrayType *T, bool IsGlobal);
+  void mangleDecayedArrayType(const ArrayType *T);
   void mangleArrayType(const ArrayType *T);
   void mangleFunctionClass(const FunctionDecl *FD);
   void mangleCallingConvention(const FunctionType *T, bool IsInstMethod = false);
@@ -337,7 +337,7 @@ void MicrosoftCXXNameMangler::mangleVariableEncoding(const VarDecl *VD) {
       mangleQualifiers(Ty->getPointeeType().getQualifiers(), false);
   } else if (const ArrayType *AT = getASTContext().getAsArrayType(Ty)) {
     // Global arrays are funny, too.
-    mangleDecayedArrayType(AT, true);
+    mangleDecayedArrayType(AT);
     if (AT->getElementType()->isArrayType())
       Out << 'A';
     else
@@ -1057,25 +1057,30 @@ void MicrosoftCXXNameMangler::mangleArgumentType(QualType T,
                                                  SourceRange Range) {
   // MSVC will backreference two canonically equivalent types that have slightly
   // different manglings when mangled alone.
-  void *TypePtr = getASTContext().getCanonicalType(T).getAsOpaquePtr();
+
+  // Decayed types do not match up with non-decayed versions of the same type.
+  //
+  // e.g.
+  // void (*x)(void) will not form a backreference with void x(void)
+  void *TypePtr;
+  if (const DecayedType *DT = T->getAs<DecayedType>()) {
+    TypePtr = DT->getOriginalType().getCanonicalType().getAsOpaquePtr();
+    // If the original parameter was textually written as an array,
+    // instead treat the decayed parameter like it's const.
+    //
+    // e.g.
+    // int [] -> int * const
+    if (DT->getOriginalType()->isArrayType())
+      T = T.withConst();
+  } else
+    TypePtr = T.getCanonicalType().getAsOpaquePtr();
+
   ArgBackRefMap::iterator Found = TypeBackReferences.find(TypePtr);
 
   if (Found == TypeBackReferences.end()) {
     size_t OutSizeBefore = Out.GetNumBytesInBuffer();
 
-    if (const DecayedType *DT = T->getAs<DecayedType>()) {
-      QualType OT = DT->getOriginalType();
-      if (const ArrayType *AT = getASTContext().getAsArrayType(OT)) {
-        mangleDecayedArrayType(AT, false);
-      } else if (const FunctionType *FT = OT->getAs<FunctionType>()) {
-        Out << "P6";
-        mangleFunctionType(FT, 0, false, false);
-      } else {
-        llvm_unreachable("unexpected decayed type");
-      }
-    } else {
-      mangleType(T, Range, QMM_Drop);
-    }
+    mangleType(T, Range, QMM_Drop);
 
     // See if it's worth creating a back reference.
     // Only types longer than 1 character are considered
@@ -1467,22 +1472,13 @@ void MicrosoftCXXNameMangler::mangleType(const TagDecl *TD) {
 // <array-type> ::= <pointer-cvr-qualifiers> <cvr-qualifiers>
 //                  [Y <dimension-count> <dimension>+]
 //                  <element-type> # as global, E is never required
-//              ::= Q E? <cvr-qualifiers> [Y <dimension-count> <dimension>+]
-//                  <element-type> # as param, E is required for 64-bit
 // It's supposed to be the other way around, but for some strange reason, it
 // isn't. Today this behavior is retained for the sole purpose of backwards
 // compatibility.
-void MicrosoftCXXNameMangler::mangleDecayedArrayType(const ArrayType *T,
-                                                     bool IsGlobal) {
+void MicrosoftCXXNameMangler::mangleDecayedArrayType(const ArrayType *T) {
   // This isn't a recursive mangling, so now we have to do it all in this
   // one call.
-  if (IsGlobal) {
-    manglePointerQualifiers(T->getElementType().getQualifiers());
-  } else {
-    Out << 'Q';
-    if (PointersAre64Bit)
-      Out << 'E';
-  }
+  manglePointerQualifiers(T->getElementType().getQualifiers());
   mangleType(T->getElementType(), SourceRange());
 }
 void MicrosoftCXXNameMangler::mangleType(const ConstantArrayType *T,

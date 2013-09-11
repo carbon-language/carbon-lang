@@ -204,3 +204,37 @@ void mangle_fwd(char * x) {}
 void mangle_no_fwd(char * x) {}
 // CHECK: "\01?mangle_no_fwd@@YAXPAD@Z"
 // X64:   "\01?mangle_no_fwd@@YAXPEAD@Z"
+
+// The first argument gets mangled as-if it were written "int *const"
+// The second arg should not form a backref because it isn't qualified
+void mangle_no_backref0(int[], int *) {}
+// CHECK: "\01?mangle_no_backref0@@YAXQAHPAH@Z"
+// X64:   "\01?mangle_no_backref0@@YAXQEAHPEAH@Z"
+
+void mangle_no_backref1(int[], int *const) {}
+// CHECK: "\01?mangle_no_backref1@@YAXQAHQAH@Z"
+// X64:   "\01?mangle_no_backref1@@YAXQEAHQEAH@Z"
+
+typedef void fun_type(void);
+typedef void (*ptr_to_fun_type)(void);
+
+// Pointer to function types don't backref with function types
+void mangle_no_backref2(fun_type, ptr_to_fun_type) {}
+// CHECK: "\01?mangle_no_backref2@@YAXP6AXXZP6AXXZ@Z"
+// X64:   "\01?mangle_no_backref2@@YAXP6AXXZP6AXXZ@Z"
+
+void mangle_yes_backref0(int[], int []) {}
+// CHECK: "\01?mangle_yes_backref0@@YAXQAH0@Z"
+// X64:   "\01?mangle_yes_backref0@@YAXQEAH0@Z"
+
+void mangle_yes_backref1(int *const, int *const) {}
+// CHECK: "\01?mangle_yes_backref1@@YAXQAH0@Z"
+// X64:   "\01?mangle_yes_backref1@@YAXQEAH0@Z"
+
+void mangle_yes_backref2(fun_type *const[], ptr_to_fun_type const[]) {}
+// CHECK: "\01?mangle_yes_backref2@@YAXQBQ6AXXZ0@Z"
+// X64:   "\01?mangle_yes_backref2@@YAXQEBQ6AXXZ0@Z"
+
+void mangle_yes_backref3(ptr_to_fun_type *const, void (**const)(void)) {}
+// CHECK: "\01?mangle_yes_backref3@@YAXQAP6AXXZ0@Z"
+// X64:   "\01?mangle_yes_backref3@@YAXQEAP6AXXZ0@Z"
