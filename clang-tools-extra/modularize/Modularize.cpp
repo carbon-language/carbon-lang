@@ -215,7 +215,7 @@ error_code getHeaderFileNames(SmallVectorImpl<std::string> &HeaderFileNames,
       else
         HeaderFileName = CurrentDirectory;
       sys::path::append(HeaderFileName, TargetAndDependents.first);
-      llvm::sys::path::native(HeaderFileName.str(), HeaderFileName);
+      sys::path::native(HeaderFileName);
     }
     // Handle optional dependencies.
     DependentsVector Dependents;
@@ -233,7 +233,7 @@ error_code getHeaderFileNames(SmallVectorImpl<std::string> &HeaderFileNames,
           Dependent = CurrentDirectory;
         sys::path::append(Dependent, DependentsList[Index]);
       }
-      llvm::sys::path::native(Dependent.str(), Dependent);
+      sys::path::native(Dependent);
       Dependents.push_back(Dependent.str());
     }
     // Save the resulting header file path and dependencies.
