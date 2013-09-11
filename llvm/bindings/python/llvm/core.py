@@ -103,11 +103,11 @@ class Module(LLVMObject):
         return m
 
     @property
-    def data_layout(self):
+    def datalayout(self):
         return lib.LLVMGetDataLayout(self)
 
-    @data_layout.setter
-    def data_layout(self, new_data_layout):
+    @datalayout.setter
+    def datalayout(self, new_data_layout):
         """new_data_layout is a string."""
         lib.LLVMSetDataLayout(self, new_data_layout)
 
