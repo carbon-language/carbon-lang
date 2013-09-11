@@ -988,10 +988,9 @@ processLoopStridedStore(Value *DestPtr, unsigned StoreSize,
     Expander.expandCodeFor(Ev->getStart(), Builder.getInt8PtrTy(AddrSpace),
                            Preheader->getTerminator());
 
-
   if (mayLoopAccessLocation(BasePtr, AliasAnalysis::ModRef,
                             CurLoop, BECount,
-                            StoreSize, getAnalysis<AliasAnalysis>(), TheStore)){
+                            StoreSize, getAnalysis<AliasAnalysis>(), TheStore)) {
     Expander.clear();
     // If we generated new code for the base pointer, clean up.
     deleteIfDeadInstruction(BasePtr, *SE, TLI);
@@ -1007,17 +1006,21 @@ processLoopStridedStore(Value *DestPtr, unsigned StoreSize,
 
   const SCEV *NumBytesS = SE->getAddExpr(BECount, SE->getConstant(IntPtr, 1),
                                          SCEV::FlagNUW);
-  if (StoreSize != 1)
+  if (StoreSize != 1) {
     NumBytesS = SE->getMulExpr(NumBytesS, SE->getConstant(IntPtr, StoreSize),
                                SCEV::FlagNUW);
+  }
 
   Value *NumBytes =
     Expander.expandCodeFor(NumBytesS, IntPtr, Preheader->getTerminator());
 
   CallInst *NewCall;
-  if (SplatValue)
-    NewCall = Builder.CreateMemSet(BasePtr, SplatValue,NumBytes,StoreAlignment);
-  else {
+  if (SplatValue) {
+    NewCall = Builder.CreateMemSet(BasePtr,
+                                   SplatValue,
+                                   NumBytes,
+                                   StoreAlignment);
+  } else {
     Module *M = TheStore->getParent()->getParent()->getParent();
     Value *MSP = M->getOrInsertFunction("memset_pattern16",
                                         Builder.getVoidTy(),
