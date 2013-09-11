@@ -235,26 +235,6 @@ namespace {
       savedAttrs.back()->setNext(0);
     }
   };
-
-  /// Basically std::pair except that we really want to avoid an
-  /// implicit operator= for safety concerns.  It's also a minor
-  /// link-time optimization for this to be a private type.
-  struct AttrAndList {
-    /// The attribute.
-    AttributeList &first;
-
-    /// The head of the list the attribute is currently in.
-    AttributeList *&second;
-
-    AttrAndList(AttributeList &attr, AttributeList *&head)
-      : first(attr), second(head) {}
-  };
-}
-
-namespace llvm {
-  template <> struct isPodLike<AttrAndList> {
-    static const bool value = true;
-  };
 }
 
 static void spliceAttrIntoList(AttributeList &attr, AttributeList *&head) {
