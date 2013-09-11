@@ -26,7 +26,7 @@ namespace llvm {
   class SMDiagnostic;
   class LLVMContext;
 
-  class LLLexer {
+  class LLVM_LIBRARY_VISIBILITY LLLexer {
     const char *CurPtr;
     MemoryBuffer *CurBuf;
     SMDiagnostic &ErrorInfo;

@@ -56,7 +56,7 @@ class Spiller;
 /// Register allocators must override the selectOrSplit() method to implement
 /// live range splitting. They must also override enqueue/dequeue to provide an
 /// assignment order.
-class RegAllocBase {
+class LLVM_LIBRARY_VISIBILITY RegAllocBase {
 protected:
   const TargetRegisterInfo *TRI;
   MachineRegisterInfo *MRI;

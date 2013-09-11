@@ -27,7 +27,7 @@ class Value;
 /// SDDbgValue - Holds the information from a dbg_value node through SDISel.
 /// We do not use SDValue here to avoid including its header.
 
-class SDDbgValue {
+class LLVM_LIBRARY_VISIBILITY SDDbgValue {
 public:
   enum DbgValueKind {
     SDNODE = 0,             // value is the result of an expression

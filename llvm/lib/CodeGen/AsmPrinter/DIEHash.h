@@ -19,7 +19,7 @@ class CompileUnit;
 
 /// \brief An object containing the capability of hashing and adding hash
 /// attributes onto a DIE.
-class DIEHash {
+class LLVM_LIBRARY_VISIBILITY DIEHash {
   // The entry for a particular attribute.
   struct AttrEntry {
     const DIEValue *Val;

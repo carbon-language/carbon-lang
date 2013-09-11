@@ -30,7 +30,7 @@ namespace llvm {
   //===--------------------------------------------------------------------===//
   /// DIEAbbrevData - Dwarf abbreviation data, describes one attribute of a
   /// Dwarf abbreviation.
-  class DIEAbbrevData {
+  class LLVM_LIBRARY_VISIBILITY DIEAbbrevData {
     /// Attribute - Dwarf attribute code.
     ///
     uint16_t Attribute;
@@ -53,7 +53,7 @@ namespace llvm {
   //===--------------------------------------------------------------------===//
   /// DIEAbbrev - Dwarf abbreviation, describes the organization of a debug
   /// information object.
-  class DIEAbbrev : public FoldingSetNode {
+  class LLVM_LIBRARY_VISIBILITY DIEAbbrev : public FoldingSetNode {
     /// Tag - Dwarf tag code.
     ///
     uint16_t Tag;
@@ -107,7 +107,7 @@ namespace llvm {
   /// describes its organization.
   class DIEValue;
 
-  class DIE {
+  class LLVM_LIBRARY_VISIBILITY DIE {
   protected:
     /// Offset - Offset in debug info section.
     ///
@@ -188,7 +188,7 @@ namespace llvm {
   //===--------------------------------------------------------------------===//
   /// DIEValue - A debug information entry value.
   ///
-  class DIEValue {
+  class LLVM_LIBRARY_VISIBILITY DIEValue {
     virtual void anchor();
   public:
     enum {
@@ -228,7 +228,7 @@ namespace llvm {
   //===--------------------------------------------------------------------===//
   /// DIEInteger - An integer value DIE.
   ///
-  class DIEInteger : public DIEValue {
+  class LLVM_LIBRARY_VISIBILITY DIEInteger : public DIEValue {
     uint64_t Integer;
   public:
     explicit DIEInteger(uint64_t I) : DIEValue(isInteger), Integer(I) {}
@@ -270,7 +270,7 @@ namespace llvm {
   //===--------------------------------------------------------------------===//
   /// DIEExpr - An expression DIE.
   //
-  class DIEExpr : public DIEValue {
+  class LLVM_LIBRARY_VISIBILITY DIEExpr : public DIEValue {
     const MCExpr *Expr;
   public:
     explicit DIEExpr(const MCExpr *E) : DIEValue(isExpr), Expr(E) {}
@@ -298,7 +298,7 @@ namespace llvm {
   //===--------------------------------------------------------------------===//
   /// DIELabel - A label DIE.
   //
-  class DIELabel : public DIEValue {
+  class LLVM_LIBRARY_VISIBILITY DIELabel : public DIEValue {
     const MCSymbol *Label;
   public:
     explicit DIELabel(const MCSymbol *L) : DIEValue(isLabel), Label(L) {}
@@ -326,7 +326,7 @@ namespace llvm {
   //===--------------------------------------------------------------------===//
   /// DIEDelta - A simple label difference DIE.
   ///
-  class DIEDelta : public DIEValue {
+  class LLVM_LIBRARY_VISIBILITY DIEDelta : public DIEValue {
     const MCSymbol *LabelHi;
     const MCSymbol *LabelLo;
   public:
@@ -352,7 +352,7 @@ namespace llvm {
   //===--------------------------------------------------------------------===//
   /// DIEString - A container for string values.
   ///
-  class DIEString : public DIEValue {
+  class LLVM_LIBRARY_VISIBILITY DIEString : public DIEValue {
     const DIEValue *Access;
     const StringRef Str;
 
@@ -383,7 +383,7 @@ namespace llvm {
   /// DIEEntry - A pointer to another debug information entry.  An instance of
   /// this class can also be used as a proxy for a debug information entry not
   /// yet defined (ie. types.)
-  class DIEEntry : public DIEValue {
+  class LLVM_LIBRARY_VISIBILITY DIEEntry : public DIEValue {
     DIE *const Entry;
   public:
     explicit DIEEntry(DIE *E) : DIEValue(isEntry), Entry(E) {
@@ -417,7 +417,7 @@ namespace llvm {
   //===--------------------------------------------------------------------===//
   /// DIEBlock - A block of values.  Primarily used for location expressions.
   //
-  class DIEBlock : public DIEValue, public DIE {
+  class LLVM_LIBRARY_VISIBILITY DIEBlock : public DIEValue, public DIE {
     unsigned Size;                // Size in bytes excluding size header.
   public:
     DIEBlock()

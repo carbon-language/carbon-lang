@@ -34,7 +34,7 @@ class ValueSymbolTable;
 class MDSymbolTable;
 class raw_ostream;
 
-class ValueEnumerator {
+class LLVM_LIBRARY_VISIBILITY ValueEnumerator {
 public:
   typedef std::vector<Type*> TypeList;
 

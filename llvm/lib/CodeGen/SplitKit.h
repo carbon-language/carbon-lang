@@ -39,7 +39,7 @@ class raw_ostream;
 
 /// SplitAnalysis - Analyze a LiveInterval, looking for live range splitting
 /// opportunities.
-class SplitAnalysis {
+class LLVM_LIBRARY_VISIBILITY SplitAnalysis {
 public:
   const MachineFunction &MF;
   const VirtRegMap &VRM;
@@ -208,7 +208,7 @@ public:
 /// - Finish the current interval with closeIntv and repeat from 2.
 /// - Rewrite instructions with finish().
 ///
-class SplitEditor {
+class LLVM_LIBRARY_VISIBILITY SplitEditor {
   SplitAnalysis &SA;
   LiveIntervals &LIS;
   VirtRegMap &VRM;

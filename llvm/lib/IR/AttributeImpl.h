@@ -29,7 +29,7 @@ class LLVMContext;
 /// \class
 /// \brief This class represents a single, uniqued attribute. That attribute
 /// could be a single enum, a tuple, or a string.
-class AttributeImpl : public FoldingSetNode {
+class LLVM_LIBRARY_VISIBILITY AttributeImpl : public FoldingSetNode {
   unsigned char KindID; ///< Holds the AttrEntryKind of the attribute
 
   // AttributesImpl is uniqued, these should not be publicly available.
@@ -93,7 +93,7 @@ public:
 /// represented by Attribute::AttrKind; alignment attribute entries; and string
 /// attribute enties, which are for target-dependent attributes.
 
-class EnumAttributeImpl : public AttributeImpl {
+class LLVM_LIBRARY_VISIBILITY EnumAttributeImpl : public AttributeImpl {
   Attribute::AttrKind Kind;
 
 protected:
@@ -107,7 +107,7 @@ public:
   Attribute::AttrKind getEnumKind() const { return Kind; }
 };
 
-class AlignAttributeImpl : public EnumAttributeImpl {
+class LLVM_LIBRARY_VISIBILITY AlignAttributeImpl : public EnumAttributeImpl {
   unsigned Align;
 
 public:
@@ -121,7 +121,7 @@ public:
   unsigned getAlignment() const { return Align; }
 };
 
-class StringAttributeImpl : public AttributeImpl {
+class LLVM_LIBRARY_VISIBILITY StringAttributeImpl : public AttributeImpl {
   std::string Kind;
   std::string Val;
 
@@ -137,7 +137,7 @@ public:
 /// \class
 /// \brief This class represents a group of attributes that apply to one
 /// element: function, return type, or parameter.
-class AttributeSetNode : public FoldingSetNode {
+class LLVM_LIBRARY_VISIBILITY AttributeSetNode : public FoldingSetNode {
   unsigned NumAttrs; ///< Number of attributes in this node.
 
   AttributeSetNode(ArrayRef<Attribute> Attrs) : NumAttrs(Attrs.size()) {
@@ -180,7 +180,7 @@ public:
 /// \class
 /// \brief This class represents a set of attributes that apply to the function,
 /// return type, and parameters.
-class AttributeSetImpl : public FoldingSetNode {
+class LLVM_LIBRARY_VISIBILITY AttributeSetImpl : public FoldingSetNode {
   friend class AttributeSet;
 
   LLVMContext &Context;

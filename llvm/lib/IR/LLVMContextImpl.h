@@ -41,7 +41,7 @@ class LLVMContext;
 class Type;
 class Value;
 
-struct DenseMapAPIntKeyInfo {
+struct LLVM_LIBRARY_VISIBILITY DenseMapAPIntKeyInfo {
   struct KeyTy {
     APInt val;
     Type* type;
@@ -66,7 +66,7 @@ struct DenseMapAPIntKeyInfo {
   }
 };
 
-struct DenseMapAPFloatKeyInfo {
+struct LLVM_LIBRARY_VISIBILITY DenseMapAPFloatKeyInfo {
   struct KeyTy {
     APFloat val;
     KeyTy(const APFloat& V) : val(V){}
@@ -94,7 +94,7 @@ struct DenseMapAPFloatKeyInfo {
   }
 };
 
-struct AnonStructTypeKeyInfo {
+struct LLVM_LIBRARY_VISIBILITY AnonStructTypeKeyInfo {
   struct KeyTy {
     ArrayRef<Type*> ETypes;
     bool isPacked;
@@ -138,7 +138,7 @@ struct AnonStructTypeKeyInfo {
   }
 };
 
-struct FunctionTypeKeyInfo {
+struct LLVM_LIBRARY_VISIBILITY FunctionTypeKeyInfo {
   struct KeyTy {
     const Type *ReturnType;
     ArrayRef<Type*> Params;
@@ -209,7 +209,7 @@ template<> struct FoldingSetTrait<MDNode> : DefaultFoldingSetTrait<MDNode> {
 
 /// DebugRecVH - This is a CallbackVH used to keep the Scope -> index maps
 /// up to date as MDNodes mutate.  This class is implemented in DebugLoc.cpp.
-class DebugRecVH : public CallbackVH {
+class LLVM_LIBRARY_VISIBILITY DebugRecVH : public CallbackVH {
   /// Ctx - This is the LLVM Context being referenced.
   LLVMContextImpl *Ctx;
   
@@ -230,7 +230,7 @@ public:
   virtual void allUsesReplacedWith(Value *VNew);
 };
   
-class LLVMContextImpl {
+class LLVM_LIBRARY_VISIBILITY LLVMContextImpl {
 public:
   /// OwnedModules - The set of modules instantiated in this context, and which
   /// will be automatically deleted if this context is deleted.

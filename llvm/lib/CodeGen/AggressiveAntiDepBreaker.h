@@ -34,7 +34,7 @@ class RegisterClassInfo;
 
   /// Class AggressiveAntiDepState
   /// Contains all the state necessary for anti-dep breaking.
-  class AggressiveAntiDepState {
+  class LLVM_LIBRARY_VISIBILITY AggressiveAntiDepState {
   public:
     /// RegisterReference - Information about a register reference
     /// within a liverange
@@ -114,7 +114,8 @@ class RegisterClassInfo;
 
 
   /// Class AggressiveAntiDepBreaker
-  class AggressiveAntiDepBreaker : public AntiDepBreaker {
+  class LLVM_LIBRARY_VISIBILITY AggressiveAntiDepBreaker
+      : public AntiDepBreaker {
     MachineFunction& MF;
     MachineRegisterInfo &MRI;
     const TargetInstrInfo *TII;
