@@ -60,4 +60,4 @@ add_dependencies(clangBasic
 )
 
 add_custom_command(TARGET clangBasic POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/SVNVersion.inc)
+  COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/SVNVersion.inc)
