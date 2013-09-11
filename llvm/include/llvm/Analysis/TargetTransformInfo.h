@@ -29,6 +29,7 @@
 namespace llvm {
 
 class GlobalValue;
+class Loop;
 class Type;
 class User;
 class Value;
@@ -190,6 +191,36 @@ public:
   /// query more accurately as the a call is a single small instruction, but
   /// incurs significant execution cost.
   virtual bool isLoweredToCall(const Function *F) const;
+
+  /// Parameters that control the generic loop unrolling transformation.
+  struct UnrollingPreferences {
+    /// The cost threshold for the unrolled loop, compared to
+    /// CodeMetrics.NumInsts aggregated over all basic blocks in the loop body.
+    /// The unrolling factor is set such that the unrolled loop body does not
+    /// exceed this cost. Set this to UINT_MAX to disable the loop body cost
+    /// restriction.
+    unsigned Threshold;
+    /// The cost threshold for the unrolled loop when optimizing for size (set
+    /// to UINT_MAX to disable).
+    unsigned OptSizeThreshold;
+    /// A forced unrolling factor (the number of concatenated bodies of the
+    /// original loop in the unrolled loop body). When set to 0, the unrolling
+    /// transformation will select an unrolling factor based on the current cost
+    /// threshold and other factors.
+    unsigned Count;
+    /// Allow partial unrolling (unrolling of loops to expand the size of the
+    /// loop body, not only to eliminate small constant-trip-count loops).
+    bool     Partial;
+    /// Allow runtime unrolling (unrolling of loops to expand the size of the
+    /// loop body even when the number of loop iterations is not known at compile
+    /// time).
+    bool     Runtime;
+  };
+
+  /// \brief Get target-customized preferences for the generic loop unrolling
+  /// transformation. The caller will initialize UP with the current
+  /// target-independent defaults.
+  virtual void getUnrollingPreferences(Loop *L, UnrollingPreferences &UP) const;
 
   /// @}
 

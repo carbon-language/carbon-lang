@@ -84,6 +84,7 @@ public:
   virtual unsigned getJumpBufSize() const;
   virtual bool shouldBuildLookupTables() const;
   virtual bool haveFastSqrt(Type *Ty) const;
+  virtual void getUnrollingPreferences(Loop *L, UnrollingPreferences &UP) const;
 
   /// @}
 
@@ -188,6 +189,8 @@ bool BasicTTI::haveFastSqrt(Type *Ty) const {
   EVT VT = TLI->getValueType(Ty);
   return TLI->isTypeLegal(VT) && TLI->isOperationLegalOrCustom(ISD::FSQRT, VT);
 }
+
+void BasicTTI::getUnrollingPreferences(Loop *, UnrollingPreferences &) const { }
 
 //===----------------------------------------------------------------------===//
 //
