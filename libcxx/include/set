@@ -66,6 +66,11 @@ public:
     set(initializer_list<value_type> il, const value_compare& comp = value_compare());
     set(initializer_list<value_type> il, const value_compare& comp,
         const allocator_type& a);
+    template <class InputIterator>
+        set(InputIterator first, InputIterator last, const allocator_type& a)
+            : set(first, last, Compare(), a) {}  // C++14
+    set(initializer_list<value_type> il, const allocator_type& a)
+        : set(il, Compare(), a) {}  // C++14
     ~set();
 
     set& operator=(const set& s);
@@ -242,6 +247,11 @@ public:
     multiset(initializer_list<value_type> il, const value_compare& comp = value_compare());
     multiset(initializer_list<value_type> il, const value_compare& comp,
              const allocator_type& a);
+    template <class InputIterator>
+        multiset(InputIterator first, InputIterator last, const allocator_type& a)
+            : set(first, last, Compare(), a) {}  // C++14
+    multiset(initializer_list<value_type> il, const allocator_type& a)
+        : set(il, Compare(), a) {}  // C++14
     ~multiset();
 
     multiset& operator=(const multiset& s);
@@ -442,6 +452,13 @@ public:
             insert(__f, __l);
         }
 
+#if _LIBCPP_STD_VER > 11
+        template <class _InputIterator>
+        _LIBCPP_INLINE_VISIBILITY 
+        set(_InputIterator __f, _InputIterator __l, const allocator_type& __a)
+            : set(__f, __l, key_compare(), __a) {}
+#endif
+
     _LIBCPP_INLINE_VISIBILITY
     set(const set& __s)
         : __tree_(__s.__tree_)
@@ -493,6 +510,12 @@ public:
         {
             insert(__il.begin(), __il.end());
         }
+
+#if _LIBCPP_STD_VER > 11
+    _LIBCPP_INLINE_VISIBILITY 
+    set(initializer_list<value_type> __il, const allocator_type& __a)
+        : set(__il, key_compare(), __a) {}
+#endif
 
     _LIBCPP_INLINE_VISIBILITY
     set& operator=(initializer_list<value_type> __il)
@@ -817,6 +840,13 @@ public:
             insert(__f, __l);
         }
 
+#if _LIBCPP_STD_VER > 11
+        template <class _InputIterator>
+        _LIBCPP_INLINE_VISIBILITY 
+        multiset(_InputIterator __f, _InputIterator __l, const allocator_type& __a)
+            : multiset(__f, __l, key_compare(), __a) {}
+#endif
+
     template <class _InputIterator>
         _LIBCPP_INLINE_VISIBILITY
         multiset(_InputIterator __f, _InputIterator __l,
@@ -875,6 +905,12 @@ public:
         {
             insert(__il.begin(), __il.end());
         }
+
+#if _LIBCPP_STD_VER > 11
+    _LIBCPP_INLINE_VISIBILITY 
+    multiset(initializer_list<value_type> __il, const allocator_type& __a)
+        : multiset(__il, key_compare(), __a) {}
+#endif
 
     _LIBCPP_INLINE_VISIBILITY
     multiset& operator=(initializer_list<value_type> __il)
