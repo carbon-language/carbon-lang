@@ -457,7 +457,7 @@ static SUnit *getSingleUnscheduledSucc(SUnit *SU) {
 // Constants used to denote relative importance of
 // heuristic components for cost computation.
 static const unsigned PriorityOne = 200;
-static const unsigned PriorityThree = 50;
+static const unsigned PriorityTwo = 50;
 static const unsigned ScaleTwo = 10;
 static const unsigned FactorOne = 2;
 
@@ -515,8 +515,8 @@ int ConvergingVLIWScheduler::SchedulingCost(ReadyQueue &Q, SUnit *SU,
   ResCount += (NumNodesBlocking * ScaleTwo);
 
   // Factor in reg pressure as a heuristic.
-  ResCount -= (Delta.Excess.getUnitInc()*PriorityThree);
-  ResCount -= (Delta.CriticalMax.getUnitInc()*PriorityThree);
+  ResCount -= (Delta.Excess.getUnitInc()*PriorityTwo);
+  ResCount -= (Delta.CriticalMax.getUnitInc()*PriorityTwo);
 
   DEBUG(if (verbose) dbgs() << " Total(" << ResCount << ")");
 

@@ -389,9 +389,9 @@ signed ResourcePriorityQueue::regPressureDelta(SUnit *SU, bool RawPressure) {
 // Constants used to denote relative importance of
 // heuristic components for cost computation.
 static const unsigned PriorityOne = 200;
-static const unsigned PriorityThree = 50;
-static const unsigned PriorityFour = 15;
-static const unsigned PriorityFive = 5;
+static const unsigned PriorityTwo = 50;
+static const unsigned PriorityThree = 15;
+static const unsigned PriorityFour = 5;
 static const unsigned ScaleOne = 20;
 static const unsigned ScaleTwo = 10;
 static const unsigned ScaleThree = 5;
@@ -448,7 +448,7 @@ signed ResourcePriorityQueue::SUSchedulingCost(SUnit *SU) {
     if (N->isMachineOpcode()) {
       const MCInstrDesc &TID = TII->get(N->getMachineOpcode());
       if (TID.isCall())
-        ResCount += (PriorityThree + (ScaleThree*N->getNumValues()));
+        ResCount += (PriorityTwo + (ScaleThree*N->getNumValues()));
     }
     else
       switch (N->getOpcode()) {
@@ -456,11 +456,11 @@ signed ResourcePriorityQueue::SUSchedulingCost(SUnit *SU) {
       case ISD::TokenFactor:
       case ISD::CopyFromReg:
       case ISD::CopyToReg:
-        ResCount += PriorityFive;
+        ResCount += PriorityFour;
         break;
 
       case ISD::INLINEASM:
-        ResCount += PriorityFour;
+        ResCount += PriorityThree;
         break;
       }
   }
