@@ -991,9 +991,6 @@ void ObjCMigrateASTConsumer::AddCFAnnotations(ASTContext &Ctx,
       if (Ret.isOwned() &&
           Ctx.Idents.get("NS_RETURNS_RETAINED").hasMacroDefinition())
         AnnotationString = " NS_RETURNS_RETAINED";
-      else if (Ret.notOwned() &&
-               Ctx.Idents.get("NS_RETURNS_NOT_RETAINED").hasMacroDefinition())
-        AnnotationString = " NS_RETURNS_NOT_RETAINED";
     }
     
     if (AnnotationString) {
@@ -1125,9 +1122,6 @@ void ObjCMigrateASTConsumer::AddCFAnnotations(ASTContext &Ctx,
           if (Ret.isOwned() &&
               Ctx.Idents.get("NS_RETURNS_RETAINED").hasMacroDefinition())
             AnnotationString = " NS_RETURNS_RETAINED";
-          else if (Ret.notOwned() &&
-                   Ctx.Idents.get("NS_RETURNS_NOT_RETAINED").hasMacroDefinition())
-            AnnotationString = " NS_RETURNS_NOT_RETAINED";
           break;
       }
     }
