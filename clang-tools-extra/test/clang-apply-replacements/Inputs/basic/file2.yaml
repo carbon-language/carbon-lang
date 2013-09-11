@@ -1,8 +1,8 @@
 ---
-MainSourceFile:     "source2.cpp"
+MainSourceFile:     source2.cpp
 Replacements:
-  - FilePath:        "$(path)/basic.h"
+  - FilePath:        $(path)/basic.h
     Offset:          148
     Length:          0
-    ReplacementText: "override "
+    ReplacementText: 'override '
 ...
