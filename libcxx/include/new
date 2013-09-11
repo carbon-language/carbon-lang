@@ -27,6 +27,18 @@ public:
     virtual const char* what() const noexcept;
 };
 
+class bad_array_length : public bad_alloc // C++14
+{
+public:
+    bad_array_length() noexcept;
+};
+
+class bad_array_new_length : public bad_alloc
+{
+public:
+    bad_array_new_length() noexcept;
+};
+
 struct nothrow_t {};
 extern const nothrow_t nothrow;
 typedef void (*new_handler)();
@@ -80,6 +92,17 @@ public:
     virtual ~bad_array_new_length() _NOEXCEPT;
     virtual const char* what() const _NOEXCEPT;
 };
+
+#if defined(_LIBCPP_BUILDING_NEW) || (_LIBCPP_STD_VER > 11)
+class _LIBCPP_EXCEPTION_ABI bad_array_length
+    : public bad_alloc
+{
+public:
+    bad_array_length() _NOEXCEPT;
+    virtual ~bad_array_length() _NOEXCEPT;
+    virtual const char* what() const _NOEXCEPT;
+};
+#endif
 
 _LIBCPP_FUNC_VIS void __throw_bad_alloc();  // not in C++ spec
 

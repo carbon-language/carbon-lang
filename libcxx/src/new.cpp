@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define _LIBCPP_BUILDING_NEW
+
 #include <stdlib.h>
 
 #include "new"
@@ -187,12 +189,26 @@ bad_array_new_length::~bad_array_new_length() _NOEXCEPT
 }
 
 const char*
+bad_array_length::what() const _NOEXCEPT
+{
+    return "bad_array_length";
+}
+
+bad_array_length::bad_array_length() _NOEXCEPT
+{
+}
+
+bad_array_length::~bad_array_length() _NOEXCEPT
+{
+}
+
+const char*
 bad_array_new_length::what() const _NOEXCEPT
 {
     return "bad_array_new_length";
 }
 
-#endif
+#endif // _LIBCPPABI_VERSION
 
 void
 __throw_bad_alloc()
