@@ -273,64 +273,7 @@ TEST(YAMLIO, TestReadWriteBuiltInTypes) {
   }
 }
 
-struct StringTypes {
-  llvm::StringRef str1;
-  llvm::StringRef str2;
-  llvm::StringRef str3;
-  llvm::StringRef str4;
-  llvm::StringRef str5;
-};
 
-namespace llvm {
-namespace yaml {
-  template <>
-  struct MappingTraits<StringTypes> {
-    static void mapping(IO &io, StringTypes& st) {
-      io.mapRequired("str1",      st.str1);
-      io.mapRequired("str2",      st.str2);
-      io.mapRequired("str3",      st.str3);
-      io.mapRequired("str4",      st.str4);
-      io.mapRequired("str5",      st.str5);
-    }
-  };
-}
-}
-
-TEST(YAMLIO, TestReadWriteStringTypes) {
-  std::string intermediate;
-  {
-    StringTypes map;
-    map.str1 = "'aaa";
-    map.str2 = "\"bbb";
-    map.str3 = "`ccc";
-    map.str4 = "@ddd";
-    map.str5 = "";
-
-    llvm::raw_string_ostream ostr(intermediate);
-    Output yout(ostr);
-    yout << map;
-  }
-
-  llvm::StringRef flowOut(intermediate);
-  EXPECT_NE(llvm::StringRef::npos, flowOut.find("'''aaa"));
-  EXPECT_NE(llvm::StringRef::npos, flowOut.find("'\"bbb'"));
-  EXPECT_NE(llvm::StringRef::npos, flowOut.find("'`ccc'"));
-  EXPECT_NE(llvm::StringRef::npos, flowOut.find("'@ddd'"));
-  EXPECT_NE(llvm::StringRef::npos, flowOut.find("''\n"));
-
-  {
-    Input yin(intermediate);
-    StringTypes map;
-    yin >> map;
-
-    EXPECT_FALSE(yin.error());
-    EXPECT_TRUE(map.str1.equals("'aaa"));
-    EXPECT_TRUE(map.str2.equals("\"bbb"));
-    EXPECT_TRUE(map.str3.equals("`ccc"));
-    EXPECT_TRUE(map.str4.equals("@ddd"));
-    EXPECT_TRUE(map.str5.equals(""));
-  }
-}
 
 //===----------------------------------------------------------------------===//
 //  Test ScalarEnumerationTraits

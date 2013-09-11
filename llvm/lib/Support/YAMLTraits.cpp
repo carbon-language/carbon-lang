@@ -509,16 +509,8 @@ void Output::endBitSetScalar() {
 
 void Output::scalarString(StringRef &S) {
   this->newLineCheck();
-
-  if (S.empty()) {
-    // Print '' for the empty string because leaving the field empty is not
-    // allowed.
-    this->outputUpToEndOfLine("''");
-    return;
-  }
-  if (!strchr("'`@\"", S.front()) && S.find('\n') == StringRef::npos) {
-    // Plain string cannot start with double quote or single quote. Backquote
-    // and atsign are reserved characters. Newline is not allowed.
+  if (S.find('\n') == StringRef::npos) {
+    // No embedded new-line chars, just print string.
     this->outputUpToEndOfLine(S);
     return;
   }
