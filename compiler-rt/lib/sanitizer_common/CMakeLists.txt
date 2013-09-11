@@ -67,6 +67,10 @@ else()
     /GR-)
 endif()
 
+if(SUPPORTS_GLOBAL_CONSTRUCTORS_FLAG)
+  list(APPEND SANITIZER_CFLAGS -Wglobal-constructors)
+endif()
+
 set(SANITIZER_RUNTIME_LIBRARIES)
 if(APPLE)
   # Build universal binary on APPLE.
