@@ -541,11 +541,9 @@ ModuleMap::inferFrameworkModule(StringRef ModuleName,
   SmallString<128> SubframeworksDirName
     = StringRef(FrameworkDir->getName());
   llvm::sys::path::append(SubframeworksDirName, "Frameworks");
-  SmallString<128> SubframeworksDirNameNative;
-  llvm::sys::path::native(SubframeworksDirName.str(),
-                          SubframeworksDirNameNative);
+  llvm::sys::path::native(SubframeworksDirName);
   for (llvm::sys::fs::directory_iterator 
-         Dir(SubframeworksDirNameNative.str(), EC), DirEnd;
+         Dir(SubframeworksDirName.str(), EC), DirEnd;
        Dir != DirEnd && !EC; Dir.increment(EC)) {
     if (!StringRef(Dir->path()).endswith(".framework"))
       continue;
