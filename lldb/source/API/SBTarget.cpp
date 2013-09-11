@@ -1905,6 +1905,8 @@ SBTarget::AddModule (const char *path,
         
         if (triple)
             module_spec.GetArchitecture().SetTriple (triple, target_sp->GetPlatform ().get());
+        else
+            module_spec.GetArchitecture() = target_sp->GetArchitecture();
         
         if (symfile)
             module_spec.GetSymbolFileSpec ().SetFile(symfile, false);
