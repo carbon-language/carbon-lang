@@ -27,32 +27,6 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
-namespace CU {
-
-  /// Compact unwind encoding values.
-  enum CompactUnwindEncodings {
-    /// [RE]BP based frame where [RE]BP is pused on the stack immediately after
-    /// the return address, then [RE]SP is moved to [RE]BP.
-    UNWIND_MODE_BP_FRAME                   = 0x01000000,
-
-    /// A frameless function with a small constant stack size.
-    UNWIND_MODE_STACK_IMMD                 = 0x02000000,
-
-    /// A frameless function with a large constant stack size.
-    UNWIND_MODE_STACK_IND                  = 0x03000000,
-
-    /// No compact unwind encoding is available.
-    UNWIND_MODE_DWARF                      = 0x04000000,
-
-    /// Mask for encoding the frame registers.
-    UNWIND_BP_FRAME_REGISTERS              = 0x00007FFF,
-
-    /// Mask for encoding the frameless registers.
-    UNWIND_FRAMELESS_STACK_REG_PERMUTATION = 0x000003FF
-  };
-
-} // end CU namespace
-
 // Option to allow disabling arithmetic relaxation to workaround PR9807, which
 // is useful when running bitwise comparison experiments on Darwin. We should be
 // able to remove this once PR9807 is resolved.
@@ -360,6 +334,7 @@ bool X86AsmBackend::writeNopData(uint64_t Count, MCObjectWriter *OW) const {
 /* *** */
 
 namespace {
+
 class ELFX86AsmBackend : public X86AsmBackend {
 public:
   uint8_t OSABI;
@@ -407,6 +382,32 @@ public:
     return createX86WinCOFFObjectWriter(OS, Is64Bit);
   }
 };
+
+namespace CU {
+
+  /// Compact unwind encoding values.
+  enum CompactUnwindEncodings {
+    /// [RE]BP based frame where [RE]BP is pused on the stack immediately after
+    /// the return address, then [RE]SP is moved to [RE]BP.
+    UNWIND_MODE_BP_FRAME                   = 0x01000000,
+
+    /// A frameless function with a small constant stack size.
+    UNWIND_MODE_STACK_IMMD                 = 0x02000000,
+
+    /// A frameless function with a large constant stack size.
+    UNWIND_MODE_STACK_IND                  = 0x03000000,
+
+    /// No compact unwind encoding is available.
+    UNWIND_MODE_DWARF                      = 0x04000000,
+
+    /// Mask for encoding the frame registers.
+    UNWIND_BP_FRAME_REGISTERS              = 0x00007FFF,
+
+    /// Mask for encoding the frameless registers.
+    UNWIND_FRAMELESS_STACK_REG_PERMUTATION = 0x000003FF
+  };
+
+} // end CU namespace
 
 class DarwinX86AsmBackend : public X86AsmBackend {
   const MCRegisterInfo &MRI;
