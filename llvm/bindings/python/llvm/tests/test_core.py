@@ -37,7 +37,7 @@ class TestCore(TestBase):
 
     def test_create_module_with_name(self):
         # Make sure we can not create a module without a LLVMModuleRef.
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(TypeError):
             m = Module()
         m = Module.CreateWithName("test-module")
 
@@ -49,7 +49,8 @@ class TestCore(TestBase):
 
     def test_module_getset_target(self):
         m = Module.CreateWithName("test-module")
-        m.target = "thumbv7-apple-ios5.0.0"
+        target = "thumbv7-apple-ios5.0.0"
+        m.target = target
         self.assertEqual(m.target, target)
 
     def test_module_print_module_to_file(self):

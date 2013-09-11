@@ -125,8 +125,9 @@ class Module(LLVMObject):
 
     def print_module_to_file(self, filename):
         out = c_char_p(None)
-        result = lib.LLVMPrintModuleToFile(self, filename, byref(out))
-        if not result:
+        # Result is inverted so 0 means everything was ok.
+        result = lib.LLVMPrintModuleToFile(self, filename, byref(out))        
+        if result:
             raise RuntimeError("LLVM Error: %s" % out.value)
 
 class Context(LLVMObject):
