@@ -159,6 +159,7 @@ addMSAIntType(MVT::SimpleValueType Ty, const TargetRegisterClass *RC) {
   setOperationAction(ISD::LOAD, Ty, Legal);
   setOperationAction(ISD::STORE, Ty, Legal);
 
+  setOperationAction(ISD::ADD, Ty, Legal);
 }
 
 void MipsSETargetLowering::
@@ -799,6 +800,17 @@ static SDValue lowerDSPIntr(SDValue Op, SelectionDAG &DAG, unsigned Opc) {
   return DAG.getMergeValues(Vals, 2, DL);
 }
 
+static SDValue lowerMSABinaryIntr(SDValue Op, SelectionDAG &DAG, unsigned Opc) {
+  SDLoc DL(Op);
+  SDValue LHS = Op->getOperand(1);
+  SDValue RHS = Op->getOperand(2);
+  EVT ResTy = Op->getValueType(0);
+
+  SDValue Result = DAG.getNode(Opc, DL, ResTy, LHS, RHS);
+
+  return Result;
+}
+
 static SDValue lowerMSABranchIntr(SDValue Op, SelectionDAG &DAG, unsigned Opc) {
   SDLoc DL(Op);
   SDValue Value = Op->getOperand(1);
@@ -846,6 +858,11 @@ SDValue MipsSETargetLowering::lowerINTRINSIC_WO_CHAIN(SDValue Op,
     return lowerDSPIntr(Op, DAG, MipsISD::MSub);
   case Intrinsic::mips_msubu:
     return lowerDSPIntr(Op, DAG, MipsISD::MSubu);
+  case Intrinsic::mips_addv_b:
+  case Intrinsic::mips_addv_h:
+  case Intrinsic::mips_addv_w:
+  case Intrinsic::mips_addv_d:
+    return lowerMSABinaryIntr(Op, DAG, ISD::ADD);
   case Intrinsic::mips_bnz_b:
   case Intrinsic::mips_bnz_h:
   case Intrinsic::mips_bnz_w:

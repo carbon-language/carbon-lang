@@ -443,6 +443,74 @@ declare <2 x i64> @llvm.mips.addv.d(<2 x i64>, <2 x i64>) nounwind
 ; CHECK: st.d
 ; CHECK: .size llvm_mips_addv_d_test
 ;
+
+define void @addv_b_test() nounwind {
+entry:
+  %0 = load <16 x i8>* @llvm_mips_addv_b_ARG1
+  %1 = load <16 x i8>* @llvm_mips_addv_b_ARG2
+  %2 = add <16 x i8> %0, %1
+  store <16 x i8> %2, <16 x i8>* @llvm_mips_addv_b_RES
+  ret void
+}
+
+; CHECK: addv_b_test:
+; CHECK: ld.b
+; CHECK: ld.b
+; CHECK: addv.b
+; CHECK: st.b
+; CHECK: .size addv_b_test
+;
+
+define void @addv_h_test() nounwind {
+entry:
+  %0 = load <8 x i16>* @llvm_mips_addv_h_ARG1
+  %1 = load <8 x i16>* @llvm_mips_addv_h_ARG2
+  %2 = add <8 x i16> %0, %1
+  store <8 x i16> %2, <8 x i16>* @llvm_mips_addv_h_RES
+  ret void
+}
+
+; CHECK: addv_h_test:
+; CHECK: ld.h
+; CHECK: ld.h
+; CHECK: addv.h
+; CHECK: st.h
+; CHECK: .size addv_h_test
+;
+
+define void @addv_w_test() nounwind {
+entry:
+  %0 = load <4 x i32>* @llvm_mips_addv_w_ARG1
+  %1 = load <4 x i32>* @llvm_mips_addv_w_ARG2
+  %2 = add <4 x i32> %0, %1
+  store <4 x i32> %2, <4 x i32>* @llvm_mips_addv_w_RES
+  ret void
+}
+
+; CHECK: addv_w_test:
+; CHECK: ld.w
+; CHECK: ld.w
+; CHECK: addv.w
+; CHECK: st.w
+; CHECK: .size addv_w_test
+;
+
+define void @addv_d_test() nounwind {
+entry:
+  %0 = load <2 x i64>* @llvm_mips_addv_d_ARG1
+  %1 = load <2 x i64>* @llvm_mips_addv_d_ARG2
+  %2 = add <2 x i64> %0, %1
+  store <2 x i64> %2, <2 x i64>* @llvm_mips_addv_d_RES
+  ret void
+}
+
+; CHECK: addv_d_test:
+; CHECK: ld.d
+; CHECK: ld.d
+; CHECK: addv.d
+; CHECK: st.d
+; CHECK: .size addv_d_test
+;
 @llvm_mips_asub_s_b_ARG1 = global <16 x i8> <i8 0, i8 1, i8 2, i8 3, i8 4, i8 5, i8 6, i8 7, i8 8, i8 9, i8 10, i8 11, i8 12, i8 13, i8 14, i8 15>, align 16
 @llvm_mips_asub_s_b_ARG2 = global <16 x i8> <i8 16, i8 17, i8 18, i8 19, i8 20, i8 21, i8 22, i8 23, i8 24, i8 25, i8 26, i8 27, i8 28, i8 29, i8 30, i8 31>, align 16
 @llvm_mips_asub_s_b_RES  = global <16 x i8> <i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0>, align 16

@@ -18,6 +18,7 @@ def MipsVAnyNonZero : SDNode<"MipsISD::VANY_NONZERO", SDT_MipsVecCond>;
 def MipsVAllZero : SDNode<"MipsISD::VALL_ZERO", SDT_MipsVecCond>;
 def MipsVAnyZero : SDNode<"MipsISD::VANY_ZERO", SDT_MipsVecCond>;
 
+// Immediates
 def immSExt5 : ImmLeaf<i32, [{return isInt<5>(Imm);}]>;
 def immSExt10: ImmLeaf<i32, [{return isInt<10>(Imm);}]>;
 
@@ -980,14 +981,10 @@ class ADDS_U_W_DESC : MSA_3R_DESC_BASE<"adds_u.w", int_mips_adds_u_w, MSA128W>,
 class ADDS_U_D_DESC : MSA_3R_DESC_BASE<"adds_u.d", int_mips_adds_u_d, MSA128D>,
                       IsCommutable;
 
-class ADDV_B_DESC : MSA_3R_DESC_BASE<"addv.b", int_mips_addv_b, MSA128B>,
-                    IsCommutable;
-class ADDV_H_DESC : MSA_3R_DESC_BASE<"addv.h", int_mips_addv_h, MSA128H>,
-                    IsCommutable;
-class ADDV_W_DESC : MSA_3R_DESC_BASE<"addv.w", int_mips_addv_w, MSA128W>,
-                    IsCommutable;
-class ADDV_D_DESC : MSA_3R_DESC_BASE<"addv.d", int_mips_addv_d, MSA128D>,
-                    IsCommutable;
+class ADDV_B_DESC : MSA_3R_DESC_BASE<"addv.b", add, MSA128B>, IsCommutable;
+class ADDV_H_DESC : MSA_3R_DESC_BASE<"addv.h", add, MSA128H>, IsCommutable;
+class ADDV_W_DESC : MSA_3R_DESC_BASE<"addv.w", add, MSA128W>, IsCommutable;
+class ADDV_D_DESC : MSA_3R_DESC_BASE<"addv.d", add, MSA128D>, IsCommutable;
 
 class ADDVI_B_DESC : MSA_I5_DESC_BASE<"addvi.b", int_mips_addvi_b, MSA128B>;
 class ADDVI_H_DESC : MSA_I5_DESC_BASE<"addvi.h", int_mips_addvi_h, MSA128H>;
