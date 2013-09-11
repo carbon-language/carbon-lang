@@ -823,7 +823,10 @@ SourceLocation CXXTemporaryObjectExpr::getLocStart() const {
 }
 
 SourceLocation CXXTemporaryObjectExpr::getLocEnd() const {
-  return getParenOrBraceRange().getEnd();
+  SourceLocation Loc = getParenOrBraceRange().getEnd();
+  if (Loc.isInvalid() && getNumArgs())
+    Loc = getArg(getNumArgs()-1)->getLocEnd();
+  return Loc;
 }
 
 CXXConstructExpr *CXXConstructExpr::Create(const ASTContext &C, QualType T,
