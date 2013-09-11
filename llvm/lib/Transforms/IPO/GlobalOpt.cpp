@@ -1504,7 +1504,7 @@ static GlobalVariable *PerformHeapAllocSRoA(GlobalVariable *GV, CallInst *CI,
     unsigned TypeSize = TD->getTypeAllocSize(FieldTy);
     if (StructType *ST = dyn_cast<StructType>(FieldTy))
       TypeSize = TD->getStructLayout(ST)->getSizeInBytes();
-    Type *IntPtrTy = TD->getIntPtrType(CI->getContext());
+    Type *IntPtrTy = TD->getIntPtrType(CI->getType());
     Value *NMI = CallInst::CreateMalloc(CI, IntPtrTy, FieldTy,
                                         ConstantInt::get(IntPtrTy, TypeSize),
                                         NElems, 0,
@@ -1734,7 +1734,7 @@ static bool TryToOptimizeStoreOfMallocToGlobal(GlobalVariable *GV,
     // If this is a fixed size array, transform the Malloc to be an alloc of
     // structs.  malloc [100 x struct],1 -> malloc struct, 100
     if (ArrayType *AT = dyn_cast<ArrayType>(getMallocAllocatedType(CI, TLI))) {
-      Type *IntPtrTy = TD->getIntPtrType(CI->getContext());
+      Type *IntPtrTy = TD->getIntPtrType(CI->getType());
       unsigned TypeSize = TD->getStructLayout(AllocSTy)->getSizeInBytes();
       Value *AllocSize = ConstantInt::get(IntPtrTy, TypeSize);
       Value *NumElements = ConstantInt::get(IntPtrTy, AT->getNumElements());
