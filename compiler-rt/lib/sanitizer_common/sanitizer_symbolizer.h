@@ -71,6 +71,8 @@ struct DataInfo {
 
 class SymbolizerInterface {
  public:
+  virtual ~SymbolizerInterface() {}
+
   // Fills at most "max_frames" elements of "frames" with descriptions
   // for a given address (in all inlined functions). Returns the number
   // of descriptions actually filled.
