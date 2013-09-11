@@ -1,0 +1,6 @@
+module A {
+  header "a.h"
+}
+
+extern module B "moduleb.map"
+

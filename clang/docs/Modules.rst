@@ -238,6 +238,7 @@ Module map files use a simplified form of the C99 lexer, with the same rules for
   ``conflict``      ``framework``  ``requires``
   ``exclude``       ``header``     ``private``
   ``explicit``      ``link``       ``umbrella``
+  ``extern``
 
 Module map file
 ---------------
@@ -263,6 +264,7 @@ A module declaration describes a module, including the headers that contribute t
 
   *module-declaration*:
     ``explicit``:sub:`opt` ``framework``:sub:`opt` ``module`` *module-id* *attributes*:sub:`opt` '{' *module-member** '}'
+    ``extern`` ``module`` *module-id* *string-literal*
 
 The *module-id* should consist of only a single *identifier*, which provides the name of the module being defined. Each module shall have a single definition. 
 
@@ -294,6 +296,8 @@ Modules can have a number of different kinds of members, each of which is descri
     *link-declaration*
     *config-macros-declaration*
     *conflict-declaration*
+
+An extern module references a module defined by the *module-id* in a file given by the *string-literal*. The file can be referenced either by an absolute path or by a path relative to the current map file.
 
 Requires declaration
 ~~~~~~~~~~~~~~~~~~~~

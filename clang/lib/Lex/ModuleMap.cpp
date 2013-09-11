@@ -722,6 +722,7 @@ namespace clang {
       ExcludeKeyword,
       ExplicitKeyword,
       ExportKeyword,
+      ExternKeyword,
       FrameworkKeyword,
       LinkKeyword,
       ModuleKeyword,
@@ -814,6 +815,7 @@ namespace clang {
     typedef SmallVector<std::pair<std::string, SourceLocation>, 2> ModuleId;
     bool parseModuleId(ModuleId &Id);
     void parseModuleDecl();
+    void parseExternModuleDecl();
     void parseRequiresDecl();
     void parseHeaderDecl(clang::MMToken::TokenKind,
                          SourceLocation LeadingLoc);
@@ -865,6 +867,7 @@ retry:
                  .Case("exclude", MMToken::ExcludeKeyword)
                  .Case("explicit", MMToken::ExplicitKeyword)
                  .Case("export", MMToken::ExportKeyword)
+                 .Case("extern", MMToken::ExternKeyword)
                  .Case("framework", MMToken::FrameworkKeyword)
                  .Case("header", MMToken::HeaderKeyword)
                  .Case("link", MMToken::LinkKeyword)
@@ -1033,6 +1036,7 @@ namespace {
 /// \brief Parse a module declaration.
 ///
 ///   module-declaration:
+///     'extern' 'module' module-id string-literal
 ///     'explicit'[opt] 'framework'[opt] 'module' module-id attributes[opt] 
 ///       { module-member* }
 ///
@@ -1048,7 +1052,12 @@ namespace {
 ///     inferred-submodule-declaration
 void ModuleMapParser::parseModuleDecl() {
   assert(Tok.is(MMToken::ExplicitKeyword) || Tok.is(MMToken::ModuleKeyword) ||
-         Tok.is(MMToken::FrameworkKeyword));
+         Tok.is(MMToken::FrameworkKeyword) || Tok.is(MMToken::ExternKeyword));
+  if (Tok.is(MMToken::ExternKeyword)) {
+    parseExternModuleDecl();
+    return;
+  }
+
   // Parse 'explicit' or 'framework' keyword, if present.
   SourceLocation ExplicitLoc;
   bool Explicit = false;
@@ -1193,11 +1202,12 @@ void ModuleMapParser::parseModuleDecl() {
       break;
 
     case MMToken::ExplicitKeyword:
+    case MMToken::ExternKeyword:
     case MMToken::FrameworkKeyword:
     case MMToken::ModuleKeyword:
       parseModuleDecl();
       break;
-        
+
     case MMToken::ExportKeyword:
       parseExportDecl();
       break;
@@ -1269,6 +1279,50 @@ void ModuleMapParser::parseModuleDecl() {
 
   // We're done parsing this module. Pop back to the previous module.
   ActiveModule = PreviousActiveModule;
+}
+
+/// \brief Parse an extern module declaration.
+///
+///   extern module-declaration:
+///     'extern' 'module' module-id string-literal
+void ModuleMapParser::parseExternModuleDecl() {
+  assert(Tok.is(MMToken::ExternKeyword));
+  consumeToken(); // 'extern' keyword
+
+  // Parse 'module' keyword.
+  if (!Tok.is(MMToken::ModuleKeyword)) {
+    Diags.Report(Tok.getLocation(), diag::err_mmap_expected_module);
+    consumeToken();
+    HadError = true;
+    return;
+  }
+  consumeToken(); // 'module' keyword
+
+  // Parse the module name.
+  ModuleId Id;
+  if (parseModuleId(Id)) {
+    HadError = true;
+    return;
+  }
+
+  // Parse the referenced module map file name.
+  if (!Tok.is(MMToken::StringLiteral)) {
+    Diags.Report(Tok.getLocation(), diag::err_mmap_expected_mmap_file);
+    HadError = true;
+    return;
+  }
+  std::string FileName = Tok.getString();
+  consumeToken(); // filename
+
+  StringRef FileNameRef = FileName;
+  SmallString<128> ModuleMapFileName;
+  if (llvm::sys::path::is_relative(FileNameRef)) {
+    ModuleMapFileName += Directory->getName();
+    llvm::sys::path::append(ModuleMapFileName, FileName);
+    FileNameRef = ModuleMapFileName.str();
+  }
+  if (const FileEntry *File = SourceMgr.getFileManager().getFile(FileNameRef))
+    Map.parseModuleMapFile(File, /*IsSystem=*/false);
 }
 
 /// \brief Parse a requires declaration.
@@ -1925,6 +1979,7 @@ bool ModuleMapParser::parseModuleMapFile() {
       return HadError;
       
     case MMToken::ExplicitKeyword:
+    case MMToken::ExternKeyword:
     case MMToken::ModuleKeyword:
     case MMToken::FrameworkKeyword:
       parseModuleDecl();

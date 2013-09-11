@@ -527,6 +527,7 @@ def note_mmap_lsquare_match : Note<"to match this ']'">;
 def err_mmap_expected_member : Error<
   "expected umbrella, header, submodule, or module export">;
 def err_mmap_expected_header : Error<"expected a header name after '%0'">;
+def err_mmap_expected_mmap_file : Error<"expected a module map file name">;
 def err_mmap_module_redefinition : Error<
   "redefinition of module '%0'">;
 def note_mmap_prev_definition : Note<"previously defined here">;
