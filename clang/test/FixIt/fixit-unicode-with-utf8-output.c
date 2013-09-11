@@ -1,7 +1,6 @@
 // This test is an additional set of checks for the fixit-unicode.c test for
 // systems capable of outputting Unicode characters to the standard output in
 // the UTF-8 encoding.
-// XFAIL: mingw32,win32,win64
 // RUN: not %clang_cc1 -fsyntax-only %S/fixit-unicode.c 2>&1 | FileCheck -strict-whitespace %s
 
 // CHECK: warning: format specifies type 'int' but the argument has type 'long'
