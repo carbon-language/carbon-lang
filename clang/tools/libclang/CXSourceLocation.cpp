@@ -266,7 +266,7 @@ void clang_getPresumedLocation(CXSourceLocation location,
                                CXString *filename,
                                unsigned *line,
                                unsigned *column) {
-  
+
   if (!isASTUnitSourceLocation(location)) {
     // Other SourceLocation implementations do not support presumed locations
     // at this time.
@@ -276,20 +276,22 @@ void clang_getPresumedLocation(CXSourceLocation location,
 
   SourceLocation Loc = SourceLocation::getFromRawEncoding(location.int_data);
 
-  if (!location.ptr_data[0] || Loc.isInvalid())
+  if (!location.ptr_data[0] || Loc.isInvalid()) {
     createNullLocation(filename, line, column);
-  else {
-    const SourceManager &SM =
-    *static_cast<const SourceManager*>(location.ptr_data[0]);
-    PresumedLoc PreLoc = SM.getPresumedLoc(Loc);
-    
-    if (filename)
-      *filename = cxstring::createRef(PreLoc.getFilename());
-    if (line)
-      *line = PreLoc.getLine();
-    if (column)
-      *column = PreLoc.getColumn();
+    return;
   }
+
+  const SourceManager &SM =
+      *static_cast<const SourceManager *>(location.ptr_data[0]);
+  PresumedLoc PreLoc = SM.getPresumedLoc(Loc);
+  if (PreLoc.isInvalid()) {
+    createNullLocation(filename, line, column);
+    return;
+  }
+
+  if (filename) *filename = cxstring::createRef(PreLoc.getFilename());
+  if (line) *line = PreLoc.getLine();
+  if (column) *column = PreLoc.getColumn();
 }
 
 void clang_getInstantiationLocation(CXSourceLocation location,

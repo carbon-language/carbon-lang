@@ -2095,8 +2095,8 @@ llvm::Constant *CodeGenFunction::EmitCheckSourceLocation(SourceLocation Loc) {
     PLoc.isValid() ? cast<llvm::Constant>(
                        Builder.CreateGlobalStringPtr(PLoc.getFilename()))
                    : llvm::Constant::getNullValue(Int8PtrTy),
-    Builder.getInt32(PLoc.getLine()),
-    Builder.getInt32(PLoc.getColumn())
+    Builder.getInt32(PLoc.isValid() ? PLoc.getLine() : 0),
+    Builder.getInt32(PLoc.isValid() ? PLoc.getColumn() : 0)
   };
 
   return llvm::ConstantStruct::getAnon(Data);
