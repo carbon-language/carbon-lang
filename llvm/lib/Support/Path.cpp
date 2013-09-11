@@ -449,23 +449,18 @@ void replace_extension(SmallVectorImpl<char> &path, const Twine &extension) {
 }
 
 void native(const Twine &path, SmallVectorImpl<char> &result) {
+  assert((!path.isSingleStringRef() ||
+          path.getSingleStringRef().data() != result.data()) &&
+         "path and result are not allowed to overlap!");
   // Clear result.
   result.clear();
-#ifdef LLVM_ON_WIN32
-  SmallString<128> path_storage;
-  StringRef p = path.toStringRef(path_storage);
-  result.reserve(p.size());
-  for (StringRef::const_iterator i = p.begin(),
-                                 e = p.end();
-                                 i != e;
-                                 ++i) {
-    if (*i == '/')
-      result.push_back('\\');
-    else
-      result.push_back(*i);
-  }
-#else
   path.toVector(result);
+  native(result);
+}
+
+void native(SmallVectorImpl<char> &path) {
+#ifdef LLVM_ON_WIN32
+  std::replace(path.begin(), path.end(), '/', '\\');
 #endif
 }
 
