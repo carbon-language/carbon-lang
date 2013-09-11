@@ -28,7 +28,7 @@ struct PrinterTrait<Value> {
 };
 
 template <typename T>
-struct LLVM_LIBRARY_VISIBILITY LeakDetectorImpl {
+struct LeakDetectorImpl {
   explicit LeakDetectorImpl(const char* const name = "") : 
     Cache(0), Name(name) { }
 

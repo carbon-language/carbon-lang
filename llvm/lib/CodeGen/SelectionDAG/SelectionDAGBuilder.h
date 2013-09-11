@@ -79,7 +79,7 @@ class ZExtInst;
 /// SelectionDAGBuilder - This is the common target-independent lowering
 /// implementation that is parameterized by a TargetLowering object.
 ///
-class LLVM_LIBRARY_VISIBILITY SelectionDAGBuilder {
+class SelectionDAGBuilder {
   /// CurInst - The current instruction being visited
   const Instruction *CurInst;
 

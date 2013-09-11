@@ -33,7 +33,7 @@ namespace llvm {
   class RegScavenger;
   class MachineBasicBlock;
 
-  class LLVM_LIBRARY_VISIBILITY PEI : public MachineFunctionPass {
+  class PEI : public MachineFunctionPass {
   public:
     static char ID;
     PEI() : MachineFunctionPass(ID) {

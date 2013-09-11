@@ -21,7 +21,7 @@ namespace llvm {
   class TargetInstrInfo;
   class TargetRegisterInfo;
 
-  class LLVM_LIBRARY_VISIBILITY BranchFolder {
+  class BranchFolder {
   public:
     explicit BranchFolder(bool defaultEnableTailMerge, bool CommonHoist);
 

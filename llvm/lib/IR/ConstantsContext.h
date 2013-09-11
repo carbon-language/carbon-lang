@@ -31,7 +31,7 @@ struct ConstantTraits;
 
 /// UnaryConstantExpr - This class is private to Constants.cpp, and is used
 /// behind the scenes to implement unary constant exprs.
-class LLVM_LIBRARY_VISIBILITY UnaryConstantExpr : public ConstantExpr {
+class UnaryConstantExpr : public ConstantExpr {
   virtual void anchor();
   void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
 public:
@@ -48,7 +48,7 @@ public:
 
 /// BinaryConstantExpr - This class is private to Constants.cpp, and is used
 /// behind the scenes to implement binary constant exprs.
-class LLVM_LIBRARY_VISIBILITY BinaryConstantExpr : public ConstantExpr {
+class BinaryConstantExpr : public ConstantExpr {
   virtual void anchor();
   void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
 public:
@@ -69,7 +69,7 @@ public:
 
 /// SelectConstantExpr - This class is private to Constants.cpp, and is used
 /// behind the scenes to implement select constant exprs.
-class LLVM_LIBRARY_VISIBILITY SelectConstantExpr : public ConstantExpr {
+class SelectConstantExpr : public ConstantExpr {
   virtual void anchor();
   void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
 public:
@@ -90,7 +90,7 @@ public:
 /// ExtractElementConstantExpr - This class is private to
 /// Constants.cpp, and is used behind the scenes to implement
 /// extractelement constant exprs.
-class LLVM_LIBRARY_VISIBILITY ExtractElementConstantExpr : public ConstantExpr {
+class ExtractElementConstantExpr : public ConstantExpr {
   virtual void anchor();
   void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
 public:
@@ -111,7 +111,7 @@ public:
 /// InsertElementConstantExpr - This class is private to
 /// Constants.cpp, and is used behind the scenes to implement
 /// insertelement constant exprs.
-class LLVM_LIBRARY_VISIBILITY InsertElementConstantExpr : public ConstantExpr {
+class InsertElementConstantExpr : public ConstantExpr {
   virtual void anchor();
   void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
 public:
@@ -133,7 +133,7 @@ public:
 /// ShuffleVectorConstantExpr - This class is private to
 /// Constants.cpp, and is used behind the scenes to implement
 /// shufflevector constant exprs.
-class LLVM_LIBRARY_VISIBILITY ShuffleVectorConstantExpr : public ConstantExpr {
+class ShuffleVectorConstantExpr : public ConstantExpr {
   virtual void anchor();
   void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
 public:
@@ -158,7 +158,7 @@ public:
 /// ExtractValueConstantExpr - This class is private to
 /// Constants.cpp, and is used behind the scenes to implement
 /// extractvalue constant exprs.
-class LLVM_LIBRARY_VISIBILITY ExtractValueConstantExpr : public ConstantExpr {
+class ExtractValueConstantExpr : public ConstantExpr {
   virtual void anchor();
   void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
 public:
@@ -184,7 +184,7 @@ public:
 /// InsertValueConstantExpr - This class is private to
 /// Constants.cpp, and is used behind the scenes to implement
 /// insertvalue constant exprs.
-class LLVM_LIBRARY_VISIBILITY InsertValueConstantExpr : public ConstantExpr {
+class InsertValueConstantExpr : public ConstantExpr {
   virtual void anchor();
   void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
 public:
@@ -211,7 +211,7 @@ public:
 
 /// GetElementPtrConstantExpr - This class is private to Constants.cpp, and is
 /// used behind the scenes to implement getelementpr constant exprs.
-class LLVM_LIBRARY_VISIBILITY GetElementPtrConstantExpr : public ConstantExpr {
+class GetElementPtrConstantExpr : public ConstantExpr {
   virtual void anchor();
   GetElementPtrConstantExpr(Constant *C, ArrayRef<Constant*> IdxList,
                             Type *DestTy);
@@ -232,7 +232,7 @@ public:
 // CompareConstantExpr - This class is private to Constants.cpp, and is used
 // behind the scenes to implement ICmp and FCmp constant expressions. This is
 // needed in order to store the predicate value for these instructions.
-class LLVM_LIBRARY_VISIBILITY CompareConstantExpr : public ConstantExpr {
+class CompareConstantExpr : public ConstantExpr {
   virtual void anchor();
   void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
 public:
@@ -313,7 +313,7 @@ struct OperandTraits<CompareConstantExpr> :
 };
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(CompareConstantExpr, Value)
 
-struct LLVM_LIBRARY_VISIBILITY ExprMapKeyType {
+struct ExprMapKeyType {
   ExprMapKeyType(unsigned opc,
       ArrayRef<Constant*> ops,
       unsigned short flags = 0,
@@ -349,7 +349,7 @@ struct LLVM_LIBRARY_VISIBILITY ExprMapKeyType {
   }
 };
 
-struct LLVM_LIBRARY_VISIBILITY InlineAsmKeyType {
+struct InlineAsmKeyType {
   InlineAsmKeyType(StringRef AsmString,
                    StringRef Constraints, bool hasSideEffects,
                    bool isAlignStack, InlineAsm::AsmDialect asmDialect)
@@ -512,7 +512,7 @@ struct ConstantKeyData<InlineAsm> {
 
 template<class ValType, class ValRefType, class TypeClass, class ConstantClass,
          bool HasLargeKey = false /*true for arrays and structs*/ >
-class LLVM_LIBRARY_VISIBILITY ConstantUniqueMap {
+class ConstantUniqueMap {
 public:
   typedef std::pair<TypeClass*, ValType> MapKey;
   typedef std::map<MapKey, ConstantClass *> MapTy;
@@ -648,7 +648,7 @@ public:
 
 // Unique map for aggregate constants
 template<class TypeClass, class ConstantClass>
-class LLVM_LIBRARY_VISIBILITY ConstantAggrUniqueMap {
+class ConstantAggrUniqueMap {
 public:
   typedef ArrayRef<Constant*> Operands;
   typedef std::pair<TypeClass*, Operands> LookupKey;

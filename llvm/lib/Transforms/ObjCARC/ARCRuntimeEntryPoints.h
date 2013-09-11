@@ -29,7 +29,7 @@ namespace objcarc {
 
 /// Declarations for ObjC runtime functions and constants. These are initialized
 /// lazily to avoid cluttering up the Module with unused declarations.
-class LLVM_LIBRARY_VISIBILITY ARCRuntimeEntryPoints {
+class ARCRuntimeEntryPoints {
 public:
   enum EntryPointType {
     EPT_AutoreleaseRV,

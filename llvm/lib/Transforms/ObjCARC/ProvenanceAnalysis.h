@@ -46,7 +46,7 @@ namespace objcarc {
 /// an ``independent provenance source'' of a pointer to determine whether or
 /// not two pointers have the same provenance source and thus could
 /// potentially be related.
-class LLVM_LIBRARY_VISIBILITY ProvenanceAnalysis {
+class ProvenanceAnalysis {
   AliasAnalysis *AA;
 
   typedef std::pair<const Value *, const Value *> ValuePairTy;

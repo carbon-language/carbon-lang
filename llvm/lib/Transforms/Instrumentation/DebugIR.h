@@ -21,7 +21,7 @@
 
 namespace llvm {
 
-class LLVM_LIBRARY_VISIBILITY DebugIR : public llvm::ModulePass {
+class DebugIR : public llvm::ModulePass {
   /// If true, write a source file to disk.
   bool WriteSourceToDisk;
 

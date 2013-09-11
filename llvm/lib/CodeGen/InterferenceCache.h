@@ -21,7 +21,7 @@ namespace llvm {
 
 class LiveIntervals;
 
-class LLVM_LIBRARY_VISIBILITY InterferenceCache {
+class InterferenceCache {
   const TargetRegisterInfo *TRI;
   LiveIntervalUnion *LIUArray;
   MachineFunction *MF;

@@ -44,7 +44,7 @@ class DIEEntry;
 
 //===----------------------------------------------------------------------===//
 /// \brief This class is used to record source line correspondence.
-class LLVM_LIBRARY_VISIBILITY SrcLineInfo {
+class SrcLineInfo {
   unsigned Line;                     // Source line number.
   unsigned Column;                   // Source column.
   unsigned SourceID;                 // Source ID number.
@@ -62,7 +62,7 @@ public:
 
 /// \brief This struct describes location entries emitted in the .debug_loc
 /// section.
-class LLVM_LIBRARY_VISIBILITY DotDebugLocEntry {
+class DotDebugLocEntry {
   // Begin and end symbols for the address range that this location is valid.
   const MCSymbol *Begin;
   const MCSymbol *End;
@@ -143,7 +143,7 @@ public:
 
 //===----------------------------------------------------------------------===//
 /// \brief This class is used to track local variable information.
-class LLVM_LIBRARY_VISIBILITY DbgVariable {
+class DbgVariable {
   DIVariable Var;                    // Variable Descriptor.
   DIE *TheDIE;                       // Variable DIE.
   unsigned DotDebugLocOffset;        // Offset in DotDebugLocEntries.
@@ -212,7 +212,7 @@ public:
 
 /// \brief Collects and handles information specific to a particular
 /// collection of units.
-class LLVM_LIBRARY_VISIBILITY DwarfUnits {
+class DwarfUnits {
   // Target of Dwarf emission, used for sizing of abbreviations.
   AsmPrinter *Asm;
 
@@ -301,7 +301,7 @@ public:
 };
 
 /// \brief Collects and handles dwarf debug information.
-class LLVM_LIBRARY_VISIBILITY DwarfDebug {
+class DwarfDebug {
   // Target of Dwarf emission.
   AsmPrinter *Asm;
 

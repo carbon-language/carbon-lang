@@ -35,8 +35,8 @@ namespace objcarc {
   /// TODO: This class could be generalized to know about other ObjC-specific
   /// tricks. Such as knowing that ivars in the non-fragile ABI are non-aliasing
   /// even though their offsets are dynamic.
-  class LLVM_LIBRARY_VISIBILITY ObjCARCAliasAnalysis : public ImmutablePass,
-                                                       public AliasAnalysis {
+  class ObjCARCAliasAnalysis : public ImmutablePass,
+                               public AliasAnalysis {
   public:
     static char ID; // Class identification, replacement for typeinfo
     ObjCARCAliasAnalysis() : ImmutablePass(ID) {

@@ -65,7 +65,7 @@ class AsmPrinter;
 class DIE;
 class DwarfUnits;
 
-class LLVM_LIBRARY_VISIBILITY DwarfAccelTable {
+class DwarfAccelTable {
 
   static uint32_t HashDJB(StringRef Str) {
     uint32_t h = 5381;

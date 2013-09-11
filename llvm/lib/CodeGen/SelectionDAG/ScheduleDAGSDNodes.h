@@ -33,7 +33,7 @@ namespace llvm {
   /// edges.  Physical register dependence information is not carried in
   /// the DAG and must be handled explicitly by schedulers.
   ///
-  class LLVM_LIBRARY_VISIBILITY ScheduleDAGSDNodes : public ScheduleDAG {
+  class ScheduleDAGSDNodes : public ScheduleDAG {
   public:
     MachineBasicBlock *BB;
     SelectionDAG *DAG;                    // DAG of the current basic block

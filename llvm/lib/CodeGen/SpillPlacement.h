@@ -39,7 +39,7 @@ class EdgeBundles;
 class MachineBasicBlock;
 class MachineLoopInfo;
 
-class LLVM_LIBRARY_VISIBILITY SpillPlacement : public MachineFunctionPass {
+class SpillPlacement  : public MachineFunctionPass {
   struct Node;
   const MachineFunction *MF;
   const EdgeBundles *bundles;

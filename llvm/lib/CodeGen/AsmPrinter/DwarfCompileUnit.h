@@ -34,7 +34,7 @@ class DbgVariable;
 //===----------------------------------------------------------------------===//
 /// CompileUnit - This dwarf writer support class manages information associated
 /// with a source file.
-class LLVM_LIBRARY_VISIBILITY CompileUnit {
+class CompileUnit {
   /// UniqueID - a numeric ID unique among all CUs in the module
   ///
   unsigned UniqueID;

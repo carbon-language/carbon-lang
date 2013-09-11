@@ -33,7 +33,7 @@ class MachineDominatorTree;
 template <class NodeT> class DomTreeNodeBase;
 typedef DomTreeNodeBase<MachineBasicBlock> MachineDomTreeNode;
 
-class LLVM_LIBRARY_VISIBILITY LiveRangeCalc {
+class LiveRangeCalc {
   const MachineFunction *MF;
   const MachineRegisterInfo *MRI;
   SlotIndexes *Indexes;

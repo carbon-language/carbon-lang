@@ -25,7 +25,7 @@ namespace llvm {
 class RegisterClassInfo;
 class VirtRegMap;
 
-class LLVM_LIBRARY_VISIBILITY AllocationOrder {
+class AllocationOrder {
   SmallVector<MCPhysReg, 16> Hints;
   ArrayRef<MCPhysReg> Order;
   int Pos;

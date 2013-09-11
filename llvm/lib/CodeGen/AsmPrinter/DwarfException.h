@@ -34,7 +34,7 @@ class AsmPrinter;
 //===----------------------------------------------------------------------===//
 /// DwarfException - Emits Dwarf exception handling directives.
 ///
-class LLVM_LIBRARY_VISIBILITY DwarfException {
+class DwarfException {
 protected:
   /// Asm - Target of Dwarf emission.
   AsmPrinter *Asm;
@@ -141,7 +141,7 @@ public:
   virtual void EndFunction();
 };
 
-class LLVM_LIBRARY_VISIBILITY DwarfCFIException : public DwarfException {
+class DwarfCFIException : public DwarfException {
   /// shouldEmitPersonality - Per-function flag to indicate if .cfi_personality
   /// should be emitted.
   bool shouldEmitPersonality;
@@ -175,7 +175,7 @@ public:
   virtual void EndFunction();
 };
 
-class LLVM_LIBRARY_VISIBILITY ARMException : public DwarfException {
+class ARMException : public DwarfException {
   void EmitTypeInfos(unsigned TTypeEncoding);
 public:
   //===--------------------------------------------------------------------===//
@@ -196,7 +196,7 @@ public:
   virtual void EndFunction();
 };
 
-class LLVM_LIBRARY_VISIBILITY Win64Exception : public DwarfException {
+class Win64Exception : public DwarfException {
   /// shouldEmitPersonality - Per-function flag to indicate if personality
   /// info should be emitted.
   bool shouldEmitPersonality;

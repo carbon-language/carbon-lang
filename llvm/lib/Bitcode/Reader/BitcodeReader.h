@@ -32,7 +32,7 @@ namespace llvm {
 //                          BitcodeReaderValueList Class
 //===----------------------------------------------------------------------===//
 
-class LLVM_LIBRARY_VISIBILITY BitcodeReaderValueList {
+class BitcodeReaderValueList {
   std::vector<WeakVH> ValuePtrs;
 
   /// ResolveConstants - As we resolve forward-referenced constants, we add
@@ -91,7 +91,7 @@ public:
 //                          BitcodeReaderMDValueList Class
 //===----------------------------------------------------------------------===//
 
-class LLVM_LIBRARY_VISIBILITY BitcodeReaderMDValueList {
+class BitcodeReaderMDValueList {
   std::vector<WeakVH> MDValuePtrs;
 
   LLVMContext &Context;
@@ -121,7 +121,7 @@ public:
   void AssignValue(Value *V, unsigned Idx);
 };
 
-class LLVM_LIBRARY_VISIBILITY BitcodeReader : public GVMaterializer {
+class BitcodeReader : public GVMaterializer {
   LLVMContext &Context;
   Module *TheModule;
   MemoryBuffer *Buffer;

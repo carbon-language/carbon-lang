@@ -39,7 +39,7 @@ SlotTracker *createSlotTracker(const Module *M);
 // TypePrinting Class: Type printing machinery
 //===----------------------------------------------------------------------===//
 
-class LLVM_LIBRARY_VISIBILITY TypePrinting {
+class TypePrinting {
   TypePrinting(const TypePrinting &) LLVM_DELETED_FUNCTION;
   void operator=(const TypePrinting&) LLVM_DELETED_FUNCTION;
 public:
@@ -61,7 +61,7 @@ public:
   void printStructBody(StructType *Ty, raw_ostream &OS);
 };
 
-class LLVM_LIBRARY_VISIBILITY AssemblyWriter {
+class AssemblyWriter {
 protected:
   formatted_raw_ostream &Out;
   const Module *TheModule;
