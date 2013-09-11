@@ -424,10 +424,13 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(CompileUnit *SPCU,
   return SPDie;
 }
 
+/// Check whether we should create a DIE for the given Scope, return true
+/// if we don't create a DIE (the corresponding DIE is null).
 bool DwarfDebug::isLexicalScopeDIENull(LexicalScope *Scope) {
   if (Scope->isAbstractScope())
     return false;
 
+  // We don't create a DIE if there is no Range.
   const SmallVectorImpl<InsnRange> &Ranges = Scope->getRanges();
   if (Ranges.empty())
     return true;
@@ -435,6 +438,8 @@ bool DwarfDebug::isLexicalScopeDIENull(LexicalScope *Scope) {
   if (Ranges.size() > 1)
     return false;
 
+  // We don't create a DIE if we have a single Range and the end label
+  // is null.
   SmallVectorImpl<InsnRange>::const_iterator RI = Ranges.begin();
   MCSymbol *End = getLabelAfterInsn(RI->second);
   return !End;
@@ -595,6 +600,9 @@ DIE *DwarfDebug::constructScopeDIE(CompileUnit *TheCU, LexicalScope *Scope) {
   DIE *ObjectPointer = NULL;
   bool ChildrenCreated = false;
 
+  // We try to create the scope DIE first, then the children DIEs. This will
+  // avoid creating un-used children then removing them later when we find out
+  // the scope DIE is null.
   DIE *ScopeDIE = NULL;
   if (Scope->getInlinedAt())
     ScopeDIE = constructInlinedScopeDIE(TheCU, Scope);
@@ -610,12 +618,15 @@ DIE *DwarfDebug::constructScopeDIE(CompileUnit *TheCU, LexicalScope *Scope) {
       ScopeDIE = updateSubprogramScopeDIE(TheCU, DS);
   }
   else {
+    // Early exit when we know the scope DIE is going to be null.
     if (isLexicalScopeDIENull(Scope))
       return NULL;
-    // We create children only when we know the scope DIE is not going to be
-    // null.
+
+    // We create children here when we know the scope DIE is not going to be
+    // null and the children will be added to the scope DIE.
     ObjectPointer = createScopeChildrenDIE(TheCU, Scope, Children);
     ChildrenCreated = true;
+
     // There is no need to emit empty lexical block DIE.
     std::pair<ImportedEntityMap::const_iterator,
               ImportedEntityMap::const_iterator> Range = std::equal_range(
@@ -637,6 +648,7 @@ DIE *DwarfDebug::constructScopeDIE(CompileUnit *TheCU, LexicalScope *Scope) {
     return NULL;
   }
   if (!ChildrenCreated)
+    // We create children when the scope DIE is not null.
     ObjectPointer = createScopeChildrenDIE(TheCU, Scope, Children);
 
   // Add children
