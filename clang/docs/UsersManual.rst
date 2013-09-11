@@ -1313,11 +1313,19 @@ C++, Objective-C, and Objective-C++ codebases. Clang only supports a
 limited number of ARM architectures. It does not yet fully support
 ARMv5, for example.
 
+PowerPC
+^^^^^^^
+
+The support for PowerPC (especially PowerPC64) is considered stable
+on Linux and FreeBSD: it has been tested to correctly compile many
+large C and C++ codebases. PowerPC (32bit) is still missing certain
+features (e.g. PIC code on ELF platforms).
+
 Other platforms
 ^^^^^^^^^^^^^^^
 
-clang currently contains some support for PPC and Sparc; however,
-significant pieces of code generation are still missing, and they
+clang currently contains some support for other architectures (e.g. Sparc);
+however, significant pieces of code generation are still missing, and they
 haven't undergone significant testing.
 
 clang contains limited support for the MSP430 embedded processor, but
