@@ -471,11 +471,11 @@ GenericValue lle_X_fprintf(FunctionType *FT,
   return GV;
 }
 
-GenericValue lle_X_memset(FunctionType *FT,
-                           const std::vector<GenericValue> &Args) {
+static GenericValue lle_X_memset(FunctionType *FT,
+                                 const std::vector<GenericValue> &Args) {
   int val = (int)Args[1].IntVal.getSExtValue();
   size_t len = (size_t)Args[2].IntVal.getZExtValue();
-  memset((void*)GVTOP(Args[0]),val, len);
+  memset((void *)GVTOP(Args[0]), val, len);
   // llvm.memset.* returns void, lle_X_* returns GenericValue,
   // so here we return GenericValue with IntVal set to zero
   GenericValue GV;
@@ -483,13 +483,12 @@ GenericValue lle_X_memset(FunctionType *FT,
   return GV;
 }
 
-GenericValue lle_X_memcpy(FunctionType *FT,
-                          const std::vector<GenericValue> &Args) {
-
+static GenericValue lle_X_memcpy(FunctionType *FT,
+                                 const std::vector<GenericValue> &Args) {
   memcpy(GVTOP(Args[0]), GVTOP(Args[1]),
          (size_t)(Args[2].IntVal.getLimitedValue()));
 
-  // llvm.mecpy* returns void, lle_X_* returns GenericValue,
+  // llvm.memcpy* returns void, lle_X_* returns GenericValue,
   // so here we return GenericValue with IntVal set to zero
   GenericValue GV;
   GV.IntVal = 0;
