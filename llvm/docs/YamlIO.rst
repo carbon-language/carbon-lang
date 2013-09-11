@@ -549,7 +549,7 @@ coordinates into polar when reading YAML.
     };
 
 When writing YAML, the local variable "keys" will be a stack allocated 
-instance of NormalizedPolar, constructed from the suppled polar object which
+instance of NormalizedPolar, constructed from the supplied polar object which
 initializes it x and y fields.  The mapRequired() methods then write out the x
 and y values as key/value pairs.  
 
