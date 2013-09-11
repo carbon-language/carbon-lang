@@ -313,7 +313,7 @@ if (LIBXML2_FOUND)
       message(STATUS "Adding LZMA as a dep to XML2 for cross-compilation, make sure liblzma.a is available.")
       set(LIBXML2_LIBRARIES ${LIBXML2_LIBRARIES} "-llzma")
     endif ()
-  endif ( CMAKE_CROSSCOMPILING )
+  endif ()
 endif ()
 
 include(CheckCXXCompilerFlag)
