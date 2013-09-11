@@ -39,6 +39,7 @@ def CFX_1 : FuncUnit; // CFX pipeline stage 1
 // def LSU_0 : FuncUnit; // LSU pipeline
 // def FPU_0 : FuncUnit; // FPU pipeline
 
+// def CR_Bypass : Bypass;
 
 def PPCE5500Itineraries : ProcessorItineraries<
   [DIS0, DIS1, SFX0, SFX1, BU, CFX_DivBypass, CFX_0, CFX_1,
