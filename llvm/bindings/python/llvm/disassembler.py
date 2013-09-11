@@ -10,7 +10,6 @@
 from ctypes import CFUNCTYPE
 from ctypes import POINTER
 from ctypes import addressof
-from ctypes import byref
 from ctypes import c_byte
 from ctypes import c_char_p
 from ctypes import c_int
