@@ -336,7 +336,9 @@ def UnusedLabel : DiagGroup<"unused-label">;
 def UnusedParameter : DiagGroup<"unused-parameter">;
 def UnusedResult : DiagGroup<"unused-result">;
 def UnusedValue : DiagGroup<"unused-value", [UnusedComparison, UnusedResult]>;
-def UnusedVariable : DiagGroup<"unused-variable">;
+def UnusedConstVariable : DiagGroup<"unused-const-variable">;
+def UnusedVariable : DiagGroup<"unused-variable",
+                               [UnusedConstVariable]>;
 def UsedButMarkedUnused : DiagGroup<"used-but-marked-unused">;
 def UserDefinedLiterals : DiagGroup<"user-defined-literals">;
 def ReadOnlySetterAttrs : DiagGroup<"readonly-setter-attrs">;

@@ -155,6 +155,8 @@ def warn_unused_parameter : Warning<"unused parameter %0">,
   InGroup<UnusedParameter>, DefaultIgnore;
 def warn_unused_variable : Warning<"unused variable %0">,
   InGroup<UnusedVariable>, DefaultIgnore;
+def warn_unused_const_variable : Warning<"unused variable %0">,
+  InGroup<UnusedConstVariable>, DefaultIgnore;
 def warn_unused_exception_param : Warning<"unused exception parameter %0">,
   InGroup<UnusedExceptionParameter>, DefaultIgnore;
 def warn_decl_in_param_list : Warning<
