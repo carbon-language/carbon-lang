@@ -106,6 +106,12 @@ typedef char BOOL;
 
 - (BOOL)is3bar; // watch out
 - (NSString *)get3foo; // watch out
+
+@property(nonatomic, getter=getM, readonly) BOOL m;
+@property(nonatomic, getter=getMA, readonly) BOOL MA;
+@property(nonatomic, getter=getALL, readonly) BOOL ALL;
+@property(nonatomic, getter=getMANY, readonly) BOOL MANY;
+@property(nonatomic, getter=getSome, readonly) BOOL some;
 @end
 
 

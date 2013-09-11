@@ -106,6 +106,12 @@ typedef char BOOL;
 
 - (BOOL)is3bar; // watch out
 - (NSString *)get3foo; // watch out
+
+- (BOOL) getM;
+- (BOOL) getMA;
+- (BOOL) getALL;
+- (BOOL) getMANY;
+- (BOOL) getSome;
 @end
 
 

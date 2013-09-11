@@ -312,7 +312,11 @@ static bool rewriteToObjCProperty(const ObjCMethodDecl *Getter,
     PropertyNameStringRef = PropertyNameStringRef.drop_front(LengthOfPrefix);
     PropertyNameString = PropertyNameStringRef;
     std::string NewPropertyNameString = PropertyNameString;
-    NewPropertyNameString[0] = toLowercase(NewPropertyNameString[0]);
+    bool NoLowering = (isUppercase(NewPropertyNameString[0]) &&
+                       NewPropertyNameString.size() > 1 &&
+                       isUppercase(NewPropertyNameString[1]));
+    if (!NoLowering)
+      NewPropertyNameString[0] = toLowercase(NewPropertyNameString[0]);
     PropertyString += NewPropertyNameString;
   }
   else
