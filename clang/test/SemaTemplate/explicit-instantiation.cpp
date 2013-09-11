@@ -106,3 +106,16 @@ class TC1 {
     void foo() { }
    };
 };
+
+namespace PR8020 {
+  template <typename T> struct X { X() {} };
+  template<> struct X<int> { X(); };
+  template X<int>::X() {}  // expected-error{{function cannot be defined in an explicit instantiation}}
+}
+
+namespace PR10086 {
+  template void foobar(int i) {}  // expected-error{{function cannot be defined in an explicit instantiation}}
+  int func() {
+    foobar(5);
+  }
+}
