@@ -169,6 +169,7 @@ entry:
   ret double %r
 
 ; CHECK: @foo3
+; CHECK: fcmpu
 ; CHECK-DAG: frsqrte
 ; CHECK-DAG: fnmsub
 ; CHECK: fmul
@@ -195,6 +196,7 @@ entry:
   ret float %r
 
 ; CHECK: @goo3
+; CHECK: fcmpu
 ; CHECK-DAG: frsqrtes
 ; CHECK-DAG: fnmsubs
 ; CHECK: fmuls
@@ -217,7 +219,8 @@ entry:
 
 ; CHECK: @hoo3
 ; CHECK: vrsqrtefp
-; CHECK: vrefp
+; CHECK-DAG: vrefp
+; CHECK-DAG: vcmpeqfp
 
 ; CHECK-SAFE: @hoo3
 ; CHECK-SAFE-NOT: vrsqrtefp

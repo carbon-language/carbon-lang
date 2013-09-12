@@ -7021,8 +7021,28 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
     if (RV.getNode() != 0) {
       DCI.AddToWorklist(RV.getNode());
       RV = DAGCombineFastRecip(RV, DCI);
-      if (RV.getNode() != 0)
+      if (RV.getNode() != 0) {
+	// Unfortunately, RV is now NaN if the input was exactly 0. Select out
+	// this case and force the answer to 0.
+
+        EVT VT = RV.getValueType();
+
+        SDValue Zero = DAG.getConstantFP(0.0, VT.getScalarType());
+        if (VT.isVector()) {
+          assert(VT.getVectorNumElements() == 4 && "Unknown vector type");
+          Zero = DAG.getNode(ISD::BUILD_VECTOR, dl, VT, Zero, Zero, Zero, Zero);
+        }
+
+        SDValue ZeroCmp =
+          DAG.getSetCC(dl, getSetCCResultType(*DAG.getContext(), VT),
+                       N->getOperand(0), Zero, ISD::SETEQ);
+        DCI.AddToWorklist(ZeroCmp.getNode());
+        DCI.AddToWorklist(RV.getNode());
+
+        RV = DAG.getNode(VT.isVector() ? ISD::VSELECT : ISD::SELECT, dl, VT,
+                         ZeroCmp, Zero, RV);
         return RV;
+      }
     }
 
     }
