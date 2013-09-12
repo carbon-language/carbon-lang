@@ -26,9 +26,9 @@
 namespace __asan {
 
 TEST(FakeStack, FlagsSize) {
-  EXPECT_EQ(FakeStack::SizeRequiredForFlags(10), 1 << 5);
-  EXPECT_EQ(FakeStack::SizeRequiredForFlags(11), 1 << 6);
-  EXPECT_EQ(FakeStack::SizeRequiredForFlags(20), 1 << 15);
+  EXPECT_EQ(FakeStack::SizeRequiredForFlags(10), 1U << 5);
+  EXPECT_EQ(FakeStack::SizeRequiredForFlags(11), 1U << 6);
+  EXPECT_EQ(FakeStack::SizeRequiredForFlags(20), 1U << 15);
 }
 
 TEST(FakeStack, RequiredSize) {
@@ -36,11 +36,11 @@ TEST(FakeStack, RequiredSize) {
   //  uptr alloc_size = FakeStack::RequiredSize(i);
   //  printf("%zdK ==> %zd\n", 1 << (i - 10), alloc_size);
   // }
-  EXPECT_EQ(FakeStack::RequiredSize(15), 365568);
-  EXPECT_EQ(FakeStack::RequiredSize(16), 727040);
-  EXPECT_EQ(FakeStack::RequiredSize(17), 1449984);
-  EXPECT_EQ(FakeStack::RequiredSize(18), 2895872);
-  EXPECT_EQ(FakeStack::RequiredSize(19), 5787648);
+  EXPECT_EQ(FakeStack::RequiredSize(15), 365568U);
+  EXPECT_EQ(FakeStack::RequiredSize(16), 727040U);
+  EXPECT_EQ(FakeStack::RequiredSize(17), 1449984U);
+  EXPECT_EQ(FakeStack::RequiredSize(18), 2895872U);
+  EXPECT_EQ(FakeStack::RequiredSize(19), 5787648U);
 }
 
 TEST(FakeStack, FlagsOffset) {
@@ -69,23 +69,23 @@ TEST(FakeStack, CreateDestroy) {
 }
 
 TEST(FakeStack, ModuloNumberOfFrames) {
-  EXPECT_EQ(FakeStack::ModuloNumberOfFrames(15, 0, 0), 0);
-  EXPECT_EQ(FakeStack::ModuloNumberOfFrames(15, 0, (1<<15)), 0);
-  EXPECT_EQ(FakeStack::ModuloNumberOfFrames(15, 0, (1<<10)), 0);
-  EXPECT_EQ(FakeStack::ModuloNumberOfFrames(15, 0, (1<<9)), 0);
-  EXPECT_EQ(FakeStack::ModuloNumberOfFrames(15, 0, (1<<8)), 1<<8);
-  EXPECT_EQ(FakeStack::ModuloNumberOfFrames(15, 0, (1<<15) + 1), 1);
+  EXPECT_EQ(FakeStack::ModuloNumberOfFrames(15, 0, 0), 0U);
+  EXPECT_EQ(FakeStack::ModuloNumberOfFrames(15, 0, (1<<15)), 0U);
+  EXPECT_EQ(FakeStack::ModuloNumberOfFrames(15, 0, (1<<10)), 0U);
+  EXPECT_EQ(FakeStack::ModuloNumberOfFrames(15, 0, (1<<9)), 0U);
+  EXPECT_EQ(FakeStack::ModuloNumberOfFrames(15, 0, (1<<8)), 1U<<8);
+  EXPECT_EQ(FakeStack::ModuloNumberOfFrames(15, 0, (1<<15) + 1), 1U);
 
-  EXPECT_EQ(FakeStack::ModuloNumberOfFrames(15, 1, 0), 0);
-  EXPECT_EQ(FakeStack::ModuloNumberOfFrames(15, 1, 1<<9), 0);
-  EXPECT_EQ(FakeStack::ModuloNumberOfFrames(15, 1, 1<<8), 0);
-  EXPECT_EQ(FakeStack::ModuloNumberOfFrames(15, 1, 1<<7), 1<<7);
+  EXPECT_EQ(FakeStack::ModuloNumberOfFrames(15, 1, 0), 0U);
+  EXPECT_EQ(FakeStack::ModuloNumberOfFrames(15, 1, 1<<9), 0U);
+  EXPECT_EQ(FakeStack::ModuloNumberOfFrames(15, 1, 1<<8), 0U);
+  EXPECT_EQ(FakeStack::ModuloNumberOfFrames(15, 1, 1<<7), 1U<<7);
 
-  EXPECT_EQ(FakeStack::ModuloNumberOfFrames(15, 5, 0), 0);
-  EXPECT_EQ(FakeStack::ModuloNumberOfFrames(15, 5, 1), 1);
-  EXPECT_EQ(FakeStack::ModuloNumberOfFrames(15, 5, 15), 15);
-  EXPECT_EQ(FakeStack::ModuloNumberOfFrames(15, 5, 16), 0);
-  EXPECT_EQ(FakeStack::ModuloNumberOfFrames(15, 5, 17), 1);
+  EXPECT_EQ(FakeStack::ModuloNumberOfFrames(15, 5, 0), 0U);
+  EXPECT_EQ(FakeStack::ModuloNumberOfFrames(15, 5, 1), 1U);
+  EXPECT_EQ(FakeStack::ModuloNumberOfFrames(15, 5, 15), 15U);
+  EXPECT_EQ(FakeStack::ModuloNumberOfFrames(15, 5, 16), 0U);
+  EXPECT_EQ(FakeStack::ModuloNumberOfFrames(15, 5, 17), 1U);
 }
 
 TEST(FakeStack, GetFrame) {
@@ -95,9 +95,9 @@ TEST(FakeStack, GetFrame) {
   u8 *base = fs->GetFrame(stack_size_log, 0, 0);
   EXPECT_EQ(base, reinterpret_cast<u8 *>(fs) +
                       fs->SizeRequiredForFlags(stack_size_log) + 4096);
-  EXPECT_EQ(base + 0*stack_size + 64 * 7, fs->GetFrame(stack_size_log, 0, 7));
-  EXPECT_EQ(base + 1*stack_size + 128 * 3, fs->GetFrame(stack_size_log, 1, 3));
-  EXPECT_EQ(base + 2*stack_size + 256 * 5, fs->GetFrame(stack_size_log, 2, 5));
+  EXPECT_EQ(base + 0*stack_size + 64 * 7, fs->GetFrame(stack_size_log, 0, 7U));
+  EXPECT_EQ(base + 1*stack_size + 128 * 3, fs->GetFrame(stack_size_log, 1, 3U));
+  EXPECT_EQ(base + 2*stack_size + 256 * 5, fs->GetFrame(stack_size_log, 2, 5U));
   fs->Destroy();
 }
 

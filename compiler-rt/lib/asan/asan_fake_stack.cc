@@ -22,6 +22,7 @@ void FakeStack::PoisonAll(u8 magic) {
                magic);
 }
 
+ALWAYS_INLINE USED
 FakeFrame *FakeStack::Allocate(uptr stack_size_log, uptr class_id,
                                uptr real_stack) {
   CHECK_LT(class_id, kNumberOfSizeClasses);
@@ -48,6 +49,7 @@ FakeFrame *FakeStack::Allocate(uptr stack_size_log, uptr class_id,
   return 0;
 }
 
+ALWAYS_INLINE USED
 void FakeStack::Deallocate(FakeFrame *ff, uptr stack_size_log, uptr class_id,
                            uptr real_stack) {
   u8 *base = GetFrame(stack_size_log, class_id, 0);

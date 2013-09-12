@@ -55,8 +55,6 @@ struct FakeFrame {
 // This allocator does not have quarantine per se, but it tries to allocate the
 // frames in round robin fasion to maximize the delay between a deallocation
 // and the next allocation.
-//
-// FIXME: handle throw/longjmp/clone, i.e. garbage collect the unwinded frames.
 class FakeStack {
   static const uptr kMinStackFrameSizeLog = 6;  // Min frame is 64B.
   static const uptr kMaxStackFrameSizeLog = 16;  // Max stack frame is 64K.
