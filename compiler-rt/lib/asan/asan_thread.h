@@ -81,8 +81,12 @@ class AsanThread {
     fake_stack_->Destroy();
   }
 
+  bool has_fake_stack() {
+    return (reinterpret_cast<uptr>(fake_stack_) > 1);
+  }
+
   FakeStack *fake_stack() {
-    if (reinterpret_cast<uptr>(fake_stack_) <= 1)
+    if (!has_fake_stack())
       return AsyncSignalSafeLazyInitFakeStack();
     return fake_stack_;
   }

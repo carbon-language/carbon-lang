@@ -187,7 +187,7 @@ const char *AsanThread::GetFrameNameByAddr(uptr addr, uptr *offset,
   uptr bottom = 0;
   if (AddrIsInStack(addr)) {
     bottom = stack_bottom();
-  } else if (fake_stack()) {
+  } else if (has_fake_stack()) {
     bottom = fake_stack()->AddrIsInFakeStack(addr);
     CHECK(bottom);
     *offset = addr - bottom;
