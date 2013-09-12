@@ -1880,6 +1880,95 @@ void Interpreter::visitShuffleVectorInst(ShuffleVectorInst &I){
   SetValue(&I, Dest, SF);
 }
 
+void Interpreter::visitExtractValueInst(ExtractValueInst &I) {
+  ExecutionContext &SF = ECStack.back();
+  Value *Agg = I.getAggregateOperand();
+  GenericValue Dest;
+  GenericValue Src = getOperandValue(Agg, SF);
+
+  ExtractValueInst::idx_iterator IdxBegin = I.idx_begin();
+  unsigned Num = I.getNumIndices();
+  GenericValue *pSrc = &Src;
+
+  for (unsigned i = 0 ; i < Num; ++i) {
+    pSrc = &pSrc->AggregateVal[*IdxBegin];
+    ++IdxBegin;
+  }
+
+  Type *IndexedType = ExtractValueInst::getIndexedType(Agg->getType(), I.getIndices());
+  switch (IndexedType->getTypeID()) {
+    default:
+      llvm_unreachable("Unhandled dest type for extractelement instruction");
+    break;
+    case Type::IntegerTyID:
+      Dest.IntVal = pSrc->IntVal;
+    break;
+    case Type::FloatTyID:
+      Dest.FloatVal = pSrc->FloatVal;
+    break;
+    case Type::DoubleTyID:
+      Dest.DoubleVal = pSrc->DoubleVal;
+    break;
+    case Type::ArrayTyID:
+    case Type::StructTyID:
+    case Type::VectorTyID:
+      Dest.AggregateVal = pSrc->AggregateVal;
+    break;
+    case Type::PointerTyID:
+      Dest.PointerVal = pSrc->PointerVal;
+    break;
+  }
+
+  SetValue(&I, Dest, SF);
+}
+
+void Interpreter::visitInsertValueInst(InsertValueInst &I) {
+
+  ExecutionContext &SF = ECStack.back();
+  Value *Agg = I.getAggregateOperand();
+
+  GenericValue Src1 = getOperandValue(Agg, SF);
+  GenericValue Src2 = getOperandValue(I.getOperand(1), SF);
+  GenericValue Dest = Src1; // Dest is a slightly changed Src1
+
+  ExtractValueInst::idx_iterator IdxBegin = I.idx_begin();
+  unsigned Num = I.getNumIndices();
+
+  GenericValue *pDest = &Dest;
+  for (unsigned i = 0 ; i < Num; ++i) {
+    pDest = &pDest->AggregateVal[*IdxBegin];
+    ++IdxBegin;
+  }
+  // pDest points to the target value in the Dest now
+
+  Type *IndexedType = ExtractValueInst::getIndexedType(Agg->getType(), I.getIndices());
+
+  switch (IndexedType->getTypeID()) {
+    default:
+      llvm_unreachable("Unhandled dest type for insertelement instruction");
+    break;
+    case Type::IntegerTyID:
+      pDest->IntVal = Src2.IntVal;
+    break;
+    case Type::FloatTyID:
+      pDest->FloatVal = Src2.FloatVal;
+    break;
+    case Type::DoubleTyID:
+      pDest->DoubleVal = Src2.DoubleVal;
+    break;
+    case Type::ArrayTyID:
+    case Type::StructTyID:
+    case Type::VectorTyID:
+      pDest->AggregateVal = Src2.AggregateVal;
+    break;
+    case Type::PointerTyID:
+      pDest->PointerVal = Src2.PointerVal;
+    break;
+  }
+
+  SetValue(&I, Dest, SF);
+}
+
 GenericValue Interpreter::getConstantExprValue (ConstantExpr *CE,
                                                 ExecutionContext &SF) {
   switch (CE->getOpcode()) {

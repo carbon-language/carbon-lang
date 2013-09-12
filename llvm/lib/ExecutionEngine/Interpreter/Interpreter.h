@@ -182,6 +182,9 @@ public:
   void visitInsertElementInst(InsertElementInst &I);
   void visitShuffleVectorInst(ShuffleVectorInst &I);
 
+  void visitExtractValueInst(ExtractValueInst &I);
+  void visitInsertValueInst(InsertValueInst &I);
+
   void visitInstruction(Instruction &I) {
     errs() << I << "\n";
     llvm_unreachable("Instruction not interpretable yet!");

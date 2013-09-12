@@ -556,6 +556,24 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
       // with the correct bit width.
       Result.IntVal = APInt(C->getType()->getPrimitiveSizeInBits(), 0);
       break;
+    case Type::StructTyID: {
+      // if the whole struct is 'undef' just reserve memory for the value.
+      if(StructType *STy = dyn_cast<StructType>(C->getType())) {
+        unsigned int elemNum = STy->getNumElements();
+        Result.AggregateVal.resize(elemNum);
+        for (unsigned int i = 0; i < elemNum; ++i) {
+          Type *ElemTy = STy->getElementType(i);
+          if (ElemTy->isIntegerTy())
+            Result.AggregateVal[i].IntVal = 
+              APInt(ElemTy->getPrimitiveSizeInBits(), 0);
+          else if (ElemTy->isAggregateType()) {
+              const Constant *ElemUndef = UndefValue::get(ElemTy);
+              Result.AggregateVal[i] = getConstantValue(ElemUndef);
+            }
+          }
+        }
+      }
+      break;
     case Type::VectorTyID:
       // if the whole vector is 'undef' just reserve memory for the value.
       const VectorType* VTy = dyn_cast<VectorType>(C->getType());
@@ -564,7 +582,7 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
       Result.AggregateVal.resize(elemNum);
       if (ElemTy->isIntegerTy())
         for (unsigned int i = 0; i < elemNum; ++i)
-          Result.AggregateVal[i].IntVal = 
+          Result.AggregateVal[i].IntVal =
             APInt(ElemTy->getPrimitiveSizeInBits(), 0);
       break;
     }
