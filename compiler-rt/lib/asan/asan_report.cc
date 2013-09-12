@@ -525,14 +525,6 @@ class ScopedInErrorReport {
     reporting_thread_tid = GetCurrentTidOrInvalid();
     Printf("===================================================="
            "=============\n");
-    if (reporting_thread_tid != kInvalidTid) {
-      // We started reporting an error message. Stop using the fake stack
-      // in case we call an instrumented function from a symbolizer.
-      AsanThread *curr_thread = GetCurrentThread();
-      CHECK(curr_thread);
-      if (curr_thread->fake_stack())
-        curr_thread->fake_stack()->StopUsingFakeStack();
-    }
   }
   // Destructor is NORETURN, as functions that report errors are.
   NORETURN ~ScopedInErrorReport() {

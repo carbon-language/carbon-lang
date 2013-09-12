@@ -128,6 +128,7 @@ add_custom_target(AsanBenchmarks)
 set_target_properties(AsanBenchmarks PROPERTIES FOLDER "Asan benchmarks")
 
 set(ASAN_NOINST_TEST_SOURCES
+  asan_fake_stack_test.cc
   asan_noinst_test.cc
   asan_test_main.cc)
 set(ASAN_INST_TEST_SOURCES

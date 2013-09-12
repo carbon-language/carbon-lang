@@ -75,17 +75,17 @@ class AsanThread {
     return addr >= stack_bottom_ && addr < stack_top_;
   }
 
-  void LazyInitFakeStack() {
-    if (fake_stack_) return;
-    fake_stack_ = (FakeStack*)MmapOrDie(sizeof(FakeStack), "FakeStack");
-    fake_stack_->Init(stack_size());
-  }
   void DeleteFakeStack() {
     if (!fake_stack_) return;
-    fake_stack_->Cleanup();
-    UnmapOrDie(fake_stack_, sizeof(FakeStack));
+    fake_stack_->PoisonAll(0);
+    fake_stack_->Destroy();
   }
-  FakeStack *fake_stack() { return fake_stack_; }
+
+  FakeStack *fake_stack() {
+    if (!fake_stack_)  // FIXME: lazy init is not async-signal safe.
+      fake_stack_ = FakeStack::Create(Log2(RoundUpToPowerOfTwo(stack_size())));
+    return fake_stack_;
+  }
 
   AsanThreadLocalMallocStorage &malloc_storage() { return malloc_storage_; }
   AsanStats &stats() { return stats_; }
