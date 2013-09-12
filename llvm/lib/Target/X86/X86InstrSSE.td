@@ -7321,6 +7321,22 @@ let Constraints = "$src1 = $dst" in {
 }
 
 //===----------------------------------------------------------------------===//
+// SHA-NI Instructions
+//===----------------------------------------------------------------------===//
+
+let Constraints = "$src1 = $dst", hasSideEffects = 0, Predicates = [HasSHA] in {
+  def SHA1RNDS4rri : Ii8<0xCC, MRMSrcReg, (outs VR128:$dst),
+                         (ins VR128:$src1, VR128:$src2, i8imm:$src3),
+                         "sha1rnds4\t{$src3, $src2, $dst|$dst, $src2, $src3}",
+                         []>, TA;
+  let mayLoad = 1 in
+  def SHA1RNDS4rmi : Ii8<0xCC, MRMSrcMem, (outs VR128:$dst),
+                         (ins VR128:$src1, i128mem:$src2, i8imm:$src3),
+                         "sha1rnds4\t{$src3, $src2, $dst|$dst, $src2, $src3}",
+                         []>, TA;
+}
+
+//===----------------------------------------------------------------------===//
 // AES-NI Instructions
 //===----------------------------------------------------------------------===//
 

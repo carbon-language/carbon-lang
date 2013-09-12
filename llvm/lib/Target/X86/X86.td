@@ -137,6 +137,9 @@ def FeatureHLE     : SubtargetFeature<"hle", "HasHLE", "true",
                                       "Support HLE">;
 def FeatureADX     : SubtargetFeature<"adx", "HasADX", "true",
                                       "Support ADX instructions">;
+def FeatureSHA     : SubtargetFeature<"sha", "HasSHA", "true",
+                                      "Enable SHA instructions",
+                                      [FeatureSSE2]>;
 def FeaturePRFCHW  : SubtargetFeature<"prfchw", "HasPRFCHW", "true",
                                       "Support PRFCHW instructions">;
 def FeatureRDSEED  : SubtargetFeature<"rdseed", "HasRDSEED", "true",

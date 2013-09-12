@@ -127,6 +127,9 @@ protected:
   /// HasADX - Processor has ADX instructions.
   bool HasADX;
 
+  /// HasSHA - Processor has SHA instructions.
+  bool HasSHA;
+
   /// HasPRFCHW - Processor has PRFCHW instructions.
   bool HasPRFCHW;
 
@@ -281,6 +284,7 @@ public:
   bool hasRTM() const { return HasRTM; }
   bool hasHLE() const { return HasHLE; }
   bool hasADX() const { return HasADX; }
+  bool hasSHA() const { return HasSHA; }
   bool hasPRFCHW() const { return HasPRFCHW; }
   bool hasRDSEED() const { return HasRDSEED; }
   bool isBTMemSlow() const { return IsBTMemSlow; }

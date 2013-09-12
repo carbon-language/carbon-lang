@@ -375,6 +375,10 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
         HasCDI = true;
         ToggleFeature(X86::FeatureCDI);
       }
+      if (IsIntel && ((EBX >> 29) & 0x1)) {
+        HasSHA = true;
+        ToggleFeature(X86::FeatureSHA);
+      }
     }
   }
 }
@@ -497,6 +501,7 @@ void X86Subtarget::initializeEnvironment() {
   HasCDI = false;
   HasPFI = false;
   HasADX = false;
+  HasSHA = false;
   HasPRFCHW = false;
   HasRDSEED = false;
   IsBTMemSlow = false;
