@@ -48,6 +48,12 @@ public:
   /// operators were removed.
   bool isFileIncluded(llvm::StringRef FilePath) const;
 
+  /// \brief Determine if a file path was explicitly excluded.
+  bool isFileExplicitlyExcluded(llvm::StringRef FilePath) const;
+
+  /// \brief Determine if a list of include paths was provided.
+  bool isIncludeListEmpty() const { return IncludeList.empty(); }
+
 private:
   std::vector<std::string> IncludeList;
   std::vector<std::string> ExcludeList;

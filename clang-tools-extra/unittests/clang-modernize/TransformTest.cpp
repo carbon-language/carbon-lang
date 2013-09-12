@@ -264,7 +264,7 @@ TEST(Transform, isFileModifiable) {
   StringRef ExcludeDir = llvm::sys::path::parent_path(HeaderBFile);
 
   IncludeExcludeInfo IncInfo;
-  Options.ModifiableHeaders.readListFromString(CurrentDir, ExcludeDir);
+  Options.ModifiableFiles.readListFromString(CurrentDir, ExcludeDir);
 
   tooling::FixedCompilationDatabase Compilations(CurrentDir.str(),
                                                  std::vector<std::string>());

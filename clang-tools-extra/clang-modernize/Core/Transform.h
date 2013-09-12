@@ -66,9 +66,9 @@ struct TransformOptions {
   /// \brief Enable the use of performance timers.
   bool EnableTiming;
 
-  /// \brief Contains information on which headers are safe to transform and
+  /// \brief Contains information on which files are safe to transform and
   /// which aren't.
-  IncludeExcludeInfo ModifiableHeaders;
+  IncludeExcludeInfo ModifiableFiles;
 
   /// \brief Maximum allowed level of risk.
   RiskLevel MaxRiskLevel;

@@ -44,7 +44,7 @@ static cl::extrahelp CommonHelp(CommonOptionsParser::HelpMessage);
 static cl::opt<std::string> BuildPath(
     "p", cl::desc("Build Path"), cl::Optional);
 static cl::list<std::string> SourcePaths(
-    cl::Positional, cl::desc("<source0> [... <sourceN>]"), cl::OneOrMore);
+    cl::Positional, cl::desc("[<sources>...]"), cl::ZeroOrMore);
 static cl::extrahelp MoreHelp(
     "EXAMPLES:\n\n"
     "Apply all transforms on a given file, no compilation database:\n\n"
@@ -281,6 +281,42 @@ bool serializeReplacements(const replace::TUReplacements &Replacements) {
   return !Errors;
 }
 
+CompilationDatabase *autoDetectCompilations(std::string &ErrorMessage) {
+  // Auto-detect a compilation database from BuildPath.
+  if (BuildPath.getNumOccurrences() > 0)
+    return CompilationDatabase::autoDetectFromDirectory(BuildPath,
+                                                        ErrorMessage);
+  // Try to auto-detect a compilation database from the first source.
+  if (!SourcePaths.empty()) {
+    if (CompilationDatabase *Compilations =
+            CompilationDatabase::autoDetectFromSource(SourcePaths[0],
+                                                      ErrorMessage))
+      return Compilations;
+    // If no compilation database can be detected from source then we create a
+    // fixed compilation database with c++11 support.
+    std::string CommandLine[] = { "-std=c++11" };
+    return new FixedCompilationDatabase(".", CommandLine);
+  }
+
+  ErrorMessage = "Could not determine sources to transform";
+  return 0;
+}
+
+// Predicate definition for determining whether a file is not included.
+static bool isFileNotIncludedPredicate(llvm::StringRef FilePath) {
+  return !GlobalOptions.ModifiableFiles.isFileIncluded(FilePath);
+}
+
+// Predicate definition for determining if a file was explicitly excluded.
+static bool isFileExplicitlyExcludedPredicate(llvm::StringRef FilePath) {
+  if (GlobalOptions.ModifiableFiles.isFileExplicitlyExcluded(FilePath)) {
+    llvm::errs() << "Warning \"" << FilePath << "\" will not be transformed "
+                 << "because it's in the excluded list.\n";
+    return true;
+  }
+  return false;
+}
+
 int main(int argc, const char **argv) {
   llvm::sys::PrintStackTraceOnErrorSignal();
   Transforms TransformManager;
@@ -292,23 +328,45 @@ int main(int argc, const char **argv) {
       FixedCompilationDatabase::loadFromCommandLine(argc, argv));
   cl::ParseCommandLineOptions(argc, argv);
 
+  // Populate the ModifiableFiles structure.
+  GlobalOptions.ModifiableFiles.readListFromString(IncludePaths, ExcludePaths);
+  GlobalOptions.ModifiableFiles.readListFromFile(IncludeFromFile,
+                                                 ExcludeFromFile);
+
   if (!Compilations) {
     std::string ErrorMessage;
-    if (BuildPath.getNumOccurrences() > 0) {
-      Compilations.reset(CompilationDatabase::autoDetectFromDirectory(
-          BuildPath, ErrorMessage));
-    } else {
-      Compilations.reset(CompilationDatabase::autoDetectFromSource(
-          SourcePaths[0], ErrorMessage));
-      // If no compilation database can be detected from source then we create
-      // a new FixedCompilationDatabase with c++11 support.
-      if (!Compilations) {
-        std::string CommandLine[] = {"-std=c++11"};
-        Compilations.reset(new FixedCompilationDatabase(".", CommandLine));
-      }
+    Compilations.reset(autoDetectCompilations(ErrorMessage));
+    if (!Compilations) {
+      llvm::errs() << llvm::sys::path::filename(argv[0]) << ": " << ErrorMessage
+                   << "\n";
+      return 1;
     }
-    if (!Compilations)
-      llvm::report_fatal_error(ErrorMessage);
+  }
+
+  // Populate source files.
+  std::vector<std::string> Sources;
+  if (!SourcePaths.empty()) {
+    // Use only files that are not explicitly excluded.
+    std::remove_copy_if(SourcePaths.begin(), SourcePaths.end(),
+                        std::back_inserter(Sources),
+                        isFileExplicitlyExcludedPredicate);
+  } else {
+    if (GlobalOptions.ModifiableFiles.isIncludeListEmpty()) {
+      llvm::errs() << llvm::sys::path::filename(argv[0])
+                   << ": Use -include to indicate which files of "
+                   << "the compilatiion database to transform.\n";
+      return 1;
+    }
+    // Use source paths from the compilation database.
+    // We only transform files that are explicitly included.
+    Sources = Compilations->getAllFiles();
+    std::remove_if(Sources.begin(), Sources.end(), isFileNotIncludedPredicate);
+  }
+
+  if (Sources.empty()) {
+    llvm::errs() << llvm::sys::path::filename(argv[0])
+                 << ": Could not determine sources to transform.\n";
+    return 1;
   }
 
   // Since ExecutionTimeDirectoryName could be an empty string we compare
@@ -325,12 +383,6 @@ int main(int argc, const char **argv) {
   if (CmdSwitchError)
     return 1;
 
-  // Populate the ModifiableHeaders structure.
-  GlobalOptions.ModifiableHeaders
-      .readListFromString(IncludePaths, ExcludePaths);
-  GlobalOptions.ModifiableHeaders
-      .readListFromFile(IncludeFromFile, ExcludeFromFile);
-
   TransformManager.createSelectedTransforms(GlobalOptions, RequiredVersions);
 
   llvm::IntrusiveRefCntPtr<clang::DiagnosticOptions> DiagOpts(
@@ -344,9 +396,10 @@ int main(int argc, const char **argv) {
 
   if (TransformManager.begin() == TransformManager.end()) {
     if (SupportedCompilers.empty())
-      llvm::errs() << argv[0] << ": no selected transforms\n";
+      llvm::errs() << llvm::sys::path::filename(argv[0])
+                   << ": no selected transforms\n";
     else
-      llvm::errs() << argv[0]
+      llvm::errs() << llvm::sys::path::filename(argv[0])
                    << ": no transforms available for specified compilers\n";
     return 1;
   }
@@ -372,7 +425,7 @@ int main(int argc, const char **argv) {
        I != E; ++I) {
     Transform *T = *I;
 
-    if (T->apply(FileStates, *Compilations, SourcePaths) != 0) {
+    if (T->apply(FileStates, *Compilations, Sources) != 0) {
       // FIXME: Improve ClangTool to not abort if just one file fails.
       return 1;
     }
@@ -441,12 +494,12 @@ int main(int argc, const char **argv) {
   // replacements. Otherwise reformat changes if reformatting is enabled.
   if (!SerializeReplacements) {
     if (ChangesReformatter)
-       reformat(*ChangesReformatter, FileStates, Diagnostics);
+      reformat(*ChangesReformatter, FileStates, Diagnostics);
     FileStates.writeToDisk(Diagnostics);
   }
 
   if (FinalSyntaxCheck)
-    if (!doSyntaxCheck(*Compilations, SourcePaths, FileStates))
+    if (!doSyntaxCheck(*Compilations, Sources, FileStates))
       return 1;
 
   // Report execution times.

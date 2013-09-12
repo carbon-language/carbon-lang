@@ -2,7 +2,7 @@
 clang-modernize Usage
 =====================
 
-``clang-modernize [options] <source0> [... <sourceN>] [-- [args]]``
+``clang-modernize [options] [<sources>...] [-- [args]]``
 
 ``<source#>`` specifies the path to the source to migrate. This path may be
 relative to the current directory.
@@ -39,6 +39,16 @@ General Command Line Options
   cannot be used for any reason, an error is reported.
 
   This option is ignored if ``--`` is present.
+
+  Files in the compilation database that can be transformed if no sources are
+  provided and file paths are explicitly included using ``-include`` or
+  ``-include-from``.
+  In order to transform all files in a compilation database the following
+  command line can be used:
+
+    ``clang-modernize -p=<build-path> -include=<project_root>``
+
+  Use ``-exclude`` or ``-exclude-from`` to limit the scope of ``-include``.
 
 .. option:: -- [args]
 

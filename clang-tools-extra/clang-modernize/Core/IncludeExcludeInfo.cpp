@@ -157,13 +157,17 @@ bool IncludeExcludeInfo::isFileIncluded(StringRef FilePath) const {
   if (!InIncludeList)
     return false;
 
+  // If the file is in the included list but not is not explicitly excluded,
+  // then it is safe to transform.
+  return !isFileExplicitlyExcluded(FilePath);
+}
+
+bool IncludeExcludeInfo::isFileExplicitlyExcluded(StringRef FilePath) const {
   for (std::vector<std::string>::const_iterator I = ExcludeList.begin(),
                                                 E = ExcludeList.end();
-       I != E; ++I)
+      I != E; ++I)
     if (fileHasPathPrefix(FilePath, *I))
-      return false;
+      return true;
 
-  // If the file is in the included list but not in the excluded list, then
-  // it is safe to transform.
-  return true;
+  return false;
 }

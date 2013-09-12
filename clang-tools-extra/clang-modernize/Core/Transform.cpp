@@ -91,7 +91,7 @@ bool Transform::isFileModifiable(const SourceManager &SM,
   if (!FE)
     return false;
 
-  return GlobalOptions.ModifiableHeaders.isFileIncluded(FE->getName());
+  return GlobalOptions.ModifiableFiles.isFileIncluded(FE->getName());
 }
 
 bool Transform::handleBeginSource(CompilerInstance &CI, StringRef Filename) {
