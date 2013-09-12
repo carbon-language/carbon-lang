@@ -113,6 +113,19 @@ RegisterContext::SetPC(uint64_t pc)
     return success;
 }
 
+bool
+RegisterContext::SetPC(Address addr)
+{
+    TargetSP target_sp = m_thread.CalculateTarget();
+    Target *target = target_sp.get();
+
+    lldb::addr_t callAddr = addr.GetCallableLoadAddress (target);
+    if (callAddr == LLDB_INVALID_ADDRESS)
+        return false;
+
+    return SetPC (callAddr);
+}
+
 uint64_t
 RegisterContext::GetSP(uint64_t fail_value)
 {

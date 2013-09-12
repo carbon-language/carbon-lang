@@ -52,12 +52,16 @@ Error::Error (const Error &rhs) :
 {
 }
 
-Error::Error (const char* err_str):
+Error::Error (const char* format, ...):
     m_code (0),
     m_type (eErrorTypeInvalid),
     m_string ()
 {
-    SetErrorString(err_str);
+    va_list args;
+    va_start (args, format);
+    SetErrorToGenericError ();
+    SetErrorStringWithVarArg (format, args);
+    va_end (args);
 }
 
 //----------------------------------------------------------------------

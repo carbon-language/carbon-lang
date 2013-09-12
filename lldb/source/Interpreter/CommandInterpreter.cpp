@@ -228,6 +228,13 @@ CommandInterpreter::Initialize ()
         AddAlias ("t", cmd_obj_sp);
     }
 
+    cmd_obj_sp = GetCommandSPExact ("_regexp-jump",false);
+    if (cmd_obj_sp)
+    {
+        AddAlias ("j", cmd_obj_sp);
+        AddAlias ("jump", cmd_obj_sp);
+    }
+
     cmd_obj_sp = GetCommandSPExact ("_regexp-list", false);
     if (cmd_obj_sp)
     {
@@ -615,6 +622,26 @@ CommandInterpreter::LoadCommandDictionary ()
         {
             CommandObjectSP env_regex_cmd_sp(env_regex_cmd_ap.release());
             m_command_dict[env_regex_cmd_sp->GetCommandName ()] = env_regex_cmd_sp;
+        }
+    }
+
+    std::unique_ptr<CommandObjectRegexCommand>
+    jump_regex_cmd_ap(new CommandObjectRegexCommand (*this,
+                                                    "_regexp-jump",
+                                                    "Sets the program counter to a new address.",
+                                                    "_regexp-jump [<line>]\n"
+                                                    "_regexp-jump [<+-lineoffset>]\n"
+                                                    "_regexp-jump [<file>:<line>]\n"
+                                                    "_regexp-jump [*<addr>]\n", 2));
+    if (jump_regex_cmd_ap.get())
+    {
+        if (jump_regex_cmd_ap->AddRegexCommand("^\\*(.*)$", "thread jump --addr %1") &&
+            jump_regex_cmd_ap->AddRegexCommand("^([0-9]+)$", "thread jump --line %1") &&
+            jump_regex_cmd_ap->AddRegexCommand("^([^:]+):([0-9]+)$", "thread jump --file %1 --line %2") &&
+            jump_regex_cmd_ap->AddRegexCommand("^([+\\-][0-9]+)$", "thread jump --by %1"))
+        {
+            CommandObjectSP jump_regex_cmd_sp(jump_regex_cmd_ap.release());
+            m_command_dict[jump_regex_cmd_sp->GetCommandName ()] = jump_regex_cmd_sp;
         }
     }
 

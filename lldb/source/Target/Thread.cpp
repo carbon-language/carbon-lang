@@ -1745,6 +1745,79 @@ Thread::ReturnFromFrame (lldb::StackFrameSP frame_sp, lldb::ValueObjectSP return
     return return_error;
 }
 
+static void DumpAddressList (Stream &s, const std::vector<Address> &list, ExecutionContextScope *exe_scope)
+{
+    for (size_t n=0;n<list.size();n++)
+    {
+        s << "\t";
+        list[n].Dump (&s, exe_scope, Address::DumpStyleResolvedDescription, Address::DumpStyleSectionNameOffset);
+        s << "\n";
+    }
+}
+
+Error
+Thread::JumpToLine (const FileSpec &file, uint32_t line, bool can_leave_function, std::string *warnings)
+{
+    ExecutionContext exe_ctx (GetStackFrameAtIndex(0));
+    Target *target = exe_ctx.GetTargetPtr();
+    TargetSP target_sp = exe_ctx.GetTargetSP();
+    RegisterContext *reg_ctx = exe_ctx.GetRegisterContext();
+    StackFrame *frame = exe_ctx.GetFramePtr();
+    const SymbolContext &sc = frame->GetSymbolContext(eSymbolContextFunction);
+
+    // Find candidate locations.
+    std::vector<Address> candidates, within_function, outside_function;
+    target->GetImages().FindAddressesForLine (target_sp, file, line, sc.function, within_function, outside_function);
+
+    // If possible, we try and stay within the current function.
+    // Within a function, we accept multiple locations (optimized code may do this,
+    // there's no solution here so we do the best we can).
+    // However if we're trying to leave the function, we don't know how to pick the
+    // right location, so if there's more than one then we bail.
+    if (!within_function.empty())
+        candidates = within_function;
+    else if (outside_function.size() == 1 && can_leave_function)
+        candidates = outside_function;
+
+    // Check if we got anything.
+    if (candidates.empty())
+    {
+        if (outside_function.empty())
+        {
+            return Error("Cannot locate an address for %s:%i.",
+                         file.GetFilename().AsCString(), line);
+        }
+        else if (outside_function.size() == 1)
+        {
+            return Error("%s:%i is outside the current function.",
+                         file.GetFilename().AsCString(), line);
+        }
+        else
+        {
+            StreamString sstr;
+            DumpAddressList(sstr, outside_function, target);
+            return Error("%s:%i has multiple candidate locations:\n%s",
+                         file.GetFilename().AsCString(), line, sstr.GetString().c_str());
+        }
+    }
+
+    // Accept the first location, warn about any others.
+    Address dest = candidates[0];
+    if (warnings && candidates.size() > 1)
+    {
+        StreamString sstr;
+        sstr.Printf("%s:%i appears multiple times in this function, selecting the first location:\n",
+                     file.GetFilename().AsCString(), line);
+        DumpAddressList(sstr, candidates, target);
+        *warnings = sstr.GetString();
+    }
+
+    if (!reg_ctx->SetPC (dest))
+        return Error("Cannot change PC to target address.");
+
+    return Error();
+}
+
 void
 Thread::DumpUsingSettingsFormat (Stream &strm, uint32_t frame_idx)
 {

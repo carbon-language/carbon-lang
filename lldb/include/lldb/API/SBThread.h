@@ -117,6 +117,9 @@ public:
                    lldb::SBFileSpec &file_spec, 
                    uint32_t line);
 
+    SBError
+    JumpToLine (lldb::SBFileSpec &file_spec, uint32_t line);
+
     void
     RunToAddress (lldb::addr_t addr);
     

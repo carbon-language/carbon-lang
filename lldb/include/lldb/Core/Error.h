@@ -68,7 +68,7 @@ public:
     Error (ValueType err, lldb::ErrorType type = lldb::eErrorTypeGeneric);
 
     explicit
-    Error (const char* err_str);
+    Error (const char *format, ...) __attribute__ ((format (printf, 2, 3)));
     
     Error (const Error &rhs);
     //------------------------------------------------------------------

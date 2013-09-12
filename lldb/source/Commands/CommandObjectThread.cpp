@@ -1463,6 +1463,208 @@ CommandObjectThreadReturn::CommandOptions::g_option_table[] =
 };
 
 //-------------------------------------------------------------------------
+// CommandObjectThreadJump
+//-------------------------------------------------------------------------
+
+class CommandObjectThreadJump : public CommandObjectParsed
+{
+public:
+    class CommandOptions : public Options
+    {
+    public:
+
+        CommandOptions (CommandInterpreter &interpreter) :
+            Options (interpreter)
+        {
+            OptionParsingStarting ();
+        }
+
+        void
+        OptionParsingStarting ()
+        {
+            m_filenames.Clear();
+            m_line_num = 0;
+            m_line_offset = 0;
+            m_load_addr = LLDB_INVALID_ADDRESS;
+            m_force = false;
+        }
+
+        virtual
+        ~CommandOptions ()
+        {
+        }
+
+        virtual Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        {
+            bool success;
+            const int short_option = m_getopt_table[option_idx].val;
+            Error error;
+
+            switch (short_option)
+            {
+                case 'f':
+                    m_filenames.AppendIfUnique (FileSpec(option_arg, false));
+                    if (m_filenames.GetSize() > 1)
+                        return Error("only one source file expected.");
+                    break;
+                case 'l':
+                    m_line_num = Args::StringToUInt32 (option_arg, 0, 0, &success);
+                    if (!success || m_line_num == 0)
+                        return Error("invalid line number: '%s'.", option_arg);
+                    break;
+                case 'b':
+                    m_line_offset = Args::StringToSInt32 (option_arg, 0, 0, &success);
+                    if (!success)
+                        return Error("invalid line offset: '%s'.", option_arg);
+                    break;
+                case 'a':
+                    {
+                        ExecutionContext exe_ctx (m_interpreter.GetExecutionContext());
+                        m_load_addr = Args::StringToAddress(&exe_ctx, option_arg, LLDB_INVALID_ADDRESS, &error);
+                    }
+                    break;
+                case 'r':
+                    m_force = true;
+                    break;
+
+                 default:
+                    return Error("invalid short option character '%c'", short_option);
+
+            }
+            return error;
+        }
+
+        const OptionDefinition*
+        GetDefinitions ()
+        {
+            return g_option_table;
+        }
+
+        FileSpecList m_filenames;
+        uint32_t m_line_num;
+        int32_t m_line_offset;
+        lldb::addr_t m_load_addr;
+        bool m_force;
+
+        static OptionDefinition g_option_table[];
+    };
+
+    virtual
+    Options *
+    GetOptions ()
+    {
+        return &m_options;
+    }
+
+    CommandObjectThreadJump (CommandInterpreter &interpreter) :
+        CommandObjectParsed (interpreter,
+                          "thread jump",
+                          "Sets the program counter to a new address.",
+                          "thread jump",
+                          eFlagRequiresFrame         |
+                          eFlagTryTargetAPILock      |
+                          eFlagProcessMustBeLaunched |
+                          eFlagProcessMustBePaused   ),
+        m_options (interpreter)
+    {
+    }
+
+    ~CommandObjectThreadJump()
+    {
+    }
+
+protected:
+
+    bool DoExecute (Args& args, CommandReturnObject &result)
+    {
+        RegisterContext *reg_ctx = m_exe_ctx.GetRegisterContext();
+        StackFrame *frame = m_exe_ctx.GetFramePtr();
+        Thread *thread = m_exe_ctx.GetThreadPtr();
+        Target *target = m_exe_ctx.GetTargetPtr();
+        const SymbolContext &sym_ctx = frame->GetSymbolContext (eSymbolContextLineEntry);
+
+        if (m_options.m_load_addr != LLDB_INVALID_ADDRESS)
+        {
+            // Use this address directly.
+            Address dest = Address(m_options.m_load_addr);
+
+            lldb::addr_t callAddr = dest.GetCallableLoadAddress (target);
+            if (callAddr == LLDB_INVALID_ADDRESS)
+            {
+                result.AppendErrorWithFormat ("Invalid destination address.");
+                result.SetStatus (eReturnStatusFailed);
+                return false;
+            }
+
+            if (!reg_ctx->SetPC (callAddr))
+            {
+                result.AppendErrorWithFormat ("Error changing PC value for thread %d.", thread->GetIndexID());
+                result.SetStatus (eReturnStatusFailed);
+                return false;
+            }
+        }
+        else
+        {
+            // Pick either the absolute line, or work out a relative one.
+            int32_t line = (int32_t)m_options.m_line_num;
+            if (line == 0)
+                line = sym_ctx.line_entry.line + m_options.m_line_offset;
+
+            // Try the current file, but override if asked.
+            FileSpec file = sym_ctx.line_entry.file;
+            if (m_options.m_filenames.GetSize() == 1)
+                file = m_options.m_filenames.GetFileSpecAtIndex(0);
+
+            if (!file)
+            {
+                result.AppendErrorWithFormat ("No source file available for the current location.");
+                result.SetStatus (eReturnStatusFailed);
+                return false;
+            }
+
+            std::string warnings;
+            Error err = thread->JumpToLine (file, line, m_options.m_force, &warnings);
+
+            if (err.Fail())
+            {
+                result.SetError (err);
+                return false;
+            }
+
+            if (!warnings.empty())
+                result.AppendWarning (warnings.c_str());
+        }
+
+        result.SetStatus (eReturnStatusSuccessFinishResult);
+        return true;
+    }
+
+    CommandOptions m_options;
+};
+OptionDefinition
+CommandObjectThreadJump::CommandOptions::g_option_table[] =
+{
+    { LLDB_OPT_SET_1, false, "file", 'f', OptionParser::eRequiredArgument, NULL, CommandCompletions::eSourceFileCompletion, eArgTypeFilename,
+        "Specifies the source file to jump to."},
+
+    { LLDB_OPT_SET_1, true, "line", 'l', OptionParser::eRequiredArgument, NULL, 0, eArgTypeLineNum,
+        "Specifies the line number to jump to."},
+
+    { LLDB_OPT_SET_2, true, "by", 'b', OptionParser::eRequiredArgument, NULL, 0, eArgTypeOffset,
+        "Jumps by a relative line offset from the current line."},
+
+    { LLDB_OPT_SET_3, true, "address", 'a', OptionParser::eRequiredArgument, NULL, 0, eArgTypeAddressOrExpression,
+        "Jumps to a specific address."},
+
+    { LLDB_OPT_SET_1|
+      LLDB_OPT_SET_2|
+      LLDB_OPT_SET_3, false, "force",'r', OptionParser::eNoArgument, NULL, 0, eArgTypeNone,"Allows the PC to leave the current function."},
+
+    { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
+};
+
+//-------------------------------------------------------------------------
 // CommandObjectMultiwordThread
 //-------------------------------------------------------------------------
 
@@ -1476,6 +1678,7 @@ CommandObjectMultiwordThread::CommandObjectMultiwordThread (CommandInterpreter &
     LoadSubCommand ("continue",   CommandObjectSP (new CommandObjectThreadContinue (interpreter)));
     LoadSubCommand ("list",       CommandObjectSP (new CommandObjectThreadList (interpreter)));
     LoadSubCommand ("return",     CommandObjectSP (new CommandObjectThreadReturn (interpreter)));
+    LoadSubCommand ("jump",       CommandObjectSP (new CommandObjectThreadJump (interpreter)));
     LoadSubCommand ("select",     CommandObjectSP (new CommandObjectThreadSelect (interpreter)));
     LoadSubCommand ("until",      CommandObjectSP (new CommandObjectThreadUntil (interpreter)));
     LoadSubCommand ("step-in",    CommandObjectSP (new CommandObjectThreadStepWithTypeAndScope (

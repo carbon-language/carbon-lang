@@ -377,7 +377,10 @@ public:
     
     Error
     ReturnFromFrame (lldb::StackFrameSP frame_sp, lldb::ValueObjectSP return_value_sp, bool broadcast = false);
-    
+
+    Error
+    JumpToLine (const FileSpec &file, uint32_t line, bool can_leave_function, std::string *warnings = NULL);
+
     virtual lldb::StackFrameSP
     GetFrameWithStackID (const StackID &stack_id)
     {

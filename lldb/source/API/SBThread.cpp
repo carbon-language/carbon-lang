@@ -910,6 +910,31 @@ SBThread::StepOverUntil (lldb::SBFrame &sb_frame,
 }
 
 SBError
+SBThread::JumpToLine (lldb::SBFileSpec &file_spec, uint32_t line)
+{
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    SBError sb_error;
+
+    Mutex::Locker api_locker;
+    ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
+
+    if (log)
+        log->Printf ("SBThread(%p)::JumpToLine (file+line = %s:%u)", exe_ctx.GetThreadPtr(), file_spec->GetPath().c_str(), line);
+
+    if (!exe_ctx.HasThreadScope())
+    {
+        sb_error.SetErrorString("this SBThread object is invalid");
+        return sb_error;
+    }
+
+    Thread *thread = exe_ctx.GetThreadPtr();
+
+    Error err = thread->JumpToLine (file_spec.get(), line, true);
+    sb_error.SetError (err);
+    return sb_error;
+}
+
+SBError
 SBThread::ReturnFromFrame (SBFrame &frame, SBValue &return_value)
 {
     SBError sb_error;

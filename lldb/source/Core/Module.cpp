@@ -9,6 +9,7 @@
 
 #include "lldb/lldb-python.h"
 
+#include "lldb/Core/AddressResolverFileLine.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/DataBuffer.h"
@@ -750,6 +751,27 @@ Module::FindFunctions (const RegularExpression& regex,
         }
     }
     return sc_list.GetSize() - start_size;
+}
+
+void
+Module::FindAddressesForLine (const lldb::TargetSP target_sp,
+                              const FileSpec &file, uint32_t line,
+                              Function *function,
+                              std::vector<Address> &output_local, std::vector<Address> &output_extern)
+{
+    SearchFilterByModule filter(target_sp, m_file);
+    AddressResolverFileLine resolver(file, line, true);
+    resolver.ResolveAddress (filter);
+
+    for (size_t n=0;n<resolver.GetNumberOfAddresses();n++)
+    {
+        Address addr = resolver.GetAddressRangeAtIndex(n).GetBaseAddress();
+        Function *f = addr.CalculateSymbolContextFunction();
+        if (f && f == function)
+            output_local.push_back (addr);
+        else
+            output_extern.push_back (addr);
+    }
 }
 
 size_t

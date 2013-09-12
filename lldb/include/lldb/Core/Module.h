@@ -347,6 +347,32 @@ public:
                    SymbolContextList& sc_list);
 
     //------------------------------------------------------------------
+    /// Find addresses by file/line
+    ///
+    /// @param[in] target_sp
+    ///     The target the addresses are desired for.
+    ///
+    /// @param[in] file
+    ///     Source file to locate.
+    ///
+    /// @param[in] line
+    ///     Source line to locate.
+    ///
+    /// @param[in] function
+    ///	    Optional filter function. Addresses within this function will be
+    ///     added to the 'local' list. All others will be added to the 'extern' list.
+    ///
+    /// @param[out] output_local
+    ///     All matching addresses within 'function'
+    ///
+    /// @param[out] output_extern
+    ///     All matching addresses not within 'function'
+    void FindAddressesForLine (const lldb::TargetSP target_sp,
+                               const FileSpec &file, uint32_t line,
+                               Function *function,
+                               std::vector<Address> &output_local, std::vector<Address> &output_extern);
+
+    //------------------------------------------------------------------
     /// Find global and static variables by name.
     ///
     /// @param[in] name

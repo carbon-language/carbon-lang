@@ -663,7 +663,19 @@ ModuleList::FindSourceFile (const FileSpec &orig_spec, FileSpec &new_spec) const
     return false;
 }
 
-
+void
+ModuleList::FindAddressesForLine (const lldb::TargetSP target_sp,
+                                  const FileSpec &file, uint32_t line,
+                                  Function *function,
+                                  std::vector<Address> &output_local, std::vector<Address> &output_extern)
+{
+    Mutex::Locker locker(m_modules_mutex);
+    collection::const_iterator pos, end = m_modules.end();
+    for (pos = m_modules.begin(); pos != end; ++pos)
+    {
+        (*pos)->FindAddressesForLine(target_sp, file, line, function, output_local, output_extern);
+    }
+}
 
 ModuleSP
 ModuleList::FindFirstModule (const ModuleSpec &module_spec) const
