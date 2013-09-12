@@ -258,7 +258,7 @@ public:
   /// more lld::File objects. Subclasses of LinkingContext must implement this
   /// method.
   ///
-  /// \param inputBuff This is an in-memory read-only copy of the input file.
+  /// \param input This is an in-memory read-only copy of the input file.
   /// If the resulting lld::File object will contain pointers into
   /// this memory buffer, the lld::File object should take ownership
   /// of the buffer.  Otherwise core linking will maintain ownership of the
