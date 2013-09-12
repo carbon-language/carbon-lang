@@ -1,0 +1,18 @@
+# RUN: lld -core %s | FileCheck %s
+
+# Test that fallback atoms can be parsed by YAML reader and processed by the
+# core linker.
+
+---
+defined-atoms:
+  - name: bar
+    type: code
+
+undefined-atoms:
+  - name: foo
+    fallback:
+      name: bar
+...
+
+# CHECK:      defined-atoms:
+# CHECK-NEXT:   - name: bar

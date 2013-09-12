@@ -67,6 +67,9 @@ public:
   /// @brief count of by-name entries in symbol table
   unsigned int size();
 
+  /// @brief add atom to replacement table
+  void addReplacement(const Atom *replaced, const Atom *replacement);
+
   /// @brief if atom has been coalesced away, return replacement, else return atom
   const Atom *replacement(const Atom *);
 

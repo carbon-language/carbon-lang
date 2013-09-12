@@ -198,7 +198,7 @@ void Resolver::resolveUndefines() {
     undefineGenCount = _symbolTable.size();
     std::vector<const UndefinedAtom *> undefines;
     _symbolTable.undefines(undefines);
-    for ( const Atom *undefAtom : undefines ) {
+    for (const UndefinedAtom *undefAtom : undefines) {
       StringRef undefName = undefAtom->name();
       // load for previous undefine may also have loaded this undefine
       if (!_symbolTable.isDefined(undefName)) {
@@ -207,6 +207,13 @@ void Resolver::resolveUndefines() {
                                     true,   // searchArchives
                                     false,  // dataSymbolOnly
                                     *this);
+      }
+      // If the undefined symbol has an alternative name, try to resolve the
+      // symbol with the name to give it a second chance. This feature is used
+      // for COFF "weak external" symbol.
+      if (const UndefinedAtom *fallbackUndefAtom = undefAtom->fallback()) {
+        _symbolTable.addReplacement(undefAtom, fallbackUndefAtom);
+        _symbolTable.add(*fallbackUndefAtom);
       }
     }
     // search libraries for overrides of common symbols

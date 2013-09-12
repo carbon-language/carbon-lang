@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "lld/ReaderWriter/Reader.h"
+#include "lld/ReaderWriter/Simple.h"
 #include "lld/ReaderWriter/Writer.h"
 
 #include "lld/Core/ArchiveLibraryFile.h"
@@ -957,10 +958,13 @@ template <> struct MappingTraits<const lld::UndefinedAtom *> {
   class NormalizedAtom : public lld::UndefinedAtom {
   public:
     NormalizedAtom(IO &io)
-        : _file(fileFromContext(io)), _name(), _canBeNull(canBeNullNever) {}
+        : _file(fileFromContext(io)), _name(), _canBeNull(canBeNullNever),
+          _fallback(nullptr) {}
+
     NormalizedAtom(IO &io, const lld::UndefinedAtom *atom)
         : _file(fileFromContext(io)), _name(atom->name()),
-          _canBeNull(atom->canBeNull()) {}
+          _canBeNull(atom->canBeNull()), _fallback(atom->fallback()) {}
+
     const lld::UndefinedAtom *denormalize(IO &io) {
       ContextInfo *info = reinterpret_cast<ContextInfo *>(io.getContext());
       assert(info != nullptr);
@@ -972,10 +976,11 @@ template <> struct MappingTraits<const lld::UndefinedAtom *> {
 
       DEBUG_WITH_TYPE("WriterYAML",
                       llvm::dbgs() << "created UndefinedAtom named: '" << _name
-                                   << "' (" << (void *)_name.data() << ", "
-                                   << _name.size() << ")\n");
+                      << "' (" << (void *)_name.data() << ", "
+                      << _name.size() << ")\n");
       return this;
     }
+
     // Extract current File object from YAML I/O parsing context
     const lld::File &fileFromContext(IO &io) {
       ContextInfo *info = reinterpret_cast<ContextInfo *>(io.getContext());
@@ -987,10 +992,12 @@ template <> struct MappingTraits<const lld::UndefinedAtom *> {
     virtual const lld::File &file() const { return _file; }
     virtual StringRef name() const { return _name; }
     virtual CanBeNull canBeNull() const { return _canBeNull; }
+    virtual const UndefinedAtom *fallback() const { return _fallback; }
 
     const lld::File &_file;
     StringRef _name;
     CanBeNull _canBeNull;
+    const UndefinedAtom *_fallback;
   };
 
   static void mapping(IO &io, const lld::UndefinedAtom *&atom) {
@@ -1000,6 +1007,8 @@ template <> struct MappingTraits<const lld::UndefinedAtom *> {
     io.mapRequired("name", keys->_name);
     io.mapOptional("can-be-null", keys->_canBeNull,
                    lld::UndefinedAtom::canBeNullNever);
+    io.mapOptional("fallback", keys->_fallback,
+                   (const lld::UndefinedAtom *)nullptr);
   }
 };
 

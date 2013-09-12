@@ -164,8 +164,8 @@ struct NativeAtomAttributesV1 {
 struct NativeUndefinedAtomIvarsV1 {
   uint32_t  nameOffset;
   uint32_t  flags;
+  uint32_t  fallbackNameOffset;
 };
-
 
 
 //

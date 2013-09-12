@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "lld/ReaderWriter/Reader.h"
+#include "lld/ReaderWriter/Simple.h"
 
 #include "lld/Core/Atom.h"
 #include "lld/Core/Error.h"
@@ -134,10 +135,12 @@ public:
     return (CanBeNull)(_ivarData->flags & 0x3);
   }
 
+  virtual const UndefinedAtom *fallback() const;
 
 private:
   const File                        *_file;
   const NativeUndefinedAtomIvarsV1  *_ivarData;
+  mutable std::unique_ptr<const SimpleUndefinedAtom> _fallback;
 };
 
 
@@ -860,8 +863,14 @@ inline StringRef NativeUndefinedAtomV1::name() const {
   return _file->string(_ivarData->nameOffset);
 }
 
-
-
+inline const UndefinedAtom *NativeUndefinedAtomV1::fallback() const {
+  if (!_ivarData->fallbackNameOffset)
+    return nullptr;
+  if (!_fallback)
+    _fallback.reset(new SimpleUndefinedAtom(
+        *_file, _file->string(_ivarData->fallbackNameOffset)));
+  return _fallback.get();
+}
 
 inline const lld::File& NativeSharedLibraryAtomV1::file() const {
   return *_file;
