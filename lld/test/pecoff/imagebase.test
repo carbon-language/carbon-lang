@@ -1,10 +1,10 @@
 # RUN: yaml2obj %p/Inputs/imagebase.obj.yaml > %t.obj
 #
-# RUN: lld -flavor link /out:%t1 /subsystem:console /entry:__start /opt:noref \
+# RUN: lld -flavor link /out:%t1 /subsystem:console /entry:_start /opt:noref \
 # RUN:   -- %t.obj \
 # RUN:   && llvm-objdump -disassemble %t1 | FileCheck -check-prefix=CHECK1 %s
 #
-# RUN: lld -flavor link /out:%t1 /subsystem:console /entry:__start /base:65536 \
+# RUN: lld -flavor link /out:%t1 /subsystem:console /entry:_start /base:65536 \
 # RUN:   /opt:noref -- %t.obj \
 # RUN:   && llvm-objdump -disassemble %t1 | FileCheck -check-prefix=CHECK2 %s
 

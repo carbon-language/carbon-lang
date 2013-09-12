@@ -4,7 +4,7 @@
 
 # RUN: yaml2obj %p/Inputs/drectve.obj.yaml > %t.obj
 #
-# RUN: lld -flavor link /out:%t.exe /entry:_start -- %t.obj >& %t.log
+# RUN: lld -flavor link /out:%t.exe /entry:start -- %t.obj >& %t.log
 # RUN: llvm-readobj -file-headers %t.exe | FileCheck -check-prefix=HEADER %s
 # RUN: echo >> %t.log
 # RUN: FileCheck -check-prefix=ERROR %s < %t.log

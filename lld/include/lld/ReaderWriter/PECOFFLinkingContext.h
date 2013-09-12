@@ -80,6 +80,11 @@ public:
     return allocateString(str);
   }
 
+  void setEntrySymbolName(StringRef name) {
+    if (!name.empty())
+      LinkingContext::setEntrySymbolName(decorateSymbol(name));
+  }
+
   void setBaseAddress(uint64_t addr) { _baseAddress = addr; }
   uint64_t getBaseAddress() const { return _baseAddress; }
 

@@ -172,12 +172,12 @@ void processLibEnv(PECOFFLinkingContext &context) {
 // subsystem. These default names are MS CRT compliant.
 StringRef getDefaultEntrySymbolName(PECOFFLinkingContext &context) {
   if (context.getImageType() == PECOFFLinkingContext::ImageType::IMAGE_DLL)
-    return "__DllMainCRTStartup";
+    return "_DllMainCRTStartup";
   llvm::COFF::WindowsSubsystem subsystem = context.getSubsystem();
   if (subsystem == llvm::COFF::WindowsSubsystem::IMAGE_SUBSYSTEM_WINDOWS_GUI)
-    return "_WinMainCRTStartup";
+    return "WinMainCRTStartup";
   if (subsystem == llvm::COFF::WindowsSubsystem::IMAGE_SUBSYSTEM_WINDOWS_CUI)
-    return "_mainCRTStartup";
+    return "mainCRTStartup";
   return "";
 }
 

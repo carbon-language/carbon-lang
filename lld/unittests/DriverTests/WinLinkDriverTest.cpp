@@ -32,7 +32,7 @@ protected:
 
 TEST_F(WinLinkParserTest, Basic) {
   EXPECT_FALSE(parse("link.exe", "/subsystem:console", "/out:a.exe",
-        "-entry:_start", "a.obj", "b.obj", "c.obj", nullptr));
+        "-entry:start", "a.obj", "b.obj", "c.obj", nullptr));
   EXPECT_EQ(llvm::COFF::IMAGE_SUBSYSTEM_WINDOWS_CUI, _context.getSubsystem());
   EXPECT_EQ("a.exe", _context.outputPath());
   EXPECT_EQ("_start", _context.entrySymbolName());
