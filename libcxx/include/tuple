@@ -133,68 +133,6 @@ template <class... Types>
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
-// allocator_arg_t
-
-struct _LIBCPP_TYPE_VIS_ONLY allocator_arg_t { };
-
-#if defined(_LIBCPP_HAS_NO_CONSTEXPR) || defined(_LIBCPP_BUILDING_MEMORY)
-extern const allocator_arg_t allocator_arg;
-#else
-constexpr allocator_arg_t allocator_arg = allocator_arg_t();
-#endif
-
-// uses_allocator
-
-template <class _Tp>
-struct __has_allocator_type
-{
-private:
-    struct __two {char __lx; char __lxx;};
-    template <class _Up> static __two __test(...);
-    template <class _Up> static char __test(typename _Up::allocator_type* = 0);
-public:
-    static const bool value = sizeof(__test<_Tp>(0)) == 1;
-};
-
-template <class _Tp, class _Alloc, bool = __has_allocator_type<_Tp>::value>
-struct __uses_allocator
-    : public integral_constant<bool,
-        is_convertible<_Alloc, typename _Tp::allocator_type>::value>
-{
-};
-
-template <class _Tp, class _Alloc>
-struct __uses_allocator<_Tp, _Alloc, false>
-    : public false_type
-{
-};
-
-template <class _Tp, class _Alloc>
-struct _LIBCPP_TYPE_VIS_ONLY uses_allocator
-    : public __uses_allocator<_Tp, _Alloc>
-{
-};
-
-#ifndef _LIBCPP_HAS_NO_VARIADICS
-
-// uses-allocator construction
-
-template <class _Tp, class _Alloc, class ..._Args>
-struct __uses_alloc_ctor_imp
-{
-    static const bool __ua = uses_allocator<_Tp, _Alloc>::value;
-    static const bool __ic =
-        is_constructible<_Tp, allocator_arg_t, _Alloc, _Args...>::value;
-    static const int value = __ua ? 2 - __ic : 0;
-};
-
-template <class _Tp, class _Alloc, class ..._Args>
-struct __uses_alloc_ctor
-    : integral_constant<int, __uses_alloc_ctor_imp<_Tp, _Alloc, _Args...>::value>
-    {};
-
-#endif  // _LIBCPP_HAS_NO_VARIADICS
-
 #ifndef _LIBCPP_HAS_NO_VARIADICS
 
 // tuple_size

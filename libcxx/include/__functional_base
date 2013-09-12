@@ -15,6 +15,7 @@
 #include <type_traits>
 #include <typeinfo>
 #include <exception>
+#include <new>
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 #pragma GCC system_header
@@ -515,6 +516,97 @@ public:
 };
 #endif
 
+// allocator_arg_t
+
+struct _LIBCPP_TYPE_VIS_ONLY allocator_arg_t { };
+
+#if defined(_LIBCPP_HAS_NO_CONSTEXPR) || defined(_LIBCPP_BUILDING_MEMORY)
+extern const allocator_arg_t allocator_arg;
+#else
+constexpr allocator_arg_t allocator_arg = allocator_arg_t();
+#endif
+
+// uses_allocator
+
+template <class _Tp>
+struct __has_allocator_type
+{
+private:
+    struct __two {char __lx; char __lxx;};
+    template <class _Up> static __two __test(...);
+    template <class _Up> static char __test(typename _Up::allocator_type* = 0);
+public:
+    static const bool value = sizeof(__test<_Tp>(0)) == 1;
+};
+
+template <class _Tp, class _Alloc, bool = __has_allocator_type<_Tp>::value>
+struct __uses_allocator
+    : public integral_constant<bool,
+        is_convertible<_Alloc, typename _Tp::allocator_type>::value>
+{
+};
+
+template <class _Tp, class _Alloc>
+struct __uses_allocator<_Tp, _Alloc, false>
+    : public false_type
+{
+};
+
+template <class _Tp, class _Alloc>
+struct _LIBCPP_TYPE_VIS_ONLY uses_allocator
+    : public __uses_allocator<_Tp, _Alloc>
+{
+};
+
+#ifndef _LIBCPP_HAS_NO_VARIADICS
+
+// allocator construction
+
+template <class _Tp, class _Alloc, class ..._Args>
+struct __uses_alloc_ctor_imp
+{
+    static const bool __ua = uses_allocator<_Tp, _Alloc>::value;
+    static const bool __ic =
+        is_constructible<_Tp, allocator_arg_t, _Alloc, _Args...>::value;
+    static const int value = __ua ? 2 - __ic : 0;
+};
+
+template <class _Tp, class _Alloc, class ..._Args>
+struct __uses_alloc_ctor
+    : integral_constant<int, __uses_alloc_ctor_imp<_Tp, _Alloc, _Args...>::value>
+    {};
+
+template <class _Tp, class _Allocator, class... _Args>
+inline _LIBCPP_INLINE_VISIBILITY
+void __user_alloc_construct_impl (integral_constant<int, 0>, _Tp *__storage, const _Allocator &, _Args &&... __args )
+{
+    new (__storage) _Tp (_VSTD::forward<_Args>(__args)...);
+}
+
+template <class _Tp, class _Allocator, class... _Args>
+inline _LIBCPP_INLINE_VISIBILITY
+void __user_alloc_construct_impl (integral_constant<int, 1>, _Tp *__storage, const _Allocator &__a, _Args &&... __args )
+{
+    new (__storage) _Tp (allocator_arg, __a, _VSTD::forward<_Args>(__args)...);
+}
+
+template <class _Tp, class _Allocator, class... _Args>
+inline _LIBCPP_INLINE_VISIBILITY
+void __user_alloc_construct_impl (integral_constant<int, 2>, _Tp *__storage, const _Allocator &__a, _Args &&... __args )
+{
+    new (__storage) _Tp (_VSTD::forward<_Args>(__args)..., __a);
+}
+
+template <class _Tp, class _Allocator, class... _Args>
+inline _LIBCPP_INLINE_VISIBILITY
+void __user_alloc_construct (_Tp *__storage, const _Allocator &__a, _Args &&... __args)
+{ 
+    __user_alloc_construct_impl( 
+             __uses_alloc_ctor<_Tp, _Allocator>(), 
+             __storage, __a, _VSTD::forward<_Args>(__args)...
+        );
+}
+#endif  // _LIBCPP_HAS_NO_VARIADICS
 
 _LIBCPP_END_NAMESPACE_STD
 
