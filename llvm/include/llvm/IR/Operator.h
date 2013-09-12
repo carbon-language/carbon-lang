@@ -439,8 +439,8 @@ public:
   /// offset of this GEP if the GEP is in fact constant. If the GEP is not
   /// all-constant, it returns false and the value of the offset APInt is
   /// undefined (it is *not* preserved!). The APInt passed into this routine
-  /// must be at least as wide as the IntPtr type for the address space of
-  /// the base GEP pointer.
+  /// must be at exactly as wide as the IntPtr type for the address space of the
+  /// base GEP pointer.
   bool accumulateConstantOffset(const DataLayout &DL, APInt &Offset) const {
     assert(Offset.getBitWidth() ==
            DL.getPointerSizeInBits(getPointerAddressSpace()) &&
