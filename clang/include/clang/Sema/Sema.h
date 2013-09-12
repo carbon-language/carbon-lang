@@ -1404,7 +1404,7 @@ public:
       case NC_VarTemplate:
         return TNK_Var_template;
       default:
-        llvm_unreachable("unsuported name classification.");
+        llvm_unreachable("unsupported name classification.");
       }
     }
   };
