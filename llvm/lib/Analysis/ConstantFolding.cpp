@@ -586,12 +586,13 @@ static Constant *SymbolicallyEvaluateBinop(unsigned Opc, Constant *Op0,
   if (Opc == Instruction::Sub && DL) {
     GlobalValue *GV1, *GV2;
     unsigned PtrSize = DL->getPointerSizeInBits();
-    unsigned OpSize = DL->getTypeSizeInBits(Op0->getType());
     APInt Offs1(PtrSize, 0), Offs2(PtrSize, 0);
 
     if (IsConstantOffsetFromGlobal(Op0, GV1, Offs1, *DL))
       if (IsConstantOffsetFromGlobal(Op1, GV2, Offs2, *DL) &&
           GV1 == GV2) {
+        unsigned OpSize = DL->getTypeSizeInBits(Op0->getType());
+
         // (&GV+C1) - (&GV+C2) -> C1-C2, pointer arithmetic cannot overflow.
         // PtrToInt may change the bitwidth so we have convert to the right size
         // first.
