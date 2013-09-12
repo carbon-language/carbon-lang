@@ -95,6 +95,12 @@ foreach Index = 448-480 in {
 
 // Special Registers
 
+def OQA : R600Reg<"OQA", 219>;
+def OQB : R600Reg<"OQB", 220>;
+def OQAP : R600Reg<"OQAP", 221>;
+def OQBP : R600Reg<"OQAP", 222>;
+def LDS_DIRECT_A : R600Reg<"LDS_DIRECT_A", 223>;
+def LDS_DIRECT_B : R600Reg<"LDS_DIRECT_B", 224>;
 def ZERO : R600Reg<"0.0", 248>;
 def ONE : R600Reg<"1.0", 249>;
 def NEG_ONE : R600Reg<"-1.0", 249>;
@@ -115,7 +121,6 @@ def PRED_SEL_OFF: R600Reg<"Pred_sel_off", 0>;
 def PRED_SEL_ZERO : R600Reg<"Pred_sel_zero", 2>;
 def PRED_SEL_ONE : R600Reg<"Pred_sel_one", 3>;
 def AR_X : R600Reg<"AR.x", 0>;
-def OQAP : R600Reg<"OQAP", 221>;
 
 def R600_ArrayBase : RegisterClass <"AMDGPU", [f32, i32], 32,
                           (add (sequence "ArrayBase%u", 448, 480))>;
@@ -129,6 +134,9 @@ let isAllocatable = 0 in {
 
 // XXX: Only use the X channel, until we support wider stack widths
 def R600_Addr : RegisterClass <"AMDGPU", [i32], 127, (add (sequence "Addr%u_X", 0, 127))>;
+
+def R600_LDS_SRC_REG : RegisterClass<"AMDGPU", [i32], 32,
+  (add OQA, OQB, OQAP, OQBP, LDS_DIRECT_A, LDS_DIRECT_B)>;
 
 } // End isAllocatable = 0
 

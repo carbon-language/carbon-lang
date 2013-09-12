@@ -204,6 +204,22 @@ bool R600InstrInfo::mustBeLastInClause(unsigned Opcode) const {
   }
 }
 
+bool R600InstrInfo::readsLDSSrcReg(const MachineInstr *MI) const {
+  if (!isALUInstr(MI->getOpcode())) {
+    return false;
+  }
+  for (MachineInstr::const_mop_iterator I = MI->operands_begin(),
+                                        E = MI->operands_end(); I != E; ++I) {
+    if (!I->isReg() || !I->isUse() ||
+        TargetRegisterInfo::isVirtualRegister(I->getReg()))
+      continue;
+
+    if (AMDGPU::R600_LDS_SRC_REGRegClass.contains(I->getReg()))
+      return true;
+  }
+  return false;
+}
+
 int R600InstrInfo::getSrcIdx(unsigned Opcode, unsigned SrcNum) const {
   static const unsigned OpTable[] = {
     AMDGPU::OpName::src0,

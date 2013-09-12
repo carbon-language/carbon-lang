@@ -78,6 +78,7 @@ namespace llvm {
   bool usesTextureCache(const MachineInstr *MI) const;
 
   bool mustBeLastInClause(unsigned Opcode) const;
+  bool readsLDSSrcReg(const MachineInstr *MI) const;
 
   /// \returns The operand index for the given source number.  Legal values
   /// for SrcNum are 0, 1, and 2.

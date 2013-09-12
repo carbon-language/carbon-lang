@@ -272,6 +272,10 @@ public:
       return false;
     }
 
+    // We cannot read LDS source registrs from the Trans slot.
+    if (isTransSlot && TII->readsLDSSrcReg(MI))
+      return false;
+
     CurrentPacketMIs.pop_back();
     return true;
   }

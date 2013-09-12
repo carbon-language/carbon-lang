@@ -314,6 +314,10 @@ R600SchedStrategy::AluKind R600SchedStrategy::getAluKind(SUnit *SU) const {
     if (regBelongsToClass(DestReg, &AMDGPU::R600_Reg128RegClass))
       return AluT_XYZW;
 
+    // LDS src registers cannot be used in the Trans slot.
+    if (TII->readsLDSSrcReg(MI))
+      return AluT_XYZW;
+
     return AluAny;
 
 }
