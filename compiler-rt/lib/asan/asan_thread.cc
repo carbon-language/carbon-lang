@@ -226,7 +226,7 @@ static bool ThreadStackContainsAddress(ThreadContextBase *tctx_base,
   AsanThread *t = tctx->thread;
   if (!t) return false;
   if (t->AddrIsInStack((uptr)addr)) return true;
-  if (t->fake_stack() && t->fake_stack()->AddrIsInFakeStack((uptr)addr))
+  if (t->has_fake_stack() && t->fake_stack()->AddrIsInFakeStack((uptr)addr))
     return true;
   return false;
 }
