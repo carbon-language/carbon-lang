@@ -493,6 +493,31 @@ static void DiagUninitUse(Sema &S, const VarDecl *VD, const UninitUse &Use,
                           bool IsCapturedByBlock) {
   bool Diagnosed = false;
 
+  switch (Use.getKind()) {
+  case UninitUse::Always:
+    S.Diag(Use.getUser()->getLocStart(), diag::warn_uninit_var)
+        << VD->getDeclName() << IsCapturedByBlock
+        << Use.getUser()->getSourceRange();
+    return;
+
+  case UninitUse::AfterDecl:
+  case UninitUse::AfterCall:
+    S.Diag(VD->getLocation(), diag::warn_sometimes_uninit_var)
+      << VD->getDeclName() << IsCapturedByBlock
+      << (Use.getKind() == UninitUse::AfterDecl ? 4 : 5)
+      << const_cast<DeclContext*>(VD->getLexicalDeclContext())
+      << VD->getSourceRange();
+    S.Diag(Use.getUser()->getLocStart(), diag::note_uninit_var_use)
+      << IsCapturedByBlock << Use.getUser()->getSourceRange();
+    return;
+
+  case UninitUse::Maybe:
+  case UninitUse::Sometimes:
+    // Carry on to report sometimes-uninitialized branches, if possible,
+    // or a 'may be used uninitialized' diagnostic otherwise.
+    break;
+  }
+
   // Diagnose each branch which leads to a sometimes-uninitialized use.
   for (UninitUse::branch_iterator I = Use.branch_begin(), E = Use.branch_end();
        I != E; ++I) {
@@ -515,14 +540,10 @@ static void DiagUninitUse(Sema &S, const VarDecl *VD, const UninitUse &Use,
                                   : (I->Output ? "1" : "0");
     FixItHint Fixit1, Fixit2;
 
-    switch (Term->getStmtClass()) {
+    switch (Term ? Term->getStmtClass() : Stmt::DeclStmtClass) {
     default:
       // Don't know how to report this. Just fall back to 'may be used
-      // uninitialized'. This happens for range-based for, which the user
-      // can't explicitly fix.
-      // FIXME: This also happens if the first use of a variable is always
-      // uninitialized, eg "for (int n; n < 10; ++n)". We should report that
-      // with the 'is uninitialized' diagnostic.
+      // uninitialized'. FIXME: Can this happen?
       continue;
 
     // "condition is true / condition is false".
@@ -583,6 +604,17 @@ static void DiagUninitUse(Sema &S, const VarDecl *VD, const UninitUse &Use,
       else
         Fixit1 = FixItHint::CreateReplacement(Range, FixitStr);
       break;
+    case Stmt::CXXForRangeStmtClass:
+      if (I->Output == 1) {
+        // The use occurs if a range-based for loop's body never executes.
+        // That may be impossible, and there's no syntactic fix for this,
+        // so treat it as a 'may be uninitialized' case.
+        continue;
+      }
+      DiagKind = 1;
+      Str = "for";
+      Range = cast<CXXForRangeStmt>(Term)->getRangeInit()->getSourceRange();
+      break;
 
     // "condition is true / loop is exited".
     case Stmt::DoStmtClass:
@@ -619,9 +651,7 @@ static void DiagUninitUse(Sema &S, const VarDecl *VD, const UninitUse &Use,
   }
 
   if (!Diagnosed)
-    S.Diag(Use.getUser()->getLocStart(),
-           Use.getKind() == UninitUse::Always ? diag::warn_uninit_var
-                                              : diag::warn_maybe_uninit_var)
+    S.Diag(Use.getUser()->getLocStart(), diag::warn_maybe_uninit_var)
         << VD->getDeclName() << IsCapturedByBlock
         << Use.getUser()->getSourceRange();
 }
@@ -1233,7 +1263,9 @@ public:
 private:
   static bool hasAlwaysUninitializedUse(const UsesVec* vec) {
   for (UsesVec::const_iterator i = vec->begin(), e = vec->end(); i != e; ++i) {
-    if (i->getKind() == UninitUse::Always) {
+    if (i->getKind() == UninitUse::Always ||
+        i->getKind() == UninitUse::AfterCall ||
+        i->getKind() == UninitUse::AfterDecl) {
       return true;
     }
   }

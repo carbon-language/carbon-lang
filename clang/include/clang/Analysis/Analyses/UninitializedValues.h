@@ -38,6 +38,12 @@ private:
   /// The expression which uses this variable.
   const Expr *User;
 
+  /// Is this use uninitialized whenever the function is called?
+  bool UninitAfterCall;
+
+  /// Is this use uninitialized whenever the variable declaration is reached?
+  bool UninitAfterDecl;
+
   /// Does this use always see an uninitialized value?
   bool AlwaysUninit;
 
@@ -46,12 +52,16 @@ private:
   SmallVector<Branch, 2> UninitBranches;
 
 public:
-  UninitUse(const Expr *User, bool AlwaysUninit) :
-    User(User), AlwaysUninit(AlwaysUninit) {}
+  UninitUse(const Expr *User, bool AlwaysUninit)
+      : User(User), UninitAfterCall(false), UninitAfterDecl(false),
+        AlwaysUninit(AlwaysUninit) {}
 
   void addUninitBranch(Branch B) {
     UninitBranches.push_back(B);
   }
+
+  void setUninitAfterCall() { UninitAfterCall = true; }
+  void setUninitAfterDecl() { UninitAfterDecl = true; }
 
   /// Get the expression containing the uninitialized use.
   const Expr *getUser() const { return User; }
@@ -62,6 +72,12 @@ public:
     Maybe,
     /// The use is uninitialized whenever a certain branch is taken.
     Sometimes,
+    /// The use is uninitialized the first time it is reached after we reach
+    /// the variable's declaration.
+    AfterDecl,
+    /// The use is uninitialized the first time it is reached after the function
+    /// is called.
+    AfterCall,
     /// The use is always uninitialized.
     Always
   };
@@ -69,6 +85,8 @@ public:
   /// Get the kind of uninitialized use.
   Kind getKind() const {
     return AlwaysUninit ? Always :
+           UninitAfterCall ? AfterCall :
+           UninitAfterDecl ? AfterDecl :
            !branch_empty() ? Sometimes : Maybe;
   }
 

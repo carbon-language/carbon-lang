@@ -527,12 +527,28 @@ public:
     SuccsVisited[block->getBlockID()] = block->succ_size();
     while (!Queue.empty()) {
       const CFGBlock *B = Queue.pop_back_val();
+
+      // If the use is always reached from the entry block, make a note of that.
+      if (B == &cfg.getEntry())
+        Use.setUninitAfterCall();
+
       for (CFGBlock::const_pred_iterator I = B->pred_begin(), E = B->pred_end();
            I != E; ++I) {
         const CFGBlock *Pred = *I;
-        if (vals.getValue(Pred, B, vd) == Initialized)
+        Value AtPredExit = vals.getValue(Pred, B, vd);
+        if (AtPredExit == Initialized)
           // This block initializes the variable.
           continue;
+        if (AtPredExit == MayUninitialized &&
+            vals.getValue(B, 0, vd) == Uninitialized) {
+          // This block declares the variable (uninitialized), and is reachable
+          // from a block that initializes the variable. We can't guarantee to
+          // give an earlier location for the diagnostic (and it appears that
+          // this code is intended to be reachable) so give a diagnostic here
+          // and go no further down this path.
+          Use.setUninitAfterDecl();
+          continue;
+        }
 
         unsigned &SV = SuccsVisited[Pred->getBlockID()];
         if (!SV) {

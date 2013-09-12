@@ -1388,7 +1388,10 @@ def warn_sometimes_uninit_var : Warning<
   "%select{'%3' condition is %select{true|false}4|"
   "'%3' loop %select{is entered|exits because its condition is false}4|"
   "'%3' loop %select{condition is true|exits because its condition is false}4|"
-  "switch %3 is taken}2">, InGroup<UninitializedSometimes>, DefaultIgnore;
+  "switch %3 is taken|"
+  "its declaration is reached|"
+  "%3 is called}2">,
+  InGroup<UninitializedSometimes>, DefaultIgnore;
 def warn_maybe_uninit_var : Warning<
   "variable %0 may be uninitialized when "
   "%select{used here|captured by block}1">,
