@@ -191,30 +191,30 @@ lldb_private::EnableLog (StreamSP &log_stream_sp, uint32_t log_options, const ch
             else if (0 == ::strcasecmp(arg, "api"))         flag_bits |= LIBLLDB_LOG_API;
             else if (0 == ::strncasecmp(arg, "break", 5))   flag_bits |= LIBLLDB_LOG_BREAKPOINTS;
             else if (0 == ::strcasecmp(arg, "commands"))    flag_bits |= LIBLLDB_LOG_COMMANDS;
+            else if (0 == ::strncasecmp(arg, "commu", 5))   flag_bits |= LIBLLDB_LOG_COMMUNICATION;
+            else if (0 == ::strncasecmp(arg, "conn", 4))    flag_bits |= LIBLLDB_LOG_CONNECTION;
             else if (0 == ::strcasecmp(arg, "default"))     flag_bits |= LIBLLDB_LOG_DEFAULT;
             else if (0 == ::strcasecmp(arg, "dyld"))        flag_bits |= LIBLLDB_LOG_DYNAMIC_LOADER;
             else if (0 == ::strncasecmp(arg, "event", 5))   flag_bits |= LIBLLDB_LOG_EVENTS;
             else if (0 == ::strncasecmp(arg, "expr", 4))    flag_bits |= LIBLLDB_LOG_EXPRESSIONS;
+            else if (0 == ::strncasecmp(arg, "host", 4))    flag_bits |= LIBLLDB_LOG_HOST;
+            else if (0 == ::strncasecmp(arg, "mmap", 4))    flag_bits |= LIBLLDB_LOG_MMAP;
+            else if (0 == ::strncasecmp(arg, "module", 6))  flag_bits |= LIBLLDB_LOG_MODULES;
             else if (0 == ::strncasecmp(arg, "object", 6))  flag_bits |= LIBLLDB_LOG_OBJECT;
-            else if (0 == ::strcasecmp(arg, "process"))     flag_bits |= LIBLLDB_LOG_PROCESS;
+            else if (0 == ::strcasecmp(arg, "os"))          flag_bits |= LIBLLDB_LOG_OS;
             else if (0 == ::strcasecmp(arg, "platform"))    flag_bits |= LIBLLDB_LOG_PLATFORM;
+            else if (0 == ::strcasecmp(arg, "process"))     flag_bits |= LIBLLDB_LOG_PROCESS;
             else if (0 == ::strcasecmp(arg, "script"))      flag_bits |= LIBLLDB_LOG_SCRIPT;
             else if (0 == ::strcasecmp(arg, "state"))       flag_bits |= LIBLLDB_LOG_STATE;
             else if (0 == ::strcasecmp(arg, "step"))        flag_bits |= LIBLLDB_LOG_STEP;
-            else if (0 == ::strcasecmp(arg, "thread"))      flag_bits |= LIBLLDB_LOG_THREAD;
+            else if (0 == ::strncasecmp(arg, "symbol", 6))  flag_bits |= LIBLLDB_LOG_SYMBOLS;
             else if (0 == ::strcasecmp(arg, "target"))      flag_bits |= LIBLLDB_LOG_TARGET;
+            else if (0 == ::strncasecmp(arg, "temp", 4))    flag_bits |= LIBLLDB_LOG_TEMPORARY;
+            else if (0 == ::strcasecmp(arg, "thread"))      flag_bits |= LIBLLDB_LOG_THREAD;
+            else if (0 == ::strncasecmp(arg, "types", 5))   flag_bits |= LIBLLDB_LOG_TYPES;
+            else if (0 == ::strncasecmp(arg, "unwind", 6))  flag_bits |= LIBLLDB_LOG_UNWIND;
             else if (0 == ::strcasecmp(arg, "verbose"))     flag_bits |= LIBLLDB_LOG_VERBOSE;
             else if (0 == ::strncasecmp(arg, "watch", 5))   flag_bits |= LIBLLDB_LOG_WATCHPOINTS;
-            else if (0 == ::strncasecmp(arg, "temp", 4))    flag_bits |= LIBLLDB_LOG_TEMPORARY;
-            else if (0 == ::strncasecmp(arg, "comm", 4))    flag_bits |= LIBLLDB_LOG_COMMUNICATION;
-            else if (0 == ::strncasecmp(arg, "conn", 4))    flag_bits |= LIBLLDB_LOG_CONNECTION;
-            else if (0 == ::strncasecmp(arg, "host", 4))    flag_bits |= LIBLLDB_LOG_HOST;
-            else if (0 == ::strncasecmp(arg, "unwind", 6))  flag_bits |= LIBLLDB_LOG_UNWIND;
-            else if (0 == ::strncasecmp(arg, "types", 5))   flag_bits |= LIBLLDB_LOG_TYPES;
-            else if (0 == ::strncasecmp(arg, "symbol", 6))  flag_bits |= LIBLLDB_LOG_SYMBOLS;
-            else if (0 == ::strncasecmp(arg, "module", 6))  flag_bits |= LIBLLDB_LOG_MODULES;
-            else if (0 == ::strncasecmp(arg, "mmap", 4))    flag_bits |= LIBLLDB_LOG_MMAP;
-            else if (0 == ::strcasecmp(arg, "os"))          flag_bits |= LIBLLDB_LOG_OS;
             else
             {
                 feedback_strm->Printf("error: unrecognized log category '%s'\n", arg);
@@ -239,14 +239,19 @@ lldb_private::ListLogCategories (Stream *strm)
                  "  api - enable logging of API calls and return values\n"
                  "  break - log breakpoints\n"
                  "  commands - log command argument parsing\n"
+                 "  communication - log communication activities\n"
+                 "  connection - log connection details\n"
                  "  default - enable the default set of logging categories for liblldb\n"
                  "  dyld - log shared library related activities\n"
                  "  events - log broadcaster, listener and event queue activities\n"
                  "  expr - log expressions\n"
-                 "  object - log object construction/destruction for important objects\n"
+                 "  host - log host activities\n"
+                 "  mmap - log mmap related activities\n"
                  "  module - log module activities such as when modules are created, detroyed, replaced, and more\n"
-                 "  process - log process events and activities\n"
+                 "  object - log object construction/destruction for important objects\n"
+                 "  os - log OperatingSystem plugin related activities\n"
                  "  platform - log platform events and activities\n"
+                 "  process - log process events and activities\n"
                  "  script - log events about the script interpreter\n"
                  "  state - log private and public process state changes\n"
                  "  step - log step related activities\n"
