@@ -34,6 +34,7 @@ TEST_F(WinLinkParserTest, Basic) {
   EXPECT_FALSE(parse("link.exe", "/subsystem:console", "/out:a.exe",
         "-entry:start", "a.obj", "b.obj", "c.obj", nullptr));
   EXPECT_EQ(llvm::COFF::IMAGE_SUBSYSTEM_WINDOWS_CUI, _context.getSubsystem());
+  EXPECT_EQ(llvm::COFF::IMAGE_FILE_MACHINE_I386, _context.getMachineType());
   EXPECT_EQ("a.exe", _context.outputPath());
   EXPECT_EQ("_start", _context.entrySymbolName());
   EXPECT_EQ(3, inputFileCount());
@@ -107,11 +108,7 @@ TEST_F(WinLinkParserTest, Libpath) {
 }
 
 TEST_F(WinLinkParserTest, MachineX64) {
-  EXPECT_FALSE(parse("link.exe", "/machine:x64", "a.obj", nullptr));
-}
-
-TEST_F(WinLinkParserTest, MachineArm) {
-  EXPECT_TRUE(parse("link.exe", "/machine:arm", "a.obj", nullptr));
+  EXPECT_TRUE(parse("link.exe", "/machine:x64", "a.obj", nullptr));
 }
 
 TEST_F(WinLinkParserTest, MinMajorOSVersion) {

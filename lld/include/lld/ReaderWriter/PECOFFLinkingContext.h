@@ -20,6 +20,9 @@
 #include "llvm/Support/COFF.h"
 #include "llvm/Support/ErrorHandling.h"
 
+using llvm::COFF::MachineTypes;
+using llvm::COFF::WindowsSubsystem;
+
 namespace lld {
 
 class PECOFFLinkingContext : public LinkingContext {
@@ -27,8 +30,9 @@ public:
   PECOFFLinkingContext()
       : _baseAddress(0x400000), _stackReserve(1024 * 1024), _stackCommit(4096),
         _heapReserve(1024 * 1024), _heapCommit(4096),
-        _subsystem(llvm::COFF::IMAGE_SUBSYSTEM_UNKNOWN), _minOSVersion(6, 0),
-        _nxCompat(true), _largeAddressAware(false),
+        _subsystem(llvm::COFF::IMAGE_SUBSYSTEM_UNKNOWN),
+        _machineType(llvm::COFF::IMAGE_FILE_MACHINE_I386),
+        _minOSVersion(6, 0), _nxCompat(true), _largeAddressAware(false),
         _baseRelocationEnabled(true), _terminalServerAware(true),
         _dynamicBaseEnabled(true), _imageType(ImageType::IMAGE_EXE) {
     setDeadStripping(true);
@@ -98,8 +102,11 @@ public:
   uint64_t getHeapReserve() const { return _heapReserve; }
   uint64_t getHeapCommit() const { return _heapCommit; }
 
-  void setSubsystem(llvm::COFF::WindowsSubsystem ss) { _subsystem = ss; }
-  llvm::COFF::WindowsSubsystem getSubsystem() const { return _subsystem; }
+  void setSubsystem(WindowsSubsystem ss) { _subsystem = ss; }
+  WindowsSubsystem getSubsystem() const { return _subsystem; }
+
+  void setMachineType(MachineTypes type) { _machineType = type; }
+  MachineTypes getMachineType() const { return _machineType; }
 
   void setMinOSVersion(const OSVersion &version) { _minOSVersion = version; }
   OSVersion getMinOSVersion() const { return _minOSVersion; }
@@ -154,7 +161,8 @@ private:
   uint64_t _stackCommit;
   uint64_t _heapReserve;
   uint64_t _heapCommit;
-  llvm::COFF::WindowsSubsystem _subsystem;
+  WindowsSubsystem _subsystem;
+  MachineTypes _machineType;
   OSVersion _minOSVersion;
   bool _nxCompat;
   bool _largeAddressAware;

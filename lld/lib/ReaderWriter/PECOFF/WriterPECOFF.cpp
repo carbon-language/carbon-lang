@@ -145,7 +145,7 @@ public:
     std::memset(&_coffHeader, 0, sizeof(_coffHeader));
     std::memset(&_peHeader, 0, sizeof(_peHeader));
 
-    _coffHeader.Machine = llvm::COFF::IMAGE_FILE_MACHINE_I386;
+    _coffHeader.Machine = context.getMachineType();
     _coffHeader.TimeDateStamp = time(NULL);
 
     // The size of PE header including optional data directory is always 224.

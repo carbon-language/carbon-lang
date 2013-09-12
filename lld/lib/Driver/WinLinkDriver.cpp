@@ -116,6 +116,15 @@ llvm::COFF::WindowsSubsystem stringToWinSubsystem(StringRef str) {
       .Default(llvm::COFF::IMAGE_SUBSYSTEM_UNKNOWN);
 }
 
+llvm::COFF::MachineTypes stringToMachineType(StringRef str) {
+  return llvm::StringSwitch<llvm::COFF::MachineTypes>(str.lower())
+      .Case("arm", llvm::COFF::IMAGE_FILE_MACHINE_ARM)
+      .Case("ebc", llvm::COFF::IMAGE_FILE_MACHINE_EBC)
+      .Case("x64", llvm::COFF::IMAGE_FILE_MACHINE_AMD64)
+      .Case("x86", llvm::COFF::IMAGE_FILE_MACHINE_I386)
+      .Default(llvm::COFF::IMAGE_FILE_MACHINE_UNKNOWN);
+}
+
 // Handle /failifmatch option.
 bool handleFailIfMismatchOption(StringRef option,
                                 std::map<StringRef, StringRef> &mustMatch,
@@ -308,12 +317,13 @@ bool WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ct
       break;
     }
     case OPT_machine: {
-      StringRef platform = inputArg->getValue();
-      if (!platform.equals_lower("x64")) {
-        diagnostics << "error: LLD does not support non-x64 platform, "
-                    << "but got /machine:" << platform << "\n";
+      StringRef arg = inputArg->getValue();
+      llvm::COFF::MachineTypes type = stringToMachineType(arg);
+      if (type == llvm::COFF::IMAGE_FILE_MACHINE_UNKNOWN) {
+        diagnostics << "error: unknown machine type: " << arg << "\n";
         return true;
       }
+      ctx.setMachineType(type);
       break;
     }
     case OPT_subsystem: {

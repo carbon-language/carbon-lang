@@ -55,6 +55,12 @@ bool PECOFFLinkingContext::validateImpl(raw_ostream &diagnostics) {
     return true;
   }
 
+  // Architectures other than i386 is not supported yet.
+  if (_machineType != llvm::COFF::IMAGE_FILE_MACHINE_I386) {
+    diagnostics << "Machine type other than x86 is not supported.\n";
+    return true;
+  }
+
   _reader = createReaderPECOFF(*this);
   _writer = createWriterPECOFF(*this);
   return false;
