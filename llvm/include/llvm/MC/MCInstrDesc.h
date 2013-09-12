@@ -169,7 +169,7 @@ public:
                          std::string &Info) const {
     if (ComplexDeprecationInfo)
       return ComplexDeprecationInfo(MI, STI, Info);
-    if (DeprecatedFeatureMask != 0) {
+    if ((DeprecatedFeatureMask & STI.getFeatureBits()) != 0) {
       // FIXME: it would be nice to include the subtarget feature here.
       Info = "deprecated";
       return true;
