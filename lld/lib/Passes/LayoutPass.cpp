@@ -21,10 +21,11 @@
 using namespace lld;
 
 /// The function compares atoms by sorting atoms in the following order
-/// a) Sorts atoms with the same permissions
-/// b) Sorts atoms with the same content Type
-/// c) Sorts atoms by Section position preference
-/// d) Sorts atoms by how they follow / precede each atom
+/// a) Sorts atoms by Section position preference
+/// b) Sorts atoms by their ordinal overrides
+///    (layout-after/layout-before/ingroup)
+/// c) Sorts atoms by their permissions
+/// d) Sorts atoms by their content
 /// e) Sorts atoms on how they appear using File Ordinality
 /// f) Sorts atoms on how they appear within the File
 bool LayoutPass::CompareAtoms::operator()(const DefinedAtom *left,
