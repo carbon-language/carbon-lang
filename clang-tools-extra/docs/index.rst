@@ -28,7 +28,7 @@ the user's guide or reference manual for each tool.
 
 * `Doxygen documentation`_
 
-.. _`Doxygen documentation`: doxygen/index.html
+.. _`Doxygen documentation`: doxygen/annotated.html
 
 ..  note::
     This documentation is generated directly from the source code with doxygen.
