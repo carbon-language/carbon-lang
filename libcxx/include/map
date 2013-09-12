@@ -753,7 +753,7 @@ private:
             : __cc(std::forward<_Args>(__args)...) {}
 
         __value_type(const __value_type& __v)
-            : __cc(std::move(__v.__cc)) {}
+            : __cc(__v.__cc) {}
 
         __value_type(__value_type&& __v)
             : __nc(std::move(__v.__nc)) {}
