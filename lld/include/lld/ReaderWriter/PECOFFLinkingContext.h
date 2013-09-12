@@ -69,6 +69,17 @@ public:
 
   StringRef searchLibraryFile(StringRef path) const;
 
+  /// Returns the decorated name of the given symbol name. On 32-bit x86, it
+  /// adds "_" at the beginning of the string. On other architectures, the
+  /// return value is the same as the argument.
+  StringRef decorateSymbol(StringRef name) const {
+    // Because we don't support architectures other than 32-bit x86, we'll
+    // prepend an underscore unconditionally.
+    std::string str = "_";
+    str.append(name);
+    return allocateString(str);
+  }
+
   void setBaseAddress(uint64_t addr) { _baseAddress = addr; }
   uint64_t getBaseAddress() const { return _baseAddress; }
 

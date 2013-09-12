@@ -31,18 +31,16 @@ namespace {
 // The symbol __ImageBase is a linker generated symbol. No standard library
 // files define it, but the linker is expected to prepare it as if it was read
 // from a file. The content of the atom is a 4-byte integer equal to the image
-// base address.
-//
-// Note that because the name is prefixed by an underscore on x86 Win32, the
-// actual symbol name becomes ___ImageBase (with three underscores). On other
-// architectures names are not mangled with an underscore. We need to handle
-// name mangling correctly when porting LLD Windows code to them.
+// base address. Note that because the name is prefixed by an underscore on x86
+// Win32, the actual symbol name will be ___ImageBase (three underscores).
 class ImageBaseAtom : public COFFLinkerInternalAtom {
 public:
-  ImageBaseAtom(const File &file, uint32_t imageBase)
-      : COFFLinkerInternalAtom(file, assembleRawContent(imageBase)) {}
+  ImageBaseAtom(const PECOFFLinkingContext &context, const File &file,
+                uint32_t imageBase)
+      : COFFLinkerInternalAtom(file, assembleRawContent(imageBase)),
+        _name(context.decorateSymbol("__ImageBase")) {}
 
-  virtual StringRef name() const { return "___ImageBase"; }
+  virtual StringRef name() const { return _name; }
   virtual uint64_t ordinal() const { return 0; }
   virtual ContentType contentType() const { return typeData; }
   virtual ContentPermissions permissions() const { return permRW_; }
@@ -54,6 +52,8 @@ private:
     *(reinterpret_cast<uint32_t *>(&data[0])) = imageBase;
     return data;
   }
+
+  StringRef _name;
 };
 
 // The file to wrap ImageBaseAtom. This is the only member file of
@@ -62,9 +62,13 @@ class MemberFile : public SimpleFile {
 public:
   MemberFile(const PECOFFLinkingContext &context)
       : SimpleFile(context, "Member of the Linker Internal File"),
-        _atom(*this, context.getBaseAddress()) {
+        _atom(context, *this, context.getBaseAddress()) {
     addAtom(_atom);
   };
+
+  bool contains(StringRef name) const {
+    return _atom.name() == name;
+  }
 
 private:
   ImageBaseAtom _atom;
@@ -86,7 +90,7 @@ public:
         _memberFile(context) {};
 
   virtual const File *find(StringRef name, bool dataSymbolOnly) const {
-    if (name == "___ImageBase")
+    if (_memberFile.contains(name))
       return &_memberFile;
     return nullptr;
   }
