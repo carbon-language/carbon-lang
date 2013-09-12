@@ -61,3 +61,40 @@ define void @test6(<4 x float> %x, float* %out) nounwind {
   ret void
 }
 
+;CHECK-LABEL: test7
+;CHECK: vmovdz
+;CHECK: vpermps %zmm
+;CHECK: ret
+define float @test7(<16 x float> %x, i32 %ind) nounwind {
+  %e = extractelement <16 x float> %x, i32 %ind
+  ret float %e
+}
+
+;CHECK-LABEL: test8
+;CHECK: vmovqz
+;CHECK: vpermpd %zmm
+;CHECK: ret
+define double @test8(<8 x double> %x, i32 %ind) nounwind {
+  %e = extractelement <8 x double> %x, i32 %ind
+  ret double %e
+}
+
+;CHECK-LABEL: test9
+;CHECK: vmovd
+;CHECK: vpermps %ymm
+;CHECK: ret
+define float @test9(<8 x float> %x, i32 %ind) nounwind {
+  %e = extractelement <8 x float> %x, i32 %ind
+  ret float %e
+}
+
+;CHECK-LABEL: test10
+;CHECK: vmovdz
+;CHECK: vpermd %zmm
+;CHEKK: vmovdz  %xmm0, %eax
+;CHECK: ret
+define i32 @test10(<16 x i32> %x, i32 %ind) nounwind {
+  %e = extractelement <16 x i32> %x, i32 %ind
+  ret i32 %e
+}
+

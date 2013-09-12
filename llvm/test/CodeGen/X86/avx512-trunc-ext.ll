@@ -67,7 +67,7 @@ define <8 x double> @fpext_test(<8 x float> %a) nounwind readnone {
 }
 
 ; CHECK-LABEL: zext_16i1_to_16xi32
-; CHECK: vpbroadcastd LCP{{.*}}(%rip), %zmm0{%k1}{z}
+; CHECK: vpbroadcastd LCP{{.*}}(%rip), %zmm0 {%k1} {z}
 ; CHECK: ret
 define   <16 x i32> @zext_16i1_to_16xi32(i16 %b) {
   %a = bitcast i16 %b to <16 x i1>
@@ -76,7 +76,7 @@ define   <16 x i32> @zext_16i1_to_16xi32(i16 %b) {
 }
 
 ; CHECK-LABEL: zext_8i1_to_8xi64
-; CHECK: vpbroadcastq LCP{{.*}}(%rip), %zmm0{%k1}{z}
+; CHECK: vpbroadcastq LCP{{.*}}(%rip), %zmm0 {%k1} {z}
 ; CHECK: ret
 define   <8 x i64> @zext_8i1_to_8xi64(i8 %b) {
   %a = bitcast i8 %b to <8 x i1>
@@ -117,7 +117,7 @@ define i8 @trunc_8i16_to_8i1(<8 x i16> %a) {
 }
 
 ; CHECK: sext_8i1_8i32
-; CHECK: vpbroadcastq  LCP{{.*}}(%rip), %zmm0{%k1}{z}
+; CHECK: vpbroadcastq  LCP{{.*}}(%rip), %zmm0 {%k1} {z}
 ; CHECK: ret
 define <8 x i32> @sext_8i1_8i32(<8 x i32> %a1, <8 x i32> %a2) nounwind {
   %x = icmp slt <8 x i32> %a1, %a2

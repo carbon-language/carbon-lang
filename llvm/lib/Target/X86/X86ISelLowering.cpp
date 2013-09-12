@@ -7601,18 +7601,40 @@ SDValue
 X86TargetLowering::LowerEXTRACT_VECTOR_ELT(SDValue Op,
                                            SelectionDAG &DAG) const {
   SDLoc dl(Op);
-  if (!isa<ConstantSDNode>(Op.getOperand(1)))
-    return SDValue();
-
   SDValue Vec = Op.getOperand(0);
   MVT VecVT = Vec.getSimpleValueType();
+  SDValue Idx = Op.getOperand(1);
+  if (!isa<ConstantSDNode>(Idx)) {
+    if (VecVT.is512BitVector() ||
+        (VecVT.is256BitVector() && Subtarget->hasInt256() &&
+         VecVT.getVectorElementType().getSizeInBits() == 32)) {
+
+      MVT MaskEltVT =
+        MVT::getIntegerVT(VecVT.getVectorElementType().getSizeInBits());
+      MVT MaskVT = MVT::getVectorVT(MaskEltVT, VecVT.getSizeInBits() /
+                                    MaskEltVT.getSizeInBits());
+      
+      if (Idx.getSimpleValueType() != MaskEltVT)
+        if (Idx.getOpcode() == ISD::ZERO_EXTEND ||
+            Idx.getOpcode() == ISD::SIGN_EXTEND)
+          Idx = Idx.getOperand(0);
+      assert(Idx.getSimpleValueType() == MaskEltVT &&
+             "Unexpected index in insertelement");
+      SDValue Mask = DAG.getNode(X86ISD::VINSERT, dl, MaskVT,
+                                getZeroVector(MaskVT, Subtarget, DAG, dl),
+                                Idx, DAG.getConstant(0, getPointerTy()));
+      SDValue Perm = DAG.getNode(X86ISD::VPERMV, dl, VecVT, Mask, Vec);
+      return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, Op.getValueType(),
+                        Perm, DAG.getConstant(0, getPointerTy()));
+    }
+    return SDValue();
+  }
 
   // If this is a 256-bit vector result, first extract the 128-bit vector and
   // then extract the element from the 128-bit vector.
   if (VecVT.is256BitVector() || VecVT.is512BitVector()) {
-    SDValue Idx = Op.getOperand(1);
-    unsigned IdxVal = cast<ConstantSDNode>(Idx)->getZExtValue();
 
+    unsigned IdxVal = cast<ConstantSDNode>(Idx)->getZExtValue();
     // Get the 128-bit vector.
     Vec = Extract128BitVector(Vec, IdxVal, DAG, dl);
     MVT EltVT = VecVT.getVectorElementType();
@@ -13663,6 +13685,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::VSEXT:              return "X86ISD::VSEXT";
   case X86ISD::VTRUNC:             return "X86ISD::VTRUNC";
   case X86ISD::VTRUNCM:            return "X86ISD::VTRUNCM";
+  case X86ISD::VINSERT:            return "X86ISD::VINSERT";
   case X86ISD::VFPEXT:             return "X86ISD::VFPEXT";
   case X86ISD::VFPROUND:           return "X86ISD::VFPROUND";
   case X86ISD::VSHLDQ:             return "X86ISD::VSHLDQ";

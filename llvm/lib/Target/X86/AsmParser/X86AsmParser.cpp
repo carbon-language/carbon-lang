@@ -1978,6 +1978,47 @@ ParseInstruction(ParseInstructionInfo &Info, StringRef Name, SMLoc NameLoc,
       }
     }
 
+    if (STI.getFeatureBits() & X86::FeatureAVX512) {
+      // Parse mask register {%k1}
+      if (getLexer().is(AsmToken::LCurly)) {
+        SMLoc Loc = Parser.getTok().getLoc();
+        Operands.push_back(X86Operand::CreateToken("{", Loc));
+        Parser.Lex();  // Eat the {
+        if (X86Operand *Op = ParseOperand()) {
+          Operands.push_back(Op);
+          if (!getLexer().is(AsmToken::RCurly)) {
+            SMLoc Loc = getLexer().getLoc();
+            Parser.eatToEndOfStatement();
+            return Error(Loc, "Expected } at this point");
+          }
+          Loc = Parser.getTok().getLoc();
+          Operands.push_back(X86Operand::CreateToken("}", Loc));
+          Parser.Lex();  // Eat the }
+        } else {
+          Parser.eatToEndOfStatement();
+          return true;
+        }
+      }
+      // Parse "zeroing non-masked" semantic {z}
+      if (getLexer().is(AsmToken::LCurly)) {
+        SMLoc Loc = Parser.getTok().getLoc();
+        Operands.push_back(X86Operand::CreateToken("{z}", Loc));
+        Parser.Lex();  // Eat the {
+        if (!getLexer().is(AsmToken::Identifier) || getLexer().getTok().getIdentifier() != "z") {
+          SMLoc Loc = getLexer().getLoc();
+          Parser.eatToEndOfStatement();
+          return Error(Loc, "Expected z at this point");
+        }
+        Parser.Lex();  // Eat the z
+        if (!getLexer().is(AsmToken::RCurly)) {
+            SMLoc Loc = getLexer().getLoc();
+            Parser.eatToEndOfStatement();
+            return Error(Loc, "Expected } at this point");
+        }
+        Parser.Lex();  // Eat the }
+      }
+    }
+
     if (getLexer().isNot(AsmToken::EndOfStatement)) {
       SMLoc Loc = getLexer().getLoc();
       Parser.eatToEndOfStatement();
