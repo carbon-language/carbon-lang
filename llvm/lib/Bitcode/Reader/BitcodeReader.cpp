@@ -1387,14 +1387,23 @@ bool BitcodeReader::ParseConstants() {
                                            bitc::CST_CODE_CE_INBOUNDS_GEP);
       break;
     }
-    case bitc::CST_CODE_CE_SELECT:  // CE_SELECT: [opval#, opval#, opval#]
+    case bitc::CST_CODE_CE_SELECT: {  // CE_SELECT: [opval#, opval#, opval#]
       if (Record.size() < 3) return Error("Invalid CE_SELECT record");
-      V = ConstantExpr::getSelect(
-                          ValueList.getConstantFwdRef(Record[0],
-                                                      Type::getInt1Ty(Context)),
-                          ValueList.getConstantFwdRef(Record[1],CurTy),
-                          ValueList.getConstantFwdRef(Record[2],CurTy));
+
+      Type *SelectorTy = Type::getInt1Ty(Context);
+
+      // If CurTy is a vector of length n, then Record[0] must be a <n x i1>
+      // vector. Otherwise, it must be a single bit.
+      if (VectorType *VTy = dyn_cast<VectorType>(CurTy))
+        SelectorTy = VectorType::get(Type::getInt1Ty(Context),
+                                     VTy->getNumElements());
+
+      V = ConstantExpr::getSelect(ValueList.getConstantFwdRef(Record[0],
+                                                              SelectorTy),
+                                  ValueList.getConstantFwdRef(Record[1],CurTy),
+                                  ValueList.getConstantFwdRef(Record[2],CurTy));
       break;
+    }
     case bitc::CST_CODE_CE_EXTRACTELT: { // CE_EXTRACTELT: [opty, opval, opval]
       if (Record.size() < 3) return Error("Invalid CE_EXTRACTELT record");
       VectorType *OpTy =
