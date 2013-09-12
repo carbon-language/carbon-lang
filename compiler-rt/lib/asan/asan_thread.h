@@ -82,8 +82,8 @@ class AsanThread {
   }
 
   FakeStack *fake_stack() {
-    if (!fake_stack_)  // FIXME: lazy init is not async-signal safe.
-      fake_stack_ = FakeStack::Create(Log2(RoundUpToPowerOfTwo(stack_size())));
+    if (reinterpret_cast<uptr>(fake_stack_) <= 1)
+      return AsyncSignalSafeLazyInitFakeStack();
     return fake_stack_;
   }
 
@@ -100,6 +100,8 @@ class AsanThread {
   AsanThread() : unwinding(false) {}
   void SetThreadStackAndTls();
   void ClearShadowForThreadStackAndTLS();
+  FakeStack *AsyncSignalSafeLazyInitFakeStack();
+
   AsanThreadContext *context_;
   thread_callback_t start_routine_;
   void *arg_;

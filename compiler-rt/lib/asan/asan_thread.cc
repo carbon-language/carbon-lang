@@ -107,6 +107,27 @@ void AsanThread::Destroy() {
   UnmapOrDie(this, size);
 }
 
+// We want to create the FakeStack lazyly on the first use, but not eralier
+// than the stack size is known and the procedure has to be async-signal safe.
+FakeStack *AsanThread::AsyncSignalSafeLazyInitFakeStack() {
+  uptr stack_size = this->stack_size();
+  if (stack_size == 0)  // stack_size is not yet available, don't use FakeStack.
+    return 0;
+  uptr old_val = 0;
+  // fake_stack_ has 3 states:
+  // 0   -- not initialized
+  // 1   -- being initialized
+  // ptr -- initialized
+  // This CAS checks if the state was 0 and if so changes it to state 1,
+  // if that was successfull, it initilizes the pointer.
+  if (atomic_compare_exchange_strong(
+      reinterpret_cast<atomic_uintptr_t *>(&fake_stack_), &old_val, 1UL,
+      memory_order_relaxed))
+    return fake_stack_ =
+               FakeStack::Create(Log2(RoundUpToPowerOfTwo(stack_size)));
+  return 0;
+}
+
 void AsanThread::Init() {
   SetThreadStackAndTls();
   CHECK(AddrIsInMem(stack_bottom_));

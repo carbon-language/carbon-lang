@@ -74,6 +74,7 @@ ALWAYS_INLINE uptr OnMalloc(uptr class_id, uptr size, uptr real_stack) {
   AsanThread *t = GetCurrentThread();
   if (!t) return real_stack;
   FakeStack *fs = t->fake_stack();
+  if (!fs) return real_stack;
   FakeFrame *ff = fs->Allocate(fs->stack_size_log(), class_id, real_stack);
   uptr ptr = reinterpret_cast<uptr>(ff);
   PoisonShadow(ptr, size, 0);

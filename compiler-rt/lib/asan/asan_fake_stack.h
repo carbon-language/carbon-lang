@@ -56,9 +56,7 @@ struct FakeFrame {
 // frames in round robin fasion to maximize the delay between a deallocation
 // and the next allocation.
 //
-// FIXME: don't lazy init the FakeStack (not async-signal safe).
 // FIXME: handle throw/longjmp/clone, i.e. garbage collect the unwinded frames.
-// FIXME: use low bits of the pointer to store stack_size_log_ (performance).
 class FakeStack {
   static const uptr kMinStackFrameSizeLog = 6;  // Min frame is 64B.
   static const uptr kMaxStackFrameSizeLog = 16;  // Max stack frame is 64K.

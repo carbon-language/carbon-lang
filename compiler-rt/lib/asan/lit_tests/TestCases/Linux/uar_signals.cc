@@ -1,7 +1,7 @@
 // This test shows that the current implementation of use-after-return is
 // not signal-safe.
 // RUN: %clangxx_asan -O1 %s -o %t -lpthread && %t
-// FAILS: %clangxx_asan -fsanitize=use-after-return -O1 %s -o %t -lpthread&& %t
+// RUN: %clangxx_asan -fsanitize=use-after-return -O1 %s -o %t -lpthread && %t
 #include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -57,10 +57,14 @@ void *Thread(void *) {
 int main(int argc, char **argv) {
   EnableSigprof(SignalHandler);
 
-  const int kNumThread = 32;
-  pthread_t t[kNumThread];
-  for (int i = 0; i < kNumThread; i++)
-    pthread_create(&t[i], 0, Thread, 0);
-  for (int i = 0; i < kNumThread; i++)
-    pthread_join(t[i], 0);
+  for (int i = 0; i < 4; i++) {
+    fprintf(stderr, ".");
+    const int kNumThread = sizeof(void*) == 8 ? 16 : 8;
+    pthread_t t[kNumThread];
+    for (int i = 0; i < kNumThread; i++)
+      pthread_create(&t[i], 0, Thread, 0);
+    for (int i = 0; i < kNumThread; i++)
+      pthread_join(t[i], 0);
+  }
+  fprintf(stderr, "\n");
 }
