@@ -67,6 +67,7 @@ private:
   void getStackAddress(unsigned StackWidth, unsigned ElemIdx,
                        unsigned &Channel, unsigned &PtrIncr) const;
   bool isZero(SDValue Op) const;
+  virtual SDNode *PostISelFolding(MachineSDNode *N, SelectionDAG &DAG) const;
 };
 
 } // End namespace llvm;
