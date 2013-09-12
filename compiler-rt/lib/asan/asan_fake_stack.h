@@ -67,8 +67,12 @@ class FakeStack {
 
   // CTOR: create the FakeStack as a single mmap-ed object.
   static FakeStack *Create(uptr stack_size_log) {
-    if (stack_size_log < 15)
-      stack_size_log = 15;
+    static uptr kMinStackSizeLog = 16;
+    static uptr kMaxStackSizeLog = FIRST_32_SECOND_64(23, 26);
+    if (stack_size_log < kMinStackSizeLog)
+      stack_size_log = kMinStackSizeLog;
+    if (stack_size_log > kMaxStackSizeLog)
+      stack_size_log = kMaxStackSizeLog;
     FakeStack *res = reinterpret_cast<FakeStack *>(
         MmapOrDie(RequiredSize(stack_size_log), "FakeStack"));
     res->stack_size_log_ = stack_size_log;
