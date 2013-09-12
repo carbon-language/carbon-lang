@@ -1010,6 +1010,17 @@ class SubtargetFeature<string n, string a,  string v, string d,
   list<SubtargetFeature> Implies = i;
 }
 
+/// Specifies a Subtarget feature that this instruction is deprecated on.
+class Deprecated<SubtargetFeature dep> {
+  SubtargetFeature DeprecatedFeatureMask = dep;
+}
+
+/// A custom predicate used to determine if an instruction is
+/// deprecated or not.
+class ComplexDeprecationPredicate<string dep> {
+  string ComplexDeprecationPredicate = dep;
+}
+
 //===----------------------------------------------------------------------===//
 // Processor chip sets - These values represent each of the chip sets supported
 // by the scheduler.  Each Processor definition requires corresponding

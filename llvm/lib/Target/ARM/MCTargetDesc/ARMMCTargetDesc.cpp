@@ -26,8 +26,25 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/TargetRegistry.h"
 
+using namespace llvm;
+
 #define GET_REGINFO_MC_DESC
 #include "ARMGenRegisterInfo.inc"
+
+static bool getMCRDeprecationInfo(MCInst &MI, MCSubtargetInfo &STI,
+                                  std::string &Info) {
+  // Checks for the deprecated CP15ISB encoding:
+  // mcr pX, #0, rX, c7, c5, #4
+  if (STI.getFeatureBits() & llvm::ARM::HasV8Ops &&
+      (MI.getOperand(1).isImm() && MI.getOperand(1).getImm() == 0) &&
+      (MI.getOperand(3).isImm() && MI.getOperand(3).getImm() == 7) &&
+      (MI.getOperand(4).isImm() && MI.getOperand(4).getImm() == 5) &&
+      (MI.getOperand(5).isImm() && MI.getOperand(5).getImm() == 4)) {
+    Info = "deprecated on armv8";
+    return true;
+  }
+  return false;
+}
 
 #define GET_INSTRINFO_MC_DESC
 #include "ARMGenInstrInfo.inc"
@@ -35,7 +52,6 @@
 #define GET_SUBTARGETINFO_MC_DESC
 #include "ARMGenSubtargetInfo.inc"
 
-using namespace llvm;
 
 std::string ARM_MC::ParseARMTriple(StringRef TT, StringRef CPU) {
   Triple triple(TT);

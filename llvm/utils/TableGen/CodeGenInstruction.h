@@ -248,6 +248,9 @@ namespace llvm {
     bool isCodeGenOnly;
     bool isPseudo;
 
+    std::string DeprecatedReason;
+    bool HasComplexDeprecationPredicate;
+
     /// Are there any undefined flags?
     bool hasUndefFlags() const {
       return mayLoad_Unset || mayStore_Unset || hasSideEffects_Unset;

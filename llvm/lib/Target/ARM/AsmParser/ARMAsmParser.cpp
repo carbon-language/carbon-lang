@@ -24,6 +24,7 @@
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstrDesc.h"
+#include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCParser/MCAsmLexer.h"
 #include "llvm/MC/MCParser/MCAsmParser.h"
 #include "llvm/MC/MCParser/MCParsedAsmOperand.h"
@@ -47,6 +48,7 @@ enum VectorLaneTy { NoLanes, AllLanes, IndexedLane };
 class ARMAsmParser : public MCTargetAsmParser {
   MCSubtargetInfo &STI;
   MCAsmParser &Parser;
+  const MCInstrInfo &MII;
   const MCRegisterInfo *MRI;
 
   // Unwind directives state
@@ -232,8 +234,6 @@ class ARMAsmParser : public MCTargetAsmParser {
                               SmallVectorImpl<MCParsedAsmOperand*> &Operands);
   bool shouldOmitPredicateOperand(StringRef Mnemonic,
                               SmallVectorImpl<MCParsedAsmOperand*> &Operands);
-  bool isDeprecated(MCInst &Inst, StringRef &Info);
-
 public:
   enum ARMMatchResultTy {
     Match_RequiresITBlock = FIRST_TARGET_MATCH_RESULT_TY,
@@ -245,8 +245,9 @@ public:
 
   };
 
-  ARMAsmParser(MCSubtargetInfo &_STI, MCAsmParser &_Parser)
-    : MCTargetAsmParser(), STI(_STI), Parser(_Parser), FPReg(-1) {
+  ARMAsmParser(MCSubtargetInfo &_STI, MCAsmParser &_Parser,
+               const MCInstrInfo &MII)
+      : MCTargetAsmParser(), STI(_STI), Parser(_Parser), MII(MII), FPReg(-1) {
     MCAsmParserExtension::Initialize(_Parser);
 
     // Cache the MCRegisterInfo.
@@ -4972,14 +4973,6 @@ bool ARMAsmParser::shouldOmitPredicateOperand(
   return false;
 }
 
-bool ARMAsmParser::isDeprecated(MCInst &Inst, StringRef &Info) {
-  if (hasV8Ops() && Inst.getOpcode() == ARM::SETEND) {
-    Info = "armv8";
-    return true;
-  }
-  return false;
-}
-
 static bool isDataTypeToken(StringRef Tok) {
   return Tok == ".8" || Tok == ".16" || Tok == ".32" || Tok == ".64" ||
     Tok == ".i8" || Tok == ".i16" || Tok == ".i32" || Tok == ".i64" ||
@@ -5296,16 +5289,6 @@ static bool listContainsReg(MCInst &Inst, unsigned OpNo, unsigned Reg) {
   return false;
 }
 
-// FIXME: We would really prefer to have MCInstrInfo (the wrapper around
-// the ARMInsts array) instead. Getting that here requires awkward
-// API changes, though. Better way?
-namespace llvm {
-extern const MCInstrDesc ARMInsts[];
-}
-static const MCInstrDesc &getInstDesc(unsigned Opcode) {
-  return ARMInsts[Opcode];
-}
-
 // Return true if instruction has the interesting property of being
 // allowed in IT blocks, but not being predicable.
 static bool instIsBreakpoint(const MCInst &Inst) {
@@ -5320,7 +5303,7 @@ static bool instIsBreakpoint(const MCInst &Inst) {
 bool ARMAsmParser::
 validateInstruction(MCInst &Inst,
                     const SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
-  const MCInstrDesc &MCID = getInstDesc(Inst.getOpcode());
+  const MCInstrDesc &MCID = MII.get(Inst.getOpcode());
   SMLoc Loc = Operands[0]->getStartLoc();
 
   // Check the IT block state first.
@@ -5512,10 +5495,6 @@ validateInstruction(MCInst &Inst,
     break;
   }
   }
-
-  StringRef DepInfo;
-  if (isDeprecated(Inst, DepInfo))
-    Warning(Loc, "deprecated on " + DepInfo);
 
   return false;
 }
@@ -7553,7 +7532,7 @@ unsigned ARMAsmParser::checkTargetMatchPredicate(MCInst &Inst) {
   // 16-bit thumb arithmetic instructions either require or preclude the 'S'
   // suffix depending on whether they're in an IT block or not.
   unsigned Opc = Inst.getOpcode();
-  const MCInstrDesc &MCID = getInstDesc(Opc);
+  const MCInstrDesc &MCID = MII.get(Opc);
   if (MCID.TSFlags & ARMII::ThumbArithFlagSetting) {
     assert(MCID.hasOptionalDef() &&
            "optionally flag setting instruction missing optional def operand");

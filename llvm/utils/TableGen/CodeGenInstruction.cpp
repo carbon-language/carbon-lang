@@ -337,6 +337,20 @@ CodeGenInstruction::CodeGenInstruction(Record *R)
 
   // Parse the DisableEncoding field.
   Operands.ProcessDisableEncoding(R->getValueAsString("DisableEncoding"));
+
+  // First check for a ComplexDeprecationPredicate.
+  if (R->getValue("ComplexDeprecationPredicate")) {
+    HasComplexDeprecationPredicate = true;
+    DeprecatedReason = R->getValueAsString("ComplexDeprecationPredicate");
+  } else if (RecordVal *Dep = R->getValue("DeprecatedFeatureMask")) {
+    // Check if we have a Subtarget feature mask.
+    HasComplexDeprecationPredicate = false;
+    DeprecatedReason = Dep->getValue()->getAsString();
+  } else {
+    // This instruction isn't deprecated.
+    HasComplexDeprecationPredicate = false;
+    DeprecatedReason = "";
+  }
 }
 
 /// HasOneImplicitDefWithKnownVT - If the instruction has at least one

@@ -41,6 +41,7 @@ namespace llvm {
   class MCAsmInfo;
   class MCCFIInstruction;
   class MCContext;
+  class MCInstrInfo;
   class MCSection;
   class MCStreamer;
   class MCSymbol;
@@ -64,6 +65,7 @@ namespace llvm {
     ///
     const MCAsmInfo *MAI;
 
+    const MCInstrInfo *MII;
     /// OutContext - This is the context for the output file that we are
     /// streaming.  This owns all of the global MC-related objects for the
     /// generated translation unit.

@@ -17,6 +17,7 @@
 
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCRegisterInfo.h"
+#include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/DataTypes.h"
 
 namespace llvm {
@@ -145,6 +146,10 @@ public:
   const uint16_t *ImplicitUses;  // Registers implicitly read by this instr
   const uint16_t *ImplicitDefs;  // Registers implicitly defined by this instr
   const MCOperandInfo *OpInfo;   // 'NumOperands' entries about operands
+  uint64_t DeprecatedFeatureMask;// Feature bits that this is deprecated on, if any
+  // A complex method to determine is a certain is deprecated or not, and return
+  // the reason for deprecation.
+  bool (*ComplexDeprecationInfo)(MCInst &, MCSubtargetInfo &, std::string &);
 
   /// \brief Returns the value of the specific constraint if
   /// it is set. Returns -1 if it is not set.
@@ -156,6 +161,20 @@ public:
       return (int)(OpInfo[OpNum].Constraints >> Pos) & 0xf;
     }
     return -1;
+  }
+
+  /// \brief Returns true if a certain instruction is deprecated and if so
+  /// returns the reason in \p Info.
+  bool getDeprecatedInfo(MCInst &MI, MCSubtargetInfo &STI,
+                         std::string &Info) const {
+    if (ComplexDeprecationInfo)
+      return ComplexDeprecationInfo(MI, STI, Info);
+    if (DeprecatedFeatureMask != 0) {
+      // FIXME: it would be nice to include the subtarget feature here.
+      Info = "deprecated";
+      return true;
+    }
+    return false;
   }
 
   /// \brief Return the opcode number for this descriptor.

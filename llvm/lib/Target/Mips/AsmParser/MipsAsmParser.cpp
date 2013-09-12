@@ -24,6 +24,10 @@
 
 using namespace llvm;
 
+namespace llvm {
+class MCInstrInfo;
+}
+
 namespace {
 class MipsAssemblerOptions {
 public:
@@ -201,8 +205,10 @@ class MipsAsmParser : public MCTargetAsmParser {
   bool processInstruction(MCInst &Inst, SMLoc IDLoc,
                         SmallVectorImpl<MCInst> &Instructions);
 public:
-  MipsAsmParser(MCSubtargetInfo &sti, MCAsmParser &parser)
-    : MCTargetAsmParser(), STI(sti), Parser(parser), hasConsumedDollar(false) {
+  MipsAsmParser(MCSubtargetInfo &sti, MCAsmParser &parser,
+                const MCInstrInfo &MII)
+      : MCTargetAsmParser(), STI(sti), Parser(parser),
+        hasConsumedDollar(false) {
     // Initialize the set of available features.
     setAvailableFeatures(ComputeAvailableFeatures(STI.getFeatureBits()));
   }

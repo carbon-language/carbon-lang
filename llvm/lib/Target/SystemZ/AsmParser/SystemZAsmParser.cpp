@@ -327,8 +327,9 @@ private:
                     StringRef Mnemonic);
 
 public:
-  SystemZAsmParser(MCSubtargetInfo &sti, MCAsmParser &parser)
-    : MCTargetAsmParser(), STI(sti), Parser(parser) {
+  SystemZAsmParser(MCSubtargetInfo &sti, MCAsmParser &parser,
+                   const MCInstrInfo &MII)
+      : MCTargetAsmParser(), STI(sti), Parser(parser) {
     MCAsmParserExtension::Initialize(Parser);
 
     // Initialize the set of available features.

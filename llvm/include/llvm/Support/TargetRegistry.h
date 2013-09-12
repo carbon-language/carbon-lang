@@ -108,7 +108,8 @@ namespace llvm {
                                                 StringRef TT,
                                                 StringRef CPU);
     typedef MCTargetAsmParser *(*MCAsmParserCtorTy)(MCSubtargetInfo &STI,
-                                                    MCAsmParser &P);
+                                                    MCAsmParser &P,
+                                                    const MCInstrInfo &MII);
     typedef MCDisassembler *(*MCDisassemblerCtorTy)(const Target &T,
                                                     const MCSubtargetInfo &STI);
     typedef MCInstPrinter *(*MCInstPrinterCtorTy)(const Target &T,
@@ -386,10 +387,11 @@ namespace llvm {
     /// \param Parser The target independent parser implementation to use for
     /// parsing and lexing.
     MCTargetAsmParser *createMCAsmParser(MCSubtargetInfo &STI,
-                                         MCAsmParser &Parser) const {
+                                         MCAsmParser &Parser,
+                                         const MCInstrInfo &MII) const {
       if (!MCAsmParserCtorFn)
         return 0;
-      return MCAsmParserCtorFn(STI, Parser);
+      return MCAsmParserCtorFn(STI, Parser, MII);
     }
 
     /// createAsmPrinter - Create a target specific assembly printer pass.  This
@@ -1142,8 +1144,9 @@ namespace llvm {
     }
 
   private:
-    static MCTargetAsmParser *Allocator(MCSubtargetInfo &STI, MCAsmParser &P) {
-      return new MCAsmParserImpl(STI, P);
+    static MCTargetAsmParser *Allocator(MCSubtargetInfo &STI, MCAsmParser &P,
+                                        const MCInstrInfo &MII) {
+      return new MCAsmParserImpl(STI, P, MII);
     }
   };
 

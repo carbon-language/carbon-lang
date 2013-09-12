@@ -54,8 +54,9 @@ public:
 #include "AArch64GenAsmMatcher.inc"
   };
 
-  AArch64AsmParser(MCSubtargetInfo &_STI, MCAsmParser &_Parser)
-    : MCTargetAsmParser(), STI(_STI), Parser(_Parser) {
+  AArch64AsmParser(MCSubtargetInfo &_STI, MCAsmParser &_Parser,
+                   const MCInstrInfo &MII)
+      : MCTargetAsmParser(), STI(_STI), Parser(_Parser) {
     MCAsmParserExtension::Initialize(_Parser);
 
     // Initialize the set of available features.

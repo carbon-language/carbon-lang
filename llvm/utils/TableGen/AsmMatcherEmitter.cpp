@@ -430,6 +430,9 @@ struct MatchableInfo {
   /// function.
   std::string ConversionFnKind;
 
+  /// If this instruction is deprecated in some form.
+  bool HasDeprecation;
+
   MatchableInfo(const CodeGenInstruction &CGI)
     : AsmVariantID(0), TheDef(CGI.TheDef), DefRec(&CGI),
       AsmString(CGI.AsmString) {
@@ -779,6 +782,13 @@ void MatchableInfo::initialize(const AsmMatcherInfo &Info,
     if (Record *Reg = AsmOperands[i].SingletonReg)
       SingletonRegisters.insert(Reg);
   }
+
+  const RecordVal *DepMask = TheDef->getValue("DeprecatedFeatureMask");
+  if (!DepMask)
+    DepMask = TheDef->getValue("ComplexDeprecationPredicate");
+
+  HasDeprecation =
+      DepMask ? !DepMask->getValue()->getAsUnquotedString().empty() : false;
 }
 
 /// tokenizeAsmString - Tokenize a simplified assembly string.
@@ -2743,11 +2753,13 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
 
   size_t MaxNumOperands = 0;
   unsigned MaxMnemonicIndex = 0;
+  bool HasDeprecation = false;
   for (std::vector<MatchableInfo*>::const_iterator it =
          Info.Matchables.begin(), ie = Info.Matchables.end();
        it != ie; ++it) {
     MatchableInfo &II = **it;
     MaxNumOperands = std::max(MaxNumOperands, II.AsmOperands.size());
+    HasDeprecation |= II.HasDeprecation;
 
     // Store a pascal-style length byte in the mnemonic.
     std::string LenMnemonic = char(II.Mnemonic.size()) + II.Mnemonic.str();
@@ -3017,6 +3029,14 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
     AsmParser->getValueAsString("AsmParserInstCleanup");
   if (!InsnCleanupFn.empty())
     OS << "    " << InsnCleanupFn << "(Inst);\n";
+
+  if (HasDeprecation) {
+    OS << "    std::string Info;\n";
+    OS << "    if (MII.get(Inst.getOpcode()).getDeprecatedInfo(Inst, STI, Info)) {\n";
+    OS << "      SMLoc Loc = ((" << Target.getName() << "Operand*)Operands[0])->getStartLoc();\n";
+    OS << "      Parser.Warning(Loc, Info, None);\n";
+    OS << "    }\n";
+  }
 
   OS << "    return Match_Success;\n";
   OS << "  }\n\n";

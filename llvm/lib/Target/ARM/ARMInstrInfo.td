@@ -1840,7 +1840,7 @@ defm PLDW : APreLoad<0, 1, "pldw">, Requires<[IsARM,HasV7,HasMP]>;
 defm PLI  : APreLoad<1, 0, "pli">,  Requires<[IsARM,HasV7]>;
 
 def SETEND : AXI<(outs), (ins setend_op:$end), MiscFrm, NoItinerary,
-                 "setend\t$end", []>, Requires<[IsARM]> {
+                 "setend\t$end", []>, Requires<[IsARM]>, Deprecated<HasV8Ops> {
   bits<1> end;
   let Inst{31-10} = 0b1111000100000001000000;
   let Inst{9} = end;
@@ -4772,7 +4772,8 @@ def MCR : MovRCopro<"mcr", 0 /* from ARM core register to coprocessor */,
                     (ins p_imm:$cop, imm0_7:$opc1, GPR:$Rt, c_imm:$CRn,
                          c_imm:$CRm, imm0_7:$opc2),
                     [(int_arm_mcr imm:$cop, imm:$opc1, GPR:$Rt, imm:$CRn,
-                                  imm:$CRm, imm:$opc2)]>;
+                                  imm:$CRm, imm:$opc2)]>,
+                    ComplexDeprecationPredicate<"MCR">;
 def : ARMInstAlias<"mcr${p} $cop, $opc1, $Rt, $CRn, $CRm",
                    (MCR p_imm:$cop, imm0_7:$opc1, GPR:$Rt, c_imm:$CRn,
                         c_imm:$CRm, 0, pred:$p)>;
