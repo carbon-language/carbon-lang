@@ -31,10 +31,9 @@ FakeFrame *FakeStack::Allocate(uptr stack_size_log, uptr class_id,
   for (int i = 0; i < num_iter; i++) {
     uptr pos = ModuloNumberOfFrames(stack_size_log, class_id, hint_position++);
     if (flags[pos]) continue;
-    u8 zero = 0;
     // FIXME: this does not have to be thread-safe, just async-signal-safe.
-    if (atomic_compare_exchange_strong((atomic_uint8_t *)&flags[pos], &zero, 1,
-                                       memory_order_acquire)) {
+    if (0 == atomic_exchange((atomic_uint8_t *)&flags[pos], 1,
+                             memory_order_relaxed)) {
       FakeFrame *res = reinterpret_cast<FakeFrame *>(
           GetFrame(stack_size_log, class_id, pos));
       res->real_stack = real_stack;
