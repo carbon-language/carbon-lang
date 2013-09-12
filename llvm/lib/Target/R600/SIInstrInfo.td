@@ -21,6 +21,25 @@ def SIload_constant : SDNode<"AMDGPUISD::LOAD_CONSTANT",
                       [SDNPMayLoad, SDNPMemOperand]
 >;
 
+def SItbuffer_store : SDNode<"AMDGPUISD::TBUFFER_STORE_FORMAT",
+  SDTypeProfile<0, 13,
+    [SDTCisVT<0, i128>,   // rsrc(SGPR)
+     SDTCisVT<1, iAny>,   // vdata(VGPR)
+     SDTCisVT<2, i32>,    // num_channels(imm)
+     SDTCisVT<3, i32>,    // vaddr(VGPR)
+     SDTCisVT<4, i32>,    // soffset(SGPR)
+     SDTCisVT<5, i32>,    // inst_offset(imm)
+     SDTCisVT<6, i32>,    // dfmt(imm)
+     SDTCisVT<7, i32>,    // nfmt(imm)
+     SDTCisVT<8, i32>,    // offen(imm)
+     SDTCisVT<9, i32>,    // idxen(imm)
+     SDTCisVT<10, i32>,   // glc(imm)
+     SDTCisVT<11, i32>,   // slc(imm)
+     SDTCisVT<12, i32>    // tfe(imm)
+    ]>,
+  [SDNPMayStore, SDNPMemOperand, SDNPHasChain]
+>;
+
 def SIload_input : SDNode<"AMDGPUISD::LOAD_INPUT",
   SDTypeProfile<1, 3, [SDTCisVT<0, v4f32>, SDTCisVT<1, i128>, SDTCisVT<2, i16>,
                        SDTCisVT<3, i32>]>
@@ -64,6 +83,14 @@ def IMM8bitDWORD : ImmLeaf <
       N->getZExtValue() >> 2, MVT::i32);
   }]>
 >;
+
+def as_i1imm : SDNodeXForm<imm, [{
+  return CurDAG->getTargetConstant(N->getZExtValue(), MVT::i1);
+}]>;
+
+def as_i8imm : SDNodeXForm<imm, [{
+  return CurDAG->getTargetConstant(N->getZExtValue(), MVT::i8);
+}]>;
 
 def as_i16imm : SDNodeXForm<imm, [{
   return CurDAG->getTargetConstant(N->getSExtValue(), MVT::i16);

@@ -86,6 +86,8 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::v16i8, Custom);
   setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::v4f32, Custom);
 
+  setOperationAction(ISD::INTRINSIC_VOID, MVT::Other, Custom);
+
   setLoadExtAction(ISD::SEXTLOAD, MVT::i32, Expand);
 
   setLoadExtAction(ISD::EXTLOAD, MVT::f32, Expand);
@@ -463,6 +465,43 @@ SDValue SITargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
                          Op.getOperand(3));
     }
   }
+
+  case ISD::INTRINSIC_VOID:
+    SDValue Chain = Op.getOperand(0);
+    unsigned IntrinsicID = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
+
+    switch (IntrinsicID) {
+      case AMDGPUIntrinsic::SI_tbuffer_store: {
+        SDLoc DL(Op);
+        SDValue Ops [] = {
+          Chain,
+          ResourceDescriptorToi128(Op.getOperand(2), DAG),
+          Op.getOperand(3),
+          Op.getOperand(4),
+          Op.getOperand(5),
+          Op.getOperand(6),
+          Op.getOperand(7),
+          Op.getOperand(8),
+          Op.getOperand(9),
+          Op.getOperand(10),
+          Op.getOperand(11),
+          Op.getOperand(12),
+          Op.getOperand(13),
+          Op.getOperand(14)
+        };
+        EVT VT = Op.getOperand(3).getValueType();
+
+        MachineMemOperand *MMO = MF.getMachineMemOperand(
+            MachinePointerInfo(),
+            MachineMemOperand::MOStore,
+            VT.getSizeInBits() / 8, 4);
+        return DAG.getMemIntrinsicNode(AMDGPUISD::TBUFFER_STORE_FORMAT, DL,
+                                       Op->getVTList(), Ops,
+                                       sizeof(Ops)/sizeof(Ops[0]), VT, MMO);
+      }
+      default:
+        break;
+    }
   }
   return SDValue();
 }

@@ -477,10 +477,10 @@ def BUFFER_STORE_DWORDX4 : MUBUF_Store_Helper <
 //def TBUFFER_LOAD_FORMAT_XY : MTBUF_ <0x00000001, "TBUFFER_LOAD_FORMAT_XY", []>;
 //def TBUFFER_LOAD_FORMAT_XYZ : MTBUF_ <0x00000002, "TBUFFER_LOAD_FORMAT_XYZ", []>;
 def TBUFFER_LOAD_FORMAT_XYZW : MTBUF_Load_Helper <0x00000003, "TBUFFER_LOAD_FORMAT_XYZW", VReg_128>;
-//def TBUFFER_STORE_FORMAT_X : MTBUF_ <0x00000004, "TBUFFER_STORE_FORMAT_X", []>;
-//def TBUFFER_STORE_FORMAT_XY : MTBUF_ <0x00000005, "TBUFFER_STORE_FORMAT_XY", []>;
-//def TBUFFER_STORE_FORMAT_XYZ : MTBUF_ <0x00000006, "TBUFFER_STORE_FORMAT_XYZ", []>;
-//def TBUFFER_STORE_FORMAT_XYZW : MTBUF_ <0x00000007, "TBUFFER_STORE_FORMAT_XYZW", []>;
+def TBUFFER_STORE_FORMAT_X : MTBUF_Store_Helper <0x00000004, "TBUFFER_STORE_FORMAT_X", VReg_32>;
+def TBUFFER_STORE_FORMAT_XY : MTBUF_Store_Helper <0x00000005, "TBUFFER_STORE_FORMAT_XY", VReg_64>;
+def TBUFFER_STORE_FORMAT_XYZ : MTBUF_Store_Helper <0x00000006, "TBUFFER_STORE_FORMAT_XYZ", VReg_128>;
+def TBUFFER_STORE_FORMAT_XYZW : MTBUF_Store_Helper <0x00000007, "TBUFFER_STORE_FORMAT_XYZW", VReg_128>;
 
 let mayLoad = 1 in {
 
@@ -1880,6 +1880,27 @@ defm : MUBUFStore_Pattern <BUFFER_STORE_DWORD, i32, global_store>;
 defm : MUBUFStore_Pattern <BUFFER_STORE_DWORDX2, i64, global_store>;
 defm : MUBUFStore_Pattern <BUFFER_STORE_DWORDX2, v2i32, global_store>;
 defm : MUBUFStore_Pattern <BUFFER_STORE_DWORDX4, v4i32, global_store>;
+
+//===----------------------------------------------------------------------===//
+// MTBUF Patterns
+//===----------------------------------------------------------------------===//
+
+// TBUFFER_STORE_FORMAT_*, addr64=0
+class MTBUF_StoreResource <ValueType vt, int num_channels, MTBUF opcode> : Pat<
+  (SItbuffer_store i128:$rsrc, vt:$vdata, num_channels, i32:$vaddr,
+                   i32:$soffset, imm:$inst_offset, imm:$dfmt,
+                   imm:$nfmt, imm:$offen, imm:$idxen,
+                   imm:$glc, imm:$slc, imm:$tfe),
+  (opcode
+    $vdata, (as_i16imm $inst_offset), (as_i1imm $offen), (as_i1imm $idxen),
+    (as_i1imm $glc), 0, (as_i8imm $dfmt), (as_i8imm $nfmt), $vaddr, $rsrc,
+    (as_i1imm $slc), (as_i1imm $tfe), $soffset)
+>;
+
+def : MTBUF_StoreResource <i32, 1, TBUFFER_STORE_FORMAT_X>;
+def : MTBUF_StoreResource <v2i32, 2, TBUFFER_STORE_FORMAT_XY>;
+def : MTBUF_StoreResource <v4i32, 3, TBUFFER_STORE_FORMAT_XYZ>;
+def : MTBUF_StoreResource <v4i32, 4, TBUFFER_STORE_FORMAT_XYZW>;
 
 /********** ====================== **********/
 /**********   Indirect adressing   **********/
