@@ -1822,6 +1822,22 @@ SDNode *R600TargetLowering::PostISelFolding(MachineSDNode *Node,
       if (FoldOperand(Node, i, Src, FakeOp, FakeOp, FakeOp, FakeOp, DAG))
         return DAG.getMachineNode(Opcode, SDLoc(Node), Node->getVTList(), Ops);
     }
+  } else if (Opcode == AMDGPU::CLAMP_R600) {
+    SDValue Src = Node->getOperand(0);
+    if (!Src.isMachineOpcode() ||
+        !TII->hasInstrModifiers(Src.getMachineOpcode()))
+      return Node;
+    int ClampIdx = TII->getOperandIdx(Src.getMachineOpcode(),
+        AMDGPU::OpName::clamp);
+    if (ClampIdx < 0)
+      return Node;
+    std::vector<SDValue> Ops;
+    unsigned NumOp = Src.getNumOperands();
+    for(unsigned i = 0; i < NumOp; ++i)
+  	  Ops.push_back(Src.getOperand(i));
+    Ops[ClampIdx - 1] = DAG.getTargetConstant(1, MVT::i32);
+    return DAG.getMachineNode(Src.getMachineOpcode(), SDLoc(Node),
+        Node->getVTList(), Ops);
   } else {
     if (!TII->hasInstrModifiers(Opcode))
       return Node;

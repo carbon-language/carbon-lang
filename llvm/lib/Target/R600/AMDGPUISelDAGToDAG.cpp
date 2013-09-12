@@ -309,39 +309,7 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
                                   SDLoc(N), N->getValueType(0), Ops);
   }
   }
-  SDNode *Result = SelectCode(N);
-
-  // Fold operands of selected node
-
-  const AMDGPUSubtarget &ST = TM.getSubtarget<AMDGPUSubtarget>();
-  if (ST.getGeneration() <= AMDGPUSubtarget::NORTHERN_ISLANDS) {
-    const R600InstrInfo *TII =
-        static_cast<const R600InstrInfo*>(TM.getInstrInfo());
-    if (Result && Result->isMachineOpcode() &&
-        !(TII->get(Result->getMachineOpcode()).TSFlags & R600_InstFlag::VECTOR)
-        && TII->hasInstrModifiers(Result->getMachineOpcode())) {
-      // If node has a single use which is CLAMP_R600, folds it
-      if (Result->hasOneUse() && Result->isMachineOpcode()) {
-        SDNode *PotentialClamp = *Result->use_begin();
-        if (PotentialClamp->isMachineOpcode() &&
-            PotentialClamp->getMachineOpcode() == AMDGPU::CLAMP_R600) {
-          unsigned ClampIdx =
-            TII->getOperandIdx(Result->getMachineOpcode(), AMDGPU::OpName::clamp);
-          std::vector<SDValue> Ops;
-          unsigned NumOp = Result->getNumOperands();
-          for (unsigned i = 0; i < NumOp; ++i) {
-            Ops.push_back(Result->getOperand(i));
-          }
-          Ops[ClampIdx - 1] = CurDAG->getTargetConstant(1, MVT::i32);
-          Result = CurDAG->SelectNodeTo(PotentialClamp,
-              Result->getMachineOpcode(), PotentialClamp->getVTList(),
-              Ops.data(), NumOp);
-        }
-      }
-    }
-  }
-
-  return Result;
+  return SelectCode(N);
 }
 
 
