@@ -2214,12 +2214,12 @@ SymbolFileDWARF::ParseChildMembers
                         
                         if (is_virtual)
                         {
-                            layout_info.vbase_offsets.insert(std::make_pair(class_clang_type.GetAsCXXRecordDecl(),
+                            layout_info.vbase_offsets.insert(std::make_pair(base_class_clang_type.GetAsCXXRecordDecl(),
                                                                             clang::CharUnits::fromQuantity(member_byte_offset)));
                         }
                         else
                         {
-                            layout_info.base_offsets.insert(std::make_pair(class_clang_type.GetAsCXXRecordDecl(),
+                            layout_info.base_offsets.insert(std::make_pair(base_class_clang_type.GetAsCXXRecordDecl(),
                                                                            clang::CharUnits::fromQuantity(member_byte_offset)));
                         }
                     }
