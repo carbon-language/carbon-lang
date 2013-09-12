@@ -767,6 +767,23 @@ public:
     lldb::ValueObjectSP
     GetChildAtIndexPath (const std::vector< std::pair<size_t, bool> > &idxs,
                          size_t* index_of_error = NULL);
+
+    // this will always create the children if necessary
+    lldb::ValueObjectSP
+    GetChildAtNamePath (const std::initializer_list<ConstString> &names,
+                        ConstString* name_of_error = NULL);
+    
+    lldb::ValueObjectSP
+    GetChildAtNamePath (const std::vector<ConstString> &names,
+                        ConstString* name_of_error = NULL);
+    
+    lldb::ValueObjectSP
+    GetChildAtNamePath (const std::initializer_list< std::pair<ConstString, bool> > &names,
+                        ConstString* name_of_error = NULL);
+    
+    lldb::ValueObjectSP
+    GetChildAtNamePath (const std::vector< std::pair<ConstString, bool> > &names,
+                        ConstString* name_of_error = NULL);
     
     virtual lldb::ValueObjectSP
     GetChildMemberWithName (const ConstString &name, bool can_create);

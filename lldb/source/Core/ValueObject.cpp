@@ -595,6 +595,86 @@ ValueObject::GetChildAtIndexPath (const std::vector< std::pair<size_t, bool> > &
     return root;
 }
 
+lldb::ValueObjectSP
+ValueObject::GetChildAtNamePath (const std::initializer_list<ConstString> &names,
+                                 ConstString* name_of_error)
+{
+    if (names.size() == 0)
+        return GetSP();
+    ValueObjectSP root(GetSP());
+    for (ConstString name : names)
+    {
+        root = root->GetChildMemberWithName(name, true);
+        if (!root)
+        {
+            if (name_of_error)
+                *name_of_error = name;
+            return root;
+        }
+    }
+    return root;
+}
+
+lldb::ValueObjectSP
+ValueObject::GetChildAtNamePath (const std::vector<ConstString> &names,
+                                 ConstString* name_of_error)
+{
+    if (names.size() == 0)
+        return GetSP();
+    ValueObjectSP root(GetSP());
+    for (ConstString name : names)
+    {
+        root = root->GetChildMemberWithName(name, true);
+        if (!root)
+        {
+            if (name_of_error)
+                *name_of_error = name;
+            return root;
+        }
+    }
+    return root;
+}
+
+lldb::ValueObjectSP
+ValueObject::GetChildAtNamePath (const std::initializer_list< std::pair<ConstString, bool> > &names,
+                                 ConstString* name_of_error)
+{
+    if (names.size() == 0)
+        return GetSP();
+    ValueObjectSP root(GetSP());
+    for (std::pair<ConstString, bool> name : names)
+    {
+        root = root->GetChildMemberWithName(name.first, name.second);
+        if (!root)
+        {
+            if (name_of_error)
+                *name_of_error = name.first;
+            return root;
+        }
+    }
+    return root;
+}
+
+lldb::ValueObjectSP
+ValueObject::GetChildAtNamePath (const std::vector< std::pair<ConstString, bool> > &names,
+                                 ConstString* name_of_error)
+{
+    if (names.size() == 0)
+        return GetSP();
+        ValueObjectSP root(GetSP());
+        for (std::pair<ConstString, bool> name : names)
+        {
+            root = root->GetChildMemberWithName(name.first, name.second);
+            if (!root)
+            {
+                if (name_of_error)
+                    *name_of_error = name.first;
+                    return root;
+            }
+        }
+    return root;
+}
+
 size_t
 ValueObject::GetIndexOfChildWithName (const ConstString &name)
 {

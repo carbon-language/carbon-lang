@@ -868,6 +868,39 @@ namespace lldb_private {
         
         SyntheticChildrenFrontEnd* LibcxxStdMapSyntheticFrontEndCreator (CXXSyntheticChildren*, lldb::ValueObjectSP);
         
+        class LibcxxStdUnorderedMapSyntheticFrontEnd : public SyntheticChildrenFrontEnd
+        {
+        public:
+            LibcxxStdUnorderedMapSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp);
+            
+            virtual size_t
+            CalculateNumChildren ();
+            
+            virtual lldb::ValueObjectSP
+            GetChildAtIndex (size_t idx);
+            
+            virtual bool
+            Update();
+            
+            virtual bool
+            MightHaveChildren ();
+            
+            virtual size_t
+            GetIndexOfChildWithName (const ConstString &name);
+            
+            virtual
+            ~LibcxxStdUnorderedMapSyntheticFrontEnd ();
+        private:
+            
+            ValueObject* m_tree;
+            size_t m_num_elements;
+            ValueObject* m_next_element;
+            std::map<size_t,lldb::ValueObjectSP> m_children;
+            std::vector<std::pair<ValueObject*, uint64_t> > m_elements_cache;
+        };
+        
+        SyntheticChildrenFrontEnd* LibcxxStdUnorderedMapSyntheticFrontEndCreator (CXXSyntheticChildren*, lldb::ValueObjectSP);
+        
     } // namespace formatters
 } // namespace lldb_private
 
