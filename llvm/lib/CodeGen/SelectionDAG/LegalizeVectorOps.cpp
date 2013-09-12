@@ -600,8 +600,6 @@ SDValue VectorLegalizer::ExpandSELECT(SDValue Op) {
 
   // Generate a mask operand.
   EVT MaskTy = VT.changeVectorElementTypeToInteger();
-  assert(MaskTy.getSizeInBits() == Op1.getValueType().getSizeInBits()
-         && "Invalid mask size");
 
   // What is the size of each element in the vector mask.
   EVT BitTy = MaskTy.getScalarType();
