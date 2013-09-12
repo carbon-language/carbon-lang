@@ -139,11 +139,13 @@ SBSymbol::GetInstructions (SBTarget target, const char *flavor_string)
             if (module_sp)
             {
                 AddressRange symbol_range (m_opaque_ptr->GetAddress(), m_opaque_ptr->GetByteSize());
+                const bool prefer_file_cache = false;
                 sb_instructions.SetDisassembler (Disassembler::DisassembleRange (module_sp->GetArchitecture (),
                                                                                  NULL,
                                                                                  flavor_string,
                                                                                  exe_ctx,
-                                                                                 symbol_range));
+                                                                                 symbol_range,
+                                                                                 prefer_file_cache));
             }
         }
     }

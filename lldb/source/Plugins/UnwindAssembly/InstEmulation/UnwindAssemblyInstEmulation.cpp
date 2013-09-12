@@ -53,11 +53,13 @@ UnwindAssemblyInstEmulation::GetNonCallSiteUnwindPlanFromAssembly (AddressRange&
         
         ExecutionContext exe_ctx;
         thread.CalculateExecutionContext(exe_ctx);
+        const bool prefer_file_cache = true;
         DisassemblerSP disasm_sp (Disassembler::DisassembleRange (m_arch,
                                                                   NULL,
                                                                   NULL,
                                                                   exe_ctx,
-                                                                  range));
+                                                                  range,
+                                                                  prefer_file_cache));
         
         Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND));
 

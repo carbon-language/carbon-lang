@@ -284,11 +284,13 @@ ThreadPlanStepRange::GetInstructionsForAddress(lldb::addr_t addr, size_t &range_
                 ExecutionContext exe_ctx (m_thread.GetProcess());
                 const char *plugin_name = NULL;
                 const char *flavor = NULL;
+                const bool prefer_file_cache = true;
                 m_instruction_ranges[i] = Disassembler::DisassembleRange(GetTarget().GetArchitecture(),
                                                                          plugin_name,
                                                                          flavor,
                                                                          exe_ctx,
-                                                                         m_address_ranges[i]);
+                                                                         m_address_ranges[i],
+                                                                         prefer_file_cache);
                 
             }
             if (!m_instruction_ranges[i])

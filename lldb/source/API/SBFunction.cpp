@@ -143,11 +143,13 @@ SBFunction::GetInstructions (SBTarget target, const char *flavor)
         ModuleSP module_sp (m_opaque_ptr->GetAddressRange().GetBaseAddress().GetModule());
         if (module_sp)
         {
+            const bool prefer_file_cache = false;
             sb_instructions.SetDisassembler (Disassembler::DisassembleRange (module_sp->GetArchitecture(),
                                                                              NULL,
                                                                              flavor,
                                                                              exe_ctx,
-                                                                             m_opaque_ptr->GetAddressRange()));
+                                                                             m_opaque_ptr->GetAddressRange(),
+                                                                             prefer_file_cache));
         }
     }
     return sb_instructions;

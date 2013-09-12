@@ -270,7 +270,8 @@ public:
                       const char *plugin_name,
                       const char *flavor,
                       const ExecutionContext &exe_ctx,
-                      const AddressRange &disasm_range);
+                      const AddressRange &disasm_range,
+                      bool prefer_file_cache);
     
     static lldb::DisassemblerSP 
     DisassembleBytes (const ArchSpec &arch,
