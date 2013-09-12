@@ -705,6 +705,7 @@ DefaultLayout<ELFT>::assignVirtualAddress() {
   for (auto si : _segments) {
     if (si->segmentType() == llvm::ELF::PT_LOAD) {
       firstLoadSegment = si;
+      si->firstSection()->setAlign(si->align2());
       break;
     }
   }

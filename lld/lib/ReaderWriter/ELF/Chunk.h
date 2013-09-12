@@ -51,8 +51,9 @@ public:
   StringRef name() const { return _name; }
   // Kind of chunk
   Kind kind() const { return _kind; }
-  uint64_t            fileSize() const { return _fsize; }
-  uint64_t            align2() const { return _align2; }
+  uint64_t        fileSize() const { return _fsize; }
+  void            setAlign(uint64_t align) { _align2 = align; }
+  uint64_t        align2() const { return _align2; }
 
   // The ordinal value of the chunk
   uint64_t            ordinal() const { return _ordinal;}

@@ -270,6 +270,8 @@ public:
     return _segmentSlices.end();
   }
 
+  Chunk<ELFT> *firstSection() { return _sections[0]; }
+
 private:
 
   /// \brief Check if the chunk needs to be aligned

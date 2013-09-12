@@ -314,6 +314,7 @@ public:
         break;
       case (llvm::ELF::SHF_MERGE|llvm::ELF::SHF_STRINGS):
       case llvm::ELF::SHF_STRINGS:
+      case llvm::ELF::SHF_MERGE:
         ret = typeConstant;
         break;
       default:
