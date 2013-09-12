@@ -427,6 +427,8 @@ void NOINLINE __asan_handle_no_return() {
     return;
   }
   PoisonShadow(bottom, top - bottom, 0);
+  if (curr_thread->has_fake_stack())
+    curr_thread->fake_stack()->HandleNoReturn();
 }
 
 void NOINLINE __asan_set_death_callback(void (*callback)(void)) {

@@ -153,15 +153,21 @@ class FakeStack {
 
   uptr stack_size_log() const { return stack_size_log_; }
 
+  void HandleNoReturn();
+  void GC(uptr real_stack);
+
  private:
   FakeStack() { }
-  static const uptr kFlagsOffset = 4096;  // There is were flags begin.
+  static const uptr kFlagsOffset = 4096;  // This is were the flags begin.
   // Must match the number of uses of DEFINE_STACK_MALLOC_FREE_WITH_CLASS_ID
   COMPILER_CHECK(kNumberOfSizeClasses == 11);
   static const uptr kMaxStackMallocSize = 1 << kMaxStackFrameSizeLog;
 
   uptr hint_position_[kNumberOfSizeClasses];
   uptr stack_size_log_;
+  // a bit is set if something was allocated from the corresponding size class.
+  uptr allocated_from_size_class_mask_;
+  bool needs_gc_;
 };
 
 }  // namespace __asan

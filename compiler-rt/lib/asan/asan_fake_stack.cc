@@ -25,6 +25,8 @@ void FakeStack::PoisonAll(u8 magic) {
 FakeFrame *FakeStack::Allocate(uptr stack_size_log, uptr class_id,
                                uptr real_stack) {
   CHECK_LT(class_id, kNumberOfSizeClasses);
+  if (needs_gc_)
+    GC(real_stack);
   uptr &hint_position = hint_position_[class_id];
   const int num_iter = NumberOfFrames(stack_size_log, class_id);
   u8 *flags = GetFlags(stack_size_log, class_id);
@@ -38,6 +40,7 @@ FakeFrame *FakeStack::Allocate(uptr stack_size_log, uptr class_id,
           GetFrame(stack_size_log, class_id, pos));
       res->real_stack = real_stack;
       res->class_id = class_id;
+      allocated_from_size_class_mask_ |= 1UL << class_id;
       return res;
     }
   }
@@ -68,6 +71,35 @@ uptr FakeStack::AddrIsInFakeStack(uptr ptr) {
   CHECK_LT(ptr, base + (1UL << stack_size_log));
   uptr pos = (ptr - base) >> (kMinStackFrameSizeLog + class_id);
   return base + pos * BytesInSizeClass(class_id);
+}
+
+void FakeStack::HandleNoReturn() {
+  needs_gc_ = true;
+}
+
+// When throw, longjmp or some such happens we don't call OnFree() and
+// as the result may leak one or more fake frames, but the good news is that
+// we are notified about all such events by HandleNoReturn().
+// If we recently had such no-return event we need to collect garbage frames.
+// We do it based on their 'real_stack' values -- everything that is lower
+// than the current real_stack is garbage.
+NOINLINE void FakeStack::GC(uptr real_stack) {
+  uptr collected = 0;
+  for (uptr class_id = 0; class_id < kNumberOfSizeClasses; class_id++) {
+    if (!(allocated_from_size_class_mask_ & (1UL << class_id))) continue;
+    u8 *flags = GetFlags(stack_size_log(), class_id);
+    for (uptr i = 0, n = NumberOfFrames(stack_size_log(), class_id); i < n;
+         i++) {
+      if (flags[i] == 0) continue;  // not allocated.
+      FakeFrame *ff = reinterpret_cast<FakeFrame *>(
+          GetFrame(stack_size_log(), class_id, i));
+      if (ff->real_stack < real_stack) {
+        flags[i] = 0;
+        collected++;
+      }
+    }
+  }
+  needs_gc_ = false;
 }
 
 ALWAYS_INLINE uptr OnMalloc(uptr class_id, uptr size, uptr real_stack) {
