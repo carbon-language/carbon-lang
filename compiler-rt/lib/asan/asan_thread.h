@@ -87,11 +87,17 @@ class AsanThread {
     return fake_stack_;
   }
 
+  // True is this thread is currently unwinding stack (i.e. collecting a stack
+  // trace). Used to prevent deadlocks on platforms where libc unwinder calls
+  // malloc internally. See PR17116 for more details.
+  bool isUnwinding() const { return unwinding; }
+  void setUnwinding(bool b) { unwinding = b; }
+
   AsanThreadLocalMallocStorage &malloc_storage() { return malloc_storage_; }
   AsanStats &stats() { return stats_; }
 
  private:
-  AsanThread() {}
+  AsanThread() : unwinding(false) {}
   void SetThreadStackAndTls();
   void ClearShadowForThreadStackAndTLS();
   AsanThreadContext *context_;
@@ -105,6 +111,19 @@ class AsanThread {
   FakeStack *fake_stack_;
   AsanThreadLocalMallocStorage malloc_storage_;
   AsanStats stats_;
+  bool unwinding;
+};
+
+// ScopedUnwinding is a scope for stacktracing member of a context
+class ScopedUnwinding {
+ public:
+  explicit ScopedUnwinding(AsanThread *t) : thread(t) {
+    t->setUnwinding(true);
+  }
+  ~ScopedUnwinding() { thread->setUnwinding(false); }
+
+ private:
+  AsanThread *thread;
 };
 
 struct CreateThreadContextArgs {

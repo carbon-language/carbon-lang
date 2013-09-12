@@ -29,21 +29,21 @@ void PrintStack(StackTrace *stack);
 // The pc will be in the position 0 of the resulting stack trace.
 // The bp may refer to the current frame or to the caller's frame.
 #if SANITIZER_WINDOWS
-#define GET_STACK_TRACE_WITH_PC_AND_BP(max_s, pc, bp, fast)     \
-  StackTrace stack;                                             \
+#define GET_STACK_TRACE_WITH_PC_AND_BP(max_s, pc, bp, fast) \
+  StackTrace stack;                                         \
   GetStackTrace(&stack, max_s, pc, bp, 0, 0, fast)
 #else
-#define GET_STACK_TRACE_WITH_PC_AND_BP(max_s, pc, bp, fast)     \
-  StackTrace stack;                                             \
-  {                                                             \
-    uptr stack_top = 0, stack_bottom = 0;                       \
-    AsanThread *t;                                              \
-    if (asan_inited && (t = GetCurrentThread())) {              \
-      stack_top = t->stack_top();                               \
-      stack_bottom = t->stack_bottom();                         \
-    }                                                           \
-    GetStackTrace(&stack, max_s, pc, bp,                        \
-                  stack_top, stack_bottom, fast);               \
+#define GET_STACK_TRACE_WITH_PC_AND_BP(max_s, pc, bp, fast)                \
+  StackTrace stack;                                                        \
+  {                                                                        \
+    AsanThread *t;                                                         \
+    stack.size = 0;                                                        \
+    if (asan_inited && (t = GetCurrentThread()) && !t->isUnwinding()) {    \
+      uptr stack_top = t->stack_top();                                     \
+      uptr stack_bottom = t->stack_bottom();                               \
+      ScopedUnwinding unwind_scope(t);                                     \
+      GetStackTrace(&stack, max_s, pc, bp, stack_top, stack_bottom, fast); \
+    }                                                                      \
   }
 #endif  // SANITIZER_WINDOWS
 

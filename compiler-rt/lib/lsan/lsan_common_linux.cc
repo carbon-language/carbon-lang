@@ -114,8 +114,9 @@ static void ProcessPlatformSpecificAllocationsCb(uptr chunk, void *arg) {
   chunk = GetUserBegin(chunk);
   LsanMetadata m(chunk);
   if (m.allocated() && m.tag() != kReachable) {
-    if (linker->containsAddress(
-            GetCallerPC(m.stack_trace_id(), param->stack_depot_reverse_map))) {
+    u32 stack_id = m.stack_trace_id();
+    if (!stack_id || linker->containsAddress(GetCallerPC(
+                         stack_id, param->stack_depot_reverse_map))) {
       m.set_tag(kReachable);
       param->frontier->push_back(chunk);
     }
