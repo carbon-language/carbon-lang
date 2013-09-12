@@ -77,8 +77,8 @@ public:
   /// adds "_" at the beginning of the string. On other architectures, the
   /// return value is the same as the argument.
   StringRef decorateSymbol(StringRef name) const {
-    // Because we don't support architectures other than 32-bit x86, we'll
-    // prepend an underscore unconditionally.
+    if (_machineType != llvm::COFF::IMAGE_FILE_MACHINE_I386)
+      return name;
     std::string str = "_";
     str.append(name);
     return allocateString(str);
