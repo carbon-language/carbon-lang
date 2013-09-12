@@ -21,6 +21,7 @@
 #include "llvm/IR/Module.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCParser/MCAsmParser.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
@@ -813,11 +814,12 @@ bool LTOModule::addAsmGlobalSymbols(std::string &errMsg) {
                                                   _context, *Streamer,
                                                   *_target->getMCAsmInfo()));
   const Target &T = _target->getTarget();
+  OwningPtr<MCInstrInfo> MCII(T.createMCInstrInfo());
   OwningPtr<MCSubtargetInfo>
     STI(T.createMCSubtargetInfo(_target->getTargetTriple(),
                                 _target->getTargetCPU(),
                                 _target->getTargetFeatureString()));
-  OwningPtr<MCTargetAsmParser> TAP(T.createMCAsmParser(*STI, *Parser.get()));
+  OwningPtr<MCTargetAsmParser> TAP(T.createMCAsmParser(*STI, *Parser.get(), *MCII));
   if (!TAP) {
     errMsg = "target " + std::string(T.getName()) +
       " does not define AsmParser.";
