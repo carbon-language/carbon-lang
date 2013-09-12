@@ -1632,7 +1632,7 @@ SDValue R600TargetLowering::PerformDAGCombine(SDNode *N,
 
 static bool
 FoldOperand(SDNode *ParentNode, unsigned SrcIdx, SDValue &Src, SDValue &Neg,
-            SDValue &Abs, SDValue &Sel, SelectionDAG &DAG) {
+            SDValue &Abs, SDValue &Sel, SDValue &Imm, SelectionDAG &DAG) {
   const R600InstrInfo *TII =
       static_cast<const R600InstrInfo *>(DAG.getTarget().getInstrInfo());
   if (!Src.isMachineOpcode())
@@ -1705,6 +1705,51 @@ FoldOperand(SDNode *ParentNode, unsigned SrcIdx, SDValue &Src, SDValue &Neg,
     Src = DAG.getRegister(AMDGPU::ALU_CONST, MVT::f32);
     return true;
   }
+  case AMDGPU::MOV_IMM_I32:
+  case AMDGPU::MOV_IMM_F32: {
+    unsigned ImmReg = AMDGPU::ALU_LITERAL_X;
+    uint64_t ImmValue = 0;
+
+
+    if (Src.getMachineOpcode() == AMDGPU::MOV_IMM_F32) {
+      ConstantFPSDNode *FPC = dyn_cast<ConstantFPSDNode>(Src.getOperand(0));
+      float FloatValue = FPC->getValueAPF().convertToFloat();
+      if (FloatValue == 0.0) {
+        ImmReg = AMDGPU::ZERO;
+      } else if (FloatValue == 0.5) {
+        ImmReg = AMDGPU::HALF;
+      } else if (FloatValue == 1.0) {
+        ImmReg = AMDGPU::ONE;
+      } else {
+        ImmValue = FPC->getValueAPF().bitcastToAPInt().getZExtValue();
+      }
+    } else {
+      ConstantSDNode *C = dyn_cast<ConstantSDNode>(Src.getOperand(0));
+      uint64_t Value = C->getZExtValue();
+      if (Value == 0) {
+        ImmReg = AMDGPU::ZERO;
+      } else if (Value == 1) {
+        ImmReg = AMDGPU::ONE_INT;
+      } else {
+        ImmValue = Value;
+      }
+    }
+
+    // Check that we aren't already using an immediate.
+    // XXX: It's possible for an instruction to have more than one
+    // immediate operand, but this is not supported yet.
+    if (ImmReg == AMDGPU::ALU_LITERAL_X) {
+      if (!Imm.getNode())
+        return false;
+      ConstantSDNode *C = dyn_cast<ConstantSDNode>(Imm);
+      assert(C);
+      if (C->getZExtValue())
+        return false;
+      Imm = DAG.getTargetConstant(ImmValue, MVT::i32);
+    }
+    Src = DAG.getRegister(ImmReg, MVT::i32);
+    return true;
+  }
   default:
     return false;
   }
@@ -1768,7 +1813,13 @@ SDNode *R600TargetLowering::PostISelFolding(MachineSDNode *Node,
       if (HasDst)
         SelIdx--;
       SDValue &Sel = (SelIdx > -1) ? Ops[SelIdx] : FakeOp;
-      if (FoldOperand(Node, i, Src, Neg, Abs, Sel, DAG))
+      if (FoldOperand(Node, i, Src, Neg, Abs, Sel, FakeOp, DAG))
+        return DAG.getMachineNode(Opcode, SDLoc(Node), Node->getVTList(), Ops);
+    }
+  } else if (Opcode == AMDGPU::REG_SEQUENCE) {
+    for (unsigned i = 1, e = Node->getNumOperands(); i < e; i += 2) {
+      SDValue &Src = Ops[i];
+      if (FoldOperand(Node, i, Src, FakeOp, FakeOp, FakeOp, FakeOp, DAG))
         return DAG.getMachineNode(Opcode, SDLoc(Node), Node->getVTList(), Ops);
     }
   } else {
@@ -1798,10 +1849,14 @@ SDNode *R600TargetLowering::PostISelFolding(MachineSDNode *Node,
       SDValue &Abs = (AbsIdx[i] > -1) ? Ops[AbsIdx[i] - 1] : FakeAbs;
       bool HasDst = TII->getOperandIdx(Opcode, AMDGPU::OpName::dst) > -1;
       int SelIdx = TII->getSelIdx(Opcode, OperandIdx[i]);
-      if (HasDst)
+      int ImmIdx = TII->getOperandIdx(Opcode, AMDGPU::OpName::literal);
+      if (HasDst) {
         SelIdx--;
+        ImmIdx--;
+      }
       SDValue &Sel = (SelIdx > -1) ? Ops[SelIdx] : FakeOp;
-      if (FoldOperand(Node, i, Src, Neg, Abs, Sel, DAG))
+      SDValue &Imm = Ops[ImmIdx];
+      if (FoldOperand(Node, i, Src, Neg, Abs, Sel, Imm, DAG))
         return DAG.getMachineNode(Opcode, SDLoc(Node), Node->getVTList(), Ops);
     }
   }

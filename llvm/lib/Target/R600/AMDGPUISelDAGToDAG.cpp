@@ -193,8 +193,6 @@ bool AMDGPUDAGToDAGISel::SelectADDR64(SDValue Addr, SDValue& R1, SDValue& R2) {
 }
 
 SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
-  const R600InstrInfo *TII =
-                      static_cast<const R600InstrInfo*>(TM.getInstrInfo());
   unsigned int Opc = N->getOpcode();
   if (N->isMachineOpcode()) {
     return NULL;   // Already selected.
@@ -309,109 +307,6 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
                             N->getOperand(1), SubReg1 };
     return CurDAG->getMachineNode(TargetOpcode::REG_SEQUENCE,
                                   SDLoc(N), N->getValueType(0), Ops);
-  }
-
-  case ISD::ConstantFP:
-  case ISD::Constant: {
-    const AMDGPUSubtarget &ST = TM.getSubtarget<AMDGPUSubtarget>();
-    // XXX: Custom immediate lowering not implemented yet.  Instead we use
-    // pseudo instructions defined in SIInstructions.td
-    if (ST.getGeneration() > AMDGPUSubtarget::NORTHERN_ISLANDS) {
-      break;
-    }
-
-    uint64_t ImmValue = 0;
-    unsigned ImmReg = AMDGPU::ALU_LITERAL_X;
-
-    if (N->getOpcode() == ISD::ConstantFP) {
-      // XXX: 64-bit Immediates not supported yet
-      assert(N->getValueType(0) != MVT::f64);
-
-      ConstantFPSDNode *C = dyn_cast<ConstantFPSDNode>(N);
-      APFloat Value = C->getValueAPF();
-      float FloatValue = Value.convertToFloat();
-      if (FloatValue == 0.0) {
-        ImmReg = AMDGPU::ZERO;
-      } else if (FloatValue == 0.5) {
-        ImmReg = AMDGPU::HALF;
-      } else if (FloatValue == 1.0) {
-        ImmReg = AMDGPU::ONE;
-      } else {
-        ImmValue = Value.bitcastToAPInt().getZExtValue();
-      }
-    } else {
-      // XXX: 64-bit Immediates not supported yet
-      assert(N->getValueType(0) != MVT::i64);
-
-      ConstantSDNode *C = dyn_cast<ConstantSDNode>(N);
-      if (C->getZExtValue() == 0) {
-        ImmReg = AMDGPU::ZERO;
-      } else if (C->getZExtValue() == 1) {
-        ImmReg = AMDGPU::ONE_INT;
-      } else {
-        ImmValue = C->getZExtValue();
-      }
-    }
-
-    for (SDNode::use_iterator Use = N->use_begin(), Next = llvm::next(Use);
-                              Use != SDNode::use_end(); Use = Next) {
-      Next = llvm::next(Use);
-      std::vector<SDValue> Ops;
-      for (unsigned i = 0; i < Use->getNumOperands(); ++i) {
-        Ops.push_back(Use->getOperand(i));
-      }
-
-      if (!Use->isMachineOpcode()) {
-          if (ImmReg == AMDGPU::ALU_LITERAL_X) {
-            // We can only use literal constants (e.g. AMDGPU::ZERO,
-            // AMDGPU::ONE, etc) in machine opcodes.
-            continue;
-          }
-      } else {
-        switch(Use->getMachineOpcode()) {
-        case AMDGPU::REG_SEQUENCE: break;
-        default:
-          if (!TII->isALUInstr(Use->getMachineOpcode()) ||
-              (TII->get(Use->getMachineOpcode()).TSFlags &
-               R600_InstFlag::VECTOR)) {
-            continue;
-          }
-        }
-
-        // Check that we aren't already using an immediate.
-        // XXX: It's possible for an instruction to have more than one
-        // immediate operand, but this is not supported yet.
-        if (ImmReg == AMDGPU::ALU_LITERAL_X) {
-          int ImmIdx = TII->getOperandIdx(Use->getMachineOpcode(),
-                                          AMDGPU::OpName::literal);
-          if (ImmIdx == -1) {
-            continue;
-          }
-
-          if (TII->getOperandIdx(Use->getMachineOpcode(),
-                                 AMDGPU::OpName::dst) != -1) {
-            // subtract one from ImmIdx, because the DST operand is usually index
-            // 0 for MachineInstrs, but we have no DST in the Ops vector.
-            ImmIdx--;
-          }
-          ConstantSDNode *C = dyn_cast<ConstantSDNode>(Use->getOperand(ImmIdx));
-          assert(C);
-
-          if (C->getZExtValue() != 0) {
-            // This instruction is already using an immediate.
-            continue;
-          }
-
-          // Set the immediate value
-          Ops[ImmIdx] = CurDAG->getTargetConstant(ImmValue, MVT::i32);
-        }
-      }
-      // Set the immediate register
-      Ops[Use.getOperandNo()] = CurDAG->getRegister(ImmReg, MVT::i32);
-
-      CurDAG->UpdateNodeOperands(*Use, Ops.data(), Use->getNumOperands());
-    }
-    break;
   }
   }
   SDNode *Result = SelectCode(N);
