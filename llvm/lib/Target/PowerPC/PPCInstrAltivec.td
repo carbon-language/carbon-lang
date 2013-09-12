@@ -229,35 +229,45 @@ let Predicates = [HasAltivec] in {
 let isCodeGenOnly = 1 in {
 def DSS      : DSS_Form<822, (outs),
                         (ins u5imm:$ZERO0, u5imm:$STRM,u5imm:$ZERO1,u5imm:$ZERO2),
-                        "dss $STRM", LdStLoad /*FIXME*/, []>;
+                        "dss $STRM", LdStLoad /*FIXME*/, []>,
+                        Deprecated<DeprecatedDST>;
 def DSSALL   : DSS_Form<822, (outs),
                         (ins u5imm:$ONE, u5imm:$ZERO0,u5imm:$ZERO1,u5imm:$ZERO2),
-                        "dssall", LdStLoad /*FIXME*/, []>;
+                        "dssall", LdStLoad /*FIXME*/, []>,
+                        Deprecated<DeprecatedDST>;
 def DST      : DSS_Form<342, (outs),
                         (ins u5imm:$ZERO, u5imm:$STRM, gprc:$rA, gprc:$rB),
-                        "dst $rA, $rB, $STRM", LdStLoad /*FIXME*/, []>;
+                        "dst $rA, $rB, $STRM", LdStLoad /*FIXME*/, []>,
+                        Deprecated<DeprecatedDST>;
 def DSTT     : DSS_Form<342, (outs),
                         (ins u5imm:$ONE, u5imm:$STRM, gprc:$rA, gprc:$rB),
-                        "dstt $rA, $rB, $STRM", LdStLoad /*FIXME*/, []>;
+                        "dstt $rA, $rB, $STRM", LdStLoad /*FIXME*/, []>,
+                        Deprecated<DeprecatedDST>;
 def DSTST    : DSS_Form<374, (outs),
                         (ins u5imm:$ZERO, u5imm:$STRM, gprc:$rA, gprc:$rB),
-                        "dstst $rA, $rB, $STRM", LdStLoad /*FIXME*/, []>;
+                        "dstst $rA, $rB, $STRM", LdStLoad /*FIXME*/, []>,
+                        Deprecated<DeprecatedDST>;
 def DSTSTT   : DSS_Form<374, (outs),
                         (ins u5imm:$ONE, u5imm:$STRM, gprc:$rA, gprc:$rB),
-                        "dststt $rA, $rB, $STRM", LdStLoad /*FIXME*/, []>;
+                        "dststt $rA, $rB, $STRM", LdStLoad /*FIXME*/, []>,
+                        Deprecated<DeprecatedDST>;
 
 def DST64    : DSS_Form<342, (outs),
                         (ins u5imm:$ZERO, u5imm:$STRM, g8rc:$rA, gprc:$rB),
-                        "dst $rA, $rB, $STRM", LdStLoad /*FIXME*/, []>;
+                        "dst $rA, $rB, $STRM", LdStLoad /*FIXME*/, []>,
+                        Deprecated<DeprecatedDST>;
 def DSTT64   : DSS_Form<342, (outs),
                         (ins u5imm:$ONE, u5imm:$STRM, g8rc:$rA, gprc:$rB),
-                        "dstt $rA, $rB, $STRM", LdStLoad /*FIXME*/, []>;
+                        "dstt $rA, $rB, $STRM", LdStLoad /*FIXME*/, []>,
+                        Deprecated<DeprecatedDST>;
 def DSTST64  : DSS_Form<374, (outs),
                         (ins u5imm:$ZERO, u5imm:$STRM, g8rc:$rA, gprc:$rB),
-                        "dstst $rA, $rB, $STRM", LdStLoad /*FIXME*/, []>;
+                        "dstst $rA, $rB, $STRM", LdStLoad /*FIXME*/, []>,
+                        Deprecated<DeprecatedDST>;
 def DSTSTT64 : DSS_Form<374, (outs),
                         (ins u5imm:$ONE, u5imm:$STRM, g8rc:$rA, gprc:$rB),
-                        "dststt $rA, $rB, $STRM", LdStLoad /*FIXME*/, []>;
+                        "dststt $rA, $rB, $STRM", LdStLoad /*FIXME*/, []>,
+                        Deprecated<DeprecatedDST>;
 }
 
 def MFVSCR : VXForm_4<1540, (outs vrrc:$vD), (ins),

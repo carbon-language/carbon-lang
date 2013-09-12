@@ -1867,7 +1867,7 @@ def MTSPR : XFXForm_1<31, 467, (outs), (ins i32imm:$SPR, gprc:$RT),
                       "mtspr $SPR, $RT", SprMTSPR>;
 
 def MFTB : XFXForm_1<31, 371, (outs gprc:$RT), (ins i32imm:$SPR),
-                     "mftb $RT, $SPR", SprMFTB>;
+                     "mftb $RT, $SPR", SprMFTB>, Deprecated<DeprecatedMFTB>;
 
 let Uses = [CTR] in {
 def MFCTR : XFXForm_1_ext<31, 339, 9, (outs gprc:$rT), (ins),

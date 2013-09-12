@@ -90,6 +90,8 @@ void PPCSubtarget::initializeEnvironment() {
   HasPOPCNTD = false;
   HasLDBRX = false;
   IsBookE = false;
+  DeprecatedMFTB = false;
+  DeprecatedDST = false;
   HasLazyResolverStubs = false;
   IsJITCodeModel = false;
 }

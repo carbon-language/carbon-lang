@@ -88,6 +88,8 @@ protected:
   bool HasPOPCNTD;
   bool HasLDBRX;
   bool IsBookE;
+  bool DeprecatedMFTB;
+  bool DeprecatedDST;
   bool HasLazyResolverStubs;
   bool IsJITCodeModel;
   bool IsLittleEndian;
@@ -190,6 +192,8 @@ public:
   bool hasPOPCNTD() const { return HasPOPCNTD; }
   bool hasLDBRX() const { return HasLDBRX; }
   bool isBookE() const { return IsBookE; }
+  bool isDeprecatedMFTB() const { return DeprecatedMFTB; }
+  bool isDeprecatedDST() const { return DeprecatedDST; }
 
   const Triple &getTargetTriple() const { return TargetTriple; }
 

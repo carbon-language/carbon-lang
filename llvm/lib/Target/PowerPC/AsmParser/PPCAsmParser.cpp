@@ -13,6 +13,7 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCParser/MCAsmLexer.h"
@@ -174,6 +175,7 @@ struct PPCOperand;
 class PPCAsmParser : public MCTargetAsmParser {
   MCSubtargetInfo &STI;
   MCAsmParser &Parser;
+  const MCInstrInfo &MII;
   bool IsPPC64;
 
   MCAsmParser &getParser() const { return Parser; }
@@ -219,8 +221,8 @@ class PPCAsmParser : public MCTargetAsmParser {
 
 public:
   PPCAsmParser(MCSubtargetInfo &_STI, MCAsmParser &_Parser,
-               const MCInstrInfo &MII)
-      : MCTargetAsmParser(), STI(_STI), Parser(_Parser) {
+               const MCInstrInfo &_MII)
+      : MCTargetAsmParser(), STI(_STI), Parser(_Parser), MII(_MII) {
     // Check for 64-bit vs. 32-bit pointer mode.
     Triple TheTriple(STI.getTargetTriple());
     IsPPC64 = (TheTriple.getArch() == Triple::ppc64 ||
