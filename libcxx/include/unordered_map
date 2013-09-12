@@ -69,6 +69,22 @@ public:
     unordered_map(initializer_list<value_type>, size_type n = 0,
                   const hasher& hf = hasher(), const key_equal& eql = key_equal(),
                   const allocator_type& a = allocator_type());
+    unordered_map(size_type n, const allocator_type& a)
+      : unordered_map(n, hasher(), key_equal(), a) {}  // C++14
+    unordered_map(size_type n, const hasher& hf, const allocator_type& a)
+      : unordered_map(n, hf, key_equal(), a) {}  // C++14
+    template <class InputIterator>
+      unordered_map(InputIterator f, InputIterator l, size_type n, const allocator_type& a)
+      : unordered_map(f, l, n, hasher(), key_equal(), a) {}  // C++14
+    template <class InputIterator>
+      unordered_map(InputIterator f, InputIterator l, size_type n, const hasher& hf, 
+        const allocator_type& a)
+      : unordered_map(f, l, n, hf, key_equal(), a) {}  // C++14
+    unordered_map(initializer_list<value_type> il, size_type n, const allocator_type& a)
+      : unordered_map(il, n, hasher(), key_equal(), a) {}  // C++14
+    unordered_map(initializer_list<value_type> il, size_type n, const hasher& hf, 
+      const allocator_type& a)
+      : unordered_map(il, n, hf, key_equal(), a) {}  // C++14
     ~unordered_map();
     unordered_map& operator=(const unordered_map&);
     unordered_map& operator=(unordered_map&&)
@@ -217,6 +233,22 @@ public:
     unordered_multimap(initializer_list<value_type>, size_type n = 0,
                   const hasher& hf = hasher(), const key_equal& eql = key_equal(),
                   const allocator_type& a = allocator_type());
+    unordered_multimap(size_type n, const allocator_type& a)
+      : unordered_multimap(n, hasher(), key_equal(), a) {}  // C++14
+    unordered_multimap(size_type n, const hasher& hf, const allocator_type& a)
+      : unordered_multimap(n, hf, key_equal(), a) {}  // C++14
+    template <class InputIterator>
+      unordered_multimap(InputIterator f, InputIterator l, size_type n, const allocator_type& a)
+      : unordered_multimap(f, l, n, hasher(), key_equal(), a) {}  // C++14
+    template <class InputIterator>
+      unordered_multimap(InputIterator f, InputIterator l, size_type n, const hasher& hf, 
+        const allocator_type& a)
+      : unordered_multimap(f, l, n, hf, key_equal(), a) {}  // C++14
+    unordered_multimap(initializer_list<value_type> il, size_type n, const allocator_type& a)
+      : unordered_multimap(il, n, hasher(), key_equal(), a) {}  // C++14
+    unordered_multimap(initializer_list<value_type> il, size_type n, const hasher& hf, 
+      const allocator_type& a)
+      : unordered_multimap(il, n, hf, key_equal(), a) {}  // C++14
     ~unordered_multimap();
     unordered_multimap& operator=(const unordered_multimap&);
     unordered_multimap& operator=(unordered_multimap&&)
@@ -745,6 +777,30 @@ public:
                   const hasher& __hf, const key_equal& __eql,
                   const allocator_type& __a);
 #endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
+#if _LIBCPP_STD_VER > 11
+    _LIBCPP_INLINE_VISIBILITY
+    unordered_map(size_type __n, const allocator_type& __a)
+      : unordered_map(__n, hasher(), key_equal(), __a) {}
+    _LIBCPP_INLINE_VISIBILITY
+    unordered_map(size_type __n, const hasher& __hf, const allocator_type& __a)
+      : unordered_map(__n, __hf, key_equal(), __a) {}
+    template <class _InputIterator>
+    _LIBCPP_INLINE_VISIBILITY
+      unordered_map(_InputIterator __first, _InputIterator __last, size_type __n, const allocator_type& __a)
+      : unordered_map(__first, __last, __n, hasher(), key_equal(), __a) {}
+    template <class _InputIterator>
+    _LIBCPP_INLINE_VISIBILITY
+      unordered_map(_InputIterator __first, _InputIterator __last, size_type __n, const hasher& __hf, 
+        const allocator_type& __a)
+      : unordered_map(__first, __last, __n, __hf, key_equal(), __a) {}
+    _LIBCPP_INLINE_VISIBILITY
+    unordered_map(initializer_list<value_type> __il, size_type __n, const allocator_type& __a)
+      : unordered_map(__il, __n, hasher(), key_equal(), __a) {}
+    _LIBCPP_INLINE_VISIBILITY
+    unordered_map(initializer_list<value_type> __il, size_type __n, const hasher& __hf, 
+      const allocator_type& __a)
+      : unordered_map(__il, __n, __hf, key_equal(), __a) {}
+#endif
     // ~unordered_map() = default;
     _LIBCPP_INLINE_VISIBILITY
     unordered_map& operator=(const unordered_map& __u)
@@ -1499,6 +1555,30 @@ public:
                        const hasher& __hf, const key_equal& __eql,
                        const allocator_type& __a);
 #endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
+#if _LIBCPP_STD_VER > 11
+    _LIBCPP_INLINE_VISIBILITY
+    unordered_multimap(size_type __n, const allocator_type& __a)
+      : unordered_multimap(__n, hasher(), key_equal(), __a) {}
+    _LIBCPP_INLINE_VISIBILITY
+    unordered_multimap(size_type __n, const hasher& __hf, const allocator_type& __a)
+      : unordered_multimap(__n, __hf, key_equal(), __a) {}
+    template <class _InputIterator>
+    _LIBCPP_INLINE_VISIBILITY
+      unordered_multimap(_InputIterator __first, _InputIterator __last, size_type __n, const allocator_type& __a)
+      : unordered_multimap(__first, __last, __n, hasher(), key_equal(), __a) {}
+    template <class _InputIterator>
+    _LIBCPP_INLINE_VISIBILITY
+      unordered_multimap(_InputIterator __first, _InputIterator __last, size_type __n, const hasher& __hf, 
+        const allocator_type& __a)
+      : unordered_multimap(__first, __last, __n, __hf, key_equal(), __a) {}
+    _LIBCPP_INLINE_VISIBILITY
+    unordered_multimap(initializer_list<value_type> __il, size_type __n, const allocator_type& __a)
+      : unordered_multimap(__il, __n, hasher(), key_equal(), __a) {}
+    _LIBCPP_INLINE_VISIBILITY
+    unordered_multimap(initializer_list<value_type> __il, size_type __n, const hasher& __hf, 
+      const allocator_type& __a)
+      : unordered_multimap(__il, __n, __hf, key_equal(), __a) {}
+#endif
     // ~unordered_multimap() = default;
     _LIBCPP_INLINE_VISIBILITY
     unordered_multimap& operator=(const unordered_multimap& __u)
