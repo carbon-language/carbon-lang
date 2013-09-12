@@ -64,15 +64,16 @@ return:                                           ; preds = %if.end, %if.then
 ; CHECK: std
 ; Make sure that we're not saving VRSAVE on non-Darwin:
 ; CHECK-NOT: mfspr
-; CHECK: stfd
-; CHECK: stvx
 
-; CHECK: addis [[REG:[0-9]+]], 2, env_sigill@toc@ha
-; CHECK: std 31, env_sigill@toc@l([[REG]])
-; CHECK: addi [[REG]], [[REG]], env_sigill@toc@l
-; CHECK: std [[REG]], [[OFF:[0-9]+]](31)                  # 8-byte Folded Spill
-; CHECK: std 1, 16([[REG]])
-; CHECK: std 2, 24([[REG]])
+; CHECK-DAG: stfd
+; CHECK-DAG: stvx
+
+; CHECK-DAG: addis [[REG:[0-9]+]], 2, env_sigill@toc@ha
+; CHECK-DAG: std 31, env_sigill@toc@l([[REG]])
+; CHECK-DAG: addi [[REGA:[0-9]+]], [[REG]], env_sigill@toc@l
+; CHECK-DAG: std [[REGA]], [[OFF:[0-9]+]](31)                  # 8-byte Folded Spill
+; CHECK-DAG: std 1, 16([[REGA]])
+; CHECK-DAG: std 2, 24([[REGA]])
 ; CHECK: bcl 20, 31, .LBB1_1
 ; CHECK: li 3, 1
 ; CHECK: #EH_SjLj_Setup	.LBB1_1
@@ -134,11 +135,11 @@ return:                                           ; preds = %if.end, %if.then
 
 ; CHECK: addis [[REG:[0-9]+]], 2, env_sigill@toc@ha
 ; CHECK: std 31, env_sigill@toc@l([[REG]])
-; CHECK: addi [[REG]], [[REG]], env_sigill@toc@l
-; CHECK: std [[REG]], [[OFF:[0-9]+]](31)                  # 8-byte Folded Spill
-; CHECK: std 1, 16([[REG]])
-; CHECK: std 2, 24([[REG]])
-; CHECK: std 30, 32([[REG]])
+; CHECK: addi [[REGB:[0-9]+]], [[REG]], env_sigill@toc@l
+; CHECK-DAG: std [[REGB]], [[OFF:[0-9]+]](31)                  # 8-byte Folded Spill
+; CHECK-DAG: std 1, 16([[REGB]])
+; CHECK-DAG: std 2, 24([[REGB]])
+; CHECK-DAG: std 30, 32([[REGB]])
 ; CHECK: bcl 20, 31,
 
 ; CHECK: blr
