@@ -646,7 +646,7 @@ llvm::yaml::SequenceTraits on T and implement two methods:
   template <>
   struct SequenceTraits<MySeq> {
     static size_t size(IO &io, MySeq &list) { ... }
-    static MySeqEl element(IO &io, MySeq &list, size_t index) { ... }
+    static MySeqEl &element(IO &io, MySeq &list, size_t index) { ... }
   };
 
 The size() method returns how many elements are currently in your sequence.
@@ -669,7 +669,7 @@ add "static const bool flow = true;".  For instance:
   template <>
   struct SequenceTraits<MyList> {
     static size_t size(IO &io, MyList &list) { ... }
-    static MyListEl element(IO &io, MyList &list, size_t index) { ... }
+    static MyListEl &element(IO &io, MyList &list, size_t index) { ... }
     
     // The existence of this member causes YAML I/O to use a flow sequence
     static const bool flow = true;
