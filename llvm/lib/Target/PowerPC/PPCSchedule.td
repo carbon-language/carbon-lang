@@ -108,6 +108,14 @@ def VecPerm      : InstrItinClass;
 def VecFPRound   : InstrItinClass;
 def VecVSL       : InstrItinClass;
 def VecVSR       : InstrItinClass;
+def SprMTMSRD    : InstrItinClass;
+def SprSLIE      : InstrItinClass;
+def SprSLBIE     : InstrItinClass;
+def SprSLBMTE    : InstrItinClass;
+def SprSLBMFEE   : InstrItinClass;
+def SprSLBIA     : InstrItinClass;
+def SprTLBIEL    : InstrItinClass;
+def SprTLBIE     : InstrItinClass;
 
 //===----------------------------------------------------------------------===//
 // Processor instruction itineraries.

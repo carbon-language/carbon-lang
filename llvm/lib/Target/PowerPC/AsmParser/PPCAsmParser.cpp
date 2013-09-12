@@ -1360,6 +1360,8 @@ unsigned PPCAsmParser::validateTargetOperandClass(MCParsedAsmOperand *AsmOp,
   switch (Kind) {
     case MCK_0: ImmVal = 0; break;
     case MCK_1: ImmVal = 1; break;
+    case MCK_2: ImmVal = 2; break;
+    case MCK_3: ImmVal = 3; break;
     default: return Match_InvalidOperand;
   }
 

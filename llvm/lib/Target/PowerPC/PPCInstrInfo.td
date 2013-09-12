@@ -2319,6 +2319,35 @@ def EIEIO : XForm_24_eieio<31, 854, (outs), (ins),
 def WAIT : XForm_24_sync<31, 62, (outs), (ins i32imm:$L),
                          "wait $L", LdStLoad, []>;
 
+def MTMSR: XForm_mtmsr<31, 146, (outs), (ins gprc:$RS, i32imm:$L),
+                    "mtmsr $RS, $L", SprMTMSR>;
+
+def MFMSR : XForm_rs<31, 83, (outs gprc:$RT), (ins),
+                  "mfmsr $RT", SprMFMSR, []>;
+
+def MTMSRD : XForm_mtmsr<31, 178, (outs), (ins gprc:$RS, i32imm:$L),
+                    "mtmsrd $RS, $L", SprMTMSRD>;
+
+def SLBIE : XForm_16b<31, 434, (outs), (ins gprc:$RB),
+                        "slbie $RB", SprSLBIE, []>;
+
+def SLBMTE : XForm_26<31, 402, (outs), (ins gprc:$RS, gprc:$RB),
+                    "slbmte $RS, $RB", SprSLBMTE, []>;
+
+def SLBMFEE : XForm_26<31, 915, (outs gprc:$RT), (ins gprc:$RB),
+                       "slbmfee $RT, $RB", SprSLBMFEE, []>;
+
+def SLBIA : XForm_0<31, 498, (outs), (ins), "slbia", SprSLBIA, []>;
+
+def TLBSYNC : XForm_0<31, 566, (outs), (ins),
+                        "tlbsync", SprTLBSYNC, []>;
+
+def TLBIEL : XForm_16b<31, 274, (outs), (ins gprc:$RB),
+                          "tlbiel $RB", SprTLBIEL, []>;
+
+def TLBIE : XForm_26<31, 306, (outs), (ins gprc:$RS, gprc:$RB),
+                          "tlbie $RB,$RS", SprTLBIE, []>;
+
 //===----------------------------------------------------------------------===//
 // PowerPC Assembler Instruction Aliases
 //
@@ -2386,6 +2415,46 @@ def : InstAlias<"sub $rA, $rB, $rC", (SUBF8 g8rc:$rA, g8rc:$rC, g8rc:$rB)>;
 def : InstAlias<"sub. $rA, $rB, $rC", (SUBF8o g8rc:$rA, g8rc:$rC, g8rc:$rB)>;
 def : InstAlias<"subc $rA, $rB, $rC", (SUBFC8 g8rc:$rA, g8rc:$rC, g8rc:$rB)>;
 def : InstAlias<"subc. $rA, $rB, $rC", (SUBFC8o g8rc:$rA, g8rc:$rC, g8rc:$rB)>;
+
+def : InstAlias<"mtmsrd $RS", (MTMSRD gprc:$RS, 0)>;
+def : InstAlias<"mtmsr $RS", (MTMSR gprc:$RS, 0)>;
+
+def : InstAlias<"mfsprg $RT, 0", (MFSPR gprc:$RT, 272)>;
+def : InstAlias<"mfsprg $RT, 1", (MFSPR gprc:$RT, 273)>;
+def : InstAlias<"mfsprg $RT, 2", (MFSPR gprc:$RT, 274)>;
+def : InstAlias<"mfsprg $RT, 3", (MFSPR gprc:$RT, 275)>;
+
+def : InstAlias<"mfsprg0 $RT", (MFSPR gprc:$RT, 272)>;
+def : InstAlias<"mfsprg1 $RT", (MFSPR gprc:$RT, 273)>;
+def : InstAlias<"mfsprg2 $RT", (MFSPR gprc:$RT, 274)>;
+def : InstAlias<"mfsprg3 $RT", (MFSPR gprc:$RT, 275)>;
+
+def : InstAlias<"mtsprg 0, $RT", (MTSPR 272, gprc:$RT)>;
+def : InstAlias<"mtsprg 1, $RT", (MTSPR 273, gprc:$RT)>;
+def : InstAlias<"mtsprg 2, $RT", (MTSPR 274, gprc:$RT)>;
+def : InstAlias<"mtsprg 3, $RT", (MTSPR 275, gprc:$RT)>;
+
+def : InstAlias<"mtsprg0 $RT", (MTSPR 272, gprc:$RT)>;
+def : InstAlias<"mtsprg1 $RT", (MTSPR 273, gprc:$RT)>;
+def : InstAlias<"mtsprg2 $RT", (MTSPR 274, gprc:$RT)>;
+def : InstAlias<"mtsprg3 $RT", (MTSPR 275, gprc:$RT)>;
+
+def : InstAlias<"mtasr $RS", (MTSPR 280, gprc:$RS)>;
+
+def : InstAlias<"mfdec $RT", (MFSPR gprc:$RT, 22)>;
+def : InstAlias<"mtdec $RT", (MTSPR 22, gprc:$RT)>;
+
+def : InstAlias<"mfpvr $RT", (MFSPR gprc:$RT, 287)>;
+
+def : InstAlias<"mfsdr1 $RT", (MFSPR gprc:$RT, 25)>;
+def : InstAlias<"mtsdr1 $RT", (MTSPR 25, gprc:$RT)>;
+
+def : InstAlias<"mfsrr0 $RT", (MFSPR gprc:$RT, 26)>;
+def : InstAlias<"mfsrr1 $RT", (MFSPR gprc:$RT, 27)>;
+def : InstAlias<"mtsrr0 $RT", (MTSPR 26, gprc:$RT)>;
+def : InstAlias<"mtsrr1 $RT", (MTSPR 27, gprc:$RT)>;
+
+def : InstAlias<"tlbie $RB", (TLBIE R0, gprc:$RB)>;
 
 def EXTLWI : PPCAsmPseudo<"extlwi $rA, $rS, $n, $b",
                           (ins gprc:$rA, gprc:$rS, u5imm:$n, u5imm:$b)>;

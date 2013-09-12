@@ -398,6 +398,13 @@ class XForm_1a<bits<6> opcode, bits<10> xo, dag OOL, dag IOL, string asmstr,
   let RST = 0;
 }
 
+class XForm_rs<bits<6> opcode, bits<10> xo, dag OOL, dag IOL, string asmstr,
+              InstrItinClass itin, list<dag> pattern>
+  : XForm_base_r3xo<opcode, xo, OOL, IOL, asmstr, itin, pattern> {
+  let A = 0;
+  let B = 0;
+}
+
 class XForm_6<bits<6> opcode, bits<10> xo, dag OOL, dag IOL, string asmstr,
               InstrItinClass itin, list<dag> pattern> 
   : XForm_base_r3xo_swapped<opcode, xo, OOL, IOL, asmstr, itin> {
@@ -436,6 +443,17 @@ class XForm_16<bits<6> opcode, bits<10> xo, dag OOL, dag IOL, string asmstr,
   let Inst{16-20} = RB;
   let Inst{21-30} = xo;
   let Inst{31}    = 0;
+}
+
+class XForm_mtmsr<bits<6> opcode, bits<10> xo, dag OOL, dag IOL, string asmstr,
+                InstrItinClass itin>
+         : I<opcode, OOL, IOL, asmstr, itin> {
+  bits<5> RS;
+  bits<1> L;
+
+  let Inst{6-10} = RS;
+  let Inst{15} = L;
+  let Inst{21-30} = xo;
 }
 
 class XForm_16_ext<bits<6> opcode, bits<10> xo, dag OOL, dag IOL, string asmstr,
@@ -532,6 +550,21 @@ class XForm_43<bits<6> opcode, bits<10> xo, dag OOL, dag IOL, string asmstr,
   let Inst{11-20} = 0;
   let Inst{21-30} = xo;
   let Inst{31}    = RC;
+}
+
+class XForm_0<bits<6> opcode, bits<10> xo, dag OOL, dag IOL, string asmstr,
+              InstrItinClass itin, list<dag> pattern>
+  : XForm_base_r3xo<opcode, xo, OOL, IOL, asmstr, itin, pattern> {
+  let RST = 0;
+  let A = 0;
+  let B = 0;
+}
+
+class XForm_16b<bits<6> opcode, bits<10> xo, dag OOL, dag IOL, string asmstr,
+              InstrItinClass itin, list<dag> pattern>
+  : XForm_base_r3xo<opcode, xo, OOL, IOL, asmstr, itin, pattern> {
+  let RST = 0;
+  let A = 0;
 }
 
 // DCB_Form - Form X instruction, used for dcb* instructions.
