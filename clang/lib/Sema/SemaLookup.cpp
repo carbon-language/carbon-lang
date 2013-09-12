@@ -3955,7 +3955,8 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
       return Correction;
   }
 
-  if (Diags.hasFatalErrorOccurred() || !getLangOpts().SpellChecking)
+  if (Diags.hasFatalErrorOccurred() || !getLangOpts().SpellChecking ||
+      DisableTypoCorrection)
     return TypoCorrection();
 
   // In Microsoft mode, don't perform typo correction in a template member

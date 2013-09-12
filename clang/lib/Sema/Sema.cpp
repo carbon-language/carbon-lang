@@ -89,8 +89,9 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
     NumSFINAEErrors(0), InFunctionDeclarator(0),
     AccessCheckingSFINAE(false), InNonInstantiationSFINAEContext(false),
     NonInstantiationEntries(0), ArgumentPackSubstitutionIndex(-1),
-    CurrentInstantiationScope(0), TyposCorrected(0),
-    AnalysisWarnings(*this), VarDataSharingAttributesStack(0), CurScope(0),
+    CurrentInstantiationScope(0), DisableTypoCorrection(false),
+    TyposCorrected(0), AnalysisWarnings(*this),
+    VarDataSharingAttributesStack(0), CurScope(0),
     Ident_super(0), Ident___float128(0)
 {
   TUScope = 0;

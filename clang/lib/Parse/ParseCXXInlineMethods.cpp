@@ -215,8 +215,7 @@ void Parser::ParseCXXNonStaticMemberInitializer(Decl *VarD) {
     ConsumeAndStoreUntil(tok::r_brace, Toks, /*StopAtSemi=*/true);
   } else {
     // Consume everything up to (but excluding) the comma or semicolon.
-    ConsumeAndStoreUntil(tok::comma, Toks, /*StopAtSemi=*/true,
-                         /*ConsumeFinalToken=*/false);
+    ConsumeAndStoreInitializer(Toks, CIK_DefaultInitializer);
   }
 
   // Store an artificial EOF token to ensure that we don't run off the end of
@@ -345,8 +344,15 @@ void Parser::ParseLexedMethodDeclaration(LateParsedMethodDeclaration &LM) {
       else {
         if (Tok.is(tok::cxx_defaultarg_end))
           ConsumeToken();
-        else
-          Diag(Tok.getLocation(), diag::err_default_arg_unparsed);
+        else {
+          // The last two tokens are the terminator and the saved value of
+          // Tok; the last token in the default argument is the one before
+          // those.
+          assert(Toks->size() >= 3 && "expected a token in default arg");
+          Diag(Tok.getLocation(), diag::err_default_arg_unparsed)
+            << SourceRange(Tok.getLocation(),
+                           (*Toks)[Toks->size() - 3].getLocation());
+        }
         Actions.ActOnParamDefaultArgument(LM.DefaultArgs[I].Param, EqualLoc,
                                           DefArgResult.take());
       }
@@ -812,5 +818,278 @@ bool Parser::ConsumeAndStoreFunctionPrologue(CachedTokens &Toks) {
     } else if (!MightBeTemplateArgument) {
       return Diag(Tok.getLocation(), diag::err_expected_lbrace_or_comma);
     }
+  }
+}
+
+/// \brief Consume and store tokens from the '?' to the ':' in a conditional
+/// expression.
+bool Parser::ConsumeAndStoreConditional(CachedTokens &Toks) {
+  // Consume '?'.
+  assert(Tok.is(tok::question));
+  Toks.push_back(Tok);
+  ConsumeToken();
+
+  while (Tok.isNot(tok::colon)) {
+    if (!ConsumeAndStoreUntil(tok::question, tok::colon, Toks, /*StopAtSemi*/true,
+                              /*ConsumeFinalToken*/false))
+      return false;
+
+    // If we found a nested conditional, consume it.
+    if (Tok.is(tok::question) && !ConsumeAndStoreConditional(Toks))
+      return false;
+  }
+
+  // Consume ':'.
+  Toks.push_back(Tok);
+  ConsumeToken();
+  return true;
+}
+
+/// \brief A tentative parsing action that can also revert token annotations.
+class Parser::UnannotatedTentativeParsingAction : public TentativeParsingAction {
+public:
+  explicit UnannotatedTentativeParsingAction(Parser &Self,
+                                             tok::TokenKind EndKind)
+      : TentativeParsingAction(Self), Self(Self), EndKind(EndKind) {
+    // Stash away the old token stream, so we can restore it once the
+    // tentative parse is complete.
+    TentativeParsingAction Inner(Self);
+    Self.ConsumeAndStoreUntil(EndKind, Toks, true, /*ConsumeFinalToken*/false);
+    Inner.Revert();
+  }
+
+  void RevertAnnotations() {
+    Revert();
+
+    // Put back the original tokens.
+    Self.SkipUntil(EndKind, true, /*DontConsume*/true);
+    if (Toks.size()) {
+      Token *Buffer = new Token[Toks.size()];
+      std::copy(Toks.begin() + 1, Toks.end(), Buffer);
+      Buffer[Toks.size() - 1] = Self.Tok;
+      Self.PP.EnterTokenStream(Buffer, Toks.size(), true, /*Owned*/true);
+
+      Self.Tok = Toks.front();
+    }
+  }
+
+private:
+  Parser &Self;
+  CachedTokens Toks;
+  tok::TokenKind EndKind;
+};
+
+/// ConsumeAndStoreInitializer - Consume and store the token at the passed token
+/// container until the end of the current initializer expression (either a
+/// default argument or an in-class initializer for a non-static data member).
+/// The final token is not consumed.
+bool Parser::ConsumeAndStoreInitializer(CachedTokens &Toks,
+                                        CachedInitKind CIK) {
+  // We always want this function to consume at least one token if not at EOF.
+  bool IsFirstTokenConsumed = true;
+
+  // Number of possible unclosed <s we've seen so far. These might be templates,
+  // and might not, but if there were none of them (or we know for sure that
+  // we're within a template), we can avoid a tentative parse.
+  unsigned AngleCount = 0;
+  unsigned KnownTemplateCount = 0;
+
+  while (1) {
+    switch (Tok.getKind()) {
+    case tok::comma:
+      // If we might be in a template, perform a tentative parse to check.
+      if (!AngleCount)
+        // Not a template argument: this is the end of the initializer.
+        return true;
+      if (KnownTemplateCount)
+        goto consume_token;
+
+      // We hit a comma inside angle brackets. This is the hard case. The
+      // rule we follow is:
+      //  * For a default argument, if the tokens after the comma form a
+      //    syntactically-valid parameter-declaration-clause, in which each
+      //    parameter has an initializer, then this comma ends the default
+      //    argument.
+      //  * For a default initializer, if the tokens after the comma form a
+      //    syntactically-valid init-declarator-list, then this comma ends
+      //    the default initializer.
+      {
+        UnannotatedTentativeParsingAction PA(*this,
+                                             CIK == CIK_DefaultInitializer
+                                               ? tok::semi : tok::r_paren);
+        Sema::TentativeAnalysisScope Scope(Actions);
+
+        TPResult Result = TPResult::Error();
+        ConsumeToken();
+        switch (CIK) {
+        case CIK_DefaultInitializer:
+          Result = TryParseInitDeclaratorList();
+          // If we parsed a complete, ambiguous init-declarator-list, this
+          // is only syntactically-valid if it's followed by a semicolon.
+          if (Result == TPResult::Ambiguous() && Tok.isNot(tok::semi))
+            Result = TPResult::False();
+          break;
+
+        case CIK_DefaultArgument:
+          bool InvalidAsDeclaration = false;
+          Result = TryParseParameterDeclarationClause(
+              &InvalidAsDeclaration, /*VersusTemplateArgument*/true);
+          // If this is an expression or a declaration with a missing
+          // 'typename', assume it's not a declaration.
+          if (Result == TPResult::Ambiguous() && InvalidAsDeclaration)
+            Result = TPResult::False();
+          break;
+        }
+
+        // If what follows could be a declaration, it is a declaration.
+        if (Result != TPResult::False() && Result != TPResult::Error()) {
+          PA.Revert();
+          return true;
+        }
+
+        // In the uncommon case that we decide the following tokens are part
+        // of a template argument, revert any annotations we've performed in
+        // those tokens. We're not going to look them up until we've parsed
+        // the rest of the class, and that might add more declarations.
+        PA.RevertAnnotations();
+      }
+
+      // Keep going. We know we're inside a template argument list now.
+      ++KnownTemplateCount;
+      goto consume_token;
+
+    case tok::eof:
+      // Ran out of tokens.
+      return false;
+
+    case tok::less:
+      // FIXME: A '<' can only start a template-id if it's preceded by an
+      // identifier, an operator-function-id, or a literal-operator-id.
+      ++AngleCount;
+      goto consume_token;
+
+    case tok::question:
+      // In 'a ? b : c', 'b' can contain an unparenthesized comma. If it does,
+      // that is *never* the end of the initializer. Skip to the ':'.
+      if (!ConsumeAndStoreConditional(Toks))
+        return false;
+      break;
+
+    case tok::greatergreatergreater:
+      if (!getLangOpts().CPlusPlus11)
+        goto consume_token;
+      if (AngleCount) --AngleCount;
+      if (KnownTemplateCount) --KnownTemplateCount;
+      // Fall through.
+    case tok::greatergreater:
+      if (!getLangOpts().CPlusPlus11)
+        goto consume_token;
+      if (AngleCount) --AngleCount;
+      if (KnownTemplateCount) --KnownTemplateCount;
+      // Fall through.
+    case tok::greater:
+      if (AngleCount) --AngleCount;
+      if (KnownTemplateCount) --KnownTemplateCount;
+      goto consume_token;
+
+    case tok::kw_template:
+      // 'template' identifier '<' is known to start a template argument list,
+      // and can be used to disambiguate the parse.
+      // FIXME: Support all forms of 'template' unqualified-id '<'.
+      Toks.push_back(Tok);
+      ConsumeToken();
+      if (Tok.is(tok::identifier)) {
+        Toks.push_back(Tok);
+        ConsumeToken();
+        if (Tok.is(tok::less)) {
+          ++KnownTemplateCount;
+          Toks.push_back(Tok);
+          ConsumeToken();
+        }
+      }
+      break;
+
+    case tok::kw_operator:
+      // If 'operator' precedes other punctuation, that punctuation loses
+      // its special behavior.
+      Toks.push_back(Tok);
+      ConsumeToken();
+      switch (Tok.getKind()) {
+      case tok::comma:
+      case tok::greatergreatergreater:
+      case tok::greatergreater:
+      case tok::greater:
+      case tok::less:
+        Toks.push_back(Tok);
+        ConsumeToken();
+        break;
+      default:
+        break;
+      }
+      break;
+
+    case tok::l_paren:
+      // Recursively consume properly-nested parens.
+      Toks.push_back(Tok);
+      ConsumeParen();
+      ConsumeAndStoreUntil(tok::r_paren, Toks, /*StopAtSemi=*/false);
+      break;
+    case tok::l_square:
+      // Recursively consume properly-nested square brackets.
+      Toks.push_back(Tok);
+      ConsumeBracket();
+      ConsumeAndStoreUntil(tok::r_square, Toks, /*StopAtSemi=*/false);
+      break;
+    case tok::l_brace:
+      // Recursively consume properly-nested braces.
+      Toks.push_back(Tok);
+      ConsumeBrace();
+      ConsumeAndStoreUntil(tok::r_brace, Toks, /*StopAtSemi=*/false);
+      break;
+
+    // Okay, we found a ']' or '}' or ')', which we think should be balanced.
+    // Since the user wasn't looking for this token (if they were, it would
+    // already be handled), this isn't balanced.  If there is a LHS token at a
+    // higher level, we will assume that this matches the unbalanced token
+    // and return it.  Otherwise, this is a spurious RHS token, which we skip.
+    case tok::r_paren:
+      if (CIK == CIK_DefaultArgument)
+        return true; // End of the default argument.
+      if (ParenCount && !IsFirstTokenConsumed)
+        return false;  // Matches something.
+      goto consume_token;
+    case tok::r_square:
+      if (BracketCount && !IsFirstTokenConsumed)
+        return false;  // Matches something.
+      goto consume_token;
+    case tok::r_brace:
+      if (BraceCount && !IsFirstTokenConsumed)
+        return false;  // Matches something.
+      goto consume_token;
+
+    case tok::code_completion:
+      Toks.push_back(Tok);
+      ConsumeCodeCompletionToken();
+      break;
+
+    case tok::string_literal:
+    case tok::wide_string_literal:
+    case tok::utf8_string_literal:
+    case tok::utf16_string_literal:
+    case tok::utf32_string_literal:
+      Toks.push_back(Tok);
+      ConsumeStringToken();
+      break;
+    case tok::semi:
+      if (CIK == CIK_DefaultInitializer)
+        return true; // End of the default initializer.
+      // FALL THROUGH.
+    default:
+    consume_token:
+      Toks.push_back(Tok);
+      ConsumeToken();
+      break;
+    }
+    IsFirstTokenConsumed = false;
   }
 }
