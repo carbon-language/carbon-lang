@@ -578,24 +578,48 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   }
 }
 
+/// getMaxByValAlign - Helper for getByValTypeAlignment to determine
+/// the desired ByVal argument alignment.
+static void getMaxByValAlign(Type *Ty, unsigned &MaxAlign,
+                             unsigned MaxMaxAlign) {
+  if (MaxAlign == MaxMaxAlign)
+    return;
+  if (VectorType *VTy = dyn_cast<VectorType>(Ty)) {
+    if (MaxMaxAlign >= 32 && VTy->getBitWidth() >= 256)
+      MaxAlign = 32;
+    else if (VTy->getBitWidth() >= 128 && MaxAlign < 16)
+      MaxAlign = 16;
+  } else if (ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
+    unsigned EltAlign = 0;
+    getMaxByValAlign(ATy->getElementType(), EltAlign, MaxMaxAlign);
+    if (EltAlign > MaxAlign)
+      MaxAlign = EltAlign;
+  } else if (StructType *STy = dyn_cast<StructType>(Ty)) {
+    for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
+      unsigned EltAlign = 0;
+      getMaxByValAlign(STy->getElementType(i), EltAlign, MaxMaxAlign);
+      if (EltAlign > MaxAlign)
+        MaxAlign = EltAlign;
+      if (MaxAlign == MaxMaxAlign)
+        break;
+    }
+  }
+}
+
 /// getByValTypeAlignment - Return the desired alignment for ByVal aggregate
 /// function arguments in the caller parameter area.
 unsigned PPCTargetLowering::getByValTypeAlignment(Type *Ty) const {
   const TargetMachine &TM = getTargetMachine();
   // Darwin passes everything on 4 byte boundary.
-  if (TM.getSubtarget<PPCSubtarget>().isDarwin())
+  if (PPCSubTarget.isDarwin())
     return 4;
 
   // 16byte and wider vectors are passed on 16byte boundary.
-  if (VectorType *VTy = dyn_cast<VectorType>(Ty))
-    if (VTy->getBitWidth() >= 128)
-      return 16;
-
   // The rest is 8 on PPC64 and 4 on PPC32 boundary.
-   if (PPCSubTarget.isPPC64())
-     return 8;
-
-  return 4;
+  unsigned Align = PPCSubTarget.isPPC64() ? 8 : 4;
+  if (PPCSubTarget.hasAltivec() || PPCSubTarget.hasQPX())
+    getMaxByValAlign(Ty, Align, PPCSubTarget.hasQPX() ? 32 : 16);
+  return Align;
 }
 
 const char *PPCTargetLowering::getTargetNodeName(unsigned Opcode) const {
@@ -2281,6 +2305,13 @@ PPCTargetLowering::LowerFormalArguments_64SVR4(
         InVals.push_back(FIN);
         continue;
       }
+
+      unsigned BVAlign = Flags.getByValAlign();
+      if (BVAlign > 8) {
+        ArgOffset = ((ArgOffset+BVAlign-1)/BVAlign)*BVAlign;
+        CurArgOffset = ArgOffset;
+      }
+
       // All aggregates smaller than 8 bytes must be passed right-justified.
       if (ObjSize < PtrByteSize)
         CurArgOffset = CurArgOffset + (PtrByteSize - ObjSize);
@@ -3869,6 +3900,15 @@ PPCTargetLowering::LowerCall_64SVR4(SDValue Chain, SDValue Callee,
       // registers.
       if (Size == 0)
         continue;
+
+      unsigned BVAlign = Flags.getByValAlign();
+      if (BVAlign > 8) {
+        if (BVAlign % PtrByteSize != 0)
+          llvm_unreachable(
+            "ByVal alignment is not a multiple of the pointer size");
+
+        ArgOffset = ((ArgOffset+BVAlign-1)/BVAlign)*BVAlign;
+      }
 
       // All aggregates smaller than 8 bytes must be passed right-justified.
       if (Size==1 || Size==2 || Size==4) {
