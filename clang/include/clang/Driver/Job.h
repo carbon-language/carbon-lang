@@ -14,6 +14,10 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Option/Option.h"
 
+namespace llvm {
+  class raw_ostream;
+}
+
 namespace clang {
 namespace driver {
 class Action;
@@ -38,13 +42,20 @@ public:
   virtual ~Job();
 
   JobClass getKind() const { return Kind; }
+
+  /// Print - Print this Job in -### format.
+  ///
+  /// \param OS - The stream to print on.
+  /// \param Terminator - A string to print at the end of the line.
+  /// \param Quote - Should separate arguments be quoted.
+  /// \param CrashReport - Whether to print for inclusion in a crash report.
+  virtual void Print(llvm::raw_ostream &OS, const char *Terminator,
+                     bool Quote, bool CrashReport = false) const = 0;
 };
 
   /// Command - An executable path/name and argument vector to
   /// execute.
 class Command : public Job {
-  virtual void anchor();
-
   /// Source - The action which caused the creation of this job.
   const Action &Source;
 
@@ -61,6 +72,9 @@ class Command : public Job {
 public:
   Command(const Action &_Source, const Tool &_Creator, const char *_Executable,
           const llvm::opt::ArgStringList &_Arguments);
+
+  virtual void Print(llvm::raw_ostream &OS, const char *Terminator,
+                     bool Quote, bool CrashReport = false) const;
 
   /// getSource - Return the Action which caused the creation of this job.
   const Action &getSource() const { return Source; }
@@ -91,6 +105,9 @@ private:
 public:
   JobList();
   virtual ~JobList();
+
+  virtual void Print(llvm::raw_ostream &OS, const char *Terminator,
+                     bool Quote, bool CrashReport = false) const;
 
   /// Add a job to the list (taking ownership).
   void addJob(Job *J) { Jobs.push_back(J); }

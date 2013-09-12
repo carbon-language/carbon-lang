@@ -14,7 +14,6 @@
 #include "clang/Driver/Options.h"
 #include "clang/Driver/ToolChain.h"
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/ADT/StringSwitch.h"
 #include "llvm/Option/ArgList.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Program.h"
@@ -69,136 +68,6 @@ const DerivedArgList &Compilation::getArgsForToolChain(const ToolChain *TC,
   }
 
   return *Entry;
-}
-
-void Compilation::PrintJob(raw_ostream &OS, const Job &J,
-                           const char *Terminator, bool Quote) const {
-  if (const Command *C = dyn_cast<Command>(&J)) {
-    OS << " \"" << C->getExecutable() << '"';
-    for (ArgStringList::const_iterator it = C->getArguments().begin(),
-           ie = C->getArguments().end(); it != ie; ++it) {
-      OS << ' ';
-      if (!Quote && !std::strpbrk(*it, " \"\\$")) {
-        OS << *it;
-        continue;
-      }
-
-      // Quote the argument and escape shell special characters; this isn't
-      // really complete but is good enough.
-      OS << '"';
-      for (const char *s = *it; *s; ++s) {
-        if (*s == '"' || *s == '\\' || *s == '$')
-          OS << '\\';
-        OS << *s;
-      }
-      OS << '"';
-    }
-    OS << Terminator;
-  } else {
-    const JobList *Jobs = cast<JobList>(&J);
-    for (JobList::const_iterator
-           it = Jobs->begin(), ie = Jobs->end(); it != ie; ++it)
-      PrintJob(OS, **it, Terminator, Quote);
-  }
-}
-
-static bool skipArg(const char *Flag, bool &SkipNextArg) {
-  StringRef FlagRef(Flag);
-
-  // Assume we're going to see -Flag <Arg>.
-  SkipNextArg = true;
-
-  // These flags are all of the form -Flag <Arg> and are treated as two
-  // arguments.  Therefore, we need to skip the flag and the next argument.
-  bool Res = llvm::StringSwitch<bool>(Flag)
-    .Cases("-I", "-MF", "-MT", "-MQ", true)
-    .Cases("-o", "-coverage-file", "-dependency-file", true)
-    .Cases("-fdebug-compilation-dir", "-idirafter", true)
-    .Cases("-include", "-include-pch", "-internal-isystem", true)
-    .Cases("-internal-externc-isystem", "-iprefix", "-iwithprefix", true)
-    .Cases("-iwithprefixbefore", "-isysroot", "-isystem", "-iquote", true)
-    .Cases("-resource-dir", "-serialize-diagnostic-file", true)
-    .Case("-dwarf-debug-flags", true)
-    .Default(false);
-
-  // Match found.
-  if (Res)
-    return Res;
-
-  // The remaining flags are treated as a single argument.
-  SkipNextArg = false;
-
-  // These flags are all of the form -Flag and have no second argument.
-  Res = llvm::StringSwitch<bool>(Flag)
-    .Cases("-M", "-MM", "-MG", "-MP", "-MD", true)
-    .Case("-MMD", true)
-    .Default(false);
-
-  // Match found.
-  if (Res)
-    return Res;
-
-  // These flags are treated as a single argument (e.g., -F<Dir>).
-  if (FlagRef.startswith("-F") || FlagRef.startswith("-I"))
-    return true;
-
-  return false;
-}
-
-static bool quoteNextArg(const char *flag) {
-  return llvm::StringSwitch<bool>(flag)
-    .Case("-D", true)
-    .Default(false);
-}
-
-void Compilation::PrintDiagnosticJob(raw_ostream &OS, const Job &J) const {
-  if (const Command *C = dyn_cast<Command>(&J)) {
-    OS << C->getExecutable();
-    unsigned QuoteNextArg = 0;
-    for (ArgStringList::const_iterator it = C->getArguments().begin(),
-           ie = C->getArguments().end(); it != ie; ++it) {
-
-      bool SkipNext;
-      if (skipArg(*it, SkipNext)) {
-        if (SkipNext) ++it;
-        continue;
-      }
-
-      if (!QuoteNextArg)
-        QuoteNextArg = quoteNextArg(*it) ? 2 : 0;
-
-      OS << ' ';
-
-      if (QuoteNextArg == 1)
-        OS << '"';
-
-      if (!std::strpbrk(*it, " \"\\$")) {
-        OS << *it;
-      } else {
-        // Quote the argument and escape shell special characters; this isn't
-        // really complete but is good enough.
-        OS << '"';
-        for (const char *s = *it; *s; ++s) {
-          if (*s == '"' || *s == '\\' || *s == '$')
-            OS << '\\';
-          OS << *s;
-        }
-        OS << '"';
-      }
-
-      if (QuoteNextArg) {
-        if (QuoteNextArg == 1)
-          OS << '"';
-        --QuoteNextArg;
-      }
-    }
-    OS << '\n';
-  } else {
-    const JobList *Jobs = cast<JobList>(&J);
-    for (JobList::const_iterator
-           it = Jobs->begin(), ie = Jobs->end(); it != ie; ++it)
-      PrintDiagnosticJob(OS, **it);
-  }
 }
 
 bool Compilation::CleanupFile(const char *File, bool IssueErrors) const {
@@ -288,7 +157,7 @@ int Compilation::ExecuteCommand(const Command &C,
     if (getDriver().CCPrintOptions)
       *OS << "[Logging clang options]";
 
-    PrintJob(*OS, C, "\n", /*Quote=*/getDriver().CCPrintOptions);
+    C.Print(*OS, "\n", /*Quote=*/getDriver().CCPrintOptions);
 
     if (OS != &llvm::errs())
       delete OS;

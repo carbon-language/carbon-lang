@@ -95,7 +95,7 @@ int main(int argc, const char **argv, char * const *envp) {
   if (Jobs.size() != 1 || !isa<driver::Command>(*Jobs.begin())) {
     SmallString<256> Msg;
     llvm::raw_svector_ostream OS(Msg);
-    C->PrintJob(OS, C->getJobs(), "; ", true);
+    Jobs.Print(OS, "; ", true);
     Diags.Report(diag::err_fe_expected_compiler_job) << OS.str();
     return 1;
   }
@@ -118,7 +118,7 @@ int main(int argc, const char **argv, char * const *envp) {
   // Show the invocation, with -v.
   if (CI->getHeaderSearchOpts().Verbose) {
     llvm::errs() << "clang invocation:\n";
-    C->PrintJob(llvm::errs(), C->getJobs(), "\n", true);
+    Jobs.Print(llvm::errs(), "\n", true);
     llvm::errs() << "\n";
   }
 

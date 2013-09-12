@@ -22,6 +22,7 @@
 // CHECK-NEXT: note: diagnostic msg: {{.*}}.c
 FOO
 // CHECKSRC: FOO
+// CHECKSH: -cc1
 // CHECKSH: -D "FOO=BAR"
 // CHECKSH-NOT: -F/tmp/
 // CHECKSH-NOT: -I /tmp/
