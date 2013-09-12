@@ -216,3 +216,8 @@ void testAnonymousEnumTypes(int arg) {
   SB = ^{ if (arg) return TDFTE_Value; else return getTDFTE(); };
   SB = ^{ if (arg) return getTDFTE(); else return TDFTE_Value; };
 }
+
+static inline void inlinefunc() {
+  ^{}();
+}
+void inlinefunccaller() { inlinefunc(); }

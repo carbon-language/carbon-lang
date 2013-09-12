@@ -10012,7 +10012,7 @@ ExprResult Sema::ActOnChooseExpr(SourceLocation BuiltinLoc,
 void Sema::ActOnBlockStart(SourceLocation CaretLoc, Scope *CurScope) {
   BlockDecl *Block = BlockDecl::Create(Context, CurContext, CaretLoc);
 
-  {
+  if (LangOpts.CPlusPlus) {
     Decl *ManglingContextDecl;
     if (MangleNumberingContext *MCtx =
             getCurrentMangleNumberContext(Block->getDeclContext(),
