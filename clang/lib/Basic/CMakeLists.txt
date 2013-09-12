@@ -59,5 +59,11 @@ add_dependencies(clangBasic
   clang_revision_tag
 )
 
-add_custom_command(TARGET clangBasic POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/SVNVersion.inc)
+# Force regeneration now.
+FILE(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/SVNVersion.inc)
+
+if(CLANG_ALWAYS_CHECK_VC_REV)
+  add_custom_command(TARGET clangBasic POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E remove
+            ${CMAKE_CURRENT_BINARY_DIR}/SVNVersion.inc)
+endif()
