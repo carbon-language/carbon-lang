@@ -10,7 +10,7 @@ target triple = "powerpc64-unknown-linux-gnu"
 ; Function Attrs: nounwind
 define void @test1(i64 %d1, i64 %d2, i64 %d3, i64 %d4, i64 %d5, i64 %d6, i64 %d7, i64 %d8, i64 %d9, <4 x float> inreg %vs.coerce) #0 {
 entry:
-  store <4 x float> %vs.coerce, <4 x float>* @ve, align 16, !tbaa !0
+  store <4 x float> %vs.coerce, <4 x float>* @ve, align 16
   ret void
 
 ; CHECK-LABEL: @test1
@@ -22,11 +22,11 @@ entry:
 define void @test2(i64 %d1, i64 %d2, i64 %d3, i64 %d4, i64 %d5, i64 %d6, i64 %d7, i64 %d8, %struct.s2* byval nocapture readonly %vs) #0 {
 entry:
   %m = getelementptr inbounds %struct.s2* %vs, i64 0, i32 0
-  %0 = load i64* %m, align 8, !tbaa !2
-  store i64 %0, i64* @n, align 8, !tbaa !2
+  %0 = load i64* %m, align 8
+  store i64 %0, i64* @n, align 8
   %v = getelementptr inbounds %struct.s2* %vs, i64 0, i32 1
-  %1 = load <4 x float>* %v, align 16, !tbaa !0
-  store <4 x float> %1, <4 x float>* @ve, align 16, !tbaa !0
+  %1 = load <4 x float>* %v, align 16
+  store <4 x float> %1, <4 x float>* @ve, align 16
   ret void
 
 ; CHECK-LABEL: @test2
@@ -41,11 +41,11 @@ entry:
 define void @test3(i64 %d1, i64 %d2, i64 %d3, i64 %d4, i64 %d5, i64 %d6, i64 %d7, i64 %d8, i64 %d9, %struct.s2* byval nocapture readonly %vs) #0 {
 entry:
   %m = getelementptr inbounds %struct.s2* %vs, i64 0, i32 0
-  %0 = load i64* %m, align 8, !tbaa !2
-  store i64 %0, i64* @n, align 8, !tbaa !2
+  %0 = load i64* %m, align 8
+  store i64 %0, i64* @n, align 8
   %v = getelementptr inbounds %struct.s2* %vs, i64 0, i32 1
-  %1 = load <4 x float>* %v, align 16, !tbaa !0
-  store <4 x float> %1, <4 x float>* @ve, align 16, !tbaa !0
+  %1 = load <4 x float>* %v, align 16
+  store <4 x float> %1, <4 x float>* @ve, align 16
   ret void
 
 ; CHECK-LABEL: @test3
@@ -57,8 +57,4 @@ entry:
 }
 
 attributes #0 = { nounwind }
-
-!0 = metadata !{metadata !"omnipotent char", metadata !1}
-!1 = metadata !{metadata !"Simple C/C++ TBAA"}
-!2 = metadata !{metadata !"long", metadata !0}
 
