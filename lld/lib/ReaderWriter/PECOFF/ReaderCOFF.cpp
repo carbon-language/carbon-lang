@@ -30,6 +30,7 @@
 #include "llvm/Support/system_error.h"
 
 #include <map>
+#include <set>
 #include <vector>
 
 using std::vector;
@@ -40,6 +41,7 @@ using lld::coff::COFFDefinedFileAtom;
 using lld::coff::COFFReference;
 using lld::coff::COFFUndefinedAtom;
 using llvm::object::coff_aux_section_definition;
+using llvm::object::coff_aux_weak_external;
 using llvm::object::coff_relocation;
 using llvm::object::coff_section;
 using llvm::object::coff_symbol;
@@ -147,7 +149,8 @@ public:
       return;
 
     createAbsoluteAtoms(symbols, _absoluteAtoms._atoms);
-    createUndefinedAtoms(symbols, _undefinedAtoms._atoms);
+    if ((ec = createUndefinedAtoms(symbols, _undefinedAtoms._atoms)))
+      return;
     if ((ec = createDefinedSymbols(symbols, _definedAtoms._atoms)))
       return;
 
@@ -230,17 +233,61 @@ private:
     }
   }
 
-  /// Create atoms for the undefined symbols.
-  void createUndefinedAtoms(const SymbolVectorT &symbols,
-                            vector<const UndefinedAtom *> &result) {
+  /// Create atoms for the undefined symbols. This code is bit complicated
+  /// because it supports "weak externals" mechanism of COFF. If an undefined
+  /// symbol (sym1) has auxiliary data, the data contains a symbol table index
+  /// at which the "second symbol" (sym2) for sym1 exists. If sym1 is resolved,
+  /// it's linked normally. If not, sym1 is resolved as if it has sym2's
+  /// name. This relationship between sym1 and sym2 is represented using
+  /// fallback mechanism of undefined symbol.
+  error_code createUndefinedAtoms(const SymbolVectorT &symbols,
+                                  vector<const UndefinedAtom *> &result) {
+    // Sort out undefined symbols from all symbols.
+    std::set<const coff_symbol *> undefines;
+    std::map<const coff_symbol *, const coff_symbol *> weakExternal;
     for (const coff_symbol *sym : symbols) {
-      if (sym->SectionNumber != llvm::COFF::IMAGE_SYM_UNDEFINED ||
-          sym->Value != 0)
+      if (sym->SectionNumber != llvm::COFF::IMAGE_SYM_UNDEFINED)
         continue;
-      auto *atom = new (_alloc) COFFUndefinedAtom(*this, _symbolName[sym]);
+      undefines.insert(sym);
+
+      // Create a mapping from sym1 to sym2, if the undefined symbol has
+      // auxiliary data.
+      auto iter = _auxSymbol.find(sym);
+      if (iter == _auxSymbol.end())
+        continue;
+      const coff_aux_weak_external *aux = reinterpret_cast<
+          const coff_aux_weak_external *>(iter->second);
+      const coff_symbol *sym2;
+      if (error_code ec = _obj->getSymbol(aux->TagIndex, sym2))
+        return ec;
+      weakExternal[sym] = sym2;
+    }
+
+    // Sort out sym1s from sym2s. Sym2s shouldn't be added to the undefined atom
+    // list because they shouldn't be resolved unless sym1 is failed to
+    // be resolved.
+    for (auto i : weakExternal)
+      undefines.erase(i.second);
+
+    // Create atoms for the undefined symbols.
+    for (const coff_symbol *sym : undefines) {
+      // If the symbol has sym2, create an undefiend atom for sym2, so that we
+      // can pass it as a fallback atom.
+      UndefinedAtom *fallback = nullptr;
+      auto iter = weakExternal.find(sym);
+      if (iter != weakExternal.end()) {
+        const coff_symbol *sym2 = iter->second;
+        fallback = new (_alloc) COFFUndefinedAtom(*this, _symbolName[sym2]);
+        _symbolAtom[sym2] = fallback;
+      }
+
+      // Create an atom for the symbol.
+      auto *atom = new (_alloc) COFFUndefinedAtom(
+          *this, _symbolName[sym], fallback);
       result.push_back(atom);
       _symbolAtom[sym] = atom;
     }
+    return error_code::success();
   }
 
   /// Create atoms for the defined symbols. This pass is a bit complicated than

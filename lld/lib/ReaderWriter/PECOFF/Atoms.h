@@ -71,16 +71,19 @@ private:
 
 class COFFUndefinedAtom : public UndefinedAtom {
 public:
-  COFFUndefinedAtom(const File &f, StringRef n)
-      : _owningFile(f), _name(n) {}
+  COFFUndefinedAtom(const File &file, StringRef name,
+                    const UndefinedAtom *fallback = nullptr)
+      : _owningFile(file), _name(name), _fallback(fallback) {}
 
   virtual const File &file() const { return _owningFile; }
   virtual StringRef name() const { return _name; }
   virtual CanBeNull canBeNull() const { return CanBeNull::canBeNullNever; }
+  virtual const UndefinedAtom *fallback() const { return _fallback; }
 
 private:
   const File &_owningFile;
   StringRef _name;
+  const UndefinedAtom *_fallback;
 };
 
 /// The base class of all COFF defined atoms. A derived class of

@@ -211,9 +211,11 @@ void Resolver::resolveUndefines() {
       // If the undefined symbol has an alternative name, try to resolve the
       // symbol with the name to give it a second chance. This feature is used
       // for COFF "weak external" symbol.
-      if (const UndefinedAtom *fallbackUndefAtom = undefAtom->fallback()) {
-        _symbolTable.addReplacement(undefAtom, fallbackUndefAtom);
-        _symbolTable.add(*fallbackUndefAtom);
+      if (!_symbolTable.isDefined(undefName)) {
+        if (const UndefinedAtom *fallbackUndefAtom = undefAtom->fallback()) {
+          _symbolTable.addReplacement(undefAtom, fallbackUndefAtom);
+          _symbolTable.add(*fallbackUndefAtom);
+        }
       }
     }
     // search libraries for overrides of common symbols
@@ -349,6 +351,10 @@ bool Resolver::checkUndefines(bool final) {
       // If this is a library and undefined symbols are allowed on the
       // target platform, skip over it.
       if (isa<SharedLibraryFile>(f) && _context.allowShlibUndefines())
+        continue;
+
+      // If the undefine is coalesced away, skip over it.
+      if (_symbolTable.replacement(undefAtom) != undefAtom)
         continue;
 
       // Seems like this symbol is undefined. Warn that.
