@@ -290,6 +290,10 @@ public:
                                                         : typeThreadData;
     }
 
+    if ((_section->sh_flags == llvm::ELF::SHF_ALLOC) &&
+        (_section->sh_type == llvm::ELF::SHT_PROGBITS))
+      return _contentType = typeConstant;
+
     if (_symbol->getType() == llvm::ELF::STT_GNU_IFUNC)
       return _contentType = typeResolver;
 
