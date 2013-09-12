@@ -782,7 +782,7 @@ unsigned AggressiveAntiDepBreaker::BreakAntiDependencies(
     if (MI == CriticalPathMI) {
       CriticalPathSU = CriticalPathStep(CriticalPathSU);
       CriticalPathMI = (CriticalPathSU) ? CriticalPathSU->getInstr() : 0;
-    } else {
+    } else if (CriticalPathSet.any()) {
       ExcludeRegs = &CriticalPathSet;
     }
 
