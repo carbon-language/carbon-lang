@@ -76,13 +76,14 @@ public:
   virtual void Print(llvm::raw_ostream &OS, const char *Terminator,
                      bool Quote, bool CrashReport = false) const;
 
+  int Execute(const StringRef **Redirects, std::string *ErrMsg,
+              bool *ExecutionFailed) const;
+
   /// getSource - Return the Action which caused the creation of this job.
   const Action &getSource() const { return Source; }
 
   /// getCreator - Return the Tool which caused the creation of this job.
   const Tool &getCreator() const { return Creator; }
-
-  const char *getExecutable() const { return Executable; }
 
   const llvm::opt::ArgStringList &getArguments() const { return Arguments; }
 

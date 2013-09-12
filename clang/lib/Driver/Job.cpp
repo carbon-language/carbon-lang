@@ -11,6 +11,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
+#include "llvm/Support/Program.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cassert>
 using namespace clang::driver;
@@ -110,6 +111,19 @@ void Command::Print(raw_ostream &OS, const char *Terminator, bool Quote,
     }
   }
   OS << Terminator;
+}
+
+int Command::Execute(const llvm::StringRef **Redirects, std::string *ErrMsg,
+                     bool *ExecutionFailed) const {
+  SmallVector<const char*, 128> Argv;
+  Argv.push_back(Executable);
+  for (size_t i = 0, e = Arguments.size(); i != e; ++i)
+    Argv.push_back(Arguments[i]);
+  Argv.push_back(0);
+
+  return llvm::sys::ExecuteAndWait(Executable, Argv.data(), /*env*/ 0,
+                                   Redirects, /*secondsToWait*/ 0,
+                                   /*memoryLimit*/ 0, ErrMsg, ExecutionFailed);
 }
 
 JobList::JobList() : Job(JobListClass) {}

@@ -16,7 +16,6 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Option/ArgList.h"
 #include "llvm/Support/FileSystem.h"
-#include "llvm/Support/Program.h"
 #include "llvm/Support/raw_ostream.h"
 #include <errno.h>
 #include <sys/stat.h>
@@ -129,12 +128,6 @@ bool Compilation::CleanupFileMap(const ArgStringMap &Files,
 
 int Compilation::ExecuteCommand(const Command &C,
                                 const Command *&FailingCommand) const {
-  std::string Prog(C.getExecutable());
-  const char **Argv = new const char*[C.getArguments().size() + 2];
-  Argv[0] = C.getExecutable();
-  std::copy(C.getArguments().begin(), C.getArguments().end(), Argv+1);
-  Argv[C.getArguments().size() + 1] = 0;
-
   if ((getDriver().CCPrintOptions ||
        getArgs().hasArg(options::OPT_v)) && !getDriver().CCGenDiagnostics) {
     raw_ostream *OS = &llvm::errs();
@@ -165,9 +158,7 @@ int Compilation::ExecuteCommand(const Command &C,
 
   std::string Error;
   bool ExecutionFailed;
-  int Res = llvm::sys::ExecuteAndWait(Prog, Argv, /*env*/ 0, Redirects,
-                                      /*secondsToWait*/ 0, /*memoryLimit*/ 0,
-                                      &Error, &ExecutionFailed);
+  int Res = C.Execute(Redirects, &Error, &ExecutionFailed);
   if (!Error.empty()) {
     assert(Res && "Error string set with 0 result code!");
     getDriver().Diag(clang::diag::err_drv_command_failure) << Error;
@@ -176,7 +167,6 @@ int Compilation::ExecuteCommand(const Command &C,
   if (Res)
     FailingCommand = &C;
 
-  delete[] Argv;
   return ExecutionFailed ? 1 : Res;
 }
 
