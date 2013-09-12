@@ -660,11 +660,14 @@ public:
         StateType state = process->GetState();
         if ((state == eStateCrashed) || (state == eStateStopped) || (state == eStateSuspended))
         {
-            Mutex::Locker locker (process->GetThreadList().GetMutex());
-            const uint32_t num_threads = process->GetThreadList().GetSize();
             const size_t argc = command.GetArgumentCount();
             if (argc > 0)
             {
+                // These two lines appear at the beginning of both blocks in
+                // this if..else, but that is because we need to release the
+                // lock before calling process->Resume below.
+                Mutex::Locker locker (process->GetThreadList().GetMutex());
+                const uint32_t num_threads = process->GetThreadList().GetSize();
                 std::vector<Thread *> resume_threads;
                 for (uint32_t i=0; i<argc; ++i)
                 {
@@ -674,7 +677,7 @@ public:
                     if (success)
                     {
                         Thread *thread = process->GetThreadList().FindThreadByIndexID(thread_idx).get();
-                        
+
                         if (thread)
                         {
                             resume_threads.push_back(thread);
@@ -693,7 +696,7 @@ public:
                         return false;
                     }
                 }
-                
+
                 if (resume_threads.empty())
                 {
                     result.AppendError ("no valid thread indexes were specified");
@@ -706,12 +709,12 @@ public:
                         result.AppendMessageWithFormat ("Resuming thread: ");
                     else
                         result.AppendMessageWithFormat ("Resuming threads: ");
-                    
+
                     for (uint32_t idx=0; idx<num_threads; ++idx)
                     {
                         Thread *thread = process->GetThreadList().GetThreadAtIndex(idx).get();
                         std::vector<Thread *>::iterator this_thread_pos = find(resume_threads.begin(), resume_threads.end(), thread);
-                        
+
                         if (this_thread_pos != resume_threads.end())
                         {
                             resume_threads.erase(this_thread_pos);
@@ -719,7 +722,7 @@ public:
                                 result.AppendMessageWithFormat ("%u, ", thread->GetIndexID());
                             else
                                 result.AppendMessageWithFormat ("%u ", thread->GetIndexID());
-                            
+
                             thread->SetResumeState (eStateRunning);
                         }
                         else
@@ -732,6 +735,11 @@ public:
             }
             else
             {
+                // These two lines appear at the beginning of both blocks in
+                // this if..else, but that is because we need to release the
+                // lock before calling process->Resume below.
+                Mutex::Locker locker (process->GetThreadList().GetMutex());
+                const uint32_t num_threads = process->GetThreadList().GetSize();
                 Thread *current_thread = process->GetThreadList().GetSelectedThread().get();
                 if (current_thread == NULL)
                 {
@@ -754,7 +762,8 @@ public:
                     }
                 }
             }
-            
+
+            // We should not be holding the thread list lock when we do this.
             Error error (process->Resume());
             if (error.Success())
             {
@@ -762,7 +771,7 @@ public:
                 if (synchronous_execution)
                 {
                     state = process->WaitForProcessToStop (NULL);
-                    
+
                     result.SetDidChangeProcessState (true);
                     result.AppendMessageWithFormat ("Process %" PRIu64 " %s\n", process->GetID(), StateAsCString (state));
                     result.SetStatus (eReturnStatusSuccessFinishNoResult);
