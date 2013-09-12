@@ -9,8 +9,6 @@ RUN: FileCheck %s -check-prefix ELF-hexagon < %t1
 
 ELF-i386: defined-atoms:   
 ELF-i386:   - name:            global_variable
-ELF-i386:   - name:            common_symbol
-ELF-i386:   - name:            tentative
 ELF-i386:   - name:            uninitialized_static_variable
 ELF-i386:   - name:            global_func
 ELF-i386:   - name:            static_func
@@ -25,8 +23,6 @@ ELF-i386: absolute-atoms:
 ELF-i386:   - name:            sample.c
 
 ELF-hexagon:   - name:            global_variable
-ELF-hexagon:   - name:            tentative
-ELF-hexagon:   - name:            common_symbol
 ELF-hexagon:   - name:            uninitialized_static_variable
 ELF-hexagon:   - name:            global_func
 ELF-hexagon:   - name:            static_func
