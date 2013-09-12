@@ -27,11 +27,11 @@ CHECK-NEXT: .text:
 CHECK-NEXT:     1000:       55                   pushl   %ebp
 CHECK-NEXT:     1001:       8b ec                movl    %esp, %ebp
 CHECK-NEXT:     1003:       56                   pushl   %esi
-CHECK-NEXT:     1004:       ff 15 78 20 40 00    calll   *4202616
-CHECK-NEXT:     100a:       8b 0d 7c 20 40 00    movl    4202620, %ecx
+CHECK-NEXT:     1004:       ff 15 22 20 40 00    calll *4202530
+CHECK-NEXT:     100a:       8b 0d 26 20 40 00    movl 4202534, %ecx
 CHECK-NEXT:     1010:       8b 31                movl    (%ecx), %esi
 CHECK-NEXT:     1012:       03 f0                addl    %eax, %esi
-CHECK-NEXT:     1014:       ff 15 74 20 40 00    calll   *4202612
+CHECK-NEXT:     1014:       ff 15 1e 20 40 00    calll *4202526
 CHECK-NEXT:     101a:       03 c6                addl    %esi, %eax
 CHECK-NEXT:     101c:       5e                   popl    %esi
 CHECK-NEXT:     101d:       5d                   popl    %ebp

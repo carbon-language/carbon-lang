@@ -7,6 +7,11 @@ RUN:   --noinhibit-exec -e main -static && llvm-objdump -d %t | FileCheck %s
 
 // Verify that the TLS accesses have the correct offsets.
 
+YAML:  type: got
+YAML:  references:      
+YAML:   kind: R_X86_64_TPOFF64
+YAML:   target: tls2
+
 YAML:  name: main
 YAML:  references:      
 YAML:    kind: R_X86_64_TPOFF32
@@ -22,11 +27,6 @@ YAML:    target: tls2
 YAML:  name: GOTTPOFF
 YAML:  kind: R_X86_64_PC32
 YAML:  target: [[GOTNAME:[a-zA-Z0-9_]+]]
-
-YAML:  type: got
-YAML:  references:      
-YAML:   kind: R_X86_64_TPOFF64
-YAML:   target: tls2
 
 
 // main

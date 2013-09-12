@@ -4,5 +4,5 @@ RUN: lld -flavor gnu -target x86_64 %p/Inputs/rwint.o \
 RUN:     %p/Inputs/constint.o -emit-yaml -o %t --noinhibit-exec
 RUN: FileCheck %s -check-prefix=CHECKORDER < %t
 
-CHECKORDER:  - name:            a
 CHECKORDER:  - name:            b
+CHECKORDER:  - name:            a

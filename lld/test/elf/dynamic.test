@@ -9,6 +9,10 @@ RUN: llvm-objdump -p %t >> %t2
 RUN: llvm-readobj -s -dyn-symbols -dynamic-table %t >> %t2
 RUN: FileCheck %s < %t2
 
+CHECK: type: got
+CHECK: references:
+CHECK:   kind: R_X86_64_JUMP_SLOT
+
 CHECK: name: main
 CHECK: kind: R_X86_64_PC32
 CHECK:  offset: 18
@@ -16,10 +20,6 @@ CHECK:  target: [[PLTNAME:[-a-zA-Z0-9_]+]]
 
 CHECK: name: [[PLTNAME]]
 CHECK: type: stub
-
-CHECK: type: got
-CHECK: references:
-CHECK:   kind: R_X86_64_JUMP_SLOT
 
 CHECK: shared-library-atoms:
 CHECK:  name: foo

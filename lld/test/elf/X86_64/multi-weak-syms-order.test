@@ -10,8 +10,4 @@ WEAKORDER: {{[0-9a-f]+}} T g
 WEAKORDER: {{[0-9a-f]+}} T main
 
 WEAKATOMSORDER:  - name:            f
-WEAKATOMSORDER:  - ref-name:        {{[A-Z0-9]+}}
 WEAKATOMSORDER:  - name:            g
-WEAKATOMSORDER:  - ref-name:        {{[A-Z0-9]+}}
-
-

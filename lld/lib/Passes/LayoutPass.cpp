@@ -52,22 +52,15 @@ bool LayoutPass::CompareAtoms::operator()(const DefinedAtom *left,
   AtomToOrdinalT::const_iterator lPos = _layout._ordinalOverrideMap.find(left);
   AtomToOrdinalT::const_iterator rPos = _layout._ordinalOverrideMap.find(right);
   AtomToOrdinalT::const_iterator end = _layout._ordinalOverrideMap.end();
-  if (lPos != end) {
-    if (rPos != end) {
-      // both left and right are overridden, so compare overridden ordinals
-      if (lPos->second != rPos->second)
-        return lPos->second < rPos->second;
-    } else {
-      // left is overridden and right is not, so left < right
-      return true;
-    }
-  } else {
-    if (rPos != end) {
-      // right is overridden and left is not, so right < left
-      return false;
-    } else {
-      // neither are overridden,
-      // fall into default sorting below
+
+  // Sort atoms by their ordinal overrides only if they fall in the same
+  // chain.
+  const DefinedAtom *leftAtom = _layout._followOnRoots.find(left)->second;
+  const DefinedAtom *rightAtom = _layout._followOnRoots.find(right)->second;
+
+  if (leftAtom == rightAtom) {
+    if ((lPos != end) && (rPos != end)) {
+      return lPos->second < rPos->second;
     }
   }
 
@@ -90,8 +83,6 @@ bool LayoutPass::CompareAtoms::operator()(const DefinedAtom *left,
 
   if (leftType != rightType)
     return leftType < rightType;
-
-  // TO DO: Sort atoms in customs sections together.
 
   // Sort by .o order.
   const File *leftFile = &left->file();
@@ -393,8 +384,6 @@ void LayoutPass::buildOrdinalOverrideMap(MutableFile::DefinedAtomRange &range) {
           _ordinalOverrideMap[nextAtom] = index++;
         }
       }
-    } else {
-      _ordinalOverrideMap[atom] = index++;
     }
   }
 }
