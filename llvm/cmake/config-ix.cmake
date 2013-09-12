@@ -308,7 +308,7 @@ if (LIBXML2_FOUND)
   # be checked by CMake, breaking native compilation.
   # Since this is only pertinent to cross-compilations, and there's no way CMake
   # can check for every foreign library on every OS, we add the dep and warn the dev.
-  if ( DEFINED CMAKE_CROSSCOMPILING )
+  if ( CMAKE_CROSSCOMPILING )
     if (NOT PC_LIBXML_VERSION VERSION_LESS "2.8.0")
       message(STATUS "Adding LZMA as a dep to XML2 for cross-compilation, make sure liblzma.a is available.")
       set(LIBXML2_LIBRARIES ${LIBXML2_LIBRARIES} "-llzma")
