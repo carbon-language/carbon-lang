@@ -122,10 +122,25 @@ NOINLINE void FakeStack::GC(uptr real_stack) {
   needs_gc_ = false;
 }
 
-ALWAYS_INLINE uptr OnMalloc(uptr class_id, uptr size, uptr real_stack) {
+static FakeStack *GetFakeStack() {
   AsanThread *t = GetCurrentThread();
-  if (!t) return real_stack;
-  FakeStack *fs = t->fake_stack();
+  if (!t) return 0;
+  return t->fake_stack();
+}
+
+static FakeStack *GetFakeStackFast() {
+#if SANITIZER_LINUX
+  static THREADLOCAL FakeStack *fake_stack;
+  if (!fake_stack)
+    fake_stack = GetFakeStack();
+  return fake_stack;
+#else
+  return GetFakeStack();
+#endif
+}
+
+ALWAYS_INLINE uptr OnMalloc(uptr class_id, uptr size, uptr real_stack) {
+  FakeStack *fs = GetFakeStackFast();
   if (!fs) return real_stack;
   FakeFrame *ff = fs->Allocate(fs->stack_size_log(), class_id, real_stack);
   uptr ptr = reinterpret_cast<uptr>(ff);
@@ -136,9 +151,7 @@ ALWAYS_INLINE uptr OnMalloc(uptr class_id, uptr size, uptr real_stack) {
 ALWAYS_INLINE void OnFree(uptr ptr, uptr class_id, uptr size, uptr real_stack) {
   if (ptr == real_stack)
     return;
-  AsanThread *t = GetCurrentThread();
-  if (!t) return;
-  FakeStack *fs = t->fake_stack();
+  FakeStack *fs = GetFakeStackFast();  // Must not be 0.
   FakeFrame *ff = reinterpret_cast<FakeFrame *>(ptr);
   fs->Deallocate(ff, fs->stack_size_log(), class_id, real_stack);
   SetShadow(ptr, size, class_id, kMagic8);
