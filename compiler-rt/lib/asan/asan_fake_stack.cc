@@ -27,11 +27,11 @@ ALWAYS_INLINE void SetShadow(uptr ptr, uptr size, uptr class_id, u64 magic) {
   CHECK_EQ(SHADOW_SCALE, 3);  // This code expects SHADOW_SCALE=3.
   u64 *shadow = reinterpret_cast<u64*>(MemToShadow(ptr));
   if (class_id <= 6) {
-    for (uptr i = 0; i < (1 << class_id); i++)
+    for (uptr i = 0; i < (1U << class_id); i++)
       shadow[i] = magic;
   } else {
     // The size class is too big, it's cheaper to poison only size bytes.
-    PoisonShadow(ptr, size, magic);
+    PoisonShadow(ptr, size, static_cast<u8>(magic));
   }
 }
 
@@ -51,17 +51,20 @@ FakeFrame *FakeStack::Allocate(uptr stack_size_log, uptr class_id,
   u8 *flags = GetFlags(stack_size_log, class_id);
   for (int i = 0; i < num_iter; i++) {
     uptr pos = ModuloNumberOfFrames(stack_size_log, class_id, hint_position++);
+    // This part is tricky. On one hand, checking and setting flags[pos]
+    // should be atomic to ensure async-signal safety. But on the other hand,
+    // if the signal arrives between checking and setting flags[pos], the
+    // signal handler's fake stack will start from a different hint_position
+    // and so will not touch this particular byte. So, it is safe to do this
+    // with regular non-atimic load and store (at least I was not able to make
+    // this code crash).
     if (flags[pos]) continue;
-    // FIXME: this does not have to be thread-safe, just async-signal-safe.
-    if (0 == atomic_exchange((atomic_uint8_t *)&flags[pos], 1,
-                             memory_order_relaxed)) {
-      FakeFrame *res = reinterpret_cast<FakeFrame *>(
-          GetFrame(stack_size_log, class_id, pos));
-      res->real_stack = real_stack;
-      res->class_id = class_id;
-      allocated_from_size_class_mask_ |= 1UL << class_id;
-      return res;
-    }
+    flags[pos] = 1;
+    FakeFrame *res = reinterpret_cast<FakeFrame *>(
+        GetFrame(stack_size_log, class_id, pos));
+    res->real_stack = real_stack;
+    res->class_id = class_id;
+    return res;
   }
   CHECK(0 && "Failed to allocate a fake stack frame");
   return 0;
@@ -106,7 +109,6 @@ void FakeStack::HandleNoReturn() {
 NOINLINE void FakeStack::GC(uptr real_stack) {
   uptr collected = 0;
   for (uptr class_id = 0; class_id < kNumberOfSizeClasses; class_id++) {
-    if (!(allocated_from_size_class_mask_ & (1UL << class_id))) continue;
     u8 *flags = GetFlags(stack_size_log(), class_id);
     for (uptr i = 0, n = NumberOfFrames(stack_size_log(), class_id); i < n;
          i++) {

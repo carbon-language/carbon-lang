@@ -164,7 +164,6 @@ class FakeStack {
   uptr hint_position_[kNumberOfSizeClasses];
   uptr stack_size_log_;
   // a bit is set if something was allocated from the corresponding size class.
-  uptr allocated_from_size_class_mask_;
   bool needs_gc_;
 };
 
