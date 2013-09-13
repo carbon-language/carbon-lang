@@ -26,6 +26,7 @@ int main(int argc, char **argv) {
   // CHECK: {{#0 0x.* in main .*stack-origin.cc:}}[[@LINE-3]]
 
   // CHECK-ORIGINS: Uninitialized value was created by an allocation of 'x' in the stack frame of function 'main'
+  // CHECK-ORIGINS: {{#0 0x.* in main .*stack-origin.cc:}}[[@LINE-9]]
 
   // CHECK: SUMMARY: MemorySanitizer: use-of-uninitialized-value {{.*stack-origin.cc:.* main}}
   return 0;
