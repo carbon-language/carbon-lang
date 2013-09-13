@@ -3727,8 +3727,8 @@ public:
       .Cases("arm1136jf-s", "mpcorenovfp", "mpcore", "6K")
       .Cases("arm1156t2-s", "arm1156t2f-s", "6T2")
       .Cases("cortex-a5", "cortex-a7", "cortex-a8", "7A")
-      .Cases("cortex-a9", "cortex-a15", "7A")
-      .Case("cortex-r5", "7R")
+      .Cases("cortex-a9", "cortex-a12", "cortex-a15", "7A")
+      .Cases("cortex-r4", "cortex-r5", "7R")
       .Case("cortex-a9-mp", "7F")
       .Case("swift", "7S")
       .Cases("cortex-m3", "cortex-m4", "7M")
@@ -3738,9 +3738,10 @@ public:
   }
   static const char *getCPUProfile(StringRef Name) {
     return llvm::StringSwitch<const char*>(Name)
-      .Cases("cortex-a8", "cortex-a9", "A")
+      .Cases("cortex-a5", "cortex-a7", "cortex-a8", "A")
+      .Cases("cortex-a9", "cortex-a12", "cortex-a15", "A")
       .Cases("cortex-m3", "cortex-m4", "cortex-m0", "M")
-      .Case("cortex-r5", "R")
+      .Cases("cortex-r4", "cortex-r5", "R")
       .Default("");
   }
   virtual bool setCPU(const std::string &Name) {

@@ -124,7 +124,11 @@ static const char *GetArmArchForMCpu(StringRef Value) {
     .Case("xscale", "xscale")
     .Cases("arm1136j-s", "arm1136jf-s", "arm1176jz-s", "arm1176jzf-s", "armv6")
     .Case("cortex-m0", "armv6m")
-    .Cases("cortex-a8", "cortex-r4", "cortex-a9", "cortex-a15", "armv7")
+    .Cases("cortex-a5", "cortex-a7", "cortex-a8", "armv7")
+    .Cases("cortex-a9", "cortex-a12", "cortex-a15", "armv7")
+    // FIXME: Shouldn't Cortex-R* be "armv7r"?
+    // See: Tools.cpp:getLLVMArchSuffixForARM()
+    .Cases("cortex-r4", "cortex-r5", "armv7")
     .Case("cortex-a9-mp", "armv7f")
     .Case("cortex-m3", "armv7m")
     .Case("cortex-m4", "armv7em")
