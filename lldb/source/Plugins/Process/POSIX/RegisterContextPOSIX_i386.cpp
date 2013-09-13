@@ -15,7 +15,7 @@
 #include "ProcessPOSIX.h"
 #include "ProcessPOSIXLog.h"
 #include "ProcessMonitor.h"
-#include "RegisterContext_i386.h"
+#include "RegisterContextPOSIX_i386.h"
 #include "RegisterContext_x86.h"
 
 using namespace lldb_private;
@@ -147,25 +147,25 @@ g_reg_sets[k_num_register_sets] =
 
 // Computes the offset of the given GPR in the user data area.
 #define GPR_OFFSET(regname) \
-    (offsetof(RegisterContext_i386::UserArea, regs) + \
-     offsetof(RegisterContext_i386::GPR, regname))
+    (offsetof(RegisterContextPOSIX_i386::UserArea, regs) + \
+     offsetof(RegisterContextPOSIX_i386::GPR, regname))
 
 // Computes the offset of the given FPR in the user data area.
 #define FPR_OFFSET(regname) \
-    (offsetof(RegisterContext_i386::UserArea, i387) + \
-     offsetof(RegisterContext_i386::FPU, regname))
+    (offsetof(RegisterContextPOSIX_i386::UserArea, i387) + \
+     offsetof(RegisterContextPOSIX_i386::FPU, regname))
 
 // Number of bytes needed to represent a GPR.
-#define GPR_SIZE(reg) sizeof(((RegisterContext_i386::GPR*)NULL)->reg)
+#define GPR_SIZE(reg) sizeof(((RegisterContextPOSIX_i386::GPR*)NULL)->reg)
 
 // Number of bytes needed to represent a FPR.
-#define FPR_SIZE(reg) sizeof(((RegisterContext_i386::FPU*)NULL)->reg)
+#define FPR_SIZE(reg) sizeof(((RegisterContextPOSIX_i386::FPU*)NULL)->reg)
 
 // Number of bytes needed to represent the i'th FP register.
-#define FP_SIZE sizeof(((RegisterContext_i386::MMSReg*)NULL)->bytes)
+#define FP_SIZE sizeof(((RegisterContextPOSIX_i386::MMSReg*)NULL)->bytes)
 
 // Number of bytes needed to represent an XMM register.
-#define XMM_SIZE sizeof(RegisterContext_i386::XMMReg)
+#define XMM_SIZE sizeof(RegisterContextPOSIX_i386::XMMReg)
 
 #define DEFINE_GPR(reg, alt, kind1, kind2, kind3, kind4)        \
     { #reg, alt, GPR_SIZE(reg), GPR_OFFSET(reg), eEncodingUint, \
@@ -244,55 +244,47 @@ g_register_infos[k_num_registers] =
 static size_t k_num_register_infos = (sizeof(g_register_infos)/sizeof(RegisterInfo));
 #endif
 
-static unsigned GetRegOffset(unsigned reg)
+unsigned RegisterContextPOSIX_i386::GetRegOffset(unsigned reg)
 {
     assert(reg < k_num_registers && "Invalid register number.");
     return g_register_infos[reg].byte_offset;
 }
 
-static unsigned GetRegSize(unsigned reg)
+unsigned RegisterContextPOSIX_i386::GetRegSize(unsigned reg)
 {
     assert(reg < k_num_registers && "Invalid register number.");
     return g_register_infos[reg].byte_size;
 }
 
-RegisterContext_i386::RegisterContext_i386(Thread &thread,
+RegisterContextPOSIX_i386::RegisterContextPOSIX_i386(Thread &thread,
                                                      uint32_t concrete_frame_idx)
     : RegisterContextPOSIX(thread, concrete_frame_idx)
 {
 }
 
-RegisterContext_i386::~RegisterContext_i386()
-{
-}
-
-ProcessMonitor &
-RegisterContext_i386::GetMonitor()
-{
-    ProcessSP base = CalculateProcess();
-    ProcessPOSIX *process = static_cast<ProcessPOSIX*>(base.get());
-    return process->GetMonitor();
-}
-
-void
-RegisterContext_i386::Invalidate()
+RegisterContextPOSIX_i386::~RegisterContextPOSIX_i386()
 {
 }
 
 void
-RegisterContext_i386::InvalidateAllRegisters()
+RegisterContextPOSIX_i386::Invalidate()
+{
+}
+
+void
+RegisterContextPOSIX_i386::InvalidateAllRegisters()
 {
 }
 
 size_t
-RegisterContext_i386::GetRegisterCount()
+RegisterContextPOSIX_i386::GetRegisterCount()
 {
     assert(k_num_register_infos == k_num_registers);
     return k_num_registers;
 }
 
 const RegisterInfo *
-RegisterContext_i386::GetRegisterInfoAtIndex(size_t reg)
+RegisterContextPOSIX_i386::GetRegisterInfoAtIndex(size_t reg)
 {
     assert(k_num_register_infos == k_num_registers);
     if (reg < k_num_registers)
@@ -302,13 +294,13 @@ RegisterContext_i386::GetRegisterInfoAtIndex(size_t reg)
 }
 
 size_t
-RegisterContext_i386::GetRegisterSetCount()
+RegisterContextPOSIX_i386::GetRegisterSetCount()
 {
     return k_num_register_sets;
 }
 
 const RegisterSet *
-RegisterContext_i386::GetRegisterSet(size_t set)
+RegisterContextPOSIX_i386::GetRegisterSet(size_t set)
 {
     if (set < k_num_register_sets)
         return &g_reg_sets[set];
@@ -317,7 +309,7 @@ RegisterContext_i386::GetRegisterSet(size_t set)
 }
 
 unsigned
-RegisterContext_i386::GetRegisterIndexFromOffset(unsigned offset)
+RegisterContextPOSIX_i386::GetRegisterIndexFromOffset(unsigned offset)
 {
     unsigned reg;
     for (reg = 0; reg < k_num_registers; reg++)
@@ -330,45 +322,26 @@ RegisterContext_i386::GetRegisterIndexFromOffset(unsigned offset)
 }
 
 const char *
-RegisterContext_i386::GetRegisterName(unsigned reg)
+RegisterContextPOSIX_i386::GetRegisterName(unsigned reg)
 {
     assert(reg < k_num_registers && "Invalid register offset.");
     return g_register_infos[reg].name;
 }
 
 bool
-RegisterContext_i386::ReadRegister(const RegisterInfo *reg_info,
-                                        RegisterValue &value)
-{
-    const uint32_t reg = reg_info->kinds[eRegisterKindLLDB];
-    ProcessMonitor &monitor = GetMonitor();
-    return monitor.ReadRegisterValue(m_thread.GetID(), GetRegOffset(reg),
-                                     GetRegisterName(reg), GetRegSize(reg), value);
-}
-
-bool
-RegisterContext_i386::ReadAllRegisterValues(DataBufferSP &data_sp)
-{
-    return false;
-}
-
-bool RegisterContext_i386::WriteRegister(const RegisterInfo *reg_info,
-                                         const RegisterValue &value)
-{
-    const uint32_t reg = reg_info->kinds[eRegisterKindLLDB];
-    ProcessMonitor &monitor = GetMonitor();
-    return monitor.WriteRegisterValue(m_thread.GetID(), GetRegOffset(reg),
-                                      GetRegisterName(reg), value);
-}
-
-bool
-RegisterContext_i386::WriteAllRegisterValues(const DataBufferSP &data)
+RegisterContextPOSIX_i386::ReadAllRegisterValues(DataBufferSP &data_sp)
 {
     return false;
 }
 
 bool
-RegisterContext_i386::UpdateAfterBreakpoint()
+RegisterContextPOSIX_i386::WriteAllRegisterValues(const DataBufferSP &data)
+{
+    return false;
+}
+
+bool
+RegisterContextPOSIX_i386::UpdateAfterBreakpoint()
 {
     // PC points one byte past the int3 responsible for the breakpoint.
     lldb::addr_t pc;
@@ -381,7 +354,7 @@ RegisterContext_i386::UpdateAfterBreakpoint()
 }
 
 uint32_t
-RegisterContext_i386::ConvertRegisterKindToRegisterNumber(uint32_t kind,
+RegisterContextPOSIX_i386::ConvertRegisterKindToRegisterNumber(uint32_t kind,
                                                                uint32_t num)
 {
     if (kind == eRegisterKindGeneric)
@@ -490,7 +463,7 @@ RegisterContext_i386::ConvertRegisterKindToRegisterNumber(uint32_t kind,
 }
 
 bool
-RegisterContext_i386::HardwareSingleStep(bool enable)
+RegisterContextPOSIX_i386::HardwareSingleStep(bool enable)
 {
     enum { TRACE_BIT = 0x100 };
     uint64_t eflags;
@@ -517,7 +490,7 @@ RegisterContext_i386::HardwareSingleStep(bool enable)
 }
 
 void
-RegisterContext_i386::LogGPR(const char *title)
+RegisterContextPOSIX_i386::LogGPR(const char *title)
 {
     Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_REGISTERS));
     if (log)
@@ -527,25 +500,7 @@ RegisterContext_i386::LogGPR(const char *title)
         for (uint32_t i=0; i<k_num_gpr_registers; i++)
         {
             uint32_t reg = gpr_eax + i;
-            log->Printf("%12s = 0x%8.8" PRIx64, g_register_infos[reg].name, ((uint64_t*)&user.regs)[reg]);
+            log->Printf("%12s = 0x%8.8" PRIx64, g_register_infos[reg].name, ((uint64_t*)&m_user.regs)[reg]);
         }
     }
-}
-
-bool
-RegisterContext_i386::ReadGPR()
-{
-    bool result;
-
-    ProcessMonitor &monitor = GetMonitor();
-    result = monitor.ReadGPR(m_thread.GetID(), &user.regs, sizeof(user.regs));
-    LogGPR("RegisterContext_i386::ReadGPR()");
-    return result;
-}
-
-bool
-RegisterContext_i386::ReadFPR()
-{
-    ProcessMonitor &monitor = GetMonitor();
-    return monitor.ReadFPR(m_thread.GetID(), &user.i387, sizeof(user.i387));
 }

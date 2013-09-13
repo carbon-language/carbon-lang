@@ -67,4 +67,21 @@ protected:
     bool m_watchpoints_initialized;
 };
 
+//------------------------------------------------------------------------------
+/// @class RegisterInfoInterface
+///
+/// @brief RegisterInfo interface to patch RegisterInfo structure for archs.
+class RegisterInfoInterface
+{
+public:
+    virtual ~RegisterInfoInterface() {}
+
+    virtual size_t
+    GetGPRSize() = 0;
+
+    virtual const lldb_private::RegisterInfo *
+    GetRegisterInfo(const lldb_private::RegisterInfo *base_info) = 0;
+};
+
 #endif // #ifndef liblldb_RegisterContextPOSIX_H_
+

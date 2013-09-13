@@ -10,23 +10,27 @@
 #ifndef liblldb_RegisterContextFreeBSD_x86_64_H_
 #define liblldb_RegisterContextFreeBSD_x86_64_H_
 
-#include "Plugins/Process/POSIX/RegisterContext_x86_64.h"
+#include <vector>
+#include "RegisterContextPOSIX.h"
 
 class RegisterContextFreeBSD_x86_64:
-    public RegisterContext_x86_64
+    public RegisterInfoInterface
 {
 public:
-    RegisterContextFreeBSD_x86_64(lldb_private::Thread &thread, uint32_t concrete_frame_idx);
+    RegisterContextFreeBSD_x86_64();
+    virtual ~RegisterContextFreeBSD_x86_64();
 
     size_t
     GetGPRSize();
 
-protected:
-    virtual const lldb_private::RegisterInfo *
-    GetRegisterInfo();
+    const lldb_private::RegisterInfo *
+    GetRegisterInfo(const lldb_private::RegisterInfo *base_info);
 
-    virtual void
+protected:
+    void
     UpdateRegisterInfo();
+
+    std::vector<lldb_private::RegisterInfo> m_register_infos;
 };
 
 #endif

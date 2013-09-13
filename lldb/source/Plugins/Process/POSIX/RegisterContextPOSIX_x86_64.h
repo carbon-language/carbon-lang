@@ -1,4 +1,4 @@
-//===-- RegisterContext_x86_64.h ---------------------------*- C++ -*-===//
+//===-- RegisterContextPOSIX_x86_64.h ---------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_RegisterContext_x86_64_H_
-#define liblldb_RegisterContext_x86_64_H_
+#ifndef liblldb_RegisterContextPOSIX_x86_64_H_
+#define liblldb_RegisterContextPOSIX_x86_64_H_
 
 #include "lldb/Core/Log.h"
 #include "RegisterContextPOSIX.h"
@@ -127,14 +127,15 @@ enum
     k_num_avx_registers = k_last_avx - k_first_avx + 1
 };
 
-class RegisterContext_x86_64
+class RegisterContextPOSIX_x86_64
   : public RegisterContextPOSIX
 {
 public:
-    RegisterContext_x86_64 (lldb_private::Thread &thread,
-                            uint32_t concrete_frame_idx);
+    RegisterContextPOSIX_x86_64 (lldb_private::Thread &thread,
+                            uint32_t concrete_frame_idx,
+                            RegisterInfoInterface *register_info);
 
-    ~RegisterContext_x86_64();
+    ~RegisterContextPOSIX_x86_64();
 
     void
     Invalidate();
@@ -146,7 +147,7 @@ public:
     GetRegisterCount();
 
     virtual size_t
-    GetGPRSize() = 0;
+    GetGPRSize();
 
     virtual unsigned
     GetRegisterSize(unsigned reg);
@@ -318,30 +319,38 @@ protected:
     GetRegisterInfo();
 
     virtual bool
-    ReadRegister(const unsigned reg, lldb_private::RegisterValue &value);
+    ReadRegister(const unsigned reg, lldb_private::RegisterValue &value) = 0;
 
     virtual bool
-    WriteRegister(const unsigned reg, const lldb_private::RegisterValue &value);
+    WriteRegister(const unsigned reg, const lldb_private::RegisterValue &value) = 0;
 
-private:
-    uint64_t m_gpr[k_num_gpr_registers]; // general purpose registers.
-    FPRType  m_fpr_type;                 // determines the type of data stored by union FPR, if any.
-    FPR      m_fpr;                      // floating-point registers including extended register sets.
-    IOVEC    m_iovec;                    // wrapper for xsave.
-    YMM      m_ymm_set;                  // copy of ymmh and xmm register halves.
+    static bool
+    IsGPR(unsigned reg);
 
-    ProcessMonitor &GetMonitor();
+    static bool
+    IsFPR(unsigned reg);
+
+    static bool
+    IsAVX(unsigned reg);
+
+    uint64_t m_gpr[k_num_gpr_registers];                       // general purpose registers.
+    FPRType  m_fpr_type;                                       // determines the type of data stored by union FPR, if any.
+    FPR      m_fpr;                                            // floating-point registers including extended register sets.
+    IOVEC    m_iovec;                                          // wrapper for xsave.
+    YMM      m_ymm_set;                                        // copy of ymmh and xmm register halves.
+    std::unique_ptr<RegisterInfoInterface> m_register_info_ap; // Register Info Interface (FreeBSD or Linux)
+
     lldb::ByteOrder GetByteOrder();
 
     bool CopyXSTATEtoYMM(uint32_t reg, lldb::ByteOrder byte_order);
     bool CopyYMMtoXSTATE(uint32_t reg, lldb::ByteOrder byte_order);
     bool IsFPR(unsigned reg, FPRType fpr_type);
+    FPRType GetFPRType();
 
-    bool ReadGPR();
-    bool ReadFPR();
-
-    bool WriteGPR();
-    bool WriteFPR();
+    virtual bool ReadGPR() = 0;
+    virtual bool ReadFPR() = 0;
+    virtual bool WriteGPR() = 0;
+    virtual bool WriteFPR() = 0;
 };
 
-#endif // #ifndef liblldb_RegisterContext_x86_64_H_
+#endif // #ifndef liblldb_RegisterContextPOSIX_x86_64_H_

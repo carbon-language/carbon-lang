@@ -1,4 +1,4 @@
-//===-- RegisterContext_i386.h ------------------------------*- C++ -*-===//
+//===-- RegisterContextPOSIX_i386.h -----------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -17,13 +17,14 @@
 #include "lldb/Core/Log.h"
 #include "RegisterContextPOSIX.h"
 
-class RegisterContext_i386 : public RegisterContextPOSIX
+class RegisterContextPOSIX_i386 :
+    public RegisterContextPOSIX
 {
 public:
-    RegisterContext_i386(lldb_private::Thread &thread,
+    RegisterContextPOSIX_i386(lldb_private::Thread &thread,
                               uint32_t concreate_frame_idx);
 
-    ~RegisterContext_i386();
+    ~RegisterContextPOSIX_i386();
 
     void
     Invalidate();
@@ -57,7 +58,7 @@ public:
 
     virtual bool
     ReadRegister(const lldb_private::RegisterInfo *reg_info,
-                 lldb_private::RegisterValue &value);
+                 lldb_private::RegisterValue &value) = 0;
 
     bool
     ReadAllRegisterValues(lldb::DataBufferSP &data_sp);
@@ -71,7 +72,7 @@ public:
 
     virtual bool
     WriteRegister(const lldb_private::RegisterInfo *reg_info,
-                  const lldb_private::RegisterValue &value);
+                  const lldb_private::RegisterValue &value) = 0;
 
     bool
     WriteAllRegisterValues(const lldb::DataBufferSP &data_sp);
@@ -155,15 +156,19 @@ public:
         char     u_comm[32];    // Command causing core dump.
         uint32_t u_debugreg[8]; // Debug registers (DR0 - DR7).
     };
-private:
-    UserArea user;
 
-    ProcessMonitor &GetMonitor();
+protected:
+    UserArea m_user;
+
+    static unsigned GetRegOffset(unsigned reg);
+    static unsigned GetRegSize(unsigned reg);
 
     void LogGPR(const char *title);
 
-    bool ReadGPR();
-    bool ReadFPR();
+    virtual bool ReadGPR() = 0;
+    virtual bool ReadFPR() = 0;
+    virtual bool WriteGPR() = 0;
+    virtual bool WriteFPR() = 0;
 };
 
 #endif // #ifndef liblldb_RegisterContext_i386_h_

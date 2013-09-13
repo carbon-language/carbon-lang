@@ -8,8 +8,8 @@
 //===---------------------------------------------------------------------===//
 
 #include "llvm/Support/Compiler.h"
+#include "RegisterContextPOSIX_x86_64.h"
 #include "RegisterContextLinux_x86_64.h"
-#include <vector>
 
 using namespace lldb_private;
 
@@ -20,13 +20,13 @@ using namespace lldb_private;
 // Update the Linux specific information (offset and size).
 #define UPDATE_GPR_INFO(reg)                                                \
 do {                                                                        \
-    GetRegisterContext()[gpr_##reg].byte_size = sizeof(GPR::reg);               \
-    GetRegisterContext()[gpr_##reg].byte_offset = GPR_OFFSET(reg);              \
+    m_register_infos[gpr_##reg].byte_size = sizeof(GPR::reg);               \
+    m_register_infos[gpr_##reg].byte_offset = GPR_OFFSET(reg);              \
 } while(false);
 
 #define UPDATE_I386_GPR_INFO(i386_reg, reg)                                 \
 do {                                                                        \
-    GetRegisterContext()[gpr_##i386_reg].byte_offset = GPR_OFFSET(reg);         \
+    m_register_infos[gpr_##i386_reg].byte_offset = GPR_OFFSET(reg);         \
 } while(false);
 
 #define DR_OFFSET(reg_index)                                                \
@@ -34,8 +34,8 @@ do {                                                                        \
 
 #define UPDATE_DR_INFO(reg_index)                                                \
 do {                                                                             \
-    GetRegisterContext()[dr##reg_index].byte_size = sizeof(UserArea::u_debugreg[0]); \
-    GetRegisterContext()[dr##reg_index].byte_offset = DR_OFFSET(reg_index);          \
+    m_register_infos[dr##reg_index].byte_size = sizeof(UserArea::u_debugreg[0]); \
+    m_register_infos[dr##reg_index].byte_offset = DR_OFFSET(reg_index);          \
 } while(false);
 
 typedef struct _GPR
@@ -69,7 +69,7 @@ typedef struct _GPR
     uint64_t gs;
 } GPR;
 
-typedef RegisterContext_x86_64::FXSAVE FXSAVE;
+typedef RegisterContextPOSIX_x86_64::FXSAVE FXSAVE;
 
 struct UserArea
 {
@@ -94,14 +94,11 @@ struct UserArea
     uint64_t fault_address; // Control register CR3.
 };
 
-// Use a singleton function to avoid global constructors in shared libraries.
-static std::vector<RegisterInfo> & GetRegisterContext () {
-    static std::vector<RegisterInfo> g_register_infos;
-    return g_register_infos;
+RegisterContextLinux_x86_64::RegisterContextLinux_x86_64()
+{
 }
 
-RegisterContextLinux_x86_64::RegisterContextLinux_x86_64(Thread &thread, uint32_t concrete_frame_idx):
-    RegisterContext_x86_64(thread, concrete_frame_idx)
+RegisterContextLinux_x86_64::~RegisterContextLinux_x86_64()
 {
 }
 
@@ -112,21 +109,17 @@ RegisterContextLinux_x86_64::GetGPRSize()
 }
 
 const RegisterInfo *
-RegisterContextLinux_x86_64::GetRegisterInfo()
+RegisterContextLinux_x86_64::GetRegisterInfo(const RegisterInfo *base_info)
 {
     // Allocate RegisterInfo only once
-    if (GetRegisterContext().empty())
+    if (m_register_infos.empty())
     {
         // Copy the register information from base class
-        const RegisterInfo *base_info = RegisterContext_x86_64::GetRegisterInfo();
-        if (base_info)
-        {
-            GetRegisterContext().insert(GetRegisterContext().end(), &base_info[0], &base_info[k_num_registers]);
-            // Update the Linux specific register information (offset and size).
-            UpdateRegisterInfo();
-        }
+        m_register_infos.insert(m_register_infos.end(), &base_info[0], &base_info[k_num_registers]);
+        // Update the Linux specific register information (offset and size).
+        UpdateRegisterInfo();
     }
-    return &GetRegisterContext()[0];
+    return &m_register_infos[0];
 }
 
 void

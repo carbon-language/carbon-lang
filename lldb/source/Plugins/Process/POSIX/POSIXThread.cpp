@@ -29,9 +29,9 @@
 #include "ProcessPOSIX.h"
 #include "ProcessPOSIXLog.h"
 #include "ProcessMonitor.h"
-#include "RegisterContext_i386.h"
-#include "RegisterContext_x86_64.h"
-#include "RegisterContextPOSIX.h"
+#include "RegisterContextPOSIX_i386.h"
+#include "RegisterContextPOSIXProcessMonitor_i386.h"
+#include "RegisterContextPOSIXProcessMonitor_x86_64.h"
 #include "RegisterContextLinux_x86_64.h"
 #include "RegisterContextFreeBSD_x86_64.h"
 
@@ -149,17 +149,17 @@ POSIXThread::GetRegisterContext()
         case ArchSpec::eCore_x86_32_i386:
         case ArchSpec::eCore_x86_32_i486:
         case ArchSpec::eCore_x86_32_i486sx:
-            m_reg_context_sp.reset(new RegisterContext_i386(*this, 0));
+            m_reg_context_sp.reset(new RegisterContextPOSIXProcessMonitor_i386(*this, 0));
             break;
 
         case ArchSpec::eCore_x86_64_x86_64:
             switch (arch.GetTriple().getOS())
             {
                 case llvm::Triple::FreeBSD:
-                    m_reg_context_sp.reset(new RegisterContextFreeBSD_x86_64(*this, 0));
+                    m_reg_context_sp.reset(new RegisterContextPOSIXProcessMonitor_x86_64(*this, 0, new RegisterContextFreeBSD_x86_64()));
                     break;
                 case llvm::Triple::Linux:
-                    m_reg_context_sp.reset(new RegisterContextLinux_x86_64(*this, 0));
+                    m_reg_context_sp.reset(new RegisterContextPOSIXProcessMonitor_x86_64(*this, 0, new RegisterContextLinux_x86_64()));
                     break;
                 default:
                     assert(false && "OS not supported");

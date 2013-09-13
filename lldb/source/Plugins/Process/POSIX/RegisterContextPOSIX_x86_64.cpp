@@ -1,4 +1,4 @@
-//===-- RegisterContext_x86_64.cpp -------------------------*- C++ -*-===//
+//===-- RegisterContextPOSIX_x86_64.cpp -------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -21,21 +21,13 @@
 #include "llvm/Support/Compiler.h"
 
 #include "ProcessPOSIX.h"
-#if defined(__linux__) or defined(__FreeBSD__)
-#include "ProcessMonitor.h"
-#endif
-#include "RegisterContext_i386.h"
+#include "RegisterContextPOSIX_i386.h"
 #include "RegisterContext_x86.h"
-#include "RegisterContext_x86_64.h"
+#include "RegisterContextPOSIX_x86_64.h"
 #include "Plugins/Process/elf-core/ProcessElfCore.h"
 
 using namespace lldb_private;
 using namespace lldb;
-
-// Support ptrace extensions even when compiled without required kernel support
-#ifndef NT_X86_XSTATE
-  #define NT_X86_XSTATE 0x202
-#endif
 
 enum
 {
@@ -291,27 +283,27 @@ g_reg_sets[k_num_register_sets] =
 
 // Computes the offset of the given FPR in the extended data area.
 #define FPR_OFFSET(regname) \
-    (offsetof(RegisterContext_x86_64::FPR, xstate) + \
-     offsetof(RegisterContext_x86_64::FXSAVE, regname))
+    (offsetof(RegisterContextPOSIX_x86_64::FPR, xstate) + \
+     offsetof(RegisterContextPOSIX_x86_64::FXSAVE, regname))
 
 // Computes the offset of the YMM register assembled from register halves.
 #define YMM_OFFSET(regname) \
-    (offsetof(RegisterContext_x86_64::YMM, regname))
+    (offsetof(RegisterContextPOSIX_x86_64::YMM, regname))
 
 // Number of bytes needed to represent a i386 GPR
-#define GPR_i386_SIZE(reg) sizeof(((RegisterContext_i386::GPR*)NULL)->reg)
+#define GPR_i386_SIZE(reg) sizeof(((RegisterContextPOSIX_i386::GPR*)NULL)->reg)
 
 // Number of bytes needed to represent a FPR.
-#define FPR_SIZE(reg) sizeof(((RegisterContext_x86_64::FXSAVE*)NULL)->reg)
+#define FPR_SIZE(reg) sizeof(((RegisterContextPOSIX_x86_64::FXSAVE*)NULL)->reg)
 
 // Number of bytes needed to represent the i'th FP register.
-#define FP_SIZE sizeof(((RegisterContext_x86_64::MMSReg*)NULL)->bytes)
+#define FP_SIZE sizeof(((RegisterContextPOSIX_x86_64::MMSReg*)NULL)->bytes)
 
 // Number of bytes needed to represent an XMM register.
-#define XMM_SIZE sizeof(RegisterContext_x86_64::XMMReg)
+#define XMM_SIZE sizeof(RegisterContextPOSIX_x86_64::XMMReg)
 
 // Number of bytes needed to represent a YMM register.
-#define YMM_SIZE sizeof(RegisterContext_x86_64::YMMReg)
+#define YMM_SIZE sizeof(RegisterContextPOSIX_x86_64::YMMReg)
 
 // Note that the size and offset will be updated by platform-specific classes.
 #define DEFINE_GPR(reg, alt, kind1, kind2, kind3, kind4)           \
@@ -352,7 +344,7 @@ static uint32_t value_regs = LLDB_INVALID_REGNUM;
       { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, \
       LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM }, NULL, NULL }
 
-#define REG_CONTEXT_SIZE (GetGPRSize() + sizeof(RegisterContext_x86_64::FPR))
+#define REG_CONTEXT_SIZE (GetGPRSize() + sizeof(RegisterContextPOSIX_x86_64::FPR))
 
 static RegisterInfo
 g_register_infos[k_num_registers] =
@@ -464,100 +456,118 @@ g_register_infos[k_num_registers] =
     DEFINE_DR(dr, 7)
 };
 
-static bool IsGPR(unsigned reg)
+bool RegisterContextPOSIX_x86_64::IsGPR(unsigned reg)
 {
     return reg <= k_last_gpr;   // GPR's come first.
 }
 
-static bool IsAVX(unsigned reg)
+bool RegisterContextPOSIX_x86_64::IsAVX(unsigned reg)
 {
     return (k_first_avx <= reg && reg <= k_last_avx);
 }
-static bool IsFPR(unsigned reg)
+
+bool RegisterContextPOSIX_x86_64::IsFPR(unsigned reg)
 {
     return (k_first_fpr <= reg && reg <= k_last_fpr);
 }
 
-
-bool RegisterContext_x86_64::IsFPR(unsigned reg, FPRType fpr_type)
+bool RegisterContextPOSIX_x86_64::IsFPR(unsigned reg, FPRType fpr_type)
 {
-    bool generic_fpr = ::IsFPR(reg);
+    bool generic_fpr = IsFPR(reg);
     if (fpr_type == eXSAVE)
       return generic_fpr || IsAVX(reg);
 
     return generic_fpr;
 }
 
-RegisterContext_x86_64::RegisterContext_x86_64(Thread &thread,
-                                               uint32_t concrete_frame_idx)
+RegisterContextPOSIX_x86_64::RegisterContextPOSIX_x86_64(Thread &thread,
+                                               uint32_t concrete_frame_idx,
+                                               RegisterInfoInterface *register_info)
     : RegisterContextPOSIX(thread, concrete_frame_idx)
 {
+    m_register_info_ap.reset(register_info);
+
     // Initialize m_iovec to point to the buffer and buffer size
     // using the conventions of Berkeley style UIO structures, as required
     // by PTRACE extensions.
     m_iovec.iov_base = &m_fpr.xstate.xsave;
     m_iovec.iov_len = sizeof(m_fpr.xstate.xsave);
 
-    ::memset(&m_fpr, 0, sizeof(RegisterContext_x86_64::FPR));
+    ::memset(&m_fpr, 0, sizeof(RegisterContextPOSIX_x86_64::FPR));
 
     // elf-core yet to support ReadFPR()
     ProcessSP base = CalculateProcess();
     if (base.get()->GetPluginName() ==  ProcessElfCore::GetPluginNameStatic())
         return;
     
-    // TODO: Use assembly to call cpuid on the inferior and query ebx or ecx
-    m_fpr_type = eXSAVE; // extended floating-point registers, if available
-    if (false == ReadFPR())
-        m_fpr_type = eFXSAVE; // assume generic floating-point registers
+    m_fpr_type = eNotValid;
 }
 
-RegisterContext_x86_64::~RegisterContext_x86_64()
+RegisterContextPOSIX_x86_64::~RegisterContextPOSIX_x86_64()
+{
+}
+
+RegisterContextPOSIX_x86_64::FPRType RegisterContextPOSIX_x86_64::GetFPRType()
+{
+    if (m_fpr_type == eNotValid)
+    {
+        // TODO: Use assembly to call cpuid on the inferior and query ebx or ecx
+        m_fpr_type = eXSAVE; // extended floating-point registers, if available
+        if (false == ReadFPR())
+            m_fpr_type = eFXSAVE; // assume generic floating-point registers
+    }
+    return m_fpr_type;
+}
+
+void
+RegisterContextPOSIX_x86_64::Invalidate()
 {
 }
 
 void
-RegisterContext_x86_64::Invalidate()
-{
-}
-
-void
-RegisterContext_x86_64::InvalidateAllRegisters()
+RegisterContextPOSIX_x86_64::InvalidateAllRegisters()
 {
 }
 
 unsigned
-RegisterContext_x86_64::GetRegisterOffset(unsigned reg)
+RegisterContextPOSIX_x86_64::GetRegisterOffset(unsigned reg)
 {
     assert(reg < k_num_registers && "Invalid register number.");
     return GetRegisterInfo()[reg].byte_offset;
 }
 
 unsigned
-RegisterContext_x86_64::GetRegisterSize(unsigned reg)
+RegisterContextPOSIX_x86_64::GetRegisterSize(unsigned reg)
 {
     assert(reg < k_num_registers && "Invalid register number.");
     return GetRegisterInfo()[reg].byte_size;
 }
 
 size_t
-RegisterContext_x86_64::GetRegisterCount()
+RegisterContextPOSIX_x86_64::GetRegisterCount()
 {
     size_t num_registers = k_num_gpr_registers + k_num_fpr_registers;
-    if (m_fpr_type == eXSAVE)
+    if (GetFPRType() == eXSAVE)
       return num_registers + k_num_avx_registers;
     return num_registers;
 }
 
-const RegisterInfo *
-RegisterContext_x86_64::GetRegisterInfo()
+size_t
+RegisterContextPOSIX_x86_64::GetGPRSize()
 {
-    // Commonly, this method is overridden and g_register_infos is copied and specialized.
-    // So, use GetRegisterInfo() rather than g_register_infos in this scope.
-    return g_register_infos;
+    return m_register_info_ap->GetGPRSize();
 }
 
 const RegisterInfo *
-RegisterContext_x86_64::GetRegisterInfoAtIndex(size_t reg)
+RegisterContextPOSIX_x86_64::GetRegisterInfo()
+{
+    // Commonly, this method is overridden and g_register_infos is copied and specialized.
+    // So, use GetRegisterInfo() rather than g_register_infos in this scope.
+    return m_register_info_ap->GetRegisterInfo(g_register_infos);
+}
+
+const RegisterInfo *
+RegisterContextPOSIX_x86_64::GetRegisterInfoAtIndex(size_t reg)
 {
     if (reg < k_num_registers)
         return &GetRegisterInfo()[reg];
@@ -566,7 +576,7 @@ RegisterContext_x86_64::GetRegisterInfoAtIndex(size_t reg)
 }
 
 size_t
-RegisterContext_x86_64::GetRegisterSetCount()
+RegisterContextPOSIX_x86_64::GetRegisterSetCount()
 {
     size_t sets = 0;
     for (size_t set = 0; set < k_num_register_sets; ++set)
@@ -577,7 +587,7 @@ RegisterContext_x86_64::GetRegisterSetCount()
 }
 
 const RegisterSet *
-RegisterContext_x86_64::GetRegisterSet(size_t set)
+RegisterContextPOSIX_x86_64::GetRegisterSet(size_t set)
 {
     if (IsRegisterSetAvailable(set))
         return &g_reg_sets[set];
@@ -586,7 +596,7 @@ RegisterContext_x86_64::GetRegisterSet(size_t set)
 }
 
 unsigned
-RegisterContext_x86_64::GetRegisterIndexFromOffset(unsigned offset)
+RegisterContextPOSIX_x86_64::GetRegisterIndexFromOffset(unsigned offset)
 {
     unsigned reg;
     for (reg = 0; reg < k_num_registers; reg++)
@@ -599,14 +609,14 @@ RegisterContext_x86_64::GetRegisterIndexFromOffset(unsigned offset)
 }
 
 const char *
-RegisterContext_x86_64::GetRegisterName(unsigned reg)
+RegisterContextPOSIX_x86_64::GetRegisterName(unsigned reg)
 {
     assert(reg < k_num_registers && "Invalid register offset.");
     return GetRegisterInfo()[reg].name;
 }
 
 lldb::ByteOrder
-RegisterContext_x86_64::GetByteOrder()
+RegisterContextPOSIX_x86_64::GetByteOrder()
 {
     // Get the target process whose privileged thread was used for the register read.
     lldb::ByteOrder byte_order = eByteOrderInvalid;
@@ -618,7 +628,7 @@ RegisterContext_x86_64::GetByteOrder()
 }
 
 // Parse ymm registers and into xmm.bytes and ymmh.bytes.
-bool RegisterContext_x86_64::CopyYMMtoXSTATE(uint32_t reg, lldb::ByteOrder byte_order)
+bool RegisterContextPOSIX_x86_64::CopyYMMtoXSTATE(uint32_t reg, lldb::ByteOrder byte_order)
 {
     if (!IsAVX(reg))
         return false;
@@ -626,27 +636,27 @@ bool RegisterContext_x86_64::CopyYMMtoXSTATE(uint32_t reg, lldb::ByteOrder byte_
     if (byte_order == eByteOrderLittle) {
       ::memcpy(m_fpr.xstate.fxsave.xmm[reg - fpu_ymm0].bytes,
                m_ymm_set.ymm[reg - fpu_ymm0].bytes,
-               sizeof(RegisterContext_x86_64::XMMReg));
+               sizeof(RegisterContextPOSIX_x86_64::XMMReg));
       ::memcpy(m_fpr.xstate.xsave.ymmh[reg - fpu_ymm0].bytes,
-               m_ymm_set.ymm[reg - fpu_ymm0].bytes + sizeof(RegisterContext_x86_64::XMMReg),
-               sizeof(RegisterContext_x86_64::YMMHReg));
+               m_ymm_set.ymm[reg - fpu_ymm0].bytes + sizeof(RegisterContextPOSIX_x86_64::XMMReg),
+               sizeof(RegisterContextPOSIX_x86_64::YMMHReg));
       return true;
     }
 
     if (byte_order == eByteOrderBig) {
       ::memcpy(m_fpr.xstate.fxsave.xmm[reg - fpu_ymm0].bytes,
-               m_ymm_set.ymm[reg - fpu_ymm0].bytes + sizeof(RegisterContext_x86_64::XMMReg),
-               sizeof(RegisterContext_x86_64::XMMReg));
+               m_ymm_set.ymm[reg - fpu_ymm0].bytes + sizeof(RegisterContextPOSIX_x86_64::XMMReg),
+               sizeof(RegisterContextPOSIX_x86_64::XMMReg));
       ::memcpy(m_fpr.xstate.xsave.ymmh[reg - fpu_ymm0].bytes,
                m_ymm_set.ymm[reg - fpu_ymm0].bytes,
-               sizeof(RegisterContext_x86_64::YMMHReg));
+               sizeof(RegisterContextPOSIX_x86_64::YMMHReg));
       return true;
     }
     return false; // unsupported or invalid byte order
 }
 
 // Concatenate xmm.bytes with ymmh.bytes
-bool RegisterContext_x86_64::CopyXSTATEtoYMM(uint32_t reg, lldb::ByteOrder byte_order)
+bool RegisterContextPOSIX_x86_64::CopyXSTATEtoYMM(uint32_t reg, lldb::ByteOrder byte_order)
 {
     if (!IsAVX(reg))
         return false;
@@ -654,44 +664,44 @@ bool RegisterContext_x86_64::CopyXSTATEtoYMM(uint32_t reg, lldb::ByteOrder byte_
     if (byte_order == eByteOrderLittle) {
       ::memcpy(m_ymm_set.ymm[reg - fpu_ymm0].bytes,
                m_fpr.xstate.fxsave.xmm[reg - fpu_ymm0].bytes,
-               sizeof(RegisterContext_x86_64::XMMReg));
-      ::memcpy(m_ymm_set.ymm[reg - fpu_ymm0].bytes + sizeof(RegisterContext_x86_64::XMMReg),
+               sizeof(RegisterContextPOSIX_x86_64::XMMReg));
+      ::memcpy(m_ymm_set.ymm[reg - fpu_ymm0].bytes + sizeof(RegisterContextPOSIX_x86_64::XMMReg),
                m_fpr.xstate.xsave.ymmh[reg - fpu_ymm0].bytes,
-               sizeof(RegisterContext_x86_64::YMMHReg));
+               sizeof(RegisterContextPOSIX_x86_64::YMMHReg));
       return true;
     }
     if (byte_order == eByteOrderBig) {
-      ::memcpy(m_ymm_set.ymm[reg - fpu_ymm0].bytes + sizeof(RegisterContext_x86_64::XMMReg),
+      ::memcpy(m_ymm_set.ymm[reg - fpu_ymm0].bytes + sizeof(RegisterContextPOSIX_x86_64::XMMReg),
                m_fpr.xstate.fxsave.xmm[reg - fpu_ymm0].bytes,
-               sizeof(RegisterContext_x86_64::XMMReg));
+               sizeof(RegisterContextPOSIX_x86_64::XMMReg));
       ::memcpy(m_ymm_set.ymm[reg - fpu_ymm0].bytes,
                m_fpr.xstate.xsave.ymmh[reg - fpu_ymm0].bytes,
-               sizeof(RegisterContext_x86_64::YMMHReg));
+               sizeof(RegisterContextPOSIX_x86_64::YMMHReg));
       return true;
     }
     return false; // unsupported or invalid byte order
 }
 
 bool
-RegisterContext_x86_64::IsRegisterSetAvailable(size_t set_index)
+RegisterContextPOSIX_x86_64::IsRegisterSetAvailable(size_t set_index)
 {
     // Note: Extended register sets are assumed to be at the end of g_reg_sets...
     size_t num_sets = k_num_register_sets - k_num_extended_register_sets;
-    if (m_fpr_type == eXSAVE) // ...and to start with AVX registers.
+    if (GetFPRType() == eXSAVE) // ...and to start with AVX registers.
         ++num_sets;
 
     return (set_index < num_sets);
 }   
 
 bool
-RegisterContext_x86_64::ReadRegister(const RegisterInfo *reg_info, RegisterValue &value)
+RegisterContextPOSIX_x86_64::ReadRegister(const RegisterInfo *reg_info, RegisterValue &value)
 {
     if (!reg_info)
         return false;
 
     const uint32_t reg = reg_info->kinds[eRegisterKindLLDB];
 
-    if (IsFPR(reg, m_fpr_type)) {
+    if (IsFPR(reg, GetFPRType())) {
         if (!ReadFPR())
             return false;
     }
@@ -717,7 +727,7 @@ RegisterContext_x86_64::ReadRegister(const RegisterInfo *reg_info, RegisterValue
             }
             if (reg >= fpu_ymm0 && reg <= fpu_ymm15) {
                 // Concatenate ymm using the register halves in xmm.bytes and ymmh.bytes
-                if (m_fpr_type == eXSAVE && CopyXSTATEtoYMM(reg, byte_order))
+                if (GetFPRType() == eXSAVE && CopyXSTATEtoYMM(reg, byte_order))
                     value.SetBytes(m_ymm_set.ymm[reg - fpu_ymm0].bytes, reg_info->byte_size, byte_order);
                 else
                     return false;
@@ -761,7 +771,7 @@ RegisterContext_x86_64::ReadRegister(const RegisterInfo *reg_info, RegisterValue
 }
 
 bool
-RegisterContext_x86_64::ReadAllRegisterValues(DataBufferSP &data_sp)
+RegisterContextPOSIX_x86_64::ReadAllRegisterValues(DataBufferSP &data_sp)
 {
     bool success = false;
     data_sp.reset (new DataBufferHeap (REG_CONTEXT_SIZE, 0));
@@ -774,10 +784,10 @@ RegisterContext_x86_64::ReadAllRegisterValues(DataBufferSP &data_sp)
             ::memcpy (dst, &m_gpr, GetGPRSize());
             dst += GetGPRSize();
         }
-        if (m_fpr_type == eFXSAVE)
+        if (GetFPRType() == eFXSAVE)
             ::memcpy (dst, &m_fpr.xstate.fxsave, sizeof(m_fpr.xstate.fxsave));
         
-        if (m_fpr_type == eXSAVE) {
+        if (GetFPRType() == eXSAVE) {
             ByteOrder byte_order = GetByteOrder();
 
             // Assemble the YMM register content from the register halves.
@@ -794,7 +804,7 @@ RegisterContext_x86_64::ReadAllRegisterValues(DataBufferSP &data_sp)
 }
 
 bool
-RegisterContext_x86_64::WriteRegister(const lldb_private::RegisterInfo *reg_info,
+RegisterContextPOSIX_x86_64::WriteRegister(const lldb_private::RegisterInfo *reg_info,
                                       const lldb_private::RegisterValue &value)
 {
     const uint32_t reg = reg_info->kinds[eRegisterKindLLDB];
@@ -802,7 +812,7 @@ RegisterContext_x86_64::WriteRegister(const lldb_private::RegisterInfo *reg_info
         return WriteRegister(reg, value);
     }
 
-    if (IsFPR(reg, m_fpr_type)) {
+    if (IsFPR(reg, GetFPRType())) {
         switch (reg)
         {
         default:
@@ -816,7 +826,7 @@ RegisterContext_x86_64::WriteRegister(const lldb_private::RegisterInfo *reg_info
                ::memcpy (m_fpr.xstate.fxsave.xmm[reg - fpu_xmm0].bytes, value.GetBytes(), value.GetByteSize());
             
             if (reg >= fpu_ymm0 && reg <= fpu_ymm15) {
-               if (m_fpr_type != eXSAVE)
+               if (GetFPRType() != eXSAVE)
                    return false; // the target processor does not support AVX
 
                // Store ymm register content, and split into the register halves in xmm.bytes and ymmh.bytes
@@ -860,7 +870,7 @@ RegisterContext_x86_64::WriteRegister(const lldb_private::RegisterInfo *reg_info
 }
 
 bool
-RegisterContext_x86_64::WriteAllRegisterValues(const DataBufferSP &data_sp)
+RegisterContextPOSIX_x86_64::WriteAllRegisterValues(const DataBufferSP &data_sp)
 {
     bool success = false;
     if (data_sp && data_sp->GetByteSize() == REG_CONTEXT_SIZE)
@@ -871,16 +881,16 @@ RegisterContext_x86_64::WriteAllRegisterValues(const DataBufferSP &data_sp)
 
             if (WriteGPR()) {
                 src += GetGPRSize();
-                if (m_fpr_type == eFXSAVE)
+                if (GetFPRType() == eFXSAVE)
                     ::memcpy (&m_fpr.xstate.fxsave, src, sizeof(m_fpr.xstate.fxsave));
-                if (m_fpr_type == eXSAVE)
+                if (GetFPRType() == eXSAVE)
                     ::memcpy (&m_fpr.xstate.xsave, src, sizeof(m_fpr.xstate.xsave));
 
                 success = WriteFPR();
                 if (success) {
                     success = true;
 
-                    if (m_fpr_type == eXSAVE) {
+                    if (GetFPRType() == eXSAVE) {
                         ByteOrder byte_order = GetByteOrder();
 
                         // Parse the YMM register content from the register halves.
@@ -895,7 +905,7 @@ RegisterContext_x86_64::WriteAllRegisterValues(const DataBufferSP &data_sp)
 }
 
 bool
-RegisterContext_x86_64::UpdateAfterBreakpoint()
+RegisterContextPOSIX_x86_64::UpdateAfterBreakpoint()
 {
     // PC points one byte past the int3 responsible for the breakpoint.
     lldb::addr_t pc;
@@ -908,7 +918,7 @@ RegisterContext_x86_64::UpdateAfterBreakpoint()
 }
 
 uint32_t
-RegisterContext_x86_64::ConvertRegisterKindToRegisterNumber(uint32_t kind,
+RegisterContextPOSIX_x86_64::ConvertRegisterKindToRegisterNumber(uint32_t kind,
                                                                  uint32_t num)
 {
     const Process *process = CalculateProcess().get();
@@ -1205,14 +1215,14 @@ RegisterContext_x86_64::ConvertRegisterKindToRegisterNumber(uint32_t kind,
 }
 
 uint32_t
-RegisterContext_x86_64::NumSupportedHardwareWatchpoints()
+RegisterContextPOSIX_x86_64::NumSupportedHardwareWatchpoints()
 {
     // Available debug address registers: dr0, dr1, dr2, dr3
     return 4;
 }
 
 bool
-RegisterContext_x86_64::IsWatchpointVacant(uint32_t hw_index)
+RegisterContextPOSIX_x86_64::IsWatchpointVacant(uint32_t hw_index)
 {
     bool is_vacant = false;
     RegisterValue value;
@@ -1264,7 +1274,7 @@ size_and_rw_bits(size_t size, bool read, bool write)
 }
 
 uint32_t
-RegisterContext_x86_64::SetHardwareWatchpoint(addr_t addr, size_t size,
+RegisterContextPOSIX_x86_64::SetHardwareWatchpoint(addr_t addr, size_t size,
                                               bool read, bool write)
 {
     const uint32_t num_hw_watchpoints = NumSupportedHardwareWatchpoints();
@@ -1282,7 +1292,7 @@ RegisterContext_x86_64::SetHardwareWatchpoint(addr_t addr, size_t size,
 }
 
 bool
-RegisterContext_x86_64::SetHardwareWatchpointWithIndex(addr_t addr, size_t size,
+RegisterContextPOSIX_x86_64::SetHardwareWatchpointWithIndex(addr_t addr, size_t size,
                                                        bool read, bool write,
                                                        uint32_t hw_index)
 {
@@ -1344,7 +1354,7 @@ RegisterContext_x86_64::SetHardwareWatchpointWithIndex(addr_t addr, size_t size,
 }
 
 bool
-RegisterContext_x86_64::ClearHardwareWatchpoint(uint32_t hw_index)
+RegisterContextPOSIX_x86_64::ClearHardwareWatchpoint(uint32_t hw_index)
 {
     if (hw_index < NumSupportedHardwareWatchpoints())
     {
@@ -1363,7 +1373,7 @@ RegisterContext_x86_64::ClearHardwareWatchpoint(uint32_t hw_index)
 }
 
 bool
-RegisterContext_x86_64::IsWatchpointHit(uint32_t hw_index)
+RegisterContextPOSIX_x86_64::IsWatchpointHit(uint32_t hw_index)
 {
     bool is_hit = false;
 
@@ -1391,7 +1401,7 @@ RegisterContext_x86_64::IsWatchpointHit(uint32_t hw_index)
 }
 
 addr_t
-RegisterContext_x86_64::GetWatchpointAddress(uint32_t hw_index)
+RegisterContextPOSIX_x86_64::GetWatchpointAddress(uint32_t hw_index)
 {
     addr_t wp_monitor_addr = LLDB_INVALID_ADDRESS;
 
@@ -1411,13 +1421,13 @@ RegisterContext_x86_64::GetWatchpointAddress(uint32_t hw_index)
 
 
 bool
-RegisterContext_x86_64::ClearWatchpointHits()
+RegisterContextPOSIX_x86_64::ClearWatchpointHits()
 {
     return WriteRegister(dr6, RegisterValue((uint64_t)0));
 }
 
 bool
-RegisterContext_x86_64::HardwareSingleStep(bool enable)
+RegisterContextPOSIX_x86_64::HardwareSingleStep(bool enable)
 {
     enum { TRACE_BIT = 0x100 };
     uint64_t rflags;
@@ -1442,122 +1452,3 @@ RegisterContext_x86_64::HardwareSingleStep(bool enable)
 
     return WriteRegisterFromUnsigned(gpr_rflags, rflags);
 }
-
-#if defined(__linux__) or defined(__FreeBSD__)
-
-ProcessMonitor &
-RegisterContext_x86_64::GetMonitor()
-{
-    ProcessSP base = CalculateProcess();
-    ProcessPOSIX *process = static_cast<ProcessPOSIX*>(base.get());
-    return process->GetMonitor();
-}
-
-bool
-RegisterContext_x86_64::ReadGPR()
-{
-     ProcessMonitor &monitor = GetMonitor();
-     return monitor.ReadGPR(m_thread.GetID(), &m_gpr, GetGPRSize());
-}
-
-bool
-RegisterContext_x86_64::ReadFPR()
-{
-    ProcessMonitor &monitor = GetMonitor();
-    if (m_fpr_type == eFXSAVE)
-        return monitor.ReadFPR(m_thread.GetID(), &m_fpr.xstate.fxsave, sizeof(m_fpr.xstate.fxsave));
-
-    if (m_fpr_type == eXSAVE)
-        return monitor.ReadRegisterSet(m_thread.GetID(), &m_iovec, sizeof(m_fpr.xstate.xsave), NT_X86_XSTATE);
-    return false;
-}
-
-bool
-RegisterContext_x86_64::WriteGPR()
-{
-    ProcessMonitor &monitor = GetMonitor();
-    return monitor.WriteGPR(m_thread.GetID(), &m_gpr, GetGPRSize());
-}
-
-bool
-RegisterContext_x86_64::WriteFPR()
-{
-    ProcessMonitor &monitor = GetMonitor();
-    if (m_fpr_type == eFXSAVE)
-        return monitor.WriteFPR(m_thread.GetID(), &m_fpr.xstate.fxsave, sizeof(m_fpr.xstate.fxsave));
-
-    if (m_fpr_type == eXSAVE)
-        return monitor.WriteRegisterSet(m_thread.GetID(), &m_iovec, sizeof(m_fpr.xstate.xsave), NT_X86_XSTATE);
-    return false;
-}
-
-bool
-RegisterContext_x86_64::ReadRegister(const unsigned reg,
-                                     RegisterValue &value)
-{
-    ProcessMonitor &monitor = GetMonitor();
-    return monitor.ReadRegisterValue(m_thread.GetID(),
-                                     GetRegisterOffset(reg),
-                                     GetRegisterName(reg),
-                                     GetRegisterSize(reg),
-                                     value);
-}
-
-bool
-RegisterContext_x86_64::WriteRegister(const unsigned reg,
-                                      const RegisterValue &value)
-{
-    ProcessMonitor &monitor = GetMonitor();
-    return monitor.WriteRegisterValue(m_thread.GetID(),
-                                      GetRegisterOffset(reg),
-                                      GetRegisterName(reg),
-                                      value);
-}
-
-#else
-
-bool
-RegisterContext_x86_64::ReadGPR()
-{
-    llvm_unreachable("not implemented");
-    return false;
-}
-
-bool
-RegisterContext_x86_64::ReadFPR()
-{
-    llvm_unreachable("not implemented");
-    return false;
-}
-
-bool
-RegisterContext_x86_64::WriteGPR()
-{
-    llvm_unreachable("not implemented");
-    return false;
-}
-
-bool
-RegisterContext_x86_64::WriteFPR()
-{
-    llvm_unreachable("not implemented");
-    return false;
-}
-
-bool
-RegisterContext_x86_64::ReadRegister(const unsigned reg,
-                                     RegisterValue &value)
-{
-    llvm_unreachable("not implemented");
-    return false;
-}
-
-bool
-RegisterContext_x86_64::WriteRegister(const unsigned reg,
-                                      const RegisterValue &value)
-{
-    llvm_unreachable("not implemented");
-    return false;
-}
-
-#endif
