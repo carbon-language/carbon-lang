@@ -449,3 +449,43 @@ store:
 exit:
   ret void
 }
+
+; Check that we can fold an SHL into a TMxx mask.
+define void @f24(i32 %a) {
+; CHECK-LABEL: f24:
+; CHECK: tmll %r2, 255
+; CHECK: jne {{\.L.*}}
+; CHECK: br %r14
+entry:
+  %shl = shl i32 %a, 12
+  %and = and i32 %shl, 1044480
+  %cmp = icmp ne i32 %and, 0
+  br i1 %cmp, label %exit, label %store
+
+store:
+  store i32 1, i32 *@g
+  br label %exit
+
+exit:
+  ret void
+}
+
+; Check that we can fold an SHR into a TMxx mask.
+define void @f25(i32 %a) {
+; CHECK-LABEL: f25:
+; CHECK: tmlh %r2, 512
+; CHECK: jne {{\.L.*}}
+; CHECK: br %r14
+entry:
+  %shr = lshr i32 %a, 25
+  %and = and i32 %shr, 1
+  %cmp = icmp ne i32 %and, 0
+  br i1 %cmp, label %exit, label %store
+
+store:
+  store i32 1, i32 *@g
+  br label %exit
+
+exit:
+  ret void
+}

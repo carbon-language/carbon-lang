@@ -1135,16 +1135,36 @@ static bool shouldSwapCmpOperands(SDValue Op0, SDValue Op1,
   return false;
 }
 
-// Check whether the CC value produced by TEST UNDER MASK is descriptive
-// enough to handle an AND with Mask followed by a comparison of type Opcode
-// with CmpVal.  CCMask says which comparison result is being tested and
-// BitSize is the number of bits in the operands.  Return the CC mask that
-// should be used for the TEST UNDER MASK result, or 0 if the condition is
-// too complex.
+// Return true if shift operation N has an in-range constant shift value.
+// Store it in ShiftVal if so.
+static bool isSimpleShift(SDValue N, unsigned &ShiftVal) {
+  ConstantSDNode *Shift = dyn_cast<ConstantSDNode>(N.getOperand(1));
+  if (!Shift)
+    return false;
+
+  uint64_t Amount = Shift->getZExtValue();
+  if (Amount >= N.getValueType().getSizeInBits())
+    return false;
+
+  ShiftVal = Amount;
+  return true;
+}
+
+// Check whether an AND with Mask is suitable for a TEST UNDER MASK
+// instruction and whether the CC value is descriptive enough to handle
+// a comparison of type Opcode between the AND result and CmpVal.
+// CCMask says which comparison result is being tested and BitSize is
+// the number of bits in the operands.  If TEST UNDER MASK can be used,
+// return the corresponding CC mask, otherwise return 0.
 static unsigned getTestUnderMaskCond(unsigned BitSize, unsigned CCMask,
                                      uint64_t Mask, uint64_t CmpVal,
                                      unsigned ICmpType) {
   assert(Mask != 0 && "ANDs with zero should have been removed by now");
+
+  // Check whether the mask is suitable for TMHH, TMHL, TMLH or TMLL.
+  if (!SystemZ::isImmLL(Mask) && !SystemZ::isImmLH(Mask) &&
+      !SystemZ::isImmHL(Mask) && !SystemZ::isImmHH(Mask))
+    return 0;
 
   // Work out the masks for the lowest and highest bits.
   unsigned HighShift = 63 - countLeadingZeros(Mask);
@@ -1230,13 +1250,15 @@ static unsigned getTestUnderMaskCond(unsigned BitSize, unsigned CCMask,
 // implemented as a TEST UNDER MASK instruction when the condition being
 // tested is as described by CCValid and CCMask.  Update the arguments
 // with the TM version if so.
-static void adjustForTestUnderMask(unsigned &Opcode, SDValue &CmpOp0,
-                                   SDValue &CmpOp1, unsigned &CCValid,
-                                   unsigned &CCMask, unsigned &ICmpType) {
+static void adjustForTestUnderMask(SelectionDAG &DAG, unsigned &Opcode,
+                                   SDValue &CmpOp0, SDValue &CmpOp1,
+                                   unsigned &CCValid, unsigned &CCMask,
+                                   unsigned &ICmpType) {
   // Check that we have a comparison with a constant.
   ConstantSDNode *ConstCmpOp1 = dyn_cast<ConstantSDNode>(CmpOp1);
   if (!ConstCmpOp1)
     return;
+  uint64_t CmpVal = ConstCmpOp1->getZExtValue();
 
   // Check whether the nonconstant input is an AND with a constant mask.
   if (CmpOp0.getOpcode() != ISD::AND)
@@ -1246,21 +1268,35 @@ static void adjustForTestUnderMask(unsigned &Opcode, SDValue &CmpOp0,
   ConstantSDNode *Mask = dyn_cast<ConstantSDNode>(AndOp1.getNode());
   if (!Mask)
     return;
-
-  // Check whether the mask is suitable for TMHH, TMHL, TMLH or TMLL.
   uint64_t MaskVal = Mask->getZExtValue();
-  if (!SystemZ::isImmLL(MaskVal) && !SystemZ::isImmLH(MaskVal) &&
-      !SystemZ::isImmHL(MaskVal) && !SystemZ::isImmHH(MaskVal))
-    return;
 
   // Check whether the combination of mask, comparison value and comparison
   // type are suitable.
   unsigned BitSize = CmpOp0.getValueType().getSizeInBits();
-  unsigned NewCCMask = getTestUnderMaskCond(BitSize, CCMask, MaskVal,
-                                            ConstCmpOp1->getZExtValue(),
-                                            ICmpType);
-  if (!NewCCMask)
-    return;
+  unsigned NewCCMask, ShiftVal;
+  if (ICmpType != SystemZICMP::SignedOnly &&
+      AndOp0.getOpcode() == ISD::SHL &&
+      isSimpleShift(AndOp0, ShiftVal) &&
+      (NewCCMask = getTestUnderMaskCond(BitSize, CCMask, MaskVal >> ShiftVal,
+                                        CmpVal >> ShiftVal,
+                                        SystemZICMP::Any))) {
+    AndOp0 = AndOp0.getOperand(0);
+    AndOp1 = DAG.getConstant(MaskVal >> ShiftVal, AndOp0.getValueType());
+  } else if (ICmpType != SystemZICMP::SignedOnly &&
+             AndOp0.getOpcode() == ISD::SRL &&
+             isSimpleShift(AndOp0, ShiftVal) &&
+             (NewCCMask = getTestUnderMaskCond(BitSize, CCMask,
+                                               MaskVal << ShiftVal,
+                                               CmpVal << ShiftVal,
+                                               SystemZICMP::UnsignedOnly))) {
+    AndOp0 = AndOp0.getOperand(0);
+    AndOp1 = DAG.getConstant(MaskVal << ShiftVal, AndOp0.getValueType());
+  } else {
+    NewCCMask = getTestUnderMaskCond(BitSize, CCMask, MaskVal, CmpVal,
+                                     ICmpType);
+    if (!NewCCMask)
+      return;
+  }
 
   // Go ahead and make the change.
   Opcode = SystemZISD::TM;
@@ -1316,7 +1352,8 @@ static SDValue emitCmp(const SystemZTargetMachine &TM, SelectionDAG &DAG,
               (CCMask & SystemZ::CCMASK_CMP_UO));
   }
 
-  adjustForTestUnderMask(Opcode, CmpOp0, CmpOp1, CCValid, CCMask, ICmpType);
+  adjustForTestUnderMask(DAG, Opcode, CmpOp0, CmpOp1, CCValid, CCMask,
+                         ICmpType);
   if (Opcode == SystemZISD::ICMP || Opcode == SystemZISD::TM)
     return DAG.getNode(Opcode, DL, MVT::Glue, CmpOp0, CmpOp1,
                        DAG.getConstant(ICmpType, MVT::i32));
