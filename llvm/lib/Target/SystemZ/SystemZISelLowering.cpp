@@ -1387,14 +1387,8 @@ static void lowerGR128Binary(SelectionDAG &DAG, SDLoc DL, EVT VT,
   SDValue Result = DAG.getNode(Opcode, DL, MVT::Untyped,
                                SDValue(In128, 0), Op1);
   bool Is32Bit = is32Bit(VT);
-  SDValue SubReg0 = DAG.getTargetConstant(SystemZ::even128(Is32Bit), VT);
-  SDValue SubReg1 = DAG.getTargetConstant(SystemZ::odd128(Is32Bit), VT);
-  SDNode *Reg0 = DAG.getMachineNode(TargetOpcode::EXTRACT_SUBREG, DL,
-                                    VT, Result, SubReg0);
-  SDNode *Reg1 = DAG.getMachineNode(TargetOpcode::EXTRACT_SUBREG, DL,
-                                    VT, Result, SubReg1);
-  Even = SDValue(Reg0, 0);
-  Odd = SDValue(Reg1, 0);
+  Even = DAG.getTargetExtractSubreg(SystemZ::even128(Is32Bit), DL, VT, Result);
+  Odd = DAG.getTargetExtractSubreg(SystemZ::odd128(Is32Bit), DL, VT, Result);
 }
 
 SDValue SystemZTargetLowering::lowerBR_CC(SDValue Op, SelectionDAG &DAG) const {
@@ -1559,21 +1553,19 @@ SDValue SystemZTargetLowering::lowerBITCAST(SDValue Op,
   EVT InVT = In.getValueType();
   EVT ResVT = Op.getValueType();
 
-  SDValue SubReg32 = DAG.getTargetConstant(SystemZ::subreg_32bit, MVT::i64);
   SDValue Shift32 = DAG.getConstant(32, MVT::i64);
   if (InVT == MVT::i32 && ResVT == MVT::f32) {
     SDValue In64 = DAG.getNode(ISD::ANY_EXTEND, DL, MVT::i64, In);
     SDValue Shift = DAG.getNode(ISD::SHL, DL, MVT::i64, In64, Shift32);
     SDValue Out64 = DAG.getNode(ISD::BITCAST, DL, MVT::f64, Shift);
-    SDNode *Out = DAG.getMachineNode(TargetOpcode::EXTRACT_SUBREG, DL,
-                                     MVT::f32, Out64, SubReg32);
-    return SDValue(Out, 0);
+    return DAG.getTargetExtractSubreg(SystemZ::subreg_32bit,
+                                      DL, MVT::f32, Out64);
   }
   if (InVT == MVT::f32 && ResVT == MVT::i32) {
     SDNode *U64 = DAG.getMachineNode(TargetOpcode::IMPLICIT_DEF, DL, MVT::f64);
-    SDNode *In64 = DAG.getMachineNode(TargetOpcode::INSERT_SUBREG, DL,
-                                      MVT::f64, SDValue(U64, 0), In, SubReg32);
-    SDValue Out64 = DAG.getNode(ISD::BITCAST, DL, MVT::i64, SDValue(In64, 0));
+    SDValue In64 = DAG.getTargetInsertSubreg(SystemZ::subreg_32bit, DL,
+                                             MVT::f64, SDValue(U64, 0), In);
+    SDValue Out64 = DAG.getNode(ISD::BITCAST, DL, MVT::i64, In64);
     SDValue Shift = DAG.getNode(ISD::SRL, DL, MVT::i64, Out64, Shift32);
     SDValue Out = DAG.getNode(ISD::TRUNCATE, DL, MVT::i32, Shift);
     return Out;
@@ -1817,10 +1809,8 @@ SDValue SystemZTargetLowering::lowerOR(SDValue Op, SelectionDAG &DAG) const {
   // can be folded.
   SDLoc DL(Op);
   SDValue Low32 = DAG.getNode(ISD::TRUNCATE, DL, MVT::i32, LowOp);
-  SDValue SubReg32 = DAG.getTargetConstant(SystemZ::subreg_32bit, MVT::i64);
-  SDNode *Result = DAG.getMachineNode(TargetOpcode::INSERT_SUBREG, DL,
-                                      MVT::i64, HighOp, Low32, SubReg32);
-  return SDValue(Result, 0);
+  return DAG.getTargetInsertSubreg(SystemZ::subreg_32bit, DL,
+                                   MVT::i64, HighOp, Low32);
 }
 
 // Op is an 8-, 16-bit or 32-bit ATOMIC_LOAD_* operation.  Lower the first

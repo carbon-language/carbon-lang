@@ -814,18 +814,11 @@ SDValue SystemZDAGToDAGISel::getUNDEF64(SDLoc DL) {
 }
 
 SDValue SystemZDAGToDAGISel::convertTo(SDLoc DL, EVT VT, SDValue N) {
-  if (N.getValueType() == MVT::i32 && VT == MVT::i64) {
-    SDValue Index = CurDAG->getTargetConstant(SystemZ::subreg_32bit, MVT::i64);
-    SDNode *Insert = CurDAG->getMachineNode(TargetOpcode::INSERT_SUBREG,
-                                            DL, VT, getUNDEF64(DL), N, Index);
-    return SDValue(Insert, 0);
-  }
-  if (N.getValueType() == MVT::i64 && VT == MVT::i32) {
-    SDValue Index = CurDAG->getTargetConstant(SystemZ::subreg_32bit, MVT::i64);
-    SDNode *Extract = CurDAG->getMachineNode(TargetOpcode::EXTRACT_SUBREG,
-                                             DL, VT, N, Index);
-    return SDValue(Extract, 0);
-  }
+  if (N.getValueType() == MVT::i32 && VT == MVT::i64)
+    return CurDAG->getTargetInsertSubreg(SystemZ::subreg_32bit,
+                                         DL, VT, getUNDEF64(DL), N);
+  if (N.getValueType() == MVT::i64 && VT == MVT::i32)
+    return CurDAG->getTargetExtractSubreg(SystemZ::subreg_32bit, DL, VT, N);
   assert(N.getValueType() == VT && "Unexpected value types");
   return N;
 }
