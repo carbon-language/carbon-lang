@@ -1755,15 +1755,33 @@ void CXXNameMangler::mangleQualifiers(Qualifiers Quals) {
     Out << 'K';
 
   if (Quals.hasAddressSpace()) {
-    // Extension:
+    // Address space extension:
     //
-    //   <type> ::= U <address-space-number>
-    // 
-    // where <address-space-number> is a source name consisting of 'AS' 
-    // followed by the address space <number>.
+    //   <type> ::= U <target-addrspace>
+    //   <type> ::= U <OpenCL-addrspace>
+    //   <type> ::= U <CUDA-addrspace>
+
     SmallString<64> ASString;
-    ASString = "AS" + llvm::utostr_32(
-        Context.getASTContext().getTargetAddressSpace(Quals.getAddressSpace()));
+    unsigned AS = Quals.getAddressSpace();
+    bool IsLangAS = (LangAS::Offset <= AS) && (AS < LangAS::Last);
+
+    if (Context.getASTContext().addressSpaceMapManglingFor(AS)) {
+      //  <target-addrspace> ::= "AS" <address-space-number>
+      unsigned TargetAS = Context.getASTContext().getTargetAddressSpace(AS);
+      ASString = "AS" + llvm::utostr_32(TargetAS);
+    } else {
+      switch (AS) {
+      default: llvm_unreachable("Not a language specific address space");
+      //  <OpenCL-addrspace> ::= "CL" [ "global" | "local" | "constant" ]
+      case LangAS::opencl_global:   ASString = "CLglobal";   break;
+      case LangAS::opencl_local:    ASString = "CLlocal";    break;
+      case LangAS::opencl_constant: ASString = "CLconstant"; break;
+      //  <CUDA-addrspace> ::= "CU" [ "device" | "constant" | "shared" ]
+      case LangAS::cuda_device:     ASString = "CUdevice";   break;
+      case LangAS::cuda_constant:   ASString = "CUconstant"; break;
+      case LangAS::cuda_shared:     ASString = "CUshared";   break;
+      }
+    }
     Out << 'U' << ASString.size() << ASString;
   }
   

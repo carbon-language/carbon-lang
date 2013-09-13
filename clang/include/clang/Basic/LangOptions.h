@@ -66,6 +66,8 @@ public:
     SOB_Trapping    // -ftrapv
   };
 
+  enum AddrSpaceMapMangling { ASMM_Target, ASMM_On, ASMM_Off };
+
 public:
   clang::ObjCRuntime ObjCRuntime;
 

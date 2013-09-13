@@ -88,6 +88,7 @@ TargetInfo::TargetInfo(const llvm::Triple &T) : TargetOpts(), Triple(T) {
 
   // Default to an empty address space map.
   AddrSpaceMap = &DefaultAddrSpaceMap;
+  UseAddrSpaceMapMangling = false;
 
   // Default to an unknown platform name.
   PlatformName = "unknown";

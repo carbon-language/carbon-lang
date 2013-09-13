@@ -695,6 +695,19 @@ static const LangAS::Map *getAddressSpaceMap(const TargetInfo &T,
   }
 }
 
+static bool isAddrSpaceMapManglingEnabled(const TargetInfo &TI,
+                                          const LangOptions &LangOpts) {
+  switch (LangOpts.getAddressSpaceMapMangling()) {
+  default: return false;
+  case LangOptions::ASMM_Target:
+    return TI.useAddressSpaceMapMangling();
+  case LangOptions::ASMM_On:
+    return true;
+  case LangOptions::ASMM_Off:
+    return false;
+  }
+}
+
 ASTContext::ASTContext(LangOptions& LOpts, SourceManager &SM,
                        const TargetInfo *t,
                        IdentifierTable &idents, SelectorTable &sels,
@@ -900,6 +913,7 @@ void ASTContext::InitBuiltinTypes(const TargetInfo &Target) {
   
   ABI.reset(createCXXABI(Target));
   AddrSpaceMap = getAddressSpaceMap(Target, LangOpts);
+  AddrSpaceMapMangling = isAddrSpaceMapManglingEnabled(Target, LangOpts);
   
   // C99 6.2.5p19.
   InitBuiltinType(VoidTy,              BuiltinType::Void);

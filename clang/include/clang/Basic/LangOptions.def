@@ -142,6 +142,7 @@ LANGOPT(HexagonQdsp6Compat , 1, 0, "hexagon-qdsp6 backward compatibility")
 LANGOPT(ObjCAutoRefCount , 1, 0, "Objective-C automated reference counting")
 LANGOPT(ObjCARCWeak         , 1, 0, "__weak support in the ARC runtime")
 LANGOPT(FakeAddressSpaceMap , 1, 0, "OpenCL fake address space map")
+ENUM_LANGOPT(AddressSpaceMapMangling , AddrSpaceMapMangling, 2, ASMM_Target, "OpenCL address space map mangling mode")
 
 LANGOPT(MRTD , 1, 0, "-mrtd calling convention")
 BENIGN_LANGOPT(DelayedTemplateParsing , 1, 0, "delayed template parsing")

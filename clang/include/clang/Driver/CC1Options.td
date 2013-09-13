@@ -460,6 +460,8 @@ def fno_bitfield_type_align : Flag<["-"], "fno-bitfield-type-align">,
   HelpText<"Ignore bit-field types when aligning structures">;
 def ffake_address_space_map : Flag<["-"], "ffake-address-space-map">,
   HelpText<"Use a fake address space map; OpenCL testing purposes only">;
+def faddress_space_map_mangling_EQ : Joined<["-"], "faddress-space-map-mangling=">, MetaVarName<"<yes|no|target>">,
+  HelpText<"Set the mode for address space map based mangling; OpenCL testing purposes only">;
 def funknown_anytype : Flag<["-"], "funknown-anytype">,
   HelpText<"Enable parser support for the __unknown_anytype type; for testing purposes only">;
 def fdebugger_support : Flag<["-"], "fdebugger-support">,

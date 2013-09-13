@@ -1329,6 +1329,28 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   Opts.ApplePragmaPack = Args.hasArg(OPT_fapple_pragma_pack);
   Opts.CurrentModule = Args.getLastArgValue(OPT_fmodule_name);
 
+  if (Arg *A = Args.getLastArg(OPT_faddress_space_map_mangling_EQ)) {
+    switch (llvm::StringSwitch<unsigned>(A->getValue())
+      .Case("target", LangOptions::ASMM_Target)
+      .Case("no", LangOptions::ASMM_Off)
+      .Case("yes", LangOptions::ASMM_On)
+      .Default(255)) {
+    default:
+      Diags.Report(diag::err_drv_invalid_value) 
+        << "-faddress-space-map-mangling=" << A->getValue();
+      break;
+    case LangOptions::ASMM_Target:
+      Opts.setAddressSpaceMapMangling(LangOptions::ASMM_Target);
+      break;
+    case LangOptions::ASMM_On:
+      Opts.setAddressSpaceMapMangling(LangOptions::ASMM_On);
+      break;
+    case LangOptions::ASMM_Off:
+      Opts.setAddressSpaceMapMangling(LangOptions::ASMM_Off);
+      break;
+    }
+  }
+
   // Check if -fopenmp is specified.
   Opts.OpenMP = Args.hasArg(OPT_fopenmp);
 

@@ -393,6 +393,10 @@ private:
   /// \brief The logical -> physical address space map.
   const LangAS::Map *AddrSpaceMap;
 
+  /// \brief Address space map mangling must be used with language specific 
+  /// address spaces (e.g. OpenCL/CUDA)
+  bool AddrSpaceMapMangling;
+
   friend class ASTDeclReader;
   friend class ASTReader;
   friend class ASTWriter;
@@ -1918,6 +1922,12 @@ public:
       return AS;
     else
       return (*AddrSpaceMap)[AS - LangAS::Offset];
+  }
+
+  bool addressSpaceMapManglingFor(unsigned AS) const {
+    return AddrSpaceMapMangling || 
+           AS < LangAS::Offset || 
+           AS >= LangAS::Offset + LangAS::Count;
   }
 
 private:
