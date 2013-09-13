@@ -211,9 +211,11 @@ DynamicLoaderPOSIXDYLD::CanLoadImage()
 void
 DynamicLoaderPOSIXDYLD::UpdateLoadedSections(ModuleSP module, addr_t base_addr)
 {
-    ObjectFile *obj_file = module->GetObjectFile();
-    SectionList *sections = obj_file->GetSectionList();
     SectionLoadList &load_list = m_process->GetTarget().GetSectionLoadList();
+    const SectionList *sections = GetSectionListFromModule(module);
+
+    assert(sections && "SectionList missing from loaded module.");
+
     const size_t num_sections = sections->GetSize();
 
     for (unsigned i = 0; i < num_sections; ++i)
@@ -230,6 +232,22 @@ DynamicLoaderPOSIXDYLD::UpdateLoadedSections(ModuleSP module, addr_t base_addr)
         if (old_load_addr == LLDB_INVALID_ADDRESS ||
             old_load_addr != new_load_addr)
             load_list.SetSectionLoadAddress(section_sp, new_load_addr);
+    }
+}
+
+void
+DynamicLoaderPOSIXDYLD::UnloadSections(const ModuleSP module)
+{
+    SectionLoadList &load_list = m_process->GetTarget().GetSectionLoadList();
+    const SectionList *sections = GetSectionListFromModule(module);
+
+    assert(sections && "SectionList missing from unloaded module.");
+
+    const size_t num_sections = sections->GetSize();
+    for (auto i = 0; i < num_sections; ++i)
+    {
+        SectionSP section_sp (sections->GetSectionAtIndex(i));
+        load_list.SetSectionUnloaded(section_sp);
     }
 }
 
@@ -321,8 +339,12 @@ DynamicLoaderPOSIXDYLD::RefreshModules()
             FileSpec file(I->path.c_str(), true);
             ModuleSP module_sp = LoadModuleAtAddress(file, I->base_addr);
             if (module_sp.get())
+            {
                 loaded_modules.AppendIfNeeded(module_sp);
+                new_modules.Append(module_sp);
+            }
         }
+        m_process->GetTarget().ModulesDidLoad(new_modules);
     }
     
     if (m_rendezvous.ModulesDidUnload())
@@ -336,10 +358,15 @@ DynamicLoaderPOSIXDYLD::RefreshModules()
             ModuleSpec module_spec (file);
             ModuleSP module_sp = 
                 loaded_modules.FindFirstModule (module_spec);
+
             if (module_sp.get())
+            {
                 old_modules.Append(module_sp);
+                UnloadSections(module_sp);
+            }
         }
         loaded_modules.Remove(old_modules);
+        m_process->GetTarget().ModulesDidUnload(old_modules);
     }
 }
 
@@ -478,4 +505,19 @@ DynamicLoaderPOSIXDYLD::GetEntryPoint()
 
     m_entry_point = static_cast<addr_t>(I->value);
     return m_entry_point;
+}
+
+const SectionList *
+DynamicLoaderPOSIXDYLD::GetSectionListFromModule(const ModuleSP module) const
+{
+    SectionList *sections = nullptr;
+    if (module.get())
+    {
+        ObjectFile *obj_file = module->GetObjectFile();
+        if (obj_file)
+        {
+            sections = obj_file->GetSectionList();
+        }
+    }
+    return sections;
 }

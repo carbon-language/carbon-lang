@@ -122,6 +122,12 @@ protected:
     UpdateLoadedSections(lldb::ModuleSP module, 
                          lldb::addr_t base_addr = 0);
 
+    /// Removes the loaded sections from the target in @p module.
+    ///
+    /// @param module The module to traverse.
+    void
+    UnloadSections(const lldb::ModuleSP module);
+
     /// Locates or creates a module given by @p file and updates/loads the
     /// resulting module at the virtual base address @p base_addr.
     lldb::ModuleSP
@@ -165,6 +171,9 @@ protected:
 
 private:
     DISALLOW_COPY_AND_ASSIGN(DynamicLoaderPOSIXDYLD);
+
+    const lldb_private::SectionList *
+    GetSectionListFromModule(const lldb::ModuleSP module) const;
 };
 
 #endif  // liblldb_DynamicLoaderPOSIXDYLD_H_
