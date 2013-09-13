@@ -37,7 +37,7 @@ void f2_test(char16 c16, longlong16 ll16, char16_e c16e, longlong16_e ll16e) {
 }
 
 // Test the conditional operator with vector types.
-void conditional(bool Cond, char16 c16, longlong16 ll16, char16_e c16e, 
+void conditional(bool Cond, char16 c16, longlong16 ll16, char16_e c16e,
                  longlong16_e ll16e) {
   // Conditional operators with the same type.
   __typeof__(Cond? c16 : c16) *c16p1 = &c16;
@@ -105,11 +105,11 @@ struct convertible_to { // expected-note 3 {{candidate function (the implicit co
   operator T() const;
 };
 
-void test_implicit_conversions(bool Cond, char16 c16, longlong16 ll16, 
+void test_implicit_conversions(bool Cond, char16 c16, longlong16 ll16,
                                char16_e c16e, longlong16_e ll16e,
-                               convertible_to<char16> to_c16, 
-                               convertible_to<longlong16> to_ll16, 
-                               convertible_to<char16_e> to_c16e, 
+                               convertible_to<char16> to_c16,
+                               convertible_to<longlong16> to_ll16,
+                               convertible_to<char16_e> to_c16e,
                                convertible_to<longlong16_e> to_ll16e,
                                convertible_to<char16&> rto_c16,
                                convertible_to<char16_e&> rto_c16e) {
@@ -183,7 +183,7 @@ void test_implicit_conversions(bool Cond, char16 c16, longlong16 ll16,
 
   (void)(Cond? to_c16 : to_c16e);
   (void)(Cond? to_ll16e : to_ll16);
-  
+
   // These 2 are convertable with -flax-vector-conversions (default)
   (void)(Cond? to_c16 : to_ll16);
   (void)(Cond? to_c16e : to_ll16e);
@@ -282,3 +282,6 @@ void test_pseudo_dtor(fltx4 *f) {
 // PR16204
 typedef __attribute__((ext_vector_type(4))) int vi4;
 const int &reference_to_vec_element = vi4(1).x;
+
+// PR12649
+typedef bool bad __attribute__((__vector_size__(16)));  // expected-error {{invalid vector element type 'bool'}}
