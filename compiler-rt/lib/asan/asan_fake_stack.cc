@@ -129,7 +129,7 @@ static FakeStack *GetFakeStack() {
 }
 
 static FakeStack *GetFakeStackFast() {
-#if SANITIZER_LINUX
+#if 0 && SANITIZER_LINUX  // breaks with signals...
   static THREADLOCAL FakeStack *fake_stack;
   if (!fake_stack)
     fake_stack = GetFakeStack();
