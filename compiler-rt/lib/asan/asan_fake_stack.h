@@ -24,8 +24,7 @@ struct FakeFrame {
   uptr magic;  // Modified by the instrumented code.
   uptr descr;  // Modified by the instrumented code.
   uptr pc;     // Modified by the instrumented code.
-  u64 real_stack : 48;
-  u64 class_id : 16;
+  uptr real_stack;
 };
 
 // For each thread we create a fake stack and place stack objects on this fake

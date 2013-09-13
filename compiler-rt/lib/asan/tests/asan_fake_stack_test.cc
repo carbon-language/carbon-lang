@@ -21,7 +21,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include <set>
+#include <map>
 
 namespace __asan {
 
@@ -104,7 +104,7 @@ TEST(FakeStack, GetFrame) {
 TEST(FakeStack, Allocate) {
   const uptr stack_size_log = 19;
   FakeStack *fs = FakeStack::Create(stack_size_log);
-  std::set<FakeFrame *> s;
+  std::map<FakeFrame *, uptr> s;
   for (int iter = 0; iter < 2; iter++) {
     s.clear();
     for (uptr cid = 0; cid < FakeStack::kNumberOfSizeClasses; cid++) {
@@ -113,7 +113,7 @@ TEST(FakeStack, Allocate) {
       for (uptr j = 0; j < n; j++) {
         FakeFrame *ff = fs->Allocate(stack_size_log, cid, 0);
         uptr x = reinterpret_cast<uptr>(ff);
-        EXPECT_TRUE(s.insert(ff).second);
+        EXPECT_TRUE(s.insert(std::make_pair(ff, cid)).second);
         EXPECT_EQ(x, fs->AddrIsInFakeStack(x));
         EXPECT_EQ(x, fs->AddrIsInFakeStack(x + 1));
         EXPECT_EQ(x, fs->AddrIsInFakeStack(x + bytes_in_class - 1));
@@ -126,9 +126,9 @@ TEST(FakeStack, Allocate) {
                      "Failed to allocate a fake stack frame");
       }
     }
-    for (std::set<FakeFrame *>::iterator it = s.begin(); it != s.end(); ++it) {
-      FakeFrame *ff = *it;
-      fs->Deallocate(ff, stack_size_log, ff->class_id, 0);
+    for (std::map<FakeFrame *, uptr>::iterator it = s.begin(); it != s.end();
+         ++it) {
+      fs->Deallocate(it->first, stack_size_log, it->second, 0);
     }
   }
   fs->Destroy();

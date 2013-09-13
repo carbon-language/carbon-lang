@@ -63,7 +63,6 @@ FakeFrame *FakeStack::Allocate(uptr stack_size_log, uptr class_id,
     FakeFrame *res = reinterpret_cast<FakeFrame *>(
         GetFrame(stack_size_log, class_id, pos));
     res->real_stack = real_stack;
-    res->class_id = class_id;
     return res;
   }
   CHECK(0 && "Failed to allocate a fake stack frame");
