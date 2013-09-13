@@ -1,4 +1,4 @@
-
+// REQUIRES: native
 // RUN: %clang -x objective-c-header %S/Inputs/cindex-from-source.h -o %t.pfx.h.gch
 // RUN: c-index-test -test-load-source local %s -include %t.pfx.h > %t
 // RUN: FileCheck %s < %t

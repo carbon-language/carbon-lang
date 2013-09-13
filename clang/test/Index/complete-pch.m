@@ -11,6 +11,8 @@ void msg_id(id x) {
   [x instanceMethod1:5];
 }
 
+// REQUIRES: native
+
 // Build the precompiled header
 // RUN: %clang -x objective-c-header -o %t.h.pch %S/Inputs/complete-pch.h
 
