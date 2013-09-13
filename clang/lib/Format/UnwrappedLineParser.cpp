@@ -290,7 +290,7 @@ void UnwrappedLineParser::calculateBraceTypes() {
           //
           // We exclude + and - as they can be ObjC visibility modifiers.
           if (NextTok->isOneOf(tok::comma, tok::semi, tok::r_paren,
-                               tok::l_brace, tok::colon) ||
+                               tok::r_square, tok::l_brace, tok::colon) ||
               (NextTok->isBinaryOperator() &&
                !NextTok->isOneOf(tok::plus, tok::minus))) {
             Tok->BlockKind = BK_BracedInit;
