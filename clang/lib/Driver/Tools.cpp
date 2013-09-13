@@ -592,9 +592,9 @@ static void getFPUFeatures(const Driver &D, const Arg *A, const ArgList &Args,
     Features.push_back("+vfp3");
     Features.push_back("-neon");
   } else if (FPU == "fp-armv8") {
-    Features.push_back("+v8fp");
+    Features.push_back("+fp-armv8");
   } else if (FPU == "neon-fp-armv8") {
-    Features.push_back("+v8fp");
+    Features.push_back("+fp-armv8");
     Features.push_back("+neon");
   } else if (FPU == "neon") {
     Features.push_back("+neon");

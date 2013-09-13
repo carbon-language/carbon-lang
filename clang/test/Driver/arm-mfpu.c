@@ -49,11 +49,11 @@
 
 // RUN: %clang -target armv8-linux-gnueabihf -mfpu=fp-armv8 %s -### 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-FP-ARMV8 %s
-// CHECK-FP-ARMV8: "-target-feature" "+v8fp"
+// CHECK-FP-ARMV8: "-target-feature" "+fp-armv8"
 
 // RUN: %clang -target armv8-linux-gnueabihf -mfpu=neon-fp-armv8 %s -### 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-NEON-FP-ARMV8 %s
-// CHECK-NEON-FP-ARMV8: "-target-feature" "+v8fp"
+// CHECK-NEON-FP-ARMV8: "-target-feature" "+fp-armv8"
 // CHECK-NEON-FP-ARMV8: "-target-feature" "+neon"
 
 // RUN: %clang -target arm-linux-gnueabihf %s -### 2>&1 \
