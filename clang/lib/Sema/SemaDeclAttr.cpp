@@ -23,6 +23,7 @@
 #include "clang/Basic/CharInfo.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
+#include "clang/Lex/Preprocessor.h"
 #include "clang/Sema/DeclSpec.h"
 #include "clang/Sema/DelayedDiagnostic.h"
 #include "clang/Sema/Lookup.h"
@@ -1561,16 +1562,47 @@ static void handleWeakRefAttr(Sema &S, Decl *D, const AttributeList &Attr) {
                          Attr.getAttributeSpellingListIndex()));
 }
 
-static void handleAliasAttr(Sema &S, Decl *D, const AttributeList &Attr) {
-  StringLiteral *Str = 0;
-  if (Attr.isArgExpr(0))
-    Str = dyn_cast<StringLiteral>(Attr.getArgAsExpr(0)->IgnoreParenCasts());
-
-  if (!Str || !Str->isAscii()) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_argument_type)
-      << Attr.getName() << AANT_ArgumentString;
-    return;
+/// \brief Check if the argument \p ArgNum of \p Attr is a ASCII string literal.
+/// If not emit an error and return false. If the argument is an identifier it
+/// will emit an error with a fixit hint and treat it as if it was a string
+/// literal.
+static bool checkStringLiteralArgument(Sema &S, StringRef &Str,
+                                       const AttributeList &Attr,
+                                       unsigned ArgNum,
+                                       SourceLocation *ArgLocation = 0) {
+  // Look for identifiers. If we have one emit a hint to fix it to a literal.
+  if (Attr.isArgIdent(ArgNum)) {
+    IdentifierLoc *Loc = Attr.getArgAsIdent(ArgNum);
+    S.Diag(Loc->Loc, diag::err_attribute_argument_type)
+        << Attr.getName() << AANT_ArgumentString
+        << FixItHint::CreateInsertion(Loc->Loc, "\"")
+        << FixItHint::CreateInsertion(S.PP.getLocForEndOfToken(Loc->Loc), "\"");
+    Str = Loc->Ident->getName();
+    if (ArgLocation)
+      *ArgLocation = Loc->Loc;
+    return true;
   }
+
+  // Now check for an actual string literal.
+  Expr *ArgExpr = Attr.getArgAsExpr(ArgNum);
+  StringLiteral *Literal = dyn_cast<StringLiteral>(ArgExpr->IgnoreParenCasts());
+  if (ArgLocation)
+    *ArgLocation = ArgExpr->getLocStart();
+
+  if (!Literal || !Literal->isAscii()) {
+    S.Diag(ArgExpr->getLocStart(), diag::err_attribute_argument_type)
+        << Attr.getName() << AANT_ArgumentString;
+    return false;
+  }
+
+  Str = Literal->getString();
+  return true;
+}
+
+static void handleAliasAttr(Sema &S, Decl *D, const AttributeList &Attr) {
+  StringRef Str;
+  if (!checkStringLiteralArgument(S, Str, Attr, 0))
+    return;
 
   if (S.Context.getTargetInfo().getTriple().isOSDarwin()) {
     S.Diag(Attr.getLoc(), diag::err_alias_not_supported_on_darwin);
@@ -1579,8 +1611,7 @@ static void handleAliasAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 
   // FIXME: check if target symbol exists in current file
 
-  D->addAttr(::new (S.Context) AliasAttr(Attr.getRange(), S.Context,
-                                         Str->getString(),
+  D->addAttr(::new (S.Context) AliasAttr(Attr.getRange(), S.Context, Str,
                                          Attr.getAttributeSpellingListIndex()));
 }
 
@@ -1657,16 +1688,11 @@ static void handleAlwaysInlineAttr(Sema &S, Decl *D,
 
 static void handleTLSModelAttr(Sema &S, Decl *D,
                                const AttributeList &Attr) {
-  Expr *Arg = Attr.getArgAsExpr(0);
-  Arg = Arg->IgnoreParenCasts();
-  StringLiteral *Str = dyn_cast<StringLiteral>(Arg);
-
+  StringRef Model;
+  SourceLocation LiteralLoc;
   // Check that it is a string.
-  if (!Str) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_argument_type)
-      << Attr.getName() << AANT_ArgumentString;
+  if (!checkStringLiteralArgument(S, Model, Attr, 0, &LiteralLoc))
     return;
-  }
 
   if (!isa<VarDecl>(D) || !cast<VarDecl>(D)->getTLSKind()) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_decl_type)
@@ -1675,10 +1701,9 @@ static void handleTLSModelAttr(Sema &S, Decl *D,
   }
 
   // Check that the value.
-  StringRef Model = Str->getString();
   if (Model != "global-dynamic" && Model != "local-dynamic"
       && Model != "initial-exec" && Model != "local-exec") {
-    S.Diag(Attr.getLoc(), diag::err_attr_tlsmodel_arg);
+    S.Diag(LiteralLoc, diag::err_attr_tlsmodel_arg);
     return;
   }
 
@@ -1998,16 +2023,8 @@ static void handleAttrWithMessage(Sema &S, Decl *D,
 
   // Handle the case where the attribute has a text message.
   StringRef Str;
-  if (Attr.isArgExpr(0)) {
-    StringLiteral *SE = dyn_cast<StringLiteral>(Attr.getArgAsExpr(0));
-    if (!SE) {
-      S.Diag(Attr.getArgAsExpr(0)->getLocStart(),
-             diag::err_attribute_argument_type) << Attr.getName()
-        << AANT_ArgumentString;
-      return;
-    }
-    Str = SE->getString();
-  }
+  if (NumArgs == 1 && !checkStringLiteralArgument(S, Str, Attr, 0))
+    return;
 
   D->addAttr(::new (S.Context) AttrTy(Attr.getRange(), S.Context, Str,
                                       Attr.getAttributeSpellingListIndex()));
@@ -2316,20 +2333,14 @@ static void handleVisibilityAttr(Sema &S, Decl *D, const AttributeList &Attr,
   }
 
   // Check that the argument is a string literal.
-  StringLiteral *Str = 0;
-  if (Attr.isArgExpr(0))
-    Str = dyn_cast<StringLiteral>(Attr.getArgAsExpr(0)->IgnoreParenCasts());
-
-  if (!Str || !Str->isAscii()) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_argument_type)
-      << Attr.getName() << AANT_ArgumentString;
+  StringRef TypeStr;
+  SourceLocation LiteralLoc;
+  if (!checkStringLiteralArgument(S, TypeStr, Attr, 0, &LiteralLoc))
     return;
-  }
 
-  StringRef TypeStr = Str->getString();
   VisibilityAttr::VisibilityType type;
   if (!VisibilityAttr::ConvertStrToVisibilityType(TypeStr, type)) {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_type_not_supported)
+    S.Diag(LiteralLoc, diag::warn_attribute_type_not_supported)
       << Attr.getName() << TypeStr;
     return;
   }
@@ -2736,31 +2747,27 @@ SectionAttr *Sema::mergeSectionAttr(Decl *D, SourceRange Range,
 static void handleSectionAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   // Make sure that there is a string literal as the sections's single
   // argument.
-  Expr *ArgExpr = Attr.getArgAsExpr(0);
-  StringLiteral *SE = dyn_cast<StringLiteral>(ArgExpr);
-  if (!SE) {
-    S.Diag(ArgExpr->getLocStart(), diag::err_attribute_argument_type)
-      << Attr.getName() << AANT_ArgumentString;
+  StringRef Str;
+  SourceLocation LiteralLoc;
+  if (!checkStringLiteralArgument(S, Str, Attr, 0, &LiteralLoc))
     return;
-  }
 
   // If the target wants to validate the section specifier, make it happen.
-  std::string Error = S.Context.getTargetInfo().isValidSectionSpecifier(SE->getString());
+  std::string Error = S.Context.getTargetInfo().isValidSectionSpecifier(Str);
   if (!Error.empty()) {
-    S.Diag(SE->getLocStart(), diag::err_attribute_section_invalid_for_target)
+    S.Diag(LiteralLoc, diag::err_attribute_section_invalid_for_target)
     << Error;
     return;
   }
 
   // This attribute cannot be applied to local variables.
   if (isa<VarDecl>(D) && cast<VarDecl>(D)->hasLocalStorage()) {
-    S.Diag(SE->getLocStart(), diag::err_attribute_section_local_variable);
+    S.Diag(LiteralLoc, diag::err_attribute_section_local_variable);
     return;
   }
   
   unsigned Index = Attr.getAttributeSpellingListIndex();
-  SectionAttr *NewAttr = S.mergeSectionAttr(D, Attr.getRange(),
-                                            SE->getString(), Index);
+  SectionAttr *NewAttr = S.mergeSectionAttr(D, Attr.getRange(), Str, Index);
   if (NewAttr)
     D->addAttr(NewAttr);
 }
@@ -3210,27 +3217,22 @@ static void handleTransparentUnionAttr(Sema &S, Decl *D,
 }
 
 static void handleAnnotateAttr(Sema &S, Decl *D, const AttributeList &Attr) {
-  Expr *ArgExpr = Attr.getArgAsExpr(0);
-  StringLiteral *SE = dyn_cast<StringLiteral>(ArgExpr);
-
   // Make sure that there is a string literal as the annotation's single
   // argument.
-  if (!SE) {
-    S.Diag(ArgExpr->getLocStart(), diag::err_attribute_argument_type)
-      << Attr.getName() << AANT_ArgumentString;
+  StringRef Str;
+  if (!checkStringLiteralArgument(S, Str, Attr, 0))
     return;
-  }
 
   // Don't duplicate annotations that are already set.
   for (specific_attr_iterator<AnnotateAttr>
        i = D->specific_attr_begin<AnnotateAttr>(),
        e = D->specific_attr_end<AnnotateAttr>(); i != e; ++i) {
-      if ((*i)->getAnnotation() == SE->getString())
-          return;
+    if ((*i)->getAnnotation() == Str)
+      return;
   }
   
   D->addAttr(::new (S.Context)
-             AnnotateAttr(Attr.getRange(), S.Context, SE->getString(),
+             AnnotateAttr(Attr.getRange(), S.Context, Str,
                           Attr.getAttributeSpellingListIndex()));
 }
 
@@ -4425,34 +4427,30 @@ static void handleUuidAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   if (!checkMicrosoftExt(S, Attr, S.LangOpts.Borland))
     return;
 
-  Expr *Arg = Attr.getArgAsExpr(0);
-  StringLiteral *Str = dyn_cast<StringLiteral>(Arg);
-  if (!Str || !Str->isAscii()) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_argument_type)
-      << Attr.getName() << AANT_ArgumentString;
+  StringRef StrRef;
+  SourceLocation LiteralLoc;
+  if (!checkStringLiteralArgument(S, StrRef, Attr, 0, &LiteralLoc))
     return;
-  }
 
   // GUID format is "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX" or
   // "{XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}", normalize to the former.
-  StringRef StrRef = Str->getString();
   if (StrRef.size() == 38 && StrRef.front() == '{' && StrRef.back() == '}')
     StrRef = StrRef.drop_front().drop_back();
 
   // Validate GUID length.
   if (StrRef.size() != 36) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_uuid_malformed_guid);
+    S.Diag(LiteralLoc, diag::err_attribute_uuid_malformed_guid);
     return;
   }
 
   for (unsigned i = 0; i < 36; ++i) {
     if (i == 8 || i == 13 || i == 18 || i == 23) {
       if (StrRef[i] != '-') {
-        S.Diag(Attr.getLoc(), diag::err_attribute_uuid_malformed_guid);
+        S.Diag(LiteralLoc, diag::err_attribute_uuid_malformed_guid);
         return;
       }
     } else if (!isHexDigit(StrRef[i])) {
-      S.Diag(Attr.getLoc(), diag::err_attribute_uuid_malformed_guid);
+      S.Diag(LiteralLoc, diag::err_attribute_uuid_malformed_guid);
       return;
     }
   }

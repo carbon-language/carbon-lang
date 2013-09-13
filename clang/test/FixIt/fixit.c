@@ -115,3 +115,5 @@ struct noSemiAfterStruct {
 enum noSemiAfterEnum {
   e1
 } // expected-error {{expected ';' after enum}}
+
+int PR17175 __attribute__((visibility(hidden))); // expected-error {{'visibility' attribute requires a string}}
