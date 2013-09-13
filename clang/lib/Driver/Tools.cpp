@@ -2499,6 +2499,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (Args.hasArg(options::OPT_gcolumn_info))
     CmdArgs.push_back("-dwarf-column-info");
 
+  // FIXME: Move backend command line options to the module.
   // -gsplit-dwarf should turn on -g and enable the backend dwarf
   // splitting and extraction.
   // FIXME: Currently only works on Linux.
@@ -2509,6 +2510,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-split-dwarf=Enable");
   }
 
+  // -ggnu-pubnames turns on gnu style pubnames in the backend.
+  if (Args.hasArg(options::OPT_ggnu_pubnames)) {
+    CmdArgs.push_back("-backend-option");
+    CmdArgs.push_back("-generate-gnu-dwarf-pub-sections");
+  }
 
   Args.AddAllArgs(CmdArgs, options::OPT_fdebug_types_section);
 

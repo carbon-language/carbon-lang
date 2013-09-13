@@ -47,6 +47,8 @@
 // RUN:        -fno-debug-types-section %s 2>&1                       \
 // RUN:        | FileCheck -check-prefix=GIGNORE %s
 //
+// RUN: %clang -### -c -ggnu-pubnames %s 2>&1 | FileCheck -check-prefix=GOPT %s
+//
 // G: "-cc1"
 // G: "-g"
 //
@@ -78,3 +80,5 @@
 // GLTO_NO-NOT: "-gline-tables-only"
 //
 // GIGNORE-NOT: "argument unused during compilation"
+//
+// GOPT: -generate-gnu-dwarf-pub-sections
