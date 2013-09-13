@@ -698,7 +698,6 @@ static const LangAS::Map *getAddressSpaceMap(const TargetInfo &T,
 static bool isAddrSpaceMapManglingEnabled(const TargetInfo &TI,
                                           const LangOptions &LangOpts) {
   switch (LangOpts.getAddressSpaceMapMangling()) {
-  default: return false;
   case LangOptions::ASMM_Target:
     return TI.useAddressSpaceMapMangling();
   case LangOptions::ASMM_On:
@@ -706,6 +705,8 @@ static bool isAddrSpaceMapManglingEnabled(const TargetInfo &TI,
   case LangOptions::ASMM_Off:
     return false;
   }
+  llvm_unreachable("getAddressSpaceMapMangling() doesn't cover anything.");
+  return false;
 }
 
 ASTContext::ASTContext(LangOptions& LOpts, SourceManager &SM,
