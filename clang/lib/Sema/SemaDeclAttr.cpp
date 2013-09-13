@@ -3869,18 +3869,11 @@ bool Sema::CheckCallingConvAttr(const AttributeList &attr, CallingConv &CC,
                                                              CC_C;
     break;
   case AttributeList::AT_Pcs: {
-    StringLiteral *Str = 0;
-    if (attr.isArgExpr(0))
-      Str = dyn_cast<StringLiteral>(attr.getArgAsExpr(0));
-    
-    if (!Str || !Str->isAscii()) {
-      Diag(attr.getLoc(), diag::err_attribute_argument_type) << attr.getName()
-        << AANT_ArgumentString;
+    StringRef StrRef;
+    if (!checkStringLiteralArgument(*this, StrRef, attr, 0)) {
       attr.setInvalid();
       return true;
     }
-
-    StringRef StrRef = Str->getString();
     if (StrRef == "aapcs") {
       CC = CC_AAPCS;
       break;

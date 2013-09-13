@@ -4371,9 +4371,15 @@ static AttributedType::Kind getCCTypeAttrKind(AttributeList &Attr) {
   case AttributeList::AT_Pascal:
     return AttributedType::attr_pascal;
   case AttributeList::AT_Pcs: {
-    // We know attr is valid so it can only have one of two strings args.
-    StringLiteral *Str = cast<StringLiteral>(Attr.getArgAsExpr(0));
-    return llvm::StringSwitch<AttributedType::Kind>(Str->getString())
+    // The attribute may have had a fixit applied where we treated an
+    // identifier as a string literal.  The contents of the string are valid,
+    // but the form may not be.
+    StringRef Str;
+    if (Attr.isArgExpr(0))
+      Str = cast<StringLiteral>(Attr.getArgAsExpr(0))->getString();
+    else
+      Str = Attr.getArgAsIdent(0)->Ident->getName();
+    return llvm::StringSwitch<AttributedType::Kind>(Str)
         .Case("aapcs", AttributedType::attr_pcs)
         .Case("aapcs-vfp", AttributedType::attr_pcs_vfp);
   }
