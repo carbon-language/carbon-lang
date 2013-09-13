@@ -38,10 +38,12 @@
          (orig-point (point))
          (style "file"))
     (unwind-protect
-        (call-process-region (point-min) (point-max) clang-format-binary t t nil
+        (call-process-region (point-min) (point-max) clang-format-binary
+                             t (list t nil) nil
                              "-offset" (number-to-string (1- begin))
                              "-length" (number-to-string (- end begin))
                              "-cursor" (number-to-string (1- (point)))
+                             "-assume-filename" (buffer-file-name)
                              "-style" style)
       (goto-char (point-min))
       (let ((json-output (json-read-from-string

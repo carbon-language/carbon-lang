@@ -37,21 +37,21 @@ class ClangFormatCommand(sublime_plugin.TextCommand):
       region_offset = min(region.a, region.b)
       region_length = abs(region.b - region.a)
       command.extend(['-offset', str(region_offset),
-                      '-length', str(region_length)])
+                      '-length', str(region_length),
+                      '-assume-filename', str(self.view.file_name())])
     old_viewport_position = self.view.viewport_position()
     buf = self.view.substr(sublime.Region(0, self.view.size()))
     p = subprocess.Popen(command, stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE, stdin=subprocess.PIPE)
     output, error = p.communicate(buf.encode(encoding))
-    if not error:
-      self.view.replace(
-          edit, sublime.Region(0, self.view.size()),
-          output.decode(encoding))
-      self.view.sel().clear()
-      for region in regions:
-        self.view.sel().add(region)
-      # FIXME: Without the 10ms delay, the viewport sometimes jumps.
-      sublime.set_timeout(lambda: self.view.set_viewport_position(
-        old_viewport_position, False), 10)
-    else:
+    if error:
       print error
+    self.view.replace(
+        edit, sublime.Region(0, self.view.size()),
+        output.decode(encoding))
+    self.view.sel().clear()
+    for region in regions:
+      self.view.sel().add(region)
+    # FIXME: Without the 10ms delay, the viewport sometimes jumps.
+    sublime.set_timeout(lambda: self.view.set_viewport_position(
+      old_viewport_position, False), 10)

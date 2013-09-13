@@ -49,7 +49,8 @@ if sys.platform.startswith('win32'):
 
 # Call formatter.
 p = subprocess.Popen([binary, '-lines', lines, '-style', style,
-                      '-cursor', str(cursor)],
+                      '-cursor', str(cursor),
+                      '-assume-filename', vim.current.buffer.name],
                      stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                      stdin=subprocess.PIPE, startupinfo=startupinfo)
 stdout, stderr = p.communicate(input=text)
