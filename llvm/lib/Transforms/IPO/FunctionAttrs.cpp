@@ -367,6 +367,7 @@ namespace {
         }
       }
       assert(Found && "Capturing call-site captured nothing?");
+      (void)Found;
       return false;
     }
 
