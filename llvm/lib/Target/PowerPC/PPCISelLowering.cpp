@@ -7321,6 +7321,8 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
         }
       }
     }
+
+    break;
   case ISD::BSWAP:
     // Turn BSWAP (LOAD) -> lhbrx/lwbrx.
     if (ISD::isNON_EXTLoad(N->getOperand(0).getNode()) &&
