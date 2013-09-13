@@ -25,7 +25,6 @@
 #include "clang/Lex/ModuleLoader.h"
 #include "clang/Lex/PreprocessingRecord.h"
 #include "clang/Sema/CodeCompleteConsumer.h"
-#include "clang/Sema/Sema.h"
 #include "clang/Serialization/ASTBitCodes.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/OwningPtr.h"
@@ -44,6 +43,7 @@ namespace llvm {
 }
 
 namespace clang {
+class Sema;
 class ASTContext;
 class ASTReader;
 class CodeCompleteConsumer;

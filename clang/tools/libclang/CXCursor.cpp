@@ -18,6 +18,7 @@
 #include "CXString.h"
 #include "CXType.h"
 #include "clang-c/Index.h"
+#include "clang/AST/Attr.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"

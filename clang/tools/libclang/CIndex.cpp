@@ -23,6 +23,7 @@
 #include "CXType.h"
 #include "CursorVisitor.h"
 #include "SimpleFormatContext.h"
+#include "clang/AST/Attr.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/Version.h"

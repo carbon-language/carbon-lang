@@ -16,6 +16,7 @@
 #include "CXCursor.h"
 #include "CXString.h"
 #include "SimpleFormatContext.h"
+#include "clang/AST/Attr.h"
 #include "clang/AST/CommentCommandTraits.h"
 #include "clang/AST/CommentVisitor.h"
 #include "clang/AST/Decl.h"
