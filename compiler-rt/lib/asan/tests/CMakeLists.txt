@@ -36,9 +36,9 @@ set(ASAN_UNITTEST_COMMON_CFLAGS
   -Wall
   -Wno-format
   -Werror
+  -Werror=sign-compare
   -g
-  -O2
-)
+  -O2)
 
 if(ASAN_TESTS_USE_ZERO_BASE_SHADOW)
   list(APPEND ASAN_UNITTEST_COMMON_CFLAGS -fPIE)
@@ -127,9 +127,9 @@ set_target_properties(AsanUnitTests PROPERTIES FOLDER "ASan unit tests")
 add_custom_target(AsanBenchmarks)
 set_target_properties(AsanBenchmarks PROPERTIES FOLDER "Asan benchmarks")
 
-if (NOT APPLE)
-# Do not build asan_fake_stack_test.cc on OS X, since it requires exposing
-# additional functions from the runtime.
+if (NOT APPLE AND NOT ANDROID)
+# Do not build asan_fake_stack_test.cc on OS X and Android, since it requires
+# exposing additional functions from the runtime.
 # See also https://code.google.com/p/address-sanitizer/issues/detail?id=222
 set(ASAN_NOINST_TEST_SOURCES
   asan_fake_stack_test.cc
