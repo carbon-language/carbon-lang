@@ -1763,7 +1763,6 @@ void CXXNameMangler::mangleQualifiers(Qualifiers Quals) {
 
     SmallString<64> ASString;
     unsigned AS = Quals.getAddressSpace();
-    bool IsLangAS = (LangAS::Offset <= AS) && (AS < LangAS::Last);
 
     if (Context.getASTContext().addressSpaceMapManglingFor(AS)) {
       //  <target-addrspace> ::= "AS" <address-space-number>
