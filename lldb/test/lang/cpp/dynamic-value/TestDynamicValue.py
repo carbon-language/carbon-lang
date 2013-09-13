@@ -20,6 +20,7 @@ class DynamicValueTestCase(TestBase):
         self.buildDsym()
         self.do_get_dynamic_vals()
 
+    @expectedFailureFreeBSD('llvm.org/pr17225')
     @python_api_test
     @dwarf_test
     def test_get_dynamic_vals_with_dwarf(self):

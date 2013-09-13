@@ -33,9 +33,10 @@ class AssertingInferiorTestCase(TestBase):
         self.inferior_asserting_registers()
 
     @skipIfGcc # Avoid xpasses as the verion of libc used on the gcc buildbot has the required function symbols.
+    @expectedFailureFreeBSD # ResolveSymbolContextForAddress can fail using ELF with stripped function symbols.
     @expectedFailureLinux # ResolveSymbolContextForAddress can fail using ELF with stripped function symbols.
     def test_inferior_asserting_disassemble(self):
-        """Test that lldb reliably disassemblers frames after asserting (command)."""
+        """Test that lldb reliably disassembles frames after asserting (command)."""
         self.buildDefault()
         self.inferior_asserting_disassemble()
 

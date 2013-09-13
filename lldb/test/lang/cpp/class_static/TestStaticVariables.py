@@ -20,6 +20,7 @@ class StaticVariableTestCase(TestBase):
         self.buildDsym()
         self.static_variable_commands()
 
+    @expectedFailureFreeBSD('llvm.org/pr15261', failing_compilers) # lldb on FreeBSD does not display the size of (class or file)static arrays
     @expectedFailureLinux('llvm.org/pr15261', failing_compilers) # lldb on Linux does not display the size of (class or file)static arrays
     @dwarf_test
     def test_with_dwarf_and_run_command(self):

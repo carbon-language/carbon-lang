@@ -20,6 +20,7 @@ class TestInlineStepping(TestBase):
 
     @python_api_test
     @dwarf_test
+    @expectedFailureFreeBSD('llvm.org/pr17214')
     @expectedFailureIcc # Not really a bug.  ICC combines two inlined functions.
     def test_with_dwarf_and_python_api(self):
         """Test stepping over and into inlined functions."""
