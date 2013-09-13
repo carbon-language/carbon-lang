@@ -245,3 +245,13 @@ namespace PR13182 {
     return s0[0] + s1[0] + s2[0] + s3[0] + s4[0] + s5[0] + s6[0][0];
   }
 }
+
+extern "C" inline void extern_c_func() {
+  static int local;
+// CHECK-DAG: @"\01?local@?1??extern_c_func@@9@4HA"
+// X64-DAG:   @"\01?local@?1??extern_c_func@@9@4HA"
+}
+
+void call_extern_c_func() {
+  extern_c_func();
+}

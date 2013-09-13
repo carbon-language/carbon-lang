@@ -29,6 +29,40 @@ using namespace clang;
 
 namespace {
 
+/// \brief Retrieve the declaration context that should be used when mangling
+/// the given declaration.
+static const DeclContext *getEffectiveDeclContext(const Decl *D) {
+  // The ABI assumes that lambda closure types that occur within
+  // default arguments live in the context of the function. However, due to
+  // the way in which Clang parses and creates function declarations, this is
+  // not the case: the lambda closure type ends up living in the context
+  // where the function itself resides, because the function declaration itself
+  // had not yet been created. Fix the context here.
+  if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(D)) {
+    if (RD->isLambda())
+      if (ParmVarDecl *ContextParam =
+              dyn_cast_or_null<ParmVarDecl>(RD->getLambdaContextDecl()))
+        return ContextParam->getDeclContext();
+  }
+
+  // Perform the same check for block literals.
+  if (const BlockDecl *BD = dyn_cast<BlockDecl>(D)) {
+    if (ParmVarDecl *ContextParam =
+            dyn_cast_or_null<ParmVarDecl>(BD->getBlockManglingContextDecl()))
+      return ContextParam->getDeclContext();
+  }
+
+  const DeclContext *DC = D->getDeclContext();
+  if (const CapturedDecl *CD = dyn_cast<CapturedDecl>(DC))
+    return getEffectiveDeclContext(CD);
+
+  return DC;
+}
+
+static const DeclContext *getEffectiveParentContext(const DeclContext *DC) {
+  return getEffectiveDeclContext(cast<Decl>(DC));
+}
+
 static const FunctionDecl *getStructor(const FunctionDecl *fn) {
   if (const FunctionTemplateDecl *ftd = fn->getPrimaryTemplate())
     return ftd->getTemplatedDecl();
@@ -180,17 +214,6 @@ private:
 
 }
 
-static bool isInCLinkageSpecification(const Decl *D) {
-  D = D->getCanonicalDecl();
-  for (const DeclContext *DC = D->getDeclContext();
-       !DC->isTranslationUnit(); DC = DC->getParent()) {
-    if (const LinkageSpecDecl *Linkage = dyn_cast<LinkageSpecDecl>(DC))
-      return Linkage->getLanguage() == LinkageSpecDecl::lang_c;
-  }
-
-  return false;
-}
-
 bool MicrosoftMangleContext::shouldMangleDeclName(const NamedDecl *D) {
   // In C, functions with no attributes never need to be mangled. Fastpath them.
   if (!getASTContext().getLangOpts().CPlusPlus && !D->hasAttrs())
@@ -201,28 +224,46 @@ bool MicrosoftMangleContext::shouldMangleDeclName(const NamedDecl *D) {
   if (D->hasAttr<AsmLabelAttr>())
     return true;
 
-  // Clang's "overloadable" attribute extension to C/C++ implies name mangling
-  // (always) as does passing a C++ member function and a function
-  // whose name is not a simple identifier.
-  const FunctionDecl *FD = dyn_cast<FunctionDecl>(D);
-  if (FD && (FD->hasAttr<OverloadableAttr>() || isa<CXXMethodDecl>(FD) ||
-             !FD->getDeclName().isIdentifier()))
-    return true;
+  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+    LanguageLinkage L = FD->getLanguageLinkage();
+    // Overloadable functions need mangling.
+    if (FD->hasAttr<OverloadableAttr>())
+      return true;
+
+    // "main" is not mangled.
+    if (FD->isMain())
+      return false;
+
+    // C++ functions and those whose names are not a simple identifier need
+    // mangling.
+    if (!FD->getDeclName().isIdentifier() || L == CXXLanguageLinkage)
+      return true;
+
+    // C functions are not mangled.
+    if (L == CLanguageLinkage)
+      return false;
+  }
 
   // Otherwise, no mangling is done outside C++ mode.
   if (!getASTContext().getLangOpts().CPlusPlus)
     return false;
 
-  // Variables at global scope with internal linkage are not mangled.
-  if (!FD) {
-    const DeclContext *DC = D->getDeclContext();
-    if (DC->isTranslationUnit() && D->getFormalLinkage() == InternalLinkage)
+  if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
+    // C variables are not mangled.
+    if (VD->isExternC())
+      return false;
+
+    // Variables at global scope with non-internal linkage are not mangled.
+    const DeclContext *DC = getEffectiveDeclContext(D);
+    // Check for extern variable declared locally.
+    if (DC->isFunctionOrMethod() && D->hasLinkage())
+      while (!DC->isNamespace() && !DC->isTranslationUnit())
+        DC = getEffectiveParentContext(DC);
+
+    if (DC->isTranslationUnit() && D->getFormalLinkage() == InternalLinkage &&
+        !isa<VarTemplateSpecializationDecl>(D))
       return false;
   }
-
-  // C functions and "main" are not mangled.
-  if ((FD && FD->isMain()) || isInCLinkageSpecification(D))
-    return false;
 
   return true;
 }
@@ -269,10 +310,6 @@ void MicrosoftCXXNameMangler::mangleFunctionEncoding(const FunctionDecl *FD) {
   // first, since it is most likely to be the declaration in a header file.
   FD = FD->getFirstDeclaration();
 
-  // Don't mangle in the type if this isn't a decl we should typically mangle.
-  if (!Context.shouldMangleDeclName(FD))
-    return;
-  
   // We should never ever see a FunctionNoProtoType at this point.
   // We don't even know how to mangle their types anyway :).
   TypeSourceInfo *TSI = FD->getTypeSourceInfo();
@@ -288,10 +325,16 @@ void MicrosoftCXXNameMangler::mangleFunctionEncoding(const FunctionDecl *FD) {
       InStructor = true;
   }
 
-  // First, the function class.
-  mangleFunctionClass(FD);
+  // extern "C" functions can hold entities that must be mangled.
+  // As it stands, these functions still need to get expressed in the full
+  // external name.  They have their class and type omitted, replaced with '9'.
+  if (Context.shouldMangleDeclName(FD)) {
+    // First, the function class.
+    mangleFunctionClass(FD);
 
-  mangleFunctionType(FT, FD, InStructor, InInstMethod);
+    mangleFunctionType(FT, FD, InStructor, InInstMethod);
+  } else
+    Out << '9';
 }
 
 void MicrosoftCXXNameMangler::mangleVariableEncoding(const VarDecl *VD) {
