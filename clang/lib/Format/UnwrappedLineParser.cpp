@@ -759,7 +759,8 @@ bool UnwrappedLineParser::tryToParseBracedList() {
   return true;
 }
 
-void UnwrappedLineParser::parseBracedList() {
+bool UnwrappedLineParser::parseBracedList(bool ContinueOnSemicolons) {
+  bool HasError = false;
   nextToken();
 
   // FIXME: Once we have an expression parser in the UnwrappedLineParser,
@@ -786,10 +787,13 @@ void UnwrappedLineParser::parseBracedList() {
       break;
     case tok::r_brace:
       nextToken();
-      return;
+      return !HasError;
     case tok::semi:
-      // Probably a missing closing brace. Bail out.
-      return;
+      HasError = true;
+      if (!ContinueOnSemicolons)
+        return !HasError;
+      nextToken();
+      break;
     case tok::comma:
       nextToken();
       break;
@@ -798,6 +802,7 @@ void UnwrappedLineParser::parseBracedList() {
       break;
     }
   } while (!eof());
+  return false;
 }
 
 void UnwrappedLineParser::parseReturn() {
@@ -1046,42 +1051,14 @@ void UnwrappedLineParser::parseEnum() {
     if (FormatTok->Tok.is(tok::identifier))
       nextToken();
   }
-  bool HasError = false;
   if (FormatTok->Tok.is(tok::l_brace)) {
-    if (Style.BreakBeforeBraces == FormatStyle::BS_Allman)
+    FormatTok->BlockKind = BK_Block;
+    bool HasError = !parseBracedList(/*ContinueOnSemicolons=*/true);
+    if (HasError) {
+      if (FormatTok->is(tok::semi))
+        nextToken();
       addUnwrappedLine();
-    nextToken();
-    addUnwrappedLine();
-    ++Line->Level;
-    do {
-      switch (FormatTok->Tok.getKind()) {
-      case tok::l_paren:
-        parseParens();
-        break;
-      case tok::r_brace:
-        addUnwrappedLine();
-        nextToken();
-        --Line->Level;
-        if (HasError) {
-          if (FormatTok->is(tok::semi))
-            nextToken();
-          addUnwrappedLine();
-        }
-        return;
-      case tok::semi:
-        HasError = true;
-        nextToken();
-        addUnwrappedLine();
-        break;
-      case tok::comma:
-        nextToken();
-        addUnwrappedLine();
-        break;
-      default:
-        nextToken();
-        break;
-      }
-    } while (!eof());
+    }
   }
   // We fall through to parsing a structural element afterwards, so that in
   // enum A {} n, m;

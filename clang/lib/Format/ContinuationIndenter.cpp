@@ -106,8 +106,10 @@ bool ContinuationIndenter::mustBreak(const LineState &State) {
   const FormatToken &Previous = *Current.Previous;
   if (Current.MustBreakBefore || Current.Type == TT_InlineASMColon)
     return true;
-  if (!Style.Cpp11BracedListStyle && Current.is(tok::r_brace) &&
-      State.Stack.back().BreakBeforeClosingBrace)
+  if ((!Style.Cpp11BracedListStyle ||
+       (Current.MatchingParen &&
+        Current.MatchingParen->BlockKind == BK_Block)) &&
+      Current.is(tok::r_brace) && State.Stack.back().BreakBeforeClosingBrace)
     return true;
   if (Previous.is(tok::semi) && State.LineContainsContinuedForLoopSection)
     return true;
@@ -224,7 +226,9 @@ unsigned ContinuationIndenter::addTokenToState(LineState &State, bool Newline,
         State.Column <= Style.ColumnLimit / 2)
       Penalty += Style.PenaltyBreakFirstLessLess;
 
-    if (Current.is(tok::r_brace)) {
+    if (Current.is(tok::l_brace) && Current.BlockKind == BK_Block) {
+      State.Column = State.FirstIndent;
+    } else if (Current.is(tok::r_brace)) {
       if (Current.MatchingParen &&
           (Current.MatchingParen->BlockKind == BK_BracedInit ||
            !Current.MatchingParen->Children.empty()))
@@ -524,14 +528,15 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
         //                      });
         for (unsigned i = 0; i != Current.MatchingParen->FakeRParens; ++i)
           State.Stack.pop_back();
-        NewIndent = State.Stack.back().LastSpace;
+        NewIndent = State.Stack.back().LastSpace + Style.IndentWidth;
       } else {
         NewIndent = State.Stack.back().LastSpace +
                     (Style.Cpp11BracedListStyle ? 4 : Style.IndentWidth);
       }
       const FormatToken *NextNoComment = Current.getNextNonComment();
-      AvoidBinPacking = NextNoComment &&
-                        NextNoComment->Type == TT_DesignatedInitializerPeriod;
+      AvoidBinPacking = Current.BlockKind == BK_Block ||
+                        (NextNoComment &&
+                         NextNoComment->Type == TT_DesignatedInitializerPeriod);
     } else {
       NewIndent = 4 + std::max(State.Stack.back().LastSpace,
                                State.Stack.back().StartOfFunctionCall);
@@ -545,6 +550,7 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
     State.Stack.push_back(ParenState(NewIndent, State.Stack.back().LastSpace,
                                      AvoidBinPacking,
                                      State.Stack.back().NoLineBreak));
+    State.Stack.back().BreakBeforeParameter = Current.BlockKind == BK_Block;
     ++State.ParenLevel;
   }
 

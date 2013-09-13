@@ -36,6 +36,7 @@ unsigned CommaSeparatedList::format(LineState &State,
   // Ensure that we start on the opening brace.
   const FormatToken *LBrace = State.NextToken->Previous->Previous;
   if (LBrace->isNot(tok::l_brace) ||
+      LBrace->BlockKind == BK_Block ||
       LBrace->Next->Type == TT_DesignatedInitializerPeriod)
     return 0;
 

@@ -529,7 +529,7 @@ private:
                E = LBrace.Children.end();
            I != E; ++I) {
         unsigned Indent =
-            ParentIndent + ((*I)->Level - Line.Level) * Style.IndentWidth;
+            ParentIndent + ((*I)->Level - Line.Level - 1) * Style.IndentWidth;
         if (!DryRun) {
           unsigned Newlines = std::min((*I)->First->NewlinesBefore,
                                        Style.MaxEmptyLinesToKeep + 1);

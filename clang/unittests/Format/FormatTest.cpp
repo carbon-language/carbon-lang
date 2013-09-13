@@ -1530,12 +1530,23 @@ TEST_F(FormatTest, FormatsEnum) {
                "  Four = (Zero && (One ^ Two)) | (One << Two),\n"
                "  Five = (One, Two, Three, Four, 5)\n"
                "};");
+  verifyGoogleFormat("enum {\n"
+                     "  Zero,\n"
+                     "  One = 1,\n"
+                     "  Two = One + 1,\n"
+                     "  Three = (One + Two),\n"
+                     "  Four = (Zero && (One ^ Two)) | (One << Two),\n"
+                     "  Five = (One, Two, Three, Four, 5)\n"
+                     "};");
   verifyFormat("enum Enum {};");
   verifyFormat("enum {};");
-  verifyFormat("enum X E {\n} d;");
-  verifyFormat("enum __attribute__((...)) E {\n} d;");
-  verifyFormat("enum __declspec__((...)) E {\n} d;");
+  verifyFormat("enum X E {} d;");
+  verifyFormat("enum __attribute__((...)) E {} d;");
+  verifyFormat("enum __declspec__((...)) E {} d;");
   verifyFormat("enum X f() {\n  a();\n  return 42;\n}");
+  verifyFormat("enum {\n"
+               "  Bar = Foo<int, int>::value\n"
+               "};");
 }
 
 TEST_F(FormatTest, FormatsEnumsWithErrors) {
@@ -1563,9 +1574,9 @@ TEST_F(FormatTest, FormatsEnumStruct) {
                "};");
   verifyFormat("enum struct Enum {};");
   verifyFormat("enum struct {};");
-  verifyFormat("enum struct X E {\n} d;");
-  verifyFormat("enum struct __attribute__((...)) E {\n} d;");
-  verifyFormat("enum struct __declspec__((...)) E {\n} d;");
+  verifyFormat("enum struct X E {} d;");
+  verifyFormat("enum struct __attribute__((...)) E {} d;");
+  verifyFormat("enum struct __declspec__((...)) E {} d;");
   verifyFormat("enum struct X f() {\n  a();\n  return 42;\n}");
 }
 
@@ -1580,9 +1591,9 @@ TEST_F(FormatTest, FormatsEnumClass) {
                "};");
   verifyFormat("enum class Enum {};");
   verifyFormat("enum class {};");
-  verifyFormat("enum class X E {\n} d;");
-  verifyFormat("enum class __attribute__((...)) E {\n} d;");
-  verifyFormat("enum class __declspec__((...)) E {\n} d;");
+  verifyFormat("enum class X E {} d;");
+  verifyFormat("enum class __attribute__((...)) E {} d;");
+  verifyFormat("enum class __declspec__((...)) E {} d;");
   verifyFormat("enum class X f() {\n  a();\n  return 42;\n}");
 }
 

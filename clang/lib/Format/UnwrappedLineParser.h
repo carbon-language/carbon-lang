@@ -79,7 +79,7 @@ private:
   void parsePPUnknown();
   void parseStructuralElement();
   bool tryToParseBracedList();
-  void parseBracedList();
+  bool parseBracedList(bool ContinueOnSemicolons = false);
   void parseReturn();
   void parseParens();
   void parseIfThenElse();
