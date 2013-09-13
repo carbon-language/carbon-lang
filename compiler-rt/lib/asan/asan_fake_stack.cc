@@ -17,6 +17,24 @@
 
 namespace __asan {
 
+static const u64 kMagic1 = kAsanStackAfterReturnMagic;
+static const u64 kMagic2 = (kMagic1 << 8) | kMagic1;
+static const u64 kMagic4 = (kMagic2 << 16) | kMagic2;
+static const u64 kMagic8 = (kMagic4 << 32) | kMagic4;
+
+// For small size classes inline PoisonShadow for better performance.
+ALWAYS_INLINE void SetShadow(uptr ptr, uptr size, uptr class_id, u64 magic) {
+  CHECK_EQ(SHADOW_SCALE, 3);  // This code expects SHADOW_SCALE=3.
+  u64 *shadow = reinterpret_cast<u64*>(MemToShadow(ptr));
+  if (class_id <= 6) {
+    for (uptr i = 0; i < (1 << class_id); i++)
+      shadow[i] = magic;
+  } else {
+    // The size class is too big, it's cheaper to poison only size bytes.
+    PoisonShadow(ptr, size, magic);
+  }
+}
+
 void FakeStack::PoisonAll(u8 magic) {
   PoisonShadow(reinterpret_cast<uptr>(this), RequiredSize(stack_size_log()),
                magic);
@@ -111,7 +129,7 @@ ALWAYS_INLINE uptr OnMalloc(uptr class_id, uptr size, uptr real_stack) {
   if (!fs) return real_stack;
   FakeFrame *ff = fs->Allocate(fs->stack_size_log(), class_id, real_stack);
   uptr ptr = reinterpret_cast<uptr>(ff);
-  PoisonShadow(ptr, size, 0);
+  SetShadow(ptr, size, class_id, 0);
   return ptr;
 }
 
@@ -123,7 +141,7 @@ ALWAYS_INLINE void OnFree(uptr ptr, uptr class_id, uptr size, uptr real_stack) {
   FakeStack *fs = t->fake_stack();
   FakeFrame *ff = reinterpret_cast<FakeFrame *>(ptr);
   fs->Deallocate(ff, fs->stack_size_log(), class_id, real_stack);
-  PoisonShadow(ptr, size, kAsanStackAfterReturnMagic);
+  SetShadow(ptr, size, class_id, kMagic8);
 }
 
 }  // namespace __asan
