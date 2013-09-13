@@ -2267,16 +2267,9 @@ static void handleAvailabilityAttr(Sema &S, Decl *D,
   AvailabilityChange Obsoleted = Attr.getAvailabilityObsoleted();
   bool IsUnavailable = Attr.getUnavailableLoc().isValid();
   StringRef Str;
-  if (Attr.getMessageExpr()) {
-    const StringLiteral *SE = dyn_cast<StringLiteral>(Attr.getMessageExpr());
-    if (!SE || !SE->isAscii()) {
-      S.Diag(Attr.getMessageExpr()->getLocStart(),
-             diag::err_attribute_argument_type)
-        << Attr.getName() << AANT_ArgumentString;
-      return;
-    }
+  if (const StringLiteral *SE =
+          dyn_cast_or_null<StringLiteral>(Attr.getMessageExpr()))
     Str = SE->getString();
-  }
 
   AvailabilityAttr *NewAttr = S.mergeAvailabilityAttr(ND, Attr.getRange(), II,
                                                       Introduced.Version,
