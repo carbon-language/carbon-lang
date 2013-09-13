@@ -353,7 +353,7 @@ bool MipsSEDAGToDAGISel::selectAddrRegImm12(SDValue Addr, SDValue &Base,
     ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Addr.getOperand(1));
     if (isInt<12>(CN->getSExtValue())) {
 
-      // If the first operand is a FI, get the TargetFI Node
+      // If the first operand is a FI then get the TargetFI Node
       if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>
                                   (Addr.getOperand(0)))
         Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), ValTy);
