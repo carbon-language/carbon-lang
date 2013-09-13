@@ -15,6 +15,7 @@
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Config/config.h"     // Get autoconf configuration settings
+#include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/ThreadLocal.h"
 #include "llvm/Support/Watchdog.h"
@@ -30,8 +31,7 @@ namespace llvm {
   bool DisablePrettyStackTrace = false;
 }
 
-// FIXME: This should be thread local when llvm supports threads.
-static sys::ThreadLocal<const PrettyStackTraceEntry> PrettyStackTraceHead;
+static ManagedStatic<sys::ThreadLocal<const PrettyStackTraceEntry> > PrettyStackTraceHead;
 
 static unsigned PrintStack(const PrettyStackTraceEntry *Entry, raw_ostream &OS){
   unsigned NextID = 0;
@@ -49,12 +49,12 @@ static unsigned PrintStack(const PrettyStackTraceEntry *Entry, raw_ostream &OS){
 /// PrintCurStackTrace - Print the current stack trace to the specified stream.
 static void PrintCurStackTrace(raw_ostream &OS) {
   // Don't print an empty trace.
-  if (PrettyStackTraceHead.get() == 0) return;
+  if (PrettyStackTraceHead->get() == 0) return;
   
   // If there are pretty stack frames registered, walk and emit them.
   OS << "Stack dump:\n";
   
-  PrintStack(PrettyStackTraceHead.get(), OS);
+  PrintStack(PrettyStackTraceHead->get(), OS);
   OS.flush();
 }
 
@@ -114,14 +114,26 @@ PrettyStackTraceEntry::PrettyStackTraceEntry() {
   (void)HandlerRegistered;
     
   // Link ourselves.
-  NextEntry = PrettyStackTraceHead.get();
-  PrettyStackTraceHead.set(this);
+  NextEntry = PrettyStackTraceHead->get();
+  PrettyStackTraceHead->set(this);
 }
 
 PrettyStackTraceEntry::~PrettyStackTraceEntry() {
-  assert(PrettyStackTraceHead.get() == this &&
+  // Do nothing if PrettyStackTraceHead is uninitialized. This can only happen
+  // if a shutdown occurred after we created the PrettyStackTraceEntry. That
+  // does occur in the following idiom:
+  //
+  // PrettyStackTraceProgram X(...);
+  // llvm_shutdown_obj Y;
+  //
+  // Without this check, we may end up removing ourselves from the stack trace
+  // after PrettyStackTraceHead has already been destroyed.
+  if (!PrettyStackTraceHead.isConstructed())
+    return;
+  
+  assert(PrettyStackTraceHead->get() == this &&
          "Pretty stack trace entry destruction is out of order");
-  PrettyStackTraceHead.set(getNextEntry());
+  PrettyStackTraceHead->set(getNextEntry());
 }
 
 void PrettyStackTraceString::print(raw_ostream &OS) const {
