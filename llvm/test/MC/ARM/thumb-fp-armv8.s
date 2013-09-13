@@ -1,4 +1,4 @@
-@ RUN: llvm-mc -triple thumbv8 -mattr=+v8fp -show-encoding < %s | FileCheck %s
+@ RUN: llvm-mc -triple thumbv8 -mattr=+fp-armv8 -show-encoding < %s | FileCheck %s
 
 @ VCVT{B,T}
 
