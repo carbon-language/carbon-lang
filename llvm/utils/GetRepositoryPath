@@ -15,7 +15,7 @@ fi
 
 cd $1
 if [ -d .svn ]; then
-  svn info | grep 'URL:' | cut -d: -f2-
+  svn info | grep '^URL:' | cut -d: -f2-
 elif [ -f .git/svn/.metadata ]; then
   git svn info | grep 'URL:' | cut -d: -f2-
 elif [ -d .git ]; then
