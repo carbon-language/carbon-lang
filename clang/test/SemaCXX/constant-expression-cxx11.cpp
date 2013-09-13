@@ -1776,3 +1776,21 @@ namespace ZeroSizeTypes {
     return &arr[3] - &arr[0]; // expected-note {{subtraction of pointers to type 'int [0]' of zero size}}
   }
 }
+
+namespace BadDefaultInit {
+  template<int N> struct X { static const int n = N; };
+
+  struct A { // expected-note {{subexpression}}
+    int k = X<A().k>::n; // expected-error {{defaulted default constructor of 'A' cannot be used}} expected-error {{not a constant expression}} expected-note {{in call to 'A()'}}
+  };
+
+  // FIXME: The "constexpr constructor must initialize all members" diagnostic
+  // here is bogus (we discard the k(k) initializer because the parameter 'k'
+  // has been marked invalid).
+  struct B { // expected-note 2{{candidate}}
+    constexpr B( // expected-error {{must initialize all members}} expected-note {{candidate}}
+        int k = X<B().k>::n) : // expected-error {{no matching constructor}}
+      k(k) {}
+    int k; // expected-note {{not initialized}}
+  };
+}
