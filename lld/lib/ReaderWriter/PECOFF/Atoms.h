@@ -100,7 +100,7 @@ public:
   virtual StringRef name() const { return _name; }
   virtual Interposable interposable() const { return interposeNo; }
   virtual Merge merge() const { return mergeNo; }
-  virtual Alignment alignment() const { return Alignment(1); }
+  virtual Alignment alignment() const { return Alignment(0); }
   virtual SectionChoice sectionChoice() const { return sectionBasedOnContent; }
   virtual StringRef customSectionName() const { return ""; }
   virtual SectionPosition sectionPosition() const { return sectionPositionAny; }
@@ -152,7 +152,7 @@ public:
                       ContentPermissions perms, uint64_t ordinal)
       : COFFBaseDefinedAtom(file, name, Kind::File), _sectionName(sectionName),
         _scope(scope), _contentType(contentType), _permissions(perms),
-        _ordinal(ordinal), _alignment(1) {}
+        _ordinal(ordinal), _alignment(0) {}
 
   static bool classof(const COFFBaseDefinedAtom *atom) {
     return atom->getKind() == Kind::File;
@@ -222,7 +222,7 @@ class COFFLinkerInternalAtom : public COFFBaseDefinedAtom {
 public:
   virtual uint64_t ordinal() const { return 0; }
   virtual Scope scope() const { return scopeGlobal; }
-  virtual Alignment alignment() const { return Alignment(1); }
+  virtual Alignment alignment() const { return Alignment(0); }
   virtual uint64_t size() const { return _data.size(); }
   virtual ArrayRef<uint8_t> rawContent() const { return _data; }
 
