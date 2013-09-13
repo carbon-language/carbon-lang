@@ -3895,8 +3895,8 @@ public:
         <
             !is_array<_Yp>::value &&
             is_convertible<_Yp*, element_type*>::value,
-            shared_ptr&
-        >::type
+            shared_ptr
+        >::type&
         operator=(auto_ptr<_Yp>&& __r);
 #else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     template<class _Yp>
@@ -4522,8 +4522,8 @@ typename enable_if
 <
     !is_array<_Yp>::value &&
     is_convertible<_Yp*, _Tp*>::value,
-    shared_ptr<_Tp>&
->::type
+    shared_ptr<_Tp>
+>::type&
 shared_ptr<_Tp>::operator=(auto_ptr<_Yp>&& __r)
 {
     shared_ptr(_VSTD::move(__r)).swap(*this);
