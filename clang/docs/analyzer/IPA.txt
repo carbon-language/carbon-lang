@@ -74,7 +74,7 @@ This option controls whether functions from the C++ standard library, including
 methods of the container classes in the Standard Template Library, should be
 considered for inlining.
 
-    -analyzer-config c++-template-inlining=[true | false]
+    -analyzer-config c++-stdlib-inlining=[true | false]
 
 Currently, C++ standard library functions are considered for inlining by 
 default.
