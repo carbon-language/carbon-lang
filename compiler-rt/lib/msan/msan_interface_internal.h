@@ -73,6 +73,8 @@ void __msan_set_origin(const void *a, uptr size, u32 origin);
 SANITIZER_INTERFACE_ATTRIBUTE
 void __msan_set_alloca_origin(void *a, uptr size, const char *descr);
 SANITIZER_INTERFACE_ATTRIBUTE
+void __msan_set_alloca_origin4(void *a, uptr size, const char *descr, uptr pc);
+SANITIZER_INTERFACE_ATTRIBUTE
 u32 __msan_get_origin(const void *a);
 
 SANITIZER_INTERFACE_ATTRIBUTE

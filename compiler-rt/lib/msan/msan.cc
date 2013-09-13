@@ -114,6 +114,7 @@ int msan_report_count = 0;
 // FIXME: make it resizable.
 static const uptr kNumStackOriginDescrs = 1024 * 1024;
 static const char *StackOriginDescr[kNumStackOriginDescrs];
+static uptr StackOriginPC[kNumStackOriginDescrs];
 static atomic_uint32_t NumStackOriginDescrs;
 
 static void ParseFlagsFromString(Flags *f, const char *str) {
@@ -254,6 +255,14 @@ void ScopedThreadLocalStateBackup::Restore() {
 }
 
 void UnpoisonThreadLocalState() {
+}
+
+const char *GetOriginDescrIfStack(u32 id, uptr *pc) {
+  if ((id >> 31) == 0) return 0;
+  id &= (1U << 31) - 1;
+  CHECK_LT(id, kNumStackOriginDescrs);
+  if (pc) *pc = StackOriginPC[id];
+  return StackOriginDescr[id];
 }
 
 }  // namespace __msan
@@ -466,6 +475,10 @@ void __msan_set_origin(const void *a, uptr size, u32 origin) {
 // When we see descr for the first time we replace '----' with a uniq id
 // and set the origin to (id | (31-th bit)).
 void __msan_set_alloca_origin(void *a, uptr size, const char *descr) {
+  __msan_set_alloca_origin4(a, size, descr, 0);
+}
+
+void __msan_set_alloca_origin4(void *a, uptr size, const char *descr, uptr pc) {
   static const u32 dash = '-';
   static const u32 first_timer =
       dash + (dash << 8) + (dash << 16) + (dash << 24);
@@ -478,8 +491,9 @@ void __msan_set_alloca_origin(void *a, uptr size, const char *descr) {
     *id_ptr = id;
     CHECK_LT(id, kNumStackOriginDescrs);
     StackOriginDescr[id] = descr + 4;
+    StackOriginPC[id] = pc;
     if (print)
-      Printf("First time: id=%d %s \n", id, descr + 4);
+      Printf("First time: id=%d %s %p \n", id, descr + 4, pc);
   }
   id |= 1U << 31;
   if (print)
@@ -488,12 +502,8 @@ void __msan_set_alloca_origin(void *a, uptr size, const char *descr) {
 }
 
 const char *__msan_get_origin_descr_if_stack(u32 id) {
-  if ((id >> 31) == 0) return 0;
-  id &= (1U << 31) - 1;
-  CHECK_LT(id, kNumStackOriginDescrs);
-  return StackOriginDescr[id];
+  return GetOriginDescrIfStack(id, 0);
 }
-
 
 u32 __msan_get_origin(const void *a) {
   if (!__msan_get_track_origins()) return 0;

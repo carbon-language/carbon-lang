@@ -51,6 +51,8 @@ void InstallTrapHandler();
 void InstallAtExitHandler();
 void ReplaceOperatorsNewAndDelete();
 
+const char *GetOriginDescrIfStack(u32 id, uptr *pc);
+
 void EnterSymbolizer();
 void ExitSymbolizer();
 bool IsInSymbolizer();

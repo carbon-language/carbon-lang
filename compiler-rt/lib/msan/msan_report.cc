@@ -44,7 +44,8 @@ static void DescribeOrigin(u32 origin) {
   Decorator d;
   if (flags()->verbosity)
     Printf("  raw origin id: %d\n", origin);
-  if (const char *so = __msan_get_origin_descr_if_stack(origin)) {
+  uptr pc;
+  if (const char *so = GetOriginDescrIfStack(origin, &pc)) {
     char* s = internal_strdup(so);
     char* sep = internal_strchr(s, '@');
     CHECK(sep);
@@ -55,6 +56,13 @@ static void DescribeOrigin(u32 origin) {
            d.Origin(), d.Name(), s, d.Origin(), d.Name(),
            getSymbolizer()->Demangle(sep + 1), d.Origin(), d.End());
     InternalFree(s);
+
+    if (pc) {
+      // For some reason function address in LLVM IR is 1 less then the address
+      // of the first instruction.
+      pc += 1;
+      PrintStack(&pc, 1);
+    }
   } else {
     uptr size = 0;
     const uptr *trace = StackDepotGet(origin, &size);
