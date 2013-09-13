@@ -6,16 +6,17 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-// This file defines the DelayedDiagnostic class, which is used to
-// record diagnostics that are being conditionally produced during
-// declarator parsing.  Certain kinds of diagnostics --- notably
-// deprecation and access control --- are suppressed based on
-// semantic properties of the parsed declaration that aren't known
-// until it is fully parsed.
-//
-// This file also defines AccessedEntity.
-//
+///
+/// \file
+/// \brief Defines the classes clang::DelayedDiagnostic and 
+/// clang::AccessedEntity.
+///
+/// DelayedDiangostic is used to record diagnostics that are being
+/// conditionally produced during declarator parsing.  Certain kinds of
+/// diagnostics -- notably deprecation and access control -- are suppressed
+/// based on semantic properties of the parsed declaration that aren't known
+/// until it is fully parsed.
+///
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CLANG_SEMA_DELAYED_DIAGNOSTIC_H
@@ -224,8 +225,7 @@ private:
   };
 };
 
-/// DelayedDiagnosticPool - A collection of diagnostics which were
-/// delayed.
+/// \brief A collection of diagnostics which were delayed.
 class DelayedDiagnosticPool {
   const DelayedDiagnosticPool *Parent;
   SmallVector<DelayedDiagnostic, 4> Diagnostics;
