@@ -5425,7 +5425,7 @@ public:
 
     /// \brief Block expression,
     UPPC_Block
-};
+  };
 
   /// \brief Diagnose unexpanded parameter packs.
   ///
