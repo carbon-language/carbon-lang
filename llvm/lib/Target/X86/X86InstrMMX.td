@@ -204,7 +204,7 @@ multiclass sse12_cvt_pint_3addr<bits<8> opc, RegisterClass SrcRC,
 //===----------------------------------------------------------------------===//
 
 def MMX_EMMS  : MMXI<0x77, RawFrm, (outs), (ins), "emms",
-                     [(int_x86_mmx_emms)]>;
+                     [(int_x86_mmx_emms)], IIC_MMX_EMMS>;
 
 //===----------------------------------------------------------------------===//
 // MMX Scalar Instructions

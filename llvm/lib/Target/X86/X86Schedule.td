@@ -141,9 +141,12 @@ def IIC_IDIV64      : InstrItinClass;
 // neg/not/inc/dec
 def IIC_UNARY_REG   : InstrItinClass;
 def IIC_UNARY_MEM   : InstrItinClass;
-// add/sub/and/or/xor/adc/sbc/cmp/test
+// add/sub/and/or/xor/sbc/cmp/test
 def IIC_BIN_MEM     : InstrItinClass;
 def IIC_BIN_NONMEM  : InstrItinClass;
+// adc/sbc
+def IIC_BIN_CARRY_MEM     : InstrItinClass;
+def IIC_BIN_CARRY_NONMEM  : InstrItinClass;
 // shift/rotate
 def IIC_SR          : InstrItinClass;
 // shift double
@@ -250,11 +253,11 @@ def IIC_SSE_INTSH_P_RR : InstrItinClass;
 def IIC_SSE_INTSH_P_RM : InstrItinClass;
 def IIC_SSE_INTSH_P_RI : InstrItinClass;
 
-def IIC_SSE_CMPP_RR : InstrItinClass;
-def IIC_SSE_CMPP_RM : InstrItinClass;
+def IIC_SSE_INTSHDQ_P_RI : InstrItinClass;
 
 def IIC_SSE_SHUFP : InstrItinClass;
-def IIC_SSE_PSHUF : InstrItinClass;
+def IIC_SSE_PSHUF_RI : InstrItinClass;
+def IIC_SSE_PSHUF_MI : InstrItinClass;
 
 def IIC_SSE_UNPCK : InstrItinClass;
 
@@ -316,7 +319,8 @@ def IIC_SSE_PSIGN_RM : InstrItinClass;
 
 def IIC_SSE_PMADD : InstrItinClass;
 def IIC_SSE_PMULHRSW : InstrItinClass;
-def IIC_SSE_PALIGNR : InstrItinClass;
+def IIC_SSE_PALIGNRR : InstrItinClass;
+def IIC_SSE_PALIGNRM : InstrItinClass;
 def IIC_SSE_MWAIT : InstrItinClass;
 def IIC_SSE_MONITOR : InstrItinClass;
 
@@ -492,8 +496,8 @@ def IIC_PUSH_REG : InstrItinClass;
 def IIC_PUSH_F : InstrItinClass;
 def IIC_PUSH_A : InstrItinClass;
 def IIC_BSWAP : InstrItinClass;
-def IIC_BSF : InstrItinClass;
-def IIC_BSR : InstrItinClass;
+def IIC_BIT_SCAN_MEM : InstrItinClass;
+def IIC_BIT_SCAN_REG : InstrItinClass;
 def IIC_MOVS : InstrItinClass;
 def IIC_STOS : InstrItinClass;
 def IIC_SCAS : InstrItinClass;
@@ -540,6 +544,33 @@ def IIC_BOUND : InstrItinClass;
 def IIC_ARPL_REG : InstrItinClass;
 def IIC_ARPL_MEM : InstrItinClass;
 def IIC_MOVBE : InstrItinClass;
+def IIC_AES   : InstrItinClass;
+def IIC_BLEND_MEM : InstrItinClass;
+def IIC_BLEND_NOMEM : InstrItinClass;
+def IIC_CBW   : InstrItinClass;
+def IIC_CRC32_REG : InstrItinClass;
+def IIC_CRC32_MEM : InstrItinClass;
+def IIC_SSE_DPPD_RR : InstrItinClass;
+def IIC_SSE_DPPD_RM : InstrItinClass;
+def IIC_SSE_DPPS_RR : InstrItinClass;
+def IIC_SSE_DPPS_RM : InstrItinClass;
+def IIC_MMX_EMMS : InstrItinClass;
+def IIC_SSE_EXTRACTPS_RR : InstrItinClass;
+def IIC_SSE_EXTRACTPS_RM : InstrItinClass;
+def IIC_SSE_INSERTPS_RR : InstrItinClass;
+def IIC_SSE_INSERTPS_RM : InstrItinClass;
+def IIC_SSE_MPSADBW_RR : InstrItinClass;
+def IIC_SSE_MPSADBW_RM : InstrItinClass;
+def IIC_SSE_PMULLD_RR : InstrItinClass;
+def IIC_SSE_PMULLD_RM : InstrItinClass;
+def IIC_SSE_ROUNDPS_REG : InstrItinClass;
+def IIC_SSE_ROUNDPS_MEM : InstrItinClass;
+def IIC_SSE_ROUNDPD_REG : InstrItinClass;
+def IIC_SSE_ROUNDPD_MEM : InstrItinClass;
+def IIC_SSE_POPCNT_RR : InstrItinClass;
+def IIC_SSE_POPCNT_RM : InstrItinClass;
+def IIC_SSE_PCLMULQDQ_RR : InstrItinClass;
+def IIC_SSE_PCLMULQDQ_RM : InstrItinClass;
 
 def IIC_NOP : InstrItinClass;
 
@@ -561,7 +592,7 @@ def IIC_NOP : InstrItinClass;
 // latencies. Since these latencies are not used for pipeline hazards,
 // they do not need to be exact.
 //
-// The GenericModel contains no instruciton itineraries.
+// The GenericModel contains no instruction itineraries.
 def GenericModel : SchedMachineModel {
   let IssueWidth = 4;
   let MicroOpBufferSize = 32;
@@ -572,3 +603,4 @@ def GenericModel : SchedMachineModel {
 include "X86ScheduleAtom.td"
 include "X86SchedSandyBridge.td"
 include "X86SchedHaswell.td"
+include "X86ScheduleSLM.td"

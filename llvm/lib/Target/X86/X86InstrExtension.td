@@ -14,26 +14,26 @@
 let neverHasSideEffects = 1 in {
   let Defs = [AX], Uses = [AL] in
   def CBW : I<0x98, RawFrm, (outs), (ins),
-              "{cbtw|cbw}", []>, OpSize;   // AX = signext(AL)
+              "{cbtw|cbw}", [], IIC_CBW>, OpSize;   // AX = signext(AL)
   let Defs = [EAX], Uses = [AX] in
   def CWDE : I<0x98, RawFrm, (outs), (ins),
-              "{cwtl|cwde}", []>;   // EAX = signext(AX)
+              "{cwtl|cwde}", [], IIC_CBW>;   // EAX = signext(AX)
 
   let Defs = [AX,DX], Uses = [AX] in
   def CWD : I<0x99, RawFrm, (outs), (ins),
-              "{cwtd|cwd}", []>, OpSize; // DX:AX = signext(AX)
+              "{cwtd|cwd}", [], IIC_CBW>, OpSize; // DX:AX = signext(AX)
   let Defs = [EAX,EDX], Uses = [EAX] in
   def CDQ : I<0x99, RawFrm, (outs), (ins),
-              "{cltd|cdq}", []>; // EDX:EAX = signext(EAX)
+              "{cltd|cdq}", [], IIC_CBW>; // EDX:EAX = signext(EAX)
 
 
   let Defs = [RAX], Uses = [EAX] in
   def CDQE : RI<0x98, RawFrm, (outs), (ins),
-               "{cltq|cdqe}", []>;     // RAX = signext(EAX)
+               "{cltq|cdqe}", [], IIC_CBW>;     // RAX = signext(EAX)
 
   let Defs = [RAX,RDX], Uses = [RAX] in
   def CQO  : RI<0x99, RawFrm, (outs), (ins),
-                "{cqto|cqo}", []>; // RDX:RAX = signext(RAX)
+                "{cqto|cqo}", [], IIC_CBW>; // RDX:RAX = signext(RAX)
 }
 
 

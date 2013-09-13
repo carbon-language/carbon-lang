@@ -671,7 +671,7 @@ class AVX512FMA3<bits<8> o, Format F, dag outs, dag ins, string asm,
 // AES8I
 // These use the same encoding as the SSE4.2 T8 and TA encodings.
 class AES8I<bits<8> o, Format F, dag outs, dag ins, string asm,
-            list<dag>pattern, InstrItinClass itin = NoItinerary>
+            list<dag>pattern, InstrItinClass itin = IIC_AES>
       : I<o, F, outs, ins, asm, pattern, itin, SSEPackedInt>, T8,
         Requires<[HasAES]>;
 

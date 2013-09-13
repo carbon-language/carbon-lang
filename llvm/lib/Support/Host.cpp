@@ -265,7 +265,8 @@ std::string sys::getHostCPUName() {
       case 54: // 32 nm Atom Midview
         return "atom";
 
-      case 55: // Intel Atom Silvermont processors
+      // Atom Silvermont codes from the Intel software optimization guide.
+      case 55:
       case 74:
       case 77:
         return "slm";

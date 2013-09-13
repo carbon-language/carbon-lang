@@ -50,7 +50,7 @@ protected:
   };
 
   enum X86ProcFamilyEnum {
-    Others, IntelAtom
+    Others, IntelAtom, IntelSLM
   };
 
   /// X86ProcFamily - X86 processor family: Intel Atom, and others

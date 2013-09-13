@@ -642,12 +642,12 @@ multiclass avx512_icmp_packed<bits<8> opc, string OpcodeStr, RegisterClass KRC,
              (outs KRC:$dst), (ins RC:$src1, RC:$src2), 
              !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
              [(set KRC:$dst, (OpNode (vt RC:$src1), (vt RC:$src2)))], 
-             IIC_SSE_CMPP_RR>, EVEX_4V;
+             IIC_SSE_ALU_F32P_RR>, EVEX_4V;
   def rm : AVX512BI<opc, MRMSrcMem,
              (outs KRC:$dst), (ins RC:$src1, x86memop:$src2), 
              !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
              [(set KRC:$dst, (OpNode (vt RC:$src1), (memop_frag addr:$src2)))],
-             IIC_SSE_CMPP_RM>, EVEX_4V;
+             IIC_SSE_ALU_F32P_RM>, EVEX_4V;
 }
 
 defm VPCMPEQDZ : avx512_icmp_packed<0x76, "vpcmpeqd", VK16, VR512, i512mem, 
@@ -677,19 +677,19 @@ multiclass avx512_icmp_cc<bits<8> opc, RegisterClass KRC,
   def rri : AVX512AIi8<opc, MRMSrcReg,
              (outs KRC:$dst), (ins RC:$src1, RC:$src2, CC:$cc), asm,
              [(set KRC:$dst, (OpNode (vt RC:$src1), (vt RC:$src2), imm:$cc))], 
-             IIC_SSE_CMPP_RR>, EVEX_4V;
+             IIC_SSE_ALU_F32P_RR>, EVEX_4V;
   def rmi : AVX512AIi8<opc, MRMSrcMem,
              (outs KRC:$dst), (ins RC:$src1, x86memop:$src2, CC:$cc), asm,
              [(set KRC:$dst, (OpNode (vt RC:$src1), (memop_frag addr:$src2),
-                              imm:$cc))], IIC_SSE_CMPP_RM>, EVEX_4V;
+                              imm:$cc))], IIC_SSE_ALU_F32P_RM>, EVEX_4V;
   // Accept explicit immediate argument form instead of comparison code.
   let neverHasSideEffects = 1 in {
     def rri_alt : AVX512AIi8<opc, MRMSrcReg,
                (outs RC:$dst), (ins RC:$src1, RC:$src2, i8imm:$cc),
-               asm_alt, [], IIC_SSE_CMPP_RR>, EVEX_4V;
+               asm_alt, [], IIC_SSE_ALU_F32P_RR>, EVEX_4V;
     def rmi_alt : AVX512AIi8<opc, MRMSrcMem,
                (outs RC:$dst), (ins RC:$src1, x86memop:$src2, i8imm:$cc),
-               asm_alt, [], IIC_SSE_CMPP_RM>, EVEX_4V;
+               asm_alt, [], IIC_SSE_ALU_F32P_RM>, EVEX_4V;
   }
 }
 
@@ -732,10 +732,10 @@ multiclass avx512_cmp_packed<RegisterClass KRC, RegisterClass RC,
   let neverHasSideEffects = 1 in {
     def rri_alt : PIi8<0xC2, MRMSrcReg,
                (outs RC:$dst), (ins RC:$src1, RC:$src2, i8imm:$cc),
-               asm_alt, [], IIC_SSE_CMPP_RR, d>;
+               asm_alt, [], IIC_SSE_ALU_F32P_RR, d>;
     def rmi_alt : PIi8<0xC2, MRMSrcMem,
                (outs RC:$dst), (ins RC:$src1, x86memop:$src2, i8imm:$cc),
-               asm_alt, [], IIC_SSE_CMPP_RM, d>;
+               asm_alt, [], IIC_SSE_ALU_F32P_RM, d>;
   }
 }
 
