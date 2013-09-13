@@ -64,7 +64,9 @@ public:
     return const_iterator(getBucketsEnd(), getBucketsEnd(), true);
   }
 
-  bool empty() const { return getNumEntries() == 0; }
+  bool LLVM_ATTRIBUTE_UNUSED_RESULT empty() const {
+    return getNumEntries() == 0;
+  }
   unsigned size() const { return getNumEntries(); }
 
   /// Grow the densemap so that it has at least Size buckets. Does not shrink

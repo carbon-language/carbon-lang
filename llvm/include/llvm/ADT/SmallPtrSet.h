@@ -71,7 +71,7 @@ protected:
   ~SmallPtrSetImpl();
 
 public:
-  bool empty() const { return size() == 0; }
+  bool LLVM_ATTRIBUTE_UNUSED_RESULT empty() const { return size() == 0; }
   unsigned size() const { return NumElements; }
 
   void clear() {

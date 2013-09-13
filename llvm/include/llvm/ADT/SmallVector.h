@@ -53,7 +53,7 @@ public:
     return size_t((char*)CapacityX - (char*)BeginX);
   }
 
-  bool empty() const { return BeginX == EndX; }
+  bool LLVM_ATTRIBUTE_UNUSED_RESULT empty() const { return BeginX == EndX; }
 };
 
 template <typename T, unsigned N> struct SmallVectorStorage;
