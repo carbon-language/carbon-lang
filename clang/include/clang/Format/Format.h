@@ -232,12 +232,16 @@ struct FormatStyle {
                R.AllowAllParametersOfDeclarationOnNextLine &&
            AllowShortIfStatementsOnASingleLine ==
                R.AllowShortIfStatementsOnASingleLine &&
+           AllowShortLoopsOnASingleLine == R.AllowShortLoopsOnASingleLine &&
            AlwaysBreakTemplateDeclarations ==
                R.AlwaysBreakTemplateDeclarations &&
            AlwaysBreakBeforeMultilineStrings ==
                R.AlwaysBreakBeforeMultilineStrings &&
            BinPackParameters == R.BinPackParameters &&
+           BreakBeforeBinaryOperators == R.BreakBeforeBinaryOperators &&
            BreakBeforeBraces == R.BreakBeforeBraces &&
+           BreakConstructorInitializersBeforeComma ==
+               R.BreakConstructorInitializersBeforeComma &&
            ColumnLimit == R.ColumnLimit &&
            ConstructorInitializerAllOnOneLineOrOnePerLine ==
                R.ConstructorInitializerAllOnOneLineOrOnePerLine &&
@@ -245,6 +249,8 @@ struct FormatStyle {
            ExperimentalAutoDetectBinPacking ==
                R.ExperimentalAutoDetectBinPacking &&
            IndentCaseLabels == R.IndentCaseLabels &&
+           IndentFunctionDeclarationAfterType ==
+               R.IndentFunctionDeclarationAfterType &&
            IndentWidth == R.IndentWidth &&
            MaxEmptyLinesToKeep == R.MaxEmptyLinesToKeep &&
            NamespaceIndentation == R.NamespaceIndentation &&
@@ -257,13 +263,10 @@ struct FormatStyle {
            PointerBindsToType == R.PointerBindsToType &&
            SpacesBeforeTrailingComments == R.SpacesBeforeTrailingComments &&
            Cpp11BracedListStyle == R.Cpp11BracedListStyle &&
-           Standard == R.Standard && UseTab == R.UseTab &&
-           IndentFunctionDeclarationAfterType ==
-               R.IndentFunctionDeclarationAfterType &&
-           SpacesInParentheses == R.SpacesInParentheses &&
+           Standard == R.Standard && TabWidth == R.TabWidth &&
+           UseTab == R.UseTab && SpacesInParentheses == R.SpacesInParentheses &&
            SpaceInEmptyParentheses == R.SpaceInEmptyParentheses &&
-           SpacesInCStyleCastParentheses ==
-               R.SpacesInCStyleCastParentheses &&
+           SpacesInCStyleCastParentheses == R.SpacesInCStyleCastParentheses &&
            SpaceAfterControlStatementKeyword ==
                R.SpaceAfterControlStatementKeyword;
   }
