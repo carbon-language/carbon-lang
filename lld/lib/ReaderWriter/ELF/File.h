@@ -428,18 +428,17 @@ public:
           if (previousAtom)
             createEdge(anonAtom, previousAtom,
                        lld::Reference::kindLayoutBefore);
+          // If this is the last atom, lets not create a followon reference.
+          if (anonAtom && (si + 1) != se) {
+            anonFollowedBy = new (_readerStorage) ELFReference<ELFT>(
+                lld::Reference::kindLayoutAfter);
+            anonAtom->addReference(anonFollowedBy);
+          }
         }
 
         ELFDefinedAtom<ELFT> *newAtom = createDefinedAtomAndAssignRelocations(
             symbolName, *sectionName, &*symbol, section, symbolData);
         newAtom->setOrdinal(++_ordinal);
-
-        // If this is the last atom, lets not create a followon reference.
-        if (anonAtom && (si + 1) != se) {
-          anonFollowedBy = new (_readerStorage)
-              ELFReference<ELFT>(lld::Reference::kindLayoutAfter);
-          anonAtom->addReference(anonFollowedBy);
-        }
 
         // If the atom was a weak symbol, lets create a followon reference to
         // the anonymous atom that we created.
