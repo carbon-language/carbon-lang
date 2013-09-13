@@ -54,3 +54,5 @@ void f8() {
 
 extern int x2 __attribute__((availability(macosx,introduced=10.2))); // expected-note {{previous attribute is here}}
 extern int x2 __attribute__((availability(macosx,introduced=10.5))); // expected-warning {{availability does not match previous declaration}}
+
+extern int x3 __attribute__((availability(macosx,message=L"wide"))); // expected-error {{'availability' attribute requires a string}}

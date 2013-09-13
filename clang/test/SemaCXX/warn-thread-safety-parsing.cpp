@@ -307,6 +307,8 @@ void sl_function_params(int lvar SCOPED_LOCKABLE); // \
 
 int gb_var_arg GUARDED_BY(mu1);
 
+int gb_non_ascii GUARDED_BY(L"wide"); // expected-warning {{ignoring 'guarded_by' attribute because its argument is invalid}}
+
 int gb_var_args __attribute__((guarded_by(mu1, mu2))); // \
   // expected-error {{'guarded_by' attribute takes one argument}}
 

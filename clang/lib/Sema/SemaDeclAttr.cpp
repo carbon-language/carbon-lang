@@ -430,7 +430,7 @@ static void checkAttrArgsAreLockableObjs(Sema &S, Decl *D,
 
     if (StringLiteral *StrLit = dyn_cast<StringLiteral>(ArgExp)) {
       if (StrLit->getLength() == 0 ||
-          StrLit->getString() == StringRef("*")) {
+          (StrLit->isAscii() && StrLit->getString() == StringRef("*"))) {
         // Pass empty strings to the analyzer without warnings.
         // Treat "*" as the universal lock.
         Args.push_back(ArgExp);
@@ -2267,10 +2267,16 @@ static void handleAvailabilityAttr(Sema &S, Decl *D,
   AvailabilityChange Obsoleted = Attr.getAvailabilityObsoleted();
   bool IsUnavailable = Attr.getUnavailableLoc().isValid();
   StringRef Str;
-  const StringLiteral *SE = 
-    dyn_cast_or_null<const StringLiteral>(Attr.getMessageExpr());
-  if (SE)
+  if (Attr.getMessageExpr()) {
+    const StringLiteral *SE = dyn_cast<StringLiteral>(Attr.getMessageExpr());
+    if (!SE || !SE->isAscii()) {
+      S.Diag(Attr.getMessageExpr()->getLocStart(),
+             diag::err_attribute_argument_type)
+        << Attr.getName() << AANT_ArgumentString;
+      return;
+    }
     Str = SE->getString();
+  }
 
   AvailabilityAttr *NewAttr = S.mergeAvailabilityAttr(ND, Attr.getRange(), II,
                                                       Introduced.Version,
