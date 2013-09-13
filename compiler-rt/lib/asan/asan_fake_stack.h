@@ -168,6 +168,9 @@ class FakeStack {
   bool needs_gc_;
 };
 
+FakeStack *GetTLSFakeStack();
+void SetTLSFakeStack(FakeStack *fs);
+
 }  // namespace __asan
 
 #endif  // ASAN_FAKE_STACK_H

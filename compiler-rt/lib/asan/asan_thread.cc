@@ -122,9 +122,11 @@ FakeStack *AsanThread::AsyncSignalSafeLazyInitFakeStack() {
   // if that was successfull, it initilizes the pointer.
   if (atomic_compare_exchange_strong(
       reinterpret_cast<atomic_uintptr_t *>(&fake_stack_), &old_val, 1UL,
-      memory_order_relaxed))
-    return fake_stack_ =
-               FakeStack::Create(Log2(RoundUpToPowerOfTwo(stack_size)));
+      memory_order_relaxed)) {
+    fake_stack_ = FakeStack::Create(Log2(RoundUpToPowerOfTwo(stack_size)));
+    SetTLSFakeStack(fake_stack_);
+    return fake_stack_;
+  }
   return 0;
 }
 

@@ -78,7 +78,10 @@ class AsanThread {
   void DeleteFakeStack() {
     if (!fake_stack_) return;
     fake_stack_->PoisonAll(0);
-    fake_stack_->Destroy();
+    FakeStack *t = fake_stack_;
+    fake_stack_ = 0;
+    SetTLSFakeStack(0);
+    t->Destroy();
   }
 
   bool has_fake_stack() {

@@ -122,6 +122,20 @@ NOINLINE void FakeStack::GC(uptr real_stack) {
   needs_gc_ = false;
 }
 
+#if SANITIZER_LINUX
+static THREADLOCAL FakeStack *fake_stack_tls;
+
+FakeStack *GetTLSFakeStack() {
+  return fake_stack_tls;
+}
+void SetTLSFakeStack(FakeStack *fs) {
+  fake_stack_tls = fs;
+}
+#else
+FakeStack *GetTLSFakeStack() { return 0; }
+void SetTLSFakeStack(FakeStack *fs) { }
+#endif  // SANITIZER_LINUX
+
 static FakeStack *GetFakeStack() {
   AsanThread *t = GetCurrentThread();
   if (!t) return 0;
@@ -129,14 +143,9 @@ static FakeStack *GetFakeStack() {
 }
 
 static FakeStack *GetFakeStackFast() {
-#if 0 && SANITIZER_LINUX  // breaks with signals...
-  static THREADLOCAL FakeStack *fake_stack;
-  if (!fake_stack)
-    fake_stack = GetFakeStack();
-  return fake_stack;
-#else
+  if (FakeStack *fs = GetTLSFakeStack())
+    return fs;
   return GetFakeStack();
-#endif
 }
 
 ALWAYS_INLINE uptr OnMalloc(uptr class_id, uptr size, uptr real_stack) {
