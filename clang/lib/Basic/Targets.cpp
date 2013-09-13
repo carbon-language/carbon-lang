@@ -3648,10 +3648,12 @@ public:
   void getDefaultFeatures(llvm::StringMap<bool> &Features) const {
     if (CPU == "arm1136jf-s" || CPU == "arm1176jzf-s" || CPU == "mpcore")
       Features["vfp2"] = true;
-    else if (CPU == "cortex-a8" || CPU == "cortex-a15" ||
-             CPU == "cortex-a9" || CPU == "cortex-a9-mp")
+    else if (CPU == "cortex-a8" || CPU == "cortex-a9" ||
+             CPU == "cortex-a9-mp") {
+      Features["vfp3"] = true;
       Features["neon"] = true;
-    else if (CPU == "swift" || CPU == "cortex-a7") {
+    } else if (CPU == "swift" || CPU == "cortex-a5" ||
+        CPU == "cortex-a7" || CPU == "cortex-a15") {
       Features["vfp4"] = true;
       Features["neon"] = true;
     }
@@ -3702,8 +3704,9 @@ public:
         .Case("arm", true)
         .Case("softfloat", SoftFloat)
         .Case("thumb", IsThumb)
-        .Case("neon", FPU == NeonFPU && !SoftFloat && 
-              StringRef(getCPUDefineSuffix(CPU)).startswith("7"))    
+        .Case("neon", (FPU & NeonFPU) && !SoftFloat &&
+              (StringRef(getCPUDefineSuffix(CPU)).startswith("7") ||
+               StringRef(getCPUDefineSuffix(CPU)).startswith("8")))
         .Default(false);
   }
   // FIXME: Should we actually have some table instead of these switches?
