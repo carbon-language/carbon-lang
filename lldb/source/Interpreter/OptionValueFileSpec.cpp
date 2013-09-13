@@ -84,8 +84,21 @@ OptionValueFileSpec::SetValueFromCString (const char *value_cstr,
     case eVarSetOperationAssign:
         if (value_cstr && value_cstr[0])
         {
+            // The setting value may have whitespace, double-quotes, or single-quotes around the file
+            // path to indicate that internal spaces are not word breaks.  Strip off any ws & quotes
+            // from the start and end of the file path - we aren't doing any word // breaking here so 
+            // the quoting is unnecessary.  NB this will cause a problem if someone tries to specify
+            // a file path that legitimately begins or ends with a " or ' character, or whitespace.
+            std::string filepath(value_cstr);
+            auto prefix_chars_to_trim = filepath.find_first_not_of ("\"' \t");
+            if (prefix_chars_to_trim != std::string::npos && prefix_chars_to_trim > 0)
+                filepath.erase(0, prefix_chars_to_trim);
+            auto suffix_chars_to_trim = filepath.find_last_not_of ("\"' \t");
+            if (suffix_chars_to_trim != std::string::npos && suffix_chars_to_trim < filepath.size())
+                filepath.erase (suffix_chars_to_trim + 1);
+
             m_value_was_set = true;
-            m_current_value.SetFile(value_cstr, true);
+            m_current_value.SetFile(filepath.c_str(), true);
         }
         else
         {
