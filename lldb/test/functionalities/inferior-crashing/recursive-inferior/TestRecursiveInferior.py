@@ -57,6 +57,7 @@ class CrashingRecursiveInferiorTestCase(TestBase):
         self.buildDsym()
         self.recursive_inferior_crashing_step()
 
+    @skipIfFreeBSD # llvm.org/pr17232
     def test_recursive_inferior_crashing_step_dwarf(self):
         """Test that stepping after a crash behaves correctly."""
         self.buildDwarf()

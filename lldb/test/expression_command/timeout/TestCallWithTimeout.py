@@ -26,6 +26,7 @@ class ExprCommandWithTimeoutsTestCase(TestBase):
         self.buildDsym()
         self.call_function()
 
+    @skipIfFreeBSD # llvm.org/pr17233
     @dwarf_test
     def test_with_dwarf(self):
         """Test calling std::String member function."""
