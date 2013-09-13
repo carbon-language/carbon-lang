@@ -533,10 +533,16 @@ private:
   void emitAccelTypes();
 
   /// \brief Emit visible names into a debug pubnames section.
-  void emitDebugPubNames();
+  /// \param GnuStyle determines whether or not we want to emit
+  /// additional information into the table ala newer gcc for gdb
+  /// index.
+  void emitDebugPubNames(bool GnuStyle = false);
 
   /// \brief Emit visible types into a debug pubtypes section.
-  void emitDebugPubTypes();
+  /// \param GnuStyle determines whether or not we want to emit
+  /// additional information into the table ala newer gcc for gdb
+  /// index.
+  void emitDebugPubTypes(bool GnuStyle = false);
 
   /// \brief Emit visible names into a debug str section.
   void emitDebugStr();

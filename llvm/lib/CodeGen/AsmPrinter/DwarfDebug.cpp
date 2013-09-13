@@ -68,6 +68,11 @@ GenerateCUHash("generate-cu-hash", cl::Hidden,
                cl::desc("Add the CU hash as the dwo_id."),
                cl::init(false));
 
+static cl::opt<bool>
+GenerateGnuPubSections("generate-gnu-dwarf-pub-sections", cl::Hidden,
+                       cl::desc("Generate GNU-style pubnames and pubtypes"),
+                       cl::init(false));
+
 namespace {
 enum DefaultOnOff {
   Default,
@@ -768,6 +773,12 @@ CompileUnit *DwarfDebug::constructCompileUnit(const MDNode *N) {
   // skeleton CU and so we don't need to duplicate it here.
   if (!useSplitDwarf() && !CompilationDir.empty())
     NewCU->addString(Die, dwarf::DW_AT_comp_dir, CompilationDir);
+
+  // Flag to let the linker know we have emitted new style pubnames. Only
+  // emit it here if we don't have a skeleton CU for split dwarf.
+  if (!useSplitDwarf() && GenerateGnuPubSections)
+    NewCU->addFlag(Die, dwarf::DW_AT_GNU_pubnames);
+
   if (DIUnit.isOptimized())
     NewCU->addFlag(Die, dwarf::DW_AT_APPLE_optimized);
 
@@ -1149,8 +1160,8 @@ void DwarfDebug::endModule() {
 
   // Emit the pubnames and pubtypes sections if requested.
   if (HasDwarfPubSections) {
-    emitDebugPubNames();
-    emitDebugPubTypes();
+    emitDebugPubNames(GenerateGnuPubSections ? true : false);
+    emitDebugPubTypes(GenerateGnuPubSections ? true : false);
   }
 
   // Finally emit string information into a string table.
@@ -1933,7 +1944,11 @@ void DwarfDebug::emitSectionLabels() {
   if (HasDwarfPubSections) {
     emitSectionSym(Asm, TLOF.getDwarfPubNamesSection());
     emitSectionSym(Asm, TLOF.getDwarfPubTypesSection());
+  } else if (GenerateGnuPubSections) {
+    emitSectionSym(Asm, TLOF.getDwarfGnuPubNamesSection());
+    emitSectionSym(Asm, TLOF.getDwarfGnuPubTypesSection());
   }
+
   DwarfStrSectionSym =
     emitSectionSym(Asm, TLOF.getDwarfStrSection(), "info_string");
   if (useSplitDwarf()) {
@@ -2292,11 +2307,83 @@ void DwarfDebug::emitAccelTypes() {
   AT.Emit(Asm, SectionBegin, &InfoHolder);
 }
 
+// Public name handling.
+// The format for the various pubnames:
+//
+// dwarf pubnames - offset/name pairs where the offset is the offset into the CU
+// for the DIE that is named.
+//
+// gnu pubnames - offset/index value/name tuples where the offset is the offset
+// into the CU and the index value is computed according to the type of value
+// for the DIE that is named.
+//
+// For type units the offset is the offset of the skeleton DIE. For split dwarf
+// it's the offset within the debug_info/debug_types dwo section, however, the
+// reference in the pubname header doesn't change.
+
+/// computeIndexValue - Compute the gdb index value for the DIE and CU.
+static uint8_t computeIndexValue(CompileUnit *CU, DIE *Die) {
+#define UPDATE_VALUE(CURRENT, VALUE)                                           \
+  {                                                                            \
+    (CURRENT) |= (((VALUE) & dwarf::GDB_INDEX_SYMBOL_KIND_MASK)                \
+                  << dwarf::GDB_INDEX_SYMBOL_KIND_SHIFT);                      \
+  }
+
+#define UPDATE_STATIC(CURRENT, IS_STATIC)                                      \
+  {                                                                            \
+    (CURRENT) |= (((IS_STATIC) & dwarf::GDB_INDEX_SYMBOL_STATIC_MASK)          \
+                  << dwarf::GDB_INDEX_SYMBOL_STATIC_SHIFT);                    \
+  }
+
+  // Compute the Attributes for the Die.
+  uint32_t Value = dwarf::GDB_INDEX_SYMBOL_KIND_NONE;
+  bool External =
+      Die->findAttribute(dwarf::DW_AT_external) != NULL ? true : false;
+
+  switch (Die->getTag()) {
+  case dwarf::DW_TAG_class_type:
+  case dwarf::DW_TAG_structure_type:
+  case dwarf::DW_TAG_union_type:
+  case dwarf::DW_TAG_enumeration_type:
+  case dwarf::DW_TAG_typedef:
+  case dwarf::DW_TAG_base_type:
+  case dwarf::DW_TAG_subrange_type:
+    UPDATE_VALUE(Value, dwarf::GDB_INDEX_SYMBOL_KIND_TYPE);
+    UPDATE_STATIC(Value, 1);
+    break;
+  case dwarf::DW_TAG_namespace:
+    UPDATE_VALUE(Value, dwarf::GDB_INDEX_SYMBOL_KIND_TYPE);
+    break;
+  case dwarf::DW_TAG_subprogram:
+    UPDATE_VALUE(Value, dwarf::GDB_INDEX_SYMBOL_KIND_FUNCTION);
+    UPDATE_STATIC(Value, !External);
+    break;
+  case dwarf::DW_TAG_constant:
+  case dwarf::DW_TAG_variable:
+    UPDATE_VALUE(Value, dwarf::GDB_INDEX_SYMBOL_KIND_VARIABLE);
+    UPDATE_STATIC(Value, !External);
+    break;
+  case dwarf::DW_TAG_enumerator:
+    UPDATE_VALUE(Value, dwarf::GDB_INDEX_SYMBOL_KIND_VARIABLE);
+    UPDATE_STATIC(Value, 1);
+    break;
+  default:
+    break;
+  }
+  // We don't need to add the CU into the bitmask for two reasons:
+  // a) the pubnames/pubtypes sections are per-cpu, and
+  // b) the linker wouldn't understand it anyhow.
+  // so go ahead and make it 1 byte by shifting it down.
+  return Value >> dwarf::GDB_INDEX_CU_BITSIZE;
+}
+
 /// emitDebugPubNames - Emit visible names into a debug pubnames section.
 ///
-void DwarfDebug::emitDebugPubNames() {
+void DwarfDebug::emitDebugPubNames(bool GnuStyle) {
   const MCSection *ISec = Asm->getObjFileLowering().getDwarfInfoSection();
-  const MCSection *PSec = Asm->getObjFileLowering().getDwarfPubNamesSection();
+  const MCSection *PSec =
+      GnuStyle ? Asm->getObjFileLowering().getDwarfGnuPubNamesSection()
+               : Asm->getObjFileLowering().getDwarfPubNamesSection();
 
   typedef DenseMap<const MDNode*, CompileUnit*> CUMapType;
   for (CUMapType::iterator I = CUMap.begin(), E = CUMap.end(); I != E; ++I) {
@@ -2309,6 +2396,7 @@ void DwarfDebug::emitDebugPubNames() {
     // Start the dwarf pubnames section.
     Asm->OutStreamer.SwitchSection(PSec);
 
+    // Emit the header.
     Asm->OutStreamer.AddComment("Length of Public Names Info");
     Asm->EmitLabelDifference(Asm->GetTempSymbol("pubnames_end", ID),
                              Asm->GetTempSymbol("pubnames_begin", ID), 4);
@@ -2327,14 +2415,20 @@ void DwarfDebug::emitDebugPubNames() {
                              Asm->GetTempSymbol(ISec->getLabelBeginName(), ID),
                              4);
 
+    // Emit the pubnames for this compilation unit.
     const StringMap<DIE*> &Globals = TheCU->getGlobalNames();
     for (StringMap<DIE*>::const_iterator
            GI = Globals.begin(), GE = Globals.end(); GI != GE; ++GI) {
       const char *Name = GI->getKeyData();
-      const DIE *Entity = GI->second;
+      DIE *Entity = GI->second;
 
       Asm->OutStreamer.AddComment("DIE offset");
       Asm->EmitInt32(Entity->getOffset());
+
+      if (GnuStyle) {
+        Asm->OutStreamer.AddComment("Index value");
+        Asm->EmitInt8(computeIndexValue(TheCU, Entity));
+      }
 
       if (Asm->isVerbose())
         Asm->OutStreamer.AddComment("External Name");
@@ -2347,7 +2441,7 @@ void DwarfDebug::emitDebugPubNames() {
   }
 }
 
-void DwarfDebug::emitDebugPubTypes() {
+void DwarfDebug::emitDebugPubTypes(bool GnuStyle) {
   const MCSection *ISec = Asm->getObjFileLowering().getDwarfInfoSection();
   const MCSection *PSec = Asm->getObjFileLowering().getDwarfPubTypesSection();
 
@@ -2389,6 +2483,11 @@ void DwarfDebug::emitDebugPubTypes() {
       if (Asm->isVerbose())
         Asm->OutStreamer.AddComment("DIE offset");
       Asm->EmitInt32(Entity->getOffset());
+
+      if (GnuStyle) {
+        Asm->OutStreamer.AddComment("Index value");
+        Asm->EmitInt8(computeIndexValue(TheCU, Entity));
+      }
 
       if (Asm->isVerbose())
         Asm->OutStreamer.AddComment("External Name");
@@ -2650,6 +2749,10 @@ CompileUnit *DwarfDebug::constructSkeletonCU(const CompileUnit *CU) {
 
   if (!CompilationDir.empty())
     NewCU->addLocalString(Die, dwarf::DW_AT_comp_dir, CompilationDir);
+
+  // Flag to let the linker know we have emitted new style pubnames.
+  if (GenerateGnuPubSections)
+    NewCU->addFlag(Die, dwarf::DW_AT_GNU_pubnames);
 
   SkeletonHolder.addUnit(NewCU);
   SkeletonCUs.push_back(NewCU);

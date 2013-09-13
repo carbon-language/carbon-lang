@@ -791,6 +791,17 @@ const char *AtomTypeString(unsigned Atom);
 
 // Constants for the GNU pubnames/pubtypes extensions supporting gdb index.
 enum GDBIndex {
+  // The full index looks like this for each symbol:
+  //
+  // 0-23   CU index
+  // 24-27  reserved
+  // 28-30  symbol kind
+  // 31     0 == global, 1 == static
+  //
+  // where each entry refers to the CU and some attributes about the symbol.
+
+  // Attributes kinds for the index.
+
   // Special value to indicate no attributes are present.
   GDB_INDEX_SYMBOL_KIND_NONE = 0,
   GDB_INDEX_SYMBOL_KIND_TYPE = 1,
@@ -800,7 +811,17 @@ enum GDBIndex {
   // 3 unused bits.
   GDB_INDEX_SYMBOL_KIND_UNUSED5 = 5,
   GDB_INDEX_SYMBOL_KIND_UNUSED6 = 6,
-  GDB_INDEX_SYMBOL_KIND_UNUSED7 = 7
+  GDB_INDEX_SYMBOL_KIND_UNUSED7 = 7,
+
+  // Index values are defined via the set of CUs that define the
+  // symbol. For the pubnames/pubtypes extensions we need the
+  // various shifts and masks.
+  GDB_INDEX_SYMBOL_STATIC_SHIFT = 31,
+  GDB_INDEX_SYMBOL_STATIC_MASK = 1,
+  GDB_INDEX_SYMBOL_KIND_SHIFT = 28,
+  GDB_INDEX_SYMBOL_KIND_MASK = 7,
+  GDB_INDEX_CU_BITSIZE = 24,
+  GDB_INDEX_CU_MASK = ((1 << GDB_INDEX_CU_BITSIZE) - 1)
 };
 
 /// GDBIndexTypeString - Return the string for the specified index type.
