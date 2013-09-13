@@ -123,7 +123,7 @@ NOINLINE void FakeStack::GC(uptr real_stack) {
   needs_gc_ = false;
 }
 
-#if SANITIZER_LINUX
+#if SANITIZER_LINUX && !SANITIZER_ANDROID
 static THREADLOCAL FakeStack *fake_stack_tls;
 
 FakeStack *GetTLSFakeStack() {
@@ -135,7 +135,7 @@ void SetTLSFakeStack(FakeStack *fs) {
 #else
 FakeStack *GetTLSFakeStack() { return 0; }
 void SetTLSFakeStack(FakeStack *fs) { }
-#endif  // SANITIZER_LINUX
+#endif  // SANITIZER_LINUX && !SANITIZER_ANDROID
 
 static FakeStack *GetFakeStack() {
   AsanThread *t = GetCurrentThread();
