@@ -153,7 +153,7 @@ libraries are the default. For example:
 
   LIBRARYNAME = mylib
   SHARED_LIBRARY = 1
-  ARCHIVE_LIBRARY = 1
+  BUILD_ARCHIVE = 1
 
 says to build a library named ``mylib`` with both a shared library
 (``mylib.so``) and an archive library (``mylib.a``) version. The contents of all
@@ -236,7 +236,7 @@ the ``-l`` option). In this case, only the symbols that are unresolved *at
 that point* will be resolved from the library, if they exist. Other
 (unreferenced) symbols will not be included when the ``.a`` syntax is used. Note
 that in order to use the ``.a`` suffix, the library in question must have been
-built with the ``ARCHIVE_LIBRARY`` option set.
+built with the ``BUILD_ARCHIVE`` option set.
 
 JIT Tools
 ^^^^^^^^^
