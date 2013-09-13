@@ -1139,23 +1139,6 @@ CollectCXXMemberFunctions(const CXXRecordDecl *RD, llvm::DIFile Unit,
   }
 }
 
-/// CollectCXXFriends - A helper function to collect debug info for
-/// C++ base classes. This is used while creating debug info entry for
-/// a Record.
-void CGDebugInfo::
-CollectCXXFriends(const CXXRecordDecl *RD, llvm::DIFile Unit,
-                SmallVectorImpl<llvm::Value *> &EltTys,
-                llvm::DIType RecordTy) {
-  for (CXXRecordDecl::friend_iterator BI = RD->friend_begin(),
-         BE = RD->friend_end(); BI != BE; ++BI) {
-    if ((*BI)->isUnsupportedFriend())
-      continue;
-    if (TypeSourceInfo *TInfo = (*BI)->getFriendType())
-      EltTys.push_back(DBuilder.createFriend(
-          RecordTy, getOrCreateType(TInfo->getType(), Unit)));
-  }
-}
-
 /// CollectCXXBases - A helper function to collect debug info for
 /// C++ base classes. This is used while creating debug info entry for
 /// a Record.
@@ -1528,7 +1511,6 @@ llvm::DIType CGDebugInfo::CreateTypeDefinition(const RecordType *Ty) {
   CollectRecordFields(RD, DefUnit, EltTys, FwdDecl);
   if (CXXDecl) {
     CollectCXXMemberFunctions(CXXDecl, DefUnit, EltTys, FwdDecl);
-    CollectCXXFriends(CXXDecl, DefUnit, EltTys, FwdDecl);
   }
 
   LexicalBlockStack.pop_back();

@@ -14,4 +14,7 @@ struct MyFriend {
   }
 };
 
-// CHECK: DW_TAG_friend
+// Emitting debug info for friends unnecessarily bloats debug info without any
+// known benefit or debugger feature that requires it. Re-enable this is a
+// use-case appears.
+// CHECK-NOT: DW_TAG_friend
