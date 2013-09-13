@@ -1,0 +1,6 @@
+# RUN: yaml2obj %p/Inputs/alignment.obj.yaml > %t.obj
+#
+# RUN: lld -flavor link /out:%t1 /subsystem:console /force /entry:start \
+# RUN:   -- %t.obj && llvm-readobj -sections %t1 | FileCheck %s
+
+CHECK: VirtualSize: 0x1001

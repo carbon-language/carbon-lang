@@ -478,7 +478,7 @@ private:
           COFFDefinedAtom(*this, "", sectionName, Atom::scopeTranslationUnit,
                           type, perms, _merge[section], data, 0);
       atoms.push_back(atom);
-      _definedAtomLocations[section][0] = atom;
+      _definedAtomLocations[section][0].push_back(atom);
       return error_code::success();
     }
 
@@ -491,7 +491,7 @@ private:
           COFFDefinedAtom(*this, "", sectionName, Atom::scopeTranslationUnit,
                           type, perms, _merge[section], data, ++ordinal);
       atoms.push_back(atom);
-      _definedAtomLocations[section][0] = atom;
+      _definedAtomLocations[section][0].push_back(atom);
     }
 
     for (auto si = symbols.begin(), se = symbols.end(); si != se; ++si) {
@@ -505,12 +505,12 @@ private:
                           type, perms, _merge[section], data, ++ordinal);
       atoms.push_back(atom);
       _symbolAtom[*si] = atom;
-      _definedAtomLocations[section][(*si)->Value] = atom;
+      _definedAtomLocations[section][(*si)->Value].push_back(atom);
     }
 
     // Finally, set alignment to the first atom so that the section contents
     // will be aligned as specified by the object section header.
-    _definedAtomLocations[section][0]->setAlignment(getAlignment(section));
+    _definedAtomLocations[section][0][0]->setAlignment(getAlignment(section));
     return error_code::success();
   }
 
@@ -542,7 +542,8 @@ private:
                         COFFDefinedFileAtom *&result, uint32_t &offsetInAtom) {
     for (auto i : _definedAtomLocations[section]) {
       uint32_t atomAddress = i.first;
-      COFFDefinedAtom *atom = i.second;
+      std::vector<COFFDefinedAtom *> &atomsAtSameLocation = i.second;
+      COFFDefinedAtom *atom = atomsAtSameLocation.back();
       if (atomAddress <= targetAddress &&
           targetAddress < atomAddress + atom->size()) {
         result = atom;
@@ -697,7 +698,8 @@ private:
 
   // A sorted map to find an atom from a section and an offset within
   // the section.
-  std::map<const coff_section *, std::map<uint32_t, COFFDefinedAtom *> >
+  std::map<const coff_section *,
+           std::map<uint32_t, std::vector<COFFDefinedAtom *> > >
   _definedAtomLocations;
 
   mutable llvm::BumpPtrAllocator _alloc;
