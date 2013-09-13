@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=armv8-linux-gnueabihf -mattr=+v8fp -float-abi=hard | FileCheck %s
+; RUN: llc < %s -mtriple=armv8-linux-gnueabihf -mattr=+fp-armv8 -float-abi=hard | FileCheck %s
 @varfloat = global float 0.0
 @vardouble = global double 0.0
 define void @test_vsel32sgt(i32 %lhs32, i32 %rhs32, float %a, float %b) {

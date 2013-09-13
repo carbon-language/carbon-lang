@@ -340,13 +340,13 @@ multiclass vsel_inst<string op, bits<2> opc, int CC> {
                    (outs SPR:$Sd), (ins SPR:$Sn, SPR:$Sm),
                    NoItinerary, !strconcat("vsel", op, ".f32\t$Sd, $Sn, $Sm"),
                    [(set SPR:$Sd, (ARMcmov SPR:$Sm, SPR:$Sn, CC))]>,
-                   Requires<[HasV8FP]>;
+                   Requires<[HasFPARMv8]>;
 
     def D : ADbInp<0b11100, opc, 0,
                    (outs DPR:$Dd), (ins DPR:$Dn, DPR:$Dm),
                    NoItinerary, !strconcat("vsel", op, ".f64\t$Dd, $Dn, $Dm"),
                    [(set DPR:$Dd, (ARMcmov (f64 DPR:$Dm), (f64 DPR:$Dn), CC))]>,
-                   Requires<[HasV8FP]>;
+                   Requires<[HasFPARMv8]>;
   }
 }
 
@@ -362,13 +362,13 @@ multiclass vmaxmin_inst<string op, bit opc, SDNode SD> {
                    (outs SPR:$Sd), (ins SPR:$Sn, SPR:$Sm),
                    NoItinerary, !strconcat(op, ".f32\t$Sd, $Sn, $Sm"),
                    [(set SPR:$Sd, (SD SPR:$Sn, SPR:$Sm))]>,
-                   Requires<[HasV8FP]>;
+                   Requires<[HasFPARMv8]>;
 
     def D : ADbInp<0b11101, 0b00, opc,
                    (outs DPR:$Dd), (ins DPR:$Dn, DPR:$Dm),
                    NoItinerary, !strconcat(op, ".f64\t$Dd, $Dn, $Dm"),
                    [(set DPR:$Dd, (f64 (SD (f64 DPR:$Dn), (f64 DPR:$Dm))))]>,
-                   Requires<[HasV8FP]>;
+                   Requires<[HasFPARMv8]>;
   }
 }
 
@@ -538,7 +538,7 @@ def VCVTTSH: ASuI<0b11101, 0b11, 0b0011, 0b11, 0, (outs SPR:$Sd), (ins SPR:$Sm),
 def VCVTBHD : ADuI<0b11101, 0b11, 0b0010, 0b01, 0,
                    (outs DPR:$Dd), (ins SPR:$Sm),
                    NoItinerary, "vcvtb", ".f64.f16\t$Dd, $Sm",
-                   []>, Requires<[HasV8FP]> {
+                   []>, Requires<[HasFPARMv8]> {
   // Instruction operands.
   bits<5> Sm;
 
@@ -550,7 +550,7 @@ def VCVTBHD : ADuI<0b11101, 0b11, 0b0010, 0b01, 0,
 def VCVTBDH : ADuI<0b11101, 0b11, 0b0011, 0b01, 0,
                    (outs SPR:$Sd), (ins DPR:$Dm),
                    NoItinerary, "vcvtb", ".f16.f64\t$Sd, $Dm",
-                   []>, Requires<[HasV8FP]> {
+                   []>, Requires<[HasFPARMv8]> {
   // Instruction operands.
   bits<5> Sd;
   bits<5> Dm;
@@ -565,7 +565,7 @@ def VCVTBDH : ADuI<0b11101, 0b11, 0b0011, 0b01, 0,
 def VCVTTHD : ADuI<0b11101, 0b11, 0b0010, 0b11, 0,
                    (outs DPR:$Dd), (ins SPR:$Sm),
                    NoItinerary, "vcvtt", ".f64.f16\t$Dd, $Sm",
-                   []>, Requires<[HasV8FP]> {
+                   []>, Requires<[HasFPARMv8]> {
   // Instruction operands.
   bits<5> Sm;
 
@@ -577,7 +577,7 @@ def VCVTTHD : ADuI<0b11101, 0b11, 0b0010, 0b11, 0,
 def VCVTTDH : ADuI<0b11101, 0b11, 0b0011, 0b11, 0,
                    (outs SPR:$Sd), (ins DPR:$Dm),
                    NoItinerary, "vcvtt", ".f16.f64\t$Sd, $Dm",
-                   []>, Requires<[HasV8FP]> {
+                   []>, Requires<[HasFPARMv8]> {
   // Instruction operands.
   bits<5> Sd;
   bits<5> Dm;
@@ -594,21 +594,21 @@ multiclass vcvt_inst<string opc, bits<2> rm> {
     def SS : ASuInp<0b11101, 0b11, 0b1100, 0b11, 0,
                     (outs SPR:$Sd), (ins SPR:$Sm),
                     NoItinerary, !strconcat("vcvt", opc, ".s32.f32\t$Sd, $Sm"),
-                    []>, Requires<[HasV8FP]> {
+                    []>, Requires<[HasFPARMv8]> {
       let Inst{17-16} = rm;
     }
 
     def US : ASuInp<0b11101, 0b11, 0b1100, 0b01, 0,
                     (outs SPR:$Sd), (ins SPR:$Sm),
                     NoItinerary, !strconcat("vcvt", opc, ".u32.f32\t$Sd, $Sm"),
-                    []>, Requires<[HasV8FP]> {
+                    []>, Requires<[HasFPARMv8]> {
       let Inst{17-16} = rm;
     }
 
     def SD : ASuInp<0b11101, 0b11, 0b1100, 0b11, 0,
                     (outs SPR:$Sd), (ins DPR:$Dm),
                     NoItinerary, !strconcat("vcvt", opc, ".s32.f64\t$Sd, $Dm"),
-                    []>, Requires<[HasV8FP]> {
+                    []>, Requires<[HasFPARMv8]> {
       bits<5> Dm;
 
       let Inst{17-16} = rm;
@@ -622,7 +622,7 @@ multiclass vcvt_inst<string opc, bits<2> rm> {
     def UD : ASuInp<0b11101, 0b11, 0b1100, 0b01, 0,
                     (outs SPR:$Sd), (ins DPR:$Dm),
                     NoItinerary, !strconcat("vcvt", opc, ".u32.f64\t$Sd, $Dm"),
-                    []>, Requires<[HasV8FP]> {
+                    []>, Requires<[HasFPARMv8]> {
       bits<5> Dm;
 
       let Inst{17-16} = rm;
@@ -658,14 +658,14 @@ multiclass vrint_inst_zrx<string opc, bit op, bit op2> {
   def S : ASuI<0b11101, 0b11, 0b0110, 0b11, 0,
                (outs SPR:$Sd), (ins SPR:$Sm),
                NoItinerary, !strconcat("vrint", opc), ".f32\t$Sd, $Sm",
-               []>, Requires<[HasV8FP]> {
+               []>, Requires<[HasFPARMv8]> {
     let Inst{7} = op2;
     let Inst{16} = op;
   }
   def D : ADuI<0b11101, 0b11, 0b0110, 0b11, 0,
                 (outs DPR:$Dd), (ins DPR:$Dm),
                 NoItinerary, !strconcat("vrint", opc), ".f64\t$Dd, $Dm",
-                []>, Requires<[HasV8FP]> {
+                []>, Requires<[HasFPARMv8]> {
     let Inst{7} = op2;
     let Inst{16} = op;
   }
@@ -685,13 +685,13 @@ multiclass vrint_inst_anpm<string opc, bits<2> rm> {
     def S : ASuInp<0b11101, 0b11, 0b1000, 0b01, 0,
                    (outs SPR:$Sd), (ins SPR:$Sm),
                    NoItinerary, !strconcat("vrint", opc, ".f32\t$Sd, $Sm"),
-                   []>, Requires<[HasV8FP]> {
+                   []>, Requires<[HasFPARMv8]> {
       let Inst{17-16} = rm;
     }
     def D : ADuInp<0b11101, 0b11, 0b1000, 0b01, 0,
                    (outs DPR:$Dd), (ins DPR:$Dm),
                    NoItinerary, !strconcat("vrint", opc, ".f64\t$Dd, $Dm"),
-                   []>, Requires<[HasV8FP]> {
+                   []>, Requires<[HasFPARMv8]> {
       let Inst{17-16} = rm;
     }
   }

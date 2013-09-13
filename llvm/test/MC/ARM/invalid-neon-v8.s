@@ -8,7 +8,7 @@ vmaxnmge.f64.f64 s4, d5, q1
 @ CHECK: error: instruction 'vmaxnm' is not predicable, but condition code specified
 
 vcvta.s32.f32 s1, s2
-@ CHECK: error: instruction requires: V8FP
+@ CHECK: error: instruction requires: FPARMv8
 vcvtp.u32.f32 s1, d2
 @ CHECK: error: invalid operand for instruction
 vcvtp.f32.u32 d1, q2

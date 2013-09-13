@@ -1,5 +1,5 @@
 ; RUN: llc < %s -mtriple armv8 -mattr=+neon | FileCheck %s
-; RUN: llc < %s -mtriple armv8 -mattr=+neon,+v8fp -enable-unsafe-fp-math | FileCheck %s --check-prefix=CHECK-FAST
+; RUN: llc < %s -mtriple armv8 -mattr=+neon,+fp-armv8 -enable-unsafe-fp-math | FileCheck %s --check-prefix=CHECK-FAST
 
 define <4 x float> @vmaxnmq(<4 x float>* %A, <4 x float>* %B) nounwind {
 ; CHECK: vmaxnmq
@@ -37,44 +37,44 @@ define <2 x float> @vminnmd(<2 x float>* %A, <2 x float>* %B) nounwind {
   ret <2 x float> %tmp3
 }
 
-define float @v8fp_vminnm_o(float %a, float %b) {
-; CHECK-FAST: v8fp_vminnm_o
+define float @fp-armv8_vminnm_o(float %a, float %b) {
+; CHECK-FAST: fp-armv8_vminnm_o
 ; CHECK-FAST-NOT: vcmp
 ; CHECK-FAST: vminnm.f32
-; CHECK: v8fp_vminnm_o
+; CHECK: fp-armv8_vminnm_o
 ; CHECK-NOT: vminnm.f32
   %cmp = fcmp olt float %a, %b
   %cond = select i1 %cmp, float %a, float %b
   ret float %cond
 }
 
-define float @v8fp_vminnm_u(float %a, float %b) {
-; CHECK-FAST: v8fp_vminnm_u
+define float @fp-armv8_vminnm_u(float %a, float %b) {
+; CHECK-FAST: fp-armv8_vminnm_u
 ; CHECK-FAST-NOT: vcmp
 ; CHECK-FAST: vminnm.f32
-; CHECK: v8fp_vminnm_u
+; CHECK: fp-armv8_vminnm_u
 ; CHECK-NOT: vminnm.f32
   %cmp = fcmp ult float %a, %b
   %cond = select i1 %cmp, float %a, float %b
   ret float %cond
 }
 
-define float @v8fp_vmaxnm_o(float %a, float %b) {
-; CHECK-FAST: v8fp_vmaxnm_o
+define float @fp-armv8_vmaxnm_o(float %a, float %b) {
+; CHECK-FAST: fp-armv8_vmaxnm_o
 ; CHECK-FAST-NOT: vcmp
 ; CHECK-FAST: vmaxnm.f32
-; CHECK: v8fp_vmaxnm_o
+; CHECK: fp-armv8_vmaxnm_o
 ; CHECK-NOT: vmaxnm.f32
   %cmp = fcmp ogt float %a, %b
   %cond = select i1 %cmp, float %a, float %b
   ret float %cond
 }
 
-define float @v8fp_vmaxnm_u(float %a, float %b) {
-; CHECK-FAST: v8fp_vmaxnm_u
+define float @fp-armv8_vmaxnm_u(float %a, float %b) {
+; CHECK-FAST: fp-armv8_vmaxnm_u
 ; CHECK-FAST-NOT: vcmp
 ; CHECK-FAST: vmaxnm.f32
-; CHECK: v8fp_vmaxnm_u
+; CHECK: fp-armv8_vmaxnm_u
 ; CHECK-NOT: vmaxnm.f32
   %cmp = fcmp ugt float %a, %b
   %cond = select i1 %cmp, float %a, float %b
