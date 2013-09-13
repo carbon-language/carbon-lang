@@ -408,6 +408,21 @@ def warn_pragma_include_alias_expected_filename :
    ExtWarn<"pragma include_alias expected include filename">,
    InGroup<UnknownPragmas>;
 
+// - #pragma warning(...)
+def warn_pragma_warning_expected :
+  ExtWarn<"#pragma warning expected '%0'">,
+  InGroup<UnknownPragmas>;
+def warn_pragma_warning_spec_invalid :
+  ExtWarn<"#pragma warning expected 'push', 'pop', 'default', 'disable',"
+          " 'error', 'once', 'suppress', 1, 2, 3, or 4">,
+  InGroup<UnknownPragmas>;
+def warn_pragma_warning_push_level :
+  ExtWarn<"#pragma warning(push, level) requires a level between 1 and 4">,
+  InGroup<UnknownPragmas>;
+def warn_pragma_warning_expected_number :
+  ExtWarn<"#pragma warning expected a warning number">,
+  InGroup<UnknownPragmas>;
+
 def err__Pragma_malformed : Error<
   "_Pragma takes a parenthesized string literal">;
 def err_pragma_message_malformed : Error<

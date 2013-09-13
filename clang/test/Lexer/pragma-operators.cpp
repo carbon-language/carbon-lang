@@ -35,3 +35,25 @@ B(foo)
 // CHECK: #pragma message("\042Hello\042, world!")
 // CHECK: 0;
 int n = pragma_L pragma_u8 pragma_u pragma_U pragma_R pragma_UR pragma_hello 0;
+
+#pragma warning(disable : 1 2L 3U ; error : 4 5 6 ; suppress : 7 8 9)
+// CHECK: #pragma warning(disable: 1 2 3)
+// CHECK: #line [[@LINE-2]]
+// CHECK: #pragma warning(error: 4 5 6)
+// CHECK: #line [[@LINE-4]]
+// CHECK: #pragma warning(suppress: 7 8 9)
+
+#pragma warning(push)
+#pragma warning(push, 1L)
+#pragma warning(push, 4U)
+#pragma warning(push, 0x1)
+#pragma warning(push, 03)
+#pragma warning(push, 0b10)
+#pragma warning(push, 1i8)
+// CHECK: #pragma warning(push)
+// CHECK: #pragma warning(push, 1)
+// CHECK: #pragma warning(push, 4)
+// CHECK: #pragma warning(push, 1)
+// CHECK: #pragma warning(push, 3)
+// CHECK: #pragma warning(push, 2)
+// CHECK: #pragma warning(push, 1)
