@@ -24,6 +24,7 @@
 #include "clang/Basic/DiagnosticOptions.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/StringSwitch.h"
 
 using namespace clang;
 
@@ -68,6 +69,29 @@ static const FunctionDecl *getStructor(const FunctionDecl *fn) {
     return ftd->getTemplatedDecl();
 
   return fn;
+}
+
+// The ABI expects that we would never mangle "typical" user-defined entry
+// points regardless of visibility or freestanding-ness.
+//
+// N.B. This is distinct from asking about "main".  "main" has a lot of special
+// rules associated with it in the standard while these user-defined entry
+// points are outside of the purview of the standard.  For example, there can be
+// only one definition for "main" in a standards compliant program; however
+// nothing forbids the existence of wmain and WinMain in the same translation
+// unit.
+static bool isUserDefinedEntryPoint(const FunctionDecl *FD) {
+  if (!FD->getIdentifier())
+    return false;
+
+  return llvm::StringSwitch<bool>(FD->getName())
+      .Cases("main",     // An ANSI console app
+             "wmain",    // A Unicode console App
+             "WinMain",  // An ANSI GUI app
+             "wWinMain", // A Unicode GUI app
+             "DllMain",  // A DLL
+             true)
+      .Default(false);
 }
 
 /// MicrosoftCXXNameMangler - Manage the mangling of a single name for the
@@ -230,8 +254,7 @@ bool MicrosoftMangleContext::shouldMangleDeclName(const NamedDecl *D) {
     if (FD->hasAttr<OverloadableAttr>())
       return true;
 
-    // "main" is not mangled.
-    if (FD->isMain())
+    if (isUserDefinedEntryPoint(FD))
       return false;
 
     // C++ functions and those whose names are not a simple identifier need

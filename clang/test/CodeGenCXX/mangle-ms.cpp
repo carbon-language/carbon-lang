@@ -255,3 +255,23 @@ extern "C" inline void extern_c_func() {
 void call_extern_c_func() {
   extern_c_func();
 }
+
+int main() { return 0; }
+// CHECK-DAG: @main
+// X64-DAG:   @main
+
+int wmain() { return 0; }
+// CHECK-DAG: @wmain
+// X64-DAG:   @wmain
+
+int WinMain() { return 0; }
+// CHECK-DAG: @WinMain
+// X64-DAG:   @WinMain
+
+int wWinMain() { return 0; }
+// CHECK-DAG: @wWinMain
+// X64-DAG:   @wWinMain
+
+int DllMain() { return 0; }
+// CHECK-DAG: @DllMain
+// X64-DAG:   @DllMain
