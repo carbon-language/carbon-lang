@@ -6,7 +6,7 @@ import lldb
 import lldbutil
 from lldbtest import *
 
-class TestObjCStepping(TestBase):
+class TestCStepping(TestBase):
 
     mydir = os.path.join("lang", "c", "stepping")
 
