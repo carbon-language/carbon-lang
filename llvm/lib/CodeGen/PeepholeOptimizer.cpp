@@ -40,20 +40,30 @@
 //     If the branch instruction can use flag from "sub", then we can replace
 //     "sub" with "subs" and eliminate the "cmp" instruction.
 //
-// - Optimize Bitcast pairs:
-//
-//     v1 = bitcast v0
-//     v2 = bitcast v1
-//        = v2
-//   =>
-//     v1 = bitcast v0
-//        = v0
-//
 // - Optimize Loads:
 //
 //     Loads that can be folded into a later instruction. A load is foldable
 //     if it loads to virtual registers and the virtual register defined has 
 //     a single use.
+//
+// - Optimize Copies and Bitcast:
+//
+//     Rewrite copies and bitcasts to avoid cross register bank copies
+//     when possible.
+//     E.g., Consider the following example, where capital and lower
+//     letters denote different register file:
+//     b = copy A <-- cross-bank copy
+//     C = copy b <-- cross-bank copy
+//   =>
+//     b = copy A <-- cross-bank copy
+//     C = copy A <-- same-bank copy
+//
+//     E.g., for bitcast:
+//     b = bitcast A <-- cross-bank copy
+//     C = bitcast b <-- cross-bank copy
+//   =>
+//     b = bitcast A <-- cross-bank copy
+//     C = copy A    <-- same-bank copy
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "peephole-opt"
@@ -81,11 +91,11 @@ DisablePeephole("disable-peephole", cl::Hidden, cl::init(false),
                 cl::desc("Disable the peephole optimizer"));
 
 STATISTIC(NumReuse,      "Number of extension results reused");
-STATISTIC(NumBitcasts,   "Number of bitcasts eliminated");
 STATISTIC(NumCmps,       "Number of compares eliminated");
 STATISTIC(NumImmFold,    "Number of move immediate folded");
 STATISTIC(NumLoadFold,   "Number of loads folded");
 STATISTIC(NumSelects,    "Number of selects optimized");
+STATISTIC(NumCopiesBitcasts, "Number of copies/bitcasts optimized");
 
 namespace {
   class PeepholeOptimizer : public MachineFunctionPass {
@@ -112,11 +122,11 @@ namespace {
     }
 
   private:
-    bool optimizeBitcastInstr(MachineInstr *MI, MachineBasicBlock *MBB);
     bool optimizeCmpInstr(MachineInstr *MI, MachineBasicBlock *MBB);
     bool optimizeExtInstr(MachineInstr *MI, MachineBasicBlock *MBB,
                           SmallPtrSet<MachineInstr*, 8> &LocalMIs);
     bool optimizeSelect(MachineInstr *MI);
+    bool optimizeCopyOrBitcast(MachineInstr *MI);
     bool isMoveImmediate(MachineInstr *MI,
                          SmallSet<unsigned, 4> &ImmDefRegs,
                          DenseMap<unsigned, MachineInstr*> &ImmDefMIs);
@@ -298,78 +308,6 @@ optimizeExtInstr(MachineInstr *MI, MachineBasicBlock *MBB,
   return Changed;
 }
 
-/// optimizeBitcastInstr - If the instruction is a bitcast instruction A that
-/// cannot be optimized away during isel (e.g. ARM::VMOVSR, which bitcast
-/// a value cross register classes), and the source is defined by another
-/// bitcast instruction B. And if the register class of source of B matches
-/// the register class of instruction A, then it is legal to replace all uses
-/// of the def of A with source of B. e.g.
-///   %vreg0<def> = VMOVSR %vreg1
-///   %vreg3<def> = VMOVRS %vreg0
-///   Replace all uses of vreg3 with vreg1.
-
-bool PeepholeOptimizer::optimizeBitcastInstr(MachineInstr *MI,
-                                             MachineBasicBlock *MBB) {
-  unsigned NumDefs = MI->getDesc().getNumDefs();
-  unsigned NumSrcs = MI->getDesc().getNumOperands() - NumDefs;
-  if (NumDefs != 1)
-    return false;
-
-  unsigned Def = 0;
-  unsigned Src = 0;
-  for (unsigned i = 0, e = NumDefs + NumSrcs; i != e; ++i) {
-    const MachineOperand &MO = MI->getOperand(i);
-    if (!MO.isReg())
-      continue;
-    unsigned Reg = MO.getReg();
-    if (!Reg)
-      continue;
-    if (MO.isDef())
-      Def = Reg;
-    else if (Src)
-      // Multiple sources?
-      return false;
-    else
-      Src = Reg;
-  }
-
-  assert(Def && Src && "Malformed bitcast instruction!");
-
-  MachineInstr *DefMI = MRI->getVRegDef(Src);
-  if (!DefMI || !DefMI->isBitcast())
-    return false;
-
-  unsigned SrcSrc = 0;
-  NumDefs = DefMI->getDesc().getNumDefs();
-  NumSrcs = DefMI->getDesc().getNumOperands() - NumDefs;
-  if (NumDefs != 1)
-    return false;
-  for (unsigned i = 0, e = NumDefs + NumSrcs; i != e; ++i) {
-    const MachineOperand &MO = DefMI->getOperand(i);
-    if (!MO.isReg() || MO.isDef())
-      continue;
-    unsigned Reg = MO.getReg();
-    if (!Reg)
-      continue;
-    if (!MO.isDef()) {
-      if (SrcSrc)
-        // Multiple sources?
-        return false;
-      else
-        SrcSrc = Reg;
-    }
-  }
-
-  if (MRI->getRegClass(SrcSrc) != MRI->getRegClass(Def))
-    return false;
-
-  MRI->replaceRegWith(Def, SrcSrc);
-  MRI->clearKillFlags(SrcSrc);
-  MI->eraseFromParent();
-  ++NumBitcasts;
-  return true;
-}
-
 /// optimizeCmpInstr - If the instruction is a compare and the previous
 /// instruction it's comparing against all ready sets (or could be modified to
 /// set) the same flag as the compare, then we can remove the comparison and use
@@ -408,6 +346,150 @@ bool PeepholeOptimizer::optimizeSelect(MachineInstr *MI) {
     return false;
   MI->eraseFromParent();
   ++NumSelects;
+  return true;
+}
+
+/// \brief Check if the registers defined by the pair (RegisterClass, SubReg)
+/// share the same register file.
+static bool shareSameRegisterFile(const TargetRegisterInfo &TRI,
+                                  const TargetRegisterClass *DefRC,
+                                  unsigned DefSubReg,
+                                  const TargetRegisterClass *SrcRC,
+                                  unsigned SrcSubReg) {
+  // Same register class.
+  if (DefRC == SrcRC)
+    return true;
+
+  // Both operands are sub registers. Check if they share a register class.
+  unsigned SrcIdx, DefIdx;
+  if (SrcSubReg && DefSubReg)
+    return TRI.getCommonSuperRegClass(SrcRC, SrcSubReg, DefRC, DefSubReg,
+                                      SrcIdx, DefIdx) != NULL;
+  // At most one of the register is a sub register, make it Src to avoid
+  // duplicating the test.
+  if (!SrcSubReg) {
+    std::swap(DefSubReg, SrcSubReg);
+    std::swap(DefRC, SrcRC);
+  }
+
+  // One of the register is a sub register, check if we can get a superclass.
+  if (SrcSubReg)
+    return TRI.getMatchingSuperRegClass(SrcRC, DefRC, SrcSubReg) != NULL;
+  // Plain copy.
+  return TRI.getCommonSubClass(DefRC, SrcRC) != NULL;
+}
+
+/// \brief Get the index of the definition and source for \p Copy
+/// instruction.
+/// \pre Copy.isCopy() or Copy.isBitcast().
+/// \return True if the Copy instruction has only one register source
+/// and one register definition. Otherwise, \p DefIdx and \p SrcIdx
+/// are invalid.
+static bool getCopyOrBitcastDefUseIdx(const MachineInstr &Copy,
+                                      unsigned &DefIdx, unsigned &SrcIdx) {
+  assert((Copy.isCopy() || Copy.isBitcast()) && "Wrong operation type.");
+  if (Copy.isCopy()) {
+    // Copy instruction are supposed to be: Def = Src.
+     if (Copy.getDesc().getNumOperands() != 2)
+       return false;
+     DefIdx = 0;
+     SrcIdx = 1;
+     assert(Copy.getOperand(DefIdx).isDef() && "Use comes before def!");
+     return true;
+  }
+  // Bitcast case.
+  // Bitcasts with more than one def are not supported.
+  if (Copy.getDesc().getNumDefs() != 1)
+    return false;
+  // Initialize SrcIdx to an undefined operand.
+  SrcIdx = Copy.getDesc().getNumOperands();
+  for (unsigned OpIdx = 0, EndOpIdx = SrcIdx; OpIdx != EndOpIdx; ++OpIdx) {
+    const MachineOperand &MO = Copy.getOperand(OpIdx);
+    if (!MO.isReg() || !MO.getReg())
+      continue;
+    if (MO.isDef())
+      DefIdx = OpIdx;
+    else if (SrcIdx != EndOpIdx)
+      // Multiple sources?
+      return false;
+    SrcIdx = OpIdx;
+  }
+  return true;
+}
+
+/// \brief Optimize a copy or bitcast instruction to avoid cross
+/// register bank copy. The optimization looks through a chain of
+/// copies and try to find a source that has a compatible register
+/// class.
+/// Two register classes are considered to be compatible if they share
+/// the same register bank.
+/// New copies issued by this optimization are register allocator
+/// friendly. This optimization does not remove any copy as it may
+/// overconstraint the register allocator, but replaces some when
+/// possible.
+/// \pre \p MI is a Copy (MI->isCopy() is true)
+/// \return True, when \p MI has been optimized. In that case, \p MI has
+/// been removed from its parent.
+bool PeepholeOptimizer::optimizeCopyOrBitcast(MachineInstr *MI) {
+  unsigned DefIdx, SrcIdx;
+  if (!MI || !getCopyOrBitcastDefUseIdx(*MI, DefIdx, SrcIdx))
+    return false;
+
+  const MachineOperand &MODef = MI->getOperand(DefIdx);
+  assert(MODef.isReg() && "Copies must be between registers.");
+  unsigned Def = MODef.getReg();
+
+  if (TargetRegisterInfo::isPhysicalRegister(Def))
+    return false;
+
+  const TargetRegisterClass *DefRC = MRI->getRegClass(Def);
+  unsigned DefSubReg = MODef.getSubReg();
+
+  unsigned Src;
+  unsigned SrcSubReg;
+  bool ShouldRewrite = false;
+  MachineInstr *Copy = MI;
+  const TargetRegisterInfo &TRI = *TM->getRegisterInfo();
+
+  // Follow the chain of copies until we reach the top or find a
+  // more suitable source.
+  do {
+    unsigned CopyDefIdx, CopySrcIdx;
+    if (!getCopyOrBitcastDefUseIdx(*Copy, CopyDefIdx, CopySrcIdx))
+      break;
+    const MachineOperand &MO = Copy->getOperand(CopySrcIdx);
+    assert(MO.isReg() && "Copies must be between registers.");
+    Src = MO.getReg();
+
+    if (TargetRegisterInfo::isPhysicalRegister(Src))
+      break;
+
+    const TargetRegisterClass *SrcRC = MRI->getRegClass(Src);
+    SrcSubReg = MO.getSubReg();
+
+    // If this source does not incur a cross register bank copy, use it.
+    ShouldRewrite = shareSameRegisterFile(TRI, DefRC, DefSubReg, SrcRC,
+                                          SrcSubReg);
+    // Follow the chain of copies: get the definition of Src.
+    Copy = MRI->getVRegDef(Src);
+  } while (!ShouldRewrite && Copy && (Copy->isCopy() || Copy->isBitcast()));
+
+  // If we did not find a more suitable source, there is nothing to optimize.
+  if (!ShouldRewrite || Src == MI->getOperand(SrcIdx).getReg())
+    return false;
+
+  // Rewrite the copy to avoid a cross register bank penalty. 
+  unsigned NewVR = TargetRegisterInfo::isPhysicalRegister(Def) ? Def :
+    MRI->createVirtualRegister(DefRC);
+  MachineInstr *NewCopy = BuildMI(*MI->getParent(), MI, MI->getDebugLoc(),
+                                  TII->get(TargetOpcode::COPY), NewVR)
+    .addReg(Src, 0, SrcSubReg);
+  NewCopy->getOperand(0).setSubReg(DefSubReg);
+
+  MRI->replaceRegWith(Def, NewVR);
+  MRI->clearKillFlags(NewVR);
+  MI->eraseFromParent();
+  ++NumCopiesBitcasts;
   return true;
 }
 
@@ -523,7 +605,7 @@ bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
       if (MI->mayStore() || MI->isCall())
         FoldAsLoadDefReg = 0;
 
-      if ((MI->isBitcast() && optimizeBitcastInstr(MI, MBB)) ||
+      if (((MI->isBitcast() || MI->isCopy()) && optimizeCopyOrBitcast(MI)) ||
           (MI->isCompare() && optimizeCmpInstr(MI, MBB)) ||
           (MI->isSelect() && optimizeSelect(MI))) {
         // MI is deleted.
