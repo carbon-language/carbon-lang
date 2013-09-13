@@ -32,17 +32,18 @@ using namespace llvm;
 /// argument to be printed as "bN".
 static bool printModifiedFPRAsmOperand(const MachineOperand &MO,
                                        const TargetRegisterInfo *TRI,
-                                       const TargetRegisterClass &RegClass,
-                                       raw_ostream &O) {
+                                       char RegType, raw_ostream &O) {
   if (!MO.isReg())
     return true;
 
   for (MCRegAliasIterator AR(MO.getReg(), TRI, true); AR.isValid(); ++AR) {
-    if (RegClass.contains(*AR)) {
-      O << AArch64InstPrinter::getRegisterName(*AR);
+    if (AArch64::FPR8RegClass.contains(*AR)) {
+      O << RegType << TRI->getEncodingValue(MO.getReg());
       return false;
     }
   }
+
+  // The register doesn't correspond to anything floating-point like.
   return true;
 }
 
@@ -157,7 +158,7 @@ bool AArch64AsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
       // register. Technically, we could allocate the argument as a VPR128, but
       // that leads to extremely dodgy copies being generated to get the data
       // there.
-      if (printModifiedFPRAsmOperand(MO, TRI, AArch64::VPR128RegClass, O))
+      if (printModifiedFPRAsmOperand(MO, TRI, 'v', O))
         O << AArch64InstPrinter::getRegisterName(MO.getReg());
       break;
     case MachineOperand::MO_Immediate:
@@ -211,25 +212,12 @@ bool AArch64AsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
     // copies ...).
     llvm_unreachable("FIXME: Unimplemented register pairs");
   case 'b':
-    // Output 8-bit FP/SIMD scalar register operand, prefixed with b.
-    return printModifiedFPRAsmOperand(MI->getOperand(OpNum), TRI,
-                                      AArch64::FPR8RegClass, O);
   case 'h':
-    // Output 16-bit FP/SIMD scalar register operand, prefixed with h.
-    return printModifiedFPRAsmOperand(MI->getOperand(OpNum), TRI,
-                                      AArch64::FPR16RegClass, O);
   case 's':
-    // Output 32-bit FP/SIMD scalar register operand, prefixed with s.
-    return printModifiedFPRAsmOperand(MI->getOperand(OpNum), TRI,
-                                      AArch64::FPR32RegClass, O);
   case 'd':
-    // Output 64-bit FP/SIMD scalar register operand, prefixed with d.
-    return printModifiedFPRAsmOperand(MI->getOperand(OpNum), TRI,
-                                      AArch64::FPR64RegClass, O);
   case 'q':
-    // Output 128-bit FP/SIMD scalar register operand, prefixed with q.
     return printModifiedFPRAsmOperand(MI->getOperand(OpNum), TRI,
-                                      AArch64::FPR128RegClass, O);
+                                      ExtraCode[0], O);
   case 'A':
     // Output symbolic address with appropriate relocation modifier (also
     // suitable for ADRP).

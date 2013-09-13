@@ -125,6 +125,8 @@ def A64Sbfx : SDNode<"AArch64ISD::SBFX", SDTA64BFX>;
 
 def A64Ubfx : SDNode<"AArch64ISD::UBFX", SDTA64BFX>;
 
+class BinOpFrag<dag res> : PatFrag<(ops node:$LHS, node:$RHS), res>;
+
 //===----------------------------------------------------------------------===//
 // Call sequence pseudo-instructions
 //===----------------------------------------------------------------------===//
@@ -2196,13 +2198,13 @@ def : Pat<(fsub (fmul FPR32:$Rn, FPR32:$Rm), FPR32:$Ra),
 def : Pat<(fsub (fneg FPR32:$Ra), (fmul FPR32:$Rn, FPR32:$Rm)),
           (FNMSUBssss FPR32:$Rn, FPR32:$Rm, FPR32:$Ra)>;
 
-def : Pat<(fadd FPR64:$Ra, (fmul FPR64:$Rn, FPR64:$Rm)),
+def : Pat<(fadd FPR64:$Ra, (fmul (f64 FPR64:$Rn), FPR64:$Rm)),
           (FMADDdddd FPR64:$Rn, FPR64:$Rm, FPR64:$Ra)>;
-def : Pat<(fsub FPR64:$Ra, (fmul FPR64:$Rn, FPR64:$Rm)),
+def : Pat<(fsub FPR64:$Ra, (fmul (f64 FPR64:$Rn), FPR64:$Rm)),
           (FMSUBdddd FPR64:$Rn, FPR64:$Rm, FPR64:$Ra)>;
-def : Pat<(fsub (fmul FPR64:$Rn, FPR64:$Rm), FPR64:$Ra),
+def : Pat<(fsub (fmul (f64 FPR64:$Rn), FPR64:$Rm), FPR64:$Ra),
           (FNMADDdddd FPR64:$Rn, FPR64:$Rm, FPR64:$Ra)>;
-def : Pat<(fsub (fneg FPR64:$Ra), (fmul FPR64:$Rn, FPR64:$Rm)),
+def : Pat<(fsub (fneg (f64 FPR64:$Ra)), (fmul FPR64:$Rn, FPR64:$Rm)),
           (FNMSUBdddd FPR64:$Rn, FPR64:$Rm, FPR64:$Ra)>;
 }
 

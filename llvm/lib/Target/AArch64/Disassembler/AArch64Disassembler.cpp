@@ -85,12 +85,6 @@ static DecodeStatus DecodeFPR64RegisterClass(llvm::MCInst &Inst, unsigned RegNo,
 static DecodeStatus DecodeFPR128RegisterClass(llvm::MCInst &Inst,
                                               unsigned RegNo, uint64_t Address,
                                               const void *Decoder);
-static DecodeStatus DecodeVPR64RegisterClass(llvm::MCInst &Inst, unsigned RegNo,
-                                             uint64_t Address,
-                                             const void *Decoder);
-static DecodeStatus DecodeVPR128RegisterClass(llvm::MCInst &Inst,
-                                              unsigned RegNo, uint64_t Address,
-                                              const void *Decoder);
 
 static DecodeStatus DecodeAddrRegExtendOperand(llvm::MCInst &Inst,
                                                unsigned OptionHiS,
@@ -355,28 +349,6 @@ DecodeFPR128RegisterClass(llvm::MCInst &Inst, unsigned RegNo,
   return MCDisassembler::Success;
 }
 
-static DecodeStatus DecodeVPR64RegisterClass(llvm::MCInst &Inst, unsigned RegNo,
-                                             uint64_t Address,
-                                             const void *Decoder) {
-  if (RegNo > 31)
-    return MCDisassembler::Fail;
-
-  uint16_t Register = getReg(Decoder, AArch64::VPR64RegClassID, RegNo);
-  Inst.addOperand(MCOperand::CreateReg(Register));
-  return MCDisassembler::Success;
-}
-
-static DecodeStatus
-DecodeVPR128RegisterClass(llvm::MCInst &Inst, unsigned RegNo,
-						  uint64_t Address, const void *Decoder) {
-  if (RegNo > 31)
-    return MCDisassembler::Fail;
-
-  uint16_t Register = getReg(Decoder, AArch64::VPR128RegClassID, RegNo);
-  Inst.addOperand(MCOperand::CreateReg(Register));
-  return MCDisassembler::Success;
-}
-
 static DecodeStatus DecodeAddrRegExtendOperand(llvm::MCInst &Inst,
                                                unsigned OptionHiS,
                                                uint64_t Address,
@@ -608,11 +580,11 @@ static DecodeStatus DecodeFMOVLaneInstruction(llvm::MCInst &Inst, unsigned Insn,
   unsigned IsToVec = fieldFromInstruction(Insn, 16, 1);
 
   if (IsToVec) {
-    DecodeVPR128RegisterClass(Inst, Rd, Address, Decoder);
+    DecodeFPR128RegisterClass(Inst, Rd, Address, Decoder);
     DecodeGPR64RegisterClass(Inst, Rn, Address, Decoder);
   } else {
     DecodeGPR64RegisterClass(Inst, Rd, Address, Decoder);
-    DecodeVPR128RegisterClass(Inst, Rn, Address, Decoder);
+    DecodeFPR128RegisterClass(Inst, Rn, Address, Decoder);
   }
 
   // Add the lane

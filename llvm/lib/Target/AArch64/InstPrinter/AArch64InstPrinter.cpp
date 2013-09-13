@@ -368,6 +368,14 @@ AArch64InstPrinter::printSImm7ScaledOperand(const MCInst *MI, unsigned OpNum,
   O << "#" << (Imm * MemScale);
 }
 
+void AArch64InstPrinter::printVPRRegister(const MCInst *MI, unsigned OpNo,
+                                          raw_ostream &O) {
+  unsigned Reg = MI->getOperand(OpNo).getReg();
+  std::string Name = getRegisterName(Reg);
+  Name[0] = 'v';
+  O << Name;
+}
+
 void AArch64InstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
                                       raw_ostream &O) {
   const MCOperand &Op = MI->getOperand(OpNo);

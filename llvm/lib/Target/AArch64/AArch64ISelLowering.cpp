@@ -57,17 +57,17 @@ AArch64TargetLowering::AArch64TargetLowering(AArch64TargetMachine &TM)
 
   if (Subtarget->hasNEON()) {
     // And the vectors
-    addRegisterClass(MVT::v8i8, &AArch64::VPR64RegClass);
-    addRegisterClass(MVT::v4i16, &AArch64::VPR64RegClass);
-    addRegisterClass(MVT::v2i32, &AArch64::VPR64RegClass);
-    addRegisterClass(MVT::v1i64, &AArch64::VPR64RegClass);
-    addRegisterClass(MVT::v2f32, &AArch64::VPR64RegClass);
-    addRegisterClass(MVT::v16i8, &AArch64::VPR128RegClass);
-    addRegisterClass(MVT::v8i16, &AArch64::VPR128RegClass);
-    addRegisterClass(MVT::v4i32, &AArch64::VPR128RegClass);
-    addRegisterClass(MVT::v2i64, &AArch64::VPR128RegClass);
-    addRegisterClass(MVT::v4f32, &AArch64::VPR128RegClass);
-    addRegisterClass(MVT::v2f64, &AArch64::VPR128RegClass);
+    addRegisterClass(MVT::v8i8, &AArch64::FPR64RegClass);
+    addRegisterClass(MVT::v4i16, &AArch64::FPR64RegClass);
+    addRegisterClass(MVT::v2i32, &AArch64::FPR64RegClass);
+    addRegisterClass(MVT::v1i64, &AArch64::FPR64RegClass);
+    addRegisterClass(MVT::v2f32, &AArch64::FPR64RegClass);
+    addRegisterClass(MVT::v16i8, &AArch64::FPR128RegClass);
+    addRegisterClass(MVT::v8i16, &AArch64::FPR128RegClass);
+    addRegisterClass(MVT::v4i32, &AArch64::FPR128RegClass);
+    addRegisterClass(MVT::v2i64, &AArch64::FPR128RegClass);
+    addRegisterClass(MVT::v4f32, &AArch64::FPR128RegClass);
+    addRegisterClass(MVT::v2f64, &AArch64::FPR128RegClass);
   }
 
   computeRegisterProperties();
@@ -3610,14 +3610,10 @@ AArch64TargetLowering::getRegForInlineAsmConstraint(
         return std::make_pair(0U, &AArch64::FPR16RegClass);
       else if (VT == MVT::f32)
         return std::make_pair(0U, &AArch64::FPR32RegClass);
-      else if (VT == MVT::f64)
-        return std::make_pair(0U, &AArch64::FPR64RegClass);
       else if (VT.getSizeInBits() == 64)
-        return std::make_pair(0U, &AArch64::VPR64RegClass);
-      else if (VT == MVT::f128)
-        return std::make_pair(0U, &AArch64::FPR128RegClass);
+        return std::make_pair(0U, &AArch64::FPR64RegClass);
       else if (VT.getSizeInBits() == 128)
-        return std::make_pair(0U, &AArch64::VPR128RegClass);
+        return std::make_pair(0U, &AArch64::FPR128RegClass);
       break;
     }
   }

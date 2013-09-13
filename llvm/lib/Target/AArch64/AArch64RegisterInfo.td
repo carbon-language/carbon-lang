@@ -17,10 +17,6 @@ def sub_64 : SubRegIndex<64>;
 def sub_32 : SubRegIndex<32>;
 def sub_16 : SubRegIndex<16>;
 def sub_8  : SubRegIndex<8>;
-
-// The VPR registers are handled as sub-registers of FPR equivalents, but
-// they're really the same thing. We give this concept a special index.
-def sub_alias : SubRegIndex<128>;
 }
 
 // Registers are identified with 5-bit ID numbers.
@@ -149,48 +145,28 @@ def FPR32 : RegisterClass<"AArch64", [f32], 32,
                           (sequence "S%u", 0, 31)> {
 }
 
-def FPR64 : RegisterClass<"AArch64", [f64], 64,
-                          (sequence "D%u", 0, 31)> {
-}
+def FPR64 : RegisterClass<"AArch64", [f64, v2f32, v2i32, v4i16, v8i8, v1i64],
+                          64, (sequence "D%u", 0, 31)>;
 
-def FPR128 : RegisterClass<"AArch64", [f128], 128,
-                          (sequence "Q%u", 0, 31)> {
-}
+def FPR128 : RegisterClass<"AArch64",
+                           [f128,v2f64, v2i64, v4f32, v4i32, v8i16, v16i8], 128,
+                           (sequence "Q%u", 0, 31)>;
+
 
 
 //===----------------------------------------------------------------------===//
 //  Vector registers:
 //===----------------------------------------------------------------------===//
 
-// NEON registers simply specify the overall vector, and it's expected that
-// Instructions will individually specify the acceptable data layout. In
-// principle this leaves two approaches open:
-//   + An operand, giving a single ADDvvv instruction (for example). This turns
-//     out to be unworkable in the assembly parser (without every Instruction
-//     having a "cvt" function, at least) because the constraints can't be
-//     properly enforced. It also complicates specifying patterns since each
-//     instruction will accept many types.
-//  + A bare token (e.g. ".2d"). This means the AsmParser has to know specific
-//    details about NEON registers, but simplifies most other details.
-//
-// The second approach was taken.
-
-foreach Index = 0-31 in {
-  def V # Index  : AArch64RegWithSubs<Index, "v" # Index,
-                                      [!cast<Register>("Q" # Index)],
-                                      [sub_alias]>,
-            DwarfRegNum<[!add(Index, 64)]>;
+def VPR64AsmOperand : AsmOperandClass {
+  let Name = "VPR";
+  let PredicateMethod = "isReg";
+  let RenderMethod = "addRegOperands";
 }
 
-// These two classes contain the same registers, which should be reasonably
-// sensible for MC and allocation purposes, but allows them to be treated
-// separately for things like stack spilling.
-def VPR64 : RegisterClass<"AArch64", [v2f32, v2i32, v4i16, v8i8, v1i64], 64,
-                          (sequence "V%u", 0, 31)>;
+def VPR64 : RegisterOperand<FPR64, "printVPRRegister">;
 
-def VPR128 : RegisterClass<"AArch64",
-                           [v2f64, v2i64, v4f32, v4i32, v8i16, v16i8], 128,
-                           (sequence "V%u", 0, 31)>;
+def VPR128 : RegisterOperand<FPR128, "printVPRRegister">;
 
 // Flags register
 def NZCV : Register<"nzcv"> {

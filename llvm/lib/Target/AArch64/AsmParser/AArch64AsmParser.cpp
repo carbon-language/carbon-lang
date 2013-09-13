@@ -1556,22 +1556,11 @@ AArch64AsmParser::IdentifyRegister(unsigned &RegNum, SMLoc &RegEndLoc,
   std::string LowerReg = Tok.getString().lower();
   size_t DotPos = LowerReg.find('.');
 
-  RegNum = MatchRegisterName(LowerReg.substr(0, DotPos));
-  if (RegNum == AArch64::NoRegister) {
-    RegNum = StringSwitch<unsigned>(LowerReg.substr(0, DotPos))
-      .Case("ip0", AArch64::X16)
-      .Case("ip1", AArch64::X17)
-      .Case("fp", AArch64::X29)
-      .Case("lr", AArch64::X30)
-      .Default(AArch64::NoRegister);
-  }
-  if (RegNum == AArch64::NoRegister)
-    return false;
-
+  bool IsVec128 = false;
   SMLoc S = Tok.getLoc();
   RegEndLoc = SMLoc::getFromPointer(S.getPointer() + DotPos);
 
-  if (DotPos == StringRef::npos) {
+  if (DotPos == std::string::npos) {
     Layout = StringRef();
   } else {
     // Everything afterwards needs to be a literal token, expected to be
@@ -1582,18 +1571,75 @@ AArch64AsmParser::IdentifyRegister(unsigned &RegNum, SMLoc &RegEndLoc,
     // would go out of scope when we return).
     LayoutLoc = SMLoc::getFromPointer(S.getPointer() + DotPos + 1);
     std::string LayoutText = LowerReg.substr(DotPos, StringRef::npos);
+
+    // See if it's a 128-bit layout first.
     Layout = StringSwitch<const char *>(LayoutText)
-      .Case(".d", ".d").Case(".1d", ".1d").Case(".2d", ".2d")
-      .Case(".s", ".s").Case(".2s", ".2s").Case(".4s", ".4s")
-      .Case(".h", ".h").Case(".4h", ".4h").Case(".8h", ".8h")
-      .Case(".b", ".b").Case(".8b", ".8b").Case(".16b", ".16b")
+      .Case(".d", ".d").Case(".2d", ".2d")
+      .Case(".s", ".s").Case(".4s", ".4s")
+      .Case(".h", ".h").Case(".8h", ".8h")
+      .Case(".b", ".b").Case(".16b", ".16b")
       .Default("");
 
+    if (Layout.size() != 0)
+      IsVec128 = true;
+    else {
+      Layout = StringSwitch<const char *>(LayoutText)
+                   .Case(".1d", ".1d")
+                   .Case(".2s", ".2s")
+                   .Case(".4h", ".4h")
+                   .Case(".8b", ".8b")
+                   .Default("");
+    }
+
     if (Layout.size() == 0) {
-      // Malformed register
+      // If we've still not pinned it down the register is malformed.
       return false;
     }
   }
+
+  RegNum = MatchRegisterName(LowerReg.substr(0, DotPos));
+  if (RegNum == AArch64::NoRegister) {
+    RegNum = StringSwitch<unsigned>(LowerReg.substr(0, DotPos))
+      .Case("ip0", AArch64::X16)
+      .Case("ip1", AArch64::X17)
+      .Case("fp", AArch64::X29)
+      .Case("lr", AArch64::X30)
+      .Case("v0", IsVec128 ? AArch64::Q0 : AArch64::D0)
+      .Case("v1", IsVec128 ? AArch64::Q1 : AArch64::D1)
+      .Case("v2", IsVec128 ? AArch64::Q2 : AArch64::D2)
+      .Case("v3", IsVec128 ? AArch64::Q3 : AArch64::D3)
+      .Case("v4", IsVec128 ? AArch64::Q4 : AArch64::D4)
+      .Case("v5", IsVec128 ? AArch64::Q5 : AArch64::D5)
+      .Case("v6", IsVec128 ? AArch64::Q6 : AArch64::D6)
+      .Case("v7", IsVec128 ? AArch64::Q7 : AArch64::D7)
+      .Case("v8", IsVec128 ? AArch64::Q8 : AArch64::D8)
+      .Case("v9", IsVec128 ? AArch64::Q9 : AArch64::D9)
+      .Case("v10", IsVec128 ? AArch64::Q10 : AArch64::D10)
+      .Case("v11", IsVec128 ? AArch64::Q11 : AArch64::D11)
+      .Case("v12", IsVec128 ? AArch64::Q12 : AArch64::D12)
+      .Case("v13", IsVec128 ? AArch64::Q13 : AArch64::D13)
+      .Case("v14", IsVec128 ? AArch64::Q14 : AArch64::D14)
+      .Case("v15", IsVec128 ? AArch64::Q15 : AArch64::D15)
+      .Case("v16", IsVec128 ? AArch64::Q16 : AArch64::D16)
+      .Case("v17", IsVec128 ? AArch64::Q17 : AArch64::D17)
+      .Case("v18", IsVec128 ? AArch64::Q18 : AArch64::D18)
+      .Case("v19", IsVec128 ? AArch64::Q19 : AArch64::D19)
+      .Case("v20", IsVec128 ? AArch64::Q20 : AArch64::D20)
+      .Case("v21", IsVec128 ? AArch64::Q21 : AArch64::D21)
+      .Case("v22", IsVec128 ? AArch64::Q22 : AArch64::D22)
+      .Case("v23", IsVec128 ? AArch64::Q23 : AArch64::D23)
+      .Case("v24", IsVec128 ? AArch64::Q24 : AArch64::D24)
+      .Case("v25", IsVec128 ? AArch64::Q25 : AArch64::D25)
+      .Case("v26", IsVec128 ? AArch64::Q26 : AArch64::D26)
+      .Case("v27", IsVec128 ? AArch64::Q27 : AArch64::D27)
+      .Case("v28", IsVec128 ? AArch64::Q28 : AArch64::D28)
+      .Case("v29", IsVec128 ? AArch64::Q29 : AArch64::D29)
+      .Case("v30", IsVec128 ? AArch64::Q30 : AArch64::D30)
+      .Case("v31", IsVec128 ? AArch64::Q31 : AArch64::D31)
+      .Default(AArch64::NoRegister);
+  }
+  if (RegNum == AArch64::NoRegister)
+    return false;
 
   return true;
 }
