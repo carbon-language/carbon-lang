@@ -2348,54 +2348,59 @@ void DwarfDebug::emitDebugPubNames() {
 }
 
 void DwarfDebug::emitDebugPubTypes() {
+  const MCSection *ISec = Asm->getObjFileLowering().getDwarfInfoSection();
+  const MCSection *PSec = Asm->getObjFileLowering().getDwarfPubTypesSection();
+
   for (DenseMap<const MDNode *, CompileUnit *>::iterator I = CUMap.begin(),
-         E = CUMap.end(); I != E; ++I) {
+                                                         E = CUMap.end();
+       I != E; ++I) {
     CompileUnit *TheCU = I->second;
     // Start the dwarf pubtypes section.
-    Asm->OutStreamer.SwitchSection(
-      Asm->getObjFileLowering().getDwarfPubTypesSection());
+    Asm->OutStreamer.SwitchSection(PSec);
     Asm->OutStreamer.AddComment("Length of Public Types Info");
     Asm->EmitLabelDifference(
-      Asm->GetTempSymbol("pubtypes_end", TheCU->getUniqueID()),
-      Asm->GetTempSymbol("pubtypes_begin", TheCU->getUniqueID()), 4);
+        Asm->GetTempSymbol("pubtypes_end", TheCU->getUniqueID()),
+        Asm->GetTempSymbol("pubtypes_begin", TheCU->getUniqueID()), 4);
 
-    Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("pubtypes_begin",
-                                                  TheCU->getUniqueID()));
+    Asm->OutStreamer.EmitLabel(
+        Asm->GetTempSymbol("pubtypes_begin", TheCU->getUniqueID()));
 
-    if (Asm->isVerbose()) Asm->OutStreamer.AddComment("DWARF Version");
+    if (Asm->isVerbose())
+      Asm->OutStreamer.AddComment("DWARF Version");
     Asm->EmitInt16(dwarf::DW_PUBTYPES_VERSION);
 
     Asm->OutStreamer.AddComment("Offset of Compilation Unit Info");
-    const MCSection *ISec = Asm->getObjFileLowering().getDwarfInfoSection();
-    Asm->EmitSectionOffset(Asm->GetTempSymbol(ISec->getLabelBeginName(),
-                                              TheCU->getUniqueID()),
-                           DwarfInfoSectionSym);
+    Asm->EmitSectionOffset(
+        Asm->GetTempSymbol(ISec->getLabelBeginName(), TheCU->getUniqueID()),
+        DwarfInfoSectionSym);
 
     Asm->OutStreamer.AddComment("Compilation Unit Length");
-    Asm->EmitLabelDifference(Asm->GetTempSymbol(ISec->getLabelEndName(),
-                                                TheCU->getUniqueID()),
-                             Asm->GetTempSymbol(ISec->getLabelBeginName(),
-                                                TheCU->getUniqueID()),
-                             4);
+    Asm->EmitLabelDifference(
+        Asm->GetTempSymbol(ISec->getLabelEndName(), TheCU->getUniqueID()),
+        Asm->GetTempSymbol(ISec->getLabelBeginName(), TheCU->getUniqueID()), 4);
 
-    const StringMap<DIE*> &Globals = TheCU->getGlobalTypes();
-    for (StringMap<DIE*>::const_iterator
-           GI = Globals.begin(), GE = Globals.end(); GI != GE; ++GI) {
+    const StringMap<DIE *> &Globals = TheCU->getGlobalTypes();
+    for (StringMap<DIE *>::const_iterator GI = Globals.begin(),
+                                          GE = Globals.end();
+         GI != GE; ++GI) {
       const char *Name = GI->getKeyData();
       DIE *Entity = GI->second;
 
-      if (Asm->isVerbose()) Asm->OutStreamer.AddComment("DIE offset");
+      if (Asm->isVerbose())
+        Asm->OutStreamer.AddComment("DIE offset");
       Asm->EmitInt32(Entity->getOffset());
 
-      if (Asm->isVerbose()) Asm->OutStreamer.AddComment("External Name");
+      if (Asm->isVerbose())
+        Asm->OutStreamer.AddComment("External Name");
+
       // Emit the name with a terminating null byte.
-      Asm->OutStreamer.EmitBytes(StringRef(Name, GI->getKeyLength()+1));
+      Asm->OutStreamer.EmitBytes(StringRef(Name, GI->getKeyLength() + 1));
     }
 
     Asm->OutStreamer.AddComment("End Mark");
     Asm->EmitInt32(0);
-    Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("pubtypes_end",
-                                                  TheCU->getUniqueID()));
+    Asm->OutStreamer.EmitLabel(
+        Asm->GetTempSymbol("pubtypes_end", TheCU->getUniqueID()));
   }
 }
 
