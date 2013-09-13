@@ -807,8 +807,11 @@ void ARMAsmPrinter::emitAttributes() {
 
   if (Subtarget->hasNEON() && emitFPU) {
     /* NEON is not exactly a VFP architecture, but GAS emit one of
-     * neon/neon-vfpv4/vfpv3/vfpv2 for .fpu parameters */
-    if (Subtarget->hasVFP4())
+     * neon/neon-fp-armv8/neon-vfpv4/vfpv3/vfpv2 for .fpu parameters */
+    if (Subtarget->hasV8FP())
+      AttrEmitter->EmitTextAttribute(ARMBuildAttrs::Advanced_SIMD_arch,
+                                     "neon-fp-armv8");
+    else if (Subtarget->hasVFP4())
       AttrEmitter->EmitTextAttribute(ARMBuildAttrs::Advanced_SIMD_arch,
                                      "neon-vfpv4");
     else
@@ -823,7 +826,7 @@ void ARMAsmPrinter::emitAttributes() {
     AttrEmitter->EmitAttribute(ARMBuildAttrs::VFP_arch,
                                ARMBuildAttrs::AllowV8FPA);
     if (emitFPU)
-      AttrEmitter->EmitTextAttribute(ARMBuildAttrs::VFP_arch, "v8fp");
+      AttrEmitter->EmitTextAttribute(ARMBuildAttrs::VFP_arch, "fp-armv8");
     /* VFPv4 + .fpu */
   } else if (Subtarget->hasVFP4()) {
     AttrEmitter->EmitAttribute(ARMBuildAttrs::VFP_arch,

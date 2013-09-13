@@ -3,6 +3,7 @@
 ; RUN: llc < %s -mtriple=thumbv8-linux-gnueabi | FileCheck %s --check-prefix=Vt8
 ; RUN: llc < %s -mtriple=armv8-linux-gnueabi -mattr=+v8fp | FileCheck %s --check-prefix=V8-V8FP
 ; RUN: llc < %s -mtriple=armv8-linux-gnueabi -mattr=+neon | FileCheck %s --check-prefix=V8-NEON
+; RUN: llc < %s -mtriple=armv8-linux-gnueabi -mattr=+v8fp -mattr=+neon | FileCheck %s --check-prefix=V8-V8FP-NEON
 ; This tests that MC/asm header conversion is smooth
 ;
 ; V7:      .syntax unified
@@ -22,10 +23,16 @@
 ; V8-V8FP:      .syntax unified
 ; V8-V8FP: .eabi_attribute 6, 14
 ; V8-V8FP: .eabi_attribute 10, 7
+; V8-V8FP: .fpu fp-armv8
 
 ; V8-NEON:      .syntax unified
 ; V8-NEON: .eabi_attribute 6, 14
 ; V8-NEON: .eabi_attribute 12, 3
+
+; V8-V8FP-NEON:      .syntax unified
+; V8-V8FP-NEON: .eabi_attribute 6, 14
+; V8-V8FP-NEON: .fpu neon-fp-armv8
+; V8-V8FP-NEON: .eabi_attribute 10, 7
 
 define i32 @f(i64 %z) {
 	ret i32 0
