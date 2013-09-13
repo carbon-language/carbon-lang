@@ -213,7 +213,7 @@ class MemorySanitizer : public FunctionPass {
   Value *MsanCopyOriginFn;
   /// \brief Run-time helper that generates a new origin value for a stack
   /// allocation.
-  Value *MsanSetAllocaOriginFn;
+  Value *MsanSetAllocaOrigin4Fn;
   /// \brief Run-time helper that poisons stack on function entry.
   Value *MsanPoisonStackFn;
   /// \brief MSan runtime replacements for memmove, memcpy and memset.
@@ -281,9 +281,9 @@ void MemorySanitizer::initializeCallbacks(Module &M) {
   MsanCopyOriginFn = M.getOrInsertFunction(
     "__msan_copy_origin", IRB.getVoidTy(), IRB.getInt8PtrTy(),
     IRB.getInt8PtrTy(), IntptrTy, NULL);
-  MsanSetAllocaOriginFn = M.getOrInsertFunction(
-    "__msan_set_alloca_origin", IRB.getVoidTy(), IRB.getInt8PtrTy(), IntptrTy,
-    IRB.getInt8PtrTy(), NULL);
+  MsanSetAllocaOrigin4Fn = M.getOrInsertFunction(
+    "__msan_set_alloca_origin4", IRB.getVoidTy(), IRB.getInt8PtrTy(), IntptrTy,
+    IRB.getInt8PtrTy(), IntptrTy, NULL);
   MsanPoisonStackFn = M.getOrInsertFunction(
     "__msan_poison_stack", IRB.getVoidTy(), IRB.getInt8PtrTy(), IntptrTy, NULL);
   MemmoveFn = M.getOrInsertFunction(
@@ -1734,10 +1734,12 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
       Value *Descr =
           createPrivateNonConstGlobalForString(*F.getParent(),
                                                StackDescription.str());
-      IRB.CreateCall3(MS.MsanSetAllocaOriginFn,
+
+      IRB.CreateCall4(MS.MsanSetAllocaOrigin4Fn,
                       IRB.CreatePointerCast(&I, IRB.getInt8PtrTy()),
                       ConstantInt::get(MS.IntptrTy, Size),
-                      IRB.CreatePointerCast(Descr, IRB.getInt8PtrTy()));
+                      IRB.CreatePointerCast(Descr, IRB.getInt8PtrTy()),
+                      IRB.CreatePointerCast(&F, MS.IntptrTy));
     }
   }
 
