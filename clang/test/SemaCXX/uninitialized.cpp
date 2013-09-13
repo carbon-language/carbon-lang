@@ -523,3 +523,41 @@ namespace lambdas {
     A a2([&] { return a2.x; }); // ok
   }
 }
+
+namespace record_fields {
+  struct A {
+    A() {}
+    A get();
+    static A num();
+    static A copy(A);
+    static A something(A&);
+  };
+
+  A ref(A&);
+  A const_ref(const A&);
+  A pointer(A*);
+  A normal(A);
+
+  struct B {
+    A a;
+    B(char (*)[1]) : a(a) {}  // expected-warning {{uninitialized}}
+    B(char (*)[2]) : a(a.get()) {}  // expected-warning {{uninitialized}}
+    B(char (*)[3]) : a(a.num()) {}
+    B(char (*)[4]) : a(a.copy(a)) {}  // expected-warning {{uninitialized}}
+    B(char (*)[5]) : a(a.something(a)) {}
+    B(char (*)[6]) : a(ref(a)) {}
+    B(char (*)[7]) : a(const_ref(a)) {}
+    B(char (*)[8]) : a(pointer(&a)) {}
+    B(char (*)[9]) : a(normal(a)) {}  // expected-warning {{uninitialized}}
+
+    A a1 = a1;  // expected-warning {{uninitialized}}
+    A a2 = a2.get();  // expected-warning {{uninitialized}}
+    A a3 = a3.num();
+    A a4 = a4.copy(a4);  // expected-warning {{uninitialized}}
+    A a5 = a5.something(a5);
+    A a6 = ref(a6);
+    A a7 = const_ref(a7);
+    A a8 = pointer(&a8);
+    A a9 = normal(a9);  // expected-warning {{uninitialized}}
+  };
+}
