@@ -1422,7 +1422,7 @@ public:
 };
 
 /// StringLiteral - This represents a string literal expression, e.g. "foo"
-/// or L"bar" (wide strings).  The actual string is returned by getStrData()
+/// or L"bar" (wide strings).  The actual string is returned by getBytes()
 /// is NOT null-terminated, and the length of the string is determined by
 /// calling getByteLength().  The C type for a string is always a
 /// ConstantArrayType.  In C++, the char type is const qualified, in C it is
