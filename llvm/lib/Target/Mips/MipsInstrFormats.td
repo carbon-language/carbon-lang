@@ -333,7 +333,7 @@ class MTLO_FM<bits<6> funct> : StdArch {
   let Inst{5-0}   = funct;
 }
 
-class SEB_FM<bits<5> funct, bits<6> funct2> {
+class SEB_FM<bits<5> funct, bits<6> funct2> : StdArch {
   bits<5> rd;
   bits<5> rt;
 
@@ -347,7 +347,7 @@ class SEB_FM<bits<5> funct, bits<6> funct2> {
   let Inst{5-0}   = funct2;
 }
 
-class CLO_FM<bits<6> funct> {
+class CLO_FM<bits<6> funct> : StdArch {
   bits<5> rd;
   bits<5> rs;
   bits<5> rt;
@@ -424,7 +424,7 @@ class MULT_FM<bits<6> op, bits<6> funct> : StdArch {
   let Inst{5-0}   = funct;
 }
 
-class EXT_FM<bits<6> funct> {
+class EXT_FM<bits<6> funct> : StdArch {
   bits<5> rt;
   bits<5> rs;
   bits<5> pos;

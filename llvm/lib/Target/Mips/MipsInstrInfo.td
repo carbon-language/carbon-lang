@@ -710,26 +710,26 @@ class EffectiveAddress<string opstr, RegisterOperand RO> :
 // Count Leading Ones/Zeros in Word
 class CountLeading0<string opstr, RegisterOperand RO>:
   InstSE<(outs RO:$rd), (ins RO:$rs), !strconcat(opstr, "\t$rd, $rs"),
-         [(set RO:$rd, (ctlz RO:$rs))], IIArith, FrmR>,
+         [(set RO:$rd, (ctlz RO:$rs))], IIArith, FrmR, opstr>,
   Requires<[HasBitCount, HasStdEnc]>;
 
 class CountLeading1<string opstr, RegisterOperand RO>:
   InstSE<(outs RO:$rd), (ins RO:$rs), !strconcat(opstr, "\t$rd, $rs"),
-         [(set RO:$rd, (ctlz (not RO:$rs)))], IIArith, FrmR>,
+         [(set RO:$rd, (ctlz (not RO:$rs)))], IIArith, FrmR, opstr>,
   Requires<[HasBitCount, HasStdEnc]>;
 
 
 // Sign Extend in Register.
 class SignExtInReg<string opstr, ValueType vt, RegisterOperand RO> :
   InstSE<(outs RO:$rd), (ins RO:$rt), !strconcat(opstr, "\t$rd, $rt"),
-         [(set RO:$rd, (sext_inreg RO:$rt, vt))], IIseb, FrmR> {
+         [(set RO:$rd, (sext_inreg RO:$rt, vt))], IIseb, FrmR, opstr> {
   let Predicates = [HasSEInReg, HasStdEnc];
 }
 
 // Subword Swap
 class SubwordSwap<string opstr, RegisterOperand RO>:
   InstSE<(outs RO:$rd), (ins RO:$rt), !strconcat(opstr, "\t$rd, $rt"), [],
-         NoItinerary, FrmR> {
+         NoItinerary, FrmR, opstr> {
   let Predicates = [HasSwap, HasStdEnc];
   let neverHasSideEffects = 1;
 }
@@ -745,7 +745,7 @@ class ExtBase<string opstr, RegisterOperand RO, Operand PosOpnd,
   InstSE<(outs RO:$rt), (ins RO:$rs, PosOpnd:$pos, size_ext:$size),
          !strconcat(opstr, " $rt, $rs, $pos, $size"),
          [(set RO:$rt, (Op RO:$rs, imm:$pos, imm:$size))], NoItinerary,
-         FrmR> {
+         FrmR, opstr> {
   let Predicates = [HasMips32r2, HasStdEnc];
 }
 
@@ -754,7 +754,7 @@ class InsBase<string opstr, RegisterOperand RO, Operand PosOpnd,
   InstSE<(outs RO:$rt), (ins RO:$rs, PosOpnd:$pos, size_ins:$size, RO:$src),
          !strconcat(opstr, " $rt, $rs, $pos, $size"),
          [(set RO:$rt, (Op RO:$rs, imm:$pos, imm:$size, RO:$src))],
-         NoItinerary, FrmR> {
+         NoItinerary, FrmR, opstr> {
   let Predicates = [HasMips32r2, HasStdEnc];
   let Constraints = "$src = $rt";
 }
@@ -1027,15 +1027,15 @@ def MFHI : MMRel, MoveFromLOHI<"mfhi", GPR32Opnd, [HI0]>, MFLO_FM<0x10>;
 def MFLO : MMRel, MoveFromLOHI<"mflo", GPR32Opnd, [LO0]>, MFLO_FM<0x12>;
 
 /// Sign Ext In Register Instructions.
-def SEB : SignExtInReg<"seb", i8, GPR32Opnd>, SEB_FM<0x10, 0x20>;
-def SEH : SignExtInReg<"seh", i16, GPR32Opnd>, SEB_FM<0x18, 0x20>;
+def SEB : MMRel, SignExtInReg<"seb", i8, GPR32Opnd>, SEB_FM<0x10, 0x20>;
+def SEH : MMRel, SignExtInReg<"seh", i16, GPR32Opnd>, SEB_FM<0x18, 0x20>;
 
 /// Count Leading
-def CLZ : CountLeading0<"clz", GPR32Opnd>, CLO_FM<0x20>;
-def CLO : CountLeading1<"clo", GPR32Opnd>, CLO_FM<0x21>;
+def CLZ : MMRel, CountLeading0<"clz", GPR32Opnd>, CLO_FM<0x20>;
+def CLO : MMRel, CountLeading1<"clo", GPR32Opnd>, CLO_FM<0x21>;
 
 /// Word Swap Bytes Within Halfwords
-def WSBH : SubwordSwap<"wsbh", GPR32Opnd>, SEB_FM<2, 0x20>;
+def WSBH : MMRel, SubwordSwap<"wsbh", GPR32Opnd>, SEB_FM<2, 0x20>;
 
 /// No operation.
 def NOP : PseudoSE<(outs), (ins), []>, PseudoInstExpansion<(SLL ZERO, ZERO, 0)>;
@@ -1058,8 +1058,8 @@ def PseudoMSUBU : MAddSubPseudo<MSUBU, MipsMSubu>;
 
 def RDHWR : ReadHardware<GPR32Opnd, HWRegsOpnd>, RDHWR_FM;
 
-def EXT : ExtBase<"ext", GPR32Opnd, uimm5, MipsExt>, EXT_FM<0>;
-def INS : InsBase<"ins", GPR32Opnd, uimm5, MipsIns>, EXT_FM<4>;
+def EXT : MMRel, ExtBase<"ext", GPR32Opnd, uimm5, MipsExt>, EXT_FM<0>;
+def INS : MMRel, InsBase<"ins", GPR32Opnd, uimm5, MipsIns>, EXT_FM<4>;
 
 /// Move Control Registers From/To CPU Registers
 def MFC0 : MFC3OP<"mfc0", GPR32Opnd>, MFC3OP_FM<0x10, 0>;

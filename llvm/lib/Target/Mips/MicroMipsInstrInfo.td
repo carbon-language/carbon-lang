@@ -135,4 +135,20 @@ let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
   def MADDU_MM : MMRel, MArithR<"maddu", 1>, MULT_FM_MM<0x36c>;
   def MSUB_MM  : MMRel, MArithR<"msub">, MULT_FM_MM<0x3ac>;
   def MSUBU_MM : MMRel, MArithR<"msubu">, MULT_FM_MM<0x3ec>;
+
+  /// Count Leading
+  def CLZ_MM : MMRel, CountLeading0<"clz", GPR32Opnd>, CLO_FM_MM<0x16c>;
+  def CLO_MM : MMRel, CountLeading1<"clo", GPR32Opnd>, CLO_FM_MM<0x12c>;
+
+  /// Sign Ext In Register Instructions.
+  def SEB_MM : MMRel, SignExtInReg<"seb", i8, GPR32Opnd>, SEB_FM_MM<0x0ac>;
+  def SEH_MM : MMRel, SignExtInReg<"seh", i16, GPR32Opnd>, SEB_FM_MM<0x0ec>;
+
+  /// Word Swap Bytes Within Halfwords
+  def WSBH_MM : MMRel, SubwordSwap<"wsbh", GPR32Opnd>, SEB_FM_MM<0x1ec>;
+
+  def EXT_MM : MMRel, ExtBase<"ext", GPR32Opnd, uimm5, MipsExt>,
+               EXT_FM_MM<0x2c>;
+  def INS_MM : MMRel, InsBase<"ins", GPR32Opnd, uimm5, MipsIns>,
+               EXT_FM_MM<0x0c>;
 }

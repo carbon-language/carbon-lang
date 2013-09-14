@@ -162,3 +162,45 @@ class MFLO_FM_MM<bits<10> funct> : MMArch {
   let Inst{15-6}  = funct;
   let Inst{5-0}   = 0x3c;
 }
+
+class CLO_FM_MM<bits<10> funct> : MMArch {
+  bits<5> rd;
+  bits<5> rs;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0x00;
+  let Inst{25-21} = rd;
+  let Inst{20-16} = rs;
+  let Inst{15-6}  = funct;
+  let Inst{5-0}   = 0x3c;
+}
+
+class SEB_FM_MM<bits<10> funct> : MMArch {
+  bits<5> rd;
+  bits<5> rt;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0x00;
+  let Inst{25-21} = rd;
+  let Inst{20-16} = rt;
+  let Inst{15-6}  = funct;
+  let Inst{5-0}   = 0x3c;
+}
+
+class EXT_FM_MM<bits<6> funct> : MMArch {
+  bits<5> rt;
+  bits<5> rs;
+  bits<5> pos;
+  bits<5> size;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0x00;
+  let Inst{25-21} = rt;
+  let Inst{20-16} = rs;
+  let Inst{15-11} = size;
+  let Inst{10-6}  = pos;
+  let Inst{5-0}   = funct;
+}
