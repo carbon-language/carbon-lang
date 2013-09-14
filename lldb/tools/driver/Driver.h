@@ -83,12 +83,9 @@ public:
     lldb::ScriptLanguage
     GetScriptLanguage() const;
 
-    size_t
-    GetNumSourceCommandFiles () const;
-
-    const char *
-    GetSourceCommandFileAtIndex (uint32_t idx) const;
-
+    void
+    ExecuteInitialCommands (bool before_file);
+    
     bool
     GetDebugMode() const;
 
@@ -102,14 +99,19 @@ public:
         void
         Clear();
 
+        void
+        AddInitialCommand (const char *command, bool before_file, bool is_file, lldb::SBError &error);
+    
         //static OptionDefinition m_cmd_option_table[];
 
         std::vector<std::string> m_args;
         lldb::ScriptLanguage m_script_lang;
         std::string m_core_file;
         std::string m_crash_log;
-        std::vector<std::string> m_source_command_files;
+        std::vector<std::pair<bool,std::string> > m_initial_commands;
+        std::vector<std::pair<bool,std::string> > m_after_file_commands;
         bool m_debug_mode;
+        bool m_source_quietly;
         bool m_print_version;
         bool m_print_python_path;
         bool m_print_help;
