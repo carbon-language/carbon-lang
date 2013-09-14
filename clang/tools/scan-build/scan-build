@@ -135,7 +135,13 @@ sub GetHTMLRunDir {
   my $year  = $CurrentTime[5] + 1900;
   my $day   = $CurrentTime[3];
   my $month = $CurrentTime[4] + 1;
-  my $DateString = sprintf("%d-%02d-%02d", $year, $month, $day);
+  my $hour =  $CurrentTime[2];
+  my $min =   $CurrentTime[1];
+  my $sec =   $CurrentTime[0];
+
+  my $TimeString = sprintf("%02d%02d%02d", $hour, $min, $sec)
+  my $DateString = sprintf("%d-%02d-%02d-%s-$$",
+                           $year, $month, $day, $TimeString);
   
   # Determine the run number.  
   my $RunNumber;
@@ -162,9 +168,11 @@ sub GetHTMLRunDir {
       next if ($x[0] != $year);
       next if ($x[1] != $month);
       next if ($x[2] != $day);
+      next if ($x[3] != $TimeString);
+      next if ($x[4] != $$);
       
-      if ($x[3] > $max) {
-        $max = $x[3];
+      if ($x[5] > $max) {
+        $max = $x[5];
       }      
     }
     
