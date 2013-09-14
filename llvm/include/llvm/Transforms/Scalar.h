@@ -267,13 +267,6 @@ extern char &LowerInvokePassID;
 
 //===----------------------------------------------------------------------===//
 //
-// BlockPlacement - This pass reorders basic blocks in order to increase the
-// number of fall-through conditional branches.
-//
-FunctionPass *createBlockPlacementPass();
-
-//===----------------------------------------------------------------------===//
-//
 // LCSSA - This pass inserts phi nodes at loop boundaries to simplify other loop
 // optimizations.
 //
