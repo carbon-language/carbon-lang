@@ -129,6 +129,10 @@ template <class ELFT> void ExecutableWriter<ELFT>::finalizeDefaultAtomValues() {
         bssSection->virtualAddr() + bssSection->memSize();
     (*underScoreEndAtomIter)->_virtualAddr = (*bssEndAtomIter)->_virtualAddr;
     (*endAtomIter)->_virtualAddr = (*bssEndAtomIter)->_virtualAddr;
+  } else if (auto dataSection = this->_layout->findOutputSection(".data")) {
+    (*underScoreEndAtomIter)->_virtualAddr =
+        dataSection->virtualAddr() + dataSection->memSize();
+    (*endAtomIter)->_virtualAddr = (*underScoreEndAtomIter)->_virtualAddr;
   }
 
   // Give a chance for the target to finalize its atom values
