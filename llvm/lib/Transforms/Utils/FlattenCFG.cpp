@@ -372,7 +372,7 @@ bool FlattenCFGOpt::CompareIfRegionBlock(BasicBlock *Head1, BasicBlock *Head2,
 
 /// Check whether \param BB is the merge block of a if-region.  If yes, check
 /// whether there exists an adjacent if-region upstream, the two if-regions
-/// contain identical instuctions and can be legally merged.  \returns true if
+/// contain identical instructions and can be legally merged.  \returns true if
 /// the two if-regions are merged.
 ///
 /// From:
