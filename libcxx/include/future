@@ -19,10 +19,10 @@ namespace std
 
 enum class future_errc
 {
-    broken_promise,
-    future_already_retrieved,
+    future_already_retrieved = 1,
     promise_already_satisfied,
-    no_state
+    no_state,
+    broken_promise
 };
 
 enum class launch
@@ -379,10 +379,10 @@ _LIBCPP_BEGIN_NAMESPACE_STD
 //enum class future_errc
 _LIBCPP_DECLARE_STRONG_ENUM(future_errc)
 {
-    broken_promise,
-    future_already_retrieved,
+    future_already_retrieved = 1,
     promise_already_satisfied,
-    no_state
+    no_state,
+    broken_promise
 };
 _LIBCPP_DECLARE_STRONG_ENUM_EPILOG(future_errc)
 
