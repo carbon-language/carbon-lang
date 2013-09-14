@@ -447,7 +447,7 @@ class shift_rotate_reg<string opstr, RegisterOperand RO,
 // Load Upper Imediate
 class LoadUpper<string opstr, RegisterOperand RO, Operand Imm>:
   InstSE<(outs RO:$rt), (ins Imm:$imm16), !strconcat(opstr, "\t$rt, $imm16"),
-         [], IIArith, FrmI>, IsAsCheapAsAMove {
+         [], IIArith, FrmI, opstr>, IsAsCheapAsAMove {
   let neverHasSideEffects = 1;
   let isReMaterializable = 1;
 }

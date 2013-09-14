@@ -363,7 +363,7 @@ class CLO_FM<bits<6> funct> : StdArch {
   let rt = rd;
 }
 
-class LUI_FM {
+class LUI_FM : StdArch {
   bits<5> rt;
   bits<16> imm16;
 
