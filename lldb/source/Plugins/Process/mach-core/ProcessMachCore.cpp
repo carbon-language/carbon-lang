@@ -107,6 +107,7 @@ ProcessMachCore::ProcessMachCore(Target& target, Listener &listener, const FileS
     m_core_module_sp (),
     m_core_file (core_file),
     m_dyld_addr (LLDB_INVALID_ADDRESS),
+    m_mach_kernel_addr (LLDB_INVALID_ADDRESS),
     m_dyld_plugin_name ()
 {
 }
@@ -173,7 +174,10 @@ ProcessMachCore::GetDynamicLoaderAddress (lldb::addr_t addr)
         case llvm::MachO::MH_DYLINKER:
             //printf("0x%16.16" PRIx64 ": file_type = MH_DYLINKER\n", vaddr);
             // Address of dyld "struct mach_header" in the core file
-            m_dyld_plugin_name = DynamicLoaderMacOSXDYLD::GetPluginNameStatic();
+            if (m_dyld_addr != LLDB_INVALID_ADDRESS)
+            {
+                assert (!"already had user process dyld");
+            }
             m_dyld_addr = addr;
             return true;
 
@@ -183,9 +187,8 @@ ProcessMachCore::GetDynamicLoaderAddress (lldb::addr_t addr)
             // is NOT set. If it isn't, then we have a mach_kernel.
             if ((header.flags & llvm::MachO::MH_DYLDLINK) == 0)
             {
-                m_dyld_plugin_name = DynamicLoaderDarwinKernel::GetPluginNameStatic();
                 // Address of the mach kernel "struct mach_header" in the core file.
-                m_dyld_addr = addr;    
+                m_mach_kernel_addr = addr;
                 return true;
             }
             break;
@@ -278,18 +281,45 @@ ProcessMachCore::DoLoadCore ()
             {
                 m_core_aranges.Append(range_entry);
             }
-            
-            // After we have added this section to our m_core_aranges map,
-            // we can check the start of the section to see if it might
-            // contain dyld for user space apps, or the mach kernel file 
-            // for kernel cores.
-            if (m_dyld_addr == LLDB_INVALID_ADDRESS)
-                GetDynamicLoaderAddress (section_vm_addr);
         }
     }
     if (!ranges_are_sorted)
     {
         m_core_aranges.Sort();
+    }
+
+    if (m_dyld_addr == LLDB_INVALID_ADDRESS || m_mach_kernel_addr == LLDB_INVALID_ADDRESS)
+    {
+        // We need to locate the main executable in the memory ranges
+        // we have in the core file.  We need to search for both a user-process dyld binary
+        // and a kernel binary in memory; we must look at all the pages in the binary so
+        // we don't miss one or the other.  If we find a user-process dyld binary, stop
+        // searching -- that's the one we'll prefer over the mach kernel.
+        const size_t num_core_aranges = m_core_aranges.GetSize();
+        for (size_t i=0; i<num_core_aranges && m_dyld_addr == LLDB_INVALID_ADDRESS; ++i)
+        {
+            const VMRangeToFileOffset::Entry *entry = m_core_aranges.GetEntryAtIndex(i);
+            lldb::addr_t section_vm_addr_start = entry->GetRangeBase();
+            lldb::addr_t section_vm_addr_end = entry->GetRangeEnd();
+            for (lldb::addr_t section_vm_addr = section_vm_addr_start;
+                 section_vm_addr < section_vm_addr_end;
+                 section_vm_addr += 0x1000)
+            {
+                GetDynamicLoaderAddress (section_vm_addr);
+            }
+        }
+    }
+
+    // If we find both a user process dyld and a mach kernel, prefer the
+    // user process dyld.  We may be looking at an lldb debug session were they were debugging
+    // a mach kernel when lldb coredumped.
+    if (m_dyld_addr != LLDB_INVALID_ADDRESS)
+    {
+        m_dyld_plugin_name = DynamicLoaderMacOSXDYLD::GetPluginNameStatic();
+    }
+    else if (m_mach_kernel_addr != LLDB_INVALID_ADDRESS)
+    {
+        m_dyld_plugin_name = DynamicLoaderDarwinKernel::GetPluginNameStatic();
     }
 
     // Even if the architecture is set in the target, we need to override
@@ -302,30 +332,6 @@ ProcessMachCore::DoLoadCore ()
     if (arch.IsValid())
         m_target.SetArchitecture(arch);            
 
-    if (m_dyld_addr == LLDB_INVALID_ADDRESS)
-    {
-        // We need to locate the main executable in the memory ranges
-        // we have in the core file. We already checked the first address
-        // in each memory zone above, so we just need to check each page
-        // except the first page in each range and stop once we have found
-        // our main executable
-        const size_t num_core_aranges = m_core_aranges.GetSize();
-        for (size_t i=0; i<num_core_aranges && m_dyld_addr == LLDB_INVALID_ADDRESS; ++i)
-        {
-            const VMRangeToFileOffset::Entry *entry = m_core_aranges.GetEntryAtIndex(i);
-            lldb::addr_t section_vm_addr_start = entry->GetRangeBase();
-            lldb::addr_t section_vm_addr_end = entry->GetRangeEnd();
-            for (lldb::addr_t section_vm_addr = section_vm_addr_start + 0x1000;
-                 section_vm_addr < section_vm_addr_end;
-                 section_vm_addr += 0x1000)
-            {
-                if (GetDynamicLoaderAddress (section_vm_addr))
-                {
-                    break;
-                }
-            }
-        }
-    }
     return error;
 }
 
@@ -455,7 +461,9 @@ ProcessMachCore::Initialize()
 addr_t
 ProcessMachCore::GetImageInfoAddress()
 {
-    return m_dyld_addr;
+    if (m_dyld_addr != LLDB_INVALID_ADDRESS)
+        return m_dyld_addr;
+    return m_mach_kernel_addr;
 }
 
 

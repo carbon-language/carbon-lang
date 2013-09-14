@@ -1040,7 +1040,7 @@ ObjectFileMachO::CreateSections (SectionList &unified_section_list)
                             // is null out the SectionList vector and if a process has been set up, dump a message
                             // to stdout.  The most common case here is core file debugging with a truncated file.
                             const char *lc_segment_name = load_cmd.cmd == LC_SEGMENT_64 ? "LC_SEGMENT_64" : "LC_SEGMENT";
-                            module_sp->ReportError("is a corrupt mach-o file: load command %u %s has a fileoff (0x%" PRIx64 ") that extends beyond the end of the file (0x%" PRIx64 ")",
+                            module_sp->ReportWarning("load command %u %s has a fileoff (0x%" PRIx64 ") that extends beyond the end of the file (0x%" PRIx64 "), ignoring this section",
                                                    i,
                                                    lc_segment_name,
                                                    load_cmd.fileoff,
@@ -1058,7 +1058,7 @@ ObjectFileMachO::CreateSections (SectionList &unified_section_list)
                             // is null out the SectionList vector and if a process has been set up, dump a message
                             // to stdout.  The most common case here is core file debugging with a truncated file.
                             const char *lc_segment_name = load_cmd.cmd == LC_SEGMENT_64 ? "LC_SEGMENT_64" : "LC_SEGMENT";
-                            GetModule()->ReportError("is a corrupt mach-o file: load command %u %s has a fileoff + filesize (0x%" PRIx64 ") that extends beyond the end of the file (0x%" PRIx64 "), the segment will be truncated",
+                            GetModule()->ReportWarning("load command %u %s has a fileoff + filesize (0x%" PRIx64 ") that extends beyond the end of the file (0x%" PRIx64 "), the segment will be truncated to match",
                                                      i,
                                                      lc_segment_name,
                                                      load_cmd.fileoff + load_cmd.filesize,
