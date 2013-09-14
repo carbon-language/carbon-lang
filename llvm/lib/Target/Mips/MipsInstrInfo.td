@@ -681,7 +681,7 @@ class MAddSubPseudo<Instruction RealInst, SDPatternOperator OpNode>
 class Div<string opstr, InstrItinClass itin, RegisterOperand RO,
           list<Register> DefRegs> :
   InstSE<(outs), (ins RO:$rs, RO:$rt), !strconcat(opstr, "\t$$zero, $rs, $rt"),
-         [], itin, FrmR> {
+         [], itin, FrmR, opstr> {
   let Defs = DefRegs;
 }
 

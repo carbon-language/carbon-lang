@@ -69,6 +69,10 @@ let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
                  MULT_FM_MM<0x22c>;
   def MULTu_MM : MMRel, Mult<"multu", IIImul, GPR32Opnd, [HI0, LO0]>,
                  MULT_FM_MM<0x26c>;
+  def SDIV_MM  : MMRel, Div<"div", IIIdiv, GPR32Opnd, [HI0, LO0]>,
+                 MULT_FM_MM<0x2ac>;
+  def UDIV_MM  : MMRel, Div<"divu", IIIdiv, GPR32Opnd, [HI0, LO0]>,
+                 MULT_FM_MM<0x2ec>;
 
   /// Shift Instructions
   def SLL_MM   : MMRel, shift_rotate_imm<"sll", uimm5, GPR32Opnd>,

@@ -36,6 +36,8 @@
 # CHECK-EL: mul    $9, $6, $7     # encoding: [0xe6,0x00,0x10,0x4a]
 # CHECK-EL: mult   $9, $7         # encoding: [0xe9,0x00,0x3c,0x8b]
 # CHECK-EL: multu  $9, $7         # encoding: [0xe9,0x00,0x3c,0x9b]
+# CHECK-EL: div    $zero, $9, $7  # encoding: [0xe9,0x00,0x3c,0xab]
+# CHECK-EL: divu   $zero, $9, $7  # encoding: [0xe9,0x00,0x3c,0xbb]
 #------------------------------------------------------------------------------
 # Big endian
 #------------------------------------------------------------------------------
@@ -68,6 +70,8 @@
 # CHECK-EB:  mul $9, $6, $7       # encoding: [0x00,0xe6,0x4a,0x10]
 # CHECK-EB:  mult  $9, $7         # encoding: [0x00,0xe9,0x8b,0x3c]
 # CHECK-EB:  multu $9, $7         # encoding: [0x00,0xe9,0x9b,0x3c]
+# CHECK-EB: div  $zero, $9, $7    # encoding: [0x00,0xe9,0xab,0x3c]
+# CHECK-EB: divu $zero, $9, $7    # encoding: [0x00,0xe9,0xbb,0x3c]
     add    $9, $6, $7
     add    $9, $6, 17767
     addu   $9, $6, -15001
@@ -97,3 +101,5 @@
     mul    $9, $6, $7
     mult   $9, $7
     multu  $9, $7
+    div    $0, $9, $7
+    divu   $0, $9, $7
