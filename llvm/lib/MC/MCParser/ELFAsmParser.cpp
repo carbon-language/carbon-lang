@@ -241,7 +241,6 @@ bool ELFAsmParser::ParseSectionName(StringRef &SectionName) {
   }
 
   for (;;) {
-    StringRef Tmp;
     unsigned CurSize;
 
     SMLoc PrevLoc = getLexer().getLoc();
