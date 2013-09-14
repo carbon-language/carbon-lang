@@ -150,7 +150,7 @@ static bool HasARCRuntime(CompilerInvocation &origCI) {
   // and avoid unrelated complications.
   llvm::Triple triple(origCI.getTargetOpts().Triple);
 
-  if (triple.getOS() == llvm::Triple::IOS)
+  if (triple.isiOS())
     return triple.getOSMajorVersion() >= 5;
 
   if (triple.getOS() == llvm::Triple::Darwin)

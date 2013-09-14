@@ -4348,7 +4348,7 @@ void CGObjCCommonMac::EmitImageInfo() {
 
   // Indicate whether we're compiling this to run on a simulator.
   const llvm::Triple &Triple = CGM.getTarget().getTriple();
-  if (Triple.getOS() == llvm::Triple::IOS &&
+  if (Triple.isiOS() &&
       (Triple.getArch() == llvm::Triple::x86 ||
        Triple.getArch() == llvm::Triple::x86_64))
     Mod.addModuleFlag(llvm::Module::Error, "Objective-C Is Simulated",

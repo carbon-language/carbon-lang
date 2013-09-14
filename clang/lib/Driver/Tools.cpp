@@ -770,7 +770,7 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
 
   // Kernel code has more strict alignment requirements.
   if (KernelOrKext) {
-    if (Triple.getOS() != llvm::Triple::IOS || Triple.isOSVersionLT(6)) {
+    if (!Triple.isiOS() || Triple.isOSVersionLT(6)) {
       CmdArgs.push_back("-backend-option");
       CmdArgs.push_back("-arm-long-calls");
     }
@@ -1768,7 +1768,7 @@ static bool shouldUseFramePointer(const ArgList &Args,
   if ((Triple.getArch() == llvm::Triple::x86_64 ||
        Triple.getArch() == llvm::Triple::x86 ||
        Triple.getArch() == llvm::Triple::systemz) &&
-      Triple.getOS() == llvm::Triple::Linux) {
+      Triple.isOSLinux()) {
     if (Arg *A = Args.getLastArg(options::OPT_O_Group))
       if (!A->getOption().matches(options::OPT_O0))
         return false;
@@ -1790,7 +1790,7 @@ static bool shouldUseLeafFramePointer(const ArgList &Args,
   if ((Triple.getArch() == llvm::Triple::x86_64 ||
        Triple.getArch() == llvm::Triple::x86 ||
        Triple.getArch() == llvm::Triple::systemz) &&
-      Triple.getOS() == llvm::Triple::Linux) {
+      Triple.isOSLinux()) {
     if (Arg *A = Args.getLastArg(options::OPT_O_Group))
       if (!A->getOption().matches(options::OPT_O0))
         return false;
@@ -2091,8 +2091,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // PIC or PIE options above, if these show up, PIC is disabled.
   llvm::Triple Triple(TripleStr);
   if (KernelOrKext &&
-      (Triple.getOS() != llvm::Triple::IOS ||
-       Triple.isOSVersionLT(6)))
+      (!Triple.isiOS() || Triple.isOSVersionLT(6)))
     PIC = PIE = false;
   if (Args.hasArg(options::OPT_static))
     PIC = PIE = false;
@@ -2503,7 +2502,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // -gsplit-dwarf should turn on -g and enable the backend dwarf
   // splitting and extraction.
   // FIXME: Currently only works on Linux.
-  if (getToolChain().getTriple().getOS() == llvm::Triple::Linux &&
+  if (getToolChain().getTriple().isOSLinux() &&
       Args.hasArg(options::OPT_gsplit_dwarf)) {
     CmdArgs.push_back("-g");
     CmdArgs.push_back("-backend-option");
@@ -3553,7 +3552,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // Add the split debug info name to the command lines here so we
   // can propagate it to the backend.
   bool SplitDwarf = Args.hasArg(options::OPT_gsplit_dwarf) &&
-    (getToolChain().getTriple().getOS() == llvm::Triple::Linux) &&
+    getToolChain().getTriple().isOSLinux() &&
     (isa<AssembleJobAction>(JA) || isa<CompileJobAction>(JA));
   const char *SplitDwarfOut;
   if (SplitDwarf) {
@@ -3906,7 +3905,7 @@ void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
   // creating an object.
   // TODO: Currently only works on linux with newer objcopy.
   if (Args.hasArg(options::OPT_gsplit_dwarf) &&
-      (getToolChain().getTriple().getOS() == llvm::Triple::Linux))
+      getToolChain().getTriple().isOSLinux())
     SplitDebugInfo(getToolChain(), C, *this, JA, Args, Output,
                    SplitDebugName(Args, Inputs));
 }
@@ -6001,7 +6000,7 @@ void gnutools::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
   // creating an object.
   // TODO: Currently only works on linux with newer objcopy.
   if (Args.hasArg(options::OPT_gsplit_dwarf) &&
-      (getToolChain().getTriple().getOS() == llvm::Triple::Linux))
+      getToolChain().getTriple().isOSLinux())
     SplitDebugInfo(getToolChain(), C, *this, JA, Args, Output,
                    SplitDebugName(Args, Inputs));
 }

@@ -139,7 +139,7 @@ static void getDarwinDefines(MacroBuilder &Builder, const LangOptions &Opts,
   }
 
   // Set the appropriate OS version define.
-  if (Triple.getOS() == llvm::Triple::IOS) {
+  if (Triple.isiOS()) {
     assert(Maj < 10 && Min < 100 && Rev < 100 && "Invalid version!");
     char Str[6];
     Str[0] = '0' + Maj;
@@ -3528,7 +3528,7 @@ class ARMTargetInfo : public TargetInfo {
     // the kernel which on armv6 and newer uses ldrex and strex. The net result
     // is that if we assume the kernel is at least as recent as the hardware,
     // it is safe to use atomic instructions on armv6 and newer.
-    if (T.getOS() != llvm::Triple::Linux &&
+    if (!T.isOSLinux() &&
         T.getOS() != llvm::Triple::FreeBSD &&
         T.getOS() != llvm::Triple::Bitrig)
       return false;
