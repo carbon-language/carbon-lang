@@ -18,7 +18,7 @@
 #include "RegisterContextPOSIX.h"
 
 class RegisterContextPOSIX_i386 :
-    public RegisterContextPOSIX
+    public lldb_private::RegisterContext
 {
 public:
     RegisterContextPOSIX_i386(lldb_private::Thread &thread,

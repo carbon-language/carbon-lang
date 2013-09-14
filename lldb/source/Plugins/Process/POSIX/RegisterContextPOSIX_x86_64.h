@@ -128,7 +128,7 @@ enum
 };
 
 class RegisterContextPOSIX_x86_64
-  : public RegisterContextPOSIX
+  : public lldb_private::RegisterContext
 {
 public:
     RegisterContextPOSIX_x86_64 (lldb_private::Thread &thread,
@@ -164,59 +164,11 @@ public:
     const lldb_private::RegisterSet *
     GetRegisterSet(size_t set);
 
-    unsigned
-    GetRegisterIndexFromOffset(unsigned offset);
-
     const char *
     GetRegisterName(unsigned reg);
 
-    virtual bool
-    ReadRegister(const lldb_private::RegisterInfo *reg_info,
-                 lldb_private::RegisterValue &value);
-
-    bool
-    ReadAllRegisterValues(lldb::DataBufferSP &data_sp);
-
-    virtual bool
-    WriteRegister(const lldb_private::RegisterInfo *reg_info,
-                  const lldb_private::RegisterValue &value);
-
-    bool
-    WriteAllRegisterValues(const lldb::DataBufferSP &data_sp);
-
     uint32_t
     ConvertRegisterKindToRegisterNumber(uint32_t kind, uint32_t num);
-
-    uint32_t
-    NumSupportedHardwareWatchpoints();
-
-    uint32_t
-    SetHardwareWatchpoint(lldb::addr_t, size_t size, bool read, bool write);
-
-    bool
-    SetHardwareWatchpointWithIndex(lldb::addr_t, size_t size, bool read,
-                                   bool write, uint32_t hw_index);
-
-    bool
-    ClearHardwareWatchpoint(uint32_t hw_index);
-
-    bool
-    HardwareSingleStep(bool enable);
-
-    bool
-    UpdateAfterBreakpoint();
-
-    bool
-    IsWatchpointVacant(uint32_t hw_index);
-
-    bool
-    IsWatchpointHit (uint32_t hw_index);
-
-    lldb::addr_t
-    GetWatchpointAddress (uint32_t hw_index);
-
-    bool
-    ClearWatchpointHits();
 
     //---------------------------------------------------------------------------
     // Generic floating-point registers
@@ -304,7 +256,8 @@ public:
     struct FPR
     {
         // Thread state for the floating-point unit of the processor read by ptrace.
-        union XSTATE {
+        union XSTATE
+        {
             FXSAVE   fxsave;    // Generic floating-point registers.
             XSAVE    xsave;     // x86 extended processor state.
         } xstate;
@@ -317,12 +270,6 @@ protected:
 
     virtual const lldb_private::RegisterInfo *
     GetRegisterInfo();
-
-    virtual bool
-    ReadRegister(const unsigned reg, lldb_private::RegisterValue &value) = 0;
-
-    virtual bool
-    WriteRegister(const unsigned reg, const lldb_private::RegisterValue &value) = 0;
 
     static bool
     IsGPR(unsigned reg);

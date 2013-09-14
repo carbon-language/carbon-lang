@@ -44,7 +44,7 @@ LinuxThread::RefreshStateAfterStop()
 void
 LinuxThread::TraceNotify(const ProcessMessage &message)
 {
-    RegisterContextPOSIX* reg_ctx = GetRegisterContextPOSIX();
+    POSIXBreakpointProtocol* reg_ctx = GetPOSIXBreakpointProtocol();
     if (reg_ctx)
     {
         uint32_t num_hw_wps = reg_ctx->NumSupportedHardwareWatchpoints();

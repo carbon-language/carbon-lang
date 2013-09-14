@@ -26,20 +26,17 @@ public:
     virtual bool
     ReadRegister(const lldb_private::RegisterInfo *reg_info, lldb_private::RegisterValue &value);
 
-    bool
-    ReadAllRegisterValues(lldb::DataBufferSP &data_sp);
-
     virtual bool
     WriteRegister(const lldb_private::RegisterInfo *reg_info, const lldb_private::RegisterValue &value);
+
+    bool
+    ReadAllRegisterValues(lldb::DataBufferSP &data_sp);
 
     bool
     WriteAllRegisterValues(const lldb::DataBufferSP &data_sp);
 
     bool
     HardwareSingleStep(bool enable);
-
-    bool
-    UpdateAfterBreakpoint();
 
 protected:
     bool
@@ -53,9 +50,6 @@ protected:
 
     bool
     WriteFPR();
-
-    bool ReadRegister(const unsigned reg, lldb_private::RegisterValue &value) { return false; }
-    bool WriteRegister(const unsigned reg, const lldb_private::RegisterValue &value) { return false; }
 
 private:
     uint8_t *m_gpregset;

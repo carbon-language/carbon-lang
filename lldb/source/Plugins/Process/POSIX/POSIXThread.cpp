@@ -46,7 +46,8 @@ POSIXThread::POSIXThread(Process &process, lldb::tid_t tid)
       m_frame_ap (),
       m_breakpoint (),
       m_thread_name_valid (false),
-      m_thread_name ()
+      m_thread_name (),
+      m_posix_thread(NULL)
 {
     Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_THREAD));
     if (log && log->GetMask().Test(POSIX_LOG_VERBOSE))
@@ -138,8 +139,9 @@ POSIXThread::GetRegisterContext()
 {
     if (!m_reg_context_sp)
     {
-        ArchSpec arch = Host::GetArchitecture();
+        m_posix_thread = NULL;
 
+        ArchSpec arch = Host::GetArchitecture();
         switch (arch.GetCore())
         {
         default:
@@ -149,23 +151,38 @@ POSIXThread::GetRegisterContext()
         case ArchSpec::eCore_x86_32_i386:
         case ArchSpec::eCore_x86_32_i486:
         case ArchSpec::eCore_x86_32_i486sx:
-            m_reg_context_sp.reset(new RegisterContextPOSIXProcessMonitor_i386(*this, 0));
+        {
+            RegisterContextPOSIXProcessMonitor_i386 *reg_ctx = new RegisterContextPOSIXProcessMonitor_i386(*this, 0);
+            m_posix_thread = reg_ctx;
+            m_reg_context_sp.reset(reg_ctx);
             break;
+        }
 
         case ArchSpec::eCore_x86_64_x86_64:
+        {
+            RegisterInfoInterface *reg_interface = NULL;
+
             switch (arch.GetTriple().getOS())
             {
                 case llvm::Triple::FreeBSD:
-                    m_reg_context_sp.reset(new RegisterContextPOSIXProcessMonitor_x86_64(*this, 0, new RegisterContextFreeBSD_x86_64()));
+                    reg_interface = new RegisterContextFreeBSD_x86_64();
                     break;
                 case llvm::Triple::Linux:
-                    m_reg_context_sp.reset(new RegisterContextPOSIXProcessMonitor_x86_64(*this, 0, new RegisterContextLinux_x86_64()));
+                    reg_interface = new RegisterContextLinux_x86_64();
                     break;
                 default:
                     assert(false && "OS not supported");
                     break;
             }
+
+            if (reg_interface)
+            {
+                RegisterContextPOSIXProcessMonitor_x86_64 *reg_ctx = new RegisterContextPOSIXProcessMonitor_x86_64(*this, 0, reg_interface);
+                m_posix_thread = reg_ctx;
+                m_reg_context_sp.reset(reg_ctx);
+            }
             break;
+        }
         }
     }
     return m_reg_context_sp;
@@ -328,7 +345,7 @@ POSIXThread::EnableHardwareWatchpoint(Watchpoint *wp)
         bool wp_read = wp->WatchpointRead();
         bool wp_write = wp->WatchpointWrite();
         uint32_t wp_hw_index = wp->GetHardwareIndex();
-        RegisterContextPOSIX* reg_ctx = GetRegisterContextPOSIX();
+        POSIXBreakpointProtocol* reg_ctx = GetPOSIXBreakpointProtocol();
         if (reg_ctx)
             wp_set = reg_ctx->SetHardwareWatchpointWithIndex(wp_addr, wp_size,
                                                              wp_read, wp_write,
@@ -365,7 +382,7 @@ POSIXThread::FindVacantWatchpointIndex()
     uint32_t hw_index = LLDB_INVALID_INDEX32;
     uint32_t num_hw_wps = NumSupportedHardwareWatchpoints();
     uint32_t wp_idx;
-    RegisterContextPOSIX* reg_ctx = GetRegisterContextPOSIX();
+    POSIXBreakpointProtocol* reg_ctx = GetPOSIXBreakpointProtocol();
     if (reg_ctx)
     {
         for (wp_idx = 0; wp_idx < num_hw_wps; wp_idx++)
@@ -387,7 +404,7 @@ POSIXThread::BreakNotify(const ProcessMessage &message)
     Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_THREAD));
 
     assert(GetRegisterContext());
-    status = GetRegisterContextPOSIX()->UpdateAfterBreakpoint();
+    status = GetPOSIXBreakpointProtocol()->UpdateAfterBreakpoint();
     assert(status && "Breakpoint update failed!");
 
     // With our register state restored, resolve the breakpoint object
@@ -436,7 +453,7 @@ POSIXThread::WatchNotify(const ProcessMessage &message)
         log->Printf ("POSIXThread::%s () Hardware Watchpoint Address = 0x%8.8"
                      PRIx64, __FUNCTION__, halt_addr);
 
-    RegisterContextPOSIX* reg_ctx = GetRegisterContextPOSIX();
+    POSIXBreakpointProtocol* reg_ctx = GetPOSIXBreakpointProtocol();
     if (reg_ctx)
     {
         uint32_t num_hw_wps = reg_ctx->NumSupportedHardwareWatchpoints();
@@ -537,11 +554,8 @@ POSIXThread::GetRegisterIndexFromOffset(unsigned offset)
     case ArchSpec::eCore_x86_32_i486sx:
     case ArchSpec::eCore_x86_64_x86_64:
         {
-            RegisterContextSP base = GetRegisterContext();
-            if (base) {
-                RegisterContextPOSIX &context = static_cast<RegisterContextPOSIX &>(*base);
-                reg = context.GetRegisterIndexFromOffset(offset);
-            }
+            POSIXBreakpointProtocol* reg_ctx = GetPOSIXBreakpointProtocol();
+            reg = reg_ctx->GetRegisterIndexFromOffset(offset);
         }
         break;
     }

@@ -86,12 +86,6 @@ RegisterContextCorePOSIX_x86_64::WriteAllRegisterValues(const lldb::DataBufferSP
 }
 
 bool
-RegisterContextCorePOSIX_x86_64::UpdateAfterBreakpoint()
-{
-    return false;
-}
-
-bool
 RegisterContextCorePOSIX_x86_64::HardwareSingleStep(bool enable)
 {
     return false;

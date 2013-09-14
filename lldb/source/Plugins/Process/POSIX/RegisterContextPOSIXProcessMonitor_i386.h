@@ -13,7 +13,8 @@
 #include "Plugins/Process/POSIX/RegisterContextPOSIX_i386.h"
 
 class RegisterContextPOSIXProcessMonitor_i386:
-    public RegisterContextPOSIX_i386
+    public RegisterContextPOSIX_i386,
+    public POSIXBreakpointProtocol
 {
 public:
     RegisterContextPOSIXProcessMonitor_i386(lldb_private::Thread &thread,
@@ -37,6 +38,34 @@ protected:
 
 	bool
 	WriteRegister(const lldb_private::RegisterInfo *reg_info, const lldb_private::RegisterValue &value);
+
+    // POSIXBreakpointProtocol
+    virtual bool
+    UpdateAfterBreakpoint() { return true; }
+
+    virtual unsigned
+    GetRegisterIndexFromOffset(unsigned offset) { return LLDB_INVALID_REGNUM; }
+
+    virtual bool
+    IsWatchpointHit (uint32_t hw_index) { return false; }
+
+    virtual bool
+    ClearWatchpointHits () { return false; }
+
+    virtual lldb::addr_t
+    GetWatchpointAddress (uint32_t hw_index) { return LLDB_INVALID_ADDRESS; }
+
+    virtual bool
+    IsWatchpointVacant (uint32_t hw_index) { return false; }
+
+    virtual bool
+    SetHardwareWatchpointWithIndex (lldb::addr_t addr, size_t size,
+                                    bool read, bool write,
+                                    uint32_t hw_index) { return false; }
+
+    // From lldb_private::RegisterContext
+    virtual uint32_t
+    NumSupportedHardwareWatchpoints () { return 0; }
 
 private:
     ProcessMonitor &

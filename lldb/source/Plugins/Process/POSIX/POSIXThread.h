@@ -21,7 +21,7 @@
 
 class ProcessMessage;
 class ProcessMonitor;
-class RegisterContextPOSIX;
+class POSIXBreakpointProtocol;
 
 //------------------------------------------------------------------------------
 // @class POSIXThread
@@ -92,15 +92,12 @@ public:
     uint32_t FindVacantWatchpointIndex();
 
 protected:
-    RegisterContextPOSIX *
-    GetRegisterContextPOSIX ()
+    POSIXBreakpointProtocol *
+    GetPOSIXBreakpointProtocol ()
     {
         if (!m_reg_context_sp)
             m_reg_context_sp = GetRegisterContext();
-#if 0
-        return dynamic_cast<RegisterContextPOSIX*>(m_reg_context_sp.get());
-#endif
-        return (RegisterContextPOSIX *)m_reg_context_sp.get();
+        return m_posix_thread;
     }
     
     std::unique_ptr<lldb_private::StackFrame> m_frame_ap;
@@ -109,6 +106,7 @@ protected:
 
     bool m_thread_name_valid;
     std::string m_thread_name;
+    POSIXBreakpointProtocol *m_posix_thread;
 
     ProcessMonitor &
     GetMonitor();
