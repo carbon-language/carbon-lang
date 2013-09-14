@@ -7395,6 +7395,17 @@ let Constraints = "$src1 = $dst" in {
 // SHA-NI Instructions
 //===----------------------------------------------------------------------===//
 
+multiclass SHAI_binop<bits<8> Opc, string OpcodeStr> {
+  def rr : I<Opc, MRMSrcReg, (outs VR128:$dst),
+             (ins VR128:$src1, VR128:$src2),
+             !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"), []>, T8;
+
+  let mayLoad = 1 in
+  def rm : I<Opc, MRMSrcMem, (outs VR128:$dst),
+             (ins VR128:$src1, i128mem:$src2),
+             !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"), []>, T8;
+}
+
 let Constraints = "$src1 = $dst", hasSideEffects = 0, Predicates = [HasSHA] in {
   def SHA1RNDS4rri : Ii8<0xCC, MRMSrcReg, (outs VR128:$dst),
                          (ins VR128:$src1, VR128:$src2, i8imm:$src3),
@@ -7405,7 +7416,23 @@ let Constraints = "$src1 = $dst", hasSideEffects = 0, Predicates = [HasSHA] in {
                          (ins VR128:$src1, i128mem:$src2, i8imm:$src3),
                          "sha1rnds4\t{$src3, $src2, $dst|$dst, $src2, $src3}",
                          []>, TA;
+
+  defm SHA1NEXTE : SHAI_binop<0xC8, "sha1nexte">;
+  defm SHA1MSG1  : SHAI_binop<0xC9, "sha1msg1">;
+  defm SHA1MSG2  : SHAI_binop<0xCA, "sha1msg2">;
+
+  let Uses=[XMM0] in
+  defm SHA256RNDS2 : SHAI_binop<0xCB, "sha256rnds2">;
+
+  defm SHA256MSG1 : SHAI_binop<0xCC, "sha256msg1">;
+  defm SHA256MSG2 : SHAI_binop<0xCD, "sha256msg2">;
 }
+
+// Aliases with explicit %xmm0
+def : InstAlias<"sha256rnds2\t{%xmm0, $src2, $dst|$dst, $src2, xmm0}",
+                (SHA256RNDS2rr VR128:$dst, VR128:$src2)>;
+def : InstAlias<"sha256rnds2\t{%xmm0, $src2, $dst|$dst, $src2, xmm0}",
+                (SHA256RNDS2rm VR128:$dst, i128mem:$src2)>;
 
 //===----------------------------------------------------------------------===//
 // AES-NI Instructions
