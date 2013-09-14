@@ -174,10 +174,6 @@ ProcessMachCore::GetDynamicLoaderAddress (lldb::addr_t addr)
         case llvm::MachO::MH_DYLINKER:
             //printf("0x%16.16" PRIx64 ": file_type = MH_DYLINKER\n", vaddr);
             // Address of dyld "struct mach_header" in the core file
-            if (m_dyld_addr != LLDB_INVALID_ADDRESS)
-            {
-                assert (!"already had user process dyld");
-            }
             m_dyld_addr = addr;
             return true;
 
