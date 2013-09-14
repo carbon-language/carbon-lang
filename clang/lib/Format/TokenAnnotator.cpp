@@ -1052,7 +1052,10 @@ void TokenAnnotator::calculateFormattingInformation(AnnotatedLine &Line) {
                Current->Next->is(tok::string_literal)) {
       Current->MustBreakBefore = true;
     } else if (Current->Previous->ClosesTemplateDeclaration &&
+               Current->Previous->MatchingParen &&
+               Current->Previous->MatchingParen->BindingStrength == 1 &&
                Style.AlwaysBreakTemplateDeclarations) {
+      // FIXME: Fix horrible hack of using BindingStrength to find top-level <>.
       Current->MustBreakBefore = true;
     } else if (Current->Type == TT_CtorInitializerComma &&
                Style.BreakConstructorInitializersBeforeComma) {
