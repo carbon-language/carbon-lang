@@ -1,4 +1,7 @@
-; RUN: opt < %s -simplifycfg -S | FileCheck %s
+; RUN: opt -S -simplifycfg < %s | FileCheck -check-prefix=CHECK %s
+; RUN: opt -S -default-data-layout="p:32:32" -simplifycfg < %s | FileCheck -check-prefix=DL %s
+
+; TODO: Other tests should also have check lines with datalayout
 
 declare void @foo1()
 
@@ -20,6 +23,25 @@ F:              ; preds = %0
 ; CHECK:    i32 17, label %T
 ; CHECK:    i32 4, label %T
 ; CHECK:  ]
+}
+
+define void @test1_ptr(i32* %V) {
+        %C1 = icmp eq i32* %V, inttoptr (i32 4 to i32*)
+        %C2 = icmp eq i32* %V, inttoptr (i32 17 to i32*)
+        %CN = or i1 %C1, %C2            ; <i1> [#uses=1]
+        br i1 %CN, label %T, label %F
+T:              ; preds = %0
+        call void @foo1( )
+        ret void
+F:              ; preds = %0
+        call void @foo2( )
+        ret void
+; DL-LABEL: @test1_ptr(
+; DL:  %magicptr = ptrtoint i32* %V to i32
+; DL:  switch i32 %magicptr, label %F [
+; DL:    i32 17, label %T
+; DL:    i32 4, label %T
+; DL:  ]
 }
 
 define void @test2(i32 %V) {
@@ -79,7 +101,7 @@ lor.end:                                          ; preds = %lor.rhs, %lor.lhs.f
   %0 = phi i1 [ true, %lor.lhs.false ], [ true, %entry ], [ %cmp8, %lor.rhs ]
   %lor.ext = zext i1 %0 to i32
   ret i32 %lor.ext
-  
+
 ; CHECK-LABEL: @test4(
 ; CHECK:  switch i8 %c, label %lor.rhs [
 ; CHECK:    i8 62, label %lor.end
@@ -139,7 +161,7 @@ shortcirc_done.4:               ; preds = %shortcirc_next.3, %shortcirc_next.2, 
 UnifiedReturnBlock:             ; preds = %shortcirc_done.4, %shortcirc_next.4
         %UnifiedRetVal = phi i1 [ %tmp.26, %shortcirc_next.4 ], [ true, %shortcirc_done.4 ]             ; <i1> [#uses=1]
         ret i1 %UnifiedRetVal
-        
+
 ; CHECK-LABEL: @test6(
 ; CHECK: %tmp.2.i.off = add i32 %tmp.2.i, -14
 ; CHECK: %switch = icmp ult i32 %tmp.2.i.off, 6
@@ -160,7 +182,7 @@ if.then:                                          ; preds = %entry
 
 if.end:                                           ; preds = %entry
   ret void
-  
+
 ; CHECK-LABEL: @test7(
 ; CHECK:   %cmp = icmp ult i32 %x, 32
 ; CHECK:   br i1 %cmp, label %if.then, label %switch.early.test
@@ -189,7 +211,7 @@ if.then:                                          ; preds = %entry
 
 if.end:                                           ; preds = %entry
   ret i32 0
-  
+
 ; CHECK-LABEL: @test8(
 ; CHECK: switch.early.test:
 ; CHECK:   switch i8 %c, label %if.end [
@@ -245,7 +267,7 @@ lor.end:                                          ; preds = %lor.rhs, %lor.lhs.f
   %0 = phi i1 [ true, %lor.lhs.false36 ], [ true, %lor.lhs.false31 ], [ true, %lor.lhs.false26 ], [ true, %lor.lhs.false21 ], [ true, %lor.lhs.false16 ], [ true, %lor.lhs.false11 ], [ true, %lor.lhs.false6 ], [ true, %lor.lhs.false ], [ true, %entry ], [ %cmp43, %lor.rhs ]
   %conv46 = zext i1 %0 to i32
   ret i32 %conv46
-  
+
 ; CHECK-LABEL: @test9(
 ; CHECK:   %cmp = icmp ult i8 %c, 33
 ; CHECK:   br i1 %cmp, label %lor.end, label %switch.early.test
