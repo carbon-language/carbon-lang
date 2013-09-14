@@ -1045,6 +1045,7 @@ static bool HasExtension(const Preprocessor &PP, const IdentifierInfo *II) {
            .Case("c_atomic", true)
            .Case("c_generic_selections", true)
            .Case("c_static_assert", true)
+           .Case("c_thread_local", PP.getTargetInfo().isTLSSupported())
            // C++11 features supported by other languages as extensions.
            .Case("cxx_atomic", LangOpts.CPlusPlus)
            .Case("cxx_deleted_functions", LangOpts.CPlusPlus)

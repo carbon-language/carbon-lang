@@ -921,8 +921,8 @@ enabled.
 C11 ``_Thread_local``
 ^^^^^^^^^^^^^^^^^^^^^
 
-Use ``__has_feature(c_thread_local)`` to determine if support for
-``_Thread_local`` variables is enabled.
+Use ``__has_feature(c_thread_local)`` or ``__has_extension(c_thread_local)``
+to determine if support for ``_Thread_local`` variables is enabled.
 
 Checks for Type Traits
 ======================
