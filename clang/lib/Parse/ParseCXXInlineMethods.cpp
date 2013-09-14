@@ -113,11 +113,12 @@ NamedDecl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS,
   // In delayed template parsing mode, if we are within a class template
   // or if we are about to parse function member template then consume
   // the tokens and store them for parsing at the end of the translation unit.
-  if (getLangOpts().DelayedTemplateParsing && 
-      DefinitionKind == FDK_Definition && 
+  if (getLangOpts().DelayedTemplateParsing &&
+      DefinitionKind == FDK_Definition &&
       ((Actions.CurContext->isDependentContext() ||
-        TemplateInfo.Kind != ParsedTemplateInfo::NonTemplate) && 
-        !Actions.IsInsideALocalClassWithinATemplateFunction())) {
+        (TemplateInfo.Kind != ParsedTemplateInfo::NonTemplate &&
+         TemplateInfo.Kind != ParsedTemplateInfo::ExplicitSpecialization)) &&
+       !Actions.IsInsideALocalClassWithinATemplateFunction())) {
 
     CachedTokens Toks;
     LexTemplateFunctionForLateParsing(Toks);
