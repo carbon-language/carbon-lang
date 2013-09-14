@@ -176,6 +176,12 @@ public:
   /// linker command line, using the -fini option.
   range<const StringRef *> finiFunctions() const { return _finiFunctions; }
 
+  void setSharedObjectName(StringRef soname) {
+    _soname = soname;
+  }
+
+  StringRef sharedObjectName() const { return _soname; }
+
   /// \brief Set path to the system root
   void setSysroot(StringRef path) {
     _sysrootPath = path;
@@ -230,6 +236,7 @@ protected:
   StringRefVector _initFunctions;
   StringRefVector _finiFunctions;
   StringRef _sysrootPath;
+  StringRef _soname;
   StringRefVector _rpathList;
   StringRefVector _rpathLinkList;
 };

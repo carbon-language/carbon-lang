@@ -322,6 +322,10 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
       ctx->setSysroot(inputArg->getValue());
       break;
 
+    case OPT_soname:
+      ctx->setSharedObjectName(inputArg->getValue());
+      break;
+
     default:
       break;
     } // end switch on option ID

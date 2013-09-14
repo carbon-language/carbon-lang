@@ -169,6 +169,13 @@ void OutputELFWriter<ELFT>::buildDynamicSymbolTable(const File &file) {
     dyn.d_un.d_val = _dynamicStringTable->addString(*rpath);
     _dynamicTable->addEntry(dyn);
   }
+  StringRef soname = _context.sharedObjectName();
+  if (!soname.empty() && _context.getOutputType() == llvm::ELF::ET_DYN) {
+    Elf_Dyn dyn;
+    dyn.d_tag = DT_SONAME;
+    dyn.d_un.d_val = _dynamicStringTable->addString(soname);
+    _dynamicTable->addEntry(dyn);
+  }
   // The dynamic symbol table need to be sorted earlier because the hash
   // table needs to be built using the dynamic symbol table. It would be
   // late to sort the symbols due to that in finalize. In the dynamic symbol
