@@ -35,6 +35,21 @@ UNSUPPORTED = ResultCode('UNSUPPORTED', False)
 
 class MetricValue(object):
     def format(self):
+        """
+        format() -> str
+
+        Convert this metric to a string suitable for displaying as part of the
+        console output.
+        """
+        raise RuntimeError("abstract method")
+
+    def todata(self):
+        """
+        todata() -> json-serializable data
+
+        Convert this metric to content suitable for serializing in the JSON test
+        output.
+        """
         raise RuntimeError("abstract method")
 
 class IntMetricValue(MetricValue):
@@ -44,12 +59,18 @@ class IntMetricValue(MetricValue):
     def format(self):
         return str(self.value)
 
+    def todata(self):
+        return self.value
+
 class RealMetricValue(MetricValue):
     def __init__(self, value):
         self.value = value
 
     def format(self):
         return '%.4f' % self.value
+
+    def todata(self):
+        return self.value
 
 # Test results.
 
