@@ -1948,22 +1948,23 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
   DeclContext *GlobalCtx = Context.getTranslationUnitDecl();
 
   // Check if this function is already declared.
-  {
-    DeclContext::lookup_result R = GlobalCtx->lookup(Name);
-    for (DeclContext::lookup_iterator Alloc = R.begin(), AllocEnd = R.end();
-         Alloc != AllocEnd; ++Alloc) {
-      // Only look at non-template functions, as it is the predefined,
-      // non-templated allocation function we are trying to declare here.
-      if (FunctionDecl *Func = dyn_cast<FunctionDecl>(*Alloc)) {
+  DeclContext::lookup_result R = GlobalCtx->lookup(Name);
+  for (DeclContext::lookup_iterator Alloc = R.begin(), AllocEnd = R.end();
+       Alloc != AllocEnd; ++Alloc) {
+    // Only look at non-template functions, as it is the predefined,
+    // non-templated allocation function we are trying to declare here.
+    if (FunctionDecl *Func = dyn_cast<FunctionDecl>(*Alloc)) {
+      if (Func->getNumParams() == 1) {
         QualType InitialParamType =
           Context.getCanonicalType(
             Func->getParamDecl(0)->getType().getUnqualifiedType());
         // FIXME: Do we need to check for default arguments here?
-        if (Func->getNumParams() == 1 && InitialParamType == Argument) {
+        if (InitialParamType == Argument) {
           if (AddMallocAttr && !Func->hasAttr<MallocAttr>())
-            Func->addAttr(::new (Context) MallocAttr(SourceLocation(), Context));
-          // Make the function visible to name lookup, even if we found it in an
-          // unimported module. It either is an implicitly-declared global
+            Func->addAttr(::new (Context) MallocAttr(SourceLocation(),
+                                                     Context));
+          // Make the function visible to name lookup, even if we found it in
+          // an unimported module. It either is an implicitly-declared global
           // allocation function, or is suppressing that function.
           Func->setHidden(false);
           return;
