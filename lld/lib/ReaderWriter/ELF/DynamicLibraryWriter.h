@@ -26,14 +26,16 @@ template<class ELFT>
 class DynamicLibraryWriter : public OutputELFWriter<ELFT> {
 public:
   DynamicLibraryWriter(const ELFLinkingContext &context)
-      : OutputELFWriter<ELFT>(context) {}
+      : OutputELFWriter<ELFT>(context), _runtimeFile(context) {}
 
 private:
   void buildDynamicSymbolTable(const File &file);
   void addDefaultAtoms();
+  virtual void addFiles(InputFiles &);
   void finalizeDefaultAtomValues();
 
   llvm::BumpPtrAllocator _alloc;
+  CRuntimeFile<ELFT> _runtimeFile;
 };
 
 //===----------------------------------------------------------------------===//
@@ -59,11 +61,34 @@ void DynamicLibraryWriter<ELFT>::buildDynamicSymbolTable(const File &file) {
   OutputELFWriter<ELFT>::buildDynamicSymbolTable(file);
 }
 
-template<class ELFT>
-void DynamicLibraryWriter<ELFT>::addDefaultAtoms() { }
+template <class ELFT> void DynamicLibraryWriter<ELFT>::addDefaultAtoms() {
+  _runtimeFile.addAbsoluteAtom("_end");
+}
 
-template<class ELFT>
+/// \brief Hook in lld to add CRuntime file
+template <class ELFT>
+void DynamicLibraryWriter<ELFT>::addFiles(InputFiles &inputFiles) {
+  // Add the default atoms as defined by executables
+  addDefaultAtoms();
+  // Add the runtime file
+  inputFiles.prependFile(_runtimeFile);
+  // Add the Linker internal file for symbols that are defined by
+  // command line options
+  OutputELFWriter<ELFT>::addFiles(inputFiles);
+}
+
+template <class ELFT>
 void DynamicLibraryWriter<ELFT>::finalizeDefaultAtomValues() {
+  auto underScoreEndAtomIter = this->_layout->findAbsoluteAtom("_end");
+
+  if (auto bssSection = this->_layout->findOutputSection(".bss")) {
+    (*underScoreEndAtomIter)->_virtualAddr =
+        bssSection->virtualAddr() + bssSection->memSize();
+  } else if (auto dataSection = this->_layout->findOutputSection(".data")) {
+    (*underScoreEndAtomIter)->_virtualAddr =
+        dataSection->virtualAddr() + dataSection->memSize();
+  }
+
   this->_targetHandler.finalizeSymbolValues();
 }
 
