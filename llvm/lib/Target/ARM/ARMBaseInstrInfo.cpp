@@ -4201,7 +4201,7 @@ breakPartialRegDependency(MachineBasicBlock::iterator MI,
   // FIXME: In some cases, VLDRS can be changed to a VLD1DUPd32 which defines
   // the full D-register by loading the same value to both lanes.  The
   // instruction is micro-coded with 2 uops, so don't do this until we can
-  // properly schedule micro-coded instuctions.  The dispatcher stalls cause
+  // properly schedule micro-coded instructions.  The dispatcher stalls cause
   // too big regressions.
 
   // Insert the dependency-breaking FCONSTD before MI.
