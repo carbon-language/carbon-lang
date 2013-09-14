@@ -1629,9 +1629,12 @@ ProcessMonitor::StopMonitor()
 {
     StopMonitoringChildProcess();
     StopOpThread();
-    CloseFD(m_terminal_fd);
     CloseFD(m_client_fd);
     CloseFD(m_server_fd);
+    // Note: ProcessPOSIX passes the m_terminal_fd file descriptor to
+    // Process::SetSTDIOFileDescriptor, which in turn transfers ownership of
+    // the descriptor to a ConnectionFileDescriptor object.  Consequently
+    // even though still has the file descriptor, we shouldn't close it here.
 }
 
 void
