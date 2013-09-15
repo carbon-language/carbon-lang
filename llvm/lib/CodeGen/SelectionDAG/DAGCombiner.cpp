@@ -10236,7 +10236,7 @@ bool DAGCombiner::isAlias(SDValue Ptr1, int64_t Size1,
 
   bool UseAA = CombinerGlobalAA.getNumOccurrences() > 0 ? CombinerGlobalAA :
     TLI.getTargetMachine().getSubtarget<TargetSubtargetInfo>().useAA();
-  if (UseAA) {
+  if (UseAA && SrcValue1 && SrcValue2) {
     // Use alias analysis information.
     int64_t MinOffset = std::min(SrcValueOffset1, SrcValueOffset2);
     int64_t Overlap1 = Size1 + SrcValueOffset1 - MinOffset;
