@@ -103,8 +103,9 @@ bool MipsOs16::runOnModule(Module &M) {
     if (F->isDeclaration()) continue;
     DEBUG(dbgs() << "Working on " << F->getName() << "\n");
     if (usingMask) {
-      if ((functionIndex < Mips32FunctionMask.length()) &&
-          (Mips32FunctionMask[functionIndex] == '1')) {
+      if (functionIndex == Mips32FunctionMask.length())
+        functionIndex = 0;
+      if (Mips32FunctionMask[functionIndex] == '1') {
         DEBUG(dbgs() << "mask forced mips32: " << F->getName() << "\n");
         F->addFnAttr("nomips16");
       }
