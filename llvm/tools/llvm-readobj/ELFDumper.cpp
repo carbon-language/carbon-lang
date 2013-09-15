@@ -377,6 +377,7 @@ static const char *getElfSectionType(unsigned Arch, unsigned Type) {
 static const EnumEntry<unsigned> ElfSectionFlags[] = {
   LLVM_READOBJ_ENUM_ENT(ELF, SHF_WRITE           ),
   LLVM_READOBJ_ENUM_ENT(ELF, SHF_ALLOC           ),
+  LLVM_READOBJ_ENUM_ENT(ELF, SHF_EXCLUDE         ),
   LLVM_READOBJ_ENUM_ENT(ELF, SHF_EXECINSTR       ),
   LLVM_READOBJ_ENUM_ENT(ELF, SHF_MERGE           ),
   LLVM_READOBJ_ENUM_ENT(ELF, SHF_STRINGS         ),

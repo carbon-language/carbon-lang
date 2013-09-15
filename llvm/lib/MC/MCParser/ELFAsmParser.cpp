@@ -279,13 +279,16 @@ static SectionKind computeSectionKind(unsigned Flags) {
   return SectionKind::getDataRel();
 }
 
-static int parseSectionFlags(StringRef flagsStr, bool *UseLastGroup) {
-  int flags = 0;
+static unsigned parseSectionFlags(StringRef flagsStr, bool *UseLastGroup) {
+  unsigned flags = 0;
 
   for (unsigned i = 0; i < flagsStr.size(); i++) {
     switch (flagsStr[i]) {
     case 'a':
       flags |= ELF::SHF_ALLOC;
+      break;
+    case 'e':
+      flags |= ELF::SHF_EXCLUDE;
       break;
     case 'x':
       flags |= ELF::SHF_EXECINSTR;
@@ -315,7 +318,7 @@ static int parseSectionFlags(StringRef flagsStr, bool *UseLastGroup) {
       *UseLastGroup = true;
       break;
     default:
-      return -1;
+      return -1U;
     }
   }
 
@@ -381,8 +384,8 @@ bool ELFAsmParser::ParseSectionArguments(bool IsPush) {
     StringRef FlagsStr = getTok().getStringContents();
     Lex();
 
-    int extraFlags = parseSectionFlags(FlagsStr, &UseLastGroup);
-    if (extraFlags < 0)
+    unsigned extraFlags = parseSectionFlags(FlagsStr, &UseLastGroup);
+    if (extraFlags == -1U)
       return TokError("unknown flag");
     Flags |= extraFlags;
 

@@ -75,6 +75,8 @@ void MCSectionELF::PrintSwitchToSection(const MCAsmInfo &MAI,
       OS << ",#execinstr";
     if (Flags & ELF::SHF_WRITE)
       OS << ",#write";
+    if (Flags & ELF::SHF_EXCLUDE)
+      OS << ",#exclude";
     if (Flags & ELF::SHF_TLS)
       OS << ",#tls";
     OS << '\n';
@@ -84,6 +86,8 @@ void MCSectionELF::PrintSwitchToSection(const MCAsmInfo &MAI,
   OS << ",\"";
   if (Flags & ELF::SHF_ALLOC)
     OS << 'a';
+  if (Flags & ELF::SHF_EXCLUDE)
+    OS << 'e';
   if (Flags & ELF::SHF_EXECINSTR)
     OS << 'x';
   if (Flags & ELF::SHF_GROUP)

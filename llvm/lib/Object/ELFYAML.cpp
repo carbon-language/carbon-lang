@@ -266,6 +266,7 @@ void ScalarBitSetTraits<ELFYAML::ELF_SHF>::bitset(IO &IO,
 #define BCase(X) IO.bitSetCase(Value, #X, ELF::X);
   BCase(SHF_WRITE)
   BCase(SHF_ALLOC)
+  BCase(SHF_EXCLUDE)
   BCase(SHF_EXECINSTR)
   BCase(SHF_MERGE)
   BCase(SHF_STRINGS)
