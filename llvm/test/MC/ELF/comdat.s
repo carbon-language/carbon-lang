@@ -82,7 +82,7 @@
 g1:
         nop
 
-        .section	.bar,"axG",@progbits,g1,comdat
+        .section	.bar,"ax?",@progbits
         nop
 
         .section	.zed,"axG",@progbits,g2,comdat
