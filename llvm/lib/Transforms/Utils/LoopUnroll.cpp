@@ -239,8 +239,6 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount,
     DEBUG(dbgs() << "!\n");
   }
 
-  std::vector<BasicBlock*> LoopBlocks = L->getBlocks();
-
   bool ContinueOnTrue = L->contains(BI->getSuccessor(0));
   BasicBlock *LoopExit = BI->getSuccessor(ContinueOnTrue);
 

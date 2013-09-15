@@ -871,7 +871,7 @@ bool HexagonHardwareLoops::isInvalidLoopOperation(
 /// \brief - Return true if the loop contains an instruction that inhibits
 /// the use of the hardware loop function.
 bool HexagonHardwareLoops::containsInvalidInstruction(MachineLoop *L) const {
-  const std::vector<MachineBasicBlock*> Blocks = L->getBlocks();
+  const std::vector<MachineBasicBlock *> &Blocks = L->getBlocks();
   for (unsigned i = 0, e = Blocks.size(); i != e; ++i) {
     MachineBasicBlock *MBB = Blocks[i];
     for (MachineBasicBlock::iterator

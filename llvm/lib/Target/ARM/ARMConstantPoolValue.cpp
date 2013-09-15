@@ -164,7 +164,7 @@ const BlockAddress *ARMConstantPoolConstant::getBlockAddress() const {
 int ARMConstantPoolConstant::getExistingMachineCPValue(MachineConstantPool *CP,
                                                        unsigned Alignment) {
   unsigned AlignMask = Alignment - 1;
-  const std::vector<MachineConstantPoolEntry> Constants = CP->getConstants();
+  const std::vector<MachineConstantPoolEntry> &Constants = CP->getConstants();
   for (unsigned i = 0, e = Constants.size(); i != e; ++i) {
     if (Constants[i].isMachineConstantPoolEntry() &&
         (Constants[i].getAlignment() & AlignMask) == 0) {
@@ -217,7 +217,7 @@ ARMConstantPoolSymbol::Create(LLVMContext &C, const char *s,
 int ARMConstantPoolSymbol::getExistingMachineCPValue(MachineConstantPool *CP,
                                                      unsigned Alignment) {
   unsigned AlignMask = Alignment - 1;
-  const std::vector<MachineConstantPoolEntry> Constants = CP->getConstants();
+  const std::vector<MachineConstantPoolEntry> &Constants = CP->getConstants();
   for (unsigned i = 0, e = Constants.size(); i != e; ++i) {
     if (Constants[i].isMachineConstantPoolEntry() &&
         (Constants[i].getAlignment() & AlignMask) == 0) {
@@ -272,7 +272,7 @@ ARMConstantPoolMBB *ARMConstantPoolMBB::Create(LLVMContext &C,
 int ARMConstantPoolMBB::getExistingMachineCPValue(MachineConstantPool *CP,
                                                   unsigned Alignment) {
   unsigned AlignMask = Alignment - 1;
-  const std::vector<MachineConstantPoolEntry> Constants = CP->getConstants();
+  const std::vector<MachineConstantPoolEntry> &Constants = CP->getConstants();
   for (unsigned i = 0, e = Constants.size(); i != e; ++i) {
     if (Constants[i].isMachineConstantPoolEntry() &&
         (Constants[i].getAlignment() & AlignMask) == 0) {
