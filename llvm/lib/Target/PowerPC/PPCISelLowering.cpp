@@ -7177,6 +7177,7 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
     unsigned ABIAlignment = getDataLayout()->getABITypeAlignment(Ty);
     if (ISD::isNON_EXTLoad(N) && VT.isVector() &&
         TM.getSubtarget<PPCSubtarget>().hasAltivec() &&
+        DCI.getDAGCombineLevel() == AfterLegalizeTypes &&
         LD->getAlignment() < ABIAlignment) {
       // This is a type-legal unaligned Altivec load.
       SDValue Chain = LD->getChain();
