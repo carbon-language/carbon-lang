@@ -122,7 +122,7 @@ PECOFFLinkingContext::stringFromRelocKind(Reference::Kind kind) const {
 
 void PECOFFLinkingContext::addPasses(PassManager &pm) const {
   pm.add(std::unique_ptr<Pass>(new pecoff::GroupedSectionsPass()));
-  pm.add(std::unique_ptr<Pass>(new pecoff::IdataPass()));
+  pm.add(std::unique_ptr<Pass>(new pecoff::IdataPass(*this)));
   pm.add(std::unique_ptr<Pass>(new LayoutPass()));
 }
 } // end namespace lld

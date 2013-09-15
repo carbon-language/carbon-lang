@@ -23,8 +23,9 @@
 
 #include "lld/Core/File.h"
 #include "lld/Core/Pass.h"
-#include "llvm/Support/Debug.h"
+#include "lld/ReaderWriter/Simple.h"
 #include "llvm/Support/COFF.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/Endian.h"
 
 #include <algorithm>
@@ -58,9 +59,10 @@ void addDir32NBReloc(COFFBaseDefinedAtom *atom, const Atom *target,
 
 // A state object of this pass.
 struct Context {
-  explicit Context(MutableFile &f) : file(f) {}
+  explicit Context(MutableFile &f, File &g) : file(f), dummyFile(g) {}
 
   MutableFile &file;
+  File &dummyFile;
 
   // The object to accumulate idata atoms. Idata atoms need to be grouped by
   // type and be continuous in the output file. To force such layout, we
@@ -82,9 +84,9 @@ public:
   virtual ContentPermissions permissions() const { return permR__; }
 
 protected:
-  IdataAtom(MutableFile &file, vector<uint8_t> data)
-      : COFFLinkerInternalAtom(file, data) {
-    file.addAtom(*this);
+  IdataAtom(Context &context, vector<uint8_t> data)
+      : COFFLinkerInternalAtom(context.dummyFile, data) {
+    context.file.addAtom(*this);
   }
 };
 
@@ -93,7 +95,7 @@ protected:
 class DLLNameAtom : public IdataAtom {
 public:
   DLLNameAtom(Context &context, StringRef name)
-      : IdataAtom(context.file, stringRefToVector(name)) {
+      : IdataAtom(context, stringRefToVector(name)) {
     context.dllNameAtoms.push_back(this);
   }
 
@@ -117,7 +119,7 @@ private:
 class HintNameAtom : public IdataAtom {
 public:
   HintNameAtom(Context &context, uint16_t hint, StringRef importName)
-      : IdataAtom(context.file, assembleRawContent(hint, importName)),
+      : IdataAtom(context, assembleRawContent(hint, importName)),
         _importName(importName) {
     context.hintNameAtoms.push_back(this);
   }
@@ -144,7 +146,7 @@ private:
 class ImportTableEntryAtom : public IdataAtom {
 public:
   explicit ImportTableEntryAtom(Context &context, uint32_t contents)
-      : IdataAtom(context.file, assembleRawContent(contents)) {}
+      : IdataAtom(context, assembleRawContent(contents)) {}
 
 private:
   vector<uint8_t> assembleRawContent(uint32_t contents) {
@@ -162,7 +164,7 @@ class ImportDirectoryAtom : public IdataAtom {
 public:
   ImportDirectoryAtom(Context &context, StringRef loadName,
                       const vector<COFFSharedLibraryAtom *> &sharedAtoms)
-      : IdataAtom(context.file, vector<uint8_t>(20, 0)) {
+      : IdataAtom(context, vector<uint8_t>(20, 0)) {
     addRelocations(context, loadName, sharedAtoms);
     context.importDirectories.push_back(this);
   }
@@ -229,20 +231,30 @@ private:
 class NullImportDirectoryAtom : public IdataAtom {
 public:
   explicit NullImportDirectoryAtom(Context &context)
-      : IdataAtom(context.file, vector<uint8_t>(20, 0)) {
+      : IdataAtom(context, vector<uint8_t>(20, 0)) {
     context.importDirectories.push_back(this);
   }
 };
 
 } // anonymous namespace
 
+// An instance of this class represents "input file" for atoms created in this
+// pass. Only one instance of this class is created as a field of IdataPass.
+class IdataPassFile : public SimpleFile {
+public:
+  IdataPassFile(const LinkingContext &ctx)
+      : SimpleFile(ctx, "<idata-pass-file>") {}
+};
+
 class IdataPass : public lld::Pass {
 public:
+  IdataPass(const LinkingContext &ctx) : _dummyFile(ctx) {}
+
   virtual void perform(MutableFile &file) {
     if (file.sharedLibrary().size() == 0)
       return;
 
-    Context context(file);
+    Context context(file, _dummyFile);
     map<StringRef, vector<COFFSharedLibraryAtom *> > sharedAtoms =
         groupByLoadName(file);
     for (auto i : sharedAtoms) {
@@ -291,14 +303,14 @@ private:
   /// will be set by the writer.
   void createDataDirectoryAtoms(Context &context) {
     auto *dir = new (_alloc) coff::COFFDataDirectoryAtom(
-        context.file, llvm::COFF::DataDirectoryIndex::IMPORT_TABLE,
+        context.dummyFile, llvm::COFF::DataDirectoryIndex::IMPORT_TABLE,
         context.importDirectories.size() *
             context.importDirectories[0]->size());
     addDir32NBReloc(dir, context.importDirectories[0]);
     context.file.addAtom(*dir);
 
     auto *iat = new (_alloc) coff::COFFDataDirectoryAtom(
-        context.file, llvm::COFF::DataDirectoryIndex::IAT,
+        context.dummyFile, llvm::COFF::DataDirectoryIndex::IAT,
         context.importAddressTables.size() *
             context.importAddressTables[0]->size());
     addDir32NBReloc(iat, context.importAddressTables[0]);
@@ -319,6 +331,11 @@ private:
       }
     }
   }
+
+  // A dummy file with which all the atoms created in the pass will be
+  // associated. Atoms need to be associated to an input file even if it's not
+  // read from a file, so we use this object.
+  IdataPassFile _dummyFile;
 
   llvm::BumpPtrAllocator _alloc;
 };
