@@ -131,7 +131,7 @@ def _SLASH_Ob2 : CLIgnoredFlag<"Ob2">;
 def _SLASH_RTC : CLIgnoredJoined<"RTC">;
 def _SLASH_Zc_forScope : CLIgnoredFlag<"Zc:forScope">;
 def _SLASH_Zc_wchar_t : CLIgnoredFlag<"Zc:wchar_t">;
-def _SLASH_wd : CLIgnoredJoined<"wd">;
+def _SLASH_w : CLIgnoredJoined<"w">;
 
 
 // Unsupported:
@@ -150,7 +150,6 @@ def _SLASH_Gy_ : CLFlag<"Gy-">;
 def _SLASH_GZ : CLFlag<"GZ">;
 def _SLASH_MP : CLJoined<"MP">;
 def _SLASH_o : CLJoinedOrSeparate<"o">;
-def _SLASH_w : CLJoined<"w">;
 def _SLASH_Za : CLFlag<"Za">;
 def _SLASH_Zc : CLJoined<"Zc:">;
 def _SLASH_ZI : CLFlag<"ZI">;
