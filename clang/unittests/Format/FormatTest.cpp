@@ -5468,6 +5468,66 @@ TEST_F(FormatTest, BreakStringLiterals) {
       format("#define A \"some text other\";", AlignLeft));
 }
 
+TEST_F(FormatTest, BreaksWideStringLiterals) {
+  EXPECT_EQ(
+      "u8\"utf8 string \"\n"
+      "u8\"literal\";",
+      format("u8\"utf8 string literal\";", getGoogleStyleWithColumns(16)));
+  EXPECT_EQ(
+      "u\"utf16 string \"\n"
+      "u\"literal\";",
+      format("u\"utf16 string literal\";", getGoogleStyleWithColumns(16)));
+  EXPECT_EQ(
+      "U\"utf32 string \"\n"
+      "U\"literal\";",
+      format("U\"utf32 string literal\";", getGoogleStyleWithColumns(16)));
+  EXPECT_EQ("L\"wide string \"\n"
+            "L\"literal\";",
+            format("L\"wide string literal\";", getGoogleStyleWithColumns(16)));
+}
+
+TEST_F(FormatTest, BreaksRawStringLiterals) {
+  EXPECT_EQ("R\"x(raw )x\"\n"
+            "R\"x(literal)x\";",
+            format("R\"x(raw literal)x\";", getGoogleStyleWithColumns(15)));
+  EXPECT_EQ("uR\"x(raw )x\"\n"
+            "uR\"x(literal)x\";",
+            format("uR\"x(raw literal)x\";", getGoogleStyleWithColumns(16)));
+  EXPECT_EQ("u8R\"x(raw )x\"\n"
+            "u8R\"x(literal)x\";",
+            format("u8R\"x(raw literal)x\";", getGoogleStyleWithColumns(17)));
+  EXPECT_EQ("LR\"x(raw )x\"\n"
+            "LR\"x(literal)x\";",
+            format("LR\"x(raw literal)x\";", getGoogleStyleWithColumns(16)));
+  EXPECT_EQ("UR\"x(raw )x\"\n"
+            "UR\"x(literal)x\";",
+            format("UR\"x(raw literal)x\";", getGoogleStyleWithColumns(16)));
+}
+
+TEST_F(FormatTest, BreaksStringLiteralsWithin_TMacro) {
+  FormatStyle Style = getLLVMStyleWithColumns(20);
+  EXPECT_EQ(
+      "_T(\"aaaaaaaaaaaaaa\")\n"
+      "_T(\"aaaaaaaaaaaaaa\")\n"
+      "_T(\"aaaaaaaaaaaa\")",
+      format("  _T(\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\")", Style));
+  EXPECT_EQ("f(x, _T(\"aaaaaaaaa\")\n"
+            "     _T(\"aaaaaa\"),\n"
+            "  z);",
+            format("f(x, _T(\"aaaaaaaaaaaaaaa\"), z);", Style));
+
+  // FIXME: Handle embedded spaces in one iteration.
+  //  EXPECT_EQ("_T(\"aaaaaaaaaaaaa\")\n"
+  //            "_T(\"aaaaaaaaaaaaa\")\n"
+  //            "_T(\"aaaaaaaaaaaaa\")\n"
+  //            "_T(\"a\")",
+  //            format("  _T ( \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\" )",
+  //                   getLLVMStyleWithColumns(20)));
+  EXPECT_EQ(
+      "_T ( \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\" )",
+      format("  _T ( \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\" )", Style));
+}
+
 TEST_F(FormatTest, DontSplitStringLiteralsWithEscapedNewlines) {
   EXPECT_EQ(
       "aaaaaaaaaaa = \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\\n"
@@ -5519,17 +5579,6 @@ TEST_F(FormatTest, CountsCharactersInMultilineRawStringLiterals) {
 }
 
 TEST_F(FormatTest, SkipsUnknownStringLiterals) {
-  EXPECT_EQ(
-      "u8\"unsupported literal\";",
-      format("u8\"unsupported literal\";", getGoogleStyleWithColumns(15)));
-  EXPECT_EQ("u\"unsupported literal\";",
-            format("u\"unsupported literal\";", getGoogleStyleWithColumns(15)));
-  EXPECT_EQ("U\"unsupported literal\";",
-            format("U\"unsupported literal\";", getGoogleStyleWithColumns(15)));
-  EXPECT_EQ("L\"unsupported literal\";",
-            format("L\"unsupported literal\";", getGoogleStyleWithColumns(15)));
-  EXPECT_EQ("R\"x(raw literal)x\";",
-            format("R\"x(raw literal)x\";", getGoogleStyleWithColumns(15)));
   verifyFormat("string a = \"unterminated;");
   EXPECT_EQ("function(\"unterminated,\n"
             "         OtherParameter);",
@@ -5626,7 +5675,10 @@ TEST_F(FormatTest, DoNotBreakStringLiteralsInEscapeSequence) {
             "\"00000000\"\n"
             "\"1\"",
             format("\"test\\000000000001\"", getLLVMStyleWithColumns(10)));
-  EXPECT_EQ("R\"(\\x\\x00)\"\n",
+  // FIXME: We probably don't need to care about escape sequences in raw
+  // literals.
+  EXPECT_EQ("R\"(\\x)\"\n"
+            "R\"(\\x00)\"\n",
             format("R\"(\\x\\x00)\"\n", getGoogleStyleWithColumns(7)));
 }
 

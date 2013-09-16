@@ -49,11 +49,9 @@ void WhitespaceManager::replaceWhitespace(const FormatToken &Tok,
 
 void WhitespaceManager::addUntouchableToken(const FormatToken &Tok,
                                             bool InPPDirective) {
-  Changes.push_back(
-      Change(false, Tok.WhitespaceRange, /*Spaces=*/0,
-             SourceMgr.getSpellingColumnNumber(Tok.Tok.getLocation()) - 1,
-             Tok.NewlinesBefore, "", "", Tok.Tok.getKind(),
-             InPPDirective && !Tok.IsFirst));
+  Changes.push_back(Change(false, Tok.WhitespaceRange, /*Spaces=*/0,
+                           Tok.OriginalColumn, Tok.NewlinesBefore, "", "",
+                           Tok.Tok.getKind(), InPPDirective && !Tok.IsFirst));
 }
 
 void WhitespaceManager::replaceWhitespaceInToken(

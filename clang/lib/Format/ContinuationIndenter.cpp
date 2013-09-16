@@ -633,6 +633,25 @@ unsigned ContinuationIndenter::addMultilineToken(const FormatToken &Current,
   return 0;
 }
 
+static bool getRawStringLiteralPrefixPostfix(StringRef Text,
+                                             StringRef &Prefix,
+                                             StringRef &Postfix) {
+  if (Text.startswith(Prefix = "R\"") || Text.startswith(Prefix = "uR\"") ||
+      Text.startswith(Prefix = "UR\"") || Text.startswith(Prefix = "u8R\"") ||
+      Text.startswith(Prefix = "LR\"")) {
+    size_t ParenPos = Text.find('(');
+    if (ParenPos != StringRef::npos) {
+      StringRef Delimiter =
+          Text.substr(Prefix.size(), ParenPos - Prefix.size());
+      Prefix = Text.substr(0, ParenPos + 1);
+      Postfix = Text.substr(Text.size() - 2 - Delimiter.size());
+      return Postfix.front() == ')' && Postfix.back() == '"' &&
+             Postfix.substr(1).startswith(Delimiter);
+    }
+  }
+  return false;
+}
+
 unsigned ContinuationIndenter::breakProtrudingToken(const FormatToken &Current,
                                                     LineState &State,
                                                     bool DryRun) {
@@ -641,24 +660,42 @@ unsigned ContinuationIndenter::breakProtrudingToken(const FormatToken &Current,
   if (Current.Type != TT_BlockComment && Current.IsMultiline)
     return addMultilineToken(Current, State);
 
-  if (!Current.isOneOf(tok::string_literal, tok::comment))
+  if (!Current.isOneOf(tok::string_literal, tok::wide_string_literal,
+                       tok::utf8_string_literal, tok::utf16_string_literal,
+                       tok::utf32_string_literal, tok::comment))
     return 0;
 
   llvm::OwningPtr<BreakableToken> Token;
   unsigned StartColumn = State.Column - Current.ColumnWidth;
 
-  if (Current.is(tok::string_literal) &&
+  if (Current.isOneOf(tok::string_literal, tok::wide_string_literal,
+                      tok::utf8_string_literal, tok::utf16_string_literal,
+                      tok::utf32_string_literal) &&
       Current.Type != TT_ImplicitStringLiteral) {
-    // Only break up default narrow strings.
-    if (!Current.TokenText.startswith("\""))
-      return 0;
     // Exempts unterminated string literals from line breaking. The user will
     // likely want to terminate the string before any line breaking is done.
     if (Current.IsUnterminatedLiteral)
       return 0;
 
-    Token.reset(new BreakableStringLiteral(
-        Current, StartColumn, State.Line->InPPDirective, Encoding, Style));
+    StringRef Text = Current.TokenText;
+    StringRef Prefix;
+    StringRef Postfix;
+    // FIXME: Handle whitespace between '_T', '(', '"..."', and ')'.
+    // FIXME: Store Prefix and Suffix (or PrefixLength and SuffixLength to
+    // reduce the overhead) for each FormatToken, which is a string, so that we
+    // don't run multiple checks here on the hot path.
+    if ((Text.endswith(Postfix = "\"") &&
+         (Text.startswith(Prefix = "\"") || Text.startswith(Prefix = "u\"") ||
+          Text.startswith(Prefix = "U\"") || Text.startswith(Prefix = "u8\"") ||
+          Text.startswith(Prefix = "L\""))) ||
+        (Text.startswith(Prefix = "_T(\"") && Text.endswith(Postfix = "\")")) ||
+        getRawStringLiteralPrefixPostfix(Text, Prefix, Postfix)) {
+      Token.reset(new BreakableStringLiteral(Current, StartColumn, Prefix,
+                                             Postfix, State.Line->InPPDirective,
+                                             Encoding, Style));
+    } else {
+      return 0;
+    }
   } else if (Current.Type == TT_BlockComment && Current.isTrailingComment()) {
     Token.reset(new BreakableBlockComment(
         Current, StartColumn, Current.OriginalColumn, !Current.Previous,

@@ -82,20 +82,18 @@ static BreakableToken::Split getCommentSplit(StringRef Text,
 }
 
 static BreakableToken::Split getStringSplit(StringRef Text,
-                                            unsigned ContentStartColumn,
+                                            unsigned UsedColumns,
                                             unsigned ColumnLimit,
                                             unsigned TabWidth,
                                             encoding::Encoding Encoding) {
   // FIXME: Reduce unit test case.
   if (Text.empty())
     return BreakableToken::Split(StringRef::npos, 0);
-  if (ColumnLimit <= ContentStartColumn)
+  if (ColumnLimit <= UsedColumns)
     return BreakableToken::Split(StringRef::npos, 0);
-  unsigned MaxSplit =
-      std::min<unsigned>(ColumnLimit - ContentStartColumn,
-                         encoding::columnWidthWithTabs(Text, ContentStartColumn,
-                                                       TabWidth, Encoding) -
-                             1);
+  unsigned MaxSplit = std::min<unsigned>(
+      ColumnLimit - UsedColumns,
+      encoding::columnWidthWithTabs(Text, UsedColumns, TabWidth, Encoding) - 1);
   StringRef::size_type SpaceOffset = 0;
   StringRef::size_type SlashOffset = 0;
   StringRef::size_type WordStartOffset = 0;
@@ -107,9 +105,8 @@ static BreakableToken::Split getStringSplit(StringRef Text,
       Chars += Advance;
     } else {
       Advance = encoding::getCodePointNumBytes(Text[0], Encoding);
-      Chars += encoding::columnWidthWithTabs(Text.substr(0, Advance),
-                                             ContentStartColumn + Chars,
-                                             TabWidth, Encoding);
+      Chars += encoding::columnWidthWithTabs(
+          Text.substr(0, Advance), UsedColumns + Chars, TabWidth, Encoding);
     }
 
     if (Chars > MaxSplit)
@@ -158,19 +155,19 @@ BreakableSingleLineToken::BreakableSingleLineToken(
       Prefix.size(), Tok.TokenText.size() - Prefix.size() - Postfix.size());
 }
 
-BreakableStringLiteral::BreakableStringLiteral(const FormatToken &Tok,
-                                               unsigned StartColumn,
-                                               bool InPPDirective,
-                                               encoding::Encoding Encoding,
-                                               const FormatStyle &Style)
-    : BreakableSingleLineToken(Tok, StartColumn, "\"", "\"", InPPDirective,
+BreakableStringLiteral::BreakableStringLiteral(
+    const FormatToken &Tok, unsigned StartColumn, StringRef Prefix,
+    StringRef Postfix, bool InPPDirective, encoding::Encoding Encoding,
+    const FormatStyle &Style)
+    : BreakableSingleLineToken(Tok, StartColumn, Prefix, Postfix, InPPDirective,
                                Encoding, Style) {}
 
 BreakableToken::Split
 BreakableStringLiteral::getSplit(unsigned LineIndex, unsigned TailOffset,
                                  unsigned ColumnLimit) const {
-  return getStringSplit(Line.substr(TailOffset), StartColumn + 2, ColumnLimit,
-                        Style.TabWidth, Encoding);
+  return getStringSplit(Line.substr(TailOffset),
+                        StartColumn + Prefix.size() + Postfix.size(),
+                        ColumnLimit, Style.TabWidth, Encoding);
 }
 
 void BreakableStringLiteral::insertBreak(unsigned LineIndex,

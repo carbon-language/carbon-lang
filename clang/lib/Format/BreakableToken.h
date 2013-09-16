@@ -110,6 +110,7 @@ public:
   /// \p StartColumn specifies the column in which the token will start
   /// after formatting.
   BreakableStringLiteral(const FormatToken &Tok, unsigned StartColumn,
+                         StringRef Prefix, StringRef Postfix,
                          bool InPPDirective, encoding::Encoding Encoding,
                          const FormatStyle &Style);
 

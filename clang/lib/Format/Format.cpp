@@ -591,6 +591,7 @@ public:
     assert(Tokens.empty());
     do {
       Tokens.push_back(getNextToken());
+      maybeJoinPreviousTokens();
     } while (Tokens.back()->Tok.isNot(tok::eof));
     return Tokens;
   }
@@ -598,6 +599,40 @@ public:
   IdentifierTable &getIdentTable() { return IdentTable; }
 
 private:
+  void maybeJoinPreviousTokens() {
+    if (Tokens.size() < 4)
+      return;
+    FormatToken *Last = Tokens.back();
+    if (!Last->is(tok::r_paren))
+      return;
+
+    FormatToken *String = Tokens[Tokens.size() - 2];
+    if (!String->is(tok::string_literal) || String->IsMultiline)
+      return;
+
+    if (!Tokens[Tokens.size() - 3]->is(tok::l_paren))
+      return;
+
+    FormatToken *Macro = Tokens[Tokens.size() - 4];
+    if (Macro->TokenText != "_T")
+      return;
+
+    const char *Start = Macro->TokenText.data();
+    const char *End = Last->TokenText.data() + Last->TokenText.size();
+    String->TokenText = StringRef(Start, End - Start);
+    String->IsFirst = Macro->IsFirst;
+    String->LastNewlineOffset = Macro->LastNewlineOffset;
+    String->WhitespaceRange = Macro->WhitespaceRange;
+    String->OriginalColumn = Macro->OriginalColumn;
+    String->ColumnWidth = encoding::columnWidthWithTabs(
+        String->TokenText, String->OriginalColumn, Style.TabWidth, Encoding);
+
+    Tokens.pop_back();
+    Tokens.pop_back();
+    Tokens.pop_back();
+    Tokens.back() = String;
+  }
+
   FormatToken *getNextToken() {
     if (GreaterStashed) {
       // Create a synthesized second '>' token.
@@ -1135,7 +1170,8 @@ private:
     CharSourceRange LineRange = CharSourceRange::getCharRange(
         First->WhitespaceRange.getBegin().getLocWithOffset(
             First->LastNewlineOffset),
-        Last->Tok.getLocation().getLocWithOffset(Last->TokenText.size() - 1));
+        Last->getStartOfNonWhitespace().getLocWithOffset(
+            Last->TokenText.size() - 1));
     return touchesRanges(LineRange);
   }
 
