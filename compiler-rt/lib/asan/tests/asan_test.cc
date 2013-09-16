@@ -111,6 +111,35 @@ TEST(AddressSanitizer, CallocTest) {
   free(a);
 }
 
+TEST(AddressSanitizer, CallocOverflow32) {
+#if SANITIZER_WORDSIZE == 32
+  size_t kArraySize = 112;
+  volatile size_t kArraySize2 = 43878406;
+  void *p = 0;
+  EXPECT_DEATH(p = calloc(kArraySize, kArraySize2),
+               "allocator is terminating the process instead of returning 0");
+  assert(!p);
+#endif
+}
+
+TEST(AddressSanitizer, CallocReturnsZeroMem) {
+  size_t sizes[] = {16, 1000, 10000, 100000, 2100000};
+  for (size_t s = 0; s < sizeof(sizes)/sizeof(sizes[0]); s++) {
+    size_t size = sizes[s];
+    for (size_t iter = 0; iter < 5; iter++) {
+      char *x = Ident((char*)calloc(1, size));
+      EXPECT_EQ(x[0], 0);
+      EXPECT_EQ(x[size - 1], 0);
+      EXPECT_EQ(x[size / 2], 0);
+      EXPECT_EQ(x[size / 3], 0);
+      EXPECT_EQ(x[size / 4], 0);
+      memset(x, 0x42, size);
+      free(Ident(x));
+      free(Ident(malloc(Ident(1 << 27))));  // Try to drain the quarantine.
+    }
+  }
+}
+
 TEST(AddressSanitizer, VallocTest) {
   void *a = valloc(100);
   EXPECT_EQ(0U, (uintptr_t)a % kPageSize);
