@@ -707,7 +707,8 @@ private:
   // When loaded into memory, reloc section should be readable and writable.
   static const uint32_t characteristics =
       llvm::COFF::IMAGE_SCN_MEM_READ |
-      llvm::COFF::IMAGE_SCN_CNT_INITIALIZED_DATA;
+      llvm::COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
+      llvm::COFF::IMAGE_SCN_MEM_DISCARDABLE;
 
   // Returns a list of RVAs that needs to be relocated if the binary is loaded
   // at an address different from its preferred one.
