@@ -2085,7 +2085,10 @@ namespace {
       isReferenceType = this->VD->getType()->isReferenceType();
     }
 
-    void HandleMemberExpr(MemberExpr *ME) {
+    void HandleMemberExpr(MemberExpr *ME, bool CheckReferenceOnly) {
+      if (CheckReferenceOnly && !isReferenceType)
+        return;
+
       if (isa<EnumConstantDecl>(ME->getMemberDecl()))
         return;
 
@@ -2107,8 +2110,11 @@ namespace {
         Base = ME->getBase();
       }
 
-      if (VD == FieldME->getMemberDecl() && isa<CXXThisExpr>(Base)) {
-        unsigned diag = VD->getType()->isReferenceType()
+      if (!isa<CXXThisExpr>(Base))
+        return;
+
+      if (VD == FieldME->getMemberDecl()) {
+        unsigned diag = isReferenceType
             ? diag::warn_reference_field_is_uninit
             : diag::warn_field_is_uninit;
         S.Diag(FieldME->getExprLoc(), diag) << VD;
@@ -2119,7 +2125,7 @@ namespace {
       E = E->IgnoreParens();
 
       if (MemberExpr *ME = dyn_cast<MemberExpr>(E)) {
-        HandleMemberExpr(ME);
+        HandleMemberExpr(ME, false /*CheckReferenceOnly*/);
         return;
       }
 
@@ -2152,8 +2158,7 @@ namespace {
     }
 
     void VisitMemberExpr(MemberExpr *ME) {
-      if (isReferenceType)
-        HandleMemberExpr(ME);
+      HandleMemberExpr(ME, true /*CheckReferenceOnly*/);
 
       Inherited::VisitMemberExpr(ME);
     }
@@ -2170,7 +2175,7 @@ namespace {
         if (ImplicitCastExpr* ICE = dyn_cast<ImplicitCastExpr>(E->getArg(0)))
           if (ICE->getCastKind() == CK_NoOp)
             if (MemberExpr *ME = dyn_cast<MemberExpr>(ICE->getSubExpr()))
-              HandleMemberExpr(ME);
+              HandleMemberExpr(ME, false /*CheckReferenceOnly*/);
       
       Inherited::VisitCXXConstructExpr(E);
     }
