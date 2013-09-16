@@ -46,7 +46,7 @@ void InitializeInterceptors();
 
 void *MsanReallocate(StackTrace *stack, void *oldp, uptr size,
                      uptr alignment, bool zeroise);
-void MsanDeallocate(void *ptr);
+void MsanDeallocate(StackTrace *stack, void *ptr);
 void InstallTrapHandler();
 void InstallAtExitHandler();
 void ReplaceOperatorsNewAndDelete();

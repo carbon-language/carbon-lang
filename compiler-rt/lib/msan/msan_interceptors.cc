@@ -165,9 +165,9 @@ INTERCEPTOR(void *, pvalloc, SIZE_T size) {
 }
 
 INTERCEPTOR(void, free, void *ptr) {
-  ENSURE_MSAN_INITED();
+  GET_MALLOC_STACK_TRACE;
   if (ptr == 0) return;
-  MsanDeallocate(ptr);
+  MsanDeallocate(&stack, ptr);
 }
 
 INTERCEPTOR(SIZE_T, strlen, const char *s) {

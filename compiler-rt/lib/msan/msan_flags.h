@@ -23,6 +23,7 @@ struct Flags {
   bool poison_heap_with_zeroes;  // default: false
   bool poison_stack_with_zeroes;  // default: false
   bool poison_in_malloc;  // default: true
+  bool poison_in_free;  // default: true
   bool report_umrs;
   bool wrap_signals;
   bool halt_on_error;

@@ -43,7 +43,8 @@ void *operator new(size_t size, std::nothrow_t const&) { OPERATOR_NEW_BODY; }
 void *operator new[](size_t size, std::nothrow_t const&) { OPERATOR_NEW_BODY; }
 
 #define OPERATOR_DELETE_BODY \
-  if (ptr) MsanDeallocate(ptr)
+  GET_MALLOC_STACK_TRACE; \
+  if (ptr) MsanDeallocate(&stack, ptr)
 
 void operator delete(void *ptr) { OPERATOR_DELETE_BODY; }
 void operator delete[](void *ptr) { OPERATOR_DELETE_BODY; }

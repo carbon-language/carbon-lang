@@ -51,21 +51,23 @@ static void *MsanAllocate(StackTrace *stack, uptr size,
   void *res = allocator.Allocate(&cache, size, alignment, false);
   Metadata *meta = reinterpret_cast<Metadata*>(allocator.GetMetaData(res));
   meta->requested_size = size;
-  if (zeroise)
+  if (zeroise) {
     __msan_clear_and_unpoison(res, size);
-  else if (flags()->poison_in_malloc)
+  } else if (flags()->poison_in_malloc) {
     __msan_poison(res, size);
-  if (__msan_get_track_origins()) {
-    u32 stack_id = StackDepotPut(stack->trace, stack->size);
-    CHECK(stack_id);
-    CHECK_EQ((stack_id >> 31), 0);  // Higher bit is occupied by stack origins.
-    __msan_set_origin(res, size, stack_id);
+    if (__msan_get_track_origins()) {
+      u32 stack_id = StackDepotPut(stack->trace, stack->size);
+      CHECK(stack_id);
+      CHECK_EQ((stack_id >> 31),
+               0);  // Higher bit is occupied by stack origins.
+      __msan_set_origin(res, size, stack_id);
+    }
   }
   MSAN_MALLOC_HOOK(res, size);
   return res;
 }
 
-void MsanDeallocate(void *p) {
+void MsanDeallocate(StackTrace *stack, void *p) {
   CHECK(p);
   Init();
   MSAN_FREE_HOOK(p);
@@ -74,9 +76,16 @@ void MsanDeallocate(void *p) {
   meta->requested_size = 0;
   // This memory will not be reused by anyone else, so we are free to keep it
   // poisoned.
-  __msan_poison(p, size);
-  if (__msan_get_track_origins())
-    __msan_set_origin(p, size, -1);
+  if (flags()->poison_in_free) {
+    __msan_poison(p, size);
+    if (__msan_get_track_origins()) {
+      u32 stack_id = StackDepotPut(stack->trace, stack->size);
+      CHECK(stack_id);
+      CHECK_EQ((stack_id >> 31),
+               0);  // Higher bit is occupied by stack origins.
+      __msan_set_origin(p, size, stack_id);
+    }
+  }
   allocator.Deallocate(&cache, p);
 }
 
@@ -85,7 +94,7 @@ void *MsanReallocate(StackTrace *stack, void *old_p, uptr new_size,
   if (!old_p)
     return MsanAllocate(stack, new_size, alignment, zeroise);
   if (!new_size) {
-    MsanDeallocate(old_p);
+    MsanDeallocate(stack, old_p);
     return 0;
   }
   Metadata *meta = reinterpret_cast<Metadata*>(allocator.GetMetaData(old_p));
@@ -103,7 +112,7 @@ void *MsanReallocate(StackTrace *stack, void *old_p, uptr new_size,
   // Printf("realloc: old_size %zd new_size %zd\n", old_size, new_size);
   if (new_p)
     __msan_memcpy(new_p, old_p, memcpy_size);
-  MsanDeallocate(old_p);
+  MsanDeallocate(stack, old_p);
   return new_p;
 }
 
