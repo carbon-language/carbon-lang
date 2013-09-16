@@ -16,6 +16,9 @@ get_filename_component(LLVM_DIR "${CMAKE_SCRIPT_MODE_FILE}" PATH)
 get_filename_component(LLVM_DIR "${LLVM_DIR}" PATH)
 get_filename_component(LLVM_DIR "${LLVM_DIR}" PATH)
 
+# Handle strange terminals
+set(ENV{TERM} "dumb")
+
 function(append_info name path)
   execute_process(COMMAND "${LLVM_DIR}/utils/GetSourceVersion" "${path}"
     OUTPUT_VARIABLE revision)
