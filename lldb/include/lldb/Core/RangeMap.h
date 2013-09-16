@@ -592,7 +592,7 @@ namespace lldb_private {
         void
         Reserve (typename Collection::size_type size)
         {
-            m_entries.resize (size);
+            m_entries.reserve (size);
         }
 
         bool
