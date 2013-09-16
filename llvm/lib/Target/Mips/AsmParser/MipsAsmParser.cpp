@@ -125,6 +125,9 @@ class MipsAsmParser : public MCTargetAsmParser {
   MipsAsmParser::OperandMatchResultTy
   parseHI32DSP(SmallVectorImpl<MCParsedAsmOperand*> &Operands);
 
+  MipsAsmParser::OperandMatchResultTy
+  parseCOP2(SmallVectorImpl<MCParsedAsmOperand*> &Operands);
+
   bool searchSymbolAlias(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                          unsigned RegKind);
 
@@ -239,7 +242,8 @@ public:
     Kind_FCCRegs,
     Kind_ACC64DSP,
     Kind_LO32DSP,
-    Kind_HI32DSP
+    Kind_HI32DSP,
+    Kind_COP2
   };
 
 private:
@@ -455,6 +459,10 @@ public:
 
   bool isHI32DSPAsm() const {
     return Kind == k_Register && Reg.Kind == Kind_HI32DSP;
+  }
+
+  bool isCOP2Asm() const {
+    return Kind == k_Register && Reg.Kind == Kind_COP2;
   }
 
   /// getStartLoc - Get the location of the first token of this operand.
@@ -1579,6 +1587,32 @@ MipsAsmParser::parseHI32DSP(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
 
   MipsOperand *Op = MipsOperand::CreateReg(Reg, S, Parser.getTok().getLoc());
   Op->setRegKind(MipsOperand::Kind_HI32DSP);
+  Operands.push_back(Op);
+
+  Parser.Lex(); // Eat the register number.
+  return MatchOperand_Success;
+}
+
+MipsAsmParser::OperandMatchResultTy
+MipsAsmParser::parseCOP2(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+  // If the first token is not '$' we have an error.
+  if (Parser.getTok().isNot(AsmToken::Dollar))
+    return MatchOperand_NoMatch;
+
+  SMLoc S = Parser.getTok().getLoc();
+  Parser.Lex(); // Eat the '$'
+
+  const AsmToken &Tok = Parser.getTok(); // Get next token.
+
+  if (Tok.isNot(AsmToken::Integer))
+    return MatchOperand_NoMatch;
+
+  unsigned IntVal = Tok.getIntVal();
+
+  unsigned Reg = matchRegisterByNumber(IntVal, Mips::COP2RegClassID);
+
+  MipsOperand *Op = MipsOperand::CreateReg(Reg, S, Parser.getTok().getLoc());
+  Op->setRegKind(MipsOperand::Kind_COP2);
   Operands.push_back(Op);
 
   Parser.Lex(); // Eat the register number.

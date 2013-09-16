@@ -169,6 +169,10 @@
 # CHECK:  swxc1   $f26, $18($22)          # encoding: [0x08,0xd0,0xd2,0x4e]
 # CHECK:  mfhc1   $17, $f4                # encoding: [0x00,0x20,0x71,0x44]
 # CHECK:  mthc1   $17, $f6                # encoding: [0x00,0x30,0xf1,0x44]
+# CHECK:  swc2    $4, 16($sp)             # encoding: [0x10,0x00,0xa4,0xeb]
+# CHECK:  sdc2    $4, 16($sp)             # encoding: [0x10,0x00,0xa4,0xfb]
+# CHECK:  lwc2    $11, 12($ra)            # encoding: [0x0c,0x00,0xeb,0xcb]
+# CHECK:  ldc2    $11, 12($ra)            # encoding: [0x0c,0x00,0xeb,0xdb]
 
    cfc1    $a2,$0
    ctc1    $10,$31
@@ -200,3 +204,7 @@
    swxc1   $f26, $s2($s6)
    mfhc1   $17, $f4
    mthc1   $17, $f6
+   swc2    $4, 16($sp)
+   sdc2    $4, 16($sp)
+   lwc2    $11, 12($ra)
+   ldc2    $11, 12($ra)
