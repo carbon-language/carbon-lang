@@ -23,6 +23,7 @@
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Target/TargetOpcodes.h"
 using namespace llvm;
 
 STATISTIC(MCNumEmitted, "Number of MC instructions emitted");
@@ -76,11 +77,17 @@ public:
                                  SmallVectorImpl<MCFixup> &Fixups) const;
   void EncodeInstruction(const MCInst &MI, raw_ostream &OS,
                          SmallVectorImpl<MCFixup> &Fixups) const {
+    // For fast-isel, a float COPY_TO_REGCLASS can survive this long.
+    // It's just a nop to keep the register classes happy, so don't
+    // generate anything.
+    unsigned Opcode = MI.getOpcode();
+    if (Opcode == TargetOpcode::COPY_TO_REGCLASS)
+      return;
+
     uint64_t Bits = getBinaryCodeForInstr(MI, Fixups);
 
     // BL8_NOP etc. all have a size of 8 because of the following 'nop'.
     unsigned Size = 4; // FIXME: Have Desc.getSize() return the correct value!
-    unsigned Opcode = MI.getOpcode();
     if (Opcode == PPC::BL8_NOP || Opcode == PPC::BLA8_NOP ||
         Opcode == PPC::BL8_NOP_TLS)
       Size = 8;
