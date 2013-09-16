@@ -1697,3 +1697,7 @@ llvm::BasicBlock *CodeGenFunction::getEHResumeBlock(bool isCleanup) {
 
   return EHResumeBlock;
 }
+
+void CodeGenFunction::EmitSEHTryStmt(const SEHTryStmt &S) {
+  CGM.ErrorUnsupported(&S, "SEH __try");
+}
