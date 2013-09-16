@@ -110,6 +110,11 @@ CXType cxtype::MakeCXType(QualType T, CXTranslationUnit TU) {
       else if (Ctx.isObjCSelType(UnqualT))
         TK = CXType_ObjCSel;
     }
+
+    /* Handle decayed types as the original type */
+    if (const DecayedType *DT = T->getAs<DecayedType>()) {
+      return MakeCXType(DT->getOriginalType(), TU);
+    }
   }
   if (TK == CXType_Invalid)
     TK = GetTypeKind(T);

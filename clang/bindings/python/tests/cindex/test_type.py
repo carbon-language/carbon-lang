@@ -369,3 +369,13 @@ struct Test {
         assert teststruct.type.get_offset("bar") == bar
 
 
+def test_decay():
+    """Ensure decayed types are handled as the original type"""
+
+    tu = get_tu("void foo(int a[]);")
+    foo = get_cursor(tu, 'foo')
+    a = foo.type.argument_types()[0]
+
+    assert a.kind == TypeKind.INCOMPLETEARRAY
+    assert a.element_type.kind == TypeKind.INT
+    assert a.get_canonical().kind == TypeKind.INCOMPLETEARRAY
