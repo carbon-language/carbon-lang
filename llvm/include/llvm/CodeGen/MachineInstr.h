@@ -637,6 +637,13 @@ public:
   bool isEHLabel() const { return getOpcode() == TargetOpcode::EH_LABEL; }
   bool isGCLabel() const { return getOpcode() == TargetOpcode::GC_LABEL; }
   bool isDebugValue() const { return getOpcode() == TargetOpcode::DBG_VALUE; }
+  /// A DBG_VALUE is indirect iff the first operand is a register and
+  /// the second operand is an immediate.
+  bool isIndirectDebugValue() const {
+    return (getOpcode() == TargetOpcode::DBG_VALUE)
+      && getOperand(0).isReg()
+      && getOperand(1).isImm();
+  }
 
   bool isPHI() const { return getOpcode() == TargetOpcode::PHI; }
   bool isKill() const { return getOpcode() == TargetOpcode::KILL; }

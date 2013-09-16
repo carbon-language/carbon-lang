@@ -688,6 +688,7 @@ bool FastISel::SelectCall(const User *I) {
         .addFPImm(CF).addImm(DI->getOffset())
         .addMetadata(DI->getVariable());
     } else if (unsigned Reg = lookUpRegForValue(V)) {
+      // FIXME: This does not handle register-indirect values at offset 0.
       bool IsIndirect = DI->getOffset() != 0;
       BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II, IsIndirect,
               Reg, DI->getOffset(), DI->getVariable());

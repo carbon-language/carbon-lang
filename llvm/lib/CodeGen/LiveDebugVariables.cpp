@@ -457,9 +457,10 @@ bool LDVImpl::handleDebugValue(MachineInstr *MI, SlotIndex Idx) {
   }
 
   // Get or create the UserValue for (variable,offset).
-  bool IsIndirect = MI->getOperand(1).isImm();
+  bool IsIndirect = MI->isIndirectDebugValue();
   unsigned Offset = IsIndirect ? MI->getOperand(1).getImm() : 0;
   const MDNode *Var = MI->getOperand(2).getMetadata();
+  //here.
   UserValue *UV = getUserValue(Var, Offset, IsIndirect, MI->getDebugLoc());
   UV->addDef(Idx, MI->getOperand(0));
   return true;

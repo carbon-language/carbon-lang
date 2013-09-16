@@ -298,7 +298,7 @@ void RAFast::spillVirtReg(MachineBasicBlock::iterator MI,
     for (unsigned li = 0, le = LRIDbgValues.size(); li != le; ++li) {
       MachineInstr *DBG = LRIDbgValues[li];
       const MDNode *MDPtr = DBG->getOperand(2).getMetadata();
-      bool IsIndirect = DBG->getOperand(1).isImm(); // Register-indirect value?
+      bool IsIndirect = DBG->isIndirectDebugValue();
       uint64_t Offset = IsIndirect ? DBG->getOperand(1).getImm() : 0;
       DebugLoc DL;
       if (MI == MBB->end()) {
@@ -856,7 +856,7 @@ void RAFast::AllocateBasicBlock() {
             }
             else {
               // Modify DBG_VALUE now that the value is in a spill slot.
-              bool IsIndirect = MI->getOperand(1).isImm();
+              bool IsIndirect = MI->isIndirectDebugValue();
               uint64_t Offset = IsIndirect ? MI->getOperand(1).getImm() : 0;
               const MDNode *MDPtr =
                 MI->getOperand(MI->getNumOperands()-1).getMetadata();
