@@ -139,7 +139,7 @@ sub GetHTMLRunDir {
   my $min =   $CurrentTime[1];
   my $sec =   $CurrentTime[0];
 
-  my $TimeString = sprintf("%02d%02d%02d", $hour, $min, $sec)
+  my $TimeString = sprintf("%02d%02d%02d", $hour, $min, $sec);
   my $DateString = sprintf("%d-%02d-%02d-%s-$$",
                            $year, $month, $day, $TimeString);
   
