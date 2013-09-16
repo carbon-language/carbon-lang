@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -ffreestanding %s
+// RUN: %clang_cc1 -triple i686-pc-openbsd -fsyntax-only -verify -ffreestanding %s
 
 // Tests that -ffreestanding disables all special treatment of main().
 
