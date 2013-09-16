@@ -353,6 +353,13 @@ let mayLoad = 1, mayStore = 1, Defs = [CC], Uses = [R0W] in
 //===----------------------------------------------------------------------===//
 // Sign extensions
 //===----------------------------------------------------------------------===//
+//
+// Note that putting these before zero extensions mean that we will prefer
+// them for anyextload*.  There's not really much to choose between the two
+// either way, but signed-extending loads have a short LH and a long LHY,
+// while zero-extending loads have only the long LLH.
+//
+//===----------------------------------------------------------------------===//
 
 // 32-bit extensions from registers.
 let neverHasSideEffects = 1 in {
@@ -375,37 +382,18 @@ def : Pat<(sext_inreg GR64:$src, i32),
           (LGFR (EXTRACT_SUBREG GR64:$src, subreg_32bit))>;
 
 // 32-bit extensions from memory.
-def  LB   : UnaryRXY<"lb", 0xE376, sextloadi8, GR32, 1>;
-defm LH   : UnaryRXPair<"lh", 0x48, 0xE378, sextloadi16, GR32, 2>;
-def  LHRL : UnaryRILPC<"lhrl", 0xC45, aligned_sextloadi16, GR32>;
+def  LB   : UnaryRXY<"lb", 0xE376, asextloadi8, GR32, 1>;
+defm LH   : UnaryRXPair<"lh", 0x48, 0xE378, asextloadi16, GR32, 2>;
+def  LHRL : UnaryRILPC<"lhrl", 0xC45, aligned_asextloadi16, GR32>;
 
 // 64-bit extensions from memory.
-def LGB   : UnaryRXY<"lgb", 0xE377, sextloadi8,  GR64, 1>;
-def LGH   : UnaryRXY<"lgh", 0xE315, sextloadi16, GR64, 2>;
-def LGF   : UnaryRXY<"lgf", 0xE314, sextloadi32, GR64, 4>;
-def LGHRL : UnaryRILPC<"lghrl", 0xC44, aligned_sextloadi16, GR64>;
-def LGFRL : UnaryRILPC<"lgfrl", 0xC4C, aligned_sextloadi32, GR64>;
+def LGB   : UnaryRXY<"lgb", 0xE377, asextloadi8,  GR64, 1>;
+def LGH   : UnaryRXY<"lgh", 0xE315, asextloadi16, GR64, 2>;
+def LGF   : UnaryRXY<"lgf", 0xE314, asextloadi32, GR64, 4>;
+def LGHRL : UnaryRILPC<"lghrl", 0xC44, aligned_asextloadi16, GR64>;
+def LGFRL : UnaryRILPC<"lgfrl", 0xC4C, aligned_asextloadi32, GR64>;
 let Defs = [CC], CCValues = 0xE, CompareZeroCCMask = 0xE in
-  def LTGF : UnaryRXY<"ltgf", 0xE332, sextloadi32, GR64, 4>;
-
-// If the sign of a load-extend operation doesn't matter, use the signed ones.
-// There's not really much to choose between the sign and zero extensions,
-// but LH is more compact than LLH for small offsets.
-def : Pat<(i32 (extloadi8  bdxaddr20only:$src)), (LB  bdxaddr20only:$src)>;
-def : Pat<(i32 (extloadi16 bdxaddr12pair:$src)), (LH  bdxaddr12pair:$src)>;
-def : Pat<(i32 (extloadi16 bdxaddr20pair:$src)), (LHY bdxaddr20pair:$src)>;
-
-def : Pat<(i64 (extloadi8  bdxaddr20only:$src)), (LGB bdxaddr20only:$src)>;
-def : Pat<(i64 (extloadi16 bdxaddr20only:$src)), (LGH bdxaddr20only:$src)>;
-def : Pat<(i64 (extloadi32 bdxaddr20only:$src)), (LGF bdxaddr20only:$src)>;
-
-// We want PC-relative addresses to be tried ahead of BD and BDX addresses.
-// However, BDXs have two extra operands and are therefore 6 units more
-// complex.
-let AddedComplexity = 7 in {
-  def : Pat<(i32 (extloadi16 pcrel32:$src)), (LHRL  pcrel32:$src)>;
-  def : Pat<(i64 (extloadi16 pcrel32:$src)), (LGHRL pcrel32:$src)>;
-}
+  def LTGF : UnaryRXY<"ltgf", 0xE332, asextloadi32, GR64, 4>;
 
 //===----------------------------------------------------------------------===//
 // Zero extensions
@@ -430,16 +418,16 @@ def : Pat<(and GR64:$src, 0xffffffff),
           (LLGFR (EXTRACT_SUBREG GR64:$src, subreg_32bit))>;
 
 // 32-bit extensions from memory.
-def LLC   : UnaryRXY<"llc", 0xE394, zextloadi8,  GR32, 1>;
-def LLH   : UnaryRXY<"llh", 0xE395, zextloadi16, GR32, 2>;
-def LLHRL : UnaryRILPC<"llhrl", 0xC42, aligned_zextloadi16, GR32>;
+def LLC   : UnaryRXY<"llc", 0xE394, azextloadi8,  GR32, 1>;
+def LLH   : UnaryRXY<"llh", 0xE395, azextloadi16, GR32, 2>;
+def LLHRL : UnaryRILPC<"llhrl", 0xC42, aligned_azextloadi16, GR32>;
 
 // 64-bit extensions from memory.
-def LLGC   : UnaryRXY<"llgc", 0xE390, zextloadi8,  GR64, 1>;
-def LLGH   : UnaryRXY<"llgh", 0xE391, zextloadi16, GR64, 2>;
-def LLGF   : UnaryRXY<"llgf", 0xE316, zextloadi32, GR64, 4>;
-def LLGHRL : UnaryRILPC<"llghrl", 0xC46, aligned_zextloadi16, GR64>;
-def LLGFRL : UnaryRILPC<"llgfrl", 0xC4E, aligned_zextloadi32, GR64>;
+def LLGC   : UnaryRXY<"llgc", 0xE390, azextloadi8,  GR64, 1>;
+def LLGH   : UnaryRXY<"llgh", 0xE391, azextloadi16, GR64, 2>;
+def LLGF   : UnaryRXY<"llgf", 0xE316, azextloadi32, GR64, 4>;
+def LLGHRL : UnaryRILPC<"llghrl", 0xC46, aligned_azextloadi16, GR64>;
+def LLGFRL : UnaryRILPC<"llgfrl", 0xC4E, aligned_azextloadi32, GR64>;
 
 //===----------------------------------------------------------------------===//
 // Truncations
@@ -558,14 +546,14 @@ defm : SXU<ineg, LCGFR>;
 //===----------------------------------------------------------------------===//
 
 let isCodeGenOnly = 1 in
-  defm IC32 : BinaryRXPair<"ic", 0x43, 0xE373, inserti8, GR32, zextloadi8, 1>;
-defm IC : BinaryRXPair<"ic", 0x43, 0xE373, inserti8, GR64, zextloadi8, 1>;
+  defm IC32 : BinaryRXPair<"ic", 0x43, 0xE373, inserti8, GR32, azextloadi8, 1>;
+defm IC : BinaryRXPair<"ic", 0x43, 0xE373, inserti8, GR64, azextloadi8, 1>;
 
-defm : InsertMem<"inserti8", IC32,  GR32, zextloadi8, bdxaddr12pair>;
-defm : InsertMem<"inserti8", IC32Y, GR32, zextloadi8, bdxaddr20pair>;
+defm : InsertMem<"inserti8", IC32,  GR32, azextloadi8, bdxaddr12pair>;
+defm : InsertMem<"inserti8", IC32Y, GR32, azextloadi8, bdxaddr20pair>;
 
-defm : InsertMem<"inserti8", IC,  GR64, zextloadi8, bdxaddr12pair>;
-defm : InsertMem<"inserti8", ICY, GR64, zextloadi8, bdxaddr20pair>;
+defm : InsertMem<"inserti8", IC,  GR64, azextloadi8, bdxaddr12pair>;
+defm : InsertMem<"inserti8", ICY, GR64, azextloadi8, bdxaddr20pair>;
 
 // Insertions of a 16-bit immediate, leaving other bits unaffected.
 // We don't have or_as_insert equivalents of these operations because
@@ -618,9 +606,9 @@ let Defs = [CC], CCValues = 0xF, CompareZeroCCMask = 0x8 in {
   def AGFI : BinaryRIL<"agfi", 0xC28, add, GR64, imm64sx32>;
 
   // Addition of memory.
-  defm AH  : BinaryRXPair<"ah", 0x4A, 0xE37A, add, GR32, sextloadi16, 2>;
+  defm AH  : BinaryRXPair<"ah", 0x4A, 0xE37A, add, GR32, asextloadi16, 2>;
   defm A   : BinaryRXPair<"a",  0x5A, 0xE35A, add, GR32, load, 4>;
-  def  AGF : BinaryRXY<"agf", 0xE318, add, GR64, sextloadi32, 4>;
+  def  AGF : BinaryRXY<"agf", 0xE318, add, GR64, asextloadi32, 4>;
   def  AG  : BinaryRXY<"ag",  0xE308, add, GR64, load, 8>;
 
   // Addition to memory.
@@ -650,7 +638,7 @@ let Defs = [CC] in {
 
   // Addition of memory.
   defm AL   : BinaryRXPair<"al", 0x5E, 0xE35E, addc, GR32, load, 4>;
-  def  ALGF : BinaryRXY<"algf", 0xE31A, addc, GR64, zextloadi32, 4>;
+  def  ALGF : BinaryRXY<"algf", 0xE31A, addc, GR64, azextloadi32, 4>;
   def  ALG  : BinaryRXY<"alg",  0xE30A, addc, GR64, load, 8>;
 }
 defm : ZXB<addc, GR64, ALGFR>;
@@ -679,9 +667,9 @@ let Defs = [CC], CCValues = 0xF, CompareZeroCCMask = 0x8 in {
   defm SGR : BinaryRREAndK<"sg", 0xB909, 0xB9E9, sub, GR64, GR64>;
 
   // Subtraction of memory.
-  defm SH  : BinaryRXPair<"sh", 0x4B, 0xE37B, sub, GR32, sextloadi16, 2>;
+  defm SH  : BinaryRXPair<"sh", 0x4B, 0xE37B, sub, GR32, asextloadi16, 2>;
   defm S   : BinaryRXPair<"s", 0x5B, 0xE35B, sub, GR32, load, 4>;
-  def  SGF : BinaryRXY<"sgf", 0xE319, sub, GR64, sextloadi32, 4>;
+  def  SGF : BinaryRXY<"sgf", 0xE319, sub, GR64, asextloadi32, 4>;
   def  SG  : BinaryRXY<"sg",  0xE309, sub, GR64, load, 8>;
 }
 defm : SXB<sub, GR64, SGFR>;
@@ -700,7 +688,7 @@ let Defs = [CC] in {
 
   // Subtraction of memory.
   defm SL   : BinaryRXPair<"sl", 0x5F, 0xE35F, subc, GR32, load, 4>;
-  def  SLGF : BinaryRXY<"slgf", 0xE31B, subc, GR64, zextloadi32, 4>;
+  def  SLGF : BinaryRXY<"slgf", 0xE31B, subc, GR64, azextloadi32, 4>;
   def  SLG  : BinaryRXY<"slg",  0xE30B, subc, GR64, load, 8>;
 }
 defm : ZXB<subc, GR64, SLGFR>;
@@ -866,9 +854,9 @@ def MSFI  : BinaryRIL<"msfi",  0xC21, mul, GR32, simm32>;
 def MSGFI : BinaryRIL<"msgfi", 0xC20, mul, GR64, imm64sx32>;
 
 // Multiplication of memory.
-defm MH   : BinaryRXPair<"mh", 0x4C, 0xE37C, mul, GR32, sextloadi16, 2>;
+defm MH   : BinaryRXPair<"mh", 0x4C, 0xE37C, mul, GR32, asextloadi16, 2>;
 defm MS   : BinaryRXPair<"ms", 0x71, 0xE351, mul, GR32, load, 4>;
-def  MSGF : BinaryRXY<"msgf", 0xE31C, mul, GR64, sextloadi32, 4>;
+def  MSGF : BinaryRXY<"msgf", 0xE31C, mul, GR64, asextloadi32, 4>;
 def  MSG  : BinaryRXY<"msg",  0xE30C, mul, GR64, load, 8>;
 
 // Multiplication of a register, producing two results.
@@ -972,21 +960,21 @@ let Defs = [CC], CCValues = 0xE in {
   def CGFI : CompareRIL<"cgfi", 0xC2C, z_scmp, GR64, imm64sx32>;
 
   // Comparison with memory.
-  defm CH    : CompareRXPair<"ch", 0x49, 0xE379, z_scmp, GR32, sextloadi16, 2>;
+  defm CH    : CompareRXPair<"ch", 0x49, 0xE379, z_scmp, GR32, asextloadi16, 2>;
   defm C     : CompareRXPair<"c",  0x59, 0xE359, z_scmp, GR32, load, 4>;
-  def  CGH   : CompareRXY<"cgh", 0xE334, z_scmp, GR64, sextloadi16, 2>;
-  def  CGF   : CompareRXY<"cgf", 0xE330, z_scmp, GR64, sextloadi32, 4>;
+  def  CGH   : CompareRXY<"cgh", 0xE334, z_scmp, GR64, asextloadi16, 2>;
+  def  CGF   : CompareRXY<"cgf", 0xE330, z_scmp, GR64, asextloadi32, 4>;
   def  CG    : CompareRXY<"cg",  0xE320, z_scmp, GR64, load, 8>;
-  def  CHRL  : CompareRILPC<"chrl",  0xC65, z_scmp, GR32, aligned_sextloadi16>;
+  def  CHRL  : CompareRILPC<"chrl",  0xC65, z_scmp, GR32, aligned_asextloadi16>;
   def  CRL   : CompareRILPC<"crl",   0xC6D, z_scmp, GR32, aligned_load>;
-  def  CGHRL : CompareRILPC<"cghrl", 0xC64, z_scmp, GR64, aligned_sextloadi16>;
-  def  CGFRL : CompareRILPC<"cgfrl", 0xC6C, z_scmp, GR64, aligned_sextloadi32>;
+  def  CGHRL : CompareRILPC<"cghrl", 0xC64, z_scmp, GR64, aligned_asextloadi16>;
+  def  CGFRL : CompareRILPC<"cgfrl", 0xC6C, z_scmp, GR64, aligned_asextloadi32>;
   def  CGRL  : CompareRILPC<"cgrl",  0xC68, z_scmp, GR64, aligned_load>;
 
   // Comparison between memory and a signed 16-bit immediate.
-  def CHHSI : CompareSIL<"chhsi", 0xE554, z_scmp, sextloadi16, imm32sx16>;
-  def CHSI  : CompareSIL<"chsi",  0xE55C, z_scmp, load,        imm32sx16>;
-  def CGHSI : CompareSIL<"cghsi", 0xE558, z_scmp, load,        imm64sx16>;
+  def CHHSI : CompareSIL<"chhsi", 0xE554, z_scmp, asextloadi16, imm32sx16>;
+  def CHSI  : CompareSIL<"chsi",  0xE55C, z_scmp, load, imm32sx16>;
+  def CGHSI : CompareSIL<"cghsi", 0xE558, z_scmp, load, imm64sx16>;
 }
 defm : SXB<z_scmp, GR64, CGFR>;
 
@@ -1003,26 +991,26 @@ let Defs = [CC], CCValues = 0xE, IsLogical = 1 in {
 
   // Comparison with memory.
   defm CL     : CompareRXPair<"cl", 0x55, 0xE355, z_ucmp, GR32, load, 4>;
-  def  CLGF   : CompareRXY<"clgf", 0xE331, z_ucmp, GR64, zextloadi32, 4>;
+  def  CLGF   : CompareRXY<"clgf", 0xE331, z_ucmp, GR64, azextloadi32, 4>;
   def  CLG    : CompareRXY<"clg",  0xE321, z_ucmp, GR64, load, 8>;
   def  CLHRL  : CompareRILPC<"clhrl",  0xC67, z_ucmp, GR32,
-                             aligned_zextloadi16>;
+                             aligned_azextloadi16>;
   def  CLRL   : CompareRILPC<"clrl",   0xC6F, z_ucmp, GR32,
                              aligned_load>;
   def  CLGHRL : CompareRILPC<"clghrl", 0xC66, z_ucmp, GR64,
-                             aligned_zextloadi16>;
+                             aligned_azextloadi16>;
   def  CLGFRL : CompareRILPC<"clgfrl", 0xC6E, z_ucmp, GR64,
-                             aligned_zextloadi32>;
+                             aligned_azextloadi32>;
   def  CLGRL  : CompareRILPC<"clgrl",  0xC6A, z_ucmp, GR64,
                              aligned_load>;
 
   // Comparison between memory and an unsigned 8-bit immediate.
-  defm CLI : CompareSIPair<"cli", 0x95, 0xEB55, z_ucmp, zextloadi8, imm32zx8>;
+  defm CLI : CompareSIPair<"cli", 0x95, 0xEB55, z_ucmp, azextloadi8, imm32zx8>;
 
   // Comparison between memory and an unsigned 16-bit immediate.
-  def CLHHSI : CompareSIL<"clhhsi", 0xE555, z_ucmp, zextloadi16, imm32zx16>;
-  def CLFHSI : CompareSIL<"clfhsi", 0xE55D, z_ucmp, load,        imm32zx16>;
-  def CLGHSI : CompareSIL<"clghsi", 0xE559, z_ucmp, load,        imm64zx16>;
+  def CLHHSI : CompareSIL<"clhhsi", 0xE555, z_ucmp, azextloadi16, imm32zx16>;
+  def CLFHSI : CompareSIL<"clfhsi", 0xE55D, z_ucmp, load, imm32zx16>;
+  def CLGHSI : CompareSIL<"clghsi", 0xE559, z_ucmp, load, imm64zx16>;
 }
 defm : ZXB<z_ucmp, GR64, CLGFR>;
 
@@ -1227,14 +1215,14 @@ let mayLoad = 1, Defs = [CC], Uses = [R0W] in
 defm : ZXB<add, GR64, ALGFR>;
 def  : Pat<(add GR64:$src1, imm64zx32:$src2),
            (ALGFI GR64:$src1, imm64zx32:$src2)>;
-def  : Pat<(add GR64:$src1, (zextloadi32 bdxaddr20only:$addr)),
+def  : Pat<(add GR64:$src1, (azextloadi32 bdxaddr20only:$addr)),
            (ALGF GR64:$src1, bdxaddr20only:$addr)>;
 
 // Use SL* for GR64 subtractions of unsigned 32-bit values.
 defm : ZXB<sub, GR64, SLGFR>;
 def  : Pat<(add GR64:$src1, imm64zx32n:$src2),
            (SLGFI GR64:$src1, imm64zx32n:$src2)>;
-def  : Pat<(sub GR64:$src1, (zextloadi32 bdxaddr20only:$addr)),
+def  : Pat<(sub GR64:$src1, (azextloadi32 bdxaddr20only:$addr)),
            (SLGF GR64:$src1, bdxaddr20only:$addr)>;
 
 // Optimize sign-extended 1/0 selects to -1/0 selects.  This is important

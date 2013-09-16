@@ -27,8 +27,8 @@ define i16 @f2(i16 %a, i16 %b, i16 %c, i16 %d, i16 %e, i16 %f, i16 %g) {
 ; CHECK: ar %r2, %r4
 ; CHECK: ar %r2, %r5
 ; CHECK: ar %r2, %r6
-; CHECK: lh {{%r[0-5]}}, 166(%r15)
-; CHECK: lh {{%r[0-5]}}, 174(%r15)
+; CHECK: ah %r2, 166(%r15)
+; CHECK: ah %r2, 174(%r15)
 ; CHECK: br %r14
   %addb = add i16 %a, %b
   %addc = add i16 %addb, %c

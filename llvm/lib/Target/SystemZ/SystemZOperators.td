@@ -194,6 +194,36 @@ def zext32 : PatFrag<(ops node:$src), (zext (i32 node:$src))>;
 def loadf32 : PatFrag<(ops node:$src), (f32 (load node:$src))>;
 def loadf64 : PatFrag<(ops node:$src), (f64 (load node:$src))>;
 
+// Extending loads in which the extension type can be signed.
+def asextload : PatFrag<(ops node:$ptr), (unindexedload node:$ptr), [{
+  unsigned Type = cast<LoadSDNode>(N)->getExtensionType();
+  return Type == ISD::EXTLOAD || Type == ISD::SEXTLOAD;
+}]>;
+def asextloadi8 : PatFrag<(ops node:$ptr), (asextload node:$ptr), [{
+  return cast<LoadSDNode>(N)->getMemoryVT() == MVT::i8;
+}]>;
+def asextloadi16 : PatFrag<(ops node:$ptr), (asextload node:$ptr), [{
+  return cast<LoadSDNode>(N)->getMemoryVT() == MVT::i16;
+}]>;
+def asextloadi32 : PatFrag<(ops node:$ptr), (asextload node:$ptr), [{
+  return cast<LoadSDNode>(N)->getMemoryVT() == MVT::i32;
+}]>;
+
+// Extending loads in which the extension type can be unsigned.
+def azextload : PatFrag<(ops node:$ptr), (unindexedload node:$ptr), [{
+  unsigned Type = cast<LoadSDNode>(N)->getExtensionType();
+  return Type == ISD::EXTLOAD || Type == ISD::ZEXTLOAD;
+}]>;
+def azextloadi8 : PatFrag<(ops node:$ptr), (azextload node:$ptr), [{
+  return cast<LoadSDNode>(N)->getMemoryVT() == MVT::i8;
+}]>;
+def azextloadi16 : PatFrag<(ops node:$ptr), (azextload node:$ptr), [{
+  return cast<LoadSDNode>(N)->getMemoryVT() == MVT::i16;
+}]>;
+def azextloadi32 : PatFrag<(ops node:$ptr), (azextload node:$ptr), [{
+  return cast<LoadSDNode>(N)->getMemoryVT() == MVT::i32;
+}]>;
+
 // Extending loads in which the extension type doesn't matter.
 def anyextload : PatFrag<(ops node:$ptr), (unindexedload node:$ptr), [{
   return cast<LoadSDNode>(N)->getExtensionType() != ISD::NON_EXTLOAD;
@@ -214,11 +244,11 @@ class AlignedLoad<SDPatternOperator load>
   LoadSDNode *Load = cast<LoadSDNode>(N);
   return Load->getAlignment() >= Load->getMemoryVT().getStoreSize();
 }]>;
-def aligned_load        : AlignedLoad<load>;
-def aligned_sextloadi16 : AlignedLoad<sextloadi16>;
-def aligned_sextloadi32 : AlignedLoad<sextloadi32>;
-def aligned_zextloadi16 : AlignedLoad<zextloadi16>;
-def aligned_zextloadi32 : AlignedLoad<zextloadi32>;
+def aligned_load         : AlignedLoad<load>;
+def aligned_asextloadi16 : AlignedLoad<asextloadi16>;
+def aligned_asextloadi32 : AlignedLoad<asextloadi32>;
+def aligned_azextloadi16 : AlignedLoad<azextloadi16>;
+def aligned_azextloadi32 : AlignedLoad<azextloadi32>;
 
 // Aligned stores.
 class AlignedStore<SDPatternOperator store>
