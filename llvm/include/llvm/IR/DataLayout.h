@@ -369,6 +369,17 @@ public:
   /// least as big as Width bits.
   Type *getSmallestLegalIntType(LLVMContext &C, unsigned Width = 0) const;
 
+  /// getLargestLegalIntType - Return the largest legal integer type, or null if
+  /// none are set.
+  Type *getLargestLegalIntType(LLVMContext &C) const {
+    unsigned LargestSize = getLargestLegalIntTypeSize();
+    return (LargestSize == 0) ? 0 : Type::getIntNTy(C, LargestSize);
+  }
+
+  /// getLargestLegalIntType - Return the size of largest legal integer type
+  /// size, or 0 if none are set.
+  unsigned getLargestLegalIntTypeSize() const;
+
   /// getIndexedOffset - return the offset from the beginning of the type for
   /// the specified indices.  This is used to implement getelementptr.
   uint64_t getIndexedOffset(Type *Ty, ArrayRef<Value *> Indices) const;

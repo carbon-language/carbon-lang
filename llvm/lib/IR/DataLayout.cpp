@@ -629,6 +629,13 @@ Type *DataLayout::getSmallestLegalIntType(LLVMContext &C, unsigned Width) const 
   return 0;
 }
 
+unsigned DataLayout::getLargestLegalIntTypeSize() const {
+  unsigned MaxWidth = 0;
+  for (unsigned i = 0, e = (unsigned)LegalIntWidths.size(); i != e; ++i)
+    MaxWidth = std::max<unsigned>(MaxWidth, LegalIntWidths[i]);
+  return MaxWidth;
+}
+
 uint64_t DataLayout::getIndexedOffset(Type *ptrTy,
                                       ArrayRef<Value *> Indices) const {
   Type *Ty = ptrTy;
