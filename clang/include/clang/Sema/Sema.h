@@ -3236,6 +3236,8 @@ public:
                                       SourceLocation LitEndLoc,
                             TemplateArgumentListInfo *ExplicitTemplateArgs = 0);
 
+  ExprResult BuildPredefinedExpr(SourceLocation Loc,
+                                 PredefinedExpr::IdentType IT);
   ExprResult ActOnPredefinedExpr(SourceLocation Loc, tok::TokenKind Kind);
   ExprResult ActOnIntegerConstant(SourceLocation Loc, uint64_t Val);
   ExprResult ActOnNumericConstant(const Token &Tok, Scope *UDLScope = 0);

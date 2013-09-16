@@ -1149,25 +1149,7 @@ TemplateInstantiator::TransformPredefinedExpr(PredefinedExpr *E) {
   if (!E->isTypeDependent())
     return SemaRef.Owned(E);
 
-  FunctionDecl *currentDecl = getSema().getCurFunctionDecl();
-  assert(currentDecl && "Must have current function declaration when "
-                        "instantiating.");
-
-  PredefinedExpr::IdentType IT = E->getIdentType();
-
-  unsigned Length = PredefinedExpr::ComputeName(IT, currentDecl).length();
-
-  llvm::APInt LengthI(32, Length + 1);
-  QualType ResTy;
-  if (IT == PredefinedExpr::LFunction)
-    ResTy = getSema().Context.WideCharTy.withConst();
-  else
-    ResTy = getSema().Context.CharTy.withConst();
-  ResTy = getSema().Context.getConstantArrayType(ResTy, LengthI, 
-                                                 ArrayType::Normal, 0);
-  PredefinedExpr *PE =
-    new (getSema().Context) PredefinedExpr(E->getLocation(), ResTy, IT);
-  return getSema().Owned(PE);
+  return getSema().BuildPredefinedExpr(E->getLocation(), E->getIdentType());
 }
 
 ExprResult

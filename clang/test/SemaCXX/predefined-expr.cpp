@@ -16,6 +16,40 @@ auto bar() -> decltype(42) {
   return 0;
 }
 
+// Within templates.
+template <typename T>
+int baz() {
+  static_assert(sizeof(__func__) == 4, "baz");
+  static_assert(sizeof(__FUNCTION__) == 4, "baz");
+  static_assert(sizeof(__PRETTY_FUNCTION__) == 20, "int baz() [T = int]");
+
+  []() {
+    static_assert(sizeof(__func__) == 11, "operator()");
+    static_assert(sizeof(__FUNCTION__) == 11, "operator()");
+    static_assert(sizeof(__PRETTY_FUNCTION__) == 50,
+                  "auto baz()::<anonymous class>::operator()() const");
+    return 0;
+  }
+  ();
+
+  ^{
+    // FIXME: This is obviously wrong.
+    static_assert(sizeof(__func__) == 1, "__baz_block_invoke");
+    static_assert(sizeof(__FUNCTION__) == 1, "__baz_block_invoke");
+    static_assert(sizeof(__PRETTY_FUNCTION__) == 1, "__baz_block_invoke");
+  }
+  ();
+
+  #pragma clang __debug captured
+  {
+    static_assert(sizeof(__func__) == 4, "baz");
+    static_assert(sizeof(__FUNCTION__) == 4, "baz");
+    static_assert(sizeof(__PRETTY_FUNCTION__) == 20, "int baz() [T = int]");
+  }
+
+  return 0;
+}
+
 int main() {
   static_assert(sizeof(__func__) == 5, "main");
   static_assert(sizeof(__FUNCTION__) == 5, "main");
@@ -62,4 +96,8 @@ int main() {
     }
   }
   ();
+
+  baz<int>();
+
+  return 0;
 }

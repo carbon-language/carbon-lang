@@ -9,6 +9,8 @@
 // CHECK: private unnamed_addr constant [57 x i8] c"void NonTypeTemplateParam<42>::size() const [Count = 42]\00"
 // CHECK: private unnamed_addr constant [122 x i8] c"static void ClassWithTemplateTemplateParam<char, NS::ClassTemplate>::staticMember() [T = char, Param = NS::ClassTemplate]\00"
 // CHECK: private unnamed_addr constant [106 x i8] c"void OuterClass<int *>::MiddleClass::InnerClass<float>::memberFunction(T, U) const [T = int *, U = float]\00"
+// CHECK: private unnamed_addr constant [51 x i8] c"void functionTemplateWithCapturedStmt(T) [T = int]\00"
+// CHECK: private unnamed_addr constant [76 x i8] c"auto functionTemplateWithLambda(int)::<anonymous class>::operator()() const\00"
 // CHECK: private unnamed_addr constant [65 x i8] c"void functionTemplateWithUnnamedTemplateParameter(T) [T = float]\00"
 
 // CHECK: private unnamed_addr constant [60 x i8] c"void functionTemplateExplicitSpecialization(T) [T = double]\00"
@@ -376,6 +378,23 @@ void functionTemplateWithUnnamedTemplateParameter(T t)
 }
 
 template <typename T>
+void functionTemplateWithLambda(T t)
+{
+  []() {
+    printf("__PRETTY_FUNCTION__ %s\n\n", __PRETTY_FUNCTION__);
+  } ();
+}
+
+template <typename T>
+void functionTemplateWithCapturedStmt(T t)
+{
+  #pragma clang __debug captured
+  {
+    printf("__PRETTY_FUNCTION__ %s\n\n", __PRETTY_FUNCTION__);
+  }
+}
+
+template <typename T>
 class OuterClass
 {
 public:
@@ -499,6 +518,9 @@ int main() {
   functionTemplateExplicitSpecialization(0);
   functionTemplateExplicitSpecialization(0.0);
   functionTemplateWithUnnamedTemplateParameter<int, float>(0.0f);
+
+  functionTemplateWithLambda<int>(0);
+  functionTemplateWithCapturedStmt<int>(0);
 
   OuterClass<int *>::MiddleClass::InnerClass<float> omi;
   omi.memberFunction(0, 0.0f);
