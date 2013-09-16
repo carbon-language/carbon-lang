@@ -112,8 +112,7 @@ void testNew10() {
 
 void testNew11(NSUInteger dataLength) {
   int *p = new int;
-  NSData *d = [NSData dataWithBytesNoCopy:p length:sizeof(int) freeWhenDone:1]; // expected-warning{{Memory allocated by 'new' should be deallocated by 'delete', not +dataWithBytesNoCopy:length:freeWhenDone:}}
-  // FIXME: should be "+dataWithBytesNoCopy:length:freeWhenDone: cannot take ownership of memory allocated by 'new'."
+  NSData *d = [NSData dataWithBytesNoCopy:p length:sizeof(int) freeWhenDone:1]; // expected-warning{{+dataWithBytesNoCopy:length:freeWhenDone: cannot take ownership of memory allocated by 'new'}}
 }
 
 //-------------------------------------------------------

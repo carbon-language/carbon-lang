@@ -313,7 +313,7 @@ private:
                      const Expr *DeallocExpr) const;
   void ReportMismatchedDealloc(CheckerContext &C, SourceRange Range,
                                const Expr *DeallocExpr, const RefState *RS,
-                               SymbolRef Sym) const;
+                               SymbolRef Sym, bool OwnershipTransferred) const;
   void ReportOffsetFree(CheckerContext &C, SVal ArgVal, SourceRange Range, 
                         const Expr *DeallocExpr, 
                         const Expr *AllocExpr = 0) const;
@@ -1042,7 +1042,7 @@ ProgramStateRef MallocChecker::FreeMemAux(CheckerContext &C,
         RsBase->getAllocationFamily() == getAllocationFamily(C, ParentExpr);
       if (!DeallocMatchesAlloc) {
         ReportMismatchedDealloc(C, ArgExpr->getSourceRange(),
-                                ParentExpr, RsBase, SymBase);
+                                ParentExpr, RsBase, SymBase, Hold);
         return 0;
       }
 
@@ -1260,7 +1260,8 @@ void MallocChecker::ReportMismatchedDealloc(CheckerContext &C,
                                             SourceRange Range,
                                             const Expr *DeallocExpr, 
                                             const RefState *RS,
-                                            SymbolRef Sym) const {
+                                            SymbolRef Sym, 
+                                            bool OwnershipTransferred) const {
 
   if (!Filter.CMismatchedDeallocatorChecker)
     return;
@@ -1279,15 +1280,27 @@ void MallocChecker::ReportMismatchedDealloc(CheckerContext &C,
     SmallString<20> DeallocBuf;
     llvm::raw_svector_ostream DeallocOs(DeallocBuf);
 
-    os << "Memory";
-    if (printAllocDeallocName(AllocOs, C, AllocExpr))
-      os << " allocated by " << AllocOs.str();
+    if (OwnershipTransferred) {
+      if (printAllocDeallocName(DeallocOs, C, DeallocExpr))
+        os << DeallocOs.str() << " cannot";
+      else 
+        os << "Cannot";
 
-    os << " should be deallocated by ";
-      printExpectedDeallocName(os, RS->getAllocationFamily());
+      os << " take ownership of memory";
 
-    if (printAllocDeallocName(DeallocOs, C, DeallocExpr))
-      os << ", not " << DeallocOs.str();
+      if (printAllocDeallocName(AllocOs, C, AllocExpr))
+        os << " allocated by " << AllocOs.str();
+    } else {
+      os << "Memory";
+      if (printAllocDeallocName(AllocOs, C, AllocExpr))
+        os << " allocated by " << AllocOs.str();
+
+      os << " should be deallocated by ";
+        printExpectedDeallocName(os, RS->getAllocationFamily());
+
+      if (printAllocDeallocName(DeallocOs, C, DeallocExpr))
+        os << ", not " << DeallocOs.str();
+    }
 
     BugReport *R = new BugReport(*BT_MismatchedDealloc, os.str(), N);
     R->markInteresting(Sym);
