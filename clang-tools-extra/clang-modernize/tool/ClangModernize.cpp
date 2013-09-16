@@ -360,7 +360,9 @@ int main(int argc, const char **argv) {
     // Use source paths from the compilation database.
     // We only transform files that are explicitly included.
     Sources = Compilations->getAllFiles();
-    std::remove_if(Sources.begin(), Sources.end(), isFileNotIncludedPredicate);
+    std::vector<std::string>::iterator E = std::remove_if(
+        Sources.begin(), Sources.end(), isFileNotIncludedPredicate);
+    Sources.erase(E, Sources.end());
   }
 
   if (Sources.empty()) {
