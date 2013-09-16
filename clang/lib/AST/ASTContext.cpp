@@ -706,7 +706,6 @@ static bool isAddrSpaceMapManglingEnabled(const TargetInfo &TI,
     return false;
   }
   llvm_unreachable("getAddressSpaceMapMangling() doesn't cover anything.");
-  return false;
 }
 
 ASTContext::ASTContext(LangOptions& LOpts, SourceManager &SM,
