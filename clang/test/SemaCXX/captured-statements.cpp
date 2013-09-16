@@ -164,3 +164,10 @@ void test_capture_variadic() {
   (void)captured_sum(1, 2, 3); // OK
   (void)captured_sum(1, 2, 3, 4, 5); // OK
 }
+
+void test_capture_with_attributes() {
+  [[]] // expected-error {{an attribute list cannot appear here}}
+  #pragma clang __debug captured
+  {
+  }
+}

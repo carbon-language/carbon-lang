@@ -303,9 +303,11 @@ Retry:
     return StmtEmpty();
 
   case tok::annot_pragma_captured:
+    ProhibitAttributes(Attrs);
     return HandlePragmaCaptured();
 
   case tok::annot_pragma_openmp:
+    ProhibitAttributes(Attrs);
     return ParseOpenMPDeclarativeOrExecutableDirective();
 
   }

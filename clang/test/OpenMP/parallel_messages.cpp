@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -verify -fopenmp -ferror-limit 100 -o - %s
+// RUN: %clang_cc1 -verify -fopenmp -ferror-limit 100 -std=c++11 -o - %s
 
 void foo() {
 }
@@ -43,6 +43,10 @@ int main(int argc, char **argv) {
   {
     return 1; // expected-error {{cannot return from OpenMP region}}
   }
+
+  [[]] // expected-error {{an attribute list cannot appear here}}
+  #pragma omp parallel
+  for (int n = 0; n < 100; ++n) {}
 
   return 0;
 }
