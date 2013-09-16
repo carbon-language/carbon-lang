@@ -1,4 +1,5 @@
 ; RUN: llc -mtriple=x86_64-linux -mcpu=atom < %s | FileCheck %s
+; RUN: llc -mtriple=x86_64-linux -mcpu=slm < %s | FileCheck %s -check-prefix=SLM
 
 declare i32 @llvm.bswap.i32(i32) nounwind readnone
 declare i64 @llvm.bswap.i64(i64) nounwind readnone
@@ -9,6 +10,8 @@ define void @test1(i32* nocapture %x, i32 %y) nounwind {
   ret void
 ; CHECK-LABEL: test1:
 ; CHECK: movbel	%esi, (%rdi)
+; SLM-LABEL: test1:
+; SLM: movbel	%esi, (%rdi)
 }
 
 define i32 @test2(i32* %x) nounwind {
@@ -17,6 +20,8 @@ define i32 @test2(i32* %x) nounwind {
   ret i32 %bswap
 ; CHECK-LABEL: test2:
 ; CHECK: movbel	(%rdi), %eax
+; SLM-LABEL: test2:
+; SLM: movbel	(%rdi), %eax
 }
 
 define void @test3(i64* %x, i64 %y) nounwind {
@@ -25,6 +30,8 @@ define void @test3(i64* %x, i64 %y) nounwind {
   ret void
 ; CHECK-LABEL: test3:
 ; CHECK: movbeq	%rsi, (%rdi)
+; SLM-LABEL: test3:
+; SLM: movbeq	%rsi, (%rdi)
 }
 
 define i64 @test4(i64* %x) nounwind {
@@ -33,4 +40,6 @@ define i64 @test4(i64* %x) nounwind {
   ret i64 %bswap
 ; CHECK-LABEL: test4:
 ; CHECK: movbeq	(%rdi), %rax
+; SLM-LABEL: test4:
+; SLM: movbeq	(%rdi), %rax
 }
