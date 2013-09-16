@@ -2214,8 +2214,13 @@ SymbolFileDWARF::ParseChildMembers
                         
                         if (is_virtual)
                         {
-                            layout_info.vbase_offsets.insert(std::make_pair(base_class_clang_type.GetAsCXXRecordDecl(),
-                                                                            clang::CharUnits::fromQuantity(member_byte_offset)));
+                            // Do not specify any offset for virtual inheritance. The DWARF produced by clang doesn't
+                            // give us a constant offset, but gives us a DWARF expressions that requires an actual object
+                            // in memory. the DW_AT_data_member_location for a virtual base class looks like:
+                            //      DW_AT_data_member_location( DW_OP_dup, DW_OP_deref, DW_OP_constu(0x00000018), DW_OP_minus, DW_OP_deref, DW_OP_plus )
+                            // Given this, there is really no valid response we can give to clang for virtual base
+                            // class offsets, and this should eventually be removed from LayoutRecordType() in the external
+                            // AST source in clang.
                         }
                         else
                         {
