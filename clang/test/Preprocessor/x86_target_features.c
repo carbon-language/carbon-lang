@@ -152,3 +152,13 @@
 // RUN: %clang -target i386-unknown-unknown -march=atom -msse -mno-mmx -x c -E -dM -o - %s | FileCheck --check-prefix=SSENOMMX %s
 
 // SSENOMMX-NOT: #define __MMX__ 1
+
+// RUN: %clang -target i386-unknown-unknown -march=atom -mf16c -x c -E -dM -o - %s | FileCheck --check-prefix=F16C %s
+
+// F16C: #define __AVX__ 1
+// F16C: #define __F16C__ 1
+
+// RUN: %clang -target i386-unknown-unknown -march=atom -mf16c -mno-avx -x c -E -dM -o - %s | FileCheck --check-prefix=F16CNOAVX %s
+
+// F16CNOAVX-NOT: #define __AVX__ 1
+// F16CNOAVX-NOT: #define __F16C__ 1
