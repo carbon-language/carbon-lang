@@ -348,6 +348,7 @@ PlatformDarwin::GetSharedModuleWithLocalCache (const lldb_private::ModuleSpec &m
     if (module_cache_spec.Exists())
     {
         // get the local and remote MD5 and compare
+        if (m_remote_platform_sp)
         {
             // when going over the *slow* GDB remote transfer mechanism we first check
             // the hashes of the files - and only do the actual transfer if they differ
