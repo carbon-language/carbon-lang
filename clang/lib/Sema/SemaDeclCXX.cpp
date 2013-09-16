@@ -2624,23 +2624,6 @@ Sema::BuildMemberInitializer(ValueDecl *Member, Expr *Init,
     Init = MemberInit.get();
   }
 
-  // Diagnose value-uses of fields to initialize themselves, e.g.
-  //   foo(foo)
-  // where foo is not also a parameter to the constructor.
-  // TODO: implement -Wuninitialized and fold this into that framework.
-  // FIXME: Warn about the case when other fields are used before being
-  // initialized. For example, let this field be the i'th field. When
-  // initializing the i'th field, throw a warning if any of the >= i'th
-  // fields are used, as they are not yet initialized.
-  // Right now we are only handling the case where the i'th field uses
-  // itself in its initializer.
-  // Also need to take into account that some fields may be initialized by
-  // in-class initializers, see C++11 [class.base.init]p9.
-  if (getDiagnostics().getDiagnosticLevel(diag::warn_field_is_uninit, IdLoc)
-      != DiagnosticsEngine::Ignored) {
-    CheckInitExprContainsUninitializedFields(*this, Init, Member);
-  }
-
   if (DirectMember) {
     return new (Context) CXXCtorInitializer(Context, DirectMember, IdLoc,
                                             InitRange.getBegin(), Init,
@@ -3707,6 +3690,43 @@ bool CheckRedundantUnionInit(Sema &S,
 }
 }
 
+// Diagnose value-uses of fields to initialize themselves, e.g.
+//   foo(foo)
+// where foo is not also a parameter to the constructor.
+// TODO: implement -Wuninitialized and fold this into that framework.
+// FIXME: Warn about the case when other fields are used before being
+// initialized. For example, let this field be the i'th field. When
+// initializing the i'th field, throw a warning if any of the >= i'th
+// fields are used, as they are not yet initialized.
+// Right now we are only handling the case where the i'th field uses
+// itself in its initializer.
+// Also need to take into account that some fields may be initialized by
+// in-class initializers, see C++11 [class.base.init]p9.
+static void DiagnoseUnitializedFields(
+    Sema &SemaRef, const CXXConstructorDecl *Constructor) {
+
+  if (SemaRef.getDiagnostics().getDiagnosticLevel(diag::warn_field_is_uninit,
+                                                  Constructor->getLocation())
+      == DiagnosticsEngine::Ignored) {
+    return;
+  }
+
+  for (CXXConstructorDecl::init_const_iterator
+           FieldInit = Constructor->init_begin(),
+           FieldInitEnd = Constructor->init_end();
+       FieldInit != FieldInitEnd; ++FieldInit) {
+
+    FieldDecl *FD = (*FieldInit)->getAnyMember();
+    if (!FD)
+      continue;
+    Expr *InitExpr = (*FieldInit)->getInit();
+
+    if (!isa<CXXDefaultInitExpr>(InitExpr)) {
+      CheckInitExprContainsUninitializedFields(SemaRef, InitExpr, FD);
+    }
+  }
+}
+
 /// ActOnMemInitializers - Handle the member initializers for a constructor.
 void Sema::ActOnMemInitializers(Decl *ConstructorDecl,
                                 SourceLocation ColonLoc,
@@ -3771,6 +3791,8 @@ void Sema::ActOnMemInitializers(Decl *ConstructorDecl,
   DiagnoseBaseOrMemInitializerOrder(*this, Constructor, MemInits);
 
   SetCtorInitializers(Constructor, AnyErrors, MemInits);
+
+  DiagnoseUnitializedFields(*this, Constructor);
 }
 
 void
