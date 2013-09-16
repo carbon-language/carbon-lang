@@ -180,8 +180,9 @@ static bool IsASCII(unsigned char c) {
 static const char *MaybeDemangleGlobalName(const char *name) {
   // We can spoil names of globals with C linkage, so use an heuristic
   // approach to check if the name should be demangled.
-  return (name[0] == '_' && name[1] == 'Z') ? getSymbolizer()->Demangle(name)
-                                            : name;
+  return (name[0] == '_' && name[1] == 'Z' && &getSymbolizer)
+             ? getSymbolizer()->Demangle(name)
+             : name;
 }
 
 // Check if the global is a zero-terminated ASCII string. If so, print it.
@@ -543,7 +544,7 @@ class ScopedInErrorReport {
 
 static void ReportSummary(const char *error_type, StackTrace *stack) {
   if (!stack->size) return;
-  if (getSymbolizer()->IsAvailable()) {
+  if (&getSymbolizer && getSymbolizer()->IsAvailable()) {
     AddressInfo ai;
     // Currently, we include the first stack frame into the report summary.
     // Maybe sometimes we need to choose another frame (e.g. skip memcpy/etc).

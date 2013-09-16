@@ -533,7 +533,7 @@ void __asan_init() {
   InitializeAllocator();
 
   // Start symbolizer process if necessary.
-  if (common_flags()->symbolize) {
+  if (common_flags()->symbolize && &getSymbolizer) {
     getSymbolizer()
         ->InitializeExternal(common_flags()->external_symbolizer_path);
   }
