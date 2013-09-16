@@ -19,15 +19,13 @@
 #include <stdlib.h>
 int main(int argc, char **argv) {
   char *volatile x = (char*)malloc(5 * sizeof(char));
-  if (*x)
-    exit(0);
+  return *x;
   // CHECK: WARNING: MemorySanitizer: use-of-uninitialized-value
-  // CHECK: {{#0 0x.* in main .*heap-origin.cc:}}[[@LINE-3]]
+  // CHECK: {{#0 0x.* in main .*heap-origin.cc:}}[[@LINE-2]]
 
   // CHECK-ORIGINS: Uninitialized value was created by a heap allocation
   // CHECK-ORIGINS: {{#0 0x.* in .*malloc}}
-  // CHECK-ORIGINS: {{#1 0x.* in main .*heap-origin.cc:}}[[@LINE-8]]
+  // CHECK-ORIGINS: {{#1 0x.* in main .*heap-origin.cc:}}[[@LINE-7]]
 
   // CHECK: SUMMARY: MemorySanitizer: use-of-uninitialized-value {{.*heap-origin.cc:.* main}}
-  return 0;
 }

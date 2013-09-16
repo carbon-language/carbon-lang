@@ -20,14 +20,12 @@
 int main(int argc, char **argv) {
   int x;
   int *volatile p = &x;
-  if (*p)
-    exit(0);
+  return *p;
   // CHECK: WARNING: MemorySanitizer: use-of-uninitialized-value
-  // CHECK: {{#0 0x.* in main .*stack-origin.cc:}}[[@LINE-3]]
+  // CHECK: {{#0 0x.* in main .*stack-origin.cc:}}[[@LINE-2]]
 
   // CHECK-ORIGINS: Uninitialized value was created by an allocation of 'x' in the stack frame of function 'main'
-  // CHECK-ORIGINS: {{#0 0x.* in main .*stack-origin.cc:}}[[@LINE-9]]
+  // CHECK-ORIGINS: {{#0 0x.* in main .*stack-origin.cc:}}[[@LINE-8]]
 
   // CHECK: SUMMARY: MemorySanitizer: use-of-uninitialized-value {{.*stack-origin.cc:.* main}}
-  return 0;
 }
