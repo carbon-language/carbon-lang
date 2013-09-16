@@ -357,7 +357,7 @@ void PEI::propagateUsesAroundLoop(MachineBasicBlock* MBB, MachineLoop* LP) {
 ///
 bool PEI::calculateSets(MachineFunction &Fn) {
   // Sets used to compute spill, restore placement sets.
-  const std::vector<CalleeSavedInfo> CSI =
+  const std::vector<CalleeSavedInfo> &CSI =
     Fn.getFrameInfo()->getCalleeSavedInfo();
 
   // If no CSRs used, we are done.
@@ -1054,7 +1054,7 @@ std::string PEI::getBasicBlockName(const MachineBasicBlock* MBB) {
 
 std::string PEI::stringifyCSRegSet(const CSRegSet& s) {
   const TargetRegisterInfo* TRI = MF->getTarget().getRegisterInfo();
-  const std::vector<CalleeSavedInfo> CSI =
+  const std::vector<CalleeSavedInfo> &CSI =
     MF->getFrameInfo()->getCalleeSavedInfo();
 
   std::ostringstream srep;
