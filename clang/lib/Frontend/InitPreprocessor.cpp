@@ -408,6 +408,22 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
     if (LangOpts.ObjCRuntime.isNeXTFamily())
       Builder.defineMacro("__NEXT_RUNTIME__");
 
+    if (LangOpts.ObjCRuntime.getKind() == ObjCRuntime::ObjFW) {
+      VersionTuple tuple = LangOpts.ObjCRuntime.getVersion();
+
+      unsigned minor = 0;
+      if (tuple.getMinor().hasValue())
+        minor = tuple.getMinor().getValue();
+
+      unsigned subminor = 0;
+      if (tuple.getSubminor().hasValue())
+        subminor = tuple.getSubminor().getValue();
+
+      Builder.defineMacro("__OBJFW_RUNTIME_ABI__",
+                          Twine(tuple.getMajor() * 10000 + minor * 100 +
+                                subminor));
+    }
+
     Builder.defineMacro("IBOutlet", "__attribute__((iboutlet))");
     Builder.defineMacro("IBOutletCollection(ClassName)",
                         "__attribute__((iboutletcollection(ClassName)))");

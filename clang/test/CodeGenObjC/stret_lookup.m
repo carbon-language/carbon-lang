@@ -11,8 +11,8 @@ struct test {
 @end
 void test0(void) {
   struct test t;
-#if (defined(STRET) && __has_feature(objc_msg_lookup_stret)) || \
-    (!defined(STRET) && !__has_feature(objc_msg_lookup_stret))
+#if (defined(STRET) && defined(__OBJFW_RUNTIME_ABI__)) || \
+    (!defined(STRET) && !defined(__OBJFW_RUNTIME_ABI__))
   t = [Test0 test];
 #endif
   (void)t;
