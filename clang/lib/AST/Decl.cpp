@@ -2204,6 +2204,33 @@ bool FunctionDecl::isMain() const {
          isNamed(this, "main");
 }
 
+bool FunctionDecl::isMSVCRTEntryPoint() const {
+  const TranslationUnitDecl *TUnit =
+      dyn_cast<TranslationUnitDecl>(getDeclContext()->getRedeclContext());
+  if (!TUnit)
+    return false;
+
+  // Even though we aren't really targeting MSVCRT if we are freestanding,
+  // semantic analysis for these functions remains the same.
+
+  // MSVCRT entry points only exist on MSVCRT targets.
+  if (!TUnit->getASTContext().getTargetInfo().getTriple().isOSMSVCRT())
+    return false;
+
+  // Nameless functions like constructors cannot be entry points.
+  if (!getIdentifier())
+    return false;
+
+  return llvm::StringSwitch<bool>(getName())
+      .Cases("main",     // an ANSI console app
+             "wmain",    // a Unicode console App
+             "WinMain",  // an ANSI GUI app
+             "wWinMain", // a Unicode GUI app
+             "DllMain",  // a DLL
+             true)
+      .Default(false);
+}
+
 bool FunctionDecl::isReservedGlobalPlacementOperator() const {
   assert(getDeclName().getNameKind() == DeclarationName::CXXOperatorName);
   assert(getDeclName().getCXXOverloadedOperator() == OO_New ||

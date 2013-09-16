@@ -21,6 +21,7 @@
 #include "clang/AST/TypeOrdering.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/PartialDiagnostic.h"
+#include "clang/Basic/TargetInfo.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Sema/Initialization.h"
 #include "clang/Sema/Lookup.h"
@@ -977,6 +978,10 @@ bool Sema::IsOverload(FunctionDecl *New, FunctionDecl *Old,
                       bool UseUsingDeclRules) {
   // C++ [basic.start.main]p2: This function shall not be overloaded.
   if (New->isMain())
+    return false;
+
+  // MSVCRT user defined entry points cannot be overloaded.
+  if (New->isMSVCRTEntryPoint())
     return false;
 
   FunctionTemplateDecl *OldTemplate = Old->getDescribedFunctionTemplate();
