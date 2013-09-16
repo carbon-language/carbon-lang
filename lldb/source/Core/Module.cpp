@@ -468,6 +468,10 @@ Module::ResolveSymbolContextForAddress (const Address& so_addr, uint32_t resolve
         sc.module_sp = shared_from_this();
         resolved_flags |= eSymbolContextModule;
 
+        SymbolVendor* sym_vendor = GetSymbolVendor();
+        if (!sym_vendor)
+            return resolved_flags;
+
         // Resolve the compile unit, function, block, line table or line
         // entry if requested.
         if (resolve_scope & eSymbolContextCompUnit    ||
@@ -475,25 +479,51 @@ Module::ResolveSymbolContextForAddress (const Address& so_addr, uint32_t resolve
             resolve_scope & eSymbolContextBlock       ||
             resolve_scope & eSymbolContextLineEntry   )
         {
-            SymbolVendor *symbols = GetSymbolVendor ();
-            if (symbols)
-                resolved_flags |= symbols->ResolveSymbolContext (so_addr, resolve_scope, sc);
+            resolved_flags |= sym_vendor->ResolveSymbolContext (so_addr, resolve_scope, sc);
         }
 
         // Resolve the symbol if requested, but don't re-look it up if we've already found it.
         if (resolve_scope & eSymbolContextSymbol && !(resolved_flags & eSymbolContextSymbol))
         {
-            SymbolVendor* sym_vendor = GetSymbolVendor();
-            if (sym_vendor)
+            Symtab *symtab = sym_vendor->GetSymtab();
+            if (symtab && so_addr.IsSectionOffset())
             {
-                Symtab *symtab = sym_vendor->GetSymtab();
-                if (symtab)
+                sc.symbol = symtab->FindSymbolContainingFileAddress(so_addr.GetFileAddress());
+                if (sc.symbol)
+                    resolved_flags |= eSymbolContextSymbol;
+            }
+        }
+
+        // For function symbols, so_addr may be off by one.  This is a convention consistent
+        // with FDE row indices in eh_frame sections, but requires extra logic here to permit
+        // symbol lookup for disassembly and unwind.
+        if (resolve_scope & eSymbolContextSymbol && !(resolved_flags & eSymbolContextSymbol) &&
+            resolve_scope & eSymbolContextFunction && !(resolved_flags & eSymbolContextFunction) &&
+            so_addr.GetOffset() > 0)
+        {
+            Address previous_addr = so_addr;
+            previous_addr.SetOffset(so_addr.GetOffset() - 1);
+
+            const uint32_t flags = sym_vendor->ResolveSymbolContext (previous_addr, resolve_scope, sc);
+            if (flags & eSymbolContextSymbol)
+            {
+                AddressRange addr_range;
+                if (sc.GetAddressRange (eSymbolContextFunction | eSymbolContextSymbol, 0, false, addr_range))
                 {
-                    if (so_addr.IsSectionOffset())
+                    if (addr_range.GetBaseAddress().GetSection() == so_addr.GetSection())
                     {
-                        sc.symbol = symtab->FindSymbolContainingFileAddress(so_addr.GetFileAddress());
-                        if (sc.symbol)
-                            resolved_flags |= eSymbolContextSymbol;
+                        // If the requested address is one past the address range of a function (i.e. a tail call),
+                        // or the decremented address is the start of a function (i.e. some forms of trampoline),
+                        // indicate that the symbol has been resolved.
+                        if (so_addr.GetOffset() == addr_range.GetBaseAddress().GetOffset() ||
+                            so_addr.GetOffset() == addr_range.GetBaseAddress().GetOffset() + addr_range.GetByteSize())
+                        {
+                            resolved_flags |= flags;
+                        }
+                    }
+                    else
+                    {
+                        sc.symbol = nullptr; // Don't trust the symbol if the sections didn't match.
                     }
                 }
             }

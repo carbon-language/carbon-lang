@@ -749,6 +749,38 @@ public:
     bool
     ResolveFileAddress (lldb::addr_t vm_addr, Address& so_addr);
 
+    //------------------------------------------------------------------
+    /// Resolve the symbol context for the given address.
+    ///
+    /// Tries to resolve the matching symbol context based on a lookup
+    /// from the current symbol vendor.  If the lazy lookup fails,
+    /// an attempt is made to parse the eh_frame section to handle 
+    /// stripped symbols.  If this fails, an attempt is made to resolve
+    /// the symbol to the previous address to handle the case of a 
+    /// function with a tail call.
+    ///
+    /// Use properties of the modified SymbolContext to inspect any
+    /// resolved target, module, compilation unit, symbol, function,
+    /// function block or line entry.  Use the return value to determine
+    /// which of these properties have been modified.
+    ///
+    /// @param[in] so_addr
+    ///     A load address to resolve.
+    ///
+    /// @param[in] resolve_scope
+    ///     The scope that should be resolved (see SymbolContext::Scope).
+    ///     A combination of flags from the enumeration SymbolContextItem
+    ///     requesting a resolution depth.  Note that the flags that are
+    ///     actually resolved may be a superset of the requested flags.
+    ///     For instance, eSymbolContextSymbol requires resolution of
+    ///     eSymbolContextModule, and eSymbolContextFunction requires
+    ///     eSymbolContextSymbol.
+    ///
+    /// @return
+    ///     The scope that has been resolved (see SymbolContext::Scope).
+    ///
+    /// @see SymbolContext::Scope
+    //------------------------------------------------------------------
     uint32_t
     ResolveSymbolContextForAddress (const Address& so_addr, uint32_t resolve_scope, SymbolContext& sc);
 
