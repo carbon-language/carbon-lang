@@ -1094,6 +1094,7 @@ def lldbLoggings():
     ci = lldb.DBG.GetCommandInterpreter()
     res = lldb.SBCommandReturnObject()
     if ("LLDB_LOG" in os.environ):
+        open(os.environ["LLDB_LOG"], 'w').close()
         if ("LLDB_LOG_OPTION" in os.environ):
             lldb_log_option = os.environ["LLDB_LOG_OPTION"]
         else:
@@ -1103,6 +1104,19 @@ def lldbLoggings():
             res)
         if not res.Succeeded():
             raise Exception('log enable failed (check LLDB_LOG env variable.')
+
+    if ("LLDB_LINUX_LOG" in os.environ):
+        open(os.environ["LLDB_LINUX_LOG"], 'w').close()
+        if ("LLDB_LINUX_LOG_OPTION" in os.environ):
+            lldb_log_option = os.environ["LLDB_LINUX_LOG_OPTION"]
+        else:
+            lldb_log_option = "event process expr state api"
+        ci.HandleCommand(
+            "log enable -n -f " + os.environ["LLDB_LINUX_LOG"] + " linux " + lldb_log_option,
+            res)
+        if not res.Succeeded():
+            raise Exception('log enable failed (check LLDB_LINUX_LOG env variable.')
+ 
     # Ditto for gdb-remote logging if ${GDB_REMOTE_LOG} environment variable is defined.
     # Use ${GDB_REMOTE_LOG} to specify the log file.
     if ("GDB_REMOTE_LOG" in os.environ):

@@ -193,10 +193,15 @@ private:
     lldb::pid_t m_pid;
     int m_terminal_fd;
 
+    // current operation which must be executed on the priviliged thread
+    Operation *m_operation;
+    lldb_private::Mutex m_operation_mutex;
 
-    lldb_private::Mutex m_server_mutex;
-    int m_client_fd;
-    int m_server_fd;
+    // semaphores notified when Operation is ready to be processed and when
+    // the operation is complete.
+    sem_t m_operation_pending;
+    sem_t m_operation_done;
+
 
     struct OperationArgs
     {
@@ -243,9 +248,6 @@ private:
 
     static bool
     Launch(LaunchArgs *args);
-
-    bool
-    EnableIPC();
 
     struct AttachArgs : OperationArgs
     {
@@ -309,9 +311,6 @@ private:
     /// Stops the operation thread used to attach/launch a process.
     void
     StopOpThread();
-
-    void
-    CloseFD(int &fd);
 };
 
 #endif // #ifndef liblldb_ProcessMonitor_H_
