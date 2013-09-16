@@ -159,11 +159,11 @@ public:
   /// calling convention of this function.  The enum values for the known
   /// calling conventions are defined in CallingConv.h.
   CallingConv::ID getCallingConv() const {
-    return static_cast<CallingConv::ID>(getSubclassDataFromValue() >> 1);
+    return static_cast<CallingConv::ID>(getSubclassDataFromValue() >> 2);
   }
   void setCallingConv(CallingConv::ID CC) {
-    setValueSubclassData((getSubclassDataFromValue() & 1) |
-                         (static_cast<unsigned>(CC) << 1));
+    setValueSubclassData((getSubclassDataFromValue() & 3) |
+                         (static_cast<unsigned>(CC) << 2));
   }
 
   /// @brief Return the attribute list for this Function.
@@ -426,6 +426,13 @@ public:
 
   size_t arg_size() const;
   bool arg_empty() const;
+
+  bool hasPrefixData() const {
+    return getSubclassDataFromValue() & 2;
+  }
+
+  Constant *getPrefixData() const;
+  void setPrefixData(Constant *PrefixData);
 
   /// viewCFG - This function is meant for use from the debugger.  You can just
   /// say 'call F->viewCFG()' and a ghostview window should pop up from the

@@ -632,7 +632,7 @@ static void WriteModuleInfo(const Module *M, const ValueEnumerator &VE,
   // Emit the function proto information.
   for (Module::const_iterator F = M->begin(), E = M->end(); F != E; ++F) {
     // FUNCTION:  [type, callingconv, isproto, linkage, paramattrs, alignment,
-    //             section, visibility, gc, unnamed_addr]
+    //             section, visibility, gc, unnamed_addr, prefix]
     Vals.push_back(VE.getTypeID(F->getType()));
     Vals.push_back(F->getCallingConv());
     Vals.push_back(F->isDeclaration());
@@ -643,6 +643,8 @@ static void WriteModuleInfo(const Module *M, const ValueEnumerator &VE,
     Vals.push_back(getEncodedVisibility(F));
     Vals.push_back(F->hasGC() ? GCMap[F->getGC()] : 0);
     Vals.push_back(F->hasUnnamedAddr());
+    Vals.push_back(F->hasPrefixData() ? (VE.getValueID(F->getPrefixData()) + 1)
+                                      : 0);
 
     unsigned AbbrevToUse = 0;
     Stream.EmitRecord(bitc::MODULE_CODE_FUNCTION, Vals, AbbrevToUse);
@@ -1863,6 +1865,8 @@ static void WriteModuleUseLists(const Module *M, ValueEnumerator &VE,
     WriteUseList(FI, VE, Stream);
     if (!FI->isDeclaration())
       WriteFunctionUseList(FI, VE, Stream);
+    if (FI->hasPrefixData())
+      WriteUseList(FI->getPrefixData(), VE, Stream);
   }
 
   // Write the aliases.

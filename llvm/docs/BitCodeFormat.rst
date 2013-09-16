@@ -718,7 +718,7 @@ global variable. The operand fields are:
 MODULE_CODE_FUNCTION Record
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``[FUNCTION, type, callingconv, isproto, linkage, paramattr, alignment, section, visibility, gc]``
+``[FUNCTION, type, callingconv, isproto, linkage, paramattr, alignment, section, visibility, gc, prefix]``
 
 The ``FUNCTION`` record (code 8) marks the declaration or definition of a
 function. The operand fields are:
@@ -756,6 +756,9 @@ function. The operand fields are:
 
 * *unnamed_addr*: If present and non-zero, indicates that the function has
   ``unnamed_addr``
+
+* *prefix*: If non-zero, the value index of the prefix data for this function,
+  plus 1.
 
 MODULE_CODE_ALIAS Record
 ^^^^^^^^^^^^^^^^^^^^^^^^

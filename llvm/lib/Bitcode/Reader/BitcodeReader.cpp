@@ -1106,9 +1106,11 @@ uint64_t BitcodeReader::decodeSignRotatedValue(uint64_t V) {
 bool BitcodeReader::ResolveGlobalAndAliasInits() {
   std::vector<std::pair<GlobalVariable*, unsigned> > GlobalInitWorklist;
   std::vector<std::pair<GlobalAlias*, unsigned> > AliasInitWorklist;
+  std::vector<std::pair<Function*, unsigned> > FunctionPrefixWorklist;
 
   GlobalInitWorklist.swap(GlobalInits);
   AliasInitWorklist.swap(AliasInits);
+  FunctionPrefixWorklist.swap(FunctionPrefixes);
 
   while (!GlobalInitWorklist.empty()) {
     unsigned ValID = GlobalInitWorklist.back().second;
@@ -1136,6 +1138,20 @@ bool BitcodeReader::ResolveGlobalAndAliasInits() {
     }
     AliasInitWorklist.pop_back();
   }
+
+  while (!FunctionPrefixWorklist.empty()) {
+    unsigned ValID = FunctionPrefixWorklist.back().second;
+    if (ValID >= ValueList.size()) {
+      FunctionPrefixes.push_back(FunctionPrefixWorklist.back());
+    } else {
+      if (Constant *C = dyn_cast<Constant>(ValueList[ValID]))
+        FunctionPrefixWorklist.back().first->setPrefixData(C);
+      else
+        return Error("Function prefix is not a constant!");
+    }
+    FunctionPrefixWorklist.pop_back();
+  }
+
   return false;
 }
 
@@ -1881,6 +1897,8 @@ bool BitcodeReader::ParseModule(bool Resume) {
       if (Record.size() > 9)
         UnnamedAddr = Record[9];
       Func->setUnnamedAddr(UnnamedAddr);
+      if (Record.size() > 10 && Record[10] != 0)
+        FunctionPrefixes.push_back(std::make_pair(Func, Record[10]-1));
       ValueList.push_back(Func);
 
       // If this is a function with a body, remember the prototype we are

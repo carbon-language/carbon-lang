@@ -44,6 +44,9 @@ void TypeFinder::run(const Module &M, bool onlyNamed) {
   for (Module::const_iterator FI = M.begin(), E = M.end(); FI != E; ++FI) {
     incorporateType(FI->getType());
 
+    if (FI->hasPrefixData())
+      incorporateValue(FI->getPrefixData());
+
     // First incorporate the arguments.
     for (Function::const_arg_iterator AI = FI->arg_begin(),
            AE = FI->arg_end(); AI != AE; ++AI)

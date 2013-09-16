@@ -60,6 +60,11 @@ ValueEnumerator::ValueEnumerator(const Module *M) {
        I != E; ++I)
     EnumerateValue(I->getAliasee());
 
+  // Enumerate the prefix data constants.
+  for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
+    if (I->hasPrefixData())
+      EnumerateValue(I->getPrefixData());
+
   // Insert constants and metadata that are named at module level into the slot
   // pool so that the module symbol table can refer to them...
   EnumerateValueSymbolTable(M->getValueSymbolTable());

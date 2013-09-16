@@ -179,6 +179,9 @@ void GlobalDCE::GlobalIsNeeded(GlobalValue *G) {
     // any globals used will be marked as needed.
     Function *F = cast<Function>(G);
 
+    if (F->hasPrefixData())
+      MarkUsedGlobalsAsNeeded(F->getPrefixData());
+
     for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
       for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
         for (User::op_iterator U = I->op_begin(), E = I->op_end(); U != E; ++U)
