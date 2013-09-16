@@ -163,21 +163,7 @@ const BlockAddress *ARMConstantPoolConstant::getBlockAddress() const {
 
 int ARMConstantPoolConstant::getExistingMachineCPValue(MachineConstantPool *CP,
                                                        unsigned Alignment) {
-  unsigned AlignMask = Alignment - 1;
-  const std::vector<MachineConstantPoolEntry> &Constants = CP->getConstants();
-  for (unsigned i = 0, e = Constants.size(); i != e; ++i) {
-    if (Constants[i].isMachineConstantPoolEntry() &&
-        (Constants[i].getAlignment() & AlignMask) == 0) {
-      ARMConstantPoolValue *CPV =
-        (ARMConstantPoolValue *)Constants[i].Val.MachineCPVal;
-      ARMConstantPoolConstant *APC = dyn_cast<ARMConstantPoolConstant>(CPV);
-      if (!APC) continue;
-      if (APC->CVal == CVal && equals(APC))
-        return i;
-    }
-  }
-
-  return -1;
+  return getExistingMachineCPValueImpl<ARMConstantPoolConstant>(CP, Alignment);
 }
 
 bool ARMConstantPoolConstant::hasSameValue(ARMConstantPoolValue *ACPV) {
@@ -216,22 +202,7 @@ ARMConstantPoolSymbol::Create(LLVMContext &C, const char *s,
 
 int ARMConstantPoolSymbol::getExistingMachineCPValue(MachineConstantPool *CP,
                                                      unsigned Alignment) {
-  unsigned AlignMask = Alignment - 1;
-  const std::vector<MachineConstantPoolEntry> &Constants = CP->getConstants();
-  for (unsigned i = 0, e = Constants.size(); i != e; ++i) {
-    if (Constants[i].isMachineConstantPoolEntry() &&
-        (Constants[i].getAlignment() & AlignMask) == 0) {
-      ARMConstantPoolValue *CPV =
-        (ARMConstantPoolValue *)Constants[i].Val.MachineCPVal;
-      ARMConstantPoolSymbol *APS = dyn_cast<ARMConstantPoolSymbol>(CPV);
-      if (!APS) continue;
-
-      if (APS->S == S && equals(APS))
-        return i;
-    }
-  }
-
-  return -1;
+  return getExistingMachineCPValueImpl<ARMConstantPoolSymbol>(CP, Alignment);
 }
 
 bool ARMConstantPoolSymbol::hasSameValue(ARMConstantPoolValue *ACPV) {
@@ -271,22 +242,7 @@ ARMConstantPoolMBB *ARMConstantPoolMBB::Create(LLVMContext &C,
 
 int ARMConstantPoolMBB::getExistingMachineCPValue(MachineConstantPool *CP,
                                                   unsigned Alignment) {
-  unsigned AlignMask = Alignment - 1;
-  const std::vector<MachineConstantPoolEntry> &Constants = CP->getConstants();
-  for (unsigned i = 0, e = Constants.size(); i != e; ++i) {
-    if (Constants[i].isMachineConstantPoolEntry() &&
-        (Constants[i].getAlignment() & AlignMask) == 0) {
-      ARMConstantPoolValue *CPV =
-        (ARMConstantPoolValue *)Constants[i].Val.MachineCPVal;
-      ARMConstantPoolMBB *APMBB = dyn_cast<ARMConstantPoolMBB>(CPV);
-      if (!APMBB) continue;
-
-      if (APMBB->MBB == MBB && equals(APMBB))
-        return i;
-    }
-  }
-
-  return -1;
+  return getExistingMachineCPValueImpl<ARMConstantPoolMBB>(CP, Alignment);
 }
 
 bool ARMConstantPoolMBB::hasSameValue(ARMConstantPoolValue *ACPV) {

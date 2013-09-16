@@ -15,6 +15,7 @@
 #define LLVM_TARGET_ARM_CONSTANTPOOLVALUE_H
 
 #include "llvm/CodeGen/MachineConstantPool.h"
+#include "llvm/Support/Casting.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <cstddef>
 
@@ -64,6 +65,26 @@ protected:
   ARMConstantPoolValue(LLVMContext &C, unsigned id, ARMCP::ARMCPKind Kind,
                        unsigned char PCAdj, ARMCP::ARMCPModifier Modifier,
                        bool AddCurrentAddress);
+
+  template <typename Derived>
+  int getExistingMachineCPValueImpl(MachineConstantPool *CP,
+                                    unsigned Alignment) {
+    unsigned AlignMask = Alignment - 1;
+    const std::vector<MachineConstantPoolEntry> &Constants = CP->getConstants();
+    for (unsigned i = 0, e = Constants.size(); i != e; ++i) {
+      if (Constants[i].isMachineConstantPoolEntry() &&
+          (Constants[i].getAlignment() & AlignMask) == 0) {
+        ARMConstantPoolValue *CPV =
+            (ARMConstantPoolValue *)Constants[i].Val.MachineCPVal;
+        if (Derived *APC = dyn_cast<Derived>(CPV))
+          if (cast<Derived>(this)->equals(APC))
+            return i;
+      }
+    }
+
+    return -1;
+  }
+
 public:
   virtual ~ARMConstantPoolValue();
 
@@ -156,6 +177,10 @@ public:
   static bool classof(const ARMConstantPoolValue *APV) {
     return APV->isGlobalValue() || APV->isBlockAddress() || APV->isLSDA();
   }
+
+  bool equals(const ARMConstantPoolConstant *A) const {
+    return CVal == A->CVal && ARMConstantPoolValue::equals(A);
+  }
 };
 
 /// ARMConstantPoolSymbol - ARM-specific constantpool values for external
@@ -186,6 +211,10 @@ public:
 
   static bool classof(const ARMConstantPoolValue *ACPV) {
     return ACPV->isExtSymbol();
+  }
+
+  bool equals(const ARMConstantPoolSymbol *A) const {
+    return S == A->S && ARMConstantPoolValue::equals(A);
   }
 };
 
@@ -218,6 +247,10 @@ public:
 
   static bool classof(const ARMConstantPoolValue *ACPV) {
     return ACPV->isMachineBasicBlock();
+  }
+
+  bool equals(const ARMConstantPoolMBB *A) const {
+    return MBB == A->MBB && ARMConstantPoolValue::equals(A);
   }
 };
 
