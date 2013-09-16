@@ -5,7 +5,7 @@
 # RUN:   && llvm-readobj -file-headers %t1 | FileCheck -check-prefix=FILE %s
 
 FILE: ImageOptionalHeader {
-FILE:   SizeOfInitializedData: 512
+FILE:   SizeOfInitializedData: 1024
 FILE: }
 
 # RUN: lld -flavor link /out:%t1 /subsystem:console /force /opt:noref \

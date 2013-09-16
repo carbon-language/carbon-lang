@@ -474,6 +474,10 @@ public:
     return _sectionHeader;
   }
 
+  ulittle32_t getSectionCharacteristics() {
+    return _sectionHeader.Characteristics;
+  }
+
   void appendAtom(const DefinedAtom *atom) {
     // Atom may have to be at a proper alignment boundary. If so, move the
     // pointer to make a room after the last atom before adding new one.
@@ -815,7 +819,7 @@ public:
 
     // Now that we know the size and file offset of sections. Set the file
     // header accordingly.
-    peHeader->setSizeOfCode(text->size());
+    peHeader->setSizeOfCode(calcSizeOfCode());
     if (text->size()) {
       peHeader->setBaseOfCode(text->getVirtualAddress());
     }
@@ -824,12 +828,33 @@ public:
     } else if (data->size()) {
       peHeader->setBaseOfData(data->getVirtualAddress());
     }
-    peHeader->setSizeOfInitializedData(rdata->size() + data->size());
-    peHeader->setSizeOfUninitializedData(bss->size());
+    peHeader->setSizeOfInitializedData(calcSizeOfInitializedData());
+    peHeader->setSizeOfUninitializedData(calcSizeOfUninitializedData());
     peHeader->setNumberOfSections(_numSections);
     peHeader->setSizeOfImage(_imageSizeInMemory);
 
     setAddressOfEntryPoint(text, peHeader);
+  }
+
+  uint64_t calcSectionSize(llvm::COFF::SectionCharacteristics sectionType) {
+    uint64_t ret = 0;
+    for (auto &cp : _chunks)
+      if (SectionChunk *chunk = dyn_cast<SectionChunk>(&*cp))
+        if (chunk->getSectionCharacteristics() & sectionType)
+          ret += chunk->size();
+    return ret;
+  }
+
+  uint64_t calcSizeOfInitializedData() {
+    return calcSectionSize(llvm::COFF::IMAGE_SCN_CNT_INITIALIZED_DATA);
+  }
+
+  uint64_t calcSizeOfUninitializedData() {
+    return calcSectionSize(llvm::COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA);
+  }
+
+  uint64_t calcSizeOfCode() {
+    return calcSectionSize(llvm::COFF::IMAGE_SCN_CNT_CODE);
   }
 
   virtual error_code writeFile(const File &linkedFile, StringRef path) {
