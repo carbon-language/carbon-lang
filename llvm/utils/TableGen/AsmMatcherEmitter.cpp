@@ -1065,7 +1065,7 @@ AsmMatcherInfo::getOperandClass(Record *Rec, int SubOpIdx) {
 }
 
 struct LessRegisterSet {
-  bool operator() (const RegisterSet &LHS, const RegisterSet & RHS) {
+  bool operator() (const RegisterSet &LHS, const RegisterSet & RHS) const {
     // std::set<T> defines its own compariso "operator<", but it
     // performs a lexicographical comparison by T's innate comparison
     // for some reason. We don't want non-deterministic pointer
