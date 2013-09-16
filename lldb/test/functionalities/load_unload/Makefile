@@ -1,51 +1,77 @@
-all: a.out liba.dylib libb.dylib libc.dylib libd.dylib
-
 CC ?= clang
 ifeq "$(ARCH)" ""
 	ARCH = x86_64
 endif
-CFLAGS ?=-arch $(ARCH) -g -O0
+
+ifeq "$(OS)" ""
+	OS = $(shell uname -s)
+endif
+
+CFLAGS ?= -g -O0
 CWD := $(shell pwd)
 
-all: a.out hidden/libd.dylib
+ifeq "$(OS)" "Darwin"
+	CFLAGS += -arch $(ARCH)
+	DS := dsymutil
+	LD_FLAGS := -dynamiclib
+	LIB_A := liba.dylib
+	LIB_B := libb.dylib
+	LIB_C := libc.dylib
+	LIB_D := libd.dylib
+	EXEC_PATH := "@executable_path"
+	EXEC_PATH_A := -install_name $(EXEC_PATH)/$(LIB_A)
+	EXEC_PATH_B := -install_name $(EXEC_PATH)/$(LIB_B)
+	EXEC_PATH_C := -install_name $(EXEC_PATH)/$(LIB_C)
+	EXEC_PATH_D := -install_name $(CWD)/$(LIB_D)
+else
+	CFLAGS += -fPIC
+	LD_FLAGS := -shared
+	LIB_DL := -ldl
+	LIB_A := liba.so
+	LIB_B := libb.so
+	LIB_C := libc.so
+	LIB_D := libd.so
+endif
 
-a.out: main.o libd.dylib
-	$(CC) $(CFLAGS) -o a.out main.o -L. -ld
+all: a.out $(LIB_A) $(LIB_B) $(LIB_C) $(LIB_D) hidden/$(LIB_D)
+
+a.out: main.o $(LIB_D)
+	$(CC) $(CFLAGS) -o a.out main.o -L. -ld $(LIB_DL)
 
 main.o: main.c
 	$(CC) $(CFLAGS) -c main.c
 
-hidden/libd.dylib: b.o
-	$(CC) $(CFLAGS) -dynamiclib -o hidden/libd.dylib d.o
-	dsymutil -o hidden/libd.dylib.dSYM hidden/libd.dylib
+hidden/$(LIB_D): b.o
+	$(CC) $(CFLAGS) $(LD_FLAGS) -o hidden/$(LIB_D) d.o
+	if [ "$(OS)" = "Darwin" ]; then dsymutil -o hidden/$(LIB_D).dSYM hidden/$(LIB_D); fi
 
-liba.dylib: a.o libb.dylib
-	$(CC) $(CFLAGS) -dynamiclib -install_name "@executable_path/liba.dylib" -o liba.dylib a.o -L. -lb
-	dsymutil liba.dylib
+$(LIB_A): a.o $(LIB_B)
+	$(CC) $(CFLAGS) $(LD_FLAGS) $(EXEC_PATH_A) -o $(LIB_A) a.o -L. -lb
+	if [ "$(OS)" = "Darwin" ]; then dsymutil $(LIB_A); fi
 
 a.o: a.c
 	$(CC) $(CFLAGS) -c a.c
 
-libb.dylib: b.o
-	$(CC) $(CFLAGS) -dynamiclib -install_name "@executable_path/libb.dylib" -o libb.dylib b.o
-	dsymutil libb.dylib
+$(LIB_B): b.o
+	$(CC) $(CFLAGS) $(LD_FLAGS) $(EXEC_PATH_B) -o $(LIB_B) b.o
+	if [ "$(OS)" = "Darwin" ]; then dsymutil $(LIB_B); fi
 
 b.o: b.c
 	$(CC) $(CFLAGS) -c b.c
 
-libc.dylib: c.o
-	$(CC) $(CFLAGS) -dynamiclib -install_name "@executable_path/libc.dylib" -o libc.dylib c.o
-	dsymutil libc.dylib
+$(LIB_C): c.o
+	$(CC) $(CFLAGS) $(LD_FLAGS) $(EXEC_PATH_C) -o $(LIB_C) c.o
+	if [ "$(OS)" = "Darwin" ]; then dsymutil $(LIB_C); fi
 
 c.o: c.c
 	$(CC) $(CFLAGS) -c c.c
 
-libd.dylib: d.o
-	$(CC) $(CFLAGS) -dynamiclib -install_name "$(CWD)/libd.dylib" -o libd.dylib d.o
-	dsymutil libd.dylib
+$(LIB_D): d.o
+	$(CC) $(CFLAGS) $(LD_FLAGS) $(EXEC_PATH_D) -o $(LIB_D) d.o
+	if [ "$(OS)" = "Darwin" ]; then dsymutil $(LIB_D); fi
 
 d.o: d.c
 	$(CC) $(CFLAGS) -c d.c
 
 clean:
-	rm -rf *.o *~ *.dylib a.out *.dSYM hidden/*
+	rm -rf *.o *~ *.dylib *.so a.out *.dSYM hidden/*
