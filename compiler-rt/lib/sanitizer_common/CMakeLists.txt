@@ -96,7 +96,8 @@ else()
       SOURCES $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
               $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>
       CFLAGS ${SANITIZER_CFLAGS})
-    list(APPEND SANITIZER_RUNTIME_LIBRARIES RTSanitizerCommon.${arch})
+    list(APPEND SANITIZER_RUNTIME_LIBRARIES RTSanitizerCommon.${arch}
+                                            RTSanitizerCommonLibc.${arch})
   endforeach()
 endif()
 
