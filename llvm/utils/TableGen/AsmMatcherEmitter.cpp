@@ -616,7 +616,7 @@ public:
   RegisterClassesTy RegisterClasses;
 
   /// Map of Predicate records to their subtarget information.
-  std::map<Record*, SubtargetFeatureInfo*> SubtargetFeatures;
+  std::map<Record*, SubtargetFeatureInfo*, LessRecordByID> SubtargetFeatures;
 
   /// Map of AsmOperandClass records to their class information.
   std::map<Record*, ClassInfo*> AsmOperandClasses;
@@ -666,7 +666,7 @@ public:
   /// given operand.
   SubtargetFeatureInfo *getSubtargetFeature(Record *Def) const {
     assert(Def->isSubClassOf("Predicate") && "Invalid predicate type!");
-    std::map<Record*, SubtargetFeatureInfo*>::const_iterator I =
+    std::map<Record*, SubtargetFeatureInfo*, LessRecordByID>::const_iterator I =
       SubtargetFeatures.find(Def);
     return I == SubtargetFeatures.end() ? 0 : I->second;
   }
@@ -2189,7 +2189,7 @@ static void emitSubtargetFeatureFlagEnumeration(AsmMatcherInfo &Info,
   OS << "// Flags for subtarget features that participate in "
      << "instruction matching.\n";
   OS << "enum SubtargetFeatureFlag {\n";
-  for (std::map<Record*, SubtargetFeatureInfo*>::const_iterator
+  for (std::map<Record*, SubtargetFeatureInfo*, LessRecordByID>::const_iterator
          it = Info.SubtargetFeatures.begin(),
          ie = Info.SubtargetFeatures.end(); it != ie; ++it) {
     SubtargetFeatureInfo &SFI = *it->second;
@@ -2227,9 +2227,9 @@ static void emitGetSubtargetFeatureName(AsmMatcherInfo &Info, raw_ostream &OS) {
      << "static const char *getSubtargetFeatureName(unsigned Val) {\n";
   if (!Info.SubtargetFeatures.empty()) {
     OS << "  switch(Val) {\n";
-    for (std::map<Record*, SubtargetFeatureInfo*>::const_iterator
-           it = Info.SubtargetFeatures.begin(),
-           ie = Info.SubtargetFeatures.end(); it != ie; ++it) {
+    typedef std::map<Record*, SubtargetFeatureInfo*, LessRecordByID> RecFeatMap;
+    for (RecFeatMap::const_iterator it = Info.SubtargetFeatures.begin(),
+             ie = Info.SubtargetFeatures.end(); it != ie; ++it) {
       SubtargetFeatureInfo &SFI = *it->second;
       // FIXME: Totally just a placeholder name to get the algorithm working.
       OS << "  case " << SFI.getEnumName() << ": return \""
@@ -2254,7 +2254,7 @@ static void emitComputeAvailableFeatures(AsmMatcherInfo &Info,
   OS << "unsigned " << Info.Target.getName() << ClassName << "::\n"
      << "ComputeAvailableFeatures(uint64_t FB) const {\n";
   OS << "  unsigned Features = 0;\n";
-  for (std::map<Record*, SubtargetFeatureInfo*>::const_iterator
+  for (std::map<Record*, SubtargetFeatureInfo*, LessRecordByID>::const_iterator
          it = Info.SubtargetFeatures.begin(),
          ie = Info.SubtargetFeatures.end(); it != ie; ++it) {
     SubtargetFeatureInfo &SFI = *it->second;
