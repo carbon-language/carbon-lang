@@ -2866,6 +2866,12 @@ bool LoopVectorizationLegality::canVectorizeInstrs() {
 
           DEBUG(dbgs() << "LV: Found an induction variable.\n");
           Inductions[Phi] = InductionInfo(StartValue, IK);
+
+          // Until we explicitly handle the case of an induction variable with
+          // an outside loop user we have to give up vectorizing this loop.
+          if (hasOutsideLoopUser(TheLoop, it, AllowedExit))
+            return false;
+
           continue;
         }
 
