@@ -601,6 +601,7 @@ def Ownership : InheritableAttr {
                     ["ownership_holds", "ownership_returns", "ownership_takes"],
                     ["Holds", "Returns", "Takes"]>,
               StringArgument<"Module">, VariadicUnsignedArgument<"Args">];
+  let HasCustomParsing = 1;
 }
 
 def Packed : InheritableAttr {

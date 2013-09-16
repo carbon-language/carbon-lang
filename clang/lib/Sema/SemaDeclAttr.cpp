@@ -1387,45 +1387,52 @@ static void handleNonNullAttr(Sema &S, Decl *D, const AttributeList &Attr) {
                          Attr.getAttributeSpellingListIndex()));
 }
 
+static const char *ownershipKindToDiagName(OwnershipAttr::OwnershipKind K) {
+  switch (K) {
+    case OwnershipAttr::Holds:    return "'ownership_holds'";
+    case OwnershipAttr::Takes:    return "'ownership_takes'";
+    case OwnershipAttr::Returns:  return "'ownership_returns'";
+  }
+  llvm_unreachable("unknown ownership");
+}
+
 static void handleOwnershipAttr(Sema &S, Decl *D, const AttributeList &AL) {
-  // This attribute must be applied to a function declaration.
-  // The first argument to the attribute must be a string,
-  // the name of the resource, for example "malloc".
-  // The following arguments must be argument indexes, the arguments must be
-  // of integer type for Returns, otherwise of pointer type.
+  // This attribute must be applied to a function declaration. The first
+  // argument to the attribute must be an identifier, the name of the resource,
+  // for example: malloc. The following arguments must be argument indexes, the
+  // arguments must be of integer type for Returns, otherwise of pointer type.
   // The difference between Holds and Takes is that a pointer may still be used
-  // after being held.  free() should be __attribute((ownership_takes)), whereas
+  // after being held. free() should be __attribute((ownership_takes)), whereas
   // a list append function may well be __attribute((ownership_holds)).
 
   if (!AL.isArgIdent(0)) {
     S.Diag(AL.getLoc(), diag::err_attribute_argument_n_type)
-      << AL.getName()->getName() << 1 << AANT_ArgumentString;
+      << AL.getName() << 1 << AANT_ArgumentIdentifier;
     return;
   }
+
   // Figure out our Kind, and check arguments while we're at it.
   OwnershipAttr::OwnershipKind K;
   switch (AL.getKind()) {
   case AttributeList::AT_ownership_takes:
     K = OwnershipAttr::Takes;
     if (AL.getNumArgs() < 2) {
-      S.Diag(AL.getLoc(), diag::err_attribute_wrong_number_arguments)
-        << AL.getName() << 2;
+      S.Diag(AL.getLoc(), diag::err_attribute_too_few_arguments) << 2;
       return;
     }
     break;
   case AttributeList::AT_ownership_holds:
     K = OwnershipAttr::Holds;
     if (AL.getNumArgs() < 2) {
-      S.Diag(AL.getLoc(), diag::err_attribute_wrong_number_arguments)
-        << AL.getName() << 2;
+      S.Diag(AL.getLoc(), diag::err_attribute_too_few_arguments) << 2;
       return;
     }
     break;
   case AttributeList::AT_ownership_returns:
     K = OwnershipAttr::Returns;
+
     if (AL.getNumArgs() > 2) {
-      S.Diag(AL.getLoc(), diag::err_attribute_wrong_number_arguments)
-        << AL.getName() << AL.getNumArgs() + 2;
+      S.Diag(AL.getLoc(), diag::err_attribute_too_many_arguments) << 1;
       return;
     }
     break;
@@ -1446,7 +1453,6 @@ static void handleOwnershipAttr(Sema &S, Decl *D, const AttributeList &AL) {
   if (Module.startswith("__") && Module.endswith("__"))
     Module = Module.substr(2, Module.size() - 4);
 
-
   SmallVector<unsigned, 8> OwnershipArgs;
   for (unsigned i = 1; i < AL.getNumArgs(); ++i) {
     Expr *Ex = AL.getArgAsExpr(i);
@@ -1455,51 +1461,35 @@ static void handleOwnershipAttr(Sema &S, Decl *D, const AttributeList &AL) {
                                             AL.getLoc(), i, Ex, Idx))
       return;
 
+    // Is the function argument a pointer type?
+    QualType T = getFunctionOrMethodArgType(D, Idx);
+    int Err = -1;  // No error
     switch (K) {
-    case OwnershipAttr::Takes:
-    case OwnershipAttr::Holds: {
-      // Is the function argument a pointer type?
-      QualType T = getFunctionOrMethodArgType(D, Idx);
-      if (!T->isAnyPointerType() && !T->isBlockPointerType()) {
-        // FIXME: Should also highlight argument in decl.
-        S.Diag(AL.getLoc(), diag::err_ownership_type)
-            << ((K==OwnershipAttr::Takes)?"ownership_takes":"ownership_holds")
-            << "pointer"
-            << Ex->getSourceRange();
-        continue;
-      }
-      break;
+      case OwnershipAttr::Takes:
+      case OwnershipAttr::Holds:
+        if (!T->isAnyPointerType() && !T->isBlockPointerType())
+          Err = 0;
+        break;
+      case OwnershipAttr::Returns:
+        if (!T->isIntegerType())
+          Err = 1;
+        break;
     }
-    case OwnershipAttr::Returns: {
-      if (AL.getNumArgs() > 2) {
-          // Is the function argument an integer type?
-          Expr *IdxExpr = AL.getArgAsExpr(1);
-          llvm::APSInt ArgNum(32);
-          if (IdxExpr->isTypeDependent() || IdxExpr->isValueDependent()
-              || !IdxExpr->isIntegerConstantExpr(ArgNum, S.Context)) {
-            S.Diag(AL.getLoc(), diag::err_ownership_type)
-                << "ownership_returns" << "integer"
-                << IdxExpr->getSourceRange();
-            return;
-          }
-      }
-      break;
+    if (-1 != Err) {
+      S.Diag(AL.getLoc(), diag::err_ownership_type) << AL.getName() << Err
+        << Ex->getSourceRange();
+      return;
     }
-    } // switch
 
     // Check we don't have a conflict with another ownership attribute.
     for (specific_attr_iterator<OwnershipAttr>
-          i = D->specific_attr_begin<OwnershipAttr>(),
-          e = D->specific_attr_end<OwnershipAttr>();
-        i != e; ++i) {
-      if ((*i)->getOwnKind() != K) {
-        for (const unsigned *I = (*i)->args_begin(), *E = (*i)->args_end();
-             I!=E; ++I) {
-          if (Idx == *I) {
-            S.Diag(AL.getLoc(), diag::err_attributes_are_not_compatible)
-                << AL.getName()->getName() << "ownership_*";
-          }
-        }
+         i = D->specific_attr_begin<OwnershipAttr>(),
+         e = D->specific_attr_end<OwnershipAttr>(); i != e; ++i) {
+      if ((*i)->getOwnKind() != K && (*i)->args_end() !=
+          std::find((*i)->args_begin(), (*i)->args_end(), Idx)) {
+        S.Diag(AL.getLoc(), diag::err_attributes_are_not_compatible)
+          << AL.getName() << ownershipKindToDiagName((*i)->getOwnKind());
+        return;
       }
     }
     OwnershipArgs.push_back(Idx);
@@ -1508,12 +1498,6 @@ static void handleOwnershipAttr(Sema &S, Decl *D, const AttributeList &AL) {
   unsigned* start = OwnershipArgs.data();
   unsigned size = OwnershipArgs.size();
   llvm::array_pod_sort(start, start + size);
-
-  if (K != OwnershipAttr::Returns && OwnershipArgs.empty()) {
-    S.Diag(AL.getLoc(), diag::err_attribute_wrong_number_arguments)
-      << AL.getName() << 2;
-    return;
-  }
 
   D->addAttr(::new (S.Context)
              OwnershipAttr(AL.getLoc(), S.Context, K, Module, start, size,

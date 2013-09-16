@@ -1829,7 +1829,7 @@ def err_attribute_no_member_pointers : Error<
 def err_attribute_invalid_implicit_this_argument : Error<
   "'%0' attribute is invalid for the implicit this argument">;
 def err_ownership_type : Error<
-  "%0 attribute only applies to %1 arguments">;
+  "%0 attribute only applies to %select{pointer|integer}1 arguments">;
 def err_format_strftime_third_parameter : Error<
   "strftime format attribute requires 3rd parameter to be 0">;
 def err_format_attribute_requires_variadic : Error<
