@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple arm-none-linux-gnueabi %s -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 -triple arm-none-linux-gnueabi -target-feature +neon %s -emit-llvm -o - | FileCheck %s
 
 typedef float float32_t;
 typedef __fp16 float16_t;

@@ -1,5 +1,5 @@
 // REQUIRES: aarch64-registered-target
-// RUN: %clang_cc1 -triple aarch64-none-linux-gnu  %s -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 -triple aarch64-none-linux-gnu -target-feature +neon %s -emit-llvm -o - | FileCheck %s
 
 typedef unsigned char uint8_t;
 typedef unsigned short uint16_t;

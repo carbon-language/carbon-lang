@@ -4735,6 +4735,12 @@ static bool isPermittedNeonBaseType(QualType &Ty,
 static void HandleNeonVectorTypeAttr(QualType& CurType,
                                      const AttributeList &Attr, Sema &S,
                                      VectorType::VectorKind VecKind) {
+  // Target must have NEON
+  if (!S.Context.getTargetInfo().hasFeature("neon")) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_unsupported) << Attr.getName();
+    Attr.setInvalid();
+    return;
+  }
   // Check the attribute arguments.
   if (Attr.getNumArgs() != 1) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)

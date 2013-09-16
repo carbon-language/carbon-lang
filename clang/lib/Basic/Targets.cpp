@@ -3711,9 +3711,7 @@ public:
         .Case("arm", true)
         .Case("softfloat", SoftFloat)
         .Case("thumb", IsThumb)
-        .Case("neon", (FPU & NeonFPU) && !SoftFloat &&
-              (StringRef(getCPUDefineSuffix(CPU)).startswith("7") ||
-               StringRef(getCPUDefineSuffix(CPU)).startswith("8")))
+        .Case("neon", (FPU & NeonFPU) && !SoftFloat)
         .Default(false);
   }
   // FIXME: Should we actually have some table instead of these switches?

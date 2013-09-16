@@ -1,5 +1,5 @@
 // REQUIRES: arm-registered-target
-// RUN: %clang_cc1 -triple armv7 %s -emit-llvm -o /dev/null
+// RUN: %clang_cc1 -triple armv7 -target-feature +neon %s -emit-llvm -o /dev/null
 
 char bar();
 
