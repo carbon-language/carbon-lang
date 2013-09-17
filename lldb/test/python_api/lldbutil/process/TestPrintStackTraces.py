@@ -19,7 +19,7 @@ class ThreadsStackTracesTestCase(TestBase):
         self.line = line_number('main.cpp', '// Set break point at this line.')
 
     @expectedFailureFreeBSD("llvm.org/pr16696") # live debugging lacks threaded inferior support
-    @expectedFailureLinux # llvm.org/pr14323
+    @expectedFailureLinux # llvm.org/pr15415 -- partial stack trace in thread 1 (while stopped inside a read() call)
     @python_api_test
     def test_stack_traces(self):
         """Test SBprocess and SBThread APIs with printing of the stack traces."""
