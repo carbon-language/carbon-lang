@@ -43,7 +43,7 @@ class ObjCMigrateASTConsumer : public ASTConsumer {
   };
   
   void migrateDecl(Decl *D);
-  void migrateObjCInterfaceDecl(ASTContext &Ctx, ObjCInterfaceDecl *D);
+  void migrateObjCInterfaceDecl(ASTContext &Ctx, ObjCContainerDecl *D);
   void migrateProtocolConformance(ASTContext &Ctx,
                                   const ObjCImplementationDecl *ImpDecl);
   void migrateNSEnumDecl(ASTContext &Ctx, const EnumDecl *EnumDcl,
@@ -51,7 +51,7 @@ class ObjCMigrateASTConsumer : public ASTConsumer {
   void migrateMethods(ASTContext &Ctx, ObjCContainerDecl *CDecl);
   void migrateMethodInstanceType(ASTContext &Ctx, ObjCContainerDecl *CDecl,
                                  ObjCMethodDecl *OM);
-  bool migrateProperty(ASTContext &Ctx, ObjCInterfaceDecl *D, ObjCMethodDecl *OM);
+  bool migrateProperty(ASTContext &Ctx, ObjCContainerDecl *D, ObjCMethodDecl *OM);
   void migrateNsReturnsInnerPointer(ASTContext &Ctx, ObjCMethodDecl *OM);
   void migrateFactoryMethod(ASTContext &Ctx, ObjCContainerDecl *CDecl,
                             ObjCMethodDecl *OM,
@@ -339,7 +339,7 @@ static bool rewriteToObjCProperty(const ObjCMethodDecl *Getter,
 }
 
 void ObjCMigrateASTConsumer::migrateObjCInterfaceDecl(ASTContext &Ctx,
-                                                      ObjCInterfaceDecl *D) {
+                                                      ObjCContainerDecl *D) {
   for (ObjCContainerDecl::method_iterator M = D->meth_begin(), MEnd = D->meth_end();
        M != MEnd; ++M) {
     ObjCMethodDecl *Method = (*M);
@@ -716,7 +716,7 @@ static bool TypeIsInnerPointer(QualType T) {
 }
 
 bool ObjCMigrateASTConsumer::migrateProperty(ASTContext &Ctx,
-                             ObjCInterfaceDecl *D,
+                             ObjCContainerDecl *D,
                              ObjCMethodDecl *Method) {
   if (Method->isPropertyAccessor() || !Method->isInstanceMethod() ||
       Method->param_size() != 0)
@@ -735,7 +735,7 @@ bool ObjCMigrateASTConsumer::migrateProperty(ASTContext &Ctx,
   SelectorTable::constructSetterSelector(PP.getIdentifierTable(),
                                          PP.getSelectorTable(),
                                          getterName);
-  ObjCMethodDecl *SetterMethod = D->lookupMethod(SetterSelector, true);
+  ObjCMethodDecl *SetterMethod = D->getInstanceMethod(SetterSelector);
   unsigned LengthOfPrefix = 0;
   if (!SetterMethod) {
     // try a different naming convention for getter: isXxxxx
@@ -755,7 +755,7 @@ bool ObjCMigrateASTConsumer::migrateProperty(ASTContext &Ctx,
         SelectorTable::constructSetterSelector(PP.getIdentifierTable(),
                                                PP.getSelectorTable(),
                                                getterName);
-        SetterMethod = D->lookupMethod(SetterSelector, true);
+        SetterMethod = D->getInstanceMethod(SetterSelector);
       }
     }
   }
@@ -1237,6 +1237,8 @@ void ObjCMigrateASTConsumer::HandleTranslationUnit(ASTContext &Ctx) {
           
       if (ObjCInterfaceDecl *CDecl = dyn_cast<ObjCInterfaceDecl>(*D))
         migrateObjCInterfaceDecl(Ctx, CDecl);
+      if (ObjCCategoryDecl *CatDecl = dyn_cast<ObjCCategoryDecl>(*D))
+        migrateObjCInterfaceDecl(Ctx, CatDecl);
       else if (ObjCProtocolDecl *PDecl = dyn_cast<ObjCProtocolDecl>(*D))
         ObjCProtocolDecls.insert(PDecl);
       else if (const ObjCImplementationDecl *ImpDecl =

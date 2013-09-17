@@ -115,3 +115,46 @@ typedef char BOOL;
 @end
 
 
+@interface NSInvocation(CAT)
+- (id)target;
+- (void)setTarget:(id)target;
+
+- (id) dataSource;
+
+- (id)xxxdelegateYYY;
+- (void)setXxxdelegateYYY:(id)delegate;
+
+- (void)setDataSource:(id)source;
+
+- (id)MYtarget;
+- (void)setMYtarget: (id)target;
+
+- (id)targetX;
+- (void)setTargetX: (id)t;
+
+- (int)value;
+- (void)setValue: (int)val;
+
+-(BOOL) isContinuous;
+-(void) setContinuous:(BOOL)value;
+
+- (id) isAnObject;
+- (void)setAnObject : (id) object;
+
+- (BOOL) isinValid;
+- (void) setInValid : (BOOL) arg;
+
+- (void) Nothing;
+- (int) Length;
+- (id) object;
++ (double) D;
+
+- (BOOL)is3bar; // watch out
+- (NSString *)get3foo; // watch out
+
+- (BOOL) getM;
+- (BOOL) getMA;
+- (BOOL) getALL;
+- (BOOL) getMANY;
+- (BOOL) getSome;
+@end

@@ -115,3 +115,46 @@ typedef char BOOL;
 @end
 
 
+@interface NSInvocation(CAT)
+@property(nonatomic, unsafe_unretained) id target;
+
+
+@property(nonatomic, unsafe_unretained) id dataSource;
+
+@property(nonatomic, unsafe_unretained) id xxxdelegateYYY;
+
+
+
+
+@property(nonatomic, retain) id MYtarget;
+
+
+@property(nonatomic, retain) id targetX;
+
+
+@property(nonatomic) int value;
+
+
+@property(nonatomic, getter=isContinuous) BOOL continuous;
+
+
+@property(nonatomic, readonly) id isAnObject;
+- (void)setAnObject : (id) object;
+
+@property(nonatomic, getter=isinValid, readonly) BOOL inValid;
+- (void) setInValid : (BOOL) arg;
+
+- (void) Nothing;
+@property(nonatomic, readonly) int Length;
+@property(nonatomic, readonly) id object;
++ (double) D;
+
+- (BOOL)is3bar; // watch out
+- (NSString *)get3foo; // watch out
+
+@property(nonatomic, getter=getM, readonly) BOOL m;
+@property(nonatomic, getter=getMA, readonly) BOOL MA;
+@property(nonatomic, getter=getALL, readonly) BOOL ALL;
+@property(nonatomic, getter=getMANY, readonly) BOOL MANY;
+@property(nonatomic, getter=getSome, readonly) BOOL some;
+@end
