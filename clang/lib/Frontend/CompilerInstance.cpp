@@ -1186,15 +1186,9 @@ CompilerInstance::loadModule(SourceLocation ImportLoc,
     case ASTReader::Success:
       break;
 
-    case ASTReader::OutOfDate: {
-      // The module file is out-of-date. Remove it, then rebuild it.
-      bool Existed;
-      llvm::sys::fs::remove(ModuleFileName, Existed);
-    }
-    // Fall through to build the module again.
-
+    case ASTReader::OutOfDate:
     case ASTReader::Missing: {
-      // The module file is (now) missing. Build it.
+      // The module file is missing or out-of-date. Build it.
 
       // If we don't have a module, we don't know how to build the module file.
       // Complain and return.
