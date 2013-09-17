@@ -685,8 +685,14 @@ const PseudoObjectExpr *ObjCMethodCall::getContainingPseudoObjectExpr() const {
 
 ObjCMessageKind ObjCMethodCall::getMessageKind() const {
   if (Data == 0) {
+
+    // Find the parent, ignoring implicit casts.
     ParentMap &PM = getLocationContext()->getParentMap();
     const Stmt *S = PM.getParent(getOriginExpr());
+    while (isa<ImplicitCastExpr>(S))
+      S = PM.getParent(S);
+
+    // Check if parent is a PseudoObjectExpr.
     if (const PseudoObjectExpr *POE = dyn_cast_or_null<PseudoObjectExpr>(S)) {
       const Expr *Syntactic = POE->getSyntacticForm();
 
