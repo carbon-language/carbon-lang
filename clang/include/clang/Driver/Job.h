@@ -24,8 +24,6 @@ class Action;
 class Command;
 class Tool;
 
-using llvm::opt::ArgStringList;
-
 class Job {
 public:
   enum JobClass {
