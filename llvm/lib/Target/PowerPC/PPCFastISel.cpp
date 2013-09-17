@@ -1821,10 +1821,19 @@ unsigned PPCFastISel::PPCMaterializeFP(const ConstantFP *CFP, MVT VT) {
     // Otherwise we generate LF[SD](Idx[lo], ADDIStocHA(X2, Idx)).
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(PPC::ADDIStocHA),
             TmpReg).addReg(PPC::X2).addConstantPoolIndex(Idx);
-    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(Opc), DestReg)
-      .addConstantPoolIndex(Idx, 0, PPCII::MO_TOC_LO)
-      .addReg(TmpReg)
-      .addMemOperand(MMO);
+    // But for large code model, we must generate a LDtocL followed
+    // by the LF[SD].
+    if (CModel == CodeModel::Large) {
+      unsigned TmpReg2 = createResultReg(&PPC::G8RC_and_G8RC_NOX0RegClass);
+      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(PPC::LDtocL),
+              TmpReg2).addConstantPoolIndex(Idx).addReg(TmpReg);
+      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(Opc), DestReg)
+        .addImm(0).addReg(TmpReg2);
+    } else 
+      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(Opc), DestReg)
+        .addConstantPoolIndex(Idx, 0, PPCII::MO_TOC_LO)
+        .addReg(TmpReg)
+        .addMemOperand(MMO);
   }
 
   return DestReg;

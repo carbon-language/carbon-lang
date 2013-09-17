@@ -33,9 +33,11 @@ entry:
 ; LARGE: ld [[REG2:[0-9]+]], [[VAR]]@toc@l([[REG1]])
 ; LARGE: lwz {{[0-9]+}}, 0([[REG2]])
 ; LARGE: stw {{[0-9]+}}, 0([[REG2]])
-; LARGE: .type [[VAR]],@object
-; LARGE: .data
-; LARGE: .globl [[VAR]]
 ; LARGE: [[VAR]]:
+; LARGE: .tc [[VAR2:[a-z0-9A-Z_.]+]][TC],[[VAR2]]
+; LARGE: .type [[VAR2]],@object
+; LARGE: .data
+; LARGE: .globl [[VAR2]]
+; LARGE: [[VAR2]]:
 ; LARGE: .long 5
 

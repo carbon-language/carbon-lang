@@ -22,6 +22,6 @@ entry:
 ; LARGE: [[VAR:[a-z0-9A-Z_.]+]]:
 ; LARGE: .quad 4562098671269285104
 ; LARGE-LABEL: test_double_const:
-; LARGE: addis [[REG1:[0-9]+]], 2, [[VAR]]@toc@ha
-; LARGE: ld [[REG2:[0-9]+]], [[VAR]]@toc@l([[REG1]])
+; LARGE: addis [[REG1:[0-9]+]], 2, [[VAR2:[a-z0-9A-Z_.]+]]@toc@ha
+; LARGE: ld [[REG2:[0-9]+]], [[VAR2]]@toc@l([[REG1]])
 ; LARGE: lfd {{[0-9]+}}, 0([[REG2]])

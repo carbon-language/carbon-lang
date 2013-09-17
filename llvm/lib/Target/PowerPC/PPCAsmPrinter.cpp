@@ -413,7 +413,8 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     else if (MO.isJTI())
       MOSymbol = GetJTISymbol(MO.getIndex());
 
-    if (IsExternal || IsFunction || IsCommon || IsAvailExt || MO.isJTI())
+    if (IsExternal || IsFunction || IsCommon || IsAvailExt || MO.isJTI() ||
+        TM.getCodeModel() == CodeModel::Large)
       MOSymbol = lookUpOrCreateTOCEntry(MOSymbol);
 
     const MCExpr *Exp =
@@ -438,8 +439,11 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
 
     if (MO.isJTI())
       MOSymbol = lookUpOrCreateTOCEntry(GetJTISymbol(MO.getIndex()));
-    else if (MO.isCPI())
+    else if (MO.isCPI()) {
       MOSymbol = GetCPISymbol(MO.getIndex());
+      if (TM.getCodeModel() == CodeModel::Large)
+        MOSymbol = lookUpOrCreateTOCEntry(MOSymbol);
+    }
     else if (MO.isGlobal()) {
       const GlobalValue *GValue = MO.getGlobal();
       const GlobalAlias *GAlias = dyn_cast<GlobalAlias>(GValue);
@@ -449,7 +453,8 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
       const GlobalVariable *GVar = dyn_cast<GlobalVariable>(RealGValue);
     
       if (!GVar || !GVar->hasInitializer() || RealGValue->hasCommonLinkage() ||
-          RealGValue->hasAvailableExternallyLinkage())
+          RealGValue->hasAvailableExternallyLinkage() ||
+          TM.getCodeModel() == CodeModel::Large)
         MOSymbol = lookUpOrCreateTOCEntry(MOSymbol);
     }
 
@@ -486,7 +491,7 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     } else if (MO.isCPI())
       MOSymbol = GetCPISymbol(MO.getIndex());
 
-    if (IsFunction || IsExternal)
+    if (IsFunction || IsExternal || TM.getCodeModel() == CodeModel::Large)
       MOSymbol = lookUpOrCreateTOCEntry(MOSymbol);
 
     const MCExpr *Exp =
