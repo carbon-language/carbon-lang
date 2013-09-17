@@ -563,9 +563,15 @@ MicrosoftCXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND,
         break;
       }
 
-      // When VC encounters an anonymous type with no tag and no typedef,
-      // it literally emits '<unnamed-tag>@'.
-      Out << "<unnamed-tag>@";
+      if (TD->hasDeclaratorForAnonDecl())
+        // Anonymous types with no tag or typedef get the name of their
+        // declarator mangled in.
+        Out << "<unnamed-type-" << TD->getDeclaratorForAnonDecl()->getName()
+            << ">@";
+      else
+        // Anonymous types with no tag, no typedef, or declarator get
+        // '<unnamed-tag>@'.
+        Out << "<unnamed-tag>@";
       break;
     }
       
