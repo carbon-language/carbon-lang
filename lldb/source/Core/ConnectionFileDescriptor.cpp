@@ -152,7 +152,7 @@ ConnectionFileDescriptor::OpenCommandPipe ()
     if (result != 0)
     {
         if (log)
-            log->Printf ("%p ConnectionFileDescriptor::ConnectionFileDescriptor () - could not make pipe: %s",
+            log->Printf ("%p ConnectionFileDescriptor::OpenCommandPipe () - could not make pipe: %s",
                          this,
                          strerror(errno));
     }
@@ -160,12 +160,22 @@ ConnectionFileDescriptor::OpenCommandPipe ()
     {
         m_pipe_read  = filedes[0];
         m_pipe_write = filedes[1];
+        if (log)
+            log->Printf ("%p ConnectionFileDescriptor::OpenCommandPipe() - success readfd=%d writefd=%d",
+                         this,
+                         m_pipe_read,
+                         m_pipe_write);
     }
 }
 
 void
 ConnectionFileDescriptor::CloseCommandPipe ()
 {
+    Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION));
+    if (log)
+        log->Printf ("%p ConnectionFileDescriptor::CloseCommandPipe()",
+                     this);
+
     if (m_pipe_read != -1)
     {
         close (m_pipe_read);
@@ -365,13 +375,16 @@ ConnectionFileDescriptor::Disconnect (Error *error_ptr)
     {
         if (m_pipe_write != -1 )
         {
-            write (m_pipe_write, "q", 1);
-            close (m_pipe_write);
-            m_pipe_write = -1;
+            int result;
+            result = write (m_pipe_write, "q", 1);
+            if (log)
+                log->Printf ("%p ConnectionFileDescriptor::Disconnect(): Couldn't get the lock, sent 'q' to %d, result = %d.", this, m_pipe_write, result);
         }
+        else if (log)
+            log->Printf ("%p ConnectionFileDescriptor::Disconnect(): Couldn't get the lock, but no command pipe is available.", this);
         locker.Lock (m_mutex);
     }
-    
+
     if (m_should_close_fd == true)
     {
         if (m_fd_send == m_fd_recv)
@@ -529,6 +542,13 @@ ConnectionFileDescriptor::Read (void *dst,
         case ETIMEDOUT: // A transmission timeout occurs during a read attempt on a socket.
             status = eConnectionStatusTimedOut;
             return 0;
+
+        default:
+            if (log)
+                log->Printf("%p ConnectionFileDescriptor::Read (), unexpected error: %s", this, strerror(error_value));
+            status = eConnectionStatusError;
+            break;  // Break to close....
+
         }
 
         return 0;
