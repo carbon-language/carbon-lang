@@ -148,7 +148,6 @@ static uptr kHighMemEnd = 0x7fffffffffffULL;
 static uptr kMidMemBeg =    0x3000000000ULL;
 static uptr kMidMemEnd =    0x4fffffffffULL;
 #else
-SANITIZER_INTERFACE_ATTRIBUTE
 extern uptr kHighMemEnd, kMidMemBeg, kMidMemEnd;  // Initialized in __asan_init.
 #endif
 

@@ -619,18 +619,15 @@ void PrintInternalAllocatorStats() {
   allocator.PrintStats();
 }
 
-SANITIZER_INTERFACE_ATTRIBUTE
 void *asan_memalign(uptr alignment, uptr size, StackTrace *stack,
                     AllocType alloc_type) {
   return Allocate(size, alignment, stack, alloc_type, true);
 }
 
-SANITIZER_INTERFACE_ATTRIBUTE
 void asan_free(void *ptr, StackTrace *stack, AllocType alloc_type) {
   Deallocate(ptr, stack, alloc_type);
 }
 
-SANITIZER_INTERFACE_ATTRIBUTE
 void *asan_malloc(uptr size, StackTrace *stack) {
   return Allocate(size, 8, stack, FROM_MALLOC, true);
 }
@@ -678,7 +675,6 @@ int asan_posix_memalign(void **memptr, uptr alignment, uptr size,
   return 0;
 }
 
-SANITIZER_INTERFACE_ATTRIBUTE
 uptr asan_malloc_usable_size(void *ptr, StackTrace *stack) {
   CHECK(stack);
   if (ptr == 0) return 0;
