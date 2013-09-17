@@ -55,186 +55,216 @@ using namespace polly;
 STATISTIC(ScopFound, "Number of valid Scops");
 STATISTIC(RichScopFound, "Number of Scops containing a loop");
 
-/// Translate a SCEVExpression into an isl_pw_aff object.
+/// Translate a 'const SCEV *' expression in an isl_pw_aff.
 struct SCEVAffinator : public SCEVVisitor<SCEVAffinator, isl_pw_aff *> {
+public:
+
+  /// @brief Translate a 'const SCEV *' to an isl_pw_aff.
+  ///
+  /// @param Stmt The location at which the scalar evolution expression
+  ///             is evaluated.
+  /// @param Expr The expression that is translated.
+  static __isl_give isl_pw_aff *getPwAff(ScopStmt *Stmt, const SCEV *Expr);
+
 private:
   isl_ctx *Ctx;
   int NbLoopSpaces;
   const Scop *S;
 
-public:
-  static isl_pw_aff *getPwAff(ScopStmt *Stmt, const SCEV *Scev) {
-    Scop *S = Stmt->getParent();
-    const Region *Reg = &S->getRegion();
+  SCEVAffinator(const ScopStmt *Stmt);
+  int getLoopDepth(const Loop *L);
 
-    S->addParams(getParamsInAffineExpr(Reg, Scev, *S->getSE()));
+  __isl_give isl_pw_aff *visit(const SCEV *Expr);
+  __isl_give isl_pw_aff *visitConstant(const SCEVConstant *Expr);
+  __isl_give isl_pw_aff *visitTruncateExpr(const SCEVTruncateExpr *Expr);
+  __isl_give isl_pw_aff *visitZeroExtendExpr(const SCEVZeroExtendExpr *Expr);
+  __isl_give isl_pw_aff *visitSignExtendExpr(const SCEVSignExtendExpr *Expr);
+  __isl_give isl_pw_aff *visitAddExpr(const SCEVAddExpr *Expr);
+  __isl_give isl_pw_aff *visitMulExpr(const SCEVMulExpr *Expr);
+  __isl_give isl_pw_aff *visitUDivExpr(const SCEVUDivExpr *Expr);
+  __isl_give isl_pw_aff *visitAddRecExpr(const SCEVAddRecExpr *Expr);
+  __isl_give isl_pw_aff *visitSMaxExpr(const SCEVSMaxExpr *Expr);
+  __isl_give isl_pw_aff *visitUMaxExpr(const SCEVUMaxExpr *Expr);
+  __isl_give isl_pw_aff *visitUnknown(const SCEVUnknown *Expr);
 
-    SCEVAffinator Affinator(Stmt);
-    return Affinator.visit(Scev);
-  }
+  friend struct SCEVVisitor<SCEVAffinator, isl_pw_aff *>;
+};
 
-  isl_pw_aff *visit(const SCEV *Scev) {
-    // In case the scev is a valid parameter, we do not further analyze this
-    // expression, but create a new parameter in the isl_pw_aff. This allows us
-    // to treat subexpressions that we cannot translate into an piecewise affine
-    // expression, as constant parameters of the piecewise affine expression.
-    if (isl_id *Id = S->getIdForParam(Scev)) {
-      isl_space *Space = isl_space_set_alloc(Ctx, 1, NbLoopSpaces);
-      Space = isl_space_set_dim_id(Space, isl_dim_param, 0, Id);
+SCEVAffinator::SCEVAffinator(const ScopStmt *Stmt)
+    : Ctx(Stmt->getIslCtx()), NbLoopSpaces(Stmt->getNumIterators()),
+      S(Stmt->getParent()) {}
 
-      isl_set *Domain = isl_set_universe(isl_space_copy(Space));
-      isl_aff *Affine =
-          isl_aff_zero_on_domain(isl_local_space_from_space(Space));
-      Affine = isl_aff_add_coefficient_si(Affine, isl_dim_param, 0, 1);
+__isl_give isl_pw_aff *SCEVAffinator::getPwAff(ScopStmt *Stmt,
+                                               const SCEV *Scev) {
+  Scop *S = Stmt->getParent();
+  const Region *Reg = &S->getRegion();
 
-      return isl_pw_aff_alloc(Domain, Affine);
-    }
+  S->addParams(getParamsInAffineExpr(Reg, Scev, *S->getSE()));
 
-    return SCEVVisitor<SCEVAffinator, isl_pw_aff *>::visit(Scev);
-  }
+  SCEVAffinator Affinator(Stmt);
+  return Affinator.visit(Scev);
+}
 
-  SCEVAffinator(const ScopStmt *Stmt)
-      : Ctx(Stmt->getIslCtx()), NbLoopSpaces(Stmt->getNumIterators()),
-        S(Stmt->getParent()) {}
+__isl_give isl_pw_aff *SCEVAffinator::visit(const SCEV *Expr) {
+  // In case the scev is a valid parameter, we do not further analyze this
+  // expression, but create a new parameter in the isl_pw_aff. This allows us
+  // to treat subexpressions that we cannot translate into an piecewise affine
+  // expression, as constant parameters of the piecewise affine expression.
+  if (isl_id *Id = S->getIdForParam(Expr)) {
+    isl_space *Space = isl_space_set_alloc(Ctx, 1, NbLoopSpaces);
+    Space = isl_space_set_dim_id(Space, isl_dim_param, 0, Id);
 
-  __isl_give isl_pw_aff *visitConstant(const SCEVConstant *Constant) {
-    ConstantInt *Value = Constant->getValue();
-    isl_val *v;
-
-    // LLVM does not define if an integer value is interpreted as a signed or
-    // unsigned value. Hence, without further information, it is unknown how
-    // this value needs to be converted to GMP. At the moment, we only support
-    // signed operations. So we just interpret it as signed. Later, there are
-    // two options:
-    //
-    // 1. We always interpret any value as signed and convert the values on
-    //    demand.
-    // 2. We pass down the signedness of the calculation and use it to interpret
-    //    this constant correctly.
-    v = isl_valFromAPInt(Ctx, Value->getValue(), /* isSigned */ true);
-
-    isl_space *Space = isl_space_set_alloc(Ctx, 0, NbLoopSpaces);
-    isl_local_space *ls = isl_local_space_from_space(isl_space_copy(Space));
-    isl_aff *Affine = isl_aff_zero_on_domain(ls);
-    isl_set *Domain = isl_set_universe(Space);
-
-    Affine = isl_aff_add_constant_val(Affine, v);
+    isl_set *Domain = isl_set_universe(isl_space_copy(Space));
+    isl_aff *Affine = isl_aff_zero_on_domain(isl_local_space_from_space(Space));
+    Affine = isl_aff_add_coefficient_si(Affine, isl_dim_param, 0, 1);
 
     return isl_pw_aff_alloc(Domain, Affine);
   }
 
-  __isl_give isl_pw_aff *visitTruncateExpr(const SCEVTruncateExpr *Expr) {
-    llvm_unreachable("SCEVTruncateExpr not yet supported");
+  return SCEVVisitor<SCEVAffinator, isl_pw_aff *>::visit(Expr);
+}
+
+__isl_give isl_pw_aff *
+SCEVAffinator::visitConstant(const SCEVConstant *Expr) {
+  ConstantInt *Value = Expr->getValue();
+  isl_val *v;
+
+  // LLVM does not define if an integer value is interpreted as a signed or
+  // unsigned value. Hence, without further information, it is unknown how
+  // this value needs to be converted to GMP. At the moment, we only support
+  // signed operations. So we just interpret it as signed. Later, there are
+  // two options:
+  //
+  // 1. We always interpret any value as signed and convert the values on
+  //    demand.
+  // 2. We pass down the signedness of the calculation and use it to interpret
+  //    this constant correctly.
+  v = isl_valFromAPInt(Ctx, Value->getValue(), /* isSigned */ true);
+
+  isl_space *Space = isl_space_set_alloc(Ctx, 0, NbLoopSpaces);
+  isl_local_space *ls = isl_local_space_from_space(isl_space_copy(Space));
+  isl_aff *Affine = isl_aff_zero_on_domain(ls);
+  isl_set *Domain = isl_set_universe(Space);
+
+  Affine = isl_aff_add_constant_val(Affine, v);
+
+  return isl_pw_aff_alloc(Domain, Affine);
+}
+
+__isl_give isl_pw_aff *
+SCEVAffinator::visitTruncateExpr(const SCEVTruncateExpr *Expr) {
+  llvm_unreachable("SCEVTruncateExpr not yet supported");
+}
+
+__isl_give isl_pw_aff *
+SCEVAffinator::visitZeroExtendExpr(const SCEVZeroExtendExpr *Expr) {
+  llvm_unreachable("SCEVZeroExtendExpr not yet supported");
+}
+
+__isl_give isl_pw_aff *
+SCEVAffinator::visitSignExtendExpr(const SCEVSignExtendExpr *Expr) {
+  // Assuming the value is signed, a sign extension is basically a noop.
+  // TODO: Reconsider this as soon as we support unsigned values.
+  return visit(Expr->getOperand());
+}
+
+__isl_give isl_pw_aff *SCEVAffinator::visitAddExpr(const SCEVAddExpr *Expr) {
+  isl_pw_aff *Sum = visit(Expr->getOperand(0));
+
+  for (int i = 1, e = Expr->getNumOperands(); i < e; ++i) {
+    isl_pw_aff *NextSummand = visit(Expr->getOperand(i));
+    Sum = isl_pw_aff_add(Sum, NextSummand);
   }
 
-  __isl_give isl_pw_aff *visitZeroExtendExpr(const SCEVZeroExtendExpr *Expr) {
-    llvm_unreachable("SCEVZeroExtendExpr not yet supported");
-  }
+  // TODO: Check for NSW and NUW.
 
-  __isl_give isl_pw_aff *visitSignExtendExpr(const SCEVSignExtendExpr *Expr) {
-    // Assuming the value is signed, a sign extension is basically a noop.
-    // TODO: Reconsider this as soon as we support unsigned values.
-    return visit(Expr->getOperand());
-  }
+  return Sum;
+}
 
-  __isl_give isl_pw_aff *visitAddExpr(const SCEVAddExpr *Expr) {
-    isl_pw_aff *Sum = visit(Expr->getOperand(0));
+__isl_give isl_pw_aff *SCEVAffinator::visitMulExpr(const SCEVMulExpr *Expr) {
+  isl_pw_aff *Product = visit(Expr->getOperand(0));
 
-    for (int i = 1, e = Expr->getNumOperands(); i < e; ++i) {
-      isl_pw_aff *NextSummand = visit(Expr->getOperand(i));
-      Sum = isl_pw_aff_add(Sum, NextSummand);
+  for (int i = 1, e = Expr->getNumOperands(); i < e; ++i) {
+    isl_pw_aff *NextOperand = visit(Expr->getOperand(i));
+
+    if (!isl_pw_aff_is_cst(Product) && !isl_pw_aff_is_cst(NextOperand)) {
+      isl_pw_aff_free(Product);
+      isl_pw_aff_free(NextOperand);
+      return NULL;
     }
 
-    // TODO: Check for NSW and NUW.
-
-    return Sum;
+    Product = isl_pw_aff_mul(Product, NextOperand);
   }
 
-  __isl_give isl_pw_aff *visitMulExpr(const SCEVMulExpr *Expr) {
-    isl_pw_aff *Product = visit(Expr->getOperand(0));
+  // TODO: Check for NSW and NUW.
+  return Product;
+}
 
-    for (int i = 1, e = Expr->getNumOperands(); i < e; ++i) {
-      isl_pw_aff *NextOperand = visit(Expr->getOperand(i));
+__isl_give isl_pw_aff *SCEVAffinator::visitUDivExpr(const SCEVUDivExpr *Expr) {
+  llvm_unreachable("SCEVUDivExpr not yet supported");
+}
 
-      if (!isl_pw_aff_is_cst(Product) && !isl_pw_aff_is_cst(NextOperand)) {
-        isl_pw_aff_free(Product);
-        isl_pw_aff_free(NextOperand);
-        return NULL;
-      }
+__isl_give isl_pw_aff *
+SCEVAffinator::visitAddRecExpr(const SCEVAddRecExpr *Expr) {
+  assert(Expr->isAffine() && "Only affine AddRecurrences allowed");
 
-      Product = isl_pw_aff_mul(Product, NextOperand);
-    }
+  // Directly generate isl_pw_aff for Expr if 'start' is zero.
+  if (Expr->getStart()->isZero()) {
+    assert(S->getRegion().contains(Expr->getLoop()) &&
+           "Scop does not contain the loop referenced in this AddRec");
 
-    // TODO: Check for NSW and NUW.
-    return Product;
-  }
-
-  __isl_give isl_pw_aff *visitUDivExpr(const SCEVUDivExpr *Expr) {
-    llvm_unreachable("SCEVUDivExpr not yet supported");
-  }
-
-  int getLoopDepth(const Loop *L) {
-    Loop *outerLoop =
-        S->getRegion().outermostLoopInRegion(const_cast<Loop *>(L));
-    assert(outerLoop && "Scop does not contain this loop");
-    return L->getLoopDepth() - outerLoop->getLoopDepth();
-  }
-
-  __isl_give isl_pw_aff *visitAddRecExpr(const SCEVAddRecExpr *Expr) {
-    assert(Expr->isAffine() && "Only affine AddRecurrences allowed");
-
-    // Directly generate isl_pw_aff for Expr if 'start' is zero.
-    if (Expr->getStart()->isZero()) {
-      assert(S->getRegion().contains(Expr->getLoop()) &&
-             "Scop does not contain the loop referenced in this AddRec");
-
-      isl_pw_aff *Start = visit(Expr->getStart());
-      isl_pw_aff *Step = visit(Expr->getOperand(1));
-      isl_space *Space = isl_space_set_alloc(Ctx, 0, NbLoopSpaces);
-      isl_local_space *LocalSpace = isl_local_space_from_space(Space);
-
-      int loopDimension = getLoopDepth(Expr->getLoop());
-
-      isl_aff *LAff = isl_aff_set_coefficient_si(
-          isl_aff_zero_on_domain(LocalSpace), isl_dim_in, loopDimension, 1);
-      isl_pw_aff *LPwAff = isl_pw_aff_from_aff(LAff);
-
-      // TODO: Do we need to check for NSW and NUW?
-      return isl_pw_aff_add(Start, isl_pw_aff_mul(Step, LPwAff));
-    }
-
-    // Translate AddRecExpr from '{start, +, inc}' into 'start + {0, +, inc}'
-    // if 'start' is not zero.
-    ScalarEvolution &SE = *S->getSE();
-    const SCEV *ZeroStartExpr = SE.getAddRecExpr(
-        SE.getConstant(Expr->getStart()->getType(), 0),
-        Expr->getStepRecurrence(SE), Expr->getLoop(), SCEV::FlagAnyWrap);
-
-    isl_pw_aff *ZeroStartResult = visit(ZeroStartExpr);
     isl_pw_aff *Start = visit(Expr->getStart());
+    isl_pw_aff *Step = visit(Expr->getOperand(1));
+    isl_space *Space = isl_space_set_alloc(Ctx, 0, NbLoopSpaces);
+    isl_local_space *LocalSpace = isl_local_space_from_space(Space);
 
-    return isl_pw_aff_add(ZeroStartResult, Start);
+    int loopDimension = getLoopDepth(Expr->getLoop());
+
+    isl_aff *LAff = isl_aff_set_coefficient_si(
+        isl_aff_zero_on_domain(LocalSpace), isl_dim_in, loopDimension, 1);
+    isl_pw_aff *LPwAff = isl_pw_aff_from_aff(LAff);
+
+    // TODO: Do we need to check for NSW and NUW?
+    return isl_pw_aff_add(Start, isl_pw_aff_mul(Step, LPwAff));
   }
 
-  __isl_give isl_pw_aff *visitSMaxExpr(const SCEVSMaxExpr *Expr) {
-    isl_pw_aff *Max = visit(Expr->getOperand(0));
+  // Translate AddRecExpr from '{start, +, inc}' into 'start + {0, +, inc}'
+  // if 'start' is not zero.
+  ScalarEvolution &SE = *S->getSE();
+  const SCEV *ZeroStartExpr = SE.getAddRecExpr(
+      SE.getConstant(Expr->getStart()->getType(), 0),
+      Expr->getStepRecurrence(SE), Expr->getLoop(), SCEV::FlagAnyWrap);
 
-    for (int i = 1, e = Expr->getNumOperands(); i < e; ++i) {
-      isl_pw_aff *NextOperand = visit(Expr->getOperand(i));
-      Max = isl_pw_aff_max(Max, NextOperand);
-    }
+  isl_pw_aff *ZeroStartResult = visit(ZeroStartExpr);
+  isl_pw_aff *Start = visit(Expr->getStart());
 
-    return Max;
+  return isl_pw_aff_add(ZeroStartResult, Start);
+}
+
+__isl_give isl_pw_aff *SCEVAffinator::visitSMaxExpr(const SCEVSMaxExpr *Expr) {
+  isl_pw_aff *Max = visit(Expr->getOperand(0));
+
+  for (int i = 1, e = Expr->getNumOperands(); i < e; ++i) {
+    isl_pw_aff *NextOperand = visit(Expr->getOperand(i));
+    Max = isl_pw_aff_max(Max, NextOperand);
   }
 
-  __isl_give isl_pw_aff *visitUMaxExpr(const SCEVUMaxExpr *Expr) {
-    llvm_unreachable("SCEVUMaxExpr not yet supported");
-  }
+  return Max;
+}
 
-  __isl_give isl_pw_aff *visitUnknown(const SCEVUnknown *Expr) {
-    llvm_unreachable("Unknowns are always parameters");
-  }
-};
+__isl_give isl_pw_aff *SCEVAffinator::visitUMaxExpr(const SCEVUMaxExpr *Expr) {
+  llvm_unreachable("SCEVUMaxExpr not yet supported");
+}
+
+__isl_give isl_pw_aff *SCEVAffinator::visitUnknown(const SCEVUnknown *Expr) {
+  llvm_unreachable("Unknowns are always parameters");
+}
+
+int SCEVAffinator::getLoopDepth(const Loop *L) {
+  Loop *outerLoop = S->getRegion().outermostLoopInRegion(const_cast<Loop *>(L));
+  assert(outerLoop && "Scop does not contain this loop");
+  return L->getLoopDepth() - outerLoop->getLoopDepth();
+}
 
 //===----------------------------------------------------------------------===//
 
