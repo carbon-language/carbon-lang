@@ -901,7 +901,7 @@ void InitListChecker::CheckSubElementType(const InitializedEntity &Entity,
     if ((ElemType->isRecordType() || ElemType->isVectorType()) &&
         SemaRef.CheckSingleAssignmentConstraints(ElemType, ExprRes,
                                                  !VerifyOnly)
-          == Sema::Compatible) {
+          != Sema::Incompatible) {
       if (ExprRes.isInvalid())
         hadError = true;
       else {
