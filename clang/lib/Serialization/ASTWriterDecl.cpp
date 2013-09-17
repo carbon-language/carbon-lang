@@ -229,6 +229,8 @@ void ASTDeclWriter::VisitTagDecl(TagDecl *D) {
   Record.push_back(D->hasExtInfo());
   if (D->hasExtInfo())
     Writer.AddQualifierInfo(*D->getExtInfo(), Record);
+  else if (D->hasDeclaratorForAnonDecl())
+    Writer.AddDeclRef(D->getDeclaratorForAnonDecl(), Record);
   else
     Writer.AddDeclRef(D->getTypedefNameForAnonDecl(), Record);
 }

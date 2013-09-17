@@ -275,3 +275,32 @@ int wWinMain() { return 0; }
 int DllMain() { return 0; }
 // CHECK-DAG: @DllMain
 // X64-DAG:   @DllMain
+
+inline int inline_function_with_local_type() {
+  static struct {
+    int a_field;
+  } static_variable_in_inline_function = { 20 }, second_static = { 40 };
+  // CHECK: @"\01?static_variable_in_inline_function@?1??inline_function_with_local_type@@YAHXZ@4U<unnamed-type-static_variable_in_inline_function>@?1??1@YAHXZ@A"
+
+  return static_variable_in_inline_function.a_field + second_static.a_field;
+}
+
+int call_inline_function_with_local_type() {
+  return inline_function_with_local_type();
+}
+
+template <typename T>
+inline int templated_inline_function_with_local_type() {
+  static struct {
+    int a_field;
+  } static_variable_in_templated_inline_function = { 20 },
+    second_static = { 40 };
+  // CHECK: @"\01?static_variable_in_templated_inline_function@?1???$templated_inline_function_with_local_type@H@@YAHXZ@4U<unnamed-type-static_variable_in_templated_inline_function>@?1???$templated_inline_function_with_local_type@H@@YAHXZ@A"
+
+  return static_variable_in_templated_inline_function.a_field +
+         second_static.a_field;
+}
+
+int call_templated_inline_function_with_local_type() {
+  return templated_inline_function_with_local_type<int>();
+}

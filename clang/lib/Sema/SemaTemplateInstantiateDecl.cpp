@@ -3356,6 +3356,19 @@ void Sema::BuildVariableInstantiation(
     NewVar->setReferenced(OldVar->isReferenced());
   }
 
+  // See if the old variable had a type-specifier that defined an anonymous tag.
+  // If it did, mark the new variable as being the declarator for the new
+  // anonymous tag.
+  if (const TagType *OldTagType = OldVar->getType()->getAs<TagType>()) {
+    TagDecl *OldTag = OldTagType->getDecl();
+    if (OldTag->getDeclaratorForAnonDecl() == OldVar) {
+      TagDecl *NewTag = NewVar->getType()->castAs<TagType>()->getDecl();
+      assert(!NewTag->hasNameForLinkage() &&
+             !NewTag->hasDeclaratorForAnonDecl());
+      NewTag->setDeclaratorForAnonDecl(NewVar);
+    }
+  }
+
   InstantiateAttrs(TemplateArgs, OldVar, NewVar, LateAttrs, StartingScope);
 
   if (NewVar->hasAttrs())

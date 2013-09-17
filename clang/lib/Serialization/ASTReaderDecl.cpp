@@ -464,9 +464,9 @@ ASTDeclReader::RedeclarableResult ASTDeclReader::VisitTagDecl(TagDecl *TD) {
   if (Record[Idx++]) { // hasExtInfo
     TagDecl::ExtInfo *Info = new (Reader.getContext()) TagDecl::ExtInfo();
     ReadQualifierInfo(*Info, Record, Idx);
-    TD->TypedefNameDeclOrQualifier = Info;
+    TD->NamedDeclOrQualifier = Info;
   } else
-    TD->setTypedefNameForAnonDecl(ReadDeclAs<TypedefNameDecl>(Record, Idx));
+    TD->NamedDeclOrQualifier = ReadDeclAs<NamedDecl>(Record, Idx);
 
   mergeRedeclarable(TD, Redecl);
   return Redecl;
