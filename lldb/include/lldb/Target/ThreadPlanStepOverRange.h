@@ -41,6 +41,8 @@ protected:
 
 private:
 
+    bool IsEquivalentContext(const SymbolContext &context);
+
     bool m_first_resume;
 
     DISALLOW_COPY_AND_ASSIGN (ThreadPlanStepOverRange);

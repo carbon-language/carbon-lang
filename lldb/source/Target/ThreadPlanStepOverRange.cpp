@@ -66,6 +66,32 @@ ThreadPlanStepOverRange::GetDescription (Stream *s, lldb::DescriptionLevel level
 }
 
 bool
+ThreadPlanStepOverRange::IsEquivalentContext(const SymbolContext &context)
+{
+
+    // Match as much as is specified in the m_addr_context:
+    // This is a fairly loose sanity check.  Note, sometimes the target doesn't get filled
+    // in so I left out the target check.  And sometimes the module comes in as the .o file from the
+    // inlined range, so I left that out too...
+    if (m_addr_context.comp_unit)
+    {
+        if (m_addr_context.comp_unit == context.comp_unit)
+        {
+            if (m_addr_context.function && m_addr_context.function == context.function)
+            {
+                if (m_addr_context.block && m_addr_context.block == context.block)
+                    return true;
+            }
+        }
+    }
+    else if (m_addr_context.symbol && m_addr_context.symbol == context.symbol)
+    {
+        return true;
+    }
+    return false;
+}
+
+bool
 ThreadPlanStepOverRange::ShouldStop (Event *event_ptr)
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
@@ -109,51 +135,29 @@ ThreadPlanStepOverRange::ShouldStop (Event *event_ptr)
     {
         // Make sure we really are in a new frame.  Do that by unwinding and seeing if the
         // start function really is our start function...
-        StackFrameSP older_frame_sp = m_thread.GetStackFrameAtIndex(1);
-        
-        // But if we can't even unwind one frame we should just get out of here & stop...
-        if (older_frame_sp)
+        for(uint32_t i = 1;; ++i)
         {
+            StackFrameSP older_frame_sp = m_thread.GetStackFrameAtIndex(i);
+            if (!older_frame_sp) {
+                // We can't unwind the next frame we should just get out of here & stop...
+                break;
+            }
+
             const SymbolContext &older_context = older_frame_sp->GetSymbolContext(eSymbolContextEverything);
-            
-            // Match as much as is specified in the m_addr_context:
-            // This is a fairly loose sanity check.  Note, sometimes the target doesn't get filled
-            // in so I left out the target check.  And sometimes the module comes in as the .o file from the
-            // inlined range, so I left that out too...
-            
-            bool older_ctx_is_equivalent = false;
-            if (m_addr_context.comp_unit)
-            {
-                if (m_addr_context.comp_unit == older_context.comp_unit)
-                {
-                    if (m_addr_context.function && m_addr_context.function == older_context.function)
-                    {
-                        if (m_addr_context.block && m_addr_context.block == older_context.block)
-                        {
-                            older_ctx_is_equivalent = true;
-                        }
-                    }
-                }
-            }
-            else if (m_addr_context.symbol && m_addr_context.symbol == older_context.symbol)
-            {
-                older_ctx_is_equivalent = true;
-            }
-        
-            if (older_ctx_is_equivalent)
+            if (IsEquivalentContext(older_context))
             {
                 new_plan_sp = m_thread.QueueThreadPlanForStepOut (false,
-                                                           NULL, 
-                                                           true, 
-                                                           stop_others, 
-                                                           eVoteNo, 
+                                                           NULL,
+                                                           true,
+                                                           stop_others,
+                                                           eVoteNo,
                                                            eVoteNoOpinion,
                                                            0);
+                break;
             }
-            else 
+            else
             {
                 new_plan_sp = m_thread.QueueThreadPlanForStepThrough (m_stack_id, false, stop_others);
-                
             }
         }
     }
