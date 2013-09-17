@@ -7395,37 +7395,49 @@ let Constraints = "$src1 = $dst" in {
 // SHA-NI Instructions
 //===----------------------------------------------------------------------===//
 
-multiclass SHAI_binop<bits<8> Opc, string OpcodeStr> {
+multiclass SHAI_binop<bits<8> Opc, string OpcodeStr, Intrinsic IntId,
+                      bit UsesXMM0 = 0> {
   def rr : I<Opc, MRMSrcReg, (outs VR128:$dst),
              (ins VR128:$src1, VR128:$src2),
-             !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"), []>, T8;
+             !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+             [!if(UsesXMM0,
+                  (set VR128:$dst, (IntId VR128:$src1, VR128:$src2, XMM0)),
+                  (set VR128:$dst, (IntId VR128:$src1, VR128:$src2)))]>, T8;
 
-  let mayLoad = 1 in
   def rm : I<Opc, MRMSrcMem, (outs VR128:$dst),
              (ins VR128:$src1, i128mem:$src2),
-             !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"), []>, T8;
+             !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+             [!if(UsesXMM0,
+                  (set VR128:$dst, (IntId VR128:$src1,
+                    (bc_v4i32 (memopv2i64 addr:$src2)), XMM0)),
+                  (set VR128:$dst, (IntId VR128:$src1,
+                    (bc_v4i32 (memopv2i64 addr:$src2)))))]>, T8;
 }
 
-let Constraints = "$src1 = $dst", hasSideEffects = 0, Predicates = [HasSHA] in {
+let Constraints = "$src1 = $dst", Predicates = [HasSHA] in {
   def SHA1RNDS4rri : Ii8<0xCC, MRMSrcReg, (outs VR128:$dst),
                          (ins VR128:$src1, VR128:$src2, i8imm:$src3),
                          "sha1rnds4\t{$src3, $src2, $dst|$dst, $src2, $src3}",
-                         []>, TA;
-  let mayLoad = 1 in
+                         [(set VR128:$dst,
+                           (int_x86_sha1rnds4 VR128:$src1, VR128:$src2,
+                            (i8 imm:$src3)))]>, TA;
   def SHA1RNDS4rmi : Ii8<0xCC, MRMSrcMem, (outs VR128:$dst),
                          (ins VR128:$src1, i128mem:$src2, i8imm:$src3),
                          "sha1rnds4\t{$src3, $src2, $dst|$dst, $src2, $src3}",
-                         []>, TA;
+                         [(set VR128:$dst,
+                           (int_x86_sha1rnds4 VR128:$src1,
+                            (bc_v4i32 (memopv2i64 addr:$src2)),
+                            (i8 imm:$src3)))]>, TA;
 
-  defm SHA1NEXTE : SHAI_binop<0xC8, "sha1nexte">;
-  defm SHA1MSG1  : SHAI_binop<0xC9, "sha1msg1">;
-  defm SHA1MSG2  : SHAI_binop<0xCA, "sha1msg2">;
+  defm SHA1NEXTE : SHAI_binop<0xC8, "sha1nexte", int_x86_sha1nexte>;
+  defm SHA1MSG1  : SHAI_binop<0xC9, "sha1msg1", int_x86_sha1msg1>;
+  defm SHA1MSG2  : SHAI_binop<0xCA, "sha1msg2", int_x86_sha1msg2>;
 
   let Uses=[XMM0] in
-  defm SHA256RNDS2 : SHAI_binop<0xCB, "sha256rnds2">;
+  defm SHA256RNDS2 : SHAI_binop<0xCB, "sha256rnds2", int_x86_sha256rnds2, 1>;
 
-  defm SHA256MSG1 : SHAI_binop<0xCC, "sha256msg1">;
-  defm SHA256MSG2 : SHAI_binop<0xCD, "sha256msg2">;
+  defm SHA256MSG1 : SHAI_binop<0xCC, "sha256msg1", int_x86_sha256msg1>;
+  defm SHA256MSG2 : SHAI_binop<0xCD, "sha256msg2", int_x86_sha256msg2>;
 }
 
 // Aliases with explicit %xmm0
