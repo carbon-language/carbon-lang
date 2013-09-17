@@ -173,11 +173,6 @@ def ProcIntelSLM  : SubtargetFeature<"slm", "X86ProcFamily", "IntelSLM",
 class Proc<string Name, list<SubtargetFeature> Features>
  : ProcessorModel<Name, GenericModel, Features>;
 
-//class AtomProc<string Name, list<SubtargetFeature> Features>
-// : ProcessorModel<Name, AtomModel, Features>;
-//class SLMProc<string Name, list<SubtargetFeature> Features>
-// : ProcessorModel<Name, SLMModel, Features>;
-
 def : Proc<"generic",         []>;
 def : Proc<"i386",            []>;
 def : Proc<"i486",            []>;
