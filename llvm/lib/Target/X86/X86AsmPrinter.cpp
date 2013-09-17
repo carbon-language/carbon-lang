@@ -518,6 +518,26 @@ bool X86AsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
 void X86AsmPrinter::EmitStartOfAsmFile(Module &M) {
   if (Subtarget->isTargetEnvMacho())
     OutStreamer.SwitchSection(getObjFileLowering().getTextSection());
+
+  if (Subtarget->isTargetCOFF()) {
+    // Emit an absolute @feat.00 symbol.  This appears to be some kind of
+    // compiler features bitfield read by link.exe.
+    if (!Subtarget->is64Bit()) {
+      MCSymbol *S = MMI->getContext().GetOrCreateSymbol(StringRef("@feat.00"));
+      OutStreamer.BeginCOFFSymbolDef(S);
+      OutStreamer.EmitCOFFSymbolStorageClass(COFF::IMAGE_SYM_CLASS_STATIC);
+      OutStreamer.EmitCOFFSymbolType(COFF::IMAGE_SYM_DTYPE_NULL);
+      OutStreamer.EndCOFFSymbolDef();
+      // According to the PE-COFF spec, the LSB of this value marks the object
+      // for "registered SEH".  This means that all SEH handler entry points
+      // must be registered in .sxdata.  Use of any unregistered handlers will
+      // cause the process to terminate immediately.  LLVM does not know how to
+      // register any SEH handlers, so its object files should be safe.
+      S->setAbsolute();
+      OutStreamer.EmitAssignment(
+          S, MCConstantExpr::Create(int64_t(1), MMI->getContext()));
+    }
+  }
 }
 
 

@@ -148,8 +148,8 @@ public:
   object_t *createCOFFEntity(StringRef Name, list_t &List);
 
   void DefineSection(MCSectionData const &SectionData);
-  void DefineSymbol(MCSymbolData const &SymbolData,
-                    MCAssembler &Assembler);
+  void DefineSymbol(MCSymbolData const &SymbolData, MCAssembler &Assembler,
+                    const MCAsmLayout &Layout);
 
   void MakeSymbolReal(COFFSymbol &S, size_t Index);
   void MakeSectionReal(COFFSection &S, size_t Number);
@@ -397,7 +397,8 @@ void WinCOFFObjectWriter::DefineSection(MCSectionData const &SectionData) {
 /// This function takes a section data object from the assembler
 /// and creates the associated COFF symbol staging object.
 void WinCOFFObjectWriter::DefineSymbol(MCSymbolData const &SymbolData,
-                                       MCAssembler &Assembler) {
+                                       MCAssembler &Assembler,
+                                       const MCAsmLayout &Layout) {
   MCSymbol const &Symbol = SymbolData.getSymbol();
   COFFSymbol *coff_symbol = GetOrCreateCOFFSymbol(&Symbol);
   SymbolMap[&Symbol] = coff_symbol;
@@ -438,6 +439,12 @@ void WinCOFFObjectWriter::DefineSymbol(MCSymbolData const &SymbolData,
     const MCSymbolData &ResSymData =
       Assembler.getSymbolData(Symbol.AliasedSymbol());
 
+    if (Symbol.isVariable()) {
+      int64_t Addr;
+      if (Symbol.getVariableValue()->EvaluateAsAbsolute(Addr, Layout))
+        coff_symbol->Data.Value = Addr;
+    }
+
     coff_symbol->Data.Type         = (ResSymData.getFlags() & 0x0000FFFF) >>  0;
     coff_symbol->Data.StorageClass = (ResSymData.getFlags() & 0x00FF0000) >> 16;
 
@@ -449,7 +456,9 @@ void WinCOFFObjectWriter::DefineSymbol(MCSymbolData const &SymbolData,
        external ? COFF::IMAGE_SYM_CLASS_EXTERNAL : COFF::IMAGE_SYM_CLASS_STATIC;
     }
 
-    if (ResSymData.Fragment != NULL)
+    if (Symbol.isAbsolute() || Symbol.AliasedSymbol().isVariable())
+      coff_symbol->Data.SectionNumber = COFF::IMAGE_SYM_ABSOLUTE;
+    else if (ResSymData.Fragment != NULL)
       coff_symbol->Section =
         SectionMap[&ResSymData.Fragment->getParent()->getSection()];
 
@@ -597,7 +606,7 @@ void WinCOFFObjectWriter::ExecutePostLayoutBinding(MCAssembler &Asm,
   for (MCAssembler::const_symbol_iterator i = Asm.symbol_begin(),
                                           e = Asm.symbol_end();
        i != e; i++)
-    DefineSymbol(*i, Asm);
+    DefineSymbol(*i, Asm, Layout);
 }
 
 void WinCOFFObjectWriter::RecordRelocation(const MCAssembler &Asm,
