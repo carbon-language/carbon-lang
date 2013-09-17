@@ -368,6 +368,22 @@ public:
                                    unsigned Alignment,
                                    unsigned AddressSpace) const;
 
+  /// \brief Calculate the cost of performing a vector reduction.
+  ///
+  /// This is the cost of reducing the vector value of type \p Ty to a scalar
+  /// value using the operation denoted by \p Opcode. The form of the reduction
+  /// can either be a pairwise reduction or a reduction that splits the vector
+  /// at every reduction level.
+  ///
+  /// Pairwise:
+  ///  (v0, v1, v2, v3)
+  ///  ((v0+v1), (v2, v3), undef, undef)
+  /// Split:
+  ///  (v0, v1, v2, v3)
+  ///  ((v0+v2), (v1+v3), undef, undef)
+  virtual unsigned getReductionCost(unsigned Opcode, Type *Ty,
+                                    bool IsPairwiseForm) const;
+
   /// \returns The cost of Intrinsic instructions.
   virtual unsigned getIntrinsicInstrCost(Intrinsic::ID ID, Type *RetTy,
                                          ArrayRef<Type *> Tys) const;

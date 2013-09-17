@@ -224,6 +224,11 @@ unsigned TargetTransformInfo::getAddressComputationCost(Type *Tp,
   return PrevTTI->getAddressComputationCost(Tp, IsComplex);
 }
 
+unsigned TargetTransformInfo::getReductionCost(unsigned Opcode, Type *Ty,
+                                               bool IsPairwise) const {
+  return PrevTTI->getReductionCost(Opcode, Ty, IsPairwise);
+}
+
 namespace {
 
 struct NoTTI : ImmutablePass, TargetTransformInfo {
@@ -591,6 +596,10 @@ struct NoTTI : ImmutablePass, TargetTransformInfo {
 
   unsigned getAddressComputationCost(Type *Tp, bool) const {
     return 0;
+  }
+
+  unsigned getReductionCost(unsigned, Type *, bool) const {
+    return 1;
   }
 };
 
