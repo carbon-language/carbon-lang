@@ -193,6 +193,10 @@ public:
     void
     StopMonitor();
 
+    // Waits for the initial stop message from a new thread.
+    bool
+    WaitForInitialTIDStop(lldb::tid_t tid);
+
 private:
     ProcessFreeBSD *m_process;
 

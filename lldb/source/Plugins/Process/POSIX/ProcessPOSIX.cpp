@@ -418,13 +418,26 @@ ProcessPOSIX::SendMessage(const ProcessMessage &message)
     case ProcessMessage::eBreakpointMessage:
     case ProcessMessage::eTraceMessage:
     case ProcessMessage::eWatchpointMessage:
-    case ProcessMessage::eNewThreadMessage:
     case ProcessMessage::eCrashMessage:
         assert(thread);
         thread->SetState(eStateStopped);
         StopAllThreads(message.GetTID());
         SetPrivateState(eStateStopped);
         break;
+
+    case ProcessMessage::eNewThreadMessage:
+        {
+        lldb::tid_t  new_tid = message.GetChildTID();
+        if (WaitingForInitialStop(new_tid))
+        {
+            m_monitor->WaitForInitialTIDStop(new_tid);
+        }
+        assert(thread);
+        thread->SetState(eStateStopped);
+        StopAllThreads(message.GetTID());
+        SetPrivateState(eStateStopped);
+        break;
+        }
     }
 
     m_message_queue.push(message);
@@ -447,6 +460,12 @@ ProcessPOSIX::AddThreadForInitialStopIfNeeded(lldb::tid_t stop_tid)
         added_to_set = true;
     }
     return added_to_set;
+}
+
+bool
+ProcessPOSIX::WaitingForInitialStop(lldb::tid_t stop_tid)
+{
+    return (m_seen_initial_stop.find(stop_tid) == m_seen_initial_stop.end());
 }
 
 POSIXThread *

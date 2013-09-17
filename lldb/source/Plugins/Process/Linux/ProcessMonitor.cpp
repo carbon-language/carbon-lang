@@ -1595,6 +1595,80 @@ ProcessMonitor::MonitorSignal(ProcessMonitor *monitor,
     return ProcessMessage::Signal(pid, signo);
 }
 
+// On Linux, when a new thread is created, we receive to notifications,
+// (1) a SIGTRAP|PTRACE_EVENT_CLONE from the main process thread with the
+// child thread id as additional information, and (2) a SIGSTOP|SI_USER from
+// the new child thread indicating that it has is stopped because we attached.
+// We have no guarantee of the order in which these arrive, but we need both
+// before we are ready to proceed.  We currently keep a list of threads which
+// have sent the initial SIGSTOP|SI_USER event.  Then when we receive the
+// SIGTRAP|PTRACE_EVENT_CLONE notification, if the initial stop has not occurred
+// we call ProcessMonitor::WaitForInitialTIDStop() to wait for it.
+
+bool
+ProcessMonitor::WaitForInitialTIDStop(lldb::tid_t tid)
+{
+    Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_PROCESS));
+    if (log)
+        log->Printf ("ProcessMonitor::%s(%d) waiting for thread to stop...", __FUNCTION__, tid);
+
+    // Wait for the thread to stop
+    while (true)
+    {
+        int status = -1;
+        if (log)
+            log->Printf ("ProcessMonitor::%s(%d) waitpid...", __FUNCTION__, tid);
+        lldb::pid_t wait_pid = waitpid(tid, &status, __WALL);
+        if (status == -1)
+        {
+            // If we got interrupted by a signal (in our process, not the
+            // inferior) try again.
+            if (errno == EINTR)
+                continue;
+            else
+            {
+                if (log)
+                    log->Printf("ProcessMonitor::%s(%d) waitpid error -- %s", __FUNCTION__, tid, strerror(errno));
+                return false; // This is bad, but there's nothing we can do.
+            }
+        }
+
+        if (log)
+            log->Printf ("ProcessMonitor::%s(%d) waitpid, status = %d", __FUNCTION__, tid, status);
+
+        assert(wait_pid == tid);
+
+        siginfo_t info;
+        int ptrace_err;
+        if (!GetSignalInfo(wait_pid, &info, ptrace_err))
+        {
+            if (log)
+            {
+                log->Printf ("ProcessMonitor::%s() GetSignalInfo failed. errno=%d (%s)", __FUNCTION__, ptrace_err, strerror(ptrace_err));
+            }
+            return false;
+        }
+
+        // If this is a thread exit, we won't get any more information.
+        if (WIFEXITED(status))
+        {
+            m_process->SendMessage(ProcessMessage::Exit(wait_pid, WEXITSTATUS(status)));
+            if (wait_pid == tid)
+                return true;
+            continue;
+        }
+
+        assert(info.si_code == SI_USER);
+        assert(WSTOPSIG(status) == SIGSTOP);
+
+        if (log)
+            log->Printf ("ProcessMonitor::%s(bp) received thread stop signal", __FUNCTION__);
+        m_process->AddThreadForInitialStopIfNeeded(wait_pid);
+        return true;
+    }
+    return false;
+}
+
 bool
 ProcessMonitor::StopThread(lldb::tid_t tid)
 {

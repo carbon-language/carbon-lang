@@ -167,6 +167,9 @@ public:
     bool
     AddThreadForInitialStopIfNeeded(lldb::tid_t stop_tid);
 
+    bool
+    WaitingForInitialStop(lldb::tid_t stop_tid);
+
     virtual POSIXThread *
     CreateNewPOSIXThread(lldb_private::Process &process, lldb::tid_t tid);
 

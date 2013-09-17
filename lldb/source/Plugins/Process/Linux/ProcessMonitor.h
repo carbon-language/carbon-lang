@@ -185,6 +185,10 @@ public:
     bool
     StopThread(lldb::tid_t tid);
 
+    // Waits for the initial stop message from a new thread.
+    bool
+    WaitForInitialTIDStop(lldb::tid_t tid);
+
 private:
     ProcessLinux *m_process;
 
