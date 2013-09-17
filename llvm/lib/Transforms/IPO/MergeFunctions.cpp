@@ -713,6 +713,19 @@ void MergeFunctions::writeThunkOrAlias(Function *F, Function *G) {
   writeThunk(F, G);
 }
 
+// Helper for writeThunk,
+// Selects proper bitcast operation,
+// but a bit simplier then CastInst::getCastOpcode.
+static Value* createCast(IRBuilder<false> &Builder, Value *V, Type *DestTy) {
+  Type *SrcTy = V->getType();
+  if (SrcTy->isIntegerTy() && DestTy->isPointerTy())
+    return Builder.CreateIntToPtr(V, DestTy);
+  else if (SrcTy->isPointerTy() && DestTy->isIntegerTy())
+    return Builder.CreatePtrToInt(V, DestTy);
+  else
+    return Builder.CreateBitCast(V, DestTy);
+}
+
 // Replace G with a simple tail call to bitcast(F). Also replace direct uses
 // of G with bitcast(F). Deletes G.
 void MergeFunctions::writeThunk(Function *F, Function *G) {
@@ -738,7 +751,7 @@ void MergeFunctions::writeThunk(Function *F, Function *G) {
   FunctionType *FFTy = F->getFunctionType();
   for (Function::arg_iterator AI = NewG->arg_begin(), AE = NewG->arg_end();
        AI != AE; ++AI) {
-    Args.push_back(Builder.CreateBitCast(AI, FFTy->getParamType(i)));
+    Args.push_back(createCast(Builder, (Value*)AI, FFTy->getParamType(i)));
     ++i;
   }
 
@@ -748,13 +761,7 @@ void MergeFunctions::writeThunk(Function *F, Function *G) {
   if (NewG->getReturnType()->isVoidTy()) {
     Builder.CreateRetVoid();
   } else {
-    Type *RetTy = NewG->getReturnType();
-    if (CI->getType()->isIntegerTy() && RetTy->isPointerTy())
-      Builder.CreateRet(Builder.CreateIntToPtr(CI, RetTy));
-    else if (CI->getType()->isPointerTy() && RetTy->isIntegerTy())
-      Builder.CreateRet(Builder.CreatePtrToInt(CI, RetTy));
-    else
-      Builder.CreateRet(Builder.CreateBitCast(CI, RetTy));
+    Builder.CreateRet(createCast(Builder, CI, NewG->getReturnType()));
   }
 
   NewG->copyAttributesFrom(G);
