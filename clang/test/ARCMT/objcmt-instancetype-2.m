@@ -16,10 +16,10 @@ typedef char BOOL;
 
 @class NSString, NSURL;
 @interface NSString (NSStringDeprecated)
-+ (id)stringWithContentsOfFile:(NSString *)path __attribute__((availability(macosx,introduced=10.0 ,deprecated=10.4,message="" )));
-+ (id)stringWithContentsOfURL:(NSURL *)url __attribute__((availability(macosx,introduced=10.0 ,deprecated=10.4,message="" )));
-+ (id)stringWithCString:(const char *)bytes length:(NSUInteger)length __attribute__((availability(macosx,introduced=10.0 ,deprecated=10.4,message="" )));
-+ (id)stringWithCString:(const char *)bytes __attribute__((availability(macosx,introduced=10.0 ,deprecated=10.4,message="" )));
++ (id)stringWithContentsOfFile:(NSString *)path __attribute__((availability(macosx,introduced=10.0 ,message="" )));
++ (id)stringWithContentsOfURL:(NSURL *)url __attribute__((availability(macosx,introduced=10.0 ,message="" )));
++ (id)stringWithCString:(const char *)bytes length:(NSUInteger)length __attribute__((availability(macosx,introduced=10.0 ,message="" )));
++ (id)stringWithCString:(const char *)bytes __attribute__((availability(macosx,introduced=10.0 ,message="" )));
 @end
 
 

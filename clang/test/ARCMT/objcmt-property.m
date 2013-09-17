@@ -6,6 +6,7 @@
 #define WEBKIT_OBJC_METHOD_ANNOTATION(ANNOTATION) ANNOTATION
 #define WEAK_IMPORT_ATTRIBUTE __attribute__((objc_arc_weak_reference_unavailable))
 #define AVAILABLE_WEBKIT_VERSION_3_0_AND_LATER
+#define DEPRECATED  __attribute__((deprecated)) 
 
 typedef char BOOL;
 @class NSString;
@@ -157,4 +158,21 @@ typedef char BOOL;
 - (BOOL) getALL;
 - (BOOL) getMANY;
 - (BOOL) getSome;
+@end
+
+DEPRECATED
+@interface I_DEP
+- (BOOL) isinValid;
+- (void) setInValid : (BOOL) arg;
+@end
+
+@interface AnotherOne
+- (BOOL) isinValid DEPRECATED;
+- (void) setInValid : (BOOL) arg;
+- (id)MYtarget;
+- (void)setMYtarget: (id)target DEPRECATED;
+- (BOOL) getM DEPRECATED;
+
+- (id)xxxdelegateYYY DEPRECATED;
+- (void)setXxxdelegateYYY:(id)delegate DEPRECATED;
 @end

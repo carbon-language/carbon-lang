@@ -8,6 +8,7 @@ typedef unsigned long NSUInteger;
 
 #define NS_ENUM(_type, _name) enum _name : _type _name; enum _name : _type
 #define NS_OPTIONS(_type, _name) enum _name : _type _name; enum _name : _type
+#define DEPRECATED  __attribute__((deprecated))
 
 enum {
   blah,
@@ -109,4 +110,19 @@ enum {
     NSCriticalAlertStyle = 2
 };
 typedef NSUInteger NSAlertStyle;
+
+enum {
+    D_NSTIFFFileType,
+    D_NSBMPFileType,
+    D_NSGIFFileType,
+    D_NSJPEGFileType,
+    D_NSPNGFileType,
+    D_NSJPEG2000FileType
+};
+typedef NSUInteger D_NSBitmapImageFileType DEPRECATED;
+
+typedef enum  {
+    D_NSTickMarkBelow = 0,
+    D_NSTickMarkAbove = 1
+} D_NSTickMarkPosition DEPRECATED;
 

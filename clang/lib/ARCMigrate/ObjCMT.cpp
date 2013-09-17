@@ -340,9 +340,14 @@ static bool rewriteToObjCProperty(const ObjCMethodDecl *Getter,
 
 void ObjCMigrateASTConsumer::migrateObjCInterfaceDecl(ASTContext &Ctx,
                                                       ObjCContainerDecl *D) {
+  if (D->isDeprecated())
+    return;
+  
   for (ObjCContainerDecl::method_iterator M = D->meth_begin(), MEnd = D->meth_end();
        M != MEnd; ++M) {
     ObjCMethodDecl *Method = (*M);
+    if (Method->isDeprecated())
+      continue;
     if (!migrateProperty(Ctx, D, Method))
       migrateNsReturnsInnerPointer(Ctx, Method);
   }
@@ -532,7 +537,7 @@ static bool UseNSOptionsMacro(Preprocessor &PP, ASTContext &Ctx,
 void ObjCMigrateASTConsumer::migrateProtocolConformance(ASTContext &Ctx,   
                                             const ObjCImplementationDecl *ImpDecl) {
   const ObjCInterfaceDecl *IDecl = ImpDecl->getClassInterface();
-  if (!IDecl || ObjCProtocolDecls.empty())
+  if (!IDecl || ObjCProtocolDecls.empty() || IDecl->isDeprecated())
     return;
   // Find all implicit conforming protocols for this class
   // and make them explicit.
@@ -590,7 +595,8 @@ void ObjCMigrateASTConsumer::migrateNSEnumDecl(ASTContext &Ctx,
                                            const EnumDecl *EnumDcl,
                                            const TypedefDecl *TypedefDcl) {
   if (!EnumDcl->isCompleteDefinition() || EnumDcl->getIdentifier() ||
-      !TypedefDcl->getIdentifier())
+      !TypedefDcl->getIdentifier() ||
+      EnumDcl->isDeprecated() || TypedefDcl->isDeprecated())
     return;
   
   QualType qt = TypedefDcl->getTypeSourceInfo()->getType();
@@ -813,6 +819,8 @@ void ObjCMigrateASTConsumer::migrateMethods(ASTContext &Ctx,
        MEnd = CDecl->meth_end();
        M != MEnd; ++M) {
     ObjCMethodDecl *Method = (*M);
+    if (Method->isDeprecated())
+      continue;
     migrateMethodInstanceType(Ctx, CDecl, Method);
   }
 }
@@ -944,6 +952,9 @@ void ObjCMigrateASTConsumer::AnnotateImplicitBridging(ASTContext &Ctx) {
 }
 
 void ObjCMigrateASTConsumer::migrateCFAnnotation(ASTContext &Ctx, const Decl *Decl) {
+  if (Decl->isDeprecated())
+    return;
+  
   if (Decl->hasAttr<CFAuditedTransferAttr>()) {
     assert(CFFunctionIBCandidates.empty() &&
            "Cannot have audited functions/methods inside user "
@@ -1084,7 +1095,7 @@ ObjCMigrateASTConsumer::CF_BRIDGING_KIND
 
 void ObjCMigrateASTConsumer::migrateARCSafeAnnotation(ASTContext &Ctx,
                                                  ObjCContainerDecl *CDecl) {
-  if (!isa<ObjCInterfaceDecl>(CDecl))
+  if (!isa<ObjCInterfaceDecl>(CDecl) || CDecl->isDeprecated())
     return;
   
   // migrate methods which can have instancetype as their result type.
@@ -1234,10 +1245,8 @@ void ObjCMigrateASTConsumer::HandleTranslationUnit(ASTContext &Ctx) {
          D != DEnd; ++D) {
       if (unsigned FID =
             PP.getSourceManager().getFileID((*D)->getLocation()).getHashValue())
-        if (FileId && FileId != FID) {
-          assert(!CFFunctionIBCandidates.empty());
+        if (FileId && FileId != FID)
           AnnotateImplicitBridging(Ctx);
-        }
           
       if (ObjCInterfaceDecl *CDecl = dyn_cast<ObjCInterfaceDecl>(*D))
         migrateObjCInterfaceDecl(Ctx, CDecl);
