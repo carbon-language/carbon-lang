@@ -1703,30 +1703,35 @@ DataExtractor::Dump (Stream *s,
         case eFormatHexUppercase:
             {
                 bool wantsuppercase  = (item_format == eFormatHexUppercase);
-                if (item_byte_size <= 8)
+                switch (item_byte_size)
                 {
+                case 1:
+                case 2:
+                case 4:
+                case 8:
                     s->Printf(wantsuppercase ? "0x%*.*" PRIX64 : "0x%*.*" PRIx64, (int)(2 * item_byte_size), (int)(2 * item_byte_size), GetMaxU64Bitfield(&offset, item_byte_size, item_bit_size, item_bit_offset));
-                }
-                else
-                {
-                    assert (item_bit_size == 0 && item_bit_offset == 0);
-                    s->PutCString("0x");
-                    const uint8_t *bytes = (const uint8_t* )GetData(&offset, item_byte_size);
-                    if (bytes)
+                    break;
+                default:
                     {
-                        uint32_t idx;
-                        if (m_byte_order == eByteOrderBig)
+                        assert (item_bit_size == 0 && item_bit_offset == 0);
+                        s->PutCString("0x");
+                        const uint8_t *bytes = (const uint8_t* )GetData(&offset, item_byte_size);
+                        if (bytes)
                         {
-                            for (idx = 0; idx < item_byte_size; ++idx)
-                                s->Printf(wantsuppercase ? "%2.2X" : "%2.2x", bytes[idx]);
-                        }
-                        else
-                        {
-                            for (idx = 0; idx < item_byte_size; ++idx)
-                                s->Printf(wantsuppercase ? "%2.2X" : "%2.2x", bytes[item_byte_size - 1 - idx]);
+                            uint32_t idx;
+                                if (m_byte_order == eByteOrderBig)
+                            {
+                                for (idx = 0; idx < item_byte_size; ++idx)
+                                    s->Printf(wantsuppercase ? "%2.2X" : "%2.2x", bytes[idx]);
+                            }
+                            else
+                            {
+                                for (idx = 0; idx < item_byte_size; ++idx)
+                                    s->Printf(wantsuppercase ? "%2.2X" : "%2.2x", bytes[item_byte_size - 1 - idx]);
+                            }
                         }
                     }
-                }
+                    break;
             }
             break;
 
