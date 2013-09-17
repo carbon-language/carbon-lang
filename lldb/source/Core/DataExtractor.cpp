@@ -1732,6 +1732,7 @@ DataExtractor::Dump (Stream *s,
                         }
                     }
                     break;
+                }
             }
             break;
 
