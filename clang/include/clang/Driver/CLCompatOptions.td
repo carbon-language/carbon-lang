@@ -140,6 +140,7 @@ def _SLASH_TP : CLCompileFlag<"TP">, HelpText<"Treat all source files as C++">;
 
 def _SLASH_analyze_ : CLIgnoredFlag<"analyze-">;
 def _SLASH_errorReport : CLIgnoredJoined<"errorReport">;
+def _SLASH_GS_ : CLIgnoredFlag<"GS-">;
 def _SLASH_nologo : CLIgnoredFlag<"nologo">;
 def _SLASH_Ob1 : CLIgnoredFlag<"Ob1">;
 def _SLASH_Ob2 : CLIgnoredFlag<"Ob2">;
