@@ -39,9 +39,9 @@ class LoadUnloadTestCase(TestBase):
         self.buildDefault()
 
         if sys.platform.startswith("darwin"):
-            dylibName = 'libd.dylib'
+            dylibName = 'libloadunload_d.dylib'
         else:
-            dylibName = 'libd.so'
+            dylibName = 'libloadunload_d.so'
 
         # The directory with the dynamic library we did not link to.
         new_dir = os.path.join(os.getcwd(), "hidden")
@@ -98,10 +98,10 @@ class LoadUnloadTestCase(TestBase):
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         if sys.platform.startswith("darwin"):
-            dylibName = 'libd.dylib'
-            dsymName = 'libd.dylib.dSYM'
+            dylibName = 'libloadunload_d.dylib'
+            dsymName = 'libloadunload_d.dylib.dSYM'
         else:
-            dylibName = 'libd.so'
+            dylibName = 'libloadunload_d.so'
 
         # The directory to relocate the dynamic library and its debugging info.
         special_dir = "hidden"
@@ -168,9 +168,9 @@ class LoadUnloadTestCase(TestBase):
             patterns = ["1 match found .* %s" % self.mydir])
 
         if sys.platform.startswith("darwin"):
-            dylibName = 'liba.dylib'
+            dylibName = 'libloadunload_a.dylib'
         else:
-            dylibName = 'liba.so'
+            dylibName = 'libloadunload_a.so'
 
         # Use lldb 'process load' to load the dylib.
         self.expect("process load %s" % dylibName, "%s loaded correctly" % dylibName,

@@ -10,14 +10,16 @@ endif
 CFLAGS ?= -g -O0
 CWD := $(shell pwd)
 
+LIB_PREFIX := libloadunload_
+
 ifeq "$(OS)" "Darwin"
 	CFLAGS += -arch $(ARCH)
 	DS := dsymutil
 	LD_FLAGS := -dynamiclib
-	LIB_A := liba.dylib
-	LIB_B := libb.dylib
-	LIB_C := libc.dylib
-	LIB_D := libd.dylib
+	LIB_A := $(LIB_PREFIX)a.dylib
+	LIB_B := $(LIB_PREFIX)b.dylib
+	LIB_C := $(LIB_PREFIX)c.dylib
+	LIB_D := $(LIB_PREFIX)d.dylib
 	EXEC_PATH := "@executable_path"
 	EXEC_PATH_A := -install_name $(EXEC_PATH)/$(LIB_A)
 	EXEC_PATH_B := -install_name $(EXEC_PATH)/$(LIB_B)
@@ -27,16 +29,16 @@ else
 	CFLAGS += -fPIC
 	LD_FLAGS := -shared
 	LIB_DL := -ldl
-	LIB_A := liba.so
-	LIB_B := libb.so
-	LIB_C := libc.so
-	LIB_D := libd.so
+	LIB_A := $(LIB_PREFIX)a.so
+	LIB_B := $(LIB_PREFIX)b.so
+	LIB_C := $(LIB_PREFIX)c.so
+	LIB_D := $(LIB_PREFIX)d.so
 endif
 
 all: a.out $(LIB_A) $(LIB_B) $(LIB_C) $(LIB_D) hidden/$(LIB_D)
 
 a.out: main.o $(LIB_D)
-	$(CC) $(CFLAGS) -o a.out main.o -L. -ld $(LIB_DL)
+	$(CC) $(CFLAGS) -o a.out main.o -L. -lloadunload_d $(LIB_DL)
 
 main.o: main.c
 	$(CC) $(CFLAGS) -c main.c
@@ -46,7 +48,7 @@ hidden/$(LIB_D): b.o
 	if [ "$(OS)" = "Darwin" ]; then dsymutil -o hidden/$(LIB_D).dSYM hidden/$(LIB_D); fi
 
 $(LIB_A): a.o $(LIB_B)
-	$(CC) $(CFLAGS) $(LD_FLAGS) $(EXEC_PATH_A) -o $(LIB_A) a.o -L. -lb
+	$(CC) $(CFLAGS) $(LD_FLAGS) $(EXEC_PATH_A) -o $(LIB_A) a.o -L. -lloadunload_b
 	if [ "$(OS)" = "Darwin" ]; then dsymutil $(LIB_A); fi
 
 a.o: a.c
