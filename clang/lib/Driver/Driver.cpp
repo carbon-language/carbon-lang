@@ -1268,8 +1268,13 @@ void Driver::BuildActions(const ToolChain &TC, DerivedArgList &Args,
 
   // If we are linking, claim any options which are obviously only used for
   // compilation.
-  if (FinalPhase == phases::Link && PL.size() == 1)
+  if (FinalPhase == phases::Link && PL.size() == 1) {
     Args.ClaimAllArgs(options::OPT_CompileOnly_Group);
+    Args.ClaimAllArgs(options::OPT_cl_compile_Group);
+  }
+
+  // Claim ignored clang-cl options.
+  Args.ClaimAllArgs(options::OPT_cl_ignored_Group);
 }
 
 Action *Driver::ConstructPhaseAction(const ArgList &Args, phases::ID Phase,

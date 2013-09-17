@@ -14,11 +14,17 @@
 def cl_Group : OptionGroup<"<clang-cl options>">,
   HelpText<"CL.EXE COMPATIBILITY OPTIONS">;
 
+def cl_compile_Group : OptionGroup<"<clang-cl compile-only options>">,
+  Group<cl_Group>;
+
 def cl_ignored_Group : OptionGroup<"<clang-cl ignored options>">,
   Group<cl_Group>;
 
 class CLFlag<string name> : Option<["/", "-"], name, KIND_FLAG>,
   Group<cl_Group>, Flags<[CLOption, DriverOption]>;
+
+class CLCompileFlag<string name> : Option<["/", "-"], name, KIND_FLAG>,
+  Group<cl_compile_Group>, Flags<[CLOption, DriverOption]>;
 
 class CLIgnoredFlag<string name> : Option<["/", "-"], name, KIND_FLAG>,
   Group<cl_ignored_Group>, Flags<[CLOption, DriverOption]>;
@@ -26,16 +32,25 @@ class CLIgnoredFlag<string name> : Option<["/", "-"], name, KIND_FLAG>,
 class CLJoined<string name> : Option<["/", "-"], name, KIND_JOINED>,
   Group<cl_Group>, Flags<[CLOption, DriverOption]>;
 
+class CLCompileJoined<string name> : Option<["/", "-"], name, KIND_JOINED>,
+  Group<cl_compile_Group>, Flags<[CLOption, DriverOption]>;
+
 class CLIgnoredJoined<string name> : Option<["/", "-"], name, KIND_JOINED>,
   Group<cl_ignored_Group>, Flags<[CLOption, DriverOption]>;
 
 class CLJoinedOrSeparate<string name> : Option<["/", "-"], name,
   KIND_JOINED_OR_SEPARATE>, Group<cl_Group>, Flags<[CLOption, DriverOption]>;
 
+class CLCompileJoinedOrSeparate<string name> : Option<["/", "-"], name,
+  KIND_JOINED_OR_SEPARATE>, Group<cl_compile_Group>,
+  Flags<[CLOption, DriverOption]>;
+
 class CLRemainingArgs<string name> : Option<["/", "-"], name,
   KIND_REMAINING_ARGS>, Group<cl_Group>, Flags<[CLOption, DriverOption]>;
 
 // Aliases:
+// (We don't put any of these in cl_compile_Group as the options they alias are
+// already in the right group.)
 
 def _SLASH_c : CLFlag<"c">, HelpText<"Compile only">, Alias<c>;
 def _SLASH_D : CLJoinedOrSeparate<"D">, HelpText<"Define macro">,
@@ -93,12 +108,12 @@ def _SLASH_Zs : CLFlag<"Zs">, HelpText<"Syntax-check only">,
 
 // Non-aliases:
 
-def _SLASH_M_Group : OptionGroup<"</M group>">, Group<cl_Group>;
+def _SLASH_M_Group : OptionGroup<"</M group>">, Group<cl_compile_Group>;
 
 def _SLASH_Fe : CLJoined<"Fe">,
   HelpText<"Set output executable file or directory (ends in / or \\)">,
   MetaVarName<"<file or directory>">;
-def _SLASH_Fo : CLJoined<"Fo">,
+def _SLASH_Fo : CLCompileJoined<"Fo">,
   HelpText<"Set output object file, or directory (ends in / or \\)">,
   MetaVarName<"<file or directory>">;
 def _SLASH_LD : CLFlag<"LD">, HelpText<"Create DLL">;
@@ -113,12 +128,12 @@ def _SLASH_MT : Option<["/", "-"], "MT", KIND_FLAG>, Group<_SLASH_M_Group>,
   Flags<[CLOption, DriverOption]>, HelpText<"Use static run-time">;
 def _SLASH_MTd : Option<["/", "-"], "MTd", KIND_FLAG>, Group<_SLASH_M_Group>,
   Flags<[CLOption, DriverOption]>, HelpText<"Use static debug run-time">;
-def _SLASH_Tc : CLJoinedOrSeparate<"Tc">, HelpText<"Specify a C source file">,
-  MetaVarName<"<filename>">;
-def _SLASH_TC : CLFlag<"TC">, HelpText<"Treat all source files as C">;
-def _SLASH_Tp : CLJoinedOrSeparate<"Tp">, HelpText<"Specify a C++ source file">,
-  MetaVarName<"<filename>">;
-def _SLASH_TP : CLFlag<"TP">, HelpText<"Treat all source files as C++">;
+def _SLASH_Tc : CLCompileJoinedOrSeparate<"Tc">,
+  HelpText<"Specify a C source file">, MetaVarName<"<filename>">;
+def _SLASH_TC : CLCompileFlag<"TC">, HelpText<"Treat all source files as C">;
+def _SLASH_Tp : CLCompileJoinedOrSeparate<"Tp">,
+  HelpText<"Specify a C++ source file">, MetaVarName<"<filename>">;
+def _SLASH_TP : CLCompileFlag<"TP">, HelpText<"Treat all source files as C++">;
 
 
 // Ignored:

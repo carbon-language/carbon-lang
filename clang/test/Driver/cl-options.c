@@ -93,10 +93,18 @@
 // WJoined: "-cc1"
 // WJoined: "-Wunused-pragmas"
 
+
 // Ignored options. Check that we don't get "unused during compilation" errors.
 // (/Zs is for syntax-only, /WX is for -Werror)
 // RUN: %clang_cl /Zs /WX /analyze- /errorReport:foo /nologo /Ob1 /Ob2 -- %s
 // RUN: %clang_cl /Zs /WX /Zc:forScope /Zc:wchar_t /w12345 /wd1234 /RTC1 -- %s
+
+// Ignored options and compile-only options are ignored for link jobs.
+// RUN: %clang_cl /c /Fo%t.obj /Tc%s
+// RUN: %clang_cl /nologo -### -- %t.obj 2>&1 | FileCheck -check-prefix=LINKUNUSED %s
+// RUN: %clang_cl /Dfoo -### -- %t.obj 2>&1 | FileCheck -check-prefix=LINKUNUSED %s
+// RUN: %clang_cl /MD -### -- %t.obj 2>&1 | FileCheck -check-prefix=LINKUNUSED %s
+// LINKUNUSED-NOT: argument unused during compilation
 
 // Support ignoring warnings about unused arguments.
 // RUN: %clang_cl /Abracadabra -Qunused-arguments -### -- %s 2>&1 | FileCheck -check-prefix=UNUSED %s
@@ -116,3 +124,5 @@
 // RUN: %clang_cl -Xclang hellocc1 -### -- %s 2>&1 | FileCheck -check-prefix=Xclang %s
 // Xclang: "-cc1"
 // Xclang: "hellocc1"
+
+void f() { }
