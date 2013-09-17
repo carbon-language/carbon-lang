@@ -17,3 +17,65 @@ entry:
   %cmp11 = fcmp olt double %add, 0.000000e+00
   ret void
 }
+
+declare i8* @objc_msgSend(i8*, i8*, ...)
+declare i32 @personality_v0(...)
+
+define void @invoketest() {
+entry:
+  br i1 undef, label %cond.true, label %cond.false
+
+cond.true:
+  %call49 = invoke double bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to double (i8*, i8*)*)(i8* undef, i8* undef) 
+          to label %cond.true54 unwind label %lpad
+
+cond.false:
+  %call51 = invoke double bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to double (i8*, i8*)*)(i8* undef, i8* undef)
+          to label %cond.false57 unwind label %lpad
+
+cond.true54:
+  %call56 = invoke double bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to double (i8*, i8*)*)(i8* undef, i8* undef) 
+          to label %cond.end60 unwind label %lpad
+
+cond.false57:
+  %call59 = invoke double bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to double (i8*, i8*)*)(i8* undef, i8* undef)
+          to label %cond.end60 unwind label %lpad
+
+; Make sure we don't vectorize these phis - they have invokes as inputs.
+
+; RUN: opt < %s -slp-vectorizer -S -mtriple=x86_64-apple-macosx10.8.0 -mcpu=corei7 | FileCheck %s
+
+; CHECK-LABEL: invoketest
+
+; CHECK-LABEL: cond.end60
+; CHECK-NEXT-NOT: phi <2 x double>
+; CHECK: insertelement
+; CHECK-LABEL: if.then63
+
+cond.end60:
+  %cond126 = phi double [ %call49, %cond.true54 ], [ %call51, %cond.false57 ]
+  %cond61 = phi double [ %call56, %cond.true54 ], [ %call59, %cond.false57 ]
+  br i1 undef, label %if.end98, label %if.then63
+
+if.then63:
+  %conv69 = fptrunc double undef to float
+  %conv70 = fpext float %conv69 to double
+  %div71 = fdiv double %cond126, %conv70
+  %conv78 = fptrunc double undef to float
+  %conv79 = fpext float %conv78 to double
+  %div80 = fdiv double %cond61, %conv79
+  br label %if.end98
+
+lpad:
+  %l = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @personality_v0 to i8*)
+          cleanup
+  resume { i8*, i32 } %l
+
+if.end98:
+  %dimensionsResult.sroa.0.0 = phi double [ %div71, %if.then63 ], [ %cond126, %cond.end60 ]
+  %dimensionsResult.sroa.6.0 = phi double [ %div80, %if.then63 ], [ %cond61, %cond.end60 ]
+  br label %if.end99
+
+if.end99:
+  ret void
+}

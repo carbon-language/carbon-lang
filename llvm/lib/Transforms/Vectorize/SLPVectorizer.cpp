@@ -639,6 +639,18 @@ void BoUpSLP::buildTree_rec(ArrayRef<Value *> VL, unsigned Depth) {
   switch (Opcode) {
     case Instruction::PHI: {
       PHINode *PH = dyn_cast<PHINode>(VL0);
+
+      // Check for terminator values (e.g. invoke).
+      for (unsigned j = 0; j < VL.size(); ++j)
+        for (unsigned i = 0, e = PH->getNumIncomingValues(); i < e; ++i) {
+          TerminatorInst *Term = dyn_cast<TerminatorInst>(cast<PHINode>(VL[j])->getIncomingValue(i));
+          if (Term) {
+            DEBUG(dbgs() << "SLP: Need to swizzle PHINodes (TerminatorInst use).\n");
+            newTreeEntry(VL, false);
+            return;
+          }
+        }
+
       newTreeEntry(VL, true);
       DEBUG(dbgs() << "SLP: added a vector of PHINodes.\n");
 
