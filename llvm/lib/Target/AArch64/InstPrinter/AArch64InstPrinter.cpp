@@ -475,6 +475,18 @@ void AArch64InstPrinter::printNeonUImm8Operand(const MCInst *MI, unsigned OpNum,
   O.write_hex(Imm);
 }
 
+void AArch64InstPrinter::printNeonUImm8OperandBare(const MCInst *MI,
+                                               unsigned OpNum,
+                                               raw_ostream &O) {
+  const MCOperand &MOUImm = MI->getOperand(OpNum);
+
+  assert(MOUImm.isImm()
+         && "Immediate operand required for Neon vector immediate inst.");
+
+  unsigned Imm = MOUImm.getImm();
+  O << Imm;
+}
+
 void AArch64InstPrinter::printNeonUImm64MaskOperand(const MCInst *MI,
                                                     unsigned OpNum,
                                                     raw_ostream &O) {

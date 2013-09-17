@@ -1089,5 +1089,45 @@ class NeonI_2VShiftImm<bit q, bit u, bits<5> opcode,
   // Inherit Rd in 4-0
 }
 
+// Format AdvSIMD duplicate and insert
+class NeonI_copy<bit q, bit op, bits<4> imm4,
+                 dag outs, dag ins, string asmstr,
+                 list<dag> patterns, InstrItinClass itin>
+  : A64InstRdn<outs, ins, asmstr, patterns, itin>
+{
+  bits<5> Imm5;
+  let Inst{31} = 0b0;
+  let Inst{30} = q;
+  let Inst{29} = op;
+  let Inst{28-21} = 0b01110000;
+  let Inst{20-16} = Imm5;
+  let Inst{15} = 0b0;
+  let Inst{14-11} = imm4;
+  let Inst{10} = 0b1;
+  
+  // Inherit Rn in 9-5
+  // Inherit Rd in 4-0
+}
+// Format AdvSIMD insert from element to vector
+class NeonI_insert<bit q, bit op,
+                  dag outs, dag ins, string asmstr,
+                  list<dag> patterns, InstrItinClass itin>
+  : A64InstRdn<outs, ins, asmstr, patterns, itin>
+{
+  bits<5> Imm5;
+  bits<4> Imm4;
+  let Inst{31} = 0b0;
+  let Inst{30} = q;
+  let Inst{29} = op;
+  let Inst{28-21} = 0b01110000;
+  let Inst{20-16} = Imm5;
+  let Inst{15} = 0b0;
+  let Inst{14-11} = Imm4;
+  let Inst{10} = 0b1;
+  
+  // Inherit Rn in 9-5
+  // Inherit Rd in 4-0
+}
+
 }
 

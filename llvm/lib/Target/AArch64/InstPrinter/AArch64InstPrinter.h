@@ -170,6 +170,8 @@ public:
                                    raw_ostream &O);
   void printNeonUImm0Operand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printNeonUImm8Operand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
+  void printNeonUImm8OperandBare(const MCInst *MI, unsigned OpNum,
+                                 raw_ostream &O);
   void printNeonUImm64MaskOperand(const MCInst *MI, unsigned OpNum,
                                   raw_ostream &O);
 };

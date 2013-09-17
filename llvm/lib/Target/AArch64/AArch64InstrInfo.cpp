@@ -68,23 +68,49 @@ void AArch64InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     BuildMI(MBB, I, DL, get(AArch64::MRSxi), DestReg)
       .addImm(A64SysReg::NZCV);
   } else if (AArch64::GPR64RegClass.contains(DestReg)) {
-    assert(AArch64::GPR64RegClass.contains(SrcReg));
-    Opc = AArch64::ORRxxx_lsl;
-    ZeroReg = AArch64::XZR;
+    if(AArch64::GPR64RegClass.contains(SrcReg)){
+      Opc = AArch64::ORRxxx_lsl;
+      ZeroReg = AArch64::XZR;
+    } else{
+      assert(AArch64::FPR64RegClass.contains(SrcReg));
+      BuildMI(MBB, I, DL, get(AArch64::FMOVxd), DestReg)
+        .addReg(SrcReg);
+      return;
+    }
   } else if (AArch64::GPR32RegClass.contains(DestReg)) {
-    assert(AArch64::GPR32RegClass.contains(SrcReg));
-    Opc = AArch64::ORRwww_lsl;
-    ZeroReg = AArch64::WZR;
+    if(AArch64::GPR32RegClass.contains(SrcReg)){
+      Opc = AArch64::ORRwww_lsl;
+      ZeroReg = AArch64::WZR;
+    } else{
+      assert(AArch64::FPR32RegClass.contains(SrcReg));
+      BuildMI(MBB, I, DL, get(AArch64::FMOVws), DestReg)
+        .addReg(SrcReg);
+      return;
+    }
   } else if (AArch64::FPR32RegClass.contains(DestReg)) {
-    assert(AArch64::FPR32RegClass.contains(SrcReg));
-    BuildMI(MBB, I, DL, get(AArch64::FMOVss), DestReg)
-      .addReg(SrcReg);
-    return;
+    if(AArch64::FPR32RegClass.contains(SrcReg)){
+      BuildMI(MBB, I, DL, get(AArch64::FMOVss), DestReg)
+        .addReg(SrcReg);
+      return;
+    }
+    else {
+      assert(AArch64::GPR32RegClass.contains(SrcReg));
+      BuildMI(MBB, I, DL, get(AArch64::FMOVsw), DestReg)
+        .addReg(SrcReg);
+      return;
+    }
   } else if (AArch64::FPR64RegClass.contains(DestReg)) {
-    assert(AArch64::FPR64RegClass.contains(SrcReg));
-    BuildMI(MBB, I, DL, get(AArch64::FMOVdd), DestReg)
-      .addReg(SrcReg);
-    return;
+    if(AArch64::FPR64RegClass.contains(SrcReg)){
+      BuildMI(MBB, I, DL, get(AArch64::FMOVdd), DestReg)
+        .addReg(SrcReg);
+      return;
+    }
+    else {
+      assert(AArch64::GPR64RegClass.contains(SrcReg));
+      BuildMI(MBB, I, DL, get(AArch64::FMOVdx), DestReg)
+        .addReg(SrcReg);
+      return;
+    }
   } else if (AArch64::FPR128RegClass.contains(DestReg)) {
     assert(AArch64::FPR128RegClass.contains(SrcReg));
 
