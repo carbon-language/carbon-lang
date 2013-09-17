@@ -86,7 +86,7 @@ typedef char BOOL;
 @property(nonatomic, getter=isContinuous) BOOL continuous;
 
 
-@property(nonatomic, readonly) id isAnObject;
+- (id) isAnObject;
 - (void)setAnObject : (id) object;
 
 @property(nonatomic, getter=isinValid, readonly) BOOL inValid;
@@ -138,7 +138,7 @@ typedef char BOOL;
 @property(nonatomic, getter=isContinuous) BOOL continuous;
 
 
-@property(nonatomic, readonly) id isAnObject;
+- (id) isAnObject;
 - (void)setAnObject : (id) object;
 
 @property(nonatomic, getter=isinValid, readonly) BOOL inValid;

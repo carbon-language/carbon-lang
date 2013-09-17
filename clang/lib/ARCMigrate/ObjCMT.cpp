@@ -741,8 +741,11 @@ bool ObjCMigrateASTConsumer::migrateProperty(ASTContext &Ctx,
     // try a different naming convention for getter: isXxxxx
     StringRef getterNameString = getterName->getName();
     bool IsPrefix = getterNameString.startswith("is");
-    if ((IsPrefix && !GRT->isObjCRetainableType()) ||
-        getterNameString.startswith("get")) {
+    // Note that we don't want to change an isXXX method of retainable object
+    // type to property (readonly or otherwise).
+    if (IsPrefix && GRT->isObjCRetainableType())
+      return false;
+    if (IsPrefix || getterNameString.startswith("get")) {
       LengthOfPrefix = (IsPrefix ? 2 : 3);
       const char *CGetterName = getterNameString.data() + LengthOfPrefix;
       // Make sure that first character after "is" or "get" prefix can
@@ -759,6 +762,7 @@ bool ObjCMigrateASTConsumer::migrateProperty(ASTContext &Ctx,
       }
     }
   }
+  
   if (SetterMethod) {
     // Is this a valid setter, matching the target getter?
     QualType SRT = SetterMethod->getResultType();
