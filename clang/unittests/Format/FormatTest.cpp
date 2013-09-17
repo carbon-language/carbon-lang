@@ -2069,6 +2069,8 @@ TEST_F(FormatTest, MacroCallsWithoutTrailingSemicolon) {
                    "    IPC_MESSAGE_HANDLER(xxx, qqq)\n"
                    "  IPC_END_MESSAGE_MAP()\n"
                    "}"));
+
+  // These must not be recognized as macros.
   EXPECT_EQ("int q() {\n"
             "  f(x);\n"
             "  f(x) {}\n"
