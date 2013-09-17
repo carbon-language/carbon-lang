@@ -21,6 +21,7 @@ class StopHookForMultipleThreadsTestCase(TestBase):
         self.stop_hook_multiple_threads()
 
     @dwarf_test
+    @skipIfLinux # llvm.org/pr14637 prompt disappears due to libedit bug. disabling until we upgrade libedit package on buildbot 
     def test_stop_hook_multiple_threads_with_dwarf(self):
         """Test that lldb stop-hook works for multiple threads."""
         self.buildDwarf(dictionary=self.d)
