@@ -172,8 +172,7 @@ public:
                                        int32_t contentPermissions);
 
   /// \brief This maps the input sections to the output section names
-  virtual StringRef getSectionName(StringRef name, const int32_t contentType,
-                                   const int32_t contentPermissions);
+  virtual StringRef getSectionName(const DefinedAtom *da) const;
 
   /// \brief Gets or creates a section.
   AtomSection<ELFT> *getSection(
@@ -372,29 +371,35 @@ Layout::SectionOrder DefaultLayout<ELFT>::getSectionOrder(
 
 /// \brief This maps the input sections to the output section names
 template <class ELFT>
-StringRef DefaultLayout<ELFT>::getSectionName(
-    StringRef name, const int32_t contentType,
-    const int32_t contentPermissions) {
-  if ((contentType == DefinedAtom::typeZeroFill) ||
-      (contentType == DefinedAtom::typeZeroFillFast))
-    return ".bss";
-  if (name.startswith(".text"))
-    return ".text";
-  if (name.startswith(".rodata"))
-    return ".rodata";
-  if (name.startswith(".gcc_except_table"))
-    return ".gcc_except_table";
-  if (name.startswith(".data.rel.ro"))
-    return ".data.rel.ro";
-  if (name.startswith(".data.rel.local"))
-    return ".data.rel.local";
-  if (name.startswith(".data"))
-    return ".data";
-  if (name.startswith(".tdata"))
-    return ".tdata";
-  if (name.startswith(".tbss"))
-    return ".tbss";
-  return name;
+StringRef DefaultLayout<ELFT>::getSectionName(const DefinedAtom *da) const {
+  if (da->sectionChoice() == DefinedAtom::sectionBasedOnContent) {
+    switch (da->contentType()) {
+    case DefinedAtom::typeCode:
+      return ".text";
+    case DefinedAtom::typeData:
+      return ".data";
+    case DefinedAtom::typeConstant:
+      return ".rodata";
+    case DefinedAtom::typeZeroFill:
+      return ".bss";
+    case DefinedAtom::typeThreadData:
+      return ".tdata";
+    case DefinedAtom::typeThreadZeroFill:
+      return ".tbss";
+    default:
+      break;
+    }
+  }
+  return llvm::StringSwitch<StringRef>(da->customSectionName())
+      .StartsWith(".text", ".text")
+      .StartsWith(".rodata", ".rodata")
+      .StartsWith(".gcc_except_table", ".gcc_except_table")
+      .StartsWith(".data.rel.ro", ".data.rel.ro")
+      .StartsWith(".data.rel.local", ".data.rel.local")
+      .StartsWith(".data", ".data")
+      .StartsWith(".tdata", ".tdata")
+      .StartsWith(".tbss", ".tbss")
+      .Default(da->customSectionName());
 }
 
 /// \brief Gets the segment for a output section
@@ -519,12 +524,11 @@ ErrorOr<const lld::AtomLayout &> DefaultLayout<ELFT>::addAtom(const Atom *atom) 
     // -noinhibit-exec.
     if (definedAtom->contentType() == DefinedAtom::typeUnknown)
       return make_error_code(llvm::errc::invalid_argument);
-    StringRef sectionName = definedAtom->customSectionName();
     const DefinedAtom::ContentPermissions permissions =
         definedAtom->permissions();
     const DefinedAtom::ContentType contentType = definedAtom->contentType();
 
-    sectionName = getSectionName(sectionName, contentType, permissions);
+    StringRef sectionName = getSectionName(definedAtom);
     AtomSection<ELFT> *section =
         getSection(sectionName, contentType, permissions);
     // Add runtime relocations to the .rela section.

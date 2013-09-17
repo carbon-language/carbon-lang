@@ -103,13 +103,15 @@ public:
   }
 
   /// \brief This maps the input sections to the output section names
-  virtual StringRef getSectionName(StringRef name, const int32_t contentType,
-                                   const int32_t contentPermissions) {
-    if ((contentType == DefinedAtom::typeDataFast) ||
-       (contentType == DefinedAtom::typeZeroFillFast))
+  virtual StringRef getSectionName(const DefinedAtom *da) const {
+    switch (da->contentType()) {
+    case DefinedAtom::typeDataFast:
+    case DefinedAtom::typeZeroFillFast:
       return ".sdata";
-    return DefaultLayout<HexagonELFType>::getSectionName(name, contentType,
-                                                         contentPermissions);
+    default:
+      break;
+    }
+    return DefaultLayout<HexagonELFType>::getSectionName(da);
   }
 
   /// \brief Gets or creates a section.

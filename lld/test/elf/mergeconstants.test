@@ -12,8 +12,6 @@ mergeAtoms:    scope:           global
 mergeAtoms:    type:            data
 mergeAtoms:    content:         [ 00, 00, 00, 00, 00, 00, 00, 00 ]
 mergeAtoms:    alignment:       2^3
-mergeAtoms:    section-choice:  custom-required
-mergeAtoms:    section-name:    .data
 mergeAtoms:    references:      
 mergeAtoms:      - kind:            R_X86_64_64
 mergeAtoms:        offset:          3

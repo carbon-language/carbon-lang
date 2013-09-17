@@ -16,6 +16,7 @@
 #include "lld/ReaderWriter/Simple.h"
 
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/StringSwitch.h"
 
 #include <memory>
 #include <vector>
@@ -376,9 +377,20 @@ public:
 
   // Do we have a choice for ELF?  All symbols live in explicit sections.
   virtual SectionChoice sectionChoice() const {
-    if (_symbol->st_shndx > llvm::ELF::SHN_LORESERVE)
-      return sectionBasedOnContent;
-
+    switch (contentType()) {
+    case typeCode:
+    case typeData:
+    case typeZeroFill:
+    case typeThreadZeroFill:
+    case typeThreadData:
+    case typeConstant:
+      if ((_sectionName == ".text") || (_sectionName == ".data") ||
+          (_sectionName == ".bss") || (_sectionName == ".rodata") ||
+          (_sectionName == ".tdata") || (_sectionName == ".tbss"))
+        return sectionBasedOnContent;
+    default:
+      break;
+    }
     return sectionCustomRequired;
   }
 
