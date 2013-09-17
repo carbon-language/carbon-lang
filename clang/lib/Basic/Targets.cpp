@@ -1785,12 +1785,12 @@ public:
   }
   virtual void getTargetDefines(const LangOptions &Opts,
                                 MacroBuilder &Builder) const;
-  void setSSELevel(llvm::StringMap<bool> &Features, X86SSEEnum Level,
-                   bool Enabled) const;
-  void setMMXLevel(llvm::StringMap<bool> &Features, MMX3DNowEnum Level,
-                   bool Enabled) const;
-  void setXOPLevel(llvm::StringMap<bool> &Features, XOPEnum Level,
-                   bool Enabled) const;
+  static void setSSELevel(llvm::StringMap<bool> &Features, X86SSEEnum Level,
+                          bool Enabled);
+  static void setMMXLevel(llvm::StringMap<bool> &Features, MMX3DNowEnum Level,
+                          bool Enabled);
+  static void setXOPLevel(llvm::StringMap<bool> &Features, XOPEnum Level,
+                          bool Enabled);
   virtual void setFeatureEnabled(llvm::StringMap<bool> &Features,
                                  StringRef Name,
                                  bool Enabled) const;
@@ -2129,7 +2129,7 @@ void X86TargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
 }
 
 void X86TargetInfo::setSSELevel(llvm::StringMap<bool> &Features,
-                                X86SSEEnum Level, bool Enabled) const {
+                                X86SSEEnum Level, bool Enabled) {
   if (Enabled) {
     switch (Level) {
     case AVX512F:
@@ -2183,7 +2183,7 @@ void X86TargetInfo::setSSELevel(llvm::StringMap<bool> &Features,
 }
 
 void X86TargetInfo::setMMXLevel(llvm::StringMap<bool> &Features,
-                                MMX3DNowEnum Level, bool Enabled) const {
+                                MMX3DNowEnum Level, bool Enabled) {
   if (Enabled) {
     switch (Level) {
     case AMD3DNowAthlon:
@@ -2210,7 +2210,7 @@ void X86TargetInfo::setMMXLevel(llvm::StringMap<bool> &Features,
 }
 
 void X86TargetInfo::setXOPLevel(llvm::StringMap<bool> &Features, XOPEnum Level,
-                                bool Enabled) const {
+                                bool Enabled) {
   if (Enabled) {
     switch (Level) {
     case XOP:
