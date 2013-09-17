@@ -74,6 +74,14 @@ define i8 @const_fold_ptrtoint_mask() {
   ret i8 ptrtoint (i32 addrspace(3)* inttoptr (i32 257 to i32 addrspace(3)*) to i8)
 }
 
+; Address space 0 is too small for the correct mask, should mask with
+; 64-bits instead of 32
+define i64 @const_fold_ptrtoint_mask_small_as0() {
+; CHECK-LABEL: @const_fold_ptrtoint_mask_small_as0(
+; CHECK: ret i64 -1
+  ret i64 ptrtoint (i32 addrspace(1)* inttoptr (i128 -1 to i32 addrspace(1)*) to i64)
+}
+
 define i32 addrspace(3)* @const_inttoptr() {
 ; CHECK-LABEL: @const_inttoptr(
 ; CHECK-NEXT: ret i32 addrspace(3)* inttoptr (i16 4 to i32 addrspace(3)*)
