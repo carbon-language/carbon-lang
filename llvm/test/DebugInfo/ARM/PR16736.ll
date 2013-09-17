@@ -1,6 +1,7 @@
 ; RUN: llc -filetype=asm < %s | FileCheck %s
 ; CHECK: @DEBUG_VALUE: h:x <- [R{{.*}}+{{.*}}]
 ; generated from:
+; clang -cc1 -triple  thumbv7 -S -O1 arm.cpp  -g
 ;
 ; int f();
 ; void g(float);
