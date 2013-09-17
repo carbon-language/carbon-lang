@@ -587,10 +587,10 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     // AVX-512 foldable instructions
     { X86::VMOV64toPQIZrr,  X86::VMOVQI2PQIZrm,       0 },
     { X86::VMOVDI2SSZrr,    X86::VMOVDI2SSZrm,        0 },
-    { X86::VMOVDQA32rr,     X86::VMOVDQA32rm,          TB_ALIGN_64 },
-    { X86::VMOVDQA64rr,     X86::VMOVDQA64rm,          TB_ALIGN_64 },
-    { X86::VMOVDQU32rr,     X86::VMOVDQU32rm,          0 },
-    { X86::VMOVDQU64rr,     X86::VMOVDQU64rm,          0 },
+    { X86::VMOVDQA32rr,     X86::VMOVDQA32rm,         TB_ALIGN_64 },
+    { X86::VMOVDQA64rr,     X86::VMOVDQA64rm,         TB_ALIGN_64 },
+    { X86::VMOVDQU32rr,     X86::VMOVDQU32rm,         0 },
+    { X86::VMOVDQU64rr,     X86::VMOVDQU64rm,         0 },
   };
 
   for (unsigned i = 0, e = array_lengthof(OpTbl1); i != e; ++i) {
