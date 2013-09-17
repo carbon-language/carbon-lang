@@ -1039,35 +1039,9 @@ void TokenAnnotator::calculateFormattingInformation(AnnotatedLine &Line) {
       Current->SpacesRequiredBefore =
           spaceRequiredBefore(Line, *Current) ? 1 : 0;
 
-    if (Current->is(tok::comment)) {
-      Current->MustBreakBefore = Current->NewlinesBefore > 0;
-    } else if (Current->Previous->isTrailingComment() ||
-               (Current->is(tok::string_literal) &&
-                Current->Previous->is(tok::string_literal))) {
-      Current->MustBreakBefore = true;
-    } else if (Current->Previous->IsUnterminatedLiteral) {
-      Current->MustBreakBefore = true;
-    } else if (Current->is(tok::lessless) && Current->Next &&
-               Current->Previous->is(tok::string_literal) &&
-               Current->Next->is(tok::string_literal)) {
-      Current->MustBreakBefore = true;
-    } else if (Current->Previous->ClosesTemplateDeclaration &&
-               Current->Previous->MatchingParen &&
-               Current->Previous->MatchingParen->BindingStrength == 1 &&
-               Style.AlwaysBreakTemplateDeclarations) {
-      // FIXME: Fix horrible hack of using BindingStrength to find top-level <>.
-      Current->MustBreakBefore = true;
-    } else if (Current->Type == TT_CtorInitializerComma &&
-               Style.BreakConstructorInitializersBeforeComma) {
-      Current->MustBreakBefore = true;
-    } else if (Current->Previous->BlockKind == BK_Block &&
-               Current->Previous->isNot(tok::r_brace) &&
-               Current->isNot(tok::r_brace)) {
-      Current->MustBreakBefore = true;
-    } else if (Current->is(tok::l_brace) && (Current->BlockKind == BK_Block)) {
-      Current->MustBreakBefore =
-          Style.BreakBeforeBraces == FormatStyle::BS_Allman;
-    }
+    Current->MustBreakBefore =
+        Current->MustBreakBefore || mustBreakBefore(Line, *Current);
+
     Current->CanBreakBefore =
         Current->MustBreakBefore || canBreakBefore(Line, *Current);
     if (Current->MustBreakBefore || !Current->Children.empty() ||
@@ -1355,6 +1329,39 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
   if (Tok.Type == TT_TrailingUnaryOperator)
     return false;
   return spaceRequiredBetween(Line, *Tok.Previous, Tok);
+}
+
+bool TokenAnnotator::mustBreakBefore(const AnnotatedLine &Line,
+                                     const FormatToken &Right) {
+  if (Right.is(tok::comment)) {
+    return Right.NewlinesBefore > 0;
+  } else if (Right.Previous->isTrailingComment() ||
+             (Right.is(tok::string_literal) &&
+              Right.Previous->is(tok::string_literal))) {
+    return true;
+  } else if (Right.Previous->IsUnterminatedLiteral) {
+    return true;
+  } else if (Right.is(tok::lessless) && Right.Next &&
+             Right.Previous->is(tok::string_literal) &&
+             Right.Next->is(tok::string_literal)) {
+    return true;
+  } else if (Right.Previous->ClosesTemplateDeclaration &&
+             Right.Previous->MatchingParen &&
+             Right.Previous->MatchingParen->BindingStrength == 1 &&
+             Style.AlwaysBreakTemplateDeclarations) {
+    // FIXME: Fix horrible hack of using BindingStrength to find top-level <>.
+    return true;
+  } else if (Right.Type == TT_CtorInitializerComma &&
+             Style.BreakConstructorInitializersBeforeComma) {
+    return true;
+  } else if (Right.Previous->BlockKind == BK_Block &&
+             Right.Previous->isNot(tok::r_brace) &&
+             Right.isNot(tok::r_brace)) {
+    return true;
+  } else if (Right.is(tok::l_brace) && (Right.BlockKind == BK_Block)) {
+    return Style.BreakBeforeBraces == FormatStyle::BS_Allman;
+  }
+  return false;
 }
 
 bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,

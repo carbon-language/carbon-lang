@@ -2226,6 +2226,12 @@ TEST_F(FormatTest, LayoutStatementsAroundPreprocessorDirectives) {
                "        andMoreParameters),\n"
                "    trailing);",
                getLLVMStyleWithColumns(69));
+  verifyFormat("Foo::Foo()\n"
+               "#ifdef BAR\n"
+               "    : baz(0)\n"
+               "#endif\n"
+               "{\n"
+               "}");
 }
 
 TEST_F(FormatTest, LayoutBlockInsideParens) {

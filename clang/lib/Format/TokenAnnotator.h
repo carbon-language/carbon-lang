@@ -110,6 +110,8 @@ private:
 
   bool spaceRequiredBefore(const AnnotatedLine &Line, const FormatToken &Tok);
 
+  bool mustBreakBefore(const AnnotatedLine &Line, const FormatToken &Right);
+
   bool canBreakBefore(const AnnotatedLine &Line, const FormatToken &Right);
 
   void printDebugInfo(const AnnotatedLine &Line);
