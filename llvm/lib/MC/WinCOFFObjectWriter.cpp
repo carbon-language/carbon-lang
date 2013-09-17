@@ -154,7 +154,6 @@ public:
   void MakeSymbolReal(COFFSymbol &S, size_t Index);
   void MakeSectionReal(COFFSection &S, size_t Number);
 
-  bool ExportSection(COFFSection const *S);
   bool ExportSymbol(MCSymbolData const &SymbolData, MCAssembler &Asm);
 
   bool IsPhysicalSection(COFFSection *S);
@@ -495,10 +494,6 @@ void WinCOFFObjectWriter::MakeSymbolReal(COFFSymbol &S, size_t Index) {
   } else
     std::memcpy(S.Data.Name, S.Name.c_str(), S.Name.size());
   S.Index = Index;
-}
-
-bool WinCOFFObjectWriter::ExportSection(COFFSection const *S) {
-  return !S->MCData->getFragmentList().empty();
 }
 
 bool WinCOFFObjectWriter::ExportSymbol(MCSymbolData const &SymbolData,
