@@ -91,7 +91,7 @@ inline
 int
 as_integer(const string& func, const string& s, size_t* idx, int base )
 {
-    // Use long as no Stantard string to integer exists.
+    // Use long as no Standard string to integer exists.
     long r = as_integer_helper<long>( func, s, idx, base, strtol );
     if (r < numeric_limits<int>::min() || numeric_limits<int>::max() < r)
         throw_from_string_out_of_range(func);
