@@ -770,6 +770,8 @@ bool ObjCMigrateASTConsumer::migrateProperty(ASTContext &Ctx,
   }
   
   if (SetterMethod) {
+    if (SetterMethod->isDeprecated())
+      return false;
     // Is this a valid setter, matching the target getter?
     QualType SRT = SetterMethod->getResultType();
     if (!SRT->isVoidType())
