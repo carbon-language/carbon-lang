@@ -1,7 +1,7 @@
 ; Ignore stderr, we expect warnings there
 ; RUN: opt < %s -instcombine 2> /dev/null -S | FileCheck %s
 
-target datalayout = "E-p:64:64:64-a0:0:8-f32:32:32-f64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-v64:64:64-v128:128:128"
+target datalayout = "E-p:64:64:64-p1:16:16:16-a0:0:8-f32:32:32-f64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-v64:64:64-v128:128:128"
 
 ; Simple case, argument translatable without changing the value
 declare void @test1a(i8*)
@@ -12,6 +12,28 @@ define void @test1(i32* %A) {
 ; CHECK: call void @test1a(i8* %1)
 ; CHECK: ret void
   call void bitcast (void (i8*)* @test1a to void (i32*)*)( i32* %A )
+  ret void
+}
+
+
+; Should not do because of change in address space of the parameter
+define void @test1_as1_illegal(i32 addrspace(1)* %A) {
+; CHECK-LABEL: @test1_as1_illegal(
+; CHECK: call void bitcast
+  call void bitcast (void (i8*)* @test1a to void (i32 addrspace(1)*)*)(i32 addrspace(1)* %A)
+  ret void
+}
+
+; Test1, but the argument has a different sized address-space
+declare void @test1a_as1(i8 addrspace(1)*)
+
+; This one is OK to perform
+define void @test1_as1(i32 addrspace(1)* %A) {
+; CHECK-LABEL: @test1_as1(
+; CHECK: %1 = bitcast i32 addrspace(1)* %A to i8 addrspace(1)*
+; CHECK: call void @test1a_as1(i8 addrspace(1)* %1)
+; CHECK: ret void
+  call void bitcast (void (i8 addrspace(1)*)* @test1a_as1 to void (i32 addrspace(1)*)*)(i32 addrspace(1)* %A )
   ret void
 }
 
@@ -135,3 +157,122 @@ entry:
 ; CHECK: call i8* bitcast
 }
 
+
+; Parameter that's a vector of pointers
+declare void @test10a(<2 x i8*>)
+
+define void @test10(<2 x i32*> %A) {
+; CHECK-LABEL: @test10(
+; CHECK: %1 = bitcast <2 x i32*> %A to <2 x i8*>
+; CHECK: call void @test10a(<2 x i8*> %1)
+; CHECK: ret void
+  call void bitcast (void (<2 x i8*>)* @test10a to void (<2 x i32*>)*)(<2 x i32*> %A)
+  ret void
+}
+
+; Don't transform because different address spaces
+declare void @test10a_mixed_as(<2 x i8 addrspace(1)*>)
+
+define void @test10_mixed_as(<2 x i8*> %A) {
+; CHECK-LABEL: @test10_mixed_as(
+; CHECK: call void bitcast
+  call void bitcast (void (<2 x i8 addrspace(1)*>)* @test10a_mixed_as to void (<2 x i8*>)*)(<2 x i8*> %A)
+  ret void
+}
+
+; Return type that's a pointer
+define i8* @test11a() {
+  ret i8* zeroinitializer
+}
+
+define i32* @test11() {
+; CHECK-LABEL: @test11(
+; CHECK: %X = call i8* @test11a()
+; CHECK: %1 = bitcast i8* %X to i32*
+  %X = call i32* bitcast (i8* ()* @test11a to i32* ()*)()
+  ret i32* %X
+}
+
+; Return type that's a pointer with a different address space
+define i8 addrspace(1)* @test11a_mixed_as() {
+  ret i8 addrspace(1)* zeroinitializer
+}
+
+define i8* @test11_mixed_as() {
+; CHECK-LABEL: @test11_mixed_as(
+; CHECK: call i8* bitcast
+  %X = call i8* bitcast (i8 addrspace(1)* ()* @test11a_mixed_as to i8* ()*)()
+  ret i8* %X
+}
+
+; Return type that's a vector of pointers
+define <2 x i8*> @test12a() {
+  ret <2 x i8*> zeroinitializer
+}
+
+define <2 x i32*> @test12() {
+; CHECK-LABEL: @test12(
+; CHECK: %X = call <2 x i8*> @test12a()
+; CHECK: %1 = bitcast <2 x i8*> %X to <2 x i32*>
+  %X = call <2 x i32*> bitcast (<2 x i8*> ()* @test12a to <2 x i32*> ()*)()
+  ret <2 x i32*> %X
+}
+
+define <2 x i8 addrspace(1)*> @test12a_mixed_as() {
+  ret <2 x i8 addrspace(1)*> zeroinitializer
+}
+
+define <2 x i8*> @test12_mixed_as() {
+; CHECK-LABEL: @test12_mixed_as(
+; CHECK: call <2 x i8*> bitcast
+  %X = call <2 x i8*> bitcast (<2 x i8 addrspace(1)*> ()* @test12a_mixed_as to <2 x i8*> ()*)()
+  ret <2 x i8*> %X
+}
+
+
+; Mix parameter that's a vector of integers and pointers of the same size
+declare void @test13a(<2 x i64>)
+
+define void @test13(<2 x i32*> %A) {
+; CHECK-LABEL: @test13(
+; CHECK: call void bitcast
+  call void bitcast (void (<2 x i64>)* @test13a to void (<2 x i32*>)*)(<2 x i32*> %A)
+  ret void
+}
+
+; Mix parameter that's a vector of integers and pointers of the same
+; size, but the other way around
+declare void @test14a(<2 x i8*>)
+
+define void @test14(<2 x i64> %A) {
+; CHECK-LABEL: @test14(
+; CHECK: call void bitcast
+  call void bitcast (void (<2 x i8*>)* @test14a to void (<2 x i64>)*)(<2 x i64> %A)
+  ret void
+}
+
+
+; Return type that's a vector
+define <2 x i16> @test15a() {
+  ret <2 x i16> zeroinitializer
+}
+
+define i32 @test15() {
+; CHECK-LABEL: @test15(
+; CHECK: %X = call <2 x i16> @test15a()
+; CHECK: %1 = bitcast <2 x i16> %X to i32
+  %X = call i32 bitcast (<2 x i16> ()* @test15a to i32 ()*)( )
+  ret i32 %X
+}
+
+define i32 @test16a() {
+  ret i32 0
+}
+
+define <2 x i16> @test16() {
+; CHECK-LABEL: @test16(
+; CHECK: %X = call i32 @test16a()
+; CHECK: %1 = bitcast i32 %X to <2 x i16>
+  %X = call <2 x i16> bitcast (i32 ()* @test16a to <2 x i16> ()*)( )
+  ret <2 x i16> %X
+}

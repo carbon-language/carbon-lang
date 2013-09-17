@@ -999,20 +999,15 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
 
   // Check to see if we are changing the return type...
   if (OldRetTy != NewRetTy) {
-    if (Callee->isDeclaration() &&
-        // Conversion is ok if changing from one pointer type to another or from
-        // a pointer to an integer of the same size.
-        !((OldRetTy->isPointerTy() || !TD ||
-           OldRetTy == TD->getIntPtrType(Caller->getContext())) &&
-          (NewRetTy->isPointerTy() || !TD ||
-           NewRetTy == TD->getIntPtrType(Caller->getContext()))))
-      return false;   // Cannot transform this return value.
+    if (!CastInst::isBitCastable(NewRetTy, OldRetTy)) {
+      if (Callee->isDeclaration())
+        return false;   // Cannot transform this return value.
 
-    if (!Caller->use_empty() &&
-        // void -> non-void is handled specially
-        !NewRetTy->isVoidTy() &&
-        !CastInst::isBitCastable(NewRetTy, OldRetTy))
+      if (!Caller->use_empty() &&
+          // void -> non-void is handled specially
+          !NewRetTy->isVoidTy())
       return false;   // Cannot transform this return value.
+    }
 
     if (!CallerPAL.isEmpty() && !Caller->use_empty()) {
       AttrBuilder RAttrs(CallerPAL, AttributeSet::ReturnIndex);
@@ -1045,9 +1040,8 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
     Type *ParamTy = FT->getParamType(i);
     Type *ActTy = (*AI)->getType();
 
-    if (!CastInst::isBitCastable(ActTy, ParamTy)) {
+    if (!CastInst::isBitCastable(ActTy, ParamTy))
       return false;   // Cannot transform this parameter value.
-    }
 
     if (AttrBuilder(CallerPAL.getParamAttributes(i + 1), i + 1).
           hasAttributes(AttributeFuncs::
@@ -1068,16 +1062,6 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
           TD->getTypeAllocSize(ParamPTy->getElementType()))
         return false;
     }
-
-    // Converting from one pointer type to another or between a pointer and an
-    // integer of the same size is safe even if we do not have a body.
-    bool isConvertible = ActTy == ParamTy ||
-      (TD && ((ParamTy->isPointerTy() ||
-      ParamTy == TD->getIntPtrType(Caller->getContext())) &&
-              (ActTy->isPointerTy() ||
-              ActTy == TD->getIntPtrType(Caller->getContext()))));
-    if (Callee->isDeclaration() && !isConvertible)
-      return false;
   }
 
   if (Callee->isDeclaration()) {
