@@ -670,11 +670,11 @@ static bool IsPartOfWord(char c) {
 }
 
 static Check::CheckType FindCheckType(StringRef &Buffer, StringRef Prefix) {
-  char NextChar = Buffer[CheckPrefix.size()];
+  char NextChar = Buffer[Prefix.size()];
 
   // Verify that the : is present after the prefix.
   if (NextChar == ':') {
-    Buffer = Buffer.substr(CheckPrefix.size() + 1);
+    Buffer = Buffer.substr(Prefix.size() + 1);
     return Check::CheckPlain;
   }
 
@@ -683,7 +683,7 @@ static Check::CheckType FindCheckType(StringRef &Buffer, StringRef Prefix) {
     return Check::CheckNone;
   }
 
-  StringRef Rest = Buffer.drop_front(CheckPrefix.size() + 1);
+  StringRef Rest = Buffer.drop_front(Prefix.size() + 1);
   if (Rest.startswith("NEXT:")) {
     Buffer = Rest.drop_front(sizeof("NEXT:") - 1);
     return Check::CheckNext;
