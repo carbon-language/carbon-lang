@@ -1714,10 +1714,10 @@ DataExtractor::Dump (Stream *s,
                 default:
                     {
                         assert (item_bit_size == 0 && item_bit_offset == 0);
-                        s->PutCString("0x");
                         const uint8_t *bytes = (const uint8_t* )GetData(&offset, item_byte_size);
                         if (bytes)
                         {
+                            s->PutCString("0x");
                             uint32_t idx;
                                 if (m_byte_order == eByteOrderBig)
                             {
