@@ -102,13 +102,13 @@ static OptionDefinition g_options[] =
     { LLDB_3_TO_5,       false, "source-quietly"          , 'b', no_argument      , 0,  eArgTypeNone,
         "Tells the debugger to print out extra information for debugging itself." },
     { LLDB_3_TO_5,       false, "source"         , 's', required_argument, 0,  eArgTypeFilename,
-        "Tells the debugger to read in and execute the file <file>, which should contain lldb commands." },
+        "Tells the debugger to read in and execute the lldb commands in the given file, after any file provided on the command line has been loaded." },
     { LLDB_3_TO_5,       false, "one-line"         , 'o', required_argument, 0,  eArgTypeNone,
-        "Tells the debugger to execute this one-line lldb command." },
+        "Tells the debugger to execute this one-line lldb command after any file provided on the command line has been loaded." },
     { LLDB_3_TO_5,       false, "source-before-file"         , 'S', required_argument, 0,  eArgTypeFilename,
-        "Tells the debugger to read in and execute the file <file>, which should contain lldb commands." },
+        "Tells the debugger to read in and execute the lldb commands in the given file, before any file provided on the command line has been loaded." },
     { LLDB_3_TO_5,       false, "one-line-before-file"         , 'O', required_argument, 0,  eArgTypeNone,
-        "Tells the debugger to execute this one-line lldb command." },
+        "Tells the debugger to execute this one-line lldb command before any file provided on the command line has been loaded." },
     { LLDB_3_TO_5,       false, "editor"         , 'e', no_argument      , 0,  eArgTypeNone,
         "Tells the debugger to open source files using the host's \"external editor\" mechanism." },
     { LLDB_3_TO_5,       false, "no-lldbinit"    , 'x', no_argument      , 0,  eArgTypeNone,
@@ -349,6 +349,15 @@ ShowUsage (FILE *out, OptionDefinition *option_table, Driver::OptionData data)
 
     indent_level -= 5;
 
+    fprintf (out, "\n%*sMultiple \"-s\" and \"-o\" options can be provided.  They will be processed from left to right in order, "
+                  "\n%*swith the source files and commands interleaved.  The same is true of the \"-S\" and \"-O\" options."
+                  "\n%*sThe before file and after file sets can intermixed freely, the command parser will sort them out."
+                  "\n%*sThe order of the file specifiers (\"-c\", \"-f\", etc.) is not significant in this regard.\n\n",
+             indent_level, "", 
+             indent_level, "", 
+             indent_level, "",
+             indent_level, "");
+    
     fprintf (out, "\n%*s(If you don't provide -f then the first argument will be the file to be debugged"
                   "\n%*s so '%s -- <filename> [<ARG1> [<ARG2>]]' also works."
                   "\n%*s Remember to end the options with \"--\" if any of your arguments have a \"-\" in them.)\n\n",
