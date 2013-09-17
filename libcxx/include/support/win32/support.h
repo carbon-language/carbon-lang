@@ -15,10 +15,15 @@
    Functions and constants used in libc++ that are missing from the Windows C library.
   */
 
-#include <cwchar>  // mbstate_t
+#include <wchar.h>  // mbstate_t
 #include <cstdarg> // va_ macros
 #define swprintf _snwprintf
 #define vswprintf _vsnwprintf
+
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <Windows.h>
 
 extern "C" {
 

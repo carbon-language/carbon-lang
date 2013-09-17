@@ -15,6 +15,7 @@
 extern "C" unsigned short  __declspec(dllimport) _ctype[];
 
 #include "support/win32/support.h"
+#include <stdio.h>
 #include <memory>
 #include <xlocinfo.h> // _locale_t
 #define locale_t _locale_t
@@ -35,18 +36,18 @@ extern "C" unsigned short  __declspec(dllimport) _ctype[];
 locale_t newlocale( int mask, const char * locale, locale_t base );
 locale_t uselocale( locale_t newloc );
 lconv *localeconv_l( locale_t loc );
-size_t mbrlen_l( const char *__restrict__ s, size_t n,
-                 mbstate_t *__restrict__ ps, locale_t loc);
-size_t mbsrtowcs_l( wchar_t *__restrict__ dst, const char **__restrict__ src,
-                    size_t len, mbstate_t *__restrict__ ps, locale_t loc );
-size_t wcrtomb_l( char *__restrict__ s, wchar_t wc, mbstate_t *__restrict__ ps,
+size_t mbrlen_l( const char *__restrict s, size_t n,
+                 mbstate_t *__restrict ps, locale_t loc);
+size_t mbsrtowcs_l( wchar_t *__restrict dst, const char **__restrict src,
+                    size_t len, mbstate_t *__restrict ps, locale_t loc );
+size_t wcrtomb_l( char *__restrict s, wchar_t wc, mbstate_t *__restrict ps,
                   locale_t loc);
-size_t mbrtowc_l( wchar_t *__restrict__ pwc, const char *__restrict__ s,
-                  size_t n, mbstate_t *__restrict__ ps, locale_t loc);
-size_t mbsnrtowcs_l( wchar_t *__restrict__ dst, const char **__restrict__ src,
-                     size_t nms, size_t len, mbstate_t *__restrict__ ps, locale_t loc);
-size_t wcsnrtombs_l( char *__restrict__ dst, const wchar_t **__restrict__ src,
-                     size_t nwc, size_t len, mbstate_t *__restrict__ ps, locale_t loc);
+size_t mbrtowc_l( wchar_t *__restrict pwc, const char *__restrict s,
+                  size_t n, mbstate_t *__restrict ps, locale_t loc);
+size_t mbsnrtowcs_l( wchar_t *__restrict dst, const char **__restrict src,
+                     size_t nms, size_t len, mbstate_t *__restrict ps, locale_t loc);
+size_t wcsnrtombs_l( char *__restrict dst, const wchar_t **__restrict src,
+                     size_t nwc, size_t len, mbstate_t *__restrict ps, locale_t loc);
 wint_t btowc_l( int c, locale_t loc );
 int wctob_l( wint_t c, locale_t loc );
 typedef _VSTD::remove_pointer<locale_t>::type __locale_struct;
@@ -59,7 +60,6 @@ decltype(MB_CUR_MAX) MB_CUR_MAX_L( locale_t __l )
 }
 
 // the *_l functions are prefixed on Windows, only available for msvcr80+, VS2005+
-#include <stdio.h>
 #define mbtowc_l _mbtowc_l
 #define strtoll_l _strtoi64_l
 #define strtoull_l _strtoui64_l
@@ -120,10 +120,10 @@ inline int iswblank_l( wint_t c, locale_t /*loc*/ )
     return ( c == L' ' || c == L'\t' );
 }
 
-#ifdef _MSC_VER
+#if defined(_LIBCPP_MSVCRT)
 inline int isblank( int c, locale_t /*loc*/ )
 { return ( c == ' ' || c == '\t' ); }
 inline int iswblank( wint_t c, locale_t /*loc*/ )
 { return ( c == L' ' || c == L'\t' ); }
-#endif // _MSC_VER
+#endif // _LIBCPP_MSVCRT
 #endif // _LIBCPP_SUPPORT_WIN32_LOCALE_WIN32_H

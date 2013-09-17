@@ -106,7 +106,7 @@ size_t wcsrtombs(char* restrict dst, const wchar_t** restrict src, size_t len,
 #include <__config>
 #include <cwctype>
 #include <wchar.h>
-#ifdef _LIBCPP_MSVCRT
+#if defined(_LIBCPP_MSVCRT) || defined(__MINGW32__)
 #include <support/win32/support.h> // pull in *swprintf defines
 #endif // _LIBCPP_MSVCRT
 

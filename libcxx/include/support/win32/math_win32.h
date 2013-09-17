@@ -16,7 +16,9 @@
 #else
 
 #include <math.h>
+#include <float.h> // _FPCLASS_PN etc.
 
+// Necessary?
 typedef float float_t;
 typedef double double_t;
 

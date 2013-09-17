@@ -191,7 +191,7 @@ template <class charT> class messages_byname;
 #endif
 #include <cstdlib>
 #include <ctime>
-#ifdef _LIBCPP_MSVCRT
+#if defined(_LIBCPP_MSVCRT) || defined(__MINGW32__)
 #include <support/win32/locale_win32.h>
 #else // _LIBCPP_MSVCRT
 #include <nl_types.h>

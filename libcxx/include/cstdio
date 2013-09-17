@@ -103,6 +103,11 @@ void perror(const char* s);
 #pragma GCC system_header
 #endif
 
+// snprintf
+#if defined(_LIBCPP_MSVCRT)
+#include "support/win32/support.h"
+#endif
+
 #ifdef getc
 inline _LIBCPP_INLINE_VISIBILITY int __libcpp_getc(FILE* __stream) {return getc(__stream);}
 #undef getc

@@ -80,7 +80,10 @@
 #  if defined(_MSC_VER) && !defined(__clang__)
 #    define _LIBCPP_MSVC // Using Microsoft Visual C++ compiler
 #  endif
-#  define _LIBCPP_MSVCRT // Using Microsoft's C Runtime library
+#  // If mingw not explicitly detected, assume using MS C runtime only.
+#  ifndef __MINGW32__
+#    define _LIBCPP_MSVCRT // Using Microsoft's C Runtime library
+#  endif
 #endif  // _WIN32
 
 #ifdef __linux__
