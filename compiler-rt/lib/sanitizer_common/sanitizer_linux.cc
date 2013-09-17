@@ -685,7 +685,7 @@ uptr ReadBinaryName(/*out*/char *buf, uptr buf_len) {
   uptr module_name_len = internal_readlink(
       "/proc/self/exe", buf, buf_len);
   int readlink_error;
-  if (internal_iserror(buf_len, &readlink_error)) {
+  if (internal_iserror(module_name_len, &readlink_error)) {
     if (proc_self_exe_cache_len) {
       // If available, use the cached module name.
       CHECK_LE(proc_self_exe_cache_len, buf_len);
