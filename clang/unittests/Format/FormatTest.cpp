@@ -3612,6 +3612,10 @@ TEST_F(FormatTest, UnderstandsTemplateParameters) {
                "}");
   verifyFormat("template <typename... Types>\n"
                "typename enable_if<0 < sizeof...(Types)>::type Foo() {}");
+
+  verifyFormat("aaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
+               "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaa >> aaaaa);",
+               getLLVMStyleWithColumns(60));
 }
 
 TEST_F(FormatTest, UnderstandsBinaryOperators) {

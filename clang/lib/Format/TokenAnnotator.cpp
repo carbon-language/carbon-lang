@@ -1430,6 +1430,9 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
     return false;
   if (Right.isBinaryOperator() && Style.BreakBeforeBinaryOperators)
     return true;
+  if (Left.is(tok::greater) && Right.is(tok::greater) &&
+      Left.Type != TT_TemplateCloser)
+    return false;
   return (Left.isBinaryOperator() && Left.isNot(tok::lessless) &&
           !Style.BreakBeforeBinaryOperators) ||
          Left.isOneOf(tok::comma, tok::coloncolon, tok::semi, tok::l_brace,
