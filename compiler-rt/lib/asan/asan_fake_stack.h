@@ -133,9 +133,10 @@ class FakeStack {
   // Allocate the fake frame.
   FakeFrame *Allocate(uptr stack_size_log, uptr class_id, uptr real_stack);
 
-  // Deallocate the fake frame.
-  void Deallocate(FakeFrame *ff, uptr stack_size_log, uptr class_id,
-                  uptr real_stack);
+  // Deallocate the fake frame: read the saved flag address and write 0 there.
+  static void Deallocate(uptr x, uptr class_id) {
+    **SavedFlagPtr(x, class_id) = 0;
+  }
 
   // Poison the entire FakeStack's shadow with the magic value.
   void PoisonAll(u8 magic);
@@ -146,6 +147,13 @@ class FakeStack {
   // Number of bytes in a fake frame of this size class.
   static uptr BytesInSizeClass(uptr class_id) {
     return 1UL << (class_id + kMinStackFrameSizeLog);
+  }
+
+  // The fake frame is guaranteed to have a right redzone.
+  // We use the last word of that redzone to store the address of the flag
+  // that corresponds to the current frame to make faster deallocation.
+  static u8 **SavedFlagPtr(uptr x, uptr class_id) {
+    return reinterpret_cast<u8 **>(x + BytesInSizeClass(class_id) - sizeof(x));
   }
 
   uptr stack_size_log() const { return stack_size_log_; }

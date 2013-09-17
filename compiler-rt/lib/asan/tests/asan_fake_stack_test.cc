@@ -128,7 +128,7 @@ TEST(FakeStack, Allocate) {
     }
     for (std::map<FakeFrame *, uptr>::iterator it = s.begin(); it != s.end();
          ++it) {
-      fs->Deallocate(it->first, stack_size_log, it->second, 0);
+      fs->Deallocate(reinterpret_cast<uptr>(it->first), it->second);
     }
   }
   fs->Destroy();
@@ -141,7 +141,7 @@ static void RecursiveFunction(FakeStack *fs, int depth) {
     RecursiveFunction(fs, depth - 1);
     RecursiveFunction(fs, depth - 1);
   }
-  fs->Deallocate(ff, fs->stack_size_log(), class_id, 0);
+  fs->Deallocate(reinterpret_cast<uptr>(ff), class_id);
 }
 
 TEST(FakeStack, RecursiveStressTest) {

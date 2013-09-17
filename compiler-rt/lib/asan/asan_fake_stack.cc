@@ -63,23 +63,11 @@ FakeFrame *FakeStack::Allocate(uptr stack_size_log, uptr class_id,
     FakeFrame *res = reinterpret_cast<FakeFrame *>(
         GetFrame(stack_size_log, class_id, pos));
     res->real_stack = real_stack;
+    *SavedFlagPtr(reinterpret_cast<uptr>(res), class_id) = &flags[pos];
     return res;
   }
   CHECK(0 && "Failed to allocate a fake stack frame");
   return 0;
-}
-
-ALWAYS_INLINE USED
-void FakeStack::Deallocate(FakeFrame *ff, uptr stack_size_log, uptr class_id,
-                           uptr real_stack) {
-  u8 *base = GetFrame(stack_size_log, class_id, 0);
-  u8 *cur = reinterpret_cast<u8 *>(ff);
-  CHECK_LE(base, cur);
-  CHECK_LT(cur, base + (1UL << stack_size_log));
-  uptr pos = (cur - base) >> (kMinStackFrameSizeLog + class_id);
-  u8 *flags = GetFlags(stack_size_log, class_id);
-  CHECK_EQ(flags[pos], 1);
-  flags[pos] = 0;
 }
 
 uptr FakeStack::AddrIsInFakeStack(uptr ptr) {
@@ -161,9 +149,7 @@ ALWAYS_INLINE uptr OnMalloc(uptr class_id, uptr size, uptr real_stack) {
 ALWAYS_INLINE void OnFree(uptr ptr, uptr class_id, uptr size, uptr real_stack) {
   if (ptr == real_stack)
     return;
-  FakeStack *fs = GetFakeStackFast();  // Must not be 0.
-  FakeFrame *ff = reinterpret_cast<FakeFrame *>(ptr);
-  fs->Deallocate(ff, fs->stack_size_log(), class_id, real_stack);
+  FakeStack::Deallocate(ptr, class_id);
   SetShadow(ptr, size, class_id, kMagic8);
 }
 
