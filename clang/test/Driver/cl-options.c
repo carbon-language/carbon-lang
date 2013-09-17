@@ -100,7 +100,7 @@
 // RUN: %clang_cl /Zs /WX /Zc:forScope /Zc:wchar_t /w12345 /wd1234 /RTC1 -- %s
 
 // Ignored options and compile-only options are ignored for link jobs.
-// RUN: %clang -c %s -o %t.obj
+// RUN: touch %t.obj
 // RUN: %clang_cl /nologo -### -- %t.obj 2>&1 | FileCheck -check-prefix=LINKUNUSED %s
 // RUN: %clang_cl /Dfoo -### -- %t.obj 2>&1 | FileCheck -check-prefix=LINKUNUSED %s
 // RUN: %clang_cl /MD -### -- %t.obj 2>&1 | FileCheck -check-prefix=LINKUNUSED %s
