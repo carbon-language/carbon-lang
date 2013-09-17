@@ -156,8 +156,7 @@ static bool matchPairwiseReductionAtLevel(const BinaryOperator *BinOp,
   if (BinOp == 0)
     return false;
 
-  Type *VecTy = BinOp->getType();
-  assert(VecTy->isVectorTy() && "Expecting a vector type");
+  assert(BinOp->getType()->isVectorTy() && "Expecting a vector type");
 
   unsigned Opcode = BinOp->getOpcode();
   Value *L = BinOp->getOperand(0);
