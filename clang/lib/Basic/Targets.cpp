@@ -1792,8 +1792,13 @@ public:
   static void setXOPLevel(llvm::StringMap<bool> &Features, XOPEnum Level,
                           bool Enabled);
   virtual void setFeatureEnabled(llvm::StringMap<bool> &Features,
-                                 StringRef Name,
-                                 bool Enabled) const;
+                                 StringRef Name, bool Enabled) const {
+    setFeatureEnabledImpl(Features, Name, Enabled);
+  }
+  // This exists purely to cut down on the number of virtual calls in
+  // getDefaultFeatures which calls this repeatedly.
+  static void setFeatureEnabledImpl(llvm::StringMap<bool> &Features,
+                                    StringRef Name, bool Enabled);
   virtual void getDefaultFeatures(llvm::StringMap<bool> &Features) const;
   virtual bool hasFeature(StringRef Feature) const;
   virtual bool HandleTargetFeatures(std::vector<std::string> &Features,
@@ -1965,7 +1970,7 @@ void X86TargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
 
   // X86_64 always has SSE2.
   if (getTriple().getArch() == llvm::Triple::x86_64)
-    setFeatureEnabled(Features, "sse2", true);
+    setFeatureEnabledImpl(Features, "sse2", true);
 
   switch (CPU) {
   case CK_Generic:
@@ -1978,152 +1983,152 @@ void X86TargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
     break;
   case CK_PentiumMMX:
   case CK_Pentium2:
-    setFeatureEnabled(Features, "mmx", true);
+    setFeatureEnabledImpl(Features, "mmx", true);
     break;
   case CK_Pentium3:
   case CK_Pentium3M:
-    setFeatureEnabled(Features, "sse", true);
+    setFeatureEnabledImpl(Features, "sse", true);
     break;
   case CK_PentiumM:
   case CK_Pentium4:
   case CK_Pentium4M:
   case CK_x86_64:
-    setFeatureEnabled(Features, "sse2", true);
+    setFeatureEnabledImpl(Features, "sse2", true);
     break;
   case CK_Yonah:
   case CK_Prescott:
   case CK_Nocona:
-    setFeatureEnabled(Features, "sse3", true);
+    setFeatureEnabledImpl(Features, "sse3", true);
     break;
   case CK_Core2:
-    setFeatureEnabled(Features, "ssse3", true);
+    setFeatureEnabledImpl(Features, "ssse3", true);
     break;
   case CK_Penryn:
-    setFeatureEnabled(Features, "sse4.1", true);
+    setFeatureEnabledImpl(Features, "sse4.1", true);
     break;
   case CK_Atom:
-    setFeatureEnabled(Features, "ssse3", true);
+    setFeatureEnabledImpl(Features, "ssse3", true);
     break;
   case CK_Silvermont:
-    setFeatureEnabled(Features, "sse4.2", true);
-    setFeatureEnabled(Features, "aes", true);
-    setFeatureEnabled(Features, "pclmul", true);
+    setFeatureEnabledImpl(Features, "sse4.2", true);
+    setFeatureEnabledImpl(Features, "aes", true);
+    setFeatureEnabledImpl(Features, "pclmul", true);
     break;
   case CK_Corei7:
-    setFeatureEnabled(Features, "sse4.2", true);
+    setFeatureEnabledImpl(Features, "sse4.2", true);
     break;
   case CK_Corei7AVX:
-    setFeatureEnabled(Features, "avx", true);
-    setFeatureEnabled(Features, "aes", true);
-    setFeatureEnabled(Features, "pclmul", true);
+    setFeatureEnabledImpl(Features, "avx", true);
+    setFeatureEnabledImpl(Features, "aes", true);
+    setFeatureEnabledImpl(Features, "pclmul", true);
     break;
   case CK_CoreAVXi:
-    setFeatureEnabled(Features, "avx", true);
-    setFeatureEnabled(Features, "aes", true);
-    setFeatureEnabled(Features, "pclmul", true);
-    setFeatureEnabled(Features, "rdrnd", true);
-    setFeatureEnabled(Features, "f16c", true);
+    setFeatureEnabledImpl(Features, "avx", true);
+    setFeatureEnabledImpl(Features, "aes", true);
+    setFeatureEnabledImpl(Features, "pclmul", true);
+    setFeatureEnabledImpl(Features, "rdrnd", true);
+    setFeatureEnabledImpl(Features, "f16c", true);
     break;
   case CK_CoreAVX2:
-    setFeatureEnabled(Features, "avx2", true);
-    setFeatureEnabled(Features, "aes", true);
-    setFeatureEnabled(Features, "pclmul", true);
-    setFeatureEnabled(Features, "lzcnt", true);
-    setFeatureEnabled(Features, "rdrnd", true);
-    setFeatureEnabled(Features, "f16c", true);
-    setFeatureEnabled(Features, "bmi", true);
-    setFeatureEnabled(Features, "bmi2", true);
-    setFeatureEnabled(Features, "rtm", true);
-    setFeatureEnabled(Features, "fma", true);
+    setFeatureEnabledImpl(Features, "avx2", true);
+    setFeatureEnabledImpl(Features, "aes", true);
+    setFeatureEnabledImpl(Features, "pclmul", true);
+    setFeatureEnabledImpl(Features, "lzcnt", true);
+    setFeatureEnabledImpl(Features, "rdrnd", true);
+    setFeatureEnabledImpl(Features, "f16c", true);
+    setFeatureEnabledImpl(Features, "bmi", true);
+    setFeatureEnabledImpl(Features, "bmi2", true);
+    setFeatureEnabledImpl(Features, "rtm", true);
+    setFeatureEnabledImpl(Features, "fma", true);
     break;
   case CK_KNL:
-    setFeatureEnabled(Features, "avx512f", true);
-    setFeatureEnabled(Features, "avx512cd", true);
-    setFeatureEnabled(Features, "avx512er", true);
-    setFeatureEnabled(Features, "avx512pf", true);
-    setFeatureEnabled(Features, "aes", true);
-    setFeatureEnabled(Features, "pclmul", true);
-    setFeatureEnabled(Features, "lzcnt", true);
-    setFeatureEnabled(Features, "rdrnd", true);
-    setFeatureEnabled(Features, "f16c", true);
-    setFeatureEnabled(Features, "bmi", true);
-    setFeatureEnabled(Features, "bmi2", true);
-    setFeatureEnabled(Features, "rtm", true);
-    setFeatureEnabled(Features, "fma", true);
+    setFeatureEnabledImpl(Features, "avx512f", true);
+    setFeatureEnabledImpl(Features, "avx512cd", true);
+    setFeatureEnabledImpl(Features, "avx512er", true);
+    setFeatureEnabledImpl(Features, "avx512pf", true);
+    setFeatureEnabledImpl(Features, "aes", true);
+    setFeatureEnabledImpl(Features, "pclmul", true);
+    setFeatureEnabledImpl(Features, "lzcnt", true);
+    setFeatureEnabledImpl(Features, "rdrnd", true);
+    setFeatureEnabledImpl(Features, "f16c", true);
+    setFeatureEnabledImpl(Features, "bmi", true);
+    setFeatureEnabledImpl(Features, "bmi2", true);
+    setFeatureEnabledImpl(Features, "rtm", true);
+    setFeatureEnabledImpl(Features, "fma", true);
     break;
   case CK_K6:
   case CK_WinChipC6:
-    setFeatureEnabled(Features, "mmx", true);
+    setFeatureEnabledImpl(Features, "mmx", true);
     break;
   case CK_K6_2:
   case CK_K6_3:
   case CK_WinChip2:
   case CK_C3:
-    setFeatureEnabled(Features, "3dnow", true);
+    setFeatureEnabledImpl(Features, "3dnow", true);
     break;
   case CK_Athlon:
   case CK_AthlonThunderbird:
   case CK_Geode:
-    setFeatureEnabled(Features, "3dnowa", true);
+    setFeatureEnabledImpl(Features, "3dnowa", true);
     break;
   case CK_Athlon4:
   case CK_AthlonXP:
   case CK_AthlonMP:
-    setFeatureEnabled(Features, "sse", true);
-    setFeatureEnabled(Features, "3dnowa", true);
+    setFeatureEnabledImpl(Features, "sse", true);
+    setFeatureEnabledImpl(Features, "3dnowa", true);
     break;
   case CK_K8:
   case CK_Opteron:
   case CK_Athlon64:
   case CK_AthlonFX:
-    setFeatureEnabled(Features, "sse2", true);
-    setFeatureEnabled(Features, "3dnowa", true);
+    setFeatureEnabledImpl(Features, "sse2", true);
+    setFeatureEnabledImpl(Features, "3dnowa", true);
     break;
   case CK_K8SSE3:
   case CK_OpteronSSE3:
   case CK_Athlon64SSE3:
-    setFeatureEnabled(Features, "sse3", true);
-    setFeatureEnabled(Features, "3dnowa", true);
+    setFeatureEnabledImpl(Features, "sse3", true);
+    setFeatureEnabledImpl(Features, "3dnowa", true);
     break;
   case CK_AMDFAM10:
-    setFeatureEnabled(Features, "sse3", true);
-    setFeatureEnabled(Features, "sse4a", true);
-    setFeatureEnabled(Features, "3dnowa", true);
-    setFeatureEnabled(Features, "lzcnt", true);
-    setFeatureEnabled(Features, "popcnt", true);
+    setFeatureEnabledImpl(Features, "sse3", true);
+    setFeatureEnabledImpl(Features, "sse4a", true);
+    setFeatureEnabledImpl(Features, "3dnowa", true);
+    setFeatureEnabledImpl(Features, "lzcnt", true);
+    setFeatureEnabledImpl(Features, "popcnt", true);
     break;
   case CK_BTVER1:
-    setFeatureEnabled(Features, "ssse3", true);
-    setFeatureEnabled(Features, "sse4a", true);
-    setFeatureEnabled(Features, "lzcnt", true);
-    setFeatureEnabled(Features, "popcnt", true);
+    setFeatureEnabledImpl(Features, "ssse3", true);
+    setFeatureEnabledImpl(Features, "sse4a", true);
+    setFeatureEnabledImpl(Features, "lzcnt", true);
+    setFeatureEnabledImpl(Features, "popcnt", true);
     break;
   case CK_BTVER2:
-    setFeatureEnabled(Features, "avx", true);
-    setFeatureEnabled(Features, "sse4a", true);
-    setFeatureEnabled(Features, "lzcnt", true);
-    setFeatureEnabled(Features, "aes", true);
-    setFeatureEnabled(Features, "pclmul", true);
-    setFeatureEnabled(Features, "bmi", true);
-    setFeatureEnabled(Features, "f16c", true);
+    setFeatureEnabledImpl(Features, "avx", true);
+    setFeatureEnabledImpl(Features, "sse4a", true);
+    setFeatureEnabledImpl(Features, "lzcnt", true);
+    setFeatureEnabledImpl(Features, "aes", true);
+    setFeatureEnabledImpl(Features, "pclmul", true);
+    setFeatureEnabledImpl(Features, "bmi", true);
+    setFeatureEnabledImpl(Features, "f16c", true);
     break;
   case CK_BDVER1:
-    setFeatureEnabled(Features, "xop", true);
-    setFeatureEnabled(Features, "lzcnt", true);
-    setFeatureEnabled(Features, "aes", true);
-    setFeatureEnabled(Features, "pclmul", true);
+    setFeatureEnabledImpl(Features, "xop", true);
+    setFeatureEnabledImpl(Features, "lzcnt", true);
+    setFeatureEnabledImpl(Features, "aes", true);
+    setFeatureEnabledImpl(Features, "pclmul", true);
     break;
   case CK_BDVER2:
-    setFeatureEnabled(Features, "xop", true);
-    setFeatureEnabled(Features, "lzcnt", true);
-    setFeatureEnabled(Features, "aes", true);
-    setFeatureEnabled(Features, "pclmul", true);
-    setFeatureEnabled(Features, "bmi", true);
-    setFeatureEnabled(Features, "fma", true);
-    setFeatureEnabled(Features, "f16c", true);
+    setFeatureEnabledImpl(Features, "xop", true);
+    setFeatureEnabledImpl(Features, "lzcnt", true);
+    setFeatureEnabledImpl(Features, "aes", true);
+    setFeatureEnabledImpl(Features, "pclmul", true);
+    setFeatureEnabledImpl(Features, "bmi", true);
+    setFeatureEnabledImpl(Features, "fma", true);
+    setFeatureEnabledImpl(Features, "f16c", true);
     break;
   case CK_C3_2:
-    setFeatureEnabled(Features, "sse", true);
+    setFeatureEnabledImpl(Features, "sse", true);
     break;
   }
 }
@@ -2238,9 +2243,8 @@ void X86TargetInfo::setXOPLevel(llvm::StringMap<bool> &Features, XOPEnum Level,
   }
 }
 
-void X86TargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
-                                      StringRef Name,
-                                      bool Enabled) const {
+void X86TargetInfo::setFeatureEnabledImpl(llvm::StringMap<bool> &Features,
+                                          StringRef Name, bool Enabled) {
   // FIXME: This *really* should not be here.  We need some way of translating
   // options into llvm subtarget features.
   if (Name == "sse4")
