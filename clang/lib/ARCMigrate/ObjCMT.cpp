@@ -508,7 +508,7 @@ static bool UseNSOptionsMacro(Preprocessor &PP, ASTContext &Ctx,
       PowerOfTwo = false;
       continue;
     }
-    InitExpr = InitExpr->IgnoreImpCasts();
+    InitExpr = InitExpr->IgnoreParenCasts();
     if (const BinaryOperator *BO = dyn_cast<BinaryOperator>(InitExpr))
       if (BO->isShiftOp() || BO->isBitwiseOp())
         return true;

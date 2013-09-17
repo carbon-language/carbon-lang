@@ -126,3 +126,23 @@ typedef enum  {
     D_NSTickMarkAbove = 1
 } D_NSTickMarkPosition DEPRECATED;
 
+
+#define NS_ENUM_AVAILABLE(X,Y)
+
+typedef NS_OPTIONS(NSUInteger, NSFOptions) {
+    NSFStrongMemory NS_ENUM_AVAILABLE(10_5, 6_0) = (0UL << 0),       
+    NSFOpaqueMemory NS_ENUM_AVAILABLE(10_5, 6_0) = (2UL << 0),
+    NSFMallocMemory NS_ENUM_AVAILABLE(10_5, 6_0) = (3UL << 0),       
+    NSFMachVirtualMemory NS_ENUM_AVAILABLE(10_5, 6_0) = (4UL << 0),
+    NSFWeakMemory NS_ENUM_AVAILABLE(10_8, 6_0) = (5UL << 0),         
+
+    NSFObjectPersonality NS_ENUM_AVAILABLE(10_5, 6_0) = (0UL << 8),         
+    NSFOpaquePersonality NS_ENUM_AVAILABLE(10_5, 6_0) = (1UL << 8),         
+    NSFObjectPointerPersonality NS_ENUM_AVAILABLE(10_5, 6_0) = (2UL << 8),  
+    NSFCStringPersonality NS_ENUM_AVAILABLE(10_5, 6_0) = (3UL << 8),        
+    NSFStructPersonality NS_ENUM_AVAILABLE(10_5, 6_0) = (4UL << 8),         
+    NSFIntegerPersonality NS_ENUM_AVAILABLE(10_5, 6_0) = (5UL << 8),        
+    NSFCopyIn NS_ENUM_AVAILABLE(10_5, 6_0) = (1UL << 16),      
+};
+
+
