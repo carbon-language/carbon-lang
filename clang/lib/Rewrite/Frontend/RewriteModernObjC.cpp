@@ -1904,7 +1904,7 @@ Stmt *RewriteModernObjC::RewriteObjCSynchronizedStmt(ObjCAtSynchronizedStmt *S) 
   std::string buf;
   SourceLocation SynchLoc = S->getAtSynchronizedLoc();
   ConvertSourceLocationToLineDirective(SynchLoc, buf);
-  buf += "{ id _rethrow = 0; id _sync_obj = ";
+  buf += "{ id _rethrow = 0; id _sync_obj = (id)";
   
   const char *lparenBuf = startBuf;
   while (*lparenBuf != '(') lparenBuf++;

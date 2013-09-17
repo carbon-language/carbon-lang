@@ -1,7 +1,6 @@
 // RUN: %clang_cc1 -x objective-c -Wno-return-type -fblocks -fms-extensions -rewrite-objc %s -o %t-rw.cpp
-// RUN: %clang_cc1 -fsyntax-only -fcxx-exceptions -fexceptions  -Wno-address-of-temporary -D"SEL=void*" -D"__declspec(X)=" %t-rw.cpp
+// RUN: %clang_cc1 -fsyntax-only -fcxx-exceptions -fexceptions  -Wno-address-of-temporary -D"SEL=void*" -D"Class=struct objc_class *" -D"__declspec(X)=" %t-rw.cpp
 
-typedef struct objc_class *Class;
 typedef struct objc_object {
     Class isa;
 } *id;
@@ -33,3 +32,15 @@ void test_sync_with_implicit_finally() {
         return; // The rewriter knows how to generate code for implicit finally
     }
 }
+
+// rdar://14993814
+@interface NSObject @end
+
+@interface I : NSObject @end
+
+@implementation I
++ (void) Meth {
+@synchronized(self) {
+}
+}
+@end
