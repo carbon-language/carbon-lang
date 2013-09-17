@@ -591,6 +591,12 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     { X86::VMOVDQA64rr,     X86::VMOVDQA64rm,         TB_ALIGN_64 },
     { X86::VMOVDQU32rr,     X86::VMOVDQU32rm,         0 },
     { X86::VMOVDQU64rr,     X86::VMOVDQU64rm,         0 },
+
+    // AES foldable instructions
+    { X86::AESIMCrr,              X86::AESIMCrm,              TB_ALIGN_16 },
+    { X86::AESKEYGENASSIST128rr,  X86::AESKEYGENASSIST128rm,  TB_ALIGN_16 },
+    { X86::VAESIMCrr,             X86::VAESIMCrm,             TB_ALIGN_16 },
+    { X86::VAESKEYGENASSIST128rr, X86::VAESKEYGENASSIST128rm, TB_ALIGN_16 },
   };
 
   for (unsigned i = 0, e = array_lengthof(OpTbl1); i != e; ++i) {
@@ -1219,6 +1225,25 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     { X86::VSHUFPSZrri,       X86::VSHUFPSZrmi,         0 },
     { X86::VALIGNQrri,        X86::VALIGNQrmi,          0 },
     { X86::VALIGNDrri,        X86::VALIGNDrmi,          0 },
+
+    // AES foldable instructions
+    { X86::AESDECLASTrr,      X86::AESDECLASTrm,        TB_ALIGN_16 },
+    { X86::AESDECrr,          X86::AESDECrm,            TB_ALIGN_16 },
+    { X86::AESENCLASTrr,      X86::AESENCLASTrm,        TB_ALIGN_16 },
+    { X86::AESENCrr,          X86::AESENCrm,            TB_ALIGN_16 },
+    { X86::VAESDECLASTrr,     X86::VAESDECLASTrm,       TB_ALIGN_16 },
+    { X86::VAESDECrr,         X86::VAESDECrm,           TB_ALIGN_16 },
+    { X86::VAESENCLASTrr,     X86::VAESENCLASTrm,       TB_ALIGN_16 },
+    { X86::VAESENCrr,         X86::VAESENCrm,           TB_ALIGN_16 },
+
+    // SHA foldable instructions
+    { X86::SHA1MSG1rr,        X86::SHA1MSG1rm,          TB_ALIGN_16 },
+    { X86::SHA1MSG2rr,        X86::SHA1MSG2rm,          TB_ALIGN_16 },
+    { X86::SHA1NEXTErr,       X86::SHA1NEXTErm,         TB_ALIGN_16 },
+    { X86::SHA1RNDS4rri,      X86::SHA1RNDS4rmi,        TB_ALIGN_16 },
+    { X86::SHA256MSG1rr,      X86::SHA256MSG1rm,        TB_ALIGN_16 },
+    { X86::SHA256MSG2rr,      X86::SHA256MSG2rm,        TB_ALIGN_16 },
+    { X86::SHA256RNDS2rr,     X86::SHA256RNDS2rm,       TB_ALIGN_16 },
   };
 
   for (unsigned i = 0, e = array_lengthof(OpTbl2); i != e; ++i) {
