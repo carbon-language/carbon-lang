@@ -609,7 +609,7 @@ struct CheckString {
     : Pat(P), Loc(L), CheckTy(Ty) {}
 
   /// Check - Match check string and its "not strings" and/or "dag strings".
-  size_t Check(const SourceMgr &SM, StringRef Buffer, bool IsLabel,
+  size_t Check(const SourceMgr &SM, StringRef Buffer,
                size_t &MatchLen, StringMap<StringRef> &VariableTable) const;
 
   /// CheckNext - Verify there is a single line in the given buffer.
@@ -874,12 +874,12 @@ static unsigned CountNumNewlinesBetween(StringRef Range) {
 }
 
 size_t CheckString::Check(const SourceMgr &SM, StringRef Buffer,
-                          bool IsLabel, size_t &MatchLen,
+                          size_t &MatchLen,
                           StringMap<StringRef> &VariableTable) const {
   size_t LastPos = 0;
   std::vector<const Pattern *> NotStrings;
 
-  if (!IsLabel) {
+  if (CheckTy != Check::CheckLabel) {
     // Match "dag strings" (with mixed "not strings" if any).
     LastPos = CheckDag(SM, Buffer, NotStrings, VariableTable);
     if (LastPos == StringRef::npos)
@@ -895,7 +895,7 @@ size_t CheckString::Check(const SourceMgr &SM, StringRef Buffer,
   }
   MatchPos += LastPos;
 
-  if (!IsLabel) {
+  if (CheckTy != Check::CheckLabel) {
     StringRef SkippedRegion = Buffer.substr(LastPos, MatchPos);
 
     // If this check is a "CHECK-NEXT", verify that the previous match was on
@@ -1119,7 +1119,7 @@ int main(int argc, char **argv) {
 
       // Scan to next CHECK-LABEL match, ignoring CHECK-NOT and CHECK-DAG
       size_t MatchLabelLen = 0;
-      size_t MatchLabelPos = CheckLabelStr.Check(SM, Buffer, true,
+      size_t MatchLabelPos = CheckLabelStr.Check(SM, Buffer,
                                                  MatchLabelLen, VariableTable);
       if (MatchLabelPos == StringRef::npos) {
         hasError = true;
@@ -1137,7 +1137,7 @@ int main(int argc, char **argv) {
       // Check each string within the scanned region, including a second check
       // of any final CHECK-LABEL (to verify CHECK-NOT and CHECK-DAG)
       size_t MatchLen = 0;
-      size_t MatchPos = CheckStr.Check(SM, CheckRegion, false, MatchLen,
+      size_t MatchPos = CheckStr.Check(SM, CheckRegion, MatchLen,
                                        VariableTable);
 
       if (MatchPos == StringRef::npos) {
