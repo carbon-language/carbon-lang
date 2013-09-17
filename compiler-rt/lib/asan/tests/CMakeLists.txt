@@ -139,14 +139,9 @@ set_target_properties(AsanBenchmarks PROPERTIES FOLDER "Asan benchmarks")
 
 set(ASAN_NOINST_TEST_SOURCES
   ${COMPILER_RT_GTEST_SOURCE}
+  asan_fake_stack_test.cc
   asan_noinst_test.cc
   asan_test_main.cc)
-if(NOT APPLE AND NOT ANDROID)
-  # Do not build asan_fake_stack_test.cc on OS X and Android, since it requires
-  # exposing additional functions from the runtime.
-  # See also https://code.google.com/p/address-sanitizer/issues/detail?id=222
-  list(APPEND ASAN_NOINST_TEST_SOURCES asan_fake_stack_test.cc)
-endif()
 
 set(ASAN_INST_TEST_SOURCES
   ${COMPILER_RT_GTEST_SOURCE}
