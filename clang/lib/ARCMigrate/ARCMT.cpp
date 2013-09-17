@@ -270,8 +270,6 @@ bool arcmt::checkForManualIssues(CompilerInvocation &origCI,
     return true;
   }
 
-  bool hadARCErrors = capturedDiags.hasErrors();
-
   // Don't filter diagnostics anymore.
   Diags->setClient(DiagClient, /*ShouldOwnClient=*/false);
 
@@ -323,15 +321,6 @@ bool arcmt::checkForManualIssues(CompilerInvocation &origCI,
   DiagClient->EndSourceFile();
   errRec.FinishCapture();
 
-  if (hadARCErrors) {
-    // If we are migrating code that gets the '-fobjc-arc' flag, make sure
-    // to remove it so that we don't get errors from normal compilation.
-    origCI.getLangOpts()->ObjCAutoRefCount = false;
-    // Disable auto-synthesize to avoid "@synthesize of 'weak' property is only
-    // allowed in ARC" errors.
-    origCI.getLangOpts()->ObjCDefaultSynthProperties = false;
-  }
-
   return capturedDiags.hasErrors() || testAct.hasReportedErrors();
 }
 
@@ -381,14 +370,6 @@ static bool applyTransforms(CompilerInvocation &origCI,
     origCI.getLangOpts()->ObjCAutoRefCount = true;
     return migration.getRemapper().overwriteOriginal(*Diags);
   } else {
-    if (migration.HadARCErrors) {
-      // If we are migrating code that gets the '-fobjc-arc' flag, make sure
-      // to remove it so that we don't get errors from normal compilation.
-      origCI.getLangOpts()->ObjCAutoRefCount = false;
-      // Disable auto-synthesize to avoid "@synthesize of 'weak' property is only
-      // allowed in ARC" errors.
-      origCI.getLangOpts()->ObjCDefaultSynthProperties = false;
-    }
     return migration.getRemapper().flushToDisk(outputDir, *Diags);
   }
 }

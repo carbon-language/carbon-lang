@@ -2563,7 +2563,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddLastArg(CmdArgs, options::OPT_working_directory);
 
   bool ARCMTEnabled = false;
-  if (!Args.hasArg(options::OPT_fno_objc_arc)) {
+  if (!Args.hasArg(options::OPT_fno_objc_arc, options::OPT_fobjc_arc)) {
     if (const Arg *A = Args.getLastArg(options::OPT_ccc_arcmt_check,
                                        options::OPT_ccc_arcmt_modify,
                                        options::OPT_ccc_arcmt_migrate)) {
