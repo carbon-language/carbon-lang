@@ -88,10 +88,12 @@ static const char *const kAsanPoisonStackMemoryName =
 static const char *const kAsanUnpoisonStackMemoryName =
     "__asan_unpoison_stack_memory";
 
+// These constants must match the definitions in the run-time library.
 static const int kAsanStackLeftRedzoneMagic = 0xf1;
 static const int kAsanStackMidRedzoneMagic = 0xf2;
 static const int kAsanStackRightRedzoneMagic = 0xf3;
 static const int kAsanStackPartialRedzoneMagic = 0xf4;
+static const int kAsanStackAfterReturnMagic = 0xf5;
 
 // Accesses sizes are powers of two: 1, 2, 4, 8, 16.
 static const size_t kNumberOfAccessSizes = 5;
@@ -519,6 +521,9 @@ struct FunctionStackPoisoner : public InstVisitor<FunctionStackPoisoner> {
   void poisonRedZones(const ArrayRef<AllocaInst*> &AllocaVec, IRBuilder<> &IRB,
                       Value *ShadowBase, bool DoPoison);
   void poisonAlloca(Value *V, uint64_t Size, IRBuilder<> &IRB, bool DoPoison);
+
+  void SetShadowToStackAfterReturnInlined(IRBuilder<> &IRB, Value *ShadowBase,
+                                          int Size);
 };
 
 }  // namespace
@@ -1362,6 +1367,22 @@ static int StackMallocSizeClass(uint64_t LocalStackSize) {
   llvm_unreachable("impossible LocalStackSize");
 }
 
+// Set Size bytes starting from ShadowBase to kAsanStackAfterReturnMagic.
+// We can not use MemSet intrinsic because it may end up calling the actual
+// memset. Size is a multiple of 8.
+// Currently this generates 8-byte stores on x86_64; it may be better to
+// generate wider stores.
+void FunctionStackPoisoner::SetShadowToStackAfterReturnInlined(
+    IRBuilder<> &IRB, Value *ShadowBase, int Size) {
+  assert(!(Size % 8));
+  assert(kAsanStackAfterReturnMagic == 0xf5);
+  for (int i = 0; i < Size; i += 8) {
+    Value *p = IRB.CreateAdd(ShadowBase, ConstantInt::get(IntptrTy, i));
+    IRB.CreateStore(ConstantInt::get(IRB.getInt64Ty(), 0xf5f5f5f5f5f5f5f5ULL),
+                    IRB.CreateIntToPtr(p, IRB.getInt64Ty()->getPointerTo()));
+  }
+}
+
 void FunctionStackPoisoner::poisonStack() {
   uint64_t LocalStackSize = TotalStackSize +
                             (AllocaVec.size() + 1) * RedzoneSize();
@@ -1465,9 +1486,33 @@ void FunctionStackPoisoner::poisonStack() {
     if (DoStackMalloc) {
       assert(StackMallocIdx >= 0);
       // In use-after-return mode, mark the whole stack frame unaddressable.
-      IRBRet.CreateCall3(AsanStackFreeFunc[StackMallocIdx], LocalStackBase,
-                         ConstantInt::get(IntptrTy, LocalStackSize),
-                         OrigStackBase);
+      if (StackMallocIdx <= 4) {
+        // For small sizes inline the whole thing:
+        // if LocalStackBase != OrigStackBase:
+        //     memset(ShadowBase, kAsanStackAfterReturnMagic, ShadowSize);
+        //     **SavedFlagPtr(LocalStackBase) = 0
+        // FIXME: if LocalStackBase != OrigStackBase don't call poisonRedZones.
+        Value *Cmp = IRBRet.CreateICmpNE(LocalStackBase, OrigStackBase);
+        TerminatorInst *PoisonTerm =
+            SplitBlockAndInsertIfThen(cast<Instruction>(Cmp), false);
+        IRBuilder<> IRBPoison(PoisonTerm);
+        int ClassSize = kMinStackMallocSize << StackMallocIdx;
+        SetShadowToStackAfterReturnInlined(IRBPoison, ShadowBase,
+                                           ClassSize >> Mapping.Scale);
+        Value *SavedFlagPtrPtr = IRBPoison.CreateAdd(
+            LocalStackBase,
+            ConstantInt::get(IntptrTy, ClassSize - ASan.LongSize / 8));
+        Value *SavedFlagPtr = IRBPoison.CreateLoad(
+            IRBPoison.CreateIntToPtr(SavedFlagPtrPtr, IntptrPtrTy));
+        IRBPoison.CreateStore(
+            Constant::getNullValue(IRBPoison.getInt8Ty()),
+            IRBPoison.CreateIntToPtr(SavedFlagPtr, IRBPoison.getInt8PtrTy()));
+      } else {
+        // For larger frames call __asan_stack_free_*.
+        IRBRet.CreateCall3(AsanStackFreeFunc[StackMallocIdx], LocalStackBase,
+                           ConstantInt::get(IntptrTy, LocalStackSize),
+                           OrigStackBase);
+      }
     } else if (HavePoisonedAllocas) {
       // If we poisoned some allocas in llvm.lifetime analysis,
       // unpoison whole stack frame now.
