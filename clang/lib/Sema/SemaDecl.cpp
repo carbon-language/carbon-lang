@@ -8814,21 +8814,13 @@ Sema::DeclGroupPtrTy Sema::FinalizeDeclaratorGroup(Scope *S, const DeclSpec &DS,
   if (DS.isTypeSpecOwned())
     Decls.push_back(DS.getRepAsDecl());
 
-  DeclaratorDecl *FirstDeclaratorInGroup = 0;
   for (unsigned i = 0, e = Group.size(); i != e; ++i)
-    if (Decl *D = Group[i]) {
-      if (DeclaratorDecl *DD = dyn_cast<DeclaratorDecl>(D))
-        if (!FirstDeclaratorInGroup)
-          FirstDeclaratorInGroup = DD;
+    if (Decl *D = Group[i])
       Decls.push_back(D);
-    }
 
   if (DeclSpec::isDeclRep(DS.getTypeSpecType())) {
-    if (TagDecl *Tag = dyn_cast_or_null<TagDecl>(DS.getRepAsDecl())) {
+    if (const TagDecl *Tag = dyn_cast_or_null<TagDecl>(DS.getRepAsDecl()))
       HandleTagNumbering(*this, Tag);
-      if (!Tag->hasNameForLinkage() && !Tag->hasDeclaratorForAnonDecl())
-        Tag->setDeclaratorForAnonDecl(FirstDeclaratorInGroup);
-    }
   }
 
   return BuildDeclaratorGroup(Decls, DS.containsPlaceholderType());

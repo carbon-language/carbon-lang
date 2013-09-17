@@ -2507,20 +2507,17 @@ private:
   // to be used for the (uncommon) case of out-of-line declarations.
   typedef QualifierInfo ExtInfo;
 
-  /// \brief If the (out-of-line) tag declaration name
+  /// TypedefNameDeclOrQualifier - If the (out-of-line) tag declaration name
   /// is qualified, it points to the qualifier info (nns and range);
   /// otherwise, if the tag declaration is anonymous and it is part of
   /// a typedef or alias, it points to the TypedefNameDecl (used for mangling);
-  /// otherwise, if the tag declaration is anonymous and it is used as a
-  /// declaration specifier for variables, it points to the first VarDecl (used
-  /// for mangling);
   /// otherwise, it is a null (TypedefNameDecl) pointer.
-  llvm::PointerUnion<NamedDecl *, ExtInfo *> NamedDeclOrQualifier;
+  llvm::PointerUnion<TypedefNameDecl*, ExtInfo*> TypedefNameDeclOrQualifier;
 
-  bool hasExtInfo() const { return NamedDeclOrQualifier.is<ExtInfo *>(); }
-  ExtInfo *getExtInfo() { return NamedDeclOrQualifier.get<ExtInfo *>(); }
+  bool hasExtInfo() const { return TypedefNameDeclOrQualifier.is<ExtInfo*>(); }
+  ExtInfo *getExtInfo() { return TypedefNameDeclOrQualifier.get<ExtInfo*>(); }
   const ExtInfo *getExtInfo() const {
-    return NamedDeclOrQualifier.get<ExtInfo *>();
+    return TypedefNameDeclOrQualifier.get<ExtInfo*>();
   }
 
 protected:
@@ -2530,7 +2527,7 @@ protected:
         IsCompleteDefinition(false), IsBeingDefined(false),
         IsEmbeddedInDeclarator(false), IsFreeStanding(false),
         IsCompleteDefinitionRequired(false),
-        NamedDeclOrQualifier((NamedDecl *)0) {
+        TypedefNameDeclOrQualifier((TypedefNameDecl *)0) {
     assert((DK != Enum || TK == TTK_Enum) &&
            "EnumDecl not matched with TTK_Enum");
     setPreviousDeclaration(PrevDecl);
@@ -2673,21 +2670,10 @@ public:
     return (getDeclName() || getTypedefNameForAnonDecl());
   }
 
-  bool hasDeclaratorForAnonDecl() const {
-    return dyn_cast_or_null<DeclaratorDecl>(
-        NamedDeclOrQualifier.get<NamedDecl *>());
-  }
-  DeclaratorDecl *getDeclaratorForAnonDecl() const {
-    return hasExtInfo() ? 0 : dyn_cast_or_null<DeclaratorDecl>(
-                                  NamedDeclOrQualifier.get<NamedDecl *>());
-  }
-
   TypedefNameDecl *getTypedefNameForAnonDecl() const {
-    return hasExtInfo() ? 0 : dyn_cast_or_null<TypedefNameDecl>(
-                                  NamedDeclOrQualifier.get<NamedDecl *>());
+    return hasExtInfo() ? 0 :
+           TypedefNameDeclOrQualifier.get<TypedefNameDecl*>();
   }
-
-  void setDeclaratorForAnonDecl(DeclaratorDecl *DD) { NamedDeclOrQualifier = DD; }
 
   void setTypedefNameForAnonDecl(TypedefNameDecl *TDD);
 
