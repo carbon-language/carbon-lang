@@ -224,3 +224,23 @@ entry:
   %vmull.i = tail call <8 x i16> @llvm.arm.neon.vmullu.v8i16(<8 x i8> %0, <8 x i8> %1)
   ret <8 x i16> %vmull.i
 }
+
+; <rdar://problem/14989896> Make sure we manage to truncate a vector from an
+; illegal type to a legal type.
+define <2 x i8> @test_truncate(<2 x i128> %in) {
+; CHECK-LABEL: test_truncate:
+; CHECK: mov [[BASE:r[0-9]+]], sp
+; CHECK-NEXT: vld1.32 {[[REG1:d[0-9]+]][0]}, {{\[}}[[BASE]]:32]
+; CHECK-NEXT: add [[BASE2:r[0-9]+]], [[BASE]], #4
+; CHECK-NEXT: vld1.32 {[[REG1]][1]}, {{\[}}[[BASE2]]:32]
+; REG2 Should map on the same Q register as REG1, i.e., REG2 = REG1 - 1, but we
+; cannot express that.
+; CHECK-NEXT: vmov.32 [[REG2:d[0-9]+]][0], r0
+; CHECK-NEXT: vmov.32 [[REG2]][1], r1
+; The Q register used here should match floor(REG1/2), but we cannot express that.
+; CHECK-NEXT: vmovn.i64 [[RES:d[0-9]+]], q{{[0-9]+}}
+; CHECK-NEXT: vmov r0, r1, [[RES]]
+entry:
+  %res = trunc <2 x i128> %in to <2 x i8>
+  ret <2 x i8> %res
+}

@@ -371,7 +371,8 @@ bool DAGTypeLegalizer::ScalarizeVectorOperand(SDNode *N, unsigned OpNo) {
     case ISD::ANY_EXTEND:
     case ISD::ZERO_EXTEND:
     case ISD::SIGN_EXTEND:
-      Res = ScalarizeVecOp_EXTEND(N);
+    case ISD::TRUNCATE:
+      Res = ScalarizeVecOp_UnaryOp(N);
       break;
     case ISD::CONCAT_VECTORS:
       Res = ScalarizeVecOp_CONCAT_VECTORS(N);
@@ -410,7 +411,7 @@ SDValue DAGTypeLegalizer::ScalarizeVecOp_BITCAST(SDNode *N) {
 
 /// ScalarizeVecOp_EXTEND - If the value to extend is a vector that needs
 /// to be scalarized, it must be <1 x ty>.  Extend the element instead.
-SDValue DAGTypeLegalizer::ScalarizeVecOp_EXTEND(SDNode *N) {
+SDValue DAGTypeLegalizer::ScalarizeVecOp_UnaryOp(SDNode *N) {
   assert(N->getValueType(0).getVectorNumElements() == 1 &&
          "Unexected vector type!");
   SDValue Elt = GetScalarizedVector(N->getOperand(0));
