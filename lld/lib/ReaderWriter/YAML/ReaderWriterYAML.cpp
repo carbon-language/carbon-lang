@@ -1146,10 +1146,10 @@ RefNameResolver::RefNameResolver(const lld::File *file, IO &io) : _io(io) {
   NormalizedAtom;
   for (const lld::DefinedAtom *a : file->defined()) {
     NormalizedAtom *na = (NormalizedAtom *)a;
-    if (na->_refName.empty())
-      add(na->_name, a);
-    else
+    if (!na->_refName.empty())
       add(na->_refName, a);
+    else if (!na->_name.empty())
+      add(na->_name, a);
   }
 
   for (const lld::UndefinedAtom *a : file->undefined())

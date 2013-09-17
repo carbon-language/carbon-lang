@@ -1,0 +1,164 @@
+# This tests the functionality that lld is able to read
+# an input YAML from a previous link
+
+RUN: lld -flavor gnu -target x86_64-linux %p/Inputs/initfini.o \
+RUN: --noinhibit-exec -emit-yaml -o %t.objtxt
+RUN: lld -flavor gnu -target x86_64-linux %t.objtxt \
+RUN: --noinhibit-exec -o %t1
+RUN: llvm-readobj -sections %t1 | FileCheck %s -check-prefix=SECTIONS
+
+SECTIONS:   Section {
+SECTIONS:     Index: 0
+SECTIONS:     Name:  (0)
+SECTIONS:     Type: SHT_NULL (0x0)
+SECTIONS:     Flags [ (0x0)
+SECTIONS:     ]
+SECTIONS:   }
+SECTIONS:   Section {
+SECTIONS:     Index: 1
+SECTIONS:     Name: .interp (1)
+SECTIONS:     Type: SHT_PROGBITS (0x1)
+SECTIONS:     Flags [ (0x2)
+SECTIONS:       SHF_ALLOC (0x2)
+SECTIONS:     ]
+SECTIONS:   }
+SECTIONS:   Section {
+SECTIONS:     Index: 2
+SECTIONS:     Name: .hash (9)
+SECTIONS:     Type: SHT_HASH (0x5)
+SECTIONS:     Flags [ (0x2)
+SECTIONS:       SHF_ALLOC (0x2)
+SECTIONS:     ]
+SECTIONS:   }
+SECTIONS:   Section {
+SECTIONS:     Index: 3
+SECTIONS:     Name: .dynsym (15)
+SECTIONS:     Type: SHT_DYNSYM (0xB)
+SECTIONS:     Flags [ (0x2)
+SECTIONS:       SHF_ALLOC (0x2)
+SECTIONS:     ]
+SECTIONS:   }
+SECTIONS:   Section {
+SECTIONS:     Index: 4
+SECTIONS:     Name: .dynstr (23)
+SECTIONS:     Type: SHT_STRTAB (0x3)
+SECTIONS:     Flags [ (0x2)
+SECTIONS:       SHF_ALLOC (0x2)
+SECTIONS:     ]
+SECTIONS:   }
+SECTIONS:   Section {
+SECTIONS:     Index: 5
+SECTIONS:     Name: .note.GNU-stack (31)
+SECTIONS:     Type: SHT_PROGBITS (0x1)
+SECTIONS:     Flags [ (0x2)
+SECTIONS:       SHF_ALLOC (0x2)
+SECTIONS:     ]
+SECTIONS:   }
+SECTIONS:   Section {
+SECTIONS:     Index: 6
+SECTIONS:     Name: .text (47)
+SECTIONS:     Type: SHT_PROGBITS (0x1)
+SECTIONS:     Flags [ (0x6)
+SECTIONS:       SHF_ALLOC (0x2)
+SECTIONS:       SHF_EXECINSTR (0x4)
+SECTIONS:     ]
+SECTIONS:   }
+SECTIONS:   Section {
+SECTIONS:     Index: 7
+SECTIONS:     Name: .rodata (53)
+SECTIONS:     Type: SHT_PROGBITS (0x1)
+SECTIONS:     Flags [ (0x2)
+SECTIONS:       SHF_ALLOC (0x2)
+SECTIONS:     ]
+SECTIONS:   }
+SECTIONS:   Section {
+SECTIONS:     Index: 8
+SECTIONS:     Name: .comment (61)
+SECTIONS:     Type: SHT_PROGBITS (0x1)
+SECTIONS:     Flags [ (0x2)
+SECTIONS:       SHF_ALLOC (0x2)
+SECTIONS:     ]
+SECTIONS:   }
+SECTIONS:   Section {
+SECTIONS:     Index: 9
+SECTIONS:     Name: .eh_frame (70)
+SECTIONS:     Type: SHT_PROGBITS (0x1)
+SECTIONS:     Flags [ (0x2)
+SECTIONS:       SHF_ALLOC (0x2)
+SECTIONS:     ]
+SECTIONS:   }
+SECTIONS:   Section {
+SECTIONS:     Index: 10
+SECTIONS:     Name: .init_array (80)
+SECTIONS:     Type: SHT_PROGBITS (0x1)
+SECTIONS:     Flags [ (0x3)
+SECTIONS:       SHF_ALLOC (0x2)
+SECTIONS:       SHF_WRITE (0x1)
+SECTIONS:     ]
+SECTIONS:   }
+SECTIONS:   Section {
+SECTIONS:     Index: 11
+SECTIONS:     Name: .fini_array (92)
+SECTIONS:     Type: SHT_PROGBITS (0x1)
+SECTIONS:     Flags [ (0x3)
+SECTIONS:       SHF_ALLOC (0x2)
+SECTIONS:       SHF_WRITE (0x1)
+SECTIONS:     ]
+SECTIONS:   }
+SECTIONS:   Section {
+SECTIONS:     Index: 12
+SECTIONS:     Name: .dynamic (104)
+SECTIONS:     Type: SHT_PROGBITS (0x1)
+SECTIONS:     Flags [ (0x3)
+SECTIONS:       SHF_ALLOC (0x2)
+SECTIONS:       SHF_WRITE (0x1)
+SECTIONS:     ]
+SECTIONS:   }
+SECTIONS:   Section {
+SECTIONS:     Index: 13
+SECTIONS:     Name: .got.plt (113)
+SECTIONS:     Type: SHT_PROGBITS (0x1)
+SECTIONS:     Flags [ (0x3)
+SECTIONS:       SHF_ALLOC (0x2)
+SECTIONS:       SHF_WRITE (0x1)
+SECTIONS:     ]
+SECTIONS:   }
+SECTIONS:   Section {
+SECTIONS:     Index: 14
+SECTIONS:     Name: .data (122)
+SECTIONS:     Type: SHT_PROGBITS (0x1)
+SECTIONS:     Flags [ (0x3)
+SECTIONS:       SHF_ALLOC (0x2)
+SECTIONS:       SHF_WRITE (0x1)
+SECTIONS:     ]
+SECTIONS:   }
+SECTIONS:   Section {
+SECTIONS:     Index: 15
+SECTIONS:     Name: .bss (128)
+SECTIONS:     Type: SHT_NOBITS (0x8)
+SECTIONS:     Flags [ (0x3)
+SECTIONS:       SHF_ALLOC (0x2)
+SECTIONS:       SHF_WRITE (0x1)
+SECTIONS:     ]
+SECTIONS:   }
+SECTIONS:   Section {
+SECTIONS:     Index: 16
+SECTIONS:     Name: .shstrtab (133)
+SECTIONS:     Type: SHT_STRTAB (0x3)
+SECTIONS:     Flags [ (0x0)
+SECTIONS:     ]
+SECTIONS:   }
+SECTIONS:   Section {
+SECTIONS:     Index: 17
+SECTIONS:     Name: .symtab (143)
+SECTIONS:     Type: SHT_SYMTAB (0x2)
+SECTIONS:     Flags [ (0x0)
+SECTIONS:     ]
+SECTIONS:   }
+SECTIONS:   Section {
+SECTIONS:     Index: 18
+SECTIONS:     Name: .strtab (151)
+SECTIONS:     Type: SHT_STRTAB (0x3)
+SECTIONS:     Flags [ (0x0)
+SECTIONS:     ]
+SECTIONS:   }
