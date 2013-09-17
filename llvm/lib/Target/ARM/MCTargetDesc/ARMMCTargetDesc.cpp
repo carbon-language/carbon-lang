@@ -33,15 +33,32 @@ using namespace llvm;
 
 static bool getMCRDeprecationInfo(MCInst &MI, MCSubtargetInfo &STI,
                                   std::string &Info) {
-  // Checks for the deprecated CP15ISB encoding:
-  // mcr pX, #0, rX, c7, c5, #4
-  if (STI.getFeatureBits() & llvm::ARM::HasV8Ops &&
+  if (STI.getFeatureBits() & llvm::ARM::HasV7Ops &&
+      (MI.getOperand(0).isImm() && MI.getOperand(0).getImm() == 15) &&
       (MI.getOperand(1).isImm() && MI.getOperand(1).getImm() == 0) &&
-      (MI.getOperand(3).isImm() && MI.getOperand(3).getImm() == 7) &&
-      (MI.getOperand(4).isImm() && MI.getOperand(4).getImm() == 5) &&
-      (MI.getOperand(5).isImm() && MI.getOperand(5).getImm() == 4)) {
-    Info = "deprecated on armv8";
-    return true;
+      // Checks for the deprecated CP15ISB encoding:
+      // mcr p15, #0, rX, c7, c5, #4
+      (MI.getOperand(3).isImm() && MI.getOperand(3).getImm() == 7)) {
+    if ((MI.getOperand(5).isImm() && MI.getOperand(5).getImm() == 4)) {
+      if (MI.getOperand(4).isImm() && MI.getOperand(4).getImm() == 5) {
+        Info = "deprecated since v7, use 'isb'";
+        return true;
+      }
+
+      // Checks for the deprecated CP15DSB encoding:
+      // mcr p15, #0, rX, c7, c10, #4
+      if (MI.getOperand(4).isImm() && MI.getOperand(4).getImm() == 10) {
+        Info = "deprecated since v7, use 'dsb'";
+        return true;
+      }
+    }
+    // Checks for the deprecated CP15DMB encoding:
+    // mcr p15, #0, rX, c7, c10, #5
+    if (MI.getOperand(4).isImm() && MI.getOperand(4).getImm() == 10 &&
+        (MI.getOperand(5).isImm() && MI.getOperand(5).getImm() == 5)) {
+      Info = "deprecated since v7, use 'dmb'";
+      return true;
+    }
   }
   return false;
 }
