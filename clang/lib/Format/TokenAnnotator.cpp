@@ -1061,6 +1061,7 @@ void TokenAnnotator::calculateFormattingInformation(AnnotatedLine &Line) {
                Style.BreakConstructorInitializersBeforeComma) {
       Current->MustBreakBefore = true;
     } else if (Current->Previous->BlockKind == BK_Block &&
+               Current->Previous->isNot(tok::r_brace) &&
                Current->isNot(tok::r_brace)) {
       Current->MustBreakBefore = true;
     } else if (Current->is(tok::l_brace) && (Current->BlockKind == BK_Block)) {

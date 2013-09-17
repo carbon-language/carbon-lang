@@ -351,6 +351,11 @@ TEST_F(FormatTest, ParseIfElse) {
                "else {\n"
                "  i();\n"
                "}");
+  verifyFormat("void f() {\n"
+               "  if (a) {\n"
+               "  } else {\n"
+               "  }\n"
+               "}");
 }
 
 TEST_F(FormatTest, ElseIf) {
