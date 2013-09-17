@@ -2022,6 +2022,20 @@ void rdar13783514(xpc_connection_t connection) {
   xpc_connection_set_finalizer_f(connection, releaseAfterXPC);
 } // no-warning
 
+// Do not report leaks when object is cleaned up with __attribute__((cleanup ..)).
+inline static void cleanupFunction(void *tp) {
+    CFTypeRef x = *(CFTypeRef *)tp;
+    if (x) {
+        CFRelease(x);
+    }
+}
+#define ADDCLEANUP __attribute__((cleanup(cleanupFunction)))
+void foo() {
+  ADDCLEANUP CFStringRef myString;
+  myString = CFStringCreateWithCString(0, "hello world", kCFStringEncodingUTF8);
+  ADDCLEANUP CFStringRef myString2 = 
+    CFStringCreateWithCString(0, "hello world", kCFStringEncodingUTF8);
+}
 
 // CHECK:  <key>diagnostics</key>
 // CHECK-NEXT:  <array>

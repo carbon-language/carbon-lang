@@ -3356,6 +3356,16 @@ void RetainCountChecker::checkBind(SVal loc, SVal val, const Stmt *S,
     }
   }
 
+  // If we are storing the value into an auto function scope variable annotated
+  // with (__attribute__((cleanup))), stop tracking the value to avoid leak
+  // false positives.
+  if (const VarRegion *LVR = dyn_cast_or_null<VarRegion>(loc.getAsRegion())) {
+    const VarDecl *VD = LVR->getDecl();
+    if (VD->getAttr<CleanupAttr>()) {
+      escapes = true;
+    }
+  }
+
   // If our store can represent the binding and we aren't storing to something
   // that doesn't have local storage then just return and have the simulation
   // state continue as is.
