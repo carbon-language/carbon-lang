@@ -14,6 +14,7 @@
 #include "lldb/Core/StreamString.h"
 #include "lldb/Expression/IRMemoryMap.h"
 #include "lldb/Expression/IRInterpreter.h"
+#include "lldb/Host/Endian.h"
 
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"
@@ -321,13 +322,19 @@ public:
         if (!ResolveConstantValue(resolved_value, constant))
             return false;
         
-        const uint64_t *raw_data = resolved_value.getRawData();
-            
+        lldb_private::StreamString buffer (lldb_private::Stream::eBinary,
+                                           m_memory_map.GetAddressByteSize(),
+                                           m_memory_map.GetByteOrder());
+        
         size_t constant_size = m_target_data.getTypeStoreSize(constant->getType());
+        
+        const uint64_t *raw_data = resolved_value.getRawData();
+        
+        buffer.PutRawBytes(raw_data, constant_size, lldb::endian::InlHostByteOrder());
         
         lldb_private::Error write_error;
         
-        m_memory_map.WriteMemory(process_address, (uint8_t*)raw_data, constant_size, write_error);
+        m_memory_map.WriteMemory(process_address, (const uint8_t*)buffer.GetData(), constant_size, write_error);
         
         return write_error.Success();
     }
