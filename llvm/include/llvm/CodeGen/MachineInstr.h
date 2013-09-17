@@ -640,7 +640,7 @@ public:
   /// A DBG_VALUE is indirect iff the first operand is a register and
   /// the second operand is an immediate.
   bool isIndirectDebugValue() const {
-    return (getOpcode() == TargetOpcode::DBG_VALUE)
+    return isDebugValue()
       && getOperand(0).isReg()
       && getOperand(1).isImm();
   }
