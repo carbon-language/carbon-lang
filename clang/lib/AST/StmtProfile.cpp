@@ -454,6 +454,10 @@ void StmtProfiler::VisitShuffleVectorExpr(const ShuffleVectorExpr *S) {
   VisitExpr(S);
 }
 
+void StmtProfiler::VisitConvertVectorExpr(const ConvertVectorExpr *S) {
+  VisitExpr(S);
+}
+
 void StmtProfiler::VisitChooseExpr(const ChooseExpr *S) {
   VisitExpr(S);
 }

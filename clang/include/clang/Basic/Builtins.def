@@ -488,6 +488,7 @@ BUILTIN(__builtin_trap, "v", "nr")
 BUILTIN(__builtin_debugtrap, "v", "n")
 BUILTIN(__builtin_unreachable, "v", "nr")
 BUILTIN(__builtin_shufflevector, "v."   , "nc")
+BUILTIN(__builtin_convertvector, "v."   , "nct")
 BUILTIN(__builtin_alloca, "v*z"   , "n")
 
 // "Overloaded" Atomic operator builtins.  These are overloaded to support data

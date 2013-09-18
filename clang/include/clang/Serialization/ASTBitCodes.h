@@ -1186,6 +1186,8 @@ namespace clang {
       EXPR_GNU_NULL,
       /// \brief A ShuffleVectorExpr record.
       EXPR_SHUFFLE_VECTOR,
+      /// \brief A ConvertVectorExpr record.
+      EXPR_CONVERT_VECTOR,
       /// \brief BlockExpr
       EXPR_BLOCK,
       /// \brief A GenericSelectionExpr record.

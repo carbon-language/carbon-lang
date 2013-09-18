@@ -995,6 +995,7 @@ CanThrowResult Sema::canThrow(const Expr *E) {
   case Expr::ParenExprClass:
   case Expr::ParenListExprClass:
   case Expr::ShuffleVectorExprClass:
+  case Expr::ConvertVectorExprClass:
   case Expr::VAArgExprClass:
     return canSubExprsThrow(*this, E);
 

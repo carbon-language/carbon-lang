@@ -2843,6 +2843,7 @@ bool Expr::HasSideEffects(const ASTContext &Ctx) const {
   case SubstNonTypeTemplateParmExprClass:
   case MaterializeTemporaryExprClass:
   case ShuffleVectorExprClass:
+  case ConvertVectorExprClass:
   case AsTypeExprClass:
     // These have a side-effect if any subexpression does.
     break;

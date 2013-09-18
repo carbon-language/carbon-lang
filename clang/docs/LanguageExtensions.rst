@@ -1473,6 +1473,50 @@ indices specified.
 
 Query for this feature with ``__has_builtin(__builtin_shufflevector)``.
 
+``__builtin_convertvector``
+---------------------------
+
+``__builtin_convertvector`` is used to express generic vector
+type-conversion operations. The input vector and the output vector
+type must have the same number of elements.
+
+**Syntax**:
+
+.. code-block:: c++
+
+  __builtin_convertvector(src_vec, dst_vec_type)
+
+**Examples**:
+
+.. code-block:: c++
+
+  typedef double vector4double __attribute__((__vector_size__(32)));
+  typedef float  vector4float  __attribute__((__vector_size__(16)));
+  typedef short  vector4short  __attribute__((__vector_size__(8)));
+  vector4float vf; vector4short vs;
+
+  // convert from a vector of 4 floats to a vector of 4 doubles.
+  __builtin_convertvector(vf, vector4double)
+  // equivalent to:
+  (vector4double) { (double) vf[0], (double) vf[1], (double) vf[2], (double) vf[3] }
+
+  // convert from a vector of 4 shorts to a vector of 4 floats.
+  __builtin_convertvector(vs, vector4float)
+  // equivalent to:
+  (vector4float) { (float) vf[0], (float) vf[1], (float) vf[2], (float) vf[3] }
+
+**Description**:
+
+The first argument to ``__builtin_convertvector`` is a vector, and the second
+argument is a vector type with the same number of elements as the first
+argument.
+
+The result of ``__builtin_convertvector`` is a vector with the same element
+type as the second argument, with a value defined in terms of the action of a
+C-style cast applied to each element of the first argument.
+
+Query for this feature with ``__has_builtin(__builtin_convertvector)``.
+
 ``__builtin_unreachable``
 -------------------------
 

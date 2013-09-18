@@ -2546,6 +2546,14 @@ public:
     return SemaRef.SemaBuiltinShuffleVector(cast<CallExpr>(TheCall.take()));
   }
 
+  /// \brief Build a new convert vector expression.
+  ExprResult RebuildConvertVectorExpr(SourceLocation BuiltinLoc,
+                                      Expr *SrcExpr, TypeSourceInfo *DstTInfo,
+                                      SourceLocation RParenLoc) {
+    return SemaRef.SemaConvertVectorExpr(SrcExpr, DstTInfo,
+                                         BuiltinLoc, RParenLoc);
+  }
+
   /// \brief Build a new template argument pack expansion.
   ///
   /// By default, performs semantic analysis to build a new pack expansion
@@ -9161,6 +9169,27 @@ TreeTransform<Derived>::TransformShuffleVectorExpr(ShuffleVectorExpr *E) {
 
   return getDerived().RebuildShuffleVectorExpr(E->getBuiltinLoc(),
                                                SubExprs,
+                                               E->getRParenLoc());
+}
+
+template<typename Derived>
+ExprResult
+TreeTransform<Derived>::TransformConvertVectorExpr(ConvertVectorExpr *E) {
+  ExprResult SrcExpr = getDerived().TransformExpr(E->getSrcExpr());
+  if (SrcExpr.isInvalid())
+    return ExprError();
+
+  TypeSourceInfo *Type = getDerived().TransformType(E->getTypeSourceInfo());
+  if (!Type)
+    return ExprError();
+
+  if (!getDerived().AlwaysRebuild() &&
+      Type == E->getTypeSourceInfo() &&
+      SrcExpr.get() == E->getSrcExpr())
+    return SemaRef.Owned(E);
+
+  return getDerived().RebuildConvertVectorExpr(E->getBuiltinLoc(),
+                                               SrcExpr.get(), Type,
                                                E->getRParenLoc());
 }
 

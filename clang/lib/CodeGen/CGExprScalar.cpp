@@ -257,6 +257,7 @@ public:
 
   Value *VisitArraySubscriptExpr(ArraySubscriptExpr *E);
   Value *VisitShuffleVectorExpr(ShuffleVectorExpr *E);
+  Value *VisitConvertVectorExpr(ConvertVectorExpr *E);
   Value *VisitMemberExpr(MemberExpr *E);
   Value *VisitExtVectorElementExpr(Expr *E) { return EmitLoadOfLValue(E); }
   Value *VisitCompoundLiteralExpr(CompoundLiteralExpr *E) {
@@ -966,6 +967,81 @@ Value *ScalarExprEmitter::VisitShuffleVectorExpr(ShuffleVectorExpr *E) {
   Value *SV = llvm::ConstantVector::get(indices);
   return Builder.CreateShuffleVector(V1, V2, SV, "shuffle");
 }
+
+Value *ScalarExprEmitter::VisitConvertVectorExpr(ConvertVectorExpr *E) {
+  QualType SrcType = E->getSrcExpr()->getType(),
+           DstType = E->getType();
+
+  Value *Src  = CGF.EmitScalarExpr(E->getSrcExpr());
+
+  SrcType = CGF.getContext().getCanonicalType(SrcType);
+  DstType = CGF.getContext().getCanonicalType(DstType);
+  if (SrcType == DstType) return Src;
+
+  assert(SrcType->isVectorType() &&
+         "ConvertVector source type must be a vector");
+  assert(DstType->isVectorType() &&
+         "ConvertVector destination type must be a vector");
+
+  llvm::Type *SrcTy = Src->getType();
+  llvm::Type *DstTy = ConvertType(DstType);
+
+  // Ignore conversions like int -> uint.
+  if (SrcTy == DstTy)
+    return Src;
+
+  QualType SrcEltType = SrcType->getAs<VectorType>()->getElementType(),
+           DstEltType = DstType->getAs<VectorType>()->getElementType();
+
+  assert(SrcTy->isVectorTy() &&
+         "ConvertVector source IR type must be a vector");
+  assert(DstTy->isVectorTy() &&
+         "ConvertVector destination IR type must be a vector");
+
+  llvm::Type *SrcEltTy = SrcTy->getVectorElementType(),
+             *DstEltTy = DstTy->getVectorElementType();
+
+  if (DstEltType->isBooleanType()) {
+    assert((SrcEltTy->isFloatingPointTy() ||
+            isa<llvm::IntegerType>(SrcEltTy)) && "Unknown boolean conversion");
+
+    llvm::Value *Zero = llvm::Constant::getNullValue(SrcTy);
+    if (SrcEltTy->isFloatingPointTy()) {
+      return Builder.CreateFCmpUNE(Src, Zero, "tobool");
+    } else {
+      return Builder.CreateICmpNE(Src, Zero, "tobool");
+    }
+  }
+
+  // We have the arithmetic types: real int/float.
+  Value *Res = NULL;
+
+  if (isa<llvm::IntegerType>(SrcEltTy)) {
+    bool InputSigned = SrcEltType->isSignedIntegerOrEnumerationType();
+    if (isa<llvm::IntegerType>(DstEltTy))
+      Res = Builder.CreateIntCast(Src, DstTy, InputSigned, "conv");
+    else if (InputSigned)
+      Res = Builder.CreateSIToFP(Src, DstTy, "conv");
+    else
+      Res = Builder.CreateUIToFP(Src, DstTy, "conv");
+  } else if (isa<llvm::IntegerType>(DstEltTy)) {
+    assert(SrcEltTy->isFloatingPointTy() && "Unknown real conversion");
+    if (DstEltType->isSignedIntegerOrEnumerationType())
+      Res = Builder.CreateFPToSI(Src, DstTy, "conv");
+    else
+      Res = Builder.CreateFPToUI(Src, DstTy, "conv");
+  } else {
+    assert(SrcEltTy->isFloatingPointTy() && DstEltTy->isFloatingPointTy() &&
+           "Unknown real conversion");
+    if (DstEltTy->getTypeID() < SrcEltTy->getTypeID())
+      Res = Builder.CreateFPTrunc(Src, DstTy, "conv");
+    else
+      Res = Builder.CreateFPExt(Src, DstTy, "conv");
+  }
+
+  return Res;
+}
+
 Value *ScalarExprEmitter::VisitMemberExpr(MemberExpr *E) {
   llvm::APSInt Value;
   if (E->EvaluateAsInt(Value, CGF.getContext(), Expr::SE_AllowSideEffects)) {
