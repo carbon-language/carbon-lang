@@ -144,7 +144,7 @@ typedef struct _NSZone NSZone;
 - (oneway void)release;
 - (id)autorelease;
 - (NSString *)description;
-- (id)init;
+- (instancetype)init;
 @end
 @protocol NSCopying 
 - (id)copyWithZone:(NSZone *)zone;
@@ -174,18 +174,18 @@ NSFastEnumerationState;
 @end
 @interface NSNumber : NSValue
 - (char)charValue;
-- (id)initWithInt:(int)value;
+- (instancetype)initWithInt:(int)value;
 + (NSNumber *)numberWithInt:(int)value;
 @end
 @class NSString;
 @interface NSArray : NSObject <NSCopying, NSMutableCopying, NSCoding, NSFastEnumeration>
 - (NSUInteger)count;
-- (id)initWithObjects:(const id [])objects count:(NSUInteger)cnt;
+- (instancetype)initWithObjects:(const id [])objects count:(NSUInteger)cnt;
 + (instancetype)arrayWithObject:(id)anObject;
 + (instancetype)arrayWithObjects:(const id [])objects count:(NSUInteger)cnt;
 + (instancetype)arrayWithObjects:(id)firstObj, ... __attribute__((sentinel(0,1)));
-- (id)initWithObjects:(id)firstObj, ... __attribute__((sentinel(0,1)));
-- (id)initWithArray:(NSArray *)array;
+- (instancetype)initWithObjects:(id)firstObj, ... __attribute__((sentinel(0,1)));
+- (instancetype)initWithArray:(NSArray *)array;
 @end  @interface NSArray (NSArrayCreation)  + (instancetype)array;
 @end       @interface NSAutoreleasePool : NSObject {
 }
@@ -198,7 +198,7 @@ typedef double NSTimeInterval;
 - (NSUInteger)length;
 - (NSString *)stringByAppendingString:(NSString *)aString;
 - ( const char *)UTF8String;
-- (id)initWithUTF8String:(const char *)nullTerminatedCString;
+- (instancetype)initWithUTF8String:(const char *)nullTerminatedCString;
 + (instancetype)stringWithUTF8String:(const char *)nullTerminatedCString;
 @end        @class NSString, NSURL, NSError;
 @interface NSData : NSObject <NSCopying, NSMutableCopying, NSCoding>  - (NSUInteger)length;
@@ -254,7 +254,7 @@ extern DADiskRef DADiskCreateFromBSDName( CFAllocatorRef allocator, DASessionRef
 extern DADiskRef DADiskCreateFromIOMedia( CFAllocatorRef allocator, DASessionRef session, io_service_t media ) CF_RETURNS_RETAINED;
 extern CFDictionaryRef DADiskCopyDescription( DADiskRef disk ) CF_RETURNS_RETAINED;
 extern DADiskRef DADiskCopyWholeDisk( DADiskRef disk ) CF_RETURNS_RETAINED;
-@interface NSTask : NSObject - (id)init;
+@interface NSTask : NSObject - (instancetype)init;
 @end                    typedef struct CGColorSpace *CGColorSpaceRef;
 typedef struct CGImage *CGImageRef;
 typedef struct CGLayer *CGLayerRef;
@@ -840,16 +840,16 @@ typedef CFTypeRef OtherRef;
 @interface RDar6320065 : NSObject {
   NSString *_foo;
 }
-- (id)initReturningNewClass;
+- (instancetype)initReturningNewClass;
 - (id)_initReturningNewClassBad;
-- (id)initReturningNewClassBad2;
+- (instancetype)initReturningNewClassBad2;
 @end
 
 @interface RDar6320065Subclass : RDar6320065
 @end
 
 @implementation RDar6320065
-- (id)initReturningNewClass {
+- (instancetype)initReturningNewClass {
   [self release];
   self = [[RDar6320065Subclass alloc] init]; // no-warning
   return self;
@@ -859,7 +859,7 @@ typedef CFTypeRef OtherRef;
   [[RDar6320065Subclass alloc] init]; // expected-warning {{leak}}
   return self;
 }
-- (id)initReturningNewClassBad2 {
+- (instancetype)initReturningNewClassBad2 {
   [self release];
   self = [[RDar6320065Subclass alloc] init];
   return [self autorelease]; // expected-warning{{Object with a +0 retain count returned to caller where a +1 (owning) retain count is expected}}
@@ -1778,11 +1778,11 @@ void rdar9658496() {
 
 // Support annotations with method families.
 @interface RDar10824732 : NSObject
-- (id)initWithObj:(id CF_CONSUMED)obj;
+- (instancetype)initWithObj:(id CF_CONSUMED)obj;
 @end
 
 @implementation RDar10824732
-- (id)initWithObj:(id)obj {
+- (instancetype)initWithObj:(id)obj {
   [obj release];
   return [super init];
 }
@@ -2050,12 +2050,12 @@ void testCustomReturnsNotRetained() {
 // Don't print variables which are out of the current scope.
 //===----------------------------------------------------------------------===//
 @interface MyObj12706177 : NSObject
--(id)initX;
+-(instancetype)initX;
 +(void)test12706177;
 @end
 static int Cond;
 @implementation MyObj12706177
--(id)initX {
+-(instancetype)initX {
   if (Cond)
     return 0;
   self = [super init];
