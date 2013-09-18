@@ -219,6 +219,11 @@ namespace  {
         const ClassTemplatePartialSpecializationDecl *D);
     void VisitClassScopeFunctionSpecializationDecl(
         const ClassScopeFunctionSpecializationDecl *D);
+    void VisitVarTemplateDecl(const VarTemplateDecl *D);
+    void VisitVarTemplateSpecializationDecl(
+        const VarTemplateSpecializationDecl *D);
+    void VisitVarTemplatePartialSpecializationDecl(
+        const VarTemplatePartialSpecializationDecl *D);
     void VisitTemplateTypeParmDecl(const TemplateTypeParmDecl *D);
     void VisitNonTypeTemplateParmDecl(const NonTypeTemplateParmDecl *D);
     void VisitTemplateTemplateParmDecl(const TemplateTemplateParmDecl *D);
@@ -1087,6 +1092,49 @@ void ASTDumper::VisitClassScopeFunctionSpecializationDecl(
   dumpDeclRef(D->getSpecialization());
   if (D->hasExplicitTemplateArgs())
     dumpTemplateArgumentListInfo(D->templateArgs());
+}
+
+void ASTDumper::VisitVarTemplateDecl(const VarTemplateDecl *D) {
+  dumpName(D);
+  dumpTemplateParameters(D->getTemplateParameters());
+
+  VarTemplateDecl::spec_iterator I = D->spec_begin();
+  VarTemplateDecl::spec_iterator E = D->spec_end();
+  if (I == E)
+    lastChild();
+  dumpDecl(D->getTemplatedDecl());
+  for (; I != E; ++I) {
+    VarTemplateDecl::spec_iterator Next = I;
+    ++Next;
+    if (Next == E)
+      lastChild();
+    switch (I->getTemplateSpecializationKind()) {
+    case TSK_Undeclared:
+    case TSK_ImplicitInstantiation:
+      if (D == D->getCanonicalDecl())
+        dumpDecl(*I);
+      else
+        dumpDeclRef(*I);
+      break;
+    case TSK_ExplicitSpecialization:
+    case TSK_ExplicitInstantiationDeclaration:
+    case TSK_ExplicitInstantiationDefinition:
+      dumpDeclRef(*I);
+      break;
+    }
+  }
+}
+
+void ASTDumper::VisitVarTemplateSpecializationDecl(
+    const VarTemplateSpecializationDecl *D) {
+  dumpTemplateArgumentList(D->getTemplateArgs());
+  VisitVarDecl(D);
+}
+
+void ASTDumper::VisitVarTemplatePartialSpecializationDecl(
+    const VarTemplatePartialSpecializationDecl *D) {
+  dumpTemplateParameters(D->getTemplateParameters());
+  VisitVarTemplateSpecializationDecl(D);
 }
 
 void ASTDumper::VisitTemplateTypeParmDecl(const TemplateTypeParmDecl *D) {
