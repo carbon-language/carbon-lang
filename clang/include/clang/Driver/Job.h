@@ -24,8 +24,7 @@ class Action;
 class Command;
 class Tool;
 
-// Users of this class will use clang::driver::ArgStringList.
-typedef llvm::opt::ArgStringList ArgStringList;
+using llvm::opt::ArgStringList;
 
 class Job {
 public:
@@ -68,11 +67,11 @@ class Command : public Job {
 
   /// The list of program arguments (not including the implicit first
   /// argument, which will be the executable).
-  ArgStringList Arguments;
+  llvm::opt::ArgStringList Arguments;
 
 public:
   Command(const Action &_Source, const Tool &_Creator, const char *_Executable,
-          const ArgStringList &_Arguments);
+          const llvm::opt::ArgStringList &_Arguments);
 
   virtual void Print(llvm::raw_ostream &OS, const char *Terminator,
                      bool Quote, bool CrashReport = false) const;
@@ -86,7 +85,7 @@ public:
   /// getCreator - Return the Tool which caused the creation of this job.
   const Tool &getCreator() const { return Creator; }
 
-  const ArgStringList &getArguments() const { return Arguments; }
+  const llvm::opt::ArgStringList &getArguments() const { return Arguments; }
 
   static bool classof(const Job *J) {
     return J->getKind() == CommandClass;
