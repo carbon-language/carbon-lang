@@ -32,6 +32,10 @@
 /* First include the standard intrinsics. */
 #include <x86intrin.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* And the random ones that aren't in those files. */
 __m64 _m_from_float(float);
 __m64 _m_from_int(int _l);
@@ -46,10 +50,10 @@ void __addfsword(unsigned long, unsigned short);
 void __code_seg(const char *);
 void __cpuid(int[4], int);
 void __cpuidex(int[4], int, int);
-void __cdecl __debugbreak(void);
+void __debugbreak(void);
 __int64 __emul(int, int);
 unsigned __int64 __emulu(unsigned int, unsigned int);
-void __fastfail(unsigned int);
+void __cdecl __fastfail(unsigned int);
 unsigned int __getcallerseflags(void);
 void __halt(void);
 unsigned char __inbyte(unsigned short);
@@ -336,6 +340,8 @@ void __cdecl _writegsbase_u64(unsigned __int64);
 void __cdecl _xrstor64(void const *, unsigned __int64);
 void __cdecl _xsave64(void *, unsigned __int64);
 void __cdecl _xsaveopt64(void *, unsigned __int64);
+
+}
 #endif
 #endif
 #endif
