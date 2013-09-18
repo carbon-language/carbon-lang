@@ -7716,11 +7716,11 @@ def : Pat<(vinsert128_insert:$ins (v4f64 VR256:$src1), (v2f64 VR128:$src2),
           (VINSERTF128rr VR256:$src1, VR128:$src2,
                          (INSERT_get_vinsert128_imm VR256:$ins))>;
 
-def : Pat<(vinsert128_insert:$ins (v8f32 VR256:$src1), (memopv4f32 addr:$src2),
+def : Pat<(vinsert128_insert:$ins (v8f32 VR256:$src1), (loadv4f32 addr:$src2),
                                    (iPTR imm)),
           (VINSERTF128rm VR256:$src1, addr:$src2,
                          (INSERT_get_vinsert128_imm VR256:$ins))>;
-def : Pat<(vinsert128_insert:$ins (v4f64 VR256:$src1), (memopv2f64 addr:$src2),
+def : Pat<(vinsert128_insert:$ins (v4f64 VR256:$src1), (loadv2f64 addr:$src2),
                                    (iPTR imm)),
           (VINSERTF128rm VR256:$src1, addr:$src2,
                          (INSERT_get_vinsert128_imm VR256:$ins))>;
@@ -7744,22 +7744,22 @@ def : Pat<(vinsert128_insert:$ins (v16i16 VR256:$src1), (v8i16 VR128:$src2),
           (VINSERTF128rr VR256:$src1, VR128:$src2,
                          (INSERT_get_vinsert128_imm VR256:$ins))>;
 
-def : Pat<(vinsert128_insert:$ins (v4i64 VR256:$src1), (memopv2i64 addr:$src2),
+def : Pat<(vinsert128_insert:$ins (v4i64 VR256:$src1), (loadv2i64 addr:$src2),
                                    (iPTR imm)),
           (VINSERTF128rm VR256:$src1, addr:$src2,
                          (INSERT_get_vinsert128_imm VR256:$ins))>;
 def : Pat<(vinsert128_insert:$ins (v8i32 VR256:$src1),
-                                   (bc_v4i32 (memopv2i64 addr:$src2)),
+                                   (bc_v4i32 (loadv2i64 addr:$src2)),
                                    (iPTR imm)),
           (VINSERTF128rm VR256:$src1, addr:$src2,
                          (INSERT_get_vinsert128_imm VR256:$ins))>;
 def : Pat<(vinsert128_insert:$ins (v32i8 VR256:$src1),
-                                   (bc_v16i8 (memopv2i64 addr:$src2)),
+                                   (bc_v16i8 (loadv2i64 addr:$src2)),
                                    (iPTR imm)),
           (VINSERTF128rm VR256:$src1, addr:$src2,
                          (INSERT_get_vinsert128_imm VR256:$ins))>;
 def : Pat<(vinsert128_insert:$ins (v16i16 VR256:$src1),
-                                   (bc_v8i16 (memopv2i64 addr:$src2)),
+                                   (bc_v8i16 (loadv2i64 addr:$src2)),
                                    (iPTR imm)),
           (VINSERTF128rm VR256:$src1, addr:$src2,
                          (INSERT_get_vinsert128_imm VR256:$ins))>;
@@ -7791,12 +7791,12 @@ def : Pat<(vextract128_extract:$ext VR256:$src1, (iPTR imm)),
                     (v4f64 VR256:$src1),
                     (EXTRACT_get_vextract128_imm VR128:$ext)))>;
 
-def : Pat<(alignedstore (v4f32 (vextract128_extract:$ext (v8f32 VR256:$src1),
-                                (iPTR imm))), addr:$dst),
+def : Pat<(store (v4f32 (vextract128_extract:$ext (v8f32 VR256:$src1),
+                         (iPTR imm))), addr:$dst),
           (VEXTRACTF128mr addr:$dst, VR256:$src1,
            (EXTRACT_get_vextract128_imm VR128:$ext))>;
-def : Pat<(alignedstore (v2f64 (vextract128_extract:$ext (v4f64 VR256:$src1),
-                                (iPTR imm))), addr:$dst),
+def : Pat<(store (v2f64 (vextract128_extract:$ext (v4f64 VR256:$src1),
+                         (iPTR imm))), addr:$dst),
           (VEXTRACTF128mr addr:$dst, VR256:$src1,
            (EXTRACT_get_vextract128_imm VR128:$ext))>;
 }

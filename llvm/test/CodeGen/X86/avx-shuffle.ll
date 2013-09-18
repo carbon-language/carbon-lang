@@ -251,8 +251,6 @@ define <8 x float> @test19(<8 x float> %A, <8 x float>%B) nounwind {
 ; CHECK: swap8doubles
 ; CHECK: vmovups {{[0-9]*}}(%rdi), %xmm{{[0-9]+}}
 ; CHECK: vmovups {{[0-9]*}}(%rdi), %xmm{{[0-9]+}}
-; CHECK: vmovups {{[0-9]*}}(%rdi), %xmm{{[0-9]+}}
-; CHECK: vmovups {{[0-9]*}}(%rdi), %xmm{{[0-9]+}}
 ; CHECK: vmovaps {{[0-9]*}}(%rsi), %ymm{{[0-9]+}}
 ; CHECK: vmovaps {{[0-9]*}}(%rsi), %ymm{{[0-9]+}}
 ; CHECK: vmovaps %xmm{{[0-9]+}}, {{[0-9]*}}(%rdi)
