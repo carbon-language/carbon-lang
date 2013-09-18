@@ -97,7 +97,7 @@ LLVMModuleRef LLVMModuleCreateWithName(const char *ModuleID) {
   return wrap(new Module(ModuleID, getGlobalContext()));
 }
 
-LLVMModuleRef LLVMModuleCreateWithNameInContext(const char *ModuleID, 
+LLVMModuleRef LLVMModuleCreateWithNameInContext(const char *ModuleID,
                                                 LLVMContextRef C) {
   return wrap(new Module(ModuleID, *unwrap(C)));
 }
@@ -681,7 +681,7 @@ LLVMValueRef LLVMConstStringInContext(LLVMContextRef C, const char *Str,
   return wrap(ConstantDataArray::getString(*unwrap(C), StringRef(Str, Length),
                                            DontNullTerminate == 0));
 }
-LLVMValueRef LLVMConstStructInContext(LLVMContextRef C, 
+LLVMValueRef LLVMConstStructInContext(LLVMContextRef C,
                                       LLVMValueRef *ConstantVals,
                                       unsigned Count, LLVMBool Packed) {
   Constant **Elements = unwrap<Constant>(ConstantVals, Count);
@@ -1553,7 +1553,7 @@ LLVMAttribute LLVMGetAttribute(LLVMValueRef Arg) {
   return (LLVMAttribute)A->getParent()->getAttributes().
     Raw(A->getArgNo()+1);
 }
-  
+
 
 void LLVMSetParamAlignment(LLVMValueRef Arg, unsigned align) {
   Argument *A = unwrap<Argument>(Arg);
@@ -1745,7 +1745,7 @@ void LLVMSetInstructionCallConv(LLVMValueRef Instr, unsigned CC) {
   llvm_unreachable("LLVMSetInstructionCallConv applies only to call and invoke!");
 }
 
-void LLVMAddInstrAttribute(LLVMValueRef Instr, unsigned index, 
+void LLVMAddInstrAttribute(LLVMValueRef Instr, unsigned index,
                            LLVMAttribute PA) {
   CallSite Call = CallSite(unwrap<Instruction>(Instr));
   AttrBuilder B(PA);
@@ -1755,7 +1755,7 @@ void LLVMAddInstrAttribute(LLVMValueRef Instr, unsigned index,
                                                          index, B)));
 }
 
-void LLVMRemoveInstrAttribute(LLVMValueRef Instr, unsigned index, 
+void LLVMRemoveInstrAttribute(LLVMValueRef Instr, unsigned index,
                               LLVMAttribute PA) {
   CallSite Call = CallSite(unwrap<Instruction>(Instr));
   AttrBuilder B(PA);
@@ -1765,7 +1765,7 @@ void LLVMRemoveInstrAttribute(LLVMValueRef Instr, unsigned index,
                                                            index, B)));
 }
 
-void LLVMSetInstrParamAlignment(LLVMValueRef Instr, unsigned index, 
+void LLVMSetInstrParamAlignment(LLVMValueRef Instr, unsigned index,
                                 unsigned align) {
   CallSite Call = CallSite(unwrap<Instruction>(Instr));
   AttrBuilder B;
@@ -2119,8 +2119,8 @@ LLVMValueRef LLVMBuildMalloc(LLVMBuilderRef B, LLVMTypeRef Ty,
   Type* ITy = Type::getInt32Ty(unwrap(B)->GetInsertBlock()->getContext());
   Constant* AllocSize = ConstantExpr::getSizeOf(unwrap(Ty));
   AllocSize = ConstantExpr::getTruncOrBitCast(AllocSize, ITy);
-  Instruction* Malloc = CallInst::CreateMalloc(unwrap(B)->GetInsertBlock(), 
-                                               ITy, unwrap(Ty), AllocSize, 
+  Instruction* Malloc = CallInst::CreateMalloc(unwrap(B)->GetInsertBlock(),
+                                               ITy, unwrap(Ty), AllocSize,
                                                0, 0, "");
   return wrap(unwrap(B)->Insert(Malloc, Twine(Name)));
 }
@@ -2130,8 +2130,8 @@ LLVMValueRef LLVMBuildArrayMalloc(LLVMBuilderRef B, LLVMTypeRef Ty,
   Type* ITy = Type::getInt32Ty(unwrap(B)->GetInsertBlock()->getContext());
   Constant* AllocSize = ConstantExpr::getSizeOf(unwrap(Ty));
   AllocSize = ConstantExpr::getTruncOrBitCast(AllocSize, ITy);
-  Instruction* Malloc = CallInst::CreateMalloc(unwrap(B)->GetInsertBlock(), 
-                                               ITy, unwrap(Ty), AllocSize, 
+  Instruction* Malloc = CallInst::CreateMalloc(unwrap(B)->GetInsertBlock(),
+                                               ITy, unwrap(Ty), AllocSize,
                                                unwrap(Val), 0, "");
   return wrap(unwrap(B)->Insert(Malloc, Twine(Name)));
 }
@@ -2157,7 +2157,7 @@ LLVMValueRef LLVMBuildLoad(LLVMBuilderRef B, LLVMValueRef PointerVal,
   return wrap(unwrap(B)->CreateLoad(unwrap(PointerVal), Name));
 }
 
-LLVMValueRef LLVMBuildStore(LLVMBuilderRef B, LLVMValueRef Val, 
+LLVMValueRef LLVMBuildStore(LLVMBuilderRef B, LLVMValueRef Val,
                             LLVMValueRef PointerVal) {
   return wrap(unwrap(B)->CreateStore(unwrap(Val), unwrap(PointerVal)));
 }
@@ -2396,9 +2396,9 @@ LLVMValueRef LLVMBuildPtrDiff(LLVMBuilderRef B, LLVMValueRef LHS,
   return wrap(unwrap(B)->CreatePtrDiff(unwrap(LHS), unwrap(RHS), Name));
 }
 
-LLVMValueRef LLVMBuildAtomicRMW(LLVMBuilderRef B,LLVMAtomicRMWBinOp op, 
-                               LLVMValueRef PTR, LLVMValueRef Val, 
-                               LLVMAtomicOrdering ordering, 
+LLVMValueRef LLVMBuildAtomicRMW(LLVMBuilderRef B,LLVMAtomicRMWBinOp op,
+                               LLVMValueRef PTR, LLVMValueRef Val,
+                               LLVMAtomicOrdering ordering,
                                LLVMBool singleThread) {
   AtomicRMWInst::BinOp intop;
   switch (op) {
@@ -2421,14 +2421,14 @@ LLVMValueRef LLVMBuildAtomicRMW(LLVMBuilderRef B,LLVMAtomicRMWBinOp op,
     case LLVMAtomicOrderingMonotonic: intordering = Monotonic; break;
     case LLVMAtomicOrderingAcquire: intordering = Acquire; break;
     case LLVMAtomicOrderingRelease: intordering = Release; break;
-    case LLVMAtomicOrderingAcquireRelease: 
-      intordering = AcquireRelease; 
+    case LLVMAtomicOrderingAcquireRelease:
+      intordering = AcquireRelease;
       break;
-    case LLVMAtomicOrderingSequentiallyConsistent: 
-      intordering = SequentiallyConsistent; 
+    case LLVMAtomicOrderingSequentiallyConsistent:
+      intordering = SequentiallyConsistent;
       break;
   }
-  return wrap(unwrap(B)->CreateAtomicRMW(intop, unwrap(PTR), unwrap(Val), 
+  return wrap(unwrap(B)->CreateAtomicRMW(intop, unwrap(PTR), unwrap(Val),
     intordering, singleThread ? SingleThread : CrossThread));
 }
 

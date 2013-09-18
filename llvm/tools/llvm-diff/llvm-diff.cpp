@@ -70,7 +70,7 @@ int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv);
 
   LLVMContext Context;
-  
+
   // Load both modules.  Die if that fails.
   Module *LModule = ReadModule(Context, LeftFilename);
   Module *RModule = ReadModule(Context, RightFilename);

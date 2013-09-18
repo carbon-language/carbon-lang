@@ -131,7 +131,7 @@ namespace {
     ProfileInfoLoader &PIL;
   public:
     static char ID; // Class identification, replacement for typeinfo.
-    explicit ProfileInfoPrinterPass(ProfileInfoLoader &_PIL) 
+    explicit ProfileInfoPrinterPass(ProfileInfoLoader &_PIL)
       : ModulePass(ID), PIL(_PIL) {}
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -161,7 +161,7 @@ bool ProfileInfoPrinterPass::runOnModule(Module &M) {
     if (FI->isDeclaration()) continue;
     double w = ignoreMissing(PI.getExecutionCount(FI));
     FunctionCounts.push_back(std::make_pair(FI, w));
-    for (Function::iterator BB = FI->begin(), BBE = FI->end(); 
+    for (Function::iterator BB = FI->begin(), BBE = FI->end();
          BB != BBE; ++BB) {
       double w = ignoreMissing(PI.getExecutionCount(BB));
       Counts.push_back(std::make_pair(BB, w));
@@ -194,7 +194,7 @@ bool ProfileInfoPrinterPass::runOnModule(Module &M) {
   outs() << " ##   Frequency\n";
   for (unsigned i = 0, e = FunctionCounts.size(); i != e; ++i) {
     if (FunctionCounts[i].second == 0) {
-      outs() << "\n  NOTE: " << e-i << " function" 
+      outs() << "\n  NOTE: " << e-i << " function"
         << (e-i-1 ? "s were" : " was") << " never executed!\n";
       break;
     }
@@ -210,14 +210,14 @@ bool ProfileInfoPrinterPass::runOnModule(Module &M) {
   TotalExecutions = 0;
   for (unsigned i = 0, e = Counts.size(); i != e; ++i)
     TotalExecutions += Counts[i].second;
-  
+
   // Sort by the frequency, backwards.
   sort(Counts.begin(), Counts.end(),
        PairSecondSortReverse<BasicBlock*>());
-  
+
   outs() << "\n===" << std::string(73, '-') << "===\n";
   outs() << "Top 20 most frequently executed basic blocks:\n\n";
-  
+
   // Print out the function frequencies...
   outs() <<" ##      %% \tFrequency\n";
   unsigned BlocksToPrint = Counts.size();
@@ -237,7 +237,7 @@ bool ProfileInfoPrinterPass::runOnModule(Module &M) {
   if (PrintAnnotatedLLVM || PrintAllCode) {
     outs() << "\n===" << std::string(73, '-') << "===\n";
     outs() << "Annotated LLVM code for the module:\n\n";
-  
+
     ProfileAnnotator PA(PI);
 
     if (FunctionsToPrint.empty() || PrintAllCode)
@@ -259,7 +259,7 @@ int main(int argc, char **argv) {
 
   LLVMContext &Context = getGlobalContext();
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
-  
+
   cl::ParseCommandLineOptions(argc, argv, "llvm profile dump decoder\n");
 
   // Read in the bitcode file...

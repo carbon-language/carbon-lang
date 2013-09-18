@@ -1557,7 +1557,7 @@ bool FPPassManager::doInitialization(Module &M) {
 
   for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index)
     Changed |= getContainedPass(Index)->doInitialization(M);
-  
+
   return Changed;
 }
 
@@ -1566,7 +1566,7 @@ bool FPPassManager::doFinalization(Module &M) {
 
   for (int Index = getNumContainedPasses() - 1; Index >= 0; --Index)
     Changed |= getContainedPass(Index)->doFinalization(M);
-  
+
   return Changed;
 }
 
@@ -1634,7 +1634,7 @@ MPPassManager::runOnModule(Module &M) {
     FPP->releaseMemoryOnTheFly();
     Changed |= FPP->doFinalization(M);
   }
-  
+
   return Changed;
 }
 
