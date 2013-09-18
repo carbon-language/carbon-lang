@@ -1610,14 +1610,14 @@ ProcessMonitor::WaitForInitialTIDStop(lldb::tid_t tid)
 {
     Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_PROCESS));
     if (log)
-        log->Printf ("ProcessMonitor::%s(%d) waiting for thread to stop...", __FUNCTION__, tid);
+        log->Printf ("ProcessMonitor::%s(%" PRIu64 ") waiting for thread to stop...", __FUNCTION__, tid);
 
     // Wait for the thread to stop
     while (true)
     {
         int status = -1;
         if (log)
-            log->Printf ("ProcessMonitor::%s(%d) waitpid...", __FUNCTION__, tid);
+            log->Printf ("ProcessMonitor::%s(%" PRIu64 ") waitpid...", __FUNCTION__, tid);
         lldb::pid_t wait_pid = waitpid(tid, &status, __WALL);
         if (status == -1)
         {
@@ -1628,13 +1628,13 @@ ProcessMonitor::WaitForInitialTIDStop(lldb::tid_t tid)
             else
             {
                 if (log)
-                    log->Printf("ProcessMonitor::%s(%d) waitpid error -- %s", __FUNCTION__, tid, strerror(errno));
+                    log->Printf("ProcessMonitor::%s(%" PRIu64 ") waitpid error -- %s", __FUNCTION__, tid, strerror(errno));
                 return false; // This is bad, but there's nothing we can do.
             }
         }
 
         if (log)
-            log->Printf ("ProcessMonitor::%s(%d) waitpid, status = %d", __FUNCTION__, tid, status);
+            log->Printf ("ProcessMonitor::%s(%" PRIu64 ") waitpid, status = %d", __FUNCTION__, tid, status);
 
         assert(wait_pid == tid);
 
@@ -1753,6 +1753,7 @@ ProcessMonitor::StopThread(lldb::tid_t tid)
 
         switch (message.GetKind())
         {
+            case ProcessMessage::eAttachMessage:
             case ProcessMessage::eInvalidMessage:
                 break;
 
@@ -1971,8 +1972,6 @@ ProcessMonitor::GetCrashReasonForSIGBUS(const siginfo_t *info)
 void
 ProcessMonitor::ServeOperation(OperationArgs *args)
 {
-    int status;
-
     ProcessMonitor *monitor = args->m_monitor;
 
     // We are finised with the arguments and are ready to go.  Sync with the
