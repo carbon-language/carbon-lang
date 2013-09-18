@@ -3724,20 +3724,8 @@ void Clang::AddClangCLArgs(const ArgList &Args, ArgStringList &CmdArgs) const {
     // but defining _DEBUG is sticky.
     RTOptionID = options::OPT__SLASH_MTd;
 
-  if (Arg *A = Args.getLastArg(options::OPT__SLASH_M_Group)) {
+  if (Arg *A = Args.getLastArg(options::OPT__SLASH_M_Group))
     RTOptionID = A->getOption().getID();
-
-    // Diagnose overrides.
-    arg_iterator it = Args.filtered_begin(options::OPT__SLASH_M_Group);
-    Arg *Previous = *it++;
-    const arg_iterator ie = Args.filtered_end();
-    while (it != ie) {
-      const Driver &D = getToolChain().getDriver();
-      D.Diag(clang::diag::warn_drv_overriding_flag_option)
-        << Previous->getSpelling() << (*it)->getSpelling();
-      Previous = *it++;
-    }
-  }
 
   switch(RTOptionID) {
     case options::OPT__SLASH_MD:

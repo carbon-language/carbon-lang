@@ -11,7 +11,6 @@
 // FoNAME:  "-o" "a.obj"
 
 // RUN: %clang_cl /Foa.ext /Fob.ext -### -- %s 2>&1 | FileCheck -check-prefix=FoNAMEEXT %s
-// FoNAMEEXT:  warning: overriding '/Foa.ext' option with '/Fob.ext'
 // FoNAMEEXT:  "-o" "b.ext"
 
 // RUN: %clang_cl /Fofoo.dir/ -### -- %s 2>&1 | FileCheck -check-prefix=FoDIR %s
@@ -88,5 +87,4 @@
 // FeMISSINGARG: error: argument to '/Fe' is missing (expected 1 value)
 
 // RUN: %clang_cl /Fefoo /Febar -### -- %s 2>&1 | FileCheck -check-prefix=FeOVERRIDE %s
-// FeOVERRIDE: warning: overriding '/Fefoo' option with '/Febar'
 // FeOVERRIDE: "-out:bar.exe"

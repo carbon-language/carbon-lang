@@ -86,5 +86,4 @@
 // CHECK-LDMDd: "--dependent-lib=msvcrtd"
 
 // RUN: %clang_cl /MD /MT -### -- %s 2>&1 | FileCheck -check-prefix=MTOVERRIDE %s
-// MTOVERRIDE: warning: overriding '/MD' option with '/MT'
 // MTOVERRIDE: "--dependent-lib=libcmt"
