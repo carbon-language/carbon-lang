@@ -1330,6 +1330,9 @@ DumpAPInt (Stream *s, const DataExtractor &data, lldb::offset_t offset, lldb::of
 
 static float half2float (uint16_t half)
 {
+#ifdef _MSC_VER
+    llvm_unreachable("half2float not implemented for MSVC");
+#else
     union{ float       f; uint32_t    u;}u;
     int32_t v = (int16_t) half;
     
@@ -1342,6 +1345,7 @@ static float half2float (uint16_t half)
     v <<= 13;
     u.u = v | 0x70000000U;
     return u.f * ldexpf(1, -112);
+#endif
 }
 
 lldb::offset_t

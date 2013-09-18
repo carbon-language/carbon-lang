@@ -13,7 +13,7 @@
 #include "SymbolFileDWARF.h"
 #include <string>
 #include <vector>
-#if __cplusplus >= 201103L
+#if __cplusplus >= 201103L || defined(_MSC_VER)
 #include <unordered_map>
 #else
 #include <ext/hash_map>
@@ -87,7 +87,7 @@ protected:
 
     dw_offset_t     m_offset;
     Header          m_header;
-#if __cplusplus >= 201103L
+#if __cplusplus >= 201103L || defined(_MSC_VER)
     typedef std::unordered_multimap<const char*, uint32_t, std::hash<const char*>, CStringEqualBinaryPredicate> cstr_to_index_mmap;
 #else
     typedef __gnu_cxx::hash_multimap<const char*, uint32_t, __gnu_cxx::hash<const char*>, CStringEqualBinaryPredicate> cstr_to_index_mmap;

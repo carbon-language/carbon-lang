@@ -42,6 +42,7 @@
 
 // C++ Includes
 // Other libraries and framework includes
+#include "llvm/Support/ErrorHandling.h"
 #if defined(__APPLE__)
 #include "llvm/ADT/SmallVector.h"
 #endif
@@ -178,13 +179,21 @@ ConnectionFileDescriptor::CloseCommandPipe ()
 
     if (m_pipe_read != -1)
     {
+#ifdef _MSC_VER
+        llvm_unreachable("pipe close unsupported in MSVC");
+#else
         close (m_pipe_read);
+#endif
         m_pipe_read = -1;
     }
     
     if (m_pipe_write != -1)
     {
+#ifdef _MSC_VER
+        llvm_unreachable("pipe close unsupported in MSVC");
+#else
         close (m_pipe_write);
+#endif
         m_pipe_write = -1;
     }
 }
@@ -879,7 +888,9 @@ ConnectionFileDescriptor::BytesAvailable (uint32_t timeout_usec, Error *error_pt
         // If this assert fires off on MacOSX, we will need to switch to using
         // libdispatch to read from file descriptors because poll() is causing
         // kernel panics and if we exceed FD_SETSIZE we will have no choice...
+#ifndef _MSC_VER
         assert (data_fd < FD_SETSIZE);
+#endif
         
         const bool have_pipe_fd = pipe_fd >= 0;
         

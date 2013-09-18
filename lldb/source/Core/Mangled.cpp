@@ -10,7 +10,9 @@
 
 // FreeBSD9-STABLE requires this to know about size_t in cxxabi.h
 #include <cstddef>
+#ifndef _MSC_VER
 #include <cxxabi.h>
+#endif
 
 
 #include "llvm/ADT/DenseMap.h"
@@ -199,7 +201,11 @@ Mangled::GetDemangledName () const
             {
                 // We didn't already mangle this name, demangle it and if all goes well
                 // add it to our map.
+#if !defined(_MSC_VER)
                 char *demangled_name = abi::__cxa_demangle (mangled_cstr, NULL, NULL, NULL);
+#else
+                char *demangled_name = 0;
+#endif
 
                 if (demangled_name)
                 {
