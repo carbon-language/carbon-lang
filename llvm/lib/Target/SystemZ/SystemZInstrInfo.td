@@ -94,6 +94,18 @@ multiclass CompareBranches<Operand ccmask, string pos1, string pos2> {
     def GIJ : InstRIEc<0xEC7C, (outs), (ins GR64:$R1, imm64sx8:$I2, ccmask:$M3,
                                             brtarget16:$RI4),
                        "cgij"##pos1##"\t$R1, $I2, "##pos2##"$RI4", []>;
+    def LRJ  : InstRIEb<0xEC77, (outs), (ins GR32:$R1, GR32:$R2, ccmask:$M3,
+                                             brtarget16:$RI4),
+                        "clrj"##pos1##"\t$R1, $R2, "##pos2##"$RI4", []>;
+    def LGRJ : InstRIEb<0xEC65, (outs), (ins GR64:$R1, GR64:$R2, ccmask:$M3,
+                                             brtarget16:$RI4),
+                        "clgrj"##pos1##"\t$R1, $R2, "##pos2##"$RI4", []>;
+    def LIJ  : InstRIEc<0xEC7F, (outs), (ins GR32:$R1, imm32zx8:$I2, ccmask:$M3,
+                                             brtarget16:$RI4),
+                        "clij"##pos1##"\t$R1, $I2, "##pos2##"$RI4", []>;
+    def LGIJ : InstRIEc<0xEC7D, (outs), (ins GR64:$R1, imm64zx8:$I2, ccmask:$M3,
+                                             brtarget16:$RI4),
+                        "clgij"##pos1##"\t$R1, $I2, "##pos2##"$RI4", []>;
   }
 }
 let isCodeGenOnly = 1 in
@@ -152,6 +164,18 @@ multiclass IntCondExtendedMnemonicA<bits<4> ccmask, string name> {
     def CGI : InstRIEc<0xEC7C, (outs), (ins GR64:$R1, imm64sx8:$I2,
                                             brtarget16:$RI4),
                        "cgij"##name##"\t$R1, $I2, $RI4", []>;
+    def CLR  : InstRIEb<0xEC77, (outs), (ins GR32:$R1, GR32:$R2,
+                                            brtarget16:$RI4),
+                        "clrj"##name##"\t$R1, $R2, $RI4", []>;
+    def CLGR : InstRIEb<0xEC65, (outs), (ins GR64:$R1, GR64:$R2,
+                                             brtarget16:$RI4),
+                        "clgrj"##name##"\t$R1, $R2, $RI4", []>;
+    def CLI  : InstRIEc<0xEC7F, (outs), (ins GR32:$R1, imm32zx8:$I2,
+                                             brtarget16:$RI4),
+                        "clij"##name##"\t$R1, $I2, $RI4", []>;
+    def CLGI : InstRIEc<0xEC7D, (outs), (ins GR64:$R1, imm64zx8:$I2,
+                                             brtarget16:$RI4),
+                        "clgij"##name##"\t$R1, $I2, $RI4", []>;
   }
 }
 multiclass IntCondExtendedMnemonic<bits<4> ccmask, string name1, string name2>

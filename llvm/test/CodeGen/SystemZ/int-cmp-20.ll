@@ -63,7 +63,7 @@ define double @f4(double %a, double %b, i8 *%ptr) {
 ; extension.  The condition is always true.
 define double @f5(double %a, double %b, i8 *%ptr) {
 ; CHECK-LABEL: f5:
-; CHECK-NOT: cli
+; CHECK-NOT: cli {{.*}}
 ; CHECK: br %r14
   %val = load i8 *%ptr
   %ext = zext i8 %val to i32
@@ -79,7 +79,7 @@ define double @f5(double %a, double %b, i8 *%ptr) {
 ; and simply ignore CLI for this range.  First check the low end of the range.
 define double @f6(double %a, double %b, i8 *%ptr) {
 ; CHECK-LABEL: f6:
-; CHECK-NOT: cli
+; CHECK-NOT: cli {{.*}}
 ; CHECK: br %r14
   %val = load i8 *%ptr
   %ext = sext i8 %val to i32
@@ -91,7 +91,7 @@ define double @f6(double %a, double %b, i8 *%ptr) {
 ; ...and then the high end.
 define double @f7(double %a, double %b, i8 *%ptr) {
 ; CHECK-LABEL: f7:
-; CHECK-NOT: cli
+; CHECK-NOT: cli {{.*}}
 ; CHECK: br %r14
   %val = load i8 *%ptr
   %ext = sext i8 %val to i32
@@ -118,7 +118,7 @@ define double @f8(double %a, double %b, i8 *%ptr) {
 ; extension.  This cannot use CLI.
 define double @f9(double %a, double %b, i8 *%ptr) {
 ; CHECK-LABEL: f9:
-; CHECK-NOT: cli
+; CHECK-NOT: cli {{.*}}
 ; CHECK: br %r14
   %val = load i8 *%ptr
   %ext = sext i8 %val to i32
@@ -145,7 +145,7 @@ define double @f10(double %a, double %b, i8 *%ptr) {
 ; extension.  This cannot use CLI.
 define double @f11(double %a, double %b, i8 *%ptr) {
 ; CHECK-LABEL: f11:
-; CHECK-NOT: cli
+; CHECK-NOT: cli {{.*}}
 ; CHECK: br %r14
   %val = load i8 *%ptr
   %ext = sext i8 %val to i32
@@ -158,7 +158,7 @@ define double @f11(double %a, double %b, i8 *%ptr) {
 ; extension.  The condition is always true.
 define double @f12(double %a, double %b, i8 *%ptr) {
 ; CHECK-LABEL: f12:
-; CHECK-NOT: cli
+; CHECK-NOT: cli {{.*}}
 ; CHECK: br %r14
   %val = load i8 *%ptr
   %ext = zext i8 %val to i32

@@ -333,6 +333,10 @@ def imm64sx8 : Immediate<i64, [{
   return isInt<8>(N->getSExtValue());
 }], SIMM8, "S8Imm">;
 
+def imm64zx8 : Immediate<i64, [{
+  return isUInt<8>(N->getSExtValue());
+}], UIMM8, "U8Imm">;
+
 def imm64sx16 : Immediate<i64, [{
   return isInt<16>(N->getSExtValue());
 }], SIMM16, "S16Imm">;

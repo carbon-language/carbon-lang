@@ -850,6 +850,50 @@
 	clghsi	0, -1
 	clghsi	0, 65536
 
+#CHECK: error: invalid operand
+#CHECK: clgij	%r0, -1, 0, 0
+#CHECK: error: invalid operand
+#CHECK: clgij	%r0, 256, 0, 0
+
+	clgij	%r0, -1, 0, 0
+	clgij	%r0, 256, 0, 0
+
+#CHECK: error: offset out of range
+#CHECK: clgij	%r0, 0, 0, -0x100002
+#CHECK: error: offset out of range
+#CHECK: clgij	%r0, 0, 0, -1
+#CHECK: error: offset out of range
+#CHECK: clgij	%r0, 0, 0, 1
+#CHECK: error: offset out of range
+#CHECK: clgij	%r0, 0, 0, 0x10000
+
+	clgij	%r0, 0, 0, -0x100002
+	clgij	%r0, 0, 0, -1
+	clgij	%r0, 0, 0, 1
+	clgij	%r0, 0, 0, 0x10000
+
+#CHECK: error: invalid instruction
+#CHECK:	clgijo	%r0, 0, 0, 0
+#CHECK: error: invalid instruction
+#CHECK:	clgijno	%r0, 0, 0, 0
+
+	clgijo	%r0, 0, 0, 0
+	clgijno	%r0, 0, 0, 0
+
+#CHECK: error: offset out of range
+#CHECK: clgrj	%r0, %r0, 0, -0x100002
+#CHECK: error: offset out of range
+#CHECK: clgrj	%r0, %r0, 0, -1
+#CHECK: error: offset out of range
+#CHECK: clgrj	%r0, %r0, 0, 1
+#CHECK: error: offset out of range
+#CHECK: clgrj	%r0, %r0, 0, 0x10000
+
+	clgrj	%r0, %r0, 0, -0x100002
+	clgrj	%r0, %r0, 0, -1
+	clgrj	%r0, %r0, 0, 1
+	clgrj	%r0, %r0, 0, 0x10000
+
 #CHECK: error: offset out of range
 #CHECK: clgrl	%r0, -0x1000000002
 #CHECK: error: offset out of range
@@ -913,6 +957,36 @@
 	cli	0, 256
 
 #CHECK: error: invalid operand
+#CHECK: clij	%r0, -1, 0, 0
+#CHECK: error: invalid operand
+#CHECK: clij	%r0, 256, 0, 0
+
+	clij	%r0, -1, 0, 0
+	clij	%r0, 256, 0, 0
+
+#CHECK: error: offset out of range
+#CHECK: clij	%r0, 0, 0, -0x100002
+#CHECK: error: offset out of range
+#CHECK: clij	%r0, 0, 0, -1
+#CHECK: error: offset out of range
+#CHECK: clij	%r0, 0, 0, 1
+#CHECK: error: offset out of range
+#CHECK: clij	%r0, 0, 0, 0x10000
+
+	clij	%r0, 0, 0, -0x100002
+	clij	%r0, 0, 0, -1
+	clij	%r0, 0, 0, 1
+	clij	%r0, 0, 0, 0x10000
+
+#CHECK: error: invalid instruction
+#CHECK:	clijo	%r0, 0, 0, 0
+#CHECK: error: invalid instruction
+#CHECK:	clijno	%r0, 0, 0, 0
+
+	clijo	%r0, 0, 0, 0
+	clijno	%r0, 0, 0, 0
+
+#CHECK: error: invalid operand
 #CHECK: cliy	-524289, 0
 #CHECK: error: invalid operand
 #CHECK: cliy	524288, 0
@@ -928,6 +1002,28 @@
 	cliy	0(%r1,%r2), 0
 	cliy	0, -1
 	cliy	0, 256
+
+#CHECK: error: offset out of range
+#CHECK: clrj	%r0, %r0, 0, -0x100002
+#CHECK: error: offset out of range
+#CHECK: clrj	%r0, %r0, 0, -1
+#CHECK: error: offset out of range
+#CHECK: clrj	%r0, %r0, 0, 1
+#CHECK: error: offset out of range
+#CHECK: clrj	%r0, %r0, 0, 0x10000
+
+	clrj	%r0, %r0, 0, -0x100002
+	clrj	%r0, %r0, 0, -1
+	clrj	%r0, %r0, 0, 1
+	clrj	%r0, %r0, 0, 0x10000
+
+#CHECK: error: invalid instruction
+#CHECK:	clrjo	%r0, %r0, 0, 0
+#CHECK: error: invalid instruction
+#CHECK:	clrjno	%r0, %r0, 0, 0
+
+	clrjo	%r0, %r0, 0, 0
+	clrjno	%r0, %r0, 0, 0
 
 #CHECK: error: offset out of range
 #CHECK: clrl	%r0, -0x1000000002

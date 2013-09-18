@@ -70,9 +70,17 @@ namespace SystemZII {
     // on the result.
     BranchC,
 
+    // An instruction that peforms a 32-bit unsigned comparison and branches
+    // on the result.
+    BranchCL,
+
     // An instruction that peforms a 64-bit signed comparison and branches
     // on the result.
     BranchCG,
+
+    // An instruction that peforms a 64-bit unsigned comparison and branches
+    // on the result.
+    BranchCLG,
 
     // An instruction that decrements a 32-bit register and branches if
     // the result is nonzero.

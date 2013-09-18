@@ -86,8 +86,7 @@ define i64 @f5(i64 %src1) {
 ; CHECK-LABEL: f5:
 ; CHECK: lgrl [[REG:%r[0-5]]], h@GOT
 ; CHECK: llgh [[VAL:%r[0-5]]], 0([[REG]])
-; CHECK: clgr %r2, [[VAL]]
-; CHECK-NEXT: jl
+; CHECK: clgrjl %r2, [[VAL]],
 ; CHECK: br %r14
 entry:
   %val = load i16 *@h, align 1

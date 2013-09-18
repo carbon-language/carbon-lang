@@ -5,8 +5,7 @@
 ; Check CLGR.
 define double @f1(double %a, double %b, i64 %i1, i64 %i2) {
 ; CHECK-LABEL: f1:
-; CHECK: clgr %r2, %r3
-; CHECK-NEXT: jl
+; CHECK: clgrjl %r2, %r3
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
   %cond = icmp ult i64 %i1, %i2

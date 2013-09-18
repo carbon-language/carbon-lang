@@ -86,8 +86,7 @@ define i32 @f5(i32 %src1) {
 ; CHECK-LABEL: f5:
 ; CHECK: lgrl [[REG:%r[0-5]]], h@GOT
 ; CHECK: llh [[VAL:%r[0-5]]], 0([[REG]])
-; CHECK: clr %r2, [[VAL]]
-; CHECK-NEXT: jl
+; CHECK: clrjl %r2, [[VAL]],
 ; CHECK: br %r14
 entry:
   %val = load i16 *@h, align 1

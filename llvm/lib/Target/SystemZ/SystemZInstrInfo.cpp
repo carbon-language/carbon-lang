@@ -794,9 +794,19 @@ SystemZInstrInfo::getBranchInfo(const MachineInstr *MI) const {
     return SystemZII::Branch(SystemZII::BranchC, SystemZ::CCMASK_ICMP,
                              MI->getOperand(2).getImm(), &MI->getOperand(3));
 
+  case SystemZ::CLIJ:
+  case SystemZ::CLRJ:
+    return SystemZII::Branch(SystemZII::BranchCL, SystemZ::CCMASK_ICMP,
+                             MI->getOperand(2).getImm(), &MI->getOperand(3));
+
   case SystemZ::CGIJ:
   case SystemZ::CGRJ:
     return SystemZII::Branch(SystemZII::BranchCG, SystemZ::CCMASK_ICMP,
+                             MI->getOperand(2).getImm(), &MI->getOperand(3));
+
+  case SystemZ::CLGIJ:
+  case SystemZ::CLGRJ:
+    return SystemZII::Branch(SystemZII::BranchCLG, SystemZ::CCMASK_ICMP,
                              MI->getOperand(2).getImm(), &MI->getOperand(3));
 
   default:
@@ -927,6 +937,14 @@ unsigned SystemZInstrInfo::getCompareAndBranch(unsigned Opcode,
     return MI && isInt<8>(MI->getOperand(1).getImm()) ? SystemZ::CIJ : 0;
   case SystemZ::CGHI:
     return MI && isInt<8>(MI->getOperand(1).getImm()) ? SystemZ::CGIJ : 0;
+  case SystemZ::CLR:
+    return SystemZ::CLRJ;
+  case SystemZ::CLGR:
+    return SystemZ::CLGRJ;
+  case SystemZ::CLFI:
+    return MI && isUInt<8>(MI->getOperand(1).getImm()) ? SystemZ::CLIJ : 0;
+  case SystemZ::CLGFI:
+    return MI && isUInt<8>(MI->getOperand(1).getImm()) ? SystemZ::CLGIJ : 0;
   default:
     return 0;
   }
