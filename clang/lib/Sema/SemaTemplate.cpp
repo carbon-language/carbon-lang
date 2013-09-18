@@ -7282,12 +7282,9 @@ DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
     //
     // C++98 has the same restriction, just worded differently.
     //
-    // C++1y If the explicit instantiation is for a variable, the
-    // unqualified-id in the declaration shall be a template-id.
-    if (!ScopeSpecifierHasTemplateId(D.getCXXScopeSpec()) &&
-        (!PrevTemplate ||
-         (D.getName().getKind() != UnqualifiedId::IK_TemplateId &&
-          D.getCXXScopeSpec().isSet())))
+    // This does not apply to variable template specializations, where the
+    // template-id is in the unqualified-id instead.
+    if (!ScopeSpecifierHasTemplateId(D.getCXXScopeSpec()) && !PrevTemplate)
       Diag(D.getIdentifierLoc(),
            diag::ext_explicit_instantiation_without_qualified_id)
         << Prev << D.getCXXScopeSpec().getRange();
