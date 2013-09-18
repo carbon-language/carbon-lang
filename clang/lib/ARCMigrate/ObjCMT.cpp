@@ -816,6 +816,9 @@ void ObjCMigrateASTConsumer::migrateNsReturnsInnerPointer(ASTContext &Ctx,
 
 void ObjCMigrateASTConsumer::migrateMethods(ASTContext &Ctx,
                                                  ObjCContainerDecl *CDecl) {
+  if (CDecl->isDeprecated())
+    return;
+  
   // migrate methods which can have instancetype as their result type.
   for (ObjCContainerDecl::method_iterator M = CDecl->meth_begin(),
        MEnd = CDecl->meth_end();
