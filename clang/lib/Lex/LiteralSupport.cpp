@@ -336,7 +336,7 @@ static void EncodeUCNEscape(const char *ThisTokBegin, const char *&ThisTokBuf,
     return;
   }
 
-  assert((CharByteWidth == 1 || CharByteWidth == 2 || CharByteWidth) &&
+  assert((CharByteWidth == 1 || CharByteWidth == 2 || CharByteWidth == 4) &&
          "only character widths of 1, 2, or 4 bytes supported");
 
   (void)UcnLen;
