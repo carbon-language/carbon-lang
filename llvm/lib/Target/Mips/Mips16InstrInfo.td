@@ -768,6 +768,10 @@ def LiRxImm16: FRI16_ins<0b01101, "li", IIAlu>;
 //
 def LiRxImmX16: FEXT_RI16_ins<0b01101, "li", IIAlu>;
 
+def LiRxImmAlignX16: FEXT_RI16_ins<0b01101, ".align 2\n\tli", IIAlu> {
+  let isCodeGenOnly = 1;
+}
+
 //
 // Format: LW ry, offset(rx) MIPS16e
 // Purpose: Load Word (Extended)
@@ -1808,3 +1812,8 @@ def : Mips16Pat<(i32 (extloadi16  addr16:$src)),
 
 def: Mips16Pat<(trap), (Break16)>;
 
+def GotPrologue16:   
+  MipsPseudo16<
+    (outs CPU16Regs:$rh, CPU16Regs:$rl),
+    (ins simm16:$immHi, simm16:$immLo),
+    ".align 2\n\tli\t$rh, $immHi\n\taddiu\t$rl, $$pc, $immLo\n ",[]> ;

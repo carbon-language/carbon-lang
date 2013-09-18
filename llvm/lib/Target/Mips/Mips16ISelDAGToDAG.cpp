@@ -80,10 +80,11 @@ void Mips16DAGToDAGISel::initGlobalBaseReg(MachineFunction &MF) {
   V1 = RegInfo.createVirtualRegister(RC);
   V2 = RegInfo.createVirtualRegister(RC);
 
-  BuildMI(MBB, I, DL, TII.get(Mips::LiRxImmX16), V0)
-    .addExternalSymbol("_gp_disp", MipsII::MO_ABS_HI);
-  BuildMI(MBB, I, DL, TII.get(Mips::AddiuRxPcImmX16), V1)
-    .addExternalSymbol("_gp_disp", MipsII::MO_ABS_LO);
+  BuildMI(MBB, I, DL, TII.get(Mips::GotPrologue16), V0).
+    addReg(V1, RegState::Define).
+    addExternalSymbol("_gp_disp", MipsII::MO_ABS_HI).
+    addExternalSymbol("_gp_disp", MipsII::MO_ABS_LO);
+
   BuildMI(MBB, I, DL, TII.get(Mips::SllX16), V2).addReg(V0).addImm(16);
   BuildMI(MBB, I, DL, TII.get(Mips::AdduRxRyRz16), GlobalBaseReg)
     .addReg(V1).addReg(V2);
