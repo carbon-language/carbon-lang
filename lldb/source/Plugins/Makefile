@@ -20,11 +20,8 @@ DIRS := ABI/MacOSX-arm ABI/MacOSX-i386 ABI/SysV-x86_64 Disassembler/llvm \
 	LanguageRuntime/CPlusPlus/ItaniumABI \
 	LanguageRuntime/ObjC/AppleObjCRuntime \
 	DynamicLoader/POSIX-DYLD \
-	OperatingSystem/Python
-
-ifeq ($(HOST_OS),MingW)
-DIRS += SymbolVendor/ELF
-endif
+	OperatingSystem/Python \
+	SymbolVendor/ELF
 
 ifeq ($(HOST_OS),Darwin)
 DIRS += Process/MacOSX-Kernel
@@ -38,13 +35,11 @@ endif
 ifeq ($(HOST_OS),Linux)
 DIRS += DynamicLoader/MacOSX-DYLD
 DIRS += Process/Linux Process/POSIX
-DIRS += SymbolVendor/ELF
 DIRS += Process/elf-core
 endif
 
 ifneq (,$(filter $(HOST_OS), FreeBSD GNU/kFreeBSD))
 DIRS += Process/FreeBSD Process/POSIX
-DIRS += SymbolVendor/ELF
 DIRS += Process/elf-core
 endif
 
