@@ -75,6 +75,19 @@
 //             ^
 //   Macro defined here.
 //
+// Checks will also be performed for '#include' directives that are
+// nested inside 'extern "C/C++" {}' or 'namespace (name) {}' blocks,
+// and can produce error message like the following:
+//
+// IncludeInExtern.h:2:3
+//   #include "Empty.h"
+//   ^
+// error: Include directive within extern "C" {}.
+// IncludeInExtern.h:1:1
+// extern "C" {
+// ^
+// The "extern "C" {}" block is here.
+//
 // See PreprocessorTracker.cpp for additional details.
 //
 // Future directions:
@@ -84,18 +97,15 @@
 //
 // Some ideas:
 //
-// 1. Check for and warn about "#include" directives inside 'extern "C/C++" {}'
-// and "namespace (name) {}" blocks.
+// 1. Omit duplicate "not always provided" messages
 //
-// 2. Omit duplicate "not always provided" messages
-//
-// 3. Add options to disable any of the checks, in case
+// 2. Add options to disable any of the checks, in case
 // there is some problem with them, or the messages get too verbose.
 //
-// 4. Try to figure out the preprocessor conditional directives that
+// 3. Try to figure out the preprocessor conditional directives that
 // contribute to problems and tie them to the inconsistent definitions.
 //
-// 5. There are some legitimate uses of preprocessor macros that
+// 4. There are some legitimate uses of preprocessor macros that
 // modularize will flag as errors, such as repeatedly #include'ing
 // a file and using interleaving defined/undefined macros
 // to change declarations in the included file.  Is there a way
@@ -103,7 +113,7 @@
 // to ignore.  Otherwise you can just exclude the file, after checking
 // for legitimate errors.
 //
-// 6. What else?
+// 5. What else?
 //
 // General clean-up and refactoring:
 //
@@ -453,8 +463,11 @@ private:
 class CollectEntitiesVisitor
     : public RecursiveASTVisitor<CollectEntitiesVisitor> {
 public:
-  CollectEntitiesVisitor(SourceManager &SM, EntityMap &Entities)
-      : SM(SM), Entities(Entities) {}
+  CollectEntitiesVisitor(SourceManager &SM, EntityMap &Entities,
+                         Preprocessor &PP, PreprocessorTracker &PPTracker,
+                         int &HadErrors)
+      : SM(SM), Entities(Entities), PP(PP), PPTracker(PPTracker),
+        HadErrors(HadErrors) {}
 
   bool TraverseStmt(Stmt *S) { return true; }
   bool TraverseType(QualType T) { return true; }
@@ -478,6 +491,42 @@ public:
   bool TraverseConstructorInitializer(CXXCtorInitializer *Init) { return true; }
   bool TraverseLambdaCapture(LambdaExpr::Capture C) { return true; }
 
+  // Check 'extern "*" {}' block for #include directives.
+  bool VisitLinkageSpecDecl(LinkageSpecDecl *D) {
+    // Bail if not a block.
+    if (!D->hasBraces())
+      return true;
+    SourceRange BlockRange = D->getSourceRange();
+    const char *LinkageLabel;
+    switch (D->getLanguage()) {
+    case LinkageSpecDecl::lang_c:
+      LinkageLabel = "extern \"C\" {}";
+      break;
+    case LinkageSpecDecl::lang_cxx:
+      LinkageLabel = "extern \"C++\" {}";
+      break;
+    default:
+      LinkageLabel = "extern \"\" {}";
+    }
+    if (!PPTracker.checkForIncludesInBlock(PP, BlockRange, LinkageLabel,
+                                           errs()))
+      HadErrors = 1;
+    return true;
+  }
+
+  // Check 'namespace (name) {}' block for #include directives.
+  bool VisitNamespaceDecl(const NamespaceDecl *D) {
+    SourceRange BlockRange = D->getSourceRange();
+    std::string Label("namespace ");
+    Label += D->getName();
+    Label += " {}";
+    if (!PPTracker.checkForIncludesInBlock(PP, BlockRange, Label.c_str(),
+                                           errs()))
+      HadErrors = 1;
+    return true;
+  }
+
+  // Collect definition entities.
   bool VisitNamedDecl(NamedDecl *ND) {
     // We only care about file-context variables.
     if (!ND->getDeclContext()->isFileContext())
@@ -517,14 +566,18 @@ public:
 private:
   SourceManager &SM;
   EntityMap &Entities;
+  Preprocessor &PP;
+  PreprocessorTracker &PPTracker;
+  int &HadErrors;
 };
 
 class CollectEntitiesConsumer : public ASTConsumer {
 public:
   CollectEntitiesConsumer(EntityMap &Entities,
                           PreprocessorTracker &preprocessorTracker,
-                          Preprocessor &PP, StringRef InFile)
-      : Entities(Entities), PPTracker(preprocessorTracker), PP(PP) {
+                          Preprocessor &PP, StringRef InFile, int &HadErrors)
+      : Entities(Entities), PPTracker(preprocessorTracker), PP(PP),
+        HadErrors(HadErrors) {
     PPTracker.handlePreprocessorEntry(PP, InFile);
   }
 
@@ -534,7 +587,7 @@ public:
     SourceManager &SM = Ctx.getSourceManager();
 
     // Collect declared entities.
-    CollectEntitiesVisitor(SM, Entities)
+    CollectEntitiesVisitor(SM, Entities, PP, PPTracker, HadErrors)
         .TraverseDecl(Ctx.getTranslationUnitDecl());
 
     // Collect macro definitions.
@@ -556,39 +609,46 @@ private:
   EntityMap &Entities;
   PreprocessorTracker &PPTracker;
   Preprocessor &PP;
+  int &HadErrors;
 };
 
 class CollectEntitiesAction : public SyntaxOnlyAction {
 public:
   CollectEntitiesAction(EntityMap &Entities,
-                        PreprocessorTracker &preprocessorTracker)
-      : Entities(Entities), PPTracker(preprocessorTracker) {}
+                        PreprocessorTracker &preprocessorTracker,
+                        int &HadErrors)
+      : Entities(Entities), PPTracker(preprocessorTracker),
+        HadErrors(HadErrors) {}
 
 protected:
   virtual clang::ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
                                                 StringRef InFile) {
     return new CollectEntitiesConsumer(Entities, PPTracker,
-                                       CI.getPreprocessor(), InFile);
+                                       CI.getPreprocessor(), InFile, HadErrors);
   }
 
 private:
   EntityMap &Entities;
   PreprocessorTracker &PPTracker;
+  int &HadErrors;
 };
 
 class ModularizeFrontendActionFactory : public FrontendActionFactory {
 public:
   ModularizeFrontendActionFactory(EntityMap &Entities,
-                                  PreprocessorTracker &preprocessorTracker)
-      : Entities(Entities), PPTracker(preprocessorTracker) {}
+                                  PreprocessorTracker &preprocessorTracker,
+                                  int &HadErrors)
+      : Entities(Entities), PPTracker(preprocessorTracker),
+        HadErrors(HadErrors) {}
 
   virtual CollectEntitiesAction *create() {
-    return new CollectEntitiesAction(Entities, PPTracker);
+    return new CollectEntitiesAction(Entities, PPTracker, HadErrors);
   }
 
 private:
   EntityMap &Entities;
   PreprocessorTracker &PPTracker;
+  int &HadErrors;
 };
 
 int main(int Argc, const char **Argv) {
@@ -626,8 +686,9 @@ int main(int Argc, const char **Argv) {
   EntityMap Entities;
   ClangTool Tool(*Compilations, Headers);
   Tool.appendArgumentsAdjuster(new AddDependenciesAdjuster(Dependencies));
-  int HadErrors =
-      Tool.run(new ModularizeFrontendActionFactory(Entities, *PPTracker));
+  int HadErrors = 0;
+  HadErrors |= Tool.run(
+      new ModularizeFrontendActionFactory(Entities, *PPTracker, HadErrors));
 
   // Create a place to save duplicate entity locations, separate bins per kind.
   typedef SmallVector<Location, 8> LocationArray;
