@@ -93,7 +93,9 @@ static const int kAsanStackLeftRedzoneMagic = 0xf1;
 static const int kAsanStackMidRedzoneMagic = 0xf2;
 static const int kAsanStackRightRedzoneMagic = 0xf3;
 static const int kAsanStackPartialRedzoneMagic = 0xf4;
+#ifndef NDEBUG
 static const int kAsanStackAfterReturnMagic = 0xf5;
+#endif
 
 // Accesses sizes are powers of two: 1, 2, 4, 8, 16.
 static const size_t kNumberOfAccessSizes = 5;
