@@ -2153,6 +2153,49 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     return Builder.CreateCall(F);
   }
 
+  // CRC32
+  Intrinsic::ID CRCIntrinsicID = Intrinsic::not_intrinsic;
+  switch (BuiltinID) {
+  case ARM::BI__builtin_arm_crc32b:
+    CRCIntrinsicID = Intrinsic::arm_crc32b; break;
+  case ARM::BI__builtin_arm_crc32cb:
+    CRCIntrinsicID = Intrinsic::arm_crc32cb; break;
+  case ARM::BI__builtin_arm_crc32h:
+    CRCIntrinsicID = Intrinsic::arm_crc32h; break;
+  case ARM::BI__builtin_arm_crc32ch:
+    CRCIntrinsicID = Intrinsic::arm_crc32ch; break;
+  case ARM::BI__builtin_arm_crc32w:
+  case ARM::BI__builtin_arm_crc32d:
+    CRCIntrinsicID = Intrinsic::arm_crc32w; break;
+  case ARM::BI__builtin_arm_crc32cw:
+  case ARM::BI__builtin_arm_crc32cd:
+    CRCIntrinsicID = Intrinsic::arm_crc32cw; break;
+  }
+
+  if (CRCIntrinsicID != Intrinsic::not_intrinsic) {
+    Value *Arg0 = EmitScalarExpr(E->getArg(0));
+    Value *Arg1 = EmitScalarExpr(E->getArg(1));
+
+    // crc32{c,}d intrinsics are implemnted as two calls to crc32{c,}w
+    // intrinsics, hence we need different codegen for these cases.
+    if (BuiltinID == ARM::BI__builtin_arm_crc32d ||
+        BuiltinID == ARM::BI__builtin_arm_crc32cd) {
+      Value *C1 = llvm::ConstantInt::get(Int64Ty, 32);
+      Value *Arg1a = Builder.CreateTruncOrBitCast(Arg1, Int32Ty);
+      Value *Arg1b = Builder.CreateLShr(Arg1, C1);
+      Arg1b = Builder.CreateTruncOrBitCast(Arg1b, Int32Ty);
+
+      Function *F = CGM.getIntrinsic(CRCIntrinsicID);
+      Value *Res = Builder.CreateCall2(F, Arg0, Arg1a);
+      return Builder.CreateCall2(F, Res, Arg1b);
+    } else {
+      Arg1 = Builder.CreateZExtOrBitCast(Arg1, Int32Ty);
+
+      Function *F = CGM.getIntrinsic(CRCIntrinsicID);
+      return Builder.CreateCall2(F, Arg0, Arg1);
+    }
+  }
+
   SmallVector<Value*, 4> Ops;
   llvm::Value *Align = 0;
   for (unsigned i = 0, e = E->getNumArgs() - 1; i != e; i++) {
