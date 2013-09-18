@@ -35,7 +35,7 @@ def err_expr_not_ice : Error<
   "expression is not an %select{integer|integral}0 constant expression">;
 def ext_expr_not_ice : Extension<
   "expression is not an %select{integer|integral}0 constant expression; "
-  "folding it to a constant is a GNU extension">, InGroup<GNU>;
+  "folding it to a constant is a GNU extension">, InGroup<GNUFoldingConstant>;
 def err_typecheck_converted_constant_expression : Error<
   "value of type %0 is not implicitly convertible to %1">;
 def err_typecheck_converted_constant_expression_disallowed : Error<
@@ -98,7 +98,7 @@ def err_vla_decl_has_static_storage : Error<
 def err_vla_decl_has_extern_linkage : Error<
   "variable length array declaration can not have 'extern' linkage">;
 def ext_vla_folded_to_constant : Extension<
-  "variable length array folded to constant array as an extension">;
+  "variable length array folded to constant array as an extension">, InGroup<GNUFoldingConstant>;
 
 // C99 variably modified types
 def err_variably_modified_template_arg : Error<
@@ -143,7 +143,7 @@ def err_designator_into_flexible_array_member : Error<
 def note_flexible_array_member : Note<
   "initialized flexible array member %0 is here">;
 def ext_flexible_array_init : Extension<
-  "flexible array initialization is a GNU extension">, InGroup<GNU>;
+  "flexible array initialization is a GNU extension">, InGroup<GNUFlexibleArrayInitializer>;
 
 // Declarations.
 def err_bad_variable_name : Error<
@@ -3626,7 +3626,7 @@ def err_forward_ref_enum : Error<
 def ext_ms_forward_ref_enum : Extension<
   "forward references to 'enum' types are a Microsoft extension">, InGroup<Microsoft>;
 def ext_forward_ref_enum_def : Extension<
-  "redeclaration of already-defined enum %0 is a GNU extension">, InGroup<GNU>;
+  "redeclaration of already-defined enum %0 is a GNU extension">, InGroup<GNURedeclaredEnum>;
   
 def err_redefinition_of_enumerator : Error<"redefinition of enumerator %0">;
 def err_duplicate_member : Error<"duplicate member %0">;
@@ -3900,7 +3900,7 @@ def err_field_declared_as_function : Error<"field %0 declared as a function">;
 def err_field_incomplete : Error<"field has incomplete type %0">;
 def ext_variable_sized_type_in_struct : ExtWarn<
   "field %0 with variable sized type %1 not at the end of a struct or class is"
-  " a GNU extension">, InGroup<GNU>;
+  " a GNU extension">, InGroup<GNUVariableSizedTypeNotAtEnd>;
 
 def err_flexible_array_empty_struct : Error<
   "flexible array %0 not allowed in otherwise empty struct">;
@@ -3924,9 +3924,9 @@ def ext_flexible_array_union_ms : Extension<
 def ext_flexible_array_empty_aggregate_gnu : Extension<
   "flexible array member %0 in otherwise empty "
   "%select{struct|interface|union|class|enum}1 is a GNU extension">,
-  InGroup<GNU>;
+  InGroup<GNUEmptyStruct>;
 def ext_flexible_array_union_gnu : Extension<
-  "flexible array member %0 in a union is a GNU extension">, InGroup<GNU>;
+  "flexible array member %0 in a union is a GNU extension">, InGroup<GNUFlexibleArrayUnionMember>;
 
 let CategoryName = "ARC Semantic Issue" in {
 
@@ -4348,7 +4348,7 @@ def note_enum_specialized_here : Note<
 
 def err_member_redeclared : Error<"class member cannot be redeclared">;
 def ext_member_redeclared : ExtWarn<"class member cannot be redeclared">,
-  InGroup<GNU>;
+  InGroup<RedeclaredClassMember>;
 def err_member_redeclared_in_instantiation : Error<
   "multiple overloads of %0 instantiate to the same signature %1">;
 def err_member_name_of_class : Error<"member %0 has the same name as its class">;
@@ -4440,7 +4440,7 @@ def err_array_init_non_constant_array : Error<
 def ext_array_init_copy : Extension<
   "initialization of an array "
   "%diff{of type $ from a compound literal of type $|"
-  "from a compound literal}0,1 is a GNU extension">, InGroup<GNU>;
+  "from a compound literal}0,1 is a GNU extension">, InGroup<GNUCompoundLiteralInitializer>;
 // This is intentionally not disabled by -Wno-gnu.
 def ext_array_init_parens : ExtWarn<
   "parenthesized initialization of a member array is a GNU extension">,
@@ -5576,7 +5576,7 @@ def ext_typecheck_cast_nonscalar : Extension<
   "C99 forbids casting nonscalar type %0 to the same type">;
 def ext_typecheck_cast_to_union : Extension<
   "cast to union type is a GNU extension">,
-  InGroup<GNU>;
+  InGroup<GNUUnionCast>;
 def err_typecheck_cast_to_union_no_type : Error<
   "cast to union type from type %0 not present in union">;
 def err_cast_pointer_from_non_pointer_int : Error<
@@ -5647,9 +5647,9 @@ def err_expected_ident_or_lparen : Error<"expected identifier or '('">;
 def err_typecheck_cond_incompatible_operands_null : Error<
   "non-pointer operand type %0 incompatible with %select{NULL|nullptr}1">;
 def ext_empty_struct_union : Extension<
-  "empty %select{struct|union}0 is a GNU extension">, InGroup<GNU>;
+  "empty %select{struct|union}0 is a GNU extension">, InGroup<GNUEmptyStruct>;
 def ext_no_named_members_in_struct_union : Extension<
-  "%select{struct|union}0 without named members is a GNU extension">, InGroup<GNU>;
+  "%select{struct|union}0 without named members is a GNU extension">, InGroup<GNUEmptyStruct>;
 def warn_zero_size_struct_union_compat : Warning<"%select{|empty }0"
   "%select{struct|union}1 has size 0 in C, %select{size 1|non-zero size}2 in C++">,
   InGroup<CXXCompat>, DefaultIgnore;
@@ -5758,7 +5758,7 @@ def err_in_class_initializer_references_def_ctor : Error<
 
 def ext_in_class_initializer_non_constant : Extension<
   "in-class initializer for static data member is not a constant expression; "
-  "folding it to a constant is a GNU extension">, InGroup<GNU>;
+  "folding it to a constant is a GNU extension">, InGroup<GNUFoldingConstant>;
 
 def err_thread_dynamic_init : Error<
   "initializer for thread-local variable must be a constant expression">;
@@ -5771,7 +5771,7 @@ def note_use_thread_local : Note<
 def ext_anonymous_union : Extension<
   "anonymous unions are a C11 extension">, InGroup<C11>;
 def ext_gnu_anonymous_struct : Extension<
-  "anonymous structs are a GNU extension">, InGroup<GNU>;
+  "anonymous structs are a GNU extension">, InGroup<GNUAnonymousStruct>;
 def ext_c11_anonymous_struct : Extension<
   "anonymous structs are a C11 extension">, InGroup<C11>;
 def err_anonymous_union_not_static : Error<

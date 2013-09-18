@@ -23,12 +23,14 @@ def AddressOfTemporary : DiagGroup<"address-of-temporary">;
 def : DiagGroup<"aggregate-return">;
 def GNUAlignofExpression : DiagGroup<"gnu-alignof-expression">;
 def AmbigMemberTemplate : DiagGroup<"ambiguous-member-template">;
+def GNUAnonymousStruct : DiagGroup<"gnu-anonymous-struct">;
 def ArrayBounds : DiagGroup<"array-bounds">;
 def ArrayBoundsPointerArithmetic : DiagGroup<"array-bounds-pointer-arithmetic">;
 def Availability : DiagGroup<"availability">;
 def Section : DiagGroup<"section">;
 def AutoImport : DiagGroup<"auto-import">;
 def GNUBinaryLiteral : DiagGroup<"gnu-binary-literal">;
+def GNUCompoundLiteralInitializer : DiagGroup<"gnu-compound-literal-initializer">;
 def BitFieldConstantConversion : DiagGroup<"bitfield-constant-conversion">;
 def ConstantConversion :
   DiagGroup<"constant-conversion", [ BitFieldConstantConversion ] >;
@@ -88,10 +90,14 @@ def Documentation : DiagGroup<"documentation",
 
 def EmptyBody : DiagGroup<"empty-body">;
 def GNUEmptyInitializer : DiagGroup<"gnu-empty-initializer">;
+def GNUEmptyStruct : DiagGroup<"gnu-empty-struct">;
 def ExtraTokens : DiagGroup<"extra-tokens">;
 def CXX11ExtraSemi : DiagGroup<"c++11-extra-semi">;
 def ExtraSemi : DiagGroup<"extra-semi", [CXX11ExtraSemi]>;
 
+def GNUFlexibleArrayInitializer : DiagGroup<"gnu-flexible-array-initializer">;
+def GNUFlexibleArrayUnionMember : DiagGroup<"gnu-flexible-array-union-member">;
+def GNUFoldingConstant : DiagGroup<"gnu-folding-constant">;
 def FormatExtraArgs : DiagGroup<"format-extra-args">;
 def FormatZeroLength : DiagGroup<"format-zero-length">;
 
@@ -233,6 +239,8 @@ def PoundPragmaMessage : DiagGroup<"#pragma-messages">,
                          DiagCategory<"#pragma message Directive">;
 def : DiagGroup<"pointer-to-int-cast">;
 def : DiagGroup<"redundant-decls">;
+def RedeclaredClassMember : DiagGroup<"redeclared-class-member">;
+def GNURedeclaredEnum : DiagGroup<"gnu-redeclared-enum">;
 def ReturnStackAddress : DiagGroup<"return-stack-address">;
 def ReturnTypeCLinkage : DiagGroup<"return-type-c-linkage">;
 def ReturnType : DiagGroup<"return-type", [ReturnTypeCLinkage]>;
@@ -266,6 +274,8 @@ def TautologicalCompare : DiagGroup<"tautological-compare",
 def HeaderHygiene : DiagGroup<"header-hygiene">;
 def DuplicateDeclSpecifier : DiagGroup<"duplicate-decl-specifier">;
 def CompareDistinctPointerType : DiagGroup<"compare-distinct-pointer-types">;
+def GNUUnionCast : DiagGroup<"gnu-union-cast">;
+def GNUVariableSizedTypeNotAtEnd : DiagGroup<"gnu-variable-sized-type-not-at-end">;
 def Varargs : DiagGroup<"varargs">;
 
 def Unsequenced : DiagGroup<"unsequenced">;
@@ -541,15 +551,19 @@ def C11 : DiagGroup<"c11-extensions">;
 def C99 : DiagGroup<"c99-extensions">;
 
 // A warning group for warnings about GCC extensions.
-def GNU : DiagGroup<"gnu", [GNUAlignofExpression, GNUBinaryLiteral,
-                            GNUCaseRange, GNUComplexInteger,
-                            GNUConditionalOmittedOperand,
-                            GNUDesignator, GNUEmptyInitializer,
-                            VLAExtension,
+def GNU : DiagGroup<"gnu", [GNUAlignofExpression, GNUAnonymousStruct,
+                            GNUBinaryLiteral, GNUCaseRange,
+                            GNUComplexInteger, GNUCompoundLiteralInitializer,
+                            GNUConditionalOmittedOperand, GNUDesignator,
+                            GNUEmptyInitializer, GNUEmptyStruct,
+                            VLAExtension, GNUFlexibleArrayInitializer,
+                            GNUFlexibleArrayUnionMember, GNUFoldingConstant,
                             GNUImaginaryConstant, GNULabelsAsValue,
+                            RedeclaredClassMember, GNURedeclaredEnum,
                             GNUStatementExpression, GNUStaticFloatInit,
-                            ZeroLengthArray,
-                            GNUZeroLineDirective, GNUZeroVariadicMacroArguments]>;
+                            GNUUnionCast, GNUVariableSizedTypeNotAtEnd,
+                            ZeroLengthArray, GNUZeroLineDirective,
+                            GNUZeroVariadicMacroArguments]>;
 // A warning group for warnings about code that clang accepts but gcc doesn't.
 def GccCompat : DiagGroup<"gcc-compat">;
 

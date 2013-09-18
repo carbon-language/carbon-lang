@@ -36,11 +36,8 @@
 // CHECK-GNU:     ext_gnu_array_range
 // CHECK-GNU:     ext_gnu_missing_equal_designator
 // CHECK-GNU:     ext_gnu_old_style_field_designator
-// CHECK-GNU:   -Wvla
+// CHECK-GNU:   -Wvla-extension
 // CHECK-GNU:     ext_vla
-// CHECK-GNU:   ext_array_init_copy
-// CHECK-GNU:   ext_empty_struct_union
-// CHECK-GNU:   ext_expr_not_ice
 // There are more GNU extensions but we don't need to check them all.
 
 // RUN: diagtool tree --flags-only -Wgnu | FileCheck -check-prefix CHECK-FLAGS-ONLY %s
