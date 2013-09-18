@@ -49,8 +49,8 @@ namespace out_of_line {
     template<typename T, typename T0> static CONST T right = T(100);
     template<typename T> static CONST T right<T,int> = T(5);
   };
-  template<typename T, typename T0> CONST T B3::right;  // expected-error {{forward declaration of variable template cannot have a nested name specifier}}
-  template<typename T> CONST T B3::right<T,int>;        // expected-error {{forward declaration of variable template partial specialization cannot have a nested name specifier}}
+  template<typename T, typename T0> CONST T B3::right;
+  template<typename T> CONST T B3::right<T,int>;
 
   class B4 {
     template<typename T, typename T0> static CONST T right;
@@ -58,9 +58,8 @@ namespace out_of_line {
     template<typename T, typename T0> static CONST T right_def = T(100);
     template<typename T> static CONST T right_def<T,int>;   // expected-note {{explicit instantiation refers here}}
   };
-  template<typename T, typename T0> CONST T B4::right;  // expected-error {{forward declaration of variable template cannot have a nested name specifier}}
-  template<typename T> CONST T B4::right<T,int>;        // expected-error {{forward declaration of variable template partial specialization cannot have a nested name specifier}} \
-                                                        // expected-note {{explicit instantiation refers here}}
+  template<typename T, typename T0> CONST T B4::right;
+  template<typename T> CONST T B4::right<T,int>; // expected-note {{explicit instantiation refers here}}
   template CONST int B4::right<int,int>;  // expected-error {{explicit instantiation of undefined static data member template 'right' of class}}
   template CONST int B4::right_def<int,int>;  // expected-error {{explicit instantiation of undefined static data member template 'right_def' of class}}
 }
@@ -245,7 +244,7 @@ namespace in_class_template {
 
     // FIXME: These cases should be accepted.
     int *use_before_definition = A<int>::x<char>;
-    template<typename T> template<typename U> T A<T>::x<U>[sizeof(U)]; // expected-error {{forward declaration}}
+    template<typename T> template<typename U> T A<T>::x<U>[sizeof(U)];
     static_assert(sizeof(A<int>::x<char>) == 1, ""); // expected-error {{incomplete}}
 
     template<typename T> template<typename...U> T A<T>::y<tuple<U...> >[] = { U()... };

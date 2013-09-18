@@ -4808,21 +4808,6 @@ static bool shouldConsiderLinkage(const FunctionDecl *FD) {
   llvm_unreachable("Unexpected context");
 }
 
-bool Sema::HandleVariableRedeclaration(Decl *D, CXXScopeSpec &SS) {
-  // If this is a redeclaration of a variable template or a forward
-  // declaration of a variable template partial specialization 
-  // with nested name specifier, complain.
-
-  if (D && SS.isNotEmpty() &&
-      (isa<VarTemplateDecl>(D) ||
-       isa<VarTemplatePartialSpecializationDecl>(D))) {
-    Diag(SS.getBeginLoc(), diag::err_forward_var_nested_name_specifier)
-      << isa<VarTemplatePartialSpecializationDecl>(D) << SS.getRange();
-    return true;
-  }
-  return false;
-}
-
 NamedDecl *
 Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
                               TypeSourceInfo *TInfo, LookupResult &Previous,

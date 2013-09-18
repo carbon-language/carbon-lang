@@ -1804,11 +1804,6 @@ Decl *Parser::ParseDeclarationAfterDeclaratorAndAttributes(Declarator &D,
     ThisDecl = Actions.ActOnTemplateDeclarator(getCurScope(),
                                                *TemplateInfo.TemplateParams,
                                                D);
-    if (Tok.is(tok::semi) &&
-	Actions.HandleVariableRedeclaration(ThisDecl, D.getCXXScopeSpec())) {
-      SkipUntil(tok::semi, true, true);
-      return 0;
-    }
     if (VarTemplateDecl *VT = dyn_cast_or_null<VarTemplateDecl>(ThisDecl))
       // Re-direct this decl to refer to the templated decl so that we can
       // initialize it.
