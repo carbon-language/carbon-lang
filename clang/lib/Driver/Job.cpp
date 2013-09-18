@@ -15,7 +15,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include <cassert>
 using namespace clang::driver;
-using llvm::opt::ArgStringList;
 using llvm::raw_ostream;
 using llvm::StringRef;
 
