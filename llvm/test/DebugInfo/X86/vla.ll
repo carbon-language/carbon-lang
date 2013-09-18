@@ -1,6 +1,7 @@
 ; RUN: llc -O0 -mtriple=x86_64-apple-darwin -filetype=asm %s -o - | FileCheck %s
-; Ensure that we generate a breg+0 location for the variable length array a.
-; CHECK: ##DEBUG_VALUE: vla:a <- [RDX+0]
+; Ensure that we generate an indirect location for the variable length array a.
+; CHECK: ##DEBUG_VALUE: vla:a <- RDX
+; CHECK: DW_OP_breg1
 ; rdar://problem/13658587
 ;
 ; generated from:
@@ -91,7 +92,7 @@ entry:
 !15 = metadata !{i32 786689, metadata !4, metadata !"n", metadata !5, i32 16777217, metadata !8, i32 0, i32 0} ; [ DW_TAG_arg_variable ] [n] [line 1]
 !16 = metadata !{i32 1, i32 0, metadata !4, null}
 !17 = metadata !{i32 2, i32 0, metadata !4, null}
-!18 = metadata !{i32 786688, metadata !4, metadata !"a", metadata !5, i32 2, metadata !19, i32 0, i32 0} ; [ DW_TAG_auto_variable ] [a] [line 2]
+!18 = metadata !{i32 786688, metadata !4, metadata !"a", metadata !5, i32 2, metadata !19, i32 8192, i32 0} ; [ DW_TAG_auto_variable ] [a] [line 2]
 !19 = metadata !{i32 786433, null, null, metadata !"", i32 0, i64 0, i64 32, i32 0, i32 0, metadata !8, metadata !20, i32 0, null, null, null} ; [ DW_TAG_array_type ] [line 0, size 0, align 32, offset 0] [from int]
 !20 = metadata !{metadata !21}
 !21 = metadata !{i32 786465, i64 0, i64 -1}       ; [ DW_TAG_subrange_type ] [unbounded]

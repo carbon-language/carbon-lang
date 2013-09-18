@@ -44,7 +44,8 @@ public:
         Offset == Other.Offset;
   }
 
-  // Accessors
+  // Accessors.
+  /// \return true iff this is a register-indirect location.
   bool isIndirect()      const { return !IsRegister; }
   bool isReg()           const { return IsRegister; }
   unsigned getReg()      const { return Register; }

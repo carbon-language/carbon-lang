@@ -10,7 +10,8 @@
 ; right now, so we check the asm output:
 ; RUN: llc -O0 -mtriple=x86_64-apple-darwin %s -o - -filetype=asm | FileCheck %s -check-prefix=ASM-CHECK
 ; vla should have a register-indirect address at one point.
-; ASM-CHECK: DEBUG_VALUE: vla <- [RCX+0]
+; ASM-CHECK: DEBUG_VALUE: vla <- RCX
+; ASM-CHECK: DW_OP_breg2
 
 define void @testVLAwithSize(i32 %s) nounwind uwtable ssp {
 entry:
@@ -77,7 +78,7 @@ declare void @llvm.stackrestore(i8*) nounwind
 !11 = metadata !{i32 1, i32 26, metadata !5, null}
 !12 = metadata !{i32 3, i32 13, metadata !13, null}
 !13 = metadata !{i32 786443, metadata !28, metadata !5, i32 2, i32 1, i32 0} ; [ DW_TAG_lexical_block ]
-!14 = metadata !{i32 786688, metadata !13, metadata !"vla", metadata !6, i32 3, metadata !15, i32 0, i32 0, i64 2} ; [ DW_TAG_auto_variable ]
+!14 = metadata !{i32 786688, metadata !13, metadata !"vla", metadata !6, i32 3, metadata !15, i32 8192, i32 0, i64 2} ; [ DW_TAG_auto_variable ]
 !15 = metadata !{i32 786433, null, null, metadata !"", i32 0, i64 0, i64 32, i32 0, i32 0, metadata !9, metadata !16, i32 0, null, null, null} ; [ DW_TAG_array_type ] [line 0, size 0, align 32, offset 0] [from int]
 !16 = metadata !{metadata !17}
 !17 = metadata !{i32 786465, i64 0, i64 -1}        ; [ DW_TAG_subrange_type ]
