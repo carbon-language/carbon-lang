@@ -71,7 +71,7 @@ extern "C" {
 
 DynamicLibrary DynamicLibrary::getPermanentLibrary(const char *filename,
                                                    std::string *errMsg) {
-  SmartScopedLock<true> lock(getMutex());
+  SmartScopedLock<true> lock(*SymbolsMutex);
 
   if (!filename) {
     // When no file is specified, enumerate all DLLs and EXEs in the process.
@@ -114,10 +114,10 @@ DynamicLibrary DynamicLibrary::getPermanentLibrary(const char *filename,
 #undef EXPLICIT_SYMBOL2
 
 void* DynamicLibrary::SearchForAddressOfSymbol(const char* symbolName) {
-  SmartScopedLock<true> Lock(getMutex());
+  SmartScopedLock<true> Lock(*SymbolsMutex);
 
   // First check symbols added via AddSymbol().
-  if (ExplicitSymbols) {
+  if (ExplicitSymbols.isConstructed()) {
     StringMap<void *>::iterator i = ExplicitSymbols->find(symbolName);
 
     if (i != ExplicitSymbols->end())

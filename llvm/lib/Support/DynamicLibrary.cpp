@@ -14,6 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/DynamicLibrary.h"
+#include "llvm/Support/ManagedStatic.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Config/config.h"
@@ -22,31 +23,12 @@
 #include <cstring>
 
 // Collection of symbol name/value pairs to be searched prior to any libraries.
-static llvm::StringMap<void *> *ExplicitSymbols = 0;
-
-namespace {
-
-struct ExplicitSymbolsDeleter {
-  ~ExplicitSymbolsDeleter() {
-    delete ExplicitSymbols;
-  }
-};
-
-}
-
-static ExplicitSymbolsDeleter Dummy;
-
-
-static llvm::sys::SmartMutex<true>& getMutex() {
-  static llvm::sys::SmartMutex<true> HandlesMutex;
-  return HandlesMutex;
-}
+static llvm::ManagedStatic<llvm::StringMap<void *> > ExplicitSymbols;
+static llvm::ManagedStatic<llvm::sys::SmartMutex<true> > SymbolsMutex;
 
 void llvm::sys::DynamicLibrary::AddSymbol(StringRef symbolName,
                                           void *symbolValue) {
-  SmartScopedLock<true> lock(getMutex());
-  if (ExplicitSymbols == 0)
-    ExplicitSymbols = new StringMap<void*>();
+  SmartScopedLock<true> lock(*SymbolsMutex);
   (*ExplicitSymbols)[symbolName] = symbolValue;
 }
 
@@ -72,7 +54,7 @@ static DenseSet<void *> *OpenedHandles = 0;
 
 DynamicLibrary DynamicLibrary::getPermanentLibrary(const char *filename,
                                                    std::string *errMsg) {
-  SmartScopedLock<true> lock(getMutex());
+  SmartScopedLock<true> lock(*SymbolsMutex);
 
   void *handle = dlopen(filename, RTLD_LAZY|RTLD_GLOBAL);
   if (handle == 0) {
@@ -126,10 +108,10 @@ void *SearchForAddressOfSpecialSymbol(const char* symbolName);
 }
 
 void* DynamicLibrary::SearchForAddressOfSymbol(const char *symbolName) {
-  SmartScopedLock<true> Lock(getMutex());
+  SmartScopedLock<true> Lock(*SymbolsMutex);
 
   // First check symbols added via AddSymbol().
-  if (ExplicitSymbols) {
+  if (ExplicitSymbols.isConstructed()) {
     StringMap<void *>::iterator i = ExplicitSymbols->find(symbolName);
 
     if (i != ExplicitSymbols->end())
