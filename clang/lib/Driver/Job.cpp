@@ -22,7 +22,7 @@ Job::~Job() {}
 
 Command::Command(const Action &_Source, const Tool &_Creator,
                  const char *_Executable,
-                 const llvm::opt::ArgStringList &_Arguments)
+                 const ArgStringList &_Arguments)
     : Job(CommandClass), Source(_Source), Creator(_Creator),
       Executable(_Executable), Arguments(_Arguments) {}
 
@@ -113,7 +113,7 @@ void Command::Print(raw_ostream &OS, const char *Terminator, bool Quote,
   OS << Terminator;
 }
 
-int Command::Execute(const llvm::StringRef **Redirects, std::string *ErrMsg,
+int Command::Execute(const StringRef **Redirects, std::string *ErrMsg,
                      bool *ExecutionFailed) const {
   SmallVector<const char*, 128> Argv;
   Argv.push_back(Executable);
