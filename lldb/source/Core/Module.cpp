@@ -499,10 +499,10 @@ Module::ResolveSymbolContextForAddress (const Address& so_addr, uint32_t resolve
         // symbol lookup for disassembly and unwind.
         if (resolve_scope & eSymbolContextSymbol && !(resolved_flags & eSymbolContextSymbol) &&
             resolve_scope & eSymbolContextFunction && !(resolved_flags & eSymbolContextFunction) &&
-            so_addr.GetOffset() > 0)
+            so_addr.IsSectionOffset())
         {
             Address previous_addr = so_addr;
-            previous_addr.SetOffset(so_addr.GetOffset() - 1);
+            previous_addr.Slide(-1);
 
             const uint32_t flags = sym_vendor->ResolveSymbolContext (previous_addr, resolve_scope, sc);
             if (flags & eSymbolContextSymbol)
