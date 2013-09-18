@@ -4927,38 +4927,42 @@ bool Sema::RequireCompleteExprType(Expr *E, TypeDiagnoser &Diagnoser){
     return false;
 
   // Incomplete array types may be completed by the initializer attached to
-  // their definitions. For static data members of class templates we need to
-  // instantiate the definition to get this initializer and complete the type.
+  // their definitions. For static data members of class templates and for
+  // variable templates, we need to instantiate the definition to get this
+  // initializer and complete the type.
   if (T->isIncompleteArrayType()) {
     if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E->IgnoreParens())) {
       if (VarDecl *Var = dyn_cast<VarDecl>(DRE->getDecl())) {
-        if (Var->isStaticDataMember() &&
-            Var->getInstantiatedFromStaticDataMember()) {
+        if (isTemplateInstantiation(Var->getTemplateSpecializationKind())) {
+          SourceLocation PointOfInstantiation = E->getExprLoc();
 
-          MemberSpecializationInfo *MSInfo = Var->getMemberSpecializationInfo();
-          assert(MSInfo && "Missing member specialization information?");
-          if (MSInfo->getTemplateSpecializationKind()
-                != TSK_ExplicitSpecialization) {
+          if (MemberSpecializationInfo *MSInfo =
+                  Var->getMemberSpecializationInfo()) {
             // If we don't already have a point of instantiation, this is it.
             if (MSInfo->getPointOfInstantiation().isInvalid()) {
-              MSInfo->setPointOfInstantiation(E->getLocStart());
+              MSInfo->setPointOfInstantiation(PointOfInstantiation);
 
               // This is a modification of an existing AST node. Notify
               // listeners.
               if (ASTMutationListener *L = getASTMutationListener())
                 L->StaticDataMemberInstantiated(Var);
             }
+          } else {
+            VarTemplateSpecializationDecl *VarSpec =
+                cast<VarTemplateSpecializationDecl>(Var);
+            if (VarSpec->getPointOfInstantiation().isInvalid())
+              VarSpec->setPointOfInstantiation(PointOfInstantiation);
+          }
 
-            InstantiateStaticDataMemberDefinition(E->getExprLoc(), Var);
+          InstantiateVariableDefinition(PointOfInstantiation, Var);
 
-            // Update the type to the newly instantiated definition's type both
-            // here and within the expression.
-            if (VarDecl *Def = Var->getDefinition()) {
-              DRE->setDecl(Def);
-              T = Def->getType();
-              DRE->setType(T);
-              E->setType(T);
-            }
+          // Update the type to the newly instantiated definition's type both
+          // here and within the expression.
+          if (VarDecl *Def = Var->getDefinition()) {
+            DRE->setDecl(Def);
+            T = Def->getType();
+            DRE->setType(T);
+            E->setType(T);
           }
 
           // We still go on to try to complete the type independently, as it

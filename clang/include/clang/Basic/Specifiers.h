@@ -131,8 +131,8 @@ namespace clang {
     OK_ObjCSubscript
   };
 
-  // \brief Describes the kind of template specialization that a
-  // particular template specialization declaration represents.
+  /// \brief Describes the kind of template specialization that a
+  /// particular template specialization declaration represents.
   enum TemplateSpecializationKind {
     /// This template specialization was formed from a template-id but
     /// has not yet been declared, defined, or instantiated.
@@ -153,6 +153,13 @@ namespace clang {
     /// (C++ [temp.explicit]).
     TSK_ExplicitInstantiationDefinition
   };
+
+  /// \brief Determine whether this template specialization kind refers
+  /// to an instantiation of an entity (as opposed to a non-template or
+  /// an explicit specialization).
+  inline bool isTemplateInstantiation(TemplateSpecializationKind Kind) {
+    return Kind != TSK_Undeclared && Kind != TSK_ExplicitSpecialization;
+  }
 
   /// \brief Thread storage-class-specifier.
   enum ThreadStorageClassSpecifier {

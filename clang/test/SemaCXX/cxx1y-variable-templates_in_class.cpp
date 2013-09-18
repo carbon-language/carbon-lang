@@ -4,6 +4,10 @@
 
 #define CONST const
 
+#ifdef PRECXX11
+#define static_assert(expr, msg) typedef int static_assert[(expr) ? 1 : -1];
+#endif
+
 class A {
   template<typename T> CONST T wrong;           // expected-error {{member 'wrong' declared as a template}}
   template<typename T> CONST T wrong_init = 5;      // expected-error {{member 'wrong_init' declared as a template}}
@@ -179,9 +183,7 @@ namespace in_class_template {
     template<typename U> static CONST U Data = U(100);
   };
   template CONST int D3<float>::Data<int>;
-#ifndef PRECXX11
   static_assert(D3<float>::Data<int> == 100, "");
-#endif
 
   namespace bug_files {
     // FIXME: A bug has been filed addressing an issue similar to these.
@@ -210,7 +212,7 @@ namespace in_class_template {
   }
   
   namespace other_bugs {
-    // FIXME: This fails to properly initilize the variable 'k'.
+    // FIXME: This fails to properly initialize the variable 'k'.
     
     template<typename A> struct S { 
       template<typename B> static int V;
@@ -220,6 +222,34 @@ namespace in_class_template {
     template<typename A> template<typename B> int S<A>::V0 = 123;
     template<typename A> template<typename B> int S<A>::V<B> = 123;
     int k = S<int>::V<void>;
+  }
+
+  namespace incomplete_array {
+    template<typename T> extern T var[];
+    template<typename T> T var[] = { 1, 2, 3 };
+    template<> char var<char>[] = "hello";
+    template<typename T> char var<T*>[] = "pointer";
+
+    static_assert(sizeof(var<int>) == 12, "");
+    static_assert(sizeof(var<char>) == 6, "");
+    static_assert(sizeof(var<void*>) == 8, "");
+
+    template<typename...> struct tuple;
+
+    template<typename T> struct A {
+      template<typename U> static T x[];
+      template<typename U> static T y[];
+
+      template<typename...U> static T y<tuple<U...> >[];
+    };
+
+    // FIXME: These cases should be accepted.
+    int *use_before_definition = A<int>::x<char>;
+    template<typename T> template<typename U> T A<T>::x<U>[sizeof(U)]; // expected-error {{forward declaration}}
+    static_assert(sizeof(A<int>::x<char>) == 1, ""); // expected-error {{incomplete}}
+
+    template<typename T> template<typename...U> T A<T>::y<tuple<U...> >[] = { U()... };
+    static_assert(sizeof(A<int>::y<tuple<char, char, char> >) == 12, ""); // expected-error {{incomplete}}
   }
 }
 
