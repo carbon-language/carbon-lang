@@ -836,27 +836,6 @@ public:
     setAddressOfEntryPoint(text, peHeader);
   }
 
-  uint64_t calcSectionSize(llvm::COFF::SectionCharacteristics sectionType) {
-    uint64_t ret = 0;
-    for (auto &cp : _chunks)
-      if (SectionChunk *chunk = dyn_cast<SectionChunk>(&*cp))
-        if (chunk->getSectionCharacteristics() & sectionType)
-          ret += chunk->size();
-    return ret;
-  }
-
-  uint64_t calcSizeOfInitializedData() {
-    return calcSectionSize(llvm::COFF::IMAGE_SCN_CNT_INITIALIZED_DATA);
-  }
-
-  uint64_t calcSizeOfUninitializedData() {
-    return calcSectionSize(llvm::COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA);
-  }
-
-  uint64_t calcSizeOfCode() {
-    return calcSectionSize(llvm::COFF::IMAGE_SCN_CNT_CODE);
-  }
-
   virtual error_code writeFile(const File &linkedFile, StringRef path) {
     this->build(linkedFile);
 
@@ -936,6 +915,27 @@ private:
       if (entryPointAddress != 0)
         peHeader->setAddressOfEntryPoint(entryPointAddress);
     }
+  }
+
+  uint64_t calcSectionSize(llvm::COFF::SectionCharacteristics sectionType) {
+    uint64_t ret = 0;
+    for (auto &cp : _chunks)
+      if (SectionChunk *chunk = dyn_cast<SectionChunk>(&*cp))
+        if (chunk->getSectionCharacteristics() & sectionType)
+          ret += chunk->size();
+    return ret;
+  }
+
+  uint64_t calcSizeOfInitializedData() {
+    return calcSectionSize(llvm::COFF::IMAGE_SCN_CNT_INITIALIZED_DATA);
+  }
+
+  uint64_t calcSizeOfUninitializedData() {
+    return calcSectionSize(llvm::COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA);
+  }
+
+  uint64_t calcSizeOfCode() {
+    return calcSectionSize(llvm::COFF::IMAGE_SCN_CNT_CODE);
   }
 
   std::vector<std::unique_ptr<Chunk>> _chunks;
