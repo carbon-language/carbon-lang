@@ -3696,22 +3696,30 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
                                     {
                                         Type *type = sc.function->GetType();
                                         
-                                        clang::DeclContext* decl_ctx = GetClangDeclContextContainingTypeUID (type->GetID());
-                                        if (decl_ctx->isRecord())
+                                        if (type)
                                         {
-                                            if (name_type_mask & eFunctionNameTypeBase)
+                                            clang::DeclContext* decl_ctx = GetClangDeclContextContainingTypeUID (type->GetID());
+                                            if (decl_ctx->isRecord())
                                             {
-                                                sc_list.RemoveContextAtIndex(sc_list.GetSize()-1);
-                                                keep_die = false;
+                                                if (name_type_mask & eFunctionNameTypeBase)
+                                                {
+                                                    sc_list.RemoveContextAtIndex(sc_list.GetSize()-1);
+                                                    keep_die = false;
+                                                }
+                                            }
+                                            else
+                                            {
+                                                if (name_type_mask & eFunctionNameTypeMethod)
+                                                {
+                                                    sc_list.RemoveContextAtIndex(sc_list.GetSize()-1);
+                                                    keep_die = false;
+                                                }
                                             }
                                         }
                                         else
                                         {
-                                            if (name_type_mask & eFunctionNameTypeMethod)
-                                            {
-                                                sc_list.RemoveContextAtIndex(sc_list.GetSize()-1);
-                                                keep_die = false;
-                                            }
+                                            GetObjectFile()->GetModule()->ReportWarning ("function at die offset 0x%8.8x had no function type",
+                                                                                         die_offset);
                                         }
                                     }
                                 }
