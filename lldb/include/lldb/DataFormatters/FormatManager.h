@@ -12,7 +12,6 @@
 
 // C Includes
 // C++ Includes
-#include <atomic>
 
 // Other libraries and framework includes
 // Project includes
@@ -23,6 +22,8 @@
 #include "lldb/DataFormatters/FormatNavigator.h"
 #include "lldb/DataFormatters/TypeCategory.h"
 #include "lldb/DataFormatters/TypeCategoryMap.h"
+
+#include "lldb/Host/Atomic.h"
 
 namespace lldb_private {
     
@@ -192,7 +193,7 @@ public:
     void
     Changed ()
     {
-        m_last_revision.fetch_add(1);
+        AtomicIncrement((cas_flag*)&m_last_revision);
         m_format_cache.Clear ();
     }
     
@@ -210,7 +211,7 @@ private:
     FormatCache m_format_cache;
     ValueNavigator m_value_nav;
     NamedSummariesMap m_named_summaries_map;
-    std::atomic<uint32_t> m_last_revision;
+    uint32_t m_last_revision;
     TypeCategoryMap m_categories_map;
     
     ConstString m_default_category_name;

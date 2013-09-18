@@ -12,7 +12,7 @@
 
 #include <algorithm>
 #include <memory>
-#include <atomic>
+#include "lldb/Host/Atomic.h"
 
 //#define ENABLE_SP_LOGGING 1 // DON'T CHECK THIS LINE IN UNLESS COMMENTED OUT
 #if defined (ENABLE_SP_LOGGING)
@@ -27,16 +27,16 @@ namespace imp {
     
 template <class T>
 inline T
-increment(std::atomic<T>& t)
+increment(T& t)
 {
-    return t.fetch_add(1);
+    return AtomicIncrement((cas_flag*)&t);
 }
 
 template <class T>
 inline T
-decrement(std::atomic<T>& t)
+decrement(T& t)
 {
-    return t.fetch_sub(1);
+    return AtomicDecrement((cas_flag*)&t);
 }
 
 class shared_count
@@ -45,7 +45,7 @@ class shared_count
     shared_count& operator=(const shared_count&);
 
 protected:
-    std::atomic<long> shared_owners_;
+    long shared_owners_;
     virtual ~shared_count();
 private:
     virtual void on_zero_shared() = 0;
@@ -580,7 +580,7 @@ public:
     }
     
 protected:
-    std::atomic<long> shared_owners_;
+    long shared_owners_;
    
     friend class IntrusiveSharingPtr<T>;
     
