@@ -214,3 +214,13 @@ public:
 }
 @end
 // CHECK: internal global [41 x i8] c"{dynamic_class=\22_vptr$dynamic_class\22^^?}\00"
+
+namespace PR17142 {
+  struct A { virtual ~A(); };
+  struct B : virtual A { int y; };
+  struct C { virtual ~C(); int z; };
+  struct D : C, B { int a; };
+  struct E : D {};
+  // CHECK: @_ZN7PR171421xE = constant [14 x i8] c"{E=^^?i^^?ii}\00"
+  extern const char x[] = @encode(E);
+}
