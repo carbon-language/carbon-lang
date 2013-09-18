@@ -2747,9 +2747,8 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
         DBuilder.insertDeclare(Storage, D, Builder.GetInsertBlock());
       Call->setDebugLoc(llvm::DebugLoc::get(Line, Column, Scope));
       return;
-    } else if (isa<VariableArrayType>(VD->getType())) {
+    } else if (isa<VariableArrayType>(VD->getType()))
       Flags |= llvm::DIDescriptor::FlagIndirectVariable;
-    }
   } else if (const RecordType *RT = dyn_cast<RecordType>(VD->getType())) {
     // If VD is an anonymous union then Storage represents value for
     // all union fields.
