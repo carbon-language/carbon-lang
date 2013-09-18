@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=x86 -mattr=+sse | FileCheck %s
 ; RUN: llc < %s -march=x86 -mattr=+avx | FileCheck %s
 ; RUN: llc < %s -march=x86 -mattr=+sse -mattr=+prfchw | FileCheck %s -check-prefix=PRFCHW
-; RUN: llc < %s -mcpu=slm | FileCheck %s -check-prefix=SLM
+; RUN: llc < %s -march=x86 -mcpu=slm | FileCheck %s -check-prefix=SLM
 
 ; rdar://10538297
 
