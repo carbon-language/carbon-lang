@@ -28,6 +28,11 @@ class Module;
 class PassManagerImpl;
 class FunctionPassManagerImpl;
 
+/// Called by tools to initialize globals and register options at a particular
+/// point (before command line parsing). If this is not called, then PassManager
+/// globals are lazily initialized at first use.
+void initializePassManager();
+
 /// PassManagerBase - An abstract interface to allow code to add passes to
 /// a pass manager without having to hard-code what kind of pass manager
 /// it is.

@@ -45,65 +45,94 @@ enum PassDebugLevel {
   Disabled, Arguments, Structure, Executions, Details
 };
 
-static cl::opt<enum PassDebugLevel>
-PassDebugging("debug-pass", cl::Hidden,
+bool TimePassesIsEnabled = false;
+
+/// Encapsulate PassManager debug options. These are convenient options that
+/// should be available to any LLVM-based tool. They exist purely as
+/// command-line debug options, therefore don't need to be local to an LLVM
+/// context or captured by a formal API. In all respects they are handled like
+/// global variables, but being defined in the LLVMCore library cannot have
+/// static initializers and must be destroyed only at llvm_shutdown.
+struct PassDebugOpts {
+  cl::opt<enum PassDebugLevel> PassDebugging;
+
+  typedef llvm::cl::list<const llvm::PassInfo *, bool, PassNameParser>
+  PassOptionList;
+
+  // Print IR out before/after specified passes.
+  PassOptionList PrintBefore;
+
+  PassOptionList PrintAfter;
+
+  cl::opt<bool> PrintBeforeAll;
+  cl::opt<bool> PrintAfterAll;
+
+  cl::opt<bool,true> EnableTiming;
+
+  PassDebugOpts():
+    PassDebugging("debug-pass", cl::Hidden,
                   cl::desc("Print PassManager debugging information"),
                   cl::values(
-  clEnumVal(Disabled  , "disable debug output"),
-  clEnumVal(Arguments , "print pass arguments to pass to 'opt'"),
-  clEnumVal(Structure , "print pass structure before run()"),
-  clEnumVal(Executions, "print pass name before it is executed"),
-  clEnumVal(Details   , "print pass details when it is executed"),
-                             clEnumValEnd));
+                    clEnumVal(Disabled , "disable debug output"),
+                    clEnumVal(Arguments,
+                              "print pass arguments to pass to 'opt'"),
+                    clEnumVal(Structure, "print pass structure before run()"),
+                    clEnumVal(Executions,
+                              "print pass name before it is executed"),
+                    clEnumVal(Details,
+                              "print pass details when it is executed"),
+                    clEnumValEnd)),
+    PrintBefore("print-before",
+                llvm::cl::desc("Print IR before specified passes"),
+                cl::Hidden),
+    PrintAfter("print-after",
+               llvm::cl::desc("Print IR after specified passes"),
+               cl::Hidden),
+    PrintBeforeAll("print-before-all",
+                   llvm::cl::desc("Print IR before each pass"),
+                   cl::init(false)),
+    PrintAfterAll("print-after-all",
+                  llvm::cl::desc("Print IR after each pass"),
+                  cl::init(false)),
+    EnableTiming("time-passes", cl::location(TimePassesIsEnabled),
+                 cl::desc(
+                   "Time each pass, printing elapsed time for each on exit"))
+  {}
 
-typedef llvm::cl::list<const llvm::PassInfo *, bool, PassNameParser>
-PassOptionList;
-
-// Print IR out before/after specified passes.
-static PassOptionList
-PrintBefore("print-before",
-            llvm::cl::desc("Print IR before specified passes"),
-            cl::Hidden);
-
-static PassOptionList
-PrintAfter("print-after",
-           llvm::cl::desc("Print IR after specified passes"),
-           cl::Hidden);
-
-static cl::opt<bool>
-PrintBeforeAll("print-before-all",
-               llvm::cl::desc("Print IR before each pass"),
-               cl::init(false));
-static cl::opt<bool>
-PrintAfterAll("print-after-all",
-              llvm::cl::desc("Print IR after each pass"),
-              cl::init(false));
-
-/// This is a helper to determine whether to print IR before or
-/// after a pass.
-
-static bool ShouldPrintBeforeOrAfterPass(const PassInfo *PI,
-                                         PassOptionList &PassesToPrint) {
-  for (unsigned i = 0, ie = PassesToPrint.size(); i < ie; ++i) {
-    const llvm::PassInfo *PassInf = PassesToPrint[i];
-    if (PassInf)
-      if (PassInf->getPassArgument() == PI->getPassArgument()) {
-        return true;
-      }
+  /// This is a helper to determine whether to print IR before or
+  /// after a pass.
+  bool ShouldPrintBeforeOrAfterPass(const PassInfo *PI,
+                                    PassOptionList &PassesToPrint) {
+    for (unsigned i = 0, ie = PassesToPrint.size(); i < ie; ++i) {
+      const llvm::PassInfo *PassInf = PassesToPrint[i];
+      if (PassInf)
+        if (PassInf->getPassArgument() == PI->getPassArgument()) {
+          return true;
+        }
+    }
+    return false;
   }
-  return false;
-}
 
-/// This is a utility to check whether a pass should have IR dumped
-/// before it.
-static bool ShouldPrintBeforePass(const PassInfo *PI) {
-  return PrintBeforeAll || ShouldPrintBeforeOrAfterPass(PI, PrintBefore);
-}
+  /// This is a utility to check whether a pass should have IR dumped
+  /// before it.
+  bool ShouldPrintBeforePass(const PassInfo *PI) {
+    return PrintBeforeAll || ShouldPrintBeforeOrAfterPass(PI, PrintBefore);
+  }
 
-/// This is a utility to check whether a pass should have IR dumped
-/// after it.
-static bool ShouldPrintAfterPass(const PassInfo *PI) {
-  return PrintAfterAll || ShouldPrintBeforeOrAfterPass(PI, PrintAfter);
+  /// This is a utility to check whether a pass should have IR dumped
+  /// after it.
+  bool ShouldPrintAfterPass(const PassInfo *PI) {
+    return PrintAfterAll || ShouldPrintBeforeOrAfterPass(PI, PrintAfter);
+  }
+};
+
+static ManagedStatic<PassDebugOpts> GlobalPassDebugOpts;
+
+/// This is called by tools to force registration of debugging options and
+/// ensure they appear in the tool's -help usage.
+void initializePassManager() {
+  // Force instantiation of PassDebugOpts.
+  *GlobalPassDebugOpts;
 }
 
 } // End of llvm namespace
@@ -111,11 +140,8 @@ static bool ShouldPrintAfterPass(const PassInfo *PI) {
 /// isPassDebuggingExecutionsOrMore - Return true if -debug-pass=Executions
 /// or higher is specified.
 bool PMDataManager::isPassDebuggingExecutionsOrMore() const {
-  return PassDebugging >= Executions;
+  return GlobalPassDebugOpts->PassDebugging >= Executions;
 }
-
-
-
 
 void PassManagerPrettyStackEntry::print(raw_ostream &OS) const {
   if (V == 0 && M == 0)
@@ -668,7 +694,8 @@ void PMTopLevelManager::schedulePass(Pass *P) {
     return;
   }
 
-  if (PI && !PI->isAnalysis() && ShouldPrintBeforePass(PI)) {
+  if (PI && !PI->isAnalysis() &&
+      GlobalPassDebugOpts->ShouldPrintBeforePass(PI)) {
     Pass *PP = P->createPrinterPass(
       dbgs(), std::string("*** IR Dump Before ") + P->getPassName() + " ***");
     PP->assignPassManager(activeStack, getTopLevelPassManagerType());
@@ -677,7 +704,8 @@ void PMTopLevelManager::schedulePass(Pass *P) {
   // Add the requested pass to the best available pass manager.
   P->assignPassManager(activeStack, getTopLevelPassManagerType());
 
-  if (PI && !PI->isAnalysis() && ShouldPrintAfterPass(PI)) {
+  if (PI && !PI->isAnalysis() &&
+      GlobalPassDebugOpts->ShouldPrintAfterPass(PI)) {
     Pass *PP = P->createPrinterPass(
       dbgs(), std::string("*** IR Dump After ") + P->getPassName() + " ***");
     PP->assignPassManager(activeStack, getTopLevelPassManagerType());
@@ -729,7 +757,7 @@ Pass *PMTopLevelManager::findAnalysisPass(AnalysisID AID) {
 // Print passes managed by this top level manager.
 void PMTopLevelManager::dumpPasses() const {
 
-  if (PassDebugging < Structure)
+  if (GlobalPassDebugOpts->PassDebugging < Structure)
     return;
 
   // Print out the immutable passes
@@ -748,7 +776,7 @@ void PMTopLevelManager::dumpPasses() const {
 
 void PMTopLevelManager::dumpArguments() const {
 
-  if (PassDebugging < Arguments)
+  if (GlobalPassDebugOpts->PassDebugging < Arguments)
     return;
 
   dbgs() << "Pass Arguments: ";
@@ -881,7 +909,7 @@ void PMDataManager::removeNotPreservedAnalysis(Pass *P) {
         std::find(PreservedSet.begin(), PreservedSet.end(), Info->first) ==
         PreservedSet.end()) {
       // Remove this analysis
-      if (PassDebugging >= Details) {
+      if (GlobalPassDebugOpts->PassDebugging >= Details) {
         Pass *S = Info->second;
         dbgs() << " -- '" <<  P->getPassName() << "' is not preserving '";
         dbgs() << S->getPassName() << "'\n";
@@ -905,7 +933,7 @@ void PMDataManager::removeNotPreservedAnalysis(Pass *P) {
           std::find(PreservedSet.begin(), PreservedSet.end(), Info->first) ==
              PreservedSet.end()) {
         // Remove this analysis
-        if (PassDebugging >= Details) {
+        if (GlobalPassDebugOpts->PassDebugging >= Details) {
           Pass *S = Info->second;
           dbgs() << " -- '" <<  P->getPassName() << "' is not preserving '";
           dbgs() << S->getPassName() << "'\n";
@@ -928,7 +956,7 @@ void PMDataManager::removeDeadPasses(Pass *P, StringRef Msg,
 
   TPM->collectLastUses(DeadPasses, P);
 
-  if (PassDebugging >= Details && !DeadPasses.empty()) {
+  if (GlobalPassDebugOpts->PassDebugging >= Details && !DeadPasses.empty()) {
     dbgs() << " -*- '" <<  P->getPassName();
     dbgs() << "' is the last user of following pass instances.";
     dbgs() << " Free these instances\n";
@@ -1146,7 +1174,7 @@ void PMDataManager::dumpPassArguments() const {
 void PMDataManager::dumpPassInfo(Pass *P, enum PassDebuggingString S1,
                                  enum PassDebuggingString S2,
                                  StringRef Msg) {
-  if (PassDebugging < Executions)
+  if (GlobalPassDebugOpts->PassDebugging < Executions)
     return;
   dbgs() << (void*)this << std::string(getDepth()*2+1, ' ');
   switch (S1) {
@@ -1187,7 +1215,7 @@ void PMDataManager::dumpPassInfo(Pass *P, enum PassDebuggingString S1,
 }
 
 void PMDataManager::dumpRequiredSet(const Pass *P) const {
-  if (PassDebugging < Details)
+  if (GlobalPassDebugOpts->PassDebugging < Details)
     return;
 
   AnalysisUsage analysisUsage;
@@ -1196,7 +1224,7 @@ void PMDataManager::dumpRequiredSet(const Pass *P) const {
 }
 
 void PMDataManager::dumpPreservedSet(const Pass *P) const {
-  if (PassDebugging < Details)
+  if (GlobalPassDebugOpts->PassDebugging < Details)
     return;
 
   AnalysisUsage analysisUsage;
@@ -1206,7 +1234,7 @@ void PMDataManager::dumpPreservedSet(const Pass *P) const {
 
 void PMDataManager::dumpAnalysisUsage(StringRef Msg, const Pass *P,
                                    const AnalysisUsage::VectorType &Set) const {
-  assert(PassDebugging >= Details);
+  assert(GlobalPassDebugOpts->PassDebugging >= Details);
   if (Set.empty())
     return;
   dbgs() << (const void*)P << std::string(getDepth()*2+3, ' ') << Msg << " Analyses:";
@@ -1740,11 +1768,6 @@ bool PassManager::run(Module &M) {
 
 //===----------------------------------------------------------------------===//
 // TimingInfo implementation
-
-bool llvm::TimePassesIsEnabled = false;
-static cl::opt<bool,true>
-EnableTiming("time-passes", cl::location(TimePassesIsEnabled),
-            cl::desc("Time each pass, printing elapsed time for each on exit"));
 
 // createTheTimeInfo - This method either initializes the TheTimeInfo pointer to
 // a non null value (if the -time-passes option is enabled) or it leaves it

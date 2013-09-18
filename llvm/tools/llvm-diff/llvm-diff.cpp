@@ -20,6 +20,7 @@
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IRReader/IRReader.h"
+#include "llvm/PassManager.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/SourceMgr.h"
@@ -67,6 +68,9 @@ static cl::list<std::string> GlobalsToCompare(cl::Positional,
                                               cl::desc("<globals to compare>"));
 
 int main(int argc, char **argv) {
+  // Initialize PassManager for -time-passes support.
+  initializePassManager();
+
   cl::ParseCommandLineOptions(argc, argv);
 
   LLVMContext Context;
