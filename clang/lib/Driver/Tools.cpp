@@ -3116,13 +3116,13 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                                  true))))
     CmdArgs.push_back("-fms-compatibility");
 
-  // -fmsc-version=1300 is default.
+  // -fmsc-version=1700 is default.
   if (Args.hasFlag(options::OPT_fms_extensions, options::OPT_fno_ms_extensions,
                    getToolChain().getTriple().getOS() == llvm::Triple::Win32) ||
       Args.hasArg(options::OPT_fmsc_version)) {
     StringRef msc_ver = Args.getLastArgValue(options::OPT_fmsc_version);
     if (msc_ver.empty())
-      CmdArgs.push_back("-fmsc-version=1300");
+      CmdArgs.push_back("-fmsc-version=1700");
     else
       CmdArgs.push_back(Args.MakeArgString("-fmsc-version=" + msc_ver));
   }
