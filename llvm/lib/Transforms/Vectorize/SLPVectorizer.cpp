@@ -51,7 +51,7 @@ static cl::opt<int>
                               "number "));
 namespace {
 
-static const unsigned MinVecRegSize = 256;
+static const unsigned MinVecRegSize = 128;
 
 static const unsigned RecursionMaxDepth = 12;
 
