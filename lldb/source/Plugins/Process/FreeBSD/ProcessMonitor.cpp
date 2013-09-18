@@ -704,23 +704,16 @@ ProcessMonitor::ProcessMonitor(ProcessPOSIX *process,
       m_operation_thread(LLDB_INVALID_HOST_THREAD),
       m_monitor_thread(LLDB_INVALID_HOST_THREAD),
       m_pid(LLDB_INVALID_PROCESS_ID),
-      m_server_mutex(Mutex::eMutexTypeRecursive),
       m_terminal_fd(-1),
-      m_client_fd(-1),
-      m_server_fd(-1)
+      m_operation(0)
 {
-    std::unique_ptr<LaunchArgs> args;
-
-    args.reset(new LaunchArgs(this, module, argv, envp,
-                              stdin_path, stdout_path, stderr_path, working_dir));
+    std::unique_ptr<LaunchArgs> args(new LaunchArgs(this, module, argv, envp,
+                                     stdin_path, stdout_path, stderr_path,
+                                     working_dir));
     
 
-    // Server/client descriptors.
-    if (!EnableIPC())
-    {
-        error.SetErrorToGenericError();
-        error.SetErrorString("Monitor failed to initialize.");
-    }
+    sem_init(&m_operation_pending, 0, 0);
+    sem_init(&m_operation_done, 0, 0);
 
     StartLaunchOpThread(args.get(), error);
     if (!error.Success())
@@ -765,21 +758,14 @@ ProcessMonitor::ProcessMonitor(ProcessPOSIX *process,
       m_operation_thread(LLDB_INVALID_HOST_THREAD),
       m_monitor_thread(LLDB_INVALID_HOST_THREAD),
       m_pid(pid),
-      m_server_mutex(Mutex::eMutexTypeRecursive),
       m_terminal_fd(-1),
-      m_client_fd(-1),
-      m_server_fd(-1)
+      m_operation(0)
 {
-    std::unique_ptr<AttachArgs> args;
+    sem_init(&m_operation_pending, 0, 0);
+    sem_init(&m_operation_done, 0, 0);
 
-    args.reset(new AttachArgs(this, pid));
 
-    // Server/client descriptors.
-    if (!EnableIPC())
-    {
-        error.SetErrorToGenericError();
-        error.SetErrorString("Monitor failed to initialize.");
-    }
+    std::unique_ptr<AttachArgs> args(new AttachArgs(this, pid));
 
     StartAttachOpThread(args.get(), error);
     if (!error.Success())
@@ -1002,19 +988,6 @@ ProcessMonitor::Launch(LaunchArgs *args)
 
 FINISH:
     return args->m_error.Success();
-}
-
-bool
-ProcessMonitor::EnableIPC()
-{
-    int fd[2];
-
-    if (socketpair(AF_UNIX, SOCK_STREAM, 0, fd))
-        return false;
-
-    m_client_fd = fd[0];
-    m_server_fd = fd[1];
-    return true;
 }
 
 void
@@ -1374,13 +1347,8 @@ void
 ProcessMonitor::ServeOperation(OperationArgs *args)
 {
     int status;
-    pollfd fdset;
 
     ProcessMonitor *monitor = args->m_monitor;
-
-    fdset.fd = monitor->m_server_fd;
-    fdset.events = POLLIN | POLLPRI;
-    fdset.revents = 0;
 
     // We are finised with the arguments and are ready to go.  Sync with the
     // parent thread and start serving operations on the inferior.
@@ -1388,64 +1356,28 @@ ProcessMonitor::ServeOperation(OperationArgs *args)
 
     for (;;)
     {
-        if ((status = poll(&fdset, 1, -1)) < 0)
-        {
-            switch (errno)
-            {
-            default:
-                assert(false && "Unexpected poll() failure!");
-                continue;
+        // wait for next pending operation
+        sem_wait(&monitor->m_operation_pending);
 
-            case EINTR: continue; // Just poll again.
-            case EBADF: return;   // Connection terminated.
-            }
-        }
+        monitor->m_operation->Execute(monitor);
 
-        assert(status == 1 && "Too many descriptors!");
-
-        if (fdset.revents & POLLIN)
-        {
-            Operation *op = NULL;
-
-        READ_AGAIN:
-            if ((status = read(fdset.fd, &op, sizeof(op))) < 0)
-            {
-                // There is only one acceptable failure.
-                assert(errno == EINTR);
-                goto READ_AGAIN;
-            }
-            if (status == 0)
-                continue; // Poll again. The connection probably terminated.
-            assert(status == sizeof(op));
-            op->Execute(monitor);
-            write(fdset.fd, &op, sizeof(op));
-        }
+        // notify calling thread that operation is complete
+        sem_post(&monitor->m_operation_done);
     }
 }
 
 void
 ProcessMonitor::DoOperation(Operation *op)
 {
-    int status;
-    Operation *ack = NULL;
-    Mutex::Locker lock(m_server_mutex);
+    Mutex::Locker lock(m_operation_mutex);
 
-    // FIXME: Do proper error checking here.
-    write(m_client_fd, &op, sizeof(op));
+    m_operation = op;
 
-READ_AGAIN:
-    if ((status = read(m_client_fd, &ack, sizeof(ack))) < 0)
-    {
-        // If interrupted by a signal handler try again.  Otherwise the monitor
-        // thread probably died and we have a stale file descriptor -- abort the
-        // operation.
-        if (errno == EINTR)
-            goto READ_AGAIN;
-        return;
-    }
+    // notify operation thread that an operation is ready to be processed
+    sem_post(&m_operation_pending);
 
-    assert(status == sizeof(ack));
-    assert(ack == op && "Invalid monitor thread response!");
+    // wait for operation to complete
+    sem_wait(&m_operation_done);
 }
 
 size_t
@@ -1629,8 +1561,9 @@ ProcessMonitor::StopMonitor()
 {
     StopMonitoringChildProcess();
     StopOpThread();
-    CloseFD(m_client_fd);
-    CloseFD(m_server_fd);
+    sem_destroy(&m_operation_pending);
+    sem_destroy(&m_operation_done);
+
     // Note: ProcessPOSIX passes the m_terminal_fd file descriptor to
     // Process::SetSTDIOFileDescriptor, which in turn transfers ownership of
     // the descriptor to a ConnectionFileDescriptor object.  Consequently
@@ -1671,14 +1604,4 @@ ProcessMonitor::StopOpThread()
     Host::ThreadCancel(m_operation_thread, NULL);
     Host::ThreadJoin(m_operation_thread, &result, NULL);
     m_operation_thread = LLDB_INVALID_HOST_THREAD;
-}
-
-void
-ProcessMonitor::CloseFD(int &fd)
-{
-    if (fd != -1)
-    {
-        close(fd);
-        fd = -1;
-    }
 }
