@@ -45,8 +45,10 @@ CPP.Flags +=   $(PYTHON_INC_DIR)
 endif
 
 ifeq ($(HOST_OS),Darwin)
-CPP.Flags += -F/System/Library/Frameworks -F/System/Library/PrivateFrameworks
-CPP.Flags += -I/usr/include/libxml2
+CPP.Flags += $(subst -I,-I$(SDKROOT),$(PYTHON_INC_DIR))
+CPP.Flags += -F$(SDKROOT)/System/Library/Frameworks
+CPP.Flags += -F$(SDKROOT)/System/Library/PrivateFrameworks
+CPP.Flags += -I$(SDKROOT)/usr/include/libxml2
 endif
 ifdef LLDB_VENDOR
 CPP.Flags += -DLLDB_VENDOR='"$(LLDB_VENDOR) "'
