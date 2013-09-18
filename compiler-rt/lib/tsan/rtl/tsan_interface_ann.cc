@@ -448,4 +448,7 @@ const char INTERFACE_ATTRIBUTE* ThreadSanitizerQuery(const char *query) {
   else
     return "0";
 }
+
+void INTERFACE_ATTRIBUTE
+AnnotateMemoryIsInitialized(char *f, int l, uptr mem, uptr sz) {}
 }  // extern "C"
