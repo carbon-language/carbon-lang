@@ -11361,6 +11361,12 @@ uint8x8_t test_vtst_p8(poly8x8_t a, poly8x8_t b) {
   return vtst_p8(a, b);
 }
 
+// CHECK: test_vtst_p16
+// CHECK: vtst.16 d{{[0-9]+}}, d{{[0-9]+}}, d{{[0-9]+}}
+uint16x4_t test_vtst_p16(poly16x4_t a, poly16x4_t b) {
+  return vtst_p16(a, b);
+}
+
 // CHECK: test_vtstq_s8
 // CHECK: vtst.8 q{{[0-9]+}}, q{{[0-9]+}}, q{{[0-9]+}}
 uint8x16_t test_vtstq_s8(int8x16_t a, int8x16_t b) {
@@ -11401,6 +11407,12 @@ uint32x4_t test_vtstq_u32(uint32x4_t a, uint32x4_t b) {
 // CHECK: vtst.8 q{{[0-9]+}}, q{{[0-9]+}}, q{{[0-9]+}}
 uint8x16_t test_vtstq_p8(poly8x16_t a, poly8x16_t b) {
   return vtstq_p8(a, b);
+}
+
+// CHECK: test_vtstq_p16
+// CHECK: vtst.16 q{{[0-9]+}}, q{{[0-9]+}}, q{{[0-9]+}}
+uint16x8_t test_vtstq_p16(poly16x8_t a, poly16x8_t b) {
+  return vtstq_p16(a, b);
 }
 
 

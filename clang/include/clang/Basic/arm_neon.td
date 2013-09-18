@@ -232,7 +232,7 @@ let InstName = "vacgt" in {
 def VCAGT : IInst<"vcagt", "udd", "fQf">;
 def VCALT : IInst<"vcalt", "udd", "fQf">;
 }
-def VTST  : WInst<"vtst", "udd", "csiUcUsUiPcQcQsQiQUcQUsQUiQPc">;
+def VTST  : WInst<"vtst", "udd", "csiUcUsUiPcPsQcQsQiQUcQUsQUiQPcQPs">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.5 Absolute Difference
@@ -539,7 +539,7 @@ def FCAGT : IInst<"vcagt", "udd", "fQfQd">;
 def FCALE : IInst<"vcale", "udd", "fQfQd">;
 def FCALT : IInst<"vcalt", "udd", "fQfQd">;
 // With additional Ql, QUl, Qd types.
-def CMTST  : WInst<"vtst", "udd", "csiUcUsUiPcQcQsQiQlQUcQUsQUiQUlQPc">;
+def CMTST  : WInst<"vtst", "udd", "csiUcUsUiPcPsQcQsQiQlQUcQUsQUiQUlQPcQPs">;
 def CFMEQ  : SOpInst<"vceq", "udd",
                   "csifUcUsUiPcQcQsQiQlQfQUcQUsQUiQUlQPcQd", OP_EQ>;
 def CFMGE  : SOpInst<"vcge", "udd", "csifUcUsUiQcQsQiQlQfQUcQUsQUiQUlQd", OP_GE>;

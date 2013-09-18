@@ -1095,10 +1095,22 @@ uint8x8_t test_vtst_p8(poly8x8_t v1, poly8x8_t v2) {
   // CHECK: cmtst {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
 }
 
+uint16x4_t test_vtst_p16(poly16x4_t v1, poly16x4_t v2) {
+   // CHECK: test_vtst_p16
+  return vtst_p16(v1, v2);
+  // CHECK: cmtst {{v[0-9]+}}.4h, {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
+}
+
 uint8x16_t test_vtstq_p8(poly8x16_t v1, poly8x16_t v2) {
    // CHECK: test_vtstq_p8
   return vtstq_p8(v1, v2);
   // CHECK: cmtst {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+}
+
+uint16x8_t test_vtstq_p16(poly16x8_t v1, poly16x8_t v2) {
+   // CHECK: test_vtstq_p16
+  return vtstq_p16(v1, v2);
+  // CHECK: cmtst {{v[0-9]+}}.8h, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
 }
 
 
