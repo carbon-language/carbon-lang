@@ -453,7 +453,7 @@ void X86Subtarget::resetSubtargetFeatures(StringRef CPU, StringRef FS) {
 
   // CPUName may have been set by the CPU detection code. Make sure the
   // new MCSchedModel is used.
-  InitMCProcessorInfo(CPUName, FS);
+  InitCPUSchedModel(CPUName);
 
   if (X86ProcFamily == IntelAtom || X86ProcFamily == IntelSLM)
     PostRAScheduler = true;
