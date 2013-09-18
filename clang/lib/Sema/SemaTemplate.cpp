@@ -7243,16 +7243,26 @@ DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
         return true;
       }
 
-      TemplateArgumentListInfo TemplateArgs;
-      if (D.getName().getKind() == UnqualifiedId::IK_TemplateId) {
-        // Translate the parser's template argument list into our AST format.
-        TemplateIdAnnotation *TemplateId = D.getName().TemplateId;
-        TemplateArgs.setLAngleLoc(TemplateId->LAngleLoc);
-        TemplateArgs.setRAngleLoc(TemplateId->RAngleLoc);
-        ASTTemplateArgsPtr TemplateArgsPtr(TemplateId->getTemplateArgs(),
-                                           TemplateId->NumArgs);
-        translateTemplateArguments(TemplateArgsPtr, TemplateArgs);
+      if (D.getName().getKind() != UnqualifiedId::IK_TemplateId) {
+        // C++1y [temp.explicit]p3:
+        //   If the explicit instantiation is for a variable, the unqualified-id
+        //   in the declaration shall be a template-id.
+        Diag(D.getIdentifierLoc(),
+             diag::err_explicit_instantiation_without_template_id)
+          << PrevTemplate;
+        Diag(PrevTemplate->getLocation(),
+             diag::note_explicit_instantiation_here);
+        return true;
       }
+
+      // Translate the parser's template argument list into our AST format.
+      TemplateArgumentListInfo TemplateArgs;
+      TemplateIdAnnotation *TemplateId = D.getName().TemplateId;
+      TemplateArgs.setLAngleLoc(TemplateId->LAngleLoc);
+      TemplateArgs.setRAngleLoc(TemplateId->RAngleLoc);
+      ASTTemplateArgsPtr TemplateArgsPtr(TemplateId->getTemplateArgs(),
+                                         TemplateId->NumArgs);
+      translateTemplateArguments(TemplateArgsPtr, TemplateArgs);
 
       DeclResult Res = CheckVarTemplateId(PrevTemplate, TemplateLoc,
                                           D.getIdentifierLoc(), TemplateArgs);
