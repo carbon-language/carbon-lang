@@ -32,15 +32,13 @@ void initializeXCoreTTIPass(PassRegistry &);
 namespace {
 
 class XCoreTTI : public ImmutablePass, public TargetTransformInfo {
-  const XCoreTargetMachine *TM;
-
 public:
-  XCoreTTI() : ImmutablePass(ID), TM(0) {
+  XCoreTTI() : ImmutablePass(ID) {
     llvm_unreachable("This pass cannot be directly constructed");
   }
 
   XCoreTTI(const XCoreTargetMachine *TM)
-      : ImmutablePass(ID), TM(TM) {
+      : ImmutablePass(ID) {
     initializeXCoreTTIPass(*PassRegistry::getPassRegistry());
   }
 
