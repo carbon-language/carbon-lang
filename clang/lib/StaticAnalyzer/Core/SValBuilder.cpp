@@ -405,6 +405,10 @@ SVal SValBuilder::evalCast(SVal val, QualType castTy, QualType originalTy) {
       return val;
     if (val.isConstant())
       return makeTruthVal(!val.isZeroConstant(), castTy);
+    if (!Loc::isLocType(originalTy) &&
+        !originalTy->isIntegralOrEnumerationType() &&
+        !originalTy->isMemberPointerType())
+      return UnknownVal();
     if (SymbolRef Sym = val.getAsSymbol(true)) {
       BasicValueFactory &BVF = getBasicValueFactory();
       // FIXME: If we had a state here, we could see if the symbol is known to
