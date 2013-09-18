@@ -4047,6 +4047,45 @@ def : ARMV6Pat<(or (and GPRnopc:$src1, 0xFFFF0000),
                (PKHTB GPRnopc:$src1, GPRnopc:$src2, imm1_15:$sh)>;
 
 //===----------------------------------------------------------------------===//
+// CRC Instructions
+//
+// Polynomials:
+// + CRC32{B,H,W}       0x04C11DB7
+// + CRC32C{B,H,W}      0x1EDC6F41
+//
+
+class AI_crc32<bit C, bits<2> sz, string suffix, SDPatternOperator builtin>
+  : AInoP<(outs GPRnopc:$Rd), (ins GPRnopc:$Rn, GPRnopc:$Rm), MiscFrm, NoItinerary,
+               !strconcat("crc32", suffix), "\t$Rd, $Rn, $Rm",
+               [(set GPRnopc:$Rd, (builtin GPRnopc:$Rn, GPRnopc:$Rm))]>,
+               Requires<[IsARM, HasV8]> {
+  bits<4> Rd;
+  bits<4> Rn;
+  bits<4> Rm;
+
+  let Inst{31-28} = 0b1110;
+  let Inst{27-23} = 0b00010;
+  let Inst{22-21} = sz;
+  let Inst{20}    = 0;
+  let Inst{19-16} = Rn;
+  let Inst{15-12} = Rd;
+  let Inst{11-10} = 0b00;
+  let Inst{9}     = C;
+  let Inst{8}     = 0;
+  let Inst{7-4}   = 0b0100;
+  let Inst{3-0}   = Rm;
+
+  let Unpredictable{11-8} = 0b1101;
+}
+
+def CRC32B  : AI_crc32<0, 0b00, "b", int_arm_crc32b>;
+def CRC32CB : AI_crc32<1, 0b00, "cb", int_arm_crc32cb>;
+def CRC32H  : AI_crc32<0, 0b01, "h", int_arm_crc32h>;
+def CRC32CH : AI_crc32<1, 0b01, "ch", int_arm_crc32ch>;
+def CRC32W  : AI_crc32<0, 0b10, "w", int_arm_crc32w>;
+def CRC32CW : AI_crc32<1, 0b10, "cw", int_arm_crc32cw>;
+
+//===----------------------------------------------------------------------===//
 //  Comparison Instructions...
 //
 

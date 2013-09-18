@@ -97,6 +97,22 @@ def int_arm_mcrr2 : GCCBuiltin<"__builtin_arm_mcrr2">,
                   llvm_i32_ty, llvm_i32_ty], []>;
 
 //===----------------------------------------------------------------------===//
+// CRC32
+
+def int_arm_crc32b  : Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty],
+    [IntrNoMem]>;
+def int_arm_crc32cb : Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty],
+    [IntrNoMem]>;
+def int_arm_crc32h  : Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty],
+    [IntrNoMem]>;
+def int_arm_crc32ch : Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty],
+    [IntrNoMem]>;
+def int_arm_crc32w  : Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty],
+    [IntrNoMem]>;
+def int_arm_crc32cw : Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty],
+    [IntrNoMem]>;
+
+//===----------------------------------------------------------------------===//
 // Advanced SIMD (NEON)
 
 // The following classes do not correspond directly to GCC builtins.

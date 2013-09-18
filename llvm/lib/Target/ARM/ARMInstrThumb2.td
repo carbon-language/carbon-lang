@@ -465,6 +465,18 @@ class T2ThreeReg<dag oops, dag iops, InstrItinClass itin,
   let Inst{3-0}   = Rm;
 }
 
+class T2ThreeRegNoP<dag oops, dag iops, InstrItinClass itin,
+           string asm, list<dag> pattern>
+  : T2XI<oops, iops, itin, asm, pattern> {
+  bits<4> Rd;
+  bits<4> Rn;
+  bits<4> Rm;
+
+  let Inst{11-8}  = Rd;
+  let Inst{19-16} = Rn;
+  let Inst{3-0}   = Rm;
+}
+
 class T2sThreeReg<dag oops, dag iops, InstrItinClass itin,
            string opc, string asm, list<dag> pattern>
   : T2sI<oops, iops, itin, opc, asm, pattern> {
@@ -3002,6 +3014,34 @@ def : T2Pat<(or (and rGPR:$src1, 0xFFFF0000),
                 (and (srl rGPR:$src2, imm1_15:$sh), 0xFFFF)),
             (t2PKHTB rGPR:$src1, rGPR:$src2, imm1_15:$sh)>,
             Requires<[HasT2ExtractPack, IsThumb2]>;
+
+//===----------------------------------------------------------------------===//
+// CRC32 Instructions
+//
+// Polynomials:
+// + CRC32{B,H,W}       0x04C11DB7
+// + CRC32C{B,H,W}      0x1EDC6F41
+//
+
+class T2I_crc32<bit C, bits<2> sz, string suffix, SDPatternOperator builtin>
+  : T2ThreeRegNoP<(outs rGPR:$Rd), (ins rGPR:$Rn, rGPR:$Rm), NoItinerary,
+               !strconcat("crc32", suffix, "\t$Rd, $Rn, $Rm"),
+               [(set rGPR:$Rd, (builtin rGPR:$Rn, rGPR:$Rm))]>,
+               Requires<[IsThumb2, HasV8]> {
+  let Inst{31-27} = 0b11111;
+  let Inst{26-21} = 0b010110;
+  let Inst{20}    = C;
+  let Inst{15-12} = 0b1111;
+  let Inst{7-6}   = 0b10;
+  let Inst{5-4}   = sz;
+}
+
+def t2CRC32B  : T2I_crc32<0, 0b00, "b", int_arm_crc32b>;
+def t2CRC32CB : T2I_crc32<1, 0b00, "cb", int_arm_crc32cb>;
+def t2CRC32H  : T2I_crc32<0, 0b01, "h", int_arm_crc32h>;
+def t2CRC32CH : T2I_crc32<1, 0b01, "ch", int_arm_crc32ch>;
+def t2CRC32W  : T2I_crc32<0, 0b10, "w", int_arm_crc32w>;
+def t2CRC32CW : T2I_crc32<1, 0b10, "cw", int_arm_crc32cw>;
 
 //===----------------------------------------------------------------------===//
 //  Comparison Instructions...
