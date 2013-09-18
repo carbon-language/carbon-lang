@@ -134,6 +134,8 @@ static FakeStack *GetFakeStack() {
 static FakeStack *GetFakeStackFast() {
   if (FakeStack *fs = GetTLSFakeStack())
     return fs;
+  if (!__asan_option_detect_stack_use_after_return)
+    return 0;
   return GetFakeStack();
 }
 

@@ -121,6 +121,10 @@ extern "C" {
   /* OPTIONAL */ void __asan_malloc_hook(void *ptr, uptr size);
   SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE
   /* OPTIONAL */ void __asan_free_hook(void *ptr);
+
+  // Global flag, copy of ASAN_OPTIONS=detect_stack_use_after_return
+  SANITIZER_INTERFACE_ATTRIBUTE
+  extern int __asan_option_detect_stack_use_after_return;
 }  // extern "C"
 
 #endif  // ASAN_INTERFACE_INTERNAL_H

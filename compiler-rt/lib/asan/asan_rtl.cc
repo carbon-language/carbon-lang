@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 #include "asan_allocator.h"
 #include "asan_interceptors.h"
+#include "asan_interface_internal.h"
 #include "asan_internal.h"
 #include "asan_mapping.h"
 #include "asan_poisoning.h"
@@ -25,6 +26,8 @@
 #include "sanitizer_common/sanitizer_libc.h"
 #include "sanitizer_common/sanitizer_symbolizer.h"
 #include "lsan/lsan_common.h"
+
+int __asan_option_detect_stack_use_after_return;  // Global interface symbol.
 
 namespace __asan {
 
@@ -101,7 +104,8 @@ static void ParseFlagsFromString(Flags *f, const char *str) {
   ParseFlag(str, &f->replace_str, "replace_str");
   ParseFlag(str, &f->replace_intrin, "replace_intrin");
   ParseFlag(str, &f->mac_ignore_invalid_free, "mac_ignore_invalid_free");
-  ParseFlag(str, &f->use_fake_stack, "use_fake_stack");
+  ParseFlag(str, &f->detect_stack_use_after_return,
+            "detect_stack_use_after_return");
   ParseFlag(str, &f->max_malloc_fill_size, "max_malloc_fill_size");
   ParseFlag(str, &f->malloc_fill_byte, "malloc_fill_byte");
   ParseFlag(str, &f->exitcode, "exitcode");
@@ -149,7 +153,7 @@ void InitializeFlags(Flags *f, const char *env) {
   f->replace_str = true;
   f->replace_intrin = true;
   f->mac_ignore_invalid_free = false;
-  f->use_fake_stack = true;
+  f->detect_stack_use_after_return = true;  // Also needs the compiler flag.
   f->max_malloc_fill_size = 0x1000;  // By default, fill only the first 4K.
   f->malloc_fill_byte = 0xbe;
   f->exitcode = ASAN_DEFAULT_FAILURE_EXITCODE;
@@ -455,6 +459,8 @@ void __asan_init() {
   const char *options = GetEnv("ASAN_OPTIONS");
   InitializeFlags(flags(), options);
   __sanitizer_set_report_path(common_flags()->log_path);
+  __asan_option_detect_stack_use_after_return =
+      flags()->detect_stack_use_after_return;
 
   if (flags()->verbosity && options) {
     Report("Parsed ASAN_OPTIONS: %s\n", options);

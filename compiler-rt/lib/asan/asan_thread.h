@@ -89,6 +89,8 @@ class AsanThread {
   }
 
   FakeStack *fake_stack() {
+    if (!__asan_option_detect_stack_use_after_return)
+      return 0;
     if (!has_fake_stack())
       return AsyncSignalSafeLazyInitFakeStack();
     return fake_stack_;

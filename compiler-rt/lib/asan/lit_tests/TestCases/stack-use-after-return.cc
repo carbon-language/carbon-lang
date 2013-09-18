@@ -6,6 +6,7 @@
 // RUN:   not %t 2>&1 | FileCheck %s
 // RUN: %clangxx_asan -fsanitize=use-after-return -O3 %s -o %t && \
 // RUN:   not %t 2>&1 | FileCheck %s
+// RUN: ASAN_OPTIONS=detect_stack_use_after_return=0 %t
 // Regression test for a CHECK failure with small stack size and large frame.
 // RUN: %clangxx_asan -fsanitize=use-after-return -O3 %s -o %t -DkSize=10000 && \
 // RUN: (ulimit -s 65;  not %t) 2>&1 | FileCheck %s
