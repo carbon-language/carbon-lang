@@ -4461,7 +4461,7 @@ public:
 /// AsTypeExpr - Clang builtin function __builtin_astype [OpenCL 6.2.4.2]
 /// This AST node provides support for reinterpreting a type to another
 /// type of the same size.
-class AsTypeExpr : public Expr { // Should this be an ExplicitCastExpr?
+class AsTypeExpr : public Expr {
 private:
   Stmt *SrcExpr;
   SourceLocation BuiltinLoc, RParenLoc;
