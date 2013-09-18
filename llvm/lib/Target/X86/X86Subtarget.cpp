@@ -440,8 +440,8 @@ void X86Subtarget::resetSubtargetFeatures(StringRef CPU, StringRef FS) {
 
     // Make sure 64-bit features are available in 64-bit mode.
     if (In64BitMode) {
-      HasX86_64 = true; ToggleFeature(X86::Feature64Bit);
-      HasCMov = true;   ToggleFeature(X86::FeatureCMOV);
+      if (!HasX86_64) { HasX86_64 = true; ToggleFeature(X86::Feature64Bit); }
+      if (!HasCMov)   { HasCMov   = true; ToggleFeature(X86::FeatureCMOV); }
 
       if (X86SSELevel < SSE2) {
         X86SSELevel = SSE2;
