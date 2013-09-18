@@ -665,6 +665,7 @@ public:
       : COFFLinkerInternalAtom(file, std::move(data)) {}
 
   virtual ContentType contentType() const { return typeData; }
+  virtual Alignment alignment() const { return Alignment(2); }
 };
 
 /// A BaseRelocChunk represents ".reloc" section.
@@ -736,8 +737,10 @@ private:
   // Create the content of a relocation block.
   DefinedAtom *createBaseRelocBlock(const File &file, uint64_t pageAddr,
                                     const std::vector<uint16_t> &offsets) {
-    uint32_t size = sizeof(ulittle32_t) * 2
-        + sizeof(ulittle16_t) * offsets.size();
+    // Relocation blocks should be padded with IMAGE_REL_I386_ABSOLUTE to be
+    // aligned to a DWORD size boundary.
+    uint32_t size = llvm::RoundUpToAlignment(sizeof(ulittle32_t) * 2
+        + sizeof(ulittle16_t) * offsets.size(), sizeof(ulittle32_t));
     std::vector<uint8_t> contents(size);
     uint8_t *ptr = &contents[0];
 
