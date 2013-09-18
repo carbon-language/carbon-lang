@@ -27,7 +27,10 @@ int **__attribute((mode(QI)))* i32;  // expected-error{{mode attribute}}
 typedef _Complex double c32 __attribute((mode(SC)));
 int c32_test[sizeof(c32) == 8 ? 1 : -1];
 typedef _Complex float c64 __attribute((mode(DC)));
+
+#ifndef TEST_64BIT_PPC64 // Note, 'XC' mode is illegal for PPC64 machines.
 typedef _Complex float c80 __attribute((mode(XC)));
+#endif
 
 // PR6108: Correctly select 'long' built in type on 64-bit platforms for 64 bit
 // modes. Also test other mode-based conversions.

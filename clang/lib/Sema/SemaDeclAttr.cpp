@@ -3460,77 +3460,24 @@ static void handleModeAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 
   // FIXME: Sync this with InitializePredefinedMacros; we need to match int8_t
   // and friends, at least with glibc.
-  // FIXME: Make sure 32/64-bit integers don't get defined to types of the wrong
-  // width on unusual platforms.
   // FIXME: Make sure floating-point mappings are accurate
   // FIXME: Support XF and TF types
-  QualType NewTy;
-  switch (DestWidth) {
-  case 0:
+  if (!DestWidth) {
     S.Diag(Attr.getLoc(), diag::err_unknown_machine_mode) << Name;
     return;
-  default:
+  }
+
+  QualType NewTy;
+
+  if (IntegerMode)
+    NewTy = S.Context.getIntTypeForBitwidth(DestWidth,
+                                            OldTy->isSignedIntegerType());
+  else
+    NewTy = S.Context.getRealTypeForBitwidth(DestWidth);
+
+  if (NewTy.isNull()) {
     S.Diag(Attr.getLoc(), diag::err_unsupported_machine_mode) << Name;
     return;
-  case 8:
-    if (!IntegerMode) {
-      S.Diag(Attr.getLoc(), diag::err_unsupported_machine_mode) << Name;
-      return;
-    }
-    if (OldTy->isSignedIntegerType())
-      NewTy = S.Context.SignedCharTy;
-    else
-      NewTy = S.Context.UnsignedCharTy;
-    break;
-  case 16:
-    if (!IntegerMode) {
-      S.Diag(Attr.getLoc(), diag::err_unsupported_machine_mode) << Name;
-      return;
-    }
-    if (OldTy->isSignedIntegerType())
-      NewTy = S.Context.ShortTy;
-    else
-      NewTy = S.Context.UnsignedShortTy;
-    break;
-  case 32:
-    if (!IntegerMode)
-      NewTy = S.Context.FloatTy;
-    else if (OldTy->isSignedIntegerType())
-      NewTy = S.Context.IntTy;
-    else
-      NewTy = S.Context.UnsignedIntTy;
-    break;
-  case 64:
-    if (!IntegerMode)
-      NewTy = S.Context.DoubleTy;
-    else if (OldTy->isSignedIntegerType())
-      if (S.Context.getTargetInfo().getLongWidth() == 64)
-        NewTy = S.Context.LongTy;
-      else
-        NewTy = S.Context.LongLongTy;
-    else
-      if (S.Context.getTargetInfo().getLongWidth() == 64)
-        NewTy = S.Context.UnsignedLongTy;
-      else
-        NewTy = S.Context.UnsignedLongLongTy;
-    break;
-  case 96:
-    NewTy = S.Context.LongDoubleTy;
-    break;
-  case 128:
-    if (!IntegerMode && &S.Context.getTargetInfo().getLongDoubleFormat() !=
-        &llvm::APFloat::PPCDoubleDouble) {
-      S.Diag(Attr.getLoc(), diag::err_unsupported_machine_mode) << Name;
-      return;
-    }
-    if (IntegerMode) {
-      if (OldTy->isSignedIntegerType())
-        NewTy = S.Context.Int128Ty;
-      else
-        NewTy = S.Context.UnsignedInt128Ty;
-    } else
-      NewTy = S.Context.LongDoubleTy;
-    break;
   }
 
   if (ComplexMode) {
