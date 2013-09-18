@@ -31,55 +31,6 @@ import sys
 binary = 'clang-format'
 
 
-def getOffsetLength(filename, line_number, line_count):
-  """
-  Calculates the field offset and length based on line number and count.
-  """
-  offset = 0
-  length = 0
-  with open(filename, 'r') as f:
-    for line in f:
-      if line_number > 1:
-        offset += len(line)
-        line_number -= 1
-      elif line_count > 0:
-        length += len(line)
-        line_count -= 1
-      else:
-        break
-  return offset, length
-
-
-def formatRange(r, style):
-  """
-  Formats range 'r' according to style 'style'.
-  """
-  filename, line_number, line_count = r
-  # FIXME: Add other types containing C++/ObjC code.
-  if not (filename.endswith(".cpp") or filename.endswith(".cc") or
-          filename.endswith(".h")):
-    return
-
-  offset, length = getOffsetLength(filename, line_number, line_count)
-  with open(filename, 'r') as f:
-    text = f.read()
-  command = [binary, '-offset', str(offset), '-length', str(length)]
-  if style:
-    command.extend(['-style', style])
-  p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                       stdin=subprocess.PIPE)
-  stdout, stderr = p.communicate(input=text)
-  if stderr:
-    print stderr
-    return
-  if not stdout:
-    print 'Segfault occurred while formatting', filename
-    print 'Please report a bug on llvm.org/bugs.'
-    return
-  with open(filename, 'w') as f:
-    f.write(stdout)
-
-
 def main():
   parser = argparse.ArgumentParser(description=
                                    'Reformat changed lines in diff.')
@@ -91,9 +42,9 @@ def main():
       'formatting style to apply (LLVM, Google, Chromium, Mozilla, WebKit)')
   args = parser.parse_args()
 
+  # Extract changed lines for each file.
   filename = None
-  ranges = []
-
+  lines_by_file = {}
   for line in sys.stdin:
     match = re.search('^\+\+\+\ (.*?/){%s}(\S*)' % args.p, line)
     if match:
@@ -101,17 +52,33 @@ def main():
     if filename == None:
       continue
 
+    # FIXME: Add other types containing C++/ObjC code.
+    if not (filename.endswith(".cpp") or filename.endswith(".cc") or
+            filename.endswith(".h")):
+      continue
+
     match = re.search('^@@.*\+(\d+)(,(\d+))?', line)
     if match:
-      line_count = 1
+      start_line = int(match.group(1))
+      end_line = start_line
       if match.group(3):
-        line_count = int(match.group(3))
-      ranges.append((filename, int(match.group(1)), line_count))
+        end_line = start_line + int(match.group(3))
+      lines_by_file.setdefault(filename, []).extend(
+          ['-lines', str(start_line) + ':' + str(end_line)])
 
-  # Reverse the ranges so that the reformatting does not influence file offsets.
-  for r in reversed(ranges):
-    # Do the actual formatting.
-    formatRange(r, args.style)
+  # Reformat files containing changes in place.
+  for filename, lines in lines_by_file.iteritems():
+    command = [binary, '-i', filename]
+    command.extend(lines)
+    if args.style:
+      command.extend(['-style', style])
+    p = subprocess.Popen(command, stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE,
+                         stdin=subprocess.PIPE)
+    stdout, stderr = p.communicate()
+    if stderr:
+      print stderr
+      return
 
 
 if __name__ == '__main__':
