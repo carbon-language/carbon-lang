@@ -88,6 +88,9 @@ static const char *const kAsanPoisonStackMemoryName =
 static const char *const kAsanUnpoisonStackMemoryName =
     "__asan_unpoison_stack_memory";
 
+static const char *const kAsanOptionDetectUAR =
+    "__asan_option_detect_stack_use_after_return";
+
 // These constants must match the definitions in the run-time library.
 static const int kAsanStackLeftRedzoneMagic = 0xf1;
 static const int kAsanStackMidRedzoneMagic = 0xf2;
@@ -1409,10 +1412,28 @@ void FunctionStackPoisoner::poisonStack() {
   Value *LocalStackBase = OrigStackBase;
 
   if (DoStackMalloc) {
+    // LocalStackBase = OrigStackBase
+    // if (__asan_option_detect_stack_use_after_return)
+    //   LocalStackBase = __asan_stack_malloc_N(LocalStackBase, OrigStackBase);
     StackMallocIdx = StackMallocSizeClass(LocalStackSize);
     assert(StackMallocIdx <= kMaxAsanStackMallocSizeClass);
-    LocalStackBase = IRB.CreateCall2(AsanStackMallocFunc[StackMallocIdx],
+    Constant *OptionDetectUAR = F.getParent()->getOrInsertGlobal(
+        kAsanOptionDetectUAR, IRB.getInt32Ty());
+    Value *Cmp = IRB.CreateICmpNE(IRB.CreateLoad(OptionDetectUAR),
+                                  Constant::getNullValue(IRB.getInt32Ty()));
+    Instruction *Term =
+        SplitBlockAndInsertIfThen(cast<Instruction>(Cmp), false);
+    BasicBlock *CmpBlock = cast<Instruction>(Cmp)->getParent();
+    IRBuilder<> IRBIf(Term);
+    LocalStackBase = IRBIf.CreateCall2(
+        AsanStackMallocFunc[StackMallocIdx],
         ConstantInt::get(IntptrTy, LocalStackSize), OrigStackBase);
+    BasicBlock *SetBlock = cast<Instruction>(LocalStackBase)->getParent();
+    IRB.SetInsertPoint(InsBefore);
+    PHINode *Phi = IRB.CreatePHI(IntptrTy, 2);
+    Phi->addIncoming(OrigStackBase, CmpBlock);
+    Phi->addIncoming(LocalStackBase, SetBlock);
+    LocalStackBase = Phi;
   }
 
   // This string will be parsed by the run-time (DescribeAddressIfStack).
