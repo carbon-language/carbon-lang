@@ -909,6 +909,11 @@ struct LoopVectorize : public LoopPass {
     DT = &getAnalysis<DominatorTree>();
     TLI = getAnalysisIfAvailable<TargetLibraryInfo>();
 
+    // If the target claims to have no vector registers don't attempt
+    // vectorization.
+    if (!TTI->getNumberOfRegisters(true))
+      return false;
+
     if (DL == NULL) {
       DEBUG(dbgs() << "LV: Not vectorizing because of missing data layout");
       return false;

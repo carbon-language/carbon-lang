@@ -1572,6 +1572,11 @@ struct SLPVectorizer : public FunctionPass {
     StoreRefs.clear();
     bool Changed = false;
 
+    // If the target claims to have no vector registers don't attempt
+    // vectorization.
+    if (!TTI->getNumberOfRegisters(true))
+      return false;
+
     // Must have DataLayout. We can't require it because some tests run w/o
     // triple.
     if (!DL)

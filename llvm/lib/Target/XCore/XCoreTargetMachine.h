@@ -57,6 +57,8 @@ public:
 
   // Pass Pipeline Configuration
   virtual TargetPassConfig *createPassConfig(PassManagerBase &PM);
+
+  virtual void addAnalysisPasses(PassManagerBase &PM);
 };
 
 } // end namespace llvm

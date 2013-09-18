@@ -31,6 +31,8 @@ namespace llvm {
                                    CodeGenOpt::Level OptLevel);
   ModulePass *createXCoreLowerThreadLocalPass();
 
+  ImmutablePass *createXCoreTargetTransformInfoPass(const XCoreTargetMachine *TM);
+
 } // end namespace llvm;
 
 #endif
