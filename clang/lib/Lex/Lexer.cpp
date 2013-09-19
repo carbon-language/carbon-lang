@@ -2823,9 +2823,12 @@ bool Lexer::Lex(Token &Result) {
 
   bool atPhysicalStartOfLine = IsAtPhysicalStartOfLine;
   IsAtPhysicalStartOfLine = false;
-  bool result = LexTokenInternal(Result, atPhysicalStartOfLine);
-  assert((result || !isLexingRawMode()) && "Raw lex must succeed");
-  return result;
+  bool isRawLex = isLexingRawMode();
+  (void) isRawLex;
+  bool returnedToken = LexTokenInternal(Result, atPhysicalStartOfLine);
+  // (After the LexTokenInternal call, the lexer might be destroyed.)
+  assert((returnedToken || !isRawLex) && "Raw lex must succeed");
+  return returnedToken;
 }
 
 /// LexTokenInternal - This implements a simple C family lexer.  It is an
