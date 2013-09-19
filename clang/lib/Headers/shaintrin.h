@@ -21,7 +21,7 @@
  *===-----------------------------------------------------------------------===
  */
 
-#ifndef __X86INTRIN_H
+#ifndef __IMMINTRIN_H
 #error "Never use <shaintrin.h> directly; include <immintrin.h> instead."
 #endif
 

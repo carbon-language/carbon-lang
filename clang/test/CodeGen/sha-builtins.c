@@ -3,7 +3,7 @@
 // Don't include mm_malloc.h, it's system specific.
 #define __MM_MALLOC_H
 
-#include <x86intrin.h>
+#include <immintrin.h>
 
 __m128i test_sha1rnds4(__m128i a, __m128i b) {
   // CHECK: call <4 x i32> @llvm.x86.sha1rnds4
