@@ -148,3 +148,21 @@ define <8 x i32> @mul_const9(<8 x i32> %x) {
   %y = mul <8 x i32> %x, <i32 2, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0>
   ret <8 x i32> %y
 }
+
+; CHECK: mul_const10
+; CHECK: vpmulld
+; CHECK: ret
+define <4 x i32> @mul_const10(<4 x i32> %x) {
+  ; %x * 0x01010101
+  %m = mul <4 x i32> %x, <i32 16843009, i32 16843009, i32 16843009, i32 16843009>
+  ret <4 x i32> %m
+}
+
+; CHECK: mul_const11
+; CHECK: vpmulld
+; CHECK: ret
+define <4 x i32> @mul_const11(<4 x i32> %x) {
+  ; %x * 0x80808080
+  %m = mul <4 x i32> %x, <i32 2155905152, i32 2155905152, i32 2155905152, i32 2155905152>
+  ret <4 x i32> %m
+}
