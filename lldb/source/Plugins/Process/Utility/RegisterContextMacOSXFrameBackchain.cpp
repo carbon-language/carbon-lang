@@ -147,9 +147,9 @@ RegisterContextMacOSXFrameBackchain::ReadRegister (const RegisterInfo *reg_info,
             }
             break;
 
-            // TOOD: need a better way to detect when "long double" types are 
+            // TOOD: need a better way to detect when "long double" types are
             // the same bytes size as "double"
-#if !defined(__arm__) && !defined(_MSC_VER)
+#if !defined(__arm__) && !defined(_MSC_VER) && !defined(__mips__)
         case sizeof (long double):
             if (sizeof (long double) == sizeof(uint32_t))
             {

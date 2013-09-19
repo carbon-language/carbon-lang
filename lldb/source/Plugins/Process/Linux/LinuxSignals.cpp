@@ -45,7 +45,9 @@ LinuxSignals::Reset()
     ADDSIGNAL(PIPE,   false,  true,  true, "write to pipe with reading end closed");
     ADDSIGNAL(ALRM,   false,  false, true, "alarm");
     ADDSIGNAL(TERM,   false,  true,  true, "termination requested");
+#ifdef SIGSTKFLT
     ADDSIGNAL(STKFLT, false,  true,  true, "stack fault");
+#endif
     ADDSIGNAL(CHLD,   false,  false, true, "child process exit");
     ADDSIGNAL(CONT,   false,  true,  true, "process continue");
     ADDSIGNAL(STOP,   false,  true,  true, "process stop");
