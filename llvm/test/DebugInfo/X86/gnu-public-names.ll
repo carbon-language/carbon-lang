@@ -33,18 +33,18 @@
 ; }
 
 
-; CHECK: .byte   32                      # Index value
+; CHECK: .byte   32                      # Kind: VARIABLE, EXTERNAL
 ; CHECK-NEXT: .asciz   "global_namespace_variable" # External Name
-; CHECK: .byte   48                      # Index value
-; CHECK: .asciz   "global_namespace_function" # External Name
-; CHECK: .byte   176                     # Index value
-; CHECK: .asciz   "static_member_function" # External Name
-; CHECK: .byte   32                      # Index value
-; CHECK: .asciz   "global_variable"      # External Name
-; CHECK: .byte   48                      # Index value
-; CHECK: .asciz   "global_function"      # External Name
-; CHECK: .byte   176                     # Index value
-; CHECK: .asciz   "member_function"      # External Name
+; CHECK: .byte   48                      # Kind: FUNCTION, EXTERNAL
+; CHECK-NEXT: .asciz   "global_namespace_function" # External Name
+; CHECK: .byte   176                     # Kind: FUNCTION, STATIC
+; CHECK-NEXT: .asciz   "static_member_function" # External Name
+; CHECK: .byte   32                      # Kind: VARIABLE, EXTERNAL
+; CHECK-NEXT: .asciz   "global_variable"      # External Name
+; CHECK: .byte   48                      # Kind: FUNCTION, EXTERNAL
+; CHECK-NEXT: .asciz   "global_function"      # External Name
+; CHECK: .byte   176                     # Kind: FUNCTION, STATIC
+; CHECK-NEXT: .asciz   "member_function"      # External Name
 
 %struct.C = type { i8 }
 
