@@ -571,7 +571,7 @@ def ObjCPreciseLifetime : InheritableAttr {
 
 def ObjCReturnsInnerPointer : InheritableAttr {
   let Spellings = [GNU<"objc_returns_inner_pointer">];
-  let Subjects = [ObjCMethod];
+  let Subjects = [ObjCMethod, ObjCProperty];
 }
 
 def ObjCRequiresSuper : InheritableAttr {

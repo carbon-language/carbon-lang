@@ -4145,6 +4145,11 @@ static void handleNSReturnsRetainedAttr(Sema &S, Decl *D,
 
 static void handleObjCReturnsInnerPointerAttr(Sema &S, Decl *D,
                                               const AttributeList &attr) {
+  enum {
+    EP_ObjCMethod = 1,
+    EP_ObjCProperty
+  };
+  
   SourceLocation loc = attr.getLoc();
   QualType resultType;
   
@@ -4167,7 +4172,8 @@ static void handleObjCReturnsInnerPointerAttr(Sema &S, Decl *D,
       (!resultType->isPointerType() || resultType->isObjCRetainableType())) {
     S.Diag(D->getLocStart(), diag::warn_ns_attribute_wrong_return_type)
       << SourceRange(loc)
-    << attr.getName() << (method ? /*method*/ 1 : /*property*/ 2) << /*non-retainable pointer*/ 2;
+    << attr.getName() << (method ? EP_ObjCMethod : EP_ObjCProperty)
+    << /*non-retainable pointer*/ 2;
 
     // Drop the attribute.
     return;

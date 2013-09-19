@@ -174,6 +174,8 @@ void foo(Baz *f) {
 {
   const void * innerPointerIvar __attribute__((objc_returns_inner_pointer)); // expected-error {{'objc_returns_inner_pointer' attribute only applies to methods and properties}}
 }
+@property (readonly) Boom * NotInnerPointer __attribute__((objc_returns_inner_pointer)); // expected-warning {{'objc_returns_inner_pointer' attribute only applies to properties that return a non-retainable pointer}}
+- (Boom *) NotInnerPointerMethod __attribute__((objc_returns_inner_pointer)); // expected-warning {{'objc_returns_inner_pointer' attribute only applies to methods that return a non-retainable pointer}}
 @property (readonly) const void * innerPointer __attribute__((objc_returns_inner_pointer));
 @end
 
