@@ -7,4 +7,11 @@
     <ExecutablePath>$(LLVMInstallDir)\msbuild-bin;$(ExecutablePath)</ExecutablePath>
     <LibraryPath>$(LLVMInstallDir)\lib\clang\3.4\lib\windows;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
+
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <!-- Set the value of _MSC_VER to claim for compatibility -->
+      <AdditionalOptions>-fmsc-version=@MSC_VERSION@ %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+  </ItemDefinitionGroup>
 </Project>
