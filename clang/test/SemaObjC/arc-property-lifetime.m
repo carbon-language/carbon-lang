@@ -171,7 +171,10 @@ void foo(Baz *f) {
 
 // rdar://11253688
 @interface Boom 
-@property (readonly) const void * innerPointer __attribute__((objc_returns_inner_pointer)); // expected-error {{'objc_returns_inner_pointer' attribute only applies to methods}}
+{
+  const void * innerPointerIvar __attribute__((objc_returns_inner_pointer)); // expected-error {{'objc_returns_inner_pointer' attribute only applies to methods and properties}}
+}
+@property (readonly) const void * innerPointer __attribute__((objc_returns_inner_pointer));
 @end
 
 @interface Foo2 {

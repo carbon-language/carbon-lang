@@ -25,7 +25,8 @@ void test0() {
 // rdar://problem/9821110
 @interface Test1
 - (char*) interior __attribute__((objc_returns_inner_pointer));
-// Should we allow this on properties?
+// Should we allow this on properties? Yes! see // rdar://14990439
+@property (nonatomic, readonly) char * PropertyReturnsInnerPointer __attribute__((objc_returns_inner_pointer));
 @end
 extern Test1 *test1_helper(void);
 
@@ -71,6 +72,50 @@ void test1b(void) {
   // CHECK-NEXT: ret void
   __attribute__((objc_precise_lifetime)) Test1 *ptr = test1_helper();
   char *c = [ptr interior];
+}
+
+void test1c(void) {
+  // CHECK:      [[T0:%.*]] = call [[TEST1:%.*]]* @test1_helper()
+  // CHECK-NEXT: [[T1:%.*]] = bitcast [[TEST1]]* [[T0]] to i8*
+  // CHECK-NEXT: [[T2:%.*]] = call i8* @objc_retainAutoreleasedReturnValue(i8* [[T1]])
+  // CHECK-NEXT: [[T3:%.*]] = bitcast i8* [[T2]] to [[TEST1]]*
+  // CHECK-NEXT: store [[TEST1]]* [[T3]]
+  // CHECK-NEXT: [[T0:%.*]] = load [[TEST1]]**
+  // CHECK-NEXT: [[T1:%.*]] = bitcast [[TEST1]]* [[T0]] to i8*
+  // CHECK-NEXT: [[T2:%.*]] = call i8* @objc_retainAutorelease(i8* [[T1]])
+  // CHECK-NEXT: [[T3:%.*]] = bitcast i8* [[T2]] to [[TEST1]]*
+  // CHECK-NEXT: [[T4:%.*]] = load i8** @"\01L_OBJC_SELECTOR_REFERENCES_
+  // CHECK-NEXT: [[T5:%.*]] = bitcast [[TEST1]]* [[T3]] to i8*
+  // CHECK-NEXT: [[T6:%.*]] = call i8* bitcast
+  // CHECK-NEXT: store i8* [[T6]], i8**
+  // CHECK-NEXT: [[T0:%.*]] = load [[TEST1]]**
+  // CHECK-NEXT: [[T1:%.*]] = bitcast [[TEST1]]* [[T0]] to i8*
+  // CHECK-NEXT: call void @objc_release(i8* [[T1]]) [[NUW]], !clang.imprecise_release
+  // CHECK-NEXT: ret void
+  Test1 *ptr = test1_helper();
+  char *pc = ptr.PropertyReturnsInnerPointer;
+}
+
+void test1d(void) {
+  // CHECK:      [[T0:%.*]] = call [[TEST1:%.*]]* @test1_helper()
+  // CHECK-NEXT: [[T1:%.*]] = bitcast [[TEST1]]* [[T0]] to i8*
+  // CHECK-NEXT: [[T2:%.*]] = call i8* @objc_retainAutoreleasedReturnValue(i8* [[T1]])
+  // CHECK-NEXT: [[T3:%.*]] = bitcast i8* [[T2]] to [[TEST1]]*
+  // CHECK-NEXT: store [[TEST1]]* [[T3]]
+  // CHECK-NEXT: [[T0:%.*]] = load [[TEST1]]**
+  // CHECK-NEXT: [[T2:%.*]] = bitcast [[TEST1]]* [[T0]] to i8*
+  // CHECK-NEXT: [[T3:%.*]] = call i8* @objc_retainAutorelease
+  // CHECK-NEXT: [[SIX:%.*]] = bitcast i8* [[T3]] to [[TEST1]]*
+  // CHECK-NEXT: [[SEVEN:%.*]] = load i8** @"\01L_OBJC_SELECTOR_REFERENCES_
+  // CHECK-NEXT: [[EIGHT:%.*]] = bitcast [[TEST1]]* [[SIX]] to i8*
+  // CHECK-NEXT: [[CALL1:%.*]] = call i8* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i8* (i8*, i8*)*)(i8* [[EIGHT]], i8* [[SEVEN]])
+  // CHECK-NEXT: store i8* [[CALL1]], i8**
+  // CHECK-NEXT: [[NINE:%.*]] = load [[TEST1]]** 
+  // CHECK-NEXT: [[TEN:%.*]] = bitcast [[TEST1]]* [[NINE]] to i8*
+  // CHECK-NEXT: call void @objc_release(i8* [[TEN]])
+  // CHECK-NEXT: ret void
+  __attribute__((objc_precise_lifetime)) Test1 *ptr = test1_helper();
+  char *pc = ptr.PropertyReturnsInnerPointer;
 }
 
 @interface Test2 {

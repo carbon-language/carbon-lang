@@ -1943,6 +1943,10 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
     if (property->hasAttr<NSReturnsNotRetainedAttr>())
       GetterMethod->addAttr(
         ::new (Context) NSReturnsNotRetainedAttr(Loc, Context));
+    
+    if (property->hasAttr<ObjCReturnsInnerPointerAttr>())
+      GetterMethod->addAttr(
+        ::new (Context) ObjCReturnsInnerPointerAttr(Loc, Context));
 
     if (getLangOpts().ObjCAutoRefCount)
       CheckARCMethodDecl(GetterMethod);
