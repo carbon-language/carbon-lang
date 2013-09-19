@@ -2323,21 +2323,9 @@ void DwarfDebug::emitAccelTypes() {
 
 /// computeIndexValue - Compute the gdb index value for the DIE and CU.
 static uint8_t computeIndexValue(CompileUnit *CU, DIE *Die) {
-#define UPDATE_VALUE(CURRENT, VALUE)                                           \
-  {                                                                            \
-    (CURRENT) |= (((VALUE) & dwarf::GDB_INDEX_SYMBOL_KIND_MASK)                \
-                  << dwarf::GDB_INDEX_SYMBOL_KIND_SHIFT);                      \
-  }
-
-#define UPDATE_STATIC(CURRENT, IS_STATIC)                                      \
-  {                                                                            \
-    (CURRENT) |= (((IS_STATIC) & dwarf::GDB_INDEX_SYMBOL_STATIC_MASK)          \
-                  << dwarf::GDB_INDEX_SYMBOL_STATIC_SHIFT);                    \
-  }
-
-  // Compute the Attributes for the Die.
-  uint32_t Value = dwarf::GDB_INDEX_SYMBOL_KIND_NONE;
-  bool External = Die->findAttribute(dwarf::DW_AT_external);
+  uint8_t IsStatic = Die->findAttribute(dwarf::DW_AT_external)
+                       ? dwarf::GDB_INDEX_SYMBOL_NON_STATIC
+                       : dwarf::GDB_INDEX_SYMBOL_STATIC;
 
   switch (Die->getTag()) {
   case dwarf::DW_TAG_class_type:
@@ -2347,33 +2335,20 @@ static uint8_t computeIndexValue(CompileUnit *CU, DIE *Die) {
   case dwarf::DW_TAG_typedef:
   case dwarf::DW_TAG_base_type:
   case dwarf::DW_TAG_subrange_type:
-    UPDATE_VALUE(Value, dwarf::GDB_INDEX_SYMBOL_KIND_TYPE);
-    UPDATE_STATIC(Value, 1);
-    break;
+    return dwarf::GDB_INDEX_SYMBOL_KIND_TYPE | dwarf::GDB_INDEX_SYMBOL_STATIC;
   case dwarf::DW_TAG_namespace:
-    UPDATE_VALUE(Value, dwarf::GDB_INDEX_SYMBOL_KIND_TYPE);
-    break;
+    return dwarf::GDB_INDEX_SYMBOL_KIND_TYPE;
   case dwarf::DW_TAG_subprogram:
-    UPDATE_VALUE(Value, dwarf::GDB_INDEX_SYMBOL_KIND_FUNCTION);
-    UPDATE_STATIC(Value, !External);
-    break;
+    return dwarf::GDB_INDEX_SYMBOL_KIND_FUNCTION | IsStatic;
   case dwarf::DW_TAG_constant:
   case dwarf::DW_TAG_variable:
-    UPDATE_VALUE(Value, dwarf::GDB_INDEX_SYMBOL_KIND_VARIABLE);
-    UPDATE_STATIC(Value, !External);
-    break;
+    return dwarf::GDB_INDEX_SYMBOL_KIND_VARIABLE | IsStatic;
   case dwarf::DW_TAG_enumerator:
-    UPDATE_VALUE(Value, dwarf::GDB_INDEX_SYMBOL_KIND_VARIABLE);
-    UPDATE_STATIC(Value, 1);
-    break;
+    return dwarf::GDB_INDEX_SYMBOL_KIND_VARIABLE |
+           dwarf::GDB_INDEX_SYMBOL_STATIC;
   default:
-    break;
+    return dwarf::GDB_INDEX_SYMBOL_KIND_NONE;
   }
-  // We don't need to add the CU into the bitmask for two reasons:
-  // a) the pubnames/pubtypes sections are per-cu, and
-  // b) the linker wouldn't understand it anyhow.
-  // so go ahead and make it 1 byte by shifting it down.
-  return Value >> dwarf::GDB_INDEX_CU_BITSIZE;
 }
 
 /// emitDebugPubNames - Emit visible names into a debug pubnames section.
