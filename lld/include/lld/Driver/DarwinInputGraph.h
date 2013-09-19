@@ -1,5 +1,4 @@
-//===- lld/Driver/DarwinInputGraph.h - Files to be linked for MachO
-// linking---===//
+//===- lld/Driver/DarwinInputGraph.h - Input Graph Node for Mach-O linker -===//
 //
 //                             The LLVM Linker
 //
@@ -15,8 +14,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_MachO_INPUT_GRAPH_H
-#define LLD_MachO_INPUT_GRAPH_H
+#ifndef LLD_DRIVER_DARWIN_INPUT_GRAPH_H
+#define LLD_DRIVER_DARWIN_INPUT_GRAPH_H
 
 #include "lld/Driver/InputGraph.h"
 #include "lld/ReaderWriter/MachOLinkingContext.h"

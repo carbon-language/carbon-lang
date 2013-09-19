@@ -1,4 +1,4 @@
-//===- lld/Driver/GnuLdInputGraph.h - Files to be linked for ELF linking---===//
+//===- lld/Driver/GnuLdInputGraph.h - Input Graph Node for ELF linker------===//
 //
 //                             The LLVM Linker
 //
@@ -14,8 +14,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_ELF_INPUT_GRAPH_H
-#define LLD_ELF_INPUT_GRAPH_H
+#ifndef LLD_DRIVER_GNU_LD_INPUT_GRAPH_H
+#define LLD_DRIVER_GNU_LD_INPUT_GRAPH_H
 
 #include "lld/Driver/InputGraph.h"
 #include "lld/ReaderWriter/ELFLinkingContext.h"

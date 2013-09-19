@@ -1,5 +1,4 @@
-//===- lld/Driver/WinLinkInputGraph.h - Files to be linked for PECOFF
-// linking---===//
+//===- lld/Driver/WinLinkInputGraph.h - Input Graph Node for COFF linker --===//
 //
 //                             The LLVM Linker
 //
@@ -15,8 +14,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_PECOFF_INPUT_GRAPH_H
-#define LLD_PECOFF_INPUT_GRAPH_H
+#ifndef LLD_DRIVER_WIN_LINK_INPUT_GRAPH_H
+#define LLD_DRIVER_WIN_LINK_INPUT_GRAPH_H
 
 #include "lld/Driver/InputGraph.h"
 #include "lld/ReaderWriter/PECOFFLinkingContext.h"

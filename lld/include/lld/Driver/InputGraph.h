@@ -1,4 +1,4 @@
-//===- lld/Core/InputGraph.h - Files to be linked -------------------------===//
+//===- lld/Core/InputGraph.h - Input Graph --------------------------------===//
 //
 //                             The LLVM Linker
 //
@@ -13,8 +13,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_INPUTGRAPH_H
-#define LLD_INPUTGRAPH_H
+#ifndef LLD_DRIVER_INPUT_GRAPH_H
+#define LLD_DRIVER_INPUT_GRAPH_H
 
 #include "lld/Core/File.h"
 #include "lld/Core/LLVM.h"
