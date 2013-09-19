@@ -14,11 +14,10 @@ namespace elf {
 
 /// \brief HexagonInstruction which is used to store various values
 typedef struct {
-	const char *insnSyntax;
-	uint32_t insnMask;
-	uint32_t insnCmpMask;
-	uint32_t insnBitMask;
-        bool isDuplex;
+  uint32_t insnMask;
+  uint32_t insnCmpMask;
+  uint32_t insnBitMask;
+  bool isDuplex;
 } Instruction;
 
 #include "HexagonV4Encodings.h"
