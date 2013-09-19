@@ -56,6 +56,11 @@
 // CHECK-NEON-FP-ARMV8: "-target-feature" "+fp-armv8"
 // CHECK-NEON-FP-ARMV8: "-target-feature" "+neon"
 
+// RUN: %clang -target armv8-linux-gnueabihf -mfpu=crypto-neon-fp-armv8 %s -### 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-CRYPTO-NEON-FP-ARMV8 %s
+// CHECK-CRYPTO-NEON-FP-ARMV8: "-target-feature" "+crypto"
+// CHECK-CRYPTO-NEON-FP-ARMV8: "-target-feature" "+fp-armv8"
+
 // RUN: %clang -target arm-linux-gnueabihf %s -### 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-HF %s
 // CHECK-HF: "-target-cpu" "arm1136jf-s"

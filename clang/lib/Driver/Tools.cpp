@@ -596,6 +596,9 @@ static void getFPUFeatures(const Driver &D, const Arg *A, const ArgList &Args,
   } else if (FPU == "neon-fp-armv8") {
     Features.push_back("+fp-armv8");
     Features.push_back("+neon");
+  } else if (FPU == "crypto-neon-fp-armv8") {
+    Features.push_back("+crypto");
+    Features.push_back("+fp-armv8");
   } else if (FPU == "neon") {
     Features.push_back("+neon");
   } else
