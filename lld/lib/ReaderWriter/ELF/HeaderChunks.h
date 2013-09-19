@@ -309,8 +309,11 @@ SectionHeader<ELFT>::appendSection(MergedSections<ELFT> *section) {
   shdr->sh_flags  = section->flags();
   shdr->sh_offset = section->fileOffset();
   shdr->sh_addr   = section->virtualAddr();
-  shdr->sh_size   = section->memSize();
-  shdr->sh_link   = section->link();
+  if (section->isLoadableSection())
+    shdr->sh_size = section->memSize();
+  else
+    shdr->sh_size = section->fileSize();
+  shdr->sh_link = section->link();
   shdr->sh_info   = section->shinfo();
   shdr->sh_addralign = section->align2();
   shdr->sh_entsize = section->entsize();

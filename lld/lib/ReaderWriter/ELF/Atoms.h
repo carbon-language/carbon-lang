@@ -285,6 +285,9 @@ public:
       return _contentType = _targetAtomHandler->contentType(this);
     }
 
+    if (!(flags & llvm::ELF::SHF_ALLOC))
+      return _contentType = typeNoAlloc;
+
     if (_section->sh_flags ==
         (llvm::ELF::SHF_ALLOC | llvm::ELF::SHF_WRITE | llvm::ELF::SHF_TLS)) {
       return _contentType = _section->sh_type == llvm::ELF::SHT_NOBITS ? typeThreadZeroFill
@@ -426,6 +429,10 @@ public:
       }
       return _permissions = _targetAtomHandler->contentPermissions(this);
     }
+
+    if (!(flags & llvm::ELF::SHF_ALLOC))
+      return _permissions = perm___;
+
     switch (_section->sh_type) {
     // permRW_L is for sections modified by the runtime
     // loader.

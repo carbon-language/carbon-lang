@@ -4,4 +4,4 @@ RUN: lld -flavor gnu -target x86_64-linux %p/Inputs/tlsAddr.x86-64 -static  \
 RUN: -o %t --noinhibit-exec
 RUN: llvm-objdump -section-headers %t | FileCheck -check-prefix=CHECKADDR %s
 
-CHECKADDR:   8 .data         00000000 0000000000401008 DATA 
+CHECKADDR:   {{[0-9]+}} .data         00000000 0000000000401008 DATA 

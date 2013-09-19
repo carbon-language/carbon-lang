@@ -149,6 +149,7 @@ public:
     typeThreadData,         // Initialized thread local data(TDATA) [ELF]
     typeRONote,             // Identifies readonly note sections [ELF]
     typeRWNote,             // Identifies readwrite note sections [ELF]
+    typeNoAlloc,            // Identifies non allocatable sections [ELF]
   };
 
   // Permission bits for atoms and segments. The order of these values are

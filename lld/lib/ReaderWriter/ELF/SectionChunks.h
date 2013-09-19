@@ -64,6 +64,9 @@ public:
     return false;
   }
 
+  /// Return if the section is a loadable section that occupies memory
+  virtual bool isLoadableSection() const { return false; }
+
   /// \brief Assign file offsets starting at offset.
   virtual void assignOffsets(uint64_t offset) {}
 
@@ -94,19 +97,14 @@ public:
   /// purposes
   StringRef segmentKindToStr() const;
 
-  // TODO: Move this down to AtomSection.
-  virtual bool findAtomAddrByName(StringRef name, uint64_t &addr) {
-    return false;
-  }
-
   /// \brief Records the segmentType, that this section belongs to
   void setSegmentType(const Layout::SegmentType segmentType) {
     this->_segmentType = segmentType;
   }
 
-  void setMergedSection(MergedSections<ELFT> *ms) {
-    _parent = ms;
-  }
+  virtual bool findAtomAddrByName(StringRef, uint64_t &) { return false; }
+
+  void setMergedSection(MergedSections<ELFT> *ms) { _parent = ms; }
 
   static bool classof(const Chunk<ELFT> *c) {
     return c->kind() == Chunk<ELFT>::Kind::ELFSection ||
@@ -136,8 +134,10 @@ public:
   AtomSection(const ELFLinkingContext &context, StringRef name,
               int32_t contentType, int32_t permissions, int32_t order)
       : Section<ELFT>(context, name, Chunk<ELFT>::Kind::AtomSection),
-        _contentType(contentType), _contentPermissions(permissions) {
+        _contentType(contentType), _contentPermissions(permissions),
+        _isLoadedInMemory(true) {
     this->setOrder(order);
+
     switch (contentType) {
     case DefinedAtom::typeCode:
     case DefinedAtom::typeDataFast:
@@ -160,6 +160,11 @@ public:
     case DefinedAtom::typeRWNote:
       this->_type = SHT_NOTE;
       break;
+
+    case DefinedAtom::typeNoAlloc:
+      this->_type = SHT_PROGBITS;
+      this->_isLoadedInMemory = false;
+      break;
     }
 
     switch (permissions) {
@@ -179,11 +184,17 @@ public:
     case DefinedAtom::permRWX:
       this->_flags = SHF_ALLOC | SHF_WRITE | SHF_EXECINSTR;
       break;
+    case DefinedAtom::perm___:
+      this->_flags = 0;
+      break;
     }
   }
 
   /// Align the offset to the required modulus defined by the atom alignment
   uint64_t alignOffset(uint64_t offset, DefinedAtom::Alignment &atomAlign);
+
+  /// Return if the section is a loadable section that occupies memory
+  virtual bool isLoadableSection() const { return _isLoadedInMemory; }
 
   // \brief Append an atom to a Section. The atom gets pushed into a vector
   // contains the atom, the atom file offset, the atom virtual address
@@ -207,7 +218,7 @@ public:
     }
   }
 
-  /// \brief Find the Atom address given a name, this is needed to to properly
+  /// \brief Find the Atom address given a name, this is needed to properly
   ///  apply relocation. The section class calls this to find the atom address
   ///  to fix the relocation
   virtual bool findAtomAddrByName(StringRef name, uint64_t &addr) {
@@ -240,6 +251,7 @@ protected:
   llvm::BumpPtrAllocator _alloc;
   int32_t _contentType;
   int32_t _contentPermissions;
+  bool _isLoadedInMemory;
   std::vector<lld::AtomLayout *> _atoms;
 };
 
@@ -295,6 +307,14 @@ const lld::AtomLayout &AtomSection<ELFT>::appendAtom(const Atom *atom) {
                       llvm::dbgs() << "[" << this->name() << " " << this << "] "
                                    << "Adding atom: " << atom->name() << "@"
                                    << fOffset << "\n");
+      break;
+    case DefinedAtom::typeNoAlloc:
+      _atoms.push_back(new (_alloc) lld::AtomLayout(atom, fOffset, 0));
+      this->_fsize = fOffset + definedAtom->size();
+      DEBUG_WITH_TYPE("Section", llvm::dbgs() << "[" << this->name() << " "
+                                              << this << "] "
+                                              << "Adding atom: " << atom->name()
+                                              << "@" << fOffset << "\n");
       break;
     case DefinedAtom::typeThreadZeroFill:
     case DefinedAtom::typeZeroFill:
@@ -414,6 +434,14 @@ public:
     _virtualAddr = addr;
   }
 
+  // Is the section loadable ?
+  inline bool isLoadableSection() const { return _isLoadableSection; }
+
+  // Set section Loadable
+  inline void setLoadableSection(bool isLoadable) {
+    _isLoadableSection = isLoadable;
+  }
+
   void setLink(uint64_t link) { _link = link; }
 
   void setInfo(uint64_t info) { _shInfo = info; }
@@ -464,27 +492,16 @@ private:
   uint64_t _align2;
   int64_t _kind;
   int64_t _type;
+  bool _isLoadableSection;
   std::vector<Chunk<ELFT> *> _sections;
 };
 
 /// MergedSections
-template<class ELFT>
+template <class ELFT>
 MergedSections<ELFT>::MergedSections(StringRef name)
-  : _name(name)
-  ,_hasSegment(false)
-  ,_ordinal(0)
-  ,_flags(0)
-  ,_size(0)
-  ,_memSize(0)
-  ,_fileOffset(0)
-  ,_virtualAddr(0)
-  ,_shInfo(0)
-  ,_entSize(0)
-  ,_link(0)
-  ,_align2(0)
-  ,_kind(0)
-  ,_type(0) { }
-
+    : _name(name), _hasSegment(false), _ordinal(0), _flags(0), _size(0),
+      _memSize(0), _fileOffset(0), _virtualAddr(0), _shInfo(0), _entSize(0),
+      _link(0), _align2(0), _kind(0), _type(0), _isLoadableSection(false) {}
 
 template<class ELFT>
 void

@@ -79,6 +79,7 @@ public:
     ORDER_DATA = 200,
     ORDER_RW_NOTE = 205,
     ORDER_BSS = 210,
+    ORDER_NOALLOC = 215,
     ORDER_OTHER = 220,
     ORDER_SECTION_STRINGS = 230,
     ORDER_SYMBOL_TABLE = 240,
@@ -356,6 +357,9 @@ Layout::SectionOrder DefaultLayout<ELFT>::getSectionOrder(
   case DefinedAtom::typeRWNote:
       return ORDER_RW_NOTE;
 
+  case DefinedAtom::typeNoAlloc:
+    return ORDER_NOALLOC;
+
   case DefinedAtom::typeThreadData:
     return ORDER_TDATA;
   case DefinedAtom::typeThreadZeroFill:
@@ -484,6 +488,7 @@ bool DefaultLayout<ELFT>::hasOutputSegment(Section<ELFT> *section) {
   case ORDER_INIT_ARRAY:
   case ORDER_FINI_ARRAY:
   case ORDER_BSS:
+  case ORDER_NOALLOC:
     return true;
   default:
     return section->hasOutputSegment();
@@ -600,6 +605,8 @@ template <class ELFT> void DefaultLayout<ELFT>::assignSectionsToSegments() {
         if (!hasOutputSegment(section))
           continue;
 
+        msi->setLoadableSection(section->isLoadableSection());
+
         // Get the segment type for the section
         int64_t segmentType = getSegmentType(section);
 
@@ -637,6 +644,8 @@ template <class ELFT> void DefaultLayout<ELFT>::assignSectionsToSegments() {
           }
           segment->append(section);
         }
+        if (segmentType == llvm::ELF::PT_NULL)
+          continue;
 
         // If the output magic is set to OutputMagic::NMAGIC or
         // OutputMagic::OMAGIC, Place the data alongside text in one single
@@ -719,7 +728,9 @@ DefaultLayout<ELFT>::assignVirtualAddress() {
   while (true) {
     for (auto si : _segments) {
       si->finalize();
-      newSegmentHeaderAdded = _programHeader->addSegment(si);
+      // Dont add PT_NULL segments into the program header
+      if (si->segmentType() != llvm::ELF::PT_NULL)
+        newSegmentHeaderAdded = _programHeader->addSegment(si);
     }
     if (!newSegmentHeaderAdded)
       break;
@@ -727,8 +738,8 @@ DefaultLayout<ELFT>::assignVirtualAddress() {
     uint64_t address = virtualAddress;
     // Fix the offsets after adding the program header
     for (auto &si : _segments) {
-      // Dont assign offsets for non loadable segments
-      if (si->segmentType() != llvm::ELF::PT_LOAD)
+      if ((si->segmentType() != llvm::ELF::PT_LOAD) &&
+          (si->segmentType() != llvm::ELF::PT_NULL))
         continue;
       // Align the segment to a page boundary only if the output mode is
       // not OutputMagic::NMAGIC/OutputMagic::OMAGIC
@@ -740,20 +751,30 @@ DefaultLayout<ELFT>::assignVirtualAddress() {
       fileoffset = si->fileOffset() + si->fileSize();
     }
     // start assigning virtual addresses
-    for (auto si = _segments.begin(); si != _segments.end(); ++si) {
-      // Dont assign addresses for non loadable segments
-      if ((*si)->segmentType() != llvm::ELF::PT_LOAD)
+    for (auto &si : _segments) {
+      if ((si->segmentType() != llvm::ELF::PT_LOAD) &&
+          (si->segmentType() != llvm::ELF::PT_NULL))
         continue;
-      (*si)->setVAddr(virtualAddress);
-      // The first segment has the virtualAddress set to the base address as
-      // we have added the file header and the program header dont align the
-      // first segment to the pagesize
-      (*si)->assignVirtualAddress(address);
-      (*si)->setMemSize(address - virtualAddress);
-      if (outputMagic != ELFLinkingContext::OutputMagic::NMAGIC &&
-          outputMagic != ELFLinkingContext::OutputMagic::OMAGIC)
-        virtualAddress =
-            llvm::RoundUpToAlignment(address, _context.getPageSize());
+
+      if (si->segmentType() == llvm::ELF::PT_NULL) {
+        uint64_t nonLoadableAddr = 0;
+        si->setVAddr(nonLoadableAddr);
+        // The first segment has the virtualAddress set to the base address as
+        // we have added the file header and the program header dont align the
+        // first segment to the pagesize
+        si->assignVirtualAddress(nonLoadableAddr);
+      } else {
+        si->setVAddr(virtualAddress);
+        // The first segment has the virtualAddress set to the base address as
+        // we have added the file header and the program header dont align the
+        // first segment to the pagesize
+        si->assignVirtualAddress(address);
+        si->setMemSize(address - virtualAddress);
+        if (outputMagic != ELFLinkingContext::OutputMagic::NMAGIC &&
+            outputMagic != ELFLinkingContext::OutputMagic::OMAGIC)
+          virtualAddress =
+              llvm::RoundUpToAlignment(address, _context.getPageSize());
+      }
     }
     _programHeader->resetProgramHeaders();
   }
@@ -809,7 +830,8 @@ DefaultLayout<ELFT>::assignOffsetsForMiscSections() {
   uint64_t size = 0;
   for (auto si : _segments) {
     // Dont calculate offsets from non loadable segments
-    if (si->segmentType() != llvm::ELF::PT_LOAD)
+    if ((si->segmentType() != llvm::ELF::PT_LOAD) &&
+        (si->segmentType() != llvm::ELF::PT_NULL))
       continue;
     fileoffset = si->fileOffset();
     size = si->fileSize();

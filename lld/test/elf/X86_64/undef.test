@@ -12,7 +12,7 @@ SYMFROMARCHIVE:    Size: 11
 SYMFROMARCHIVE:    Binding: Global (0x1)
 SYMFROMARCHIVE:    Type: Function (0x2)
 SYMFROMARCHIVE:    Other: 0
-SYMFROMARCHIVE:    Section: .text (0x6)
+SYMFROMARCHIVE:    Section: .text
 SYMFROMARCHIVE:  }
 
 CHECK-NOT: Name: fn
