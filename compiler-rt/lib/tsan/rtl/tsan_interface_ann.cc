@@ -230,12 +230,12 @@ using namespace __tsan;  // NOLINT
 extern "C" {
 void INTERFACE_ATTRIBUTE AnnotateHappensBefore(char *f, int l, uptr addr) {
   SCOPED_ANNOTATION(AnnotateHappensBefore);
-  Release(cur_thread(), pc, addr);
+  Release(thr, pc, addr);
 }
 
 void INTERFACE_ATTRIBUTE AnnotateHappensAfter(char *f, int l, uptr addr) {
   SCOPED_ANNOTATION(AnnotateHappensAfter);
-  Acquire(cur_thread(), pc, addr);
+  Acquire(thr, pc, addr);
 }
 
 void INTERFACE_ATTRIBUTE AnnotateCondVarSignal(char *f, int l, uptr cv) {
@@ -383,22 +383,22 @@ void INTERFACE_ATTRIBUTE AnnotateBenignRace(
 
 void INTERFACE_ATTRIBUTE AnnotateIgnoreReadsBegin(char *f, int l) {
   SCOPED_ANNOTATION(AnnotateIgnoreReadsBegin);
-  ThreadIgnoreBegin(cur_thread());
+  ThreadIgnoreBegin(thr);
 }
 
 void INTERFACE_ATTRIBUTE AnnotateIgnoreReadsEnd(char *f, int l) {
   SCOPED_ANNOTATION(AnnotateIgnoreReadsEnd);
-  ThreadIgnoreEnd(cur_thread());
+  ThreadIgnoreEnd(thr);
 }
 
 void INTERFACE_ATTRIBUTE AnnotateIgnoreWritesBegin(char *f, int l) {
   SCOPED_ANNOTATION(AnnotateIgnoreWritesBegin);
-  ThreadIgnoreBegin(cur_thread());
+  ThreadIgnoreBegin(thr);
 }
 
 void INTERFACE_ATTRIBUTE AnnotateIgnoreWritesEnd(char *f, int l) {
   SCOPED_ANNOTATION(AnnotateIgnoreWritesEnd);
-  ThreadIgnoreEnd(cur_thread());
+  ThreadIgnoreEnd(thr);
 }
 
 void INTERFACE_ATTRIBUTE AnnotatePublishMemoryRange(
