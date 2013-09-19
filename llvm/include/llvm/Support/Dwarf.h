@@ -800,7 +800,7 @@ enum GDBIndexEntryKind {
   GIEK_OTHER,
   GIEK_UNUSED5,
   GIEK_UNUSED6,
-  GIEK_UNUSED7,
+  GIEK_UNUSED7
 };
 
 StringRef GDBIndexEntryKindString(GDBIndexEntryKind Kind);
