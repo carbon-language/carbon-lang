@@ -19,10 +19,16 @@ SET D="%ProgramFiles%\MSBuild\Microsoft.Cpp\v4.0\V110\Platforms\Win32\PlatformTo
 IF EXIST %D%\LLVM-vs2012 del %D%\LLVM-vs2012\Microsoft.Cpp.Win32.LLVM-vs2012.props
 IF EXIST %D%\LLVM-vs2012 del %D%\LLVM-vs2012\Microsoft.Cpp.Win32.LLVM-vs2012.targets
 IF EXIST %D%\LLVM-vs2012 rmdir %D%\LLVM-vs2012
+IF EXIST %D%\LLVM-vs2012_xp del %D%\LLVM-vs2012_xp\Microsoft.Cpp.Win32.LLVM-vs2012_xp.props
+IF EXIST %D%\LLVM-vs2012_xp del %D%\LLVM-vs2012_xp\Microsoft.Cpp.Win32.LLVM-vs2012_xp.targets
+IF EXIST %D%\LLVM-vs2012_xp rmdir %D%\LLVM-vs2012_xp
 
 SET D="%ProgramFiles(x86)%\MSBuild\Microsoft.Cpp\v4.0\V110\Platforms\Win32\PlatformToolsets"
 IF EXIST %D%\LLVM-vs2012 del %D%\LLVM-vs2012\Microsoft.Cpp.Win32.LLVM-vs2012.props
 IF EXIST %D%\LLVM-vs2012 del %D%\LLVM-vs2012\Microsoft.Cpp.Win32.LLVM-vs2012.targets
 IF EXIST %D%\LLVM-vs2012 rmdir %D%\LLVM-vs2012
+IF EXIST %D%\LLVM-vs2012_xp del %D%\LLVM-vs2012_xp\Microsoft.Cpp.Win32.LLVM-vs2012_xp.props
+IF EXIST %D%\LLVM-vs2012_xp del %D%\LLVM-vs2012_xp\Microsoft.Cpp.Win32.LLVM-vs2012_xp.targets
+IF EXIST %D%\LLVM-vs2012_xp rmdir %D%\LLVM-vs2012_xp
 
 echo Done!

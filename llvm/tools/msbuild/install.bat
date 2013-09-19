@@ -39,6 +39,12 @@ copy Microsoft.Cpp.Win32.LLVM-vs2012.props %D%\LLVM-vs2012
 IF NOT %ERRORLEVEL% == 0 GOTO FAILED
 copy Microsoft.Cpp.Win32.LLVM-vs2012.targets %D%\LLVM-vs2012
 IF NOT %ERRORLEVEL% == 0 GOTO FAILED
+IF NOT EXIST %D%\LLVM-vs2012_xp mkdir %D%\LLVM-vs2012_xp
+IF NOT %ERRORLEVEL% == 0 GOTO FAILED
+copy Microsoft.Cpp.Win32.LLVM-vs2012_xp.props %D%\LLVM-vs2012_xp
+IF NOT %ERRORLEVEL% == 0 GOTO FAILED
+copy Microsoft.Cpp.Win32.LLVM-vs2012_xp.targets %D%\LLVM-vs2012_xp
+IF NOT %ERRORLEVEL% == 0 GOTO FAILED
 echo Done!
 goto END
 
