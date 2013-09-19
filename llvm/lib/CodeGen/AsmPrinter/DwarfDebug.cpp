@@ -2337,8 +2337,7 @@ static uint8_t computeIndexValue(CompileUnit *CU, DIE *Die) {
 
   // Compute the Attributes for the Die.
   uint32_t Value = dwarf::GDB_INDEX_SYMBOL_KIND_NONE;
-  bool External =
-      Die->findAttribute(dwarf::DW_AT_external) != NULL ? true : false;
+  bool External = Die->findAttribute(dwarf::DW_AT_external);
 
   switch (Die->getTag()) {
   case dwarf::DW_TAG_class_type:
@@ -2371,7 +2370,7 @@ static uint8_t computeIndexValue(CompileUnit *CU, DIE *Die) {
     break;
   }
   // We don't need to add the CU into the bitmask for two reasons:
-  // a) the pubnames/pubtypes sections are per-cpu, and
+  // a) the pubnames/pubtypes sections are per-cu, and
   // b) the linker wouldn't understand it anyhow.
   // so go ahead and make it 1 byte by shifting it down.
   return Value >> dwarf::GDB_INDEX_CU_BITSIZE;
