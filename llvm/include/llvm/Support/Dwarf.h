@@ -829,10 +829,12 @@ struct PubIndexEntryDescriptor {
     return Kind << KIND_OFFSET | Static << STATIC_OFFSET;
   }
 private:
-  const uint8_t KIND_OFFSET = 4;
-  const uint8_t KIND_MASK = 7 << KIND_OFFSET;
-  const uint8_t STATIC_OFFSET = 7;
-  const uint8_t STATIC_MASK = 1 << STATIC_OFFSET;
+  enum {
+    KIND_OFFSET = 4,
+    KIND_MASK = 7 << KIND_OFFSET,
+    STATIC_OFFSET = 7,
+    STATIC_MASK = 1 << STATIC_OFFSET
+  };
 };
 
 } // End of namespace dwarf
