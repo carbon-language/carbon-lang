@@ -341,9 +341,11 @@ void __cdecl _xrstor64(void const *, unsigned __int64);
 void __cdecl _xsave64(void *, unsigned __int64);
 void __cdecl _xsaveopt64(void *, unsigned __int64);
 
+#endif /* __X86_64__ */
+
 #ifdef __cplusplus
 }
 #endif
-#endif
-#endif
-#endif
+
+#endif /* __INTRIN_H */
+#endif /* _MSC_VER */
