@@ -24,6 +24,7 @@ set(files
   prfchwintrin.h
   rdseedintrin.h
   rtmintrin.h
+  shaintrin.h
   smmintrin.h
   stdalign.h
   stdarg.h

@@ -1589,6 +1589,7 @@ class X86TargetInfo : public TargetInfo {
   bool HasFMA;
   bool HasF16C;
   bool HasAVX512CD, HasAVX512ER, HasAVX512PF;
+  bool HasSHA;
 
   /// \brief Enumeration of all of the X86 CPUs supported by Clang.
   ///
@@ -1749,7 +1750,7 @@ public:
         HasRDRND(false), HasBMI(false), HasBMI2(false), HasPOPCNT(false),
         HasRTM(false), HasPRFCHW(false), HasRDSEED(false), HasFMA(false),
         HasF16C(false), HasAVX512CD(false), HasAVX512ER(false),
-        HasAVX512PF(false), CPU(CK_Generic), FPMath(FP_Default) {
+        HasAVX512PF(false), HasSHA(false), CPU(CK_Generic), FPMath(FP_Default) {
     BigEndian = false;
     LongDoubleFormat = &llvm::APFloat::x87DoubleExtended;
   }
@@ -2166,7 +2167,8 @@ void X86TargetInfo::setSSELevel(llvm::StringMap<bool> &Features,
   case SSE1:
     Features["sse"] = false;
   case SSE2:
-    Features["sse2"] = Features["pclmul"] = Features["aes"] = false;
+    Features["sse2"] = Features["pclmul"] = Features["aes"] =
+      Features["sha"] = false;
   case SSE3:
     Features["sse3"] = false;
     setXOPLevel(Features, NoXOP, false);
@@ -2297,6 +2299,9 @@ void X86TargetInfo::setFeatureEnabledImpl(llvm::StringMap<bool> &Features,
   } else if (Name == "f16c") {
     if (Enabled)
       setSSELevel(Features, AVX, Enabled);
+  } else if (Name == "sha") {
+    if (Enabled)
+      setSSELevel(Features, SSE2, Enabled);
   }
 }
 
@@ -2384,6 +2389,11 @@ bool X86TargetInfo::HandleTargetFeatures(std::vector<std::string> &Features,
 
     if (Feature == "avx512pf") {
       HasAVX512PF = true;
+      continue;
+    }
+
+    if (Feature == "sha") {
+      HasSHA = true;
       continue;
     }
 
@@ -2656,6 +2666,9 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
   if (HasAVX512PF)
     Builder.defineMacro("__AVX512PF__");
 
+  if (HasSHA)
+    Builder.defineMacro("__SHA__");
+
   // Each case falls through to the previous one here.
   switch (SSELevel) {
   case AVX512F:
@@ -2746,6 +2759,7 @@ bool X86TargetInfo::hasFeature(StringRef Feature) const {
       .Case("rtm", HasRTM)
       .Case("prfchw", HasPRFCHW)
       .Case("rdseed", HasRDSEED)
+      .Case("sha", HasSHA)
       .Case("sse", SSELevel >= SSE1)
       .Case("sse2", SSELevel >= SSE2)
       .Case("sse3", SSELevel >= SSE3)

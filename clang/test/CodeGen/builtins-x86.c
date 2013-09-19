@@ -491,5 +491,13 @@ void f0() {
   tmp_V2f = __builtin_ia32_pi2fw(tmp_V2i);
   tmp_V2f = __builtin_ia32_pswapdsf(tmp_V2f);
   tmp_V2i = __builtin_ia32_pswapdsi(tmp_V2i);
+
+  tmp_V4i = __builtin_ia32_sha1rnds4(tmp_V4i, tmp_V4i, imm_i);
+  tmp_V4i = __builtin_ia32_sha1nexte(tmp_V4i, tmp_V4i);
+  tmp_V4i = __builtin_ia32_sha1msg1(tmp_V4i, tmp_V4i);
+  tmp_V4i = __builtin_ia32_sha1msg2(tmp_V4i, tmp_V4i);
+  tmp_V4i = __builtin_ia32_sha256rnds2(tmp_V4i, tmp_V4i, tmp_V4i);
+  tmp_V4i = __builtin_ia32_sha256msg1(tmp_V4i, tmp_V4i);
+  tmp_V4i = __builtin_ia32_sha256msg2(tmp_V4i, tmp_V4i);
 #endif
 }

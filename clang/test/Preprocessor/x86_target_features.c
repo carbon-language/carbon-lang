@@ -186,3 +186,20 @@
 // AESNOSSE2-NOT: #define __AES__ 1
 // AESNOSSE2-NOT: #define __SSE2__ 1
 // AESNOSSE2-NOT: #define __SSE3__ 1
+
+// RUN: %clang -target i386-unknown-unknown -march=pentiumpro -msha -x c -E -dM -o - %s | FileCheck --check-prefix=SHA %s
+
+// SHA: #define __SHA__ 1
+// SHA: #define __SSE2__ 1
+// SHA-NOT: #define __SSE3__ 1
+
+// run: %clang -target i386-unknown-unknown -march=pentiumpro -msha -mno-sha -x c -e -dm -o - %s | filecheck --check-prefix=SHANOSHA %s
+
+// SHANOSHA-NOT: #define __SHA__ 1
+// SHANOSHA-NOT: #define __SSE2__ 1
+
+// run: %clang -target i386-unknown-unknown -march=pentiumpro -msha -mno-sse2 -x c -e -dm -o - %s | filecheck --check-prefix=SHANOSSE2 %s
+
+// SHANOSSSE2-NOT: #define __SHA__ 1
+// SHANOSSSE2-NOT: #define __SSE2__ 1
+// SHANOSSSE2-NOT: #define __SSE3__ 1

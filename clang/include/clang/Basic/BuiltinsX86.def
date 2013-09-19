@@ -641,6 +641,15 @@ BUILTIN(__builtin_ia32_pdep_di, "ULLiULLiULLi", "")
 BUILTIN(__builtin_ia32_pext_si, "UiUiUi", "")
 BUILTIN(__builtin_ia32_pext_di, "ULLiULLiULLi", "")
 
+// SHA
+BUILTIN(__builtin_ia32_sha1rnds4, "V4iV4iV4iIc", "")
+BUILTIN(__builtin_ia32_sha1nexte, "V4iV4iV4i", "")
+BUILTIN(__builtin_ia32_sha1msg1, "V4iV4iV4i", "")
+BUILTIN(__builtin_ia32_sha1msg2, "V4iV4iV4i", "")
+BUILTIN(__builtin_ia32_sha256rnds2, "V4iV4iV4iV4i", "")
+BUILTIN(__builtin_ia32_sha256msg1, "V4iV4iV4i", "")
+BUILTIN(__builtin_ia32_sha256msg2, "V4iV4iV4i", "")
+
 // FMA4
 BUILTIN(__builtin_ia32_vfmaddps, "V4fV4fV4fV4f", "")
 BUILTIN(__builtin_ia32_vfmaddpd, "V2dV2dV2dV2d", "")
