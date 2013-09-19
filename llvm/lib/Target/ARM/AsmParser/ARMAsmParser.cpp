@@ -141,7 +141,8 @@ class ARMAsmParser : public MCTargetAsmParser {
   StringRef splitMnemonic(StringRef Mnemonic, unsigned &PredicationCode,
                           bool &CarrySetting, unsigned &ProcessorIMod,
                           StringRef &ITMask);
-  void getMnemonicAcceptInfo(StringRef Mnemonic, bool &CanAcceptCarrySet,
+  void getMnemonicAcceptInfo(StringRef Mnemonic, StringRef FullInst,
+                             bool &CanAcceptCarrySet,
                              bool &CanAcceptPredicationCode);
 
   bool isThumb() const {
@@ -4784,8 +4785,8 @@ StringRef ARMAsmParser::splitMnemonic(StringRef Mnemonic,
 //
 // FIXME: It would be nice to autogen this.
 void ARMAsmParser::
-getMnemonicAcceptInfo(StringRef Mnemonic, bool &CanAcceptCarrySet,
-                      bool &CanAcceptPredicationCode) {
+getMnemonicAcceptInfo(StringRef Mnemonic, StringRef FullInst,
+                     bool &CanAcceptCarrySet, bool &CanAcceptPredicationCode) {
   if (Mnemonic == "and" || Mnemonic == "lsl" || Mnemonic == "lsr" ||
       Mnemonic == "rrx" || Mnemonic == "ror" || Mnemonic == "sub" ||
       Mnemonic == "add" || Mnemonic == "adc" ||
@@ -4808,7 +4809,9 @@ getMnemonicAcceptInfo(StringRef Mnemonic, bool &CanAcceptCarrySet,
       Mnemonic == "vmaxnm" || Mnemonic == "vminnm" || Mnemonic == "vcvta" ||
       Mnemonic == "vcvtn" || Mnemonic == "vcvtp" || Mnemonic == "vcvtm" ||
       Mnemonic == "vrinta" || Mnemonic == "vrintn" || Mnemonic == "vrintp" ||
-      Mnemonic == "vrintm") {
+      Mnemonic == "vrintm" || Mnemonic.startswith("aes") ||
+      Mnemonic.startswith("sha1") || Mnemonic.startswith("sha256") ||
+      (FullInst.startswith("vmull") && FullInst.endswith(".p64"))) {
     // These mnemonics are never predicable
     CanAcceptPredicationCode = false;
   } else if (!isThumb()) {
@@ -5068,7 +5071,7 @@ bool ARMAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
   // the matcher deal with finding the right instruction or generating an
   // appropriate error.
   bool CanAcceptCarrySet, CanAcceptPredicationCode;
-  getMnemonicAcceptInfo(Mnemonic, CanAcceptCarrySet, CanAcceptPredicationCode);
+  getMnemonicAcceptInfo(Mnemonic, Name, CanAcceptCarrySet, CanAcceptPredicationCode);
 
   // If we had a carry-set on an instruction that can't do that, issue an
   // error.

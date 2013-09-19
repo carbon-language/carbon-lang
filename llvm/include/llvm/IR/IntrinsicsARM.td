@@ -466,4 +466,21 @@ def int_arm_neon_vbsl : Intrinsic<[llvm_anyvector_ty],
                         [LLVMMatchType<0>, LLVMMatchType<0>, LLVMMatchType<0>],
                         [IntrNoMem]>;
 
+
+// Crypto instructions
+def int_arm_neon_aesd : Neon_2Arg_Intrinsic;
+def int_arm_neon_aese : Neon_2Arg_Intrinsic;
+def int_arm_neon_aesimc : Neon_1Arg_Intrinsic;
+def int_arm_neon_aesmc : Neon_1Arg_Intrinsic;
+def int_arm_neon_sha1h : Neon_1Arg_Intrinsic;
+def int_arm_neon_sha1su1 : Neon_2Arg_Intrinsic;
+def int_arm_neon_sha256su0 : Neon_2Arg_Intrinsic;
+def int_arm_neon_sha1c : Neon_3Arg_Intrinsic;
+def int_arm_neon_sha1m : Neon_3Arg_Intrinsic;
+def int_arm_neon_sha1p : Neon_3Arg_Intrinsic;
+def int_arm_neon_sha1su0: Neon_3Arg_Intrinsic;
+def int_arm_neon_sha256h: Neon_3Arg_Intrinsic;
+def int_arm_neon_sha256h2: Neon_3Arg_Intrinsic;
+def int_arm_neon_sha256su1: Neon_3Arg_Intrinsic;
+
 } // end TargetPrefix

@@ -67,6 +67,9 @@ def FeaturePerfMon : SubtargetFeature<"perfmon", "HasPerfMon", "true",
                            "Enable support for Performance Monitor extensions">;
 def FeatureTrustZone : SubtargetFeature<"trustzone", "HasTrustZone", "true",
                           "Enable support for TrustZone security extensions">;
+def FeatureCrypto : SubtargetFeature<"crypto", "HasCrypto", "true",
+                          "Enable support for Cryptography extensions",
+                          [FeatureNEON]>;
 
 // Some processors have FP multiply-accumulate instructions that don't
 // play nicely with other VFP / NEON instructions, and it's generally better
