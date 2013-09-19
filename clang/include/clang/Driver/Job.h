@@ -11,6 +11,7 @@
 #define CLANG_DRIVER_JOB_H_
 
 #include "clang/Basic/LLVM.h"
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Option/Option.h"
 
@@ -31,6 +32,7 @@ class Job {
 public:
   enum JobClass {
     CommandClass,
+    FallbackCommandClass,
     JobListClass
   };
 
@@ -54,8 +56,8 @@ public:
                      bool Quote, bool CrashReport = false) const = 0;
 };
 
-  /// Command - An executable path/name and argument vector to
-  /// execute.
+/// Command - An executable path/name and argument vector to
+/// execute.
 class Command : public Job {
   /// Source - The action which caused the creation of this job.
   const Action &Source;
@@ -77,8 +79,8 @@ public:
   virtual void Print(llvm::raw_ostream &OS, const char *Terminator,
                      bool Quote, bool CrashReport = false) const;
 
-  int Execute(const StringRef **Redirects, std::string *ErrMsg,
-              bool *ExecutionFailed) const;
+  virtual int Execute(const StringRef **Redirects, std::string *ErrMsg,
+                      bool *ExecutionFailed) const;
 
   /// getSource - Return the Action which caused the creation of this job.
   const Action &getSource() const { return Source; }
@@ -89,11 +91,34 @@ public:
   const llvm::opt::ArgStringList &getArguments() const { return Arguments; }
 
   static bool classof(const Job *J) {
-    return J->getKind() == CommandClass;
+    return J->getKind() == CommandClass ||
+           J->getKind() == FallbackCommandClass;
   }
 };
 
-  /// JobList - A sequence of jobs to perform.
+/// Like Command, but with a fallback which is executed in case
+/// the primary command crashes.
+class FallbackCommand : public Command {
+public:
+  FallbackCommand(const Action &Source_, const Tool &Creator_,
+                  const char *Executable_, const ArgStringList &Arguments_,
+                  Command *Fallback_);
+
+  virtual void Print(llvm::raw_ostream &OS, const char *Terminator,
+                     bool Quote, bool CrashReport = false) const;
+
+  virtual int Execute(const StringRef **Redirects, std::string *ErrMsg,
+                      bool *ExecutionFailed) const;
+
+  static bool classof(const Job *J) {
+    return J->getKind() == FallbackCommandClass;
+  }
+
+private:
+  OwningPtr<Command> Fallback;
+};
+
+/// JobList - A sequence of jobs to perform.
 class JobList : public Job {
 public:
   typedef SmallVector<Job*, 4> list_type;

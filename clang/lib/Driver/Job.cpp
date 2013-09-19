@@ -126,6 +126,43 @@ int Command::Execute(const StringRef **Redirects, std::string *ErrMsg,
                                    /*memoryLimit*/ 0, ErrMsg, ExecutionFailed);
 }
 
+FallbackCommand::FallbackCommand(const Action &Source_, const Tool &Creator_,
+                                 const char *Executable_,
+                                 const ArgStringList &Arguments_,
+                                 Command *Fallback_)
+    : Command(Source_, Creator_, Executable_, Arguments_), Fallback(Fallback_) {
+}
+
+void FallbackCommand::Print(raw_ostream &OS, const char *Terminator,
+                            bool Quote, bool CrashReport) const {
+  Command::Print(OS, "", Quote, CrashReport);
+  OS << " ||";
+  Fallback->Print(OS, Terminator, Quote, CrashReport);
+}
+
+static bool ShouldFallback(int ExitCode) {
+  // FIXME: We really just want to fall back for internal errors, such
+  // as when some symbol cannot be mangled, when we should be able to
+  // parse something but can't, etc.
+  return ExitCode != 0;
+}
+
+int FallbackCommand::Execute(const StringRef **Redirects, std::string *ErrMsg,
+                             bool *ExecutionFailed) const {
+  int PrimaryStatus = Command::Execute(Redirects, ErrMsg, ExecutionFailed);
+  if (!ShouldFallback(PrimaryStatus))
+    return PrimaryStatus;
+
+  // Clear ExecutionFailed and ErrMsg before falling back.
+  if (ErrMsg)
+    ErrMsg->clear();
+  if (ExecutionFailed)
+    *ExecutionFailed = false;
+
+  int SecondaryStatus = Fallback->Execute(Redirects, ErrMsg, ExecutionFailed);
+  return SecondaryStatus;
+}
+
 JobList::JobList() : Job(JobListClass) {}
 
 JobList::~JobList() {

@@ -21,6 +21,7 @@ namespace clang {
   class ObjCRuntime;
 
 namespace driver {
+  class Command;
   class Driver;
 
 namespace toolchains {
@@ -590,7 +591,7 @@ namespace dragonfly {
 
   /// Visual studio tools.
 namespace visualstudio {
-  class LLVM_LIBRARY_VISIBILITY Link : public Tool  {
+  class LLVM_LIBRARY_VISIBILITY Link : public Tool {
   public:
     Link(const ToolChain &TC) : Tool("visualstudio::Link", "linker", TC) {}
 
@@ -602,6 +603,27 @@ namespace visualstudio {
                               const InputInfoList &Inputs,
                               const llvm::opt::ArgList &TCArgs,
                               const char *LinkingOutput) const;
+  };
+
+  class LLVM_LIBRARY_VISIBILITY Compile : public Tool {
+  public:
+    Compile(const ToolChain &TC) : Tool("visualstudio::Compile", "compiler", TC) {}
+
+    virtual bool hasIntegratedAssembler() const { return true; }
+    virtual bool hasIntegratedCPP() const { return true; }
+    virtual bool isLinkJob() const { return false; }
+
+    virtual void ConstructJob(Compilation &C, const JobAction &JA,
+                              const InputInfo &Output,
+                              const InputInfoList &Inputs,
+                              const llvm::opt::ArgList &TCArgs,
+                              const char *LinkingOutput) const;
+
+    Command *GetCommand(Compilation &C, const JobAction &JA,
+                        const InputInfo &Output,
+                        const InputInfoList &Inputs,
+                        const llvm::opt::ArgList &TCArgs,
+                        const char *LinkingOutput) const;
   };
 } // end namespace visualstudio
 

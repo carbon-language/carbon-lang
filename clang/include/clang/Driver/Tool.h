@@ -63,7 +63,8 @@ public:
   virtual bool hasGoodDiagnostics() const { return false; }
 
   /// ConstructJob - Construct jobs to perform the action \p JA,
-  /// writing to \p Output and with \p Inputs.
+  /// writing to \p Output and with \p Inputs, and add the jobs to
+  /// \p C.
   ///
   /// \param TCArgs - The argument list for this toolchain, with any
   /// tool chain specific translations applied.
