@@ -56,10 +56,15 @@ def tsaware : F<"tsaware">;
 def no_tsaware : F<"tsaware:no">,
     HelpText<"Create non-Terminal Server aware executable">;
 
-// NOLOGO does nothing. It is defined only for link.exe compatibility.
-def nologo : F<"nologo">;
-
 def help : F<"help">;
 def help_q : F<"?">, Alias<help>;
 
 def DASH_DASH : Option<["--"], "", KIND_REMAINING_ARGS>;
+
+// The flags below do nothing. They are defined only for link.exe compatibility.
+multiclass Q<string name> {
+  def "" : Joined<["/", "-", "-?"], name#":">;
+  def _c : Separate<["/", "-", "-?"], name>, Alias<!cast<Option>(name)>;
+}
+def nologo : F<"nologo">;
+defm errorreport : Q<"errorreport">;
