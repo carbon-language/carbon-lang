@@ -2322,10 +2322,11 @@ void DwarfDebug::emitAccelTypes() {
 // reference in the pubname header doesn't change.
 
 /// computeIndexValue - Compute the gdb index value for the DIE and CU.
-static uint8_t computeIndexValue(CompileUnit *CU, DIE *Die) {
-  uint8_t IsStatic = Die->findAttribute(dwarf::DW_AT_external)
-                       ? dwarf::GDB_INDEX_SYMBOL_NON_STATIC
-                       : dwarf::GDB_INDEX_SYMBOL_STATIC;
+static dwarf::PubIndexEntryDescriptor computeIndexValue(CompileUnit *CU,
+                                                        DIE *Die) {
+  dwarf::GDBIndexEntryLinkage IsStatic =
+      Die->findAttribute(dwarf::DW_AT_external) ? dwarf::GIEL_EXTERNAL
+                                                : dwarf::GIEL_STATIC;
 
   switch (Die->getTag()) {
   case dwarf::DW_TAG_class_type:
@@ -2335,19 +2336,19 @@ static uint8_t computeIndexValue(CompileUnit *CU, DIE *Die) {
   case dwarf::DW_TAG_typedef:
   case dwarf::DW_TAG_base_type:
   case dwarf::DW_TAG_subrange_type:
-    return dwarf::GDB_INDEX_SYMBOL_KIND_TYPE | dwarf::GDB_INDEX_SYMBOL_STATIC;
+    return dwarf::PubIndexEntryDescriptor(dwarf::GIEK_TYPE, dwarf::GIEL_STATIC);
   case dwarf::DW_TAG_namespace:
-    return dwarf::GDB_INDEX_SYMBOL_KIND_TYPE;
+    return dwarf::GIEK_TYPE;
   case dwarf::DW_TAG_subprogram:
-    return dwarf::GDB_INDEX_SYMBOL_KIND_FUNCTION | IsStatic;
+    return dwarf::PubIndexEntryDescriptor(dwarf::GIEK_FUNCTION, IsStatic);
   case dwarf::DW_TAG_constant:
   case dwarf::DW_TAG_variable:
-    return dwarf::GDB_INDEX_SYMBOL_KIND_VARIABLE | IsStatic;
+    return dwarf::PubIndexEntryDescriptor(dwarf::GIEK_VARIABLE, IsStatic);
   case dwarf::DW_TAG_enumerator:
-    return dwarf::GDB_INDEX_SYMBOL_KIND_VARIABLE |
-           dwarf::GDB_INDEX_SYMBOL_STATIC;
+    return dwarf::PubIndexEntryDescriptor(dwarf::GIEK_VARIABLE,
+                                          dwarf::GIEL_STATIC);
   default:
-    return dwarf::GDB_INDEX_SYMBOL_KIND_NONE;
+    return dwarf::GIEK_NONE;
   }
 }
 
@@ -2401,7 +2402,7 @@ void DwarfDebug::emitDebugPubNames(bool GnuStyle) {
 
       if (GnuStyle) {
         Asm->OutStreamer.AddComment("Index value");
-        Asm->EmitInt8(computeIndexValue(TheCU, Entity));
+        Asm->EmitInt8(computeIndexValue(TheCU, Entity).toBits());
       }
 
       if (Asm->isVerbose())
@@ -2460,7 +2461,7 @@ void DwarfDebug::emitDebugPubTypes(bool GnuStyle) {
 
       if (GnuStyle) {
         Asm->OutStreamer.AddComment("Index value");
-        Asm->EmitInt8(computeIndexValue(TheCU, Entity));
+        Asm->EmitInt8(computeIndexValue(TheCU, Entity).toBits());
       }
 
       if (Asm->isVerbose())
