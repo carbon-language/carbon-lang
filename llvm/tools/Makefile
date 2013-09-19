@@ -54,11 +54,10 @@ endif
 ifndef ONLY_TOOLS
 ifeq ($(ENABLE_PIC),1)
   # gold only builds if binutils is around.  It requires "lto" to build before
-  # it so it is added to DIRS.
+  # it so it is added to DIRS. llvm-lto also requires lto
+  DIRS += lto llvm-lto
   ifdef BINUTILS_INCDIR
-    DIRS += lto gold
-  else
-    PARALLEL_DIRS += lto
+    DIRS += gold
   endif
 
   PARALLEL_DIRS += bugpoint-passes

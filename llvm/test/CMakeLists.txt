@@ -28,6 +28,7 @@ set(LLVM_TEST_DEPENDS
           llvm-extract
           llvm-dwarfdump
           llvm-link
+	   llvm-lto
           llvm-mc
           llvm-mcmarkup
           llvm-nm

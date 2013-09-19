@@ -45,8 +45,10 @@ add_llvm_tool_subdirectory(yaml2obj)
 
 if( NOT WIN32 )
   add_llvm_tool_subdirectory(lto)
+  add_llvm_tool_subdirectory(llvm-lto)
 else()
   ignore_llvm_tool_subdirectory(lto)
+  ignore_llvm_tool_subdirectory(llvm-lto)
 endif()
 
 if( LLVM_ENABLE_PIC )

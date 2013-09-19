@@ -792,6 +792,9 @@ namespace {
                                           const MCSymbol *Label,
                                           unsigned PointerSize) {}
     virtual void FinishImpl() {}
+    virtual void EmitCFIEndProcImpl(MCDwarfFrameInfo &Frame) {
+      RecordProcEnd(Frame);
+    }
 
     static bool classof(const MCStreamer *S) {
       return S->getKind() == SK_RecordStreamer;
