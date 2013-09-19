@@ -1,8 +1,9 @@
 ; RUN: opt < %s -basicaa -gvn -S | FileCheck %s
 
-define i32 @main(i32** %p) {
+define i32 @main(i32** %p, i32 %x, i32 %y) {
 block1:
-	br i1 true, label %block2, label %block3
+    %cmp = icmp eq i32 %x, %y
+	br i1 %cmp , label %block2, label %block3
 
 block2:
  %a = load i32** %p
