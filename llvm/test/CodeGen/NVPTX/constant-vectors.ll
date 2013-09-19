@@ -2,6 +2,5 @@
 
 target triple = "nvptx-nvidia-cuda"
 
-; CHECK: .visible .global .align 16 .b8 sphPosArr[80] = {0, 0, 192, 192, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 128, 63, 0, 0, 64, 192, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 128, 63, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 128, 63, 0, 0, 64, 64, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 128, 63, 0, 0, 192, 64, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 128, 63};
-@sphPosArr = constant [5 x <4 x float>] [<4 x float> <float -6.000000e+00, float 0.000000e+00, float 0.000000e+00, float 1.000000e+00>, <4 x float> <float -3.000000e+00, float 0.000000e+00, float 0.000000e+00, float 1.000000e+00>, <4 x float> <float 0.000000e+00, float 0.000000e+00, float 0.000000e+00, float 1.000000e+00>, <4 x float> <float 3.000000e+00, float 0.000000e+00, float 0.000000e+00, float 1.000000e+00>, <4 x float> <float 6.000000e+00, float 0.000000e+00, float 0.000000e+00, float 1.000000e+00>], align 16
-
+; CHECK: .visible .global .align 16 .b8 testArray[8] = {0, 1, 2, 3, 4, 5, 6, 7};
+@testArray = constant [2 x <4 x i8>] [<4 x i8> <i8 0, i8 1, i8 2, i8 3>, <4 x i8> <i8 4, i8 5, i8 6, i8 7>], align 16
