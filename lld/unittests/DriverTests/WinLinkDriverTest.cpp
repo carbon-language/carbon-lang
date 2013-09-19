@@ -111,6 +111,18 @@ TEST_F(WinLinkParserTest, MachineX64) {
   EXPECT_TRUE(parse("link.exe", "/machine:x64", "a.obj", nullptr));
 }
 
+TEST_F(WinLinkParserTest, MajorImageVersion) {
+  EXPECT_FALSE(parse("link.exe", "/version:7", "foo.o", nullptr));
+  EXPECT_EQ(7, _context.getImageVersion().majorVersion);
+  EXPECT_EQ(0, _context.getImageVersion().minorVersion);
+}
+
+TEST_F(WinLinkParserTest, MajorMinorImageVersion) {
+  EXPECT_FALSE(parse("link.exe", "/version:72.35", "foo.o", nullptr));
+  EXPECT_EQ(72, _context.getImageVersion().majorVersion);
+  EXPECT_EQ(35, _context.getImageVersion().minorVersion);
+}
+
 TEST_F(WinLinkParserTest, MinMajorOSVersion) {
   EXPECT_FALSE(parse("link.exe", "/subsystem:windows,3", "foo.o", nullptr));
   EXPECT_EQ(llvm::COFF::IMAGE_SUBSYSTEM_WINDOWS_GUI, _context.getSubsystem());

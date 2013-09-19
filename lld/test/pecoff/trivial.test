@@ -4,8 +4,8 @@
 #
 # RUN: yaml2obj %p/Inputs/nop.obj.yaml > %t.obj
 #
-# RUN: lld -flavor link /out:%t1 /subsystem:console,3.11 /entry:start \
-# RUN:   /opt:noref -- %t.obj && llvm-readobj -file-headers %t1 \
+# RUN: lld -flavor link /out:%t1 /subsystem:console,3.11 /version:1.25 \
+# RUN:   /entry:start /opt:noref -- %t.obj && llvm-readobj -file-headers %t1 \
 # RUN:   | FileCheck -check-prefix=FILE %s
 #
 # RUN: lld -flavor link /out:%t1 /entry:start /opt:noref -- %t.obj \
@@ -40,8 +40,8 @@ FILE:   SectionAlignment: 4096
 FILE:   FileAlignment: 512
 FILE:   MajorOperatingSystemVersion: 3
 FILE:   MinorOperatingSystemVersion: 11
-FILE:   MajorImageVersion: 0
-FILE:   MinorImageVersion: 0
+FILE:   MajorImageVersion: 1
+FILE:   MinorImageVersion: 25
 FILE:   MajorSubsystemVersion: 3
 FILE:   MinorSubsystemVersion: 11
 FILE:   SizeOfImage: 8192

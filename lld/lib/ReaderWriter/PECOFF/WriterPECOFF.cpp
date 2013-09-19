@@ -179,10 +179,17 @@ public:
     // Sections in an executable file on disk should be sector-aligned (512 byte).
     _peHeader.FileAlignment = SECTOR_SIZE;
 
+    // The version number of the resultant executable/DLL. The number is purely
+    // informative, and neither the linker nor the loader won't use it. User can
+    // set the value using /version command line option. Default is 0.0.
+    PECOFFLinkingContext::Version imageVersion = context.getImageVersion();
+    _peHeader.MajorImageVersion = imageVersion.majorVersion;
+    _peHeader.MinorImageVersion = imageVersion.minorVersion;
+
     // The required Windows version number. This is the internal version and
     // shouldn't be confused with product name. Windows 7 is version 6.1 and
     // Windows 8 is 6.2, for example.
-    PECOFFLinkingContext::OSVersion minOSVersion = context.getMinOSVersion();
+    PECOFFLinkingContext::Version minOSVersion = context.getMinOSVersion();
     _peHeader.MajorOperatingSystemVersion = minOSVersion.majorVersion;
     _peHeader.MinorOperatingSystemVersion = minOSVersion.minorVersion;
     _peHeader.MajorSubsystemVersion = minOSVersion.majorVersion;

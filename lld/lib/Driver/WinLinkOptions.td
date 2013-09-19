@@ -20,6 +20,7 @@ defm mllvm   : P<"mllvm", "Options to pass to LLVM">;
 defm out     : P<"out", "Path to file to write output">;
 defm stack   : P<"stack", "Size of the stack">;
 defm machine : P<"machine", "Specify target platform">;
+defm version : P<"version", "Specify a version number in the PE header">;
 defm subsystem : P<"subsystem", "Specify subsystem">;
 
 // We cannot use multiclass P because class name "incl" is different

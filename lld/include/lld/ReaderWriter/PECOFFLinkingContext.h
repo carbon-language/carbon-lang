@@ -31,15 +31,15 @@ public:
       : _baseAddress(0x400000), _stackReserve(1024 * 1024), _stackCommit(4096),
         _heapReserve(1024 * 1024), _heapCommit(4096),
         _subsystem(llvm::COFF::IMAGE_SUBSYSTEM_UNKNOWN),
-        _machineType(llvm::COFF::IMAGE_FILE_MACHINE_I386),
+        _machineType(llvm::COFF::IMAGE_FILE_MACHINE_I386), _imageVersion(0, 0),
         _minOSVersion(6, 0), _nxCompat(true), _largeAddressAware(false),
         _baseRelocationEnabled(true), _terminalServerAware(true),
         _dynamicBaseEnabled(true), _imageType(ImageType::IMAGE_EXE) {
     setDeadStripping(true);
   }
 
-  struct OSVersion {
-    OSVersion(int v1, int v2) : majorVersion(v1), minorVersion(v2) {}
+  struct Version {
+    Version(int v1, int v2) : majorVersion(v1), minorVersion(v2) {}
     int majorVersion;
     int minorVersion;
   };
@@ -108,8 +108,11 @@ public:
   void setMachineType(MachineTypes type) { _machineType = type; }
   MachineTypes getMachineType() const { return _machineType; }
 
-  void setMinOSVersion(const OSVersion &version) { _minOSVersion = version; }
-  OSVersion getMinOSVersion() const { return _minOSVersion; }
+  void setImageVersion(const Version &version) { _imageVersion = version; }
+  Version getImageVersion() const { return _imageVersion; }
+
+  void setMinOSVersion(const Version &version) { _minOSVersion = version; }
+  Version getMinOSVersion() const { return _minOSVersion; }
 
   void setNxCompat(bool nxCompat) { _nxCompat = nxCompat; }
   bool isNxCompat() const { return _nxCompat; }
@@ -163,7 +166,8 @@ private:
   uint64_t _heapCommit;
   WindowsSubsystem _subsystem;
   MachineTypes _machineType;
-  OSVersion _minOSVersion;
+  Version _imageVersion;
+  Version _minOSVersion;
   bool _nxCompat;
   bool _largeAddressAware;
   bool _baseRelocationEnabled;

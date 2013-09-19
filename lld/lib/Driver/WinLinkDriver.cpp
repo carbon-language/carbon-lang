@@ -98,6 +98,20 @@ bool parseMemoryOption(StringRef arg, uint64_t &reserve, uint64_t &commit) {
   return false;
 }
 
+// Parse an argument for /version or /subsystem. The expected string is
+// "<integer>[.<integer>]".
+bool parseVersion(StringRef arg, uint32_t &major, uint32_t &minor) {
+  StringRef majorVersion, minorVersion;
+  llvm::tie(majorVersion, minorVersion) = arg.split('.');
+  if (minorVersion.empty())
+    minorVersion = "0";
+  if (majorVersion.getAsInteger(0, major))
+    return true;
+  if (minorVersion.getAsInteger(0, minor))
+    return true;
+  return false;
+}
+
 // Returns subsystem type for the given string.
 llvm::COFF::WindowsSubsystem stringToWinSubsystem(StringRef str) {
   return llvm::StringSwitch<llvm::COFF::WindowsSubsystem>(str.lower())
@@ -326,6 +340,13 @@ bool WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ct
       ctx.setMachineType(type);
       break;
     }
+    case OPT_version: {
+      uint32_t major, minor;
+      if (parseVersion(inputArg->getValue(), major, minor))
+        return true;
+      ctx.setImageVersion(PECOFFLinkingContext::Version(major, minor));
+      break;
+    }
     case OPT_subsystem: {
       // Parse /subsystem command line option. The form of /subsystem is
       // "subsystem_name[,majorOSVersion[.minorOSVersion]]".
@@ -333,16 +354,10 @@ bool WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ct
       llvm::tie(subsystemStr, osVersion) =
           StringRef(inputArg->getValue()).split(',');
       if (!osVersion.empty()) {
-        StringRef majorVersion, minorVersion;
-        llvm::tie(majorVersion, minorVersion) = osVersion.split('.');
-        if (minorVersion.empty())
-          minorVersion = "0";
-        int32_t major, minor;
-        if (majorVersion.getAsInteger(0, major))
+        uint32_t major, minor;
+        if (parseVersion(osVersion, major, minor))
           return true;
-        if (minorVersion.getAsInteger(0, minor))
-          return true;
-        ctx.setMinOSVersion(PECOFFLinkingContext::OSVersion(major, minor));
+        ctx.setMinOSVersion(PECOFFLinkingContext::Version(major, minor));
       }
       // Parse subsystem name.
       llvm::COFF::WindowsSubsystem subsystem =
