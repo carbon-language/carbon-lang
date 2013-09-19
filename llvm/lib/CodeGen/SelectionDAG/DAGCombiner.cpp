@@ -3341,7 +3341,6 @@ SDNode *DAGCombiner::MatchRotate(SDValue LHS, SDValue RHS, SDLoc DL) {
   unsigned OpSizeInBits = VT.getSizeInBits();
   SDValue LHSShiftArg = LHSShift.getOperand(0);
   SDValue LHSShiftAmt = LHSShift.getOperand(1);
-  SDValue RHSShiftArg = RHSShift.getOperand(0);
   SDValue RHSShiftAmt = RHSShift.getOperand(1);
 
   // fold (or (shl x, C1), (srl x, C2)) -> (rotl x, C1)
@@ -3425,23 +3424,6 @@ SDNode *DAGCombiner::MatchRotate(SDValue LHS, SDValue RHS, SDLoc DL) {
           return DAG.getNode(HasROTL ? ISD::ROTL : ISD::ROTR, DL, VT,
                              LHSShiftArg,
                              HasROTL ? LHSShiftAmt : RHSShiftAmt).getNode();
-        else if (LHSShiftArg.getOpcode() == ISD::ZERO_EXTEND ||
-                 LHSShiftArg.getOpcode() == ISD::ANY_EXTEND) {
-          // fold (or (shl (*ext x), (*ext y)),
-          //          (srl (*ext x), (*ext (sub 32, y)))) ->
-          //   (*ext (rotl x, y))
-          // fold (or (shl (*ext x), (*ext y)),
-          //          (srl (*ext x), (*ext (sub 32, y)))) ->
-          //   (*ext (rotr x, (sub 32, y)))
-          SDValue LArgExtOp0 = LHSShiftArg.getOperand(0);
-          EVT LArgVT = LArgExtOp0.getValueType();
-          if (LArgVT.getSizeInBits() == SUBC->getAPIntValue()) {
-            SDValue V = DAG.getNode(HasROTL ? ISD::ROTL : ISD::ROTR, DL, LArgVT,
-                             LArgExtOp0,
-                             HasROTL ? LHSShiftAmt : RHSShiftAmt);
-            return DAG.getNode(LHSShiftArg.getOpcode(), DL, VT, V).getNode();
-          }
-        }
     } else if (LExtOp0.getOpcode() == ISD::SUB &&
                RExtOp0 == LExtOp0.getOperand(1)) {
       // fold (or (shl x, (*ext (sub 32, y))), (srl x, (*ext y))) ->
@@ -3454,23 +3436,6 @@ SDNode *DAGCombiner::MatchRotate(SDValue LHS, SDValue RHS, SDLoc DL) {
           return DAG.getNode(HasROTR ? ISD::ROTR : ISD::ROTL, DL, VT,
                              LHSShiftArg,
                              HasROTR ? RHSShiftAmt : LHSShiftAmt).getNode();
-        else if (RHSShiftArg.getOpcode() == ISD::ZERO_EXTEND ||
-                 RHSShiftArg.getOpcode() == ISD::ANY_EXTEND) {
-          // fold (or (shl (*ext x), (*ext (sub 32, y))),
-          //          (srl (*ext x), (*ext y))) ->
-          //   (*ext (rotl x, y))
-          // fold (or (shl (*ext x), (*ext (sub 32, y))),
-          //          (srl (*ext x), (*ext y))) ->
-          //   (*ext (rotr x, (sub 32, y)))
-          SDValue RArgExtOp0 = RHSShiftArg.getOperand(0);
-          EVT RArgVT = RArgExtOp0.getValueType();
-          if (RArgVT.getSizeInBits() == SUBC->getAPIntValue()) {
-            SDValue V = DAG.getNode(HasROTR ? ISD::ROTR : ISD::ROTL, DL, RArgVT,
-                             RArgExtOp0,
-                             HasROTR ? RHSShiftAmt : LHSShiftAmt);
-            return DAG.getNode(RHSShiftArg.getOpcode(), DL, VT, V).getNode();
-          }
-        }
     }
   }
 
