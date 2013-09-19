@@ -120,6 +120,27 @@ void DWARFContext::dump(raw_ostream &OS, DIDumpType DumpType) {
     }
   }
 
+  if (DumpType == DIDT_All || DumpType == DIDT_GnuPubnames) {
+    OS << "\n.debug_gnu_pubnames contents:\n";
+    DataExtractor pubNames(getGnuPubNamesSection(), isLittleEndian(), 0);
+    offset = 0;
+    OS << "Length:                " << pubNames.getU32(&offset) << "\n";
+    OS << "Version:               " << pubNames.getU16(&offset) << "\n";
+    OS << "Offset in .debug_info: " << pubNames.getU32(&offset) << "\n";
+    OS << "Size:                  " << pubNames.getU32(&offset) << "\n";
+    OS << "Offset     Linkage  Kind    Name\n";
+    while (offset < getGnuPubNamesSection().size()) {
+      uint32_t dieRef = pubNames.getU32(&offset);
+      if (dieRef == 0)
+        break;
+      PubIndexEntryDescriptor desc(pubNames.getU8(&offset));
+      OS << format("0x%8.8x ", dieRef)
+         << format("%-8s", dwarf::GDBIndexEntryLinkageString(desc.Linkage))
+         << ' ' << dwarf::GDBIndexEntryKindString(desc.Kind) << ' '
+         << pubNames.getCStr(&offset) << "\n";
+    }
+  }
+
   if (DumpType == DIDT_All || DumpType == DIDT_AbbrevDwo) {
     const DWARFDebugAbbrev *D = getDebugAbbrevDWO();
     if (D) {
@@ -566,6 +587,7 @@ DWARFContextInMemory::DWARFContextInMemory(object::ObjectFile *Obj) :
         .Case("debug_str", &StringSection)
         .Case("debug_ranges", &RangeSection)
         .Case("debug_pubnames", &PubNamesSection)
+        .Case("debug_gnu_pubnames", &GnuPubNamesSection)
         .Case("debug_info.dwo", &InfoDWOSection)
         .Case("debug_abbrev.dwo", &AbbrevDWOSection)
         .Case("debug_str.dwo", &StringDWOSection)

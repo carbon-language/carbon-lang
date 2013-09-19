@@ -821,19 +821,18 @@ StringRef GDBIndexEntryLinkageString(GDBIndexEntryLinkage Linkage);
 /// offset of the cu within the debug_info section stored in those 24 bits.
 struct PubIndexEntryDescriptor {
   GDBIndexEntryKind Kind;
-  GDBIndexEntryLinkage Static;
-  PubIndexEntryDescriptor(GDBIndexEntryKind Kind, GDBIndexEntryLinkage Static)
-      : Kind(Kind), Static(Static) {}
+  GDBIndexEntryLinkage Linkage;
+  PubIndexEntryDescriptor(GDBIndexEntryKind Kind, GDBIndexEntryLinkage Linkage)
+      : Kind(Kind), Linkage(Linkage) {}
   /* implicit */ PubIndexEntryDescriptor(GDBIndexEntryKind Kind)
-      : Kind(Kind), Static(GIEL_EXTERNAL) {}
+      : Kind(Kind), Linkage(GIEL_EXTERNAL) {}
   explicit PubIndexEntryDescriptor(uint8_t Value)
       : Kind(static_cast<GDBIndexEntryKind>((Value & KIND_MASK) >>
                                             KIND_OFFSET)),
-        Static(static_cast<GDBIndexEntryLinkage>((Value & LINKAGE_MASK) >>
-                                                 LINKAGE_OFFSET)) {}
-  uint8_t toBits() {
-    return Kind << KIND_OFFSET | Static << LINKAGE_OFFSET;
-  }
+        Linkage(static_cast<GDBIndexEntryLinkage>((Value & LINKAGE_MASK) >>
+                                                  LINKAGE_OFFSET)) {}
+  uint8_t toBits() { return Kind << KIND_OFFSET | Linkage << LINKAGE_OFFSET; }
+
 private:
   enum {
     KIND_OFFSET = 4,

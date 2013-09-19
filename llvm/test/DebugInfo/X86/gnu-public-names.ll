@@ -1,4 +1,5 @@
-; RUN: llc -mtriple=x86_64-pc-linux-gnu -generate-gnu-dwarf-pub-sections -o - %s | FileCheck %s
+; RUN: llc -mtriple=x86_64-pc-linux-gnu -generate-gnu-dwarf-pub-sections < %s | FileCheck -check-prefix=ASM %s
+; RUN: llc -mtriple=x86_64-pc-linux-gnu -generate-gnu-dwarf-pub-sections -filetype=obj < %s | llvm-dwarfdump - | FileCheck %s
 ; ModuleID = 'dwarf-public-names.cpp'
 ;
 ; Generated from:
@@ -33,18 +34,20 @@
 ; }
 
 
-; CHECK: .byte   32                      # Kind: VARIABLE, EXTERNAL
-; CHECK-NEXT: .asciz   "global_namespace_variable" # External Name
-; CHECK: .byte   48                      # Kind: FUNCTION, EXTERNAL
-; CHECK-NEXT: .asciz   "global_namespace_function" # External Name
-; CHECK: .byte   176                     # Kind: FUNCTION, STATIC
-; CHECK-NEXT: .asciz   "static_member_function" # External Name
-; CHECK: .byte   32                      # Kind: VARIABLE, EXTERNAL
-; CHECK-NEXT: .asciz   "global_variable"      # External Name
-; CHECK: .byte   48                      # Kind: FUNCTION, EXTERNAL
-; CHECK-NEXT: .asciz   "global_function"      # External Name
-; CHECK: .byte   176                     # Kind: FUNCTION, STATIC
-; CHECK-NEXT: .asciz   "member_function"      # External Name
+; ASM: .byte   32                      # Kind: VARIABLE, EXTERNAL
+
+; CHECK: .debug_gnu_pubnames contents:
+; CHECK-NEXT: Length:   167
+; CHECK-NEXT: Version:  2
+; CHECK-NEXT: Offset in .debug_info: 0
+; CHECK-NEXT: Size:     317
+; CHECK-NEXT: Offset     Linkage  Kind     Name
+; CHECK-DAG:  0x00000094 EXTERNAL VARIABLE global_namespace_variable
+; CHECK-DAG:  0x000000a3 EXTERNAL FUNCTION global_namespace_function
+; CHECK-DAG:  0x000000e8 STATIC   FUNCTION static_member_function
+; CHECK-DAG:  0x0000007c EXTERNAL VARIABLE global_variable
+; CHECK-DAG:  0x000000ff EXTERNAL FUNCTION global_function
+; CHECK-DAG:  0x000000be STATIC   FUNCTION member_function
 
 %struct.C = type { i8 }
 
