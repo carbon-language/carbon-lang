@@ -57,7 +57,7 @@ typedef enum {
 } LLVMCodeGenFileType;
 
 /** Returns the first llvm::Target in the registered targets list. */
-LLVMTargetRef LLVMGetFirstTarget();
+LLVMTargetRef LLVMGetFirstTarget(void);
 /** Returns the next llvm::Target given a previous one (or null if there's none) */
 LLVMTargetRef LLVMGetNextTarget(LLVMTargetRef T);
 
