@@ -174,10 +174,10 @@ thread_return_t AsanThread::ThreadStart(uptr os_id) {
 }
 
 void AsanThread::SetThreadStackAndTls() {
-  uptr stack_size = 0, tls_size = 0;
-  GetThreadStackAndTls(tid() == 0, &stack_bottom_, &stack_size, &tls_begin_,
+  uptr tls_size = 0;
+  GetThreadStackAndTls(tid() == 0, &stack_bottom_, &stack_size_, &tls_begin_,
                        &tls_size);
-  stack_top_ = stack_bottom_ + stack_size;
+  stack_top_ = stack_bottom_ + stack_size_;
   tls_end_ = tls_begin_ + tls_size;
 
   int local;
