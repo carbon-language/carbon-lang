@@ -2166,7 +2166,7 @@ void X86TargetInfo::setSSELevel(llvm::StringMap<bool> &Features,
   case SSE1:
     Features["sse"] = false;
   case SSE2:
-    Features["sse2"] = false;
+    Features["sse2"] = Features["pclmul"] = Features["aes"] = false;
   case SSE3:
     Features["sse3"] = false;
     setXOPLevel(Features, NoXOP, false);

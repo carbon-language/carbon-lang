@@ -162,3 +162,27 @@
 
 // F16CNOAVX-NOT: #define __AVX__ 1
 // F16CNOAVX-NOT: #define __F16C__ 1
+
+// RUN: %clang -target i386-unknown-unknown -march=pentiumpro -mpclmul -x c -E -dM -o - %s | FileCheck --check-prefix=PCLMUL %s
+
+// PCLMUL: #define __PCLMUL__ 1
+// PCLMUL: #define __SSE2__ 1
+// PCLMUL-NOT: #define __SSE3__ 1
+
+// RUN: %clang -target i386-unknown-unknown -march=pentiumpro -mpclmul -mno-sse2 -x c -E -dM -o - %s | FileCheck --check-prefix=PCLMULNOSSE2 %s
+
+// PCLMULNOSSE2-NOT: #define __PCLMUL__ 1
+// PCLMULNOSSE2-NOT: #define __SSE2__ 1
+// PCLMULNOSSE2-NOT: #define __SSE3__ 1
+
+// RUN: %clang -target i386-unknown-unknown -march=pentiumpro -maes -x c -E -dM -o - %s | FileCheck --check-prefix=AES %s
+
+// AES: #define __AES__ 1
+// AES: #define __SSE2__ 1
+// AES-NOT: #define __SSE3__ 1
+
+// RUN: %clang -target i386-unknown-unknown -march=pentiumpro -maes -mno-sse2 -x c -E -dM -o - %s | FileCheck --check-prefix=AESNOSSE2 %s
+
+// AESNOSSE2-NOT: #define __AES__ 1
+// AESNOSSE2-NOT: #define __SSE2__ 1
+// AESNOSSE2-NOT: #define __SSE3__ 1
