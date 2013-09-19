@@ -881,6 +881,9 @@ bool AsmPrinter::doFinalization(Module &M) {
   if (!ModuleFlags.empty())
     getObjFileLowering().emitModuleFlags(OutStreamer, ModuleFlags, Mang, TM);
 
+  // Make sure we wrote out everything we need.
+  OutStreamer.Flush();
+
   // Finalize debug and EH information.
   if (DE) {
     {

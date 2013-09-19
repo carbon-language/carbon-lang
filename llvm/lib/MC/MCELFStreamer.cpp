@@ -272,7 +272,8 @@ void MCELFStreamer::EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                                                          ELF::SHF_WRITE |
                                                          ELF::SHF_ALLOC,
                                                          SectionKind::getBSS());
-    Symbol->setSection(*Section);
+
+    AssignSection(Symbol, Section);
 
     struct LocalCommon L = {&SD, Size, ByteAlignment};
     LocalCommons.push_back(L);
@@ -527,9 +528,7 @@ void MCELFStreamer::EmitBundleUnlock() {
   SD->setBundleLockState(MCSectionData::NotBundleLocked);
 }
 
-void MCELFStreamer::FinishImpl() {
-  EmitFrames(NULL, true);
-
+void MCELFStreamer::Flush() {
   for (std::vector<LocalCommon>::const_iterator i = LocalCommons.begin(),
                                                 e = LocalCommons.end();
        i != e; ++i) {
@@ -550,8 +549,17 @@ void MCELFStreamer::FinishImpl() {
       SectData.setAlignment(ByteAlignment);
   }
 
+  LocalCommons.clear();
+}
+
+void MCELFStreamer::FinishImpl() {
+  EmitFrames(NULL, true);
+
+  Flush();
+
   this->MCObjectStreamer::FinishImpl();
 }
+
 void MCELFStreamer::EmitTCEntry(const MCSymbol &S) {
   // Creates a R_PPC64_TOC relocation
   MCObjectStreamer::EmitSymbolValue(&S, 8);

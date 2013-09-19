@@ -86,6 +86,10 @@ private:
 
   MCSymbol *LastSymbol;
 
+  // SymbolOrdering - Tracks an index to represent the order
+  // a symbol was emitted in. Zero means we did not emit that symbol.
+  DenseMap<const MCSymbol *, unsigned> SymbolOrdering;
+
   /// SectionStack - This is stack of current and previous section
   /// values saved by PushSection.
   SmallVector<std::pair<MCSectionSubPair, MCSectionSubPair>, 4> SectionStack;
@@ -185,6 +189,12 @@ public:
     return MCSectionSubPair();
   }
 
+  /// GetSymbolOrder - Returns an index to represent the order
+  /// a symbol was emitted in. (zero if we did not emit that symbol)
+  unsigned GetSymbolOrder(const MCSymbol *Sym) const {
+    return SymbolOrdering.lookup(Sym);
+  }
+
   /// ChangeSection - Update streamer for a new active section.
   ///
   /// This is called by PopSection and SwitchSection, if the current
@@ -263,6 +273,12 @@ public:
 
   /// InitToTextSection - Create a text section and switch the streamer to it.
   virtual void InitToTextSection() = 0;
+
+  /// AssignSection - Sets the symbol's section.
+  ///
+  /// Each emitted symbol will be tracked in the ordering table,
+  /// so we can sort on them later.
+  void AssignSection(MCSymbol *Symbol, const MCSection *Section);
 
   /// EmitLabel - Emit a label for @p Symbol into the current section.
   ///
@@ -619,6 +635,9 @@ public:
   /// FIXME: Eventually replace it with some "target MC streamer" and move
   /// these methods there.
   virtual void EmitTCEntry(const MCSymbol &S);
+
+  /// Flush - Causes any cached state to be written out.
+  virtual void Flush() {}
 
   /// FinishImpl - Streamer specific finalization.
   virtual void FinishImpl() = 0;

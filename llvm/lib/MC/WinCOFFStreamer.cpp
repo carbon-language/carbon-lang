@@ -164,7 +164,7 @@ void WinCOFFStreamer::AddCommonSymbol(MCSymbol *Symbol, uint64_t Size,
 
   SymbolData.setExternal(External);
 
-  Symbol->setSection(*Section);
+  AssignSection(Symbol, Section);
 
   if (ByteAlignment != 1)
       new MCAlignFragment(ByteAlignment, 0, 0, ByteAlignment, &SectionData);

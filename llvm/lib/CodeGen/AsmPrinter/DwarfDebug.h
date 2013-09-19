@@ -300,6 +300,12 @@ public:
   unsigned getCUOffset(DIE *Die);
 };
 
+/// \brief Helper used to pair up a symbol and it's DWARF compile unit.
+struct SymbolCU {
+  const MCSymbol *Sym;
+  CompileUnit *CU;
+};
+
 /// \brief Collects and handles dwarf debug information.
 class DwarfDebug {
   // Target of Dwarf emission.
@@ -332,8 +338,12 @@ class DwarfDebug {
   // separated by a zero byte, mapped to a unique id.
   StringMap<unsigned, BumpPtrAllocator&> SourceIdMap;
 
+  // List of all labels used in the output.
+  std::vector<SymbolCU> Labels;
+
   // Provides a unique id per text section.
-  SetVector<const MCSection*> SectionMap;
+  typedef DenseMap<const MCSection *, SmallVector<SymbolCU, 8> > SectionMapType;
+  SectionMapType SectionMap;
 
   // List of arguments for current function.
   SmallVector<DbgVariable *, 8> CurrentFnArguments;
@@ -668,6 +678,9 @@ public:
   /// \brief Add a DIE to the set of types that we're going to pull into
   /// type units.
   void addTypeUnitType(DIE *Die) { TypeUnits.push_back(Die); }
+
+  /// \brief Add a label so that arange data can be generated for it.
+  void addLabel(SymbolCU SCU) { Labels.push_back(SCU); }
 
   /// \brief Look up the source id with the given directory and source file
   /// names. If none currently exists, create a new id and insert it in the

@@ -924,7 +924,7 @@ void DwarfDebug::beginModule() {
   MMI->setDebugInfoAvailability(true);
 
   // Prime section data.
-  SectionMap.insert(Asm->getObjFileLowering().getTextSection());
+  SectionMap[Asm->getObjFileLowering().getTextSection()];
 }
 
 // Attach DW_AT_inline attribute with inlined subprogram DIEs.
@@ -1077,16 +1077,39 @@ void DwarfDebug::finalizeModuleInfo() {
 }
 
 void DwarfDebug::endSections() {
-  // Standard sections final addresses.
-  Asm->OutStreamer.SwitchSection(Asm->getObjFileLowering().getTextSection());
-  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("text_end"));
-  Asm->OutStreamer.SwitchSection(Asm->getObjFileLowering().getDataSection());
-  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("data_end"));
+   // Filter labels by section.
+  for (size_t n = 0; n < Labels.size(); n++) {
+    const SymbolCU &SCU = Labels[n];
+    if (SCU.Sym->isInSection()) {
+      // Make a note of this symbol and it's section.
+      const MCSection *Section = &SCU.Sym->getSection();
+      if (!Section->getKind().isMetadata())
+        SectionMap[Section].push_back(SCU);
+    } else {
+      // Some symbols (e.g. common/bss on mach-o) can have no section but still
+      // appear in the output. This sucks as we rely on sections to build
+      // arange spans. We can do it without, but it's icky.
+      SectionMap[NULL].push_back(SCU);
+    }
+  }
 
-  // End text sections.
-  for (unsigned I = 0, E = SectionMap.size(); I != E; ++I) {
-    Asm->OutStreamer.SwitchSection(SectionMap[I]);
-    Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("section_end", I+1));
+  // Add terminating symbols for each section.
+  for (SectionMapType::iterator it = SectionMap.begin(); it != SectionMap.end();
+       it++) {
+    const MCSection *Section = it->first;
+    MCSymbol *Sym = NULL;
+
+    if (Section) {
+      Sym = Asm->GetTempSymbol(Section->getLabelEndName());
+      Asm->OutStreamer.SwitchSection(Section);
+      Asm->OutStreamer.EmitLabel(Sym);
+    }
+
+    // Insert a final terminator.
+    SymbolCU Entry;
+    Entry.CU = NULL;
+    Entry.Sym = Sym;
+    SectionMap[Section].push_back(Entry);
   }
 }
 
@@ -2659,11 +2682,172 @@ void DwarfDebug::emitDebugLoc() {
   }
 }
 
-// Emit visible names into a debug aranges section.
+struct SymbolCUSorter {
+  SymbolCUSorter(const MCStreamer &s) : Streamer(s) {}
+  const MCStreamer &Streamer;
+
+  bool operator() (const SymbolCU &A, const SymbolCU &B) {
+    unsigned IA = A.Sym ? Streamer.GetSymbolOrder(A.Sym) : 0;
+    unsigned IB = B.Sym ? Streamer.GetSymbolOrder(B.Sym) : 0;
+
+    // Symbols with no order assigned should be placed at the end.
+    // (e.g. section end labels)
+    if (IA == 0)
+      IA = (unsigned)(-1);
+    if (IB == 0)
+      IB = (unsigned)(-1);
+    return IA < IB;
+  }
+};
+
+static bool SectionSort(const MCSection *A, const MCSection *B) {
+    std::string LA = (A ? A->getLabelBeginName() : "");
+    std::string LB = (B ? B->getLabelBeginName() : "");
+    return LA < LB;
+}
+
+static bool CUSort(const CompileUnit *A, const CompileUnit *B) {
+    return (A->getUniqueID() < B->getUniqueID());
+}
+
+struct ArangeSpan {
+  const MCSymbol *Start, *End;
+};
+
+// Emit a debug aranges section, containing a CU lookup for any
+// address we can tie back to a CU.
 void DwarfDebug::emitDebugARanges() {
   // Start the dwarf aranges section.
   Asm->OutStreamer
       .SwitchSection(Asm->getObjFileLowering().getDwarfARangesSection());
+
+  typedef DenseMap<CompileUnit *, std::vector<ArangeSpan> > SpansType;
+
+  SpansType Spans;
+
+  // Build a list of sections used.
+  std::vector<const MCSection *> Sections;
+  for (SectionMapType::iterator it = SectionMap.begin(); it != SectionMap.end();
+       it++) {
+    const MCSection *Section = it->first;
+    Sections.push_back(Section);
+  }
+
+  // Sort the sections into order.
+  // This is only done to ensure consistent output order across different runs.
+  std::sort(Sections.begin(), Sections.end(), SectionSort);
+
+  // Build a set of address spans, sorted by CU.
+  for (size_t SecIdx=0;SecIdx<Sections.size();SecIdx++) {
+    const MCSection *Section = Sections[SecIdx];
+    SmallVector<SymbolCU, 8> &List = SectionMap[Section];
+    if (List.size() < 2)
+      continue;
+
+    // Sort the symbols by offset within the section.
+    SymbolCUSorter sorter(Asm->OutStreamer);
+    std::sort(List.begin(), List.end(), sorter);
+
+    // If we have no section (e.g. common), just write out
+    // individual spans for each symbol.
+    if (Section == NULL) {
+      for (size_t n = 0; n < List.size(); n++) {
+        const SymbolCU &Cur = List[n];
+
+        ArangeSpan Span;
+        Span.Start = Cur.Sym;
+        Span.End = NULL;
+        if (Cur.CU)
+          Spans[Cur.CU].push_back(Span);
+      }
+    } else {
+      // Build spans between each label.
+      const MCSymbol *StartSym = List[0].Sym;
+      for (size_t n = 1; n < List.size(); n++) {
+        const SymbolCU &Prev = List[n - 1];
+        const SymbolCU &Cur = List[n];
+
+        // Try and build the longest span we can within the same CU.
+        if (Cur.CU != Prev.CU) {
+          ArangeSpan Span;
+          Span.Start = StartSym;
+          Span.End = Cur.Sym;
+          Spans[Prev.CU].push_back(Span);
+          StartSym = Cur.Sym;
+        }
+      }
+    }
+  }
+
+  const MCSection *ISec = Asm->getObjFileLowering().getDwarfInfoSection();
+  unsigned PtrSize = Asm->getDataLayout().getPointerSize();
+
+  // Build a list of CUs used.
+  std::vector<CompileUnit *> CUs;
+  for (SpansType::iterator it = Spans.begin(); it != Spans.end(); it++) {
+    CompileUnit *CU = it->first;
+    CUs.push_back(CU);
+  }
+
+  // Sort the CU list (again, to ensure consistent output order).
+  std::sort(CUs.begin(), CUs.end(), CUSort);
+
+  // Emit an arange table for each CU we used.
+  for (size_t CUIdx=0;CUIdx<CUs.size();CUIdx++) {
+    CompileUnit *CU = CUs[CUIdx];
+    std::vector<ArangeSpan> &List = Spans[CU];
+
+    // Emit size of content not including length itself.
+    unsigned ContentSize
+        = sizeof(int16_t) // DWARF ARange version number
+        + sizeof(int32_t) // Offset of CU in the .debug_info section
+        + sizeof(int8_t)  // Pointer Size (in bytes)
+        + sizeof(int8_t); // Segment Size (in bytes)
+
+    unsigned TupleSize = PtrSize * 2;
+
+    // 7.20 in the Dwarf specs requires the table to be aligned to a tuple.
+    unsigned Padding = 0;
+    while (((sizeof(int32_t) + ContentSize + Padding) % TupleSize) != 0)
+      Padding++;
+
+    ContentSize += Padding;
+    ContentSize += (List.size() + 1) * TupleSize;
+
+    // For each compile unit, write the list of spans it covers.
+    Asm->OutStreamer.AddComment("Length of ARange Set");
+    Asm->EmitInt32(ContentSize);
+    Asm->OutStreamer.AddComment("DWARF Arange version number");
+    Asm->EmitInt16(dwarf::DW_ARANGES_VERSION);
+    Asm->OutStreamer.AddComment("Offset Into Debug Info Section");
+    Asm->EmitSectionOffset(
+        Asm->GetTempSymbol(ISec->getLabelBeginName(), CU->getUniqueID()),
+        DwarfInfoSectionSym);
+    Asm->OutStreamer.AddComment("Address Size (in bytes)");
+    Asm->EmitInt8(PtrSize);
+    Asm->OutStreamer.AddComment("Segment Size (in bytes)");
+    Asm->EmitInt8(0);
+
+    for (unsigned n = 0; n < Padding; n++)
+      Asm->EmitInt8(0xff);
+
+    for (unsigned n = 0; n < List.size(); n++) {
+      const ArangeSpan &Span = List[n];
+      Asm->EmitLabelReference(Span.Start, PtrSize);
+
+      // Calculate the size as being from the span start to it's end.
+      // If we have no valid end symbol, then we just cover the first byte.
+      // (this sucks, but I can't seem to figure out how to get the size)
+      if (Span.End)
+        Asm->EmitLabelDifference(Span.End, Span.Start, PtrSize);
+      else
+        Asm->OutStreamer.EmitIntValue(1, PtrSize);
+    }
+
+    Asm->OutStreamer.AddComment("ARange terminator");
+    Asm->OutStreamer.EmitIntValue(0, PtrSize);
+    Asm->OutStreamer.EmitIntValue(0, PtrSize);
+  }
 }
 
 // Emit visible names into a debug ranges section.

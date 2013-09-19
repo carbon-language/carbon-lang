@@ -183,7 +183,7 @@ private:
     MCELF::SetType(SD, ELF::STT_NOTYPE);
     MCELF::SetBinding(SD, ELF::STB_LOCAL);
     SD.setExternal(false);
-    Symbol->setSection(*getCurrentSection().first);
+    AssignSection(Symbol, getCurrentSection().first);
 
     const MCExpr *Value = MCSymbolRefExpr::Create(Start, getContext());
     Symbol->setVariableValue(Value);

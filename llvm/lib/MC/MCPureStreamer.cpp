@@ -121,7 +121,7 @@ void MCPureStreamer::EmitLabel(MCSymbol *Symbol) {
   assert(!Symbol->isVariable() && "Cannot emit a variable symbol!");
   assert(getCurrentSection().first && "Cannot emit before setting section!");
 
-  Symbol->setSection(*getCurrentSection().first);
+  AssignSection(Symbol, getCurrentSection().first);
 
   MCSymbolData &SD = getAssembler().getOrCreateSymbolData(*Symbol);
 

@@ -85,6 +85,8 @@ public:
 
   virtual void EmitValueToAlignment(unsigned, int64_t, unsigned, unsigned);
 
+  virtual void Flush();
+
   virtual void FinishImpl();
   /// @}
 

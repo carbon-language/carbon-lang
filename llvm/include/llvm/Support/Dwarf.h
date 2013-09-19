@@ -59,7 +59,8 @@ enum LLVMConstants {
   DWARF_VERSION = 4,       // Default dwarf version we output.
   DW_CIE_VERSION = 1,      // Common frame information version.
   DW_PUBTYPES_VERSION = 2, // Section version number for .debug_pubtypes.
-  DW_PUBNAMES_VERSION = 2  // Section version number for .debug_pubnames.
+  DW_PUBNAMES_VERSION = 2, // Section version number for .debug_pubnames.
+  DW_ARANGES_VERSION = 2   // Section version number for .debug_aranges.
 };
 
 // Special ID values that distinguish a CIE from a FDE in DWARF CFI.
