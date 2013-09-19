@@ -657,7 +657,6 @@ void MCAsmStreamer::EmitBytes(StringRef Data) {
     OS << MAI->getAsciiDirective();
   }
 
-  OS << ' ';
   PrintQuotedString(Data, OS);
   EmitEOL();
 }
