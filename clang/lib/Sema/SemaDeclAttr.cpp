@@ -4145,10 +4145,8 @@ static void handleNSReturnsRetainedAttr(Sema &S, Decl *D,
 
 static void handleObjCReturnsInnerPointerAttr(Sema &S, Decl *D,
                                               const AttributeList &attr) {
-  enum {
-    EP_ObjCMethod = 1,
-    EP_ObjCProperty
-  };
+  const int EP_ObjCMethod = 1;
+  const int EP_ObjCProperty = 2;
   
   SourceLocation loc = attr.getLoc();
   QualType resultType;
