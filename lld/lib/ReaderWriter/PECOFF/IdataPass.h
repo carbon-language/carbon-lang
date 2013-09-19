@@ -288,12 +288,20 @@ private:
     new (_alloc) ImportDirectoryAtom(context, loadName, dllAtoms);
   }
 
+  // Append vec2's elements at the end of vec1.
+  template <typename T, typename U>
+  void appendAtoms(vector<T *> &vec1, const vector<U *> &vec2) {
+    vec1.insert(vec1.end(), vec2.begin(), vec2.end());
+  }
+
   void connectAtoms(Context &context) {
-    coff::connectAtomsWithLayoutEdge(context.importDirectories);
-    coff::connectAtomsWithLayoutEdge(context.importLookupTables);
-    coff::connectAtomsWithLayoutEdge(context.importAddressTables);
-    coff::connectAtomsWithLayoutEdge(context.hintNameAtoms);
-    coff::connectAtomsWithLayoutEdge(context.dllNameAtoms);
+    vector<COFFBaseDefinedAtom *> atoms;
+    appendAtoms(atoms, context.importDirectories);
+    appendAtoms(atoms, context.importLookupTables);
+    appendAtoms(atoms, context.importAddressTables);
+    appendAtoms(atoms, context.dllNameAtoms);
+    appendAtoms(atoms, context.hintNameAtoms);
+    coff::connectAtomsWithLayoutEdge(atoms);
   }
 
   /// The addresses of the import dirctory and the import address table needs to
