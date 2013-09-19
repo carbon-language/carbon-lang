@@ -101,6 +101,9 @@ public:
                                    unsigned AddressSpace) const;
 
   virtual unsigned getAddressComputationCost(Type *PtrTy, bool IsComplex) const;
+  
+  virtual unsigned getReductionCost(unsigned Opcode, Type *Ty,
+                                    bool IsPairwiseForm) const;
 
   /// @}
 };
@@ -605,3 +608,84 @@ unsigned X86TTI::getAddressComputationCost(Type *Ty, bool IsComplex) const {
 
   return TargetTransformInfo::getAddressComputationCost(Ty, IsComplex);
 }
+
+unsigned X86TTI::getReductionCost(unsigned Opcode, Type *ValTy,
+                                  bool IsPairwise) const {
+  
+  std::pair<unsigned, MVT> LT = TLI->getTypeLegalizationCost(ValTy);
+  
+  MVT MTy = LT.second;
+  
+  int ISD = TLI->InstructionOpcodeToISD(Opcode);
+  assert(ISD && "Invalid opcode");
+ 
+  // We use the Intel Architecture Code Analyzer(IACA) to measure the throughput 
+  // and make it as the cost. 
+ 
+  static const CostTblEntry<MVT::SimpleValueType> SSE42CostTblPairWise[] = {
+    { ISD::FADD,  MVT::v2f64,   2 },
+    { ISD::FADD,  MVT::v4f32,   4 },
+    { ISD::ADD,   MVT::v2i64,   2 },      // The data reported by the IACA tool is "1.6".
+    { ISD::ADD,   MVT::v4i32,   3 },      // The data reported by the IACA tool is "3.5".
+    { ISD::ADD,   MVT::v8i16,   5 },
+  };
+ 
+  static const CostTblEntry<MVT::SimpleValueType> AVX1CostTblPairWise[] = {
+    { ISD::FADD,  MVT::v4f32,   4 },
+    { ISD::FADD,  MVT::v4f64,   5 },
+    { ISD::FADD,  MVT::v8f32,   7 },
+    { ISD::ADD,   MVT::v2i64,   1 },      // The data reported by the IACA tool is "1.5".
+    { ISD::ADD,   MVT::v4i32,   3 },      // The data reported by the IACA tool is "3.5".
+    { ISD::ADD,   MVT::v4i64,   5 },      // The data reported by the IACA tool is "4.8".
+    { ISD::ADD,   MVT::v8i16,   5 },
+    { ISD::ADD,   MVT::v8i32,   5 },
+  };
+
+  static const CostTblEntry<MVT::SimpleValueType> SSE42CostTblNoPairWise[] = {
+    { ISD::FADD,  MVT::v2f64,   2 },
+    { ISD::FADD,  MVT::v4f32,   4 },
+    { ISD::ADD,   MVT::v2i64,   2 },      // The data reported by the IACA tool is "1.6".
+    { ISD::ADD,   MVT::v4i32,   3 },      // The data reported by the IACA tool is "3.3".
+    { ISD::ADD,   MVT::v8i16,   4 },      // The data reported by the IACA tool is "4.3".
+  };
+  
+  static const CostTblEntry<MVT::SimpleValueType> AVX1CostTblNoPairWise[] = {
+    { ISD::FADD,  MVT::v4f32,   3 },
+    { ISD::FADD,  MVT::v4f64,   3 },
+    { ISD::FADD,  MVT::v8f32,   4 },
+    { ISD::ADD,   MVT::v2i64,   1 },      // The data reported by the IACA tool is "1.5".
+    { ISD::ADD,   MVT::v4i32,   3 },      // The data reported by the IACA tool is "2.8".
+    { ISD::ADD,   MVT::v4i64,   3 },
+    { ISD::ADD,   MVT::v8i16,   4 },
+    { ISD::ADD,   MVT::v8i32,   5 },
+  };
+  
+  if (IsPairwise) {
+    if (ST->hasAVX()) {
+      int Idx = CostTableLookup(AVX1CostTblPairWise, ISD, MTy);
+      if (Idx != -1)
+        return LT.first * AVX1CostTblPairWise[Idx].Cost;
+    }
+  
+    if (ST->hasSSE42()) {
+      int Idx = CostTableLookup(SSE42CostTblPairWise, ISD, MTy);
+      if (Idx != -1)
+        return LT.first * SSE42CostTblPairWise[Idx].Cost;
+    }
+  } else {
+    if (ST->hasAVX()) {
+      int Idx = CostTableLookup(AVX1CostTblNoPairWise, ISD, MTy);
+      if (Idx != -1)
+        return LT.first * AVX1CostTblNoPairWise[Idx].Cost;
+    }
+    
+    if (ST->hasSSE42()) {
+      int Idx = CostTableLookup(SSE42CostTblNoPairWise, ISD, MTy);
+      if (Idx != -1)
+        return LT.first * SSE42CostTblNoPairWise[Idx].Cost;
+    }
+  }
+
+  return TargetTransformInfo::getReductionCost(Opcode, ValTy, IsPairwise);
+}
+
