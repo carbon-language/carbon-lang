@@ -141,6 +141,8 @@ LLVMGenericValueRef LLVMRunFunction(LLVMExecutionEngineRef EE, LLVMValueRef F,
                                     unsigned NumArgs,
                                     LLVMGenericValueRef *Args);
 
+void *LLVMGetPointerToFunction(LLVMExecutionEngineRef EE, LLVMValueRef F);
+
 void LLVMFreeMachineCodeForFunction(LLVMExecutionEngineRef EE, LLVMValueRef F);
 
 void LLVMAddModule(LLVMExecutionEngineRef EE, LLVMModuleRef M);
