@@ -70,10 +70,6 @@
 #include <f16cintrin.h>
 #endif
 
- #ifdef __SHA__
- #include <shaintrin.h>
- #endif
-
 // FIXME: LWP
 
 #endif /* __X86INTRIN_H */

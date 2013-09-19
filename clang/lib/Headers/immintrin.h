@@ -111,4 +111,8 @@ _xtest(void)
 }
 #endif
 
+#ifdef __SHA__
+#include <shaintrin.h>
+#endif
+
 #endif /* __IMMINTRIN_H */

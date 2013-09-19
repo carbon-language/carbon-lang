@@ -22,7 +22,7 @@
  */
 
 #ifndef __X86INTRIN_H
-#error "Never use <shaintrin.h> directly; include <x86intrin.h> instead."
+#error "Never use <shaintrin.h> directly; include <immintrin.h> instead."
 #endif
 
 #ifndef __SHAINTRIN_H
