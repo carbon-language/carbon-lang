@@ -313,8 +313,14 @@ TSAN_INTERCEPTOR(int, __cxa_atexit, void (*f)(void *a), void *arg, void *dso) {
   if (cur_thread()->in_symbolizer)
     return 0;
   SCOPED_TSAN_INTERCEPTOR(__cxa_atexit, f, arg, dso);
-  if (dso)
-    return REAL(__cxa_atexit)(f, arg, dso);
+  if (dso) {
+    // Memory allocation in __cxa_atexit will race with free during exit,
+    // because we do not see synchronization around atexit callback list.
+    ThreadIgnoreBegin(thr);
+    int res = REAL(__cxa_atexit)(f, arg, dso);
+    ThreadIgnoreEnd(thr);
+    return res;
+  }
   return atexit_ctx->atexit(thr, pc, false, (void(*)())f, arg);
 }
 
