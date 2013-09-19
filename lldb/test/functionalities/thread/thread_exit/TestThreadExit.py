@@ -81,7 +81,7 @@ class ThreadExitTestCase(TestBase):
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT + " 2",
             substrs = ['stopped',
                        'thread #1',
-                       '* thread #2',
+                       'thread #2',
                        'stop reason = breakpoint 2',
                        'thread #3'])
 
@@ -96,7 +96,7 @@ class ThreadExitTestCase(TestBase):
         # The stop reason of the thread should be breakpoint 3.
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT + " 3",
             substrs = ['stopped',
-                       '* thread #1',
+                       'thread #1',
                        'stop reason = breakpoint 3',
                        'thread #3',
                        ])
@@ -112,7 +112,7 @@ class ThreadExitTestCase(TestBase):
         # The stop reason of the thread should be breakpoint 4.
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT + " 4",
             substrs = ['stopped',
-                       '* thread #1',
+                       'thread #1',
                        'stop reason = breakpoint 4'])
 
         # Update the number of threads
