@@ -505,8 +505,6 @@ public:
     case LinkageSpecDecl::lang_cxx:
       LinkageLabel = "extern \"C++\" {}";
       break;
-    default:
-      LinkageLabel = "extern \"\" {}";
     }
     if (!PPTracker.checkForIncludesInBlock(PP, BlockRange, LinkageLabel,
                                            errs()))
