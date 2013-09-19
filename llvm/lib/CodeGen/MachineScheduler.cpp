@@ -155,7 +155,7 @@ DefaultSchedRegistry("default", "Use the target's default scheduler choice.",
 
 /// Forward declare the standard machine scheduler. This will be used as the
 /// default scheduler if the target does not set a default.
-static ScheduleDAGInstrs *createConvergingSched(MachineSchedContext *C);
+static ScheduleDAGInstrs *createGenericSched(MachineSchedContext *C);
 
 
 /// Decrement this iterator until reaching the top or a non-debug instr.
@@ -243,7 +243,7 @@ bool MachineScheduler::runOnMachineFunction(MachineFunction &mf) {
     // Get the default scheduler set by the target.
     Ctor = MachineSchedRegistry::getDefault();
     if (!Ctor) {
-      Ctor = createConvergingSched;
+      Ctor = createGenericSched;
       MachineSchedRegistry::setDefault(Ctor);
     }
   }
@@ -1303,13 +1303,13 @@ void CopyConstrain::apply(ScheduleDAGMI *DAG) {
 }
 
 //===----------------------------------------------------------------------===//
-// ConvergingScheduler - Implementation of the generic MachineSchedStrategy.
+// GenericScheduler - Implementation of the generic MachineSchedStrategy.
 //===----------------------------------------------------------------------===//
 
 namespace {
-/// ConvergingScheduler shrinks the unscheduled zone using heuristics to balance
+/// GenericScheduler shrinks the unscheduled zone using heuristics to balance
 /// the schedule.
-class ConvergingScheduler : public MachineSchedStrategy {
+class GenericScheduler : public MachineSchedStrategy {
 public:
   /// Represent the type of SchedCandidate found within a single queue.
   /// pickNodeBidirectional depends on these listed by decreasing priority.
@@ -1319,7 +1319,7 @@ public:
     TopDepthReduce, TopPathReduce, NextDefUse, NodeOrder};
 
 #ifndef NDEBUG
-  static const char *getReasonStr(ConvergingScheduler::CandReason Reason);
+  static const char *getReasonStr(GenericScheduler::CandReason Reason);
 #endif
 
   /// Policy for scheduling the next instruction in the candidate's zone.
@@ -1350,7 +1350,7 @@ public:
     }
   };
 
-  /// Store the state used by ConvergingScheduler heuristics, required for the
+  /// Store the state used by GenericScheduler heuristics, required for the
   /// lifetime of one invocation of pickNode().
   struct SchedCandidate {
     CandPolicy Policy;
@@ -1514,7 +1514,7 @@ public:
     /// PendingFlag set.
     SchedBoundary(unsigned ID, const Twine &Name):
       DAG(0), SchedModel(0), Rem(0), Available(ID, Name+".A"),
-      Pending(ID << ConvergingScheduler::LogMaxQID, Name+".P"),
+      Pending(ID << GenericScheduler::LogMaxQID, Name+".P"),
       HazardRec(0) {
       reset();
     }
@@ -1525,7 +1525,7 @@ public:
               SchedRemainder *rem);
 
     bool isTop() const {
-      return Available.getID() == ConvergingScheduler::TopQID;
+      return Available.getID() == GenericScheduler::TopQID;
     }
 
 #ifndef NDEBUG
@@ -1616,7 +1616,7 @@ public:
     LogMaxQID = 2
   };
 
-  ConvergingScheduler(const MachineSchedContext *C):
+  GenericScheduler(const MachineSchedContext *C):
     Context(C), DAG(0), SchedModel(0), TRI(0),
     Top(TopQID, "TopQ"), Bot(BotQID, "BotQ") {}
 
@@ -1661,7 +1661,7 @@ protected:
 };
 } // namespace
 
-void ConvergingScheduler::SchedRemainder::
+void GenericScheduler::SchedRemainder::
 init(ScheduleDAGMI *DAG, const TargetSchedModel *SchedModel) {
   reset();
   if (!SchedModel->hasInstrSchedModel())
@@ -1682,7 +1682,7 @@ init(ScheduleDAGMI *DAG, const TargetSchedModel *SchedModel) {
   }
 }
 
-void ConvergingScheduler::SchedBoundary::
+void GenericScheduler::SchedBoundary::
 init(ScheduleDAGMI *dag, const TargetSchedModel *smodel, SchedRemainder *rem) {
   reset();
   DAG = dag;
@@ -1693,7 +1693,7 @@ init(ScheduleDAGMI *dag, const TargetSchedModel *smodel, SchedRemainder *rem) {
 }
 
 /// Initialize the per-region scheduling policy.
-void ConvergingScheduler::initPolicy(MachineBasicBlock::iterator Begin,
+void GenericScheduler::initPolicy(MachineBasicBlock::iterator Begin,
                                      MachineBasicBlock::iterator End,
                                      unsigned NumRegionInstrs) {
   const TargetMachine &TM = Context->MF->getTarget();
@@ -1734,7 +1734,7 @@ void ConvergingScheduler::initPolicy(MachineBasicBlock::iterator Begin,
   }
 }
 
-void ConvergingScheduler::initialize(ScheduleDAGMI *dag) {
+void GenericScheduler::initialize(ScheduleDAGMI *dag) {
   DAG = dag;
   SchedModel = DAG->getSchedModel();
   TRI = DAG->TRI;
@@ -1759,7 +1759,7 @@ void ConvergingScheduler::initialize(ScheduleDAGMI *dag) {
   }
 }
 
-void ConvergingScheduler::releaseTopNode(SUnit *SU) {
+void GenericScheduler::releaseTopNode(SUnit *SU) {
   if (SU->isScheduled)
     return;
 
@@ -1778,7 +1778,7 @@ void ConvergingScheduler::releaseTopNode(SUnit *SU) {
   Top.releaseNode(SU, SU->TopReadyCycle);
 }
 
-void ConvergingScheduler::releaseBottomNode(SUnit *SU) {
+void GenericScheduler::releaseBottomNode(SUnit *SU) {
   if (SU->isScheduled)
     return;
 
@@ -1808,7 +1808,7 @@ void ConvergingScheduler::releaseBottomNode(SUnit *SU) {
 /// InFlightResources = InFlightIterations * LoopResources
 ///
 /// TODO: Check execution resources in addition to IssueCount.
-void ConvergingScheduler::checkAcyclicLatency() {
+void GenericScheduler::checkAcyclicLatency() {
   if (Rem.CyclicCritPath == 0 || Rem.CyclicCritPath >= Rem.CriticalPath)
     return;
 
@@ -1836,7 +1836,7 @@ void ConvergingScheduler::checkAcyclicLatency() {
           dbgs() << "  ACYCLIC LATENCY LIMIT\n");
 }
 
-void ConvergingScheduler::registerRoots() {
+void GenericScheduler::registerRoots() {
   Rem.CriticalPath = DAG->ExitSU.getDepth();
 
   // Some roots may not feed into ExitSU. Check all of them in case.
@@ -1866,7 +1866,7 @@ void ConvergingScheduler::registerRoots() {
 /// can dispatch per cycle.
 ///
 /// TODO: Also check whether the SU must start a new group.
-bool ConvergingScheduler::SchedBoundary::checkHazard(SUnit *SU) {
+bool GenericScheduler::SchedBoundary::checkHazard(SUnit *SU) {
   if (HazardRec->isEnabled())
     return HazardRec->getHazardType(SU) != ScheduleHazardRecognizer::NoHazard;
 
@@ -1880,7 +1880,7 @@ bool ConvergingScheduler::SchedBoundary::checkHazard(SUnit *SU) {
 }
 
 // Find the unscheduled node in ReadySUs with the highest latency.
-unsigned ConvergingScheduler::SchedBoundary::
+unsigned GenericScheduler::SchedBoundary::
 findMaxLatency(ArrayRef<SUnit*> ReadySUs) {
   SUnit *LateSU = 0;
   unsigned RemLatency = 0;
@@ -1902,7 +1902,7 @@ findMaxLatency(ArrayRef<SUnit*> ReadySUs) {
 // Count resources in this zone and the remaining unscheduled
 // instruction. Return the max count, scaled. Set OtherCritIdx to the critical
 // resource index, or zero if the zone is issue limited.
-unsigned ConvergingScheduler::SchedBoundary::
+unsigned GenericScheduler::SchedBoundary::
 getOtherResourceCount(unsigned &OtherCritIdx) {
   OtherCritIdx = 0;
   if (!SchedModel->hasInstrSchedModel())
@@ -1930,7 +1930,7 @@ getOtherResourceCount(unsigned &OtherCritIdx) {
 
 /// Set the CandPolicy for this zone given the current resources and latencies
 /// inside and outside the zone.
-void ConvergingScheduler::SchedBoundary::setPolicy(CandPolicy &Policy,
+void GenericScheduler::SchedBoundary::setPolicy(CandPolicy &Policy,
                                                    SchedBoundary &OtherZone) {
   // Now that potential stalls have been considered, apply preemptive heuristics
   // based on the the total latency and resources inside and outside this
@@ -1989,7 +1989,7 @@ void ConvergingScheduler::SchedBoundary::setPolicy(CandPolicy &Policy,
     Policy.DemandResIdx = OtherCritIdx;
 }
 
-void ConvergingScheduler::SchedBoundary::releaseNode(SUnit *SU,
+void GenericScheduler::SchedBoundary::releaseNode(SUnit *SU,
                                                      unsigned ReadyCycle) {
   if (ReadyCycle < MinReadyCycle)
     MinReadyCycle = ReadyCycle;
@@ -2007,7 +2007,7 @@ void ConvergingScheduler::SchedBoundary::releaseNode(SUnit *SU,
 }
 
 /// Move the boundary of scheduled code by one cycle.
-void ConvergingScheduler::SchedBoundary::bumpCycle(unsigned NextCycle) {
+void GenericScheduler::SchedBoundary::bumpCycle(unsigned NextCycle) {
   if (SchedModel->getMicroOpBufferSize() == 0) {
     assert(MinReadyCycle < UINT_MAX && "MinReadyCycle uninitialized");
     if (MinReadyCycle > NextCycle)
@@ -2045,7 +2045,7 @@ void ConvergingScheduler::SchedBoundary::bumpCycle(unsigned NextCycle) {
   DEBUG(dbgs() << "Cycle: " << CurrCycle << ' ' << Available.getName() << '\n');
 }
 
-void ConvergingScheduler::SchedBoundary::incExecutedResources(unsigned PIdx,
+void GenericScheduler::SchedBoundary::incExecutedResources(unsigned PIdx,
                                                               unsigned Count) {
   ExecutedResCounts[PIdx] += Count;
   if (ExecutedResCounts[PIdx] > MaxExecutedResCount)
@@ -2059,7 +2059,7 @@ void ConvergingScheduler::SchedBoundary::incExecutedResources(unsigned PIdx,
 ///
 /// \return the next cycle at which the instruction may execute without
 /// oversubscribing resources.
-unsigned ConvergingScheduler::SchedBoundary::
+unsigned GenericScheduler::SchedBoundary::
 countResource(unsigned PIdx, unsigned Cycles, unsigned ReadyCycle) {
   unsigned Factor = SchedModel->getResourceFactor(PIdx);
   unsigned Count = Factor * Cycles;
@@ -2084,7 +2084,7 @@ countResource(unsigned PIdx, unsigned Cycles, unsigned ReadyCycle) {
 }
 
 /// Move the boundary of scheduled code by one SUnit.
-void ConvergingScheduler::SchedBoundary::bumpNode(SUnit *SU) {
+void GenericScheduler::SchedBoundary::bumpNode(SUnit *SU) {
   // Update the reservation table.
   if (HazardRec->isEnabled()) {
     if (!isTop() && SU->isCall) {
@@ -2188,7 +2188,7 @@ void ConvergingScheduler::SchedBoundary::bumpNode(SUnit *SU) {
 
 /// Release pending ready nodes in to the available queue. This makes them
 /// visible to heuristics.
-void ConvergingScheduler::SchedBoundary::releasePending() {
+void GenericScheduler::SchedBoundary::releasePending() {
   // If the available queue is empty, it is safe to reset MinReadyCycle.
   if (Available.empty())
     MinReadyCycle = UINT_MAX;
@@ -2218,7 +2218,7 @@ void ConvergingScheduler::SchedBoundary::releasePending() {
 }
 
 /// Remove SU from the ready set for this boundary.
-void ConvergingScheduler::SchedBoundary::removeReady(SUnit *SU) {
+void GenericScheduler::SchedBoundary::removeReady(SUnit *SU) {
   if (Available.isInQueue(SU))
     Available.remove(Available.find(SU));
   else {
@@ -2230,7 +2230,7 @@ void ConvergingScheduler::SchedBoundary::removeReady(SUnit *SU) {
 /// If this queue only has one ready candidate, return it. As a side effect,
 /// defer any nodes that now hit a hazard, and advance the cycle until at least
 /// one node is ready. If multiple instructions are ready, return NULL.
-SUnit *ConvergingScheduler::SchedBoundary::pickOnlyChoice() {
+SUnit *GenericScheduler::SchedBoundary::pickOnlyChoice() {
   if (CheckPending)
     releasePending();
 
@@ -2259,7 +2259,7 @@ SUnit *ConvergingScheduler::SchedBoundary::pickOnlyChoice() {
 #ifndef NDEBUG
 // This is useful information to dump after bumpNode.
 // Note that the Queue contents are more useful before pickNodeFromQueue.
-void ConvergingScheduler::SchedBoundary::dumpScheduledState() {
+void GenericScheduler::SchedBoundary::dumpScheduledState() {
   unsigned ResFactor;
   unsigned ResCount;
   if (ZoneCritResIdx) {
@@ -2282,7 +2282,7 @@ void ConvergingScheduler::SchedBoundary::dumpScheduledState() {
 }
 #endif
 
-void ConvergingScheduler::SchedCandidate::
+void GenericScheduler::SchedCandidate::
 initResourceDelta(const ScheduleDAGMI *DAG,
                   const TargetSchedModel *SchedModel) {
   if (!Policy.ReduceResIdx && !Policy.DemandResIdx)
@@ -2302,9 +2302,9 @@ initResourceDelta(const ScheduleDAGMI *DAG,
 
 /// Return true if this heuristic determines order.
 static bool tryLess(int TryVal, int CandVal,
-                    ConvergingScheduler::SchedCandidate &TryCand,
-                    ConvergingScheduler::SchedCandidate &Cand,
-                    ConvergingScheduler::CandReason Reason) {
+                    GenericScheduler::SchedCandidate &TryCand,
+                    GenericScheduler::SchedCandidate &Cand,
+                    GenericScheduler::CandReason Reason) {
   if (TryVal < CandVal) {
     TryCand.Reason = Reason;
     return true;
@@ -2319,9 +2319,9 @@ static bool tryLess(int TryVal, int CandVal,
 }
 
 static bool tryGreater(int TryVal, int CandVal,
-                       ConvergingScheduler::SchedCandidate &TryCand,
-                       ConvergingScheduler::SchedCandidate &Cand,
-                       ConvergingScheduler::CandReason Reason) {
+                       GenericScheduler::SchedCandidate &TryCand,
+                       GenericScheduler::SchedCandidate &Cand,
+                       GenericScheduler::CandReason Reason) {
   if (TryVal > CandVal) {
     TryCand.Reason = Reason;
     return true;
@@ -2337,9 +2337,9 @@ static bool tryGreater(int TryVal, int CandVal,
 
 static bool tryPressure(const PressureChange &TryP,
                         const PressureChange &CandP,
-                        ConvergingScheduler::SchedCandidate &TryCand,
-                        ConvergingScheduler::SchedCandidate &Cand,
-                        ConvergingScheduler::CandReason Reason) {
+                        GenericScheduler::SchedCandidate &TryCand,
+                        GenericScheduler::SchedCandidate &Cand,
+                        GenericScheduler::CandReason Reason) {
   int TryRank = TryP.getPSetOrMax();
   int CandRank = CandP.getPSetOrMax();
   // If both candidates affect the same set, go with the smallest increase.
@@ -2391,27 +2391,27 @@ static int biasPhysRegCopy(const SUnit *SU, bool isTop) {
   return 0;
 }
 
-static bool tryLatency(ConvergingScheduler::SchedCandidate &TryCand,
-                       ConvergingScheduler::SchedCandidate &Cand,
-                       ConvergingScheduler::SchedBoundary &Zone) {
+static bool tryLatency(GenericScheduler::SchedCandidate &TryCand,
+                       GenericScheduler::SchedCandidate &Cand,
+                       GenericScheduler::SchedBoundary &Zone) {
   if (Zone.isTop()) {
     if (Cand.SU->getDepth() > Zone.getScheduledLatency()) {
       if (tryLess(TryCand.SU->getDepth(), Cand.SU->getDepth(),
-                  TryCand, Cand, ConvergingScheduler::TopDepthReduce))
+                  TryCand, Cand, GenericScheduler::TopDepthReduce))
         return true;
     }
     if (tryGreater(TryCand.SU->getHeight(), Cand.SU->getHeight(),
-                   TryCand, Cand, ConvergingScheduler::TopPathReduce))
+                   TryCand, Cand, GenericScheduler::TopPathReduce))
       return true;
   }
   else {
     if (Cand.SU->getHeight() > Zone.getScheduledLatency()) {
       if (tryLess(TryCand.SU->getHeight(), Cand.SU->getHeight(),
-                  TryCand, Cand, ConvergingScheduler::BotHeightReduce))
+                  TryCand, Cand, GenericScheduler::BotHeightReduce))
         return true;
     }
     if (tryGreater(TryCand.SU->getDepth(), Cand.SU->getDepth(),
-                   TryCand, Cand, ConvergingScheduler::BotPathReduce))
+                   TryCand, Cand, GenericScheduler::BotPathReduce))
       return true;
   }
   return false;
@@ -2428,7 +2428,7 @@ static bool tryLatency(ConvergingScheduler::SchedCandidate &TryCand,
 /// \param Zone describes the scheduled zone that we are extending.
 /// \param RPTracker describes reg pressure within the scheduled zone.
 /// \param TempTracker is a scratch pressure tracker to reuse in queries.
-void ConvergingScheduler::tryCandidate(SchedCandidate &Cand,
+void GenericScheduler::tryCandidate(SchedCandidate &Cand,
                                        SchedCandidate &TryCand,
                                        SchedBoundary &Zone,
                                        const RegPressureTracker &RPTracker,
@@ -2554,8 +2554,8 @@ void ConvergingScheduler::tryCandidate(SchedCandidate &Cand,
 }
 
 #ifndef NDEBUG
-const char *ConvergingScheduler::getReasonStr(
-  ConvergingScheduler::CandReason Reason) {
+const char *GenericScheduler::getReasonStr(
+  GenericScheduler::CandReason Reason) {
   switch (Reason) {
   case NoCand:         return "NOCAND    ";
   case PhysRegCopy:    return "PREG-COPY";
@@ -2576,7 +2576,7 @@ const char *ConvergingScheduler::getReasonStr(
   llvm_unreachable("Unknown reason!");
 }
 
-void ConvergingScheduler::traceCandidate(const SchedCandidate &Cand) {
+void GenericScheduler::traceCandidate(const SchedCandidate &Cand) {
   PressureChange P;
   unsigned ResIdx = 0;
   unsigned Latency = 0;
@@ -2634,7 +2634,7 @@ void ConvergingScheduler::traceCandidate(const SchedCandidate &Cand) {
 /// TODO: getMaxPressureDelta results can be mostly cached for each SUnit during
 /// DAG building. To adjust for the current scheduling location we need to
 /// maintain the number of vreg uses remaining to be top-scheduled.
-void ConvergingScheduler::pickNodeFromQueue(SchedBoundary &Zone,
+void GenericScheduler::pickNodeFromQueue(SchedBoundary &Zone,
                                             const RegPressureTracker &RPTracker,
                                             SchedCandidate &Cand) {
   ReadyQueue &Q = Zone.Available;
@@ -2659,14 +2659,14 @@ void ConvergingScheduler::pickNodeFromQueue(SchedBoundary &Zone,
   }
 }
 
-static void tracePick(const ConvergingScheduler::SchedCandidate &Cand,
+static void tracePick(const GenericScheduler::SchedCandidate &Cand,
                       bool IsTop) {
   DEBUG(dbgs() << "Pick " << (IsTop ? "Top " : "Bot ")
-        << ConvergingScheduler::getReasonStr(Cand.Reason) << '\n');
+        << GenericScheduler::getReasonStr(Cand.Reason) << '\n');
 }
 
 /// Pick the best candidate node from either the top or bottom queue.
-SUnit *ConvergingScheduler::pickNodeBidirectional(bool &IsTopNode) {
+SUnit *GenericScheduler::pickNodeBidirectional(bool &IsTopNode) {
   // Schedule as far as possible in the direction of no choice. This is most
   // efficient, but also provides the best heuristics for CriticalPSets.
   if (SUnit *SU = Bot.pickOnlyChoice()) {
@@ -2721,7 +2721,7 @@ SUnit *ConvergingScheduler::pickNodeBidirectional(bool &IsTopNode) {
 }
 
 /// Pick the best node to balance the schedule. Implements MachineSchedStrategy.
-SUnit *ConvergingScheduler::pickNode(bool &IsTopNode) {
+SUnit *GenericScheduler::pickNode(bool &IsTopNode) {
   if (DAG->top() == DAG->bottom()) {
     assert(Top.Available.empty() && Top.Pending.empty() &&
            Bot.Available.empty() && Bot.Pending.empty() && "ReadyQ garbage");
@@ -2767,7 +2767,7 @@ SUnit *ConvergingScheduler::pickNode(bool &IsTopNode) {
   return SU;
 }
 
-void ConvergingScheduler::reschedulePhysRegCopies(SUnit *SU, bool isTop) {
+void GenericScheduler::reschedulePhysRegCopies(SUnit *SU, bool isTop) {
 
   MachineBasicBlock::iterator InsertPos = SU->getInstr();
   if (!isTop)
@@ -2798,7 +2798,7 @@ void ConvergingScheduler::reschedulePhysRegCopies(SUnit *SU, bool isTop) {
 ///
 /// FIXME: Eventually, we may bundle physreg copies rather than rescheduling
 /// them here. See comments in biasPhysRegCopy.
-void ConvergingScheduler::schedNode(SUnit *SU, bool IsTopNode) {
+void GenericScheduler::schedNode(SUnit *SU, bool IsTopNode) {
   if (IsTopNode) {
     SU->TopReadyCycle = std::max(SU->TopReadyCycle, Top.CurrCycle);
     Top.bumpNode(SU);
@@ -2815,8 +2815,8 @@ void ConvergingScheduler::schedNode(SUnit *SU, bool IsTopNode) {
 
 /// Create the standard converging machine scheduler. This will be used as the
 /// default scheduler if the target does not set a default.
-static ScheduleDAGInstrs *createConvergingSched(MachineSchedContext *C) {
-  ScheduleDAGMI *DAG = new ScheduleDAGMI(C, new ConvergingScheduler(C));
+static ScheduleDAGInstrs *createGenericSched(MachineSchedContext *C) {
+  ScheduleDAGMI *DAG = new ScheduleDAGMI(C, new GenericScheduler(C));
   // Register DAG post-processors.
   //
   // FIXME: extend the mutation API to allow earlier mutations to instantiate
@@ -2830,8 +2830,8 @@ static ScheduleDAGInstrs *createConvergingSched(MachineSchedContext *C) {
   return DAG;
 }
 static MachineSchedRegistry
-ConvergingSchedRegistry("converge", "Standard converging scheduler.",
-                        createConvergingSched);
+GenericSchedRegistry("converge", "Standard converging scheduler.",
+                     createGenericSched);
 
 //===----------------------------------------------------------------------===//
 // ILP Scheduler. Currently for experimental analysis of heuristics.
