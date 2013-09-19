@@ -935,6 +935,10 @@ DataExtractor::ExtractBytes (offset_t offset, offset_t length, ByteOrder dst_byt
     {
         if (dst_byte_order != GetByteOrder())
         {
+            // Validate that only a word- or register-sized dst is byte swapped
+            assert (length == 1 || length == 2 || length == 4 || length == 8 ||
+                    length == 10 || length == 16 || length == 32);
+
             for (uint32_t i=0; i<length; ++i)
                 ((uint8_t*)dst)[i] = src[length - i - 1];
         }
@@ -963,7 +967,12 @@ DataExtractor::CopyByteOrderedData (offset_t src_offset,
     assert (dst_void_ptr != NULL);
     assert (dst_len > 0);
     assert (dst_byte_order == eByteOrderBig || dst_byte_order == eByteOrderLittle);
-    
+
+    // Validate that only a word- or register-sized dst is byte swapped
+    assert (dst_byte_order == m_byte_order || dst_len == 1 || dst_len == 2 ||
+            dst_len == 4 || dst_len == 8 || dst_len == 10 || dst_len == 16 ||
+            dst_len == 32);
+
     // Must have valid byte orders set in this object and for destination
     if (!(dst_byte_order == eByteOrderBig || dst_byte_order == eByteOrderLittle) ||
         !(m_byte_order == eByteOrderBig || m_byte_order == eByteOrderLittle))
