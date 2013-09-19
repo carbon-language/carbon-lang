@@ -374,9 +374,12 @@ Value *InstCombiner::foldFMulConst(Instruction *FMulOrDiv, ConstantFP *C,
   } else {
     if (C0) {
       // (C0 / X) * C => (C0 * C) / X
-      ConstantFP *F = cast<ConstantFP>(ConstantExpr::getFMul(C0, C));
-      if (isNormalFp(F))
-        R = BinaryOperator::CreateFDiv(F, Opnd1);
+      if (FMulOrDiv->hasOneUse()) {
+        // It would otherwise introduce another div.
+        ConstantFP *F = cast<ConstantFP>(ConstantExpr::getFMul(C0, C));
+        if (isNormalFp(F))
+          R = BinaryOperator::CreateFDiv(F, Opnd1);
+      }
     } else {
       // (X / C1) * C => X * (C/C1) if C/C1 is not a denormal
       ConstantFP *F = cast<ConstantFP>(ConstantExpr::getFDiv(C, C1));

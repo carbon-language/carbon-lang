@@ -202,6 +202,18 @@ define float @fmul2(float %f1) {
 ; CHECK: fdiv fast float 1.200000e+07, %f1
 }
 
+; X/C1 * C2 => X * (C2/C1) is disabled if X/C1 has multiple uses
+@fmul2_external = external global float
+define float @fmul2_disable(float %f1) {
+  %div = fdiv fast float 1.000000e+00, %f1 
+  store float %div, float* @fmul2_external
+  %mul = fmul fast float %div, 2.000000e+00
+  ret float %mul
+; CHECK-LABEL: @fmul2_disable
+; CHECK: store
+; CHECK: fmul fast
+}
+
 ; X/C1 * C2 => X * (C2/C1) (if C2/C1 is normal Fp)
 define float @fmul3(float %f1, float %f2) {
   %t1 = fdiv float %f1, 2.0e+3
