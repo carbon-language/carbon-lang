@@ -681,10 +681,6 @@ void IntroduceControlFlow(Function *F, Random &R) {
 int main(int argc, char **argv) {
   // Init LLVM, call llvm_shutdown() on exit, parse args, etc.
   llvm::PrettyStackTraceProgram X(argc, argv);
-
-  // Initialize PassManager for -time-passes support.
-  initializePassManager();
-
   cl::ParseCommandLineOptions(argc, argv, "llvm codegen stress-tester\n");
   llvm_shutdown_obj Y;
 

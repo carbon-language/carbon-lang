@@ -260,9 +260,6 @@ int main(int argc, char **argv) {
   LLVMContext &Context = getGlobalContext();
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
 
-  // Initialize PassManager for -time-passes support.
-  initializePassManager();
-
   cl::ParseCommandLineOptions(argc, argv, "llvm profile dump decoder\n");
 
   // Read in the bitcode file...

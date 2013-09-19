@@ -18,7 +18,6 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IRReader/IRReader.h"
-#include "llvm/PassManager.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Path.h"
@@ -74,10 +73,6 @@ int main(int argc, char **argv) {
 
   LLVMContext &Context = getGlobalContext();
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
-
-  // Initialize PassManager for -time-passes support.
-  initializePassManager();
-
   cl::ParseCommandLineOptions(argc, argv, "llvm linker\n");
 
   unsigned BaseArg = 0;
