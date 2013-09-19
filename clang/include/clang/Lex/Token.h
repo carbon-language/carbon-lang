@@ -71,8 +71,10 @@ public:
 
   // Various flags set per token:
   enum TokenFlags {
-    StartOfLine   = 0x01,  // At start of line or only after whitespace.
-    LeadingSpace  = 0x02,  // Whitespace exists before this token.
+    StartOfLine   = 0x01,  // At start of line or only after whitespace
+                           // (considering the line after macro expansion).
+    LeadingSpace  = 0x02,  // Whitespace exists before this token (considering 
+                           // whitespace after macro expansion).
     DisableExpand = 0x04,  // This identifier may never be macro expanded.
     NeedsCleaning = 0x08,  // Contained an escaped newline or trigraph.
     LeadingEmptyMacro = 0x10, // Empty macro exists before this token.

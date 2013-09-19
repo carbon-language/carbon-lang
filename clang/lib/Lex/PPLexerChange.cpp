@@ -231,6 +231,19 @@ static void computeRelativePath(FileManager &FM, const DirectoryEntry *Dir,
   Result = File->getName();
 }
 
+void Preprocessor::PropagateLineStartLeadingSpaceInfo(Token &Result) {
+  if (CurTokenLexer) {
+    CurTokenLexer->PropagateLineStartLeadingSpaceInfo(Result);
+    return;
+  }
+  if (CurLexer) {
+    CurLexer->PropagateLineStartLeadingSpaceInfo(Result);
+    return;
+  }
+  // FIXME: Handle other kinds of lexers?  It generally shouldn't matter,
+  // but it might if they're empty?
+}
+
 /// HandleEndOfFile - This callback is invoked when the lexer hits the end of
 /// the current file.  This either returns the EOF token or pops a level off
 /// the include stack and keeps going.
@@ -319,6 +332,9 @@ bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
     
     // We're done with the #included file.
     RemoveTopOfLexerStack();
+
+    // Propagate info about start-of-line/leading white-space/etc.
+    PropagateLineStartLeadingSpaceInfo(Result);
 
     // Notify the client, if desired, that we are in a new source file.
     if (Callbacks && !isEndOfMacro && CurPPLexer) {

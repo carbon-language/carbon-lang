@@ -43,9 +43,7 @@ PTHLexer::PTHLexer(Preprocessor &PP, FileID FID, const unsigned char *D,
   FileStartLoc = PP.getSourceManager().getLocForStartOfFile(FID);
 }
 
-void PTHLexer::Lex(Token& Tok) {
-LexNextToken:
-
+bool PTHLexer::Lex(Token& Tok) {
   //===--------------------------------------==//
   // Read the raw token data.
   //===--------------------------------------==//
@@ -90,8 +88,9 @@ LexNextToken:
     Tok.setKind(II->getTokenID());
 
     if (II->isHandleIdentifierCase())
-      PP->HandleIdentifier(Tok);
-    return;
+      return PP->HandleIdentifier(Tok);
+
+    return true;
   }
 
   //===--------------------------------------==//
@@ -101,16 +100,10 @@ LexNextToken:
     // Save the end-of-file token.
     EofToken = Tok;
 
-    // Save 'PP' to 'PPCache' as LexEndOfFile can delete 'this'.
-    Preprocessor *PPCache = PP;
-
     assert(!ParsingPreprocessorDirective);
     assert(!LexingRawMode);
-    
-    if (LexEndOfFile(Tok))
-      return;
 
-    return PPCache->Lex(Tok);
+    return LexEndOfFile(Tok);
   }
 
   if (TKind == tok::hash && Tok.isAtStartOfLine()) {
@@ -118,19 +111,17 @@ LexNextToken:
     assert(!LexingRawMode);
     PP->HandleDirective(Tok);
 
-    if (PP->isCurrentLexer(this))
-      goto LexNextToken;
-
-    return PP->Lex(Tok);
+    return false;
   }
 
   if (TKind == tok::eod) {
     assert(ParsingPreprocessorDirective);
     ParsingPreprocessorDirective = false;
-    return;
+    return true;
   }
 
   MIOpt.ReadToken();
+  return true;
 }
 
 bool PTHLexer::LexEndOfFile(Token &Result) {

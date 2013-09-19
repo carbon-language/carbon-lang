@@ -269,3 +269,8 @@ void test_template_inst(int x) {
   test_template<double>(x);
 }
 
+#define IDENTITY(a) a
+void test7(int x, int y) {
+  if (x) IDENTITY(); // no-warning
+}
+

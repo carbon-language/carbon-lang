@@ -614,7 +614,7 @@ void Preprocessor::HandlePoisonedIdentifier(Token & Identifier) {
 /// IdentifierInfo's 'isHandleIdentifierCase' bit.  If this method changes, the
 /// IdentifierInfo methods that compute these properties will need to change to
 /// match.
-void Preprocessor::HandleIdentifier(Token &Identifier) {
+bool Preprocessor::HandleIdentifier(Token &Identifier) {
   assert(Identifier.getIdentifierInfo() &&
          "Can't handle identifiers without identifier info!");
 
@@ -648,8 +648,10 @@ void Preprocessor::HandleIdentifier(Token &Identifier) {
     MacroInfo *MI = MD->getMacroInfo();
     if (!DisableMacroExpansion) {
       if (!Identifier.isExpandDisabled() && MI->isEnabled()) {
-        if (!HandleMacroExpandedIdentifier(Identifier, MD))
-          return;
+        // C99 6.10.3p10: If the preprocessing token immediately after the
+        // macro name isn't a '(', this macro should not be expanded.
+        if (!MI->isFunctionLike() || isNextPPTokenLParen())
+          return HandleMacroExpandedIdentifier(Identifier, MD);
       } else {
         // C99 6.10.3.4p2 says that a disabled macro may never again be
         // expanded, even if it's in a context where it could be expanded in the
@@ -698,7 +700,35 @@ void Preprocessor::HandleIdentifier(Token &Identifier) {
     ModuleImportExpectsIdentifier = true;
     CurLexerKind = CLK_LexAfterModuleImport;
   }
+  return true;
 }
+
+void Preprocessor::Lex(Token &Result) {
+  // We loop here until a lex function retuns a token; this avoids recursion.
+  bool ReturnedToken;
+  do {
+    switch (CurLexerKind) {
+    case CLK_Lexer:
+      ReturnedToken = CurLexer->Lex(Result);
+      break;
+    case CLK_PTHLexer:
+      ReturnedToken = CurPTHLexer->Lex(Result);
+      break;
+    case CLK_TokenLexer:
+      ReturnedToken = CurTokenLexer->Lex(Result);
+      break;
+    case CLK_CachingLexer:
+      CachingLex(Result);
+      ReturnedToken = true;
+      break;
+    case CLK_LexAfterModuleImport:
+      LexAfterModuleImport(Result);
+      ReturnedToken = true;
+      break;
+    }
+  } while (!ReturnedToken);
+}
+
 
 /// \brief Lex a token following the 'import' contextual keyword.
 ///

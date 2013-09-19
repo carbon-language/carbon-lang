@@ -416,22 +416,19 @@ void TokenLexer::ExpandFunctionArguments() {
 
 /// Lex - Lex and return a token from this macro stream.
 ///
-void TokenLexer::Lex(Token &Tok) {
+bool TokenLexer::Lex(Token &Tok) {
   // Lexing off the end of the macro, pop this macro off the expansion stack.
   if (isAtEnd()) {
     // If this is a macro (not a token stream), mark the macro enabled now
     // that it is no longer being expanded.
     if (Macro) Macro->EnableMacro();
 
-    // Pop this context off the preprocessors lexer stack and get the next
-    // token.  This will delete "this" so remember the PP instance var.
-    Preprocessor &PPCache = PP;
-    if (PP.HandleEndOfTokenLexer(Tok))
-      return;
-
-    // HandleEndOfTokenLexer may not return a token.  If it doesn't, lex
-    // whatever is next.
-    return PPCache.Lex(Tok);
+    Tok.startToken();
+    Tok.setFlagValue(Token::StartOfLine , AtStartOfLine);
+    Tok.setFlagValue(Token::LeadingSpace, HasLeadingSpace);
+    if (CurToken == 0)
+      Tok.setFlag(Token::LeadingEmptyMacro);
+    return PP.HandleEndOfTokenLexer(Tok);
   }
 
   SourceManager &SM = PP.getSourceManager();
@@ -451,7 +448,7 @@ void TokenLexer::Lex(Token &Tok) {
     // When handling the microsoft /##/ extension, the final token is
     // returned by PasteTokens, not the pasted token.
     if (PasteTokens(Tok))
-      return;
+      return true;
 
     TokenIsFromPaste = true;
   }
@@ -482,6 +479,8 @@ void TokenLexer::Lex(Token &Tok) {
   if (isFirstToken) {
     Tok.setFlagValue(Token::StartOfLine , AtStartOfLine);
     Tok.setFlagValue(Token::LeadingSpace, HasLeadingSpace);
+    AtStartOfLine = false;
+    HasLeadingSpace = false;
   }
 
   // Handle recursive expansion!
@@ -499,10 +498,11 @@ void TokenLexer::Lex(Token &Tok) {
     }
 
     if (!DisableMacroExpansion && II->isHandleIdentifierCase())
-      PP.HandleIdentifier(Tok);
+      return PP.HandleIdentifier(Tok);
   }
 
   // Otherwise, return a normal token.
+  return true;
 }
 
 /// PasteTokens - Tok is the LHS of a ## operator, and CurToken is the ##
@@ -823,4 +823,9 @@ void TokenLexer::updateLocForMacroArgTokens(SourceLocation ArgIdSpellLoc,
 
     updateConsecutiveMacroArgTokens(SM, InstLoc, begin_tokens, end_tokens);
   }
+}
+
+void TokenLexer::PropagateLineStartLeadingSpaceInfo(Token &Result) {
+  AtStartOfLine = Result.isAtStartOfLine();
+  HasLeadingSpace = Result.hasLeadingSpace();
 }

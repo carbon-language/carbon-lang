@@ -225,7 +225,7 @@ bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
     if (Callbacks) Callbacks->MacroExpands(Identifier, MD,
                                            Identifier.getLocation(),/*Args=*/0);
     ExpandBuiltinMacro(Identifier);
-    return false;
+    return true;
   }
 
   /// Args - If this is a function-like macro expansion, this contains,
@@ -239,11 +239,6 @@ bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
 
   // If this is a function-like macro, read the arguments.
   if (MI->isFunctionLike()) {
-    // C99 6.10.3p10: If the preprocessing token immediately after the macro
-    // name isn't a '(', this macro should not be expanded.
-    if (!isNextPPTokenLParen())
-      return true;
-
     // Remember that we are now parsing the arguments to a macro invocation.
     // Preprocessor directives used inside macro arguments are not portable, and
     // this enables the warning.
@@ -254,7 +249,7 @@ bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
     InMacroArgs = false;
 
     // If there was an error parsing the arguments, bail out.
-    if (Args == 0) return false;
+    if (Args == 0) return true;
 
     ++NumFnMacroExpanded;
   } else {
@@ -314,25 +309,12 @@ bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
     // No need for arg info.
     if (Args) Args->destroy(*this);
 
-    // Ignore this macro use, just return the next token in the current
-    // buffer.
-    bool HadLeadingSpace = Identifier.hasLeadingSpace();
-    bool IsAtStartOfLine = Identifier.isAtStartOfLine();
-
-    Lex(Identifier);
-
-    // If the identifier isn't on some OTHER line, inherit the leading
-    // whitespace/first-on-a-line property of this token.  This handles
-    // stuff like "! XX," -> "! ," and "   XX," -> "    ,", when XX is
-    // empty.
-    if (!Identifier.isAtStartOfLine()) {
-      if (IsAtStartOfLine) Identifier.setFlag(Token::StartOfLine);
-      if (HadLeadingSpace) Identifier.setFlag(Token::LeadingSpace);
-    }
+    // Propagate whitespace info as if we had pushed, then popped,
+    // a macro context.
     Identifier.setFlag(Token::LeadingEmptyMacro);
+    PropagateLineStartLeadingSpaceInfo(Identifier);
     ++NumFastMacroExpanded;
     return false;
-
   } else if (MI->getNumTokens() == 1 &&
              isTrivialSingleTokenExpansion(MI, Identifier.getIdentifierInfo(),
                                            *this)) {
@@ -378,15 +360,11 @@ bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
     // Since this is not an identifier token, it can't be macro expanded, so
     // we're done.
     ++NumFastMacroExpanded;
-    return false;
+    return true;
   }
 
   // Start expanding the macro.
   EnterMacro(Identifier, ExpansionEnd, MI, Args);
-
-  // Now that the macro is at the top of the include stack, ask the
-  // preprocessor to read the next token from it.
-  Lex(Identifier);
   return false;
 }
 

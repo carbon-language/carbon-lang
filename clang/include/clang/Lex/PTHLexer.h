@@ -68,7 +68,7 @@ public:
   ~PTHLexer() {}
 
   /// Lex - Return the next token.
-  void Lex(Token &Tok);
+  bool Lex(Token &Tok);
 
   void getEOF(Token &Tok);
 

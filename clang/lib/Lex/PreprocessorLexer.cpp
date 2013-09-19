@@ -38,7 +38,10 @@ void PreprocessorLexer::LexIncludeFilename(Token &FilenameTok) {
   ParsingFilename = true;
 
   // Lex the filename.
-  IndirectLex(FilenameTok);
+  if (LexingRawMode)
+    IndirectLex(FilenameTok);
+  else
+    PP->Lex(FilenameTok);
 
   // We should have obtained the filename now.
   ParsingFilename = false;

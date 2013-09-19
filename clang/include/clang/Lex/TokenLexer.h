@@ -136,7 +136,7 @@ public:
   unsigned isNextTokenLParen() const;
 
   /// Lex - Lex and return a token from this macro stream.
-  void Lex(Token &Tok);
+  bool Lex(Token &Tok);
 
   /// isParsingPreprocessorDirective - Return true if we are in the middle of a
   /// preprocessor directive.
@@ -181,6 +181,8 @@ private:
   /// macro definition.
   void updateLocForMacroArgTokens(SourceLocation ArgIdSpellLoc,
                                   Token *begin_tokens, Token *end_tokens);
+
+  void PropagateLineStartLeadingSpaceInfo(Token &Result);
 };
 
 }  // end namespace clang

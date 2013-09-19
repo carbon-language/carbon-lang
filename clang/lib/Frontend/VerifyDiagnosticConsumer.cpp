@@ -555,7 +555,7 @@ static bool findDirectives(SourceManager &SM, FileID FID,
   VerifyDiagnosticConsumer::DirectiveStatus Status =
     VerifyDiagnosticConsumer::HasNoDirectives;
   while (Tok.isNot(tok::eof)) {
-    RawLex.Lex(Tok);
+    RawLex.LexFromRawLexer(Tok);
     if (!Tok.is(tok::comment)) continue;
 
     std::string Comment = RawLex.getSpelling(Tok, SM, LangOpts);
