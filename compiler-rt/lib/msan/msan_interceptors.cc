@@ -1123,8 +1123,12 @@ struct MSanInterceptorContext {
 #include "sanitizer_common/sanitizer_common_interceptors.inc"
 
 #define COMMON_SYSCALL_PRE_READ_RANGE(p, s) CHECK_UNPOISONED(p, s)
-#define COMMON_SYSCALL_PRE_WRITE_RANGE(p, s)
-#define COMMON_SYSCALL_POST_READ_RANGE(p, s)
+#define COMMON_SYSCALL_PRE_WRITE_RANGE(p, s) \
+  do {                                       \
+  } while (false)
+#define COMMON_SYSCALL_POST_READ_RANGE(p, s) \
+  do {                                       \
+  } while (false)
 #define COMMON_SYSCALL_POST_WRITE_RANGE(p, s) __msan_unpoison(p, s)
 #include "sanitizer_common/sanitizer_common_syscalls.inc"
 
