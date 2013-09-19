@@ -1160,8 +1160,8 @@ void DwarfDebug::endModule() {
 
   // Emit the pubnames and pubtypes sections if requested.
   if (HasDwarfPubSections) {
-    emitDebugPubNames(GenerateGnuPubSections ? true : false);
-    emitDebugPubTypes(GenerateGnuPubSections ? true : false);
+    emitDebugPubNames(GenerateGnuPubSections);
+    emitDebugPubTypes(GenerateGnuPubSections);
   }
 
   // Finally emit string information into a string table.
