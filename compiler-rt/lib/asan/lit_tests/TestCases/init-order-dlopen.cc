@@ -1,8 +1,12 @@
 // Regression test for
 // https://code.google.com/p/address-sanitizer/issues/detail?id=178
 
+// Assume we're on Darwin and try to pass -U to the linker. If this flag is
+// unsupported, don't use it.
 // RUN: %clangxx_asan -O0 %p/SharedLibs/init-order-dlopen-so.cc \
-// RUN:     -fPIC -shared -o %t-so.so
+// RUN:     -fPIC -shared -o %t-so.so -Wl,-U,_inc_global || \
+// RUN:     %clangxx_asan -O0 %p/SharedLibs/init-order-dlopen-so.cc \
+// RUN:         -fPIC -shared -o %t-so.so
 // If the linker doesn't support --export-dynamic (which is ELF-specific),
 // try to link without that option.
 // FIXME: find a better solution.
@@ -24,6 +28,7 @@ int foo() {
 int global = foo();
 
 __attribute__((visibility("default")))
+extern "C"
 void inc_global() {
   global++;
 }

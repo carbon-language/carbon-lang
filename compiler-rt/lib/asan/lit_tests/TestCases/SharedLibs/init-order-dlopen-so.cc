@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-void inc_global();
+extern "C" void inc_global();
 
 int slow_init() {
   sleep(1);
