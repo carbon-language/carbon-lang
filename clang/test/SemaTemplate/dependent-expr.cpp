@@ -72,3 +72,10 @@ namespace PR8795 {
     return data[0];
   }
 }
+
+template<typename T> struct CastDependentIntToPointer {
+  static void* f() {
+    T *x;
+    return ((void*)(((unsigned long)(x)|0x1ul)));
+  }
+};
