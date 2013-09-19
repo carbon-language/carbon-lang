@@ -673,13 +673,18 @@ void FuncExit(ThreadState *thr) {
   thr->shadow_stack_pos--;
 }
 
-void IgnoreCtl(ThreadState *thr, bool write, bool begin) {
-  DPrintf("#%d: IgnoreCtl(%d, %d)\n", thr->tid, write, begin);
-  thr->ignore_reads_and_writes += begin ? 1 : -1;
+void ThreadIgnoreBegin(ThreadState *thr) {
+  DPrintf("#%d: ThreadIgnoreBegin\n", thr->tid);
+  thr->ignore_reads_and_writes++;
   CHECK_GE(thr->ignore_reads_and_writes, 0);
-  if (thr->ignore_reads_and_writes)
-    thr->fast_state.SetIgnoreBit();
-  else
+  thr->fast_state.SetIgnoreBit();
+}
+
+void ThreadIgnoreEnd(ThreadState *thr) {
+  DPrintf("#%d: ThreadIgnoreEnd\n", thr->tid);
+  thr->ignore_reads_and_writes--;
+  CHECK_GE(thr->ignore_reads_and_writes, 0);
+  if (thr->ignore_reads_and_writes == 0)
     thr->fast_state.ClearIgnoreBit();
 }
 

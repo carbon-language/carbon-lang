@@ -383,22 +383,22 @@ void INTERFACE_ATTRIBUTE AnnotateBenignRace(
 
 void INTERFACE_ATTRIBUTE AnnotateIgnoreReadsBegin(char *f, int l) {
   SCOPED_ANNOTATION(AnnotateIgnoreReadsBegin);
-  IgnoreCtl(cur_thread(), false, true);
+  ThreadIgnoreBegin(cur_thread());
 }
 
 void INTERFACE_ATTRIBUTE AnnotateIgnoreReadsEnd(char *f, int l) {
   SCOPED_ANNOTATION(AnnotateIgnoreReadsEnd);
-  IgnoreCtl(cur_thread(), false, false);
+  ThreadIgnoreEnd(cur_thread());
 }
 
 void INTERFACE_ATTRIBUTE AnnotateIgnoreWritesBegin(char *f, int l) {
   SCOPED_ANNOTATION(AnnotateIgnoreWritesBegin);
-  IgnoreCtl(cur_thread(), true, true);
+  ThreadIgnoreBegin(cur_thread());
 }
 
 void INTERFACE_ATTRIBUTE AnnotateIgnoreWritesEnd(char *f, int l) {
   SCOPED_ANNOTATION(AnnotateIgnoreWritesEnd);
-  IgnoreCtl(thr, true, false);
+  ThreadIgnoreEnd(cur_thread());
 }
 
 void INTERFACE_ATTRIBUTE AnnotatePublishMemoryRange(

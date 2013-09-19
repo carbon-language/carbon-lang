@@ -1744,11 +1744,9 @@ TSAN_INTERCEPTOR(int, getaddrinfo, void *node, void *service,
   // We miss atomic synchronization in getaddrinfo,
   // and can report false race between malloc and free
   // inside of getaddrinfo. So ignore memory accesses.
-  IgnoreCtl(thr, true, true);
-  IgnoreCtl(thr, false, true);
+  ThreadIgnoreBegin(thr);
   int res = REAL(getaddrinfo)(node, service, hints, rv);
-  IgnoreCtl(thr, true, false);
-  IgnoreCtl(thr, false, false);
+  ThreadIgnoreEnd(thr);
   return res;
 }
 

@@ -677,7 +677,8 @@ void ALWAYS_INLINE MemoryWriteAtomic(ThreadState *thr, uptr pc,
 void MemoryResetRange(ThreadState *thr, uptr pc, uptr addr, uptr size);
 void MemoryRangeFreed(ThreadState *thr, uptr pc, uptr addr, uptr size);
 void MemoryRangeImitateWrite(ThreadState *thr, uptr pc, uptr addr, uptr size);
-void IgnoreCtl(ThreadState *thr, bool write, bool begin);
+void ThreadIgnoreBegin(ThreadState *thr);
+void ThreadIgnoreEnd(ThreadState *thr);
 
 void FuncEntry(ThreadState *thr, uptr pc);
 void FuncExit(ThreadState *thr);
