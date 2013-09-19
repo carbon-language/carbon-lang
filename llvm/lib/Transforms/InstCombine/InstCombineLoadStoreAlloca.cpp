@@ -318,7 +318,8 @@ static Instruction *InstCombineLoadCast(InstCombiner &IC, LoadInst &LI,
             SrcPTy->isVectorTy()) &&
           // Do not allow turning this into a load of an integer, which is then
           // casted to a pointer, this pessimizes pointer analysis a lot.
-          (SrcPTy->isPointerTy() == LI.getType()->isPointerTy()) &&
+          (SrcPTy->isPtrOrPtrVectorTy() ==
+           LI.getType()->isPtrOrPtrVectorTy()) &&
           IC.getDataLayout()->getTypeSizeInBits(SrcPTy) ==
                IC.getDataLayout()->getTypeSizeInBits(DestPTy)) {
 

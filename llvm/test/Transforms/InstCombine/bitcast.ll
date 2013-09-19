@@ -144,3 +144,13 @@ define <2 x i16> @BitcastInsert(i32 %a) {
 ; CHECK-LABEL: @BitcastInsert(
 ; CHECK: bitcast i32 %a to <2 x i16>
 }
+
+; PR17293
+define <2 x i64> @test7(<2 x i8*>* %arg) nounwind {
+  %cast = bitcast <2 x i8*>* %arg to <2 x i64>*
+  %load = load <2 x i64>* %cast, align 16
+  ret <2 x i64> %load
+; CHECK: @test7
+; CHECK: bitcast
+; CHECK: load
+}
