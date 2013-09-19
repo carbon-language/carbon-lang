@@ -484,7 +484,7 @@ bool Sema::BuildCXXNestedNameSpecifier(Scope *S,
   
   // FIXME: Deal with ambiguities cleanly.
 
-  if (Found.empty() && !ErrorRecoveryLookup) {
+  if (Found.empty() && !ErrorRecoveryLookup && !getLangOpts().MicrosoftExt) {
     // We haven't found anything, and we're not recovering from a
     // different kind of error, so look for typos.
     DeclarationName Name = Found.getLookupName();
