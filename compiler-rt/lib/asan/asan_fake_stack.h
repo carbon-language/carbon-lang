@@ -77,6 +77,7 @@ class FakeStack {
   }
 
   void Destroy() {
+    PoisonAll(0);
     UnmapOrDie(this, RequiredSize(stack_size_log_));
   }
 
