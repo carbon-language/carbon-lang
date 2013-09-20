@@ -29,16 +29,16 @@ LSAN_RTL_LINT_FILTER=${COMMON_LINT_FILTER}
 LSAN_LIT_TEST_LINT_FILTER=${LSAN_RTL_LINT_FILTER},-whitespace/line_length
 COMMON_RTL_INC_LINT_FILTER=${COMMON_LINT_FILTER},-runtime/int,-runtime/sizeof,-runtime/printf
 SANITIZER_INCLUDES_LINT_FILTER=${COMMON_LINT_FILTER},-runtime/int
-
+MKTEMP="mktemp -q /tmp/tmp.XXXXXXXXXX"
 cd ${LLVM_CHECKOUT}
 
 EXITSTATUS=0
-ERROR_LOG=$(mktemp -q)
+ERROR_LOG=$(${MKTEMP})
 
 run_lint() {
   FILTER=$1
   shift
-  TASK_LOG=$(mktemp -q)
+  TASK_LOG=$(${MKTEMP})
   ${CPPLINT} --filter=${FILTER} "$@" 2>$TASK_LOG
   if [ "$?" != "0" ]; then
     cat $TASK_LOG | grep -v "Done processing" | grep -v "Total errors found" \
