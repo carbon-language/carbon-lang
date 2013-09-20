@@ -1218,14 +1218,14 @@ C++; to enable it, use the -fms-extensions command-line option. This is
 the default for Windows targets. Note that the support is incomplete.
 Some constructs such as dllexport on classes are ignored with a warning,
 and others such as `Microsoft IDL annotations
-<http://msdn.microsoft.com/en-us/library/8tesw2eh.aspx>` are silently
+<http://msdn.microsoft.com/en-us/library/8tesw2eh.aspx>`_ are silently
 ignored.
 
 clang has a -fms-compatibility flag that makes clang accept enough
 invalid C++ to be able to parse most Microsoft headers. For example, it
 allows `unqualified lookup of dependent base class members
-<http://clang.llvm.org/compatibility.html#dep_lookup_bases>`, which is a
-common compatibility issue with clang. This flag is enabled by default
+<http://clang.llvm.org/compatibility.html#dep_lookup_bases>`_, which is
+a common compatibility issue with clang. This flag is enabled by default
 for Windows targets.
 
 -fdelayed-template-parsing lets clang delay all template instantiation
