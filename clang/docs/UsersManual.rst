@@ -1215,9 +1215,11 @@ Microsoft extensions
 
 clang has some experimental support for extensions from Microsoft Visual
 C++; to enable it, use the -fms-extensions command-line option. This is
-the default for Windows targets. Note that the support is incomplete;
-some constructs like dllexport on classes with inline methods will be
-ignored with a warning.
+the default for Windows targets. Note that the support is incomplete.
+Some constructs such as dllexport on classes are ignored with a warning,
+and others such as `Microsoft IDL annotations
+<http://msdn.microsoft.com/en-us/library/8tesw2eh.aspx>` are silently
+ignored.
 
 clang has a -fms-compatibility flag that makes clang accept enough
 invalid C++ to be able to parse most Microsoft headers. For example, it
