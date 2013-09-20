@@ -158,8 +158,8 @@ public:
                               ConstantInt *DivRHS);
   Instruction *FoldICmpShrCst(ICmpInst &ICI, BinaryOperator *DivI,
                               ConstantInt *DivRHS);
-  Instruction *FoldICmpAddOpCst(ICmpInst &ICI, Value *X, ConstantInt *CI,
-                                ICmpInst::Predicate Pred, Value *TheAdd);
+  Instruction *FoldICmpAddOpCst(Instruction &ICI, Value *X, ConstantInt *CI,
+                                ICmpInst::Predicate Pred);
   Instruction *FoldGEPICmp(GEPOperator *GEPLHS, Value *RHS,
                            ICmpInst::Predicate Cond, Instruction &I);
   Instruction *FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
