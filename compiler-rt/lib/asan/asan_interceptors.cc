@@ -325,9 +325,6 @@ INTERCEPTOR(int, memcmp, const void *a1, const void *a2, uptr size) {
     ASAN_READ_RANGE(from, size); \
     ASAN_WRITE_RANGE(to, size); \
   } \
-  /* Interposing of resolver functions is broken on Mac OS 10.7 and 10.8. \
-     See also \
-     http://code.google.com/p/address-sanitizer/issues/detail?id=116. */ \
   return internal_memmove(to, from, size); \
 }
 
