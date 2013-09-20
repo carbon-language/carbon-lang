@@ -276,10 +276,6 @@ LLVMGenericValueRef LLVMRunFunction(LLVMExecutionEngineRef EE, LLVMValueRef F,
   return wrap(Result);
 }
 
-void *LLVMGetPointerToFunction(LLVMExecutionEngineRef EE, LLVMValueRef F) {
-  return unwrap(EE)->getPointerToFunction(unwrap<Function>(F));
-}
-
 void LLVMFreeMachineCodeForFunction(LLVMExecutionEngineRef EE, LLVMValueRef F) {
   unwrap(EE)->freeMachineCodeForFunction(unwrap<Function>(F));
 }
