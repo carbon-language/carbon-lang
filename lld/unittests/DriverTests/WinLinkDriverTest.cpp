@@ -259,8 +259,8 @@ TEST_F(WinLinkParserTest, FailIfMismatch_Mismatch) {
 TEST_F(WinLinkParserTest, Ignore) {
   // There are some no-op command line options that are recognized for
   // compatibility with link.exe.
-  EXPECT_FALSE(parse("link.exe", "/nologo", "/errorreport:prompt", "a.obj",
-                     nullptr));
+  EXPECT_FALSE(parse("link.exe", "/nologo", "/errorreport:prompt",
+                     "/incremental", "/incremental:no", "a.obj", nullptr));
   EXPECT_EQ("", errorMessage());
   EXPECT_EQ(1, inputFileCount());
   EXPECT_EQ("a.obj", inputFile(0));

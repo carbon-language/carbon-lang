@@ -68,3 +68,5 @@ multiclass Q<string name> {
 }
 def nologo : F<"nologo">;
 defm errorreport : Q<"errorreport">;
+def incremental : F<"incremental">;
+def no_incremental : F<"incremental:no">;
