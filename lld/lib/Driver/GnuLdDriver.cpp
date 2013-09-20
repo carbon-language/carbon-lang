@@ -87,17 +87,12 @@ llvm::ErrorOr<StringRef> ELFFileNode::path(const LinkingContext &) const {
 }
 
 std::string ELFFileNode::errStr(llvm::error_code errc) {
-  std::string errorMsg;
   if (errc == llvm::errc::no_such_file_or_directory) {
     if (_isDashlPrefix)
-      errorMsg = (Twine("Unable to find library -l") + _path).str();
-    else
-      errorMsg = (Twine("Unable to find file ") + _path).str();
+      return (Twine("Unable to find library -l") + _path).str();
+    return (Twine("Unable to find file ") + _path).str();
   }
-  else {
-    return "Unknown Error";
-  }
-  return std::move(errorMsg);
+  return FileNode::errStr(errc);
 }
 
 bool GnuLdDriver::linkELF(int argc, const char *argv[],
