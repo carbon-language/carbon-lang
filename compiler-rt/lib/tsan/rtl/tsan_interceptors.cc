@@ -1846,11 +1846,21 @@ struct TsanInterceptorContext {
 #define COMMON_INTERCEPTOR_BLOCK_REAL(name) BLOCK_REAL(name)
 #include "sanitizer_common/sanitizer_common_interceptors.inc"
 
-// FIXME: Implement these with MemoryAccessRange().
+static void syscall_access_range(uptr pc, uptr p, uptr s, bool write) {
+  ThreadState *thr = cur_thread();
+  if (thr->in_rtl == 0)
+    Initialize(thr);
+  thr->in_rtl++;
+  MemoryAccessRange(thr, pc, p, s, write);
+  thr->in_rtl--;
+  if (thr->in_rtl == 0)
+    ProcessPendingSignals(thr);
+}
+
 #define COMMON_SYSCALL_PRE_READ_RANGE(p, s) \
-  do { } while (false)
+  syscall_access_range(GET_CALLER_PC(), (uptr)(p), (uptr)(s), false)
 #define COMMON_SYSCALL_PRE_WRITE_RANGE(p, s) \
-  do { } while (false)
+  syscall_access_range(GET_CALLER_PC(), (uptr)(p), (uptr)(s), true)
 #define COMMON_SYSCALL_POST_READ_RANGE(p, s) \
   do { } while (false)
 #define COMMON_SYSCALL_POST_WRITE_RANGE(p, s) \
