@@ -245,8 +245,7 @@ class InitListChecker {
                              unsigned &StructuredIndex);
   void CheckExplicitInitList(const InitializedEntity &Entity,
                              InitListExpr *IList, QualType &T,
-                             unsigned &Index, InitListExpr *StructuredList,
-                             unsigned &StructuredIndex,
+                             InitListExpr *StructuredList,
                              bool TopLevelObject = false);
   void CheckListElementTypes(const InitializedEntity &Entity,
                              InitListExpr *IList, QualType &DeclType,
@@ -561,12 +560,9 @@ InitListChecker::InitListChecker(Sema &S, const InitializedEntity &Entity,
   : SemaRef(S), VerifyOnly(VerifyOnly) {
   hadError = false;
 
-  unsigned newIndex = 0;
-  unsigned newStructuredIndex = 0;
-  FullyStructuredList
-    = getStructuredSubobjectInit(IL, newIndex, T, 0, 0, IL->getSourceRange());
-  CheckExplicitInitList(Entity, IL, T, newIndex,
-                        FullyStructuredList, newStructuredIndex,
+  FullyStructuredList =
+      getStructuredSubobjectInit(IL, 0, T, 0, 0, IL->getSourceRange());
+  CheckExplicitInitList(Entity, IL, T, FullyStructuredList,
                         /*TopLevelObject=*/true);
 
   if (!hadError && !VerifyOnly) {
@@ -603,6 +599,12 @@ int InitListChecker::numStructUnionElements(QualType DeclType) {
   return InitializableMembers - structDecl->hasFlexibleArrayMember();
 }
 
+/// Check whether the range of the initializer \p ParentIList from element
+/// \p Index onwards can be used to initialize an object of type \p T. Update
+/// \p Index to indicate how many elements of the list were consumed.
+///
+/// This also fills in \p StructuredList, from element \p StructuredIndex
+/// onwards, with the fully-braced, desugared form of the initialization.
 void InitListChecker::CheckImplicitInitList(const InitializedEntity &Entity,
                                             InitListExpr *ParentIList,
                                             QualType T, unsigned &Index,
@@ -670,17 +672,22 @@ void InitListChecker::CheckImplicitInitList(const InitializedEntity &Entity,
   }
 }
 
+/// Check whether the initializer \p IList (that was written with explicit
+/// braces) can be used to initialize an object of type \p T.
+///
+/// This also fills in \p StructuredList with the fully-braced, desugared
+/// form of the initialization.
 void InitListChecker::CheckExplicitInitList(const InitializedEntity &Entity,
                                             InitListExpr *IList, QualType &T,
-                                            unsigned &Index,
                                             InitListExpr *StructuredList,
-                                            unsigned &StructuredIndex,
                                             bool TopLevelObject) {
   assert(IList->isExplicit() && "Illegal Implicit InitListExpr");
   if (!VerifyOnly) {
     SyntacticToSemantic[IList] = StructuredList;
     StructuredList->setSyntacticForm(IList);
   }
+
+  unsigned Index = 0, StructuredIndex = 0;
   CheckListElementTypes(Entity, IList, T, /*SubobjectIsDesignatorContext=*/true,
                         Index, StructuredList, StructuredIndex, TopLevelObject);
   if (!VerifyOnly) {
@@ -820,14 +827,12 @@ void InitListChecker::CheckSubElementType(const InitializedEntity &Entity,
 
   if (InitListExpr *SubInitList = dyn_cast<InitListExpr>(expr)) {
     if (!ElemType->isRecordType() || ElemType->isAggregateType()) {
-      unsigned newIndex = 0;
-      unsigned newStructuredIndex = 0;
-      InitListExpr *newStructuredList
+      InitListExpr *InnerStructuredList
         = getStructuredSubobjectInit(IList, Index, ElemType,
                                      StructuredList, StructuredIndex,
                                      SubInitList->getSourceRange());
-      CheckExplicitInitList(Entity, SubInitList, ElemType, newIndex,
-                            newStructuredList, newStructuredIndex);
+      CheckExplicitInitList(Entity, SubInitList, ElemType,
+                            InnerStructuredList);
       ++StructuredIndex;
       ++Index;
       return;
