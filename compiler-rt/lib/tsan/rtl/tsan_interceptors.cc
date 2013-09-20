@@ -1751,7 +1751,11 @@ TSAN_INTERCEPTOR(int, getaddrinfo, void *node, void *service,
   // and can report false race between malloc and free
   // inside of getaddrinfo. So ignore memory accesses.
   ThreadIgnoreBegin(thr);
+  // getaddrinfo calls fopen, which can be intercepted by user.
+  thr->in_rtl--;
+  CHECK_EQ(thr->in_rtl, 0);
   int res = REAL(getaddrinfo)(node, service, hints, rv);
+  thr->in_rtl++;
   ThreadIgnoreEnd(thr);
   return res;
 }
