@@ -227,9 +227,9 @@ public:
 
   /// \brief create an error string for printing purposes
   virtual std::string errStr(llvm::error_code errc) {
-    if (errc == llvm::errc::no_such_file_or_directory)
-      return (Twine("Cannot open ") + _path).str();
-    llvm_unreachable("not handling errors");
+    std::string msg = errc.message();
+    Twine twine = Twine("Cannot open ") + _path + ": " + msg;
+    return twine.str();
   }
 
   /// \brief Create a lld::File node from the FileNode
