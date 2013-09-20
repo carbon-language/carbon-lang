@@ -438,9 +438,9 @@ bool Sema::MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old,
   //   declaration (not even to the same value).
   //
   // C++ [dcl.fct.default]p6:
-  //   Except for member functions of class templates, the default arguments 
-  //   in a member function definition that appears outside of the class 
-  //   definition are added to the set of default arguments provided by the 
+  //   Except for member functions of class templates, the default arguments
+  //   in a member function definition that appears outside of the class
+  //   definition are added to the set of default arguments provided by the
   //   member function declaration in the class definition.
   for (unsigned p = 0, NumParams = Old->getNumParams(); p < NumParams; ++p) {
     ParmVarDecl *OldParam = Old->getParamDecl(p);
@@ -450,9 +450,18 @@ bool Sema::MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old,
     bool NewParamHasDfl = NewParam->hasDefaultArg();
 
     NamedDecl *ND = Old;
-    if (S && !isDeclInScope(ND, New->getDeclContext(), S))
+
+    // The declaration context corresponding to the scope is the semantic
+    // parent, unless this is a local function declaration, in which case
+    // it is that surrounding function.
+    DeclContext *ScopeDC = New->getLexicalDeclContext();
+    if (!ScopeDC->isFunctionOrMethod())
+      ScopeDC = New->getDeclContext();
+    if (S && !isDeclInScope(ND, ScopeDC, S) &&
+        !New->getDeclContext()->isRecord())
       // Ignore default parameters of old decl if they are not in
-      // the same scope.
+      // the same scope and this is not an out-of-line definition of
+      // a member function.
       OldParamHasDfl = false;
 
     if (OldParamHasDfl && NewParamHasDfl) {
@@ -11486,6 +11495,7 @@ NamedDecl *Sema::ActOnFriendFunctionDecl(Scope *S, Declarator &D,
       // declared the function in, if we were permitted to, for error recovery.
       DC = FunctionContainingLocalClass;
     }
+    adjustContextForLocalExternDecl(DC);
 
     // C++ [class.friend]p6:
     //   A function can be defined in a friend declaration of a class if and

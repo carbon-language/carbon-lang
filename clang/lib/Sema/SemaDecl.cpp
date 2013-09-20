@@ -1020,12 +1020,12 @@ void Sema::PushOnScopeChains(NamedDecl *D, Scope *S, bool AddToContext) {
   if (AddToContext)
     CurContext->addDecl(D);
 
-  // Out-of-line definitions shouldn't be pushed into scope in C++.
-  // Out-of-line variable and function definitions shouldn't even in C.
-  if ((getLangOpts().CPlusPlus || isa<VarDecl>(D) || isa<FunctionDecl>(D)) &&
-      D->isOutOfLine() &&
+  // Out-of-line definitions shouldn't be pushed into scope in C++, unless they
+  // are function-local declarations.
+  if (getLangOpts().CPlusPlus && D->isOutOfLine() &&
       !D->getDeclContext()->getRedeclContext()->Equals(
-        D->getLexicalDeclContext()->getRedeclContext()))
+        D->getLexicalDeclContext()->getRedeclContext()) &&
+      !D->getLexicalDeclContext()->isFunctionOrMethod())
     return;
 
   // Template instantiations should also not be pushed into scope.
@@ -2426,7 +2426,9 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, Scope *S,
       ? New->getTypeSourceInfo()->getType()->castAs<FunctionType>()
       : NewType)->getResultType();
     QualType ResQT;
-    if (!Context.hasSameType(OldDeclaredReturnType, NewDeclaredReturnType)) {
+    if (!Context.hasSameType(OldDeclaredReturnType, NewDeclaredReturnType) &&
+        !((NewQType->isDependentType() || OldQType->isDependentType()) &&
+          New->isLocalExternDecl())) {
       if (NewDeclaredReturnType->isObjCObjectPointerType() &&
           OldDeclaredReturnType->isObjCObjectPointerType())
         ResQT = Context.mergeObjCGCQualifiers(NewQType, OldQType);
@@ -2578,6 +2580,14 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, Scope *S,
     if (OldQTypeForComparison == NewQType)
       return MergeCompatibleFunctionDecls(New, Old, S, MergeTypeWithOld);
 
+    if ((NewQType->isDependentType() || OldQType->isDependentType()) &&
+        New->isLocalExternDecl()) {
+      // It's OK if we couldn't merge types for a local function declaraton
+      // if either the old or new type is dependent. We'll merge the types
+      // when we instantiate the function.
+      return false;
+    }
+
     // Fall through for conflicting redeclarations and redefinitions.
   }
 
@@ -2710,7 +2720,7 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, Scope *S,
       // local declaration will produce a hard error; if it doesn't
       // remain visible, a single bogus local redeclaration (which is
       // actually only a warning) could break all the downstream code.
-      if (!New->getDeclContext()->isFunctionOrMethod())
+      if (!New->getLexicalDeclContext()->isFunctionOrMethod())
         New->getIdentifier()->setBuiltinID(Builtin::NotBuiltin);
 
       return false;
@@ -2820,18 +2830,21 @@ void Sema::MergeVarDeclTypes(VarDecl *New, VarDecl *Old,
                               NewArray->getElementType()))
         MergedT = New->getType();
     } else if (Old->getType()->isArrayType() &&
-             New->getType()->isIncompleteArrayType()) {
+               New->getType()->isIncompleteArrayType()) {
       const ArrayType *OldArray = Context.getAsArrayType(Old->getType());
       const ArrayType *NewArray = Context.getAsArrayType(New->getType());
       if (Context.hasSameType(OldArray->getElementType(),
                               NewArray->getElementType()))
         MergedT = Old->getType();
-    } else if (New->getType()->isObjCObjectPointerType()
-               && Old->getType()->isObjCObjectPointerType()) {
-        MergedT = Context.mergeObjCGCQualifiers(New->getType(),
-                                                        Old->getType());
+    } else if (New->getType()->isObjCObjectPointerType() &&
+               Old->getType()->isObjCObjectPointerType()) {
+      MergedT = Context.mergeObjCGCQualifiers(New->getType(),
+                                              Old->getType());
     }
   } else {
+    // C 6.2.7p2:
+    //   All declarations that refer to the same object or function shall have
+    //   compatible type.
     MergedT = Context.mergeTypes(New->getType(), Old->getType());
   }
   if (MergedT.isNull()) {
@@ -4308,8 +4321,15 @@ NamedDecl *Sema::HandleDeclarator(Scope *S, Declarator &D,
   // If this has an identifier and is not an invalid redeclaration or 
   // function template specialization, add it to the scope stack.
   if (New->getDeclName() && AddToScope &&
-       !(D.isRedeclaration() && New->isInvalidDecl()))
-    PushOnScopeChains(New, S);
+       !(D.isRedeclaration() && New->isInvalidDecl())) {
+    // Only make a locally-scoped extern declaration visible if it is the first
+    // declaration of this entity. Qualified lookup for such an entity should
+    // only find this declaration if there is no visible declaration of it.
+    bool AddToContext = !D.isRedeclaration() || !New->isLocalExternDecl();
+    PushOnScopeChains(New, S, AddToContext);
+    if (!AddToContext)
+      CurContext->addHiddenDecl(New);
+  }
 
   return New;
 }
@@ -4808,6 +4828,30 @@ static bool shouldConsiderLinkage(const FunctionDecl *FD) {
   llvm_unreachable("Unexpected context");
 }
 
+/// Adjust the \c DeclContext for a function or variable that might be a
+/// function-local external declaration.
+bool Sema::adjustContextForLocalExternDecl(DeclContext *&DC) {
+  if (!DC->isFunctionOrMethod())
+    return false;
+
+  // If this is a local extern function or variable declared within a function
+  // template, don't add it into the enclosing namespace scope until it is
+  // instantiated; it might have a dependent type right now.
+  if (DC->isDependentContext())
+    return true;
+
+  // C++11 [basic.link]p7:
+  //   When a block scope declaration of an entity with linkage is not found to
+  //   refer to some other declaration, then that entity is a member of the
+  //   innermost enclosing namespace.
+  //
+  // Per C++11 [namespace.def]p6, the innermost enclosing namespace is a
+  // semantically-enclosing namespace, not a lexically-enclosing one.
+  while (!DC->isFileContext() && !isa<LinkageSpecDecl>(DC))
+    DC = DC->getParent();
+  return true;
+}
+
 NamedDecl *
 Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
                               TypeSourceInfo *TInfo, LookupResult &Previous,
@@ -4819,6 +4863,10 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
   DeclSpec::SCS SCSpec = D.getDeclSpec().getStorageClassSpec();
   VarDecl::StorageClass SC =
     StorageClassSpecToVarDeclStorageClass(D.getDeclSpec());
+
+  DeclContext *OriginalDC = DC;
+  bool IsLocalExternDecl = SC == SC_Extern &&
+                           adjustContextForLocalExternDecl(DC);
 
   if (getLangOpts().OpenCL && !getOpenCLOptions().cl_khr_fp16) {
     // OpenCL v1.2 s6.1.1.1: reject declaring variables of the half and
@@ -5150,6 +5198,9 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
   if (NewTemplate)
     NewTemplate->setLexicalDeclContext(CurContext);
 
+  if (IsLocalExternDecl)
+    NewVD->setLocalExternDecl();
+
   if (DeclSpec::TSCS TSCS = D.getDeclSpec().getThreadStorageClassSpec()) {
     if (NewVD->hasLocalStorage()) {
       // C++11 [dcl.stc]p4:
@@ -5277,7 +5328,7 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
   // scope and are out-of-semantic-context declarations (if the new
   // declaration has linkage).
   FilterLookupForScope(
-      Previous, DC, S, shouldConsiderLinkage(NewVD),
+      Previous, OriginalDC, S, shouldConsiderLinkage(NewVD),
       IsExplicitSpecialization || IsVariableTemplateSpecialization);
 
   // Check whether the previous declaration is in the same block scope. This
@@ -5286,7 +5337,7 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
       NewVD->isLocalVarDecl() && NewVD->hasExternalStorage())
     NewVD->setPreviousDeclInSameBlockScope(
         Previous.isSingleResult() && !Previous.isShadowed() &&
-        isDeclInScope(Previous.getFoundDecl(), DC, S, false));
+        isDeclInScope(Previous.getFoundDecl(), OriginalDC, S, false));
 
   if (!getLangOpts().CPlusPlus) {
     D.setRedeclaration(CheckVariableDeclaration(NewVD, Previous));
@@ -5543,12 +5594,8 @@ static bool checkForConflictWithNonVisibleExternC(Sema &S, const T *ND,
                                                   LookupResult &Previous) {
   if (!S.getLangOpts().CPlusPlus) {
     // In C, when declaring a global variable, look for a corresponding 'extern'
-    // variable declared in function scope.
-    //
-    // FIXME: The corresponding case in C++ does not work.  We should instead
-    // set the semantic DC for an extern local variable to be the innermost
-    // enclosing namespace, and ensure they are only found by redeclaration
-    // lookup.
+    // variable declared in function scope. We don't need this in C++, because
+    // we find local extern decls in the surrounding file-scope DeclContext.
     if (ND->getDeclContext()->getRedeclContext()->isTranslationUnit()) {
       if (NamedDecl *Prev = S.findLocallyScopedExternCDecl(ND->getDeclName())) {
         Previous.clear();
@@ -6032,6 +6079,7 @@ static NamedDecl *DiagnoseInvalidRedeclaration(
     bool FDisConst = MD && MD->isConst();
     bool IsMember = MD || !IsLocalFriend;
 
+    // FIXME: These notes are poorly worded for the local friend case.
     if (unsigned Idx = NearMatch->second) {
       ParmVarDecl *FDParam = FD->getParamDecl(Idx-1);
       SourceLocation Loc = FDParam->getTypeSpecStartLoc();
@@ -6455,12 +6503,23 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
 
   bool isVirtualOkay = false;
 
+  DeclContext *OriginalDC = DC;
+  bool IsLocalExternDecl = adjustContextForLocalExternDecl(DC);
+
   FunctionDecl *NewFD = CreateNewFunctionDecl(*this, D, DC, R, TInfo, SC,
                                               isVirtualOkay);
   if (!NewFD) return 0;
 
   if (OriginalLexicalContext && OriginalLexicalContext->isObjCContainer())
     NewFD->setTopLevelDeclInObjCContainer();
+
+  // Set the lexical context. If this is a function-scope declaration, or has a
+  // C++ scope specifier, or is the object of a friend declaration, the lexical
+  // context will be different from the semantic context.
+  NewFD->setLexicalDeclContext(CurContext);
+
+  if (IsLocalExternDecl)
+    NewFD->setLocalExternDecl();
 
   if (getLangOpts().CPlusPlus) {
     bool isInline = D.getDeclSpec().isInlineSpecified();
@@ -6489,12 +6548,7 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     isFunctionTemplateSpecialization = false;
     if (D.isInvalidType())
       NewFD->setInvalidDecl();
-    
-    // Set the lexical context. If the declarator has a C++
-    // scope specifier, or is the object of a friend declaration, the
-    // lexical context will be different from the semantic context.
-    NewFD->setLexicalDeclContext(CurContext);
-        
+
     // Match up the template parameter lists with the scope specifier, then
     // determine whether we have a template or a template specialization.
     bool Invalid = false;
@@ -6750,7 +6804,7 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
   }
 
   // Filter out previous declarations that don't match the scope.
-  FilterLookupForScope(Previous, DC, S, shouldConsiderLinkage(NewFD),
+  FilterLookupForScope(Previous, OriginalDC, S, shouldConsiderLinkage(NewFD),
                        isExplicitSpecialization ||
                        isFunctionTemplateSpecialization);
 
@@ -9232,21 +9286,21 @@ static bool ShouldWarnAboutMissingPrototype(const FunctionDecl *FD,
   // Don't warn for OpenCL kernels.
   if (FD->hasAttr<OpenCLKernelAttr>())
     return false;
-  
+
   bool MissingPrototype = true;
   for (const FunctionDecl *Prev = FD->getPreviousDecl();
        Prev; Prev = Prev->getPreviousDecl()) {
     // Ignore any declarations that occur in function or method
     // scope, because they aren't visible from the header.
-    if (Prev->getDeclContext()->isFunctionOrMethod())
+    if (Prev->getLexicalDeclContext()->isFunctionOrMethod())
       continue;
-      
+
     MissingPrototype = !Prev->getType()->isFunctionProtoType();
     if (FD->getNumParams() == 0)
       PossibleZeroParamPrototype = Prev;
     break;
   }
-    
+
   return MissingPrototype;
 }
 

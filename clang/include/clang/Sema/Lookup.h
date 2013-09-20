@@ -613,6 +613,13 @@ public:
     return Filter(*this);
   }
 
+  void setFindLocalExtern(bool FindLocalExtern) {
+    if (FindLocalExtern)
+      IDNS |= Decl::IDNS_LocalExtern;
+    else
+      IDNS &= ~Decl::IDNS_LocalExtern;
+  }
+
 private:
   void diagnose() {
     if (isAmbiguous())

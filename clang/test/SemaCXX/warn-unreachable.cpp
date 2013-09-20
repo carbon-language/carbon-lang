@@ -62,8 +62,8 @@ void test5() {
   struct S {
     int mem;
   } s;
-  S &foor() __attribute__((noreturn));
-  foor()
+  S &foonr() __attribute__((noreturn));
+  foonr()
     .mem;       // expected-warning {{will never be executed}}
 }
 

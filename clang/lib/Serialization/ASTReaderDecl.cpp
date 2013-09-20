@@ -946,7 +946,13 @@ ASTDeclReader::RedeclarableResult ASTDeclReader::VisitVarDeclImpl(VarDecl *VD) {
   VD->VarDeclBits.ARCPseudoStrong = Record[Idx++];
   VD->VarDeclBits.IsConstexpr = Record[Idx++];
   VD->VarDeclBits.PreviousDeclInSameBlockScope = Record[Idx++];
-  VD->setCachedLinkage(Linkage(Record[Idx++]));
+  Linkage VarLinkage = Linkage(Record[Idx++]);
+  VD->setCachedLinkage(VarLinkage);
+
+  // Reconstruct the one piece of the IdentifierNamespace that we need.
+  if (VarLinkage != NoLinkage &&
+      VD->getLexicalDeclContext()->isFunctionOrMethod())
+    VD->setLocalExternDecl();
 
   // Only true variables (not parameters or implicit parameters) can be merged.
   if (VD->getKind() != Decl::ParmVar && VD->getKind() != Decl::ImplicitParam)
@@ -2199,8 +2205,6 @@ void ASTDeclReader::attachPreviousDecl(Decl *D, Decl *previous) {
   //
   // FIXME: In this case, the declaration should only be visible if a module
   //        that makes it visible has been imported.
-  // FIXME: This is not correct in the case where previous is a local extern
-  //        declaration and D is a friend declaraton.
   D->IdentifierNamespace |=
       previous->IdentifierNamespace &
       (Decl::IDNS_Ordinary | Decl::IDNS_Tag | Decl::IDNS_Type);

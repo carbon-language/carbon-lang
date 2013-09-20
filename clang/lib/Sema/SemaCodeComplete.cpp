@@ -715,8 +715,8 @@ unsigned ResultBuilder::getBasePriority(const NamedDecl *ND) {
     return CCP_Unlikely;
 
   // Context-based decisions.
-  const DeclContext *DC = ND->getDeclContext()->getRedeclContext();
-  if (DC->isFunctionOrMethod() || isa<BlockDecl>(DC)) {
+  const DeclContext *LexicalDC = ND->getLexicalDeclContext();
+  if (LexicalDC->isFunctionOrMethod()) {
     // _cmd is relatively rare
     if (const ImplicitParamDecl *ImplicitParam =
         dyn_cast<ImplicitParamDecl>(ND))
@@ -726,6 +726,8 @@ unsigned ResultBuilder::getBasePriority(const NamedDecl *ND) {
 
     return CCP_LocalDeclaration;
   }
+
+  const DeclContext *DC = ND->getDeclContext()->getRedeclContext();
   if (DC->isRecord() || isa<ObjCContainerDecl>(DC))
     return CCP_MemberDeclaration;
 
@@ -876,8 +878,8 @@ void ResultBuilder::MaybeAddResult(Result R, DeclContext *CurContext) {
     for (; I != IEnd; ++I) {
       // A tag declaration does not hide a non-tag declaration.
       if (I->first->hasTagIdentifierNamespace() &&
-          (IDNS & (Decl::IDNS_Member | Decl::IDNS_Ordinary | 
-                   Decl::IDNS_ObjCProtocol)))
+          (IDNS & (Decl::IDNS_Member | Decl::IDNS_Ordinary |
+                   Decl::IDNS_LocalExtern | Decl::IDNS_ObjCProtocol)))
         continue;
       
       // Protocols are in distinct namespaces from everything else.
@@ -1038,7 +1040,9 @@ void ResultBuilder::ExitScope() {
 bool ResultBuilder::IsOrdinaryName(const NamedDecl *ND) const {
   ND = cast<NamedDecl>(ND->getUnderlyingDecl());
 
-  unsigned IDNS = Decl::IDNS_Ordinary;
+  // If name lookup finds a local extern declaration, then we are in a
+  // context where it behaves like an ordinary name.
+  unsigned IDNS = Decl::IDNS_Ordinary | Decl::IDNS_LocalExtern;
   if (SemaRef.getLangOpts().CPlusPlus)
     IDNS |= Decl::IDNS_Tag | Decl::IDNS_Namespace | Decl::IDNS_Member;
   else if (SemaRef.getLangOpts().ObjC1) {
@@ -1056,7 +1060,7 @@ bool ResultBuilder::IsOrdinaryNonTypeName(const NamedDecl *ND) const {
   if (isa<TypeDecl>(ND) || isa<ObjCInterfaceDecl>(ND))
     return false;
   
-  unsigned IDNS = Decl::IDNS_Ordinary;
+  unsigned IDNS = Decl::IDNS_Ordinary | Decl::IDNS_LocalExtern;
   if (SemaRef.getLangOpts().CPlusPlus)
     IDNS |= Decl::IDNS_Tag | Decl::IDNS_Namespace | Decl::IDNS_Member;
   else if (SemaRef.getLangOpts().ObjC1) {
@@ -1083,7 +1087,7 @@ bool ResultBuilder::IsIntegralConstantValue(const NamedDecl *ND) const {
 bool ResultBuilder::IsOrdinaryNonValueName(const NamedDecl *ND) const {
   ND = cast<NamedDecl>(ND->getUnderlyingDecl());
 
-  unsigned IDNS = Decl::IDNS_Ordinary;
+  unsigned IDNS = Decl::IDNS_Ordinary | Decl::IDNS_LocalExtern;
   if (SemaRef.getLangOpts().CPlusPlus)
     IDNS |= Decl::IDNS_Tag | Decl::IDNS_Namespace;
   

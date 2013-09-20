@@ -61,6 +61,8 @@ namespace test6 {
       int x = sizeof(array); // expected-error {{invalid application of 'sizeof' to an incomplete type 'int []'}}
     }
     int y = sizeof(array);
+    extern int array[];
+    int z = sizeof(array);
   }
 }
 
@@ -71,6 +73,19 @@ namespace test7 {
     int x = sizeof(array); // expected-error {{invalid application of 'sizeof' to an incomplete type 'int []'}}
   }
   int y = sizeof(array);
+  extern int array[];
+  int z = sizeof(array);
+}
+
+namespace test8 {
+  extern int array[];
+  void test() {
+    extern int array[100];
+    int x = sizeof(array);
+  }
+  int y = sizeof(array); // expected-error {{invalid application of 'sizeof' to an incomplete type 'int []'}}
+  extern int array[];
+  int z = sizeof(array); // expected-error {{invalid application of 'sizeof' to an incomplete type 'int []'}}
 }
 
 namespace dependent {
@@ -143,10 +158,52 @@ namespace dependent {
   }
 
   template<typename T> void n() {
-    extern T n_var;
+    extern T n_var; // expected-error {{redefinition of 'n_var' with a different type: 'double' vs 'int'}} expected-note {{previous}}
+    extern T n_fn(); // expected-error {{functions that differ only in their return type cannot be overloaded}} expected-note {{previous}}
   }
   template void n<int>();
-  // FIXME: Diagnose this!
-  float n_var;
-  template void n<double>();
+  template void n<double>(); // expected-note {{in instantiation of}}
+
+  template<typename T> void o() {
+    extern T o_var; // expected-note {{previous}}
+    extern T o_fn(); // expected-note {{previous}}
+  }
+  template void o<int>();
+  float o_var; // expected-error {{redefinition of 'o_var' with a different type: 'float' vs 'int'}}
+  float o_fn(); // expected-error {{functions that differ only in their return type cannot be overloaded}}
+
+  int p_var;
+  int p_fn();
+  template<typename T> void p() {
+    extern T p_var;
+    extern T p_fn();
+  }
+}
+
+namespace use_outside_ns {
+  namespace A {
+    extern int a[3];
+    extern int b[];
+    extern int c[3];
+    void f() {
+      extern int a[];
+      extern int b[3];
+    }
+    template<typename T> void x() {
+      extern T c;
+      extern T d;
+    }
+    extern int d[3];
+    template void x<int[]>();
+  }
+  int w = sizeof(A::a);
+  int x = sizeof(A::b); // expected-error {{incomplete}}
+  int y = sizeof(A::c);
+  int z = sizeof(A::d);
+  namespace A {
+    int g() { return sizeof(a); }
+    int h() { return sizeof(b); } // expected-error {{incomplete}}
+    int i() { return sizeof(c); }
+    int j() { return sizeof(d); }
+  }
 }

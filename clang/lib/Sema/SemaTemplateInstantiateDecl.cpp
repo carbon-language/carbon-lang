@@ -347,8 +347,12 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D,
     return 0;
   }
 
+  DeclContext *DC = Owner;
+  if (D->isLocalExternDecl())
+    SemaRef.adjustContextForLocalExternDecl(DC);
+
   // Build the instantiated declaration.
-  VarDecl *Var = VarDecl::Create(SemaRef.Context, Owner, D->getInnerLocStart(),
+  VarDecl *Var = VarDecl::Create(SemaRef.Context, DC, D->getInnerLocStart(),
                                  D->getLocation(), D->getIdentifier(),
                                  DI->getType(), DI, D->getStorageClass());
 
@@ -361,7 +365,7 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D,
   if (SubstQualifier(D, Var))
     return 0;
 
-  SemaRef.BuildVariableInstantiation(Var, D, TemplateArgs, LateAttrs,
+  SemaRef.BuildVariableInstantiation(Var, D, TemplateArgs, LateAttrs, Owner,
                                      StartingScope, InstantiatingVarTemplate);
   return Var;
 }
@@ -1199,11 +1203,13 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
   }
 
   // If we're instantiating a local function declaration, put the result
-  // in the owner;  otherwise we need to find the instantiated context.
+  // in the enclosing namespace; otherwise we need to find the instantiated
+  // context.
   DeclContext *DC;
-  if (D->getDeclContext()->isFunctionOrMethod())
+  if (D->isLocalExternDecl()) {
     DC = Owner;
-  else if (isFriend && QualifierLoc) {
+    SemaRef.adjustContextForLocalExternDecl(DC);
+  } else if (isFriend && QualifierLoc) {
     CXXScopeSpec SS;
     SS.Adopt(QualifierLoc);
     DC = SemaRef.computeDeclContext(SS);
@@ -1227,8 +1233,11 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
   if (QualifierLoc)
     Function->setQualifierInfo(QualifierLoc);
 
+  if (D->isLocalExternDecl())
+    Function->setLocalExternDecl();
+
   DeclContext *LexicalDC = Owner;
-  if (!isFriend && D->isOutOfLine()) {
+  if (!isFriend && D->isOutOfLine() && !D->isLocalExternDecl()) {
     assert(D->getDeclContext()->isFileContext());
     LexicalDC = D->getDeclContext();
   }
@@ -1294,8 +1303,11 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
 
   bool isExplicitSpecialization = false;
 
-  LookupResult Previous(SemaRef, Function->getDeclName(), SourceLocation(),
-                        Sema::LookupOrdinaryName, Sema::ForRedeclaration);
+  LookupResult Previous(
+      SemaRef, Function->getDeclName(), SourceLocation(),
+      D->isLocalExternDecl() ? Sema::LookupRedeclarationWithLinkage
+                             : Sema::LookupOrdinaryName,
+      Sema::ForRedeclaration);
 
   if (DependentFunctionTemplateSpecializationInfo *Info
         = D->getDependentSpecializationInfo()) {
@@ -1426,6 +1438,9 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
       }
     }
   }
+
+  if (Function->isLocalExternDecl() && !Function->getPreviousDecl())
+    DC->makeDeclVisibleInContext(PrincipalDecl);
 
   if (Function->isOverloadedOperator() && !DC->isRecord() &&
       PrincipalDecl->isInIdentifierNamespace(Decl::IDNS_Ordinary))
@@ -2358,7 +2373,7 @@ Decl *TemplateDeclInstantiator::VisitVarTemplateSpecializationDecl(
     return 0;
 
   SemaRef.BuildVariableInstantiation(Var, D, TemplateArgs, LateAttrs,
-                                     StartingScope);
+                                     Owner, StartingScope);
 
   return Var;
 }
@@ -2680,7 +2695,7 @@ TemplateDeclInstantiator::InstantiateVarTemplatePartialSpecialization(
   if (VarDecl *Def = PartialSpec->getDefinition(SemaRef.getASTContext()))
     PartialSpec = cast<VarTemplatePartialSpecializationDecl>(Def);
   SemaRef.BuildVariableInstantiation(InstPartialSpec, PartialSpec, TemplateArgs,
-                                     LateAttrs, StartingScope);
+                                     LateAttrs, Owner, StartingScope);
   InstPartialSpec->setInit(PartialSpec->getInit());
 
   return InstPartialSpec;
@@ -3335,13 +3350,19 @@ VarTemplateSpecializationDecl *Sema::CompleteVarTemplateSpecializationDecl(
 void Sema::BuildVariableInstantiation(
     VarDecl *NewVar, VarDecl *OldVar,
     const MultiLevelTemplateArgumentList &TemplateArgs,
-    LateInstantiatedAttrVec *LateAttrs, LocalInstantiationScope *StartingScope,
+    LateInstantiatedAttrVec *LateAttrs, DeclContext *Owner,
+    LocalInstantiationScope *StartingScope,
     bool InstantiatingVarTemplate) {
 
+  // If we are instantiating a local extern declaration, the
+  // instantiation belongs lexically to the containing function.
   // If we are instantiating a static data member defined
   // out-of-line, the instantiation will have the same lexical
   // context (which will be a namespace scope) as the template.
-  if (OldVar->isOutOfLine())
+  if (OldVar->isLocalExternDecl()) {
+    NewVar->setLocalExternDecl();
+    NewVar->setLexicalDeclContext(Owner);
+  } else if (OldVar->isOutOfLine())
     NewVar->setLexicalDeclContext(OldVar->getLexicalDeclContext());
   NewVar->setTSCSpec(OldVar->getTSCSpec());
   NewVar->setInitStyle(OldVar->getInitStyle());
@@ -3374,11 +3395,13 @@ void Sema::BuildVariableInstantiation(
   if (NewVar->hasAttrs())
     CheckAlignasUnderalignment(NewVar);
 
-  LookupResult Previous(*this, NewVar->getDeclName(), NewVar->getLocation(),
-                        Sema::LookupOrdinaryName, Sema::ForRedeclaration);
+  LookupResult Previous(
+      *this, NewVar->getDeclName(), NewVar->getLocation(),
+      NewVar->isLocalExternDecl() ? Sema::LookupRedeclarationWithLinkage
+                                  : Sema::LookupOrdinaryName,
+      Sema::ForRedeclaration);
 
-  if (NewVar->getLexicalDeclContext()->isFunctionOrMethod() &&
-      OldVar->getPreviousDecl()) {
+  if (NewVar->isLocalExternDecl() && OldVar->getPreviousDecl()) {
     // We have a previous declaration. Use that one, so we merge with the
     // right type.
     if (NamedDecl *NewPrev = FindInstantiatedDecl(
@@ -3389,13 +3412,13 @@ void Sema::BuildVariableInstantiation(
     LookupQualifiedName(Previous, NewVar->getDeclContext(), false);
   CheckVariableDeclaration(NewVar, Previous);
 
-  if (OldVar->isOutOfLine()) {
-    OldVar->getLexicalDeclContext()->addDecl(NewVar);
-    if (!InstantiatingVarTemplate)
+  if (!InstantiatingVarTemplate) {
+    NewVar->getLexicalDeclContext()->addHiddenDecl(NewVar);
+    if (!NewVar->isLocalExternDecl() || !NewVar->getPreviousDecl())
       NewVar->getDeclContext()->makeDeclVisibleInContext(NewVar);
-  } else {
-    if (!InstantiatingVarTemplate)
-      NewVar->getDeclContext()->addDecl(NewVar);
+  }
+
+  if (!OldVar->isOutOfLine()) {
     if (NewVar->getDeclContext()->isFunctionOrMethod())
       CurrentInstantiationScope->InstantiatedLocal(OldVar, NewVar);
   }

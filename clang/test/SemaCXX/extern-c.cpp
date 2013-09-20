@@ -29,20 +29,40 @@ namespace test3 {
   }
 }
 
-extern "C" {
-  void test4_f() {
-    extern int test4_b; // expected-note {{declared with C language linkage here}}
+namespace N {
+  extern "C" {
+    void test4_f() {
+      extern int test4_b; // expected-note {{declared with C language linkage here}}
+    }
   }
 }
 static float test4_b; // expected-error {{declaration of 'test4_b' in global scope conflicts with declaration with C language linkage}}
 
 extern "C" {
-  void test5_f() {
-    extern int test5_b; // expected-note {{declared with C language linkage here}}
+  void test4c_f() {
+    extern int test4_c; // expected-note {{previous}}
+  }
+}
+static float test4_c; // expected-error {{redefinition of 'test4_c' with a different type: 'float' vs 'int'}}
+
+namespace N {
+  extern "C" {
+    void test5_f() {
+      extern int test5_b; // expected-note {{declared with C language linkage here}}
+    }
   }
 }
 extern "C" {
   static float test5_b; // expected-error {{declaration of 'test5_b' in global scope conflicts with declaration with C language linkage}}
+}
+
+extern "C" {
+  void test5c_f() {
+    extern int test5_c; // expected-note {{previous}}
+  }
+}
+extern "C" {
+  static float test5_c; // expected-error {{redefinition of 'test5_c' with a different type: 'float' vs 'int'}}
 }
 
 extern "C" {

@@ -873,7 +873,7 @@ public:
   bool isLocalVarDecl() const {
     if (getKind() != Decl::Var)
       return false;
-    if (const DeclContext *DC = getDeclContext())
+    if (const DeclContext *DC = getLexicalDeclContext())
       return DC->getRedeclContext()->isFunctionOrMethod();
     return false;
   }
@@ -883,7 +883,7 @@ public:
   bool isFunctionOrMethodVarDecl() const {
     if (getKind() != Decl::Var)
       return false;
-    const DeclContext *DC = getDeclContext()->getRedeclContext();
+    const DeclContext *DC = getLexicalDeclContext()->getRedeclContext();
     return DC->isFunctionOrMethod() && DC->getDeclKind() != Decl::Block;
   }
 
@@ -959,7 +959,7 @@ public:
     if (K == ParmVar || K == ImplicitParam)
       return false;
 
-    if (getDeclContext()->getRedeclContext()->isFileContext())
+    if (getLexicalDeclContext()->getRedeclContext()->isFileContext())
       return true;
 
     if (isStaticDataMember())
@@ -3472,10 +3472,8 @@ void Redeclarable<decl_type>::setPreviousDeclaration(decl_type *PrevDecl) {
 
     // If the declaration was previously visible, a redeclaration of it remains
     // visible even if it wouldn't be visible by itself.
-    // FIXME: Once we handle local extern decls properly, this should inherit
-    // the visibility from MostRecent, not from PrevDecl.
     static_cast<decl_type*>(this)->IdentifierNamespace |=
-      PrevDecl->getIdentifierNamespace() &
+      MostRecent->getIdentifierNamespace() &
       (Decl::IDNS_Ordinary | Decl::IDNS_Tag | Decl::IDNS_Type);
   } else {
     // Make this first.

@@ -223,6 +223,8 @@ static inline unsigned getIDNS(Sema::LookupNameKind NameKind,
       if (Redeclaration)
         IDNS |= Decl::IDNS_TagFriend | Decl::IDNS_OrdinaryFriend;
     }
+    if (Redeclaration)
+      IDNS |= Decl::IDNS_LocalExtern;
     break;
 
   case Sema::LookupOperatorName:
@@ -847,6 +849,26 @@ static std::pair<DeclContext *, bool> findOuterContext(Scope *S) {
   return std::make_pair(Lexical, false);
 }
 
+namespace {
+/// An RAII object to specify that we want to find block scope extern
+/// declarations.
+struct FindLocalExternScope {
+  FindLocalExternScope(LookupResult &R)
+      : R(R), OldFindLocalExtern(R.getIdentifierNamespace() &
+                                 Decl::IDNS_LocalExtern) {
+    R.setFindLocalExtern(R.getIdentifierNamespace() & Decl::IDNS_Ordinary);
+  }
+  void restore() {
+    R.setFindLocalExtern(OldFindLocalExtern);
+  }
+  ~FindLocalExternScope() {
+    restore();
+  }
+  LookupResult &R;
+  bool OldFindLocalExtern;
+};
+}
+
 bool Sema::CppLookupName(LookupResult &R, Scope *S) {
   assert(getLangOpts().CPlusPlus && "Can perform only C++ lookup");
 
@@ -891,6 +913,10 @@ bool Sema::CppLookupName(LookupResult &R, Scope *S) {
   bool VisitedUsingDirectives = false;
   bool LeftStartingScope = false;
   DeclContext *OutsideOfTemplateParamDC = 0;
+
+  // When performing a scope lookup, we want to find local extern decls.
+  FindLocalExternScope FindLocals(R);
+
   for (; S && !isNamespaceOrTranslationUnitScope(S); S = S->getParent()) {
     DeclContext *Ctx = static_cast<DeclContext*>(S->getEntity());
 
@@ -1046,7 +1072,12 @@ bool Sema::CppLookupName(LookupResult &R, Scope *S) {
     UDirs.visitScopeChain(Initial, S);
     UDirs.done();
   }
-  
+
+  // If we're not performing redeclaration lookup, do not look for local
+  // extern declarations outside of a function scope.
+  if (!R.isForRedeclaration())
+    FindLocals.restore();
+
   // Lookup namespace scope, and global scope.
   // Unqualified name lookup in C++ requires looking into scopes
   // that aren't strictly lexical, and therefore we walk through the
@@ -1292,6 +1323,9 @@ bool Sema::LookupName(LookupResult &R, Scope *S, bool AllowBuiltinCreation) {
         S = S->getParent();
     }
 
+    // When performing a scope lookup, we want to find local extern decls.
+    FindLocalExternScope FindLocals(R);
+
     // Scan up the scope chain looking for a decl that matches this
     // identifier that is in the appropriate namespace.  This search
     // should not take long, as shadowing of names is uncommon, and
@@ -1361,6 +1395,7 @@ bool Sema::LookupName(LookupResult &R, Scope *S, bool AllowBuiltinCreation) {
 
           R.resolveKind();
         }
+
         return true;
       }
   } else {
@@ -2858,7 +2893,11 @@ void Sema::ArgumentDependentLookup(DeclarationName Name, bool Operator,
       NamedDecl *D = *I;
       // If the only declaration here is an ordinary friend, consider
       // it only if it was declared in an associated classes.
-      if (D->getIdentifierNamespace() == Decl::IDNS_OrdinaryFriend) {
+      if ((D->getIdentifierNamespace() & Decl::IDNS_Ordinary) == 0) {
+        // If it's neither ordinarily visible nor a friend, we can't find it.
+        if ((D->getIdentifierNamespace() & Decl::IDNS_OrdinaryFriend) == 0)
+          continue;
+
         bool DeclaredInAssociatedClass = false;
         for (Decl *DI = D; DI; DI = DI->getPreviousDecl()) {
           DeclContext *LexDC = DI->getLexicalDeclContext();
@@ -3160,6 +3199,7 @@ static void LookupVisibleDecls(Scope *S, LookupResult &Result,
       (!S->getParent() &&
        !Visited.alreadyVisitedContext((DeclContext *)S->getEntity())) ||
       ((DeclContext *)S->getEntity())->isFunctionOrMethod()) {
+    FindLocalExternScope FindLocals(Result);
     // Walk through the declarations in this Scope.
     for (Scope::decl_iterator D = S->decl_begin(), DEnd = S->decl_end();
          D != DEnd; ++D) {

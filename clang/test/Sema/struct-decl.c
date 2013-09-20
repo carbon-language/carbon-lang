@@ -57,3 +57,12 @@ const struct test2 { // expected-warning {{'const' ignored on this declaration}}
 inline struct test3 { // expected-error {{'inline' can only appear on functions}}
   int x;
 };
+
+struct hiding_1 {};
+struct hiding_2 {};
+void test_hiding() {
+  struct hiding_1 *hiding_1();
+  extern struct hiding_2 *hiding_2;
+  struct hiding_1 *p = hiding_1();
+  struct hiding_2 *q = hiding_2;
+}

@@ -4,17 +4,14 @@ int foo(int);
 namespace N {
   void f1() {
     void foo(int); // okay
-    void bar(int);
+    void bar(int); // expected-note 2{{previous declaration is here}}
   }
 
   void foo(int); // expected-note 2{{previous declaration is here}}
 
   void f2() {
     int foo(int); // expected-error {{functions that differ only in their return type cannot be overloaded}}
-    // FIXME: We should be able to diagnose the conflict between this
-    // declaration of 'bar' and the previous one, even though they come
-    // from different lexical scopes.
-    int bar(int); // expected-note {{previous declaration is here}}
+    int bar(int); // expected-error {{functions that differ only in their return type cannot be overloaded}}
     int baz(int); // expected-note {{previous declaration is here}}
 
     {

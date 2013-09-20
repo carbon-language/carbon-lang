@@ -9,7 +9,7 @@ struct Y { };
 // CHECK: @_ZGVZN1N1gEvE1a = internal global
 
 //CHECK: @pr5966_i = external global
-//CHECK: @_ZL8pr5966_i = internal global
+//CHECK: @_ZL8pr5966_j = internal global
 
 // CHECK-LABEL: define zeroext i1 @_ZplRK1YRA100_P1X
 bool operator+(const Y&, X* (&xs)[100]) { return false; }
@@ -314,10 +314,10 @@ void pr5966_foo() {
   pr5966_i = 0;
 }
 
-static int pr5966_i;
+static int pr5966_j;
 
 void pr5966_bar() {
-  pr5966_i = 0;
+  pr5966_j = 0;
 }
 
 namespace test0 {
@@ -652,10 +652,10 @@ namespace test24 {
     foo();
   }
 
-  static char foo() {}
+  static char bar() {}
   void test1() {
-    // CHECK: call signext i8 @_ZN6test24L3fooEv()
-    foo();
+    // CHECK: call signext i8 @_ZN6test24L3barEv()
+    bar();
   }
 }
 

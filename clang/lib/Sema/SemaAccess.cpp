@@ -1483,7 +1483,9 @@ void Sema::HandleDelayedAccessCheck(DelayedDiagnostic &DD, Decl *D) {
 
   DeclContext *DC = D->getDeclContext();
   if (FunctionDecl *FN = dyn_cast<FunctionDecl>(D)) {
-    if (!DC->isFunctionOrMethod())
+    if (D->getLexicalDeclContext()->isFunctionOrMethod())
+      DC = D->getLexicalDeclContext();
+    else
       DC = FN;
   } else if (TemplateDecl *TD = dyn_cast<TemplateDecl>(D)) {
     DC = cast<DeclContext>(TD->getTemplatedDecl());

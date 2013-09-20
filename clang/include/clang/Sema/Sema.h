@@ -1451,6 +1451,7 @@ public:
   bool diagnoseQualifiedDeclaration(CXXScopeSpec &SS, DeclContext *DC,
                                     DeclarationName Name,
                                     SourceLocation Loc);
+  static bool adjustContextForLocalExternDecl(DeclContext *&DC);
   void DiagnoseFunctionSpecifiers(const DeclSpec &DS);
   void CheckShadow(Scope *S, VarDecl *D, const LookupResult& R);
   void CheckShadow(Scope *S, VarDecl *D);
@@ -6465,8 +6466,9 @@ public:
   void
   BuildVariableInstantiation(VarDecl *NewVar, VarDecl *OldVar,
                              const MultiLevelTemplateArgumentList &TemplateArgs,
-                             LateInstantiatedAttrVec *LateAttrs = 0,
-                             LocalInstantiationScope *StartingScope = 0,
+                             LateInstantiatedAttrVec *LateAttrs,
+                             DeclContext *Owner,
+                             LocalInstantiationScope *StartingScope,
                              bool InstantiatingVarTemplate = false);
   void InstantiateVariableInitializer(
       VarDecl *Var, VarDecl *OldVar,

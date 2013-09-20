@@ -159,7 +159,12 @@ public:
     /// This declaration is a C++ operator declared in a non-class
     /// context.  All such operators are also in IDNS_Ordinary.
     /// C++ lexical operator lookup looks for these.
-    IDNS_NonMemberOperator   = 0x0400
+    IDNS_NonMemberOperator   = 0x0400,
+
+    /// This declaration is a function-local extern declaration of a
+    /// variable or function. This may also be IDNS_Ordinary if it
+    /// has been declared outside any function.
+    IDNS_LocalExtern         = 0x0800
   };
 
   /// ObjCDeclQualifier - 'Qualifiers' written next to the return and
@@ -829,6 +834,32 @@ public:
   bool isFunctionOrFunctionTemplate() const;
 
   /// \brief Changes the namespace of this declaration to reflect that it's
+  /// a function-local extern declaration.
+  ///
+  /// These declarations appear in the lexical context of the extern
+  /// declaration, but in the semantic context of the enclosing namespace
+  /// scope.
+  void setLocalExternDecl() {
+    assert((IdentifierNamespace == IDNS_Ordinary ||
+            IdentifierNamespace == IDNS_OrdinaryFriend) &&
+           "namespace is not ordinary");
+
+    Decl *Prev = getPreviousDecl();
+    IdentifierNamespace &= ~IDNS_Ordinary;
+
+    IdentifierNamespace |= IDNS_LocalExtern;
+    if (Prev && Prev->getIdentifierNamespace() & IDNS_Ordinary)
+      IdentifierNamespace |= IDNS_Ordinary;
+  }
+
+  /// \brief Determine whether this is a block-scope declaration with linkage.
+  /// This will either be a local variable declaration declared 'extern', or a
+  /// local function declaration.
+  bool isLocalExternDecl() {
+    return IdentifierNamespace & IDNS_LocalExtern;
+  }
+
+  /// \brief Changes the namespace of this declaration to reflect that it's
   /// the object of a friend declaration.
   ///
   /// These declarations appear in the lexical context of the friending
@@ -838,22 +869,25 @@ public:
   void setObjectOfFriendDecl(bool PerformFriendInjection = false) {
     unsigned OldNS = IdentifierNamespace;
     assert((OldNS & (IDNS_Tag | IDNS_Ordinary |
-                     IDNS_TagFriend | IDNS_OrdinaryFriend)) &&
+                     IDNS_TagFriend | IDNS_OrdinaryFriend |
+                     IDNS_LocalExtern)) &&
            "namespace includes neither ordinary nor tag");
     assert(!(OldNS & ~(IDNS_Tag | IDNS_Ordinary | IDNS_Type |
-                       IDNS_TagFriend | IDNS_OrdinaryFriend)) &&
+                       IDNS_TagFriend | IDNS_OrdinaryFriend |
+                       IDNS_LocalExtern)) &&
            "namespace includes other than ordinary or tag");
 
     Decl *Prev = getPreviousDecl();
-    IdentifierNamespace = 0;
+    IdentifierNamespace &= ~(IDNS_Ordinary | IDNS_Tag | IDNS_Type);
+
     if (OldNS & (IDNS_Tag | IDNS_TagFriend)) {
       IdentifierNamespace |= IDNS_TagFriend;
-      if (PerformFriendInjection || 
+      if (PerformFriendInjection ||
           (Prev && Prev->getIdentifierNamespace() & IDNS_Tag))
         IdentifierNamespace |= IDNS_Tag | IDNS_Type;
     }
 
-    if (OldNS & (IDNS_Ordinary | IDNS_OrdinaryFriend)) {
+    if (OldNS & (IDNS_Ordinary | IDNS_OrdinaryFriend | IDNS_LocalExtern)) {
       IdentifierNamespace |= IDNS_OrdinaryFriend;
       if (PerformFriendInjection ||
           (Prev && Prev->getIdentifierNamespace() & IDNS_Ordinary))

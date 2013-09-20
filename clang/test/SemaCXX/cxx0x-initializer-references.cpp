@@ -36,10 +36,10 @@ namespace reference {
   };
 
   void call() {
-    void f(const int&);
+    one f(const int&);
     f({1});
 
-    void g(int&); // expected-note {{passing argument}}
+    one g(int&); // expected-note {{passing argument}}
     g({1}); // expected-error {{cannot bind to an initializer list temporary}}
     int i = 0;
     g({i});

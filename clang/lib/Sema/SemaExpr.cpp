@@ -2459,7 +2459,7 @@ bool Sema::UseArgumentDependentLookup(const CXXScopeSpec &SS,
     // turn off ADL anyway).
     if (isa<UsingShadowDecl>(D))
       D = cast<UsingShadowDecl>(D)->getTargetDecl();
-    else if (D->getDeclContext()->isFunctionOrMethod())
+    else if (D->getLexicalDeclContext()->isFunctionOrMethod())
       return false;
 
     // C++0x [basic.lookup.argdep]p3:
