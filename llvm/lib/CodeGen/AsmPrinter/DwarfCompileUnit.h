@@ -129,12 +129,11 @@ public:
 
   /// addGlobalName - Add a new global entity to the compile unit.
   ///
-  void addGlobalName(StringRef Name, DIE *Die) { GlobalNames[Name] = Die; }
+  void addGlobalName(StringRef Name, DIE *Die);
 
   /// addGlobalType - Add a new global type to the compile unit.
   ///
   void addGlobalType(DIType Ty);
-
 
   /// addAccelName - Add a new name to the name accelerator table.
   void addAccelName(StringRef Name, DIE *Die) {

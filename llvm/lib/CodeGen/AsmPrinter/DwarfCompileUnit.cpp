@@ -843,6 +843,11 @@ void CompileUnit::addType(DIE *Entity, DIType Ty, uint16_t Attribute) {
   addGlobalType(Ty);
 }
 
+/// addGlobalName - Add a new global name to the compile unit.
+void CompileUnit::addGlobalName(StringRef Name, DIE *Die) {
+  GlobalNames[Name] = Die;
+}
+
 /// addGlobalType - Add a new global type to the compile unit.
 ///
 void CompileUnit::addGlobalType(DIType Ty) {
