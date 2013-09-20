@@ -12,6 +12,8 @@
 //===----------------------------------------------------------------------===//
 #include "asan_test_utils.h"
 
+#include <AvailabilityMacros.h>
+
 // Used for string functions tests
 static char global_string[] = "global";
 static size_t global_string_length = 6;
