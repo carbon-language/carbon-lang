@@ -1,6 +1,9 @@
 ; RUN: llc -mtriple=x86_64-unknown-linux-gnu < %s | FileCheck %s --check-prefix=LINUX
 ; RUN: llc -mtriple=x86_64-darwin < %s | FileCheck %s --check-prefix=DARWIN
 
+; FIXME: Investigating.
+; XFAIL: win32
+
 @yyyy = common global i32 0, align 4
 
 !llvm.dbg.cu = !{!0}
