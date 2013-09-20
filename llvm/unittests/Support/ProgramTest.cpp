@@ -60,7 +60,7 @@ TEST(ProgramTest, CreateProcessTrailingSlash) {
       sys::fs::getMainExecutable(TestMainArgv0, &ProgramTestStringArg1);
   const char *argv[] = {
     my_exe.c_str(),
-    "--gtest_filter=ProgramTest.CreateProcessTrailingSlashChild",
+    "--gtest_filter=ProgramTest.CreateProcessTrailingSlash",
     "-program-test-string-arg1", "has\\\\ trailing\\",
     "-program-test-string-arg2", "has\\\\ trailing\\",
     0
