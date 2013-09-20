@@ -17,7 +17,6 @@ class AssertingInferiorTestCase(TestBase):
 
     def test_inferior_asserting_dwarf(self):
         """Test that lldb reliably catches the inferior asserting (command)."""
-        self.skipTest("llvm.org/pr17276 -- backtrace is truncated")
         self.buildDwarf()
         self.inferior_asserting()
 
@@ -30,21 +29,20 @@ class AssertingInferiorTestCase(TestBase):
     @expectedFailureFreeBSD('llvm.org/pr17184')
     def test_inferior_asserting_register_dwarf(self):
         """Test that lldb reliably reads registers from the inferior after asserting (command)."""
-        self.skipTest("llvm.org/pr17276 -- backtrace is truncated")
         self.buildDwarf()
         self.inferior_asserting_registers()
 
     @skipIfGcc # Avoid xpasses as the verion of libc used on the gcc buildbot has the required function symbols.
+    @expectedFailureFreeBSD # ResolveSymbolContextForAddress can fail using ELF with stripped function symbols.
+    @expectedFailureLinux # ResolveSymbolContextForAddress can fail using ELF with stripped function symbols.
     def test_inferior_asserting_disassemble(self):
         """Test that lldb reliably disassembles frames after asserting (command)."""
-        self.skipTest("llvm.org/pr17276 -- ResolveSymbolContextForAddress can fail using ELF with stripped function symbols.")
         self.buildDefault()
         self.inferior_asserting_disassemble()
 
     @python_api_test
     def test_inferior_asserting_python(self):
         """Test that lldb reliably catches the inferior asserting (Python API)."""
-        self.skipTest("llvm.org/pr17276 -- backtrace is truncated")
         self.buildDefault()
         self.inferior_asserting_python()
 
@@ -56,20 +54,17 @@ class AssertingInferiorTestCase(TestBase):
 
     def test_inferior_asserting_expr(self):
         """Test that the lldb expression interpreter can read from the inferior after asserting (command)."""
-        self.skipTest("llvm.org/pr17276 -- backtrace is truncated")
         self.buildDwarf()
         self.inferior_asserting_expr()
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_inferior_asserting_step(self):
         """Test that lldb functions correctly after stepping through a call to assert()."""
-        self.skipTest("llvm.org/pr17276 -- backtrace is truncated")
         self.buildDsym()
         self.inferior_asserting_step()
 
     def test_inferior_asserting_step(self):
         """Test that lldb functions correctly after stepping through a call to assert()."""
-        self.skipTest("llvm.org/pr17276 -- backtrace is truncated")
         self.buildDwarf()
         self.inferior_asserting_step()
 

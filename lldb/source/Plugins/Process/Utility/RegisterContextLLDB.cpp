@@ -370,7 +370,8 @@ RegisterContextLLDB::InitializeNonZerothFrame()
     }
 
     // We require that eSymbolContextSymbol be successfully filled in or this context is of no use to us.
-    if ((pc_module_sp->ResolveSymbolContextForAddress (m_current_pc, eSymbolContextFunction| eSymbolContextSymbol, m_sym_ctx) & eSymbolContextSymbol) == eSymbolContextSymbol)
+    uint32_t resolve_scope = eSymbolContextFunction | eSymbolContextSymbol | eSymbolContextTailCall;
+    if ((pc_module_sp->ResolveSymbolContextForAddress (m_current_pc, resolve_scope, m_sym_ctx) & eSymbolContextSymbol) == eSymbolContextSymbol)
     {
         m_sym_ctx_valid = true;
     }
