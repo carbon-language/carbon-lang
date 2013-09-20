@@ -416,31 +416,22 @@ POSIXThread::BreakNotify(const ProcessMessage &message)
     lldb::BreakpointSiteSP bp_site(GetProcess()->GetBreakpointSiteList().FindByAddress(pc));
 
     // If the breakpoint is for this thread, then we'll report the hit, but if it is for another thread,
-    // we can just report no reason.  We don't need to worry about stepping over the breakpoint here, that
-    // will be taken care of when the thread resumes and notices that there's a breakpoint under the pc.
-    if (bp_site && bp_site->ValidForThisThread(this))
+    // we create a stop reason with should_stop=false.  If there is no breakpoint location, then report
+    // an invalid stop reason. We don't need to worry about stepping over the breakpoint here, that will
+    // be taken care of when the thread resumes and notices that there's a breakpoint under the pc.
+    if (bp_site)
     {
         lldb::break_id_t bp_id = bp_site->GetID();
-        if (GetProcess()->GetThreadList().SetSelectedThreadByID(GetID()))
+        if (bp_site->ValidForThisThread(this))
             SetStopInfo (StopInfo::CreateStopReasonWithBreakpointSiteID(*this, bp_id));
         else
-            assert(false && "Invalid thread ID during BreakNotify.");
-    }
-    else
-    {
-        const ThreadSpec *spec = bp_site ? 
-            bp_site->GetOwnerAtIndex(0)->GetOptionsNoCreate()->GetThreadSpecNoCreate() : 0;
-
-        if (spec && spec->TIDMatches(*this))
-            assert(false && "BreakpointSite is invalid for the current ThreadSpec.");
-        else
         {
-            if (!m_stop_info_sp) {
-                StopInfoSP invalid_stop_info_sp;
-                SetStopInfo (invalid_stop_info_sp);
-            }
+            const bool should_stop = false;
+            SetStopInfo (StopInfo::CreateStopReasonWithBreakpointSiteID(*this, bp_id, should_stop));
         }
     }
+    else
+        SetStopInfo(StopInfoSP());
 }
 
 void
