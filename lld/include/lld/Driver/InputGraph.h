@@ -226,7 +226,9 @@ public:
   }
 
   /// \brief create an error string for printing purposes
-  virtual std::string errStr(llvm::error_code) {
+  virtual std::string errStr(llvm::error_code errc) {
+    if (errc == llvm::errc::no_such_file_or_directory)
+      return (Twine("Cannot open ") + _path).str();
     llvm_unreachable("not handling errors");
   }
 
