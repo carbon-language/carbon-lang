@@ -25,9 +25,10 @@ new_delete = set(['_ZdaPv', '_ZdaPvRKSt9nothrow_t',
                   '_Znwm', '_ZnwmRKSt9nothrow_t'])
 
 versioned_functions = set(['memcpy', 'pthread_cond_broadcast',
-                           'pthread_cond_destroy', 'pthread_cond_signal',
-                           'pthread_cond_timedwait', 'pthread_cond_wait',
-                           'realpath', 'sched_getaffinity'])
+                           'pthread_cond_destroy', 'pthread_cond_init',
+                           'pthread_cond_signal', 'pthread_cond_timedwait',
+                           'pthread_cond_wait', 'realpath',
+                           'sched_getaffinity'])
 
 def get_global_functions(library):
   functions = []
