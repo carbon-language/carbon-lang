@@ -1233,13 +1233,12 @@ until the end of a translation unit. This flag is enabled by default for
 Windows targets.
 
 -  clang allows setting ``_MSC_VER`` with ``-fmsc-version=``. It defaults to
-   1300 which is the same as Visual C/C++ 2003. Any number is supported
+   1700 which is the same as Visual C/C++ 2012. Any number is supported
    and can greatly affect what Windows SDK and c++stdlib headers clang
-   can compile. This option will be removed when clang supports the full
-   set of MS extensions required for these headers.
+   can compile.
 -  clang does not support the Microsoft extension where anonymous record
    members can be declared using user defined typedefs.
--  clang supports the Microsoft "#pragma pack" feature for controlling
+-  clang supports the Microsoft ``#pragma pack`` feature for controlling
    record layout. GCC also contains support for this feature, however
    where MSVC and GCC are incompatible clang follows the MSVC
    definition.
