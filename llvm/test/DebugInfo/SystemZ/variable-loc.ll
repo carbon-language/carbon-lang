@@ -11,6 +11,9 @@
 ; CHECK: la      %r2, 164(%r11)
 ; CHECK: brasl   %r14, populate_array@PLT
 ;
+; CHECK: .Linfo_string7:
+; CHECK-NEXT: main_arr
+;
 ; Now check that the debugging information reflects this:
 ; CHECK: DW_TAG_variable
 ; CHECK-NEXT: .long .Linfo_string7
@@ -21,8 +24,6 @@
 ; CHECK-NEXT: .byte 145
 ; CHECK-NEXT: .ascii "\244\001"
 ;
-; CHECK: .Linfo_string7:
-; CHECK-NEXT: main_arr
 
 
 @.str = private unnamed_addr constant [13 x i8] c"Total is %d\0A\00", align 2

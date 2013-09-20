@@ -313,10 +313,12 @@ static StringRef getObjCMethodName(StringRef In) {
 }
 
 // Add the various names to the Dwarf accelerator table names.
+// TODO: Determine whether or not we should add names for programs
+// that do not have a DW_AT_name or DW_AT_linkage_name field - this
+// is only slightly different than the lookup of non-standard ObjC names.
 static void addSubprogramNames(CompileUnit *TheCU, DISubprogram SP,
                                DIE* Die) {
   if (!SP.isDefinition()) return;
-
   TheCU->addAccelName(SP.getName(), Die);
 
   // If the linkage name is different than the name, go ahead and output
@@ -1126,6 +1128,8 @@ void DwarfDebug::endModule() {
   finalizeModuleInfo();
 
   if (!useSplitDwarf()) {
+    emitDebugStr();
+
     // Emit all the DIEs into a debug info section.
     emitDebugInfo();
 
@@ -1147,6 +1151,9 @@ void DwarfDebug::endModule() {
   } else {
     // TODO: Fill this in for separated debug sections and separate
     // out information into new sections.
+    emitDebugStr();
+    if (useSplitDwarf())
+      emitDebugStrDWO();
 
     // Emit the debug info section and compile units.
     emitDebugInfo();
@@ -1186,11 +1193,6 @@ void DwarfDebug::endModule() {
     emitDebugPubNames(GenerateGnuPubSections);
     emitDebugPubTypes(GenerateGnuPubSections);
   }
-
-  // Finally emit string information into a string table.
-  emitDebugStr();
-  if (useSplitDwarf())
-    emitDebugStrDWO();
 
   // clean up.
   SPMap.clear();

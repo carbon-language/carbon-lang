@@ -23,7 +23,10 @@
 ; CHECK: add x29, sp, #416
 ; CHECK: add {{x[0-9]+}}, sp, #4
 
-  ; Now check the debugging information reflects this:
+; CHECK: .Linfo_string7:
+; CHECK-NEXT: main_arr
+
+; Now check the debugging information reflects this:
 ; CHECK: DW_TAG_variable
 ; CHECK-NEXT: .word .Linfo_string7
 
@@ -32,8 +35,6 @@
 ; CHECK-NEXT: .byte 145
 ; CHECK-NEXT: .ascii "\344|"
 
-; CHECK: .Linfo_string7:
-; CHECK-NEXT: main_arr
 
 
 target datalayout = "e-p:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-i128:128:128-f32:32:32-f64:64:64-f128:128:128-n32:64-S128"

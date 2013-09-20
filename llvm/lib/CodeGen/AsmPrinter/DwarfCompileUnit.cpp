@@ -843,6 +843,34 @@ void CompileUnit::addType(DIE *Entity, DIType Ty, uint16_t Attribute) {
   addGlobalType(Ty);
 }
 
+// Accelerator table mutators - add each name along with its companion
+// DIE to the proper table while ensuring that the name that we're going
+// to reference is in the string table. We do this since the names we
+// add may not only be identical to the names in the DIE.
+void CompileUnit::addAccelName(StringRef Name, DIE *Die) {
+  DU->getStringPoolEntry(Name);
+  std::vector<DIE*> &DIEs = AccelNames[Name];
+  DIEs.push_back(Die);
+}
+
+void CompileUnit::addAccelObjC(StringRef Name, DIE *Die) {
+  DU->getStringPoolEntry(Name);
+  std::vector<DIE*> &DIEs = AccelObjC[Name];
+  DIEs.push_back(Die);
+}
+
+void CompileUnit::addAccelNamespace(StringRef Name, DIE *Die) {
+  DU->getStringPoolEntry(Name);
+  std::vector<DIE*> &DIEs = AccelNamespace[Name];
+  DIEs.push_back(Die);
+}
+
+void CompileUnit::addAccelType(StringRef Name, std::pair<DIE *, unsigned> Die) {
+  DU->getStringPoolEntry(Name);
+  std::vector<std::pair<DIE *, unsigned> > &DIEs = AccelTypes[Name];
+  DIEs.push_back(Die);
+}
+
 /// addGlobalName - Add a new global name to the compile unit.
 void CompileUnit::addGlobalName(StringRef Name, DIE *Die) {
   GlobalNames[Name] = Die;
