@@ -328,7 +328,11 @@ FileSpec::SetFile (const char *pathname, bool resolve)
             // Truncate the basename off the end of the resolved path
 
             // Only attempt to get the dirname if it looks like we have a path
-            if (strchr(resolved_path, '/'))
+            if (strchr(resolved_path, '/')
+#ifdef _WIN32
+                || strchr(resolved_path, '\\')
+#endif
+                )
             {
                 char *directory = ::dirname (resolved_path);
 
@@ -339,6 +343,11 @@ FileSpec::SetFile (const char *pathname, bool resolve)
                 else
                 {
                     char *last_resolved_path_slash = strrchr(resolved_path, '/');
+#ifdef _WIN32
+                    char* last_resolved_path_slash_windows = strrchr(resolved_path, '\\');
+                    if (last_resolved_path_slash_windows > last_resolved_path_slash)
+                        last_resolved_path_slash = last_resolved_path_slash_windows;
+#endif
                     if (last_resolved_path_slash)
                     {
                         *last_resolved_path_slash = '\0';
