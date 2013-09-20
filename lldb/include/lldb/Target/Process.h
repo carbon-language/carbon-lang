@@ -1368,9 +1368,7 @@ class Process :
 {
 friend class ThreadList;
 friend class ClangFunction; // For WaitForStateChangeEventsPrivate
-friend class CommandObjectProcessLaunch;
 friend class ProcessEventData;
-friend class CommandObjectBreakpointCommand;
 friend class StopInfo;
 
 public:
