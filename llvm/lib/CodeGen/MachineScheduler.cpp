@@ -101,6 +101,9 @@ public:
   virtual void print(raw_ostream &O, const Module* = 0) const;
 
   static char ID; // Class identification, replacement for typeinfo
+
+protected:
+  ScheduleDAGInstrs *createMachineScheduler();
 };
 } // namespace
 
@@ -202,6 +205,22 @@ nextIfDebug(MachineBasicBlock::iterator I,
       &*nextIfDebug(MachineBasicBlock::const_iterator(I), End)));
 }
 
+/// Instantiate a ScheduleDAGInstrs that will be owned by the called.
+ScheduleDAGInstrs *MachineScheduler::createMachineScheduler() {
+  // Select the scheduler, or set the default.
+  MachineSchedRegistry::ScheduleDAGCtor Ctor = MachineSchedOpt;
+  if (Ctor != useDefaultMachineSched)
+    return Ctor(this);
+
+  // Get the default scheduler set by the target for this function.
+  ScheduleDAGInstrs *Scheduler = PassConfig->createMachineScheduler(this);
+  if (Scheduler)
+    return Scheduler;
+
+  // Default to GenericScheduler.
+  return createGenericSched(this);
+}
+
 /// Top-level MachineScheduler pass driver.
 ///
 /// Visit blocks in function order. Divide each block into scheduling regions
@@ -237,18 +256,9 @@ bool MachineScheduler::runOnMachineFunction(MachineFunction &mf) {
   }
   RegClassInfo->runOnMachineFunction(*MF);
 
-  // Select the scheduler, or set the default.
-  MachineSchedRegistry::ScheduleDAGCtor Ctor = MachineSchedOpt;
-  if (Ctor == useDefaultMachineSched) {
-    // Get the default scheduler set by the target.
-    Ctor = MachineSchedRegistry::getDefault();
-    if (!Ctor) {
-      Ctor = createGenericSched;
-      MachineSchedRegistry::setDefault(Ctor);
-    }
-  }
-  // Instantiate the selected scheduler.
-  OwningPtr<ScheduleDAGInstrs> Scheduler(Ctor(this));
+  // Instantiate the selected scheduler for this target, function, and
+  // optimization level.
+  OwningPtr<ScheduleDAGInstrs> Scheduler(createMachineScheduler());
 
   // Visit all machine basic blocks.
   //

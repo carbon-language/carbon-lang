@@ -64,6 +64,10 @@ public:
   bool hasHWFP64() const;
   bool hasCaymanISA() const;
 
+  virtual bool enableMachineScheduler() const {
+    return getGeneration() <= NORTHERN_ISLANDS;
+  }
+
   // Helper functions to simplify if statements
   bool isTargetELF() const;
   std::string getDataLayout() const;

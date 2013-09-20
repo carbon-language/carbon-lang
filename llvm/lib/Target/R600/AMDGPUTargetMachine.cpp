@@ -80,17 +80,20 @@ namespace {
 class AMDGPUPassConfig : public TargetPassConfig {
 public:
   AMDGPUPassConfig(AMDGPUTargetMachine *TM, PassManagerBase &PM)
-    : TargetPassConfig(TM, PM) {
-    const AMDGPUSubtarget &ST = TM->getSubtarget<AMDGPUSubtarget>();
-    if (ST.getGeneration() <= AMDGPUSubtarget::NORTHERN_ISLANDS) {
-      enablePass(&MachineSchedulerID);
-      MachineSchedRegistry::setDefault(createR600MachineScheduler);
-    }
-  }
+    : TargetPassConfig(TM, PM) {}
 
   AMDGPUTargetMachine &getAMDGPUTargetMachine() const {
     return getTM<AMDGPUTargetMachine>();
   }
+
+  virtual ScheduleDAGInstrs *
+  createMachineScheduler(MachineSchedContext *C) const {
+    const AMDGPUSubtarget &ST = TM->getSubtarget<AMDGPUSubtarget>();
+    if (ST.getGeneration() <= AMDGPUSubtarget::NORTHERN_ISLANDS)
+      return createR600MachineScheduler(C);
+    return 0;
+  }
+
   virtual bool addPreISel();
   virtual bool addInstSelector();
   virtual bool addPreRegAlloc();
@@ -186,4 +189,3 @@ bool AMDGPUPassConfig::addPreEmitPass() {
 
   return false;
 }
-
