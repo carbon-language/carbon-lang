@@ -742,7 +742,7 @@ const char *llvm::dwarf::AtomTypeString(unsigned AT) {
   return 0;
 }
 
-StringRef llvm::dwarf::GDBIndexEntryKindString(GDBIndexEntryKind Kind) {
+const char *llvm::dwarf::GDBIndexEntryKindString(GDBIndexEntryKind Kind) {
   switch (Kind) {
   case GIEK_NONE:
     return "NONE";
@@ -764,7 +764,7 @@ StringRef llvm::dwarf::GDBIndexEntryKindString(GDBIndexEntryKind Kind) {
   llvm_unreachable("Unknown GDBIndexEntryKind value");
 }
 
-StringRef llvm::dwarf::GDBIndexEntryLinkageString(GDBIndexEntryLinkage Linkage) {
+const char *llvm::dwarf::GDBIndexEntryLinkageString(GDBIndexEntryLinkage Linkage) {
   switch (Linkage) {
   case GIEL_EXTERNAL:
     return "EXTERNAL";

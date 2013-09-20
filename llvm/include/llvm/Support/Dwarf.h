@@ -17,7 +17,6 @@
 #define LLVM_SUPPORT_DWARF_H
 
 #include "llvm/Support/DataTypes.h"
-#include "llvm/ADT/StringRef.h"
 
 namespace llvm {
 
@@ -803,14 +802,14 @@ enum GDBIndexEntryKind {
   GIEK_UNUSED7
 };
 
-StringRef GDBIndexEntryKindString(GDBIndexEntryKind Kind);
+const char *GDBIndexEntryKindString(GDBIndexEntryKind Kind);
 
 enum GDBIndexEntryLinkage {
   GIEL_EXTERNAL,
   GIEL_STATIC
 };
 
-StringRef GDBIndexEntryLinkageString(GDBIndexEntryLinkage Linkage);
+const char *GDBIndexEntryLinkageString(GDBIndexEntryLinkage Linkage);
 
 /// The gnu_pub* kind looks like:
 ///

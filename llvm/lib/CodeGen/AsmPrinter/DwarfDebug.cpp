@@ -2426,7 +2426,7 @@ void DwarfDebug::emitDebugPubNames(bool GnuStyle) {
       if (GnuStyle) {
         dwarf::PubIndexEntryDescriptor Desc = computeIndexValue(TheCU, Entity);
         Asm->OutStreamer.AddComment(
-            "Kind: " + dwarf::GDBIndexEntryKindString(Desc.Kind) + ", " +
+            Twine("Kind: ") + dwarf::GDBIndexEntryKindString(Desc.Kind) + ", " +
             dwarf::GDBIndexEntryLinkageString(Desc.Linkage));
         Asm->EmitInt8(Desc.toBits());
       }
@@ -2488,7 +2488,7 @@ void DwarfDebug::emitDebugPubTypes(bool GnuStyle) {
       if (GnuStyle) {
         dwarf::PubIndexEntryDescriptor Desc = computeIndexValue(TheCU, Entity);
         Asm->OutStreamer.AddComment(
-            "Kind: " + dwarf::GDBIndexEntryKindString(Desc.Kind) + ", " +
+            Twine("Kind: ") + dwarf::GDBIndexEntryKindString(Desc.Kind) + ", " +
             dwarf::GDBIndexEntryLinkageString(Desc.Linkage));
         Asm->EmitInt8(Desc.toBits());
       }
