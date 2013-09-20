@@ -439,14 +439,9 @@ static bool SuggestInitializationFixit(Sema &S, const VarDecl *VD) {
     << FixItHint::CreateInsertion(VD->getLocation(), "__block ");
     return true;
   }
-  
+
   // Don't issue a fixit if there is already an initializer.
   if (VD->getInit())
-    return false;
-  
-  // Suggest possible initialization (if any).
-  std::string Init = S.getFixItZeroInitializerForType(VariableTy);
-  if (Init.empty())
     return false;
 
   // Don't suggest a fixit inside macros.
@@ -454,7 +449,12 @@ static bool SuggestInitializationFixit(Sema &S, const VarDecl *VD) {
     return false;
 
   SourceLocation Loc = S.PP.getLocForEndOfToken(VD->getLocEnd());
-  
+
+  // Suggest possible initialization (if any).
+  std::string Init = S.getFixItZeroInitializerForType(VariableTy, Loc);
+  if (Init.empty())
+    return false;
+
   S.Diag(Loc, diag::note_var_fixit_add_initialization) << VD->getDeclName()
     << FixItHint::CreateInsertion(Loc, Init);
   return true;

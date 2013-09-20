@@ -2395,7 +2395,8 @@ static void warnAboutAmbiguousFunction(Sema &S, Declarator &D,
       S.Diag(DeclType.Loc, diag::note_empty_parens_default_ctor)
         << FixItHint::CreateRemoval(ParenRange);
     else {
-      std::string Init = S.getFixItZeroInitializerForType(RT);
+      std::string Init =
+          S.getFixItZeroInitializerForType(RT, ParenRange.getBegin());
       if (Init.empty() && S.LangOpts.CPlusPlus11)
         Init = "{}";
       if (!Init.empty())

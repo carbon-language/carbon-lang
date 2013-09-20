@@ -5328,7 +5328,8 @@ void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
     if (!Loc.isMacroID() || CC.isMacroID())
       S.Diag(Loc, diag::warn_impcast_null_pointer_to_integer)
           << T << clang::SourceRange(CC)
-          << FixItHint::CreateReplacement(Loc, S.getFixItZeroLiteralForType(T));
+          << FixItHint::CreateReplacement(Loc,
+                                          S.getFixItZeroLiteralForType(T, Loc));
   }
 
   if (!Source->isIntegerType() || !Target->isIntegerType())
