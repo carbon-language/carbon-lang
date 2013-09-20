@@ -935,14 +935,14 @@ public:
       if ((I->File == SourceHandle) && (I->Line >= BlockStartLine) &&
           (I->Line < BlockEndLine)) {
         returnValue = false;
-        OS << SourcePath << ":" << I->Line << ":" << I->Column << "\n";
+        OS << SourcePath << ":" << I->Line << ":" << I->Column << ":\n";
         OS << getSourceLine(PP, FileID, I->Line) << "\n";
         if (I->Column > 0)
           OS << std::string(I->Column - 1, ' ') << "^\n";
         OS << "error: Include directive within " << BlockIdentifierMessage
            << ".\n";
         OS << SourcePath << ":" << BlockStartLine << ":" << BlockStartColumn
-           << "\n";
+           << ":\n";
         OS << getSourceLine(PP, BlockStartLoc) << "\n";
         if (BlockStartColumn > 0)
           OS << std::string(BlockStartColumn - 1, ' ') << "^\n";
