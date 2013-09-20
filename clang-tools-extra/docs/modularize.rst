@@ -44,6 +44,14 @@ modularize.
 What Modularize Checks
 ======================
 
+Modularize will check for the following:
+
+* Duplicate global type and variable definitions
+* Duplicate macro definitions
+* Macro instances, 'defined(macro)', or #if, #elif, #ifdef, #ifndef conditions
+  that evaluate differently in a header
+* #include directives inside 'extern "C/C++" {}' or 'namespace (name) {}' blocks
+
 Modularize will do normal C/C++ parsing, reporting normal errors and warnings,
 but will also report special error messages like the following:
 
