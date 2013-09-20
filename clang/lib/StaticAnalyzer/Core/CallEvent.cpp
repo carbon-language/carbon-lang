@@ -688,9 +688,7 @@ ObjCMessageKind ObjCMethodCall::getMessageKind() const {
 
     // Find the parent, ignoring implicit casts.
     ParentMap &PM = getLocationContext()->getParentMap();
-    const Stmt *S = PM.getParent(getOriginExpr());
-    while (isa<ImplicitCastExpr>(S))
-      S = PM.getParent(S);
+    const Stmt *S = PM.getParentIgnoreParenCasts(getOriginExpr());
 
     // Check if parent is a PseudoObjectExpr.
     if (const PseudoObjectExpr *POE = dyn_cast_or_null<PseudoObjectExpr>(S)) {
