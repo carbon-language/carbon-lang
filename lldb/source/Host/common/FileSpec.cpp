@@ -14,7 +14,9 @@
 #include "lldb/Host/windows/windows.h"
 #endif
 #include <fcntl.h>
+#ifndef _MSC_VER
 #include <libgen.h>
+#endif
 #include <sys/stat.h>
 #include <set>
 #include <string.h>

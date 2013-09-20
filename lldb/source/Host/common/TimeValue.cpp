@@ -14,6 +14,11 @@
 #include <stddef.h>
 #include <time.h>
 #include <cstring>
+
+#ifdef _MSC_VER
+#include "lldb/Host/windows/windows.h"
+#endif
+
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
@@ -119,10 +124,20 @@ TimeValue
 TimeValue::Now()
 {
     uint32_t seconds, nanoseconds;
+#if _MSC_VER
+    SYSTEMTIME st;
+    GetSystemTime(&st);
+    nanoseconds = st.wMilliseconds * 1000000;
+    FILETIME ft;
+    SystemTimeToFileTime(&st, &ft);
+
+    seconds = ((((uint64_t)ft.dwHighDateTime) << 32 | ft.dwLowDateTime) / 10000000) - 11644473600ULL;
+#else
     struct timeval tv;
     gettimeofday(&tv, NULL);
     seconds = tv.tv_sec;
     nanoseconds = tv.tv_usec * NanoSecPerMicroSec;
+#endif
     TimeValue now(seconds, nanoseconds);
     return now;
 }

@@ -114,6 +114,11 @@
 #define MAX_PATH 260
 #endif
 
+#ifdef _MSC_VER
+// ignore GCC function attributes
+#define __attribute__(X)
+#endif
+
 #if defined(__cplusplus)
 
 //----------------------------------------------------------------------

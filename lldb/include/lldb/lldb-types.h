@@ -35,8 +35,10 @@
 // things should be defined. Currently MacOSX is being assumed by default
 // since that is what lldb was first developed for.
 
+#ifndef _MSC_VER
 #include <stdbool.h>
 #include <unistd.h>
+#endif
 
 #ifdef _WIN32
 

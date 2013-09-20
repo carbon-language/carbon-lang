@@ -12,6 +12,7 @@
 
 // C Includes
 #include <stdint.h>
+#ifndef _MSC_VER
 #include <sys/time.h>
 
 // BEGIN: MinGW work around
@@ -19,6 +20,7 @@
 #include <pthread.h>
 #endif
 // END: MinGW work around
+#endif
 
 // C++ Includes
 // Other libraries and framework includes

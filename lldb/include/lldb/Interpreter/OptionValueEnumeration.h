@@ -34,7 +34,7 @@ public:
         const char *description;
     };
     typedef UniqueCStringMap<EnumeratorInfo> EnumerationMap;
-    typedef typename EnumerationMap::Entry EnumerationMapEntry;
+    typedef EnumerationMap::Entry EnumerationMapEntry;
 
     OptionValueEnumeration (const OptionEnumValueElement *enumerators, enum_type value);
     
