@@ -3420,7 +3420,7 @@ SDNode *DAGCombiner::MatchRotate(SDValue LHS, SDValue RHS, SDLoc DL) {
       // fold (or (shl x, (*ext y)), (srl x, (*ext (sub 32, y)))) ->
       //   (rotr x, (sub 32, y))
       if (ConstantSDNode *SUBC =
-            dyn_cast<ConstantSDNode>(RExtOp0.getOperand(0)))
+              dyn_cast<ConstantSDNode>(RExtOp0.getOperand(0))) {
         if (SUBC->getAPIntValue() == OpSizeInBits) {
           return DAG.getNode(HasROTL ? ISD::ROTL : ISD::ROTR, DL, VT,
                              LHSShiftArg,
@@ -3442,6 +3442,7 @@ SDNode *DAGCombiner::MatchRotate(SDValue LHS, SDValue RHS, SDLoc DL) {
             return DAG.getNode(LHSShiftArg.getOpcode(), DL, VT, V).getNode();
           }
         }
+      }
     } else if (LExtOp0.getOpcode() == ISD::SUB &&
                RExtOp0 == LExtOp0.getOperand(1)) {
       // fold (or (shl x, (*ext (sub 32, y))), (srl x, (*ext y))) ->
@@ -3449,7 +3450,7 @@ SDNode *DAGCombiner::MatchRotate(SDValue LHS, SDValue RHS, SDLoc DL) {
       // fold (or (shl x, (*ext (sub 32, y))), (srl x, (*ext y))) ->
       //   (rotl x, (sub 32, y))
       if (ConstantSDNode *SUBC =
-            dyn_cast<ConstantSDNode>(LExtOp0.getOperand(0)))
+              dyn_cast<ConstantSDNode>(LExtOp0.getOperand(0))) {
         if (SUBC->getAPIntValue() == OpSizeInBits) {
           return DAG.getNode(HasROTR ? ISD::ROTR : ISD::ROTL, DL, VT,
                              LHSShiftArg,
@@ -3471,6 +3472,7 @@ SDNode *DAGCombiner::MatchRotate(SDValue LHS, SDValue RHS, SDLoc DL) {
             return DAG.getNode(RHSShiftArg.getOpcode(), DL, VT, V).getNode();
           }
         }
+      }
     }
   }
 
