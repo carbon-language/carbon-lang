@@ -1,6 +1,6 @@
-// RUN: %clang -fsyntax-only -Xclang -verify -std=c11 %s
-// RUN: %clang -fsyntax-only -Xclang -verify -std=c11 -fmodules %s
-// RUN: %clang -fsyntax-only -Xclang -verify -std=c11 -ffreestanding %s
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c11 %s
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c11 -fmodules %s
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c11 -ffreestanding %s
 
 noreturn int f(); // expected-error 1+{{}}
 

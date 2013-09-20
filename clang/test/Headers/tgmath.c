@@ -1,4 +1,4 @@
-// RUN: %clang -fsyntax-only -isystem %S/Inputs/include -Xclang -verify %s
+// RUN: %clang_cc1 -fsyntax-only -isystem %S/Inputs/include -verify %s
 // expected-no-diagnostics
 
 #include <tgmath.h>

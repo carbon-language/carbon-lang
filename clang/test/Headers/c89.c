@@ -1,4 +1,4 @@
-// RUN: %clang -target i386-apple-darwin10 -fsyntax-only -Xclang -verify -std=c89 %s
+// RUN: %clang_cc1 -triple i386-apple-darwin10 -target-cpu yonah -fsyntax-only -verify -std=c89 %s
 // expected-no-diagnostics
 
 // FIXME: Disable inclusion of mm_malloc.h, our current implementation is broken

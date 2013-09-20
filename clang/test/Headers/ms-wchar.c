@@ -1,4 +1,4 @@
-// RUN: %clang -fsyntax-only -target i386-pc-win32 %s
+// RUN: %clang_cc1 -fsyntax-only -triple i386-pc-win32 -fms-compatibility %s
 
 #if defined(_WCHAR_T_DEFINED)
 #error "_WCHAR_T_DEFINED should not be defined in C99"
