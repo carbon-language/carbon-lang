@@ -1,0 +1,96 @@
+.. index:: modularize
+
+==================================
+Modularize User's Manual
+==================================
+
+.. toctree::
+   :hidden:
+
+   ModularizeUsage
+
+:program:`modularize` is a standalone tool that checks whether a set of headers
+provides the consistent definitions required to use modules. For example, it
+detects whether the same entity (say, a NULL macro or size_t typedef) is
+defined in multiple headers or whether a header produces different definitions
+under different circumstances. These conditions cause modules built from the
+headers to behave poorly, and should be fixed before introducing a module
+map.
+
+Getting Started
+===============
+
+To build from source:
+
+1. Read `Getting Started with the LLVM System`_ and `Clang Tools
+   Documentation`_ for information on getting sources for LLVM, Clang, and
+   Clang Extra Tools.
+
+2. `Getting Started with the LLVM System`_ and `Building LLVM with CMake`_ give
+   directions for how to build. With sources all checked out into the
+   right place the LLVM build will build Clang Extra Tools and their
+   dependencies automatically.
+
+   * If using CMake, you can also use the ``modularize`` target to build
+     just the modularize tool and its dependencies.
+
+Before continuing, take a look at :doc:`ModularizeUsage` to see how to invoke
+modularize.
+
+.. _Getting Started with the LLVM System: http://llvm.org/docs/GettingStarted.html
+.. _Building LLVM with CMake: http://llvm.org/docs/CMake.html
+.. _Clang Tools Documentation: http://clang.llvm.org/docs/ClangTools.html
+
+What Modularize Checks
+======================
+
+Modularize will do normal C/C++ parsing, reporting normal errors and warnings,
+but will also report special error messages like the following:
+
+  | error: '(symbol)' defined at multiple locations:
+  |    (file):(row):(column)
+  |    (file):(row):(column)
+
+  error: header '(file)' has different contents depending on how it was
+    included
+
+The latter might be followed by messages like the following:
+
+  | note: '(symbol)' in (file) at (row):(column) not always provided
+
+Checks will also be performed for macro expansions, defined(macro)
+expressions, and preprocessor conditional directives that evaluate
+inconsistently, and can produce error messages like the following:
+
+  |  (...)/SubHeader.h:11:5:
+  |  #if SYMBOL == 1
+  |      ^
+  |  error: Macro instance 'SYMBOL' has different values in this header,
+  |         depending on how it was included.
+  |    'SYMBOL' expanded to: '1' with respect to these inclusion paths:
+  |      (...)/Header1.h
+  |        (...)/SubHeader.h
+  |  (...)/SubHeader.h:3:9:
+  |  #define SYMBOL 1
+  |          ^
+  |  Macro defined here.
+  |    'SYMBOL' expanded to: '2' with respect to these inclusion paths:
+  |      (...)/Header2.h
+  |          (...)/SubHeader.h
+  |  (...)/SubHeader.h:7:9:
+  |  #define SYMBOL 2
+  |          ^
+  |  Macro defined here.
+
+Checks will also be performed for '#include' directives that are
+nested inside 'extern "C/C++" {}' or 'namespace (name) {}' blocks,
+and can produce error message like the following:
+
+  | IncludeInExtern.h:2:3:
+  | #include "Empty.h"
+  | ^
+  | error: Include directive within extern "C" {}.
+  | IncludeInExtern.h:1:1:
+  | extern "C" {
+  | ^
+  | The "extern "C" {}" block is here.

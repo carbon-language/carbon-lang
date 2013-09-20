@@ -16,6 +16,7 @@ Contents
    :maxdepth: 1
 
    clang-modernize
+   modularize
 
 
 Doxygen Documentation

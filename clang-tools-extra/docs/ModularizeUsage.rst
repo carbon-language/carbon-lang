@@ -1,0 +1,41 @@
+=====================
+modularize Usage
+=====================
+
+``modularize [<modularize-options>] <include-files-list> [<front-end-options>...]``
+
+``<modularize-options>`` is a place-holder for options
+specific to modularize, which are described below in
+`Modularize Command Line Options`.
+
+``<include-files-list>`` specifies the path of a file name for a
+file containing the newline-separated list of headers to check
+with respect to each other. Lines beginning with '#' and empty
+lines are ignored. Header file names followed by a colon and
+other space-separated file names will include those extra files
+as dependencies. The file names can be relative or full paths,
+but must be on the same line. For example:
+
+  | header1.h
+  | header2.h
+  | header3.h: header1.h header2.h
+
+Note that unless a "-prefix (header path)" option is specified,
+non-absolute file paths in the header list file will be relative
+to the header list file directory.  Use -prefix to specify a different
+directory.
+
+``<front-end-options>`` is a place-holder for regular Clang
+front-end arguments, which must follow the <include-files-list>.
+Note that by default, the underlying Clang front end assumes .h files
+contain C source, so you might need to specify the ``-x c++`` Clang option
+to tell Clang that the header contains C++ definitions.
+
+Modularize Command Line Options
+============================
+
+.. option:: -prefix <header-path>
+
+  Prepend the given path to non-absolute file paths in the header list file.
+  By default, headers are assumed to be relative to the header list file
+  directory.  Use -prefix to specify a different directory.
