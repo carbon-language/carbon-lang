@@ -139,14 +139,14 @@ llvm::COFF::MachineTypes stringToMachineType(StringRef str) {
       .Default(llvm::COFF::IMAGE_FILE_MACHINE_UNKNOWN);
 }
 
-// Handle /failifmatch option.
+// Handle /failifmismatch option.
 bool handleFailIfMismatchOption(StringRef option,
                                 std::map<StringRef, StringRef> &mustMatch,
                                 raw_ostream &diagnostics) {
   StringRef key, value;
   llvm::tie(key, value) = option.split('=');
   if (key.empty() || value.empty()) {
-    diagnostics << "error: malformed /failifmatch option: " << option << "\n";
+    diagnostics << "error: malformed /failifmismatch option: " << option << "\n";
     return true;
   }
   auto it = mustMatch.find(key);
