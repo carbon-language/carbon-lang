@@ -135,9 +135,8 @@ void DWARFContext::dump(raw_ostream &OS, DIDumpType DumpType) {
         break;
       PubIndexEntryDescriptor desc(pubNames.getU8(&offset));
       OS << format("0x%8.8x ", dieRef)
-         << format("%-8s", dwarf::GDBIndexEntryLinkageString(desc.Linkage)
-                               .str().c_str()) << ' '
-         << dwarf::GDBIndexEntryKindString(desc.Kind) << " \""
+         << format("%-8s", dwarf::GDBIndexEntryLinkageString(desc.Linkage))
+         << ' ' << dwarf::GDBIndexEntryKindString(desc.Kind) << " \""
          << pubNames.getCStr(&offset) << "\"\n";
     }
   }
