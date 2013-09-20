@@ -4817,20 +4817,6 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
 
   Args.AddAllArgs(CmdArgs, options::OPT_L);
 
-  const SanitizerArgs &Sanitize =
-      getToolChain().getDriver().getOrParseSanitizerArgs(Args);
-  // If we're building a dynamic lib with -fsanitize=address,
-  // unresolved symbols may appear. Mark all
-  // of them as dynamic_lookup. Linking executables is handled in
-  // lib/Driver/ToolChains.cpp.
-  if (Sanitize.needsAsanRt()) {
-    if (Args.hasArg(options::OPT_dynamiclib) ||
-        Args.hasArg(options::OPT_bundle)) {
-      CmdArgs.push_back("-undefined");
-      CmdArgs.push_back("dynamic_lookup");
-    }
-  }
-
   if (Args.hasArg(options::OPT_fopenmp))
     // This is more complicated in gcc...
     CmdArgs.push_back("-lgomp");

@@ -314,15 +314,13 @@ void DarwinClang::AddLinkRuntimeLibArgs(const ArgList &Args,
       getDriver().Diag(diag::err_drv_clang_unsupported_per_platform)
         << "-fsanitize=address";
     } else {
-      if (Args.hasArg(options::OPT_dynamiclib) ||
-          Args.hasArg(options::OPT_bundle)) {
-        // Assume the binary will provide the ASan runtime.
-      } else {
-        AddLinkRuntimeLib(Args, CmdArgs,
-                          "libclang_rt.asan_osx_dynamic.dylib", true);
+      if (!Args.hasArg(options::OPT_dynamiclib) &&
+          !Args.hasArg(options::OPT_bundle)) {
         // The ASAN runtime library requires C++.
         AddCXXStdlibLibArgs(Args, CmdArgs);
       }
+      AddLinkRuntimeLib(Args, CmdArgs,
+                        "libclang_rt.asan_osx_dynamic.dylib", true);
     }
   }
 
