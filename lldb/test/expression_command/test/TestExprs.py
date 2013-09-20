@@ -33,7 +33,7 @@ class BasicExprCommandsTestCase(TestBase):
         self.addTearDownHook(lambda: self.runCmd("settings clear auto-confirm"))
 
 
-    def test_many_expr_commands(self):
+    def build_and_run(self):
         """These basic expression commands should work as expected."""
         self.buildDefault()
 
@@ -42,6 +42,17 @@ class BasicExprCommandsTestCase(TestBase):
         lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line, num_expected_locations=1, loc_exact=False)
 
         self.runCmd("run", RUN_SUCCEEDED)
+
+    @unittest2.expectedFailure # llvm.org/pr17135: APFloat::toString does not identify the correct (i.e. least) precision.
+    def test_floating_point_expr_commands(self):
+        self.build_and_run()
+
+        self.expect("expression 2.234f",
+            patterns = ["\(float\) \$.* = 2\.234"])
+        # (float) $2 = 2.234
+
+    def test_many_expr_commands(self):
+        self.build_and_run()
 
         self.expect("expression 2",
             patterns = ["\(int\) \$.* = 2"])
