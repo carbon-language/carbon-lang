@@ -484,7 +484,7 @@ bool Sema::BuildCXXNestedNameSpecifier(Scope *S,
   
   // FIXME: Deal with ambiguities cleanly.
 
-  if (Found.empty() && !ErrorRecoveryLookup && !getLangOpts().MicrosoftExt) {
+  if (Found.empty() && !ErrorRecoveryLookup && !getLangOpts().MicrosoftMode) {
     // We haven't found anything, and we're not recovering from a
     // different kind of error, so look for typos.
     DeclarationName Name = Found.getLookupName();
@@ -644,7 +644,7 @@ bool Sema::BuildCXXNestedNameSpecifier(Scope *S,
   // public:
   //   void foo() { D::foo2(); }
   // };
-  if (getLangOpts().MicrosoftExt) {
+  if (getLangOpts().MicrosoftMode) {
     DeclContext *DC = LookupCtx ? LookupCtx : CurContext;
     if (DC->isDependentContext() && DC->isFunctionOrMethod()) {
       SS.Extend(Context, &Identifier, IdentifierLoc, CCLoc);

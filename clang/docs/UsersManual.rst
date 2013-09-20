@@ -1216,12 +1216,15 @@ Microsoft extensions
 clang has some experimental support for extensions from Microsoft Visual
 C++; to enable it, use the -fms-extensions command-line option. This is
 the default for Windows targets. Note that the support is incomplete;
-enabling Microsoft extensions will silently drop certain constructs
-(including ``__declspec`` and Microsoft-style asm statements).
+some constructs like dllexport on classes with inline methods will be
+ignored with a warning.
 
 clang has a -fms-compatibility flag that makes clang accept enough
-invalid C++ to be able to parse most Microsoft headers. This flag is
-enabled by default for Windows targets.
+invalid C++ to be able to parse most Microsoft headers. For example, it
+allows `unqualified lookup of dependent base class members
+<http://clang.llvm.org/compatibility.html#dep_lookup_bases>`, which is a
+common compatibility issue with clang. This flag is enabled by default
+for Windows targets.
 
 -fdelayed-template-parsing lets clang delay all template instantiation
 until the end of a translation unit. This flag is enabled by default for
