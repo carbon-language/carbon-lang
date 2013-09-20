@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++11 -verify %s
+// RUN: %clang_cc1 -Wno-uninitialized -std=c++11 -verify %s
 
 template<int> struct c { c(int) = delete; typedef void val; operator int() const; };
 

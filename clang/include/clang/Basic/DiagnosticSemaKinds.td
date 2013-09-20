@@ -1370,6 +1370,8 @@ def warn_field_is_uninit : Warning<"field %0 is uninitialized when used here">,
 def warn_reference_field_is_uninit : Warning<
   "reference %0 is not yet bound to a value when used here">,
   InGroup<Uninitialized>;
+def note_uninit_in_this_constructor : Note<
+  "during field initialization in this constructor">;
 def warn_static_self_reference_in_init : Warning<
   "static variable %0 is suspiciously used within its own initialization">,
   InGroup<UninitializedStaticSelfInit>;

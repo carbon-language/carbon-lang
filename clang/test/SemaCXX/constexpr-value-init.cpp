@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -std=c++11 -fsyntax-only -verify
+// RUN: %clang_cc1 %s -Wno-uninitialized -std=c++11 -fsyntax-only -verify
 
 struct A {
   constexpr A() : a(b + 1), b(a + 1) {} // expected-note {{outside its lifetime}}

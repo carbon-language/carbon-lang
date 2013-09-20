@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++1y %s -verify
+// RUN: %clang_cc1 -Wno-uninitialized -std=c++1y %s -verify
 
 // expected-no-diagnostics
 
