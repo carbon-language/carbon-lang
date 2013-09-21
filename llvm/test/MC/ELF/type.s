@@ -31,6 +31,16 @@ tls:
         .type tls,@tls_object
         .type tls,@gnu_indirect_function
 
+// Test that "<type>" is accepted.
+tls_quoted:
+        .global tls_quoted
+        .type tls_quoted,"tls_object"
+
+// Test that "<type>" is accepted.
+tls_upper_case:
+        .global tls_upper_case
+        .type tls_upper_case,STT_TLS
+
 // CHECK:        Symbol {
 // CHECK:          Name: bar
 // CHECK-NEXT:     Value: 0x0
@@ -78,6 +88,24 @@ tls:
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: tls
+// CHECK-NEXT:     Value: 0x0
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Global
+// CHECK-NEXT:     Type: TLS
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .text (0x1)
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: tls_quoted
+// CHECK-NEXT:     Value: 0x0
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Global
+// CHECK-NEXT:     Type: TLS
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .text (0x1)
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: tls_upper_case
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Global

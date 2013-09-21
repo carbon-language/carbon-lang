@@ -402,10 +402,13 @@ bool ELFAsmParser::ParseSectionArguments(bool IsPush) {
         return TokError("Group section must specify the type");
     } else {
       Lex();
-      if (getLexer().isNot(AsmToken::Percent) && getLexer().isNot(AsmToken::At))
-        return TokError("expected '@' or '%' before type");
+      if (getLexer().is(AsmToken::At) || getLexer().is(AsmToken::Percent) ||
+          getLexer().is(AsmToken::String)) {
+        if (!getLexer().is(AsmToken::String))
+          Lex();
+      } else
+        return TokError("expected '@<type>', '%<type>' or \"<type>\"");
 
-      Lex();
       if (getParser().parseIdentifier(TypeName))
         return TokError("expected identifier in directive");
 
@@ -499,7 +502,11 @@ bool ELFAsmParser::ParseDirectivePrevious(StringRef DirName, SMLoc) {
 }
 
 /// ParseDirectiveELFType
+///  ::= .type identifier , STT_<TYPE_IN_UPPER_CASE>
+///  ::= .type identifier , #attribute
 ///  ::= .type identifier , @attribute
+///  ::= .type identifier , %attribute
+///  ::= .type identifier , "attribute"
 bool ELFAsmParser::ParseDirectiveType(StringRef, SMLoc) {
   StringRef Name;
   if (getParser().parseIdentifier(Name))
@@ -512,26 +519,42 @@ bool ELFAsmParser::ParseDirectiveType(StringRef, SMLoc) {
     return TokError("unexpected token in '.type' directive");
   Lex();
 
-  if (getLexer().isNot(AsmToken::Percent) && getLexer().isNot(AsmToken::At))
-    return TokError("expected '@' or '%' before type");
-  Lex();
-
   StringRef Type;
   SMLoc TypeLoc;
+  MCSymbolAttr Attr;
+  if (getLexer().is(AsmToken::Identifier)) {
+    TypeLoc = getLexer().getLoc();
+    if (getParser().parseIdentifier(Type))
+      return TokError("expected symbol type in directive");
+    Attr = StringSwitch<MCSymbolAttr>(Type)
+               .Case("STT_FUNC", MCSA_ELF_TypeFunction)
+               .Case("STT_OBJECT", MCSA_ELF_TypeObject)
+               .Case("STT_TLS", MCSA_ELF_TypeTLS)
+               .Case("STT_COMMON", MCSA_ELF_TypeCommon)
+               .Case("STT_NOTYPE", MCSA_ELF_TypeNoType)
+               .Case("STT_GNU_IFUNC", MCSA_ELF_TypeIndFunction)
+               .Default(MCSA_Invalid);
+  } else if (getLexer().is(AsmToken::Hash) || getLexer().is(AsmToken::At) ||
+             getLexer().is(AsmToken::Percent) ||
+             getLexer().is(AsmToken::String)) {
+    if (!getLexer().is(AsmToken::String))
+      Lex();
 
-  TypeLoc = getLexer().getLoc();
-  if (getParser().parseIdentifier(Type))
-    return TokError("expected symbol type in directive");
-
-  MCSymbolAttr Attr = StringSwitch<MCSymbolAttr>(Type)
-    .Case("function", MCSA_ELF_TypeFunction)
-    .Case("object", MCSA_ELF_TypeObject)
-    .Case("tls_object", MCSA_ELF_TypeTLS)
-    .Case("common", MCSA_ELF_TypeCommon)
-    .Case("notype", MCSA_ELF_TypeNoType)
-    .Case("gnu_unique_object", MCSA_ELF_TypeGnuUniqueObject)
-    .Case("gnu_indirect_function", MCSA_ELF_TypeIndFunction)
-    .Default(MCSA_Invalid);
+    TypeLoc = getLexer().getLoc();
+    if (getParser().parseIdentifier(Type))
+      return TokError("expected symbol type in directive");
+    Attr = StringSwitch<MCSymbolAttr>(Type)
+               .Case("function", MCSA_ELF_TypeFunction)
+               .Case("object", MCSA_ELF_TypeObject)
+               .Case("tls_object", MCSA_ELF_TypeTLS)
+               .Case("common", MCSA_ELF_TypeCommon)
+               .Case("notype", MCSA_ELF_TypeNoType)
+               .Case("gnu_unique_object", MCSA_ELF_TypeGnuUniqueObject)
+               .Case("gnu_indirect_function", MCSA_ELF_TypeIndFunction)
+               .Default(MCSA_Invalid);
+  } else
+    return TokError("expected STT_<TYPE_IN_UPPER_CASE>, '#<type>', '@<type>', "
+                    "'%<type>' or \"<type>\"");
 
   if (Attr == MCSA_Invalid)
     return Error(TypeLoc, "unsupported attribute in '.type' directive");

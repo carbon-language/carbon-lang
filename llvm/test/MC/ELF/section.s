@@ -5,7 +5,7 @@
 .section	.note.GNU-stack,"",@progbits
 .section	.note.GNU-stack2,"",%progbits
 .section	.note.GNU-,"",@progbits
-.section	-.note.GNU,"",@progbits
+.section	-.note.GNU,"","progbits"
 
 // CHECK: Name: .note.GNU-stack (56)
 // CHECK: Name: .note.GNU-stack2 (153)
