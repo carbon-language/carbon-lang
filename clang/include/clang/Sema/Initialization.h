@@ -586,8 +586,10 @@ public:
   bool AllowExplicit() const { return !isCopyInit(); }
 
   /// \brief Retrieve whether this initialization allows the use of explicit
-  /// conversion functions.
-  bool allowExplicitConversionFunctions() const {
+  /// conversion functions when binding a reference. If the reference is the
+  /// first parameter in a copy or move constructor, such conversions are
+  /// permitted even though we are performing copy-initialization.
+  bool allowExplicitConversionFunctionsInRefBinding() const {
     return !isCopyInit() || Context == IC_ExplicitConvs;
   }
   

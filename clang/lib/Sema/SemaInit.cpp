@@ -3013,9 +3013,19 @@ ResolveConstructorOverload(Sema &S, SourceLocation DeclLoc,
     else {
       Constructor = cast<CXXConstructorDecl>(D);
 
-      // If we're performing copy initialization using a copy constructor, we
-      // suppress user-defined conversions on the arguments. We do the same for
-      // move constructors.
+      // C++11 [over.best.ics]p4:
+      //   However, when considering the argument of a constructor or
+      //   user-defined conversion function that is a candidate:
+      //    -- by 13.3.1.3 when invoked for the copying/moving of a temporary
+      //       in the second step of a class copy-initialization,
+      //    -- by 13.3.1.7 when passing the initializer list as a single
+      //       argument or when the initializer list has exactly one elementand
+      //       a conversion to some class X or reference to (possibly
+      //       cv-qualified) X is considered for the first parameter of a
+      //       constructor of X, or
+      //    -- by 13.3.1.4, 13.3.1.5, or 13.3.1.6 in all cases,
+      //   only standard conversion sequences and ellipsis conversion sequences
+      //   are considered.
       if ((CopyInitializing || (InitListSyntax && Args.size() == 1)) &&
           Constructor->isCopyOrMoveConstructor())
         SuppressUserConversions = true;
@@ -3382,8 +3392,8 @@ static OverloadingResult TryRefInitWithConversionFunction(Sema &S,
   // Determine whether we are allowed to call explicit constructors or
   // explicit conversion operators.
   bool AllowExplicit = Kind.AllowExplicit();
-  bool AllowExplicitConvs = Kind.allowExplicitConversionFunctions();
-  
+  bool AllowExplicitConvs = Kind.allowExplicitConversionFunctionsInRefBinding();
+
   const RecordType *T1RecordType = 0;
   if (AllowRValues && (T1RecordType = T1->getAs<RecordType>()) &&
       !S.RequireCompleteType(Kind.getLocation(), T1, 0)) {
@@ -3650,7 +3660,7 @@ static void TryReferenceInitializationCore(Sema &S,
   //
   //     - If the reference is an lvalue reference and the initializer
   //       expression
-  // Note the analogous bullet points for rvlaue refs to functions. Because
+  // Note the analogous bullet points for rvalue refs to functions. Because
   // there are no function rvalues in C++, rvalue refs to functions are treated
   // like lvalue refs.
   OverloadingResult ConvOvlResult = OR_Success;
@@ -3691,20 +3701,17 @@ static void TryReferenceInitializationCore(Sema &S,
     //       applicable conversion functions (13.3.1.6) and choosing the best
     //       one through overload resolution (13.3)),
     // If we have an rvalue ref to function type here, the rhs must be
-    // an rvalue.
+    // an rvalue. DR1287 removed the "implicitly" here.
     if (RefRelationship == Sema::Ref_Incompatible && T2->isRecordType() &&
         (isLValueRef || InitCategory.isRValue())) {
-      ConvOvlResult = TryRefInitWithConversionFunction(S, Entity, Kind,
-                                                       Initializer,
-                                                   /*AllowRValues=*/isRValueRef,
-                                                       Sequence);
+      ConvOvlResult = TryRefInitWithConversionFunction(
+          S, Entity, Kind, Initializer, /*AllowRValues*/isRValueRef, Sequence);
       if (ConvOvlResult == OR_Success)
         return;
-      if (ConvOvlResult != OR_No_Viable_Function) {
+      if (ConvOvlResult != OR_No_Viable_Function)
         Sequence.SetOverloadFailure(
-                      InitializationSequence::FK_ReferenceInitOverloadFailed,
-                                    ConvOvlResult);
-      }
+            InitializationSequence::FK_ReferenceInitOverloadFailed,
+            ConvOvlResult);
     }
   }
 
@@ -3776,16 +3783,16 @@ static void TryReferenceInitializationCore(Sema &S,
   //         reference-related to T2, and can be implicitly converted to an
   //         xvalue, class prvalue, or function lvalue of type "cv3 T3",
   //         where "cv1 T1" is reference-compatible with "cv3 T3",
+  //
+  // DR1287 removes the "implicitly" here.
   if (T2->isRecordType()) {
     if (RefRelationship == Sema::Ref_Incompatible) {
-      ConvOvlResult = TryRefInitWithConversionFunction(S, Entity,
-                                                       Kind, Initializer,
-                                                       /*AllowRValues=*/true,
-                                                       Sequence);
+      ConvOvlResult = TryRefInitWithConversionFunction(
+          S, Entity, Kind, Initializer, /*AllowRValues*/true, Sequence);
       if (ConvOvlResult)
         Sequence.SetOverloadFailure(
-                      InitializationSequence::FK_ReferenceInitOverloadFailed,
-                                    ConvOvlResult);
+            InitializationSequence::FK_ReferenceInitOverloadFailed,
+            ConvOvlResult);
 
       return;
     }
