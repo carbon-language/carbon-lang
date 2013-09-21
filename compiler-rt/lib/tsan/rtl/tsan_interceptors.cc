@@ -444,7 +444,7 @@ TSAN_INTERCEPTOR(void, siglongjmp, uptr *env, int val) {
 }
 
 TSAN_INTERCEPTOR(void*, malloc, uptr size) {
-  if (cur_thread()->in_symbolizer)
+  if (cur_thread()->in_symbolizer || libjvm_check(GET_CALLER_PC()))
     return __libc_malloc(size);
   void *p = 0;
   {
@@ -461,7 +461,7 @@ TSAN_INTERCEPTOR(void*, __libc_memalign, uptr align, uptr sz) {
 }
 
 TSAN_INTERCEPTOR(void*, calloc, uptr size, uptr n) {
-  if (cur_thread()->in_symbolizer)
+  if (cur_thread()->in_symbolizer || libjvm_check(GET_CALLER_PC()))
     return __libc_calloc(size, n);
   if (__sanitizer::CallocShouldReturnNullDueToOverflow(size, n))
     return AllocatorReturnNull();
@@ -477,7 +477,7 @@ TSAN_INTERCEPTOR(void*, calloc, uptr size, uptr n) {
 }
 
 TSAN_INTERCEPTOR(void*, realloc, void *p, uptr size) {
-  if (cur_thread()->in_symbolizer)
+  if (cur_thread()->in_symbolizer || libjvm_check(GET_CALLER_PC()))
     return __libc_realloc(p, size);
   if (p)
     invoke_free_hook(p);
@@ -492,7 +492,7 @@ TSAN_INTERCEPTOR(void*, realloc, void *p, uptr size) {
 TSAN_INTERCEPTOR(void, free, void *p) {
   if (p == 0)
     return;
-  if (cur_thread()->in_symbolizer)
+  if (cur_thread()->in_symbolizer || libjvm_check(GET_CALLER_PC()))
     return __libc_free(p);
   invoke_free_hook(p);
   SCOPED_INTERCEPTOR_RAW(free, p);
@@ -502,7 +502,7 @@ TSAN_INTERCEPTOR(void, free, void *p) {
 TSAN_INTERCEPTOR(void, cfree, void *p) {
   if (p == 0)
     return;
-  if (cur_thread()->in_symbolizer)
+  if (cur_thread()->in_symbolizer || libjvm_check(GET_CALLER_PC()))
     return __libc_free(p);
   invoke_free_hook(p);
   SCOPED_INTERCEPTOR_RAW(cfree, p);
@@ -511,11 +511,13 @@ TSAN_INTERCEPTOR(void, cfree, void *p) {
 
 TSAN_INTERCEPTOR(uptr, malloc_usable_size, void *p) {
   SCOPED_INTERCEPTOR_RAW(malloc_usable_size, p);
+  if (libjvm_check(pc))
+    return malloc_usable_size(p);
   return user_alloc_usable_size(thr, pc, p);
 }
 
 #define OPERATOR_NEW_BODY(mangled_name) \
-  if (cur_thread()->in_symbolizer) \
+  if (cur_thread()->in_symbolizer || libjvm_check(GET_CALLER_PC())) \
     return __libc_malloc(size); \
   void *p = 0; \
   {  \
@@ -551,7 +553,7 @@ void *operator new[](__sanitizer::uptr size, std::nothrow_t const&) {
 
 #define OPERATOR_DELETE_BODY(mangled_name) \
   if (ptr == 0) return;  \
-  if (cur_thread()->in_symbolizer) \
+  if (cur_thread()->in_symbolizer || libjvm_check(GET_CALLER_PC())) \
     return __libc_free(ptr); \
   invoke_free_hook(ptr);  \
   SCOPED_INTERCEPTOR_RAW(mangled_name, ptr);  \
@@ -681,6 +683,21 @@ TSAN_INTERCEPTOR(const char*, strstr, const char *s1, const char *s2) {
   MemoryAccessRange(thr, pc, (uptr)s1, len1 + 1, false);
   MemoryAccessRange(thr, pc, (uptr)s2, len2 + 1, false);
   return res;
+}
+
+TSAN_INTERCEPTOR(char*, strdup, const char *str) {
+  SCOPED_TSAN_INTERCEPTOR(strdup, str);
+  if (libjvm_check(pc)) {
+    // The memory must come from libc malloc,
+    // and we must not instrument accesses in this case.
+    uptr n = internal_strlen(str) + 1;
+    void *p = __libc_malloc(n);
+    if (p == 0)
+      return 0;
+    return (char*)internal_memcpy(p, str, n);
+  }
+  // strdup will call malloc, so no instrumentation is required here.
+  return REAL(strdup)(str);
 }
 
 static bool fix_mmap_addr(void **addr, long_t sz, int flags) {
@@ -2037,6 +2054,7 @@ void InitializeInterceptors() {
   TSAN_INTERCEPT(strcpy);  // NOLINT
   TSAN_INTERCEPT(strncpy);
   TSAN_INTERCEPT(strstr);
+  TSAN_INTERCEPT(strdup);
 
   TSAN_INTERCEPT(pthread_create);
   TSAN_INTERCEPT(pthread_join);

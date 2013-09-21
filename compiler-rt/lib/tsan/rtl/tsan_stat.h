@@ -137,6 +137,7 @@ enum StatType {
   StatInt_strcasecmp,
   StatInt_strncasecmp,
   StatInt_strstr,
+  StatInt_strdup,
   StatInt_atexit,
   StatInt___cxa_guard_acquire,
   StatInt___cxa_guard_release,

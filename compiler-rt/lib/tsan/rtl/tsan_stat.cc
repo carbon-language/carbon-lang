@@ -138,6 +138,7 @@ void StatOutput(u64 *stat) {
   name[StatInt_strcpy]                   = "  strcpy                          ";
   name[StatInt_strncpy]                  = "  strncpy                         ";
   name[StatInt_strstr]                   = "  strstr                          ";
+  name[StatInt_strdup]                   = "  strdup                          ";
   name[StatInt_strcasecmp]               = "  strcasecmp                      ";
   name[StatInt_strncasecmp]              = "  strncasecmp                     ";
   name[StatInt_atexit]                   = "  atexit                          ";
