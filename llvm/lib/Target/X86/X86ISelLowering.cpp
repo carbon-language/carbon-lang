@@ -16801,9 +16801,9 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
 
   // Try to match a min/max vector operation.
   if (N->getOpcode() == ISD::VSELECT && Cond.getOpcode() == ISD::SETCC) {
-    unsigned Opc;
-    bool NeedSplit;
-    std::tie(Opc, NeedSplit) = matchIntegerMINMAX(Cond, VT, LHS, RHS, DAG, Subtarget);
+    std::pair<unsigned, bool> ret = matchIntegerMINMAX(Cond, VT, LHS, RHS, DAG, Subtarget);
+    unsigned Opc = ret.first;
+    bool NeedSplit = ret.second;
 
     if (Opc && NeedSplit) {
       unsigned NumElems = VT.getVectorNumElements();
