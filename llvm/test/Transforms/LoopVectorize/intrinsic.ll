@@ -1018,7 +1018,7 @@ for.body:                                         ; preds = %entry, %for.body
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
   %arrayidx = getelementptr inbounds float* %x, i64 %indvars.iv
   %0 = load float* %arrayidx, align 4
-  %call = tail call float @fabsf(float %0) nounwind readnone
+  %call = tail call float @llvm.fabs.f32(float %0) nounwind readnone
   store float %call, float* %arrayidx, align 4
   %indvars.iv.next = add i64 %indvars.iv, 1
   %lftr.wideiv = trunc i64 %indvars.iv.next to i32
@@ -1029,6 +1029,31 @@ for.end:                                          ; preds = %for.body
   ret void
 }
 
-declare float @fabsf(float) nounwind readnone
-
 declare double @llvm.pow.f64(double, double) nounwind readnone
+
+
+;CHECK: @not_intrin
+;CHECK: @round
+;CHECK-NOT: @round
+;CHECK: ret
+define void @not_intrin(i32* nocapture %A) nounwind ssp uwtable {
+  br label %1
+
+; <label>:1                                       ; preds = %1, %0
+  %indvars.iv = phi i64 [ 0, %0 ], [ %indvars.iv.next, %1 ]
+  %2 = getelementptr inbounds i32* %A, i64 %indvars.iv
+  %3 = load i32* %2, align 4
+  %4 = add nsw i32 %3, 3
+  store i32 %4, i32* %2, align 4
+  %5 = trunc i64 %indvars.iv to i32
+  tail call void @round(i32 %5) nounwind
+  %indvars.iv.next = add i64 %indvars.iv, 1
+  %lftr.wideiv = trunc i64 %indvars.iv.next to i32
+  %exitcond = icmp eq i32 %lftr.wideiv, 256
+  br i1 %exitcond, label %6, label %1
+
+; <label>:6                                       ; preds = %1
+  ret void
+}
+
+declare void @round(i32)

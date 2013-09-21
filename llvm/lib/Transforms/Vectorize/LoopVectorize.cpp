@@ -2925,9 +2925,18 @@ bool LoopVectorizationLegality::canVectorizeInstrs() {
       // We still don't handle functions. However, we can ignore dbg intrinsic
       // calls and we do handle certain intrinsic and libm functions.
       CallInst *CI = dyn_cast<CallInst>(it);
-      if (CI && !getIntrinsicIDForCall(CI, TLI) && !isa<DbgInfoIntrinsic>(CI)) {
+      if (CI) {
         DEBUG(dbgs() << "LV: Found a call site.\n");
-        return false;
+
+        if (!isa<IntrinsicInst>(it)) {
+          DEBUG(dbgs() << "LV: We only vectorize intrinsics.\n");
+          return false;
+        }
+
+        if (!getIntrinsicIDForCall(CI, TLI) && !isa<DbgInfoIntrinsic>(CI)) {
+          DEBUG(dbgs() << "LV: Found an unknown intrinsic.\n");
+          return false;
+        }
       }
 
       // Check that the instruction return type is vectorizable.
