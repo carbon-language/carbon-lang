@@ -56,7 +56,7 @@ public:
 
     // invoke
     template <class... ArgTypes>
-      typename result_of<T(ArgTypes...)>::type
+      typename result_of<T&(ArgTypes&&...)>::type
           operator() (ArgTypes&&...) const;
 };
 
