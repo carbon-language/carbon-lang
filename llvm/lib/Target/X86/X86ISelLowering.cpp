@@ -16371,24 +16371,28 @@ static SDValue PerformEXTRACT_VECTOR_ELTCombine(SDNode *N, SelectionDAG &DAG,
 }
 
 /// \brief Matches a VSELECT onto min/max or return 0 if the node doesn't match.
-static unsigned matchIntegerMINMAX(SDValue Cond, EVT VT, SDValue LHS,
-                                   SDValue RHS, SelectionDAG &DAG,
-                                   const X86Subtarget *Subtarget) {
+static std::pair<unsigned, bool>
+matchIntegerMINMAX(SDValue Cond, EVT VT, SDValue LHS, SDValue RHS,
+                   SelectionDAG &DAG, const X86Subtarget *Subtarget) {
   if (!VT.isVector())
-    return 0;
+    return std::make_pair(0, false);
 
+  bool NeedSplit = false;
   switch (VT.getSimpleVT().SimpleTy) {
-  default: return 0;
+  default: return std::make_pair(0, false);
   case MVT::v32i8:
   case MVT::v16i16:
   case MVT::v8i32:
     if (!Subtarget->hasAVX2())
-      return 0;
+      NeedSplit = true;
+    if (!Subtarget->hasAVX())
+      return std::make_pair(0, false);
+    break;
   case MVT::v16i8:
   case MVT::v8i16:
   case MVT::v4i32:
     if (!Subtarget->hasSSE2())
-      return 0;
+      return std::make_pair(0, false);
   }
 
   // SSE2 has only a small subset of the operations.
@@ -16399,6 +16403,7 @@ static unsigned matchIntegerMINMAX(SDValue Cond, EVT VT, SDValue LHS,
 
   ISD::CondCode CC = cast<CondCodeSDNode>(Cond.getOperand(2))->get();
 
+  unsigned Opc = 0;
   // Check for x CC y ? x : y.
   if (DAG.isEqualTo(LHS, Cond.getOperand(0)) &&
       DAG.isEqualTo(RHS, Cond.getOperand(1))) {
@@ -16406,16 +16411,16 @@ static unsigned matchIntegerMINMAX(SDValue Cond, EVT VT, SDValue LHS,
     default: break;
     case ISD::SETULT:
     case ISD::SETULE:
-      return hasUnsigned ? X86ISD::UMIN : 0;
+      Opc = hasUnsigned ? X86ISD::UMIN : 0; break;
     case ISD::SETUGT:
     case ISD::SETUGE:
-      return hasUnsigned ? X86ISD::UMAX : 0;
+      Opc = hasUnsigned ? X86ISD::UMAX : 0; break;
     case ISD::SETLT:
     case ISD::SETLE:
-      return hasSigned ? X86ISD::SMIN : 0;
+      Opc = hasSigned ? X86ISD::SMIN : 0; break;
     case ISD::SETGT:
     case ISD::SETGE:
-      return hasSigned ? X86ISD::SMAX : 0;
+      Opc = hasSigned ? X86ISD::SMAX : 0; break;
     }
   // Check for x CC y ? y : x -- a min/max with reversed arms.
   } else if (DAG.isEqualTo(LHS, Cond.getOperand(1)) &&
@@ -16424,20 +16429,20 @@ static unsigned matchIntegerMINMAX(SDValue Cond, EVT VT, SDValue LHS,
     default: break;
     case ISD::SETULT:
     case ISD::SETULE:
-      return hasUnsigned ? X86ISD::UMAX : 0;
+      Opc = hasUnsigned ? X86ISD::UMAX : 0; break;
     case ISD::SETUGT:
     case ISD::SETUGE:
-      return hasUnsigned ? X86ISD::UMIN : 0;
+      Opc = hasUnsigned ? X86ISD::UMIN : 0; break;
     case ISD::SETLT:
     case ISD::SETLE:
-      return hasSigned ? X86ISD::SMAX : 0;
+      Opc = hasSigned ? X86ISD::SMAX : 0; break;
     case ISD::SETGT:
     case ISD::SETGE:
-      return hasSigned ? X86ISD::SMIN : 0;
+      Opc = hasSigned ? X86ISD::SMIN : 0; break;
     }
   }
 
-  return 0;
+  return std::make_pair(Opc, NeedSplit);
 }
 
 /// PerformSELECTCombine - Do target-specific dag combines on SELECT and VSELECT
@@ -16795,9 +16800,30 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
   }
 
   // Try to match a min/max vector operation.
-  if (N->getOpcode() == ISD::VSELECT && Cond.getOpcode() == ISD::SETCC)
-    if (unsigned Op = matchIntegerMINMAX(Cond, VT, LHS, RHS, DAG, Subtarget))
-      return DAG.getNode(Op, DL, N->getValueType(0), LHS, RHS);
+  if (N->getOpcode() == ISD::VSELECT && Cond.getOpcode() == ISD::SETCC) {
+    unsigned Opc;
+    bool NeedSplit;
+    std::tie(Opc, NeedSplit) = matchIntegerMINMAX(Cond, VT, LHS, RHS, DAG, Subtarget);
+
+    if (Opc && NeedSplit) {
+      unsigned NumElems = VT.getVectorNumElements();
+      // Extract the LHS vectors
+      SDValue LHS1 = Extract128BitVector(LHS, 0, DAG, DL);
+      SDValue LHS2 = Extract128BitVector(LHS, NumElems/2, DAG, DL);
+
+      // Extract the RHS vectors
+      SDValue RHS1 = Extract128BitVector(RHS, 0, DAG, DL);
+      SDValue RHS2 = Extract128BitVector(RHS, NumElems/2, DAG, DL);
+
+      // Create min/max for each subvector
+      LHS = DAG.getNode(Opc, DL, LHS1.getValueType(), LHS1, RHS1);
+      RHS = DAG.getNode(Opc, DL, LHS2.getValueType(), LHS2, RHS2);
+
+      // Merge the result
+      return DAG.getNode(ISD::CONCAT_VECTORS, DL, VT, LHS, RHS);
+    } else if (Opc)
+      return DAG.getNode(Opc, DL, VT, LHS, RHS);
+  }
 
   // Simplify vector selection if the selector will be produced by CMPP*/PCMP*.
   if (N->getOpcode() == ISD::VSELECT && Cond.getOpcode() == ISD::SETCC &&
