@@ -49,11 +49,6 @@ static cl::opt<int>
     SLPCostThreshold("slp-threshold", cl::init(0), cl::Hidden,
                      cl::desc("Only vectorize if you gain more than this "
                               "number "));
-
-static cl::opt<bool>
-ShouldVectorizeHor("slp-vectorize-hor", cl::init(false), cl::Hidden,
-                   cl::desc("Attempt to vectorize horizontal reductions"));
-
 namespace {
 
 static const unsigned MinVecRegSize = 128;
@@ -243,21 +238,17 @@ public:
     }
 
   /// \brief Vectorize the tree that starts with the elements in \p VL.
-  /// Returns the vectorized root and the scalar operations the root was based
-  /// on.
-  std::pair<Value *, ValueList *> vectorizeTree();
+  void vectorizeTree();
 
   /// \returns the vectorization cost of the subtree that starts at \p VL.
   /// A negative number means that this is profitable.
   int getTreeCost();
 
-  /// Construct a vectorizable tree that starts at \p Roots and is possibly
-  /// used by a reduction of \p RdxOps.
-  void buildTree(ArrayRef<Value *> Roots, ValueSet *RdxOps = 0);
+  /// Construct a vectorizable tree that starts at \p Roots.
+  void buildTree(ArrayRef<Value *> Roots);
 
   /// Clear the internal data structures that are created by 'buildTree'.
   void deleteTree() {
-    RdxOps = 0;
     VectorizableTree.clear();
     ScalarToTreeEntry.clear();
     MustGather.clear();
@@ -410,9 +401,6 @@ private:
   /// Numbers instructions in different blocks.
   DenseMap<BasicBlock *, BlockNumbering> BlocksNumbers;
 
-  /// Reduction operators.
-  ValueSet *RdxOps;
-
   // Analysis and block reference.
   Function *F;
   ScalarEvolution *SE;
@@ -425,9 +413,8 @@ private:
   IRBuilder<> Builder;
 };
 
-void BoUpSLP::buildTree(ArrayRef<Value *> Roots, ValueSet *Rdx) {
+void BoUpSLP::buildTree(ArrayRef<Value *> Roots) {
   deleteTree();
-  RdxOps = Rdx;
   if (!getSameType(Roots))
     return;
   buildTree_rec(Roots, 0);
@@ -458,12 +445,8 @@ void BoUpSLP::buildTree(ArrayRef<Value *> Roots, ValueSet *Rdx) {
           assert(!VectorizableTree[Idx].NeedToGather && "Bad state");
           continue;
         }
-        Instruction *UserInst = dyn_cast<Instruction>(*User);
-        if (!UserInst)
-          continue;
 
-        // Ignore uses that are part of the reduction.
-        if (Rdx && std::find(Rdx->begin(), Rdx->end(), UserInst) != Rdx->end())
+        if (!isa<Instruction>(*User))
           continue;
 
         DEBUG(dbgs() << "SLP: Need to extract:" << **User << " from lane " <<
@@ -594,10 +577,6 @@ void BoUpSLP::buildTree_rec(ArrayRef<Value *> VL, unsigned Depth) {
               << MyLastIndex << ".\n");
         continue;
       }
-
-      // This user is part of the reduction.
-      if (RdxOps && RdxOps->count(User))
-        continue;
 
       // Make sure that we can schedule this unknown user.
       BlockNumbering &BN = BlocksNumbers[BB];
@@ -1393,7 +1372,7 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
   return 0;
 }
 
-std::pair<Value *, BoUpSLP::ValueList *> BoUpSLP::vectorizeTree() {
+void BoUpSLP::vectorizeTree() {
   Builder.SetInsertPoint(F->getEntryBlock().begin());
   vectorizeTree(&VectorizableTree[0]);
 
@@ -1470,10 +1449,7 @@ std::pair<Value *, BoUpSLP::ValueList *> BoUpSLP::vectorizeTree() {
           DEBUG(dbgs() << "SLP: \tvalidating user:" << **User << ".\n");
           assert(!MustGather.count(*User) &&
                  "Replacing gathered value with undef");
-
-          assert((ScalarToTreeEntry.count(*User) ||
-                  // It is legal to replace the reduction users by undef.
-                  (RdxOps && RdxOps->count(*User))) &&
+          assert(ScalarToTreeEntry.count(*User) &&
                  "Replacing out-of-tree value with undef");
         }
         Value *Undef = UndefValue::get(Ty);
@@ -1488,9 +1464,6 @@ std::pair<Value *, BoUpSLP::ValueList *> BoUpSLP::vectorizeTree() {
     BlocksNumbers[it].forget();
   }
   Builder.ClearInsertionPoint();
-
-  return std::make_pair(VectorizableTree[0].VectorizedValue,
-                        &VectorizableTree[0].Scalars);
 }
 
 void BoUpSLP::optimizeGatherSequence() {
@@ -1914,310 +1887,6 @@ bool SLPVectorizer::tryToVectorize(BinaryOperator *V, BoUpSLP &R) {
   return 0;
 }
 
-/// \brief Generate a shuffle mask to be used in a reduction tree.
-///
-/// \param VecLen The length of the vector to be reduced.
-/// \param NumEltsToRdx The number of elements that should be reduced in the
-///        vector.
-/// \param IsPairwise Whether the reduction is a pairwise or splitting
-///        reduction. A pairwise reduction will generate a mask of 
-///        <0,2,...> or <1,3,..> while a splitting reduction will generate
-///        <2,3, undef,undef> for a vector of 4 and NumElts = 2.
-/// \param IsLeft True will generate a mask of even elements, odd otherwise.
-static Value *createRdxShuffleMask(unsigned VecLen, unsigned NumEltsToRdx,
-                                   bool IsPairwise, bool IsLeft,
-                                   IRBuilder<> &Builder) {
-  assert((IsPairwise || !IsLeft) && "Don't support a <0,1,undef,...> mask");
-
-  SmallVector<Constant *, 32> ShuffleMask(
-      VecLen, UndefValue::get(Builder.getInt32Ty()));
-
-  if (IsPairwise)
-    // Build a mask of 0, 2, ... (left) or 1, 3, ... (right).
-    for (unsigned i = 0; i != NumEltsToRdx; ++i)
-      ShuffleMask[i] = Builder.getInt32(2 * i + !IsLeft);
-  else
-    // Move the upper half of the vector to the lower half.
-    for (unsigned i = 0; i != NumEltsToRdx; ++i)
-      ShuffleMask[i] = Builder.getInt32(NumEltsToRdx + i);
-
-  return ConstantVector::get(ShuffleMask);
-}
-
-
-/// Model horizontal reductions.
-///
-/// A horizontal reduction is a tree of reduction operations (currently add and
-/// fadd) that has operations that can be put into a vector as its leaf.
-/// For example, this tree:
-///
-/// mul mul mul mul
-///  \  /    \  /
-///   +       +
-///    \     /
-///       +
-/// This tree has "mul" as its reduced values and "+" as its reduction
-/// operations. A reduction might be feeding into a store or a binary operation
-/// feeding a phi.
-///    ...
-///    \  /
-///     +
-///     \
-///  phi +=
-///
-///  Or:
-///    ...
-///    \  /
-///     +
-///     \
-///   *p =
-///
-class HorizontalReduction {
-  SmallPtrSet<Value *, 16> ReductionOps;
-  SmallVector<Value *, 32> ReducedVals;
-
-  BinaryOperator *ReductionRoot;
-  PHINode *ReductionPHI;
-
-  /// The opcode of the reduction.
-  unsigned ReductionOpcode;
-  /// The opcode of the values we perform a reduction on.
-  unsigned ReducedValueOpcode;
-  /// The width of one full horizontal reduction operation.
-  unsigned ReduxWidth;
-  /// Should we model this reduction as a pairwise reduction tree or a tree that
-  /// splits the vector in halves and adds those halves.
-  bool IsPairwiseReduction;
-
-public:
-  HorizontalReduction()
-    : ReductionRoot(0), ReductionPHI(0), ReductionOpcode(0),
-    ReducedValueOpcode(0), ReduxWidth(0), IsPairwiseReduction(false) {}
-
-  /// \brief Try to find a reduction tree.
-  bool matchAssociativeReduction(PHINode *Phi, BinaryOperator *B,
-                                 DataLayout *DL) {
-    assert((!Phi ||
-            std::find(Phi->op_begin(), Phi->op_end(), B) != Phi->op_end()) &&
-           "Thi phi needs to use the binary operator");
-
-    // We could have a initial reductions that is not an add.
-    //  r *= v1 + v2 + v3 + v4
-    // In such a case start looking for a tree rooted in the first '+'.
-    if (Phi) {
-      if (B->getOperand(0) == Phi) {
-        Phi = 0;
-        B = dyn_cast<BinaryOperator>(B->getOperand(1));
-      } else if (B->getOperand(1) == Phi) {
-        Phi = 0;
-        B = dyn_cast<BinaryOperator>(B->getOperand(0));
-      }
-    }
-
-    if (!B)
-      return false;
-
-    Type *Ty = B->getType();
-    if (Ty->isVectorTy())
-      return false;
-
-    ReductionOpcode = B->getOpcode();
-    ReducedValueOpcode = 0;
-    ReduxWidth = MinVecRegSize / DL->getTypeSizeInBits(Ty);
-    ReductionRoot = B;
-    ReductionPHI = Phi;
-
-    if (ReduxWidth < 4)
-      return false;
-
-    // We currently only support adds.
-    if (ReductionOpcode != Instruction::Add &&
-        ReductionOpcode != Instruction::FAdd)
-      return false;
-
-    // Post order traverse the reduction tree starting at B. We only handle true
-    // trees containing only binary operators.
-    SmallVector<std::pair<BinaryOperator *, unsigned>, 32> Stack;
-    Stack.push_back(std::make_pair(B, 0));
-    while (!Stack.empty()) {
-      BinaryOperator *TreeN = Stack.back().first;
-      unsigned EdgeToVist = Stack.back().second++;
-      bool IsReducedValue = TreeN->getOpcode() != ReductionOpcode;
-
-      // Only handle trees in the current basic block.
-      if (TreeN->getParent() != B->getParent())
-        return false;
-
-      // Each tree node needs to have one user except for the ultimate
-      // reduction.
-      if (!TreeN->hasOneUse() && TreeN != B)
-        return false;
-
-      // Postorder vist.
-      if (EdgeToVist == 2 || IsReducedValue) {
-        if (IsReducedValue) {
-          // Make sure that the opcodes of the operations that we are going to
-          // reduce match.
-          if (!ReducedValueOpcode)
-            ReducedValueOpcode = TreeN->getOpcode();
-          else if (ReducedValueOpcode != TreeN->getOpcode())
-            return false;
-          ReducedVals.push_back(TreeN);
-        } else {
-          // We need to be able to reassociate the adds.
-          if (!TreeN->isAssociative())
-            return false;
-          ReductionOps.insert(TreeN);
-        }
-        // Retract.
-        Stack.pop_back();
-        continue;
-      }
-
-      // Visit left or right.
-      Value *NextV = TreeN->getOperand(EdgeToVist);
-      BinaryOperator *Next = dyn_cast<BinaryOperator>(NextV);
-      if (Next)
-        Stack.push_back(std::make_pair(Next, 0));
-      else if (NextV != Phi)
-        return false;
-    }
-    return true;
-  }
-
-  /// \brief Attempt to vectorize the tree found by
-  /// matchAssociativeReduction.
-  bool tryToReduce(BoUpSLP &V, TargetTransformInfo *TTI) {
-    if (ReducedVals.empty())
-      return false;
-
-    unsigned NumReducedVals = ReducedVals.size();
-    if (NumReducedVals < ReduxWidth)
-      return false;
-
-    Value *VectorizedTree = 0;
-    IRBuilder<> Builder(ReductionRoot);
-    FastMathFlags Unsafe;
-    Unsafe.setUnsafeAlgebra();
-    Builder.SetFastMathFlags(Unsafe);
-    unsigned i = 0;
-
-    for (; i < NumReducedVals - ReduxWidth + 1; i += ReduxWidth) {
-      ArrayRef<Value *> ValsToReduce(&ReducedVals[i], ReduxWidth);
-      V.buildTree(ValsToReduce, &ReductionOps);
-
-      // Estimate cost.
-      int Cost = V.getTreeCost() + getReductionCost(TTI, ReducedVals[i]);
-      if (Cost >= -SLPCostThreshold)
-        break;
-
-      DEBUG(dbgs() << "SLP: Vectorizing horizontal reduction at cost:" << Cost
-                   << ". (HorRdx)\n");
-
-      // Vectorize a tree.
-      Value *VectorizedRoot;
-      BoUpSLP::ValueList *Scalars;
-      tie(VectorizedRoot, Scalars) = V.vectorizeTree();
-
-      // Emit a reduction.
-      Value *ReducedSubTree = emitReduction(VectorizedRoot, Builder);
-      if (VectorizedTree) {
-        Builder.SetCurrentDebugLocation(
-          cast<Instruction>((*Scalars)[0])->getDebugLoc());
-        VectorizedTree = createBinOp(Builder, ReductionOpcode, VectorizedTree,
-                                     ReducedSubTree, "bin.rdx");
-      } else
-        VectorizedTree = ReducedSubTree;
-    }
-
-    if (VectorizedTree) {
-      // Finish the reduction.
-      for (; i < NumReducedVals; ++i) {
-        Builder.SetCurrentDebugLocation(
-          cast<Instruction>(ReducedVals[i])->getDebugLoc());
-        VectorizedTree = createBinOp(Builder, ReductionOpcode, VectorizedTree,
-                                     ReducedVals[i]);
-      }
-      // Update users.
-      if (ReductionPHI) {
-        assert(ReductionRoot != NULL && "Need a reduction operation");
-        ReductionRoot->setOperand(0, VectorizedTree);
-        ReductionRoot->setOperand(1, ReductionPHI);
-      } else
-        ReductionRoot->replaceAllUsesWith(VectorizedTree);
-    }
-    return VectorizedTree != 0;
-  }
-
-private:
-
-  /// \brief Calcuate the cost of a reduction.
-  int getReductionCost(TargetTransformInfo *TTI, Value *FirstReducedVal) {
-    Type *ScalarTy = FirstReducedVal->getType();
-    Type *VecTy = VectorType::get(ScalarTy, ReduxWidth);
-
-    int PairwiseRdxCost = TTI->getReductionCost(ReductionOpcode, VecTy, true);
-    int SplittingRdxCost = TTI->getReductionCost(ReductionOpcode, VecTy, false);
-
-    IsPairwiseReduction = PairwiseRdxCost < SplittingRdxCost;
-    int VecReduxCost = IsPairwiseReduction ? PairwiseRdxCost : SplittingRdxCost;
-
-    int ScalarReduxCost =
-        ReduxWidth * TTI->getArithmeticInstrCost(ReductionOpcode, VecTy);
-
-    DEBUG(dbgs() << "SLP: Adding cost " << VecReduxCost - ScalarReduxCost
-                 << " for reduction that starts with " << *FirstReducedVal
-                 << " (It is a "
-                 << (IsPairwiseReduction ? "pairwise" : "splitting")
-                 << " reduction)\n");
-
-    return VecReduxCost - ScalarReduxCost;
-  }
-
-  static Value *createBinOp(IRBuilder<> &Builder, unsigned Opcode, Value *L,
-                            Value *R, const Twine &Name = "") {
-    if (Opcode == Instruction::FAdd)
-      return Builder.CreateFAdd(L, R, Name);
-    return Builder.CreateBinOp((Instruction::BinaryOps)Opcode, L, R, Name);
-  }
-
-  /// \brief Emit a horizontal reduction of the vectorized value.
-  Value *emitReduction(Value *VectorizedValue, IRBuilder<> &Builder) {
-    assert(VectorizedValue && "Need to have a vectorized tree node");
-    Instruction *ValToReduce = dyn_cast<Instruction>(VectorizedValue);
-    assert(isPowerOf2_32(ReduxWidth) &&
-           "We only handle power-of-two reductions for now");
-
-    SmallVector<Constant *, 32> ShuffleMask(ReduxWidth, 0);
-    Value *TmpVec = ValToReduce;
-    for (unsigned i = ReduxWidth / 2; i != 0; i >>= 1) {
-      if (IsPairwiseReduction) {
-        Value *LeftMask =
-          createRdxShuffleMask(ReduxWidth, i, true, true, Builder);
-        Value *RightMask =
-          createRdxShuffleMask(ReduxWidth, i, true, false, Builder);
-
-        Value *LeftShuf = Builder.CreateShuffleVector(
-          TmpVec, UndefValue::get(TmpVec->getType()), LeftMask, "rdx.shuf.l");
-        Value *RightShuf = Builder.CreateShuffleVector(
-          TmpVec, UndefValue::get(TmpVec->getType()), (RightMask),
-          "rdx.shuf.r");
-        TmpVec = createBinOp(Builder, ReductionOpcode, LeftShuf, RightShuf,
-                             "bin.rdx");
-      } else {
-        Value *UpperHalf =
-          createRdxShuffleMask(ReduxWidth, i, false, false, Builder);
-        Value *Shuf = Builder.CreateShuffleVector(
-          TmpVec, UndefValue::get(TmpVec->getType()), UpperHalf, "rdx.shuf");
-        TmpVec = createBinOp(Builder, ReductionOpcode, TmpVec, Shuf, "bin.rdx");
-      }
-    }
-
-    // The result is in the first element of the vector.
-    return Builder.CreateExtractElement(TmpVec, Builder.getInt32(0));
-  }
-};
-
 /// \brief Recognize construction of vectors like
 ///  %ra = insertelement <4 x float> undef, float %s0, i32 0
 ///  %rb = insertelement <4 x float> %ra, float %s1, i32 1
@@ -2312,18 +1981,7 @@ bool SLPVectorizer::vectorizeChainsInBlock(BasicBlock *BB, BoUpSLP &R) {
       if (!BI)
         continue;
 
-      // Try to match and vectorize a horizontal reduction.
-      HorizontalReduction HorRdx;
-      if (ShouldVectorizeHor &&
-          HorRdx.matchAssociativeReduction(P, BI, DL) &&
-          HorRdx.tryToReduce(R, TTI)) {
-        Changed = true;
-        it = BB->begin();
-        e = BB->end();
-        continue;
-      }
-
-     Value *Inst = BI->getOperand(0);
+      Value *Inst = BI->getOperand(0);
       if (Inst == P)
         Inst = BI->getOperand(1);
 
@@ -2333,27 +1991,9 @@ bool SLPVectorizer::vectorizeChainsInBlock(BasicBlock *BB, BoUpSLP &R) {
         Changed = true;
         it = BB->begin();
         e = BB->end();
-        continue;
       }
-
       continue;
     }
-
-    // Try to vectorize horizontal reductions feeding into a store.
-    if (StoreInst *SI = dyn_cast<StoreInst>(it))
-      if (BinaryOperator *BinOp =
-              dyn_cast<BinaryOperator>(SI->getValueOperand())) {
-        HorizontalReduction HorRdx;
-        if (ShouldVectorizeHor &&
-            ((HorRdx.matchAssociativeReduction(0, BinOp, DL) &&
-              HorRdx.tryToReduce(R, TTI)) ||
-             tryToVectorize(BinOp, R))) {
-          Changed = true;
-          it = BB->begin();
-          e = BB->end();
-          continue;
-        }
-      }
 
     // Try to vectorize trees that start at compare instructions.
     if (CmpInst *CI = dyn_cast<CmpInst>(it)) {
