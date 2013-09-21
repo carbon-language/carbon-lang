@@ -2643,6 +2643,7 @@ void InitializationSequence::Step::Destroy() {
     break;
 
   case SK_ConversionSequence:
+  case SK_ConversionSequenceNoNarrowing:
     delete ICS;
   }
 }
@@ -2782,10 +2783,11 @@ void InitializationSequence::AddLValueToRValueStep(QualType Ty) {
 }
 
 void InitializationSequence::AddConversionSequenceStep(
-                                       const ImplicitConversionSequence &ICS,
-                                                       QualType T) {
+    const ImplicitConversionSequence &ICS, QualType T,
+    bool TopLevelOfInitList) {
   Step S;
-  S.Kind = SK_ConversionSequence;
+  S.Kind = TopLevelOfInitList ? SK_ConversionSequenceNoNarrowing
+                              : SK_ConversionSequence;
   S.Type = T;
   S.ICS = new ImplicitConversionSequence(ICS);
   Steps.push_back(S);
@@ -3991,7 +3993,8 @@ static void TryUserDefinedConversion(Sema &S,
                                      const InitializedEntity &Entity,
                                      const InitializationKind &Kind,
                                      Expr *Initializer,
-                                     InitializationSequence &Sequence) {
+                                     InitializationSequence &Sequence,
+                                     bool TopLevelOfInitList) {
   QualType DestType = Entity.getType();
   assert(!DestType->isReferenceType() && "References are handled elsewhere");
   QualType SourceType = Initializer->getType();
@@ -4142,7 +4145,7 @@ static void TryUserDefinedConversion(Sema &S,
     ImplicitConversionSequence ICS;
     ICS.setStandard();
     ICS.Standard = Best->FinalConversion;
-    Sequence.AddConversionSequenceStep(ICS, DestType);
+    Sequence.AddConversionSequenceStep(ICS, DestType, TopLevelOfInitList);
   }
 }
 
@@ -4353,7 +4356,8 @@ static bool TryOCLZeroEventInitialization(Sema &S,
 InitializationSequence::InitializationSequence(Sema &S,
                                                const InitializedEntity &Entity,
                                                const InitializationKind &Kind,
-                                               MultiExprArg Args)
+                                               MultiExprArg Args,
+                                               bool TopLevelOfInitList)
     : FailedCandidateSet(Kind.getLocation()) {
   ASTContext &Context = S.Context;
 
@@ -4544,7 +4548,8 @@ InitializationSequence::InitializationSequence(Sema &S,
     //       13.3.1.4, and the best one is chosen through overload resolution
     //       (13.3).
     else
-      TryUserDefinedConversion(S, Entity, Kind, Initializer, *this);
+      TryUserDefinedConversion(S, Entity, Kind, Initializer, *this,
+                               TopLevelOfInitList);
     return;
   }
 
@@ -4557,7 +4562,8 @@ InitializationSequence::InitializationSequence(Sema &S,
   //    - Otherwise, if the source type is a (possibly cv-qualified) class
   //      type, conversion functions are considered.
   if (!SourceType.isNull() && SourceType->isRecordType()) {
-    TryUserDefinedConversion(S, Entity, Kind, Initializer, *this);
+    TryUserDefinedConversion(S, Entity, Kind, Initializer, *this,
+                             TopLevelOfInitList);
     MaybeProduceObjCObject(S, *this, Entity);
     return;
   }
@@ -4609,7 +4615,7 @@ InitializationSequence::InitializationSequence(Sema &S,
     else
       SetFailed(InitializationSequence::FK_ConversionFailed);
   } else {
-    AddConversionSequenceStep(ICS, Entity.getType());
+    AddConversionSequenceStep(ICS, Entity.getType(), TopLevelOfInitList);
 
     MaybeProduceObjCObject(S, *this, Entity);
   }
@@ -5438,6 +5444,12 @@ static void warnOnLifetimeExtension(Sema &S, const InitializedEntity &Entity,
   }
 }
 
+static void DiagnoseNarrowingInInitList(Sema &S,
+                                        const ImplicitConversionSequence &ICS,
+                                        QualType PreNarrowingType,
+                                        QualType EntityType,
+                                        const Expr *PostInit);
+
 ExprResult
 InitializationSequence::Perform(Sema &S,
                                 const InitializedEntity &Entity,
@@ -5555,6 +5567,7 @@ InitializationSequence::Perform(Sema &S,
   case SK_QualificationConversionRValue:
   case SK_LValueToRValue:
   case SK_ConversionSequence:
+  case SK_ConversionSequenceNoNarrowing:
   case SK_ListInitialization:
   case SK_UnwrapInitList:
   case SK_RewrapInitList:
@@ -5853,8 +5866,9 @@ InitializationSequence::Perform(Sema &S,
       break;
     }
 
-    case SK_ConversionSequence: {
-      Sema::CheckedConversionKind CCK 
+    case SK_ConversionSequence:
+    case SK_ConversionSequenceNoNarrowing: {
+      Sema::CheckedConversionKind CCK
         = Kind.isCStyleCast()? Sema::CCK_CStyleCast
         : Kind.isFunctionalCast()? Sema::CCK_FunctionalCast
         : Kind.isExplicitCast()? Sema::CCK_OtherCast
@@ -5865,6 +5879,11 @@ InitializationSequence::Perform(Sema &S,
       if (CurInitExprRes.isInvalid())
         return ExprError();
       CurInit = CurInitExprRes;
+
+      if (Step->Kind == SK_ConversionSequenceNoNarrowing &&
+          S.getLangOpts().CPlusPlus && !CurInit.get()->isValueDependent())
+        DiagnoseNarrowingInInitList(S, *Step->ICS, SourceType, Entity.getType(),
+                                    CurInit.get());
       break;
     }
 
@@ -6780,6 +6799,12 @@ void InitializationSequence::dump(raw_ostream &OS) const {
       OS << ")";
       break;
 
+    case SK_ConversionSequenceNoNarrowing:
+      OS << "implicit conversion sequence with narrowing prohibited (";
+      S->ICS->DebugPrint(); // FIXME: use OS
+      OS << ")";
+      break;
+
     case SK_ListInitialization:
       OS << "list aggregate initialization";
       break;
@@ -6859,20 +6884,11 @@ void InitializationSequence::dump() const {
   dump(llvm::errs());
 }
 
-static void DiagnoseNarrowingInInitList(Sema &S, InitializationSequence &Seq,
+static void DiagnoseNarrowingInInitList(Sema &S,
+                                        const ImplicitConversionSequence &ICS,
+                                        QualType PreNarrowingType,
                                         QualType EntityType,
-                                        const Expr *PreInit,
                                         const Expr *PostInit) {
-  if (Seq.step_begin() == Seq.step_end() || PreInit->isValueDependent())
-    return;
-
-  // A narrowing conversion can only appear as the final implicit conversion in
-  // an initialization sequence.
-  const InitializationSequence::Step &LastStep = Seq.step_end()[-1];
-  if (LastStep.Kind != InitializationSequence::SK_ConversionSequence)
-    return;
-
-  const ImplicitConversionSequence &ICS = *LastStep.ICS;
   const StandardConversionSequence *SCS = 0;
   switch (ICS.getKind()) {
   case ImplicitConversionSequence::StandardConversion:
@@ -6886,13 +6902,6 @@ static void DiagnoseNarrowingInInitList(Sema &S, InitializationSequence &Seq,
   case ImplicitConversionSequence::BadConversion:
     return;
   }
-
-  // Determine the type prior to the narrowing conversion. If a conversion
-  // operator was used, this may be different from both the type of the entity
-  // and of the pre-initialization expression.
-  QualType PreNarrowingType = PreInit->getType();
-  if (Seq.step_begin() + 1 != Seq.step_end())
-    PreNarrowingType = Seq.step_end()[-2].Type;
 
   // C++11 [dcl.init.list]p7: Check whether this is a narrowing conversion.
   APValue ConstantValue;
@@ -7006,14 +7015,10 @@ Sema::PerformCopyInitialization(const InitializedEntity &Entity,
   InitializationKind Kind = InitializationKind::CreateCopy(InitE->getLocStart(),
                                                            EqualLoc,
                                                            AllowExplicit);
-  InitializationSequence Seq(*this, Entity, Kind, InitE);
+  InitializationSequence Seq(*this, Entity, Kind, InitE, TopLevelOfInitList);
   Init.release();
 
   ExprResult Result = Seq.Perform(*this, Entity, Kind, InitE);
-
-  if (!Result.isInvalid() && TopLevelOfInitList)
-    DiagnoseNarrowingInInitList(*this, Seq, Entity.getType(),
-                                InitE, Result.get());
 
   return Result;
 }
