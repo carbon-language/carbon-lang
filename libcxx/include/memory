@@ -917,13 +917,13 @@ public:
 
 namespace __has_pointer_type_imp
 {
-    template <class _Up> static __two test(...);
-    template <class _Up> static char test(typename _Up::pointer* = 0);
+    template <class _Up> static __two __test(...);
+    template <class _Up> static char __test(typename _Up::pointer* = 0);
 }
 
 template <class _Tp>
 struct __has_pointer_type
-    : public integral_constant<bool, sizeof(__has_pointer_type_imp::test<_Tp>(0)) == 1>
+    : public integral_constant<bool, sizeof(__has_pointer_type_imp::__test<_Tp>(0)) == 1>
 {
 };
 
