@@ -441,8 +441,10 @@ static void createFPFnStub(Function *F, Module *M, FPParamVariant PV,
     IAH.Out(".reloc 0,R_MIPS_NONE," + Name);
     IAH.Out("la $$25," + LocalName);
   }
-  else
+  else {
+    IAH.Out(".set reorder");
     IAH.Out("la $$25, " + Name);
+  }
   swapFPIntParams(PV, M, IAH, LE, false);
   IAH.Out("jr $$25");
   IAH.Out(LocalName + " = " + Name);
