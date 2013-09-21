@@ -5829,6 +5829,17 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
     ConvType = Conversion->getConversionType().getNonReferenceType();
   }
 
+  // Per C++ [over.match.conv]p1, [over.match.ref]p1, an explicit conversion
+  // operator is only a candidate if its return type is the target type or
+  // can be converted to the target type with a qualification conversion.
+  bool ObjCLifetimeConversion;
+  QualType ToNonRefType = ToType.getNonReferenceType();
+  if (Conversion->isExplicit() &&
+      !Context.hasSameUnqualifiedType(ConvType, ToNonRefType) &&
+      !IsQualificationConversion(ConvType, ToNonRefType, /*CStyle*/false,
+                                 ObjCLifetimeConversion))
+    return;
+
   // Overload resolution is always an unevaluated context.
   EnterExpressionEvaluationContext Unevaluated(*this, Sema::Unevaluated);
 

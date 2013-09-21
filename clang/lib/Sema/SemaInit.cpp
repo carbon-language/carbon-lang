@@ -3346,6 +3346,33 @@ static void TryListInitialization(Sema &S,
       return;
     }
   }
+  if (S.getLangOpts().CPlusPlus && !DestType->isAggregateType() &&
+      InitList->getNumInits() == 1 &&
+      InitList->getInit(0)->getType()->isRecordType()) {
+    //   - Otherwise, if the initializer list has a single element of type E
+    //     [...references are handled above...], the object or reference is
+    //     initialized from that element; if a narrowing conversion is required
+    //     to convert the element to T, the program is ill-formed.
+    //
+    // Per core-24034, this is direct-initialization if we were performing
+    // direct-list-initialization and copy-initialization otherwise.
+    // We can't use InitListChecker for this, because it always performs
+    // copy-initialization. This only matters if we might use an 'explicit'
+    // conversion operator, so we only need to handle the cases where the source
+    // is of record type.
+    InitializationKind SubKind =
+        Kind.getKind() == InitializationKind::IK_DirectList
+            ? InitializationKind::CreateDirect(Kind.getLocation(),
+                                               InitList->getLBraceLoc(),
+                                               InitList->getRBraceLoc())
+            : Kind;
+    Expr *SubInit[1] = { InitList->getInit(0) };
+    Sequence.InitializeFrom(S, Entity, SubKind, SubInit,
+                            /*TopLevelOfInitList*/true);
+    if (Sequence)
+      Sequence.RewrapReferenceInitList(Entity.getType(), InitList);
+    return;
+  }
 
   InitListChecker CheckInitList(S, Entity, InitList,
           DestType, /*VerifyOnly=*/true);
@@ -4366,6 +4393,14 @@ InitializationSequence::InitializationSequence(Sema &S,
                                                MultiExprArg Args,
                                                bool TopLevelOfInitList)
     : FailedCandidateSet(Kind.getLocation()) {
+  InitializeFrom(S, Entity, Kind, Args, TopLevelOfInitList);
+}
+
+void InitializationSequence::InitializeFrom(Sema &S,
+                                            const InitializedEntity &Entity,
+                                            const InitializationKind &Kind,
+                                            MultiExprArg Args,
+                                            bool TopLevelOfInitList) {
   ASTContext &Context = S.Context;
 
   // Eliminate non-overload placeholder types in the arguments.  We

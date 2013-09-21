@@ -853,6 +853,10 @@ public:
                          const InitializationKind &Kind,
                          MultiExprArg Args,
                          bool InInitList = false);
+  void InitializeFrom(Sema &S, const InitializedEntity &Entity,
+                      const InitializationKind &Kind, MultiExprArg Args,
+                      bool InInitList);
+
   ~InitializationSequence();
   
   /// \brief Perform the actual initialization of the given entity based on
