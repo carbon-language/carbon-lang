@@ -74,43 +74,43 @@ let neverHasSideEffects = 1 in {
 
 // Fused Multiply-Add
 let ExeDomain = SSEPackedSingle in {
-  defm VFMADDPS    : fma3p_forms<0x98, 0xA8, 0xB8, "vfmadd", "ps", memopv4f32,
-                                 memopv8f32, X86Fmadd, v4f32, v8f32>;
-  defm VFMSUBPS    : fma3p_forms<0x9A, 0xAA, 0xBA, "vfmsub", "ps", memopv4f32,
-                                 memopv8f32, X86Fmsub, v4f32, v8f32>;
+  defm VFMADDPS    : fma3p_forms<0x98, 0xA8, 0xB8, "vfmadd", "ps", loadv4f32,
+                                 loadv8f32, X86Fmadd, v4f32, v8f32>;
+  defm VFMSUBPS    : fma3p_forms<0x9A, 0xAA, 0xBA, "vfmsub", "ps", loadv4f32,
+                                 loadv8f32, X86Fmsub, v4f32, v8f32>;
   defm VFMADDSUBPS : fma3p_forms<0x96, 0xA6, 0xB6, "vfmaddsub", "ps",
-                                 memopv4f32, memopv8f32, X86Fmaddsub,
+                                 loadv4f32, loadv8f32, X86Fmaddsub,
                                  v4f32, v8f32>;
   defm VFMSUBADDPS : fma3p_forms<0x97, 0xA7, 0xB7, "vfmsubadd", "ps",
-                                 memopv4f32, memopv8f32, X86Fmsubadd,
+                                 loadv4f32, loadv8f32, X86Fmsubadd,
                                  v4f32, v8f32>;
 }
 
 let ExeDomain = SSEPackedDouble in {
-  defm VFMADDPD    : fma3p_forms<0x98, 0xA8, 0xB8, "vfmadd", "pd", memopv2f64,
-                                 memopv4f64, X86Fmadd, v2f64, v4f64>, VEX_W;
-  defm VFMSUBPD    : fma3p_forms<0x9A, 0xAA, 0xBA, "vfmsub", "pd", memopv2f64,
-                                 memopv4f64, X86Fmsub, v2f64, v4f64>, VEX_W;
+  defm VFMADDPD    : fma3p_forms<0x98, 0xA8, 0xB8, "vfmadd", "pd", loadv2f64,
+                                 loadv4f64, X86Fmadd, v2f64, v4f64>, VEX_W;
+  defm VFMSUBPD    : fma3p_forms<0x9A, 0xAA, 0xBA, "vfmsub", "pd", loadv2f64,
+                                 loadv4f64, X86Fmsub, v2f64, v4f64>, VEX_W;
   defm VFMADDSUBPD : fma3p_forms<0x96, 0xA6, 0xB6, "vfmaddsub", "pd",
-                                 memopv2f64, memopv4f64, X86Fmaddsub,
+                                 loadv2f64, loadv4f64, X86Fmaddsub,
                                  v2f64, v4f64>, VEX_W;
   defm VFMSUBADDPD : fma3p_forms<0x97, 0xA7, 0xB7, "vfmsubadd", "pd",
-                                 memopv2f64, memopv4f64, X86Fmsubadd,
+                                 loadv2f64, loadv4f64, X86Fmsubadd,
                                  v2f64, v4f64>, VEX_W;
 }
 
 // Fused Negative Multiply-Add
 let ExeDomain = SSEPackedSingle in {
-  defm VFNMADDPS : fma3p_forms<0x9C, 0xAC, 0xBC, "vfnmadd", "ps",  memopv4f32,
-                               memopv8f32, X86Fnmadd, v4f32, v8f32>;
-  defm VFNMSUBPS : fma3p_forms<0x9E, 0xAE, 0xBE, "vfnmsub", "ps",  memopv4f32,
-                               memopv8f32, X86Fnmsub, v4f32, v8f32>;
+  defm VFNMADDPS : fma3p_forms<0x9C, 0xAC, 0xBC, "vfnmadd", "ps",  loadv4f32,
+                               loadv8f32, X86Fnmadd, v4f32, v8f32>;
+  defm VFNMSUBPS : fma3p_forms<0x9E, 0xAE, 0xBE, "vfnmsub", "ps",  loadv4f32,
+                               loadv8f32, X86Fnmsub, v4f32, v8f32>;
 }
 let ExeDomain = SSEPackedDouble in {
-  defm VFNMADDPD : fma3p_forms<0x9C, 0xAC, 0xBC, "vfnmadd", "pd", memopv2f64,
-                               memopv4f64, X86Fnmadd, v2f64, v4f64>, VEX_W;
+  defm VFNMADDPD : fma3p_forms<0x9C, 0xAC, 0xBC, "vfnmadd", "pd", loadv2f64,
+                               loadv4f64, X86Fnmadd, v2f64, v4f64>, VEX_W;
   defm VFNMSUBPD : fma3p_forms<0x9E, 0xAE, 0xBE, "vfnmsub", "pd",
-                               memopv2f64, memopv4f64, X86Fnmsub, v2f64,
+                               loadv2f64, loadv4f64, X86Fnmsub, v2f64,
                                v4f64>, VEX_W;
 }
 
@@ -338,31 +338,31 @@ defm VFNMSUBSD4 : fma4s<0x7F, "vfnmsubsd", FR64, f64mem, f64,
 
 let ExeDomain = SSEPackedSingle in {
   defm VFMADDPS4    : fma4p<0x68, "vfmaddps", X86Fmadd, v4f32, v8f32,
-                            memopv4f32, memopv8f32>;
+                            loadv4f32, loadv8f32>;
   defm VFMSUBPS4    : fma4p<0x6C, "vfmsubps", X86Fmsub, v4f32, v8f32,
-                            memopv4f32, memopv8f32>;
+                            loadv4f32, loadv8f32>;
   defm VFNMADDPS4   : fma4p<0x78, "vfnmaddps", X86Fnmadd, v4f32, v8f32,
-                            memopv4f32, memopv8f32>;
+                            loadv4f32, loadv8f32>;
   defm VFNMSUBPS4   : fma4p<0x7C, "vfnmsubps", X86Fnmsub, v4f32, v8f32,
-                            memopv4f32, memopv8f32>;
+                            loadv4f32, loadv8f32>;
   defm VFMADDSUBPS4 : fma4p<0x5C, "vfmaddsubps", X86Fmaddsub, v4f32, v8f32,
-                            memopv4f32, memopv8f32>;
+                            loadv4f32, loadv8f32>;
   defm VFMSUBADDPS4 : fma4p<0x5E, "vfmsubaddps", X86Fmsubadd, v4f32, v8f32,
-                            memopv4f32, memopv8f32>;
+                            loadv4f32, loadv8f32>;
 }
 
 let ExeDomain = SSEPackedDouble in {
   defm VFMADDPD4    : fma4p<0x69, "vfmaddpd", X86Fmadd, v2f64, v4f64,
-                            memopv2f64, memopv4f64>;
+                            loadv2f64, loadv4f64>;
   defm VFMSUBPD4    : fma4p<0x6D, "vfmsubpd", X86Fmsub, v2f64, v4f64,
-                            memopv2f64, memopv4f64>;
+                            loadv2f64, loadv4f64>;
   defm VFNMADDPD4   : fma4p<0x79, "vfnmaddpd", X86Fnmadd, v2f64, v4f64,
-                            memopv2f64, memopv4f64>;
+                            loadv2f64, loadv4f64>;
   defm VFNMSUBPD4   : fma4p<0x7D, "vfnmsubpd", X86Fnmsub, v2f64, v4f64,
-                            memopv2f64, memopv4f64>;
+                            loadv2f64, loadv4f64>;
   defm VFMADDSUBPD4 : fma4p<0x5D, "vfmaddsubpd", X86Fmaddsub, v2f64, v4f64,
-                            memopv2f64, memopv4f64>;
+                            loadv2f64, loadv4f64>;
   defm VFMSUBADDPD4 : fma4p<0x5F, "vfmsubaddpd", X86Fmsubadd, v2f64, v4f64,
-                            memopv2f64, memopv4f64>;
+                            loadv2f64, loadv4f64>;
 }
 
