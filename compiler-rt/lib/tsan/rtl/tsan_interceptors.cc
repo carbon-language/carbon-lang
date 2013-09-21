@@ -128,6 +128,21 @@ struct SignalContext {
   int pending_signal_count;
   SignalDesc pending_signals[kSigCount];
 };
+
+// Used to ignore interceptors coming directly from libjvm.so.
+atomic_uintptr_t libjvm_begin;
+atomic_uintptr_t libjvm_end;
+
+static bool libjvm_check(uptr pc) {
+  uptr begin = atomic_load(&libjvm_begin, memory_order_relaxed);
+  if (begin != 0 && pc >= begin) {
+    uptr end = atomic_load(&libjvm_end, memory_order_relaxed);
+    if (end != 0 && pc < end)
+      return true;
+  }
+  return false;
+}
+
 }  // namespace __tsan
 
 static SignalContext *SigCtx(ThreadState *thr) {
@@ -191,7 +206,7 @@ ScopedInterceptor::~ScopedInterceptor() {
       Printf("FATAL: ThreadSanitizer: failed to intercept %s\n", #func); \
       Die(); \
     } \
-    if (thr->in_rtl > 1) \
+    if (thr->in_rtl > 1 || libjvm_check(pc)) \
       return REAL(func)(__VA_ARGS__); \
 /**/
 

@@ -5,6 +5,7 @@
 
 extern "C" {
 typedef unsigned long jptr;  // NOLINT
+void __tsan_java_preinit(const char *libjvm_path);
 void __tsan_java_init(jptr heap_begin, jptr heap_size);
 int  __tsan_java_fini();
 void __tsan_java_alloc(jptr ptr, jptr size);
