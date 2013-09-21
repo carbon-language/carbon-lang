@@ -4327,27 +4327,6 @@ SDValue DAGCombiner::visitVSELECT(SDNode *N) {
     }
   }
 
-  // Treat SETCC as a mask and promote the result type based on the targets
-  // expected SETCC result type. This will ensure that SETCC and VSELECT are
-  // both split by the type legalizer. This is done to prevent the type
-  // legalizer from unrolling SETCC into scalar comparions.
-  EVT SelectVT = N->getValueType(0);
-  if (N0.getOpcode() == ISD::SETCC &&
-      N0.getValueType() != getSetCCResultType(SelectVT)) {
-    SDLoc MaskDL(N0);
-    EVT MaskVT = getSetCCResultType(SelectVT);
-
-    SDValue Mask = DAG.getNode(ISD::SETCC, MaskDL, MaskVT, N0->getOperand(0),
-                               N0->getOperand(1), N0->getOperand(2));
-
-    AddToWorkList(Mask.getNode());
-
-    SDValue LHS = N->getOperand(1);
-    SDValue RHS = N->getOperand(2);
-
-    return DAG.getNode(ISD::VSELECT, DL, SelectVT, Mask, LHS, RHS);
-  }
-
   return SDValue();
 }
 
