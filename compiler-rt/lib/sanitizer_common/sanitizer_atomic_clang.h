@@ -15,18 +15,6 @@
 #ifndef SANITIZER_ATOMIC_CLANG_H
 #define SANITIZER_ATOMIC_CLANG_H
 
-#ifndef __has_builtin
-# define __has_builtin(x) 0
-#endif
-
-#define ATOMIC_ORDER(mo) \
-  ((mo) == memory_order_relaxed ? __ATOMIC_RELAXED : \
-  (mo) == memory_order_consume ? __ATOMIC_CONSUME : \
-  (mo) == memory_order_acquire ? __ATOMIC_ACQUIRE : \
-  (mo) == memory_order_release ? __ATOMIC_RELEASE : \
-  (mo) == memory_order_acq_rel ? __ATOMIC_ACQ_REL : \
-  __ATOMIC_SEQ_CST)
-
 namespace __sanitizer {
 
 INLINE void atomic_signal_fence(memory_order) {
@@ -53,16 +41,17 @@ INLINE typename T::Type atomic_load(
       | memory_order_acquire | memory_order_seq_cst));
   DCHECK(!((uptr)a % sizeof(*a)));
   typename T::Type v;
-// Use builtin atomic operations if available.
-// But not on x86_64 because they lead to vastly inefficient code generation
-// (http://llvm.org/bugs/show_bug.cgi?id=17281).
-// And not on x86_32 because they are not implemented
-// (http://llvm.org/bugs/show_bug.cgi?id=15034)
-// Have to use them on ARM/PPC/etc, because our implementation lacks necessary
-// memory fences.
-#if __has_builtin(__atomic_load_n) && !defined(__x86_64__) && !defined(__i386__)
-  v = __atomic_load_n(&a->val_dont_use, ATOMIC_ORDER(mo));
-#else
+  // FIXME:
+  // 64-bit atomic operations are not atomic on 32-bit platforms.
+  // The implementation lacks necessary memory fences on ARM/PPC.
+  // We would like to use compiler builtin atomic operations,
+  // but they are mostly broken:
+  // - they lead to vastly inefficient code generation
+  // (http://llvm.org/bugs/show_bug.cgi?id=17281)
+  // - 64-bit atomic operations are not implemented on x86_32
+  // (http://llvm.org/bugs/show_bug.cgi?id=15034)
+  // - they are not implemented on ARM
+  // error: undefined reference to '__atomic_load_4'
   if (mo == memory_order_relaxed) {
     v = a->val_dont_use;
   } else {
@@ -70,7 +59,6 @@ INLINE typename T::Type atomic_load(
     v = a->val_dont_use;
     atomic_signal_fence(memory_order_seq_cst);
   }
-#endif
   return v;
 }
 
@@ -79,11 +67,6 @@ INLINE void atomic_store(volatile T *a, typename T::Type v, memory_order mo) {
   DCHECK(mo & (memory_order_relaxed | memory_order_release
       | memory_order_seq_cst));
   DCHECK(!((uptr)a % sizeof(*a)));
-// See the comment in atomic_load.
-#if __has_builtin(__atomic_store_n) && !defined(__x86_64__) \
-    && !defined(__i386__)
-  __atomic_store_n(&a->val_dont_use, v, ATOMIC_ORDER(mo));
-#else
   if (mo == memory_order_relaxed) {
     a->val_dont_use = v;
   } else {
@@ -93,7 +76,6 @@ INLINE void atomic_store(volatile T *a, typename T::Type v, memory_order mo) {
   }
   if (mo == memory_order_seq_cst)
     atomic_thread_fence(memory_order_seq_cst);
-#endif
 }
 
 template<typename T>
