@@ -42,6 +42,7 @@ void
 mutex::unlock() _NOEXCEPT
 {
     int ec = pthread_mutex_unlock(&__m_);
+    (void)ec;
     assert(ec == 0);
 }
 
@@ -79,6 +80,7 @@ fail:
 recursive_mutex::~recursive_mutex()
 {
     int e = pthread_mutex_destroy(&__m_);
+    (void)e;
     assert(e == 0);
 }
 
@@ -94,6 +96,7 @@ void
 recursive_mutex::unlock() _NOEXCEPT
 {
     int e = pthread_mutex_unlock(&__m_);
+    (void)e;
     assert(e == 0);
 }
 
