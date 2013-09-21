@@ -1826,6 +1826,14 @@
   __sanitizer_syscall_post_impl_process_vm_writev(                          \
       res, (long)(pid), (long)(lvec), (long)(liovcnt), (long)(rvec),        \
       (long)(riovcnt), (long)(flags))
+#define __sanitizer_syscall_pre_fork() \
+  __sanitizer_syscall_pre_impl_fork()
+#define __sanitizer_syscall_post_fork(res) \
+  __sanitizer_syscall_post_impl_fork(res)
+#define __sanitizer_syscall_pre_vfork() \
+  __sanitizer_syscall_pre_impl_vfork()
+#define __sanitizer_syscall_post_vfork(res) \
+  __sanitizer_syscall_post_impl_vfork(res)
 
 // And now a few syscalls we don't handle yet.
 #define __sanitizer_syscall_pre_afs_syscall(...)
@@ -1843,7 +1851,6 @@
 #define __sanitizer_syscall_pre_fanotify_init(...)
 #define __sanitizer_syscall_pre_fanotify_mark(...)
 #define __sanitizer_syscall_pre_fchown32(...)
-#define __sanitizer_syscall_pre_fork(...)
 #define __sanitizer_syscall_pre_ftime(...)
 #define __sanitizer_syscall_pre_ftruncate64(...)
 #define __sanitizer_syscall_pre_futex(...)
@@ -1907,7 +1914,6 @@
 #define __sanitizer_syscall_pre_ugetrlimit(...)
 #define __sanitizer_syscall_pre_ulimit(...)
 #define __sanitizer_syscall_pre_umount2(...)
-#define __sanitizer_syscall_pre_vfork(...)
 #define __sanitizer_syscall_pre_vm86(...)
 #define __sanitizer_syscall_pre_vm86old(...)
 #define __sanitizer_syscall_pre_vserver(...)
@@ -1927,7 +1933,6 @@
 #define __sanitizer_syscall_post_fanotify_init(res, ...)
 #define __sanitizer_syscall_post_fanotify_mark(res, ...)
 #define __sanitizer_syscall_post_fchown32(res, ...)
-#define __sanitizer_syscall_post_fork(res, ...)
 #define __sanitizer_syscall_post_ftime(res, ...)
 #define __sanitizer_syscall_post_ftruncate64(res, ...)
 #define __sanitizer_syscall_post_futex(res, ...)
@@ -1991,7 +1996,6 @@
 #define __sanitizer_syscall_post_ugetrlimit(res, ...)
 #define __sanitizer_syscall_post_ulimit(res, ...)
 #define __sanitizer_syscall_post_umount2(res, ...)
-#define __sanitizer_syscall_post_vfork(res, ...)
 #define __sanitizer_syscall_post_vm86old(res, ...)
 #define __sanitizer_syscall_post_vm86(res, ...)
 #define __sanitizer_syscall_post_vserver(res, ...)
@@ -3053,6 +3057,10 @@ void __sanitizer_syscall_post_impl_process_vm_writev(long res, long pid,
                                                      long lvec, long liovcnt,
                                                      long rvec, long riovcnt,
                                                      long flags);
+void __sanitizer_syscall_pre_impl_fork();
+void __sanitizer_syscall_post_impl_fork(long res);
+void __sanitizer_syscall_pre_impl_vfork();
+void __sanitizer_syscall_post_impl_vfork(long res);
 
 #ifdef __cplusplus
 }  // extern "C"

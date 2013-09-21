@@ -27,6 +27,10 @@
 //          and are now initialized.
 //   COMMON_SYSCALL_FD_CLOSE(fd)
 //          Called before closing file descriptor fd.
+//   COMMON_SYSCALL_PRE_FORK()
+//          Called before fork syscall.
+//   COMMON_SYSCALL_POST_FORK(long res)
+//          Called after fork syscall.
 //===----------------------------------------------------------------------===//
 
 #include "sanitizer_platform.h"
@@ -46,6 +50,14 @@
 
 #ifndef COMMON_SYSCALL_FD_CLOSE
 # define COMMON_SYSCALL_FD_CLOSE(fd)
+#endif
+
+#ifndef COMMON_SYSCALL_PRE_FORK
+# define COMMON_SYSCALL_PRE_FORK()
+#endif
+
+#ifndef COMMON_SYSCALL_POST_FORK
+# define COMMON_SYSCALL_POST_FORK(res)
 #endif
 
 // FIXME: do some kind of PRE_READ for all syscall arguments (int(s) and such).
@@ -2693,6 +2705,22 @@ POST_SYSCALL(process_vm_writev)(long res, long pid,
   if (res >= 0) {
     if (lvec) kernel_read_iovec(lvec, liovcnt, res);
   }
+}
+
+PRE_SYSCALL(fork)() {
+  COMMON_SYSCALL_PRE_FORK();
+}
+
+POST_SYSCALL(fork)(long res) {
+  COMMON_SYSCALL_POST_FORK(res);
+}
+
+PRE_SYSCALL(vfork)() {
+  COMMON_SYSCALL_PRE_FORK();
+}
+
+POST_SYSCALL(vfork)(long res) {
+  COMMON_SYSCALL_POST_FORK(res);
 }
 }  // extern "C"
 

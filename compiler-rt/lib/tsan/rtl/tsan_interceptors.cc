@@ -1792,7 +1792,6 @@ TSAN_INTERCEPTOR(int, munlockall, void) {
 
 TSAN_INTERCEPTOR(int, fork, int fake) {
   SCOPED_TSAN_INTERCEPTOR(fork, fake);
-  // It's intercepted merely to process pending signals.
   int pid = REAL(fork)(fake);
   if (pid == 0) {
     // child
@@ -1846,28 +1845,51 @@ struct TsanInterceptorContext {
 #define COMMON_INTERCEPTOR_BLOCK_REAL(name) BLOCK_REAL(name)
 #include "sanitizer_common/sanitizer_common_interceptors.inc"
 
+#define TSAN_SYSCALL() \
+  ThreadState *thr = cur_thread(); \
+  ScopedSyscall scoped_syscall(thr) \
+/**/
+
+struct ScopedSyscall {
+  ThreadState *thr;
+
+  explicit ScopedSyscall(ThreadState *thr)
+      : thr(thr) {
+    if (thr->in_rtl == 0)
+      Initialize(thr);
+    thr->in_rtl++;
+  }
+
+  ~ScopedSyscall() {
+    thr->in_rtl--;
+    if (thr->in_rtl == 0)
+      ProcessPendingSignals(thr);
+  }
+};
+
 static void syscall_access_range(uptr pc, uptr p, uptr s, bool write) {
-  ThreadState *thr = cur_thread();
-  if (thr->in_rtl == 0)
-    Initialize(thr);
-  thr->in_rtl++;
+  TSAN_SYSCALL();
   MemoryAccessRange(thr, pc, p, s, write);
-  thr->in_rtl--;
-  if (thr->in_rtl == 0)
-    ProcessPendingSignals(thr);
 }
 
 static void syscall_fd_close(uptr pc, int fd) {
-  if (fd < 0)
-    return;
-  ThreadState *thr = cur_thread();
-  if (thr->in_rtl == 0)
-    Initialize(thr);
-  thr->in_rtl++;
-  FdClose(thr, pc, fd);
-  thr->in_rtl--;
-  if (thr->in_rtl == 0)
-    ProcessPendingSignals(thr);
+  TSAN_SYSCALL();
+  if (fd >= 0)
+    FdClose(thr, pc, fd);
+}
+
+static void syscall_pre_fork(uptr pc) {
+  TSAN_SYSCALL();
+}
+
+static void syscall_post_fork(uptr pc, int res) {
+  TSAN_SYSCALL();
+  if (res == 0) {
+    // child
+    FdOnFork(thr, pc);
+  } else if (res > 0) {
+    // parent
+  }
 }
 
 #define COMMON_SYSCALL_PRE_READ_RANGE(p, s) \
@@ -1880,6 +1902,10 @@ static void syscall_fd_close(uptr pc, int fd) {
   do { } while (false)
 #define COMMON_SYSCALL_FD_CLOSE(fd) \
   syscall_fd_close(GET_CALLER_PC(), fd)
+#define COMMON_SYSCALL_PRE_FORK() \
+  syscall_pre_fork(GET_CALLER_PC())
+#define COMMON_SYSCALL_POST_FORK(res) \
+  syscall_post_fork(GET_CALLER_PC(), res)
 #include "sanitizer_common/sanitizer_common_syscalls.inc"
 
 namespace __tsan {
