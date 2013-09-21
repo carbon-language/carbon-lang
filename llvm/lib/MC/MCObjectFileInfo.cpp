@@ -39,6 +39,9 @@ void MCObjectFileInfo::InitMachOMCObjectFileInfo(Triple T) {
     = Ctx->getMachOSection("__DATA", "__data", 0,
                            SectionKind::getDataRel());
 
+  // BSSSection might not be expected initialized on msvc.
+  BSSSection = 0;
+
   TLSDataSection // .tdata
     = Ctx->getMachOSection("__DATA", "__thread_data",
                            MCSectionMachO::S_THREAD_LOCAL_REGULAR,
