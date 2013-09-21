@@ -71,7 +71,7 @@ def main():
     command = [binary, '-i', filename]
     command.extend(lines)
     if args.style:
-      command.extend(['-style', style])
+      command.extend(['-style', args.style])
     p = subprocess.Popen(command, stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE,
                          stdin=subprocess.PIPE)
