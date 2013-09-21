@@ -55,3 +55,10 @@ unsigned long test_epi16(__m128i x) { return _mm_extract_epi16(x, 3); }
 // CHECK: @test_epi16
 // CHECK: extractelement <8 x i16> {{.*}}, i32 3
 // CHECK: zext i16 {{.*}} to i32
+
+void extractinttypes() {
+  extern int check_extract_result_int;
+  extern __typeof(_mm_extract_epi8(_mm_setzero_si128(), 3)) check_result_int;
+  extern __typeof(_mm_extract_epi16(_mm_setzero_si128(), 3)) check_result_int;
+  extern __typeof(_mm_extract_epi32(_mm_setzero_si128(), 3)) check_result_int;
+}
