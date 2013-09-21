@@ -126,6 +126,9 @@ typedef void (*fill_profile_f)(uptr start, uptr rss, bool file,
 // |stats_size| elements.
 void GetMemoryProfile(fill_profile_f cb, uptr *stats, uptr stats_size);
 
+// Returns code range for the specified module.
+bool GetCodeRangeForFile(const char *module, uptr *start, uptr *end);
+
 #endif  // SANITIZER_WINDOWS
 
 }  // namespace __sanitizer
