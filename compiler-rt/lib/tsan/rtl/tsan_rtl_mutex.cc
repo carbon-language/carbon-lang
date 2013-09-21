@@ -95,7 +95,7 @@ void MutexLock(ThreadState *thr, uptr pc, uptr addr, int rec) {
   } else if (s->owner_tid == thr->tid) {
     CHECK_GT(s->recursion, 0);
   } else {
-    Printf("ThreadSanitizer WARNING: double lock\n");
+    Printf("ThreadSanitizer WARNING: double lock of mutex %p\n", addr);
     PrintCurrentStack(thr, pc);
   }
   if (s->recursion == 0) {
@@ -125,13 +125,14 @@ int MutexUnlock(ThreadState *thr, uptr pc, uptr addr, bool all) {
   if (s->recursion == 0) {
     if (!s->is_broken) {
       s->is_broken = true;
-      Printf("ThreadSanitizer WARNING: unlock of unlocked mutex\n");
+      Printf("ThreadSanitizer WARNING: unlock of unlocked mutex %p\n", addr);
       PrintCurrentStack(thr, pc);
     }
   } else if (s->owner_tid != thr->tid) {
     if (!s->is_broken) {
       s->is_broken = true;
-      Printf("ThreadSanitizer WARNING: mutex unlock by another thread\n");
+      Printf("ThreadSanitizer WARNING: mutex %p is unlocked by wrong thread\n",
+             addr);
       PrintCurrentStack(thr, pc);
     }
   } else {
@@ -163,7 +164,8 @@ void MutexReadLock(ThreadState *thr, uptr pc, uptr addr) {
   thr->fast_state.IncrementEpoch();
   TraceAddEvent(thr, thr->fast_state, EventTypeRLock, s->GetId());
   if (s->owner_tid != SyncVar::kInvalidTid) {
-    Printf("ThreadSanitizer WARNING: read lock of a write locked mutex\n");
+    Printf("ThreadSanitizer WARNING: read lock of a write locked mutex %p\n",
+           addr);
     PrintCurrentStack(thr, pc);
   }
   thr->clock.set(thr->tid, thr->fast_state.epoch());
@@ -184,8 +186,8 @@ void MutexReadUnlock(ThreadState *thr, uptr pc, uptr addr) {
   thr->fast_state.IncrementEpoch();
   TraceAddEvent(thr, thr->fast_state, EventTypeRUnlock, s->GetId());
   if (s->owner_tid != SyncVar::kInvalidTid) {
-    Printf("ThreadSanitizer WARNING: read unlock of a write "
-               "locked mutex\n");
+    Printf("ThreadSanitizer WARNING: read unlock of a write locked mutex %p\n",
+           addr);
     PrintCurrentStack(thr, pc);
   }
   thr->clock.set(thr->tid, thr->fast_state.epoch());
@@ -235,7 +237,8 @@ void MutexReadOrWriteUnlock(ThreadState *thr, uptr pc, uptr addr) {
     }
   } else if (!s->is_broken) {
     s->is_broken = true;
-    Printf("ThreadSanitizer WARNING: mutex unlock by another thread\n");
+    Printf("ThreadSanitizer WARNING: mutex %p is unlock by wrong thread\n",
+           addr);
     PrintCurrentStack(thr, pc);
   }
   thr->mset.Del(s->GetId(), write);
