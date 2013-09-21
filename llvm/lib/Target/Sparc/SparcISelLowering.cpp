@@ -2160,12 +2160,12 @@ static SDValue LowerRETURNADDR(SDValue Op, SelectionDAG &DAG,
   return RetAddr;
 }
 
-static SDValue LowerF64Op(SDValue Op, SelectionDAG &DAG)
+static SDValue LowerF64Op(SDValue Op, SelectionDAG &DAG, unsigned opcode)
 {
   SDLoc dl(Op);
 
   assert(Op.getValueType() == MVT::f64 && "LowerF64Op called on non-double!");
-  assert(Op.getOpcode() == ISD::FNEG || Op.getOpcode() == ISD::FABS);
+  assert(opcode == ISD::FNEG || opcode == ISD::FABS);
 
   // Lower fneg/fabs on f64 to fneg/fabs on f32.
   // fneg f64 => fneg f32:sub_even, fmov f32:sub_odd.
@@ -2177,7 +2177,7 @@ static SDValue LowerF64Op(SDValue Op, SelectionDAG &DAG)
   SDValue Lo32 = DAG.getTargetExtractSubreg(SP::sub_odd, dl, MVT::f32,
                                             SrcReg64);
 
-  Hi32 = DAG.getNode(Op.getOpcode(), dl, MVT::f32, Hi32);
+  Hi32 = DAG.getNode(opcode, dl, MVT::f32, Hi32);
 
   SDValue DstReg64 = SDValue(DAG.getMachineNode(TargetOpcode::IMPLICIT_DEF,
                                                 dl, MVT::f64), 0);
@@ -2280,7 +2280,7 @@ static SDValue LowerFNEG(SDValue Op, SelectionDAG &DAG,
                          const SparcTargetLowering &TLI,
                          bool is64Bit) {
   if (Op.getValueType() == MVT::f64)
-    return LowerF64Op(Op, DAG);
+    return LowerF64Op(Op, DAG, ISD::FNEG);
   if (Op.getValueType() == MVT::f128)
     return TLI.LowerF128Op(Op, DAG, ((is64Bit) ? "_Qp_neg" : "_Q_neg"), 1);
   return Op;
@@ -2288,7 +2288,7 @@ static SDValue LowerFNEG(SDValue Op, SelectionDAG &DAG,
 
 static SDValue LowerFABS(SDValue Op, SelectionDAG &DAG, bool isV9) {
   if (Op.getValueType() == MVT::f64)
-    return LowerF64Op(Op, DAG);
+    return LowerF64Op(Op, DAG, ISD::FABS);
   if (Op.getValueType() != MVT::f128)
     return Op;
 
@@ -2304,7 +2304,7 @@ static SDValue LowerFABS(SDValue Op, SelectionDAG &DAG, bool isV9) {
   if (isV9)
     Hi64 = DAG.getNode(Op.getOpcode(), dl, MVT::f64, Hi64);
   else
-    Hi64 = LowerF64Op(Op, DAG);
+    Hi64 = LowerF64Op(Hi64, DAG, ISD::FABS);
 
   SDValue DstReg128 = SDValue(DAG.getMachineNode(TargetOpcode::IMPLICIT_DEF,
                                                  dl, MVT::f128), 0);

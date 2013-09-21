@@ -96,3 +96,20 @@ entry:
 "7":                                              ; preds = %entry
   ret i32 1
 }
+
+
+; HARD-LABEL: f128_abs
+; HARD:       fabss
+
+; SOFT-LABEL: f128_abs
+; SOFT:       fabss
+
+define void @f128_abs(fp128* noalias sret %scalar.result, fp128* byval %a) {
+entry:
+  %0 = load fp128* %a, align 8
+  %1 = tail call fp128 @llvm.fabs.f128(fp128 %0)
+  store fp128 %1, fp128* %scalar.result, align 8
+  ret void
+}
+
+declare fp128 @llvm.fabs.f128(fp128) nounwind readonly
