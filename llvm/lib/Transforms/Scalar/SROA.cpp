@@ -1452,6 +1452,10 @@ static bool canConvertValue(const DataLayout &DL, Type *OldTy, Type *NewTy) {
   if (!NewTy->isSingleValueType() || !OldTy->isSingleValueType())
     return false;
 
+  // We handle can convert pointers to integers and vice-versa. Same for vectors
+  // of pointers and integers.
+  OldTy = OldTy->getScalarType();
+  NewTy = NewTy->getScalarType();
   if (NewTy->isPointerTy() || OldTy->isPointerTy()) {
     if (NewTy->isPointerTy() && OldTy->isPointerTy())
       return true;
@@ -1470,21 +1474,53 @@ static bool canConvertValue(const DataLayout &DL, Type *OldTy, Type *NewTy) {
 /// inttoptr, and ptrtoint casts. Use the \c canConvertValue predicate to test
 /// two types for viability with this routine.
 static Value *convertValue(const DataLayout &DL, IRBuilderTy &IRB, Value *V,
-                           Type *Ty) {
-  assert(canConvertValue(DL, V->getType(), Ty) &&
-         "Value not convertable to type");
-  if (V->getType() == Ty)
+                           Type *NewTy) {
+  Type *OldTy = V->getType();
+  assert(canConvertValue(DL, OldTy, NewTy) && "Value not convertable to type");
+
+  if (OldTy == NewTy)
     return V;
-  if (IntegerType *OldITy = dyn_cast<IntegerType>(V->getType()))
-    if (IntegerType *NewITy = dyn_cast<IntegerType>(Ty))
+
+  if (IntegerType *OldITy = dyn_cast<IntegerType>(OldTy))
+    if (IntegerType *NewITy = dyn_cast<IntegerType>(NewTy))
       if (NewITy->getBitWidth() > OldITy->getBitWidth())
         return IRB.CreateZExt(V, NewITy);
-  if (V->getType()->isIntegerTy() && Ty->isPointerTy())
-    return IRB.CreateIntToPtr(V, Ty);
-  if (V->getType()->isPointerTy() && Ty->isIntegerTy())
-    return IRB.CreatePtrToInt(V, Ty);
 
-  return IRB.CreateBitCast(V, Ty);
+  // See if we need inttoptr for this type pair. A cast involving both scalars
+  // and vectors requires and additional bitcast.
+  if (OldTy->getScalarType()->isIntegerTy() &&
+      NewTy->getScalarType()->isPointerTy()) {
+    // Expand <2 x i32> to i8* --> <2 x i32> to i64 to i8*
+    if (OldTy->isVectorTy() && !NewTy->isVectorTy())
+      return IRB.CreateIntToPtr(IRB.CreateBitCast(V, DL.getIntPtrType(NewTy)),
+                                NewTy);
+
+    // Expand i128 to <2 x i8*> --> i128 to <2 x i64> to <2 x i8*>
+    if (!OldTy->isVectorTy() && NewTy->isVectorTy())
+      return IRB.CreateIntToPtr(IRB.CreateBitCast(V, DL.getIntPtrType(NewTy)),
+                                NewTy);
+
+    return IRB.CreateIntToPtr(V, NewTy);
+  }
+
+  // See if we need ptrtoint for this type pair. A cast involving both scalars
+  // and vectors requires and additional bitcast.
+  if (OldTy->getScalarType()->isPointerTy() &&
+      NewTy->getScalarType()->isIntegerTy()) {
+    // Expand <2 x i8*> to i128 --> <2 x i8*> to <2 x i64> to i128
+    if (OldTy->isVectorTy() && !NewTy->isVectorTy())
+      return IRB.CreateBitCast(IRB.CreatePtrToInt(V, DL.getIntPtrType(OldTy)),
+                               NewTy);
+
+    // Expand i8* to <2 x i32> --> i8* to i64 to <2 x i32>
+    if (!OldTy->isVectorTy() && NewTy->isVectorTy())
+      return IRB.CreateBitCast(IRB.CreatePtrToInt(V, DL.getIntPtrType(OldTy)),
+                               NewTy);
+
+    return IRB.CreatePtrToInt(V, NewTy);
+  }
+
+  return IRB.CreateBitCast(V, NewTy);
 }
 
 /// \brief Test whether the given slice use can be promoted to a vector.
