@@ -1960,14 +1960,14 @@ static Value *createRdxShuffleMask(unsigned VecLen, unsigned NumEltsToRdx,
 ///    ...
 ///    \  /
 ///     +
-///     \
+///     |
 ///  phi +=
 ///
 ///  Or:
 ///    ...
 ///    \  /
 ///     +
-///     \
+///     |
 ///   *p =
 ///
 class HorizontalReduction {
