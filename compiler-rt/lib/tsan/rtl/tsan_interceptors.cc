@@ -1857,6 +1857,19 @@ static void syscall_access_range(uptr pc, uptr p, uptr s, bool write) {
     ProcessPendingSignals(thr);
 }
 
+static void syscall_fd_close(uptr pc, int fd) {
+  if (fd < 0)
+    return;
+  ThreadState *thr = cur_thread();
+  if (thr->in_rtl == 0)
+    Initialize(thr);
+  thr->in_rtl++;
+  FdClose(thr, pc, fd);
+  thr->in_rtl--;
+  if (thr->in_rtl == 0)
+    ProcessPendingSignals(thr);
+}
+
 #define COMMON_SYSCALL_PRE_READ_RANGE(p, s) \
   syscall_access_range(GET_CALLER_PC(), (uptr)(p), (uptr)(s), false)
 #define COMMON_SYSCALL_PRE_WRITE_RANGE(p, s) \
@@ -1865,6 +1878,8 @@ static void syscall_access_range(uptr pc, uptr p, uptr s, bool write) {
   do { } while (false)
 #define COMMON_SYSCALL_POST_WRITE_RANGE(p, s) \
   do { } while (false)
+#define COMMON_SYSCALL_FD_CLOSE(fd) \
+  syscall_fd_close(GET_CALLER_PC(), fd)
 #include "sanitizer_common/sanitizer_common_syscalls.inc"
 
 namespace __tsan {
