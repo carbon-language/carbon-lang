@@ -110,6 +110,7 @@ SDNode* MipsDAGToDAGISel::Select(SDNode *Node) {
   // If we have a custom node, we already have selected!
   if (Node->isMachineOpcode()) {
     DEBUG(errs() << "== "; Node->dump(CurDAG); errs() << "\n");
+    Node->setNodeId(-1);
     return NULL;
   }
 

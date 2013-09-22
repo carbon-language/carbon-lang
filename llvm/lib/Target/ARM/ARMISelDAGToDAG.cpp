@@ -2383,8 +2383,10 @@ SDNode *ARMDAGToDAGISel::SelectAtomic64(SDNode *Node, unsigned Opc) {
 SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
   SDLoc dl(N);
 
-  if (N->isMachineOpcode())
+  if (N->isMachineOpcode()) {
+    N->setNodeId(-1);
     return NULL;   // Already selected.
+  }
 
   switch (N->getOpcode()) {
   default: break;

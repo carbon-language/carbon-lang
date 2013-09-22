@@ -15,7 +15,7 @@ entry:
 
 ; CHECK: lock
 ; CHECK-NEXT: orl {{.*}}, (%esp)
-; CHECK-NEXT: cmpl $0
+; CHECK-NEXT: testl [[REG:%e[a-z]+]], [[REG]]
 
 if.then:                                          ; preds = %entry
   tail call void bitcast (void (...)* @foo to void ()*)() nounwind

@@ -876,8 +876,10 @@ SDNode *PPCDAGToDAGISel::SelectSETCC(SDNode *N) {
 // target-specific node if it hasn't already been changed.
 SDNode *PPCDAGToDAGISel::Select(SDNode *N) {
   SDLoc dl(N);
-  if (N->isMachineOpcode())
+  if (N->isMachineOpcode()) {
+    N->setNodeId(-1);
     return NULL;   // Already selected.
+  }
 
   switch (N->getOpcode()) {
   default: break;

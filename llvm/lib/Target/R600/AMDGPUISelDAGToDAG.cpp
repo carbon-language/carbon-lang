@@ -195,6 +195,7 @@ bool AMDGPUDAGToDAGISel::SelectADDR64(SDValue Addr, SDValue& R1, SDValue& R2) {
 SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
   unsigned int Opc = N->getOpcode();
   if (N->isMachineOpcode()) {
+    N->setNodeId(-1);
     return NULL;   // Already selected.
   }
   switch (Opc) {

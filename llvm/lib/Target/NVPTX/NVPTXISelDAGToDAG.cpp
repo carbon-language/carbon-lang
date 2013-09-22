@@ -118,8 +118,10 @@ bool NVPTXDAGToDAGISel::useF32FTZ() const {
 /// expanded, promoted and normal instructions.
 SDNode *NVPTXDAGToDAGISel::Select(SDNode *N) {
 
-  if (N->isMachineOpcode())
+  if (N->isMachineOpcode()) {
+    N->setNodeId(-1);
     return NULL; // Already selected.
+  }
 
   SDNode *ResNode = NULL;
   switch (N->getOpcode()) {
