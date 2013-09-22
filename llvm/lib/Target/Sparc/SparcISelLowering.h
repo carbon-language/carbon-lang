@@ -40,8 +40,12 @@ namespace llvm {
 
       CALL,        // A call instruction.
       RET_FLAG,    // Return with a flag operand.
-      GLOBAL_BASE_REG, // Global base reg for PIC
-      FLUSHW       // FLUSH register windows to stack
+      GLOBAL_BASE_REG, // Global base reg for PIC.
+      FLUSHW,      // FLUSH register windows to stack.
+
+      TLS_ADD,     // For Thread Local Storage (TLS).
+      TLS_LD,
+      TLS_CALL
     };
   }
 
@@ -119,6 +123,7 @@ namespace llvm {
                            SDLoc DL, SelectionDAG &DAG) const;
 
     SDValue LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) const;
+    SDValue LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerConstantPool(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerBlockAddress(SDValue Op, SelectionDAG &DAG) const;
 

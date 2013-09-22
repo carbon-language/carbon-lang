@@ -162,6 +162,9 @@ def : Pat<(subc i64:$a, i64:$b), (SUBCCrr $a, $b)>;
 
 def : Pat<(SPcmpicc i64:$a, i64:$b), (CMPrr $a, $b)>;
 
+def : Pat<(tlsadd i64:$a, i64:$b, tglobaltlsaddr:$sym),
+          (TLS_ADDrr $a, $b, $sym)>;
+
 // Register-immediate instructions.
 
 def : Pat<(and i64:$a, (i64 simm13:$b)), (ANDri $a, (as_i32imm $b))>;
@@ -237,6 +240,12 @@ def LDXri  : F3_2<3, 0b001011,
                   (outs I64Regs:$dst), (ins MEMri:$addr),
                   "ldx [$addr], $dst",
                   [(set i64:$dst, (load ADDRri:$addr))]>;
+let mayLoad = 1 in
+  def TLS_LDXrr : F3_1<3, 0b001011,
+                       (outs IntRegs:$dst), (ins MEMrr:$addr, TLSSym:$sym),
+                       "ldx [$addr], $dst, $sym",
+                       [(set i64:$dst,
+                           (tlsld ADDRrr:$addr, tglobaltlsaddr:$sym))]>;
 
 // Extending loads to i64.
 def : Pat<(i64 (zextloadi1 ADDRrr:$addr)), (LDUBrr ADDRrr:$addr)>;

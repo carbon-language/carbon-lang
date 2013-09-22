@@ -53,7 +53,27 @@ enum TOF {
 
   // Extract bits 41-32 of an address.
   // Assembler: %hm(addr)
-  MO_HM
+  MO_HM,
+
+  // TargetFlags for Thread Local Storage.
+  MO_TLS_GD_HI22,
+  MO_TLS_GD_LO10,
+  MO_TLS_GD_ADD,
+  MO_TLS_GD_CALL,
+  MO_TLS_LDM_HI22,
+  MO_TLS_LDM_LO10,
+  MO_TLS_LDM_ADD,
+  MO_TLS_LDM_CALL,
+  MO_TLS_LDO_HIX22,
+  MO_TLS_LDO_LOX10,
+  MO_TLS_LDO_ADD,
+  MO_TLS_IE_HI22,
+  MO_TLS_IE_LO10,
+  MO_TLS_IE_LD,
+  MO_TLS_IE_LDX,
+  MO_TLS_IE_ADD,
+  MO_TLS_LE_HIX22,
+  MO_TLS_LE_LOX10
 };
 
 } // end namespace SPII

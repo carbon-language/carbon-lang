@@ -85,6 +85,8 @@ def MEMri : Operand<iPTR> {
   let MIOperandInfo = (ops ptr_rc, i32imm);
 }
 
+def TLSSym : Operand<iPTR>;
+
 // Branch targets have OtherVT type.
 def brtarget : Operand<OtherVT>;
 def calltarget : Operand<i32>;
@@ -105,6 +107,11 @@ def SDTSPFTOI :
 SDTypeProfile<1, 1, [SDTCisVT<0, f32>, SDTCisFP<1>]>;
 def SDTSPITOF :
 SDTypeProfile<1, 1, [SDTCisFP<0>, SDTCisVT<1, f32>]>;
+
+def SDTSPtlsadd :
+SDTypeProfile<1, 3, [SDTCisInt<0>, SDTCisSameAs<0, 1>, SDTCisPtrTy<2>]>;
+def SDTSPtlsld :
+SDTypeProfile<1, 2, [SDTCisPtrTy<0>, SDTCisPtrTy<1>]>;
 
 def SPcmpicc : SDNode<"SPISD::CMPICC", SDTSPcmpicc, [SDNPOutGlue]>;
 def SPcmpfcc : SDNode<"SPISD::CMPFCC", SDTSPcmpfcc, [SDNPOutGlue]>;
@@ -143,6 +150,12 @@ def retflag       : SDNode<"SPISD::RET_FLAG", SDT_SPRet,
 
 def flushw        : SDNode<"SPISD::FLUSHW", SDTNone,
                            [SDNPHasChain, SDNPSideEffect, SDNPMayStore]>;
+
+def tlsadd        : SDNode<"SPISD::TLS_ADD", SDTSPtlsadd>;
+def tlsld         : SDNode<"SPISD::TLS_LD",  SDTSPtlsld>;
+def tlscall       : SDNode<"SPISD::TLS_CALL", SDT_SPCall,
+                            [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue,
+                             SDNPVariadic]>;
 
 def getPCX        : Operand<i32> {
   let PrintMethod = "printGetPCX";
@@ -807,6 +820,34 @@ let Defs = [FCC] in {
 }
 
 //===----------------------------------------------------------------------===//
+// Instructions for Thread Local Storage(TLS).
+//===----------------------------------------------------------------------===//
+
+def TLS_ADDrr : F3_1<2, 0b000000,
+                    (outs IntRegs:$rd),
+                    (ins IntRegs:$rs1, IntRegs:$rs2, TLSSym:$sym),
+                    "add $rs1, $rs2, $rd, $sym",
+                    [(set i32:$rd,
+                        (tlsadd i32:$rs1, i32:$rs2, tglobaltlsaddr:$sym))]>;
+
+let mayLoad = 1 in
+  def TLS_LDrr : F3_1<3, 0b000000,
+                      (outs IntRegs:$dst), (ins MEMrr:$addr, TLSSym:$sym),
+                      "ld [$addr], $dst, $sym",
+                      [(set i32:$dst,
+                          (tlsld ADDRrr:$addr, tglobaltlsaddr:$sym))]>;
+
+let Uses = [O6], isCall = 1 in
+  def TLS_CALL : InstSP<(outs),
+                        (ins calltarget:$disp, TLSSym:$sym, variable_ops),
+                        "call $disp, $sym\n\tnop",
+                        [(tlscall texternalsym:$disp, tglobaltlsaddr:$sym)]> {
+  bits<30> disp;
+  let op = 1;
+  let Inst{29-0} = disp;
+}
+
+//===----------------------------------------------------------------------===//
 // V9 Instructions
 //===----------------------------------------------------------------------===//
 
@@ -914,6 +955,14 @@ def : Pat<(SPhi tglobaladdr:$in), (SETHIi tglobaladdr:$in)>;
 def : Pat<(SPlo tglobaladdr:$in), (ORri (i32 G0), tglobaladdr:$in)>;
 def : Pat<(SPhi tconstpool:$in), (SETHIi tconstpool:$in)>;
 def : Pat<(SPlo tconstpool:$in), (ORri (i32 G0), tconstpool:$in)>;
+
+// GlobalTLS addresses
+def : Pat<(SPhi tglobaltlsaddr:$in), (SETHIi tglobaltlsaddr:$in)>;
+def : Pat<(SPlo tglobaltlsaddr:$in), (ORri (i32 G0), tglobaltlsaddr:$in)>;
+def : Pat<(add (SPhi tglobaltlsaddr:$in1), (SPlo tglobaltlsaddr:$in2)),
+          (ADDri (SETHIi tglobaltlsaddr:$in1), (tglobaltlsaddr:$in2))>;
+def : Pat<(xor (SPhi tglobaltlsaddr:$in1), (SPlo tglobaltlsaddr:$in2)),
+          (XORri (SETHIi tglobaltlsaddr:$in1), (tglobaltlsaddr:$in2))>;
 
 // Blockaddress
 def : Pat<(SPhi tblockaddress:$in), (SETHIi tblockaddress:$in)>;

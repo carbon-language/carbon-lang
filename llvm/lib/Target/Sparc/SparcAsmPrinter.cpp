@@ -105,11 +105,37 @@ void SparcAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
       assert(TF == SPII::MO_NO_FLAG &&
              "Cannot handle target flags on call address");
     else if (MI->getOpcode() == SP::SETHIi)
-      assert((TF == SPII::MO_HI || TF == SPII::MO_H44 || TF == SPII::MO_HH) &&
+      assert((TF == SPII::MO_HI || TF == SPII::MO_H44 || TF == SPII::MO_HH
+              || TF == SPII::MO_TLS_GD_HI22
+              || TF == SPII::MO_TLS_LDM_HI22
+              || TF == SPII::MO_TLS_LDO_HIX22
+              || TF == SPII::MO_TLS_IE_HI22
+              || TF == SPII::MO_TLS_LE_HIX22) &&
              "Invalid target flags for address operand on sethi");
+    else if (MI->getOpcode() == SP::TLS_CALL)
+      assert((TF == SPII::MO_NO_FLAG
+              || TF == SPII::MO_TLS_GD_CALL
+              || TF == SPII::MO_TLS_LDM_CALL) &&
+             "Cannot handle target flags on tls call address");
+    else if (MI->getOpcode() == SP::TLS_ADDrr)
+      assert((TF == SPII::MO_TLS_GD_ADD || TF == SPII::MO_TLS_LDM_ADD
+              || TF == SPII::MO_TLS_LDO_ADD || TF == SPII::MO_TLS_IE_ADD) &&
+             "Cannot handle target flags on add for TLS");
+    else if (MI->getOpcode() == SP::TLS_LDrr)
+      assert(TF == SPII::MO_TLS_IE_LD &&
+             "Cannot handle target flags on ld for TLS");
+    else if (MI->getOpcode() == SP::TLS_LDXrr)
+      assert(TF == SPII::MO_TLS_IE_LDX &&
+             "Cannot handle target flags on ldx for TLS");
+    else if (MI->getOpcode() == SP::XORri)
+      assert((TF == SPII::MO_TLS_LDO_LOX10 || TF == SPII::MO_TLS_LE_LOX10) &&
+             "Cannot handle target flags on xor for TLS");
     else
-      assert((TF == SPII::MO_LO || TF == SPII::MO_M44 || TF == SPII::MO_L44 ||
-              TF == SPII::MO_HM) &&
+      assert((TF == SPII::MO_LO || TF == SPII::MO_M44 || TF == SPII::MO_L44
+              || TF == SPII::MO_HM
+              || TF == SPII::MO_TLS_GD_LO10
+              || TF == SPII::MO_TLS_LDM_LO10
+              || TF == SPII::MO_TLS_IE_LO10 ) &&
              "Invalid target flags for small address operand");
   }
 #endif
@@ -128,6 +154,24 @@ void SparcAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
   case SPII::MO_L44: O << "%l44("; break;
   case SPII::MO_HH:  O << "%hh(";  break;
   case SPII::MO_HM:  O << "%hm(";  break;
+  case SPII::MO_TLS_GD_HI22:   O << "%tgd_hi22(";   break;
+  case SPII::MO_TLS_GD_LO10:   O << "%tgd_lo10(";   break;
+  case SPII::MO_TLS_GD_ADD:    O << "%tgd_add(";    break;
+  case SPII::MO_TLS_GD_CALL:   O << "%tgd_call(";   break;
+  case SPII::MO_TLS_LDM_HI22:  O << "%tldm_hi22(";  break;
+  case SPII::MO_TLS_LDM_LO10:  O << "%tldm_lo10(";  break;
+  case SPII::MO_TLS_LDM_ADD:   O << "%tldm_add(";   break;
+  case SPII::MO_TLS_LDM_CALL:  O << "%tldm_call(";  break;
+  case SPII::MO_TLS_LDO_HIX22: O << "%tldo_hix22("; break;
+  case SPII::MO_TLS_LDO_LOX10: O << "%tldo_lox10("; break;
+  case SPII::MO_TLS_LDO_ADD:   O << "%tldo_add(";   break;
+  case SPII::MO_TLS_IE_HI22:   O << "%tie_hi22(";   break;
+  case SPII::MO_TLS_IE_LO10:   O << "%tie_lo10(";   break;
+  case SPII::MO_TLS_IE_LD:     O << "%tie_ld(";     break;
+  case SPII::MO_TLS_IE_LDX:    O << "%tie_ldx(";    break;
+  case SPII::MO_TLS_IE_ADD:    O << "%tie_add(";    break;
+  case SPII::MO_TLS_LE_HIX22:  O << "%tle_hix22(";  break;
+  case SPII::MO_TLS_LE_LOX10:  O << "%tle_lox10(";   break;
   }
 
   switch (MO.getType()) {
