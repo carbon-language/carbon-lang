@@ -112,7 +112,11 @@ const Stmt *DeadCodeScan::findDeadCode(const clang::CFGBlock *Block) {
 
 static int SrcCmp(const std::pair<const CFGBlock *, const Stmt *> *p1,
                   const std::pair<const CFGBlock *, const Stmt *> *p2) {
-  return p2->second->getLocStart() < p1->second->getLocStart();
+  if (p1->second->getLocStart() < p2->second->getLocStart())
+    return -1;
+  if (p2->second->getLocStart() < p1->second->getLocStart())
+    return 1;
+  return 0;
 }
 
 unsigned DeadCodeScan::scanBackwards(const clang::CFGBlock *Start,
