@@ -110,10 +110,9 @@ const Stmt *DeadCodeScan::findDeadCode(const clang::CFGBlock *Block) {
   return 0;
 }
 
-static int SrcCmp(const void *p1, const void *p2) {
-  return
-    ((const std::pair<const CFGBlock *, const Stmt *>*) p2)->second->getLocStart() <
-    ((const std::pair<const CFGBlock *, const Stmt *>*) p1)->second->getLocStart();
+static int SrcCmp(const std::pair<const CFGBlock *, const Stmt *> *p1,
+                  const std::pair<const CFGBlock *, const Stmt *> *p2) {
+  return p2->second->getLocStart() < p1->second->getLocStart();
 }
 
 unsigned DeadCodeScan::scanBackwards(const clang::CFGBlock *Start,
