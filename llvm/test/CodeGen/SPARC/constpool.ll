@@ -39,8 +39,10 @@ entry:
 ; v8pic32: sethi %hi(.LCPI0_0), %[[R1:[gilo][0-7]]]
 ; v8pic32: add %[[R1]], %lo(.LCPI0_0), %[[Goffs:[gilo][0-7]]]
 ; v8pic32: ld [%[[GOT:[gilo][0-7]]]+%[[Goffs]]], %[[Gaddr:[gilo][0-7]]]
-; v8pic32: jmp %o7+8
 ; v8pic32: ld [%[[Gaddr]]], %f0
+; v8pic32: jmp %i7+8
+; v8pic32: restore
+
 
 
 ; v9pic32: floatCP
@@ -48,6 +50,8 @@ entry:
 ; v9pic32: sethi %hi(.LCPI0_0), %[[R1:[gilo][0-7]]]
 ; v9pic32: add %[[R1]], %lo(.LCPI0_0), %[[Goffs:[gilo][0-7]]]
 ; v9pic32: ldx [%[[GOT:[gilo][0-7]]]+%[[Goffs]]], %[[Gaddr:[gilo][0-7]]]
-; v9pic32: jmp %o7+8
 ; v9pic32: ld [%[[Gaddr]]], %f1
+; v9pic32: jmp %i7+8
+; v9pic32: restore
+
 

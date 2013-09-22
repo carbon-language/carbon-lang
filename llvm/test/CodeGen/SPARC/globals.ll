@@ -41,8 +41,9 @@ define zeroext i8 @loadG() {
 ; v8pic32: sethi %hi(G), %[[R1:[gilo][0-7]]]
 ; v8pic32: add %[[R1]], %lo(G), %[[Goffs:[gilo][0-7]]]
 ; v8pic32: ld [%[[GOT:[gilo][0-7]]]+%[[Goffs]]], %[[Gaddr:[gilo][0-7]]]
-; v8pic32: jmp %o7+8
-; v8pic32: ldub [%[[Gaddr]]], %o0
+; v8pic32: ldub [%[[Gaddr]]], %i0
+; v8pic32: jmp %i7+8
+; v8pic32: restore
 
 
 ; v9pic32: loadG
@@ -50,6 +51,7 @@ define zeroext i8 @loadG() {
 ; v9pic32: sethi %hi(G), %[[R1:[gilo][0-7]]]
 ; v9pic32: add %[[R1]], %lo(G), %[[Goffs:[gilo][0-7]]]
 ; v9pic32: ldx [%[[GOT:[gilo][0-7]]]+%[[Goffs]]], %[[Gaddr:[gilo][0-7]]]
-; v9pic32: jmp %o7+8
-; v9pic32: ldub [%[[Gaddr]]], %o0
+; v9pic32: ldub [%[[Gaddr]]], %i0
+; v9pic32: jmp %i7+8
+; v9pic32: restore
 
