@@ -149,3 +149,59 @@ multiclass F3_S<string OpcStr, bits<6> Op3Val, bit XVal, SDNode OpNode,
                  !strconcat(OpcStr, " $rs, $shcnt, $rd"),
                  [(set VT:$rd, (OpNode VT:$rs, (i32 imm:$shcnt)))]>;
 }
+
+class F4<bits<6> op3, dag outs, dag ins, string asmstr, list<dag> pattern>
+      : InstSP<outs, ins, asmstr, pattern> {
+  bits<5> rd;
+
+  let op          = 2;
+  let Inst{29-25} = rd;
+  let Inst{24-19} = op3;
+}
+
+
+class F4_1<bits<6> op3, dag outs, dag ins,
+            string asmstr, list<dag> pattern>
+      : F4<op3, outs, ins, asmstr, pattern> {
+
+  bits<3> cc;
+  bits<4> cond;
+  bits<5> rs2;
+
+  let Inst{4-0}   = rs2;
+  let Inst{11}    = cc{0};
+  let Inst{12}    = cc{1};
+  let Inst{13}    = 0;
+  let Inst{17-14} = cond;
+  let Inst{18}    = cc{2};
+
+}
+
+class F4_2<bits<6> op3, dag outs, dag ins,
+            string asmstr, list<dag> pattern>
+      : F4<op3, outs, ins, asmstr, pattern> {
+  bits<3>  cc;
+  bits<4>  cond;
+  bits<11> simm11;
+
+  let Inst{10-0}  = simm11;
+  let Inst{11}    = cc{0};
+  let Inst{12}    = cc{1};
+  let Inst{13}    = 1;
+  let Inst{17-14} = cond;
+  let Inst{18}    = cc{2};
+}
+
+class F4_3<bits<6> op3, bits<6> opf_low, dag outs, dag ins,
+           string asmstr, list<dag> pattern>
+      : F4<op3, outs, ins, asmstr, pattern> {
+  bits<4> cond;
+  bits<3> opf_cc;
+  bits<5> rs2;
+
+  let Inst{18}     = 0;
+  let Inst{17-14}  = cond;
+  let Inst{13-11}  = opf_cc;
+  let Inst{10-5}   = opf_low;
+  let Inst{4-0}    = rs2;
+}
