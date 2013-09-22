@@ -1452,7 +1452,7 @@ static bool canConvertValue(const DataLayout &DL, Type *OldTy, Type *NewTy) {
   if (!NewTy->isSingleValueType() || !OldTy->isSingleValueType())
     return false;
 
-  // We handle can convert pointers to integers and vice-versa. Same for vectors
+  // We can convert pointers to integers and vice-versa. Same for vectors
   // of pointers and integers.
   OldTy = OldTy->getScalarType();
   NewTy = NewTy->getScalarType();
