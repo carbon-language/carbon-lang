@@ -520,7 +520,7 @@ let Defs = [ICC], rd = 0 in {
                      (outs), (ins IntRegs:$b, IntRegs:$c),
                      "cmp $b, $c",
                      [(SPcmpicc i32:$b, i32:$c)]>;
-  def CMPri   : F3_1<2, 0b010100,
+  def CMPri   : F3_2<2, 0b010100,
                      (outs), (ins IntRegs:$b, i32imm:$c),
                      "cmp $b, $c",
                      [(SPcmpicc i32:$b, (i32 simm13:$c))]>;
