@@ -209,6 +209,14 @@ namespace PR5066 {
   using T = int (*T)(); // expected-error {{type-id cannot have a name}} expected-warning {{C++11}}
 }
 
+namespace PR17255 {
+void foo() {
+  typename A::template B<>; // expected-error {{use of undeclared identifier 'A'}} \
+                            // expected-error {{expected a qualified name after 'typename'}} \
+                            // expected-warning {{'template' keyword outside of a template}}
+}
+}
+
 // PR8380
 extern ""      // expected-error {{unknown linkage language}}
 test6a { ;// expected-error {{C++ requires a type specifier for all declarations}} \

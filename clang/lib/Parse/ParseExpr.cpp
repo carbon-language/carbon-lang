@@ -1049,6 +1049,11 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     //                     simple-type-specifier braced-init-list
     //
     DeclSpec DS(AttrFactory);
+
+    if (!Actions.isSimpleTypeSpecifier(Tok.getKind()))
+      // This can happen if we tried to recover from errors earlier.
+      return ExprError();
+
     ParseCXXSimpleTypeSpecifier(DS);
     if (Tok.isNot(tok::l_paren) &&
         (!getLangOpts().CPlusPlus11 || Tok.isNot(tok::l_brace)))
