@@ -315,10 +315,12 @@ EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
       assert(ChildSize != 0 && "Should not have a zero-sized child!");
 
       if (i != 0) {
+        if (!OmitComments)
+          OS << "/*" << CurrentIdx << "*/";
         OS.PadToColumn(Indent*2);
         if (!OmitComments)
-        OS << (isa<SwitchOpcodeMatcher>(N) ?
-                   "/*SwitchOpcode*/ " : "/*SwitchType*/ ");
+          OS << (isa<SwitchOpcodeMatcher>(N) ?
+                     "/*SwitchOpcode*/ " : "/*SwitchType*/ ");
       }
 
       // Emit the VBR.
@@ -340,6 +342,8 @@ EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
     }
 
     // Emit the final zero to terminate the switch.
+    if (!OmitComments)
+      OS << "/*" << CurrentIdx << "*/";
     OS.PadToColumn(Indent*2) << "0, ";
     if (!OmitComments)
       OS << (isa<SwitchOpcodeMatcher>(N) ?
