@@ -20,6 +20,7 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
@@ -43,6 +44,7 @@ namespace {
                          const char *Modifier = 0);
     void printCCOperand(const MachineInstr *MI, int opNum, raw_ostream &OS);
 
+    virtual void EmitFunctionBodyStart();
     virtual void EmitInstruction(const MachineInstr *MI) {
       SmallString<128> Str;
       raw_svector_ostream OS(Str);
@@ -63,10 +65,34 @@ namespace {
 
     virtual bool isBlockOnlyReachableByFallthrough(const MachineBasicBlock *MBB)
                        const;
+    void EmitGlobalRegisterDecl(unsigned reg) {
+      SmallString<128> Str;
+      raw_svector_ostream OS(Str);
+      OS << "\t.register "
+         << "%" << StringRef(getRegisterName(reg)).lower()
+         << ", "
+         << ((reg == SP::G6 || reg == SP::G7)? "#ignore" : "#scratch");
+      OutStreamer.EmitRawText(OS.str());
+    }
+
   };
 } // end of anonymous namespace
 
 #include "SparcGenAsmWriter.inc"
+
+void SparcAsmPrinter::EmitFunctionBodyStart() {
+  if (!TM.getSubtarget<SparcSubtarget>().is64Bit())
+    return;
+
+  const MachineRegisterInfo &MRI = MF->getRegInfo();
+  const unsigned globalRegs[] = { SP::G2, SP::G3, SP::G6, SP::G7, 0 };
+  for (unsigned i = 0; globalRegs[i] != 0; ++i) {
+    unsigned reg = globalRegs[i];
+    if (!MRI.isPhysRegUsed(reg))
+      continue;
+    EmitGlobalRegisterDecl(reg);
+  }
+}
 
 void SparcAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
                                    raw_ostream &O) {
