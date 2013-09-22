@@ -340,9 +340,7 @@ void Sema::ActOnParamUnparsedDefaultArgument(Decl *param,
     return;
 
   ParmVarDecl *Param = cast<ParmVarDecl>(param);
-  if (Param)
-    Param->setUnparsedDefaultArg();
-
+  Param->setUnparsedDefaultArg();
   UnparsedDefaultArgLocs[Param] = ArgLoc;
 }
 
@@ -353,9 +351,7 @@ void Sema::ActOnParamDefaultArgumentError(Decl *param) {
     return;
 
   ParmVarDecl *Param = cast<ParmVarDecl>(param);
-
   Param->setInvalidDecl();
-
   UnparsedDefaultArgLocs.erase(Param);
 }
 
@@ -11130,13 +11126,13 @@ VarDecl *Sema::BuildExceptionDeclaration(Scope *S,
       EnterExpressionEvaluationContext scope(*this, PotentiallyEvaluated);
 
       // C++ [except.handle]p16:
-      //   The object declared in an exception-declaration or, if the 
-      //   exception-declaration does not specify a name, a temporary (12.2) is 
+      //   The object declared in an exception-declaration or, if the
+      //   exception-declaration does not specify a name, a temporary (12.2) is
       //   copy-initialized (8.5) from the exception object. [...]
       //   The object is destroyed when the handler exits, after the destruction
       //   of any automatic objects initialized within the handler.
       //
-      // We just pretend to initialize the object with itself, then make sure 
+      // We just pretend to initialize the object with itself, then make sure
       // it can be destroyed later.
       QualType initType = ExDeclType;
 
@@ -11154,7 +11150,7 @@ VarDecl *Sema::BuildExceptionDeclaration(Scope *S,
       else {
         // If the constructor used was non-trivial, set this as the
         // "initializer".
-        CXXConstructExpr *construct = cast<CXXConstructExpr>(result.take());
+        CXXConstructExpr *construct = result.takeAs<CXXConstructExpr>();
         if (!construct->getConstructor()->isTrivial()) {
           Expr *init = MaybeCreateExprWithCleanups(construct);
           ExDecl->setInit(init);
