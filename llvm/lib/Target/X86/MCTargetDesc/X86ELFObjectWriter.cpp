@@ -108,6 +108,9 @@ unsigned X86ELFObjectWriter::GetRelocType(const MCValue &Target,
         case MCSymbolRefExpr::VK_None:
           Type = ELF::R_X86_64_64;
           break;
+        case MCSymbolRefExpr::VK_TPOFF:
+          Type = ELF::R_X86_64_TPOFF64;
+          break;
         case MCSymbolRefExpr::VK_DTPOFF:
           Type = ELF::R_X86_64_DTPOFF64;
           break;
