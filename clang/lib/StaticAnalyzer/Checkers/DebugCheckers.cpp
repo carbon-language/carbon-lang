@@ -154,25 +154,29 @@ void ento::registerCallGraphDumper(CheckerManager &mgr) {
 
 namespace {
 class ConfigDumper : public Checker< check::EndOfTranslationUnit > {
+  typedef AnalyzerOptions::ConfigTable Table;
+
+  static int compareEntry(const void *LHS, const void *RHS) {
+    return ((const Table::MapEntryTy *)LHS)->getKey().compare(
+           ((const Table::MapEntryTy *)RHS)->getKey());
+  }
+
 public:
   void checkEndOfTranslationUnit(const TranslationUnitDecl *TU,
                                  AnalysisManager& mgr,
                                  BugReporter &BR) const {
+    const Table &Config = mgr.options.Config;
 
-    const AnalyzerOptions::ConfigTable &Config = mgr.options.Config;
-    AnalyzerOptions::ConfigTable::const_iterator I =
-      Config.begin(), E = Config.end();
+    SmallVector<const Table::MapEntryTy *, 32> Keys;
+    for (Table::const_iterator I = Config.begin(), E = Config.end(); I != E;
+         ++I)
+      Keys.push_back(&*I);
+    llvm::array_pod_sort(Keys.begin(), Keys.end(), compareEntry);
 
-    std::vector<StringRef> Keys;
-    for (; I != E ; ++I) { Keys.push_back(I->getKey()); }
-    sort(Keys.begin(), Keys.end());
-    
     llvm::errs() << "[config]\n";
-    for (unsigned i = 0, n = Keys.size(); i < n ; ++i) {
-      StringRef Key = Keys[i];
-      I = Config.find(Key);
-      llvm::errs() << Key << " = " << I->second << '\n';
-    }
+    for (unsigned I = 0, E = Keys.size(); I != E; ++I)
+      llvm::errs() << Keys[I]->getKey() << " = " << Keys[I]->second << '\n';
+
     llvm::errs() << "[stats]\n" << "num-entries = " << Keys.size() << '\n';
   }
 };
