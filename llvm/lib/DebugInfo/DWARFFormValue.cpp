@@ -483,23 +483,6 @@ uint64_t DWARFFormValue::getReference(const DWARFCompileUnit *cu) const {
   return die_offset;
 }
 
-bool
-DWARFFormValue::resolveCompileUnitReferences(const DWARFCompileUnit *cu) {
-  switch (Form) {
-  case DW_FORM_ref1:
-  case DW_FORM_ref2:
-  case DW_FORM_ref4:
-  case DW_FORM_ref8:
-  case DW_FORM_ref_udata:
-    Value.uval += cu->getOffset();
-    Form = DW_FORM_ref_addr;
-    return true;
-  default:
-    break;
-  }
-  return false;
-}
-
 const uint8_t *DWARFFormValue::BlockData() const {
   if (!isInlinedCStr())
     return Value.data;

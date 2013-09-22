@@ -58,10 +58,6 @@ public:
   const uint8_t *BlockData() const;
   uint64_t getReference(const DWARFCompileUnit* cu) const;
 
-  /// Resolve any compile unit specific references so that we don't need
-  /// the compile unit at a later time in order to work with the form
-  /// value.
-  bool resolveCompileUnitReferences(const DWARFCompileUnit* cu);
   uint64_t getUnsigned() const { return Value.uval; }
   int64_t getSigned() const { return Value.sval; }
   const char *getAsCString(const DWARFCompileUnit *CU) const;
