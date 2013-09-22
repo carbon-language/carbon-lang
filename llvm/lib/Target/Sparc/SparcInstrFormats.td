@@ -111,6 +111,32 @@ class F3_3<bits<2> opVal, bits<6> op3val, bits<9> opfval, dag outs, dag ins,
   let Inst{4-0}  = rs2;
 }
 
+// floating-point unary operations.
+class F3_3u<bits<2> opVal, bits<6> op3val, bits<9> opfval, dag outs, dag ins,
+           string asmstr, list<dag> pattern> : F3<outs, ins, asmstr, pattern> {
+  bits<5> rs2;
+
+  let op         = opVal;
+  let op3        = op3val;
+  let rs1        = 0;
+
+  let Inst{13-5} = opfval;   // fp opcode
+  let Inst{4-0}  = rs2;
+}
+
+// floating-point compares.
+class F3_3c<bits<2> opVal, bits<6> op3val, bits<9> opfval, dag outs, dag ins,
+           string asmstr, list<dag> pattern> : F3<outs, ins, asmstr, pattern> {
+  bits<5> rs2;
+
+  let op         = opVal;
+  let op3        = op3val;
+  let rd         = 0;
+
+  let Inst{13-5} = opfval;   // fp opcode
+  let Inst{4-0}  = rs2;
+}
+
 // Shift by register rs2.
 class F3_Sr<bits<2> opVal, bits<6> op3val, bit xVal, dag outs, dag ins,
             string asmstr, list<dag> pattern> : F3<outs, ins, asmstr, pattern> {

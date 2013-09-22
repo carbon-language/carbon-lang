@@ -14,7 +14,8 @@ TARGET = Sparc
 # Make sure that tblgen is run, first thing.
 BUILT_SOURCES = SparcGenRegisterInfo.inc SparcGenInstrInfo.inc \
 		SparcGenAsmWriter.inc SparcGenDAGISel.inc \
-		SparcGenSubtargetInfo.inc SparcGenCallingConv.inc
+		SparcGenSubtargetInfo.inc SparcGenCallingConv.inc \
+		SparcGenCodeEmitter.inc
 
 DIRS = TargetInfo MCTargetDesc
 
