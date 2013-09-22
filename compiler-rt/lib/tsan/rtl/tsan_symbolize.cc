@@ -69,7 +69,56 @@ static ReportStack *NewReportStackEntry(const AddressInfo &info) {
   return ent;
 }
 
+
+  ReportStack *next;
+  char *module;
+  uptr offset;
+  uptr pc;
+  char *func;
+  char *file;
+  int line;
+  int col;
+
+
+// Denotes fake PC values that come from JIT/JAVA/etc.
+// For such PC values __tsan_symbolize_external() will be called.
+const uptr kExternalPCBit = 1ULL << 60;
+
+// May be overriden by JIT/JAVA/etc,
+// whatever produces PCs marked with kExternalPCBit.
+extern "C" bool __tsan_symbolize_external(uptr pc,
+                               char *func_buf, uptr func_siz,
+                               char *file_buf, uptr file_siz,
+                               int *line, int *col)
+                               SANITIZER_WEAK_ATTRIBUTE;
+
+bool __tsan_symbolize_external(uptr pc,
+                               char *func_buf, uptr func_siz,
+                               char *file_buf, uptr file_siz,
+                               int *line, int *col) {
+  return false;
+}
+
 ReportStack *SymbolizeCode(uptr addr) {
+  // Check if PC comes from non-native land.
+  if (addr & kExternalPCBit) {
+    // Declare static to not consume too much stack space.
+    // We symbolize reports in a single thread, so this is fine.
+    static char func_buf[1024];
+    static char file_buf[1024];
+    int line, col;
+    if (!__tsan_symbolize_external(addr, func_buf, sizeof(func_buf),
+                                  file_buf, sizeof(file_buf), &line, &col))
+      return NewReportStackEntry(addr);
+    ReportStack *ent = NewReportStackEntry(addr);
+    ent->module = 0;
+    ent->offset = 0;
+    ent->func = internal_strdup(func_buf);
+    ent->file = internal_strdup(file_buf);
+    ent->line = line;
+    ent->col = col;
+    return ent;
+  }
   if (!getSymbolizer()->IsAvailable())
     return SymbolizeCodeAddr2Line(addr);
   ScopedInSymbolizer in_symbolizer;
