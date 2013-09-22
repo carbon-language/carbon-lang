@@ -438,14 +438,11 @@ DILineInfoTable DWARFContext::getLineInfoForAddressRange(uint64_t Address,
     }
   }
 
-  StringRef  FuncNameRef = StringRef(FunctionName);
-
   // If the Specifier says we don't need FileLineInfo, just
   // return the top-most function at the starting address.
   if (!Specifier.needs(DILineInfoSpecifier::FileLineInfo)) {
-    Lines.push_back(std::make_pair(Address,
-                                   DILineInfo(StringRef("<invalid>"),
-                                              FuncNameRef, 0, 0)));
+    Lines.push_back(
+        std::make_pair(Address, DILineInfo("<invalid>", FunctionName, 0, 0)));
     return Lines;
   }
 
@@ -466,9 +463,8 @@ DILineInfoTable DWARFContext::getLineInfoForAddressRange(uint64_t Address,
     std::string FileName = "<invalid>";
     getFileNameForCompileUnit(CU, LineTable, Row.File,
                               NeedsAbsoluteFilePath, FileName);
-    Lines.push_back(std::make_pair(Row.Address,
-                                   DILineInfo(StringRef(FileName),
-                                         FuncNameRef, Row.Line, Row.Column)));
+    Lines.push_back(std::make_pair(
+        Row.Address, DILineInfo(FileName, FunctionName, Row.Line, Row.Column)));
   }
 
   return Lines;
