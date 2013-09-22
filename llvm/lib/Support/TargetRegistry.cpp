@@ -135,9 +135,9 @@ const Target *TargetRegistry::getClosestTargetForJIT(std::string &Error) {
   return TheTarget;
 }
 
-static int TargetArraySortFn(const void *LHS, const void *RHS) {
-  typedef std::pair<StringRef, const Target*> pair_ty;
-  return ((const pair_ty*)LHS)->first.compare(((const pair_ty*)RHS)->first);
+static int TargetArraySortFn(const std::pair<StringRef, const Target *> *LHS,
+                             const std::pair<StringRef, const Target *> *RHS) {
+  return LHS->first.compare(RHS->first);
 }
 
 void TargetRegistry::printRegisteredTargetsForVersion() {

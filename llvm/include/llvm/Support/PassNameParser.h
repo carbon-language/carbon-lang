@@ -86,10 +86,9 @@ public:
 
 private:
   // ValLessThan - Provide a sorting comparator for Values elements...
-  static int ValLessThan(const void *VT1, const void *VT2) {
-    typedef PassNameParser::OptionInfo ValType;
-    return std::strcmp(static_cast<const ValType *>(VT1)->Name,
-                       static_cast<const ValType *>(VT2)->Name);
+  static int ValLessThan(const PassNameParser::OptionInfo *VT1,
+                         const PassNameParser::OptionInfo *VT2) {
+    return std::strcmp(VT1->Name, VT2->Name);
   }
 };
 

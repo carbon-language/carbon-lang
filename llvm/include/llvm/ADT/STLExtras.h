@@ -293,12 +293,16 @@ inline void array_pod_sort(IteratorTy Start, IteratorTy End) {
         get_array_pod_sort_comparator(*Start));
 }
 
-template<class IteratorTy>
-inline void array_pod_sort(IteratorTy Start, IteratorTy End,
-                                  int (*Compare)(const void*, const void*)) {
+template <class IteratorTy>
+inline void array_pod_sort(
+    IteratorTy Start, IteratorTy End,
+    int (*Compare)(
+        const typename std::iterator_traits<IteratorTy>::value_type *,
+        const typename std::iterator_traits<IteratorTy>::value_type *)) {
   // Don't dereference start iterator of empty sequence.
   if (Start == End) return;
-  qsort(&*Start, End-Start, sizeof(*Start), Compare);
+  qsort(&*Start, End - Start, sizeof(*Start),
+        reinterpret_cast<int (*)(const void *, const void *)>(Compare));
 }
 
 //===----------------------------------------------------------------------===//

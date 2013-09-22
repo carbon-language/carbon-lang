@@ -42,9 +42,9 @@ const MCSymbol *MCELFObjectTargetWriter::undefinedExplicitRelSym(const MCValue &
 // ELF doesn't require relocations to be in any order. We sort by the r_offset,
 // just to match gnu as for easier comparison. The use type and index is an
 // arbitrary way of making the sort deterministic.
-static int cmpRel(const void *AP, const void *BP) {
-  const ELFRelocationEntry &A = *(const ELFRelocationEntry *)AP;
-  const ELFRelocationEntry &B = *(const ELFRelocationEntry *)BP;
+static int cmpRel(const ELFRelocationEntry *AP, const ELFRelocationEntry *BP) {
+  const ELFRelocationEntry &A = *AP;
+  const ELFRelocationEntry &B = *BP;
   if (A.r_offset != B.r_offset)
     return B.r_offset - A.r_offset;
   if (B.Type != A.Type)

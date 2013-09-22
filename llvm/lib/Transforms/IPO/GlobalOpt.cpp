@@ -3042,14 +3042,8 @@ bool GlobalOpt::OptimizeGlobalCtorsList(GlobalVariable *&GCL) {
   return true;
 }
 
-static int compareNames(const void *A, const void *B) {
-  const GlobalValue *VA = *reinterpret_cast<GlobalValue* const*>(A);
-  const GlobalValue *VB = *reinterpret_cast<GlobalValue* const*>(B);
-  if (VA->getName() < VB->getName())
-    return -1;
-  if (VB->getName() < VA->getName())
-    return 1;
-  return 0;
+static int compareNames(Constant *const *A, Constant *const *B) {
+  return (*A)->getName().compare((*B)->getName());
 }
 
 static void setUsedInitializer(GlobalVariable &V,

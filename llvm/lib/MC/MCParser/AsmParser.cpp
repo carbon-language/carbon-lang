@@ -4059,9 +4059,8 @@ bool AsmParser::parseDirectiveMSAlign(SMLoc IDLoc, ParseStatementInfo &Info) {
 
 // We are comparing pointers, but the pointers are relative to a single string.
 // Thus, this should always be deterministic.
-static int rewritesSort(const void *A, const void *B) {
-  const AsmRewrite *AsmRewriteA = static_cast<const AsmRewrite *>(A);
-  const AsmRewrite *AsmRewriteB = static_cast<const AsmRewrite *>(B);
+static int rewritesSort(const AsmRewrite *AsmRewriteA,
+                        const AsmRewrite *AsmRewriteB) {
   if (AsmRewriteA->Loc.getPointer() < AsmRewriteB->Loc.getPointer())
     return -1;
   if (AsmRewriteB->Loc.getPointer() < AsmRewriteA->Loc.getPointer())

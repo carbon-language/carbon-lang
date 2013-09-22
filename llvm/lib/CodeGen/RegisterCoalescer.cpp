@@ -2040,9 +2040,8 @@ struct MBBPriorityInfo {
 // block (the unsigned), and then on the MBB number.
 //
 // EnableGlobalCopies assumes that the primary sort key is loop depth.
-static int compareMBBPriority(const void *L, const void *R) {
-  const MBBPriorityInfo *LHS = static_cast<const MBBPriorityInfo*>(L);
-  const MBBPriorityInfo *RHS = static_cast<const MBBPriorityInfo*>(R);
+static int compareMBBPriority(const MBBPriorityInfo *LHS,
+                              const MBBPriorityInfo *RHS) {
   // Deeper loops first
   if (LHS->Depth != RHS->Depth)
     return LHS->Depth > RHS->Depth ? -1 : 1;

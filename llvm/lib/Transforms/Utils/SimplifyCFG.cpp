@@ -699,9 +699,10 @@ namespace {
   };
 }
 
-static int ConstantIntSortPredicate(const void *P1, const void *P2) {
-  const ConstantInt *LHS = *(const ConstantInt*const*)P1;
-  const ConstantInt *RHS = *(const ConstantInt*const*)P2;
+static int ConstantIntSortPredicate(ConstantInt *const *P1,
+                                    ConstantInt *const *P2) {
+  const ConstantInt *LHS = *P1;
+  const ConstantInt *RHS = *P2;
   if (LHS->getValue().ult(RHS->getValue()))
     return 1;
   if (LHS->getValue() == RHS->getValue())

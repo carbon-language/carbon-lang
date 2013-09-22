@@ -1104,11 +1104,10 @@ void ELFObjectWriter::WriteRelocationsFragment(const MCAssembler &Asm,
   }
 }
 
-static int compareBySuffix(const void *a, const void *b) {
-  const MCSectionELF *secA = *static_cast<const MCSectionELF* const *>(a);
-  const MCSectionELF *secB = *static_cast<const MCSectionELF* const *>(b);
-  const StringRef &NameA = secA->getSectionName();
-  const StringRef &NameB = secB->getSectionName();
+static int compareBySuffix(const MCSectionELF *const *a,
+                           const MCSectionELF *const *b) {
+  const StringRef &NameA = (*a)->getSectionName();
+  const StringRef &NameB = (*b)->getSectionName();
   const unsigned sizeA = NameA.size();
   const unsigned sizeB = NameB.size();
   const unsigned len = std::min(sizeA, sizeB);

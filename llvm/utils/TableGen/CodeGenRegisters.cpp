@@ -813,9 +813,10 @@ static bool testSubClass(const CodeGenRegisterClass *A,
 /// Register classes with the same registers, spill size, and alignment form a
 /// clique.  They will be ordered alphabetically.
 ///
-static int TopoOrderRC(const void *PA, const void *PB) {
-  const CodeGenRegisterClass *A = *(const CodeGenRegisterClass* const*)PA;
-  const CodeGenRegisterClass *B = *(const CodeGenRegisterClass* const*)PB;
+static int TopoOrderRC(CodeGenRegisterClass *const *PA,
+                       CodeGenRegisterClass *const *PB) {
+  const CodeGenRegisterClass *A = *PA;
+  const CodeGenRegisterClass *B = *PB;
   if (A == B)
     return 0;
 
