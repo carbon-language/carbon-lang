@@ -302,7 +302,7 @@ namespace {
     /// This - The binding for the this pointer in this call, if any.
     const LValue *This;
 
-    /// ParmBindings - Parameter bindings for this function call, indexed by
+    /// Arguments - Parameter bindings for this function call, indexed by
     /// parameters' function scope indices.
     APValue *Arguments;
 
