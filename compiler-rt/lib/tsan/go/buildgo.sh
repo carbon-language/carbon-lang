@@ -26,7 +26,7 @@ SRCS="
 
 if [ "`uname -a | grep Linux`" != "" ]; then
 	SUFFIX="linux_amd64"
-	OSCFLAGS="-fPIC -ffreestanding -Wno-maybe-uninitialized"
+	OSCFLAGS="-fPIC -ffreestanding -Wno-maybe-uninitialized -Werror"
 	OSLDFLAGS="-lpthread -fPIC -fpie"
 	SRCS+="
 		../rtl/tsan_platform_linux.cc
@@ -65,7 +65,7 @@ for F in $SRCS; do
 	cat $F >> gotsan.cc
 done
 
-FLAGS=" -I../rtl -I../.. -I../../sanitizer_common -I../../../include -m64 -Wall -Werror -fno-exceptions -fno-rtti -DTSAN_GO -DSANITIZER_GO -DTSAN_SHADOW_COUNT=4 $OSCFLAGS"
+FLAGS=" -I../rtl -I../.. -I../../sanitizer_common -I../../../include -m64 -Wall -fno-exceptions -fno-rtti -DTSAN_GO -DSANITIZER_GO -DTSAN_SHADOW_COUNT=4 $OSCFLAGS"
 if [ "$DEBUG" == "" ]; then
 	FLAGS+=" -DTSAN_DEBUG=0 -O3 -fomit-frame-pointer"
 else
