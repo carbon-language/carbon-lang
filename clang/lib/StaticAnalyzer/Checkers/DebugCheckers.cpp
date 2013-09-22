@@ -157,8 +157,8 @@ class ConfigDumper : public Checker< check::EndOfTranslationUnit > {
   typedef AnalyzerOptions::ConfigTable Table;
 
   static int compareEntry(const void *LHS, const void *RHS) {
-    return ((const Table::MapEntryTy *)LHS)->getKey().compare(
-           ((const Table::MapEntryTy *)RHS)->getKey());
+    return (*(const Table::MapEntryTy **)LHS)->getKey().compare(
+           (*(const Table::MapEntryTy **)RHS)->getKey());
   }
 
 public:
