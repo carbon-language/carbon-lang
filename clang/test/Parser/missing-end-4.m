@@ -32,9 +32,9 @@
 @interface I
 @end
 @implementation I
-@protocol P; // forward declarations of protocols in @implementations is allowed
-@class C; // forward declarations of classes in @implementations is allowed
-- (C<P>*) MyMeth {}
+@protocol P; // expected-error {{Objective-C declarations may only appear in global scope}}
+@class C; // expected-error {{Objective-C declarations may only appear in global scope}}
+- (C<P>*) MyMeth {} // expected-error {{expected a type}}
 @end
 
 @interface I2 {}
@@ -47,5 +47,5 @@
 @implementation I3
 - Meth {}
 + Cls {}
-@protocol P3;
+@protocol P3; // expected-error {{Objective-C declarations may only appear in global scope}}
 @end
