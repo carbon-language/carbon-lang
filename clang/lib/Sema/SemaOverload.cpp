@@ -5532,7 +5532,7 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
 }
 
 /// \brief Add all of the function declarations in the given function set to
-/// the overload canddiate set.
+/// the overload candidate set.
 void Sema::AddFunctionCandidates(const UnresolvedSetImpl &Fns,
                                  ArrayRef<Expr *> Args,
                                  OverloadCandidateSet& CandidateSet,
@@ -8157,7 +8157,7 @@ void Sema::NoteOverloadCandidate(FunctionDecl *Fn, QualType DestType) {
   MaybeEmitInheritedConstructorNote(*this, Fn);
 }
 
-//Notes the location of all overload candidates designated through 
+// Notes the location of all overload candidates designated through
 // OverloadedExpr
 void Sema::NoteAllOverloadCandidates(Expr* OverloadedExpr, QualType DestType) {
   assert(OverloadedExpr->getType() == Context.OverloadTy);
