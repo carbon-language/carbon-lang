@@ -321,9 +321,9 @@ def : Pat<(store (i64 0), ADDRri:$dst), (STXri ADDRri:$dst, (i64 G0))>;
 let Predicates = [Is64Bit] in {
 
 let Uses = [ICC] in
-def BPXCC : BranchSP<0, (ins brtarget:$dst, CCOp:$cc),
-                     "b$cc %xcc, $dst",
-                     [(SPbrxcc bb:$dst, imm:$cc)]>;
+def BPXCC : BranchSP<(ins brtarget:$imm22, CCOp:$cond),
+                     "b$cond %xcc, $imm22",
+                     [(SPbrxcc bb:$imm22, imm:$cond)]>;
 
 // Conditional moves on %xcc.
 let Uses = [ICC], Constraints = "$f = $rd" in {

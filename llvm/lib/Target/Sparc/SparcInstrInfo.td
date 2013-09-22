@@ -548,18 +548,25 @@ defm RESTORE : F3_12np<"restore", 0b111101>;
 
 // Section B.21 - Branch on Integer Condition Codes Instructions, p. 119
 
+// unconditional branch class.
+class BranchAlways<dag ins, string asmstr, list<dag> pattern>
+  : F2_2<0b010, (outs), ins, asmstr, pattern> {
+  let isBranch     = 1;
+  let isTerminator = 1;
+  let hasDelaySlot = 1;
+  let isBarrier    = 1;
+}
+
+let cond = 8 in
+  def BA : BranchAlways<(ins brtarget:$imm22), "ba $imm22", [(br bb:$imm22)]>;
+
 // conditional branch class:
-class BranchSP<bits<4> cc, dag ins, string asmstr, list<dag> pattern>
- : F2_2<cc, 0b010, (outs), ins, asmstr, pattern> {
+class BranchSP<dag ins, string asmstr, list<dag> pattern>
+ : F2_2<0b010, (outs), ins, asmstr, pattern> {
   let isBranch = 1;
   let isTerminator = 1;
   let hasDelaySlot = 1;
 }
-
-let isBarrier = 1 in
-  def BA   : BranchSP<0b1000, (ins brtarget:$dst),
-                      "ba $dst",
-                      [(br bb:$dst)]>;
 
 // Indirect branch instructions.
 let isTerminator = 1, isBarrier = 1,
@@ -575,28 +582,25 @@ let isTerminator = 1, isBarrier = 1,
                    [(brind ADDRri:$ptr)]>;
 }
 
-// FIXME: the encoding for the JIT should look at the condition field.
 let Uses = [ICC] in
-  def BCOND : BranchSP<0, (ins brtarget:$dst, CCOp:$cc),
-                         "b$cc $dst",
-                        [(SPbricc bb:$dst, imm:$cc)]>;
-
+  def BCOND : BranchSP<(ins brtarget:$imm22, CCOp:$cond),
+                         "b$cond $imm22",
+                        [(SPbricc bb:$imm22, imm:$cond)]>;
 
 // Section B.22 - Branch on Floating-point Condition Codes Instructions, p. 121
 
 // floating-point conditional branch class:
-class FPBranchSP<bits<4> cc, dag ins, string asmstr, list<dag> pattern>
- : F2_2<cc, 0b110, (outs), ins, asmstr, pattern> {
+class FPBranchSP<dag ins, string asmstr, list<dag> pattern>
+ : F2_2<0b110, (outs), ins, asmstr, pattern> {
   let isBranch = 1;
   let isTerminator = 1;
   let hasDelaySlot = 1;
 }
 
-// FIXME: the encoding for the JIT should look at the condition field.
 let Uses = [FCC] in
-  def FBCOND  : FPBranchSP<0, (ins brtarget:$dst, CCOp:$cc),
-                              "fb$cc $dst",
-                              [(SPbrfcc bb:$dst, imm:$cc)]>;
+  def FBCOND  : FPBranchSP<(ins brtarget:$imm22, CCOp:$cond),
+                              "fb$cond $imm22",
+                              [(SPbrfcc bb:$imm22, imm:$cond)]>;
 
 
 // Section B.24 - Call and Link Instruction, p. 125
