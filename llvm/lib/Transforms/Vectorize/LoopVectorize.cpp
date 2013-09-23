@@ -1809,6 +1809,31 @@ LoopVectorizationLegality::getReductionIdentity(ReductionKind K, Type *Tp) {
   }
 }
 
+static Intrinsic::ID checkUnaryFloatSignature(const CallInst &I,
+                                              Intrinsic::ID ValidIntrinsicID) {
+  if (I.getNumArgOperands() != 1 ||
+      !I.getArgOperand(0)->getType()->isFloatingPointTy() ||
+      I.getType() != I.getArgOperand(0)->getType() ||
+      !I.onlyReadsMemory())
+    return Intrinsic::not_intrinsic;
+
+  return ValidIntrinsicID;
+}
+
+static Intrinsic::ID checkBinaryFloatSignature(const CallInst &I,
+                                               Intrinsic::ID ValidIntrinsicID) {
+  if (I.getNumArgOperands() != 2 ||
+      !I.getArgOperand(0)->getType()->isFloatingPointTy() ||
+      !I.getArgOperand(1)->getType()->isFloatingPointTy() ||
+      I.getType() != I.getArgOperand(0)->getType() ||
+      I.getType() != I.getArgOperand(1)->getType() ||
+      !I.onlyReadsMemory())
+    return Intrinsic::not_intrinsic;
+
+  return ValidIntrinsicID;
+}
+
+
 static Intrinsic::ID
 getIntrinsicIDForCall(CallInst *CI, const TargetLibraryInfo *TLI) {
   // If we have an intrinsic call, check if it is trivially vectorizable.
@@ -1847,8 +1872,9 @@ getIntrinsicIDForCall(CallInst *CI, const TargetLibraryInfo *TLI) {
   LibFunc::Func Func;
   Function *F = CI->getCalledFunction();
   // We're going to make assumptions on the semantics of the functions, check
-  // that the target knows that it's available in this environment.
-  if (!F || !TLI->getLibFunc(F->getName(), Func))
+  // that the target knows that it's available in this environment and it does
+  // not have local linkage.
+  if (!F || F->hasLocalLinkage() || !TLI->getLibFunc(F->getName(), Func))
     return Intrinsic::not_intrinsic;
 
   // Otherwise check if we have a call to a function that can be turned into a
@@ -1859,67 +1885,67 @@ getIntrinsicIDForCall(CallInst *CI, const TargetLibraryInfo *TLI) {
   case LibFunc::sin:
   case LibFunc::sinf:
   case LibFunc::sinl:
-    return Intrinsic::sin;
+    return checkUnaryFloatSignature(*CI, Intrinsic::sin);
   case LibFunc::cos:
   case LibFunc::cosf:
   case LibFunc::cosl:
-    return Intrinsic::cos;
+    return checkUnaryFloatSignature(*CI, Intrinsic::cos);
   case LibFunc::exp:
   case LibFunc::expf:
   case LibFunc::expl:
-    return Intrinsic::exp;
+    return checkUnaryFloatSignature(*CI, Intrinsic::exp);
   case LibFunc::exp2:
   case LibFunc::exp2f:
   case LibFunc::exp2l:
-    return Intrinsic::exp2;
+    return checkUnaryFloatSignature(*CI, Intrinsic::exp2);
   case LibFunc::log:
   case LibFunc::logf:
   case LibFunc::logl:
-    return Intrinsic::log;
+    return checkUnaryFloatSignature(*CI, Intrinsic::log);
   case LibFunc::log10:
   case LibFunc::log10f:
   case LibFunc::log10l:
-    return Intrinsic::log10;
+    return checkUnaryFloatSignature(*CI, Intrinsic::log10);
   case LibFunc::log2:
   case LibFunc::log2f:
   case LibFunc::log2l:
-    return Intrinsic::log2;
+    return checkUnaryFloatSignature(*CI, Intrinsic::log2);
   case LibFunc::fabs:
   case LibFunc::fabsf:
   case LibFunc::fabsl:
-    return Intrinsic::fabs;
+    return checkUnaryFloatSignature(*CI, Intrinsic::fabs);
   case LibFunc::copysign:
   case LibFunc::copysignf:
   case LibFunc::copysignl:
-    return Intrinsic::copysign;
+    return checkBinaryFloatSignature(*CI, Intrinsic::copysign);
   case LibFunc::floor:
   case LibFunc::floorf:
   case LibFunc::floorl:
-    return Intrinsic::floor;
+    return checkUnaryFloatSignature(*CI, Intrinsic::floor);
   case LibFunc::ceil:
   case LibFunc::ceilf:
   case LibFunc::ceill:
-    return Intrinsic::ceil;
+    return checkUnaryFloatSignature(*CI, Intrinsic::ceil);
   case LibFunc::trunc:
   case LibFunc::truncf:
   case LibFunc::truncl:
-    return Intrinsic::trunc;
+    return checkUnaryFloatSignature(*CI, Intrinsic::trunc);
   case LibFunc::rint:
   case LibFunc::rintf:
   case LibFunc::rintl:
-    return Intrinsic::rint;
+    return checkUnaryFloatSignature(*CI, Intrinsic::rint);
   case LibFunc::nearbyint:
   case LibFunc::nearbyintf:
   case LibFunc::nearbyintl:
-    return Intrinsic::nearbyint;
+    return checkUnaryFloatSignature(*CI, Intrinsic::nearbyint);
   case LibFunc::round:
   case LibFunc::roundf:
   case LibFunc::roundl:
-    return Intrinsic::round;
+    return checkUnaryFloatSignature(*CI, Intrinsic::round);
   case LibFunc::pow:
   case LibFunc::powf:
   case LibFunc::powl:
-    return Intrinsic::pow;
+    return checkBinaryFloatSignature(*CI, Intrinsic::pow);
   }
 
   return Intrinsic::not_intrinsic;
@@ -2925,18 +2951,9 @@ bool LoopVectorizationLegality::canVectorizeInstrs() {
       // We still don't handle functions. However, we can ignore dbg intrinsic
       // calls and we do handle certain intrinsic and libm functions.
       CallInst *CI = dyn_cast<CallInst>(it);
-      if (CI) {
+      if (CI && !getIntrinsicIDForCall(CI, TLI) && !isa<DbgInfoIntrinsic>(CI)) {
         DEBUG(dbgs() << "LV: Found a call site.\n");
-
-        if (!isa<IntrinsicInst>(it)) {
-          DEBUG(dbgs() << "LV: We only vectorize intrinsics.\n");
-          return false;
-        }
-
-        if (!getIntrinsicIDForCall(CI, TLI) && !isa<DbgInfoIntrinsic>(CI)) {
-          DEBUG(dbgs() << "LV: Found an unknown intrinsic.\n");
-          return false;
-        }
+        return false;
       }
 
       // Check that the instruction return type is vectorizable.
