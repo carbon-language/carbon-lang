@@ -91,7 +91,7 @@ void EnterSymbolizer() { ++is_in_symbolizer; }
 void ExitSymbolizer()  { --is_in_symbolizer; }
 bool IsInSymbolizer() { return is_in_symbolizer; }
 
-void EnterLoader() { --is_in_loader; }
+void EnterLoader() { ++is_in_loader; }
 void ExitLoader()  { --is_in_loader; }
 
 extern "C" {
