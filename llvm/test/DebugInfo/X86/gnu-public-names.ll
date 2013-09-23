@@ -33,8 +33,11 @@
 ;   int global_namespace_variable = 1;
 ; }
 
-
+; ASM: .section        .debug_gnu_pubnames
 ; ASM: .byte   32                      # Kind: VARIABLE, EXTERNAL
+
+; ASM: .section        .debug_gnu_pubtypes
+; ASM: .byte   16                      # Kind: TYPE, EXTERNAL
 
 ; CHECK: .debug_info contents:
 ; CHECK: 0x00000046: DW_TAG_subprogram

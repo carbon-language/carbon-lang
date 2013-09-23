@@ -1966,12 +1966,12 @@ void DwarfDebug::emitSectionLabels() {
   DwarfLineSectionSym =
     emitSectionSym(Asm, TLOF.getDwarfLineSection(), "section_line");
   emitSectionSym(Asm, TLOF.getDwarfLocSection());
-  if (HasDwarfPubSections) {
-    emitSectionSym(Asm, TLOF.getDwarfPubNamesSection());
-    emitSectionSym(Asm, TLOF.getDwarfPubTypesSection());
-  } else if (GenerateGnuPubSections) {
+  if (GenerateGnuPubSections) {
     emitSectionSym(Asm, TLOF.getDwarfGnuPubNamesSection());
     emitSectionSym(Asm, TLOF.getDwarfGnuPubTypesSection());
+  } else if (HasDwarfPubSections) {
+    emitSectionSym(Asm, TLOF.getDwarfPubNamesSection());
+    emitSectionSym(Asm, TLOF.getDwarfPubTypesSection());
   }
 
   DwarfStrSectionSym =
@@ -2358,6 +2358,10 @@ static dwarf::PubIndexEntryDescriptor computeIndexValue(CompileUnit *CU,
   case dwarf::DW_TAG_structure_type:
   case dwarf::DW_TAG_union_type:
   case dwarf::DW_TAG_enumeration_type:
+    return dwarf::PubIndexEntryDescriptor(
+        dwarf::GIEK_TYPE, CU->getLanguage() != dwarf::DW_LANG_C_plus_plus
+                              ? dwarf::GIEL_STATIC
+                              : dwarf::GIEL_EXTERNAL);
   case dwarf::DW_TAG_typedef:
   case dwarf::DW_TAG_base_type:
   case dwarf::DW_TAG_subrange_type:
@@ -2446,7 +2450,9 @@ void DwarfDebug::emitDebugPubNames(bool GnuStyle) {
 
 void DwarfDebug::emitDebugPubTypes(bool GnuStyle) {
   const MCSection *ISec = Asm->getObjFileLowering().getDwarfInfoSection();
-  const MCSection *PSec = Asm->getObjFileLowering().getDwarfPubTypesSection();
+  const MCSection *PSec =
+      GnuStyle ? Asm->getObjFileLowering().getDwarfGnuPubTypesSection()
+               : Asm->getObjFileLowering().getDwarfPubTypesSection();
 
   for (DenseMap<const MDNode *, CompileUnit *>::iterator I = CUMap.begin(),
                                                          E = CUMap.end();
