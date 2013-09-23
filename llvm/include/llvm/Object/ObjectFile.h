@@ -192,7 +192,7 @@ public:
     ST_Other
   };
 
-  enum Flags {
+  enum Flags LLVM_ENUM_INT_TYPE(unsigned) {
     SF_None            = 0,
     SF_Undefined       = 1U << 0,  // Symbol is defined in another object file
     SF_Global          = 1U << 1,  // Global symbol

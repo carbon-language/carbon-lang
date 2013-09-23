@@ -14,6 +14,7 @@
 #ifndef LLVM_ADT_POINTERINTPAIR_H
 #define LLVM_ADT_POINTERINTPAIR_H
 
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/PointerLikeTypeTraits.h"
 #include <cassert>
 
@@ -40,7 +41,7 @@ template <typename PointerTy, unsigned IntBits, typename IntType=unsigned,
           typename PtrTraits = PointerLikeTypeTraits<PointerTy> >
 class PointerIntPair {
   intptr_t Value;
-  enum {
+  enum LLVM_ENUM_INT_TYPE(uintptr_t) {
     /// PointerBitMask - The bits that come from the pointer.
     PointerBitMask =
       ~(uintptr_t)(((intptr_t)1 << PtrTraits::NumLowBitsAvailable)-1),

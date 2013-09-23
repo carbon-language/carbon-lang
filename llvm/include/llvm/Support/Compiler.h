@@ -391,4 +391,16 @@
 # define LLVM_STATIC_ASSERT(expr, msg)
 #endif
 
+/// \macro LLVM_ENUM_INT_TYPE
+/// \brief Expands to colon followed by the given integral type on compilers
+/// which support C++11 strong enums.  This can be used to make enums unsigned
+/// with MSVC.
+#if __has_feature(cxx_strong_enums)
+# define LLVM_ENUM_INT_TYPE(intty) : intty
+#elif defined(_MSC_VER) && _MSC_VER >= 1600  // Added in MSVC 2010.
+# define LLVM_ENUM_INT_TYPE(intty) : intty
+#else
+# define LLVM_ENUM_INT_TYPE(intty)
+#endif
+
 #endif

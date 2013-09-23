@@ -14,13 +14,14 @@
 #ifndef LLVM_SUPPORT_MACHO_H
 #define LLVM_SUPPORT_MACHO_H
 
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Host.h"
 
 namespace llvm {
   namespace MachO {
     // Enums from <mach-o/loader.h>
-    enum {
+    enum LLVM_ENUM_INT_TYPE(uint32_t) {
       // Constants for the "magic" field in llvm::MachO::mach_header and
       // llvm::MachO::mach_header_64
       MH_MAGIC    = 0xFEEDFACEu,
@@ -75,12 +76,12 @@ namespace llvm {
       MH_DEAD_STRIPPABLE_DYLIB   = 0x00400000u
     };
 
-    enum {
+    enum LLVM_ENUM_INT_TYPE(uint32_t) {
       // Flags for the "cmd" field in llvm::MachO::load_command
       LC_REQ_DYLD    = 0x80000000u
     };
 
-    enum LoadCommandType {
+    enum LoadCommandType LLVM_ENUM_INT_TYPE(uint32_t) {
       // Constants for the "cmd" field in llvm::MachO::load_command
       LC_SEGMENT              = 0x00000001u,
       LC_SYMTAB               = 0x00000002u,
@@ -130,7 +131,7 @@ namespace llvm {
       LC_LINKER_OPTIONS       = 0x0000002Du
     };
 
-    enum {
+    enum LLVM_ENUM_INT_TYPE(uint32_t) {
       // Constant bits for the "flags" field in llvm::MachO::segment_command
       SG_HIGHVM              = 0x1u,
       SG_FVMLIB              = 0x2u,
@@ -173,7 +174,7 @@ namespace llvm {
       S_THREAD_LOCAL_INIT_FUNCTION_POINTERS = 0x15u
     };
 
-    enum {
+    enum LLVM_ENUM_INT_TYPE(uint32_t) {
       // Constant masks for the "flags[31:24]" field in llvm::MachO::section and
       // llvm::MachO::section_64 (mask "flags" with SECTION_ATTRIBUTES_USR)
       S_ATTR_PURE_INSTRUCTIONS   = 0x80000000u,
@@ -235,9 +236,9 @@ namespace llvm {
     };
 
     enum BindSpecialDylib {
-      BIND_SPECIAL_DYLIB_SELF            =  0u,
-      BIND_SPECIAL_DYLIB_MAIN_EXECUTABLE = -1u,
-      BIND_SPECIAL_DYLIB_FLAT_LOOKUP     = -2u
+      BIND_SPECIAL_DYLIB_SELF            =  0,
+      BIND_SPECIAL_DYLIB_MAIN_EXECUTABLE = -1,
+      BIND_SPECIAL_DYLIB_FLAT_LOOKUP     = -2
     };
 
     enum {
@@ -347,7 +348,7 @@ namespace llvm {
       N_LENG    = 0xFEu
     };
 
-    enum {
+    enum LLVM_ENUM_INT_TYPE(uint32_t) {
       // Constant values for the r_symbolnum field in an
       // llvm::MachO::relocation_info structure when r_extern is 0.
       R_ABS = 0,
@@ -892,7 +893,7 @@ namespace llvm {
     }
 
     // Enums from <mach/machine.h>
-    enum {
+    enum LLVM_ENUM_INT_TYPE(uint32_t) {
       // Capability bits used in the definition of cpu_type.
       CPU_ARCH_MASK  = 0xff000000,   // Mask for architecture bits
       CPU_ARCH_ABI64 = 0x01000000    // 64 bit ABI
@@ -912,13 +913,13 @@ namespace llvm {
       CPU_TYPE_POWERPC64 = CPU_TYPE_POWERPC | CPU_ARCH_ABI64
     };
 
-    enum {
+    enum LLVM_ENUM_INT_TYPE(uint32_t) {
       // Capability bits used in the definition of cpusubtype.
       CPU_SUB_TYPE_MASK  = 0xff000000,   // Mask for architecture bits
       CPU_SUB_TYPE_LIB64 = 0x80000000,   // 64 bit libraries
 
       // Special CPU subtype constants.
-      CPU_SUBTYPE_MULTIPLE = -1
+      CPU_SUBTYPE_MULTIPLE = ~0u
     };
 
     // Constants for the cpusubtype field.

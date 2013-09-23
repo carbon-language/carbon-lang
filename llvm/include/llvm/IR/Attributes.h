@@ -18,6 +18,7 @@
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/FoldingSet.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/PointerLikeTypeTraits.h"
 #include <bitset>
 #include <cassert>
@@ -200,7 +201,7 @@ public:
 /// index `1'.
 class AttributeSet {
 public:
-  enum AttrIndex {
+  enum AttrIndex LLVM_ENUM_INT_TYPE(unsigned) {
     ReturnIndex = 0U,
     FunctionIndex = ~0U
   };
