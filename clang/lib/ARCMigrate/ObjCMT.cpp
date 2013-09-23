@@ -304,7 +304,9 @@ static bool rewriteToObjCProperty(const ObjCMethodDecl *Getter,
   }
   PropertyString += " ";
   PropertyString += RT.getAsString(Context.getPrintingPolicy());
-  PropertyString += " ";
+  char LastChar = PropertyString[PropertyString.size()-1]        ;
+  if (LastChar != '*')
+    PropertyString += " ";
   if (LengthOfPrefix > 0) {
     // property name must strip off "is" and lower case the first character
     // after that; e.g. isContinuous will become continuous.
