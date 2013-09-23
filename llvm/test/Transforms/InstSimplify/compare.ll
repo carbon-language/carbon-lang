@@ -717,3 +717,12 @@ define i1 @alloca_gep(i64 %a, i64 %b) {
   ret i1 %cmp
 ; CHECK-NEXT: ret i1 false
 }
+
+define i1 @non_inbounds_gep_compare(i64* %a) {
+; CHECK-LABEL: @non_inbounds_gep_compare(
+; Equality compares with non-inbounds GEPs can be folded.
+  %x = getelementptr i64* %a, i64 42
+  %cmp = icmp eq i64* %a, %x
+  ret i1 %cmp
+; CHECK-NEXT: ret i1 false
+}

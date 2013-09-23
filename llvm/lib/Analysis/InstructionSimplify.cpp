@@ -668,7 +668,8 @@ Value *llvm::SimplifyAddInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
 /// follow non-inbounds geps. This allows it to remain usable for icmp ult/etc.
 /// folding.
 static Constant *stripAndComputeConstantOffsets(const DataLayout *TD,
-                                                Value *&V) {
+                                                Value *&V,
+                                                bool AllowNonInbounds = false) {
   assert(V->getType()->getScalarType()->isPointerTy());
 
   // Without DataLayout, just be conservative for now. Theoretically, more could
@@ -685,7 +686,8 @@ static Constant *stripAndComputeConstantOffsets(const DataLayout *TD,
   Visited.insert(V);
   do {
     if (GEPOperator *GEP = dyn_cast<GEPOperator>(V)) {
-      if (!GEP->isInBounds() || !GEP->accumulateConstantOffset(*TD, Offset))
+      if ((!AllowNonInbounds && !GEP->isInBounds()) ||
+          !GEP->accumulateConstantOffset(*TD, Offset))
         break;
       V = GEP->getPointerOperand();
     } else if (Operator::getOpcode(V) == Instruction::BitCast) {
@@ -1837,6 +1839,17 @@ static Constant *computePointerICmp(const DataLayout *TD,
         return ConstantInt::get(GetCompareTy(LHS),
                                 !CmpInst::isTrueWhenEqual(Pred));
     }
+
+    // Even if an non-inbounds GEP occurs along the path we can still optimize
+    // equality comparisons concerning the result. We avoid walking the whole
+    // chain again by starting where the last calls to
+    // stripAndComputeConstantOffsets left off and accumulate the offsets.
+    Constant *LHSNoBound = stripAndComputeConstantOffsets(TD, LHS, true);
+    Constant *RHSNoBound = stripAndComputeConstantOffsets(TD, RHS, true);
+    if (LHS == RHS)
+      return ConstantExpr::getICmp(Pred,
+                                   ConstantExpr::getAdd(LHSOffset, LHSNoBound),
+                                   ConstantExpr::getAdd(RHSOffset, RHSNoBound));
   }
 
   // Otherwise, fail.
