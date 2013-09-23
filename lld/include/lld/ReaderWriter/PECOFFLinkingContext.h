@@ -33,7 +33,7 @@ public:
         _subsystem(llvm::COFF::IMAGE_SUBSYSTEM_UNKNOWN),
         _machineType(llvm::COFF::IMAGE_FILE_MACHINE_I386), _imageVersion(0, 0),
         _minOSVersion(6, 0), _nxCompat(true), _largeAddressAware(false),
-        _allowBind(true), _baseRelocationEnabled(true),
+        _allowBind(true), _allowIsolation(true), _baseRelocationEnabled(true),
         _terminalServerAware(true), _dynamicBaseEnabled(true),
         _imageType(ImageType::IMAGE_EXE) {
     setDeadStripping(true);
@@ -127,6 +127,9 @@ public:
   void setAllowBind(bool val) { _allowBind = val; }
   bool getAllowBind() const { return _allowBind; }
 
+  void setAllowIsolation(bool val) { _allowIsolation = val; }
+  bool getAllowIsolation() const { return _allowIsolation; }
+
   void setBaseRelocationEnabled(bool val) { _baseRelocationEnabled = val; }
   bool getBaseRelocationEnabled() const { return _baseRelocationEnabled; }
 
@@ -179,6 +182,7 @@ private:
   bool _nxCompat;
   bool _largeAddressAware;
   bool _allowBind;
+  bool _allowIsolation;
   bool _baseRelocationEnabled;
   bool _terminalServerAware;
   bool _dynamicBaseEnabled;

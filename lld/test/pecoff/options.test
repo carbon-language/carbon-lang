@@ -8,5 +8,10 @@ ALIGN: SectionAlignment: 8192
 
 # RUN: lld -flavor link /allowbind:no /out:%t.exe /entry:start -- %t.obj \
 # RUN:   && llvm-readobj -file-headers %t.exe \
-# RUN:   | FileCheck -check-prefix=ALLOWBIND %s
-ALLOWBIND: IMAGE_DLL_CHARACTERISTICS_NO_BIND
+# RUN:   | FileCheck -check-prefix=NOBIND %s
+NOBIND: IMAGE_DLL_CHARACTERISTICS_NO_BIND
+
+# RUN: lld -flavor link /allowisolation:no /out:%t.exe /entry:start -- %t.obj \
+# RUN:   && llvm-readobj -file-headers %t.exe \
+# RUN:   | FileCheck -check-prefix=NOISOLATION %s
+NOISOLATION: IMAGE_DLL_CHARACTERISTICS_NO_ISOLATION

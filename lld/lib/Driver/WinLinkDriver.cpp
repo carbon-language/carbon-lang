@@ -429,6 +429,16 @@ bool WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ct
       ctx.setAllowBind(false);
       break;
 
+    case OPT_allowisolation:
+      // handle /allowisolation
+      ctx.setAllowIsolation(true);
+      break;
+
+    case OPT_allowisolation_no:
+      // handle /allowisolation:no
+      ctx.setAllowIsolation(false);
+      break;
+
     case OPT_fixed:
       // handle /fixed
 

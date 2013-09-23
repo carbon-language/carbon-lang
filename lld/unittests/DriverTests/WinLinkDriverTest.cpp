@@ -54,6 +54,7 @@ TEST_F(WinLinkParserTest, Basic) {
   EXPECT_TRUE(_context.isNxCompat());
   EXPECT_FALSE(_context.getLargeAddressAware());
   EXPECT_TRUE(_context.getAllowBind());
+  EXPECT_TRUE(_context.getAllowIsolation());
   EXPECT_TRUE(_context.getBaseRelocationEnabled());
   EXPECT_TRUE(_context.isTerminalServerAware());
   EXPECT_TRUE(_context.getDynamicBaseEnabled());
@@ -215,6 +216,16 @@ TEST_F(WinLinkParserTest, AllowBind) {
 TEST_F(WinLinkParserTest, NoAllowBind) {
   EXPECT_FALSE(parse("link.exe", "/allowbind:no", "a.obj", nullptr));
   EXPECT_FALSE(_context.getAllowBind());
+}
+
+TEST_F(WinLinkParserTest, AllowIsolation) {
+  EXPECT_FALSE(parse("link.exe", "/allowisolation", "a.obj", nullptr));
+  EXPECT_TRUE(_context.getAllowIsolation());
+}
+
+TEST_F(WinLinkParserTest, NoAllowIsolation) {
+  EXPECT_FALSE(parse("link.exe", "/allowisolation:no", "a.obj", nullptr));
+  EXPECT_FALSE(_context.getAllowIsolation());
 }
 
 TEST_F(WinLinkParserTest, Fixed) {

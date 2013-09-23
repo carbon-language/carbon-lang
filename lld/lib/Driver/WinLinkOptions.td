@@ -52,6 +52,7 @@ defm largeaddressaware : B<"largeaddressaware", "Disable large addresses">;
 defm allowbind: B<"allowbind", "Disable DLL binding">;
 defm fixed    : B<"fixed", "Enable base relocations">;
 defm tsaware  : B<"tsaware", "Create non-Terminal Server aware executable">;
+defm allowisolation : B<"allowisolation", "Set NO_ISOLATION bit">;
 defm dynamicbase : B<"dynamicbase",
      "Disable address space layout randomization">;
 
