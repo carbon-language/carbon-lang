@@ -12,6 +12,7 @@
 #include "llvm/DebugInfo/DWARFFormValue.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/Path.h"
+#include <cstdio>
 
 using namespace llvm;
 using namespace dwarf;
