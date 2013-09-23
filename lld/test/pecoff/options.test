@@ -1,0 +1,7 @@
+# Tests for miscellaneous command line options.
+#
+# RUN: yaml2obj %p/Inputs/nop.obj.yaml > %t.obj
+
+# RUN: lld -flavor link /out:%t.exe /align:8192 /entry:start -- %t.obj \
+# RUN:   && llvm-readobj -file-headers %t.exe | FileCheck -check-prefix=ALIGN %s
+ALIGN: SectionAlignment: 8192
