@@ -22,7 +22,11 @@ namespace llvm {
   public:
     explicit MipsSETargetLowering(MipsTargetMachine &TM);
 
+    /// \brief Enable MSA support for the given integer type and Register
+    /// class.
     void addMSAIntType(MVT::SimpleValueType Ty, const TargetRegisterClass *RC);
+    /// \brief Enable MSA support for the given floating-point type and
+    /// Register class.
     void addMSAFloatType(MVT::SimpleValueType Ty,
                          const TargetRegisterClass *RC);
 
@@ -69,6 +73,7 @@ namespace llvm {
     SDValue lowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) const;
     SDValue lowerINTRINSIC_W_CHAIN(SDValue Op, SelectionDAG &DAG) const;
     SDValue lowerINTRINSIC_VOID(SDValue Op, SelectionDAG &DAG) const;
+    SDValue lowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const;
 
     MachineBasicBlock *emitBPOSGE32(MachineInstr *MI,
                                     MachineBasicBlock *BB) const;

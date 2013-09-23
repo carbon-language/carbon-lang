@@ -147,6 +147,7 @@ llvm::createMipsSETargetLowering(MipsTargetMachine &TM) {
   return new MipsSETargetLowering(TM);
 }
 
+// Enable MSA support for the given integer type and Register class.
 void MipsSETargetLowering::
 addMSAIntType(MVT::SimpleValueType Ty, const TargetRegisterClass *RC) {
   addRegisterClass(Ty, RC);
@@ -158,6 +159,7 @@ addMSAIntType(MVT::SimpleValueType Ty, const TargetRegisterClass *RC) {
   setOperationAction(ISD::BITCAST, Ty, Legal);
   setOperationAction(ISD::LOAD, Ty, Legal);
   setOperationAction(ISD::STORE, Ty, Legal);
+  setOperationAction(ISD::BUILD_VECTOR, Ty, Custom);
 
   setOperationAction(ISD::ADD, Ty, Legal);
   setOperationAction(ISD::CTLZ, Ty, Legal);
@@ -170,6 +172,7 @@ addMSAIntType(MVT::SimpleValueType Ty, const TargetRegisterClass *RC) {
   setOperationAction(ISD::UDIV, Ty, Legal);
 }
 
+// Enable MSA support for the given floating-point type and Register class.
 void MipsSETargetLowering::
 addMSAFloatType(MVT::SimpleValueType Ty, const TargetRegisterClass *RC) {
   addRegisterClass(Ty, RC);
@@ -224,6 +227,7 @@ SDValue MipsSETargetLowering::LowerOperation(SDValue Op,
   case ISD::INTRINSIC_WO_CHAIN: return lowerINTRINSIC_WO_CHAIN(Op, DAG);
   case ISD::INTRINSIC_W_CHAIN:  return lowerINTRINSIC_W_CHAIN(Op, DAG);
   case ISD::INTRINSIC_VOID:     return lowerINTRINSIC_VOID(Op, DAG);
+  case ISD::BUILD_VECTOR:       return lowerBUILD_VECTOR(Op, DAG);
   }
 
   return MipsTargetLowering::LowerOperation(Op, DAG);
@@ -921,6 +925,10 @@ SDValue MipsSETargetLowering::lowerINTRINSIC_WO_CHAIN(SDValue Op,
   case Intrinsic::mips_fdiv_w:
   case Intrinsic::mips_fdiv_d:
     return lowerMSABinaryIntr(Op, DAG, ISD::FDIV);
+  case Intrinsic::mips_fill_b:
+  case Intrinsic::mips_fill_h:
+  case Intrinsic::mips_fill_w:
+    return lowerMSAUnaryIntr(Op, DAG, MipsISD::VSPLAT);
   case Intrinsic::mips_flog2_w:
   case Intrinsic::mips_flog2_d:
     return lowerMSAUnaryIntr(Op, DAG, ISD::FLOG2);
@@ -936,6 +944,11 @@ SDValue MipsSETargetLowering::lowerINTRINSIC_WO_CHAIN(SDValue Op,
   case Intrinsic::mips_fsub_w:
   case Intrinsic::mips_fsub_d:
     return lowerMSABinaryIntr(Op, DAG, ISD::FSUB);
+  case Intrinsic::mips_ldi_b:
+  case Intrinsic::mips_ldi_h:
+  case Intrinsic::mips_ldi_w:
+  case Intrinsic::mips_ldi_d:
+    return lowerMSAUnaryIntr(Op, DAG, MipsISD::VSPLAT);
   case Intrinsic::mips_mulv_b:
   case Intrinsic::mips_mulv_h:
   case Intrinsic::mips_mulv_w:
@@ -1071,6 +1084,102 @@ SDValue MipsSETargetLowering::lowerINTRINSIC_VOID(SDValue Op,
   case Intrinsic::mips_stx_d:
     return lowerMSAStoreIntr(Op, DAG, Intr);
   }
+}
+
+/// \brief Check if the given BuildVectorSDNode is a splat.
+/// This method currently relies on DAG nodes being reused when equivalent,
+/// so it's possible for this to return false even when isConstantSplat returns
+/// true.
+static bool isSplatVector(const BuildVectorSDNode *N) {
+  EVT VT = N->getValueType(0);
+  assert(VT.isVector() && "Expected a vector type");
+
+  unsigned int nOps = N->getNumOperands();
+  assert(nOps > 1 && "isSplat has 0 or 1 sized build vector");
+
+  SDValue Operand0 = N->getOperand(0);
+
+  for (unsigned int i = 1; i < nOps; ++i) {
+    if (N->getOperand(i) != Operand0)
+      return false;
+  }
+
+  return true;
+}
+
+// Lowers ISD::BUILD_VECTOR into appropriate SelectionDAG nodes for the
+// backend.
+//
+// Lowers according to the following rules:
+// - Vectors of 128-bits may be legal subject to the other rules. Other sizes
+//   are not legal.
+// - Non-constant splats are legal and are lowered to MipsISD::VSPLAT.
+// - Constant splats with an element size of 32-bits or less are legal and are
+//   lowered to MipsISD::VSPLAT.
+// - Constant splats with an element size of 64-bits but whose value would fit
+//   within a 10 bit immediate are legal and are lowered to MipsISD::VSPLATD.
+// - All other ISD::BUILD_VECTORS are not legal
+SDValue MipsSETargetLowering::lowerBUILD_VECTOR(SDValue Op,
+                                                SelectionDAG &DAG) const {
+  BuildVectorSDNode *Node = cast<BuildVectorSDNode>(Op);
+  EVT ResTy = Op->getValueType(0);
+  SDLoc DL(Op);
+  APInt SplatValue, SplatUndef;
+  unsigned SplatBitSize;
+  bool HasAnyUndefs;
+
+  if (!Subtarget->hasMSA() || !ResTy.is128BitVector())
+    return SDValue();
+
+  if (Node->isConstantSplat(SplatValue, SplatUndef, SplatBitSize,
+                            HasAnyUndefs, 8,
+                            !Subtarget->isLittle())) {
+    SDValue Result;
+    EVT TmpVecTy;
+    EVT ConstTy = MVT::i32;
+    unsigned SplatOp = MipsISD::VSPLAT;
+
+    switch (SplatBitSize) {
+    default:
+      return SDValue();
+    case 64:
+      TmpVecTy = MVT::v2i64;
+
+      // i64 is an illegal type on Mips32, but if it the constant fits into a
+      // signed 10-bit value then we can still handle it using VSPLATD and an
+      // i32 constant
+      if (HasMips64)
+        ConstTy = MVT::i64;
+      else if (isInt<10>(SplatValue.getSExtValue())) {
+        SplatValue = SplatValue.trunc(32);
+        SplatOp = MipsISD::VSPLATD;
+      } else
+        return SDValue();
+      break;
+    case 32:
+      TmpVecTy = MVT::v4i32;
+      break;
+    case 16:
+      TmpVecTy = MVT::v8i16;
+      SplatValue = SplatValue.sext(32);
+      break;
+    case 8:
+      TmpVecTy = MVT::v16i8;
+      SplatValue = SplatValue.sext(32);
+      break;
+    }
+
+    Result = DAG.getNode(SplatOp, DL, TmpVecTy,
+                         DAG.getConstant(SplatValue, ConstTy));
+    if (ResTy != Result.getValueType())
+      Result = DAG.getNode(ISD::BITCAST, DL, ResTy, Result);
+
+    return Result;
+  }
+  else if (isSplatVector(Node))
+    return DAG.getNode(MipsISD::VSPLAT, DL, ResTy, Op->getOperand(0));
+
+  return SDValue();
 }
 
 MachineBasicBlock * MipsSETargetLowering::

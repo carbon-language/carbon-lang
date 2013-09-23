@@ -11,12 +11,20 @@
 //
 //===----------------------------------------------------------------------===//
 
+def SDT_MipsSplat : SDTypeProfile<1, 1, [SDTCisVec<0>, SDTCisInt<1>]>;
 def SDT_MipsVecCond : SDTypeProfile<1, 1, [SDTCisInt<0>, SDTCisVec<1>]>;
 
 def MipsVAllNonZero : SDNode<"MipsISD::VALL_NONZERO", SDT_MipsVecCond>;
 def MipsVAnyNonZero : SDNode<"MipsISD::VANY_NONZERO", SDT_MipsVecCond>;
 def MipsVAllZero : SDNode<"MipsISD::VALL_ZERO", SDT_MipsVecCond>;
 def MipsVAnyZero : SDNode<"MipsISD::VANY_ZERO", SDT_MipsVecCond>;
+def MipsVSplat  : SDNode<"MipsISD::VSPLAT", SDT_MipsSplat>;
+def MipsVSplatD : SDNode<"MipsISD::VSPLATD", SDT_MipsSplat>;
+
+def vsplati8  : PatFrag<(ops node:$in), (v16i8 (MipsVSplat (i32 node:$in)))>;
+def vsplati16 : PatFrag<(ops node:$in), (v8i16 (MipsVSplat (i32 node:$in)))>;
+def vsplati32 : PatFrag<(ops node:$in), (v4i32 (MipsVSplat (i32 node:$in)))>;
+def vsplati64 : PatFrag<(ops node:$in), (v2i64 (MipsVSplatD (i32 node:$in)))>;
 
 // Immediates
 def immSExt5 : ImmLeaf<i32, [{return isInt<5>(Imm);}]>;
@@ -1383,12 +1391,9 @@ class FFQR_W_DESC : MSA_2RF_DESC_BASE<"ffqr.w", int_mips_ffqr_w,
 class FFQR_D_DESC : MSA_2RF_DESC_BASE<"ffqr.d", int_mips_ffqr_d,
                                       MSA128D, MSA128W>;
 
-class FILL_B_DESC : MSA_2R_DESC_BASE<"fill.b", int_mips_fill_b,
-                                     MSA128B, GPR32>;
-class FILL_H_DESC : MSA_2R_DESC_BASE<"fill.h", int_mips_fill_h,
-                                     MSA128H, GPR32>;
-class FILL_W_DESC : MSA_2R_DESC_BASE<"fill.w", int_mips_fill_w,
-                                     MSA128W, GPR32>;
+class FILL_B_DESC : MSA_2R_DESC_BASE<"fill.b", vsplati8,  MSA128B, GPR32>;
+class FILL_H_DESC : MSA_2R_DESC_BASE<"fill.h", vsplati16, MSA128H, GPR32>;
+class FILL_W_DESC : MSA_2R_DESC_BASE<"fill.w", vsplati32, MSA128W, GPR32>;
 
 class FLOG2_W_DESC : MSA_2RF_DESC_BASE<"flog2.w", flog2, MSA128W>;
 class FLOG2_D_DESC : MSA_2RF_DESC_BASE<"flog2.d", flog2, MSA128D>;
@@ -1573,10 +1578,10 @@ class LD_H_DESC : LD_DESC_BASE<"ld.h", load, v8i16, MSA128H>;
 class LD_W_DESC : LD_DESC_BASE<"ld.w", load, v4i32, MSA128W>;
 class LD_D_DESC : LD_DESC_BASE<"ld.d", load, v2i64, MSA128D>;
 
-class LDI_B_DESC : MSA_I10_DESC_BASE<"ldi.b", int_mips_ldi_b, MSA128B>;
-class LDI_H_DESC : MSA_I10_DESC_BASE<"ldi.h", int_mips_ldi_h, MSA128H>;
-class LDI_W_DESC : MSA_I10_DESC_BASE<"ldi.w", int_mips_ldi_w, MSA128W>;
-class LDI_D_DESC : MSA_I10_DESC_BASE<"ldi.d", int_mips_ldi_d, MSA128D>;
+class LDI_B_DESC : MSA_I10_DESC_BASE<"ldi.b", vsplati8,  MSA128B>;
+class LDI_H_DESC : MSA_I10_DESC_BASE<"ldi.h", vsplati16, MSA128H>;
+class LDI_W_DESC : MSA_I10_DESC_BASE<"ldi.w", vsplati32, MSA128W>;
+class LDI_D_DESC : MSA_I10_DESC_BASE<"ldi.d", vsplati64, MSA128D>;
 
 class LDX_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
                     ValueType TyNode, RegisterClass RCWD,
@@ -2356,6 +2361,7 @@ def LD_D: LD_D_ENC, LD_D_DESC;
 def LDI_B : LDI_B_ENC, LDI_B_DESC;
 def LDI_H : LDI_H_ENC, LDI_H_DESC;
 def LDI_W : LDI_W_ENC, LDI_W_DESC;
+def LDI_D : LDI_D_ENC, LDI_D_DESC;
 
 def LDX_B: LDX_B_ENC, LDX_B_DESC;
 def LDX_H: LDX_H_ENC, LDX_H_DESC;
