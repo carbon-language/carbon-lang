@@ -1214,6 +1214,14 @@ _mm_stream_si32(int *__p, int __a)
   __builtin_ia32_movnti(__p, __a);
 }
 
+#ifdef __x86_64__
+static __inline__ void __attribute__((__always_inline__, __nodebug__))
+_mm_stream_si64(long long *__p, long long __a)
+{
+  __builtin_ia32_movnti64(__p, __a);
+}
+#endif
+
 static __inline__ void __attribute__((__always_inline__, __nodebug__))
 _mm_clflush(void const *__p)
 {

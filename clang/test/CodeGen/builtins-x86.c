@@ -55,6 +55,7 @@ void f0() {
   const float*   tmp_fCp;
   double*        tmp_dp;
   const double*  tmp_dCp;
+  long long*     tmp_LLip;
 
 #define imm_i 32
 #define imm_i_0_2 0
@@ -288,6 +289,9 @@ void f0() {
   tmp_i = __builtin_ia32_movmskpd(tmp_V2d);
   tmp_i = __builtin_ia32_pmovmskb128(tmp_V16c);
   (void) __builtin_ia32_movnti(tmp_ip, tmp_i);
+#ifdef USE_64
+  (void) __builtin_ia32_movnti64(tmp_LLip, tmp_LLi);
+#endif
   (void) __builtin_ia32_movntpd(tmp_dp, tmp_V2d);
   (void) __builtin_ia32_movntdq(tmp_V2LLip, tmp_V2LLi);
   tmp_V2LLi = __builtin_ia32_psadbw128(tmp_V16c, tmp_V16c);

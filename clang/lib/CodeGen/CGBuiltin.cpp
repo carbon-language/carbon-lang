@@ -3249,7 +3249,8 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
   case X86::BI__builtin_ia32_movntpd256:
   case X86::BI__builtin_ia32_movntdq:
   case X86::BI__builtin_ia32_movntdq256:
-  case X86::BI__builtin_ia32_movnti: {
+  case X86::BI__builtin_ia32_movnti:
+  case X86::BI__builtin_ia32_movnti64: {
     llvm::MDNode *Node = llvm::MDNode::get(getLLVMContext(),
                                            Builder.getInt32(1));
 
@@ -3259,7 +3260,16 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
                                       "cast");
     StoreInst *SI = Builder.CreateStore(Ops[1], BC);
     SI->setMetadata(CGM.getModule().getMDKindID("nontemporal"), Node);
-    SI->setAlignment(16);
+
+    // If the operand is an integer, we can't assume alignment. Otherwise,
+    // assume natural alignment.
+    QualType ArgTy = E->getArg(1)->getType();
+    unsigned Align;
+    if (ArgTy->isIntegerType())
+      Align = 1;
+    else
+      Align = getContext().getTypeSizeInChars(ArgTy).getQuantity();
+    SI->setAlignment(Align);
     return SI;
   }
   // 3DNow!

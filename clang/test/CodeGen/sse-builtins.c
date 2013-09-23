@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -ffreestanding -triple i386-apple-darwin9 -target-cpu pentium4 -target-feature +sse4.1 -g -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang_cc1 -ffreestanding -triple x86_64-apple-macosx10.8.0 -target-feature +sse4.1 -g -emit-llvm %s -o - | FileCheck %s
 
 #include <xmmintrin.h>
 #include <emmintrin.h>
@@ -187,4 +187,22 @@ void test_storel_epi64(__m128i x, void* y) {
   // CHECK-LABEL: define void @test_storel_epi64
   // CHECK: store {{.*}} i64* {{.*}}, align 1{{$}}
   _mm_storel_epi64(y, x);
+}
+
+void test_stream_si32(int x, void *y) {
+  // CHECK-LABEL: define void @test_stream_si32
+  // CHECK: store {{.*}} i32* {{.*}}, align 1, !nontemporal
+  _mm_stream_si32(y, x);
+}
+
+void test_stream_si64(long long x, void *y) {
+  // CHECK-LABEL: define void @test_stream_si64
+  // CHECK: store {{.*}} i64* {{.*}}, align 1, !nontemporal
+  _mm_stream_si64(y, x);
+}
+
+void test_stream_si128(__m128i x, void *y) {
+  // CHECK-LABEL: define void @test_stream_si128
+  // CHECK: store {{.*}} <2 x i64>* {{.*}}, align 16, !nontemporal
+  _mm_stream_si128(y, x);
 }
