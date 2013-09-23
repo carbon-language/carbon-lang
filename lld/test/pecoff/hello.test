@@ -6,6 +6,7 @@
 
 FILE: ImageOptionalHeader {
 FILE:   SizeOfInitializedData: 1024
+FILE:   SizeOfHeaders: 512
 FILE: }
 
 # RUN: lld -flavor link /out:%t1 /subsystem:console /force /opt:noref \

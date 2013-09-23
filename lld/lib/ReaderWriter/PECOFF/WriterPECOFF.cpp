@@ -195,10 +195,6 @@ public:
     _peHeader.MajorSubsystemVersion = minOSVersion.majorVersion;
     _peHeader.MinorSubsystemVersion = minOSVersion.minorVersion;
 
-    // The combined size of the DOS, PE and section headers including garbage
-    // between the end of the header and the beginning of the first section.
-    // Must be multiple of FileAlignment.
-    _peHeader.SizeOfHeaders = 512;
     _peHeader.Subsystem = context.getSubsystem();
 
     // Despite its name, DLL characteristics field has meaning both for
@@ -232,6 +228,11 @@ public:
     std::memcpy(fileBuffer, &_coffHeader, sizeof(_coffHeader));
     fileBuffer += sizeof(_coffHeader);
     std::memcpy(fileBuffer, &_peHeader, sizeof(_peHeader));
+  }
+  
+  virtual void setSizeOfHeaders(uint64_t size) {
+    // Must be multiple of FileAlignment.
+    _peHeader.SizeOfHeaders = llvm::RoundUpToAlignment(size, SECTOR_SIZE);
   }
 
   virtual void setSizeOfCode(uint64_t size) {
@@ -842,6 +843,11 @@ public:
     peHeader->setSizeOfUninitializedData(calcSizeOfUninitializedData());
     peHeader->setNumberOfSections(_numSections);
     peHeader->setSizeOfImage(_imageSizeInMemory);
+    
+    // The combined size of the DOS, PE and section headers including garbage
+    // between the end of the header and the beginning of the first section.
+    peHeader->setSizeOfHeaders(dosStub->size() + peHeader->size() +
+        sectionTable->size() + dataDirectory->size());
 
     setAddressOfEntryPoint(text, peHeader);
   }
