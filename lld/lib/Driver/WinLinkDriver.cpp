@@ -93,7 +93,7 @@ bool parseMemoryOption(StringRef arg, uint64_t &reserve, uint64_t &commit) {
   llvm::tie(reserveStr, commitStr) = arg.split(',');
   if (reserveStr.getAsInteger(0, reserve))
     return true;
-  if (!commitStr.empty() && (commitStr.getAsInteger(0, commit)))
+  if (!commitStr.empty() && commitStr.getAsInteger(0, commit))
     return true;
   return false;
 }

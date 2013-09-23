@@ -229,7 +229,7 @@ public:
     fileBuffer += sizeof(_coffHeader);
     std::memcpy(fileBuffer, &_peHeader, sizeof(_peHeader));
   }
-  
+
   virtual void setSizeOfHeaders(uint64_t size) {
     // Must be multiple of FileAlignment.
     _peHeader.SizeOfHeaders = llvm::RoundUpToAlignment(size, SECTOR_SIZE);
@@ -843,7 +843,7 @@ public:
     peHeader->setSizeOfUninitializedData(calcSizeOfUninitializedData());
     peHeader->setNumberOfSections(_numSections);
     peHeader->setSizeOfImage(_imageSizeInMemory);
-    
+
     // The combined size of the DOS, PE and section headers including garbage
     // between the end of the header and the beginning of the first section.
     peHeader->setSizeOfHeaders(dosStub->size() + peHeader->size() +
