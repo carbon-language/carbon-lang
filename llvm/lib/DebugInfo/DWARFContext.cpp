@@ -626,6 +626,8 @@ DWARFContextInMemory::DWARFContextInMemory(object::ObjectFile *Obj) :
         RangeDWOSection = data;
       }
     } else if (name == "debug_types") {
+      // Find debug_types data by section rather than name as there are
+      // multiple, comdat grouped, debug_types sections.
       TypesSections[*i].Data = data;
     }
 
@@ -649,6 +651,8 @@ DWARFContextInMemory::DWARFContextInMemory(object::ObjectFile *Obj) :
     if (!Map) {
       if (RelSecName != "debug_types")
         continue;
+      // Find debug_types relocs by section rather than name as there are
+      // multiple, comdat grouped, debug_types sections.
       Map = &TypesSections[*RelocatedSection].Relocs;
     }
 
