@@ -27,7 +27,7 @@
 
 extern "C" {
   SANITIZER_INTERFACE_ATTRIBUTE
-  bool __asan_should_detect_stack_use_after_return() {
+  int __asan_should_detect_stack_use_after_return() {
     __asan_init();
     return __asan_option_detect_stack_use_after_return;
   }

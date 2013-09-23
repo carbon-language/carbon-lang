@@ -128,7 +128,7 @@ extern "C" {
     static fntype fn = (fntype)getRealProcAddressOrDie("__asan_init_v3");
     fn();
     __asan_option_detect_stack_use_after_return =
-        (bool)__asan_should_detect_stack_use_after_return();
+        (__asan_should_detect_stack_use_after_return() != 0);
   }
 }
 
