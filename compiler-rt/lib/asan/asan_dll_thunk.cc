@@ -56,6 +56,20 @@ static void *getRealProcAddressOrDie(const char *name) {
     fn(arg1, arg2);                                                            \
   }
 
+#define WRAP_V_WWW(name)                                                       \
+  extern "C" void name(void *arg1, void *arg2, void *arg3) {                   \
+    typedef void *(*fntype)(void *, void *, void *);                           \
+    fntype fn = (fntype)getRealProcAddressOrDie(#name);                        \
+    fn(arg1, arg2, arg3);                                                      \
+  }
+
+#define WRAP_W_V(name)                                                         \
+  extern "C" void *name() {                                                    \
+    typedef void *(*fntype)();                                                 \
+    fntype fn = (fntype)getRealProcAddressOrDie(#name);                        \
+    return fn();                                                               \
+  }
+
 #define WRAP_W_W(name)                                                         \
   extern "C" void *name(void *arg) {                                           \
     typedef void *(*fntype)(void *arg);                                        \
@@ -102,7 +116,21 @@ static void *getRealProcAddressOrDie(const char *name) {
 // }}}
 
 // ----------------- ASan own interface functions --------------------
-WRAP_V_V(__asan_init_v3)
+WRAP_W_V(__asan_should_detect_stack_use_after_return)
+
+extern "C" {
+  int __asan_option_detect_stack_use_after_return;
+
+  // Manually wrap __asan_init as we need to initialize
+  // __asan_option_detect_stack_use_after_return afterwards.
+  void __asan_init_v3() {
+    typedef void (*fntype)();
+    static fntype fn = (fntype)getRealProcAddressOrDie("__asan_init_v3");
+    fn();
+    __asan_option_detect_stack_use_after_return =
+        (bool)__asan_should_detect_stack_use_after_return();
+  }
+}
 
 WRAP_V_W(__asan_report_store1)
 WRAP_V_W(__asan_report_store2)
@@ -120,6 +148,29 @@ WRAP_V_WW(__asan_report_load_n)
 
 WRAP_V_WW(__asan_register_globals)
 WRAP_V_WW(__asan_unregister_globals)
+
+WRAP_W_WW(__asan_stack_malloc_0)
+WRAP_W_WW(__asan_stack_malloc_1)
+WRAP_W_WW(__asan_stack_malloc_2)
+WRAP_W_WW(__asan_stack_malloc_3)
+WRAP_W_WW(__asan_stack_malloc_4)
+WRAP_W_WW(__asan_stack_malloc_5)
+WRAP_W_WW(__asan_stack_malloc_6)
+WRAP_W_WW(__asan_stack_malloc_7)
+WRAP_W_WW(__asan_stack_malloc_8)
+WRAP_W_WW(__asan_stack_malloc_9)
+WRAP_W_WW(__asan_stack_malloc_10)
+
+WRAP_V_WWW(__asan_stack_free_0)
+WRAP_V_WWW(__asan_stack_free_1)
+WRAP_V_WWW(__asan_stack_free_2)
+WRAP_V_WWW(__asan_stack_free_4)
+WRAP_V_WWW(__asan_stack_free_5)
+WRAP_V_WWW(__asan_stack_free_6)
+WRAP_V_WWW(__asan_stack_free_7)
+WRAP_V_WWW(__asan_stack_free_8)
+WRAP_V_WWW(__asan_stack_free_9)
+WRAP_V_WWW(__asan_stack_free_10)
 
 // TODO(timurrrr): Add more interface functions on the as-needed basis.
 
