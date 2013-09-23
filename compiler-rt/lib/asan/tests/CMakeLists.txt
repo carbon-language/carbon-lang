@@ -67,7 +67,6 @@ set(ASAN_UNITTEST_INSTRUMENTED_CFLAGS
   -mllvm -asan-globals=1
   -mllvm -asan-mapping-scale=0        # default will be used
   -mllvm -asan-mapping-offset-log=-1  # default will be used
-  -mllvm -asan-use-after-return=0
 )
 if(ASAN_TESTS_USE_ZERO_BASE_SHADOW)
   list(APPEND ASAN_UNITTEST_INSTRUMENTED_CFLAGS

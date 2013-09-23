@@ -1,6 +1,6 @@
 // Check that UAR mode can handle very deep recusrion.
-//
-// RUN: %clangxx_asan -fsanitize=use-after-return -O2 %s -o %t && \
+// export ASAN_OPTIONS=detect_stack_use_after_return=1
+// RUN: %clangxx_asan -O2 %s -o %t && \
 // RUN:   %t 2>&1 | FileCheck %s
 #include <stdio.h>
 

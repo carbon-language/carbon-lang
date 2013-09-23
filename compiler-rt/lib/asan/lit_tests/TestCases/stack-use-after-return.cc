@@ -1,19 +1,19 @@
 // RUN: export ASAN_OPTIONS=detect_stack_use_after_return=1
-// RUN: %clangxx_asan -fsanitize=use-after-return -O0 %s -o %t && \
+// RUN: %clangxx_asan  -O0 %s -o %t && \
 // RUN:   not %t 2>&1 | FileCheck %s
-// RUN: %clangxx_asan -fsanitize=use-after-return -O1 %s -o %t && \
+// RUN: %clangxx_asan  -O1 %s -o %t && \
 // RUN:   not %t 2>&1 | FileCheck %s
-// RUN: %clangxx_asan -fsanitize=use-after-return -O2 %s -o %t && \
+// RUN: %clangxx_asan  -O2 %s -o %t && \
 // RUN:   not %t 2>&1 | FileCheck %s
-// RUN: %clangxx_asan -fsanitize=use-after-return -O3 %s -o %t && \
+// RUN: %clangxx_asan  -O3 %s -o %t && \
 // RUN:   not %t 2>&1 | FileCheck %s
 // RUN: ASAN_OPTIONS=detect_stack_use_after_return=0 %t
 // Regression test for a CHECK failure with small stack size and large frame.
-// RUN: %clangxx_asan -fsanitize=use-after-return -O3 %s -o %t -DkSize=10000 && \
+// RUN: %clangxx_asan  -O3 %s -o %t -DkSize=10000 && \
 // RUN: (ulimit -s 65;  not %t) 2>&1 | FileCheck %s
 //
 // Test that we can find UAR in a thread other than main:
-// RUN: %clangxx_asan -fsanitize=use-after-return -DUseThread -O2 %s -o %t && \
+// RUN: %clangxx_asan  -DUseThread -O2 %s -o %t && \
 // RUN:   not %t 2>&1 | FileCheck --check-prefix=THREAD %s
 
 #include <stdio.h>

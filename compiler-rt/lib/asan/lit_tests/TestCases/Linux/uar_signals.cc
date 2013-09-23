@@ -1,7 +1,7 @@
 // This test shows that the current implementation of use-after-return is
 // not signal-safe.
 // RUN: %clangxx_asan -O1 %s -o %t -lpthread && %t
-// RUN: %clangxx_asan -fsanitize=use-after-return -O1 %s -o %t -lpthread && %t
+// RUN: %clangxx_asan -O1 %s -o %t -lpthread && %t
 #include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
