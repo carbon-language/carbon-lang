@@ -980,6 +980,14 @@ static SDValue lowerMSABinaryIntr(SDValue Op, SelectionDAG &DAG, unsigned Opc) {
   return Result;
 }
 
+static SDValue lowerMSABinaryImmIntr(SDValue Op, SelectionDAG &DAG,
+                                     unsigned Opc, SDValue RHS) {
+  SDValue LHS = Op->getOperand(1);
+  EVT ResTy = Op->getValueType(0);
+
+  return DAG.getNode(Opc, SDLoc(Op), ResTy, LHS, RHS);
+}
+
 static SDValue lowerMSABranchIntr(SDValue Op, SelectionDAG &DAG, unsigned Opc) {
   SDLoc DL(Op);
   SDValue Value = Op->getOperand(1);
@@ -1015,6 +1023,16 @@ static SDValue lowerMSAInsertIntr(SDValue Op, SelectionDAG &DAG, unsigned Opc) {
   SDValue Result = DAG.getNode(Opc, DL, ResTy, Op0, Op2, Op1);
 
   return Result;
+}
+
+static SDValue lowerMSASplatImm(SDValue Op, unsigned ImmOp, SelectionDAG &DAG) {
+  EVT ResTy = Op->getValueType(0);
+
+  unsigned SplatOp = MipsISD::VSPLAT;
+  if (ResTy == MVT::v2i64)
+    SplatOp = MipsISD::VSPLATD;
+
+  return DAG.getNode(SplatOp, SDLoc(Op), ResTy, Op->getOperand(ImmOp));
 }
 
 static SDValue lowerMSAUnaryIntr(SDValue Op, SelectionDAG &DAG, unsigned Opc) {
@@ -1069,6 +1087,12 @@ SDValue MipsSETargetLowering::lowerINTRINSIC_WO_CHAIN(SDValue Op,
   case Intrinsic::mips_addv_w:
   case Intrinsic::mips_addv_d:
     return lowerMSABinaryIntr(Op, DAG, ISD::ADD);
+  case Intrinsic::mips_addvi_b:
+  case Intrinsic::mips_addvi_h:
+  case Intrinsic::mips_addvi_w:
+  case Intrinsic::mips_addvi_d:
+    return lowerMSABinaryImmIntr(Op, DAG, ISD::ADD,
+                                 lowerMSASplatImm(Op, 2, DAG));
   case Intrinsic::mips_and_v:
     return lowerMSABinaryIntr(Op, DAG, ISD::AND);
   case Intrinsic::mips_bnz_b:
@@ -1178,6 +1202,12 @@ SDValue MipsSETargetLowering::lowerINTRINSIC_WO_CHAIN(SDValue Op,
   case Intrinsic::mips_subv_w:
   case Intrinsic::mips_subv_d:
     return lowerMSABinaryIntr(Op, DAG, ISD::SUB);
+  case Intrinsic::mips_subvi_b:
+  case Intrinsic::mips_subvi_h:
+  case Intrinsic::mips_subvi_w:
+  case Intrinsic::mips_subvi_d:
+    return lowerMSABinaryImmIntr(Op, DAG, ISD::SUB,
+                                 lowerMSASplatImm(Op, 2, DAG));
   case Intrinsic::mips_xor_v:
     return lowerMSABinaryIntr(Op, DAG, ISD::XOR);
   }
