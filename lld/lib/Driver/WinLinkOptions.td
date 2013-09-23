@@ -49,6 +49,7 @@ def no_ref : F<"opt:noref">,
 
 defm nxcompat : B<"nxcompat", "Disable data execution provention">;
 defm largeaddressaware : B<"largeaddressaware", "Disable large addresses">;
+defm allowbind: B<"allowbind", "Disable DLL binding">;
 defm fixed    : B<"fixed", "Enable base relocations">;
 defm tsaware  : B<"tsaware", "Create non-Terminal Server aware executable">;
 defm dynamicbase : B<"dynamicbase",

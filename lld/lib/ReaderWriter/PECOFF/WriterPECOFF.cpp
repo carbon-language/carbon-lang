@@ -210,6 +210,8 @@ public:
       dllCharacteristics |= llvm::COFF::IMAGE_DLL_CHARACTERISTICS_NX_COMPAT;
     if (context.getDynamicBaseEnabled())
       dllCharacteristics |= llvm::COFF::IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE;
+    if (!context.getAllowBind())
+      dllCharacteristics |= llvm::COFF::IMAGE_DLL_CHARACTERISTICS_NO_BIND;
     _peHeader.DLLCharacteristics = dllCharacteristics;
 
     _peHeader.SizeOfStackReserve = context.getStackReserve();

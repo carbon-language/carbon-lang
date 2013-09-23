@@ -419,6 +419,16 @@ bool WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ct
       ctx.setLargeAddressAware(true);
       break;
 
+    case OPT_allowbind:
+      // handle /allowbind
+      ctx.setAllowBind(true);
+      break;
+
+    case OPT_allowbind_no:
+      // handle /allowbind:no
+      ctx.setAllowBind(false);
+      break;
+
     case OPT_fixed:
       // handle /fixed
 

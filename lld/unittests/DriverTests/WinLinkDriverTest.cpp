@@ -53,6 +53,7 @@ TEST_F(WinLinkParserTest, Basic) {
   EXPECT_FALSE(_context.allowRemainingUndefines());
   EXPECT_TRUE(_context.isNxCompat());
   EXPECT_FALSE(_context.getLargeAddressAware());
+  EXPECT_TRUE(_context.getAllowBind());
   EXPECT_TRUE(_context.getBaseRelocationEnabled());
   EXPECT_TRUE(_context.isTerminalServerAware());
   EXPECT_TRUE(_context.getDynamicBaseEnabled());
@@ -204,6 +205,16 @@ TEST_F(WinLinkParserTest, LargeAddressAware) {
 TEST_F(WinLinkParserTest, NoLargeAddressAware) {
   EXPECT_FALSE(parse("link.exe", "/largeaddressaware:no", "a.obj", nullptr));
   EXPECT_FALSE(_context.getLargeAddressAware());
+}
+
+TEST_F(WinLinkParserTest, AllowBind) {
+  EXPECT_FALSE(parse("link.exe", "/allowbind", "a.obj", nullptr));
+  EXPECT_TRUE(_context.getAllowBind());
+}
+
+TEST_F(WinLinkParserTest, NoAllowBind) {
+  EXPECT_FALSE(parse("link.exe", "/allowbind:no", "a.obj", nullptr));
+  EXPECT_FALSE(_context.getAllowBind());
 }
 
 TEST_F(WinLinkParserTest, Fixed) {

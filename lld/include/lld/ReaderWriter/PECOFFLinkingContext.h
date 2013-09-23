@@ -33,8 +33,9 @@ public:
         _subsystem(llvm::COFF::IMAGE_SUBSYSTEM_UNKNOWN),
         _machineType(llvm::COFF::IMAGE_FILE_MACHINE_I386), _imageVersion(0, 0),
         _minOSVersion(6, 0), _nxCompat(true), _largeAddressAware(false),
-        _baseRelocationEnabled(true), _terminalServerAware(true),
-        _dynamicBaseEnabled(true), _imageType(ImageType::IMAGE_EXE) {
+        _allowBind(true), _baseRelocationEnabled(true),
+        _terminalServerAware(true), _dynamicBaseEnabled(true),
+        _imageType(ImageType::IMAGE_EXE) {
     setDeadStripping(true);
   }
 
@@ -123,6 +124,9 @@ public:
   void setLargeAddressAware(bool val) { _largeAddressAware = val; }
   bool getLargeAddressAware() const { return _largeAddressAware; }
 
+  void setAllowBind(bool val) { _allowBind = val; }
+  bool getAllowBind() const { return _allowBind; }
+
   void setBaseRelocationEnabled(bool val) { _baseRelocationEnabled = val; }
   bool getBaseRelocationEnabled() const { return _baseRelocationEnabled; }
 
@@ -174,6 +178,7 @@ private:
   Version _minOSVersion;
   bool _nxCompat;
   bool _largeAddressAware;
+  bool _allowBind;
   bool _baseRelocationEnabled;
   bool _terminalServerAware;
   bool _dynamicBaseEnabled;
