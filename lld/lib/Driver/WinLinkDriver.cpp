@@ -409,7 +409,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ct
       ctx.setDeadStripping(false);
       break;
 
-    case OPT_no_nxcompat:
+    case OPT_nxcompat_no:
       // handle /nxcompat:no
       ctx.setNxCompat(false);
       break;
@@ -432,7 +432,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ct
       ctx.setDynamicBaseEnabled(false);
       break;
 
-    case OPT_no_dynamicbase:
+    case OPT_dynamicbase_no:
       // handle /dynamicbase:no
       ctx.setDynamicBaseEnabled(false);
       break;
@@ -442,7 +442,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ct
       ctx.setTerminalServerAware(true);
       break;
 
-    case OPT_no_tsaware:
+    case OPT_tsaware_no:
       // handle /tsaware:no
       ctx.setTerminalServerAware(false);
       break;

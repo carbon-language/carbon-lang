@@ -2,11 +2,19 @@ include "llvm/Option/OptParser.td"
 
 // link.exe accepts options starting with either a dash or a slash.
 
+// Flag that takes no arguments.
 class F<string name> : Flag<["/", "-", "-?"], name>;
 
+// Flag that takes one argument after ":".
 multiclass P<string name, string help> {
   def "" : Joined<["/", "-", "-?"], name#":">, HelpText<help>;
   def _c : Separate<["/", "-", "-?"], name>, Alias<!cast<Option>(name)>;
+}
+
+// Boolean flag suffixed by ":no".
+multiclass B<string name, string help> {
+  def "" : F<name>;
+  def _no : F<name#":no">, HelpText<help>;
 }
 
 defm base    : P<"base", "Base address of the program">;
@@ -39,23 +47,12 @@ def ref : F<"opt:ref">;
 def no_ref : F<"opt:noref">,
     HelpText<"Keep unreferenced symbols to be included to the output">;
 
-def nxcompat : F<"nxcompat">;
-def no_nxcompat : F<"nxcompat:no">,
-    HelpText<"Disable data execution provention">;
-
-def largeaddressaware : F<"largeaddressaware">;
-def no_largeaddressaware : F<"largeaddressaware:no">,
-    HelpText<"Disable large addresses">;
-
-def fixed : F<"fixed">;
-def no_fixed : F<"fixed:no">, HelpText<"Enable base relocations">;
-
-def dynamicbase : F<"dynamicbase">;
-def no_dynamicbase : F<"dynamicbase:no">, HelpText<"Disable address space layout randomization">;
-
-def tsaware : F<"tsaware">;
-def no_tsaware : F<"tsaware:no">,
-    HelpText<"Create non-Terminal Server aware executable">;
+defm nxcompat : B<"nxcompat", "Disable data execution provention">;
+defm largeaddressaware : B<"largeaddressaware", "Disable large addresses">;
+defm fixed    : B<"fixed", "Enable base relocations">;
+defm tsaware  : B<"tsaware", "Create non-Terminal Server aware executable">;
+defm dynamicbase : B<"dynamicbase",
+     "Disable address space layout randomization">;
 
 def help : F<"help">;
 def help_q : F<"?">, Alias<help>;
