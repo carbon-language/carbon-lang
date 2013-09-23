@@ -66,10 +66,8 @@ look for the line where it runs ``collect2``. Replace that with
 ready to switch to using gold, backup your existing ``/usr/bin/ld``
 then replace it with ``ld-new``.
 
-You can produce bitcode files from ``clang`` using ``-emit-llvm`` or
-``-flto``, or the ``-O4`` flag which is synonymous with ``-O3 -flto``.
-
-Any of these flags will also cause ``clang`` to look for the gold plugin in
+You should produce bitcode files from ``clang`` with the option
+ ``-flto``. This flag will also cause ``clang`` to look for the gold plugin in
 the ``lib`` directory under its prefix and pass the ``-plugin`` option to
 ``ld``. It will not look for an alternate linker, which is why you need
 gold to be the installed system linker in your path.
@@ -153,7 +151,6 @@ everything is in place for an easy to use LTO build of autotooled projects:
      export AR="$PREFIX/bin/ar"
      export NM="$PREFIX/bin/nm"
      export RANLIB=/bin/true #ranlib is not needed, and doesn't support .bc files in .a
-     export CFLAGS="-O4"
 
 * Or you can just set your path:
 
@@ -163,7 +160,6 @@ everything is in place for an easy to use LTO build of autotooled projects:
      export CC="clang -flto"
      export CXX="clang++ -flto"
      export RANLIB=/bin/true
-     export CFLAGS="-O4"
 * Configure and build the project as usual:
 
   .. code-block:: bash
