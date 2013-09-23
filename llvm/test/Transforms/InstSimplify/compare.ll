@@ -722,7 +722,10 @@ define i1 @non_inbounds_gep_compare(i64* %a) {
 ; CHECK-LABEL: @non_inbounds_gep_compare(
 ; Equality compares with non-inbounds GEPs can be folded.
   %x = getelementptr i64* %a, i64 42
-  %cmp = icmp eq i64* %a, %x
+  %y = getelementptr inbounds i64* %x, i64 -42
+  %z = getelementptr i64* %a, i64 -42
+  %w = getelementptr inbounds i64* %z, i64 42
+  %cmp = icmp eq i64* %y, %w
   ret i1 %cmp
-; CHECK-NEXT: ret i1 false
+; CHECK-NEXT: ret i1 true
 }
