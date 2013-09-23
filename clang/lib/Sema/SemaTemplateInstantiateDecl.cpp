@@ -3372,9 +3372,7 @@ void Sema::BuildVariableInstantiation(
       OldVar->isPreviousDeclInSameBlockScope());
   NewVar->setAccess(OldVar->getAccess());
 
-  // For local variables, inherit the 'used' and 'referenced' flags from the
-  // primary template.
-  if (OldVar->getLexicalDeclContext()->isFunctionOrMethod()) {
+  if (!OldVar->isStaticDataMember()) {
     NewVar->setIsUsed(OldVar->isUsed(false));
     NewVar->setReferenced(OldVar->isReferenced());
   }
