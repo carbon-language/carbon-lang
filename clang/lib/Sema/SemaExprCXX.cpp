@@ -903,18 +903,21 @@ Sema::BuildCXXTypeConstructExpr(TypeSourceInfo *TInfo,
   InitializationSequence InitSeq(*this, Entity, Kind, Exprs);
   ExprResult Result = InitSeq.Perform(*this, Entity, Kind, Exprs);
 
-  if (!Result.isInvalid() && ListInitialization &&
-      isa<InitListExpr>(Result.get())) {
+  if (Result.isInvalid() || !ListInitialization)
+    return Result;
+
+  Expr *Inner = Result.get();
+  if (CXXBindTemporaryExpr *BTE = dyn_cast_or_null<CXXBindTemporaryExpr>(Inner))
+    Inner = BTE->getSubExpr();
+  if (isa<InitListExpr>(Inner)) {
     // If the list-initialization doesn't involve a constructor call, we'll get
     // the initializer-list (with corrected type) back, but that's not what we
     // want, since it will be treated as an initializer list in further
     // processing. Explicitly insert a cast here.
-    InitListExpr *List = cast<InitListExpr>(Result.take());
-    Result = Owned(CXXFunctionalCastExpr::Create(Context, List->getType(),
-                                    Expr::getValueKindForType(TInfo->getType()),
-                                                 TInfo, CK_NoOp, List,
-                                                 /*Path=*/0,
-                                                 LParenLoc, RParenLoc));
+    QualType ResultType = Result.get()->getType();
+    Result = Owned(CXXFunctionalCastExpr::Create(
+        Context, ResultType, Expr::getValueKindForType(TInfo->getType()), TInfo,
+        CK_NoOp, Result.take(), /*Path=*/ 0, LParenLoc, RParenLoc));
   }
 
   // FIXME: Improve AST representation?

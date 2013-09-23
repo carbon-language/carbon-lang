@@ -37,6 +37,14 @@ struct C {
                          // expected-error {{expected ')'}} expected-note {{to match this '('}}
 };
 
+namespace PR16529 {
+  struct U {};
+  template <typename T> struct S {
+    static decltype(T{}, U{}) &f();
+  };
+  U &r = S<int>::f();
+}
+
 template<typename>
 class conditional {
 };
