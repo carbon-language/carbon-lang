@@ -290,8 +290,21 @@ CompilationDatabase *autoDetectCompilations(std::string &ErrorMessage) {
   if (!SourcePaths.empty()) {
     if (CompilationDatabase *Compilations =
             CompilationDatabase::autoDetectFromSource(SourcePaths[0],
-                                                      ErrorMessage))
-      return Compilations;
+                                                      ErrorMessage)) {
+      // FIXME: just pass SourcePaths[0] once getCompileCommands supports
+      // non-absolute paths.
+      SmallString<64> Path(SourcePaths[0]);
+      llvm::sys::fs::make_absolute(Path);
+      std::vector<CompileCommand> Commands =
+          Compilations->getCompileCommands(Path);
+      // Ignore a detected compilation database that doesn't contain source0
+      // since it is probably an unrelated compilation database.
+      if (!Commands.empty())
+        return Compilations;
+    }
+    // Reset ErrorMessage since a fix compilation database will be created if
+    // it fails to detect one from source.
+    ErrorMessage = "";
     // If no compilation database can be detected from source then we create a
     // fixed compilation database with c++11 support.
     std::string CommandLine[] = { "-std=c++11" };
