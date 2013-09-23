@@ -6,10 +6,8 @@ include "llvm/Option/OptParser.td"
 class F<string name> : Flag<["/", "-", "-?"], name>;
 
 // Flag that takes one argument after ":".
-multiclass P<string name, string help> {
-  def "" : Joined<["/", "-", "-?"], name#":">, HelpText<help>;
-  def _c : Separate<["/", "-", "-?"], name>, Alias<!cast<Option>(name)>;
-}
+class P<string name, string help> :
+      Joined<["/", "-", "-?"], name#":">, HelpText<help>;
 
 // Boolean flag suffixed by ":no".
 multiclass B<string name, string help> {
@@ -17,20 +15,20 @@ multiclass B<string name, string help> {
   def _no : F<name#":no">, HelpText<help>;
 }
 
-defm base    : P<"base", "Base address of the program">;
-defm defaultlib : P<"defaultlib", "Add the library to the list of input files">;
-defm entry   : P<"entry", "Name of entry point symbol">;
+def base    : P<"base", "Base address of the program">;
+def defaultlib : P<"defaultlib", "Add the library to the list of input files">;
+def entry   : P<"entry", "Name of entry point symbol">;
 // No help text because /failifmismatch is not intended to be used by the user.
-defm failifmismatch : P<"failifmismatch", "">;
-defm heap    : P<"heap", "Size of the heap">;
-defm align   : P<"align", "Section alignment">;
-defm libpath : P<"libpath", "Additional library search path">;
-defm mllvm   : P<"mllvm", "Options to pass to LLVM">;
-defm out     : P<"out", "Path to file to write output">;
-defm stack   : P<"stack", "Size of the stack">;
-defm machine : P<"machine", "Specify target platform">;
-defm version : P<"version", "Specify a version number in the PE header">;
-defm subsystem : P<"subsystem", "Specify subsystem">;
+def failifmismatch : P<"failifmismatch", "">;
+def heap    : P<"heap", "Size of the heap">;
+def align   : P<"align", "Section alignment">;
+def libpath : P<"libpath", "Additional library search path">;
+def mllvm   : P<"mllvm", "Options to pass to LLVM">;
+def out     : P<"out", "Path to file to write output">;
+def stack   : P<"stack", "Size of the stack">;
+def machine : P<"machine", "Specify target platform">;
+def version : P<"version", "Specify a version number in the PE header">;
+def subsystem : P<"subsystem", "Specify subsystem">;
 
 // We cannot use multiclass P because class name "incl" is different
 // from its command line option name. We do this because "include" is
@@ -65,16 +63,13 @@ def DASH_DASH : Option<["--"], "", KIND_REMAINING_ARGS>;
 // The flags below do nothing. They are defined only for link.exe compatibility.
 //
 
-multiclass Q<string name> {
-  def "" : Joined<["/", "-", "-?"], name#":">;
-  def _c : Separate<["/", "-", "-?"], name>, Alias<!cast<Option>(name)>;
-}
+class Q<string name> : Joined<["/", "-", "-?"], name#":">;
 
 def nologo : F<"nologo">;
-defm errorreport : Q<"errorreport">;
+def errorreport : Q<"errorreport">;
 
 def incremental : F<"incremental">;
 def no_incremental : F<"incremental:no">;
 
-defm delay : Q<"delay">;
-defm delayload : Q<"delayload">;
+def delay : Q<"delay">;
+def delayload : Q<"delayload">;
