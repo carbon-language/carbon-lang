@@ -14,9 +14,9 @@
 // RUN: sed -e 's#$(path)#%/T/CompilationNotInc#g' %S/Inputs/compile_commands.json > %T/CompilationNotInc/compile_commands.json
 
 // Check that no files are tranformed when -p is specified but not -include.
-// RUN: cp %S/Inputs/compilations.cpp %T/DetectFromSource/a1
-// RUN: cp %S/Inputs/compilations.cpp %T/DetectFromSource/a2
-// RUN: cp %S/Inputs/compilations.cpp %T/DetectFromSource/a3
+// RUN: cp %S/Inputs/compilations.cpp %T/CompilationNotInc/a1
+// RUN: cp %S/Inputs/compilations.cpp %T/CompilationNotInc/a2
+// RUN: cp %S/Inputs/compilations.cpp %T/CompilationNotInc/a3
 
 // RUN: not clang-modernize -use-nullptr -p=%T/CompilationNotInc
 // RUN: not diff -b %T/compilations_expected.cpp %T/CompilationNotInc/a1/compilations.cpp
