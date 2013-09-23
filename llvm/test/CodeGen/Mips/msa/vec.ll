@@ -95,6 +95,72 @@ entry:
 ; ANYENDIAN: st.b
 ; ANYENDIAN: .size llvm_mips_and_v_d_test
 ;
+define void @and_v_b_test() nounwind {
+entry:
+  %0 = load <16 x i8>* @llvm_mips_and_v_b_ARG1
+  %1 = load <16 x i8>* @llvm_mips_and_v_b_ARG2
+  %2 = and <16 x i8> %0, %1
+  store <16 x i8> %2, <16 x i8>* @llvm_mips_and_v_b_RES
+  ret void
+}
+
+; CHECK: and_v_b_test:
+; CHECK: ld.b
+; CHECK: ld.b
+; CHECK: and.v
+; CHECK: st.b
+; CHECK: .size and_v_b_test
+;
+define void @and_v_h_test() nounwind {
+entry:
+  %0 = load <8 x i16>* @llvm_mips_and_v_h_ARG1
+  %1 = load <8 x i16>* @llvm_mips_and_v_h_ARG2
+  %2 = and <8 x i16> %0, %1
+  store <8 x i16> %2, <8 x i16>* @llvm_mips_and_v_h_RES
+  ret void
+}
+
+; CHECK: and_v_h_test:
+; CHECK: ld.h
+; CHECK: ld.h
+; CHECK: and.v
+; CHECK: st.h
+; CHECK: .size and_v_h_test
+;
+
+define void @and_v_w_test() nounwind {
+entry:
+  %0 = load <4 x i32>* @llvm_mips_and_v_w_ARG1
+  %1 = load <4 x i32>* @llvm_mips_and_v_w_ARG2
+  %2 = and <4 x i32> %0, %1
+  store <4 x i32> %2, <4 x i32>* @llvm_mips_and_v_w_RES
+  ret void
+}
+
+; CHECK: and_v_w_test:
+; CHECK: ld.w
+; CHECK: ld.w
+; CHECK: and.v
+; CHECK: st.w
+; CHECK: .size and_v_w_test
+;
+
+define void @and_v_d_test() nounwind {
+entry:
+  %0 = load <2 x i64>* @llvm_mips_and_v_d_ARG1
+  %1 = load <2 x i64>* @llvm_mips_and_v_d_ARG2
+  %2 = and <2 x i64> %0, %1
+  store <2 x i64> %2, <2 x i64>* @llvm_mips_and_v_d_RES
+  ret void
+}
+
+; CHECK: and_v_d_test:
+; CHECK: ld.d
+; CHECK: ld.d
+; CHECK: and.v
+; CHECK: st.d
+; CHECK: .size and_v_d_test
+;
 @llvm_mips_bmnz_v_b_ARG1 = global <16 x i8> <i8 0, i8 1, i8 2, i8 3, i8 4, i8 5, i8 6, i8 7, i8 8, i8 9, i8 10, i8 11, i8 12, i8 13, i8 14, i8 15>, align 16
 @llvm_mips_bmnz_v_b_ARG2 = global <16 x i8> <i8 16, i8 17, i8 18, i8 19, i8 20, i8 21, i8 22, i8 23, i8 24, i8 25, i8 26, i8 27, i8 28, i8 29, i8 30, i8 31>, align 16
 @llvm_mips_bmnz_v_b_RES  = global <16 x i8> <i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0>, align 16
@@ -555,6 +621,72 @@ entry:
 ; ANYENDIAN: st.b
 ; ANYENDIAN: .size llvm_mips_or_v_d_test
 ;
+define void @or_v_b_test() nounwind {
+entry:
+  %0 = load <16 x i8>* @llvm_mips_or_v_b_ARG1
+  %1 = load <16 x i8>* @llvm_mips_or_v_b_ARG2
+  %2 = or <16 x i8> %0, %1
+  store <16 x i8> %2, <16 x i8>* @llvm_mips_or_v_b_RES
+  ret void
+}
+
+; CHECK: or_v_b_test:
+; CHECK: ld.b
+; CHECK: ld.b
+; CHECK: or.v
+; CHECK: st.b
+; CHECK: .size or_v_b_test
+;
+define void @or_v_h_test() nounwind {
+entry:
+  %0 = load <8 x i16>* @llvm_mips_or_v_h_ARG1
+  %1 = load <8 x i16>* @llvm_mips_or_v_h_ARG2
+  %2 = or <8 x i16> %0, %1
+  store <8 x i16> %2, <8 x i16>* @llvm_mips_or_v_h_RES
+  ret void
+}
+
+; CHECK: or_v_h_test:
+; CHECK: ld.h
+; CHECK: ld.h
+; CHECK: or.v
+; CHECK: st.h
+; CHECK: .size or_v_h_test
+;
+
+define void @or_v_w_test() nounwind {
+entry:
+  %0 = load <4 x i32>* @llvm_mips_or_v_w_ARG1
+  %1 = load <4 x i32>* @llvm_mips_or_v_w_ARG2
+  %2 = or <4 x i32> %0, %1
+  store <4 x i32> %2, <4 x i32>* @llvm_mips_or_v_w_RES
+  ret void
+}
+
+; CHECK: or_v_w_test:
+; CHECK: ld.w
+; CHECK: ld.w
+; CHECK: or.v
+; CHECK: st.w
+; CHECK: .size or_v_w_test
+;
+
+define void @or_v_d_test() nounwind {
+entry:
+  %0 = load <2 x i64>* @llvm_mips_or_v_d_ARG1
+  %1 = load <2 x i64>* @llvm_mips_or_v_d_ARG2
+  %2 = or <2 x i64> %0, %1
+  store <2 x i64> %2, <2 x i64>* @llvm_mips_or_v_d_RES
+  ret void
+}
+
+; CHECK: or_v_d_test:
+; CHECK: ld.d
+; CHECK: ld.d
+; CHECK: or.v
+; CHECK: st.d
+; CHECK: .size or_v_d_test
+;
 @llvm_mips_xor_v_b_ARG1 = global <16 x i8> <i8 0, i8 1, i8 2, i8 3, i8 4, i8 5, i8 6, i8 7, i8 8, i8 9, i8 10, i8 11, i8 12, i8 13, i8 14, i8 15>, align 16
 @llvm_mips_xor_v_b_ARG2 = global <16 x i8> <i8 16, i8 17, i8 18, i8 19, i8 20, i8 21, i8 22, i8 23, i8 24, i8 25, i8 26, i8 27, i8 28, i8 29, i8 30, i8 31>, align 16
 @llvm_mips_xor_v_b_RES  = global <16 x i8> <i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0>, align 16
@@ -646,6 +778,72 @@ entry:
 ; ANYENDIAN: xor.v
 ; ANYENDIAN: st.b
 ; ANYENDIAN: .size llvm_mips_xor_v_d_test
+;
+define void @xor_v_b_test() nounwind {
+entry:
+  %0 = load <16 x i8>* @llvm_mips_xor_v_b_ARG1
+  %1 = load <16 x i8>* @llvm_mips_xor_v_b_ARG2
+  %2 = xor <16 x i8> %0, %1
+  store <16 x i8> %2, <16 x i8>* @llvm_mips_xor_v_b_RES
+  ret void
+}
+
+; CHECK: xor_v_b_test:
+; CHECK: ld.b
+; CHECK: ld.b
+; CHECK: xor.v
+; CHECK: st.b
+; CHECK: .size xor_v_b_test
+;
+define void @xor_v_h_test() nounwind {
+entry:
+  %0 = load <8 x i16>* @llvm_mips_xor_v_h_ARG1
+  %1 = load <8 x i16>* @llvm_mips_xor_v_h_ARG2
+  %2 = xor <8 x i16> %0, %1
+  store <8 x i16> %2, <8 x i16>* @llvm_mips_xor_v_h_RES
+  ret void
+}
+
+; CHECK: xor_v_h_test:
+; CHECK: ld.h
+; CHECK: ld.h
+; CHECK: xor.v
+; CHECK: st.h
+; CHECK: .size xor_v_h_test
+;
+
+define void @xor_v_w_test() nounwind {
+entry:
+  %0 = load <4 x i32>* @llvm_mips_xor_v_w_ARG1
+  %1 = load <4 x i32>* @llvm_mips_xor_v_w_ARG2
+  %2 = xor <4 x i32> %0, %1
+  store <4 x i32> %2, <4 x i32>* @llvm_mips_xor_v_w_RES
+  ret void
+}
+
+; CHECK: xor_v_w_test:
+; CHECK: ld.w
+; CHECK: ld.w
+; CHECK: xor.v
+; CHECK: st.w
+; CHECK: .size xor_v_w_test
+;
+
+define void @xor_v_d_test() nounwind {
+entry:
+  %0 = load <2 x i64>* @llvm_mips_xor_v_d_ARG1
+  %1 = load <2 x i64>* @llvm_mips_xor_v_d_ARG2
+  %2 = xor <2 x i64> %0, %1
+  store <2 x i64> %2, <2 x i64>* @llvm_mips_xor_v_d_RES
+  ret void
+}
+
+; CHECK: xor_v_d_test:
+; CHECK: ld.d
+; CHECK: ld.d
+; CHECK: xor.v
+; CHECK: st.d
+; CHECK: .size xor_v_d_test
 ;
 declare <16 x i8> @llvm.mips.and.v(<16 x i8>, <16 x i8>) nounwind
 declare <16 x i8> @llvm.mips.bmnz.v(<16 x i8>, <16 x i8>) nounwind

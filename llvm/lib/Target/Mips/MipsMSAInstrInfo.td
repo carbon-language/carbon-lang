@@ -953,6 +953,12 @@ class MSA_VEC_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
   InstrItinClass Itinerary = itin;
 }
 
+class MSA_VEC_PSEUDO_BASE<SDPatternOperator OpNode, RegisterClass RCWD,
+                          RegisterClass RCWS = RCWD,
+                          RegisterClass RCWT = RCWD> :
+      MipsPseudo<(outs RCWD:$wd), (ins RCWS:$ws, RCWT:$wt),
+                 [(set RCWD:$wd, (OpNode RCWS:$ws, RCWT:$wt))]>;
+
 class ADD_A_B_DESC : MSA_3R_DESC_BASE<"add_a.b", int_mips_add_a_b, MSA128B>,
                      IsCommutable;
 class ADD_A_H_DESC : MSA_3R_DESC_BASE<"add_a.h", int_mips_add_a_h, MSA128H>,
@@ -999,7 +1005,10 @@ class ADDVI_H_DESC : MSA_I5_DESC_BASE<"addvi.h", int_mips_addvi_h, MSA128H>;
 class ADDVI_W_DESC : MSA_I5_DESC_BASE<"addvi.w", int_mips_addvi_w, MSA128W>;
 class ADDVI_D_DESC : MSA_I5_DESC_BASE<"addvi.d", int_mips_addvi_d, MSA128D>;
 
-class AND_V_DESC : MSA_VEC_DESC_BASE<"and.v", int_mips_and_v, MSA128B>;
+class AND_V_DESC : MSA_VEC_DESC_BASE<"and.v", and, MSA128B>;
+class AND_V_H_PSEUDO_DESC : MSA_VEC_PSEUDO_BASE<and, MSA128H>;
+class AND_V_W_PSEUDO_DESC : MSA_VEC_PSEUDO_BASE<and, MSA128W>;
+class AND_V_D_PSEUDO_DESC : MSA_VEC_PSEUDO_BASE<and, MSA128D>;
 
 class ANDI_B_DESC : MSA_I8_DESC_BASE<"andi.b", int_mips_andi_b, MSA128B>;
 
@@ -1724,7 +1733,10 @@ class NOR_V_DESC : MSA_VEC_DESC_BASE<"nor.v", int_mips_nor_v, MSA128B>;
 
 class NORI_B_DESC : MSA_I8_DESC_BASE<"nori.b", int_mips_nori_b, MSA128B>;
 
-class OR_V_DESC : MSA_VEC_DESC_BASE<"or.v", int_mips_or_v, MSA128B>;
+class OR_V_DESC : MSA_VEC_DESC_BASE<"or.v", or, MSA128B>;
+class OR_V_H_PSEUDO_DESC : MSA_VEC_PSEUDO_BASE<or, MSA128H>;
+class OR_V_W_PSEUDO_DESC : MSA_VEC_PSEUDO_BASE<or, MSA128W>;
+class OR_V_D_PSEUDO_DESC : MSA_VEC_PSEUDO_BASE<or, MSA128D>;
 
 class ORI_B_DESC : MSA_I8_DESC_BASE<"ori.b", int_mips_ori_b, MSA128B>;
 
@@ -1910,7 +1922,10 @@ class VSHF_H_DESC : MSA_3R_DESC_BASE<"vshf.h", int_mips_vshf_h, MSA128H>;
 class VSHF_W_DESC : MSA_3R_DESC_BASE<"vshf.w", int_mips_vshf_w, MSA128W>;
 class VSHF_D_DESC : MSA_3R_DESC_BASE<"vshf.d", int_mips_vshf_d, MSA128D>;
 
-class XOR_V_DESC : MSA_VEC_DESC_BASE<"xor.v", int_mips_xor_v, MSA128B>;
+class XOR_V_DESC : MSA_VEC_DESC_BASE<"xor.v", xor, MSA128B>;
+class XOR_V_H_PSEUDO_DESC : MSA_VEC_PSEUDO_BASE<xor, MSA128H>;
+class XOR_V_W_PSEUDO_DESC : MSA_VEC_PSEUDO_BASE<xor, MSA128W>;
+class XOR_V_D_PSEUDO_DESC : MSA_VEC_PSEUDO_BASE<xor, MSA128D>;
 
 class XORI_B_DESC : MSA_I8_DESC_BASE<"xori.b", int_mips_xori_b, MSA128B>;
 
@@ -1946,6 +1961,15 @@ def ADDVI_W : ADDVI_W_ENC, ADDVI_W_DESC;
 def ADDVI_D : ADDVI_D_ENC, ADDVI_D_DESC;
 
 def AND_V : AND_V_ENC, AND_V_DESC;
+def AND_V_H_PSEUDO : AND_V_H_PSEUDO_DESC,
+                     PseudoInstExpansion<(AND_V MSA128B:$wd,
+                                                MSA128B:$ws, MSA128B:$wt)>;
+def AND_V_W_PSEUDO : AND_V_W_PSEUDO_DESC,
+                     PseudoInstExpansion<(AND_V MSA128B:$wd,
+                                                MSA128B:$ws, MSA128B:$wt)>;
+def AND_V_D_PSEUDO : AND_V_D_PSEUDO_DESC,
+                     PseudoInstExpansion<(AND_V MSA128B:$wd,
+                                                MSA128B:$ws, MSA128B:$wt)>;
 
 def ANDI_B : ANDI_B_ENC, ANDI_B_DESC;
 
@@ -2478,6 +2502,15 @@ def NOR_V : NOR_V_ENC, NOR_V_DESC;
 def NORI_B : NORI_B_ENC, NORI_B_DESC;
 
 def OR_V : OR_V_ENC, OR_V_DESC;
+def OR_V_H_PSEUDO : OR_V_H_PSEUDO_DESC,
+                    PseudoInstExpansion<(OR_V MSA128B:$wd,
+                                              MSA128B:$ws, MSA128B:$wt)>;
+def OR_V_W_PSEUDO : OR_V_W_PSEUDO_DESC,
+                    PseudoInstExpansion<(OR_V MSA128B:$wd,
+                                              MSA128B:$ws, MSA128B:$wt)>;
+def OR_V_D_PSEUDO : OR_V_D_PSEUDO_DESC,
+                    PseudoInstExpansion<(OR_V MSA128B:$wd,
+                                              MSA128B:$ws, MSA128B:$wt)>;
 
 def ORI_B : ORI_B_ENC, ORI_B_DESC;
 
@@ -2626,6 +2659,15 @@ def VSHF_W : VSHF_W_ENC, VSHF_W_DESC;
 def VSHF_D : VSHF_D_ENC, VSHF_D_DESC;
 
 def XOR_V : XOR_V_ENC, XOR_V_DESC;
+def XOR_V_H_PSEUDO : XOR_V_H_PSEUDO_DESC,
+                     PseudoInstExpansion<(XOR_V MSA128B:$wd,
+                                                MSA128B:$ws, MSA128B:$wt)>;
+def XOR_V_W_PSEUDO : XOR_V_W_PSEUDO_DESC,
+                     PseudoInstExpansion<(XOR_V MSA128B:$wd,
+                                                MSA128B:$ws, MSA128B:$wt)>;
+def XOR_V_D_PSEUDO : XOR_V_D_PSEUDO_DESC,
+                     PseudoInstExpansion<(XOR_V MSA128B:$wd,
+                                                MSA128B:$ws, MSA128B:$wt)>;
 
 def XORI_B : XORI_B_ENC, XORI_B_DESC;
 

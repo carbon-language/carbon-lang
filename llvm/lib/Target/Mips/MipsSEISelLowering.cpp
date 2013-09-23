@@ -162,14 +162,17 @@ addMSAIntType(MVT::SimpleValueType Ty, const TargetRegisterClass *RC) {
   setOperationAction(ISD::BUILD_VECTOR, Ty, Custom);
 
   setOperationAction(ISD::ADD, Ty, Legal);
+  setOperationAction(ISD::AND, Ty, Legal);
   setOperationAction(ISD::CTLZ, Ty, Legal);
   setOperationAction(ISD::MUL, Ty, Legal);
+  setOperationAction(ISD::OR, Ty, Legal);
   setOperationAction(ISD::SDIV, Ty, Legal);
   setOperationAction(ISD::SHL, Ty, Legal);
   setOperationAction(ISD::SRA, Ty, Legal);
   setOperationAction(ISD::SRL, Ty, Legal);
   setOperationAction(ISD::SUB, Ty, Legal);
   setOperationAction(ISD::UDIV, Ty, Legal);
+  setOperationAction(ISD::XOR, Ty, Legal);
 }
 
 // Enable MSA support for the given floating-point type and Register class.
@@ -895,6 +898,8 @@ SDValue MipsSETargetLowering::lowerINTRINSIC_WO_CHAIN(SDValue Op,
   case Intrinsic::mips_addv_w:
   case Intrinsic::mips_addv_d:
     return lowerMSABinaryIntr(Op, DAG, ISD::ADD);
+  case Intrinsic::mips_and_v:
+    return lowerMSABinaryIntr(Op, DAG, ISD::AND);
   case Intrinsic::mips_bnz_b:
   case Intrinsic::mips_bnz_h:
   case Intrinsic::mips_bnz_w:
@@ -959,6 +964,8 @@ SDValue MipsSETargetLowering::lowerINTRINSIC_WO_CHAIN(SDValue Op,
   case Intrinsic::mips_nlzc_w:
   case Intrinsic::mips_nlzc_d:
     return lowerMSAUnaryIntr(Op, DAG, ISD::CTLZ);
+  case Intrinsic::mips_or_v:
+    return lowerMSABinaryIntr(Op, DAG, ISD::OR);
   case Intrinsic::mips_sll_b:
   case Intrinsic::mips_sll_h:
   case Intrinsic::mips_sll_w:
@@ -979,6 +986,8 @@ SDValue MipsSETargetLowering::lowerINTRINSIC_WO_CHAIN(SDValue Op,
   case Intrinsic::mips_subv_w:
   case Intrinsic::mips_subv_d:
     return lowerMSABinaryIntr(Op, DAG, ISD::SUB);
+  case Intrinsic::mips_xor_v:
+    return lowerMSABinaryIntr(Op, DAG, ISD::XOR);
   }
 }
 
