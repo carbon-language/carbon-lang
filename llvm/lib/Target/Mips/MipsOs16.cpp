@@ -94,6 +94,7 @@ namespace llvm {
 
 bool MipsOs16::runOnModule(Module &M) {
   bool usingMask = Mips32FunctionMask.length() > 0;
+  bool doneUsingMask = false; // this will make it stop repeating
   DEBUG(dbgs() << "Run on Module MipsOs16 \n" << Mips32FunctionMask << "\n");
   if (usingMask)
     DEBUG(dbgs() << "using mask \n" << Mips32FunctionMask << "\n");
@@ -103,13 +104,22 @@ bool MipsOs16::runOnModule(Module &M) {
     if (F->isDeclaration()) continue;
     DEBUG(dbgs() << "Working on " << F->getName() << "\n");
     if (usingMask) {
-      if (functionIndex == Mips32FunctionMask.length())
-        functionIndex = 0;
-      if (Mips32FunctionMask[functionIndex] == '1') {
-        DEBUG(dbgs() << "mask forced mips32: " << F->getName() << "\n");
-        F->addFnAttr("nomips16");
+      if (!doneUsingMask) {
+        if (functionIndex == Mips32FunctionMask.length())
+          functionIndex = 0;
+        switch (Mips32FunctionMask[functionIndex]) {
+        case '1':
+          DEBUG(dbgs() << "mask forced mips32: " << F->getName() << "\n");
+          F->addFnAttr("nomips16");
+          break;
+        case '.':
+          doneUsingMask = true;
+          break;
+        default:
+          break;
+        }
+        functionIndex++;
       }
-      functionIndex++;
     }
     else {
       if (needsFP(*F)) {

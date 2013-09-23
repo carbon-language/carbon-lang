@@ -2,6 +2,8 @@
 
 ; RUN: llc -mtriple=mipsel-linux-gnu -march=mipsel -mcpu=mips16 -soft-float -mips16-hard-float -relocation-model=static -mips32-function-mask=01 -mips-os16 < %s | FileCheck %s -check-prefix=fmask2 
 
+; RUN: llc -mtriple=mipsel-linux-gnu -march=mipsel -mcpu=mips16 -soft-float -mips16-hard-float -relocation-model=static -mips32-function-mask=10. -mips-os16 < %s | FileCheck %s -check-prefix=fmask1nr
+
 ; Function Attrs: nounwind optsize readnone
 define void @foo1()  {
 entry:
@@ -17,6 +19,14 @@ entry:
 ; fmask2: .ent	foo1
 ; fmask2: save	{{.*}}
 ; fmask2: .end	foo1
+; fmask1nr: .ent foo1
+; fmask1nr: .set	noreorder
+; fmask1nr: .set	nomacro
+; fmask1nr: .set	noat
+; fmask1nr: .set	at
+; fmask1nr: .set	macro
+; fmask1nr: .set	reorder
+; fmask1nr: .end	foo1
 }
 
 ; Function Attrs: nounwind optsize readnone
@@ -34,6 +44,9 @@ entry:
 ; fmask1: .ent	foo2
 ; fmask1: save	{{.*}}
 ; fmask1: .end	foo2
+; fmask1nr: .ent	foo2
+; fmask1nr: save	{{.*}}
+; fmask1nr: .end	foo2
 }
 
 ; Function Attrs: nounwind optsize readnone
@@ -51,6 +64,9 @@ entry:
 ; fmask2:  .ent	foo3
 ; fmask2:  save	{{.*}}
 ; fmask2:  .end	foo3
+; fmask1r:  .ent	foo3
+; fmask1r:  save	{{.*}}
+; fmask1r:  .end	foo3
 }
 
 ; Function Attrs: nounwind optsize readnone
@@ -68,6 +84,9 @@ entry:
 ; fmask1: .ent	foo4
 ; fmask1: save	{{.*}}
 ; fmask1: .end	foo4
+; fmask1nr: .ent	foo4
+; fmask1nr: save	{{.*}}
+; fmask1nr: .end	foo4
 }
 
 
