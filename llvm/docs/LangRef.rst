@@ -780,6 +780,11 @@ the inliner and other passes to reason about the semantics of the function
 definition without needing to reason about the prefix data.  Obviously this
 makes the format of the prefix data highly target dependent.
 
+Prefix data is laid out as if it were an initializer for a global variable
+of the prefix data's type.  No padding is automatically placed between the
+prefix data and the function body.  If padding is required, it must be part
+of the prefix data.
+
 A trivial example of valid prefix data for the x86 architecture is ``i8 144``,
 which encodes the ``nop`` instruction:
 
