@@ -240,8 +240,9 @@ private:
 // COFF header.
 class COFFDataDirectoryAtom : public COFFLinkerInternalAtom {
 public:
-  COFFDataDirectoryAtom(const File &file, uint64_t ordinal, uint32_t entrySize)
-      : COFFLinkerInternalAtom(file, assembleRawContent(entrySize)),
+  COFFDataDirectoryAtom(const File &file, uint64_t ordinal, uint32_t entrySize,
+                        uint32_t entryAddr = 0)
+      : COFFLinkerInternalAtom(file, assembleRawContent(entrySize, entryAddr)),
         _ordinal(ordinal) {}
 
   virtual uint64_t ordinal() const { return _ordinal; }
@@ -249,9 +250,10 @@ public:
   virtual ContentPermissions permissions() const { return permR__; }
 
 private:
-  std::vector<uint8_t> assembleRawContent(uint32_t entrySize) {
+  std::vector<uint8_t> assembleRawContent(uint32_t entrySize, uint32_t entryAddr) {
     std::vector<uint8_t> data = std::vector<uint8_t>(8, 0);
-    *(reinterpret_cast<uint32_t *>(&data[4])) = entrySize;
+    *(reinterpret_cast<llvm::support::ulittle32_t *>(&data[0])) = entryAddr;
+    *(reinterpret_cast<llvm::support::ulittle32_t *>(&data[4])) = entrySize;
     return data;
   }
 

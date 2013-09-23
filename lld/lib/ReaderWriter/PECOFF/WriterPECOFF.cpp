@@ -425,7 +425,8 @@ public:
 
   void setBaseRelocField(uint32_t addr, uint32_t size) {
     auto *atom = new (_alloc) coff::COFFDataDirectoryAtom(
-        _file, llvm::COFF::DataDirectoryIndex::BASE_RELOCATION_TABLE, size);
+        _file, llvm::COFF::DataDirectoryIndex::BASE_RELOCATION_TABLE, size,
+        addr);
     uint64_t offset = atom->ordinal() * sizeof(llvm::object::data_directory);
     _atomLayouts.push_back(new (_alloc) AtomLayout(atom, offset, offset));
   }
@@ -820,9 +821,9 @@ public:
     if (baseReloc) {
       baseReloc->setContents(_chunks);
       if (baseReloc->size()) {
+        addSectionChunk(baseReloc, sectionTable);
         dataDirectory->setBaseRelocField(baseReloc->getSectionRva(),
                                          baseReloc->rawSize());
-        addSectionChunk(baseReloc, sectionTable);
       }
     }
 
