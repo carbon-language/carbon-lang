@@ -38,63 +38,63 @@ static void *getRealProcAddressOrDie(const char *name) {
 #define WRAP_V_V(name)                                                         \
   extern "C" void name() {                                                     \
     typedef void (*fntype)();                                                  \
-    fntype fn = (fntype)getRealProcAddressOrDie(#name);                        \
+    static fntype fn = (fntype)getRealProcAddressOrDie(#name);                 \
     fn();                                                                      \
   }
 
 #define WRAP_V_W(name)                                                         \
   extern "C" void name(void *arg) {                                            \
     typedef void (*fntype)(void *arg);                                         \
-    fntype fn = (fntype)getRealProcAddressOrDie(#name);                        \
+    static fntype fn = (fntype)getRealProcAddressOrDie(#name);                 \
     fn(arg);                                                                   \
   }
 
 #define WRAP_V_WW(name)                                                        \
   extern "C" void name(void *arg1, void *arg2) {                               \
     typedef void (*fntype)(void *, void *);                                    \
-    fntype fn = (fntype)getRealProcAddressOrDie(#name);                        \
+    static fntype fn = (fntype)getRealProcAddressOrDie(#name);                 \
     fn(arg1, arg2);                                                            \
   }
 
 #define WRAP_V_WWW(name)                                                       \
   extern "C" void name(void *arg1, void *arg2, void *arg3) {                   \
     typedef void *(*fntype)(void *, void *, void *);                           \
-    fntype fn = (fntype)getRealProcAddressOrDie(#name);                        \
+    static fntype fn = (fntype)getRealProcAddressOrDie(#name);                 \
     fn(arg1, arg2, arg3);                                                      \
   }
 
 #define WRAP_W_V(name)                                                         \
   extern "C" void *name() {                                                    \
     typedef void *(*fntype)();                                                 \
-    fntype fn = (fntype)getRealProcAddressOrDie(#name);                        \
+    static fntype fn = (fntype)getRealProcAddressOrDie(#name);                 \
     return fn();                                                               \
   }
 
 #define WRAP_W_W(name)                                                         \
   extern "C" void *name(void *arg) {                                           \
     typedef void *(*fntype)(void *arg);                                        \
-    fntype fn = (fntype)getRealProcAddressOrDie(#name);                        \
+    static fntype fn = (fntype)getRealProcAddressOrDie(#name);                 \
     return fn(arg);                                                            \
   }
 
 #define WRAP_W_WW(name)                                                        \
   extern "C" void *name(void *arg1, void *arg2) {                              \
     typedef void *(*fntype)(void *, void *);                                   \
-    fntype fn = (fntype)getRealProcAddressOrDie(#name);                        \
+    static fntype fn = (fntype)getRealProcAddressOrDie(#name);                 \
     return fn(arg1, arg2);                                                     \
   }
 
 #define WRAP_W_WWW(name)                                                       \
   extern "C" void *name(void *arg1, void *arg2, void *arg3) {                  \
     typedef void *(*fntype)(void *, void *, void *);                           \
-    fntype fn = (fntype)getRealProcAddressOrDie(#name);                        \
+    static fntype fn = (fntype)getRealProcAddressOrDie(#name);                 \
     return fn(arg1, arg2, arg3);                                               \
   }
 
 #define WRAP_W_WWWW(name)                                                      \
   extern "C" void *name(void *arg1, void *arg2, void *arg3, void *arg4) {      \
     typedef void *(*fntype)(void *, void *, void *, void *);                   \
-    fntype fn = (fntype)getRealProcAddressOrDie(#name);                        \
+    static fntype fn = (fntype)getRealProcAddressOrDie(#name);                 \
     return fn(arg1, arg2, arg3, arg4);                                         \
   }
 
@@ -102,7 +102,7 @@ static void *getRealProcAddressOrDie(const char *name) {
   extern "C" void *name(void *arg1, void *arg2, void *arg3, void *arg4,        \
                         void *arg5) {                                          \
     typedef void *(*fntype)(void *, void *, void *, void *, void *);           \
-    fntype fn = (fntype)getRealProcAddressOrDie(#name);                        \
+    static fntype fn = (fntype)getRealProcAddressOrDie(#name);                 \
     return fn(arg1, arg2, arg3, arg4, arg5);                                   \
   }
 
@@ -110,7 +110,7 @@ static void *getRealProcAddressOrDie(const char *name) {
   extern "C" void *name(void *arg1, void *arg2, void *arg3, void *arg4,        \
                         void *arg5, void *arg6) {                              \
     typedef void *(*fntype)(void *, void *, void *, void *, void *, void *);   \
-    fntype fn = (fntype)getRealProcAddressOrDie(#name);                        \
+    static fntype fn = (fntype)getRealProcAddressOrDie(#name);                 \
     return fn(arg1, arg2, arg3, arg4, arg5, arg6);                             \
   }
 // }}}
