@@ -211,11 +211,11 @@ unsigned SanitizerArgs::parse(const char *Value) {
 #define SANITIZER_GROUP(NAME, ID, ALIAS) .Case(NAME, ID)
 #include "clang/Basic/Sanitizers.def"
     .Default(SanitizeKind());
-  // Assume -fsanitize=address implies -fsanitize=init-order.
+  // Assume -fsanitize=address implies -fsanitize=init-order,use-after-return.
   // FIXME: This should be either specified in Sanitizers.def, or go away when
-  // we get rid of "-fsanitize=init-order" flag at all.
+  // we get rid of "-fsanitize=init-order,use-after-return" flags at all.
   if (ParsedKind & Address)
-    ParsedKind |= InitOrder;
+    ParsedKind |= InitOrder | UseAfterReturn;
   return ParsedKind;
 }
 
