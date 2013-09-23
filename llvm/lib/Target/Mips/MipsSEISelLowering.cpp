@@ -90,6 +90,8 @@ MipsSETargetLowering::MipsSETargetLowering(MipsTargetMachine &TM)
     addMSAFloatType(MVT::v8f16, &Mips::MSA128HRegClass);
     addMSAFloatType(MVT::v4f32, &Mips::MSA128WRegClass);
     addMSAFloatType(MVT::v2f64, &Mips::MSA128DRegClass);
+
+    setTargetDAGCombine(ISD::XOR);
   }
 
   if (!Subtarget->mipsSEUsesSoftFloat()) {
@@ -567,6 +569,44 @@ static SDValue performVSELECTCombine(SDNode *N, SelectionDAG &DAG) {
                      N->getOperand(2), SetCC.getOperand(2));
 }
 
+static SDValue performXORCombine(SDNode *N, SelectionDAG &DAG,
+                                 const MipsSubtarget *Subtarget) {
+  EVT Ty = N->getValueType(0);
+
+  if (Subtarget->hasMSA() && Ty.is128BitVector() && Ty.isInteger()) {
+    // Try the following combines:
+    //   (xor (or $a, $b), (build_vector allones))
+    //   (xor (or $a, $b), (bitcast (build_vector allones)))
+    SDValue Op0 = N->getOperand(0);
+    SDValue Op1 = N->getOperand(1);
+    SDValue NotOp;
+    ConstantSDNode *Const;
+
+    if (ISD::isBuildVectorAllOnes(Op0.getNode()))
+      NotOp = Op1;
+    else if (ISD::isBuildVectorAllOnes(Op1.getNode()))
+      NotOp = Op0;
+    else if ((Op0->getOpcode() == MipsISD::VSPLAT ||
+              Op0->getOpcode() == MipsISD::VSPLATD) &&
+             (Const = dyn_cast<ConstantSDNode>(Op0->getOperand(0))) &&
+             Const->isAllOnesValue())
+      NotOp = Op1;
+    else if ((Op1->getOpcode() == MipsISD::VSPLAT ||
+              Op1->getOpcode() == MipsISD::VSPLATD) &&
+             (Const = dyn_cast<ConstantSDNode>(Op1->getOperand(0))) &&
+             Const->isAllOnesValue())
+      NotOp = Op0;
+    else
+      return SDValue();
+
+    if (NotOp->getOpcode() == ISD::OR)
+      return DAG.getNode(MipsISD::VNOR, SDLoc(N), Ty, NotOp->getOperand(0),
+                         NotOp->getOperand(1));
+  }
+
+  return SDValue();
+}
+
 SDValue
 MipsSETargetLowering::PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const {
   SelectionDAG &DAG = DCI.DAG;
@@ -587,10 +627,12 @@ MipsSETargetLowering::PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const {
     return performSRLCombine(N, DAG, DCI, Subtarget);
   case ISD::VSELECT:
     return performVSELECTCombine(N, DAG);
-  case ISD::SETCC: {
+  case ISD::XOR:
+    Val = performXORCombine(N, DAG, Subtarget);
+    break;
+  case ISD::SETCC:
     Val = performSETCCCombine(N, DAG);
     break;
-  }
   }
 
   if (Val.getNode())
@@ -964,6 +1006,10 @@ SDValue MipsSETargetLowering::lowerINTRINSIC_WO_CHAIN(SDValue Op,
   case Intrinsic::mips_nlzc_w:
   case Intrinsic::mips_nlzc_d:
     return lowerMSAUnaryIntr(Op, DAG, ISD::CTLZ);
+  case Intrinsic::mips_nor_v: {
+    SDValue Res = lowerMSABinaryIntr(Op, DAG, ISD::OR);
+    return DAG.getNOT(SDLoc(Op), Res, Res->getValueType(0));
+  }
   case Intrinsic::mips_or_v:
     return lowerMSABinaryIntr(Op, DAG, ISD::OR);
   case Intrinsic::mips_sll_b:

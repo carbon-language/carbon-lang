@@ -214,6 +214,7 @@ const char *MipsTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case MipsISD::VANY_NONZERO:      return "MipsISD::VANY_NONZERO";
   case MipsISD::VSPLAT:            return "MipsISD::VSPLAT";
   case MipsISD::VSPLATD:           return "MipsISD::VSPLATD";
+  case MipsISD::VNOR:              return "MipsISD::VNOR";
   default:                         return NULL;
   }
 }

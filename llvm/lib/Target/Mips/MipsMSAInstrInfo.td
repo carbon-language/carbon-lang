@@ -20,6 +20,8 @@ def MipsVAllZero : SDNode<"MipsISD::VALL_ZERO", SDT_MipsVecCond>;
 def MipsVAnyZero : SDNode<"MipsISD::VANY_ZERO", SDT_MipsVecCond>;
 def MipsVSplat  : SDNode<"MipsISD::VSPLAT", SDT_MipsSplat>;
 def MipsVSplatD : SDNode<"MipsISD::VSPLATD", SDT_MipsSplat>;
+def MipsVNOR : SDNode<"MipsISD::VNOR", SDTIntBinOp,
+                      [SDNPCommutative, SDNPAssociative]>;
 
 def vsplati8  : PatFrag<(ops node:$in), (v16i8 (MipsVSplat (i32 node:$in)))>;
 def vsplati16 : PatFrag<(ops node:$in), (v8i16 (MipsVSplat (i32 node:$in)))>;
@@ -1729,7 +1731,10 @@ class NLZC_H_DESC : MSA_2R_DESC_BASE<"nlzc.h", ctlz, MSA128H>;
 class NLZC_W_DESC : MSA_2R_DESC_BASE<"nlzc.w", ctlz, MSA128W>;
 class NLZC_D_DESC : MSA_2R_DESC_BASE<"nlzc.d", ctlz, MSA128D>;
 
-class NOR_V_DESC : MSA_VEC_DESC_BASE<"nor.v", int_mips_nor_v, MSA128B>;
+class NOR_V_DESC : MSA_VEC_DESC_BASE<"nor.v", MipsVNOR, MSA128B>;
+class NOR_V_H_PSEUDO_DESC : MSA_VEC_PSEUDO_BASE<MipsVNOR, MSA128H>;
+class NOR_V_W_PSEUDO_DESC : MSA_VEC_PSEUDO_BASE<MipsVNOR, MSA128W>;
+class NOR_V_D_PSEUDO_DESC : MSA_VEC_PSEUDO_BASE<MipsVNOR, MSA128D>;
 
 class NORI_B_DESC : MSA_I8_DESC_BASE<"nori.b", int_mips_nori_b, MSA128B>;
 
@@ -2498,6 +2503,15 @@ def NLZC_W : NLZC_W_ENC, NLZC_W_DESC;
 def NLZC_D : NLZC_D_ENC, NLZC_D_DESC;
 
 def NOR_V : NOR_V_ENC, NOR_V_DESC;
+def NOR_V_H_PSEUDO : NOR_V_H_PSEUDO_DESC,
+                     PseudoInstExpansion<(NOR_V MSA128B:$wd,
+                                                MSA128B:$ws, MSA128B:$wt)>;
+def NOR_V_W_PSEUDO : NOR_V_W_PSEUDO_DESC,
+                     PseudoInstExpansion<(NOR_V MSA128B:$wd,
+                                                MSA128B:$ws, MSA128B:$wt)>;
+def NOR_V_D_PSEUDO : NOR_V_D_PSEUDO_DESC,
+                     PseudoInstExpansion<(NOR_V MSA128B:$wd,
+                                                MSA128B:$ws, MSA128B:$wt)>;
 
 def NORI_B : NORI_B_ENC, NORI_B_DESC;
 

@@ -164,6 +164,9 @@ namespace llvm {
       // constant, and the operand fits in a signed 10-bits value.
       VSPLATD,
 
+      // Combined (XOR (OR $a, $b), -1)
+      VNOR,
+
       // Load/Store Left/Right nodes.
       LWL = ISD::FIRST_TARGET_MEMORY_OPCODE,
       LWR,
