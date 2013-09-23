@@ -337,7 +337,8 @@ TEST_F(WinLinkParserTest, Ignore) {
   // There are some no-op command line options that are recognized for
   // compatibility with link.exe.
   EXPECT_FALSE(parse("link.exe", "/nologo", "/errorreport:prompt",
-                     "/incremental", "/incremental:no", "a.obj", nullptr));
+                     "/incremental", "/incremental:no", "/delay:unload",
+                     "/delayload:user32", "a.obj", nullptr));
   EXPECT_EQ("", errorMessage());
   EXPECT_EQ(1, inputFileCount());
   EXPECT_EQ("a.obj", inputFile(0));
