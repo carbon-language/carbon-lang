@@ -849,19 +849,19 @@ void CompileUnit::addType(DIE *Entity, DIType Ty, uint16_t Attribute) {
 // add may not only be identical to the names in the DIE.
 void CompileUnit::addAccelName(StringRef Name, DIE *Die) {
   DU->getStringPoolEntry(Name);
-  std::vector<DIE*> &DIEs = AccelNames[Name];
+  std::vector<DIE *> &DIEs = AccelNames[Name];
   DIEs.push_back(Die);
 }
 
 void CompileUnit::addAccelObjC(StringRef Name, DIE *Die) {
   DU->getStringPoolEntry(Name);
-  std::vector<DIE*> &DIEs = AccelObjC[Name];
+  std::vector<DIE *> &DIEs = AccelObjC[Name];
   DIEs.push_back(Die);
 }
 
 void CompileUnit::addAccelNamespace(StringRef Name, DIE *Die) {
   DU->getStringPoolEntry(Name);
-  std::vector<DIE*> &DIEs = AccelNamespace[Name];
+  std::vector<DIE *> &DIEs = AccelNamespace[Name];
   DIEs.push_back(Die);
 }
 
@@ -880,9 +880,9 @@ void CompileUnit::addGlobalName(StringRef Name, DIE *Die) {
 ///
 void CompileUnit::addGlobalType(DIType Ty) {
   DIDescriptor Context = DD->resolve(Ty.getContext());
-  if (Ty.isCompositeType() && !Ty.getName().empty() && !Ty.isForwardDecl()
-      && (!Context || Context.isCompileUnit() || Context.isFile()
-          || Context.isNameSpace()))
+  if (Ty.isCompositeType() && !Ty.getName().empty() && !Ty.isForwardDecl() &&
+      (!Context || Context.isCompileUnit() || Context.isFile() ||
+       Context.isNameSpace()))
     if (DIEEntry *Entry = getDIEEntry(Ty))
       GlobalTypes[Ty.getName()] = Entry->getEntry();
 }
