@@ -74,9 +74,8 @@ DWARFFormValue::getFixedFormSizes(uint8_t AddrSize, uint16_t Version) {
   return 0;
 }
 
-bool
-DWARFFormValue::extractValue(DataExtractor data, uint32_t *offset_ptr,
-                             const DWARFCompileUnit *cu) {
+bool DWARFFormValue::extractValue(DataExtractor data, uint32_t *offset_ptr,
+                                  const DWARFUnit *cu) {
   bool indirect = false;
   bool is_block = false;
   Value.data = NULL;
@@ -206,13 +205,13 @@ DWARFFormValue::extractValue(DataExtractor data, uint32_t *offset_ptr,
 
 bool
 DWARFFormValue::skipValue(DataExtractor debug_info_data, uint32_t* offset_ptr,
-                          const DWARFCompileUnit *cu) const {
+                          const DWARFUnit *cu) const {
   return DWARFFormValue::skipValue(Form, debug_info_data, offset_ptr, cu);
 }
 
 bool
 DWARFFormValue::skipValue(uint16_t form, DataExtractor debug_info_data,
-                          uint32_t *offset_ptr, const DWARFCompileUnit *cu) {
+                          uint32_t *offset_ptr, const DWARFUnit *cu) {
   bool indirect = false;
   do {
     switch (form) {
@@ -312,7 +311,7 @@ DWARFFormValue::skipValue(uint16_t form, DataExtractor debug_info_data,
 }
 
 void
-DWARFFormValue::dump(raw_ostream &OS, const DWARFCompileUnit *cu) const {
+DWARFFormValue::dump(raw_ostream &OS, const DWARFUnit *cu) const {
   DataExtractor debug_str_data(cu->getStringSection(), true, 0);
   DataExtractor debug_str_offset_data(cu->getStringOffsetSection(), true, 0);
   uint64_t uvalue = getUnsigned();
@@ -436,8 +435,7 @@ DWARFFormValue::dump(raw_ostream &OS, const DWARFCompileUnit *cu) const {
     OS << format(" => {0x%8.8" PRIx64 "}", uvalue + (cu ? cu->getOffset() : 0));
 }
 
-const char*
-DWARFFormValue::getAsCString(const DWARFCompileUnit *CU) const {
+const char *DWARFFormValue::getAsCString(const DWARFUnit *CU) const {
   if (isInlinedCStr())
     return Value.cstr;
   if (!CU)
@@ -452,8 +450,7 @@ DWARFFormValue::getAsCString(const DWARFCompileUnit *CU) const {
   return CU->getStringExtractor().getCStr(&Offset);
 }
 
-uint64_t
-DWARFFormValue::getAsAddress(const DWARFCompileUnit *CU) const {
+uint64_t DWARFFormValue::getAsAddress(const DWARFUnit *CU) const {
   if (!CU)
     return 0;
   if (Value.IsDWOIndex) {
@@ -466,7 +463,7 @@ DWARFFormValue::getAsAddress(const DWARFCompileUnit *CU) const {
   return Value.uval;
 }
 
-uint64_t DWARFFormValue::getReference(const DWARFCompileUnit *cu) const {
+uint64_t DWARFFormValue::getReference(const DWARFUnit *cu) const {
   uint64_t die_offset = Value.uval;
   switch (Form) {
   case DW_FORM_ref1:

@@ -283,7 +283,7 @@ void DWARFContext::parseCompileUnits() {
       break;
     }
     CUs.push_back(CU.take());
-    offset = CUs.back()->getNextCompileUnitOffset();
+    offset = CUs.back()->getNextUnitOffset();
   }
 }
 
@@ -301,7 +301,7 @@ void DWARFContext::parseDWOCompileUnits() {
       break;
     }
     DWOCUs.push_back(DWOCU.take());
-    offset = DWOCUs.back()->getNextCompileUnitOffset();
+    offset = DWOCUs.back()->getNextUnitOffset();
   }
 }
 
@@ -400,7 +400,7 @@ DILineInfo DWARFContext::getLineInfoForAddress(uint64_t Address,
         CU->getInlinedChainForAddress(Address);
     if (InlinedChain.DIEs.size() > 0) {
       const DWARFDebugInfoEntryMinimal &TopFunctionDIE = InlinedChain.DIEs[0];
-      if (const char *Name = TopFunctionDIE.getSubroutineName(InlinedChain.CU))
+      if (const char *Name = TopFunctionDIE.getSubroutineName(InlinedChain.U))
         FunctionName = Name;
     }
   }
@@ -433,7 +433,7 @@ DILineInfoTable DWARFContext::getLineInfoForAddressRange(uint64_t Address,
         CU->getInlinedChainForAddress(Address);
     if (InlinedChain.DIEs.size() > 0) {
       const DWARFDebugInfoEntryMinimal &TopFunctionDIE = InlinedChain.DIEs[0];
-      if (const char *Name = TopFunctionDIE.getSubroutineName(InlinedChain.CU))
+      if (const char *Name = TopFunctionDIE.getSubroutineName(InlinedChain.U))
         FunctionName = Name;
     }
   }
@@ -492,7 +492,7 @@ DIInliningInfo DWARFContext::getInliningInfoForAddress(uint64_t Address,
     uint32_t Column = 0;
     // Get function name if necessary.
     if (Specifier.needs(DILineInfoSpecifier::FunctionName)) {
-      if (const char *Name = FunctionDIE.getSubroutineName(InlinedChain.CU))
+      if (const char *Name = FunctionDIE.getSubroutineName(InlinedChain.U))
         FunctionName = Name;
     }
     if (Specifier.needs(DILineInfoSpecifier::FileLineInfo)) {
@@ -516,7 +516,7 @@ DIInliningInfo DWARFContext::getInliningInfoForAddress(uint64_t Address,
       }
       // Get call file/line/column of a current DIE.
       if (i + 1 < n) {
-        FunctionDIE.getCallerFrame(InlinedChain.CU, CallFile, CallLine,
+        FunctionDIE.getCallerFrame(InlinedChain.U, CallFile, CallLine,
                                    CallColumn);
       }
     }

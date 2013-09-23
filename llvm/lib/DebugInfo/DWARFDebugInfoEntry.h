@@ -18,6 +18,7 @@ namespace llvm {
 
 class DWARFDebugAranges;
 class DWARFCompileUnit;
+class DWARFUnit;
 class DWARFContext;
 class DWARFFormValue;
 struct DWARFDebugInfoEntryInlinedChain;
@@ -39,23 +40,22 @@ public:
   DWARFDebugInfoEntryMinimal()
     : Offset(0), ParentIdx(0), SiblingIdx(0), AbbrevDecl(0) {}
 
-  void dump(raw_ostream &OS, const DWARFCompileUnit *cu,
-            unsigned recurseDepth, unsigned indent = 0) const;
-  void dumpAttribute(raw_ostream &OS, const DWARFCompileUnit *cu,
-                     uint32_t *offset_ptr, uint16_t attr, uint16_t form,
-                     unsigned indent = 0) const;
+  void dump(raw_ostream &OS, const DWARFUnit *u, unsigned recurseDepth,
+            unsigned indent = 0) const;
+  void dumpAttribute(raw_ostream &OS, const DWARFUnit *u, uint32_t *offset_ptr,
+                     uint16_t attr, uint16_t form, unsigned indent = 0) const;
 
   /// Extracts a debug info entry, which is a child of a given compile unit,
   /// starting at a given offset. If DIE can't be extracted, returns false and
   /// doesn't change OffsetPtr.
-  bool extractFast(const DWARFCompileUnit *CU, const uint8_t *FixedFormSizes,
+  bool extractFast(const DWARFUnit *U, const uint8_t *FixedFormSizes,
                    uint32_t *OffsetPtr);
 
   /// Extract a debug info entry for a given compile unit from the
   /// .debug_info and .debug_abbrev data starting at the given offset.
   /// If compile unit can't be parsed, returns false and doesn't change
   /// OffsetPtr.
-  bool extract(const DWARFCompileUnit *CU, uint32_t *OffsetPtr);
+  bool extract(const DWARFUnit *U, uint32_t *OffsetPtr);
 
   uint32_t getTag() const { return AbbrevDecl ? AbbrevDecl->getTag() : 0; }
   bool isNULL() const { return AbbrevDecl == 0; }
@@ -120,59 +120,53 @@ public:
     return AbbrevDecl;
   }
 
-  uint32_t getAttributeValue(const DWARFCompileUnit *cu,
-                             const uint16_t attr, DWARFFormValue &formValue,
+  uint32_t getAttributeValue(const DWARFUnit *u, const uint16_t attr,
+                             DWARFFormValue &formValue,
                              uint32_t *end_attr_offset_ptr = 0) const;
 
-  const char* getAttributeValueAsString(const DWARFCompileUnit* cu,
-                                        const uint16_t attr,
+  const char *getAttributeValueAsString(const DWARFUnit *u, const uint16_t attr,
                                         const char *fail_value) const;
 
-  uint64_t getAttributeValueAsAddress(const DWARFCompileUnit *CU,
-                                      const uint16_t Attr,
+  uint64_t getAttributeValueAsAddress(const DWARFUnit *U, const uint16_t Attr,
                                       uint64_t FailValue) const;
 
-  uint64_t getAttributeValueAsUnsigned(const DWARFCompileUnit *cu,
-                                       const uint16_t attr,
+  uint64_t getAttributeValueAsUnsigned(const DWARFUnit *u, const uint16_t attr,
                                        uint64_t fail_value) const;
 
-  uint64_t getAttributeValueAsReference(const DWARFCompileUnit *cu,
-                                        const uint16_t attr,
+  uint64_t getAttributeValueAsReference(const DWARFUnit *u, const uint16_t attr,
                                         uint64_t fail_value) const;
 
-  int64_t getAttributeValueAsSigned(const DWARFCompileUnit* cu,
-                                    const uint16_t attr,
+  int64_t getAttributeValueAsSigned(const DWARFUnit *u, const uint16_t attr,
                                     int64_t fail_value) const;
 
   /// Retrieves DW_AT_low_pc and DW_AT_high_pc from CU.
   /// Returns true if both attributes are present.
-  bool getLowAndHighPC(const DWARFCompileUnit *CU,
-                       uint64_t &LowPC, uint64_t &HighPC) const;
+  bool getLowAndHighPC(const DWARFUnit *U, uint64_t &LowPC,
+                       uint64_t &HighPC) const;
 
-  void buildAddressRangeTable(const DWARFCompileUnit *CU,
+  void buildAddressRangeTable(const DWARFUnit *U,
                               DWARFDebugAranges *DebugAranges,
                               uint32_t CUOffsetInAranges) const;
 
-  bool addressRangeContainsAddress(const DWARFCompileUnit *CU,
+  bool addressRangeContainsAddress(const DWARFUnit *U,
                                    const uint64_t Address) const;
 
   /// If a DIE represents a subprogram (or inlined subroutine),
   /// returns its mangled name (or short name, if mangled is missing).
   /// This name may be fetched from specification or abstract origin
   /// for this subprogram. Returns null if no name is found.
-  const char* getSubroutineName(const DWARFCompileUnit *CU) const;
+  const char *getSubroutineName(const DWARFUnit *U) const;
 
   /// Retrieves values of DW_AT_call_file, DW_AT_call_line and
   /// DW_AT_call_column from DIE (or zeroes if they are missing).
-  void getCallerFrame(const DWARFCompileUnit *CU, uint32_t &CallFile,
+  void getCallerFrame(const DWARFUnit *U, uint32_t &CallFile,
                       uint32_t &CallLine, uint32_t &CallColumn) const;
 
   /// Get inlined chain for a given address, rooted at the current DIE.
   /// Returns empty chain if address is not contained in address range
   /// of current DIE.
   DWARFDebugInfoEntryInlinedChain
-  getInlinedChainForAddress(const DWARFCompileUnit *CU,
-                            const uint64_t Address) const;
+  getInlinedChainForAddress(const DWARFUnit *U, const uint64_t Address) const;
 };
 
 /// DWARFDebugInfoEntryInlinedChain - represents a chain of inlined_subroutine
@@ -181,9 +175,9 @@ public:
 /// (except the last DIE) in this chain is contained in address
 /// range for next DIE in the chain.
 struct DWARFDebugInfoEntryInlinedChain {
-  DWARFDebugInfoEntryInlinedChain() : CU(0) {}
+  DWARFDebugInfoEntryInlinedChain() : U(0) {}
   SmallVector<DWARFDebugInfoEntryMinimal, 4> DIEs;
-  const DWARFCompileUnit *CU;
+  const DWARFUnit *U;
 };
 
 }
