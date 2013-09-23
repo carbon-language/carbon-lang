@@ -33,6 +33,8 @@
 // RUN: echo __asan_report_store16 >> %t.interface
 // RUN: echo __asan_report_load_n >> %t.interface
 // RUN: echo __asan_report_store_n >> %t.interface
+// RUN: for i in `jot - 0 10`; do echo __asan_stack_malloc_$i >> %t.interface; done
+// RUN: for i in `jot - 0 10`; do echo __asan_stack_free_$i >> %t.interface; done
 
 // RUN: cat %t.interface | sort -u | diff %t.symbols -
 
