@@ -146,3 +146,61 @@ enum {
 };
 
 typedef NSUInteger NSFOptions;
+
+typedef enum {
+  UIP0One = 0,
+  UIP0Two = 1,
+  UIP0Three = 2,
+  UIP0Four = 10,
+  UIP0Last = 0x100
+} UIP;
+
+typedef enum {
+  UIPZero = 0x0,
+  UIPOne = 0x1,
+  UIPTwo = 0x2,
+  UIP10 = 0x10,
+  UIPHundred = 0x100
+} UIP_3;
+
+typedef enum {
+  UIP4Zero = 0x0,
+  UIP4One = 0x1,
+  UIP4Two = 0x2,
+  UIP410 = 0x10,
+  UIP4Hundred = 100
+} UIP4_3;
+
+typedef enum {
+  UIP5Zero = 0x0,
+  UIP5Two = 0x2,
+  UIP510 = 0x3,
+  UIP5Hundred = 0x4
+} UIP5_3;
+
+typedef enum {
+  UIP6Zero = 0x0,
+  UIP6One = 0x1,
+  UIP6Two = 0x2,
+  UIP610 = 10,
+  UIP6Hundred = 0x100
+} UIP6_3;
+
+typedef enum {
+  UIP7Zero = 0x0,
+  UIP7One = 1,
+  UIP7Two = 0x2,
+  UIP710 = 10,
+  UIP7Hundred = 100
+} UIP7_3;
+
+
+typedef enum {
+  Random = 0,
+  Random1 = 2,
+  Random2 = 4,
+  Random3 = 0x12345,
+  Random4 = 0x3444444,
+  Random5 = 0xbadbeef,
+  Random6
+} UIP8_3;
