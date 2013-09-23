@@ -304,7 +304,7 @@ static bool rewriteToObjCProperty(const ObjCMethodDecl *Getter,
   }
   PropertyString += " ";
   PropertyString += RT.getAsString(Context.getPrintingPolicy());
-  char LastChar = PropertyString[PropertyString.size()-1]        ;
+  char LastChar = PropertyString[PropertyString.size()-1];
   if (LastChar != '*')
     PropertyString += " ";
   if (LengthOfPrefix > 0) {
