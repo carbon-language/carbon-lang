@@ -153,7 +153,7 @@ void InitializeFlags(Flags *f, const char *env) {
   f->replace_str = true;
   f->replace_intrin = true;
   f->mac_ignore_invalid_free = false;
-  f->detect_stack_use_after_return = true;  // Also needs the compiler flag.
+  f->detect_stack_use_after_return = false;  // Also needs the compiler flag.
   f->max_malloc_fill_size = 0x1000;  // By default, fill only the first 4K.
   f->malloc_fill_byte = 0xbe;
   f->exitcode = ASAN_DEFAULT_FAILURE_EXITCODE;
