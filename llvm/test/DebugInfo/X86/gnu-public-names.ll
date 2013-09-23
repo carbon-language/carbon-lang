@@ -38,6 +38,9 @@
 
 ; ASM: .section        .debug_gnu_pubtypes
 ; ASM: .byte   16                      # Kind: TYPE, EXTERNAL
+; ASM: .asciz  "C"                     # External Name
+; ASM: .byte   144                     # Kind: TYPE, STATIC
+; ASM: .asciz  "int"                   # External Name
 
 ; CHECK: .debug_info contents:
 ; CHECK: 0x00000046: DW_TAG_subprogram

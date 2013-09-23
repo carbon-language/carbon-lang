@@ -880,7 +880,7 @@ void CompileUnit::addGlobalName(StringRef Name, DIE *Die) {
 ///
 void CompileUnit::addGlobalType(DIType Ty) {
   DIDescriptor Context = DD->resolve(Ty.getContext());
-  if (Ty.isCompositeType() && !Ty.getName().empty() && !Ty.isForwardDecl() &&
+  if (!Ty.getName().empty() && !Ty.isForwardDecl() &&
       (!Context || Context.isCompileUnit() || Context.isFile() ||
        Context.isNameSpace()))
     if (DIEEntry *Entry = getDIEEntry(Ty))
