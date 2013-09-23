@@ -452,6 +452,62 @@ define void @srl_v2i64(<2 x i64>* %c, <2 x i64>* %a, <2 x i64>* %b) nounwind {
   ; CHECK: .size srl_v2i64
 }
 
+define void @ctpop_v16i8(<16 x i8>* %c, <16 x i8>* %a) nounwind {
+  ; CHECK: ctpop_v16i8:
+
+  %1 = load <16 x i8>* %a
+  ; CHECK-DAG: ld.b [[R1:\$w[0-9]+]], 0($5)
+  %2 = tail call <16 x i8> @llvm.ctpop.v16i8 (<16 x i8> %1)
+  ; CHECK-DAG: pcnt.b [[R3:\$w[0-9]+]], [[R1]]
+  store <16 x i8> %2, <16 x i8>* %c
+  ; CHECK-DAG: st.b [[R3]], 0($4)
+
+  ret void
+  ; CHECK: .size ctpop_v16i8
+}
+
+define void @ctpop_v8i16(<8 x i16>* %c, <8 x i16>* %a) nounwind {
+  ; CHECK: ctpop_v8i16:
+
+  %1 = load <8 x i16>* %a
+  ; CHECK-DAG: ld.h [[R1:\$w[0-9]+]], 0($5)
+  %2 = tail call <8 x i16> @llvm.ctpop.v8i16 (<8 x i16> %1)
+  ; CHECK-DAG: pcnt.h [[R3:\$w[0-9]+]], [[R1]]
+  store <8 x i16> %2, <8 x i16>* %c
+  ; CHECK-DAG: st.h [[R3]], 0($4)
+
+  ret void
+  ; CHECK: .size ctpop_v8i16
+}
+
+define void @ctpop_v4i32(<4 x i32>* %c, <4 x i32>* %a) nounwind {
+  ; CHECK: ctpop_v4i32:
+
+  %1 = load <4 x i32>* %a
+  ; CHECK-DAG: ld.w [[R1:\$w[0-9]+]], 0($5)
+  %2 = tail call <4 x i32> @llvm.ctpop.v4i32 (<4 x i32> %1)
+  ; CHECK-DAG: pcnt.w [[R3:\$w[0-9]+]], [[R1]]
+  store <4 x i32> %2, <4 x i32>* %c
+  ; CHECK-DAG: st.w [[R3]], 0($4)
+
+  ret void
+  ; CHECK: .size ctpop_v4i32
+}
+
+define void @ctpop_v2i64(<2 x i64>* %c, <2 x i64>* %a) nounwind {
+  ; CHECK: ctpop_v2i64:
+
+  %1 = load <2 x i64>* %a
+  ; CHECK-DAG: ld.d [[R1:\$w[0-9]+]], 0($5)
+  %2 = tail call <2 x i64> @llvm.ctpop.v2i64 (<2 x i64> %1)
+  ; CHECK-DAG: pcnt.d [[R3:\$w[0-9]+]], [[R1]]
+  store <2 x i64> %2, <2 x i64>* %c
+  ; CHECK-DAG: st.d [[R3]], 0($4)
+
+  ret void
+  ; CHECK: .size ctpop_v2i64
+}
+
 define void @ctlz_v16i8(<16 x i8>* %c, <16 x i8>* %a) nounwind {
   ; CHECK: ctlz_v16i8:
 
@@ -508,6 +564,10 @@ define void @ctlz_v2i64(<2 x i64>* %c, <2 x i64>* %a) nounwind {
   ; CHECK: .size ctlz_v2i64
 }
 
+declare <16 x i8> @llvm.ctpop.v16i8(<16 x i8> %val)
+declare <8 x i16> @llvm.ctpop.v8i16(<8 x i16> %val)
+declare <4 x i32> @llvm.ctpop.v4i32(<4 x i32> %val)
+declare <2 x i64> @llvm.ctpop.v2i64(<2 x i64> %val)
 declare <16 x i8> @llvm.ctlz.v16i8(<16 x i8> %val)
 declare <8 x i16> @llvm.ctlz.v8i16(<8 x i16> %val)
 declare <4 x i32> @llvm.ctlz.v4i32(<4 x i32> %val)

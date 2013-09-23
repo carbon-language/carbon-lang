@@ -1755,10 +1755,10 @@ class PCKOD_H_DESC : MSA_3R_DESC_BASE<"pckod.h", int_mips_pckod_h, MSA128H>;
 class PCKOD_W_DESC : MSA_3R_DESC_BASE<"pckod.w", int_mips_pckod_w, MSA128W>;
 class PCKOD_D_DESC : MSA_3R_DESC_BASE<"pckod.d", int_mips_pckod_d, MSA128D>;
 
-class PCNT_B_DESC : MSA_2R_DESC_BASE<"pcnt.b", int_mips_pcnt_b, MSA128B>;
-class PCNT_H_DESC : MSA_2R_DESC_BASE<"pcnt.h", int_mips_pcnt_h, MSA128H>;
-class PCNT_W_DESC : MSA_2R_DESC_BASE<"pcnt.w", int_mips_pcnt_w, MSA128W>;
-class PCNT_D_DESC : MSA_2R_DESC_BASE<"pcnt.d", int_mips_pcnt_d, MSA128D>;
+class PCNT_B_DESC : MSA_2R_DESC_BASE<"pcnt.b", ctpop, MSA128B>;
+class PCNT_H_DESC : MSA_2R_DESC_BASE<"pcnt.h", ctpop, MSA128H>;
+class PCNT_W_DESC : MSA_2R_DESC_BASE<"pcnt.w", ctpop, MSA128W>;
+class PCNT_D_DESC : MSA_2R_DESC_BASE<"pcnt.d", ctpop, MSA128D>;
 
 class SAT_S_B_DESC : MSA_BIT_B_DESC_BASE<"sat_s.b", int_mips_sat_s_b, MSA128B>;
 class SAT_S_H_DESC : MSA_BIT_H_DESC_BASE<"sat_s.h", int_mips_sat_s_h, MSA128H>;
