@@ -23,6 +23,8 @@
 #include "lld/ReaderWriter/Simple.h"
 #include "lld/ReaderWriter/Writer.h"
 
+#include <bitset>
+
 namespace lld {
 
 namespace {} // anonymous namespace
@@ -52,6 +54,13 @@ bool PECOFFLinkingContext::validateImpl(raw_ostream &diagnostics) {
   if (_baseAddress & 0xffff) {
     diagnostics << "Base address have to be multiple of 64K, but got "
                 << _baseAddress << "\n";
+    return true;
+  }
+
+  std::bitset<64> alignment(_sectionAlignment);
+  if (alignment.count() != 1) {
+    diagnostics << "Section alignment must be a power of 2, but got "
+                << _sectionAlignment << "\n";
     return true;
   }
 

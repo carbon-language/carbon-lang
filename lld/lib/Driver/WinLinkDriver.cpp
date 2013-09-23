@@ -330,6 +330,16 @@ bool WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ct
       ctx.setHeapCommit(commit);
       break;
     }
+    case OPT_align: {
+      uint32_t align;
+      StringRef arg = inputArg->getValue();
+      if (arg.getAsInteger(10, align)) {
+        diagnostics << "error: invalid value for /align: " << arg << "\n";
+        return true;
+      }
+      ctx.setSectionAlignment(align);
+      break;
+    }
     case OPT_machine: {
       StringRef arg = inputArg->getValue();
       llvm::COFF::MachineTypes type = stringToMachineType(arg);

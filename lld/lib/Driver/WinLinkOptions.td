@@ -15,6 +15,7 @@ defm entry   : P<"entry", "Name of entry point symbol">;
 // No help text because /failifmismatch is not intended to be used by the user.
 defm failifmismatch : P<"failifmismatch", "">;
 defm heap    : P<"heap", "Size of the heap">;
+defm align   : P<"align", "Section alignment">;
 defm libpath : P<"libpath", "Additional library search path">;
 defm mllvm   : P<"mllvm", "Options to pass to LLVM">;
 defm out     : P<"out", "Path to file to write output">;
