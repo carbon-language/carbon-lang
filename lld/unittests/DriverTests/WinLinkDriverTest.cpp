@@ -86,6 +86,15 @@ TEST_F(WinLinkParserTest, Mllvm) {
   EXPECT_EQ("-debug", options[0]);
 }
 
+TEST_F(WinLinkParserTest, NoInputFiles) {
+  EXPECT_TRUE(parse("link.exe", nullptr));
+  EXPECT_EQ("No input files\n", errorMessage());
+}
+
+//
+// Tests for implicit file extension interpolation.
+//
+
 TEST_F(WinLinkParserTest, NoFileExtension) {
   EXPECT_FALSE(parse("link.exe", "foo", "bar", nullptr));
   EXPECT_EQ("foo.exe", _context.outputPath());
@@ -109,6 +118,10 @@ TEST_F(WinLinkParserTest, Libpath) {
   EXPECT_EQ("dir1", paths[0]);
   EXPECT_EQ("dir2", paths[1]);
 }
+
+//
+// Tests for command line options that take values.
+//
 
 TEST_F(WinLinkParserTest, MachineX64) {
   EXPECT_TRUE(parse("link.exe", "/machine:x64", "a.obj", nullptr));
@@ -182,6 +195,19 @@ TEST_F(WinLinkParserTest, SectionAlignment) {
   EXPECT_FALSE(parse("link.exe", "/align:8192", "a.obj", nullptr));
   EXPECT_EQ(8192U, _context.getSectionAlignment());
 }
+
+TEST_F(WinLinkParserTest, Include) {
+  EXPECT_FALSE(parse("link.exe", "/include:foo", "a.out", nullptr));
+  auto symbols = _context.initialUndefinedSymbols();
+  EXPECT_FALSE(symbols.empty());
+  EXPECT_EQ("foo", symbols[0]);
+  symbols.pop_front();
+  EXPECT_TRUE(symbols.empty());
+}
+
+//
+// Tests for boolean flags.
+//
 
 TEST_F(WinLinkParserTest, Force) {
   EXPECT_FALSE(parse("link.exe", "/force", "a.obj", nullptr));
@@ -259,19 +285,9 @@ TEST_F(WinLinkParserTest, NoDynamicBase) {
   EXPECT_FALSE(_context.getDynamicBaseEnabled());
 }
 
-TEST_F(WinLinkParserTest, Include) {
-  EXPECT_FALSE(parse("link.exe", "/include:foo", "a.out", nullptr));
-  auto symbols = _context.initialUndefinedSymbols();
-  EXPECT_FALSE(symbols.empty());
-  EXPECT_EQ("foo", symbols[0]);
-  symbols.pop_front();
-  EXPECT_TRUE(symbols.empty());
-}
-
-TEST_F(WinLinkParserTest, NoInputFiles) {
-  EXPECT_TRUE(parse("link.exe", nullptr));
-  EXPECT_EQ("No input files\n", errorMessage());
-}
+//
+// Test for /failifmismatch
+//
 
 TEST_F(WinLinkParserTest, FailIfMismatch_Match) {
   EXPECT_FALSE(parse("link.exe", "/failifmismatch:foo=bar",
@@ -284,6 +300,10 @@ TEST_F(WinLinkParserTest, FailIfMismatch_Mismatch) {
                     "/failifmismatch:foo=baz", "a.out", nullptr));
 }
 
+//
+// Test for command line flags that are ignored.
+//
+
 TEST_F(WinLinkParserTest, Ignore) {
   // There are some no-op command line options that are recognized for
   // compatibility with link.exe.
@@ -293,6 +313,10 @@ TEST_F(WinLinkParserTest, Ignore) {
   EXPECT_EQ(1, inputFileCount());
   EXPECT_EQ("a.obj", inputFile(0));
 }
+
+//
+// Test for "--"
+//
 
 TEST_F(WinLinkParserTest, DashDash) {
   EXPECT_FALSE(parse("link.exe", "/subsystem:console", "/out:a.exe",
@@ -304,6 +328,10 @@ TEST_F(WinLinkParserTest, DashDash) {
   EXPECT_EQ("b.obj", inputFile(1));
   EXPECT_EQ("-c.obj", inputFile(2));
 }
+
+//
+// Tests for entry symbol name.
+//
 
 TEST_F(WinLinkParserTest, DefEntryNameConsole) {
   EXPECT_FALSE(parse("link.exe", "/subsystem:console", "a.obj", nullptr));
