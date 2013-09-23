@@ -16,6 +16,7 @@
 #include "DWARFDebugLine.h"
 #include "DWARFDebugLoc.h"
 #include "DWARFDebugRangeList.h"
+#include "DWARFTypeUnit.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/DebugInfo/DIContext.h"
@@ -28,6 +29,7 @@ namespace llvm {
 /// methods that a concrete implementation provides.
 class DWARFContext : public DIContext {
   SmallVector<DWARFCompileUnit *, 1> CUs;
+  SmallVector<DWARFTypeUnit *, 1> TUs;
   OwningPtr<DWARFDebugAbbrev> Abbrev;
   OwningPtr<DWARFDebugLoc> Loc;
   OwningPtr<DWARFDebugAranges> Aranges;
@@ -42,6 +44,9 @@ class DWARFContext : public DIContext {
 
   /// Read compile units from the debug_info section and store them in CUs.
   void parseCompileUnits();
+
+  /// Read type units from the debug_types sections and store them in CUs.
+  void parseTypeUnits();
 
   /// Read compile units from the debug_info.dwo section and store them in
   /// DWOCUs.
@@ -69,6 +74,13 @@ public:
     return CUs.size();
   }
 
+  /// Get the number of compile units in this context.
+  unsigned getNumTypeUnits() {
+    if (TUs.empty())
+      parseTypeUnits();
+    return TUs.size();
+  }
+
   /// Get the number of compile units in the DWO context.
   unsigned getNumDWOCompileUnits() {
     if (DWOCUs.empty())
@@ -81,6 +93,13 @@ public:
     if (CUs.empty())
       parseCompileUnits();
     return CUs[index];
+  }
+
+  /// Get the type unit at the specified index for this compile unit.
+  DWARFTypeUnit *getTypeUnitAtIndex(unsigned index) {
+    if (TUs.empty())
+      parseTypeUnits();
+    return TUs[index];
   }
 
   /// Get the compile unit at the specified index for the DWO compile units.
@@ -119,6 +138,7 @@ public:
   virtual bool isLittleEndian() const = 0;
   virtual uint8_t getAddressSize() const = 0;
   virtual const Section &getInfoSection() = 0;
+  virtual const std::map<object::SectionRef, Section> &getTypesSections() = 0;
   virtual StringRef getAbbrevSection() = 0;
   virtual const Section &getLocSection() = 0;
   virtual StringRef getARangeSection() = 0;
@@ -157,6 +177,7 @@ class DWARFContextInMemory : public DWARFContext {
   bool IsLittleEndian;
   uint8_t AddressSize;
   Section InfoSection;
+  std::map<object::SectionRef, Section> TypesSections;
   StringRef AbbrevSection;
   Section LocSection;
   StringRef ARangeSection;
@@ -183,6 +204,9 @@ public:
   virtual bool isLittleEndian() const { return IsLittleEndian; }
   virtual uint8_t getAddressSize() const { return AddressSize; }
   virtual const Section &getInfoSection() { return InfoSection; }
+  virtual const std::map<object::SectionRef, Section> &getTypesSections() {
+    return TypesSections;
+  }
   virtual StringRef getAbbrevSection() { return AbbrevSection; }
   virtual const Section &getLocSection() { return LocSection; }
   virtual StringRef getARangeSection() { return ARangeSection; }
