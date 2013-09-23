@@ -1,9 +1,9 @@
 # This test checks that IRELATIVE relocations are created for symbols that 
 # need relocation even for static links. 
-RUN: lld -flavor gnu -target x86_64-linux -emit-yaml -r \
+RUN: lld -flavor gnu -target x86_64-linux --output-filetype=yaml -r \
 RUN:   %p/Inputs/ifunc.x86-64  | FileCheck %s
 
-RUN: lld -flavor gnu -target x86_64-linux -emit-yaml --noinhibit-exec \
+RUN: lld -flavor gnu -target x86_64-linux --output-filetype=yaml --noinhibit-exec \
 RUN:   %p/Inputs/ifunc.x86-64 %p/Inputs/ifunc.cpp.x86-64 \
 RUN: | FileCheck %s --check-prefix=PLT
 

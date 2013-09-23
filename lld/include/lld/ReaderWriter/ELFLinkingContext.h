@@ -39,6 +39,9 @@ public:
 
 class ELFLinkingContext : public LinkingContext {
 public:
+
+  /// \brief The type of ELF executable that the linker
+  /// creates.
   enum class OutputMagic : uint8_t {
     DEFAULT, // The default mode, no specific magic set
     NMAGIC,  // Disallow shared libraries and dont align sections
@@ -46,14 +49,14 @@ public:
     OMAGIC   // Disallow shared libraries and dont align sections,
              // Mark Text Segment/Data segment RW
   };
+
   llvm::Triple getTriple() const { return _triple; }
   virtual bool is64Bits() const;
   virtual bool isLittleEndian() const;
   virtual uint64_t getPageSize() const { return 0x1000; }
   OutputMagic getOutputMagic() const { return _outputMagic; }
-  uint16_t getOutputType() const { return _outputFileType; }
+  uint16_t getOutputELFType() const { return _outputELFType; }
   uint16_t getOutputMachine() const;
-  bool outputYAML() const { return _outputYAML; }
   bool mergeCommonStrings() const { return _mergeCommonStrings; }
   virtual uint64_t getBaseAddress() const { return _baseAddress; }
 
@@ -130,12 +133,12 @@ public:
   virtual void addPasses(PassManager &pm) const;
 
   void setTriple(llvm::Triple trip) { _triple = trip; }
-  void setOutputFileType(uint32_t type) { _outputFileType = type; }
-  void setOutputYAML(bool v) { _outputYAML = v; }
   void setNoInhibitExec(bool v) { _noInhibitExec = v; }
   void setIsStaticExecutable(bool v) { _isStaticExecutable = v; }
   void setMergeCommonStrings(bool v) { _mergeCommonStrings = v; }
   void setUseShlibUndefines(bool use) { _useShlibUndefines = use; }
+
+  void setOutputELFType(uint32_t type) { _outputELFType = type; }
 
   /// \brief Set the dynamic linker path
   void setInterpreter(StringRef dynamicLinker) {
@@ -214,12 +217,11 @@ protected:
   /// Method to create a internal file for an undefined symbol
   virtual std::unique_ptr<File> createUndefinedSymbolFile();
 
-  uint16_t _outputFileType; // e.g ET_EXEC
+  uint16_t _outputELFType; // e.g ET_EXEC
   llvm::Triple _triple;
   std::unique_ptr<TargetHandlerBase> _targetHandler;
   uint64_t _baseAddress;
   bool _isStaticExecutable;
-  bool _outputYAML;
   bool _noInhibitExec;
   bool _mergeCommonStrings;
   bool _runLayoutPass;

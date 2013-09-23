@@ -3,7 +3,7 @@ RUN: lld -flavor gnu -target x86_64 %p/Inputs/weak-zero-sized.o -o %t \
 RUN:   --noinhibit-exec
 RUN: llvm-nm %t | FileCheck -check-prefix=WEAKORDER %s
 RUN: lld -flavor gnu -target x86_64 %p/Inputs/weak-zero-sized.o \
-RUN:    -emit-yaml -o %t2 --noinhibit-exec
+RUN:    --output-filetype=yaml -o %t2 --noinhibit-exec
 RUN: FileCheck -check-prefix=WEAKATOMSORDER %s < %t2
 
 WEAKORDER: 004001a4 T _start

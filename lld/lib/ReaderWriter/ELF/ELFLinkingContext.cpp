@@ -36,9 +36,9 @@ public:
 
 ELFLinkingContext::ELFLinkingContext(
     llvm::Triple triple, std::unique_ptr<TargetHandlerBase> targetHandler)
-    : _outputFileType(elf::ET_EXEC), _triple(triple),
+    : _outputELFType(elf::ET_EXEC), _triple(triple),
       _targetHandler(std::move(targetHandler)), _baseAddress(0),
-      _isStaticExecutable(false), _outputYAML(false), _noInhibitExec(false),
+      _isStaticExecutable(false), _noInhibitExec(false),
       _mergeCommonStrings(false), _runLayoutPass(true),
       _useShlibUndefines(false), _dynamicLinkerArg(false),
       _noAllowDynamicLibraries(false), _outputMagic(OutputMagic::DEFAULT),
@@ -72,7 +72,7 @@ uint16_t ELFLinkingContext::getOutputMachine() const {
 }
 
 StringRef ELFLinkingContext::entrySymbolName() const {
-  if (_outputFileType == elf::ET_EXEC && _entrySymbolName.empty())
+  if (_outputELFType == elf::ET_EXEC && _entrySymbolName.empty())
     return "_start";
   return _entrySymbolName;
 }
@@ -80,12 +80,22 @@ StringRef ELFLinkingContext::entrySymbolName() const {
 bool ELFLinkingContext::validateImpl(raw_ostream &diagnostics) {
   _elfReader = createReaderELF(*this);
   _linkerScriptReader.reset(new ReaderLinkerScript(*this));
-  _writer = _outputYAML ? createWriterYAML(*this) : createWriterELF(*this);
+  switch (outputFileType()) {
+  case LinkingContext::OutputFileType::YAML:
+    _writer = createWriterYAML(*this);
+    break;
+  case LinkingContext::OutputFileType::Native:
+    llvm_unreachable("Unimplemented");
+    break;
+  default:
+    _writer = createWriterELF(*this);
+    break;
+  }
   return false;
 }
 
 bool ELFLinkingContext::isDynamic() const {
-  switch (_outputFileType) {
+  switch (_outputELFType) {
   case llvm::ELF::ET_EXEC:
     return !_isStaticExecutable;
   case llvm::ELF::ET_DYN:

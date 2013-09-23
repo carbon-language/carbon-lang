@@ -3,7 +3,7 @@ RUN: lld -flavor gnu -target x86_64 %p/Inputs/weak.o %p/Inputs/ovrd.o \
 RUN:    -o %t --noinhibit-exec
 RUN: llvm-nm %t | FileCheck -check-prefix=WEAKORDER %s
 RUN: lld -flavor gnu -target x86_64 %p/Inputs/weak.o \
-RUN:   %p/Inputs/ovrd.o -o %t2 -emit-yaml --noinhibit-exec
+RUN:   %p/Inputs/ovrd.o -o %t2 --output-filetype=yaml --noinhibit-exec
 RUN: FileCheck -check-prefix=WEAKATOMSORDER %s < %t2
 
 WEAKORDER: {{[0-9a-c]+}} T f

@@ -1,6 +1,6 @@
 # Test that debug info is assigned typeNoAlloc and that the output sections have
 # a virtual address of 0.
-RUN: lld -flavor gnu -target x86_64 -e main -emit-yaml \
+RUN: lld -flavor gnu -target x86_64 -e main --output-filetype=yaml \
 RUN:   %p/Inputs/debug0.x86-64 %p/Inputs/debug1.x86-64 -o %t
 RUN: FileCheck %s -check-prefix YAML < %t
 

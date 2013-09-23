@@ -154,13 +154,10 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
   bool _outputOptionSet = false;
 
   // Create a dynamic executable by default
-  ctx->setOutputFileType(llvm::ELF::ET_EXEC);
+  ctx->setOutputELFType(llvm::ELF::ET_EXEC);
   ctx->setIsStaticExecutable(false);
   ctx->setAllowShlibUndefines(false);
   ctx->setUseShlibUndefines(true);
-
-  // Set the output file to be a.out
-  ctx->setOutputPath("a.out");
 
   // Process all the arguments and create Input Elements
   for (auto inputArg : *parsedArgs) {
@@ -169,16 +166,16 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
       ctx->appendLLVMOption(inputArg->getValue());
       break;
     case OPT_relocatable:
-      ctx->setOutputFileType(llvm::ELF::ET_REL);
+      ctx->setOutputELFType(llvm::ELF::ET_REL);
       ctx->setPrintRemainingUndefines(false);
       ctx->setAllowRemainingUndefines(true);
       break;
     case OPT_static:
-      ctx->setOutputFileType(llvm::ELF::ET_EXEC);
+      ctx->setOutputELFType(llvm::ELF::ET_EXEC);
       ctx->setIsStaticExecutable(true);
       break;
     case OPT_shared:
-      ctx->setOutputFileType(llvm::ELF::ET_DYN);
+      ctx->setOutputELFType(llvm::ELF::ET_DYN);
       ctx->setAllowShlibUndefines(true);
       ctx->setUseShlibUndefines(false);
       break;
@@ -246,10 +243,8 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
       ctx->addFiniFunction(inputArg->getValue());
       break;
 
-    case OPT_emit_yaml:
-      if (!_outputOptionSet)
-        ctx->setOutputPath("-");
-      ctx->setOutputYAML(true);
+    case OPT_output_filetype:
+      ctx->setOutputFileType(inputArg->getValue());
       break;
 
     case OPT_no_whole_archive:
@@ -333,7 +328,23 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
 
   inputGraph->addInternalFile(ctx->createInternalFiles());
 
-  if (ctx->outputYAML())
+  // Set default output file name if the output file was not
+  // specified.
+  if (!_outputOptionSet) {
+    switch (ctx->outputFileType()) {
+    case LinkingContext::OutputFileType::YAML:
+      ctx->setOutputPath("-");
+      break;
+    case LinkingContext::OutputFileType::Native:
+      ctx->setOutputPath("a.native");
+      break;
+    default:
+      ctx->setOutputPath("a.out");
+      break;
+    }
+  }
+
+  if (ctx->outputFileType() == LinkingContext::OutputFileType::YAML)
     inputGraph->dump(diagnostics);
 
   // Validate the combination of options used.

@@ -1,5 +1,5 @@
-# RUN: lld -flavor gnu -u undefinedsymbol -e entrysymbol %s -emit-yaml \
-# RUN: --noinhibit-exec | FileCheck %s
+# RUN: lld -flavor gnu -u undefinedsymbol -e entrysymbol %s \
+# RUN: --output-filetype=yaml --noinhibit-exec | FileCheck %s
 
 #
 # Test that we are able to add undefined atoms from the command line

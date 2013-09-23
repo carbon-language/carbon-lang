@@ -4,7 +4,7 @@
 # in the output ELF. 
 
 RUN: lld -flavor gnu -target x86_64-linux %p/Inputs/initfini-option.o  \
-RUN: -init init -fini fini --noinhibit-exec -emit-yaml -o %t
+RUN: -init init -fini fini --noinhibit-exec --output-filetype=yaml -o %t
 RUN: FileCheck %s < %t
 
 CHECK:    content:         [ 00, 00, 00, 00, 00, 00, 00, 00 ]

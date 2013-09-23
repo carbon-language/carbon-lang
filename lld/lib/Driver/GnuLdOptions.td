@@ -25,7 +25,6 @@ multiclass dashEq<string opt1, string opt2, string help> {
       Alias<!cast<Option>(opt1)>;
 }
 
-
 //===----------------------------------------------------------------------===//
 /// Output Kinds
 //===----------------------------------------------------------------------===//
@@ -223,9 +222,11 @@ def t : Flag<["-"], "t">,
 //===----------------------------------------------------------------------===//
 def grp_extns : OptionGroup<"opts">,
      HelpText<"Extensions">;
-def emit_yaml : Flag<["-"], "emit-yaml">,
-     HelpText<"Write YAML instead of ELF">,
-     Group<grp_extns>;
+def output_filetype: Separate<["--"], "output-filetype">,
+      HelpText<"Specify what type of output file that lld creates, YAML/Native">,
+      Group<grp_extns>;
+def alias_output_filetype: Joined<["--"], "output-filetype=">,
+      Alias<output_filetype>;
 
 //===----------------------------------------------------------------------===//
 /// Help

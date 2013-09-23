@@ -2,4 +2,4 @@
 RUN: lld -flavor gnu --help | FileCheck %s
 
 CHECK: --noinhibit-exec
-CHECK: -emit-yaml
+CHECK: --output-filetype

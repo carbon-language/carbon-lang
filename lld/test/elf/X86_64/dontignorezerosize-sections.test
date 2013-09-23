@@ -1,6 +1,6 @@
 # This tests that lld is not ignoring zero sized sections
 RUN: lld -flavor gnu -target x86_64-linux %p/Inputs/zerosizedsection.o  \
-RUN: --noinhibit-exec -emit-yaml -o %t
+RUN: --noinhibit-exec --output-filetype=yaml -o %t
 RUN: FileCheck %s < %t
 
 CHECK:    section-name:    .data

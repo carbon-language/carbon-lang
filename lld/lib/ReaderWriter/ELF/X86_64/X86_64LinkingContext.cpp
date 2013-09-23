@@ -461,7 +461,7 @@ private:
 
 
 void elf::X86_64LinkingContext::addPasses(PassManager &pm) const {
-  switch (_outputFileType) {
+  switch (_outputELFType) {
   case llvm::ELF::ET_EXEC:
     if (_isStaticExecutable)
       pm.add(std::unique_ptr<Pass>(new StaticGOTPLTPass(*this)));

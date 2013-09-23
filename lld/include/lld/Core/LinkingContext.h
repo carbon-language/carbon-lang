@@ -46,6 +46,14 @@ class InputGraph;
 /// to the ELF Reader and Writer.
 class LinkingContext : public Reader {
 public:
+  /// \brief The types of output file that the linker
+  /// creates.
+  enum class OutputFileType : uint8_t {
+    Default, // The default output type for this target
+    YAML,    // The output type is set to YAML
+    Native   // The output file format is Native (Atoms)
+  };
+
   virtual ~LinkingContext();
 
   /// \name Methods needed by core linking
@@ -254,6 +262,22 @@ public:
   /// the linker to write to an in-memory buffer.
   StringRef outputPath() const { return _outputPath; }
 
+  /// Set the various output file types that the linker would
+  /// create
+  bool setOutputFileType(StringRef outputFileType) {
+    StringRef lowerOutputFileType = outputFileType.lower();
+    if (lowerOutputFileType == "yaml")
+      _outputFileType = OutputFileType::YAML;
+    else if (lowerOutputFileType == "native")
+      _outputFileType = OutputFileType::YAML;
+    else
+      return false;
+    return true;
+  }
+
+  /// Returns the output file that that the linker needs to create
+  OutputFileType outputFileType() const { return _outputFileType; }
+
   /// Abstract method to parse a supplied input file buffer into one or
   /// more lld::File objects. Subclasses of LinkingContext must implement this
   /// method.
@@ -325,6 +349,7 @@ protected:
   bool _allowRemainingUndefines;
   bool _logInputFiles;
   bool _allowShlibUndefines;
+  OutputFileType _outputFileType;
   std::vector<StringRef> _deadStripRoots;
   std::vector<const char *> _llvmOptions;
   std::unique_ptr<Reader> _yamlReader;

@@ -23,7 +23,7 @@ std::unique_ptr<Writer> createWriterELF(const ELFLinkingContext &info) {
   // We would set the layout to a dynamic executable layout
   // if we came across any shared libraries in the process
 
-  switch(info.getOutputType()) {
+  switch (info.getOutputELFType()) {
   case llvm::ELF::ET_EXEC:
     if (info.is64Bits()) {
       if (info.isLittleEndian())

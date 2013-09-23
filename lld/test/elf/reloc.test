@@ -1,4 +1,4 @@
-RUN: lld -flavor gnu --merge-strings -r -emit-yaml %p/Inputs/reloc-test.elf-i386 | FileCheck %s -check-prefix ELF-i386
+RUN: lld -flavor gnu --merge-strings -r --output-filetype=yaml %p/Inputs/reloc-test.elf-i386 | FileCheck %s -check-prefix ELF-i386
 
 ELF-i386: defined-atoms:   
 ELF-i386:   - ref-name:        [[STRNAMEA:[-a-zA-Z0-9_]+]]

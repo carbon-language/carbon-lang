@@ -1,7 +1,7 @@
 # This tests verifies that TLS variables have correct offsets
 # when variables the TLS variables are not defined in the program
 RUN: lld -flavor gnu -target x86_64-linux %p/Inputs/externtls.x86-64 -static  \
-RUN: -emit-yaml --noinhibit-exec | FileCheck %s -check-prefix=CHECKGOT
+RUN: --output-filetype=yaml --noinhibit-exec | FileCheck %s -check-prefix=CHECKGOT
 
            - name:            __got_tls_extern_tls
 CHECKGOT:    type:            got

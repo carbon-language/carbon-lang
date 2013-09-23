@@ -39,16 +39,18 @@ TEST_F(GnuLdParserTest, Basic) {
   EXPECT_EQ("a.out", linkingContext()->outputPath());
   EXPECT_EQ(1, inputFileCount());
   EXPECT_EQ("infile.o", inputFile(0));
-  EXPECT_FALSE(_context->outputYAML());
+  EXPECT_FALSE(_context->outputFileType() ==
+               LinkingContext::OutputFileType::YAML);
 }
 
 TEST_F(GnuLdParserTest, ManyOptions) {
   EXPECT_FALSE(parse("ld", "-entry", "_start", "-o", "outfile",
-        "-emit-yaml", "infile.o", nullptr));
+                     "--output-filetype=yaml", "infile.o", nullptr));
   EXPECT_NE(linkingContext(), nullptr);
   EXPECT_EQ("outfile", linkingContext()->outputPath());
   EXPECT_EQ("_start", linkingContext()->entrySymbolName());
-  EXPECT_TRUE(_context->outputYAML());
+  EXPECT_TRUE(_context->outputFileType() ==
+              LinkingContext::OutputFileType::YAML);
 }
 
 }  // end anonymous namespace

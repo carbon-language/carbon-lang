@@ -1,4 +1,4 @@
-RUN: lld -flavor gnu -target hexagon -static -emit-yaml \
+RUN: lld -flavor gnu -target hexagon -static --output-filetype=yaml \
 RUN: %p/Inputs/branch-test.hexagon %p/Inputs/target-test.hexagon --noinhibit-exec | FileCheck %s -check-prefix hexagon-yaml
 RUN: lld -flavor gnu -target hexagon -e target -o %t1 \
 RUN: %p/Inputs/branch-test.hexagon %p/Inputs/target-test.hexagon --noinhibit-exec

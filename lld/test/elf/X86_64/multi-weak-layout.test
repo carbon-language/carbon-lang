@@ -2,7 +2,7 @@
 # properly
 
 RUN: lld -flavor gnu -target x86_64 %p/Inputs/multiweaksyms.o  \
-RUN: --noinhibit-exec -static -emit-yaml -o %t
+RUN: --noinhibit-exec -static --output-filetype=yaml -o %t
 RUN: FileCheck %s -check-prefix=WEAKSYMS < %t
 
 WEAKSYMS:  - ref-name:        [[SYMA:[-a-zA-Z0-9_]+]]
