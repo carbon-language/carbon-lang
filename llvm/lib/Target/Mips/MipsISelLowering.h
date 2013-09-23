@@ -167,6 +167,10 @@ namespace llvm {
       // Combined (XOR (OR $a, $b), -1)
       VNOR,
 
+      // Extended vector element extraction
+      VEXTRACT_SEXT_ELT,
+      VEXTRACT_ZEXT_ELT,
+
       // Load/Store Left/Right nodes.
       LWL = ISD::FIRST_TARGET_MEMORY_OPCODE,
       LWR,

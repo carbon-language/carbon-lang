@@ -118,3 +118,229 @@ define void @const_v2i64() nounwind {
   ret void
   ; MIPS32: .size const_v2i64
 }
+
+define i32 @extract_sext_v16i8() nounwind {
+  ; MIPS32: extract_sext_v16i8:
+
+  %1 = load <16 x i8>* @v16i8
+  ; MIPS32-DAG: ld.b [[R1:\$w[0-9]+]],
+
+  %2 = add <16 x i8> %1, %1
+  ; MIPS32-DAG: addv.b [[R2:\$w[0-9]+]], [[R1]], [[R1]]
+
+  %3 = extractelement <16 x i8> %2, i32 1
+  %4 = sext i8 %3 to i32
+  ; MIPS32-DAG: copy_s.b [[R3:\$[0-9]+]], [[R1]][1]
+  ; MIPS32-NOT: sll
+  ; MIPS32-NOT: sra
+
+  ret i32 %4
+  ; MIPS32: .size extract_sext_v16i8
+}
+
+define i32 @extract_sext_v8i16() nounwind {
+  ; MIPS32: extract_sext_v8i16:
+
+  %1 = load <8 x i16>* @v8i16
+  ; MIPS32-DAG: ld.h [[R1:\$w[0-9]+]],
+
+  %2 = add <8 x i16> %1, %1
+  ; MIPS32-DAG: addv.h [[R2:\$w[0-9]+]], [[R1]], [[R1]]
+
+  %3 = extractelement <8 x i16> %2, i32 1
+  %4 = sext i16 %3 to i32
+  ; MIPS32-DAG: copy_s.h [[R3:\$[0-9]+]], [[R1]][1]
+  ; MIPS32-NOT: sll
+  ; MIPS32-NOT: sra
+
+  ret i32 %4
+  ; MIPS32: .size extract_sext_v8i16
+}
+
+define i32 @extract_sext_v4i32() nounwind {
+  ; MIPS32: extract_sext_v4i32:
+
+  %1 = load <4 x i32>* @v4i32
+  ; MIPS32-DAG: ld.w [[R1:\$w[0-9]+]],
+
+  %2 = add <4 x i32> %1, %1
+  ; MIPS32-DAG: addv.w [[R2:\$w[0-9]+]], [[R1]], [[R1]]
+
+  %3 = extractelement <4 x i32> %2, i32 1
+  ; MIPS32-DAG: copy_s.w [[R3:\$[0-9]+]], [[R1]][1]
+
+  ret i32 %3
+  ; MIPS32: .size extract_sext_v4i32
+}
+
+define i64 @extract_sext_v2i64() nounwind {
+  ; MIPS32: extract_sext_v2i64:
+
+  %1 = load <2 x i64>* @v2i64
+  ; MIPS32-DAG: ld.d [[R1:\$w[0-9]+]],
+
+  %2 = add <2 x i64> %1, %1
+  ; MIPS32-DAG: addv.d [[R2:\$w[0-9]+]], [[R1]], [[R1]]
+
+  %3 = extractelement <2 x i64> %2, i32 1
+  ; MIPS32-DAG: copy_s.w [[R3:\$[0-9]+]], [[R1]][2]
+  ; MIPS32-DAG: copy_s.w [[R4:\$[0-9]+]], [[R1]][3]
+  ; MIPS32-NOT: sll
+  ; MIPS32-NOT: sra
+
+  ret i64 %3
+  ; MIPS32: .size extract_sext_v2i64
+}
+
+define i32 @extract_zext_v16i8() nounwind {
+  ; MIPS32: extract_zext_v16i8:
+
+  %1 = load <16 x i8>* @v16i8
+  ; MIPS32-DAG: ld.b [[R1:\$w[0-9]+]],
+
+  %2 = add <16 x i8> %1, %1
+  ; MIPS32-DAG: addv.b [[R2:\$w[0-9]+]], [[R1]], [[R1]]
+
+  %3 = extractelement <16 x i8> %2, i32 1
+  %4 = zext i8 %3 to i32
+  ; MIPS32-DAG: copy_u.b [[R3:\$[0-9]+]], [[R1]][1]
+  ; MIPS32-NOT: andi
+
+  ret i32 %4
+  ; MIPS32: .size extract_zext_v16i8
+}
+
+define i32 @extract_zext_v8i16() nounwind {
+  ; MIPS32: extract_zext_v8i16:
+
+  %1 = load <8 x i16>* @v8i16
+  ; MIPS32-DAG: ld.h [[R1:\$w[0-9]+]],
+
+  %2 = add <8 x i16> %1, %1
+  ; MIPS32-DAG: addv.h [[R2:\$w[0-9]+]], [[R1]], [[R1]]
+
+  %3 = extractelement <8 x i16> %2, i32 1
+  %4 = zext i16 %3 to i32
+  ; MIPS32-DAG: copy_u.h [[R3:\$[0-9]+]], [[R1]][1]
+  ; MIPS32-NOT: andi
+
+  ret i32 %4
+  ; MIPS32: .size extract_zext_v8i16
+}
+
+define i32 @extract_zext_v4i32() nounwind {
+  ; MIPS32: extract_zext_v4i32:
+
+  %1 = load <4 x i32>* @v4i32
+  ; MIPS32-DAG: ld.w [[R1:\$w[0-9]+]],
+
+  %2 = add <4 x i32> %1, %1
+  ; MIPS32-DAG: addv.w [[R2:\$w[0-9]+]], [[R1]], [[R1]]
+
+  %3 = extractelement <4 x i32> %2, i32 1
+  ; MIPS32-DAG: copy_{{[su]}}.w [[R3:\$[0-9]+]], [[R1]][1]
+
+  ret i32 %3
+  ; MIPS32: .size extract_zext_v4i32
+}
+
+define i64 @extract_zext_v2i64() nounwind {
+  ; MIPS32: extract_zext_v2i64:
+
+  %1 = load <2 x i64>* @v2i64
+  ; MIPS32-DAG: ld.d [[R1:\$w[0-9]+]],
+
+  %2 = add <2 x i64> %1, %1
+  ; MIPS32-DAG: addv.d [[R2:\$w[0-9]+]], [[R1]], [[R1]]
+
+  %3 = extractelement <2 x i64> %2, i32 1
+  ; MIPS32-DAG: copy_{{[su]}}.w [[R3:\$[0-9]+]], [[R1]][2]
+  ; MIPS32-DAG: copy_{{[su]}}.w [[R4:\$[0-9]+]], [[R1]][3]
+  ; MIPS32-NOT: andi
+
+  ret i64 %3
+  ; MIPS32: .size extract_zext_v2i64
+}
+
+define void @insert_v16i8(i32 %a) nounwind {
+  ; MIPS32: insert_v16i8:
+
+  %1 = load <16 x i8>* @v16i8
+  ; MIPS32-DAG: ld.b [[R1:\$w[0-9]+]],
+
+  %a2 = trunc i32 %a to i8
+  %a3 = sext i8 %a2 to i32
+  %a4 = trunc i32 %a3 to i8
+  ; MIPS32-NOT: andi
+  ; MIPS32-NOT: sra
+
+  %2 = insertelement <16 x i8> %1, i8 %a4, i32 1
+  ; MIPS32-DAG: insert.b [[R1]][1], $4
+
+  store <16 x i8> %2, <16 x i8>* @v16i8
+  ; MIPS32-DAG: st.b [[R1]]
+
+  ret void
+  ; MIPS32: .size insert_v16i8
+}
+
+define void @insert_v8i16(i32 %a) nounwind {
+  ; MIPS32: insert_v8i16:
+
+  %1 = load <8 x i16>* @v8i16
+  ; MIPS32-DAG: ld.h [[R1:\$w[0-9]+]],
+
+  %a2 = trunc i32 %a to i16
+  %a3 = sext i16 %a2 to i32
+  %a4 = trunc i32 %a3 to i16
+  ; MIPS32-NOT: andi
+  ; MIPS32-NOT: sra
+
+  %2 = insertelement <8 x i16> %1, i16 %a4, i32 1
+  ; MIPS32-DAG: insert.h [[R1]][1], $4
+
+  store <8 x i16> %2, <8 x i16>* @v8i16
+  ; MIPS32-DAG: st.h [[R1]]
+
+  ret void
+  ; MIPS32: .size insert_v8i16
+}
+
+define void @insert_v4i32(i32 %a) nounwind {
+  ; MIPS32: insert_v4i32:
+
+  %1 = load <4 x i32>* @v4i32
+  ; MIPS32-DAG: ld.w [[R1:\$w[0-9]+]],
+
+  ; MIPS32-NOT: andi
+  ; MIPS32-NOT: sra
+
+  %2 = insertelement <4 x i32> %1, i32 %a, i32 1
+  ; MIPS32-DAG: insert.w [[R1]][1], $4
+
+  store <4 x i32> %2, <4 x i32>* @v4i32
+  ; MIPS32-DAG: st.w [[R1]]
+
+  ret void
+  ; MIPS32: .size insert_v4i32
+}
+
+define void @insert_v2i64(i64 %a) nounwind {
+  ; MIPS32: insert_v2i64:
+
+  %1 = load <2 x i64>* @v2i64
+  ; MIPS32-DAG: ld.w [[R1:\$w[0-9]+]],
+
+  ; MIPS32-NOT: andi
+  ; MIPS32-NOT: sra
+
+  %2 = insertelement <2 x i64> %1, i64 %a, i32 1
+  ; MIPS32-DAG: insert.w [[R1]][2], $4
+  ; MIPS32-DAG: insert.w [[R1]][3], $5
+
+  store <2 x i64> %2, <2 x i64>* @v2i64
+  ; MIPS32-DAG: st.w [[R1]]
+
+  ret void
+  ; MIPS32: .size insert_v2i64
+}

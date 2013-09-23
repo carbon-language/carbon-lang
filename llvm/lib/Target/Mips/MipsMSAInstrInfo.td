@@ -23,6 +23,33 @@ def MipsVSplatD : SDNode<"MipsISD::VSPLATD", SDT_MipsSplat>;
 def MipsVNOR : SDNode<"MipsISD::VNOR", SDTIntBinOp,
                       [SDNPCommutative, SDNPAssociative]>;
 
+def MipsVExtractSExt : SDNode<"MipsISD::VEXTRACT_SEXT_ELT",
+    SDTypeProfile<1, 3, [SDTCisPtrTy<2>]>, []>;
+def MipsVExtractZExt : SDNode<"MipsISD::VEXTRACT_ZEXT_ELT",
+    SDTypeProfile<1, 3, [SDTCisPtrTy<2>]>, []>;
+
+// Pattern fragments
+def vextract_sext_i8  : PatFrag<(ops node:$vec, node:$idx),
+                                (MipsVExtractSExt node:$vec, node:$idx, i8)>;
+def vextract_sext_i16 : PatFrag<(ops node:$vec, node:$idx),
+                                (MipsVExtractSExt node:$vec, node:$idx, i16)>;
+def vextract_sext_i32 : PatFrag<(ops node:$vec, node:$idx),
+                                (MipsVExtractSExt node:$vec, node:$idx, i32)>;
+
+def vextract_zext_i8  : PatFrag<(ops node:$vec, node:$idx),
+                                (MipsVExtractZExt node:$vec, node:$idx, i8)>;
+def vextract_zext_i16 : PatFrag<(ops node:$vec, node:$idx),
+                                (MipsVExtractZExt node:$vec, node:$idx, i16)>;
+def vextract_zext_i32 : PatFrag<(ops node:$vec, node:$idx),
+                                (MipsVExtractZExt node:$vec, node:$idx, i32)>;
+
+def vinsert_v16i8 : PatFrag<(ops node:$vec, node:$val, node:$idx),
+    (v16i8 (vector_insert node:$vec, node:$val, node:$idx))>;
+def vinsert_v8i16 : PatFrag<(ops node:$vec, node:$val, node:$idx),
+    (v8i16 (vector_insert node:$vec, node:$val, node:$idx))>;
+def vinsert_v4i32 : PatFrag<(ops node:$vec, node:$val, node:$idx),
+    (v4i32 (vector_insert node:$vec, node:$val, node:$idx))>;
+
 def vsplati8  : PatFrag<(ops node:$in), (v16i8 (MipsVSplat (i32 node:$in)))>;
 def vsplati16 : PatFrag<(ops node:$in), (v8i16 (MipsVSplat (i32 node:$in)))>;
 def vsplati32 : PatFrag<(ops node:$in), (v4i32 (MipsVSplat (i32 node:$in)))>;
@@ -805,12 +832,12 @@ class MSA_BIT_D_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
 }
 
 class MSA_COPY_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
-                         RegisterClass RCD, RegisterClass RCWS,
+                         ValueType VecTy, RegisterClass RCD, RegisterClass RCWS,
                          InstrItinClass itin = NoItinerary> {
   dag OutOperandList = (outs RCD:$rd);
-  dag InOperandList = (ins RCWS:$ws, uimm6:$n);
+  dag InOperandList = (ins RCWS:$ws, uimm4:$n);
   string AsmString = !strconcat(instr_asm, "\t$rd, $ws[$n]");
-  list<dag> Pattern = [(set RCD:$rd, (OpNode RCWS:$ws, immZExt6:$n))];
+  list<dag> Pattern = [(set RCD:$rd, (OpNode (VecTy RCWS:$ws), immZExt4:$n))];
   InstrItinClass Itinerary = itin;
 }
 
@@ -922,11 +949,11 @@ class MSA_INSERT_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
                            RegisterClass RCD, RegisterClass RCWS,
                            InstrItinClass itin = NoItinerary> {
   dag OutOperandList = (outs RCD:$wd);
-  dag InOperandList = (ins RCD:$wd_in, uimm6:$n, RCWS:$rs);
+  dag InOperandList = (ins RCD:$wd_in, RCWS:$rs, uimm6:$n);
   string AsmString = !strconcat(instr_asm, "\t$wd[$n], $rs");
   list<dag> Pattern = [(set RCD:$wd, (OpNode RCD:$wd_in,
-                                             immZExt6:$n,
-                                             RCWS:$rs))];
+                                             RCWS:$rs,
+                                             immZExt6:$n))];
   InstrItinClass Itinerary = itin;
   string Constraints = "$wd = $wd_in";
 }
@@ -1222,18 +1249,18 @@ class CLTI_U_W_DESC : MSA_SI5_DESC_BASE<"clti_u.w", int_mips_clti_u_w,
 class CLTI_U_D_DESC : MSA_SI5_DESC_BASE<"clti_u.d", int_mips_clti_u_d,
                                         MSA128D>;
 
-class COPY_S_B_DESC : MSA_COPY_DESC_BASE<"copy_s.b", int_mips_copy_s_b,
+class COPY_S_B_DESC : MSA_COPY_DESC_BASE<"copy_s.b", vextract_sext_i8,  v16i8,
                                          GPR32, MSA128B>;
-class COPY_S_H_DESC : MSA_COPY_DESC_BASE<"copy_s.h", int_mips_copy_s_h,
+class COPY_S_H_DESC : MSA_COPY_DESC_BASE<"copy_s.h", vextract_sext_i16, v8i16,
                                          GPR32, MSA128H>;
-class COPY_S_W_DESC : MSA_COPY_DESC_BASE<"copy_s.w", int_mips_copy_s_w,
+class COPY_S_W_DESC : MSA_COPY_DESC_BASE<"copy_s.w", vextract_sext_i32, v4i32,
                                          GPR32, MSA128W>;
 
-class COPY_U_B_DESC : MSA_COPY_DESC_BASE<"copy_u.b", int_mips_copy_u_b,
+class COPY_U_B_DESC : MSA_COPY_DESC_BASE<"copy_u.b", vextract_zext_i8,  v16i8,
                                          GPR32, MSA128B>;
-class COPY_U_H_DESC : MSA_COPY_DESC_BASE<"copy_u.h", int_mips_copy_u_h,
+class COPY_U_H_DESC : MSA_COPY_DESC_BASE<"copy_u.h", vextract_zext_i16, v8i16,
                                          GPR32, MSA128H>;
-class COPY_U_W_DESC : MSA_COPY_DESC_BASE<"copy_u.w", int_mips_copy_u_w,
+class COPY_U_W_DESC : MSA_COPY_DESC_BASE<"copy_u.w", vextract_zext_i32, v4i32,
                                          GPR32, MSA128W>;
 
 class CTCMSA_DESC {
@@ -1561,12 +1588,12 @@ class ILVR_H_DESC : MSA_3R_DESC_BASE<"ilvr.h", int_mips_ilvr_h, MSA128H>;
 class ILVR_W_DESC : MSA_3R_DESC_BASE<"ilvr.w", int_mips_ilvr_w, MSA128W>;
 class ILVR_D_DESC : MSA_3R_DESC_BASE<"ilvr.d", int_mips_ilvr_d, MSA128D>;
 
-class INSERT_B_DESC : MSA_INSERT_DESC_BASE<"insert.b", int_mips_insert_b,
-                                           MSA128B, GPR32>;
-class INSERT_H_DESC : MSA_INSERT_DESC_BASE<"insert.h", int_mips_insert_h,
-                                           MSA128H, GPR32>;
-class INSERT_W_DESC : MSA_INSERT_DESC_BASE<"insert.w", int_mips_insert_w,
-                                           MSA128W, GPR32>;
+class INSERT_B_DESC : MSA_INSERT_DESC_BASE<"insert.b", vinsert_v16i8, MSA128B,
+                                           GPR32>;
+class INSERT_H_DESC : MSA_INSERT_DESC_BASE<"insert.h", vinsert_v8i16, MSA128H,
+                                           GPR32>;
+class INSERT_W_DESC : MSA_INSERT_DESC_BASE<"insert.w", vinsert_v4i32, MSA128W,
+                                           GPR32>;
 
 class INSVE_B_DESC : MSA_INSVE_DESC_BASE<"insve.b", int_mips_insve_b, MSA128B>;
 class INSVE_H_DESC : MSA_INSVE_DESC_BASE<"insve.h", int_mips_insve_h, MSA128H>;
@@ -2688,6 +2715,9 @@ def XORI_B : XORI_B_ENC, XORI_B_DESC;
 // Patterns.
 class MSAPat<dag pattern, dag result, list<Predicate> pred = [HasMSA]> :
   Pat<pattern, result>, Requires<pred>;
+
+def : MSAPat<(extractelt (v4i32 MSA128W:$ws), immZExt4:$idx),
+             (COPY_S_W MSA128W:$ws, immZExt4:$idx)>;
 
 def : MSAPat<(v16i8 (load addr:$addr)), (LD_B addr:$addr)>;
 def : MSAPat<(v8i16 (load addr:$addr)), (LD_H addr:$addr)>;
