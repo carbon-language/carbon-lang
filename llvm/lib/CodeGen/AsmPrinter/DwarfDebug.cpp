@@ -2349,7 +2349,7 @@ void DwarfDebug::emitAccelTypes() {
 /// computeIndexValue - Compute the gdb index value for the DIE and CU.
 static dwarf::PubIndexEntryDescriptor computeIndexValue(CompileUnit *CU,
                                                         DIE *Die) {
-  dwarf::GDBIndexEntryLinkage IsStatic =
+  dwarf::GDBIndexEntryLinkage Linkage =
       Die->findAttribute(dwarf::DW_AT_external) ? dwarf::GIEL_EXTERNAL
                                                 : dwarf::GIEL_STATIC;
 
@@ -2369,10 +2369,10 @@ static dwarf::PubIndexEntryDescriptor computeIndexValue(CompileUnit *CU,
   case dwarf::DW_TAG_namespace:
     return dwarf::GIEK_TYPE;
   case dwarf::DW_TAG_subprogram:
-    return dwarf::PubIndexEntryDescriptor(dwarf::GIEK_FUNCTION, IsStatic);
+    return dwarf::PubIndexEntryDescriptor(dwarf::GIEK_FUNCTION, Linkage);
   case dwarf::DW_TAG_constant:
   case dwarf::DW_TAG_variable:
-    return dwarf::PubIndexEntryDescriptor(dwarf::GIEK_VARIABLE, IsStatic);
+    return dwarf::PubIndexEntryDescriptor(dwarf::GIEK_VARIABLE, Linkage);
   case dwarf::DW_TAG_enumerator:
     return dwarf::PubIndexEntryDescriptor(dwarf::GIEK_VARIABLE,
                                           dwarf::GIEL_STATIC);
