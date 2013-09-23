@@ -1745,11 +1745,12 @@ ShouldLaunchUsingXPC(const char *exe_path, ProcessLaunchInfo &launch_info)
         if (strcmp(part, debugserver) == 0)
         {
             // We are dealing with debugserver.
-            uid_t requested_uid = launch_info.GetUserID();
-            if (requested_uid == 0)
+            bool launchingAsRoot = launch_info.GetUserID() == 0;
+            bool currentUserIsRoot = Host::GetEffectiveUserID() == 0;
+            
+            if (launchingAsRoot && !currentUserIsRoot)
             {
-                // Launching XPC works for root. It also works for the non-attaching case for current login
-                // but unfortunately, we can't detect it here.
+                // If current user is already root, we don't need XPC's help.
                 result = true;
             }
         }
