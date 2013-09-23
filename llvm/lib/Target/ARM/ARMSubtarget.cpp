@@ -61,6 +61,7 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &CPU,
                            const std::string &FS, const TargetOptions &Options)
   : ARMGenSubtargetInfo(TT, CPU, FS)
   , ARMProcFamily(Others)
+  , ARMProcClass(None)
   , stackAlignment(4)
   , CPUString(CPU)
   , TargetTriple(TT)
@@ -90,7 +91,6 @@ void ARMSubtarget::initializeEnvironment() {
   SlowFPBrcc = false;
   InThumbMode = false;
   HasThumb2 = false;
-  IsMClass = false;
   NoARM = false;
   PostRAScheduler = false;
   IsR9Reserved = ReserveR9;

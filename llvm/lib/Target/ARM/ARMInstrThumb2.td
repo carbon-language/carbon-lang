@@ -3922,7 +3922,7 @@ defm t2STC2L : t2LdStCop<0b1111, 0, 1, "stc2l">;
 //
 // A/R class can only move from CPSR or SPSR.
 def t2MRS_AR : T2I<(outs GPR:$Rd), (ins), NoItinerary, "mrs", "\t$Rd, apsr",
-                  []>, Requires<[IsThumb2,IsARClass]> {
+                  []>, Requires<[IsThumb2,IsNotMClass]> {
   bits<4> Rd;
   let Inst{31-12} = 0b11110011111011111000;
   let Inst{11-8} = Rd;
@@ -3932,7 +3932,7 @@ def t2MRS_AR : T2I<(outs GPR:$Rd), (ins), NoItinerary, "mrs", "\t$Rd, apsr",
 def : t2InstAlias<"mrs${p} $Rd, cpsr", (t2MRS_AR GPR:$Rd, pred:$p)>;
 
 def t2MRSsys_AR: T2I<(outs GPR:$Rd), (ins), NoItinerary, "mrs", "\t$Rd, spsr",
-                   []>, Requires<[IsThumb2,IsARClass]> {
+                   []>, Requires<[IsThumb2,IsNotMClass]> {
   bits<4> Rd;
   let Inst{31-12} = 0b11110011111111111000;
   let Inst{11-8} = Rd;
@@ -3965,7 +3965,7 @@ def t2MRS_M : T2I<(outs rGPR:$Rd), (ins msr_mask:$mask), NoItinerary,
 // the mask with the fields to be accessed in the special register.
 def t2MSR_AR : T2I<(outs), (ins msr_mask:$mask, rGPR:$Rn),
                    NoItinerary, "msr", "\t$mask, $Rn", []>,
-               Requires<[IsThumb2,IsARClass]> {
+               Requires<[IsThumb2,IsNotMClass]> {
   bits<5> mask;
   bits<4> Rn;
   let Inst{31-21} = 0b11110011100;
