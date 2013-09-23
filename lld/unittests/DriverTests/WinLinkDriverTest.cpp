@@ -123,8 +123,15 @@ TEST_F(WinLinkParserTest, Libpath) {
 // Tests for command line options that take values.
 //
 
+TEST_F(WinLinkParserTest, MachineX86) {
+  EXPECT_FALSE(parse("link.exe", "/machine:x86", "a.obj", nullptr));
+  EXPECT_EQ(llvm::COFF::IMAGE_FILE_MACHINE_I386, _context.getMachineType());
+}
+
 TEST_F(WinLinkParserTest, MachineX64) {
   EXPECT_TRUE(parse("link.exe", "/machine:x64", "a.obj", nullptr));
+  EXPECT_TRUE(StringRef(errorMessage()).startswith(
+      "Machine type other than x86 is not supported"));
 }
 
 TEST_F(WinLinkParserTest, MajorImageVersion) {
@@ -167,6 +174,12 @@ TEST_F(WinLinkParserTest, Base) {
   EXPECT_EQ(0x800000U, _context.getBaseAddress());
 }
 
+TEST_F(WinLinkParserTest, InvalidBase) {
+  EXPECT_TRUE(parse("link.exe", "/base:1234", "a.obj", nullptr));
+  EXPECT_TRUE(StringRef(errorMessage()).startswith(
+      "Base address have to be multiple of 64K"));
+}
+
 TEST_F(WinLinkParserTest, StackReserve) {
   EXPECT_FALSE(parse("link.exe", "/stack:8192", "a.obj", nullptr));
   EXPECT_EQ(8192U, _context.getStackReserve());
@@ -177,6 +190,11 @@ TEST_F(WinLinkParserTest, StackReserveAndCommit) {
   EXPECT_FALSE(parse("link.exe", "/stack:16384,8192", "a.obj", nullptr));
   EXPECT_EQ(16384U, _context.getStackReserve());
   EXPECT_EQ(8192U, _context.getStackCommit());
+}
+
+TEST_F(WinLinkParserTest, InvalidStackSize) {
+  EXPECT_TRUE(parse("link.exe", "/stack:8192,16384", "a.obj", nullptr));
+  EXPECT_TRUE(StringRef(errorMessage()).startswith("Invalid stack size"));
 }
 
 TEST_F(WinLinkParserTest, HeapReserve) {
@@ -191,9 +209,20 @@ TEST_F(WinLinkParserTest, HeapReserveAndCommit) {
   EXPECT_EQ(8192U, _context.getHeapCommit());
 }
 
+TEST_F(WinLinkParserTest, InvalidHeapSize) {
+  EXPECT_TRUE(parse("link.exe", "/heap:8192,16384", "a.obj", nullptr));
+  EXPECT_TRUE(StringRef(errorMessage()).startswith("Invalid heap size"));
+}
+
 TEST_F(WinLinkParserTest, SectionAlignment) {
   EXPECT_FALSE(parse("link.exe", "/align:8192", "a.obj", nullptr));
   EXPECT_EQ(8192U, _context.getSectionAlignment());
+}
+
+TEST_F(WinLinkParserTest, InvalidAlignment) {
+  EXPECT_TRUE(parse("link.exe", "/align:1000", "a.obj", nullptr));
+  EXPECT_EQ("Section alignment must be a power of 2, but got 1000\n",
+            errorMessage());
 }
 
 TEST_F(WinLinkParserTest, Include) {
