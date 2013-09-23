@@ -757,11 +757,9 @@ DefaultLayout<ELFT>::assignVirtualAddress() {
         continue;
 
       if (si->segmentType() == llvm::ELF::PT_NULL) {
+        // Handle Non allocatable sections.
         uint64_t nonLoadableAddr = 0;
         si->setVAddr(nonLoadableAddr);
-        // The first segment has the virtualAddress set to the base address as
-        // we have added the file header and the program header dont align the
-        // first segment to the pagesize
         si->assignVirtualAddress(nonLoadableAddr);
       } else {
         si->setVAddr(virtualAddress);
