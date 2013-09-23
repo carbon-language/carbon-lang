@@ -6,7 +6,7 @@
 // CHECK: unknown argument
 
 
-// RUN: %clang -S %s -o %t.s -funknown-to-clang-option -Wunknown-to-clang-option -munknown-to-clang-optio
+// RUN: %clang -S %s -o %t.s -funknown-to-clang-option -Wunknown-to-clang-option -munknown-to-clang-option 2>&1 | FileCheck --check-prefix=IGNORED %s
 
 // IGNORED: warning: argument unused during compilation: '-funknown-to-clang-option'
 // IGNORED: warning: argument unused during compilation: '-munknown-to-clang-option'
