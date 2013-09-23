@@ -4,3 +4,10 @@
 // CHECK: unknown argument
 // CHECK: unknown argument
 // CHECK: unknown argument
+
+
+// RUN: %clang -S %s -o %t.s -funknown-to-clang-option -Wunknown-to-clang-option -munknown-to-clang-optio
+
+// IGNORED: warning: argument unused during compilation: '-funknown-to-clang-option'
+// IGNORED: warning: argument unused during compilation: '-munknown-to-clang-option'
+// IGNORED: warning: unknown warning option '-Wunknown-to-clang-option'
