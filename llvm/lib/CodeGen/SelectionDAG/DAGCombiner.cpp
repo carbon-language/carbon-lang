@@ -3114,7 +3114,7 @@ SDValue DAGCombiner::MatchBSwapHWord(SDNode *N, SDValue N0, SDValue N1) {
   SDValue BSwap = DAG.getNode(ISD::BSWAP, SDLoc(N), VT,
                               SDValue(Parts[0],0));
 
-  // Result of the bswap should be rotated by 16. If it's not legal, than
+  // Result of the bswap should be rotated by 16. If it's not legal, then
   // do  (x << 16) | (x >> 16).
   SDValue ShAmt = DAG.getConstant(16, getShiftAmountTy(VT));
   if (TLI.isOperationLegalOrCustom(ISD::ROTL, VT))
