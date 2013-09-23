@@ -533,8 +533,8 @@ void MCAsmStreamer::EmitELFSize(MCSymbol *Symbol, const MCExpr *Value) {
 
 void MCAsmStreamer::EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                                      unsigned ByteAlignment) {
-  const MCSection *Section = getContext().getObjectFileInfo()->getBSSSection();
-  AssignSection(Symbol, Section);
+  // Common symbols do not belong to any actual section.
+  AssignSection(Symbol, NULL);
 
   OS << "\t.comm\t" << *Symbol << ',' << Size;
   if (ByteAlignment != 0) {
@@ -552,8 +552,8 @@ void MCAsmStreamer::EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
 /// @param Size - The size of the common symbol.
 void MCAsmStreamer::EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                                           unsigned ByteAlign) {
-  const MCSection *Section = getContext().getObjectFileInfo()->getBSSSection();
-  AssignSection(Symbol, Section);
+  // Common symbols do not belong to any actual section.
+  AssignSection(Symbol, NULL);
 
   OS << "\t.lcomm\t" << *Symbol << ',' << Size;
   if (ByteAlign > 1) {

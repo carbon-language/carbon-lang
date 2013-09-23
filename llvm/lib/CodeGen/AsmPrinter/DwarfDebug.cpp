@@ -2838,12 +2838,17 @@ void DwarfDebug::emitDebugARanges() {
       Asm->EmitLabelReference(Span.Start, PtrSize);
 
       // Calculate the size as being from the span start to it's end.
-      // If we have no valid end symbol, then we just cover the first byte.
-      // (this sucks, but I can't seem to figure out how to get the size)
-      if (Span.End)
+      if (Span.End) {
         Asm->EmitLabelDifference(Span.End, Span.Start, PtrSize);
-      else
-        Asm->OutStreamer.EmitIntValue(1, PtrSize);
+      } else {
+        // For symbols without an end marker (e.g. common), we
+        // write a single arange entry containing just that one symbol.
+        uint64_t Size = SymSize[Span.Start];
+        if (Size == 0)
+          Size = 1;
+
+        Asm->OutStreamer.EmitIntValue(Size, PtrSize);
+      }
     }
 
     Asm->OutStreamer.AddComment("ARange terminator");

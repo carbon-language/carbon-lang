@@ -292,6 +292,9 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
   // sections and expected to be contiguous (e.g. ObjC metadata).
   unsigned AlignLog = getGVAlignmentLog2(GV, *TD);
 
+  if (DD)
+    DD->setSymbolSize(GVSym, Size);
+
   // Handle common and BSS local symbols (.lcomm).
   if (GVKind.isCommon() || GVKind.isBSSLocal()) {
     if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.

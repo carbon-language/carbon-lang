@@ -18,27 +18,28 @@
 ; -- finish --
 ; CHECK-HEADER: # ARange terminator
 
-
+; <text section> - it should have made one span covering all functions in this CU.
 ; CHECK-CODE: .short 2 # DWARF Arange version number
 ; CHECK-CODE: .quad .Lfunc_begin0
+; CHECK-CODE-NEXT: .Lset1 = .L.text_end-.Lfunc_begin0
 ; CHECK-CODE: # ARange terminator
 
+; <data section> - it should have made one span covering all vars in this CU.
 ; CHECK-DATA: .short 2 # DWARF Arange version number
 ; CHECK-DATA: .quad some_data
 ; CHECK-DATA-NEXT: -some_data
-; CHECK-DATA-NEXT: .quad
 ; CHECK-DATA: # ARange terminator
 
+; <common symbols> - it should have made one span for each symbol.
 ; CHECK-BSS: .short 2 # DWARF Arange version number
 ; CHECK-BSS: .quad some_bss
-; CHECK-BSS-NEXT: -some_bss
-; CHECK-BSS-NEXT: .quad
+; CHECK-BSS-NEXT: .quad 4
 ; CHECK-BSS: # ARange terminator
 
+; <other sections> - it should have made one span covering all vars in this CU.
 ; CHECK-CUSTOM: .short 2 # DWARF Arange version number
 ; CHECK-CUSTOM: .quad some_other
 ; CHECK-CUSTOM-NEXT: -some_other
-; CHECK-CUSTOM-NEXT: .quad
 ; CHECK-CUSTOM: # ARange terminator
 
 

@@ -341,6 +341,9 @@ class DwarfDebug {
   // List of all labels used in the output.
   std::vector<SymbolCU> Labels;
 
+  // Size of each symbol emitted (for those symbols that have a specific size).
+  DenseMap <const MCSymbol *, uint64_t> SymSize;
+
   // Provides a unique id per text section.
   typedef DenseMap<const MCSection *, SmallVector<SymbolCU, 8> > SectionMapType;
   SectionMapType SectionMap;
@@ -681,6 +684,10 @@ public:
 
   /// \brief Add a label so that arange data can be generated for it.
   void addLabel(SymbolCU SCU) { Labels.push_back(SCU); }
+
+  /// \brief For symbols that have a size designated (e.g. common symbols),
+  /// this tracks that size.
+  void setSymbolSize(const MCSymbol *Sym, uint64_t Size) { SymSize[Sym] = Size;}
 
   /// \brief Look up the source id with the given directory and source file
   /// names. If none currently exists, create a new id and insert it in the
