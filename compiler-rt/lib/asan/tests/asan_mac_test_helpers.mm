@@ -1,5 +1,6 @@
 // Mac OS X 10.6 or higher only.
 #include <dispatch/dispatch.h>
+#include <pthread.h>  // for pthread_yield_np()
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,26 +12,26 @@
 
 // This is a (void*)(void*) function so it can be passed to pthread_create.
 void *CFAllocatorDefaultDoubleFree(void *unused) {
-  void *mem =  CFAllocatorAllocate(kCFAllocatorDefault, 5, 0);
+  void *mem = CFAllocatorAllocate(kCFAllocatorDefault, 5, 0);
   CFAllocatorDeallocate(kCFAllocatorDefault, mem);
   CFAllocatorDeallocate(kCFAllocatorDefault, mem);
   return 0;
 }
 
 void CFAllocatorSystemDefaultDoubleFree() {
-  void *mem =  CFAllocatorAllocate(kCFAllocatorSystemDefault, 5, 0);
+  void *mem = CFAllocatorAllocate(kCFAllocatorSystemDefault, 5, 0);
   CFAllocatorDeallocate(kCFAllocatorSystemDefault, mem);
   CFAllocatorDeallocate(kCFAllocatorSystemDefault, mem);
 }
 
 void CFAllocatorMallocDoubleFree() {
-  void *mem =  CFAllocatorAllocate(kCFAllocatorMalloc, 5, 0);
+  void *mem = CFAllocatorAllocate(kCFAllocatorMalloc, 5, 0);
   CFAllocatorDeallocate(kCFAllocatorMalloc, mem);
   CFAllocatorDeallocate(kCFAllocatorMalloc, mem);
 }
 
 void CFAllocatorMallocZoneDoubleFree() {
-  void *mem =  CFAllocatorAllocate(kCFAllocatorMallocZone, 5, 0);
+  void *mem = CFAllocatorAllocate(kCFAllocatorMallocZone, 5, 0);
   CFAllocatorDeallocate(kCFAllocatorMallocZone, mem);
   CFAllocatorDeallocate(kCFAllocatorMallocZone, mem);
 }
@@ -77,10 +78,17 @@ void worker_do_crash(int size) {
   free(mem);
 }
 
+// Used by the GCD tests to avoid a race between the worker thread reporting a
+// memory error and the main thread which may exit with exit code 0 before
+// that.
+void wait_forever() {
+  volatile bool infinite = true;
+  while (infinite) pthread_yield_np();
+}
+
 // Tests for the Grand Central Dispatch. See
 // http://developer.apple.com/library/mac/#documentation/Performance/Reference/GCD_libdispatch_Ref/Reference/reference.html
 // for the reference.
-
 void TestGCDDispatchAsync() {
   dispatch_queue_t queue = dispatch_get_global_queue(0, 0);
   dispatch_block_t block = ^{ worker_do_crash(1024); };
@@ -88,8 +96,7 @@ void TestGCDDispatchAsync() {
   // pthread_create(). We need to verify that AddressSanitizer notices that the
   // thread has started.
   dispatch_async(queue, block);
-  // TODO(glider): this is hacky. Need to wait for the worker instead.
-  sleep(1);
+  wait_forever();
 }
 
 void TestGCDDispatchSync() {
@@ -99,8 +106,7 @@ void TestGCDDispatchSync() {
   // pthread_create(). We need to verify that AddressSanitizer notices that the
   // thread has started.
   dispatch_sync(queue, block);
-  // TODO(glider): this is hacky. Need to wait for the worker instead.
-  sleep(1);
+  wait_forever();
 }
 
 // libdispatch spawns a rather small number of threads and reuses them. We need
@@ -113,8 +119,7 @@ void TestGCDReuseWqthreadsAsync() {
     dispatch_async(queue, block_alloc);
   }
   dispatch_async(queue, block_crash);
-  // TODO(glider): this is hacky. Need to wait for the workers instead.
-  sleep(1);
+  wait_forever();
 }
 
 // Try to trigger abnormal behaviour of dispatch_sync() being unhandled by us.
@@ -130,8 +135,7 @@ void TestGCDReuseWqthreadsSync() {
     dispatch_sync(queue[i % 4], block_alloc);
   }
   dispatch_sync(queue[3], block_crash);
-  // TODO(glider): this is hacky. Need to wait for the workers instead.
-  sleep(1);
+  wait_forever();
 }
 
 void TestGCDDispatchAfter() {
@@ -141,9 +145,7 @@ void TestGCDDispatchAfter() {
   dispatch_time_t milestone =
       dispatch_time(DISPATCH_TIME_NOW, 1LL * NSEC_PER_SEC);
   dispatch_after(milestone, queue, block_crash);
-  // Let's wait for a bit longer now.
-  // TODO(glider): this is still hacky.
-  sleep(2);
+  wait_forever();
 }
 
 void worker_do_deallocate(void *ptr) {
@@ -172,7 +174,7 @@ void TestGCDSourceEvent() {
     access_memory(&mem[10]);
   });
   dispatch_resume(timer);
-  sleep(2);
+  wait_forever();
 }
 
 void TestGCDSourceCancel() {
@@ -196,7 +198,7 @@ void TestGCDSourceCancel() {
     access_memory(&mem[10]);
   });
   dispatch_resume(timer);
-  sleep(2);
+  wait_forever();
 }
 
 void TestGCDGroupAsync() {
@@ -207,6 +209,7 @@ void TestGCDGroupAsync() {
     access_memory(&mem[10]);
   });
   dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
+  wait_forever();
 }
 
 @interface FixedArray : NSObject {
