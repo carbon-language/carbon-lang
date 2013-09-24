@@ -75,6 +75,7 @@ def incremental : F<"incremental">;
 def no_incremental : F<"incremental:no">;
 
 def pdb : Q<"pdb">;
+def pdbaltpath : Q<"pdbaltpath">;
 def errorreport : Q<"errorreport">;
 def delay : Q<"delay">;
 def delayload : Q<"delayload">;
