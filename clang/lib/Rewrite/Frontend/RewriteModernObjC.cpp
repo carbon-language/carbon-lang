@@ -1066,16 +1066,19 @@ void RewriteModernObjC::RewriteForwardClassEpilogue(ObjCInterfaceDecl *ClassDecl
 void RewriteModernObjC::RewriteForwardClassDecl(DeclGroupRef D) {
   std::string typedefString;
   for (DeclGroupRef::iterator I = D.begin(), E = D.end(); I != E; ++I) {
-    ObjCInterfaceDecl *ForwardDecl = cast<ObjCInterfaceDecl>(*I);
-    if (I == D.begin()) {
-      // Translate to typedef's that forward reference structs with the same name
-      // as the class. As a convenience, we include the original declaration
-      // as a comment.
-      typedefString += "// @class ";
-      typedefString += ForwardDecl->getNameAsString();
-      typedefString += ";";
+    if (ObjCInterfaceDecl *ForwardDecl = dyn_cast<ObjCInterfaceDecl>(*I)) {
+      if (I == D.begin()) {
+        // Translate to typedef's that forward reference structs with the same name
+        // as the class. As a convenience, we include the original declaration
+        // as a comment.
+        typedefString += "// @class ";
+        typedefString += ForwardDecl->getNameAsString();
+        typedefString += ";";
+      }
+      RewriteOneForwardClassDecl(ForwardDecl, typedefString);
     }
-    RewriteOneForwardClassDecl(ForwardDecl, typedefString);
+    else
+      HandleTopLevelSingleDecl(*I);
   }
   DeclGroupRef::iterator I = D.begin();
   RewriteForwardClassEpilogue(cast<ObjCInterfaceDecl>(*I), typedefString);

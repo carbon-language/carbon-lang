@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -x objective-c++ -Wno-return-type -fblocks -fms-extensions -rewrite-objc -fobjc-runtime=macosx-fragile-10.5 %s -o %t-rw.cpp
+// RUN: %clang_cc1 -x objective-c++ -Wno-return-type -fblocks -fms-extensions -rewrite-objc %s -o %t-rw.cpp
 // RUN: %clang_cc1 -fsyntax-only -fblocks -Wno-address-of-temporary -D"id=void*" -D"SEL=void*" -D"__declspec(X)=" %t-rw.cpp
 
 extern "C" {
@@ -42,3 +42,14 @@ int I,J,K;
 };
 
 
+// rdar://15027032
+@interface ISDPropertyChangeGroup
+@end
+
+@implementation ISDPropertyChangeGroup
+@class ISDClientState;
+- (id)lastModifiedGeneration : (ISDClientState *) obj
+{
+  return obj ;
+}
+@end

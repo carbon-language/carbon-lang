@@ -809,12 +809,6 @@ Sema::ActOnForwardProtocolDeclaration(SourceLocation AtProtocolLoc,
                                       unsigned NumElts,
                                       AttributeList *attrList) {
   SmallVector<Decl *, 8> DeclsInGroup;
-  if (isa<ObjCContainerDecl>(CurContext)) {
-    Diag(AtProtocolLoc, 
-         diag::err_objc_decls_may_only_appear_in_global_scope);
-    return BuildDeclaratorGroup(DeclsInGroup, false);
-  }
-
   for (unsigned i = 0; i != NumElts; ++i) {
     IdentifierInfo *Ident = IdentList[i].first;
     ObjCProtocolDecl *PrevDecl = LookupProtocol(Ident, IdentList[i].second,
@@ -1933,12 +1927,6 @@ Sema::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
                                    SourceLocation *IdentLocs,
                                    unsigned NumElts) {
   SmallVector<Decl *, 8> DeclsInGroup;
-  if (isa<ObjCContainerDecl>(CurContext)) {
-    Diag(AtClassLoc, 
-         diag::err_objc_decls_may_only_appear_in_global_scope);
-    return BuildDeclaratorGroup(DeclsInGroup, false);
-  }
-
   for (unsigned i = 0; i != NumElts; ++i) {
     // Check for another declaration kind with the same name.
     NamedDecl *PrevDecl
