@@ -17,6 +17,7 @@ multiclass B<string name, string help> {
 
 def base    : P<"base", "Base address of the program">;
 def defaultlib : P<"defaultlib", "Add the library to the list of input files">;
+def nodefaultlib : P<"nodefaultlib", "Remove a default library">;
 def entry   : P<"entry", "Name of entry point symbol">;
 // No help text because /failifmismatch is not intended to be used by the user.
 def failifmismatch : P<"failifmismatch", "">;
@@ -36,6 +37,8 @@ def subsystem : P<"subsystem", "Specify subsystem">;
 def incl : Joined<["/", "-"], "include:">,
     HelpText<"Force symbol to be added to symbol table as undefined one">;
 def incl_c : Separate<["/", "-"], "include">, Alias<incl>;
+
+def nodefaultlib_all : F<"nodefaultlib">;
 
 def force : F<"force">,
     HelpText<"Allow undefined symbols when creating executables">;

@@ -10,6 +10,7 @@
 #ifndef LLD_READER_WRITER_PECOFF_LINKER_CONTEXT_H
 #define LLD_READER_WRITER_PECOFF_LINKER_CONTEXT_H
 
+#include <set>
 #include <vector>
 
 #include "lld/Core/LinkingContext.h"
@@ -29,7 +30,8 @@ class PECOFFLinkingContext : public LinkingContext {
 public:
   PECOFFLinkingContext()
       : _baseAddress(0x400000), _stackReserve(1024 * 1024), _stackCommit(4096),
-        _heapReserve(1024 * 1024), _heapCommit(4096), _sectionAlignment(4096),
+        _heapReserve(1024 * 1024), _heapCommit(4096), _noDefaultLibAll(false),
+        _sectionAlignment(4096),
         _subsystem(llvm::COFF::IMAGE_SUBSYSTEM_UNKNOWN),
         _machineType(llvm::COFF::IMAGE_FILE_MACHINE_I386), _imageVersion(0, 0),
         _minOSVersion(6, 0), _nxCompat(true), _largeAddressAware(false),
@@ -142,6 +144,14 @@ public:
   void setImageType(ImageType type) { _imageType = type; }
   ImageType getImageType() const { return _imageType; }
 
+  void addNoDefaultLib(StringRef libName) { _noDefaultLibs.insert(libName); }
+  const std::set<std::string> &getNoDefaultLibs() const {
+    return _noDefaultLibs;
+  }
+
+  void setNoDefaultLibAll(bool val) { _noDefaultLibAll = val; }
+  bool getNoDefaultLibAll() const { return _noDefaultLibAll; }
+
   virtual ErrorOr<Reference::Kind> relocKindFromString(StringRef str) const;
   virtual ErrorOr<std::string> stringFromRelocKind(Reference::Kind kind) const;
 
@@ -174,6 +184,7 @@ private:
   uint64_t _stackCommit;
   uint64_t _heapReserve;
   uint64_t _heapCommit;
+  bool _noDefaultLibAll;
   uint32_t _sectionAlignment;
   WindowsSubsystem _subsystem;
   MachineTypes _machineType;
@@ -187,6 +198,9 @@ private:
   bool _terminalServerAware;
   bool _dynamicBaseEnabled;
   ImageType _imageType;
+
+  // The set to store /nodefaultlib arguments.
+  std::set<std::string> _noDefaultLibs;
 
   std::vector<StringRef> _inputSearchPaths;
   mutable std::unique_ptr<Reader> _reader;

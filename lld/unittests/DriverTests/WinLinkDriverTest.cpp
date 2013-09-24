@@ -160,15 +160,6 @@ TEST_F(WinLinkParserTest, MinMajorMinorOSVersion) {
   EXPECT_EQ(1, _context.getMinOSVersion().minorVersion);
 }
 
-TEST_F(WinLinkParserTest, DefaultLib) {
-  EXPECT_FALSE(parse("link.exe", "/defaultlib:user32.lib",
-                     "/defaultlib:kernel32", "a.obj", nullptr));
-  EXPECT_EQ(3, inputFileCount());
-  EXPECT_EQ("a.obj", inputFile(0));
-  EXPECT_EQ("user32.lib", inputFile(1));
-  EXPECT_EQ("kernel32.lib", inputFile(2));
-}
-
 TEST_F(WinLinkParserTest, Base) {
   EXPECT_FALSE(parse("link.exe", "/base:8388608", "a.obj", nullptr));
   EXPECT_EQ(0x800000U, _context.getBaseAddress());
@@ -232,6 +223,36 @@ TEST_F(WinLinkParserTest, Include) {
   EXPECT_EQ("foo", symbols[0]);
   symbols.pop_front();
   EXPECT_TRUE(symbols.empty());
+}
+
+//
+// Tests for /defaultlib and /nodefaultlib.
+//
+
+TEST_F(WinLinkParserTest, DefaultLib) {
+  EXPECT_FALSE(parse("link.exe", "/defaultlib:user32.lib",
+                     "/defaultlib:kernel32", "a.obj", nullptr));
+  EXPECT_EQ(3, inputFileCount());
+  EXPECT_EQ("a.obj", inputFile(0));
+  EXPECT_EQ("user32.lib", inputFile(1));
+  EXPECT_EQ("kernel32.lib", inputFile(2));
+}
+
+TEST_F(WinLinkParserTest, NoDefaultLib) {
+  EXPECT_FALSE(parse("link.exe", "/defaultlib:user32.lib",
+                     "/defaultlib:kernel32", "/nodefaultlib:user32.lib",
+                     "a.obj", nullptr));
+  EXPECT_EQ(2, inputFileCount());
+  EXPECT_EQ("a.obj", inputFile(0));
+  EXPECT_EQ("kernel32.lib", inputFile(1));
+}
+
+TEST_F(WinLinkParserTest, NoDefaultLibAll) {
+  EXPECT_FALSE(parse("link.exe", "/defaultlib:user32.lib",
+                     "/defaultlib:kernel32", "/nodefaultlib", "a.obj",
+                     nullptr));
+  EXPECT_EQ(1, inputFileCount());
+  EXPECT_EQ("a.obj", inputFile(0));
 }
 
 //

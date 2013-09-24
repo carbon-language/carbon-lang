@@ -276,14 +276,23 @@ bool WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ct
 
   InputGraph &inputGraph = ctx.inputGraph();
 
-  // handle /help
+  // Handle /help
   if (parsedArgs->getLastArg(OPT_help)) {
     WinLinkOptTable table;
     table.PrintHelp(llvm::outs(), argv[0], "LLVM Linker", false);
     return true;
   }
 
-  // handle /defaultlib
+  // Handle /nodefaultlib:<lib>. The same option without argument is handled in
+  // the following for loop.
+  for (llvm::opt::arg_iterator it = parsedArgs->filtered_begin(OPT_nodefaultlib),
+                               ie = parsedArgs->filtered_end();
+       it != ie; ++it) {
+    ctx.addNoDefaultLib((*it)->getValue());
+  }
+
+  // Handle /defaultlib. Argument of the option is added to the input file list
+  // unless it's blacklisted by /nodefaultlib.
   std::vector<StringRef> defaultLibs;
   for (llvm::opt::arg_iterator it = parsedArgs->filtered_begin(OPT_defaultlib),
                                ie = parsedArgs->filtered_end();
@@ -472,6 +481,11 @@ bool WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ct
       ctx.addInitialUndefinedSymbol(ctx.allocateString(inputArg->getValue()));
       break;
 
+    case OPT_nodefaultlib_all:
+      // handle /nodefaultlib
+      ctx.setNoDefaultLibAll(true);
+      break;
+
     case OPT_out:
       // handle /out
       ctx.setOutputPath(ctx.allocateString(inputArg->getValue()));
@@ -515,11 +529,14 @@ bool WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ct
           std::unique_ptr<InputElement>(new PECOFFFileNode(ctx, value)));
   }
 
-  // Add ".lib" extension if the path does not already have the extension to
-  // mimic link.exe behavior.
-  for (auto defaultLibPath : defaultLibs)
-    inputGraph.addInputElement(std::unique_ptr<InputElement>(
-        new PECOFFLibraryNode(ctx, defaultLibPath)));
+  // Add the libraries specified by /defaultlib unless they are blacklisted by
+  // /nodefaultlib.
+  if (!ctx.getNoDefaultLibAll())
+    for (auto defaultLibPath : defaultLibs)
+      if (ctx.getNoDefaultLibs().find(defaultLibPath) ==
+          ctx.getNoDefaultLibs().end())
+        inputGraph.addInputElement(std::unique_ptr<InputElement>(
+            new PECOFFLibraryNode(ctx, defaultLibPath)));
 
   if (!inputGraph.numFiles()) {
     diagnostics << "No input files\n";
