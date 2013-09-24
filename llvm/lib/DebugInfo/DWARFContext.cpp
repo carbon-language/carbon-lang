@@ -134,7 +134,7 @@ void DWARFContext::dump(raw_ostream &OS, DIDumpType DumpType) {
     OS << "Version:               " << pubNames.getU16(&offset) << "\n";
     OS << "Offset in .debug_info: " << pubNames.getU32(&offset) << "\n";
     OS << "Size:                  " << pubNames.getU32(&offset) << "\n";
-    OS << "Offset     Linkage  Kind    Name\n";
+    OS << "Offset     Linkage  Kind     Name\n";
     while (offset < getGnuPubNamesSection().size()) {
       uint32_t dieRef = pubNames.getU32(&offset);
       if (dieRef == 0)
@@ -142,8 +142,8 @@ void DWARFContext::dump(raw_ostream &OS, DIDumpType DumpType) {
       PubIndexEntryDescriptor desc(pubNames.getU8(&offset));
       OS << format("0x%8.8x ", dieRef)
          << format("%-8s", dwarf::GDBIndexEntryLinkageString(desc.Linkage))
-         << ' ' << dwarf::GDBIndexEntryKindString(desc.Kind) << " \""
-         << pubNames.getCStr(&offset) << "\"\n";
+         << ' ' << format("%-8s", dwarf::GDBIndexEntryKindString(desc.Kind))
+         << " \"" << pubNames.getCStr(&offset) << "\"\n";
     }
   }
 
