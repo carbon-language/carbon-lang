@@ -1336,6 +1336,16 @@ def _write_dependencies : Flag<["--"], "write-dependencies">, Alias<MD>;
 def _write_user_dependencies : Flag<["--"], "write-user-dependencies">, Alias<MMD>;
 def _ : Joined<["--"], "">, Flags<[Unsupported]>;
 def mieee_rnd_near : Flag<["-"], "mieee-rnd-near">, Group<m_hexagon_Features_Group>;
+def mv1 : Flag<["-"], "mv1">, Group<m_hexagon_Features_Group>, Alias<march_EQ>,
+          AliasArgs<["v1"]>;
+def mv2 : Flag<["-"], "mv2">, Group<m_hexagon_Features_Group>, Alias<march_EQ>,
+          AliasArgs<["v2"]>;
+def mv3 : Flag<["-"], "mv3">, Group<m_hexagon_Features_Group>, Alias<march_EQ>,
+          AliasArgs<["v3"]>;
+def mv4 : Flag<["-"], "mv4">, Group<m_hexagon_Features_Group>, Alias<march_EQ>,
+          AliasArgs<["v4"]>;
+def mv5 : Flag<["-"], "mv5">, Group<m_hexagon_Features_Group>, Alias<march_EQ>,
+          AliasArgs<["v5"]>;
 
 // These are legacy user-facing driver-level option spellings. They are always
 // aliases for options that are spelled using the more common Unix / GNU flag

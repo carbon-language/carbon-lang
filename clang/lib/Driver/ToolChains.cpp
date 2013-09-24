@@ -1671,40 +1671,47 @@ Hexagon_TC::GetCXXStdlibType(const ArgList &Args) const {
   return ToolChain::CST_Libstdcxx;
 }
 
-static Arg *GetLastHexagonArchArg(const ArgList &Args)
-{
-  Arg *A = NULL;
+static int getHexagonVersion(const ArgList &Args) {
+  Arg *A = Args.getLastArg(options::OPT_march_EQ, options::OPT_mcpu_EQ);
+  // Select the default CPU (v4) if none was given.
+  if (!A)
+    return 4;
 
-  for (ArgList::const_iterator it = Args.begin(), ie = Args.end();
-       it != ie; ++it) {
-    if ((*it)->getOption().matches(options::OPT_march_EQ) ||
-        (*it)->getOption().matches(options::OPT_mcpu_EQ)) {
-      A = *it;
-      A->claim();
-    } else if ((*it)->getOption().matches(options::OPT_m_Joined)) {
-      StringRef Value = (*it)->getValue(0);
-      if (Value.startswith("v")) {
-        A = *it;
-        A->claim();
-      }
-    }
+  // FIXME: produce errors if we cannot parse the version.
+  StringRef WhichHexagon = A->getValue();
+  if (WhichHexagon.startswith("hexagonv")) {
+    int Val;
+    if (!WhichHexagon.substr(sizeof("hexagonv") - 1).getAsInteger(10, Val))
+      return Val;
   }
-  return A;
+  if (WhichHexagon.startswith("v")) {
+    int Val;
+    if (!WhichHexagon.substr(1).getAsInteger(10, Val))
+      return Val;
+  }
+
+  // FIXME: should probably be an error.
+  return 4;
 }
 
 StringRef Hexagon_TC::GetTargetCPU(const ArgList &Args)
 {
-  // Select the default CPU (v4) if none was given or detection failed.
-  Arg *A = GetLastHexagonArchArg (Args);
-  if (A) {
-    StringRef WhichHexagon = A->getValue();
-    if (WhichHexagon.startswith("hexagon"))
-      return WhichHexagon.substr(sizeof("hexagon") - 1);
-    if (WhichHexagon != "")
-      return WhichHexagon;
+  int V = getHexagonVersion(Args);
+  // FIXME: We don't support versions < 4. We should error on them.
+  switch (V) {
+  default:
+    llvm_unreachable("Unexpected version");
+  case 5:
+    return "v5";
+  case 4:
+    return "v4";
+  case 3:
+    return "v3";
+  case 2:
+    return "v2";
+  case 1:
+    return "v1";
   }
-
-  return "v4";
 }
 // End Hexagon
 
