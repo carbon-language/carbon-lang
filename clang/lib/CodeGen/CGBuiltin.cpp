@@ -1609,8 +1609,6 @@ static llvm::VectorType *GetNeonType(CodeGenFunction *CGF,
                                      bool V1Ty=false) {
   int IsQuad = TypeFlags.isQuad();
   switch (TypeFlags.getEltType()) {
-  default:
-	llvm_unreachable("Invalid NeonTypeFlags element type!");
   case NeonTypeFlags::Int8:
   case NeonTypeFlags::Poly8:
     return llvm::VectorType::get(CGF->Int8Ty, V1Ty ? 1 : (8 << IsQuad));
