@@ -172,12 +172,6 @@ namespace llvm {
       VUMAX,
       VUMIN,
 
-      // Special case of BUILD_VECTOR where all elements are the same.
-      VSPLAT,
-      // Special case of VSPLAT where the result is v2i64, the operand is
-      // constant, and the operand fits in a signed 10-bits value.
-      VSPLATD,
-
       // Combined (XOR (OR $a, $b), -1)
       VNOR,
 

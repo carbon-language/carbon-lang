@@ -17,7 +17,7 @@ define void @false_v4f32(<4 x i32>* %c, <4 x float>* %a, <4 x float>* %b) nounwi
 
   ; (setcc $a, $b, SETFALSE) is always folded, so we won't get fcaf:
   ; CHECK-DAG: ldi.b [[R1:\$w[0-9]+]], 0
-  ; CHECK-DAG: st.b [[R1]], 0($4)
+  ; CHECK-DAG: st.w [[R1]], 0($4)
   ; CHECK: .size false_v4f32
 }
 
@@ -494,7 +494,7 @@ define void @true_v4f32(<4 x i32>* %c, <4 x float>* %a, <4 x float>* %b) nounwin
 
   ; (setcc $a, $b, SETTRUE) is always folded, so we won't get fcaf:
   ; CHECK-DAG: ldi.b [[R1:\$w[0-9]+]], -1
-  ; CHECK-DAG: st.b [[R1]], 0($4)
+  ; CHECK-DAG: st.w [[R1]], 0($4)
   ; CHECK: .size true_v4f32
 }
 

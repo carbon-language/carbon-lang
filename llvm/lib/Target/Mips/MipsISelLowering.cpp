@@ -221,8 +221,6 @@ const char *MipsTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case MipsISD::VSMIN:             return "MipsISD::VSMIN";
   case MipsISD::VUMAX:             return "MipsISD::VUMAX";
   case MipsISD::VUMIN:             return "MipsISD::VUMIN";
-  case MipsISD::VSPLAT:            return "MipsISD::VSPLAT";
-  case MipsISD::VSPLATD:           return "MipsISD::VSPLATD";
   case MipsISD::VEXTRACT_SEXT_ELT: return "MipsISD::VEXTRACT_SEXT_ELT";
   case MipsISD::VEXTRACT_ZEXT_ELT: return "MipsISD::VEXTRACT_ZEXT_ELT";
   case MipsISD::VNOR:              return "MipsISD::VNOR";

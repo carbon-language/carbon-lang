@@ -738,21 +738,10 @@ static SDValue performXORCombine(SDNode *N, SelectionDAG &DAG,
     SDValue Op0 = N->getOperand(0);
     SDValue Op1 = N->getOperand(1);
     SDValue NotOp;
-    ConstantSDNode *Const;
 
     if (ISD::isBuildVectorAllOnes(Op0.getNode()))
       NotOp = Op1;
     else if (ISD::isBuildVectorAllOnes(Op1.getNode()))
-      NotOp = Op0;
-    else if ((Op0->getOpcode() == MipsISD::VSPLAT ||
-              Op0->getOpcode() == MipsISD::VSPLATD) &&
-             (Const = dyn_cast<ConstantSDNode>(Op0->getOperand(0))) &&
-             Const->isAllOnesValue())
-      NotOp = Op1;
-    else if ((Op1->getOpcode() == MipsISD::VSPLAT ||
-              Op1->getOpcode() == MipsISD::VSPLATD) &&
-             (Const = dyn_cast<ConstantSDNode>(Op1->getOperand(0))) &&
-             Const->isAllOnesValue())
       NotOp = Op0;
     else
       return SDValue();
@@ -1084,14 +1073,38 @@ static SDValue lowerMSAInsertIntr(SDValue Op, SelectionDAG &DAG, unsigned Opc) {
   return Result;
 }
 
-static SDValue lowerMSASplatImm(SDValue Op, unsigned ImmOp, SelectionDAG &DAG) {
+static SDValue lowerMSASplatImm(SDValue Op, SDValue ImmOp, SelectionDAG &DAG) {
   EVT ResTy = Op->getValueType(0);
+  EVT ViaVecTy = ResTy;
+  SmallVector<SDValue, 16> Ops;
+  SDValue ImmHiOp;
+  SDLoc DL(Op);
 
-  unsigned SplatOp = MipsISD::VSPLAT;
-  if (ResTy == MVT::v2i64)
-    SplatOp = MipsISD::VSPLATD;
+  if (ViaVecTy == MVT::v2i64) {
+    ImmHiOp = DAG.getNode(ISD::SRA, DL, MVT::i32, ImmOp,
+                          DAG.getConstant(31, MVT::i32));
+    for (unsigned i = 0; i < ViaVecTy.getVectorNumElements(); ++i) {
+      Ops.push_back(ImmHiOp);
+      Ops.push_back(ImmOp);
+    }
+    ViaVecTy = MVT::v4i32;
+  } else {
+    for (unsigned i = 0; i < ResTy.getVectorNumElements(); ++i)
+      Ops.push_back(ImmOp);
+  }
 
-  return DAG.getNode(SplatOp, SDLoc(Op), ResTy, Op->getOperand(ImmOp));
+  SDValue Result = DAG.getNode(ISD::BUILD_VECTOR, DL, ViaVecTy, &Ops[0],
+                               Ops.size());
+
+  if (ResTy != ViaVecTy)
+    Result = DAG.getNode(ISD::BITCAST, DL, ResTy, Result);
+
+  return Result;
+}
+
+static SDValue
+lowerMSASplatImm(SDValue Op, unsigned ImmOp, SelectionDAG &DAG) {
+  return lowerMSASplatImm(Op, Op->getOperand(ImmOp), DAG);
 }
 
 static SDValue lowerMSAUnaryIntr(SDValue Op, SelectionDAG &DAG, unsigned Opc) {
@@ -1306,8 +1319,16 @@ SDValue MipsSETargetLowering::lowerINTRINSIC_WO_CHAIN(SDValue Op,
     return lowerMSABinaryIntr(Op, DAG, ISD::FDIV);
   case Intrinsic::mips_fill_b:
   case Intrinsic::mips_fill_h:
-  case Intrinsic::mips_fill_w:
-    return lowerMSAUnaryIntr(Op, DAG, MipsISD::VSPLAT);
+  case Intrinsic::mips_fill_w: {
+    SmallVector<SDValue, 16> Ops;
+    EVT ResTy = Op->getValueType(0);
+
+    for (unsigned i = 0; i < ResTy.getVectorNumElements(); ++i)
+      Ops.push_back(Op->getOperand(1));
+
+    return DAG.getNode(ISD::BUILD_VECTOR, SDLoc(Op), ResTy, &Ops[0],
+                       Ops.size());
+  }
   case Intrinsic::mips_flog2_w:
   case Intrinsic::mips_flog2_d:
     return lowerMSAUnaryIntr(Op, DAG, ISD::FLOG2);
@@ -1331,7 +1352,7 @@ SDValue MipsSETargetLowering::lowerINTRINSIC_WO_CHAIN(SDValue Op,
   case Intrinsic::mips_ldi_h:
   case Intrinsic::mips_ldi_w:
   case Intrinsic::mips_ldi_d:
-    return lowerMSAUnaryIntr(Op, DAG, MipsISD::VSPLAT);
+    return lowerMSASplatImm(Op, 1, DAG);
   case Intrinsic::mips_max_s_b:
   case Intrinsic::mips_max_s_h:
   case Intrinsic::mips_max_s_w:
@@ -1597,18 +1618,36 @@ lowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) const {
                      DAG.getValueType(EltTy));
 }
 
+static bool isConstantOrUndef(const SDValue Op) {
+  if (Op->getOpcode() == ISD::UNDEF)
+    return true;
+  if (dyn_cast<ConstantSDNode>(Op))
+    return true;
+  if (dyn_cast<ConstantFPSDNode>(Op))
+    return true;
+  return false;
+}
+
+static bool isConstantOrUndefBUILD_VECTOR(const BuildVectorSDNode *Op) {
+  for (unsigned i = 0; i < Op->getNumOperands(); ++i)
+    if (isConstantOrUndef(Op->getOperand(i)))
+      return true;
+  return false;
+}
+
 // Lowers ISD::BUILD_VECTOR into appropriate SelectionDAG nodes for the
 // backend.
 //
 // Lowers according to the following rules:
-// - Vectors of 128-bits may be legal subject to the other rules. Other sizes
-//   are not legal.
-// - Non-constant splats are legal and are lowered to MipsISD::VSPLAT.
-// - Constant splats with an element size of 32-bits or less are legal and are
-//   lowered to MipsISD::VSPLAT.
-// - Constant splats with an element size of 64-bits but whose value would fit
-//   within a 10 bit immediate are legal and are lowered to MipsISD::VSPLATD.
-// - All other ISD::BUILD_VECTORS are not legal
+// - Constant splats are legal as-is as long as the SplatBitSize is a power of
+//   2 less than or equal to 64 and the value fits into a signed 10-bit
+//   immediate
+// - Constant splats are lowered to bitconverted BUILD_VECTORs if SplatBitSize
+//   is a power of 2 less than or equal to 64 and the value does not fit into a
+//   signed 10-bit immediate
+// - Non-constant splats are legal as-is.
+// - Non-constant non-splats are lowered to sequences of INSERT_VECTOR_ELT.
+// - All others are illegal and must be expanded.
 SDValue MipsSETargetLowering::lowerBUILD_VECTOR(SDValue Op,
                                                 SelectionDAG &DAG) const {
   BuildVectorSDNode *Node = cast<BuildVectorSDNode>(Op);
@@ -1623,52 +1662,51 @@ SDValue MipsSETargetLowering::lowerBUILD_VECTOR(SDValue Op,
 
   if (Node->isConstantSplat(SplatValue, SplatUndef, SplatBitSize,
                             HasAnyUndefs, 8,
-                            !Subtarget->isLittle())) {
-    SDValue Result;
-    EVT TmpVecTy;
-    EVT ConstTy = MVT::i32;
-    unsigned SplatOp = MipsISD::VSPLAT;
+                            !Subtarget->isLittle()) && SplatBitSize <= 64) {
+    // We can only cope with 8, 16, 32, or 64-bit elements
+    if (SplatBitSize != 8 && SplatBitSize != 16 && SplatBitSize != 32 &&
+        SplatBitSize != 64)
+      return SDValue();
+
+    // If the value fits into a simm10 then we can use ldi.[bhwd]
+    if (SplatValue.isSignedIntN(10))
+      return Op;
+
+    EVT ViaVecTy;
 
     switch (SplatBitSize) {
     default:
       return SDValue();
-    case 64:
-      TmpVecTy = MVT::v2i64;
-
-      // i64 is an illegal type on Mips32, but if it the constant fits into a
-      // signed 10-bit value then we can still handle it using VSPLATD and an
-      // i32 constant
-      if (HasMips64)
-        ConstTy = MVT::i64;
-      else if (isInt<10>(SplatValue.getSExtValue())) {
-        SplatValue = SplatValue.trunc(32);
-        SplatOp = MipsISD::VSPLATD;
-      } else
-        return SDValue();
-      break;
-    case 32:
-      TmpVecTy = MVT::v4i32;
+    case 8:
+      ViaVecTy = MVT::v16i8;
       break;
     case 16:
-      TmpVecTy = MVT::v8i16;
-      SplatValue = SplatValue.sext(32);
+      ViaVecTy = MVT::v8i16;
       break;
-    case 8:
-      TmpVecTy = MVT::v16i8;
-      SplatValue = SplatValue.sext(32);
+    case 32:
+      ViaVecTy = MVT::v4i32;
       break;
+    case 64:
+      // There's no fill.d to fall back on for 64-bit values
+      return SDValue();
     }
 
-    Result = DAG.getNode(SplatOp, DL, TmpVecTy,
-                         DAG.getConstant(SplatValue, ConstTy));
-    if (ResTy != Result.getValueType())
-      Result = DAG.getNode(ISD::BITCAST, DL, ResTy, Result);
+    SmallVector<SDValue, 16> Ops;
+    SDValue Constant = DAG.getConstant(SplatValue.sextOrSelf(32), MVT::i32);
+
+    for (unsigned i = 0; i < ViaVecTy.getVectorNumElements(); ++i)
+      Ops.push_back(Constant);
+
+    SDValue Result = DAG.getNode(ISD::BUILD_VECTOR, SDLoc(Node), ViaVecTy,
+                                 &Ops[0], Ops.size());
+
+    if (ViaVecTy != ResTy)
+      Result = DAG.getNode(ISD::BITCAST, SDLoc(Node), ResTy, Result);
 
     return Result;
-  }
-  else if (isSplatVector(Node))
-    return DAG.getNode(MipsISD::VSPLAT, DL, ResTy, Op->getOperand(0));
-  else {
+  } else if (isSplatVector(Node))
+    return Op;
+  else if (!isConstantOrUndefBUILD_VECTOR(Node)) {
     // Use INSERT_VECTOR_ELT operations rather than expand to stores.
     // The resulting code is the same length as the expansion, but it doesn't
     // use memory operations

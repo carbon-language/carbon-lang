@@ -76,6 +76,23 @@ private:
   virtual bool selectAddr16(SDNode *Parent, SDValue N, SDValue &Base,
                             SDValue &Offset, SDValue &Alias);
 
+  /// \brief Select constant vector splats.
+  virtual bool selectVSplat(SDNode *N, APInt &Imm) const;
+  /// \brief Select constant vector splats whose value fits in a uimm3.
+  virtual bool selectVSplatUimm3(SDValue N, SDValue &Imm) const;
+  /// \brief Select constant vector splats whose value fits in a uimm4.
+  virtual bool selectVSplatUimm4(SDValue N, SDValue &Imm) const;
+  /// \brief Select constant vector splats whose value fits in a uimm5.
+  virtual bool selectVSplatUimm5(SDValue N, SDValue &Imm) const;
+  /// \brief Select constant vector splats whose value fits in a uimm6.
+  virtual bool selectVSplatUimm6(SDValue N, SDValue &Imm) const;
+  /// \brief Select constant vector splats whose value fits in a uimm8.
+  virtual bool selectVSplatUimm8(SDValue N, SDValue &Imm) const;
+  /// \brief Select constant vector splats whose value fits in a simm5.
+  virtual bool selectVSplatSimm5(SDValue N, SDValue &Imm) const;
+  /// \brief Select constant vector splats whose value is a power of 2.
+  virtual bool selectVSplatUimmPow2(SDValue N, SDValue &Imm) const;
+
   virtual SDNode *Select(SDNode *N);
 
   virtual std::pair<bool, SDNode*> selectNode(SDNode *Node) = 0;
