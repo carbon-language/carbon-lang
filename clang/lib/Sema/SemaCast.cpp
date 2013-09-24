@@ -669,8 +669,10 @@ void CastOperation::CheckDynamicCast() {
   Self.MarkVTableUsed(OpRange.getBegin(), 
                       cast<CXXRecordDecl>(SrcRecord->getDecl()));
 
-  // dynamic_cast is not available with fno-rtti
-  if (!Self.getLangOpts().RTTI) {
+  // dynamic_cast is not available with -fno-rtti.
+  // As an exception, dynamic_cast to void* is available because it doesn't
+  // use RTTI.
+  if (!Self.getLangOpts().RTTI && !DestPointee->isVoidType()) {
     Self.Diag(OpRange.getBegin(), diag::err_no_dynamic_cast_with_fno_rtti);
     SrcExpr = ExprError();
     return;

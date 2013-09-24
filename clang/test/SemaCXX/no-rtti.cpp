@@ -22,3 +22,8 @@ struct B : public A {
 bool isa_B(A *a) {
   return dynamic_cast<B *>(a) != 0; // expected-error {{cannot use dynamic_cast with -fno-rtti}}
 }
+
+void* getMostDerived(A* a) {
+  // This cast does not use RTTI.
+  return dynamic_cast<void *>(a);
+}
