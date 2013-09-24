@@ -15,10 +15,26 @@
 // CHECK: "-D" "foo=bar"
 // CHECK: "-U" "baz"
 // CHECK: "-I" "foo"
-// CHECK: "-O3"
+// CHECK: "/Ox"
 // CHECK: "/GR-"
 // CHECK: "/LD"
 // CHECK: "/LDd"
 // CHECK: "/MT"
 // CHECK: "/Tc" "{{.*cl-fallback.c}}"
 // CHECK: "/Fo{{.*cl-fallback.*.obj}}"
+
+// RUN: %clang_cl /fallback /Od -### -- %s 2>&1 | FileCheck -check-prefix=O0 %s
+// O0: cl.exe
+// O0: "/Od"
+// RUN: %clang_cl /fallback /O1 -### -- %s 2>&1 | FileCheck -check-prefix=O1 %s
+// O1: cl.exe
+// O1: "-O1"
+// RUN: %clang_cl /fallback /O2 -### -- %s 2>&1 | FileCheck -check-prefix=O2 %s
+// O2: cl.exe
+// O2: "-O2"
+// RUN: %clang_cl /fallback /Os -### -- %s 2>&1 | FileCheck -check-prefix=Os %s
+// Os: cl.exe
+// Os: "-Os"
+// RUN: %clang_cl /fallback /Ox -### -- %s 2>&1 | FileCheck -check-prefix=Ox %s
+// Ox: cl.exe
+// Ox: "/Ox"
