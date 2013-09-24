@@ -1165,13 +1165,33 @@ static bool MIIsInTerminatorSequence(const MachineInstr *MI) {
     // sequence, so we return true in that case.
     return MI->isDebugValue();
 
-  // If we are not defining a register that is a physical register via a copy or
-  // are defining a register via an implicit def, we have left the terminator
-  // sequence.
-  MachineInstr::const_mop_iterator OPI = MI->operands_begin();  
-  if (!OPI->isReg() || !OPI->isDef() ||
+  // We have left the terminator sequence if we are not doing one of the
+  // following:
+  //
+  // 1. Copying a vreg into a physical register.
+  // 2. Copying a vreg into a vreg.
+  // 3. Defining a register via an implicit def.
+
+  // OPI should always be a register definition...
+  MachineInstr::const_mop_iterator OPI = MI->operands_begin();
+  if (!OPI->isReg() || !OPI->isDef())      
+    return false;
+
+  // Defining any register via an implicit def is always ok.
+  if (MI->isImplicitDef())
+    return true;
+
+  // Grab the copy source...
+  MachineInstr::const_mop_iterator OPI2 = OPI;
+  ++OPI2;
+  assert(OPI2 != MI->operands_end()
+         && "Should have a copy implying we should have 2 arguments.");
+
+  // Make sure that the copy dest is not a vreg when the copy source is a
+  // physical register.
+  if (!OPI2->isReg() ||
       (!TargetRegisterInfo::isPhysicalRegister(OPI->getReg()) &&
-       !MI->isImplicitDef()))
+       TargetRegisterInfo::isPhysicalRegister(OPI2->getReg())))
     return false;
 
   return true;
