@@ -32,4 +32,3 @@
 // CHECK: faddp v0.2s, v1.2s, v2.2s       // encoding: [0x20,0xd4,0x22,0x2e]
 // CHECK: faddp v0.4s, v1.4s, v2.4s       // encoding: [0x20,0xd4,0x22,0x6e]
 // CHECK: faddp v0.2d, v1.2d, v2.2d       // encoding: [0x20,0xd4,0x62,0x6e]
-

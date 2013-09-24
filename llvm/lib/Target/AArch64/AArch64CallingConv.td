@@ -59,9 +59,9 @@ def CC_A64_APCS : CallingConv<[
   // Canonicalise the various types that live in different floating-point
   // registers. This makes sense because the PCS does not distinguish Short
   // Vectors and Floating-point types.
-  CCIfType<[v2i8], CCBitConvertToType<f16>>,
-  CCIfType<[v4i8, v2i16], CCBitConvertToType<f32>>,
-  CCIfType<[v8i8, v4i16, v2i32, v2f32, v1i64], CCBitConvertToType<f64>>,
+  CCIfType<[v1i16, v2i8], CCBitConvertToType<f16>>,
+  CCIfType<[v1i32, v4i8, v2i16, v1f32], CCBitConvertToType<f32>>,
+  CCIfType<[v8i8, v4i16, v2i32, v2f32, v1i64, v1f64], CCBitConvertToType<f64>>,
   CCIfType<[v16i8, v8i16, v4i32, v2i64, v4f32, v2f64],
            CCBitConvertToType<f128>>,
 
@@ -70,7 +70,8 @@ def CC_A64_APCS : CallingConv<[
   // argument is allocated to the least significant bits of register
   // v[NSRN]. The NSRN is incremented by one. The argument has now been
   // allocated."
-  CCIfType<[f16],  CCAssignToReg<[B0, B1, B2, B3, B4, B5, B6, B7]>>,
+  CCIfType<[v1i8], CCAssignToReg<[B0, B1, B2, B3, B4, B5, B6, B7]>>,
+  CCIfType<[f16],  CCAssignToReg<[H0, H1, H2, H3, H4, H5, H6, H7]>>,
   CCIfType<[f32],  CCAssignToReg<[S0, S1, S2, S3, S4, S5, S6, S7]>>,
   CCIfType<[f64],  CCAssignToReg<[D0, D1, D2, D3, D4, D5, D6, D7]>>,
   CCIfType<[f128], CCAssignToReg<[Q0, Q1, Q2, Q3, Q4, Q5, Q6, Q7]>>,

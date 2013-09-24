@@ -57,6 +57,12 @@ AArch64TargetLowering::AArch64TargetLowering(AArch64TargetMachine &TM)
 
   if (Subtarget->hasNEON()) {
     // And the vectors
+    addRegisterClass(MVT::v1i8,  &AArch64::FPR8RegClass);
+    addRegisterClass(MVT::v1i16, &AArch64::FPR16RegClass);
+    addRegisterClass(MVT::v1i32, &AArch64::FPR32RegClass);
+    addRegisterClass(MVT::v1i64, &AArch64::FPR64RegClass);
+    addRegisterClass(MVT::v1f32, &AArch64::FPR32RegClass);
+    addRegisterClass(MVT::v1f64, &AArch64::FPR64RegClass);
     addRegisterClass(MVT::v8i8, &AArch64::FPR64RegClass);
     addRegisterClass(MVT::v4i16, &AArch64::FPR64RegClass);
     addRegisterClass(MVT::v2i32, &AArch64::FPR64RegClass);
@@ -274,16 +280,21 @@ AArch64TargetLowering::AArch64TargetLowering(AArch64TargetMachine &TM)
   setExceptionSelectorRegister(AArch64::X1);
 
   if (Subtarget->hasNEON()) {
+    setOperationAction(ISD::BUILD_VECTOR, MVT::v1i8, Custom);
     setOperationAction(ISD::BUILD_VECTOR, MVT::v8i8, Custom);
     setOperationAction(ISD::BUILD_VECTOR, MVT::v16i8, Custom);
+    setOperationAction(ISD::BUILD_VECTOR, MVT::v1i16, Custom);
     setOperationAction(ISD::BUILD_VECTOR, MVT::v4i16, Custom);
     setOperationAction(ISD::BUILD_VECTOR, MVT::v8i16, Custom);
+    setOperationAction(ISD::BUILD_VECTOR, MVT::v1i32, Custom);
     setOperationAction(ISD::BUILD_VECTOR, MVT::v2i32, Custom);
     setOperationAction(ISD::BUILD_VECTOR, MVT::v4i32, Custom);
     setOperationAction(ISD::BUILD_VECTOR, MVT::v1i64, Custom);
     setOperationAction(ISD::BUILD_VECTOR, MVT::v2i64, Custom);
+    setOperationAction(ISD::BUILD_VECTOR, MVT::v1f32, Custom);
     setOperationAction(ISD::BUILD_VECTOR, MVT::v2f32, Custom);
     setOperationAction(ISD::BUILD_VECTOR, MVT::v4f32, Custom);
+    setOperationAction(ISD::BUILD_VECTOR, MVT::v1f64, Custom);
     setOperationAction(ISD::BUILD_VECTOR, MVT::v2f64, Custom);
 
     setOperationAction(ISD::CONCAT_VECTORS, MVT::v2i64, Legal);

@@ -2504,11 +2504,12 @@ defm UABDLvvv : NeonI_3VDL_zext<0b1, 0b0111, "uabdl", int_arm_neon_vabdu, 1>;
 multiclass NeonI_Op_High<SDPatternOperator op>
 {
   def _16B : PatFrag<(ops node:$Rn, node:$Rm),
-                     (op (Neon_top16B node:$Rn), (Neon_top16B node:$Rm))>;
+                     (op (v8i8 (Neon_top16B node:$Rn)), (v8i8 (Neon_top16B node:$Rm)))>;
   def _8H  : PatFrag<(ops node:$Rn, node:$Rm),
-                     (op (Neon_top8H node:$Rn), (Neon_top8H node:$Rm))>;
+                     (op (v4i16 (Neon_top8H node:$Rn)), (v4i16 (Neon_top8H node:$Rm)))>;
   def _4S  : PatFrag<(ops node:$Rn, node:$Rm),
-                     (op (Neon_top4S node:$Rn), (Neon_top4S node:$Rm))>;
+                     (op (v2i32 (Neon_top4S node:$Rn)), (v2i32 (Neon_top4S node:$Rm)))>;
+
 }
 
 defm NI_sabdl_hi : NeonI_Op_High<int_arm_neon_vabds>;
@@ -2868,9 +2869,25 @@ multiclass NeonI_Scalar3Same_BHSD_sizes<bit u, bits<5> opcode,
   }
 }
 
-class Neon_Scalar_D_size_patterns<SDPatternOperator opnode, Instruction INSTD>
-  : Pat<(v1i64 (opnode (v1i64 VPR64:$Rn), (v1i64 VPR64:$Rm))),
-        (INSTD VPR64:$Rn, VPR64:$Rm)>;
+multiclass Neon_Scalar_D_size_patterns<SDPatternOperator opnode,
+                                       Instruction INSTD> {
+  def : Pat<(v1i64 (opnode (v1i64 FPR64:$Rn), (v1i64 FPR64:$Rm))),
+            (INSTD FPR64:$Rn, FPR64:$Rm)>;        
+}
+
+multiclass Neon_Scalar_BHSD_size_patterns<SDPatternOperator opnode,
+                                          Instruction INSTB, Instruction INSTH,
+                                          Instruction INSTS, Instruction INSTD>
+  : Neon_Scalar_D_size_patterns<opnode, INSTD> {
+  def: Pat<(v1i8 (opnode (v1i8 FPR8:$Rn), (v1i8 FPR8:$Rm))),
+           (INSTB FPR8:$Rn, FPR8:$Rm)>;
+
+  def: Pat<(v1i16 (opnode (v1i16 FPR16:$Rn), (v1i16 FPR16:$Rm))),
+           (INSTH FPR16:$Rn, FPR16:$Rm)>;
+
+  def: Pat<(v1i32 (opnode (v1i32 FPR32:$Rn), (v1i32 FPR32:$Rm))),
+           (INSTS FPR32:$Rn, FPR32:$Rm)>;
+}
 
 // Scalar Integer Add
 let isCommutable = 1 in {
@@ -2880,9 +2897,15 @@ def ADDddd : NeonI_Scalar3Same_D_size<0b0, 0b10000, "add">;
 // Scalar Integer Sub
 def SUBddd : NeonI_Scalar3Same_D_size<0b1, 0b10000, "sub">;
 
-// Pattern for Scalar Integer Add and Sub with D register
-def : Neon_Scalar_D_size_patterns<add, ADDddd>;
-def : Neon_Scalar_D_size_patterns<sub, SUBddd>;
+// Pattern for Scalar Integer Add and Sub with D register only
+defm : Neon_Scalar_D_size_patterns<add, ADDddd>;
+defm : Neon_Scalar_D_size_patterns<sub, SUBddd>;
+
+// Patterns to match llvm.aarch64.* intrinsic for Scalar Add, Sub
+defm : Neon_Scalar_D_size_patterns<int_aarch64_neon_vaddds, ADDddd>;
+defm : Neon_Scalar_D_size_patterns<int_aarch64_neon_vadddu, ADDddd>;
+defm : Neon_Scalar_D_size_patterns<int_aarch64_neon_vsubds, SUBddd>;
+defm : Neon_Scalar_D_size_patterns<int_aarch64_neon_vsubdu, SUBddd>;
 
 // Scalar Integer Saturating Add (Signed, Unsigned)
 defm SQADD : NeonI_Scalar3Same_BHSD_sizes<0b0, 0b00001, "sqadd", 1>;
@@ -2892,40 +2915,160 @@ defm UQADD : NeonI_Scalar3Same_BHSD_sizes<0b1, 0b00001, "uqadd", 1>;
 defm SQSUB : NeonI_Scalar3Same_BHSD_sizes<0b0, 0b00101, "sqsub", 0>;
 defm UQSUB : NeonI_Scalar3Same_BHSD_sizes<0b1, 0b00101, "uqsub", 0>;
 
-// Patterns for Scalar Integer Saturating Add, Sub with D register only
-def : Neon_Scalar_D_size_patterns<int_arm_neon_vqadds, SQADDddd>;
-def : Neon_Scalar_D_size_patterns<int_arm_neon_vqaddu, UQADDddd>;
-def : Neon_Scalar_D_size_patterns<int_arm_neon_vqsubs, SQSUBddd>;
-def : Neon_Scalar_D_size_patterns<int_arm_neon_vqsubu, UQSUBddd>;
+// Patterns to match llvm.arm.* intrinsic for
+// Scalar Integer Saturating Add, Sub  (Signed, Unsigned)
+defm : Neon_Scalar_D_size_patterns<int_arm_neon_vqadds, SQADDddd>;
+defm : Neon_Scalar_D_size_patterns<int_arm_neon_vqaddu, UQADDddd>;
+defm : Neon_Scalar_D_size_patterns<int_arm_neon_vqsubs, SQSUBddd>;
+defm : Neon_Scalar_D_size_patterns<int_arm_neon_vqsubu, UQSUBddd>;
+
+// Patterns to match llvm.aarch64.* intrinsic for
+// Scalar Integer Saturating Add, Sub  (Signed, Unsigned)
+defm : Neon_Scalar_BHSD_size_patterns<int_aarch64_neon_vqadds, SQADDbbb, SQADDhhh,
+                                      SQADDsss, SQADDddd>;
+defm : Neon_Scalar_BHSD_size_patterns<int_aarch64_neon_vqaddu, UQADDbbb, UQADDhhh,
+                                      UQADDsss, UQADDddd>;
+defm : Neon_Scalar_BHSD_size_patterns<int_aarch64_neon_vqsubs, SQSUBbbb, SQSUBhhh,
+                                      SQSUBsss, SQSUBddd>;
+defm : Neon_Scalar_BHSD_size_patterns<int_aarch64_neon_vqsubu, UQSUBbbb, UQSUBhhh,
+                                      UQSUBsss, UQSUBddd>;
 
 // Scalar Integer Shift Left (Signed, Unsigned)
 def SSHLddd : NeonI_Scalar3Same_D_size<0b0, 0b01000, "sshl">;
 def USHLddd : NeonI_Scalar3Same_D_size<0b1, 0b01000, "ushl">;
 
+// Patterns to match llvm.arm.* intrinsic for
+// Scalar Integer Shift Left (Signed, Unsigned)
+defm : Neon_Scalar_D_size_patterns<int_arm_neon_vshifts, SSHLddd>;
+defm : Neon_Scalar_D_size_patterns<int_arm_neon_vshiftu, USHLddd>;
+
+// Patterns to match llvm.aarch64.* intrinsic for
+// Scalar Integer Shift Left (Signed, Unsigned)
+defm : Neon_Scalar_D_size_patterns<int_aarch64_neon_vshlds, SSHLddd>;
+defm : Neon_Scalar_D_size_patterns<int_aarch64_neon_vshldu, USHLddd>;
+
 // Scalar Integer Saturating Shift Left (Signed, Unsigned)
 defm SQSHL: NeonI_Scalar3Same_BHSD_sizes<0b0, 0b01001, "sqshl", 0>;
 defm UQSHL: NeonI_Scalar3Same_BHSD_sizes<0b1, 0b01001, "uqshl", 0>;
 
-// Scalar Integer Rouding Shift Left (Signed, Unsigned)
+// Patterns to match llvm.aarch64.* intrinsic for
+// Scalar  Integer Saturating Shift Letf (Signed, Unsigned)
+defm : Neon_Scalar_BHSD_size_patterns<int_aarch64_neon_vqshls, SQSHLbbb, SQSHLhhh,
+                                      SQSHLsss, SQSHLddd>;
+defm : Neon_Scalar_BHSD_size_patterns<int_aarch64_neon_vqshlu, UQSHLbbb, UQSHLhhh,
+                                      UQSHLsss, UQSHLddd>;
+
+// Patterns to match llvm.arm.* intrinsic for
+// Scalar  Integer Saturating Shift Letf (Signed, Unsigned)
+defm : Neon_Scalar_D_size_patterns<int_arm_neon_vqshifts, SQSHLddd>;
+defm : Neon_Scalar_D_size_patterns<int_arm_neon_vqshiftu, UQSHLddd>;
+
+// Scalar Integer Rounding Shift Left (Signed, Unsigned)
 def SRSHLddd: NeonI_Scalar3Same_D_size<0b0, 0b01010, "srshl">;
 def URSHLddd: NeonI_Scalar3Same_D_size<0b1, 0b01010, "urshl">;
+
+// Patterns to match llvm.aarch64.* intrinsic for
+// Scalar Integer Rounding Shift Left (Signed, Unsigned)
+defm : Neon_Scalar_D_size_patterns<int_aarch64_neon_vrshlds, SRSHLddd>;
+defm : Neon_Scalar_D_size_patterns<int_aarch64_neon_vrshldu, URSHLddd>;
+
+// Patterns to match llvm.arm.* intrinsic for
+// Scalar Integer Rounding Shift Left (Signed, Unsigned)
+defm : Neon_Scalar_D_size_patterns<int_arm_neon_vrshifts, SRSHLddd>;
+defm : Neon_Scalar_D_size_patterns<int_arm_neon_vrshiftu, URSHLddd>;
 
 // Scalar Integer Saturating Rounding Shift Left (Signed, Unsigned)
 defm SQRSHL: NeonI_Scalar3Same_BHSD_sizes<0b0, 0b01011, "sqrshl", 0>;
 defm UQRSHL: NeonI_Scalar3Same_BHSD_sizes<0b1, 0b01011, "uqrshl", 0>;
 
-// Patterns for Scalar Integer Shift Lef, Saturating Shift Left,
-// Rounding Shift Left, Rounding Saturating Shift Left with D register only
-def : Neon_Scalar_D_size_patterns<int_arm_neon_vshifts, SSHLddd>;
-def : Neon_Scalar_D_size_patterns<int_arm_neon_vshiftu, USHLddd>;
-def : Neon_Scalar_D_size_patterns<shl, SSHLddd>;
-def : Neon_Scalar_D_size_patterns<shl, USHLddd>;
-def : Neon_Scalar_D_size_patterns<int_arm_neon_vqshifts, SQSHLddd>;
-def : Neon_Scalar_D_size_patterns<int_arm_neon_vqshiftu, UQSHLddd>;
-def : Neon_Scalar_D_size_patterns<int_arm_neon_vrshifts, SRSHLddd>;
-def : Neon_Scalar_D_size_patterns<int_arm_neon_vrshiftu, URSHLddd>;
-def : Neon_Scalar_D_size_patterns<int_arm_neon_vqrshifts, SQRSHLddd>;
-def : Neon_Scalar_D_size_patterns<int_arm_neon_vqrshiftu, UQRSHLddd>;
+// Patterns to match llvm.aarch64.* intrinsic for
+// Scalar Integer Saturating Rounding Shift Left (Signed, Unsigned)
+defm : Neon_Scalar_BHSD_size_patterns<int_aarch64_neon_vqrshls, SQRSHLbbb, SQRSHLhhh,
+                                      SQRSHLsss, SQRSHLddd>;
+defm : Neon_Scalar_BHSD_size_patterns<int_aarch64_neon_vqrshlu, UQRSHLbbb, UQRSHLhhh,
+                                      UQRSHLsss, UQRSHLddd>;
+
+// Patterns to match llvm.arm.* intrinsic for
+// Scalar Integer Saturating Rounding Shift Left (Signed, Unsigned)
+defm : Neon_Scalar_D_size_patterns<int_arm_neon_vqrshifts, SQRSHLddd>;
+defm : Neon_Scalar_D_size_patterns<int_arm_neon_vqrshiftu, UQRSHLddd>;
+
+// Scalar Reduce Pairwise
+
+multiclass NeonI_ScalarPair_D_sizes<bit u, bit size, bits<5> opcode,
+                                     string asmop, bit Commutable = 0> {
+  let isCommutable = Commutable in {
+    def _D_2D : NeonI_ScalarPair<u, {size, 0b1}, opcode,
+                                (outs FPR64:$Rd), (ins VPR128:$Rn),
+                                !strconcat(asmop, " $Rd, $Rn.2d"),
+                                [],
+                                NoItinerary>;
+  }
+}
+
+multiclass NeonI_ScalarPair_SD_sizes<bit u, bit size, bits<5> opcode,
+                                     string asmop, bit Commutable = 0>
+  : NeonI_ScalarPair_D_sizes<u, size, opcode, asmop, Commutable> {
+  let isCommutable = Commutable in {
+    def _S_2S : NeonI_ScalarPair<u, {size, 0b0}, opcode,
+                                (outs FPR32:$Rd), (ins VPR64:$Rn),
+                                !strconcat(asmop, " $Rd, $Rn.2s"),
+                                [],
+                                NoItinerary>;
+  }
+}
+
+// Scalar Reduce Addition Pairwise (Integer) with
+// Pattern to match llvm.arm.* intrinsic
+defm ADDPvv : NeonI_ScalarPair_D_sizes<0b0, 0b1, 0b11011, "addp", 0>;
+
+// Pattern to match llvm.aarch64.* intrinsic for
+// Scalar Reduce Addition Pairwise (Integer)
+def : Pat<(v1i64 (int_aarch64_neon_vpadd (v2i64 VPR128:$Rn))),
+          (ADDPvv_D_2D VPR128:$Rn)>;
+
+// Scalar Reduce Addition Pairwise (Floating Point)
+defm FADDPvv : NeonI_ScalarPair_SD_sizes<0b1, 0b0, 0b01101, "faddp", 0>;
+
+// Scalar Reduce Maximum Pairwise (Floating Point)
+defm FMAXPvv : NeonI_ScalarPair_SD_sizes<0b1, 0b0, 0b01111, "fmaxp", 0>;
+
+// Scalar Reduce Minimum Pairwise (Floating Point)
+defm FMINPvv : NeonI_ScalarPair_SD_sizes<0b1, 0b1, 0b01111, "fminp", 0>;
+
+// Scalar Reduce maxNum Pairwise (Floating Point)
+defm FMAXNMPvv : NeonI_ScalarPair_SD_sizes<0b1, 0b0, 0b01100, "fmaxnmp", 0>;
+
+// Scalar Reduce minNum Pairwise (Floating Point)
+defm FMINNMPvv : NeonI_ScalarPair_SD_sizes<0b1, 0b1, 0b01100, "fminnmp", 0>;
+
+multiclass Neon_ScalarPair_SD_size_patterns<SDPatternOperator opnodeS,
+                                            SDPatternOperator opnodeD,
+                                            Instruction INSTS,
+                                            Instruction INSTD> {
+  def : Pat<(v1f32 (opnodeS (v2f32 VPR64:$Rn))),
+            (INSTS VPR64:$Rn)>;
+  def : Pat<(v1f64 (opnodeD (v2f64 VPR128:$Rn))),
+            (INSTD VPR128:$Rn)>;
+}
+
+// Patterns to match llvm.aarch64.* intrinsic for
+// Scalar Reduce Add, Max, Min, MaxiNum, MinNum Pairwise (Floating Point)
+defm : Neon_ScalarPair_SD_size_patterns<int_aarch64_neon_vpfadd,
+  int_aarch64_neon_vpfaddq, FADDPvv_S_2S, FADDPvv_D_2D>;
+
+defm : Neon_ScalarPair_SD_size_patterns<int_aarch64_neon_vpmax,
+  int_aarch64_neon_vpmaxq, FMAXPvv_S_2S, FMAXPvv_D_2D>;
+
+defm : Neon_ScalarPair_SD_size_patterns<int_aarch64_neon_vpmin,
+  int_aarch64_neon_vpminq, FMINPvv_S_2S, FMINPvv_D_2D>;
+
+defm : Neon_ScalarPair_SD_size_patterns<int_aarch64_neon_vpfmaxnm,
+  int_aarch64_neon_vpfmaxnmq, FMAXNMPvv_S_2S, FMAXNMPvv_D_2D>;
+
+defm : Neon_ScalarPair_SD_size_patterns<int_aarch64_neon_vpfminnm, 
+  int_aarch64_neon_vpfminnmq, FMINNMPvv_S_2S, FMINNMPvv_D_2D>;
+
 
 
 //===----------------------------------------------------------------------===//
@@ -2999,6 +3142,14 @@ def : Pat<(v16i8 (bitconvert (v2f64  VPR128:$src))), (v16i8 VPR128:$src)>;
 
 
 // ...and scalar bitcasts...
+def : Pat<(f16 (bitconvert (v1i16  FPR16:$src))), (f16 FPR16:$src)>;
+def : Pat<(f32 (bitconvert (v1i32  FPR32:$src))), (f32 FPR32:$src)>;
+def : Pat<(f64 (bitconvert (v1i64  FPR64:$src))), (f64 FPR64:$src)>;
+def : Pat<(f32 (bitconvert (v1f32  FPR32:$src))), (f32 FPR32:$src)>;
+def : Pat<(f64 (bitconvert (v1f64  FPR64:$src))), (f64 FPR64:$src)>;
+
+def : Pat<(i64 (bitconvert (v1i64  FPR64:$src))), (FMOVxd $src)>;
+def : Pat<(i32 (bitconvert (v1i32  FPR32:$src))), (FMOVws $src)>;
 
 def : Pat<(v8i8  (bitconvert (v1i64  VPR64:$src))), (v8i8 VPR64:$src)>;
 def : Pat<(v4i16 (bitconvert (v1i64  VPR64:$src))), (v4i16 VPR64:$src)>;
@@ -3016,6 +3167,15 @@ def : Pat<(f128  (bitconvert (v4i32  VPR128:$src))), (f128 VPR128:$src)>;
 def : Pat<(f128  (bitconvert (v2i64  VPR128:$src))), (f128 VPR128:$src)>;
 def : Pat<(f128  (bitconvert (v4f32  VPR128:$src))), (f128 VPR128:$src)>;
 def : Pat<(f128  (bitconvert (v2f64  VPR128:$src))), (f128 VPR128:$src)>;
+
+def : Pat<(v1i16 (bitconvert (f16  FPR16:$src))), (v1i16 FPR16:$src)>;
+def : Pat<(v1i32 (bitconvert (f32  FPR32:$src))), (v1i32 FPR32:$src)>;
+def : Pat<(v1i64 (bitconvert (f64  FPR64:$src))), (v1i64 FPR64:$src)>;
+def : Pat<(v1f32 (bitconvert (f32  FPR32:$src))), (v1f32 FPR32:$src)>;
+def : Pat<(v1f64 (bitconvert (f64  FPR64:$src))), (v1f64 FPR64:$src)>;
+
+def : Pat<(v1i64 (bitconvert (i64  GPR64:$src))), (FMOVdx $src)>;
+def : Pat<(v1i32 (bitconvert (i32  GPR32:$src))), (FMOVsw $src)>;
 
 def : Pat<(v8i8   (bitconvert (f64   FPR64:$src))), (v8i8 FPR64:$src)>;
 def : Pat<(v4i16  (bitconvert (f64   FPR64:$src))), (v4i16 FPR64:$src)>;
@@ -3349,8 +3509,6 @@ def UMOVwh_pattern : Neon_UMOV_pattern<v8i16, v4i16, i32, neon_uimm3_bare,
                                        neon_uimm2_bare, UMOVwh>; 
 def UMOVws_pattern : Neon_UMOV_pattern<v4i32, v2i32, i32, neon_uimm2_bare,
                                        neon_uimm1_bare, UMOVws>;
-def UMOVxd_pattern : Neon_UMOV_pattern<v2i64, v1i64, i64, neon_uimm1_bare,
-                                       neon_uimm0_bare, UMOVxd>;
 
 def : Pat<(i32 (and
             (i32 (vector_extract
@@ -3388,4 +3546,41 @@ def : Pat<(i64 (zext
               (v1i64 VPR64:$Rn), (neon_uimm0_bare:$Imm))))),
           (UMOVxd (SUBREG_TO_REG (i64 0), VPR64:$Rn, sub_64),
             neon_uimm0_bare:$Imm)>;
+
+// Additional copy patterns for scalar types
+def : Pat<(i32 (vector_extract (v1i8 FPR8:$Rn), (i64 0))),
+          (UMOVwb (v16i8
+            (SUBREG_TO_REG (i64 0), FPR8:$Rn, sub_8)), (i64 0))>;
+
+def : Pat<(i32 (vector_extract (v1i16 FPR16:$Rn), (i64 0))),
+          (UMOVwh (v8i16
+            (SUBREG_TO_REG (i64 0), FPR16:$Rn, sub_16)), (i64 0))>;
+
+def : Pat<(i32 (vector_extract (v1i32 FPR32:$Rn), (i64 0))),
+          (FMOVws FPR32:$Rn)>;
+
+def : Pat<(i64 (vector_extract (v1i64 FPR64:$Rn), (i64 0))),
+          (FMOVxd FPR64:$Rn)>;
+               
+def : Pat<(f64 (vector_extract (v1f64 FPR64:$Rn), (i64 0))),
+          (f64 FPR64:$Rn)>;
+
+def : Pat<(f32 (vector_extract (v1f32 FPR32:$Rn), (i64 0))),
+          (f32 FPR32:$Rn)>;
+
+def : Pat<(v1i8 (scalar_to_vector GPR32:$Rn)),
+          (v1i8 (EXTRACT_SUBREG (v16i8
+            (INSbw (v16i8 (IMPLICIT_DEF)), $Rn, (i64 0))),
+            sub_8))>;
+
+def : Pat<(v1i16 (scalar_to_vector GPR32:$Rn)),
+          (v1i16 (EXTRACT_SUBREG (v8i16
+            (INShw (v8i16 (IMPLICIT_DEF)), $Rn, (i64 0))),
+            sub_16))>;
+
+def : Pat<(v1i32 (scalar_to_vector GPR32:$src)),
+          (FMOVsw $src)>;
+
+def : Pat<(v1i64 (scalar_to_vector GPR64:$src)),
+          (FMOVdx $src)>;
 

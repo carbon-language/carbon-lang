@@ -118,15 +118,3 @@ define <2 x double> @sub2xdouble(<2 x double> %A, <2 x double> %B) {
 	ret <2 x double> %tmp3
 }
 
-define <1 x i64> @add1xi64(<1 x i64> %A, <1 x i64> %B) {
-;CHECK: add {{d[0-31]+}}, {{d[0-31]+}}, {{d[0-31]+}}
-	%tmp3 = add <1 x i64> %A, %B;
-	ret <1 x i64> %tmp3
-}
-
-define <1 x i64> @sub1xi64(<1 x i64> %A, <1 x i64> %B) {
-;CHECK: sub {{d[0-31]+}}, {{d[0-31]+}}, {{d[0-31]+}}
-	%tmp3 = sub <1 x i64> %A, %B;
-	ret <1 x i64> %tmp3
-}
-

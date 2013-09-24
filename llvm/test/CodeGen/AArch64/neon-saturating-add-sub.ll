@@ -102,22 +102,7 @@ define <4 x i32> @test_sqadd_v4i32(<4 x i32> %lhs, <4 x i32> %rhs) {
   ret <4 x i32> %tmp1
 }
 
-declare <1 x i64> @llvm.arm.neon.vqaddu.v1i64(<1 x i64>, <1 x i64>)
-declare <1 x i64> @llvm.arm.neon.vqadds.v1i64(<1 x i64>, <1 x i64>)
 
-define <1 x i64> @test_uqadd_v1i64(<1 x i64> %lhs, <1 x i64> %rhs) {
-; CHECK: test_uqadd_v1i64:
-  %tmp1 = call <1 x i64> @llvm.arm.neon.vqaddu.v1i64(<1 x i64> %lhs, <1 x i64> %rhs)
-; CHECK: uqadd d0, d0, d1
-  ret <1 x i64> %tmp1
-}
-
-define <1 x i64> @test_sqadd_v1i64(<1 x i64> %lhs, <1 x i64> %rhs) {
-; CHECK: test_sqadd_v1i64:
-  %tmp1 = call <1 x i64> @llvm.arm.neon.vqadds.v1i64(<1 x i64> %lhs, <1 x i64> %rhs)
-; CHECK: sqadd d0, d0, d1
-  ret <1 x i64> %tmp1
-}
 
 declare <2 x i64> @llvm.arm.neon.vqaddu.v2i64(<2 x i64>, <2 x i64>)
 declare <2 x i64> @llvm.arm.neon.vqadds.v2i64(<2 x i64>, <2 x i64>)
@@ -254,21 +239,3 @@ define <2 x i64> @test_sqsub_v2i64(<2 x i64> %lhs, <2 x i64> %rhs) {
 ; CHECK: sqsub v0.2d, v0.2d, v1.2d
   ret <2 x i64> %tmp1
 }
-
-declare <1 x i64> @llvm.arm.neon.vqsubu.v1i64(<1 x i64>, <1 x i64>)
-declare <1 x i64> @llvm.arm.neon.vqsubs.v1i64(<1 x i64>, <1 x i64>)
-
-define <1 x i64> @test_uqsub_v1i64(<1 x i64> %lhs, <1 x i64> %rhs) {
-; CHECK: test_uqsub_v1i64:
-  %tmp1 = call <1 x i64> @llvm.arm.neon.vqsubu.v1i64(<1 x i64> %lhs, <1 x i64> %rhs)
-; CHECK: uqsub d0, d0, d1
-  ret <1 x i64> %tmp1
-}
-
-define <1 x i64> @test_sqsub_v1i64(<1 x i64> %lhs, <1 x i64> %rhs) {
-; CHECK: test_sqsub_v1i64:
-  %tmp1 = call <1 x i64> @llvm.arm.neon.vqsubs.v1i64(<1 x i64> %lhs, <1 x i64> %rhs)
-; CHECK: sqsub d0, d0, d1
-  ret <1 x i64> %tmp1
-}
-

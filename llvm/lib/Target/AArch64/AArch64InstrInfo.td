@@ -2189,22 +2189,22 @@ def FNMSUBdddd : A64I_fpdp3Impl<"fnmsub", FPR64, f64, 0b01, 0b1, 0b1, fnmsub>;
 // Extra patterns for when we're allowed to optimise separate multiplication and
 // addition.
 let Predicates = [UseFusedMAC] in {
-def : Pat<(fadd FPR32:$Ra, (fmul FPR32:$Rn, FPR32:$Rm)),
+def : Pat<(f32 (fadd FPR32:$Ra, (f32 (fmul FPR32:$Rn, FPR32:$Rm)))),
           (FMADDssss FPR32:$Rn, FPR32:$Rm, FPR32:$Ra)>;
-def : Pat<(fsub FPR32:$Ra, (fmul FPR32:$Rn, FPR32:$Rm)),
+def : Pat<(f32 (fsub FPR32:$Ra, (f32 (fmul FPR32:$Rn, FPR32:$Rm)))),
           (FMSUBssss FPR32:$Rn, FPR32:$Rm, FPR32:$Ra)>;
-def : Pat<(fsub (fmul FPR32:$Rn, FPR32:$Rm), FPR32:$Ra),
+def : Pat<(f32 (fsub (f32 (fmul FPR32:$Rn, FPR32:$Rm)), FPR32:$Ra)),
           (FNMADDssss FPR32:$Rn, FPR32:$Rm, FPR32:$Ra)>;
-def : Pat<(fsub (fneg FPR32:$Ra), (fmul FPR32:$Rn, FPR32:$Rm)),
+def : Pat<(f32 (fsub (f32 (fneg FPR32:$Ra)), (f32 (fmul FPR32:$Rn, FPR32:$Rm)))),
           (FNMSUBssss FPR32:$Rn, FPR32:$Rm, FPR32:$Ra)>;
 
-def : Pat<(fadd FPR64:$Ra, (fmul (f64 FPR64:$Rn), FPR64:$Rm)),
+def : Pat<(f64 (fadd FPR64:$Ra, (f64 (fmul FPR64:$Rn, FPR64:$Rm)))),
           (FMADDdddd FPR64:$Rn, FPR64:$Rm, FPR64:$Ra)>;
-def : Pat<(fsub FPR64:$Ra, (fmul (f64 FPR64:$Rn), FPR64:$Rm)),
+def : Pat<(f64 (fsub FPR64:$Ra, (f64 (fmul FPR64:$Rn, FPR64:$Rm)))),
           (FMSUBdddd FPR64:$Rn, FPR64:$Rm, FPR64:$Ra)>;
-def : Pat<(fsub (fmul (f64 FPR64:$Rn), FPR64:$Rm), FPR64:$Ra),
+def : Pat<(f64 (fsub (f64 (fmul FPR64:$Rn, FPR64:$Rm)), FPR64:$Ra)),
           (FNMADDdddd FPR64:$Rn, FPR64:$Rm, FPR64:$Ra)>;
-def : Pat<(fsub (fneg (f64 FPR64:$Ra)), (fmul FPR64:$Rn, FPR64:$Rm)),
+def : Pat<(f64 (fsub (f64 (fneg FPR64:$Ra)), (f64 (fmul FPR64:$Rn, FPR64:$Rm)))),
           (FNMSUBdddd FPR64:$Rn, FPR64:$Rm, FPR64:$Ra)>;
 }
 

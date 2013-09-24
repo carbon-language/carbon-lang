@@ -1074,8 +1074,7 @@ class NeonI_2VMisc<bit q, bit u, bits<2> size, bits<5> opcode,
 class NeonI_2VShiftImm<bit q, bit u, bits<5> opcode,
                        dag outs, dag ins, string asmstr,
                        list<dag> patterns, InstrItinClass itin>
-  : A64InstRdn<outs, ins, asmstr, patterns, itin>
-{
+  : A64InstRdn<outs, ins, asmstr, patterns, itin> {
   bits<7> Imm;
   let Inst{31} = 0b0;
   let Inst{30} = q;
@@ -1125,6 +1124,24 @@ class NeonI_insert<bit q, bit op,
   let Inst{14-11} = Imm4;
   let Inst{10} = 0b1;
   
+  // Inherit Rn in 9-5
+  // Inherit Rd in 4-0
+}
+
+// Format AdvSIMD scalar pairwise
+class NeonI_ScalarPair<bit u, bits<2> size, bits<5> opcode,
+                          dag outs, dag ins, string asmstr,
+                          list<dag> patterns, InstrItinClass itin>
+  : A64InstRdn<outs, ins, asmstr, patterns, itin> {
+  let Inst{31} = 0b0;
+  let Inst{30} = 0b1;
+  let Inst{29} = u;
+  let Inst{28-24} = 0b11110;
+  let Inst{23-22} = size;
+  let Inst{21-17} = 0b11000;
+  let Inst{16-12} = opcode;
+  let Inst{11-10} = 0b10;
+
   // Inherit Rn in 9-5
   // Inherit Rd in 4-0
 }

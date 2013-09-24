@@ -133,19 +133,19 @@ foreach Index = 0-31 in {
 }
 
 
-def FPR8 : RegisterClass<"AArch64", [i8], 8,
+def FPR8 : RegisterClass<"AArch64", [i8, v1i8], 8,
                           (sequence "B%u", 0, 31)> {
 }
 
-def FPR16 : RegisterClass<"AArch64", [f16], 16,
+def FPR16 : RegisterClass<"AArch64", [f16, v1i16], 16,
                           (sequence "H%u", 0, 31)> {
 }
 
-def FPR32 : RegisterClass<"AArch64", [f32], 32,
+def FPR32 : RegisterClass<"AArch64", [f32, v1i32, v1f32], 32,
                           (sequence "S%u", 0, 31)> {
 }
 
-def FPR64 : RegisterClass<"AArch64", [f64, v2f32, v2i32, v4i16, v8i8, v1i64],
+def FPR64 : RegisterClass<"AArch64", [f64, v2f32, v2i32, v4i16, v8i8, v1i64, v1f64],
                           64, (sequence "D%u", 0, 31)>;
 
 def FPR128 : RegisterClass<"AArch64",

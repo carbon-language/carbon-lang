@@ -2747,3 +2747,105 @@
 // CHECK-ERROR:        rsubhn2 v0.4s, v1.2d, v2.2s
 // CHECK-ERROR:                                 ^
 
+//----------------------------------------------------------------------
+// Scalar Reduce Add Pairwise (Integer)
+//----------------------------------------------------------------------
+         // invalid vector types
+      addp s0, d1.2d
+      addp d0, d1.2s
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          addp s0, d1.2d
+// CHECK-ERROR:               ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          addp d0, d1.2s
+// CHECK-ERROR:                      ^
+
+//----------------------------------------------------------------------
+// Scalar Reduce Add Pairwise (Floating Point)
+//----------------------------------------------------------------------
+         // invalid vector types
+      faddp s0, d1.2d
+      faddp d0, d1.2s
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          faddp s0, d1.2d
+// CHECK-ERROR:                    ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          faddp d0, d1.2s
+// CHECK-ERROR:                    ^
+
+//----------------------------------------------------------------------
+// Scalar Reduce Maximum Pairwise (Floating Point)
+//----------------------------------------------------------------------
+         // mismatched and invalid vector types
+      fmaxp s0, v1.2d
+      fmaxp d31, v2.2s
+      fmaxp h3, v2.2s
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          fmaxp s0, v1.2d
+// CHECK-ERROR:                       ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          fmaxp d31, v2.2s
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          fmaxp h3, v2.2s
+// CHECK-ERROR:                ^
+
+
+//----------------------------------------------------------------------
+// Scalar Reduce Minimum Pairwise (Floating Point)
+//----------------------------------------------------------------------
+         // mismatched and invalid vector types
+      fminp s0, v1.4h
+      fminp d31, v2.8h
+      fminp b3, v2.2s
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          fminp s0, v1.4h
+// CHECK-ERROR:                       ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          fminp d31, v2.8h
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          fminp b3, v2.2s
+// CHECK-ERROR:                ^
+
+
+//----------------------------------------------------------------------
+// Scalar Reduce maxNum Pairwise (Floating Point)
+//----------------------------------------------------------------------
+         // mismatched and invalid vector types
+      fmaxnmp s0, v1.8b
+      fmaxnmp d31, v2.16b
+      fmaxnmp v1.2s, v2.2s
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          fmaxnmp s0, v1.8b
+// CHECK-ERROR:                         ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          fmaxnmp d31, v2.16b
+// CHECK-ERROR:                          ^
+// CHECK-ERROR: error: too few operands for instruction
+// CHECK-ERROR:          fmaxnmp v1.2s, v2.2s
+// CHECK-ERROR:          ^
+
+//----------------------------------------------------------------------
+// Scalar Reduce minNum Pairwise (Floating Point)
+//----------------------------------------------------------------------
+         // mismatched and invalid vector types
+      fminnmp s0, v1.2d
+      fminnmp d31, v2.4s
+      fminnmp v1.4s, v2.2d
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          fminnmp s0, v1.2d
+// CHECK-ERROR:                         ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          fminnmp d31, v2.4s
+// CHECK-ERROR:                          ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          fminnmp v1.4s, v2.2d
+// CHECK-ERROR:          ^
+

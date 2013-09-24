@@ -102,23 +102,6 @@ define <4 x i32> @test_sqrshl_v4i32(<4 x i32> %lhs, <4 x i32> %rhs) {
   ret <4 x i32> %tmp1
 }
 
-declare <1 x i64> @llvm.arm.neon.vqrshiftu.v1i64(<1 x i64>, <1 x i64>)
-declare <1 x i64> @llvm.arm.neon.vqrshifts.v1i64(<1 x i64>, <1 x i64>)
-
-define <1 x i64> @test_uqrshl_v1i64(<1 x i64> %lhs, <1 x i64> %rhs) {
-; CHECK: test_uqrshl_v1i64:
-  %tmp1 = call <1 x i64> @llvm.arm.neon.vqrshiftu.v1i64(<1 x i64> %lhs, <1 x i64> %rhs)
-; CHECK: uqrshl d0, d0, d1
-  ret <1 x i64> %tmp1
-}
-
-define <1 x i64> @test_sqrshl_v1i64(<1 x i64> %lhs, <1 x i64> %rhs) {
-; CHECK: test_sqrshl_v1i64:
-  %tmp1 = call <1 x i64> @llvm.arm.neon.vqrshifts.v1i64(<1 x i64> %lhs, <1 x i64> %rhs)
-; CHECK: sqrshl d0, d0, d1
-  ret <1 x i64> %tmp1
-}
-
 declare <2 x i64> @llvm.arm.neon.vqrshiftu.v2i64(<2 x i64>, <2 x i64>)
 declare <2 x i64> @llvm.arm.neon.vqrshifts.v2i64(<2 x i64>, <2 x i64>)
 

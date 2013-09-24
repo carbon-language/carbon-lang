@@ -102,23 +102,6 @@ define <4 x i32> @test_srshl_v4i32(<4 x i32> %lhs, <4 x i32> %rhs) {
   ret <4 x i32> %tmp1
 }
 
-declare <1 x i64> @llvm.arm.neon.vrshiftu.v1i64(<1 x i64>, <1 x i64>)
-declare <1 x i64> @llvm.arm.neon.vrshifts.v1i64(<1 x i64>, <1 x i64>)
-
-define <1 x i64> @test_urshl_v1i64(<1 x i64> %lhs, <1 x i64> %rhs) {
-; CHECK: test_urshl_v1i64:
-  %tmp1 = call <1 x i64> @llvm.arm.neon.vrshiftu.v1i64(<1 x i64> %lhs, <1 x i64> %rhs)
-; CHECK: urshl d0, d0, d1
-  ret <1 x i64> %tmp1
-}
-
-define <1 x i64> @test_srshl_v1i64(<1 x i64> %lhs, <1 x i64> %rhs) {
-; CHECK: test_srshl_v1i64:
-  %tmp1 = call <1 x i64> @llvm.arm.neon.vrshifts.v1i64(<1 x i64> %lhs, <1 x i64> %rhs)
-; CHECK: srshl d0, d0, d1
-  ret <1 x i64> %tmp1
-}
-
 declare <2 x i64> @llvm.arm.neon.vrshiftu.v2i64(<2 x i64>, <2 x i64>)
 declare <2 x i64> @llvm.arm.neon.vrshifts.v2i64(<2 x i64>, <2 x i64>)
 

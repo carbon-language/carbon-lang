@@ -146,7 +146,7 @@ define i32 @umovw2s(<2 x i32> %tmp1) {
 }
 
 define i64 @umovx1d(<1 x i64> %tmp1) {
-;CHECK: umov {{x[0-31]+}}, {{v[0-31]+}}.d[0]
+;CHECK: fmov {{x[0-31]+}}, {{d[0-31]+}}
   %tmp3 = extractelement <1 x i64> %tmp1, i32 0
   ret i64 %tmp3
 }
