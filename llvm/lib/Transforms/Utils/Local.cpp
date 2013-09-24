@@ -413,7 +413,7 @@ bool llvm::SimplifyInstructionsInBlock(BasicBlock *BB, const DataLayout *TD,
     Instruction *Inst = BI++;
 
     WeakVH BIHandle(BI);
-    if (recursivelySimplifyInstruction(Inst, TD)) {
+    if (recursivelySimplifyInstruction(Inst, TD, TLI)) {
       MadeChange = true;
       if (BIHandle != BI)
         BI = BB->begin();

@@ -1893,7 +1893,8 @@ bool CodeGenPrepare::OptimizeInst(Instruction *I) {
     // It is possible for very late stage optimizations (such as SimplifyCFG)
     // to introduce PHI nodes too late to be cleaned up.  If we detect such a
     // trivial PHI, go ahead and zap it here.
-    if (Value *V = SimplifyInstruction(P)) {
+    if (Value *V = SimplifyInstruction(P, TLI ? TLI->getDataLayout() : 0,
+                                       TLInfo, DT)) {
       P->replaceAllUsesWith(V);
       P->eraseFromParent();
       ++NumPHIsElim;
