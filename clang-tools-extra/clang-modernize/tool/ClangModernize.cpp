@@ -93,11 +93,10 @@ static cl::opt<bool>
 SummaryMode("summary", cl::desc("Print transform summary"),
             cl::init(false));
 
-const char NoTiming[] = "no_timing";
 static cl::opt<std::string> TimingDirectoryName(
     "perf", cl::desc("Capture performance data and output to specified "
                      "directory. Default: ./migrate_perf"),
-    cl::init(NoTiming), cl::ValueOptional, cl::value_desc("directory name"));
+    cl::ValueOptional, cl::value_desc("directory name"));
 
 static cl::opt<std::string>
 IncludePaths("include",
@@ -384,9 +383,8 @@ int main(int argc, const char **argv) {
     return 1;
   }
 
-  // Since ExecutionTimeDirectoryName could be an empty string we compare
-  // against the default value when the command line option is not specified.
-  GlobalOptions.EnableTiming = (TimingDirectoryName != NoTiming);
+  // Enable timming.
+  GlobalOptions.EnableTiming = TimingDirectoryName.getNumOccurrences() > 0;
 
   // Check the reformatting style option
   bool CmdSwitchError = false;
