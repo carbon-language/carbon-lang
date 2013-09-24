@@ -324,6 +324,62 @@ define void @sll_v2i64(<2 x i64>* %c, <2 x i64>* %a, <2 x i64>* %b) nounwind {
   ; CHECK: .size sll_v2i64
 }
 
+define void @sll_v16i8_i(<16 x i8>* %c, <16 x i8>* %a) nounwind {
+  ; CHECK: sll_v16i8_i:
+
+  %1 = load <16 x i8>* %a
+  ; CHECK-DAG: ld.b [[R1:\$w[0-9]+]], 0($5)
+  %2 = shl <16 x i8> %1, <i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1>
+  ; CHECK-DAG: slli.b [[R4:\$w[0-9]+]], [[R1]], 1
+  store <16 x i8> %2, <16 x i8>* %c
+  ; CHECK-DAG: st.b [[R4]], 0($4)
+
+  ret void
+  ; CHECK: .size sll_v16i8_i
+}
+
+define void @sll_v8i16_i(<8 x i16>* %c, <8 x i16>* %a) nounwind {
+  ; CHECK: sll_v8i16_i:
+
+  %1 = load <8 x i16>* %a
+  ; CHECK-DAG: ld.h [[R1:\$w[0-9]+]], 0($5)
+  %2 = shl <8 x i16> %1, <i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1>
+  ; CHECK-DAG: slli.h [[R4:\$w[0-9]+]], [[R1]], 1
+  store <8 x i16> %2, <8 x i16>* %c
+  ; CHECK-DAG: st.h [[R4]], 0($4)
+
+  ret void
+  ; CHECK: .size sll_v8i16_i
+}
+
+define void @sll_v4i32_i(<4 x i32>* %c, <4 x i32>* %a) nounwind {
+  ; CHECK: sll_v4i32_i:
+
+  %1 = load <4 x i32>* %a
+  ; CHECK-DAG: ld.w [[R1:\$w[0-9]+]], 0($5)
+  %2 = shl <4 x i32> %1, <i32 1, i32 1, i32 1, i32 1>
+  ; CHECK-DAG: slli.w [[R4:\$w[0-9]+]], [[R1]], 1
+  store <4 x i32> %2, <4 x i32>* %c
+  ; CHECK-DAG: st.w [[R4]], 0($4)
+
+  ret void
+  ; CHECK: .size sll_v4i32_i
+}
+
+define void @sll_v2i64_i(<2 x i64>* %c, <2 x i64>* %a) nounwind {
+  ; CHECK: sll_v2i64_i:
+
+  %1 = load <2 x i64>* %a
+  ; CHECK-DAG: ld.d [[R1:\$w[0-9]+]], 0($5)
+  %2 = shl <2 x i64> %1, <i64 1, i64 1>
+  ; CHECK-DAG: slli.d [[R4:\$w[0-9]+]], [[R1]], 1
+  store <2 x i64> %2, <2 x i64>* %c
+  ; CHECK-DAG: st.d [[R4]], 0($4)
+
+  ret void
+  ; CHECK: .size sll_v2i64_i
+}
+
 define void @sra_v16i8(<16 x i8>* %c, <16 x i8>* %a, <16 x i8>* %b) nounwind {
   ; CHECK: sra_v16i8:
 
@@ -388,6 +444,62 @@ define void @sra_v2i64(<2 x i64>* %c, <2 x i64>* %a, <2 x i64>* %b) nounwind {
   ; CHECK: .size sra_v2i64
 }
 
+define void @sra_v16i8_i(<16 x i8>* %c, <16 x i8>* %a) nounwind {
+  ; CHECK: sra_v16i8_i:
+
+  %1 = load <16 x i8>* %a
+  ; CHECK-DAG: ld.b [[R1:\$w[0-9]+]], 0($5)
+  %2 = ashr <16 x i8> %1, <i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1>
+  ; CHECK-DAG: srai.b [[R4:\$w[0-9]+]], [[R1]], 1
+  store <16 x i8> %2, <16 x i8>* %c
+  ; CHECK-DAG: st.b [[R4]], 0($4)
+
+  ret void
+  ; CHECK: .size sra_v16i8_i
+}
+
+define void @sra_v8i16_i(<8 x i16>* %c, <8 x i16>* %a) nounwind {
+  ; CHECK: sra_v8i16_i:
+
+  %1 = load <8 x i16>* %a
+  ; CHECK-DAG: ld.h [[R1:\$w[0-9]+]], 0($5)
+  %2 = ashr <8 x i16> %1, <i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1>
+  ; CHECK-DAG: srai.h [[R4:\$w[0-9]+]], [[R1]], 1
+  store <8 x i16> %2, <8 x i16>* %c
+  ; CHECK-DAG: st.h [[R4]], 0($4)
+
+  ret void
+  ; CHECK: .size sra_v8i16_i
+}
+
+define void @sra_v4i32_i(<4 x i32>* %c, <4 x i32>* %a) nounwind {
+  ; CHECK: sra_v4i32_i:
+
+  %1 = load <4 x i32>* %a
+  ; CHECK-DAG: ld.w [[R1:\$w[0-9]+]], 0($5)
+  %2 = ashr <4 x i32> %1, <i32 1, i32 1, i32 1, i32 1>
+  ; CHECK-DAG: srai.w [[R4:\$w[0-9]+]], [[R1]], 1
+  store <4 x i32> %2, <4 x i32>* %c
+  ; CHECK-DAG: st.w [[R4]], 0($4)
+
+  ret void
+  ; CHECK: .size sra_v4i32_i
+}
+
+define void @sra_v2i64_i(<2 x i64>* %c, <2 x i64>* %a) nounwind {
+  ; CHECK: sra_v2i64_i:
+
+  %1 = load <2 x i64>* %a
+  ; CHECK-DAG: ld.d [[R1:\$w[0-9]+]], 0($5)
+  %2 = ashr <2 x i64> %1, <i64 1, i64 1>
+  ; CHECK-DAG: srai.d [[R4:\$w[0-9]+]], [[R1]], 1
+  store <2 x i64> %2, <2 x i64>* %c
+  ; CHECK-DAG: st.d [[R4]], 0($4)
+
+  ret void
+  ; CHECK: .size sra_v2i64_i
+}
+
 define void @srl_v16i8(<16 x i8>* %c, <16 x i8>* %a, <16 x i8>* %b) nounwind {
   ; CHECK: srl_v16i8:
 
@@ -450,6 +562,62 @@ define void @srl_v2i64(<2 x i64>* %c, <2 x i64>* %a, <2 x i64>* %b) nounwind {
 
   ret void
   ; CHECK: .size srl_v2i64
+}
+
+define void @srl_v16i8_i(<16 x i8>* %c, <16 x i8>* %a) nounwind {
+  ; CHECK: srl_v16i8_i:
+
+  %1 = load <16 x i8>* %a
+  ; CHECK-DAG: ld.b [[R1:\$w[0-9]+]], 0($5)
+  %2 = lshr <16 x i8> %1, <i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1>
+  ; CHECK-DAG: srli.b [[R4:\$w[0-9]+]], [[R1]], 1
+  store <16 x i8> %2, <16 x i8>* %c
+  ; CHECK-DAG: st.b [[R4]], 0($4)
+
+  ret void
+  ; CHECK: .size srl_v16i8_i
+}
+
+define void @srl_v8i16_i(<8 x i16>* %c, <8 x i16>* %a) nounwind {
+  ; CHECK: srl_v8i16_i:
+
+  %1 = load <8 x i16>* %a
+  ; CHECK-DAG: ld.h [[R1:\$w[0-9]+]], 0($5)
+  %2 = lshr <8 x i16> %1, <i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1>
+  ; CHECK-DAG: srli.h [[R4:\$w[0-9]+]], [[R1]], 1
+  store <8 x i16> %2, <8 x i16>* %c
+  ; CHECK-DAG: st.h [[R4]], 0($4)
+
+  ret void
+  ; CHECK: .size srl_v8i16_i
+}
+
+define void @srl_v4i32_i(<4 x i32>* %c, <4 x i32>* %a) nounwind {
+  ; CHECK: srl_v4i32_i:
+
+  %1 = load <4 x i32>* %a
+  ; CHECK-DAG: ld.w [[R1:\$w[0-9]+]], 0($5)
+  %2 = lshr <4 x i32> %1, <i32 1, i32 1, i32 1, i32 1>
+  ; CHECK-DAG: srli.w [[R4:\$w[0-9]+]], [[R1]], 1
+  store <4 x i32> %2, <4 x i32>* %c
+  ; CHECK-DAG: st.w [[R4]], 0($4)
+
+  ret void
+  ; CHECK: .size srl_v4i32_i
+}
+
+define void @srl_v2i64_i(<2 x i64>* %c, <2 x i64>* %a) nounwind {
+  ; CHECK: srl_v2i64_i:
+
+  %1 = load <2 x i64>* %a
+  ; CHECK-DAG: ld.d [[R1:\$w[0-9]+]], 0($5)
+  %2 = lshr <2 x i64> %1, <i64 1, i64 1>
+  ; CHECK-DAG: srli.d [[R4:\$w[0-9]+]], [[R1]], 1
+  store <2 x i64> %2, <2 x i64>* %c
+  ; CHECK-DAG: st.d [[R4]], 0($4)
+
+  ret void
+  ; CHECK: .size srl_v2i64_i
 }
 
 define void @ctpop_v16i8(<16 x i8>* %c, <16 x i8>* %a) nounwind {
