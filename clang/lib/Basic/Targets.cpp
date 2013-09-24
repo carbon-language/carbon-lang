@@ -1586,6 +1586,7 @@ class X86TargetInfo : public TargetInfo {
   bool HasRTM;
   bool HasPRFCHW;
   bool HasRDSEED;
+  bool HasTBM;
   bool HasFMA;
   bool HasF16C;
   bool HasAVX512CD, HasAVX512ER, HasAVX512PF;
@@ -1748,8 +1749,8 @@ public:
       : TargetInfo(Triple), SSELevel(NoSSE), MMX3DNowLevel(NoMMX3DNow),
         XOPLevel(NoXOP), HasAES(false), HasPCLMUL(false), HasLZCNT(false),
         HasRDRND(false), HasBMI(false), HasBMI2(false), HasPOPCNT(false),
-        HasRTM(false), HasPRFCHW(false), HasRDSEED(false), HasFMA(false),
-        HasF16C(false), HasAVX512CD(false), HasAVX512ER(false),
+        HasRTM(false), HasPRFCHW(false), HasRDSEED(false), HasTBM(false),
+        HasFMA(false), HasF16C(false), HasAVX512CD(false), HasAVX512ER(false),
         HasAVX512PF(false), HasSHA(false), CPU(CK_Generic), FPMath(FP_Default) {
     BigEndian = false;
     LongDoubleFormat = &llvm::APFloat::x87DoubleExtended;
@@ -2127,6 +2128,7 @@ void X86TargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
     setFeatureEnabledImpl(Features, "bmi", true);
     setFeatureEnabledImpl(Features, "fma", true);
     setFeatureEnabledImpl(Features, "f16c", true);
+    setFeatureEnabledImpl(Features, "tbm", true);
     break;
   case CK_C3_2:
     setFeatureEnabledImpl(Features, "sse", true);
@@ -2364,6 +2366,11 @@ bool X86TargetInfo::HandleTargetFeatures(std::vector<std::string> &Features,
 
     if (Feature == "rdseed") {
       HasRDSEED = true;
+      continue;
+    }
+
+    if (Feature == "tbm") {
+      HasTBM = true;
       continue;
     }
 
@@ -2642,6 +2649,9 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
   if (HasRDSEED)
     Builder.defineMacro("__RDSEED__");
 
+  if (HasTBM)
+    Builder.defineMacro("__TBM__");
+
   switch (XOPLevel) {
   case XOP:
     Builder.defineMacro("__XOP__");
@@ -2749,6 +2759,7 @@ bool X86TargetInfo::hasFeature(StringRef Feature) const {
       .Case("bmi2", HasBMI2)
       .Case("fma", HasFMA)
       .Case("fma4", XOPLevel >= FMA4)
+      .Case("tbm", HasTBM)
       .Case("lzcnt", HasLZCNT)
       .Case("rdrnd", HasRDRND)
       .Case("mm3dnow", MMX3DNowLevel >= AMD3DNow)

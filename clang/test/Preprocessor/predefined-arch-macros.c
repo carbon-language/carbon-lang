@@ -1326,6 +1326,7 @@
 // CHECK_BDVER2_M32: #define __SSE_MATH__ 1
 // CHECK_BDVER2_M32: #define __SSE__ 1
 // CHECK_BDVER2_M32: #define __SSSE3__ 1
+// CHECK_BDVER2_M32: #define __TBM__ 1
 // CHECK_BDVER2_M32: #define __XOP__ 1
 // CHECK_BDVER2_M32: #define __bdver2 1
 // CHECK_BDVER2_M32: #define __bdver2__ 1
@@ -1356,6 +1357,7 @@
 // CHECK_BDVER2_M64: #define __SSE_MATH__ 1
 // CHECK_BDVER2_M64: #define __SSE__ 1
 // CHECK_BDVER2_M64: #define __SSSE3__ 1
+// CHECK_BDVER2_M64: #define __TBM__ 1
 // CHECK_BDVER2_M64: #define __XOP__ 1
 // CHECK_BDVER2_M64: #define __amd64 1
 // CHECK_BDVER2_M64: #define __amd64__ 1
