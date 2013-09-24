@@ -397,8 +397,7 @@ bool EEVT::TypeSet::EnforceSmallerThan(EEVT::TypeSet &Other, TreePattern &TP) {
                    Other.getName() +"'!");
           return false;
         }
-    }
-    else
+    } else
       // For scalar types, the bitsize of this type must be larger
       // than that of the other.
       if (Type.getSizeInBits() >= OtherType.getSizeInBits()) {
@@ -450,8 +449,7 @@ bool EEVT::TypeSet::EnforceSmallerThan(EEVT::TypeSet &Other, TreePattern &TP) {
         MadeChange = true;
         continue;
       }
-    }
-    else if (isFloatingPoint(*TVI)) {
+    } else if (isFloatingPoint(*TVI)) {
       ++OtherFPSize;
       if (*TVI == SmallestFP) {
         TVI = Other.TypeVec.erase(TVI);
@@ -465,8 +463,8 @@ bool EEVT::TypeSet::EnforceSmallerThan(EEVT::TypeSet &Other, TreePattern &TP) {
 
   // If this is the only type in the large set, the constraint can never be
   // satisfied.
-  if ((Other.hasIntegerTypes() && OtherIntSize == 0)
-      || (Other.hasFloatingPointTypes() && OtherFPSize == 0)) {
+  if ((Other.hasIntegerTypes() && OtherIntSize == 0) ||
+      (Other.hasFloatingPointTypes() && OtherFPSize == 0)) {
     TP.error("Type inference contradiction found, '" +
              Other.getName() + "' has nothing larger than '" + getName() +"'!");
     return false;
@@ -508,8 +506,7 @@ bool EEVT::TypeSet::EnforceSmallerThan(EEVT::TypeSet &Other, TreePattern &TP) {
         MadeChange = true;
         continue;
       }
-    }
-    else if (isFloatingPoint(*TVI)) {
+    } else if (isFloatingPoint(*TVI)) {
       ++FPSize;
       if (*TVI == LargestFP) {
         TVI = TypeVec.erase(TVI);
@@ -523,8 +520,8 @@ bool EEVT::TypeSet::EnforceSmallerThan(EEVT::TypeSet &Other, TreePattern &TP) {
 
   // If this is the only type in the small set, the constraint can never be
   // satisfied.
-  if ((hasIntegerTypes() && IntSize == 0)
-      || (hasFloatingPointTypes() && FPSize == 0)) {
+  if ((hasIntegerTypes() && IntSize == 0) ||
+      (hasFloatingPointTypes() && FPSize == 0)) {
     TP.error("Type inference contradiction found, '" +
              getName() + "' has nothing smaller than '" + Other.getName()+"'!");
     return false;
