@@ -41,3 +41,9 @@ int CGood1::MGood1;
 namespace {
   int mgood4;
 }
+
+class C {
+  void test() {
+    static int x = 0; // no-warn
+  }
+};
