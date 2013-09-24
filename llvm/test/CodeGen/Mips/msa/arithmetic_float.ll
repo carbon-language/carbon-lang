@@ -128,6 +128,34 @@ define void @fdiv_v2f64(<2 x double>* %c, <2 x double>* %a, <2 x double>* %b) no
   ; CHECK: .size fdiv_v2f64
 }
 
+define void @fabs_v4f32(<4 x float>* %c, <4 x float>* %a) nounwind {
+  ; CHECK: fabs_v4f32:
+
+  %1 = load <4 x float>* %a
+  ; CHECK-DAG: ld.w [[R1:\$w[0-9]+]], 0($5)
+  %2 = tail call <4 x float> @llvm.fabs.v4f32 (<4 x float> %1)
+  ; CHECK-DAG: fmax_a.w [[R3:\$w[0-9]+]], [[R1]], [[R1]]
+  store <4 x float> %2, <4 x float>* %c
+  ; CHECK-DAG: st.w [[R3]], 0($4)
+
+  ret void
+  ; CHECK: .size fabs_v4f32
+}
+
+define void @fabs_v2f64(<2 x double>* %c, <2 x double>* %a) nounwind {
+  ; CHECK: fabs_v2f64:
+
+  %1 = load <2 x double>* %a
+  ; CHECK-DAG: ld.d [[R1:\$w[0-9]+]], 0($5)
+  %2 = tail call <2 x double> @llvm.fabs.v2f64 (<2 x double> %1)
+  ; CHECK-DAG: fmax_a.d [[R3:\$w[0-9]+]], [[R1]], [[R1]]
+  store <2 x double> %2, <2 x double>* %c
+  ; CHECK-DAG: st.d [[R3]], 0($4)
+
+  ret void
+  ; CHECK: .size fabs_v2f64
+}
+
 define void @fsqrt_v4f32(<4 x float>* %c, <4 x float>* %a) nounwind {
   ; CHECK: fsqrt_v4f32:
 
@@ -156,5 +184,7 @@ define void @fsqrt_v2f64(<2 x double>* %c, <2 x double>* %a) nounwind {
   ; CHECK: .size fsqrt_v2f64
 }
 
+declare <4 x float>  @llvm.fabs.v4f32(<4 x float>  %Val)
+declare <2 x double> @llvm.fabs.v2f64(<2 x double> %Val)
 declare <4 x float>  @llvm.sqrt.v4f32(<4 x float>  %Val)
 declare <2 x double> @llvm.sqrt.v2f64(<2 x double> %Val)

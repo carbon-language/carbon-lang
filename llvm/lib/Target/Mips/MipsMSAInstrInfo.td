@@ -2946,6 +2946,20 @@ def ST_FW : MSAPat<(store (v4f32 MSA128W:$ws), addrRegImm:$addr),
 def ST_FD : MSAPat<(store (v2f64 MSA128D:$ws), addrRegImm:$addr),
                    (ST_D MSA128D:$ws, addrRegImm:$addr)>;
 
+class MSA_FABS_PSEUDO_DESC_BASE<RegisterClass RCWD, RegisterClass RCWS = RCWD,
+                                InstrItinClass itin = NoItinerary> :
+  MipsPseudo<(outs RCWD:$wd),
+             (ins RCWS:$ws),
+             [(set RCWD:$wd, (fabs RCWS:$ws))]> {
+  InstrItinClass Itinerary = itin;
+}
+def FABS_W : MSA_FABS_PSEUDO_DESC_BASE<MSA128W>,
+             PseudoInstExpansion<(FMAX_A_W MSA128W:$wd, MSA128W:$ws,
+                                           MSA128W:$ws)>;
+def FABS_D : MSA_FABS_PSEUDO_DESC_BASE<MSA128D>,
+             PseudoInstExpansion<(FMAX_A_D MSA128D:$wd, MSA128D:$ws,
+                                           MSA128D:$ws)>;
+
 class MSABitconvertPat<ValueType DstVT, ValueType SrcVT,
                        RegisterClass DstRC, list<Predicate> preds = [HasMSA]> :
    MSAPat<(DstVT (bitconvert SrcVT:$src)),
