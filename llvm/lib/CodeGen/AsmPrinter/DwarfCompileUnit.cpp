@@ -1258,6 +1258,7 @@ DIE *CompileUnit::getOrCreateNameSpace(DINameSpace NS) {
   if (!NS.getName().empty()) {
     addString(NDie, dwarf::DW_AT_name, NS.getName());
     addAccelNamespace(NS.getName(), NDie);
+    addGlobalName(NS.getName(), NDie);
   } else
     addAccelNamespace("(anonymous namespace)", NDie);
   addSourceLine(NDie, NS);

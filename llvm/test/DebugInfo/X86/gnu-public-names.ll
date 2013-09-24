@@ -70,6 +70,7 @@
 ; CHECK-NEXT: Offset in .debug_info: 0
 ; CHECK-NEXT: Size:                  319
 ; CHECK-NEXT: Offset     Linkage  Kind     Name
+; CHECK-DAG:  0x00000091 EXTERNAL TYPE     "ns"
 ; CHECK-DAG:  0x00000098 EXTERNAL VARIABLE "global_namespace_variable"
 ; CHECK-DAG:  0x000000a7 EXTERNAL FUNCTION "global_namespace_function"
 ; CHECK-DAG:  0x000000ea STATIC   FUNCTION "static_member_function"
