@@ -948,6 +948,11 @@ static void getMIPSTargetFeatures(const Driver &D, const ArgList &Args,
     Features.push_back("+soft-float");
   }
 
+  if (Arg *A = Args.getLastArg(options::OPT_mnan_EQ)) {
+    if (StringRef(A->getValue()) == "2008")
+      Features.push_back("+nan2008");
+  }
+
   AddTargetFeature(Args, Features, options::OPT_msingle_float,
                    options::OPT_mdouble_float, "single-float");
   AddTargetFeature(Args, Features, options::OPT_mips16, options::OPT_mno_mips16,
@@ -5941,6 +5946,11 @@ void gnutools::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back("-EB");
     else
       CmdArgs.push_back("-EL");
+
+    if (Arg *A = Args.getLastArg(options::OPT_mnan_EQ)) {
+      if (StringRef(A->getValue()) == "2008")
+        CmdArgs.push_back(Args.MakeArgString("-mnan=2008"));
+    }
 
     Args.AddLastArg(CmdArgs, options::OPT_mips16, options::OPT_mno_mips16);
     Args.AddLastArg(CmdArgs, options::OPT_mmicromips,
