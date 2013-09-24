@@ -31,12 +31,12 @@
 using namespace llvm;
 
 enum AllocType {
-  MallocLike         = 1<<0, // allocates
-  CallocLike         = 1<<1, // allocates + bzero
-  ReallocLike        = 1<<2, // reallocates
-  StrDupLike         = 1<<3,
-  OpNewLike          = 1<<4, // allocates; never returns null
-  AllocLike          = MallocLike | CallocLike | StrDupLike | OpNewLike,
+  OpNewLike          = 1<<0, // allocates; never returns null
+  MallocLike         = 1<<1 | OpNewLike, // allocates; may return null
+  CallocLike         = 1<<2, // allocates + bzero
+  ReallocLike        = 1<<3, // reallocates
+  StrDupLike         = 1<<4,
+  AllocLike          = MallocLike | CallocLike | StrDupLike,
   AnyAlloc           = AllocLike | ReallocLike
 };
 
@@ -118,7 +118,7 @@ static const AllocFnsTy *getAllocationData(const Value *V, AllocType AllocTy,
     return 0;
 
   const AllocFnsTy *FnData = &AllocationFnData[i];
-  if ((FnData->AllocTy & AllocTy) == 0)
+  if ((FnData->AllocTy & AllocTy) != FnData->AllocTy)
     return 0;
 
   // Check function prototype.
