@@ -384,6 +384,10 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
         ToggleFeature(X86::FeatureSHA);
       }
     }
+    if (IsAMD && ((ECX >> 21) & 0x1)) {
+      HasTBM = true;
+      ToggleFeature(X86::FeatureTBM);
+    }
   }
 }
 
@@ -492,6 +496,7 @@ void X86Subtarget::initializeEnvironment() {
   HasFMA = false;
   HasFMA4 = false;
   HasXOP = false;
+  HasTBM = false;
   HasMOVBE = false;
   HasRDRAND = false;
   HasF16C = false;

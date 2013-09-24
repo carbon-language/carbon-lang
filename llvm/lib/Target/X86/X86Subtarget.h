@@ -97,6 +97,9 @@ protected:
   /// HasXOP - Target has XOP instructions
   bool HasXOP;
 
+  /// HasTBM - Target has TBM instructions.
+  bool HasTBM;
+
   /// HasMOVBE - True if the processor has the MOVBE instruction.
   bool HasMOVBE;
 
@@ -274,6 +277,7 @@ public:
   // FIXME: Favor FMA when both are enabled. Is this the right thing to do?
   bool hasFMA4() const { return HasFMA4 && !HasFMA; }
   bool hasXOP() const { return HasXOP; }
+  bool hasTBM() const { return HasTBM; }
   bool hasMOVBE() const { return HasMOVBE; }
   bool hasRDRAND() const { return HasRDRAND; }
   bool hasF16C() const { return HasF16C; }
