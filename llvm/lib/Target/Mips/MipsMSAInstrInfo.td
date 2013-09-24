@@ -13,6 +13,14 @@
 
 def SDT_MipsSplat : SDTypeProfile<1, 1, [SDTCisVec<0>, SDTCisInt<1>]>;
 def SDT_MipsVecCond : SDTypeProfile<1, 1, [SDTCisInt<0>, SDTCisVec<1>]>;
+def SDT_VSetCC : SDTypeProfile<1, 3, [SDTCisInt<0>,
+                                      SDTCisInt<1>,
+                                      SDTCisSameAs<1, 2>,
+                                      SDTCisVT<3, OtherVT>]>;
+def SDT_VFSetCC : SDTypeProfile<1, 3, [SDTCisInt<0>,
+                                       SDTCisFP<1>,
+                                       SDTCisSameAs<1, 2>,
+                                       SDTCisVT<3, OtherVT>]>;
 
 def MipsVAllNonZero : SDNode<"MipsISD::VALL_NONZERO", SDT_MipsVecCond>;
 def MipsVAnyNonZero : SDNode<"MipsISD::VANY_NONZERO", SDT_MipsVecCond>;
@@ -22,6 +30,9 @@ def MipsVSplat  : SDNode<"MipsISD::VSPLAT", SDT_MipsSplat>;
 def MipsVSplatD : SDNode<"MipsISD::VSPLATD", SDT_MipsSplat>;
 def MipsVNOR : SDNode<"MipsISD::VNOR", SDTIntBinOp,
                       [SDNPCommutative, SDNPAssociative]>;
+
+def vsetcc : SDNode<"ISD::SETCC", SDT_VSetCC>;
+def vfsetcc : SDNode<"ISD::SETCC", SDT_VFSetCC>;
 
 def MipsVExtractSExt : SDNode<"MipsISD::VEXTRACT_SEXT_ELT",
     SDTypeProfile<1, 3, [SDTCisPtrTy<2>]>, []>;
@@ -49,6 +60,68 @@ def vinsert_v8i16 : PatFrag<(ops node:$vec, node:$val, node:$idx),
     (v8i16 (vector_insert node:$vec, node:$val, node:$idx))>;
 def vinsert_v4i32 : PatFrag<(ops node:$vec, node:$val, node:$idx),
     (v4i32 (vector_insert node:$vec, node:$val, node:$idx))>;
+
+class vfsetcc_type<ValueType ResTy, ValueType OpTy, CondCode CC> :
+  PatFrag<(ops node:$lhs, node:$rhs),
+          (ResTy (vfsetcc (OpTy node:$lhs), (OpTy node:$rhs), CC))>;
+
+// ISD::SETFALSE cannot occur
+def vfsetoeq_v4f32 : vfsetcc_type<v4i32, v4f32, SETOEQ>;
+def vfsetoeq_v2f64 : vfsetcc_type<v2i64, v2f64, SETOEQ>;
+def vfsetoge_v4f32 : vfsetcc_type<v4i32, v4f32, SETOGE>;
+def vfsetoge_v2f64 : vfsetcc_type<v2i64, v2f64, SETOGE>;
+def vfsetogt_v4f32 : vfsetcc_type<v4i32, v4f32, SETOGT>;
+def vfsetogt_v2f64 : vfsetcc_type<v2i64, v2f64, SETOGT>;
+def vfsetole_v4f32 : vfsetcc_type<v4i32, v4f32, SETOLE>;
+def vfsetole_v2f64 : vfsetcc_type<v2i64, v2f64, SETOLE>;
+def vfsetolt_v4f32 : vfsetcc_type<v4i32, v4f32, SETOLT>;
+def vfsetolt_v2f64 : vfsetcc_type<v2i64, v2f64, SETOLT>;
+def vfsetone_v4f32 : vfsetcc_type<v4i32, v4f32, SETONE>;
+def vfsetone_v2f64 : vfsetcc_type<v2i64, v2f64, SETONE>;
+def vfsetord_v4f32 : vfsetcc_type<v4i32, v4f32, SETO>;
+def vfsetord_v2f64 : vfsetcc_type<v2i64, v2f64, SETO>;
+def vfsetun_v4f32  : vfsetcc_type<v4i32, v4f32, SETUO>;
+def vfsetun_v2f64  : vfsetcc_type<v2i64, v2f64, SETUO>;
+def vfsetueq_v4f32 : vfsetcc_type<v4i32, v4f32, SETUEQ>;
+def vfsetueq_v2f64 : vfsetcc_type<v2i64, v2f64, SETUEQ>;
+def vfsetuge_v4f32 : vfsetcc_type<v4i32, v4f32, SETUGE>;
+def vfsetuge_v2f64 : vfsetcc_type<v2i64, v2f64, SETUGE>;
+def vfsetugt_v4f32 : vfsetcc_type<v4i32, v4f32, SETUGT>;
+def vfsetugt_v2f64 : vfsetcc_type<v2i64, v2f64, SETUGT>;
+def vfsetule_v4f32 : vfsetcc_type<v4i32, v4f32, SETULE>;
+def vfsetule_v2f64 : vfsetcc_type<v2i64, v2f64, SETULE>;
+def vfsetult_v4f32 : vfsetcc_type<v4i32, v4f32, SETULT>;
+def vfsetult_v2f64 : vfsetcc_type<v2i64, v2f64, SETULT>;
+def vfsetune_v4f32 : vfsetcc_type<v4i32, v4f32, SETUNE>;
+def vfsetune_v2f64 : vfsetcc_type<v2i64, v2f64, SETUNE>;
+// ISD::SETTRUE cannot occur
+// ISD::SETFALSE2 cannot occur
+// ISD::SETTRUE2 cannot occur
+
+class vsetcc_type<ValueType ResTy, CondCode CC> :
+  PatFrag<(ops node:$lhs, node:$rhs),
+          (ResTy (vsetcc node:$lhs, node:$rhs, CC))>;
+
+def vseteq_v16i8  : vsetcc_type<v16i8, SETEQ>;
+def vseteq_v8i16  : vsetcc_type<v8i16, SETEQ>;
+def vseteq_v4i32  : vsetcc_type<v4i32, SETEQ>;
+def vseteq_v2i64  : vsetcc_type<v2i64, SETEQ>;
+def vsetle_v16i8  : vsetcc_type<v16i8, SETLE>;
+def vsetle_v8i16  : vsetcc_type<v8i16, SETLE>;
+def vsetle_v4i32  : vsetcc_type<v4i32, SETLE>;
+def vsetle_v2i64  : vsetcc_type<v2i64, SETLE>;
+def vsetlt_v16i8  : vsetcc_type<v16i8, SETLT>;
+def vsetlt_v8i16  : vsetcc_type<v8i16, SETLT>;
+def vsetlt_v4i32  : vsetcc_type<v4i32, SETLT>;
+def vsetlt_v2i64  : vsetcc_type<v2i64, SETLT>;
+def vsetule_v16i8 : vsetcc_type<v16i8, SETULE>;
+def vsetule_v8i16 : vsetcc_type<v8i16, SETULE>;
+def vsetule_v4i32 : vsetcc_type<v4i32, SETULE>;
+def vsetule_v2i64 : vsetcc_type<v2i64, SETULE>;
+def vsetult_v16i8 : vsetcc_type<v16i8, SETULT>;
+def vsetult_v8i16 : vsetcc_type<v8i16, SETULT>;
+def vsetult_v4i32 : vsetcc_type<v4i32, SETULT>;
+def vsetult_v2i64 : vsetcc_type<v2i64, SETULT>;
 
 def vsplati8  : PatFrag<(ops node:$in), (v16i8 (MipsVSplat (i32 node:$in)))>;
 def vsplati16 : PatFrag<(ops node:$in), (v8i16 (MipsVSplat (i32 node:$in)))>;
@@ -909,12 +982,14 @@ class MSA_I5_X_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
 }
 
 class MSA_SI5_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
-                       RegisterClass RCWD, RegisterClass RCWS = RCWD,
+                       SDPatternOperator SplatNode, RegisterClass RCWD,
+                       RegisterClass RCWS = RCWD,
                        InstrItinClass itin = NoItinerary> {
   dag OutOperandList = (outs RCWD:$wd);
   dag InOperandList = (ins RCWS:$ws, simm5:$s5);
   string AsmString = !strconcat(instr_asm, "\t$wd, $ws, $s5");
-  list<dag> Pattern = [(set RCWD:$wd, (OpNode RCWS:$ws, immSExt5:$s5))];
+  list<dag> Pattern = [(set RCWD:$wd, (OpNode RCWS:$ws,
+                                              (SplatNode immSExt5:$s5)))];
   InstrItinClass Itinerary = itin;
 }
 
@@ -1228,19 +1303,23 @@ class BZ_D_DESC : MSA_CBRANCH_DESC_BASE<"bz.d", MSA128D>;
 
 class BZ_V_DESC : MSA_CBRANCH_DESC_BASE<"bz.v", MSA128B>;
 
-class CEQ_B_DESC : MSA_3R_DESC_BASE<"ceq.b", int_mips_ceq_b, MSA128B>,
+class CEQ_B_DESC : MSA_3R_DESC_BASE<"ceq.b", vseteq_v16i8, MSA128B>,
                    IsCommutable;
-class CEQ_H_DESC : MSA_3R_DESC_BASE<"ceq.h", int_mips_ceq_h, MSA128H>,
+class CEQ_H_DESC : MSA_3R_DESC_BASE<"ceq.h", vseteq_v8i16, MSA128H>,
                    IsCommutable;
-class CEQ_W_DESC : MSA_3R_DESC_BASE<"ceq.w", int_mips_ceq_w, MSA128W>,
+class CEQ_W_DESC : MSA_3R_DESC_BASE<"ceq.w", vseteq_v4i32, MSA128W>,
                    IsCommutable;
-class CEQ_D_DESC : MSA_3R_DESC_BASE<"ceq.d", int_mips_ceq_d, MSA128D>,
+class CEQ_D_DESC : MSA_3R_DESC_BASE<"ceq.d", vseteq_v2i64, MSA128D>,
                    IsCommutable;
 
-class CEQI_B_DESC : MSA_SI5_DESC_BASE<"ceqi.b", int_mips_ceqi_b, MSA128B>;
-class CEQI_H_DESC : MSA_SI5_DESC_BASE<"ceqi.h", int_mips_ceqi_h, MSA128H>;
-class CEQI_W_DESC : MSA_SI5_DESC_BASE<"ceqi.w", int_mips_ceqi_w, MSA128W>;
-class CEQI_D_DESC : MSA_SI5_DESC_BASE<"ceqi.d", int_mips_ceqi_d, MSA128D>;
+class CEQI_B_DESC : MSA_SI5_DESC_BASE<"ceqi.b", vseteq_v16i8, vsplati8,
+                                      MSA128B>;
+class CEQI_H_DESC : MSA_SI5_DESC_BASE<"ceqi.h", vseteq_v8i16, vsplati16,
+                                      MSA128H>;
+class CEQI_W_DESC : MSA_SI5_DESC_BASE<"ceqi.w", vseteq_v4i32, vsplati32,
+                                      MSA128W>;
+class CEQI_D_DESC : MSA_SI5_DESC_BASE<"ceqi.d", vseteq_v2i64, vsplati64,
+                                      MSA128D>;
 
 class CFCMSA_DESC {
   dag OutOperandList = (outs GPR32:$rd);
@@ -1250,61 +1329,61 @@ class CFCMSA_DESC {
   bit hasSideEffects = 1;
 }
 
-class CLE_S_B_DESC : MSA_3R_DESC_BASE<"cle_s.b", int_mips_cle_s_b, MSA128B>;
-class CLE_S_H_DESC : MSA_3R_DESC_BASE<"cle_s.h", int_mips_cle_s_h, MSA128H>;
-class CLE_S_W_DESC : MSA_3R_DESC_BASE<"cle_s.w", int_mips_cle_s_w, MSA128W>;
-class CLE_S_D_DESC : MSA_3R_DESC_BASE<"cle_s.d", int_mips_cle_s_d, MSA128D>;
+class CLE_S_B_DESC : MSA_3R_DESC_BASE<"cle_s.b", vsetle_v16i8, MSA128B>;
+class CLE_S_H_DESC : MSA_3R_DESC_BASE<"cle_s.h", vsetle_v8i16, MSA128H>;
+class CLE_S_W_DESC : MSA_3R_DESC_BASE<"cle_s.w", vsetle_v4i32, MSA128W>;
+class CLE_S_D_DESC : MSA_3R_DESC_BASE<"cle_s.d", vsetle_v2i64, MSA128D>;
 
-class CLE_U_B_DESC : MSA_3R_DESC_BASE<"cle_u.b", int_mips_cle_u_b, MSA128B>;
-class CLE_U_H_DESC : MSA_3R_DESC_BASE<"cle_u.h", int_mips_cle_u_h, MSA128H>;
-class CLE_U_W_DESC : MSA_3R_DESC_BASE<"cle_u.w", int_mips_cle_u_w, MSA128W>;
-class CLE_U_D_DESC : MSA_3R_DESC_BASE<"cle_u.d", int_mips_cle_u_d, MSA128D>;
+class CLE_U_B_DESC : MSA_3R_DESC_BASE<"cle_u.b", vsetule_v16i8, MSA128B>;
+class CLE_U_H_DESC : MSA_3R_DESC_BASE<"cle_u.h", vsetule_v8i16, MSA128H>;
+class CLE_U_W_DESC : MSA_3R_DESC_BASE<"cle_u.w", vsetule_v4i32, MSA128W>;
+class CLE_U_D_DESC : MSA_3R_DESC_BASE<"cle_u.d", vsetule_v2i64, MSA128D>;
 
-class CLEI_S_B_DESC : MSA_SI5_DESC_BASE<"clei_s.b", int_mips_clei_s_b,
+class CLEI_S_B_DESC : MSA_SI5_DESC_BASE<"clei_s.b", vsetle_v16i8, vsplati8,
                                         MSA128B>;
-class CLEI_S_H_DESC : MSA_SI5_DESC_BASE<"clei_s.h", int_mips_clei_s_h,
+class CLEI_S_H_DESC : MSA_SI5_DESC_BASE<"clei_s.h", vsetle_v8i16, vsplati16,
                                         MSA128H>;
-class CLEI_S_W_DESC : MSA_SI5_DESC_BASE<"clei_s.w", int_mips_clei_s_w,
+class CLEI_S_W_DESC : MSA_SI5_DESC_BASE<"clei_s.w", vsetle_v4i32, vsplati32,
                                         MSA128W>;
-class CLEI_S_D_DESC : MSA_SI5_DESC_BASE<"clei_s.d", int_mips_clei_s_d,
+class CLEI_S_D_DESC : MSA_SI5_DESC_BASE<"clei_s.d", vsetle_v2i64, vsplati64,
                                         MSA128D>;
 
-class CLEI_U_B_DESC : MSA_SI5_DESC_BASE<"clei_u.b", int_mips_clei_u_b,
+class CLEI_U_B_DESC : MSA_I5_DESC_BASE<"clei_u.b", vsetule_v16i8, vsplati8,
+                                       MSA128B>;
+class CLEI_U_H_DESC : MSA_I5_DESC_BASE<"clei_u.h", vsetule_v8i16, vsplati16,
+                                       MSA128H>;
+class CLEI_U_W_DESC : MSA_I5_DESC_BASE<"clei_u.w", vsetule_v4i32, vsplati32,
+                                       MSA128W>;
+class CLEI_U_D_DESC : MSA_I5_DESC_BASE<"clei_u.d", vsetule_v2i64, vsplati64,
+                                       MSA128D>;
+
+class CLT_S_B_DESC : MSA_3R_DESC_BASE<"clt_s.b", vsetlt_v16i8, MSA128B>;
+class CLT_S_H_DESC : MSA_3R_DESC_BASE<"clt_s.h", vsetlt_v8i16, MSA128H>;
+class CLT_S_W_DESC : MSA_3R_DESC_BASE<"clt_s.w", vsetlt_v4i32, MSA128W>;
+class CLT_S_D_DESC : MSA_3R_DESC_BASE<"clt_s.d", vsetlt_v2i64, MSA128D>;
+
+class CLT_U_B_DESC : MSA_3R_DESC_BASE<"clt_u.b", vsetult_v16i8, MSA128B>;
+class CLT_U_H_DESC : MSA_3R_DESC_BASE<"clt_u.h", vsetult_v8i16, MSA128H>;
+class CLT_U_W_DESC : MSA_3R_DESC_BASE<"clt_u.w", vsetult_v4i32, MSA128W>;
+class CLT_U_D_DESC : MSA_3R_DESC_BASE<"clt_u.d", vsetult_v2i64, MSA128D>;
+
+class CLTI_S_B_DESC : MSA_SI5_DESC_BASE<"clti_s.b", vsetlt_v16i8, vsplati8,
                                         MSA128B>;
-class CLEI_U_H_DESC : MSA_SI5_DESC_BASE<"clei_u.h", int_mips_clei_u_h,
+class CLTI_S_H_DESC : MSA_SI5_DESC_BASE<"clti_s.h", vsetlt_v8i16, vsplati16,
                                         MSA128H>;
-class CLEI_U_W_DESC : MSA_SI5_DESC_BASE<"clei_u.w", int_mips_clei_u_w,
+class CLTI_S_W_DESC : MSA_SI5_DESC_BASE<"clti_s.w", vsetlt_v4i32, vsplati32,
                                         MSA128W>;
-class CLEI_U_D_DESC : MSA_SI5_DESC_BASE<"clei_u.d", int_mips_clei_u_d,
+class CLTI_S_D_DESC : MSA_SI5_DESC_BASE<"clti_s.d", vsetlt_v2i64, vsplati64,
                                         MSA128D>;
 
-class CLT_S_B_DESC : MSA_3R_DESC_BASE<"clt_s.b", int_mips_clt_s_b, MSA128B>;
-class CLT_S_H_DESC : MSA_3R_DESC_BASE<"clt_s.h", int_mips_clt_s_h, MSA128H>;
-class CLT_S_W_DESC : MSA_3R_DESC_BASE<"clt_s.w", int_mips_clt_s_w, MSA128W>;
-class CLT_S_D_DESC : MSA_3R_DESC_BASE<"clt_s.d", int_mips_clt_s_d, MSA128D>;
-
-class CLT_U_B_DESC : MSA_3R_DESC_BASE<"clt_u.b", int_mips_clt_u_b, MSA128B>;
-class CLT_U_H_DESC : MSA_3R_DESC_BASE<"clt_u.h", int_mips_clt_u_h, MSA128H>;
-class CLT_U_W_DESC : MSA_3R_DESC_BASE<"clt_u.w", int_mips_clt_u_w, MSA128W>;
-class CLT_U_D_DESC : MSA_3R_DESC_BASE<"clt_u.d", int_mips_clt_u_d, MSA128D>;
-
-class CLTI_S_B_DESC : MSA_SI5_DESC_BASE<"clti_s.b", int_mips_clti_s_b,
-                                        MSA128B>;
-class CLTI_S_H_DESC : MSA_SI5_DESC_BASE<"clti_s.h", int_mips_clti_s_h,
-                                        MSA128H>;
-class CLTI_S_W_DESC : MSA_SI5_DESC_BASE<"clti_s.w", int_mips_clti_s_w,
-                                        MSA128W>;
-class CLTI_S_D_DESC : MSA_SI5_DESC_BASE<"clti_s.d", int_mips_clti_s_d,
-                                        MSA128D>;
-
-class CLTI_U_B_DESC : MSA_SI5_DESC_BASE<"clti_u.b", int_mips_clti_u_b,
-                                        MSA128B>;
-class CLTI_U_H_DESC : MSA_SI5_DESC_BASE<"clti_u.h", int_mips_clti_u_h,
-                                        MSA128H>;
-class CLTI_U_W_DESC : MSA_SI5_DESC_BASE<"clti_u.w", int_mips_clti_u_w,
-                                        MSA128W>;
-class CLTI_U_D_DESC : MSA_SI5_DESC_BASE<"clti_u.d", int_mips_clti_u_d,
-                                        MSA128D>;
+class CLTI_U_B_DESC : MSA_I5_DESC_BASE<"clti_u.b", vsetult_v16i8, vsplati8,
+                                       MSA128B>;
+class CLTI_U_H_DESC : MSA_I5_DESC_BASE<"clti_u.h", vsetult_v8i16, vsplati16,
+                                       MSA128H>;
+class CLTI_U_W_DESC : MSA_I5_DESC_BASE<"clti_u.w", vsetult_v4i32, vsplati32,
+                                       MSA128W>;
+class CLTI_U_D_DESC : MSA_I5_DESC_BASE<"clti_u.d", vsetult_v2i64, vsplati64,
+                                       MSA128D>;
 
 class COPY_S_B_DESC : MSA_COPY_DESC_BASE<"copy_s.b", vextract_sext_i8,  v16i8,
                                          GPR32, MSA128B>;
@@ -1394,9 +1473,9 @@ class FCAF_W_DESC : MSA_3RF_DESC_BASE<"fcaf.w", int_mips_fcaf_w, MSA128W>,
 class FCAF_D_DESC : MSA_3RF_DESC_BASE<"fcaf.d", int_mips_fcaf_d, MSA128D>,
                     IsCommutable;
 
-class FCEQ_W_DESC : MSA_3RF_DESC_BASE<"fceq.w", int_mips_fceq_w, MSA128W>,
+class FCEQ_W_DESC : MSA_3RF_DESC_BASE<"fceq.w", vfsetoeq_v4f32, MSA128W>,
                     IsCommutable;
-class FCEQ_D_DESC : MSA_3RF_DESC_BASE<"fceq.d", int_mips_fceq_d, MSA128D>,
+class FCEQ_D_DESC : MSA_3RF_DESC_BASE<"fceq.d", vfsetoeq_v2f64, MSA128D>,
                     IsCommutable;
 
 class FCLASS_W_DESC : MSA_2RF_DESC_BASE<"fclass.w", int_mips_fclass_w,
@@ -1404,45 +1483,45 @@ class FCLASS_W_DESC : MSA_2RF_DESC_BASE<"fclass.w", int_mips_fclass_w,
 class FCLASS_D_DESC : MSA_2RF_DESC_BASE<"fclass.d", int_mips_fclass_d,
                                         MSA128D>;
 
-class FCLE_W_DESC : MSA_3RF_DESC_BASE<"fcle.w", int_mips_fcle_w, MSA128W>;
-class FCLE_D_DESC : MSA_3RF_DESC_BASE<"fcle.d", int_mips_fcle_d, MSA128D>;
+class FCLE_W_DESC : MSA_3RF_DESC_BASE<"fcle.w", vfsetole_v4f32, MSA128W>;
+class FCLE_D_DESC : MSA_3RF_DESC_BASE<"fcle.d", vfsetole_v2f64, MSA128D>;
 
-class FCLT_W_DESC : MSA_3RF_DESC_BASE<"fclt.w", int_mips_fclt_w, MSA128W>;
-class FCLT_D_DESC : MSA_3RF_DESC_BASE<"fclt.d", int_mips_fclt_d, MSA128D>;
+class FCLT_W_DESC : MSA_3RF_DESC_BASE<"fclt.w", vfsetolt_v4f32, MSA128W>;
+class FCLT_D_DESC : MSA_3RF_DESC_BASE<"fclt.d", vfsetolt_v2f64, MSA128D>;
 
-class FCNE_W_DESC : MSA_3RF_DESC_BASE<"fcne.w", int_mips_fcne_w, MSA128W>,
+class FCNE_W_DESC : MSA_3RF_DESC_BASE<"fcne.w", vfsetone_v4f32, MSA128W>,
                     IsCommutable;
-class FCNE_D_DESC : MSA_3RF_DESC_BASE<"fcne.d", int_mips_fcne_d, MSA128D>,
-                    IsCommutable;
-
-class FCOR_W_DESC : MSA_3RF_DESC_BASE<"fcor.w", int_mips_fcor_w, MSA128W>,
-                    IsCommutable;
-class FCOR_D_DESC : MSA_3RF_DESC_BASE<"fcor.d", int_mips_fcor_d, MSA128D>,
+class FCNE_D_DESC : MSA_3RF_DESC_BASE<"fcne.d", vfsetone_v2f64, MSA128D>,
                     IsCommutable;
 
-class FCUEQ_W_DESC : MSA_3RF_DESC_BASE<"fcueq.w", int_mips_fcueq_w, MSA128W>,
-                     IsCommutable;
-class FCUEQ_D_DESC : MSA_3RF_DESC_BASE<"fcueq.d", int_mips_fcueq_d, MSA128D>,
-                     IsCommutable;
-
-class FCULE_W_DESC : MSA_3RF_DESC_BASE<"fcule.w", int_mips_fcule_w, MSA128W>,
-                     IsCommutable;
-class FCULE_D_DESC : MSA_3RF_DESC_BASE<"fcule.d", int_mips_fcule_d, MSA128D>,
-                     IsCommutable;
-
-class FCULT_W_DESC : MSA_3RF_DESC_BASE<"fcult.w", int_mips_fcult_w, MSA128W>,
-                     IsCommutable;
-class FCULT_D_DESC : MSA_3RF_DESC_BASE<"fcult.d", int_mips_fcult_d, MSA128D>,
-                     IsCommutable;
-
-class FCUN_W_DESC : MSA_3RF_DESC_BASE<"fcun.w", int_mips_fcun_w, MSA128W>,
+class FCOR_W_DESC : MSA_3RF_DESC_BASE<"fcor.w", vfsetord_v4f32, MSA128W>,
                     IsCommutable;
-class FCUN_D_DESC : MSA_3RF_DESC_BASE<"fcun.d", int_mips_fcun_d, MSA128D>,
+class FCOR_D_DESC : MSA_3RF_DESC_BASE<"fcor.d", vfsetord_v2f64, MSA128D>,
                     IsCommutable;
 
-class FCUNE_W_DESC : MSA_3RF_DESC_BASE<"fcune.w", int_mips_fcune_w, MSA128W>,
+class FCUEQ_W_DESC : MSA_3RF_DESC_BASE<"fcueq.w", vfsetueq_v4f32, MSA128W>,
                      IsCommutable;
-class FCUNE_D_DESC : MSA_3RF_DESC_BASE<"fcune.d", int_mips_fcune_d, MSA128D>,
+class FCUEQ_D_DESC : MSA_3RF_DESC_BASE<"fcueq.d", vfsetueq_v2f64, MSA128D>,
+                     IsCommutable;
+
+class FCULE_W_DESC : MSA_3RF_DESC_BASE<"fcule.w", vfsetule_v4f32, MSA128W>,
+                     IsCommutable;
+class FCULE_D_DESC : MSA_3RF_DESC_BASE<"fcule.d", vfsetule_v2f64, MSA128D>,
+                     IsCommutable;
+
+class FCULT_W_DESC : MSA_3RF_DESC_BASE<"fcult.w", vfsetult_v4f32, MSA128W>,
+                     IsCommutable;
+class FCULT_D_DESC : MSA_3RF_DESC_BASE<"fcult.d", vfsetult_v2f64, MSA128D>,
+                     IsCommutable;
+
+class FCUN_W_DESC : MSA_3RF_DESC_BASE<"fcun.w", vfsetun_v4f32, MSA128W>,
+                    IsCommutable;
+class FCUN_D_DESC : MSA_3RF_DESC_BASE<"fcun.d", vfsetun_v2f64, MSA128D>,
+                    IsCommutable;
+
+class FCUNE_W_DESC : MSA_3RF_DESC_BASE<"fcune.w", vfsetune_v4f32, MSA128W>,
+                     IsCommutable;
+class FCUNE_D_DESC : MSA_3RF_DESC_BASE<"fcune.d", vfsetune_v2f64, MSA128D>,
                      IsCommutable;
 
 class FDIV_W_DESC : MSA_3RF_DESC_BASE<"fdiv.w", fdiv, MSA128W>;

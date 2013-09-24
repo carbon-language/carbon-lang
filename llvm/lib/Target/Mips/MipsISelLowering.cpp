@@ -212,6 +212,11 @@ const char *MipsTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case MipsISD::VANY_ZERO:         return "MipsISD::VANY_ZERO";
   case MipsISD::VALL_NONZERO:      return "MipsISD::VALL_NONZERO";
   case MipsISD::VANY_NONZERO:      return "MipsISD::VANY_NONZERO";
+  case MipsISD::VCEQ:              return "MipsISD::VCEQ";
+  case MipsISD::VCLE_S:            return "MipsISD::VCLE_S";
+  case MipsISD::VCLE_U:            return "MipsISD::VCLE_U";
+  case MipsISD::VCLT_S:            return "MipsISD::VCLT_S";
+  case MipsISD::VCLT_U:            return "MipsISD::VCLT_U";
   case MipsISD::VSPLAT:            return "MipsISD::VSPLAT";
   case MipsISD::VSPLATD:           return "MipsISD::VSPLATD";
   case MipsISD::VEXTRACT_SEXT_ELT: return "MipsISD::VEXTRACT_SEXT_ELT";

@@ -153,10 +153,18 @@ namespace llvm {
       SELECT_CC_DSP,
 
       // Vector comparisons.
+      // These take a vector and return a boolean.
       VALL_ZERO,
       VANY_ZERO,
       VALL_NONZERO,
       VANY_NONZERO,
+
+      // These take a vector and return a vector bitmask.
+      VCEQ,
+      VCLE_S,
+      VCLE_U,
+      VCLT_S,
+      VCLT_U,
 
       // Special case of BUILD_VECTOR where all elements are the same.
       VSPLAT,
