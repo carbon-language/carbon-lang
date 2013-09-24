@@ -83,8 +83,7 @@ Target::Target(Debugger &debugger, const ArchSpec &target_arch, const lldb::Plat
     m_source_manager_ap(),
     m_stop_hooks (),
     m_stop_hook_next_id (0),
-    m_suppress_stop_hooks (false),
-    m_suppress_synthetic_value(false)
+    m_suppress_stop_hooks (false)
 {
     SetEventName (eBroadcastBitBreakpointChanged, "breakpoint-changed");
     SetEventName (eBroadcastBitModulesLoaded, "modules-loaded");
@@ -208,7 +207,6 @@ Target::Destroy()
     m_stop_hooks.clear();
     m_stop_hook_next_id = 0;
     m_suppress_stop_hooks = false;
-    m_suppress_synthetic_value = false;
 }
 
 

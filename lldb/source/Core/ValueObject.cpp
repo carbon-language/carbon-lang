@@ -2291,7 +2291,7 @@ ValueObject::CalculateSyntheticValue (bool use_synthetic)
         return;
     
     TargetSP target_sp(GetTargetSP());
-    if (target_sp && (target_sp->GetEnableSyntheticValue() == false || target_sp->GetSuppressSyntheticValue() == true))
+    if (target_sp && target_sp->GetEnableSyntheticValue() == false)
     {
         m_synthetic_value = NULL;
         return;

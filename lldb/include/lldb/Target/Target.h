@@ -1095,21 +1095,7 @@ public:
     {
         return m_suppress_stop_hooks;
     }
-    
-    bool
-    SetSuppressSyntheticValue (bool suppress)
-    {
-        bool old_value = m_suppress_synthetic_value;
-        m_suppress_synthetic_value = suppress;
-        return old_value;
-    }
-    
-    bool
-    GetSuppressSyntheticValue ()
-    {
-        return m_suppress_synthetic_value;
-    }
-    
+
 //    StopHookSP &
 //    GetStopHookByIndex (size_t index);
 //    
