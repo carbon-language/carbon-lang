@@ -505,7 +505,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ct
   // Add the libraries specified by /defaultlib unless they are blacklisted by
   // /nodefaultlib.
   if (!ctx.getNoDefaultLibAll())
-    for (auto defaultLibPath : defaultLibs)
+    for (const StringRef defaultLibPath : defaultLibs)
       if (ctx.getNoDefaultLibs().find(defaultLibPath) ==
           ctx.getNoDefaultLibs().end())
         inputGraph.addInputElement(std::unique_ptr<InputElement>(
