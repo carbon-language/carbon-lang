@@ -347,6 +347,7 @@ bool X86FastISel::X86FastEmitExtend(ISD::NodeType Opc, EVT DstVT,
 /// X86SelectAddress - Attempt to fill in an address from the given value.
 ///
 bool X86FastISel::X86SelectAddress(const Value *V, X86AddressMode &AM) {
+redo_gep:
   const User *U = NULL;
   unsigned Opcode = Instruction::UserOp1;
   if (const Instruction *I = dyn_cast<Instruction>(V)) {
@@ -469,16 +470,24 @@ bool X86FastISel::X86SelectAddress(const Value *V, X86AddressMode &AM) {
         goto unsupported_gep;
       }
     }
+
     // Check for displacement overflow.
     if (!isInt<32>(Disp))
       break;
-    // Ok, the GEP indices were covered by constant-offset and scaled-index
-    // addressing. Update the address state and move on to examining the base.
+
     AM.IndexReg = IndexReg;
     AM.Scale = Scale;
     AM.Disp = (uint32_t)Disp;
-    if (X86SelectAddress(U->getOperand(0), AM))
+
+    if (const GetElementPtrInst *GEP =
+          dyn_cast<GetElementPtrInst>(U->getOperand(0))) {
+      // Ok, the GEP indices were covered by constant-offset and scaled-index
+      // addressing. Update the address state and move on to examining the base.
+      V = GEP;
+      goto redo_gep;
+    } else if (X86SelectAddress(U->getOperand(0), AM)) {
       return true;
+    }
 
     // If we couldn't merge the gep value into this addr mode, revert back to
     // our address and just match the value instead of completely failing.
