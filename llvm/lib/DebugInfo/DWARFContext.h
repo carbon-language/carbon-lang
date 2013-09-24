@@ -148,6 +148,7 @@ public:
   virtual StringRef getRangeSection() = 0;
   virtual StringRef getPubNamesSection() = 0;
   virtual StringRef getGnuPubNamesSection() = 0;
+  virtual StringRef getGnuPubTypesSection() = 0;
 
   // Sections for DWARF5 split dwarf proposal.
   virtual const Section &getInfoDWOSection() = 0;
@@ -187,6 +188,7 @@ class DWARFContextInMemory : public DWARFContext {
   StringRef RangeSection;
   StringRef PubNamesSection;
   StringRef GnuPubNamesSection;
+  StringRef GnuPubTypesSection;
 
   // Sections for DWARF5 split dwarf proposal.
   Section InfoDWOSection;
@@ -216,6 +218,7 @@ public:
   virtual StringRef getRangeSection() { return RangeSection; }
   virtual StringRef getPubNamesSection() { return PubNamesSection; }
   virtual StringRef getGnuPubNamesSection() { return GnuPubNamesSection; }
+  virtual StringRef getGnuPubTypesSection() { return GnuPubTypesSection; }
 
   // Sections for DWARF5 split dwarf proposal.
   virtual const Section &getInfoDWOSection() { return InfoDWOSection; }

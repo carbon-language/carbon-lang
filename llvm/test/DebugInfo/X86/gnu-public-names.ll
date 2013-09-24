@@ -35,14 +35,17 @@
 
 ; ASM: .section        .debug_gnu_pubnames
 ; ASM: .byte   32                      # Kind: VARIABLE, EXTERNAL
+; ASM-NEXT: .asciz  "global_namespace_variable" # External Name
 
 ; ASM: .section        .debug_gnu_pubtypes
 ; ASM: .byte   16                      # Kind: TYPE, EXTERNAL
-; ASM: .asciz  "C"                     # External Name
-; ASM: .byte   144                     # Kind: TYPE, STATIC
-; ASM: .asciz  "int"                   # External Name
+; ASM-NEXT: .asciz  "C"                     # External Name
 
 ; CHECK: .debug_info contents:
+; CHECK: 0x00000026: DW_TAG_base_type
+; CHECK-NEXT: DW_AT_name {{.*}} "int"
+; CHECK: 0x00000032: DW_TAG_structure_type
+; CHECK-NEXT: DW_AT_name {{.*}} "C"
 ; CHECK: 0x00000046: DW_TAG_subprogram
 ; CHECK-NEXT: DW_AT_MIPS_linkage_name
 ; CHECK-NEXT: DW_AT_name {{.*}} "member_function"
@@ -77,6 +80,15 @@
 ; CHECK-DAG:  0x0000007c EXTERNAL VARIABLE "global_variable"
 ; CHECK-DAG:  0x00000101 EXTERNAL FUNCTION "global_function"
 ; CHECK-DAG:  0x000000c2 STATIC   FUNCTION "member_function"
+
+; CHECK-LABEL: debug_gnu_pubtypes contents:
+; CHECK-NEXT: Length:
+; CHECK-NEXT: Version:
+; CHECK-NEXT: Offset in .debug_info:
+; CHECK-NEXT: Size:
+; CHECK-NEXT: Offset     Linkage  Kind     Name
+; CHECK-DAG:  0x00000032 EXTERNAL TYPE     "C"
+; CHECK-DAG:  0x00000026 STATIC   TYPE     "int"
 
 %struct.C = type { i8 }
 
