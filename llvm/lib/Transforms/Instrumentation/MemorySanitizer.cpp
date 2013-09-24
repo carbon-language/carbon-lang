@@ -66,6 +66,31 @@
 /// avoids storing origin to memory when a fully initialized value is stored.
 /// This way it avoids needless overwritting origin of the 4-byte region on
 /// a short (i.e. 1 byte) clean store, and it is also good for performance.
+///
+///                            Atomic handling.
+///
+/// Ideally, every atomic store of application value should update the
+/// corresponding shadow location in an atomic way. Unfortunately, atomic store
+/// of two disjoint locations can not be done without severe slowdown.
+///
+/// Therefore, we implement an approximation that may err on the safe side.
+/// In this implementation, every atomically accessed location in the program
+/// may only change from (partially) uninitialized to fully initialized, but
+/// not the other way around. We load the shadow _after_ the application load,
+/// and we store the shadow _before_ the app store. Also, we always store clean
+/// shadow (if the application store is atomic). This way, if the store-load
+/// pair constitutes a happens-before arc, shadow store and load are correctly
+/// ordered such that the load will get either the value that was stored, or
+/// some later value (which is always clean).
+///
+/// This does not work very well with Compare-And-Swap (CAS) and
+/// Read-Modify-Write (RMW) operations. To follow the above logic, CAS and RMW
+/// must store the new shadow before the app operation, and load the shadow
+/// after the app operation. Computers don't work this way. Current
+/// implementation ignores the load aspect of CAS/RMW, always returning a clean
+/// value. It implements the store part as a simple atomic store by storing a
+/// clean shadow.
+
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "msan"
@@ -487,7 +512,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
       IRBuilder<> IRB(&I);
       Value *Val = I.getValueOperand();
       Value *Addr = I.getPointerOperand();
-      Value *Shadow = getShadow(Val);
+      Value *Shadow = I.isAtomic() ? getCleanShadow(Val) : getShadow(Val);
       Value *ShadowPtr = getShadowPtr(Addr, Shadow->getType(), IRB);
 
       StoreInst *NewSI =
@@ -497,6 +522,9 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
 
       if (ClCheckAccessAddress)
         insertCheck(Addr, &I);
+
+      if (I.isAtomic())
+        I.setOrdering(addReleaseOrdering(I.getOrdering()));
 
       if (MS.TrackOrigins) {
         unsigned Alignment = std::max(kMinOriginAlignment, I.getAlignment());
@@ -876,6 +904,38 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
       ShadowOriginAndInsertPoint(Shadow, Origin, OrigIns));
   }
 
+  AtomicOrdering addReleaseOrdering(AtomicOrdering a) {
+    switch (a) {
+      case NotAtomic:
+        return NotAtomic;
+      case Unordered:
+      case Monotonic:
+      case Release:
+        return Release;
+      case Acquire:
+      case AcquireRelease:
+        return AcquireRelease;
+      case SequentiallyConsistent:
+        return SequentiallyConsistent;
+    }
+  }
+
+  AtomicOrdering addAcquireOrdering(AtomicOrdering a) {
+    switch (a) {
+      case NotAtomic:
+        return NotAtomic;
+      case Unordered:
+      case Monotonic:
+      case Acquire:
+        return Acquire;
+      case Release:
+      case AcquireRelease:
+        return AcquireRelease;
+      case SequentiallyConsistent:
+        return SequentiallyConsistent;
+    }
+  }
+
   // ------------------- Visitors.
 
   /// \brief Instrument LoadInst
@@ -884,7 +944,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
   /// Optionally, checks that the load address is fully defined.
   void visitLoadInst(LoadInst &I) {
     assert(I.getType()->isSized() && "Load type must have size");
-    IRBuilder<> IRB(&I);
+    IRBuilder<> IRB(I.getNextNode());
     Type *ShadowTy = getShadowTy(&I);
     Value *Addr = I.getPointerOperand();
     if (LoadShadow) {
@@ -897,6 +957,9 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
 
     if (ClCheckAccessAddress)
       insertCheck(I.getPointerOperand(), &I);
+
+    if (I.isAtomic())
+      I.setOrdering(addAcquireOrdering(I.getOrdering()));
 
     if (MS.TrackOrigins) {
       if (LoadShadow) {
@@ -915,6 +978,37 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
   /// Optionally, checks that the store address is fully defined.
   void visitStoreInst(StoreInst &I) {
     StoreList.push_back(&I);
+  }
+
+  void handleCASOrRMW(Instruction &I) {
+    assert(isa<AtomicRMWInst>(I) || isa<AtomicCmpXchgInst>(I));
+
+    IRBuilder<> IRB(&I);
+    Value *Addr = I.getOperand(0);
+    Value *ShadowPtr = getShadowPtr(Addr, I.getType(), IRB);
+
+    if (ClCheckAccessAddress)
+      insertCheck(Addr, &I);
+
+    // Only test the conditional argument of cmpxchg instruction.
+    // The other argument can potentially be uninitialized, but we can not
+    // detect this situation reliably without possible false positives.
+    if (isa<AtomicCmpXchgInst>(I))
+      insertCheck(I.getOperand(1), &I);
+
+    IRB.CreateStore(getCleanShadow(&I), ShadowPtr);
+
+    setShadow(&I, getCleanShadow(&I));
+  }
+
+  void visitAtomicRMWInst(AtomicRMWInst &I) {
+    handleCASOrRMW(I);
+    I.setOrdering(addReleaseOrdering(I.getOrdering()));
+  }
+
+  void visitAtomicCmpXchgInst(AtomicCmpXchgInst &I) {
+    handleCASOrRMW(I);
+    I.setOrdering(addReleaseOrdering(I.getOrdering()));
   }
 
   // Vector manipulation.

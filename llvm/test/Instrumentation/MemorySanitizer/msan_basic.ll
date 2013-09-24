@@ -442,8 +442,8 @@ define i32 @ShadowLoadAlignmentLarge() nounwind uwtable sanitize_memory {
 }
 
 ; CHECK: @ShadowLoadAlignmentLarge
-; CHECK: load i32* {{.*}} align 64
 ; CHECK: load volatile i32* {{.*}} align 64
+; CHECK: load i32* {{.*}} align 64
 ; CHECK: ret i32
 
 define i32 @ShadowLoadAlignmentSmall() nounwind uwtable sanitize_memory {
@@ -453,14 +453,14 @@ define i32 @ShadowLoadAlignmentSmall() nounwind uwtable sanitize_memory {
 }
 
 ; CHECK: @ShadowLoadAlignmentSmall
-; CHECK: load i32* {{.*}} align 2
 ; CHECK: load volatile i32* {{.*}} align 2
+; CHECK: load i32* {{.*}} align 2
 ; CHECK: ret i32
 
 ; CHECK-ORIGINS: @ShadowLoadAlignmentSmall
+; CHECK-ORIGINS: load volatile i32* {{.*}} align 2
 ; CHECK-ORIGINS: load i32* {{.*}} align 2
 ; CHECK-ORIGINS: load i32* {{.*}} align 4
-; CHECK-ORIGINS: load volatile i32* {{.*}} align 2
 ; CHECK-ORIGINS: ret i32
 
 
@@ -600,8 +600,8 @@ define <8 x i8*> @VectorOfPointers(<8 x i8*>* %p) nounwind uwtable sanitize_memo
 }
 
 ; CHECK: @VectorOfPointers
-; CHECK: load <8 x i64>*
 ; CHECK: load <8 x i8*>*
+; CHECK: load <8 x i64>*
 ; CHECK: store <8 x i64> {{.*}} @__msan_retval_tls
 ; CHECK: ret <8 x i8*>
 
