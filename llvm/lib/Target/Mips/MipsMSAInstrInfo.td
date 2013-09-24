@@ -25,6 +25,8 @@ def SDT_VSHF : SDTypeProfile<1, 3, [SDTCisInt<0>, SDTCisVec<0>,
                                     SDTCisSameAs<0, 2>, SDTCisSameAs<2, 3>]>;
 def SDT_SHF : SDTypeProfile<1, 2, [SDTCisInt<0>, SDTCisVec<0>,
                                    SDTCisVT<1, i32>, SDTCisSameAs<0, 2>]>;
+def SDT_ILV : SDTypeProfile<1, 2, [SDTCisInt<0>, SDTCisVec<0>,
+                                   SDTCisSameAs<0, 1>, SDTCisSameAs<1, 2>]>;
 
 def MipsVAllNonZero : SDNode<"MipsISD::VALL_NONZERO", SDT_MipsVecCond>;
 def MipsVAnyNonZero : SDNode<"MipsISD::VANY_NONZERO", SDT_MipsVecCond>;
@@ -42,6 +44,10 @@ def MipsVNOR : SDNode<"MipsISD::VNOR", SDTIntBinOp,
                       [SDNPCommutative, SDNPAssociative]>;
 def MipsVSHF : SDNode<"MipsISD::VSHF", SDT_VSHF>;
 def MipsSHF : SDNode<"MipsISD::SHF", SDT_SHF>;
+def MipsILVEV : SDNode<"MipsISD::ILVEV", SDT_ILV>;
+def MipsILVOD : SDNode<"MipsISD::ILVOD", SDT_ILV>;
+def MipsILVL  : SDNode<"MipsISD::ILVL",  SDT_ILV>;
+def MipsILVR  : SDNode<"MipsISD::ILVR",  SDT_ILV>;
 
 def vsetcc : SDNode<"ISD::SETCC", SDT_VSetCC>;
 def vfsetcc : SDNode<"ISD::SETCC", SDT_VFSetCC>;
@@ -1833,25 +1839,25 @@ class HSUB_U_W_DESC : MSA_3R_DESC_BASE<"hsub_u.w", int_mips_hsub_u_w, MSA128W,
 class HSUB_U_D_DESC : MSA_3R_DESC_BASE<"hsub_u.d", int_mips_hsub_u_d, MSA128D,
                                        MSA128W, MSA128W>;
 
-class ILVEV_B_DESC : MSA_3R_DESC_BASE<"ilvev.b", int_mips_ilvev_b, MSA128B>;
-class ILVEV_H_DESC : MSA_3R_DESC_BASE<"ilvev.h", int_mips_ilvev_h, MSA128H>;
-class ILVEV_W_DESC : MSA_3R_DESC_BASE<"ilvev.w", int_mips_ilvev_w, MSA128W>;
-class ILVEV_D_DESC : MSA_3R_DESC_BASE<"ilvev.d", int_mips_ilvev_d, MSA128D>;
+class ILVEV_B_DESC : MSA_3R_DESC_BASE<"ilvev.b", MipsILVEV, MSA128B>;
+class ILVEV_H_DESC : MSA_3R_DESC_BASE<"ilvev.h", MipsILVEV, MSA128H>;
+class ILVEV_W_DESC : MSA_3R_DESC_BASE<"ilvev.w", MipsILVEV, MSA128W>;
+class ILVEV_D_DESC : MSA_3R_DESC_BASE<"ilvev.d", MipsILVEV, MSA128D>;
 
-class ILVL_B_DESC : MSA_3R_DESC_BASE<"ilvl.b", int_mips_ilvl_b, MSA128B>;
-class ILVL_H_DESC : MSA_3R_DESC_BASE<"ilvl.h", int_mips_ilvl_h, MSA128H>;
-class ILVL_W_DESC : MSA_3R_DESC_BASE<"ilvl.w", int_mips_ilvl_w, MSA128W>;
-class ILVL_D_DESC : MSA_3R_DESC_BASE<"ilvl.d", int_mips_ilvl_d, MSA128D>;
+class ILVL_B_DESC : MSA_3R_DESC_BASE<"ilvl.b", MipsILVL, MSA128B>;
+class ILVL_H_DESC : MSA_3R_DESC_BASE<"ilvl.h", MipsILVL, MSA128H>;
+class ILVL_W_DESC : MSA_3R_DESC_BASE<"ilvl.w", MipsILVL, MSA128W>;
+class ILVL_D_DESC : MSA_3R_DESC_BASE<"ilvl.d", MipsILVL, MSA128D>;
 
-class ILVOD_B_DESC : MSA_3R_DESC_BASE<"ilvod.b", int_mips_ilvod_b, MSA128B>;
-class ILVOD_H_DESC : MSA_3R_DESC_BASE<"ilvod.h", int_mips_ilvod_h, MSA128H>;
-class ILVOD_W_DESC : MSA_3R_DESC_BASE<"ilvod.w", int_mips_ilvod_w, MSA128W>;
-class ILVOD_D_DESC : MSA_3R_DESC_BASE<"ilvod.d", int_mips_ilvod_d, MSA128D>;
+class ILVOD_B_DESC : MSA_3R_DESC_BASE<"ilvod.b", MipsILVOD, MSA128B>;
+class ILVOD_H_DESC : MSA_3R_DESC_BASE<"ilvod.h", MipsILVOD, MSA128H>;
+class ILVOD_W_DESC : MSA_3R_DESC_BASE<"ilvod.w", MipsILVOD, MSA128W>;
+class ILVOD_D_DESC : MSA_3R_DESC_BASE<"ilvod.d", MipsILVOD, MSA128D>;
 
-class ILVR_B_DESC : MSA_3R_DESC_BASE<"ilvr.b", int_mips_ilvr_b, MSA128B>;
-class ILVR_H_DESC : MSA_3R_DESC_BASE<"ilvr.h", int_mips_ilvr_h, MSA128H>;
-class ILVR_W_DESC : MSA_3R_DESC_BASE<"ilvr.w", int_mips_ilvr_w, MSA128W>;
-class ILVR_D_DESC : MSA_3R_DESC_BASE<"ilvr.d", int_mips_ilvr_d, MSA128D>;
+class ILVR_B_DESC : MSA_3R_DESC_BASE<"ilvr.b", MipsILVR, MSA128B>;
+class ILVR_H_DESC : MSA_3R_DESC_BASE<"ilvr.h", MipsILVR, MSA128H>;
+class ILVR_W_DESC : MSA_3R_DESC_BASE<"ilvr.w", MipsILVR, MSA128W>;
+class ILVR_D_DESC : MSA_3R_DESC_BASE<"ilvr.d", MipsILVR, MSA128D>;
 
 class INSERT_B_DESC : MSA_INSERT_DESC_BASE<"insert.b", vinsert_v16i8, MSA128B,
                                            GPR32>;

@@ -1346,6 +1346,30 @@ SDValue MipsSETargetLowering::lowerINTRINSIC_WO_CHAIN(SDValue Op,
   case Intrinsic::mips_fsub_w:
   case Intrinsic::mips_fsub_d:
     return lowerMSABinaryIntr(Op, DAG, ISD::FSUB);
+  case Intrinsic::mips_ilvev_b:
+  case Intrinsic::mips_ilvev_h:
+  case Intrinsic::mips_ilvev_w:
+  case Intrinsic::mips_ilvev_d:
+    return DAG.getNode(MipsISD::ILVEV, SDLoc(Op), Op->getValueType(0),
+                       Op->getOperand(1), Op->getOperand(2));
+  case Intrinsic::mips_ilvl_b:
+  case Intrinsic::mips_ilvl_h:
+  case Intrinsic::mips_ilvl_w:
+  case Intrinsic::mips_ilvl_d:
+    return DAG.getNode(MipsISD::ILVL, SDLoc(Op), Op->getValueType(0),
+                       Op->getOperand(1), Op->getOperand(2));
+  case Intrinsic::mips_ilvod_b:
+  case Intrinsic::mips_ilvod_h:
+  case Intrinsic::mips_ilvod_w:
+  case Intrinsic::mips_ilvod_d:
+    return DAG.getNode(MipsISD::ILVOD, SDLoc(Op), Op->getValueType(0),
+                       Op->getOperand(1), Op->getOperand(2));
+  case Intrinsic::mips_ilvr_b:
+  case Intrinsic::mips_ilvr_h:
+  case Intrinsic::mips_ilvr_w:
+  case Intrinsic::mips_ilvr_d:
+    return DAG.getNode(MipsISD::ILVR, SDLoc(Op), Op->getValueType(0),
+                       Op->getOperand(1), Op->getOperand(2));
   case Intrinsic::mips_insert_b:
   case Intrinsic::mips_insert_h:
   case Intrinsic::mips_insert_w:
@@ -1806,6 +1830,127 @@ static SDValue lowerVECTOR_SHUFFLE_SHF(SDValue Op, EVT ResTy,
                      DAG.getConstant(Imm, MVT::i32), Op->getOperand(0));
 }
 
+// Lower VECTOR_SHUFFLE into ILVEV (if possible).
+//
+// ILVEV interleaves the even elements from each vector.
+//
+// It is possible to lower into ILVEV when the mask takes the form:
+//   <0, n, 2, n+2, 4, n+4, ...>
+// where n is the number of elements in the vector.
+//
+// When undef's appear in the mask they are treated as if they were whatever
+// value is necessary in order to fit the above form.
+static SDValue lowerVECTOR_SHUFFLE_ILVEV(SDValue Op, EVT ResTy,
+                                         SmallVector<int, 16> Indices,
+                                         SelectionDAG &DAG) {
+  assert ((Indices.size() % 2) == 0);
+  int WsIdx = 0;
+  int WtIdx = ResTy.getVectorNumElements();
+
+  for (unsigned i = 0; i < Indices.size(); i += 2) {
+    if (Indices[i] != -1 && Indices[i] != WsIdx)
+      return SDValue();
+    if (Indices[i+1] != -1 && Indices[i+1] != WtIdx)
+      return SDValue();
+    WsIdx += 2;
+    WtIdx += 2;
+  }
+
+  return DAG.getNode(MipsISD::ILVEV, SDLoc(Op), ResTy, Op->getOperand(0),
+                     Op->getOperand(1));
+}
+
+// Lower VECTOR_SHUFFLE into ILVOD (if possible).
+//
+// ILVOD interleaves the odd elements from each vector.
+//
+// It is possible to lower into ILVOD when the mask takes the form:
+//   <1, n+1, 3, n+3, 5, n+5, ...>
+// where n is the number of elements in the vector.
+//
+// When undef's appear in the mask they are treated as if they were whatever
+// value is necessary in order to fit the above form.
+static SDValue lowerVECTOR_SHUFFLE_ILVOD(SDValue Op, EVT ResTy,
+                                         SmallVector<int, 16> Indices,
+                                         SelectionDAG &DAG) {
+  assert ((Indices.size() % 2) == 0);
+  int WsIdx = 1;
+  int WtIdx = ResTy.getVectorNumElements() + 1;
+
+  for (unsigned i = 0; i < Indices.size(); i += 2) {
+    if (Indices[i] != -1 && Indices[i] != WsIdx)
+      return SDValue();
+    if (Indices[i+1] != -1 && Indices[i+1] != WtIdx)
+      return SDValue();
+    WsIdx += 2;
+    WtIdx += 2;
+  }
+
+  return DAG.getNode(MipsISD::ILVOD, SDLoc(Op), ResTy, Op->getOperand(0),
+                     Op->getOperand(1));
+}
+
+// Lower VECTOR_SHUFFLE into ILVL (if possible).
+//
+// ILVL interleaves consecutive elements from the left half of each vector.
+//
+// It is possible to lower into ILVL when the mask takes the form:
+//   <0, n, 1, n+1, 2, n+2, ...>
+// where n is the number of elements in the vector.
+//
+// When undef's appear in the mask they are treated as if they were whatever
+// value is necessary in order to fit the above form.
+static SDValue lowerVECTOR_SHUFFLE_ILVL(SDValue Op, EVT ResTy,
+                                        SmallVector<int, 16> Indices,
+                                        SelectionDAG &DAG) {
+  assert ((Indices.size() % 2) == 0);
+  int WsIdx = 0;
+  int WtIdx = ResTy.getVectorNumElements();
+
+  for (unsigned i = 0; i < Indices.size(); i += 2) {
+    if (Indices[i] != -1 && Indices[i] != WsIdx)
+      return SDValue();
+    if (Indices[i+1] != -1 && Indices[i+1] != WtIdx)
+      return SDValue();
+    WsIdx ++;
+    WtIdx ++;
+  }
+
+  return DAG.getNode(MipsISD::ILVL, SDLoc(Op), ResTy, Op->getOperand(0),
+                     Op->getOperand(1));
+}
+
+// Lower VECTOR_SHUFFLE into ILVR (if possible).
+//
+// ILVR interleaves consecutive elements from the right half of each vector.
+//
+// It is possible to lower into ILVR when the mask takes the form:
+//   <x, n+x, x+1, n+x+1, x+2, n+x+2, ...>
+// where n is the number of elements in the vector and x is half n.
+//
+// When undef's appear in the mask they are treated as if they were whatever
+// value is necessary in order to fit the above form.
+static SDValue lowerVECTOR_SHUFFLE_ILVR(SDValue Op, EVT ResTy,
+                                        SmallVector<int, 16> Indices,
+                                        SelectionDAG &DAG) {
+  assert ((Indices.size() % 2) == 0);
+  unsigned NumElts = ResTy.getVectorNumElements();
+  int WsIdx = NumElts / 2;
+  int WtIdx = NumElts + NumElts / 2;
+
+  for (unsigned i = 0; i < Indices.size(); i += 2) {
+    if (Indices[i] != -1 && Indices[i] != WsIdx)
+      return SDValue();
+    if (Indices[i+1] != -1 && Indices[i+1] != WtIdx)
+      return SDValue();
+    WsIdx ++;
+    WtIdx ++;
+  }
+
+  return DAG.getNode(MipsISD::ILVR, SDLoc(Op), ResTy, Op->getOperand(0),
+                     Op->getOperand(1));
+}
+
 // Lower VECTOR_SHUFFLE into VSHF.
 //
 // This mostly consists of converting the shuffle indices in Indices into a
@@ -1874,6 +2019,18 @@ SDValue MipsSETargetLowering::lowerVECTOR_SHUFFLE(SDValue Op,
     Indices.push_back(Node->getMaskElt(i));
 
   SDValue Result = lowerVECTOR_SHUFFLE_SHF(Op, ResTy, Indices, DAG);
+  if (Result.getNode())
+    return Result;
+  Result = lowerVECTOR_SHUFFLE_ILVEV(Op, ResTy, Indices, DAG);
+  if (Result.getNode())
+    return Result;
+  Result = lowerVECTOR_SHUFFLE_ILVOD(Op, ResTy, Indices, DAG);
+  if (Result.getNode())
+    return Result;
+  Result = lowerVECTOR_SHUFFLE_ILVL(Op, ResTy, Indices, DAG);
+  if (Result.getNode())
+    return Result;
+  Result = lowerVECTOR_SHUFFLE_ILVR(Op, ResTy, Indices, DAG);
   if (Result.getNode())
     return Result;
   return lowerVECTOR_SHUFFLE_VSHF(Op, ResTy, Indices, DAG);

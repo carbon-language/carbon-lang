@@ -226,6 +226,10 @@ const char *MipsTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case MipsISD::VNOR:              return "MipsISD::VNOR";
   case MipsISD::VSHF:              return "MipsISD::VSHF";
   case MipsISD::SHF:               return "MipsISD::SHF";
+  case MipsISD::ILVEV:             return "MipsISD::ILVEV";
+  case MipsISD::ILVOD:             return "MipsISD::ILVOD";
+  case MipsISD::ILVL:              return "MipsISD::ILVL";
+  case MipsISD::ILVR:              return "MipsISD::ILVR";
   default:                         return NULL;
   }
 }

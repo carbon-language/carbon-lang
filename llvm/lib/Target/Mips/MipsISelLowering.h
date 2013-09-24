@@ -175,6 +175,10 @@ namespace llvm {
       // Vector Shuffle with mask as an operand
       VSHF,  // Generic shuffle
       SHF,   // 4-element set shuffle.
+      ILVEV, // Interleave even elements
+      ILVOD, // Interleave odd elements
+      ILVL,  // Interleave left elements
+      ILVR,  // Interleave right elements
 
       // Combined (XOR (OR $a, $b), -1)
       VNOR,
