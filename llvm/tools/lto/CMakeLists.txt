@@ -1,14 +1,12 @@
 set(LLVM_LINK_COMPONENTS
   ${LLVM_TARGETS_TO_BUILD}
-  ipo scalaropts linker bitreader bitwriter mcdisassembler vectorize)
+  ipo scalaropts linker bitreader bitwriter lto mcdisassembler vectorize)
 
 add_definitions( -DLLVM_VERSION_INFO=\"${PACKAGE_VERSION}\" )
 
 set(SOURCES
-  LTOCodeGenerator.cpp
   LTODisassembler.cpp
   lto.cpp
-  LTOModule.cpp
   )
 
 if( NOT WIN32 AND LLVM_ENABLE_PIC )

@@ -96,7 +96,7 @@ struct LTOCodeGenerator {
   // single object file. Instead of returning the object-file-path to the caller
   // (linker), it brings the object to a buffer, and return the buffer to the
   // caller. This function should delete intermediate object file once its content
-  // is brought to memory. Return NULL is the compilation was not successful. 
+  // is brought to memory. Return NULL if the compilation was not successful. 
   //
   const void *compile(size_t *length, std::string &errMsg);
 

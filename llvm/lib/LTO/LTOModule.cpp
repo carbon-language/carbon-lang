@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "LTOModule.h"
+#include "llvm/LTO/LTOModule.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Bitcode/ReaderWriter.h"
@@ -248,14 +248,6 @@ void LTOModule::getTargetOptions(TargetOptions &Options) {
 
 LTOModule *LTOModule::makeLTOModule(MemoryBuffer *buffer,
                                     std::string &errMsg) {
-  static bool Initialized = false;
-  if (!Initialized) {
-    InitializeAllTargets();
-    InitializeAllTargetMCs();
-    InitializeAllAsmParsers();
-    Initialized = true;
-  }
-
   // parse bitcode buffer
   OwningPtr<Module> m(getLazyBitcodeModule(buffer, getGlobalContext(),
                                            &errMsg));

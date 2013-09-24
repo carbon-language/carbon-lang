@@ -10,7 +10,7 @@
 LEVEL := ../..
 LIBRARYNAME := LTO
 LINK_COMPONENTS := all-targets ipo scalaropts linker bitreader bitwriter \
-                   mcdisassembler vectorize
+                   lto mcdisassembler vectorize
 LINK_LIBS_IN_SHARED := 1
 SHARED_LIBRARY := 1
 

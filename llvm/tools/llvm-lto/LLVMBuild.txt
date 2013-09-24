@@ -1,4 +1,4 @@
-;===- ./lib/LLVMBuild.txt --------------------------------------*- Conf -*--===;
+;===- ./tools/llvm-lto/LLVMBuild.txt ----------------------------*- Conf -*--===;
 ;
 ;                     The LLVM Compiler Infrastructure
 ;
@@ -15,10 +15,8 @@
 ;
 ;===------------------------------------------------------------------------===;
 
-[common]
-subdirectories = Analysis AsmParser Bitcode CodeGen DebugInfo ExecutionEngine Linker IR IRReader LTO MC Object Option Support TableGen Target Transforms
-
 [component_0]
-type = Group
-name = Libraries
-parent = $ROOT
+type = Tool
+name = llvm-lto
+parent = Tools
+required_libraries = LTO Support all-targets

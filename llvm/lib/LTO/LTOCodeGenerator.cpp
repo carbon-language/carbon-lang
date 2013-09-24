@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "LTOCodeGenerator.h"
-#include "LTOModule.h"
+#include "llvm/LTO/LTOCodeGenerator.h"
+#include "llvm/LTO/LTOModule.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/Verifier.h"
@@ -40,10 +40,8 @@
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Support/system_error.h"
-#include "llvm/Target/Mangler.h"
-#include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/Target/Mangler.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include "llvm/Transforms/ObjCARC.h"
@@ -73,9 +71,6 @@ LTOCodeGenerator::LTOCodeGenerator()
     : Context(getGlobalContext()), Linker(new Module("ld-temp.o", Context)),
       TargetMach(NULL), EmitDwarfDebugInfo(false), ScopeRestrictionsDone(false),
       CodeModel(LTO_CODEGEN_PIC_MODEL_DYNAMIC), NativeObjectFile(NULL) {
-  InitializeAllTargets();
-  InitializeAllTargetMCs();
-  InitializeAllAsmPrinters();
   initializeLTOPasses();
 }
 
@@ -452,7 +447,7 @@ void LTOCodeGenerator::setCodeGenDebugOptions(const char *options) {
     // ParseCommandLineOptions() expects argv[0] to be program name. Lazily add
     // that.
     if (CodegenOptions.empty())
-      CodegenOptions.push_back(strdup("libLTO"));
+      CodegenOptions.push_back(strdup("libLLVMLTO"));
     CodegenOptions.push_back(strdup(o.first.str().c_str()));
   }
 }

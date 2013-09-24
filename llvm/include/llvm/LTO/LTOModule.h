@@ -76,7 +76,13 @@ public:
                                      const char *triplePrefix);
 
   /// makeLTOModule - Create an LTOModule. N.B. These methods take ownership
-  /// of the buffer.
+  /// of the buffer. The caller must have initialized the Targets, the
+  /// TargetMCs, the AsmPrinters, and the AsmParsers by calling:
+  ///
+  /// InitializeAllTargets();
+  /// InitializeAllTargetMCs();
+  /// InitializeAllAsmPrinters();
+  /// InitializeAllAsmParsers();
   static LTOModule *makeLTOModule(const char* path,
                                   std::string &errMsg);
   static LTOModule *makeLTOModule(int fd, const char *path,

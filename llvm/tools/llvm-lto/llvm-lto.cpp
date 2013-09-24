@@ -12,12 +12,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm-c/lto.h"
+#include "llvm/LTO/LTOCodeGenerator.h"
+#include "llvm/LTO/LTOModule.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/TargetSelect.h"
 
 using namespace llvm;
 
@@ -37,46 +39,48 @@ int main(int argc, char **argv) {
   llvm_shutdown_obj Y; // Call llvm_shutdown() on exit.
   cl::ParseCommandLineOptions(argc, argv, "llvm LTO linker\n");
 
+  // Initialize the configured targets.
+  InitializeAllTargets();
+  InitializeAllTargetMCs();
+  InitializeAllAsmPrinters();
+  InitializeAllAsmParsers();
+
   unsigned BaseArg = 0;
   std::string ErrorMessage;
 
-  lto_code_gen_t code_gen = lto_codegen_create();
-  if (code_gen == NULL)
-    errs() << argv[0] << ": error creating a code generation module: "
-           << lto_get_error_message() << "\n";
+  LTOCodeGenerator CodeGen;
 
-  lto_codegen_set_pic_model(code_gen, LTO_CODEGEN_PIC_MODEL_DYNAMIC);
-  lto_codegen_set_debug_model(code_gen, LTO_DEBUG_MODEL_DWARF);
+  CodeGen.setCodePICModel(LTO_CODEGEN_PIC_MODEL_DYNAMIC);
+  CodeGen.setDebugInfo(LTO_DEBUG_MODEL_DWARF);
 
   for (unsigned i = BaseArg; i < InputFilenames.size(); ++i) {
-    lto_module_t BitcodeModule = lto_module_create(InputFilenames[i].c_str());
-    if (BitcodeModule == NULL) {
+    std::string error;
+    OwningPtr<LTOModule> Module(LTOModule::makeLTOModule(InputFilenames[i].c_str(),
+                                                         error));
+    if (!error.empty()) {
       errs() << argv[0] << ": error loading file '" << InputFilenames[i]
-             << "': " << lto_get_error_message() << "\n";
+             << "': " << error << "\n";
       return 1;
     }
 
-    if (lto_codegen_add_module(code_gen, BitcodeModule)) {
+
+    if (!CodeGen.addModule(Module.get(), error)) {
       errs() << argv[0] << ": error adding file '" << InputFilenames[i]
-             << "': " << lto_get_error_message() << "\n";
-      lto_module_dispose(BitcodeModule);
+             << "': " << error << "\n";
       return 1;
     }
-
-    lto_module_dispose(BitcodeModule);
   }
 
   if (!OutputFilename.empty()) {
     size_t len = 0;
-    const void *Code = lto_codegen_compile(code_gen, &len);
+    std::string ErrorInfo;
+    const void *Code = CodeGen.compile(&len, ErrorInfo);
     if (Code == NULL) {
       errs() << argv[0]
-             << ": error compiling the code: " << lto_get_error_message()
-             << "\n";
+             << ": error compiling the code: " << ErrorInfo << "\n";
       return 1;
     }
 
-    std::string ErrorInfo;
     raw_fd_ostream FileStream(OutputFilename.c_str(), ErrorInfo);
     if (!ErrorInfo.empty()) {
       errs() << argv[0] << ": error opening the file '" << OutputFilename
@@ -86,18 +90,17 @@ int main(int argc, char **argv) {
 
     FileStream.write(reinterpret_cast<const char *>(Code), len);
   } else {
+    std::string ErrorInfo;
     const char *OutputName = NULL;
-    if (lto_codegen_compile_to_file(code_gen, &OutputName)) {
+    if (!CodeGen.compile_to_file(&OutputName, ErrorInfo)) {
       errs() << argv[0]
-             << ": error compiling the code: " << lto_get_error_message()
+             << ": error compiling the code: " << ErrorInfo
              << "\n";
       return 1;
     }
 
     outs() << "Wrote native object file '" << OutputName << "'\n";
   }
-
-  lto_codegen_dispose(code_gen);
 
   return 0;
 }

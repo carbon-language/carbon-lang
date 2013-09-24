@@ -13,14 +13,32 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm-c/lto.h"
-#include "LTOCodeGenerator.h"
-#include "LTOModule.h"
+#include "llvm/LTO/LTOCodeGenerator.h"
+#include "llvm/LTO/LTOModule.h"
 #include "llvm-c/Core.h"
+#include "llvm-c/Target.h"
 
 
 // Holds most recent error string.
 // *** Not thread safe ***
 static std::string sLastErrorString;
+
+// Holds the initialization state of the LTO module.
+// *** Not thread safe ***
+static bool initialized = false;
+
+// Initialize the configured targets if they have not been initialized.
+static void lto_initialize() {
+  if (!initialized) {
+    LLVMInitializeAllTargetInfos();
+    LLVMInitializeAllTargets();
+    LLVMInitializeAllTargetMCs();
+    LLVMInitializeAllAsmParsers();
+    LLVMInitializeAllAsmPrinters();
+    LLVMInitializeAllDisassemblers();
+    initialized = true;
+  }
+}
 
 /// lto_get_version - Returns a printable string.
 extern const char* lto_get_version() {
@@ -63,12 +81,14 @@ lto_module_is_object_file_in_memory_for_target(const void* mem,
 /// lto_module_create - Loads an object file from disk. Returns NULL on error
 /// (check lto_get_error_message() for details).
 lto_module_t lto_module_create(const char* path) {
+  lto_initialize();
   return LTOModule::makeLTOModule(path, sLastErrorString);
 }
 
 /// lto_module_create_from_fd - Loads an object file from disk. Returns NULL on
 /// error (check lto_get_error_message() for details).
 lto_module_t lto_module_create_from_fd(int fd, const char *path, size_t size) {
+  lto_initialize();
   return LTOModule::makeLTOModule(fd, path, size, sLastErrorString);
 }
 
@@ -78,12 +98,14 @@ lto_module_t lto_module_create_from_fd_at_offset(int fd, const char *path,
                                                  size_t file_size,
                                                  size_t map_size,
                                                  off_t offset) {
+  lto_initialize();
   return LTOModule::makeLTOModule(fd, path, map_size, offset, sLastErrorString);
 }
 
 /// lto_module_create_from_memory - Loads an object file from memory. Returns
 /// NULL on error (check lto_get_error_message() for details).
 lto_module_t lto_module_create_from_memory(const void* mem, size_t length) {
+  lto_initialize();
   return LTOModule::makeLTOModule(mem, length, sLastErrorString);
 }
 
@@ -127,6 +149,7 @@ lto_symbol_attributes lto_module_get_symbol_attribute(lto_module_t mod,
 /// lto_codegen_create - Instantiates a code generator. Returns NULL if there
 /// is an error.
 lto_code_gen_t lto_codegen_create(void) {
+  lto_initialize();
   return new LTOCodeGenerator();
 }
 
