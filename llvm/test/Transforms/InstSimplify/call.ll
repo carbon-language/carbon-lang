@@ -101,3 +101,23 @@ define float @test_idempotence(float %a) {
 
   ret float %r4
 }
+
+define i8* @operator_new() {
+entry:
+  %call = tail call noalias i8* @_Znwm(i64 8)
+  %cmp = icmp eq i8* %call, null
+  br i1 %cmp, label %cast.end, label %cast.notnull
+
+cast.notnull:                                     ; preds = %entry
+  %add.ptr = getelementptr inbounds i8* %call, i64 4
+  br label %cast.end
+
+cast.end:                                         ; preds = %cast.notnull, %entry
+  %cast.result = phi i8* [ %add.ptr, %cast.notnull ], [ null, %entry ]
+  ret i8* %cast.result
+
+; CHECK-LABEL: @operator_new
+; CHECK: br i1 false, label %cast.end, label %cast.notnull
+}
+
+declare noalias i8* @_Znwm(i64)

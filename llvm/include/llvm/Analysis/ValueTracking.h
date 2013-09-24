@@ -25,6 +25,7 @@ namespace llvm {
   class DataLayout;
   class StringRef;
   class MDNode;
+  class TargetLibraryInfo;
 
   /// ComputeMaskedBits - Determine which of the bits specified in Mask are
   /// known to be either zero or one and return them in the KnownZero/KnownOne
@@ -186,7 +187,7 @@ namespace llvm {
   /// isKnownNonNull - Return true if this pointer couldn't possibly be null by
   /// its definition.  This returns true for allocas, non-extern-weak globals
   /// and byval arguments.
-  bool isKnownNonNull(const Value *V);
+  bool isKnownNonNull(const Value *V, const TargetLibraryInfo *TLI = 0);
 
 } // end namespace llvm
 

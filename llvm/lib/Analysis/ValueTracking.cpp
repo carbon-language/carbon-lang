@@ -15,6 +15,7 @@
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Analysis/InstructionSimplify.h"
+#include "llvm/Analysis/MemoryBuiltins.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/GlobalAlias.h"
@@ -2064,7 +2065,7 @@ bool llvm::isSafeToSpeculativelyExecute(const Value *V,
 
 /// isKnownNonNull - Return true if we know that the specified value is never
 /// null.
-bool llvm::isKnownNonNull(const Value *V) {
+bool llvm::isKnownNonNull(const Value *V, const TargetLibraryInfo *TLI) {
   // Alloca never returns null, malloc might.
   if (isa<AllocaInst>(V)) return true;
 
@@ -2075,5 +2076,10 @@ bool llvm::isKnownNonNull(const Value *V) {
   // Global values are not null unless extern weak.
   if (const GlobalValue *GV = dyn_cast<GlobalValue>(V))
     return !GV->hasExternalWeakLinkage();
+
+  // operator new never returns null.
+  if (isOperatorNewLikeFn(V, TLI, /*LookThroughBitCast=*/true))
+    return true;
+
   return false;
 }
