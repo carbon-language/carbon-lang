@@ -947,7 +947,7 @@ int BoUpSLP::getTreeCost() {
     if (!VectorizableTree.size()) {
       assert(!ExternalUses.size() && "We should not have any external users");
     }
-    return 0;
+    return INT_MAX;
   }
 
   unsigned BundleWidth = VectorizableTree[0].Scalars.size();
