@@ -1764,8 +1764,8 @@ class INSVE_W_DESC : MSA_INSVE_DESC_BASE<"insve.w", int_mips_insve_w, MSA128W>;
 class INSVE_D_DESC : MSA_INSVE_DESC_BASE<"insve.d", int_mips_insve_d, MSA128D>;
 
 class LD_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
-                   ValueType TyNode, RegisterClass RCWD,
-                   Operand MemOpnd = mem, ComplexPattern Addr = addrRegImm,
+                   ValueType TyNode, RegisterClass RCWD, Operand MemOpnd = mem,
+                   ComplexPattern Addr = addrRegImm,
                    InstrItinClass itin = NoItinerary> {
   dag OutOperandList = (outs RCWD:$wd);
   dag InOperandList = (ins MemOpnd:$addr);
@@ -2059,8 +2059,8 @@ class SRLRI_W_DESC : MSA_BIT_W_DESC_BASE<"srlri.w", int_mips_srlri_w, MSA128W>;
 class SRLRI_D_DESC : MSA_BIT_D_DESC_BASE<"srlri.d", int_mips_srlri_d, MSA128D>;
 
 class ST_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
-                   ValueType TyNode, RegisterClass RCWD,
-                   Operand MemOpnd = mem, ComplexPattern Addr = addrRegImm,
+                   ValueType TyNode, RegisterClass RCWD, Operand MemOpnd = mem,
+                   ComplexPattern Addr = addrRegImm,
                    InstrItinClass itin = NoItinerary> {
   dag OutOperandList = (outs);
   dag InOperandList = (ins RCWD:$wd, MemOpnd:$addr);
