@@ -70,14 +70,23 @@ def DASH_DASH : Option<["--"], "", KIND_REMAINING_ARGS>;
 // The flags below do nothing. They are defined only for link.exe compatibility.
 //
 
-class Q<string name> : Joined<["/", "-", "-?"], name#":">;
+class QF<string name> : Joined<["/", "-", "-?"], name#":">;
 
-def nologo : F<"nologo">;
+multiclass QB<string name> {
+  def "" : F<name>;
+  def _no : F<name#":no">;
+}
+
 def incremental : F<"incremental">;
 def no_incremental : F<"incremental:no">;
+def nologo : F<"nologo">;
+def verbose : F<"verbose">;
 
-def pdb : Q<"pdb">;
-def pdbaltpath : Q<"pdbaltpath">;
-def errorreport : Q<"errorreport">;
-def delay : Q<"delay">;
-def delayload : Q<"delayload">;
+def delay : QF<"delay">;
+def delayload : QF<"delayload">;
+def errorreport : QF<"errorreport">;
+def pdb : QF<"pdb">;
+def pdbaltpath : QF<"pdbaltpath">;
+def verbose_all : QF<"verbose">;
+
+defm wx : QB<"wx">;
