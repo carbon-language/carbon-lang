@@ -3034,6 +3034,13 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-fmodule-maps");
   }
 
+  // -fmodule-decluse checks that modules used are declared so (off by default).
+  if (Args.hasFlag(options::OPT_fmodules_decluse,
+                   options::OPT_fno_modules_decluse,
+                   false)) {
+    CmdArgs.push_back("-fmodule-decluse");
+  }
+
   // If a module path was provided, pass it along. Otherwise, use a temporary
   // directory.
   if (Arg *A = Args.getLastArg(options::OPT_fmodules_cache_path)) {

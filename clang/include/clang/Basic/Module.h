@@ -183,6 +183,12 @@ public:
   /// \brief The set of export declarations that have yet to be resolved.
   SmallVector<UnresolvedExportDecl, 2> UnresolvedExports;
 
+  /// \brief The directly used modules.
+  SmallVector<Module *, 2> DirectUses;
+
+  /// \brief The set of use declarations that have yet to be resolved.
+  SmallVector<ModuleId, 2> UnresolvedDirectUses;
+
   /// \brief A library or framework to link against when an entity from this
   /// module is used.
   struct LinkLibrary {

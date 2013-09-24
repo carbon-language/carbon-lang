@@ -2421,6 +2421,10 @@ void ASTWriter::WriteSubmodules(Module *WritingModule) {
       Stream.EmitRecord(SUBMODULE_EXPORTS, Record);
     }
 
+    //FIXME: How do we emit the 'use'd modules?  They may not be submodules.
+    // Might be unnecessary as use declarations are only used to build the
+    // module itself.
+
     // Emit the link libraries.
     for (unsigned I = 0, N = Mod->LinkLibraries.size(); I != N; ++I) {
       Record.clear();

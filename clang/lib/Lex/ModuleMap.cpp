@@ -387,6 +387,10 @@ ModuleMap::findOrCreateModule(StringRef Name, Module *Parent, bool IsFramework,
   // Create a new module with this name.
   Module *Result = new Module(Name, SourceLocation(), Parent, IsFramework, 
                               IsExplicit);
+  if (LangOpts.CurrentModule == Name) {
+    SourceModule = Result;
+    SourceModuleName = Name;
+  }
   if (!Parent) {
     Modules[Name] = Result;
     if (!LangOpts.CurrentModule.empty() && !CompilingModule &&
@@ -518,6 +522,10 @@ ModuleMap::inferFrameworkModule(StringRef ModuleName,
   
   Module *Result = new Module(ModuleName, SourceLocation(), Parent,
                               /*IsFramework=*/true, /*IsExplicit=*/false);
+  if (LangOpts.CurrentModule == ModuleName) {
+    SourceModule = Result;
+    SourceModuleName = ModuleName;
+  }
   if (IsSystem)
     Result->IsSystem = IsSystem;
   
@@ -653,6 +661,20 @@ bool ModuleMap::resolveExports(Module *Mod, bool Complain) {
   return HadError;
 }
 
+bool ModuleMap::resolveUses(Module *Mod, bool Complain) {
+  bool HadError = false;
+  for (unsigned I = 0, N = Mod->UnresolvedDirectUses.size(); I != N; ++I) {
+    Module *DirectUse =
+        resolveModuleId(Mod->UnresolvedDirectUses[I], Mod, Complain);
+    if (DirectUse)
+      Mod->DirectUses.push_back(DirectUse);
+    else
+      HadError = true;
+  }
+  Mod->UnresolvedDirectUses.clear();
+  return HadError;
+}
+
 bool ModuleMap::resolveConflicts(Module *Mod, bool Complain) {
   bool HadError = false;
   for (unsigned I = 0, N = Mod->UnresolvedConflicts.size(); I != N; ++I) {
@@ -727,6 +749,7 @@ namespace clang {
       Period,
       PrivateKeyword,
       UmbrellaKeyword,
+      UseKeyword,
       RequiresKeyword,
       Star,
       StringLiteral,
@@ -819,6 +842,7 @@ namespace clang {
                          SourceLocation LeadingLoc);
     void parseUmbrellaDirDecl(SourceLocation UmbrellaLoc);
     void parseExportDecl();
+    void parseUseDecl();
     void parseLinkDecl();
     void parseConfigMacros();
     void parseConflict();
@@ -873,6 +897,7 @@ retry:
                  .Case("private", MMToken::PrivateKeyword)
                  .Case("requires", MMToken::RequiresKeyword)
                  .Case("umbrella", MMToken::UmbrellaKeyword)
+                 .Case("use", MMToken::UseKeyword)
                  .Default(MMToken::Identifier);
     break;
 
@@ -1208,6 +1233,10 @@ void ModuleMapParser::parseModuleDecl() {
 
     case MMToken::ExportKeyword:
       parseExportDecl();
+      break;
+
+    case MMToken::UseKeyword:
+      parseUseDecl();
       break;
         
     case MMToken::RequiresKeyword:
@@ -1593,7 +1622,7 @@ void ModuleMapParser::parseExportDecl() {
       break;
     }
     
-    Diags.Report(Tok.getLocation(), diag::err_mmap_export_module_id);
+    Diags.Report(Tok.getLocation(), diag::err_mmap_module_id);
     HadError = true;
     return;
   } while (true);
@@ -1602,6 +1631,38 @@ void ModuleMapParser::parseExportDecl() {
     ExportLoc, ParsedModuleId, Wildcard 
   };
   ActiveModule->UnresolvedExports.push_back(Unresolved);
+}
+
+/// \brief Parse a module uses declaration.
+///
+///   uses-declaration:
+///     'uses' wildcard-module-id
+void ModuleMapParser::parseUseDecl() {
+  assert(Tok.is(MMToken::UseKeyword));
+  consumeToken();
+  // Parse the module-id.
+  ModuleId ParsedModuleId;
+
+  do {
+    if (Tok.is(MMToken::Identifier)) {
+      ParsedModuleId.push_back(
+          std::make_pair(Tok.getString(), Tok.getLocation()));
+      consumeToken();
+
+      if (Tok.is(MMToken::Period)) {
+        consumeToken();
+        continue;
+      }
+
+      break;
+    }
+
+    Diags.Report(Tok.getLocation(), diag::err_mmap_module_id);
+    HadError = true;
+    return;
+  } while (true);
+
+  ActiveModule->UnresolvedDirectUses.push_back(ParsedModuleId);
 }
 
 /// \brief Parse a link declaration.
@@ -2001,6 +2062,7 @@ bool ModuleMapParser::parseModuleMapFile() {
     case MMToken::Star:
     case MMToken::StringLiteral:
     case MMToken::UmbrellaKeyword:
+    case MMToken::UseKeyword:
       Diags.Report(Tok.getLocation(), diag::err_mmap_expected_module);
       HadError = true;
       consumeToken();

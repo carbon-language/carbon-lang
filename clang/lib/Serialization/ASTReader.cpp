@@ -3028,6 +3028,10 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
     }
   }
   UnresolvedModuleRefs.clear();
+
+  // FIXME: How do we load the 'use'd modules? They may not be submodules.
+  // Might be unnecessary as use declarations are only used to build the
+  // module itself.
   
   InitializeContext();
 

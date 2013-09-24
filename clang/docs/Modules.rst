@@ -188,6 +188,12 @@ Command-line parameters
 ``-module-file-info <module file name>``
   Debugging aid that prints information about a given module file (with a ``.pcm`` extension), including the language and preprocessor options that particular module variant was built with.
 
+``-fmodules-decluse``
+  Enable checking of module ``use`` declarations.
+
+``-fmodule-name=module-id``
+  Consider a source file as a part of the given module.
+
 Module Map Language
 ===================
 
@@ -238,7 +244,7 @@ Module map files use a simplified form of the C99 lexer, with the same rules for
   ``conflict``      ``framework``  ``requires``
   ``exclude``       ``header``     ``private``
   ``explicit``      ``link``       ``umbrella``
-  ``extern``
+  ``extern``        ``use``
 
 Module map file
 ---------------
@@ -293,6 +299,7 @@ Modules can have a number of different kinds of members, each of which is descri
     *umbrella-dir-declaration*
     *submodule-declaration*
     *export-declaration*
+    *use-declaration*
     *link-declaration*
     *config-macros-declaration*
     *conflict-declaration*
@@ -532,6 +539,36 @@ Note that, if ``Derived.h`` includes ``Base.h``, one can simply use a wildcard e
   Therefore, liberal use of ``export *`` provides excellent backward
   compatibility for programs that rely on transitive inclusion (i.e.,
   all of them).
+
+Use declaration
+~~~~~~~~~~~~~~~
+A *use-declaration* specifies one of the other modules that the module is allowed to use. An import or include not matching one of these is rejected when the option *-fmodules-decluse*.
+
+.. parsed-literal::
+
+  *use-declaration*:
+    ``use`` *module-id*
+
+**Example**:: In the following example, use of A from C is not declared, so will trigger a warning.
+
+.. parsed-literal::
+
+  module A {
+    header "a.h"
+  }
+
+  module B {
+    header "b.h"
+  }
+
+  module C {
+    header "c.h"
+    use B
+  }
+
+When compiling a source file that implements a module, use the option ``-fmodule-name=``module-id to indicate that the source file is logically part of that module.
+
+The compiler at present only applies restrictions to the module directly being built.
 
 Link declaration
 ~~~~~~~~~~~~~~~~

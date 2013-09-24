@@ -1441,6 +1441,31 @@ private:
   void HandleImportDirective(SourceLocation HashLoc, Token &Tok);
   void HandleMicrosoftImportDirective(Token &Tok);
 
+  // Module inclusion testing.
+  /// \brief Find the module for the source or header file that \p FilenameLoc
+  /// points to.
+  Module *getModuleForLocation(SourceLocation FilenameLoc);
+
+  /// \brief Verify that a private header is included only from within its
+  /// module.
+  bool violatesPrivateInclude(Module *RequestingModule,
+                              const FileEntry *IncFileEnt,
+                              ModuleMap::ModuleHeaderRole Role,
+                              Module *RequestedModule);
+
+  /// \brief Verify that a module includes headers only from modules that it
+  /// has declared that it uses.
+  bool violatesUseDeclarations(Module *RequestingModule,
+                               Module *RequestedModule);
+
+  /// \brief Verify that it is legal for the source file that \p FilenameLoc
+  /// points to to include the file \p Filename.
+  ///
+  /// Tries to reuse \p IncFileEnt and \p SuggestedModule.
+  void verifyModuleInclude(SourceLocation FilenameLoc, StringRef Filename,
+                           const FileEntry *IncFileEnt,
+                           ModuleMap::KnownHeader *SuggestedModule);
+
   // Macro handling.
   void HandleDefineDirective(Token &Tok, bool ImmediatelyAfterTopLevelIfndef);
   void HandleUndefDirective(Token &Tok);

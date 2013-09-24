@@ -654,6 +654,7 @@ void Sema::ActOnEndOfTranslationUnit() {
         // diagnostic client to deal with complaints in the module map at this
         // point.
         ModMap.resolveExports(Mod, /*Complain=*/false);
+        ModMap.resolveUses(Mod, /*Complain=*/false);
         ModMap.resolveConflicts(Mod, /*Complain=*/false);
 
         // Queue the submodules, so their exports will also be resolved.

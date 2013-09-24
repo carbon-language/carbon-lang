@@ -362,6 +362,20 @@ void Module::print(raw_ostream &OS, unsigned Indent) const {
     OS << "\n";
   }
 
+  for (unsigned I = 0, N = DirectUses.size(); I != N; ++I) {
+    OS.indent(Indent + 2);
+    OS << "use ";
+    OS << DirectUses[I]->getFullModuleName();
+    OS << "\n";
+  }
+
+  for (unsigned I = 0, N = UnresolvedDirectUses.size(); I != N; ++I) {
+    OS.indent(Indent + 2);
+    OS << "use ";
+    printModuleId(OS, UnresolvedDirectUses[I]);
+    OS << "\n";
+  }
+
   for (unsigned I = 0, N = LinkLibraries.size(); I != N; ++I) {
     OS.indent(Indent + 2);
     OS << "link ";

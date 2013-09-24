@@ -561,6 +561,9 @@ def fmodule_maps : Flag <["-"], "fmodule-maps">, Group<f_Group>,
   HelpText<"Read module maps to understand the structure of library headers">;
 def fmodules_ignore_macro : Joined<["-"], "fmodules-ignore-macro=">, Group<f_Group>, Flags<[CC1Option]>,
   HelpText<"Ignore the definition of the given macro when building and loading modules">;
+def fmodules_decluse : Flag <["-"], "fmodules-decluse">, Group<f_Group>,
+  Flags<[DriverOption,CC1Option]>,
+  HelpText<"Require declaration of modules used within a module">;
 def fretain_comments_from_system_headers : Flag<["-"], "fretain-comments-from-system-headers">, Group<f_Group>, Flags<[CC1Option]>;
 
 def fmudflapth : Flag<["-"], "fmudflapth">, Group<f_Group>;
@@ -620,6 +623,8 @@ def fno_merge_all_constants : Flag<["-"], "fno-merge-all-constants">, Group<f_Gr
 def fno_modules : Flag <["-"], "fno-modules">, Group<f_Group>,
   Flags<[DriverOption]>;
 def fno_module_maps : Flag <["-"], "fno-module-maps">, Group<f_Group>,
+  Flags<[DriverOption]>;
+def fno_modules_decluse : Flag <["-"], "fno-modules-decluse">, Group<f_Group>,
   Flags<[DriverOption]>;
 def fno_ms_extensions : Flag<["-"], "fno-ms-extensions">, Group<f_Group>;
 def fno_ms_compatibility : Flag<["-"], "fno-ms-compatibility">, Group<f_Group>;

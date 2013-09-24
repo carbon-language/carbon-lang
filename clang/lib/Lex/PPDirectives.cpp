@@ -532,6 +532,88 @@ void Preprocessor::PTHSkipExcludedConditionalBlock() {
   }
 }
 
+Module *Preprocessor::getModuleForLocation(SourceLocation FilenameLoc) {
+  ModuleMap &ModMap = HeaderInfo.getModuleMap();
+  if (SourceMgr.isInMainFile(FilenameLoc)) {
+    if (Module *CurMod = getCurrentModule())
+      return CurMod;                               // Compiling a module.
+    return HeaderInfo.getModuleMap().SourceModule; // Compiling a source.
+  }
+  // Try to determine the module of the include directive.
+  FileID IDOfIncl = SourceMgr.getFileID(FilenameLoc);
+  if (const FileEntry *EntryOfIncl = SourceMgr.getFileEntryForID(IDOfIncl)) {
+    // The include comes from a file.
+    return ModMap.findModuleForHeader(EntryOfIncl).getModule();
+  } else {
+    // The include does not come from a file,
+    // so it is probably a module compilation.
+    return getCurrentModule();
+  }
+}
+
+bool Preprocessor::violatesPrivateInclude(
+    Module *RequestingModule,
+    const FileEntry *IncFileEnt,
+    ModuleMap::ModuleHeaderRole Role,
+    Module *RequestedModule) {
+  #ifndef NDEBUG
+  // Check for consistency between the module header role
+  // as obtained from the lookup and as obtained from the module.
+  // This check is not cheap, so enable it only for debugging.
+  SmallVectorImpl<const FileEntry *> &PvtHdrs
+      = RequestedModule->PrivateHeaders;
+  SmallVectorImpl<const FileEntry *>::iterator Look
+      = std::find(PvtHdrs.begin(), PvtHdrs.end(), IncFileEnt);
+  bool IsPrivate = Look != PvtHdrs.end();
+  assert((IsPrivate && Role == ModuleMap::PrivateHeader)
+               || (!IsPrivate && Role != ModuleMap::PrivateHeader));
+  #endif
+  return Role == ModuleMap::PrivateHeader &&
+         RequestedModule->getTopLevelModule() != RequestingModule;
+}
+
+bool Preprocessor::violatesUseDeclarations(
+    Module *RequestingModule,
+    Module *RequestedModule) {
+  ModuleMap &ModMap = HeaderInfo.getModuleMap();
+  ModMap.resolveUses(RequestingModule, /*Complain=*/false);
+  const SmallVectorImpl<Module *> &AllowedUses = RequestingModule->DirectUses;
+  SmallVectorImpl<Module *>::const_iterator Declared =
+      std::find(AllowedUses.begin(), AllowedUses.end(), RequestedModule);
+  return Declared == AllowedUses.end();
+}
+
+void Preprocessor::verifyModuleInclude(
+    SourceLocation FilenameLoc,
+    StringRef Filename,
+    const FileEntry *IncFileEnt,
+    ModuleMap::KnownHeader *SuggestedModule) {
+  Module *RequestingModule = getModuleForLocation(FilenameLoc);
+  Module *RequestedModule = SuggestedModule->getModule();
+  if (!RequestedModule)
+    RequestedModule = HeaderInfo.findModuleForHeader(IncFileEnt).getModule();
+
+  if (RequestingModule == RequestedModule)
+    return; // No faults wihin a module, or between files both not in modules.
+
+  if (RequestingModule != HeaderInfo.getModuleMap().SourceModule)
+    return; // No errors for indirect modules.
+            // This may be a bit of a problem for modules with no source files.
+
+  if (RequestedModule &&
+      violatesPrivateInclude(RequestingModule, IncFileEnt,
+                             SuggestedModule->getRole(), RequestedModule))
+    Diag(FilenameLoc, diag::error_use_of_private_header_outside_module)
+        << Filename;
+
+  // FIXME: Add support for FixIts in module map files and offer adding the
+  // required use declaration.
+  if (RequestingModule && getLangOpts().ModulesDeclUse &&
+      violatesUseDeclarations(RequestingModule, RequestedModule))
+    Diag(FilenameLoc, diag::error_undeclared_use_of_module)
+        << Filename;
+}
+
 const FileEntry *Preprocessor::LookupFile(
     SourceLocation FilenameLoc,
     StringRef Filename,
@@ -567,29 +649,8 @@ const FileEntry *Preprocessor::LookupFile(
       Filename, isAngled, FromDir, CurDir, CurFileEnt,
       SearchPath, RelativePath, SuggestedModule, SkipCache);
   if (FE) {
-    if (SuggestedModule) {
-      Module *RequestedModule = SuggestedModule->getModule();
-      if (RequestedModule) {
-        ModuleMap::ModuleHeaderRole Role = SuggestedModule->getRole();
-        #ifndef NDEBUG
-        // Check for consistency between the module header role
-        // as obtained from the lookup and as obtained from the module.
-        // This check is not cheap, so enable it only for debugging.
-        SmallVectorImpl<const FileEntry *> &PvtHdrs
-            = RequestedModule->PrivateHeaders;
-        SmallVectorImpl<const FileEntry *>::iterator Look
-            = std::find(PvtHdrs.begin(), PvtHdrs.end(), FE);
-        bool IsPrivate = Look != PvtHdrs.end();
-        assert((IsPrivate && Role == ModuleMap::PrivateHeader)
-               || (!IsPrivate && Role != ModuleMap::PrivateHeader));
-        #endif
-        if (Role == ModuleMap::PrivateHeader) {
-          if (RequestedModule->getTopLevelModule() != getCurrentModule())
-            Diag(FilenameLoc, diag::error_use_of_private_header_outside_module)
-                 << Filename;
-        }
-      }
-    }
+    if (SuggestedModule)
+      verifyModuleInclude(FilenameLoc, Filename, FE, SuggestedModule);
     return FE;
   }
 

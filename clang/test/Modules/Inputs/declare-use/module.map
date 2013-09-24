@@ -1,0 +1,43 @@
+module A {
+  header "a.h"
+}
+
+module B {
+  header "b.h"
+}
+
+module C {
+  header "c.h"
+  use A
+}
+
+module D {
+  header "d.h"
+  use A
+}
+
+module E {
+  header "e.h"
+  use A
+  use B
+}
+
+module F {
+  header "f.h"
+  use A
+  use B
+}
+
+module G {
+  header "g.h"
+  header "g1.h"
+  use C
+  use E
+}
+
+module H {
+  header "h.h"
+  header "h1.h"
+  use C
+  use E
+}

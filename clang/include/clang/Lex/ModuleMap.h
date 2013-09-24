@@ -55,6 +55,12 @@ class ModuleMap {
   // The module that we are building; related to \c LangOptions::CurrentModule.
   Module *CompilingModule;
 
+public:
+  // The module that the .cc source file is associated with.
+  Module *SourceModule;
+  std::string SourceModuleName;
+
+private:
   /// \brief The top-level modules that are known.
   llvm::StringMap<Module *> Modules;
 
@@ -298,6 +304,16 @@ public:
   /// \returns true if any errors were encountered while resolving exports,
   /// false otherwise.
   bool resolveExports(Module *Mod, bool Complain);
+
+  /// \brief Resolve all of the unresolved uses in the given module.
+  ///
+  /// \param Mod The module whose uses should be resolved.
+  ///
+  /// \param Complain Whether to emit diagnostics for failures.
+  ///
+  /// \returns true if any errors were encountered while resolving uses,
+  /// false otherwise.
+  bool resolveUses(Module *Mod, bool Complain);
 
   /// \brief Resolve all of the unresolved conflicts in the given module.
   ///

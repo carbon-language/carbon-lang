@@ -554,8 +554,8 @@ def err_mmap_umbrella_dir_not_found : Error<
   "umbrella directory '%0' not found">;
 def err_mmap_umbrella_clash : Error<
   "umbrella for module '%0' already covers this directory">;
-def err_mmap_export_module_id : Error<
-  "expected an exported module name or '*'">;
+def err_mmap_module_id : Error<
+  "expected a module name or '*'">;
 def err_mmap_expected_library_name : Error<
   "expected %select{library|framework}0 name as a string">;
 def err_mmap_config_macro_submodule : Error<
@@ -610,7 +610,9 @@ def err_expected_id_building_module : Error<
   "expected a module name in '__building_module' expression">;
 def error_use_of_private_header_outside_module : Error<
   "use of private header from outside its module: '%0'">;
-  
+def error_undeclared_use_of_module : Error<
+  "use of a module not declared used: '%0'">;
+
 def warn_header_guard : Warning<
   "%0 is used as a header guard here, followed by #define of a different macro">,
   InGroup<DiagGroup<"header-guard">>;
