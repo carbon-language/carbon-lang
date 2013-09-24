@@ -1447,6 +1447,18 @@ SDValue MipsSETargetLowering::lowerINTRINSIC_WO_CHAIN(SDValue Op,
   case Intrinsic::mips_ori_b:
     return lowerMSABinaryImmIntr(Op, DAG, ISD::OR,
                                  lowerMSASplatImm(Op, 2, DAG));
+  case Intrinsic::mips_pckev_b:
+  case Intrinsic::mips_pckev_h:
+  case Intrinsic::mips_pckev_w:
+  case Intrinsic::mips_pckev_d:
+    return DAG.getNode(MipsISD::PCKEV, SDLoc(Op), Op->getValueType(0),
+                       Op->getOperand(1), Op->getOperand(2));
+  case Intrinsic::mips_pckod_b:
+  case Intrinsic::mips_pckod_h:
+  case Intrinsic::mips_pckod_w:
+  case Intrinsic::mips_pckod_d:
+    return DAG.getNode(MipsISD::PCKOD, SDLoc(Op), Op->getValueType(0),
+                       Op->getOperand(1), Op->getOperand(2));
   case Intrinsic::mips_pcnt_b:
   case Intrinsic::mips_pcnt_h:
   case Intrinsic::mips_pcnt_w:
@@ -1951,6 +1963,58 @@ static SDValue lowerVECTOR_SHUFFLE_ILVR(SDValue Op, EVT ResTy,
                      Op->getOperand(1));
 }
 
+// Lower VECTOR_SHUFFLE into PCKEV (if possible).
+//
+// PCKEV copies the even elements of each vector into the result vector.
+//
+// It is possible to lower into PCKEV when the mask takes the form:
+//   <0, 2, 4, ..., n, n+2, n+4, ...>
+// where n is the number of elements in the vector.
+//
+// When undef's appear in the mask they are treated as if they were whatever
+// value is necessary in order to fit the above form.
+static SDValue lowerVECTOR_SHUFFLE_PCKEV(SDValue Op, EVT ResTy,
+                                         SmallVector<int, 16> Indices,
+                                         SelectionDAG &DAG) {
+  assert ((Indices.size() % 2) == 0);
+  int Idx = 0;
+
+  for (unsigned i = 0; i < Indices.size(); ++i) {
+    if (Indices[i] != -1 && Indices[i] != Idx)
+      return SDValue();
+    Idx += 2;
+  }
+
+  return DAG.getNode(MipsISD::PCKEV, SDLoc(Op), ResTy, Op->getOperand(0),
+                     Op->getOperand(1));
+}
+
+// Lower VECTOR_SHUFFLE into PCKOD (if possible).
+//
+// PCKOD copies the odd elements of each vector into the result vector.
+//
+// It is possible to lower into PCKOD when the mask takes the form:
+//   <1, 3, 5, ..., n+1, n+3, n+5, ...>
+// where n is the number of elements in the vector.
+//
+// When undef's appear in the mask they are treated as if they were whatever
+// value is necessary in order to fit the above form.
+static SDValue lowerVECTOR_SHUFFLE_PCKOD(SDValue Op, EVT ResTy,
+                                         SmallVector<int, 16> Indices,
+                                         SelectionDAG &DAG) {
+  assert ((Indices.size() % 2) == 0);
+  int Idx = 1;
+
+  for (unsigned i = 0; i < Indices.size(); ++i) {
+    if (Indices[i] != -1 && Indices[i] != Idx)
+      return SDValue();
+    Idx += 2;
+  }
+
+  return DAG.getNode(MipsISD::PCKOD, SDLoc(Op), ResTy, Op->getOperand(0),
+                     Op->getOperand(1));
+}
+
 // Lower VECTOR_SHUFFLE into VSHF.
 //
 // This mostly consists of converting the shuffle indices in Indices into a
@@ -2031,6 +2095,12 @@ SDValue MipsSETargetLowering::lowerVECTOR_SHUFFLE(SDValue Op,
   if (Result.getNode())
     return Result;
   Result = lowerVECTOR_SHUFFLE_ILVR(Op, ResTy, Indices, DAG);
+  if (Result.getNode())
+    return Result;
+  Result = lowerVECTOR_SHUFFLE_PCKEV(Op, ResTy, Indices, DAG);
+  if (Result.getNode())
+    return Result;
+  Result = lowerVECTOR_SHUFFLE_PCKOD(Op, ResTy, Indices, DAG);
   if (Result.getNode())
     return Result;
   return lowerVECTOR_SHUFFLE_VSHF(Op, ResTy, Indices, DAG);

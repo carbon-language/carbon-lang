@@ -179,6 +179,8 @@ namespace llvm {
       ILVOD, // Interleave odd elements
       ILVL,  // Interleave left elements
       ILVR,  // Interleave right elements
+      PCKEV, // Pack even elements
+      PCKOD, // Pack odd elements
 
       // Combined (XOR (OR $a, $b), -1)
       VNOR,

@@ -48,6 +48,8 @@ def MipsILVEV : SDNode<"MipsISD::ILVEV", SDT_ILV>;
 def MipsILVOD : SDNode<"MipsISD::ILVOD", SDT_ILV>;
 def MipsILVL  : SDNode<"MipsISD::ILVL",  SDT_ILV>;
 def MipsILVR  : SDNode<"MipsISD::ILVR",  SDT_ILV>;
+def MipsPCKEV : SDNode<"MipsISD::PCKEV", SDT_ILV>;
+def MipsPCKOD : SDNode<"MipsISD::PCKOD", SDT_ILV>;
 
 def vsetcc : SDNode<"ISD::SETCC", SDT_VSetCC>;
 def vfsetcc : SDNode<"ISD::SETCC", SDT_VFSetCC>;
@@ -2060,15 +2062,15 @@ class OR_V_D_PSEUDO_DESC : MSA_VEC_PSEUDO_BASE<or, MSA128D>;
 
 class ORI_B_DESC : MSA_I8_DESC_BASE<"ori.b", or, vsplati8_uimm8, MSA128B>;
 
-class PCKEV_B_DESC : MSA_3R_DESC_BASE<"pckev.b", int_mips_pckev_b, MSA128B>;
-class PCKEV_H_DESC : MSA_3R_DESC_BASE<"pckev.h", int_mips_pckev_h, MSA128H>;
-class PCKEV_W_DESC : MSA_3R_DESC_BASE<"pckev.w", int_mips_pckev_w, MSA128W>;
-class PCKEV_D_DESC : MSA_3R_DESC_BASE<"pckev.d", int_mips_pckev_d, MSA128D>;
+class PCKEV_B_DESC : MSA_3R_DESC_BASE<"pckev.b", MipsPCKEV, MSA128B>;
+class PCKEV_H_DESC : MSA_3R_DESC_BASE<"pckev.h", MipsPCKEV, MSA128H>;
+class PCKEV_W_DESC : MSA_3R_DESC_BASE<"pckev.w", MipsPCKEV, MSA128W>;
+class PCKEV_D_DESC : MSA_3R_DESC_BASE<"pckev.d", MipsPCKEV, MSA128D>;
 
-class PCKOD_B_DESC : MSA_3R_DESC_BASE<"pckod.b", int_mips_pckod_b, MSA128B>;
-class PCKOD_H_DESC : MSA_3R_DESC_BASE<"pckod.h", int_mips_pckod_h, MSA128H>;
-class PCKOD_W_DESC : MSA_3R_DESC_BASE<"pckod.w", int_mips_pckod_w, MSA128W>;
-class PCKOD_D_DESC : MSA_3R_DESC_BASE<"pckod.d", int_mips_pckod_d, MSA128D>;
+class PCKOD_B_DESC : MSA_3R_DESC_BASE<"pckod.b", MipsPCKOD, MSA128B>;
+class PCKOD_H_DESC : MSA_3R_DESC_BASE<"pckod.h", MipsPCKOD, MSA128H>;
+class PCKOD_W_DESC : MSA_3R_DESC_BASE<"pckod.w", MipsPCKOD, MSA128W>;
+class PCKOD_D_DESC : MSA_3R_DESC_BASE<"pckod.d", MipsPCKOD, MSA128D>;
 
 class PCNT_B_DESC : MSA_2R_DESC_BASE<"pcnt.b", ctpop, MSA128B>;
 class PCNT_H_DESC : MSA_2R_DESC_BASE<"pcnt.h", ctpop, MSA128H>;
