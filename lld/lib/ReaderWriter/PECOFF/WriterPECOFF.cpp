@@ -156,6 +156,10 @@ public:
                                llvm::COFF::IMAGE_FILE_EXECUTABLE_IMAGE;
     if (context.getLargeAddressAware())
       characteristics |= llvm::COFF::IMAGE_FILE_LARGE_ADDRESS_AWARE;
+    if (context.getSwapRunFromCD())
+      characteristics |= llvm::COFF::IMAGE_FILE_REMOVABLE_RUN_FROM_SWAP;
+    if (context.getSwapRunFromNet())
+      characteristics |= llvm::COFF::IMAGE_FILE_NET_RUN_FROM_SWAP;
     if (!context.getBaseRelocationEnabled())
       characteristics |= llvm::COFF::IMAGE_FILE_RELOCS_STRIPPED;
 

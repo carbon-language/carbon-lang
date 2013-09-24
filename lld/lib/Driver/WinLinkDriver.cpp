@@ -433,6 +433,18 @@ bool WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ct
       ctx.setDynamicBaseEnabled(false);
       break;
 
+    case OPT_swaprun_cd:
+      // /swaprun:{cd,net} options set IMAGE_FILE_{REMOVABLE,NET}_RUN_FROM_SWAP
+      // bits in the COFF header, respectively. If one of the bits is on, the
+      // Windows loader will copy the entire file to swap area then execute it,
+      // so that the user can eject a CD or disconnect from the network.
+      ctx.setSwapRunFromCD(true);
+      break;
+
+    case OPT_swaprun_net:
+      ctx.setSwapRunFromNet(true);
+      break;
+
     case OPT_incl:
       ctx.addInitialUndefinedSymbol(ctx.allocateString(inputArg->getValue()));
       break;

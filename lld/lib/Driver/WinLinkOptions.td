@@ -41,6 +41,8 @@ def incl_c : Separate<["/", "-"], "include">, Alias<incl>;
 def nodefaultlib_all : F<"nodefaultlib">;
 
 def debug : F<"debug">;
+def swaprun_cd : F<"swaprun:cd">;
+def swaprun_net : F<"swaprun:net">;
 
 def force : F<"force">,
     HelpText<"Allow undefined symbols when creating executables">;

@@ -55,6 +55,8 @@ TEST_F(WinLinkParserTest, Basic) {
   EXPECT_FALSE(_context.getLargeAddressAware());
   EXPECT_TRUE(_context.getAllowBind());
   EXPECT_TRUE(_context.getAllowIsolation());
+  EXPECT_FALSE(_context.getSwapRunFromCD());
+  EXPECT_FALSE(_context.getSwapRunFromNet());
   EXPECT_TRUE(_context.getBaseRelocationEnabled());
   EXPECT_TRUE(_context.isTerminalServerAware());
   EXPECT_TRUE(_context.getDynamicBaseEnabled());
@@ -302,6 +304,16 @@ TEST_F(WinLinkParserTest, AllowIsolation) {
 TEST_F(WinLinkParserTest, NoAllowIsolation) {
   EXPECT_FALSE(parse("link.exe", "/allowisolation:no", "a.obj", nullptr));
   EXPECT_FALSE(_context.getAllowIsolation());
+}
+
+TEST_F(WinLinkParserTest, SwapRunFromCD) {
+  EXPECT_FALSE(parse("link.exe", "/swaprun:cd", "a.obj", nullptr));
+  EXPECT_TRUE(_context.getSwapRunFromCD());
+}
+
+TEST_F(WinLinkParserTest, SwapRunFromNet) {
+  EXPECT_FALSE(parse("link.exe", "/swaprun:net", "a.obj", nullptr));
+  EXPECT_TRUE(_context.getSwapRunFromNet());
 }
 
 TEST_F(WinLinkParserTest, Debug) {
