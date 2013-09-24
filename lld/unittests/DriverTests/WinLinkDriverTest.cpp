@@ -83,7 +83,7 @@ TEST_F(WinLinkParserTest, Mllvm) {
   EXPECT_FALSE(parse("link.exe", "/mllvm:-debug", "a.obj", nullptr));
   const std::vector<const char *> &options = _context.llvmOptions();
   EXPECT_EQ(1U, options.size());
-  EXPECT_EQ("-debug", options[0]);
+  EXPECT_STREQ("-debug", options[0]);
 }
 
 TEST_F(WinLinkParserTest, NoInputFiles) {
