@@ -6702,6 +6702,7 @@ Command *visualstudio::Compile::GetCommand(Compilation &C, const JobAction &JA,
                                            const ArgList &Args,
                                            const char *LinkingOutput) const {
   ArgStringList CmdArgs;
+  CmdArgs.push_back("/nologo");
   CmdArgs.push_back("/c"); // Compile only.
   CmdArgs.push_back("/W0"); // No warnings.
 

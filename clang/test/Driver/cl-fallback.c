@@ -9,6 +9,7 @@
 // CHECK: "-fdiagnostics-format" "msvc-fallback"
 // CHECK: ||
 // CHECK: cl.exe
+// CHECK: "/nologo"
 // CHECK: "/c"
 // CHECK: "/W0"
 // CHECK: "-D" "foo=bar"
