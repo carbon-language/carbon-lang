@@ -604,6 +604,9 @@ NumericLiteralParser::NumericLiteralParser(StringRef TokSpelling,
           break;
         }
       }
+      // "i", "if", and "il" are user-defined suffixes in C++1y.
+      if (PP.getLangOpts().CPlusPlus1y && *s == 'i')
+        break;
       // fall through.
     case 'j':
     case 'J':
@@ -665,9 +668,11 @@ bool NumericLiteralParser::isValidUDSuffix(const LangOptions &LangOpts,
     return false;
 
   // In C++1y, "s", "h", "min", "ms", "us", and "ns" are used in the library.
+  // Per tweaked N3660, "il", "i", and "if" are also used in the library.
   return llvm::StringSwitch<bool>(Suffix)
       .Cases("h", "min", "s", true)
       .Cases("ms", "us", "ns", true)
+      .Cases("il", "i", "if", true)
       .Default(false);
 }
 
