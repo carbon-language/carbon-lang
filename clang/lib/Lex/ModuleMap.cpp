@@ -87,7 +87,7 @@ ModuleMap::ModuleMap(FileManager &FileMgr, DiagnosticConsumer &DC,
                      const LangOptions &LangOpts, const TargetInfo *Target,
                      HeaderSearch &HeaderInfo)
   : LangOpts(LangOpts), Target(Target), HeaderInfo(HeaderInfo),
-    BuiltinIncludeDir(0), CompilingModule(0)
+    BuiltinIncludeDir(0), CompilingModule(0), SourceModule(0)
 {
   IntrusiveRefCntPtr<DiagnosticIDs> DiagIDs(new DiagnosticIDs);
   Diags = IntrusiveRefCntPtr<DiagnosticsEngine>(
