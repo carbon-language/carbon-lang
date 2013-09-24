@@ -406,6 +406,12 @@ bool WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ct
       ctx.appendInputSearchPath(ctx.allocateString(inputArg->getValue()));
       break;
 
+    case OPT_debug:
+      // LLD is not yet capable of creating a PDB file, so /debug does not have
+      // any effect, other than disabling dead stripping.
+      ctx.setDeadStripping(false);
+      break;
+
     case OPT_force:
     case OPT_force_unresolved:
       // handle /force or /force:unresolved. We do not currently support

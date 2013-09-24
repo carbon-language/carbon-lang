@@ -40,6 +40,8 @@ def incl_c : Separate<["/", "-"], "include">, Alias<incl>;
 
 def nodefaultlib_all : F<"nodefaultlib">;
 
+def debug : F<"debug">;
+
 def force : F<"force">,
     HelpText<"Allow undefined symbols when creating executables">;
 def force_unresolved : F<"force:unresolved">;

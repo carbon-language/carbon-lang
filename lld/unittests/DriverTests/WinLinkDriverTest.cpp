@@ -304,6 +304,11 @@ TEST_F(WinLinkParserTest, NoAllowIsolation) {
   EXPECT_FALSE(_context.getAllowIsolation());
 }
 
+TEST_F(WinLinkParserTest, Debug) {
+  EXPECT_FALSE(parse("link.exe", "/debug", "a.out", nullptr));
+  EXPECT_FALSE(_context.deadStrip());
+}
+
 TEST_F(WinLinkParserTest, Fixed) {
   EXPECT_FALSE(parse("link.exe", "/fixed", "a.out", nullptr));
   EXPECT_FALSE(_context.getBaseRelocationEnabled());
