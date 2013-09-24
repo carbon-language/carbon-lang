@@ -309,9 +309,9 @@ bool WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ct
 
     case OPT_base:
       // Parse /base command line option. The argument for the parameter is in
-      // the
-      // form of "<address>[:<size>]".
+      // the form of "<address>[:<size>]".
       uint64_t addr, size;
+
       // Size should be set to SizeOfImage field in the COFF header, and if
       // it's smaller than the actual size, the linker should warn about that.
       // Currently we just ignore the value of size parameter.
@@ -319,6 +319,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ct
         return true;
       ctx.setBaseAddress(addr);
       break;
+
     case OPT_stack: {
       // Parse /stack command line option
       uint64_t reserve;
@@ -329,6 +330,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ct
       ctx.setStackCommit(commit);
       break;
     }
+
     case OPT_heap: {
       // Parse /heap command line option
       uint64_t reserve;
@@ -339,6 +341,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ct
       ctx.setHeapCommit(commit);
       break;
     }
+
     case OPT_align: {
       uint32_t align;
       StringRef arg = inputArg->getValue();
@@ -349,6 +352,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ct
       ctx.setSectionAlignment(align);
       break;
     }
+
     case OPT_machine: {
       StringRef arg = inputArg->getValue();
       llvm::COFF::MachineTypes type = stringToMachineType(arg);
@@ -359,6 +363,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ct
       ctx.setMachineType(type);
       break;
     }
+
     case OPT_version: {
       uint32_t major, minor;
       if (parseVersion(inputArg->getValue(), major, minor))
@@ -366,6 +371,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ct
       ctx.setImageVersion(PECOFFLinkingContext::Version(major, minor));
       break;
     }
+
     case OPT_subsystem: {
       // Parse /subsystem command line option. The form of /subsystem is
       // "subsystem_name[,majorOSVersion[.minorOSVersion]]".
@@ -397,12 +403,10 @@ bool WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ct
       break;
 
     case OPT_entry:
-      // handle /entry
       ctx.setEntrySymbolName(ctx.allocateString(inputArg->getValue()));
       break;
 
     case OPT_libpath:
-      // handle /libpath
       ctx.appendInputSearchPath(ctx.allocateString(inputArg->getValue()));
       break;
 
@@ -414,90 +418,75 @@ bool WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ct
 
     case OPT_force:
     case OPT_force_unresolved:
-      // handle /force or /force:unresolved. We do not currently support
-      // /force:multiple.
+      // /force and /force:unresolved mean the same thing. We do not currently
+      // support /force:multiple.
       ctx.setAllowRemainingUndefines(true);
       break;
 
     case OPT_no_ref:
-      // Handle /opt:noref
       ctx.setDeadStripping(false);
       break;
 
     case OPT_nxcompat_no:
-      // handle /nxcompat:no
       ctx.setNxCompat(false);
       break;
 
     case OPT_largeaddressaware:
-      // handle /largeaddressaware
       ctx.setLargeAddressAware(true);
       break;
 
     case OPT_allowbind:
-      // handle /allowbind
       ctx.setAllowBind(true);
       break;
 
     case OPT_allowbind_no:
-      // handle /allowbind:no
       ctx.setAllowBind(false);
       break;
 
     case OPT_allowisolation:
-      // handle /allowisolation
       ctx.setAllowIsolation(true);
       break;
 
     case OPT_allowisolation_no:
-      // handle /allowisolation:no
       ctx.setAllowIsolation(false);
       break;
 
     case OPT_fixed:
-      // handle /fixed
-
-      // make sure /dynamicbase wasn't specified
+      // /fixed is not compatible with /dynamicbase. Check for it.
       if (parsedArgs->getLastArg(OPT_dynamicbase)) {
         diagnostics << "/dynamicbase must not be specified with /fixed\n";
         return true;
       }
-
       ctx.setBaseRelocationEnabled(false);
       ctx.setDynamicBaseEnabled(false);
       break;
 
     case OPT_dynamicbase_no:
-      // handle /dynamicbase:no
       ctx.setDynamicBaseEnabled(false);
       break;
 
     case OPT_tsaware:
-      // handle /tsaware
       ctx.setTerminalServerAware(true);
       break;
 
     case OPT_tsaware_no:
-      // handle /tsaware:no
       ctx.setTerminalServerAware(false);
       break;
 
     case OPT_incl:
-      // handle /incl
       ctx.addInitialUndefinedSymbol(ctx.allocateString(inputArg->getValue()));
       break;
 
     case OPT_nodefaultlib_all:
-      // handle /nodefaultlib
       ctx.setNoDefaultLibAll(true);
       break;
 
     case OPT_out:
-      // handle /out
       ctx.setOutputPath(ctx.allocateString(inputArg->getValue()));
       break;
 
     case OPT_INPUT:
+      // Add an input file.
       inputGraph.addInputElement(std::unique_ptr<InputElement>(
           new PECOFFFileNode(ctx, inputArg->getValue())));
       break;
