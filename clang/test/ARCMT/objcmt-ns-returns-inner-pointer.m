@@ -80,6 +80,7 @@ typedef struct CGImage *CGImageRef;
 typedef struct OpaqueJSValue* JSObjectRef;
 
 typedef JSObjectRef TTJSObjectRef;
+typedef unsigned int NSUInteger;
 
 CF_IMPLICIT_BRIDGING_DISABLED
 
@@ -121,4 +122,6 @@ typedef void *SecTrustRef;
 
 - (SecTrustRef) FOO1 NS_AVAILABLE;
 
+// pointer personality functions
+@property NSUInteger (*hashFunction)(const void *item, NSUInteger (*size)(const void *item));
 @end
