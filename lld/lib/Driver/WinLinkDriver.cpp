@@ -423,34 +423,6 @@ bool WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ct
       ctx.setAllowRemainingUndefines(true);
       break;
 
-    case OPT_no_ref:
-      ctx.setDeadStripping(false);
-      break;
-
-    case OPT_nxcompat_no:
-      ctx.setNxCompat(false);
-      break;
-
-    case OPT_largeaddressaware:
-      ctx.setLargeAddressAware(true);
-      break;
-
-    case OPT_allowbind:
-      ctx.setAllowBind(true);
-      break;
-
-    case OPT_allowbind_no:
-      ctx.setAllowBind(false);
-      break;
-
-    case OPT_allowisolation:
-      ctx.setAllowIsolation(true);
-      break;
-
-    case OPT_allowisolation_no:
-      ctx.setAllowIsolation(false);
-      break;
-
     case OPT_fixed:
       // /fixed is not compatible with /dynamicbase. Check for it.
       if (parsedArgs->getLastArg(OPT_dynamicbase)) {
@@ -459,18 +431,6 @@ bool WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ct
       }
       ctx.setBaseRelocationEnabled(false);
       ctx.setDynamicBaseEnabled(false);
-      break;
-
-    case OPT_dynamicbase_no:
-      ctx.setDynamicBaseEnabled(false);
-      break;
-
-    case OPT_tsaware:
-      ctx.setTerminalServerAware(true);
-      break;
-
-    case OPT_tsaware_no:
-      ctx.setTerminalServerAware(false);
       break;
 
     case OPT_incl:
@@ -491,6 +451,24 @@ bool WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ct
           new PECOFFFileNode(ctx, inputArg->getValue())));
       break;
 
+#define DEFINE_BOOLEAN_FLAG(name, setter)       \
+    case OPT_##name:                            \
+      ctx.setter(true);                         \
+      break;                                    \
+    case OPT_##name##_no:                       \
+      ctx.setter(false);                        \
+      break
+
+    DEFINE_BOOLEAN_FLAG(ref, setDeadStripping);
+    DEFINE_BOOLEAN_FLAG(nxcompat, setNxCompat);
+    DEFINE_BOOLEAN_FLAG(largeaddressaware, setLargeAddressAware);
+    DEFINE_BOOLEAN_FLAG(allowbind, setAllowBind);
+    DEFINE_BOOLEAN_FLAG(allowisolation, setAllowIsolation);
+    DEFINE_BOOLEAN_FLAG(dynamicbase, setDynamicBaseEnabled);
+    DEFINE_BOOLEAN_FLAG(tsaware, setTerminalServerAware);
+
+#undef DEFINE_BOOLEAN_FLAG
+
     default:
       break;
     }
@@ -501,7 +479,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ct
     ctx.setEntrySymbolName(getDefaultEntrySymbolName(ctx));
 
   // Specifying both /opt:ref and /opt:noref is an error.
-  if (parsedArgs->getLastArg(OPT_ref) && parsedArgs->getLastArg(OPT_no_ref)) {
+  if (parsedArgs->getLastArg(OPT_ref) && parsedArgs->getLastArg(OPT_ref_no)) {
     diagnostics << "/opt:ref must not be specified with /opt:noref\n";
     return true;
   }

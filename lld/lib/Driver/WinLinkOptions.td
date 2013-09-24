@@ -47,7 +47,7 @@ def force : F<"force">,
 def force_unresolved : F<"force:unresolved">;
 
 def ref : F<"opt:ref">;
-def no_ref : F<"opt:noref">,
+def ref_no : F<"opt:noref">,
     HelpText<"Keep unreferenced symbols to be included to the output">;
 
 defm nxcompat : B<"nxcompat", "Disable data execution provention">;
