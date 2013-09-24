@@ -1995,6 +1995,29 @@ INTERCEPTOR(int, ppoll, __sanitizer_pollfd *fds, __sanitizer_nfds_t nfds,
 #define INIT_PPOLL
 #endif
 
+#if SANITIZER_INTERCEPT_WORDEXP
+INTERCEPTOR(int, wordexp, char *s, __sanitizer_wordexp_t *p, int flags) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, wordexp, s, p, flags);
+  if (s) COMMON_INTERCEPTOR_READ_RANGE(ctx, s, REAL(strlen)(s) + 1);
+  int res = REAL(wordexp)(s, p, flags);
+  if (!res && p) {
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, p, sizeof(*p));
+    if (p->we_wordc)
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, p->we_wordv,
+                                     sizeof(*p->we_wordv) * p->we_wordc);
+    for (uptr i = 0; i < p->we_wordc; ++i) {
+      char *w = p->we_wordv[i];
+      if (w) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, w, REAL(strlen)(w) + 1);
+    }
+  }
+  return res;
+}
+#define INIT_WORDEXP INTERCEPT_FUNCTION(wordexp);
+#else
+#define INIT_WORDEXP
+#endif
+
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
   INIT_STRCMP;                             \
   INIT_STRNCMP;                            \
@@ -2063,4 +2086,5 @@ INTERCEPTOR(int, ppoll, __sanitizer_pollfd *fds, __sanitizer_nfds_t nfds,
   INIT_SCANDIR64;                          \
   INIT_GETGROUPS;                          \
   INIT_POLL;                               \
-  INIT_PPOLL;
+  INIT_PPOLL;                              \
+  INIT_WORDEXP;

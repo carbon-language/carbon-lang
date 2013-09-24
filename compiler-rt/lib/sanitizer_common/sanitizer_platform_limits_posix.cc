@@ -42,6 +42,7 @@
 #include <termios.h>
 #include <time.h>
 #include <wchar.h>
+#include <wordexp.h>
 
 #if SANITIZER_LINUX
 #include <utime.h>
@@ -873,5 +874,10 @@ CHECK_TYPE_SIZE(__kernel_off_t);
 CHECK_TYPE_SIZE(__kernel_loff_t);
 CHECK_TYPE_SIZE(__kernel_fd_set);
 #endif
+
+CHECK_TYPE_SIZE(wordexp_t);
+CHECK_SIZE_AND_OFFSET(wordexp_t, we_wordc);
+CHECK_SIZE_AND_OFFSET(wordexp_t, we_wordv);
+CHECK_SIZE_AND_OFFSET(wordexp_t, we_offs);
 
 #endif  // SANITIZER_LINUX || SANITIZER_MAC

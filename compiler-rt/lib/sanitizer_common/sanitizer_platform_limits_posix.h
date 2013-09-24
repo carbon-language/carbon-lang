@@ -286,6 +286,12 @@ namespace __sanitizer {
 
   extern unsigned path_max;
 
+  struct __sanitizer_wordexp_t {
+    uptr we_wordc;
+    char **we_wordv;
+    uptr we_offs;
+  };
+
 #if SANITIZER_LINUX && !SANITIZER_ANDROID && \
       (defined(__i386) || defined (__x86_64))  // NOLINT
   extern unsigned struct_user_regs_struct_sz;

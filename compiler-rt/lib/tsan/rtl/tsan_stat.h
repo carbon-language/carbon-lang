@@ -356,6 +356,7 @@ enum StatType {
   StatInt_scandir,
   StatInt_scandir64,
   StatInt_getgroups,
+  StatInt_wordexp,
 
   // Dynamic annotations.
   StatAnnotation,
