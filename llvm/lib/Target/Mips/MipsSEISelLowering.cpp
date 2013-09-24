@@ -93,6 +93,7 @@ MipsSETargetLowering::MipsSETargetLowering(MipsTargetMachine &TM)
 
     setTargetDAGCombine(ISD::AND);
     setTargetDAGCombine(ISD::SRA);
+    setTargetDAGCombine(ISD::VSELECT);
     setTargetDAGCombine(ISD::XOR);
   }
 
@@ -179,6 +180,7 @@ addMSAIntType(MVT::SimpleValueType Ty, const TargetRegisterClass *RC) {
   setOperationAction(ISD::SRL, Ty, Legal);
   setOperationAction(ISD::SUB, Ty, Legal);
   setOperationAction(ISD::UDIV, Ty, Legal);
+  setOperationAction(ISD::VSELECT, Ty, Legal);
   setOperationAction(ISD::XOR, Ty, Legal);
 
   setOperationAction(ISD::SETCC, Ty, Legal);
@@ -211,6 +213,7 @@ addMSAFloatType(MVT::SimpleValueType Ty, const TargetRegisterClass *RC) {
     setOperationAction(ISD::FRINT, Ty, Legal);
     setOperationAction(ISD::FSQRT, Ty, Legal);
     setOperationAction(ISD::FSUB,  Ty, Legal);
+    setOperationAction(ISD::VSELECT, Ty, Legal);
 
     setOperationAction(ISD::SETCC, Ty, Legal);
     setCondCodeAction(ISD::SETOGE, Ty, Expand);
@@ -1117,6 +1120,14 @@ SDValue MipsSETargetLowering::lowerINTRINSIC_WO_CHAIN(SDValue Op,
     return lowerMSABranchIntr(Op, DAG, MipsISD::VALL_NONZERO);
   case Intrinsic::mips_bnz_v:
     return lowerMSABranchIntr(Op, DAG, MipsISD::VANY_NONZERO);
+  case Intrinsic::mips_bsel_v:
+    return DAG.getNode(ISD::VSELECT, SDLoc(Op), Op->getValueType(0),
+                       Op->getOperand(1), Op->getOperand(2),
+                       Op->getOperand(3));
+  case Intrinsic::mips_bseli_b:
+    return DAG.getNode(ISD::VSELECT, SDLoc(Op), Op->getValueType(0),
+                       Op->getOperand(1), Op->getOperand(2),
+                       lowerMSASplatImm(Op, 3, DAG));
   case Intrinsic::mips_bz_b:
   case Intrinsic::mips_bz_h:
   case Intrinsic::mips_bz_w:

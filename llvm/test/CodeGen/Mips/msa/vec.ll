@@ -355,7 +355,7 @@ entry:
   %1 = load <16 x i8>* @llvm_mips_bsel_v_b_ARG2
   %2 = bitcast <16 x i8> %0 to <16 x i8>
   %3 = bitcast <16 x i8> %1 to <16 x i8>
-  %4 = tail call <16 x i8> @llvm.mips.bsel.v(<16 x i8> %2, <16 x i8> %3)
+  %4 = tail call <16 x i8> @llvm.mips.bsel.v(<16 x i8> %2, <16 x i8> %2, <16 x i8> %3)
   %5 = bitcast <16 x i8> %4 to <16 x i8>
   store <16 x i8> %5, <16 x i8>* @llvm_mips_bsel_v_b_RES
   ret void
@@ -378,7 +378,7 @@ entry:
   %1 = load <8 x i16>* @llvm_mips_bsel_v_h_ARG2
   %2 = bitcast <8 x i16> %0 to <16 x i8>
   %3 = bitcast <8 x i16> %1 to <16 x i8>
-  %4 = tail call <16 x i8> @llvm.mips.bsel.v(<16 x i8> %2, <16 x i8> %3)
+  %4 = tail call <16 x i8> @llvm.mips.bsel.v(<16 x i8> %2, <16 x i8> %2, <16 x i8> %3)
   %5 = bitcast <16 x i8> %4 to <8 x i16>
   store <8 x i16> %5, <8 x i16>* @llvm_mips_bsel_v_h_RES
   ret void
@@ -401,7 +401,7 @@ entry:
   %1 = load <4 x i32>* @llvm_mips_bsel_v_w_ARG2
   %2 = bitcast <4 x i32> %0 to <16 x i8>
   %3 = bitcast <4 x i32> %1 to <16 x i8>
-  %4 = tail call <16 x i8> @llvm.mips.bsel.v(<16 x i8> %2, <16 x i8> %3)
+  %4 = tail call <16 x i8> @llvm.mips.bsel.v(<16 x i8> %2, <16 x i8> %2, <16 x i8> %3)
   %5 = bitcast <16 x i8> %4 to <4 x i32>
   store <4 x i32> %5, <4 x i32>* @llvm_mips_bsel_v_w_RES
   ret void
@@ -424,7 +424,7 @@ entry:
   %1 = load <2 x i64>* @llvm_mips_bsel_v_d_ARG2
   %2 = bitcast <2 x i64> %0 to <16 x i8>
   %3 = bitcast <2 x i64> %1 to <16 x i8>
-  %4 = tail call <16 x i8> @llvm.mips.bsel.v(<16 x i8> %2, <16 x i8> %3)
+  %4 = tail call <16 x i8> @llvm.mips.bsel.v(<16 x i8> %2, <16 x i8> %2, <16 x i8> %3)
   %5 = bitcast <16 x i8> %4 to <2 x i64>
   store <2 x i64> %5, <2 x i64>* @llvm_mips_bsel_v_d_RES
   ret void
@@ -848,7 +848,7 @@ entry:
 declare <16 x i8> @llvm.mips.and.v(<16 x i8>, <16 x i8>) nounwind
 declare <16 x i8> @llvm.mips.bmnz.v(<16 x i8>, <16 x i8>) nounwind
 declare <16 x i8> @llvm.mips.bmz.v(<16 x i8>, <16 x i8>) nounwind
-declare <16 x i8> @llvm.mips.bsel.v(<16 x i8>, <16 x i8>) nounwind
+declare <16 x i8> @llvm.mips.bsel.v(<16 x i8>, <16 x i8>, <16 x i8>) nounwind
 declare <16 x i8> @llvm.mips.nor.v(<16 x i8>, <16 x i8>) nounwind
 declare <16 x i8> @llvm.mips.or.v(<16 x i8>, <16 x i8>) nounwind
 declare <16 x i8> @llvm.mips.xor.v(<16 x i8>, <16 x i8>) nounwind

@@ -516,3 +516,83 @@ define void @true_v2f64(<2 x i64>* %c, <2 x double>* %a, <2 x double>* %b) nounw
   ; CHECK-DAG: st.d [[R4]], 0($4)
   ; CHECK: .size true_v2f64
 }
+
+define void @bsel_v4f32(<4 x float>* %d, <4 x float>* %a, <4 x float>* %b,
+                          <4 x float>* %c) nounwind {
+  ; CHECK: bsel_v4f32:
+
+  %1 = load <4 x float>* %a
+  ; CHECK-DAG: ld.w [[R1:\$w[0-9]+]], 0($5)
+  %2 = load <4 x float>* %b
+  ; CHECK-DAG: ld.w [[R2:\$w[0-9]+]], 0($6)
+  %3 = load <4 x float>* %c
+  ; CHECK-DAG: ld.w [[R3:\$w[0-9]+]], 0($7)
+  %4 = fcmp ogt <4 x float> %1, %2
+  ; CHECK-DAG: fclt.w [[R4:\$w[0-9]+]], [[R2]], [[R1]]
+  %5 = select <4 x i1> %4, <4 x float> %1, <4 x float> %3
+  ; CHECK-DAG: bsel.v [[R4]], [[R1]], [[R3]]
+  store <4 x float> %5, <4 x float>* %d
+  ; CHECK-DAG: st.w [[R4]], 0($4)
+
+  ret void
+  ; CHECK: .size bsel_v4f32
+}
+
+define void @bsel_v2f64(<2 x double>* %d, <2 x double>* %a, <2 x double>* %b,
+                          <2 x double>* %c) nounwind {
+  ; CHECK: bsel_v2f64:
+
+  %1 = load <2 x double>* %a
+  ; CHECK-DAG: ld.d [[R1:\$w[0-9]+]], 0($5)
+  %2 = load <2 x double>* %b
+  ; CHECK-DAG: ld.d [[R2:\$w[0-9]+]], 0($6)
+  %3 = load <2 x double>* %c
+  ; CHECK-DAG: ld.d [[R3:\$w[0-9]+]], 0($7)
+  %4 = fcmp ogt <2 x double> %1, %2
+  ; CHECK-DAG: fclt.d [[R4:\$w[0-9]+]], [[R2]], [[R1]]
+  %5 = select <2 x i1> %4, <2 x double> %1, <2 x double> %3
+  ; CHECK-DAG: bsel.v [[R4]], [[R1]], [[R3]]
+  store <2 x double> %5, <2 x double>* %d
+  ; CHECK-DAG: st.d [[R4]], 0($4)
+
+  ret void
+  ; CHECK: .size bsel_v2f64
+}
+
+define void @bseli_v4f32(<4 x float>* %d, <4 x float>* %a, <4 x float>* %b,
+                          <4 x float>* %c) nounwind {
+  ; CHECK: bseli_v4f32:
+
+  %1 = load <4 x float>* %a
+  ; CHECK-DAG: ld.w [[R1:\$w[0-9]+]], 0($5)
+  %2 = load <4 x float>* %b
+  ; CHECK-DAG: ld.w [[R2:\$w[0-9]+]], 0($6)
+  %3 = fcmp ogt <4 x float> %1, %2
+  ; CHECK-DAG: fclt.w [[R4:\$w[0-9]+]], [[R2]], [[R1]]
+  %4 = select <4 x i1> %3, <4 x float> %1, <4 x float> zeroinitializer
+  ; CHECK-DAG: bsel.v [[R4]], [[R1]], [[R3:\$w[0-9]+]]
+  store <4 x float> %4, <4 x float>* %d
+  ; CHECK-DAG: st.w [[R4]], 0($4)
+
+  ret void
+  ; CHECK: .size bseli_v4f32
+}
+
+define void @bseli_v2f64(<2 x double>* %d, <2 x double>* %a, <2 x double>* %b,
+                          <2 x double>* %c) nounwind {
+  ; CHECK: bseli_v2f64:
+
+  %1 = load <2 x double>* %a
+  ; CHECK-DAG: ld.d [[R1:\$w[0-9]+]], 0($5)
+  %2 = load <2 x double>* %b
+  ; CHECK-DAG: ld.d [[R2:\$w[0-9]+]], 0($6)
+  %3 = fcmp ogt <2 x double> %1, %2
+  ; CHECK-DAG: fclt.d [[R4:\$w[0-9]+]], [[R2]], [[R1]]
+  %4 = select <2 x i1> %3, <2 x double> %1, <2 x double> zeroinitializer
+  ; CHECK-DAG: bsel.v [[R4]], [[R1]], [[R3:\$w[0-9]+]]
+  store <2 x double> %4, <2 x double>* %d
+  ; CHECK-DAG: st.d [[R4]], 0($4)
+
+  ret void
+  ; CHECK: .size bseli_v2f64
+}

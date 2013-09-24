@@ -644,16 +644,12 @@ def int_mips_bnz_v : GCCBuiltin<"__builtin_msa_bnz_v">,
   Intrinsic<[llvm_i32_ty], [llvm_v16i8_ty], [IntrNoMem]>;
 
 def int_mips_bsel_v : GCCBuiltin<"__builtin_msa_bsel_v">,
-  Intrinsic<[llvm_v16i8_ty], [llvm_v16i8_ty, llvm_v16i8_ty], [IntrNoMem]>;
+  Intrinsic<[llvm_v16i8_ty], [llvm_v16i8_ty, llvm_v16i8_ty, llvm_v16i8_ty],
+            [IntrNoMem]>;
 
 def int_mips_bseli_b : GCCBuiltin<"__builtin_msa_bseli_b">,
-  Intrinsic<[llvm_v16i8_ty], [llvm_v16i8_ty, llvm_i32_ty], [IntrNoMem]>;
-def int_mips_bseli_h : GCCBuiltin<"__builtin_msa_bseli_h">,
-  Intrinsic<[llvm_v8i16_ty], [llvm_v8i16_ty, llvm_i32_ty], [IntrNoMem]>;
-def int_mips_bseli_w : GCCBuiltin<"__builtin_msa_bseli_w">,
-  Intrinsic<[llvm_v4i32_ty], [llvm_v4i32_ty, llvm_i32_ty], [IntrNoMem]>;
-def int_mips_bseli_d : GCCBuiltin<"__builtin_msa_bseli_d">,
-  Intrinsic<[llvm_v2i64_ty], [llvm_v2i64_ty, llvm_i32_ty], [IntrNoMem]>;
+  Intrinsic<[llvm_v16i8_ty], [llvm_v16i8_ty, llvm_v16i8_ty, llvm_i32_ty],
+            [IntrNoMem]>;
 
 def int_mips_bset_b : GCCBuiltin<"__builtin_msa_bset_b">,
   Intrinsic<[llvm_v16i8_ty], [llvm_v16i8_ty, llvm_v16i8_ty], [IntrNoMem]>;

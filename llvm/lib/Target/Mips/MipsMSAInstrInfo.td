@@ -1282,9 +1282,26 @@ class BNZ_D_DESC : MSA_CBRANCH_DESC_BASE<"bnz.d", MSA128D>;
 
 class BNZ_V_DESC : MSA_CBRANCH_DESC_BASE<"bnz.v", MSA128B>;
 
-class BSEL_V_DESC : MSA_VEC_DESC_BASE<"bsel.v", int_mips_bsel_v, MSA128B>;
+class BSEL_V_DESC {
+  dag OutOperandList = (outs MSA128B:$wd);
+  dag InOperandList = (ins MSA128B:$wd_in, MSA128B:$ws, MSA128B:$wt);
+  string AsmString = "bsel.v\t$wd, $ws, $wt";
+  list<dag> Pattern = [(set MSA128B:$wd, (vselect MSA128B:$wd_in, MSA128B:$ws,
+                                                  MSA128B:$wt))];
+  InstrItinClass Itinerary = NoItinerary;
+  string Constraints = "$wd = $wd_in";
+}
 
-class BSELI_B_DESC : MSA_I8_DESC_BASE<"bseli.b", int_mips_bseli_b, MSA128B>;
+class BSELI_B_DESC {
+  dag OutOperandList = (outs MSA128B:$wd);
+  dag InOperandList = (ins MSA128B:$wd_in, MSA128B:$ws, uimm8:$u8);
+  string AsmString = "bseli.b\t$wd, $ws, $u8";
+  list<dag> Pattern = [(set MSA128B:$wd, (vselect MSA128B:$wd_in,
+                                                  MSA128B:$ws,
+                                                  (vsplati8 immZExt8:$u8)))];
+  InstrItinClass Itinerary = NoItinerary;
+  string Constraints = "$wd = $wd_in";
+}
 
 class BSET_B_DESC : MSA_3R_DESC_BASE<"bset.b", int_mips_bset_b, MSA128B>;
 class BSET_H_DESC : MSA_3R_DESC_BASE<"bset.h", int_mips_bset_h, MSA128H>;
@@ -2243,6 +2260,20 @@ def BNZ_D : BNZ_D_ENC, BNZ_D_DESC;
 def BNZ_V : BNZ_V_ENC, BNZ_V_DESC;
 
 def BSEL_V : BSEL_V_ENC, BSEL_V_DESC;
+
+class MSA_BSEL_PSEUDO_BASE<RegisterClass RC, ValueType Ty> :
+  MipsPseudo<(outs RC:$wd), (ins RC:$wd_in, RC:$ws, RC:$wt),
+             [(set RC:$wd, (Ty (vselect RC:$wd_in, RC:$ws, RC:$wt)))]>,
+  PseudoInstExpansion<(BSEL_V MSA128B:$wd, MSA128B:$wd_in, MSA128B:$ws,
+                              MSA128B:$wt)> {
+  let Constraints = "$wd_in = $wd";
+}
+
+def BSEL_H_PSEUDO : MSA_BSEL_PSEUDO_BASE<MSA128H, v8i16>;
+def BSEL_W_PSEUDO : MSA_BSEL_PSEUDO_BASE<MSA128W, v4i32>;
+def BSEL_D_PSEUDO : MSA_BSEL_PSEUDO_BASE<MSA128D, v2i64>;
+def BSEL_FW_PSEUDO : MSA_BSEL_PSEUDO_BASE<MSA128W, v4f32>;
+def BSEL_FD_PSEUDO : MSA_BSEL_PSEUDO_BASE<MSA128D, v2f64>;
 
 def BSELI_B : BSELI_B_ENC, BSELI_B_DESC;
 

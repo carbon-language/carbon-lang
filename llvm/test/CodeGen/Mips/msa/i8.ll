@@ -65,12 +65,12 @@ declare <16 x i8> @llvm.mips.bmzi.b(<16 x i8>, i32) nounwind
 define void @llvm_mips_bseli_b_test() nounwind {
 entry:
   %0 = load <16 x i8>* @llvm_mips_bseli_b_ARG1
-  %1 = tail call <16 x i8> @llvm.mips.bseli.b(<16 x i8> %0, i32 25)
+  %1 = tail call <16 x i8> @llvm.mips.bseli.b(<16 x i8> %0, <16 x i8> %0, i32 25)
   store <16 x i8> %1, <16 x i8>* @llvm_mips_bseli_b_RES
   ret void
 }
 
-declare <16 x i8> @llvm.mips.bseli.b(<16 x i8>, i32) nounwind
+declare <16 x i8> @llvm.mips.bseli.b(<16 x i8>, <16 x i8>, i32) nounwind
 
 ; CHECK: llvm_mips_bseli_b_test:
 ; CHECK: ld.b

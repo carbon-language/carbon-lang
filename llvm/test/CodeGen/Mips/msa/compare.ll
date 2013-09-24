@@ -639,3 +639,329 @@ define void @clti_u_v2i64(<2 x i64>* %c, <2 x i64>* %a) nounwind {
   ret void
   ; CHECK: .size clti_u_v2i64
 }
+
+define void @bsel_s_v16i8(<16 x i8>* %d, <16 x i8>* %a, <16 x i8>* %b,
+                        <16 x i8>* %c) nounwind {
+  ; CHECK: bsel_s_v16i8:
+
+  %1 = load <16 x i8>* %a
+  ; CHECK-DAG: ld.b [[R1:\$w[0-9]+]], 0($5)
+  %2 = load <16 x i8>* %b
+  ; CHECK-DAG: ld.b [[R2:\$w[0-9]+]], 0($6)
+  %3 = load <16 x i8>* %c
+  ; CHECK-DAG: ld.b [[R3:\$w[0-9]+]], 0($7)
+  %4 = icmp sgt <16 x i8> %1, %2
+  ; CHECK-DAG: clt_s.b [[R4:\$w[0-9]+]], [[R2]], [[R1]]
+  %5 = select <16 x i1> %4, <16 x i8> %1, <16 x i8> %3
+  ; CHECK-DAG: bsel.v [[R4]], [[R1]], [[R3]]
+  store <16 x i8> %5, <16 x i8>* %d
+  ; CHECK-DAG: st.b [[R4]], 0($4)
+
+  ret void
+  ; CHECK: .size bsel_s_v16i8
+}
+
+define void @bsel_s_v8i16(<8 x i16>* %d, <8 x i16>* %a, <8 x i16>* %b,
+                        <8 x i16>* %c) nounwind {
+  ; CHECK: bsel_s_v8i16:
+
+  %1 = load <8 x i16>* %a
+  ; CHECK-DAG: ld.h [[R1:\$w[0-9]+]], 0($5)
+  %2 = load <8 x i16>* %b
+  ; CHECK-DAG: ld.h [[R2:\$w[0-9]+]], 0($6)
+  %3 = load <8 x i16>* %c
+  ; CHECK-DAG: ld.h [[R3:\$w[0-9]+]], 0($7)
+  %4 = icmp sgt <8 x i16> %1, %2
+  ; CHECK-DAG: clt_s.h [[R4:\$w[0-9]+]], [[R2]], [[R1]]
+  %5 = select <8 x i1> %4, <8 x i16> %1, <8 x i16> %3
+  ; CHECK-DAG: bsel.v [[R4]], [[R1]], [[R3]]
+  store <8 x i16> %5, <8 x i16>* %d
+  ; CHECK-DAG: st.h [[R4]], 0($4)
+
+  ret void
+  ; CHECK: .size bsel_s_v8i16
+}
+
+define void @bsel_s_v4i32(<4 x i32>* %d, <4 x i32>* %a, <4 x i32>* %b,
+                        <4 x i32>* %c) nounwind {
+  ; CHECK: bsel_s_v4i32:
+
+  %1 = load <4 x i32>* %a
+  ; CHECK-DAG: ld.w [[R1:\$w[0-9]+]], 0($5)
+  %2 = load <4 x i32>* %b
+  ; CHECK-DAG: ld.w [[R2:\$w[0-9]+]], 0($6)
+  %3 = load <4 x i32>* %c
+  ; CHECK-DAG: ld.w [[R3:\$w[0-9]+]], 0($7)
+  %4 = icmp sgt <4 x i32> %1, %2
+  ; CHECK-DAG: clt_s.w [[R4:\$w[0-9]+]], [[R2]], [[R1]]
+  %5 = select <4 x i1> %4, <4 x i32> %1, <4 x i32> %3
+  ; CHECK-DAG: bsel.v [[R4]], [[R1]], [[R3]]
+  store <4 x i32> %5, <4 x i32>* %d
+  ; CHECK-DAG: st.w [[R4]], 0($4)
+
+  ret void
+  ; CHECK: .size bsel_s_v4i32
+}
+
+define void @bsel_s_v2i64(<2 x i64>* %d, <2 x i64>* %a, <2 x i64>* %b,
+                        <2 x i64>* %c) nounwind {
+  ; CHECK: bsel_s_v2i64:
+
+  %1 = load <2 x i64>* %a
+  ; CHECK-DAG: ld.d [[R1:\$w[0-9]+]], 0($5)
+  %2 = load <2 x i64>* %b
+  ; CHECK-DAG: ld.d [[R2:\$w[0-9]+]], 0($6)
+  %3 = load <2 x i64>* %c
+  ; CHECK-DAG: ld.d [[R3:\$w[0-9]+]], 0($7)
+  %4 = icmp sgt <2 x i64> %1, %2
+  ; CHECK-DAG: clt_s.d [[R4:\$w[0-9]+]], [[R2]], [[R1]]
+  %5 = select <2 x i1> %4, <2 x i64> %1, <2 x i64> %3
+  ; CHECK-DAG: bsel.v [[R4]], [[R1]], [[R3]]
+  store <2 x i64> %5, <2 x i64>* %d
+  ; CHECK-DAG: st.d [[R4]], 0($4)
+
+  ret void
+  ; CHECK: .size bsel_s_v2i64
+}
+
+define void @bsel_u_v16i8(<16 x i8>* %d, <16 x i8>* %a, <16 x i8>* %b,
+                        <16 x i8>* %c) nounwind {
+  ; CHECK: bsel_u_v16i8:
+
+  %1 = load <16 x i8>* %a
+  ; CHECK-DAG: ld.b [[R1:\$w[0-9]+]], 0($5)
+  %2 = load <16 x i8>* %b
+  ; CHECK-DAG: ld.b [[R2:\$w[0-9]+]], 0($6)
+  %3 = load <16 x i8>* %c
+  ; CHECK-DAG: ld.b [[R3:\$w[0-9]+]], 0($7)
+  %4 = icmp ugt <16 x i8> %1, %2
+  ; CHECK-DAG: clt_u.b [[R4:\$w[0-9]+]], [[R2]], [[R1]]
+  %5 = select <16 x i1> %4, <16 x i8> %1, <16 x i8> %3
+  ; CHECK-DAG: bsel.v [[R4]], [[R1]], [[R3]]
+  store <16 x i8> %5, <16 x i8>* %d
+  ; CHECK-DAG: st.b [[R4]], 0($4)
+
+  ret void
+  ; CHECK: .size bsel_u_v16i8
+}
+
+define void @bsel_u_v8i16(<8 x i16>* %d, <8 x i16>* %a, <8 x i16>* %b,
+                        <8 x i16>* %c) nounwind {
+  ; CHECK: bsel_u_v8i16:
+
+  %1 = load <8 x i16>* %a
+  ; CHECK-DAG: ld.h [[R1:\$w[0-9]+]], 0($5)
+  %2 = load <8 x i16>* %b
+  ; CHECK-DAG: ld.h [[R2:\$w[0-9]+]], 0($6)
+  %3 = load <8 x i16>* %c
+  ; CHECK-DAG: ld.h [[R3:\$w[0-9]+]], 0($7)
+  %4 = icmp ugt <8 x i16> %1, %2
+  ; CHECK-DAG: clt_u.h [[R4:\$w[0-9]+]], [[R2]], [[R1]]
+  %5 = select <8 x i1> %4, <8 x i16> %1, <8 x i16> %3
+  ; CHECK-DAG: bsel.v [[R4]], [[R1]], [[R3]]
+  store <8 x i16> %5, <8 x i16>* %d
+  ; CHECK-DAG: st.h [[R4]], 0($4)
+
+  ret void
+  ; CHECK: .size bsel_u_v8i16
+}
+
+define void @bsel_u_v4i32(<4 x i32>* %d, <4 x i32>* %a, <4 x i32>* %b,
+                        <4 x i32>* %c) nounwind {
+  ; CHECK: bsel_u_v4i32:
+
+  %1 = load <4 x i32>* %a
+  ; CHECK-DAG: ld.w [[R1:\$w[0-9]+]], 0($5)
+  %2 = load <4 x i32>* %b
+  ; CHECK-DAG: ld.w [[R2:\$w[0-9]+]], 0($6)
+  %3 = load <4 x i32>* %c
+  ; CHECK-DAG: ld.w [[R3:\$w[0-9]+]], 0($7)
+  %4 = icmp ugt <4 x i32> %1, %2
+  ; CHECK-DAG: clt_u.w [[R4:\$w[0-9]+]], [[R2]], [[R1]]
+  %5 = select <4 x i1> %4, <4 x i32> %1, <4 x i32> %3
+  ; CHECK-DAG: bsel.v [[R4]], [[R1]], [[R3]]
+  store <4 x i32> %5, <4 x i32>* %d
+  ; CHECK-DAG: st.w [[R4]], 0($4)
+
+  ret void
+  ; CHECK: .size bsel_u_v4i32
+}
+
+define void @bsel_u_v2i64(<2 x i64>* %d, <2 x i64>* %a, <2 x i64>* %b,
+                        <2 x i64>* %c) nounwind {
+  ; CHECK: bsel_u_v2i64:
+
+  %1 = load <2 x i64>* %a
+  ; CHECK-DAG: ld.d [[R1:\$w[0-9]+]], 0($5)
+  %2 = load <2 x i64>* %b
+  ; CHECK-DAG: ld.d [[R2:\$w[0-9]+]], 0($6)
+  %3 = load <2 x i64>* %c
+  ; CHECK-DAG: ld.d [[R3:\$w[0-9]+]], 0($7)
+  %4 = icmp ugt <2 x i64> %1, %2
+  ; CHECK-DAG: clt_u.d [[R4:\$w[0-9]+]], [[R2]], [[R1]]
+  %5 = select <2 x i1> %4, <2 x i64> %1, <2 x i64> %3
+  ; CHECK-DAG: bsel.v [[R4]], [[R1]], [[R3]]
+  store <2 x i64> %5, <2 x i64>* %d
+  ; CHECK-DAG: st.d [[R4]], 0($4)
+
+  ret void
+  ; CHECK: .size bsel_u_v2i64
+}
+
+define void @bseli_s_v16i8(<16 x i8>* %d, <16 x i8>* %a, <16 x i8>* %b,
+                        <16 x i8>* %c) nounwind {
+  ; CHECK: bseli_s_v16i8:
+
+  %1 = load <16 x i8>* %a
+  ; CHECK-DAG: ld.b [[R1:\$w[0-9]+]], 0($5)
+  %2 = load <16 x i8>* %b
+  ; CHECK-DAG: ld.b [[R2:\$w[0-9]+]], 0($6)
+  %3 = icmp sgt <16 x i8> %1, %2
+  ; CHECK-DAG: clt_s.b [[R4:\$w[0-9]+]], [[R2]], [[R1]]
+  %4 = select <16 x i1> %3, <16 x i8> %1, <16 x i8> <i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1>
+  ; CHECK-DAG: bseli.b [[R4]], [[R1]], 1
+  store <16 x i8> %4, <16 x i8>* %d
+  ; CHECK-DAG: st.b [[R4]], 0($4)
+
+  ret void
+  ; CHECK: .size bseli_s_v16i8
+}
+
+define void @bseli_s_v8i16(<8 x i16>* %d, <8 x i16>* %a, <8 x i16>* %b,
+                        <8 x i16>* %c) nounwind {
+  ; CHECK: bseli_s_v8i16:
+
+  %1 = load <8 x i16>* %a
+  ; CHECK-DAG: ld.h [[R1:\$w[0-9]+]], 0($5)
+  %2 = load <8 x i16>* %b
+  ; CHECK-DAG: ld.h [[R2:\$w[0-9]+]], 0($6)
+  %3 = icmp sgt <8 x i16> %1, %2
+  ; CHECK-DAG: clt_s.h [[R4:\$w[0-9]+]], [[R2]], [[R1]]
+  %4 = select <8 x i1> %3, <8 x i16> %1, <8 x i16> <i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1>
+  ; CHECK-DAG: ldi.h [[R3:\$w[0-9]+]], 1
+  ; CHECK-DAG: bsel.v [[R4]], [[R1]], [[R3]]
+  store <8 x i16> %4, <8 x i16>* %d
+  ; CHECK-DAG: st.h [[R4]], 0($4)
+
+  ret void
+  ; CHECK: .size bseli_s_v8i16
+}
+
+define void @bseli_s_v4i32(<4 x i32>* %d, <4 x i32>* %a, <4 x i32>* %b,
+                        <4 x i32>* %c) nounwind {
+  ; CHECK: bseli_s_v4i32:
+
+  %1 = load <4 x i32>* %a
+  ; CHECK-DAG: ld.w [[R1:\$w[0-9]+]], 0($5)
+  %2 = load <4 x i32>* %b
+  ; CHECK-DAG: ld.w [[R2:\$w[0-9]+]], 0($6)
+  %3 = icmp sgt <4 x i32> %1, %2
+  ; CHECK-DAG: clt_s.w [[R4:\$w[0-9]+]], [[R2]], [[R1]]
+  %4 = select <4 x i1> %3, <4 x i32> %1, <4 x i32> <i32 1, i32 1, i32 1, i32 1>
+  ; CHECK-DAG: ldi.w [[R3:\$w[0-9]+]], 1
+  ; CHECK-DAG: bsel.v [[R4]], [[R1]], [[R3]]
+  store <4 x i32> %4, <4 x i32>* %d
+  ; CHECK-DAG: st.w [[R4]], 0($4)
+
+  ret void
+  ; CHECK: .size bseli_s_v4i32
+}
+
+define void @bseli_s_v2i64(<2 x i64>* %d, <2 x i64>* %a, <2 x i64>* %b,
+                        <2 x i64>* %c) nounwind {
+  ; CHECK: bseli_s_v2i64:
+
+  %1 = load <2 x i64>* %a
+  ; CHECK-DAG: ld.d [[R1:\$w[0-9]+]], 0($5)
+  %2 = load <2 x i64>* %b
+  ; CHECK-DAG: ld.d [[R2:\$w[0-9]+]], 0($6)
+  %3 = icmp sgt <2 x i64> %1, %2
+  ; CHECK-DAG: clt_s.d [[R4:\$w[0-9]+]], [[R2]], [[R1]]
+  %4 = select <2 x i1> %3, <2 x i64> %1, <2 x i64> <i64 1, i64 1>
+  ; CHECK-DAG: ldi.d [[R3:\$w[0-9]+]], 1
+  ; CHECK-DAG: bsel.v [[R4]], [[R1]], [[R3]]
+  store <2 x i64> %4, <2 x i64>* %d
+  ; CHECK-DAG: st.d [[R4]], 0($4)
+
+  ret void
+  ; CHECK: .size bseli_s_v2i64
+}
+
+define void @bseli_u_v16i8(<16 x i8>* %d, <16 x i8>* %a, <16 x i8>* %b,
+                        <16 x i8>* %c) nounwind {
+  ; CHECK: bseli_u_v16i8:
+
+  %1 = load <16 x i8>* %a
+  ; CHECK-DAG: ld.b [[R1:\$w[0-9]+]], 0($5)
+  %2 = load <16 x i8>* %b
+  ; CHECK-DAG: ld.b [[R2:\$w[0-9]+]], 0($6)
+  %3 = icmp ugt <16 x i8> %1, %2
+  ; CHECK-DAG: clt_u.b [[R4:\$w[0-9]+]], [[R2]], [[R1]]
+  %4 = select <16 x i1> %3, <16 x i8> %1, <16 x i8> <i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1>
+  ; CHECK-DAG: bseli.b [[R4]], [[R1]], 1
+  store <16 x i8> %4, <16 x i8>* %d
+  ; CHECK-DAG: st.b [[R4]], 0($4)
+
+  ret void
+  ; CHECK: .size bseli_u_v16i8
+}
+
+define void @bseli_u_v8i16(<8 x i16>* %d, <8 x i16>* %a, <8 x i16>* %b,
+                        <8 x i16>* %c) nounwind {
+  ; CHECK: bseli_u_v8i16:
+
+  %1 = load <8 x i16>* %a
+  ; CHECK-DAG: ld.h [[R1:\$w[0-9]+]], 0($5)
+  %2 = load <8 x i16>* %b
+  ; CHECK-DAG: ld.h [[R2:\$w[0-9]+]], 0($6)
+  %3 = icmp ugt <8 x i16> %1, %2
+  ; CHECK-DAG: clt_u.h [[R4:\$w[0-9]+]], [[R2]], [[R1]]
+  %4 = select <8 x i1> %3, <8 x i16> %1, <8 x i16> <i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1>
+  ; CHECK-DAG: ldi.h [[R3:\$w[0-9]+]], 1
+  ; CHECK-DAG: bsel.v [[R4]], [[R1]], [[R3]]
+  store <8 x i16> %4, <8 x i16>* %d
+  ; CHECK-DAG: st.h [[R4]], 0($4)
+
+  ret void
+  ; CHECK: .size bseli_u_v8i16
+}
+
+define void @bseli_u_v4i32(<4 x i32>* %d, <4 x i32>* %a, <4 x i32>* %b,
+                        <4 x i32>* %c) nounwind {
+  ; CHECK: bseli_u_v4i32:
+
+  %1 = load <4 x i32>* %a
+  ; CHECK-DAG: ld.w [[R1:\$w[0-9]+]], 0($5)
+  %2 = load <4 x i32>* %b
+  ; CHECK-DAG: ld.w [[R2:\$w[0-9]+]], 0($6)
+  %3 = icmp ugt <4 x i32> %1, %2
+  ; CHECK-DAG: clt_u.w [[R4:\$w[0-9]+]], [[R2]], [[R1]]
+  %4 = select <4 x i1> %3, <4 x i32> %1, <4 x i32> <i32 1, i32 1, i32 1, i32 1>
+  ; CHECK-DAG: ldi.w [[R3:\$w[0-9]+]], 1
+  ; CHECK-DAG: bsel.v [[R4]], [[R1]], [[R3]]
+  store <4 x i32> %4, <4 x i32>* %d
+  ; CHECK-DAG: st.w [[R4]], 0($4)
+
+  ret void
+  ; CHECK: .size bseli_u_v4i32
+}
+
+define void @bseli_u_v2i64(<2 x i64>* %d, <2 x i64>* %a, <2 x i64>* %b,
+                        <2 x i64>* %c) nounwind {
+  ; CHECK: bseli_u_v2i64:
+
+  %1 = load <2 x i64>* %a
+  ; CHECK-DAG: ld.d [[R1:\$w[0-9]+]], 0($5)
+  %2 = load <2 x i64>* %b
+  ; CHECK-DAG: ld.d [[R2:\$w[0-9]+]], 0($6)
+  %3 = icmp ugt <2 x i64> %1, %2
+  ; CHECK-DAG: clt_u.d [[R4:\$w[0-9]+]], [[R2]], [[R1]]
+  %4 = select <2 x i1> %3, <2 x i64> %1, <2 x i64> <i64 1, i64 1>
+  ; CHECK-DAG: ldi.d [[R3:\$w[0-9]+]], 1
+  ; CHECK-DAG: bsel.v [[R4]], [[R1]], [[R3]]
+  store <2 x i64> %4, <2 x i64>* %d
+  ; CHECK-DAG: st.d [[R4]], 0($4)
+
+  ret void
+  ; CHECK: .size bseli_u_v2i64
+}
