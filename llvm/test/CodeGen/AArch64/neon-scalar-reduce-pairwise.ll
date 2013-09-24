@@ -1,4 +1,4 @@
-; RUN: llc -march=aarch64 -mattr=+neon < %s | FileCheck %s
+; RUN: llc -mtriple=aarch64-none-linux-gnu -mattr=+neon < %s | FileCheck %s
 
 declare <1 x i64> @llvm.aarch64.neon.vpadd(<2 x i64>)
 
