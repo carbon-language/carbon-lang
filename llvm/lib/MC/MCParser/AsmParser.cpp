@@ -2353,7 +2353,7 @@ bool AsmParser::parseDirectiveZero() {
 }
 
 /// parseDirectiveFill
-///  ::= .fill expression , expression , expression
+///  ::= .fill expression [ , expression [ , expression ] ]
 bool AsmParser::parseDirectiveFill() {
   checkForValidSection();
 
@@ -2361,26 +2361,31 @@ bool AsmParser::parseDirectiveFill() {
   if (parseAbsoluteExpression(NumValues))
     return true;
 
-  if (getLexer().isNot(AsmToken::Comma))
-    return TokError("unexpected token in '.fill' directive");
-  Lex();
+  int64_t FillSize = 1;
+  int64_t FillExpr = 0;
 
-  int64_t FillSize;
-  if (parseAbsoluteExpression(FillSize))
-    return true;
+  if (getLexer().isNot(AsmToken::EndOfStatement)) {
+    if (getLexer().isNot(AsmToken::Comma))
+      return TokError("unexpected token in '.fill' directive");
+    Lex();
 
-  if (getLexer().isNot(AsmToken::Comma))
-    return TokError("unexpected token in '.fill' directive");
-  Lex();
+    if (parseAbsoluteExpression(FillSize))
+      return true;
 
-  int64_t FillExpr;
-  if (parseAbsoluteExpression(FillExpr))
-    return true;
+    if (getLexer().isNot(AsmToken::EndOfStatement)) {
+      if (getLexer().isNot(AsmToken::Comma))
+        return TokError("unexpected token in '.fill' directive");
+      Lex();
 
-  if (getLexer().isNot(AsmToken::EndOfStatement))
-    return TokError("unexpected token in '.fill' directive");
+      if (parseAbsoluteExpression(FillExpr))
+        return true;
 
-  Lex();
+      if (getLexer().isNot(AsmToken::EndOfStatement))
+        return TokError("unexpected token in '.fill' directive");
+
+      Lex();
+    }
+  }
 
   if (FillSize != 1 && FillSize != 2 && FillSize != 4 && FillSize != 8)
     return TokError("invalid '.fill' size, expected 1, 2, 4, or 8");

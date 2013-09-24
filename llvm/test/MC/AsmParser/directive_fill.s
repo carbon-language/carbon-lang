@@ -15,3 +15,19 @@ TEST1:
 # CHECK: .quad 4
 TEST2:  
         .fill 1, 8, 4
+
+# CHECK: TEST3
+# CHECK: .byte 0
+# CHECK: .byte 0
+# CHECK: .byte 0
+# CHECK: .byte 0
+TEST3:
+	.fill 4
+
+# CHECK: TEST4
+# CHECK: .short 0
+# CHECK: .short 0
+# CHECK: .short 0
+# CHECK: .short 0
+TEST4:
+	.fill 4, 2
