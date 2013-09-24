@@ -941,26 +941,48 @@ bool HeaderSearch::hasModuleMap(StringRef FileName,
     DirName = llvm::sys::path::parent_path(DirName);
     if (DirName.empty())
       return false;
-    
+
     // Determine whether this directory exists.
     const DirectoryEntry *Dir = FileMgr.getDirectory(DirName);
     if (!Dir)
       return false;
     
-    // Try to load the module map file in this directory.
+    // Load user-specified module map files in 'Dir'.
+    bool ModuleMapFound = false;
+    for (llvm::SetVector<std::string>::iterator
+             I = HSOpts->ModuleMapFiles.begin(),
+             E = HSOpts->ModuleMapFiles.end();
+         I != E; ++I) {
+      StringRef ModuleMapFileDir = llvm::sys::path::parent_path(*I);
+      if (!llvm::sys::fs::equivalent(ModuleMapFileDir, DirName))
+        continue;
+
+      const FileEntry *File = FileMgr.getFile(*I);
+      if (!File)
+        continue;
+
+      loadModuleMapFile(File, /*IsSystem=*/false);
+      ModuleMapFound = true;
+    }
+
+    // Try to load the "module.map" file in this directory.
     switch (loadModuleMapFile(Dir, IsSystem)) {
     case LMM_NewlyLoaded:
     case LMM_AlreadyLoaded:
-      // Success. All of the directories we stepped through inherit this module
-      // map file.
-      for (unsigned I = 0, N = FixUpDirectories.size(); I != N; ++I)
-        DirectoryHasModuleMap[FixUpDirectories[I]] = true;
-      
-      return true;
+      ModuleMapFound = true;
+      break;
 
     case LMM_NoDirectory:
     case LMM_InvalidModuleMap:
       break;
+    }
+
+    if (ModuleMapFound) {
+      // Success. All of the directories we stepped through inherit this module
+      // map file.
+      for (unsigned I = 0, N = FixUpDirectories.size(); I != N; ++I)
+        DirectoryHasModuleMap[FixUpDirectories[I]] = true;
+      return true;
     }
 
     // If we hit the top of our search, we're done.

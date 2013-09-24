@@ -194,6 +194,9 @@ Command-line parameters
 ``-fmodule-name=module-id``
   Consider a source file as a part of the given module.
 
+``-fmodule-map-file=<file>``
+  Load the given module map file if a header from its directory or one of its subdirectories is loaded.
+
 Module Map Language
 ===================
 
