@@ -597,16 +597,25 @@ AssemblyParse_x86::get_non_call_site_unwind_plan (UnwindPlan &unwind_plan)
         if (push_reg_p (machine_regno))
         {
             current_sp_bytes_offset_from_cfa += m_wordsize;
+            bool need_to_push_row = false;
+            // the PUSH instruction has moved the stack pointer - if the CFA is set in terms of the stack pointer,
+            // we need to add a new row of instructions.
+            if (row->GetCFARegister() == m_lldb_sp_regnum)
+            {
+                need_to_push_row = true;
+                row->SetCFAOffset (current_sp_bytes_offset_from_cfa);
+            }
+            // record where non-volatile (callee-saved, spilled) registers are saved on the stack
             if (nonvolatile_reg_p (machine_regno) && machine_regno_to_lldb_regno (machine_regno, lldb_regno))
             {
-                row->SetOffset (current_func_text_offset + insn_len);
-                if (row->GetCFARegister() == m_lldb_sp_regnum)
-                {
-                    row->SetCFAOffset (current_sp_bytes_offset_from_cfa);
-                }
+                need_to_push_row = true;
                 UnwindPlan::Row::RegisterLocation regloc;
                 regloc.SetAtCFAPlusOffset (-current_sp_bytes_offset_from_cfa);
                 row->SetRegisterInfo (lldb_regno, regloc);
+            }
+            if (need_to_push_row)
+            {
+                row->SetOffset (current_func_text_offset + insn_len);
                 unwind_plan.AppendRow (row);
                 // Allocate a new Row, populate it with the existing Row contents.
                 newrow = new UnwindPlan::Row;
