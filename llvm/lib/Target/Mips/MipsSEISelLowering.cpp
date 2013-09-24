@@ -673,17 +673,57 @@ static SDValue performSETCCCombine(SDNode *N, SelectionDAG &DAG) {
 static SDValue performVSELECTCombine(SDNode *N, SelectionDAG &DAG) {
   EVT Ty = N->getValueType(0);
 
-  if ((Ty != MVT::v2i16) && (Ty != MVT::v4i8))
-    return SDValue();
+  if (Ty.is128BitVector() && Ty.isInteger()) {
+    // Try the following combines:
+    //   (vselect (setcc $a, $b, SETLT), $b, $a)) -> (vsmax $a, $b)
+    //   (vselect (setcc $a, $b, SETLE), $b, $a)) -> (vsmax $a, $b)
+    //   (vselect (setcc $a, $b, SETLT), $a, $b)) -> (vsmin $a, $b)
+    //   (vselect (setcc $a, $b, SETLE), $a, $b)) -> (vsmin $a, $b)
+    //   (vselect (setcc $a, $b, SETULT), $b, $a)) -> (vumax $a, $b)
+    //   (vselect (setcc $a, $b, SETULE), $b, $a)) -> (vumax $a, $b)
+    //   (vselect (setcc $a, $b, SETULT), $a, $b)) -> (vumin $a, $b)
+    //   (vselect (setcc $a, $b, SETULE), $a, $b)) -> (vumin $a, $b)
+    // SETGT/SETGE/SETUGT/SETUGE variants of these will show up initially but
+    // will be expanded to equivalent SETLT/SETLE/SETULT/SETULE versions by the
+    // legalizer.
+    SDValue Op0 = N->getOperand(0);
 
-  SDValue SetCC = N->getOperand(0);
+    if (Op0->getOpcode() != ISD::SETCC)
+      return SDValue();
 
-  if (SetCC.getOpcode() != MipsISD::SETCC_DSP)
-    return SDValue();
+    ISD::CondCode CondCode = cast<CondCodeSDNode>(Op0->getOperand(2))->get();
+    bool Signed;
 
-  return DAG.getNode(MipsISD::SELECT_CC_DSP, SDLoc(N), Ty,
-                     SetCC.getOperand(0), SetCC.getOperand(1), N->getOperand(1),
-                     N->getOperand(2), SetCC.getOperand(2));
+    if (CondCode == ISD::SETLT  || CondCode == ISD::SETLE)
+      Signed = true;
+    else if (CondCode == ISD::SETULT || CondCode == ISD::SETULE)
+      Signed = false;
+    else
+      return SDValue();
+
+    SDValue Op1 = N->getOperand(1);
+    SDValue Op2 = N->getOperand(2);
+    SDValue Op0Op0 = Op0->getOperand(0);
+    SDValue Op0Op1 = Op0->getOperand(1);
+
+    if (Op1 == Op0Op0 && Op2 == Op0Op1)
+      return DAG.getNode(Signed ? MipsISD::VSMIN : MipsISD::VUMIN, SDLoc(N),
+                         Ty, Op1, Op2);
+    else if (Op1 == Op0Op1 && Op2 == Op0Op0)
+      return DAG.getNode(Signed ? MipsISD::VSMAX : MipsISD::VUMAX, SDLoc(N),
+                         Ty, Op1, Op2);
+  } else if ((Ty == MVT::v2i16) || (Ty == MVT::v4i8)) {
+    SDValue SetCC = N->getOperand(0);
+
+    if (SetCC.getOpcode() != MipsISD::SETCC_DSP)
+      return SDValue();
+
+    return DAG.getNode(MipsISD::SELECT_CC_DSP, SDLoc(N), Ty,
+                       SetCC.getOperand(0), SetCC.getOperand(1),
+                       N->getOperand(1), N->getOperand(2), SetCC.getOperand(2));
+  }
+
+  return SDValue();
 }
 
 static SDValue performXORCombine(SDNode *N, SelectionDAG &DAG,
@@ -1288,6 +1328,50 @@ SDValue MipsSETargetLowering::lowerINTRINSIC_WO_CHAIN(SDValue Op,
   case Intrinsic::mips_ldi_w:
   case Intrinsic::mips_ldi_d:
     return lowerMSAUnaryIntr(Op, DAG, MipsISD::VSPLAT);
+  case Intrinsic::mips_max_s_b:
+  case Intrinsic::mips_max_s_h:
+  case Intrinsic::mips_max_s_w:
+  case Intrinsic::mips_max_s_d:
+    return lowerMSABinaryIntr(Op, DAG, MipsISD::VSMAX);
+  case Intrinsic::mips_max_u_b:
+  case Intrinsic::mips_max_u_h:
+  case Intrinsic::mips_max_u_w:
+  case Intrinsic::mips_max_u_d:
+    return lowerMSABinaryIntr(Op, DAG, MipsISD::VUMAX);
+  case Intrinsic::mips_maxi_s_b:
+  case Intrinsic::mips_maxi_s_h:
+  case Intrinsic::mips_maxi_s_w:
+  case Intrinsic::mips_maxi_s_d:
+    return lowerMSABinaryImmIntr(Op, DAG, MipsISD::VSMAX,
+                                 lowerMSASplatImm(Op, 2, DAG));
+  case Intrinsic::mips_maxi_u_b:
+  case Intrinsic::mips_maxi_u_h:
+  case Intrinsic::mips_maxi_u_w:
+  case Intrinsic::mips_maxi_u_d:
+    return lowerMSABinaryImmIntr(Op, DAG, MipsISD::VUMAX,
+                                 lowerMSASplatImm(Op, 2, DAG));
+  case Intrinsic::mips_min_s_b:
+  case Intrinsic::mips_min_s_h:
+  case Intrinsic::mips_min_s_w:
+  case Intrinsic::mips_min_s_d:
+    return lowerMSABinaryIntr(Op, DAG, MipsISD::VSMIN);
+  case Intrinsic::mips_min_u_b:
+  case Intrinsic::mips_min_u_h:
+  case Intrinsic::mips_min_u_w:
+  case Intrinsic::mips_min_u_d:
+    return lowerMSABinaryIntr(Op, DAG, MipsISD::VUMIN);
+  case Intrinsic::mips_mini_s_b:
+  case Intrinsic::mips_mini_s_h:
+  case Intrinsic::mips_mini_s_w:
+  case Intrinsic::mips_mini_s_d:
+    return lowerMSABinaryImmIntr(Op, DAG, MipsISD::VSMIN,
+                                 lowerMSASplatImm(Op, 2, DAG));
+  case Intrinsic::mips_mini_u_b:
+  case Intrinsic::mips_mini_u_h:
+  case Intrinsic::mips_mini_u_w:
+  case Intrinsic::mips_mini_u_d:
+    return lowerMSABinaryImmIntr(Op, DAG, MipsISD::VUMIN,
+                                 lowerMSASplatImm(Op, 2, DAG));
   case Intrinsic::mips_mulv_b:
   case Intrinsic::mips_mulv_h:
   case Intrinsic::mips_mulv_w:

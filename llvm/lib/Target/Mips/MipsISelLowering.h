@@ -166,6 +166,12 @@ namespace llvm {
       VCLT_S,
       VCLT_U,
 
+      // Element-wise vector max/min.
+      VSMAX,
+      VSMIN,
+      VUMAX,
+      VUMIN,
+
       // Special case of BUILD_VECTOR where all elements are the same.
       VSPLAT,
       // Special case of VSPLAT where the result is v2i64, the operand is

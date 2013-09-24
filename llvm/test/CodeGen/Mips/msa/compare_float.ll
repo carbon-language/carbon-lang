@@ -596,3 +596,67 @@ define void @bseli_v2f64(<2 x double>* %d, <2 x double>* %a, <2 x double>* %b,
   ret void
   ; CHECK: .size bseli_v2f64
 }
+
+define void @max_v4f32(<4 x float>* %c, <4 x float>* %a, <4 x float>* %b) nounwind {
+  ; CHECK: max_v4f32:
+
+  %1 = load <4 x float>* %a
+  ; CHECK-DAG: ld.w [[R1:\$w[0-9]+]], 0($5)
+  %2 = load <4 x float>* %b
+  ; CHECK-DAG: ld.w [[R2:\$w[0-9]+]], 0($6)
+  %3 = tail call <4 x float> @llvm.mips.fmax.w(<4 x float> %1, <4 x float> %2)
+  ; CHECK-DAG: fmax.w [[R3:\$w[0-9]+]], [[R1]], [[R2]]
+  store <4 x float> %3, <4 x float>* %c
+  ; CHECK-DAG: st.w [[R3]], 0($4)
+
+  ret void
+  ; CHECK: .size max_v4f32
+}
+
+define void @max_v2f64(<2 x double>* %c, <2 x double>* %a, <2 x double>* %b) nounwind {
+  ; CHECK: max_v2f64:
+
+  %1 = load <2 x double>* %a
+  ; CHECK-DAG: ld.d [[R1:\$w[0-9]+]], 0($5)
+  %2 = load <2 x double>* %b
+  ; CHECK-DAG: ld.d [[R2:\$w[0-9]+]], 0($6)
+  %3 = tail call <2 x double> @llvm.mips.fmax.d(<2 x double> %1, <2 x double> %2)
+  ; CHECK-DAG: fmax.d [[R3:\$w[0-9]+]], [[R1]], [[R2]]
+  store <2 x double> %3, <2 x double>* %c
+  ; CHECK-DAG: st.d [[R3]], 0($4)
+
+  ret void
+  ; CHECK: .size max_v2f64
+}
+
+define void @min_v4f32(<4 x float>* %c, <4 x float>* %a, <4 x float>* %b) nounwind {
+  ; CHECK: min_v4f32:
+
+  %1 = load <4 x float>* %a
+  ; CHECK-DAG: ld.w [[R1:\$w[0-9]+]], 0($5)
+  %2 = load <4 x float>* %b
+  ; CHECK-DAG: ld.w [[R2:\$w[0-9]+]], 0($6)
+  %3 = tail call <4 x float> @llvm.mips.fmin.w(<4 x float> %1, <4 x float> %2)
+  ; CHECK-DAG: fmin.w [[R3:\$w[0-9]+]], [[R1]], [[R2]]
+  store <4 x float> %3, <4 x float>* %c
+  ; CHECK-DAG: st.w [[R3]], 0($4)
+
+  ret void
+  ; CHECK: .size min_v4f32
+}
+
+define void @min_v2f64(<2 x double>* %c, <2 x double>* %a, <2 x double>* %b) nounwind {
+  ; CHECK: min_v2f64:
+
+  %1 = load <2 x double>* %a
+  ; CHECK-DAG: ld.d [[R1:\$w[0-9]+]], 0($5)
+  %2 = load <2 x double>* %b
+  ; CHECK-DAG: ld.d [[R2:\$w[0-9]+]], 0($6)
+  %3 = tail call <2 x double> @llvm.mips.fmin.d(<2 x double> %1, <2 x double> %2)
+  ; CHECK-DAG: fmin.d [[R3:\$w[0-9]+]], [[R1]], [[R2]]
+  store <2 x double> %3, <2 x double>* %c
+  ; CHECK-DAG: st.d [[R3]], 0($4)
+
+  ret void
+  ; CHECK: .size min_v2f64
+}

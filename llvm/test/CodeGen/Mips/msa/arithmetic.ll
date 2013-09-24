@@ -69,7 +69,8 @@ define void @add_v16i8_i(<16 x i8>* %c, <16 x i8>* %a) nounwind {
 
   %1 = load <16 x i8>* %a
   ; CHECK-DAG: ld.b [[R1:\$w[0-9]+]], 0($5)
-  %2 = add <16 x i8> %1, <i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1>
+  %2 = add <16 x i8> %1, <i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1,
+                          i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1>
   ; CHECK-DAG: addvi.b [[R3:\$w[0-9]+]], [[R1]], 1
   store <16 x i8> %2, <16 x i8>* %c
   ; CHECK-DAG: st.b [[R3]], 0($4)
@@ -83,7 +84,8 @@ define void @add_v8i16_i(<8 x i16>* %c, <8 x i16>* %a) nounwind {
 
   %1 = load <8 x i16>* %a
   ; CHECK-DAG: ld.h [[R1:\$w[0-9]+]], 0($5)
-  %2 = add <8 x i16> %1, <i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1>
+  %2 = add <8 x i16> %1, <i16 1, i16 1, i16 1, i16 1,
+                          i16 1, i16 1, i16 1, i16 1>
   ; CHECK-DAG: addvi.h [[R3:\$w[0-9]+]], [[R1]], 1
   store <8 x i16> %2, <8 x i16>* %c
   ; CHECK-DAG: st.h [[R3]], 0($4)
@@ -189,7 +191,8 @@ define void @sub_v16i8_i(<16 x i8>* %c, <16 x i8>* %a) nounwind {
 
   %1 = load <16 x i8>* %a
   ; CHECK-DAG: ld.b [[R1:\$w[0-9]+]], 0($5)
-  %2 = sub <16 x i8> %1, <i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1>
+  %2 = sub <16 x i8> %1, <i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1,
+                          i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1>
   ; CHECK-DAG: subvi.b [[R3:\$w[0-9]+]], [[R1]], 1
   store <16 x i8> %2, <16 x i8>* %c
   ; CHECK-DAG: st.b [[R3]], 0($4)
@@ -203,7 +206,8 @@ define void @sub_v8i16_i(<8 x i16>* %c, <8 x i16>* %a) nounwind {
 
   %1 = load <8 x i16>* %a
   ; CHECK-DAG: ld.h [[R1:\$w[0-9]+]], 0($5)
-  %2 = sub <8 x i16> %1, <i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1>
+  %2 = sub <8 x i16> %1, <i16 1, i16 1, i16 1, i16 1,
+                          i16 1, i16 1, i16 1, i16 1>
   ; CHECK-DAG: subvi.h [[R3:\$w[0-9]+]], [[R1]], 1
   store <8 x i16> %2, <8 x i16>* %c
   ; CHECK-DAG: st.h [[R3]], 0($4)
