@@ -275,7 +275,7 @@ class OMPSharedClause : public OMPClause, public OMPVarList<OMPSharedClause> {
   /// \param N Number of variables.
   ///
   explicit OMPSharedClause(unsigned N)
-    : OMPClause(OMPC_private, SourceLocation(), SourceLocation()),
+    : OMPClause(OMPC_shared, SourceLocation(), SourceLocation()),
       OMPVarList<OMPSharedClause>(SourceLocation(), N) { }
 public:
   /// \brief Creates clause with a list of variables \a VL.

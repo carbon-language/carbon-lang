@@ -410,6 +410,9 @@ private:
 #define OPENMP_CLAUSE(Name, Class)                                      \
   bool Visit##Class(Class *C);
 #include "clang/Basic/OpenMPKinds.def"
+  /// \brief Process clauses with list of variables.
+  template <typename T>
+  void VisitOMPClauseList(T *Node);
 
   typedef SmallVector<Stmt *, 16> StmtsTy;
   typedef SmallVector<StmtsTy *, 4> QueuesTy;
@@ -2326,25 +2329,26 @@ bool RecursiveASTVisitor<Derived>::VisitOMPDefaultClause(OMPDefaultClause *C) {
   return true;
 }
 
-#define PROCESS_OMP_CLAUSE_LIST(Class, Node)                                   \
-  for (OMPVarList<Class>::varlist_iterator I = Node->varlist_begin(),          \
-                                           E = Node->varlist_end();            \
-         I != E; ++I)                                                          \
+template<typename Derived>
+template<typename T>
+void RecursiveASTVisitor<Derived>::VisitOMPClauseList(T *Node) {
+  for (typename T::varlist_iterator I = Node->varlist_begin(),
+                                    E = Node->varlist_end();
+         I != E; ++I)
     TraverseStmt(*I);
+}
 
 template<typename Derived>
 bool RecursiveASTVisitor<Derived>::VisitOMPPrivateClause(OMPPrivateClause *C) {
-  PROCESS_OMP_CLAUSE_LIST(OMPPrivateClause, C)
+  VisitOMPClauseList(C);
   return true;
 }
 
 template<typename Derived>
 bool RecursiveASTVisitor<Derived>::VisitOMPSharedClause(OMPSharedClause *C) {
-  PROCESS_OMP_CLAUSE_LIST(OMPSharedClause, C)
+  VisitOMPClauseList(C);
   return true;
 }
-
-#undef PROCESS_OMP_CLAUSE_LIST
 
 // FIXME: look at the following tricky-seeming exprs to see if we
 // need to recurse on anything.  These are ones that have methods

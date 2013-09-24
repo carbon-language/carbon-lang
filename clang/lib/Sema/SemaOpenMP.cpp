@@ -717,7 +717,8 @@ OMPClause *Sema::ActOnOpenMPPrivateClause(ArrayRef<Expr *> VarList,
   SmallVector<Expr *, 8> Vars;
   for (ArrayRef<Expr *>::iterator I = VarList.begin(), E = VarList.end();
        I != E; ++I) {
-    if (*I && isa<DependentScopeDeclRefExpr>(*I)) {
+    assert(*I && "NULL expr in OpenMP private clause.");
+    if (isa<DependentScopeDeclRefExpr>(*I)) {
       // It will be analyzed later.
       Vars.push_back(*I);
       continue;
@@ -849,7 +850,8 @@ OMPClause *Sema::ActOnOpenMPSharedClause(ArrayRef<Expr *> VarList,
   SmallVector<Expr *, 8> Vars;
   for (ArrayRef<Expr *>::iterator I = VarList.begin(), E = VarList.end();
        I != E; ++I) {
-    if (*I && isa<DependentScopeDeclRefExpr>(*I)) {
+    assert(*I && "NULL expr in OpenMP shared clause.");
+    if (isa<DependentScopeDeclRefExpr>(*I)) {
       // It will be analyzed later.
       Vars.push_back(*I);
       continue;

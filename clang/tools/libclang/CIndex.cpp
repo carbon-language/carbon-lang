@@ -1911,6 +1911,9 @@ void EnqueueVisitor::EnqueueChildren(const Stmt *S) {
 namespace {
 class OMPClauseEnqueue : public ConstOMPClauseVisitor<OMPClauseEnqueue> {
   EnqueueVisitor *Visitor;
+  /// \brief Process clauses with list of variables.
+  template <typename T>
+  void VisitOMPClauseList(T *Node);
 public:
   OMPClauseEnqueue(EnqueueVisitor *Visitor) : Visitor(Visitor) { }
 #define OPENMP_CLAUSE(Name, Class)                                             \
@@ -1919,20 +1922,23 @@ public:
 };
 
 void OMPClauseEnqueue::VisitOMPDefaultClause(const OMPDefaultClause *C) { }
-#define PROCESS_OMP_CLAUSE_LIST(Class, Node)                                   \
-  for (OMPVarList<Class>::varlist_const_iterator I = Node->varlist_begin(),    \
-                                                 E = Node->varlist_end();      \
-         I != E; ++I)                                                          \
+
+template<typename T>
+void OMPClauseEnqueue::VisitOMPClauseList(T *Node) {
+  for (typename T::varlist_const_iterator I = Node->varlist_begin(),
+                                          E = Node->varlist_end();
+         I != E; ++I)
     Visitor->AddStmt(*I);
+}
 
 void OMPClauseEnqueue::VisitOMPPrivateClause(const OMPPrivateClause *C) {
-  PROCESS_OMP_CLAUSE_LIST(OMPPrivateClause, C)
+  VisitOMPClauseList(C);
 }
 void OMPClauseEnqueue::VisitOMPSharedClause(const OMPSharedClause *C) {
-  PROCESS_OMP_CLAUSE_LIST(OMPSharedClause, C)
+  VisitOMPClauseList(C);
 }
-#undef PROCESS_OMP_CLAUSE_LIST
 }
+
 void EnqueueVisitor::EnqueueChildren(const OMPClause *S) {
   unsigned size = WL.size();
   OMPClauseEnqueue Visitor(this);
