@@ -121,3 +121,23 @@ cast.end:                                         ; preds = %cast.notnull, %entr
 }
 
 declare noalias i8* @_Znwm(i64)
+
+define i8* @malloc_can_return_null() {
+entry:
+  %call = tail call noalias i8* @malloc(i64 8)
+  %cmp = icmp eq i8* %call, null
+  br i1 %cmp, label %cast.end, label %cast.notnull
+
+cast.notnull:                                     ; preds = %entry
+  %add.ptr = getelementptr inbounds i8* %call, i64 4
+  br label %cast.end
+
+cast.end:                                         ; preds = %cast.notnull, %entry
+  %cast.result = phi i8* [ %add.ptr, %cast.notnull ], [ null, %entry ]
+  ret i8* %cast.result
+
+; CHECK-LABEL: @malloc_can_return_null
+; CHECK: br i1 %cmp, label %cast.end, label %cast.notnull
+}
+
+declare noalias i8* @malloc(i64)

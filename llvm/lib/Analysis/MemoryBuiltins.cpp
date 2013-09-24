@@ -35,9 +35,9 @@ enum AllocType {
   CallocLike         = 1<<1, // allocates + bzero
   ReallocLike        = 1<<2, // reallocates
   StrDupLike         = 1<<3,
-  OpNewLike          = MallocLike | (1<<4), // allocates; never returns null
-  AllocLike          = MallocLike | CallocLike | StrDupLike,
-  AnyAlloc           = MallocLike | CallocLike | ReallocLike | StrDupLike
+  OpNewLike          = 1<<4, // allocates; never returns null
+  AllocLike          = MallocLike | CallocLike | StrDupLike | OpNewLike,
+  AnyAlloc           = AllocLike | ReallocLike
 };
 
 struct AllocFnsTy {
