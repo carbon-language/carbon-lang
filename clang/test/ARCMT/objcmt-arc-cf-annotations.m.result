@@ -2088,8 +2088,8 @@ void rdar13783514(xpc_connection_t connection) {
 CFAttributedStringRef CFAttributedCreate(void *CFObj CF_CONSUMED) CF_RETURNS_RETAINED;
 
 @interface Action
-@property(nonatomic) SEL action;
+@property (nonatomic) SEL action;
 
-@property(nonatomic, unsafe_unretained) id target;
+@property (nonatomic, unsafe_unretained) id target;
 
 @end

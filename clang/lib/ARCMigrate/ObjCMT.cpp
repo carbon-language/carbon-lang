@@ -252,7 +252,7 @@ static bool rewriteToObjCProperty(const ObjCMethodDecl *Getter,
                                   const NSAPI &NS, edit::Commit &commit,
                                   unsigned LengthOfPrefix) {
   ASTContext &Context = NS.getASTContext();
-  std::string PropertyString = "@property(nonatomic";
+  std::string PropertyString = "@property (nonatomic";
   std::string PropertyNameString = Getter->getNameAsString();
   StringRef PropertyName(PropertyNameString);
   if (LengthOfPrefix > 0) {
