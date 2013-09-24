@@ -36,6 +36,8 @@
 #define NS_RETURNS_AUTORELEASED __attribute__((ns_returns_autoreleased))
 #endif
 
+#define NS_AVAILABLE __attribute__((availability(macosx,introduced=10.0)))
+
 CF_IMPLICIT_BRIDGING_ENABLED
 
 typedef unsigned long CFTypeID;
@@ -103,4 +105,20 @@ CF_IMPLICIT_BRIDGING_DISABLED
 - (JSObjectRef)JSObject; 
 - (TTJSObjectRef)JSObject1;
 - (JSObjectRef*)JSObject2 NS_RETURNS_INNER_POINTER;
+@end
+
+// rdar://15044991
+typedef void *SecTrustRef;
+
+@interface NSURLProtectionSpace
+@property (readonly) SecTrustRef  NS_RETURNS_INNER_POINTER serverTrust NS_AVAILABLE;
+- (void *) FOO NS_AVAILABLE NS_RETURNS_INNER_POINTER;
+@property (readonly) void *  NS_RETURNS_INNER_POINTER mitTrust NS_AVAILABLE;
+
+@property (readonly) void *  NS_RETURNS_INNER_POINTER mittiTrust;
+
+@property (readonly) SecTrustRef  NS_RETURNS_INNER_POINTER XserverTrust;
+
+- (SecTrustRef) FOO1 NS_AVAILABLE NS_RETURNS_INNER_POINTER;
+
 @end
