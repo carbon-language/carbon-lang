@@ -174,6 +174,7 @@ namespace llvm {
 
       // Vector Shuffle with mask as an operand
       VSHF,  // Generic shuffle
+      SHF,   // 4-element set shuffle.
 
       // Combined (XOR (OR $a, $b), -1)
       VNOR,

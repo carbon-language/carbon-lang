@@ -23,6 +23,8 @@ def SDT_VFSetCC : SDTypeProfile<1, 3, [SDTCisInt<0>,
 def SDT_VSHF : SDTypeProfile<1, 3, [SDTCisInt<0>, SDTCisVec<0>,
                                     SDTCisInt<1>, SDTCisVec<1>,
                                     SDTCisSameAs<0, 2>, SDTCisSameAs<2, 3>]>;
+def SDT_SHF : SDTypeProfile<1, 2, [SDTCisInt<0>, SDTCisVec<0>,
+                                   SDTCisVT<1, i32>, SDTCisSameAs<0, 2>]>;
 
 def MipsVAllNonZero : SDNode<"MipsISD::VALL_NONZERO", SDT_MipsVecCond>;
 def MipsVAnyNonZero : SDNode<"MipsISD::VANY_NONZERO", SDT_MipsVecCond>;
@@ -39,6 +41,7 @@ def MipsVUMin : SDNode<"MipsISD::VUMIN", SDTIntBinOp,
 def MipsVNOR : SDNode<"MipsISD::VNOR", SDTIntBinOp,
                       [SDNPCommutative, SDNPAssociative]>;
 def MipsVSHF : SDNode<"MipsISD::VSHF", SDT_VSHF>;
+def MipsSHF : SDNode<"MipsISD::SHF", SDT_SHF>;
 
 def vsetcc : SDNode<"ISD::SETCC", SDT_VSetCC>;
 def vfsetcc : SDNode<"ISD::SETCC", SDT_VFSetCC>;
@@ -1074,6 +1077,16 @@ class MSA_I8_X_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
   InstrItinClass Itinerary = itin;
 }
 
+class MSA_I8_SHF_DESC_BASE<string instr_asm, RegisterClass RCWD,
+                           RegisterClass RCWS = RCWD,
+                           InstrItinClass itin = NoItinerary> {
+  dag OutOperandList = (outs RCWD:$wd);
+  dag InOperandList = (ins RCWS:$ws, uimm8:$u8);
+  string AsmString = !strconcat(instr_asm, "\t$wd, $ws, $u8");
+  list<dag> Pattern = [(set RCWD:$wd, (MipsSHF immZExt8:$u8, RCWS:$ws))];
+  InstrItinClass Itinerary = itin;
+}
+
 class MSA_I10_LDI_DESC_BASE<string instr_asm, RegisterClass RCWD,
                             InstrItinClass itin = NoItinerary> {
   dag OutOperandList = (outs RCWD:$wd);
@@ -2066,9 +2079,9 @@ class SAT_U_H_DESC : MSA_BIT_H_DESC_BASE<"sat_u.h", int_mips_sat_u_h, MSA128H>;
 class SAT_U_W_DESC : MSA_BIT_W_DESC_BASE<"sat_u.w", int_mips_sat_u_w, MSA128W>;
 class SAT_U_D_DESC : MSA_BIT_D_DESC_BASE<"sat_u.d", int_mips_sat_u_d, MSA128D>;
 
-class SHF_B_DESC : MSA_I8_X_DESC_BASE<"shf.b", int_mips_shf_b, MSA128B>;
-class SHF_H_DESC : MSA_I8_X_DESC_BASE<"shf.h", int_mips_shf_h, MSA128H>;
-class SHF_W_DESC : MSA_I8_X_DESC_BASE<"shf.w", int_mips_shf_w, MSA128W>;
+class SHF_B_DESC : MSA_I8_SHF_DESC_BASE<"shf.b", MSA128B>;
+class SHF_H_DESC : MSA_I8_SHF_DESC_BASE<"shf.h", MSA128H>;
+class SHF_W_DESC : MSA_I8_SHF_DESC_BASE<"shf.w", MSA128W>;
 
 class SLD_B_DESC : MSA_3R_DESC_BASE<"sld.b", int_mips_sld_b, MSA128B>;
 class SLD_H_DESC : MSA_3R_DESC_BASE<"sld.h", int_mips_sld_h, MSA128H>;

@@ -225,6 +225,7 @@ const char *MipsTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case MipsISD::VEXTRACT_ZEXT_ELT: return "MipsISD::VEXTRACT_ZEXT_ELT";
   case MipsISD::VNOR:              return "MipsISD::VNOR";
   case MipsISD::VSHF:              return "MipsISD::VSHF";
+  case MipsISD::SHF:               return "MipsISD::SHF";
   default:                         return NULL;
   }
 }

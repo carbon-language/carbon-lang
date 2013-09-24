@@ -1428,6 +1428,11 @@ SDValue MipsSETargetLowering::lowerINTRINSIC_WO_CHAIN(SDValue Op,
   case Intrinsic::mips_pcnt_w:
   case Intrinsic::mips_pcnt_d:
     return lowerMSAUnaryIntr(Op, DAG, ISD::CTPOP);
+  case Intrinsic::mips_shf_b:
+  case Intrinsic::mips_shf_h:
+  case Intrinsic::mips_shf_w:
+    return DAG.getNode(MipsISD::SHF, SDLoc(Op), Op->getValueType(0),
+                       Op->getOperand(2), Op->getOperand(1));
   case Intrinsic::mips_sll_b:
   case Intrinsic::mips_sll_h:
   case Intrinsic::mips_sll_w:
@@ -1735,6 +1740,72 @@ SDValue MipsSETargetLowering::lowerBUILD_VECTOR(SDValue Op,
   return SDValue();
 }
 
+// Lower VECTOR_SHUFFLE into SHF (if possible).
+//
+// SHF splits the vector into blocks of four elements, then shuffles these
+// elements according to a <4 x i2> constant (encoded as an integer immediate).
+//
+// It is therefore possible to lower into SHF when the mask takes the form:
+//   <a, b, c, d, a+4, b+4, c+4, d+4, a+8, b+8, c+8, d+8, ...>
+// When undef's appear they are treated as if they were whatever value is
+// necessary in order to fit the above form.
+//
+// For example:
+//   %2 = shufflevector <8 x i16> %0, <8 x i16> undef,
+//                      <8 x i32> <i32 3, i32 2, i32 1, i32 0,
+//                                 i32 7, i32 6, i32 5, i32 4>
+// is lowered to:
+//   (SHF_H $w0, $w1, 27)
+// where the 27 comes from:
+//   3 + (2 << 2) + (1 << 4) + (0 << 6)
+static SDValue lowerVECTOR_SHUFFLE_SHF(SDValue Op, EVT ResTy,
+                                       SmallVector<int, 16> Indices,
+                                       SelectionDAG &DAG) {
+  int SHFIndices[4] = { -1, -1, -1, -1 };
+
+  if (Indices.size() < 4)
+    return SDValue();
+
+  for (unsigned i = 0; i < 4; ++i) {
+    for (unsigned j = i; j < Indices.size(); j += 4) {
+      int Idx = Indices[j];
+
+      // Convert from vector index to 4-element subvector index
+      // If an index refers to an element outside of the subvector then give up
+      if (Idx != -1) {
+        Idx -= 4 * (j / 4);
+        if (Idx < 0 || Idx >= 4)
+          return SDValue();
+      }
+
+      // If the mask has an undef, replace it with the current index.
+      // Note that it might still be undef if the current index is also undef
+      if (SHFIndices[i] == -1)
+        SHFIndices[i] = Idx;
+
+      // Check that non-undef values are the same as in the mask. If they
+      // aren't then give up
+      if (!(Idx == -1 || Idx == SHFIndices[i]))
+        return SDValue();
+    }
+  }
+
+  // Calculate the immediate. Replace any remaining undefs with zero
+  APInt Imm(32, 0);
+  for (int i = 3; i >= 0; --i) {
+    int Idx = SHFIndices[i];
+
+    if (Idx == -1)
+      Idx = 0;
+
+    Imm <<= 2;
+    Imm |= Idx & 0x3;
+  }
+
+  return DAG.getNode(MipsISD::SHF, SDLoc(Op), ResTy,
+                     DAG.getConstant(Imm, MVT::i32), Op->getOperand(0));
+}
+
 // Lower VECTOR_SHUFFLE into VSHF.
 //
 // This mostly consists of converting the shuffle indices in Indices into a
@@ -1802,6 +1873,9 @@ SDValue MipsSETargetLowering::lowerVECTOR_SHUFFLE(SDValue Op,
   for (int i = 0; i < ResTyNumElts; ++i)
     Indices.push_back(Node->getMaskElt(i));
 
+  SDValue Result = lowerVECTOR_SHUFFLE_SHF(Op, ResTy, Indices, DAG);
+  if (Result.getNode())
+    return Result;
   return lowerVECTOR_SHUFFLE_VSHF(Op, ResTy, Indices, DAG);
 }
 

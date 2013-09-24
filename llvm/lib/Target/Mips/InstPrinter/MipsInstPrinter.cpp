@@ -211,6 +211,11 @@ printFCCOperand(const MCInst *MI, int opNum, raw_ostream &O) {
   O << MipsFCCToString((Mips::CondCode)MO.getImm());
 }
 
+void MipsInstPrinter::
+printSHFMask(const MCInst *MI, int opNum, raw_ostream &O) {
+  llvm_unreachable("TODO");
+}
+
 bool MipsInstPrinter::printAlias(const char *Str, const MCInst &MI,
                                  unsigned OpNo, raw_ostream &OS) {
   OS << "\t" << Str << "\t";
