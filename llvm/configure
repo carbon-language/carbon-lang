@@ -1992,8 +1992,8 @@ echo "$as_me: error: Already configured in ${srcdir}" >&2;}
   fi
 fi
 
-${CFLAGS=}
-${CXXFLAGS=}
+: ${CFLAGS=}
+: ${CXXFLAGS=}
 
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'

@@ -61,8 +61,8 @@ fi
 
 dnl Default to empty (i.e. assigning the null string to) CFLAGS and CXXFLAGS,
 dnl instead of the autoconf default (for example, '-g -O2' for CC=gcc).
-${CFLAGS=}
-${CXXFLAGS=}
+: ${CFLAGS=}
+: ${CXXFLAGS=}
 
 dnl We need to check for the compiler up here to avoid anything else
 dnl starting with a different one.
