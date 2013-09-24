@@ -1643,7 +1643,7 @@ const char *Lexer::LexUDSuffix(Token &Result, const char *CurPtr,
       // In C++1y, we need to look ahead a few characters to see if this is a
       // valid suffix for a string literal or a numeric literal (this could be
       // the 'operator""if' defining a numeric literal operator).
-      const int MaxStandardSuffixLength = 3;
+      const unsigned MaxStandardSuffixLength = 3;
       char Buffer[MaxStandardSuffixLength] = { C };
       unsigned Consumed = Size;
       unsigned Chars = 1;
