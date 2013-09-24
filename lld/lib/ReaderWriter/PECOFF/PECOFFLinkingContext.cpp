@@ -40,39 +40,39 @@ bool PECOFFLinkingContext::validateImpl(raw_ostream &diagnostics) {
     diagnostics << "Invalid stack size: reserve size must be equal to or "
                 << "greater than commit size, but got " << _stackCommit
                 << " and " << _stackReserve << ".\n";
-    return true;
+    return false;
   }
 
   if (_heapReserve < _heapCommit) {
     diagnostics << "Invalid heap size: reserve size must be equal to or "
                 << "greater than commit size, but got " << _heapCommit
                 << " and " << _heapReserve << ".\n";
-    return true;
+    return false;
   }
 
   // It's an error if the base address is not multiple of 64K.
   if (_baseAddress & 0xffff) {
     diagnostics << "Base address have to be multiple of 64K, but got "
                 << _baseAddress << "\n";
-    return true;
+    return false;
   }
 
   std::bitset<64> alignment(_sectionAlignment);
   if (alignment.count() != 1) {
     diagnostics << "Section alignment must be a power of 2, but got "
                 << _sectionAlignment << "\n";
-    return true;
+    return false;
   }
 
   // Architectures other than i386 is not supported yet.
   if (_machineType != llvm::COFF::IMAGE_FILE_MACHINE_I386) {
     diagnostics << "Machine type other than x86 is not supported.\n";
-    return true;
+    return false;
   }
 
   _reader = createReaderPECOFF(*this);
   _writer = createWriterPECOFF(*this);
-  return false;
+  return true;
 }
 
 std::unique_ptr<File> PECOFFLinkingContext::createEntrySymbolFile() {

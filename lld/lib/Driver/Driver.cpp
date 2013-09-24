@@ -42,7 +42,7 @@ bool Driver::link(const LinkingContext &context, raw_ostream &diagnostics) {
   }
   InputGraph &inputGraph = context.inputGraph();
   if (!inputGraph.numFiles())
-    return true;
+    return false;
 
   // Read inputs
   ScopedTask readTask(getDefaultDomain(), "Read Args");
@@ -58,7 +58,7 @@ bool Driver::link(const LinkingContext &context, raw_ostream &diagnostics) {
       auto linkerInput = fileNode->createLinkerInput(context);
       if (!linkerInput) {
         llvm::outs() << fileNode->errStr(error_code(linkerInput)) << "\n";
-        return true;
+        return false;
       }
       linkerInputs.push_back(std::move(*linkerInput));
     }
@@ -84,7 +84,7 @@ bool Driver::link(const LinkingContext &context, raw_ostream &diagnostics) {
   readTask.end();
 
   if (fail)
-    return true;
+    return false;
 
   InputFiles inputs;
 
@@ -105,7 +105,7 @@ bool Driver::link(const LinkingContext &context, raw_ostream &diagnostics) {
   Resolver resolver(context, inputs);
   if (resolver.resolve()) {
     if (!context.allowRemainingUndefines())
-      return true;
+      return false;
   }
   MutableFile &merged = resolver.resultFile();
   resolveTask.end();
@@ -122,10 +122,10 @@ bool Driver::link(const LinkingContext &context, raw_ostream &diagnostics) {
   if (error_code ec = context.writeFile(merged)) {
     diagnostics << "Failed to write file '" << context.outputPath()
                 << "': " << ec.message() << "\n";
-    return true;
+    return false;
   }
 
-  return false;
+  return true;
 }
 
 } // namespace

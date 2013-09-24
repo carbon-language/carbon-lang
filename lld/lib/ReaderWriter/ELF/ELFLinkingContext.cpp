@@ -91,7 +91,7 @@ bool ELFLinkingContext::validateImpl(raw_ostream &diagnostics) {
     _writer = createWriterELF(*this);
     break;
   }
-  return false;
+  return true;
 }
 
 bool ELFLinkingContext::isDynamic() const {

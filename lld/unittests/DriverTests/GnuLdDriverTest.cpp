@@ -28,13 +28,13 @@ protected:
 };
 
 TEST_F(GnuLdParserTest, Empty) {
-  EXPECT_TRUE(parse("ld", nullptr));
+  EXPECT_FALSE(parse("ld", nullptr));
   EXPECT_EQ(linkingContext(), nullptr);
   EXPECT_EQ("No input files\n", errorMessage());
 }
 
 TEST_F(GnuLdParserTest, Basic) {
-  EXPECT_FALSE(parse("ld", "infile.o", nullptr));
+  EXPECT_TRUE(parse("ld", "infile.o", nullptr));
   EXPECT_NE(linkingContext(), nullptr);
   EXPECT_EQ("a.out", linkingContext()->outputPath());
   EXPECT_EQ(1, inputFileCount());
@@ -44,8 +44,8 @@ TEST_F(GnuLdParserTest, Basic) {
 }
 
 TEST_F(GnuLdParserTest, ManyOptions) {
-  EXPECT_FALSE(parse("ld", "-entry", "_start", "-o", "outfile",
-                     "--output-filetype=yaml", "infile.o", nullptr));
+  EXPECT_TRUE(parse("ld", "-entry", "_start", "-o", "outfile",
+                    "--output-filetype=yaml", "infile.o", nullptr));
   EXPECT_NE(linkingContext(), nullptr);
   EXPECT_EQ("outfile", linkingContext()->outputPath());
   EXPECT_EQ("_start", linkingContext()->entrySymbolName());

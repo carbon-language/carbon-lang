@@ -82,11 +82,10 @@ MachOFileNode::createLinkerInput(const LinkingContext &ctx) {
 bool DarwinLdDriver::linkMachO(int argc, const char *argv[],
                                raw_ostream &diagnostics) {
   MachOLinkingContext ctx;
-  if (parse(argc, argv, ctx, diagnostics))
-    return true;
-  if (ctx.doNothing())
+  if (!parse(argc, argv, ctx, diagnostics))
     return false;
-
+  if (ctx.doNothing())
+    return true;
   return link(ctx, diagnostics);
 }
 
@@ -104,7 +103,7 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
     diagnostics << "error: missing arg value for '"
                 << parsedArgs->getArgString(missingIndex) << "' expected "
                 << missingCount << " argument(s).\n";
-    return true;
+    return false;
   }
 
   for (auto it = parsedArgs->filtered_begin(OPT_UNKNOWN),
@@ -168,12 +167,12 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
     if (ctx.outputFileType() != mach_o::MH_DYLIB) {
       diagnostics
           << "error: -compatibility_version can only be used with -dylib\n";
-      return true;
+      return false;
     }
     uint32_t parsedVers;
     if (MachOLinkingContext::parsePackedVersion(vers->getValue(), parsedVers)) {
       diagnostics << "error: -compatibility_version value is malformed\n";
-      return true;
+      return false;
     }
     ctx.setCompatibilityVersion(parsedVers);
   }
@@ -181,12 +180,12 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
   if (llvm::opt::Arg *vers = parsedArgs->getLastArg(OPT_current_version)) {
     if (ctx.outputFileType() != mach_o::MH_DYLIB) {
       diagnostics << "-current_version can only be used with -dylib\n";
-      return true;
+      return false;
     }
     uint32_t parsedVers;
     if (MachOLinkingContext::parsePackedVersion(vers->getValue(), parsedVers)) {
       diagnostics << "error: -current_version value is malformed\n";
-      return true;
+      return false;
     }
     ctx.setCurrentVersion(parsedVers);
   }
@@ -201,7 +200,7 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
     if (ctx.arch() == MachOLinkingContext::arch_unknown) {
       diagnostics << "error: unknown arch named '" << archStr->getValue()
                   << "'\n";
-      return true;
+      return false;
     }
   }
 
@@ -214,20 +213,20 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
     case OPT_macosx_version_min:
       if (ctx.setOS(MachOLinkingContext::OS::macOSX, minOS->getValue())) {
         diagnostics << "error: malformed macosx_version_min value\n";
-        return true;
+        return false;
       }
       break;
     case OPT_ios_version_min:
       if (ctx.setOS(MachOLinkingContext::OS::iOS, minOS->getValue())) {
         diagnostics << "error: malformed ios_version_min value\n";
-        return true;
+        return false;
       }
       break;
     case OPT_ios_simulator_version_min:
       if (ctx.setOS(MachOLinkingContext::OS::iOS_simulator,
                     minOS->getValue())) {
         diagnostics << "error: malformed ios_simulator_version_min value\n";
-        return true;
+        return false;
       }
       break;
     }
@@ -242,7 +241,7 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
     // If only -help on command line, don't try to do any linking
     if (argc == 2) {
       ctx.setDoNothing(true);
-      return false;
+      return true;
     }
   }
 
@@ -258,16 +257,13 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
 
   if (!inputGraph->numFiles()) {
     diagnostics << "No input files\n";
-    return true;
+    return false;
   }
 
   ctx.setInputGraph(std::move(inputGraph));
 
   // Validate the combination of options used.
-  if (ctx.validate(diagnostics))
-    return true;
-
-  return false;
+  return ctx.validate(diagnostics);
 }
 
 } // namespace lld

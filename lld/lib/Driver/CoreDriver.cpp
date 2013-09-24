@@ -68,9 +68,8 @@ namespace lld {
 
 bool CoreDriver::link(int argc, const char *argv[], raw_ostream &diagnostics) {
   CoreLinkingContext info;
-  if (parse(argc, argv, info))
-    return true;
-
+  if (!parse(argc, argv, info))
+    return false;
   return Driver::link(info);
 }
 
@@ -87,7 +86,7 @@ bool CoreDriver::parse(int argc, const char *argv[], CoreLinkingContext &ctx,
     diagnostics << "error: missing arg value for '"
                 << parsedArgs->getArgString(missingIndex) << "' expected "
                 << missingCount << " argument(s).\n";
-    return true;
+    return false;
   }
 
   std::unique_ptr<InputGraph> inputGraph(new InputGraph());
@@ -148,7 +147,7 @@ bool CoreDriver::parse(int argc, const char *argv[], CoreLinkingContext &ctx,
 
   if (!inputGraph->numFiles()) {
     diagnostics << "No input files\n";
-    return true;
+    return false;
   }
 
   ctx.setInputGraph(std::move(inputGraph));

@@ -272,7 +272,7 @@ private:
 CoreLinkingContext::CoreLinkingContext() {}
 
 bool CoreLinkingContext::validateImpl(raw_ostream &diagnostics) {
-  return false;
+  return true;
 }
 
 void CoreLinkingContext::addPasses(PassManager &pm) const {

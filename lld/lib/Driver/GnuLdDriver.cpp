@@ -98,11 +98,10 @@ std::string ELFFileNode::errStr(llvm::error_code errc) {
 bool GnuLdDriver::linkELF(int argc, const char *argv[],
                           raw_ostream &diagnostics) {
   std::unique_ptr<ELFLinkingContext> options;
-  bool error = parse(argc, argv, options, diagnostics);
-  if (error)
-    return true;
-  if (!options)
+  if (!parse(argc, argv, options, diagnostics))
     return false;
+  if (!options)
+    return true;
 
   return link(*options, diagnostics);
 }
@@ -122,13 +121,13 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
     diagnostics << "error: missing arg value for '"
                 << parsedArgs->getArgString(missingIndex) << "' expected "
                 << missingCount << " argument(s).\n";
-    return true;
+    return false;
   }
 
   // Handle --help
   if (parsedArgs->getLastArg(OPT_help)) {
     table.PrintHelp(llvm::outs(), argv[0], "LLVM Linker", false);
-    return false;
+    return true;
   }
 
   // Use -target or use default target triple to instantiate LinkingContext
@@ -141,7 +140,7 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
 
   if (!ctx) {
     diagnostics << "unknown target triple\n";
-    return true;
+    return false;
   }
 
   std::unique_ptr<InputGraph> inputGraph(new InputGraph());
@@ -276,7 +275,7 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
       (llvm::dyn_cast<ControlNode>)(controlNodeStack.top())
           ->processControlExit();
       controlNodeStack.pop();
-      return false;
+      return true;
 
     case OPT_INPUT:
     case OPT_l: {
@@ -323,7 +322,7 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
 
   if (!inputGraph->numFiles()) {
     diagnostics << "No input files\n";
-    return true;
+    return false;
   }
 
   inputGraph->addInternalFile(ctx->createInternalFiles());
@@ -348,14 +347,14 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
     inputGraph->dump(diagnostics);
 
   // Validate the combination of options used.
-  if (ctx->validate(diagnostics))
-    return true;
+  if (!ctx->validate(diagnostics))
+    return false;
 
   ctx->setInputGraph(std::move(inputGraph));
 
   context.swap(ctx);
 
-  return false;
+  return true;
 }
 
 /// Get the default target triple based on either the program name

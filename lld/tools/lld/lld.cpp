@@ -33,8 +33,5 @@ int main(int argc, const char *argv[]) {
   llvm::PrettyStackTraceProgram stackPrinter(argc, argv);
   llvm::llvm_shutdown_obj shutdown;
 
-  if (UniversalDriver::link(argc, argv))
-    return 1;
-  else
-    return 0;
+  return UniversalDriver::link(argc, argv) ? 0 : 1;
 }

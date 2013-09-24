@@ -257,8 +257,8 @@ bool WinLinkDriver::linkPECOFF(int argc, const char *argv[],
   PECOFFLinkingContext context;
   std::vector<const char *> newargv = processLinkEnv(context, argc, argv);
   processLibEnv(context);
-  if (parse(newargv.size() - 1, &newargv[0], context, diagnostics))
-    return true;
+  if (!parse(newargv.size() - 1, &newargv[0], context, diagnostics))
+    return false;
   return link(context, diagnostics);
 }
 
@@ -269,7 +269,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ct
   std::unique_ptr<llvm::opt::InputArgList> parsedArgs = parseArgs(
       argc, argv, diagnostics, isDirective);
   if (!parsedArgs)
-    return true;
+    return false;
 
   if (!ctx.hasInputGraph())
     ctx.setInputGraph(std::unique_ptr<InputGraph>(new InputGraph()));
@@ -280,7 +280,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ct
   if (parsedArgs->getLastArg(OPT_help)) {
     WinLinkOptTable table;
     table.PrintHelp(llvm::outs(), argv[0], "LLVM Linker", false);
-    return true;
+    return false;
   }
 
   // Handle /nodefaultlib:<lib>. The same option without argument is handled in
@@ -316,7 +316,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ct
       // it's smaller than the actual size, the linker should warn about that.
       // Currently we just ignore the value of size parameter.
       if (parseMemoryOption(inputArg->getValue(), addr, size))
-        return true;
+        return false;
       ctx.setBaseAddress(addr);
       break;
 
@@ -325,7 +325,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ct
       uint64_t reserve;
       uint64_t commit = ctx.getStackCommit();
       if (parseMemoryOption(inputArg->getValue(), reserve, commit))
-        return true;
+        return false;
       ctx.setStackReserve(reserve);
       ctx.setStackCommit(commit);
       break;
@@ -336,7 +336,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ct
       uint64_t reserve;
       uint64_t commit = ctx.getHeapCommit();
       if (parseMemoryOption(inputArg->getValue(), reserve, commit))
-        return true;
+        return false;
       ctx.setHeapReserve(reserve);
       ctx.setHeapCommit(commit);
       break;
@@ -347,7 +347,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ct
       StringRef arg = inputArg->getValue();
       if (arg.getAsInteger(10, align)) {
         diagnostics << "error: invalid value for /align: " << arg << "\n";
-        return true;
+        return false;
       }
       ctx.setSectionAlignment(align);
       break;
@@ -358,7 +358,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ct
       llvm::COFF::MachineTypes type = stringToMachineType(arg);
       if (type == llvm::COFF::IMAGE_FILE_MACHINE_UNKNOWN) {
         diagnostics << "error: unknown machine type: " << arg << "\n";
-        return true;
+        return false;
       }
       ctx.setMachineType(type);
       break;
@@ -367,7 +367,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ct
     case OPT_version: {
       uint32_t major, minor;
       if (parseVersion(inputArg->getValue(), major, minor))
-        return true;
+        return false;
       ctx.setImageVersion(PECOFFLinkingContext::Version(major, minor));
       break;
     }
@@ -381,7 +381,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ct
       if (!osVersion.empty()) {
         uint32_t major, minor;
         if (parseVersion(osVersion, major, minor))
-          return true;
+          return false;
         ctx.setMinOSVersion(PECOFFLinkingContext::Version(major, minor));
       }
       // Parse subsystem name.
@@ -390,7 +390,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ct
       if (subsystem == llvm::COFF::IMAGE_SUBSYSTEM_UNKNOWN) {
         diagnostics << "error: unknown subsystem name: " << subsystemStr
                     << "\n";
-        return true;
+        return false;
       }
       ctx.setSubsystem(subsystem);
       break;
@@ -399,7 +399,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ct
     case OPT_failifmismatch:
       if (handleFailIfMismatchOption(inputArg->getValue(), failIfMismatchMap,
                                      diagnostics))
-        return true;
+        return false;
       break;
 
     case OPT_entry:
@@ -427,7 +427,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ct
       // /fixed is not compatible with /dynamicbase. Check for it.
       if (parsedArgs->getLastArg(OPT_dynamicbase)) {
         diagnostics << "/dynamicbase must not be specified with /fixed\n";
-        return true;
+        return false;
       }
       ctx.setBaseRelocationEnabled(false);
       ctx.setDynamicBaseEnabled(false);
@@ -493,7 +493,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ct
   // Specifying both /opt:ref and /opt:noref is an error.
   if (parsedArgs->getLastArg(OPT_ref) && parsedArgs->getLastArg(OPT_ref_no)) {
     diagnostics << "/opt:ref must not be specified with /opt:noref\n";
-    return true;
+    return false;
   }
 
   // If dead-stripping is enabled, we need to add the entry symbol and
@@ -525,7 +525,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ct
 
   if (!inputGraph.numFiles()) {
     diagnostics << "No input files\n";
-    return true;
+    return false;
   }
 
   // A list of undefined symbols will be added to the input

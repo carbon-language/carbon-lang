@@ -129,7 +129,7 @@ bool UniversalDriver::link(int argc, const char *argv[],
   case Flavor::core:
     return CoreDriver::link(args.size(), args.data(), diagnostics);
   case Flavor::invalid:
-    return true;
+    return false;
   }
   llvm_unreachable("Unrecognised flavor");
 }

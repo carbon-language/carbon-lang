@@ -207,28 +207,28 @@ bool MachOLinkingContext::validateImpl(raw_ostream &diagnostics) {
 
   if (_currentVersion && _outputFileType != mach_o::MH_DYLIB) {
     diagnostics << "error: -current_version can only be used with dylibs\n";
-    return true;
+    return false;
   }
 
   if (_compatibilityVersion && _outputFileType != mach_o::MH_DYLIB) {
     diagnostics
         << "error: -compatibility_version can only be used with dylibs\n";
-    return true;
+    return false;
   }
 
   if (_deadStrippableDylib && _outputFileType != mach_o::MH_DYLIB) {
     diagnostics
         << "error: -mark_dead_strippable_dylib can only be used with dylibs.\n";
-    return true;
+    return false;
   }
 
   if (!_bundleLoader.empty() && outputFileType() != mach_o::MH_BUNDLE) {
     diagnostics
         << "error: -bundle_loader can only be used with Mach-O bundles\n";
-    return true;
+    return false;
   }
 
-  return false;
+  return true;
 }
 
 bool MachOLinkingContext::setOS(OS os, StringRef minOSVersion) {
