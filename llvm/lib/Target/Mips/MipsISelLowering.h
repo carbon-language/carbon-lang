@@ -172,6 +172,9 @@ namespace llvm {
       VUMAX,
       VUMIN,
 
+      // Vector Shuffle with mask as an operand
+      VSHF,  // Generic shuffle
+
       // Combined (XOR (OR $a, $b), -1)
       VNOR,
 

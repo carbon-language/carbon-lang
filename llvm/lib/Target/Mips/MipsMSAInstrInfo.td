@@ -20,6 +20,9 @@ def SDT_VFSetCC : SDTypeProfile<1, 3, [SDTCisInt<0>,
                                        SDTCisFP<1>,
                                        SDTCisSameAs<1, 2>,
                                        SDTCisVT<3, OtherVT>]>;
+def SDT_VSHF : SDTypeProfile<1, 3, [SDTCisInt<0>, SDTCisVec<0>,
+                                    SDTCisInt<1>, SDTCisVec<1>,
+                                    SDTCisSameAs<0, 2>, SDTCisSameAs<2, 3>]>;
 
 def MipsVAllNonZero : SDNode<"MipsISD::VALL_NONZERO", SDT_MipsVecCond>;
 def MipsVAnyNonZero : SDNode<"MipsISD::VANY_NONZERO", SDT_MipsVecCond>;
@@ -35,6 +38,7 @@ def MipsVUMin : SDNode<"MipsISD::VUMIN", SDTIntBinOp,
                        [SDNPCommutative, SDNPAssociative]>;
 def MipsVNOR : SDNode<"MipsISD::VNOR", SDTIntBinOp,
                       [SDNPCommutative, SDNPAssociative]>;
+def MipsVSHF : SDNode<"MipsISD::VSHF", SDT_VSHF>;
 
 def vsetcc : SDNode<"ISD::SETCC", SDT_VSetCC>;
 def vfsetcc : SDNode<"ISD::SETCC", SDT_VFSetCC>;
@@ -1116,6 +1120,19 @@ class MSA_3R_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
   dag InOperandList = (ins RCWS:$ws, RCWT:$wt);
   string AsmString = !strconcat(instr_asm, "\t$wd, $ws, $wt");
   list<dag> Pattern = [(set RCWD:$wd, (OpNode RCWS:$ws, RCWT:$wt))];
+  InstrItinClass Itinerary = itin;
+}
+
+class MSA_3R_VSHF_DESC_BASE<string instr_asm, RegisterClass RCWD,
+                            RegisterClass RCWS = RCWD,
+                            RegisterClass RCWT = RCWD,
+                            InstrItinClass itin = NoItinerary> {
+  dag OutOperandList = (outs RCWD:$wd);
+  dag InOperandList = (ins RCWD:$wd_in, RCWS:$ws, RCWT:$wt);
+  string AsmString = !strconcat(instr_asm, "\t$wd, $ws, $wt");
+  list<dag> Pattern = [(set RCWD:$wd, (MipsVSHF RCWD:$wd_in, RCWS:$ws,
+                                                RCWT:$wt))];
+  string Constraints = "$wd = $wd_in";
   InstrItinClass Itinerary = itin;
 }
 
@@ -2213,10 +2230,10 @@ class SUBVI_H_DESC : MSA_I5_DESC_BASE<"subvi.h", sub, vsplati16_uimm5, MSA128H>;
 class SUBVI_W_DESC : MSA_I5_DESC_BASE<"subvi.w", sub, vsplati32_uimm5, MSA128W>;
 class SUBVI_D_DESC : MSA_I5_DESC_BASE<"subvi.d", sub, vsplati64_uimm5, MSA128D>;
 
-class VSHF_B_DESC : MSA_3R_DESC_BASE<"vshf.b", int_mips_vshf_b, MSA128B>;
-class VSHF_H_DESC : MSA_3R_DESC_BASE<"vshf.h", int_mips_vshf_h, MSA128H>;
-class VSHF_W_DESC : MSA_3R_DESC_BASE<"vshf.w", int_mips_vshf_w, MSA128W>;
-class VSHF_D_DESC : MSA_3R_DESC_BASE<"vshf.d", int_mips_vshf_d, MSA128D>;
+class VSHF_B_DESC : MSA_3R_VSHF_DESC_BASE<"vshf.b", MSA128B>;
+class VSHF_H_DESC : MSA_3R_VSHF_DESC_BASE<"vshf.h", MSA128H>;
+class VSHF_W_DESC : MSA_3R_VSHF_DESC_BASE<"vshf.w", MSA128W>;
+class VSHF_D_DESC : MSA_3R_VSHF_DESC_BASE<"vshf.d", MSA128D>;
 
 class XOR_V_DESC : MSA_VEC_DESC_BASE<"xor.v", xor, MSA128B>;
 class XOR_V_H_PSEUDO_DESC : MSA_VEC_PSEUDO_BASE<xor, MSA128H>;

@@ -180,6 +180,7 @@ addMSAIntType(MVT::SimpleValueType Ty, const TargetRegisterClass *RC) {
   setOperationAction(ISD::SRL, Ty, Legal);
   setOperationAction(ISD::SUB, Ty, Legal);
   setOperationAction(ISD::UDIV, Ty, Legal);
+  setOperationAction(ISD::VECTOR_SHUFFLE, Ty, Custom);
   setOperationAction(ISD::VSELECT, Ty, Legal);
   setOperationAction(ISD::XOR, Ty, Legal);
 
@@ -259,6 +260,7 @@ SDValue MipsSETargetLowering::LowerOperation(SDValue Op,
   case ISD::INTRINSIC_VOID:     return lowerINTRINSIC_VOID(Op, DAG);
   case ISD::EXTRACT_VECTOR_ELT: return lowerEXTRACT_VECTOR_ELT(Op, DAG);
   case ISD::BUILD_VECTOR:       return lowerBUILD_VECTOR(Op, DAG);
+  case ISD::VECTOR_SHUFFLE:     return lowerVECTOR_SHUFFLE(Op, DAG);
   }
 
   return MipsTargetLowering::LowerOperation(Op, DAG);
@@ -1470,6 +1472,12 @@ SDValue MipsSETargetLowering::lowerINTRINSIC_WO_CHAIN(SDValue Op,
   case Intrinsic::mips_subvi_d:
     return lowerMSABinaryImmIntr(Op, DAG, ISD::SUB,
                                  lowerMSASplatImm(Op, 2, DAG));
+  case Intrinsic::mips_vshf_b:
+  case Intrinsic::mips_vshf_h:
+  case Intrinsic::mips_vshf_w:
+  case Intrinsic::mips_vshf_d:
+    return DAG.getNode(MipsISD::VSHF, SDLoc(Op), Op->getValueType(0),
+                       Op->getOperand(1), Op->getOperand(2), Op->getOperand(3));
   case Intrinsic::mips_xor_v:
     return lowerMSABinaryIntr(Op, DAG, ISD::XOR);
   case Intrinsic::mips_xori_b:
@@ -1725,6 +1733,76 @@ SDValue MipsSETargetLowering::lowerBUILD_VECTOR(SDValue Op,
   }
 
   return SDValue();
+}
+
+// Lower VECTOR_SHUFFLE into VSHF.
+//
+// This mostly consists of converting the shuffle indices in Indices into a
+// BUILD_VECTOR and adding it as an operand to the resulting VSHF. There is
+// also code to eliminate unused operands of the VECTOR_SHUFFLE. For example,
+// if the type is v8i16 and all the indices are less than 8 then the second
+// operand is unused and can be replaced with anything. We choose to replace it
+// with the used operand since this reduces the number of instructions overall.
+static SDValue lowerVECTOR_SHUFFLE_VSHF(SDValue Op, EVT ResTy,
+                                        SmallVector<int, 16> Indices,
+                                        SelectionDAG &DAG) {
+  SmallVector<SDValue, 16> Ops;
+  SDValue Op0;
+  SDValue Op1;
+  EVT MaskVecTy = ResTy.changeVectorElementTypeToInteger();
+  EVT MaskEltTy = MaskVecTy.getVectorElementType();
+  bool Using1stVec = false;
+  bool Using2ndVec = false;
+  SDLoc DL(Op);
+  int ResTyNumElts = ResTy.getVectorNumElements();
+
+  for (int i = 0; i < ResTyNumElts; ++i) {
+    // Idx == -1 means UNDEF
+    int Idx = Indices[i];
+
+    if (0 <= Idx && Idx < ResTyNumElts)
+      Using1stVec = true;
+    if (ResTyNumElts <= Idx && Idx < ResTyNumElts * 2)
+      Using2ndVec = true;
+  }
+
+  for (SmallVector<int, 16>::iterator I = Indices.begin(); I != Indices.end();
+       ++I)
+    Ops.push_back(DAG.getTargetConstant(*I, MaskEltTy));
+
+  SDValue MaskVec = DAG.getNode(ISD::BUILD_VECTOR, DL, MaskVecTy, &Ops[0],
+                                Ops.size());
+
+  if (Using1stVec && Using2ndVec) {
+    Op0 = Op->getOperand(0);
+    Op1 = Op->getOperand(1);
+  } else if (Using1stVec)
+    Op0 = Op1 = Op->getOperand(0);
+  else if (Using2ndVec)
+    Op0 = Op1 = Op->getOperand(1);
+  else
+    llvm_unreachable("shuffle vector mask references neither vector operand?");
+
+  return DAG.getNode(MipsISD::VSHF, DL, ResTy, MaskVec, Op0, Op1);
+}
+
+// Lower VECTOR_SHUFFLE into one of a number of instructions depending on the
+// indices in the shuffle.
+SDValue MipsSETargetLowering::lowerVECTOR_SHUFFLE(SDValue Op,
+                                                  SelectionDAG &DAG) const {
+  ShuffleVectorSDNode *Node = cast<ShuffleVectorSDNode>(Op);
+  EVT ResTy = Op->getValueType(0);
+
+  if (!ResTy.is128BitVector())
+    return SDValue();
+
+  int ResTyNumElts = ResTy.getVectorNumElements();
+  SmallVector<int, 16> Indices;
+
+  for (int i = 0; i < ResTyNumElts; ++i)
+    Indices.push_back(Node->getMaskElt(i));
+
+  return lowerVECTOR_SHUFFLE_VSHF(Op, ResTy, Indices, DAG);
 }
 
 MachineBasicBlock * MipsSETargetLowering::

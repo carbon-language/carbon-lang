@@ -75,6 +75,9 @@ namespace llvm {
     SDValue lowerINTRINSIC_VOID(SDValue Op, SelectionDAG &DAG) const;
     SDValue lowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) const;
     SDValue lowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const;
+    /// \brief Lower VECTOR_SHUFFLE into one of a number of instructions
+    /// depending on the indices in the shuffle.
+    SDValue lowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const;
 
     MachineBasicBlock *emitBPOSGE32(MachineInstr *MI,
                                     MachineBasicBlock *BB) const;
