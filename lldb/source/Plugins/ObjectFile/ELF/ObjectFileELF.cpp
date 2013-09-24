@@ -21,6 +21,7 @@
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/Section.h"
 #include "lldb/Core/Stream.h"
+#include "lldb/Symbol/DWARFCallFrameInfo.h"
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Host/Host.h"
 
@@ -1512,6 +1513,57 @@ ObjectFileELF::GetSymtab()
     }
     return m_symtab_ap.get();
 }
+
+Symbol *
+ObjectFileELF::ResolveSymbolForAddress(const Address& so_addr, bool verify_unique)
+{
+    if (!m_symtab_ap.get())
+        return nullptr; // GetSymtab() should be called first.
+
+    const SectionList *section_list = GetSectionList();
+    if (!section_list)
+        return nullptr;
+
+    if (DWARFCallFrameInfo *eh_frame = GetUnwindTable().GetEHFrameInfo())
+    {
+        AddressRange range;
+        if (eh_frame->GetAddressRange (so_addr, range))
+        {
+            const addr_t file_addr = range.GetBaseAddress().GetFileAddress();
+            Symbol * symbol = verify_unique ? m_symtab_ap->FindSymbolContainingFileAddress(file_addr) : nullptr;
+            if (symbol)
+                return symbol;
+
+            // Note that a (stripped) symbol won't be found by GetSymtab()...
+            lldb::SectionSP eh_sym_section_sp = section_list->FindSectionContainingFileAddress(file_addr);
+            if (eh_sym_section_sp.get())
+            {
+                addr_t section_base = eh_sym_section_sp->GetFileAddress();
+                addr_t offset = file_addr - section_base;
+                uint64_t symbol_id = m_symtab_ap->GetNumSymbols();
+
+                Symbol eh_symbol(
+                        symbol_id,            // Symbol table index.
+                        "???",                // Symbol name.
+                        false,                // Is the symbol name mangled?
+                        eSymbolTypeCode,      // Type of this symbol.
+                        true,                 // Is this globally visible?
+                        false,                // Is this symbol debug info?
+                        false,                // Is this symbol a trampoline?
+                        true,                 // Is this symbol artificial?
+                        eh_sym_section_sp,    // Section in which this symbol is defined or null.
+                        offset,               // Offset in section or symbol value.
+                        range.GetByteSize(),  // Size in bytes of this symbol.
+                        true,                 // Size is valid.
+                        0);                   // Symbol flags.
+                if (symbol_id == m_symtab_ap->AddSymbol(eh_symbol))
+                    return m_symtab_ap->SymbolAtIndex(symbol_id);
+            }
+        }
+    }
+    return nullptr;
+}
+
 
 bool
 ObjectFileELF::IsStripped ()

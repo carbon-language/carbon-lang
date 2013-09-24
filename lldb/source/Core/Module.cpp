@@ -449,7 +449,8 @@ Module::ResolveFileAddress (lldb::addr_t vm_addr, Address& so_addr)
 }
 
 uint32_t
-Module::ResolveSymbolContextForAddress (const Address& so_addr, uint32_t resolve_scope, SymbolContext& sc)
+Module::ResolveSymbolContextForAddress (const Address& so_addr, uint32_t resolve_scope, SymbolContext& sc,
+                                        bool resolve_tail_call_address)
 {
     Mutex::Locker locker (m_mutex);
     uint32_t resolved_flags = 0;
@@ -489,6 +490,14 @@ Module::ResolveSymbolContextForAddress (const Address& so_addr, uint32_t resolve
             if (symtab && so_addr.IsSectionOffset())
             {
                 sc.symbol = symtab->FindSymbolContainingFileAddress(so_addr.GetFileAddress());
+                if (!sc.symbol &&
+                    resolve_scope & eSymbolContextFunction && !(resolved_flags & eSymbolContextFunction))
+                {
+                    bool verify_unique = false; // No need to check again since ResolveSymbolContext failed to find a symbol at this address.
+                    if (ObjectFile *obj_file = sc.module_sp->GetObjectFile())
+                        sc.symbol = obj_file->ResolveSymbolForAddress(so_addr, verify_unique);
+                }
+
                 if (sc.symbol)
                     resolved_flags |= eSymbolContextSymbol;
             }
@@ -498,13 +507,14 @@ Module::ResolveSymbolContextForAddress (const Address& so_addr, uint32_t resolve
         // with FDE row indices in eh_frame sections, but requires extra logic here to permit
         // symbol lookup for disassembly and unwind.
         if (resolve_scope & eSymbolContextSymbol && !(resolved_flags & eSymbolContextSymbol) &&
-            resolve_scope & eSymbolContextTailCall &&
-            so_addr.IsSectionOffset())
+            resolve_tail_call_address && so_addr.IsSectionOffset())
         {
             Address previous_addr = so_addr;
             previous_addr.Slide(-1);
 
-            const uint32_t flags = ResolveSymbolContextForAddress(previous_addr, resolve_scope & ~eSymbolContextTailCall, sc);
+            bool do_resolve_tail_call_address = false; // prevent recursion
+            const uint32_t flags = ResolveSymbolContextForAddress(previous_addr, resolve_scope, sc,
+                                                                  do_resolve_tail_call_address);
             if (flags & eSymbolContextSymbol)
             {
                 AddressRange addr_range;

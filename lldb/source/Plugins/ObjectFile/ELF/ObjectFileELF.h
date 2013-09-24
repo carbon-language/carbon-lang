@@ -102,6 +102,9 @@ public:
     virtual lldb_private::Symtab *
     GetSymtab();
 
+    virtual lldb_private::Symbol *
+    ResolveSymbolForAddress(const lldb_private::Address& so_addr, bool verify_unique);
+
     virtual bool
     IsStripped ();
 

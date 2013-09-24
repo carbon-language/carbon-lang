@@ -776,13 +776,22 @@ public:
     ///     eSymbolContextModule, and eSymbolContextFunction requires
     ///     eSymbolContextSymbol.
     ///
+    /// @param[out] sc
+    ///     The SymbolContext that is modified based on symbol resolution.
+    ///
+    /// @param[in] resolve_tail_call_address
+    ///     Determines if so_addr should resolve to a symbol in the case
+    ///     of a function whose last instruction is a call.  In this case,
+    ///     the PC can be one past the address range of the function.
+    ///
     /// @return
     ///     The scope that has been resolved (see SymbolContext::Scope).
     ///
     /// @see SymbolContext::Scope
     //------------------------------------------------------------------
     uint32_t
-    ResolveSymbolContextForAddress (const Address& so_addr, uint32_t resolve_scope, SymbolContext& sc);
+    ResolveSymbolContextForAddress (const Address& so_addr, uint32_t resolve_scope,
+                                    SymbolContext& sc, bool resolve_tail_call_address = false);
 
     //------------------------------------------------------------------
     /// Resolve items in the symbol context for a given file and line.

@@ -263,7 +263,6 @@ namespace lldb {
         eSymbolContextBlock      = (1u << 4), ///< Set when the deepest \a block is requested from a query, or was located in query results
         eSymbolContextLineEntry  = (1u << 5), ///< Set when \a line_entry is requested from a query, or was located in query results
         eSymbolContextSymbol     = (1u << 6), ///< Set when \a symbol is requested from a query, or was located in query results
-        eSymbolContextTailCall   = (1u << 7), ///< Set when a function symbol with a tail call is requested from a query, or was located in query results
         eSymbolContextEverything = ((eSymbolContextSymbol << 1) - 1u)  ///< Indicates to try and lookup everything up during a query.
     } SymbolContextItem;
 

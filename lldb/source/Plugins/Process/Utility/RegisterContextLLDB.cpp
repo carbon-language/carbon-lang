@@ -369,9 +369,13 @@ RegisterContextLLDB::InitializeNonZerothFrame()
         return;
     }
 
+    bool resolve_tail_call_address = true; // m_current_pc can be one past the address range of the function...
+    uint32_t resolved_scope = pc_module_sp->ResolveSymbolContextForAddress (m_current_pc,
+                                                                            eSymbolContextFunction | eSymbolContextSymbol,
+                                                                            m_sym_ctx, resolve_tail_call_address);
+
     // We require that eSymbolContextSymbol be successfully filled in or this context is of no use to us.
-    uint32_t resolve_scope = eSymbolContextFunction | eSymbolContextSymbol | eSymbolContextTailCall;
-    if ((pc_module_sp->ResolveSymbolContextForAddress (m_current_pc, resolve_scope, m_sym_ctx) & eSymbolContextSymbol) == eSymbolContextSymbol)
+    if ((resolved_scope & eSymbolContextSymbol) == eSymbolContextSymbol)
     {
         m_sym_ctx_valid = true;
     }

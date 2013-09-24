@@ -32,9 +32,7 @@ class AssertingInferiorTestCase(TestBase):
         self.buildDwarf()
         self.inferior_asserting_registers()
 
-    @skipIfGcc # Avoid xpasses as the verion of libc used on the gcc buildbot has the required function symbols.
-    @expectedFailureFreeBSD # ResolveSymbolContextForAddress can fail using ELF with stripped function symbols.
-    @expectedFailureLinux # ResolveSymbolContextForAddress can fail using ELF with stripped function symbols.
+    @expectedFailureLinux # Disassembly does not specify '->' for the PC for a non-terminal frame for a function with a tail call.
     def test_inferior_asserting_disassemble(self):
         """Test that lldb reliably disassembles frames after asserting (command)."""
         self.buildDefault()

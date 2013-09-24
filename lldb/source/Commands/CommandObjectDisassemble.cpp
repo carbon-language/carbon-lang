@@ -453,7 +453,9 @@ CommandObjectDisassemble::DoExecute (Args& command, CommandReturnObject &result)
                         {
                             ModuleSP module_sp (symbol_containing_address.GetModule());
                             SymbolContext sc;
-                            module_sp->ResolveSymbolContextForAddress (symbol_containing_address, eSymbolContextEverything, sc);
+                            bool resolve_tail_call_address = true; // PC can be one past the address range of the function.
+                            module_sp->ResolveSymbolContextForAddress (symbol_containing_address, eSymbolContextEverything, sc,
+                                                                       resolve_tail_call_address);
                             if (sc.function || sc.symbol)
                             {
                                 sc.GetAddressRange (eSymbolContextFunction | eSymbolContextSymbol, 0, false, range);
