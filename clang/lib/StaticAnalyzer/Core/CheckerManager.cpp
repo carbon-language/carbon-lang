@@ -487,10 +487,10 @@ CheckerManager::runCheckersForRegionChanges(ProgramStateRef state,
 /// \brief Run checkers to process symbol escape event.
 ProgramStateRef
 CheckerManager::runCheckersForPointerEscape(ProgramStateRef State,
-                                           const InvalidatedSymbols &Escaped,
-                                           const CallEvent *Call,
-                                           PointerEscapeKind Kind,
-                                           bool IsConst) {
+                                   const InvalidatedSymbols &Escaped,
+                                   const CallEvent *Call,
+                                   PointerEscapeKind Kind,
+                                   RegionAndSymbolInvalidationTraits *ETraits) {
   assert((Call != NULL ||
           (Kind != PSK_DirectEscapeOnCall &&
            Kind != PSK_IndirectEscapeOnCall)) &&
@@ -500,7 +500,7 @@ CheckerManager::runCheckersForPointerEscape(ProgramStateRef State,
       //  way), bail out.
       if (!State)
         return NULL;
-      State = PointerEscapeCheckers[i](State, Escaped, Call, Kind, IsConst);
+      State = PointerEscapeCheckers[i](State, Escaped, Call, Kind, ETraits);
     }
   return State;
 }

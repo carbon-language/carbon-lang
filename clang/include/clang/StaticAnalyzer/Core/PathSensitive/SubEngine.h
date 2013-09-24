@@ -134,7 +134,7 @@ public:
                            ArrayRef<const MemRegion *> ExplicitRegions,
                            ArrayRef<const MemRegion *> Regions,
                            const CallEvent *Call,
-                           bool IsConst = false) = 0;
+                           RegionAndSymbolInvalidationTraits &HTraits) = 0;
 
   /// printState - Called by ProgramStateManager to print checker-specific data.
   virtual void printState(raw_ostream &Out, ProgramStateRef State,

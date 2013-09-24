@@ -1876,7 +1876,8 @@ ProgramStateRef ExprEngine::processPointerEscapedOnBind(ProgramStateRef State,
   State = getCheckerManager().runCheckersForPointerEscape(State,
                                                           EscapedSymbols,
                                                           /*CallEvent*/ 0,
-                                                          PSK_EscapeOnBind);
+                                                          PSK_EscapeOnBind,
+                                                          0);
 
   return State;
 }
@@ -1887,7 +1888,7 @@ ExprEngine::notifyCheckersOfPointerEscape(ProgramStateRef State,
     ArrayRef<const MemRegion *> ExplicitRegions,
     ArrayRef<const MemRegion *> Regions,
     const CallEvent *Call,
-    bool IsConst) {
+    RegionAndSymbolInvalidationTraits &ITraits) {
   
   if (!Invalidated || Invalidated->empty())
     return State;
@@ -1897,17 +1898,7 @@ ExprEngine::notifyCheckersOfPointerEscape(ProgramStateRef State,
                                                            *Invalidated,
                                                            0,
                                                            PSK_EscapeOther,
-                                                           IsConst);
-
-  // Note: Due to current limitations of RegionStore, we only process the top
-  // level const pointers correctly. The lower level const pointers are
-  // currently treated as non-const.
-  if (IsConst)
-    return getCheckerManager().runCheckersForPointerEscape(State,
-                                                        *Invalidated,
-                                                        Call,
-                                                        PSK_DirectEscapeOnCall,
-                                                        true);
+                                                           &ITraits);
 
   // If the symbols were invalidated by a call, we want to find out which ones 
   // were invalidated directly due to being arguments to the call.
@@ -1929,12 +1920,12 @@ ExprEngine::notifyCheckersOfPointerEscape(ProgramStateRef State,
 
   if (!SymbolsDirectlyInvalidated.empty())
     State = getCheckerManager().runCheckersForPointerEscape(State,
-        SymbolsDirectlyInvalidated, Call, PSK_DirectEscapeOnCall);
+        SymbolsDirectlyInvalidated, Call, PSK_DirectEscapeOnCall, &ITraits);
 
   // Notify about the symbols that get indirectly invalidated by the call.
   if (!SymbolsIndirectlyInvalidated.empty())
     State = getCheckerManager().runCheckersForPointerEscape(State,
-        SymbolsIndirectlyInvalidated, Call, PSK_IndirectEscapeOnCall);
+        SymbolsIndirectlyInvalidated, Call, PSK_IndirectEscapeOnCall, &ITraits);
 
   return State;
 }

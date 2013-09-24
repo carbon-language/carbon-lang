@@ -365,14 +365,16 @@ public:
   /// \param Escaped The list of escaped symbols.
   /// \param Call The corresponding CallEvent, if the symbols escape as 
   ///        parameters to the given call.
-  /// \param IsConst Specifies if the pointer is const.
+  /// \param Kind The reason of pointer escape.
+  /// \param ITraits Information about invalidation for a particular 
+  ///        region/symbol.
   /// \returns Checkers can modify the state by returning a new one.
   ProgramStateRef 
   runCheckersForPointerEscape(ProgramStateRef State,
                               const InvalidatedSymbols &Escaped,
                               const CallEvent *Call,
                               PointerEscapeKind Kind,
-                              bool IsConst = false);
+                             RegionAndSymbolInvalidationTraits *ITraits);
 
   /// \brief Run checkers for handling assumptions on symbolic values.
   ProgramStateRef runCheckersForEvalAssume(ProgramStateRef state,
@@ -464,7 +466,7 @@ public:
                                      const InvalidatedSymbols &Escaped,
                                      const CallEvent *Call,
                                      PointerEscapeKind Kind,
-                                     bool IsConst)>
+                                     RegionAndSymbolInvalidationTraits *ITraits)>
       CheckPointerEscapeFunc;
   
   typedef CheckerFn<ProgramStateRef (ProgramStateRef,

@@ -1309,6 +1309,37 @@ private:
 inline ASTContext &MemRegion::getContext() const {
   return getMemRegionManager()->getContext();
 }
+
+//===----------------------------------------------------------------------===//
+// Means for storing region/symbol handling traits.
+//===----------------------------------------------------------------------===//
+
+/// Information about invalidation for a particular region/symbol.
+class RegionAndSymbolInvalidationTraits {
+  typedef unsigned char StorageTypeForKinds;
+  llvm::DenseMap<const MemRegion *, StorageTypeForKinds> MRTraitsMap;
+  llvm::DenseMap<SymbolRef, StorageTypeForKinds> SymTraitsMap;
+
+  typedef llvm::DenseMap<const MemRegion *, StorageTypeForKinds>::const_iterator
+      const_region_iterator;
+  typedef llvm::DenseMap<SymbolRef, StorageTypeForKinds>::const_iterator
+      const_symbol_iterator;
+
+public:
+  /// \brief Describes different invalidation traits.
+  enum InvalidationKinds {
+    /// Tells that a region's contents is not changed.
+    TK_PreserveContents = 0x1
+
+    // Do not forget to extend StorageTypeForKinds if number of traits exceed 
+    // the number of bits StorageTypeForKinds can store.
+  };
+
+  void setTrait(SymbolRef Sym, InvalidationKinds IK);
+  void setTrait(const MemRegion *MR, InvalidationKinds IK);
+  bool hasTrait(SymbolRef Sym, InvalidationKinds IK);
+  bool hasTrait(const MemRegion *MR, InvalidationKinds IK);
+};
   
 } // end GR namespace
 

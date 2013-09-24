@@ -1450,3 +1450,45 @@ const VarRegion *BlockDataRegion::getOriginalRegion(const VarRegion *R) const {
   }
   return 0;
 }
+
+//===----------------------------------------------------------------------===//
+// RegionAndSymbolInvalidationTraits
+//===----------------------------------------------------------------------===//
+
+void RegionAndSymbolInvalidationTraits::setTrait(SymbolRef Sym, 
+                                                 InvalidationKinds IK) {
+  SymTraitsMap[Sym] |= IK;
+}
+
+void RegionAndSymbolInvalidationTraits::setTrait(const MemRegion *MR, 
+                                                 InvalidationKinds IK) {
+  assert(MR);
+  if (const SymbolicRegion *SR = dyn_cast<SymbolicRegion>(MR))
+    setTrait(SR->getSymbol(), IK);
+  else
+    MRTraitsMap[MR] |= IK;
+}
+
+bool RegionAndSymbolInvalidationTraits::hasTrait(SymbolRef Sym, 
+                                                 InvalidationKinds IK) {
+  const_symbol_iterator I = SymTraitsMap.find(Sym);
+  if (I != SymTraitsMap.end())
+    return I->second & IK;
+
+  return false;    
+}
+
+bool RegionAndSymbolInvalidationTraits::hasTrait(const MemRegion *MR,
+                                                 InvalidationKinds IK) {
+  if (!MR)
+    return false;
+
+  if (const SymbolicRegion *SR = dyn_cast<SymbolicRegion>(MR))
+    return hasTrait(SR->getSymbol(), IK);
+
+  const_region_iterator I = MRTraitsMap.find(MR);
+  if (I != MRTraitsMap.end())
+    return I->second & IK;
+
+  return false;
+}
