@@ -71,10 +71,10 @@ def DASH_DASH : Option<["--"], "", KIND_REMAINING_ARGS>;
 class Q<string name> : Joined<["/", "-", "-?"], name#":">;
 
 def nologo : F<"nologo">;
-def errorreport : Q<"errorreport">;
-
 def incremental : F<"incremental">;
 def no_incremental : F<"incremental:no">;
 
+def pdb : Q<"pdb">;
+def errorreport : Q<"errorreport">;
 def delay : Q<"delay">;
 def delayload : Q<"delayload">;
