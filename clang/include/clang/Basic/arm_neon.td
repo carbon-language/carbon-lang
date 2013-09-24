@@ -633,10 +633,39 @@ def VQDMLSL_HIGH : SOpInst<"vqdmlsl_high", "wwkk", "si", OP_QDMLSLHi>;
 // Scalar Arithmetic
 
 // Scalar Addition
-
-def SCALAR_ADD : Inst<"vaddd", "ddd", "lUl", OP_ADD>;
+def SCALAR_ADD : SInst<"vadd", "sss",  "SlSUl">;
+// Scalar  Saturating Add
+def SCALAR_QADD   : SInst<"vqadd", "sss", "ScSsSiSlSUcSUsSUiSUl">;
 
 // Scalar Subtraction
-def SCALAR_SUB : Inst<"vsubd", "ddd", "lUl", OP_SUB>;
+def SCALAR_SUB : SInst<"vsub", "sss",  "SlSUl">;
+// Scalar  Saturating Sub
+def SCALAR_QSUB   : SInst<"vqsub", "sss", "ScSsSiSlSUcSUsSUiSUl">;
+
+////////////////////////////////////////////////////////////////////////////////
+// Scalar Shift
+// Scalar Shift Left
+def SCALAR_SHL: SInst<"vshl", "sss", "SlSUl">;
+// Scalar Saturating Shift Left
+def SCALAR_QSHL: SInst<"vqshl", "sss", "ScSsSiSlSUcSUsSUiSUl">;
+// Scalar Saturating Rounding Shift Left
+def SCALAR_QRSHL: SInst<"vqrshl", "sss", "ScSsSiSlSUcSUsSUiSUl">;
+// Scalar Shift Rouding Left
+def SCALAR_RSHL: SInst<"vrshl", "sss", "SlSUl">;
+
+////////////////////////////////////////////////////////////////////////////////
+// Scalar Reduce Pairwise Addition (Scalar and Floating Point)
+def SCALAR_ADDP  : SInst<"vpadd", "sd", "SfSHlSHd">;
+
+////////////////////////////////////////////////////////////////////////////////
+// Scalar Reduce Floating Point Pairwise Max/Min
+def SCALAR_FMAXP : SInst<"vpmax", "sd", "SfSQd">;
+
+def SCALAR_FMINP : SInst<"vpmin", "sd", "SfSQd">;
+
+////////////////////////////////////////////////////////////////////////////////
+// Scalar Reduce Floating Point Pairwise maxNum/minNum
+def SCALAR_FMAXNMP : SInst<"vpmaxnm", "sd", "SfSQd">;
+def SCALAR_FMINNMP : SInst<"vpminnm", "sd", "SfSQd">;
 
 }
