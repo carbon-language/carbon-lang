@@ -632,9 +632,10 @@ RegisterContextLLDB::GetFullUnwindPlanForFrame ()
     // in the zeroth frame, we need to use the "unwind at first instruction" arch default UnwindPlan
     // Also, if this Process can report on memory region attributes, any non-executable region means
     // we jumped through a bad function pointer - handle the same way as 0x0.
-    // Note, if the symbol context has a function for the symbol, then we don't need to do this check.
+    // Note, if we have a symbol context & a symbol, we don't want to follow this code path.  This is
+    // for jumping to memory regions without any information available.
 
-    if ((!m_sym_ctx_valid  || m_sym_ctx.function == NULL) && behaves_like_zeroth_frame && m_current_pc.IsValid())
+    if ((!m_sym_ctx_valid || m_sym_ctx.symbol == NULL) && behaves_like_zeroth_frame && m_current_pc.IsValid())
     {
         uint32_t permissions;
         addr_t current_pc_addr = m_current_pc.GetLoadAddress (exe_ctx.GetTargetPtr());
@@ -739,6 +740,18 @@ RegisterContextLLDB::GetFullUnwindPlanForFrame ()
     {
         UnwindLogMsgVerbose ("frame uses %s for full UnwindPlan", unwind_plan_sp->GetSourceName().GetCString());
         return unwind_plan_sp;
+    }
+
+    // If we're on the first instruction of a function, and we have an architectural default UnwindPlan
+    // for the initial instruction of a function, use that.
+    if (m_current_offset_backed_up_one == 0)
+    {
+        unwind_plan_sp = func_unwinders_sp->GetUnwindPlanArchitectureDefaultAtFunctionEntry (m_thread);
+        if (unwind_plan_sp)
+        {
+            UnwindLogMsgVerbose ("frame uses %s for full UnwindPlan", unwind_plan_sp->GetSourceName().GetCString());
+            return unwind_plan_sp;
+        }
     }
 
     // If nothing else, use the architectural default UnwindPlan and hope that does the job.

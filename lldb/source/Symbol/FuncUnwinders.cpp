@@ -114,9 +114,12 @@ FuncUnwinders::GetUnwindPlanAtNonCallSite (Thread& thread)
     if (m_tried_unwind_at_non_call_site == false && m_unwind_plan_non_call_site_sp.get() == NULL)
     {
         m_tried_unwind_at_non_call_site = true;
-        m_unwind_plan_non_call_site_sp.reset (new UnwindPlan (lldb::eRegisterKindGeneric));
-        if (!m_assembly_profiler->GetNonCallSiteUnwindPlanFromAssembly (m_range, thread, *m_unwind_plan_non_call_site_sp))
-            m_unwind_plan_non_call_site_sp.reset();
+        if (m_assembly_profiler)
+        {
+            m_unwind_plan_non_call_site_sp.reset (new UnwindPlan (lldb::eRegisterKindGeneric));
+            if (!m_assembly_profiler->GetNonCallSiteUnwindPlanFromAssembly (m_range, thread, *m_unwind_plan_non_call_site_sp))
+                m_unwind_plan_non_call_site_sp.reset();
+        }
     }
     return m_unwind_plan_non_call_site_sp;
 }
@@ -140,9 +143,12 @@ FuncUnwinders::GetUnwindPlanFastUnwind (Thread& thread)
     if (m_tried_unwind_fast == false && m_unwind_plan_fast_sp.get() == NULL)
     {
         m_tried_unwind_fast = true;
-        m_unwind_plan_fast_sp.reset (new UnwindPlan (lldb::eRegisterKindGeneric));
-        if (!m_assembly_profiler->GetFastUnwindPlan (m_range, thread, *m_unwind_plan_fast_sp))
-            m_unwind_plan_fast_sp.reset();
+        if (m_assembly_profiler)
+        {
+            m_unwind_plan_fast_sp.reset (new UnwindPlan (lldb::eRegisterKindGeneric));
+            if (!m_assembly_profiler->GetFastUnwindPlan (m_range, thread, *m_unwind_plan_fast_sp))
+                m_unwind_plan_fast_sp.reset();
+        }
     }
     return m_unwind_plan_fast_sp;
 }
@@ -216,7 +222,7 @@ FuncUnwinders::GetUnwindPlanArchitectureDefaultAtFunctionEntry (Thread& thread)
         }
     }
 
-    return m_unwind_plan_arch_default_sp;
+    return m_unwind_plan_arch_default_at_func_entry_sp;
 }
 
 
@@ -226,7 +232,8 @@ FuncUnwinders::GetFirstNonPrologueInsn (Target& target)
     if (m_first_non_prologue_insn.IsValid())
         return m_first_non_prologue_insn;
     ExecutionContext exe_ctx (target.shared_from_this(), false);
-    m_assembly_profiler->FirstNonPrologueInsn (m_range, exe_ctx, m_first_non_prologue_insn);
+    if (m_assembly_profiler)
+        m_assembly_profiler->FirstNonPrologueInsn (m_range, exe_ctx, m_first_non_prologue_insn);
     return m_first_non_prologue_insn;
 }
 
