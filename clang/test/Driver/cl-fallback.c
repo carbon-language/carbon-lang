@@ -6,6 +6,7 @@
 
 // RUN: %clang_cl /fallback /Dfoo=bar /Ubaz /Ifoo /O0 /Ox /GR /GR- /LD /LDd \
 // RUN:     /MD /MDd /MTd /MT -### -- %s 2>&1 | FileCheck %s
+// CHECK: "-fdiagnostics-format" "msvc-fallback"
 // CHECK: ||
 // CHECK: cl.exe
 // CHECK: "/c"

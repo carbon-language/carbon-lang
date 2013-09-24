@@ -12,7 +12,7 @@
 //
 // RUN: %clang -fsyntax-only -fno-show-column %s 2>&1 | FileCheck %s -check-prefix=NO_COLUMN
 //
-
+// RUN: not %clang -fsyntax-only -Werror -fdiagnostics-format=msvc-fallback %s 2>&1 | FileCheck %s -check-prefix=MSVC-FALLBACK
 
 
 
@@ -31,4 +31,5 @@
 // VI: {{.*}} +28:8: warning: extra tokens at end of #endif directive [-Wextra-tokens]
 // MSVC_ORIG: {{.*}}(28) : warning: extra tokens at end of #endif directive [-Wextra-tokens]
 // NO_COLUMN: {{.*}}:28: warning: extra tokens at end of #endif directive [-Wextra-tokens]
+// MSVC-FALLBACK: {{.*}}(28,7) : error(clang): extra tokens at end of #endif directive
 int x;

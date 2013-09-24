@@ -693,7 +693,8 @@ TextDiagnostic::emitDiagnosticMessage(SourceLocation Loc,
   if (DiagOpts->ShowColors)
     OS.resetColor();
   
-  printDiagnosticLevel(OS, Level, DiagOpts->ShowColors);
+  printDiagnosticLevel(OS, Level, DiagOpts->ShowColors,
+                       DiagOpts->CLFallbackMode);
   printDiagnosticMessage(OS, Level, Message,
                          OS.tell() - StartOfLocationInfo,
                          DiagOpts->MessageLength, DiagOpts->ShowColors);
@@ -702,7 +703,8 @@ TextDiagnostic::emitDiagnosticMessage(SourceLocation Loc,
 /*static*/ void
 TextDiagnostic::printDiagnosticLevel(raw_ostream &OS,
                                      DiagnosticsEngine::Level Level,
-                                     bool ShowColors) {
+                                     bool ShowColors,
+                                     bool CLFallbackMode) {
   if (ShowColors) {
     // Print diagnostic category in bold and color
     switch (Level) {
@@ -718,11 +720,20 @@ TextDiagnostic::printDiagnosticLevel(raw_ostream &OS,
   switch (Level) {
   case DiagnosticsEngine::Ignored:
     llvm_unreachable("Invalid diagnostic type");
-  case DiagnosticsEngine::Note:    OS << "note: "; break;
-  case DiagnosticsEngine::Warning: OS << "warning: "; break;
-  case DiagnosticsEngine::Error:   OS << "error: "; break;
-  case DiagnosticsEngine::Fatal:   OS << "fatal error: "; break;
+  case DiagnosticsEngine::Note:    OS << "note"; break;
+  case DiagnosticsEngine::Warning: OS << "warning"; break;
+  case DiagnosticsEngine::Error:   OS << "error"; break;
+  case DiagnosticsEngine::Fatal:   OS << "fatal error"; break;
   }
+
+  // In clang-cl /fallback mode, print diagnostics as "error(clang):". This
+  // makes it more clear whether a message is coming from clang or cl.exe,
+  // and it prevents MSBuild from concluding that the build failed just because
+  // there is an "error:" in the output.
+  if (CLFallbackMode)
+    OS << "(clang)";
+
+  OS << ": ";
 
   if (ShowColors)
     OS.resetColor();

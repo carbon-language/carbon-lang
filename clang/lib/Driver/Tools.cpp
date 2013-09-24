@@ -3783,7 +3783,10 @@ void Clang::AddClangCLArgs(const ArgList &Args, ArgStringList &CmdArgs) const {
 
   if (!Args.hasArg(options::OPT_fdiagnostics_format_EQ)) {
     CmdArgs.push_back("-fdiagnostics-format");
-    CmdArgs.push_back("msvc");
+    if (Args.hasArg(options::OPT__SLASH_fallback))
+      CmdArgs.push_back("msvc-fallback");
+    else
+      CmdArgs.push_back("msvc");
   }
 }
 

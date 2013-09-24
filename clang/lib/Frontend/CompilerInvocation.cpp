@@ -589,7 +589,10 @@ bool clang::ParseDiagnosticArgs(DiagnosticOptions &Opts, ArgList &Args,
     Opts.setFormat(DiagnosticOptions::Clang);
   else if (Format == "msvc")
     Opts.setFormat(DiagnosticOptions::Msvc);
-  else if (Format == "vi")
+  else if (Format == "msvc-fallback") {
+    Opts.setFormat(DiagnosticOptions::Msvc);
+    Opts.CLFallbackMode = true;
+  } else if (Format == "vi")
     Opts.setFormat(DiagnosticOptions::Vi);
   else {
     Success = false;
