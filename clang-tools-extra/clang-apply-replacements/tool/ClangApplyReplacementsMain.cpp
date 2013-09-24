@@ -17,7 +17,10 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/DiagnosticOptions.h"
 #include "clang/Basic/SourceManager.h"
+#include "clang/Basic/Version.h"
 #include "clang/Rewrite/Core/Rewriter.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/StringSet.h"
 #include "llvm/Support/CommandLine.h"
 
 using namespace llvm;
@@ -32,6 +35,11 @@ static cl::opt<bool> RemoveTUReplacementFiles(
     cl::desc("Remove the change description files regardless of successful\n"
              "merging/replacing."),
     cl::init(false));
+
+// Update this list of options to show in -help as new options are added.
+// Should add even those options marked as 'Hidden'. Any option not listed
+// here will get marked 'ReallyHidden' so they don't appear in any -help text.
+const char *OptionsToShow[] = { "help", "version", "remove-change-desc-files" };
 
 // Helper object to remove the TUReplacement files (triggered by
 // "remove-change-desc-files" command line option) when exiting current scope.
@@ -50,7 +58,22 @@ private:
   clang::DiagnosticsEngine &Diag;
 };
 
+void printVersion() {
+  outs() << "clang-apply-replacements version " CLANG_VERSION_STRING << "\n";
+}
+
 int main(int argc, char **argv) {
+  // Only include our options in -help output.
+  StringMap<cl::Option*> OptMap;
+  cl::getRegisteredOptions(OptMap);
+  const char **EndOpts = OptionsToShow + array_lengthof(OptionsToShow);
+  for (StringMap<cl::Option *>::iterator I = OptMap.begin(), E = OptMap.end();
+       I != E; ++I) {
+    if (std::find(OptionsToShow, EndOpts, I->getKey()) == EndOpts)
+      I->getValue()->setHiddenFlag(cl::ReallyHidden);
+  }
+
+  cl::SetVersionPrinter(&printVersion);
   cl::ParseCommandLineOptions(argc, argv);
 
   IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts(new DiagnosticOptions());
