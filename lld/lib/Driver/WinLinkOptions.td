@@ -62,7 +62,7 @@ defm dynamicbase : B<"dynamicbase",
      "Disable address space layout randomization">;
 
 def help : F<"help">;
-def help_q : F<"?">, Alias<help>;
+def help_q : Flag<["/?", "-?"], "">, Alias<help>;
 
 def DASH_DASH : Option<["--"], "", KIND_REMAINING_ARGS>;
 
