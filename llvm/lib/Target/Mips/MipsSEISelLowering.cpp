@@ -1668,6 +1668,23 @@ SDValue MipsSETargetLowering::lowerBUILD_VECTOR(SDValue Op,
   }
   else if (isSplatVector(Node))
     return DAG.getNode(MipsISD::VSPLAT, DL, ResTy, Op->getOperand(0));
+  else {
+    // Use INSERT_VECTOR_ELT operations rather than expand to stores.
+    // The resulting code is the same length as the expansion, but it doesn't
+    // use memory operations
+    EVT ResTy = Node->getValueType(0);
+
+    assert(ResTy.isVector());
+
+    unsigned NumElts = ResTy.getVectorNumElements();
+    SDValue Vector = DAG.getUNDEF(ResTy);
+    for (unsigned i = 0; i < NumElts; ++i) {
+      Vector = DAG.getNode(ISD::INSERT_VECTOR_ELT, DL, ResTy, Vector,
+                           Node->getOperand(i),
+                           DAG.getConstant(i, MVT::i32));
+    }
+    return Vector;
+  }
 
   return SDValue();
 }

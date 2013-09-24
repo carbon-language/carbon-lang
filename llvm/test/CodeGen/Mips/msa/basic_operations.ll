@@ -119,6 +119,116 @@ define void @const_v2i64() nounwind {
   ; MIPS32: .size const_v2i64
 }
 
+define void @nonconst_v16i8(i8 %a, i8 %b, i8 %c, i8 %d, i8 %e, i8 %f, i8 %g, i8 %h) nounwind {
+  ; MIPS32: nonconst_v16i8:
+
+  %1 = insertelement <16 x i8> undef, i8 %a, i32 0
+  %2 = insertelement <16 x i8> %1, i8 %b, i32 1
+  %3 = insertelement <16 x i8> %2, i8 %c, i32 2
+  %4 = insertelement <16 x i8> %3, i8 %d, i32 3
+  %5 = insertelement <16 x i8> %4, i8 %e, i32 4
+  %6 = insertelement <16 x i8> %5, i8 %f, i32 5
+  %7 = insertelement <16 x i8> %6, i8 %g, i32 6
+  %8 = insertelement <16 x i8> %7, i8 %h, i32 7
+  %9 = insertelement <16 x i8> %8, i8 %h, i32 8
+  %10 = insertelement <16 x i8> %9, i8 %h, i32 9
+  %11 = insertelement <16 x i8> %10, i8 %h, i32 10
+  %12 = insertelement <16 x i8> %11, i8 %h, i32 11
+  %13 = insertelement <16 x i8> %12, i8 %h, i32 12
+  %14 = insertelement <16 x i8> %13, i8 %h, i32 13
+  %15 = insertelement <16 x i8> %14, i8 %h, i32 14
+  %16 = insertelement <16 x i8> %15, i8 %h, i32 15
+  ; MIPS32-DAG: insert.b [[R1:\$w[0-9]+]][0], $4
+  ; MIPS32-DAG: insert.b [[R1]][1], $5
+  ; MIPS32-DAG: insert.b [[R1]][2], $6
+  ; MIPS32-DAG: insert.b [[R1]][3], $7
+  ; MIPS32-DAG: lbu [[R2:\$[0-9]+]], 19($sp)
+  ; MIPS32-DAG: insert.b [[R1]][4], [[R2]]
+  ; MIPS32-DAG: lbu [[R3:\$[0-9]+]], 23($sp)
+  ; MIPS32-DAG: insert.b [[R1]][5], [[R3]]
+  ; MIPS32-DAG: lbu [[R4:\$[0-9]+]], 27($sp)
+  ; MIPS32-DAG: insert.b [[R1]][6], [[R4]]
+  ; MIPS32-DAG: lbu [[R5:\$[0-9]+]], 31($sp)
+  ; MIPS32-DAG: insert.b [[R1]][7], [[R5]]
+  ; MIPS32-DAG: insert.b [[R1]][8], [[R5]]
+  ; MIPS32-DAG: insert.b [[R1]][9], [[R5]]
+  ; MIPS32-DAG: insert.b [[R1]][10], [[R5]]
+  ; MIPS32-DAG: insert.b [[R1]][11], [[R5]]
+  ; MIPS32-DAG: insert.b [[R1]][12], [[R5]]
+  ; MIPS32-DAG: insert.b [[R1]][13], [[R5]]
+  ; MIPS32-DAG: insert.b [[R1]][14], [[R5]]
+  ; MIPS32-DAG: insert.b [[R1]][15], [[R5]]
+
+  store volatile <16 x i8> %16, <16 x i8>*@v16i8
+
+  ret void
+  ; MIPS32: .size nonconst_v16i8
+}
+
+define void @nonconst_v8i16(i16 %a, i16 %b, i16 %c, i16 %d, i16 %e, i16 %f, i16 %g, i16 %h) nounwind {
+  ; MIPS32: nonconst_v8i16:
+
+  %1 = insertelement <8 x i16> undef, i16 %a, i32 0
+  %2 = insertelement <8 x i16> %1, i16 %b, i32 1
+  %3 = insertelement <8 x i16> %2, i16 %c, i32 2
+  %4 = insertelement <8 x i16> %3, i16 %d, i32 3
+  %5 = insertelement <8 x i16> %4, i16 %e, i32 4
+  %6 = insertelement <8 x i16> %5, i16 %f, i32 5
+  %7 = insertelement <8 x i16> %6, i16 %g, i32 6
+  %8 = insertelement <8 x i16> %7, i16 %h, i32 7
+  ; MIPS32-DAG: insert.h [[R1:\$w[0-9]+]][0], $4
+  ; MIPS32-DAG: insert.h [[R1]][1], $5
+  ; MIPS32-DAG: insert.h [[R1]][2], $6
+  ; MIPS32-DAG: insert.h [[R1]][3], $7
+  ; MIPS32-DAG: lhu [[R2:\$[0-9]+]], 18($sp)
+  ; MIPS32-DAG: insert.h [[R1]][4], [[R2]]
+  ; MIPS32-DAG: lhu [[R2:\$[0-9]+]], 22($sp)
+  ; MIPS32-DAG: insert.h [[R1]][5], [[R2]]
+  ; MIPS32-DAG: lhu [[R2:\$[0-9]+]], 26($sp)
+  ; MIPS32-DAG: insert.h [[R1]][6], [[R2]]
+  ; MIPS32-DAG: lhu [[R2:\$[0-9]+]], 30($sp)
+  ; MIPS32-DAG: insert.h [[R1]][7], [[R2]]
+
+  store volatile <8 x i16> %8, <8 x i16>*@v8i16
+
+  ret void
+  ; MIPS32: .size nonconst_v8i16
+}
+
+define void @nonconst_v4i32(i32 %a, i32 %b, i32 %c, i32 %d) nounwind {
+  ; MIPS32: nonconst_v4i32:
+
+  %1 = insertelement <4 x i32> undef, i32 %a, i32 0
+  %2 = insertelement <4 x i32> %1, i32 %b, i32 1
+  %3 = insertelement <4 x i32> %2, i32 %c, i32 2
+  %4 = insertelement <4 x i32> %3, i32 %d, i32 3
+  ; MIPS32: insert.w [[R1:\$w[0-9]+]][0], $4
+  ; MIPS32: insert.w [[R1]][1], $5
+  ; MIPS32: insert.w [[R1]][2], $6
+  ; MIPS32: insert.w [[R1]][3], $7
+
+  store volatile <4 x i32> %4, <4 x i32>*@v4i32
+
+  ret void
+  ; MIPS32: .size nonconst_v4i32
+}
+
+define void @nonconst_v2i64(i64 %a, i64 %b) nounwind {
+  ; MIPS32: nonconst_v2i64:
+
+  %1 = insertelement <2 x i64> undef, i64 %a, i32 0
+  %2 = insertelement <2 x i64> %1, i64 %b, i32 1
+  ; MIPS32: insert.w [[R1:\$w[0-9]+]][0], $4
+  ; MIPS32: insert.w [[R1]][1], $5
+  ; MIPS32: insert.w [[R1]][2], $6
+  ; MIPS32: insert.w [[R1]][3], $7
+
+  store volatile <2 x i64> %2, <2 x i64>*@v2i64
+
+  ret void
+  ; MIPS32: .size nonconst_v2i64
+}
+
 define i32 @extract_sext_v16i8() nounwind {
   ; MIPS32: extract_sext_v16i8:
 
