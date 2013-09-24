@@ -101,29 +101,29 @@ namespace non_const_init {
     
     struct C1a {
       template<typename U> static U Data;
-      template<typename U> static U* Data<U>;   // Okay, with out-of-line definition
+      template<typename U> static U* Data<U*>;   // Okay, with out-of-line definition
     };
-    template<typename T> T* C1a::Data<T> = new T();
-    template int* C1a::Data<int>;
+    template<typename T> T* C1a::Data<T*> = new T();
+    template int* C1a::Data<int*>;
     
     struct C1b {
       template<typename U> static U Data;
-      template<typename U> static CONST U* Data<U>;   // Okay, with out-of-line definition
+      template<typename U> static CONST U* Data<U*>;   // Okay, with out-of-line definition
     };
-    template<typename T> CONST T* C1b::Data<T> = (T*)(0);
-    template CONST int* C1b::Data<int>;
+    template<typename T> CONST T* C1b::Data<T*> = (T*)(0);
+    template CONST int* C1b::Data<int*>;
 
     struct C2a {
-      template<typename U> static U Data;
-      template<typename U> static U* Data<U> = new U();   // expected-error {{non-const static data member must be initialized out of line}}
+      template<typename U> static int Data;
+      template<typename U> static U* Data<U*> = new U();   // expected-error {{non-const static data member must be initialized out of line}}
     };
-    template int* C2a::Data<int>; // expected-note {{in instantiation of static data member 'non_const_init::pointers::C2a::Data<int>' requested here}}
+    template int* C2a::Data<int*>; // expected-note {{in instantiation of static data member 'non_const_init::pointers::C2a::Data<int *>' requested here}}
     
     struct C2b {  // FIXME: ?!? Should this be an error? pointer-types are automatically non-const?
-      template<typename U> static U Data;
-      template<typename U> static CONST U* Data<U> = (U*)(0); // expected-error {{non-const static data member must be initialized out of line}}
+      template<typename U> static int Data;
+      template<typename U> static CONST U* Data<U*> = (U*)(0); // expected-error {{non-const static data member must be initialized out of line}}
     };
-    template CONST int* C2b::Data<int>; // expected-note {{in instantiation of static data member 'non_const_init::pointers::C2b::Data<int>' requested here}}
+    template CONST int* C2b::Data<int*>; // expected-note {{in instantiation of static data member 'non_const_init::pointers::C2b::Data<int *>' requested here}}
   }
 }
 
@@ -211,16 +211,17 @@ namespace in_class_template {
   }
   
   namespace other_bugs {
-    // FIXME: This fails to properly initialize the variable 'k'.
-    
+    // FIXME: This fails to properly initialize the variables 'k1' and 'k2'.
+
     template<typename A> struct S { 
-      template<typename B> static int V;
       template<typename B> static int V0;
+      template<typename B> static int V1;
     };
     template struct S<int>;
     template<typename A> template<typename B> int S<A>::V0 = 123;
-    template<typename A> template<typename B> int S<A>::V<B> = 123;
-    int k = S<int>::V<void>;
+    template<typename A> template<typename B> int S<A>::V1<B*> = 123;
+    int k1 = S<int>::V0<void>;
+    int k2 = S<int>::V1<void*>;
   }
 
   namespace incomplete_array {
@@ -244,7 +245,7 @@ namespace in_class_template {
 
     // FIXME: These cases should be accepted.
     int *use_before_definition = A<int>::x<char>;
-    template<typename T> template<typename U> T A<T>::x<U>[sizeof(U)];
+    template<typename T> template<typename U> T A<T>::x[sizeof(U)];
     static_assert(sizeof(A<int>::x<char>) == 1, ""); // expected-error {{incomplete}}
 
     template<typename T> template<typename...U> T A<T>::y<tuple<U...> >[] = { U()... };

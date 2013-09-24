@@ -49,7 +49,7 @@ template struct a<int>;
 struct b {
   template <typename T> static T i;
 };
-template<typename T> T b::i<T> = foo();
+template<typename T> T b::i = foo();
 template int b::i<int>;
 }
 // CHECK: define internal void @[[unordered1]]

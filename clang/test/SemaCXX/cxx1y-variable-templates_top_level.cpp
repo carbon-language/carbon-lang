@@ -315,8 +315,7 @@ namespace explicit_specialization {
   
   namespace diff_type {
     // TODO:
-    template<typename T> T var = T();
-    template<typename T> T* var<T> = new T();
+    template<typename T> T* var = new T();
 #ifndef PRECXX11
     template<typename T> auto var<T*> = T();  // expected-note {{previous definition is here}}
     template<typename T> T var<T*> = T();     // expected-error {{redefinition of 'var' with a different type: 'T' vs 'auto'}}

@@ -58,7 +58,7 @@ namespace spec {
   template<typename T> T vc = T();
 
   template<typename T> constexpr T vd = T(10);
-  template<typename T> T* vd<T> = new T();
+  template<typename T> T* vd<T*> = new T();
 }
 
 namespace spec_join1 {
@@ -72,7 +72,7 @@ namespace spec_join1 {
   template<typename T> T vc = T(10);
 
   template<typename T> T vd = T(10);
-  template<typename T> extern T* vd<T>;
+  template<typename T> extern T* vd<T*>;
 }
 
 #endif
@@ -108,7 +108,7 @@ namespace spec_join1 {
   template int vc<int>;
   
   template<typename T> extern T vd;
-  template<typename T> T* vd<T> = new T();
+  template<typename T> T* vd<T*> = new T();
 }
 
 #endif
@@ -146,16 +146,16 @@ namespace spec {
   static_assert(va<float> == 1.5, "");
   static_assert(va<int> == 10, "");
 
-  template<typename T> T* vb<T> = new T();
-  int* intpb = vb<int>;
+  template<typename T> T* vb<T*> = new T();
+  int* intpb = vb<int*>;
   static_assert(vb<float> == 1.5, "");
 
-  template<typename T> T* vc<T> = new T();
+  template<typename T> T* vc<T*> = new T();
   template<> constexpr float vc<float> = 1.5;
-  int* intpc = vc<int>;
+  int* intpc = vc<int*>;
   static_assert(vc<float> == 1.5, "");
 
-  char* intpd = vd<char>;
+  char* intpd = vd<char*>;
 }
 
 namespace spec_join1 {
@@ -165,7 +165,7 @@ namespace spec_join1 {
   template<typename T> extern T vb;
   int b = vb<int>;
 
-  int* intpb = vd<int>;
+  int* intpb = vd<int*>;
 }
 
 #endif

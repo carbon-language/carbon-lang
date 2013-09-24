@@ -2273,6 +2273,69 @@ static bool CheckTemplateSpecializationScope(Sema &S, NamedDecl *Specialized,
 
 static TemplateSpecializationKind getTemplateSpecializationKind(Decl *D);
 
+static bool isTemplateArgumentTemplateParameter(
+    const TemplateArgument &Arg, unsigned Depth, unsigned Index) {
+  switch (Arg.getKind()) {
+  case TemplateArgument::Null:
+  case TemplateArgument::NullPtr:
+  case TemplateArgument::Integral:
+  case TemplateArgument::Declaration:
+  case TemplateArgument::Pack:
+  case TemplateArgument::TemplateExpansion:
+    return false;
+
+  case TemplateArgument::Type: {
+    QualType Type = Arg.getAsType();
+    const TemplateTypeParmType *TPT =
+        Arg.getAsType()->getAs<TemplateTypeParmType>();
+    return TPT && !Type.hasQualifiers() &&
+           TPT->getDepth() == Depth && TPT->getIndex() == Index;
+  }
+
+  case TemplateArgument::Expression: {
+    DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(Arg.getAsExpr());
+    if (!DRE || !DRE->getDecl())
+      return false;
+    const NonTypeTemplateParmDecl *NTTP =
+        dyn_cast<NonTypeTemplateParmDecl>(DRE->getDecl());
+    return NTTP && NTTP->getDepth() == Depth && NTTP->getIndex() == Index;
+  }
+
+  case TemplateArgument::Template:
+    const TemplateTemplateParmDecl *TTP =
+        dyn_cast_or_null<TemplateTemplateParmDecl>(
+            Arg.getAsTemplateOrTemplatePattern().getAsTemplateDecl());
+    return TTP && TTP->getDepth() == Depth && TTP->getIndex() == Index;
+  }
+  llvm_unreachable("unexpected kind of template argument");
+}
+
+static bool isSameAsPrimaryTemplate(TemplateParameterList *Params,
+                                    ArrayRef<TemplateArgument> Args) {
+  if (Params->size() != Args.size())
+    return false;
+
+  unsigned Depth = Params->getDepth();
+
+  for (unsigned I = 0, N = Args.size(); I != N; ++I) {
+    TemplateArgument Arg = Args[I];
+
+    // If the parameter is a pack expansion, the argument must be a pack
+    // whose only element is a pack expansion.
+    if (Params->getParam(I)->isParameterPack()) {
+      if (Arg.getKind() != TemplateArgument::Pack || Arg.pack_size() != 1 ||
+          !Arg.pack_begin()->isPackExpansion())
+        return false;
+      Arg = Arg.pack_begin()->getPackExpansionPattern();
+    }
+
+    if (!isTemplateArgumentTemplateParameter(Arg, Depth, I))
+      return false;
+  }
+
+  return true;
+}
+
 DeclResult Sema::ActOnVarTemplateSpecialization(
     Scope *S, VarTemplateDecl *VarTemplate, Declarator &D, TypeSourceInfo *DI,
     SourceLocation TemplateKWLoc, TemplateParameterList *TemplateParams,
@@ -2341,6 +2404,21 @@ DeclResult Sema::ActOnVarTemplateSpecialization(
           << VarTemplate->getDeclName();
       IsPartialSpecialization = false;
     }
+
+    if (isSameAsPrimaryTemplate(VarTemplate->getTemplateParameters(),
+                                Converted)) {
+      // C++ [temp.class.spec]p9b3:
+      //
+      //   -- The argument list of the specialization shall not be identical
+      //      to the implicit argument list of the primary template.
+      Diag(TemplateNameLoc, diag::err_partial_spec_args_match_primary_template)
+        << /*variable template*/ 1
+        << /*is definition*/(SC != SC_Extern && !CurContext->isRecord())
+        << FixItHint::CreateRemoval(SourceRange(LAngleLoc, RAngleLoc));
+      // FIXME: Recover from this by treating the declaration as a redeclaration
+      // of the primary template.
+      return true;
+    }
   }
 
   void *InsertPos = 0;
@@ -2402,7 +2480,8 @@ DeclResult Sema::ActOnVarTemplateSpecialization(
       unsigned NumNonDeducible =
           DeducibleParams.size() - DeducibleParams.count();
       Diag(TemplateNameLoc, diag::warn_partial_specs_not_deducible)
-          << (NumNonDeducible > 1) << SourceRange(TemplateNameLoc, RAngleLoc);
+        << /*variable template*/ 1 << (NumNonDeducible > 1)
+        << SourceRange(TemplateNameLoc, RAngleLoc);
       for (unsigned I = 0, N = DeducibleParams.size(); I != N; ++I) {
         if (!DeducibleParams[I]) {
           NamedDecl *Param = cast<NamedDecl>(TemplateParams->getParam(I));
@@ -5881,7 +5960,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
       //   -- The argument list of the specialization shall not be identical
       //      to the implicit argument list of the primary template.
       Diag(TemplateNameLoc, diag::err_partial_spec_args_match_primary_template)
-        << (TUK == TUK_Definition)
+        << /*class template*/0 << (TUK == TUK_Definition)
         << FixItHint::CreateRemoval(SourceRange(LAngleLoc, RAngleLoc));
       return CheckClassTemplate(S, TagSpec, TUK, KWLoc, SS,
                                 ClassTemplate->getIdentifier(),
@@ -5935,7 +6014,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
     if (!DeducibleParams.all()) {
       unsigned NumNonDeducible = DeducibleParams.size()-DeducibleParams.count();
       Diag(TemplateNameLoc, diag::warn_partial_specs_not_deducible)
-        << (NumNonDeducible > 1)
+        << /*class template*/0 << (NumNonDeducible > 1)
         << SourceRange(TemplateNameLoc, RAngleLoc);
       for (unsigned I = 0, N = DeducibleParams.size(); I != N; ++I) {
         if (!DeducibleParams[I]) {
