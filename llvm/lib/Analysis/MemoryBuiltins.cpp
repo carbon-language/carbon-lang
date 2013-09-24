@@ -61,12 +61,12 @@ static const AllocFnsTy AllocationFnData[] = {
   {LibFunc::ZnajRKSt9nothrow_t,  MallocLike,  2, 0,  -1}, // new[](unsigned int, nothrow)
   {LibFunc::Znam,                OpNewLike,   1, 0,  -1}, // new[](unsigned long)
   {LibFunc::ZnamRKSt9nothrow_t,  MallocLike,  2, 0,  -1}, // new[](unsigned long, nothrow)
-  {LibFunc::posix_memalign,      MallocLike,  3, 2,  -1},
   {LibFunc::calloc,              CallocLike,  2, 0,   1},
   {LibFunc::realloc,             ReallocLike, 2, 1,  -1},
   {LibFunc::reallocf,            ReallocLike, 2, 1,  -1},
   {LibFunc::strdup,              StrDupLike,  1, -1, -1},
   {LibFunc::strndup,             StrDupLike,  2, 1,  -1}
+  // TODO: Handle "int posix_memalign(void **, size_t, size_t)"
 };
 
 
