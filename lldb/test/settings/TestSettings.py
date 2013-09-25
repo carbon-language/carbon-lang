@@ -116,13 +116,16 @@ class SettingsCommandTestCase(TestBase):
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         def cleanup():
-            format_string = "frame #${frame.index}: ${frame.pc}{ ${module.file.basename}{`${function.name}${function.pc-offset}}}{ at ${line.file.basename}:${line.number}}\n"
-            self.runCmd("settings set frame-format %s" % format_string, check=False)
+            self.runCmd("settings set frame-format %s" % self.format_string, check=False)
 
         # Execute the cleanup function during test case tear down.
         self.addTearDownHook(cleanup)
 
-        format_string = "frame #${frame.index}: ${frame.pc}{ ${module.file.basename}`${function.name-with-args}{${function.pc-offset}}}{ at ${line.file.fullpath}:${line.number}}\n"
+        self.runCmd("settings show frame-format")
+        self.format_string = self.res.GetOutput()
+
+        # Change the default format to print function.name rather than function.name-with-args
+        format_string = "frame #${frame.index}: ${frame.pc}{ ${module.file.basename}`${function.name}{${function.pc-offset}}}{ at ${line.file.fullpath}:${line.number}}\n"
         self.runCmd("settings set frame-format %s" % format_string)
 
         # Immediately test the setting.
