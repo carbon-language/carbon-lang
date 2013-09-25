@@ -48,6 +48,11 @@ class TextTestResult(result.TestResult):
         self.descriptions = descriptions
         self.progressbar = None
 
+        if self.dots:
+            self.stream.writeln(".=success F=fail E=error s=skipped x=expected-fail u=unexpected-success");
+            self.stream.writeln("");
+            self.stream.flush()
+
     def getDescription(self, test):
         doc_first_line = test.shortDescription()
         if self.descriptions and doc_first_line:
