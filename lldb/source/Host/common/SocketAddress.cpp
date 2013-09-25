@@ -11,6 +11,7 @@
 #include <stddef.h>
 
 // C Includes
+#include <arpa/inet.h>
 #include <assert.h>
 #include <string.h>
 
