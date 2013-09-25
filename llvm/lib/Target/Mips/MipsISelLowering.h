@@ -248,11 +248,16 @@ namespace llvm {
   protected:
     SDValue getGlobalReg(SelectionDAG &DAG, EVT Ty) const;
 
-    SDValue getAddrLocal(SDValue Op, SelectionDAG &DAG, bool HasMips64) const;
+    template<class NodeTy>
+    SDValue getAddrLocal(NodeTy *N, EVT Ty, SelectionDAG &DAG,
+                         bool HasMips64) const;
 
-    SDValue getAddrGlobal(SDValue Op, SelectionDAG &DAG, unsigned Flag) const;
+    template<class NodeTy>
+    SDValue getAddrGlobal(NodeTy *N, EVT Ty, SelectionDAG &DAG,
+                          unsigned Flag) const;
 
-    SDValue getAddrGlobalLargeGOT(SDValue Op, SelectionDAG &DAG,
+    template<class NodeTy>
+    SDValue getAddrGlobalLargeGOT(NodeTy *N, EVT Ty, SelectionDAG &DAG,
                                   unsigned HiFlag, unsigned LoFlag) const;
 
     /// This function fills Ops, which is the list of operands that will later
