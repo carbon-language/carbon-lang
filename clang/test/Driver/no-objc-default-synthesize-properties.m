@@ -1,4 +1,4 @@
-// RUN: %clang  -fsyntax-only -fno-objc-default-synthesize-properties -fobjc-default-synthesize-properties %s 2>&1 | FileCheck %s
+// RUN: not %clang  -fsyntax-only -fno-objc-default-synthesize-properties -fobjc-default-synthesize-properties %s 2>&1 | FileCheck %s
 
 @interface I
 @property int P;
@@ -6,5 +6,5 @@
 
 @implementation I
 @end
-// CHECK: warning: argument unused during compilation: '-fno-objc-default-synthesize-properties'
-// CHECK: warning: argument unused during compilation: '-fobjc-default-synthesize-properties'
+// CHECK: error: unknown argument: '-fno-objc-default-synthesize-properties'
+// CHECK: error: unknown argument: '-fobjc-default-synthesize-properties'
