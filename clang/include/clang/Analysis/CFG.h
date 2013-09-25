@@ -200,7 +200,7 @@ public:
   }
 
   // Get Delete expression which triggered the destructor call.
-  const CXXDeleteExpr *getDeleteExpr() {
+  const CXXDeleteExpr *getDeleteExpr() const {
     return static_cast<CXXDeleteExpr *>(Data2.getPointer());
   }
 

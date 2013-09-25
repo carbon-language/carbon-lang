@@ -296,7 +296,9 @@ void ExprEngine::VisitCXXDestructor(QualType ObjectType,
   // FIXME: We need to run the same destructor on every element of the array.
   // This workaround will just run the first destructor (which will still
   // invalidate the entire array).
-  SVal DestVal = loc::MemRegionVal(Dest);
+  SVal DestVal = UnknownVal();
+  if (Dest)
+    DestVal = loc::MemRegionVal(Dest);
   DestVal = makeZeroElementRegion(State, DestVal, ObjectType);
   Dest = DestVal.getAsRegion();
 

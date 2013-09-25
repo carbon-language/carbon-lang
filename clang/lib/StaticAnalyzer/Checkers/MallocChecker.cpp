@@ -1803,7 +1803,8 @@ bool MallocChecker::isReleased(SymbolRef Sym, CheckerContext &C) const {
 bool MallocChecker::checkUseAfterFree(SymbolRef Sym, CheckerContext &C,
                                       const Stmt *S) const {
 
-  if (isReleased(Sym, C)) {
+  // FIXME: Handle destructor called from delete more precisely.
+  if (isReleased(Sym, C) && S) {
     ReportUseAfterFree(C, S->getSourceRange(), Sym);
     return true;
   }

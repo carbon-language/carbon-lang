@@ -333,3 +333,28 @@ namespace reference_count {
   }
 }
 
+// Test double delete
+class DerefClass{
+public:
+  int *x;
+  DerefClass() {}
+  ~DerefClass() {*x = 1;} //expected-warning {{Use of memory after it is freed}}
+};
+
+void testDoubleDeleteClassInstance() {
+  DerefClass *foo = new DerefClass();
+  delete foo;
+  delete foo; // FIXME: We should ideally report warning here instead of inside the destructor.
+}
+
+class EmptyClass{
+public:
+  EmptyClass() {}
+  ~EmptyClass() {}
+};
+
+void testDoubleDeleteEmptyClass() {
+  EmptyClass *foo = new EmptyClass();
+  delete foo;
+  delete foo;  //expected-warning {{Attempt to free released memory}}
+}
