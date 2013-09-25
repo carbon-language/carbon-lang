@@ -1198,6 +1198,11 @@ void SubtargetEmitter::EmitProcessorModels(raw_ostream &OS) {
     EmitProcessorProp(OS, PI->ModelDef, "LoadLatency", ',');
     EmitProcessorProp(OS, PI->ModelDef, "HighLatency", ',');
     EmitProcessorProp(OS, PI->ModelDef, "MispredictPenalty", ',');
+
+    OS << "  " << (bool)(PI->ModelDef ?
+                         PI->ModelDef->getValueAsBit("CompleteModel") : 0)
+       << ", // " << "CompleteModel\n";
+
     OS << "  " << PI->Index << ", // Processor ID\n";
     if (PI->hasInstrSchedModel())
       OS << "  " << PI->ModelName << "ProcResources" << ",\n"

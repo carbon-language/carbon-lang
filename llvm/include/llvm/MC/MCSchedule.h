@@ -174,6 +174,8 @@ public:
   unsigned MispredictPenalty;
   static const unsigned DefaultMispredictPenalty = 10;
 
+  bool CompleteModel;
+
 private:
   unsigned ProcID;
   const MCProcResourceDesc *ProcResourceTable;
@@ -194,6 +196,7 @@ public:
                   LoadLatency(DefaultLoadLatency),
                   HighLatency(DefaultHighLatency),
                   MispredictPenalty(DefaultMispredictPenalty),
+                  CompleteModel(true),
                   ProcID(0), ProcResourceTable(0), SchedClassTable(0),
                   NumProcResourceKinds(0), NumSchedClasses(0),
                   InstrItineraries(0) {
@@ -203,18 +206,22 @@ public:
 
   // Table-gen driven ctor.
   MCSchedModel(unsigned iw, int mbs, unsigned ll, unsigned hl,
-               unsigned mp, unsigned pi, const MCProcResourceDesc *pr,
+               unsigned mp, bool cm, unsigned pi, const MCProcResourceDesc *pr,
                const MCSchedClassDesc *sc, unsigned npr, unsigned nsc,
                const InstrItinerary *ii):
     IssueWidth(iw), MicroOpBufferSize(mbs), LoadLatency(ll), HighLatency(hl),
-    MispredictPenalty(mp), ProcID(pi), ProcResourceTable(pr),
-    SchedClassTable(sc), NumProcResourceKinds(npr), NumSchedClasses(nsc),
-    InstrItineraries(ii) {}
+    MispredictPenalty(mp), CompleteModel(cm), ProcID(pi),
+    ProcResourceTable(pr), SchedClassTable(sc), NumProcResourceKinds(npr),
+    NumSchedClasses(nsc), InstrItineraries(ii) {}
 
   unsigned getProcessorID() const { return ProcID; }
 
   /// Does this machine model include instruction-level scheduling.
   bool hasInstrSchedModel() const { return SchedClassTable; }
+
+  /// Return true if this machine model data for all instructions with a
+  /// scheduling class (itinerary class or SchedRW list).
+  bool isComplete() const { return CompleteModel; }
 
   unsigned getNumProcResourceKinds() const {
     return NumProcResourceKinds;

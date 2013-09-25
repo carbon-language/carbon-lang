@@ -210,7 +210,8 @@ unsigned TargetSchedModel::computeOperandLatency(
   // unit latency (defaultDefLatency may be too conservative).
 #ifndef NDEBUG
   if (SCDesc->isValid() && !DefMI->getOperand(DefOperIdx).isImplicit()
-      && !DefMI->getDesc().OpInfo[DefOperIdx].isOptionalDef()) {
+      && !DefMI->getDesc().OpInfo[DefOperIdx].isOptionalDef()
+      && SchedModel.isComplete()) {
     std::string Err;
     raw_string_ostream ss(Err);
     ss << "DefIdx " << DefIdx << " exceeds machine model writes for "

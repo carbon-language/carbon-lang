@@ -86,6 +86,15 @@ class SchedMachineModel {
   // Per-cycle resources tables.
   ProcessorItineraries Itineraries = NoItineraries;
 
+  // Subtargets that define a model for only a subset of instructions
+  // that have a scheduling class (itinerary class or SchedRW list)
+  // and may actually be generated for that subtarget must clear this
+  // bit. Otherwise, the scheduler considers an unmodelled opcode to
+  // be an error. This should only be set during initial bringup,
+  // or there will be no way to catch simple errors in the model
+  // resulting from changes to the instruction definitions.
+  bit CompleteModel = 1;
+
   bit NoModel = 0; // Special tag to indicate missing machine model.
 }
 

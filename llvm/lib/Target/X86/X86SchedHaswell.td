@@ -19,6 +19,10 @@ def HaswellModel : SchedMachineModel {
   let MicroOpBufferSize = 192; // Based on the reorder buffer.
   let LoadLatency = 4;
   let MispredictPenalty = 16;
+
+  // FIXME: SSE4 and AVX are unimplemented. This flag is set to allow
+  // the scheduler to assign a default model to unrecognized opcodes.
+  let CompleteModel = 0;
 }
 
 let SchedModel = HaswellModel in {
