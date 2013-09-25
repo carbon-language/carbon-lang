@@ -201,19 +201,19 @@ let Defs = [CC] in {
 def Select32 : SelectWrapper<GR32>;
 def Select64 : SelectWrapper<GR64>;
 
-defm CondStore8_32  : CondStores<GR32, nonvolatile_truncstorei8,
-                                 nonvolatile_anyextloadi8, bdxaddr20only>;
-defm CondStore16_32 : CondStores<GR32, nonvolatile_truncstorei16,
-                                 nonvolatile_anyextloadi16, bdxaddr20only>;
-defm CondStore32_32 : CondStores<GR32, nonvolatile_store,
-                                 nonvolatile_load, bdxaddr20only>;
-
-defm CondStore8  : CondStores<GR64, nonvolatile_truncstorei8,
+defm CondStore8  : CondStores<GR32, nonvolatile_truncstorei8,
                               nonvolatile_anyextloadi8, bdxaddr20only>;
-defm CondStore16 : CondStores<GR64, nonvolatile_truncstorei16,
+defm CondStore16 : CondStores<GR32, nonvolatile_truncstorei16,
                               nonvolatile_anyextloadi16, bdxaddr20only>;
-defm CondStore32 : CondStores<GR64, nonvolatile_truncstorei32,
-                              nonvolatile_anyextloadi32, bdxaddr20only>;
+defm CondStore32 : CondStores<GR32, nonvolatile_store,
+                              nonvolatile_load, bdxaddr20only>;
+
+defm : CondStores64<CondStore8, CondStore8Inv, nonvolatile_truncstorei8,
+                    nonvolatile_anyextloadi8, bdxaddr20only>;
+defm : CondStores64<CondStore16, CondStore16Inv, nonvolatile_truncstorei16,
+                    nonvolatile_anyextloadi16, bdxaddr20only>;
+defm : CondStores64<CondStore32, CondStore32Inv, nonvolatile_truncstorei32,
+                    nonvolatile_anyextloadi32, bdxaddr20only>;
 defm CondStore64 : CondStores<GR64, nonvolatile_store,
                               nonvolatile_load, bdxaddr20only>;
 
@@ -329,8 +329,7 @@ let Uses = [CC] in {
 
 // Register stores.
 let SimpleBDXStore = 1 in {
-  let isCodeGenOnly = 1 in
-    defm ST32 : StoreRXPair<"st", 0x50, 0xE350, store, GR32, 4>;
+  defm ST : StoreRXPair<"st", 0x50, 0xE350, store, GR32, 4>;
   def STG : StoreRXY<"stg", 0xE324, store, GR64, 8>;
 
   // These instructions are split after register allocation, so we don't
@@ -340,15 +339,13 @@ let SimpleBDXStore = 1 in {
                        [(store GR128:$src, bdxaddr20only128:$dst)]>;
   }
 }
-let isCodeGenOnly = 1 in
-  def STRL32 : StoreRILPC<"strl", 0xC4F, aligned_store, GR32>;
+def STRL  : StoreRILPC<"strl", 0xC4F, aligned_store, GR32>;
 def STGRL : StoreRILPC<"stgrl", 0xC4B, aligned_store, GR64>;
 
 // Store on condition.
 let isCodeGenOnly = 1, Uses = [CC] in {
-  def STOC32 : CondStoreRSY<"stoc",  0xEBF3, GR32, 4>;
-  def STOC   : CondStoreRSY<"stoc",  0xEBF3, GR64, 4>;
-  def STOCG  : CondStoreRSY<"stocg", 0xEBE3, GR64, 8>;
+  def STOC  : CondStoreRSY<"stoc",  0xEBF3, GR32, 4>;
+  def STOCG : CondStoreRSY<"stocg", 0xEBE3, GR64, 8>;
 }
 let Uses = [CC] in {
   def AsmSTOC  : AsmCondStoreRSY<"stoc",  0xEBF3, GR32, 4>;
@@ -459,18 +456,16 @@ def : Pat<(i32 (trunc GR64:$src)),
           (EXTRACT_SUBREG GR64:$src, subreg_32bit)>;
 
 // Truncations of 32-bit registers to memory.
-let isCodeGenOnly = 1 in {
-  defm STC32   : StoreRXPair<"stc", 0x42, 0xE372, truncstorei8,  GR32, 1>;
-  defm STH32   : StoreRXPair<"sth", 0x40, 0xE370, truncstorei16, GR32, 2>;
-  def  STHRL32 : StoreRILPC<"sthrl", 0xC47, aligned_truncstorei16, GR32>;
-}
+defm STC   : StoreRXPair<"stc", 0x42, 0xE372, truncstorei8,  GR32, 1>;
+defm STH   : StoreRXPair<"sth", 0x40, 0xE370, truncstorei16, GR32, 2>;
+def  STHRL : StoreRILPC<"sthrl", 0xC47, aligned_truncstorei16, GR32>;
 
 // Truncations of 64-bit registers to memory.
-defm STC   : StoreRXPair<"stc", 0x42, 0xE372, truncstorei8,  GR64, 1>;
-defm STH   : StoreRXPair<"sth", 0x40, 0xE370, truncstorei16, GR64, 2>;
-def  STHRL : StoreRILPC<"sthrl", 0xC47, aligned_truncstorei16, GR64>;
-defm ST    : StoreRXPair<"st", 0x50, 0xE350, truncstorei32, GR64, 4>;
-def  STRL  : StoreRILPC<"strl", 0xC4F, aligned_truncstorei32, GR64>;
+defm : StoreGR64Pair<STC, STCY, truncstorei8>;
+defm : StoreGR64Pair<STH, STHY, truncstorei16>;
+def  : StoreGR64PC<STHRL, aligned_truncstorei16>;
+defm : StoreGR64Pair<ST, STY, truncstorei32>;
+def  : StoreGR64PC<STRL, aligned_truncstorei32>;
 
 //===----------------------------------------------------------------------===//
 // Multi-register moves

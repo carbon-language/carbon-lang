@@ -2872,18 +2872,6 @@ EmitInstrWithCustomInserter(MachineInstr *MI, MachineBasicBlock *MBB) const {
   case SystemZ::SelectF128:
     return emitSelect(MI, MBB);
 
-  case SystemZ::CondStore8_32:
-    return emitCondStore(MI, MBB, SystemZ::STC32, 0, false);
-  case SystemZ::CondStore8_32Inv:
-    return emitCondStore(MI, MBB, SystemZ::STC32, 0, true);
-  case SystemZ::CondStore16_32:
-    return emitCondStore(MI, MBB, SystemZ::STH32, 0, false);
-  case SystemZ::CondStore16_32Inv:
-    return emitCondStore(MI, MBB, SystemZ::STH32, 0, true);
-  case SystemZ::CondStore32_32:
-    return emitCondStore(MI, MBB, SystemZ::ST32, SystemZ::STOC32, false);
-  case SystemZ::CondStore32_32Inv:
-    return emitCondStore(MI, MBB, SystemZ::ST32, SystemZ::STOC32, true);
   case SystemZ::CondStore8:
     return emitCondStore(MI, MBB, SystemZ::STC, 0, false);
   case SystemZ::CondStore8Inv:

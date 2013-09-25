@@ -66,6 +66,52 @@ multiclass InsertMem<string type, Instruction insn, RegisterOperand cls,
             (insn cls:$src1, mode:$src2)>;
 }
 
+// INSN stores the low 32 bits of a GPR to a memory with addressing mode MODE.
+// Record that it is equivalent to using OPERATOR to store a GR64.
+class StoreGR64<Instruction insn, SDPatternOperator operator,
+                AddressingMode mode>
+  : Pat<(operator GR64:$R1, mode:$XBD2),
+        (insn (EXTRACT_SUBREG GR64:$R1, subreg_32bit), mode:$XBD2)>;
+
+// INSN and INSNY are an RX/RXY pair of instructions that store the low
+// 32 bits of a GPR to memory.  Record that they are equivalent to using
+// OPERATOR to store a GR64.
+multiclass StoreGR64Pair<Instruction insn, Instruction insny,
+                         SDPatternOperator operator> {
+  def : StoreGR64<insn, operator, bdxaddr12pair>;
+  def : StoreGR64<insny, operator, bdxaddr20pair>;
+}
+
+// INSN stores the low 32 bits of a GPR using PC-relative addressing.
+// Record that it is equivalent to using OPERATOR to store a GR64.
+class StoreGR64PC<Instruction insn, SDPatternOperator operator>
+  : Pat<(operator GR64:$R1, pcrel32:$XBD2),
+        (insn (EXTRACT_SUBREG GR64:$R1, subreg_32bit), pcrel32:$XBD2)> {
+  // We want PC-relative addresses to be tried ahead of BD and BDX addresses.
+  // However, BDXs have two extra operands and are therefore 6 units more
+  // complex.
+  let AddedComplexity = 7;
+}
+
+// INSN and INSNINV conditionally store the low 32 bits of a GPR to memory,
+// with INSN storing when the condition is true and INSNINV storing when the
+// condition is false.  Record that they are equivalent to a LOAD/select/STORE
+// sequence for GR64s.
+multiclass CondStores64<Instruction insn, Instruction insninv,
+                        SDPatternOperator store, SDPatternOperator load,
+                        AddressingMode mode> {
+  def : Pat<(store (z_select_ccmask GR64:$new, (load mode:$addr),
+                                    uimm8zx4:$valid, uimm8zx4:$cc),
+                   mode:$addr),
+            (insn (EXTRACT_SUBREG GR64:$new, subreg_32bit), mode:$addr,
+                  uimm8zx4:$valid, uimm8zx4:$cc)>;
+  def : Pat<(store (z_select_ccmask (load mode:$addr), GR64:$new,
+                                    uimm8zx4:$valid, uimm8zx4:$cc),
+                   mode:$addr),
+            (insninv (EXTRACT_SUBREG GR64:$new, subreg_32bit), mode:$addr,
+                     uimm8zx4:$valid, uimm8zx4:$cc)>;
+}
+
 // Try to use MVC instruction INSN for a load of type LOAD followed by a store
 // of the same size.  VT is the type of the intermediate (legalized) value and
 // LENGTH is the number of bytes loaded by LOAD.

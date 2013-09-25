@@ -819,7 +819,7 @@ void SystemZInstrInfo::getLoadStoreOpcodes(const TargetRegisterClass *RC,
                                            unsigned &StoreOpcode) const {
   if (RC == &SystemZ::GR32BitRegClass || RC == &SystemZ::ADDR32BitRegClass) {
     LoadOpcode = SystemZ::L;
-    StoreOpcode = SystemZ::ST32;
+    StoreOpcode = SystemZ::ST;
   } else if (RC == &SystemZ::GR64BitRegClass ||
              RC == &SystemZ::ADDR64BitRegClass) {
     LoadOpcode = SystemZ::LG;
