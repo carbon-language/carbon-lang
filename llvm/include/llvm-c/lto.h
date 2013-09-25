@@ -20,7 +20,7 @@
 #include <stdbool.h>
 #endif
 #include <stddef.h>
-#include <unistd.h>
+#include <sys/types.h>
 
 /**
  * @defgroup LLVMCLTO LTO
