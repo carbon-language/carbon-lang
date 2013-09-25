@@ -14,6 +14,7 @@
 
 // Some system headers or GCC predefined macros conflict with identifiers in
 // this file.  Undefine them here.
+#undef NetBSD
 #undef mips
 #undef sparc
 
