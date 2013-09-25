@@ -1642,6 +1642,39 @@ TEST(MemorySanitizer, sigaction) {
 
 } // namespace
 
+
+TEST(MemorySanitizer, sigemptyset) {
+  sigset_t s;
+  EXPECT_POISONED(s);
+  int res = sigemptyset(&s);
+  ASSERT_EQ(0, res);
+  EXPECT_NOT_POISONED(s);
+}
+
+TEST(MemorySanitizer, sigfillset) {
+  sigset_t s;
+  EXPECT_POISONED(s);
+  int res = sigfillset(&s);
+  ASSERT_EQ(0, res);
+  EXPECT_NOT_POISONED(s);
+}
+
+TEST(MemorySanitizer, sigpending) {
+  sigset_t s;
+  EXPECT_POISONED(s);
+  int res = sigpending(&s);
+  ASSERT_EQ(0, res);
+  EXPECT_NOT_POISONED(s);
+}
+
+TEST(MemorySanitizer, sigprocmask) {
+  sigset_t s;
+  EXPECT_POISONED(s);
+  int res = sigprocmask(SIG_BLOCK, 0, &s);
+  ASSERT_EQ(0, res);
+  EXPECT_NOT_POISONED(s);
+}
+
 struct StructWithDtor {
   ~StructWithDtor();
 };

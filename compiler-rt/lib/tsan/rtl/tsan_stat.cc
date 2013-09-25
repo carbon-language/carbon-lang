@@ -362,6 +362,13 @@ void StatOutput(u64 *stat) {
   name[StatInt_scandir64]                = "  scandir64                       ";
   name[StatInt_getgroups]                = "  getgroups                       ";
   name[StatInt_wordexp]                  = "  wordexp                         ";
+  name[StatInt_sigwait]                  = "  sigwait                         ";
+  name[StatInt_sigwaitinfo]              = "  sigwaitinfo                     ";
+  name[StatInt_sigtimedwait]             = "  sigtimedwait                    ";
+  name[StatInt_sigemptyset]              = "  sigemptyset                     ";
+  name[StatInt_sigfillset]               = "  sigfillset                      ";
+  name[StatInt_sigpending]               = "  sigpending                      ";
+  name[StatInt_sigprocmask]              = "  sigprocmask                     ";
 
   name[StatAnnotation]                   = "Dynamic annotations               ";
   name[StatAnnotateHappensBefore]        = "  HappensBefore                   ";

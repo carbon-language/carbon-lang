@@ -35,11 +35,6 @@ struct my_siginfo_t {
   u64 opaque[128 / sizeof(u64)];
 };
 
-struct sigset_t {
-  // The size is determined by looking at sizeof of real sigset_t on linux.
-  u64 val[128 / sizeof(u64)];
-};
-
 struct ucontext_t {
   // The size is determined by looking at sizeof of real ucontext_t on linux.
   u64 opaque[936 / sizeof(u64) + 1];
@@ -54,8 +49,10 @@ extern "C" int pthread_key_create(unsigned *key, void (*destructor)(void* v));
 extern "C" int pthread_setspecific(unsigned key, const void *v);
 extern "C" int pthread_mutexattr_gettype(void *a, int *type);
 extern "C" int pthread_yield();
-extern "C" int pthread_sigmask(int how, const sigset_t *set, sigset_t *oldset);
-extern "C" int sigfillset(sigset_t *set);
+extern "C" int pthread_sigmask(int how, const __sanitizer_sigset_t *set,
+                               __sanitizer_sigset_t *oldset);
+// REAL(sigfillset) defined in common interceptors.
+DECLARE_REAL(int, sigfillset, __sanitizer_sigset_t *set)
 extern "C" void *pthread_self();
 extern "C" void _exit(int status);
 extern "C" int *__errno_location();
@@ -97,7 +94,7 @@ struct sigaction_t {
     sighandler_t sa_handler;
     void (*sa_sigaction)(int sig, my_siginfo_t *siginfo, void *uctx);
   };
-  sigset_t sa_mask;
+  __sanitizer_sigset_t sa_mask;
   int sa_flags;
   void (*sa_restorer)();
 };
@@ -1698,7 +1695,7 @@ TSAN_INTERCEPTOR(int, sigaction, int sig, sigaction_t *act, sigaction_t *old) {
   internal_memcpy(&sigactions[sig], act, sizeof(*act));
   sigaction_t newact;
   internal_memcpy(&newact, act, sizeof(newact));
-  sigfillset(&newact.sa_mask);
+  REAL(sigfillset)(&newact.sa_mask);
   if (act->sa_handler != SIG_IGN && act->sa_handler != SIG_DFL) {
     if (newact.sa_flags & SA_SIGINFO)
       newact.sa_sigaction = rtl_sigaction;
@@ -1721,7 +1718,7 @@ TSAN_INTERCEPTOR(sighandler_t, signal, int sig, sighandler_t h) {
   return old.sa_handler;
 }
 
-TSAN_INTERCEPTOR(int, sigsuspend, const sigset_t *mask) {
+TSAN_INTERCEPTOR(int, sigsuspend, const __sanitizer_sigset_t *mask) {
   SCOPED_TSAN_INTERCEPTOR(sigsuspend, mask);
   return REAL(sigsuspend)(mask);
 }
@@ -1951,8 +1948,8 @@ void ProcessPendingSignals(ThreadState *thr) {
   thr->in_signal_handler = true;
   sctx->pending_signal_count = 0;
   // These are too big for stack.
-  static THREADLOCAL sigset_t emptyset, oldset;
-  sigfillset(&emptyset);
+  static THREADLOCAL __sanitizer_sigset_t emptyset, oldset;
+  REAL(sigfillset)(&emptyset);
   pthread_sigmask(SIG_SETMASK, &emptyset, &oldset);
   for (int sig = 0; sig < kSigCount; sig++) {
     SignalDesc *signal = &sctx->pending_signals[sig];
