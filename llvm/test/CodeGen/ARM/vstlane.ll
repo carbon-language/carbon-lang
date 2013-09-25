@@ -13,7 +13,7 @@ define void @vst1lanei8(i8* %A, <8 x i8>* %B) nounwind {
 ;Check for a post-increment updating store.
 define void @vst1lanei8_update(i8** %ptr, <8 x i8>* %B) nounwind {
 ;CHECK-LABEL: vst1lanei8_update:
-;CHECK: vst1.8 {d16[3]}, [r2]!
+;CHECK: vst1.8 {d16[3]}, [{{r[0-9]}}]!
 	%A = load i8** %ptr
 	%tmp1 = load <8 x i8>* %B
 	%tmp2 = extractelement <8 x i8> %tmp1, i32 3

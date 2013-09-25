@@ -282,8 +282,6 @@ bool ARMSubtarget::enablePostRAScheduler(
            CodeGenOpt::Level OptLevel,
            TargetSubtargetInfo::AntiDepBreakMode& Mode,
            RegClassVector& CriticalPathRCs) const {
-  Mode = TargetSubtargetInfo::ANTIDEP_CRITICAL;
-  CriticalPathRCs.clear();
-  CriticalPathRCs.push_back(&ARM::GPRRegClass);
+  Mode = TargetSubtargetInfo::ANTIDEP_NONE;
   return PostRAScheduler && OptLevel >= CodeGenOpt::Default;
 }

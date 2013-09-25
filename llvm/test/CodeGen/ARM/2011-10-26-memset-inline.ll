@@ -10,8 +10,8 @@ target triple = "thumbv7-apple-ios5.0.0"
 ; CHECK-GENERIT-NEXT: strb
 ; CHECK-GENERIT-NEXT: strb
 ; CHECK-GENERIT-NEXT: strb
-; CHECK-UNALIGNED:      strb
-; CHECK-UNALIGNED-NEXT: str 
+; CHECK-UNALIGNED:    strb
+; CHECK-UNALIGNED:    str
 define void @foo(i8* nocapture %c) nounwind optsize {
 entry:
   call void @llvm.memset.p0i8.i64(i8* %c, i8 -1, i64 5, i32 1, i1 false)
