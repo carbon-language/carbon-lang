@@ -3348,6 +3348,10 @@ CXString clang_getCursorSpelling(CXCursor C) {
     return cxstring::createDup(AA->getLabel());
   }
 
+  if (C.kind == CXCursor_PackedAttr) {
+    return cxstring::createRef("packed");
+  }
+
   return cxstring::createEmpty();
 }
 
@@ -3765,6 +3769,8 @@ CXString clang_getCursorKindSpelling(enum CXCursorKind Kind) {
     return cxstring::createRef("attribute(annotate)");
   case CXCursor_AsmLabelAttr:
     return cxstring::createRef("asm label");
+  case CXCursor_PackedAttr:
+    return cxstring::createRef("attribute(packed)");
   case CXCursor_PreprocessingDirective:
     return cxstring::createRef("preprocessing directive");
   case CXCursor_MacroDefinition:
@@ -4169,6 +4175,12 @@ CXSourceLocation clang_getCursorLocation(CXCursor C) {
   if (C.kind == CXCursor_InclusionDirective) {
     SourceLocation L
       = cxcursor::getCursorInclusionDirective(C)->getSourceRange().getBegin();
+    return cxloc::translateSourceLocation(getCursorContext(C), L);
+  }
+
+  if (clang_isAttribute(C.kind)) {
+    SourceLocation L
+      = cxcursor::getCursorAttr(C)->getLocation();
     return cxloc::translateSourceLocation(getCursorContext(C), L);
   }
 

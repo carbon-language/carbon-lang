@@ -2095,7 +2095,8 @@ enum CXCursorKind {
   CXCursor_CXXOverrideAttr               = 405,
   CXCursor_AnnotateAttr                  = 406,
   CXCursor_AsmLabelAttr                  = 407,
-  CXCursor_LastAttr                      = CXCursor_AsmLabelAttr,
+  CXCursor_PackedAttr                    = 408,
+  CXCursor_LastAttr                      = CXCursor_PackedAttr,
      
   /* Preprocessing */
   CXCursor_PreprocessingDirective        = 500,
