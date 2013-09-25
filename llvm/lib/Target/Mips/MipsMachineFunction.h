@@ -26,39 +26,6 @@ namespace llvm {
 /// MipsFunctionInfo - This class is derived from MachineFunction private
 /// Mips target-specific information for each MachineFunction.
 class MipsFunctionInfo : public MachineFunctionInfo {
-  virtual void anchor();
-
-  MachineFunction& MF;
-  /// SRetReturnReg - Some subtargets require that sret lowering includes
-  /// returning the value of the returned struct in a register. This field
-  /// holds the virtual register into which the sret argument is passed.
-  unsigned SRetReturnReg;
-
-  /// GlobalBaseReg - keeps track of the virtual register initialized for
-  /// use as the global base register. This is used for PIC in some PIC
-  /// relocation models.
-  unsigned GlobalBaseReg;
-
-  /// Mips16SPAliasReg - keeps track of the virtual register initialized for
-  /// use as an alias for SP for use in load/store of halfword/byte from/to
-  /// the stack
-  unsigned Mips16SPAliasReg;
-
-  /// VarArgsFrameIndex - FrameIndex for start of varargs area.
-  int VarArgsFrameIndex;
-
-  /// True if function has a byval argument.
-  bool HasByvalArg;
-
-  /// Size of incoming argument area.
-  unsigned IncomingArgSize;
-
-  /// CallsEhReturn - Whether the function calls llvm.eh.return.
-  bool CallsEhReturn;
-
-  /// Frame objects for spilling eh data registers.
-  int EhDataRegFI[4];
-
 public:
   MipsFunctionInfo(MachineFunction& MF)
    : MF(MF), SRetReturnReg(0), GlobalBaseReg(0), Mips16SPAliasReg(0),
@@ -92,6 +59,39 @@ public:
   int getEhDataRegFI(unsigned Reg) const { return EhDataRegFI[Reg]; }
   bool isEhDataRegFI(int FI) const;
 
+private:
+  virtual void anchor();
+
+  MachineFunction& MF;
+  /// SRetReturnReg - Some subtargets require that sret lowering includes
+  /// returning the value of the returned struct in a register. This field
+  /// holds the virtual register into which the sret argument is passed.
+  unsigned SRetReturnReg;
+
+  /// GlobalBaseReg - keeps track of the virtual register initialized for
+  /// use as the global base register. This is used for PIC in some PIC
+  /// relocation models.
+  unsigned GlobalBaseReg;
+
+  /// Mips16SPAliasReg - keeps track of the virtual register initialized for
+  /// use as an alias for SP for use in load/store of halfword/byte from/to
+  /// the stack
+  unsigned Mips16SPAliasReg;
+
+  /// VarArgsFrameIndex - FrameIndex for start of varargs area.
+  int VarArgsFrameIndex;
+
+  /// True if function has a byval argument.
+  bool HasByvalArg;
+
+  /// Size of incoming argument area.
+  unsigned IncomingArgSize;
+
+  /// CallsEhReturn - Whether the function calls llvm.eh.return.
+  bool CallsEhReturn;
+
+  /// Frame objects for spilling eh data registers.
+  int EhDataRegFI[4];
 };
 
 } // end of namespace llvm
