@@ -2014,7 +2014,7 @@ bool Driver::GetReleaseVersion(const char *Str, unsigned &Major,
 
 std::pair<unsigned, unsigned> Driver::getIncludeExcludeOptionFlagMasks() const {
   unsigned IncludedFlagsBitmask = 0;
-  unsigned ExcludedFlagsBitmask = 0;
+  unsigned ExcludedFlagsBitmask = options::NoDriverOption;
 
   if (Mode == CLMode) {
     // Include CL and Core options.
