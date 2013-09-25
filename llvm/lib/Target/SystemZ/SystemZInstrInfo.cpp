@@ -535,14 +535,14 @@ namespace {
 
 static LogicOp interpretAndImmediate(unsigned Opcode) {
   switch (Opcode) {
-  case SystemZ::NILL32: return LogicOp(32,  0, 16);
-  case SystemZ::NILH32: return LogicOp(32, 16, 16);
-  case SystemZ::NILL:   return LogicOp(64,  0, 16);
-  case SystemZ::NILH:   return LogicOp(64, 16, 16);
+  case SystemZ::NILL:   return LogicOp(32,  0, 16);
+  case SystemZ::NILH:   return LogicOp(32, 16, 16);
+  case SystemZ::NILL64: return LogicOp(64,  0, 16);
+  case SystemZ::NILH64: return LogicOp(64, 16, 16);
   case SystemZ::NIHL:   return LogicOp(64, 32, 16);
   case SystemZ::NIHH:   return LogicOp(64, 48, 16);
-  case SystemZ::NILF32: return LogicOp(32,  0, 32);
-  case SystemZ::NILF:   return LogicOp(64,  0, 32);
+  case SystemZ::NILF:   return LogicOp(32,  0, 32);
+  case SystemZ::NILF64: return LogicOp(64,  0, 32);
   case SystemZ::NIHF:   return LogicOp(64, 32, 32);
   default:              return LogicOp();
   }

@@ -112,6 +112,14 @@ multiclass CondStores64<Instruction insn, Instruction insninv,
                      uimm8zx4:$valid, uimm8zx4:$cc)>;
 }
 
+// INSN performs a comparison between a 32-bit register and a constant.
+// Record that it is equivalent to comparing the low word of a GR64 with IMM.
+class CompareGR64RI<Instruction insn, SDPatternOperator compare,
+                    Immediate imm>
+  : Pat<(compare GR64:$R1, imm:$I2),
+        (insn (EXTRACT_SUBREG GR64:$R1, subreg_32bit),
+              (imm.OperandTransform imm:$I2))>;
+
 // Try to use MVC instruction INSN for a load of type LOAD followed by a store
 // of the same size.  VT is the type of the intermediate (legalized) value and
 // LENGTH is the number of bytes loaded by LOAD.

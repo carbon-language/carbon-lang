@@ -1477,3 +1477,19 @@ class Alias<int size, dag outs, dag ins, list<dag> pattern>
   let isPseudo = 1;
   let isCodeGenOnly = 1;
 }
+
+// An alias of a BinaryRI, but with different register sizes.
+class BinaryAliasRI<SDPatternOperator operator, RegisterOperand cls,
+                    Immediate imm>
+  : Alias<4, (outs cls:$R1), (ins cls:$R1src, imm:$I2),
+          [(set cls:$R1, (operator cls:$R1src, imm:$I2))]> {
+  let Constraints = "$R1 = $R1src";
+}
+
+// An alias of a BinaryRIL, but with different register sizes.
+class BinaryAliasRIL<SDPatternOperator operator, RegisterOperand cls,
+                     Immediate imm>
+  : Alias<6, (outs cls:$R1), (ins cls:$R1src, imm:$I2),
+          [(set cls:$R1, (operator cls:$R1src, imm:$I2))]> {
+  let Constraints = "$R1 = $R1src";
+}

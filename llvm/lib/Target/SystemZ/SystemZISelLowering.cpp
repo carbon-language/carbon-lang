@@ -2330,11 +2330,11 @@ SystemZTargetLowering::emitAtomicLoadBinary(MachineInstr *MI,
       .addReg(RotatedOldVal).addOperand(Src2);
     if (BitSize < 32)
       // XILF with the upper BitSize bits set.
-      BuildMI(MBB, DL, TII->get(SystemZ::XILF32), RotatedNewVal)
+      BuildMI(MBB, DL, TII->get(SystemZ::XILF), RotatedNewVal)
         .addReg(Tmp).addImm(uint32_t(~0 << (32 - BitSize)));
     else if (BitSize == 32)
       // XILF with every bit set.
-      BuildMI(MBB, DL, TII->get(SystemZ::XILF32), RotatedNewVal)
+      BuildMI(MBB, DL, TII->get(SystemZ::XILF), RotatedNewVal)
         .addReg(Tmp).addImm(~uint32_t(0));
     else {
       // Use LCGR and add -1 to the result, which is more compact than
@@ -2938,96 +2938,96 @@ EmitInstrWithCustomInserter(MachineInstr *MI, MachineBasicBlock *MBB) const {
   case SystemZ::ATOMIC_LOADW_NR:
     return emitAtomicLoadBinary(MI, MBB, SystemZ::NR, 0);
   case SystemZ::ATOMIC_LOADW_NILH:
-    return emitAtomicLoadBinary(MI, MBB, SystemZ::NILH32, 0);
+    return emitAtomicLoadBinary(MI, MBB, SystemZ::NILH, 0);
   case SystemZ::ATOMIC_LOAD_NR:
     return emitAtomicLoadBinary(MI, MBB, SystemZ::NR, 32);
-  case SystemZ::ATOMIC_LOAD_NILL32:
-    return emitAtomicLoadBinary(MI, MBB, SystemZ::NILL32, 32);
-  case SystemZ::ATOMIC_LOAD_NILH32:
-    return emitAtomicLoadBinary(MI, MBB, SystemZ::NILH32, 32);
-  case SystemZ::ATOMIC_LOAD_NILF32:
-    return emitAtomicLoadBinary(MI, MBB, SystemZ::NILF32, 32);
+  case SystemZ::ATOMIC_LOAD_NILL:
+    return emitAtomicLoadBinary(MI, MBB, SystemZ::NILL, 32);
+  case SystemZ::ATOMIC_LOAD_NILH:
+    return emitAtomicLoadBinary(MI, MBB, SystemZ::NILH, 32);
+  case SystemZ::ATOMIC_LOAD_NILF:
+    return emitAtomicLoadBinary(MI, MBB, SystemZ::NILF, 32);
   case SystemZ::ATOMIC_LOAD_NGR:
     return emitAtomicLoadBinary(MI, MBB, SystemZ::NGR, 64);
-  case SystemZ::ATOMIC_LOAD_NILL:
-    return emitAtomicLoadBinary(MI, MBB, SystemZ::NILL, 64);
-  case SystemZ::ATOMIC_LOAD_NILH:
-    return emitAtomicLoadBinary(MI, MBB, SystemZ::NILH, 64);
+  case SystemZ::ATOMIC_LOAD_NILL64:
+    return emitAtomicLoadBinary(MI, MBB, SystemZ::NILL64, 64);
+  case SystemZ::ATOMIC_LOAD_NILH64:
+    return emitAtomicLoadBinary(MI, MBB, SystemZ::NILH64, 64);
   case SystemZ::ATOMIC_LOAD_NIHL:
     return emitAtomicLoadBinary(MI, MBB, SystemZ::NIHL, 64);
   case SystemZ::ATOMIC_LOAD_NIHH:
     return emitAtomicLoadBinary(MI, MBB, SystemZ::NIHH, 64);
-  case SystemZ::ATOMIC_LOAD_NILF:
-    return emitAtomicLoadBinary(MI, MBB, SystemZ::NILF, 64);
+  case SystemZ::ATOMIC_LOAD_NILF64:
+    return emitAtomicLoadBinary(MI, MBB, SystemZ::NILF64, 64);
   case SystemZ::ATOMIC_LOAD_NIHF:
     return emitAtomicLoadBinary(MI, MBB, SystemZ::NIHF, 64);
 
   case SystemZ::ATOMIC_LOADW_OR:
     return emitAtomicLoadBinary(MI, MBB, SystemZ::OR, 0);
   case SystemZ::ATOMIC_LOADW_OILH:
-    return emitAtomicLoadBinary(MI, MBB, SystemZ::OILH32, 0);
+    return emitAtomicLoadBinary(MI, MBB, SystemZ::OILH, 0);
   case SystemZ::ATOMIC_LOAD_OR:
     return emitAtomicLoadBinary(MI, MBB, SystemZ::OR, 32);
-  case SystemZ::ATOMIC_LOAD_OILL32:
-    return emitAtomicLoadBinary(MI, MBB, SystemZ::OILL32, 32);
-  case SystemZ::ATOMIC_LOAD_OILH32:
-    return emitAtomicLoadBinary(MI, MBB, SystemZ::OILH32, 32);
-  case SystemZ::ATOMIC_LOAD_OILF32:
-    return emitAtomicLoadBinary(MI, MBB, SystemZ::OILF32, 32);
+  case SystemZ::ATOMIC_LOAD_OILL:
+    return emitAtomicLoadBinary(MI, MBB, SystemZ::OILL, 32);
+  case SystemZ::ATOMIC_LOAD_OILH:
+    return emitAtomicLoadBinary(MI, MBB, SystemZ::OILH, 32);
+  case SystemZ::ATOMIC_LOAD_OILF:
+    return emitAtomicLoadBinary(MI, MBB, SystemZ::OILF, 32);
   case SystemZ::ATOMIC_LOAD_OGR:
     return emitAtomicLoadBinary(MI, MBB, SystemZ::OGR, 64);
-  case SystemZ::ATOMIC_LOAD_OILL:
-    return emitAtomicLoadBinary(MI, MBB, SystemZ::OILL, 64);
-  case SystemZ::ATOMIC_LOAD_OILH:
-    return emitAtomicLoadBinary(MI, MBB, SystemZ::OILH, 64);
+  case SystemZ::ATOMIC_LOAD_OILL64:
+    return emitAtomicLoadBinary(MI, MBB, SystemZ::OILL64, 64);
+  case SystemZ::ATOMIC_LOAD_OILH64:
+    return emitAtomicLoadBinary(MI, MBB, SystemZ::OILH64, 64);
   case SystemZ::ATOMIC_LOAD_OIHL:
     return emitAtomicLoadBinary(MI, MBB, SystemZ::OIHL, 64);
   case SystemZ::ATOMIC_LOAD_OIHH:
     return emitAtomicLoadBinary(MI, MBB, SystemZ::OIHH, 64);
-  case SystemZ::ATOMIC_LOAD_OILF:
-    return emitAtomicLoadBinary(MI, MBB, SystemZ::OILF, 64);
+  case SystemZ::ATOMIC_LOAD_OILF64:
+    return emitAtomicLoadBinary(MI, MBB, SystemZ::OILF64, 64);
   case SystemZ::ATOMIC_LOAD_OIHF:
     return emitAtomicLoadBinary(MI, MBB, SystemZ::OIHF, 64);
 
   case SystemZ::ATOMIC_LOADW_XR:
     return emitAtomicLoadBinary(MI, MBB, SystemZ::XR, 0);
   case SystemZ::ATOMIC_LOADW_XILF:
-    return emitAtomicLoadBinary(MI, MBB, SystemZ::XILF32, 0);
+    return emitAtomicLoadBinary(MI, MBB, SystemZ::XILF, 0);
   case SystemZ::ATOMIC_LOAD_XR:
     return emitAtomicLoadBinary(MI, MBB, SystemZ::XR, 32);
-  case SystemZ::ATOMIC_LOAD_XILF32:
-    return emitAtomicLoadBinary(MI, MBB, SystemZ::XILF32, 32);
+  case SystemZ::ATOMIC_LOAD_XILF:
+    return emitAtomicLoadBinary(MI, MBB, SystemZ::XILF, 32);
   case SystemZ::ATOMIC_LOAD_XGR:
     return emitAtomicLoadBinary(MI, MBB, SystemZ::XGR, 64);
-  case SystemZ::ATOMIC_LOAD_XILF:
-    return emitAtomicLoadBinary(MI, MBB, SystemZ::XILF, 64);
+  case SystemZ::ATOMIC_LOAD_XILF64:
+    return emitAtomicLoadBinary(MI, MBB, SystemZ::XILF64, 64);
   case SystemZ::ATOMIC_LOAD_XIHF:
     return emitAtomicLoadBinary(MI, MBB, SystemZ::XIHF, 64);
 
   case SystemZ::ATOMIC_LOADW_NRi:
     return emitAtomicLoadBinary(MI, MBB, SystemZ::NR, 0, true);
   case SystemZ::ATOMIC_LOADW_NILHi:
-    return emitAtomicLoadBinary(MI, MBB, SystemZ::NILH32, 0, true);
+    return emitAtomicLoadBinary(MI, MBB, SystemZ::NILH, 0, true);
   case SystemZ::ATOMIC_LOAD_NRi:
     return emitAtomicLoadBinary(MI, MBB, SystemZ::NR, 32, true);
-  case SystemZ::ATOMIC_LOAD_NILL32i:
-    return emitAtomicLoadBinary(MI, MBB, SystemZ::NILL32, 32, true);
-  case SystemZ::ATOMIC_LOAD_NILH32i:
-    return emitAtomicLoadBinary(MI, MBB, SystemZ::NILH32, 32, true);
-  case SystemZ::ATOMIC_LOAD_NILF32i:
-    return emitAtomicLoadBinary(MI, MBB, SystemZ::NILF32, 32, true);
+  case SystemZ::ATOMIC_LOAD_NILLi:
+    return emitAtomicLoadBinary(MI, MBB, SystemZ::NILL, 32, true);
+  case SystemZ::ATOMIC_LOAD_NILHi:
+    return emitAtomicLoadBinary(MI, MBB, SystemZ::NILH, 32, true);
+  case SystemZ::ATOMIC_LOAD_NILFi:
+    return emitAtomicLoadBinary(MI, MBB, SystemZ::NILF, 32, true);
   case SystemZ::ATOMIC_LOAD_NGRi:
     return emitAtomicLoadBinary(MI, MBB, SystemZ::NGR, 64, true);
-  case SystemZ::ATOMIC_LOAD_NILLi:
-    return emitAtomicLoadBinary(MI, MBB, SystemZ::NILL, 64, true);
-  case SystemZ::ATOMIC_LOAD_NILHi:
-    return emitAtomicLoadBinary(MI, MBB, SystemZ::NILH, 64, true);
+  case SystemZ::ATOMIC_LOAD_NILL64i:
+    return emitAtomicLoadBinary(MI, MBB, SystemZ::NILL64, 64, true);
+  case SystemZ::ATOMIC_LOAD_NILH64i:
+    return emitAtomicLoadBinary(MI, MBB, SystemZ::NILH64, 64, true);
   case SystemZ::ATOMIC_LOAD_NIHLi:
     return emitAtomicLoadBinary(MI, MBB, SystemZ::NIHL, 64, true);
   case SystemZ::ATOMIC_LOAD_NIHHi:
     return emitAtomicLoadBinary(MI, MBB, SystemZ::NIHH, 64, true);
-  case SystemZ::ATOMIC_LOAD_NILFi:
-    return emitAtomicLoadBinary(MI, MBB, SystemZ::NILF, 64, true);
+  case SystemZ::ATOMIC_LOAD_NILF64i:
+    return emitAtomicLoadBinary(MI, MBB, SystemZ::NILF64, 64, true);
   case SystemZ::ATOMIC_LOAD_NIHFi:
     return emitAtomicLoadBinary(MI, MBB, SystemZ::NIHF, 64, true);
 

@@ -570,12 +570,10 @@ defm : InsertMem<"inserti8", ICY, GR64, azextloadi8, bdxaddr20pair>;
 // Insertions of a 16-bit immediate, leaving other bits unaffected.
 // We don't have or_as_insert equivalents of these operations because
 // OI is available instead.
-let isCodeGenOnly = 1 in {
-  def IILL32 : BinaryRI<"iill", 0xA53, insertll, GR32, imm32ll16>;
-  def IILH32 : BinaryRI<"iilh", 0xA52, insertlh, GR32, imm32lh16>;
-}
-def IILL : BinaryRI<"iill", 0xA53, insertll, GR64, imm64ll16>;
-def IILH : BinaryRI<"iilh", 0xA52, insertlh, GR64, imm64lh16>;
+def IILL : BinaryRI<"iill", 0xA53, insertll, GR32, imm32ll16>;
+def IILH : BinaryRI<"iilh", 0xA52, insertlh, GR32, imm32lh16>;
+def IILL64 : BinaryAliasRI<insertll, GR64, imm64ll16>;
+def IILH64 : BinaryAliasRI<insertlh, GR64, imm64lh16>;
 def IIHL : BinaryRI<"iihl", 0xA51, inserthl, GR64, imm64hl16>;
 def IIHH : BinaryRI<"iihh", 0xA50, inserthh, GR64, imm64hh16>;
 
@@ -583,11 +581,9 @@ def IIHH : BinaryRI<"iihh", 0xA50, inserthh, GR64, imm64hh16>;
 // full-width move.  (We use IILF rather than something like LLILF
 // for 32-bit moves because IILF leaves the upper 32 bits of the
 // GR64 unchanged.)
-let isCodeGenOnly = 1, isAsCheapAsAMove = 1, isMoveImm = 1,
-    isReMaterializable = 1 in {
-  def IILF32 : UnaryRIL<"iilf", 0xC09, bitconvert, GR32, uimm32>;
-}
-def IILF : BinaryRIL<"iilf", 0xC09, insertlf, GR64, imm64lf32>;
+let isAsCheapAsAMove = 1, isMoveImm = 1, isReMaterializable = 1 in
+  def IILF : UnaryRIL<"iilf", 0xC09, bitconvert, GR32, uimm32>;
+def IILF64 : BinaryAliasRIL<insertlf, GR64, imm64lf32>;
 def IIHF : BinaryRIL<"iihf", 0xC08, inserthf, GR64, imm64hf32>;
 
 // An alternative model of inserthf, with the first operand being
@@ -730,21 +726,19 @@ let Defs = [CC] in {
   let isConvertibleToThreeAddress = 1 in {
     // ANDs of a 16-bit immediate, leaving other bits unaffected.
     // The CC result only reflects the 16-bit field, not the full register.
-    let isCodeGenOnly = 1 in {
-      def NILL32 : BinaryRI<"nill", 0xA57, and, GR32, imm32ll16c>;
-      def NILH32 : BinaryRI<"nilh", 0xA56, and, GR32, imm32lh16c>;
-    }
-    def NILL : BinaryRI<"nill", 0xA57, and, GR64, imm64ll16c>;
-    def NILH : BinaryRI<"nilh", 0xA56, and, GR64, imm64lh16c>;
+    def NILL : BinaryRI<"nill", 0xA57, and, GR32, imm32ll16c>;
+    def NILH : BinaryRI<"nilh", 0xA56, and, GR32, imm32lh16c>;
+    def NILL64 : BinaryAliasRI<and, GR64, imm64ll16c>;
+    def NILH64 : BinaryAliasRI<and, GR64, imm64lh16c>;
     def NIHL : BinaryRI<"nihl", 0xA55, and, GR64, imm64hl16c>;
     def NIHH : BinaryRI<"nihh", 0xA54, and, GR64, imm64hh16c>;
 
     // ANDs of a 32-bit immediate, leaving other bits unaffected.
     // The CC result only reflects the 32-bit field, which means we can
     // use it as a zero indicator for i32 operations but not otherwise.
-    let isCodeGenOnly = 1, CCValues = 0xC, CompareZeroCCMask = 0x8 in
-      def NILF32 : BinaryRIL<"nilf", 0xC0B, and, GR32, uimm32>;
-    def NILF : BinaryRIL<"nilf", 0xC0B, and, GR64, imm64lf32c>;
+    let CCValues = 0xC, CompareZeroCCMask = 0x8 in
+      def NILF : BinaryRIL<"nilf", 0xC0B, and, GR32, uimm32>;
+    def NILF64 : BinaryAliasRIL<and, GR64, imm64lf32c>;
     def NIHF : BinaryRIL<"nihf", 0xC0A, and, GR64, imm64hf32c>;
   }
 
@@ -777,21 +771,19 @@ let Defs = [CC] in {
 
   // ORs of a 16-bit immediate, leaving other bits unaffected.
   // The CC result only reflects the 16-bit field, not the full register.
-  let isCodeGenOnly = 1 in {
-    def OILL32 : BinaryRI<"oill", 0xA5B, or, GR32, imm32ll16>;
-    def OILH32 : BinaryRI<"oilh", 0xA5A, or, GR32, imm32lh16>;
-  }
-  def OILL : BinaryRI<"oill", 0xA5B, or, GR64, imm64ll16>;
-  def OILH : BinaryRI<"oilh", 0xA5A, or, GR64, imm64lh16>;
+  def OILL : BinaryRI<"oill", 0xA5B, or, GR32, imm32ll16>;
+  def OILH : BinaryRI<"oilh", 0xA5A, or, GR32, imm32lh16>;
+  def OILL64 : BinaryAliasRI<or, GR64, imm64ll16>;
+  def OILH64 : BinaryAliasRI<or, GR64, imm64lh16>;
   def OIHL : BinaryRI<"oihl", 0xA59, or, GR64, imm64hl16>;
   def OIHH : BinaryRI<"oihh", 0xA58, or, GR64, imm64hh16>;
 
   // ORs of a 32-bit immediate, leaving other bits unaffected.
   // The CC result only reflects the 32-bit field, which means we can
   // use it as a zero indicator for i32 operations but not otherwise.
-  let isCodeGenOnly = 1, CCValues = 0xC, CompareZeroCCMask = 0x8 in
-    def OILF32 : BinaryRIL<"oilf", 0xC0D, or, GR32, uimm32>;
-  def OILF : BinaryRIL<"oilf", 0xC0D, or, GR64, imm64lf32>;
+  let CCValues = 0xC, CompareZeroCCMask = 0x8 in
+    def OILF : BinaryRIL<"oilf", 0xC0D, or, GR32, uimm32>;
+  def OILF64 : BinaryAliasRIL<or, GR64, imm64lf32>;
   def OIHF : BinaryRIL<"oihf", 0xC0C, or, GR64, imm64hf32>;
 
   // ORs of memory.
@@ -824,9 +816,9 @@ let Defs = [CC] in {
   // XORs of a 32-bit immediate, leaving other bits unaffected.
   // The CC result only reflects the 32-bit field, which means we can
   // use it as a zero indicator for i32 operations but not otherwise.
-  let isCodeGenOnly = 1, CCValues = 0xC, CompareZeroCCMask = 0x8 in
-    def XILF32 : BinaryRIL<"xilf", 0xC07, xor, GR32, uimm32>;
-  def XILF : BinaryRIL<"xilf", 0xC07, xor, GR64, imm64lf32>;
+  let CCValues = 0xC, CompareZeroCCMask = 0x8 in
+    def XILF : BinaryRIL<"xilf", 0xC07, xor, GR32, uimm32>;
+  def XILF64 : BinaryAliasRIL<xor, GR64, imm64lf32>;
   def XIHF : BinaryRIL<"xihf", 0xC06, xor, GR64, imm64hf32>;
 
   // XORs of memory.
@@ -1036,18 +1028,16 @@ let mayLoad = 1, Defs = [CC], Uses = [R0W] in
 
 // Test under mask.
 let Defs = [CC] in {
-  let isCodeGenOnly = 1 in {
-    def TMLL32 : CompareRI<"tmll", 0xA71, z_tm_reg, GR32, imm32ll16>;
-    def TMLH32 : CompareRI<"tmlh", 0xA70, z_tm_reg, GR32, imm32lh16>;
-  }
+  def TMLL : CompareRI<"tmll", 0xA71, z_tm_reg, GR32, imm32ll16>;
+  def TMLH : CompareRI<"tmlh", 0xA70, z_tm_reg, GR32, imm32lh16>;
 
-  def TMLL : CompareRI<"tmll", 0xA71, z_tm_reg, GR64, imm64ll16>;
-  def TMLH : CompareRI<"tmlh", 0xA70, z_tm_reg, GR64, imm64lh16>;
   def TMHL : CompareRI<"tmhl", 0xA73, z_tm_reg, GR64, imm64hl16>;
   def TMHH : CompareRI<"tmhh", 0xA72, z_tm_reg, GR64, imm64hh16>;
 
   defm TM : CompareSIPair<"tm", 0x91, 0xEB51, z_tm_mem, anyextloadi8, imm32zx8>;
 }
+def : CompareGR64RI<TMLL, z_tm_reg, imm64ll16>;
+def : CompareGR64RI<TMLH, z_tm_reg, imm64lh16>;
 
 //===----------------------------------------------------------------------===//
 // Prefetch
@@ -1080,58 +1070,58 @@ def ATOMIC_LOAD_SGR     : AtomicLoadBinaryReg64<atomic_load_sub_64>;
 def ATOMIC_LOADW_NR     : AtomicLoadWBinaryReg<z_atomic_loadw_and>;
 def ATOMIC_LOADW_NILH   : AtomicLoadWBinaryImm<z_atomic_loadw_and, imm32lh16c>;
 def ATOMIC_LOAD_NR      : AtomicLoadBinaryReg32<atomic_load_and_32>;
-def ATOMIC_LOAD_NILL32  : AtomicLoadBinaryImm32<atomic_load_and_32, imm32ll16c>;
-def ATOMIC_LOAD_NILH32  : AtomicLoadBinaryImm32<atomic_load_and_32, imm32lh16c>;
-def ATOMIC_LOAD_NILF32  : AtomicLoadBinaryImm32<atomic_load_and_32, uimm32>;
+def ATOMIC_LOAD_NILL    : AtomicLoadBinaryImm32<atomic_load_and_32, imm32ll16c>;
+def ATOMIC_LOAD_NILH    : AtomicLoadBinaryImm32<atomic_load_and_32, imm32lh16c>;
+def ATOMIC_LOAD_NILF    : AtomicLoadBinaryImm32<atomic_load_and_32, uimm32>;
 def ATOMIC_LOAD_NGR     : AtomicLoadBinaryReg64<atomic_load_and_64>;
-def ATOMIC_LOAD_NILL    : AtomicLoadBinaryImm64<atomic_load_and_64, imm64ll16c>;
-def ATOMIC_LOAD_NILH    : AtomicLoadBinaryImm64<atomic_load_and_64, imm64lh16c>;
+def ATOMIC_LOAD_NILL64  : AtomicLoadBinaryImm64<atomic_load_and_64, imm64ll16c>;
+def ATOMIC_LOAD_NILH64  : AtomicLoadBinaryImm64<atomic_load_and_64, imm64lh16c>;
 def ATOMIC_LOAD_NIHL    : AtomicLoadBinaryImm64<atomic_load_and_64, imm64hl16c>;
 def ATOMIC_LOAD_NIHH    : AtomicLoadBinaryImm64<atomic_load_and_64, imm64hh16c>;
-def ATOMIC_LOAD_NILF    : AtomicLoadBinaryImm64<atomic_load_and_64, imm64lf32c>;
+def ATOMIC_LOAD_NILF64  : AtomicLoadBinaryImm64<atomic_load_and_64, imm64lf32c>;
 def ATOMIC_LOAD_NIHF    : AtomicLoadBinaryImm64<atomic_load_and_64, imm64hf32c>;
 
 def ATOMIC_LOADW_OR     : AtomicLoadWBinaryReg<z_atomic_loadw_or>;
 def ATOMIC_LOADW_OILH   : AtomicLoadWBinaryImm<z_atomic_loadw_or, imm32lh16>;
 def ATOMIC_LOAD_OR      : AtomicLoadBinaryReg32<atomic_load_or_32>;
-def ATOMIC_LOAD_OILL32  : AtomicLoadBinaryImm32<atomic_load_or_32, imm32ll16>;
-def ATOMIC_LOAD_OILH32  : AtomicLoadBinaryImm32<atomic_load_or_32, imm32lh16>;
-def ATOMIC_LOAD_OILF32  : AtomicLoadBinaryImm32<atomic_load_or_32, uimm32>;
+def ATOMIC_LOAD_OILL    : AtomicLoadBinaryImm32<atomic_load_or_32, imm32ll16>;
+def ATOMIC_LOAD_OILH    : AtomicLoadBinaryImm32<atomic_load_or_32, imm32lh16>;
+def ATOMIC_LOAD_OILF    : AtomicLoadBinaryImm32<atomic_load_or_32, uimm32>;
 def ATOMIC_LOAD_OGR     : AtomicLoadBinaryReg64<atomic_load_or_64>;
-def ATOMIC_LOAD_OILL    : AtomicLoadBinaryImm64<atomic_load_or_64, imm64ll16>;
-def ATOMIC_LOAD_OILH    : AtomicLoadBinaryImm64<atomic_load_or_64, imm64lh16>;
+def ATOMIC_LOAD_OILL64  : AtomicLoadBinaryImm64<atomic_load_or_64, imm64ll16>;
+def ATOMIC_LOAD_OILH64  : AtomicLoadBinaryImm64<atomic_load_or_64, imm64lh16>;
 def ATOMIC_LOAD_OIHL    : AtomicLoadBinaryImm64<atomic_load_or_64, imm64hl16>;
 def ATOMIC_LOAD_OIHH    : AtomicLoadBinaryImm64<atomic_load_or_64, imm64hh16>;
-def ATOMIC_LOAD_OILF    : AtomicLoadBinaryImm64<atomic_load_or_64, imm64lf32>;
+def ATOMIC_LOAD_OILF64  : AtomicLoadBinaryImm64<atomic_load_or_64, imm64lf32>;
 def ATOMIC_LOAD_OIHF    : AtomicLoadBinaryImm64<atomic_load_or_64, imm64hf32>;
 
 def ATOMIC_LOADW_XR     : AtomicLoadWBinaryReg<z_atomic_loadw_xor>;
 def ATOMIC_LOADW_XILF   : AtomicLoadWBinaryImm<z_atomic_loadw_xor, uimm32>;
 def ATOMIC_LOAD_XR      : AtomicLoadBinaryReg32<atomic_load_xor_32>;
-def ATOMIC_LOAD_XILF32  : AtomicLoadBinaryImm32<atomic_load_xor_32, uimm32>;
+def ATOMIC_LOAD_XILF    : AtomicLoadBinaryImm32<atomic_load_xor_32, uimm32>;
 def ATOMIC_LOAD_XGR     : AtomicLoadBinaryReg64<atomic_load_xor_64>;
-def ATOMIC_LOAD_XILF    : AtomicLoadBinaryImm64<atomic_load_xor_64, imm64lf32>;
+def ATOMIC_LOAD_XILF64  : AtomicLoadBinaryImm64<atomic_load_xor_64, imm64lf32>;
 def ATOMIC_LOAD_XIHF    : AtomicLoadBinaryImm64<atomic_load_xor_64, imm64hf32>;
 
 def ATOMIC_LOADW_NRi    : AtomicLoadWBinaryReg<z_atomic_loadw_nand>;
 def ATOMIC_LOADW_NILHi  : AtomicLoadWBinaryImm<z_atomic_loadw_nand,
                                                imm32lh16c>;
 def ATOMIC_LOAD_NRi     : AtomicLoadBinaryReg32<atomic_load_nand_32>;
-def ATOMIC_LOAD_NILL32i : AtomicLoadBinaryImm32<atomic_load_nand_32,
+def ATOMIC_LOAD_NILLi   : AtomicLoadBinaryImm32<atomic_load_nand_32,
                                                 imm32ll16c>;
-def ATOMIC_LOAD_NILH32i : AtomicLoadBinaryImm32<atomic_load_nand_32,
+def ATOMIC_LOAD_NILHi   : AtomicLoadBinaryImm32<atomic_load_nand_32,
                                                 imm32lh16c>;
-def ATOMIC_LOAD_NILF32i : AtomicLoadBinaryImm32<atomic_load_nand_32, uimm32>;
+def ATOMIC_LOAD_NILFi   : AtomicLoadBinaryImm32<atomic_load_nand_32, uimm32>;
 def ATOMIC_LOAD_NGRi    : AtomicLoadBinaryReg64<atomic_load_nand_64>;
-def ATOMIC_LOAD_NILLi   : AtomicLoadBinaryImm64<atomic_load_nand_64,
+def ATOMIC_LOAD_NILL64i : AtomicLoadBinaryImm64<atomic_load_nand_64,
                                                 imm64ll16c>;
-def ATOMIC_LOAD_NILHi   : AtomicLoadBinaryImm64<atomic_load_nand_64,
+def ATOMIC_LOAD_NILH64i : AtomicLoadBinaryImm64<atomic_load_nand_64,
                                                 imm64lh16c>;
 def ATOMIC_LOAD_NIHLi   : AtomicLoadBinaryImm64<atomic_load_nand_64,
                                                 imm64hl16c>;
 def ATOMIC_LOAD_NIHHi   : AtomicLoadBinaryImm64<atomic_load_nand_64,
                                                 imm64hh16c>;
-def ATOMIC_LOAD_NILFi   : AtomicLoadBinaryImm64<atomic_load_nand_64,
+def ATOMIC_LOAD_NILF64i : AtomicLoadBinaryImm64<atomic_load_nand_64,
                                                 imm64lf32c>;
 def ATOMIC_LOAD_NIHFi   : AtomicLoadBinaryImm64<atomic_load_nand_64,
                                                 imm64hf32c>;

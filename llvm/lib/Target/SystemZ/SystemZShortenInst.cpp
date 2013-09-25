@@ -119,7 +119,7 @@ bool SystemZShortenInst::processBlock(MachineBasicBlock *MBB) {
          MBBE = MBB->rend(); MBBI != MBBE; ++MBBI) {
     MachineInstr &MI = *MBBI;
     unsigned Opcode = MI.getOpcode();
-    if (Opcode == SystemZ::IILF32)
+    if (Opcode == SystemZ::IILF)
       Changed |= shortenIIF(MI, LowGPRs, LiveHigh, SystemZ::LLILL,
                             SystemZ::LLILH);
     unsigned UsedLow = 0;
