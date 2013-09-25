@@ -1201,7 +1201,7 @@ ConnectionFileDescriptor::NamedSocketAccept (const char *socket_name, Error *err
     saddr_un.sun_family = AF_UNIX;
     ::strncpy(saddr_un.sun_path, socket_name, sizeof(saddr_un.sun_path) - 1);
     saddr_un.sun_path[sizeof(saddr_un.sun_path) - 1] = '\0';
-#if defined(__APPLE__) || defined(__FreeBSD__)
+#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__NetBSD__)
     saddr_un.sun_len = SUN_LEN (&saddr_un);
 #endif
 
@@ -1254,7 +1254,7 @@ ConnectionFileDescriptor::NamedSocketConnect (const char *socket_name, Error *er
     saddr_un.sun_family = AF_UNIX;
     ::strncpy(saddr_un.sun_path, socket_name, sizeof(saddr_un.sun_path) - 1);
     saddr_un.sun_path[sizeof(saddr_un.sun_path) - 1] = '\0';
-#if defined(__APPLE__) || defined(__FreeBSD__)
+#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__NetBSD__)
     saddr_un.sun_len = SUN_LEN (&saddr_un);
 #endif
 
