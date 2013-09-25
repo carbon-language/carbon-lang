@@ -47,6 +47,15 @@ namespace SystemZMC {
   extern const unsigned FP32Regs[16];
   extern const unsigned FP64Regs[16];
   extern const unsigned FP128Regs[16];
+
+  // Return the 0-based number of the first architectural register that
+  // contains the given LLVM register.   E.g. R1D -> 1.
+  unsigned getFirstReg(unsigned Reg);
+
+  // Return the given register as a GR64.
+  inline unsigned getRegAsGR64(unsigned Reg) {
+    return GR64Regs[getFirstReg(Reg)];
+  }
 }
 
 MCCodeEmitter *createSystemZMCCodeEmitter(const MCInstrInfo &MCII,

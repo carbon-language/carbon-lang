@@ -48,6 +48,10 @@ public:
     LLVM_OVERRIDE {
     return true;
   }
+  virtual bool trackLivenessAfterRegAlloc(const MachineFunction &MF) const
+    LLVM_OVERRIDE {
+    return true;
+  }
   virtual const uint16_t *getCalleeSavedRegs(const MachineFunction *MF = 0)
     const LLVM_OVERRIDE;
   virtual BitVector getReservedRegs(const MachineFunction &MF)

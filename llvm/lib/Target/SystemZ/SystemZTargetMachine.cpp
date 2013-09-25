@@ -97,6 +97,8 @@ bool SystemZPassConfig::addPreEmitPass() {
   // preventing that would be a win or not.
   if (getOptLevel() != CodeGenOpt::None)
     addPass(createSystemZElimComparePass(getSystemZTargetMachine()));
+  if (getOptLevel() != CodeGenOpt::None)
+    addPass(createSystemZShortenInstPass(getSystemZTargetMachine()));
   addPass(createSystemZLongBranchPass(getSystemZTargetMachine()));
   return true;
 }

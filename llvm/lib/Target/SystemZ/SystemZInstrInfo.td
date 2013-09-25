@@ -1212,14 +1212,6 @@ def : Pat<(ctlz GR64:$src),
 def : Pat<(i64 (anyext GR32:$src)),
           (INSERT_SUBREG (i64 (IMPLICIT_DEF)), GR32:$src, subreg_32bit)>;
 
-// There are no 32-bit equivalents of LLILL and LLILH, so use a full
-// 64-bit move followed by a subreg.  This preserves the invariant that
-// all GR32 operations only modify the low 32 bits.
-def : Pat<(i32 imm32ll16:$src),
-          (EXTRACT_SUBREG (LLILL (LL16 imm:$src)), subreg_32bit)>;
-def : Pat<(i32 imm32lh16:$src),
-          (EXTRACT_SUBREG (LLILH (LH16 imm:$src)), subreg_32bit)>;
-
 // Extend GR32s and GR64s to GR128s.
 let usesCustomInserter = 1 in {
   def AEXT128_64 : Pseudo<(outs GR128:$dst), (ins GR64:$src), []>;

@@ -69,6 +69,23 @@ const unsigned SystemZMC::FP128Regs[16] = {
   SystemZ::F12Q, SystemZ::F13Q, 0, 0
 };
 
+unsigned SystemZMC::getFirstReg(unsigned Reg) {
+  static unsigned Map[SystemZ::NUM_TARGET_REGS];
+  static bool Initialized = false;
+  if (!Initialized) {
+    for (unsigned I = 0; I < 16; ++I) {
+      Map[GR32Regs[I]] = I;
+      Map[GR64Regs[I]] = I;
+      Map[GR128Regs[I]] = I;
+      Map[FP32Regs[I]] = I;
+      Map[FP64Regs[I]] = I;
+      Map[FP128Regs[I]] = I;
+    }
+  }
+  assert(Reg < SystemZ::NUM_TARGET_REGS);
+  return Map[Reg];
+}
+
 static MCAsmInfo *createSystemZMCAsmInfo(const MCRegisterInfo &MRI,
                                          StringRef TT) {
   MCAsmInfo *MAI = new SystemZMCAsmInfo(TT);
