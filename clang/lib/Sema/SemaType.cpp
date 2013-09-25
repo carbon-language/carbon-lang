@@ -762,8 +762,13 @@ static QualType ConvertDeclSpecToType(TypeProcessingState &state) {
     // is inferred from the return statements inside the block.
     // The declspec is always missing in a lambda expr context; it is either
     // specified with a trailing return type or inferred.
-    if (declarator.getContext() == Declarator::LambdaExprContext ||
-        isOmittedBlockReturnType(declarator)) {
+    if (S.getLangOpts().CPlusPlus1y &&
+        declarator.getContext() == Declarator::LambdaExprContext) {
+      // In C++1y, a lambda's implicit return type is 'auto'.
+      Result = Context.getAutoDeductType();
+      break;
+    } else if (declarator.getContext() == Declarator::LambdaExprContext ||
+               isOmittedBlockReturnType(declarator)) {
       Result = Context.DependentTy;
       break;
     }

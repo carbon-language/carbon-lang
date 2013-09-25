@@ -2478,6 +2478,14 @@ Sema::PerformMoveOrCopyInitialization(const InitializedEntity &Entity,
   return Res;
 }
 
+/// \brief Determine whether the declared return type of the specified function
+/// contains 'auto'.
+static bool hasDeducedReturnType(FunctionDecl *FD) {
+  const FunctionProtoType *FPT =
+      FD->getTypeSourceInfo()->getType()->castAs<FunctionProtoType>();
+  return FPT->getResultType()->isUndeducedType();
+}
+
 /// ActOnCapScopeReturnStmt - Utility routine to type-check return statements
 /// for capturing scopes.
 ///
@@ -2487,27 +2495,36 @@ Sema::ActOnCapScopeReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
   // [expr.prim.lambda]p4 in C++11; block literals follow the same rules.
   CapturingScopeInfo *CurCap = cast<CapturingScopeInfo>(getCurFunction());
   QualType FnRetType = CurCap->ReturnType;
+  LambdaScopeInfo *CurLambda = dyn_cast<LambdaScopeInfo>(CurCap);
 
-  // For blocks/lambdas with implicit return types, we check each return
-  // statement individually, and deduce the common return type when the block
-  // or lambda is completed.
-  if (CurCap->HasImplicitReturnType) {
-    // FIXME: Fold this into the 'auto' codepath below.
+  if (CurLambda && hasDeducedReturnType(CurLambda->CallOperator)) {
+    // In C++1y, the return type may involve 'auto'.
+    // FIXME: Blocks might have a return type of 'auto' explicitly specified.
+    FunctionDecl *FD = CurLambda->CallOperator;
+    if (CurCap->ReturnType.isNull())
+      CurCap->ReturnType = FD->getResultType();
+
+    AutoType *AT = CurCap->ReturnType->getContainedAutoType();
+    assert(AT && "lost auto type from lambda return type");
+    if (DeduceFunctionTypeFromReturnExpr(FD, ReturnLoc, RetValExp, AT)) {
+      FD->setInvalidDecl();
+      return StmtError();
+    }
+    CurCap->ReturnType = FnRetType = FD->getResultType();
+  } else if (CurCap->HasImplicitReturnType) {
+    // For blocks/lambdas with implicit return types, we check each return
+    // statement individually, and deduce the common return type when the block
+    // or lambda is completed.
+    // FIXME: Fold this into the 'auto' codepath above.
     if (RetValExp && !isa<InitListExpr>(RetValExp)) {
       ExprResult Result = DefaultFunctionArrayLvalueConversion(RetValExp);
       if (Result.isInvalid())
         return StmtError();
       RetValExp = Result.take();
 
-      if (!CurContext->isDependentContext()) {
+      if (!CurContext->isDependentContext())
         FnRetType = RetValExp->getType();
-        // In C++11, we take the type of the expression after decay and
-        // lvalue-to-rvalue conversion, so a class type can be cv-qualified.
-        // In C++1y, we perform template argument deduction as if the return
-        // type were 'auto', so an implicit return type is never cv-qualified.
-        if (getLangOpts().CPlusPlus1y && FnRetType.hasQualifiers())
-          FnRetType = FnRetType.getUnqualifiedType();
-      } else
+      else
         FnRetType = CurCap->ReturnType = Context.DependentTy;
     } else {
       if (RetValExp) {
@@ -2525,21 +2542,6 @@ Sema::ActOnCapScopeReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
     // make sure we provide a return type now for better error recovery.
     if (CurCap->ReturnType.isNull())
       CurCap->ReturnType = FnRetType;
-  } else if (AutoType *AT =
-                 FnRetType.isNull() ? 0 : FnRetType->getContainedAutoType()) {
-    // In C++1y, the return type may involve 'auto'.
-    FunctionDecl *FD = cast<LambdaScopeInfo>(CurCap)->CallOperator;
-    if (CurContext->isDependentContext()) {
-      // C++1y [dcl.spec.auto]p12:
-      //   Return type deduction [...] occurs when the definition is
-      //   instantiated even if the function body contains a return
-      //   statement with a non-type-dependent operand.
-      CurCap->ReturnType = FnRetType = Context.DependentTy;
-    } else if (DeduceFunctionTypeFromReturnExpr(FD, ReturnLoc, RetValExp, AT)) {
-      FD->setInvalidDecl();
-      return StmtError();
-    } else
-      CurCap->ReturnType = FnRetType = FD->getResultType();
   }
   assert(!FnRetType.isNull());
 
@@ -2553,8 +2555,9 @@ Sema::ActOnCapScopeReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
     Diag(ReturnLoc, diag::err_return_in_captured_stmt) << CurRegion->getRegionName();
     return StmtError();
   } else {
-    LambdaScopeInfo *LSI = cast<LambdaScopeInfo>(CurCap);
-    if (LSI->CallOperator->getType()->getAs<FunctionType>()->getNoReturnAttr()){
+    assert(CurLambda && "unknown kind of captured scope");
+    if (CurLambda->CallOperator->getType()->getAs<FunctionType>()
+            ->getNoReturnAttr()) {
       Diag(ReturnLoc, diag::err_noreturn_lambda_has_return_expr);
       return StmtError();
     }
@@ -2638,7 +2641,10 @@ bool Sema::DeduceFunctionTypeFromReturnExpr(FunctionDecl *FD,
   if (RetExpr && isa<InitListExpr>(RetExpr)) {
     //  If the deduction is for a return statement and the initializer is
     //  a braced-init-list, the program is ill-formed.
-    Diag(RetExpr->getExprLoc(), diag::err_auto_fn_return_init_list);
+    Diag(RetExpr->getExprLoc(),
+         getCurLambda() ? diag::err_lambda_return_init_list
+                        : diag::err_auto_fn_return_init_list)
+        << RetExpr->getSourceRange();
     return true;
   }
 
@@ -2692,9 +2698,16 @@ bool Sema::DeduceFunctionTypeFromReturnExpr(FunctionDecl *FD,
     AutoType *NewAT = Deduced->getContainedAutoType();
     if (!FD->isDependentContext() &&
         !Context.hasSameType(AT->getDeducedType(), NewAT->getDeducedType())) {
-      Diag(ReturnLoc, diag::err_auto_fn_different_deductions)
-        << (AT->isDecltypeAuto() ? 1 : 0)
-        << NewAT->getDeducedType() << AT->getDeducedType();
+      const LambdaScopeInfo *LambdaSI = getCurLambda();
+      if (LambdaSI && LambdaSI->HasImplicitReturnType) {
+        Diag(ReturnLoc, diag::err_typecheck_missing_return_type_incompatible)
+          << NewAT->getDeducedType() << AT->getDeducedType()
+          << true /*IsLambda*/;
+      } else {
+        Diag(ReturnLoc, diag::err_auto_fn_different_deductions)
+          << (AT->isDecltypeAuto() ? 1 : 0)
+          << NewAT->getDeducedType() << AT->getDeducedType();
+      }
       return true;
     }
   } else if (!FD->isInvalidDecl()) {

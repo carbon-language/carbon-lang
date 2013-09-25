@@ -131,10 +131,25 @@ Sema::ExpressionEvaluationContextRecord::getMangleNumberingContext(
 }
 
 CXXMethodDecl *Sema::startLambdaDefinition(CXXRecordDecl *Class,
-                 SourceRange IntroducerRange,
-                 TypeSourceInfo *MethodType,
-                 SourceLocation EndLoc,
-                 ArrayRef<ParmVarDecl *> Params) {
+                                           SourceRange IntroducerRange,
+                                           TypeSourceInfo *MethodTypeInfo,
+                                           SourceLocation EndLoc,
+                                           ArrayRef<ParmVarDecl *> Params) {
+  QualType MethodType = MethodTypeInfo->getType();
+
+  // If a lambda appears in a dependent context and has an 'auto' return type,
+  // deduce it to a dependent type.
+  // FIXME: Generic lambda call operators should also get this treatment.
+  if (Class->isDependentContext()) {
+    const FunctionProtoType *FPT = MethodType->castAs<FunctionProtoType>();
+    QualType Result = FPT->getResultType();
+    if (Result->isUndeducedType()) {
+      Result = SubstAutoType(Result, Context.DependentTy);
+      MethodType = Context.getFunctionType(Result, FPT->getArgTypes(),
+                                           FPT->getExtProtoInfo());
+    }
+  }
+
   // C++11 [expr.prim.lambda]p5:
   //   The closure type for a lambda-expression has a public inline function 
   //   call operator (13.5.4) whose parameters and return type are described by
@@ -152,7 +167,7 @@ CXXMethodDecl *Sema::startLambdaDefinition(CXXRecordDecl *Class,
                             DeclarationNameInfo(MethodName, 
                                                 IntroducerRange.getBegin(),
                                                 MethodNameLoc),
-                            MethodType->getType(), MethodType,
+                            MethodType, MethodTypeInfo,
                             SC_None,
                             /*isInline=*/true,
                             /*isConstExpr=*/false,
@@ -553,8 +568,17 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
         /*IsVariadic=*/false, /*IsCXXMethod=*/true));
     EPI.HasTrailingReturn = true;
     EPI.TypeQuals |= DeclSpec::TQ_const;
-    QualType MethodTy = Context.getFunctionType(Context.DependentTy, None,
-                                                EPI);
+    // C++1y [expr.prim.lambda]:
+    //   The lambda return type is 'auto', which is replaced by the
+    //   trailing-return type if provided and/or deduced from 'return'
+    //   statements
+    // We don't do this before C++1y, because we don't support deduced return
+    // types there.
+    QualType DefaultTypeForNoTrailingReturn =
+        getLangOpts().CPlusPlus1y ? Context.getAutoDeductType()
+                                  : Context.DependentTy;
+    QualType MethodTy =
+        Context.getFunctionType(DefaultTypeForNoTrailingReturn, None, EPI);
     MethodTyInfo = Context.getTrivialTypeSourceInfo(MethodTy);
     ExplicitParams = false;
     ExplicitResultType = false;
@@ -563,21 +587,19 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
     assert(ParamInfo.isFunctionDeclarator() &&
            "lambda-declarator is a function");
     DeclaratorChunk::FunctionTypeInfo &FTI = ParamInfo.getFunctionTypeInfo();
-    
+
     // C++11 [expr.prim.lambda]p5:
     //   This function call operator is declared const (9.3.1) if and only if 
     //   the lambda-expression's parameter-declaration-clause is not followed 
     //   by mutable. It is neither virtual nor declared volatile. [...]
     if (!FTI.hasMutableQualifier())
       FTI.TypeQuals |= DeclSpec::TQ_const;
-    
+
     MethodTyInfo = GetTypeForDeclarator(ParamInfo, CurScope);
     assert(MethodTyInfo && "no type from lambda-declarator");
     EndLoc = ParamInfo.getSourceRange().getEnd();
-    
-    ExplicitResultType
-      = MethodTyInfo->getType()->getAs<FunctionType>()->getResultType() 
-                                                        != Context.DependentTy;
+
+    ExplicitResultType = FTI.hasTrailingReturnType();
 
     if (FTI.NumArgs == 1 && !FTI.isVariadic && FTI.ArgInfo[0].Ident == 0 &&
         cast<ParmVarDecl>(FTI.ArgInfo[0].Param)->getType()->isVoidType()) {
@@ -1015,8 +1037,12 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc, Stmt *Body,
     //   If a lambda-expression does not include a
     //   trailing-return-type, it is as if the trailing-return-type
     //   denotes the following type:
+    //
+    // Skip for C++1y return type deduction semantics which uses
+    // different machinery.
+    // FIXME: Refactor and Merge the return type deduction machinery.
     // FIXME: Assumes current resolution to core issue 975.
-    if (LSI->HasImplicitReturnType) {
+    if (LSI->HasImplicitReturnType && !getLangOpts().CPlusPlus1y) {
       deduceClosureReturnType(*LSI);
 
       //   - if there are no return statements in the
