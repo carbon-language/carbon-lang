@@ -8342,6 +8342,13 @@ static SDValue PerformSUBCombine(SDNode *N,
 /// is faster than
 ///   vadd d3, d0, d1
 ///   vmul d3, d3, d2
+//  However, for (A + B) * (A + B),
+//    vadd d2, d0, d1
+//    vmul d3, d0, d2
+//    vmla d3, d1, d2
+//  is slower than
+//    vadd d2, d0, d1
+//    vmul d3, d2, d2
 static SDValue PerformVMULCombine(SDNode *N,
                                   TargetLowering::DAGCombinerInfo &DCI,
                                   const ARMSubtarget *Subtarget) {
@@ -8360,6 +8367,9 @@ static SDValue PerformVMULCombine(SDNode *N,
       return SDValue();
     std::swap(N0, N1);
   }
+
+  if (N0 == N1)
+    return SDValue();
 
   EVT VT = N->getValueType(0);
   SDLoc DL(N);

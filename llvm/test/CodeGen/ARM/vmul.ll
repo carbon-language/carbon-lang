@@ -515,6 +515,17 @@ entry:
   ret void
 }
 
+define <8 x i8> @no_distribute(<8 x i8> %a, <8 x i8> %b) nounwind {
+entry:
+; CHECK: no_distribute
+; CHECK: vadd.i8
+; CHECK: vmul.i8
+; CHECK-NOT: vmla.i8
+  %0 = add <8 x i8> %a, %b
+  %1 = mul <8x i8> %0, %0
+  ret <8 x i8> %1
+}
+
 ; If one operand has a zero-extend and the other a sign-extend, vmull
 ; cannot be used.
 define i16 @vmullWithInconsistentExtensions(<8 x i8> %vec) {
