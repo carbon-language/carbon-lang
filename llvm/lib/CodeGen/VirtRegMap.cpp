@@ -28,6 +28,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/Passes.h"
+#include "llvm/IR/Function.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
@@ -264,14 +265,31 @@ void VirtRegRewriter::rewrite() {
   SmallVector<unsigned, 8> SuperDeads;
   SmallVector<unsigned, 8> SuperDefs;
   SmallVector<unsigned, 8> SuperKills;
+  SmallPtrSet<const MachineInstr *, 4> NoReturnInsts;
 
   for (MachineFunction::iterator MBBI = MF->begin(), MBBE = MF->end();
        MBBI != MBBE; ++MBBI) {
     DEBUG(MBBI->print(dbgs(), Indexes));
+    bool IsExitBB = MBBI->succ_empty();
     for (MachineBasicBlock::instr_iterator
            MII = MBBI->instr_begin(), MIE = MBBI->instr_end(); MII != MIE;) {
       MachineInstr *MI = MII;
       ++MII;
+
+      // Check if this instruction is a call to a noreturn function.
+      // If so, all the definitions set by this instruction can be ignored.
+      if (IsExitBB && MI->isCall())
+        for (MachineInstr::mop_iterator MOI = MI->operands_begin(),
+               MOE = MI->operands_end(); MOI != MOE; ++MOI) {
+          MachineOperand &MO = *MOI;
+          if (!MO.isGlobal())
+            continue;
+          const Function *Func = dyn_cast<Function>(MO.getGlobal());
+          if (!Func || !Func->hasFnAttribute(Attribute::NoReturn))
+            continue;
+          NoReturnInsts.insert(MI);
+          break;
+        }
 
       for (MachineInstr::mop_iterator MOI = MI->operands_begin(),
            MOE = MI->operands_end(); MOI != MOE; ++MOI) {
@@ -353,7 +371,25 @@ void VirtRegRewriter::rewrite() {
   }
 
   // Tell MRI about physical registers in use.
-  for (unsigned Reg = 1, RegE = TRI->getNumRegs(); Reg != RegE; ++Reg)
-    if (!MRI->reg_nodbg_empty(Reg))
-      MRI->setPhysRegUsed(Reg);
+  if (NoReturnInsts.empty()) {
+    for (unsigned Reg = 1, RegE = TRI->getNumRegs(); Reg != RegE; ++Reg)
+      if (!MRI->reg_nodbg_empty(Reg))
+        MRI->setPhysRegUsed(Reg);
+  } else {
+    for (unsigned Reg = 1, RegE = TRI->getNumRegs(); Reg != RegE; ++Reg) {
+      if (MRI->reg_nodbg_empty(Reg))
+        continue;
+      // Check if this register has a use that will impact the rest of the
+      // code. Uses in debug and noreturn instructions do not impact the
+      // generated code.
+      for (MachineRegisterInfo::reg_nodbg_iterator It =
+             MRI->reg_nodbg_begin(Reg),
+             EndIt = MRI->reg_nodbg_end(); It != EndIt; ++It) {
+        if (!NoReturnInsts.count(&(*It))) {
+          MRI->setPhysRegUsed(Reg);
+          break;
+        }
+      }
+    }
+  }
 }
