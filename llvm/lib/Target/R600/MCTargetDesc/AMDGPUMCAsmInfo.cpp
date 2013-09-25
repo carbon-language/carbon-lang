@@ -21,7 +21,6 @@ AMDGPUMCAsmInfo::AMDGPUMCAsmInfo(StringRef &TT) : MCAsmInfo() {
   HasStaticCtorDtorReferenceInStaticMode = false;
   LinkerRequiresNonEmptyDwarfLines = true;
   MaxInstLength = 16;
-  PCSymbol = "$";
   SeparatorString = "\n";
   CommentColumn = 40;
   CommentString = ";";

@@ -19,7 +19,6 @@ SystemZMCAsmInfo::SystemZMCAsmInfo(StringRef TT) {
   IsLittleEndian = false;
 
   CommentString = "#";
-  PCSymbol = ".";
   GlobalPrefix = "";
   PrivateGlobalPrefix = ".L";
   WeakRefDirective = "\t.weak\t";

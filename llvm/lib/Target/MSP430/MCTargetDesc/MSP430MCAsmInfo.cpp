@@ -22,7 +22,6 @@ MSP430MCAsmInfo::MSP430MCAsmInfo(StringRef TT) {
 
   PrivateGlobalPrefix = ".L";
   WeakRefDirective ="\t.weak\t";
-  PCSymbol=".";
   CommentString = ";";
 
   AlignmentIsInBytes = false;

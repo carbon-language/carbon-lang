@@ -93,10 +93,6 @@ namespace llvm {
     /// this value.  Factored out in .debug_frame and .debug_line.
     unsigned MinInstAlignment;                  // Defaults to 1.
 
-    /// PCSymbol - The symbol used to represent the current PC.  Used in PC
-    /// relative expressions.
-    const char *PCSymbol;                    // Defaults to "$".
-
     /// SeparatorString - This string, if specified, is used to separate
     /// instructions from each other when on the same line.
     const char *SeparatorString;             // Defaults to ';'
@@ -424,9 +420,6 @@ namespace llvm {
     }
     unsigned getMinInstAlignment() const {
       return MinInstAlignment;
-    }
-    const char *getPCSymbol() const {
-      return PCSymbol;
     }
     const char *getSeparatorString() const {
       return SeparatorString;
