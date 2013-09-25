@@ -147,6 +147,7 @@ public:
   virtual StringRef getStringSection() = 0;
   virtual StringRef getRangeSection() = 0;
   virtual StringRef getPubNamesSection() = 0;
+  virtual StringRef getPubTypesSection() = 0;
   virtual StringRef getGnuPubNamesSection() = 0;
   virtual StringRef getGnuPubTypesSection() = 0;
 
@@ -187,6 +188,7 @@ class DWARFContextInMemory : public DWARFContext {
   StringRef StringSection;
   StringRef RangeSection;
   StringRef PubNamesSection;
+  StringRef PubTypesSection;
   StringRef GnuPubNamesSection;
   StringRef GnuPubTypesSection;
 
@@ -217,6 +219,7 @@ public:
   virtual StringRef getStringSection() { return StringSection; }
   virtual StringRef getRangeSection() { return RangeSection; }
   virtual StringRef getPubNamesSection() { return PubNamesSection; }
+  virtual StringRef getPubTypesSection() { return PubTypesSection; }
   virtual StringRef getGnuPubNamesSection() { return GnuPubNamesSection; }
   virtual StringRef getGnuPubTypesSection() { return GnuPubTypesSection; }
 

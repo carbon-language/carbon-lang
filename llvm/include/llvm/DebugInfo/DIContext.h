@@ -109,6 +109,7 @@ enum DIDumpType {
   DIDT_Loc,
   DIDT_Ranges,
   DIDT_Pubnames,
+  DIDT_Pubtypes,
   DIDT_GnuPubnames,
   DIDT_GnuPubtypes,
   DIDT_Str,

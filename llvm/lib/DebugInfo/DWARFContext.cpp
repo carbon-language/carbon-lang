@@ -54,7 +54,7 @@ static void dumpPubSection(raw_ostream &OS, StringRef Name, StringRef Data,
          << ' ' << '\"' << pubNames.getCStr(&offset) << "\"\n";
     } else {
       OS << format("0x%8.8x    ", dieRef);
-      OS << pubNames.getCStr(&offset) << "\n";
+      OS << '\"' << pubNames.getCStr(&offset) << "\"\n";
     }
   }
 }
@@ -141,6 +141,10 @@ void DWARFContext::dump(raw_ostream &OS, DIDumpType DumpType) {
 
   if (DumpType == DIDT_All || DumpType == DIDT_Pubnames)
     dumpPubSection(OS, "debug_pubnames", getPubNamesSection(),
+                   isLittleEndian(), false);
+
+  if (DumpType == DIDT_All || DumpType == DIDT_Pubtypes)
+    dumpPubSection(OS, "debug_pubtypes", getPubTypesSection(),
                    isLittleEndian(), false);
 
   if (DumpType == DIDT_All || DumpType == DIDT_GnuPubnames)
@@ -605,25 +609,27 @@ DWARFContextInMemory::DWARFContextInMemory(object::ObjectFile *Obj) :
       UncompressedSections.push_back(UncompressedSection.take());
     }
 
-    StringRef *Section = StringSwitch<StringRef*>(name)
-        .Case("debug_info", &InfoSection.Data)
-        .Case("debug_abbrev", &AbbrevSection)
-        .Case("debug_loc", &LocSection.Data)
-        .Case("debug_line", &LineSection.Data)
-        .Case("debug_aranges", &ARangeSection)
-        .Case("debug_frame", &DebugFrameSection)
-        .Case("debug_str", &StringSection)
-        .Case("debug_ranges", &RangeSection)
-        .Case("debug_pubnames", &PubNamesSection)
-        .Case("debug_gnu_pubnames", &GnuPubNamesSection)
-        .Case("debug_gnu_pubtypes", &GnuPubTypesSection)
-        .Case("debug_info.dwo", &InfoDWOSection.Data)
-        .Case("debug_abbrev.dwo", &AbbrevDWOSection)
-        .Case("debug_str.dwo", &StringDWOSection)
-        .Case("debug_str_offsets.dwo", &StringOffsetDWOSection)
-        .Case("debug_addr", &AddrSection)
-        // Any more debug info sections go here.
-        .Default(0);
+    StringRef *Section =
+        StringSwitch<StringRef *>(name)
+            .Case("debug_info", &InfoSection.Data)
+            .Case("debug_abbrev", &AbbrevSection)
+            .Case("debug_loc", &LocSection.Data)
+            .Case("debug_line", &LineSection.Data)
+            .Case("debug_aranges", &ARangeSection)
+            .Case("debug_frame", &DebugFrameSection)
+            .Case("debug_str", &StringSection)
+            .Case("debug_ranges", &RangeSection)
+            .Case("debug_pubnames", &PubNamesSection)
+            .Case("debug_pubtypes", &PubTypesSection)
+            .Case("debug_gnu_pubnames", &GnuPubNamesSection)
+            .Case("debug_gnu_pubtypes", &GnuPubTypesSection)
+            .Case("debug_info.dwo", &InfoDWOSection.Data)
+            .Case("debug_abbrev.dwo", &AbbrevDWOSection)
+            .Case("debug_str.dwo", &StringDWOSection)
+            .Case("debug_str_offsets.dwo", &StringOffsetDWOSection)
+            .Case("debug_addr", &AddrSection)
+            // Any more debug info sections go here.
+            .Default(0);
     if (Section) {
       *Section = data;
       if (name == "debug_ranges") {
