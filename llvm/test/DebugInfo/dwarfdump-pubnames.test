@@ -7,10 +7,11 @@ CHECK: Version:               2
 CHECK: Offset in .debug_info: 0
 CHECK: Size:                  321
 
-CHECK:  Offset    Name
-CHECK:      98    global_namespace_variable
-CHECK:      a7    global_namespace_function
-CHECK:      ec    static_member_function
-CHECK:      7c    global_variable
-CHECK:     103    global_function
-CHECK:      c2    member_function
+CHECK: Offset        Name
+CHECK: 0x00000098    "global_namespace_variable"
+CHECK: 0x000000a7    "global_namespace_function"
+CHECK: 0x000000ec    "static_member_function"
+CHECK: 0x0000007c    "global_variable"
+CHECK: 0x00000103    "global_function"
+CHECK: 0x000000c2    "member_function"
+
