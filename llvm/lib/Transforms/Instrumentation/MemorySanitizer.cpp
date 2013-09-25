@@ -918,6 +918,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
       case SequentiallyConsistent:
         return SequentiallyConsistent;
     }
+    llvm_unreachable("Unknown ordering");
   }
 
   AtomicOrdering addAcquireOrdering(AtomicOrdering a) {
@@ -934,6 +935,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
       case SequentiallyConsistent:
         return SequentiallyConsistent;
     }
+    llvm_unreachable("Unknown ordering");
   }
 
   // ------------------- Visitors.
