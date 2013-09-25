@@ -772,9 +772,19 @@ bool AsmParser::parsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) {
   case AsmToken::Identifier: {
     StringRef Identifier;
     if (parseIdentifier(Identifier)) {
-      if (FirstTokenKind == AsmToken::Dollar)
-        return Error(FirstTokenLoc, "invalid token in expression");
-      return true;
+      if (FirstTokenKind == AsmToken::Dollar) {
+        if (Lexer.getMAI().getDollarIsPC()) {
+          // This is a '$' reference, which references the current PC.  Emit a
+          // temporary label to the streamer and refer to it.
+          MCSymbol *Sym = Ctx.CreateTempSymbol();
+          Out.EmitLabel(Sym);
+          Res = MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_None, getContext());
+          EndLoc = FirstTokenLoc;
+          return false;
+        } else
+          return Error(FirstTokenLoc, "invalid token in expression");
+        return true;
+      }
     }
 
     EndLoc = SMLoc::getFromPointer(Identifier.end());

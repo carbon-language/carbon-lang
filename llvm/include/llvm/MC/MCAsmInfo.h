@@ -93,6 +93,10 @@ namespace llvm {
     /// this value.  Factored out in .debug_frame and .debug_line.
     unsigned MinInstAlignment;                  // Defaults to 1.
 
+    /// DollarIsPC - The '$' token, when not referencing an identifier or
+    /// constant, refers to the current PC.
+    bool DollarIsPC;                         // Defaults to false.
+
     /// SeparatorString - This string, if specified, is used to separate
     /// instructions from each other when on the same line.
     const char *SeparatorString;             // Defaults to ';'
@@ -420,6 +424,9 @@ namespace llvm {
     }
     unsigned getMinInstAlignment() const {
       return MinInstAlignment;
+    }
+    bool getDollarIsPC() const {
+      return DollarIsPC;
     }
     const char *getSeparatorString() const {
       return SeparatorString;

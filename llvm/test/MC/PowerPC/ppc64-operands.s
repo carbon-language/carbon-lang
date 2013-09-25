@@ -108,3 +108,8 @@
 # CHECK: beqa 0, 1024                    # encoding: [0x41,0x82,0x04,0x02]
          beqa 1024
 
+# CHECK:                                 # encoding: [0x42,0x9f,A,0bAAAAAA01]
+         bcl 20, 31, $+4
+
+# CHECK:                                 # encoding: [0x42,0x00,A,0bAAAAAA00]
+         bdnz $-8
