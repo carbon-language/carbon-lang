@@ -962,8 +962,6 @@ public:
     : ClusterAnalysis<invalidateRegionsWorker>(rm, stateMgr, b, GFK),
       Ex(ex), Count(count), LCtx(lctx), IS(is), ITraits(ITraitsIn), Regions(r){}
 
-  /// \param IsConst Specifies if the region we are invalidating is constant.
-  /// If it is, we invalidate all subregions, but not the base region itself.
   void VisitCluster(const MemRegion *baseR, const ClusterBindings *C);
   void VisitBinding(SVal V);
 };
