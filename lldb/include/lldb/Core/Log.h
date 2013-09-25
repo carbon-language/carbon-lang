@@ -11,6 +11,7 @@
 #define liblldb_Log_h_
 
 // C Includes
+#include <stdarg.h>
 #include <stdint.h>
 #include <signal.h>
 #include <stdio.h>

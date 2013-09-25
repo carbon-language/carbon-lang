@@ -13,6 +13,7 @@
 
 #include "llvm/Support/DataTypes.h"
 
+#include <cstdarg>
 #include <cstdio>
 #include <string>
 
