@@ -154,7 +154,7 @@ public:
   /// node.  Other must be equal to or before this.
   bool canMoveBefore(const Matcher *Other) const;
 
-  /// canMoveBefore - Return true if it is safe to move the current matcher
+  /// canMoveBeforeNode - Return true if it is safe to move the current matcher
   /// across the specified one.
   bool canMoveBeforeNode(const Matcher *Other) const;
 

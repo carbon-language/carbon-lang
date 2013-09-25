@@ -63,7 +63,7 @@ bool Matcher::canMoveBefore(const Matcher *Other) const {
   }
 }
 
-/// canMoveBefore - Return true if it is safe to move the current matcher
+/// canMoveBeforeNode - Return true if it is safe to move the current matcher
 /// across the specified one.
 bool Matcher::canMoveBeforeNode(const Matcher *Other) const {
   // We can move simple predicates before record nodes.
