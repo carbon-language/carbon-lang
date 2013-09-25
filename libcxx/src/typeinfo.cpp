@@ -20,7 +20,7 @@
 
 #include "typeinfo"
 
-#if !(defined(_LIBCPPABI_VERSION) || defined(LIBCXXRT))
+#if !defined(LIBCXXRT) && !defined(_LIBCPPABI_VERSION) && !defined(__GLIBCXX__)
 
 std::bad_cast::bad_cast() _NOEXCEPT
 {
@@ -67,4 +67,4 @@ std::bad_typeid::what() const _NOEXCEPT
   }
 #endif
 
-#endif  // _LIBCPPABI_VERSION
+#endif  // !LIBCXXRT && !_LIBCPPABI_VERSION && !__GLIBCXX__
