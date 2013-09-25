@@ -772,6 +772,12 @@ bool ObjCMigrateASTConsumer::migrateProperty(ASTContext &Ctx,
     return false;
   
   Selector GetterSelector = Method->getSelector();
+  ObjCInstanceTypeFamily OIT_Family =
+    Selector::getInstTypeMethodFamily(GetterSelector);
+  
+  if (OIT_Family != OIT_None)
+    return false;
+  
   IdentifierInfo *getterName = GetterSelector.getIdentifierInfoForSlot(0);
   Selector SetterSelector =
   SelectorTable::constructSetterSelector(PP.getIdentifierTable(),

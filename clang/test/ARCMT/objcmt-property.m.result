@@ -207,4 +207,7 @@ DEPRECATED
 @property (nonatomic, retain) id method1 ALIGNED NS_AVAILABLE;
 
 
+- (NSURL *)init;  // No Change
++ (id)alloc;      // No Change
+
 @end

@@ -207,4 +207,7 @@ DEPRECATED
 - (id)method1 ALIGNED NS_AVAILABLE;
 - (void) setMethod1 : (id) object NS_AVAILABLE ALIGNED;
 
+- (NSURL *)init;  // No Change
++ (id)alloc;      // No Change
+
 @end
