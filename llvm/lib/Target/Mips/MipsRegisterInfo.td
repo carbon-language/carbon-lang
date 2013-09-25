@@ -436,6 +436,26 @@ def FCCRegsAsmOperand : MipsAsmRegOperand {
   let ParserMethod = "parseFCCRegs";
 }
 
+def MSA128BAsmOperand : MipsAsmRegOperand {
+  let Name = "MSA128BAsm";
+  let ParserMethod = "parseMSA128BRegs";
+}
+
+def MSA128HAsmOperand : MipsAsmRegOperand {
+  let Name = "MSA128HAsm";
+  let ParserMethod = "parseMSA128HRegs";
+}
+
+def MSA128WAsmOperand : MipsAsmRegOperand {
+  let Name = "MSA128WAsm";
+  let ParserMethod = "parseMSA128WRegs";
+}
+
+def MSA128DAsmOperand : MipsAsmRegOperand {
+  let Name = "MSA128DAsm";
+  let ParserMethod = "parseMSA128DRegs";
+}
+
 def GPR32Opnd : RegisterOperand<GPR32> {
   let ParserMatchClass = GPR32AsmOperand;
 }
@@ -501,3 +521,20 @@ def ACC64DSPOpnd : RegisterOperand<ACC64DSP> {
 def COP2Opnd : RegisterOperand<COP2> {
   let ParserMatchClass = COP2AsmOperand;
 }
+
+def MSA128BOpnd : RegisterOperand<MSA128B> {
+  let ParserMatchClass = MSA128BAsmOperand;
+}
+
+def MSA128HOpnd : RegisterOperand<MSA128H> {
+  let ParserMatchClass = MSA128HAsmOperand;
+}
+
+def MSA128WOpnd : RegisterOperand<MSA128W> {
+  let ParserMatchClass = MSA128WAsmOperand;
+}
+
+def MSA128DOpnd : RegisterOperand<MSA128D> {
+  let ParserMatchClass = MSA128DAsmOperand;
+}
+

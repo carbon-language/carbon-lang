@@ -1132,6 +1132,15 @@ class MSA_2RF_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
                         InstrItinClass itin = NoItinerary> :
   MSA_2R_DESC_BASE<instr_asm, OpNode, RCWD, RCWS, itin>;
 
+class MSA_2RF_RO_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
+                           RegisterOperand ROWD, RegisterOperand ROWS = ROWD,
+                           InstrItinClass itin = NoItinerary> {
+  dag OutOperandList = (outs ROWD:$wd);
+  dag InOperandList = (ins ROWS:$ws);
+  string AsmString = !strconcat(instr_asm, "\t$wd, $ws");
+  list<dag> Pattern = [(set ROWD:$wd, (OpNode ROWS:$ws))];
+  InstrItinClass Itinerary = itin;
+}
 
 class MSA_3R_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
                        RegisterClass RCWD, RegisterClass RCWS = RCWD,
@@ -1612,10 +1621,10 @@ class FCEQ_W_DESC : MSA_3RF_DESC_BASE<"fceq.w", vfsetoeq_v4f32, MSA128W>,
 class FCEQ_D_DESC : MSA_3RF_DESC_BASE<"fceq.d", vfsetoeq_v2f64, MSA128D>,
                     IsCommutable;
 
-class FCLASS_W_DESC : MSA_2RF_DESC_BASE<"fclass.w", int_mips_fclass_w,
-                                        MSA128W>;
-class FCLASS_D_DESC : MSA_2RF_DESC_BASE<"fclass.d", int_mips_fclass_d,
-                                        MSA128D>;
+class FCLASS_W_DESC : MSA_2RF_RO_DESC_BASE<"fclass.w", int_mips_fclass_w,
+                                           MSA128WOpnd>;
+class FCLASS_D_DESC : MSA_2RF_RO_DESC_BASE<"fclass.d", int_mips_fclass_d,
+                                           MSA128DOpnd>;
 
 class FCLE_W_DESC : MSA_3RF_DESC_BASE<"fcle.w", vfsetole_v4f32, MSA128W>;
 class FCLE_D_DESC : MSA_3RF_DESC_BASE<"fcle.d", vfsetole_v2f64, MSA128D>;
