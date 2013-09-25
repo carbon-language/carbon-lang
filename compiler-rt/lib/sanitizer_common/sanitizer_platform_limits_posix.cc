@@ -42,7 +42,6 @@
 #include <termios.h>
 #include <time.h>
 #include <wchar.h>
-#include <wordexp.h>
 
 #if SANITIZER_LINUX
 #include <utime.h>
@@ -64,6 +63,7 @@
 
 #if !SANITIZER_ANDROID
 #include <sys/ucontext.h>
+#include <wordexp.h>
 #endif
 
 #if SANITIZER_LINUX && !SANITIZER_ANDROID
@@ -875,9 +875,11 @@ CHECK_TYPE_SIZE(__kernel_loff_t);
 CHECK_TYPE_SIZE(__kernel_fd_set);
 #endif
 
+#if !SANITIZER_ANDROID
 CHECK_TYPE_SIZE(wordexp_t);
 CHECK_SIZE_AND_OFFSET(wordexp_t, we_wordc);
 CHECK_SIZE_AND_OFFSET(wordexp_t, we_wordv);
 CHECK_SIZE_AND_OFFSET(wordexp_t, we_offs);
+#endif
 
 #endif  // SANITIZER_LINUX || SANITIZER_MAC
