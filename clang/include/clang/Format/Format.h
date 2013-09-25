@@ -222,6 +222,9 @@ struct FormatStyle {
   /// and '('.
   bool SpaceAfterControlStatementKeyword;
 
+  /// \brief If \c false, spaces will be removed before assignment operators.
+  bool SpaceBeforeAssignmentOperators;
+
   bool operator==(const FormatStyle &R) const {
     return AccessModifierOffset == R.AccessModifierOffset &&
            ConstructorInitializerIndentWidth ==
@@ -268,7 +271,8 @@ struct FormatStyle {
            SpaceInEmptyParentheses == R.SpaceInEmptyParentheses &&
            SpacesInCStyleCastParentheses == R.SpacesInCStyleCastParentheses &&
            SpaceAfterControlStatementKeyword ==
-               R.SpaceAfterControlStatementKeyword;
+               R.SpaceAfterControlStatementKeyword &&
+           SpaceBeforeAssignmentOperators == R.SpaceBeforeAssignmentOperators;
   }
 };
 

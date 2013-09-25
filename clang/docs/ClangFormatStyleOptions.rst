@@ -249,6 +249,9 @@ the configuration (without a prefix: ``Auto``).
   If ``true``, spaces will be inserted between 'for'/'if'/'while'/...
   and '('.
 
+**SpaceBeforeAssignmentOperators** (``bool``)
+  If ``false``, spaces will be removed before '=', '+=', etc.
+
 **SpaceInEmptyParentheses** (``bool``)
   If ``false``, spaces may be inserted into '()'.
 

@@ -1318,6 +1318,9 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
   if (Tok.isOneOf(tok::arrowstar, tok::periodstar) ||
       Tok.Previous->isOneOf(tok::arrowstar, tok::periodstar))
     return false;
+  if (!Style.SpaceBeforeAssignmentOperators &&
+      Tok.getPrecedence() == prec::Assignment)
+    return false;
   if ((Tok.Type == TT_BinaryOperator && !Tok.Previous->is(tok::l_paren)) ||
       Tok.Previous->Type == TT_BinaryOperator)
     return true;
