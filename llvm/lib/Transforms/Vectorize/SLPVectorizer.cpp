@@ -54,6 +54,11 @@ static cl::opt<bool>
 ShouldVectorizeHor("slp-vectorize-hor", cl::init(false), cl::Hidden,
                    cl::desc("Attempt to vectorize horizontal reductions"));
 
+static cl::opt<bool> ShouldStartVectorizeHorAtStore(
+    "slp-vectorize-hor-store", cl::init(false), cl::Hidden,
+    cl::desc(
+        "Attempt to vectorize horizontal reductions feeding into a store"));
+
 namespace {
 
 static const unsigned MinVecRegSize = 128;
@@ -2336,20 +2341,20 @@ bool SLPVectorizer::vectorizeChainsInBlock(BasicBlock *BB, BoUpSLP &R) {
     }
 
     // Try to vectorize horizontal reductions feeding into a store.
-    if (StoreInst *SI = dyn_cast<StoreInst>(it))
-      if (BinaryOperator *BinOp =
-              dyn_cast<BinaryOperator>(SI->getValueOperand())) {
-        HorizontalReduction HorRdx;
-        if (ShouldVectorizeHor &&
-            ((HorRdx.matchAssociativeReduction(0, BinOp, DL) &&
-              HorRdx.tryToReduce(R, TTI)) ||
-             tryToVectorize(BinOp, R))) {
-          Changed = true;
-          it = BB->begin();
-          e = BB->end();
-          continue;
+    if (ShouldStartVectorizeHorAtStore)
+      if (StoreInst *SI = dyn_cast<StoreInst>(it))
+        if (BinaryOperator *BinOp =
+                dyn_cast<BinaryOperator>(SI->getValueOperand())) {
+          HorizontalReduction HorRdx;
+          if (((HorRdx.matchAssociativeReduction(0, BinOp, DL) &&
+                HorRdx.tryToReduce(R, TTI)) ||
+               tryToVectorize(BinOp, R))) {
+            Changed = true;
+            it = BB->begin();
+            e = BB->end();
+            continue;
+          }
         }
-      }
 
     // Try to vectorize trees that start at compare instructions.
     if (CmpInst *CI = dyn_cast<CmpInst>(it)) {

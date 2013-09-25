@@ -1,4 +1,4 @@
-; RUN: opt -slp-vectorizer -slp-vectorize-hor -S <  %s -mtriple=x86_64-apple-macosx -mcpu=corei7-avx | FileCheck %s
+; RUN: opt -slp-vectorizer -slp-vectorize-hor -S <  %s -mtriple=x86_64-apple-macosx -mcpu=corei7-avx | FileCheck %s --check-prefix=NOSTORE
 
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64-S128"
 
@@ -15,9 +15,9 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 ;   return sum;
 ; }
 
-; CHECK-LABEL: add_red
-; CHECK: fmul <4 x float>
-; CHECK: shufflevector <4 x float>
+; NOSTORE-LABEL: add_red
+; NOSTORE: fmul <4 x float>
+; NOSTORE: shufflevector <4 x float>
 
 define i32 @add_red(float* %A, i32 %n) {
 entry:
@@ -369,6 +369,8 @@ for.end:
 }
 
 
+; RUN: opt -slp-vectorizer -slp-vectorize-hor -slp-vectorize-hor-store -S <  %s -mtriple=x86_64-apple-macosx -mcpu=corei7-avx | FileCheck %s --check-prefix=STORE
+
 ; void foo(double * restrict A, double * restrict B, double * restrict C,
 ;          int n) {
 ;   for (intptr_t i=0; i < n; ++i) {
@@ -376,10 +378,10 @@ for.end:
 ;   }
 ; }
 
-; CHECK-LABEL: store_red_double
-; CHECK: fmul <2 x double>
-; CHECK: extractelement <2 x double>
-; CHECK: extractelement <2 x double>
+; STORE-LABEL: store_red_double
+; STORE: fmul <2 x double>
+; STORE: extractelement <2 x double>
+; STORE: extractelement <2 x double>
 
 define void @store_red_double(double* noalias %A, double* noalias %B, double* noalias %C, i32 %n) {
 entry:
