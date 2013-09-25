@@ -19,6 +19,7 @@
 #include "llvm/CodeGen/MachineModuleInfoImpls.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 #include "llvm/MC/MCExpr.h"
+#include "llvm/MC/MCInstBuilder.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Target/Mangler.h"
@@ -26,9 +27,16 @@
 using namespace llvm;
 
 void SystemZAsmPrinter::EmitInstruction(const MachineInstr *MI) {
-  SystemZMCInstLower Lower(Mang, MF->getContext(), *this);
   MCInst LoweredMI;
-  Lower.lower(MI, LoweredMI);
+  switch (MI->getOpcode()) {
+  case SystemZ::Return:
+    LoweredMI = MCInstBuilder(SystemZ::BR).addReg(SystemZ::R14D);
+    break;
+
+  default:
+    SystemZMCInstLower(Mang, MF->getContext(), *this).lower(MI, LoweredMI);
+    break;
+  }
   OutStreamer.EmitInstruction(LoweredMI);
 }
 

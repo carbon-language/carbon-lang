@@ -32,12 +32,9 @@ let neverHasSideEffects = 1 in {
 // Control flow instructions
 //===----------------------------------------------------------------------===//
 
-// A return instruction.  R1 is the condition-code mask (all 1s)
-// and R2 is the target address, which is always stored in %r14.
-let isReturn = 1, isTerminator = 1, isBarrier = 1, hasCtrlDep = 1,
-    R1 = 15, R2 = 14, isCodeGenOnly = 1 in {
-  def RET : InstRR<0x07, (outs), (ins), "br\t%r14", [(z_retflag)]>;
-}
+// A return instruction (br %r14).
+let isReturn = 1, isTerminator = 1, isBarrier = 1, hasCtrlDep = 1 in
+  def Return : Alias<2, (outs), (ins), [(z_retflag)]>;
 
 // Unconditional branches.  R1 is the condition-code mask (all 1s).
 let isBranch = 1, isTerminator = 1, isBarrier = 1, R1 = 15 in {

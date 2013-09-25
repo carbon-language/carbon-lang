@@ -1467,3 +1467,13 @@ multiclass StringRRE<string mnemonic, bits<16> opcode,
                       [(set GR64:$end, (operator GR64:$start1, GR64:$start2,
                                                  GR32:$char))]>;
 }
+
+// A pseudo instruction that is a direct alias of a real instruction.
+// These aliases are used in cases where a particular register operand is
+// fixed or where the same instruction is used with different register sizes.
+// The size parameter is the size in bytes of the associated real instruction.
+class Alias<int size, dag outs, dag ins, list<dag> pattern>
+  : InstSystemZ<size, outs, ins, "", pattern> {
+  let isPseudo = 1;
+  let isCodeGenOnly = 1;
+}
