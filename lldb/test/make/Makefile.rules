@@ -239,16 +239,14 @@ endif
 #----------------------------------------------------------------------
 # Make the dSYM file from the executable if $(MAKE_DSYM) != "NO"
 #----------------------------------------------------------------------
+ifneq "$(DYLIB_ONLY)" "YES"
 $(DSYM) : $(EXE)
 ifeq "$(OS)" "Darwin"
 ifneq "$(MAKE_DSYM)" "NO"
-ifeq "$(DYLIB_ONLY)" ""
 	$(DS) $(DSFLAGS) -o "$(DSYM)" "$(EXE)"
-endif
 endif
 else
 ifeq "$(SPLIT_DEBUG_SYMBOLS)" "YES"
-ifeq "$(DYLIB_ONLY)" ""
 	objcopy --only-keep-debug "$(EXE)" "$(DSYM)"
 	objcopy --strip-debug --add-gnu-debuglink="$(DSYM)" "$(EXE)" "$(EXE)"
 endif

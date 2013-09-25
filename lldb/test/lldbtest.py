@@ -1329,14 +1329,20 @@ class Base(unittest2.TestCase):
     # Build methods supported through a plugin interface
     # ==================================================
 
-    def buildDriver(self, sources, exe_name):
-        """ Platform-specific way to build a program that links with LLDB (via the liblldb.so
-            or LLDB.framework).
-        """
+    def getstdFlag(self):
+        """ Returns the proper stdflag. """
         if "gcc" in self.getCompiler() and "4.6" in self.getCompilerVersion():
           stdflag = "-std=c++0x"
         else:
           stdflag = "-std=c++11"
+        return stdflag
+
+    def buildDriver(self, sources, exe_name):
+        """ Platform-specific way to build a program that links with LLDB (via the liblldb.so
+            or LLDB.framework).
+        """
+
+        stdflag = self.getstdFlag()
 
         if sys.platform.startswith("darwin"):
             dsym = os.path.join(self.lib_dir, 'LLDB.framework', 'LLDB')
@@ -1353,6 +1359,29 @@ class Base(unittest2.TestCase):
                  'LD_EXTRAS' : "-L%s -llldb" % self.lib_dir}
         if self.TraceOn():
             print "Building LLDB Driver (%s) from sources %s" % (exe_name, sources)
+
+        self.buildDefault(dictionary=d)
+
+    def buildLibrary(self, sources, lib_name):
+        """Platform specific way to build a default library. """
+
+        stdflag = self.getstdFlag()
+
+        if sys.platform.startswith("darwin"):
+            dsym = os.path.join(self.lib_dir, 'LLDB.framework', 'LLDB')
+            d = {'DYLIB_CXX_SOURCES' : sources,
+                 'DYLIB_NAME' : lib_name,
+                 'CFLAGS_EXTRAS' : "%s -stdlib=libc++" % stdflag,
+                 'FRAMEWORK_INCLUDES' : "-F%s" % self.lib_dir,
+                 'LD_EXTRAS' : "%s -Wl,-rpath,%s -dynamiclib" % (dsym, self.lib_dir),
+                }
+        elif sys.platform.startswith('freebsd') or sys.platform.startswith("linux") or os.environ.get('LLDB_BUILD_TYPE') == 'Makefile':
+            d = {'DYLIB_CXX_SOURCES' : sources,
+                 'DYLIB_NAME' : lib_name,
+                 'CFLAGS_EXTRAS' : "%s -I%s -fPIC" % (stdflag, os.path.join(os.environ["LLDB_SRC"], "include")),
+                 'LD_EXTRAS' : "-shared -L%s -llldb" % self.lib_dir}
+        if self.TraceOn():
+            print "Building LLDB Library (%s) from sources %s" % (lib_name, sources)
 
         self.buildDefault(dictionary=d)
 

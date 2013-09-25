@@ -16,19 +16,26 @@ class PluginCommandTestCase(TestBase):
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
+        self.lib_dir = os.environ["LLDB_LIB_DIR"]
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipIfi386 # This test links against liblldb.so. Thus, the test requires a 32-bit liblldb.so.
     def test_load_plugin(self):
         """Test that plugins that load commands work correctly."""
 
-        # Invoke the default build rule.
-        self.buildDefault()
-        
+        plugin_name = "plugin"
+        if sys.platform.startswith("darwin"):
+            plugin_lib_name = "lib%s.dylib" % plugin_name
+        else:
+            plugin_lib_name = "lib%s.so" % plugin_name
+
+        # Invoke the library build rule.
+        self.buildLibrary("plugin.cpp", plugin_name)
+
         debugger = lldb.SBDebugger.Create()
 
         retobj = lldb.SBCommandReturnObject()
-        
-        retval = debugger.GetCommandInterpreter().HandleCommand("plugin load plugin.dylib",retobj)
+
+        retval = debugger.GetCommandInterpreter().HandleCommand("plugin load %s" % plugin_lib_name, retobj)
 
         retobj.Clear()
 

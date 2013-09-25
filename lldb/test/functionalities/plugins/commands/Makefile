@@ -1,11 +1,8 @@
-all: foo.dylib
+LEVEL = ../../../make
 
-CWD := $(shell pwd)
+DYLIB_CXX_SOURCES := plugin.cpp
+DYLIB_NAME := plugin
+DYLIB_ONLY := YES
+MAKE_DSYM := NO
 
-all: foo.dylib
-
-foo.dylib:
-	clang++ -O0 -g -stdlib=libc++ -dynamiclib -o plugin.dylib plugin.cpp -framework LLDB -F $(LLDB_FRAMEWORK)/..
-
-clean:
-	rm -rf plugin.dylib plugin.dylib.dSYM/* plugin.dylib.dSYM
+include $(LEVEL)/Makefile.rules
