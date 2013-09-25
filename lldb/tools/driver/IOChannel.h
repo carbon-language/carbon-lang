@@ -128,6 +128,7 @@ protected:
 private:
 
     pthread_mutex_t m_output_mutex;
+    pthread_cond_t m_output_cond;
     struct timeval m_enter_elgets_time;
 
     Driver *m_driver;
@@ -135,6 +136,7 @@ private:
     bool m_read_thread_should_exit;
     FILE *m_out_file;
     FILE *m_err_file;
+    FILE *m_editline_out;
     std::queue<std::string> m_command_queue;
     const char *m_completion_key;
 
@@ -143,7 +145,8 @@ private:
     HistEvent m_history_event;
     bool m_getting_command;
     bool m_expecting_prompt;
-	std::string m_prompt_str;  // for accumlating the prompt as it gets written out by editline
+    bool m_output_flushed;
+    std::string m_prompt_str;  // for accumlating the prompt as it gets written out by editline
     bool m_refresh_request_pending;
 
     void
