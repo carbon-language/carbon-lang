@@ -1055,8 +1055,11 @@ Host::GetLLDBPath (PathType path_type, FileSpec &file_spec)
         }
         break;
 
-#ifndef LLDB_DISABLE_PYTHON
-    case ePathTypePythonDir:                
+#ifdef LLDB_DISABLE_PYTHON
+    case ePathTypePythonDir:
+        return false;
+#else
+    case ePathTypePythonDir:
         {
             static ConstString g_lldb_python_dir;
             if (!g_lldb_python_dir)
