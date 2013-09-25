@@ -29,6 +29,10 @@ struct compat_timeval
 #define ELFLINUXPRSTATUS64_SIZE (112)
 #define ELFLINUXPRPSINFO64_SIZE (132)
 
+#undef si_signo
+#undef si_code
+#undef si_errno
+
 struct ELFLinuxPrStatus
 {
     int32_t         si_signo;
