@@ -149,48 +149,49 @@ ELFLinkingContext::create(llvm::Triple triple) {
   }
 }
 
-llvm::ErrorOr<std::string> ELFLinkingContext::searchLibrary(
+llvm::ErrorOr<StringRef> ELFLinkingContext::searchLibrary(
     StringRef libName, const std::vector<StringRef> &searchPath) const {
   bool foundFile = false;
   StringRef pathref;
+  SmallString<128> path;
   for (StringRef dir : searchPath) {
     // Search for dynamic library
     if (!_isStaticExecutable) {
-      SmallString<128> dynlibPath;
+      path.clear();
       if (dir.startswith("=/")) {
-        dynlibPath.assign(_sysrootPath);
-        dynlibPath.append(dir.substr(1));
+        path.assign(_sysrootPath);
+        path.append(dir.substr(1));
       } else {
-        dynlibPath.assign(dir);
+        path.assign(dir);
       }
-      llvm::sys::path::append(dynlibPath, Twine("lib") + libName + ".so");
-      pathref = dynlibPath.str();
+      llvm::sys::path::append(path, Twine("lib") + libName + ".so");
+      pathref = path.str();
       if (llvm::sys::fs::exists(pathref)) {
         foundFile = true;
       }
     }
     // Search for static libraries too
     if (!foundFile) {
-      SmallString<128> archivefullPath;
+      path.clear();
       if (dir.startswith("=/")) {
-        archivefullPath.assign(_sysrootPath);
-        archivefullPath.append(dir.substr(1));
+        path.assign(_sysrootPath);
+        path.append(dir.substr(1));
       } else {
-        archivefullPath.assign(dir);
+        path.assign(dir);
       }
-      llvm::sys::path::append(archivefullPath, Twine("lib") + libName + ".a");
-      pathref = archivefullPath.str();
+      llvm::sys::path::append(path, Twine("lib") + libName + ".a");
+      pathref = path.str();
       if (llvm::sys::fs::exists(pathref)) {
         foundFile = true;
       }
     }
     if (foundFile)
-      return (*(new (_alloc) std::string(pathref.str())));
+      return StringRef(*new (_alloc) std::string(pathref));
   }
   if (!llvm::sys::fs::exists(libName))
     return llvm::make_error_code(llvm::errc::no_such_file_or_directory);
 
-  return std::string(libName);
+  return libName;
 }
 
 std::unique_ptr<File> ELFLinkingContext::createUndefinedSymbolFile() {
