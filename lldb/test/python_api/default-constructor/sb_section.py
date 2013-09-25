@@ -19,4 +19,4 @@ def fuzz_obj(obj):
     obj.GetSectionType()
     obj.GetDescription(lldb.SBStream())
     for subsec in obj:
-        print subsec
+        s = str(subsec)

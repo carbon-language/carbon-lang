@@ -34,4 +34,4 @@ def fuzz_obj(obj):
     obj.GetDescription(lldb.SBStream())
     obj.Clear()
     for frame in obj:
-        print frame
+        s = str(frame)

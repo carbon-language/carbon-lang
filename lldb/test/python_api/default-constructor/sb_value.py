@@ -38,7 +38,7 @@ def fuzz_obj(obj):
     obj.Watch(True, True, False, error)
     obj.WatchPointee(True, False, True, error)
     for child_val in obj:
-        print child_val
+        s = str(child_val)
     error = lldb.SBError()
     obj.GetValueAsSigned (error, 0)
     obj.GetValueAsUnsigned (error, 0)

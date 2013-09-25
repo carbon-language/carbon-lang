@@ -19,4 +19,4 @@ def fuzz_obj(obj):
     obj.IsPointerType(None)
     lldb.SBType.IsPointerType(None)
     for child_type in obj:
-        print child_type
+        s = str(child_type)

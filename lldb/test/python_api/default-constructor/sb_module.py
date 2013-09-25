@@ -19,11 +19,11 @@ def fuzz_obj(obj):
     sc_list = obj.FindFunctions("my_func", lldb.eFunctionNameTypeAny)
     obj.FindGlobalVariables(lldb.SBTarget(), "my_global_var", 1)
     for section in obj.section_iter():
-        print section
+        s = str(section)
     for symbol in obj.symbol_in_section_iter(lldb.SBSection()):
-        print symbol
+        s = str(symbol)
     for symbol in obj:
-        print symbol
+        s = str(symbol)
     obj.GetAddressByteSize()
     obj.GetByteOrder()
     obj.GetTriple()

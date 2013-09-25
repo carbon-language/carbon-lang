@@ -11,4 +11,4 @@ def fuzz_obj(obj):
     obj.GetValueAtIndex(100)
     obj.FindValueObjectByUID(200)
     for val in obj:
-        print val
+        s = str(val)

@@ -58,8 +58,8 @@ def fuzz_obj(obj):
     obj.GetDescription(lldb.SBStream(), lldb.eDescriptionLevelBrief)
     obj.Clear()
     for module in obj.module_iter():
-        print module
+        s = str(module)
     for bp in obj.breakpoint_iter():
-        print bp
+        s = str(bp)
     for wp in obj.watchpoint_iter():
-        print wp
+        s = str(wp)

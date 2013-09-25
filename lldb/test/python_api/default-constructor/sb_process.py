@@ -46,4 +46,4 @@ def fuzz_obj(obj):
     obj.Clear()
     obj.GetNumSupportedHardwareWatchpoints(error)
     for thread in obj:
-        print thread
+        s = str(thread)
