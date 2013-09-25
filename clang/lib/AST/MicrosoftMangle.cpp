@@ -162,7 +162,7 @@ private:
   void mangleDecayedArrayType(const ArrayType *T);
   void mangleArrayType(const ArrayType *T);
   void mangleFunctionClass(const FunctionDecl *FD);
-  void mangleCallingConvention(const FunctionType *T, bool IsInstMethod = false);
+  void mangleCallingConvention(const FunctionType *T);
   void mangleIntegerLiteral(const llvm::APSInt &Number, bool IsBoolean);
   void mangleExpression(const Expr *E);
   void mangleThrowSpecification(const FunctionProtoType *T);
@@ -1337,7 +1337,7 @@ void MicrosoftCXXNameMangler::mangleFunctionType(const FunctionType *T,
     mangleQualifiers(Qualifiers::fromCVRMask(Proto->getTypeQuals()), false);
   }
 
-  mangleCallingConvention(T, IsInstMethod);
+  mangleCallingConvention(T);
 
   // <return-type> ::= <type>
   //               ::= @ # structors (they have no declared return type)
@@ -1441,8 +1441,7 @@ void MicrosoftCXXNameMangler::mangleFunctionClass(const FunctionDecl *FD) {
   } else
     Out << 'Y';
 }
-void MicrosoftCXXNameMangler::mangleCallingConvention(const FunctionType *T,
-                                                      bool IsInstMethod) {
+void MicrosoftCXXNameMangler::mangleCallingConvention(const FunctionType *T) {
   // <calling-convention> ::= A # __cdecl
   //                      ::= B # __export __cdecl
   //                      ::= C # __pascal
