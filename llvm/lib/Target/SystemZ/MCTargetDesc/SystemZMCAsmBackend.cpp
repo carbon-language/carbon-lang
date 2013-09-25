@@ -35,15 +35,6 @@ static uint64_t extractBitsForFixup(MCFixupKind Kind, uint64_t Value) {
   llvm_unreachable("Unknown fixup kind!");
 }
 
-// If Opcode is a relaxable interprocedural reference, return the relaxed form,
-// otherwise return 0.
-static unsigned getRelaxedOpcode(unsigned Opcode) {
-  switch (Opcode) {
-  case SystemZ::BRAS: return SystemZ::BRASL;
-  }
-  return 0;
-}
-
 namespace {
 class SystemZMCAsmBackend : public MCAsmBackend {
   uint8_t OSABI;
@@ -59,14 +50,20 @@ public:
     LLVM_OVERRIDE;
   virtual void applyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
                           uint64_t Value) const LLVM_OVERRIDE;
-  virtual bool mayNeedRelaxation(const MCInst &Inst) const LLVM_OVERRIDE;
+  virtual bool mayNeedRelaxation(const MCInst &Inst) const LLVM_OVERRIDE {
+    return false;
+  }
   virtual bool fixupNeedsRelaxation(const MCFixup &Fixup,
                                     uint64_t Value,
                                     const MCRelaxableFragment *Fragment,
                                     const MCAsmLayout &Layout) const
-    LLVM_OVERRIDE;
+    LLVM_OVERRIDE {
+    return false;
+  }
   virtual void relaxInstruction(const MCInst &Inst,
-                                MCInst &Res) const LLVM_OVERRIDE;
+                                MCInst &Res) const LLVM_OVERRIDE {
+    llvm_unreachable("SystemZ does do not have assembler relaxation");
+  }
   virtual bool writeNopData(uint64_t Count,
                             MCObjectWriter *OW) const LLVM_OVERRIDE;
   virtual MCObjectWriter *createObjectWriter(raw_ostream &OS) const
@@ -112,28 +109,6 @@ void SystemZMCAsmBackend::applyFixup(const MCFixup &Fixup, char *Data,
     Data[Offset + I] |= uint8_t(Value >> ShiftValue);
     ShiftValue -= 8;
   }
-}
-
-bool SystemZMCAsmBackend::mayNeedRelaxation(const MCInst &Inst) const {
-  return getRelaxedOpcode(Inst.getOpcode()) != 0;
-}
-
-bool
-SystemZMCAsmBackend::fixupNeedsRelaxation(const MCFixup &Fixup,
-                                          uint64_t Value,
-                                          const MCRelaxableFragment *Fragment,
-                                          const MCAsmLayout &Layout) const {
-  // At the moment we just need to relax 16-bit fields to wider fields.
-  Value = extractBitsForFixup(Fixup.getKind(), Value);
-  return (int16_t)Value != (int64_t)Value;
-}
-
-void SystemZMCAsmBackend::relaxInstruction(const MCInst &Inst,
-                                           MCInst &Res) const {
-  unsigned Opcode = getRelaxedOpcode(Inst.getOpcode());
-  assert(Opcode && "Unexpected insn to relax");
-  Res = Inst;
-  Res.setOpcode(Opcode);
 }
 
 bool SystemZMCAsmBackend::writeNopData(uint64_t Count,

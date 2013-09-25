@@ -124,18 +124,6 @@ void SystemZInstPrinter::printPCRelOperand(const MCInst *MI, int OpNum,
     O << *MO.getExpr();
 }
 
-void SystemZInstPrinter::printCallOperand(const MCInst *MI, int OpNum,
-                                          raw_ostream &O) {
-  const MCOperand &MO = MI->getOperand(OpNum);
-  if (MO.isImm()) {
-    O << "0x";
-    O.write_hex(MO.getImm());
-  } else {
-    O << *MO.getExpr();
-    O << "@PLT";
-  }
-}
-
 void SystemZInstPrinter::printOperand(const MCInst *MI, int OpNum,
                                       raw_ostream &O) {
   printOperand(MI->getOperand(OpNum), O);

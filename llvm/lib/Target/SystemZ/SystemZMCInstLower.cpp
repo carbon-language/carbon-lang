@@ -15,15 +15,6 @@
 
 using namespace llvm;
 
-// If Opcode is an interprocedural reference that can be shortened,
-// return the short form, otherwise return 0.
-static unsigned getShortenedInstr(unsigned Opcode) {
-  switch (Opcode) {
-  case SystemZ::BRASL: return SystemZ::BRAS;
-  }
-  return Opcode;
-}
-
 // Return the VK_* enumeration for MachineOperand target flags Flags.
 static MCSymbolRefExpr::VariantKind getVariantKind(unsigned Flags) {
   switch (Flags & SystemZII::MO_SYMBOL_MODIFIER) {
@@ -39,66 +30,67 @@ SystemZMCInstLower::SystemZMCInstLower(Mangler *mang, MCContext &ctx,
                                        SystemZAsmPrinter &asmprinter)
   : Mang(mang), Ctx(ctx), AsmPrinter(asmprinter) {}
 
-MCOperand SystemZMCInstLower::lowerSymbolOperand(const MachineOperand &MO,
-                                                 const MCSymbol *Symbol,
-                                                 int64_t Offset) const {
-  MCSymbolRefExpr::VariantKind Kind = getVariantKind(MO.getTargetFlags());
-  const MCExpr *Expr = MCSymbolRefExpr::Create(Symbol, Kind, Ctx);
-  if (Offset) {
-    const MCExpr *OffsetExpr = MCConstantExpr::Create(Offset, Ctx);
-    Expr = MCBinaryExpr::CreateAdd(Expr, OffsetExpr, Ctx);
+const MCExpr *
+SystemZMCInstLower::getExpr(const MachineOperand &MO,
+                            MCSymbolRefExpr::VariantKind Kind) const {
+  const MCSymbol *Symbol;
+  bool HasOffset = true;
+  switch (MO.getType()) {
+  case MachineOperand::MO_MachineBasicBlock:
+    Symbol = MO.getMBB()->getSymbol();
+    HasOffset = false;
+    break;
+
+  case MachineOperand::MO_GlobalAddress:
+    Symbol = Mang->getSymbol(MO.getGlobal());
+    break;
+
+  case MachineOperand::MO_ExternalSymbol:
+    Symbol = AsmPrinter.GetExternalSymbolSymbol(MO.getSymbolName());
+    break;
+
+  case MachineOperand::MO_JumpTableIndex:
+    Symbol = AsmPrinter.GetJTISymbol(MO.getIndex());
+    HasOffset = false;
+    break;
+
+  case MachineOperand::MO_ConstantPoolIndex:
+    Symbol = AsmPrinter.GetCPISymbol(MO.getIndex());
+    break;
+
+  case MachineOperand::MO_BlockAddress:
+    Symbol = AsmPrinter.GetBlockAddressSymbol(MO.getBlockAddress());
+    break;
+
+  default:
+    llvm_unreachable("unknown operand type");
   }
-  return MCOperand::CreateExpr(Expr);
+  const MCExpr *Expr = MCSymbolRefExpr::Create(Symbol, Kind, Ctx);
+  if (HasOffset)
+    if (int64_t Offset = MO.getOffset()) {
+      const MCExpr *OffsetExpr = MCConstantExpr::Create(Offset, Ctx);
+      Expr = MCBinaryExpr::CreateAdd(Expr, OffsetExpr, Ctx);
+    }
+  return Expr;
 }
 
 MCOperand SystemZMCInstLower::lowerOperand(const MachineOperand &MO) const {
   switch (MO.getType()) {
-  default:
-    llvm_unreachable("unknown operand type");
-
   case MachineOperand::MO_Register:
     return MCOperand::CreateReg(MO.getReg());
 
   case MachineOperand::MO_Immediate:
     return MCOperand::CreateImm(MO.getImm());
 
-  case MachineOperand::MO_MachineBasicBlock:
-    return lowerSymbolOperand(MO, MO.getMBB()->getSymbol(),
-                              /* MO has no offset field */0);
-
-  case MachineOperand::MO_GlobalAddress:
-    return lowerSymbolOperand(MO, Mang->getSymbol(MO.getGlobal()),
-                              MO.getOffset());
-
-  case MachineOperand::MO_ExternalSymbol: {
-    StringRef Name = MO.getSymbolName();
-    return lowerSymbolOperand(MO, AsmPrinter.GetExternalSymbolSymbol(Name),
-                              MO.getOffset());
-  }
-
-  case MachineOperand::MO_JumpTableIndex:
-    return lowerSymbolOperand(MO, AsmPrinter.GetJTISymbol(MO.getIndex()),
-                              /* MO has no offset field */0);
-
-  case MachineOperand::MO_ConstantPoolIndex:
-    return lowerSymbolOperand(MO, AsmPrinter.GetCPISymbol(MO.getIndex()),
-                              MO.getOffset());
-
-  case MachineOperand::MO_BlockAddress: {
-    const BlockAddress *BA = MO.getBlockAddress();
-    return lowerSymbolOperand(MO, AsmPrinter.GetBlockAddressSymbol(BA),
-                              MO.getOffset());
+  default: {
+    MCSymbolRefExpr::VariantKind Kind = getVariantKind(MO.getTargetFlags());
+    return MCOperand::CreateExpr(getExpr(MO, Kind));
   }
   }
 }
 
 void SystemZMCInstLower::lower(const MachineInstr *MI, MCInst &OutMI) const {
-  unsigned Opcode = MI->getOpcode();
-  // When emitting binary code, start with the shortest form of an instruction
-  // and then relax it where necessary.
-  if (!AsmPrinter.OutStreamer.hasRawTextSupport())
-    Opcode = getShortenedInstr(Opcode);
-  OutMI.setOpcode(Opcode);
+  OutMI.setOpcode(MI->getOpcode());
   for (unsigned I = 0, E = MI->getNumOperands(); I != E; ++I) {
     const MachineOperand &MO = MI->getOperand(I);
     // Ignore all implicit register operands.

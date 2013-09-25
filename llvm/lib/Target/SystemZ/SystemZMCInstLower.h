@@ -10,14 +10,13 @@
 #ifndef LLVM_SYSTEMZMCINSTLOWER_H
 #define LLVM_SYSTEMZMCINSTLOWER_H
 
+#include "llvm/MC/MCExpr.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Compiler.h"
 
 namespace llvm {
-class MCContext;
 class MCInst;
 class MCOperand;
-class MCSymbol;
 class MachineInstr;
 class MachineOperand;
 class Mangler;
@@ -38,9 +37,9 @@ public:
   // Return an MCOperand for MO.
   MCOperand lowerOperand(const MachineOperand& MO) const;
 
-  // Return an MCOperand for MO, given that it equals Symbol + Offset.
-  MCOperand lowerSymbolOperand(const MachineOperand &MO,
-                               const MCSymbol *Symbol, int64_t Offset) const;
+  // Return an MCExpr for symbolic operand MO with variant kind Kind.
+  const MCExpr *getExpr(const MachineOperand &MO,
+                        MCSymbolRefExpr::VariantKind Kind) const;
 };
 } // end namespace llvm
 

@@ -223,34 +223,30 @@ defm CondStore64 : CondStores<GR64, nonvolatile_store,
 
 // The definitions here are for the call-clobbered registers.
 let isCall = 1, Defs = [R0D, R1D, R2D, R3D, R4D, R5D, R14D,
-                        F0D, F1D, F2D, F3D, F4D, F5D, F6D, F7D, CC],
-    R1 = 14, isCodeGenOnly = 1 in {
-  def BRAS  : InstRI<0xA75, (outs), (ins pcrel16call:$I2, variable_ops),
-                     "bras\t%r14, $I2", []>;
-  def BRASL : InstRIL<0xC05, (outs), (ins pcrel32call:$I2, variable_ops),
-                      "brasl\t%r14, $I2", [(z_call pcrel32call:$I2)]>;
-  def BASR  : InstRR<0x0D, (outs), (ins ADDR64:$R2, variable_ops),
-                     "basr\t%r14, $R2", [(z_call ADDR64:$R2)]>;
+                        F0D, F1D, F2D, F3D, F4D, F5D, F6D, F7D, CC] in {
+  def CallBRASL : Alias<6, (outs), (ins pcrel32:$I2, variable_ops),
+                        [(z_call pcrel32:$I2)]>;
+  def CallBASR  : Alias<2, (outs), (ins ADDR64:$R2, variable_ops),
+                        [(z_call ADDR64:$R2)]>;
 }
 
 // Sibling calls.  Indirect sibling calls must be via R1, since R2 upwards
 // are argument registers and since branching to R0 is a no-op.
-let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1,
-    isCodeGenOnly = 1, R1 = 15 in {
-  def CallJG : InstRIL<0xC04, (outs), (ins pcrel32call:$I2),
-                       "jg\t$I2", [(z_sibcall pcrel32call:$I2)]>;
-  let R2 = 1, Uses = [R1D] in
-    def CallBR : InstRR<0x07, (outs), (ins), "br\t%r1", [(z_sibcall R1D)]>;
+let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
+  def CallJG : Alias<6, (outs), (ins pcrel32:$I2),
+                     [(z_sibcall pcrel32:$I2)]>;
+  let Uses = [R1D] in
+    def CallBR : Alias<2, (outs), (ins), [(z_sibcall R1D)]>;
 }
 
 // Define the general form of the call instructions for the asm parser.
 // These instructions don't hard-code %r14 as the return address register.
-def AsmBRAS  : InstRI<0xA75, (outs), (ins GR64:$R1, brtarget16:$I2),
-                      "bras\t$R1, $I2", []>;
-def AsmBRASL : InstRIL<0xC05, (outs), (ins GR64:$R1, brtarget32:$I2),
-                       "brasl\t$R1, $I2", []>;
-def AsmBASR  : InstRR<0x0D, (outs), (ins GR64:$R1, ADDR64:$R2),
-                      "basr\t$R1, $R2", []>;
+def BRAS  : InstRI<0xA75, (outs), (ins GR64:$R1, brtarget16:$I2),
+                   "bras\t$R1, $I2", []>;
+def BRASL : InstRIL<0xC05, (outs), (ins GR64:$R1, brtarget32:$I2),
+                    "brasl\t$R1, $I2", []>;
+def BASR  : InstRR<0x0D, (outs), (ins GR64:$R1, ADDR64:$R2),
+                   "basr\t$R1, $R2", []>;
 
 //===----------------------------------------------------------------------===//
 // Move instructions

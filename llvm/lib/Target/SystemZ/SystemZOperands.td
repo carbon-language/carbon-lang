@@ -395,19 +395,6 @@ def pcrel32 : PCRelAddress<i64, "pcrel32", PCRel32> {
   let DecoderMethod = "decodePC32DBLOperand";
 }
 
-// A PC-relative offset of a global value when the value is used as a
-// call target.  The offset is sign-extended and multiplied by 2.
-def pcrel16call : PCRelAddress<i64, "pcrel16call", PCRel16> {
-  let PrintMethod = "printCallOperand";
-  let EncoderMethod = "getPLT16DBLEncoding";
-  let DecoderMethod = "decodePC16DBLOperand";
-}
-def pcrel32call : PCRelAddress<i64, "pcrel32call", PCRel32> {
-  let PrintMethod = "printCallOperand";
-  let EncoderMethod = "getPLT32DBLEncoding";
-  let DecoderMethod = "decodePC32DBLOperand";
-}
-
 //===----------------------------------------------------------------------===//
 // Addressing modes
 //===----------------------------------------------------------------------===//

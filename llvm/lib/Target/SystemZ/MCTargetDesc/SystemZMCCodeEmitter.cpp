@@ -79,14 +79,6 @@ private:
                               SmallVectorImpl<MCFixup> &Fixups) const {
     return getPCRelEncoding(MI, OpNum, Fixups, SystemZ::FK_390_PC32DBL, 2);
   }
-  uint64_t getPLT16DBLEncoding(const MCInst &MI, unsigned OpNum,
-                               SmallVectorImpl<MCFixup> &Fixups) const {
-    return getPCRelEncoding(MI, OpNum, Fixups, SystemZ::FK_390_PLT16DBL, 2);
-  }
-  uint64_t getPLT32DBLEncoding(const MCInst &MI, unsigned OpNum,
-                               SmallVectorImpl<MCFixup> &Fixups) const {
-    return getPCRelEncoding(MI, OpNum, Fixups, SystemZ::FK_390_PLT32DBL, 2);
-  }
 };
 }
 

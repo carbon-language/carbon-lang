@@ -27,14 +27,36 @@
 using namespace llvm;
 
 void SystemZAsmPrinter::EmitInstruction(const MachineInstr *MI) {
+  SystemZMCInstLower Lower(Mang, MF->getContext(), *this);
   MCInst LoweredMI;
   switch (MI->getOpcode()) {
   case SystemZ::Return:
     LoweredMI = MCInstBuilder(SystemZ::BR).addReg(SystemZ::R14D);
     break;
 
+  case SystemZ::CallBRASL:
+    LoweredMI = MCInstBuilder(SystemZ::BRASL)
+      .addReg(SystemZ::R14D)
+      .addExpr(Lower.getExpr(MI->getOperand(0), MCSymbolRefExpr::VK_PLT));
+    break;
+
+  case SystemZ::CallBASR:
+    LoweredMI = MCInstBuilder(SystemZ::BASR)
+      .addReg(SystemZ::R14D)
+      .addReg(MI->getOperand(0).getReg());
+    break;
+
+  case SystemZ::CallJG:
+    LoweredMI = MCInstBuilder(SystemZ::JG)
+      .addExpr(Lower.getExpr(MI->getOperand(0), MCSymbolRefExpr::VK_PLT));
+    break;
+
+  case SystemZ::CallBR:
+    LoweredMI = MCInstBuilder(SystemZ::BR).addReg(SystemZ::R1D);
+    break;
+
   default:
-    SystemZMCInstLower(Mang, MF->getContext(), *this).lower(MI, LoweredMI);
+    Lower.lower(MI, LoweredMI);
     break;
   }
   OutStreamer.EmitInstruction(LoweredMI);
