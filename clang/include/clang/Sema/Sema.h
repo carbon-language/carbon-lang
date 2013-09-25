@@ -6513,6 +6513,10 @@ public:
                                  const SourceLocation *ProtoLocs,
                                  SourceLocation EndProtoLoc,
                                  AttributeList *AttrList);
+  
+  void ActOnTypedefedProtocols(SmallVectorImpl<Decl *> &ProtocolRefs,
+                               IdentifierInfo *SuperName,
+                               SourceLocation SuperLoc);
 
   Decl *ActOnCompatibilityAlias(
                     SourceLocation AtCompatibilityAliasLoc,

@@ -289,6 +289,9 @@ Decl *Parser::ParseObjCAtInterfaceDeclaration(SourceLocation AtLoc,
                                   LAngleLoc, EndProtoLoc))
     return 0;
 
+  if (Tok.isNot(tok::less))
+    Actions.ActOnTypedefedProtocols(ProtocolRefs, superClassId, superClassLoc);
+  
   Decl *ClsType =
     Actions.ActOnStartClassInterface(AtLoc, nameId, nameLoc,
                                      superClassId, superClassLoc,

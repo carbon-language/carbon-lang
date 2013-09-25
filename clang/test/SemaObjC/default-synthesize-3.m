@@ -157,3 +157,27 @@ __attribute ((objc_requires_property_definitions)) // expected-error {{objc_requ
 __attribute ((objc_requires_property_definitions(1))) // expected-error {{'objc_requires_property_definitions' attribute takes no arguments}}
 @interface I1
 @end
+
+// rdar://15051465
+@protocol SubFooling
+  @property(nonatomic, readonly) id hoho; // expected-note 2 {{property declared here}}
+@end
+
+@protocol Fooing<SubFooling>
+  @property(nonatomic, readonly) id muahahaha; // expected-note 2 {{property declared here}}
+@end
+
+typedef NSObject<Fooing> FooObject;
+
+@interface Okay : NSObject<Fooing>
+@end
+
+@implementation Okay // expected-warning 2 {{auto property synthesis will not synthesize property declared in a protocol}}
+@end
+
+@interface Fail : FooObject
+@end
+
+@implementation Fail // expected-warning 2 {{auto property synthesis will not synthesize property declared in a protocol}}
+@end
+
