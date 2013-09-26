@@ -938,7 +938,6 @@ ExprResult Parser::ParseLambdaExpressionAfterIntroducer(
 
     
     if (Tok.isNot(tok::r_paren)) {
-      sema::LambdaScopeInfo *LSI = Actions.getCurLambda(); 
       Actions.RecordParsingTemplateParameterDepth(TemplateParameterDepth);
       ParseParameterDeclarationClause(D, Attr, ParamInfo, EllipsisLoc);
       // For a generic lambda, each 'auto' within the parameter declaration 
