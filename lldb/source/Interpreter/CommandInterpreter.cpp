@@ -592,7 +592,7 @@ CommandInterpreter::LoadCommandDictionary ()
     list_regex_cmd_ap(new CommandObjectRegexCommand (*this,
                                                      "_regexp-list",
                                                      "Implements the GDB 'list' command in all of its forms except FILE:FUNCTION and maps them to the appropriate 'source list' commands.",
-                                                     "_regexp-list [<line>]\n_regexp-attach [<file>:<line>]\n_regexp-attach [<file>:<line>]",
+                                                     "_regexp-list [<line>]\n_regexp-list [<file>:<line>]\n_regexp-list [<file>:<line>]",
                                                      2,
                                                      CommandCompletions::eSourceFileCompletion));
     if (list_regex_cmd_ap.get())
