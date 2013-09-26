@@ -36,3 +36,8 @@ namespace floating {
 
 #line 123'456
 static_assert(__LINE__ == 123456, "");
+
+// x has value 0 in C++11 and 34 in C++1y.
+#define M(x, ...) __VA_ARGS__
+constexpr int x = { M(1'2,3'4) };
+static_assert(x == 34, "");
