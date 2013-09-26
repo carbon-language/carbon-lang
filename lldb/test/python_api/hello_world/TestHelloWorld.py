@@ -49,6 +49,7 @@ class HelloWorldTestCase(TestBase):
     @not_remote_testsuite_ready
     @python_api_test
     @dwarf_test
+    @expectedFailurei386 # llvm.org/pr17384: lldb needs to be aware of linux-vdso.so to unwind stacks properly
     def test_with_dwarf_and_attach_to_process_with_id_api(self):
         """Create target, spawn a process, and attach to it with process id.
 
@@ -74,6 +75,7 @@ class HelloWorldTestCase(TestBase):
     @not_remote_testsuite_ready
     @python_api_test
     @dwarf_test
+    @expectedFailurei386 # llvm.org/pr17384: lldb needs to be aware of linux-vdso.so to unwind stacks properly
     def test_with_dwarf_and_attach_to_process_with_name_api(self):
         """Create target, spawn a process, and attach to it with process name.
 

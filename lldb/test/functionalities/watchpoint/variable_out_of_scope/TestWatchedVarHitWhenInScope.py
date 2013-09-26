@@ -20,15 +20,17 @@ class WatchedVariableHitWhenInScopeTestCase(TestBase):
     # clearer API to express this.
     #
 
-    @unittest2.expectedFailure
     @dsym_test
+    @unittest2.expectedFailure
     def test_watched_var_should_only_hit_when_in_scope_with_dsym(self):
         """Test that a variable watchpoint should only hit when in scope."""
         self.buildDsym(dictionary=self.d)
         self.setTearDownCleanup(dictionary=self.d)
         self.watched_var()
 
-    @unittest2.expectedFailure
+    @expectedFailureDarwin
+    @expectedFailureFreeBSD
+    @expectedFailurex86_64
     @dwarf_test
     def test_watched_var_should_only_hit_when_in_scope_with_dwarf(self):
         """Test that a variable watchpoint should only hit when in scope."""

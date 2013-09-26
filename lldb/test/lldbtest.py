@@ -535,6 +535,42 @@ def expectedFailurei386(bugnumber=None):
               return wrapper
         return expectedFailurei386_impl
 
+def expectedFailurex86_64(bugnumber=None):
+     if callable(bugnumber):
+        @wraps(bugnumber)
+        def expectedFailurex86_64_easy_wrapper(*args, **kwargs):
+            from unittest2 import case
+            self = args[0]
+            arch = self.getArchitecture()
+            try:
+                bugnumber(*args, **kwargs)
+            except Exception:
+                if "x86_64" in arch:
+                    raise case._ExpectedFailure(sys.exc_info(),None)
+                else:
+                    raise
+            if "x86_64" in arch:
+                raise case._UnexpectedSuccess(sys.exc_info(),None)
+        return expectedFailurex86_64_easy_wrapper
+     else:
+        def expectedFailurex86_64_impl(func):
+              @wraps(func)
+              def wrapper(*args, **kwargs):
+                from unittest2 import case
+                self = args[0]
+                arch = self.getArchitecture()
+                try:
+                    func(*args, **kwargs)
+                except Exception:
+                    if "x86_64" in arch:
+                        raise case._ExpectedFailure(sys.exc_info(),bugnumber)
+                    else:
+                        raise
+                if "x86_64" in arch:
+                    raise case._UnexpectedSuccess(sys.exc_info(),bugnumber)
+              return wrapper
+        return expectedFailurex86_64_impl
+
 def expectedFailureFreeBSD(bugnumber=None, compilers=None):
      if callable(bugnumber):
         @wraps(bugnumber)
