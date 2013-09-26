@@ -846,6 +846,7 @@ bool ObjCMigrateASTConsumer::migrateProperty(ASTContext &Ctx,
 void ObjCMigrateASTConsumer::migrateNsReturnsInnerPointer(ASTContext &Ctx,
                                                           ObjCMethodDecl *OM) {
   if (OM->isImplicit() ||
+      !OM->isInstanceMethod() ||
       OM->hasAttr<ObjCReturnsInnerPointerAttr>())
     return;
   

@@ -122,6 +122,8 @@ typedef void *SecTrustRef;
 
 - (SecTrustRef) FOO1 NS_AVAILABLE;
 
++ (const NSURLProtectionSpace *)ProtectionSpace;
+
 // pointer personality functions
 @property NSUInteger (*hashFunction)(const void *item, NSUInteger (*size)(const void *item));
 @end
