@@ -170,6 +170,11 @@ static DecodeStatus DecodeLO32DSPRegisterClass(MCInst &Inst,
                                                uint64_t Address,
                                                const void *Decoder);
 
+static DecodeStatus DecodeMSA128BRegisterClass(MCInst &Inst,
+                                               unsigned RegNo,
+                                               uint64_t Address,
+                                               const void *Decoder);
+
 static DecodeStatus DecodeMSA128HRegisterClass(MCInst &Inst,
                                                unsigned RegNo,
                                                uint64_t Address,
@@ -631,6 +636,18 @@ static DecodeStatus DecodeLO32DSPRegisterClass(MCInst &Inst,
     return MCDisassembler::Fail;
 
   unsigned Reg = getReg(Decoder, Mips::LO32DSPRegClassID, RegNo);
+  Inst.addOperand(MCOperand::CreateReg(Reg));
+  return MCDisassembler::Success;
+}
+
+static DecodeStatus DecodeMSA128BRegisterClass(MCInst &Inst,
+                                               unsigned RegNo,
+                                               uint64_t Address,
+                                               const void *Decoder) {
+  if (RegNo > 31)
+    return MCDisassembler::Fail;
+
+  unsigned Reg = getReg(Decoder, Mips::MSA128BRegClassID, RegNo);
   Inst.addOperand(MCOperand::CreateReg(Reg));
   return MCDisassembler::Success;
 }
