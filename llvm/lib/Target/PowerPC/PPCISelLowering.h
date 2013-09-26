@@ -42,10 +42,10 @@ namespace llvm {
       /// unsigned integers and single-precision outputs.
       FCFIDU, FCFIDS, FCFIDUS,
 
-      /// FCTI[D,W]Z? - The FCTID, FCTIDZ, FCTIW and FCTIWZ instructions,
-      /// taking an f32 or f64 operand, producing an f64 value containing the
-      /// integer representation of that FP value.
-      FCTID, FCTIDZ, FCTIW, FCTIWZ,
+      /// FCTI[D,W]Z - The FCTIDZ and FCTIWZ instructions, taking an f32 or f64
+      /// operand, producing an f64 value containing the integer representation
+      /// of that FP value.
+      FCTIDZ, FCTIWZ,
 
       /// Newer FCTI[D,W]UZ floating-point-to-integer conversion instructions for
       /// unsigned integers.

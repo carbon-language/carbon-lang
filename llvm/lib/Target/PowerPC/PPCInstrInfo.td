@@ -69,9 +69,7 @@ def PPCfcfid  : SDNode<"PPCISD::FCFID",   SDTFPUnaryOp, []>;
 def PPCfcfidu : SDNode<"PPCISD::FCFIDU",  SDTFPUnaryOp, []>;
 def PPCfcfids : SDNode<"PPCISD::FCFIDS",  SDTFPRoundOp, []>;
 def PPCfcfidus: SDNode<"PPCISD::FCFIDUS", SDTFPRoundOp, []>;
-def PPCfctid  : SDNode<"PPCISD::FCTID",  SDTFPUnaryOp, []>;
 def PPCfctidz : SDNode<"PPCISD::FCTIDZ", SDTFPUnaryOp, []>;
-def PPCfctiw  : SDNode<"PPCISD::FCTIW",  SDTFPUnaryOp, []>;
 def PPCfctiwz : SDNode<"PPCISD::FCTIWZ", SDTFPUnaryOp, []>;
 def PPCfctiduz: SDNode<"PPCISD::FCTIDUZ",SDTFPUnaryOp, []>;
 def PPCfctiwuz: SDNode<"PPCISD::FCTIWUZ",SDTFPUnaryOp, []>;
@@ -1696,7 +1694,7 @@ let Uses = [RM] in {
   let neverHasSideEffects = 1 in {
   defm FCTIW  : XForm_26r<63, 14, (outs f8rc:$frD), (ins f8rc:$frB),
                           "fctiw", "$frD, $frB", FPGeneral,
-                          [(set f64:$frD, (PPCfctiw f64:$frB))]>;
+                          []>;
   defm FCTIWZ : XForm_26r<63, 15, (outs f8rc:$frD), (ins f8rc:$frB),
                           "fctiwz", "$frD, $frB", FPGeneral,
                           [(set f64:$frD, (PPCfctiwz f64:$frB))]>;
