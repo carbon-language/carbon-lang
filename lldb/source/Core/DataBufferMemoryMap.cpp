@@ -149,6 +149,16 @@ DataBufferMemoryMap::MemoryMapFromFileSpec (const FileSpec* filespec,
 }
 
 
+#ifdef _WIN32
+static size_t win32memmapalignment = 0;
+void LoadWin32MemMapAlignment ()
+{
+  SYSTEM_INFO data;
+  GetSystemInfo(&data);
+  win32memmapalignment = data.dwAllocationGranularity;
+}
+#endif
+
 //----------------------------------------------------------------------
 // The file descriptor FD is assumed to already be opened as read only
 // and the STAT structure is assumed to a valid pointer and already
@@ -206,12 +216,22 @@ DataBufferMemoryMap::MemoryMapFromFileDescriptor (int fd,
             HANDLE fileMapping = CreateFileMapping(handle, NULL, writeable ? PAGE_READWRITE : PAGE_READONLY, file_size_high, file_size_low, NULL);
             if (fileMapping != NULL)
             {
-                m_mmap_addr = (uint8_t*)MapViewOfFile(fileMapping, writeable ? FILE_MAP_ALL_ACCESS : FILE_MAP_READ, (DWORD)(offset >> 32), (DWORD)(offset), length);
-                if (m_mmap_addr != NULL)
-                {
-                    m_mmap_size = length;
-                    m_data = m_mmap_addr;
-                    m_size = length;
+                if (win32memmapalignment == 0) LoadWin32MemMapAlignment();
+                lldb::offset_t realoffset = offset;
+                lldb::offset_t delta = 0;
+                if (realoffset % win32memmapalignment != 0) {
+                  realoffset = realoffset / win32memmapalignment * win32memmapalignment;
+                  delta = offset - realoffset;
+	              }
+
+                LPVOID data = MapViewOfFile(fileMapping, writeable ? FILE_MAP_WRITE : FILE_MAP_READ, 0, realoffset, length + delta);
+                m_mmap_addr = (uint8_t *)data;
+                if (!data) {
+                  Error error; 
+                  error.SetErrorToErrno ();
+                } else {
+                  m_data = m_mmap_addr + delta;
+                  m_size = length;
                 }
                 CloseHandle(fileMapping);
             }
