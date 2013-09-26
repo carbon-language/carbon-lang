@@ -23,21 +23,21 @@ using N::FFG; // expected-error {{no member named 'FFG' in namespace 'using_sugg
 }
 
 namespace using_suggestion_ty_dropped_specifier {
-class AAA {}; // expected-note {{'::using_suggestion_ty_dropped_specifier::AAA' declared here}}
+class ABC {}; // expected-note {{'::using_suggestion_ty_dropped_specifier::ABC' declared here}}
 namespace N { }
-using N::AAA; // expected-error {{no member named 'AAA' in namespace 'using_suggestion_ty_dropped_specifier::N'; did you mean '::using_suggestion_ty_dropped_specifier::AAA'?}}
+using N::ABC; // expected-error {{no member named 'ABC' in namespace 'using_suggestion_ty_dropped_specifier::N'; did you mean '::using_suggestion_ty_dropped_specifier::ABC'?}}
 }
 
 namespace using_suggestion_tyname_ty_dropped_specifier {
-class AAA {}; // expected-note {{'::using_suggestion_tyname_ty_dropped_specifier::AAA' declared here}}
+class BCD {}; // expected-note {{'::using_suggestion_tyname_ty_dropped_specifier::BCD' declared here}}
 namespace N { }
-using typename N::AAA; // expected-error {{no member named 'AAA' in namespace 'using_suggestion_tyname_ty_dropped_specifier::N'; did you mean '::using_suggestion_tyname_ty_dropped_specifier::AAA'?}}
+using typename N::BCD; // expected-error {{no member named 'BCD' in namespace 'using_suggestion_tyname_ty_dropped_specifier::N'; did you mean '::using_suggestion_tyname_ty_dropped_specifier::BCD'?}}
 }
 
 namespace using_suggestion_val_dropped_specifier {
-void FFF() {} // expected-note {{'::using_suggestion_val_dropped_specifier::FFF' declared here}}
+void EFG() {} // expected-note {{'::using_suggestion_val_dropped_specifier::EFG' declared here}}
 namespace N { }
-using N::FFF; // expected-error {{no member named 'FFF' in namespace 'using_suggestion_val_dropped_specifier::N'; did you mean '::using_suggestion_val_dropped_specifier::FFF'?}}
+using N::EFG; // expected-error {{no member named 'EFG' in namespace 'using_suggestion_val_dropped_specifier::N'; did you mean '::using_suggestion_val_dropped_specifier::EFG'?}}
 }
 
 namespace using_suggestion_member_ty {

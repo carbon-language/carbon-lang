@@ -5,7 +5,7 @@ namespace N {
   
   X operator+(X, X);
 
-  void f(X);
+  void f(X); // expected-note 2 {{'N::f' declared here}}
   void g(X); // expected-note{{candidate function}}
 
   void test_multiadd(X x) {
@@ -17,7 +17,7 @@ namespace M {
   struct Y : N::X { };
 }
 
-void f(); // expected-note 2 {{'f' declared here}}
+void f();
 
 void test_operator_adl(N::X x, M::Y y) {
   (void)(x + x);
@@ -27,8 +27,8 @@ void test_operator_adl(N::X x, M::Y y) {
 void test_func_adl(N::X x, M::Y y) {
   f(x);
   f(y);
-  (f)(x); // expected-error{{too many arguments to function call}}
-  ::f(x); // expected-error{{too many arguments to function call}}
+  (f)(x); // expected-error{{too many arguments to function call, expected 0, have 1; did you mean 'N::f'?}}
+  ::f(x); // expected-error{{too many arguments to function call, expected 0, have 1; did you mean 'N::f'?}}
 }
 
 namespace N {

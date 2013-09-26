@@ -33,3 +33,64 @@ void test(Foo F, int num) {
   F.B(num);  // expected-error {{too many arguments to function call, expected 0, have 1; did you mean '::TemplateFunction::B'?}}
 }
 }
+namespace using_suggestion_val_dropped_specifier {
+void FFF() {} // expected-note {{'::using_suggestion_val_dropped_specifier::FFF' declared here}}
+namespace N { }
+using N::FFF; // expected-error {{no member named 'FFF' in namespace 'using_suggestion_val_dropped_specifier::N'; did you mean '::using_suggestion_val_dropped_specifier::FFF'?}}
+}
+
+namespace class_member_typo_corrections {
+class Outer {
+public:
+  class Inner {};  // expected-note {{'Outer::Inner' declared here}}
+  Inner MyMethod(Inner arg);
+};
+
+Inner Outer::MyMethod(Inner arg) {  // expected-error {{unknown type name 'Inner'; did you mean 'Outer::Inner'?}}
+  // TODO: Recovery needs to be fixed/added for the typo-correction of the
+  // return type so the below error isn't still generated.
+  return Inner();  // expected-error {{no viable conversion from 'class_member_typo_corrections::Outer::Inner' to 'int'}}
+}
+
+class Result {
+public:
+  enum ResultType {
+    ENTITY,  // expected-note {{'Result::ENTITY' declared here}}
+    PREDICATE,  // expected-note {{'Result::PREDICATE' declared here}}
+    LITERAL  // expected-note {{'Result::LITERAL' declared here}}
+  };
+
+  ResultType type();
+};
+
+void test() {
+  Result result_cell;
+  switch (result_cell.type()) {
+  case ENTITY:  // expected-error {{use of undeclared identifier 'ENTITY'; did you mean 'Result::ENTITY'?}}
+  case LITERAL:  // expected-error {{use of undeclared identifier 'LITERAL'; did you mean 'Result::LITERAL'?}}
+  case PREDICAT:  // expected-error {{use of undeclared identifier 'PREDICAT'; did you mean 'Result::PREDICATE'?}}
+    break;
+  }
+}
+
+class Figure {
+  enum ResultType {
+    SQUARE,
+    TRIANGLE,
+    CIRCLE
+  };
+
+public:
+  ResultType type();
+};
+
+void testAccess() {
+  Figure obj;
+  switch (obj.type()) {  // expected-warning {{enumeration values 'SQUARE', 'TRIANGLE', and 'CIRCLE' not handled in switch}}
+  case SQUARE:  // expected-error-re {{use of undeclared identifier 'SQUARE'$}}
+  case TRIANGLE:  // expected-error-re {{use of undeclared identifier 'TRIANGLE'$}}
+  case CIRCE:  // expected-error-re {{use of undeclared identifier 'CIRCE'$}}
+    break;
+  }
+}
+}

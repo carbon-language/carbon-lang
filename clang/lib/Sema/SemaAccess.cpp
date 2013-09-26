@@ -1390,6 +1390,8 @@ static AccessResult IsAccessible(Sema &S,
   CXXBasePath *Path = FindBestPath(S, EC, Entity, FinalAccess, Paths);
   if (!Path)
     return AR_dependent;
+  if (Path->Access == AS_none)  // This can happen during typo correction.
+    return AR_inaccessible;
 
   assert(Path->Access <= UnprivilegedAccess &&
          "access along best path worse than direct?");
