@@ -968,6 +968,9 @@ let PPC970_Unit = 3, neverHasSideEffects = 1,
 defm FCFID  : XForm_26r<63, 846, (outs f8rc:$frD), (ins f8rc:$frB),
                         "fcfid", "$frD, $frB", FPGeneral,
                         [(set f64:$frD, (PPCfcfid f64:$frB))]>, isPPC64;
+defm FCTID  : XForm_26r<63, 814, (outs f8rc:$frD), (ins f8rc:$frB),
+                        "fctid", "$frD, $frB", FPGeneral,
+                        [(set f64:$frD, (PPCfctid f64:$frB))]>, isPPC64;
 defm FCTIDZ : XForm_26r<63, 815, (outs f8rc:$frD), (ins f8rc:$frB),
                         "fctidz", "$frD, $frB", FPGeneral,
                         [(set f64:$frD, (PPCfctidz f64:$frB))]>, isPPC64;
