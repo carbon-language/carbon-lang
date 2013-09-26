@@ -223,21 +223,7 @@ namespace llvm {
       VST4_UPD,
       VST2LN_UPD,
       VST3LN_UPD,
-      VST4LN_UPD,
-
-      // 64-bit atomic ops (value split into two registers)
-      ATOMADD64_DAG,
-      ATOMSUB64_DAG,
-      ATOMOR64_DAG,
-      ATOMXOR64_DAG,
-      ATOMAND64_DAG,
-      ATOMNAND64_DAG,
-      ATOMSWAP64_DAG,
-      ATOMCMPXCHG64_DAG,
-      ATOMMIN64_DAG,
-      ATOMUMIN64_DAG,
-      ATOMMAX64_DAG,
-      ATOMUMAX64_DAG
+      VST4LN_UPD
     };
   }
 
@@ -574,6 +560,8 @@ namespace llvm {
                                                unsigned Size,
                                                bool signExtend,
                                                ARMCC::CondCodes Cond) const;
+    MachineBasicBlock *EmitAtomicLoad64(MachineInstr *MI,
+                                        MachineBasicBlock *BB) const;
 
     void SetupEntryBlockForSjLj(MachineInstr *MI,
                                 MachineBasicBlock *MBB,

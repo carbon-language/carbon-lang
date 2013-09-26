@@ -94,7 +94,7 @@ std::string ARM_MC::ParseARMTriple(StringRef TT, StringRef CPU) {
     unsigned SubVer = TT[Idx];
     if (SubVer == '8') {
       // FIXME: Parse v8 features
-      ARMArchFeature = "+v8";
+      ARMArchFeature = "+v8,+db";
     } else if (SubVer == '7') {
       if (Len >= Idx+2 && TT[Idx+1] == 'm') {
         isThumb = true;

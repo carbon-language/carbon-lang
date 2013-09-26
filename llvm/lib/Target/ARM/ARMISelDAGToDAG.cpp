@@ -253,7 +253,7 @@ private:
 
   SDNode *SelectConcatVector(SDNode *N);
 
-  SDNode *SelectAtomic64(SDNode *Node, unsigned Opc);
+  SDNode *SelectAtomic(SDNode *N, unsigned Op8, unsigned Op16, unsigned Op32, unsigned Op64);
 
   /// SelectInlineAsmMemoryOperand - Implement addressing mode selection for
   /// inline asm expressions.
@@ -2361,23 +2361,36 @@ SDNode *ARMDAGToDAGISel::SelectConcatVector(SDNode *N) {
   return createDRegPairNode(VT, N->getOperand(0), N->getOperand(1));
 }
 
-SDNode *ARMDAGToDAGISel::SelectAtomic64(SDNode *Node, unsigned Opc) {
+SDNode *ARMDAGToDAGISel::SelectAtomic(SDNode *Node, unsigned Op8,
+                                      unsigned Op16,unsigned Op32,
+                                      unsigned Op64) {
+  // Mostly direct translation to the given operations, except that we preserve
+  // the AtomicOrdering for use later on.
+  AtomicSDNode *AN = cast<AtomicSDNode>(Node);
+  EVT VT = AN->getMemoryVT();
+
+  unsigned Op;
+  SDVTList VTs = CurDAG->getVTList(AN->getValueType(0), MVT::Other);
+  if (VT == MVT::i8)
+    Op = Op8;
+  else if (VT == MVT::i16)
+    Op = Op16;
+  else if (VT == MVT::i32)
+    Op = Op32;
+  else if (VT == MVT::i64) {
+    Op = Op64;
+    VTs = CurDAG->getVTList(MVT::i32, MVT::i32, MVT::Other);
+  } else
+    llvm_unreachable("Unexpected atomic operation");
+
   SmallVector<SDValue, 6> Ops;
-  Ops.push_back(Node->getOperand(1)); // Ptr
-  Ops.push_back(Node->getOperand(2)); // Low part of Val1
-  Ops.push_back(Node->getOperand(3)); // High part of Val1
-  if (Opc == ARM::ATOMCMPXCHG6432) {
-    Ops.push_back(Node->getOperand(4)); // Low part of Val2
-    Ops.push_back(Node->getOperand(5)); // High part of Val2
-  }
-  Ops.push_back(Node->getOperand(0)); // Chain
-  MachineSDNode::mmo_iterator MemOp = MF->allocateMemRefsArray(1);
-  MemOp[0] = cast<MemSDNode>(Node)->getMemOperand();
-  SDNode *ResNode = CurDAG->getMachineNode(Opc, SDLoc(Node),
-                                           MVT::i32, MVT::i32, MVT::Other,
-                                           Ops);
-  cast<MachineSDNode>(ResNode)->setMemRefs(MemOp, MemOp + 1);
-  return ResNode;
+  for (unsigned i = 1; i < AN->getNumOperands(); ++i)
+      Ops.push_back(AN->getOperand(i));
+
+  Ops.push_back(CurDAG->getTargetConstant(AN->getOrdering(), MVT::i32));
+  Ops.push_back(AN->getOperand(0)); // Chain moves to the end
+
+  return CurDAG->SelectNodeTo(Node, Op, VTs, &Ops[0], Ops.size());
 }
 
 SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
@@ -3251,31 +3264,90 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
   case ISD::CONCAT_VECTORS:
     return SelectConcatVector(N);
 
-  case ARMISD::ATOMOR64_DAG:
-    return SelectAtomic64(N, ARM::ATOMOR6432);
-  case ARMISD::ATOMXOR64_DAG:
-    return SelectAtomic64(N, ARM::ATOMXOR6432);
-  case ARMISD::ATOMADD64_DAG:
-    return SelectAtomic64(N, ARM::ATOMADD6432);
-  case ARMISD::ATOMSUB64_DAG:
-    return SelectAtomic64(N, ARM::ATOMSUB6432);
-  case ARMISD::ATOMNAND64_DAG:
-    return SelectAtomic64(N, ARM::ATOMNAND6432);
-  case ARMISD::ATOMAND64_DAG:
-    return SelectAtomic64(N, ARM::ATOMAND6432);
-  case ARMISD::ATOMSWAP64_DAG:
-    return SelectAtomic64(N, ARM::ATOMSWAP6432);
-  case ARMISD::ATOMCMPXCHG64_DAG:
-    return SelectAtomic64(N, ARM::ATOMCMPXCHG6432);
+  case ISD::ATOMIC_LOAD:
+    if (cast<AtomicSDNode>(N)->getMemoryVT() == MVT::i64)
+      return SelectAtomic(N, 0, 0, 0, ARM::ATOMIC_LOAD_I64);
+    else
+      break;
 
-  case ARMISD::ATOMMIN64_DAG:
-    return SelectAtomic64(N, ARM::ATOMMIN6432);
-  case ARMISD::ATOMUMIN64_DAG:
-    return SelectAtomic64(N, ARM::ATOMUMIN6432);
-  case ARMISD::ATOMMAX64_DAG:
-    return SelectAtomic64(N, ARM::ATOMMAX6432);
-  case ARMISD::ATOMUMAX64_DAG:
-    return SelectAtomic64(N, ARM::ATOMUMAX6432);
+  case ISD::ATOMIC_STORE:
+    if (cast<AtomicSDNode>(N)->getMemoryVT() == MVT::i64)
+      return SelectAtomic(N, 0, 0, 0, ARM::ATOMIC_STORE_I64);
+    else
+      break;
+
+  case ISD::ATOMIC_LOAD_ADD:
+    return SelectAtomic(N,
+                        ARM::ATOMIC_LOAD_ADD_I8,
+                        ARM::ATOMIC_LOAD_ADD_I16,
+                        ARM::ATOMIC_LOAD_ADD_I32,
+                        ARM::ATOMIC_LOAD_ADD_I64);
+  case ISD::ATOMIC_LOAD_SUB:
+    return SelectAtomic(N,
+                        ARM::ATOMIC_LOAD_SUB_I8,
+                        ARM::ATOMIC_LOAD_SUB_I16,
+                        ARM::ATOMIC_LOAD_SUB_I32,
+                        ARM::ATOMIC_LOAD_SUB_I64);
+  case ISD::ATOMIC_LOAD_AND:
+    return SelectAtomic(N,
+                        ARM::ATOMIC_LOAD_AND_I8,
+                        ARM::ATOMIC_LOAD_AND_I16,
+                        ARM::ATOMIC_LOAD_AND_I32,
+                        ARM::ATOMIC_LOAD_AND_I64);
+  case ISD::ATOMIC_LOAD_OR:
+    return SelectAtomic(N,
+                        ARM::ATOMIC_LOAD_OR_I8,
+                        ARM::ATOMIC_LOAD_OR_I16,
+                        ARM::ATOMIC_LOAD_OR_I32,
+                        ARM::ATOMIC_LOAD_OR_I64);
+  case ISD::ATOMIC_LOAD_XOR:
+    return SelectAtomic(N,
+                        ARM::ATOMIC_LOAD_XOR_I8,
+                        ARM::ATOMIC_LOAD_XOR_I16,
+                        ARM::ATOMIC_LOAD_XOR_I32,
+                        ARM::ATOMIC_LOAD_XOR_I64);
+  case ISD::ATOMIC_LOAD_NAND:
+    return SelectAtomic(N,
+                        ARM::ATOMIC_LOAD_NAND_I8,
+                        ARM::ATOMIC_LOAD_NAND_I16,
+                        ARM::ATOMIC_LOAD_NAND_I32,
+                        ARM::ATOMIC_LOAD_NAND_I64);
+  case ISD::ATOMIC_LOAD_MIN:
+    return SelectAtomic(N,
+                        ARM::ATOMIC_LOAD_MIN_I8,
+                        ARM::ATOMIC_LOAD_MIN_I16,
+                        ARM::ATOMIC_LOAD_MIN_I32,
+                        ARM::ATOMIC_LOAD_MIN_I64);
+  case ISD::ATOMIC_LOAD_MAX:
+    return SelectAtomic(N,
+                        ARM::ATOMIC_LOAD_MAX_I8,
+                        ARM::ATOMIC_LOAD_MAX_I16,
+                        ARM::ATOMIC_LOAD_MAX_I32,
+                        ARM::ATOMIC_LOAD_MAX_I64);
+  case ISD::ATOMIC_LOAD_UMIN:
+    return SelectAtomic(N,
+                        ARM::ATOMIC_LOAD_UMIN_I8,
+                        ARM::ATOMIC_LOAD_UMIN_I16,
+                        ARM::ATOMIC_LOAD_UMIN_I32,
+                        ARM::ATOMIC_LOAD_UMIN_I64);
+  case ISD::ATOMIC_LOAD_UMAX:
+    return SelectAtomic(N,
+                        ARM::ATOMIC_LOAD_UMAX_I8,
+                        ARM::ATOMIC_LOAD_UMAX_I16,
+                        ARM::ATOMIC_LOAD_UMAX_I32,
+                        ARM::ATOMIC_LOAD_UMAX_I64);
+  case ISD::ATOMIC_SWAP:
+    return SelectAtomic(N,
+                        ARM::ATOMIC_SWAP_I8,
+                        ARM::ATOMIC_SWAP_I16,
+                        ARM::ATOMIC_SWAP_I32,
+                        ARM::ATOMIC_SWAP_I64);
+  case ISD::ATOMIC_CMP_SWAP:
+    return SelectAtomic(N,
+                        ARM::ATOMIC_CMP_SWAP_I8,
+                        ARM::ATOMIC_CMP_SWAP_I16,
+                        ARM::ATOMIC_CMP_SWAP_I32,
+                        ARM::ATOMIC_CMP_SWAP_I64);
   }
 
   return SelectCode(N);

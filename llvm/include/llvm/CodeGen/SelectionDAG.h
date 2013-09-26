@@ -677,6 +677,13 @@ public:
                     AtomicOrdering Ordering,
                     SynchronizationScope SynchScope);
 
+  /// getAtomic - Gets a node for an atomic op, produces result and chain and
+  /// takes N operands.
+  SDValue getAtomic(unsigned Opcode, SDLoc dl, EVT MemVT, SDVTList VTList,
+                    SDValue* Ops, unsigned NumOps, MachineMemOperand *MMO,
+                    AtomicOrdering Ordering,
+                    SynchronizationScope SynchScope);
+
   /// getMemIntrinsicNode - Creates a MemIntrinsicNode that may produce a
   /// result and takes a list of operands. Opcode may be INTRINSIC_VOID,
   /// INTRINSIC_W_CHAIN, or a target-specific opcode with a value not

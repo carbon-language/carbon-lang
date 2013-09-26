@@ -1073,6 +1073,7 @@ public:
 ///
 class AtomicSDNode : public MemSDNode {
   SDUse Ops[4];
+  SDUse* DynOps;
 
   void InitAtomic(AtomicOrdering Ordering, SynchronizationScope SynchScope) {
     // This must match encodeMemSDNodeFlags() in SelectionDAG.cpp.
@@ -1100,7 +1101,7 @@ public:
                SDValue Chain, SDValue Ptr,
                SDValue Cmp, SDValue Swp, MachineMemOperand *MMO,
                AtomicOrdering Ordering, SynchronizationScope SynchScope)
-    : MemSDNode(Opc, Order, dl, VTL, MemVT, MMO) {
+    : MemSDNode(Opc, Order, dl, VTL, MemVT, MMO), DynOps(NULL) {
     InitAtomic(Ordering, SynchScope);
     InitOperands(Ops, Chain, Ptr, Cmp, Swp);
   }
@@ -1109,7 +1110,7 @@ public:
                SDValue Chain, SDValue Ptr,
                SDValue Val, MachineMemOperand *MMO,
                AtomicOrdering Ordering, SynchronizationScope SynchScope)
-    : MemSDNode(Opc, Order, dl, VTL, MemVT, MMO) {
+    : MemSDNode(Opc, Order, dl, VTL, MemVT, MMO), DynOps(NULL) {
     InitAtomic(Ordering, SynchScope);
     InitOperands(Ops, Chain, Ptr, Val);
   }
@@ -1118,9 +1119,21 @@ public:
                SDValue Chain, SDValue Ptr,
                MachineMemOperand *MMO,
                AtomicOrdering Ordering, SynchronizationScope SynchScope)
-    : MemSDNode(Opc, Order, dl, VTL, MemVT, MMO) {
+    : MemSDNode(Opc, Order, dl, VTL, MemVT, MMO), DynOps(NULL) {
     InitAtomic(Ordering, SynchScope);
     InitOperands(Ops, Chain, Ptr);
+  }
+  AtomicSDNode(unsigned Opc, unsigned Order, DebugLoc dl, SDVTList VTL, EVT MemVT,
+               SDValue* AllOps, unsigned NumOps,
+               MachineMemOperand *MMO,
+               AtomicOrdering Ordering, SynchronizationScope SynchScope)
+    : MemSDNode(Opc, Order, dl, VTL, MemVT, MMO) {
+    DynOps = new SDUse[NumOps];
+    InitAtomic(Ordering, SynchScope);
+    InitOperands(DynOps, AllOps, NumOps);
+  }
+  ~AtomicSDNode() {
+    delete[] DynOps;
   }
 
   const SDValue &getBasePtr() const { return getOperand(1); }
@@ -1852,7 +1865,7 @@ template <> struct GraphTraits<SDNode*> {
 
 /// LargestSDNode - The largest SDNode class.
 ///
-typedef LoadSDNode LargestSDNode;
+typedef AtomicSDNode LargestSDNode;
 
 /// MostAlignedSDNode - The SDNode class with the greatest alignment
 /// requirement.
