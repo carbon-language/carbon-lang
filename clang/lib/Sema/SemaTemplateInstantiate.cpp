@@ -2142,13 +2142,25 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
 
     // Instantiate any out-of-line class template partial
     // specializations now.
-    for (TemplateDeclInstantiator::delayed_partial_spec_iterator 
+    for (TemplateDeclInstantiator::delayed_partial_spec_iterator
               P = Instantiator.delayed_partial_spec_begin(),
            PEnd = Instantiator.delayed_partial_spec_end();
          P != PEnd; ++P) {
       if (!Instantiator.InstantiateClassTemplatePartialSpecialization(
-                                                                P->first,
-                                                                P->second)) {
+              P->first, P->second)) {
+        Instantiation->setInvalidDecl();
+        break;
+      }
+    }
+
+    // Instantiate any out-of-line variable template partial
+    // specializations now.
+    for (TemplateDeclInstantiator::delayed_var_partial_spec_iterator
+              P = Instantiator.delayed_var_partial_spec_begin(),
+           PEnd = Instantiator.delayed_var_partial_spec_end();
+         P != PEnd; ++P) {
+      if (!Instantiator.InstantiateVarTemplatePartialSpecialization(
+              P->first, P->second)) {
         Instantiation->setInvalidDecl();
         break;
       }
