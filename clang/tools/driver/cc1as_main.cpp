@@ -184,7 +184,7 @@ bool AssemblerInvocation::CreateFromArgs(AssemblerInvocation &Opts,
   // Language Options
   Opts.IncludePaths = Args->getAllArgValues(OPT_I);
   Opts.NoInitialTextSection = Args->hasArg(OPT_n);
-  Opts.SaveTemporaryLabels = Args->hasArg(OPT_L);
+  Opts.SaveTemporaryLabels = Args->hasArg(OPT_msave_temp_labels);
   Opts.GenDwarfForAssembly = Args->hasArg(OPT_g);
   Opts.DwarfDebugFlags = Args->getLastArgValue(OPT_dwarf_debug_flags);
   Opts.DwarfDebugProducer = Args->getLastArgValue(OPT_dwarf_debug_producer);
