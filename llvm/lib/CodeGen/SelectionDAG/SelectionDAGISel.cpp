@@ -230,7 +230,7 @@ namespace llvm {
     const TargetLowering *TLI = IS->getTargetLowering();
     const TargetSubtargetInfo &ST = IS->TM.getSubtarget<TargetSubtargetInfo>();
 
-    if (OptLevel == CodeGenOpt::None || ST.enableMachineScheduler() ||
+    if (OptLevel == CodeGenOpt::None || ST.useMachineScheduler() ||
         TLI->getSchedulingPreference() == Sched::Source)
       return createSourceListDAGScheduler(IS, OptLevel);
     if (TLI->getSchedulingPreference() == Sched::RegPressure)

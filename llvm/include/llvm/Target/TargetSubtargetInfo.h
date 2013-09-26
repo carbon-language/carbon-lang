@@ -56,6 +56,9 @@ public:
     return 0;
   }
 
+  /// \brief Temporary API to test migration to MI scheduler.
+  bool useMachineScheduler() const;
+
   /// \brief True if the subtarget should run MachineScheduler after aggressive
   /// coalescing.
   ///

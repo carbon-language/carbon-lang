@@ -2199,7 +2199,7 @@ bool RegisterCoalescer::runOnMachineFunction(MachineFunction &fn) {
 
   const TargetSubtargetInfo &ST = TM->getSubtarget<TargetSubtargetInfo>();
   if (EnableGlobalCopies == cl::BOU_UNSET)
-    JoinGlobalCopies = ST.enableMachineScheduler();
+    JoinGlobalCopies = ST.useMachineScheduler();
   else
     JoinGlobalCopies = (EnableGlobalCopies == cl::BOU_TRUE);
 

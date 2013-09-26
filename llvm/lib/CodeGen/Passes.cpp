@@ -236,7 +236,7 @@ TargetPassConfig::TargetPassConfig(TargetMachine *tm, PassManagerBase &pm)
 
   // Temporarily disable experimental passes.
   const TargetSubtargetInfo &ST = TM->getSubtarget<TargetSubtargetInfo>();
-  if (!ST.enableMachineScheduler())
+  if (!ST.useMachineScheduler())
     disablePass(&MachineSchedulerID);
 }
 
