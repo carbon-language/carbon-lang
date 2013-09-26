@@ -1231,7 +1231,7 @@ ConnectionFileDescriptor::NamedSocketAccept (const char *socket_name, Error *err
             error_ptr->SetErrorToErrno();
     }
     // We are done with the listen port
-    Close (listen_socket, NULL);
+    Close (listen_socket, eFDTypeSocket, NULL);
     return result;
 #else
     return eConnectionStatusError;
