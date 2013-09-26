@@ -685,11 +685,11 @@ void NumericLiteralParser::checkSeparator(SourceLocation TokLoc,
                                           const char *Pos,
                                           CheckSeparatorKind IsAfterDigits) {
   if (IsAfterDigits == CSK_AfterDigits) {
-    assert(Pos != ThisTokBegin);
+    if (Pos == ThisTokBegin)
+      return;
     --Pos;
-  } else {
-    assert(Pos != ThisTokEnd);
-  }
+  } else if (Pos == ThisTokEnd)
+    return;
 
   if (isDigitSeparator(*Pos))
     PP.Diag(PP.AdvanceToTokenCharacter(TokLoc, Pos - ThisTokBegin),
