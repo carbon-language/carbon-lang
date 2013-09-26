@@ -251,7 +251,7 @@ CommandObjectDisassemble::CommandOptions::g_option_table[] =
                                                                                                     "Disassemble entire contents of the given function name."},
 { LLDB_OPT_SET_4  , false, "frame"        , 'f', OptionParser::eNoArgument        , NULL, 0, eArgTypeNone,        "Disassemble from the start of the current frame's function."},
 { LLDB_OPT_SET_5  , false, "pc"           , 'p', OptionParser::eNoArgument        , NULL, 0, eArgTypeNone,        "Disassemble around the current pc."},
-{ LLDB_OPT_SET_6  , false, "line"         , 'l', OptionParser::eNoArgument        , NULL, 0, eArgTypeNone,        "Disassemble the current frame's current source line instructions if there debug line table information, else disasemble around the pc."},
+{ LLDB_OPT_SET_6  , false, "line"         , 'l', OptionParser::eNoArgument        , NULL, 0, eArgTypeNone,        "Disassemble the current frame's current source line instructions if there is debug line table information, else disassemble around the pc."},
 { LLDB_OPT_SET_7  , false, "address"      , 'a', OptionParser::eRequiredArgument  , NULL, 0, eArgTypeAddressOrExpression, "Disassemble function containing this address."},
 { 0               , false, NULL           ,   0, 0                  , NULL, 0, eArgTypeNone,        NULL }
 };
