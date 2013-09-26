@@ -398,16 +398,16 @@ ConnectionFileDescriptor::Disconnect (Error *error_ptr)
     {
         if (m_fd_send == m_fd_recv)
         {
-            status = Close (m_fd_send, error_ptr);
+            status = Close (m_fd_send, m_fd_send_type, error_ptr);
         }
         else
         {
             // File descriptors are the different, close both if needed
             if (m_fd_send >= 0)
-                status = Close (m_fd_send, error_ptr);
+                status = Close (m_fd_send, m_fd_send_type, error_ptr);
             if (m_fd_recv >= 0)
             {
-                ConnectionStatus recv_status = Close (m_fd_recv, error_ptr);
+                ConnectionStatus recv_status = Close (m_fd_recv, m_fd_recv_type, error_ptr);
                 if (status == eConnectionStatusSuccess)
                     status = recv_status;
             }
@@ -1146,7 +1146,7 @@ ConnectionFileDescriptor::BytesAvailable (uint32_t timeout_usec, Error *error_pt
 #endif
 
 ConnectionStatus
-ConnectionFileDescriptor::Close (int& fd, Error *error_ptr)
+ConnectionFileDescriptor::Close (int& fd, FDType type, Error *error_ptr)
 {
     if (error_ptr)
         error_ptr->Clear();
@@ -1162,7 +1162,11 @@ ConnectionFileDescriptor::Close (int& fd, Error *error_ptr)
             Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION));
             if (log)
                 log->Printf ("%p ConnectionFileDescriptor::Close (fd = %i)", this,fd);
-
+#if _WIN32
+            if (type != eFDTypeFile)
+              success = closesocket(fd) == 0;
+            else
+#endif
             success = ::close (fd) == 0;
             // A reference to a FD was passed in, set it to an invalid value
             fd = -1;
@@ -1301,7 +1305,7 @@ ConnectionFileDescriptor::SocketListen (uint16_t listen_port_num, Error *error_p
         {
             if (error_ptr)
                 error_ptr->SetErrorToErrno();
-            Close (listen_port, NULL);
+            Close (listen_port, eFDTypeSocket, NULL);
             return eConnectionStatusError;
         }
 
@@ -1310,7 +1314,7 @@ ConnectionFileDescriptor::SocketListen (uint16_t listen_port_num, Error *error_p
         {
             if (error_ptr)
                 error_ptr->SetErrorToErrno();
-            Close (listen_port, NULL);
+            Close (listen_port, eFDTypeSocket, NULL);
             return eConnectionStatusError;
         }
 
@@ -1319,13 +1323,13 @@ ConnectionFileDescriptor::SocketListen (uint16_t listen_port_num, Error *error_p
         {
             if (error_ptr)
                 error_ptr->SetErrorToErrno();
-            Close (listen_port, NULL);
+            Close (listen_port, eFDTypeSocket, NULL);
             return eConnectionStatusError;
         }
     }
 
     // We are done with the listen port
-    Close (listen_port, NULL);
+    Close (listen_port, eFDTypeSocket, NULL);
 
     m_should_close_fd = true;
 

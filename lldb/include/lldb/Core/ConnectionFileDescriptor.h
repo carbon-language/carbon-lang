@@ -77,6 +77,13 @@ public:
     GetWritePort () const;
 
 protected:
+
+    typedef enum
+    {
+        eFDTypeFile,        // Other FD requireing read/write
+        eFDTypeSocket,      // Socket requiring send/recv
+        eFDTypeSocketUDP    // Unconnected UDP socket requiring sendto/recvfrom
+    } FDType;
     
     void
     OpenCommandPipe ();
@@ -103,14 +110,7 @@ protected:
     NamedSocketConnect (const char *socket_name, Error *error_ptr);
     
     lldb::ConnectionStatus
-    Close (int& fd, Error *error);
-
-    typedef enum
-    {
-        eFDTypeFile,        // Other FD requireing read/write
-        eFDTypeSocket,      // Socket requiring send/recv
-        eFDTypeSocketUDP    // Unconnected UDP socket requiring sendto/recvfrom
-    } FDType;
+    Close (int& fd, FDType type, Error *error);
     
     int m_fd_send;
     int m_fd_recv;
