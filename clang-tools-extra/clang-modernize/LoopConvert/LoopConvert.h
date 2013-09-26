@@ -20,6 +20,9 @@
 #include "Core/Transform.h"
 #include "llvm/Support/Compiler.h" // For LLVM_OVERRIDE
 
+// Forward decl for private implementation.
+struct TUTrackingInfo;
+
 /// \brief Subclass of Transform that transforms for-loops into range-based
 /// for-loops where possible.
 class LoopConvertTransform : public Transform {
@@ -31,6 +34,11 @@ public:
   virtual int apply(const FileOverrides &InputStates,
                     const clang::tooling::CompilationDatabase &Database,
                     const std::vector<std::string> &SourcePaths) LLVM_OVERRIDE;
+
+  virtual bool handleBeginSource(clang::CompilerInstance &CI,
+                                 llvm::StringRef Filename) LLVM_OVERRIDE;
+private:
+  llvm::OwningPtr<TUTrackingInfo> TUInfo;
 };
 
 #endif // CLANG_MODERNIZE_LOOP_CONVERT_H

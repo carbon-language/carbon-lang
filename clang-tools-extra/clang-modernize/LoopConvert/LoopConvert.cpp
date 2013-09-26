@@ -29,26 +29,22 @@ int LoopConvertTransform::apply(const FileOverrides &InputStates,
                                 const std::vector<std::string> &SourcePaths) {
   ClangTool LoopTool(Database, SourcePaths);
 
-  StmtAncestorASTVisitor ParentFinder;
-  StmtGeneratedVarNameMap GeneratedDecls;
-  ReplacedVarsMap ReplacedVars;
   unsigned AcceptedChanges = 0;
   unsigned DeferredChanges = 0;
   unsigned RejectedChanges = 0;
 
+  TUInfo.reset(new TUTrackingInfo);
+
   MatchFinder Finder;
-  LoopFixer ArrayLoopFixer(&ParentFinder, &GeneratedDecls, &ReplacedVars,
-                           &AcceptedChanges, &DeferredChanges, &RejectedChanges,
-                           Options().MaxRiskLevel, LFK_Array,
+  LoopFixer ArrayLoopFixer(*TUInfo, &AcceptedChanges, &DeferredChanges,
+                           &RejectedChanges, Options().MaxRiskLevel, LFK_Array,
                            /*Owner=*/ *this);
   Finder.addMatcher(makeArrayLoopMatcher(), &ArrayLoopFixer);
-  LoopFixer IteratorLoopFixer(&ParentFinder, &GeneratedDecls, &ReplacedVars,
-                              &AcceptedChanges, &DeferredChanges,
+  LoopFixer IteratorLoopFixer(*TUInfo, &AcceptedChanges, &DeferredChanges,
                               &RejectedChanges, Options().MaxRiskLevel,
                               LFK_Iterator, /*Owner=*/ *this);
   Finder.addMatcher(makeIteratorLoopMatcher(), &IteratorLoopFixer);
-  LoopFixer PseudoarrrayLoopFixer(&ParentFinder, &GeneratedDecls, &ReplacedVars,
-                                  &AcceptedChanges, &DeferredChanges,
+  LoopFixer PseudoarrrayLoopFixer(*TUInfo, &AcceptedChanges, &DeferredChanges,
                                   &RejectedChanges, Options().MaxRiskLevel,
                                   LFK_PseudoArray, /*Owner=*/ *this);
   Finder.addMatcher(makePseudoArrayLoopMatcher(), &PseudoarrrayLoopFixer);
@@ -65,6 +61,15 @@ int LoopConvertTransform::apply(const FileOverrides &InputStates,
   setDeferredChanges(DeferredChanges);
 
   return 0;
+}
+
+bool
+LoopConvertTransform::handleBeginSource(clang::CompilerInstance &CI,
+                                        llvm::StringRef Filename) {
+  // Reset and initialize per-TU tracking structures.
+  TUInfo->reset();
+
+  return Transform::handleBeginSource(CI, Filename);
 }
 
 struct LoopConvertFactory : TransformFactory {

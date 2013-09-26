@@ -821,7 +821,8 @@ void LoopFixer::doConversion(ASTContext *Context,
     // No further replacements are made to the loop, since the iterator or index
     // was used exactly once - in the initialization of AliasVar.
   } else {
-    VariableNamer Namer(GeneratedDecls, &ParentFinder->getStmtToParentStmtMap(),
+    VariableNamer Namer(&TUInfo.getGeneratedDecls(),
+                        &TUInfo.getParentFinder().getStmtToParentStmtMap(),
                         TheLoop, IndexVar, MaybeContainer, Context);
     VarName = Namer.createIndexName();
     // First, replace all usages of the array subscript expression with our new
@@ -829,7 +830,7 @@ void LoopFixer::doConversion(ASTContext *Context,
     for (UsageResult::const_iterator I = Usages.begin(), E = Usages.end();
          I != E; ++I) {
       std::string ReplaceText = I->IsArrow ? VarName + "." : VarName;
-      ReplacedVarRanges->insert(std::make_pair(TheLoop, IndexVar));
+      TUInfo.getReplacedVars().insert(std::make_pair(TheLoop, IndexVar));
       Owner.addReplacementForCurrentTU(
           Replacement(Context->getSourceManager(),
                       CharSourceRange::getTokenRange(I->Range), ReplaceText));
@@ -864,7 +865,7 @@ void LoopFixer::doConversion(ASTContext *Context,
   Owner.addReplacementForCurrentTU(
       Replacement(Context->getSourceManager(),
                   CharSourceRange::getTokenRange(ParenRange), Range));
-  GeneratedDecls->insert(make_pair(TheLoop, VarName));
+  TUInfo.getGeneratedDecls().insert(make_pair(TheLoop, VarName));
 }
 
 /// \brief Determine whether Init appears to be an initializing an iterator.
@@ -933,18 +934,18 @@ StringRef LoopFixer::checkDeferralsAndRejections(ASTContext *Context,
   // updates on this iteration.
   // FIXME: Once Replacements can detect conflicting edits, replace this
   // implementation and rely on conflicting edit detection instead.
-  if (ReplacedVarRanges->count(TheLoop)) {
+  if (TUInfo.getReplacedVars().count(TheLoop)) {
     ++*DeferredChanges;
     return "";
   }
 
-  ParentFinder->gatherAncestors(Context->getTranslationUnitDecl());
+  TUInfo.getParentFinder().gatherAncestors(Context->getTranslationUnitDecl());
   // Ensure that we do not try to move an expression dependent on a local
   // variable declared inside the loop outside of it!
-  DependencyFinderASTVisitor
-      DependencyFinder(&ParentFinder->getStmtToParentStmtMap(),
-                       &ParentFinder->getDeclToParentStmtMap(),
-                       ReplacedVarRanges, TheLoop);
+  DependencyFinderASTVisitor DependencyFinder(
+      &TUInfo.getParentFinder().getStmtToParentStmtMap(),
+      &TUInfo.getParentFinder().getDeclToParentStmtMap(),
+      &TUInfo.getReplacedVars(), TheLoop);
 
   // Not all of these are actually deferred changes.
   // FIXME: Determine when the external dependency isn't an expression converted
