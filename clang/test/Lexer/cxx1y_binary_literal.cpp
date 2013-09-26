@@ -17,3 +17,4 @@ int k1 = 0b1234; // expected-error {{invalid digit '2' in binary constant}}
 // we'll need to rework our binary literal parsing rules.
 int k2 = 0b10010f; // expected-error {{invalid digit 'f' in binary constant}}
 int k3 = 0b10010g; // expected-error {{invalid suffix 'g' on integer constant}}
+int k4 = 0b; // expected-error {{invalid digit 'b' in octal constant}}

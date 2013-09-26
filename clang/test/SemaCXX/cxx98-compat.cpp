@@ -1,8 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -std=c++11 -Wc++98-compat -verify %s
-// RUN: %clang_cc1 -fsyntax-only -std=c++11 %s
-// RUN: %clang_cc1 -fsyntax-only -std=c++1y -Wc++98-c++11-compat -verify %s -DCXX1YCOMPAT
-
-#ifndef CXX1YCOMPAT
+// RUN: %clang_cc1 -fsyntax-only -std=c++1y -Wc++98-compat -verify %s -DCXX1YCOMPAT
 
 namespace std {
   struct type_info;
@@ -381,7 +378,6 @@ namespace rdar11736429 {
     X x; // expected-warning{{union member 'x' with a non-trivial constructor is incompatible with C++98}}
   };
 }
-#endif
 
 template<typename T> T var = T(10);
 #ifdef CXX1YCOMPAT
@@ -455,3 +451,6 @@ template<> int B::v<int> = 10;
 template int B::v<int>;
 float fsvar = B::v<float>;
 
+#ifdef CXX1YCOMPAT
+int digit_seps = 123'456; // expected-warning {{digit separators are incompatible with C++ standards before C++1y}}
+#endif

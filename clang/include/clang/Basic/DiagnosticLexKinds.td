@@ -159,6 +159,11 @@ def err_invalid_suffix_integer_constant : Error<
   "invalid suffix '%0' on integer constant">;
 def err_invalid_suffix_float_constant : Error<
   "invalid suffix '%0' on floating constant">;
+def warn_cxx11_compat_digit_separator : Warning<
+  "digit separators are incompatible with C++ standards before C++1y">,
+  InGroup<CXXPre1yCompat>, DefaultIgnore;
+def err_digit_separator_not_between_digits : Error<
+  "digit separator cannot appear at %select{start|end}0 of digit sequence">;
 def warn_extraneous_char_constant : Warning<
   "extraneous characters in character constant ignored">;
 def warn_char_constant_too_large : Warning<

@@ -498,15 +498,19 @@ NumericLiteralParser::NumericLiteralParser(StringRef TokSpelling,
       hadError = true;
       return;
     } else if (*s == '.') {
+      checkSeparator(TokLoc, s, true);
       s++;
       saw_period = true;
+      checkSeparator(TokLoc, s, false);
       s = SkipDigits(s);
     }
     if ((*s == 'e' || *s == 'E')) { // exponent
+      checkSeparator(TokLoc, s, true);
       const char *Exponent = s;
       s++;
       saw_exponent = true;
       if (*s == '+' || *s == '-')  s++; // sign
+      checkSeparator(TokLoc, s, false);
       const char *first_non_digit = SkipDigits(s);
       if (first_non_digit != s) {
         s = first_non_digit;
@@ -520,6 +524,7 @@ NumericLiteralParser::NumericLiteralParser(StringRef TokSpelling,
   }
 
   SuffixBegin = s;
+  checkSeparator(TokLoc, s, true);
 
   // Parse the suffix.  At this point we can classify whether we have an FP or
   // integer constant.
@@ -676,6 +681,21 @@ bool NumericLiteralParser::isValidUDSuffix(const LangOptions &LangOpts,
       .Default(false);
 }
 
+void NumericLiteralParser::checkSeparator(SourceLocation TokLoc,
+                                          const char *Pos, bool IsAfterDigits) {
+  if (IsAfterDigits) {
+    assert(Pos != ThisTokBegin);
+    --Pos;
+  } else {
+    assert(Pos != ThisTokEnd);
+  }
+
+  if (isDigitSeparator(*Pos))
+    PP.Diag(PP.AdvanceToTokenCharacter(TokLoc, Pos - ThisTokBegin),
+            diag::err_digit_separator_not_between_digits)
+      << IsAfterDigits;
+}
+
 /// ParseNumberStartingWithZero - This method is called when the first character
 /// of the number is found to be a zero.  This means it is either an octal
 /// number (like '04') or a hex number ('0x123a') a binary number ('0b1010') or
@@ -736,7 +756,7 @@ void NumericLiteralParser::ParseNumberStartingWithZero(SourceLocation TokLoc) {
   }
 
   // Handle simple binary numbers 0b01010
-  if (*s == 'b' || *s == 'B') {
+  if ((*s == 'b' || *s == 'B') && (s[1] == '0' || s[1] == '1')) {
     // 0b101010 is a C++1y / GCC extension.
     PP.Diag(TokLoc,
             PP.getLangOpts().CPlusPlus1y
@@ -840,7 +860,8 @@ bool NumericLiteralParser::GetIntegerValue(llvm::APInt &Val) {
   if (alwaysFitsInto64Bits(radix, NumDigits)) {
     uint64_t N = 0;
     for (const char *Ptr = DigitsBegin; Ptr != SuffixBegin; ++Ptr)
-      N = N * radix + llvm::hexDigitValue(*Ptr);
+      if (!isDigitSeparator(*Ptr))
+        N = N * radix + llvm::hexDigitValue(*Ptr);
 
     // This will truncate the value to Val's input width. Simply check
     // for overflow by comparing.
@@ -857,6 +878,11 @@ bool NumericLiteralParser::GetIntegerValue(llvm::APInt &Val) {
 
   bool OverflowOccurred = false;
   while (Ptr < SuffixBegin) {
+    if (isDigitSeparator(*Ptr)) {
+      ++Ptr;
+      continue;
+    }
+
     unsigned C = llvm::hexDigitValue(*Ptr++);
 
     // If this letter is out of bound for this radix, reject it.
@@ -885,8 +911,17 @@ NumericLiteralParser::GetFloatValue(llvm::APFloat &Result) {
   using llvm::APFloat;
 
   unsigned n = std::min(SuffixBegin - ThisTokBegin, ThisTokEnd - ThisTokBegin);
-  return Result.convertFromString(StringRef(ThisTokBegin, n),
-                                  APFloat::rmNearestTiesToEven);
+
+  llvm::SmallString<16> Buffer;
+  StringRef Str(ThisTokBegin, n);
+  if (Str.find('\'') != StringRef::npos) {
+    Buffer.reserve(n);
+    std::remove_copy_if(Str.begin(), Str.end(), std::back_inserter(Buffer),
+                        &isDigitSeparator);
+    Str = Buffer;
+  }
+
+  return Result.convertFromString(Str, APFloat::rmNearestTiesToEven);
 }
 
 

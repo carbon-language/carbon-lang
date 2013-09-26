@@ -1606,6 +1606,18 @@ bool Lexer::LexNumericConstant(Token &Result, const char *CurPtr) {
       return LexNumericConstant(Result, ConsumeChar(CurPtr, Size, Result));
   }
 
+  // If we have a digit separator, continue.
+  if (C == '\'' && getLangOpts().CPlusPlus1y) {
+    unsigned NextSize;
+    char Next = getCharAndSizeNoWarn(CurPtr + Size, NextSize, getLangOpts());
+    if (isAlphanumeric(Next)) {
+      if (!isLexingRawMode())
+        Diag(CurPtr, diag::warn_cxx11_compat_digit_separator);
+      CurPtr = ConsumeChar(CurPtr, Size, Result);
+      return LexNumericConstant(Result, CurPtr);
+    }
+  }
+
   // Update the location of token as well as BufferPtr.
   const char *TokStart = BufferPtr;
   FormTokenWithChars(Result, CurPtr, tok::numeric_constant);
