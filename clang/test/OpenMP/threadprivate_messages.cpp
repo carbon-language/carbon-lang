@@ -60,12 +60,12 @@ class Class {
 #pragma omp threadprivate (g)
 
 namespace ns {
-  int m; // expected-note 2 {{'m' defined here}}
+  int m;
 #pragma omp threadprivate (m)
 }
 #pragma omp threadprivate (m) // expected-error {{use of undeclared identifier 'm'}}
-#pragma omp threadprivate (ns::m) // expected-error {{'#pragma omp threadprivate' must appear in the scope of the 'ns::m' variable declaration}}
-#pragma omp threadprivate (ns:m) // expected-error {{unexpected ':' in nested name specifier; did you mean '::'?}} expected-error {{'#pragma omp threadprivate' must appear in the scope of the 'ns::m' variable declaration}}
+#pragma omp threadprivate (ns::m) // expected-error {{'#pragma omp threadprivate' must precede all references to variable 'ns::m'}}
+#pragma omp threadprivate (ns:m) // expected-error {{unexpected ':' in nested name specifier; did you mean '::'?}} expected-error {{'#pragma omp threadprivate' must precede all references to variable 'ns::m'}}
 
 const int h = 12;
 const volatile int i = 10;

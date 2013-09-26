@@ -413,22 +413,55 @@ ExprResult Sema::ActOnOpenMPIdExpression(Scope *CurScope,
     return ExprError();
   }
 
+  VarDecl *CanonicalVD = VD->getCanonicalDecl();
+  NamedDecl *ND = cast<NamedDecl>(CanonicalVD);
   // OpenMP [2.9.2, Restrictions, C/C++, p.2]
   //   A threadprivate directive for file-scope variables must appear outside
   //   any definition or declaration.
+  if (CanonicalVD->getDeclContext()->isTranslationUnit() &&
+      !getCurLexicalContext()->isTranslationUnit()) {
+    Diag(Id.getLoc(), diag::err_omp_var_scope)
+      << getOpenMPDirectiveName(OMPD_threadprivate) << VD;
+    bool IsDecl = VD->isThisDeclarationADefinition(Context) ==
+                  VarDecl::DeclarationOnly;
+    Diag(VD->getLocation(), IsDecl ? diag::note_previous_decl :
+                                     diag::note_defined_here) << VD;
+    return ExprError();
+  }
   // OpenMP [2.9.2, Restrictions, C/C++, p.3]
   //   A threadprivate directive for static class member variables must appear
   //   in the class definition, in the same scope in which the member
   //   variables are declared.
+  if (CanonicalVD->isStaticDataMember() &&
+      !CanonicalVD->getDeclContext()->Equals(getCurLexicalContext())) {
+    Diag(Id.getLoc(), diag::err_omp_var_scope)
+      << getOpenMPDirectiveName(OMPD_threadprivate) << VD;
+    bool IsDecl = VD->isThisDeclarationADefinition(Context) ==
+                  VarDecl::DeclarationOnly;
+    Diag(VD->getLocation(), IsDecl ? diag::note_previous_decl :
+                                     diag::note_defined_here) << VD;
+    return ExprError();
+  }
   // OpenMP [2.9.2, Restrictions, C/C++, p.4]
   //   A threadprivate directive for namespace-scope variables must appear
   //   outside any definition or declaration other than the namespace
   //   definition itself.
+  if (CanonicalVD->getDeclContext()->isNamespace() &&
+      (!getCurLexicalContext()->isFileContext() ||
+       !getCurLexicalContext()->Encloses(CanonicalVD->getDeclContext()))) {
+    Diag(Id.getLoc(), diag::err_omp_var_scope)
+      << getOpenMPDirectiveName(OMPD_threadprivate) << VD;
+    bool IsDecl = VD->isThisDeclarationADefinition(Context) ==
+                  VarDecl::DeclarationOnly;
+    Diag(VD->getLocation(), IsDecl ? diag::note_previous_decl :
+                                     diag::note_defined_here) << VD;
+    return ExprError();
+  }
   // OpenMP [2.9.2, Restrictions, C/C++, p.6]
   //   A threadprivate directive for static block-scope variables must appear
   //   in the scope of the variable and not in a nested scope.
-  NamedDecl *ND = cast<NamedDecl>(VD);
-  if (!isDeclInScope(ND, getCurLexicalContext(), CurScope)) {
+  if (CanonicalVD->isStaticLocal() && CurScope &&
+      !isDeclInScope(ND, getCurLexicalContext(), CurScope)) {
     Diag(Id.getLoc(), diag::err_omp_var_scope)
       << getOpenMPDirectiveName(OMPD_threadprivate) << VD;
     bool IsDecl = VD->isThisDeclarationADefinition(Context) ==

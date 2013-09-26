@@ -1189,8 +1189,9 @@ void DeclPrinter::VisitOMPThreadPrivateDecl(OMPThreadPrivateDecl *D) {
     for (OMPThreadPrivateDecl::varlist_iterator I = D->varlist_begin(),
                                                 E = D->varlist_end();
                                                 I != E; ++I) {
-      Out << (I == D->varlist_begin() ? '(' : ',')
-          << *cast<NamedDecl>(cast<DeclRefExpr>(*I)->getDecl());
+      Out << (I == D->varlist_begin() ? '(' : ',');
+      NamedDecl *ND = cast<NamedDecl>(cast<DeclRefExpr>(*I)->getDecl());
+      ND->printQualifiedName(Out);
     }
     Out << ")";
   }
