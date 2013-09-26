@@ -185,21 +185,7 @@ UnwindLLDB::AddOneMoreFrame (ABI *abi)
         }
         goto unwind_done;
     }
-    if (!m_frames.empty())
-    {
-        if (m_frames.back()->start_pc == cursor_sp->start_pc)
-        {
-            if (m_frames.back()->cfa == cursor_sp->cfa)
-                goto unwind_done; // Infinite loop where the current cursor is the same as the previous one...
-            else if (abi && abi->StackUsesFrames())
-            {
-                // We might have a CFA that is not using the frame pointer and
-                // we want to validate that the frame pointer is valid.
-                if (reg_ctx_sp->GetFP() == 0)
-                    goto unwind_done;
-            }
-        }
-    }
+
     cursor_sp->reg_ctx_lldb_sp = reg_ctx_sp;
     m_frames.push_back (cursor_sp);
     return true;

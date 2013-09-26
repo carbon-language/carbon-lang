@@ -15,7 +15,6 @@ class CrashingRecursiveInferiorTestCase(TestBase):
         self.buildDsym()
         self.recursive_inferior_crashing()
 
-    @expectedFailureLinux('llvm.org/pr15415', ['gcc', 'clang']) # partial backtrace with -fomit-frame-pointer with tool-chains that support this option
     def test_recursive_inferior_crashing_dwarf(self):
         """Test that lldb reliably catches the inferior crashing (command)."""
         self.buildDwarf()
@@ -82,7 +81,7 @@ class CrashingRecursiveInferiorTestCase(TestBase):
         self.recursive_inferior_crashing_expr_step_expr()
 
     @expectedFailureFreeBSD('llvm.org/pr17184')
-    @expectedFailureLinux # due to llvm.org/pr15415 with -fomit-frame-pointer, and pr15989 with ebp/rbp
+    @expectedFailureLinux # llvm.org/pr15989 - Couldn't allocate space for the stack frame
     def test_recursive_inferior_crashing_expr_step_and_expr_dwarf(self):
         """Test that lldb expressions work before and after stepping after a crash."""
         self.buildDwarf()
