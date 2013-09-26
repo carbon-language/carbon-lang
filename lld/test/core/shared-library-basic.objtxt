@@ -8,6 +8,8 @@
 shared-library-atoms:
     - name:              malloc
       load-name:         libc.so
+      type:              code
+      size:              0
       
     - name:              free
       load-name:         libc.so
@@ -16,6 +18,11 @@ shared-library-atoms:
       load-name:         libc.so
       can-be-null:       at-runtime
       
+    - name:              stdout
+      load-name:         libc.so
+      type:              data
+      size:              8
+
 ...
 
 # CHECK: shared-library-atoms:
@@ -26,4 +33,8 @@ shared-library-atoms:
 # CHECK:       name:         fast_malloc
 # CHECK:       load-name:    libc.so
 # CHECK:       can-be-null:  at-runtime
+# CHECK:       name:         stdout
+# CHECK:       load-name:    libc.so
+# CHECK:       type:         data
+# CHECK:       size:         8
 # CHECK:       ...

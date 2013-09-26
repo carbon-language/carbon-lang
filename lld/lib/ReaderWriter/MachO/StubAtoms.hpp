@@ -49,6 +49,14 @@ public:
   virtual bool canBeNullAtRuntime() const {
     return false;
   }
+
+  virtual Type type() const {
+    return Type::Unknown;
+  }
+
+  virtual uint64_t size() const LLVM_OVERRIDE {
+    return 0;
+  }
   
 private:
   const File  &_file;

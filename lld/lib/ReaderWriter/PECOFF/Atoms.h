@@ -283,6 +283,8 @@ public:
 
   virtual StringRef loadName() const { return _dllName; }
   virtual bool canBeNullAtRuntime() const { return false; }
+  virtual Type type() const { return Type::Unknown; }
+  virtual uint64_t size() const { return 0; }
 
   void setImportTableEntry(const DefinedAtom *atom) {
     _importTableEntry = atom;

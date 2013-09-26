@@ -162,6 +162,14 @@ public:
     return (_ivarData->flags & 0x1);
   }
 
+  virtual Type type() const {
+    return (Type)_ivarData->type;
+  }
+
+  virtual uint64_t size() const {
+    return _ivarData->size;
+  }
+
 private:
   const File                           *_file;
   const NativeSharedLibraryAtomIvarsV1 *_ivarData;

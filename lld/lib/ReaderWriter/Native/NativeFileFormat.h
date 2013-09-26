@@ -172,8 +172,10 @@ struct NativeUndefinedAtomIvarsV1 {
 // The NCS_SharedLibraryAtomsV1 chunk contains an array of these structs
 //
 struct NativeSharedLibraryAtomIvarsV1 {
+  uint64_t  size;
   uint32_t  nameOffset;
   uint32_t  loadNameOffset;
+  uint32_t  type;
   uint32_t  flags;
 };
 

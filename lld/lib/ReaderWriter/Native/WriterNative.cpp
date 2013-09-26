@@ -159,8 +159,10 @@ private:
   void addIVarsForSharedLibraryAtom(const SharedLibraryAtom& atom) {
     _sharedLibraryAtomIndex[&atom] = _sharedLibraryAtomIvars.size();
     NativeSharedLibraryAtomIvarsV1 ivar;
+    ivar.size = atom.size();
     ivar.nameOffset = getNameOffset(atom);
     ivar.loadNameOffset = getSharedLibraryNameOffset(atom.loadName());
+    ivar.type = (uint32_t)atom.type();
     ivar.flags = atom.canBeNullAtRuntime();
     _sharedLibraryAtomIvars.push_back(ivar);
   }

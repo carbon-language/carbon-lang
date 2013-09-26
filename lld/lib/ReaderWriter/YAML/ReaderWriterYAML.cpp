@@ -469,6 +469,15 @@ template <> struct ScalarEnumerationTraits<ShlibCanBeNull> {
   }
 };
 
+template <>
+struct ScalarEnumerationTraits<lld::SharedLibraryAtom::Type> {
+  static void enumeration(IO &io, lld::SharedLibraryAtom::Type &value) {
+    io.enumCase(value, "code", lld::SharedLibraryAtom::Type::Code);
+    io.enumCase(value, "data", lld::SharedLibraryAtom::Type::Data);
+    io.enumCase(value, "unknown", lld::SharedLibraryAtom::Type::Unknown);
+  }
+};
+
 /// This is a custom formatter for lld::DefinedAtom::Alignment.  Values look
 /// like:
 ///     2^3          # 8-byte aligned
@@ -1019,10 +1028,13 @@ template <> struct MappingTraits<const lld::SharedLibraryAtom *> {
   class NormalizedAtom : public lld::SharedLibraryAtom {
   public:
     NormalizedAtom(IO &io)
-        : _file(fileFromContext(io)), _name(), _loadName(), _canBeNull(false) {}
+        : _file(fileFromContext(io)), _name(), _loadName(), _canBeNull(false),
+          _type(Type::Unknown), _size(0) {}
     NormalizedAtom(IO &io, const lld::SharedLibraryAtom *atom)
         : _file(fileFromContext(io)), _name(atom->name()),
-          _loadName(atom->loadName()), _canBeNull(atom->canBeNullAtRuntime()) {}
+          _loadName(atom->loadName()), _canBeNull(atom->canBeNullAtRuntime()),
+          _type(atom->type()), _size(atom->size()) {}
+
     const lld::SharedLibraryAtom *denormalize(IO &io) {
       ContextInfo *info = reinterpret_cast<ContextInfo *>(io.getContext());
       assert(info != nullptr);
@@ -1040,6 +1052,7 @@ template <> struct MappingTraits<const lld::SharedLibraryAtom *> {
                                    << ", " << _name.size() << ")\n");
       return this;
     }
+
     // Extract current File object from YAML I/O parsing context
     const lld::File &fileFromContext(IO &io) {
       ContextInfo *info = reinterpret_cast<ContextInfo *>(io.getContext());
@@ -1052,11 +1065,15 @@ template <> struct MappingTraits<const lld::SharedLibraryAtom *> {
     virtual StringRef name() const { return _name; }
     virtual StringRef loadName() const { return _loadName; }
     virtual bool canBeNullAtRuntime() const { return _canBeNull; }
+    virtual Type type() const { return _type; }
+    virtual uint64_t size() const { return _size; }
 
     const lld::File &_file;
     StringRef _name;
     StringRef _loadName;
     ShlibCanBeNull _canBeNull;
+    Type _type;
+    uint64_t _size;
   };
 
   static void mapping(IO &io, const lld::SharedLibraryAtom *&atom) {
@@ -1067,6 +1084,8 @@ template <> struct MappingTraits<const lld::SharedLibraryAtom *> {
     io.mapRequired("name", keys->_name);
     io.mapOptional("load-name", keys->_loadName);
     io.mapOptional("can-be-null", keys->_canBeNull, (ShlibCanBeNull) false);
+    io.mapOptional("type", keys->_type, SharedLibraryAtom::Type::Code);
+    io.mapOptional("size", keys->_size, uint64_t(0));
   }
 };
 

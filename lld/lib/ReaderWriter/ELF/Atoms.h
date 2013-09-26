@@ -773,6 +773,21 @@ public:
     return _symbol->getBinding() == llvm::ELF::STB_WEAK;
   }
 
+  virtual Type type() const {
+    switch (_symbol->getType()) {
+    case llvm::ELF::STT_FUNC:
+      return Type::Code;
+    case llvm::ELF::STT_OBJECT:
+      return Type::Data;
+    default:
+      return Type::Unknown;
+    }
+  }
+
+  virtual uint64_t size() const LLVM_OVERRIDE {
+    return _symbol->st_size;
+  }
+
 private:
 
   const DynamicFile<ELFT> &_owningFile;
