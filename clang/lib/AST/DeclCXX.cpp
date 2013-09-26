@@ -10,9 +10,9 @@
 // This file implements the C++ related Decl classes.
 //
 //===----------------------------------------------------------------------===//
-
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/ASTLambda.h"
 #include "clang/AST/ASTMutationListener.h"
 #include "clang/AST/CXXInheritance.h"
 #include "clang/AST/DeclTemplate.h"
@@ -943,6 +943,40 @@ bool CXXRecordDecl::isCLike() const {
   return isPOD() && data().HasOnlyCMembers;
 }
 
+bool CXXRecordDecl::isGenericLambda() const { 
+  return isLambda() && 
+      getLambdaCallOperator()->getDescribedFunctionTemplate(); 
+}
+
+CXXMethodDecl* CXXRecordDecl::getLambdaCallOperator() const {
+  if (!isLambda()) return 0;
+  DeclarationName Name = 
+    getASTContext().DeclarationNames.getCXXOperatorName(OO_Call);
+  DeclContext::lookup_const_result Calls = lookup(Name);
+
+  assert(!Calls.empty() && "Missing lambda call operator!");
+  assert(Calls.size() == 1 && "More than one lambda call operator!"); 
+   
+  NamedDecl *CallOp = Calls.front();
+  if (FunctionTemplateDecl *CallOpTmpl = 
+                    dyn_cast<FunctionTemplateDecl>(CallOp)) 
+    return cast<CXXMethodDecl>(CallOpTmpl->getTemplatedDecl());
+  
+  return cast<CXXMethodDecl>(CallOp);
+}
+
+CXXMethodDecl* CXXRecordDecl::getLambdaStaticInvoker() const {
+  if (!isLambda()) return 0;
+  DeclarationName Name = 
+    &getASTContext().Idents.get(getLambdaStaticInvokerName());
+  DeclContext::lookup_const_result Invoker = lookup(Name);
+  if (Invoker.empty()) return 0;
+  assert(Invoker.size() == 1 && "More than one static invoker operator!");  
+  CXXMethodDecl *Result = cast<CXXMethodDecl>(Invoker.front());  
+  return Result;
+
+}
+
 void CXXRecordDecl::getCaptureFields(
        llvm::DenseMap<const VarDecl *, FieldDecl *> &Captures,
        FieldDecl *&ThisCapture) const {
@@ -960,6 +994,14 @@ void CXXRecordDecl::getCaptureFields(
   }
 }
 
+TemplateParameterList * 
+CXXRecordDecl::getGenericLambdaTemplateParameterList() const {
+  if (!isLambda()) return 0;
+  CXXMethodDecl *CallOp = getLambdaCallOperator();     
+  if (FunctionTemplateDecl *Tmpl = CallOp->getDescribedFunctionTemplate())
+    return Tmpl->getTemplateParameters();
+  return 0;
+}
 
 static CanQualType GetConversionType(ASTContext &Context, NamedDecl *Conv) {
   QualType T;
@@ -1510,7 +1552,7 @@ bool CXXMethodDecl::hasInlineBody() const {
 
 bool CXXMethodDecl::isLambdaStaticInvoker() const {
   return getParent()->isLambda() && 
-         getIdentifier() && getIdentifier()->getName() == "__invoke";
+         getParent()->getLambdaStaticInvoker() == this;
 }
 
 

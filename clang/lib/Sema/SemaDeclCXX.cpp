@@ -14,6 +14,7 @@
 #include "clang/Sema/SemaInternal.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/ASTLambda.h"
 #include "clang/AST/ASTMutationListener.h"
 #include "clang/AST/CXXInheritance.h"
 #include "clang/AST/CharUnits.h"
@@ -10364,10 +10365,10 @@ void Sema::DefineImplicitLambdaToFunctionPointerConversion(
        SourceLocation CurrentLocation,
        CXXConversionDecl *Conv) 
 {
-  CXXRecordDecl *Lambda = Conv->getParent();
+  CXXRecordDecl *LambdaClass = Conv->getParent();
   
   // Make sure that the lambda call operator is marked used.
-  markLambdaCallOperatorUsed(*this, Lambda);
+  markLambdaCallOperatorUsed(*this, LambdaClass);
   
   Conv->markUsed(Context);
   
@@ -10375,19 +10376,18 @@ void Sema::DefineImplicitLambdaToFunctionPointerConversion(
   DiagnosticErrorTrap Trap(Diags);
   
   // Return the address of the __invoke function.
-  DeclarationName InvokeName = &Context.Idents.get("__invoke");
-  CXXMethodDecl *Invoke 
-    = cast<CXXMethodDecl>(Lambda->lookup(InvokeName).front());
+  
+  CXXMethodDecl *Invoke = LambdaClass->getLambdaStaticInvoker();
   Expr *FunctionRef = BuildDeclRefExpr(Invoke, Invoke->getType(),
                                        VK_LValue, Conv->getLocation()).take();
-  assert(FunctionRef && "Can't refer to __invoke function?");
+  assert(FunctionRef && "Can't refer to lambda static invoker function?");
   Stmt *Return = ActOnReturnStmt(Conv->getLocation(), FunctionRef).take();
   Conv->setBody(new (Context) CompoundStmt(Context, Return,
                                            Conv->getLocation(),
                                            Conv->getLocation()));
     
-  // Fill in the __invoke function with a dummy implementation. IR generation
-  // will fill in the actual details.
+  // Fill in the static invoker function with a dummy implementation. 
+  // IR generation will fill in the actual details.
   Invoke->markUsed(Context);
   Invoke->setReferenced();
   Invoke->setBody(new (Context) CompoundStmt(Conv->getLocation()));

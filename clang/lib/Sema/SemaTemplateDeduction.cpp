@@ -3913,8 +3913,16 @@ Sema::DeduceAutoType(TypeLoc Type, Expr *&Init, QualType &Result) {
   return DAR_Succeeded;
 }
 
-QualType Sema::SubstAutoType(QualType Type, QualType Deduced) {
-  return SubstituteAutoTransform(*this, Deduced).TransformType(Type);
+QualType Sema::SubstAutoType(QualType TypeWithAuto, 
+                             QualType TypeToReplaceAuto) {
+  return SubstituteAutoTransform(*this, TypeToReplaceAuto).
+               TransformType(TypeWithAuto);
+}
+
+TypeSourceInfo* Sema::SubstAutoTypeSourceInfo(TypeSourceInfo *TypeWithAuto, 
+                             QualType TypeToReplaceAuto) {
+    return SubstituteAutoTransform(*this, TypeToReplaceAuto).
+               TransformType(TypeWithAuto);
 }
 
 void Sema::DiagnoseAutoDeductionFailure(VarDecl *VDecl, Expr *Init) {

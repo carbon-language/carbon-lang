@@ -698,7 +698,7 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn,
     EmitLambdaToBlockPointerBody(Args);
   } else if (isa<CXXMethodDecl>(FD) &&
              cast<CXXMethodDecl>(FD)->isLambdaStaticInvoker()) {
-    // The lambda "__invoke" function is special, because it forwards or
+    // The lambda static invoker function is special, because it forwards or
     // clones the body of the function call operator (but is actually static).
     EmitLambdaStaticInvokeFunction(cast<CXXMethodDecl>(FD));
   } else if (FD->isDefaulted() && isa<CXXMethodDecl>(FD) &&

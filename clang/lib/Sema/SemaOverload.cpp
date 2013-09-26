@@ -8682,6 +8682,10 @@ void DiagnoseBadDeduction(Sema &S, Decl *Templated,
         }
       }
     }
+    // FIXME: For generic lambda parameters, check if the function is a lambda
+    // call operator, and if so, emit a prettier and more informative 
+    // diagnostic that mentions 'auto' and lambda in addition to 
+    // (or instead of?) the canonical template type parameters.
     S.Diag(Templated->getLocation(),
            diag::note_ovl_candidate_non_deduced_mismatch)
         << FirstTA << SecondTA;

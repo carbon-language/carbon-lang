@@ -1130,7 +1130,7 @@ public:
 
   /// \brief C++11 deduced auto type.
   QualType getAutoType(QualType DeducedType, bool IsDecltypeAuto,
-                       bool IsDependent = false) const;
+                       bool IsDependent) const;
 
   /// \brief C++11 deduction pattern for 'auto' type.
   QualType getAutoDeductType() const;

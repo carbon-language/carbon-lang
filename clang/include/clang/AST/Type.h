@@ -3630,10 +3630,13 @@ public:
 /// is no deduced type and an auto type is canonical. In the latter case, it is
 /// also a dependent type.
 class AutoType : public Type, public llvm::FoldingSetNode {
-  AutoType(QualType DeducedType, bool IsDecltypeAuto, bool IsDependent)
+  AutoType(QualType DeducedType, bool IsDecltypeAuto, 
+           bool IsDependent)
     : Type(Auto, DeducedType.isNull() ? QualType(this, 0) : DeducedType,
            /*Dependent=*/IsDependent, /*InstantiationDependent=*/IsDependent,
-           /*VariablyModified=*/false, /*ContainsParameterPack=*/false) {
+           /*VariablyModified=*/false, 
+           /*ContainsParameterPack=*/DeducedType.isNull() 
+               ? false : DeducedType->containsUnexpandedParameterPack()) {
     assert((DeducedType.isNull() || !IsDependent) &&
            "auto deduced to dependent type");
     AutoTypeBits.IsDecltypeAuto = IsDecltypeAuto;
@@ -3657,7 +3660,8 @@ public:
   }
 
   void Profile(llvm::FoldingSetNodeID &ID) {
-    Profile(ID, getDeducedType(), isDecltypeAuto(), isDependentType());
+    Profile(ID, getDeducedType(), isDecltypeAuto(), 
+		    isDependentType());
   }
 
   static void Profile(llvm::FoldingSetNodeID &ID, QualType Deduced,

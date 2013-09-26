@@ -286,6 +286,10 @@ namespace  {
     void VisitExprWithCleanups(const ExprWithCleanups *Node);
     void VisitUnresolvedLookupExpr(const UnresolvedLookupExpr *Node);
     void dumpCXXTemporary(const CXXTemporary *Temporary);
+    void VisitLambdaExpr(const LambdaExpr *Node) {
+      VisitExpr(Node);
+      dumpDecl(Node->getLambdaClass());
+    }
 
     // ObjC
     void VisitObjCAtCatchStmt(const ObjCAtCatchStmt *Node);

@@ -1076,13 +1076,13 @@ CXXRecordDecl *LambdaExpr::getLambdaClass() const {
 
 CXXMethodDecl *LambdaExpr::getCallOperator() const {
   CXXRecordDecl *Record = getLambdaClass();
-  DeclarationName Name
-    = Record->getASTContext().DeclarationNames.getCXXOperatorName(OO_Call);
-  DeclContext::lookup_result Calls = Record->lookup(Name);
-  assert(!Calls.empty() && "Missing lambda call operator!");
-  assert(Calls.size() == 1 && "More than one lambda call operator!");
-  CXXMethodDecl *Result = cast<CXXMethodDecl>(Calls.front());
-  return Result;
+  return Record->getLambdaCallOperator();  
+}
+
+TemplateParameterList *LambdaExpr::getTemplateParameterList() const {
+  CXXRecordDecl *Record = getLambdaClass();
+  return Record->getGenericLambdaTemplateParameterList();
+
 }
 
 CompoundStmt *LambdaExpr::getBody() const {

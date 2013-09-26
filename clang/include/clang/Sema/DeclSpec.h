@@ -1502,6 +1502,7 @@ public:
     ObjCCatchContext,    // Objective-C catch exception-declaration
     BlockLiteralContext, // Block literal declarator.
     LambdaExprContext,   // Lambda-expression declarator.
+    LambdaExprParameterContext, // Lambda-expression parameter declarator.
     ConversionIdContext, // C++ conversion-type-id.
     TrailingReturnContext, // C++11 trailing-type-specifier.
     TemplateTypeArgContext, // Template type argument.
@@ -1577,7 +1578,6 @@ public:
   ~Declarator() {
     clear();
   }
-
   /// getDeclSpec - Return the declaration-specifier that this declarator was
   /// declared with.
   const DeclSpec &getDeclSpec() const { return DS; }
@@ -1606,7 +1606,8 @@ public:
   bool isPrototypeContext() const {
     return (Context == PrototypeContext ||
             Context == ObjCParameterContext ||
-            Context == ObjCResultContext);
+            Context == ObjCResultContext ||
+            Context == LambdaExprParameterContext);
   }
 
   /// \brief Get the source range that spans this declarator.
@@ -1670,6 +1671,7 @@ public:
     case AliasDeclContext:
     case AliasTemplateContext:
     case PrototypeContext:
+    case LambdaExprParameterContext:
     case ObjCParameterContext:
     case ObjCResultContext:
     case TemplateParamContext:
@@ -1698,6 +1700,7 @@ public:
     case ForContext:
     case ConditionContext:
     case PrototypeContext:
+    case LambdaExprParameterContext:
     case TemplateParamContext:
     case CXXCatchContext:
     case ObjCCatchContext:
@@ -1730,6 +1733,7 @@ public:
     case ForContext:
     case ConditionContext:
     case PrototypeContext:
+    case LambdaExprParameterContext:
     case TemplateParamContext:
     case CXXCatchContext:
     case ObjCCatchContext:
@@ -1782,6 +1786,7 @@ public:
     case KNRTypeListContext:
     case MemberContext:
     case PrototypeContext:
+    case LambdaExprParameterContext:
     case ObjCParameterContext:
     case ObjCResultContext:
     case TemplateParamContext:
@@ -1968,6 +1973,7 @@ public:
     case AliasDeclContext:
     case AliasTemplateContext:
     case PrototypeContext:
+    case LambdaExprParameterContext:
     case ObjCParameterContext:
     case ObjCResultContext:
     case TemplateParamContext:
