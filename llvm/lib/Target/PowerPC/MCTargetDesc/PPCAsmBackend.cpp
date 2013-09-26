@@ -132,13 +132,16 @@ public:
   }
 
   bool writeNopData(uint64_t Count, MCObjectWriter *OW) const {
-    // Can't emit NOP with size not multiple of 32-bits
-    if (Count % 4 != 0)
-      return false;
-
     uint64_t NumNops = Count / 4;
     for (uint64_t i = 0; i != NumNops; ++i)
       OW->Write32(0x60000000);
+
+    switch (Count % 4) {
+    default: break; // No leftover bytes to write
+    case 1: OW->Write8(0); break;
+    case 2: OW->Write16(0); break;
+    case 3: OW->Write16(0); OW->Write8(0); break;
+    }
 
     return true;
   }
