@@ -360,8 +360,6 @@ def fbounds_checking : Flag<["-"], "fbounds-checking">, Group<f_Group>,
   HelpText<"Enable run-time bounds checks">;
 def fbounds_checking_EQ : Joined<["-"], "fbounds-checking=">, Flags<[CC1Option]>,
   Group<f_Group>;
-def fbuiltin_strcat : Flag<["-"], "fbuiltin-strcat">, Group<f_Group>;
-def fbuiltin_strcpy : Flag<["-"], "fbuiltin-strcpy">, Group<f_Group>;
 def fbuiltin : Flag<["-"], "fbuiltin">, Group<f_Group>;
 def fcaret_diagnostics : Flag<["-"], "fcaret-diagnostics">, Group<f_Group>;
 def fcatch_undefined_behavior : Flag<["-"], "fcatch-undefined-behavior">, Group<f_Group>;
