@@ -714,7 +714,8 @@ static bool TypeIsInnerPointer(QualType T) {
   if (!T->isAnyPointerType())
     return false;
   if (T->isObjCObjectPointerType() || T->isObjCBuiltinType() ||
-      T->isBlockPointerType() || ento::coreFoundation::isCFObjectRef(T))
+      T->isBlockPointerType() || T->isFunctionPointerType() ||
+      ento::coreFoundation::isCFObjectRef(T))
     return false;
   // Also, typedef-of-pointer-to-incomplete-struct is something that we assume
   // is not an innter pointer type.

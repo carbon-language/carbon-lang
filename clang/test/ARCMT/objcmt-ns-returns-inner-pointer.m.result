@@ -123,5 +123,5 @@ typedef void *SecTrustRef;
 - (SecTrustRef) FOO1 NS_AVAILABLE NS_RETURNS_INNER_POINTER;
 
 // pointer personality functions
-@property NSUInteger (* NS_RETURNS_INNER_POINTER hashFunction)(const void *item, NSUInteger (*size)(const void *item));
+@property NSUInteger (*hashFunction)(const void *item, NSUInteger (*size)(const void *item));
 @end
