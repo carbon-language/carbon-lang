@@ -334,6 +334,7 @@ negativeOffsetOpcode(unsigned opcode)
   case ARM::t2STRi12:   return ARM::t2STRi8;
   case ARM::t2STRBi12:  return ARM::t2STRBi8;
   case ARM::t2STRHi12:  return ARM::t2STRHi8;
+  case ARM::t2PLDi12:   return ARM::t2PLDi8;
 
   case ARM::t2LDRi8:
   case ARM::t2LDRHi8:
@@ -343,6 +344,7 @@ negativeOffsetOpcode(unsigned opcode)
   case ARM::t2STRi8:
   case ARM::t2STRBi8:
   case ARM::t2STRHi8:
+  case ARM::t2PLDi8:
     return opcode;
 
   default:
@@ -364,6 +366,7 @@ positiveOffsetOpcode(unsigned opcode)
   case ARM::t2STRi8:   return ARM::t2STRi12;
   case ARM::t2STRBi8:  return ARM::t2STRBi12;
   case ARM::t2STRHi8:  return ARM::t2STRHi12;
+  case ARM::t2PLDi8:   return ARM::t2PLDi12;
 
   case ARM::t2LDRi12:
   case ARM::t2LDRHi12:
@@ -373,6 +376,7 @@ positiveOffsetOpcode(unsigned opcode)
   case ARM::t2STRi12:
   case ARM::t2STRBi12:
   case ARM::t2STRHi12:
+  case ARM::t2PLDi12:
     return opcode;
 
   default:
@@ -394,6 +398,7 @@ immediateOffsetOpcode(unsigned opcode)
   case ARM::t2STRs:   return ARM::t2STRi12;
   case ARM::t2STRBs:  return ARM::t2STRBi12;
   case ARM::t2STRHs:  return ARM::t2STRHi12;
+  case ARM::t2PLDs:   return ARM::t2PLDi12;
 
   case ARM::t2LDRi12:
   case ARM::t2LDRHi12:
@@ -403,6 +408,7 @@ immediateOffsetOpcode(unsigned opcode)
   case ARM::t2STRi12:
   case ARM::t2STRBi12:
   case ARM::t2STRHi12:
+  case ARM::t2PLDi12:
   case ARM::t2LDRi8:
   case ARM::t2LDRHi8:
   case ARM::t2LDRBi8:
@@ -411,6 +417,7 @@ immediateOffsetOpcode(unsigned opcode)
   case ARM::t2STRi8:
   case ARM::t2STRBi8:
   case ARM::t2STRHi8:
+  case ARM::t2PLDi8:
     return opcode;
 
   default:
