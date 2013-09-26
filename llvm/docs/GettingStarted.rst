@@ -930,6 +930,10 @@ GCC compiler supports.
 The result of such a build is executables that are not runnable on on the build
 host (--build option) but can be executed on the compile host (--host option).
 
+Check :doc:`HowToCrossCompileLLVM` and `Clang docs on how to cross-compile in general
+<http://clang.llvm.org/docs/CrossCompilation.html>`_ for more information
+about cross-compiling.
+
 The Location of LLVM Object Files
 ---------------------------------
 
