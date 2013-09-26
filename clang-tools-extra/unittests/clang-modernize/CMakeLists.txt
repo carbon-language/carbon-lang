@@ -2,16 +2,16 @@ set(LLVM_LINK_COMPONENTS
   support
   )
 
-get_filename_component(CPP11_MIGRATE_SOURCE_DIR
+get_filename_component(CLANG_MODERNIZE_SOURCE_DIR
   ${CMAKE_CURRENT_SOURCE_DIR}/../../clang-modernize REALPATH)
 get_filename_component(ClangReplaceLocation
   "${CMAKE_CURRENT_SOURCE_DIR}/../../clang-apply-replacements/include" REALPATH)
 include_directories(
-  ${CPP11_MIGRATE_SOURCE_DIR}
+  ${CLANG_MODERNIZE_SOURCE_DIR}
   ${ClangReplaceLocation}
   )
 
-add_extra_unittest(Cpp11MigrateTests
+add_extra_unittest(ClangModernizeTests
   FileOverridesTest.cpp
   ReformattingTest.cpp
   IncludeExcludeTest.cpp
@@ -21,7 +21,7 @@ add_extra_unittest(Cpp11MigrateTests
   IncludeDirectivesTest.cpp
   )
 
-target_link_libraries(Cpp11MigrateTests
+target_link_libraries(ClangModernizeTests
   modernizeCore
   clangFormat
   clangTooling
