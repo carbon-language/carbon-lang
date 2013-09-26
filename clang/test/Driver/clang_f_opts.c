@@ -99,3 +99,26 @@
 // RUN: %clang -### -S -O4 %s 2>&1 | FileCheck -check-prefix=CHECK-MAX-O %s
 // CHECK-MAX-O: warning: -O4 is equivalent to -O3
 // CHECK-MAX-O: -O3
+
+// Test that we don't error on these.
+// RUN: %clang -### -S                                                        \
+// RUN:     -falign-functions -falign-functions=2 -fno-align-functions        \
+// RUN:     -fasynchronous-unwind-tables -fno-asynchronous-unwind-tables      \
+// RUN:     -fbuiltin -fno-builtin                                            \
+// RUN:     -ffloat-store -fno-float-store                                    \
+// RUN:     -feliminate-unused-debug-types -fno-eliminate-unused-debug-types  \
+// RUN:     -fgcse -fno-gcse                                                  \
+// RUN:     -fident -fno-ident                                                \
+// RUN:     -fivopts -fno-ivopts                                              \
+// RUN:     -fnon-call-exceptions -fno-non-call-exceptions                    \
+// RUN:     -fpermissive -fno-permissive                                      \
+// RUN:     -fprefetch-loop-arrays -fno-prefetch-loop-arrays                  \
+// RUN:     -fprofile-correction -fno-profile-correction                      \
+// RUN:     -fprofile-dir=bar                                                 \
+// RUN:     -fprofile-use -fprofile-use=zed -fno-profile-use                  \
+// RUN:     -fprofile-values -fno-profile-values                              \
+// RUN:     -frounding-math -fno-rounding-math                                \
+// RUN:     -fsee -fno-see                                                    \
+// RUN:     -ftracer -fno-tracer                                              \
+// RUN:     -funroll-all-loops -fno-unroll-all-loops                          \
+// RUN:     %s
