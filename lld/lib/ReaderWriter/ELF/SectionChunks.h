@@ -770,7 +770,11 @@ template <class ELFT>
 void SymbolTable<ELFT>::addSharedLibAtom(Elf_Sym &sym,
                                          const SharedLibraryAtom *aa) {
   unsigned char binding = 0, type = 0;
-  type = llvm::ELF::STT_FUNC;
+  if (aa->type() == SharedLibraryAtom::Type::Data) {
+    type = llvm::ELF::STT_OBJECT;
+    sym.st_size = aa->size();
+  } else
+    type = llvm::ELF::STT_FUNC;
   sym.st_shndx = llvm::ELF::SHN_UNDEF;
   binding = llvm::ELF::STB_GLOBAL;
   sym.setBindingAndType(binding, type);

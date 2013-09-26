@@ -1,7 +1,5 @@
-RUN: lld -flavor gnu -e main -o %t -L%p/Inputs -ltest %p/Inputs/undef-from-main.o
+RUN: lld -flavor gnu -e main -o %t -L%p/Inputs -lundef %p/Inputs/undef.o
 RUN: llvm-readobj -relocations -symbols %t | FileCheck %s
-
-XFAIL: *
 
 # DSO source code:
 # int x[2] = { 1, 2 };

@@ -46,6 +46,7 @@ public:
     switch (r.kind()) {
     case llvm::ELF::R_X86_64_RELATIVE:
     case llvm::ELF::R_X86_64_GLOB_DAT:
+    case llvm::ELF::R_X86_64_COPY:
       return true;
     default:
       return false;
