@@ -101,7 +101,7 @@
 // CHECK-MAX-O: -O3
 
 // Test that we don't error on these.
-// RUN: %clang -### -S                                                        \
+// RUN: %clang -### -S -Werror                                                \
 // RUN:     -falign-functions -falign-functions=2 -fno-align-functions        \
 // RUN:     -fasynchronous-unwind-tables -fno-asynchronous-unwind-tables      \
 // RUN:     -fbuiltin -fno-builtin                                            \
@@ -122,4 +122,5 @@
 // RUN:     -ftracer -fno-tracer                                              \
 // RUN:     -funroll-all-loops -fno-unroll-all-loops                          \
 // RUN:     -fno-builtin-foobar                                               \
+// RUN:     -fno-builtin-strcat -fno-builtin-strcpy                           \
 // RUN:     %s
