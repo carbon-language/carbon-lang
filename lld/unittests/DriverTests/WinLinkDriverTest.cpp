@@ -61,6 +61,7 @@ TEST_F(WinLinkParserTest, Basic) {
   EXPECT_TRUE(_context.isTerminalServerAware());
   EXPECT_TRUE(_context.getDynamicBaseEnabled());
   EXPECT_TRUE(_context.deadStrip());
+  EXPECT_FALSE(_context.logInputFiles());
 }
 
 TEST_F(WinLinkParserTest, StartsWithHyphen) {
@@ -318,6 +319,7 @@ TEST_F(WinLinkParserTest, SwapRunFromNet) {
 TEST_F(WinLinkParserTest, Debug) {
   EXPECT_TRUE(parse("link.exe", "/debug", "a.out", nullptr));
   EXPECT_FALSE(_context.deadStrip());
+  EXPECT_TRUE(_context.logInputFiles());
 }
 
 TEST_F(WinLinkParserTest, Fixed) {
