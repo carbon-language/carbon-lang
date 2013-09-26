@@ -426,8 +426,13 @@ bool Sema::DiagnoseUnknownTypeName(IdentifierInfo *&II,
         llvm_unreachable("could not have corrected a typo here");
       }
 
+      CXXScopeSpec tmpSS;
+      if (Corrected.getCorrectionSpecifier())
+        tmpSS.MakeTrivial(Context, Corrected.getCorrectionSpecifier(),
+                          SourceRange(IILoc));
       SuggestedType = getTypeName(*Corrected.getCorrectionAsIdentifierInfo(),
-                                  IILoc, S, SS, false, false, ParsedType(),
+                                  IILoc, S, tmpSS.isSet() ? &tmpSS : SS, false,
+                                  false, ParsedType(),
                                   /*IsCtorOrDtorName=*/false,
                                   /*NonTrivialTypeSourceInfo=*/true);
     }

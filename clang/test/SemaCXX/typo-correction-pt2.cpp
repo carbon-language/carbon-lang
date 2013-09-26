@@ -47,9 +47,7 @@ public:
 };
 
 Inner Outer::MyMethod(Inner arg) {  // expected-error {{unknown type name 'Inner'; did you mean 'Outer::Inner'?}}
-  // TODO: Recovery needs to be fixed/added for the typo-correction of the
-  // return type so the below error isn't still generated.
-  return Inner();  // expected-error {{no viable conversion from 'class_member_typo_corrections::Outer::Inner' to 'int'}}
+  return Inner();
 }
 
 class Result {
