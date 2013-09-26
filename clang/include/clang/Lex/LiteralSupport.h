@@ -102,9 +102,11 @@ private:
 
   static bool isDigitSeparator(char C) { return C == '\''; }
 
+  enum CheckSeparatorKind { CSK_BeforeDigits, CSK_AfterDigits };
+
   /// \brief Ensure that we don't have a digit separator here.
   void checkSeparator(SourceLocation TokLoc, const char *Pos,
-                      bool IsAfterDigits);
+                      CheckSeparatorKind IsAfterDigits);
 
   /// SkipHexDigits - Read and skip over any hex digits, up to End.
   /// Return a pointer to the first non-hex digit or End.

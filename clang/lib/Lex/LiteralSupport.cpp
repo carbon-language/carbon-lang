@@ -498,19 +498,19 @@ NumericLiteralParser::NumericLiteralParser(StringRef TokSpelling,
       hadError = true;
       return;
     } else if (*s == '.') {
-      checkSeparator(TokLoc, s, true);
+      checkSeparator(TokLoc, s, CSK_AfterDigits);
       s++;
       saw_period = true;
-      checkSeparator(TokLoc, s, false);
+      checkSeparator(TokLoc, s, CSK_BeforeDigits);
       s = SkipDigits(s);
     }
     if ((*s == 'e' || *s == 'E')) { // exponent
-      checkSeparator(TokLoc, s, true);
+      checkSeparator(TokLoc, s, CSK_AfterDigits);
       const char *Exponent = s;
       s++;
       saw_exponent = true;
       if (*s == '+' || *s == '-')  s++; // sign
-      checkSeparator(TokLoc, s, false);
+      checkSeparator(TokLoc, s, CSK_BeforeDigits);
       const char *first_non_digit = SkipDigits(s);
       if (first_non_digit != s) {
         s = first_non_digit;
@@ -524,7 +524,7 @@ NumericLiteralParser::NumericLiteralParser(StringRef TokSpelling,
   }
 
   SuffixBegin = s;
-  checkSeparator(TokLoc, s, true);
+  checkSeparator(TokLoc, s, CSK_AfterDigits);
 
   // Parse the suffix.  At this point we can classify whether we have an FP or
   // integer constant.
@@ -682,8 +682,9 @@ bool NumericLiteralParser::isValidUDSuffix(const LangOptions &LangOpts,
 }
 
 void NumericLiteralParser::checkSeparator(SourceLocation TokLoc,
-                                          const char *Pos, bool IsAfterDigits) {
-  if (IsAfterDigits) {
+                                          const char *Pos,
+                                          CheckSeparatorKind IsAfterDigits) {
+  if (IsAfterDigits == CSK_AfterDigits) {
     assert(Pos != ThisTokBegin);
     --Pos;
   } else {
