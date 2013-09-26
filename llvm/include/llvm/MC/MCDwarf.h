@@ -290,7 +290,8 @@ public:
     OpEscape,
     OpRestore,
     OpUndefined,
-    OpRegister
+    OpRegister,
+    OpWindowSave
   };
 
 private:
@@ -362,6 +363,11 @@ public:
   static MCCFIInstruction createRegister(MCSymbol *L, unsigned Register1,
                                          unsigned Register2) {
     return MCCFIInstruction(OpRegister, L, Register1, Register2);
+  }
+
+  /// \brief .cfi_window_save SPARC register window is saved.
+  static MCCFIInstruction createWindowSave(MCSymbol *L) {
+    return MCCFIInstruction(OpWindowSave, L, 0, 0, "");
   }
 
   /// \brief .cfi_restore says that the rule for Register is now the same as it

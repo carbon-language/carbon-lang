@@ -959,6 +959,10 @@ void FrameEmitterImpl::EmitCFIInstruction(MCStreamer &Streamer,
     Streamer.EmitULEB128IntValue(Reg2);
     return;
   }
+  case MCCFIInstruction::OpWindowSave: {
+    Streamer.EmitIntValue(dwarf::DW_CFA_GNU_window_save, 1);
+    return;
+  }
   case MCCFIInstruction::OpUndefined: {
     unsigned Reg = Instr.getRegister();
     if (VerboseAsm) {

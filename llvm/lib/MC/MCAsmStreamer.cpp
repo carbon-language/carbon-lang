@@ -229,6 +229,7 @@ public:
   virtual void EmitCFISignalFrame();
   virtual void EmitCFIUndefined(int64_t Register);
   virtual void EmitCFIRegister(int64_t Register1, int64_t Register2);
+  virtual void EmitCFIWindowSave();
 
   virtual void EmitWin64EHStartProc(const MCSymbol *Symbol);
   virtual void EmitWin64EHEndProc();
@@ -1095,6 +1096,16 @@ void MCAsmStreamer::EmitCFIRegister(int64_t Register1, int64_t Register2) {
     return;
 
   OS << "\t.cfi_register " << Register1 << ", " << Register2;
+  EmitEOL();
+}
+
+void MCAsmStreamer::EmitCFIWindowSave() {
+  MCStreamer::EmitCFIWindowSave();
+
+  if (!UseCFI)
+    return;
+
+  OS << "\t.cfi_window_save";
   EmitEOL();
 }
 
