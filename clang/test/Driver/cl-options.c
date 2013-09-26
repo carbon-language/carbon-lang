@@ -20,9 +20,9 @@
 // RUN: %clang_cl /GR- -### -- %s 2>&1 | FileCheck -check-prefix=GR_ %s
 // GR_: -fno-rtti
 
-// RUN: %clang_cl /Imyincludedir -### -- %s 2>&1 | FileCheck -check-prefix=I %s
-// RUN: %clang_cl /I myincludedir -### -- %s 2>&1 | FileCheck -check-prefix=I %s
-// I: "-I" "myincludedir"
+// RUN: %clang_cl /Imyincludedir -### -- %s 2>&1 | FileCheck -check-prefix=SLASH_I %s
+// RUN: %clang_cl /I myincludedir -### -- %s 2>&1 | FileCheck -check-prefix=SLASH_I %s
+// SLASH_I: "-I" "myincludedir"
 
 // RUN: %clang_cl /J -### -- %s 2>&1 | FileCheck -check-prefix=J %s
 // J: -fno-signed-char
@@ -87,6 +87,9 @@
 
 // RUN: %clang_cl /Zs -### -- %s 2>&1 | FileCheck -check-prefix=Zs %s
 // Zs: -fsyntax-only
+
+// RUN: %clang_cl /FIasdf.h -### -- %s 2>&1 | FileCheck -check-prefix=FI %s
+// FI: "-include" "asdf.h"
 
 // We forward any unrecognized -W diagnostic options to cc1.
 // RUN: %clang_cl -Wunused-pragmas -### -- %s 2>&1 | FileCheck -check-prefix=WJoined %s
