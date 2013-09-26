@@ -1432,8 +1432,6 @@ SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::UMUL_LOHI, MVT::i32, Expand);
   setOperationAction(ISD::SMUL_LOHI, MVT::i32, Expand);
 
-  setOperationAction(ISD::EH_LABEL, MVT::Other, Expand);
-
   // VASTART needs to be custom lowered to use the VarArgsFrameIndex.
   setOperationAction(ISD::VASTART           , MVT::Other, Custom);
   // VAARG needs to be lowered to not do unaligned accesses for doubles.
@@ -1446,8 +1444,8 @@ SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::STACKRESTORE      , MVT::Other, Expand);
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32  , Custom);
 
-  // No debug info support yet.
-  setOperationAction(ISD::EH_LABEL, MVT::Other, Expand);
+  setExceptionPointerRegister(SP::I0);
+  setExceptionSelectorRegister(SP::I1);
 
   setStackPointerRegisterToSaveRestore(SP::O6);
 

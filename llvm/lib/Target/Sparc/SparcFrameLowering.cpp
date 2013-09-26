@@ -70,6 +70,25 @@ void SparcFrameLowering::emitPrologue(MachineFunction &MF) const {
     BuildMI(MBB, MBBI, dl, TII.get(SAVErr), SP::O6)
       .addReg(SP::O6).addReg(SP::G1);
   }
+  MachineModuleInfo &MMI = MF.getMMI();
+  const MCRegisterInfo *MRI = MMI.getContext().getRegisterInfo();
+  MCSymbol *FrameLabel = MMI.getContext().CreateTempSymbol();
+  BuildMI(MBB, MBBI, dl, TII.get(SP::PROLOG_LABEL)).addSym(FrameLabel);
+
+  unsigned regFP = MRI->getDwarfRegNum(SP::I6, true);
+
+  // Emit ".cfi_def_cfa_register 30".
+  MMI.addFrameInst(MCCFIInstruction::createDefCfaRegister(FrameLabel,
+                                                          regFP));
+  // Emit ".cfi_window_save".
+  MMI.addFrameInst(MCCFIInstruction::createWindowSave(FrameLabel));
+
+  unsigned regInRA = MRI->getDwarfRegNum(SP::I7, true);
+  unsigned regOutRA = MRI->getDwarfRegNum(SP::O7, true);
+  // Emit ".cfi_register 15, 31".
+  MMI.addFrameInst(MCCFIInstruction::createRegister(FrameLabel,
+                                                    regOutRA,
+                                                    regInRA));
 }
 
 void SparcFrameLowering::
