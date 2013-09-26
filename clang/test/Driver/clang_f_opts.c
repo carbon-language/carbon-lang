@@ -123,4 +123,5 @@
 // RUN:     -funroll-all-loops -fno-unroll-all-loops                          \
 // RUN:     -fno-builtin-foobar                                               \
 // RUN:     -fno-builtin-strcat -fno-builtin-strcpy                           \
+// RUN:     -fno-var-tracking                                                 \
 // RUN:     %s
