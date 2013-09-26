@@ -584,6 +584,8 @@ def fno_builtin_strcat : Flag<["-"], "fno-builtin-strcat">, Group<f_Group>;
 def fno_builtin_strcpy : Flag<["-"], "fno-builtin-strcpy">, Group<f_Group>;
 def fno_builtin : Flag<["-"], "fno-builtin">, Group<f_Group>, Flags<[CC1Option]>,
   HelpText<"Disable implicit builtin knowledge of functions">;
+def fno_builtin_ : Joined<["-"], "fno-builtin-">, Group<clang_ignored_f_Group>,
+  HelpText<"Disable implicit builtin knowledge of a specific function">;
 def fno_math_builtin : Flag<["-"], "fno-math-builtin">, Group<f_Group>, Flags<[CC1Option]>,
   HelpText<"Disable implicit builtin knowledge of math functions">;
 def fno_caret_diagnostics : Flag<["-"], "fno-caret-diagnostics">, Group<f_Group>,

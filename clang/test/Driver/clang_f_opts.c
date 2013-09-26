@@ -121,4 +121,5 @@
 // RUN:     -fsee -fno-see                                                    \
 // RUN:     -ftracer -fno-tracer                                              \
 // RUN:     -funroll-all-loops -fno-unroll-all-loops                          \
+// RUN:     -fno-builtin-foobar                                               \
 // RUN:     %s
