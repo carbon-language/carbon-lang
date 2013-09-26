@@ -1891,7 +1891,11 @@ llvm::DIType CGDebugInfo::CreateEnumType(const EnumType *Ty) {
 static QualType UnwrapTypeForDebugInfo(QualType T, const ASTContext &C) {
   Qualifiers Quals;
   do {
-    Quals += T.getLocalQualifiers();
+    Qualifiers InnerQuals = T.getLocalQualifiers();
+    // Qualifiers::operator+() doesn't like it if you add a Qualifier
+    // that is already there.
+    Quals += Qualifiers::removeCommonQualifiers(Quals, InnerQuals);
+    Quals += InnerQuals;
     QualType LastT = T;
     switch (T->getTypeClass()) {
     default:
