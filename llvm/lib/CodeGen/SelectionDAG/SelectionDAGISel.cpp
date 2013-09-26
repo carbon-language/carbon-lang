@@ -1174,7 +1174,7 @@ static bool MIIsInTerminatorSequence(const MachineInstr *MI) {
 
   // OPI should always be a register definition...
   MachineInstr::const_mop_iterator OPI = MI->operands_begin();
-  if (!OPI->isReg() || !OPI->isDef())      
+  if (!OPI->isReg() || !OPI->isDef())
     return false;
 
   // Defining any register via an implicit def is always ok.
@@ -1212,7 +1212,7 @@ static bool MIIsInTerminatorSequence(const MachineInstr *MI) {
 /// physical registers.
 static MachineBasicBlock::iterator
 FindSplitPointForStackProtector(MachineBasicBlock *BB, DebugLoc DL) {
-  MachineBasicBlock::iterator SplitPoint = BB->getFirstTerminator();  
+  MachineBasicBlock::iterator SplitPoint = BB->getFirstTerminator();
   //
   if (SplitPoint == BB->begin())
     return SplitPoint;
