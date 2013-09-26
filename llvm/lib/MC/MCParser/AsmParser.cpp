@@ -2634,8 +2634,8 @@ bool AsmParser::parseDirectiveLoc() {
   int64_t LineNumber = 0;
   if (getLexer().is(AsmToken::Integer)) {
     LineNumber = getTok().getIntVal();
-    if (LineNumber < 1)
-      return TokError("line number less than one in '.loc' directive");
+    if (LineNumber < 0)
+      return TokError("line number less than zero in '.loc' directive");
     Lex();
   }
 
