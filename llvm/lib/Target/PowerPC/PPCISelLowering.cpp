@@ -3487,7 +3487,9 @@ PPCTargetLowering::FinishCall(CallingConv::ID CallConv, SDLoc dl,
       // from allocating it), resulting in an additional register being
       // allocated and an unnecessary move instruction being generated.
       needsTOCRestore = true;
-    } else if ((CallOpc == PPCISD::CALL) && !isLocalCall(Callee)) {
+    } else if ((CallOpc == PPCISD::CALL) &&
+               (!isLocalCall(Callee) ||
+                DAG.getTarget().getRelocationModel() == Reloc::PIC_)) {
       // Otherwise insert NOP for non-local calls.
       CallOpc = PPCISD::CALL_NOP;
     }
