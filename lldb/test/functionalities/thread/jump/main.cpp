@@ -26,9 +26,10 @@ int main ()
 {
     int i;
     double j;
-
-    i = min(4, 5); // 3rd marker
-    j = min(7.0, 8.0); // 4th marker
+    int min_i_a = 4, min_i_b = 5;
+    double min_j_a = 7.0, min_j_b = 8.0;
+    i = min(min_i_a, min_i_b); // 3rd marker
+    j = min(min_j_a, min_j_b); // 4th marker
 
     return 0;
 }
