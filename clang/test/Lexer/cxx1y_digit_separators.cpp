@@ -3,6 +3,8 @@
 int operator""ms(unsigned long long); // expected-warning {{reserved}}
 float operator""ms(long double); // expected-warning {{reserved}}
 
+int operator""_foo(unsigned long long);
+
 namespace integral {
   static_assert(1'2'3 == 12'3, "");
   static_assert(1'000'000 == 0xf'4240, "");
@@ -17,8 +19,7 @@ namespace integral {
   int f = 0b'1010; // expected-error {{invalid digit 'b' in octal}}
   int g = 123'ms; // expected-error {{digit separator cannot appear at end of digit sequence}}
 
-  // FIXME: not yet known if _ after ' will be permitted.
-  int z = 0'123'_foo; //'; // expected-error {{expected ';'}}
+  int z = 0'123'_foo; //'; // expected-error {{cannot appear at end of digit seq}}
 }
 
 namespace floating {
@@ -32,3 +33,6 @@ namespace floating {
   float e = 1e'1; // expected-error {{digit separator cannot appear at start of digit sequence}}
   float f = 1e1'ms; // expected-error {{digit separator cannot appear at end of digit sequence}}
 }
+
+#line 123'456
+static_assert(__LINE__ == 123456, "");

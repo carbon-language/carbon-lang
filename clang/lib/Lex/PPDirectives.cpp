@@ -911,6 +911,11 @@ static bool GetLineValue(Token &DigitTok, unsigned &Val,
   // here.
   Val = 0;
   for (unsigned i = 0; i != ActualLength; ++i) {
+    // C++1y [lex.fcon]p1:
+    //   Optional separating single quotes in a digit-sequence are ignored
+    if (DigitTokBegin[i] == '\'')
+      continue;
+
     if (!isDigit(DigitTokBegin[i])) {
       PP.Diag(PP.AdvanceToTokenCharacter(DigitTok.getLocation(), i),
               diag::err_pp_line_digit_sequence) << IsGNULineDirective;

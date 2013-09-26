@@ -1610,7 +1610,7 @@ bool Lexer::LexNumericConstant(Token &Result, const char *CurPtr) {
   if (C == '\'' && getLangOpts().CPlusPlus1y) {
     unsigned NextSize;
     char Next = getCharAndSizeNoWarn(CurPtr + Size, NextSize, getLangOpts());
-    if (isAlphanumeric(Next)) {
+    if (isIdentifierBody(Next)) {
       if (!isLexingRawMode())
         Diag(CurPtr, diag::warn_cxx11_compat_digit_separator);
       CurPtr = ConsumeChar(CurPtr, Size, Result);
