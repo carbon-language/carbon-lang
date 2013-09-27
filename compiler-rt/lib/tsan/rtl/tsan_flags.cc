@@ -64,6 +64,7 @@ void InitializeFlags(Flags *f, const char *env) {
   f->external_symbolizer_path = "";
   f->history_size = kGoMode ? 1 : 2;  // There are a lot of goroutines in Go.
   f->io_sync = 1;
+  f->allocator_may_return_null = false;
 
   // Let a frontend override.
   OverrideFlags(f);
@@ -95,6 +96,7 @@ void InitializeFlags(Flags *f, const char *env) {
   ParseFlag(env, &f->external_symbolizer_path, "external_symbolizer_path");
   ParseFlag(env, &f->history_size, "history_size");
   ParseFlag(env, &f->io_sync, "io_sync");
+  ParseFlag(env, &f->allocator_may_return_null, "allocator_may_return_null");
 
   if (!f->report_bugs) {
     f->report_thread_leaks = false;
@@ -113,6 +115,8 @@ void InitializeFlags(Flags *f, const char *env) {
            " (must be [0..2])\n");
     Die();
   }
+
+  common_flags()->allocator_may_return_null = f->allocator_may_return_null;
 }
 
 }  // namespace __tsan

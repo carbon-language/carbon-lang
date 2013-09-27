@@ -92,6 +92,8 @@ struct Flags {
   // 1 - reasonable level of synchronization (write->read)
   // 2 - global synchronization of all IO operations
   int io_sync;
+  // If false, the allocator will crash instead of returning 0 on out-of-memory.
+  bool allocator_may_return_null;
 };
 
 Flags *flags();
