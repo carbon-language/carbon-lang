@@ -770,6 +770,14 @@ static void PrintUnwindInfo(const ObjectFile *o) {
   }
 }
 
+static void printPrivateFileHeader(const ObjectFile *o) {
+  if (o->isELF()) {
+    printELFFileHeader(o);
+  } else if (o->isCOFF()) {
+    printCOFFFileHeader(o);
+  }
+}
+
 static void DumpObject(const ObjectFile *o) {
   outs() << '\n';
   outs() << o->getFileName()
@@ -787,8 +795,8 @@ static void DumpObject(const ObjectFile *o) {
     PrintSymbolTable(o);
   if (UnwindInfo)
     PrintUnwindInfo(o);
-  if (PrivateHeaders && o->isELF())
-    printELFFileHeader(o);
+  if (PrivateHeaders)
+    printPrivateFileHeader(o);
 }
 
 /// @brief Dump each object file in \a a;

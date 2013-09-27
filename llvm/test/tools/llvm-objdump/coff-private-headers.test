@@ -1,0 +1,9 @@
+// RUN: llvm-objdump -p %p/Inputs/nop.exe.coff-i386 | FileCheck %s
+
+CHECK:       The Import Tables:
+CHECK-NEXT:  lookup 00005028 time 00000000 fwd 00000000 name 00005096 addr 00005058
+CHECK:       DLL Name: KERNEL32.dll
+CHECK-NEXT:     Hint/Ord  Name
+CHECK-NEXT:          365  ExitProcess
+
+

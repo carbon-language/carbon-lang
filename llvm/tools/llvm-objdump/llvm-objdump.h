@@ -34,7 +34,8 @@ void DumpBytes(StringRef bytes);
 void DisassembleInputMachO(StringRef Filename);
 void printCOFFUnwindInfo(const object::COFFObjectFile* o);
 void printELFFileHeader(const object::ObjectFile *o);
+void printCOFFFileHeader(const object::ObjectFile *o);
 
-}
+} // end namespace llvm
 
 #endif
