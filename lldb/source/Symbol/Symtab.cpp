@@ -682,7 +682,7 @@ Symtab::AppendSymbolIndexesWithNameAndType (const ConstString& symbol_name, Symb
             if (symbol_type == eSymbolTypeAny || m_symbols[*pos].GetType() == symbol_type)
                 ++pos;
             else
-                indexes.erase(pos);
+                pos = indexes.erase(pos);
         }
     }
     return indexes.size();
@@ -701,7 +701,7 @@ Symtab::AppendSymbolIndexesWithNameAndType (const ConstString& symbol_name, Symb
             if (symbol_type == eSymbolTypeAny || m_symbols[*pos].GetType() == symbol_type)
                 ++pos;
             else
-                indexes.erase(pos);
+                pos = indexes.erase(pos);
         }
     }
     return indexes.size();
