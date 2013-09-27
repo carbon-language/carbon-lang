@@ -295,10 +295,14 @@ static void CollectLeaksCb(uptr chunk, void *arg) {
   LsanMetadata m(chunk);
   if (!m.allocated()) return;
   if (m.tag() == kDirectlyLeaked || m.tag() == kIndirectlyLeaked) {
+    uptr size = 0;
+    const uptr *trace = StackDepotGet(m.stack_trace_id(), &size);
+    // Ignore leaks with one-frame stack traces (which often come from
+    // coroutines) - they are not actionable.
+    if (size <= 1)
+      return;
     uptr resolution = flags()->resolution;
     if (resolution > 0) {
-      uptr size = 0;
-      const uptr *trace = StackDepotGet(m.stack_trace_id(), &size);
       size = Min(size, resolution);
       leak_report->Add(StackDepotPut(trace, size), m.requested_size(), m.tag());
     } else {
