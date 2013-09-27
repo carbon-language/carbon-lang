@@ -727,15 +727,23 @@ VisitUnaryExprOrTypeTraitExpr(const UnaryExprOrTypeTraitExpr *Ex,
 void ExprEngine::VisitUnaryOperator(const UnaryOperator* U, 
                                     ExplodedNode *Pred,
                                     ExplodedNodeSet &Dst) {
-  StmtNodeBuilder Bldr(Pred, Dst, *currBldrCtx);
-  switch (U->getOpcode()) {
+  // FIXME: Prechecks eventually go in ::Visit().
+  ExplodedNodeSet CheckedSet;
+  getCheckerManager().runCheckersForPreStmt(CheckedSet, Pred, U, *this);
+
+  ExplodedNodeSet EvalSet;
+  StmtNodeBuilder Bldr(CheckedSet, EvalSet, *currBldrCtx);
+
+  for (ExplodedNodeSet::iterator I = CheckedSet.begin(), E = CheckedSet.end();
+       I != E; ++I) {
+    switch (U->getOpcode()) {
     default: {
-      Bldr.takeNodes(Pred);
+      Bldr.takeNodes(*I);
       ExplodedNodeSet Tmp;
-      VisitIncrementDecrementOperator(U, Pred, Tmp);
+      VisitIncrementDecrementOperator(U, *I, Tmp);
       Bldr.addNodes(Tmp);
-    }
       break;
+    }
     case UO_Real: {
       const Expr *Ex = U->getSubExpr()->IgnoreParens();
         
@@ -747,10 +755,10 @@ void ExprEngine::VisitUnaryOperator(const UnaryOperator* U,
         
       // For all other types, UO_Real is an identity operation.
       assert (U->getType() == Ex->getType());
-      ProgramStateRef state = Pred->getState();
-      const LocationContext *LCtx = Pred->getLocationContext();
-      Bldr.generateNode(U, Pred, state->BindExpr(U, LCtx,
-                                                 state->getSVal(Ex, LCtx)));
+      ProgramStateRef state = (*I)->getState();
+      const LocationContext *LCtx = (*I)->getLocationContext();
+      Bldr.generateNode(U, *I, state->BindExpr(U, LCtx,
+                                               state->getSVal(Ex, LCtx)));
       break;
     }
       
@@ -762,10 +770,10 @@ void ExprEngine::VisitUnaryOperator(const UnaryOperator* U,
         break;
       }
       // For all other types, UO_Imag returns 0.
-      ProgramStateRef state = Pred->getState();
-      const LocationContext *LCtx = Pred->getLocationContext();
+      ProgramStateRef state = (*I)->getState();
+      const LocationContext *LCtx = (*I)->getLocationContext();
       SVal X = svalBuilder.makeZeroVal(Ex->getType());
-      Bldr.generateNode(U, Pred, state->BindExpr(U, LCtx, X));
+      Bldr.generateNode(U, *I, state->BindExpr(U, LCtx, X));
       break;
     }
       
@@ -783,10 +791,10 @@ void ExprEngine::VisitUnaryOperator(const UnaryOperator* U,
       // generate an extra node that just propagates the value of the
       // subexpression.      
       const Expr *Ex = U->getSubExpr()->IgnoreParens();
-      ProgramStateRef state = Pred->getState();
-      const LocationContext *LCtx = Pred->getLocationContext();
-      Bldr.generateNode(U, Pred, state->BindExpr(U, LCtx,
-                                                 state->getSVal(Ex, LCtx)));
+      ProgramStateRef state = (*I)->getState();
+      const LocationContext *LCtx = (*I)->getLocationContext();
+      Bldr.generateNode(U, *I, state->BindExpr(U, LCtx,
+                                               state->getSVal(Ex, LCtx)));
       break;
     }
       
@@ -795,14 +803,14 @@ void ExprEngine::VisitUnaryOperator(const UnaryOperator* U,
     case UO_Not: {
       assert (!U->isGLValue());
       const Expr *Ex = U->getSubExpr()->IgnoreParens();
-      ProgramStateRef state = Pred->getState();
-      const LocationContext *LCtx = Pred->getLocationContext();
+      ProgramStateRef state = (*I)->getState();
+      const LocationContext *LCtx = (*I)->getLocationContext();
         
       // Get the value of the subexpression.
       SVal V = state->getSVal(Ex, LCtx);
         
       if (V.isUnknownOrUndef()) {
-        Bldr.generateNode(U, Pred, state->BindExpr(U, LCtx, V));
+        Bldr.generateNode(U, *I, state->BindExpr(U, LCtx, V));
         break;
       }
         
@@ -839,11 +847,13 @@ void ExprEngine::VisitUnaryOperator(const UnaryOperator* U,
           state = state->BindExpr(U, LCtx, Result);          
           break;
       }
-      Bldr.generateNode(U, Pred, state);
+      Bldr.generateNode(U, *I, state);
       break;
+    }
     }
   }
 
+  getCheckerManager().runCheckersForPostStmt(Dst, EvalSet, U, *this);
 }
 
 void ExprEngine::VisitIncrementDecrementOperator(const UnaryOperator* U,
