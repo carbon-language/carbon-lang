@@ -164,14 +164,18 @@ unsigned shiftedCodePosition(const Replacements& Replaces, unsigned Position);
 
 /// \brief Calculates how a code \p Position is shifted when \p Replaces are
 /// applied.
+///
+/// \pre Replaces[i].getOffset() <= Replaces[i+1].getOffset().
 unsigned shiftedCodePosition(const std::vector<Replacement> &Replaces,
                              unsigned Position);
 
 /// \brief Removes duplicate Replacements and reports if Replacements conflict
 /// with one another.
 ///
-/// This function will sort \p Replaces so that conflicts can be reported simply
-/// by offset into \p Replaces and number of elements in the conflict.
+/// \post Replaces[i].getOffset() <= Replaces[i+1].getOffset().
+///
+/// This function sorts \p Replaces so that conflicts can be reported simply by
+/// offset into \p Replaces and number of elements in the conflict.
 void deduplicate(std::vector<Replacement> &Replaces,
                  std::vector<Range> &Conflicts);
 
