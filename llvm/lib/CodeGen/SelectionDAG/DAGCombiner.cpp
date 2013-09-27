@@ -3748,6 +3748,26 @@ SDValue DAGCombiner::visitSHL(SDNode *N) {
     }
   }
 
+  // fold (shl (zext (srl x, C)), C) -> (zext (shl (srl x, C), C))
+  // Only fold this if the inner zext has no other uses to avoid increasing
+  // the total number of instructions.
+  if (N1C && N0.getOpcode() == ISD::ZERO_EXTEND && N0.hasOneUse() &&
+      N0.getOperand(0).getOpcode() == ISD::SRL &&
+      isa<ConstantSDNode>(N0.getOperand(0)->getOperand(1))) {
+    uint64_t c1 =
+      cast<ConstantSDNode>(N0.getOperand(0)->getOperand(1))->getZExtValue();
+    if (c1 < VT.getSizeInBits()) {
+      uint64_t c2 = N1C->getZExtValue();
+      if (c1 == c2) {
+        SDValue NewOp0 = N0.getOperand(0);
+        EVT CountVT = NewOp0.getOperand(1).getValueType();
+        SDValue NewSHL = DAG.getNode(ISD::SHL, SDLoc(N), NewOp0.getValueType(),
+                                     NewOp0, DAG.getConstant(c2, CountVT));
+        return DAG.getNode(ISD::ZERO_EXTEND, SDLoc(N0), VT, NewSHL);
+      }
+    }
+  }
+
   // fold (shl (srl x, c1), c2) -> (and (shl x, (sub c2, c1), MASK) or
   //                               (and (srl x, (sub c1, c2), MASK)
   // Only fold this if the inner shift has no other uses -- if it does, folding
