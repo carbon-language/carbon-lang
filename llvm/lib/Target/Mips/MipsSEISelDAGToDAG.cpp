@@ -451,6 +451,16 @@ selectVSplatCommon(SDValue N, SDValue &Imm, bool Signed,
 
 // Select constant vector splats.
 bool MipsSEDAGToDAGISel::
+selectVSplatUimm1(SDValue N, SDValue &Imm) const {
+  return selectVSplatCommon(N, Imm, false, 1);
+}
+
+bool MipsSEDAGToDAGISel::
+selectVSplatUimm2(SDValue N, SDValue &Imm) const {
+  return selectVSplatCommon(N, Imm, false, 2);
+}
+
+bool MipsSEDAGToDAGISel::
 selectVSplatUimm3(SDValue N, SDValue &Imm) const {
   return selectVSplatCommon(N, Imm, false, 3);
 }

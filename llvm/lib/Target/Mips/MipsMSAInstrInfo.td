@@ -77,6 +77,14 @@ def simm5 : Operand<i32>;
 
 def simm10 : Operand<i32>;
 
+def vsplat_uimm1 : Operand<vAny> {
+  let PrintMethod = "printUnsignedImm8";
+}
+
+def vsplat_uimm2 : Operand<vAny> {
+  let PrintMethod = "printUnsignedImm8";
+}
+
 def vsplat_uimm3 : Operand<vAny> {
   let PrintMethod = "printUnsignedImm";
 }
@@ -222,6 +230,10 @@ def vsplati8_uimm3 : SplatComplexPattern<vsplat_uimm3, v16i8, 1,
                                          "selectVSplatUimm3",
                                          [build_vector, bitconvert]>;
 
+def vsplati8_uimm4 : SplatComplexPattern<vsplat_uimm4, v16i8, 1,
+                                         "selectVSplatUimm4",
+                                         [build_vector, bitconvert]>;
+
 def vsplati8_uimm5 : SplatComplexPattern<vsplat_uimm5, v16i8, 1,
                                          "selectVSplatUimm5",
                                          [build_vector, bitconvert]>;
@@ -233,6 +245,10 @@ def vsplati8_uimm8 : SplatComplexPattern<vsplat_uimm8, v16i8, 1,
 def vsplati8_simm5 : SplatComplexPattern<vsplat_simm5, v16i8, 1,
                                          "selectVSplatSimm5",
                                          [build_vector, bitconvert]>;
+
+def vsplati16_uimm3 : SplatComplexPattern<vsplat_uimm3, v8i16, 1,
+                                          "selectVSplatUimm3",
+                                          [build_vector, bitconvert]>;
 
 def vsplati16_uimm4 : SplatComplexPattern<vsplat_uimm4, v8i16, 1,
                                           "selectVSplatUimm4",
@@ -246,12 +262,20 @@ def vsplati16_simm5 : SplatComplexPattern<vsplat_simm5, v8i16, 1,
                                           "selectVSplatSimm5",
                                           [build_vector, bitconvert]>;
 
+def vsplati32_uimm2 : SplatComplexPattern<vsplat_uimm2, v4i32, 1,
+                                          "selectVSplatUimm2",
+                                          [build_vector, bitconvert]>;
+
 def vsplati32_uimm5 : SplatComplexPattern<vsplat_uimm5, v4i32, 1,
                                           "selectVSplatUimm5",
                                           [build_vector, bitconvert]>;
 
 def vsplati32_simm5 : SplatComplexPattern<vsplat_simm5, v4i32, 1,
                                           "selectVSplatSimm5",
+                                          [build_vector, bitconvert]>;
+
+def vsplati64_uimm1 : SplatComplexPattern<vsplat_uimm1, v2i64, 1,
+                                          "selectVSplatUimm1",
                                           [build_vector, bitconvert]>;
 
 def vsplati64_uimm5 : SplatComplexPattern<vsplat_uimm5, v2i64, 1,
@@ -1235,6 +1259,18 @@ class MSA_VEC_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
   InstrItinClass Itinerary = itin;
 }
 
+class MSA_ELM_SPLAT_DESC_BASE<string instr_asm, SplatComplexPattern SplatImm,
+                              RegisterClass RCWD,
+                              RegisterClass RCWS = RCWD,
+                              InstrItinClass itin = NoItinerary> {
+  dag OutOperandList = (outs RCWD:$wd);
+  dag InOperandList = (ins RCWS:$ws, SplatImm.OpClass:$u3);
+  string AsmString = !strconcat(instr_asm, "\t$wd, $ws[$u3]");
+  list<dag> Pattern = [(set RCWD:$wd, (MipsVSHF SplatImm:$u3, RCWS:$ws,
+                                                RCWS:$ws))];
+  InstrItinClass Itinerary = itin;
+}
+
 class MSA_VEC_PSEUDO_BASE<SDPatternOperator OpNode, RegisterClass RCWD,
                           RegisterClass RCWS = RCWD,
                           RegisterClass RCWT = RCWD> :
@@ -2172,14 +2208,14 @@ class SPLAT_W_DESC : MSA_3R_DESC_BASE<"splat.w", int_mips_splat_w, MSA128WOpnd,
 class SPLAT_D_DESC : MSA_3R_DESC_BASE<"splat.d", int_mips_splat_d, MSA128DOpnd,
                                       MSA128DOpnd, GPR32Opnd>;
 
-class SPLATI_B_DESC : MSA_BIT_B_DESC_BASE<"splati.b", int_mips_splati_b,
-                                          MSA128B>;
-class SPLATI_H_DESC : MSA_BIT_H_DESC_BASE<"splati.h", int_mips_splati_h,
-                                          MSA128H>;
-class SPLATI_W_DESC : MSA_BIT_W_DESC_BASE<"splati.w", int_mips_splati_w,
-                                          MSA128W>;
-class SPLATI_D_DESC : MSA_BIT_D_DESC_BASE<"splati.d", int_mips_splati_d,
-                                          MSA128D>;
+class SPLATI_B_DESC : MSA_ELM_SPLAT_DESC_BASE<"splati.b", vsplati8_uimm4,
+                                              MSA128B>;
+class SPLATI_H_DESC : MSA_ELM_SPLAT_DESC_BASE<"splati.h", vsplati16_uimm3,
+                                              MSA128H>;
+class SPLATI_W_DESC : MSA_ELM_SPLAT_DESC_BASE<"splati.w", vsplati32_uimm2,
+                                              MSA128W>;
+class SPLATI_D_DESC : MSA_ELM_SPLAT_DESC_BASE<"splati.d", vsplati64_uimm1,
+                                              MSA128D>;
 
 class SRA_B_DESC : MSA_3R_DESC_BASE<"sra.b", sra, MSA128BOpnd>;
 class SRA_H_DESC : MSA_3R_DESC_BASE<"sra.h", sra, MSA128HOpnd>;

@@ -104,6 +104,16 @@ bool MipsDAGToDAGISel::selectVSplat(SDNode *N, APInt &Imm) const {
   return false;
 }
 
+bool MipsDAGToDAGISel::selectVSplatUimm1(SDValue N, SDValue &Imm) const {
+  llvm_unreachable("Unimplemented function.");
+  return false;
+}
+
+bool MipsDAGToDAGISel::selectVSplatUimm2(SDValue N, SDValue &Imm) const {
+  llvm_unreachable("Unimplemented function.");
+  return false;
+}
+
 bool MipsDAGToDAGISel::selectVSplatUimm3(SDValue N, SDValue &Imm) const {
   llvm_unreachable("Unimplemented function.");
   return false;

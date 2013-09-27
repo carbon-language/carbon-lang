@@ -78,6 +78,10 @@ private:
 
   /// \brief Select constant vector splats.
   virtual bool selectVSplat(SDNode *N, APInt &Imm) const;
+  /// \brief Select constant vector splats whose value fits in a uimm1.
+  virtual bool selectVSplatUimm1(SDValue N, SDValue &Imm) const;
+  /// \brief Select constant vector splats whose value fits in a uimm2.
+  virtual bool selectVSplatUimm2(SDValue N, SDValue &Imm) const;
   /// \brief Select constant vector splats whose value fits in a uimm3.
   virtual bool selectVSplatUimm3(SDValue N, SDValue &Imm) const;
   /// \brief Select constant vector splats whose value fits in a uimm4.

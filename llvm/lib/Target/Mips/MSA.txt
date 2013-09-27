@@ -28,3 +28,7 @@ ilvl.d, pckev.d:
 ilvr.d, ilvod.d, pckod.d:
         It is not possible to emit ilvr.d, or pckod.d since ilvod.d covers the
         same shuffle. ilvod.d will be emitted instead.
+
+splati.w:
+        It is not possible to emit splati.w since shf.w covers the same cases.
+        shf.w will be emitted instead.

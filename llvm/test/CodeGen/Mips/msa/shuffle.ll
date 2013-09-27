@@ -21,8 +21,7 @@ define void @vshf_v16i8_1(<16 x i8>* %c, <16 x i8>* %a, <16 x i8>* %b) nounwind 
   %1 = load <16 x i8>* %a
   ; CHECK-DAG: ld.b [[R1:\$w[0-9]+]], 0($5)
   %2 = shufflevector <16 x i8> %1, <16 x i8> undef, <16 x i32> <i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1>
-  ; CHECK-DAG: ldi.b [[R3:\$w[0-9]+]], 1
-  ; CHECK-DAG: vshf.b [[R3]], [[R1]], [[R1]]
+  ; CHECK-DAG: splati.b [[R3:\$w[0-9]+]], [[R1]][1]
   store <16 x i8> %2, <16 x i8>* %c
   ; CHECK-DAG: st.b [[R3]], 0($4)
 
@@ -69,8 +68,7 @@ define void @vshf_v16i8_4(<16 x i8>* %c, <16 x i8>* %a, <16 x i8>* %b) nounwind 
   %1 = load <16 x i8>* %a
   ; CHECK-DAG: ld.b [[R1:\$w[0-9]+]], 0($5)
   %2 = shufflevector <16 x i8> %1, <16 x i8> %1, <16 x i32> <i32 1, i32 17, i32 1, i32 17, i32 1, i32 17, i32 1, i32 17, i32 1, i32 17, i32 1, i32 17, i32 1, i32 17, i32 1, i32 17>
-  ; CHECK-DAG: ldi.b [[R3:\$w[0-9]+]], 1
-  ; CHECK-DAG: vshf.b [[R3]], [[R1]], [[R1]]
+  ; CHECK-DAG: splati.b [[R3:\$w[0-9]+]], [[R1]][1]
   store <16 x i8> %2, <16 x i8>* %c
   ; CHECK-DAG: st.b [[R3]], 0($4)
 
@@ -99,8 +97,7 @@ define void @vshf_v8i16_1(<8 x i16>* %c, <8 x i16>* %a, <8 x i16>* %b) nounwind 
   %1 = load <8 x i16>* %a
   ; CHECK-DAG: ld.h [[R1:\$w[0-9]+]], 0($5)
   %2 = shufflevector <8 x i16> %1, <8 x i16> undef, <8 x i32> <i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1>
-  ; CHECK-DAG: ldi.h [[R3:\$w[0-9]+]], 1
-  ; CHECK-DAG: vshf.h [[R3]], [[R1]], [[R1]]
+  ; CHECK-DAG: splati.h [[R3:\$w[0-9]+]], [[R1]][1]
   store <8 x i16> %2, <8 x i16>* %c
   ; CHECK-DAG: st.h [[R3]], 0($4)
 
@@ -147,8 +144,7 @@ define void @vshf_v8i16_4(<8 x i16>* %c, <8 x i16>* %a, <8 x i16>* %b) nounwind 
   %1 = load <8 x i16>* %a
   ; CHECK-DAG: ld.h [[R1:\$w[0-9]+]], 0($5)
   %2 = shufflevector <8 x i16> %1, <8 x i16> %1, <8 x i32> <i32 1, i32 9, i32 1, i32 9, i32 1, i32 9, i32 1, i32 9>
-  ; CHECK-DAG: ldi.h [[R3:\$w[0-9]+]], 1
-  ; CHECK-DAG: vshf.h [[R3]], [[R1]], [[R1]]
+  ; CHECK-DAG: splati.h [[R3:\$w[0-9]+]], [[R1]][1]
   store <8 x i16> %2, <8 x i16>* %c
   ; CHECK-DAG: st.h [[R3]], 0($4)
 
@@ -254,8 +250,7 @@ define void @vshf_v2i64_1(<2 x i64>* %c, <2 x i64>* %a, <2 x i64>* %b) nounwind 
   %1 = load <2 x i64>* %a
   ; CHECK-DAG: ld.d [[R1:\$w[0-9]+]], 0($5)
   %2 = shufflevector <2 x i64> %1, <2 x i64> undef, <2 x i32> <i32 1, i32 1>
-  ; CHECK-DAG: ldi.d [[R3:\$w[0-9]+]], 1
-  ; CHECK-DAG: vshf.d [[R3]], [[R1]], [[R1]]
+  ; CHECK-DAG: splati.d [[R3:\$w[0-9]+]], [[R1]][1]
   store <2 x i64> %2, <2 x i64>* %c
   ; CHECK-DAG: st.d [[R3]], 0($4)
 
@@ -302,8 +297,7 @@ define void @vshf_v2i64_4(<2 x i64>* %c, <2 x i64>* %a, <2 x i64>* %b) nounwind 
   %1 = load <2 x i64>* %a
   ; CHECK-DAG: ld.d [[R1:\$w[0-9]+]], 0($5)
   %2 = shufflevector <2 x i64> %1, <2 x i64> %1, <2 x i32> <i32 1, i32 3>
-  ; CHECK-DAG: ldi.d [[R3:\$w[0-9]+]], 1
-  ; CHECK-DAG: vshf.d [[R3]], [[R1]], [[R1]]
+  ; CHECK-DAG: splati.d [[R3:\$w[0-9]+]], [[R1]][1]
   store <2 x i64> %2, <2 x i64>* %c
   ; CHECK-DAG: st.d [[R3]], 0($4)
 
@@ -747,4 +741,62 @@ define void @pckod_v2i64_0(<2 x i64>* %c, <2 x i64>* %a, <2 x i64>* %b) nounwind
 
   ret void
   ; CHECK: .size pckod_v2i64_0
+}
+
+define void @splati_v16i8_0(<16 x i8>* %c, <16 x i8>* %a) nounwind {
+  ; CHECK: splati_v16i8_0:
+
+  %1 = load <16 x i8>* %a
+  ; CHECK-DAG: ld.b [[R1:\$w[0-9]+]], 0($5)
+  %2 = shufflevector <16 x i8> %1, <16 x i8> undef,
+                     <16 x i32> <i32 4, i32 4, i32 4, i32 4, i32 4, i32 4, i32 4, i32 4, i32 4, i32 4, i32 4, i32 4, i32 4, i32 4, i32 4, i32 4>
+  ; CHECK-DAG: splati.b [[R3:\$w[0-9]+]], [[R1]][4]
+  store <16 x i8> %2, <16 x i8>* %c
+  ; CHECK-DAG: st.b [[R3]], 0($4)
+
+  ret void
+  ; CHECK: .size splati_v16i8_0
+}
+
+define void @splati_v8i16_0(<8 x i16>* %c, <8 x i16>* %a) nounwind {
+  ; CHECK: splati_v8i16_0:
+
+  %1 = load <8 x i16>* %a
+  ; CHECK-DAG: ld.h [[R1:\$w[0-9]+]], 0($5)
+  %2 = shufflevector <8 x i16> %1, <8 x i16> undef, <8 x i32> <i32 4, i32 4, i32 4, i32 4, i32 4, i32 4, i32 4, i32 4>
+  ; CHECK-DAG: splati.h [[R3:\$w[0-9]+]], [[R1]][4]
+  store <8 x i16> %2, <8 x i16>* %c
+  ; CHECK-DAG: st.h [[R3]], 0($4)
+
+  ret void
+  ; CHECK: .size splati_v8i16_0
+}
+
+define void @splati_v4i32_0(<4 x i32>* %c, <4 x i32>* %a) nounwind {
+  ; CHECK: splati_v4i32_0:
+
+  %1 = load <4 x i32>* %a
+  ; CHECK-DAG: ld.w [[R1:\$w[0-9]+]], 0($5)
+  %2 = shufflevector <4 x i32> %1, <4 x i32> undef, <4 x i32> <i32 3, i32 3, i32 3, i32 3>
+  ; shf.w and splati.w are equivalent
+  ; CHECK-DAG: shf.w [[R3:\$w[0-9]+]], [[R1]], 255
+  store <4 x i32> %2, <4 x i32>* %c
+  ; CHECK-DAG: st.w [[R3]], 0($4)
+
+  ret void
+  ; CHECK: .size splati_v4i32_0
+}
+
+define void @splati_v2i64_0(<2 x i64>* %c, <2 x i64>* %a) nounwind {
+  ; CHECK: splati_v2i64_0:
+
+  %1 = load <2 x i64>* %a
+  ; CHECK-DAG: ld.d [[R1:\$w[0-9]+]], 0($5)
+  %2 = shufflevector <2 x i64> %1, <2 x i64> undef, <2 x i32> <i32 1, i32 1>
+  ; CHECK-DAG: splati.d [[R3:\$w[0-9]+]], [[R1]][1]
+  store <2 x i64> %2, <2 x i64>* %c
+  ; CHECK-DAG: st.d [[R3]], 0($4)
+
+  ret void
+  ; CHECK: .size splati_v2i64_0
 }
