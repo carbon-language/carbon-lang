@@ -1387,7 +1387,7 @@ class ClassTemplateSpecializationDecl
 
     /// \brief The template argument list deduced for the class template
     /// partial specialization itself.
-    TemplateArgumentList *TemplateArgs;
+    const TemplateArgumentList *TemplateArgs;
   };
 
   /// \brief The template that this specialization specializes
@@ -1412,7 +1412,7 @@ class ClassTemplateSpecializationDecl
   ExplicitSpecializationInfo *ExplicitInfo;
 
   /// \brief The template arguments used to describe this specialization.
-  TemplateArgumentList *TemplateArgs;
+  const TemplateArgumentList *TemplateArgs;
 
   /// \brief The point where this template was instantiated (if any)
   SourceLocation PointOfInstantiation;
@@ -1563,7 +1563,7 @@ public:
   /// instantiation of the given class template partial specialization whose
   /// template arguments have been deduced.
   void setInstantiationOf(ClassTemplatePartialSpecializationDecl *PartialSpec,
-                          TemplateArgumentList *TemplateArgs) {
+                          const TemplateArgumentList *TemplateArgs) {
     assert(!SpecializedTemplate.is<SpecializedPartialSpecialization*>() &&
            "Already set to a class template partial specialization!");
     SpecializedPartialSpecialization *PS
@@ -2250,7 +2250,7 @@ class VarTemplateSpecializationDecl : public VarDecl,
 
     /// \brief The template argument list deduced for the variable template
     /// partial specialization itself.
-    TemplateArgumentList *TemplateArgs;
+    const TemplateArgumentList *TemplateArgs;
   };
 
   /// \brief The template that this specialization specializes.
@@ -2275,7 +2275,7 @@ class VarTemplateSpecializationDecl : public VarDecl,
   ExplicitSpecializationInfo *ExplicitInfo;
 
   /// \brief The template arguments used to describe this specialization.
-  TemplateArgumentList *TemplateArgs;
+  const TemplateArgumentList *TemplateArgs;
   TemplateArgumentListInfo TemplateArgsInfo;
 
   /// \brief The point where this template was instantiated (if any).
@@ -2421,7 +2421,7 @@ public:
   /// instantiation of the given variable template partial specialization whose
   /// template arguments have been deduced.
   void setInstantiationOf(VarTemplatePartialSpecializationDecl *PartialSpec,
-                          TemplateArgumentList *TemplateArgs) {
+                          const TemplateArgumentList *TemplateArgs) {
     assert(!SpecializedTemplate.is<SpecializedPartialSpecialization *>() &&
            "Already set to a variable template partial specialization!");
     SpecializedPartialSpecialization *PS =

@@ -11767,45 +11767,33 @@ static void DoMarkVarDeclReferenced(Sema &SemaRef, SourceLocation Loc,
 
   VarTemplateSpecializationDecl *VarSpec =
       dyn_cast<VarTemplateSpecializationDecl>(Var);
+  assert(!isa<VarTemplatePartialSpecializationDecl>(Var) &&
+         "Can't instantiate a partial template specialization.");
 
   // Implicit instantiation of static data members, static data member
   // templates of class templates, and variable template specializations.
   // Delay instantiations of variable templates, except for those
   // that could be used in a constant expression.
-  if (VarSpec || (Var->isStaticDataMember() &&
-                  Var->getInstantiatedFromStaticDataMember())) {
-    MemberSpecializationInfo *MSInfo = Var->getMemberSpecializationInfo();
-    if (VarSpec)
-      assert(!isa<VarTemplatePartialSpecializationDecl>(Var) &&
-             "Can't instantiate a partial template specialization.");
-    if (Var->isStaticDataMember())
-      assert(MSInfo && "Missing member specialization information?");
+  TemplateSpecializationKind TSK = Var->getTemplateSpecializationKind();
+  if (isTemplateInstantiation(TSK)) {
+    bool TryInstantiating = TSK == TSK_ImplicitInstantiation;
 
-    SourceLocation PointOfInstantiation;
-    bool InstantiationIsOkay = true;
-    if (MSInfo) {
-      bool AlreadyInstantiated = !MSInfo->getPointOfInstantiation().isInvalid();
-      TemplateSpecializationKind TSK = MSInfo->getTemplateSpecializationKind();
-
-      if (TSK == TSK_ImplicitInstantiation &&
-          (!AlreadyInstantiated ||
-           Var->isUsableInConstantExpressions(SemaRef.Context))) {
-        if (!AlreadyInstantiated) {
-          // This is a modification of an existing AST node. Notify listeners.
-          if (ASTMutationListener *L = SemaRef.getASTMutationListener())
-            L->StaticDataMemberInstantiated(Var);
-          MSInfo->setPointOfInstantiation(Loc);
-        }
-        PointOfInstantiation = MSInfo->getPointOfInstantiation();
-      } else
-        InstantiationIsOkay = false;
-    } else {
-      if (VarSpec->getPointOfInstantiation().isInvalid())
-        VarSpec->setPointOfInstantiation(Loc);
-      PointOfInstantiation = VarSpec->getPointOfInstantiation();
+    if (TryInstantiating && !isa<VarTemplateSpecializationDecl>(Var)) {
+      if (Var->getPointOfInstantiation().isInvalid()) {
+        // This is a modification of an existing AST node. Notify listeners.
+        if (ASTMutationListener *L = SemaRef.getASTMutationListener())
+          L->StaticDataMemberInstantiated(Var);
+      } else if (!Var->isUsableInConstantExpressions(SemaRef.Context))
+        // Don't bother trying to instantiate it again, unless we might need
+        // its initializer before we get to the end of the TU.
+        TryInstantiating = false;
     }
 
-    if (InstantiationIsOkay) {
+    if (Var->getPointOfInstantiation().isInvalid())
+      Var->setTemplateSpecializationKind(TSK, Loc);
+
+    if (TryInstantiating) {
+      SourceLocation PointOfInstantiation = Var->getPointOfInstantiation();
       bool InstantiationDependent = false;
       bool IsNonDependent =
           VarSpec ? !TemplateSpecializationType::anyDependentTemplateArguments(

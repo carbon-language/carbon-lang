@@ -53,59 +53,84 @@ namespace out_of_line {
   template<typename T> CONST T B3::right<T,int>;
 
   class B4 {
-    template<typename T, typename T0> static CONST T right;
-    template<typename T> static CONST T right<T,int>;
-    template<typename T, typename T0> static CONST T right_def = T(100);
-    template<typename T> static CONST T right_def<T,int>;   // expected-note {{explicit instantiation refers here}}
+    template<typename T, typename T0> static CONST T a;
+    template<typename T> static CONST T a<T,int> = T(100);
+    template<typename T, typename T0> static CONST T b = T(100);
+    template<typename T> static CONST T b<T,int>;
   };
-  template<typename T, typename T0> CONST T B4::right;
-  template<typename T> CONST T B4::right<T,int>; // expected-note {{explicit instantiation refers here}}
-  template CONST int B4::right<int,int>;  // expected-error {{explicit instantiation of undefined static data member template 'right' of class}}
-  template CONST int B4::right_def<int,int>;  // expected-error {{explicit instantiation of undefined static data member template 'right_def' of class}}
+  template<typename T, typename T0> CONST T B4::a; // expected-error {{default initialization of an object of const type 'const int'}}
+  template<typename T> CONST T B4::a<T,int>;
+  template CONST int B4::a<int,char>; // expected-note {{in instantiation of}}
+  template CONST int B4::a<int,int>;
+
+  template<typename T, typename T0> CONST T B4::b;
+  template<typename T> CONST T B4::b<T,int>; // expected-error {{default initialization of an object of const type 'const int'}}
+  template CONST int B4::b<int,char>;
+  template CONST int B4::b<int,int>; // expected-note {{in instantiation of}}
 }
 
 namespace non_const_init {
   class A {
-    template<typename T> static T wrong_inst = T(10); // expected-error {{non-const static data member must be initialized out of line}}
-    template<typename T> static T wrong_inst_fixed;
+    template<typename T> static T wrong_inst_undefined = T(10); // expected-note {{refers here}}
+    template<typename T> static T wrong_inst_defined = T(10); // expected-error {{non-const static data member must be initialized out of line}}
+    template<typename T> static T wrong_inst_out_of_line;
   };
-  template int A::wrong_inst<int>;  // expected-note {{in instantiation of static data member 'non_const_init::A::wrong_inst<int>' requested here}}
-  template<typename T> T A::wrong_inst_fixed = T(10);
-  template int A::wrong_inst_fixed<int>;
-  
+
+  template const int A::wrong_inst_undefined<const int>; // expected-error {{undefined}}
+
+  template<typename T> T A::wrong_inst_defined;
+  template const int A::wrong_inst_defined<const int>;
+  template int A::wrong_inst_defined<int>; // expected-note {{in instantiation of static data member 'non_const_init::A::wrong_inst_defined<int>' requested here}}
+
+  template<typename T> T A::wrong_inst_out_of_line = T(10);
+  template int A::wrong_inst_out_of_line<int>;
+
   class B {
-    template<typename T> static T wrong_inst;
-    template<typename T> static T wrong_inst<T*> = T(100);  // expected-error {{non-const static data member must be initialized out of line}}
-    
+    template<typename T> static T wrong_inst; // expected-note {{refers here}}
+    template<typename T> static T wrong_inst<T*> = T(100); // expected-error {{non-const static data member must be initialized out of line}} expected-note {{refers here}}
+
     template<typename T> static T wrong_inst_fixed;
     template<typename T> static T wrong_inst_fixed<T*>;
   };
-  template int B::wrong_inst<int*>;  // expected-note {{in instantiation of static data member 'non_const_init::B::wrong_inst<int *>' requested here}}
+  template int B::wrong_inst<int>; // expected-error {{undefined}}
+  // FIXME: It'd be better to produce the 'explicit instantiation of undefined
+  // template' diagnostic here, not the 'must be initialized out of line'
+  // diagnostic.
+  template int B::wrong_inst<int*>; // expected-note {{in instantiation of static data member 'non_const_init::B::wrong_inst<int *>' requested here}}
+  template const int B::wrong_inst<const int*>; // expected-error {{undefined}}
   template<typename T> T B::wrong_inst_fixed = T(100);
   template int B::wrong_inst_fixed<int>;
-  
+
   class C {
-    template<typename T> static CONST T right_inst = T(10);
-    template<typename T> static CONST T right_inst<T*> = T(100);
+    template<typename T> static CONST T right_inst = T(10); // expected-note {{here}}
+    template<typename T> static CONST T right_inst<T*> = T(100); // expected-note {{here}}
   };
-  template CONST int C::right_inst<int>;
-  template CONST int C::right_inst<int*>;
-  
+  template CONST int C::right_inst<int>; // expected-error {{undefined variable template}}
+  template CONST int C::right_inst<int*>; // expected-error {{undefined variable template}}
+
   namespace pointers {
-    
+
     struct C0 {
       template<typename U> static U Data;
-      template<typename U> static CONST U Data<U*> = U();   // Okay
+      template<typename U> static CONST U Data<U*> = U(); // expected-note {{here}}
+
+      template<typename U> static U Data2;
+      template<typename U> static CONST U Data2<U*> = U();
     };
-    template CONST int C0::Data<int*>;
-    
+    const int c0_test = C0::Data<int*>;
+    static_assert(c0_test == 0, "");
+    template const int C0::Data<int*>; // expected-error {{undefined}}
+
+    template<typename U> const U C0::Data2<U*>;
+    template const int C0::Data2<int*>;
+
     struct C1a {
       template<typename U> static U Data;
       template<typename U> static U* Data<U*>;   // Okay, with out-of-line definition
     };
     template<typename T> T* C1a::Data<T*> = new T();
     template int* C1a::Data<int*>;
-    
+
     struct C1b {
       template<typename U> static U Data;
       template<typename U> static CONST U* Data<U*>;   // Okay, with out-of-line definition
@@ -118,12 +143,13 @@ namespace non_const_init {
       template<typename U> static U* Data<U*> = new U();   // expected-error {{non-const static data member must be initialized out of line}}
     };
     template int* C2a::Data<int*>; // expected-note {{in instantiation of static data member 'non_const_init::pointers::C2a::Data<int *>' requested here}}
-    
-    struct C2b {  // FIXME: ?!? Should this be an error? pointer-types are automatically non-const?
+
+    struct C2b {
       template<typename U> static int Data;
-      template<typename U> static CONST U* Data<U*> = (U*)(0); // expected-error {{non-const static data member must be initialized out of line}}
+      template<typename U> static U *const Data<U*> = (U*)(0); // expected-error {{static data member of type 'int *const'}}
     };
-    template CONST int* C2b::Data<int*>; // expected-note {{in instantiation of static data member 'non_const_init::pointers::C2b::Data<int *>' requested here}}
+    template<typename U> U *const C2b::Data<U*>;
+    template int *const C2b::Data<int*>; // expected-note {{in instantiation of static data member 'non_const_init::pointers::C2b::Data<int *>' requested here}}
   }
 }
 
@@ -146,18 +172,16 @@ namespace constexpred {
 }
 #endif
 
-struct matrix_constants {
-  // TODO: (?)
-};
-
 namespace in_class_template {
 
   template<typename T>
   class D0 {
-    template<typename U> static U Data;
+    template<typename U> static U Data; // expected-note {{here}}
     template<typename U> static CONST U Data<U*> = U();
   };
   template CONST int D0<float>::Data<int*>;
+  template int D0<float>::Data<int>; // expected-error {{undefined}}
+  template<typename T> template<typename U> const U D0<T>::Data<U*>;
 
   template<typename T>
   class D1 {
@@ -166,7 +190,8 @@ namespace in_class_template {
   };
   template<typename T>
   template<typename U> U* D1<T>::Data<U*> = (U*)(0);
-  template int* D1<float>::Data<int*>;
+  template int* D1<float>::Data<int*>; // expected-note {{previous}}
+  template int* D1<float>::Data<int*>; // expected-error {{duplicate explicit instantiation}}
 
   template<typename T>
   class D2 {
@@ -175,53 +200,69 @@ namespace in_class_template {
   };
   template<>
   template<typename U> U* D2<float>::Data<U*> = (U*)(0) + 1;
-  template int* D1<float>::Data<int*>;
+  template int* D2<float>::Data<int*>; // expected-note {{previous}}
+  template int* D2<float>::Data<int*>; // expected-error {{duplicate explicit instantiation}}
 
   template<typename T>
   struct D3 {
-    template<typename U> static CONST U Data = U(100);
+    template<typename U> static CONST U Data = U(100); // expected-note {{here}}
   };
-  template CONST int D3<float>::Data<int>;
   static_assert(D3<float>::Data<int> == 100, "");
+  template const char D3<float>::Data<char>; // expected-error {{undefined}}
 
   namespace bug_files {
-    // FIXME: A bug has been filed addressing an issue similar to these.
-    // No error diagnosis should be produced, because an
-    // explicit specialization of a member templates of class
-    // template specialization should not inherit the partial
-    // specializations from the class template specialization.
-
     template<typename T>
-    class D0 {
+    class D0a {
       template<typename U> static U Data;
       template<typename U> static CONST U Data<U*> = U(10);  // expected-note {{previous definition is here}}
     };
     template<>
-    template<typename U> U D0<float>::Data<U*> = U(100);  // expected-error{{redefinition of 'Data'}}
+    template<typename U> U D0a<float>::Data<U*> = U(100);  // expected-error {{redefinition of 'Data'}}
 
+    // FIXME: We should accept this, and the corresponding case for class
+    // templates.
+    //
+    // [temp.class.spec.mfunc]/2: If the primary member template is explicitly
+    // specialized for a given specialization of the enclosing class template,
+    // the partial specializations of the member template are ignored
     template<typename T>
     class D1 {
       template<typename U> static U Data;
-      template<typename U> static U* Data<U*>;  // expected-note {{previous definition is here}}
-    };  
-    template<typename T>
-    template<typename U> U* D1<T>::Data<U*> = (U*)(0);
+      template<typename U> static CONST U Data<U*> = U(10);  // expected-note {{previous definition is here}}
+    };
     template<>
-    template<typename U> U* D1<float>::Data<U*> = (U*)(0) + 1;  // expected-error{{redefinition of 'Data'}}
+    template<typename U> U D1<float>::Data = U(10);
+    template<>
+    template<typename U> U D1<float>::Data<U*> = U(100);  // expected-error{{redefinition of 'Data'}}
   }
-  
-  namespace other_bugs {
-    // FIXME: This fails to properly initialize the variables 'k1' and 'k2'.
 
-    template<typename A> struct S { 
-      template<typename B> static int V0;
-      template<typename B> static int V1;
+  namespace definition_after_outer_instantiation {
+    template<typename A> struct S {
+      template<typename B> static const int V1;
+      template<typename B> static const int V2;
     };
     template struct S<int>;
-    template<typename A> template<typename B> int S<A>::V0 = 123;
-    template<typename A> template<typename B> int S<A>::V1<B*> = 123;
-    int k1 = S<int>::V0<void>;
-    int k2 = S<int>::V1<void*>;
+    template<typename A> template<typename B> const int S<A>::V1 = 123;
+    template<typename A> template<typename B> const int S<A>::V2<B*> = 456;
+
+    static_assert(S<int>::V1<int> == 123, "");
+
+    // FIXME: The first and third case below possibly should be accepted. We're
+    // not picking up partial specializations added after the primary template
+    // is instantiated. This is kind of implied by [temp.class.spec.mfunc]/2,
+    // and matches our behavior for member class templates, but it's not clear
+    // that this is intentional. See PR17294 and core-24030.
+    static_assert(S<int>::V2<int*> == 456, ""); // FIXME expected-error {{}}
+    static_assert(S<int>::V2<int&> == 789, ""); // expected-error {{}}
+
+    template<typename A> template<typename B> const int S<A>::V2<B&> = 789;
+    static_assert(S<int>::V2<int&> == 789, ""); // FIXME expected-error {{}}
+
+    // All is OK if the partial specialization is declared before the implicit
+    // instantiation of the class template specialization.
+    static_assert(S<char>::V1<int> == 123, "");
+    static_assert(S<char>::V2<int*> == 456, "");
+    static_assert(S<char>::V2<int&> == 789, "");
   }
 
   namespace incomplete_array {
@@ -243,13 +284,12 @@ namespace in_class_template {
       template<typename...U> static T y<tuple<U...> >[];
     };
 
-    // FIXME: These cases should be accepted.
     int *use_before_definition = A<int>::x<char>;
     template<typename T> template<typename U> T A<T>::x[sizeof(U)];
-    static_assert(sizeof(A<int>::x<char>) == 1, ""); // expected-error {{incomplete}}
+    static_assert(sizeof(A<int>::x<char>) == 4, "");
 
     template<typename T> template<typename...U> T A<T>::y<tuple<U...> >[] = { U()... };
-    static_assert(sizeof(A<int>::y<tuple<char, char, char> >) == 12, ""); // expected-error {{incomplete}}
+    static_assert(sizeof(A<int>::y<tuple<char, char, char> >) == 12, "");
   }
 }
 

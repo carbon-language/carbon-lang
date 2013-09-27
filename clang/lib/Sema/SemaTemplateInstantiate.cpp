@@ -2471,6 +2471,9 @@ Sema::InstantiateClassMembers(SourceLocation PointOfInstantiation,
         }
       }
     } else if (VarDecl *Var = dyn_cast<VarDecl>(*D)) {
+      if (isa<VarTemplateSpecializationDecl>(Var))
+        continue;
+
       if (Var->isStaticDataMember()) {
         MemberSpecializationInfo *MSInfo = Var->getMemberSpecializationInfo();
         assert(MSInfo && "No member specialization information?");

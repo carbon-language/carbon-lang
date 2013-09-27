@@ -7864,14 +7864,7 @@ GVALinkage ASTContext::GetGVALinkageForVariable(const VarDecl *VD) {
   if (!VD->isExternallyVisible())
     return GVA_Internal;
 
-  // If this is a static data member, compute the kind of template
-  // specialization. Otherwise, this variable is not part of a
-  // template.
-  TemplateSpecializationKind TSK = TSK_Undeclared;
-  if (VD->isStaticDataMember())
-    TSK = VD->getTemplateSpecializationKind();
-
-  switch (TSK) {
+  switch (VD->getTemplateSpecializationKind()) {
   case TSK_Undeclared:
   case TSK_ExplicitSpecialization:
     return GVA_StrongExternal;

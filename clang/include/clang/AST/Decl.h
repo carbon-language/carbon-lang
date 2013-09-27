@@ -1146,9 +1146,15 @@ public:
   /// from which it was instantiated.
   VarDecl *getInstantiatedFromStaticDataMember() const;
 
-  /// \brief If this variable is a static data member, determine what kind of
+  /// \brief If this variable is an instantiation of a variable template or a
+  /// static data member of a class template, determine what kind of
   /// template specialization or instantiation this is.
   TemplateSpecializationKind getTemplateSpecializationKind() const;
+
+  /// \brief If this variable is an instantiation of a variable template or a
+  /// static data member of a class template, determine its point of
+  /// instantiation.
+  SourceLocation getPointOfInstantiation() const;
 
   /// \brief If this variable is an instantiation of a static data member of a
   /// class template specialization, retrieves the member specialization
