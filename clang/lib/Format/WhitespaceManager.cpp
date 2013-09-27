@@ -290,6 +290,8 @@ void WhitespaceManager::appendIndentText(std::string &Text,
   case FormatStyle::UT_ForIndentation:
     if (WhitespaceStartColumn == 0) {
       unsigned Indentation = IndentLevel * Style.IndentWidth;
+      // This happens, e.g. when a line in a block comment is indented less than
+      // the first one.
       if (Indentation > Spaces)
         Indentation = Spaces;
       unsigned Tabs = Indentation / Style.TabWidth;

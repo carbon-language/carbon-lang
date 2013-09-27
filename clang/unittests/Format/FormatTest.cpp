@@ -5932,7 +5932,19 @@ TEST_F(FormatTest, ConfigurableUseOfTab) {
                    "\t/*\n"
                    "\n"
                    "\t*/\n"
-                   "}", Tab));
+                   "}",
+                   Tab));
+  EXPECT_EQ("{\n"
+            "\t/*\n"
+            " asdf\n"
+            "\t*/\n"
+            "}",
+            format("{\n"
+                   "\t/*\n"
+                   " asdf\n"
+                   "\t*/\n"
+                   "}",
+                   Tab));
 
   Tab.UseTab = FormatStyle::UT_Never;
   EXPECT_EQ("/*\n"
