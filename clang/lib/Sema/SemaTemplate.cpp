@@ -2092,6 +2092,9 @@ QualType Sema::CheckTemplateIdType(TemplateName Name,
         Decl->setLexicalDeclContext(ClassTemplate->getLexicalDeclContext());
     }
 
+    // Diagnose uses of this specialization.
+    (void)DiagnoseUseOfDecl(Decl, TemplateLoc);
+
     CanonType = Context.getTypeDeclType(Decl);
     assert(isa<RecordType>(CanonType) &&
            "type of non-dependent specialization is not a RecordType");
