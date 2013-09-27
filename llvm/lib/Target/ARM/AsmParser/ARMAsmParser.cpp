@@ -5347,8 +5347,17 @@ validateInstruction(MCInst &Inst,
   case ARM::LDRD:
   case ARM::LDRD_PRE:
   case ARM::LDRD_POST: {
+    unsigned RtReg = Inst.getOperand(0).getReg();
+    // Rt can't be R14.
+    if (RtReg == ARM::LR)
+      return Error(Operands[3]->getStartLoc(),
+                   "Rt can't be R14");
+    unsigned Rt = MRI->getEncodingValue(RtReg);
+    // Rt must be even-numbered.
+    if ((Rt & 1) == 1)
+      return Error(Operands[3]->getStartLoc(),
+                   "Rt must be even-numbered");
     // Rt2 must be Rt + 1.
-    unsigned Rt = MRI->getEncodingValue(Inst.getOperand(0).getReg());
     unsigned Rt2 = MRI->getEncodingValue(Inst.getOperand(1).getReg());
     if (Rt2 != Rt + 1)
       return Error(Operands[3]->getStartLoc(),
