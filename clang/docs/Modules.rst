@@ -1,10 +1,10 @@
-======================
-Modules (EXPERIMENTAL)
-======================
+=======
+Modules
+=======
 
 .. warning::
-   The functionality described on this page is still experimental! Please
-   try it out and send us bug reports!
+   The functionality described on this page is supported for C and
+   Objective-C. C++ support is experimental.
 
 .. contents::
    :local:
@@ -106,24 +106,25 @@ Using Modules
 =============
 To enable modules, pass the command-line flag ``-fmodules`` [#]_. This will make any modules-enabled software libraries available as modules as well as introducing any modules-specific syntax. Additional `command-line parameters`_ are described in a separate section later.
 
-Import declaration
-------------------
-The most direct way to import a module is with an *import declaration*, which imports the named module:
+Objective-C Import declaration
+------------------------------
+Objective-C provides syntax for importing a module via an *@import declaration*, which imports the named module:
 
 .. parsed-literal::
 
-  import std;
+  @import std;
 
-The import declaration above imports the entire contents of the ``std`` module (which would contain, e.g., the entire C or C++ standard library) and make its API available within the current translation unit. To import only part of a module, one may use dot syntax to specific a particular submodule, e.g.,
+The @import declaration above imports the entire contents of the ``std`` module (which would contain, e.g., the entire C or C++ standard library) and make its API available within the current translation unit. To import only part of a module, one may use dot syntax to specific a particular submodule, e.g.,
 
 .. parsed-literal::
 
-  import std.io;
+  @import std.io;
 
 Redundant import declarations are ignored, and one is free to import modules at any point within the translation unit, so long as the import declaration is at global scope.
 
-.. warning::
-  The import declaration syntax described here does not actually exist. Rather, it is a straw man proposal that may very well change when modules are discussed in the C and C++ committees. See the section `Includes as imports`_ to see how modules get imported today.
+At present, there is no C or C++ syntax for import declarations. Clang
+will track the modules proposal in the C++ committee. See the section
+`Includes as imports`_ to see how modules get imported today.
 
 Includes as imports
 -------------------
