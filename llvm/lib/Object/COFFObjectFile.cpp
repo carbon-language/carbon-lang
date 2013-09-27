@@ -16,6 +16,8 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Triple.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
 using namespace object;
@@ -429,6 +431,94 @@ relocation_iterator COFFObjectFile::getSectionRelEnd(DataRefImpl Sec) const {
   return relocation_iterator(RelocationRef(ret, this));
 }
 
+// Initialize the pointer to the symbol table.
+error_code COFFObjectFile::initSymbolTablePtr() {
+  if (error_code ec = getObject(
+          SymbolTable, Data, base() + COFFHeader->PointerToSymbolTable,
+          COFFHeader->NumberOfSymbols * sizeof(coff_symbol)))
+    return ec;
+
+  // Find string table. The first four byte of the string table contains the
+  // total size of the string table, including the size field itself. If the
+  // string table is empty, the value of the first four byte would be 4.
+  const uint8_t *StringTableAddr =
+      base() + COFFHeader->PointerToSymbolTable +
+      COFFHeader->NumberOfSymbols * sizeof(coff_symbol);
+  const ulittle32_t *StringTableSizePtr;
+  if (error_code ec = getObject(StringTableSizePtr, Data, StringTableAddr))
+    return ec;
+  StringTableSize = *StringTableSizePtr;
+  if (error_code ec =
+      getObject(StringTable, Data, StringTableAddr, StringTableSize))
+    return ec;
+
+  // Check that the string table is null terminated if has any in it.
+  if (StringTableSize < 4 ||
+      (StringTableSize > 4 && StringTable[StringTableSize - 1] != 0))
+    return  object_error::parse_failed;
+  return object_error::success;
+}
+
+// Returns the file offset for the given RVA.
+error_code COFFObjectFile::getRvaPtr(uint32_t Rva, uintptr_t &Res) const {
+  error_code ec;
+  for (section_iterator i = begin_sections(), e = end_sections(); i != e;
+       i.increment(ec)) {
+    if (ec)
+      return ec;
+    const coff_section *Section = getCOFFSection(i);
+    uint32_t SectionStart = Section->VirtualAddress;
+    uint32_t SectionEnd = Section->VirtualAddress + Section->VirtualSize;
+    if (SectionStart <= Rva && Rva < SectionEnd) {
+      uint32_t Offset = Rva - SectionStart;
+      Res = uintptr_t(base()) + Section->PointerToRawData + Offset;
+      return object_error::success;
+    }
+  }
+  return object_error::parse_failed;
+}
+
+// Returns hint and name fields, assuming \p Rva is pointing to a Hint/Name
+// table entry.
+error_code COFFObjectFile::
+getHintName(uint32_t Rva, uint16_t &Hint, StringRef &Name) const {
+  uintptr_t IntPtr = 0;
+  if (error_code ec = getRvaPtr(Rva, IntPtr))
+    return ec;
+  const uint8_t *Ptr = reinterpret_cast<const uint8_t *>(IntPtr);
+  Hint = *reinterpret_cast<const ulittle16_t *>(Ptr);
+  Name = StringRef(reinterpret_cast<const char *>(Ptr + 2));
+  return object_error::success;
+}
+
+// Find the import table.
+error_code COFFObjectFile::initImportTablePtr() {
+  // First, we get the RVA of the import table. If the file lacks a pointer to
+  // the import table, do nothing.
+  const data_directory *DataEntry;
+  if (getDataDirectory(COFF::IMPORT_TABLE, DataEntry))
+    return object_error::success;
+
+  // Do nothing if the pointer to import table is NULL.
+  if (DataEntry->RelativeVirtualAddress == 0)
+    return object_error::success;
+
+  uint32_t ImportTableRva = DataEntry->RelativeVirtualAddress;
+  NumberOfImportDirectory = DataEntry->Size /
+      sizeof(import_directory_table_entry);
+
+  // Find the section that contains the RVA. This is needed because the RVA is
+  // the import table's memory address which is different from its file offset.
+  uintptr_t IntPtr = 0;
+  if (error_code ec = getRvaPtr(ImportTableRva, IntPtr))
+    return ec;
+  ImportDirectory = reinterpret_cast<
+      const import_directory_table_entry *>(IntPtr);
+
+  // It's an error if there's no section containing the Import Table RVA.
+  return object_error::parse_failed;
+}
+
 COFFObjectFile::COFFObjectFile(MemoryBuffer *Object, error_code &ec)
   : ObjectFile(Binary::ID_COFF, Object)
   , COFFHeader(0)
@@ -437,7 +527,9 @@ COFFObjectFile::COFFObjectFile(MemoryBuffer *Object, error_code &ec)
   , SectionTable(0)
   , SymbolTable(0)
   , StringTable(0)
-  , StringTableSize(0) {
+  , StringTableSize(0)
+  , ImportDirectory(0)
+  , NumberOfImportDirectory(0) {
   // Check that we at least have enough room for a header.
   if (!checkSize(Data, ec, sizeof(coff_file_header))) return;
 
@@ -488,45 +580,28 @@ COFFObjectFile::COFFObjectFile(MemoryBuffer *Object, error_code &ec)
                       COFFHeader->NumberOfSections * sizeof(coff_section))))
     return;
 
-  if (COFFHeader->PointerToSymbolTable != 0) {
-    if ((ec = getObject(SymbolTable, Data,
-                        base() + COFFHeader->PointerToSymbolTable,
-                        COFFHeader->NumberOfSymbols * sizeof(coff_symbol))))
+  // Initialize the pointer to the symbol table.
+  if (COFFHeader->PointerToSymbolTable != 0)
+    if ((ec = initSymbolTablePtr()))
       return;
 
-    // Find string table. The first four byte of the string table contains the
-    // total size of the string table, including the size field itself. If the
-    // string table is empty, the value of the first four byte would be 4.
-    const uint8_t *StringTableAddr = base() + COFFHeader->PointerToSymbolTable
-        + COFFHeader->NumberOfSymbols * sizeof(coff_symbol);
-    const ulittle32_t *StringTableSizePtr;
-    if ((ec = getObject(StringTableSizePtr, Data, StringTableAddr)))
-      return;
-    StringTableSize = *StringTableSizePtr;
-    if ((ec = getObject(StringTable, Data, StringTableAddr, StringTableSize)))
-      return;
-
-    // Check that the string table is null terminated if has any in it.
-    if (StringTableSize < 4
-        || (StringTableSize > 4 && StringTable[StringTableSize - 1] != 0)) {
-      ec = object_error::parse_failed;
-      return;
-    }
-  }
+  // Initialize the pointer to the beginning of the import table.
+  if ((ec = initImportTablePtr()))
+    return;
 
   ec = object_error::success;
 }
 
 symbol_iterator COFFObjectFile::begin_symbols() const {
   DataRefImpl ret;
-  ret.p = reinterpret_cast<intptr_t>(SymbolTable);
+  ret.p = reinterpret_cast<uintptr_t>(SymbolTable);
   return symbol_iterator(SymbolRef(ret, this));
 }
 
 symbol_iterator COFFObjectFile::end_symbols() const {
   // The symbol table ends where the string table begins.
   DataRefImpl ret;
-  ret.p = reinterpret_cast<intptr_t>(StringTable);
+  ret.p = reinterpret_cast<uintptr_t>(StringTable);
   return symbol_iterator(SymbolRef(ret, this));
 }
 
@@ -555,16 +630,32 @@ StringRef COFFObjectFile::getLoadName() const {
   return "";
 }
 
+import_directory_iterator COFFObjectFile::getImportDirectoryBegin() const {
+  DataRefImpl Imp;
+  Imp.p = reinterpret_cast<uintptr_t>(ImportDirectory);
+  return import_directory_iterator(ImportDirectoryEntryRef(Imp, this));
+}
+
+import_directory_iterator COFFObjectFile::getImportDirectoryEnd() const {
+  DataRefImpl Imp;
+  if (ImportDirectory) {
+    Imp.p = reinterpret_cast<uintptr_t>(
+        ImportDirectory + (NumberOfImportDirectory - 1));
+  } else {
+    Imp.p = 0;
+  }
+  return import_directory_iterator(ImportDirectoryEntryRef(Imp, this));
+}
 
 section_iterator COFFObjectFile::begin_sections() const {
   DataRefImpl ret;
-  ret.p = reinterpret_cast<intptr_t>(SectionTable);
+  ret.p = reinterpret_cast<uintptr_t>(SectionTable);
   return section_iterator(SectionRef(ret, this));
 }
 
 section_iterator COFFObjectFile::end_sections() const {
   DataRefImpl ret;
-  ret.p = reinterpret_cast<intptr_t>(SectionTable + COFFHeader->NumberOfSections);
+  ret.p = reinterpret_cast<uintptr_t>(SectionTable + COFFHeader->NumberOfSections);
   return section_iterator(SectionRef(ret, this));
 }
 
@@ -676,7 +767,7 @@ error_code COFFObjectFile::getSymbolName(const coff_symbol *symbol,
 ArrayRef<uint8_t> COFFObjectFile::getSymbolAuxData(
                                   const coff_symbol *symbol) const {
   const uint8_t *aux = NULL;
-  
+
   if ( symbol->NumberOfAuxSymbols > 0 ) {
   // AUX data comes immediately after the symbol in COFF
     aux = reinterpret_cast<const uint8_t *>(symbol + 1);
@@ -777,7 +868,6 @@ const coff_relocation *COFFObjectFile::getCOFFRelocation(
   return toRel(It->getRawDataRefImpl());
 }
 
-
 #define LLVM_COFF_SWITCH_RELOC_TYPE_NAME(enum) \
   case COFF::enum: res = #enum; break;
 
@@ -856,6 +946,52 @@ error_code COFFObjectFile::getLibraryNext(DataRefImpl LibData,
 error_code COFFObjectFile::getLibraryPath(DataRefImpl LibData,
                                           StringRef &Result) const {
   report_fatal_error("getLibraryPath not implemented in COFFObjectFile");
+}
+
+bool ImportDirectoryEntryRef::
+operator==(const ImportDirectoryEntryRef &Other) const {
+  return ImportDirectoryPimpl == Other.ImportDirectoryPimpl;
+}
+
+static const import_directory_table_entry *toImportEntry(DataRefImpl Imp) {
+  return reinterpret_cast<const import_directory_table_entry *>(Imp.p);
+}
+
+error_code
+ImportDirectoryEntryRef::getNext(ImportDirectoryEntryRef &Result) const {
+  const import_directory_table_entry *Dir = toImportEntry(ImportDirectoryPimpl);
+  Dir += 1;
+  DataRefImpl Next;
+  Next.p = reinterpret_cast<uintptr_t>(Dir);
+  Result = ImportDirectoryEntryRef(Next, OwningObject);
+  return object_error::success;
+}
+
+error_code ImportDirectoryEntryRef::
+getImportTableEntry(const import_directory_table_entry *&Result) const {
+  Result = toImportEntry(ImportDirectoryPimpl);
+  return object_error::success;
+}
+
+error_code ImportDirectoryEntryRef::getName(StringRef &Result) const {
+  const import_directory_table_entry *Dir = toImportEntry(ImportDirectoryPimpl);
+  uintptr_t IntPtr = 0;
+  if (error_code ec = OwningObject->getRvaPtr(Dir->NameRVA, IntPtr))
+    return ec;
+  const char *Ptr = reinterpret_cast<const char *>(IntPtr);
+  Result = StringRef(Ptr);
+  return object_error::success;
+}
+
+error_code ImportDirectoryEntryRef::getImportLookupEntry(
+    const import_lookup_table_entry32 *&Result) const {
+  const import_directory_table_entry *Dir = toImportEntry(ImportDirectoryPimpl);
+  uintptr_t IntPtr = 0;
+  if (error_code ec = OwningObject->getRvaPtr(
+          Dir->ImportLookupTableRVA, IntPtr))
+    return ec;
+  Result = reinterpret_cast<const import_lookup_table_entry32 *>(IntPtr);
+  return object_error::success;
 }
 
 namespace llvm {

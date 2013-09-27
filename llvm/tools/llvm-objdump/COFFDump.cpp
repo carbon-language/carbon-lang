@@ -227,6 +227,48 @@ static void printCOFFSymbolAddress(llvm::raw_ostream &Out,
     Out << format(" + 0x%04x", Disp);
 }
 
+// Prints import tables. The import table is a table containing the list of
+// DLL name and symbol names which will be linked by the loader.
+static void printImportTables(const COFFObjectFile *Obj) {
+  outs() << "The Import Tables:\n";
+  error_code ec;
+  for (import_directory_iterator i = Obj->getImportDirectoryBegin(),
+                                 e = Obj->getImportDirectoryEnd();
+       i != e; i = i.increment(ec)) {
+    if (ec)
+      return;
+
+    const import_directory_table_entry *Dir;
+    StringRef Name;
+    if (i->getImportTableEntry(Dir)) return;
+    if (i->getName(Name)) return;
+
+    outs() << format("  lookup %08x time %08x fwd %08x name %08x addr %08x\n\n",
+                     static_cast<uint32_t>(Dir->ImportLookupTableRVA),
+                     static_cast<uint32_t>(Dir->TimeDateStamp),
+                     static_cast<uint32_t>(Dir->ForwarderChain),
+                     static_cast<uint32_t>(Dir->NameRVA),
+                     static_cast<uint32_t>(Dir->ImportAddressTableRVA));
+    outs() << "    DLL Name: " << Name << "\n";
+    outs() << "    Hint/Ord  Name\n";
+    const import_lookup_table_entry32 *entry;
+    if (i->getImportLookupEntry(entry))
+      return;
+    for (; entry->data; ++entry) {
+      if (entry->isOrdinal()) {
+        outs() << format("      % 6d\n", entry->getOrdinal());
+        continue;
+      }
+      uint16_t Hint;
+      StringRef Name;
+      if (Obj->getHintName(entry->getHintNameRVA(), Hint, Name))
+        return;
+      outs() << format("      % 6d  ", Hint) << Name << "\n";
+    }
+    outs() << "\n";
+  }
+}
+
 void llvm::printCOFFUnwindInfo(const COFFObjectFile *Obj) {
   const coff_file_header *Header;
   if (error(Obj->getCOFFHeader(Header))) return;
@@ -352,4 +394,8 @@ void llvm::printCOFFUnwindInfo(const COFFObjectFile *Obj) {
       outs().flush();
     }
   }
+}
+
+void llvm::printCOFFFileHeader(const object::ObjectFile *Obj) {
+  printImportTables(dyn_cast<const COFFObjectFile>(Obj));
 }
