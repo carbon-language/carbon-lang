@@ -2114,6 +2114,36 @@ INTERCEPTOR(int, sigprocmask, int how, __sanitizer_sigset_t *set,
 #define INIT_SIGPROCMASK
 #endif
 
+#if SANITIZER_INTERCEPT_BACKTRACE
+INTERCEPTOR(int, backtrace, void **buffer, int size) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, backtrace, buffer, size);
+  int res = REAL(backtrace)(buffer, size);
+  if (res && buffer)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, buffer, res * sizeof(*buffer));
+  return res;
+}
+
+INTERCEPTOR(char **, backtrace_symbols, void **buffer, int size) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, backtrace_symbols, buffer, size);
+  if (buffer && size)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, buffer, size * sizeof(*buffer));
+  char ** res = REAL(backtrace_symbols)(buffer, size);
+  if (res && size) {
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, res, size * sizeof(*res));
+    for (int i = 0; i < size; ++i)
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, res[i], REAL(strlen(res[i])) + 1);
+  }
+  return res;
+}
+#define INIT_BACKTRACE           \
+  INTERCEPT_FUNCTION(backtrace); \
+  INTERCEPT_FUNCTION(backtrace_symbols);
+#else
+#define INIT_BACKTRACE
+#endif
+
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
   INIT_STRCMP;                             \
   INIT_STRNCMP;                            \
@@ -2189,4 +2219,5 @@ INTERCEPTOR(int, sigprocmask, int how, __sanitizer_sigset_t *set,
   INIT_SIGTIMEDWAIT;                       \
   INIT_SIGSETOPS;                          \
   INIT_SIGPENDING;                         \
-  INIT_SIGPROCMASK;
+  INIT_SIGPROCMASK;                        \
+  INIT_BACKTRACE;
