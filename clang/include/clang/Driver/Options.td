@@ -796,6 +796,7 @@ def fno_unroll_loops : Flag<["-"], "fno-unroll-loops">, Group<f_Group>,
   HelpText<"Turn off loop unroller">, Flags<[CC1Option]>;
 def funsigned_bitfields : Flag<["-"], "funsigned-bitfields">, Group<f_Group>;
 def funsigned_char : Flag<["-"], "funsigned-char">, Group<f_Group>;
+def fno_unsigned_char : Flag<["-"], "fno-unsigned-char">, Group<clang_ignored_f_Group>;
 def funwind_tables : Flag<["-"], "funwind-tables">, Group<f_Group>;
 def fuse_cxa_atexit : Flag<["-"], "fuse-cxa-atexit">, Group<f_Group>;
 def fuse_init_array : Flag<["-"], "fuse-init-array">, Group<f_Group>, Flags<[CC1Option]>,

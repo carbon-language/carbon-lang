@@ -124,4 +124,6 @@
 // RUN:     -fno-builtin-foobar                                               \
 // RUN:     -fno-builtin-strcat -fno-builtin-strcpy                           \
 // RUN:     -fno-var-tracking                                                 \
+// RUN:     -fno-unsigned-char                                                \
+// RUN:     -fno-signed-char                                                  \
 // RUN:     %s
