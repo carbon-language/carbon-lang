@@ -889,7 +889,7 @@ cores_match (const ArchSpec::Core core1, const ArchSpec::Core core2, bool try_in
         if (!enforce_exact_match)
         {
             try_inverse = false;
-            if (core2 == ArchSpec::eCore_arm_armv6)
+            if (core2 == ArchSpec::eCore_arm_armv7)
                 return true;
         }
         break;
