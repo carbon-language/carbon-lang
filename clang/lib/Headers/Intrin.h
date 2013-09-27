@@ -87,7 +87,9 @@ void __outdword(unsigned short, unsigned long);
 void __outdwordstring(unsigned short, unsigned long *, unsigned long);
 void __outword(unsigned short, unsigned short);
 void __outwordstring(unsigned short, unsigned short *, unsigned long);
+static __inline__
 unsigned int __popcnt(unsigned int);
+static __inline__
 unsigned short __popcnt16(unsigned short);
 unsigned __int64 __rdtsc(void);
 unsigned __int64 __rdtscp(unsigned int *);
@@ -133,16 +135,23 @@ void __writefsdword(unsigned long, unsigned long);
 void __writefsqword(unsigned long, unsigned __int64);
 void __writefsword(unsigned long, unsigned short);
 void __writemsr(unsigned long, unsigned __int64);
+static __inline__
 void *_AddressOfReturnAddress(void);
 unsigned int _andn_u32(unsigned int, unsigned int);
 unsigned int _bextr_u32(unsigned int, unsigned int, unsigned int);
 unsigned int _bextr_u32(unsigned int, unsigned int, unsigned int);
 unsigned int _bextri_u32(unsigned int, unsigned int);
+static __inline__
 unsigned char _BitScanForward(unsigned long *_Index, unsigned long _Mask);
+static __inline__
 unsigned char _BitScanReverse(unsigned long *_Index, unsigned long _Mask);
+static __inline__
 unsigned char _bittest(long const *, long);
+static __inline__
 unsigned char _bittestandcomplement(long *, long);
+static __inline__
 unsigned char _bittestandreset(long *, long);
+static __inline__
 unsigned char _bittestandset(long *, long);
 unsigned int _blcfill_u32(unsigned int);
 unsigned int _blci_u32(unsigned int);
@@ -165,63 +174,97 @@ void __cdecl _enable(void);
 void __cdecl _fxrstor(void const *);
 void __cdecl _fxsave(void *);
 long _InterlockedAddLargeStatistic(__int64 volatile *_Addend, long _Value);
+static __inline__
 long _InterlockedAnd(long volatile *_Value, long _Mask);
+static __inline__
 short _InterlockedAnd16(short volatile *_Value, short _Mask);
+static __inline__
 char _InterlockedAnd8(char volatile *_Value, char _Mask);
 unsigned char _interlockedbittestandreset(long volatile *, long);
 unsigned char _interlockedbittestandset(long volatile *, long);
+static __inline__
 long __cdecl _InterlockedCompareExchange(long volatile *_Destination,
                                          long _Exchange, long _Comparand);
 long _InterlockedCompareExchange_HLEAcquire(long volatile *, long, long);
 long _InterlockedCompareExchange_HLERelease(long volatile *, long, long);
+static __inline__
 short _InterlockedCompareExchange16(short volatile *_Destination,
                                     short _Exchange, short _Comparand);
+static __inline__
 __int64 _InterlockedCompareExchange64(__int64 volatile *_Destination,
                                       __int64 _Exchange, __int64 _Comparand);
 __int64 _InterlockedcompareExchange64_HLEAcquire(__int64 volatile *, __int64,
                                                  __int64);
 __int64 _InterlockedCompareExchange64_HLERelease(__int64 volatile *, __int64,
                                                  __int64);
+static __inline__
 char _InterlockedCompareExchange8(char volatile *_Destination, char _Exchange,
                                   char _Comparand);
 void *_InterlockedCompareExchangePointer_HLEAcquire(void *volatile *, void *,
                                                     void *);
 void *_InterlockedCompareExchangePointer_HLERelease(void *volatile *, void *,
                                                     void *);
+static __inline__
 long __cdecl _InterlockedDecrement(long volatile *_Addend);
+static __inline__
 short _InterlockedDecrement16(short volatile *_Addend);
+static __inline__
 long __cdecl _InterlockedExchange(long volatile *_Target, long _Value);
+static __inline__
 short _InterlockedExchange16(short volatile *_Target, short _Value);
+static __inline__
 char _InterlockedExchange8(char volatile *_Target, char _Value);
+static __inline__
 long __cdecl _InterlockedExchangeAdd(long volatile *_Addend, long _Value);
 long _InterlockedExchangeAdd_HLEAcquire(long volatile *, long);
 long _InterlockedExchangeAdd_HLERelease(long volatile *, long);
+static __inline__
 char _InterlockedExchangeAdd8(char volatile *_Addend, char _Value);
+static __inline__
 long __cdecl _InterlockedIncrement(long volatile *_Addend);
+static __inline__
 short _InterlockedIncrement16(short volatile *_Addend);
+static __inline__
 long _InterlockedOr(long volatile *_Value, long _Mask);
+static __inline__
 short _InterlockedOr16(short volatile *_Value, short _Mask);
+static __inline__
 char _InterlockedOr8(char volatile *_Value, char _Mask);
+static __inline__
 long _InterlockedXor(long volatile *_Value, long _Mask);
+static __inline__
 short _InterlockedXor16(short volatile *_Value, short _Mask);
+static __inline__
 char _InterlockedXor8(char volatile *_Value, char _Mask);
 void __cdecl _invpcid(unsigned int, void *);
+static __inline__
 unsigned long __cdecl _lrotl(unsigned long, int);
+static __inline__
 unsigned long __cdecl _lrotr(unsigned long, int);
+static __inline__
 unsigned int _lzcnt_u32(unsigned int);
 void _ReadBarrier(void);
 void _ReadWriteBarrier(void);
+static __inline__
 void *_ReturnAddress(void);
 unsigned int _rorx_u32(unsigned int, const unsigned int);
 int __cdecl _rdrand16_step(unsigned short *);
 int __cdecl _rdrand32_step(unsigned int *);
+static __inline__
 unsigned int __cdecl _rotl(unsigned int _Value, int _Shift);
+static __inline__
 unsigned short _rotl16(unsigned short _Value, unsigned char _Shift);
+static __inline__
 unsigned __int64 __cdecl _rotl64(unsigned __int64 _Value, int _Shift);
+static __inline__
 unsigned char _rotl8(unsigned char _Value, unsigned char _Shift);
+static __inline__
 unsigned int __cdecl _rotr(unsigned int _Value, int _Shift);
+static __inline__
 unsigned short _rotr16(unsigned short _Value, unsigned char _Shift);
+static __inline__
 unsigned __int64 __cdecl _rotr64(unsigned __int64 _Value, int _Shift);
+static __inline__
 unsigned char _rotr8(unsigned char _Value, unsigned char _Shift);
 int _sarx_i32(int, unsigned int);
 
@@ -270,11 +313,17 @@ void __stosq(unsigned __int64 *, unsigned __int64, size_t);
 unsigned __int64 _andn_u64(unsigned __int64, unsigned __int64);
 unsigned __int64 _bextr_u64(unsigned __int64, unsigned int, unsigned int);
 unsigned __int64 _bextri_u64(unsigned __int64, unsigned int);
+static __inline__
 unsigned char _BitScanForward64(unsigned long *_Index, unsigned __int64 _Mask);
+static __inline__
 unsigned char _BitScanReverse64(unsigned long *_Index, unsigned __int64 _Mask);
+static __inline__
 unsigned char _bittest64(__int64 const *, __int64);
+static __inline__
 unsigned char _bittestandcomplement64(__int64 *, __int64);
+static __inline__
 unsigned char _bittestandreset64(__int64 *, __int64);
+static __inline__
 unsigned char _bittestandset64(__int64 *, __int64);
 unsigned __int64 _blcfill_u64(unsigned __int64);
 unsigned __int64 _blci_u64(unsigned __int64);
@@ -342,6 +391,369 @@ void __cdecl _xsave64(void *, unsigned __int64);
 void __cdecl _xsaveopt64(void *, unsigned __int64);
 
 #endif /* __X86_64__ */
+
+/*----------------------------------------------------------------------------*\
+|* Bit Twiddling
+\*----------------------------------------------------------------------------*/
+static __inline__ unsigned char __attribute__((__always_inline__, __nodebug__))
+_rotl8(unsigned char _Value, unsigned char _Shift) {
+  _Shift &= 0x7;
+  return _Shift ? (_Value << _Shift) | (_Value >> (8 - _Shift)) : _Value;
+}
+static __inline__ unsigned char __attribute__((__always_inline__, __nodebug__))
+_rotr8(unsigned char _Value, unsigned char _Shift) {
+  _Shift &= 0x7;
+  return _Shift ? (_Value >> _Shift) | (_Value << (8 - _Shift)) : _Value;
+}
+static __inline__ unsigned short __attribute__((__always_inline__, __nodebug__))
+_rotl16(unsigned short _Value, unsigned char _Shift) {
+  _Shift &= 0xf;
+  return _Shift ? (_Value << _Shift) | (_Value >> (16 - _Shift)) : _Value;
+}
+static __inline__ unsigned short __attribute__((__always_inline__, __nodebug__))
+_rotr16(unsigned short _Value, unsigned char _Shift) {
+  _Shift &= 0xf;
+  return _Shift ? (_Value >> _Shift) | (_Value << (16 - _Shift)) : _Value;
+}
+static __inline__ unsigned int __attribute__((__always_inline__, __nodebug__))
+_rotl(unsigned int _Value, int _Shift) {
+  _Shift &= 0x1f;
+  return _Shift ? (_Value << _Shift) | (_Value >> (32 - _Shift)) : _Value;
+}
+static __inline__ unsigned int __attribute__((__always_inline__, __nodebug__))
+_rotr(unsigned int _Value, int _Shift) {
+  _Shift &= 0x1f;
+  return _Shift ? (_Value >> _Shift) | (_Value << (32 - _Shift)) : _Value;
+}
+static __inline__ unsigned long __attribute__((__always_inline__, __nodebug__))
+_lrotl(unsigned long _Value, int _Shift) {
+  _Shift &= 0x1f;
+  return _Shift ? (_Value << _Shift) | (_Value >> (32 - _Shift)) : _Value;
+}
+static __inline__ unsigned long __attribute__((__always_inline__, __nodebug__))
+_lrotr(unsigned long _Value, int _Shift) {
+  _Shift &= 0x1f;
+  return _Shift ? (_Value >> _Shift) | (_Value << (32 - _Shift)) : _Value;
+}
+static
+__inline__ unsigned __int64 __attribute__((__always_inline__, __nodebug__))
+_rotl64(unsigned __int64 _Value, int _Shift) {
+  _Shift &= 0x3f;
+  return _Shift ? (_Value << _Shift) | (_Value >> (64 - _Shift)) : _Value;
+}
+static
+__inline__ unsigned __int64 __attribute__((__always_inline__, __nodebug__))
+_rotr64(unsigned __int64 _Value, int _Shift) {
+  _Shift &= 0x3f;
+  return _Shift ? (_Value >> _Shift) | (_Value << (64 - _Shift)) : _Value;
+}
+/*----------------------------------------------------------------------------*\
+|* Bit Counting and Testing
+\*----------------------------------------------------------------------------*/
+static __inline__ unsigned char __attribute__((__always_inline__, __nodebug__))
+_BitScanForward(unsigned long *_Index, unsigned long _Mask) {
+  if (!_Mask)
+    return 0;
+  *_Index = __builtin_ctzl(_Mask);
+  return 1;
+}
+static __inline__ unsigned char __attribute__((__always_inline__, __nodebug__))
+_BitScanReverse(unsigned long *_Index, unsigned long _Mask) {
+  if (!_Mask)
+    return 0;
+  *_Index = 31 - __builtin_clzl(_Mask);
+  return 1;
+}
+static __inline__ unsigned int __attribute__((__always_inline__, __nodebug__))
+_lzcnt_u32(unsigned int a) {
+  if (!a)
+    return 32;
+  return __builtin_clzl(a);
+}
+static __inline__ unsigned short __attribute__((__always_inline__, __nodebug__))
+__popcnt16(unsigned short value) {
+  return __builtin_popcount((int)value);
+}
+static __inline__ unsigned int __attribute__((__always_inline__, __nodebug__))
+__popcnt(unsigned int value) {
+  return __builtin_popcount(value);
+}
+static __inline__ unsigned char __attribute__((__always_inline__, __nodebug__))
+_bittest(long const *a, long b) {
+  return (*a >> b) & 1;
+}
+static __inline__ unsigned char __attribute__((__always_inline__, __nodebug__))
+_bittestandcomplement(long *a, long b) {
+  unsigned char x = (*a >> b) & 1;
+  *a = *a ^ (1 << b);
+  return x;
+}
+static __inline__ unsigned char __attribute__((__always_inline__, __nodebug__))
+_bittestandreset(long *a, long b) {
+  unsigned char x = (*a >> b) & 1;
+  *a = *a & ~(1 << b);
+  return x;
+}
+static __inline__ unsigned char __attribute__((__always_inline__, __nodebug__))
+_bittestandset(long *a, long b) {
+  unsigned char x = (*a >> b) & 1;
+  *a = *a & (1 << b);
+  return x;
+}
+#ifdef __X86_64__
+static __inline__ unsigned char __attribute__((__always_inline__, __nodebug__))
+_BitScanForward64(unsigned long *_Index, unsigned __int64 _Mask) {
+  if (!_Mask)
+    return 0;
+  *_Index = __builtin_ctzll(_Mask);
+  return 1;
+}
+static __inline__ unsigned char __attribute__((__always_inline__, __nodebug__))
+_BitScanReverse64(unsigned long *_Index, unsigned __int64 _Mask) {
+  if (!_Mask)
+    return 0;
+  *_Index = 63 - __builtin_clzll(_Mask);
+  return 1;
+}
+static
+__inline__ unsigned __int64 __attribute__((__always_inline__, __nodebug__))
+_lzcnt_u64(unsigned __int64 a) {
+  if (!a)
+    return 64;
+  return __builtin_clzll(a);
+}
+static __inline__
+unsigned __int64 __attribute__((__always_inline__, __nodebug__))
+ __popcnt64(unsigned __int64 value) {
+  return __builtin_popcountll(value);
+}
+static __inline__ unsigned char __attribute__((__always_inline__, __nodebug__))
+_bittest64(__int64 const *a, __int64 b) {
+  return (*a >> b) & 1;
+}
+static __inline__ unsigned char __attribute__((__always_inline__, __nodebug__))
+_bittestandcomplement64(__int64 *a, __int64 b) {
+  unsigned char x = (*a >> b) & 1;
+  *a = *a ^ (1ll << b);
+  return x;
+}
+static __inline__ unsigned char __attribute__((__always_inline__, __nodebug__))
+_bittestandreset64(__int64 *a, __int64 b) {
+  unsigned char x = (*a >> b) & 1;
+  *a = *a & ~(1ll << b);
+  return x;
+}
+static __inline__ unsigned char __attribute__((__always_inline__, __nodebug__))
+_bittestandset64(__int64 *a, __int64 b) {
+  unsigned char x = (*a >> b) & 1;
+  *a = *a & (1ll << b);
+  return x;
+}
+#endif
+/*----------------------------------------------------------------------------*\
+|* Interlocked Exchange Add
+\*----------------------------------------------------------------------------*/
+static __inline__ char __attribute__((__always_inline__, __nodebug__))
+_InterlockedExchangeAdd8(char volatile *_Addend, char _Value) {
+  return __atomic_add_fetch(_Addend, _Value, 0) - _Value;
+}
+static __inline__ short __attribute__((__always_inline__, __nodebug__))
+_InterlockedExchangeAdd16(short volatile *_Addend, short _Value) {
+  return __atomic_add_fetch(_Addend, _Value, 0) - _Value;
+}
+static __inline__ long __attribute__((__always_inline__, __nodebug__))
+_InterlockedExchangeAdd(long volatile *_Addend, long _Value) {
+  return __atomic_add_fetch(_Addend, _Value, 0) - _Value;
+}
+#ifdef __X86_64__
+static __inline__ __int64 __attribute__((__always_inline__, __nodebug__))
+_InterlockedExchangeAdd64(__int64 volatile *_Addend, __int64 _Value) {
+  return __atomic_add_fetch(_Addend, _Value, 0) - _Value;
+}
+#endif
+/*----------------------------------------------------------------------------*\
+|* Interlocked Exchange Sub
+\*----------------------------------------------------------------------------*/
+static __inline__ char __attribute__((__always_inline__, __nodebug__))
+_InterlockedExchangeSub8(char volatile *_Subend, char _Value) {
+  return __atomic_sub_fetch(_Subend, _Value, 0) + _Value;
+}
+static __inline__ short __attribute__((__always_inline__, __nodebug__))
+_InterlockedExchangeSub16(short volatile *_Subend, short _Value) {
+  return __atomic_sub_fetch(_Subend, _Value, 0) + _Value;
+}
+static __inline__ long __attribute__((__always_inline__, __nodebug__))
+_InterlockedExchangeSub(long volatile *_Subend, long _Value) {
+  return __atomic_sub_fetch(_Subend, _Value, 0) + _Value;
+}
+#ifdef __X86_64__
+static __inline__ __int64 __attribute__((__always_inline__, __nodebug__))
+_InterlockedExchangeSub64(__int64 volatile *_Subend, __int64 _Value) {
+  return __atomic_sub_fetch(_Subend, _Value, 0) + _Value;
+}
+#endif
+/*----------------------------------------------------------------------------*\
+|* Interlocked Increment
+\*----------------------------------------------------------------------------*/
+static __inline__ char __attribute__((__always_inline__, __nodebug__))
+_InterlockedIncrement16(char volatile *_Value) {
+  return __atomic_add_fetch(_Value, 1, 0);
+}
+static __inline__ long __attribute__((__always_inline__, __nodebug__))
+_InterlockedIncrement(long volatile *_Value) {
+  return __atomic_add_fetch(_Value, 1, 0);
+}
+#ifdef __X86_64__
+static __inline__ __int64 __attribute__((__always_inline__, __nodebug__))
+_InterlockedIncrement64(__int64 volatile *_Value) {
+  return __atomic_add_fetch(_Value, 1, 0);
+}
+#endif
+/*----------------------------------------------------------------------------*\
+|* Interlocked Decrement
+\*----------------------------------------------------------------------------*/
+static __inline__ char __attribute__((__always_inline__, __nodebug__))
+_InterlockedDecrement16(char volatile *_Value) {
+  return __atomic_sub_fetch(_Value, 1, 0);
+}
+static __inline__ long __attribute__((__always_inline__, __nodebug__))
+_InterlockedDecrement(long volatile *_Value) {
+  return __atomic_sub_fetch(_Value, 1, 0);
+}
+#ifdef __X86_64__
+static __inline__ __int64 __attribute__((__always_inline__, __nodebug__))
+_InterlockedDecrement64(__int64 volatile *_Value) {
+  return __atomic_sub_fetch(_Value, 1, 0);
+}
+#endif
+/*----------------------------------------------------------------------------*\
+|* Interlocked And
+\*----------------------------------------------------------------------------*/
+static __inline__ char __attribute__((__always_inline__, __nodebug__))
+_InterlockedAnd8(char volatile *_Value, char _Mask) {
+  return __atomic_and_fetch(_Value, _Mask, 0);
+}
+static __inline__ short __attribute__((__always_inline__, __nodebug__))
+_InterlockedAnd16(short volatile *_Value, short _Mask) {
+  return __atomic_and_fetch(_Value, _Mask, 0);
+}
+static __inline__ long __attribute__((__always_inline__, __nodebug__))
+_InterlockedAnd(long volatile *_Value, long _Mask) {
+  return __atomic_and_fetch(_Value, _Mask, 0);
+}
+#ifdef __X86_64__
+static __inline__ __int64 __attribute__((__always_inline__, __nodebug__))
+_InterlockedAnd64(__int64 volatile *_Value, __int64 _Mask) {
+  return __atomic_and_fetch(_Value, _Mask, 0);
+}
+#endif
+/*----------------------------------------------------------------------------*\
+|* Interlocked Or
+\*----------------------------------------------------------------------------*/
+static __inline__ char __attribute__((__always_inline__, __nodebug__))
+_InterlockedOr8(char volatile *_Value, char _Mask) {
+  return __atomic_or_fetch(_Value, _Mask, 0);
+}
+static __inline__ short __attribute__((__always_inline__, __nodebug__))
+_InterlockedOr16(short volatile *_Value, short _Mask) {
+  return __atomic_or_fetch(_Value, _Mask, 0);
+}
+static __inline__ long __attribute__((__always_inline__, __nodebug__))
+_InterlockedOr(long volatile *_Value, long _Mask) {
+  return __atomic_or_fetch(_Value, _Mask, 0);
+}
+#ifdef __X86_64__
+static __inline__ __int64 __attribute__((__always_inline__, __nodebug__))
+_InterlockedOr64(__int64 volatile *_Value, __int64 _Mask) {
+  return __atomic_or_fetch(_Value, _Mask, 0);
+}
+#endif
+/*----------------------------------------------------------------------------*\
+|* Interlocked Xor
+\*----------------------------------------------------------------------------*/
+static __inline__ char __attribute__((__always_inline__, __nodebug__))
+_InterlockedXor8(char volatile *_Value, char _Mask) {
+  return __atomic_xor_fetch(_Value, _Mask, 0);
+}
+static __inline__ short __attribute__((__always_inline__, __nodebug__))
+_InterlockedXor16(short volatile *_Value, short _Mask) {
+  return __atomic_xor_fetch(_Value, _Mask, 0);
+}
+static __inline__ long __attribute__((__always_inline__, __nodebug__))
+_InterlockedXor(long volatile *_Value, long _Mask) {
+  return __atomic_xor_fetch(_Value, _Mask, 0);
+}
+#ifdef __X86_64__
+static __inline__ __int64 __attribute__((__always_inline__, __nodebug__))
+_InterlockedXor64(__int64 volatile *_Value, __int64 _Mask) {
+  return __atomic_xor_fetch(_Value, _Mask, 0);
+}
+#endif
+/*----------------------------------------------------------------------------*\
+|* Interlocked Exchange
+\*----------------------------------------------------------------------------*/
+static __inline__ char __attribute__((__always_inline__, __nodebug__))
+_InterlockedExchange8(char volatile *_Target, char _Value) {
+  __atomic_exchange(_Target, &_Value, &_Value, 0);
+  return _Value;
+}
+static __inline__ short __attribute__((__always_inline__, __nodebug__))
+_InterlockedExchange16(short volatile *_Target, short _Value) {
+  __atomic_exchange(_Target, &_Value, &_Value, 0);
+  return _Value;
+}
+static __inline__ long __attribute__((__always_inline__, __nodebug__))
+_InterlockedExchange(long volatile *_Target, long _Value) {
+  __atomic_exchange(_Target, &_Value, &_Value, 0);
+  return _Value;
+}
+#ifdef __X86_64__
+static __inline__ __int64 __attribute__((__always_inline__, __nodebug__))
+_InterlockedExchange64(__int64 volatile *_Target, __int64 _Value) {
+  __atomic_exchange(_Target, &_Value, &_Value, 0);
+  return _Value;
+}
+#endif
+/*----------------------------------------------------------------------------*\
+|* Interlocked Compare Exchange
+\*----------------------------------------------------------------------------*/
+static __inline__ char __attribute__((__always_inline__, __nodebug__))
+_InterlockedCompareExchange8(char volatile *_Destination,
+                             char _Exchange, char _Comparand) {
+  __atomic_compare_exchange(_Destination, &_Comparand, &_Exchange, 0, 0, 0);
+  return _Comparand;
+}
+static __inline__ short __attribute__((__always_inline__, __nodebug__))
+_InterlockedCompareExchange16(short volatile *_Destination,
+                              short _Exchange, short _Comparand) {
+  __atomic_compare_exchange(_Destination, &_Comparand, &_Exchange, 0, 0, 0);
+  return _Comparand;
+}
+static __inline__ long __attribute__((__always_inline__, __nodebug__))
+_InterlockedCompareExchange(long volatile *_Destination,
+                            long _Exchange, long _Comparand) {
+  __atomic_compare_exchange(_Destination, &_Comparand, &_Exchange, 0, 0, 0);
+  return _Comparand;
+}
+#ifdef __X86_64__
+static __inline__ __int64 __attribute__((__always_inline__, __nodebug__))
+_InterlockedCompareExchange64(__int64 volatile *_Destination,
+                              __int64 _Exchange, __int64 _Comparand) {
+  __atomic_compare_exchange(_Destination, &_Comparand, &_Exchange, 0, 0, 0);
+  return _Comparand;
+}
+#endif
+/*----------------------------------------------------------------------------*\
+|* Misc
+\*----------------------------------------------------------------------------*/
+static __inline__ void * __attribute__((__always_inline__, __nodebug__))
+_AddressOfReturnAddress(void) {
+  return (void*)((char*)__builtin_frame_address(0) + sizeof(void*));
+}
+static __inline__ void * __attribute__((__always_inline__, __nodebug__))
+_ReturnAddress(void) {
+  return __builtin_return_address(0);
+}
 
 #ifdef __cplusplus
 }
