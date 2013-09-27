@@ -2553,10 +2553,10 @@ defm VSHUFPSY : sse12_shuffle<VR256, f256mem, v8f32,
            "shufps\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
            memopv8f32, SSEPackedSingle>, TB, VEX_4V, VEX_L;
 defm VSHUFPD  : sse12_shuffle<VR128, f128mem, v2f64,
-           "shufpd\t{$src3, $src2, $src1, $dst|$dst, $src2, $src2, $src3}",
+           "shufpd\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
            memopv2f64, SSEPackedDouble>, TB, OpSize, VEX_4V;
 defm VSHUFPDY : sse12_shuffle<VR256, f256mem, v4f64,
-           "shufpd\t{$src3, $src2, $src1, $dst|$dst, $src2, $src2, $src3}",
+           "shufpd\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
            memopv4f64, SSEPackedDouble>, TB, OpSize, VEX_4V, VEX_L;
 
 let Constraints = "$src1 = $dst" in {
