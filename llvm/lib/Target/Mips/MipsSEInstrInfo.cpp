@@ -154,6 +154,10 @@ void MipsSEInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     else if (Mips::FGR64RegClass.contains(DestReg))
       Opc = Mips::DMTC1;
   }
+  else if (Mips::MSA128BRegClass.contains(DestReg)) { // Copy to MSA reg
+    if (Mips::MSA128BRegClass.contains(SrcReg))
+      Opc = Mips::MOVE_V;
+  }
 
   assert(Opc && "Cannot copy registers");
 
