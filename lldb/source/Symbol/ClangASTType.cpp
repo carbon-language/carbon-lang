@@ -1065,14 +1065,14 @@ ClangASTType::GetConstTypeName () const
 {
     if (IsValid())
     {
-        std::string type_name (GetTypeName());
-        if (!type_name.empty())
-            return ConstString (type_name.c_str());
+        ConstString type_name (GetTypeName());
+        if (type_name)
+            return type_name;
     }
     return ConstString("<invalid>");
 }
 
-std::string
+ConstString
 ClangASTType::GetTypeName () const
 {
     std::string type_name;
@@ -1093,7 +1093,7 @@ ClangASTType::GetTypeName () const
             type_name = qual_type.getAsString(printing_policy);
         }
     }
-    return type_name;
+    return ConstString(type_name);
 }
 
 
@@ -3777,7 +3777,7 @@ ClangASTType::GetIndexOfChildWithName (const char *name, bool omit_empty_base_cl
                                 continue;
                             
                             ClangASTType base_class_clang_type (m_ast, base_class->getType());
-                            std::string base_class_type_name (base_class_clang_type.GetTypeName());
+                            std::string base_class_type_name (base_class_clang_type.GetTypeName().AsCString(""));
                             if (base_class_type_name.compare (name) == 0)
                                 return child_idx;
                             ++child_idx;

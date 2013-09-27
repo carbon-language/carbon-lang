@@ -111,7 +111,7 @@ ClangFunction::CompileFunction (Stream &errors)
     // FIXME: How does clang tell us there's no return value?  We need to handle that case.
     unsigned num_errors = 0;
     
-    std::string return_type_str (m_function_return_type.GetTypeName());
+    std::string return_type_str (m_function_return_type.GetTypeName().AsCString(""));
     
     // Cons up the function we're going to wrap our call in, then compile it...
     // We declare the function "extern "C"" because the compiler might be in C++

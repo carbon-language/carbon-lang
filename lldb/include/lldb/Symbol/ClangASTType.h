@@ -249,7 +249,7 @@ public:
     ConstString
     GetConstTypeName () const;
     
-    std::string
+    ConstString
     GetTypeName () const;
 
     uint32_t

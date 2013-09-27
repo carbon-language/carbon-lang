@@ -2465,22 +2465,21 @@ SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (ClangASTType &clang_type)
                     
                     if (class_language == eLanguageTypeObjC)
                     {
-                        std::string class_str (clang_type.GetTypeName());
-                        if (!class_str.empty())
+                        ConstString class_name (clang_type.GetTypeName());
+                        if (class_name)
                         {
                             
                             DIEArray method_die_offsets;
                             if (m_using_apple_tables)
                             {
                                 if (m_apple_objc_ap.get())
-                                    m_apple_objc_ap->FindByName(class_str.c_str(), method_die_offsets);
+                                    m_apple_objc_ap->FindByName(class_name.GetCString(), method_die_offsets);
                             }
                             else
                             {
                                 if (!m_indexed)
                                     Index ();
                                 
-                                ConstString class_name (class_str.c_str());
                                 m_objc_class_selectors_index.Find (class_name, method_die_offsets);
                             }
                             
@@ -2502,7 +2501,7 @@ SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (ClangASTType &clang_type)
                                         if (m_using_apple_tables)
                                         {
                                             GetObjectFile()->GetModule()->ReportErrorIfModifyDetected ("the DWARF debug information has been modified (.apple_objc accelerator table had bad die 0x%8.8x for '%s')\n",
-                                                                                                       die_offset, class_str.c_str());
+                                                                                                       die_offset, class_name.GetCString());
                                         }
                                     }            
                                 }
