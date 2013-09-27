@@ -119,12 +119,8 @@ TEST(FakeStack, Allocate) {
         EXPECT_EQ(x, fs->AddrIsInFakeStack(x + bytes_in_class - 1));
         EXPECT_NE(x, fs->AddrIsInFakeStack(x + bytes_in_class));
       }
-      if (iter == 0 &&
-          (cid == 0 || cid == FakeStack::kNumberOfSizeClasses - 1)) {
-        // This is slow, so we do it only sometimes.
-        EXPECT_DEATH(fs->Allocate(stack_size_log, cid, 0),
-                     "Failed to allocate a fake stack frame");
-      }
+      // We are out of fake stack, so Allocate should return 0.
+      EXPECT_EQ(0UL, fs->Allocate(stack_size_log, cid, 0));
     }
     for (std::map<FakeFrame *, uptr>::iterator it = s.begin(); it != s.end();
          ++it) {

@@ -35,6 +35,30 @@ ALWAYS_INLINE void SetShadow(uptr ptr, uptr size, uptr class_id, u64 magic) {
   }
 }
 
+FakeStack *FakeStack::Create(uptr stack_size_log) {
+  static uptr kMinStackSizeLog = 16;
+  static uptr kMaxStackSizeLog = FIRST_32_SECOND_64(24, 28);
+  if (stack_size_log < kMinStackSizeLog)
+    stack_size_log = kMinStackSizeLog;
+  if (stack_size_log > kMaxStackSizeLog)
+    stack_size_log = kMaxStackSizeLog;
+  FakeStack *res = reinterpret_cast<FakeStack *>(
+      MmapOrDie(RequiredSize(stack_size_log), "FakeStack"));
+  res->stack_size_log_ = stack_size_log;
+  if (flags()->verbosity) {
+    u8 *p = reinterpret_cast<u8 *>(res);
+    Report("T%d: FakeStack created: %p -- %p stack_size_log: %zd \n",
+           GetCurrentTidOrInvalid(), p,
+           p + FakeStack::RequiredSize(stack_size_log), stack_size_log);
+  }
+  return res;
+}
+
+void FakeStack::Destroy() {
+  PoisonAll(0);
+  UnmapOrDie(this, RequiredSize(stack_size_log_));
+}
+
 void FakeStack::PoisonAll(u8 magic) {
   PoisonShadow(reinterpret_cast<uptr>(this), RequiredSize(stack_size_log()),
                magic);
@@ -66,8 +90,7 @@ FakeFrame *FakeStack::Allocate(uptr stack_size_log, uptr class_id,
     *SavedFlagPtr(reinterpret_cast<uptr>(res), class_id) = &flags[pos];
     return res;
   }
-  CHECK(0 && "Failed to allocate a fake stack frame");
-  return 0;
+  return 0; // We are out of fake stack.
 }
 
 uptr FakeStack::AddrIsInFakeStack(uptr ptr) {
@@ -143,6 +166,8 @@ ALWAYS_INLINE uptr OnMalloc(uptr class_id, uptr size, uptr real_stack) {
   FakeStack *fs = GetFakeStackFast();
   if (!fs) return real_stack;
   FakeFrame *ff = fs->Allocate(fs->stack_size_log(), class_id, real_stack);
+  if (!ff)
+    return real_stack;  // Out of fake stack, return the real one.
   uptr ptr = reinterpret_cast<uptr>(ff);
   SetShadow(ptr, size, class_id, 0);
   return ptr;

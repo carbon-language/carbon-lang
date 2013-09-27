@@ -15,6 +15,11 @@
 // Test that we can find UAR in a thread other than main:
 // RUN: %clangxx_asan  -DUseThread -O2 %s -o %t && \
 // RUN:   not %t 2>&1 | FileCheck --check-prefix=THREAD %s
+//
+// Test the uar_stack_size_log flag.
+//
+// RUN: ASAN_OPTIONS=$ASAN_OPTIONS:uar_stack_size_log=20:verbosity=1 not %t 2>&1 | FileCheck --check-prefix=CHECK-20 %s
+// RUN: ASAN_OPTIONS=$ASAN_OPTIONS:uar_stack_size_log=24:verbosity=1 not %t 2>&1 | FileCheck --check-prefix=CHECK-24 %s
 
 #include <stdio.h>
 #include <pthread.h>
@@ -51,6 +56,8 @@ void Func2(char *x) {
   // THREAD:     #0{{.*}}Func2{{.*}}stack-use-after-return.cc:[[@LINE-6]]
   // THREAD: is located in stack of thread T{{[1-9]}} at offset
   // THREAD: 'local' <== Memory access at offset 32 is inside this variable
+  // CHECK-20: T0: FakeStack created:{{.*}} stack_size_log: 20
+  // CHECK-24: T0: FakeStack created:{{.*}} stack_size_log: 24
 }
 
 void *Thread(void *unused)  {
