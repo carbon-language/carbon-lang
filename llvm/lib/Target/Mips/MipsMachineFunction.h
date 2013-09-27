@@ -15,13 +15,36 @@
 #define MIPS_MACHINE_FUNCTION_INFO_H
 
 #include "MipsSubtarget.h"
+#include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/ValueMap.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineMemOperand.h"
+#include "llvm/CodeGen/PseudoSourceValue.h"
+#include "llvm/IR/GlobalValue.h"
 #include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetMachine.h"
 #include <utility>
 
 namespace llvm {
+
+/// \brief A class derived from PseudoSourceValue that represents a GOT entry
+/// resolved by lazy-binding.
+class MipsCallEntry : public PseudoSourceValue {
+public:
+  explicit MipsCallEntry(const StringRef &N);
+  explicit MipsCallEntry(const GlobalValue *V);
+  virtual bool isConstant(const MachineFrameInfo *) const;
+  virtual bool isAliased(const MachineFrameInfo *) const;
+  virtual bool mayAlias(const MachineFrameInfo *) const;
+
+private:
+  virtual void printCustom(raw_ostream &O) const;
+#ifndef NDEBUG
+  std::string Name;
+  const GlobalValue *Val;
+#endif
+};
 
 /// MipsFunctionInfo - This class is derived from MachineFunction private
 /// Mips target-specific information for each MachineFunction.
@@ -31,6 +54,8 @@ public:
    : MF(MF), SRetReturnReg(0), GlobalBaseReg(0), Mips16SPAliasReg(0),
      VarArgsFrameIndex(0), CallsEhReturn(false)
   {}
+
+  ~MipsFunctionInfo();
 
   unsigned getSRetReturnReg() const { return SRetReturnReg; }
   void setSRetReturnReg(unsigned Reg) { SRetReturnReg = Reg; }
@@ -58,6 +83,14 @@ public:
   void createEhDataRegsFI();
   int getEhDataRegFI(unsigned Reg) const { return EhDataRegFI[Reg]; }
   bool isEhDataRegFI(int FI) const;
+
+  /// \brief Create a MachinePointerInfo that has a MipsCallEntr object
+  /// representing a GOT entry for an external function.
+  MachinePointerInfo callPtrInfo(const StringRef &Name);
+
+  /// \brief Create a MachinePointerInfo that has a MipsCallEntr object
+  /// representing a GOT entry for a global function.
+  MachinePointerInfo callPtrInfo(const GlobalValue *Val);
 
 private:
   virtual void anchor();
@@ -92,6 +125,10 @@ private:
 
   /// Frame objects for spilling eh data registers.
   int EhDataRegFI[4];
+
+  /// MipsCallEntry maps.
+  StringMap<const MipsCallEntry *> ExternalCallEntries;
+  ValueMap<const GlobalValue *, const MipsCallEntry *> GlobalCallEntries;
 };
 
 } // end of namespace llvm
