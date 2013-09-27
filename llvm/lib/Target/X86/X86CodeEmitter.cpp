@@ -919,6 +919,9 @@ void Emitter<CodeEmitter>::emitVEXOpcodePrefix(uint64_t TSFlags,
     case X86II::XOP9:
       VEX_5M = 0x9;
       break;
+    case X86II::XOPA:
+      VEX_5M = 0xA;
+      break;
     case X86II::A6:  // Bypass: Not used by VEX
     case X86II::A7:  // Bypass: Not used by VEX
     case X86II::TB:  // Bypass: Not used by VEX

@@ -139,6 +139,7 @@ class T8XS   { bits<5> Prefix = 18; }
 class TAXD   { bits<5> Prefix = 19; }
 class XOP8   { bits<5> Prefix = 20; }
 class XOP9   { bits<5> Prefix = 21; }
+class XOPA   { bits<5> Prefix = 22; }
 class VEX    { bit hasVEXPrefix = 1; }
 class VEX_W  { bit hasVEX_WPrefix = 1; }
 class VEX_4V : VEX { bit hasVEX_4VPrefix = 1; }

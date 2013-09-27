@@ -354,6 +354,9 @@ namespace X86II {
     // XOP9 - Prefix to exclude use of imm byte.
     XOP9 = 21 << Op0Shift,
 
+    // XOPA - Prefix to encode 0xA in VEX.MMMM of XOP instructions.
+    XOPA = 22 << Op0Shift,
+
     //===------------------------------------------------------------------===//
     // REX_W - REX prefixes are instruction prefixes used in 64-bit mode.
     // They are used to specify GPRs and SSE registers, 64-bit operand size,

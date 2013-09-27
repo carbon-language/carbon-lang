@@ -2594,6 +2594,72 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
 }
 
 //===----------------------------------------------------------------------===//
+// TBM
+
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_tbm_bextri_u32 : GCCBuiltin<"__builtin_ia32_bextri_u32">,
+        Intrinsic<[llvm_i32_ty], [llvm_i32_ty,
+                  llvm_i32_ty], [IntrNoMem]>;
+  def int_x86_tbm_bextri_u64 : GCCBuiltin<"__builtin_ia32_bextri_u64">,
+        Intrinsic<[llvm_i64_ty], [llvm_i64_ty,
+                  llvm_i32_ty], [IntrNoMem]>;
+  def int_x86_tbm_blcfill_u32 : GCCBuiltin<"__builtin_ia32_blcfill_u32">,
+        Intrinsic<[llvm_i32_ty], [llvm_i32_ty],
+                  [IntrNoMem]>;
+  def int_x86_tbm_blcfill_u64 : GCCBuiltin<"__builtin_ia32_blcfill_u64">,
+        Intrinsic<[llvm_i64_ty], [llvm_i64_ty],
+                  [IntrNoMem]>;
+  def int_x86_tbm_blci_u32 : GCCBuiltin<"__builtin_ia32_blci_u32">,
+        Intrinsic<[llvm_i32_ty], [llvm_i32_ty],
+                  [IntrNoMem]>;
+  def int_x86_tbm_blci_u64 : GCCBuiltin<"__builtin_ia32_blci_u64">,
+        Intrinsic<[llvm_i64_ty], [llvm_i64_ty],
+                  [IntrNoMem]>;
+  def int_x86_tbm_blcic_u32 : GCCBuiltin<"__builtin_ia32_blcic_u32">,
+        Intrinsic<[llvm_i32_ty], [llvm_i32_ty],
+                  [IntrNoMem]>;
+  def int_x86_tbm_blcic_u64 : GCCBuiltin<"__builtin_ia32_blcic_u64">,
+        Intrinsic<[llvm_i64_ty], [llvm_i64_ty],
+                  [IntrNoMem]>;
+  def int_x86_tbm_blcmsk_u32 : GCCBuiltin<"__builtin_ia32_blcmsk_u32">,
+        Intrinsic<[llvm_i32_ty], [llvm_i32_ty],
+                  [IntrNoMem]>;
+  def int_x86_tbm_blcmsk_u64 : GCCBuiltin<"__builtin_ia32_blcmsk_u64">,
+        Intrinsic<[llvm_i64_ty], [llvm_i64_ty],
+                  [IntrNoMem]>;
+  def int_x86_tbm_blcs_u32 : GCCBuiltin<"__builtin_ia32_blcs_u32">,
+        Intrinsic<[llvm_i32_ty], [llvm_i32_ty],
+                  [IntrNoMem]>;
+  def int_x86_tbm_blcs_u64 : GCCBuiltin<"__builtin_ia32_blcs_u64">,
+        Intrinsic<[llvm_i64_ty], [llvm_i64_ty],
+                  [IntrNoMem]>;
+  def int_x86_tbm_blsfill_u32 : GCCBuiltin<"__builtin_ia32_blsfill_u32">,
+        Intrinsic<[llvm_i32_ty], [llvm_i32_ty],
+                  [IntrNoMem]>;
+  def int_x86_tbm_blsfill_u64 : GCCBuiltin<"__builtin_ia32_blsfill_u64">,
+        Intrinsic<[llvm_i64_ty], [llvm_i64_ty],
+                  [IntrNoMem]>;
+  def int_x86_tbm_blsic_u32 : GCCBuiltin<"__builtin_ia32_blsic_u32">,
+        Intrinsic<[llvm_i32_ty], [llvm_i32_ty],
+                  [IntrNoMem]>;
+  def int_x86_tbm_blsic_u64 : GCCBuiltin<"__builtin_ia32_blsic_u64">,
+        Intrinsic<[llvm_i64_ty], [llvm_i64_ty],
+                  [IntrNoMem]>;
+  def int_x86_tbm_t1mskc_u32 : GCCBuiltin<"__builtin_ia32_t1mskc_u32">,
+        Intrinsic<[llvm_i32_ty], [llvm_i32_ty],
+                  [IntrNoMem]>;
+  def int_x86_tbm_t1mskc_u64 : GCCBuiltin<"__builtin_ia32_t1mskc_u64">,
+        Intrinsic<[llvm_i64_ty], [llvm_i64_ty],
+                  [IntrNoMem]>;
+  def int_x86_tbm_tzmsk_u32 : GCCBuiltin<"__builtin_ia32_tzmsk_u32">,
+        Intrinsic<[llvm_i32_ty], [llvm_i32_ty],
+                  [IntrNoMem]>;
+  def int_x86_tbm_tzmsk_u64 : GCCBuiltin<"__builtin_ia32_tzmsk_u64">,
+        Intrinsic<[llvm_i64_ty], [llvm_i64_ty],
+                  [IntrNoMem]>;
+}
+
+//===----------------------------------------------------------------------===//
 // RDRAND intrinsics - Return a random value and whether it is valid.
 // RDSEED intrinsics - Return a NIST SP800-90B & C compliant random value and
 // whether it is valid.

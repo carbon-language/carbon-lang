@@ -664,6 +664,7 @@ def HasFMA       : Predicate<"Subtarget->hasFMA()">;
 def UseFMAOnAVX  : Predicate<"Subtarget->hasFMA() && !Subtarget->hasAVX512()">;
 def HasFMA4      : Predicate<"Subtarget->hasFMA4()">;
 def HasXOP       : Predicate<"Subtarget->hasXOP()">;
+def HasTBM       : Predicate<"Subtarget->hasTBM()">;
 def HasMOVBE     : Predicate<"Subtarget->hasMOVBE()">;
 def HasRDRAND    : Predicate<"Subtarget->hasRDRAND()">;
 def HasF16C      : Predicate<"Subtarget->hasF16C()">;
@@ -1905,6 +1906,84 @@ let Predicates = [HasBMI2] in {
   defm PEXT64 : bmi_pdep_pext<"pext{q}", GR64, i64mem,
                                int_x86_bmi_pext_64, loadi64>, T8XS, VEX_W;
 }
+
+//===----------------------------------------------------------------------===//
+// TBM Instructions
+//
+let isAsmParserOnly = 1, Predicates = [HasTBM], Defs = [EFLAGS] in {
+
+multiclass tbm_ternary_imm_intr<bits<8> opc, RegisterClass RC, string OpcodeStr,
+                                X86MemOperand x86memop, PatFrag ld_frag,
+                                Intrinsic Int> {
+  def rr : Ii32<opc,  MRMSrcReg, (outs RC:$dst), (ins RC:$src1, i32imm:$cntl),
+                !strconcat(OpcodeStr,
+                           "\t{$cntl, $src1, $dst|$dst, $src1, $cntl}"),
+                [(set RC:$dst, (Int RC:$src1, imm:$cntl))]>,
+           XOP, XOPA, VEX;
+  def mr : Ii32<opc,  MRMSrcMem, (outs RC:$dst),
+                (ins x86memop:$src1, i32imm:$cntl),
+                !strconcat(OpcodeStr,
+                           "\t{$cntl, $src1, $dst|$dst, $src1, $cntl}"),
+                [(set RC:$dst, (Int (ld_frag addr:$src1), imm:$cntl))]>,
+           XOP, XOPA, VEX;
+}
+
+defm BEXTRI32 : tbm_ternary_imm_intr<0x10, GR32, "bextr", i32mem, loadi32,
+                                     int_x86_tbm_bextri_u32>;
+defm BEXTRI64 : tbm_ternary_imm_intr<0x10, GR64, "bextr", i64mem, loadi64,
+                                     int_x86_tbm_bextri_u64>, VEX_W;
+
+multiclass tbm_binary_rm<bits<8> opc, Format FormReg, Format FormMem,
+                         RegisterClass RC, string OpcodeStr,
+                         X86MemOperand x86memop, PatFrag ld_frag,
+                         Intrinsic Int> {
+  def rr : I<opc,  FormReg, (outs RC:$dst), (ins RC:$src),
+             !strconcat(OpcodeStr,"\t{$src, $dst|$dst, $src}"),
+             [(set RC:$dst, (Int RC:$src))]>,
+           XOP, XOP9,  VEX_4V;
+  def rm : I<opc,  FormMem, (outs RC:$dst), (ins x86memop:$src),
+             !strconcat(OpcodeStr,"\t{$src, $dst|$dst, $src}"),
+             [(set RC:$dst, (Int (ld_frag addr:$src)))]>,
+           XOP, XOP9,  VEX_4V;
+}
+
+multiclass tbm_binary_intr<bits<8> opc, string OpcodeStr,
+                           Format FormReg, Format FormMem,
+                           Intrinsic Int32, Intrinsic Int64> {
+  defm _32 : tbm_binary_rm<opc, FormReg, FormMem, GR32, OpcodeStr, i32mem,
+                           loadi32, Int32>;
+  defm _64 : tbm_binary_rm<opc, FormReg, FormMem, GR64, OpcodeStr, i64mem,
+                           loadi64, Int64>, VEX_W;
+}
+
+defm BLCFILL : tbm_binary_intr<0x01, "blcfill", MRM1r, MRM1m,
+                               int_x86_tbm_blcfill_u32,
+                               int_x86_tbm_blcfill_u64>;
+defm BLCI    : tbm_binary_intr<0x02, "blci", MRM6r, MRM6m,
+                               int_x86_tbm_blci_u32,
+                               int_x86_tbm_blci_u64>;
+defm BLCIC   : tbm_binary_intr<0x01, "blcic", MRM5r, MRM5m,
+                               int_x86_tbm_blcic_u32,
+                               int_x86_tbm_blcic_u64>;
+defm BLCMSK  : tbm_binary_intr<0x02, "blcmsk", MRM1r, MRM1m,
+                               int_x86_tbm_blcmsk_u32,
+                               int_x86_tbm_blcmsk_u64>;
+defm BLCS    : tbm_binary_intr<0x01, "blcs", MRM3r, MRM3m,
+                               int_x86_tbm_blcs_u32,
+                               int_x86_tbm_blcs_u64>;
+defm BLSFILL : tbm_binary_intr<0x01, "blsfill", MRM2r, MRM2m,
+                               int_x86_tbm_blsfill_u32,
+                               int_x86_tbm_blsfill_u64>;
+defm BLSIC   : tbm_binary_intr<0x01, "blsic", MRM6r, MRM6m,
+                               int_x86_tbm_blsic_u32,
+                               int_x86_tbm_blsic_u64>;
+defm T1MSKC  : tbm_binary_intr<0x01, "t1mskc", MRM7r, MRM7m,
+                               int_x86_tbm_t1mskc_u32,
+                               int_x86_tbm_t1mskc_u64>;
+defm TZMSK   : tbm_binary_intr<0x01, "tzmsk", MRM4r, MRM4m,
+                               int_x86_tbm_tzmsk_u32,
+                               int_x86_tbm_tzmsk_u64>;
+} // isAsmParserOnly, HasTBM, EFLAGS
 
 //===----------------------------------------------------------------------===//
 // Subsystems.
