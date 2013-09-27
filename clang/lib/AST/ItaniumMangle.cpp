@@ -2879,7 +2879,7 @@ recurse:
     //               ::= te <expression>  # typeid (expression)
     if (TIE->isTypeOperand()) {
       Out << "ti";
-      mangleType(TIE->getTypeOperand());
+      mangleType(TIE->getTypeOperand(Context.getASTContext()));
     } else {
       Out << "te";
       mangleExpression(TIE->getExprOperand());

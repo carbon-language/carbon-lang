@@ -966,7 +966,7 @@ public:
       CXXTypeidExpr *Typeid = cast<CXXTypeidExpr>(E);
       QualType T;
       if (Typeid->isTypeOperand())
-        T = Typeid->getTypeOperand();
+        T = Typeid->getTypeOperand(CGM.getContext());
       else
         T = Typeid->getExprOperand()->getType();
       return CGM.GetAddrOfRTTIDescriptor(T);

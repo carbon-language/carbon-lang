@@ -566,7 +566,7 @@ public:
 
   /// \brief Retrieves the type operand of this typeid() expression after
   /// various required adjustments (removing reference types, cv-qualifiers).
-  QualType getTypeOperand() const;
+  QualType getTypeOperand(ASTContext &Context) const;
 
   /// \brief Retrieve source information for the type operand.
   TypeSourceInfo *getTypeOperandSourceInfo() const {
@@ -701,7 +701,7 @@ public:
 
   /// \brief Retrieves the type operand of this __uuidof() expression after
   /// various required adjustments (removing reference types, cv-qualifiers).
-  QualType getTypeOperand() const;
+  QualType getTypeOperand(ASTContext &Context) const;
 
   /// \brief Retrieve source information for the type operand.
   TypeSourceInfo *getTypeOperandSourceInfo() const {

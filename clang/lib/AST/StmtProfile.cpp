@@ -812,13 +812,13 @@ void StmtProfiler::VisitCXXStdInitializerListExpr(
 void StmtProfiler::VisitCXXTypeidExpr(const CXXTypeidExpr *S) {
   VisitExpr(S);
   if (S->isTypeOperand())
-    VisitType(S->getTypeOperand());
+    VisitType(S->getTypeOperandSourceInfo()->getType());
 }
 
 void StmtProfiler::VisitCXXUuidofExpr(const CXXUuidofExpr *S) {
   VisitExpr(S);
   if (S->isTypeOperand())
-    VisitType(S->getTypeOperand());
+    VisitType(S->getTypeOperandSourceInfo()->getType());
 }
 
 void StmtProfiler::VisitMSPropertyRefExpr(const MSPropertyRefExpr *S) {

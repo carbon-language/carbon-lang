@@ -1307,7 +1307,7 @@ void StmtPrinter::VisitCXXConstCastExpr(CXXConstCastExpr *Node) {
 void StmtPrinter::VisitCXXTypeidExpr(CXXTypeidExpr *Node) {
   OS << "typeid(";
   if (Node->isTypeOperand()) {
-    Node->getTypeOperand().print(OS, Policy);
+    Node->getTypeOperandSourceInfo()->getType().print(OS, Policy);
   } else {
     PrintExpr(Node->getExprOperand());
   }
@@ -1317,7 +1317,7 @@ void StmtPrinter::VisitCXXTypeidExpr(CXXTypeidExpr *Node) {
 void StmtPrinter::VisitCXXUuidofExpr(CXXUuidofExpr *Node) {
   OS << "__uuidof(";
   if (Node->isTypeOperand()) {
-    Node->getTypeOperand().print(OS, Policy);
+    Node->getTypeOperandSourceInfo()->getType().print(OS, Policy);
   } else {
     PrintExpr(Node->getExprOperand());
   }

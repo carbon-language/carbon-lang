@@ -40,16 +40,18 @@ bool CXXTypeidExpr::isPotentiallyEvaluated() const {
   return false;
 }
 
-QualType CXXTypeidExpr::getTypeOperand() const {
+QualType CXXTypeidExpr::getTypeOperand(ASTContext &Context) const {
   assert(isTypeOperand() && "Cannot call getTypeOperand for typeid(expr)");
-  return Operand.get<TypeSourceInfo *>()->getType().getNonReferenceType()
-                                                        .getUnqualifiedType();
+  Qualifiers Quals;
+  return Context.getUnqualifiedArrayType(
+      Operand.get<TypeSourceInfo *>()->getType().getNonReferenceType(), Quals);
 }
 
-QualType CXXUuidofExpr::getTypeOperand() const {
+QualType CXXUuidofExpr::getTypeOperand(ASTContext &Context) const {
   assert(isTypeOperand() && "Cannot call getTypeOperand for __uuidof(expr)");
-  return Operand.get<TypeSourceInfo *>()->getType().getNonReferenceType()
-                                                        .getUnqualifiedType();
+  Qualifiers Quals;
+  return Context.getUnqualifiedArrayType(
+      Operand.get<TypeSourceInfo *>()->getType().getNonReferenceType(), Quals);
 }
 
 // static
@@ -118,7 +120,7 @@ UuidAttr *CXXUuidofExpr::GetUuidAttrOfType(QualType QT,
 StringRef CXXUuidofExpr::getUuidAsStringRef(ASTContext &Context) const {
   StringRef Uuid;
   if (isTypeOperand())
-    Uuid = CXXUuidofExpr::GetUuidAttrOfType(getTypeOperand())->getGuid();
+    Uuid = CXXUuidofExpr::GetUuidAttrOfType(getTypeOperand(Context))->getGuid();
   else {
     // Special case: __uuidof(0) means an all-zero GUID.
     Expr *Op = getExprOperand();

@@ -27,6 +27,9 @@ extern A &a;
 // CHECK: @_ZN5Test14a_tiE = global
 const std::type_info &a_ti = typeid(a);
 
+// CHECK: @_ZN5Test18A10_c_tiE = constant %"class.std::type_info"* bitcast ({ i8*, i8* }* @_ZTIA10_c to %"class.std::type_info"*), align 8
+const std::type_info &A10_c_ti = typeid(char const[10]);
+
 // CHECK-LABEL: define i8* @_ZN5Test11fEv
 const char *f() {
   try {
