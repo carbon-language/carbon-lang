@@ -102,3 +102,15 @@ namespace rdar11700604 {
   };
 }
 
+namespace PR17334 {
+
+template <typename = void> struct ArrayRef {
+  constexpr ArrayRef() {}
+};
+template <typename = void> void CreateConstInBoundsGEP2_32() {
+  ArrayRef<> IdxList;
+}
+void LLVMBuildStructGEP() { CreateConstInBoundsGEP2_32(); }
+
+}
+
