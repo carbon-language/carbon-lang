@@ -986,6 +986,16 @@ define i32 @select_icmp_ne_0_and_8_or_1073741824(i8 %x, i32 %y) {
   ret i32 %select
 }
 
+; We can't combine here, because the cmp is scalar and the or vector.
+; Just make sure we don't assert.
+define <2 x i32> @select_icmp_eq_and_1_0_or_vector_of_2s(i32 %x, <2 x i32> %y) {
+  %and = and i32 %x, 1
+  %cmp = icmp eq i32 %and, 0
+  %or = or <2 x i32> %y, <i32 2, i32 2>
+  %select = select i1 %cmp, <2 x i32> %y, <2 x i32> %or
+  ret <2 x i32> %select
+}
+
 define i32 @test65(i64 %x) {
   %1 = and i64 %x, 16
   %2 = icmp ne i64 %1, 0

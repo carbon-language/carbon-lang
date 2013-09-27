@@ -367,7 +367,7 @@ static Value *foldSelectICmpAndOr(const SelectInst &SI, Value *TrueVal,
                                   Value *FalseVal,
                                   InstCombiner::BuilderTy *Builder) {
   const ICmpInst *IC = dyn_cast<ICmpInst>(SI.getCondition());
-  if (!IC || !IC->isEquality())
+  if (!IC || !IC->isEquality() || !SI.getType()->isIntegerTy())
     return 0;
 
   Value *CmpLHS = IC->getOperand(0);
