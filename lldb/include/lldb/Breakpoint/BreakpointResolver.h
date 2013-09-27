@@ -134,6 +134,13 @@ public:
     }
 
 protected:
+    //------------------------------------------------------------------
+    /// SetSCMatchesByLine - Takes a symbol context list of matches which supposedly represent the same file and
+    /// line number in a CU, and find the nearest actual line number that matches, and then filter down the
+    /// matching addresses to unique entries, and skip the prologue if asked to do so, and then set
+    /// breakpoint locations in this breakpoint for all the resultant addresses.
+    void SetSCMatchesByLine (SearchFilter &filter, SymbolContextList &sc_list, bool skip_prologue, const char *log_ident);
+    
     Breakpoint *m_breakpoint;  // This is the breakpoint we add locations to.
 
 private:

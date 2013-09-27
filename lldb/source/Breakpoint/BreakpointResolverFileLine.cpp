@@ -59,7 +59,6 @@ BreakpointResolverFileLine::SearchCallback
     SymbolContextList sc_list;
 
     assert (m_breakpoint != NULL);
-    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS));
     
     // There is a tricky bit here.  You can have two compilation units that #include the same file, and
     // in one of them the function at m_line_number is used (and so code and a line entry for it is generated) but in the
@@ -83,145 +82,13 @@ BreakpointResolverFileLine::SearchCallback
                 cu_sp->ResolveSymbolContext (m_file_spec, m_line_number, m_inlines, false, eSymbolContextEverything, sc_list);
         }
     }
-    
-    while (sc_list.GetSize() > 0)
-    {
-        SymbolContextList tmp_sc_list;
-        unsigned current_idx = 0;
-        SymbolContext sc;
-        bool first_entry = true;
-        
-        FileSpec match_file_spec;
-        uint32_t closest_line_number = UINT32_MAX;
+    StreamString s;
+    s.Printf ("for %s:%d ",
+                        m_file_spec.GetFilename().AsCString("<Unknown>"),
+                        m_line_number);
 
-        // Pull out the first entry, and all the others that match its file spec, and stuff them in the tmp list.
-        while (current_idx < sc_list.GetSize())
-        {
-            bool matches;
-            
-            sc_list.GetContextAtIndex (current_idx, sc);
-            if (first_entry)
-            {
-                match_file_spec = sc.line_entry.file;
-                matches = true;
-                first_entry = false;
-            }
-            else
-                matches = (sc.line_entry.file == match_file_spec);
-            
-            if (matches)
-            {
-                tmp_sc_list.Append (sc);
-                sc_list.RemoveContextAtIndex(current_idx);
-                
-                // ResolveSymbolContext will always return a number that is >= the line number you pass in.
-                // So the smaller line number is always better.
-                if (sc.line_entry.line < closest_line_number)
-                    closest_line_number = sc.line_entry.line;
-            }
-            else
-                current_idx++;
-        }
-            
-        // Okay, we've found the closest line number match, now throw away all the others:
-        
-        current_idx = 0;
-        while (current_idx < tmp_sc_list.GetSize())
-        {
-            if (tmp_sc_list.GetContextAtIndex(current_idx, sc))
-            {
-                if (sc.line_entry.line != closest_line_number)
-                    tmp_sc_list.RemoveContextAtIndex(current_idx);
-                else
-                    current_idx++;
-            }
-        }
-        
-        // Next go through and see if there are line table entries that are contiguous, and if so keep only the
-        // first of the contiguous range:
-        
-        current_idx = 0;
-        std::map<Block *, lldb::addr_t> blocks_with_breakpoints;
-        
-        while (current_idx < tmp_sc_list.GetSize())
-        {
-            if (tmp_sc_list.GetContextAtIndex(current_idx, sc))
-            {
-                if (blocks_with_breakpoints.find (sc.block) != blocks_with_breakpoints.end())
-                    tmp_sc_list.RemoveContextAtIndex(current_idx);
-                else
-                {
-                    blocks_with_breakpoints.insert (std::pair<Block *, lldb::addr_t>(sc.block, sc.line_entry.range.GetBaseAddress().GetFileAddress()));
-                    current_idx++;
-                }
-            }
-        }
-        
-        // and make breakpoints out of the closest line number match.
-        
-        uint32_t tmp_sc_list_size = tmp_sc_list.GetSize();
-        
-        for (uint32_t i = 0; i < tmp_sc_list_size; i++)
-        {
-            if (tmp_sc_list.GetContextAtIndex(i, sc))
-            {
-                Address line_start = sc.line_entry.range.GetBaseAddress();
-                if (line_start.IsValid())
-                {
-                    if (filter.AddressPasses(line_start))
-                    {
-                        // If the line number is before the prologue end, move it there...
-                        bool skipped_prologue = false;
-                        if (m_skip_prologue)
-                        {
-                            if (sc.function)
-                            {
-                                Address prologue_addr(sc.function->GetAddressRange().GetBaseAddress());
-                                if (prologue_addr.IsValid() && (line_start == prologue_addr))
-                                {
-                                    const uint32_t prologue_byte_size = sc.function->GetPrologueByteSize();
-                                    if (prologue_byte_size)
-                                    {
-                                        prologue_addr.Slide(prologue_byte_size);
-                 
-                                        if (filter.AddressPasses(prologue_addr))
-                                        {
-                                            skipped_prologue = true;
-                                            line_start = prologue_addr;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    
-                        BreakpointLocationSP bp_loc_sp (m_breakpoint->AddLocation(line_start));
-                        if (log && bp_loc_sp && !m_breakpoint->IsInternal())
-                        {
-                            StreamString s;
-                            bp_loc_sp->GetDescription (&s, lldb::eDescriptionLevelVerbose);
-                            log->Printf ("Added location (skipped prologue: %s): %s \n", skipped_prologue ? "yes" : "no", s.GetData());
-                        }
-                    }
-                    else if (log)
-                    {
-                        log->Printf ("Breakpoint at file address 0x%" PRIx64 " for %s:%d didn't pass the filter.\n",
-                                     line_start.GetFileAddress(),
-                                     m_file_spec.GetFilename().AsCString("<Unknown>"),
-                                     m_line_number);
-                    }
-                }
-                else
-                {
-                    if (log)
-                        log->Printf ("error: Unable to set breakpoint at file address 0x%" PRIx64 " for %s:%d\n",
-                                     line_start.GetFileAddress(),
-                                     m_file_spec.GetFilename().AsCString("<Unknown>"),
-                                     m_line_number);
-                }
-            }
-        }
-    }
-        
+    SetSCMatchesByLine (filter, sc_list, m_skip_prologue, s.GetData());
+
     return Searcher::eCallbackReturnContinue;
 }
 
