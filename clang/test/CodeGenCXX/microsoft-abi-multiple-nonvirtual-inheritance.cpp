@@ -162,7 +162,7 @@ void emit_ctors() {
   ChildOverride co;
   // CHECK: define {{.*}} @"\01??0ChildOverride@@QAE@XZ"
   // CHECK:   %[[THIS:.*]] = load %struct.ChildOverride**
-  // CHECK:   %[[VFPTR:.*]] = bitcast %struct.ChildOverride* %this1 to [1 x i8*]**
+  // CHECK:   %[[VFPTR:.*]] = bitcast %struct.ChildOverride* %[[THIS]] to [1 x i8*]**
   // CHECK:   store [1 x i8*]* @"\01??_7ChildOverride@@6BLeft@@@", [1 x i8*]** %[[VFPTR]]
   // CHECK:   %[[THIS_i8:.*]] = bitcast %struct.ChildOverride* %[[THIS]] to i8*
   // CHECK:   %[[VFPTR_i8:.*]] = getelementptr inbounds i8* %[[THIS_i8]], i32 4
@@ -173,7 +173,7 @@ void emit_ctors() {
   GrandchildOverride gc;
   // CHECK: define {{.*}} @"\01??0GrandchildOverride@@QAE@XZ"
   // CHECK:   %[[THIS:.*]] = load %struct.GrandchildOverride**
-  // CHECK:   %[[VFPTR:.*]] = bitcast %struct.GrandchildOverride* %this1 to [1 x i8*]**
+  // CHECK:   %[[VFPTR:.*]] = bitcast %struct.GrandchildOverride* %[[THIS]] to [1 x i8*]**
   // CHECK:   store [1 x i8*]* @"\01??_7GrandchildOverride@@6BLeft@@@", [1 x i8*]** %[[VFPTR]]
   // CHECK:   %[[THIS_i8:.*]] = bitcast %struct.GrandchildOverride* %[[THIS]] to i8*
   // CHECK:   %[[VFPTR_i8:.*]] = getelementptr inbounds i8* %[[THIS_i8]], i32 4
