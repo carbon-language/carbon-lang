@@ -950,8 +950,8 @@ functions, Objective-C methods, C++ constructors, destructors, and operators
 ``DeclarationName`` is designed to efficiently represent any kind of name.
 
 Given a ``DeclarationName`` ``N``, ``N.getNameKind()`` will produce a value
-that describes what kind of name ``N`` stores.  There are 8 options (all of the
-names are inside the ``DeclarationName`` class).
+that describes what kind of name ``N`` stores.  There are 10 options (all of
+the names are inside the ``DeclarationName`` class).
 
 ``Identifier``
 
@@ -994,6 +994,21 @@ names are inside the ``DeclarationName`` class).
   according to their spelling, e.g., "``operator+``" or "``operator new []``".
   Use ``N.getCXXOverloadedOperator()`` to retrieve the overloaded operator (a
   value of type ``OverloadedOperatorKind``).
+
+``CXXLiteralOperatorName``
+
+  The name is a C++11 user defined literal operator.  User defined
+  Literal operators are named according to the suffix they define,
+  e.g., "``_foo``" for "``operator "" _foo``".  Use
+  ``N.getCXXLiteralIdentifier()`` to retrieve the corresponding
+  ``IdentifierInfo*`` pointing to the identifier.
+
+``CXXUsingDirective``
+
+  The name is a C++ using directive.  Using directives are not really
+  NamedDecls, in that they all have the same name, but they are
+  implemented as such in order to store them in DeclContext
+  effectively.
 
 ``DeclarationName``\ s are cheap to create, copy, and compare.  They require
 only a single pointer's worth of storage in the common cases (identifiers,
