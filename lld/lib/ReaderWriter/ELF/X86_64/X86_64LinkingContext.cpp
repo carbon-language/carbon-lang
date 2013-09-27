@@ -407,7 +407,10 @@ public:
     if (auto sla = dyn_cast<SharedLibraryAtom>(ref.target())) {
       if (sla->type() == SharedLibraryAtom::Type::Code)
         return handlePLT32(ref);
-      else
+      else if (sla->type() == SharedLibraryAtom::Type::Data) {
+        const_cast<Reference &>(ref).setTarget(getObjectEntry(sla));
+        return error_code::success();
+      } else
         return handleGOTPCREL(ref);
     }
     return handleIFUNC(ref);
