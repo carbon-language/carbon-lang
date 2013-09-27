@@ -3190,10 +3190,6 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     }
   }
 
-  // -fobjc-default-synthesize-properties=1 is default. This only has an effect
-  // if the nonfragile objc abi is used.
-  CmdArgs.push_back("-fobjc-default-synthesize-properties");
-
   // -fencode-extended-block-signature=1 is default.
   if (getToolChain().IsEncodeExtendedBlockSignatureDefault()) {
     CmdArgs.push_back("-fencode-extended-block-signature");

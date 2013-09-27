@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -Wimplicit-atomic-properties -fobjc-default-synthesize-properties -verify -Wno-objc-root-class %s
+// RUN: %clang_cc1 -fsyntax-only -Wimplicit-atomic-properties -verify -Wno-objc-root-class %s
 // rdar://8774580
 
 @interface Super

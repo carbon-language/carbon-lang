@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify -disable-objc-default-synthesize-properties %s
 // rdar://7884086
 
 @interface NSObject @end

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -Wno-objc-root-class %s
+// RUN: %clang_cc1 -fsyntax-only -verify -disable-objc-default-synthesize-properties -Wno-objc-root-class %s
 
 @interface Object
 + (id)new;

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -fobjc-default-synthesize-properties -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 
 @interface B
 +(int) classGetter;

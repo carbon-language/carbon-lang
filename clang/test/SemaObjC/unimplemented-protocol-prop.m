@@ -1,4 +1,4 @@
-// RUN: %clang_cc1  -fsyntax-only -verify -Wno-objc-root-class %s
+// RUN: %clang_cc1  -fsyntax-only -verify -Wno-objc-root-class -disable-objc-default-synthesize-properties %s
 
 @protocol PROTOCOL0
 @required

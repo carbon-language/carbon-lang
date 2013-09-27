@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fobjc-default-synthesize-properties -masm-verbose -S -g %s -o - | FileCheck %s
+// RUN: %clang_cc1 -masm-verbose -S -g %s -o - | FileCheck %s
 
 // CHECK: AT_APPLE_property_name
 // CHECK: AT_APPLE_property_getter
