@@ -56,6 +56,7 @@ static const CoreDefinition g_core_definitions[ArchSpec::kNumCores] =
     { eByteOrderLittle, 4, 2, 4, llvm::Triple::arm    , ArchSpec::eCore_arm_armv5e      , "armv5e"    },
     { eByteOrderLittle, 4, 2, 4, llvm::Triple::arm    , ArchSpec::eCore_arm_armv5t      , "armv5t"    },
     { eByteOrderLittle, 4, 2, 4, llvm::Triple::arm    , ArchSpec::eCore_arm_armv6       , "armv6"     },
+    { eByteOrderLittle, 4, 2, 4, llvm::Triple::arm    , ArchSpec::eCore_arm_armv6m      , "armv6m"    },
     { eByteOrderLittle, 4, 2, 4, llvm::Triple::arm    , ArchSpec::eCore_arm_armv7       , "armv7"     },
     { eByteOrderLittle, 4, 2, 4, llvm::Triple::arm    , ArchSpec::eCore_arm_armv7f      , "armv7f"    },
     { eByteOrderLittle, 4, 2, 4, llvm::Triple::arm    , ArchSpec::eCore_arm_armv7s      , "armv7s"    },
@@ -68,6 +69,7 @@ static const CoreDefinition g_core_definitions[ArchSpec::kNumCores] =
     { eByteOrderLittle, 4, 2, 4, llvm::Triple::thumb  , ArchSpec::eCore_thumbv5         , "thumbv5"   },
     { eByteOrderLittle, 4, 2, 4, llvm::Triple::thumb  , ArchSpec::eCore_thumbv5e        , "thumbv5e"  },
     { eByteOrderLittle, 4, 2, 4, llvm::Triple::thumb  , ArchSpec::eCore_thumbv6         , "thumbv6"   },
+    { eByteOrderLittle, 4, 2, 4, llvm::Triple::thumb  , ArchSpec::eCore_thumbv6m        , "thumbv6m"  },
     { eByteOrderLittle, 4, 2, 4, llvm::Triple::thumb  , ArchSpec::eCore_thumbv7         , "thumbv7"   },
     { eByteOrderLittle, 4, 2, 4, llvm::Triple::thumb  , ArchSpec::eCore_thumbv7f        , "thumbv7f"  },
     { eByteOrderLittle, 4, 2, 4, llvm::Triple::thumb  , ArchSpec::eCore_thumbv7s        , "thumbv7s"  },
@@ -881,6 +883,15 @@ cores_match (const ArchSpec::Core core1, const ArchSpec::Core core2, bool try_in
     case ArchSpec::kCore_ppc64_any:
         if ((core2 >= ArchSpec::kCore_ppc64_first && core2 <= ArchSpec::kCore_ppc64_last) || (core2 == ArchSpec::kCore_ppc64_any))
             return true;
+        break;
+
+    case ArchSpec::eCore_arm_armv6m:
+        if (!enforce_exact_match)
+        {
+            try_inverse = false;
+            if (core2 == ArchSpec::eCore_arm_armv6)
+                return true;
+        }
         break;
 
     case ArchSpec::eCore_arm_armv7m:
