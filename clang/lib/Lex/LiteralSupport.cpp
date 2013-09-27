@@ -706,8 +706,11 @@ void NumericLiteralParser::ParseNumberStartingWithZero(SourceLocation TokLoc) {
   assert(s[0] == '0' && "Invalid method call");
   s++;
 
+  int c1 = s[0];
+  int c2 = s[1];
+
   // Handle a hex number like 0x1234.
-  if ((*s == 'x' || *s == 'X') && (isHexDigit(s[1]) || s[1] == '.')) {
+  if ((c1 == 'x' || c1 == 'X') && (isHexDigit(c2) || c2 == '.')) {
     s++;
     radix = 16;
     DigitsBegin = s;
@@ -757,7 +760,7 @@ void NumericLiteralParser::ParseNumberStartingWithZero(SourceLocation TokLoc) {
   }
 
   // Handle simple binary numbers 0b01010
-  if ((*s == 'b' || *s == 'B') && (s[1] == '0' || s[1] == '1')) {
+  if ((c1 == 'b' || c1 == 'B') && (c2 == '0' || c2 == '1')) {
     // 0b101010 is a C++1y / GCC extension.
     PP.Diag(TokLoc,
             PP.getLangOpts().CPlusPlus1y
