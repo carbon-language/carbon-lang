@@ -55,3 +55,83 @@ define void @const_v2f64() nounwind {
   ret void
   ; MIPS32: .size const_v2f64
 }
+
+define float @extract_v4f32() nounwind {
+  ; MIPS32: extract_v4f32:
+
+  %1 = load <4 x float>* @v4f32
+  ; MIPS32-DAG: ld.w [[R1:\$w[0-9]+]],
+
+  %2 = fadd <4 x float> %1, %1
+  ; MIPS32-DAG: fadd.w [[R2:\$w[0-9]+]], [[R1]], [[R1]]
+
+  %3 = extractelement <4 x float> %2, i32 1
+  ; Element 1 can be obtained by splatting it across the vector and extracting
+  ; $w0:sub_lo
+  ; MIPS32-DAG: splati.w $w0, [[R1]][1]
+
+  ret float %3
+  ; MIPS32: .size extract_v4f32
+}
+
+define float @extract_v4f32_elt0() nounwind {
+  ; MIPS32: extract_v4f32_elt0:
+
+  %1 = load <4 x float>* @v4f32
+  ; MIPS32-DAG: ld.w [[R1:\$w[0-9]+]],
+
+  %2 = fadd <4 x float> %1, %1
+  ; MIPS32-DAG: fadd.w $w0, [[R1]], [[R1]]
+
+  %3 = extractelement <4 x float> %2, i32 0
+  ; Element 0 can be obtained by extracting $w0:sub_lo ($f0)
+  ; MIPS32-NOT: copy_u.w
+  ; MIPS32-NOT: mtc1
+
+  ret float %3
+  ; MIPS32: .size extract_v4f32_elt0
+}
+
+define double @extract_v2f64() nounwind {
+  ; MIPS32: extract_v2f64:
+
+  %1 = load <2 x double>* @v2f64
+  ; MIPS32-DAG: ld.d [[R1:\$w[0-9]+]],
+
+  %2 = fadd <2 x double> %1, %1
+  ; MIPS32-DAG: fadd.d [[R2:\$w[0-9]+]], [[R1]], [[R1]]
+
+  %3 = extractelement <2 x double> %2, i32 1
+  ; Element 1 can be obtained by splatting it across the vector and extracting
+  ; $w0:sub_64
+  ; MIPS32-DAG: splati.d $w0, [[R1]][1]
+  ; MIPS32-NOT: copy_u.w
+  ; MIPS32-NOT: mtc1
+  ; MIPS32-NOT: mthc1
+  ; MIPS32-NOT: sll
+  ; MIPS32-NOT: sra
+
+  ret double %3
+  ; MIPS32: .size extract_v2f64
+}
+
+define double @extract_v2f64_elt0() nounwind {
+  ; MIPS32: extract_v2f64_elt0:
+
+  %1 = load <2 x double>* @v2f64
+  ; MIPS32-DAG: ld.d [[R1:\$w[0-9]+]],
+
+  %2 = fadd <2 x double> %1, %1
+  ; MIPS32-DAG: fadd.d $w0, [[R1]], [[R1]]
+
+  %3 = extractelement <2 x double> %2, i32 0
+  ; Element 0 can be obtained by extracting $w0:sub_64 ($f0)
+  ; MIPS32-NOT: copy_u.w
+  ; MIPS32-NOT: mtc1
+  ; MIPS32-NOT: mthc1
+  ; MIPS32-NOT: sll
+  ; MIPS32-NOT: sra
+
+  ret double %3
+  ; MIPS32: .size extract_v2f64_elt0
+}

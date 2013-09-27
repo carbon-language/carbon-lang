@@ -1076,6 +1076,13 @@ class MSA_COPY_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
   InstrItinClass Itinerary = itin;
 }
 
+class MSA_COPY_PSEUDO_BASE<SDPatternOperator OpNode, ValueType VecTy,
+                           RegisterClass RCD, RegisterClass RCWS> :
+      MipsPseudo<(outs RCD:$wd), (ins RCWS:$ws, uimm4:$n),
+                 [(set RCD:$wd, (OpNode (VecTy RCWS:$ws), immZExt4:$n))]> {
+  bit usesCustomInserter = 1;
+}
+
 class MSA_I5_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
                        SplatComplexPattern SplatImm, RegisterClass RCWD,
                        RegisterClass RCWS = RCWD,
@@ -1580,6 +1587,11 @@ class COPY_U_H_DESC : MSA_COPY_DESC_BASE<"copy_u.h", vextract_zext_i16, v8i16,
                                          GPR32, MSA128H>;
 class COPY_U_W_DESC : MSA_COPY_DESC_BASE<"copy_u.w", vextract_zext_i32, v4i32,
                                          GPR32, MSA128W>;
+
+class COPY_FW_PSEUDO_DESC : MSA_COPY_PSEUDO_BASE<vector_extract, v4f32, FGR32,
+                                                 MSA128W>;
+class COPY_FD_PSEUDO_DESC : MSA_COPY_PSEUDO_BASE<vector_extract, v2f64, FGR64,
+                                                 MSA128D>;
 
 class CTCMSA_DESC {
   dag OutOperandList = (outs);
@@ -2578,6 +2590,9 @@ def COPY_S_W : COPY_S_W_ENC, COPY_S_W_DESC;
 def COPY_U_B : COPY_U_B_ENC, COPY_U_B_DESC;
 def COPY_U_H : COPY_U_H_ENC, COPY_U_H_DESC;
 def COPY_U_W : COPY_U_W_ENC, COPY_U_W_DESC;
+
+def COPY_FW_PSEUDO : COPY_FW_PSEUDO_DESC;
+def COPY_FD_PSEUDO : COPY_FD_PSEUDO_DESC;
 
 def CTCMSA : CTCMSA_ENC, CTCMSA_DESC;
 

@@ -827,6 +827,10 @@ MipsSETargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     return emitMSACBranchPseudo(MI, BB, Mips::BZ_D);
   case Mips::SZ_V_PSEUDO:
     return emitMSACBranchPseudo(MI, BB, Mips::BZ_V);
+  case Mips::COPY_FW_PSEUDO:
+    return emitCOPY_FW(MI, BB);
+  case Mips::COPY_FD_PSEUDO:
+    return emitCOPY_FD(MI, BB);
   }
 }
 
@@ -1662,10 +1666,19 @@ lowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) const {
   SDLoc DL(Op);
   EVT ResTy = Op->getValueType(0);
   SDValue Op0 = Op->getOperand(0);
-  SDValue Op1 = Op->getOperand(1);
-  EVT EltTy = Op0->getValueType(0).getVectorElementType();
-  return DAG.getNode(MipsISD::VEXTRACT_SEXT_ELT, DL, ResTy, Op0, Op1,
-                     DAG.getValueType(EltTy));
+  EVT VecTy = Op0->getValueType(0);
+
+  if (!VecTy.is128BitVector())
+    return SDValue();
+
+  if (ResTy.isInteger()) {
+    SDValue Op1 = Op->getOperand(1);
+    EVT EltTy = VecTy.getVectorElementType();
+    return DAG.getNode(MipsISD::VEXTRACT_SEXT_ELT, DL, ResTy, Op0, Op1,
+                       DAG.getValueType(EltTy));
+  }
+
+  return Op;
 }
 
 static bool isConstantOrUndef(const SDValue Op) {
@@ -2235,4 +2248,70 @@ emitMSACBranchPseudo(MachineInstr *MI, MachineBasicBlock *BB,
 
   MI->eraseFromParent();   // The pseudo instruction is gone now.
   return Sink;
+}
+
+// Emit the COPY_FW pseudo instruction.
+//
+// copy_fw_pseudo $fd, $ws, n
+// =>
+// copy_u_w $rt, $ws, $n
+// mtc1     $rt, $fd
+//
+// When n is zero, the equivalent operation can be performed with (potentially)
+// zero instructions due to register overlaps. This optimization is never valid
+// for lane 1 because it would require FR=0 mode which isn't supported by MSA.
+MachineBasicBlock * MipsSETargetLowering::
+emitCOPY_FW(MachineInstr *MI, MachineBasicBlock *BB) const{
+  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
+  MachineRegisterInfo &RegInfo = BB->getParent()->getRegInfo();
+  DebugLoc DL = MI->getDebugLoc();
+  unsigned Fd = MI->getOperand(0).getReg();
+  unsigned Ws = MI->getOperand(1).getReg();
+  unsigned Lane = MI->getOperand(2).getImm();
+
+  if (Lane == 0)
+    BuildMI(*BB, MI, DL, TII->get(Mips::COPY), Fd).addReg(Ws, 0, Mips::sub_lo);
+  else {
+    unsigned Wt = RegInfo.createVirtualRegister(&Mips::MSA128WRegClass);
+
+    BuildMI(*BB, MI, DL, TII->get(Mips::SPLATI_W), Wt).addReg(Ws).addImm(1);
+    BuildMI(*BB, MI, DL, TII->get(Mips::COPY), Fd).addReg(Wt, 0, Mips::sub_lo);
+  }
+
+  MI->eraseFromParent();   // The pseudo instruction is gone now.
+  return BB;
+}
+
+// Emit the COPY_FD pseudo instruction.
+//
+// copy_fd_pseudo $fd, $ws, n
+// =>
+// splati.d $wt, $ws, $n
+// copy $fd, $wt:sub_64
+//
+// When n is zero, the equivalent operation can be performed with (potentially)
+// zero instructions due to register overlaps. This optimization is always
+// valid because FR=1 mode which is the only supported mode in MSA.
+MachineBasicBlock * MipsSETargetLowering::
+emitCOPY_FD(MachineInstr *MI, MachineBasicBlock *BB) const{
+  assert(Subtarget->isFP64bit());
+
+  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
+  MachineRegisterInfo &RegInfo = BB->getParent()->getRegInfo();
+  unsigned Fd  = MI->getOperand(0).getReg();
+  unsigned Ws  = MI->getOperand(1).getReg();
+  unsigned Lane = MI->getOperand(2).getImm() * 2;
+  DebugLoc DL = MI->getDebugLoc();
+
+  if (Lane == 0)
+    BuildMI(*BB, MI, DL, TII->get(Mips::COPY), Fd).addReg(Ws, 0, Mips::sub_64);
+  else {
+    unsigned Wt = RegInfo.createVirtualRegister(&Mips::MSA128DRegClass);
+
+    BuildMI(*BB, MI, DL, TII->get(Mips::SPLATI_D), Wt).addReg(Ws).addImm(1);
+    BuildMI(*BB, MI, DL, TII->get(Mips::COPY), Fd).addReg(Wt, 0, Mips::sub_64);
+  }
+
+  MI->eraseFromParent();   // The pseudo instruction is gone now.
+  return BB;
 }

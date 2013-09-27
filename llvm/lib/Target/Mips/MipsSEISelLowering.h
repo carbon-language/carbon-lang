@@ -84,6 +84,12 @@ namespace llvm {
     MachineBasicBlock *emitMSACBranchPseudo(MachineInstr *MI,
                                             MachineBasicBlock *BB,
                                             unsigned BranchOp) const;
+    /// \brief Emit the COPY_FW pseudo instruction
+    MachineBasicBlock *emitCOPY_FW(MachineInstr *MI,
+                                   MachineBasicBlock *BB) const;
+    /// \brief Emit the COPY_FD pseudo instruction
+    MachineBasicBlock *emitCOPY_FD(MachineInstr *MI,
+                                   MachineBasicBlock *BB) const;
   };
 }
 
