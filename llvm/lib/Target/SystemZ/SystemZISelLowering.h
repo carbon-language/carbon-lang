@@ -38,6 +38,13 @@ namespace SystemZISD {
     // accesses (LARL).  Operand 0 is the address.
     PCREL_WRAPPER,
 
+    // Used in cases where an offset is applied to a TargetGlobalAddress.
+    // Operand 0 is the full TargetGlobalAddress and operand 1 is a
+    // PCREL_WRAPPER for an anchor point.  This is used so that we can
+    // cheaply refer to either the full address or the anchor point
+    // as a register base.
+    PCREL_OFFSET,
+
     // Integer comparisons.  There are three operands: the two values
     // to compare, and an integer of type SystemZICMP.
     ICMP,
@@ -163,6 +170,11 @@ namespace SystemZISD {
     // a store prefetch.
     PREFETCH
   };
+
+  // Return true if OPCODE is some kind of PC-relative address.
+  inline bool isPCREL(unsigned Opcode) {
+    return Opcode == PCREL_WRAPPER || Opcode == PCREL_OFFSET;
+  }
 }
 
 namespace SystemZICMP {

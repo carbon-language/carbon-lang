@@ -10,6 +10,8 @@
 @gsrc32u = global i32 1, align 2, section "foo"
 @gdst16u = global i16 2, align 1, section "foo"
 @gdst32u = global i32 2, align 2, section "foo"
+@garray8 = global [2 x i8] [i8 100, i8 101]
+@garray16 = global [2 x i16] [i16 102, i16 103]
 
 ; Check sign-extending loads from i16.
 define i32 @f1() {
@@ -95,5 +97,38 @@ define void @f8() {
 ; CHECK: br %r14
   %val = load i32 *@gsrc32u, align 2
   store i32 %val, i32 *@gdst32u, align 2
+  ret void
+}
+
+; Test a case where we want to use one LARL for accesses to two different
+; parts of a variable.
+define void @f9() {
+; CHECK-LABEL: f9:
+; CHECK: larl [[REG:%r[0-5]]], garray8
+; CHECK: llc [[VAL:%r[0-5]]], 0([[REG]])
+; CHECK: srl [[VAL]], 1
+; CHECK: stc [[VAL]], 1([[REG]])
+; CHECK: br %r14
+  %ptr1 = getelementptr [2 x i8] *@garray8, i64 0, i64 0
+  %ptr2 = getelementptr [2 x i8] *@garray8, i64 0, i64 1
+  %val = load i8 *%ptr1
+  %shr = lshr i8 %val, 1
+  store i8 %shr, i8 *%ptr2
+  ret void
+}
+
+; Test a case where we want to use separate relative-long addresses for
+; two different parts of a variable.
+define void @f10() {
+; CHECK-LABEL: f10:
+; CHECK: llhrl [[VAL:%r[0-5]]], garray16
+; CHECK: srl [[VAL]], 1
+; CHECK: sthrl [[VAL]], garray16+2
+; CHECK: br %r14
+  %ptr1 = getelementptr [2 x i16] *@garray16, i64 0, i64 0
+  %ptr2 = getelementptr [2 x i16] *@garray16, i64 0, i64 1
+  %val = load i16 *%ptr1
+  %shr = lshr i16 %val, 1
+  store i16 %shr, i16 *%ptr2
   ret void
 }

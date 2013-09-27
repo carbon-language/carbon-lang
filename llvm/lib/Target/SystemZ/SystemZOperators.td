@@ -30,6 +30,10 @@ def SDT_ZSelectCCMask       : SDTypeProfile<1, 4,
 def SDT_ZWrapPtr            : SDTypeProfile<1, 1,
                                             [SDTCisSameAs<0, 1>,
                                              SDTCisPtrTy<0>]>;
+def SDT_ZWrapOffset         : SDTypeProfile<1, 2,
+                                            [SDTCisSameAs<0, 1>,
+                                             SDTCisSameAs<0, 2>,
+                                             SDTCisPtrTy<0>]>;
 def SDT_ZAdjDynAlloc        : SDTypeProfile<1, 0, [SDTCisVT<0, i64>]>;
 def SDT_ZExtractAccess      : SDTypeProfile<1, 1,
                                             [SDTCisVT<0, i32>,
@@ -97,6 +101,8 @@ def z_sibcall           : SDNode<"SystemZISD::SIBCALL", SDT_ZCall,
                                  [SDNPHasChain, SDNPOutGlue, SDNPOptInGlue,
                                   SDNPVariadic]>;
 def z_pcrel_wrapper     : SDNode<"SystemZISD::PCREL_WRAPPER", SDT_ZWrapPtr, []>;
+def z_pcrel_offset      : SDNode<"SystemZISD::PCREL_OFFSET",
+                                 SDT_ZWrapOffset, []>;
 def z_icmp              : SDNode<"SystemZISD::ICMP", SDT_ZICmp, [SDNPOutGlue]>;
 def z_fcmp              : SDNode<"SystemZISD::FCMP", SDT_ZCmp, [SDNPOutGlue]>;
 def z_tm                : SDNode<"SystemZISD::TM", SDT_ZICmp, [SDNPOutGlue]>;

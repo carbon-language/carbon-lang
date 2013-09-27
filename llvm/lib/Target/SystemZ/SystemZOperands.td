@@ -46,7 +46,8 @@ class PCRelOperand<ValueType vt, AsmOperandClass asmop> : Operand<vt> {
 // address with address size VT.  SELF is the name of the operand and
 // ASMOP is the associated asm operand.
 class PCRelAddress<ValueType vt, string self, AsmOperandClass asmop>
-  : ComplexPattern<vt, 1, "selectPCRelAddress", [z_pcrel_wrapper]>,
+  : ComplexPattern<vt, 1, "selectPCRelAddress",
+                   [z_pcrel_wrapper, z_pcrel_offset]>,
     PCRelOperand<vt, asmop> {
   let MIOperandInfo = (ops !cast<Operand>(self));
 }

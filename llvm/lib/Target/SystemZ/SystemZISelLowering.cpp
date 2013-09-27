@@ -1440,18 +1440,18 @@ SDValue SystemZTargetLowering::lowerGlobalAddress(GlobalAddressSDNode *Node,
 
   SDValue Result;
   if (Subtarget.isPC32DBLSymbol(GV, RM, CM)) {
-    // Make sure that the offset is aligned to a halfword.  If it isn't,
-    // create an "anchor" at the previous 12-bit boundary.
-    // FIXME check whether there is a better way of handling this.
-    if (Offset & 1) {
-      Result = DAG.getTargetGlobalAddress(GV, DL, PtrVT,
-                                          Offset & ~uint64_t(0xfff));
-      Offset &= 0xfff;
-    } else {
-      Result = DAG.getTargetGlobalAddress(GV, DL, PtrVT, Offset);
+    // Assign anchors at 1<<12 byte boundaries.
+    uint64_t Anchor = Offset & ~uint64_t(0xfff);
+    Result = DAG.getTargetGlobalAddress(GV, DL, PtrVT, Anchor);
+    Result = DAG.getNode(SystemZISD::PCREL_WRAPPER, DL, PtrVT, Result);
+
+    // The offset can be folded into the address if it is aligned to a halfword.
+    Offset -= Anchor;
+    if (Offset != 0 && (Offset & 1) == 0) {
+      SDValue Full = DAG.getTargetGlobalAddress(GV, DL, PtrVT, Anchor + Offset);
+      Result = DAG.getNode(SystemZISD::PCREL_OFFSET, DL, PtrVT, Full, Result);
       Offset = 0;
     }
-    Result = DAG.getNode(SystemZISD::PCREL_WRAPPER, DL, PtrVT, Result);
   } else {
     Result = DAG.getTargetGlobalAddress(GV, DL, PtrVT, 0, SystemZII::MO_GOT);
     Result = DAG.getNode(SystemZISD::PCREL_WRAPPER, DL, PtrVT, Result);
@@ -2046,6 +2046,7 @@ const char *SystemZTargetLowering::getTargetNodeName(unsigned Opcode) const {
     OPCODE(CALL);
     OPCODE(SIBCALL);
     OPCODE(PCREL_WRAPPER);
+    OPCODE(PCREL_OFFSET);
     OPCODE(ICMP);
     OPCODE(FCMP);
     OPCODE(TM);

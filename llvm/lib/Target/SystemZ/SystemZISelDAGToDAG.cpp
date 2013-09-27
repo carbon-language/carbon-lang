@@ -128,7 +128,7 @@ class SystemZDAGToDAGISel : public SelectionDAGISel {
   const SystemZSubtarget &Subtarget;
 
   // Used by SystemZOperands.td to create integer constants.
-  inline SDValue getImm(const SDNode *Node, uint64_t Imm) {
+  inline SDValue getImm(const SDNode *Node, uint64_t Imm) const {
     return CurDAG->getTargetConstant(Imm, Node->getValueType(0));
   }
 
@@ -142,39 +142,39 @@ class SystemZDAGToDAGISel : public SelectionDAGISel {
 
   // Try to fold more of the base or index of AM into AM, where IsBase
   // selects between the base and index.
-  bool expandAddress(SystemZAddressingMode &AM, bool IsBase);
+  bool expandAddress(SystemZAddressingMode &AM, bool IsBase) const;
 
   // Try to describe N in AM, returning true on success.
-  bool selectAddress(SDValue N, SystemZAddressingMode &AM);
+  bool selectAddress(SDValue N, SystemZAddressingMode &AM) const;
 
   // Extract individual target operands from matched address AM.
   void getAddressOperands(const SystemZAddressingMode &AM, EVT VT,
-                          SDValue &Base, SDValue &Disp);
+                          SDValue &Base, SDValue &Disp) const;
   void getAddressOperands(const SystemZAddressingMode &AM, EVT VT,
-                          SDValue &Base, SDValue &Disp, SDValue &Index);
+                          SDValue &Base, SDValue &Disp, SDValue &Index) const;
 
   // Try to match Addr as a FormBD address with displacement type DR.
   // Return true on success, storing the base and displacement in
   // Base and Disp respectively.
   bool selectBDAddr(SystemZAddressingMode::DispRange DR, SDValue Addr,
-                    SDValue &Base, SDValue &Disp);
+                    SDValue &Base, SDValue &Disp) const;
 
   // Try to match Addr as a FormBDX address with displacement type DR.
   // Return true on success and if the result had no index.  Store the
   // base and displacement in Base and Disp respectively.
   bool selectMVIAddr(SystemZAddressingMode::DispRange DR, SDValue Addr,
-                     SDValue &Base, SDValue &Disp);
+                     SDValue &Base, SDValue &Disp) const;
 
   // Try to match Addr as a FormBDX* address of form Form with
   // displacement type DR.  Return true on success, storing the base,
   // displacement and index in Base, Disp and Index respectively.
   bool selectBDXAddr(SystemZAddressingMode::AddrForm Form,
                      SystemZAddressingMode::DispRange DR, SDValue Addr,
-                     SDValue &Base, SDValue &Disp, SDValue &Index);
+                     SDValue &Base, SDValue &Disp, SDValue &Index) const;
 
   // PC-relative address matching routines used by SystemZOperands.td.
-  bool selectPCRelAddress(SDValue Addr, SDValue &Target) {
-    if (Addr.getOpcode() == SystemZISD::PCREL_WRAPPER) {
+  bool selectPCRelAddress(SDValue Addr, SDValue &Target) const {
+    if (SystemZISD::isPCREL(Addr.getOpcode())) {
       Target = Addr.getOperand(0);
       return true;
     }
@@ -182,72 +182,72 @@ class SystemZDAGToDAGISel : public SelectionDAGISel {
   }
 
   // BD matching routines used by SystemZOperands.td.
-  bool selectBDAddr12Only(SDValue Addr, SDValue &Base, SDValue &Disp) {
+  bool selectBDAddr12Only(SDValue Addr, SDValue &Base, SDValue &Disp) const {
     return selectBDAddr(SystemZAddressingMode::Disp12Only, Addr, Base, Disp);
   }
-  bool selectBDAddr12Pair(SDValue Addr, SDValue &Base, SDValue &Disp) {
+  bool selectBDAddr12Pair(SDValue Addr, SDValue &Base, SDValue &Disp) const {
     return selectBDAddr(SystemZAddressingMode::Disp12Pair, Addr, Base, Disp);
   }
-  bool selectBDAddr20Only(SDValue Addr, SDValue &Base, SDValue &Disp) {
+  bool selectBDAddr20Only(SDValue Addr, SDValue &Base, SDValue &Disp) const {
     return selectBDAddr(SystemZAddressingMode::Disp20Only, Addr, Base, Disp);
   }
-  bool selectBDAddr20Pair(SDValue Addr, SDValue &Base, SDValue &Disp) {
+  bool selectBDAddr20Pair(SDValue Addr, SDValue &Base, SDValue &Disp) const {
     return selectBDAddr(SystemZAddressingMode::Disp20Pair, Addr, Base, Disp);
   }
 
   // MVI matching routines used by SystemZOperands.td.
-  bool selectMVIAddr12Pair(SDValue Addr, SDValue &Base, SDValue &Disp) {
+  bool selectMVIAddr12Pair(SDValue Addr, SDValue &Base, SDValue &Disp) const {
     return selectMVIAddr(SystemZAddressingMode::Disp12Pair, Addr, Base, Disp);
   }
-  bool selectMVIAddr20Pair(SDValue Addr, SDValue &Base, SDValue &Disp) {
+  bool selectMVIAddr20Pair(SDValue Addr, SDValue &Base, SDValue &Disp) const {
     return selectMVIAddr(SystemZAddressingMode::Disp20Pair, Addr, Base, Disp);
   }
 
   // BDX matching routines used by SystemZOperands.td.
   bool selectBDXAddr12Only(SDValue Addr, SDValue &Base, SDValue &Disp,
-                           SDValue &Index) {
+                           SDValue &Index) const {
     return selectBDXAddr(SystemZAddressingMode::FormBDXNormal,
                          SystemZAddressingMode::Disp12Only,
                          Addr, Base, Disp, Index);
   }
   bool selectBDXAddr12Pair(SDValue Addr, SDValue &Base, SDValue &Disp,
-                           SDValue &Index) {
+                           SDValue &Index) const {
     return selectBDXAddr(SystemZAddressingMode::FormBDXNormal,
                          SystemZAddressingMode::Disp12Pair,
                          Addr, Base, Disp, Index);
   }
   bool selectDynAlloc12Only(SDValue Addr, SDValue &Base, SDValue &Disp,
-                            SDValue &Index) {
+                            SDValue &Index) const {
     return selectBDXAddr(SystemZAddressingMode::FormBDXDynAlloc,
                          SystemZAddressingMode::Disp12Only,
                          Addr, Base, Disp, Index);
   }
   bool selectBDXAddr20Only(SDValue Addr, SDValue &Base, SDValue &Disp,
-                           SDValue &Index) {
+                           SDValue &Index) const {
     return selectBDXAddr(SystemZAddressingMode::FormBDXNormal,
                          SystemZAddressingMode::Disp20Only,
                          Addr, Base, Disp, Index);
   }
   bool selectBDXAddr20Only128(SDValue Addr, SDValue &Base, SDValue &Disp,
-                              SDValue &Index) {
+                              SDValue &Index) const {
     return selectBDXAddr(SystemZAddressingMode::FormBDXNormal,
                          SystemZAddressingMode::Disp20Only128,
                          Addr, Base, Disp, Index);
   }
   bool selectBDXAddr20Pair(SDValue Addr, SDValue &Base, SDValue &Disp,
-                           SDValue &Index) {
+                           SDValue &Index) const {
     return selectBDXAddr(SystemZAddressingMode::FormBDXNormal,
                          SystemZAddressingMode::Disp20Pair,
                          Addr, Base, Disp, Index);
   }
   bool selectLAAddr12Pair(SDValue Addr, SDValue &Base, SDValue &Disp,
-                          SDValue &Index) {
+                          SDValue &Index) const {
     return selectBDXAddr(SystemZAddressingMode::FormBDXLA,
                          SystemZAddressingMode::Disp12Pair,
                          Addr, Base, Disp, Index);
   }
   bool selectLAAddr20Pair(SDValue Addr, SDValue &Base, SDValue &Disp,
-                          SDValue &Index) {
+                          SDValue &Index) const {
     return selectBDXAddr(SystemZAddressingMode::FormBDXLA,
                          SystemZAddressingMode::Disp20Pair,
                          Addr, Base, Disp, Index);
@@ -256,21 +256,21 @@ class SystemZDAGToDAGISel : public SelectionDAGISel {
   // Check whether (or Op (and X InsertMask)) is effectively an insertion
   // of X into bits InsertMask of some Y != Op.  Return true if so and
   // set Op to that Y.
-  bool detectOrAndInsertion(SDValue &Op, uint64_t InsertMask);
+  bool detectOrAndInsertion(SDValue &Op, uint64_t InsertMask) const;
 
   // Try to update RxSBG so that only the bits of RxSBG.Input in Mask are used.
   // Return true on success.
-  bool refineRxSBGMask(RxSBGOperands &RxSBG, uint64_t Mask);
+  bool refineRxSBGMask(RxSBGOperands &RxSBG, uint64_t Mask) const;
 
   // Try to fold some of RxSBG.Input into other fields of RxSBG.
   // Return true on success.
-  bool expandRxSBG(RxSBGOperands &RxSBG);
+  bool expandRxSBG(RxSBGOperands &RxSBG) const;
 
   // Return an undefined i64 value.
-  SDValue getUNDEF64(SDLoc DL);
+  SDValue getUNDEF64(SDLoc DL) const;
 
   // Convert N to VT, if it isn't already.
-  SDValue convertTo(SDLoc DL, EVT VT, SDValue N);
+  SDValue convertTo(SDLoc DL, EVT VT, SDValue N) const;
 
   // Try to implement AND or shift node N using RISBG with the zero flag set.
   // Return the selected node on success, otherwise return null.
@@ -384,9 +384,9 @@ static bool expandIndex(SystemZAddressingMode &AM, SDValue Base,
 // The base or index of AM is equivalent to Op0 + Op1, where IsBase selects
 // between the base and index.  Try to fold Op1 into AM's displacement.
 static bool expandDisp(SystemZAddressingMode &AM, bool IsBase,
-                       SDValue Op0, ConstantSDNode *Op1) {
+                       SDValue Op0, uint64_t Op1) {
   // First try adjusting the displacement.
-  int64_t TestDisp = AM.Disp + Op1->getSExtValue();
+  int64_t TestDisp = AM.Disp + Op1;
   if (selectDisp(AM.DR, TestDisp)) {
     changeComponent(AM, IsBase, Op0);
     AM.Disp = TestDisp;
@@ -399,7 +399,7 @@ static bool expandDisp(SystemZAddressingMode &AM, bool IsBase,
 }
 
 bool SystemZDAGToDAGISel::expandAddress(SystemZAddressingMode &AM,
-                                        bool IsBase) {
+                                        bool IsBase) const {
   SDValue N = IsBase ? AM.Base : AM.Index;
   unsigned Opcode = N.getOpcode();
   if (Opcode == ISD::TRUNCATE) {
@@ -419,12 +419,22 @@ bool SystemZDAGToDAGISel::expandAddress(SystemZAddressingMode &AM,
       return expandAdjDynAlloc(AM, IsBase, Op0);
 
     if (Op0Code == ISD::Constant)
-      return expandDisp(AM, IsBase, Op1, cast<ConstantSDNode>(Op0));
+      return expandDisp(AM, IsBase, Op1,
+                        cast<ConstantSDNode>(Op0)->getSExtValue());
     if (Op1Code == ISD::Constant)
-      return expandDisp(AM, IsBase, Op0, cast<ConstantSDNode>(Op1));
+      return expandDisp(AM, IsBase, Op0,
+                        cast<ConstantSDNode>(Op1)->getSExtValue());
 
     if (IsBase && expandIndex(AM, Op0, Op1))
       return true;
+  }
+  if (Opcode == SystemZISD::PCREL_OFFSET) {
+    SDValue Full = N.getOperand(0);
+    SDValue Base = N.getOperand(1);
+    SDValue Anchor = Base.getOperand(0);
+    uint64_t Offset = (cast<GlobalAddressSDNode>(Full)->getOffset() -
+                       cast<GlobalAddressSDNode>(Anchor)->getOffset());
+    return expandDisp(AM, IsBase, Base, Offset);
   }
   return false;
 }
@@ -504,14 +514,15 @@ static bool shouldUseLA(SDNode *Base, int64_t Disp, SDNode *Index) {
 
 // Return true if Addr is suitable for AM, updating AM if so.
 bool SystemZDAGToDAGISel::selectAddress(SDValue Addr,
-                                        SystemZAddressingMode &AM) {
+                                        SystemZAddressingMode &AM) const {
   // Start out assuming that the address will need to be loaded separately,
   // then try to extend it as much as we can.
   AM.Base = Addr;
 
   // First try treating the address as a constant.
   if (Addr.getOpcode() == ISD::Constant &&
-      expandDisp(AM, true, SDValue(), cast<ConstantSDNode>(Addr)))
+      expandDisp(AM, true, SDValue(),
+                 cast<ConstantSDNode>(Addr)->getSExtValue()))
     ;
   else
     // Otherwise try expanding each component.
@@ -551,7 +562,7 @@ static void insertDAGNode(SelectionDAG *DAG, SDNode *Pos, SDValue N) {
 
 void SystemZDAGToDAGISel::getAddressOperands(const SystemZAddressingMode &AM,
                                              EVT VT, SDValue &Base,
-                                             SDValue &Disp) {
+                                             SDValue &Disp) const {
   Base = AM.Base;
   if (!Base.getNode())
     // Register 0 means "no base".  This is mostly useful for shifts.
@@ -576,7 +587,8 @@ void SystemZDAGToDAGISel::getAddressOperands(const SystemZAddressingMode &AM,
 
 void SystemZDAGToDAGISel::getAddressOperands(const SystemZAddressingMode &AM,
                                              EVT VT, SDValue &Base,
-                                             SDValue &Disp, SDValue &Index) {
+                                             SDValue &Disp,
+                                             SDValue &Index) const {
   getAddressOperands(AM, VT, Base, Disp);
 
   Index = AM.Index;
@@ -587,7 +599,7 @@ void SystemZDAGToDAGISel::getAddressOperands(const SystemZAddressingMode &AM,
 
 bool SystemZDAGToDAGISel::selectBDAddr(SystemZAddressingMode::DispRange DR,
                                        SDValue Addr, SDValue &Base,
-                                       SDValue &Disp) {
+                                       SDValue &Disp) const {
   SystemZAddressingMode AM(SystemZAddressingMode::FormBD, DR);
   if (!selectAddress(Addr, AM))
     return false;
@@ -598,7 +610,7 @@ bool SystemZDAGToDAGISel::selectBDAddr(SystemZAddressingMode::DispRange DR,
 
 bool SystemZDAGToDAGISel::selectMVIAddr(SystemZAddressingMode::DispRange DR,
                                         SDValue Addr, SDValue &Base,
-                                        SDValue &Disp) {
+                                        SDValue &Disp) const {
   SystemZAddressingMode AM(SystemZAddressingMode::FormBDXNormal, DR);
   if (!selectAddress(Addr, AM) || AM.Index.getNode())
     return false;
@@ -610,7 +622,7 @@ bool SystemZDAGToDAGISel::selectMVIAddr(SystemZAddressingMode::DispRange DR,
 bool SystemZDAGToDAGISel::selectBDXAddr(SystemZAddressingMode::AddrForm Form,
                                         SystemZAddressingMode::DispRange DR,
                                         SDValue Addr, SDValue &Base,
-                                        SDValue &Disp, SDValue &Index) {
+                                        SDValue &Disp, SDValue &Index) const {
   SystemZAddressingMode AM(Form, DR);
   if (!selectAddress(Addr, AM))
     return false;
@@ -620,7 +632,7 @@ bool SystemZDAGToDAGISel::selectBDXAddr(SystemZAddressingMode::AddrForm Form,
 }
 
 bool SystemZDAGToDAGISel::detectOrAndInsertion(SDValue &Op,
-                                               uint64_t InsertMask) {
+                                               uint64_t InsertMask) const {
   // We're only interested in cases where the insertion is into some operand
   // of Op, rather than into Op itself.  The only useful case is an AND.
   if (Op.getOpcode() != ISD::AND)
@@ -651,7 +663,8 @@ bool SystemZDAGToDAGISel::detectOrAndInsertion(SDValue &Op,
   return true;
 }
 
-bool SystemZDAGToDAGISel::refineRxSBGMask(RxSBGOperands &RxSBG, uint64_t Mask) {
+bool SystemZDAGToDAGISel::refineRxSBGMask(RxSBGOperands &RxSBG,
+                                          uint64_t Mask) const {
   const SystemZInstrInfo *TII = getInstrInfo();
   if (RxSBG.Rotate != 0)
     Mask = (Mask << RxSBG.Rotate) | (Mask >> (64 - RxSBG.Rotate));
@@ -682,7 +695,7 @@ static bool shiftedInBitsMatter(RxSBGOperands &RxSBG, uint64_t Count,
   return (ShiftedIn & RxSBG.Mask) != 0;
 }
 
-bool SystemZDAGToDAGISel::expandRxSBG(RxSBGOperands &RxSBG) {
+bool SystemZDAGToDAGISel::expandRxSBG(RxSBGOperands &RxSBG) const {
   SDValue N = RxSBG.Input;
   unsigned Opcode = N.getOpcode();
   switch (Opcode) {
@@ -808,12 +821,12 @@ bool SystemZDAGToDAGISel::expandRxSBG(RxSBGOperands &RxSBG) {
   }
 }
 
-SDValue SystemZDAGToDAGISel::getUNDEF64(SDLoc DL) {
+SDValue SystemZDAGToDAGISel::getUNDEF64(SDLoc DL) const {
   SDNode *N = CurDAG->getMachineNode(TargetOpcode::IMPLICIT_DEF, DL, MVT::i64);
   return SDValue(N, 0);
 }
 
-SDValue SystemZDAGToDAGISel::convertTo(SDLoc DL, EVT VT, SDValue N) {
+SDValue SystemZDAGToDAGISel::convertTo(SDLoc DL, EVT VT, SDValue N) const {
   if (N.getValueType() == MVT::i32 && VT == MVT::i64)
     return CurDAG->getTargetInsertSubreg(SystemZ::subreg_32bit,
                                          DL, VT, getUNDEF64(DL), N);
@@ -970,10 +983,10 @@ bool SystemZDAGToDAGISel::storeLoadCanUseMVC(SDNode *N) const {
   uint64_t Size = Load->getMemoryVT().getStoreSize();
   if (Size > 1 && Size <= 8) {
     // Prefer LHRL, LRL and LGRL.
-    if (Load->getBasePtr().getOpcode() == SystemZISD::PCREL_WRAPPER)
+    if (SystemZISD::isPCREL(Load->getBasePtr().getOpcode()))
       return false;
     // Prefer STHRL, STRL and STGRL.
-    if (Store->getBasePtr().getOpcode() == SystemZISD::PCREL_WRAPPER)
+    if (SystemZISD::isPCREL(Store->getBasePtr().getOpcode()))
       return false;
   }
 
