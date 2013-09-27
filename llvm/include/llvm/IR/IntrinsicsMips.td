@@ -983,6 +983,8 @@ def int_mips_fill_h : GCCBuiltin<"__builtin_msa_fill_h">,
   Intrinsic<[llvm_v8i16_ty], [llvm_i32_ty], [IntrNoMem]>;
 def int_mips_fill_w : GCCBuiltin<"__builtin_msa_fill_w">,
   Intrinsic<[llvm_v4i32_ty], [llvm_i32_ty], [IntrNoMem]>;
+def int_mips_fill_d : GCCBuiltin<"__builtin_msa_fill_d">,
+  Intrinsic<[llvm_v2i64_ty], [llvm_i64_ty], [IntrNoMem]>;
 
 def int_mips_flog2_w : GCCBuiltin<"__builtin_msa_flog2_w">,
   Intrinsic<[llvm_v4f32_ty], [llvm_v4f32_ty], [IntrNoMem]>;

@@ -1325,15 +1325,17 @@ SDValue MipsSETargetLowering::lowerINTRINSIC_WO_CHAIN(SDValue Op,
                        Op->getOperand(2));
   case Intrinsic::mips_fill_b:
   case Intrinsic::mips_fill_h:
-  case Intrinsic::mips_fill_w: {
+  case Intrinsic::mips_fill_w:
+  case Intrinsic::mips_fill_d: {
     SmallVector<SDValue, 16> Ops;
     EVT ResTy = Op->getValueType(0);
 
     for (unsigned i = 0; i < ResTy.getVectorNumElements(); ++i)
       Ops.push_back(Op->getOperand(1));
 
-    return DAG.getNode(ISD::BUILD_VECTOR, DL, ResTy, &Ops[0],
-                       Ops.size());
+    // If ResTy is v2i64 then the type legalizer will break this node down into
+    // an equivalent v4i32.
+    return DAG.getNode(ISD::BUILD_VECTOR, DL, ResTy, &Ops[0], Ops.size());
   }
   case Intrinsic::mips_flog2_w:
   case Intrinsic::mips_flog2_d:
