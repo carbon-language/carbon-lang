@@ -213,7 +213,14 @@ Host::GetOSVersion(uint32_t &major,
         return false;
 
     status = sscanf(un.release, "%u.%u.%u", &major, &minor, &update);
-    return status == 3;
+    if (status == 3)
+        return true;
+
+    // Some kernels omit the update version, so try looking for just "X.Y" and
+    // set update to 0.
+    update = 0;
+    status = sscanf(un.release, "%u.%u", &major, &minor);
+    return status == 2;
 }
 
 lldb::DataBufferSP
