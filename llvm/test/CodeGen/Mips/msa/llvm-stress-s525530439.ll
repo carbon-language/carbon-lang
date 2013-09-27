@@ -1,5 +1,5 @@
 ; RUN: llc -march=mips < %s
-; RUN: llc -march=mips -mattr=+MSA < %s
+; RUN: llc -march=mips -mattr=+msa,+fp64 < %s
 
 ; This test originally failed for MSA with a
 ; `Num < NumOperands && "Invalid child # of SDNode!"' assertion.

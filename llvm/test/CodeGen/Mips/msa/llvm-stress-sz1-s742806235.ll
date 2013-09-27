@@ -1,5 +1,5 @@
 ; RUN: llc -march=mips < %s
-; RUN: llc -march=mips -mattr=+MSA < %s
+; RUN: llc -march=mips -mattr=+msa,+fp64 < %s
 
 ; This test originally failed to select code for a truncstore of a
 ; build_vector.

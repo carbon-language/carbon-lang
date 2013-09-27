@@ -1,7 +1,7 @@
 ; Test the MSA intrinsics that are encoded with the 3RF instruction format and
 ; use the result as a third operand.
 
-; RUN: llc -march=mips -mattr=+msa < %s | FileCheck %s
+; RUN: llc -march=mips -mattr=+msa,+fp64 < %s | FileCheck %s
 
 @llvm_mips_fmadd_w_ARG1 = global <4 x float> <float 0.000000e+00, float 1.000000e+00, float 2.000000e+00, float 3.000000e+00>, align 16
 @llvm_mips_fmadd_w_ARG2 = global <4 x float> <float 4.000000e+00, float 5.000000e+00, float 6.000000e+00, float 7.000000e+00>, align 16

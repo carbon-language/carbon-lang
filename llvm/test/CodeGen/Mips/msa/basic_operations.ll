@@ -1,4 +1,4 @@
-; RUN: llc -march=mips -mattr=+msa < %s | FileCheck -check-prefix=MIPS32 %s
+; RUN: llc -march=mips -mattr=+msa,+fp64 < %s | FileCheck -check-prefix=MIPS32 %s
 
 @v4i8 = global <4 x i8> <i8 0, i8 0, i8 0, i8 0>
 @v16i8 = global <16 x i8> <i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0>

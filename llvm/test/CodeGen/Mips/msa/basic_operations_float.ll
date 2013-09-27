@@ -1,4 +1,4 @@
-; RUN: llc -march=mips -mattr=+msa < %s | FileCheck -check-prefix=MIPS32 %s
+; RUN: llc -march=mips -mattr=+msa,+fp64 < %s | FileCheck -check-prefix=MIPS32 %s
 
 @v4f32 = global <4 x float> <float 0.0, float 0.0, float 0.0, float 0.0>
 @v2f64 = global <2 x double> <double 0.0, double 0.0>
