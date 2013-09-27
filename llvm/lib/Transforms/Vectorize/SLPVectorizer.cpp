@@ -1201,7 +1201,7 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
   switch (Opcode) {
     case Instruction::PHI: {
       PHINode *PH = dyn_cast<PHINode>(VL0);
-      Builder.SetInsertPoint(PH->getParent()->getFirstInsertionPt());
+      Builder.SetInsertPoint(PH->getParent()->getFirstNonPHI());
       Builder.SetCurrentDebugLocation(PH->getDebugLoc());
       PHINode *NewPhi = Builder.CreatePHI(VecTy, PH->getNumIncomingValues());
       E->VectorizedValue = NewPhi;

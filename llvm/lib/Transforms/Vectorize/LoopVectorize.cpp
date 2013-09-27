@@ -1552,7 +1552,7 @@ InnerLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal) {
 
   // Use this IR builder to create the loop instructions (Phi, Br, Cmp)
   // inside the loop.
-  Builder.SetInsertPoint(VecBody->getFirstInsertionPt());
+  Builder.SetInsertPoint(VecBody->getFirstNonPHI());
 
   // Generate the induction variable.
   setDebugLocFromInst(Builder, getDebugLocFromInstOrOperands(OldInduction));
