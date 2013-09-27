@@ -313,8 +313,7 @@ DecomposeGEPExpression(const Value *V, int64_t &BaseOffs,
     }
 
     // Don't attempt to analyze GEPs over unsized objects.
-    if (!cast<PointerType>(GEPOp->getOperand(0)->getType())
-        ->getElementType()->isSized())
+    if (!GEPOp->getOperand(0)->getType()->getPointerElementType()->isSized())
       return V;
 
     // If we are lacking DataLayout information, we can't compute the offets of
@@ -354,7 +353,7 @@ DecomposeGEPExpression(const Value *V, int64_t &BaseOffs,
 
       // If the integer type is smaller than the pointer size, it is implicitly
       // sign extended to pointer size.
-      unsigned Width = cast<IntegerType>(Index->getType())->getBitWidth();
+      unsigned Width = Index->getType()->getIntegerBitWidth();
       if (TD->getPointerSizeInBits() > Width)
         Extension = EK_SignExt;
 

@@ -1057,7 +1057,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
       if (ParamPTy == 0 || !ParamPTy->getElementType()->isSized() || TD == 0)
         return false;
 
-      Type *CurElTy = cast<PointerType>(ActTy)->getElementType();
+      Type *CurElTy = ActTy->getPointerElementType();
       if (TD->getTypeAllocSize(CurElTy) !=
           TD->getTypeAllocSize(ParamPTy->getElementType()))
         return false;
