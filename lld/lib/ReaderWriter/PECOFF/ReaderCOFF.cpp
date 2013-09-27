@@ -729,6 +729,10 @@ public:
                        std::vector<std::unique_ptr<File> > &result) const {
     StringRef magic(input.getBuffer().getBufferStart(),
                     input.getBuffer().getBufferSize());
+    // The input file should be an archive file, a regular COFF file, or an an
+    // import library member file. Try to parse in that order. If the input file
+    // does not start with a known magic, parseCOFFImportLibrary will return an
+    // error object.
     llvm::sys::fs::file_magic fileType = llvm::sys::fs::identify_magic(magic);
     if (fileType == llvm::sys::fs::file_magic::archive)
       return _readerArchive.parseFile(input, result);
