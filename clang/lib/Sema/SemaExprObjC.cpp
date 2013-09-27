@@ -1839,9 +1839,9 @@ Sema::ObjCMessageKind Sema::getObjCMessageKind(Scope *S,
   }
 
   ObjCInterfaceOrSuperCCC Validator(getCurMethodDecl());
-  if (TypoCorrection Corrected = CorrectTypo(Result.getLookupNameInfo(),
-                                             Result.getLookupKind(), S, NULL,
-                                             Validator)) {
+  if (TypoCorrection Corrected =
+          CorrectTypo(Result.getLookupNameInfo(), Result.getLookupKind(), S,
+                      NULL, Validator, NULL, false, NULL, false)) {
     if (Corrected.isKeyword()) {
       // If we've found the keyword "super" (the only keyword that would be
       // returned by CorrectTypo), this is a send to super.
