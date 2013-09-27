@@ -66,12 +66,14 @@ public:
                                        WhitespaceManager &Whitespaces) {}
 
 protected:
-  BreakableToken(const FormatToken &Tok, bool InPPDirective,
-                 encoding::Encoding Encoding, const FormatStyle &Style)
-      : Tok(Tok), InPPDirective(InPPDirective), Encoding(Encoding),
-        Style(Style) {}
+  BreakableToken(const FormatToken &Tok, unsigned IndentLevel,
+                 bool InPPDirective, encoding::Encoding Encoding,
+                 const FormatStyle &Style)
+      : Tok(Tok), IndentLevel(IndentLevel), InPPDirective(InPPDirective),
+        Encoding(Encoding), Style(Style) {}
 
   const FormatToken &Tok;
+  const unsigned IndentLevel;
   const bool InPPDirective;
   const encoding::Encoding Encoding;
   const FormatStyle &Style;
@@ -88,9 +90,10 @@ public:
                                            StringRef::size_type Length) const;
 
 protected:
-  BreakableSingleLineToken(const FormatToken &Tok, unsigned StartColumn,
-                           StringRef Prefix, StringRef Postfix,
-                           bool InPPDirective, encoding::Encoding Encoding,
+  BreakableSingleLineToken(const FormatToken &Tok, unsigned IndentLevel,
+                           unsigned StartColumn, StringRef Prefix,
+                           StringRef Postfix, bool InPPDirective,
+                           encoding::Encoding Encoding,
                            const FormatStyle &Style);
 
   // The column in which the token starts.
@@ -109,10 +112,10 @@ public:
   ///
   /// \p StartColumn specifies the column in which the token will start
   /// after formatting.
-  BreakableStringLiteral(const FormatToken &Tok, unsigned StartColumn,
-                         StringRef Prefix, StringRef Postfix,
-                         bool InPPDirective, encoding::Encoding Encoding,
-                         const FormatStyle &Style);
+  BreakableStringLiteral(const FormatToken &Tok, unsigned IndentLevel,
+                         unsigned StartColumn, StringRef Prefix,
+                         StringRef Postfix, bool InPPDirective,
+                         encoding::Encoding Encoding, const FormatStyle &Style);
 
   virtual Split getSplit(unsigned LineIndex, unsigned TailOffset,
                          unsigned ColumnLimit) const;
@@ -126,9 +129,9 @@ public:
   ///
   /// \p StartColumn specifies the column in which the comment will start
   /// after formatting.
-  BreakableLineComment(const FormatToken &Token, unsigned StartColumn,
-                       bool InPPDirective, encoding::Encoding Encoding,
-                       const FormatStyle &Style);
+  BreakableLineComment(const FormatToken &Token, unsigned IndentLevel,
+                       unsigned StartColumn, bool InPPDirective,
+                       encoding::Encoding Encoding, const FormatStyle &Style);
 
   virtual Split getSplit(unsigned LineIndex, unsigned TailOffset,
                          unsigned ColumnLimit) const;
@@ -150,10 +153,10 @@ public:
   /// after formatting, while \p OriginalStartColumn specifies in which
   /// column the comment started before formatting.
   /// If the comment starts a line after formatting, set \p FirstInLine to true.
-  BreakableBlockComment(const FormatToken &Token, unsigned StartColumn,
-                        unsigned OriginaStartColumn, bool FirstInLine,
-                        bool InPPDirective, encoding::Encoding Encoding,
-                        const FormatStyle &Style);
+  BreakableBlockComment(const FormatToken &Token, unsigned IndentLevel,
+                        unsigned StartColumn, unsigned OriginaStartColumn,
+                        bool FirstInLine, bool InPPDirective,
+                        encoding::Encoding Encoding, const FormatStyle &Style);
 
   virtual unsigned getLineCount() const;
   virtual unsigned getLineLengthAfterSplit(unsigned LineIndex,

@@ -166,9 +166,19 @@ struct FormatStyle {
   /// \brief If \c true, always break before multiline string literals.
   bool AlwaysBreakBeforeMultilineStrings;
 
-  /// \brief If \c true, \c IndentWidth consecutive spaces will be replaced
-  /// with tab characters.
-  bool UseTab;
+  /// \brief Different ways to use tab in formatting.
+  enum UseTabStyle {
+    /// Never use tab.
+    UT_Never,
+    /// Use tabs only for indentation.
+    UT_ForIndentation,
+    /// Use tabs whenever we need to fill whitespace that spans at least from
+    /// one tab stop to the next one.
+    UT_Always
+  };
+
+  /// \brief The way to use tab characters in the resulting file.
+  UseTabStyle UseTab;
 
   /// \brief If \c true, binary operators will be placed after line breaks.
   bool BreakBeforeBinaryOperators;

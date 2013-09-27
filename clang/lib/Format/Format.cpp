@@ -45,6 +45,19 @@ struct ScalarEnumerationTraits<clang::format::FormatStyle::LanguageStandard> {
 };
 
 template <>
+struct ScalarEnumerationTraits<clang::format::FormatStyle::UseTabStyle> {
+  static void
+  enumeration(IO &IO, clang::format::FormatStyle::UseTabStyle &Value) {
+    IO.enumCase(Value, "Never", clang::format::FormatStyle::UT_Never);
+    IO.enumCase(Value, "false", clang::format::FormatStyle::UT_Never);
+    IO.enumCase(Value, "Always", clang::format::FormatStyle::UT_Always);
+    IO.enumCase(Value, "true", clang::format::FormatStyle::UT_Always);
+    IO.enumCase(Value, "ForIndentation",
+                clang::format::FormatStyle::UT_ForIndentation);
+  }
+};
+
+template <>
 struct ScalarEnumerationTraits<clang::format::FormatStyle::BraceBreakingStyle> {
   static void
   enumeration(IO &IO, clang::format::FormatStyle::BraceBreakingStyle &Value) {
@@ -194,7 +207,7 @@ FormatStyle getLLVMStyle() {
   LLVMStyle.PointerBindsToType = false;
   LLVMStyle.SpacesBeforeTrailingComments = 1;
   LLVMStyle.Standard = FormatStyle::LS_Cpp03;
-  LLVMStyle.UseTab = false;
+  LLVMStyle.UseTab = FormatStyle::UT_Never;
   LLVMStyle.SpacesInParentheses = false;
   LLVMStyle.SpaceInEmptyParentheses = false;
   LLVMStyle.SpacesInCStyleCastParentheses = false;
@@ -237,7 +250,7 @@ FormatStyle getGoogleStyle() {
   GoogleStyle.PointerBindsToType = true;
   GoogleStyle.SpacesBeforeTrailingComments = 2;
   GoogleStyle.Standard = FormatStyle::LS_Auto;
-  GoogleStyle.UseTab = false;
+  GoogleStyle.UseTab = FormatStyle::UT_Never;
   GoogleStyle.SpacesInParentheses = false;
   GoogleStyle.SpaceInEmptyParentheses = false;
   GoogleStyle.SpacesInCStyleCastParentheses = false;
@@ -539,7 +552,7 @@ private:
                                        Style.MaxEmptyLinesToKeep + 1);
           Newlines = std::max(1u, Newlines);
           Whitespaces->replaceWhitespace(
-              *(*I)->First, Newlines, /*Spaces=*/Indent,
+              *(*I)->First, Newlines, (*I)->Level, /*Spaces=*/Indent,
               /*StartOfTokenColumn=*/Indent, Line.InPPDirective);
         }
         UnwrappedLineFormatter Formatter(Indenter, Whitespaces, Style, **I);
@@ -556,10 +569,10 @@ private:
       return false;
 
     if (!DryRun) {
-      Whitespaces->replaceWhitespace(*LBrace.Children[0]->First,
-                                     /*Newlines=*/0, /*Spaces=*/1,
-                                     /*StartOfTokenColumn=*/State.Column,
-                                     State.Line->InPPDirective);
+      Whitespaces->replaceWhitespace(
+          *LBrace.Children[0]->First,
+          /*Newlines=*/0, /*IndentLevel=*/1, /*Spaces=*/1,
+          /*StartOfTokenColumn=*/State.Column, State.Line->InPPDirective);
       UnwrappedLineFormatter Formatter(Indenter, Whitespaces, Style,
                                        *LBrace.Children[0]);
       Penalty += Formatter.format(State.Column + 1, DryRun);
@@ -847,8 +860,9 @@ public:
       if (TheLine.First->is(tok::eof)) {
         if (PreviousLineWasTouched) {
           unsigned NewLines = std::min(FirstTok->NewlinesBefore, 1u);
-          Whitespaces.replaceWhitespace(*TheLine.First, NewLines, /*Indent*/ 0,
-                                        /*TargetColumn*/ 0);
+          Whitespaces.replaceWhitespace(*TheLine.First, NewLines,
+                                        /*IndentLevel=*/0, /*Spaces=*/0,
+                                        /*TargetColumn=*/0);
         }
       } else if (TheLine.Type != LT_Invalid &&
                  (WasMoved || FormatPPDirective || touchesLine(TheLine))) {
@@ -1225,7 +1239,7 @@ private:
       ++Newlines;
 
     Whitespaces.replaceWhitespace(
-        RootToken, Newlines, Indent, Indent,
+        RootToken, Newlines, Indent / Style.IndentWidth, Indent, Indent,
         InPPDirective && !RootToken.HasUnescapedNewline);
   }
 

@@ -303,12 +303,13 @@ unsigned ContinuationIndenter::addTokenToState(LineState &State, bool Newline,
       State.Stack.back().BreakBeforeParameter = false;
 
     if (!DryRun) {
-      unsigned NewLines = 1;
+      unsigned Newlines = 1;
       if (Current.is(tok::comment))
-        NewLines = std::max(NewLines, std::min(Current.NewlinesBefore,
+        Newlines = std::max(Newlines, std::min(Current.NewlinesBefore,
                                                Style.MaxEmptyLinesToKeep + 1));
-      Whitespaces.replaceWhitespace(Current, NewLines, State.Column,
-                                    State.Column, State.Line->InPPDirective);
+      Whitespaces.replaceWhitespace(Current, Newlines, State.Line->Level,
+                                    State.Column, State.Column,
+                                    State.Line->InPPDirective);
     }
 
     if (!Current.isTrailingComment())
@@ -363,7 +364,8 @@ unsigned ContinuationIndenter::addTokenToState(LineState &State, bool Newline,
     unsigned Spaces = State.NextToken->SpacesRequiredBefore + ExtraSpaces;
 
     if (!DryRun)
-      Whitespaces.replaceWhitespace(Current, 0, Spaces, State.Column + Spaces);
+      Whitespaces.replaceWhitespace(Current, /*Newlines=*/0, /*IndentLevel=*/0,
+                                    Spaces, State.Column + Spaces);
 
     if (Current.Type == TT_ObjCSelectorName &&
         State.Stack.back().ColonPos == 0) {
@@ -693,21 +695,22 @@ unsigned ContinuationIndenter::breakProtrudingToken(const FormatToken &Current,
           Text.startswith(Prefix = "L\""))) ||
         (Text.startswith(Prefix = "_T(\"") && Text.endswith(Postfix = "\")")) ||
         getRawStringLiteralPrefixPostfix(Text, Prefix, Postfix)) {
-      Token.reset(new BreakableStringLiteral(Current, StartColumn, Prefix,
-                                             Postfix, State.Line->InPPDirective,
-                                             Encoding, Style));
+      Token.reset(new BreakableStringLiteral(
+          Current, State.Line->Level, StartColumn, Prefix, Postfix,
+          State.Line->InPPDirective, Encoding, Style));
     } else {
       return 0;
     }
   } else if (Current.Type == TT_BlockComment && Current.isTrailingComment()) {
     Token.reset(new BreakableBlockComment(
-        Current, StartColumn, Current.OriginalColumn, !Current.Previous,
-        State.Line->InPPDirective, Encoding, Style));
+        Current, State.Line->Level, StartColumn, Current.OriginalColumn,
+        !Current.Previous, State.Line->InPPDirective, Encoding, Style));
   } else if (Current.Type == TT_LineComment &&
              (Current.Previous == NULL ||
               Current.Previous->Type != TT_ImplicitStringLiteral)) {
-    Token.reset(new BreakableLineComment(
-        Current, StartColumn, State.Line->InPPDirective, Encoding, Style));
+    Token.reset(new BreakableLineComment(Current, State.Line->Level,
+                                         StartColumn, State.Line->InPPDirective,
+                                         Encoding, Style));
   } else {
     return 0;
   }
