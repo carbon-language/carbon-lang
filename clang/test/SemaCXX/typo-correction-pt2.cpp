@@ -123,3 +123,8 @@ void testAccess() {
   }
 }
 }
+
+long readline(const char *, char *, unsigned long);
+void assign_to_unknown_var() {
+    deadline_ = 1;  // expected-error-re {{use of undeclared identifier 'deadline_'$}}
+}

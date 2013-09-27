@@ -130,6 +130,8 @@ public:
   virtual bool ValidateCandidate(const TypoCorrection &candidate) {
     if (FieldDecl *FD = candidate.getCorrectionDeclAs<FieldDecl>())
       return isa<ObjCIvarDecl>(FD);
+    if (NextToken.is(tok::equal))
+      return candidate.getCorrectionDeclAs<VarDecl>();
     return CorrectionCandidateCallback::ValidateCandidate(candidate);
   }
 

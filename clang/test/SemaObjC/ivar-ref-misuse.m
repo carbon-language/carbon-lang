@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -Wno-objc-root-class %s
 
-@interface Sprite { // expected-note{{'Sprite' declared here}}
+@interface Sprite {
   int sprite, spree;
   int UseGlobalBar;
 }
@@ -17,8 +17,7 @@ int UseGlobalBar;
 + (void)setFoo:(int)foo {
   sprite = foo;   // expected-error {{instance variable 'sprite' accessed in class method}}
   spree = foo;
-  Xsprite = foo; // expected-error {{unknown type name 'Xsprite'; did you mean 'Sprite'?}}  \
-  // expected-error{{expected identifier or '('}}
+  Xsprite = foo; // expected-error {{use of undeclared identifier 'Xsprite'}}
   UseGlobalBar = 10;
 }
 + (void)setSprite:(int)sprite {
