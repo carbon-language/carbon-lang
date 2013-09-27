@@ -173,6 +173,25 @@ ThreadPlanStepRange::InRange ()
                         log->Printf ("Step range plan stepped to another range of same line: %s", s.GetData());
                     }
                 }
+                else if (new_context.line_entry.line == 0)
+                {
+                    new_context.line_entry.line = m_addr_context.line_entry.line;
+                    m_addr_context = new_context;
+                    AddRange(m_addr_context.line_entry.range);
+                    ret_value = true;
+                    if (log)
+                    {
+                        StreamString s;
+                        m_addr_context.line_entry.Dump (&s,
+                                                        m_thread.CalculateTarget().get(),
+                                                        true,
+                                                        Address::DumpStyleLoadAddress,
+                                                        Address::DumpStyleLoadAddress,
+                                                        true);
+
+                        log->Printf ("Step range plan stepped to a range at linenumber 0 stepping through that range: %s", s.GetData());
+                    }
+                }
                 else if (new_context.line_entry.range.GetBaseAddress().GetLoadAddress(m_thread.CalculateTarget().get())
                          != pc_load_addr)
                 {

@@ -17,7 +17,7 @@ using namespace lldb_private;
 LineEntry::LineEntry() :
     range(),
     file(),
-    line(0),
+    line(LLDB_INVALID_LINE_NUMBER),
     column(0),
     is_start_of_statement(0),
     is_start_of_basic_block(0),
@@ -58,7 +58,7 @@ LineEntry::Clear()
 {
     range.Clear();
     file.Clear();
-    line = 0;
+    line = LLDB_INVALID_LINE_NUMBER;
     column = 0;
     is_start_of_statement = 0;
     is_start_of_basic_block = 0;
@@ -71,7 +71,7 @@ LineEntry::Clear()
 bool
 LineEntry::IsValid() const
 {
-    return range.GetBaseAddress().IsValid() && line != 0;
+    return range.GetBaseAddress().IsValid() && line != LLDB_INVALID_LINE_NUMBER;
 }
 
 bool

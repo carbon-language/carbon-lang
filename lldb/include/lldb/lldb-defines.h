@@ -82,6 +82,7 @@
 #define LLDB_INVALID_FRAME_ID           UINT32_MAX
 #define LLDB_INVALID_SIGNAL_NUMBER      INT32_MAX
 #define LLDB_INVALID_OFFSET             UINT64_MAX // Must match max of lldb::offset_t
+#define LLDB_INVALID_LINE_NUMBER        UINT32_MAX
 
 //----------------------------------------------------------------------
 /// CPU Type defintions
