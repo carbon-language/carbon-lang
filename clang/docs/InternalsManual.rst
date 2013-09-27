@@ -957,10 +957,6 @@ names are inside the ``DeclarationName`` class).
 
   The name is a simple identifier.  Use ``N.getAsIdentifierInfo()`` to retrieve
   the corresponding ``IdentifierInfo*`` pointing to the actual identifier.
-  Note that C++ overloaded operators (e.g., "``operator+``") are represented as
-  special kinds of identifiers.  Use ``IdentifierInfo``'s
-  ``getOverloadedOperatorID`` function to determine whether an identifier is an
-  overloaded operator name.
 
 ``ObjCZeroArgSelector``, ``ObjCOneArgSelector``, ``ObjCMultiArgSelector``
 
