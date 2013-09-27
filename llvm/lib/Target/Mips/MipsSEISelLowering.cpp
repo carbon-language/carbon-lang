@@ -609,6 +609,10 @@ static SDValue performSRACombine(SDNode *N, SelectionDAG &DAG,
       if (!ShAmount)
         return SDValue();
 
+      if (Op0Op0->getOpcode() != MipsISD::VEXTRACT_SEXT_ELT &&
+          Op0Op0->getOpcode() != MipsISD::VEXTRACT_ZEXT_ELT)
+        return SDValue();
+
       EVT ExtendTy = cast<VTSDNode>(Op0Op0->getOperand(2))->getVT();
       unsigned TotalBits = ShAmount->getZExtValue() + ExtendTy.getSizeInBits();
 
