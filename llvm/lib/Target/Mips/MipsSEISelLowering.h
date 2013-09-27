@@ -90,6 +90,12 @@ namespace llvm {
     /// \brief Emit the COPY_FD pseudo instruction
     MachineBasicBlock *emitCOPY_FD(MachineInstr *MI,
                                    MachineBasicBlock *BB) const;
+    /// \brief Emit the INSERT_FW pseudo instruction
+    MachineBasicBlock *emitINSERT_FW(MachineInstr *MI,
+                                     MachineBasicBlock *BB) const;
+    /// \brief Emit the INSERT_FD pseudo instruction
+    MachineBasicBlock *emitINSERT_FD(MachineInstr *MI,
+                                     MachineBasicBlock *BB) const;
   };
 }
 

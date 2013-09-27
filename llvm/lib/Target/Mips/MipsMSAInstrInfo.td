@@ -1242,6 +1242,15 @@ class MSA_INSERT_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
   string Constraints = "$wd = $wd_in";
 }
 
+class MSA_INSERT_PSEUDO_BASE<SDPatternOperator OpNode, ValueType Ty,
+                             RegisterClass RCWD, RegisterClass RCFS> :
+      MipsPseudo<(outs RCWD:$wd), (ins RCWD:$wd_in, uimm6:$n, RCFS:$fs),
+                 [(set RCWD:$wd, (OpNode (Ty RCWD:$wd_in), RCFS:$fs,
+                                        immZExt6:$n))]> {
+  bit usesCustomInserter = 1;
+  string Constraints = "$wd = $wd_in";
+}
+
 class MSA_INSVE_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
                           RegisterClass RCWD, RegisterClass RCWS = RCWD,
                           InstrItinClass itin = NoItinerary> {
@@ -1953,6 +1962,11 @@ class INSERT_H_DESC : MSA_INSERT_DESC_BASE<"insert.h", vinsert_v8i16, MSA128H,
                                            GPR32>;
 class INSERT_W_DESC : MSA_INSERT_DESC_BASE<"insert.w", vinsert_v4i32, MSA128W,
                                            GPR32>;
+
+class INSERT_FW_PSEUDO_DESC : MSA_INSERT_PSEUDO_BASE<vector_insert, v4f32,
+                                                     MSA128W, FGR32>;
+class INSERT_FD_PSEUDO_DESC : MSA_INSERT_PSEUDO_BASE<vector_insert, v2f64,
+                                                     MSA128D, FGR64>;
 
 class INSVE_B_DESC : MSA_INSVE_DESC_BASE<"insve.b", int_mips_insve_b, MSA128B>;
 class INSVE_H_DESC : MSA_INSVE_DESC_BASE<"insve.h", int_mips_insve_h, MSA128H>;
@@ -2827,10 +2841,16 @@ def INSERT_B : INSERT_B_ENC, INSERT_B_DESC;
 def INSERT_H : INSERT_H_ENC, INSERT_H_DESC;
 def INSERT_W : INSERT_W_ENC, INSERT_W_DESC;
 
+// INSERT_FW_PSEUDO defined after INSVE_W
+// INSERT_FD_PSEUDO defined after INSVE_D
+
 def INSVE_B : INSVE_B_ENC, INSVE_B_DESC;
 def INSVE_H : INSVE_H_ENC, INSVE_H_DESC;
 def INSVE_W : INSVE_W_ENC, INSVE_W_DESC;
 def INSVE_D : INSVE_D_ENC, INSVE_D_DESC;
+
+def INSERT_FW_PSEUDO : INSERT_FW_PSEUDO_DESC;
+def INSERT_FD_PSEUDO : INSERT_FD_PSEUDO_DESC;
 
 def LD_B: LD_B_ENC, LD_B_DESC;
 def LD_H: LD_H_ENC, LD_H_DESC;

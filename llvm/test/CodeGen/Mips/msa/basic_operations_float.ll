@@ -135,3 +135,37 @@ define double @extract_v2f64_elt0() nounwind {
   ret double %3
   ; MIPS32: .size extract_v2f64_elt0
 }
+
+define void @insert_v4f32(float %a) nounwind {
+  ; MIPS32: insert_v4f32:
+
+  %1 = load <4 x float>* @v4f32
+  ; MIPS32-DAG: ld.w [[R1:\$w[0-9]+]],
+
+  %2 = insertelement <4 x float> %1, float %a, i32 1
+  ; float argument passed in $f12
+  ; MIPS32-DAG: insve.w [[R1]][1], $w12[0]
+
+  store <4 x float> %2, <4 x float>* @v4f32
+  ; MIPS32-DAG: st.w [[R1]]
+
+  ret void
+  ; MIPS32: .size insert_v4f32
+}
+
+define void @insert_v2f64(double %a) nounwind {
+  ; MIPS32: insert_v2f64:
+
+  %1 = load <2 x double>* @v2f64
+  ; MIPS32-DAG: ld.d [[R1:\$w[0-9]+]],
+
+  %2 = insertelement <2 x double> %1, double %a, i32 1
+  ; double argument passed in $f12
+  ; MIPS32-DAG: insve.d [[R1]][1], $w12[0]
+
+  store <2 x double> %2, <2 x double>* @v2f64
+  ; MIPS32-DAG: st.d [[R1]]
+
+  ret void
+  ; MIPS32: .size insert_v2f64
+}
