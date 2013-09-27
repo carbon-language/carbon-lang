@@ -144,11 +144,17 @@ public:
   ///
   /// @param ShowColors - Display colored messages if output is a terminal and
   /// the default error handler is used.
-  void PrintMessage(SMLoc Loc, DiagKind Kind, const Twine &Msg,
+  void PrintMessage(raw_ostream &OS, SMLoc Loc, DiagKind Kind,
+                    const Twine &Msg,
                     ArrayRef<SMRange> Ranges = None,
                     ArrayRef<SMFixIt> FixIts = None,
                     bool ShowColors = true) const;
 
+  /// Emits a diagnostic to llvm::errs().
+  void PrintMessage(SMLoc Loc, DiagKind Kind, const Twine &Msg,
+                    ArrayRef<SMRange> Ranges = None,
+                    ArrayRef<SMFixIt> FixIts = None,
+                    bool ShowColors = true) const;
 
   /// GetMessage - Return an SMDiagnostic at the specified location with the
   /// specified string.

@@ -211,7 +211,8 @@ SMDiagnostic SourceMgr::GetMessage(SMLoc Loc, SourceMgr::DiagKind Kind,
                       LineStr, ColRanges, FixIts);
 }
 
-void SourceMgr::PrintMessage(SMLoc Loc, SourceMgr::DiagKind Kind,
+void SourceMgr::PrintMessage(raw_ostream &OS, SMLoc Loc,
+                             SourceMgr::DiagKind Kind,
                              const Twine &Msg, ArrayRef<SMRange> Ranges,
                              ArrayRef<SMFixIt> FixIts, bool ShowColors) const {
   SMDiagnostic Diagnostic = GetMessage(Loc, Kind, Msg, Ranges, FixIts);
@@ -222,8 +223,6 @@ void SourceMgr::PrintMessage(SMLoc Loc, SourceMgr::DiagKind Kind,
     return;
   }
 
-  raw_ostream &OS = errs();
-
   if (Loc != SMLoc()) {
     int CurBuf = FindBufferContainingLoc(Loc);
     assert(CurBuf != -1 && "Invalid or unspecified location!");
@@ -231,6 +230,12 @@ void SourceMgr::PrintMessage(SMLoc Loc, SourceMgr::DiagKind Kind,
   }
 
   Diagnostic.print(0, OS, ShowColors);
+}
+
+void SourceMgr::PrintMessage(SMLoc Loc, SourceMgr::DiagKind Kind,
+                             const Twine &Msg, ArrayRef<SMRange> Ranges,
+                             ArrayRef<SMFixIt> FixIts, bool ShowColors) const {
+  PrintMessage(llvm::errs(), Loc, Kind, Msg, Ranges, FixIts, ShowColors);
 }
 
 //===----------------------------------------------------------------------===//
