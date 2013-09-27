@@ -160,3 +160,15 @@ TEST_F(SourceMgrTest, BasicFixit) {
             Output);
 }
 
+TEST_F(SourceMgrTest, FixitForTab) {
+  setMainBuffer("aaa\tbbb\nccc ddd\n", "file.in");
+  printMessage(getLoc(3), SourceMgr::DK_Error, "message", None,
+               makeArrayRef(SMFixIt(getRange(3, 1), "zzz")));
+
+  EXPECT_EQ("file.in:1:4: error: message\n"
+            "aaa     bbb\n"
+            "   ^^^^^\n"
+            "   zzz\n",
+            Output);
+}
+

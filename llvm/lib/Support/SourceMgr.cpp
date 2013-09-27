@@ -470,7 +470,7 @@ void SMDiagnostic::print(const char *ProgName, raw_ostream &S,
   if (FixItInsertionLine.empty())
     return;
   
-  for (size_t i = 0, e = FixItInsertionLine.size(), OutCol = 0; i != e; ++i) {
+  for (size_t i = 0, e = FixItInsertionLine.size(), OutCol = 0; i < e; ++i) {
     if (i >= LineContents.size() || LineContents[i] != '\t') {
       S << FixItInsertionLine[i];
       ++OutCol;
