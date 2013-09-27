@@ -5358,7 +5358,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                     log->Printf("Process::RunThreadPlan(): execution interrupted: %s", s.GetData());
             }
             
-            if (should_unwind && thread_plan_sp)
+            if (should_unwind)
             {
                 if (log)
                     log->Printf ("Process::RunThreadPlan: ExecutionInterrupted - discarding thread plans up to %p.", thread_plan_sp.get());
@@ -5376,7 +5376,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
             if (log)
                 log->PutCString("Process::RunThreadPlan(): execution set up error.");
                 
-            if (unwind_on_error && thread_plan_sp)
+            if (unwind_on_error)
             {
                 thread->DiscardThreadPlansUpToPlan (thread_plan_sp);
                 thread_plan_sp->SetPrivate (orig_plan_private);
