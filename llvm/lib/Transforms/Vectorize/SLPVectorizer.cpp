@@ -1365,8 +1365,10 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
       setInsertPointAfterBundle(E->Scalars);
 
       LoadInst *LI = cast<LoadInst>(VL0);
-      Value *VecPtr =
-      Builder.CreateBitCast(LI->getPointerOperand(), VecTy->getPointerTo());
+      unsigned AS = LI->getPointerAddressSpace();
+
+      Value *VecPtr = Builder.CreateBitCast(LI->getPointerOperand(),
+                                            VecTy->getPointerTo(AS));
       unsigned Alignment = LI->getAlignment();
       LI = Builder.CreateLoad(VecPtr);
       LI->setAlignment(Alignment);
@@ -1376,6 +1378,7 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
     case Instruction::Store: {
       StoreInst *SI = cast<StoreInst>(VL0);
       unsigned Alignment = SI->getAlignment();
+      unsigned AS = SI->getPointerAddressSpace();
 
       ValueList ValueOp;
       for (int i = 0, e = E->Scalars.size(); i < e; ++i)
@@ -1384,8 +1387,8 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
       setInsertPointAfterBundle(E->Scalars);
 
       Value *VecValue = vectorizeTree(ValueOp);
-      Value *VecPtr =
-      Builder.CreateBitCast(SI->getPointerOperand(), VecTy->getPointerTo());
+      Value *VecPtr = Builder.CreateBitCast(SI->getPointerOperand(),
+                                            VecTy->getPointerTo(AS));
       StoreInst *S = Builder.CreateStore(VecValue, VecPtr);
       S->setAlignment(Alignment);
       E->VectorizedValue = S;
