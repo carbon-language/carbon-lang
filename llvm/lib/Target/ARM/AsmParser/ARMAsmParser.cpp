@@ -5358,7 +5358,7 @@ validateInstruction(MCInst &Inst,
   case ARM::t2LDRDi8:
   case ARM::t2LDRD_PRE:
   case ARM::t2LDRD_POST: {
-    // Rt2 must different from Rt.
+    // Rt2 must be different from Rt.
     unsigned Rt = MRI->getEncodingValue(Inst.getOperand(0).getReg());
     unsigned Rt2 = MRI->getEncodingValue(Inst.getOperand(1).getReg());
     if (Rt2 == Rt)
