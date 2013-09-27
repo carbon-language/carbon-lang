@@ -326,7 +326,9 @@ TypeBasedAliasAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
 /// it as struct-path aware TBAA format, otherwise, we treat it as scalar TBAA
 /// format.
 static bool isStructPathTBAA(const MDNode *MD) {
-  return isa<MDNode>(MD->getOperand(0));
+  // Anonymous TBAA root starts with a MDNode and dragonegg uses it as
+  // a TBAA tag.
+  return isa<MDNode>(MD->getOperand(0)) && MD->getNumOperands() >= 3;
 }
 
 /// Aliases - Test whether the type represented by A may alias the
