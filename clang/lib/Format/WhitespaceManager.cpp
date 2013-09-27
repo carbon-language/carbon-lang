@@ -225,7 +225,7 @@ void WhitespaceManager::generateChanges() {
                           C.PreviousEndOfTokenColumn, C.EscapedNewlineColumn);
       else
         appendNewlineText(ReplacementText, C.NewlinesBefore);
-      appendIndentText(ReplacementText, C.Spaces);
+      appendIndentText(ReplacementText, C.Spaces, C.StartOfTokenColumn - C.Spaces);
       ReplacementText.append(C.CurrentLinePrefix);
       storeReplacement(C.OriginalWhitespaceRange, ReplacementText);
     }
@@ -264,10 +264,18 @@ void WhitespaceManager::appendNewlineText(std::string &Text, unsigned Newlines,
   }
 }
 
-void WhitespaceManager::appendIndentText(std::string &Text, unsigned Spaces) {
+void WhitespaceManager::appendIndentText(std::string &Text, unsigned Spaces,
+                                         unsigned WhitespaceStartColumn) {
   if (!Style.UseTab) {
     Text.append(std::string(Spaces, ' '));
   } else {
+    unsigned FirstTabWidth =
+        Style.TabWidth - WhitespaceStartColumn % Style.TabWidth;
+    // Indent with tabs only when there's at least one full tab.
+    if (FirstTabWidth + Style.TabWidth <= Spaces) {
+      Spaces -= FirstTabWidth;
+      Text.append("\t");
+    }
     Text.append(std::string(Spaces / Style.TabWidth, '\t'));
     Text.append(std::string(Spaces % Style.TabWidth, ' '));
   }

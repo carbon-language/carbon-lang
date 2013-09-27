@@ -5760,6 +5760,20 @@ TEST_F(FormatTest, ConfigurableUseOfTab) {
   Tab.IndentWidth = 8;
   Tab.UseTab = true;
   Tab.AlignEscapedNewlinesLeft = true;
+
+  EXPECT_EQ("if (aaaaaaaa && // q\n"
+            "    bb)\t\t// w\n"
+            "\t;",
+            format("if (aaaaaaaa &&// q\n"
+                   "bb)// w\n"
+                   ";",
+                   Tab));
+  EXPECT_EQ("if (aaa && bbb) // w\n"
+            "\t;",
+            format("if(aaa&&bbb)// w\n"
+                   ";",
+                   Tab));
+
   verifyFormat("class X {\n"
                "\tvoid f() {\n"
                "\t\tsomeFunction(parameter1,\n"
@@ -5843,6 +5857,7 @@ TEST_F(FormatTest, ConfigurableUseOfTab) {
                    " \t \t in multiple lines\t\n"
                    " \t  */",
                    Tab));
+
   Tab.UseTab = false;
   EXPECT_EQ("/*\n"
             "              a\t\tcomment\n"

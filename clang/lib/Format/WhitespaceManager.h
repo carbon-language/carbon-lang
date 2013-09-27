@@ -157,7 +157,8 @@ private:
   void appendNewlineText(std::string &Text, unsigned Newlines,
                          unsigned PreviousEndOfTokenColumn,
                          unsigned EscapedNewlineColumn);
-  void appendIndentText(std::string &Text, unsigned Spaces);
+  void appendIndentText(std::string &Text, unsigned Spaces,
+                        unsigned WhitespaceStartColumn);
 
   SmallVector<Change, 16> Changes;
   SourceManager &SourceMgr;
