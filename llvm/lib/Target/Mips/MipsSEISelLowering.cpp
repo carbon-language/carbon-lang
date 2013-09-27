@@ -1048,19 +1048,6 @@ static SDValue lowerMSACopyIntr(SDValue Op, SelectionDAG &DAG, unsigned Opc) {
   return Result;
 }
 
-// Lower an MSA insert intrinsic into the specified SelectionDAG node
-static SDValue lowerMSAInsertIntr(SDValue Op, SelectionDAG &DAG, unsigned Opc) {
-  SDLoc DL(Op);
-  SDValue Op0 = Op->getOperand(1);
-  SDValue Op1 = Op->getOperand(2);
-  SDValue Op2 = Op->getOperand(3);
-  EVT ResTy = Op->getValueType(0);
-
-  SDValue Result = DAG.getNode(Opc, DL, ResTy, Op0, Op2, Op1);
-
-  return Result;
-}
-
 static SDValue
 lowerMSASplatImm(SDLoc DL, EVT ResTy, SDValue ImmOp, SelectionDAG &DAG) {
   EVT ViaVecTy = ResTy;
@@ -1381,7 +1368,9 @@ SDValue MipsSETargetLowering::lowerINTRINSIC_WO_CHAIN(SDValue Op,
   case Intrinsic::mips_insert_b:
   case Intrinsic::mips_insert_h:
   case Intrinsic::mips_insert_w:
-    return lowerMSAInsertIntr(Op, DAG, ISD::INSERT_VECTOR_ELT);
+  case Intrinsic::mips_insert_d:
+    return DAG.getNode(ISD::INSERT_VECTOR_ELT, SDLoc(Op), Op->getValueType(0),
+                       Op->getOperand(1), Op->getOperand(3), Op->getOperand(2));
   case Intrinsic::mips_ldi_b:
   case Intrinsic::mips_ldi_h:
   case Intrinsic::mips_ldi_w:
