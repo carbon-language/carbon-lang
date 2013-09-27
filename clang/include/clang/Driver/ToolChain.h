@@ -182,10 +182,6 @@ public:
   /// IsMathErrnoDefault - Does this tool chain use -fmath-errno by default.
   virtual bool IsMathErrnoDefault() const { return true; }
 
-  /// IsObjCDefaultSynthPropertiesDefault - Does this tool chain enable
-  /// -fobjc-default-synthesize-properties by default.
-  virtual bool IsObjCDefaultSynthPropertiesDefault() const { return true; }
-  
   /// IsEncodeExtendedBlockSignatureDefault - Does this tool chain enable
   /// -fencode-extended-block-signature by default.
   virtual bool IsEncodeExtendedBlockSignatureDefault() const { return false; }
