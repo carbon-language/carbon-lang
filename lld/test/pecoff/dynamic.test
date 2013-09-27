@@ -1,0 +1,10 @@
+# RUN: yaml2obj %p/Inputs/vars-main.obj.yaml > %t.obj
+#
+# RUN: lld -flavor link /out:%t1 /subsystem:console /entry:main /opt:noref \
+# RUN:    -- %t.obj %p/Inputs/vars.lib && llvm-objdump -p %t1 | FileCheck %s
+
+CHECK:      DLL Name: vars.dll
+CHECK-NEXT: Hint/Ord  Name
+CHECK-NEXT:        0  _name_with_underscore
+CHECK-NEXT:        1  fn
+CHECK-NEXT:        1
