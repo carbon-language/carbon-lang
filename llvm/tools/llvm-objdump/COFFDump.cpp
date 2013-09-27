@@ -263,7 +263,7 @@ static void printImportTables(const COFFObjectFile *Obj) {
       StringRef Name;
       if (Obj->getHintName(entry->getHintNameRVA(), Hint, Name))
         return;
-      outs() << format("      % 6d  %s\n", Hint, Name);
+      outs() << format("      % 6d  ", Hint) << Name << "\n";
     }
     outs() << "\n";
   }
