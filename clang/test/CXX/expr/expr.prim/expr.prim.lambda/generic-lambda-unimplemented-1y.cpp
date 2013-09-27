@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -std=c++1y %s -verify -emit-llvm
+// RUN: %clang_cc1 -fsyntax-only -std=c++1y %s -verify
 namespace return_type_deduction_ok {
  auto l = [](auto a) ->auto { return a; }(2); 
  auto l2 = [](auto a) ->decltype(auto) { return a; }(2);  

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s -std=c++1y -DCXX1Y -emit-llvm
+// RUN: %clang_cc1 -fsyntax-only -verify %s -std=c++1y -DCXX1Y 
 
 namespace test_factorial {
 
@@ -70,7 +70,6 @@ int test2() {
   {
     auto L = [](auto *a) { 
                 return (*a)(a); }; //expected-error{{called object type 'double' is not a function}}
-    //l(&l);
     double d;
     L(&d); //expected-note{{in instantiation of}}
     auto M = [](auto b) { return b; };
@@ -79,7 +78,6 @@ int test2() {
   {
     auto L = [](auto *a) ->decltype (a->foo()) { //expected-note2{{candidate template ignored:}}
                 return (*a)(a); }; 
-    //l(&l);
     double d;
     L(&d); //expected-error{{no matching function for call}} 
     auto M = [](auto b) { return b; };
@@ -118,8 +116,6 @@ namespace nested_lambdas {
                            return a + b;
                         };
               };
-   // auto M = L(3.14);
-   // return M('4');    
   }
   auto get_lambda() {
     return [](auto a) {
