@@ -1,5 +1,6 @@
 ; RUN: llc -march=mips -mattr=+msa < %s | FileCheck -check-prefix=MIPS32 %s
 
+@v4i8 = global <4 x i8> <i8 0, i8 0, i8 0, i8 0>
 @v16i8 = global <16 x i8> <i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0>
 @v8i16 = global <8 x i16> <i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0>
 @v4i32 = global <4 x i32> <i32 0, i32 0, i32 0, i32 0>
@@ -453,4 +454,14 @@ define void @insert_v2i64(i64 %a) nounwind {
 
   ret void
   ; MIPS32: .size insert_v2i64
+}
+
+define void @truncstore() nounwind {
+  ; MIPS32: truncstore:
+
+  store volatile <4 x i8> <i8 -1, i8 -1, i8 -1, i8 -1>, <4 x i8>*@v4i8
+  ; TODO: What code should be emitted?
+
+  ret void
+  ; MIPS32: .size truncstore
 }
