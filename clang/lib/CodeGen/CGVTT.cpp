@@ -19,7 +19,8 @@ using namespace clang;
 using namespace CodeGen;
 
 static llvm::Constant *
-GetAddrOfVTTVTable(CodeGenVTables &CGVT, const CXXRecordDecl *MostDerivedClass,
+GetAddrOfVTTVTable(CodeGenVTables &CGVT, CodeGenModule &CGM,
+                   const CXXRecordDecl *MostDerivedClass,
                    const VTTVTable &VTable,
                    llvm::GlobalVariable::LinkageTypes Linkage,
                    llvm::DenseMap<BaseSubobject, uint64_t> &AddressPoints) {
@@ -27,7 +28,7 @@ GetAddrOfVTTVTable(CodeGenVTables &CGVT, const CXXRecordDecl *MostDerivedClass,
     assert(VTable.getBaseOffset().isZero() &&
            "Most derived class vtable must have a zero offset!");
     // This is a regular vtable.
-    return CGVT.GetAddrOfVTable(MostDerivedClass);
+    return CGM.getCXXABI().getAddrOfVTable(MostDerivedClass, CharUnits());
   }
   
   return CGVT.GenerateConstructionVTable(MostDerivedClass, 
@@ -52,7 +53,7 @@ CodeGenVTables::EmitVTTDefinition(llvm::GlobalVariable *VTT,
   for (const VTTVTable *i = Builder.getVTTVTables().begin(),
                        *e = Builder.getVTTVTables().end(); i != e; ++i) {
     VTableAddressPoints.push_back(VTableAddressPointsMapTy());
-    VTables.push_back(GetAddrOfVTTVTable(*this, RD, *i, Linkage,
+    VTables.push_back(GetAddrOfVTTVTable(*this, CGM, RD, *i, Linkage,
                                          VTableAddressPoints.back()));
   }
 
@@ -106,7 +107,7 @@ llvm::GlobalVariable *CodeGenVTables::GetAddrOfVTT(const CXXRecordDecl *RD) {
   StringRef Name = OutName.str();
 
   // This will also defer the definition of the VTT.
-  (void) GetAddrOfVTable(RD);
+  (void) CGM.getCXXABI().getAddrOfVTable(RD, CharUnits());
 
   VTTBuilder Builder(CGM.getContext(), RD, /*GenerateDefinition=*/false);
 

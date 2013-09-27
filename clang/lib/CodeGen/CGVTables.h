@@ -35,9 +35,6 @@ class CodeGenVTables {
   // classes?
   VTableContext VTContext;
   OwningPtr<MicrosoftVFTableContext> VFTContext;
-
-  /// VTables - All the vtables which have been defined.
-  llvm::DenseMap<const CXXRecordDecl *, llvm::GlobalVariable *> VTables;
   
   /// VTableAddressPointsMapTy - Address points for a single vtable.
   typedef llvm::DenseMap<BaseSubobject, uint64_t> VTableAddressPointsMapTy;
@@ -65,6 +62,7 @@ class CodeGenVTables {
   /// doesn't contain any incomplete types.
   void MaybeEmitThunkAvailableExternally(GlobalDecl GD, const ThunkInfo &Thunk);
 
+public:
   /// CreateVTableInitializer - Create a vtable initializer for the given record
   /// decl.
   /// \param Components - The vtable components; this is really an array of
@@ -75,7 +73,6 @@ class CodeGenVTables {
                                 const VTableLayout::VTableThunkTy *VTableThunks,
                                           unsigned NumVTableThunks);
 
-public:
   CodeGenVTables(CodeGenModule &CGM);
 
   VTableContext &getVTableContext() { return VTContext; }
@@ -94,14 +91,6 @@ public:
   /// getAddressPoint - Get the address point of the given subobject in the
   /// class decl.
   uint64_t getAddressPoint(BaseSubobject Base, const CXXRecordDecl *RD);
-  
-  /// GetAddrOfVTable - Get the address of the vtable for the given record decl.
-  llvm::GlobalVariable *GetAddrOfVTable(const CXXRecordDecl *RD);
-
-  /// EmitVTableDefinition - Emit the definition of the given vtable.
-  void EmitVTableDefinition(llvm::GlobalVariable *VTable,
-                            llvm::GlobalVariable::LinkageTypes Linkage,
-                            const CXXRecordDecl *RD);
   
   /// GenerateConstructionVTable - Generate a construction vtable for the given 
   /// base subobject.

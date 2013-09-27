@@ -329,13 +329,6 @@ public:
   VTableContext(ASTContext &Context);
   ~VTableContext();
 
-  bool isMicrosoftABI() const {
-    // FIXME: Currently, this method is only used in the VTableContext and
-    // VTableBuilder code which is ABI-specific. Probably we can remove it
-    // when we add a layer of abstraction for vtable generation.
-    return IsMicrosoftABI;
-  }
-
   const VTableLayout &getVTableLayout(const CXXRecordDecl *RD) {
     computeVTableRelatedInformation(RD);
     assert(VTableLayouts.count(RD) && "No layout for this record decl!");
@@ -377,11 +370,13 @@ unsigned GetVBTableIndex(const CXXRecordDecl *Derived,
 struct VFPtrInfo {
   typedef SmallVector<const CXXRecordDecl *, 1> BasePath;
 
+  // Don't pass the PathToMangle as it should be calculated later.
   VFPtrInfo(CharUnits VFPtrOffset, const BasePath &PathToBaseWithVFPtr)
       : VBTableIndex(0), LastVBase(0), VFPtrOffset(VFPtrOffset),
         PathToBaseWithVFPtr(PathToBaseWithVFPtr), VFPtrFullOffset(VFPtrOffset) {
   }
 
+  // Don't pass the PathToMangle as it should be calculated later.
   VFPtrInfo(uint64_t VBTableIndex, const CXXRecordDecl *LastVBase,
             CharUnits VFPtrOffset, const BasePath &PathToBaseWithVFPtr,
             CharUnits VFPtrFullOffset)
@@ -404,8 +399,12 @@ struct VFPtrInfo {
   CharUnits VFPtrOffset;
 
   /// This holds the base classes path from the complete type to the first base
-  /// with the given vfptr offset.
+  /// with the given vfptr offset, in the base-to-derived order.
   BasePath PathToBaseWithVFPtr;
+
+  /// This holds the subset of records that need to be mangled into the vftable
+  /// symbol name in order to get a unique name, in the derived-to-base order.
+  BasePath PathToMangle;
 
   /// This is the full offset of the vfptr from the start of the complete type.
   CharUnits VFPtrFullOffset;

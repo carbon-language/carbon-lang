@@ -18,6 +18,8 @@
 // RUN: FileCheck --check-prefix=RET-W %s < %t
 // RUN: FileCheck --check-prefix=RET-T %s < %t
 
+// RUN: FileCheck --check-prefix=MANGLING %s < %t
+
 struct Empty { };
 
 struct A {
@@ -37,6 +39,8 @@ struct C: virtual A {
   // VTABLE-C: VFTable indices for 'C' (1 entries)
   // VTABLE-C-NEXT: vbtable index 1, vfptr at offset 0
   // VTABLE-C-NEXT: 0 | void C::f()
+
+  // MANGLING-DAG: @"\01??_7C@@6B@"
 
   ~C();  // Currently required to have correct record layout, see PR16406
   virtual void f();
@@ -58,6 +62,9 @@ struct D: virtual A {
   // VTABLE-D-NEXT: via vbtable index 1, vfptr at offset 0
   // VTABLE-D-NEXT: 0 | void D::f()
 
+  // MANGLING-DAG: @"\01??_7D@@6B0@@"
+  // MANGLING-DAG: @"\01??_7D@@6BA@@@"
+
   virtual void f();
   virtual void h();
 };
@@ -71,6 +78,7 @@ struct X { int x; };
 
 // X and A get reordered in the layout since X doesn't have a vfptr while A has.
 struct Y : X, A { };
+// MANGLING-DAG: @"\01??_7Y@Test1@@6B@"
 
 struct Z : virtual Y {
   // TEST1: VFTable for 'A' in 'Test1::Y' in 'Test1::Z' (2 entries).
@@ -78,6 +86,8 @@ struct Z : virtual Y {
   // TEST1-NEXT: 1 | void A::z()
 
   // TEST1-NOT: VFTable indices for 'Test1::Z'
+
+  // MANGLING-DAG: @"\01??_7Z@Test1@@6B@"
 };
 
 Z z;
@@ -99,6 +109,10 @@ struct X: virtual A, virtual B {
   // TEST2: VFTable indices for 'Test2::X' (1 entries).
   // TEST2-NEXT: 0 | void Test2::X::h()
 
+  // MANGLING-DAG: @"\01??_7X@Test2@@6B01@@"
+  // MANGLING-DAG: @"\01??_7X@Test2@@6BA@@@"
+  // MANGLING-DAG: @"\01??_7X@Test2@@6BB@@@"
+
   virtual void h();
 };
 
@@ -107,7 +121,9 @@ X x;
 
 namespace Test3 {
 
-struct X : virtual A { };
+struct X : virtual A {
+  // MANGLING-DAG: @"\01??_7X@Test3@@6B@"
+};
 
 struct Y: virtual X {
   // TEST3: VFTable for 'A' in 'Test3::X' in 'Test3::Y' (2 entries).
@@ -115,6 +131,8 @@ struct Y: virtual X {
   // TEST3-NEXT: 1 | void A::z()
 
   // TEST3-NOT: VFTable indices for 'Test3::Y'
+
+  // MANGLING-DAG: @"\01??_7Y@Test3@@6B@"
 };
 
 Y y;
@@ -134,6 +152,8 @@ struct X: virtual C {
   // TEST4-NEXT: 1 | void A::z()
 
   // TEST4-NOT: VFTable indices for 'Test4::X'
+
+  // MANGLING-DAG: @"\01??_7X@Test4@@6B@"
 };
 
 X x;
@@ -143,6 +163,7 @@ namespace Test5 {
 
 // New methods are added to the base's vftable.
 struct X : A {
+  // MANGLING-DAG: @"\01??_7X@Test5@@6B@"
   virtual void g();
 };
 
@@ -158,6 +179,9 @@ struct Y : virtual X {
   // TEST5: VFTable indices for 'Test5::Y' (1 entries).
   // TEST5-NEXT: 0 | void Test5::Y::h()
 
+  // MANGLING-DAG: @"\01??_7Y@Test5@@6B01@@"
+  // MANGLING-DAG: @"\01??_7Y@Test5@@6BX@1@@"
+
   virtual void h();
 };
 
@@ -172,6 +196,8 @@ struct X : A, virtual Empty {
   // TEST6-NEXT: 1 | void A::z()
 
   // TEST6-NOT: VFTable indices for 'Test6::X'
+
+  // MANGLING-DAG: @"\01??_7X@Test6@@6B@"
 };
 
 X x;
@@ -179,7 +205,9 @@ X x;
 
 namespace Test7 {
 
-struct X : C { };
+struct X : C {
+  // MANGLING-DAG: @"\01??_7X@Test7@@6B@"
+};
 
 struct Y : virtual X {
   // TEST7: VFTable for 'A' in 'C' in 'Test7::X' in 'Test7::Y' (2 entries).
@@ -191,6 +219,8 @@ struct Y : virtual X {
   // TEST7-NEXT: 0 | this adjustment: 12 non-virtual
 
   // TEST7-NOT: VFTable indices for 'Test7::Y'
+
+  // MANGLING-DAG: @"\01??_7Y@Test7@@6B@"
 };
 
 Y y;
@@ -209,6 +239,9 @@ struct X : D, C {
 
   // TEST8: VFTable indices for 'Test8::X' (1 entries).
   // TEST8-NEXT: via vbtable index 1, vfptr at offset 0
+
+  // MANGLING-DAG: @"\01??_7X@Test8@@6BA@@@"
+  // MANGLING-DAG: @"\01??_7X@Test8@@6BD@@@"
 
   virtual void f();
 };
@@ -231,6 +264,9 @@ struct Y : virtual X {
   // TEST9-Y: VFTable indices for 'Test9::Y' (1 entries).
   // TEST9-Y-NEXT: 0 | void Test9::Y::h()
 
+  // MANGLING-DAG: @"\01??_7Y@Test9@@6B01@@"
+  // MANGLING-DAG: @"\01??_7Y@Test9@@6BX@1@@"
+
   virtual void h();
 };
 
@@ -248,6 +284,13 @@ struct Z : Y, virtual B {
   // TEST9-Z-NEXT: 0 | void B::g()
 
   // TEST9-Z-NOT: VFTable indices for 'Test9::Z'
+
+  // MANGLING-DAG: @"\01??_7Z@Test9@@6BX@1@@"
+  // MANGLING-DAG: @"\01??_7Z@Test9@@6BY@1@@"
+
+  // FIXME this one is wrong:
+  // INCORRECT MANGLING-DAG: @"\01??_7Z@Test9@@6BB@@@"
+  // MANGLING-DAG-SHOULD-BE: @"\01??_7Z@Test9@@6B@"
 };
 
 Z z;
@@ -275,6 +318,16 @@ struct W : Z, D, virtual A, virtual B {
   // TEST9-W-NEXT: 0 | this adjustment: -8 non-virtual
 
   // TEST9-W-NOT: VFTable indices for 'Test9::W'
+
+  // MANGLING-DAG: @"\01??_7W@Test9@@6BA@@@"
+  // MANGLING-DAG: @"\01??_7W@Test9@@6BD@@@"
+  // MANGLING-DAG: @"\01??_7W@Test9@@6BX@1@@"
+
+  // FIXME: these two are wrong:
+  // INCORRECT MANGLING-DAG: @"\01??_7W@Test9@@6BB@@@"
+  // MANGLING-DAG-SHOULD-BE: @"\01??_7W@Test9@@6B@"
+  // INCORRECT MANGLING-DAG: @"\01??_7W@Test9@@6BY@1@Z@1@@"
+  // MANGLING-DAG-SHOULD-BE: @"\01??_7W@Test9@@6BY@1@@"
 };
 
 W w;
@@ -319,6 +372,16 @@ struct T : Z, D, virtual A, virtual B {
   // TEST9-T-NEXT: 1 | void Test9::T::z()
   // TEST9-T-NEXT: via vbtable index 2, vfptr at offset 0
   // TEST9-T-NEXT: 0 | void Test9::T::g()
+
+  // MANGLING-DAG: @"\01??_7T@Test9@@6BA@@@"
+  // MANGLING-DAG: @"\01??_7T@Test9@@6BD@@@"
+  // MANGLING-DAG: @"\01??_7T@Test9@@6BX@1@@"
+
+  // FIXME: these two are wrong:
+  // INCORRECT MANGLING-DAG: @"\01??_7T@Test9@@6BB@@@"
+  // MANGLING-DAG-SHOULD-BE: @"\01??_7T@Test9@@6B@"
+  // INCORRECT MANGLING-DAG: @"\01??_7T@Test9@@6BY@1@Z@1@@"
+  // MANGLING-DAG-SHOULD-BE: @"\01??_7T@Test9@@6BY@1@@"
 
   virtual void f();
   virtual void g();

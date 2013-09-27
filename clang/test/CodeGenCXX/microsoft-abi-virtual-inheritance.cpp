@@ -7,9 +7,25 @@ struct VBase {
 };
 
 struct B : virtual VBase {
+  B();
   virtual void foo();
   virtual void bar();
 };
+
+B::B() {
+  // CHECK: @"\01??0B@@QAE@XZ"
+  // CHECK:   %[[THIS:.*]] = load %struct.B**
+  // CHECK:   br i1 %{{.*}}, label %[[INIT_VBASES:.*]], label %[[SKIP_VBASES:.*]]
+  // CHECK: %[[SKIP_VBASES]]
+  // CHECK:   %[[THIS_i8:.*]] = bitcast %struct.B* %[[THIS]] to i8*
+  // CHECK:   %[[VBPTR:.*]] = getelementptr inbounds i8* %[[THIS_i8]], i32 0
+  // CHECK:   %[[THIS_i8:.*]] = bitcast %struct.B* %[[THIS]] to i8*
+  // CHECK:   %[[VFPTR_i8:.*]] = getelementptr inbounds i8* %[[THIS_i8]], i32 %{{.*}}
+  // CHECK:   %[[VFPTR:.*]] = bitcast i8* %[[VFPTR_i8]] to [2 x i8*]**
+  // CHECK:   store [2 x i8*]* @"\01??_7B@@6B@", [2 x i8*]** %[[VFPTR]]
+  // FIXME: Should initialize the vtorDisp here.
+  // CHECK: ret
+}
 
 void B::foo() {
 // CHECK: define x86_thiscallcc void @"\01?foo@B@@UAEXXZ"(i8*

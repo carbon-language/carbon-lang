@@ -71,8 +71,8 @@ void C::foo() {}
 void check_vftable_offset() {
   C c;
 // The vftable pointer should point at the beginning of the vftable.
-// CHECK: [[THIS_PTR:%[0-9]+]] = bitcast %"struct.basic::C"* {{.*}} to i8***
-// CHECK: store i8** getelementptr inbounds ([2 x i8*]* @"\01??_7C@basic@@6B@", i64 0, i64 0), i8*** [[THIS_PTR]]
+// CHECK: [[THIS_PTR:%[0-9]+]] = bitcast %"struct.basic::C"* {{.*}} to [2 x i8*]**
+// CHECK: store [2 x i8*]* @"\01??_7C@basic@@6B@", [2 x i8*]** [[THIS_PTR]]
 }
 
 void call_complete_dtor(C *obj_ptr) {
@@ -161,7 +161,8 @@ C::C() {
   // CHECK-NEXT: br label %[[SKIP_VBASES]]
   //
   // CHECK: [[SKIP_VBASES]]
-  // CHECK: @"\01??_7C@constructors@@6B@"
+  // Class C does not define or override methods, so shouldn't change the vfptr.
+  // CHECK-NOT: @"\01??_7C@constructors@@6B@"
   // CHECK: ret
 }
 

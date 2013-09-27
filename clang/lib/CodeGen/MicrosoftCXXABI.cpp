@@ -21,6 +21,7 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/VTableBuilder.h"
+#include "llvm/ADT/StringSet.h"
 
 using namespace clang;
 using namespace CodeGen;
@@ -150,6 +151,20 @@ public:
                            CallExpr::const_arg_iterator ArgBeg,
                            CallExpr::const_arg_iterator ArgEnd);
 
+  void emitVTableDefinitions(CodeGenVTables &CGVT, const CXXRecordDecl *RD);
+
+  llvm::Value *getVTableAddressPointInStructor(
+      CodeGenFunction &CGF, const CXXRecordDecl *VTableClass,
+      BaseSubobject Base, const CXXRecordDecl *NearestVBase,
+      bool &NeedsVirtualOffset);
+
+  llvm::Constant *
+  getVTableAddressPointForConstExpr(BaseSubobject Base,
+                                    const CXXRecordDecl *VTableClass);
+
+  llvm::GlobalVariable *getAddrOfVTable(const CXXRecordDecl *RD,
+                                        CharUnits VPtrOffset);
+
   llvm::Value *getVirtualFunctionPointer(CodeGenFunction &CGF, GlobalDecl GD,
                                          llvm::Value *This, llvm::Type *Ty);
 
@@ -158,8 +173,7 @@ public:
                                  CXXDtorType DtorType, SourceLocation CallLoc,
                                  llvm::Value *This);
 
-  void EmitVirtualInheritanceTables(llvm::GlobalVariable::LinkageTypes Linkage,
-                                    const CXXRecordDecl *RD);
+  void emitVirtualInheritanceTables(const CXXRecordDecl *RD);
 
   void EmitGuardedInit(CodeGenFunction &CGF, const VarDecl &D,
                        llvm::GlobalVariable *DeclPtr,
@@ -303,7 +317,16 @@ public:
                                   const MemberPointerType *MPT);
 
 private:
-  /// VBTables - All the vbtables which have been referenced.
+  typedef std::pair<const CXXRecordDecl *, CharUnits> VFTableIdTy;
+  typedef llvm::DenseMap<VFTableIdTy, llvm::GlobalVariable *> VFTablesMapTy;
+  /// \brief All the vftables that have been referenced.
+  VFTablesMapTy VFTablesMap;
+
+  /// \brief This set holds the record decls we've deferred vtable emission for.
+  llvm::SmallPtrSet<const CXXRecordDecl *, 4> DeferredVFTables;
+
+
+  /// \brief All the vbtables which have been referenced.
   llvm::DenseMap<const CXXRecordDecl *, VBTableVector> VBTablesMap;
 
   /// Info on the global variable used to guard initialization of static locals.
@@ -616,6 +639,116 @@ void MicrosoftCXXABI::EmitConstructorCall(CodeGenFunction &CGF,
                         ImplicitParam, ImplicitParamTy, ArgBeg, ArgEnd);
 }
 
+void MicrosoftCXXABI::emitVTableDefinitions(CodeGenVTables &CGVT,
+                                            const CXXRecordDecl *RD) {
+  MicrosoftVFTableContext &VFTContext = CGM.getVFTableContext();
+  MicrosoftVFTableContext::VFPtrListTy VFPtrs = VFTContext.getVFPtrOffsets(RD);
+  llvm::GlobalVariable::LinkageTypes Linkage = CGM.getVTableLinkage(RD);
+
+  for (MicrosoftVFTableContext::VFPtrListTy::iterator I = VFPtrs.begin(),
+       E = VFPtrs.end(); I != E; ++I) {
+    llvm::GlobalVariable *VTable = getAddrOfVTable(RD, I->VFPtrFullOffset);
+    if (VTable->hasInitializer())
+      continue;
+
+    const VTableLayout &VTLayout =
+        VFTContext.getVFTableLayout(RD, I->VFPtrFullOffset);
+    llvm::Constant *Init = CGVT.CreateVTableInitializer(
+        RD, VTLayout.vtable_component_begin(),
+        VTLayout.getNumVTableComponents(), VTLayout.vtable_thunk_begin(),
+        VTLayout.getNumVTableThunks());
+    VTable->setInitializer(Init);
+
+    VTable->setLinkage(Linkage);
+    CGM.setTypeVisibility(VTable, RD, CodeGenModule::TVK_ForVTable);
+  }
+}
+
+llvm::Value *MicrosoftCXXABI::getVTableAddressPointInStructor(
+    CodeGenFunction &CGF, const CXXRecordDecl *VTableClass, BaseSubobject Base,
+    const CXXRecordDecl *NearestVBase, bool &NeedsVirtualOffset) {
+  NeedsVirtualOffset = (NearestVBase != 0);
+
+  llvm::Value *VTableAddressPoint =
+      getAddrOfVTable(VTableClass, Base.getBaseOffset());
+  if (!VTableAddressPoint) {
+    assert(Base.getBase()->getNumVBases() &&
+           !CGM.getContext().getASTRecordLayout(Base.getBase()).hasOwnVFPtr());
+  }
+  return VTableAddressPoint;
+}
+
+static void mangleVFTableName(CodeGenModule &CGM, const CXXRecordDecl *RD,
+                              const VFPtrInfo &VFPtr, SmallString<256> &Name) {
+  llvm::raw_svector_ostream Out(Name);
+  CGM.getCXXABI().getMangleContext().mangleCXXVFTable(
+      RD, VFPtr.PathToMangle, Out);
+}
+
+llvm::Constant *MicrosoftCXXABI::getVTableAddressPointForConstExpr(
+    BaseSubobject Base, const CXXRecordDecl *VTableClass) {
+  llvm::Constant *VTable = getAddrOfVTable(VTableClass, Base.getBaseOffset());
+  assert(VTable && "Couldn't find a vftable for the given base?");
+  return VTable;
+}
+
+llvm::GlobalVariable *MicrosoftCXXABI::getAddrOfVTable(const CXXRecordDecl *RD,
+                                                       CharUnits VPtrOffset) {
+  // getAddrOfVTable may return 0 if asked to get an address of a vtable which
+  // shouldn't be used in the given record type. We want to cache this result in
+  // VFTablesMap, thus a simple zero check is not sufficient.
+  VFTableIdTy ID(RD, VPtrOffset);
+  VFTablesMapTy::iterator I;
+  bool Inserted;
+  llvm::tie(I, Inserted) = VFTablesMap.insert(
+      std::make_pair(ID, static_cast<llvm::GlobalVariable *>(0)));
+  if (!Inserted)
+    return I->second;
+
+  llvm::GlobalVariable *&VTable = I->second;
+
+  MicrosoftVFTableContext &VFTContext = CGM.getVFTableContext();
+  const MicrosoftVFTableContext::VFPtrListTy &VFPtrs =
+      VFTContext.getVFPtrOffsets(RD);
+
+  if (DeferredVFTables.insert(RD)) {
+    // We haven't processed this record type before.
+    // Queue up this v-table for possible deferred emission.
+    CGM.addDeferredVTable(RD);
+
+#ifndef NDEBUG
+    // Create all the vftables at once in order to make sure each vftable has
+    // a unique mangled name.
+    llvm::StringSet<> ObservedMangledNames;
+    for (size_t J = 0, F = VFPtrs.size(); J != F; ++J) {
+      SmallString<256> Name;
+      mangleVFTableName(CGM, RD, VFPtrs[J], Name);
+      if (!ObservedMangledNames.insert(Name.str()))
+        llvm_unreachable("Already saw this mangling before?");
+    }
+#endif
+  }
+
+  for (size_t J = 0, F = VFPtrs.size(); J != F; ++J) {
+    if (VFPtrs[J].VFPtrFullOffset != VPtrOffset)
+      continue;
+
+    llvm::ArrayType *ArrayType = llvm::ArrayType::get(
+        CGM.Int8PtrTy,
+        VFTContext.getVFTableLayout(RD, VFPtrs[J].VFPtrFullOffset)
+            .getNumVTableComponents());
+
+    SmallString<256> Name;
+    mangleVFTableName(CGM, RD, VFPtrs[J], Name);
+    VTable = CGM.CreateOrReplaceCXXRuntimeVariable(
+        Name.str(), ArrayType, llvm::GlobalValue::ExternalLinkage);
+    VTable->setUnnamedAddr(true);
+    break;
+  }
+
+  return VTable;
+}
+
 llvm::Value *MicrosoftCXXABI::getVirtualFunctionPointer(CodeGenFunction &CGF,
                                                         GlobalDecl GD,
                                                         llvm::Value *This,
@@ -674,9 +807,10 @@ MicrosoftCXXABI::EnumerateVBTables(const CXXRecordDecl *RD) {
   return VBTables;
 }
 
-void MicrosoftCXXABI::EmitVirtualInheritanceTables(
-    llvm::GlobalVariable::LinkageTypes Linkage, const CXXRecordDecl *RD) {
+void MicrosoftCXXABI::emitVirtualInheritanceTables(const CXXRecordDecl *RD) {
   const VBTableVector &VBTables = EnumerateVBTables(RD);
+  llvm::GlobalVariable::LinkageTypes Linkage = CGM.getVTableLinkage(RD);
+
   for (VBTableVector::const_iterator I = VBTables.begin(), E = VBTables.end();
        I != E; ++I) {
     I->EmitVBTableDefinition(CGM, RD, Linkage);

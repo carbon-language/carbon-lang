@@ -1053,7 +1053,11 @@ CGDebugInfo::CreateCXXMemberFunction(const CXXMethodDecl *Method,
 
     // It doesn't make sense to give a virtual destructor a vtable index,
     // since a single destructor has two entries in the vtable.
-    if (!isa<CXXDestructorDecl>(Method))
+    // FIXME: Add proper support for debug info for virtual calls in
+    // the Microsoft ABI, where we may use multiple vptrs to make a vftable
+    // lookup if we have multiple or virtual inheritance.
+    if (!isa<CXXDestructorDecl>(Method) &&
+        !CGM.getTarget().getCXXABI().isMicrosoft())
       VIndex = CGM.getVTableContext().getMethodVTableIndex(Method);
     ContainingType = RecordTy;
   }

@@ -19,6 +19,8 @@
 // RUN: FileCheck --check-prefix=RET-THUNKS-Test4 %s < %t
 // RUN: FileCheck --check-prefix=RET-THUNKS-Test5 %s < %t
 
+// RUN: FileCheck --check-prefix=MANGLING %s < %t
+
 struct Empty {
   // Doesn't have a vftable!
 };
@@ -50,6 +52,9 @@ struct Test1: A, B {
 
   // NO-THUNKS-Test1: VFTable indices for 'no_thunks::Test1' (1 entries)
   // NO-THUNKS-Test1-NEXT: 0 | void no_thunks::Test1::f()
+
+  // MANGLING-DAG: @"\01??_7Test1@no_thunks@@6BA@@@"
+  // MANGLING-DAG: @"\01??_7Test1@no_thunks@@6BB@@@"
 
   // Overrides only the left child's method (A::f), needs no thunks.
   virtual void f();
@@ -102,6 +107,8 @@ struct Test4 : Empty, A {
   // NO-THUNKS-Test4: VFTable indices for 'no_thunks::Test4' (1 entries).
   // NO-THUNKS-Test4-NEXT: 0 | void no_thunks::Test4::f()
 
+  // MANGLING-DAG: @"\01??_7Test4@no_thunks@@6B@"
+
   virtual void f();
 };
 
@@ -127,6 +134,11 @@ struct Test5: Test1, Test2 {
   // NO-THUNKS-Test5: VFTable indices for 'no_thunks::Test5' (1 entries).
   // NO-THUNKS-Test5-NEXT: 1 | void no_thunks::Test5::z()
 
+  // MANGLING-DAG: @"\01??_7Test5@no_thunks@@6BA@@Test1@1@@"
+  // MANGLING-DAG: @"\01??_7Test5@no_thunks@@6BA@@Test2@1@@"
+  // MANGLING-DAG: @"\01??_7Test5@no_thunks@@6BB@@Test1@1@@"
+  // MANGLING-DAG: @"\01??_7Test5@no_thunks@@6BB@@Test2@1@@"
+
   virtual void z();
 };
 
@@ -142,6 +154,9 @@ struct Test6: Test1 {
 
   // NO-THUNKS-Test6: VFTable indices for 'no_thunks::Test6' (1 entries).
   // NO-THUNKS-Test6-NEXT: 0 | void no_thunks::Test6::f()
+
+  // MANGLING-DAG: @"\01??_7Test6@no_thunks@@6BA@@@"
+  // MANGLING-DAG: @"\01??_7Test6@no_thunks@@6BB@@@"
 
   // Overrides both no_thunks::Test1::f and A::f.
   virtual void f();
@@ -203,6 +218,9 @@ struct Test9: A, D {
   // NO-THUNKS-Test9: VFTable indices for 'no_thunks::Test9' (1 entries).
   // NO-THUNKS-Test9-NEXT: 1 | void no_thunks::Test9::h()
 
+  // MANGLING-DAG: @"\01??_7Test9@no_thunks@@6BA@@@"
+  // MANGLING-DAG: @"\01??_7Test9@no_thunks@@6BD@1@@"
+
   virtual void h();
 };
 
@@ -227,6 +245,9 @@ struct Test1: A, D {
   // PURE-VIRTUAL-Test1: VFTable indices for 'pure_virtual::Test1' (1 entries).
   // PURE-VIRTUAL-Test1-NEXT: via vfptr at offset 4
   // PURE-VIRTUAL-Test1-NEXT: 0 | void pure_virtual::Test1::g()
+
+  // MANGLING-DAG: @"\01??_7Test1@pure_virtual@@6BA@@@"
+  // MANGLING-DAG: @"\01??_7Test1@pure_virtual@@6BD@1@@"
 
   // Overrides only the right child's method (pure_virtual::D::g), needs this adjustment but
   // not thunks.
@@ -254,6 +275,9 @@ struct Test1 : B, C {
   // THIS-THUNKS-Test1: VFTable indices for 'this_adjustment::Test1' (1 entries).
   // THIS-THUNKS-Test1-NEXT: 0 | void this_adjustment::Test1::g()
 
+  // MANGLING-DAG: @"\01??_7Test1@this_adjustment@@6BB@@@"
+  // MANGLING-DAG: @"\01??_7Test1@this_adjustment@@6BC@@@"
+
   virtual void g();
 };
 
@@ -277,6 +301,10 @@ struct Test2 : A, B, C {
   // THIS-THUNKS-Test2: VFTable indices for 'this_adjustment::Test2' (1 entries).
   // THIS-THUNKS-Test2-NEXT: via vfptr at offset 4
   // THIS-THUNKS-Test2-NEXT: 0 | void this_adjustment::Test2::g()
+
+  // MANGLING-DAG: @"\01??_7Test2@this_adjustment@@6BA@@@"
+  // MANGLING-DAG: @"\01??_7Test2@this_adjustment@@6BB@@@"
+  // MANGLING-DAG: @"\01??_7Test2@this_adjustment@@6BC@@@"
 
   virtual void g();
 };
@@ -336,6 +364,8 @@ struct Test1 : Ret1 {
 
   // RET-THUNKS-Test1: VFTable indices for 'return_adjustment::Test1' (1 entries).
   // RET-THUNKS-Test1-NEXT: 2 | this_adjustment::Test1 *return_adjustment::Test1::foo()
+
+  // MANGLING-DAG: @"\01??_7Test1@return_adjustment@@6B@"
 
   virtual this_adjustment::Test1* foo();
 };

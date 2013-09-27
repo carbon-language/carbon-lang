@@ -145,3 +145,39 @@ void call_grandchild_right(GrandchildOverride *obj) {
   // Just make sure we don't crash.
   obj->right();
 }
+
+void emit_ctors() {
+  Left l;
+  // CHECK: define {{.*}} @"\01??0Left@@QAE@XZ"
+  // CHECK-NOT: getelementptr
+  // CHECK:   store [1 x i8*]* @"\01??_7Left@@6B@"
+  // CHECK: ret
+
+  Right r;
+  // CHECK: define {{.*}} @"\01??0Right@@QAE@XZ"
+  // CHECK-NOT: getelementptr
+  // CHECK:   store [1 x i8*]* @"\01??_7Right@@6B@"
+  // CHECK: ret
+
+  ChildOverride co;
+  // CHECK: define {{.*}} @"\01??0ChildOverride@@QAE@XZ"
+  // CHECK:   %[[THIS:.*]] = load %struct.ChildOverride**
+  // CHECK:   %[[VFPTR:.*]] = bitcast %struct.ChildOverride* %this1 to [1 x i8*]**
+  // CHECK:   store [1 x i8*]* @"\01??_7ChildOverride@@6BLeft@@@", [1 x i8*]** %[[VFPTR]]
+  // CHECK:   %[[THIS_i8:.*]] = bitcast %struct.ChildOverride* %[[THIS]] to i8*
+  // CHECK:   %[[VFPTR_i8:.*]] = getelementptr inbounds i8* %[[THIS_i8]], i32 4
+  // CHECK:   %[[VFPTR:.*]] = bitcast i8* %[[VFPTR_i8]] to [1 x i8*]**
+  // CHECK:   store [1 x i8*]* @"\01??_7ChildOverride@@6BRight@@@", [1 x i8*]** %[[VFPTR]]
+  // CHECK: ret
+
+  GrandchildOverride gc;
+  // CHECK: define {{.*}} @"\01??0GrandchildOverride@@QAE@XZ"
+  // CHECK:   %[[THIS:.*]] = load %struct.GrandchildOverride**
+  // CHECK:   %[[VFPTR:.*]] = bitcast %struct.GrandchildOverride* %this1 to [1 x i8*]**
+  // CHECK:   store [1 x i8*]* @"\01??_7GrandchildOverride@@6BLeft@@@", [1 x i8*]** %[[VFPTR]]
+  // CHECK:   %[[THIS_i8:.*]] = bitcast %struct.GrandchildOverride* %[[THIS]] to i8*
+  // CHECK:   %[[VFPTR_i8:.*]] = getelementptr inbounds i8* %[[THIS_i8]], i32 4
+  // CHECK:   %[[VFPTR:.*]] = bitcast i8* %[[VFPTR_i8]] to [1 x i8*]**
+  // CHECK:   store [1 x i8*]* @"\01??_7GrandchildOverride@@6BRight@@@", [1 x i8*]** %[[VFPTR]]
+  // CHECK: ret
+}

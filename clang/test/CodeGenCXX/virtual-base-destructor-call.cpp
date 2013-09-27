@@ -27,12 +27,6 @@ int main() {
 //  CHECK: call {{.*}} @_ZN13basic_istreamIcED2Ev
 //  CHECK: }
 
-// basic_iostream's deleting dtor calls its complete dtor, then
-// operator delete().
-//  CHECK: define linkonce_odr {{.*}} @_ZN14basic_iostreamIcED0Ev(%struct.basic_iostream* {{.*}}%this) unnamed_addr
-//  CHECK: call {{.*}} @_ZN14basic_iostreamIcED1Ev
-//  CHECK: call {{.*}} @_ZdlPv
-
 // basic_istream's complete dtor calls the base dtor,
 // then its virtual base's base dtor.
 //  CHECK: define linkonce_odr {{.*}} @_ZN13basic_istreamIcED1Ev(%struct.basic_istream* {{.*}}%this) unnamed_addr
@@ -43,6 +37,12 @@ int main() {
 // operator delete().
 //  CHECK: define linkonce_odr {{.*}} @_ZN13basic_istreamIcED0Ev(%struct.basic_istream* {{.*}}%this) unnamed_addr
 //  CHECK: call {{.*}} @_ZN13basic_istreamIcED1Ev
+//  CHECK: call {{.*}} @_ZdlPv
+
+// basic_iostream's deleting dtor calls its complete dtor, then
+// operator delete().
+//  CHECK: define linkonce_odr {{.*}} @_ZN14basic_iostreamIcED0Ev(%struct.basic_iostream* {{.*}}%this) unnamed_addr
+//  CHECK: call {{.*}} @_ZN14basic_iostreamIcED1Ev
 //  CHECK: call {{.*}} @_ZdlPv
 
 // basic_istream's base dtor is a no-op.

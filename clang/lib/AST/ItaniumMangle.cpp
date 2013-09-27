@@ -137,6 +137,9 @@ public:
                                 raw_ostream &);
   void mangleCXXVTable(const CXXRecordDecl *RD,
                        raw_ostream &);
+  void mangleCXXVFTable(const CXXRecordDecl *Derived,
+                        ArrayRef<const CXXRecordDecl *> BasePath,
+                        raw_ostream &Out);
   void mangleCXXVTT(const CXXRecordDecl *RD,
                     raw_ostream &);
   void mangleCXXVBTable(const CXXRecordDecl *Derived,
@@ -3770,6 +3773,14 @@ void ItaniumMangleContext::mangleCXXVTable(const CXXRecordDecl *RD,
   CXXNameMangler Mangler(*this, Out);
   Mangler.getStream() << "_ZTV";
   Mangler.mangleNameOrStandardSubstitution(RD);
+}
+
+void
+ItaniumMangleContext::mangleCXXVFTable(const CXXRecordDecl *Derived,
+                                       ArrayRef<const CXXRecordDecl *> BasePath,
+                                       raw_ostream &Out) {
+  llvm_unreachable(
+      "The Itanium C++ ABI does not have vftables (use vtables instead)!");
 }
 
 void ItaniumMangleContext::mangleCXXVTT(const CXXRecordDecl *RD,

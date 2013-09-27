@@ -280,7 +280,7 @@ static llvm::Value *BuildAppleKextVirtualCall(CodeGenFunction &CGF,
          "No kext in Microsoft ABI");
   GD = GD.getCanonicalDecl();
   CodeGenModule &CGM = CGF.CGM;
-  llvm::Value *VTable = CGM.getVTables().GetAddrOfVTable(RD);
+  llvm::Value *VTable = CGM.getCXXABI().getAddrOfVTable(RD, CharUnits());
   Ty = Ty->getPointerTo()->getPointerTo();
   VTable = CGF.Builder.CreateBitCast(VTable, Ty);
   assert(VTable && "BuildVirtualCall = kext vtbl pointer is null");

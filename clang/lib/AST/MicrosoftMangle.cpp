@@ -188,6 +188,9 @@ public:
                                   raw_ostream &);
   virtual void mangleCXXVTable(const CXXRecordDecl *RD,
                                raw_ostream &);
+  virtual void mangleCXXVFTable(const CXXRecordDecl *Derived,
+                                ArrayRef<const CXXRecordDecl *> BasePath,
+                                raw_ostream &Out);
   virtual void mangleCXXVTT(const CXXRecordDecl *RD,
                             raw_ostream &);
   virtual void mangleCXXVBTable(const CXXRecordDecl *Derived,
@@ -1900,16 +1903,26 @@ void MicrosoftMangleContext::mangleCXXDtorThunk(const CXXDestructorDecl *DD,
 
 void MicrosoftMangleContext::mangleCXXVTable(const CXXRecordDecl *RD,
                                              raw_ostream &Out) {
+  llvm_unreachable(
+      "The Microsoft C++ ABI does not have vtables (use vftables instead)!");
+}
+
+void MicrosoftMangleContext::mangleCXXVFTable(
+    const CXXRecordDecl *Derived, ArrayRef<const CXXRecordDecl *> BasePath,
+    raw_ostream &Out) {
   // <mangled-name> ::= ?_7 <class-name> <storage-class>
   //                    <cvr-qualifiers> [<name>] @
   // NOTE: <cvr-qualifiers> here is always 'B' (const). <storage-class>
   // is always '6' for vftables.
   MicrosoftCXXNameMangler Mangler(*this, Out);
   Mangler.getStream() << "\01??_7";
-  Mangler.mangleName(RD);
-  Mangler.getStream() << "6B";  // '6' for vftable, 'B' for const.
-  // TODO: If the class has more than one vtable, mangle in the class it came
-  // from.
+  Mangler.mangleName(Derived);
+  Mangler.getStream() << "6B"; // '6' for vftable, 'B' for const.
+  for (ArrayRef<const CXXRecordDecl *>::iterator I = BasePath.begin(),
+                                                 E = BasePath.end();
+       I != E; ++I) {
+    Mangler.mangleName(*I);
+  }
   Mangler.getStream() << '@';
 }
 

@@ -999,10 +999,6 @@ public:
       dumpLayout(llvm::errs());
   }
 
-  bool isMicrosoftABI() const {
-    return VTables.isMicrosoftABI();
-  }
-
   uint64_t getNumThunks() const {
     return Thunks.size();
   }
@@ -1157,7 +1153,7 @@ void VTableBuilder::ComputeThisAdjustments() {
     // Add it.
     VTableThunks[VTableIndex].This = ThisAdjustment;
 
-    if (isa<CXXDestructorDecl>(MD) && !isMicrosoftABI()) {
+    if (isa<CXXDestructorDecl>(MD)) {
       // Add an adjustment for the deleting destructor as well.
       VTableThunks[VTableIndex + 1].This = ThisAdjustment;
     }
@@ -1188,8 +1184,6 @@ void VTableBuilder::ComputeThisAdjustments() {
       break;
     case VTableComponent::CK_DeletingDtorPointer:
       // We've already added the thunk when we saw the complete dtor pointer.
-      // FIXME: check how this works in the Microsoft ABI
-      // while working on the multiple inheritance patch.
       continue;
     }
 
@@ -1326,15 +1320,9 @@ VTableBuilder::AddMethod(const CXXMethodDecl *MD,
     assert(ReturnAdjustment.isEmpty() && 
            "Destructor can't have return adjustment!");
 
-    // FIXME: Should probably add a layer of abstraction for vtable generation.
-    if (!isMicrosoftABI()) {
-      // Add both the complete destructor and the deleting destructor.
-      Components.push_back(VTableComponent::MakeCompleteDtor(DD));
-      Components.push_back(VTableComponent::MakeDeletingDtor(DD));
-    } else {
-      // Add the scalar deleting destructor.
-      Components.push_back(VTableComponent::MakeDeletingDtor(DD));
-    }
+    // Add both the complete destructor and the deleting destructor.
+    Components.push_back(VTableComponent::MakeCompleteDtor(DD));
+    Components.push_back(VTableComponent::MakeDeletingDtor(DD));
   } else {
     // Add the return adjustment if necessary.
     if (!ReturnAdjustment.isEmpty())
@@ -1693,18 +1681,12 @@ VTableBuilder::LayoutPrimaryAndSecondaryVTables(BaseSubobject Base,
   if (Base.getBase() == MostDerivedClass)
     VBaseOffsetOffsets = Builder.getVBaseOffsetOffsets();
 
-  // FIXME: Should probably add a layer of abstraction for vtable generation.
-  if (!isMicrosoftABI()) {
-    // Add the offset to top.
-    CharUnits OffsetToTop = MostDerivedClassOffset - OffsetInLayoutClass;
-    Components.push_back(VTableComponent::MakeOffsetToTop(OffsetToTop));
+  // Add the offset to top.
+  CharUnits OffsetToTop = MostDerivedClassOffset - OffsetInLayoutClass;
+  Components.push_back(VTableComponent::MakeOffsetToTop(OffsetToTop));
 
-    // Next, add the RTTI.
-    Components.push_back(VTableComponent::MakeRTTI(MostDerivedClass));
-  } else {
-    // FIXME: unclear what to do with RTTI in MS ABI as emitting it anywhere
-    // breaks the vftable layout. Just skip RTTI for now, can't mangle anyway.
-  }
+  // Next, add the RTTI.
+  Components.push_back(VTableComponent::MakeRTTI(MostDerivedClass));
 
   uint64_t AddressPoint = Components.size();
 
@@ -1722,16 +1704,10 @@ VTableBuilder::LayoutPrimaryAndSecondaryVTables(BaseSubobject Base,
       const CXXMethodDecl *MD = I->first;
       const MethodInfo &MI = I->second;
       if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(MD)) {
-        // FIXME: Should probably add a layer of abstraction for vtable generation.
-        if (!isMicrosoftABI()) {
-          MethodVTableIndices[GlobalDecl(DD, Dtor_Complete)]
-              = MI.VTableIndex - AddressPoint;
-          MethodVTableIndices[GlobalDecl(DD, Dtor_Deleting)]
-              = MI.VTableIndex + 1 - AddressPoint;
-        } else {
-          MethodVTableIndices[GlobalDecl(DD, Dtor_Deleting)]
-              = MI.VTableIndex - AddressPoint;
-        }
+        MethodVTableIndices[GlobalDecl(DD, Dtor_Complete)]
+            = MI.VTableIndex - AddressPoint;
+        MethodVTableIndices[GlobalDecl(DD, Dtor_Deleting)]
+            = MI.VTableIndex + 1 - AddressPoint;
       } else {
         MethodVTableIndices[MD] = MI.VTableIndex - AddressPoint;
       }
@@ -2044,8 +2020,6 @@ void VTableBuilder::dumpLayout(raw_ostream& Out) {
       Out << DD->getQualifiedNameAsString();
       if (IsComplete)
         Out << "() [complete]";
-      else if (isMicrosoftABI())
-        Out << "() [scalar deleting]";
       else
         Out << "() [deleting]";
 
@@ -2230,18 +2204,11 @@ void VTableBuilder::dumpLayout(raw_ostream& Out) {
                                   MD);
 
     if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(MD)) {
-      // FIXME: Should add a layer of abstraction for vtable generation.
-      if (!isMicrosoftABI()) {
-        GlobalDecl GD(DD, Dtor_Complete);
-        assert(MethodVTableIndices.count(GD));
-        uint64_t VTableIndex = MethodVTableIndices[GD];
-        IndicesMap[VTableIndex] = MethodName + " [complete]";
-        IndicesMap[VTableIndex + 1] = MethodName + " [deleting]";
-      } else {
-        GlobalDecl GD(DD, Dtor_Deleting);
-        assert(MethodVTableIndices.count(GD));
-        IndicesMap[MethodVTableIndices[GD]] = MethodName + " [scalar deleting]";
-      }
+      GlobalDecl GD(DD, Dtor_Complete);
+      assert(MethodVTableIndices.count(GD));
+      uint64_t VTableIndex = MethodVTableIndices[GD];
+      IndicesMap[VTableIndex] = MethodName + " [complete]";
+      IndicesMap[VTableIndex + 1] = MethodName + " [deleting]";
     } else {
       assert(MethodVTableIndices.count(MD));
       IndicesMap[MethodVTableIndices[MD]] = MethodName;
@@ -2352,10 +2319,12 @@ static VTableLayout *CreateVTableLayout(const VTableBuilder &Builder) {
                           VTableThunks.size(),
                           VTableThunks.data(),
                           Builder.getAddressPoints(),
-                          Builder.isMicrosoftABI());
+                          /*IsMicrosoftABI=*/false);
 }
 
 void VTableContext::computeVTableRelatedInformation(const CXXRecordDecl *RD) {
+  assert(!IsMicrosoftABI && "Shouldn't be called in this ABI!");
+
   const VTableLayout *&Entry = VTableLayouts[RD];
 
   // Check if we've computed this information before.
@@ -3132,6 +3101,55 @@ static void EnumerateVFPtrs(
   }
 }
 
+/// CalculatePathToMangle - Calculate the subset of records that should be used
+/// to mangle the vftable for the given vfptr.
+/// Should only be called if a class has multiple vftables.
+static void
+CalculatePathToMangle(const CXXRecordDecl *RD, VFPtrInfo &VFPtr) {
+  // FIXME: In some rare cases this code produces a slightly incorrect mangling.
+  // It's very likely that the vbtable mangling code can be adjusted to mangle
+  // both vftables and vbtables correctly.
+
+  VFPtrInfo::BasePath &FullPath = VFPtr.PathToBaseWithVFPtr;
+  if (FullPath.empty()) {
+    // Mangle the class's own vftable.
+    assert(RD->getNumVBases() &&
+           "Something's wrong: if the most derived "
+           "class has more than one vftable, it can only have its own "
+           "vftable if it has vbases");
+    VFPtr.PathToMangle.push_back(RD);
+    return;
+  }
+
+  unsigned Begin = 0;
+
+  // First, skip all the bases before the vbase.
+  if (VFPtr.LastVBase) {
+    while (FullPath[Begin] != VFPtr.LastVBase) {
+      Begin++;
+      assert(Begin < FullPath.size());
+    }
+  }
+
+  // Then, put the rest of the base path in the reverse order.
+  for (unsigned I = FullPath.size(); I != Begin; --I) {
+    const CXXRecordDecl *CurBase = FullPath[I - 1],
+                        *ItsBase = (I == 1) ? RD : FullPath[I - 2];
+    bool BaseIsVirtual = false;
+    for (CXXRecordDecl::base_class_const_iterator J = ItsBase->bases_begin(),
+         F = ItsBase->bases_end(); J != F; ++J) {
+      if (J->getType()->getAsCXXRecordDecl() == CurBase) {
+        BaseIsVirtual = J->isVirtual();
+        break;
+      }
+    }
+
+    // Should skip the current base if it is a non-virtual base with no siblings.
+    if (BaseIsVirtual || ItsBase->getNumBases() != 1)
+      VFPtr.PathToMangle.push_back(CurBase);
+  }
+}
+
 static void EnumerateVFPtrs(ASTContext &Context, const CXXRecordDecl *ForClass,
                             MicrosoftVFTableContext::VFPtrListTy &Result) {
   Result.clear();
@@ -3140,6 +3158,10 @@ static void EnumerateVFPtrs(ASTContext &Context, const CXXRecordDecl *ForClass,
   EnumerateVFPtrs(Context, ForClass, ClassLayout,
                   BaseSubobject(ForClass, CharUnits::Zero()), 0,
                   VFPtrInfo::BasePath(), VisitedVBases, Result);
+  if (Result.size() > 1) {
+    for (unsigned I = 0, E = Result.size(); I != E; ++I)
+      CalculatePathToMangle(ForClass, Result[I]);
+  }
 }
 
 void MicrosoftVFTableContext::computeVTableRelatedInformation(

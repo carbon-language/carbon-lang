@@ -498,6 +498,7 @@ void CodeGenVTables::EmitThunks(GlobalDecl GD)
     // FIXME: This is a temporary solution to force generation of vftables in
     // Microsoft ABI. Remove when we thread VFTableContext through CodeGen.
     VFTContext->getVFPtrOffsets(MD->getParent());
+    return;
   }
 
   const VTableContext::ThunkInfoVectorTy *ThunkInfoVector =
@@ -627,53 +628,6 @@ CodeGenVTables::CreateVTableInitializer(const CXXRecordDecl *RD,
   
   llvm::ArrayType *ArrayType = llvm::ArrayType::get(Int8PtrTy, NumComponents);
   return llvm::ConstantArray::get(ArrayType, Inits);
-}
-
-llvm::GlobalVariable *CodeGenVTables::GetAddrOfVTable(const CXXRecordDecl *RD) {
-  llvm::GlobalVariable *&VTable = VTables[RD];
-  if (VTable)
-    return VTable;
-
-  // Queue up this v-table for possible deferred emission.
-  CGM.addDeferredVTable(RD);
-
-  SmallString<256> OutName;
-  llvm::raw_svector_ostream Out(OutName);
-  CGM.getCXXABI().getMangleContext().mangleCXXVTable(RD, Out);
-  Out.flush();
-  StringRef Name = OutName.str();
-
-  llvm::ArrayType *ArrayType = 
-    llvm::ArrayType::get(CGM.Int8PtrTy,
-                        VTContext.getVTableLayout(RD).getNumVTableComponents());
-
-  VTable =
-    CGM.CreateOrReplaceCXXRuntimeVariable(Name, ArrayType, 
-                                          llvm::GlobalValue::ExternalLinkage);
-  VTable->setUnnamedAddr(true);
-  return VTable;
-}
-
-void
-CodeGenVTables::EmitVTableDefinition(llvm::GlobalVariable *VTable,
-                                     llvm::GlobalVariable::LinkageTypes Linkage,
-                                     const CXXRecordDecl *RD) {
-  const VTableLayout &VTLayout = VTContext.getVTableLayout(RD);
-
-  // Create and set the initializer.
-  llvm::Constant *Init = 
-    CreateVTableInitializer(RD,
-                            VTLayout.vtable_component_begin(),
-                            VTLayout.getNumVTableComponents(),
-                            VTLayout.vtable_thunk_begin(),
-                            VTLayout.getNumVTableThunks());
-  VTable->setInitializer(Init);
-  
-  // Set the correct linkage.
-  VTable->setLinkage(Linkage);
-  
-  // Set the right visibility.
-  CGM.setTypeVisibility(VTable, RD, CodeGenModule::TVK_ForVTable);
 }
 
 llvm::GlobalVariable *
@@ -818,35 +772,10 @@ CodeGenVTables::GenerateClassData(const CXXRecordDecl *RD) {
   if (CGDebugInfo *DI = CGM.getModuleDebugInfo())
     DI->completeClassData(RD);
 
-  if (VFTContext.isValid()) {
-    // FIXME: This is a temporary solution to force generation of vftables in
-    // Microsoft ABI. Remove when we thread VFTableContext through CodeGen.
-    VFTContext->getVFPtrOffsets(RD);
-  }
-
-  // First off, check whether we've already emitted the v-table and
-  // associated stuff.
-  llvm::GlobalVariable *VTable = GetAddrOfVTable(RD);
-  if (VTable->hasInitializer())
-    return;
-
-  llvm::GlobalVariable::LinkageTypes Linkage = CGM.getVTableLinkage(RD);
-  EmitVTableDefinition(VTable, Linkage, RD);
-
   if (RD->getNumVBases())
-    CGM.getCXXABI().EmitVirtualInheritanceTables(Linkage, RD);
+    CGM.getCXXABI().emitVirtualInheritanceTables(RD);
 
-  // If this is the magic class __cxxabiv1::__fundamental_type_info,
-  // we will emit the typeinfo for the fundamental types. This is the
-  // same behaviour as GCC.
-  const DeclContext *DC = RD->getDeclContext();
-  if (RD->getIdentifier() &&
-      RD->getIdentifier()->isStr("__fundamental_type_info") &&
-      isa<NamespaceDecl>(DC) &&
-      cast<NamespaceDecl>(DC)->getIdentifier() &&
-      cast<NamespaceDecl>(DC)->getIdentifier()->isStr("__cxxabiv1") &&
-      DC->getParent()->isTranslationUnit())
-    CGM.EmitFundamentalRTTIDescriptors();
+  CGM.getCXXABI().emitVTableDefinitions(*this, RD);
 }
 
 /// At this point in the translation unit, does it appear that can we

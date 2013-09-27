@@ -53,9 +53,6 @@ private:
     NextFieldOffsetInChars(CharUnits::Zero()),
     LLVMStructAlignment(CharUnits::One()) { }
 
-  void AppendVTablePointer(BaseSubobject Base, llvm::Constant *VTable,
-                           const CXXRecordDecl *VTableClass);
-
   void AppendField(const FieldDecl *Field, uint64_t FieldOffset,
                    llvm::Constant *InitExpr);
 
@@ -72,8 +69,7 @@ private:
 
   bool Build(InitListExpr *ILE);
   void Build(const APValue &Val, const RecordDecl *RD, bool IsPrimaryBase,
-             llvm::Constant *VTable, const CXXRecordDecl *VTableClass,
-             CharUnits BaseOffset);
+             const CXXRecordDecl *VTableClass, CharUnits BaseOffset);
   llvm::Constant *Finalize(QualType Ty);
 
   CharUnits getAlignment(const llvm::Constant *C) const {
@@ -87,23 +83,6 @@ private:
         CGM.getDataLayout().getTypeAllocSize(C->getType()));
   }
 };
-
-void ConstStructBuilder::AppendVTablePointer(BaseSubobject Base,
-                                             llvm::Constant *VTable,
-                                             const CXXRecordDecl *VTableClass) {
-  // Find the appropriate vtable within the vtable group.
-  uint64_t AddressPoint =
-    CGM.getVTableContext().getVTableLayout(VTableClass).getAddressPoint(Base);
-  llvm::Value *Indices[] = {
-    llvm::ConstantInt::get(CGM.Int64Ty, 0),
-    llvm::ConstantInt::get(CGM.Int64Ty, AddressPoint)
-  };
-  llvm::Constant *VTableAddressPoint =
-    llvm::ConstantExpr::getInBoundsGetElementPtr(VTable, Indices);
-
-  // Add the vtable at the start of the object.
-  AppendBytes(Base.getBaseOffset(), VTableAddressPoint);
-}
 
 void ConstStructBuilder::
 AppendField(const FieldDecl *Field, uint64_t FieldOffset,
@@ -424,15 +403,19 @@ struct BaseInfo {
 }
 
 void ConstStructBuilder::Build(const APValue &Val, const RecordDecl *RD,
-                               bool IsPrimaryBase, llvm::Constant *VTable,
+                               bool IsPrimaryBase,
                                const CXXRecordDecl *VTableClass,
                                CharUnits Offset) {
   const ASTRecordLayout &Layout = CGM.getContext().getASTRecordLayout(RD);
 
   if (const CXXRecordDecl *CD = dyn_cast<CXXRecordDecl>(RD)) {
     // Add a vtable pointer, if we need one and it hasn't already been added.
-    if (CD->isDynamicClass() && !IsPrimaryBase)
-      AppendVTablePointer(BaseSubobject(CD, Offset), VTable, VTableClass);
+    if (CD->isDynamicClass() && !IsPrimaryBase) {
+      llvm::Constant *VTableAddressPoint =
+          CGM.getCXXABI().getVTableAddressPointForConstExpr(
+              BaseSubobject(CD, Offset), VTableClass);
+      AppendBytes(Offset, VTableAddressPoint);
+    }
 
     // Accumulate and sort bases, in order to visit them in address order, which
     // may not be the same as declaration order.
@@ -453,7 +436,7 @@ void ConstStructBuilder::Build(const APValue &Val, const RecordDecl *RD,
 
       bool IsPrimaryBase = Layout.getPrimaryBase() == Base.Decl;
       Build(Val.getStructBase(Base.Index), Base.Decl, IsPrimaryBase,
-            VTable, VTableClass, Offset + Base.Offset);
+            VTableClass, Offset + Base.Offset);
     }
   }
 
@@ -560,11 +543,7 @@ llvm::Constant *ConstStructBuilder::BuildStruct(CodeGenModule &CGM,
 
   const RecordDecl *RD = ValTy->castAs<RecordType>()->getDecl();
   const CXXRecordDecl *CD = dyn_cast<CXXRecordDecl>(RD);
-  llvm::Constant *VTable = 0;
-  if (CD && CD->isDynamicClass())
-    VTable = CGM.getVTables().GetAddrOfVTable(CD);
-
-  Builder.Build(Val, RD, false, VTable, CD, CharUnits::Zero());
+  Builder.Build(Val, RD, false, CD, CharUnits::Zero());
 
   return Builder.Finalize(ValTy);
 }

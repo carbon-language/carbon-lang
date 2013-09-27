@@ -106,8 +106,16 @@ public:
                                   raw_ostream &) = 0;
   virtual void mangleReferenceTemporary(const VarDecl *D,
                                         raw_ostream &) = 0;
+  // FIXME: Some of these objects only exist in select ABIs. We should probably
+  // only declare them in ABI-specific manglers?
   virtual void mangleCXXVTable(const CXXRecordDecl *RD,
                                raw_ostream &) = 0;
+  /// \brief Mangle vftable symbols.  Only a subset of the bases along the path
+  /// to the vftable are included in the name.  It's up to the caller to pick
+  /// them correctly.
+  virtual void mangleCXXVFTable(const CXXRecordDecl *Derived,
+                                ArrayRef<const CXXRecordDecl *> BasePath,
+                                raw_ostream &Out) = 0;
   virtual void mangleCXXVTT(const CXXRecordDecl *RD,
                             raw_ostream &) = 0;
   /// \brief Mangle vbtable symbols.  Only a subset of the bases along the path
