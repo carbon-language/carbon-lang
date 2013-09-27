@@ -309,7 +309,7 @@ A style similar to the `Linux Kernel style
 
   BasedOnStyle: LLVM
   IndentWidth: 8
-  UseTab: true
+  UseTab: Always
   BreakBeforeBraces: Linux
   AllowShortIfStatementsOnASingleLine: false
   IndentCaseLabels: false
@@ -347,7 +347,7 @@ A style similar to the default Visual Studio formatting style:
 
 .. code-block:: yaml
 
-  UseTab: false
+  UseTab: Never
   IndentWidth: 4
   BreakBeforeBraces: Allman
   AllowShortIfStatementsOnASingleLine: false
