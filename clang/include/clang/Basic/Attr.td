@@ -351,7 +351,8 @@ def OpenCLImageAccess : Attr {
 }
 
 def Deprecated : InheritableAttr {
-  let Spellings = [GNU<"deprecated">, CXX11<"gnu", "deprecated">];
+  let Spellings = [GNU<"deprecated">,
+                   CXX11<"gnu", "deprecated">, CXX11<"","deprecated">];
   let Args = [StringArgument<"Message", 1>];
 }
 
