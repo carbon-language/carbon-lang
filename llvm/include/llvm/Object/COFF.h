@@ -23,8 +23,6 @@ namespace llvm {
   class ArrayRef;
 
 namespace object {
-class ImportDirectoryEntryRef;
-typedef content_iterator<ImportDirectoryEntryRef> import_directory_iterator;
 
 /// The DOS compatible header at the front of all PE/COFF executables.
 struct dos_header {
@@ -204,7 +202,6 @@ struct coff_aux_section_definition {
 
 class COFFObjectFile : public ObjectFile {
 private:
-  friend class ImportDirectoryEntryRef;
   const coff_file_header *COFFHeader;
   const pe32_header      *PE32Header;
   const data_directory   *DataDirectory;
@@ -212,17 +209,12 @@ private:
   const coff_symbol      *SymbolTable;
   const char             *StringTable;
         uint32_t          StringTableSize;
-  const import_directory_table_entry *ImportDirectory;
-        uint32_t          NumberOfImportDirectory;
 
         error_code        getString(uint32_t offset, StringRef &Res) const;
 
   const coff_symbol      *toSymb(DataRefImpl Symb) const;
   const coff_section     *toSec(DataRefImpl Sec) const;
   const coff_relocation  *toRel(DataRefImpl Rel) const;
-
-        error_code        initSymbolTablePtr();
-        error_code        initImportTablePtr();
 
 protected:
   virtual error_code getSymbolNext(DataRefImpl Symb, SymbolRef &Res) const;
@@ -295,9 +287,6 @@ public:
   virtual unsigned getArch() const;
   virtual StringRef getLoadName() const;
 
-  import_directory_iterator getImportDirectoryBegin() const;
-  import_directory_iterator getImportDirectoryEnd() const;
-
   error_code getHeader(const coff_file_header *&Res) const;
   error_code getCOFFHeader(const coff_file_header *&Res) const;
   error_code getPE32Header(const pe32_header *&Res) const;
@@ -318,37 +307,12 @@ public:
   error_code getSectionContents(const coff_section *Sec,
                                 ArrayRef<uint8_t> &Res) const;
 
-  error_code getRvaPtr(uint32_t Rva, uintptr_t &Res) const;
-  error_code getHintName(uint32_t Rva, uint16_t &Hint, StringRef &Name) const;
-
   static inline bool classof(const Binary *v) {
     return v->isCOFF();
   }
 };
 
-// The iterator for the import directory table.
-class ImportDirectoryEntryRef {
-public:
-  ImportDirectoryEntryRef() : OwningObject(0) {}
-  ImportDirectoryEntryRef(DataRefImpl ImportDirectory,
-                          const COFFObjectFile *Owner)
-      : ImportDirectoryPimpl(ImportDirectory), OwningObject(Owner) {}
-
-  bool operator==(const ImportDirectoryEntryRef &Other) const;
-  error_code getNext(ImportDirectoryEntryRef &Result) const;
-  error_code getName(StringRef &Result) const;
-
-  error_code
-  getImportTableEntry(const import_directory_table_entry *&Result) const;
-
-  error_code
-  getImportLookupEntry(const COFF::ImportLookupTableEntry32 *&Result) const;
-
-private:
-  DataRefImpl ImportDirectoryPimpl;
-  const COFFObjectFile *OwningObject;
-};
-} // end namespace object
-} // end namespace llvm
+}
+}
 
 #endif
