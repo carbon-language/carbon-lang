@@ -32,3 +32,8 @@ ilvr.d, ilvod.d, pckod.d:
 splati.w:
         It is not possible to emit splati.w since shf.w covers the same cases.
         shf.w will be emitted instead.
+
+copy_s.w
+        On MIPS32, the copy_u.d intrinsic will emit this instruction instead of
+        copy_u.w. This is semantically equivalent since the general-purpose
+        register file is 32-bits wide.

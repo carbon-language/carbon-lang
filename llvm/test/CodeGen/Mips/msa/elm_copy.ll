@@ -60,6 +60,27 @@ declare i32 @llvm.mips.copy.s.w(<4 x i32>, i32) nounwind
 ; CHECK: sw
 ; CHECK: .size llvm_mips_copy_s_w_test
 ;
+@llvm_mips_copy_s_d_ARG1 = global <2 x i64> <i64 0, i64 1>, align 16
+@llvm_mips_copy_s_d_RES  = global i64 0, align 16
+
+define void @llvm_mips_copy_s_d_test() nounwind {
+entry:
+  %0 = load <2 x i64>* @llvm_mips_copy_s_d_ARG1
+  %1 = tail call i64 @llvm.mips.copy.s.d(<2 x i64> %0, i32 1)
+  store i64 %1, i64* @llvm_mips_copy_s_d_RES
+  ret void
+}
+
+declare i64 @llvm.mips.copy.s.d(<2 x i64>, i32) nounwind
+
+; CHECK: llvm_mips_copy_s_d_test:
+; CHECK: ld.w
+; CHECK: copy_s.w
+; CHECK: copy_s.w
+; CHECK: sw
+; CHECK: sw
+; CHECK: .size llvm_mips_copy_s_d_test
+;
 @llvm_mips_copy_u_b_ARG1 = global <16 x i8> <i8 0, i8 1, i8 2, i8 3, i8 4, i8 5, i8 6, i8 7, i8 8, i8 9, i8 10, i8 11, i8 12, i8 13, i8 14, i8 15>, align 16
 @llvm_mips_copy_u_b_RES  = global i32 0, align 16
 
@@ -116,4 +137,25 @@ declare i32 @llvm.mips.copy.u.w(<4 x i32>, i32) nounwind
 ; CHECK: copy_u.w
 ; CHECK: sw
 ; CHECK: .size llvm_mips_copy_u_w_test
+;
+@llvm_mips_copy_u_d_ARG1 = global <2 x i64> <i64 0, i64 1>, align 16
+@llvm_mips_copy_u_d_RES  = global i64 0, align 16
+
+define void @llvm_mips_copy_u_d_test() nounwind {
+entry:
+  %0 = load <2 x i64>* @llvm_mips_copy_u_d_ARG1
+  %1 = tail call i64 @llvm.mips.copy.u.d(<2 x i64> %0, i32 1)
+  store i64 %1, i64* @llvm_mips_copy_u_d_RES
+  ret void
+}
+
+declare i64 @llvm.mips.copy.u.d(<2 x i64>, i32) nounwind
+
+; CHECK: llvm_mips_copy_u_d_test:
+; CHECK: ld.w
+; CHECK: copy_s.w
+; CHECK: copy_s.w
+; CHECK: sw
+; CHECK: sw
+; CHECK: .size llvm_mips_copy_u_d_test
 ;
