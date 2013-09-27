@@ -754,32 +754,32 @@ CompileUnit *DwarfDebug::constructCompileUnit(const MDNode *N) {
      Asm->OutStreamer.getKind() == MCStreamer::SK_AsmStreamer) ||
     (NewCU->getUniqueID() == 0);
 
-  // DW_AT_stmt_list is a offset of line number information for this
-  // compile unit in debug_line section. For split dwarf this is
-  // left in the skeleton CU and so not included.
-  // The line table entries are not always emitted in assembly, so it
-  // is not okay to use line_table_start here.
   if (!useSplitDwarf()) {
+    // DW_AT_stmt_list is a offset of line number information for this
+    // compile unit in debug_line section. For split dwarf this is
+    // left in the skeleton CU and so not included.
+    // The line table entries are not always emitted in assembly, so it
+    // is not okay to use line_table_start here.
     if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
       NewCU->addLabel(Die, dwarf::DW_AT_stmt_list, dwarf::DW_FORM_sec_offset,
-                      UseTheFirstCU ?
-                      Asm->GetTempSymbol("section_line") : LineTableStartSym);
+                      UseTheFirstCU ? Asm->GetTempSymbol("section_line")
+                                    : LineTableStartSym);
     else if (UseTheFirstCU)
       NewCU->addUInt(Die, dwarf::DW_AT_stmt_list, dwarf::DW_FORM_data4, 0);
     else
       NewCU->addDelta(Die, dwarf::DW_AT_stmt_list, dwarf::DW_FORM_data4,
                       LineTableStartSym, DwarfLineSectionSym);
+
+    // If we're using split dwarf the compilation dir is going to be in the
+    // skeleton CU and so we don't need to duplicate it here.
+    if (!CompilationDir.empty())
+      NewCU->addString(Die, dwarf::DW_AT_comp_dir, CompilationDir);
+
+    // Flag to let the linker know we have emitted new style pubnames. Only
+    // emit it here if we don't have a skeleton CU for split dwarf.
+    if (GenerateGnuPubSections)
+      NewCU->addFlag(Die, dwarf::DW_AT_GNU_pubnames);
   }
-
-  // If we're using split dwarf the compilation dir is going to be in the
-  // skeleton CU and so we don't need to duplicate it here.
-  if (!useSplitDwarf() && !CompilationDir.empty())
-    NewCU->addString(Die, dwarf::DW_AT_comp_dir, CompilationDir);
-
-  // Flag to let the linker know we have emitted new style pubnames. Only
-  // emit it here if we don't have a skeleton CU for split dwarf.
-  if (!useSplitDwarf() && GenerateGnuPubSections)
-    NewCU->addFlag(Die, dwarf::DW_AT_GNU_pubnames);
 
   if (DIUnit.isOptimized())
     NewCU->addFlag(Die, dwarf::DW_AT_APPLE_optimized);
