@@ -246,37 +246,6 @@ namespace outer {
   }
 }
 
-namespace bogus_keyword_suggestion {
-void test() {
-   status = "OK"; // expected-error-re{{use of undeclared identifier 'status'$}}
-   return status; // expected-error-re{{use of undeclared identifier 'status'$}}
- }
-}
-
-namespace PR13387 {
-struct A {
-  void CreateFoo(float, float);
-  void CreateBar(float, float);
-};
-struct B : A {
-  using A::CreateFoo;
-  void CreateFoo(int, int);
-};
-void f(B &x) {
-  x.Createfoo(0,0); // expected-error {{no member named 'Createfoo' in 'PR13387::B'; did you mean 'CreateFoo'?}}
-}
-}
-
-struct DataStruct {void foo();};
-struct T {
- DataStruct data_struct;
- void f();
-};
-// should be void T::f();
-void f() {
- data_struct->foo(); // expected-error-re{{use of undeclared identifier 'data_struct'$}}
-}
-
 namespace b6956809_test1 {
   struct A {};
   struct B {};
@@ -319,9 +288,13 @@ namespace b6956809_test2 {
   }
 }
 
+// This test should have one correction, followed by an error without a
+// suggestion due to exceeding the maximum number of typos for which correction
+// is attempted.
 namespace CorrectTypo_has_reached_its_limit {
-int flibberdy();  // no note here
+int flibberdy();  // expected-note{{'flibberdy' declared here}}
 int no_correction() {
-  return gibberdy();  // expected-error-re{{use of undeclared identifier 'gibberdy'$}}
+  return hibberdy() +  // expected-error{{use of undeclared identifier 'hibberdy'; did you mean 'flibberdy'?}}
+         gibberdy();  // expected-error-re{{use of undeclared identifier 'gibberdy'$}}
 };
 }

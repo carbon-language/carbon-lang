@@ -5,6 +5,37 @@
 // attempt within a single file (which is to avoid having very broken files take
 // minutes to finally be rejected by the parser).
 
+namespace bogus_keyword_suggestion {
+void test() {
+   status = "OK";  // expected-error-re {{use of undeclared identifier 'status'$}}
+   return status;  // expected-error-re {{use of undeclared identifier 'status'$}}
+ }
+}
+
+namespace PR13387 {
+struct A {
+  void CreateFoo(float, float);
+  void CreateBar(float, float);
+};
+struct B : A {
+  using A::CreateFoo;
+  void CreateFoo(int, int);
+};
+void f(B &x) {
+  x.Createfoo(0,0);  // expected-error {{no member named 'Createfoo' in 'PR13387::B'; did you mean 'CreateFoo'?}}
+}
+}
+
+struct DataStruct {void foo();};
+struct T {
+ DataStruct data_struct;
+ void f();
+};
+// should be void T::f();
+void f() {
+ data_struct->foo();  // expected-error-re{{use of undeclared identifier 'data_struct'$}}
+}
+
 namespace PR12287 {
 class zif {
   void nab(int);
