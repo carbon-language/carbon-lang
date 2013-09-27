@@ -290,6 +290,17 @@ class SystemZDAGToDAGISel : public SelectionDAGISel {
   SDNode *splitLargeImmediate(unsigned Opcode, SDNode *Node, SDValue Op0,
                               uint64_t UpperVal, uint64_t LowerVal);
 
+  // Return true if Load and Store are loads and stores of the same size
+  // and are guaranteed not to overlap.  Such operations can be implemented
+  // using block (SS-format) instructions.
+  //
+  // Partial overlap would lead to incorrect code, since the block operations
+  // are logically bytewise, even though they have a fast path for the
+  // non-overlapping case.  We also need to avoid full overlap (i.e. two
+  // addresses that might be equal at run time) because although that case
+  // would be handled correctly, it might be implemented by millicode.
+  bool canUseBlockOperation(StoreSDNode *Store, LoadSDNode *Load) const;
+
   // N is a (store (load Y), X) pattern.  Return true if it can use an MVC
   // from Y to X.
   bool storeLoadCanUseMVC(SDNode *N) const;
@@ -938,13 +949,8 @@ SDNode *SystemZDAGToDAGISel::splitLargeImmediate(unsigned Opcode, SDNode *Node,
   return Or.getNode();
 }
 
-// Return true if Load and Store:
-// - are loads and stores of the same size;
-// - do not partially overlap; and
-// - can be decomposed into what are logically individual character accesses
-//   without changing the semantics.
-static bool canUseBlockOperation(StoreSDNode *Store, LoadSDNode *Load,
-                                 AliasAnalysis *AA) {
+bool SystemZDAGToDAGISel::canUseBlockOperation(StoreSDNode *Store,
+                                               LoadSDNode *Load) const {
   // Check that the two memory operands have the same size.
   if (Load->getMemoryVT() != Store->getMemoryVT())
     return false;
@@ -957,19 +963,19 @@ static bool canUseBlockOperation(StoreSDNode *Store, LoadSDNode *Load,
   if (Load->isInvariant())
     return true;
 
-  // If both operands are aligned, they must be equal or not overlap.
-  uint64_t Size = Load->getMemoryVT().getStoreSize();
-  if (Load->getAlignment() >= Size && Store->getAlignment() >= Size)
-    return true;
-
   // Otherwise we need to check whether there's an alias.
   const Value *V1 = Load->getSrcValue();
   const Value *V2 = Store->getSrcValue();
   if (!V1 || !V2)
     return false;
 
+  // Reject equality.
+  uint64_t Size = Load->getMemoryVT().getStoreSize();
   int64_t End1 = Load->getSrcValueOffset() + Size;
   int64_t End2 = Store->getSrcValueOffset() + Size;
+  if (V1 == V2 && End1 == End2)
+    return false;
+
   return !AA->alias(AliasAnalysis::Location(V1, End1, Load->getTBAAInfo()),
                     AliasAnalysis::Location(V2, End2, Store->getTBAAInfo()));
 }
@@ -990,7 +996,7 @@ bool SystemZDAGToDAGISel::storeLoadCanUseMVC(SDNode *N) const {
       return false;
   }
 
-  return canUseBlockOperation(Store, Load, AA);
+  return canUseBlockOperation(Store, Load);
 }
 
 bool SystemZDAGToDAGISel::storeLoadCanUseBlockBinary(SDNode *N,
@@ -998,11 +1004,7 @@ bool SystemZDAGToDAGISel::storeLoadCanUseBlockBinary(SDNode *N,
   StoreSDNode *StoreA = cast<StoreSDNode>(N);
   LoadSDNode *LoadA = cast<LoadSDNode>(StoreA->getValue().getOperand(1 - I));
   LoadSDNode *LoadB = cast<LoadSDNode>(StoreA->getValue().getOperand(I));
-  if (LoadA->isVolatile() ||
-      LoadA->getMemoryVT() != StoreA->getMemoryVT() ||
-      LoadA->getBasePtr() != StoreA->getBasePtr())
-    return false;
-  return canUseBlockOperation(StoreA, LoadB, AA);
+  return !LoadA->isVolatile() && canUseBlockOperation(StoreA, LoadB);
 }
 
 SDNode *SystemZDAGToDAGISel::Select(SDNode *Node) {

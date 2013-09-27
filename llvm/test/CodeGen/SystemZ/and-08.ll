@@ -2,8 +2,10 @@
 ;
 ; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
 
-@g1 = global i8 1
-@g2 = global i16 2
+@g1src = global i8 1
+@g1dst = global i8 1
+@g2src = global i16 2
+@g2dst = global i16 2
 
 ; Test the simple i8 case.
 define void @f1(i8 *%ptr1) {
@@ -239,11 +241,12 @@ define void @f16(i64 *%ptr1) {
   ret void
 }
 
-; Test that NC is used for aligned loads and stores, even if there is
-; no way of telling whether they alias.
+; Test that NC is not used for aligned loads and stores if there is
+; no way of telling whether they alias.  We don't want to use NC in
+; cases where the addresses could be equal.
 define void @f17(i64 *%ptr1, i64 *%ptr2) {
 ; CHECK-LABEL: f17:
-; CHECK: nc 0(8,%r3), 0(%r2)
+; CHECK-NOT: nc
 ; CHECK: br %r14
   %val = load i64 *%ptr1
   %old = load i64 *%ptr2
@@ -306,58 +309,34 @@ define void @f21(i64 %base) {
 ; Test that we can use NC for global addresses for i8.
 define void @f22(i8 *%ptr) {
 ; CHECK-LABEL: f22:
-; CHECK: larl [[REG:%r[0-5]]], g1
-; CHECK: nc 0(1,%r2), 0([[REG]])
+; CHECK-DAG: larl [[SRC:%r[0-5]]], g1src
+; CHECK-DAG: larl [[DST:%r[0-5]]], g1dst
+; CHECK: nc 0(1,[[DST]]), 0([[SRC]])
 ; CHECK: br %r14
-  %val = load i8 *@g1
-  %old = load i8 *%ptr
+  %val = load i8 *@g1src
+  %old = load i8 *@g1dst
   %and = and i8 %val, %old
-  store i8 %and, i8 *%ptr
-  ret void
-}
-
-; ...and again with the global on the store.
-define void @f23(i8 *%ptr) {
-; CHECK-LABEL: f23:
-; CHECK: larl [[REG:%r[0-5]]], g1
-; CHECK: nc 0(1,[[REG]]), 0(%r2)
-; CHECK: br %r14
-  %val = load i8 *%ptr
-  %old = load i8 *@g1
-  %and = and i8 %val, %old
-  store i8 %and, i8 *@g1
+  store i8 %and, i8 *@g1dst
   ret void
 }
 
 ; Test that we use NC even where LHRL and STHRL are available.
-define void @f24(i16 *%ptr) {
-; CHECK-LABEL: f24:
-; CHECK: larl [[REG:%r[0-5]]], g2
-; CHECK: nc 0(2,%r2), 0([[REG]])
+define void @f23(i16 *%ptr) {
+; CHECK-LABEL: f23:
+; CHECK-DAG: larl [[SRC:%r[0-5]]], g2src
+; CHECK-DAG: larl [[DST:%r[0-5]]], g2dst
+; CHECK: nc 0(2,[[DST]]), 0([[SRC]])
 ; CHECK: br %r14
-  %val = load i16 *@g2
-  %old = load i16 *%ptr
+  %val = load i16 *@g2src
+  %old = load i16 *@g2dst
   %and = and i16 %val, %old
-  store i16 %and, i16 *%ptr
-  ret void
-}
-
-; ...likewise on the other side.
-define void @f25(i16 *%ptr) {
-; CHECK-LABEL: f25:
-; CHECK: larl [[REG:%r[0-5]]], g2
-; CHECK: nc 0(2,[[REG]]), 0(%r2)
-; CHECK: br %r14
-  %val = load i16 *%ptr
-  %old = load i16 *@g2
-  %and = and i16 %val, %old
-  store i16 %and, i16 *@g2
+  store i16 %and, i16 *@g2dst
   ret void
 }
 
 ; Test a case where offset disambiguation is enough.
-define void @f26(i64 *%ptr1) {
-; CHECK-LABEL: f26:
+define void @f24(i64 *%ptr1) {
+; CHECK-LABEL: f24:
 ; CHECK: nc 8(8,%r2), 0(%r2)
 ; CHECK: br %r14
   %ptr2 = getelementptr i64 *%ptr1, i64 1
@@ -369,8 +348,8 @@ define void @f26(i64 *%ptr1) {
 }
 
 ; Test a case where TBAA tells us there is no alias.
-define void @f27(i64 *%ptr1, i64 *%ptr2) {
-; CHECK-LABEL: f27:
+define void @f25(i64 *%ptr1, i64 *%ptr2) {
+; CHECK-LABEL: f25:
 ; CHECK: nc 0(8,%r3), 0(%r2)
 ; CHECK: br %r14
   %val = load i64 *%ptr1, align 2, !tbaa !1
@@ -381,8 +360,8 @@ define void @f27(i64 *%ptr1, i64 *%ptr2) {
 }
 
 ; Test a case where TBAA information is present but doesn't help.
-define void @f28(i64 *%ptr1, i64 *%ptr2) {
-; CHECK-LABEL: f28:
+define void @f26(i64 *%ptr1, i64 *%ptr2) {
+; CHECK-LABEL: f26:
 ; CHECK-NOT: nc
 ; CHECK: br %r14
   %val = load i64 *%ptr1, align 2, !tbaa !1

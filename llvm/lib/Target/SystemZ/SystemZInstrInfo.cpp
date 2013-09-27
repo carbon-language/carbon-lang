@@ -674,10 +674,14 @@ SystemZInstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
   //
   // Although MVC is in practice a fast choice in these cases, it is still
   // logically a bytewise copy.  This means that we cannot use it if the
-  // load or store is volatile.  It also means that the transformation is
-  // not valid in cases where the two memories partially overlap; however,
-  // that is not a problem here, because we know that one of the memories
-  // is a full frame index.
+  // load or store is volatile.  We also wouldn't be able to use MVC if
+  // the two memories partially overlap, but that case cannot occur here,
+  // because we know that one of the memories is a full frame index.
+  //
+  // For performance reasons, we also want to avoid using MVC if the addresses
+  // might be equal.  We don't worry about that case here, because spill slot
+  // coloring happens later, and because we have special code to remove
+  // MVCs that turn out to be redundant.
   if (OpNum == 0 && MI->hasOneMemOperand()) {
     MachineMemOperand *MMO = *MI->memoperands_begin();
     if (MMO->getSize() == Size && !MMO->isVolatile()) {

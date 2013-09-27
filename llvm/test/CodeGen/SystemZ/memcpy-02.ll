@@ -2,11 +2,14 @@
 ;
 ; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
 
-@g1 = global i8 1
-@g2 = global i16 2
+@g1src = global i8 1
+@g1dst = global i8 1
+@g2src = global i16 2
+@g2dst = global i16 2
 @g3 = global i32 3
 @g4 = global i64 4
-@g5 = external global fp128, align 16
+@g5src = external global fp128, align 16
+@g5dst = external global fp128, align 16
 
 ; Test the simple i8 case.
 define void @f1(i8 *%ptr1) {
@@ -237,18 +240,19 @@ define void @f19(i64 *%ptr1) {
   ret void
 }
 
-; Test that MVC is used for aligned loads and stores, even if there is
-; no way of telling whether they alias.
+; Test that MVC is not used for aligned loads and stores if there is
+; no way of telling whether they alias.  We don't want to use MVC in
+; cases where the addresses could be equal.
 define void @f20(i64 *%ptr1, i64 *%ptr2) {
 ; CHECK-LABEL: f20:
-; CHECK: mvc 0(8,%r3), 0(%r2)
+; CHECK-NOT: mvc
 ; CHECK: br %r14
   %val = load i64 *%ptr1
   store i64 %val, i64 *%ptr2
   ret void
 }
 
-; ...but if the loads aren't aligned, we can't be sure.
+; ...and again for unaligned loads and stores.
 define void @f21(i64 *%ptr1, i64 *%ptr2) {
 ; CHECK-LABEL: f21:
 ; CHECK-NOT: mvc
@@ -274,50 +278,29 @@ define void @f22(i64 %base) {
 ; Test that we can use MVC for global addresses for i8.
 define void @f23(i8 *%ptr) {
 ; CHECK-LABEL: f23:
-; CHECK: larl [[REG:%r[0-5]]], g1
-; CHECK: mvc 0(1,%r2), 0([[REG]])
+; CHECK-DAG: larl [[SRC:%r[0-5]]], g1src
+; CHECK-DAG: larl [[DST:%r[0-5]]], g1dst
+; CHECK: mvc 0(1,[[DST]]), 0([[SRC]])
 ; CHECK: br %r14
-  %val = load i8 *@g1
-  store i8 %val, i8 *%ptr
+  %val = load i8 *@g1src
+  store i8 %val, i8 *@g1dst
   ret void
 }
 
-; ...and again with the global on the store.
-define void @f24(i8 *%ptr) {
+; Test that we use LHRL and STHRL for i16.
+define void @f24(i16 *%ptr) {
 ; CHECK-LABEL: f24:
-; CHECK: larl [[REG:%r[0-5]]], g1
-; CHECK: mvc 0(1,[[REG]]), 0(%r2)
+; CHECK: lhrl [[REG:%r[0-5]]], g2src
+; CHECK: sthrl [[REG]], g2dst
 ; CHECK: br %r14
-  %val = load i8 *%ptr
-  store i8 %val, i8 *@g1
-  ret void
-}
-
-; Test that we use LHRL for i16.
-define void @f25(i16 *%ptr) {
-; CHECK-LABEL: f25:
-; CHECK: lhrl [[REG:%r[0-5]]], g2
-; CHECK: sth [[REG]], 0(%r2)
-; CHECK: br %r14
-  %val = load i16 *@g2
-  store i16 %val, i16 *%ptr
-  ret void
-}
-
-; ...likewise STHRL.
-define void @f26(i16 *%ptr) {
-; CHECK-LABEL: f26:
-; CHECK: lh [[REG:%r[0-5]]], 0(%r2)
-; CHECK: sthrl [[REG]], g2
-; CHECK: br %r14
-  %val = load i16 *%ptr
-  store i16 %val, i16 *@g2
+  %val = load i16 *@g2src
+  store i16 %val, i16 *@g2dst
   ret void
 }
 
 ; Test that we use LRL for i32.
-define void @f27(i32 *%ptr) {
-; CHECK-LABEL: f27:
+define void @f25(i32 *%ptr) {
+; CHECK-LABEL: f25:
 ; CHECK: lrl [[REG:%r[0-5]]], g3
 ; CHECK: st [[REG]], 0(%r2)
 ; CHECK: br %r14
@@ -327,8 +310,8 @@ define void @f27(i32 *%ptr) {
 }
 
 ; ...likewise STRL.
-define void @f28(i32 *%ptr) {
-; CHECK-LABEL: f28:
+define void @f26(i32 *%ptr) {
+; CHECK-LABEL: f26:
 ; CHECK: l [[REG:%r[0-5]]], 0(%r2)
 ; CHECK: strl [[REG]], g3
 ; CHECK: br %r14
@@ -338,8 +321,8 @@ define void @f28(i32 *%ptr) {
 }
 
 ; Test that we use LGRL for i64.
-define void @f29(i64 *%ptr) {
-; CHECK-LABEL: f29:
+define void @f27(i64 *%ptr) {
+; CHECK-LABEL: f27:
 ; CHECK: lgrl [[REG:%r[0-5]]], g4
 ; CHECK: stg [[REG]], 0(%r2)
 ; CHECK: br %r14
@@ -349,8 +332,8 @@ define void @f29(i64 *%ptr) {
 }
 
 ; ...likewise STGRL.
-define void @f30(i64 *%ptr) {
-; CHECK-LABEL: f30:
+define void @f28(i64 *%ptr) {
+; CHECK-LABEL: f28:
 ; CHECK: lg [[REG:%r[0-5]]], 0(%r2)
 ; CHECK: stgrl [[REG]], g4
 ; CHECK: br %r14
@@ -360,30 +343,20 @@ define void @f30(i64 *%ptr) {
 }
 
 ; Test that we can use MVC for global addresses for fp128.
-define void @f31(fp128 *%ptr) {
-; CHECK-LABEL: f31:
-; CHECK: larl [[REG:%r[0-5]]], g5
-; CHECK: mvc 0(16,%r2), 0([[REG]])
+define void @f29(fp128 *%ptr) {
+; CHECK-LABEL: f29:
+; CHECK-DAG: larl [[SRC:%r[0-5]]], g5src
+; CHECK-DAG: larl [[DST:%r[0-5]]], g5dst
+; CHECK: mvc 0(16,[[DST]]), 0([[SRC]])
 ; CHECK: br %r14
-  %val = load fp128 *@g5, align 16
-  store fp128 %val, fp128 *%ptr, align 16
-  ret void
-}
-
-; ...and again with the global on the store.
-define void @f32(fp128 *%ptr) {
-; CHECK-LABEL: f32:
-; CHECK: larl [[REG:%r[0-5]]], g5
-; CHECK: mvc 0(16,[[REG]]), 0(%r2)
-; CHECK: br %r14
-  %val = load fp128 *%ptr, align 16
-  store fp128 %val, fp128 *@g5, align 16
+  %val = load fp128 *@g5src, align 16
+  store fp128 %val, fp128 *@g5dst, align 16
   ret void
 }
 
 ; Test a case where offset disambiguation is enough.
-define void @f33(i64 *%ptr1) {
-; CHECK-LABEL: f33:
+define void @f30(i64 *%ptr1) {
+; CHECK-LABEL: f30:
 ; CHECK: mvc 8(8,%r2), 0(%r2)
 ; CHECK: br %r14
   %ptr2 = getelementptr i64 *%ptr1, i64 1
@@ -393,8 +366,8 @@ define void @f33(i64 *%ptr1) {
 }
 
 ; Test f21 in cases where TBAA tells us there is no alias.
-define void @f34(i64 *%ptr1, i64 *%ptr2) {
-; CHECK-LABEL: f34:
+define void @f31(i64 *%ptr1, i64 *%ptr2) {
+; CHECK-LABEL: f31:
 ; CHECK: mvc 0(8,%r3), 0(%r2)
 ; CHECK: br %r14
   %val = load i64 *%ptr1, align 2, !tbaa !1
@@ -403,8 +376,8 @@ define void @f34(i64 *%ptr1, i64 *%ptr2) {
 }
 
 ; Test f21 in cases where TBAA is present but doesn't help.
-define void @f35(i64 *%ptr1, i64 *%ptr2) {
-; CHECK-LABEL: f35:
+define void @f32(i64 *%ptr1, i64 *%ptr2) {
+; CHECK-LABEL: f32:
 ; CHECK-NOT: mvc
 ; CHECK: br %r14
   %val = load i64 *%ptr1, align 2, !tbaa !1

@@ -63,11 +63,11 @@ define double @f5(i64 %a) {
 
 ; Test 128-bit moves from GPRs to FPRs.  i128 isn't a legitimate type,
 ; so this goes through memory.
-; FIXME: it would be better to use one MVC here.
 define void @f6(fp128 *%a, i128 *%b) {
 ; CHECK-LABEL: f6:
 ; CHECK: lg
-; CHECK: mvc
+; CHECK: lg
+; CHECK: stg
 ; CHECK: stg
 ; CHECK: br %r14
   %val = load i128 *%b
