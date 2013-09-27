@@ -16,7 +16,6 @@
 #include "lld/Driver/Driver.h"
 #include "lld/Driver/DarwinInputGraph.h"
 #include "lld/ReaderWriter/MachOLinkingContext.h"
-#include "lld/ReaderWriter/MachOFormat.hpp"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Triple.h"
@@ -25,6 +24,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Host.h"
+#include "llvm/Support/MachO.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/PrettyStackTrace.h"
@@ -117,22 +117,22 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
                                       OPT_bundle, OPT_static, OPT_preload)) {
     switch (kind->getOption().getID()) {
     case OPT_dylib:
-      ctx.setOutputFileType(mach_o::MH_DYLIB);
+      ctx.setOutputFileType(llvm::MachO::MH_DYLIB);
       ctx.setGlobalsAreDeadStripRoots(true);
       break;
     case OPT_relocatable:
       ctx.setPrintRemainingUndefines(false);
       ctx.setAllowRemainingUndefines(true);
-      ctx.setOutputFileType(mach_o::MH_OBJECT);
+      ctx.setOutputFileType(llvm::MachO::MH_OBJECT);
       break;
     case OPT_bundle:
-      ctx.setOutputFileType(mach_o::MH_BUNDLE);
+      ctx.setOutputFileType(llvm::MachO::MH_BUNDLE);
       break;
     case OPT_static:
-      ctx.setOutputFileType(mach_o::MH_EXECUTE);
+      ctx.setOutputFileType(llvm::MachO::MH_EXECUTE);
       break;
     case OPT_preload:
-      ctx.setOutputFileType(mach_o::MH_PRELOAD);
+      ctx.setOutputFileType(llvm::MachO::MH_PRELOAD);
       break;
     }
   }
@@ -164,7 +164,7 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
   // Handle -compatibility_version and -current_version
   if (llvm::opt::Arg *vers =
           parsedArgs->getLastArg(OPT_compatibility_version)) {
-    if (ctx.outputFileType() != mach_o::MH_DYLIB) {
+    if (ctx.outputFileType() != llvm::MachO::MH_DYLIB) {
       diagnostics
           << "error: -compatibility_version can only be used with -dylib\n";
       return false;
@@ -178,7 +178,7 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
   }
 
   if (llvm::opt::Arg *vers = parsedArgs->getLastArg(OPT_current_version)) {
-    if (ctx.outputFileType() != mach_o::MH_DYLIB) {
+    if (ctx.outputFileType() != llvm::MachO::MH_DYLIB) {
       diagnostics << "-current_version can only be used with -dylib\n";
       return false;
     }

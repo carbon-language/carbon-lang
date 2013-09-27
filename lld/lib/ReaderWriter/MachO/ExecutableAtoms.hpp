@@ -10,6 +10,7 @@
 #ifndef LLD_READER_WRITER_MACHO_EXECUTABLE_ATOM_H_
 #define LLD_READER_WRITER_MACHO_EXECUTABLE_ATOM_H_
 
+#include "llvm/Support/MachO.h"
 
 #include "lld/Core/DefinedAtom.h"
 #include "lld/Core/UndefinedAtom.h"
@@ -32,7 +33,7 @@ public:
       : SimpleFile(context, "C runtime"),
         _undefMain(*this, context.entrySymbolName()) {
       // only main executables need _main
-      if (context.outputFileType() == MH_EXECUTE) {
+      if (context.outputFileType() == llvm::MachO::MH_EXECUTE) {
         this->addAtom(_undefMain);
       }
    }

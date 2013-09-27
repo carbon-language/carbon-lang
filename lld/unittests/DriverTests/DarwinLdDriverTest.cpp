@@ -14,8 +14,9 @@
 
 #include "DriverTest.h"
 
+#include "llvm/Support/MachO.h"
+
 #include "lld/ReaderWriter/MachOLinkingContext.h"
-#include "lld/ReaderWriter/MachOFormat.hpp"
 
 using namespace llvm;
 using namespace lld;
@@ -44,27 +45,27 @@ TEST_F(DarwinLdParserTest, Output) {
 
 TEST_F(DarwinLdParserTest, Dylib) {
   EXPECT_TRUE(parse("ld", "-dylib", "foo.o", nullptr));
-  EXPECT_EQ(mach_o::MH_DYLIB, _context.outputFileType());
+  EXPECT_EQ(llvm::MachO::MH_DYLIB, _context.outputFileType());
 }
 
 TEST_F(DarwinLdParserTest, Relocatable) {
   EXPECT_TRUE(parse("ld", "-r", "foo.o", nullptr));
-  EXPECT_EQ(mach_o::MH_OBJECT, _context.outputFileType());
+  EXPECT_EQ(llvm::MachO::MH_OBJECT, _context.outputFileType());
 }
 
 TEST_F(DarwinLdParserTest, Bundle) {
   EXPECT_TRUE(parse("ld", "-bundle", "foo.o", nullptr));
-  EXPECT_EQ(mach_o::MH_BUNDLE, _context.outputFileType());
+  EXPECT_EQ(llvm::MachO::MH_BUNDLE, _context.outputFileType());
 }
 
 TEST_F(DarwinLdParserTest, Preload) {
   EXPECT_TRUE(parse("ld", "-preload", "foo.o", nullptr));
-  EXPECT_EQ(mach_o::MH_PRELOAD, _context.outputFileType());
+  EXPECT_EQ(llvm::MachO::MH_PRELOAD, _context.outputFileType());
 }
 
 TEST_F(DarwinLdParserTest, Static) {
   EXPECT_TRUE(parse("ld", "-static", "foo.o", nullptr));
-  EXPECT_EQ(mach_o::MH_EXECUTE, _context.outputFileType());
+  EXPECT_EQ(llvm::MachO::MH_EXECUTE, _context.outputFileType());
 }
 
 TEST_F(DarwinLdParserTest, Entry) {
@@ -95,36 +96,36 @@ TEST_F(DarwinLdParserTest, DeadStripRootsDylib) {
 TEST_F(DarwinLdParserTest, Arch) {
   EXPECT_TRUE(parse("ld", "-arch", "x86_64", "foo.o", nullptr));
   EXPECT_EQ(MachOLinkingContext::arch_x86_64, _context.arch());
-  EXPECT_EQ(mach_o::CPU_TYPE_X86_64, _context.getCPUType());
-  EXPECT_EQ(mach_o::CPU_SUBTYPE_X86_64_ALL, _context.getCPUSubType());
+  EXPECT_EQ((uint32_t)llvm::MachO::CPU_TYPE_X86_64, _context.getCPUType());
+  EXPECT_EQ(llvm::MachO::CPU_SUBTYPE_X86_64_ALL, _context.getCPUSubType());
 }
 
 TEST_F(DarwinLdParserTest, Arch_x86) {
   EXPECT_TRUE(parse("ld", "-arch", "i386", "foo.o", nullptr));
   EXPECT_EQ(MachOLinkingContext::arch_x86, _context.arch());
-  EXPECT_EQ(mach_o::CPU_TYPE_I386, _context.getCPUType());
-  EXPECT_EQ(mach_o::CPU_SUBTYPE_X86_ALL, _context.getCPUSubType());
+  EXPECT_EQ((uint32_t)llvm::MachO::CPU_TYPE_I386, _context.getCPUType());
+  EXPECT_EQ(llvm::MachO::CPU_SUBTYPE_X86_ALL, _context.getCPUSubType());
 }
 
 TEST_F(DarwinLdParserTest, Arch_armv6) {
   EXPECT_TRUE(parse("ld", "-arch", "armv6", "foo.o", nullptr));
   EXPECT_EQ(MachOLinkingContext::arch_armv6, _context.arch());
-  EXPECT_EQ(mach_o::CPU_TYPE_ARM, _context.getCPUType());
-  EXPECT_EQ(mach_o::CPU_SUBTYPE_ARM_V6, _context.getCPUSubType());
+  EXPECT_EQ((uint32_t)llvm::MachO::CPU_TYPE_ARM, _context.getCPUType());
+  EXPECT_EQ(llvm::MachO::CPU_SUBTYPE_ARM_V6, _context.getCPUSubType());
 }
 
 TEST_F(DarwinLdParserTest, Arch_armv7) {
   EXPECT_TRUE(parse("ld", "-arch", "armv7", "foo.o", nullptr));
   EXPECT_EQ(MachOLinkingContext::arch_armv7, _context.arch());
-  EXPECT_EQ(mach_o::CPU_TYPE_ARM, _context.getCPUType());
-  EXPECT_EQ(mach_o::CPU_SUBTYPE_ARM_V7, _context.getCPUSubType());
+  EXPECT_EQ((uint32_t)llvm::MachO::CPU_TYPE_ARM, _context.getCPUType());
+  EXPECT_EQ(llvm::MachO::CPU_SUBTYPE_ARM_V7, _context.getCPUSubType());
 }
 
 TEST_F(DarwinLdParserTest, Arch_armv7s) {
   EXPECT_TRUE(parse("ld", "-arch", "armv7s", "foo.o", nullptr));
   EXPECT_EQ(MachOLinkingContext::arch_armv7s, _context.arch());
-  EXPECT_EQ(mach_o::CPU_TYPE_ARM, _context.getCPUType());
-  EXPECT_EQ(mach_o::CPU_SUBTYPE_ARM_V7S, _context.getCPUSubType());
+  EXPECT_EQ((uint32_t)llvm::MachO::CPU_TYPE_ARM, _context.getCPUType());
+  EXPECT_EQ(llvm::MachO::CPU_SUBTYPE_ARM_V7S, _context.getCPUSubType());
 }
 
 TEST_F(DarwinLdParserTest, MinMacOSX10_7) {

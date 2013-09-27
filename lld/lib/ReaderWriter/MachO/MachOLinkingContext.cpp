@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "lld/ReaderWriter/MachOLinkingContext.h"
-#include "lld/ReaderWriter/MachOFormat.hpp"
 #include "GOTPass.hpp"
 #include "StubsPass.hpp"
 #include "ReferenceKinds.h"
@@ -20,6 +19,7 @@
 
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Triple.h"
+#include "llvm/Support/MachO.h"
 
 using lld::mach_o::KindHandler;
 
@@ -68,16 +68,16 @@ struct ArchInfo {
 };
 
 static ArchInfo archInfos[] = {
-  { "x86_64", MachOLinkingContext::arch_x86_64, mach_o::CPU_TYPE_X86_64,
-    mach_o::CPU_SUBTYPE_X86_64_ALL },
-  { "i386", MachOLinkingContext::arch_x86, mach_o::CPU_TYPE_I386,
-    mach_o::CPU_SUBTYPE_X86_ALL },
-  { "armv6", MachOLinkingContext::arch_armv6, mach_o::CPU_TYPE_ARM,
-    mach_o::CPU_SUBTYPE_ARM_V6 },
-  { "armv7", MachOLinkingContext::arch_armv7, mach_o::CPU_TYPE_ARM,
-    mach_o::CPU_SUBTYPE_ARM_V7 },
-  { "armv7s", MachOLinkingContext::arch_armv7s, mach_o::CPU_TYPE_ARM,
-    mach_o::CPU_SUBTYPE_ARM_V7S },
+  { "x86_64", MachOLinkingContext::arch_x86_64, llvm::MachO::CPU_TYPE_X86_64,
+    llvm::MachO::CPU_SUBTYPE_X86_64_ALL },
+  { "i386", MachOLinkingContext::arch_x86, llvm::MachO::CPU_TYPE_I386,
+    llvm::MachO::CPU_SUBTYPE_X86_ALL },
+  { "armv6", MachOLinkingContext::arch_armv6, llvm::MachO::CPU_TYPE_ARM,
+    llvm::MachO::CPU_SUBTYPE_ARM_V6 },
+  { "armv7", MachOLinkingContext::arch_armv7, llvm::MachO::CPU_TYPE_ARM,
+    llvm::MachO::CPU_SUBTYPE_ARM_V7 },
+  { "armv7s", MachOLinkingContext::arch_armv7s, llvm::MachO::CPU_TYPE_ARM,
+    llvm::MachO::CPU_SUBTYPE_ARM_V7S },
   { StringRef(), MachOLinkingContext::arch_unknown, 0, 0 }
 };
 
@@ -122,7 +122,7 @@ uint32_t MachOLinkingContext::cpuSubtypeFromArch(Arch arch) {
 }
 
 MachOLinkingContext::MachOLinkingContext()
-    : _outputFileType(mach_o::MH_EXECUTE), _outputFileTypeStatic(false),
+    : _outputFileType(llvm::MachO::MH_EXECUTE), _outputFileTypeStatic(false),
       _doNothing(false), _arch(arch_unknown), _os(OS::macOSX), _osMinVersion(0),
       _pageZeroSize(0x1000), _compatibilityVersion(0), _currentVersion(0),
       _deadStrippableDylib(false), _kindHandler(nullptr) {}
@@ -139,9 +139,9 @@ uint32_t MachOLinkingContext::getCPUSubType() const {
 
 bool MachOLinkingContext::outputTypeHasEntry() const {
   switch (_outputFileType) {
-  case mach_o::MH_EXECUTE:
-  case mach_o::MH_DYLINKER:
-  case mach_o::MH_PRELOAD:
+  case llvm::MachO::MH_EXECUTE:
+  case llvm::MachO::MH_DYLINKER:
+  case llvm::MachO::MH_PRELOAD:
     return true;
   default:
     return false;
@@ -168,7 +168,7 @@ bool MachOLinkingContext::minOS(StringRef mac, StringRef iOS) const {
 }
 
 bool MachOLinkingContext::addEntryPointLoadCommand() const {
-  if ((_outputFileType == mach_o::MH_EXECUTE) && !_outputFileTypeStatic) {
+  if ((_outputFileType == llvm::MachO::MH_EXECUTE) && !_outputFileTypeStatic) {
     return minOS("10.8", "6.0");
   }
   return false;
@@ -176,14 +176,14 @@ bool MachOLinkingContext::addEntryPointLoadCommand() const {
 
 bool MachOLinkingContext::addUnixThreadLoadCommand() const {
   switch (_outputFileType) {
-  case mach_o::MH_EXECUTE:
+  case llvm::MachO::MH_EXECUTE:
     if (_outputFileTypeStatic)
       return true;
     else
       return !minOS("10.8", "6.0");
     break;
-  case mach_o::MH_DYLINKER:
-  case mach_o::MH_PRELOAD:
+  case llvm::MachO::MH_DYLINKER:
+  case llvm::MachO::MH_PRELOAD:
     return true;
   default:
     return false;
@@ -191,7 +191,7 @@ bool MachOLinkingContext::addUnixThreadLoadCommand() const {
 }
 
 bool MachOLinkingContext::validateImpl(raw_ostream &diagnostics) {
-  if ((_outputFileType == mach_o::MH_EXECUTE) && _entrySymbolName.empty()) {
+  if ((_outputFileType == llvm::MachO::MH_EXECUTE) && _entrySymbolName.empty()){
     if (_outputFileTypeStatic) {
       _entrySymbolName = "start";
     } else {
@@ -205,24 +205,24 @@ bool MachOLinkingContext::validateImpl(raw_ostream &diagnostics) {
     }
   }
 
-  if (_currentVersion && _outputFileType != mach_o::MH_DYLIB) {
+  if (_currentVersion && _outputFileType != llvm::MachO::MH_DYLIB) {
     diagnostics << "error: -current_version can only be used with dylibs\n";
     return false;
   }
 
-  if (_compatibilityVersion && _outputFileType != mach_o::MH_DYLIB) {
+  if (_compatibilityVersion && _outputFileType != llvm::MachO::MH_DYLIB) {
     diagnostics
         << "error: -compatibility_version can only be used with dylibs\n";
     return false;
   }
 
-  if (_deadStrippableDylib && _outputFileType != mach_o::MH_DYLIB) {
+  if (_deadStrippableDylib && _outputFileType != llvm::MachO::MH_DYLIB) {
     diagnostics
         << "error: -mark_dead_strippable_dylib can only be used with dylibs.\n";
     return false;
   }
 
-  if (!_bundleLoader.empty() && outputFileType() != mach_o::MH_BUNDLE) {
+  if (!_bundleLoader.empty() && outputFileType() != llvm::MachO::MH_BUNDLE) {
     diagnostics
         << "error: -bundle_loader can only be used with Mach-O bundles\n";
     return false;
