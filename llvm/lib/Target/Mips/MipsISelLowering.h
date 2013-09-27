@@ -17,6 +17,7 @@
 
 #include "Mips.h"
 #include "MipsSubtarget.h"
+#include "MCTargetDesc/MipsBaseInfo.h"
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/IR/Function.h"
@@ -248,12 +249,70 @@ namespace llvm {
   protected:
     SDValue getGlobalReg(SelectionDAG &DAG, EVT Ty) const;
 
-    SDValue getAddrLocal(SDValue Op, SelectionDAG &DAG, bool HasMips64) const;
+    // This method creates the following nodes, which are necessary for
+    // computing a local symbol's address:
+    //
+    // (add (load (wrapper $gp, %got(sym)), %lo(sym))
+    template<class NodeTy>
+    SDValue getAddrLocal(NodeTy *N, EVT Ty, SelectionDAG &DAG,
+                         bool HasMips64) const {
+      SDLoc DL(N);
+      unsigned GOTFlag = HasMips64 ? MipsII::MO_GOT_PAGE : MipsII::MO_GOT;
+      SDValue GOT = DAG.getNode(MipsISD::Wrapper, DL, Ty, getGlobalReg(DAG, Ty),
+                                getTargetNode(N, Ty, DAG, GOTFlag));
+      SDValue Load = DAG.getLoad(Ty, DL, DAG.getEntryNode(), GOT,
+                                 MachinePointerInfo::getGOT(), false, false,
+                                 false, 0);
+      unsigned LoFlag = HasMips64 ? MipsII::MO_GOT_OFST : MipsII::MO_ABS_LO;
+      SDValue Lo = DAG.getNode(MipsISD::Lo, DL, Ty,
+                               getTargetNode(N, Ty, DAG, LoFlag));
+      return DAG.getNode(ISD::ADD, DL, Ty, Load, Lo);
+    }
 
-    SDValue getAddrGlobal(SDValue Op, SelectionDAG &DAG, unsigned Flag) const;
+    // This method creates the following nodes, which are necessary for
+    // computing a global symbol's address:
+    //
+    // (load (wrapper $gp, %got(sym)))
+    template<class NodeTy>
+    SDValue getAddrGlobal(NodeTy *N, EVT Ty, SelectionDAG &DAG,
+                          unsigned Flag) const {
+      SDLoc DL(N);
+      SDValue Tgt = DAG.getNode(MipsISD::Wrapper, DL, Ty, getGlobalReg(DAG, Ty),
+                                getTargetNode(N, Ty, DAG, Flag));
+      return DAG.getLoad(Ty, DL, DAG.getEntryNode(), Tgt,
+                         MachinePointerInfo::getGOT(), false, false, false, 0);
+    }
 
-    SDValue getAddrGlobalLargeGOT(SDValue Op, SelectionDAG &DAG,
-                                  unsigned HiFlag, unsigned LoFlag) const;
+    // This method creates the following nodes, which are necessary for
+    // computing a global symbol's address in large-GOT mode:
+    //
+    // (load (wrapper (add %hi(sym), $gp), %lo(sym)))
+    template<class NodeTy>
+    SDValue getAddrGlobalLargeGOT(NodeTy *N, EVT Ty, SelectionDAG &DAG,
+                                  unsigned HiFlag, unsigned LoFlag) const {
+      SDLoc DL(N);
+      SDValue Hi = DAG.getNode(MipsISD::Hi, DL, Ty,
+                               getTargetNode(N, Ty, DAG, HiFlag));
+      Hi = DAG.getNode(ISD::ADD, DL, Ty, Hi, getGlobalReg(DAG, Ty));
+      SDValue Wrapper = DAG.getNode(MipsISD::Wrapper, DL, Ty, Hi,
+                                    getTargetNode(N, Ty, DAG, LoFlag));
+      return DAG.getLoad(Ty, DL, DAG.getEntryNode(), Wrapper,
+                         MachinePointerInfo::getGOT(), false, false, false, 0);
+    }
+
+    // This method creates the following nodes, which are necessary for
+    // computing a symbol's address in non-PIC mode:
+    //
+    // (add %hi(sym), %lo(sym))
+    template<class NodeTy>
+    SDValue getAddrNonPIC(NodeTy *N, EVT Ty, SelectionDAG &DAG) const {
+      SDLoc DL(N);
+      SDValue Hi = getTargetNode(N, Ty, DAG, MipsII::MO_ABS_HI);
+      SDValue Lo = getTargetNode(N, Ty, DAG, MipsII::MO_ABS_LO);
+      return DAG.getNode(ISD::ADD, DL, Ty,
+                         DAG.getNode(MipsISD::Hi, DL, Ty, Hi),
+                         DAG.getNode(MipsISD::Lo, DL, Ty, Lo));
+    }
 
     /// This function fills Ops, which is the list of operands that will later
     /// be used when a function call node is created. It also generates
@@ -369,6 +428,25 @@ namespace llvm {
     bool HasMips64, IsN64, IsO32;
 
   private:
+    // Create a TargetGlobalAddress node.
+    SDValue getTargetNode(GlobalAddressSDNode *N, EVT Ty, SelectionDAG &DAG,
+                          unsigned Flag) const;
+
+    // Create a TargetExternalSymbol node.
+    SDValue getTargetNode(ExternalSymbolSDNode *N, EVT Ty, SelectionDAG &DAG,
+                          unsigned Flag) const;
+
+    // Create a TargetBlockAddress node.
+    SDValue getTargetNode(BlockAddressSDNode *N, EVT Ty, SelectionDAG &DAG,
+                          unsigned Flag) const;
+
+    // Create a TargetJumpTable node.
+    SDValue getTargetNode(JumpTableSDNode *N, EVT Ty, SelectionDAG &DAG,
+                          unsigned Flag) const;
+
+    // Create a TargetConstantPool node.
+    SDValue getTargetNode(ConstantPoolSDNode *N, EVT Ty, SelectionDAG &DAG,
+                          unsigned Flag) const;
 
     MipsCC::SpecialCallingConvType getSpecialCallingConv(SDValue Callee) const;
     // Lower Operand helpers

@@ -474,7 +474,9 @@ getOpndList(SmallVectorImpl<SDValue> &Ops,
     if (NeedMips16Helper) {
       RegsToPass.push_front(std::make_pair(V0Reg, Callee));
       JumpTarget = DAG.getExternalSymbol(Mips16HelperFunction, getPointerTy());
-      JumpTarget = getAddrGlobal(JumpTarget, DAG, MipsII::MO_GOT);
+      JumpTarget = getAddrGlobal(cast<ExternalSymbolSDNode>(JumpTarget),
+                                 JumpTarget.getValueType(), DAG,
+                                 MipsII::MO_GOT);
     } else
       RegsToPass.push_front(std::make_pair((unsigned)Mips::T9, Callee));
   }
