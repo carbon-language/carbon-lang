@@ -40,16 +40,17 @@ int has_reference_qualified_functions();
 int has_rvalue_references();
 #endif
 
+// CHECK: has_local_type_template_args
 #if __has_extension(cxx_local_type_template_args)
 int has_local_type_template_args();
-#else
-int no_local_type_template_args();
 #endif
 
-// CHECK: has_local_type_template_args
-
+// CHECK: has_binary_literals
 #if __has_extension(cxx_binary_literals)
 int has_binary_literals();
 #endif
 
-// CHECK: has_binary_literals
+// CHECK: has_variable_templates
+#if __has_extension(cxx_variable_templates)
+int has_variable_templates();
+#endif

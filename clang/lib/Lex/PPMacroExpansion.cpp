@@ -961,7 +961,7 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
            .Case("cxx_relaxed_constexpr", LangOpts.CPlusPlus1y)
            .Case("cxx_return_type_deduction", LangOpts.CPlusPlus1y)
            //.Case("cxx_runtime_array", LangOpts.CPlusPlus1y)
-           //.Case("cxx_variable_templates", LangOpts.CPlusPlus1y)
+           .Case("cxx_variable_templates", LangOpts.CPlusPlus1y)
            // Type traits
            .Case("has_nothrow_assign", LangOpts.CPlusPlus)
            .Case("has_nothrow_copy", LangOpts.CPlusPlus)
@@ -1036,6 +1036,7 @@ static bool HasExtension(const Preprocessor &PP, const IdentifierInfo *II) {
            .Case("cxx_rvalue_references", LangOpts.CPlusPlus)
            // C++1y features supported by other languages as extensions.
            .Case("cxx_binary_literals", true)
+           .Case("cxx_variable_templates", true)
            .Default(false);
 }
 

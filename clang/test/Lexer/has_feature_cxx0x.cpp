@@ -376,3 +376,13 @@ int no_relaxed_constexpr();
 // CHECK-1Y: has_relaxed_constexpr
 // CHECK-11: no_relaxed_constexpr
 // CHECK-NO-11: no_relaxed_constexpr
+
+#if __has_feature(cxx_variable_templates)
+int has_variable_templates();
+#else
+int no_variable_templates();
+#endif
+
+// CHECK-1Y: has_variable_templates
+// CHECK-11: no_variable_templates
+// CHECK-NO-11: no_variable_templates
