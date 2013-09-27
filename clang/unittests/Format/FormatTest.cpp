@@ -2776,6 +2776,10 @@ TEST_F(FormatTest, BreaksFunctionDeclarationsWithTrailingTokens) {
   // function-like.
   verifyFormat("void SomeFunction(aaaaaaaaaaaaaaaaaaaaaaaaaa,\n"
                "                  aaaaaaaaaaaaaaaaaaaaaaaaaa) OVERRIDE;");
+  verifyFormat("void SomeFunction(aaaaaaaaaaaaaaaaaaaaaaaaaa,\n"
+               "                  aaaaaaaaaaaaaaaaaaaaaaaaaa) OVERRIDE FINAL;");
+  verifyFormat("void SomeFunction(aaaaaaaaaaaaaaaaaaaaaaaaaa,\n"
+               "                  aaaaaaaaaaaaaaaaaaaaaaaaaa) override final;");
 
   // Breaking before function-like trailing annotations is fine to keep them
   // close to their arguments.

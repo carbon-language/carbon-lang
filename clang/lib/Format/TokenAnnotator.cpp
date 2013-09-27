@@ -606,7 +606,10 @@ private:
     }
 
     if (Current.Type == TT_Unknown) {
-      if (isStartOfName(Current)) {
+      // Line.MightBeFunctionDecl can only be true after the parentheses of a
+      // function declaration have been found. In this case, 'Current' is a
+      // trailing token of this declaration and thus cannot be a name.
+      if (isStartOfName(Current) && !Line.MightBeFunctionDecl) {
         Contexts.back().FirstStartOfName = &Current;
         Current.Type = TT_StartOfName;
         NameFound = true;
