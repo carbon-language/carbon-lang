@@ -1,5 +1,3 @@
-; SCE: bug 39153
-
 ; RUN: llc < %s -mtriple=x86_64-linux-gnu | FileCheck %s
 
 ; fold (shl (zext (lshr (A, X))), X) -> (zext (shl (lshr (A, X)), X))
