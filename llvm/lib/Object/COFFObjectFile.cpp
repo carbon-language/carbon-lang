@@ -406,7 +406,7 @@ error_code COFFObjectFile::sectionContainsSymbol(DataRefImpl Sec,
   return object_error::success;
 }
 
-relocation_iterator COFFObjectFile::getSectionRelBegin(DataRefImpl Sec) const {
+relocation_iterator COFFObjectFile::section_rel_begin(DataRefImpl Sec) const {
   const coff_section *sec = toSec(Sec);
   DataRefImpl ret;
   if (sec->NumberOfRelocations == 0)
@@ -417,7 +417,7 @@ relocation_iterator COFFObjectFile::getSectionRelBegin(DataRefImpl Sec) const {
   return relocation_iterator(RelocationRef(ret, this));
 }
 
-relocation_iterator COFFObjectFile::getSectionRelEnd(DataRefImpl Sec) const {
+relocation_iterator COFFObjectFile::section_rel_end(DataRefImpl Sec) const {
   const coff_section *sec = toSec(Sec);
   DataRefImpl ret;
   if (sec->NumberOfRelocations == 0)
@@ -630,13 +630,13 @@ StringRef COFFObjectFile::getLoadName() const {
   return "";
 }
 
-import_directory_iterator COFFObjectFile::getImportDirectoryBegin() const {
+import_directory_iterator COFFObjectFile::import_directory_begin() const {
   DataRefImpl Imp;
   Imp.p = reinterpret_cast<uintptr_t>(ImportDirectory);
   return import_directory_iterator(ImportDirectoryEntryRef(Imp, this));
 }
 
-import_directory_iterator COFFObjectFile::getImportDirectoryEnd() const {
+import_directory_iterator COFFObjectFile::import_directory_end() const {
   DataRefImpl Imp;
   if (ImportDirectory) {
     Imp.p = reinterpret_cast<uintptr_t>(

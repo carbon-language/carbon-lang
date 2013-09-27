@@ -232,8 +232,8 @@ static void printCOFFSymbolAddress(llvm::raw_ostream &Out,
 static void printImportTables(const COFFObjectFile *Obj) {
   outs() << "The Import Tables:\n";
   error_code ec;
-  for (import_directory_iterator i = Obj->getImportDirectoryBegin(),
-                                 e = Obj->getImportDirectoryEnd();
+  for (import_directory_iterator i = Obj->import_directory_begin(),
+                                 e = Obj->import_directory_end();
        i != e; i = i.increment(ec)) {
     if (ec)
       return;

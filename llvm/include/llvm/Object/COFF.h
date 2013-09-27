@@ -269,8 +269,8 @@ protected:
                                                    bool &Res) const;
   virtual error_code sectionContainsSymbol(DataRefImpl Sec, DataRefImpl Symb,
                                            bool &Result) const;
-  virtual relocation_iterator getSectionRelBegin(DataRefImpl Sec) const;
-  virtual relocation_iterator getSectionRelEnd(DataRefImpl Sec) const;
+  virtual relocation_iterator section_rel_begin(DataRefImpl Sec) const;
+  virtual relocation_iterator section_rel_end(DataRefImpl Sec) const;
 
   virtual error_code getRelocationNext(DataRefImpl Rel,
                                        RelocationRef &Res) const;
@@ -311,8 +311,8 @@ public:
   virtual unsigned getArch() const;
   virtual StringRef getLoadName() const;
 
-  import_directory_iterator getImportDirectoryBegin() const;
-  import_directory_iterator getImportDirectoryEnd() const;
+  import_directory_iterator import_directory_begin() const;
+  import_directory_iterator import_directory_end() const;
 
   error_code getHeader(const coff_file_header *&Res) const;
   error_code getCOFFHeader(const coff_file_header *&Res) const;

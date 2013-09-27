@@ -823,7 +823,7 @@ MachOObjectFile::sectionContainsSymbol(DataRefImpl Sec, DataRefImpl Symb,
   return object_error::success;
 }
 
-relocation_iterator MachOObjectFile::getSectionRelBegin(DataRefImpl Sec) const {
+relocation_iterator MachOObjectFile::section_rel_begin(DataRefImpl Sec) const {
   uint32_t Offset;
   if (is64Bit()) {
     MachO::section_64 Sect = getSection64(Sec);
@@ -839,7 +839,7 @@ relocation_iterator MachOObjectFile::getSectionRelBegin(DataRefImpl Sec) const {
 }
 
 relocation_iterator
-MachOObjectFile::getSectionRelEnd(DataRefImpl Sec) const {
+MachOObjectFile::section_rel_end(DataRefImpl Sec) const {
   uint32_t Offset;
   uint32_t Num;
   if (is64Bit()) {
@@ -1331,16 +1331,16 @@ StringRef MachOObjectFile::getLoadName() const {
   report_fatal_error("get_load_name() unimplemented in MachOObjectFile");
 }
 
-relocation_iterator MachOObjectFile::getSectionRelBegin(unsigned Index) const {
+relocation_iterator MachOObjectFile::section_rel_begin(unsigned Index) const {
   DataRefImpl DRI;
   DRI.d.a = Index;
-  return getSectionRelBegin(DRI);
+  return section_rel_begin(DRI);
 }
 
-relocation_iterator MachOObjectFile::getSectionRelEnd(unsigned Index) const {
+relocation_iterator MachOObjectFile::section_rel_end(unsigned Index) const {
   DataRefImpl DRI;
   DRI.d.a = Index;
-  return getSectionRelEnd(DRI);
+  return section_rel_end(DRI);
 }
 
 dice_iterator MachOObjectFile::begin_dices() const {

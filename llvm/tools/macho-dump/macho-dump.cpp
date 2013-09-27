@@ -97,8 +97,8 @@ static int DumpSectionData(const MachOObjectFile &Obj, unsigned Index,
   outs() << "  ('_relocations', [\n";
   unsigned RelNum = 0;
   error_code EC;
-  for (relocation_iterator I = Obj.getSectionRelBegin(Index),
-         E = Obj.getSectionRelEnd(Index); I != E; I.increment(EC), ++RelNum) {
+  for (relocation_iterator I = Obj.section_rel_begin(Index),
+         E = Obj.section_rel_end(Index); I != E; I.increment(EC), ++RelNum) {
     MachO::any_relocation_info RE = Obj.getRelocation(I->getRawDataRefImpl());
     outs() << "    # Relocation " << RelNum << "\n";
     outs() << "    (('word-0', " << format("0x%x", RE.r_word0) << "),\n";

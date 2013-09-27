@@ -89,8 +89,8 @@ public:
   virtual error_code isSectionReadOnlyData(DataRefImpl Sec, bool &Res) const;
   virtual error_code sectionContainsSymbol(DataRefImpl Sec, DataRefImpl Symb,
                                            bool &Result) const;
-  virtual relocation_iterator getSectionRelBegin(DataRefImpl Sec) const;
-  virtual relocation_iterator getSectionRelEnd(DataRefImpl Sec) const;
+  virtual relocation_iterator section_rel_begin(DataRefImpl Sec) const;
+  virtual relocation_iterator section_rel_end(DataRefImpl Sec) const;
 
   virtual error_code getRelocationNext(DataRefImpl Rel,
                                        RelocationRef &Res) const;
@@ -129,8 +129,8 @@ public:
 
   virtual StringRef getLoadName() const;
 
-  relocation_iterator getSectionRelBegin(unsigned Index) const;
-  relocation_iterator getSectionRelEnd(unsigned Index) const;
+  relocation_iterator section_rel_begin(unsigned Index) const;
+  relocation_iterator section_rel_end(unsigned Index) const;
 
   dice_iterator begin_dices() const;
   dice_iterator end_dices() const;

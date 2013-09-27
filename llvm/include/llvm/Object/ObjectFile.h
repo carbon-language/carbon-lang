@@ -322,8 +322,8 @@ protected:
   virtual error_code isSectionReadOnlyData(DataRefImpl Sec, bool &Res) const =0;
   virtual error_code sectionContainsSymbol(DataRefImpl Sec, DataRefImpl Symb,
                                            bool &Result) const = 0;
-  virtual relocation_iterator getSectionRelBegin(DataRefImpl Sec) const = 0;
-  virtual relocation_iterator getSectionRelEnd(DataRefImpl Sec) const = 0;
+  virtual relocation_iterator section_rel_begin(DataRefImpl Sec) const = 0;
+  virtual relocation_iterator section_rel_end(DataRefImpl Sec) const = 0;
   virtual section_iterator getRelocatedSection(DataRefImpl Sec) const;
 
   // Same as above for RelocationRef.
@@ -528,11 +528,11 @@ inline error_code SectionRef::containsSymbol(SymbolRef S, bool &Result) const {
 }
 
 inline relocation_iterator SectionRef::begin_relocations() const {
-  return OwningObject->getSectionRelBegin(SectionPimpl);
+  return OwningObject->section_rel_begin(SectionPimpl);
 }
 
 inline relocation_iterator SectionRef::end_relocations() const {
-  return OwningObject->getSectionRelEnd(SectionPimpl);
+  return OwningObject->section_rel_end(SectionPimpl);
 }
 
 inline section_iterator SectionRef::getRelocatedSection() const {
