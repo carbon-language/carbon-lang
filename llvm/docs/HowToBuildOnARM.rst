@@ -6,7 +6,11 @@ Introduction
 ============
 
 This document contains information about building/testing LLVM and
-Clang on ARM.
+Clang on an ARM machine.
+
+This document is *NOT* tailored to help you cross-compile LLVM/Clang
+to ARM on another architecture, for example an x86_64 machine. To find
+out more about cross-compiling, please check :doc:`HowToCrossCompileLLVM`.
 
 Notes On Building LLVM/Clang on ARM
 =====================================
