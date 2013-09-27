@@ -132,6 +132,9 @@ public:
       return isa<ObjCIvarDecl>(FD);
     if (NextToken.is(tok::equal))
       return candidate.getCorrectionDeclAs<VarDecl>();
+    if (NextToken.is(tok::period) &&
+        candidate.getCorrectionDeclAs<NamespaceDecl>())
+      return false;
     return CorrectionCandidateCallback::ValidateCandidate(candidate);
   }
 

@@ -128,3 +128,10 @@ long readline(const char *, char *, unsigned long);
 void assign_to_unknown_var() {
     deadline_ = 1;  // expected-error-re {{use of undeclared identifier 'deadline_'$}}
 }
+
+namespace no_ns_before_dot {
+namespace re2 {}
+void test() {
+    req.set_check(false);  // expected-error-re {{use of undeclared identifier 'req'$}}
+}
+}
