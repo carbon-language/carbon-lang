@@ -1025,35 +1025,6 @@ static SDValue lowerDSPIntr(SDValue Op, SelectionDAG &DAG, unsigned Opc) {
   return DAG.getMergeValues(Vals, 2, DL);
 }
 
-static SDValue lowerMSABinaryIntr(SDValue Op, SelectionDAG &DAG, unsigned Opc) {
-  SDLoc DL(Op);
-  SDValue LHS = Op->getOperand(1);
-  SDValue RHS = Op->getOperand(2);
-  EVT ResTy = Op->getValueType(0);
-
-  SDValue Result = DAG.getNode(Opc, DL, ResTy, LHS, RHS);
-
-  return Result;
-}
-
-static SDValue lowerMSABinaryImmIntr(SDValue Op, SelectionDAG &DAG,
-                                     unsigned Opc, SDValue RHS) {
-  SDValue LHS = Op->getOperand(1);
-  EVT ResTy = Op->getValueType(0);
-
-  return DAG.getNode(Opc, SDLoc(Op), ResTy, LHS, RHS);
-}
-
-static SDValue lowerMSABranchIntr(SDValue Op, SelectionDAG &DAG, unsigned Opc) {
-  SDLoc DL(Op);
-  SDValue Value = Op->getOperand(1);
-  EVT ResTy = Op->getValueType(0);
-
-  SDValue Result = DAG.getNode(Opc, DL, ResTy, Value);
-
-  return Result;
-}
-
 // Lower an MSA copy intrinsic into the specified SelectionDAG node
 static SDValue lowerMSACopyIntr(SDValue Op, SelectionDAG &DAG, unsigned Opc) {
   SDLoc DL(Op);
@@ -1081,12 +1052,11 @@ static SDValue lowerMSAInsertIntr(SDValue Op, SelectionDAG &DAG, unsigned Opc) {
   return Result;
 }
 
-static SDValue lowerMSASplatImm(SDValue Op, SDValue ImmOp, SelectionDAG &DAG) {
-  EVT ResTy = Op->getValueType(0);
+static SDValue
+lowerMSASplatImm(SDLoc DL, EVT ResTy, SDValue ImmOp, SelectionDAG &DAG) {
   EVT ViaVecTy = ResTy;
   SmallVector<SDValue, 16> Ops;
   SDValue ImmHiOp;
-  SDLoc DL(Op);
 
   if (ViaVecTy == MVT::v2i64) {
     ImmHiOp = DAG.getNode(ISD::SRA, DL, MVT::i32, ImmOp,
@@ -1112,21 +1082,14 @@ static SDValue lowerMSASplatImm(SDValue Op, SDValue ImmOp, SelectionDAG &DAG) {
 
 static SDValue
 lowerMSASplatImm(SDValue Op, unsigned ImmOp, SelectionDAG &DAG) {
-  return lowerMSASplatImm(Op, Op->getOperand(ImmOp), DAG);
-}
-
-static SDValue lowerMSAUnaryIntr(SDValue Op, SelectionDAG &DAG, unsigned Opc) {
-  SDLoc DL(Op);
-  SDValue Value = Op->getOperand(1);
-  EVT ResTy = Op->getValueType(0);
-
-  SDValue Result = DAG.getNode(Opc, DL, ResTy, Value);
-
-  return Result;
+  return lowerMSASplatImm(SDLoc(Op), Op->getValueType(0),
+                          Op->getOperand(ImmOp), DAG);
 }
 
 SDValue MipsSETargetLowering::lowerINTRINSIC_WO_CHAIN(SDValue Op,
                                                       SelectionDAG &DAG) const {
+  SDLoc DL(Op);
+
   switch (cast<ConstantSDNode>(Op->getOperand(0))->getZExtValue()) {
   default:
     return SDValue();
@@ -1166,99 +1129,105 @@ SDValue MipsSETargetLowering::lowerINTRINSIC_WO_CHAIN(SDValue Op,
   case Intrinsic::mips_addv_h:
   case Intrinsic::mips_addv_w:
   case Intrinsic::mips_addv_d:
-    return lowerMSABinaryIntr(Op, DAG, ISD::ADD);
+    return DAG.getNode(ISD::ADD, DL, Op->getValueType(0), Op->getOperand(1),
+                       Op->getOperand(2));
   case Intrinsic::mips_addvi_b:
   case Intrinsic::mips_addvi_h:
   case Intrinsic::mips_addvi_w:
   case Intrinsic::mips_addvi_d:
-    return lowerMSABinaryImmIntr(Op, DAG, ISD::ADD,
-                                 lowerMSASplatImm(Op, 2, DAG));
+    return DAG.getNode(ISD::ADD, DL, Op->getValueType(0), Op->getOperand(1),
+                       lowerMSASplatImm(Op, 2, DAG));
   case Intrinsic::mips_and_v:
-    return lowerMSABinaryIntr(Op, DAG, ISD::AND);
+    return DAG.getNode(ISD::AND, DL, Op->getValueType(0), Op->getOperand(1),
+                       Op->getOperand(2));
   case Intrinsic::mips_andi_b:
-    return lowerMSABinaryImmIntr(Op, DAG, ISD::AND,
-                                 lowerMSASplatImm(Op, 2, DAG));
+    return DAG.getNode(ISD::AND, DL, Op->getValueType(0), Op->getOperand(1),
+                       lowerMSASplatImm(Op, 2, DAG));
   case Intrinsic::mips_bnz_b:
   case Intrinsic::mips_bnz_h:
   case Intrinsic::mips_bnz_w:
   case Intrinsic::mips_bnz_d:
-    return lowerMSABranchIntr(Op, DAG, MipsISD::VALL_NONZERO);
+    return DAG.getNode(MipsISD::VALL_NONZERO, DL, Op->getValueType(0),
+                       Op->getOperand(1));
   case Intrinsic::mips_bnz_v:
-    return lowerMSABranchIntr(Op, DAG, MipsISD::VANY_NONZERO);
+    return DAG.getNode(MipsISD::VANY_NONZERO, DL, Op->getValueType(0),
+                       Op->getOperand(1));
   case Intrinsic::mips_bsel_v:
-    return DAG.getNode(ISD::VSELECT, SDLoc(Op), Op->getValueType(0),
+    return DAG.getNode(ISD::VSELECT, DL, Op->getValueType(0),
                        Op->getOperand(1), Op->getOperand(2),
                        Op->getOperand(3));
   case Intrinsic::mips_bseli_b:
-    return DAG.getNode(ISD::VSELECT, SDLoc(Op), Op->getValueType(0),
+    return DAG.getNode(ISD::VSELECT, DL, Op->getValueType(0),
                        Op->getOperand(1), Op->getOperand(2),
                        lowerMSASplatImm(Op, 3, DAG));
   case Intrinsic::mips_bz_b:
   case Intrinsic::mips_bz_h:
   case Intrinsic::mips_bz_w:
   case Intrinsic::mips_bz_d:
-    return lowerMSABranchIntr(Op, DAG, MipsISD::VALL_ZERO);
+    return DAG.getNode(MipsISD::VALL_ZERO, DL, Op->getValueType(0),
+                       Op->getOperand(1));
   case Intrinsic::mips_bz_v:
-    return lowerMSABranchIntr(Op, DAG, MipsISD::VANY_ZERO);
+    return DAG.getNode(MipsISD::VANY_ZERO, DL, Op->getValueType(0),
+                       Op->getOperand(1));
   case Intrinsic::mips_ceq_b:
   case Intrinsic::mips_ceq_h:
   case Intrinsic::mips_ceq_w:
   case Intrinsic::mips_ceq_d:
-    return DAG.getSetCC(SDLoc(Op), Op->getValueType(0), Op->getOperand(1),
+    return DAG.getSetCC(DL, Op->getValueType(0), Op->getOperand(1),
                         Op->getOperand(2), ISD::SETEQ);
   case Intrinsic::mips_ceqi_b:
   case Intrinsic::mips_ceqi_h:
   case Intrinsic::mips_ceqi_w:
   case Intrinsic::mips_ceqi_d:
-    return DAG.getSetCC(SDLoc(Op), Op->getValueType(0), Op->getOperand(1),
+    return DAG.getSetCC(DL, Op->getValueType(0), Op->getOperand(1),
                         lowerMSASplatImm(Op, 2, DAG), ISD::SETEQ);
   case Intrinsic::mips_cle_s_b:
   case Intrinsic::mips_cle_s_h:
   case Intrinsic::mips_cle_s_w:
   case Intrinsic::mips_cle_s_d:
-    return DAG.getSetCC(SDLoc(Op), Op->getValueType(0), Op->getOperand(1),
+    return DAG.getSetCC(DL, Op->getValueType(0), Op->getOperand(1),
                         Op->getOperand(2), ISD::SETLE);
   case Intrinsic::mips_clei_s_b:
   case Intrinsic::mips_clei_s_h:
   case Intrinsic::mips_clei_s_w:
   case Intrinsic::mips_clei_s_d:
-    return DAG.getSetCC(SDLoc(Op), Op->getValueType(0), Op->getOperand(1),
+    return DAG.getSetCC(DL, Op->getValueType(0), Op->getOperand(1),
                         lowerMSASplatImm(Op, 2, DAG), ISD::SETLE);
   case Intrinsic::mips_cle_u_b:
   case Intrinsic::mips_cle_u_h:
   case Intrinsic::mips_cle_u_w:
   case Intrinsic::mips_cle_u_d:
-    return DAG.getSetCC(SDLoc(Op), Op->getValueType(0), Op->getOperand(1),
+    return DAG.getSetCC(DL, Op->getValueType(0), Op->getOperand(1),
                         Op->getOperand(2), ISD::SETULE);
   case Intrinsic::mips_clei_u_b:
   case Intrinsic::mips_clei_u_h:
   case Intrinsic::mips_clei_u_w:
   case Intrinsic::mips_clei_u_d:
-    return DAG.getSetCC(SDLoc(Op), Op->getValueType(0), Op->getOperand(1),
+    return DAG.getSetCC(DL, Op->getValueType(0), Op->getOperand(1),
                         lowerMSASplatImm(Op, 2, DAG), ISD::SETULE);
   case Intrinsic::mips_clt_s_b:
   case Intrinsic::mips_clt_s_h:
   case Intrinsic::mips_clt_s_w:
   case Intrinsic::mips_clt_s_d:
-    return DAG.getSetCC(SDLoc(Op), Op->getValueType(0), Op->getOperand(1),
+    return DAG.getSetCC(DL, Op->getValueType(0), Op->getOperand(1),
                         Op->getOperand(2), ISD::SETLT);
   case Intrinsic::mips_clti_s_b:
   case Intrinsic::mips_clti_s_h:
   case Intrinsic::mips_clti_s_w:
   case Intrinsic::mips_clti_s_d:
-    return DAG.getSetCC(SDLoc(Op), Op->getValueType(0), Op->getOperand(1),
+    return DAG.getSetCC(DL, Op->getValueType(0), Op->getOperand(1),
                         lowerMSASplatImm(Op, 2, DAG), ISD::SETLT);
   case Intrinsic::mips_clt_u_b:
   case Intrinsic::mips_clt_u_h:
   case Intrinsic::mips_clt_u_w:
   case Intrinsic::mips_clt_u_d:
-    return DAG.getSetCC(SDLoc(Op), Op->getValueType(0), Op->getOperand(1),
+    return DAG.getSetCC(DL, Op->getValueType(0), Op->getOperand(1),
                         Op->getOperand(2), ISD::SETULT);
   case Intrinsic::mips_clti_u_b:
   case Intrinsic::mips_clti_u_h:
   case Intrinsic::mips_clti_u_w:
   case Intrinsic::mips_clti_u_d:
-    return DAG.getSetCC(SDLoc(Op), Op->getValueType(0), Op->getOperand(1),
+    return DAG.getSetCC(DL, Op->getValueType(0), Op->getOperand(1),
                         lowerMSASplatImm(Op, 2, DAG), ISD::SETULT);
   case Intrinsic::mips_copy_s_b:
   case Intrinsic::mips_copy_s_h:
@@ -1272,59 +1241,63 @@ SDValue MipsSETargetLowering::lowerINTRINSIC_WO_CHAIN(SDValue Op,
   case Intrinsic::mips_div_s_h:
   case Intrinsic::mips_div_s_w:
   case Intrinsic::mips_div_s_d:
-    return lowerMSABinaryIntr(Op, DAG, ISD::SDIV);
+    return DAG.getNode(ISD::SDIV, DL, Op->getValueType(0), Op->getOperand(1),
+                       Op->getOperand(2));
   case Intrinsic::mips_div_u_b:
   case Intrinsic::mips_div_u_h:
   case Intrinsic::mips_div_u_w:
   case Intrinsic::mips_div_u_d:
-    return lowerMSABinaryIntr(Op, DAG, ISD::UDIV);
+    return DAG.getNode(ISD::UDIV, DL, Op->getValueType(0), Op->getOperand(1),
+                       Op->getOperand(2));
   case Intrinsic::mips_fadd_w:
   case Intrinsic::mips_fadd_d:
-    return lowerMSABinaryIntr(Op, DAG, ISD::FADD);
+    return DAG.getNode(ISD::FADD, DL, Op->getValueType(0), Op->getOperand(1),
+                       Op->getOperand(2));
   // Don't lower mips_fcaf_[wd] since LLVM folds SETFALSE condcodes away
   case Intrinsic::mips_fceq_w:
   case Intrinsic::mips_fceq_d:
-    return DAG.getSetCC(SDLoc(Op), Op->getValueType(0), Op->getOperand(1),
+    return DAG.getSetCC(DL, Op->getValueType(0), Op->getOperand(1),
                         Op->getOperand(2), ISD::SETOEQ);
   case Intrinsic::mips_fcle_w:
   case Intrinsic::mips_fcle_d:
-    return DAG.getSetCC(SDLoc(Op), Op->getValueType(0), Op->getOperand(1),
+    return DAG.getSetCC(DL, Op->getValueType(0), Op->getOperand(1),
                         Op->getOperand(2), ISD::SETOLE);
   case Intrinsic::mips_fclt_w:
   case Intrinsic::mips_fclt_d:
-    return DAG.getSetCC(SDLoc(Op), Op->getValueType(0), Op->getOperand(1),
+    return DAG.getSetCC(DL, Op->getValueType(0), Op->getOperand(1),
                         Op->getOperand(2), ISD::SETOLT);
   case Intrinsic::mips_fcne_w:
   case Intrinsic::mips_fcne_d:
-    return DAG.getSetCC(SDLoc(Op), Op->getValueType(0), Op->getOperand(1),
+    return DAG.getSetCC(DL, Op->getValueType(0), Op->getOperand(1),
                         Op->getOperand(2), ISD::SETONE);
   case Intrinsic::mips_fcor_w:
   case Intrinsic::mips_fcor_d:
-    return DAG.getSetCC(SDLoc(Op), Op->getValueType(0), Op->getOperand(1),
+    return DAG.getSetCC(DL, Op->getValueType(0), Op->getOperand(1),
                         Op->getOperand(2), ISD::SETO);
   case Intrinsic::mips_fcueq_w:
   case Intrinsic::mips_fcueq_d:
-    return DAG.getSetCC(SDLoc(Op), Op->getValueType(0), Op->getOperand(1),
+    return DAG.getSetCC(DL, Op->getValueType(0), Op->getOperand(1),
                         Op->getOperand(2), ISD::SETUEQ);
   case Intrinsic::mips_fcule_w:
   case Intrinsic::mips_fcule_d:
-    return DAG.getSetCC(SDLoc(Op), Op->getValueType(0), Op->getOperand(1),
+    return DAG.getSetCC(DL, Op->getValueType(0), Op->getOperand(1),
                         Op->getOperand(2), ISD::SETULE);
   case Intrinsic::mips_fcult_w:
   case Intrinsic::mips_fcult_d:
-    return DAG.getSetCC(SDLoc(Op), Op->getValueType(0), Op->getOperand(1),
+    return DAG.getSetCC(DL, Op->getValueType(0), Op->getOperand(1),
                         Op->getOperand(2), ISD::SETULT);
   case Intrinsic::mips_fcun_w:
   case Intrinsic::mips_fcun_d:
-    return DAG.getSetCC(SDLoc(Op), Op->getValueType(0), Op->getOperand(1),
+    return DAG.getSetCC(DL, Op->getValueType(0), Op->getOperand(1),
                         Op->getOperand(2), ISD::SETUO);
   case Intrinsic::mips_fcune_w:
   case Intrinsic::mips_fcune_d:
-    return DAG.getSetCC(SDLoc(Op), Op->getValueType(0), Op->getOperand(1),
+    return DAG.getSetCC(DL, Op->getValueType(0), Op->getOperand(1),
                         Op->getOperand(2), ISD::SETUNE);
   case Intrinsic::mips_fdiv_w:
   case Intrinsic::mips_fdiv_d:
-    return lowerMSABinaryIntr(Op, DAG, ISD::FDIV);
+    return DAG.getNode(ISD::FDIV, DL, Op->getValueType(0), Op->getOperand(1),
+                       Op->getOperand(2));
   case Intrinsic::mips_fill_b:
   case Intrinsic::mips_fill_h:
   case Intrinsic::mips_fill_w: {
@@ -1334,47 +1307,49 @@ SDValue MipsSETargetLowering::lowerINTRINSIC_WO_CHAIN(SDValue Op,
     for (unsigned i = 0; i < ResTy.getVectorNumElements(); ++i)
       Ops.push_back(Op->getOperand(1));
 
-    return DAG.getNode(ISD::BUILD_VECTOR, SDLoc(Op), ResTy, &Ops[0],
+    return DAG.getNode(ISD::BUILD_VECTOR, DL, ResTy, &Ops[0],
                        Ops.size());
   }
   case Intrinsic::mips_flog2_w:
   case Intrinsic::mips_flog2_d:
-    return lowerMSAUnaryIntr(Op, DAG, ISD::FLOG2);
+    return DAG.getNode(ISD::FLOG2, DL, Op->getValueType(0), Op->getOperand(1));
   case Intrinsic::mips_fmul_w:
   case Intrinsic::mips_fmul_d:
-    return lowerMSABinaryIntr(Op, DAG, ISD::FMUL);
+    return DAG.getNode(ISD::FMUL, DL, Op->getValueType(0), Op->getOperand(1),
+                       Op->getOperand(2));
   case Intrinsic::mips_frint_w:
   case Intrinsic::mips_frint_d:
-    return lowerMSAUnaryIntr(Op, DAG, ISD::FRINT);
+    return DAG.getNode(ISD::FRINT, DL, Op->getValueType(0), Op->getOperand(1));
   case Intrinsic::mips_fsqrt_w:
   case Intrinsic::mips_fsqrt_d:
-    return lowerMSAUnaryIntr(Op, DAG, ISD::FSQRT);
+    return DAG.getNode(ISD::FSQRT, DL, Op->getValueType(0), Op->getOperand(1));
   case Intrinsic::mips_fsub_w:
   case Intrinsic::mips_fsub_d:
-    return lowerMSABinaryIntr(Op, DAG, ISD::FSUB);
+    return DAG.getNode(ISD::FSUB, DL, Op->getValueType(0), Op->getOperand(1),
+                       Op->getOperand(2));
   case Intrinsic::mips_ilvev_b:
   case Intrinsic::mips_ilvev_h:
   case Intrinsic::mips_ilvev_w:
   case Intrinsic::mips_ilvev_d:
-    return DAG.getNode(MipsISD::ILVEV, SDLoc(Op), Op->getValueType(0),
+    return DAG.getNode(MipsISD::ILVEV, DL, Op->getValueType(0),
                        Op->getOperand(1), Op->getOperand(2));
   case Intrinsic::mips_ilvl_b:
   case Intrinsic::mips_ilvl_h:
   case Intrinsic::mips_ilvl_w:
   case Intrinsic::mips_ilvl_d:
-    return DAG.getNode(MipsISD::ILVL, SDLoc(Op), Op->getValueType(0),
+    return DAG.getNode(MipsISD::ILVL, DL, Op->getValueType(0),
                        Op->getOperand(1), Op->getOperand(2));
   case Intrinsic::mips_ilvod_b:
   case Intrinsic::mips_ilvod_h:
   case Intrinsic::mips_ilvod_w:
   case Intrinsic::mips_ilvod_d:
-    return DAG.getNode(MipsISD::ILVOD, SDLoc(Op), Op->getValueType(0),
+    return DAG.getNode(MipsISD::ILVOD, DL, Op->getValueType(0),
                        Op->getOperand(1), Op->getOperand(2));
   case Intrinsic::mips_ilvr_b:
   case Intrinsic::mips_ilvr_h:
   case Intrinsic::mips_ilvr_w:
   case Intrinsic::mips_ilvr_d:
-    return DAG.getNode(MipsISD::ILVR, SDLoc(Op), Op->getValueType(0),
+    return DAG.getNode(MipsISD::ILVR, DL, Op->getValueType(0),
                        Op->getOperand(1), Op->getOperand(2));
   case Intrinsic::mips_insert_b:
   case Intrinsic::mips_insert_h:
@@ -1389,147 +1364,160 @@ SDValue MipsSETargetLowering::lowerINTRINSIC_WO_CHAIN(SDValue Op,
   case Intrinsic::mips_max_s_h:
   case Intrinsic::mips_max_s_w:
   case Intrinsic::mips_max_s_d:
-    return lowerMSABinaryIntr(Op, DAG, MipsISD::VSMAX);
+    return DAG.getNode(MipsISD::VSMAX, DL, Op->getValueType(0),
+                       Op->getOperand(1), Op->getOperand(2));
   case Intrinsic::mips_max_u_b:
   case Intrinsic::mips_max_u_h:
   case Intrinsic::mips_max_u_w:
   case Intrinsic::mips_max_u_d:
-    return lowerMSABinaryIntr(Op, DAG, MipsISD::VUMAX);
+    return DAG.getNode(MipsISD::VUMAX, DL, Op->getValueType(0),
+                       Op->getOperand(1), Op->getOperand(2));
   case Intrinsic::mips_maxi_s_b:
   case Intrinsic::mips_maxi_s_h:
   case Intrinsic::mips_maxi_s_w:
   case Intrinsic::mips_maxi_s_d:
-    return lowerMSABinaryImmIntr(Op, DAG, MipsISD::VSMAX,
-                                 lowerMSASplatImm(Op, 2, DAG));
+    return DAG.getNode(MipsISD::VSMAX, DL, Op->getValueType(0),
+                       Op->getOperand(1), lowerMSASplatImm(Op, 2, DAG));
   case Intrinsic::mips_maxi_u_b:
   case Intrinsic::mips_maxi_u_h:
   case Intrinsic::mips_maxi_u_w:
   case Intrinsic::mips_maxi_u_d:
-    return lowerMSABinaryImmIntr(Op, DAG, MipsISD::VUMAX,
-                                 lowerMSASplatImm(Op, 2, DAG));
+    return DAG.getNode(MipsISD::VUMAX, DL, Op->getValueType(0),
+                       Op->getOperand(1), lowerMSASplatImm(Op, 2, DAG));
   case Intrinsic::mips_min_s_b:
   case Intrinsic::mips_min_s_h:
   case Intrinsic::mips_min_s_w:
   case Intrinsic::mips_min_s_d:
-    return lowerMSABinaryIntr(Op, DAG, MipsISD::VSMIN);
+    return DAG.getNode(MipsISD::VSMIN, DL, Op->getValueType(0),
+                       Op->getOperand(1), Op->getOperand(2));
   case Intrinsic::mips_min_u_b:
   case Intrinsic::mips_min_u_h:
   case Intrinsic::mips_min_u_w:
   case Intrinsic::mips_min_u_d:
-    return lowerMSABinaryIntr(Op, DAG, MipsISD::VUMIN);
+    return DAG.getNode(MipsISD::VUMIN, DL, Op->getValueType(0),
+                       Op->getOperand(1), Op->getOperand(2));
   case Intrinsic::mips_mini_s_b:
   case Intrinsic::mips_mini_s_h:
   case Intrinsic::mips_mini_s_w:
   case Intrinsic::mips_mini_s_d:
-    return lowerMSABinaryImmIntr(Op, DAG, MipsISD::VSMIN,
-                                 lowerMSASplatImm(Op, 2, DAG));
+    return DAG.getNode(MipsISD::VSMIN, DL, Op->getValueType(0),
+                       Op->getOperand(1), lowerMSASplatImm(Op, 2, DAG));
   case Intrinsic::mips_mini_u_b:
   case Intrinsic::mips_mini_u_h:
   case Intrinsic::mips_mini_u_w:
   case Intrinsic::mips_mini_u_d:
-    return lowerMSABinaryImmIntr(Op, DAG, MipsISD::VUMIN,
-                                 lowerMSASplatImm(Op, 2, DAG));
+    return DAG.getNode(MipsISD::VUMIN, DL, Op->getValueType(0),
+                       Op->getOperand(1), lowerMSASplatImm(Op, 2, DAG));
   case Intrinsic::mips_mulv_b:
   case Intrinsic::mips_mulv_h:
   case Intrinsic::mips_mulv_w:
   case Intrinsic::mips_mulv_d:
-    return lowerMSABinaryIntr(Op, DAG, ISD::MUL);
+    return DAG.getNode(ISD::MUL, DL, Op->getValueType(0), Op->getOperand(1),
+                       Op->getOperand(2));
   case Intrinsic::mips_nlzc_b:
   case Intrinsic::mips_nlzc_h:
   case Intrinsic::mips_nlzc_w:
   case Intrinsic::mips_nlzc_d:
-    return lowerMSAUnaryIntr(Op, DAG, ISD::CTLZ);
+    return DAG.getNode(ISD::CTLZ, DL, Op->getValueType(0), Op->getOperand(1));
   case Intrinsic::mips_nor_v: {
-    SDValue Res = lowerMSABinaryIntr(Op, DAG, ISD::OR);
-    return DAG.getNOT(SDLoc(Op), Res, Res->getValueType(0));
+    SDValue Res = DAG.getNode(ISD::OR, DL, Op->getValueType(0),
+                              Op->getOperand(1), Op->getOperand(2));
+    return DAG.getNOT(DL, Res, Res->getValueType(0));
   }
   case Intrinsic::mips_nori_b: {
-    SDValue Res = lowerMSABinaryImmIntr(Op, DAG, ISD::OR,
-                                        lowerMSASplatImm(Op, 2, DAG));
-    return DAG.getNOT(SDLoc(Op), Res, Res->getValueType(0));
+    SDValue Res =  DAG.getNode(ISD::OR, DL, Op->getValueType(0),
+                               Op->getOperand(1),
+                               lowerMSASplatImm(Op, 2, DAG));
+    return DAG.getNOT(DL, Res, Res->getValueType(0));
   }
   case Intrinsic::mips_or_v:
-    return lowerMSABinaryIntr(Op, DAG, ISD::OR);
+    return DAG.getNode(ISD::OR, DL, Op->getValueType(0), Op->getOperand(1),
+                       Op->getOperand(2));
   case Intrinsic::mips_ori_b:
-    return lowerMSABinaryImmIntr(Op, DAG, ISD::OR,
-                                 lowerMSASplatImm(Op, 2, DAG));
+    return DAG.getNode(ISD::OR, DL, Op->getValueType(0),
+                       Op->getOperand(1), lowerMSASplatImm(Op, 2, DAG));
   case Intrinsic::mips_pckev_b:
   case Intrinsic::mips_pckev_h:
   case Intrinsic::mips_pckev_w:
   case Intrinsic::mips_pckev_d:
-    return DAG.getNode(MipsISD::PCKEV, SDLoc(Op), Op->getValueType(0),
+    return DAG.getNode(MipsISD::PCKEV, DL, Op->getValueType(0),
                        Op->getOperand(1), Op->getOperand(2));
   case Intrinsic::mips_pckod_b:
   case Intrinsic::mips_pckod_h:
   case Intrinsic::mips_pckod_w:
   case Intrinsic::mips_pckod_d:
-    return DAG.getNode(MipsISD::PCKOD, SDLoc(Op), Op->getValueType(0),
+    return DAG.getNode(MipsISD::PCKOD, DL, Op->getValueType(0),
                        Op->getOperand(1), Op->getOperand(2));
   case Intrinsic::mips_pcnt_b:
   case Intrinsic::mips_pcnt_h:
   case Intrinsic::mips_pcnt_w:
   case Intrinsic::mips_pcnt_d:
-    return lowerMSAUnaryIntr(Op, DAG, ISD::CTPOP);
+    return DAG.getNode(ISD::CTPOP, DL, Op->getValueType(0), Op->getOperand(1));
   case Intrinsic::mips_shf_b:
   case Intrinsic::mips_shf_h:
   case Intrinsic::mips_shf_w:
-    return DAG.getNode(MipsISD::SHF, SDLoc(Op), Op->getValueType(0),
+    return DAG.getNode(MipsISD::SHF, DL, Op->getValueType(0),
                        Op->getOperand(2), Op->getOperand(1));
   case Intrinsic::mips_sll_b:
   case Intrinsic::mips_sll_h:
   case Intrinsic::mips_sll_w:
   case Intrinsic::mips_sll_d:
-    return lowerMSABinaryIntr(Op, DAG, ISD::SHL);
+    return DAG.getNode(ISD::SHL, DL, Op->getValueType(0), Op->getOperand(1),
+                       Op->getOperand(2));
   case Intrinsic::mips_slli_b:
   case Intrinsic::mips_slli_h:
   case Intrinsic::mips_slli_w:
   case Intrinsic::mips_slli_d:
-    return lowerMSABinaryImmIntr(Op, DAG, ISD::SHL,
-                                 lowerMSASplatImm(Op, 2, DAG));
+    return DAG.getNode(ISD::SHL, DL, Op->getValueType(0),
+                       Op->getOperand(1), lowerMSASplatImm(Op, 2, DAG));
   case Intrinsic::mips_sra_b:
   case Intrinsic::mips_sra_h:
   case Intrinsic::mips_sra_w:
   case Intrinsic::mips_sra_d:
-    return lowerMSABinaryIntr(Op, DAG, ISD::SRA);
+    return DAG.getNode(ISD::SRA, DL, Op->getValueType(0), Op->getOperand(1),
+                       Op->getOperand(2));
   case Intrinsic::mips_srai_b:
   case Intrinsic::mips_srai_h:
   case Intrinsic::mips_srai_w:
   case Intrinsic::mips_srai_d:
-    return lowerMSABinaryImmIntr(Op, DAG, ISD::SRA,
-                                 lowerMSASplatImm(Op, 2, DAG));
+    return DAG.getNode(ISD::SRA, DL, Op->getValueType(0),
+                       Op->getOperand(1), lowerMSASplatImm(Op, 2, DAG));
   case Intrinsic::mips_srl_b:
   case Intrinsic::mips_srl_h:
   case Intrinsic::mips_srl_w:
   case Intrinsic::mips_srl_d:
-    return lowerMSABinaryIntr(Op, DAG, ISD::SRL);
+    return DAG.getNode(ISD::SRL, DL, Op->getValueType(0), Op->getOperand(1),
+                       Op->getOperand(2));
   case Intrinsic::mips_srli_b:
   case Intrinsic::mips_srli_h:
   case Intrinsic::mips_srli_w:
   case Intrinsic::mips_srli_d:
-    return lowerMSABinaryImmIntr(Op, DAG, ISD::SRL,
-                                 lowerMSASplatImm(Op, 2, DAG));
+    return DAG.getNode(ISD::SRL, DL, Op->getValueType(0),
+                       Op->getOperand(1), lowerMSASplatImm(Op, 2, DAG));
   case Intrinsic::mips_subv_b:
   case Intrinsic::mips_subv_h:
   case Intrinsic::mips_subv_w:
   case Intrinsic::mips_subv_d:
-    return lowerMSABinaryIntr(Op, DAG, ISD::SUB);
+    return DAG.getNode(ISD::SUB, DL, Op->getValueType(0), Op->getOperand(1),
+                       Op->getOperand(2));
   case Intrinsic::mips_subvi_b:
   case Intrinsic::mips_subvi_h:
   case Intrinsic::mips_subvi_w:
   case Intrinsic::mips_subvi_d:
-    return lowerMSABinaryImmIntr(Op, DAG, ISD::SUB,
-                                 lowerMSASplatImm(Op, 2, DAG));
+    return DAG.getNode(ISD::SUB, DL, Op->getValueType(0),
+                       Op->getOperand(1), lowerMSASplatImm(Op, 2, DAG));
   case Intrinsic::mips_vshf_b:
   case Intrinsic::mips_vshf_h:
   case Intrinsic::mips_vshf_w:
   case Intrinsic::mips_vshf_d:
-    return DAG.getNode(MipsISD::VSHF, SDLoc(Op), Op->getValueType(0),
+    return DAG.getNode(MipsISD::VSHF, DL, Op->getValueType(0),
                        Op->getOperand(1), Op->getOperand(2), Op->getOperand(3));
   case Intrinsic::mips_xor_v:
-    return lowerMSABinaryIntr(Op, DAG, ISD::XOR);
+    return DAG.getNode(ISD::XOR, DL, Op->getValueType(0), Op->getOperand(1),
+                       Op->getOperand(2));
   case Intrinsic::mips_xori_b:
-    return lowerMSABinaryImmIntr(Op, DAG, ISD::XOR,
-                                 lowerMSASplatImm(Op, 2, DAG));
+    return DAG.getNode(ISD::XOR, DL, Op->getValueType(0),
+                       Op->getOperand(1), lowerMSASplatImm(Op, 2, DAG));
   }
 }
 
