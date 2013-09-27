@@ -62,7 +62,7 @@ UuidAttr *CXXUuidofExpr::GetUuidAttrOfType(QualType QT,
   if (QT->isPointerType() || QT->isReferenceType())
     Ty = QT->getPointeeType().getTypePtr();
   else if (QT->isArrayType())
-    Ty = cast<ArrayType>(QT)->getElementType().getTypePtr();
+    Ty = Ty->getBaseElementTypeUnsafe();
 
   // Loop all record redeclaration looking for an uuid attribute.
   CXXRecordDecl *RD = Ty->getAsCXXRecordDecl();

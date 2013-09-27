@@ -72,6 +72,10 @@ int uuid_sema_test()
    __uuidof(struct_without_uuid); // expected-error {{cannot call operator __uuidof on a type with no GUID}}
    __uuidof(struct_with_uuid*);
    __uuidof(struct_without_uuid*); // expected-error {{cannot call operator __uuidof on a type with no GUID}}
+   __uuidof(struct_with_uuid[1]);
+   __uuidof(struct_with_uuid*[1]); // expected-error {{cannot call operator __uuidof on a type with no GUID}}
+   __uuidof(const struct_with_uuid[1][1]);
+   __uuidof(const struct_with_uuid*[1][1]); // expected-error {{cannot call operator __uuidof on a type with no GUID}}
 
    __uuidof(var_with_uuid);
    __uuidof(var_without_uuid);// expected-error {{cannot call operator __uuidof on a type with no GUID}}
