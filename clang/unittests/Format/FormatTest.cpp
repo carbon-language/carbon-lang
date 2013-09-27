@@ -3500,6 +3500,9 @@ TEST_F(FormatTest, WrapsAtFunctionCallsIfNecessary) {
 TEST_F(FormatTest, WrapsTemplateDeclarations) {
   verifyFormat("template <typename T>\n"
                "virtual void loooooooooooongFunction(int Param1, int Param2);");
+  verifyFormat("template <typename T>\n"
+               "// T should be one of {A, B}.\n"
+               "virtual void loooooooooooongFunction(int Param1, int Param2);");
   verifyFormat(
       "template <typename T>\n"
       "using comment_to_xml_conversion = comment_to_xml_conversion<T, int>;");

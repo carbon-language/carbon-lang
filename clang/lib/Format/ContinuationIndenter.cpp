@@ -192,6 +192,8 @@ unsigned ContinuationIndenter::addTokenToState(LineState &State, bool Newline,
                                                unsigned ExtraSpaces) {
   const FormatToken &Current = *State.NextToken;
   const FormatToken &Previous = *State.NextToken->Previous;
+  const FormatToken *PreviousNonComment =
+      State.NextToken->getPreviousNonComment();
 
   // Extra penalty that needs to be added because of the way certain line
   // breaks are chosen.
@@ -253,7 +255,8 @@ unsigned ContinuationIndenter::addTokenToState(LineState &State, bool Newline,
       State.Column = State.Stack.back().QuestionColumn;
     } else if (Previous.is(tok::comma) && State.Stack.back().VariablePos != 0) {
       State.Column = State.Stack.back().VariablePos;
-    } else if (Previous.ClosesTemplateDeclaration ||
+    } else if ((PreviousNonComment &&
+                PreviousNonComment->ClosesTemplateDeclaration) ||
                ((Current.Type == TT_StartOfName ||
                  Current.is(tok::kw_operator)) &&
                 State.ParenLevel == 0 &&
