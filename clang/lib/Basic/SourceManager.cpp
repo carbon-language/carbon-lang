@@ -1553,6 +1553,36 @@ PresumedLoc SourceManager::getPresumedLoc(SourceLocation Loc,
   return PresumedLoc(Filename, LineNo, ColNo, IncludeLoc);
 }
 
+/// \brief Returns whether the PresumedLoc for a given SourceLocation is
+/// in the main file.
+///
+/// This computes the "presumed" location for a SourceLocation, then checks
+/// whether it came from a file other than the main file. This is different
+/// from isWrittenInMainFile() because it takes line marker directives into
+/// account.
+bool SourceManager::isInMainFile(SourceLocation Loc) const {
+  if (Loc.isInvalid()) return false;
+
+  // Presumed locations are always for expansion points.
+  std::pair<FileID, unsigned> LocInfo = getDecomposedExpansionLoc(Loc);
+
+  bool Invalid = false;
+  const SLocEntry &Entry = getSLocEntry(LocInfo.first, &Invalid);
+  if (Invalid || !Entry.isFile())
+    return false;
+
+  const SrcMgr::FileInfo &FI = Entry.getFile();
+
+  // Check if there is a line directive for this location.
+  if (FI.hasLineDirectives())
+    if (const LineEntry *Entry =
+            LineTable->FindNearestLineEntry(LocInfo.first, LocInfo.second))
+      if (Entry->IncludeOffset)
+        return false;
+
+  return FI.getIncludeLoc().isInvalid();
+}
+
 /// \brief The size of the SLocEnty that \arg FID represents.
 unsigned SourceManager::getFileIDSize(FileID FID) const {
   bool Invalid = false;
