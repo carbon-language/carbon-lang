@@ -296,10 +296,10 @@ void __msan_init() {
   msan_init_is_running = 1;
   SanitizerToolName = "MemorySanitizer";
 
-  InstallAtExitHandler();
   SetDieCallback(MsanDie);
   InitTlsSize();
   InitializeInterceptors();
+  InstallAtExitHandler(); // Needs __cxa_atexit interceptor.
 
   if (MSAN_REPLACE_OPERATORS_NEW_AND_DELETE)
     ReplaceOperatorsNewAndDelete();
