@@ -243,12 +243,12 @@ static void printImportTables(const COFFObjectFile *Obj) {
     if (i->getImportTableEntry(Dir)) return;
     if (i->getName(Name)) return;
 
-    outs() << format("  lookup %08x", Dir->ImportLookupTableRVA);
-    outs() << format(" time %08x", Dir->TimeDateStamp);
-    outs() << format(" fwd %08x", Dir->ForwarderChain);
-    outs() << format(" name %08x", Dir->NameRVA);
-    outs() << format(" addr %08x\n\n", Dir->ImportAddressTableRVA);
-
+    outs() << format("  lookup %08x time %08x fwd %08x name %08x addr %08x\n\n",
+                     static_cast<uint32_t>(Dir->ImportLookupTableRVA),
+                     static_cast<uint32_t>(Dir->TimeDateStamp),
+                     static_cast<uint32_t>(Dir->ForwarderChain),
+                     static_cast<uint32_t>(Dir->NameRVA),
+                     static_cast<uint32_t>(Dir->ImportAddressTableRVA));
     outs() << "    DLL Name: " << Name << "\n";
     outs() << "    Hint/Ord  Name\n";
     const COFF::ImportLookupTableEntry32 *entry;
