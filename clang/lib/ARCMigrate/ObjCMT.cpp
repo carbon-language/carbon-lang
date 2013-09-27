@@ -761,6 +761,16 @@ static bool AttributesMatch(const Decl *Decl1, const Decl *Decl2) {
   return true;
 }
 
+static bool IsValidIdentifier(ASTContext &Ctx,
+                              const char *Name) {
+  if (!isIdentifierHead(Name[0]))
+    return false;
+  std::string NameString = Name;
+  NameString[0] = toLowercase(NameString[0]);
+  IdentifierInfo *II = &Ctx.Idents.get(NameString);
+  return II->getTokenID() ==  tok::identifier;
+}
+
 bool ObjCMigrateASTConsumer::migrateProperty(ASTContext &Ctx,
                              ObjCContainerDecl *D,
                              ObjCMethodDecl *Method) {
@@ -799,7 +809,7 @@ bool ObjCMigrateASTConsumer::migrateProperty(ASTContext &Ctx,
       const char *CGetterName = getterNameString.data() + LengthOfPrefix;
       // Make sure that first character after "is" or "get" prefix can
       // start an identifier.
-      if (!isIdentifierHead(CGetterName[0]))
+      if (!IsValidIdentifier(Ctx, CGetterName))
         return false;
       if (CGetterName[0] && isUppercase(CGetterName[0])) {
         getterName = &Ctx.Idents.get(CGetterName);

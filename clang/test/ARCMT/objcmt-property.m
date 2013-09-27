@@ -210,4 +210,8 @@ DEPRECATED
 - (NSURL *)init;  // No Change
 + (id)alloc;      // No Change
 
+- (BOOL)is1stClass; // Not a valid property
+- (BOOL)isClass;    // This is a valid property 'class' is not a keyword in ObjC
+- (BOOL)isDouble; // Not a valid property
+
 @end
