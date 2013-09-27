@@ -402,7 +402,7 @@ private:
       Type *PointeeTy = T->getPointerElementType();
       if (!(N = getType(PointeeTy)))
         N = Builder.createPointerType(
-            getOrCreateType(PointeeTy), Layout.getPointerSizeInBits(),
+            getOrCreateType(PointeeTy), Layout.getPointerTypeSizeInBits(T),
             Layout.getPrefTypeAlignment(T), getTypeName(T));
     } else if (T->isArrayTy()) {
       SmallVector<Value *, 1> Subrange;
