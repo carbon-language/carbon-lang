@@ -1230,14 +1230,14 @@ class MSA_CBRANCH_DESC_BASE<string instr_asm, RegisterClass RCWD> {
 }
 
 class MSA_INSERT_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
-                           RegisterClass RCD, RegisterClass RCWS,
+                           RegisterClass RCWD, RegisterClass RCS,
                            InstrItinClass itin = NoItinerary> {
-  dag OutOperandList = (outs RCD:$wd);
-  dag InOperandList = (ins RCD:$wd_in, RCWS:$rs, uimm6:$n);
+  dag OutOperandList = (outs RCWD:$wd);
+  dag InOperandList = (ins RCWD:$wd_in, RCS:$rs, uimm6:$n);
   string AsmString = !strconcat(instr_asm, "\t$wd[$n], $rs");
-  list<dag> Pattern = [(set RCD:$wd, (OpNode RCD:$wd_in,
-                                             RCWS:$rs,
-                                             immZExt6:$n))];
+  list<dag> Pattern = [(set RCWD:$wd, (OpNode RCWD:$wd_in,
+                                              RCS:$rs,
+                                              immZExt6:$n))];
   InstrItinClass Itinerary = itin;
   string Constraints = "$wd = $wd_in";
 }
