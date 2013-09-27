@@ -204,7 +204,7 @@ the configuration (without a prefix: ``Auto``).
   are not also definitions after the type.
 
 **IndentWidth** (``unsigned``)
-  The number of characters to use for indentation.
+  The number of columns to use for indentation.
 
 **MaxEmptyLinesToKeep** (``unsigned``)
   The maximum number of consecutive empty lines to keep.
@@ -250,7 +250,7 @@ the configuration (without a prefix: ``Auto``).
   and '('.
 
 **SpaceBeforeAssignmentOperators** (``bool``)
-  If ``false``, spaces will be removed before '=', '+=', etc.
+  If ``false``, spaces will be removed before assignment operators.
 
 **SpaceInEmptyParentheses** (``bool``)
   If ``false``, spaces may be inserted into '()'.
@@ -280,9 +280,22 @@ the configuration (without a prefix: ``Auto``).
     Automatic detection based on the input.
 
 
-**UseTab** (``bool``)
-  If ``true``, ``IndentWidth`` consecutive spaces will be replaced
-  with tab characters.
+**TabWidth** (``unsigned``)
+  The number of columns used for tab stops.
+
+**UseTab** (``UseTabStyle``)
+  The way to use tab characters in the resulting file.
+
+  Possible values:
+
+  * ``UT_Never`` (in configuration: ``Never``)
+    Never use tab.
+  * ``UT_ForIndentation`` (in configuration: ``ForIndentation``)
+    Use tabs only for indentation.
+  * ``UT_Always`` (in configuration: ``Always``)
+    Use tabs whenever we need to fill whitespace that spans at least from
+    one tab stop to the next one.
+
 
 .. END_FORMAT_STYLE_OPTIONS
 
