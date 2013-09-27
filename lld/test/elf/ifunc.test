@@ -12,6 +12,11 @@ RUN:   -e main -static %p/Inputs/ifunc.cpp.x86-64
 RUN: llvm-objdump -d -s %t| FileCheck %s --check-prefix=BIN
 RUN: llvm-readobj -r %t | FileCheck %s --check-prefix=RELATIVEADDEND
 
+# Test that STT_GNU_IFUNC symbols have type Code in SharedLibraryAtom.
+RUN: lld -flavor gnu -target x86_64-linux --output-filetype=yaml \
+RUN:   --noinhibit-exec %p/Inputs/ifunc.cpp.x86-64 -L%p/Inputs -lifunc.x86-64 \
+RUN: | FileCheck %s --check-prefix=SHARED
+
 PLT: defined-atoms:
 
 // Make sure there's a got entry with a IRELATIVE relocation.
@@ -58,3 +63,7 @@ RELATIVEADDEND-NEXT:   Section (1) .rela.plt {
 RELATIVEADDEND-NEXT:     0x401000 R_X86_64_IRELATIVE - 0x4000E0
 RELATIVEADDEND-NEXT:   }
 RELATIVEADDEND-NEXT: ]
+
+SHARED: shared-library-atoms
+SHARED: name: hey
+SHARED-NOT: data

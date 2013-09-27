@@ -776,6 +776,7 @@ public:
   virtual Type type() const {
     switch (_symbol->getType()) {
     case llvm::ELF::STT_FUNC:
+    case llvm::ELF::STT_GNU_IFUNC:
       return Type::Code;
     case llvm::ELF::STT_OBJECT:
       return Type::Data;
