@@ -85,7 +85,11 @@ if.else:
 }
 
 !0 = metadata !{}
-!1 = metadata !{metadata !"red", metadata !0}
-!2 = metadata !{metadata !"blu", metadata !0}
-!3 = metadata !{metadata !"outer space"}
-!4 = metadata !{metadata !"brick red", metadata !1}
+!1 = metadata !{metadata !5, metadata !5, i64 0}
+!2 = metadata !{metadata !6, metadata !6, i64 0}
+!3 = metadata !{metadata !7, metadata !7, i64 0}
+!4 = metadata !{metadata !8, metadata !8, i64 0}
+!5 = metadata !{metadata !"red", metadata !0}
+!6 = metadata !{metadata !"blu", metadata !0}
+!7 = metadata !{metadata !"outer space"}
+!8 = metadata !{metadata !"brick red", metadata !5}

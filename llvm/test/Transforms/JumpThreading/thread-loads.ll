@@ -75,7 +75,7 @@ bb3:		; preds = %bb1
 	ret i32 %res.0
 }
 
-!0 = metadata !{metadata !"int", metadata !1}
+!0 = metadata !{metadata !3, metadata !3, i64 0}
 !1 = metadata !{metadata !"omnipotent char", metadata !2}
 !2 = metadata !{metadata !"Simple C/C++ TBAA", null}
-
+!3 = metadata !{metadata !"int", metadata !1}

@@ -30,8 +30,10 @@ for.end:                                          ; preds = %for.inc
   ret void
 }
 
-!0 = metadata !{metadata !"any pointer", metadata !1}
+!0 = metadata !{metadata !5, metadata !5, i64 0}
 !1 = metadata !{metadata !"omnipotent char", metadata !2}
 !2 = metadata !{metadata !"Simple C/C++ TBAA", null}
 !3 = metadata !{metadata !"short", metadata !1}
-!4 = metadata !{metadata !"int", metadata !1}
+!4 = metadata !{metadata !6, metadata !6, i64 0}
+!5 = metadata !{metadata !"any pointer", metadata !1}
+!6 = metadata !{metadata !"int", metadata !1}

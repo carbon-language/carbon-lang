@@ -41,7 +41,7 @@ entry:
 define void @call_virtual_func(%struct.Foo* %f) uwtable {
 entry:
   %0 = bitcast %struct.Foo* %f to void (%struct.Foo*)***
-  %vtable = load void (%struct.Foo*)*** %0, align 8, !tbaa !3
+  %vtable = load void (%struct.Foo*)*** %0, align 8, !tbaa !2
   %1 = load void (%struct.Foo*)** %vtable, align 8
   call void %1(%struct.Foo* %f)
   ret void
@@ -54,8 +54,6 @@ entry:
 ; CHECK: = load
 ; CHECK: ret void
 
-!0 = metadata !{metadata !"int", metadata !1}
-!1 = metadata !{metadata !"omnipotent char", metadata !2}
-!2 = metadata !{metadata !"Simple C/C++ TBAA", null}
-!3 = metadata !{metadata !"vtable pointer", metadata !2}
-
+!0 = metadata !{metadata !"Simple C/C++ TBAA", null}
+!1 = metadata !{metadata !"vtable pointer", metadata !0}
+!2 = metadata !{metadata !1, metadata !1, i64 0}

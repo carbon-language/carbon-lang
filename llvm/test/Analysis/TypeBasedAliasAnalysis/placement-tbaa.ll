@@ -18,7 +18,7 @@
 
 ; Basic AA says MayAlias, TBAA says NoAlias
 ; CHECK: MayAlias: i64* %i5, i8** %p
-; CHECK: NoAlias: store i64 %conv, i64* %i5, align 8, !tbaa !4 <->   store i8* null, i8** %p, align 8, !tbaa !3
+; CHECK: NoAlias: store i64 %conv, i64* %i5, align 8, !tbaa !6 <->   store i8* null, i8** %p, align 8, !tbaa !9
 
 %struct.Foo = type { i64 }
 %struct.Bar = type { i8* }
@@ -32,10 +32,10 @@ entry:
   store i32 %n, i32* %n.addr, align 4, !tbaa !0
   %call = call noalias i8* @_Znwm(i64 8)
   %0 = bitcast i8* %call to %struct.Foo*
-  store %struct.Foo* %0, %struct.Foo** %f, align 8, !tbaa !3
-  %1 = load %struct.Foo** %f, align 8, !tbaa !3
+  store %struct.Foo* %0, %struct.Foo** %f, align 8, !tbaa !4
+  %1 = load %struct.Foo** %f, align 8, !tbaa !4
   %i = getelementptr inbounds %struct.Foo* %1, i32 0, i32 0
-  store i64 1, i64* %i, align 8, !tbaa !4
+  store i64 1, i64* %i, align 8, !tbaa !6
   store i32 0, i32* %i1, align 4, !tbaa !0
   br label %for.cond
 
@@ -46,7 +46,7 @@ for.cond:
   br i1 %cmp, label %for.body, label %for.end
 
 for.body:
-  %4 = load %struct.Foo** %f, align 8, !tbaa !3
+  %4 = load %struct.Foo** %f, align 8, !tbaa !4
   %5 = bitcast %struct.Foo* %4 to i8*
   %new.isnull = icmp eq i8* %5, null
   br i1 %new.isnull, label %new.cont, label %new.notnull
@@ -57,11 +57,11 @@ new.notnull:
 
 new.cont:
   %7 = phi %struct.Bar* [ %6, %new.notnull ], [ null, %for.body ]
-  store %struct.Bar* %7, %struct.Bar** %b, align 8, !tbaa !3
-  %8 = load %struct.Bar** %b, align 8, !tbaa !3
+  store %struct.Bar* %7, %struct.Bar** %b, align 8, !tbaa !4
+  %8 = load %struct.Bar** %b, align 8, !tbaa !4
   %p = getelementptr inbounds %struct.Bar* %8, i32 0, i32 0
-  store i8* null, i8** %p, align 8, !tbaa !3
-  %9 = load %struct.Foo** %f, align 8, !tbaa !3
+  store i8* null, i8** %p, align 8, !tbaa !9
+  %9 = load %struct.Foo** %f, align 8, !tbaa !4
   %10 = bitcast %struct.Foo* %9 to i8*
   %new.isnull2 = icmp eq i8* %10, null
   br i1 %new.isnull2, label %new.cont4, label %new.notnull3
@@ -72,12 +72,12 @@ new.notnull3:
 
 new.cont4:
   %12 = phi %struct.Foo* [ %11, %new.notnull3 ], [ null, %new.cont ]
-  store %struct.Foo* %12, %struct.Foo** %f, align 8, !tbaa !3
+  store %struct.Foo* %12, %struct.Foo** %f, align 8, !tbaa !4
   %13 = load i32* %i1, align 4, !tbaa !0
   %conv = sext i32 %13 to i64
-  %14 = load %struct.Foo** %f, align 8, !tbaa !3
+  %14 = load %struct.Foo** %f, align 8, !tbaa !4
   %i5 = getelementptr inbounds %struct.Foo* %14, i32 0, i32 0
-  store i64 %conv, i64* %i5, align 8, !tbaa !4
+  store i64 %conv, i64* %i5, align 8, !tbaa !6
   br label %for.inc
 
 for.inc:
@@ -87,9 +87,9 @@ for.inc:
   br label %for.cond
 
 for.end:
-  %16 = load %struct.Foo** %f, align 8, !tbaa !3
+  %16 = load %struct.Foo** %f, align 8, !tbaa !4
   %i6 = getelementptr inbounds %struct.Foo* %16, i32 0, i32 0
-  %17 = load i64* %i6, align 8, !tbaa !4
+  %17 = load i64* %i6, align 8, !tbaa !6
   ret i64 %17
 }
 
@@ -97,8 +97,14 @@ declare noalias i8* @_Znwm(i64)
 
 attributes #0 = { nounwind }
 
-!0 = metadata !{metadata !"int", metadata !1}
-!1 = metadata !{metadata !"omnipotent char", metadata !2}
-!2 = metadata !{metadata !"Simple C/C++ TBAA"}
-!3 = metadata !{metadata !"any pointer", metadata !1}
-!4 = metadata !{metadata !"long", metadata !1}
+!0 = metadata !{metadata !1, metadata !1, i64 0}
+!1 = metadata !{metadata !"int", metadata !2, i64 0}
+!2 = metadata !{metadata !"omnipotent char", metadata !3, i64 0}
+!3 = metadata !{metadata !"Simple C/C++ TBAA"}
+!4 = metadata !{metadata !5, metadata !5, i64 0}
+!5 = metadata !{metadata !"any pointer", metadata !2, i64 0}
+!6 = metadata !{metadata !7, metadata !8, i64 0}
+!7 = metadata !{metadata !"_ZTS3Foo", metadata !8, i64 0}
+!8 = metadata !{metadata !"long", metadata !2, i64 0}
+!9 = metadata !{metadata !10, metadata !5, i64 0}
+!10 = metadata !{metadata !"_ZTS3Bar", metadata !5, i64 0}

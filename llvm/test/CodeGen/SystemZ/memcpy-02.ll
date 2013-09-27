@@ -386,5 +386,7 @@ define void @f32(i64 *%ptr1, i64 *%ptr2) {
 }
 
 !0 = metadata !{ metadata !"root" }
-!1 = metadata !{ metadata !"set1", metadata !0 }
-!2 = metadata !{ metadata !"set2", metadata !0 }
+!1 = metadata !{ metadata !3, metadata !3, i64 0 }
+!2 = metadata !{ metadata !4, metadata !4, i64 0 }
+!3 = metadata !{ metadata !"set1", metadata !0 }
+!4 = metadata !{ metadata !"set2", metadata !0 }

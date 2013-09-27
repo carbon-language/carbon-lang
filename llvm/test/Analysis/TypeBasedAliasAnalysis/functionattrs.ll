@@ -80,6 +80,7 @@ declare void @llvm.memcpy.p0i8.p0i8.i64(i8*, i8*, i64, i32, i1) nounwind
 !0 = metadata !{ }
 
 ; Invariant memory.
-!1 = metadata !{ metadata !"foo", metadata !0, i1 1 }
+!1 = metadata !{metadata !3, metadata !3, i64 0, i1 1 }
 ; Not invariant memory.
-!2 = metadata !{ metadata !"foo", metadata !0, i1 0 }
+!2 = metadata !{metadata !3, metadata !3, i64 0, i1 0 }
+!3 = metadata !{ metadata !"foo", metadata !0 }

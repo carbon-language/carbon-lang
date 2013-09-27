@@ -16,7 +16,12 @@
 // typical C/C++ TBAA, but it can also be used to implement custom alias
 // analysis behavior for other languages.
 //
-// The current metadata format is very simple. TBAA MDNodes have up to
+// We now support two types of metadata format: scalar TBAA and struct-path
+// aware TBAA. After all testing cases are upgraded to use struct-path aware
+// TBAA and we can auto-upgrade existing bc files, the support for scalar TBAA
+// can be dropped.
+//
+// The scalar TBAA metadata format is very simple. TBAA MDNodes have up to
 // three fields, e.g.:
 //   !0 = metadata !{ metadata !"an example type tree" }
 //   !1 = metadata !{ metadata !"int", metadata !0 }
@@ -39,6 +44,65 @@
 // indicates that the type is "constant" (meaning pointsToConstantMemory
 // should return true; see
 // http://llvm.org/docs/AliasAnalysis.html#OtherItfs).
+//
+// With struct-path aware TBAA, the MDNodes attached to an instruction using
+// "!tbaa" are called path tag nodes.
+//
+// The path tag node has 4 fields with the last field being optional.
+//
+// The first field is the base type node, it can be a struct type node
+// or a scalar type node. The second field is the access type node, it
+// must be a scalar type node. The third field is the offset into the base type.
+// The last field has the same meaning as the last field of our scalar TBAA:
+// it's an integer which if equal to 1 indicates that the access is "constant".
+//
+// The struct type node has a name and a list of pairs, one pair for each member
+// of the struct. The first element of each pair is a type node (a struct type
+// node or a sclar type node), specifying the type of the member, the second
+// element of each pair is the offset of the member.
+//
+// Given an example
+// typedef struct {
+//   short s;
+// } A;
+// typedef struct {
+//   uint16_t s;
+//   A a;
+// } B;
+//
+// For an acess to B.a.s, we attach !5 (a path tag node) to the load/store
+// instruction. The base type is !4 (struct B), the access type is !2 (scalar
+// type short) and the offset is 4.
+//
+// !0 = metadata !{metadata !"Simple C/C++ TBAA"}
+// !1 = metadata !{metadata !"omnipotent char", metadata !0} // Scalar type node
+// !2 = metadata !{metadata !"short", metadata !1}           // Scalar type node
+// !3 = metadata !{metadata !"A", metadata !2, i64 0}        // Struct type node
+// !4 = metadata !{metadata !"B", metadata !2, i64 0, metadata !3, i64 4}
+//                                                           // Struct type node
+// !5 = metadata !{metadata !4, metadata !2, i64 4}          // Path tag node
+//
+// The struct type nodes and the scalar type nodes form a type DAG.
+//         Root (!0)
+//         char (!1)  -- edge to Root
+//         short (!2) -- edge to char
+//         A (!3) -- edge with offset 0 to short
+//         B (!4) -- edge with offset 0 to short and edge with offset 4 to A
+//
+// To check if two tags (tagX and tagY) can alias, we start from the base type
+// of tagX, follow the edge with the correct offset in the type DAG and adjust
+// the offset until we reach the base type of tagY or until we reach the Root
+// node.
+// If we reach the base type of tagY, compare the adjusted offset with
+// offset of tagY, return Alias if the offsets are the same, return NoAlias
+// otherwise.
+// If we reach the Root node, perform the above starting from base type of tagY
+// to see if we reach base type of tagX.
+//
+// If they have different roots, they're part of different potentially
+// unrelated type systems, so we return Alias to be conservative.
+// If neither node is an ancestor of the other and they have the same root,
+// then we say NoAlias.
 //
 // TODO: The current metadata format doesn't support struct
 // fields. For example:
@@ -71,7 +135,6 @@ using namespace llvm;
 // achieved by stripping the !tbaa tags from IR, but this option is sometimes
 // more convenient.
 static cl::opt<bool> EnableTBAA("enable-tbaa", cl::init(true));
-static cl::opt<bool> EnableStructPathTBAA("struct-path-tbaa", cl::init(false));
 
 namespace {
   /// TBAANode - This is a simple wrapper around an MDNode which provides a
@@ -259,12 +322,19 @@ TypeBasedAliasAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
   AliasAnalysis::getAnalysisUsage(AU);
 }
 
+/// Check the first operand of the tbaa tag node, if it is a MDNode, we treat
+/// it as struct-path aware TBAA format, otherwise, we treat it as scalar TBAA
+/// format.
+static bool isStructPathTBAA(const MDNode *MD) {
+  return isa<MDNode>(MD->getOperand(0));
+}
+
 /// Aliases - Test whether the type represented by A may alias the
 /// type represented by B.
 bool
 TypeBasedAliasAnalysis::Aliases(const MDNode *A,
                                 const MDNode *B) const {
-  if (EnableStructPathTBAA)
+  if (isStructPathTBAA(A))
     return PathAliases(A, B);
 
   // Keep track of the root node for A and B.
@@ -397,8 +467,8 @@ bool TypeBasedAliasAnalysis::pointsToConstantMemory(const Location &Loc,
 
   // If this is an "immutable" type, we can assume the pointer is pointing
   // to constant memory.
-  if ((!EnableStructPathTBAA && TBAANode(M).TypeIsImmutable()) ||
-      (EnableStructPathTBAA && TBAAStructTagNode(M).TypeIsImmutable()))
+  if ((!isStructPathTBAA(M) && TBAANode(M).TypeIsImmutable()) ||
+      (isStructPathTBAA(M) && TBAAStructTagNode(M).TypeIsImmutable()))
     return true;
 
   return AliasAnalysis::pointsToConstantMemory(Loc, OrLocal);
@@ -414,8 +484,8 @@ TypeBasedAliasAnalysis::getModRefBehavior(ImmutableCallSite CS) {
   // If this is an "immutable" type, we can assume the call doesn't write
   // to memory.
   if (const MDNode *M = CS.getInstruction()->getMetadata(LLVMContext::MD_tbaa))
-    if ((!EnableStructPathTBAA && TBAANode(M).TypeIsImmutable()) ||
-        (EnableStructPathTBAA && TBAAStructTagNode(M).TypeIsImmutable()))
+    if ((!isStructPathTBAA(M) && TBAANode(M).TypeIsImmutable()) ||
+        (isStructPathTBAA(M) && TBAAStructTagNode(M).TypeIsImmutable()))
       Min = OnlyReadsMemory;
 
   return ModRefBehavior(AliasAnalysis::getModRefBehavior(CS) & Min);
@@ -459,7 +529,7 @@ TypeBasedAliasAnalysis::getModRefInfo(ImmutableCallSite CS1,
 }
 
 bool MDNode::isTBAAVtableAccess() const {
-  if (!EnableStructPathTBAA) {
+  if (!isStructPathTBAA(this)) {
     if (getNumOperands() < 1) return false;
     if (MDString *Tag1 = dyn_cast<MDString>(getOperand(0))) {
       if (Tag1->getString() == "vtable pointer") return true;
@@ -485,7 +555,8 @@ MDNode *MDNode::getMostGenericTBAA(MDNode *A, MDNode *B) {
     return A;
 
   // For struct-path aware TBAA, we use the access type of the tag.
-  if (EnableStructPathTBAA) {
+  bool StructPath = isStructPathTBAA(A);
+  if (StructPath) {
     A = cast_or_null<MDNode>(A->getOperand(1));
     if (!A) return 0;
     B = cast_or_null<MDNode>(B->getOperand(1));
@@ -518,7 +589,7 @@ MDNode *MDNode::getMostGenericTBAA(MDNode *A, MDNode *B) {
     --IA;
     --IB;
   }
-  if (!EnableStructPathTBAA)
+  if (!StructPath)
     return Ret;
 
   if (!Ret)

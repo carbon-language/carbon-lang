@@ -37,5 +37,7 @@ for.end:                                          ; preds = %for.cond.for.end_cr
 }
 
 !0 = metadata !{metadata !"minimal TBAA"}
-!1 = metadata !{metadata !"float", metadata !0}
-!2 = metadata !{metadata !"int", metadata !0}
+!1 = metadata !{metadata !3, metadata !3, i64 0}
+!2 = metadata !{metadata !4, metadata !4, i64 0}
+!3 = metadata !{metadata !"float", metadata !0}
+!4 = metadata !{metadata !"int", metadata !0}
