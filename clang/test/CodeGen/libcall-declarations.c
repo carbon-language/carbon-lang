@@ -139,8 +139,8 @@ long double nearbyintl(long double);
 double nextafter(double, double);
 float nextafterf(float, float);
 long double nextafterl(long double, long double);
-double nexttoward(double, double);
-float nexttowardf(float, float);
+double nexttoward(double, long double);
+float nexttowardf(float, long double);
 long double nexttowardl(long double, long double);
 double remainder(double, double);
 float remainderf(float, float);
@@ -427,8 +427,8 @@ void *use[] = {
 // CHECK-NOERRNO: declare double @nextafter(double, double) [[NUW]]
 // CHECK-NOERRNO: declare float @nextafterf(float, float) [[NUW]]
 // CHECK-NOERRNO: declare x86_fp80 @nextafterl(x86_fp80, x86_fp80) [[NUW]]
-// CHECK-NOERRNO: declare double @nexttoward(double, double) [[NUW]]
-// CHECK-NOERRNO: declare float @nexttowardf(float, float) [[NUW]]
+// CHECK-NOERRNO: declare double @nexttoward(double, x86_fp80) [[NUW]]
+// CHECK-NOERRNO: declare float @nexttowardf(float, x86_fp80) [[NUW]]
 // CHECK-NOERRNO: declare x86_fp80 @nexttowardl(x86_fp80, x86_fp80) [[NUW]]
 // CHECK-NOERRNO: declare double @remainder(double, double) [[NUW]]
 // CHECK-NOERRNO: declare float @remainderf(float, float) [[NUW]]
