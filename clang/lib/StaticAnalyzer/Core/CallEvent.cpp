@@ -264,7 +264,20 @@ QualType CallEvent::getDeclaredResultType(const Decl *D) {
     return QualType();
   }
   
-  return QualType();
+  llvm_unreachable("unknown callable kind");
+}
+
+bool CallEvent::isVariadic(const Decl *D) {
+  assert(D);
+
+  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
+    return FD->isVariadic();
+  if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D))
+    return MD->isVariadic();
+  if (const BlockDecl *BD = dyn_cast<BlockDecl>(D))
+    return BD->isVariadic();
+
+  llvm_unreachable("unknown callable kind");
 }
 
 static void addParameterValuesToBindings(const StackFrameContext *CalleeCtx,
