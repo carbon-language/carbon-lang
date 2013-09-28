@@ -992,6 +992,7 @@ void CXXRecordDecl::getCaptureFields(
     else if (C->capturesVariable())
       Captures[C->getCapturedVar()] = *Field;
   }
+  assert(Field == field_end());
 }
 
 TemplateParameterList * 

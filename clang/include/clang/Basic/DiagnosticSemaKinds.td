@@ -5074,7 +5074,7 @@ let CategoryName = "Lambda Issue" in {
   def err_init_capture_multiple_expressions : Error<
     "initializer for lambda capture %0 contains multiple expressions">;
   def err_init_capture_deduction_failure : Error<
-    "cannot deduce type for lambda capture %0 from initializer of type %1">;
+    "cannot deduce type for lambda capture %0 from initializer of type %2">;
   def err_init_capture_deduction_failure_from_init_list : Error<
     "cannot deduce type for lambda capture %0 from initializer list">;
 }

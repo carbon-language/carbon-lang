@@ -5144,18 +5144,13 @@ void ASTWriter::AddCXXDefinitionData(const CXXRecordDecl *D, RecordDataImpl &Rec
       case LCK_This:
         break;
       case LCK_ByCopy:
-      case LCK_ByRef: {
+      case LCK_ByRef:
         VarDecl *Var =
             Capture.capturesVariable() ? Capture.getCapturedVar() : 0;
         AddDeclRef(Var, Record);
         AddSourceLocation(Capture.isPackExpansion() ? Capture.getEllipsisLoc()
                                                     : SourceLocation(),
                           Record);
-        break;
-      }
-      case LCK_Init:
-        FieldDecl *Field = Capture.getInitCaptureField();
-        AddDeclRef(Field, Record);
         break;
       }
     }

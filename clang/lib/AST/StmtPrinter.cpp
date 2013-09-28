@@ -1460,24 +1460,18 @@ void StmtPrinter::VisitLambdaExpr(LambdaExpr *Node) {
       break;
 
     case LCK_ByRef:
-      if (Node->getCaptureDefault() != LCD_ByRef)
+      if (Node->getCaptureDefault() != LCD_ByRef || C->isInitCapture())
         OS << '&';
       OS << C->getCapturedVar()->getName();
       break;
 
     case LCK_ByCopy:
-      if (Node->getCaptureDefault() != LCD_ByCopy)
-        OS << '=';
       OS << C->getCapturedVar()->getName();
       break;
-
-    case LCK_Init:
-      if (C->getInitCaptureField()->getType()->isReferenceType())
-        OS << '&';
-      OS << C->getInitCaptureField()->getName();
-      PrintExpr(Node->getInitCaptureInit(C));
-      break;
     }
+
+    if (C->isInitCapture())
+      PrintExpr(C->getCapturedVar()->getInit());
   }
   OS << ']';
 

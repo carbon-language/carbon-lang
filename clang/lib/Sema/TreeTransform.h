@@ -8313,7 +8313,9 @@ TreeTransform<Derived>::TransformLambdaScope(LambdaExpr *E,
     if (!C->isInitCapture())
       continue;
     InitCaptureExprs[C - E->capture_begin()] =
-        getDerived().TransformExpr(E->getInitCaptureInit(C));
+        getDerived().TransformInitializer(
+            C->getCapturedVar()->getInit(),
+            C->getCapturedVar()->getInitStyle() == VarDecl::CallInit);
   }
 
   // Introduce the context of the call operator.
@@ -8353,14 +8355,15 @@ TreeTransform<Derived>::TransformLambdaScope(LambdaExpr *E,
         Invalid = true;
         continue;
       }
-      FieldDecl *OldFD = C->getInitCaptureField();
-      FieldDecl *NewFD = getSema().checkInitCapture(
-          C->getLocation(), OldFD->getType()->isReferenceType(),
-          OldFD->getIdentifier(), Init.take());
-      if (!NewFD)
+      VarDecl *OldVD = C->getCapturedVar();
+      VarDecl *NewVD = getSema().checkInitCapture(
+          C->getLocation(), OldVD->getType()->isReferenceType(),
+          OldVD->getIdentifier(), Init.take());
+      if (!NewVD)
         Invalid = true;
       else
-        getDerived().transformedLocalDecl(OldFD, NewFD);
+        getDerived().transformedLocalDecl(OldVD, NewVD);
+      getSema().buildInitCaptureField(LSI, NewVD);
       continue;
     }
 

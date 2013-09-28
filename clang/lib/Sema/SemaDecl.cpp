@@ -7971,14 +7971,17 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
         // It isn't possible to write this directly, but it is possible to
         // end up in this situation with "auto x(some_pack...);"
         Diag(CXXDirectInit->getLocStart(),
-             diag::err_auto_var_init_no_expression)
+             VDecl->isInitCapture() ? diag::err_init_capture_no_expression
+                                    : diag::err_auto_var_init_no_expression)
           << VDecl->getDeclName() << VDecl->getType()
           << VDecl->getSourceRange();
         RealDecl->setInvalidDecl();
         return;
       } else if (CXXDirectInit->getNumExprs() > 1) {
         Diag(CXXDirectInit->getExpr(1)->getLocStart(),
-             diag::err_auto_var_init_multiple_expressions)
+             VDecl->isInitCapture()
+                 ? diag::err_init_capture_multiple_expressions
+                 : diag::err_auto_var_init_multiple_expressions)
           << VDecl->getDeclName() << VDecl->getType()
           << VDecl->getSourceRange();
         RealDecl->setInvalidDecl();

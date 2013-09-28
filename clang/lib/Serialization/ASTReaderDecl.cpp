@@ -945,6 +945,7 @@ ASTDeclReader::RedeclarableResult ASTDeclReader::VisitVarDeclImpl(VarDecl *VD) {
   VD->VarDeclBits.CXXForRangeDecl = Record[Idx++];
   VD->VarDeclBits.ARCPseudoStrong = Record[Idx++];
   VD->VarDeclBits.IsConstexpr = Record[Idx++];
+  VD->VarDeclBits.IsInitCapture = Record[Idx++];
   VD->VarDeclBits.PreviousDeclInSameBlockScope = Record[Idx++];
   Linkage VarLinkage = Linkage(Record[Idx++]);
   VD->setCachedLinkage(VarLinkage);
@@ -1223,15 +1224,10 @@ void ASTDeclReader::ReadCXXDefinitionData(
         *ToCapture++ = Capture(Loc, IsImplicit, Kind, 0, SourceLocation());
         break;
       case LCK_ByCopy:
-      case LCK_ByRef: {
+      case LCK_ByRef:
         VarDecl *Var = ReadDeclAs<VarDecl>(Record, Idx);
         SourceLocation EllipsisLoc = ReadSourceLocation(Record, Idx);
         *ToCapture++ = Capture(Loc, IsImplicit, Kind, Var, EllipsisLoc);
-        break;
-      }
-      case LCK_Init:
-        FieldDecl *Field = ReadDeclAs<FieldDecl>(Record, Idx);
-        *ToCapture++ = Capture(Field);
         break;
       }
     }

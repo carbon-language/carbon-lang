@@ -1388,9 +1388,6 @@ public:
             LambdaCaptureKind Kind, VarDecl *Var = 0,
             SourceLocation EllipsisLoc = SourceLocation());
 
-    /// \brief Create a new init-capture.
-    Capture(FieldDecl *Field);
-
     /// \brief Determine the kind of capture.
     LambdaCaptureKind getCaptureKind() const;
 
@@ -1404,7 +1401,9 @@ public:
     }
 
     /// \brief Determine whether this is an init-capture.
-    bool isInitCapture() const { return getCaptureKind() == LCK_Init; }
+    bool isInitCapture() const {
+      return capturesVariable() && getCapturedVar()->isInitCapture();
+    }
 
     /// \brief Retrieve the declaration of the local variable being
     /// captured.
@@ -1414,16 +1413,6 @@ public:
     VarDecl *getCapturedVar() const {
       assert(capturesVariable() && "No variable available for 'this' capture");
       return cast<VarDecl>(DeclAndBits.getPointer());
-    }
-
-    /// \brief Retrieve the field for an init-capture.
-    ///
-    /// This works only for an init-capture.  To retrieve the FieldDecl for
-    /// a captured variable or for a capture of \c this, use
-    /// LambdaExpr::getLambdaClass and CXXRecordDecl::getCaptureFields.
-    FieldDecl *getInitCaptureField() const {
-      assert(getCaptureKind() == LCK_Init && "no field for non-init-capture");
-      return cast<FieldDecl>(DeclAndBits.getPointer());
     }
 
     /// \brief Determine whether this was an implicit capture (not
@@ -1571,16 +1560,6 @@ public:
   /// initialization argument for this lambda expression.
   capture_init_iterator capture_init_end() const {
     return capture_init_begin() + NumCaptures;    
-  }
-
-  /// \brief Retrieve the initializer for an init-capture.
-  Expr *getInitCaptureInit(capture_iterator Capture) {
-    assert(Capture >= explicit_capture_begin() &&
-           Capture <= explicit_capture_end() && Capture->isInitCapture());
-    return capture_init_begin()[Capture - capture_begin()];
-  }
-  const Expr *getInitCaptureInit(capture_iterator Capture) const {
-    return const_cast<LambdaExpr*>(this)->getInitCaptureInit(Capture);
   }
 
   /// \brief Retrieve the set of index variables used in the capture 

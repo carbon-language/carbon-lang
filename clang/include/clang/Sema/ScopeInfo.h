@@ -347,21 +347,17 @@ public:
     // variables of reference type are captured by reference, and other
     // variables are captured by copy.
     enum CaptureKind {
-      Cap_ByCopy, Cap_ByRef, Cap_Block, Cap_ThisOrInit
+      Cap_ByCopy, Cap_ByRef, Cap_Block, Cap_This
     };
 
-    // The variable being captured (if we are not capturing 'this', and whether
-    // this is a nested capture; the expression is only required if we are
-    // capturing ByVal and the variable's type has a non-trivial copy
-    // constructor, or for an initialized capture.
-    typedef llvm::PointerIntPair<VarDecl*, 1, bool> VarAndNested;
+    /// The variable being captured (if we are not capturing 'this') and whether
+    /// this is a nested capture.
+    llvm::PointerIntPair<VarDecl*, 1, bool> VarAndNested;
 
-    // The variable being captured, or the implicitly-generated field for
-    // an init-capture.
-    llvm::PointerUnion<VarAndNested, FieldDecl*> VarOrField;
-
-    // Expression to initialize a field of the given type, and the kind of
-    // capture (if this is a capture and not an init-capture).
+    /// Expression to initialize a field of the given type, and the kind of
+    /// capture (if this is a capture and not an init-capture). The expression
+    /// is only required if we are capturing ByVal and the variable's type has
+    /// a non-trivial copy constructor.
     llvm::PointerIntPair<Expr*, 2, CaptureKind> InitExprAndCaptureKind;
 
     /// \brief The source location at which the first capture occurred.
@@ -378,7 +374,7 @@ public:
     Capture(VarDecl *Var, bool Block, bool ByRef, bool IsNested,
             SourceLocation Loc, SourceLocation EllipsisLoc,
             QualType CaptureType, Expr *Cpy)
-        : VarOrField(VarAndNested(Var, IsNested)),
+        : VarAndNested(Var, IsNested),
           InitExprAndCaptureKind(Cpy, Block ? Cap_Block :
                                       ByRef ? Cap_ByRef : Cap_ByCopy),
           Loc(Loc), EllipsisLoc(EllipsisLoc), CaptureType(CaptureType) {}
@@ -386,23 +382,15 @@ public:
     enum IsThisCapture { ThisCapture };
     Capture(IsThisCapture, bool IsNested, SourceLocation Loc,
             QualType CaptureType, Expr *Cpy)
-        : VarOrField(VarAndNested(0, IsNested)),
-          InitExprAndCaptureKind(Cpy, Cap_ThisOrInit),
+        : VarAndNested(0, IsNested),
+          InitExprAndCaptureKind(Cpy, Cap_This),
           Loc(Loc), EllipsisLoc(), CaptureType(CaptureType) {}
 
-    Capture(FieldDecl *Field, Expr *Init)
-        : VarOrField(Field), InitExprAndCaptureKind(Init, Cap_ThisOrInit),
-          Loc(), EllipsisLoc(), CaptureType() {}
-
     bool isThisCapture() const {
-      return InitExprAndCaptureKind.getInt() == Cap_ThisOrInit &&
-             VarOrField.is<VarAndNested>();
+      return InitExprAndCaptureKind.getInt() == Cap_This;
     }
     bool isVariableCapture() const {
-      return InitExprAndCaptureKind.getInt() != Cap_ThisOrInit;
-    }
-    bool isInitCapture() const {
-      return VarOrField.is<FieldDecl*>();
+      return InitExprAndCaptureKind.getInt() != Cap_This;
     }
     bool isCopyCapture() const {
       return InitExprAndCaptureKind.getInt() == Cap_ByCopy;
@@ -413,13 +401,10 @@ public:
     bool isBlockCapture() const {
       return InitExprAndCaptureKind.getInt() == Cap_Block;
     }
-    bool isNested() { return VarOrField.dyn_cast<VarAndNested>().getInt(); }
+    bool isNested() { return VarAndNested.getInt(); }
 
     VarDecl *getVariable() const {
-      return VarOrField.dyn_cast<VarAndNested>().getPointer();
-    }
-    FieldDecl *getInitCaptureField() const {
-      return VarOrField.dyn_cast<FieldDecl*>();
+      return VarAndNested.getPointer();
     }
     
     /// \brief Retrieve the location at which this variable was captured.
@@ -472,10 +457,6 @@ public:
 
   void addThisCapture(bool isNested, SourceLocation Loc, QualType CaptureType,
                       Expr *Cpy);
-
-  void addInitCapture(FieldDecl *Field, Expr *Init) {
-    Captures.push_back(Capture(Field, Init));
-  }
 
   /// \brief Determine whether the C++ 'this' is captured.
   bool isCXXThisCaptured() const { return CXXThisCaptureIndex != 0; }

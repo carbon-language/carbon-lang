@@ -881,9 +881,6 @@ StmtProfiler::VisitLambdaExpr(const LambdaExpr *S) {
       VisitDecl(C->getCapturedVar());
       ID.AddBoolean(C->isPackExpansion());
       break;
-    case LCK_Init:
-      VisitDecl(C->getInitCaptureField());
-      break;
     }
   }
   // Note: If we actually needed to be able to match lambda

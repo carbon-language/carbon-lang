@@ -3928,10 +3928,14 @@ TypeSourceInfo* Sema::SubstAutoTypeSourceInfo(TypeSourceInfo *TypeWithAuto,
 void Sema::DiagnoseAutoDeductionFailure(VarDecl *VDecl, Expr *Init) {
   if (isa<InitListExpr>(Init))
     Diag(VDecl->getLocation(),
-         diag::err_auto_var_deduction_failure_from_init_list)
+         VDecl->isInitCapture()
+             ? diag::err_init_capture_deduction_failure_from_init_list
+             : diag::err_auto_var_deduction_failure_from_init_list)
       << VDecl->getDeclName() << VDecl->getType() << Init->getSourceRange();
   else
-    Diag(VDecl->getLocation(), diag::err_auto_var_deduction_failure)
+    Diag(VDecl->getLocation(),
+         VDecl->isInitCapture() ? diag::err_init_capture_deduction_failure
+                                : diag::err_auto_var_deduction_failure)
       << VDecl->getDeclName() << VDecl->getType() << Init->getType()
       << Init->getSourceRange();
 }

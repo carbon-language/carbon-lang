@@ -66,7 +66,7 @@ void init_capture_pack_err(Args ...args) {
 
 template<typename ...Args>
 void init_capture_pack_multi(Args ...args) {
-  [as(args...)] {} (); // expected-error {{initializer missing}} expected-error {{multiple}}
+  [as(args...)] {} (); // expected-error {{initializer missing for lambda capture 'as'}} expected-error {{multiple}}
 }
 template void init_capture_pack_multi(); // expected-note {{instantiation}}
 template void init_capture_pack_multi(int);

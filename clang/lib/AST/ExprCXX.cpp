@@ -905,25 +905,14 @@ LambdaExpr::Capture::Capture(SourceLocation Loc, bool Implicit,
   case LCK_ByRef:
     assert(Var && "capture must have a variable!");
     break;
-
-  case LCK_Init:
-    llvm_unreachable("don't use this constructor for an init-capture");
   }
   DeclAndBits.setInt(Bits);
 }
-
-LambdaExpr::Capture::Capture(FieldDecl *Field)
-    : DeclAndBits(Field,
-                  Field->getType()->isReferenceType() ? 0 : Capture_ByCopy),
-      Loc(Field->getLocation()), EllipsisLoc() {}
 
 LambdaCaptureKind LambdaExpr::Capture::getCaptureKind() const {
   Decl *D = DeclAndBits.getPointer();
   if (!D)
     return LCK_This;
-
-  if (isa<FieldDecl>(D))
-    return LCK_Init;
 
   return (DeclAndBits.getInt() & Capture_ByCopy) ? LCK_ByCopy : LCK_ByRef;
 }
