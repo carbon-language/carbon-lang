@@ -1,4 +1,5 @@
-// RUN: %clang_cc1 -E %s -o - | FileCheck %s
+// RUN: %clang_cc1 -std=c++98 -E %s -o - | FileCheck %s
+// RUN: %clang_cc1 -std=c++11 -E %s -o - | FileCheck %s --check-prefix=CHECK11
 
 // CHECK: c_static_assert
 #if __has_extension(c_static_assert)
@@ -53,4 +54,10 @@ int has_binary_literals();
 // CHECK: has_variable_templates
 #if __has_extension(cxx_variable_templates)
 int has_variable_templates();
+#endif
+
+// CHECK-NOT: has_init_captures
+// CHECK11: has_init_captures
+#if __has_extension(cxx_init_captures)
+int has_init_captures();
 #endif

@@ -386,3 +386,13 @@ int no_variable_templates();
 // CHECK-1Y: has_variable_templates
 // CHECK-11: no_variable_templates
 // CHECK-NO-11: no_variable_templates
+
+#if __has_feature(cxx_init_captures)
+int has_init_captures();
+#else
+int no_init_captures();
+#endif
+
+// CHECK-1Y: has_init_captures
+// CHECK-11: no_init_captures
+// CHECK-NO-11: no_init_captures

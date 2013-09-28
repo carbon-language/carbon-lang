@@ -945,7 +945,7 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
            .Case("cxx_rvalue_references", LangOpts.CPlusPlus11)
            .Case("cxx_strong_enums", LangOpts.CPlusPlus11)
            .Case("cxx_static_assert", LangOpts.CPlusPlus11)
-           .Case("cxx_thread_local", 
+           .Case("cxx_thread_local",
                  LangOpts.CPlusPlus11 && PP.getTargetInfo().isTLSSupported())
            .Case("cxx_trailing_return", LangOpts.CPlusPlus11)
            .Case("cxx_unicode_literals", LangOpts.CPlusPlus11)
@@ -956,11 +956,11 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
            .Case("cxx_aggregate_nsdmi", LangOpts.CPlusPlus1y)
            .Case("cxx_binary_literals", LangOpts.CPlusPlus1y)
            .Case("cxx_contextual_conversions", LangOpts.CPlusPlus1y)
-           //.Case("cxx_generic_lambda", LangOpts.CPlusPlus1y)
-           //.Case("cxx_init_capture", LangOpts.CPlusPlus1y)
+           //.Case("cxx_generic_lambdas", LangOpts.CPlusPlus1y)
+           .Case("cxx_init_captures", LangOpts.CPlusPlus1y)
            .Case("cxx_relaxed_constexpr", LangOpts.CPlusPlus1y)
            .Case("cxx_return_type_deduction", LangOpts.CPlusPlus1y)
-           //.Case("cxx_runtime_array", LangOpts.CPlusPlus1y)
+           //.Case("cxx_runtime_arrays", LangOpts.CPlusPlus1y)
            .Case("cxx_variable_templates", LangOpts.CPlusPlus1y)
            // Type traits
            .Case("has_nothrow_assign", LangOpts.CPlusPlus)
@@ -1036,6 +1036,7 @@ static bool HasExtension(const Preprocessor &PP, const IdentifierInfo *II) {
            .Case("cxx_rvalue_references", LangOpts.CPlusPlus)
            // C++1y features supported by other languages as extensions.
            .Case("cxx_binary_literals", true)
+           .Case("cxx_init_captures", LangOpts.CPlusPlus11)
            .Case("cxx_variable_templates", true)
            .Default(false);
 }
