@@ -514,7 +514,7 @@ VarDecl *Sema::checkInitCapture(SourceLocation Loc, bool ByRef,
   // used as a variable, and only exists as a way to name and refer to the
   // init-capture.
   // FIXME: Pass in separate source locations for '&' and identifier.
-  VarDecl *NewVD = VarDecl::Create(Context, CurContext->getLexicalParent(), Loc,
+  VarDecl *NewVD = VarDecl::Create(Context, CurContext, Loc,
                                    Loc, Id, TSI->getType(), TSI, SC_Auto);
   NewVD->setInitCapture(true);
   NewVD->setReferenced(true);

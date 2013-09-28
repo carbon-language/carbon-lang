@@ -94,5 +94,9 @@ int h(int a) {
   } ();
 }
 
+// Ensure we can emit code for init-captures in global lambdas too.
+auto global_lambda = [a = 0] () mutable { return ++a; };
+int get_incremented() { return global_lambda(); }
+
 // CHECK-LABEL: define internal void @"_ZZ1fvEN3$_0D2Ev"(
 // CHECK: call void @_ZN1SD1Ev(

@@ -1577,7 +1577,9 @@ Sema::BuildDeclRefExpr(ValueDecl *D, QualType Ty, ExprValueKind VK,
 
   bool refersToEnclosingScope =
     (CurContext != D->getDeclContext() &&
-     D->getDeclContext()->isFunctionOrMethod());
+     D->getDeclContext()->isFunctionOrMethod()) ||
+    (isa<VarDecl>(D) &&
+     cast<VarDecl>(D)->isInitCapture());
 
   DeclRefExpr *E;
   if (isa<VarTemplateSpecializationDecl>(D)) {
@@ -8116,9 +8118,14 @@ static NonConstCaptureKind isReferenceToNonConstCapture(Sema &S, Expr *E) {
   assert(var->hasLocalStorage() && "capture added 'const' to non-local?");
 
   // Decide whether the first capture was for a block or a lambda.
-  DeclContext *DC = S.CurContext;
-  while (DC->getParent() != var->getDeclContext())
+  DeclContext *DC = S.CurContext, *Prev = 0;
+  while (DC != var->getDeclContext()) {
+    Prev = DC;
     DC = DC->getParent();
+  }
+  // Unless we have an init-capture, we've gone one step too far.
+  if (!var->isInitCapture())
+    DC = Prev;
   return (isa<BlockDecl>(DC) ? NCCK_Block : NCCK_Lambda);
 }
 
@@ -11353,7 +11360,7 @@ bool Sema::tryCaptureVariable(VarDecl *Var, SourceLocation Loc,
   bool Nested = false;
   
   DeclContext *DC = CurContext;
-  if (Var->getDeclContext() == DC) return true;
+  if (!Var->isInitCapture() && Var->getDeclContext() == DC) return true;
   if (!Var->hasLocalStorage()) return true;
 
   bool HasBlocksAttr = Var->hasAttr<BlocksAttr>();
