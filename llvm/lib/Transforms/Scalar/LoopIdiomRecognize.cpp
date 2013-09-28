@@ -314,7 +314,7 @@ bool NclPopcountRecognize::preliminaryScreen() {
   if (TTI->getPopcntSupport(32) != TargetTransformInfo::PSK_FastHardware)
     return false;
 
-  // Counting population are usually conducted by few arithmetic instrutions.
+  // Counting population are usually conducted by few arithmetic instructions.
   // Such instructions can be easilly "absorbed" by vacant slots in a
   // non-compact loop. Therefore, recognizing popcount idiom only makes sense
   // in a compact loop.

@@ -275,7 +275,7 @@ bool AMDGPUIndirectAddressingPass::runOnMachineFunction(MachineFunction &MF) {
       } else {
         // Indirect register access
 
-        // Note on REQ_SEQUENCE instructons: You can't actually use the register
+        // Note on REQ_SEQUENCE instructions: You can't actually use the register
         // it defines unless  you have an instruction that takes the defined
         // register class as an operand.
 

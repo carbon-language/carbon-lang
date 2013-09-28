@@ -76,7 +76,7 @@ def instregex;
 // See MCSchedule.h for detailed comments.
 class SchedMachineModel {
   int IssueWidth = -1; // Max micro-ops that may be scheduled per cycle.
-  int MinLatency = -1; // Determines which instrucions are allowed in a group.
+  int MinLatency = -1; // Determines which instructions are allowed in a group.
                        // (-1) inorder (0) ooo, (1): inorder +var latencies.
   int MicroOpBufferSize = -1; // Max micro-ops that can be buffered.
   int LoadLatency = -1; // Cycles for loads to access the cache.

@@ -410,8 +410,8 @@ public:
   /// branch to do so (e.g., a table jump).  True is a conservative answer.
   bool canFallThrough();
 
-  /// Returns a pointer to the first instructon in this block that is not a
-  /// PHINode instruction. When adding instruction to the beginning of the
+  /// Returns a pointer to the first instruction in this block that is not a
+  /// PHINode instruction. When adding instructions to the beginning of the
   /// basic block, they should be added before the returned value, not before
   /// the first instruction, which might be PHI.
   /// Returns end() is there's no non-PHI instruction.

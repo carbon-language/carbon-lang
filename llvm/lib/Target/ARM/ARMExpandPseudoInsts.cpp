@@ -847,7 +847,7 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
 
     case ARM::MOVsrl_flag:
     case ARM::MOVsra_flag: {
-      // These are just fancy MOVs insructions.
+      // These are just fancy MOVs instructions.
       AddDefaultPred(BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(ARM::MOVsi),
                              MI.getOperand(0).getReg())
                      .addOperand(MI.getOperand(1))

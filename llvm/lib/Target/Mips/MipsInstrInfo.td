@@ -115,7 +115,7 @@ def MipsDivRemU16 : SDNode<"MipsISD::DivRemU16", SDT_MipsDivRem16,
 // Wrapper node patterns give the instruction selector a chance to replace
 // target constant nodes that would otherwise remain unchanged with ADDiu
 // nodes. Without these wrapper node patterns, the following conditional move
-// instrucion is emitted when function cmov2 in test/CodeGen/Mips/cmov.ll is
+// instruction is emitted when function cmov2 in test/CodeGen/Mips/cmov.ll is
 // compiled:
 //  movn  %got(d)($gp), %got(c)($gp), $4
 // This instruction is illegal since movn can take only register operands.

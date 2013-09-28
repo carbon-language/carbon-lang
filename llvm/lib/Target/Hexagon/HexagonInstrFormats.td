@@ -63,7 +63,7 @@ class MemAccessSize<bits<3> value> {
 def NoMemAccess      : MemAccessSize<0>;// Not a memory acces instruction.
 def ByteAccess       : MemAccessSize<1>;// Byte access instruction (memb).
 def HalfWordAccess   : MemAccessSize<2>;// Half word access instruction (memh).
-def WordAccess       : MemAccessSize<3>;// Word access instrution (memw).
+def WordAccess       : MemAccessSize<3>;// Word access instruction (memw).
 def DoubleWordAccess : MemAccessSize<4>;// Double word access instruction (memd)
 
 

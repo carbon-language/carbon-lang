@@ -66,7 +66,7 @@ namespace llvm {
     }
 
     /// Returns true if this value is defined by a PHI instruction (or was,
-    /// PHI instrucions may have been eliminated).
+    /// PHI instructions may have been eliminated).
     /// PHI-defs begin at a block boundary, all other defs begin at register or
     /// EC slots.
     bool isPHIDef() const { return def.isBlock(); }

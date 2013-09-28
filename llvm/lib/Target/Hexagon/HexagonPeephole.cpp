@@ -29,7 +29,7 @@
 //
 // Note: The peephole pass makes the instrucstions like
 // %vreg170<def> = SXTW %vreg166 or %vreg16<def> = NOT_p %vreg15<kill>
-// redundant and relies on some form of dead removal instrucions, like
+// redundant and relies on some form of dead removal instructions, like
 // DCE or DIE to actually eliminate them.
 
 

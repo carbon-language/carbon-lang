@@ -426,7 +426,7 @@ rewriteFrameIndex(MachineBasicBlock::iterator II, unsigned FrameRegIdx,
                                 *this);
     } else {
       // Translate r0 = add sp, -imm to
-      // r0 = -imm (this is then translated into a series of instructons)
+      // r0 = -imm (this is then translated into a series of instructions)
       // r0 = add r0, sp
       emitThumbConstant(MBB, II, DestReg, Offset, TII, *this, dl);
 

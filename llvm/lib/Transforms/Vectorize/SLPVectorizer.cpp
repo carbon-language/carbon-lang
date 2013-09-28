@@ -318,7 +318,7 @@ private:
   /// \returns the pointer to the barrier instruction if we can't sink.
   Value *getSinkBarrier(Instruction *Src, Instruction *Dst);
 
-  /// \returns the index of the last instrucion in the BB from \p VL.
+  /// \returns the index of the last instruction in the BB from \p VL.
   int getLastIndex(ArrayRef<Value *> VL);
 
   /// \returns the Instruction in the bundle \p VL.

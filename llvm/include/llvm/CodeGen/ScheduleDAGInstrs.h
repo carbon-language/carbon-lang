@@ -129,7 +129,7 @@ namespace llvm {
     Reg2SUnitsMap Defs;
     Reg2SUnitsMap Uses;
 
-    /// Track the last instructon in this region defining each virtual register.
+    /// Track the last instruction in this region defining each virtual register.
     VReg2SUnitMap VRegDefs;
 
     /// PendingLoads - Remember where unknown loads are after the most recent

@@ -1357,7 +1357,7 @@ void InnerLoopVectorizer::scalarizeInstruction(Instruction *Instr) {
       Instruction *Cloned = Instr->clone();
       if (!IsVoidRetTy)
         Cloned->setName(Instr->getName() + ".cloned");
-      // Replace the operands of the cloned instrucions with extracted scalars.
+      // Replace the operands of the cloned instructions with extracted scalars.
       for (unsigned op = 0, e = Instr->getNumOperands(); op != e; ++op) {
         Value *Op = Params[op][Part];
         // Param is a vector. Need to extract the right lane.
@@ -4901,7 +4901,7 @@ void InnerLoopUnroller::scalarizeInstruction(Instruction *Instr) {
     Instruction *Cloned = Instr->clone();
       if (!IsVoidRetTy)
         Cloned->setName(Instr->getName() + ".cloned");
-      // Replace the operands of the cloned instrucions with extracted scalars.
+      // Replace the operands of the cloned instructions with extracted scalars.
       for (unsigned op = 0, e = Instr->getNumOperands(); op != e; ++op) {
         Value *Op = Params[op][Part];
         Cloned->setOperand(op, Op);

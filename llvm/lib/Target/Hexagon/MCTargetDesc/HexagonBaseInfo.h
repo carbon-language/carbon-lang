@@ -73,7 +73,7 @@ namespace HexagonII {
     NoMemAccess = 0,            // Not a memory acces instruction.
     ByteAccess = 1,             // Byte access instruction (memb).
     HalfWordAccess = 2,         // Half word access instruction (memh).
-    WordAccess = 3,             // Word access instrution (memw).
+    WordAccess = 3,             // Word access instruction (memw).
     DoubleWordAccess = 4        // Double word access instruction (memd)
   };
 
