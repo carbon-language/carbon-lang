@@ -31,7 +31,7 @@ define void @test_select_v2f32(<2 x float> addrspace(1)* %out, <2 x float> addrs
 entry:
   %0 = load <2 x float> addrspace(1)* %in0
   %1 = load <2 x float> addrspace(1)* %in1
-  %cmp = fcmp one <2 x float> %0, %1
+  %cmp = fcmp une <2 x float> %0, %1
   %result = select <2 x i1> %cmp, <2 x float> %0, <2 x float> %1
   store <2 x float> %result, <2 x float> addrspace(1)* %out
   ret void
@@ -69,7 +69,7 @@ define void @test_select_v4f32(<4 x float> addrspace(1)* %out, <4 x float> addrs
 entry:
   %0 = load <4 x float> addrspace(1)* %in0
   %1 = load <4 x float> addrspace(1)* %in1
-  %cmp = fcmp one <4 x float> %0, %1
+  %cmp = fcmp une <4 x float> %0, %1
   %result = select <4 x i1> %cmp, <4 x float> %0, <4 x float> %1
   store <4 x float> %result, <4 x float> addrspace(1)* %out
   ret void

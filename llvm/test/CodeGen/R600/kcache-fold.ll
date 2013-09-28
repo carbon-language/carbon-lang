@@ -10,7 +10,7 @@ main_body:
   %3 = extractelement <4 x float> %2, i32 0
   %4 = load <4 x float> addrspace(8)* getelementptr ([1024 x <4 x float>] addrspace(8)* null, i64 0, i32 2)
   %5 = extractelement <4 x float> %4, i32 0
-  %6 = fcmp ult float %1, 0.000000e+00
+  %6 = fcmp ogt float %1, 0.000000e+00
   %7 = select i1 %6, float %3, float %5
   %8 = load <4 x float> addrspace(8)* null
   %9 = extractelement <4 x float> %8, i32 1
@@ -18,7 +18,7 @@ main_body:
   %11 = extractelement <4 x float> %10, i32 1
   %12 = load <4 x float> addrspace(8)* getelementptr ([1024 x <4 x float>] addrspace(8)* null, i64 0, i32 2)
   %13 = extractelement <4 x float> %12, i32 1
-  %14 = fcmp ult float %9, 0.000000e+00
+  %14 = fcmp ogt float %9, 0.000000e+00
   %15 = select i1 %14, float %11, float %13
   %16 = load <4 x float> addrspace(8)* null
   %17 = extractelement <4 x float> %16, i32 2
@@ -26,7 +26,7 @@ main_body:
   %19 = extractelement <4 x float> %18, i32 2
   %20 = load <4 x float> addrspace(8)* getelementptr ([1024 x <4 x float>] addrspace(8)* null, i64 0, i32 2)
   %21 = extractelement <4 x float> %20, i32 2
-  %22 = fcmp ult float %17, 0.000000e+00
+  %22 = fcmp ogt float %17, 0.000000e+00
   %23 = select i1 %22, float %19, float %21
   %24 = load <4 x float> addrspace(8)* null
   %25 = extractelement <4 x float> %24, i32 3
@@ -34,7 +34,7 @@ main_body:
   %27 = extractelement <4 x float> %26, i32 3
   %28 = load <4 x float> addrspace(8)* getelementptr ([1024 x <4 x float>] addrspace(8)* null, i64 0, i32 2)
   %29 = extractelement <4 x float> %28, i32 3
-  %30 = fcmp ult float %25, 0.000000e+00
+  %30 = fcmp ogt float %25, 0.000000e+00
   %31 = select i1 %30, float %27, float %29
   %32 = call float @llvm.AMDIL.clamp.(float %7, float 0.000000e+00, float 1.000000e+00)
   %33 = call float @llvm.AMDIL.clamp.(float %15, float 0.000000e+00, float 1.000000e+00)
@@ -58,7 +58,7 @@ main_body:
   %3 = extractelement <4 x float> %2, i32 0
   %4 = load <4 x float> addrspace(8)* getelementptr ([1024 x <4 x float>] addrspace(8)* null, i64 0, i32 1)
   %5 = extractelement <4 x float> %4, i32 1
-  %6 = fcmp ult float %1, 0.000000e+00
+  %6 = fcmp ogt float %1, 0.000000e+00
   %7 = select i1 %6, float %3, float %5
   %8 = load <4 x float> addrspace(8)* null
   %9 = extractelement <4 x float> %8, i32 1
@@ -66,7 +66,7 @@ main_body:
   %11 = extractelement <4 x float> %10, i32 0
   %12 = load <4 x float> addrspace(8)* getelementptr ([1024 x <4 x float>] addrspace(8)* null, i64 0, i32 2)
   %13 = extractelement <4 x float> %12, i32 1
-  %14 = fcmp ult float %9, 0.000000e+00
+  %14 = fcmp ogt float %9, 0.000000e+00
   %15 = select i1 %14, float %11, float %13
   %16 = load <4 x float> addrspace(8)* null
   %17 = extractelement <4 x float> %16, i32 2
@@ -74,7 +74,7 @@ main_body:
   %19 = extractelement <4 x float> %18, i32 3
   %20 = load <4 x float> addrspace(8)* getelementptr ([1024 x <4 x float>] addrspace(8)* null, i64 0, i32 1)
   %21 = extractelement <4 x float> %20, i32 2
-  %22 = fcmp ult float %17, 0.000000e+00
+  %22 = fcmp ogt float %17, 0.000000e+00
   %23 = select i1 %22, float %19, float %21
   %24 = load <4 x float> addrspace(8)* null
   %25 = extractelement <4 x float> %24, i32 3
@@ -82,7 +82,7 @@ main_body:
   %27 = extractelement <4 x float> %26, i32 3
   %28 = load <4 x float> addrspace(8)* getelementptr ([1024 x <4 x float>] addrspace(8)* null, i64 0, i32 2)
   %29 = extractelement <4 x float> %28, i32 2
-  %30 = fcmp ult float %25, 0.000000e+00
+  %30 = fcmp ogt float %25, 0.000000e+00
   %31 = select i1 %30, float %27, float %29
   %32 = call float @llvm.AMDIL.clamp.(float %7, float 0.000000e+00, float 1.000000e+00)
   %33 = call float @llvm.AMDIL.clamp.(float %15, float 0.000000e+00, float 1.000000e+00)

@@ -689,42 +689,42 @@ def MIN : R600_2OP_Helper <0x4, "MIN", AMDGPUfmin>;
 // XXX: Use the defs in TargetSelectionDAG.td instead of intrinsics.
 def SETE : R600_2OP <
   0x08, "SETE",
-  [(set f32:$dst, (selectcc f32:$src0, f32:$src1, FP_ONE, FP_ZERO, COND_EQ))]
+  [(set f32:$dst, (selectcc f32:$src0, f32:$src1, FP_ONE, FP_ZERO, COND_OEQ))]
 >;
 
 def SGT : R600_2OP <
   0x09, "SETGT",
-  [(set f32:$dst, (selectcc f32:$src0, f32:$src1, FP_ONE, FP_ZERO, COND_GT))]
+  [(set f32:$dst, (selectcc f32:$src0, f32:$src1, FP_ONE, FP_ZERO, COND_OGT))]
 >;
 
 def SGE : R600_2OP <
   0xA, "SETGE",
-  [(set f32:$dst, (selectcc f32:$src0, f32:$src1, FP_ONE, FP_ZERO, COND_GE))]
+  [(set f32:$dst, (selectcc f32:$src0, f32:$src1, FP_ONE, FP_ZERO, COND_OGE))]
 >;
 
 def SNE : R600_2OP <
   0xB, "SETNE",
-  [(set f32:$dst, (selectcc f32:$src0, f32:$src1, FP_ONE, FP_ZERO, COND_NE))]
+  [(set f32:$dst, (selectcc f32:$src0, f32:$src1, FP_ONE, FP_ZERO, COND_UNE))]
 >;
 
 def SETE_DX10 : R600_2OP <
   0xC, "SETE_DX10",
-  [(set i32:$dst, (selectcc f32:$src0, f32:$src1, -1, 0, COND_EQ))]
+  [(set i32:$dst, (selectcc f32:$src0, f32:$src1, -1, 0, COND_OEQ))]
 >;
 
 def SETGT_DX10 : R600_2OP <
   0xD, "SETGT_DX10",
-  [(set i32:$dst, (selectcc f32:$src0, f32:$src1, -1, 0, COND_GT))]
+  [(set i32:$dst, (selectcc f32:$src0, f32:$src1, -1, 0, COND_OGT))]
 >;
 
 def SETGE_DX10 : R600_2OP <
   0xE, "SETGE_DX10",
-  [(set i32:$dst, (selectcc f32:$src0, f32:$src1, -1, 0, COND_GE))]
+  [(set i32:$dst, (selectcc f32:$src0, f32:$src1, -1, 0, COND_OGE))]
 >;
 
 def SETNE_DX10 : R600_2OP <
   0xF, "SETNE_DX10",
-  [(set i32:$dst, (selectcc f32:$src0, f32:$src1, -1, 0, COND_NE))]
+  [(set i32:$dst, (selectcc f32:$src0, f32:$src1, -1, 0, COND_UNE))]
 >;
 
 def FRACT : R600_1OP_Helper <0x10, "FRACT", AMDGPUfract>;
@@ -920,19 +920,19 @@ class MULADD_IEEE_Common <bits<5> inst> : R600_3OP <
 
 class CNDE_Common <bits<5> inst> : R600_3OP <
   inst, "CNDE",
-  [(set f32:$dst, (selectcc f32:$src0, FP_ZERO, f32:$src1, f32:$src2, COND_EQ))]
+  [(set f32:$dst, (selectcc f32:$src0, FP_ZERO, f32:$src1, f32:$src2, COND_OEQ))]
 >;
 
 class CNDGT_Common <bits<5> inst> : R600_3OP <
   inst, "CNDGT",
-  [(set f32:$dst, (selectcc f32:$src0, FP_ZERO, f32:$src1, f32:$src2, COND_GT))]
+  [(set f32:$dst, (selectcc f32:$src0, FP_ZERO, f32:$src1, f32:$src2, COND_OGT))]
 > {
   let Itinerary = VecALU;
 }
 
 class CNDGE_Common <bits<5> inst> : R600_3OP <
   inst, "CNDGE",
-  [(set f32:$dst, (selectcc f32:$src0, FP_ZERO, f32:$src1, f32:$src2, COND_GE))]
+  [(set f32:$dst, (selectcc f32:$src0, FP_ZERO, f32:$src1, f32:$src2, COND_OGE))]
 > {
   let Itinerary = VecALU;
 }
@@ -2322,38 +2322,6 @@ def KILP : Pat <
 def KIL : Pat <
   (int_AMDGPU_kill f32:$src0),
   (MASK_WRITE (KILLGT (f32 ZERO), $src0))
->;
-
-// The next two patterns are special cases for handling 'true if ordered' and
-// 'true if unordered' conditionals.  The assumption here is that the behavior of
-// SETE and SNE conforms to the Direct3D 10 rules for floating point values
-// described here:
-// http://msdn.microsoft.com/en-us/library/windows/desktop/cc308050.aspx#alpha_32_bit
-// We assume that  SETE returns false when one of the operands is NAN and
-// SNE returns true when on of the operands is NAN
-
-//SETE - 'true if ordered'
-def : Pat <
-  (selectcc f32:$src0, f32:$src1, FP_ONE, FP_ZERO, SETO),
-  (SETE $src0, $src1)
->;
-
-//SETE_DX10 - 'true if ordered'
-def : Pat <
-  (selectcc f32:$src0, f32:$src1, -1, 0, SETO),
-  (SETE_DX10 $src0, $src1)
->;
-
-//SNE - 'true if unordered'
-def : Pat <
-  (selectcc f32:$src0, f32:$src1, FP_ONE, FP_ZERO, SETUO),
-  (SNE $src0, $src1)
->;
-
-//SETNE_DX10 - 'true if ordered'
-def : Pat <
-  (selectcc f32:$src0, f32:$src1, -1, 0, SETUO),
-  (SETNE_DX10 $src0, $src1)
 >;
 
 def : Extract_Element <f32, v4f32, 0, sub0>;

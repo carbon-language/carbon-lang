@@ -43,12 +43,23 @@ def COND_EQ : PatLeaf <
                      case ISD::SETEQ: return true;}}}]
 >;
 
+def COND_OEQ : PatLeaf <
+  (cond),
+  [{return N->get() == ISD::SETOEQ || N->get() == ISD::SETEQ;}]
+>;
+
 def COND_NE : PatLeaf <
   (cond),
   [{switch(N->get()){{default: return false;
                      case ISD::SETONE: case ISD::SETUNE:
                      case ISD::SETNE: return true;}}}]
 >;
+
+def COND_UNE : PatLeaf <
+  (cond),
+  [{return N->get() == ISD::SETUNE || N->get() == ISD::SETNE;}]
+>;
+
 def COND_GT : PatLeaf <
   (cond),
   [{switch(N->get()){{default: return false;
@@ -56,11 +67,21 @@ def COND_GT : PatLeaf <
                      case ISD::SETGT: return true;}}}]
 >;
 
+def COND_OGT : PatLeaf <
+  (cond),
+  [{return N->get() == ISD::SETOGT || N->get() == ISD::SETGT;}]
+>;
+
 def COND_GE : PatLeaf <
   (cond),
   [{switch(N->get()){{default: return false;
                      case ISD::SETOGE: case ISD::SETUGE:
                      case ISD::SETGE: return true;}}}]
+>;
+
+def COND_OGE : PatLeaf <
+  (cond),
+  [{return N->get() == ISD::SETOGE || N->get() == ISD::SETGE;}]
 >;
 
 def COND_LT : PatLeaf <

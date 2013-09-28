@@ -6,7 +6,7 @@
 
 define void @test_a(i32 addrspace(1)* %out, float %in) {
 entry:
-  %0 = fcmp ult float %in, 0.000000e+00
+  %0 = fcmp olt float %in, 0.000000e+00
   %1 = select i1 %0, float 1.000000e+00, float 0.000000e+00
   %2 = fsub float -0.000000e+00, %1
   %3 = fptosi float %2 to i32
@@ -34,7 +34,7 @@ ENDIF:
 ; CHECK-NEXT: ALU clause starting
 define void @test_b(i32 addrspace(1)* %out, float %in) {
 entry:
-  %0 = fcmp ult float %in, 0.0
+  %0 = fcmp olt float %in, 0.0
   %1 = select i1 %0, float 1.000000e+00, float 0.000000e+00
   %2 = fsub float -0.000000e+00, %1
   %3 = fptosi float %2 to i32

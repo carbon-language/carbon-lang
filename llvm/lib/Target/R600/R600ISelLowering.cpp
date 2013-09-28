@@ -38,10 +38,17 @@ R600TargetLowering::R600TargetLowering(TargetMachine &TM) :
 
   computeRegisterProperties();
 
-  setCondCodeAction(ISD::SETLE,  MVT::f32, Expand);
+  // Set condition code actions
+  setCondCodeAction(ISD::SETO,   MVT::f32, Expand);
+  setCondCodeAction(ISD::SETUO,  MVT::f32, Expand);
   setCondCodeAction(ISD::SETLT,  MVT::f32, Expand);
+  setCondCodeAction(ISD::SETLE,  MVT::f32, Expand);
   setCondCodeAction(ISD::SETOLT, MVT::f32, Expand);
   setCondCodeAction(ISD::SETOLE, MVT::f32, Expand);
+  setCondCodeAction(ISD::SETONE, MVT::f32, Expand);
+  setCondCodeAction(ISD::SETUEQ, MVT::f32, Expand);
+  setCondCodeAction(ISD::SETUGE, MVT::f32, Expand);
+  setCondCodeAction(ISD::SETUGT, MVT::f32, Expand);
   setCondCodeAction(ISD::SETULT, MVT::f32, Expand);
   setCondCodeAction(ISD::SETULE, MVT::f32, Expand);
 
