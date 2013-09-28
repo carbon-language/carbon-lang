@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <errno.h>
 
 #include "GDBRemoteCommunicationServer.h"
 #include "lldb/Core/StreamGDBRemote.h"
@@ -762,9 +763,9 @@ GDBRemoteCommunicationServer::Handle_qLaunchGDBServer (StringExtractorGDBRemote 
         Error error;
         std::string hostname;
         char unix_socket_name[PATH_MAX] = "/tmp/XXXXXX";
-        if (::mktemp (unix_socket_name) == NULL)
+        if (::mkstemp (unix_socket_name) == -1)
         {
-            error.SetErrorString ("failed to make temporary path for a unix socket");
+            error.SetErrorStringWithFormat("failed to make temporary path for a unix socket with errno: %s", strerror(errno));
         }
         else
         {
