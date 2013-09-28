@@ -107,12 +107,9 @@ public:
     return RawText;
   }
 
-  SourceRange getSourceRange() const LLVM_READONLY {
-    return Range;
-  }
-
-  unsigned getBeginLine(const SourceManager &SM) const;
-  unsigned getEndLine(const SourceManager &SM) const;
+  SourceRange getSourceRange() const LLVM_READONLY { return Range; }
+  SourceLocation getLocStart() const LLVM_READONLY { return Range.getBegin(); }
+  SourceLocation getLocEnd() const LLVM_READONLY { return Range.getEnd(); }
 
   const char *getBriefText(const ASTContext &Context) const {
     if (BriefTextValid)
@@ -146,11 +143,6 @@ private:
   /// considered as documentation comments.
   bool ParseAllComments : 1;
 
-  mutable bool BeginLineValid : 1; ///< True if BeginLine is valid
-  mutable bool EndLineValid : 1;   ///< True if EndLine is valid
-  mutable unsigned BeginLine;      ///< Cached line number
-  mutable unsigned EndLine;        ///< Cached line number
-
   /// \brief Constructor for AST deserialization.
   RawComment(SourceRange SR, CommentKind K, bool IsTrailingComment,
              bool IsAlmostTrailingComment,
@@ -158,8 +150,7 @@ private:
     Range(SR), RawTextValid(false), BriefTextValid(false), Kind(K),
     IsAttached(false), IsTrailingComment(IsTrailingComment),
     IsAlmostTrailingComment(IsAlmostTrailingComment),
-    ParseAllComments(ParseAllComments),
-    BeginLineValid(false), EndLineValid(false)
+    ParseAllComments(ParseAllComments)
   { }
 
   StringRef getRawTextSlow(const SourceManager &SourceMgr) const;
@@ -178,8 +169,7 @@ public:
   explicit BeforeThanCompare(const SourceManager &SM) : SM(SM) { }
 
   bool operator()(const RawComment &LHS, const RawComment &RHS) {
-    return SM.isBeforeInTranslationUnit(LHS.getSourceRange().getBegin(),
-                                        RHS.getSourceRange().getBegin());
+    return SM.isBeforeInTranslationUnit(LHS.getLocStart(), RHS.getLocStart());
   }
 
   bool operator()(const RawComment *LHS, const RawComment *RHS) {
@@ -191,8 +181,7 @@ public:
 /// sorted in order of appearance in the translation unit.
 class RawCommentList {
 public:
-  RawCommentList(SourceManager &SourceMgr) :
-    SourceMgr(SourceMgr), OnlyWhitespaceSeen(true) { }
+  RawCommentList(SourceManager &SourceMgr) : SourceMgr(SourceMgr) {}
 
   void addComment(const RawComment &RC, llvm::BumpPtrAllocator &Allocator);
 
@@ -203,15 +192,9 @@ public:
 private:
   SourceManager &SourceMgr;
   std::vector<RawComment *> Comments;
-  SourceLocation PrevCommentEndLoc;
-  bool OnlyWhitespaceSeen;
 
   void addCommentsToFront(const std::vector<RawComment *> &C) {
-    size_t OldSize = Comments.size();
-    Comments.resize(C.size() + OldSize);
-    std::copy_backward(Comments.begin(), Comments.begin() + OldSize,
-                       Comments.end());
-    std::copy(C.begin(), C.end(), Comments.begin());
+    Comments.insert(Comments.begin(), C.begin(), C.end());
   }
 
   friend class ASTReader;
