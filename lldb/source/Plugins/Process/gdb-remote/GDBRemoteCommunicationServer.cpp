@@ -762,10 +762,12 @@ GDBRemoteCommunicationServer::Handle_qLaunchGDBServer (StringExtractorGDBRemote 
         char connect_url[PATH_MAX];
         Error error;
         std::string hostname;
+        // TODO: /tmp/ should not be hardcoded. User might want to override /tmp
+        // with the TMPDIR environnement variable
         char unix_socket_name[PATH_MAX] = "/tmp/XXXXXX";
         if (::mkstemp (unix_socket_name) == -1)
         {
-            error.SetErrorStringWithFormat("failed to make temporary path for a unix socket with errno: %s", strerror(errno));
+            error.SetErrorStringWithFormat("failed to make temporary path for a unix socket: %s", strerror(errno));
         }
         else
         {
