@@ -2762,7 +2762,7 @@ public:
 /// DependentScopeDeclRefExpr node is used only within C++ templates when
 /// the qualification (e.g., X<T>::) refers to a dependent type. In
 /// this case, X<T>::value cannot resolve to a declaration because the
-/// declaration will differ from on instantiation of X<T> to the
+/// declaration will differ from one instantiation of X<T> to the
 /// next. Therefore, DependentScopeDeclRefExpr keeps track of the
 /// qualifier (X<T>::) and the name of the entity being referenced
 /// ("value"). Such expressions will instantiate to a DeclRefExpr once the
@@ -2814,12 +2814,13 @@ public:
   DeclarationName getDeclName() const { return NameInfo.getName(); }
 
   /// \brief Retrieve the location of the name within the expression.
+  ///
+  /// For example, in "X<T>::value" this is the location of "value".
   SourceLocation getLocation() const { return NameInfo.getLoc(); }
 
   /// \brief Retrieve the nested-name-specifier that qualifies the
   /// name, with source location information.
   NestedNameSpecifierLoc getQualifierLoc() const { return QualifierLoc; }
-
 
   /// \brief Retrieve the nested-name-specifier that qualifies this
   /// declaration.
@@ -2892,6 +2893,8 @@ public:
     return getExplicitTemplateArgs().NumTemplateArgs;
   }
 
+  /// Note: getLocStart() is the start of the whole DependentScopeDeclRefExpr,
+  /// and differs from getLocation().getStart().
   SourceLocation getLocStart() const LLVM_READONLY {
     return QualifierLoc.getBeginLoc();
   }
