@@ -29,7 +29,7 @@
 
 using namespace llvm;
 
-STATISTIC(IfHandled, "Number of 'expect' intrinsic intructions handled");
+STATISTIC(IfHandled, "Number of 'expect' intrinsic instructions handled");
 
 static cl::opt<uint32_t>
 LikelyBranchWeight("likely-branch-weight", cl::Hidden, cl::init(64),

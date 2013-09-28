@@ -9442,7 +9442,7 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC,
   unsigned NumOperands = 0;
 
   // Truncate operations may prevent the merge of the SETCC instruction
-  // and the arithmetic intruction before it. Attempt to truncate the operands
+  // and the arithmetic instruction before it. Attempt to truncate the operands
   // of the arithmetic instruction and use a reduced bit-width instruction.
   bool NeedTruncation = false;
   SDValue ArithOp = Op;
@@ -11319,7 +11319,7 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
   case Intrinsic::x86_avx2_permd:
   case Intrinsic::x86_avx2_permps:
     // Operands intentionally swapped. Mask is last operand to intrinsic,
-    // but second operand for node/intruction.
+    // but second operand for node/instruction.
     return DAG.getNode(X86ISD::VPERMV, dl, Op.getValueType(),
                        Op.getOperand(2), Op.getOperand(1));
 

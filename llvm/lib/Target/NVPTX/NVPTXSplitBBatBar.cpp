@@ -36,7 +36,7 @@ bool NVPTXSplitBBatBar::runOnFunction(Function &F) {
     BasicBlock::iterator II = IB;
     BasicBlock::iterator IE = BI->end();
 
-    // Skit the first intruction. No splitting is needed at this
+    // Skit the first instruction. No splitting is needed at this
     // point even if this is a bar.
     while (II != IE) {
       if (IntrinsicInst *inst = dyn_cast<IntrinsicInst>(II)) {

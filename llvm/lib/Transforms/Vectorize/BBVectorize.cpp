@@ -533,7 +533,7 @@ namespace {
       default: break;
       case Instruction::GetElementPtr:
         // We mark this instruction as zero-cost because scalar GEPs are usually
-        // lowered to the intruction addressing mode. At the moment we don't
+        // lowered to the instruction addressing mode. At the moment we don't
         // generate vector GEPs.
         return 0;
       case Instruction::Br:

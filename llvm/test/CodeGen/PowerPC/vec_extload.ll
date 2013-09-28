@@ -5,7 +5,7 @@
 target datalayout = "E-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v128:128:128-n32:64"
 target triple = "powerpc64-unknown-linux-gnu"
 
-; Altivec does not provides an sext intruction, so it expands
+; Altivec does not provides an sext instruction, so it expands
 ; a set of vector stores (stvx), bytes load/sign expand/store
 ; (lbz/stb), and a final vector load (lvx) to load the result
 ; extended vector.

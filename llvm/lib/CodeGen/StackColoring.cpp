@@ -170,7 +170,7 @@ private:
   /// slots to use the joint slots.
   void remapInstructions(DenseMap<int, int> &SlotRemap);
 
-  /// The input program may contain intructions which are not inside lifetime
+  /// The input program may contain instructions which are not inside lifetime
   /// markers. This can happen due to a bug in the compiler or due to a bug in
   /// user code (for example, returning a reference to a local variable).
   /// This procedure checks all of the instructions in the function and

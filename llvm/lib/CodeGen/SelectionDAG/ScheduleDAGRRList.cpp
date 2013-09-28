@@ -718,7 +718,7 @@ void ScheduleDAGRRList::ScheduleNodeBottomUp(SUnit *SU) {
   // indicate the scheduled cycle.
   SU->setHeightToAtLeast(CurCycle);
 
-  // Reserve resources for the scheduled intruction.
+  // Reserve resources for the scheduled instruction.
   EmitNode(SU);
 
   Sequence.push_back(SU);

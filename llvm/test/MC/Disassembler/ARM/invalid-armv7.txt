@@ -183,7 +183,7 @@
 # | 1: 1: 1: 1| 0: 0: 0: 1| 1: 0: 1: 1| 1: 1: 0: 0| 1: 1: 0: 1| 0: 0: 0: 1| 0: 0: 0: 0| 0: 0: 1: 0|
 # -------------------------------------------------------------------------------------------------
 # To qualify as an LSL (immediate) instruction, Inst{19-16} "should" be 0b0000, instead it is = 0b1100.
-# The instruction is UNPREDICTABLE, and is not a valid intruction.
+# The instruction is UNPREDICTABLE, and is not a valid instruction.
 #
 # See also
 # A8.6.88 LSL (immediate)
@@ -201,7 +201,7 @@
 # | 1: 1: 1: 1| 0: 0: 0: 1| 1: 0: 1: 1| 1: 1: 0: 0| 1: 1: 0: 1| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 1: 0|
 # -------------------------------------------------------------------------------------------------
 # To qualify as a MOV (register) instruction, Inst{19-16} "should" be 0b0000, instead it is = 0b1100.
-# The instruction is UNPREDICTABLE, and is not a valid intruction.
+# The instruction is UNPREDICTABLE, and is not a valid instruction.
 #
 # See also
 # A8.6.97 MOV (register)
