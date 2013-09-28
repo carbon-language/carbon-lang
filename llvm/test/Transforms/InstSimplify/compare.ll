@@ -729,3 +729,13 @@ define i1 @non_inbounds_gep_compare(i64* %a) {
   ret i1 %cmp
 ; CHECK-NEXT: ret i1 true
 }
+
+define i1 @non_inbounds_gep_compare2(i64* %a) {
+; CHECK-LABEL: @non_inbounds_gep_compare2(
+; Equality compares with non-inbounds GEPs can be folded.
+  %x = getelementptr i64* %a, i64 4294967297
+  %y = getelementptr i64* %a, i64 1
+  %cmp = icmp eq i64* %y, %y
+  ret i1 %cmp
+; CHECK-NEXT: ret i1 true
+}
