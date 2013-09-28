@@ -31,7 +31,7 @@ D: FreeBSD and Solaris ports, libcxxrt support, some atomics work.
 N: Marshall Clow
 E: mclow.lists@gmail.com
 E: marshall@idio.com
-D: Minor patches and bug fixes.
+D: C++14 support, patches and bug fixes.
 
 N: Bill Fisher
 E: william.w.fisher@gmail.com
