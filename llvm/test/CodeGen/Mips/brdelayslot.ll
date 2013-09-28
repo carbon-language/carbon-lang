@@ -160,7 +160,14 @@ for.end:                                          ; preds = %for.body, %entry
 ;
 ; SUCCBB-LABEL:      succbbs_br1:
 ; SUCCBB:      beqz ${{[0-9]+}}, $BB
-; SUCCBB-NEXT: lw $25, %call16(foo100)
+; SUCCBB-NEXT: lw ${{[0-9]+}}, %got(foo101)(${{[0-9]+}})
+
+define internal fastcc void @foo101() {
+entry:
+  tail call void @foo100()
+  tail call void @foo100()
+  ret void
+}
 
 define void @succbbs_br1(i32 %a) {
 entry:
@@ -168,7 +175,7 @@ entry:
   br i1 %tobool, label %if.end, label %if.then
 
 if.then:                                          ; preds = %entry
-  tail call void @foo100() #1
+  tail call fastcc void @foo101()
   br label %if.end
 
 if.end:                                           ; preds = %entry, %if.then

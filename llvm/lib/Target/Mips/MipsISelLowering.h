@@ -275,12 +275,12 @@ namespace llvm {
     // (load (wrapper $gp, %got(sym)))
     template<class NodeTy>
     SDValue getAddrGlobal(NodeTy *N, EVT Ty, SelectionDAG &DAG,
-                          unsigned Flag) const {
+                          unsigned Flag, SDValue Chain,
+                          const MachinePointerInfo &PtrInfo) const {
       SDLoc DL(N);
       SDValue Tgt = DAG.getNode(MipsISD::Wrapper, DL, Ty, getGlobalReg(DAG, Ty),
                                 getTargetNode(N, Ty, DAG, Flag));
-      return DAG.getLoad(Ty, DL, DAG.getEntryNode(), Tgt,
-                         MachinePointerInfo::getGOT(), false, false, false, 0);
+      return DAG.getLoad(Ty, DL, Chain, Tgt, PtrInfo, false, false, false, 0);
     }
 
     // This method creates the following nodes, which are necessary for
@@ -289,15 +289,17 @@ namespace llvm {
     // (load (wrapper (add %hi(sym), $gp), %lo(sym)))
     template<class NodeTy>
     SDValue getAddrGlobalLargeGOT(NodeTy *N, EVT Ty, SelectionDAG &DAG,
-                                  unsigned HiFlag, unsigned LoFlag) const {
+                                  unsigned HiFlag, unsigned LoFlag,
+                                  SDValue Chain,
+                                  const MachinePointerInfo &PtrInfo) const {
       SDLoc DL(N);
       SDValue Hi = DAG.getNode(MipsISD::Hi, DL, Ty,
                                getTargetNode(N, Ty, DAG, HiFlag));
       Hi = DAG.getNode(ISD::ADD, DL, Ty, Hi, getGlobalReg(DAG, Ty));
       SDValue Wrapper = DAG.getNode(MipsISD::Wrapper, DL, Ty, Hi,
                                     getTargetNode(N, Ty, DAG, LoFlag));
-      return DAG.getLoad(Ty, DL, DAG.getEntryNode(), Wrapper,
-                         MachinePointerInfo::getGOT(), false, false, false, 0);
+      return DAG.getLoad(Ty, DL, Chain, Wrapper, PtrInfo, false, false, false,
+                         0);
     }
 
     // This method creates the following nodes, which are necessary for

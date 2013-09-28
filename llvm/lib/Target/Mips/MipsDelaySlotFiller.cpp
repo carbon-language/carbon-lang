@@ -421,8 +421,7 @@ bool LoadFromStackOrConst::hasHazard_(const MachineInstr &MI) {
     return false;
 
   if (const PseudoSourceValue *PSV = dyn_cast<const PseudoSourceValue>(V))
-    return !PSV->PseudoSourceValue::isConstant(0) &&
-      (V != PseudoSourceValue::getStack());
+    return !PSV->isConstant(0) && V != PseudoSourceValue::getStack();
 
   return true;
 }

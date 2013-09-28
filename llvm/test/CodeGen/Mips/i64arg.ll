@@ -9,11 +9,11 @@ entry:
 ; CHECK: lw  $25, %call16(ff1)
 ; CHECK: jalr
   tail call void @ff1(i32 %i, i64 1085102592623924856) nounwind
-; CHECK: lw $25, %call16(ff2)
-; CHECK: lw $[[R2:[0-9]+]], 80($sp)
-; CHECK: lw $[[R3:[0-9]+]], 84($sp)
-; CHECK: move $4, $[[R2]]
-; CHECK: move $5, $[[R3]]
+; CHECK-DAG: lw $25, %call16(ff2)
+; CHECK-DAG: lw $[[R2:[0-9]+]], 80($sp)
+; CHECK-DAG: lw $[[R3:[0-9]+]], 84($sp)
+; CHECK-DAG: move $4, $[[R2]]
+; CHECK-DAG: move $5, $[[R3]]
 ; CHECK: jalr $25
   tail call void @ff2(i64 %ll, double 3.000000e+00) nounwind
   %sub = add nsw i32 %i, -1
