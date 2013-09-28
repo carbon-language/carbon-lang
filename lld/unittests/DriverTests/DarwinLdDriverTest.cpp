@@ -222,4 +222,13 @@ TEST_F(DarwinLdParserTest, deadStrippableDylibInvalidType) {
   EXPECT_FALSE(parse("ld", "-mark_dead_strippable_dylib", "a.o", nullptr));
 }
 
+TEST_F(DarwinLdParserTest, llvmOptions) {
+  EXPECT_TRUE(parse("ld", "-mllvm", "-debug-only", "-mllvm", "foo", "a.o", nullptr));
+  const std::vector<const char *> &options = _context.llvmOptions();
+  EXPECT_EQ(options.size(), 2UL);
+  EXPECT_EQ(strcmp(options[0],"-debug-only"), 0);
+  EXPECT_EQ(strcmp(options[1],"foo"), 0);
+}
+
+
 }  // end anonymous namespace
