@@ -87,7 +87,7 @@ GDBRemoteCommunicationServer::~GDBRemoteCommunicationServer()
 //        log->Printf ("ProcessGDBRemote::%s (arg = %p, pid = %i) thread starting...", __FUNCTION__, arg, process->GetID());
 //
 //    StringExtractorGDBRemote packet;
-//    
+//
 //    while ()
 //    {
 //        if (packet.
@@ -101,9 +101,9 @@ GDBRemoteCommunicationServer::~GDBRemoteCommunicationServer()
 //}
 //
 bool
-GDBRemoteCommunicationServer::GetPacketAndSendResponse (uint32_t timeout_usec, 
+GDBRemoteCommunicationServer::GetPacketAndSendResponse (uint32_t timeout_usec,
                                                         Error &error,
-                                                        bool &interrupt, 
+                                                        bool &interrupt,
                                                         bool &quit)
 {
     StringExtractorGDBRemote packet;
@@ -125,7 +125,7 @@ GDBRemoteCommunicationServer::GetPacketAndSendResponse (uint32_t timeout_usec,
                 error.SetErrorString("interrupt received");
                 interrupt = true;
                 break;
-            
+
             case StringExtractorGDBRemote::eServerPacketType_unimplemented:
                 return SendUnimplementedResponse (packet.GetStringRef().c_str()) > 0;
 
@@ -134,25 +134,25 @@ GDBRemoteCommunicationServer::GetPacketAndSendResponse (uint32_t timeout_usec,
 
             case StringExtractorGDBRemote::eServerPacketType_qfProcessInfo:
                 return Handle_qfProcessInfo (packet);
-                
+
             case StringExtractorGDBRemote::eServerPacketType_qsProcessInfo:
                 return Handle_qsProcessInfo (packet);
-                
+
             case StringExtractorGDBRemote::eServerPacketType_qC:
                 return Handle_qC (packet);
-                
+
             case StringExtractorGDBRemote::eServerPacketType_qHostInfo:
                 return Handle_qHostInfo (packet);
-                
+
             case StringExtractorGDBRemote::eServerPacketType_qLaunchGDBServer:
                 return Handle_qLaunchGDBServer (packet);
-                
+
             case StringExtractorGDBRemote::eServerPacketType_qKillSpawnedProcess:
                 return Handle_qKillSpawnedProcess (packet);
-                
+
             case StringExtractorGDBRemote::eServerPacketType_qLaunchSuccess:
                 return Handle_qLaunchSuccess (packet);
-                
+
             case StringExtractorGDBRemote::eServerPacketType_qGroupName:
                 return Handle_qGroupName (packet);
 
@@ -167,43 +167,43 @@ GDBRemoteCommunicationServer::GetPacketAndSendResponse (uint32_t timeout_usec,
 
             case StringExtractorGDBRemote::eServerPacketType_QEnvironment:
                 return Handle_QEnvironment (packet);
-                
+
             case StringExtractorGDBRemote::eServerPacketType_QLaunchArch:
                 return Handle_QLaunchArch (packet);
-            
+
             case StringExtractorGDBRemote::eServerPacketType_QSetDisableASLR:
                 return Handle_QSetDisableASLR (packet);
-            
+
             case StringExtractorGDBRemote::eServerPacketType_QSetSTDIN:
                 return Handle_QSetSTDIN (packet);
-            
+
             case StringExtractorGDBRemote::eServerPacketType_QSetSTDOUT:
                 return Handle_QSetSTDOUT (packet);
-            
+
             case StringExtractorGDBRemote::eServerPacketType_QSetSTDERR:
                 return Handle_QSetSTDERR (packet);
-            
+
             case StringExtractorGDBRemote::eServerPacketType_QSetWorkingDir:
                 return Handle_QSetWorkingDir (packet);
 
             case StringExtractorGDBRemote::eServerPacketType_QStartNoAckMode:
                 return Handle_QStartNoAckMode (packet);
-                
+
             case StringExtractorGDBRemote::eServerPacketType_qPlatform_IO_MkDir:
                 return Handle_qPlatform_IO_MkDir (packet);
-                
+
             case StringExtractorGDBRemote::eServerPacketType_qPlatform_RunCommand:
                 return Handle_qPlatform_RunCommand (packet);
-                
+
             case StringExtractorGDBRemote::eServerPacketType_vFile_Open:
                 return Handle_vFile_Open (packet);
-                
+
             case StringExtractorGDBRemote::eServerPacketType_vFile_Close:
                 return Handle_vFile_Close (packet);
-                
+
             case StringExtractorGDBRemote::eServerPacketType_vFile_pRead:
                 return Handle_vFile_pRead (packet);
-                
+
             case StringExtractorGDBRemote::eServerPacketType_vFile_pWrite:
                 return Handle_vFile_pWrite (packet);
 
@@ -215,10 +215,10 @@ GDBRemoteCommunicationServer::GetPacketAndSendResponse (uint32_t timeout_usec,
 
             case StringExtractorGDBRemote::eServerPacketType_vFile_Exists:
                 return Handle_vFile_Exists (packet);
-                
+
             case StringExtractorGDBRemote::eServerPacketType_vFile_Stat:
                 return Handle_vFile_Stat (packet);
-                
+
             case StringExtractorGDBRemote::eServerPacketType_vFile_MD5:
                 return Handle_vFile_MD5 (packet);
         }
@@ -268,7 +268,7 @@ bool
 GDBRemoteCommunicationServer::Handle_qHostInfo (StringExtractorGDBRemote &packet)
 {
     StreamString response;
-    
+
     // $cputype:16777223;cpusubtype:3;ostype:Darwin;vendor:apple;endian:little;ptrsize:8;#00
 
     ArchSpec host_arch (Host::GetArchitecture ());
@@ -283,12 +283,12 @@ GDBRemoteCommunicationServer::Handle_qHostInfo (StringExtractorGDBRemote &packet
         response.Printf ("cputype:%u;", cpu);
     if (sub != LLDB_INVALID_CPUTYPE)
         response.Printf ("cpusubtype:%u;", sub);
-    
+
     if (cpu == ArchSpec::kCore_arm_any)
         response.Printf("watchpoint_exceptions_received:before;");   // On armv7 we use "synchronous" watchpoints which means the exception is delivered before the instruction executes.
     else
         response.Printf("watchpoint_exceptions_received:after;");
-    
+
     switch (lldb::endian::InlHostByteOrder())
     {
     case eByteOrderBig:     response.PutCString ("endian:big;"); break;
@@ -296,7 +296,7 @@ GDBRemoteCommunicationServer::Handle_qHostInfo (StringExtractorGDBRemote &packet
     case eByteOrderPDP:     response.PutCString ("endian:pdp;"); break;
     default:                response.PutCString ("endian:unknown;"); break;
     }
-    
+
     uint32_t major = UINT32_MAX;
     uint32_t minor = UINT32_MAX;
     uint32_t update = UINT32_MAX;
@@ -334,7 +334,7 @@ GDBRemoteCommunicationServer::Handle_qHostInfo (StringExtractorGDBRemote &packet
         response.PutCStringAsRawHex8(s.c_str());
         response.PutChar(';');
     }
-    
+
     return SendPacketNoLock (response.GetData(), response.GetSize()) > 0;
 }
 
@@ -380,7 +380,7 @@ GDBRemoteCommunicationServer::Handle_qProcessInfoPID (StringExtractorGDBRemote &
     return SendErrorResponse (1);
 }
 
-bool 
+bool
 GDBRemoteCommunicationServer::Handle_qfProcessInfo (StringExtractorGDBRemote &packet)
 {
     m_proc_infos_index = 0;
@@ -390,7 +390,7 @@ GDBRemoteCommunicationServer::Handle_qfProcessInfo (StringExtractorGDBRemote &pa
     packet.SetFilePos(::strlen ("qfProcessInfo"));
     if (packet.GetChar() == ':')
     {
-    
+
         std::string key;
         std::string value;
         while (packet.GetNameColonValue(key, value))
@@ -421,11 +421,11 @@ GDBRemoteCommunicationServer::Handle_qfProcessInfo (StringExtractorGDBRemote &pa
                 {
                     match_info.SetNameMatchType (eNameMatchContains);
                 }
-                else if (value.compare("regex") == 0)       
+                else if (value.compare("regex") == 0)
                 {
                     match_info.SetNameMatchType (eNameMatchRegularExpression);
                 }
-                else 
+                else
                 {
                     success = false;
                 }
@@ -466,7 +466,7 @@ GDBRemoteCommunicationServer::Handle_qfProcessInfo (StringExtractorGDBRemote &pa
             {
                 success = false;
             }
-            
+
             if (!success)
                 return SendErrorResponse (2);
         }
@@ -481,7 +481,7 @@ GDBRemoteCommunicationServer::Handle_qfProcessInfo (StringExtractorGDBRemote &pa
     return SendErrorResponse (3);
 }
 
-bool 
+bool
 GDBRemoteCommunicationServer::Handle_qsProcessInfo (StringExtractorGDBRemote &packet)
 {
     if (m_proc_infos_index < m_proc_infos.GetSize())
@@ -494,7 +494,7 @@ GDBRemoteCommunicationServer::Handle_qsProcessInfo (StringExtractorGDBRemote &pa
     return SendErrorResponse (4);
 }
 
-bool 
+bool
 GDBRemoteCommunicationServer::Handle_qUserName (StringExtractorGDBRemote &packet)
 {
     // Packet format: "qUserName:%i" where %i is the uid
@@ -511,10 +511,10 @@ GDBRemoteCommunicationServer::Handle_qUserName (StringExtractorGDBRemote &packet
         }
     }
     return SendErrorResponse (5);
-    
+
 }
 
-bool 
+bool
 GDBRemoteCommunicationServer::Handle_qGroupName (StringExtractorGDBRemote &packet)
 {
     // Packet format: "qGroupName:%i" where %i is the gid
@@ -600,11 +600,11 @@ AcceptPortFromInferior (void *arg)
 //    for (int i=0; i<num_retries; i++)
 //    {
 //        struct proc_bsdinfo bsd_info;
-//        int error = ::proc_pidinfo (pid, PROC_PIDTBSDINFO, 
-//                                    (uint64_t) 0, 
-//                                    &bsd_info, 
+//        int error = ::proc_pidinfo (pid, PROC_PIDTBSDINFO,
+//                                    (uint64_t) 0,
+//                                    &bsd_info,
 //                                    PROC_PIDTBSDINFO_SIZE);
-//        
+//
 //        switch (error)
 //        {
 //            case EINVAL:
@@ -612,10 +612,10 @@ AcceptPortFromInferior (void *arg)
 //            case ESRCH:
 //            case EPERM:
 //                return false;
-//                
+//
 //            default:
 //                break;
-//                
+//
 //            case 0:
 //                if (bsd_info.pbi_status == SSTOP)
 //                    return true;
@@ -628,9 +628,9 @@ AcceptPortFromInferior (void *arg)
 bool
 GDBRemoteCommunicationServer::Handle_A (StringExtractorGDBRemote &packet)
 {
-    // The 'A' packet is the most over designed packet ever here with 
-    // redundant argument indexes, redundant argument lengths and needed hex 
-    // encoded argument string values. Really all that is needed is a comma 
+    // The 'A' packet is the most over designed packet ever here with
+    // redundant argument indexes, redundant argument lengths and needed hex
+    // encoded argument string values. Really all that is needed is a comma
     // separated hex encoded argument value list, but we will stay true to the
     // documented version of the 'A' packet here...
 
@@ -676,7 +676,7 @@ GDBRemoteCommunicationServer::Handle_A (StringExtractorGDBRemote &packet)
                                 if (packet.GetChar() != ',')
                                     success = false;
                             }
-                            
+
                             if (success)
                             {
                                 if (arg_idx == 0)
@@ -710,11 +710,11 @@ GDBRemoteCommunicationServer::Handle_qC (StringExtractorGDBRemote &packet)
     response.Printf("QC%" PRIx64, pid);
     if (m_is_platform)
     {
-        // If we launch a process and this GDB server is acting as a platform, 
-        // then we need to clear the process launch state so we can start 
+        // If we launch a process and this GDB server is acting as a platform,
+        // then we need to clear the process launch state so we can start
         // launching another process. In order to launch a process a bunch or
         // packets need to be sent: environment packets, working directory,
-        // disable ASLR, and many more settings. When we launch a process we 
+        // disable ASLR, and many more settings. When we launch a process we
         // then need to know when to clear this information. Currently we are
         // selecting the 'qC' packet as that packet which seems to make the most
         // sense.
@@ -786,7 +786,7 @@ GDBRemoteCommunicationServer::Handle_qLaunchGDBServer (StringExtractorGDBRemote 
             // Spawn a new thread to accept the port that gets bound after
             // binding to port 0 (zero).
             lldb::thread_t accept_thread = LLDB_INVALID_HOST_THREAD;
-            
+
             if (port == 0)
             {
                 accept_thread = Host::ThreadCreate (unix_socket_name,
@@ -794,7 +794,7 @@ GDBRemoteCommunicationServer::Handle_qLaunchGDBServer (StringExtractorGDBRemote 
                                                     connect_url,
                                                     &error);
             }
-            
+
             if (IS_VALID_LLDB_HOST_THREAD(accept_thread))
             {
                 // Spawn a debugserver and try to get the port it listens to.
@@ -808,11 +808,11 @@ GDBRemoteCommunicationServer::Handle_qLaunchGDBServer (StringExtractorGDBRemote 
                 if (log)
                     log->Printf("Launching debugserver with: %s...\n", host_and_port_cstr);
                 error = StartDebugserverProcess (host_and_port_cstr,
-                                                 unix_socket_name, 
+                                                 unix_socket_name,
                                                  debugserver_launch_info);
-                
+
                 lldb::pid_t debugserver_pid = debugserver_launch_info.GetProcessID();
-                
+
                 if (debugserver_pid != LLDB_INVALID_PROCESS_ID)
                 {
                     {
@@ -825,7 +825,7 @@ GDBRemoteCommunicationServer::Handle_qLaunchGDBServer (StringExtractorGDBRemote 
                 if (error.Success())
                 {
                     bool success = false;
-                    
+
                     if (accept_thread)
                     {
                         thread_result_t accept_thread_result = NULL;
@@ -849,10 +849,10 @@ GDBRemoteCommunicationServer::Handle_qLaunchGDBServer (StringExtractorGDBRemote 
                         assert (response_len < sizeof(response));
                         //m_port_to_pid_map[port] = debugserver_launch_info.GetProcessID();
                         success = SendPacketNoLock (response, response_len) > 0;
-                        
+
                     }
                     ::unlink (unix_socket_name);
-                    
+
                     if (!success)
                     {
                         if (debugserver_pid != LLDB_INVALID_PROCESS_ID)
@@ -872,11 +872,11 @@ GDBRemoteCommunicationServer::Handle_qKillSpawnedProcess (StringExtractorGDBRemo
 {
     // Spawn a local debugserver as a platform so we can then attach or launch
     // a process...
-    
+
     if (m_is_platform)
     {
         packet.SetFilePos(::strlen ("qKillSpawnedProcess:"));
-        
+
         lldb::pid_t pid = packet.GetU64(LLDB_INVALID_PROCESS_ID);
 
         // Scope for locker
@@ -886,7 +886,7 @@ GDBRemoteCommunicationServer::Handle_qKillSpawnedProcess (StringExtractorGDBRemo
                 return SendErrorResponse (10);
         }
         Host::Kill (pid, SIGTERM);
-        
+
         for (size_t i=0; i<10; ++i)
         {
             // Scope for locker
@@ -905,7 +905,7 @@ GDBRemoteCommunicationServer::Handle_qKillSpawnedProcess (StringExtractorGDBRemo
                 return true;
         }
         Host::Kill (pid, SIGKILL);
-        
+
         for (size_t i=0; i<10; ++i)
         {
             // Scope for locker
@@ -925,7 +925,7 @@ GDBRemoteCommunicationServer::Handle_qLaunchSuccess (StringExtractorGDBRemote &p
 {
     if (m_process_launch_error.Success())
         return SendOKResponse();
-    StreamString response;    
+    StreamString response;
     response.PutChar('E');
     response.PutCString(m_process_launch_error.AsCString("<unknown error>"));
     return SendPacketNoLock (response.GetData(), response.GetSize());
