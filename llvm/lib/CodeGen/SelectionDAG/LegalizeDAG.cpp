@@ -3664,20 +3664,44 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
     Tmp4 = Node->getOperand(3);   // False
     SDValue CC = Node->getOperand(4);
 
-    bool Legalized = LegalizeSetCCCondCode(
-        getSetCCResultType(Tmp1.getValueType()), Tmp1, Tmp2, CC, dl);
-
-    assert(Legalized && "Can't legalize SELECT_CC with legal condition!");
-    // If we exapanded the SETCC by swapping LHS and RHS, create a new SELECT_CC
-    // node and return it.
-    if (CC.getNode()) {
-      Tmp1 = DAG.getNode(ISD::SELECT_CC, dl, Node->getValueType(0),
-                         Tmp1, Tmp2, Tmp3, Tmp4, CC);
+    bool Legalized = false;
+    // Try to legalize by inverting the condition.  This is for targets that
+    // might support an ordered version of a condition, but not the unordered
+    // version (or vice versa).
+    ISD::CondCode InvCC = ISD::getSetCCInverse(cast<CondCodeSDNode>(CC)->get(),
+                                               Tmp1.getValueType().isInteger());
+    if (TLI.isCondCodeLegal(InvCC, Tmp1.getSimpleValueType())) {
+      // Use the new condition code and swap true and false
+      Legalized = true;
+      Tmp1 = DAG.getSelectCC(dl, Tmp1, Tmp2, Tmp4, Tmp3, InvCC);
     } else {
-      Tmp2 = DAG.getConstant(0, Tmp1.getValueType());
-      CC = DAG.getCondCode(ISD::SETNE);
-      Tmp1 = DAG.getNode(ISD::SELECT_CC, dl, Node->getValueType(0), Tmp1, Tmp2,
-                         Tmp3, Tmp4, CC);
+      // If The inverse is not legal, then try to swap the arguments using
+      // the inverse condition code.
+      ISD::CondCode SwapInvCC = ISD::getSetCCSwappedOperands(InvCC);
+      if (TLI.isCondCodeLegal(SwapInvCC, Tmp1.getSimpleValueType())) {
+        // The swapped inverse condition is legal, so swap true and false,
+        // lhs and rhs.
+        Legalized = true;
+        Tmp1 = DAG.getSelectCC(dl, Tmp2, Tmp1, Tmp4, Tmp3, SwapInvCC);
+      }
+    }
+
+    if (!Legalized) {
+      Legalized = LegalizeSetCCCondCode(
+          getSetCCResultType(Tmp1.getValueType()), Tmp1, Tmp2, CC, dl);
+
+      assert(Legalized && "Can't legalize SELECT_CC with legal condition!");
+      // If we exapanded the SETCC by swapping LHS and RHS, create a new
+      // SELECT_CC node.
+      if (CC.getNode()) {
+        Tmp1 = DAG.getNode(ISD::SELECT_CC, dl, Node->getValueType(0),
+                           Tmp1, Tmp2, Tmp3, Tmp4, CC);
+      } else {
+        Tmp2 = DAG.getConstant(0, Tmp1.getValueType());
+        CC = DAG.getCondCode(ISD::SETNE);
+        Tmp1 = DAG.getNode(ISD::SELECT_CC, dl, Node->getValueType(0), Tmp1, Tmp2,
+                           Tmp3, Tmp4, CC);
+      }
     }
     Results.push_back(Tmp1);
     break;
