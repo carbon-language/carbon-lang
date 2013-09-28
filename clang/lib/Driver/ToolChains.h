@@ -82,6 +82,7 @@ protected:
     std::string GCCInstallPath;
     std::string GCCBiarchSuffix;
     std::string GCCParentLibPath;
+    std::string GCCMultiLibSuffix;
 
     GCCVersion Version;
 
@@ -108,6 +109,9 @@ protected:
 
     /// \brief Get the detected GCC parent lib path.
     StringRef getParentLibPath() const { return GCCParentLibPath; }
+
+    /// \brief Get the detected GCC lib path suffix.
+    StringRef getMultiLibSuffix() const { return GCCMultiLibSuffix; }
 
     /// \brief Get the detected GCC version string.
     const GCCVersion &getVersion() const { return Version; }

@@ -1306,29 +1306,8 @@ static bool hasMipsN32ABIArg(const ArgList &Args) {
   return A && (A->getValue() == StringRef("n32"));
 }
 
-static void appendMipsTargetSuffix(std::string &Path,
-                                   llvm::Triple::ArchType TargetArch,
-                                   const ArgList &Args) {
-  if (isMips16(Args))
-    Path += "/mips16";
-  else if (isMicroMips(Args))
-    Path += "/micromips";
-
-  if (isSoftFloatABI(Args))
-    Path += "/soft-float";
-
-  if (TargetArch == llvm::Triple::mipsel ||
-      TargetArch == llvm::Triple::mips64el)
-    Path += "/el";
-}
-
-static StringRef getMipsTargetABISuffix(llvm::Triple::ArchType TargetArch,
-                                        const ArgList &Args) {
-  if (TargetArch == llvm::Triple::mips64 ||
-      TargetArch == llvm::Triple::mips64el)
-    return hasMipsN32ABIArg(Args) ? "/n32" : "/64";
-
-  return "/32";
+static bool hasCrtBeginObj(Twine Path) {
+  return llvm::sys::fs::exists(Path + "/crtbegin.o");
 }
 
 static bool findTargetBiarchSuffix(std::string &Suffix, StringRef Path,
@@ -1337,35 +1316,41 @@ static bool findTargetBiarchSuffix(std::string &Suffix, StringRef Path,
   // FIXME: This routine was only intended to model bi-arch toolchains which
   // use -m32 and -m64 to swap between variants of a target. It shouldn't be
   // doing ABI-based builtin location for MIPS.
-  if (isMipsArch(TargetArch)) {
-    StringRef ABISuffix = getMipsTargetABISuffix(TargetArch, Args);
-
-    // First build and check a complex path to crtbegin.o
-    // depends on command line options (-mips16, -msoft-float, ...)
-    // like mips-linux-gnu/4.7/mips16/soft-float/el/crtbegin.o
-    appendMipsTargetSuffix(Suffix, TargetArch, Args);
-
-    if (TargetArch == llvm::Triple::mips64 ||
-        TargetArch == llvm::Triple::mips64el)
-      Suffix += ABISuffix;
-
-    if (llvm::sys::fs::exists(Path + Suffix + "/crtbegin.o"))
-      return true;
-
-    // Then fall back and probe a simple case like
-    // mips-linux-gnu/4.7/32/crtbegin.o
-    Suffix = ABISuffix;
-    return llvm::sys::fs::exists(Path + Suffix + "/crtbegin.o");
-  }
-
-  if (TargetArch == llvm::Triple::x86_64 ||
-      TargetArch == llvm::Triple::ppc64 ||
-      TargetArch == llvm::Triple::systemz)
+  if (hasMipsN32ABIArg(Args))
+    Suffix = "/n32";
+  else if (TargetArch == llvm::Triple::x86_64 ||
+           TargetArch == llvm::Triple::ppc64 ||
+           TargetArch == llvm::Triple::systemz ||
+           TargetArch == llvm::Triple::mips64 ||
+           TargetArch == llvm::Triple::mips64el)
     Suffix = "/64";
   else
     Suffix = "/32";
 
-  return llvm::sys::fs::exists(Path + Suffix + "/crtbegin.o");
+  return hasCrtBeginObj(Path + Suffix);
+}
+
+static void findMultiLibSuffix(std::string &Suffix,
+                               llvm::Triple::ArchType TargetArch,
+                               StringRef Path,
+                               const ArgList &Args) {
+  if (!isMipsArch(TargetArch))
+    return;
+
+  if (isMips16(Args))
+    Suffix += "/mips16";
+  else if (isMicroMips(Args))
+    Suffix += "/micromips";
+
+  if (isSoftFloatABI(Args))
+    Suffix += "/soft-float";
+
+  if (TargetArch == llvm::Triple::mipsel ||
+      TargetArch == llvm::Triple::mips64el)
+    Suffix += "/el";
+
+  if (!hasCrtBeginObj(Path + Suffix))
+    Suffix.clear();
 }
 
 void Generic_GCC::GCCInstallationDetector::ScanLibDirForGCCTriple(
@@ -1416,6 +1401,9 @@ void Generic_GCC::GCCInstallationDetector::ScanLibDirForGCCTriple(
       if (CandidateVersion <= Version)
         continue;
 
+      std::string MultiLibSuffix;
+      findMultiLibSuffix(MultiLibSuffix, TargetArch, LI->path(), Args);
+
       // Some versions of SUSE and Fedora on ppc64 put 32-bit libs
       // in what would normally be GCCInstallPath and put the 64-bit
       // libs in a subdirectory named 64. The simple logic we follow is that
@@ -1424,12 +1412,14 @@ void Generic_GCC::GCCInstallationDetector::ScanLibDirForGCCTriple(
       // crtbegin.o without the subdirectory.
 
       std::string BiarchSuffix;
-      if (findTargetBiarchSuffix(BiarchSuffix, LI->path(), TargetArch, Args)) {
+      if (findTargetBiarchSuffix(BiarchSuffix,
+                                 LI->path() + MultiLibSuffix,
+                                 TargetArch, Args)) {
         GCCBiarchSuffix = BiarchSuffix;
+      } else if (NeedsBiarchSuffix ||
+                 !hasCrtBeginObj(LI->path() + MultiLibSuffix)) {
+        continue;
       } else {
-        if (NeedsBiarchSuffix ||
-            !llvm::sys::fs::exists(LI->path() + "/crtbegin.o"))
-          continue;
         GCCBiarchSuffix.clear();
       }
 
@@ -1440,6 +1430,7 @@ void Generic_GCC::GCCInstallationDetector::ScanLibDirForGCCTriple(
       // Linux.
       GCCInstallPath = LibDir + LibSuffixes[i] + "/" + VersionText.str();
       GCCParentLibPath = GCCInstallPath + InstallSuffixes[i];
+      GCCMultiLibSuffix = MultiLibSuffix;
       IsValid = true;
     }
   }
@@ -2293,21 +2284,19 @@ Linux::Linux(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
     const llvm::Triple &GCCTriple = GCCInstallation.getTriple();
     const std::string &LibPath = GCCInstallation.getParentLibPath();
 
-    if (IsAndroid && isMipsR2Arch(Triple.getArch(), Args))
-      addPathIfExists(GCCInstallation.getInstallPath() +
-                          GCCInstallation.getBiarchSuffix() + "/mips-r2",
-                      Paths);
-    else
-      addPathIfExists((GCCInstallation.getInstallPath() +
-                       GCCInstallation.getBiarchSuffix()),
-                      Paths);
-
     // Sourcery CodeBench MIPS toolchain holds some libraries under
     // the parent prefix of the GCC installation.
     // FIXME: It would be cleaner to model this as a variant of multilib. IE,
     // instead of 'lib64' it would be 'lib/el'.
-    std::string MultilibSuffix;
-    appendMipsTargetSuffix(MultilibSuffix, Arch, Args);
+    if (IsAndroid && isMipsR2Arch(Triple.getArch(), Args)) {
+      assert(GCCInstallation.getBiarchSuffix().empty() &&
+             "Unexpected bi-arch suffix");
+      addPathIfExists(GCCInstallation.getInstallPath() + "/mips-r2", Paths);
+    } else
+      addPathIfExists((GCCInstallation.getInstallPath() +
+                       GCCInstallation.getMultiLibSuffix() +
+                       GCCInstallation.getBiarchSuffix()),
+                      Paths);
 
     // GCC cross compiling toolchains will install target libraries which ship
     // as part of the toolchain under <prefix>/<triple>/<libdir> rather than as
@@ -2328,7 +2317,7 @@ Linux::Linux(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
     // Note that this matches the GCC behavior. See the below comment for where
     // Clang diverges from GCC's behavior.
     addPathIfExists(LibPath + "/../" + GCCTriple.str() + "/lib/../" + Multilib +
-                        MultilibSuffix,
+                    GCCInstallation.getMultiLibSuffix(),
                     Paths);
 
     // If the GCC installation we found is inside of the sysroot, we want to
@@ -2410,8 +2399,8 @@ std::string Linux::computeSysRoot(const ArgList &Args) const {
 
   std::string Path =
     (GCCInstallation.getInstallPath() +
-     "/../../../../" + GCCInstallation.getTriple().str() + "/libc").str();
-  appendMipsTargetSuffix(Path, getTriple().getArch(), Args);
+     "/../../../../" + GCCInstallation.getTriple().str() +
+     "/libc" + GCCInstallation.getMultiLibSuffix()).str();
 
   return llvm::sys::fs::exists(Path) ? Path : "";
 }
@@ -2597,11 +2586,13 @@ void Linux::AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
   StringRef LibDir = GCCInstallation.getParentLibPath();
   StringRef InstallDir = GCCInstallation.getInstallPath();
   StringRef TripleStr = GCCInstallation.getTriple().str();
+  StringRef MultiLibSuffix = GCCInstallation.getMultiLibSuffix();
+  StringRef BiarchSuffix = GCCInstallation.getBiarchSuffix();
   const GCCVersion &Version = GCCInstallation.getVersion();
 
   if (addLibStdCXXIncludePaths(
           LibDir.str() + "/../include", "/c++/" + Version.Text, TripleStr,
-          GCCInstallation.getBiarchSuffix(), DriverArgs, CC1Args))
+          MultiLibSuffix + BiarchSuffix, DriverArgs, CC1Args))
     return;
 
   const std::string IncludePathCandidates[] = {
@@ -2620,8 +2611,7 @@ void Linux::AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
   for (unsigned i = 0; i < llvm::array_lengthof(IncludePathCandidates); ++i) {
     if (addLibStdCXXIncludePaths(
             IncludePathCandidates[i],
-            (TripleStr + GCCInstallation.getBiarchSuffix()), DriverArgs,
-            CC1Args))
+            TripleStr + MultiLibSuffix + BiarchSuffix, DriverArgs, CC1Args))
       break;
   }
 }
