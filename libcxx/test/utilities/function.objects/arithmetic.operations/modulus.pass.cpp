@@ -27,5 +27,11 @@ int main()
     assert(f2(36, 8) == 4);
     assert(f2(36L, 8) == 4);
     assert(f2(36, 8L) == 4);
+
+    constexpr int foo = std::modulus<int> () (3, 2);
+    static_assert ( foo == 1, "" );
+
+    constexpr int bar = std::modulus<> () (3L, 2);
+    static_assert ( bar == 1, "" );
 #endif
 }

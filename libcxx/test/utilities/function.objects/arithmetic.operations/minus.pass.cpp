@@ -27,5 +27,11 @@ int main()
     assert(f2(3,2) == 1);
     assert(f2(3.0, 2) == 1);
     assert(f2(3, 2.5) == 0.5);
+
+    constexpr int foo = std::minus<int> () (3, 2);
+    static_assert ( foo == 1, "" );
+
+    constexpr int bar = std::minus<> () (3.0, 2);
+    static_assert ( bar == 1, "" );
 #endif
 }

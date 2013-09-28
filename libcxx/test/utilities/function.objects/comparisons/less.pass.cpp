@@ -33,5 +33,11 @@ int main()
     assert(!f2(36.0, 6));
     assert( f2(6, 36.0));
     assert( f2(6.0, 36));
+
+    constexpr bool foo = std::less<int> () (36, 36);
+    static_assert ( !foo, "" );
+
+    constexpr bool bar = std::less<> () (36.0, 36);
+    static_assert ( !bar, "" );
 #endif
 }

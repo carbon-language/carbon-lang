@@ -37,5 +37,11 @@ int main()
     assert(!f2(0, 0));
     assert(!f2(0, 0L));
     assert(!f2(0L, 0));
+
+    constexpr bool foo = std::logical_or<int> () (36, 36);
+    static_assert ( foo, "" );
+
+    constexpr bool bar = std::logical_or<> () (36.0, 36);
+    static_assert ( bar, "" );
 #endif
 }

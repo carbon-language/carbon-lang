@@ -31,5 +31,11 @@ int main()
     assert( f2(36.0, 6));
     assert(!f2(36.0, 36));
     assert(!f2(36, 36.0));
+
+    constexpr bool foo = std::not_equal_to<int> () (36, 36);
+    static_assert ( !foo, "" );
+
+    constexpr bool bar = std::not_equal_to<> () (36.0, 36);
+    static_assert ( !bar, "" );
 #endif
 }

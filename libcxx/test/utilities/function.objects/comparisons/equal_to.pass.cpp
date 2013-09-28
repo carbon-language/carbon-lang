@@ -29,5 +29,11 @@ int main()
     assert(!f2(36, 6));
     assert(f2(36, 36.0));
     assert(f2(36.0, 36L));
+
+    constexpr bool foo = std::equal_to<int> () (36, 36);
+    static_assert ( foo, "" );
+
+    constexpr bool bar = std::equal_to<> () (36.0, 36);
+    static_assert ( bar, "" );
 #endif
 }

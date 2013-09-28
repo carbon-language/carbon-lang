@@ -38,5 +38,11 @@ int main()
     assert( f2(36L, 36));
     assert(!f2(36L, 0));
     assert(!f2(0L, 36));
+
+    constexpr bool foo = std::logical_and<int> () (36, 36);
+    static_assert ( foo, "" );
+
+    constexpr bool bar = std::logical_and<> () (36.0, 36);
+    static_assert ( bar, "" );
 #endif
 }

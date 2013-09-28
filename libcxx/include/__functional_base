@@ -58,7 +58,8 @@ template <class _Tp>
 #endif
 struct _LIBCPP_TYPE_VIS_ONLY less : binary_function<_Tp, _Tp, bool>
 {
-    _LIBCPP_INLINE_VISIBILITY bool operator()(const _Tp& __x, const _Tp& __y) const
+    _LIBCPP_CONSTEXPR_AFTER_CXX11 _LIBCPP_INLINE_VISIBILITY 
+    bool operator()(const _Tp& __x, const _Tp& __y) const
         {return __x < __y;}
 };
 
@@ -66,7 +67,8 @@ struct _LIBCPP_TYPE_VIS_ONLY less : binary_function<_Tp, _Tp, bool>
 template <>
 struct _LIBCPP_TYPE_VIS_ONLY less<void>
 {
-    template <class _T1, class _T2> _LIBCPP_INLINE_VISIBILITY
+    template <class _T1, class _T2> 
+    _LIBCPP_CONSTEXPR_AFTER_CXX11 _LIBCPP_INLINE_VISIBILITY
     auto operator()(_T1&& __t, _T2&& __u) const
         { return _VSTD::forward<_T1>(__t) < _VSTD::forward<_T2>(__u); }
     typedef void is_transparent;

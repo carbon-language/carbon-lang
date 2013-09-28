@@ -27,5 +27,11 @@ int main()
     assert(f2(36, 4) == 9);
     assert(f2(36.0, 4) == 9);
     assert(f2(18, 4.0) == 4.5); // exact in binary
+
+    constexpr int foo = std::divides<int> () (3, 2);
+    static_assert ( foo == 1, "" );
+
+    constexpr int bar = std::divides<> () (3.0, 2);
+    static_assert ( bar == 1, "" );
 #endif
 }

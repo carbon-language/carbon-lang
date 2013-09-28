@@ -27,5 +27,11 @@ int main()
     assert(f2(3,2) == 5);
     assert(f2(3.0, 2) == 5);
     assert(f2(3, 2.5) == 5.5);
+    
+    constexpr int foo = std::plus<int> () (3, 2);
+    static_assert ( foo == 5, "" );
+
+    constexpr int bar = std::plus<> () (3.0, 2);
+    static_assert ( bar == 5, "" );
 #endif
 }

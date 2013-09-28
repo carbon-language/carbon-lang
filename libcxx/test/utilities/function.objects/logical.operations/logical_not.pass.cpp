@@ -29,5 +29,11 @@ int main()
     assert( f2(0));
     assert(!f2(36L));
     assert( f2(0L));
+
+    constexpr bool foo = std::logical_not<int> () (36);
+    static_assert ( !foo, "" );
+
+    constexpr bool bar = std::logical_not<> () (36);
+    static_assert ( !bar, "" );
 #endif
 }

@@ -47,5 +47,11 @@ int main()
     assert(f2(0xFFFF, 0x58D3) == 0xFFFF);
     assert(f2(0xFFFFL, 0x58D3) == 0xFFFF);
     assert(f2(0xFFFF, 0x58D3L) == 0xFFFF);
+
+    constexpr int foo = std::bit_or<int> () (0x58D3, 0xEA95);
+    static_assert ( foo == 0xFAD7, "" );
+
+    constexpr int bar = std::bit_or<> () (0x58D3L, 0xEA95);
+    static_assert ( bar == 0xFAD7, "" );
 #endif
 }
