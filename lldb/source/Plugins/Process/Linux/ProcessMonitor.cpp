@@ -1111,7 +1111,8 @@ ProcessMonitor::Launch(LaunchArgs *args)
         eDupStdoutFailed,
         eDupStderrFailed,
         eChdirFailed,
-        eExecFailed
+        eExecFailed,
+        eSetGidFailed
     };
 
     // Child process.
@@ -1122,7 +1123,8 @@ ProcessMonitor::Launch(LaunchArgs *args)
             exit(ePtraceFailed);
 
         // Do not inherit setgid powers.
-        setgid(getgid());
+        if (setgid(getgid()) != 0)
+            exit(eSetGidFailed);
 
         // Let us have our own process group.
         setpgid(0, 0);
@@ -1186,6 +1188,9 @@ ProcessMonitor::Launch(LaunchArgs *args)
                 break;
             case eExecFailed:
                 args->m_error.SetErrorString("Child exec failed.");
+                break;
+            case eSetGidFailed:
+                args->m_error.SetErrorString("Child setgid failed.");
                 break;
             default:
                 args->m_error.SetErrorString("Child returned unknown exit status.");
