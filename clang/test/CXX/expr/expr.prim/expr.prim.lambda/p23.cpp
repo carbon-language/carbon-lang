@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -std=c++11 %s -verify
+// RUN: %clang_cc1 -fsyntax-only -std=c++11 %s -verify -Wno-c++1y-extensions
 // RUN: %clang_cc1 -fsyntax-only -std=c++1y %s -verify
 
 void print();

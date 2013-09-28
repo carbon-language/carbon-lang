@@ -52,14 +52,14 @@ class C {
   // We support init-captures in C++11 as an extension.
   int z;
   void init_capture() {
-    [n(0)] () mutable -> int { return ++n; };
-    [n{0}] { return; }; // expected-error {{<initializer_list>}}
-    [n = 0] { return ++n; }; // expected-error {{captured by copy in a non-mutable}}
-    [n = {0}] { return; }; // expected-error {{<initializer_list>}}
-    [a([&b = z]{})](){};
+    [n(0)] () mutable -> int { return ++n; }; // expected-warning{{extension}}
+    [n{0}] { return; }; // expected-error {{<initializer_list>}} expected-warning{{extension}}
+    [n = 0] { return ++n; }; // expected-error {{captured by copy in a non-mutable}} expected-warning{{extension}}
+    [n = {0}] { return; }; // expected-error {{<initializer_list>}} expected-warning{{extension}}
+    [a([&b = z]{})](){}; // expected-warning 2{{extension}}
 
     int x = 4;
-    auto y = [&r = x, x = x + 1]() -> int {
+    auto y = [&r = x, x = x + 1]() -> int { // expected-warning 2{{extension}}
       r += 2;
       return x + 2;
     } ();

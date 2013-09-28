@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++11 %s -verify
+// RUN: %clang_cc1 -std=c++11 %s -verify -Wno-c++1y-extensions
 
 class X0 {
   void explicit_capture() {

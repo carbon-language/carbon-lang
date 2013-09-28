@@ -703,6 +703,10 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
 
     VarDecl *Var;
     if (C->Init.isUsable()) {
+      Diag(C->Loc, getLangOpts().CPlusPlus1y
+                       ? diag::warn_cxx11_compat_init_capture
+                       : diag::ext_init_capture);
+
       if (C->Init.get()->containsUnexpandedParameterPack())
         ContainsUnexpandedParameterPack = true;
 

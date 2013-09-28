@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -Wno-unused-value -std=c++11 %s
+// RUN: %clang_cc1 -fsyntax-only -verify -Wno-unused-value -Wno-c++1y-extensions -std=c++11 %s
 
 class C {
   id get(int);
