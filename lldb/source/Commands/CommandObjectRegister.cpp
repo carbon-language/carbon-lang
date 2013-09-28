@@ -192,7 +192,7 @@ protected:
                         if (!DumpRegisterSet (m_exe_ctx, strm, reg_ctx, set_idx))
                         {
                             if (errno)
-                                result.AppendErrorWithFormat ("register read failed with errno: %d\n", errno);
+                                result.AppendErrorWithFormat ("register read failed: %s\n", strerror(errno));
                             else
                                 result.AppendError ("unknown error while reading registers.\n");
                             result.SetStatus (eReturnStatusFailed);
