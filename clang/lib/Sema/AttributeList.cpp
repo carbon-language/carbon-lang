@@ -155,7 +155,7 @@ namespace {
   #include "clang/Sema/AttrParsedAttrImpl.inc"
 }
 
-const ParsedAttrInfo& getInfo(const AttributeList& A) {
+static const ParsedAttrInfo &getInfo(const AttributeList &A) {
   return AttrInfoMap[A.getKind()];
 }
 
