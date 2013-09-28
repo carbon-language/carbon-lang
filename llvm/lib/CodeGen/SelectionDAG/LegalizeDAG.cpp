@@ -3714,6 +3714,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
 
     bool Legalized = LegalizeSetCCCondCode(getSetCCResultType(
         Tmp2.getValueType()), Tmp2, Tmp3, Tmp4, dl);
+    (void)Legalized;
     assert(Legalized && "Can't legalize BR_CC with legal condition!");
 
     // If we exapanded the SETCC by swapping LHS and RHS, create a new BR_CC
