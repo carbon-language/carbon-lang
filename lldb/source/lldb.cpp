@@ -408,8 +408,6 @@ lldb_private::NameMatches (const char *name,
         llvm::StringRef match_sref(match);
         switch (match_type)
         {
-        case eNameMatchIgnore:
-            return true;
         case eNameMatchEquals:      return name_sref == match_sref;
         case eNameMatchContains:    return name_sref.find (match_sref) != llvm::StringRef::npos;
         case eNameMatchStartsWith:  return name_sref.startswith (match_sref);
