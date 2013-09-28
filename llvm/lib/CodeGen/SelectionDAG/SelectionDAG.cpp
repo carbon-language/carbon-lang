@@ -1645,7 +1645,12 @@ SDValue SelectionDAG::FoldSetCC(EVT VT, SDValue N1,
       }
     } else {
       // Ensure that the constant occurs on the RHS.
-      return getSetCC(dl, VT, N2, N1, ISD::getSetCCSwappedOperands(Cond));
+      ISD::CondCode SwappedCond = ISD::getSetCCSwappedOperands(Cond);
+      MVT CompVT = N1.getValueType().getSimpleVT();
+      if (!TM.getTargetLowering()->isCondCodeLegal(SwappedCond, CompVT))
+        return SDValue();
+
+      return getSetCC(dl, VT, N2, N1, SwappedCond);
     }
   }
 

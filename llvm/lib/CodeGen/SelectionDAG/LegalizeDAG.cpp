@@ -1615,8 +1615,13 @@ bool SelectionDAGLegalize::LegalizeSetCCCondCode(EVT VT,
     // Nothing to do.
     break;
   case TargetLowering::Expand: {
+    ISD::CondCode InvCC = ISD::getSetCCSwappedOperands(CCCode);
+    if (TLI.isCondCodeLegal(InvCC, OpVT)) {
+      std::swap(LHS, RHS);
+      CC = DAG.getCondCode(InvCC);
+      return true;
+    }
     ISD::CondCode CC1 = ISD::SETCC_INVALID, CC2 = ISD::SETCC_INVALID;
-    ISD::CondCode InvCC = ISD::SETCC_INVALID;
     unsigned Opc = 0;
     switch (CCCode) {
     default: llvm_unreachable("Don't know how to expand this condition!");
@@ -1658,15 +1663,9 @@ bool SelectionDAGLegalize::LegalizeSetCCCondCode(EVT VT,
     case ISD::SETLT:
     case ISD::SETNE:
     case ISD::SETEQ:
-      InvCC = ISD::getSetCCSwappedOperands(CCCode);
-      if (TLI.getCondCodeAction(InvCC, OpVT) == TargetLowering::Expand) {
-        // We only support using the inverted operation and not a
-        // different manner of supporting expanding these cases.
-        llvm_unreachable("Don't know how to expand this condition!");
-      }
-      std::swap(LHS, RHS);
-      CC = DAG.getCondCode(InvCC);
-      return true;
+      // We only support using the inverted operation, which is computed above
+      // and not a different manner of supporting expanding these cases.
+      llvm_unreachable("Don't know how to expand this condition!");
     }
 
     SDValue SetCC1, SetCC2;

@@ -38,6 +38,18 @@ R600TargetLowering::R600TargetLowering(TargetMachine &TM) :
 
   computeRegisterProperties();
 
+  setCondCodeAction(ISD::SETLE,  MVT::f32, Expand);
+  setCondCodeAction(ISD::SETLT,  MVT::f32, Expand);
+  setCondCodeAction(ISD::SETOLT, MVT::f32, Expand);
+  setCondCodeAction(ISD::SETOLE, MVT::f32, Expand);
+  setCondCodeAction(ISD::SETULT, MVT::f32, Expand);
+  setCondCodeAction(ISD::SETULE, MVT::f32, Expand);
+
+  setCondCodeAction(ISD::SETLE, MVT::i32, Expand);
+  setCondCodeAction(ISD::SETLT, MVT::i32, Expand);
+  setCondCodeAction(ISD::SETULE, MVT::i32, Expand);
+  setCondCodeAction(ISD::SETULT, MVT::i32, Expand);
+
   setOperationAction(ISD::FCOS, MVT::f32, Custom);
   setOperationAction(ISD::FSIN, MVT::f32, Custom);
 
@@ -841,16 +853,19 @@ SDValue R600TargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const 
   //
   // SET* can match the following patterns:
   //
-  // select_cc f32, f32, -1,  0, cc_any
-  // select_cc f32, f32, 1.0f, 0.0f, cc_any
-  // select_cc i32, i32, -1,  0, cc_any
+  // select_cc f32, f32, -1,  0, cc_supported
+  // select_cc f32, f32, 1.0f, 0.0f, cc_supported
+  // select_cc i32, i32, -1,  0, cc_supported
   //
 
   // Move hardware True/False values to the correct operand.
-  if (isHWTrueValue(False) && isHWFalseValue(True)) {
-    ISD::CondCode CCOpcode = cast<CondCodeSDNode>(CC)->get();
+  ISD::CondCode CCOpcode = cast<CondCodeSDNode>(CC)->get();
+  ISD::CondCode InverseCC =
+     ISD::getSetCCInverse(CCOpcode, CompareVT == MVT::i32);
+  if (isHWTrueValue(False) && isHWFalseValue(True) &&
+      isCondCodeLegal(InverseCC, CompareVT.getSimpleVT())) {
     std::swap(False, True);
-    CC = DAG.getCondCode(ISD::getSetCCInverse(CCOpcode, CompareVT == MVT::i32));
+    CC = DAG.getCondCode(InverseCC);
   }
 
   if (isHWTrueValue(True) && isHWFalseValue(False) &&
@@ -863,14 +878,34 @@ SDValue R600TargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const 
   //
   // CND* can match the following patterns:
   //
-  // select_cc f32, 0.0, f32, f32, cc_any
-  // select_cc f32, 0.0, i32, i32, cc_any
-  // select_cc i32, 0,   f32, f32, cc_any
-  // select_cc i32, 0,   i32, i32, cc_any
+  // select_cc f32, 0.0, f32, f32, cc_supported
+  // select_cc f32, 0.0, i32, i32, cc_supported
+  // select_cc i32, 0,   f32, f32, cc_supported
+  // select_cc i32, 0,   i32, i32, cc_supported
   //
-  if (isZero(LHS) || isZero(RHS)) {
-    SDValue Cond = (isZero(LHS) ? RHS : LHS);
-    SDValue Zero = (isZero(LHS) ? LHS : RHS);
+
+  // Try to move the zero value to the RHS
+  if (isZero(LHS)) {
+    ISD::CondCode CCOpcode = cast<CondCodeSDNode>(CC)->get();
+    // Try swapping the operands
+    ISD::CondCode CCSwapped = ISD::getSetCCSwappedOperands(CCOpcode);
+    if (isCondCodeLegal(CCSwapped, CompareVT.getSimpleVT())) {
+      std::swap(LHS, RHS);
+      CC = DAG.getCondCode(CCSwapped);
+    } else {
+      // Try inverting the conditon and then swapping the operands
+      ISD::CondCode CCInv = ISD::getSetCCInverse(CCOpcode, CompareVT.isInteger());
+      CCSwapped = ISD::getSetCCSwappedOperands(CCInv);
+      if (isCondCodeLegal(CCSwapped, CompareVT.getSimpleVT())) {
+        std::swap(True, False);
+        std::swap(LHS, RHS);
+        CC = DAG.getCondCode(CCSwapped);
+      }
+    }
+  }
+  if (isZero(RHS)) {
+    SDValue Cond = LHS;
+    SDValue Zero = RHS;
     ISD::CondCode CCOpcode = cast<CondCodeSDNode>(CC)->get();
     if (CompareVT != VT) {
       // Bitcast True / False to the correct types.  This will end up being
@@ -880,20 +915,11 @@ SDValue R600TargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const 
       True = DAG.getNode(ISD::BITCAST, DL, CompareVT, True);
       False = DAG.getNode(ISD::BITCAST, DL, CompareVT, False);
     }
-    if (isZero(LHS)) {
-      CCOpcode = ISD::getSetCCSwappedOperands(CCOpcode);
-    }
 
     switch (CCOpcode) {
     case ISD::SETONE:
     case ISD::SETUNE:
     case ISD::SETNE:
-    case ISD::SETULE:
-    case ISD::SETULT:
-    case ISD::SETOLE:
-    case ISD::SETOLT:
-    case ISD::SETLE:
-    case ISD::SETLT:
       CCOpcode = ISD::getSetCCInverse(CCOpcode, CompareVT == MVT::i32);
       Temp = True;
       True = False;
@@ -1567,14 +1593,18 @@ SDValue R600TargetLowering::PerformDAGCombine(SDNode *N,
       ISD::CondCode LHSCC = cast<CondCodeSDNode>(LHS.getOperand(4))->get();
       LHSCC = ISD::getSetCCInverse(LHSCC,
                                   LHS.getOperand(0).getValueType().isInteger());
-      return DAG.getSelectCC(SDLoc(N),
-                             LHS.getOperand(0),
-                             LHS.getOperand(1),
-                             LHS.getOperand(2),
-                             LHS.getOperand(3),
-                             LHSCC);
+      if (DCI.isBeforeLegalizeOps() ||
+          isCondCodeLegal(LHSCC, LHS.getOperand(0).getSimpleValueType()))
+        return DAG.getSelectCC(SDLoc(N),
+                               LHS.getOperand(0),
+                               LHS.getOperand(1),
+                               LHS.getOperand(2),
+                               LHS.getOperand(3),
+                               LHSCC);
+      break;
     }
     }
+    return SDValue();
   }
 
   case AMDGPUISD::EXPORT: {

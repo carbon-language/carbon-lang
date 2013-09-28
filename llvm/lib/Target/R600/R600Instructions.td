@@ -2324,54 +2324,6 @@ def KIL : Pat <
   (MASK_WRITE (KILLGT (f32 ZERO), $src0))
 >;
 
-// SGT Reverse args
-def : Pat <
-  (selectcc f32:$src0, f32:$src1, FP_ONE, FP_ZERO, COND_LT),
-  (SGT $src1, $src0)
->;
-
-// SGE Reverse args
-def : Pat <
-  (selectcc f32:$src0, f32:$src1, FP_ONE, FP_ZERO, COND_LE),
-  (SGE $src1, $src0)
->;
-
-// SETGT_DX10 reverse args
-def : Pat <
-  (selectcc f32:$src0, f32:$src1, -1, 0, COND_LT),
-  (SETGT_DX10 $src1, $src0)
->;
-
-// SETGE_DX10 reverse args
-def : Pat <
-  (selectcc f32:$src0, f32:$src1, -1, 0, COND_LE),
-  (SETGE_DX10 $src1, $src0)
->;
-
-// SETGT_INT reverse args
-def : Pat <
-  (selectcc i32:$src0, i32:$src1, -1, 0, SETLT),
-  (SETGT_INT $src1, $src0)
->;
-
-// SETGE_INT reverse args
-def : Pat <
-  (selectcc i32:$src0, i32:$src1, -1, 0, SETLE),
-  (SETGE_INT $src1, $src0)
->;
-
-// SETGT_UINT reverse args
-def : Pat <
-  (selectcc i32:$src0, i32:$src1, -1, 0, SETULT),
-  (SETGT_UINT $src1, $src0)
->;
-
-// SETGE_UINT reverse args
-def : Pat <
-  (selectcc i32:$src0, i32:$src1, -1, 0, SETULE),
-  (SETGE_UINT $src1, $src0)
->;
-
 // The next two patterns are special cases for handling 'true if ordered' and
 // 'true if unordered' conditionals.  The assumption here is that the behavior of
 // SETE and SNE conforms to the Direct3D 10 rules for floating point values
