@@ -761,6 +761,8 @@ Host::SetShortThreadName (lldb::pid_t pid, lldb::tid_t tid,
         }
         return Host::SetThreadName (pid, tid, namebuf);
     }
+
+    ::free(namebuf);
     return false;
 }
 
