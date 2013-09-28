@@ -17,6 +17,7 @@
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/InlineAsm.h"
 #include "llvm/IR/IntrinsicInst.h"
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/OperandTraits.h"
 #include "llvm/IR/Operator.h"
@@ -2123,6 +2124,8 @@ bool BitcodeReader::ParseMetadataAttachment() {
           return Error("Invalid metadata kind ID");
         Value *Node = MDValueList.getValueFwdRef(Record[i+1]);
         Inst->setMetadata(I->second, cast<MDNode>(Node));
+        if (I->second == LLVMContext::MD_tbaa)
+          InstsWithTBAATag.push_back(Inst);
       }
       break;
     }
@@ -3133,6 +3136,9 @@ bool BitcodeReader::MaterializeModule(Module *M, std::string *ErrInfo) {
     }
   }
   std::vector<std::pair<Function*, Function*> >().swap(UpgradedIntrinsics);
+
+  for (unsigned I = 0, E = InstsWithTBAATag.size(); I < E; I++)
+    UpgradeInstWithTBAATag(InstsWithTBAATag[I]);
 
   return false;
 }

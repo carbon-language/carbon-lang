@@ -19,6 +19,7 @@ namespace llvm {
   class GlobalVariable;
   class Function;
   class CallInst;
+  class Instruction;
 
   /// This is a more granular function that simply checks an intrinsic function
   /// for upgrading, and returns true if it requires upgrading. It may return
@@ -39,6 +40,10 @@ namespace llvm {
   /// This checks for global variables which should be upgraded. It returns true
   /// if it requires upgrading.
   bool UpgradeGlobalVariable(GlobalVariable *GV);
+
+  /// If the TBAA tag for the given instruction uses the scalar TBAA format,
+  /// we upgrade it to the struct-path aware TBAA format.
+  void UpgradeInstWithTBAATag(Instruction *I);
 } // End llvm namespace
 
 #endif
