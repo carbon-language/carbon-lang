@@ -564,7 +564,7 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   unsigned char VEX_W = 0;
 
   // XOP: Use XOP prefix byte 0x8f instead of VEX.
-  unsigned char XOP = 0;
+  bool XOP = false;
 
   // VEX_5M (VEX m-mmmmm field):
   //
@@ -621,7 +621,7 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
     VEX_W = 1;
 
   if ((TSFlags >> X86II::VEXShift) & X86II::XOP)
-    XOP = 1;
+    XOP = true;
 
   if ((TSFlags >> X86II::VEXShift) & X86II::VEX_L)
     VEX_L = 1;
@@ -669,11 +669,8 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   case X86II::XOPA:
     VEX_5M = 0xA;
     break;
-  case X86II::A6:  // Bypass: Not used by VEX
-  case X86II::A7:  // Bypass: Not used by VEX
-  case X86II::TB:  // Bypass: Not used by VEX
-  case 0:
-    break;  // No prefix!
+  case X86II::TB: // VEX_5M/VEX_PP already correct
+    break;
   }
 
 
