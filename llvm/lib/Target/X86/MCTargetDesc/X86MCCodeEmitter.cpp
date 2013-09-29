@@ -574,7 +574,8 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   //  0b00011: implied 0F 3A leading opcode bytes
   //  0b00100-0b11111: Reserved for future use
   //  0b01000: XOP map select - 08h instructions with imm byte
-  //  0b10001: XOP map select - 09h instructions with no imm byte
+  //  0b01001: XOP map select - 09h instructions with no imm byte
+  //  0b01010: XOP map select - 0Ah instructions with imm dword
   unsigned char VEX_5M = 0x1;
 
   // VEX_4V (VEX vvvv field): a register specifier
