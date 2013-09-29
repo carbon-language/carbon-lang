@@ -942,13 +942,7 @@ public:
 class HandleSDNode : public SDNode {
   SDUse Op;
 public:
-  // FIXME: Remove the "noinline" attribute once <rdar://problem/5852746> is
-  // fixed.
-#if __GNUC__==4 && __GNUC_MINOR__==2 && defined(__APPLE__) && !defined(__llvm__)
-  explicit __attribute__((__noinline__)) HandleSDNode(SDValue X)
-#else
   explicit HandleSDNode(SDValue X)
-#endif
     : SDNode(ISD::HANDLENODE, 0, DebugLoc(), getSDVTList(MVT::Other)) {
     InitOperands(&Op, X);
   }
