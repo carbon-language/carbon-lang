@@ -265,21 +265,3 @@ namespace TypeDeduction {
 #endif
   }
 }
-
-
-namespace lambdas_in_NSDMIs {
-  template<class T>
-  struct L {
-      T t{};
-      T t2 = ([](int a) { return [](int b) { return b; };})(t)(t);    
-  };
-  L<int> l; 
-  
-  namespace non_template {
-    struct L {
-      int t = 0;
-      int t2 = ([](int a) { return [](int b) { return b; };})(t)(t);    
-    };
-    L l; 
-  }
-}
