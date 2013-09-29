@@ -2310,8 +2310,11 @@ bool FunctionDecl::isReplaceableGlobalAllocationFunction() const {
     return true;
 
   // Otherwise, we're looking for a second parameter whose type is
-  // 'const std::nothrow_t &'.
+  // 'const std::nothrow_t &', or, in C++1y, 'std::size_t'.
   QualType Ty = FPT->getArgType(1);
+  ASTContext &Ctx = getASTContext();
+  if (Ctx.getLangOpts().SizedDeallocation && Ty == Ctx.getSizeType())
+    return true;
   if (!Ty->isReferenceType())
     return false;
   Ty = Ty->getPointeeType();

@@ -1775,8 +1775,10 @@ public:
   ///    void *operator new[](size_t);
   ///    void *operator new[](size_t, const std::nothrow_t &) noexcept;
   ///    void operator delete(void *) noexcept;
+  ///    void operator delete(void *, std::size_t) noexcept;      [C++1y]
   ///    void operator delete(void *, const std::nothrow_t &) noexcept;
   ///    void operator delete[](void *) noexcept;
+  ///    void operator delete[](void *, std::size_t) noexcept;    [C++1y]
   ///    void operator delete[](void *, const std::nothrow_t &) noexcept;
   /// These functions have special behavior under C++1y [expr.new]:
   ///    An implementation is allowed to omit a call to a replaceable global
