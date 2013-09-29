@@ -253,6 +253,11 @@ protected:
     Builder.defineMacro("__KPRINTF_ATTRIBUTE__");
     DefineStd(Builder, "unix", Opts);
     Builder.defineMacro("__ELF__");
+
+    // On FreeBSD, wchar_t contains the number of the code point as
+    // used by the character set of the locale. These character sets are
+    // not necessarily a superset of ASCII.
+    Builder.defineMacro("__STDC_MB_MIGHT_NEQ_WC__", "1");
   }
 public:
   FreeBSDTargetInfo(const llvm::Triple &Triple) : OSTargetInfo<Target>(Triple) {
