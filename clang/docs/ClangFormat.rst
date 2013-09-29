@@ -143,6 +143,13 @@ menu item by renaming the script, and can assign the menu item a keyboard
 shortcut in the BBEdit preferences, under Menus & Shortcuts.
 
 
+Visual Studio Integration
+=========================
+
+Download the latest Visual Studio plugin from the `alpha build site
+<http://llvm.org/builds/>`_. The default key-binding is Ctrl-R,Ctrl-F.
+
+
 Script for patch reformatting
 =============================
 
