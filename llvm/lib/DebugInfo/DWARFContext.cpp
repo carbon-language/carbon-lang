@@ -25,6 +25,7 @@ typedef DWARFDebugLine::LineTable DWARFLineTable;
 
 DWARFContext::~DWARFContext() {
   DeleteContainerPointers(CUs);
+  DeleteContainerPointers(TUs);
   DeleteContainerPointers(DWOCUs);
 }
 
