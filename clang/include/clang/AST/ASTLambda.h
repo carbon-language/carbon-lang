@@ -45,12 +45,6 @@ inline bool isGenericLambdaCallOperatorSpecialization(CXXMethodDecl *MD) {
   return false;
 }
 
-inline bool isGenericLambdaCallOperatorSpecialization(Decl *D) {
-  if (!D || !isa<CXXMethodDecl>(D)) return false;
-  return isGenericLambdaCallOperatorSpecialization(
-                                cast<CXXMethodDecl>(D));
-}
-
 inline bool isLambdaConversionOperator(CXXConversionDecl *C) {
   return C ? C->getParent()->isLambda() : false;
 }

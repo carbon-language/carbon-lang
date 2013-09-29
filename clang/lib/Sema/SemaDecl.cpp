@@ -9349,7 +9349,7 @@ Decl *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Decl *D) {
   // a LambdaScopeInfo onto the function stack.  But use the information
   // that's already been calculated (ActOnLambdaExpr) when analyzing the
   // template version, to prime the current LambdaScopeInfo. 
-  if (isGenericLambdaCallOperatorSpecialization(D)) {
+  if (isGenericLambdaCallOperatorSpecialization(FD)) {
     CXXMethodDecl *CallOperator = cast<CXXMethodDecl>(D);
     CXXRecordDecl *LambdaClass = CallOperator->getParent();
     LambdaExpr    *LE = LambdaClass->getLambdaExpr();
