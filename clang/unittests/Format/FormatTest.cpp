@@ -3398,6 +3398,11 @@ TEST_F(FormatTest, AlignsPipes) {
   verifyFormat(
       "llvm::errs() << aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
       "                    .aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa();");
+
+  // Incomplete string literal.
+  EXPECT_EQ("llvm::errs() << \"\n"
+            "             << a;",
+            format("llvm::errs() << \"\n<<a;"));
 }
 
 TEST_F(FormatTest, UnderstandsEquals) {
