@@ -857,8 +857,6 @@ static void addFunctionPointerConversion(Sema &S,
                                          SourceRange IntroducerRange,
                                          CXXRecordDecl *Class,
                                          CXXMethodDecl *CallOperator) {
-  // FIXME: The conversion operator needs to be fixed for generic lambdas.
-  if (Class->isGenericLambda()) return;
   // Add the conversion to function pointer.
   const FunctionProtoType *Proto
     = CallOperator->getType()->getAs<FunctionProtoType>(); 
@@ -898,10 +896,34 @@ static void addFunctionPointerConversion(Sema &S,
                                 CallOperator->getBody()->getLocEnd());
   Conversion->setAccess(AS_public);
   Conversion->setImplicit(true);
-  Class->addDecl(Conversion);
+
+  if (Class->isGenericLambda()) {
+    // Create a template version of the conversion operator, using the template
+    // parameter list of the function call operator.
+    FunctionTemplateDecl *TemplateCallOperator = 
+            CallOperator->getDescribedFunctionTemplate();
+    FunctionTemplateDecl *ConversionTemplate =
+                  FunctionTemplateDecl::Create(S.Context, Class,
+                                      Loc, Name,
+                                      TemplateCallOperator->getTemplateParameters(),
+                                      Conversion);
+    ConversionTemplate->setAccess(AS_public);
+    ConversionTemplate->setImplicit(true);
+    Conversion->setDescribedFunctionTemplate(ConversionTemplate);
+    Class->addDecl(ConversionTemplate);
+  } else
+    Class->addDecl(Conversion);
   // Add a non-static member function that will be the result of
   // the conversion with a certain unique ID.
   Name = &S.Context.Idents.get(getLambdaStaticInvokerName());
+  // FIXME: Instead of passing in the CallOperator->getTypeSourceInfo()
+  // we should get a prebuilt TrivialTypeSourceInfo from Context
+  // using FunctionTy & Loc and get its TypeLoc as a FunctionProtoTypeLoc
+  // then rewire the parameters accordingly, by hoisting up the InvokeParams
+  // loop below and then use its Params to set Invoke->setParams(...) below.
+  // This would avoid the 'const' qualifier of the calloperator from 
+  // contaminating the type of the invoker, which is currently adjusted 
+  // in SemaTemplateDeduction.cpp:DeduceTemplateArguments.
   CXXMethodDecl *Invoke
     = CXXMethodDecl::Create(S.Context, Class, Loc, 
                             DeclarationNameInfo(Name, Loc), FunctionTy, 
@@ -924,7 +946,19 @@ static void addFunctionPointerConversion(Sema &S,
   Invoke->setParams(InvokeParams);
   Invoke->setAccess(AS_private);
   Invoke->setImplicit(true);
-  Class->addDecl(Invoke);
+  if (Class->isGenericLambda()) {
+    FunctionTemplateDecl *TemplateCallOperator = 
+            CallOperator->getDescribedFunctionTemplate();
+    FunctionTemplateDecl *StaticInvokerTemplate = FunctionTemplateDecl::Create(
+                          S.Context, Class, Loc, Name,
+                          TemplateCallOperator->getTemplateParameters(),
+                          Invoke);
+    StaticInvokerTemplate->setAccess(AS_private);
+    StaticInvokerTemplate->setImplicit(true);
+    Invoke->setDescribedFunctionTemplate(StaticInvokerTemplate);
+    Class->addDecl(StaticInvokerTemplate);
+  } else
+    Class->addDecl(Invoke);
 }
 
 /// \brief Add a lambda's conversion to block pointer.
@@ -1096,7 +1130,9 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc, Stmt *Body,
     //   non-explicit const conversion function to a block pointer having the
     //   same parameter and return types as the closure type's function call
     //   operator.
-    if (getLangOpts().Blocks && getLangOpts().ObjC1)
+    // FIXME: Fix generic lambda to block conversions.
+    if (getLangOpts().Blocks && getLangOpts().ObjC1 && 
+                                              !Class->isGenericLambda())
       addBlockPointerConversion(*this, IntroducerRange, Class, CallOperator);
     
     // Finalize the lambda class.
@@ -1141,7 +1177,7 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc, Stmt *Body,
   }
   // TODO: Implement capturing.
   if (Lambda->isGenericLambda()) {
-    if (Lambda->getCaptureDefault() != LCD_None) {
+    if (!Captures.empty() || Lambda->getCaptureDefault() != LCD_None) {
       Diag(Lambda->getIntroducerRange().getBegin(), 
         diag::err_glambda_not_fully_implemented) 
         << " capturing not implemented yet";

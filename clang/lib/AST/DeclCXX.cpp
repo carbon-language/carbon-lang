@@ -972,9 +972,12 @@ CXXMethodDecl* CXXRecordDecl::getLambdaStaticInvoker() const {
   DeclContext::lookup_const_result Invoker = lookup(Name);
   if (Invoker.empty()) return 0;
   assert(Invoker.size() == 1 && "More than one static invoker operator!");  
-  CXXMethodDecl *Result = cast<CXXMethodDecl>(Invoker.front());  
-  return Result;
-
+  NamedDecl *InvokerFun = Invoker.front();
+  if (FunctionTemplateDecl *InvokerTemplate =
+                  dyn_cast<FunctionTemplateDecl>(InvokerFun)) 
+    return cast<CXXMethodDecl>(InvokerTemplate->getTemplatedDecl());
+  
+  return cast<CXXMethodDecl>(InvokerFun); 
 }
 
 void CXXRecordDecl::getCaptureFields(
@@ -1552,10 +1555,16 @@ bool CXXMethodDecl::hasInlineBody() const {
 }
 
 bool CXXMethodDecl::isLambdaStaticInvoker() const {
-  return getParent()->isLambda() && 
-         getParent()->getLambdaStaticInvoker() == this;
+  const CXXRecordDecl *P = getParent();
+  if (P->isLambda()) {
+    if (const CXXMethodDecl *StaticInvoker = P->getLambdaStaticInvoker()) {
+      if (StaticInvoker == this) return true;
+      if (P->isGenericLambda() && this->isFunctionTemplateSpecialization())
+        return StaticInvoker == this->getPrimaryTemplate()->getTemplatedDecl();
+    }
+  }
+  return false;
 }
-
 
 CXXCtorInitializer::CXXCtorInitializer(ASTContext &Context,
                                        TypeSourceInfo *TInfo, bool IsVirtual,

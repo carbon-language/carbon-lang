@@ -31,7 +31,13 @@ inline bool isLambdaCallOperator(const CXXMethodDecl *MD) {
   return MD->getOverloadedOperator() == OO_Call;
 }
 
+inline bool isLambdaCallOperator(const DeclContext *DC) {
+  if (!DC || !isa<CXXMethodDecl>(DC)) return false;
+  return isLambdaCallOperator(cast<CXXMethodDecl>(DC));
+}
+
 inline bool isGenericLambdaCallOperatorSpecialization(CXXMethodDecl *MD) {
+  if (!MD) return false;
   CXXRecordDecl *LambdaClass = MD->getParent();
   if (LambdaClass && LambdaClass->isGenericLambda())
     return isLambdaCallOperator(MD) && 
@@ -44,6 +50,27 @@ inline bool isGenericLambdaCallOperatorSpecialization(Decl *D) {
   return isGenericLambdaCallOperatorSpecialization(
                                 cast<CXXMethodDecl>(D));
 }
+
+inline bool isLambdaConversionOperator(CXXConversionDecl *C) {
+  return C ? C->getParent()->isLambda() : false;
+}
+
+inline bool isLambdaConversionOperator(Decl *D) {
+  if (!D) return false;
+  if (CXXConversionDecl *Conv = dyn_cast<CXXConversionDecl>(D)) 
+    return isLambdaConversionOperator(Conv);  
+  if (FunctionTemplateDecl *F = dyn_cast<FunctionTemplateDecl>(D)) 
+    if (CXXConversionDecl *Conv = 
+        dyn_cast_or_null<CXXConversionDecl>(F->getTemplatedDecl())) 
+      return isLambdaConversionOperator(Conv);
+  return false;
+}
+
+inline bool isGenericLambdaCallOperatorSpecialization(DeclContext *DC) {
+  return isGenericLambdaCallOperatorSpecialization(
+                                          dyn_cast<CXXMethodDecl>(DC));
+}
+
 } // clang
 
 #endif // LLVM_CLANG_AST_LAMBDA_H
