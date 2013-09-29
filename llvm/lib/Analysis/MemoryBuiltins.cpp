@@ -634,13 +634,15 @@ SizeOffsetEvalType ObjectSizeOffsetEvaluator::compute_(Value *V) {
   if (Instruction *I = dyn_cast<Instruction>(V))
     Builder.SetInsertPoint(I);
 
-  // record the pointers that were handled in this run, so that they can be
-  // cleaned later if something fails
-  SeenVals.insert(V);
-
   // now compute the size and offset
   SizeOffsetEvalType Result;
-  if (GEPOperator *GEP = dyn_cast<GEPOperator>(V)) {
+
+  // Record the pointers that were handled in this run, so that they can be
+  // cleaned later if something fails. We also use this set to break cycles that
+  // can occur in dead code.
+  if (!SeenVals.insert(V)) {
+    Result = unknown();
+  } else if (GEPOperator *GEP = dyn_cast<GEPOperator>(V)) {
     Result = visitGEPOperator(*GEP);
   } else if (Instruction *I = dyn_cast<Instruction>(V)) {
     Result = visit(*I);

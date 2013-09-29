@@ -126,3 +126,20 @@ define i64 @f12(i64 %x, i64 %y) nounwind {
   %4 = load i64* %3, align 8
   ret i64 %4
 }
+
+; PR17402
+; CHECK-LABEL: @f13
+define void @f13() nounwind {
+entry:
+  br label %alive
+
+dead:
+  ; Self-refential GEPs can occur in dead code.
+  %incdec.ptr = getelementptr inbounds i32* %incdec.ptr, i64 1
+  ; CHECK: %incdec.ptr = getelementptr inbounds i32* %incdec.ptr
+  %l = load i32* %incdec.ptr
+  br label %alive
+
+alive:
+  ret void
+}
