@@ -57,8 +57,13 @@ class MSA_2R_FILL_FMT<bits<8> major, bits<2> df, bits<6> minor>: MSAInst {
 }
 
 class MSA_2R_FMT<bits<8> major, bits<2> df, bits<6> minor>: MSAInst {
+  bits<5> ws;
+  bits<5> wd;
+
   let Inst{25-18} = major;
   let Inst{17-16} = df;
+  let Inst{15-11} = ws;
+  let Inst{10-6} = wd;
   let Inst{5-0} = minor;
 }
 

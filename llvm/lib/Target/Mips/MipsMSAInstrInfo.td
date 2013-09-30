@@ -1138,12 +1138,12 @@ class MSA_I10_LDI_DESC_BASE<string instr_asm, RegisterClass RCWD,
 }
 
 class MSA_2R_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
-                       RegisterClass RCWD, RegisterClass RCWS = RCWD,
+                       RegisterOperand ROWD, RegisterOperand ROWS = ROWD,
                        InstrItinClass itin = NoItinerary> {
-  dag OutOperandList = (outs RCWD:$wd);
-  dag InOperandList = (ins RCWS:$ws);
+  dag OutOperandList = (outs ROWD:$wd);
+  dag InOperandList = (ins ROWS:$ws);
   string AsmString = !strconcat(instr_asm, "\t$wd, $ws");
-  list<dag> Pattern = [(set RCWD:$wd, (OpNode RCWS:$ws))];
+  list<dag> Pattern = [(set ROWD:$wd, (OpNode ROWS:$ws))];
   InstrItinClass Itinerary = itin;
 }
 
@@ -2147,15 +2147,15 @@ class MULV_H_DESC : MSA_3R_DESC_BASE<"mulv.h", mul, MSA128HOpnd>;
 class MULV_W_DESC : MSA_3R_DESC_BASE<"mulv.w", mul, MSA128WOpnd>;
 class MULV_D_DESC : MSA_3R_DESC_BASE<"mulv.d", mul, MSA128DOpnd>;
 
-class NLOC_B_DESC : MSA_2R_DESC_BASE<"nloc.b", int_mips_nloc_b, MSA128B>;
-class NLOC_H_DESC : MSA_2R_DESC_BASE<"nloc.h", int_mips_nloc_h, MSA128H>;
-class NLOC_W_DESC : MSA_2R_DESC_BASE<"nloc.w", int_mips_nloc_w, MSA128W>;
-class NLOC_D_DESC : MSA_2R_DESC_BASE<"nloc.d", int_mips_nloc_d, MSA128D>;
+class NLOC_B_DESC : MSA_2R_DESC_BASE<"nloc.b", int_mips_nloc_b, MSA128BOpnd>;
+class NLOC_H_DESC : MSA_2R_DESC_BASE<"nloc.h", int_mips_nloc_h, MSA128HOpnd>;
+class NLOC_W_DESC : MSA_2R_DESC_BASE<"nloc.w", int_mips_nloc_w, MSA128WOpnd>;
+class NLOC_D_DESC : MSA_2R_DESC_BASE<"nloc.d", int_mips_nloc_d, MSA128DOpnd>;
 
-class NLZC_B_DESC : MSA_2R_DESC_BASE<"nlzc.b", ctlz, MSA128B>;
-class NLZC_H_DESC : MSA_2R_DESC_BASE<"nlzc.h", ctlz, MSA128H>;
-class NLZC_W_DESC : MSA_2R_DESC_BASE<"nlzc.w", ctlz, MSA128W>;
-class NLZC_D_DESC : MSA_2R_DESC_BASE<"nlzc.d", ctlz, MSA128D>;
+class NLZC_B_DESC : MSA_2R_DESC_BASE<"nlzc.b", ctlz, MSA128BOpnd>;
+class NLZC_H_DESC : MSA_2R_DESC_BASE<"nlzc.h", ctlz, MSA128HOpnd>;
+class NLZC_W_DESC : MSA_2R_DESC_BASE<"nlzc.w", ctlz, MSA128WOpnd>;
+class NLZC_D_DESC : MSA_2R_DESC_BASE<"nlzc.d", ctlz, MSA128DOpnd>;
 
 class NOR_V_DESC : MSA_VEC_DESC_BASE<"nor.v", MipsVNOR, MSA128B>;
 class NOR_V_H_PSEUDO_DESC : MSA_VEC_PSEUDO_BASE<MipsVNOR, MSA128H>;
@@ -2182,10 +2182,10 @@ class PCKOD_H_DESC : MSA_3R_DESC_BASE<"pckod.h", MipsPCKOD, MSA128HOpnd>;
 class PCKOD_W_DESC : MSA_3R_DESC_BASE<"pckod.w", MipsPCKOD, MSA128WOpnd>;
 class PCKOD_D_DESC : MSA_3R_DESC_BASE<"pckod.d", MipsPCKOD, MSA128DOpnd>;
 
-class PCNT_B_DESC : MSA_2R_DESC_BASE<"pcnt.b", ctpop, MSA128B>;
-class PCNT_H_DESC : MSA_2R_DESC_BASE<"pcnt.h", ctpop, MSA128H>;
-class PCNT_W_DESC : MSA_2R_DESC_BASE<"pcnt.w", ctpop, MSA128W>;
-class PCNT_D_DESC : MSA_2R_DESC_BASE<"pcnt.d", ctpop, MSA128D>;
+class PCNT_B_DESC : MSA_2R_DESC_BASE<"pcnt.b", ctpop, MSA128BOpnd>;
+class PCNT_H_DESC : MSA_2R_DESC_BASE<"pcnt.h", ctpop, MSA128HOpnd>;
+class PCNT_W_DESC : MSA_2R_DESC_BASE<"pcnt.w", ctpop, MSA128WOpnd>;
+class PCNT_D_DESC : MSA_2R_DESC_BASE<"pcnt.d", ctpop, MSA128DOpnd>;
 
 class SAT_S_B_DESC : MSA_BIT_B_DESC_BASE<"sat_s.b", int_mips_sat_s_b, MSA128B>;
 class SAT_S_H_DESC : MSA_BIT_H_DESC_BASE<"sat_s.h", int_mips_sat_s_h, MSA128H>;
