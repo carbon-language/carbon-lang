@@ -4,6 +4,7 @@ target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f3
 
 ; Check that geps with equal base offsets of noalias base pointers stay noalias.
 define i32 @test(i32* %p, i16 %i) {
+; CHECK-LABEL: Function: test:
   %pi = getelementptr i32* %p, i32 0
   %pi.next = getelementptr i32* %p, i32 1
   %b = icmp eq i16 %i, 0
@@ -30,6 +31,7 @@ ret i32 0
 
 ; Check that geps with equal indices of noalias base pointers stay noalias.
 define i32 @test2([2 x i32]* %p, i32 %i) {
+; CHECK-LABEL: Function: test2:
   %pi = getelementptr [2 x i32]* %p, i32 0
   %pi.next = getelementptr [2 x i32]* %p, i32 1
   %b = icmp eq i32 %i, 0

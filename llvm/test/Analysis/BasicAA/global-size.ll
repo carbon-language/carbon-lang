@@ -6,7 +6,7 @@ target datalayout = "E-p:64:64:64-a0:0:8-f32:32:32-f64:64:64-i1:8:8-i8:8:8-i16:1
 
 @B = global i16 8
 
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 define i16 @test1(i32* %P) {
         %X = load i16* @B
         store i32 7, i32* %P
@@ -20,7 +20,7 @@ define i16 @test1(i32* %P) {
 ; rdar://8813415
 @window = external global [0 x i8]
 
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 define i8 @test2(i32 %tmp79, i32 %w.2, i32 %indvar89) nounwind {
   %tmp92 = add i32 %tmp79, %indvar89
   %arrayidx412 = getelementptr [0 x i8]* @window, i32 0, i32 %tmp92

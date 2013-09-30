@@ -15,7 +15,7 @@ entry:
 
 	%t = sub i32 %S, %s
 	ret i32 %t
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK: ret i32 0
 }
 
@@ -32,7 +32,7 @@ entry:
 
 	%t = sub i32 %S, %s
 	ret i32 %t
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK: ret i32 0
 }
 
@@ -51,7 +51,7 @@ entry:
 
 	%t = sub i32 %S, %s
 	ret i32 %t
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 ; CHECK: ret i32 0
 }
 
@@ -68,7 +68,7 @@ entry:
   store i8* null, i8** %tmp3, align 8
   %tmp4 = load i32* %tmp2, align 8
 	ret i32 %tmp4
-; CHECK: @test4
+; CHECK-LABEL: @test4(
 ; CHECK: ret i32 64
 }
 
@@ -82,7 +82,7 @@ define i32 @test5(i32* %p, i64 %i) {
   %y = load i32* %pi
   %z = sub i32 %x, %y
   ret i32 %z
-; CHECK: @test5
+; CHECK-LABEL: @test5(
 ; CHECK: ret i32 0
 }
 
@@ -97,7 +97,7 @@ define i32 @test6(i32* %p, i64 %i1) {
   %y = load i32* %pi
   %z = sub i32 %x, %y
   ret i32 %z
-; CHECK: @test6
+; CHECK-LABEL: @test6(
 ; CHECK: ret i32 0
 }
 
@@ -111,7 +111,7 @@ define i32 @test7(i32* %p, i64 %i) {
   %y = load i32* %pi
   %z = sub i32 %x, %y
   ret i32 %z
-; CHECK: @test7
+; CHECK-LABEL: @test7(
 ; CHECK: ret i32 0
 }
 
@@ -128,7 +128,7 @@ define i32 @test8(i32* %p, i16 %i) {
   %y = load i32* %pi
   %z = sub i32 %x, %y
   ret i32 %z
-; CHECK: @test8
+; CHECK-LABEL: @test8(
 ; CHECK: ret i32 0
 }
 
@@ -139,7 +139,7 @@ define i8 @test9([4 x i8] *%P, i32 %i, i32 %j) {
   %P2 = getelementptr [4 x i8] *%P, i32 0, i32 %i3
 
   %j2 = shl i32 %j, 2
-  
+
   ; P4 = P + 4*j
   %P4 = getelementptr [4 x i8]* %P, i32 0, i32 %j2
 
@@ -148,7 +148,7 @@ define i8 @test9([4 x i8] *%P, i32 %i, i32 %j) {
   %y = load i8* %P2
   %z = sub i8 %x, %y
   ret i8 %z
-; CHECK: @test9
+; CHECK-LABEL: @test9(
 ; CHECK: ret i8 0
 }
 
@@ -157,7 +157,7 @@ define i8 @test10([4 x i8] *%P, i32 %i) {
   %i3 = add i32 %i2, 4
   ; P2 = P + 4 + 4*i
   %P2 = getelementptr [4 x i8] *%P, i32 0, i32 %i3
-  
+
   ; P4 = P + 4*i
   %P4 = getelementptr [4 x i8]* %P, i32 0, i32 %i2
 
@@ -166,7 +166,7 @@ define i8 @test10([4 x i8] *%P, i32 %i) {
   %y = load i8* %P2
   %z = sub i8 %x, %y
   ret i8 %z
-; CHECK: @test10
+; CHECK-LABEL: @test10(
 ; CHECK: ret i8 0
 }
 
@@ -182,8 +182,8 @@ define float @test11(i32 %indvar, [4 x [2 x float]]* %q) nounwind ssp {
   store i64 0, i64* %scevgep35, align 4
   %tmp30 = load float* %y29, align 4
   ret float %tmp30
-  ; CHECK: @test11
-  ; CHECK: ret float %tmp30
+; CHECK-LABEL: @test11(
+; CHECK: ret float %tmp30
 }
 
 ; (This was a miscompilation.)
@@ -198,6 +198,6 @@ define i32 @test12(i32 %x, i32 %y, i8* %p) nounwind {
   store i32 0, i32* %castd
   %r = load i32* %castp
   ret i32 %r
-  ; CHECK: @test12
-  ; CHECK: ret i32 %r
+; CHECK-LABEL: @test12(
+; CHECK: ret i32 %r
 }
