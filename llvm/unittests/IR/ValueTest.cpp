@@ -43,4 +43,44 @@ TEST(ValueTest, UsedInBasicBlock) {
   EXPECT_TRUE(F->arg_begin()->isUsedInBasicBlock(F->begin()));
 }
 
+TEST(GlobalTest, CreateAddressSpace) {
+  LLVMContext &Ctx = getGlobalContext();
+  OwningPtr<Module> M(new Module("TestModule", Ctx));
+  Type *Int8Ty = Type::getInt8Ty(Ctx);
+  Type *Int32Ty = Type::getInt32Ty(Ctx);
+
+  GlobalVariable *Dummy0
+    = new GlobalVariable(*M,
+                         Int32Ty,
+                         true,
+                         GlobalValue::ExternalLinkage,
+                         Constant::getAllOnesValue(Int32Ty),
+                         "dummy",
+                         0,
+                         GlobalVariable::NotThreadLocal,
+                         1);
+
+  // Make sure the address space isn't dropped when returning this.
+  Constant *Dummy1 = M->getOrInsertGlobal("dummy", Int32Ty);
+  EXPECT_EQ(Dummy0, Dummy1);
+  EXPECT_EQ(1u, Dummy1->getType()->getPointerAddressSpace());
+
+
+  // This one requires a bitcast, but the address space must also stay the same.
+  GlobalVariable *DummyCast0
+    = new GlobalVariable(*M,
+                         Int32Ty,
+                         true,
+                         GlobalValue::ExternalLinkage,
+                         Constant::getAllOnesValue(Int32Ty),
+                         "dummy_cast",
+                         0,
+                         GlobalVariable::NotThreadLocal,
+                         1);
+
+  // Make sure the address space isn't dropped when returning this.
+  Constant *DummyCast1 = M->getOrInsertGlobal("dummy_cast", Int8Ty);
+  EXPECT_EQ(1u, DummyCast1->getType()->getPointerAddressSpace());
+  EXPECT_NE(DummyCast0, DummyCast1) << *DummyCast1;
+}
 } // end anonymous namespace

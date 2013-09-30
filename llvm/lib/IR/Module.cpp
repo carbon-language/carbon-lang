@@ -260,8 +260,10 @@ Constant *Module::getOrInsertGlobal(StringRef Name, Type *Ty) {
 
   // If the variable exists but has the wrong type, return a bitcast to the
   // right type.
-  if (GV->getType() != PointerType::getUnqual(Ty))
-    return ConstantExpr::getBitCast(GV, PointerType::getUnqual(Ty));
+  Type *GVTy = GV->getType();
+  PointerType *PTy = PointerType::get(Ty, GVTy->getPointerAddressSpace());
+  if (GV->getType() != PTy)
+    return ConstantExpr::getBitCast(GV, PTy);
 
   // Otherwise, we just found the existing function or a prototype.
   return GV;
