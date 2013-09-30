@@ -14,9 +14,9 @@ set(PACKAGE_BUGREPORT "llvmbugs@cs.uiuc.edu")
 
 # Add path for custom modules
 set(CMAKE_MODULE_PATH
-  ${CMAKE_MODULE_PATH}
   "${CMAKE_CURRENT_SOURCE_DIR}/cmake"
   "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules"
+  ${CMAKE_MODULE_PATH}
   )
 
 # Require out of source build.
