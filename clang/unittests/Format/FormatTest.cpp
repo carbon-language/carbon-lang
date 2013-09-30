@@ -3103,6 +3103,9 @@ TEST_F(FormatTest, AlignsAfterReturn) {
   verifyFormat("return aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
                "           aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) &&\n"
                "       aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;");
+  verifyFormat("return\n"
+               "    // true if code is one of a or b.\n"
+               "    code == a || code == b;");
 }
 
 TEST_F(FormatTest, BreaksConditionalExpressions) {

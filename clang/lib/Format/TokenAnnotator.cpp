@@ -853,6 +853,10 @@ public:
 
   /// \brief Parse expressions with the given operatore precedence.
   void parse(int Precedence = 0) {
+    // Skip 'return' as it is not part of a binary expression.
+    while (Current && Current->is(tok::kw_return))
+      next();
+
     if (Current == NULL || Precedence > PrecedenceArrowAndPeriod)
       return;
 

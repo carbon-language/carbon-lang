@@ -459,10 +459,6 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
     State.Stack.back().BreakBeforeParameter = false;
   }
 
-  // If return returns a binary expression, align after it.
-  if (Current.is(tok::kw_return) && Current.StartsBinaryExpression)
-    State.Stack.back().LastSpace = State.Column + 7;
-
   // In ObjC method declaration we align on the ":" of parameters, but we need
   // to ensure that we indent parameters on subsequent lines by at least 4.
   if (Current.Type == TT_ObjCMethodSpecifier)
@@ -474,8 +470,7 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
   // 'return', assignements or opening <({[. The indentation for these cases
   // is special cased.
   bool SkipFirstExtraIndent =
-      Current.is(tok::kw_return) ||
-      (Previous && (Previous->opensScope() ||
+      (Previous && (Previous->opensScope() || Previous->is(tok::kw_return) ||
                     Previous->getPrecedence() == prec::Assignment));
   for (SmallVectorImpl<prec::Level>::const_reverse_iterator
            I = Current.FakeLParens.rbegin(),
@@ -483,9 +478,15 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
        I != E; ++I) {
     ParenState NewParenState = State.Stack.back();
     NewParenState.ContainsLineBreak = false;
-    NewParenState.Indent =
-        std::max(std::max(State.Column, NewParenState.Indent),
-                 State.Stack.back().LastSpace);
+
+    // Indent from 'LastSpace' unless this the fake parentheses encapsulating a
+    // builder type call after 'return'. If such a call is line-wrapped, we
+    // commonly just want to indent from the start of the line.
+    if (!Previous || Previous->isNot(tok::kw_return) || *I > 0)
+      NewParenState.Indent =
+          std::max(std::max(State.Column, NewParenState.Indent),
+                   State.Stack.back().LastSpace);
+
     // Do not indent relative to the fake parentheses inserted for "." or "->".
     // This is a special case to make the following to statements consistent:
     //   OuterFunction(InnerFunctionCall( // break
