@@ -27,9 +27,6 @@
 
 using namespace llvm;
 
-// Fallback style when no style specified or found in a .clang-format file.
-static const char FallbackStyle[] = "LLVM";
-
 static cl::opt<bool> Help("h", cl::desc("Alias for -help"), cl::Hidden);
 
 // Mark all our options with this category, everything else (except for -version
