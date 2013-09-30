@@ -39,7 +39,7 @@ Itanium (ia64)
 MIPS
 ----
 
-* `MIPS Processor Architecture <http://mips.com/content/Documentation/MIPSDocumentation/ProcessorArchitecture/doclibrary>`_
+* `MIPS Processor Architecture <http://imgtec.com/mips/mips-architectures.asp>`_
 
 PowerPC
 -------
