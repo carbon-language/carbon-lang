@@ -20,6 +20,7 @@
 #include "X86DisassemblerShared.h"
 #include "X86ModRMFilters.h"
 #include "llvm/Support/raw_ostream.h"
+#include <map>
 #include <vector>
 
 namespace llvm {
@@ -41,27 +42,15 @@ private:
   /// [5] three-byte opcodes of the form 0f a7 __
   ContextDecision* Tables[6];
 
+  // Table of ModRM encodings.
+  typedef std::map<std::vector<unsigned>, unsigned> ModRMMapTy;
+  mutable ModRMMapTy ModRMTable;
+
   /// The instruction information table
   std::vector<InstructionSpecifier> InstructionSpecifiers;
 
   /// True if there are primary decode conflicts in the instruction set
   bool HasConflicts;
-
-  /// emitOneID - Emits a table entry for a single instruction entry, at the
-  ///   innermost level of the structure hierarchy.  The entry is printed out
-  ///   in the format "nnnn, /* MNEMONIC */" where nnnn is the ID in decimal,
-  ///   the comma is printed if addComma is true, and the menonic is the name
-  ///   of the instruction as listed in the LLVM tables.
-  ///
-  /// @param o        - The output stream to print the entry on.
-  /// @param i        - The indentation level for o.
-  /// @param id       - The unique ID of the instruction to print.
-  /// @param addComma - Whether or not to print a comma after the ID.  True if
-  ///                    additional items will follow.
-  void emitOneID(raw_ostream &o,
-                 uint32_t &i,
-                 InstrUID id,
-                 bool addComma) const;
 
   /// emitModRMDecision - Emits a table of entries corresponding to a single
   ///   ModR/M decision.  Compacts the ModR/M decision if possible.  ModR/M
@@ -91,12 +80,11 @@ private:
   /// @param o2       - The output stream to print the decision structure to.
   /// @param i1       - The indentation level to use with stream o1.
   /// @param i2       - The indentation level to use with stream o2.
+  /// @param ModRMTableNum - next table number for adding to ModRMTable.
   /// @param decision - The ModR/M decision to emit.  This decision has 256
   ///                   entries - emitModRMDecision decides how to compact it.
-  void emitModRMDecision(raw_ostream &o1,
-                         raw_ostream &o2,
-                         uint32_t &i1,
-                         uint32_t &i2,
+  void emitModRMDecision(raw_ostream &o1, raw_ostream &o2,
+                         unsigned &i1, unsigned &i2, unsigned &ModRMTableNum,
                          ModRMDecision &decision) const;
 
   /// emitOpcodeDecision - Emits an OpcodeDecision and all its subsidiary ModR/M
@@ -120,12 +108,11 @@ private:
   /// @param o2       - The output stream for the decision structure itself.
   /// @param i1       - The indent level to use with stream o1.
   /// @param i2       - The indent level to use with stream o2.
+  /// @param ModRMTableNum - next table number for adding to ModRMTable.
   /// @param decision - The OpcodeDecision to emit along with its subsidiary
   ///                    structures.
-  void emitOpcodeDecision(raw_ostream &o1,
-                          raw_ostream &o2,
-                          uint32_t &i1,
-                          uint32_t &i2,
+  void emitOpcodeDecision(raw_ostream &o1, raw_ostream &o2,
+                          unsigned &i1, unsigned &i2, unsigned &ModRMTableNum,
                           OpcodeDecision &decision) const;
 
   /// emitContextDecision - Emits a ContextDecision and all its subsidiary
@@ -155,15 +142,13 @@ private:
   /// @param o2       - The output stream to print the decision structure to.
   /// @param i1       - The indent level to use with stream o1.
   /// @param i2       - The indent level to use with stream o2.
+  /// @param ModRMTableNum - next table number for adding to ModRMTable.
   /// @param decision - The ContextDecision to emit along with its subsidiary
   ///                   structures.
   /// @param name     - The name for the ContextDecision.
-  void emitContextDecision(raw_ostream &o1,
-                           raw_ostream &o2,
-                           uint32_t &i1,
-                           uint32_t &i2,
-                           ContextDecision &decision,
-                           const char* name) const;
+  void emitContextDecision(raw_ostream &o1, raw_ostream &o2,
+                           unsigned &i1, unsigned &i2, unsigned &ModRMTableNum,
+                           ContextDecision &decision, const char* name) const;
 
   /// emitInstructionInfo - Prints the instruction specifier table, which has
   ///   one entry for each instruction, and contains name and operand
@@ -194,7 +179,7 @@ private:
   /// @param o  - The output stream to which the instruction table should be
   ///             written.
   /// @param i  - The indent level for use with the stream.
-  void emitInstructionInfo(raw_ostream &o, uint32_t &i) const;
+  void emitInstructionInfo(raw_ostream &o, unsigned &i) const;
 
   /// emitContextTable - Prints the table that is used to translate from an
   ///   instruction attribute mask to an instruction context.  This table is
@@ -220,10 +205,10 @@ private:
   /// @param o2 - The output stream to print the decision structures to.
   /// @param i1 - The indent level to use with stream o1.
   /// @param i2 - The indent level to use with stream o2.
-  void emitContextDecisions(raw_ostream &o1,
-                            raw_ostream &o2,
-                            uint32_t &i1,
-                            uint32_t &i2) const;
+  /// @param ModRMTableNum - next table number for adding to ModRMTable.
+  void emitContextDecisions(raw_ostream &o1, raw_ostream &o2,
+                            unsigned &i1, unsigned &i2,
+                            unsigned &ModRMTableNum) const;
 
   /// setTableFields - Uses a ModRMFilter to set the appropriate entries in a
   ///   ModRMDecision to refer to a particular instruction ID.
