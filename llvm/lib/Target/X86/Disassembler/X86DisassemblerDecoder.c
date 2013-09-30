@@ -828,42 +828,6 @@ static int getID(struct InternalInstruction* insn, const void *miiArg) {
 
   /* The following clauses compensate for limitations of the tables. */
 
-  if ((attrMask & ATTR_VEXL) && (attrMask & ATTR_REXW) &&
-      !(attrMask & ATTR_OPSIZE)) {
-    /*
-     * Some VEX instructions ignore the L-bit, but use the W-bit. Normally L-bit
-     * has precedence since there are no L-bit with W-bit entries in the tables.
-     * So if the L-bit isn't significant we should use the W-bit instead.
-     * We only need to do this if the instruction doesn't specify OpSize since
-     * there is a VEX_L_W_OPSIZE table.
-     */
-
-    const struct InstructionSpecifier *spec;
-    uint16_t instructionIDWithWBit;
-    const struct InstructionSpecifier *specWithWBit;
-
-    spec = specifierForUID(instructionID);
-
-    if (getIDWithAttrMask(&instructionIDWithWBit,
-                          insn,
-                          (attrMask & (~ATTR_VEXL)) | ATTR_REXW)) {
-      insn->instructionID = instructionID;
-      insn->spec = spec;
-      return 0;
-    }
-
-    specWithWBit = specifierForUID(instructionIDWithWBit);
-
-    if (instructionID != instructionIDWithWBit) {
-      insn->instructionID = instructionIDWithWBit;
-      insn->spec = specWithWBit;
-    } else {
-      insn->instructionID = instructionID;
-      insn->spec = spec;
-    }
-    return 0;
-  }
-
   if (insn->prefixPresent[0x66] && !(attrMask & ATTR_OPSIZE)) {
     /*
      * The instruction tables make no distinction between instructions that

@@ -116,10 +116,10 @@ enum attributeBits {
   ENUM_ENTRY(IC_VEX_L_XS,           4,  "requires VEX and the L and XS prefix")\
   ENUM_ENTRY(IC_VEX_L_XD,           4,  "requires VEX and the L and XD prefix")\
   ENUM_ENTRY(IC_VEX_L_OPSIZE,       4,  "requires VEX, L, and OpSize")         \
-  ENUM_ENTRY(IC_VEX_L_W,            3,  "requires VEX, L and W")               \
-  ENUM_ENTRY(IC_VEX_L_W_XS,         4,  "requires VEX, L, W and XS prefix")    \
-  ENUM_ENTRY(IC_VEX_L_W_XD,         4,  "requires VEX, L, W and XD prefix")    \
-  ENUM_ENTRY(IC_VEX_L_W_OPSIZE,     4,  "requires VEX, L, W and OpSize")       \
+  ENUM_ENTRY(IC_VEX_L_W,            4,  "requires VEX, L and W")               \
+  ENUM_ENTRY(IC_VEX_L_W_XS,         5,  "requires VEX, L, W and XS prefix")    \
+  ENUM_ENTRY(IC_VEX_L_W_XD,         5,  "requires VEX, L, W and XD prefix")    \
+  ENUM_ENTRY(IC_VEX_L_W_OPSIZE,     5,  "requires VEX, L, W and OpSize")       \
   ENUM_ENTRY(IC_EVEX,               1,  "requires an EVEX prefix")             \
   ENUM_ENTRY(IC_EVEX_XS,            2,  "requires EVEX and the XS prefix")     \
   ENUM_ENTRY(IC_EVEX_XD,            2,  "requires EVEX and the XD prefix")     \

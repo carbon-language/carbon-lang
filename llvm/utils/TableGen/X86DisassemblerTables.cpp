@@ -81,31 +81,37 @@ static inline bool inheritsFrom(InstructionContext child,
   case IC_64BIT_REXW_OPSIZE:
     return false;
   case IC_VEX:
-    return inheritsFrom(child, IC_VEX_L_W) ||
+    return (VEX_LIG && inheritsFrom(child, IC_VEX_L_W)) ||
            inheritsFrom(child, IC_VEX_W) ||
            (VEX_LIG && inheritsFrom(child, IC_VEX_L));
   case IC_VEX_XS:
-    return inheritsFrom(child, IC_VEX_L_W_XS) ||
+    return (VEX_LIG && inheritsFrom(child, IC_VEX_L_W_XS)) ||
            inheritsFrom(child, IC_VEX_W_XS) ||
            (VEX_LIG && inheritsFrom(child, IC_VEX_L_XS));
   case IC_VEX_XD:
-    return inheritsFrom(child, IC_VEX_L_W_XD) ||
+    return (VEX_LIG && inheritsFrom(child, IC_VEX_L_W_XD)) ||
            inheritsFrom(child, IC_VEX_W_XD) ||
            (VEX_LIG && inheritsFrom(child, IC_VEX_L_XD));
   case IC_VEX_OPSIZE:
-    return inheritsFrom(child, IC_VEX_L_W_OPSIZE) ||
+    return (VEX_LIG && inheritsFrom(child, IC_VEX_L_W_OPSIZE)) ||
            inheritsFrom(child, IC_VEX_W_OPSIZE) ||
            (VEX_LIG && inheritsFrom(child, IC_VEX_L_OPSIZE));
   case IC_VEX_W:
+    return VEX_LIG && inheritsFrom(child, IC_VEX_L_W);
   case IC_VEX_W_XS:
+    return VEX_LIG && inheritsFrom(child, IC_VEX_L_W_XS);
   case IC_VEX_W_XD:
+    return VEX_LIG && inheritsFrom(child, IC_VEX_L_W_XD);
   case IC_VEX_W_OPSIZE:
-    return false;
+    return VEX_LIG && inheritsFrom(child, IC_VEX_L_W_OPSIZE);
   case IC_VEX_L:
+    return inheritsFrom(child, IC_VEX_L_W);
   case IC_VEX_L_XS:
+    return inheritsFrom(child, IC_VEX_L_W_XS);
   case IC_VEX_L_XD:
+    return inheritsFrom(child, IC_VEX_L_W_XD);
   case IC_VEX_L_OPSIZE:
-    return false;
+    return inheritsFrom(child, IC_VEX_L_W_OPSIZE);
   case IC_VEX_L_W:
   case IC_VEX_L_W_XS:
   case IC_VEX_L_W_XD:
@@ -622,6 +628,12 @@ void DisassemblerTables::emitContextTable(raw_ostream &o, unsigned &i) const {
 
     if ((index & ATTR_VEXL) && (index & ATTR_REXW) && (index & ATTR_OPSIZE))
       o << "IC_VEX_L_W_OPSIZE";
+    else if ((index & ATTR_VEXL) && (index & ATTR_REXW) && (index & ATTR_XD))
+      o << "IC_VEX_L_W_XD";
+    else if ((index & ATTR_VEXL) && (index & ATTR_REXW) && (index & ATTR_XS))
+      o << "IC_VEX_L_W_XS";
+    else if ((index & ATTR_VEXL) && (index & ATTR_REXW))
+      o << "IC_VEX_L_W";
     else if ((index & ATTR_VEXL) && (index & ATTR_OPSIZE))
       o << "IC_VEX_L_OPSIZE";
     else if ((index & ATTR_VEXL) && (index & ATTR_XD))

@@ -206,25 +206,26 @@ multiclass fma4s<bits<8> opc, string OpcodeStr, RegisterClass RC,
            !strconcat(OpcodeStr,
            "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
            [(set RC:$dst,
-             (OpVT (OpNode RC:$src1, RC:$src2, RC:$src3)))]>, VEX_W, MemOp4;
+             (OpVT (OpNode RC:$src1, RC:$src2, RC:$src3)))]>, VEX_W, VEX_LIG, MemOp4;
   def rm : FMA4<opc, MRMSrcMem, (outs RC:$dst),
            (ins RC:$src1, RC:$src2, x86memop:$src3),
            !strconcat(OpcodeStr,
            "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
            [(set RC:$dst, (OpNode RC:$src1, RC:$src2,
-                           (mem_frag addr:$src3)))]>, VEX_W, MemOp4;
+                           (mem_frag addr:$src3)))]>, VEX_W, VEX_LIG, MemOp4;
   def mr : FMA4<opc, MRMSrcMem, (outs RC:$dst),
            (ins RC:$src1, x86memop:$src2, RC:$src3),
            !strconcat(OpcodeStr,
            "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
            [(set RC:$dst,
-             (OpNode RC:$src1, (mem_frag addr:$src2), RC:$src3))]>;
+             (OpNode RC:$src1, (mem_frag addr:$src2), RC:$src3))]>, VEX_LIG;
 // For disassembler
 let isCodeGenOnly = 1, hasSideEffects = 0 in
   def rr_REV : FMA4<opc, MRMSrcReg, (outs RC:$dst),
                (ins RC:$src1, RC:$src2, RC:$src3),
                !strconcat(OpcodeStr,
-               "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"), []>;
+               "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"), []>,
+               VEX_LIG;
 }
 
 multiclass fma4s_int<bits<8> opc, string OpcodeStr, Operand memop,
@@ -235,19 +236,19 @@ multiclass fma4s_int<bits<8> opc, string OpcodeStr, Operand memop,
                !strconcat(OpcodeStr,
                "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
                [(set VR128:$dst,
-                 (Int VR128:$src1, VR128:$src2, VR128:$src3))]>, VEX_W, MemOp4;
+                 (Int VR128:$src1, VR128:$src2, VR128:$src3))]>, VEX_W, VEX_LIG, MemOp4;
   def rm_Int : FMA4<opc, MRMSrcMem, (outs VR128:$dst),
                (ins VR128:$src1, VR128:$src2, memop:$src3),
                !strconcat(OpcodeStr,
                "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
                [(set VR128:$dst, (Int VR128:$src1, VR128:$src2,
-                                  mem_cpat:$src3))]>, VEX_W, MemOp4;
+                                  mem_cpat:$src3))]>, VEX_W, VEX_LIG, MemOp4;
   def mr_Int : FMA4<opc, MRMSrcMem, (outs VR128:$dst),
                (ins VR128:$src1, memop:$src2, VR128:$src3),
                !strconcat(OpcodeStr,
                "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
                [(set VR128:$dst,
-                 (Int VR128:$src1, mem_cpat:$src2, VR128:$src3))]>;
+                 (Int VR128:$src1, mem_cpat:$src2, VR128:$src3))]>, VEX_LIG;
 }
 
 multiclass fma4p<bits<8> opc, string OpcodeStr, SDNode OpNode,
