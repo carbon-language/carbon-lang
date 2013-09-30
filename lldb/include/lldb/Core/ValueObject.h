@@ -216,229 +216,6 @@ public:
         }
 
     };
-    
-    struct DumpValueObjectOptions
-    {
-        uint32_t m_max_ptr_depth;
-        uint32_t m_max_depth;
-        bool m_show_types;
-        bool m_show_location;
-        bool m_use_objc;
-        lldb::DynamicValueType m_use_dynamic;
-        bool m_use_synthetic;
-        bool m_scope_already_checked;
-        bool m_flat_output;
-        uint32_t m_omit_summary_depth;
-        bool m_ignore_cap;
-        lldb::Format m_format;
-        lldb::TypeSummaryImplSP m_summary_sp;
-        std::string m_root_valobj_name;
-        bool m_hide_root_type;
-        bool m_hide_name;
-        bool m_hide_value;
-        
-        DumpValueObjectOptions() :
-            m_max_ptr_depth(0),
-            m_max_depth(UINT32_MAX),
-            m_show_types(false),
-            m_show_location(false),
-            m_use_objc(false),
-            m_use_dynamic(lldb::eNoDynamicValues),
-            m_use_synthetic(true),
-            m_scope_already_checked(false),
-            m_flat_output(false),
-            m_omit_summary_depth(0),
-            m_ignore_cap(false), 
-            m_format (lldb::eFormatDefault),
-            m_summary_sp(),
-            m_root_valobj_name(),
-            m_hide_root_type(false),  // provide a special compact display for "po"
-            m_hide_name(false), // provide a special compact display for "po"
-            m_hide_value(false) // provide a special compact display for "po"
-        {}
-        
-        static const DumpValueObjectOptions
-        DefaultOptions()
-        {
-            static DumpValueObjectOptions g_default_options;
-            
-            return g_default_options;
-        }
-        
-        DumpValueObjectOptions (const DumpValueObjectOptions& rhs) :
-            m_max_ptr_depth(rhs.m_max_ptr_depth),
-            m_max_depth(rhs.m_max_depth),
-            m_show_types(rhs.m_show_types),
-            m_show_location(rhs.m_show_location),
-            m_use_objc(rhs.m_use_objc),
-            m_use_dynamic(rhs.m_use_dynamic),
-            m_use_synthetic(rhs.m_use_synthetic),
-            m_scope_already_checked(rhs.m_scope_already_checked),
-            m_flat_output(rhs.m_flat_output),
-            m_omit_summary_depth(rhs.m_omit_summary_depth),
-            m_ignore_cap(rhs.m_ignore_cap),
-            m_format(rhs.m_format),
-            m_summary_sp(rhs.m_summary_sp),
-            m_root_valobj_name(rhs.m_root_valobj_name),
-            m_hide_root_type(rhs.m_hide_root_type),
-            m_hide_name(rhs.m_hide_name),
-            m_hide_value(rhs.m_hide_value)
-        {}
-        
-        DumpValueObjectOptions&
-        SetMaximumPointerDepth(uint32_t depth = 0)
-        {
-            m_max_ptr_depth = depth;
-            return *this;
-        }
-        
-        DumpValueObjectOptions&
-        SetMaximumDepth(uint32_t depth = 0)
-        {
-            m_max_depth = depth;
-            return *this;
-        }
-        
-        DumpValueObjectOptions&
-        SetShowTypes(bool show = false)
-        {
-            m_show_types = show;
-            return *this;
-        }
-        
-        DumpValueObjectOptions&
-        SetShowLocation(bool show = false)
-        {
-            m_show_location = show;
-            return *this;
-        }
-
-        DumpValueObjectOptions&
-        SetUseObjectiveC(bool use = false)
-        {
-            m_use_objc = use;
-            return *this;
-        }
-    
-        DumpValueObjectOptions&
-        SetShowSummary(bool show = true)
-        {
-            if (show == false)
-                SetOmitSummaryDepth(UINT32_MAX);
-            else
-                SetOmitSummaryDepth(0);
-            return *this;
-        }
-        
-        DumpValueObjectOptions&
-        SetUseDynamicType(lldb::DynamicValueType dyn = lldb::eNoDynamicValues)
-        {
-            m_use_dynamic = dyn;
-            return *this;
-        }
-        
-        DumpValueObjectOptions&
-        SetUseSyntheticValue(bool use_synthetic = true)
-        {
-            m_use_synthetic = use_synthetic;
-            return *this;
-        }
-
-        DumpValueObjectOptions&
-        SetScopeChecked(bool check = true)
-        {
-            m_scope_already_checked = check;
-            return *this;
-        }
-        
-        DumpValueObjectOptions&
-        SetFlatOutput(bool flat = false)
-        {
-            m_flat_output = flat;
-            return *this;
-        }
-        
-        DumpValueObjectOptions&
-        SetOmitSummaryDepth(uint32_t depth = 0)
-        {
-            m_omit_summary_depth = depth;
-            return *this;
-        }
-        
-        DumpValueObjectOptions&
-        SetIgnoreCap(bool ignore = false)
-        {
-            m_ignore_cap = ignore;
-            return *this;
-        }
-
-        DumpValueObjectOptions&
-        SetRawDisplay(bool raw = false)
-        {
-            if (raw)
-            {
-                SetUseSyntheticValue(false);
-                SetOmitSummaryDepth(UINT32_MAX);
-                SetIgnoreCap(true);
-                SetHideName(false);
-                SetHideValue(false);
-            }
-            else
-            {
-                SetUseSyntheticValue(true);
-                SetOmitSummaryDepth(0);
-                SetIgnoreCap(false);
-                SetHideName(false);
-                SetHideValue(false);
-            }
-            return *this;
-        }
-
-        DumpValueObjectOptions&
-        SetFormat (lldb::Format format = lldb::eFormatDefault)
-        {
-            m_format = format;
-            return *this;
-        }
-        
-        DumpValueObjectOptions&
-        SetSummary (lldb::TypeSummaryImplSP summary = lldb::TypeSummaryImplSP())
-        {
-            m_summary_sp = summary;
-            return *this;
-        }
-        
-        DumpValueObjectOptions&
-        SetRootValueObjectName (const char* name = NULL)
-        {
-            if (name)
-                m_root_valobj_name.assign(name);
-            else
-                m_root_valobj_name.clear();
-            return *this;
-        }
-                
-        DumpValueObjectOptions&
-        SetHideRootType (bool hide_root_type = false)
-        {
-            m_hide_root_type = hide_root_type;
-            return *this;
-        }
-        
-        DumpValueObjectOptions&
-        SetHideName (bool hide_name = false)
-        {
-            m_hide_name = hide_name;
-            return *this;
-        }
-
-        DumpValueObjectOptions&
-        SetHideValue (bool hide_value = false)
-        {
-            m_hide_value = hide_value;
-            return *this;
-        }        
-    };
 
     class EvaluationPoint
     {
@@ -953,13 +730,12 @@ public:
     virtual SymbolContextScope *
     GetSymbolContextScope();
     
-    static void
-    DumpValueObject (Stream &s,
-                     ValueObject *valobj);    
-    static void
-    DumpValueObject (Stream &s,
-                     ValueObject *valobj,
-                     const DumpValueObjectOptions& options);
+    void
+    Dump (Stream &s);
+    
+    void
+    Dump (Stream &s,
+          const DumpValueObjectOptions& options);
 
     static lldb::ValueObjectSP
     CreateValueObjectFromExpression (const char* name,
@@ -978,13 +754,11 @@ public:
                                const ExecutionContext& exe_ctx,
                                ClangASTType type);
     
-    static void
-    LogValueObject (Log *log,
-                    ValueObject *valobj);
+    void
+    LogValueObject (Log *log);
 
-    static void
+    void
     LogValueObject (Log *log,
-                    ValueObject *valobj,
                     const DumpValueObjectOptions& options);
 
 

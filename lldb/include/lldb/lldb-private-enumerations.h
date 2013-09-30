@@ -229,6 +229,14 @@ typedef enum ScriptedCommandSynchronicity
     eScriptedCommandSynchronicityCurrentValue // use whatever the current synchronicity is
 } ScriptedCommandSynchronicity;
 
+//----------------------------------------------------------------------
+// Verbosity mode of "po" output
+//----------------------------------------------------------------------
+typedef enum LanguageRuntimeDescriptionDisplayVerbosity
+{
+    eLanguageRuntimeDescriptionDisplayVerbosityCompact, // only print the description string, if any
+    eLanguageRuntimeDescriptionDisplayVerbosityFull,    // print the full-blown output
+} LanguageRuntimeDescriptionDisplayVerbosity;
 
 //----------------------------------------------------------------------
 // Loading modules from memory

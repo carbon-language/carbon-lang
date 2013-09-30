@@ -380,6 +380,7 @@ namespace lldb {
         eArgTypeClassName,
         eArgTypeCommandName,
         eArgTypeCount,
+        eArgTypeDescriptionVerbosity,
         eArgTypeDirectoryName,
         eArgTypeDisassemblyFlavor,
         eArgTypeEndAddress,

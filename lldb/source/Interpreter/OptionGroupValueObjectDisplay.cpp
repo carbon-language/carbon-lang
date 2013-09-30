@@ -15,6 +15,7 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
+#include "lldb/DataFormatters/ValueObjectPrinter.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Utility/Utils.h"
@@ -147,12 +148,12 @@ OptionGroupValueObjectDisplay::OptionParsingStarting (CommandInterpreter &interp
     }
 }
 
-ValueObject::DumpValueObjectOptions
-OptionGroupValueObjectDisplay::GetAsDumpOptions (bool objc_is_compact,
+DumpValueObjectOptions
+OptionGroupValueObjectDisplay::GetAsDumpOptions (LanguageRuntimeDescriptionDisplayVerbosity lang_descr_verbosity,
                                                  lldb::Format format,
                                                  lldb::TypeSummaryImplSP summary_sp)
 {
-    ValueObject::DumpValueObjectOptions options;
+    DumpValueObjectOptions options;
     options.SetMaximumPointerDepth(ptr_depth);
     if (use_objc)
         options.SetShowSummary(false);
@@ -169,7 +170,7 @@ OptionGroupValueObjectDisplay::GetAsDumpOptions (bool objc_is_compact,
     .SetFormat(format)
     .SetSummary(summary_sp);
     
-    if (objc_is_compact)
+    if (lang_descr_verbosity == eLanguageRuntimeDescriptionDisplayVerbosityCompact)
         options.SetHideRootType(use_objc)
         .SetHideName(use_objc)
         .SetHideValue(use_objc);

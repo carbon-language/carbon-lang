@@ -62,8 +62,8 @@ public:
                ignore_cap == true;
     }
     
-    ValueObject::DumpValueObjectOptions
-    GetAsDumpOptions (bool objc_is_compact = false,
+    DumpValueObjectOptions
+    GetAsDumpOptions (LanguageRuntimeDescriptionDisplayVerbosity lang_descr_verbosity = eLanguageRuntimeDescriptionDisplayVerbosityFull,
                       lldb::Format format = lldb::eFormatDefault,
                       lldb::TypeSummaryImplSP summary_sp = lldb::TypeSummaryImplSP());
 

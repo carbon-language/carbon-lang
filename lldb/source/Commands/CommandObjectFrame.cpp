@@ -25,6 +25,7 @@
 #include "lldb/Core/ValueObject.h"
 #include "lldb/Core/ValueObjectVariable.h"
 #include "lldb/DataFormatters/DataVisualization.h"
+#include "lldb/DataFormatters/ValueObjectPrinter.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
@@ -400,7 +401,7 @@ protected:
         else if (!m_option_variable.summary_string.IsCurrentValueEmpty())
             summary_format_sp.reset(new StringSummaryFormat(TypeSummaryImpl::Flags(),m_option_variable.summary_string.GetCurrentValue()));
         
-        ValueObject::DumpValueObjectOptions options(m_varobj_options.GetAsDumpOptions(false,eFormatDefault,summary_format_sp));
+        DumpValueObjectOptions options(m_varobj_options.GetAsDumpOptions(eLanguageRuntimeDescriptionDisplayVerbosityFull,eFormatDefault,summary_format_sp));
         
         if (variable_list)
         {
@@ -447,9 +448,7 @@ protected:
                                                 if (var_sp->DumpDeclaration(&s, show_fullpaths, show_module))
                                                     s.PutCString (": ");
                                             }
-                                            ValueObject::DumpValueObject (result.GetOutputStream(), 
-                                                                          valobj_sp.get(),
-                                                                          options);
+                                            valobj_sp->Dump(result.GetOutputStream(),options);
                                         }
                                     }
                                 }
@@ -493,9 +492,7 @@ protected:
 
                             Stream &output_stream = result.GetOutputStream();
                             options.SetRootValueObjectName(valobj_sp->GetParent() ? name_cstr : NULL);
-                            ValueObject::DumpValueObject (output_stream, 
-                                                          valobj_sp.get(), 
-                                                          options);
+                            valobj_sp->Dump(output_stream,options);
                         }
                         else
                         {
@@ -571,9 +568,7 @@ protected:
                                     
                                     options.SetFormat(format);
                                     options.SetRootValueObjectName(name_cstr);
-                                    ValueObject::DumpValueObject (result.GetOutputStream(), 
-                                                                  valobj_sp.get(), 
-                                                                  options);
+                                    valobj_sp->Dump(result.GetOutputStream(),options);
                                 }
                             }
                         }

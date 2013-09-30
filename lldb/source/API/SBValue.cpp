@@ -1394,9 +1394,7 @@ SBValue::GetDescription (SBStream &description)
     ValueLocker locker;
     lldb::ValueObjectSP value_sp(GetSP(locker));
     if (value_sp)
-    {
-        ValueObject::DumpValueObject (strm, value_sp.get());
-    }
+        value_sp->Dump(strm);
     else
         strm.PutCString ("No value");
     

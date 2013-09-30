@@ -23,6 +23,7 @@
 #include "lldb/Core/Module.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/ValueObjectMemory.h"
+#include "lldb/DataFormatters/ValueObjectPrinter.h"
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
@@ -836,11 +837,9 @@ protected:
                     if (format != eFormatDefault)
                         valobj_sp->SetFormat (format);
 
-                    ValueObject::DumpValueObjectOptions options(m_varobj_options.GetAsDumpOptions(false,format));
+                    DumpValueObjectOptions options(m_varobj_options.GetAsDumpOptions(eLanguageRuntimeDescriptionDisplayVerbosityFull,format));
                     
-                    ValueObject::DumpValueObject (*output_stream,
-                                                  valobj_sp.get(),
-                                                  options);
+                    valobj_sp->Dump(*output_stream,options);
                 }
                 else
                 {

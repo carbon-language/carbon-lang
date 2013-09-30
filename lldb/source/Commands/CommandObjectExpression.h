@@ -57,6 +57,7 @@ public:
         bool        show_summary;
         uint32_t    timeout;
         bool        try_all_threads;
+        LanguageRuntimeDescriptionDisplayVerbosity m_verbosity;
     };
 
     CommandObjectExpression (CommandInterpreter &interpreter);

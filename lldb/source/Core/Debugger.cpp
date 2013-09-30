@@ -1981,7 +1981,7 @@ FormatPromptRecurse
                                                 ValueObjectSP return_valobj_sp = StopInfo::GetReturnValueObject (stop_info_sp);
                                                 if (return_valobj_sp)
                                                 {
-                                                    ValueObject::DumpValueObject (s, return_valobj_sp.get());
+                                                    return_valobj_sp->Dump(s);
                                                     var_success = true;
                                                 }
                                             }

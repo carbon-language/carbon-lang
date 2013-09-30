@@ -26,6 +26,7 @@
 #include "lldb/Core/State.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/Core/ValueObjectVariable.h"
+#include "lldb/DataFormatters/ValueObjectPrinter.h"
 #include "lldb/Host/Symbols.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
@@ -719,7 +720,7 @@ public:
     void
     DumpValueObject (Stream &s, VariableSP &var_sp, ValueObjectSP &valobj_sp, const char *root_name)
     {
-        ValueObject::DumpValueObjectOptions options(m_varobj_options.GetAsDumpOptions());
+        DumpValueObjectOptions options(m_varobj_options.GetAsDumpOptions());
         
         switch (var_sp->GetScope())
         {
@@ -761,10 +762,7 @@ public:
 
         options.SetRootValueObjectName(root_name);
         
-        ValueObject::DumpValueObject (s, 
-                                      valobj_sp.get(), 
-                                      options);                                        
-
+        valobj_sp->Dump(s,options);
     }
     
     
