@@ -3806,7 +3806,7 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *ConversionTemplate,
     FunctionTemplateDecl *InvokerTemplate = LambdaClass->
                     getLambdaStaticInvoker()->getDescribedFunctionTemplate();
 
-    TemplateDeductionResult Result
+    TemplateDeductionResult LLVM_ATTRIBUTE_UNUSED Result
       = FinishTemplateArgumentDeduction(InvokerTemplate, Deduced, 0, 
             InvokerSpecialization, Info);
     assert(Result == TDK_Success);
