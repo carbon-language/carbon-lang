@@ -777,8 +777,29 @@ CompileUnit *DwarfDebug::constructCompileUnit(const MDNode *N) {
 
     // Flag to let the linker know we have emitted new style pubnames. Only
     // emit it here if we don't have a skeleton CU for split dwarf.
-    if (GenerateGnuPubSections)
-      NewCU->addFlag(Die, dwarf::DW_AT_GNU_pubnames);
+    if (GenerateGnuPubSections) {
+      if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
+        NewCU->addLabel(Die, dwarf::DW_AT_GNU_pubnames,
+                        dwarf::DW_FORM_sec_offset,
+                        Asm->GetTempSymbol("gnu_pubnames",
+                                           NewCU->getUniqueID()));
+      else
+        NewCU->addDelta(Die, dwarf::DW_AT_GNU_pubnames, dwarf::DW_FORM_data4,
+                        Asm->GetTempSymbol("gnu_pubnames",
+                                           NewCU->getUniqueID()),
+                        DwarfGnuPubNamesSectionSym);
+
+      if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
+        NewCU->addLabel(Die, dwarf::DW_AT_GNU_pubtypes,
+                        dwarf::DW_FORM_sec_offset,
+                        Asm->GetTempSymbol("gnu_pubtypes",
+                                           NewCU->getUniqueID()));
+      else
+        NewCU->addDelta(Die, dwarf::DW_AT_GNU_pubtypes, dwarf::DW_FORM_data4,
+                        Asm->GetTempSymbol("gnu_pubnames",
+                                           NewCU->getUniqueID()),
+                        DwarfGnuPubTypesSectionSym);
+    }
   }
 
   if (DIUnit.isOptimized())
@@ -1967,8 +1988,10 @@ void DwarfDebug::emitSectionLabels() {
     emitSectionSym(Asm, TLOF.getDwarfLineSection(), "section_line");
   emitSectionSym(Asm, TLOF.getDwarfLocSection());
   if (GenerateGnuPubSections) {
-    emitSectionSym(Asm, TLOF.getDwarfGnuPubNamesSection());
-    emitSectionSym(Asm, TLOF.getDwarfGnuPubTypesSection());
+    DwarfGnuPubNamesSectionSym =
+        emitSectionSym(Asm, TLOF.getDwarfGnuPubNamesSection());
+    DwarfGnuPubTypesSectionSym =
+        emitSectionSym(Asm, TLOF.getDwarfGnuPubTypesSection());
   } else if (HasDwarfPubSections) {
     emitSectionSym(Asm, TLOF.getDwarfPubNamesSection());
     emitSectionSym(Asm, TLOF.getDwarfPubTypesSection());
@@ -2400,6 +2423,11 @@ void DwarfDebug::emitDebugPubNames(bool GnuStyle) {
     // Start the dwarf pubnames section.
     Asm->OutStreamer.SwitchSection(PSec);
 
+    // Emit a label so we can reference the beginning of this pubname section.
+    if (GnuStyle)
+      Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("gnu_pubnames",
+                                                    TheCU->getUniqueID()));
+
     // Emit the header.
     Asm->OutStreamer.AddComment("Length of Public Names Info");
     Asm->EmitLabelDifference(Asm->GetTempSymbol("pubnames_end", ID),
@@ -2460,6 +2488,13 @@ void DwarfDebug::emitDebugPubTypes(bool GnuStyle) {
     CompileUnit *TheCU = I->second;
     // Start the dwarf pubtypes section.
     Asm->OutStreamer.SwitchSection(PSec);
+
+    // Emit a label so we can reference the beginning of this pubtype section.
+    if (GnuStyle)
+      Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("gnu_pubtypes",
+                                                    TheCU->getUniqueID()));
+
+    // Emit the header.
     Asm->OutStreamer.AddComment("Length of Public Types Info");
     Asm->EmitLabelDifference(
         Asm->GetTempSymbol("pubtypes_end", TheCU->getUniqueID()),
@@ -2482,6 +2517,7 @@ void DwarfDebug::emitDebugPubTypes(bool GnuStyle) {
         Asm->GetTempSymbol(ISec->getLabelEndName(), TheCU->getUniqueID()),
         Asm->GetTempSymbol(ISec->getLabelBeginName(), TheCU->getUniqueID()), 4);
 
+    // Emit the pubtypes.
     const StringMap<DIE *> &Globals = TheCU->getGlobalTypes();
     for (StringMap<DIE *>::const_iterator GI = Globals.begin(),
                                           GE = Globals.end();
@@ -2929,8 +2965,23 @@ CompileUnit *DwarfDebug::constructSkeletonCU(const CompileUnit *CU) {
     NewCU->addLocalString(Die, dwarf::DW_AT_comp_dir, CompilationDir);
 
   // Flag to let the linker know we have emitted new style pubnames.
-  if (GenerateGnuPubSections)
-    NewCU->addFlag(Die, dwarf::DW_AT_GNU_pubnames);
+  if (GenerateGnuPubSections) {
+    if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
+      NewCU->addLabel(Die, dwarf::DW_AT_GNU_pubnames, dwarf::DW_FORM_sec_offset,
+                      Asm->GetTempSymbol("gnu_pubnames", NewCU->getUniqueID()));
+    else
+      NewCU->addDelta(Die, dwarf::DW_AT_GNU_pubnames, dwarf::DW_FORM_data4,
+                      Asm->GetTempSymbol("gnu_pubnames", NewCU->getUniqueID()),
+                      DwarfGnuPubNamesSectionSym);
+
+    if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
+      NewCU->addLabel(Die, dwarf::DW_AT_GNU_pubtypes, dwarf::DW_FORM_sec_offset,
+                      Asm->GetTempSymbol("gnu_pubtypes", NewCU->getUniqueID()));
+    else
+      NewCU->addDelta(Die, dwarf::DW_AT_GNU_pubtypes, dwarf::DW_FORM_data4,
+                      Asm->GetTempSymbol("gnu_pubnames", NewCU->getUniqueID()),
+                      DwarfGnuPubTypesSectionSym);
+  }
 
   SkeletonHolder.addUnit(NewCU);
   SkeletonCUs.push_back(NewCU);

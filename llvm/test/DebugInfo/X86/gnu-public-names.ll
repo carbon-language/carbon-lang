@@ -42,28 +42,30 @@
 ; ASM-NEXT: .asciz  "C"                     # External Name
 
 ; CHECK: .debug_info contents:
-; CHECK: 0x00000026: DW_TAG_base_type
+; CHECK: DW_AT_GNU_pubnames [DW_FORM_sec_offset]   (0x00000000)
+; CHECK: DW_AT_GNU_pubtypes [DW_FORM_sec_offset]   (0x00000000)
+; CHECK: 0x0000002e: DW_TAG_base_type
 ; CHECK-NEXT: DW_AT_name {{.*}} "int"
-; CHECK: 0x00000032: DW_TAG_structure_type
+; CHECK: 0x0000003a: DW_TAG_structure_type
 ; CHECK-NEXT: DW_AT_name {{.*}} "C"
-; CHECK: 0x00000046: DW_TAG_subprogram
+; CHECK: 0x0000004e: DW_TAG_subprogram
 ; CHECK-NEXT: DW_AT_MIPS_linkage_name
 ; CHECK-NEXT: DW_AT_name {{.*}} "member_function"
-; CHECK: 0x00000058: DW_TAG_subprogram
+; CHECK: 0x00000060: DW_TAG_subprogram
 ; CHECK-NEXT: DW_AT_MIPS_linkage_name
 ; CHECK-NEXT: DW_AT_name {{.*}} "static_member_function"
-; CHECK: 0x0000007c: DW_TAG_variable
+; CHECK: 0x00000084: DW_TAG_variable
 ; CHECK-NEXT: DW_AT_name {{.*}} "global_variable"
-; CHECK: 0x00000098: DW_TAG_variable
+; CHECK: 0x000000a0: DW_TAG_variable
 ; CHECK-NEXT: DW_AT_name {{.*}} "global_namespace_variable"
-; CHECK: 0x000000a7: DW_TAG_subprogram
+; CHECK: 0x000000af: DW_TAG_subprogram
 ; CHECK-NEXT: DW_AT_MIPS_linkage_name
 ; CHECK-NEXT: DW_AT_name {{.*}} "global_namespace_function"
-; CHECK: 0x000000c2: DW_TAG_subprogram
-; CHECK-NEXT: DW_AT_specification {{.*}}0x00000046}
-; CHECK: 0x000000ea: DW_TAG_subprogram
-; CHECK-NEXT: DW_AT_specification {{.*}}0x00000058}
-; CHECK: 0x00000101: DW_TAG_subprogram
+; CHECK: 0x000000ca: DW_TAG_subprogram
+; CHECK-NEXT: DW_AT_specification {{.*}}0x0000004e}
+; CHECK: 0x000000f2: DW_TAG_subprogram
+; CHECK-NEXT: DW_AT_specification {{.*}}0x00000060}
+; CHECK: 0x00000109: DW_TAG_subprogram
 ; CHECK-NEXT: DW_AT_MIPS_linkage_name
 ; CHECK-NEXT: DW_AT_name {{.*}} "global_function"
 
@@ -71,15 +73,15 @@
 ; CHECK-NEXT: Length:                175
 ; CHECK-NEXT: Version:               2
 ; CHECK-NEXT: Offset in .debug_info: 0
-; CHECK-NEXT: Size:                  319
+; CHECK-NEXT: Size:                  327
 ; CHECK-NEXT: Offset     Linkage  Kind     Name
-; CHECK-DAG:  0x00000091 EXTERNAL TYPE     "ns"
-; CHECK-DAG:  0x00000098 EXTERNAL VARIABLE "global_namespace_variable"
-; CHECK-DAG:  0x000000a7 EXTERNAL FUNCTION "global_namespace_function"
-; CHECK-DAG:  0x000000ea STATIC   FUNCTION "static_member_function"
-; CHECK-DAG:  0x0000007c EXTERNAL VARIABLE "global_variable"
-; CHECK-DAG:  0x00000101 EXTERNAL FUNCTION "global_function"
-; CHECK-DAG:  0x000000c2 STATIC   FUNCTION "member_function"
+; CHECK-DAG:  0x00000099 EXTERNAL TYPE     "ns"
+; CHECK-DAG:  0x000000a0 EXTERNAL VARIABLE "global_namespace_variable"
+; CHECK-DAG:  0x000000af EXTERNAL FUNCTION "global_namespace_function"
+; CHECK-DAG:  0x000000f2 STATIC   FUNCTION "static_member_function"
+; CHECK-DAG:  0x00000084 EXTERNAL VARIABLE "global_variable"
+; CHECK-DAG:  0x00000109 EXTERNAL FUNCTION "global_function"
+; CHECK-DAG:  0x000000ca STATIC   FUNCTION "member_function"
 
 ; CHECK-LABEL: debug_gnu_pubtypes contents:
 ; CHECK-NEXT: Length:
@@ -87,8 +89,8 @@
 ; CHECK-NEXT: Offset in .debug_info:
 ; CHECK-NEXT: Size:
 ; CHECK-NEXT: Offset     Linkage  Kind     Name
-; CHECK-DAG:  0x00000032 EXTERNAL TYPE     "C"
-; CHECK-DAG:  0x00000026 STATIC   TYPE     "int"
+; CHECK-DAG:  0x0000003a EXTERNAL TYPE     "C"
+; CHECK-DAG:  0x0000002e STATIC   TYPE     "int"
 
 %struct.C = type { i8 }
 
