@@ -5311,26 +5311,25 @@ validateInstruction(MCInst &Inst,
 
   // Check the IT block state first.
   // NOTE: BKPT and HLT instructions have the interesting property of being
-  // allowed in IT blocks, but not being predicable.  They just always
-  // execute.
+  // allowed in IT blocks, but not being predicable. They just always execute.
   if (inITBlock() && !instIsBreakpoint(Inst)) {
-    unsigned bit = 1;
+    unsigned Bit = 1;
     if (ITState.FirstCond)
       ITState.FirstCond = false;
     else
-      bit = (ITState.Mask >> (5 - ITState.CurPosition)) & 1;
+      Bit = (ITState.Mask >> (5 - ITState.CurPosition)) & 1;
     // The instruction must be predicable.
     if (!MCID.isPredicable())
       return Error(Loc, "instructions in IT block must be predicable");
     unsigned Cond = Inst.getOperand(MCID.findFirstPredOperandIdx()).getImm();
-    unsigned ITCond = bit ? ITState.Cond :
+    unsigned ITCond = Bit ? ITState.Cond :
       ARMCC::getOppositeCondition(ITState.Cond);
     if (Cond != ITCond) {
       // Find the condition code Operand to get its SMLoc information.
       SMLoc CondLoc;
-      for (unsigned i = 1; i < Operands.size(); ++i)
-        if (static_cast<ARMOperand*>(Operands[i])->isCondCode())
-          CondLoc = Operands[i]->getStartLoc();
+      for (unsigned I = 1; I < Operands.size(); ++I)
+        if (static_cast<ARMOperand*>(Operands[I])->isCondCode())
+          CondLoc = Operands[I]->getStartLoc();
       return Error(CondLoc, "incorrect condition in IT block; got '" +
                    StringRef(ARMCondCodeToString(ARMCC::CondCodes(Cond))) +
                    "', but expected '" +
@@ -5411,37 +5410,36 @@ validateInstruction(MCInst &Inst,
   }
   case ARM::SBFX:
   case ARM::UBFX: {
-    // width must be in range [1, 32-lsb]
-    unsigned lsb = Inst.getOperand(2).getImm();
-    unsigned widthm1 = Inst.getOperand(3).getImm();
-    if (widthm1 >= 32 - lsb)
+    // Width must be in range [1, 32-lsb].
+    unsigned LSB = Inst.getOperand(2).getImm();
+    unsigned Widthm1 = Inst.getOperand(3).getImm();
+    if (Widthm1 >= 32 - LSB)
       return Error(Operands[5]->getStartLoc(),
                    "bitfield width must be in range [1,32-lsb]");
     return false;
   }
   case ARM::tLDMIA: {
     // If we're parsing Thumb2, the .w variant is available and handles
-    // most cases that are normally illegal for a Thumb1 LDM
-    // instruction. We'll make the transformation in processInstruction()
-    // if necessary.
+    // most cases that are normally illegal for a Thumb1 LDM instruction.
+    // We'll make the transformation in processInstruction() if necessary.
     //
     // Thumb LDM instructions are writeback iff the base register is not
     // in the register list.
     unsigned Rn = Inst.getOperand(0).getReg();
-    bool hasWritebackToken =
+    bool HasWritebackToken =
       (static_cast<ARMOperand*>(Operands[3])->isToken() &&
        static_cast<ARMOperand*>(Operands[3])->getToken() == "!");
-    bool listContainsBase;
-    if (checkLowRegisterList(Inst, 3, Rn, 0, listContainsBase) && !isThumbTwo())
-      return Error(Operands[3 + hasWritebackToken]->getStartLoc(),
+    bool ListContainsBase;
+    if (checkLowRegisterList(Inst, 3, Rn, 0, ListContainsBase) && !isThumbTwo())
+      return Error(Operands[3 + HasWritebackToken]->getStartLoc(),
                    "registers must be in range r0-r7");
     // If we should have writeback, then there should be a '!' token.
-    if (!listContainsBase && !hasWritebackToken && !isThumbTwo())
+    if (!ListContainsBase && !HasWritebackToken && !isThumbTwo())
       return Error(Operands[2]->getStartLoc(),
                    "writeback operator '!' expected");
     // If we should not have writeback, there must not be a '!'. This is
     // true even for the 32-bit wide encodings.
-    if (listContainsBase && hasWritebackToken)
+    if (ListContainsBase && HasWritebackToken)
       return Error(Operands[3]->getStartLoc(),
                    "writeback operator '!' not allowed when base register "
                    "in register list");
@@ -5478,24 +5476,24 @@ validateInstruction(MCInst &Inst,
   // so only issue a diagnostic for thumb1. The instructions will be
   // switched to the t2 encodings in processInstruction() if necessary.
   case ARM::tPOP: {
-    bool listContainsBase;
-    if (checkLowRegisterList(Inst, 2, 0, ARM::PC, listContainsBase) &&
+    bool ListContainsBase;
+    if (checkLowRegisterList(Inst, 2, 0, ARM::PC, ListContainsBase) &&
         !isThumbTwo())
       return Error(Operands[2]->getStartLoc(),
                    "registers must be in range r0-r7 or pc");
     break;
   }
   case ARM::tPUSH: {
-    bool listContainsBase;
-    if (checkLowRegisterList(Inst, 2, 0, ARM::LR, listContainsBase) &&
+    bool ListContainsBase;
+    if (checkLowRegisterList(Inst, 2, 0, ARM::LR, ListContainsBase) &&
         !isThumbTwo())
       return Error(Operands[2]->getStartLoc(),
                    "registers must be in range r0-r7 or lr");
     break;
   }
   case ARM::tSTMIA_UPD: {
-    bool listContainsBase;
-    if (checkLowRegisterList(Inst, 4, 0, 0, listContainsBase) && !isThumbTwo())
+    bool ListContainsBase;
+    if (checkLowRegisterList(Inst, 4, 0, 0, ListContainsBase) && !isThumbTwo())
       return Error(Operands[4]->getStartLoc(),
                    "registers must be in range r0-r7");
     break;
@@ -5510,26 +5508,26 @@ validateInstruction(MCInst &Inst,
     }
     break;
   }
-  // final range checking for Thumb unconditional branch instructions
+  // Final range checking for Thumb unconditional branch instructions.
   case ARM::tB:
-    if(!(static_cast<ARMOperand*>(Operands[2]))->isSignedOffset<11, 1>())
-      return Error(Operands[2]->getStartLoc(), "Branch target out of range");
+    if (!(static_cast<ARMOperand*>(Operands[2]))->isSignedOffset<11, 1>())
+      return Error(Operands[2]->getStartLoc(), "branch target out of range");
     break;
   case ARM::t2B: {
     int op = (Operands[2]->isImm()) ? 2 : 3;
-    if(!(static_cast<ARMOperand*>(Operands[op]))->isSignedOffset<24, 1>())
-      return Error(Operands[op]->getStartLoc(), "Branch target out of range");
+    if (!(static_cast<ARMOperand*>(Operands[op]))->isSignedOffset<24, 1>())
+      return Error(Operands[op]->getStartLoc(), "branch target out of range");
     break;
   }
-  // final range checking for Thumb conditional branch instructions
+  // Final range checking for Thumb conditional branch instructions.
   case ARM::tBcc:
-    if(!(static_cast<ARMOperand*>(Operands[2]))->isSignedOffset<8, 1>())
-      return Error(Operands[2]->getStartLoc(), "Branch target out of range");
+    if (!(static_cast<ARMOperand*>(Operands[2]))->isSignedOffset<8, 1>())
+      return Error(Operands[2]->getStartLoc(), "branch target out of range");
     break;
   case ARM::t2Bcc: {
-    int op = (Operands[2]->isImm()) ? 2 : 3;
-    if(!(static_cast<ARMOperand*>(Operands[op]))->isSignedOffset<20, 1>())
-      return Error(Operands[op]->getStartLoc(), "Branch target out of range");
+    int Op = (Operands[2]->isImm()) ? 2 : 3;
+    if (!(static_cast<ARMOperand*>(Operands[Op]))->isSignedOffset<20, 1>())
+      return Error(Operands[Op]->getStartLoc(), "branch target out of range");
     break;
   }
   }
