@@ -5343,25 +5343,40 @@ validateInstruction(MCInst &Inst,
              Inst.getOpcode() != ARM::t2Bcc)
     return Error(Loc, "predicated instructions must be in IT block");
 
-  switch (Inst.getOpcode()) {
+  const unsigned Opcode = Inst.getOpcode();
+  switch (Opcode) {
   case ARM::LDRD:
   case ARM::LDRD_PRE:
   case ARM::LDRD_POST: {
-    unsigned RtReg = Inst.getOperand(0).getReg();
+    const unsigned RtReg = Inst.getOperand(0).getReg();
+
     // Rt can't be R14.
     if (RtReg == ARM::LR)
       return Error(Operands[3]->getStartLoc(),
                    "Rt can't be R14");
-    unsigned Rt = MRI->getEncodingValue(RtReg);
+
+    const unsigned Rt = MRI->getEncodingValue(RtReg);
     // Rt must be even-numbered.
     if ((Rt & 1) == 1)
       return Error(Operands[3]->getStartLoc(),
                    "Rt must be even-numbered");
+
     // Rt2 must be Rt + 1.
-    unsigned Rt2 = MRI->getEncodingValue(Inst.getOperand(1).getReg());
+    const unsigned Rt2 = MRI->getEncodingValue(Inst.getOperand(1).getReg());
     if (Rt2 != Rt + 1)
       return Error(Operands[3]->getStartLoc(),
                    "destination operands must be sequential");
+
+    if (Opcode == ARM::LDRD_PRE || Opcode == ARM::LDRD_POST) {
+      const unsigned Rn = MRI->getEncodingValue(Inst.getOperand(3).getReg());
+      // For addressing modes with writeback, the base register needs to be
+      // different from the destination registers.
+      if (Rn == Rt || Rn == Rt2)
+        return Error(Operands[3]->getStartLoc(),
+                     "base register needs to be different from destination "
+                     "registers");
+    }
+
     return false;
   }
   case ARM::t2LDRDi8:
