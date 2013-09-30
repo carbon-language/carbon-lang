@@ -525,6 +525,71 @@ public:
     }
 };
 
+#if __cplusplus >= 201103L
+
+template <class _Key, class _Tp>
+union __hash_value_type
+{
+    typedef _Key                                     key_type;
+    typedef _Tp                                      mapped_type;
+    typedef pair<const key_type, mapped_type>        value_type;
+    typedef pair<key_type, mapped_type>              __nc_value_type;
+
+    value_type __cc;
+    __nc_value_type __nc;
+
+    template <class ..._Args>
+    _LIBCPP_INLINE_VISIBILITY
+    __hash_value_type(_Args&& ...__args)
+        : __cc(std::forward<_Args>(__args)...) {}
+
+    _LIBCPP_INLINE_VISIBILITY
+    __hash_value_type(const __hash_value_type& __v)
+        : __cc(__v.__cc) {}
+
+    _LIBCPP_INLINE_VISIBILITY
+    __hash_value_type(__hash_value_type&& __v)
+        : __nc(std::move(__v.__nc)) {}
+
+    _LIBCPP_INLINE_VISIBILITY
+    __hash_value_type& operator=(const __hash_value_type& __v)
+        {__nc = __v.__cc; return *this;}
+
+    _LIBCPP_INLINE_VISIBILITY
+    __hash_value_type& operator=(__hash_value_type&& __v)
+        {__nc = std::move(__v.__nc); return *this;}
+
+    _LIBCPP_INLINE_VISIBILITY
+    ~__hash_value_type() {__cc.~value_type();}
+};
+
+#else
+
+template <class _Key, class _Tp>
+struct __hash_value_type
+{
+    typedef _Key                                     key_type;
+    typedef _Tp                                      mapped_type;
+    typedef pair<const key_type, mapped_type>        value_type;
+
+    value_type __cc;
+
+    _LIBCPP_INLINE_VISIBILITY
+    __hash_value_type() {}
+
+    template <class _A0>
+    _LIBCPP_INLINE_VISIBILITY
+    __hash_value_type(const _A0& __a0)
+        : __cc(__a0) {}
+
+    template <class _A0, class _A1>
+    _LIBCPP_INLINE_VISIBILITY
+    __hash_value_type(const _A0& __a0, const _A1& __a1)
+        : __cc(__a0, __a1) {}
+};
+
+#endif
+
 template <class _HashIterator>
 class _LIBCPP_TYPE_VIS_ONLY __hash_map_iterator
 {
@@ -660,49 +725,7 @@ public:
                   "Invalid allocator::value_type");
 
 private:
-#if __cplusplus >= 201103L
-    union __value_type
-    {
-        typedef typename unordered_map::value_type value_type;
-        typedef typename unordered_map::__nc_value_type __nc_value_type;
-        value_type __cc;
-        __nc_value_type __nc;
-
-        template <class ..._Args>
-        __value_type(_Args&& ...__args)
-            : __cc(std::forward<_Args>(__args)...) {}
-
-        __value_type(const __value_type& __v)
-            : __cc(__v.__cc) {}
-
-        __value_type(__value_type&& __v)
-            : __nc(std::move(__v.__nc)) {}
-
-        __value_type& operator=(const __value_type& __v)
-            {__nc = __v.__cc; return *this;}
-
-        __value_type& operator=(__value_type&& __v)
-            {__nc = std::move(__v.__nc); return *this;}
-
-        ~__value_type() {__cc.~value_type();}
-    };
-#else
-    struct __value_type
-    {
-        typedef typename unordered_map::value_type value_type;
-        value_type __cc;
-
-        __value_type() {}
-
-        template <class _A0>
-        __value_type(const _A0& __a0)
-            : __cc(__a0) {}
-
-        template <class _A0, class _A1>
-        __value_type(const _A0& __a0, const _A1& __a1)
-            : __cc(__a0, __a1) {}
-    };
-#endif
+    typedef __hash_value_type<key_type, mapped_type>                 __value_type;
     typedef __unordered_map_hasher<key_type, __value_type, hasher>   __hasher;
     typedef __unordered_map_equal<key_type, __value_type, key_equal> __key_equal;
     typedef typename allocator_traits<allocator_type>::template
@@ -1439,49 +1462,7 @@ public:
                   "Invalid allocator::value_type");
 
 private:
-#if __cplusplus >= 201103L
-    union __value_type
-    {
-        typedef typename unordered_multimap::value_type value_type;
-        typedef typename unordered_multimap::__nc_value_type __nc_value_type;
-        value_type __cc;
-        __nc_value_type __nc;
-
-        template <class ..._Args>
-        __value_type(_Args&& ...__args)
-            : __cc(std::forward<_Args>(__args)...) {}
-
-        __value_type(const __value_type& __v)
-            : __cc(std::move(__v.__cc)) {}
-
-        __value_type(__value_type&& __v)
-            : __nc(std::move(__v.__nc)) {}
-
-        __value_type& operator=(const __value_type& __v)
-            {__nc = __v.__cc; return *this;}
-
-        __value_type& operator=(__value_type&& __v)
-            {__nc = std::move(__v.__nc); return *this;}
-
-        ~__value_type() {__cc.~value_type();}
-    };
-#else
-    struct __value_type
-    {
-        typedef typename unordered_multimap::value_type value_type;
-        value_type __cc;
-
-        __value_type() {}
-
-        template <class _A0>
-        __value_type(const _A0& __a0)
-            : __cc(__a0) {}
-
-        template <class _A0, class _A1>
-        __value_type(const _A0& __a0, const _A1& __a1)
-            : __cc(__a0, __a1) {}
-    };
-#endif
+    typedef __hash_value_type<key_type, mapped_type>                 __value_type;
     typedef __unordered_map_hasher<key_type, __value_type, hasher>   __hasher;
     typedef __unordered_map_equal<key_type, __value_type, key_equal> __key_equal;
     typedef typename allocator_traits<allocator_type>::template
