@@ -1345,20 +1345,25 @@ let SchedModel = SwiftModel in {
   // 4.2.20 Integer Load Signextended
   def SwiftWriteP2P01ThreeCycle : SchedWriteRes<[SwiftUnitP2, SwiftUnitP01]> {
     let Latency = 3;
+    let NumMicroOps = 2;
   }
   def SwiftWriteP2P01FourCyle : SchedWriteRes<[SwiftUnitP2, SwiftUnitP01]> {
     let Latency = 4;
+    let NumMicroOps = 2;
   }
   def SwiftWriteP2P01P01FourCycle : SchedWriteRes<[SwiftUnitP2, SwiftUnitP01,
                                                    SwiftUnitP01]> {
     let Latency = 4;
+    let NumMicroOps = 3;
   }
   def SwiftWriteP2P2ThreeCycle : SchedWriteRes<[SwiftUnitP2, SwiftUnitP2]> {
     let Latency = 3;
+    let NumMicroOps = 2;
   }
   def SwiftWriteP2P2P01ThreeCycle : SchedWriteRes<[SwiftUnitP2, SwiftUnitP2,
-                                                    SwiftUnitP01]> {
+                                                   SwiftUnitP01]> {
     let Latency = 3;
+    let NumMicroOps = 3;
   }
   def SwiftWrBackOne : SchedWriteRes<[]> {
     let Latency = 1;
@@ -1399,7 +1404,10 @@ let SchedModel = SwiftModel in {
     def SwiftWriteLM#Lat#Cy : SchedWriteRes<[SwiftUnitP2]> {
       let Latency = Lat;
     }
-    def SwiftWriteLM#Lat#CyNo : SchedWriteRes<[]> { let Latency = Lat; }
+    def SwiftWriteLM#Lat#CyNo : SchedWriteRes<[]> {
+      let Latency = Lat;
+      let NumMicroOps = 0;
+    }
   }
   // Predicate.
   foreach NumAddr = 1-16 in {
@@ -1520,6 +1528,7 @@ let SchedModel = SwiftModel in {
   // 4.2.25 Integer Store, Multiple
   def SwiftWriteStIncAddr : SchedWriteRes<[SwiftUnitP2, SwiftUnitP01]> {
     let Latency = 0;
+    let NumMicroOps = 2;
   }
   foreach NumAddr = 1-16 in {
      def SwiftWriteSTM#NumAddr : WriteSequence<[SwiftWriteStIncAddr], NumAddr>;
