@@ -322,7 +322,7 @@ DIDerivedType DIBuilder::createMemberPointerType(DIType PointeeTy,
     ConstantInt::get(Type::getInt64Ty(VMContext), 0), // Offset
     ConstantInt::get(Type::getInt32Ty(VMContext), 0), // Flags
     PointeeTy,
-    Base.generateRef()
+    Base.getRef()
   };
   return DIDerivedType(MDNode::get(VMContext, Elts));
 }
@@ -375,7 +375,7 @@ DIDerivedType DIBuilder::createFriend(DIType Ty, DIType FriendTy) {
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_friend),
     NULL,
-    Ty.generateRef(),
+    Ty.getRef(),
     NULL, // Name
     ConstantInt::get(Type::getInt32Ty(VMContext), 0), // Line
     ConstantInt::get(Type::getInt64Ty(VMContext), 0), // Size
@@ -396,7 +396,7 @@ DIDerivedType DIBuilder::createInheritance(
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_inheritance),
     NULL,
-    Ty.generateRef(),
+    Ty.getRef(),
     NULL, // Name
     ConstantInt::get(Type::getInt32Ty(VMContext), 0), // Line
     ConstantInt::get(Type::getInt64Ty(VMContext), 0), // Size
@@ -417,7 +417,7 @@ DIDerivedType DIBuilder::createMemberType(
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_member),
     File.getFileNode(),
-    DIScope(getNonCompileUnitScope(Scope)).generateRef(),
+    DIScope(getNonCompileUnitScope(Scope)).getRef(),
     MDString::get(VMContext, Name),
     ConstantInt::get(Type::getInt32Ty(VMContext), LineNumber),
     ConstantInt::get(Type::getInt64Ty(VMContext), SizeInBits),
@@ -626,7 +626,7 @@ DICompositeType DIBuilder::createClassType(DIDescriptor Context, StringRef Name,
     DerivedFrom,
     Elements,
     ConstantInt::get(Type::getInt32Ty(VMContext), 0),
-    VTableHolder.generateRef(),
+    VTableHolder.getRef(),
     TemplateParams,
     UniqueIdentifier.empty() ? NULL : MDString::get(VMContext, UniqueIdentifier)
   };
@@ -663,7 +663,7 @@ DICompositeType DIBuilder::createStructType(DIDescriptor Context,
     DerivedFrom,
     Elements,
     ConstantInt::get(Type::getInt32Ty(VMContext), RunTimeLang),
-    VTableHolder.generateRef(),
+    VTableHolder.getRef(),
     NULL,
     UniqueIdentifier.empty() ? NULL : MDString::get(VMContext, UniqueIdentifier)
   };
@@ -1117,7 +1117,7 @@ DISubprogram DIBuilder::createMethod(DIDescriptor Context,
     ConstantInt::get(Type::getInt1Ty(VMContext), isDefinition),
     ConstantInt::get(Type::getInt32Ty(VMContext), (unsigned)VK),
     ConstantInt::get(Type::getInt32Ty(VMContext), VIndex),
-    VTableHolder.generateRef(),
+    VTableHolder.getRef(),
     ConstantInt::get(Type::getInt32Ty(VMContext), Flags),
     ConstantInt::get(Type::getInt1Ty(VMContext), isOptimized),
     Fn,

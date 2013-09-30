@@ -725,7 +725,7 @@ void DICompositeType::addMember(DIDescriptor D) {
 
 /// Generate a reference to this DIType. Uses the type identifier instead
 /// of the actual MDNode if possible, to help type uniquing.
-DIScopeRef DIScope::generateRef() {
+DIScopeRef DIScope::getRef() const {
   if (!isCompositeType())
     return DIScopeRef(*this);
   DICompositeType DTy(DbgNode);
@@ -737,7 +737,7 @@ DIScopeRef DIScope::generateRef() {
 /// \brief Set the containing type.
 void DICompositeType::setContainingType(DICompositeType ContainingType) {
   TrackingVH<MDNode> N(*this);
-  N->replaceOperandWith(12, ContainingType.generateRef());
+  N->replaceOperandWith(12, ContainingType.getRef());
   DbgNode = N;
 }
 

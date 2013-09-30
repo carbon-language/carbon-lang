@@ -211,7 +211,7 @@ namespace llvm {
 
     /// Generate a reference to this DIScope. Uses the type identifier instead
     /// of the actual MDNode if possible, to help type uniquing.
-    DIScopeRef generateRef();
+    DIScopeRef getRef() const;
   };
 
   /// Represents reference to a DIDescriptor, abstracts over direct and
@@ -221,7 +221,7 @@ namespace llvm {
     template <typename DescTy>
     friend DescTy DIDescriptor::getFieldAs(unsigned Elt) const;
     friend DIScopeRef DIScope::getContext() const;
-    friend DIScopeRef DIScope::generateRef();
+    friend DIScopeRef DIScope::getRef() const;
 
     /// Val can be either a MDNode or a MDString, in the latter,
     /// MDString specifies the type identifier.
