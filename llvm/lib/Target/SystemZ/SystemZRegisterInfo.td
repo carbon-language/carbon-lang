@@ -94,7 +94,7 @@ defm GR128 : SystemZRegClass<"GR128", untyped, 128, (add R0Q, R2Q, R4Q,
 
 // Base and index registers.  Everything except R0, which in an address
 // context evaluates as 0.
-defm ADDR32 : SystemZRegClass<"ADDR32", i32, 32, (sub GR32Bit, R0W)>;
+defm ADDR32 : SystemZRegClass<"ADDR32", i32, 32, (sub GR32Bit, R0L)>;
 defm ADDR64 : SystemZRegClass<"ADDR64", i64, 64, (sub GR64Bit, R0D)>;
 
 // Not used directly, but needs to exist for ADDR32 and ADDR64 subregs
