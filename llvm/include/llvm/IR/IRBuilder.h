@@ -52,10 +52,13 @@ protected:
   BasicBlock *BB;
   BasicBlock::iterator InsertPt;
   LLVMContext &Context;
+
+  MDNode *DefaultFPMathTag;
+  FastMathFlags FMF;
 public:
 
-  IRBuilderBase(LLVMContext &context)
-    : Context(context) {
+  IRBuilderBase(LLVMContext &context, MDNode *FPMathTag = 0)
+    : Context(context), DefaultFPMathTag(FPMathTag), FMF() {
     ClearInsertionPoint();
   }
 
@@ -168,6 +171,21 @@ public:
     else
       ClearInsertionPoint();
   }
+
+  /// \brief Get the floating point math metadata being used.
+  MDNode *getDefaultFPMathTag() const { return DefaultFPMathTag; }
+
+  /// \brief Get the flags to be applied to created floating point ops
+  FastMathFlags getFastMathFlags() const { return FMF; }
+
+  /// \brief Clear the fast-math flags.
+  void clearFastMathFlags() { FMF.clear(); }
+
+  /// \brief Set the floating point math metadata to be used.
+  void SetDefaultFPMathTag(MDNode *FPMathTag) { DefaultFPMathTag = FPMathTag; }
+
+  /// \brief Set the fast-math flags to be used with generated fp-math operators
+  void SetFastMathFlags(FastMathFlags NewFMF) { FMF = NewFMF; }
 
   //===--------------------------------------------------------------------===//
   // Miscellaneous creation methods.
@@ -354,75 +372,51 @@ template<bool preserveNames = true, typename T = ConstantFolder,
          typename Inserter = IRBuilderDefaultInserter<preserveNames> >
 class IRBuilder : public IRBuilderBase, public Inserter {
   T Folder;
-  MDNode *DefaultFPMathTag;
-  FastMathFlags FMF;
 public:
   IRBuilder(LLVMContext &C, const T &F, const Inserter &I = Inserter(),
             MDNode *FPMathTag = 0)
-    : IRBuilderBase(C), Inserter(I), Folder(F), DefaultFPMathTag(FPMathTag),
-      FMF() {
+    : IRBuilderBase(C, FPMathTag), Inserter(I), Folder(F) {
   }
 
   explicit IRBuilder(LLVMContext &C, MDNode *FPMathTag = 0)
-    : IRBuilderBase(C), Folder(), DefaultFPMathTag(FPMathTag), FMF() {
+    : IRBuilderBase(C, FPMathTag), Folder() {
   }
 
   explicit IRBuilder(BasicBlock *TheBB, const T &F, MDNode *FPMathTag = 0)
-    : IRBuilderBase(TheBB->getContext()), Folder(F),
-      DefaultFPMathTag(FPMathTag), FMF() {
+    : IRBuilderBase(TheBB->getContext(), FPMathTag), Folder(F) {
     SetInsertPoint(TheBB);
   }
 
   explicit IRBuilder(BasicBlock *TheBB, MDNode *FPMathTag = 0)
-    : IRBuilderBase(TheBB->getContext()), Folder(),
-      DefaultFPMathTag(FPMathTag), FMF() {
+    : IRBuilderBase(TheBB->getContext(), FPMathTag), Folder() {
     SetInsertPoint(TheBB);
   }
 
   explicit IRBuilder(Instruction *IP, MDNode *FPMathTag = 0)
-    : IRBuilderBase(IP->getContext()), Folder(), DefaultFPMathTag(FPMathTag),
-      FMF() {
+    : IRBuilderBase(IP->getContext(), FPMathTag), Folder() {
     SetInsertPoint(IP);
     SetCurrentDebugLocation(IP->getDebugLoc());
   }
 
   explicit IRBuilder(Use &U, MDNode *FPMathTag = 0)
-    : IRBuilderBase(U->getContext()), Folder(), DefaultFPMathTag(FPMathTag),
-      FMF() {
+    : IRBuilderBase(U->getContext(), FPMathTag), Folder() {
     SetInsertPoint(U);
     SetCurrentDebugLocation(cast<Instruction>(U.getUser())->getDebugLoc());
   }
 
   IRBuilder(BasicBlock *TheBB, BasicBlock::iterator IP, const T& F,
             MDNode *FPMathTag = 0)
-    : IRBuilderBase(TheBB->getContext()), Folder(F),
-      DefaultFPMathTag(FPMathTag), FMF() {
+    : IRBuilderBase(TheBB->getContext(), FPMathTag), Folder(F) {
     SetInsertPoint(TheBB, IP);
   }
 
   IRBuilder(BasicBlock *TheBB, BasicBlock::iterator IP, MDNode *FPMathTag = 0)
-    : IRBuilderBase(TheBB->getContext()), Folder(),
-      DefaultFPMathTag(FPMathTag), FMF() {
+    : IRBuilderBase(TheBB->getContext(), FPMathTag), Folder() {
     SetInsertPoint(TheBB, IP);
   }
 
   /// \brief Get the constant folder being used.
   const T &getFolder() { return Folder; }
-
-  /// \brief Get the floating point math metadata being used.
-  MDNode *getDefaultFPMathTag() const { return DefaultFPMathTag; }
-
-  /// \brief Get the flags to be applied to created floating point ops
-  FastMathFlags getFastMathFlags() const { return FMF; }
-
-  /// \brief Clear the fast-math flags.
-  void clearFastMathFlags() { FMF.clear(); }
-
-  /// \brief SetDefaultFPMathTag - Set the floating point math metadata to be used.
-  void SetDefaultFPMathTag(MDNode *FPMathTag) { DefaultFPMathTag = FPMathTag; }
-
-  /// \brief Set the fast-math flags to be used with generated fp-math operators
-  void SetFastMathFlags(FastMathFlags NewFMF) { FMF = NewFMF; }
 
   /// \brief Return true if this builder is configured to actually add the
   /// requested names to IR created through it.
