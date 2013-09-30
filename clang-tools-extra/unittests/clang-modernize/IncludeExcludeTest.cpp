@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Utility.h"
+#include "common/Utility.h"
 #include "Core/IncludeExcludeInfo.h"
 #include "gtest/gtest.h"
 #include "llvm/Support/FileSystem.h"

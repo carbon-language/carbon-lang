@@ -13,6 +13,7 @@ target_link_libraries(clangApplyReplacements
   clangTooling
   clangBasic
   clangRewriteFrontend
+  clangFormat
   )
 
 include_directories(

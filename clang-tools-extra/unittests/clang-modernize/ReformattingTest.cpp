@@ -11,7 +11,7 @@
 #include "Core/FileOverrides.h"
 #include "Core/Refactoring.h"
 #include "gtest/gtest.h"
-#include "VirtualFileHelper.h"
+#include "common/VirtualFileHelper.h"
 
 using namespace clang;
 using namespace clang::tooling;

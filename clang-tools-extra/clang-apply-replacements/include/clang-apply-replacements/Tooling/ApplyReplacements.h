@@ -28,7 +28,14 @@ namespace clang {
 class DiagnosticsEngine;
 class Rewriter;
 
+namespace format {
+struct FormatStyle;
+} // end namespace format
+
 namespace replace {
+
+/// \brief Collection of source ranges.
+typedef std::vector<clang::tooling::Range> RangeVector;
 
 /// \brief Collection of TranslationUnitReplacements.
 typedef std::vector<clang::tooling::TranslationUnitReplacements>
@@ -67,6 +74,9 @@ collectReplacementsFromDirectory(const llvm::StringRef Directory,
 /// \brief Deduplicate, check for conflicts, and apply all Replacements stored
 /// in \c TUs. If conflicts occur, no Replacements are applied.
 ///
+/// \post For all (key,value) in GroupedReplacements, value[i].getOffset() <=
+/// value[i+1].getOffset().
+///
 /// \param[in] TUs Collection of TranslationUnitReplacements to merge,
 /// deduplicate, and test for conflicts.
 /// \param[out] GroupedReplacements Container grouping all Replacements by the
@@ -90,6 +100,18 @@ bool mergeAndDeduplicate(const TUReplacements &TUs,
 ///          \li false If a replacement failed to apply.
 bool applyReplacements(const FileToReplacementsMap &GroupedReplacements,
                        clang::Rewriter &Rewrites);
+
+/// \brief Given a collection of Replacements for a single file, produces a list
+/// of source ranges that enclose those Replacements.
+///
+/// \pre Replacements[i].getOffset() <= Replacements[i+1].getOffset().
+///
+/// \param[in] Replacements Replacements from a single file.
+/// 
+/// \returns Collection of source ranges that enclose all given Replacements.
+/// One range is created for each replacement.
+RangeVector calculateChangedRanges(
+    const std::vector<clang::tooling::Replacement> &Replacements);
 
 /// \brief Write the contents of \c FileContents to disk. Keys of the map are
 /// filenames and values are the new contents for those files.

@@ -17,6 +17,8 @@
 #include "clang-apply-replacements/Tooling/ApplyReplacements.h"
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/SourceManager.h"
+#include "clang/Format/Format.h"
+#include "clang/Lex/Lexer.h"
 #include "clang/Rewrite/Core/Rewriter.h"
 #include "clang/Tooling/ReplacementsYaml.h"
 #include "llvm/ADT/ArrayRef.h"
@@ -33,7 +35,6 @@ static void eatDiagnostics(const SMDiagnostic &, void *) {}
 
 namespace clang {
 namespace replace {
-
 
 llvm::error_code
 collectReplacementsFromDirectory(const llvm::StringRef Directory,
@@ -128,6 +129,8 @@ static void reportConflict(
 /// \brief Deduplicates and tests for conflicts among the replacements for each
 /// file in \c Replacements. Any conflicts found are reported.
 ///
+/// \post Replacements[i].getOffset() <= Replacements[i+1].getOffset().
+///
 /// \param[in,out] Replacements Container of all replacements grouped by file
 /// to be deduplicated and checked for conflicts.
 /// \param[in] SM SourceManager required for conflict reporting.
@@ -210,6 +213,29 @@ bool applyReplacements(const FileToReplacementsMap &GroupedReplacements,
   }
 
   return true;
+}
+
+RangeVector calculateChangedRanges(
+    const std::vector<clang::tooling::Replacement> &Replaces) {
+  RangeVector ChangedRanges;
+
+  // Generate the new ranges from the replacements.
+  //
+  // NOTE: This is O(n^2) in the number of replacements. If this starts to
+  // become a problem inline shiftedCodePosition() here and do shifts in a
+  // single run through this loop.
+  for (std::vector<clang::tooling::Replacement>::const_iterator
+           I = Replaces.begin(),
+           E = Replaces.end();
+       I != E; ++I) {
+    const tooling::Replacement &R = *I;
+    unsigned Offset = tooling::shiftedCodePosition(Replaces, R.getOffset());
+    unsigned Length = R.getReplacementText().size();
+
+    ChangedRanges.push_back(tooling::Range(Offset, Length));
+  }
+
+  return ChangedRanges;
 }
 
 bool writeFiles(const clang::Rewriter &Rewrites) {

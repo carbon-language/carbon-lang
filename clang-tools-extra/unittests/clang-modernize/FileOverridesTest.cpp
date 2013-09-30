@@ -10,7 +10,7 @@
 #include "Core/FileOverrides.h"
 #include "Core/Refactoring.h"
 #include "gtest/gtest.h"
-#include "VirtualFileHelper.h"
+#include "common/VirtualFileHelper.h"
 #include "clang/Rewrite/Core/Rewriter.h"
 
 using namespace clang;

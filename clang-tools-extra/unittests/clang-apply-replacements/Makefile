@@ -1,4 +1,4 @@
-##===- unittests/clang-modernize/Makefile ------------------*- Makefile -*-===##
+##===- unittests/clang-apply-replacements/Makefile ---------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -10,17 +10,14 @@
 CLANG_LEVEL = ../../../..
 include $(CLANG_LEVEL)/../../Makefile.config
 
-TESTNAME = ClangModernizeTests
-LINK_COMPONENTS := asmparser bitreader support MC MCParser option \
-		TransformUtils
-USEDLIBS = modernizeCore.a clangFormat.a clangApplyReplacements.a clangTooling.a clangFrontend.a \
+TESTNAME = ClangApplyReplacementsTests
+LINK_COMPONENTS := asmparser bitreader support mc mcparser option
+USEDLIBS = clangApplyReplacements.a clangFormat.a clangTooling.a clangFrontend.a \
 		clangSerialization.a clangDriver.a clangRewriteFrontend.a \
 		clangRewriteCore.a clangParse.a clangSema.a clangAnalysis.a \
-		clangAST.a clangASTMatchers.a clangEdit.a clangLex.a \
-		clangBasic.a
+		clangAST.a clangASTMatchers.a clangEdit.a clangLex.a clangBasic.a
 
 include $(CLANG_LEVEL)/Makefile
 MAKEFILE_UNITTEST_NO_INCLUDE_COMMON := 1
-CPP.Flags += -I$(PROJ_SRC_DIR)/../../clang-modernize -I$(PROJ_SRC_DIR)/../../clang-apply-replacements/include \
-	           -I$(PROJ_SRC_DIR)/../include
+CPP.Flags += -I$(PROJ_SRC_DIR)/../../clang-apply-replacements/include -I$(PROJ_SRC_DIR)/../include
 include $(LLVM_SRC_ROOT)/unittests/Makefile.unittest
