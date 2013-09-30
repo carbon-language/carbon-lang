@@ -42,13 +42,13 @@ SystemZRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   if (TFI->hasFP(MF)) {
     // R11D is the frame pointer.  Reserve all aliases.
     Reserved.set(SystemZ::R11D);
-    Reserved.set(SystemZ::R11W);
+    Reserved.set(SystemZ::R11L);
     Reserved.set(SystemZ::R10Q);
   }
 
   // R15D is the stack pointer.  Reserve all aliases.
   Reserved.set(SystemZ::R15D);
-  Reserved.set(SystemZ::R15W);
+  Reserved.set(SystemZ::R15L);
   Reserved.set(SystemZ::R14Q);
   return Reserved;
 }

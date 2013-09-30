@@ -733,7 +733,7 @@ static bool canUseSiblingCall(CCState ArgCCInfo,
     if (!VA.isRegLoc())
       return false;
     unsigned Reg = VA.getLocReg();
-    if (Reg == SystemZ::R6W || Reg == SystemZ::R6D)
+    if (Reg == SystemZ::R6L || Reg == SystemZ::R6D)
       return false;
   }
   return true;
@@ -2834,12 +2834,12 @@ SystemZTargetLowering::emitStringWrapper(MachineInstr *MI,
   //  LoopMBB:
   //   %This1Reg = phi [ %Start1Reg, StartMBB ], [ %End1Reg, LoopMBB ]
   //   %This2Reg = phi [ %Start2Reg, StartMBB ], [ %End2Reg, LoopMBB ]
-  //   R0W = %CharReg
-  //   %End1Reg, %End2Reg = CLST %This1Reg, %This2Reg -- uses R0W
+  //   R0L = %CharReg
+  //   %End1Reg, %End2Reg = CLST %This1Reg, %This2Reg -- uses R0L
   //   JO LoopMBB
   //   # fall through to DoneMMB
   //
-  // The load of R0W can be hoisted by post-RA LICM.
+  // The load of R0L can be hoisted by post-RA LICM.
   MBB = LoopMBB;
 
   BuildMI(MBB, DL, TII->get(SystemZ::PHI), This1Reg)
@@ -2848,7 +2848,7 @@ SystemZTargetLowering::emitStringWrapper(MachineInstr *MI,
   BuildMI(MBB, DL, TII->get(SystemZ::PHI), This2Reg)
     .addReg(Start2Reg).addMBB(StartMBB)
     .addReg(End2Reg).addMBB(LoopMBB);
-  BuildMI(MBB, DL, TII->get(TargetOpcode::COPY), SystemZ::R0W).addReg(CharReg);
+  BuildMI(MBB, DL, TII->get(TargetOpcode::COPY), SystemZ::R0L).addReg(CharReg);
   BuildMI(MBB, DL, TII->get(Opcode))
     .addReg(End1Reg, RegState::Define).addReg(End2Reg, RegState::Define)
     .addReg(This1Reg).addReg(This2Reg);

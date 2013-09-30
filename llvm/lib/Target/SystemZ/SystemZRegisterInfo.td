@@ -70,8 +70,8 @@ class GPR128<bits<16> num, string n, GPR64 high, GPR64 low>
 
 // General-purpose registers
 foreach I = 0-15 in {
-  def R#I#W : GPR32<I, "r"#I>;
-  def R#I#D : GPR64<I, "r"#I, !cast<GPR32>("R"#I#"W")>, DwarfRegNum<[I]>;
+  def R#I#L : GPR32<I, "r"#I>;
+  def R#I#D : GPR64<I, "r"#I, !cast<GPR32>("R"#I#"L")>, DwarfRegNum<[I]>;
 }
 
 foreach I = [0, 2, 4, 6, 8, 10, 12, 14] in {
@@ -81,8 +81,8 @@ foreach I = [0, 2, 4, 6, 8, 10, 12, 14] in {
 
 /// Allocate the callee-saved R6-R13 backwards. That way they can be saved
 /// together with R14 and R15 in one prolog instruction.
-defm GR32 : SystemZRegClass<"GR32", i32, 32, (add (sequence "R%uW",  0, 5),
-                                                  (sequence "R%uW", 15, 6))>;
+defm GR32 : SystemZRegClass<"GR32", i32, 32, (add (sequence "R%uL",  0, 5),
+                                                  (sequence "R%uL", 15, 6))>;
 defm GR64 : SystemZRegClass<"GR64", i64, 64, (add (sequence "R%uD",  0, 5),
                                                   (sequence "R%uD", 15, 6))>;
 

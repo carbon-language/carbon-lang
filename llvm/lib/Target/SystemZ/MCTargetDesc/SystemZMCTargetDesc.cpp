@@ -28,10 +28,10 @@
 using namespace llvm;
 
 const unsigned SystemZMC::GR32Regs[16] = {
-  SystemZ::R0W, SystemZ::R1W, SystemZ::R2W, SystemZ::R3W,
-  SystemZ::R4W, SystemZ::R5W, SystemZ::R6W, SystemZ::R7W,
-  SystemZ::R8W, SystemZ::R9W, SystemZ::R10W, SystemZ::R11W,
-  SystemZ::R12W, SystemZ::R13W, SystemZ::R14W, SystemZ::R15W
+  SystemZ::R0L, SystemZ::R1L, SystemZ::R2L, SystemZ::R3L,
+  SystemZ::R4L, SystemZ::R5L, SystemZ::R6L, SystemZ::R7L,
+  SystemZ::R8L, SystemZ::R9L, SystemZ::R10L, SystemZ::R11L,
+  SystemZ::R12L, SystemZ::R13L, SystemZ::R14L, SystemZ::R15L
 };
 
 const unsigned SystemZMC::GR64Regs[16] = {

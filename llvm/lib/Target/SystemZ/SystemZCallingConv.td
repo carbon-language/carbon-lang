@@ -23,7 +23,7 @@ def RetCC_SystemZ : CallingConv<[
   // call-clobbered argument registers available for code that doesn't
   // care about the ABI.  (R6 is an argument register too, but is
   // call-saved and therefore not suitable for return values.)
-  CCIfType<[i32], CCAssignToReg<[R2W, R3W, R4W, R5W]>>,
+  CCIfType<[i32], CCAssignToReg<[R2L, R3L, R4L, R5L]>>,
   CCIfType<[i64], CCAssignToReg<[R2D, R3D, R4D, R5D]>>,
 
   // ABI-complaint code returns float and double in F0.  Make the
@@ -53,7 +53,7 @@ def CC_SystemZ : CallingConv<[
 
   // The first 5 integer arguments are passed in R2-R6.  Note that R6
   // is call-saved.
-  CCIfType<[i32], CCAssignToReg<[R2W, R3W, R4W, R5W, R6W]>>,
+  CCIfType<[i32], CCAssignToReg<[R2L, R3L, R4L, R5L, R6L]>>,
   CCIfType<[i64], CCAssignToReg<[R2D, R3D, R4D, R5D, R6D]>>,
 
   // The first 4 float and double arguments are passed in even registers F0-F6.
