@@ -347,6 +347,30 @@ tooling::Replacements reformat(const FormatStyle &Style, StringRef Code,
 LangOptions getFormattingLangOpts(FormatStyle::LanguageStandard Standard =
                                       FormatStyle::LS_Cpp11);
 
+/// \brief Description to be used for help text for a llvm::cl option for
+/// specifying format style. The description is closely related to the operation
+/// of getStyle().
+extern const char *StyleOptionHelpDescription;
+
+/// \brief Construct a FormatStyle based on \c StyleName.
+///
+/// \c StyleName can take several forms:
+/// \li "{<key>: <value>, ...}" - Set specic style parameters.
+/// \li "<style name>" - One of the style names supported by
+/// getPredefinedStyle().
+/// \li "file" - Load style configuration from a file called '.clang-format'
+/// located in one of the parent directories of \c FileName or the current
+/// directory if \c FileName is empty.
+///
+/// \param[in] StyleName Style name to interpret according to the description
+/// above.
+/// \param[in] FileName Path to start search for .clang-format if \c StyleName
+/// == "file".
+///
+/// \returns FormatStyle as specified by \c StyleName. If no style could be
+/// determined, the default is LLVM Style (see getLLVMStyle()).
+FormatStyle getStyle(StringRef StyleName, StringRef FileName);
+
 } // end namespace format
 } // end namespace clang
 

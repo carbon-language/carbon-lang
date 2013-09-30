@@ -27,6 +27,7 @@
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/YAMLTraits.h"
+#include "llvm/Support/Path.h"
 #include <queue>
 #include <string>
 
@@ -1303,6 +1304,83 @@ LangOptions getFormattingLangOpts(FormatStyle::LanguageStandard Standard) {
   LangOpts.ObjC1 = 1;
   LangOpts.ObjC2 = 1;
   return LangOpts;
+}
+
+const char *StyleOptionHelpDescription =
+    "Coding style, currently supports:\n"
+    "  LLVM, Google, Chromium, Mozilla, WebKit.\n"
+    "Use -style=file to load style configuration from\n"
+    ".clang-format file located in one of the parent\n"
+    "directories of the source file (or current\n"
+    "directory for stdin).\n"
+    "Use -style=\"{key: value, ...}\" to set specific\n"
+    "parameters, e.g.:\n"
+    "  -style=\"{BasedOnStyle: llvm, IndentWidth: 8}\"";
+
+FormatStyle getStyle(StringRef StyleName, StringRef FileName) {
+  // Fallback style in case the rest of this function can't determine a style.
+  StringRef FallbackStyle = "LLVM";
+  FormatStyle Style;
+  getPredefinedStyle(FallbackStyle, &Style);
+
+  if (StyleName.startswith("{")) {
+    // Parse YAML/JSON style from the command line.
+    if (llvm::error_code ec = parseConfiguration(StyleName, &Style)) {
+      llvm::errs() << "Error parsing -style: " << ec.message()
+                   << ", using " << FallbackStyle << " style\n";
+    }
+    return Style;
+  }
+
+  if (!StyleName.equals_lower("file")) {
+    if (!getPredefinedStyle(StyleName, &Style))
+      llvm::errs() << "Invalid value for -style, using " << FallbackStyle
+                   << " style\n";
+    return Style;
+  }
+
+  SmallString<128> Path(FileName);
+  llvm::sys::fs::make_absolute(Path);
+  for (StringRef Directory = Path;
+       !Directory.empty();
+       Directory = llvm::sys::path::parent_path(Directory)) {
+    if (!llvm::sys::fs::is_directory(Directory))
+      continue;
+    SmallString<128> ConfigFile(Directory);
+
+    llvm::sys::path::append(ConfigFile, ".clang-format");
+    DEBUG(llvm::dbgs() << "Trying " << ConfigFile << "...\n");
+    bool IsFile = false;
+    // Ignore errors from is_regular_file: we only need to know if we can read
+    // the file or not.
+    llvm::sys::fs::is_regular_file(Twine(ConfigFile), IsFile);
+
+    if (!IsFile) {
+      // Try _clang-format too, since dotfiles are not commonly used on Windows.
+      ConfigFile = Directory;
+      llvm::sys::path::append(ConfigFile, "_clang-format");
+      DEBUG(llvm::dbgs() << "Trying " << ConfigFile << "...\n");
+      llvm::sys::fs::is_regular_file(Twine(ConfigFile), IsFile);
+    }
+
+    if (IsFile) {
+      OwningPtr<llvm::MemoryBuffer> Text;
+      if (llvm::error_code ec = llvm::MemoryBuffer::getFile(ConfigFile, Text)) {
+        llvm::errs() << ec.message() << "\n";
+        continue;
+      }
+      if (llvm::error_code ec = parseConfiguration(Text->getBuffer(), &Style)) {
+        llvm::errs() << "Error reading " << ConfigFile << ": " << ec.message()
+                     << "\n";
+        continue;
+      }
+      DEBUG(llvm::dbgs() << "Using configuration file " << ConfigFile << "\n");
+      return Style;
+    }
+  }
+  llvm::errs() << "Can't find usable .clang-format, using " << FallbackStyle
+               << " style\n";
+  return Style;
 }
 
 } // namespace format

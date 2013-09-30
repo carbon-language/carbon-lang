@@ -63,15 +63,7 @@ LineRanges("lines", cl::desc("<start line>:<end line> - format a range of\n"
            cl::cat(ClangFormatCategory));
 static cl::opt<std::string>
     Style("style",
-          cl::desc("Coding style, currently supports:\n"
-                   "  LLVM, Google, Chromium, Mozilla, WebKit.\n"
-                   "Use -style=file to load style configuration from\n"
-                   ".clang-format file located in one of the parent\n"
-                   "directories of the source file (or current\n"
-                   "directory for stdin).\n"
-                   "Use -style=\"{key: value, ...}\" to set specific\n"
-                   "parameters, e.g.:\n"
-                   "  -style=\"{BasedOnStyle: llvm, IndentWidth: 8}\""),
+          cl::desc(clang::format::StyleOptionHelpDescription),
           cl::init("file"), cl::cat(ClangFormatCategory));
 
 static cl::opt<std::string>
@@ -112,72 +104,6 @@ static FileID createInMemoryFile(StringRef FileName, const MemoryBuffer *Source,
                                                 Source->getBufferSize(), 0);
   Sources.overrideFileContents(Entry, Source, true);
   return Sources.createFileID(Entry, SourceLocation(), SrcMgr::C_User);
-}
-
-FormatStyle getStyle(StringRef StyleName, StringRef FileName) {
-  FormatStyle Style;
-  getPredefinedStyle(FallbackStyle, &Style);
-
-  if (StyleName.startswith("{")) {
-    // Parse YAML/JSON style from the command line.
-    if (error_code ec = parseConfiguration(StyleName, &Style)) {
-      llvm::errs() << "Error parsing -style: " << ec.message()
-                   << ", using " << FallbackStyle << " style\n";
-    }
-    return Style;
-  }
-
-  if (!StyleName.equals_lower("file")) {
-    if (!getPredefinedStyle(StyleName, &Style))
-      llvm::errs() << "Invalid value for -style, using " << FallbackStyle
-                   << " style\n";
-    return Style;
-  }
-
-  if (FileName == "-")
-    FileName = AssumeFilename;
-  SmallString<128> Path(FileName);
-  llvm::sys::fs::make_absolute(Path);
-  for (StringRef Directory = Path;
-       !Directory.empty();
-       Directory = llvm::sys::path::parent_path(Directory)) {
-    if (!llvm::sys::fs::is_directory(Directory))
-      continue;
-    SmallString<128> ConfigFile(Directory);
-
-    llvm::sys::path::append(ConfigFile, ".clang-format");
-    DEBUG(llvm::dbgs() << "Trying " << ConfigFile << "...\n");
-    bool IsFile = false;
-    // Ignore errors from is_regular_file: we only need to know if we can read
-    // the file or not.
-    llvm::sys::fs::is_regular_file(Twine(ConfigFile), IsFile);
-
-    if (!IsFile) {
-      // Try _clang-format too, since dotfiles are not commonly used on Windows.
-      ConfigFile = Directory;
-      llvm::sys::path::append(ConfigFile, "_clang-format");
-      DEBUG(llvm::dbgs() << "Trying " << ConfigFile << "...\n");
-      llvm::sys::fs::is_regular_file(Twine(ConfigFile), IsFile);
-    }
-
-    if (IsFile) {
-      OwningPtr<MemoryBuffer> Text;
-      if (error_code ec = MemoryBuffer::getFile(ConfigFile, Text)) {
-        llvm::errs() << ec.message() << "\n";
-        continue;
-      }
-      if (error_code ec = parseConfiguration(Text->getBuffer(), &Style)) {
-        llvm::errs() << "Error reading " << ConfigFile << ": " << ec.message()
-                     << "\n";
-        continue;
-      }
-      DEBUG(llvm::dbgs() << "Using configuration file " << ConfigFile << "\n");
-      return Style;
-    }
-  }
-  llvm::errs() << "Can't find usable .clang-format, using " << FallbackStyle
-               << " style\n";
-  return Style;
 }
 
 // Parses <start line>:<end line> input to a pair of line numbers.
@@ -269,7 +195,8 @@ static bool format(std::string FileName) {
   if (fillRanges(Sources, ID, Code.get(), Ranges))
     return true;
 
-  FormatStyle FormatStyle = getStyle(Style, FileName);
+  FormatStyle FormatStyle =
+      getStyle(Style, (FileName == "-") ? AssumeFilename : FileName);
   Lexer Lex(ID, Sources.getBuffer(ID), Sources,
             getFormattingLangOpts(FormatStyle.Standard));
   tooling::Replacements Replaces = reformat(FormatStyle, Lex, Sources, Ranges);
@@ -340,8 +267,9 @@ int main(int argc, const char **argv) {
     cl::PrintHelpMessage();
 
   if (DumpConfig) {
-    std::string Config = clang::format::configurationAsText(
-        clang::format::getStyle(Style, FileNames.empty() ? "-" : FileNames[0]));
+    std::string Config =
+        clang::format::configurationAsText(clang::format::getStyle(
+            Style, FileNames.empty() ? AssumeFilename : FileNames[0]));
     llvm::outs() << Config << "\n";
     return 0;
   }
