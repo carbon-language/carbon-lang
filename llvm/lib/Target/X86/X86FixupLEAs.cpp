@@ -125,6 +125,14 @@ FixupLEAPass::postRAConvertToLEA(MachineFunction::iterator &MFI,
       // which requires isImm() to be true
       return 0;
     }
+  case X86::ADD16rr:
+  case X86::ADD16rr_DB:
+    if (MI->getOperand(1).getReg() != MI->getOperand(2).getReg()) {
+      // if src1 != src2, then convertToThreeAddress will
+      // need to create a Virtual register, which we cannot do
+      // after register allocation.
+      return 0;
+    }
   }
   return TII->convertToThreeAddress(MFI, MBBI, 0);
 }
