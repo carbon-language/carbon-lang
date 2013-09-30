@@ -49,6 +49,7 @@ class ConvenienceVariablesCase(TestBase):
         child.sendline('breakpoint set -f main.c -l %d' % self.line)
         child.expect_exact(prompt)
         child.sendline('run')
+        child.expect_exact("stop reason = breakpoint 1.1")
         child.expect_exact(prompt)
         child.sendline('script')
         child.expect_exact(python_prompt)
