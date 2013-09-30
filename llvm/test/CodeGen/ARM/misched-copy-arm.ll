@@ -65,7 +65,7 @@ if.end28:                                         ; preds = %if.then24, %while.c
   %dst.1 = phi %struct.rtx_def* [ undef, %if.then24 ], [ %dst.0, %while.cond ], [ %dst.0, %while.cond ]
   %arrayidx30 = getelementptr inbounds %struct.rtx_def* %dst.1, i32 0, i32 1, i32 0
   %rtx31 = bitcast %union.rtunion_def* %arrayidx30 to %struct.rtx_def**
-  %0 = load %struct.rtx_def** %rtx31, align 4, !tbaa !0
+  %0 = load %struct.rtx_def** %rtx31, align 4
   br label %while.cond
 
 if.then46:                                        ; preds = %while.cond
@@ -77,7 +77,3 @@ if.end47:                                         ; preds = %while.cond
 }
 
 attributes #0 = { nounwind ssp }
-
-!0 = metadata !{metadata !"any pointer", metadata !1}
-!1 = metadata !{metadata !"omnipotent char", metadata !2}
-!2 = metadata !{metadata !"Simple C/C++ TBAA"}

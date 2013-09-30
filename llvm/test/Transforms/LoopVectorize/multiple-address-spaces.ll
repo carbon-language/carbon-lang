@@ -28,10 +28,10 @@ entry:
 for.body:                                         ; preds = %for.body, %entry
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
   %arrayidx = getelementptr inbounds [40000 x i8] addrspace(1)* @Y, i64 0, i64 %indvars.iv
-  %0 = load i8 addrspace(1)* %arrayidx, align 1, !tbaa !0
+  %0 = load i8 addrspace(1)* %arrayidx, align 1
   %add = add i8 %0, 1
   %arrayidx3 = getelementptr inbounds [40000 x i8]* @X, i64 0, i64 %indvars.iv
-  store i8 %add, i8* %arrayidx3, align 1, !tbaa !0
+  store i8 %add, i8* %arrayidx3, align 1
   %indvars.iv.next = add i64 %indvars.iv, 1
   %lftr.wideiv = trunc i64 %indvars.iv.next to i32
   %exitcond = icmp eq i32 %lftr.wideiv, 40000
@@ -42,6 +42,3 @@ for.end:                                          ; preds = %for.body
 }
 
 attributes #0 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointer-elim"="false" "no-frame-pointer-elim-non-leaf"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "unsafe-fp-math"="false" "use-soft-float"="false" }
-
-!0 = metadata !{metadata !"omnipotent char", metadata !1}
-!1 = metadata !{metadata !"Simple C/C++ TBAA"}

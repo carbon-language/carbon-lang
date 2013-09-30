@@ -33,7 +33,7 @@ for.body:                                         ; preds = %for.body.lr.ph, %fo
   %indvars.iv = phi i64 [ 0, %for.body.lr.ph ], [ %indvars.iv.next, %for.body ]
   %sum.05 = phi i32 [ 0, %for.body.lr.ph ], [ %add, %for.body ]
   %arrayidx = getelementptr inbounds i32* %a, i64 %indvars.iv, !dbg !22
-  %0 = load i32* %arrayidx, align 4, !dbg !22, !tbaa !23
+  %0 = load i32* %arrayidx, align 4, !dbg !22
   %add = add i32 %0, %sum.05, !dbg !22
   tail call void @llvm.dbg.value(metadata !{i32 %add.lcssa}, i64 0, metadata !15), !dbg !22
   %indvars.iv.next = add i64 %indvars.iv, 1, !dbg !21
@@ -86,7 +86,4 @@ attributes #1 = { nounwind readnone }
 !20 = metadata !{i32 4, i32 0, metadata !4, null}
 !21 = metadata !{i32 5, i32 0, metadata !17, null}
 !22 = metadata !{i32 6, i32 0, metadata !17, null}
-!23 = metadata !{metadata !"int", metadata !24}
-!24 = metadata !{metadata !"omnipotent char", metadata !25}
-!25 = metadata !{metadata !"Simple C/C++ TBAA"}
 !26 = metadata !{i32 7, i32 0, metadata !4, null}

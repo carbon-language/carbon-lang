@@ -60,9 +60,9 @@ if.end332:                                        ; preds = %if.then329, %if.end
   %sub334 = fsub float %add294, %dx272.1
   %sub338 = fsub float %add297, %dy276.1
   %arrayidx.i.i606 = getelementptr inbounds %class.btVector3.23.221.463.485.507.573.595.683.727.749.815.837.991.1585.1607.1629.1651.1849.2047.2069.2091.2113* %vertices, i64 0, i32 0, i64 0
-  store float %sub334, float* %arrayidx.i.i606, align 4, !tbaa !0
+  store float %sub334, float* %arrayidx.i.i606, align 4
   %arrayidx3.i607 = getelementptr inbounds %class.btVector3.23.221.463.485.507.573.595.683.727.749.815.837.991.1585.1607.1629.1651.1849.2047.2069.2091.2113* %vertices, i64 0, i32 0, i64 1
-  store float %sub338, float* %arrayidx3.i607, align 4, !tbaa !0
+  store float %sub338, float* %arrayidx3.i607, align 4
   br label %return
 
 return:                                           ; preds = %if.end332, %for.end271, %entry
@@ -82,7 +82,3 @@ if.end22.2:                                       ; preds = %if.then17.2, %if.en
 }
 
 attributes #0 = { ssp uwtable "less-precise-fpmad"="false" "no-frame-pointer-elim"="false" "no-frame-pointer-elim-non-leaf"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "unsafe-fp-math"="false" "use-soft-float"="false" }
-
-!0 = metadata !{metadata !"float", metadata !1}
-!1 = metadata !{metadata !"omnipotent char", metadata !2}
-!2 = metadata !{metadata !"Simple C/C++ TBAA"}

@@ -12,12 +12,12 @@ entry:
   %vla = alloca i32, i64 %0, align 128
   %vla1 = alloca i32, i64 %0, align 128
   %a2 = getelementptr inbounds %struct.s* %a, i64 0, i32 0
-  %1 = load i32* %a2, align 4, !tbaa !0
-  store i32 %1, i32* %vla1, align 128, !tbaa !0
+  %1 = load i32* %a2, align 4
+  store i32 %1, i32* %vla1, align 128
   %b = getelementptr inbounds %struct.s* %a, i64 0, i32 1
-  %2 = load i32* %b, align 4, !tbaa !0
+  %2 = load i32* %b, align 4
   %arrayidx3 = getelementptr inbounds i32* %vla1, i64 1
-  store i32 %2, i32* %arrayidx3, align 4, !tbaa !0
+  store i32 %2, i32* %arrayidx3, align 4
   call void @bar(i32* %vla1, i32* %vla) #0
   ret void
 
@@ -33,7 +33,3 @@ entry:
 }
 
 attributes #0 = { nounwind }
-
-!0 = metadata !{metadata !"int", metadata !1}
-!1 = metadata !{metadata !"omnipotent char", metadata !2}
-!2 = metadata !{metadata !"Simple C/C++ TBAA"}

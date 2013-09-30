@@ -10,14 +10,14 @@ target triple = "i386-unknown-freebsd10.0"
 ; Function Attrs: nounwind sspreq
 define void @set_state(i32 %s) #0 {
 entry:
-  store i32 %s, i32* @state, align 4, !tbaa !0
+  store i32 %s, i32* @state, align 4
   ret void
 }
 
 ; Function Attrs: nounwind sspreq
 define void @zero_char(i8* nocapture %p) #0 {
 entry:
-  store i8 0, i8* %p, align 1, !tbaa !1
+  store i8 0, i8* %p, align 1
   tail call void @g(i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0) #2
   ret void
 }
@@ -28,7 +28,7 @@ declare void @g(i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32,
 define void @do_something(i32 %i) #0 {
 entry:
   %data = alloca [8 x i8], align 1
-  %0 = load i32* @state, align 4, !tbaa !0
+  %0 = load i32* @state, align 4
   %cmp = icmp eq i32 %0, 0
   br i1 %cmp, label %if.then, label %if.else
 
@@ -59,7 +59,3 @@ declare void @f(i32) #1
 attributes #0 = { nounwind sspreq "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" }
 attributes #1 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" }
 attributes #2 = { nounwind }
-
-!0 = metadata !{metadata !"int", metadata !1}
-!1 = metadata !{metadata !"omnipotent char", metadata !2}
-!2 = metadata !{metadata !"Simple C/C++ TBAA"}

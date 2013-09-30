@@ -10,7 +10,7 @@ target triple = "mipsel--linux-gnu"
 define void @getSubImagesLuma(%struct.StorablePicture* nocapture %s) #0 {
 entry:
   %size_y = getelementptr inbounds %struct.StorablePicture* %s, i32 0, i32 1
-  %0 = load i32* %size_y, align 4, !tbaa !0
+  %0 = load i32* %size_y, align 4
   %sub = add nsw i32 %0, -1
   %add5 = add nsw i32 %0, 20
   %cmp6 = icmp sgt i32 %add5, -20
@@ -20,7 +20,7 @@ for.body:                                         ; preds = %entry, %for.body
   %j.07 = phi i32 [ %inc, %for.body ], [ -20, %entry ]
   %call = tail call i32 bitcast (i32 (...)* @iClip3 to i32 (i32, i32, i32)*)(i32 0, i32 %sub, i32 %j.07) #2
   %inc = add nsw i32 %j.07, 1
-  %1 = load i32* %size_y, align 4, !tbaa !0
+  %1 = load i32* %size_y, align 4
   %add = add nsw i32 %1, 20
   %cmp = icmp slt i32 %inc, %add
   br i1 %cmp, label %for.body, label %for.end
@@ -36,7 +36,3 @@ declare i32 @iClip3(...) #1
 attributes #0 = { nounwind "less-precise-fpmad"="false" "no-frame-pointer-elim"="false" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "unsafe-fp-math"="false" "use-soft-float"="false" }
 attributes #1 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="false" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "unsafe-fp-math"="false" "use-soft-float"="false" }
 attributes #2 = { nounwind }
-
-!0 = metadata !{metadata !"int", metadata !1}
-!1 = metadata !{metadata !"omnipotent char", metadata !2}
-!2 = metadata !{metadata !"Simple C/C++ TBAA"}

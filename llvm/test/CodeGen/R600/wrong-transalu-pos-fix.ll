@@ -36,7 +36,7 @@ entry:
   %add.i = add i32 %z.i8.i, %mul33.i
   %add13 = add i32 %add.i, %add
   %arrayidx = getelementptr inbounds i32 addrspace(1)* %out, i32 %add13
-  store i32 %mul3, i32 addrspace(1)* %arrayidx, align 4, !tbaa !3
+  store i32 %mul3, i32 addrspace(1)* %arrayidx, align 4
   ret void
 }
 
@@ -84,6 +84,3 @@ attributes #1 = { nounwind readnone }
 !0 = metadata !{null}
 !1 = metadata !{null}
 !2 = metadata !{void (i32 addrspace(1)*)* @fill3d}
-!3 = metadata !{metadata !"int", metadata !4}
-!4 = metadata !{metadata !"omnipotent char", metadata !5}
-!5 = metadata !{metadata !"Simple C/C++ TBAA"}

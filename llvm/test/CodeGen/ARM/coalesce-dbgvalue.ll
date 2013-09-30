@@ -17,7 +17,7 @@ target triple = "thumbv7-apple-ios3.0.0"
 ; Function Attrs: nounwind ssp
 define i32 @pr16110() #0 {
 for.cond1.preheader:
-  store i32 0, i32* @c, align 4, !dbg !21, !tbaa !23
+  store i32 0, i32* @c, align 4, !dbg !21
   br label %for.cond1.outer, !dbg !26
 
 for.cond1:                                        ; preds = %for.end9, %for.cond1.outer
@@ -26,9 +26,9 @@ for.cond1:                                        ; preds = %for.end9, %for.cond
   br i1 %cmp, label %for.body2, label %for.end9, !dbg !26
 
 for.body2:                                        ; preds = %for.cond1
-  store i32 %storemerge11, i32* @b, align 4, !dbg !26, !tbaa !23
+  store i32 %storemerge11, i32* @b, align 4, !dbg !26
   tail call void @llvm.dbg.value(metadata !27, i64 0, metadata !11), !dbg !28
-  %0 = load i64* @a, align 8, !dbg !29, !tbaa !30
+  %0 = load i64* @a, align 8, !dbg !29
   %xor = xor i64 %0, %e.1.ph, !dbg !29
   %conv3 = trunc i64 %xor to i32, !dbg !29
   tail call void @llvm.dbg.value(metadata !{i32 %conv3}, i64 0, metadata !10), !dbg !29
@@ -44,7 +44,7 @@ land.end:                                         ; preds = %land.rhs, %for.body
   %1 = phi i1 [ false, %for.body2 ], [ %tobool5, %land.rhs ]
   %land.ext = zext i1 %1 to i32
   %call6 = tail call i32 bitcast (i32 (...)* @fn2 to i32 (i32, i32*)*)(i32 %land.ext, i32* null) #3
-  %2 = load i32* @b, align 4, !dbg !26, !tbaa !23
+  %2 = load i32* @b, align 4, !dbg !26
   %inc8 = add nsw i32 %2, 1, !dbg !26
   %phitmp = and i64 %xor, 4294967295, !dbg !26
   br label %for.cond1.outer, !dbg !26
@@ -52,7 +52,7 @@ land.end:                                         ; preds = %land.rhs, %for.body
 for.cond1.outer:                                  ; preds = %land.end, %for.cond1.preheader
   %storemerge11.ph = phi i32 [ %inc8, %land.end ], [ 0, %for.cond1.preheader ]
   %e.1.ph = phi i64 [ %phitmp, %land.end ], [ 0, %for.cond1.preheader ]
-  %3 = load i32* @d, align 4, !dbg !31, !tbaa !23
+  %3 = load i32* @d, align 4, !dbg !31
   %tobool10 = icmp eq i32 %3, 0, !dbg !31
   br label %for.cond1
 
@@ -60,7 +60,7 @@ for.end9:                                         ; preds = %for.cond1
   br i1 %tobool10, label %if.end, label %for.cond1, !dbg !31
 
 if.end:                                           ; preds = %for.end9
-  store i32 %storemerge11, i32* @b, align 4, !dbg !26, !tbaa !23
+  store i32 %storemerge11, i32* @b, align 4, !dbg !26
   ret i32 0, !dbg !32
 }
 
@@ -101,13 +101,9 @@ attributes #3 = { nounwind }
 !20 = metadata !{i32 786484, i32 0, null, metadata !"d", metadata !"d", metadata !"", metadata !5, i32 4, metadata !8, i32 0, i32 1, i32* @d, null} ; [ DW_TAG_variable ] [d] [line 4] [def]
 !21 = metadata !{i32 10, i32 0, metadata !22, null}
 !22 = metadata !{i32 786443, metadata !1, metadata !4, i32 10, i32 0, i32 0} ; [ DW_TAG_lexical_block ] [/d/b/pr16110.c]
-!23 = metadata !{metadata !"int", metadata !24}
-!24 = metadata !{metadata !"omnipotent char", metadata !25}
-!25 = metadata !{metadata !"Simple C/C++ TBAA"}
 !26 = metadata !{i32 12, i32 0, metadata !13, null}
 !27 = metadata !{i32* null}
 !28 = metadata !{i32 13, i32 0, metadata !12, null}
 !29 = metadata !{i32 14, i32 0, metadata !12, null}
-!30 = metadata !{metadata !"long long", metadata !24}
 !31 = metadata !{i32 16, i32 0, metadata !4, null}
 !32 = metadata !{i32 18, i32 0, metadata !4, null}

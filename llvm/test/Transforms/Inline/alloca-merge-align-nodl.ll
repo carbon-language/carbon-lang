@@ -8,13 +8,13 @@ define void @foo(%struct.s* byval nocapture readonly %a) {
 entry:
   %x = alloca [2 x i32], align 4
   %a1 = getelementptr inbounds %struct.s* %a, i64 0, i32 0
-  %0 = load i32* %a1, align 4, !tbaa !0
+  %0 = load i32* %a1, align 4
   %arrayidx = getelementptr inbounds [2 x i32]* %x, i64 0, i64 0
-  store i32 %0, i32* %arrayidx, align 4, !tbaa !0
+  store i32 %0, i32* %arrayidx, align 4
   %b = getelementptr inbounds %struct.s* %a, i64 0, i32 1
-  %1 = load i32* %b, align 4, !tbaa !0
+  %1 = load i32* %b, align 4
   %arrayidx2 = getelementptr inbounds [2 x i32]* %x, i64 0, i64 1
-  store i32 %1, i32* %arrayidx2, align 4, !tbaa !0
+  store i32 %1, i32* %arrayidx2, align 4
   call void @bar(i32* %arrayidx) #2
   ret void
 }
@@ -23,13 +23,13 @@ define void @foo0(%struct.s* byval nocapture readonly %a) {
 entry:
   %x = alloca [2 x i32]
   %a1 = getelementptr inbounds %struct.s* %a, i64 0, i32 0
-  %0 = load i32* %a1, align 4, !tbaa !0
+  %0 = load i32* %a1, align 4
   %arrayidx = getelementptr inbounds [2 x i32]* %x, i64 0, i64 0
-  store i32 %0, i32* %arrayidx, align 4, !tbaa !0
+  store i32 %0, i32* %arrayidx, align 4
   %b = getelementptr inbounds %struct.s* %a, i64 0, i32 1
-  %1 = load i32* %b, align 4, !tbaa !0
+  %1 = load i32* %b, align 4
   %arrayidx2 = getelementptr inbounds [2 x i32]* %x, i64 0, i64 1
-  store i32 %1, i32* %arrayidx2, align 4, !tbaa !0
+  store i32 %1, i32* %arrayidx2, align 4
   call void @bar(i32* %arrayidx) #2
   ret void
 }
@@ -40,13 +40,13 @@ define void @goo(%struct.s* byval nocapture readonly %a) {
 entry:
   %x = alloca [2 x i32], align 32
   %a1 = getelementptr inbounds %struct.s* %a, i64 0, i32 0
-  %0 = load i32* %a1, align 4, !tbaa !0
+  %0 = load i32* %a1, align 4
   %arrayidx = getelementptr inbounds [2 x i32]* %x, i64 0, i64 0
-  store i32 %0, i32* %arrayidx, align 32, !tbaa !0
+  store i32 %0, i32* %arrayidx, align 32
   %b = getelementptr inbounds %struct.s* %a, i64 0, i32 1
-  %1 = load i32* %b, align 4, !tbaa !0
+  %1 = load i32* %b, align 4
   %arrayidx2 = getelementptr inbounds [2 x i32]* %x, i64 0, i64 1
-  store i32 %1, i32* %arrayidx2, align 4, !tbaa !0
+  store i32 %1, i32* %arrayidx2, align 4
   call void @bar(i32* %arrayidx) #2
   ret void
 }
@@ -62,9 +62,9 @@ entry:
   %tmpcast = bitcast i64* %a to %struct.s*
   store i64 0, i64* %a, align 8
   %a1 = bitcast i64* %a to i32*
-  store i32 1, i32* %a1, align 8, !tbaa !0
+  store i32 1, i32* %a1, align 8
   call void @foo(%struct.s* byval %tmpcast)
-  store i32 2, i32* %a1, align 8, !tbaa !0
+  store i32 2, i32* %a1, align 8
   call void @goo(%struct.s* byval %tmpcast)
   ret i32 0
 }
@@ -80,14 +80,9 @@ entry:
   %tmpcast = bitcast i64* %a to %struct.s*
   store i64 0, i64* %a, align 8
   %a1 = bitcast i64* %a to i32*
-  store i32 1, i32* %a1, align 8, !tbaa !0
+  store i32 1, i32* %a1, align 8
   call void @foo0(%struct.s* byval %tmpcast)
-  store i32 2, i32* %a1, align 8, !tbaa !0
+  store i32 2, i32* %a1, align 8
   call void @goo(%struct.s* byval %tmpcast)
   ret i32 0
 }
-
-!0 = metadata !{metadata !"int", metadata !1}
-!1 = metadata !{metadata !"omnipotent char", metadata !2}
-!2 = metadata !{metadata !"Simple C/C++ TBAA"}
-

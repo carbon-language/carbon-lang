@@ -11,7 +11,7 @@
 define i32 @_Z18read_response_sizev() #0 {
 entry:
   tail call void @llvm.dbg.value(metadata !22, i64 0, metadata !23), !dbg !39
-  %0 = load i64* getelementptr inbounds ({ i64, [56 x i8] }* @a, i32 0, i32 0), align 8, !dbg !40, !tbaa !60
+  %0 = load i64* getelementptr inbounds ({ i64, [56 x i8] }* @a, i32 0, i32 0), align 8, !dbg !40
   tail call void @llvm.dbg.value(metadata !63, i64 0, metadata !64), !dbg !71
   %1 = trunc i64 %0 to i32
   ret i32 %1
@@ -85,9 +85,6 @@ attributes #0 = { sspreq }
 !57 = metadata !{i32 786689, metadata !41, metadata !"p2", metadata !10, i32 33554439, metadata !32, i32 0, i32 0} ; [ DW_TAG_arg_variable ] [p2] [line 7]
 !58 = metadata !{i32 786689, metadata !41, metadata !"p3", metadata !10, i32 50331656, metadata !44, i32 0, i32 0} ; [ DW_TAG_arg_variable ] [p3] [line 8]
 !59 = metadata !{i32 13, i32 0, metadata !24, metadata !38}
-!60 = metadata !{metadata !"long long", metadata !61}
-!61 = metadata !{metadata !"omnipotent char", metadata !62}
-!62 = metadata !{metadata !"Simple C/C++ TBAA"}
 !63 = metadata !{i32 undef}
 !64 = metadata !{i32 786689, metadata !65, metadata !"p1", metadata !10, i32 33554433, metadata !50, i32 0, metadata !40} ; [ DW_TAG_arg_variable ] [p1] [line 1]
 !65 = metadata !{i32 786478, metadata !1, metadata !25, metadata !"operator()", metadata !"operator()", metadata !"_ZN3__11AclERKiS2_", i32 1, metadata !47, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 true, null, null, metadata !46, metadata !66, i32 2} ; [ DW_TAG_subprogram ] [line 1] [def] [scope 2] [operator()]
