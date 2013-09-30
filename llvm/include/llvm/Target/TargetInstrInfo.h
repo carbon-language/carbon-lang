@@ -823,6 +823,8 @@ public:
                                    const MachineInstr *MI,
                                    unsigned *PredCost = 0) const;
 
+  virtual unsigned getPredicationCost(const MachineInstr *MI) const;
+
   virtual int getInstrLatency(const InstrItineraryData *ItinData,
                               SDNode *Node) const;
 

@@ -22,6 +22,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/TargetSchedule.h"
 #include "llvm/MC/MCInstrItineraries.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
@@ -31,6 +32,8 @@
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
+
 using namespace llvm;
 
 // Hidden options for help debugging.
@@ -150,11 +153,11 @@ namespace {
     /// BBAnalysis - Results of if-conversion feasibility analysis indexed by
     /// basic block number.
     std::vector<BBInfo> BBAnalysis;
+    TargetSchedModel SchedModel;
 
     const TargetLoweringBase *TLI;
     const TargetInstrInfo *TII;
     const TargetRegisterInfo *TRI;
-    const InstrItineraryData *InstrItins;
     const MachineBranchProbabilityInfo *MBPI;
     MachineRegisterInfo *MRI;
 
@@ -267,7 +270,11 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
   TRI = MF.getTarget().getRegisterInfo();
   MBPI = &getAnalysis<MachineBranchProbabilityInfo>();
   MRI = &MF.getRegInfo();
-  InstrItins = MF.getTarget().getInstrItineraryData();
+
+  const TargetSubtargetInfo &ST =
+    MF.getTarget().getSubtarget<TargetSubtargetInfo>();
+  SchedModel.init(*ST.getSchedModel(), &ST, TII);
+
   if (!TII) return false;
 
   PreRegAlloc = MRI->isSSA();
@@ -672,9 +679,8 @@ void IfConverter::ScanInstructions(BBInfo &BBI) {
 
     if (!isPredicated) {
       BBI.NonPredSize++;
-      unsigned ExtraPredCost = 0;
-      unsigned NumCycles = TII->getInstrLatency(InstrItins, &*I,
-                                                &ExtraPredCost);
+      unsigned ExtraPredCost = TII->getPredicationCost(&*I);
+      unsigned NumCycles = SchedModel.computeInstrLatency(&*I, false);
       if (NumCycles > 1)
         BBI.ExtraCost += NumCycles-1;
       BBI.ExtraCost2 += ExtraPredCost;
@@ -1511,8 +1517,8 @@ void IfConverter::CopyAndPredicateBlock(BBInfo &ToBBI, BBInfo &FromBBI,
     MachineInstr *MI = MF.CloneMachineInstr(I);
     ToBBI.BB->insert(ToBBI.BB->end(), MI);
     ToBBI.NonPredSize++;
-    unsigned ExtraPredCost = 0;
-    unsigned NumCycles = TII->getInstrLatency(InstrItins, &*I, &ExtraPredCost);
+    unsigned ExtraPredCost = TII->getPredicationCost(&*I);
+    unsigned NumCycles = SchedModel.computeInstrLatency(&*I, false);
     if (NumCycles > 1)
       ToBBI.ExtraCost += NumCycles-1;
     ToBBI.ExtraCost2 += ExtraPredCost;

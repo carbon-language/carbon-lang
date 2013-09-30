@@ -181,6 +181,8 @@ namespace llvm {
   bool PredicateInstruction(MachineInstr *MI,
                         const SmallVectorImpl<MachineOperand> &Pred) const;
 
+  unsigned int getPredicationCost(const MachineInstr *) const;
+
   unsigned int getInstrLatency(const InstrItineraryData *ItinData,
                                const MachineInstr *MI,
                                unsigned *PredCost = 0) const;

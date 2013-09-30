@@ -264,6 +264,8 @@ private:
                         const MCInstrDesc &UseMCID,
                         unsigned UseIdx, unsigned UseAlign) const;
 
+  unsigned getPredicationCost(const MachineInstr *MI) const;
+
   unsigned getInstrLatency(const InstrItineraryData *ItinData,
                            const MachineInstr *MI,
                            unsigned *PredCost = 0) const;

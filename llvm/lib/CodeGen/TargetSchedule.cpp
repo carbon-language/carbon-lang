@@ -225,10 +225,13 @@ unsigned TargetSchedModel::computeOperandLatency(
   return DefMI->isTransient() ? 0 : TII->defaultDefLatency(&SchedModel, DefMI);
 }
 
-unsigned TargetSchedModel::computeInstrLatency(const MachineInstr *MI) const {
+unsigned
+TargetSchedModel::computeInstrLatency(const MachineInstr *MI,
+                                      bool UseDefaultDefLatency) const {
   // For the itinerary model, fall back to the old subtarget hook.
   // Allow subtargets to compute Bundle latencies outside the machine model.
-  if (hasInstrItineraries() || MI->isBundle())
+  if (hasInstrItineraries() || MI->isBundle() ||
+      (!hasInstrSchedModel() && !UseDefaultDefLatency))
     return TII->getInstrLatency(&InstrItins, MI);
 
   if (hasInstrSchedModel()) {

@@ -989,6 +989,10 @@ R600InstrInfo::PredicateInstruction(MachineInstr *MI,
   return false;
 }
 
+unsigned int R600InstrInfo::getPredicationCost(const MachineInstr *) const {
+  return 2;
+}
+
 unsigned int R600InstrInfo::getInstrLatency(const InstrItineraryData *ItinData,
                                             const MachineInstr *MI,
                                             unsigned *PredCost) const {

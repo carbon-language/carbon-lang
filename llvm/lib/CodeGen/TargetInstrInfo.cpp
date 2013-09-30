@@ -630,6 +630,10 @@ unsigned TargetInstrInfo::defaultDefLatency(const MCSchedModel *SchedModel,
   return 1;
 }
 
+unsigned TargetInstrInfo::getPredicationCost(const MachineInstr *) const {
+  return 0;
+}
+
 unsigned TargetInstrInfo::
 getInstrLatency(const InstrItineraryData *ItinData,
                 const MachineInstr *MI,
