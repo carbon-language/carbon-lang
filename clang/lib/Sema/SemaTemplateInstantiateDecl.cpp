@@ -3312,9 +3312,9 @@ VarTemplateSpecializationDecl *Sema::BuildVarTemplateInstantiation(
   // we want to instantiate a definition.
   FromVar = FromVar->getFirstDeclaration();
 
-  TemplateDeclInstantiator Instantiator(
-      *this, FromVar->getDeclContext(),
-      MultiLevelTemplateArgumentList(TemplateArgList));
+  MultiLevelTemplateArgumentList MultiLevelList(TemplateArgList);
+  TemplateDeclInstantiator Instantiator(*this, FromVar->getDeclContext(),
+                                        MultiLevelList);
 
   // TODO: Set LateAttrs and StartingScope ...
 
