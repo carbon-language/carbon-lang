@@ -25,6 +25,7 @@ class PoVerbosityTestCase(TestBase):
         self.buildDsym()
         self.do_my_test()
 
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin due to ObjC test case")
     @dwarf_test
     def test_with_dwarf(self):
         """Test that the po command acts correctly."""
