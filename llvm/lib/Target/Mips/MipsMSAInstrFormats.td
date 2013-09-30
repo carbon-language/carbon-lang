@@ -147,7 +147,14 @@ class MSA_I5_FMT<bits<3> major, bits<2> df, bits<6> minor>: MSAInst {
 }
 
 class MSA_I8_FMT<bits<2> major, bits<6> minor>: MSAInst {
+  bits<8> u8;
+  bits<5> ws;
+  bits<5> wd;
+
   let Inst{25-24} = major;
+  let Inst{23-16} = u8;
+  let Inst{15-11} = ws;
+  let Inst{10-6} = wd;
   let Inst{5-0} = minor;
 }
 
