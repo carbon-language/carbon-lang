@@ -61,5 +61,49 @@ int main()
         assert(c.load_factor() == 0);
         assert(c.max_load_factor() == 1);
     }
+#if _LIBCPP_STD_VER > 11
+    {
+        typedef NotConstructible T;
+        typedef test_hash<std::hash<T>> HF;
+        typedef test_compare<std::equal_to<T>> Comp;
+        typedef test_allocator<T> A;
+        typedef std::unordered_set<T, HF, Comp, A> C;
+
+        A a(43);
+        C c(3, a);
+        assert(c.bucket_count() == 3);
+        assert(c.hash_function() == HF());
+        assert(c.key_eq() == Comp ());
+        assert(c.get_allocator() == a);
+        assert(!(c.get_allocator() == A()));
+        assert(c.size() == 0);
+        assert(c.empty());
+        assert(std::distance(c.begin(), c.end()) == 0);
+        assert(c.load_factor() == 0);
+        assert(c.max_load_factor() == 1);
+    }
+    {
+        typedef NotConstructible T;
+        typedef test_hash<std::hash<T>> HF;
+        typedef test_compare<std::equal_to<T>> Comp;
+        typedef test_allocator<T> A;
+        typedef std::unordered_set<T, HF, Comp, A> C;
+
+        HF hf(42);
+        A a(43);
+        C c(4, hf, a);
+        assert(c.bucket_count() == 4);
+        assert(c.hash_function() == hf);
+        assert(!(c.hash_function() == HF()));
+        assert(c.key_eq() == Comp ());
+        assert(c.get_allocator() == a);
+        assert(!(c.get_allocator() == A()));
+        assert(c.size() == 0);
+        assert(c.empty());
+        assert(std::distance(c.begin(), c.end()) == 0);
+        assert(c.load_factor() == 0);
+        assert(c.max_load_factor() == 1);
+    }
+#endif
 #endif
 }
