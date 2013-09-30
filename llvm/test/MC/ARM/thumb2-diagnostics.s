@@ -64,9 +64,9 @@
         b.w    #16777216
         b.w    #1592313
 
-@ CHECK-ERRORS: error: Branch target out of range
-@ CHECK-ERRORS: error: Branch target out of range
-@ CHECK-ERRORS: error: Branch target out of range
-@ CHECK-ERRORS: error: Branch target out of range
-@ CHECK-ERRORS: error: Branch target out of range
-@ CHECK-ERRORS: error: Branch target out of range
+@ CHECK-ERRORS: error: branch target out of range
+@ CHECK-ERRORS: error: branch target out of range
+@ CHECK-ERRORS: error: branch target out of range
+@ CHECK-ERRORS: error: branch target out of range
+@ CHECK-ERRORS: error: branch target out of range
+@ CHECK-ERRORS: error: branch target out of range
