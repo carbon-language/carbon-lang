@@ -1558,12 +1558,12 @@ SDValue SystemZTargetLowering::lowerBITCAST(SDValue Op,
     SDValue In64 = DAG.getNode(ISD::ANY_EXTEND, DL, MVT::i64, In);
     SDValue Shift = DAG.getNode(ISD::SHL, DL, MVT::i64, In64, Shift32);
     SDValue Out64 = DAG.getNode(ISD::BITCAST, DL, MVT::f64, Shift);
-    return DAG.getTargetExtractSubreg(SystemZ::subreg_32bit,
+    return DAG.getTargetExtractSubreg(SystemZ::subreg_h32,
                                       DL, MVT::f32, Out64);
   }
   if (InVT == MVT::f32 && ResVT == MVT::i32) {
     SDNode *U64 = DAG.getMachineNode(TargetOpcode::IMPLICIT_DEF, DL, MVT::f64);
-    SDValue In64 = DAG.getTargetInsertSubreg(SystemZ::subreg_32bit, DL,
+    SDValue In64 = DAG.getTargetInsertSubreg(SystemZ::subreg_h32, DL,
                                              MVT::f64, SDValue(U64, 0), In);
     SDValue Out64 = DAG.getNode(ISD::BITCAST, DL, MVT::i64, In64);
     SDValue Shift = DAG.getNode(ISD::SRL, DL, MVT::i64, Out64, Shift32);
@@ -1809,7 +1809,7 @@ SDValue SystemZTargetLowering::lowerOR(SDValue Op, SelectionDAG &DAG) const {
   // can be folded.
   SDLoc DL(Op);
   SDValue Low32 = DAG.getNode(ISD::TRUNCATE, DL, MVT::i32, LowOp);
-  return DAG.getTargetInsertSubreg(SystemZ::subreg_32bit, DL,
+  return DAG.getTargetInsertSubreg(SystemZ::subreg_l32, DL,
                                    MVT::i64, HighOp, Low32);
 }
 
@@ -2602,8 +2602,8 @@ SystemZTargetLowering::emitAtomicCmpSwapW(MachineInstr *MI,
 
 // Emit an extension from a GR32 or GR64 to a GR128.  ClearEven is true
 // if the high register of the GR128 value must be cleared or false if
-// it's "don't care".  SubReg is subreg_odd32 when extending a GR32
-// and subreg_odd when extending a GR64.
+// it's "don't care".  SubReg is subreg_l32 when extending a GR32
+// and subreg_l64 when extending a GR64.
 MachineBasicBlock *
 SystemZTargetLowering::emitExt128(MachineInstr *MI,
                                   MachineBasicBlock *MBB,
@@ -2625,7 +2625,7 @@ SystemZTargetLowering::emitExt128(MachineInstr *MI,
     BuildMI(*MBB, MI, DL, TII->get(SystemZ::LLILL), Zero64)
       .addImm(0);
     BuildMI(*MBB, MI, DL, TII->get(TargetOpcode::INSERT_SUBREG), NewIn128)
-      .addReg(In128).addReg(Zero64).addImm(SystemZ::subreg_high);
+      .addReg(In128).addReg(Zero64).addImm(SystemZ::subreg_h64);
     In128 = NewIn128;
   }
   BuildMI(*MBB, MI, DL, TII->get(TargetOpcode::INSERT_SUBREG), Dest)
@@ -2899,11 +2899,11 @@ EmitInstrWithCustomInserter(MachineInstr *MI, MachineBasicBlock *MBB) const {
     return emitCondStore(MI, MBB, SystemZ::STD, 0, true);
 
   case SystemZ::AEXT128_64:
-    return emitExt128(MI, MBB, false, SystemZ::subreg_low);
+    return emitExt128(MI, MBB, false, SystemZ::subreg_l64);
   case SystemZ::ZEXT128_32:
-    return emitExt128(MI, MBB, true, SystemZ::subreg_low32);
+    return emitExt128(MI, MBB, true, SystemZ::subreg_l32);
   case SystemZ::ZEXT128_64:
-    return emitExt128(MI, MBB, true, SystemZ::subreg_low);
+    return emitExt128(MI, MBB, true, SystemZ::subreg_l64);
 
   case SystemZ::ATOMIC_SWAPW:
     return emitAtomicLoadBinary(MI, MBB, 0, 0);

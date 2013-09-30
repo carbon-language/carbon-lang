@@ -111,7 +111,7 @@ static void addSavedGPR(MachineBasicBlock &MBB, MachineInstrBuilder &MIB,
                         const SystemZTargetMachine &TM,
                         unsigned GPR64, bool IsImplicit) {
   const SystemZRegisterInfo *RI = TM.getRegisterInfo();
-  unsigned GPR32 = RI->getSubReg(GPR64, SystemZ::subreg_32bit);
+  unsigned GPR32 = RI->getSubReg(GPR64, SystemZ::subreg_l32);
   bool IsLive = MBB.isLiveIn(GPR64) || MBB.isLiveIn(GPR32);
   if (!IsLive || !IsImplicit) {
     MIB.addReg(GPR64, getImplRegState(IsImplicit) | getKillRegState(!IsLive));

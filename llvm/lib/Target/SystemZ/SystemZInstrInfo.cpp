@@ -48,8 +48,8 @@ void SystemZInstrInfo::splitMove(MachineBasicBlock::iterator MI,
   // Set up the two 64-bit registers.
   MachineOperand &HighRegOp = EarlierMI->getOperand(0);
   MachineOperand &LowRegOp = MI->getOperand(0);
-  HighRegOp.setReg(RI.getSubReg(HighRegOp.getReg(), SystemZ::subreg_high));
-  LowRegOp.setReg(RI.getSubReg(LowRegOp.getReg(), SystemZ::subreg_low));
+  HighRegOp.setReg(RI.getSubReg(HighRegOp.getReg(), SystemZ::subreg_h64));
+  LowRegOp.setReg(RI.getSubReg(LowRegOp.getReg(), SystemZ::subreg_l64));
 
   // The address in the first (high) instruction is already correct.
   // Adjust the offset in the second (low) instruction.
@@ -453,10 +453,10 @@ SystemZInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
 			      bool KillSrc) const {
   // Split 128-bit GPR moves into two 64-bit moves.  This handles ADDR128 too.
   if (SystemZ::GR128BitRegClass.contains(DestReg, SrcReg)) {
-    copyPhysReg(MBB, MBBI, DL, RI.getSubReg(DestReg, SystemZ::subreg_high),
-                RI.getSubReg(SrcReg, SystemZ::subreg_high), KillSrc);
-    copyPhysReg(MBB, MBBI, DL, RI.getSubReg(DestReg, SystemZ::subreg_low),
-                RI.getSubReg(SrcReg, SystemZ::subreg_low), KillSrc);
+    copyPhysReg(MBB, MBBI, DL, RI.getSubReg(DestReg, SystemZ::subreg_h64),
+                RI.getSubReg(SrcReg, SystemZ::subreg_h64), KillSrc);
+    copyPhysReg(MBB, MBBI, DL, RI.getSubReg(DestReg, SystemZ::subreg_l64),
+                RI.getSubReg(SrcReg, SystemZ::subreg_l64), KillSrc);
     return;
   }
 

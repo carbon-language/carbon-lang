@@ -13,7 +13,7 @@ multiclass SXU<SDPatternOperator operator, Instruction insn> {
   def : Pat<(operator (sext (i32 GR32:$src))),
             (insn GR32:$src)>;
   def : Pat<(operator (sext_inreg GR64:$src, i32)),
-            (insn (EXTRACT_SUBREG GR64:$src, subreg_32bit))>;
+            (insn (EXTRACT_SUBREG GR64:$src, subreg_l32))>;
 }
 
 // Record that INSN performs a 64-bit version of binary operator OPERATOR
@@ -24,7 +24,7 @@ multiclass SXB<SDPatternOperator operator, RegisterOperand cls,
   def : Pat<(operator cls:$src1, (sext GR32:$src2)),
             (insn cls:$src1, GR32:$src2)>;
   def : Pat<(operator cls:$src1, (sext_inreg GR64:$src2, i32)),
-            (insn cls:$src1, (EXTRACT_SUBREG GR64:$src2, subreg_32bit))>;
+            (insn cls:$src1, (EXTRACT_SUBREG GR64:$src2, subreg_l32))>;
 }
 
 // Like SXB, but for zero extension.
@@ -33,7 +33,7 @@ multiclass ZXB<SDPatternOperator operator, RegisterOperand cls,
   def : Pat<(operator cls:$src1, (zext GR32:$src2)),
             (insn cls:$src1, GR32:$src2)>;
   def : Pat<(operator cls:$src1, (and GR64:$src2, 0xffffffff)),
-            (insn cls:$src1, (EXTRACT_SUBREG GR64:$src2, subreg_32bit))>;
+            (insn cls:$src1, (EXTRACT_SUBREG GR64:$src2, subreg_l32))>;
 }
 
 // Record that INSN performs a binary read-modify-write operation,
@@ -71,7 +71,7 @@ multiclass InsertMem<string type, Instruction insn, RegisterOperand cls,
 class StoreGR64<Instruction insn, SDPatternOperator operator,
                 AddressingMode mode>
   : Pat<(operator GR64:$R1, mode:$XBD2),
-        (insn (EXTRACT_SUBREG GR64:$R1, subreg_32bit), mode:$XBD2)>;
+        (insn (EXTRACT_SUBREG GR64:$R1, subreg_l32), mode:$XBD2)>;
 
 // INSN and INSNY are an RX/RXY pair of instructions that store the low
 // 32 bits of a GPR to memory.  Record that they are equivalent to using
@@ -86,7 +86,7 @@ multiclass StoreGR64Pair<Instruction insn, Instruction insny,
 // Record that it is equivalent to using OPERATOR to store a GR64.
 class StoreGR64PC<Instruction insn, SDPatternOperator operator>
   : Pat<(operator GR64:$R1, pcrel32:$XBD2),
-        (insn (EXTRACT_SUBREG GR64:$R1, subreg_32bit), pcrel32:$XBD2)> {
+        (insn (EXTRACT_SUBREG GR64:$R1, subreg_l32), pcrel32:$XBD2)> {
   // We want PC-relative addresses to be tried ahead of BD and BDX addresses.
   // However, BDXs have two extra operands and are therefore 6 units more
   // complex.
@@ -103,12 +103,12 @@ multiclass CondStores64<Instruction insn, Instruction insninv,
   def : Pat<(store (z_select_ccmask GR64:$new, (load mode:$addr),
                                     uimm8zx4:$valid, uimm8zx4:$cc),
                    mode:$addr),
-            (insn (EXTRACT_SUBREG GR64:$new, subreg_32bit), mode:$addr,
+            (insn (EXTRACT_SUBREG GR64:$new, subreg_l32), mode:$addr,
                   uimm8zx4:$valid, uimm8zx4:$cc)>;
   def : Pat<(store (z_select_ccmask (load mode:$addr), GR64:$new,
                                     uimm8zx4:$valid, uimm8zx4:$cc),
                    mode:$addr),
-            (insninv (EXTRACT_SUBREG GR64:$new, subreg_32bit), mode:$addr,
+            (insninv (EXTRACT_SUBREG GR64:$new, subreg_l32), mode:$addr,
                      uimm8zx4:$valid, uimm8zx4:$cc)>;
 }
 
@@ -117,7 +117,7 @@ multiclass CondStores64<Instruction insn, Instruction insninv,
 class CompareGR64RI<Instruction insn, SDPatternOperator compare,
                     Immediate imm>
   : Pat<(compare GR64:$R1, imm:$I2),
-        (insn (EXTRACT_SUBREG GR64:$R1, subreg_32bit),
+        (insn (EXTRACT_SUBREG GR64:$R1, subreg_l32),
               (imm.OperandTransform imm:$I2))>;
 
 // Try to use MVC instruction INSN for a load of type LOAD followed by a store

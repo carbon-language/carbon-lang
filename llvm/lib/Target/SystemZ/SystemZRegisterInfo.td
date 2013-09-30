@@ -21,11 +21,12 @@ class SystemZRegWithSubregs<string n, list<Register> subregs>
 }
 
 let Namespace = "SystemZ" in {
-def subreg_32bit  : SubRegIndex<32>; // could also be named "subreg_high32"
-// Indices are used in a variety of ways, so don't set an Offset.
-def subreg_high   : SubRegIndex<64, -1>;
-def subreg_low    : SubRegIndex<64, -1>;
-def subreg_low32  : ComposedSubRegIndex<subreg_low, subreg_32bit>;
+def subreg_l32   : SubRegIndex<32, 0>;  // Also acts as subreg_ll32.
+def subreg_h32   : SubRegIndex<32, 32>; // Also acts as subreg_lh32.
+def subreg_l64   : SubRegIndex<64, 0>;
+def subreg_h64   : SubRegIndex<64, 64>;
+def subreg_hh32  : ComposedSubRegIndex<subreg_h64, subreg_h32>;
+def subreg_hl32  : ComposedSubRegIndex<subreg_h64, subreg_l32>;
 }
 
 // Define a register class that contains values of type TYPE and an
@@ -58,14 +59,14 @@ class GPR32<bits<16> num, string n> : SystemZReg<n> {
 class GPR64<bits<16> num, string n, GPR32 low>
  : SystemZRegWithSubregs<n, [low]> {
   let HWEncoding = num;
-  let SubRegIndices = [subreg_32bit];
+  let SubRegIndices = [subreg_l32];
 }
 
 // 8 even-odd pairs of GPR64s.
 class GPR128<bits<16> num, string n, GPR64 high, GPR64 low>
  : SystemZRegWithSubregs<n, [high, low]> {
   let HWEncoding = num;
-  let SubRegIndices = [subreg_high, subreg_low];
+  let SubRegIndices = [subreg_l64, subreg_h64];
 }
 
 // General-purpose registers
@@ -75,8 +76,8 @@ foreach I = 0-15 in {
 }
 
 foreach I = [0, 2, 4, 6, 8, 10, 12, 14] in {
-  def R#I#Q : GPR128<I, "r"#I, !cast<GPR64>("R"#I#"D"),
-                     !cast<GPR64>("R"#!add(I, 1)#"D")>;
+  def R#I#Q : GPR128<I, "r"#I, !cast<GPR64>("R"#!add(I, 1)#"D"),
+                     !cast<GPR64>("R"#I#"D")>;
 }
 
 /// Allocate the callee-saved R6-R13 backwards. That way they can be saved
@@ -114,14 +115,14 @@ class FPR32<bits<16> num, string n> : SystemZReg<n> {
 class FPR64<bits<16> num, string n, FPR32 low>
  : SystemZRegWithSubregs<n, [low]> {
   let HWEncoding = num;
-  let SubRegIndices = [subreg_32bit];
+  let SubRegIndices = [subreg_h32];
 }
 
 // 8 pairs of FPR64s, with a one-register gap inbetween.
 class FPR128<bits<16> num, string n, FPR64 high, FPR64 low>
  : SystemZRegWithSubregs<n, [high, low]> {
   let HWEncoding = num;
-  let SubRegIndices = [subreg_high, subreg_low];
+  let SubRegIndices = [subreg_l64, subreg_h64];
 }
 
 // Floating-point registers
@@ -132,8 +133,8 @@ foreach I = 0-15 in {
 }
 
 foreach I = [0, 1, 4, 5, 8, 9, 12, 13] in {
-  def F#I#Q  : FPR128<I, "f"#I, !cast<FPR64>("F"#I#"D"),
-                     !cast<FPR64>("F"#!add(I, 2)#"D")>;
+  def F#I#Q  : FPR128<I, "f"#I, !cast<FPR64>("F"#!add(I, 2)#"D"),
+                     !cast<FPR64>("F"#I#"D")>;
 }
 
 // There's no store-multiple instruction for FPRs, so we're not fussy
