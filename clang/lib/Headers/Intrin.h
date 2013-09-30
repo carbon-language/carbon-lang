@@ -292,7 +292,7 @@ void __cdecl _xsetbv(unsigned int, unsigned __int64);
 unsigned char _xtest(void);
 
 /* These additional intrinsics are turned on in x64/amd64/x86_64 mode. */
-#ifdef __X86_64__
+#ifdef __x86_64__
 void __addgsbyte(unsigned long, unsigned char);
 void __addgsdword(unsigned long, unsigned long);
 void __addgsqword(unsigned long, unsigned __int64);
@@ -390,7 +390,7 @@ void __cdecl _xrstor64(void const *, unsigned __int64);
 void __cdecl _xsave64(void *, unsigned __int64);
 void __cdecl _xsaveopt64(void *, unsigned __int64);
 
-#endif /* __X86_64__ */
+#endif /* __x86_64__ */
 
 /*----------------------------------------------------------------------------*\
 |* Bit Twiddling
@@ -500,7 +500,7 @@ _bittestandset(long *a, long b) {
   *a = *a & (1 << b);
   return x;
 }
-#ifdef __X86_64__
+#ifdef __x86_64__
 static __inline__ unsigned char __attribute__((__always_inline__, __nodebug__))
 _BitScanForward64(unsigned long *_Index, unsigned __int64 _Mask) {
   if (!_Mask)
@@ -565,7 +565,7 @@ static __inline__ long __attribute__((__always_inline__, __nodebug__))
 _InterlockedExchangeAdd(long volatile *_Addend, long _Value) {
   return __atomic_add_fetch(_Addend, _Value, 0) - _Value;
 }
-#ifdef __X86_64__
+#ifdef __x86_64__
 static __inline__ __int64 __attribute__((__always_inline__, __nodebug__))
 _InterlockedExchangeAdd64(__int64 volatile *_Addend, __int64 _Value) {
   return __atomic_add_fetch(_Addend, _Value, 0) - _Value;
@@ -586,7 +586,7 @@ static __inline__ long __attribute__((__always_inline__, __nodebug__))
 _InterlockedExchangeSub(long volatile *_Subend, long _Value) {
   return __atomic_sub_fetch(_Subend, _Value, 0) + _Value;
 }
-#ifdef __X86_64__
+#ifdef __x86_64__
 static __inline__ __int64 __attribute__((__always_inline__, __nodebug__))
 _InterlockedExchangeSub64(__int64 volatile *_Subend, __int64 _Value) {
   return __atomic_sub_fetch(_Subend, _Value, 0) + _Value;
@@ -603,7 +603,7 @@ static __inline__ long __attribute__((__always_inline__, __nodebug__))
 _InterlockedIncrement(long volatile *_Value) {
   return __atomic_add_fetch(_Value, 1, 0);
 }
-#ifdef __X86_64__
+#ifdef __x86_64__
 static __inline__ __int64 __attribute__((__always_inline__, __nodebug__))
 _InterlockedIncrement64(__int64 volatile *_Value) {
   return __atomic_add_fetch(_Value, 1, 0);
@@ -620,7 +620,7 @@ static __inline__ long __attribute__((__always_inline__, __nodebug__))
 _InterlockedDecrement(long volatile *_Value) {
   return __atomic_sub_fetch(_Value, 1, 0);
 }
-#ifdef __X86_64__
+#ifdef __x86_64__
 static __inline__ __int64 __attribute__((__always_inline__, __nodebug__))
 _InterlockedDecrement64(__int64 volatile *_Value) {
   return __atomic_sub_fetch(_Value, 1, 0);
@@ -641,7 +641,7 @@ static __inline__ long __attribute__((__always_inline__, __nodebug__))
 _InterlockedAnd(long volatile *_Value, long _Mask) {
   return __atomic_and_fetch(_Value, _Mask, 0);
 }
-#ifdef __X86_64__
+#ifdef __x86_64__
 static __inline__ __int64 __attribute__((__always_inline__, __nodebug__))
 _InterlockedAnd64(__int64 volatile *_Value, __int64 _Mask) {
   return __atomic_and_fetch(_Value, _Mask, 0);
@@ -662,7 +662,7 @@ static __inline__ long __attribute__((__always_inline__, __nodebug__))
 _InterlockedOr(long volatile *_Value, long _Mask) {
   return __atomic_or_fetch(_Value, _Mask, 0);
 }
-#ifdef __X86_64__
+#ifdef __x86_64__
 static __inline__ __int64 __attribute__((__always_inline__, __nodebug__))
 _InterlockedOr64(__int64 volatile *_Value, __int64 _Mask) {
   return __atomic_or_fetch(_Value, _Mask, 0);
@@ -683,7 +683,7 @@ static __inline__ long __attribute__((__always_inline__, __nodebug__))
 _InterlockedXor(long volatile *_Value, long _Mask) {
   return __atomic_xor_fetch(_Value, _Mask, 0);
 }
-#ifdef __X86_64__
+#ifdef __x86_64__
 static __inline__ __int64 __attribute__((__always_inline__, __nodebug__))
 _InterlockedXor64(__int64 volatile *_Value, __int64 _Mask) {
   return __atomic_xor_fetch(_Value, _Mask, 0);
@@ -707,7 +707,7 @@ _InterlockedExchange(long volatile *_Target, long _Value) {
   __atomic_exchange(_Target, &_Value, &_Value, 0);
   return _Value;
 }
-#ifdef __X86_64__
+#ifdef __x86_64__
 static __inline__ __int64 __attribute__((__always_inline__, __nodebug__))
 _InterlockedExchange64(__int64 volatile *_Target, __int64 _Value) {
   __atomic_exchange(_Target, &_Value, &_Value, 0);
@@ -735,7 +735,7 @@ _InterlockedCompareExchange(long volatile *_Destination,
   __atomic_compare_exchange(_Destination, &_Comparand, &_Exchange, 0, 0, 0);
   return _Comparand;
 }
-#ifdef __X86_64__
+#ifdef __x86_64__
 static __inline__ __int64 __attribute__((__always_inline__, __nodebug__))
 _InterlockedCompareExchange64(__int64 volatile *_Destination,
                               __int64 _Exchange, __int64 _Comparand) {
