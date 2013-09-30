@@ -39,6 +39,7 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Linker.h"
+#include "llvm/Target/TargetOptions.h"
 #include <string>
 #include <vector>
 
@@ -64,6 +65,7 @@ struct LTOCodeGenerator {
   // Merge given module, return true on success.
   bool addModule(struct LTOModule*, std::string &errMsg);
 
+  void setTargetOptions(llvm::TargetOptions options);
   void setDebugInfo(lto_debug_model);
   void setCodePICModel(lto_codegen_model);
 
@@ -90,7 +92,11 @@ struct LTOCodeGenerator {
   //  Do not try to remove the object file in LTOCodeGenerator's destructor
   //  as we don't who (LTOCodeGenerator or the obj file) will last longer.
   // 
-  bool compile_to_file(const char **name, std::string &errMsg);
+  bool compile_to_file(const char **name,
+                       bool disableOpt,
+                       bool disableInline,
+                       bool disableGVNLoadPRE,
+                       std::string &errMsg);
 
   // As with compile_to_file(), this function compiles the merged module into
   // single object file. Instead of returning the object-file-path to the caller
@@ -98,12 +104,20 @@ struct LTOCodeGenerator {
   // caller. This function should delete intermediate object file once its content
   // is brought to memory. Return NULL if the compilation was not successful. 
   //
-  const void *compile(size_t *length, std::string &errMsg);
+  const void *compile(size_t *length,
+                      bool disableOpt,
+                      bool disableInline,
+                      bool disableGVNLoadPRE,
+                      std::string &errMsg);
 
 private:
   void initializeLTOPasses();
 
-  bool generateObjectFile(llvm::raw_ostream &out, std::string &errMsg);
+  bool generateObjectFile(llvm::raw_ostream &out,
+                          bool disableOpt,
+                          bool disableInline,
+                          bool disableGVNLoadPRE,
+                          std::string &errMsg);
   void applyScopeRestrictions();
   void applyRestriction(llvm::GlobalValue &GV,
                         std::vector<const char*> &MustPreserveList,
@@ -125,6 +139,7 @@ private:
   std::vector<char *> CodegenOptions;
   std::string MCpu;
   std::string NativeObjectPath;
+  llvm::TargetOptions Options;
 };
 
 #endif // LTO_CODE_GENERATOR_H

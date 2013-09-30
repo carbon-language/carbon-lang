@@ -84,14 +84,17 @@ public:
   /// InitializeAllAsmPrinters();
   /// InitializeAllAsmParsers();
   static LTOModule *makeLTOModule(const char* path,
+                                  llvm::TargetOptions options,
                                   std::string &errMsg);
   static LTOModule *makeLTOModule(int fd, const char *path,
-                                  size_t size, std::string &errMsg);
+                                  size_t size, llvm::TargetOptions options,
+                                  std::string &errMsg);
   static LTOModule *makeLTOModule(int fd, const char *path,
                                   size_t map_size,
-                                  off_t offset,
+                                  off_t offset, llvm::TargetOptions options,
                                   std::string& errMsg);
   static LTOModule *makeLTOModule(const void *mem, size_t length,
+                                  llvm::TargetOptions options,
                                   std::string &errMsg);
 
   /// getTargetTriple - Return the Module's target triple.
@@ -131,10 +134,6 @@ public:
   const std::vector<const char*> &getAsmUndefinedRefs() {
     return _asm_undefines;
   }
-
-  /// getTargetOptions - Fill the TargetOptions object with the options
-  /// specified on the command line.
-  static void getTargetOptions(llvm::TargetOptions &Options);
 
 private:
   /// parseSymbols - Parse the symbols from the module and model-level ASM and
@@ -187,6 +186,7 @@ private:
   /// makeLTOModule - Create an LTOModule (private version). N.B. This
   /// method takes ownership of the buffer.
   static LTOModule *makeLTOModule(llvm::MemoryBuffer *buffer,
+                                  llvm::TargetOptions options,
                                   std::string &errMsg);
 
   /// makeBuffer - Create a MemoryBuffer from a memory range.
