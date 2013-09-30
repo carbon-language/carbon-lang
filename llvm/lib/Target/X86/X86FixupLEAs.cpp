@@ -125,6 +125,7 @@ FixupLEAPass::postRAConvertToLEA(MachineFunction::iterator &MFI,
       // which requires isImm() to be true
       return 0;
     }
+    break;
   case X86::ADD16rr:
   case X86::ADD16rr_DB:
     if (MI->getOperand(1).getReg() != MI->getOperand(2).getReg()) {
