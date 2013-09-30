@@ -17,4 +17,3 @@ define i32 @main(i32 %argc, i8** %argv) {
   call void @PR14512()
   ret i32 0
 }
-; XFAIL: win32
