@@ -32,6 +32,7 @@ set(files
   stddef.h
   stdint.h
   stdnoreturn.h
+  tbmintrin.h
   tgmath.h
   tmmintrin.h
   varargs.h

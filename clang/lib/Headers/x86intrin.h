@@ -66,6 +66,10 @@
 #include <xopintrin.h>
 #endif
 
+#ifdef __TBM__
+#include <tbmintrin.h>
+#endif
+
 #ifdef __F16C__
 #include <f16cintrin.h>
 #endif
