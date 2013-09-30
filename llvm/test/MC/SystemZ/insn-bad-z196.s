@@ -73,6 +73,14 @@
 	fixbra	%f2, 0, %f0, 0
 
 #CHECK: error: invalid operand
+#CHECK: lfh	%r0, -524289
+#CHECK: error: invalid operand
+#CHECK: lfh	%r0, 524288
+
+	lfh	%r0, -524289
+	lfh	%r0, 524288
+
+#CHECK: error: invalid operand
 #CHECK: loc	%r0,0,-1
 #CHECK: error: invalid operand
 #CHECK: loc	%r0,0,16
@@ -203,6 +211,14 @@
 	srlk	%r0,%r0,524288
 	srlk	%r0,%r0,0(%r0)
 	srlk	%r0,%r0,0(%r1,%r2)
+
+#CHECK: error: invalid operand
+#CHECK: stfh	%r0, -524289
+#CHECK: error: invalid operand
+#CHECK: stfh	%r0, 524288
+
+	stfh	%r0, -524289
+	stfh	%r0, 524288
 
 #CHECK: error: invalid operand
 #CHECK: stoc	%r0,0,-1

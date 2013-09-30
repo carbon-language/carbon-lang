@@ -294,6 +294,8 @@ let neverHasSideEffects = 1, isAsCheapAsAMove = 1, isMoveImm = 1,
 // Register loads.
 let canFoldAsLoad = 1, SimpleBDXLoad = 1 in {
   defm L : UnaryRXPair<"l", 0x58, 0xE358, load, GR32, 4>;
+  def LFH : UnaryRXY<"lfh", 0xE3CA, load, GRH32, 4>,
+            Requires<[FeatureHighWord]>;
   def LG : UnaryRXY<"lg", 0xE304, load, GR64, 8>;
 
   // These instructions are split after register allocation, so we don't
@@ -326,6 +328,8 @@ let Uses = [CC] in {
 // Register stores.
 let SimpleBDXStore = 1 in {
   defm ST : StoreRXPair<"st", 0x50, 0xE350, store, GR32, 4>;
+  def STFH : StoreRXY<"stfh", 0xE3CB, store, GRH32, 4>,
+             Requires<[FeatureHighWord]>;
   def STG : StoreRXY<"stg", 0xE324, store, GR64, 8>;
 
   // These instructions are split after register allocation, so we don't
