@@ -507,10 +507,15 @@ def parseOptionsAndInitTestdirs():
     if args.h:
         do_help = True
 
+    if args.compilers:
+        compilers = args.compilers
+    else:
+        compilers = ['clang']
+
     if args.archs:
         archs = args.archs
     else:
-        if platform_system == 'Darwin' and platform_machine == 'x86_64':
+        if (platform_system == 'Darwin' or (platform_system == 'Linux' and compilers == ['clang'])) and platform_machine == 'x86_64':
             archs = ['x86_64', 'i386']
         else:
             archs = [platform_machine]
@@ -523,11 +528,6 @@ def parseOptionsAndInitTestdirs():
 
     if args.skipCategories:
         skipCategories = validate_categories(args.skipCategories)
-
-    if args.compilers:
-        compilers = args.compilers
-    else:
-        compilers = ['clang']
 
     if args.D:
         dumpSysPath = True
