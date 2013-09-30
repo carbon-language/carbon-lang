@@ -1378,23 +1378,23 @@ def fprofile_dir : Joined<["-"], "fprofile-dir=">, Group<clang_ignored_f_Group>;
 defm profile_use : BooleanFFlag<"profile-use">, Group<clang_ignored_f_Group>;
 def fprofile_use_eq : Joined<["-"], "fprofile-use=">, Group<clang_ignored_f_Group>;
 
-defm falign_functions : BooleanFFlag<"align-functions">, Group<clang_ignored_f_Group>;
+defm align_functions : BooleanFFlag<"align-functions">, Group<clang_ignored_f_Group>;
 def falign_functions_eq : Joined<["-"], "falign-functions=">, Group<clang_ignored_f_Group>;
 
-defm tracer : BooleanFFlag<"tracer">, Group<clang_ignored_f_Group>;
-defm unroll_all_loops : BooleanFFlag<"unroll-all-loops">, Group<clang_ignored_f_Group>;
-defm sse : BooleanFFlag<"see">, Group<clang_ignored_f_Group>;
-defm rounding_math : BooleanFFlag<"rounding-math">, Group<clang_ignored_f_Group>;
-defm profile_values : BooleanFFlag<"profile-values">, Group<clang_ignored_f_Group>;
-defm profile_correction : BooleanFFlag<"profile-correction">, Group<clang_ignored_f_Group>;
-defm prefetch_loop_arrays : BooleanFFlag<"prefetch-loop-arrays">, Group<clang_ignored_f_Group>;
-defm permissive : BooleanFFlag<"permissive">, Group<clang_ignored_f_Group>;
-defm non_call_exceptions : BooleanFFlag<"non-call-exceptions">, Group<clang_ignored_f_Group>;
-defm ivopts : BooleanFFlag<"ivopts">, Group<clang_ignored_f_Group>;
-defm ident : BooleanFFlag<"ident">, Group<clang_ignored_f_Group>;
-defm gcse : BooleanFFlag<"gcse">, Group<clang_ignored_f_Group>;
 defm eliminate_unused_debug_types : BooleanFFlag<"eliminate-unused-debug-types">, Group<clang_ignored_f_Group>;
 defm float_store : BooleanFFlag<"float-store">, Group<clang_ignored_f_Group>;
+defm gcse : BooleanFFlag<"gcse">, Group<clang_ignored_f_Group>;
+defm ident : BooleanFFlag<"ident">, Group<clang_ignored_f_Group>;
+defm ivopts : BooleanFFlag<"ivopts">, Group<clang_ignored_f_Group>;
+defm non_call_exceptions : BooleanFFlag<"non-call-exceptions">, Group<clang_ignored_f_Group>;
+defm permissive : BooleanFFlag<"permissive">, Group<clang_ignored_f_Group>;
+defm prefetch_loop_arrays : BooleanFFlag<"prefetch-loop-arrays">, Group<clang_ignored_f_Group>;
+defm profile_correction : BooleanFFlag<"profile-correction">, Group<clang_ignored_f_Group>;
+defm profile_values : BooleanFFlag<"profile-values">, Group<clang_ignored_f_Group>;
+defm rounding_math : BooleanFFlag<"rounding-math">, Group<clang_ignored_f_Group>;
+defm sse : BooleanFFlag<"see">, Group<clang_ignored_f_Group>;
+defm tracer : BooleanFFlag<"tracer">, Group<clang_ignored_f_Group>;
+defm unroll_all_loops : BooleanFFlag<"unroll-all-loops">, Group<clang_ignored_f_Group>;
 
 include "CC1Options.td"
 
