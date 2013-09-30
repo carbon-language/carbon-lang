@@ -22,15 +22,15 @@ entry:
   %BeginX.i.i.i.i.i.i = getelementptr inbounds %"class.llvm::SmallVector"* %sv, i64 0, i32 0, i32 0, i32 0, i32 0, i32 0
   %FirstEl.i.i.i.i.i.i = getelementptr inbounds %"class.llvm::SmallVector"* %sv, i64 0, i32 0, i32 0, i32 0, i32 0, i32 3
   %1 = bitcast %"union.llvm::SmallVectorBase::U"* %FirstEl.i.i.i.i.i.i to i8*
-  store i8* %1, i8** %BeginX.i.i.i.i.i.i, align 16, !tbaa !0
+  store i8* %1, i8** %BeginX.i.i.i.i.i.i, align 16, !tbaa !4
   %EndX.i.i.i.i.i.i = getelementptr inbounds %"class.llvm::SmallVector"* %sv, i64 0, i32 0, i32 0, i32 0, i32 0, i32 1
-  store i8* %1, i8** %EndX.i.i.i.i.i.i, align 8, !tbaa !0
+  store i8* %1, i8** %EndX.i.i.i.i.i.i, align 8, !tbaa !4
   %CapacityX.i.i.i.i.i.i = getelementptr inbounds %"class.llvm::SmallVector"* %sv, i64 0, i32 0, i32 0, i32 0, i32 0, i32 2
   %add.ptr.i.i.i.i2.i.i = getelementptr inbounds %"union.llvm::SmallVectorBase::U"* %FirstEl.i.i.i.i.i.i, i64 2
   %add.ptr.i.i.i.i.i.i = bitcast %"union.llvm::SmallVectorBase::U"* %add.ptr.i.i.i.i2.i.i to i8*
-  store i8* %add.ptr.i.i.i.i.i.i, i8** %CapacityX.i.i.i.i.i.i, align 16, !tbaa !0
+  store i8* %add.ptr.i.i.i.i.i.i, i8** %CapacityX.i.i.i.i.i.i, align 16, !tbaa !4
   %EndX.i = getelementptr inbounds %"class.llvm::SmallVector"* %sv, i64 0, i32 0, i32 0, i32 0, i32 0, i32 1
-  %2 = load i8** %EndX.i, align 8, !tbaa !0
+  %2 = load i8** %EndX.i, align 8, !tbaa !4
   %CapacityX.i = getelementptr inbounds %"class.llvm::SmallVector"* %sv, i64 0, i32 0, i32 0, i32 0, i32 0, i32 2
   %cmp.i = icmp ult i8* %2, %add.ptr.i.i.i.i.i.i
   br i1 %cmp.i, label %Retry.i, label %if.end.i
@@ -42,7 +42,7 @@ Retry.i:                                          ; preds = %.noexc, %entry
 
 new.notnull.i:                                    ; preds = %Retry.i
   %4 = bitcast i8* %3 to i32*
-  store i32 1, i32* %4, align 4, !tbaa !3
+  store i32 1, i32* %4, align 4, !tbaa !5
   br label %invoke.cont
 
 if.end.i:                                         ; preds = %entry
@@ -51,25 +51,25 @@ if.end.i:                                         ; preds = %entry
           to label %.noexc unwind label %lpad
 
 .noexc:                                           ; preds = %if.end.i
-  %.pre.i = load i8** %EndX.i, align 8, !tbaa !0
+  %.pre.i = load i8** %EndX.i, align 8, !tbaa !4
   br label %Retry.i
 
 invoke.cont:                                      ; preds = %new.notnull.i, %Retry.i
   %add.ptr.i = getelementptr inbounds i8* %3, i64 4
-  store i8* %add.ptr.i, i8** %EndX.i, align 8, !tbaa !0
-  %6 = load i8** %CapacityX.i, align 16, !tbaa !0
+  store i8* %add.ptr.i, i8** %EndX.i, align 8, !tbaa !4
+  %6 = load i8** %CapacityX.i, align 16, !tbaa !4
   %cmp.i8 = icmp ult i8* %add.ptr.i, %6
   br i1 %cmp.i8, label %new.notnull.i11, label %if.end.i14
 
 Retry.i10:                                        ; preds = %if.end.i14
-  %.pre.i13 = load i8** %EndX.i, align 8, !tbaa !0
+  %.pre.i13 = load i8** %EndX.i, align 8, !tbaa !4
   %new.isnull.i9 = icmp eq i8* %.pre.i13, null
   br i1 %new.isnull.i9, label %invoke.cont2, label %new.notnull.i11
 
 new.notnull.i11:                                  ; preds = %invoke.cont, %Retry.i10
   %7 = phi i8* [ %.pre.i13, %Retry.i10 ], [ %add.ptr.i, %invoke.cont ]
   %8 = bitcast i8* %7 to i32*
-  store i32 2, i32* %8, align 4, !tbaa !3
+  store i32 2, i32* %8, align 4, !tbaa !5
   br label %invoke.cont2
 
 if.end.i14:                                       ; preds = %invoke.cont
@@ -80,12 +80,12 @@ if.end.i14:                                       ; preds = %invoke.cont
 invoke.cont2:                                     ; preds = %new.notnull.i11, %Retry.i10
   %10 = phi i8* [ null, %Retry.i10 ], [ %7, %new.notnull.i11 ]
   %add.ptr.i12 = getelementptr inbounds i8* %10, i64 4
-  store i8* %add.ptr.i12, i8** %EndX.i, align 8, !tbaa !0
+  store i8* %add.ptr.i12, i8** %EndX.i, align 8, !tbaa !4
   invoke void @_Z1gRN4llvm11SmallVectorIiLj8EEE(%"class.llvm::SmallVector"* %sv)
           to label %invoke.cont3 unwind label %lpad
 
 invoke.cont3:                                     ; preds = %invoke.cont2
-  %11 = load i8** %BeginX.i.i.i.i.i.i, align 16, !tbaa !0
+  %11 = load i8** %BeginX.i.i.i.i.i.i, align 16, !tbaa !4
   %cmp.i.i.i.i19 = icmp eq i8* %11, %1
   br i1 %cmp.i.i.i.i19, label %_ZN4llvm11SmallVectorIiLj8EED1Ev.exit21, label %if.then.i.i.i20
 
@@ -100,7 +100,7 @@ _ZN4llvm11SmallVectorIiLj8EED1Ev.exit21:          ; preds = %invoke.cont3, %if.t
 lpad:                                             ; preds = %if.end.i14, %if.end.i, %invoke.cont2
   %12 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
           cleanup
-  %13 = load i8** %BeginX.i.i.i.i.i.i, align 16, !tbaa !0
+  %13 = load i8** %BeginX.i.i.i.i.i.i, align 16, !tbaa !4
   %cmp.i.i.i.i = icmp eq i8* %13, %1
   br i1 %cmp.i.i.i.i, label %eh.resume, label %if.then.i.i.i
 
@@ -136,4 +136,5 @@ attributes #3 = { nounwind "less-precise-fpmad"="false" "no-frame-pointer-elim"=
 !1 = metadata !{metadata !"omnipotent char", metadata !2}
 !2 = metadata !{metadata !"Simple C/C++ TBAA"}
 !3 = metadata !{metadata !"int", metadata !1}
-
+!4 = metadata !{metadata !0, metadata !0, i64 0}
+!5 = metadata !{metadata !3, metadata !3, i64 0}

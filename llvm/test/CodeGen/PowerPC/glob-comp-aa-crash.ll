@@ -25,9 +25,9 @@ entry:
   %agg.tmp = alloca %"class.std::__exception_ptr::exception_ptr", align 8
   %__mut_ = getelementptr inbounds %"class.std::__1::__assoc_sub_state"* %this, i64 0, i32 2
   %__m_.i.i = getelementptr inbounds %"class.std::__1::unique_lock"* %__lk, i64 0, i32 0
-  store %"class.std::__1::mutex"* %__mut_, %"class.std::__1::mutex"** %__m_.i.i, align 8, !tbaa !0
+  store %"class.std::__1::mutex"* %__mut_, %"class.std::__1::mutex"** %__m_.i.i, align 8, !tbaa !5
   %__owns_.i.i = getelementptr inbounds %"class.std::__1::unique_lock"* %__lk, i64 0, i32 1
-  store i8 1, i8* %__owns_.i.i, align 8, !tbaa !3
+  store i8 1, i8* %__owns_.i.i, align 8, !tbaa !6
   call void @_ZNSt3__15mutex4lockEv(%"class.std::__1::mutex"* %__mut_) #4
   invoke void @_ZNSt3__117__assoc_sub_state10__sub_waitERNS_11unique_lockINS_5mutexEEE(%"class.std::__1::__assoc_sub_state"* %this, %"class.std::__1::unique_lock"* %__lk) #4
           to label %invoke.cont unwind label %lpad
@@ -65,12 +65,12 @@ lpad3:                                            ; preds = %if.then
   br label %ehcleanup
 
 if.end:                                           ; preds = %invoke.cont
-  %7 = load i8* %__owns_.i.i, align 8, !tbaa !3, !range !4
+  %7 = load i8* %__owns_.i.i, align 8, !tbaa !6, !range !4
   %tobool.i.i = icmp eq i8 %7, 0
   br i1 %tobool.i.i, label %_ZNSt3__111unique_lockINS_5mutexEED1Ev.exit, label %if.then.i.i
 
 if.then.i.i:                                      ; preds = %if.end
-  %8 = load %"class.std::__1::mutex"** %__m_.i.i, align 8, !tbaa !0
+  %8 = load %"class.std::__1::mutex"** %__m_.i.i, align 8, !tbaa !5
   call void @_ZNSt3__15mutex6unlockEv(%"class.std::__1::mutex"* %8) #5
   br label %_ZNSt3__111unique_lockINS_5mutexEED1Ev.exit
 
@@ -80,12 +80,12 @@ _ZNSt3__111unique_lockINS_5mutexEED1Ev.exit:      ; preds = %if.then.i.i, %if.en
 ehcleanup:                                        ; preds = %lpad3, %lpad
   %exn.slot.0 = phi i8* [ %5, %lpad3 ], [ %2, %lpad ]
   %ehselector.slot.0 = phi i32 [ %6, %lpad3 ], [ %3, %lpad ]
-  %9 = load i8* %__owns_.i.i, align 8, !tbaa !3, !range !4
+  %9 = load i8* %__owns_.i.i, align 8, !tbaa !6, !range !4
   %tobool.i.i9 = icmp eq i8 %9, 0
   br i1 %tobool.i.i9, label %_ZNSt3__111unique_lockINS_5mutexEED1Ev.exit12, label %if.then.i.i11
 
 if.then.i.i11:                                    ; preds = %ehcleanup
-  %10 = load %"class.std::__1::mutex"** %__m_.i.i, align 8, !tbaa !0
+  %10 = load %"class.std::__1::mutex"** %__m_.i.i, align 8, !tbaa !5
   call void @_ZNSt3__15mutex6unlockEv(%"class.std::__1::mutex"* %10) #5
   br label %_ZNSt3__111unique_lockINS_5mutexEED1Ev.exit12
 
@@ -135,3 +135,5 @@ attributes #6 = { noreturn optsize }
 !2 = metadata !{metadata !"Simple C/C++ TBAA"}
 !3 = metadata !{metadata !"bool", metadata !1}
 !4 = metadata !{i8 0, i8 2}
+!5 = metadata !{metadata !0, metadata !0, i64 0}
+!6 = metadata !{metadata !3, metadata !3, i64 0}

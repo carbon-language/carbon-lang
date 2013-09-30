@@ -29,14 +29,14 @@ for.cond4.preheader:                              ; preds = %for.cond
   br i1 %cmp514, label %for.cond7.preheader.lr.ph, label %for.end26
 
 for.cond7.preheader.lr.ph:                        ; preds = %for.cond4.preheader
-  %0 = load i32** @e, align 8, !tbaa !0
+  %0 = load i32** @e, align 8, !tbaa !4
   br label %for.cond7.preheader
 
 for.cond7.preheader:                              ; preds = %for.cond7.preheader.lr.ph, %for.inc23
   %y.017 = phi i32 [ 0, %for.cond7.preheader.lr.ph ], [ %inc24, %for.inc23 ]
   %i.116 = phi i32 [ 0, %for.cond7.preheader.lr.ph ], [ %i.2.lcssa, %for.inc23 ]
   %n.015 = phi i32 [ undef, %for.cond7.preheader.lr.ph ], [ %inc25, %for.inc23 ]
-  %1 = load i32* @b, align 4, !tbaa !3
+  %1 = load i32* @b, align 4, !tbaa !5
   %tobool11 = icmp eq i32 %1, 0
   br i1 %tobool11, label %for.inc23, label %for.body8.lr.ph
 
@@ -49,7 +49,7 @@ for.body8:                                        ; preds = %for.body8.lr.ph, %f
   %i.213 = phi i32 [ %i.116, %for.body8.lr.ph ], [ 0, %for.inc19 ]
   %2 = trunc i64 %indvars.iv19 to i32
   %add10 = add i32 %add9, %2
-  store i32 %add10, i32* @f, align 4, !tbaa !3
+  store i32 %add10, i32* @f, align 4, !tbaa !5
   %idx.ext = sext i32 %add10 to i64
   %add.ptr = getelementptr inbounds i32* @a, i64 %idx.ext
   %tobool129 = icmp eq i32 %i.213, 0
@@ -63,9 +63,9 @@ for.body13:                                       ; preds = %for.body13.lr.ph, %
   %indvars.iv = phi i64 [ %3, %for.body13.lr.ph ], [ %indvars.iv.next, %for.body13 ]
   %add.ptr.sum = add i64 %idx.ext, %indvars.iv
   %arrayidx = getelementptr inbounds i32* @a, i64 %add.ptr.sum
-  %4 = load i32* %arrayidx, align 4, !tbaa !3
+  %4 = load i32* %arrayidx, align 4, !tbaa !5
   %arrayidx15 = getelementptr inbounds i32* %0, i64 %indvars.iv
-  store i32 %4, i32* %arrayidx15, align 4, !tbaa !3
+  store i32 %4, i32* %arrayidx15, align 4, !tbaa !5
   %indvars.iv.next = add i64 %indvars.iv, 1
   %5 = trunc i64 %indvars.iv.next to i32
   %tobool12 = icmp eq i32 %5, 0
@@ -75,17 +75,17 @@ for.cond11.for.inc19_crit_edge:                   ; preds = %for.body13
   br label %for.inc19
 
 for.inc19:                                        ; preds = %for.cond11.for.inc19_crit_edge, %for.body8
-  %6 = load i32* @c, align 4, !tbaa !3
+  %6 = load i32* @c, align 4, !tbaa !5
   %inc20 = add nsw i32 %6, 1
-  store i32 %inc20, i32* @c, align 4, !tbaa !3
+  store i32 %inc20, i32* @c, align 4, !tbaa !5
   %indvars.iv.next20 = add i64 %indvars.iv19, 1
-  %7 = load i32* @b, align 4, !tbaa !3
+  %7 = load i32* @b, align 4, !tbaa !5
   %tobool = icmp eq i32 %7, 0
   br i1 %tobool, label %for.cond7.for.inc23_crit_edge, label %for.body8
 
 for.cond7.for.inc23_crit_edge:                    ; preds = %for.inc19
   %add.ptr.lcssa = phi i32* [ %add.ptr, %for.inc19 ]
-  store i32* %add.ptr.lcssa, i32** @d, align 8, !tbaa !0
+  store i32* %add.ptr.lcssa, i32** @d, align 8, !tbaa !4
   br label %for.inc23
 
 for.inc23:                                        ; preds = %for.cond7.for.inc23_crit_edge, %for.cond7.preheader
@@ -110,4 +110,5 @@ attributes #1 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "n
 !1 = metadata !{metadata !"omnipotent char", metadata !2}
 !2 = metadata !{metadata !"Simple C/C++ TBAA"}
 !3 = metadata !{metadata !"double", metadata !1}
-!4 = metadata !{metadata !"any pointer", metadata !1}
+!4 = metadata !{metadata !0, metadata !0, i64 0}
+!5 = metadata !{metadata !3, metadata !3, i64 0}

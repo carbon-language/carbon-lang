@@ -27,15 +27,15 @@
 define i32 @foo(%struct.jmpbuf_env* byval %inbuf) #0 {
 entry:
   %0 = getelementptr inbounds %struct.jmpbuf_env* %inbuf, i32 0, i32 0
-  store i32 0, i32* %0, align 4, !tbaa !2
+  store i32 0, i32* %0, align 4, !tbaa !4
   %1 = getelementptr inbounds %struct.jmpbuf_env* %inbuf, i32 0, i32 1
-  store i32 1, i32* %1, align 4, !tbaa !2
+  store i32 1, i32* %1, align 4, !tbaa !4
   %2 = getelementptr inbounds %struct.jmpbuf_env* %inbuf, i32 0, i32 2, i32 0
   %3 = call i32 @_setjmp(%struct.__jmp_buf_tag* %2) #2
   %4 = getelementptr inbounds %struct.jmpbuf_env* %inbuf, i32 0, i32 3
-  store i32 %3, i32* %4, align 4, !tbaa !2
-  store %struct.jmpbuf_env* %inbuf, %struct.jmpbuf_env** @jenv, align 4, !tbaa !0
-  %5 = load i32* %1, align 4, !tbaa !2
+  store i32 %3, i32* %4, align 4, !tbaa !4
+  store %struct.jmpbuf_env* %inbuf, %struct.jmpbuf_env** @jenv, align 4, !tbaa !3
+  %5 = load i32* %1, align 4, !tbaa !4
   %6 = icmp eq i32 %5, 1
   %7 = icmp eq i32 %3, 0
   %or.cond = and i1 %6, %7
@@ -46,7 +46,7 @@ entry:
   unreachable
 
 bar.exit:                                         ; preds = %entry
-  %8 = load i32* %0, align 4, !tbaa !2
+  %8 = load i32* %0, align 4, !tbaa !4
   %9 = call i32 (i8*, ...)* @printf(i8* noalias getelementptr inbounds ([30 x i8]* @.cst, i32 0, i32 0), i32 %8) #0
   ret i32 0
 }
@@ -68,3 +68,5 @@ attributes #2 = { nounwind returns_twice }
 !0 = metadata !{metadata !"alias set 6: struct.jmpbuf_env*", metadata !1}
 !1 = metadata !{metadata !1}
 !2 = metadata !{metadata !"alias set 3: int", metadata !1}
+!3 = metadata !{metadata !0, metadata !0, i64 0}
+!4 = metadata !{metadata !2, metadata !2, i64 0}

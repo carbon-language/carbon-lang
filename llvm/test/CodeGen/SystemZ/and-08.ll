@@ -352,10 +352,10 @@ define void @f25(i64 *%ptr1, i64 *%ptr2) {
 ; CHECK-LABEL: f25:
 ; CHECK: nc 0(8,%r3), 0(%r2)
 ; CHECK: br %r14
-  %val = load i64 *%ptr1, align 2, !tbaa !1
-  %old = load i64 *%ptr2, align 2, !tbaa !2
+  %val = load i64 *%ptr1, align 2, !tbaa !3
+  %old = load i64 *%ptr2, align 2, !tbaa !4
   %and = and i64 %old, %val
-  store i64 %and, i64 *%ptr2, align 2, !tbaa !2
+  store i64 %and, i64 *%ptr2, align 2, !tbaa !4
   ret void
 }
 
@@ -364,13 +364,15 @@ define void @f26(i64 *%ptr1, i64 *%ptr2) {
 ; CHECK-LABEL: f26:
 ; CHECK-NOT: nc
 ; CHECK: br %r14
-  %val = load i64 *%ptr1, align 2, !tbaa !1
-  %old = load i64 *%ptr2, align 2, !tbaa !1
+  %val = load i64 *%ptr1, align 2, !tbaa !3
+  %old = load i64 *%ptr2, align 2, !tbaa !3
   %and = and i64 %old, %val
-  store i64 %and, i64 *%ptr2, align 2, !tbaa !1
+  store i64 %and, i64 *%ptr2, align 2, !tbaa !3
   ret void
 }
 
 !0 = metadata !{ metadata !"root" }
 !1 = metadata !{ metadata !"set1", metadata !0 }
 !2 = metadata !{ metadata !"set2", metadata !0 }
+!3 = metadata !{ metadata !1, metadata !1, i64 0}
+!4 = metadata !{ metadata !2, metadata !2, i64 0}
