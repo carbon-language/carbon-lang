@@ -602,9 +602,9 @@ class FFQL_D_ENC : MSA_2RF_FMT<0b110011010, 0b1, 0b011110>;
 class FFQR_W_ENC : MSA_2RF_FMT<0b110011011, 0b0, 0b011110>;
 class FFQR_D_ENC : MSA_2RF_FMT<0b110011011, 0b1, 0b011110>;
 
-class FILL_B_ENC : MSA_2R_FMT<0b11000000, 0b00, 0b011110>;
-class FILL_H_ENC : MSA_2R_FMT<0b11000000, 0b01, 0b011110>;
-class FILL_W_ENC : MSA_2R_FMT<0b11000000, 0b10, 0b011110>;
+class FILL_B_ENC : MSA_2R_FILL_FMT<0b11000000, 0b00, 0b011110>;
+class FILL_H_ENC : MSA_2R_FILL_FMT<0b11000000, 0b01, 0b011110>;
+class FILL_W_ENC : MSA_2R_FILL_FMT<0b11000000, 0b10, 0b011110>;
 
 class FLOG2_W_ENC : MSA_2RF_FMT<0b110010111, 0b0, 0b011110>;
 class FLOG2_D_ENC : MSA_2RF_FMT<0b110010111, 0b1, 0b011110>;
@@ -1148,13 +1148,13 @@ class MSA_2R_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
 }
 
 class MSA_2R_FILL_DESC_BASE<string instr_asm, ValueType VT,
-                            SDPatternOperator OpNode, RegisterClass RCWD,
-                            RegisterClass RCWS = RCWD,
+                            SDPatternOperator OpNode, RegisterOperand ROWD,
+                            RegisterOperand ROWS = ROWD,
                             InstrItinClass itin = NoItinerary> {
-  dag OutOperandList = (outs RCWD:$wd);
-  dag InOperandList = (ins RCWS:$ws);
-  string AsmString = !strconcat(instr_asm, "\t$wd, $ws");
-  list<dag> Pattern = [(set RCWD:$wd, (VT (OpNode RCWS:$ws)))];
+  dag OutOperandList = (outs ROWD:$wd);
+  dag InOperandList = (ins ROWS:$rs);
+  string AsmString = !strconcat(instr_asm, "\t$wd, $rs");
+  list<dag> Pattern = [(set ROWD:$wd, (VT (OpNode ROWS:$rs)))];
   InstrItinClass Itinerary = itin;
 }
 
@@ -1784,12 +1784,12 @@ class FFQR_W_DESC : MSA_2RF_DESC_BASE<"ffqr.w", int_mips_ffqr_w,
 class FFQR_D_DESC : MSA_2RF_DESC_BASE<"ffqr.d", int_mips_ffqr_d,
                                       MSA128DOpnd, MSA128WOpnd>;
 
-class FILL_B_DESC : MSA_2R_FILL_DESC_BASE<"fill.b", v16i8, vsplati8,  MSA128B,
-                                          GPR32>;
-class FILL_H_DESC : MSA_2R_FILL_DESC_BASE<"fill.h", v8i16, vsplati16, MSA128H,
-                                          GPR32>;
-class FILL_W_DESC : MSA_2R_FILL_DESC_BASE<"fill.w", v4i32, vsplati32, MSA128W,
-                                          GPR32>;
+class FILL_B_DESC : MSA_2R_FILL_DESC_BASE<"fill.b", v16i8, vsplati8,
+                                          MSA128BOpnd, GPR32Opnd>;
+class FILL_H_DESC : MSA_2R_FILL_DESC_BASE<"fill.h", v8i16, vsplati16,
+                                          MSA128HOpnd, GPR32Opnd>;
+class FILL_W_DESC : MSA_2R_FILL_DESC_BASE<"fill.w", v4i32, vsplati32,
+                                          MSA128WOpnd, GPR32Opnd>;
 
 class FLOG2_W_DESC : MSA_2RF_DESC_BASE<"flog2.w", flog2, MSA128WOpnd>;
 class FLOG2_D_DESC : MSA_2RF_DESC_BASE<"flog2.d", flog2, MSA128DOpnd>;
