@@ -519,10 +519,10 @@ Instruction *InstCombiner::visitFMul(BinaryOperator &I) {
       if (Opnd0->hasOneUse()) {
         // -X * Y => -(X*Y) (Promote negation as high as possible)
         Value *T = Builder->CreateFMul(N0, Opnd1);
-        cast<Instruction>(T)->setDebugLoc(I.getDebugLoc());
         Instruction *Neg = BinaryOperator::CreateFNeg(T);
         if (I.getFastMathFlags().any()) {
-          cast<Instruction>(T)->copyFastMathFlags(&I);
+          if (Instruction *TI = dyn_cast<Instruction>(T))
+            TI->copyFastMathFlags(&I);
           Neg->copyFastMathFlags(&I);
         }
         return Neg;
