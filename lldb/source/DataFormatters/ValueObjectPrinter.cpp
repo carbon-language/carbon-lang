@@ -48,11 +48,22 @@ ValueObjectPrinter::ValueObjectPrinter (ValueObject* valobj,
                                         const DumpValueObjectOptions& options,
                                         uint32_t ptr_depth,
                                         uint32_t curr_depth) :
-    ValueObjectPrinter(valobj,s,options)
-{
-    m_ptr_depth = ptr_depth;
-    m_curr_depth = curr_depth;
-}
+    m_orig_valobj(valobj),
+    m_valobj(nullptr),
+    m_stream(s),
+    options(options),
+    m_ptr_depth(ptr_depth),
+    m_curr_depth(curr_depth),
+    m_should_print(eLazyBoolCalculate),
+    m_is_nil(eLazyBoolCalculate),
+    m_is_ptr(eLazyBoolCalculate),
+    m_is_ref(eLazyBoolCalculate),
+    m_is_aggregate(eLazyBoolCalculate),
+    m_summary_formatter({nullptr,false}),
+    m_value(),
+    m_summary(),
+    m_error()
+{ }
 
 bool
 ValueObjectPrinter::PrintValueObject ()
