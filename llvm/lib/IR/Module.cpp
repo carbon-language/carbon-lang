@@ -262,7 +262,7 @@ Constant *Module::getOrInsertGlobal(StringRef Name, Type *Ty) {
   // right type.
   Type *GVTy = GV->getType();
   PointerType *PTy = PointerType::get(Ty, GVTy->getPointerAddressSpace());
-  if (GV->getType() != PTy)
+  if (GVTy != PTy)
     return ConstantExpr::getBitCast(GV, PTy);
 
   // Otherwise, we just found the existing function or a prototype.
