@@ -182,4 +182,40 @@ TEST_F(IRBuilderTest, FastMathFlags) {
 
 }
 
+TEST_F(IRBuilderTest, RAIIHelpersTest) {
+  IRBuilder<> Builder(BB);
+  EXPECT_FALSE(Builder.getFastMathFlags().allowReciprocal());
+  MDBuilder MDB(M->getContext());
+
+  MDNode *FPMathA = MDB.createFPMath(0.01);
+  MDNode *FPMathB = MDB.createFPMath(0.1);
+
+  Builder.SetDefaultFPMathTag(FPMathA);
+
+  {
+    IRBuilder<>::FastMathFlagGuard Guard(Builder);
+    FastMathFlags FMF;
+    FMF.setAllowReciprocal();
+    Builder.SetFastMathFlags(FMF);
+    Builder.SetDefaultFPMathTag(FPMathB);
+    EXPECT_TRUE(Builder.getFastMathFlags().allowReciprocal());
+    EXPECT_EQ(FPMathB, Builder.getDefaultFPMathTag());
+  }
+
+  EXPECT_FALSE(Builder.getFastMathFlags().allowReciprocal());
+  EXPECT_EQ(FPMathA, Builder.getDefaultFPMathTag());
+
+  Value *F = Builder.CreateLoad(GV);
+
+  {
+    IRBuilder<>::InsertPointGuard Guard(Builder);
+    Builder.SetInsertPoint(cast<Instruction>(F));
+    EXPECT_EQ(F, Builder.GetInsertPoint());
+  }
+
+  EXPECT_EQ(BB->end(), Builder.GetInsertPoint());
+  EXPECT_EQ(BB, Builder.GetInsertBlock());
+}
+
+
 }

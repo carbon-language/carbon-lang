@@ -19,7 +19,7 @@ target triple = "x86_64-apple-macosx10.7.0"
 ;CHECK: store <2 x double> {{.*}}, !dbg ![[LOC2:[0-9]+]]
 ;CHECK: ret
 ;CHECK: ![[LOC]] = metadata !{i32 4, i32 0,
-;CHECK: ![[LOC2]] = metadata !{i32 8, i32 0,
+;CHECK: ![[LOC2]] = metadata !{i32 7, i32 0,
 
 define i32 @depth(double* nocapture %A, i32 %m) #0 {
 entry:

@@ -25,6 +25,7 @@
 #include "llvm/IR/Operator.h"
 #include "llvm/Support/CBindingWrapping.h"
 #include "llvm/Support/ConstantFolder.h"
+#include "llvm/Support/ValueHandle.h"
 
 namespace llvm {
   class MDNode;
@@ -186,6 +187,53 @@ public:
 
   /// \brief Set the fast-math flags to be used with generated fp-math operators
   void SetFastMathFlags(FastMathFlags NewFMF) { FMF = NewFMF; }
+
+  //===--------------------------------------------------------------------===//
+  // RAII helpers.
+  //===--------------------------------------------------------------------===//
+
+  // \brief RAII object that stores the current insertion point and restores it
+  // when the object is destroyed. This includes the debug location.
+  class InsertPointGuard {
+    IRBuilderBase &Builder;
+    AssertingVH<BasicBlock> Block;
+    AssertingVH<Instruction> Point;
+    DebugLoc DbgLoc;
+
+    InsertPointGuard(const InsertPointGuard &) LLVM_DELETED_FUNCTION;
+    InsertPointGuard &operator=(const InsertPointGuard &) LLVM_DELETED_FUNCTION;
+
+  public:
+    InsertPointGuard(IRBuilderBase &B)
+        : Builder(B), Block(B.GetInsertBlock()), Point(B.GetInsertPoint()),
+          DbgLoc(B.getCurrentDebugLocation()) {}
+
+    ~InsertPointGuard() {
+      Builder.restoreIP(InsertPoint(Block, BasicBlock::iterator(Point)));
+      Builder.SetCurrentDebugLocation(DbgLoc);
+    }
+  };
+
+  // \brief RAII object that stores the current fast math settings and restores
+  // them when the object is destroyed.
+  class FastMathFlagGuard {
+    IRBuilderBase &Builder;
+    FastMathFlags FMF;
+    MDNode *FPMathTag;
+
+    FastMathFlagGuard(const FastMathFlagGuard &) LLVM_DELETED_FUNCTION;
+    FastMathFlagGuard &operator=(
+        const FastMathFlagGuard &) LLVM_DELETED_FUNCTION;
+
+  public:
+    FastMathFlagGuard(IRBuilderBase &B)
+        : Builder(B), FMF(B.FMF), FPMathTag(B.DefaultFPMathTag) {}
+
+    ~FastMathFlagGuard() {
+      Builder.FMF = FMF;
+      Builder.DefaultFPMathTag = FPMathTag;
+    }
+  };
 
   //===--------------------------------------------------------------------===//
   // Miscellaneous creation methods.

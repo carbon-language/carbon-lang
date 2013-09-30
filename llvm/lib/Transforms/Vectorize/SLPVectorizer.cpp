@@ -65,26 +65,6 @@ static const unsigned MinVecRegSize = 128;
 
 static const unsigned RecursionMaxDepth = 12;
 
-/// RAII pattern to save the insertion point of the IR builder.
-class BuilderLocGuard {
-public:
-  BuilderLocGuard(IRBuilder<> &B) : Builder(B), Loc(B.GetInsertPoint()),
-  DbgLoc(B.getCurrentDebugLocation()) {}
-  ~BuilderLocGuard() {
-    Builder.SetCurrentDebugLocation(DbgLoc);
-    if (Loc)
-      Builder.SetInsertPoint(Loc);
-  }
-
-private:
-  // Prevent copying.
-  BuilderLocGuard(const BuilderLocGuard &);
-  BuilderLocGuard &operator=(const BuilderLocGuard &);
-  IRBuilder<> &Builder;
-  AssertingVH<Instruction> Loc;
-  DebugLoc DbgLoc;
-};
-
 /// A helper class for numbering instructions in multiple blocks.
 /// Numbers start at zero for each basic block.
 struct BlockNumbering {
@@ -1177,7 +1157,7 @@ Value *BoUpSLP::vectorizeTree(ArrayRef<Value *> VL) {
 }
 
 Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
-  BuilderLocGuard Guard(Builder);
+  IRBuilder<>::InsertPointGuard Guard(Builder);
 
   if (E->VectorizedValue) {
     DEBUG(dbgs() << "SLP: Diamond merged for " << *E->Scalars[0] << ".\n");
