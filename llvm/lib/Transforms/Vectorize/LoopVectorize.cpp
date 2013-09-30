@@ -1027,24 +1027,18 @@ LoopVectorizationLegality::RuntimePointerCheck::insert(ScalarEvolution *SE,
 }
 
 Value *InnerLoopVectorizer::getBroadcastInstrs(Value *V) {
-  // Save the current insertion location.
-  Instruction *Loc = Builder.GetInsertPoint();
-
   // We need to place the broadcast of invariant variables outside the loop.
   Instruction *Instr = dyn_cast<Instruction>(V);
   bool NewInstr = (Instr && Instr->getParent() == LoopVectorBody);
   bool Invariant = OrigLoop->isLoopInvariant(V) && !NewInstr;
 
   // Place the code for broadcasting invariant variables in the new preheader.
+  IRBuilder<>::InsertPointGuard Guard(Builder);
   if (Invariant)
     Builder.SetInsertPoint(LoopVectorPreHeader->getTerminator());
 
   // Broadcast the scalar into all locations in the vector.
   Value *Shuf = Builder.CreateVectorSplat(VF, V, "broadcast");
-
-  // Restore the builder insertion point.
-  if (Invariant)
-    Builder.SetInsertPoint(Loc);
 
   return Shuf;
 }

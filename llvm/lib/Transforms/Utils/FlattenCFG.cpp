@@ -266,8 +266,7 @@ bool FlattenCFGOpt::FlattenParallelAndOr(BasicBlock *BB, IRBuilder<> &Builder,
   BasicBlock *CB;
   BranchInst *PBI = dyn_cast<BranchInst>(FirstCondBlock->getTerminator());
   bool Iteration = true;
-  BasicBlock *SaveInsertBB = Builder.GetInsertBlock();
-  BasicBlock::iterator SaveInsertPt = Builder.GetInsertPoint();
+  IRBuilder<>::InsertPointGuard Guard(Builder);
   Value *PC = PBI->getCondition();
 
   do {
@@ -298,7 +297,6 @@ bool FlattenCFGOpt::FlattenParallelAndOr(BasicBlock *BB, IRBuilder<> &Builder,
     new UnreachableInst(CB->getContext(), CB);
   } while (Iteration);
 
-  Builder.SetInsertPoint(SaveInsertBB, SaveInsertPt);
   DEBUG(dbgs() << "Use parallel and/or in:\n" << *FirstCondBlock);
   return true;
 }

@@ -252,8 +252,6 @@ namespace llvm {
 
     void rememberInstruction(Value *I);
 
-    void restoreInsertPoint(BasicBlock *BB, BasicBlock::iterator I);
-
     bool isNormalAddRecExprPHI(PHINode *PN, Instruction *IncV, const Loop *L);
 
     bool isExpandedAddRecExprPHI(PHINode *PN, Instruction *IncV, const Loop *L);
