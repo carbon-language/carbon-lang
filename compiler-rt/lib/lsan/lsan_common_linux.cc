@@ -115,8 +115,12 @@ static void ProcessPlatformSpecificAllocationsCb(uptr chunk, void *arg) {
   LsanMetadata m(chunk);
   if (m.allocated() && m.tag() != kReachable) {
     u32 stack_id = m.stack_trace_id();
-    if (!stack_id || linker->containsAddress(GetCallerPC(
-                         stack_id, param->stack_depot_reverse_map))) {
+    uptr caller_pc = 0;
+    if (stack_id > 0)
+      caller_pc = GetCallerPC(stack_id, param->stack_depot_reverse_map);
+    // If caller_pc is unknown, this chunk may be allocated in a coroutine. Mark
+    // it as reachable, as we can't properly report its allocation stack anyway.
+    if (caller_pc == 0 || linker->containsAddress(caller_pc)) {
       m.set_tag(kReachable);
       param->frontier->push_back(chunk);
     }
