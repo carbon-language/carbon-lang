@@ -56,15 +56,15 @@ class GPR32<bits<16> num, string n> : SystemZReg<n> {
 }
 
 // One of the 16 64-bit general-purpose registers.
-class GPR64<bits<16> num, string n, GPR32 low>
- : SystemZRegWithSubregs<n, [low]> {
+class GPR64<bits<16> num, string n, GPR32 low, GPR32 high>
+ : SystemZRegWithSubregs<n, [low, high]> {
   let HWEncoding = num;
-  let SubRegIndices = [subreg_l32];
+  let SubRegIndices = [subreg_l32, subreg_h32];
 }
 
 // 8 even-odd pairs of GPR64s.
-class GPR128<bits<16> num, string n, GPR64 high, GPR64 low>
- : SystemZRegWithSubregs<n, [high, low]> {
+class GPR128<bits<16> num, string n, GPR64 low, GPR64 high>
+ : SystemZRegWithSubregs<n, [low, high]> {
   let HWEncoding = num;
   let SubRegIndices = [subreg_l64, subreg_h64];
 }
@@ -72,7 +72,9 @@ class GPR128<bits<16> num, string n, GPR64 high, GPR64 low>
 // General-purpose registers
 foreach I = 0-15 in {
   def R#I#L : GPR32<I, "r"#I>;
-  def R#I#D : GPR64<I, "r"#I, !cast<GPR32>("R"#I#"L")>, DwarfRegNum<[I]>;
+  def R#I#H : GPR32<I, "r"#I>;
+  def R#I#D : GPR64<I, "r"#I, !cast<GPR32>("R"#I#"L"), !cast<GPR32>("R"#I#"H")>,
+                    DwarfRegNum<[I]>;
 }
 
 foreach I = [0, 2, 4, 6, 8, 10, 12, 14] in {
@@ -82,10 +84,12 @@ foreach I = [0, 2, 4, 6, 8, 10, 12, 14] in {
 
 /// Allocate the callee-saved R6-R13 backwards. That way they can be saved
 /// together with R14 and R15 in one prolog instruction.
-defm GR32 : SystemZRegClass<"GR32", i32, 32, (add (sequence "R%uL",  0, 5),
-                                                  (sequence "R%uL", 15, 6))>;
-defm GR64 : SystemZRegClass<"GR64", i64, 64, (add (sequence "R%uD",  0, 5),
-                                                  (sequence "R%uD", 15, 6))>;
+defm GR32  : SystemZRegClass<"GR32",  i32, 32, (add (sequence "R%uL",  0, 5),
+                                                    (sequence "R%uL", 15, 6))>;
+defm GRH32 : SystemZRegClass<"GRH32", i32, 32, (add (sequence "R%uH",  0, 5),
+                                                    (sequence "R%uH", 15, 6))>;
+defm GR64  : SystemZRegClass<"GR64",  i64, 64, (add (sequence "R%uD",  0, 5),
+                                                    (sequence "R%uD", 15, 6))>;
 
 // The architecture doesn't really have any i128 support, so model the
 // register pairs as untyped instead.
@@ -119,8 +123,8 @@ class FPR64<bits<16> num, string n, FPR32 low>
 }
 
 // 8 pairs of FPR64s, with a one-register gap inbetween.
-class FPR128<bits<16> num, string n, FPR64 high, FPR64 low>
- : SystemZRegWithSubregs<n, [high, low]> {
+class FPR128<bits<16> num, string n, FPR64 low, FPR64 high>
+ : SystemZRegWithSubregs<n, [low, high]> {
   let HWEncoding = num;
   let SubRegIndices = [subreg_l64, subreg_h64];
 }

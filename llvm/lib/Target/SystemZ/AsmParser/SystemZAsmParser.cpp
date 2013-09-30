@@ -32,6 +32,7 @@ static bool inRange(const MCExpr *Expr, int64_t MinValue, int64_t MaxValue) {
 namespace {
 enum RegisterKind {
   GR32Reg,
+  GRH32Reg,
   GR64Reg,
   GR128Reg,
   ADDR32Reg,
@@ -262,6 +263,7 @@ public:
 
   // Used by the TableGen code to check for particular operand types.
   bool isGR32() const { return isReg(GR32Reg); }
+  bool isGRH32() const { return isReg(GRH32Reg); }
   bool isGR64() const { return isReg(GR64Reg); }
   bool isGR128() const { return isReg(GR128Reg); }
   bool isADDR32() const { return isReg(ADDR32Reg); }
@@ -354,6 +356,10 @@ public:
   OperandMatchResultTy
   parseGR32(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
     return parseRegister(Operands, RegGR, SystemZMC::GR32Regs, GR32Reg);
+  }
+  OperandMatchResultTy
+  parseGRH32(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+    return parseRegister(Operands, RegGR, SystemZMC::GRH32Regs, GRH32Reg);
   }
   OperandMatchResultTy
   parseGR64(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {

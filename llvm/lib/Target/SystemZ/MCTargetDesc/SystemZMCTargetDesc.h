@@ -42,6 +42,7 @@ namespace SystemZMC {
   // as %r0-%r15.  It seems better to provide the same interface for
   // all classes though.
   extern const unsigned GR32Regs[16];
+  extern const unsigned GRH32Regs[16];
   extern const unsigned GR64Regs[16];
   extern const unsigned GR128Regs[16];
   extern const unsigned FP32Regs[16];

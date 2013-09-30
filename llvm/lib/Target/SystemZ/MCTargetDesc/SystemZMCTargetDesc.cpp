@@ -34,6 +34,13 @@ const unsigned SystemZMC::GR32Regs[16] = {
   SystemZ::R12L, SystemZ::R13L, SystemZ::R14L, SystemZ::R15L
 };
 
+const unsigned SystemZMC::GRH32Regs[16] = {
+  SystemZ::R0H, SystemZ::R1H, SystemZ::R2H, SystemZ::R3H,
+  SystemZ::R4H, SystemZ::R5H, SystemZ::R6H, SystemZ::R7H,
+  SystemZ::R8H, SystemZ::R9H, SystemZ::R10H, SystemZ::R11H,
+  SystemZ::R12H, SystemZ::R13H, SystemZ::R14H, SystemZ::R15H
+};
+
 const unsigned SystemZMC::GR64Regs[16] = {
   SystemZ::R0D, SystemZ::R1D, SystemZ::R2D, SystemZ::R3D,
   SystemZ::R4D, SystemZ::R5D, SystemZ::R6D, SystemZ::R7D,

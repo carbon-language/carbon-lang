@@ -928,9 +928,9 @@ let Defs = [CC] in {
 let isCodeGenOnly = 1 in
   def RISBLG32 : RotateSelectRIEf<"risblg", 0xEC51, GR32, GR32>,
                  Requires<[FeatureHighWord]>;
-def RISBHG : RotateSelectRIEf<"risbhg", 0xEC5D, GR64, GR64>,
+def RISBHG : RotateSelectRIEf<"risbhg", 0xEC5D, GRH32, GR64>,
              Requires<[FeatureHighWord]>;
-def RISBLG : RotateSelectRIEf<"risblg", 0xEC51, GR64, GR64>,
+def RISBLG : RotateSelectRIEf<"risblg", 0xEC51, GR32, GR64>,
              Requires<[FeatureHighWord]>;
 
 // Rotate second operand left and perform a logical operation with selected

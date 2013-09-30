@@ -66,6 +66,12 @@ static DecodeStatus DecodeGR32BitRegisterClass(MCInst &Inst, uint64_t RegNo,
   return decodeRegisterClass(Inst, RegNo, SystemZMC::GR32Regs);
 }
 
+static DecodeStatus DecodeGRH32BitRegisterClass(MCInst &Inst, uint64_t RegNo,
+                                                uint64_t Address,
+                                                const void *Decoder) {
+  return decodeRegisterClass(Inst, RegNo, SystemZMC::GRH32Regs);
+}
+
 static DecodeStatus DecodeGR64BitRegisterClass(MCInst &Inst, uint64_t RegNo,
                                                uint64_t Address,
                                                const void *Decoder) {
