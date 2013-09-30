@@ -43,7 +43,7 @@ add_llvm_tool_subdirectory(llvm-symbolizer)
 add_llvm_tool_subdirectory(obj2yaml)
 add_llvm_tool_subdirectory(yaml2obj)
 
-if( NOT CYGWIN )
+if( NOT WIN32 )
   add_llvm_tool_subdirectory(lto)
   add_llvm_tool_subdirectory(llvm-lto)
 else()

@@ -9,19 +9,7 @@ set(SOURCES
   lto.cpp
   )
 
-if( NOT CYGWIN AND LLVM_ENABLE_PIC )
-  if ( WIN32 )
-    # Create .def file containing a list of exports preceeded by
-    # 'EXPORTS'.  The file "lto.exports" already contains the list, so we
-    # massage it into the correct format here to create "lto.exports.def".
-    set(LTO_EXPORTS_DEF ${CMAKE_CURRENT_BINARY_DIR}/lto.exports.def)
-    file(READ "lto.exports" exports_list)
-    file(WRITE ${LTO_EXPORTS_DEF} "LIBRARY LTO\n")
-    file(APPEND ${LTO_EXPORTS_DEF} "EXPORTS\n")
-    file(APPEND ${LTO_EXPORTS_DEF} ${exports_list})
-    set(SOURCES ${SOURCES} ${LTO_EXPORTS_DEF})
-  endif()
-
+if( NOT WIN32 AND LLVM_ENABLE_PIC )
   set(bsl ${BUILD_SHARED_LIBS})
   set(BUILD_SHARED_LIBS ON)
   add_llvm_library(LTO ${SOURCES})
@@ -37,7 +25,7 @@ if( NOT BUILD_SHARED_LIBS )
   set_property(TARGET ${LTO_STATIC_TARGET_NAME} PROPERTY OUTPUT_NAME "LTO")
 endif()
 
-if( NOT CYGWIN )
+if( NOT WIN32 )
   install(FILES ${LLVM_MAIN_INCLUDE_DIR}/llvm-c/lto.h
           DESTINATION include/llvm-c)
 endif()
