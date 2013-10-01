@@ -253,7 +253,7 @@ def X86blsi   : SDNode<"X86ISD::BLSI",   SDTIntUnaryOp>;
 def X86blsmsk : SDNode<"X86ISD::BLSMSK", SDTIntUnaryOp>;
 def X86blsr   : SDNode<"X86ISD::BLSR",   SDTIntUnaryOp>;
 def X86bzhi   : SDNode<"X86ISD::BZHI",   SDTIntShiftOp>;
-def X86bextr  : SDNode<"X86ISD::BEXTR",  SDTIntShiftOp>;
+def X86bextr  : SDNode<"X86ISD::BEXTR",  SDTIntBinOp>;
 
 def X86mul_imm : SDNode<"X86ISD::MUL_IMM", SDTIntBinOp>;
 
