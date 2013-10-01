@@ -1386,6 +1386,25 @@ class BinaryRIPseudo<SDPatternOperator operator, RegisterOperand cls,
   let Constraints = "$R1 = $R1src";
 }
 
+// Like BinaryRIE, but expanded after RA depending on the choice of register.
+class BinaryRIEPseudo<SDPatternOperator operator, RegisterOperand cls,
+                      Immediate imm>
+  : Pseudo<(outs cls:$R1), (ins cls:$R3, imm:$I2),
+           [(set cls:$R1, (operator cls:$R3, imm:$I2))]>;
+
+// Like BinaryRIAndK, but expanded after RA depending on the choice of register.
+multiclass BinaryRIAndKPseudo<string key, SDPatternOperator operator,
+                              RegisterOperand cls, Immediate imm> {
+  let NumOpsKey = key in {
+    let NumOpsValue = "3" in
+      def K : BinaryRIEPseudo<null_frag, cls, imm>,
+              Requires<[FeatureHighWord, FeatureDistinctOps]>;
+    let NumOpsValue = "2", isConvertibleToThreeAddress = 1 in
+      def "" : BinaryRIPseudo<operator, cls, imm>,
+               Requires<[FeatureHighWord]>;
+  }
+}
+
 // Like CompareRI, but expanded after RA depending on the choice of register.
 class CompareRIPseudo<SDPatternOperator operator, RegisterOperand cls,
                       Immediate imm>

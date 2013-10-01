@@ -128,6 +128,11 @@
 	ahy	%r0, -524289
 	ahy	%r0, 524288
 
+#CHECK: error: {{(instruction requires: high-word)?}}
+#CHECK: aih	%r0, 0
+
+	aih	%r0, 0
+
 #CHECK: error: invalid operand
 #CHECK: al	%r0, -1
 #CHECK: error: invalid operand

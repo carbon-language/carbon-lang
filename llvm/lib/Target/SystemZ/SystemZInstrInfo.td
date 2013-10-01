@@ -685,11 +685,16 @@ let Defs = [CC], CCValues = 0xF, CompareZeroCCMask = 0x8 in {
   def AGFR : BinaryRRE<"agf", 0xB918, null_frag, GR64, GR32>;
 
   // Addition of signed 16-bit immediates.
+  defm AHIMux : BinaryRIAndKPseudo<"ahimux", add, GRX32, imm32sx16>;
   defm AHI  : BinaryRIAndK<"ahi",  0xA7A, 0xECD8, add, GR32, imm32sx16>;
   defm AGHI : BinaryRIAndK<"aghi", 0xA7B, 0xECD9, add, GR64, imm64sx16>;
 
   // Addition of signed 32-bit immediates.
+  def AFIMux : BinaryRIPseudo<add, GRX32, simm32>,
+               Requires<[FeatureHighWord]>;
   def AFI  : BinaryRIL<"afi",  0xC29, add, GR32, simm32>;
+  def AIH  : BinaryRIL<"aih",  0xCC8, add, GRH32, simm32>,
+             Requires<[FeatureHighWord]>;
   def AGFI : BinaryRIL<"agfi", 0xC28, add, GR64, imm64sx32>;
 
   // Addition of memory.

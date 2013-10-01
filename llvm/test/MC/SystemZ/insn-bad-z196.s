@@ -25,6 +25,14 @@
 	ahik	%r0, %r1, foo
 
 #CHECK: error: invalid operand
+#CHECK: aih	%r0, (-1 << 31) - 1
+#CHECK: error: invalid operand
+#CHECK: aih	%r0, (1 << 31)
+
+	aih	%r0, (-1 << 31) - 1
+	aih	%r0, (1 << 31)
+
+#CHECK: error: invalid operand
 #CHECK: fidbra	%f0, 0, %f0, -1
 #CHECK: error: invalid operand
 #CHECK: fidbra	%f0, 0, %f0, 16

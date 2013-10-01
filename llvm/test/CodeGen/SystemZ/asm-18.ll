@@ -554,3 +554,118 @@ define i32 @f25(i32 %old) {
                        "=r,h,h"(i32 %sel3, i32 %sel4)
   ret i32 %res2
 }
+
+; Test two-operand halfword immediate addition involving high registers.
+define void @f26() {
+; CHECK-LABEL: f26:
+; CHECK: stepa [[REG:%r[0-5]]]
+; CHECK: aih [[REG]], -32768
+; CHECK: stepb [[REG]]
+; CHECK: aih [[REG]], 1
+; CHECK: stepc [[REG]]
+; CHECK: aih [[REG]], 32767
+; CHECK: stepd [[REG]]
+; CHECK: br %r14
+  %res1 = call i32 asm "stepa $0", "=h"()
+  %add1 = add i32 %res1, -32768
+  %res2 = call i32 asm "stepb $0, $1", "=h,h"(i32 %add1)
+  %add2 = add i32 %res2, 1
+  %res3 = call i32 asm "stepc $0, $1", "=h,h"(i32 %add2)
+  %add3 = add i32 %res3, 32767
+  call void asm sideeffect "stepd $0", "h"(i32 %add3)
+  ret void
+}
+
+; Test two-operand halfword immediate addition involving low registers.
+define void @f27() {
+; CHECK-LABEL: f27:
+; CHECK: stepa [[REG:%r[0-5]]]
+; CHECK: ahi [[REG]], -32768
+; CHECK: stepb [[REG]]
+; CHECK: ahi [[REG]], 1
+; CHECK: stepc [[REG]]
+; CHECK: ahi [[REG]], 32767
+; CHECK: stepd [[REG]]
+; CHECK: br %r14
+  %res1 = call i32 asm "stepa $0", "=r"()
+  %add1 = add i32 %res1, -32768
+  %res2 = call i32 asm "stepb $0, $1", "=r,r"(i32 %add1)
+  %add2 = add i32 %res2, 1
+  %res3 = call i32 asm "stepc $0, $1", "=r,r"(i32 %add2)
+  %add3 = add i32 %res3, 32767
+  call void asm sideeffect "stepd $0", "r"(i32 %add3)
+  ret void
+}
+
+; Test three-operand halfword immediate addition involving mixtures of low
+; and high registers.  RISBHG/AIH would be OK too, instead of AHIK/RISBHG.
+define i32 @f28(i32 %old) {
+; CHECK-LABEL: f28:
+; CHECK: ahik [[REG1:%r[0-5]]], %r2, 14
+; CHECK: stepa %r2, [[REG1]]
+; CHECK: ahik [[TMP:%r[0-5]]], [[REG1]], 254
+; CHECK: risbhg [[REG2:%r[0-5]]], [[TMP]], 0, 159, 32
+; CHECK: stepb [[REG1]], [[REG2]]
+; CHECK: risbhg [[REG3:%r[0-5]]], [[REG2]], 0, 159, 0
+; CHECK: aih [[REG3]], 127
+; CHECK: stepc [[REG2]], [[REG3]]
+; CHECK: risblg %r2, [[REG3]], 0, 159, 32
+; CHECK: ahi %r2, 128
+; CHECK: stepd [[REG3]], %r2
+; CHECK: br %r14
+  %add1 = add i32 %old, 14
+  %res1 = call i32 asm "stepa $1, $2",
+                       "=r,r,0"(i32 %old, i32 %add1)
+  %add2 = add i32 %res1, 254
+  %res2 = call i32 asm "stepb $1, $2",
+                       "=h,r,0"(i32 %res1, i32 %add2)
+  %add3 = add i32 %res2, 127
+  %res3 = call i32 asm "stepc $1, $2",
+                       "=h,h,0"(i32 %res2, i32 %add3)
+  %add4 = add i32 %res3, 128
+  %res4 = call i32 asm "stepd $1, $2",
+                       "=r,h,0"(i32 %res3, i32 %add4)
+  ret i32 %res4
+}
+
+; Test large immediate addition involving high registers.
+define void @f29() {
+; CHECK-LABEL: f29:
+; CHECK: stepa [[REG:%r[0-5]]]
+; CHECK: aih [[REG]], -32769
+; CHECK: stepb [[REG]]
+; CHECK: aih [[REG]], 32768
+; CHECK: stepc [[REG]]
+; CHECK: aih [[REG]], 1000000000
+; CHECK: stepd [[REG]]
+; CHECK: br %r14
+  %res1 = call i32 asm "stepa $0", "=h"()
+  %add1 = add i32 %res1, -32769
+  %res2 = call i32 asm "stepb $0, $1", "=h,h"(i32 %add1)
+  %add2 = add i32 %res2, 32768
+  %res3 = call i32 asm "stepc $0, $1", "=h,h"(i32 %add2)
+  %add3 = add i32 %res3, 1000000000
+  call void asm sideeffect "stepd $0", "h"(i32 %add3)
+  ret void
+}
+
+; Test large immediate addition involving low registers.
+define void @f30() {
+; CHECK-LABEL: f30:
+; CHECK: stepa [[REG:%r[0-5]]]
+; CHECK: afi [[REG]], -32769
+; CHECK: stepb [[REG]]
+; CHECK: afi [[REG]], 32768
+; CHECK: stepc [[REG]]
+; CHECK: afi [[REG]], 1000000000
+; CHECK: stepd [[REG]]
+; CHECK: br %r14
+  %res1 = call i32 asm "stepa $0", "=r"()
+  %add1 = add i32 %res1, -32769
+  %res2 = call i32 asm "stepb $0, $1", "=r,r"(i32 %add1)
+  %add2 = add i32 %res2, 32768
+  %res3 = call i32 asm "stepc $0, $1", "=r,r"(i32 %add2)
+  %add3 = add i32 %res3, 1000000000
+  call void asm sideeffect "stepd $0", "r"(i32 %add3)
+  ret void
+}
