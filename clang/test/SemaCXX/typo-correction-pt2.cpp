@@ -144,3 +144,10 @@ namespace PR17394 {
   class B : private A {};
   B zzzzzzzzzy<>; // expected-error {{expected ';' after top level declarator}}{}
 }
+
+namespace correct_fields_in_member_funcs {
+struct S {
+  int my_member;  // expected-note {{'my_member' declared here}}
+  void f() { my_menber = 1; }  // expected-error {{use of undeclared identifier 'my_menber'; did you mean 'my_member'?}}
+};
+}

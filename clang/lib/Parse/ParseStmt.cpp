@@ -129,7 +129,7 @@ public:
 
   virtual bool ValidateCandidate(const TypoCorrection &candidate) {
     if (FieldDecl *FD = candidate.getCorrectionDeclAs<FieldDecl>())
-      return isa<ObjCIvarDecl>(FD);
+      return !candidate.getCorrectionSpecifier() || isa<ObjCIvarDecl>(FD);
     if (NextToken.is(tok::equal))
       return candidate.getCorrectionDeclAs<VarDecl>();
     if (NextToken.is(tok::period) &&
