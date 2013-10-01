@@ -3056,9 +3056,9 @@ public:
             Env == "android" || Env == "androideabi");
   }
 
-private:
   ABIKind getABIKind() const { return Kind; }
 
+private:
   ABIArgInfo classifyReturnType(QualType RetTy) const;
   ABIArgInfo classifyArgumentType(QualType RetTy, int *VFPRegs,
                                   unsigned &AllocatedVFP,
@@ -3105,6 +3105,45 @@ public:
     if (getABIInfo().isEABI()) return 88;
     return TargetCodeGenInfo::getSizeOfUnwindException();
   }
+
+  void SetTargetAttributes(const Decl *D, llvm::GlobalValue *GV,
+                           CodeGen::CodeGenModule &CGM) const {
+    const FunctionDecl *FD = dyn_cast<FunctionDecl>(D);
+    if (!FD)
+      return;
+
+    const ARMInterruptAttr *Attr = FD->getAttr<ARMInterruptAttr>();
+    if (!Attr)
+      return;
+
+    const char *Kind;
+    switch (Attr->getInterrupt()) {
+    case ARMInterruptAttr::Generic: Kind = ""; break;
+    case ARMInterruptAttr::IRQ:     Kind = "IRQ"; break;
+    case ARMInterruptAttr::FIQ:     Kind = "FIQ"; break;
+    case ARMInterruptAttr::SWI:     Kind = "SWI"; break;
+    case ARMInterruptAttr::ABORT:   Kind = "ABORT"; break;
+    case ARMInterruptAttr::UNDEF:   Kind = "UNDEF"; break;
+    }
+
+    llvm::Function *Fn = cast<llvm::Function>(GV);
+
+    Fn->addFnAttr("interrupt", Kind);
+
+    if (cast<ARMABIInfo>(getABIInfo()).getABIKind() == ARMABIInfo::APCS)
+      return;
+
+    // AAPCS guarantees that sp will be 8-byte aligned on any public interface,
+    // however this is not necessarily true on taking any interrupt. Instruct
+    // the backend to perform a realignment as part of the function prologue.
+    llvm::AttrBuilder B;
+    B.addStackAlignmentAttr(8);
+    Fn->addAttributes(llvm::AttributeSet::FunctionIndex,
+                      llvm::AttributeSet::get(CGM.getLLVMContext(),
+                                              llvm::AttributeSet::FunctionIndex,
+                                              B));
+  }
+
 };
 
 }

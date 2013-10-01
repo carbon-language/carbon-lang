@@ -26,6 +26,50 @@ bool TargetAttributesSema::ProcessDeclAttribute(Scope *scope, Decl *D,
   return false;
 }
 
+static void HandleARMInterruptAttr(Decl *d,
+                                   const AttributeList &Attr, Sema &S) {
+  // Check the attribute arguments.
+  if (Attr.getNumArgs() > 1) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_too_many_arguments)
+        << 1;
+    return;
+  }
+
+  StringRef Str;
+  SourceLocation ArgLoc;
+
+  if (Attr.getNumArgs() == 0)
+    Str = "";
+  else if (!S.checkStringLiteralArgumentAttr(Attr, 0, Str, &ArgLoc))
+    return;
+
+  ARMInterruptAttr::InterruptType Kind;
+  if (!ARMInterruptAttr::ConvertStrToInterruptType(Str, Kind)) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_type_not_supported)
+        << Attr.getName() << Str << ArgLoc;
+    return;
+  }
+
+  unsigned Index = Attr.getAttributeSpellingListIndex();
+  d->addAttr(::new (S.Context)
+             ARMInterruptAttr(Attr.getLoc(), S.Context, Kind, Index));
+}
+
+namespace {
+  class ARMAttributesSema : public TargetAttributesSema {
+  public:
+    ARMAttributesSema() { }
+    bool ProcessDeclAttribute(Scope *scope, Decl *D,
+                              const AttributeList &Attr, Sema &S) const {
+      if (Attr.getName()->getName() == "interrupt") {
+        HandleARMInterruptAttr(D, Attr, S);
+        return true;
+      }
+      return false;
+    }
+  };
+}
+
 static void HandleMSP430InterruptAttr(Decl *d,
                                       const AttributeList &Attr, Sema &S) {
     // Check the attribute arguments.
@@ -292,6 +336,9 @@ const TargetAttributesSema &Sema::getTargetAttributesSema() const {
 
   const llvm::Triple &Triple(Context.getTargetInfo().getTriple());
   switch (Triple.getArch()) {
+  case llvm::Triple::arm:
+  case llvm::Triple::thumb:
+    return *(TheTargetAttributesSema = new ARMAttributesSema);
   case llvm::Triple::msp430:
     return *(TheTargetAttributesSema = new MSP430AttributesSema);
   case llvm::Triple::x86:

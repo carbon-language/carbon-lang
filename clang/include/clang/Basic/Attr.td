@@ -210,6 +210,14 @@ def Annotate : InheritableParamAttr {
   let Args = [StringArgument<"Annotation">];
 }
 
+def ARMInterrupt : InheritableAttr, TargetSpecificAttr {
+  let Spellings = [GNU<"interrupt">];
+  let Args = [EnumArgument<"Interrupt", "InterruptType",
+                           ["IRQ", "FIQ", "SWI", "ABORT", "UNDEF", ""],
+                           ["IRQ", "FIQ", "SWI", "ABORT", "UNDEF", "Generic"],
+                           1>];
+}
+
 def AsmLabel : InheritableAttr {
   let Spellings = [];
   let Args = [StringArgument<"Label">];

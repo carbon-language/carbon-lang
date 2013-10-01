@@ -289,7 +289,7 @@ static bool checkFunctionOrMethodArgumentIndex(Sema &S, const Decl *D,
 /// literal.
 bool Sema::checkStringLiteralArgumentAttr(const AttributeList &Attr,
                                           unsigned ArgNum, StringRef &Str,
-                                          SourceLocation *ArgLocation = 0) {
+                                          SourceLocation *ArgLocation) {
   // Look for identifiers. If we have one emit a hint to fix it to a literal.
   if (Attr.isArgIdent(ArgNum)) {
     IdentifierLoc *Loc = Attr.getArgAsIdent(ArgNum);
