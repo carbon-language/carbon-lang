@@ -116,6 +116,8 @@ class SystemZInstrInfo : public SystemZGenInstrInfo {
 
   void splitMove(MachineBasicBlock::iterator MI, unsigned NewOpcode) const;
   void splitAdjDynAlloc(MachineBasicBlock::iterator MI) const;
+  void expandRIPseudo(MachineInstr *MI, unsigned LowOpcode,
+                      unsigned HighOpcode, bool ConvertHigh) const;
   void expandRXYPseudo(MachineInstr *MI, unsigned LowOpcode,
                        unsigned HighOpcode) const;
   void expandZExtPseudo(MachineInstr *MI, unsigned LowOpcode,

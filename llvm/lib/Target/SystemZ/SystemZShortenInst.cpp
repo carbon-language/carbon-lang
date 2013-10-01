@@ -58,6 +58,7 @@ SystemZShortenInst::SystemZShortenInst(const SystemZTargetMachine &tm)
   for (unsigned I = 0; I < 16; ++I) {
     LowGPRs[SystemZMC::GR32Regs[I]] |= 1 << I;
     LowGPRs[SystemZMC::GR64Regs[I]] |= 1 << I;
+    HighGPRs[SystemZMC::GRH32Regs[I]] |= 1 << I;
     HighGPRs[SystemZMC::GR64Regs[I]] |= 1 << I;
     if (unsigned GR128 = SystemZMC::GR128Regs[I]) {
       LowGPRs[GR128] |= 3 << I;
@@ -122,6 +123,9 @@ bool SystemZShortenInst::processBlock(MachineBasicBlock *MBB) {
     if (Opcode == SystemZ::IILF)
       Changed |= shortenIIF(MI, LowGPRs, LiveHigh, SystemZ::LLILL,
                             SystemZ::LLILH);
+    else if (Opcode == SystemZ::IIHF)
+      Changed |= shortenIIF(MI, HighGPRs, LiveLow, SystemZ::LLIHL,
+                            SystemZ::LLIHH);
     unsigned UsedLow = 0;
     unsigned UsedHigh = 0;
     for (MachineInstr::mop_iterator MOI = MI.operands_begin(),

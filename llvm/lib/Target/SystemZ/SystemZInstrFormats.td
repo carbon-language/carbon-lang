@@ -1349,6 +1349,12 @@ class Pseudo<dag outs, dag ins, list<dag> pattern>
   let isCodeGenOnly = 1;
 }
 
+// Like UnaryRI, but expanded after RA depending on the choice of register.
+class UnaryRIPseudo<SDPatternOperator operator, RegisterOperand cls,
+                    Immediate imm>
+  : Pseudo<(outs cls:$R1), (ins imm:$I2),
+           [(set cls:$R1, (operator imm:$I2))]>;
+
 // Like UnaryRXY, but expanded after RA depending on the choice of registers.
 class UnaryRXYPseudo<string key, SDPatternOperator operator,
                      RegisterOperand cls, bits<5> bytes,

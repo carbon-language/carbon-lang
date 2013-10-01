@@ -82,6 +82,12 @@ void SystemZAsmPrinter::EmitInstruction(const MachineInstr *MI) {
       .addImm(MI->getOperand(2).getImm());
     break;
 
+  case SystemZ::IIHF64:
+    LoweredMI = MCInstBuilder(SystemZ::IIHF)
+      .addReg(SystemZMC::getRegAsGRH32(MI->getOperand(0).getReg()))
+      .addImm(MI->getOperand(2).getImm());
+    break;
+
   case SystemZ::RISBHH:
   case SystemZ::RISBHL:
     LoweredMI = lowerRIEfLow(MI, SystemZ::RISBHG);

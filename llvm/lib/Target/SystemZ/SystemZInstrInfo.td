@@ -278,7 +278,10 @@ let Uses = [CC] in {
 // Immediate moves.
 let neverHasSideEffects = 1, isAsCheapAsAMove = 1, isMoveImm = 1,
     isReMaterializable = 1 in {
-  // 16-bit sign-extended immediates.
+  // 16-bit sign-extended immediates.  LHIMux expands to LHI or IIHF,
+  // deopending on the choice of register.
+  def LHIMux : UnaryRIPseudo<bitconvert, GRX32, imm32sx16>,
+               Requires<[FeatureHighWord]>;
   def LHI  : UnaryRI<"lhi",  0xA78, bitconvert, GR32, imm32sx16>;
   def LGHI : UnaryRI<"lghi", 0xA79, bitconvert, GR64, imm64sx16>;
 
@@ -636,16 +639,20 @@ def IIHH : BinaryRI<"iihh", 0xA50, inserthh, GR64, imm64hh16>;
 // full-width move.  (We use IILF rather than something like LLILF
 // for 32-bit moves because IILF leaves the upper 32 bits of the
 // GR64 unchanged.)
-let isAsCheapAsAMove = 1, isMoveImm = 1, isReMaterializable = 1 in
+let isAsCheapAsAMove = 1, isMoveImm = 1, isReMaterializable = 1 in {
+  def IIFMux : UnaryRIPseudo<bitconvert, GRX32, uimm32>,
+               Requires<[FeatureHighWord]>;
   def IILF : UnaryRIL<"iilf", 0xC09, bitconvert, GR32, uimm32>;
+  def IIHF : UnaryRIL<"iihf", 0xC08, bitconvert, GRH32, uimm32>;
+}
 def IILF64 : BinaryAliasRIL<insertlf, GR64, imm64lf32>;
-def IIHF : BinaryRIL<"iihf", 0xC08, inserthf, GR64, imm64hf32>;
+def IIHF64 : BinaryAliasRIL<inserthf, GR64, imm64hf32>;
 
 // An alternative model of inserthf, with the first operand being
 // a zero-extended value.
 def : Pat<(or (zext32 GR32:$src), imm64hf32:$imm),
-          (IIHF (INSERT_SUBREG (i64 (IMPLICIT_DEF)), GR32:$src, subreg_l32),
-                imm64hf32:$imm)>;
+          (IIHF64 (INSERT_SUBREG (i64 (IMPLICIT_DEF)), GR32:$src, subreg_l32),
+                  imm64hf32:$imm)>;
 
 //===----------------------------------------------------------------------===//
 // Addition

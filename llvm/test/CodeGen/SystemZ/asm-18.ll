@@ -230,3 +230,60 @@ define i32 @f10(i16 %val1, i16 %val2) {
   %ext4 = zext i16 %val4 to i32
   ret i32 %ext4
 }
+
+; Test loads of 16-bit constants into mixtures of high and low registers.
+define void @f11() {
+; CHECK-LABEL: f11:
+; CHECK-DAG: iihf [[REG1:%r[0-5]]], 4294934529
+; CHECK-DAG: lhi [[REG2:%r[0-5]]], -32768
+; CHECK-DAG: llihl [[REG3:%r[0-5]]], 32766
+; CHECK-DAG: lhi [[REG4:%r[0-5]]], 32767
+; CHECK: blah [[REG1]], [[REG2]], [[REG3]], [[REG4]]
+; CHECK: br %r14
+  call void asm sideeffect "blah $0, $1, $2, $3",
+                           "h,r,h,r"(i32 -32767, i32 -32768,
+                                     i32 32766, i32 32767)
+  ret void
+}
+
+; Test loads of unsigned constants into mixtures of high and low registers.
+; For stepc, we expect the h and r operands to be paired by the register
+; allocator.  It doesn't really matter which comes first: LLILL/IIHF would
+; be just as good.
+define void @f12() {
+; CHECK-LABEL: f12:
+; CHECK-DAG: llihl [[REG1:%r[0-5]]], 32768
+; CHECK-DAG: llihl [[REG2:%r[0-5]]], 65535
+; CHECK-DAG: llihh [[REG3:%r[0-5]]], 1
+; CHECK-DAG: llihh [[REG4:%r[0-5]]], 65535
+; CHECK: stepa [[REG1]], [[REG2]], [[REG3]], [[REG4]]
+; CHECK-DAG: llill [[REG1:%r[0-5]]], 32769
+; CHECK-DAG: llill [[REG2:%r[0-5]]], 65534
+; CHECK-DAG: llilh [[REG3:%r[0-5]]], 2
+; CHECK-DAG: llilh [[REG4:%r[0-5]]], 65534
+; CHECK: stepb [[REG1]], [[REG2]], [[REG3]], [[REG4]]
+; CHECK-DAG: llihl [[REG1:%r[0-5]]], 32770
+; CHECK-DAG: iilf [[REG1]], 65533
+; CHECK-DAG: llihh [[REG2:%r[0-5]]], 4
+; CHECK-DAG: iilf [[REG2]], 524288
+; CHECK: stepc [[REG1]], [[REG1]], [[REG2]], [[REG2]]
+; CHECK-DAG: iihf [[REG1:%r[0-5]]], 3294967296
+; CHECK-DAG: iilf [[REG2:%r[0-5]]], 4294567296
+; CHECK-DAG: iihf [[REG3:%r[0-5]]], 1000000000
+; CHECK-DAG: iilf [[REG4:%r[0-5]]], 400000
+; CHECK: stepd [[REG1]], [[REG2]], [[REG3]], [[REG4]]
+; CHECK: br %r14
+  call void asm sideeffect "stepa $0, $1, $2, $3",
+                           "h,h,h,h"(i32 32768, i32 65535,
+                                     i32 65536, i32 -65536)
+  call void asm sideeffect "stepb $0, $1, $2, $3",
+                           "r,r,r,r"(i32 32769, i32 65534,
+                                     i32 131072, i32 -131072)
+  call void asm sideeffect "stepc $0, $1, $2, $3",
+                           "h,r,h,r"(i32 32770, i32 65533,
+                                     i32 262144, i32 524288)
+  call void asm sideeffect "stepd $0, $1, $2, $3",
+                           "h,r,h,r"(i32 -1000000000, i32 -400000,
+                                     i32 1000000000, i32 400000)
+  ret void
+}

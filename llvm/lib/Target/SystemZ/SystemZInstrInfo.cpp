@@ -91,6 +91,22 @@ void SystemZInstrInfo::splitAdjDynAlloc(MachineBasicBlock::iterator MI) const {
   OffsetMO.setImm(Offset);
 }
 
+// MI is an RI-style pseudo instruction.  Replace it with LowOpcode
+// if the first operand is a low GR32 and HighOpcode if the first operand
+// is a high GR32.  ConvertHigh is true if LowOpcode takes a signed operand
+// and HighOpcode takes an unsigned 32-bit operand.  In those cases,
+// MI has the same kind of operand as LowOpcode, so needs to be converted
+// if HighOpcode is used.
+void SystemZInstrInfo::expandRIPseudo(MachineInstr *MI, unsigned LowOpcode,
+                                      unsigned HighOpcode,
+                                      bool ConvertHigh) const {
+  unsigned Reg = MI->getOperand(0).getReg();
+  bool IsHigh = isHighReg(Reg);
+  MI->setDesc(get(IsHigh ? HighOpcode : LowOpcode));
+  if (IsHigh && ConvertHigh)
+    MI->getOperand(1).setImm(uint32_t(MI->getOperand(1).getImm()));
+}
+
 // MI is an RXY-style pseudo instruction.  Replace it with LowOpcode
 // if the first operand is a low GR32 and HighOpcode if the first operand
 // is a high GR32.
@@ -855,6 +871,14 @@ SystemZInstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
 
   case SystemZ::STMux:
     expandRXYPseudo(MI, SystemZ::ST, SystemZ::STFH);
+    return true;
+
+  case SystemZ::LHIMux:
+    expandRIPseudo(MI, SystemZ::LHI, SystemZ::IIHF, true);
+    return true;
+
+  case SystemZ::IIFMux:
+    expandRIPseudo(MI, SystemZ::IILF, SystemZ::IIHF, false);
     return true;
 
   case SystemZ::ADJDYNALLOC:

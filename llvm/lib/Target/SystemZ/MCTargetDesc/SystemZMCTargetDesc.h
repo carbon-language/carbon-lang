@@ -62,6 +62,11 @@ namespace SystemZMC {
   inline unsigned getRegAsGR32(unsigned Reg) {
     return GR32Regs[getFirstReg(Reg)];
   }
+
+  // Return the given register as a high GR32.
+  inline unsigned getRegAsGRH32(unsigned Reg) {
+    return GRH32Regs[getFirstReg(Reg)];
+  }
 }
 
 MCCodeEmitter *createSystemZMCCodeEmitter(const MCInstrInfo &MCII,
