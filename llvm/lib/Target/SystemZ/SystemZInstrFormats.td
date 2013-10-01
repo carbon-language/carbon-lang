@@ -1349,6 +1349,40 @@ class Pseudo<dag outs, dag ins, list<dag> pattern>
   let isCodeGenOnly = 1;
 }
 
+// Like UnaryRXY, but expanded after RA depending on the choice of registers.
+class UnaryRXYPseudo<string key, SDPatternOperator operator,
+                     RegisterOperand cls, bits<5> bytes,
+                     AddressingMode mode = bdxaddr20only>
+  : Pseudo<(outs cls:$R1), (ins mode:$XBD2),
+           [(set cls:$R1, (operator mode:$XBD2))]> {
+  let OpKey = key ## cls;
+  let OpType = "mem";
+  let mayLoad = 1;
+  let Has20BitOffset = 1;
+  let HasIndex = 1;
+  let AccessBytes = bytes;
+}
+
+// Like UnaryRR, but expanded after RA depending on the choice of registers.
+class UnaryRRPseudo<string key, SDPatternOperator operator,
+                    RegisterOperand cls1, RegisterOperand cls2>
+  : Pseudo<(outs cls1:$R1), (ins cls2:$R2),
+           [(set cls1:$R1, (operator cls2:$R2))]> {
+  let OpKey = key ## cls1;
+  let OpType = "reg";
+}
+
+// Like StoreRXY, but expanded after RA depending on the choice of registers.
+class StoreRXYPseudo<SDPatternOperator operator, RegisterOperand cls,
+                     bits<5> bytes, AddressingMode mode = bdxaddr20only>
+  : Pseudo<(outs), (ins cls:$R1, mode:$XBD2),
+           [(operator cls:$R1, mode:$XBD2)]> {
+  let mayStore = 1;
+  let Has20BitOffset = 1;
+  let HasIndex = 1;
+  let AccessBytes = bytes;
+}
+
 // Implements "$dst = $cc & (8 >> CC) ? $src1 : $src2", where CC is
 // the value of the PSW's 2-bit condition code field.
 class SelectWrapper<RegisterOperand cls>
@@ -1491,5 +1525,12 @@ class BinaryAliasRIL<SDPatternOperator operator, RegisterOperand cls,
                      Immediate imm>
   : Alias<6, (outs cls:$R1), (ins cls:$R1src, imm:$I2),
           [(set cls:$R1, (operator cls:$R1src, imm:$I2))]> {
+  let Constraints = "$R1 = $R1src";
+}
+
+// An alias of a RotateSelectRIEf, but with different register sizes.
+class RotateSelectAliasRIEf<RegisterOperand cls1, RegisterOperand cls2>
+  : Alias<6, (outs cls1:$R1),
+          (ins cls1:$R1src, cls2:$R2, uimm8:$I3, uimm8:$I4, uimm8zx6:$I5), []> {
   let Constraints = "$R1 = $R1src";
 }

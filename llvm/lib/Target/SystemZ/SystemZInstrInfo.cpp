@@ -28,6 +28,15 @@ static uint64_t allOnes(unsigned int Count) {
   return Count == 0 ? 0 : (uint64_t(1) << (Count - 1) << 1) - 1;
 }
 
+// Reg should be a 32-bit GPR.  Return true if it is a high register rather
+// than a low register.
+static bool isHighReg(unsigned int Reg) {
+  if (SystemZ::GRH32BitRegClass.contains(Reg))
+    return true;
+  assert(SystemZ::GR32BitRegClass.contains(Reg) && "Invalid GRX32");
+  return false;
+}
+
 SystemZInstrInfo::SystemZInstrInfo(SystemZTargetMachine &tm)
   : SystemZGenInstrInfo(SystemZ::ADJCALLSTACKDOWN, SystemZ::ADJCALLSTACKUP),
     RI(tm), TM(tm) {
@@ -80,6 +89,48 @@ void SystemZInstrInfo::splitAdjDynAlloc(MachineBasicBlock::iterator MI) const {
   assert(NewOpcode && "No support for huge argument lists yet");
   MI->setDesc(get(NewOpcode));
   OffsetMO.setImm(Offset);
+}
+
+// MI is an RXY-style pseudo instruction.  Replace it with LowOpcode
+// if the first operand is a low GR32 and HighOpcode if the first operand
+// is a high GR32.
+void SystemZInstrInfo::expandRXYPseudo(MachineInstr *MI, unsigned LowOpcode,
+                                       unsigned HighOpcode) const {
+  unsigned Reg = MI->getOperand(0).getReg();
+  unsigned Opcode = getOpcodeForOffset(isHighReg(Reg) ? HighOpcode : LowOpcode,
+                                       MI->getOperand(2).getImm());
+  MI->setDesc(get(Opcode));
+}
+
+// Emit a zero-extending move from 32-bit GPR SrcReg to 32-bit GPR
+// DestReg before MBBI in MBB.  Use LowLowOpcode when both DestReg and SrcReg
+// are low registers, otherwise use RISB[LH]G.  Size is the number of bits
+// taken from the low end of SrcReg (8 for LLCR, 16 for LLHR and 32 for LR).
+// KillSrc is true if this move is the last use of SrcReg.
+void SystemZInstrInfo::emitGRX32Move(MachineBasicBlock &MBB,
+                                     MachineBasicBlock::iterator MBBI,
+                                     DebugLoc DL, unsigned DestReg,
+                                     unsigned SrcReg, unsigned LowLowOpcode,
+                                     unsigned Size, bool KillSrc) const {
+  unsigned Opcode;
+  bool DestIsHigh = isHighReg(DestReg);
+  bool SrcIsHigh = isHighReg(SrcReg);
+  if (DestIsHigh && SrcIsHigh)
+    Opcode = SystemZ::RISBHH;
+  else if (DestIsHigh && !SrcIsHigh)
+    Opcode = SystemZ::RISBHL;
+  else if (!DestIsHigh && SrcIsHigh)
+    Opcode = SystemZ::RISBLH;
+  else {
+    BuildMI(MBB, MBBI, DL, get(LowLowOpcode), DestReg)
+      .addReg(SrcReg, getKillRegState(KillSrc));
+    return;
+  }
+  unsigned Rotate = (DestIsHigh != SrcIsHigh ? 32 : 0);
+  BuildMI(MBB, MBBI, DL, get(Opcode), DestReg)
+    .addReg(DestReg, RegState::Undef)
+    .addReg(SrcReg, getKillRegState(KillSrc))
+    .addImm(32 - Size).addImm(128 + 31).addImm(Rotate);
 }
 
 // If MI is a simple load or store for a frame object, return the register
@@ -460,11 +511,14 @@ SystemZInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     return;
   }
 
+  if (SystemZ::GRX32BitRegClass.contains(DestReg, SrcReg)) {
+    emitGRX32Move(MBB, MBBI, DL, DestReg, SrcReg, SystemZ::LR, 32, KillSrc);
+    return;
+  }
+
   // Everything else needs only one instruction.
   unsigned Opcode;
-  if (SystemZ::GR32BitRegClass.contains(DestReg, SrcReg))
-    Opcode = SystemZ::LR;
-  else if (SystemZ::GR64BitRegClass.contains(DestReg, SrcReg))
+  if (SystemZ::GR64BitRegClass.contains(DestReg, SrcReg))
     Opcode = SystemZ::LGR;
   else if (SystemZ::FP32BitRegClass.contains(DestReg, SrcReg))
     Opcode = SystemZ::LER;
@@ -601,7 +655,7 @@ SystemZInstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     if (And.RegSize == 64)
       NewOpcode = SystemZ::RISBG;
     else if (TM.getSubtargetImpl()->hasHighWord())
-      NewOpcode = SystemZ::RISBLG32;
+      NewOpcode = SystemZ::RISBLL;
     else
       // We can't use RISBG for 32-bit operations because it clobbers the
       // high word of the destination too.
@@ -612,7 +666,7 @@ SystemZInstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
       Imm |= allOnes(And.RegSize) & ~(allOnes(And.ImmSize) << And.ImmLSB);
       unsigned Start, End;
       if (isRxSBGMask(Imm, And.RegSize, Start, End)) {
-        if (NewOpcode == SystemZ::RISBLG32) {
+        if (NewOpcode == SystemZ::RISBLL) {
           Start &= 31;
           End &= 31;
         }
@@ -752,6 +806,14 @@ SystemZInstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
     splitMove(MI, SystemZ::STD);
     return true;
 
+  case SystemZ::LMux:
+    expandRXYPseudo(MI, SystemZ::L, SystemZ::LFH);
+    return true;
+
+  case SystemZ::STMux:
+    expandRXYPseudo(MI, SystemZ::ST, SystemZ::STFH);
+    return true;
+
   case SystemZ::ADJDYNALLOC:
     splitAdjDynAlloc(MI);
     return true;
@@ -824,6 +886,12 @@ void SystemZInstrInfo::getLoadStoreOpcodes(const TargetRegisterClass *RC,
   if (RC == &SystemZ::GR32BitRegClass || RC == &SystemZ::ADDR32BitRegClass) {
     LoadOpcode = SystemZ::L;
     StoreOpcode = SystemZ::ST;
+  } else if (RC == &SystemZ::GRH32BitRegClass) {
+    LoadOpcode = SystemZ::LFH;
+    StoreOpcode = SystemZ::STFH;
+  } else if (RC == &SystemZ::GRX32BitRegClass) {
+    LoadOpcode = SystemZ::LMux;
+    StoreOpcode = SystemZ::STMux;
   } else if (RC == &SystemZ::GR64BitRegClass ||
              RC == &SystemZ::ADDR64BitRegClass) {
     LoadOpcode = SystemZ::LG;

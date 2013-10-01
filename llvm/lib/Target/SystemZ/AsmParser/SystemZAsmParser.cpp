@@ -264,6 +264,7 @@ public:
   // Used by the TableGen code to check for particular operand types.
   bool isGR32() const { return isReg(GR32Reg); }
   bool isGRH32() const { return isReg(GRH32Reg); }
+  bool isGRX32() const { return false; }
   bool isGR64() const { return isReg(GR64Reg); }
   bool isGR128() const { return isReg(GR128Reg); }
   bool isADDR32() const { return isReg(ADDR32Reg); }
@@ -360,6 +361,10 @@ public:
   OperandMatchResultTy
   parseGRH32(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
     return parseRegister(Operands, RegGR, SystemZMC::GRH32Regs, GRH32Reg);
+  }
+  OperandMatchResultTy
+  parseGRX32(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+    llvm_unreachable("GRX32 should only be used for pseudo instructions");
   }
   OperandMatchResultTy
   parseGR64(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {

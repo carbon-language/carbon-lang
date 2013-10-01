@@ -82,6 +82,7 @@ unsigned SystemZMC::getFirstReg(unsigned Reg) {
   if (!Initialized) {
     for (unsigned I = 0; I < 16; ++I) {
       Map[GR32Regs[I]] = I;
+      Map[GRH32Regs[I]] = I;
       Map[GR64Regs[I]] = I;
       Map[GR128Regs[I]] = I;
       Map[FP32Regs[I]] = I;

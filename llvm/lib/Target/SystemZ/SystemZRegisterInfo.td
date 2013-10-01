@@ -91,6 +91,15 @@ defm GRH32 : SystemZRegClass<"GRH32", i32, 32, (add (sequence "R%uH",  0, 5),
 defm GR64  : SystemZRegClass<"GR64",  i64, 64, (add (sequence "R%uD",  0, 5),
                                                     (sequence "R%uD", 15, 6))>;
 
+// Combine the low and high GR32s into a single class.  This can only be
+// used for virtual registers if the high-word facility is available.
+defm GRX32 : SystemZRegClass<"GRX32", i32, 32,
+                             (add (sequence "R%uL",  0, 5),
+                                  (sequence "R%uH",  0, 5),
+                                  R15L, R15H, R14L, R14H, R13L, R13H,
+                                  R12L, R12H, R11L, R11H, R10L, R10H,
+                                  R9L, R9H, R8L, R8H, R7L, R7H, R6L, R6H)>;
+
 // The architecture doesn't really have any i128 support, so model the
 // register pairs as untyped instead.
 defm GR128 : SystemZRegClass<"GR128", untyped, 128, (add R0Q, R2Q, R4Q,

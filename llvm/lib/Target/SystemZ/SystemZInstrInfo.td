@@ -254,6 +254,9 @@ def BASR  : InstRR<0x0D, (outs), (ins GR64:$R1, ADDR64:$R2),
 
 // Register moves.
 let neverHasSideEffects = 1 in {
+  // Expands to LR, RISBHG or RISBLG, depending on the choice of registers.
+  def LRMux : UnaryRRPseudo<"l", null_frag, GRX32, GRX32>,
+              Requires<[FeatureHighWord]>;
   def LR  : UnaryRR <"l",  0x18,   null_frag, GR32, GR32>;
   def LGR : UnaryRRE<"lg", 0xB904, null_frag, GR64, GR64>;
 }
@@ -293,6 +296,9 @@ let neverHasSideEffects = 1, isAsCheapAsAMove = 1, isMoveImm = 1,
 
 // Register loads.
 let canFoldAsLoad = 1, SimpleBDXLoad = 1 in {
+  // Expands to L, LY or LFH, depending on the choice of register.
+  def LMux : UnaryRXYPseudo<"l", load, GRX32, 4>,
+             Requires<[FeatureHighWord]>;
   defm L : UnaryRXPair<"l", 0x58, 0xE358, load, GR32, 4>;
   def LFH : UnaryRXY<"lfh", 0xE3CA, load, GRH32, 4>,
             Requires<[FeatureHighWord]>;
@@ -327,6 +333,9 @@ let Uses = [CC] in {
 
 // Register stores.
 let SimpleBDXStore = 1 in {
+  // Expands to ST, STY or STFH, depending on the choice of register.
+  def STMux : StoreRXYPseudo<store, GRX32, 4>,
+              Requires<[FeatureHighWord]>;
   defm ST : StoreRXPair<"st", 0x50, 0xE350, store, GR32, 4>;
   def STFH : StoreRXY<"stfh", 0xE3CB, store, GRH32, 4>,
              Requires<[FeatureHighWord]>;
@@ -929,12 +938,13 @@ let Defs = [CC] in {
 
 // Forms of RISBG that only affect one word of the destination register.
 // They do not set CC.
-let isCodeGenOnly = 1 in
-  def RISBLG32 : RotateSelectRIEf<"risblg", 0xEC51, GR32, GR32>,
-                 Requires<[FeatureHighWord]>;
-def RISBHG : RotateSelectRIEf<"risbhg", 0xEC5D, GRH32, GR64>,
-             Requires<[FeatureHighWord]>;
+def RISBLL : RotateSelectAliasRIEf<GR32,  GR32>,  Requires<[FeatureHighWord]>;
+def RISBLH : RotateSelectAliasRIEf<GR32,  GRH32>, Requires<[FeatureHighWord]>;
+def RISBHL : RotateSelectAliasRIEf<GRH32, GR32>,  Requires<[FeatureHighWord]>;
+def RISBHH : RotateSelectAliasRIEf<GRH32, GRH32>, Requires<[FeatureHighWord]>;
 def RISBLG : RotateSelectRIEf<"risblg", 0xEC51, GR32, GR64>,
+             Requires<[FeatureHighWord]>;
+def RISBHG : RotateSelectRIEf<"risbhg", 0xEC5D, GRH32, GR64>,
              Requires<[FeatureHighWord]>;
 
 // Rotate second operand left and perform a logical operation with selected
