@@ -28,3 +28,35 @@ define void @f2(float %val, i8 *%ptr) {
   store i8 %trunc, i8 *%ptr
   ret void
 }
+
+; Like f2, but with a conditional store.
+define void @f3(float %val, i8 *%ptr, i32 %which) {
+; CHECK-LABEL: f3:
+; CHECK: cijlh %r3, 0,
+; CHECK: lgdr [[REG:%r[0-5]]], %f0
+; CHECK: stch [[REG]], 0(%r2)
+; CHECK: br %r14
+  %int = bitcast float %val to i32
+  %trunc = trunc i32 %int to i8
+  %old = load i8 *%ptr
+  %cmp = icmp eq i32 %which, 0
+  %res = select i1 %cmp, i8 %trunc, i8 %old
+  store i8 %res, i8 *%ptr
+  ret void
+}
+
+; ...and again with 16-bit memory.
+define void @f4(float %val, i16 *%ptr, i32 %which) {
+; CHECK-LABEL: f4:
+; CHECK: cijlh %r3, 0,
+; CHECK: lgdr [[REG:%r[0-5]]], %f0
+; CHECK: sthh [[REG]], 0(%r2)
+; CHECK: br %r14
+  %int = bitcast float %val to i32
+  %trunc = trunc i32 %int to i16
+  %old = load i16 *%ptr
+  %cmp = icmp eq i32 %which, 0
+  %res = select i1 %cmp, i16 %trunc, i16 %old
+  store i16 %res, i16 *%ptr
+  ret void
+}

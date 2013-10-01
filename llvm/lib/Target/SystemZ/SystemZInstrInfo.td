@@ -202,12 +202,20 @@ def Select32Mux : SelectWrapper<GRX32>, Requires<[FeatureHighWord]>;
 def Select32    : SelectWrapper<GR32>;
 def Select64    : SelectWrapper<GR64>;
 
-defm CondStore8  : CondStores<GR32, nonvolatile_truncstorei8,
-                              nonvolatile_anyextloadi8, bdxaddr20only>;
-defm CondStore16 : CondStores<GR32, nonvolatile_truncstorei16,
-                              nonvolatile_anyextloadi16, bdxaddr20only>;
-defm CondStore32 : CondStores<GR32, nonvolatile_store,
-                              nonvolatile_load, bdxaddr20only>;
+// We don't define 32-bit Mux stores because the low-only STOC should
+// always be used if possible.
+defm CondStore8Mux  : CondStores<GRX32, nonvolatile_truncstorei8,
+                                 nonvolatile_anyextloadi8, bdxaddr20only>,
+                      Requires<[FeatureHighWord]>;
+defm CondStore16Mux : CondStores<GRX32, nonvolatile_truncstorei16,
+                                 nonvolatile_anyextloadi16, bdxaddr20only>,
+                      Requires<[FeatureHighWord]>;
+defm CondStore8     : CondStores<GR32, nonvolatile_truncstorei8,
+                                 nonvolatile_anyextloadi8, bdxaddr20only>;
+defm CondStore16    : CondStores<GR32, nonvolatile_truncstorei16,
+                                 nonvolatile_anyextloadi16, bdxaddr20only>;
+defm CondStore32    : CondStores<GR32, nonvolatile_store,
+                                 nonvolatile_load, bdxaddr20only>;
 
 defm : CondStores64<CondStore8, CondStore8Inv, nonvolatile_truncstorei8,
                     nonvolatile_anyextloadi8, bdxaddr20only>;
