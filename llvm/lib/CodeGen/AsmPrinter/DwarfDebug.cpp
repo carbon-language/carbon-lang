@@ -2928,8 +2928,7 @@ void DwarfDebug::emitDebugMacInfo() {
 
 // This DIE has the following attributes: DW_AT_comp_dir, DW_AT_stmt_list,
 // DW_AT_low_pc, DW_AT_high_pc, DW_AT_ranges, DW_AT_dwo_name, DW_AT_dwo_id,
-// DW_AT_ranges_base, DW_AT_addr_base. If DW_AT_ranges is present,
-// DW_AT_low_pc and DW_AT_high_pc are not used, and vice versa.
+// DW_AT_ranges_base, DW_AT_addr_base.
 CompileUnit *DwarfDebug::constructSkeletonCU(const CompileUnit *CU) {
 
   DIE *Die = new DIE(dwarf::DW_TAG_compile_unit);
@@ -2981,6 +2980,16 @@ CompileUnit *DwarfDebug::constructSkeletonCU(const CompileUnit *CU) {
       NewCU->addDelta(Die, dwarf::DW_AT_GNU_pubtypes, dwarf::DW_FORM_data4,
                       Asm->GetTempSymbol("gnu_pubnames", NewCU->getUniqueID()),
                       DwarfGnuPubTypesSectionSym);
+  }
+
+  // Flag if we've emitted any ranges and their location for the compile unit.
+  if (DebugRangeSymbols.size()) {
+    if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
+      NewCU->addLabel(Die, dwarf::DW_AT_GNU_ranges_base,
+                      dwarf::DW_FORM_sec_offset, DwarfDebugRangeSectionSym);
+    else
+      NewCU->addUInt(Die, dwarf::DW_AT_GNU_ranges_base, dwarf::DW_FORM_data4,
+                     0);
   }
 
   SkeletonHolder.addUnit(NewCU);
