@@ -153,6 +153,24 @@ bool R600InstrInfo::isLDSInstr(unsigned Opcode) const {
           (TargetFlags & R600_InstFlag::LDS_1A2D));
 }
 
+bool R600InstrInfo::canBeConsideredALU(const MachineInstr *MI) const {
+  if (isALUInstr(MI->getOpcode()))
+    return true;
+  if (isVector(*MI) || isCubeOp(MI->getOpcode()))
+    return true;
+  switch (MI->getOpcode()) {
+  case AMDGPU::PRED_X:
+  case AMDGPU::INTERP_PAIR_XY:
+  case AMDGPU::INTERP_PAIR_ZW:
+  case AMDGPU::INTERP_VEC_LOAD:
+  case AMDGPU::COPY:
+  case AMDGPU::DOT_4:
+    return true;
+  default:
+    return false;
+  }
+}
+
 bool R600InstrInfo::isTransOnly(unsigned Opcode) const {
   if (ST.hasCaymanISA())
     return false;

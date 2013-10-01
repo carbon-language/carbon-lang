@@ -168,10 +168,11 @@ bool AMDGPUPassConfig::addPostRegAlloc() {
 bool AMDGPUPassConfig::addPreSched2() {
   const AMDGPUSubtarget &ST = TM->getSubtarget<AMDGPUSubtarget>();
 
-  if (ST.getGeneration() <= AMDGPUSubtarget::NORTHERN_ISLANDS) {
+  if (ST.getGeneration() <= AMDGPUSubtarget::NORTHERN_ISLANDS)
     addPass(createR600EmitClauseMarkers(*TM));
-  }
   addPass(&IfConverterID);
+  if (ST.getGeneration() <= AMDGPUSubtarget::NORTHERN_ISLANDS)
+    addPass(createR600ClauseMergePass(*TM));
   return false;
 }
 

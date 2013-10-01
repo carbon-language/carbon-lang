@@ -30,7 +30,8 @@ ENDIF:
 
 ; CHECK: @test_b
 ; CHECK: SET{{[GTEQN]+}}_DX10
-; CHECK: PRED_
+; CHECK-NEXT: PRED_
+; CHECK-NEXT: ALU clause starting
 define void @test_b(i32 addrspace(1)* %out, float %in) {
 entry:
   %0 = fcmp olt float %in, 0.0
