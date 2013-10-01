@@ -1454,6 +1454,11 @@
 	ley	%f0, -524289
 	ley	%f0, 524288
 
+#CHECK: error: {{(instruction requires: high-word)?}}
+#CHECK: lfh	%r0, 0
+
+	lfh	%r0, 0
+
 #CHECK: error: invalid operand
 #CHECK: lg	%r0, -524289
 #CHECK: error: invalid operand
@@ -2981,6 +2986,11 @@
 
 	sthy	%r0, -524289
 	sthy	%r0, 524288
+
+#CHECK: error: {{(instruction requires: high-word)?}}
+#CHECK: stfh	%r0, 0
+
+	stfh	%r0, 0
 
 #CHECK: error: invalid operand
 #CHECK: stmg	%r0, %r0, -524289
