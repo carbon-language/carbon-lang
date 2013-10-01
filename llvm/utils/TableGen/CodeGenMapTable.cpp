@@ -240,7 +240,6 @@ public:
 
 void MapTableEmitter::buildRowInstrMap() {
   for (unsigned i = 0, e = InstrDefs.size(); i < e; i++) {
-    std::vector<Record*> InstrList;
     Record *CurInstr = InstrDefs[i];
     std::vector<Init*> KeyValue;
     ListInit *RowFields = InstrMapDesc.getRowFields();

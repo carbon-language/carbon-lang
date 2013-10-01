@@ -72,7 +72,6 @@ void COFFDumper::dumpSections(unsigned NumSections) {
       const object::coff_relocation *reloc = Obj.getCOFFRelocation(rIter);
       COFFYAML::Relocation Rel;
       object::symbol_iterator Sym = rIter->getSymbol();
-      StringRef Name;
       Sym->getName(Rel.SymbolName);
       Rel.VirtualAddress = reloc->VirtualAddress;
       Rel.Type = reloc->Type;

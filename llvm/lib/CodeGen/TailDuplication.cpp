@@ -638,8 +638,6 @@ bothUsedInPHI(const MachineBasicBlock &A,
 
 bool
 TailDuplicatePass::canCompletelyDuplicateBB(MachineBasicBlock &BB) {
-  SmallPtrSet<MachineBasicBlock*, 8> Succs(BB.succ_begin(), BB.succ_end());
-
   for (MachineBasicBlock::pred_iterator PI = BB.pred_begin(),
        PE = BB.pred_end(); PI != PE; ++PI) {
     MachineBasicBlock *PredBB = *PI;

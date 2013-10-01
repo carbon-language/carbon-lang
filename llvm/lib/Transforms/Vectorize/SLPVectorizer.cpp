@@ -2172,7 +2172,6 @@ private:
     assert(isPowerOf2_32(ReduxWidth) &&
            "We only handle power-of-two reductions for now");
 
-    SmallVector<Constant *, 32> ShuffleMask(ReduxWidth, 0);
     Value *TmpVec = ValToReduce;
     for (unsigned i = ReduxWidth / 2; i != 0; i >>= 1) {
       if (IsPairwiseReduction) {

@@ -301,7 +301,6 @@ std::string BugDriver::executeProgram(const Module *Program,
   if (AI == 0) AI = Interpreter;
   assert(AI && "Interpreter should have been created already!");
   bool CreatedBitcode = false;
-  std::string ErrMsg;
   if (BitcodeFile.empty()) {
     // Emit the program to a bitcode file...
     SmallString<128> UniqueFilename;

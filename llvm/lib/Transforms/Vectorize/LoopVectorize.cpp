@@ -3758,7 +3758,6 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
     return true;
   }
 
-  SmallPtrSet<Value *, 16> ReadOnlyPtr;
   for (I = Loads.begin(), IE = Loads.end(); I != IE; ++I) {
     LoadInst *LD = cast<LoadInst>(*I);
     Value* Ptr = LD->getPointerOperand();

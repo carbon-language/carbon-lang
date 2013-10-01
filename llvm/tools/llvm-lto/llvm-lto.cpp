@@ -82,7 +82,6 @@ int main(int argc, char **argv) {
   Options.UseInitArray = UseInitArray;
 
   unsigned BaseArg = 0;
-  std::string ErrorMessage;
 
   LTOCodeGenerator CodeGen;
 

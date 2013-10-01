@@ -195,8 +195,6 @@ class FunctionDifferenceEngine {
     BasicBlock::iterator LI = L->begin(), LE = L->end();
     BasicBlock::iterator RI = R->begin();
 
-    llvm::SmallVector<std::pair<Instruction*,Instruction*>, 20> TentativePairs;
-
     do {
       assert(LI != LE && RI != R->end());
       Instruction *LeftI = &*LI, *RightI = &*RI;

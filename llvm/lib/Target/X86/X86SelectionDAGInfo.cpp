@@ -46,8 +46,6 @@ X86SelectionDAGInfo::EmitTargetCodeForMemset(SelectionDAG &DAG, SDLoc dl,
       !ConstantSize ||
       ConstantSize->getZExtValue() >
         Subtarget->getMaxInlineSizeThreshold()) {
-    SDValue InFlag(0, 0);
-
     // Check to see if there is a specialized entry-point for memory zeroing.
     ConstantSDNode *V = dyn_cast<ConstantSDNode>(Src);
 

@@ -219,5 +219,8 @@ void llvm::DisplayGraph(StringRef FilenameRef, bool wait,
   errs() << "Running 'dotty' program... ";
   if (!ExecGraphViewer(dotty, args, Filename, wait, ErrMsg))
     return;
+#else
+  (void)Filename;
+  (void)ErrMsg;
 #endif
 }

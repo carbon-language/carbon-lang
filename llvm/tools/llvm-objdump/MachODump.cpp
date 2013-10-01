@@ -260,8 +260,6 @@ static void DisassembleInputMachO2(StringRef Filename,
   getSectionsAndSymbols(Header, MachOOF, Sections, Symbols, FoundFns,
                         BaseSegmentAddress);
 
-  // Make a copy of the unsorted symbol list. FIXME: duplication
-  std::vector<SymbolRef> UnsortedSymbols(Symbols);
   // Sort the symbols by address, just in case they didn't come in that way.
   std::sort(Symbols.begin(), Symbols.end(), SymbolSorter());
 

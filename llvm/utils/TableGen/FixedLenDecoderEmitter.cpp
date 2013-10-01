@@ -2038,7 +2038,6 @@ void FixedLenDecoderEmitter::run(raw_ostream &o) {
   }
 
   DecoderTableInfo TableInfo;
-  std::set<unsigned> Sizes;
   for (std::map<std::pair<std::string, unsigned>,
                 std::vector<unsigned> >::const_iterator
        I = OpcMap.begin(), E = OpcMap.end(); I != E; ++I) {

@@ -147,9 +147,6 @@ char ProfileInfoPrinterPass::ID = 0;
 
 bool ProfileInfoPrinterPass::runOnModule(Module &M) {
   ProfileInfo &PI = getAnalysis<ProfileInfo>();
-  std::map<const Function  *, unsigned> FuncFreqs;
-  std::map<const BasicBlock*, unsigned> BlockFreqs;
-  std::map<ProfileInfo::Edge, unsigned> EdgeFreqs;
 
   // Output a report. Eventually, there will be multiple reports selectable on
   // the command line, for now, just keep things simple.

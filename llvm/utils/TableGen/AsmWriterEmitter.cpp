@@ -836,7 +836,6 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
       Cond = std::string("MI->getNumOperands() == ") + llvm::utostr(LastOpNo);
       IAP->addCond(Cond);
 
-      std::map<StringRef, unsigned> OpMap;
       bool CantHandle = false;
 
       for (unsigned i = 0, e = LastOpNo; i != e; ++i) {

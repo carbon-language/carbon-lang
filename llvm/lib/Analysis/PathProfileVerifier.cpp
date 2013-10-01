@@ -166,7 +166,6 @@ bool PathProfileVerifier::runOnModule (Module &M) {
     }
   }
 
-  std::string errorInfo;
   std::string filename = EdgeProfileFilename;
 
   // Open a handle to the file

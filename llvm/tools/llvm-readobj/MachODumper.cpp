@@ -398,8 +398,6 @@ void MachODumper::printDynamicSymbols() {
 }
 
 void MachODumper::printSymbol(symbol_iterator SymI) {
-  error_code EC;
-
   StringRef SymbolName;
   if (SymI->getName(SymbolName))
     SymbolName = "";
