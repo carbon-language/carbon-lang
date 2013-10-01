@@ -51,8 +51,3 @@ int k = 0b1001;
 #ifdef CXX1Y
 // expected-warning@-2 {{binary integer literals are incompatible with C++ standards before C++1y}}
 #endif
-
-void f(int n) { int a[n]; }
-#ifdef CXX1Y
-// expected-warning@-2 {{arrays of runtime bound are incompatible with C++ standards before C++1y}}
-#endif
