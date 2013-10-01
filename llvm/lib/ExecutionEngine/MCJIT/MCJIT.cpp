@@ -526,6 +526,10 @@ void MCJIT::NotifyFreeingObject(const ObjectImage& Obj) {
 
 uint64_t LinkingMemoryManager::getSymbolAddress(const std::string &Name) {
   uint64_t Result = ParentEngine->getSymbolAddress(Name, false);
+  // If the symbols wasn't found and it begins with an underscore, try again
+  // without the underscore.
+  if (!Result && Name[0] == '_')
+    Result = ParentEngine->getSymbolAddress(Name.substr(1), false);
   if (Result)
     return Result;
   return ClientMM->getSymbolAddress(Name);
