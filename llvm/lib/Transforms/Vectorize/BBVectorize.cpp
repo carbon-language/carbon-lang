@@ -2344,6 +2344,12 @@ namespace {
     return ExpandedIEChain;
   }
 
+  static unsigned getNumScalarElements(Type *Ty) {
+    if (VectorType *VecTy = dyn_cast<VectorType>(Ty))
+      return VecTy->getNumElements();
+    return 1;
+  }
+
   // Returns the value to be used as the specified operand of the vector
   // instruction that fuses I with J.
   Value *BBVectorize::getReplacementInput(LLVMContext& Context, Instruction *I,
@@ -2359,17 +2365,8 @@ namespace {
     Instruction *L = I, *H = J;
     Type *ArgTypeL = ArgTypeI, *ArgTypeH = ArgTypeJ;
 
-    unsigned numElemL;
-    if (ArgTypeL->isVectorTy())
-      numElemL = cast<VectorType>(ArgTypeL)->getNumElements();
-    else
-      numElemL = 1;
-
-    unsigned numElemH;
-    if (ArgTypeH->isVectorTy())
-      numElemH = cast<VectorType>(ArgTypeH)->getNumElements();
-    else
-      numElemH = 1;
+    unsigned numElemL = getNumScalarElements(ArgTypeL);
+    unsigned numElemH = getNumScalarElements(ArgTypeH);
 
     Value *LOp = L->getOperand(o);
     Value *HOp = H->getOperand(o);
@@ -2750,16 +2747,8 @@ namespace {
       VectorType *VType = getVecTypeForPair(IType, JType);
       unsigned numElem = VType->getNumElements();
 
-      unsigned numElemI, numElemJ;
-      if (IType->isVectorTy())
-        numElemI = cast<VectorType>(IType)->getNumElements();
-      else
-        numElemI = 1;
-
-      if (JType->isVectorTy())
-        numElemJ = cast<VectorType>(JType)->getNumElements();
-      else
-        numElemJ = 1;
+      unsigned numElemI = getNumScalarElements(IType);
+      unsigned numElemJ = getNumScalarElements(JType);
 
       if (IType->isVectorTy()) {
         std::vector<Constant*> Mask1(numElemI), Mask2(numElemI);
