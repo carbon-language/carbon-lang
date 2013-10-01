@@ -1561,11 +1561,19 @@ SDValue SystemZTargetLowering::lowerBITCAST(SDValue Op,
   EVT InVT = In.getValueType();
   EVT ResVT = Op.getValueType();
 
-  SDValue Shift32 = DAG.getConstant(32, MVT::i64);
   if (InVT == MVT::i32 && ResVT == MVT::f32) {
-    SDValue In64 = DAG.getNode(ISD::ANY_EXTEND, DL, MVT::i64, In);
-    SDValue Shift = DAG.getNode(ISD::SHL, DL, MVT::i64, In64, Shift32);
-    SDValue Out64 = DAG.getNode(ISD::BITCAST, DL, MVT::f64, Shift);
+    SDValue In64;
+    if (Subtarget.hasHighWord()) {
+      SDNode *U64 = DAG.getMachineNode(TargetOpcode::IMPLICIT_DEF, DL,
+                                       MVT::i64);
+      In64 = DAG.getTargetInsertSubreg(SystemZ::subreg_h32, DL,
+                                       MVT::i64, SDValue(U64, 0), In);
+    } else {
+      In64 = DAG.getNode(ISD::ANY_EXTEND, DL, MVT::i64, In);
+      In64 = DAG.getNode(ISD::SHL, DL, MVT::i64, In64,
+                         DAG.getConstant(32, MVT::i64));
+    }
+    SDValue Out64 = DAG.getNode(ISD::BITCAST, DL, MVT::f64, In64);
     return DAG.getTargetExtractSubreg(SystemZ::subreg_h32,
                                       DL, MVT::f32, Out64);
   }
@@ -1574,9 +1582,12 @@ SDValue SystemZTargetLowering::lowerBITCAST(SDValue Op,
     SDValue In64 = DAG.getTargetInsertSubreg(SystemZ::subreg_h32, DL,
                                              MVT::f64, SDValue(U64, 0), In);
     SDValue Out64 = DAG.getNode(ISD::BITCAST, DL, MVT::i64, In64);
-    SDValue Shift = DAG.getNode(ISD::SRL, DL, MVT::i64, Out64, Shift32);
-    SDValue Out = DAG.getNode(ISD::TRUNCATE, DL, MVT::i32, Shift);
-    return Out;
+    if (Subtarget.hasHighWord())
+      return DAG.getTargetExtractSubreg(SystemZ::subreg_h32, DL,
+                                        MVT::i32, Out64);
+    SDValue Shift = DAG.getNode(ISD::SRL, DL, MVT::i64, Out64,
+                                DAG.getConstant(32, MVT::i64));
+    return DAG.getNode(ISD::TRUNCATE, DL, MVT::i32, Shift);
   }
   llvm_unreachable("Unexpected bitcast combination");
 }
