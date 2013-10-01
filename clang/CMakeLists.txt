@@ -321,8 +321,6 @@ set(LIBCLANG_LIBRARY_VERSION
     "Version number that will be placed into the libclang library , in the form XX.YY")
 mark_as_advanced(CLANG_EXECUTABLE_VERSION LIBCLANG_LIBRARY_VERSION)
 
-option(CLANG_ALWAYS_CHECK_VC_REV "Always keep revision number up-to-date." OFF)
-
 add_subdirectory(utils/TableGen)
 
 add_subdirectory(include)
