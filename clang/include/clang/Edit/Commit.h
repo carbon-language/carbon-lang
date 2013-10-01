@@ -49,7 +49,8 @@ private:
   const LangOptions &LangOpts;
   const PPConditionalDirectiveRecord *PPRec;
   EditedSource *Editor;
-
+  
+  const bool ForceCommitInSystemHeader;
   bool IsCommitable;
   SmallVector<Edit, 8> CachedEdits;
   
@@ -60,7 +61,7 @@ public:
   Commit(const SourceManager &SM, const LangOptions &LangOpts,
          const PPConditionalDirectiveRecord *PPRec = 0)
     : SourceMgr(SM), LangOpts(LangOpts), PPRec(PPRec), Editor(0),
-      IsCommitable(true) { }
+      ForceCommitInSystemHeader(true), IsCommitable(true) { }
 
   bool isCommitable() const { return IsCommitable; }
 
