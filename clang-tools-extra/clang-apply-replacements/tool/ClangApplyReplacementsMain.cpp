@@ -157,6 +157,7 @@ bool applyReplacements(const std::vector<tooling::Replacement> &Replacements,
 /// \param[in] FileData The contents of the file \b after \c Replacements have
 /// been applied.
 /// \param[out] FormattedFileData The contents of the file after reformatting.
+/// \param[in] FormatStyle Style to apply.
 /// \param[in] Diagnostics For diagnostic output.
 ///
 /// \returns \li true if reformatting replacements were all successfully
