@@ -63,36 +63,35 @@ namespace {
   };
 }
 
-bool DWARFDebugAranges::extract(DataExtractor debug_aranges_data) {
-  if (debug_aranges_data.isValidOffset(0)) {
-    uint32_t offset = 0;
+void DWARFDebugAranges::extract(DataExtractor DebugArangesData) {
+  if (!DebugArangesData.isValidOffset(0))
+    return;
+  uint32_t offset = 0;
 
-    typedef std::vector<DWARFDebugArangeSet> SetCollection;
-    SetCollection sets;
+  typedef std::vector<DWARFDebugArangeSet> SetCollection;
+  SetCollection sets;
 
-    DWARFDebugArangeSet set;
-    Range range;
-    while (set.extract(debug_aranges_data, &offset))
-      sets.push_back(set);
+  DWARFDebugArangeSet set;
+  Range range;
+  while (set.extract(DebugArangesData, &offset))
+    sets.push_back(set);
 
-    uint32_t count = 0;
+  uint32_t count = 0;
 
-    std::for_each(sets.begin(), sets.end(), CountArangeDescriptors(count));
+  std::for_each(sets.begin(), sets.end(), CountArangeDescriptors(count));
 
-    if (count > 0) {
-      Aranges.reserve(count);
-      AddArangeDescriptors range_adder(Aranges, ParsedCUOffsets);
-      std::for_each(sets.begin(), sets.end(), range_adder);
-    }
+  if (count > 0) {
+    Aranges.reserve(count);
+    AddArangeDescriptors range_adder(Aranges, ParsedCUOffsets);
+    std::for_each(sets.begin(), sets.end(), range_adder);
   }
-  return false;
 }
 
-bool DWARFDebugAranges::generate(DWARFContext *ctx) {
-  if (ctx) {
-    const uint32_t num_compile_units = ctx->getNumCompileUnits();
+void DWARFDebugAranges::generate(DWARFContext *CTX) {
+  if (CTX) {
+    const uint32_t num_compile_units = CTX->getNumCompileUnits();
     for (uint32_t cu_idx = 0; cu_idx < num_compile_units; ++cu_idx) {
-      if (DWARFCompileUnit *cu = ctx->getCompileUnitAtIndex(cu_idx)) {
+      if (DWARFCompileUnit *cu = CTX->getCompileUnitAtIndex(cu_idx)) {
         uint32_t CUOffset = cu->getOffset();
         if (ParsedCUOffsets.insert(CUOffset).second)
           cu->buildAddressRangeTable(this, true, CUOffset);
@@ -100,15 +99,11 @@ bool DWARFDebugAranges::generate(DWARFContext *ctx) {
     }
   }
   sort(true, /* overlap size */ 0);
-  return !isEmpty();
 }
 
 void DWARFDebugAranges::dump(raw_ostream &OS) const {
-  const uint32_t num_ranges = getNumRanges();
-  for (uint32_t i = 0; i < num_ranges; ++i) {
-    const Range &range = Aranges[i];
-    OS << format("0x%8.8x: [0x%8.8" PRIx64 " - 0x%8.8" PRIx64 ")\n",
-                 range.Offset, (uint64_t)range.LoPC, (uint64_t)range.HiPC());
+  for (RangeCollIterator I = Aranges.begin(), E = Aranges.end(); I != E; ++I) {
+    I->dump(OS);
   }
 }
 
@@ -117,18 +112,18 @@ void DWARFDebugAranges::Range::dump(raw_ostream &OS) const {
                Offset, LoPC, HiPC());
 }
 
-void DWARFDebugAranges::appendRange(uint32_t offset, uint64_t low_pc,
-                                    uint64_t high_pc) {
+void DWARFDebugAranges::appendRange(uint32_t CUOffset, uint64_t LowPC,
+                                    uint64_t HighPC) {
   if (!Aranges.empty()) {
-    if (Aranges.back().Offset == offset && Aranges.back().HiPC() == low_pc) {
-      Aranges.back().setHiPC(high_pc);
+    if (Aranges.back().Offset == CUOffset && Aranges.back().HiPC() == LowPC) {
+      Aranges.back().setHiPC(HighPC);
       return;
     }
   }
-  Aranges.push_back(Range(low_pc, high_pc, offset));
+  Aranges.push_back(Range(LowPC, HighPC, CUOffset));
 }
 
-void DWARFDebugAranges::sort(bool minimize, uint32_t n) {
+void DWARFDebugAranges::sort(bool Minimize, uint32_t OverlapSize) {
   const size_t orig_arange_size = Aranges.size();
   // Size of one? If so, no sorting is needed
   if (orig_arange_size <= 1)
@@ -136,7 +131,7 @@ void DWARFDebugAranges::sort(bool minimize, uint32_t n) {
   // Sort our address range entries
   std::stable_sort(Aranges.begin(), Aranges.end(), RangeLessThan);
 
-  if (!minimize)
+  if (!Minimize)
     return;
 
   // Most address ranges are contiguous from function to function
@@ -151,7 +146,7 @@ void DWARFDebugAranges::sort(bool minimize, uint32_t n) {
   // copy the new minimal stuff over to the new collection.
   size_t minimal_size = 1;
   for (size_t i = 1; i < orig_arange_size; ++i) {
-    if (!Range::SortedOverlapCheck(Aranges[i-1], Aranges[i], n))
+    if (!Range::SortedOverlapCheck(Aranges[i-1], Aranges[i], OverlapSize))
       ++minimal_size;
   }
 
@@ -166,7 +161,8 @@ void DWARFDebugAranges::sort(bool minimize, uint32_t n) {
   uint32_t j = 0;
   minimal_aranges[j] = Aranges[0];
   for (size_t i = 1; i < orig_arange_size; ++i) {
-    if(Range::SortedOverlapCheck (minimal_aranges[j], Aranges[i], n)) {
+    if (Range::SortedOverlapCheck(minimal_aranges[j], Aranges[i],
+                                  OverlapSize)) {
       minimal_aranges[j].setHiPC (Aranges[i].HiPC());
     } else {
       // Only increment j if we aren't merging
@@ -181,50 +177,20 @@ void DWARFDebugAranges::sort(bool minimize, uint32_t n) {
   minimal_aranges.swap(Aranges);
 }
 
-uint32_t DWARFDebugAranges::findAddress(uint64_t address) const {
+uint32_t DWARFDebugAranges::findAddress(uint64_t Address) const {
   if (!Aranges.empty()) {
-    Range range(address);
+    Range range(Address);
     RangeCollIterator begin = Aranges.begin();
     RangeCollIterator end = Aranges.end();
     RangeCollIterator pos = std::lower_bound(begin, end, range, RangeLessThan);
 
-    if (pos != end && pos->LoPC <= address && address < pos->HiPC()) {
+    if (pos != end && pos->LoPC <= Address && Address < pos->HiPC()) {
       return pos->Offset;
     } else if (pos != begin) {
       --pos;
-      if (pos->LoPC <= address && address < pos->HiPC())
+      if (pos->LoPC <= Address && Address < pos->HiPC())
         return (*pos).Offset;
     }
   }
   return -1U;
-}
-
-bool
-DWARFDebugAranges::allRangesAreContiguous(uint64_t &LoPC, uint64_t &HiPC) const{
-  if (Aranges.empty())
-    return false;
-
-  uint64_t next_addr = 0;
-  RangeCollIterator begin = Aranges.begin();
-  for (RangeCollIterator pos = begin, end = Aranges.end(); pos != end;
-       ++pos) {
-    if (pos != begin && pos->LoPC != next_addr)
-      return false;
-    next_addr = pos->HiPC();
-  }
-  // We checked for empty at the start of function so front() will be valid.
-  LoPC = Aranges.front().LoPC;
-  // We checked for empty at the start of function so back() will be valid.
-  HiPC = Aranges.back().HiPC();
-  return true;
-}
-
-bool DWARFDebugAranges::getMaxRange(uint64_t &LoPC, uint64_t &HiPC) const {
-  if (Aranges.empty())
-    return false;
-  // We checked for empty at the start of function so front() will be valid.
-  LoPC = Aranges.front().LoPC;
-  // We checked for empty at the start of function so back() will be valid.
-  HiPC = Aranges.back().HiPC();
-  return true;
 }

@@ -65,30 +65,15 @@ public:
     Aranges.clear();
     ParsedCUOffsets.clear();
   }
-  bool allRangesAreContiguous(uint64_t& LoPC, uint64_t& HiPC) const;
-  bool getMaxRange(uint64_t& LoPC, uint64_t& HiPC) const;
-  bool extract(DataExtractor debug_aranges_data);
-  bool generate(DWARFContext *ctx);
+  void extract(DataExtractor DebugArangesData);
+  void generate(DWARFContext *CTX);
 
-  // Use append range multiple times and then call sort
-  void appendRange(uint32_t cu_offset, uint64_t low_pc, uint64_t high_pc);
-  void sort(bool minimize, uint32_t n);
+  // Use appendRange multiple times and then call sort.
+  void appendRange(uint32_t CUOffset, uint64_t LowPC, uint64_t HighPC);
+  void sort(bool Minimize, uint32_t OverlapSize);
 
-  const Range *rangeAtIndex(uint32_t idx) const {
-    if (idx < Aranges.size())
-      return &Aranges[idx];
-    return NULL;
-  }
   void dump(raw_ostream &OS) const;
-  uint32_t findAddress(uint64_t address) const;
-  bool isEmpty() const { return Aranges.empty(); }
-  uint32_t getNumRanges() const { return Aranges.size(); }
-
-  uint32_t offsetAtIndex(uint32_t idx) const {
-    if (idx < Aranges.size())
-      return Aranges[idx].Offset;
-    return -1U;
-  }
+  uint32_t findAddress(uint64_t Address) const;
 
   typedef std::vector<Range>              RangeColl;
   typedef RangeColl::const_iterator       RangeCollIterator;
