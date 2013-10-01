@@ -1397,6 +1397,16 @@ class StoreRXYPseudo<SDPatternOperator operator, RegisterOperand cls,
   let AccessBytes = bytes;
 }
 
+// Like RotateSelectRIEf, but expanded after RA depending on the choice
+// of registers.
+class RotateSelectRIEfPseudo<RegisterOperand cls1, RegisterOperand cls2>
+  : Pseudo<(outs cls1:$R1),
+           (ins cls1:$R1src, cls2:$R2, uimm8:$I3, uimm8:$I4, uimm8zx6:$I5),
+           []> {
+  let Constraints = "$R1 = $R1src";
+  let DisableEncoding = "$R1src";
+}
+
 // Implements "$dst = $cc & (8 >> CC) ? $src1 : $src2", where CC is
 // the value of the PSW's 2-bit condition code field.
 class SelectWrapper<RegisterOperand cls>

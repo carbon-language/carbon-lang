@@ -2963,14 +2963,14 @@ EmitInstrWithCustomInserter(MachineInstr *MI, MachineBasicBlock *MBB) const {
     return emitAtomicLoadBinary(MI, MBB, SystemZ::NILL64, 64);
   case SystemZ::ATOMIC_LOAD_NILH64:
     return emitAtomicLoadBinary(MI, MBB, SystemZ::NILH64, 64);
-  case SystemZ::ATOMIC_LOAD_NIHL:
-    return emitAtomicLoadBinary(MI, MBB, SystemZ::NIHL, 64);
-  case SystemZ::ATOMIC_LOAD_NIHH:
-    return emitAtomicLoadBinary(MI, MBB, SystemZ::NIHH, 64);
+  case SystemZ::ATOMIC_LOAD_NIHL64:
+    return emitAtomicLoadBinary(MI, MBB, SystemZ::NIHL64, 64);
+  case SystemZ::ATOMIC_LOAD_NIHH64:
+    return emitAtomicLoadBinary(MI, MBB, SystemZ::NIHH64, 64);
   case SystemZ::ATOMIC_LOAD_NILF64:
     return emitAtomicLoadBinary(MI, MBB, SystemZ::NILF64, 64);
-  case SystemZ::ATOMIC_LOAD_NIHF:
-    return emitAtomicLoadBinary(MI, MBB, SystemZ::NIHF, 64);
+  case SystemZ::ATOMIC_LOAD_NIHF64:
+    return emitAtomicLoadBinary(MI, MBB, SystemZ::NIHF64, 64);
 
   case SystemZ::ATOMIC_LOADW_OR:
     return emitAtomicLoadBinary(MI, MBB, SystemZ::OR, 0);
@@ -3032,14 +3032,14 @@ EmitInstrWithCustomInserter(MachineInstr *MI, MachineBasicBlock *MBB) const {
     return emitAtomicLoadBinary(MI, MBB, SystemZ::NILL64, 64, true);
   case SystemZ::ATOMIC_LOAD_NILH64i:
     return emitAtomicLoadBinary(MI, MBB, SystemZ::NILH64, 64, true);
-  case SystemZ::ATOMIC_LOAD_NIHLi:
-    return emitAtomicLoadBinary(MI, MBB, SystemZ::NIHL, 64, true);
-  case SystemZ::ATOMIC_LOAD_NIHHi:
-    return emitAtomicLoadBinary(MI, MBB, SystemZ::NIHH, 64, true);
+  case SystemZ::ATOMIC_LOAD_NIHL64i:
+    return emitAtomicLoadBinary(MI, MBB, SystemZ::NIHL64, 64, true);
+  case SystemZ::ATOMIC_LOAD_NIHH64i:
+    return emitAtomicLoadBinary(MI, MBB, SystemZ::NIHH64, 64, true);
   case SystemZ::ATOMIC_LOAD_NILF64i:
     return emitAtomicLoadBinary(MI, MBB, SystemZ::NILF64, 64, true);
-  case SystemZ::ATOMIC_LOAD_NIHFi:
-    return emitAtomicLoadBinary(MI, MBB, SystemZ::NIHF, 64, true);
+  case SystemZ::ATOMIC_LOAD_NIHF64i:
+    return emitAtomicLoadBinary(MI, MBB, SystemZ::NIHF64, 64, true);
 
   case SystemZ::ATOMIC_LOADW_MIN:
     return emitAtomicLoadMinMax(MI, MBB, SystemZ::CR,

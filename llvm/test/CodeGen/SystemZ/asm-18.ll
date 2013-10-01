@@ -437,3 +437,66 @@ define void @f20() {
   call void asm sideeffect "stepd $0", "r"(i32 %xor3)
   ret void
 }
+
+; Test two-operand immediate AND involving high registers.
+define void @f21() {
+; CHECK-LABEL: f21:
+; CHECK: stepa [[REG:%r[0-5]]]
+; CHECK: nihh [[REG]], 4096
+; CHECK: stepb [[REG]]
+; CHECK: nihl [[REG]], 57536
+; CHECK: stepc [[REG]]
+; CHECK: nihf [[REG]], 12345678
+; CHECK: stepd [[REG]]
+; CHECK: br %r14
+  %res1 = call i32 asm "stepa $0", "=h"()
+  %and1 = and i32 %res1, 268500991
+  %res2 = call i32 asm "stepb $0, $1", "=h,h"(i32 %and1)
+  %and2 = and i32 %res2, -8000
+  %res3 = call i32 asm "stepc $0, $1", "=h,h"(i32 %and2)
+  %and3 = and i32 %res3, 12345678
+  call void asm sideeffect "stepd $0", "h"(i32 %and3)
+  ret void
+}
+
+; Test two-operand immediate AND involving low registers.
+define void @f22() {
+; CHECK-LABEL: f22:
+; CHECK: stepa [[REG:%r[0-5]]]
+; CHECK: nilh [[REG]], 4096
+; CHECK: stepb [[REG]]
+; CHECK: nill [[REG]], 57536
+; CHECK: stepc [[REG]]
+; CHECK: nilf [[REG]], 12345678
+; CHECK: stepd [[REG]]
+; CHECK: br %r14
+  %res1 = call i32 asm "stepa $0", "=r"()
+  %and1 = and i32 %res1, 268500991
+  %res2 = call i32 asm "stepb $0, $1", "=r,r"(i32 %and1)
+  %and2 = and i32 %res2, -8000
+  %res3 = call i32 asm "stepc $0, $1", "=r,r"(i32 %and2)
+  %and3 = and i32 %res3, 12345678
+  call void asm sideeffect "stepd $0", "r"(i32 %and3)
+  ret void
+}
+
+; Test three-operand immediate AND involving mixtures of low and high registers.
+define i32 @f23(i32 %old) {
+; CHECK-LABEL: f23:
+; CHECK-DAG: risblg [[REG1:%r[0-5]]], %r2, 28, 158, 0
+; CHECK-DAG: risbhg [[REG2:%r[0-5]]], %r2, 24, 158, 32
+; CHECK: stepa %r2, [[REG1]], [[REG2]]
+; CHECK-DAG: risbhg [[REG3:%r[0-5]]], [[REG2]], 25, 159, 0
+; CHECK-DAG: risblg %r2, [[REG2]], 24, 152, 32
+; CHECK: stepb [[REG2]], [[REG3]], %r2
+; CHECK: br %r14
+  %and1 = and i32 %old, 14
+  %and2 = and i32 %old, 254
+  %res1 = call i32 asm "stepa $1, $2, $3",
+                       "=h,r,r,0"(i32 %old, i32 %and1, i32 %and2)
+  %and3 = and i32 %res1, 127
+  %and4 = and i32 %res1, 128
+  %res2 = call i32 asm "stepb $1, $2, $3",
+                       "=r,h,h,0"(i32 %res1, i32 %and3, i32 %and4)
+  ret i32 %res2
+}

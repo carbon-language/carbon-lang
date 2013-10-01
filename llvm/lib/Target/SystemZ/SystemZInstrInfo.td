@@ -797,20 +797,33 @@ let Defs = [CC] in {
   let isConvertibleToThreeAddress = 1 in {
     // ANDs of a 16-bit immediate, leaving other bits unaffected.
     // The CC result only reflects the 16-bit field, not the full register.
+    //
+    // NIxMux expands to NI[LH]x, depending on the choice of register.
+    def NILMux : BinaryRIPseudo<and, GRX32, imm32ll16c>,
+                 Requires<[FeatureHighWord]>;
+    def NIHMux : BinaryRIPseudo<and, GRX32, imm32lh16c>,
+                 Requires<[FeatureHighWord]>;
     def NILL : BinaryRI<"nill", 0xA57, and, GR32, imm32ll16c>;
     def NILH : BinaryRI<"nilh", 0xA56, and, GR32, imm32lh16c>;
+    def NIHL : BinaryRI<"nihl", 0xA55, and, GRH32, imm32ll16c>;
+    def NIHH : BinaryRI<"nihh", 0xA54, and, GRH32, imm32lh16c>;
     def NILL64 : BinaryAliasRI<and, GR64, imm64ll16c>;
     def NILH64 : BinaryAliasRI<and, GR64, imm64lh16c>;
-    def NIHL : BinaryRI<"nihl", 0xA55, and, GR64, imm64hl16c>;
-    def NIHH : BinaryRI<"nihh", 0xA54, and, GR64, imm64hh16c>;
+    def NIHL64 : BinaryAliasRI<and, GR64, imm64hl16c>;
+    def NIHH64 : BinaryAliasRI<and, GR64, imm64hh16c>;
 
     // ANDs of a 32-bit immediate, leaving other bits unaffected.
     // The CC result only reflects the 32-bit field, which means we can
     // use it as a zero indicator for i32 operations but not otherwise.
-    let CCValues = 0xC, CompareZeroCCMask = 0x8 in
+    let CCValues = 0xC, CompareZeroCCMask = 0x8 in {
+      // Expands to NILF or NIHF, depending on the choice of register.
+      def NIFMux : BinaryRIPseudo<and, GRX32, uimm32>,
+                   Requires<[FeatureHighWord]>;
       def NILF : BinaryRIL<"nilf", 0xC0B, and, GR32, uimm32>;
+      def NIHF : BinaryRIL<"nihf", 0xC0A, and, GRH32, uimm32>;
+    }
     def NILF64 : BinaryAliasRIL<and, GR64, imm64lf32c>;
-    def NIHF : BinaryRIL<"nihf", 0xC0A, and, GR64, imm64hf32c>;
+    def NIHF64 : BinaryAliasRIL<and, GR64, imm64hf32c>;
   }
 
   // ANDs of memory.
@@ -1014,14 +1027,15 @@ let Defs = [CC] in {
 
 // Forms of RISBG that only affect one word of the destination register.
 // They do not set CC.
-def RISBLL : RotateSelectAliasRIEf<GR32,  GR32>,  Requires<[FeatureHighWord]>;
-def RISBLH : RotateSelectAliasRIEf<GR32,  GRH32>, Requires<[FeatureHighWord]>;
-def RISBHL : RotateSelectAliasRIEf<GRH32, GR32>,  Requires<[FeatureHighWord]>;
-def RISBHH : RotateSelectAliasRIEf<GRH32, GRH32>, Requires<[FeatureHighWord]>;
-def RISBLG : RotateSelectRIEf<"risblg", 0xEC51, GR32, GR64>,
-             Requires<[FeatureHighWord]>;
-def RISBHG : RotateSelectRIEf<"risbhg", 0xEC5D, GRH32, GR64>,
-             Requires<[FeatureHighWord]>;
+def RISBMux : RotateSelectRIEfPseudo<GRX32, GRX32>, Requires<[FeatureHighWord]>;
+def RISBLL  : RotateSelectAliasRIEf<GR32,  GR32>,  Requires<[FeatureHighWord]>;
+def RISBLH  : RotateSelectAliasRIEf<GR32,  GRH32>, Requires<[FeatureHighWord]>;
+def RISBHL  : RotateSelectAliasRIEf<GRH32, GR32>,  Requires<[FeatureHighWord]>;
+def RISBHH  : RotateSelectAliasRIEf<GRH32, GRH32>, Requires<[FeatureHighWord]>;
+def RISBLG  : RotateSelectRIEf<"risblg", 0xEC51, GR32, GR64>,
+              Requires<[FeatureHighWord]>;
+def RISBHG  : RotateSelectRIEf<"risbhg", 0xEC5D, GRH32, GR64>,
+              Requires<[FeatureHighWord]>;
 
 // Rotate second operand left and perform a logical operation with selected
 // bits of the first operand.  The CC result only describes the selected bits,
@@ -1166,10 +1180,10 @@ def ATOMIC_LOAD_NILF    : AtomicLoadBinaryImm32<atomic_load_and_32, uimm32>;
 def ATOMIC_LOAD_NGR     : AtomicLoadBinaryReg64<atomic_load_and_64>;
 def ATOMIC_LOAD_NILL64  : AtomicLoadBinaryImm64<atomic_load_and_64, imm64ll16c>;
 def ATOMIC_LOAD_NILH64  : AtomicLoadBinaryImm64<atomic_load_and_64, imm64lh16c>;
-def ATOMIC_LOAD_NIHL    : AtomicLoadBinaryImm64<atomic_load_and_64, imm64hl16c>;
-def ATOMIC_LOAD_NIHH    : AtomicLoadBinaryImm64<atomic_load_and_64, imm64hh16c>;
+def ATOMIC_LOAD_NIHL64  : AtomicLoadBinaryImm64<atomic_load_and_64, imm64hl16c>;
+def ATOMIC_LOAD_NIHH64  : AtomicLoadBinaryImm64<atomic_load_and_64, imm64hh16c>;
 def ATOMIC_LOAD_NILF64  : AtomicLoadBinaryImm64<atomic_load_and_64, imm64lf32c>;
-def ATOMIC_LOAD_NIHF    : AtomicLoadBinaryImm64<atomic_load_and_64, imm64hf32c>;
+def ATOMIC_LOAD_NIHF64  : AtomicLoadBinaryImm64<atomic_load_and_64, imm64hf32c>;
 
 def ATOMIC_LOADW_OR     : AtomicLoadWBinaryReg<z_atomic_loadw_or>;
 def ATOMIC_LOADW_OILH   : AtomicLoadWBinaryImm<z_atomic_loadw_or, imm32lh16>;
@@ -1207,13 +1221,13 @@ def ATOMIC_LOAD_NILL64i : AtomicLoadBinaryImm64<atomic_load_nand_64,
                                                 imm64ll16c>;
 def ATOMIC_LOAD_NILH64i : AtomicLoadBinaryImm64<atomic_load_nand_64,
                                                 imm64lh16c>;
-def ATOMIC_LOAD_NIHLi   : AtomicLoadBinaryImm64<atomic_load_nand_64,
+def ATOMIC_LOAD_NIHL64i : AtomicLoadBinaryImm64<atomic_load_nand_64,
                                                 imm64hl16c>;
-def ATOMIC_LOAD_NIHHi   : AtomicLoadBinaryImm64<atomic_load_nand_64,
+def ATOMIC_LOAD_NIHH64i : AtomicLoadBinaryImm64<atomic_load_nand_64,
                                                 imm64hh16c>;
 def ATOMIC_LOAD_NILF64i : AtomicLoadBinaryImm64<atomic_load_nand_64,
                                                 imm64lf32c>;
-def ATOMIC_LOAD_NIHFi   : AtomicLoadBinaryImm64<atomic_load_nand_64,
+def ATOMIC_LOAD_NIHF64i : AtomicLoadBinaryImm64<atomic_load_nand_64,
                                                 imm64hf32c>;
 
 def ATOMIC_LOADW_MIN    : AtomicLoadWBinaryReg<z_atomic_loadw_min>;
