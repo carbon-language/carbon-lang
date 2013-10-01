@@ -86,7 +86,9 @@
 # CHECK:  mult   $3, $5          # encoding: [0x18,0x00,0x65,0x00]
 # CHECK:  multu  $3, $5          # encoding: [0x19,0x00,0x65,0x00]
 # CHECK:  sub    $9, $6, $7      # encoding: [0x22,0x48,0xc7,0x00]
+# CHECK:  addi   $sp, $sp, -56   # encoding: [0xc8,0xff,0xbd,0x23]
 # CHECK:  subu   $4, $3, $5      # encoding: [0x23,0x20,0x65,0x00]
+# CHECK:  addiu   $sp, $sp, -40  # encoding: [0xd8,0xff,0xbd,0x27]
 # CHECK:  neg     $6, $7         # encoding: [0x22,0x30,0x07,0x00]
 # CHECK:  negu    $6, $7         # encoding: [0x23,0x30,0x07,0x00]
 # CHECK:  move    $7, $8         # encoding: [0x21,0x38,0x00,0x01]
@@ -109,7 +111,9 @@
     mult   $3,$5
     multu  $3,$5
     sub    $9,$6,$7
+    sub    $sp,$sp,56
     subu   $4,$3,$5
+    subu    $sp,$sp,40
     neg    $6,$7
     negu   $6,$7
     move   $7,$8

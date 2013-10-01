@@ -144,6 +144,9 @@ class MipsAsmParser : public MCTargetAsmParser {
   MipsAsmParser::OperandMatchResultTy
   parseMSA128DRegs(SmallVectorImpl<MCParsedAsmOperand*> &Operands);
 
+  MipsAsmParser::OperandMatchResultTy
+  parseInvNum(SmallVectorImpl<MCParsedAsmOperand*> &Operands);
+
   bool searchSymbolAlias(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                          unsigned RegKind);
 
@@ -351,6 +354,7 @@ public:
   bool isToken() const { return Kind == k_Token; }
   bool isMem() const { return Kind == k_Memory; }
   bool isPtrReg() const { return Kind == k_PtrReg; }
+  bool isInvNum() const { return Kind == k_Immediate; }
 
   StringRef getToken() const {
     assert(Kind == k_Token && "Invalid access!");
@@ -1815,6 +1819,24 @@ MipsAsmParser::parseHWRegs(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
 MipsAsmParser::OperandMatchResultTy
 MipsAsmParser::parseCCRRegs(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   return parseRegs(Operands, (int) MipsOperand::Kind_CCRRegs);
+}
+
+MipsAsmParser::OperandMatchResultTy
+MipsAsmParser::parseInvNum(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+  const MCExpr *IdVal;
+  // If the first token is '$' we may have register operand.
+  if (Parser.getTok().is(AsmToken::Dollar))
+    return MatchOperand_NoMatch;
+  SMLoc S = Parser.getTok().getLoc();
+  if (getParser().parseExpression(IdVal))
+    return MatchOperand_ParseFail;
+  const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(IdVal);
+    assert( MCE && "Unexpected MCExpr type.");
+  int64_t Val = MCE->getValue();
+  SMLoc E = SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
+  Operands.push_back(MipsOperand::CreateImm(
+                     MCConstantExpr::Create(0 - Val, getContext()), S, E));
+  return MatchOperand_Success;
 }
 
 MCSymbolRefExpr::VariantKind MipsAsmParser::getVariantKind(StringRef Symbol) {

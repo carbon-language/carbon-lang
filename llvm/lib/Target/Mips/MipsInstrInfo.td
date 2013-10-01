@@ -282,9 +282,20 @@ def MipsMemAsmOperand : AsmOperandClass {
   let ParserMethod = "parseMemOperand";
 }
 
+def MipsInvertedImmoperand : AsmOperandClass {
+  let Name = "InvNum";
+  let RenderMethod = "addImmOperands";
+  let ParserMethod = "parseInvNum";
+}
+
 def PtrRegAsmOperand : AsmOperandClass {
   let Name = "PtrReg";
   let ParserMethod = "parsePtrReg";
+}
+
+
+def InvertedImOperand : Operand<i32> {
+  let ParserMatchClass = MipsInvertedImmoperand;
 }
 
 // Address operand
@@ -1120,6 +1131,11 @@ def  : InstAlias<"tgeu $rs, $rt", (TGEU GPR32Opnd:$rs, GPR32Opnd:$rt, 0), 1>;
 def  : InstAlias<"tlt $rs, $rt", (TLT GPR32Opnd:$rs, GPR32Opnd:$rt, 0), 1>;
 def  : InstAlias<"tltu $rs, $rt", (TLTU GPR32Opnd:$rs, GPR32Opnd:$rt, 0), 1>;
 def  : InstAlias<"tne $rs, $rt", (TNE GPR32Opnd:$rs, GPR32Opnd:$rt, 0), 1>;
+def : InstAlias<"sub, $rd, $rs, $imm",
+                (ADDi GPR32Opnd:$rd, GPR32Opnd:$rs, InvertedImOperand:$imm)>;
+def : InstAlias<"subu, $rd, $rs, $imm",
+                (ADDiu GPR32Opnd:$rd, GPR32Opnd:$rs, InvertedImOperand:$imm)>;
+
 //===----------------------------------------------------------------------===//
 // Assembler Pseudo Instructions
 //===----------------------------------------------------------------------===//
@@ -1138,8 +1154,6 @@ class LoadAddressImm<string instr_asm, Operand Od, RegisterOperand RO> :
   MipsAsmPseudoInst<(outs RO:$rt), (ins Od:$imm32),
                      !strconcat(instr_asm, "\t$rt, $imm32")> ;
 def LoadAddr32Imm : LoadAddressImm<"la", uimm5, GPR32Opnd>;
-
-
 
 //===----------------------------------------------------------------------===//
 //  Arbitrary patterns that map to one or more instructions
