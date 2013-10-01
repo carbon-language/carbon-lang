@@ -589,8 +589,6 @@ static int readOpcode(struct InternalInstruction* insn) {
     default:
       dbgprintf(insn, "Unhandled m-mmmm field for instruction (0x%hhx)", mmmmmFromVEX2of3(insn->vexPrefix[1]));
       return -1;
-    case 0:
-      break;
     case VEX_LOB_0F:
       insn->opcodeType = TWOBYTE;
       return consumeByte(insn, &insn->opcode);
