@@ -192,3 +192,41 @@ define void @f8(i16 *%ptr1, i16 *%ptr2) {
   store i16 %trunc2, i16 *%ptr4
   ret void
 }
+
+; Test zero extensions from 8 bits between mixtures of high and low registers.
+define i32 @f9(i8 %val1, i8 %val2) {
+; CHECK-LABEL: f9:
+; CHECK-DAG: risbhg [[REG1:%r[0-5]]], %r2, 24, 159, 32
+; CHECK-DAG: llcr [[REG2:%r[0-5]]], %r3
+; CHECK: stepa [[REG1]], [[REG2]]
+; CHECK: risbhg [[REG3:%r[0-5]]], [[REG1]], 24, 159, 0
+; CHECK: stepb [[REG3]]
+; CHECK: risblg %r2, [[REG3]], 24, 159, 32
+; CHECK: br %r14
+  %ext1 = zext i8 %val1 to i32
+  %ext2 = zext i8 %val2 to i32
+  %val3 = call i8 asm sideeffect "stepa $0, $1", "=h,0,r"(i32 %ext1, i32 %ext2)
+  %ext3 = zext i8 %val3 to i32
+  %val4 = call i8 asm sideeffect "stepb $0", "=h,0"(i32 %ext3)
+  %ext4 = zext i8 %val4 to i32
+  ret i32 %ext4
+}
+
+; Test zero extensions from 16 bits between mixtures of high and low registers.
+define i32 @f10(i16 %val1, i16 %val2) {
+; CHECK-LABEL: f10:
+; CHECK-DAG: risbhg [[REG1:%r[0-5]]], %r2, 16, 159, 32
+; CHECK-DAG: llhr [[REG2:%r[0-5]]], %r3
+; CHECK: stepa [[REG1]], [[REG2]]
+; CHECK: risbhg [[REG3:%r[0-5]]], [[REG1]], 16, 159, 0
+; CHECK: stepb [[REG3]]
+; CHECK: risblg %r2, [[REG3]], 16, 159, 32
+; CHECK: br %r14
+  %ext1 = zext i16 %val1 to i32
+  %ext2 = zext i16 %val2 to i32
+  %val3 = call i16 asm sideeffect "stepa $0, $1", "=h,0,r"(i32 %ext1, i32 %ext2)
+  %ext3 = zext i16 %val3 to i32
+  %val4 = call i16 asm sideeffect "stepb $0", "=h,0"(i32 %ext3)
+  %ext4 = zext i16 %val4 to i32
+  ret i32 %ext4
+}

@@ -102,6 +102,17 @@ void SystemZInstrInfo::expandRXYPseudo(MachineInstr *MI, unsigned LowOpcode,
   MI->setDesc(get(Opcode));
 }
 
+// MI is an RR-style pseudo instruction that zero-extends the low Size bits
+// of one GRX32 into another.  Replace it with LowOpcode if both operands
+// are low registers, otherwise use RISB[LH]G.
+void SystemZInstrInfo::expandZExtPseudo(MachineInstr *MI, unsigned LowOpcode,
+                                        unsigned Size) const {
+  emitGRX32Move(*MI->getParent(), MI, MI->getDebugLoc(),
+                MI->getOperand(0).getReg(), MI->getOperand(1).getReg(),
+                LowOpcode, Size, MI->getOperand(1).isKill());
+  MI->eraseFromParent();
+}
+
 // Emit a zero-extending move from 32-bit GPR SrcReg to 32-bit GPR
 // DestReg before MBBI in MBB.  Use LowLowOpcode when both DestReg and SrcReg
 // are low registers, otherwise use RISB[LH]G.  Size is the number of bits
@@ -812,6 +823,14 @@ SystemZInstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
 
   case SystemZ::LHMux:
     expandRXYPseudo(MI, SystemZ::LH, SystemZ::LHH);
+    return true;
+
+  case SystemZ::LLCRMux:
+    expandZExtPseudo(MI, SystemZ::LLCR, 8);
+    return true;
+
+  case SystemZ::LLHRMux:
+    expandZExtPseudo(MI, SystemZ::LLHR, 16);
     return true;
 
   case SystemZ::LLCMux:

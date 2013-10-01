@@ -440,8 +440,14 @@ let Defs = [CC], CCValues = 0xE, CompareZeroCCMask = 0xE in
 
 // 32-bit extensions from registers.
 let neverHasSideEffects = 1 in {
-  def LLCR : UnaryRRE<"llc", 0xB994, zext8,  GR32, GR32>;
-  def LLHR : UnaryRRE<"llh", 0xB995, zext16, GR32, GR32>;
+  // Expands to LLCR or RISB[LH]G, depending on the choice of registers.
+  def LLCRMux : UnaryRRPseudo<"llc", zext8, GRX32, GRX32>,
+                Requires<[FeatureHighWord]>;
+  def LLCR    : UnaryRRE<"llc", 0xB994, zext8,  GR32, GR32>;
+  // Expands to LLHR or RISB[LH]G, depending on the choice of registers.
+  def LLHRMux : UnaryRRPseudo<"llh", zext16, GRX32, GRX32>,
+                Requires<[FeatureHighWord]>;
+  def LLHR    : UnaryRRE<"llh", 0xB995, zext16, GR32, GR32>;
 }
 
 // 64-bit extensions from registers.
