@@ -889,6 +889,18 @@ SystemZInstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
     expandRIPseudo(MI, SystemZ::IILH, SystemZ::IIHH, false);
     return true;
 
+  case SystemZ::OIFMux:
+    expandRIPseudo(MI, SystemZ::OILF, SystemZ::OIHF, false);
+    return true;
+
+  case SystemZ::OILMux:
+    expandRIPseudo(MI, SystemZ::OILL, SystemZ::OIHL, false);
+    return true;
+
+  case SystemZ::OIHMux:
+    expandRIPseudo(MI, SystemZ::OILH, SystemZ::OIHH, false);
+    return true;
+
   case SystemZ::ADJDYNALLOC:
     splitAdjDynAlloc(MI);
     return true;

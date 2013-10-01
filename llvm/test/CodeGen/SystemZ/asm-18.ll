@@ -353,3 +353,45 @@ define void @f16() {
   call void asm sideeffect "stepc $0", "r"(i32 %or2)
   ret void
 }
+
+; Test immediate OR involving high registers.
+define void @f17() {
+; CHECK-LABEL: f17:
+; CHECK: stepa [[REG:%r[0-5]]]
+; CHECK: oihh [[REG]], 4660
+; CHECK: stepb [[REG]]
+; CHECK: oihl [[REG]], 34661
+; CHECK: stepc [[REG]]
+; CHECK: oihf [[REG]], 12345678
+; CHECK: stepd [[REG]]
+; CHECK: br %r14
+  %res1 = call i32 asm "stepa $0", "=h"()
+  %or1 = or i32 %res1, 305397760
+  %res2 = call i32 asm "stepb $0, $1", "=h,h"(i32 %or1)
+  %or2 = or i32 %res2, 34661
+  %res3 = call i32 asm "stepc $0, $1", "=h,h"(i32 %or2)
+  %or3 = or i32 %res3, 12345678
+  call void asm sideeffect "stepd $0", "h"(i32 %or3)
+  ret void
+}
+
+; Test immediate OR involving low registers.
+define void @f18() {
+; CHECK-LABEL: f18:
+; CHECK: stepa [[REG:%r[0-5]]]
+; CHECK: oilh [[REG]], 4660
+; CHECK: stepb [[REG]]
+; CHECK: oill [[REG]], 34661
+; CHECK: stepc [[REG]]
+; CHECK: oilf [[REG]], 12345678
+; CHECK: stepd [[REG]]
+; CHECK: br %r14
+  %res1 = call i32 asm "stepa $0", "=r"()
+  %or1 = or i32 %res1, 305397760
+  %res2 = call i32 asm "stepb $0, $1", "=r,r"(i32 %or1)
+  %or2 = or i32 %res2, 34661
+  %res3 = call i32 asm "stepc $0, $1", "=r,r"(i32 %or2)
+  %or3 = or i32 %res3, 12345678
+  call void asm sideeffect "stepd $0", "r"(i32 %or3)
+  ret void
+}

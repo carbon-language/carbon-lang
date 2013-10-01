@@ -127,6 +127,9 @@ void SystemZAsmPrinter::EmitInstruction(const MachineInstr *MI) {
 
   LOWER_HIGH(IIHL);
   LOWER_HIGH(IIHH);
+  LOWER_HIGH(OIHL);
+  LOWER_HIGH(OIHH);
+  LOWER_HIGH(OIHF);
 
 #undef LOWER_HIGH
 
