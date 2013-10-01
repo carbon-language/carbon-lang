@@ -1,6 +1,6 @@
 ;RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck %s
 
-; CHECK: JUMP @5
+; CHECK: JUMP @10
 ; CHECK: EXPORT
 ; CHECK-NOT: EXPORT
 
