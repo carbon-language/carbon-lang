@@ -113,13 +113,21 @@ DIE::~DIE() {
 /// Climb up the parent chain to get the compile unit DIE to which this DIE
 /// belongs.
 DIE *DIE::getCompileUnit() {
+  DIE *Cu = checkCompileUnit();
+  assert(Cu && "We should not have orphaned DIEs.");
+  return Cu;
+}
+
+/// Climb up the parent chain to get the compile unit DIE this DIE belongs
+/// to. Return NULL if DIE is not added to an owner yet.
+DIE *DIE::checkCompileUnit() {
   DIE *p = this;
   while (p) {
     if (p->getTag() == dwarf::DW_TAG_compile_unit)
       return p;
     p = p->getParent();
   }
-  llvm_unreachable("We should not have orphaned DIEs.");
+  return NULL;
 }
 
 DIEValue *DIE::findAttribute(uint16_t Attribute) {

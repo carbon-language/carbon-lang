@@ -242,7 +242,7 @@ void CompileUnit::addDelta(DIE *Die, uint16_t Attribute, uint16_t Form,
 ///
 void CompileUnit::addDIEEntry(DIE *Die, uint16_t Attribute, uint16_t Form,
                               DIE *Entry) {
-  Die->addValue(Attribute, Form, createDIEEntry(Entry));
+  DD->addDIEEntry(Die, Attribute, Form, createDIEEntry(Entry));
 }
 
 /// addBlock - Add block data.
@@ -784,13 +784,13 @@ DIE *CompileUnit::getOrCreateTypeDIE(const MDNode *TyNode) {
   DIType Ty(TyNode);
   if (!Ty.isType())
     return NULL;
-  DIE *TyDIE = getDIE(Ty);
+  DIE *TyDIE = DD->getTypeDIE(Ty);
   if (TyDIE)
     return TyDIE;
 
   // Create new type.
   TyDIE = new DIE(dwarf::DW_TAG_base_type);
-  insertDIE(Ty, TyDIE);
+  DD->insertTypeDIE(Ty, TyDIE);
   if (Ty.isBasicType())
     constructTypeDIE(*TyDIE, DIBasicType(Ty));
   else if (Ty.isCompositeType())
@@ -826,7 +826,7 @@ void CompileUnit::addType(DIE *Entity, DIType Ty, uint16_t Attribute) {
   DIEEntry *Entry = getDIEEntry(Ty);
   // If it exists then use the existing value.
   if (Entry) {
-    Entity->addValue(Attribute, dwarf::DW_FORM_ref4, Entry);
+    DD->addDIEEntry(Entity, Attribute, dwarf::DW_FORM_ref4, Entry);
     return;
   }
 
@@ -836,7 +836,7 @@ void CompileUnit::addType(DIE *Entity, DIType Ty, uint16_t Attribute) {
   // Set up proxy.
   Entry = createDIEEntry(Buffer);
   insertDIEEntry(Ty, Entry);
-  Entity->addValue(Attribute, dwarf::DW_FORM_ref4, Entry);
+  DD->addDIEEntry(Entity, Attribute, dwarf::DW_FORM_ref4, Entry);
 
   // If this is a complete composite type then include it in the
   // list of global types.
@@ -1268,14 +1268,14 @@ DIE *CompileUnit::getOrCreateNameSpace(DINameSpace NS) {
 
 /// getOrCreateSubprogramDIE - Create new DIE using SP.
 DIE *CompileUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
-  DIE *SPDie = getDIE(SP);
+  DIE *SPDie = DD->getSPDIE(SP);
   if (SPDie)
     return SPDie;
 
   SPDie = new DIE(dwarf::DW_TAG_subprogram);
 
   // DW_TAG_inlined_subroutine may refer to this DIE.
-  insertDIE(SP, SPDie);
+  DD->insertSPDIE(SP, SPDie);
 
   DISubprogram SPDecl = SP.getFunctionDeclaration();
   DIE *DeclDie = NULL;
@@ -1422,7 +1422,7 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
     // But that class might not exist in the DWARF yet.
     // Creating the class will create the static member decl DIE.
     getOrCreateContextDIE(DD->resolve(SDMDecl.getContext()));
-    VariableDIE = getDIE(SDMDecl);
+    VariableDIE = DD->getStaticMemberDIE(SDMDecl);
     assert(VariableDIE && "Static member decl has no context?");
     IsStaticMember = true;
   }
@@ -1616,7 +1616,7 @@ void CompileUnit::constructContainingTypeDIEs() {
     DIE *SPDie = CI->first;
     const MDNode *N = CI->second;
     if (!N) continue;
-    DIE *NDie = getDIE(N);
+    DIE *NDie = DD->getTypeDIE(N);
     if (!NDie) continue;
     addDIEEntry(SPDie, dwarf::DW_AT_containing_type, dwarf::DW_FORM_ref4, NDie);
   }
@@ -1819,6 +1819,6 @@ DIE *CompileUnit::createStaticMemberDIE(const DIDerivedType DT) {
   if (const ConstantFP *CFP = dyn_cast_or_null<ConstantFP>(DT.getConstant()))
     addConstantFPValue(StaticMemberDIE, CFP);
 
-  insertDIE(DT, StaticMemberDIE);
+  DD->insertStaticMemberDIE(DT, StaticMemberDIE);
   return StaticMemberDIE;
 }
