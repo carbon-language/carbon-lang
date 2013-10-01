@@ -900,10 +900,15 @@ let Defs = [CC] in {
   // XORs of a 32-bit immediate, leaving other bits unaffected.
   // The CC result only reflects the 32-bit field, which means we can
   // use it as a zero indicator for i32 operations but not otherwise.
-  let CCValues = 0xC, CompareZeroCCMask = 0x8 in
+  let CCValues = 0xC, CompareZeroCCMask = 0x8 in {
+    // Expands to XILF or XIHF, depending on the choice of register.
+    def XIFMux : BinaryRIPseudo<xor, GRX32, uimm32>,
+                 Requires<[FeatureHighWord]>;
     def XILF : BinaryRIL<"xilf", 0xC07, xor, GR32, uimm32>;
+    def XIHF : BinaryRIL<"xihf", 0xC06, xor, GRH32, uimm32>;
+  }
   def XILF64 : BinaryAliasRIL<xor, GR64, imm64lf32>;
-  def XIHF : BinaryRIL<"xihf", 0xC06, xor, GR64, imm64hf32>;
+  def XIHF64 : BinaryAliasRIL<xor, GR64, imm64hf32>;
 
   // XORs of memory.
   let CCValues = 0xC, CompareZeroCCMask = 0x8 in {
@@ -1186,7 +1191,7 @@ def ATOMIC_LOAD_XR      : AtomicLoadBinaryReg32<atomic_load_xor_32>;
 def ATOMIC_LOAD_XILF    : AtomicLoadBinaryImm32<atomic_load_xor_32, uimm32>;
 def ATOMIC_LOAD_XGR     : AtomicLoadBinaryReg64<atomic_load_xor_64>;
 def ATOMIC_LOAD_XILF64  : AtomicLoadBinaryImm64<atomic_load_xor_64, imm64lf32>;
-def ATOMIC_LOAD_XIHF    : AtomicLoadBinaryImm64<atomic_load_xor_64, imm64hf32>;
+def ATOMIC_LOAD_XIHF64  : AtomicLoadBinaryImm64<atomic_load_xor_64, imm64hf32>;
 
 def ATOMIC_LOADW_NRi    : AtomicLoadWBinaryReg<z_atomic_loadw_nand>;
 def ATOMIC_LOADW_NILHi  : AtomicLoadWBinaryImm<z_atomic_loadw_nand,

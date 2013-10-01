@@ -395,3 +395,45 @@ define void @f18() {
   call void asm sideeffect "stepd $0", "r"(i32 %or3)
   ret void
 }
+
+; Test immediate XOR involving high registers.
+define void @f19() {
+; CHECK-LABEL: f19:
+; CHECK: stepa [[REG:%r[0-5]]]
+; CHECK: xihf [[REG]], 305397760
+; CHECK: stepb [[REG]]
+; CHECK: xihf [[REG]], 34661
+; CHECK: stepc [[REG]]
+; CHECK: xihf [[REG]], 12345678
+; CHECK: stepd [[REG]]
+; CHECK: br %r14
+  %res1 = call i32 asm "stepa $0", "=h"()
+  %xor1 = xor i32 %res1, 305397760
+  %res2 = call i32 asm "stepb $0, $1", "=h,h"(i32 %xor1)
+  %xor2 = xor i32 %res2, 34661
+  %res3 = call i32 asm "stepc $0, $1", "=h,h"(i32 %xor2)
+  %xor3 = xor i32 %res3, 12345678
+  call void asm sideeffect "stepd $0", "h"(i32 %xor3)
+  ret void
+}
+
+; Test immediate XOR involving low registers.
+define void @f20() {
+; CHECK-LABEL: f20:
+; CHECK: stepa [[REG:%r[0-5]]]
+; CHECK: xilf [[REG]], 305397760
+; CHECK: stepb [[REG]]
+; CHECK: xilf [[REG]], 34661
+; CHECK: stepc [[REG]]
+; CHECK: xilf [[REG]], 12345678
+; CHECK: stepd [[REG]]
+; CHECK: br %r14
+  %res1 = call i32 asm "stepa $0", "=r"()
+  %xor1 = xor i32 %res1, 305397760
+  %res2 = call i32 asm "stepb $0, $1", "=r,r"(i32 %xor1)
+  %xor2 = xor i32 %res2, 34661
+  %res3 = call i32 asm "stepc $0, $1", "=r,r"(i32 %xor2)
+  %xor3 = xor i32 %res3, 12345678
+  call void asm sideeffect "stepd $0", "r"(i32 %xor3)
+  ret void
+}

@@ -3011,8 +3011,8 @@ EmitInstrWithCustomInserter(MachineInstr *MI, MachineBasicBlock *MBB) const {
     return emitAtomicLoadBinary(MI, MBB, SystemZ::XGR, 64);
   case SystemZ::ATOMIC_LOAD_XILF64:
     return emitAtomicLoadBinary(MI, MBB, SystemZ::XILF64, 64);
-  case SystemZ::ATOMIC_LOAD_XIHF:
-    return emitAtomicLoadBinary(MI, MBB, SystemZ::XIHF, 64);
+  case SystemZ::ATOMIC_LOAD_XIHF64:
+    return emitAtomicLoadBinary(MI, MBB, SystemZ::XIHF64, 64);
 
   case SystemZ::ATOMIC_LOADW_NRi:
     return emitAtomicLoadBinary(MI, MBB, SystemZ::NR, 0, true);
