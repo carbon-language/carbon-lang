@@ -19,6 +19,8 @@
 #include "clang/Rewrite/Core/Rewriter.h"
 #include "clang/Tooling/Refactoring.h"
 #include "llvm/Support/raw_os_ostream.h"
+#include "llvm/Support/FileSystem.h"
+#include "llvm/Support/Path.h"
 
 namespace clang {
 namespace tooling {
@@ -103,7 +105,16 @@ void Replacement::setFromSourceLocation(SourceManager &Sources,
   const std::pair<FileID, unsigned> DecomposedLocation =
       Sources.getDecomposedLoc(Start);
   const FileEntry *Entry = Sources.getFileEntryForID(DecomposedLocation.first);
-  this->FilePath = Entry != NULL ? Entry->getName() : InvalidLocation;
+
+  if (Entry != NULL) {
+    // Make FilePath absolute so replacements can be applied correctly when
+    // relative paths for files are used.
+    llvm::SmallString<256> FilePath(Entry->getName());
+    llvm::error_code EC = llvm::sys::fs::make_absolute(FilePath);
+    // Don't change the FilePath if the file is a virtual file.
+    this->FilePath = EC ? FilePath.c_str() : Entry->getName();
+  } else
+    this->FilePath = InvalidLocation;
   this->ReplacementRange = Range(DecomposedLocation.second, Length);
   this->ReplacementText = ReplacementText;
 }
