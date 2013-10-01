@@ -497,7 +497,7 @@ _bittestandreset(long *a, long b) {
 static __inline__ unsigned char __attribute__((__always_inline__, __nodebug__))
 _bittestandset(long *a, long b) {
   unsigned char x = (*a >> b) & 1;
-  *a = *a & (1 << b);
+  *a = *a | (1 << b);
   return x;
 }
 #ifdef __x86_64__
@@ -546,7 +546,7 @@ _bittestandreset64(__int64 *a, __int64 b) {
 static __inline__ unsigned char __attribute__((__always_inline__, __nodebug__))
 _bittestandset64(__int64 *a, __int64 b) {
   unsigned char x = (*a >> b) & 1;
-  *a = *a & (1ll << b);
+  *a = *a | (1ll << b);
   return x;
 }
 #endif
