@@ -4409,7 +4409,7 @@ retry_lookup:
                  TRD != TRDEnd; ++TRD) {
               if (CheckMemberAccess(TC.getCorrectionRange().getBegin(),
                                     NSType ? NSType->getAsCXXRecordDecl() : 0,
-                                    *TRD) == AR_accessible)
+                                    TRD.getPair()) == AR_accessible)
                 TC.addCorrectionDecl(*TRD);
             }
             if (TC.isResolved())

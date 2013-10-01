@@ -135,3 +135,12 @@ void test() {
     req.set_check(false);  // expected-error-re {{use of undeclared identifier 'req'$}}
 }
 }
+
+namespace PR17394 {
+  class A {
+  protected:
+    long zzzzzzzzzz;
+  };
+  class B : private A {};
+  B zzzzzzzzzy<>; // expected-error {{expected ';' after top level declarator}}{}
+}

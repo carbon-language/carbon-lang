@@ -4896,7 +4896,7 @@ public:
   AccessResult CheckFriendAccess(NamedDecl *D);
   AccessResult CheckMemberAccess(SourceLocation UseLoc,
                                  CXXRecordDecl *NamingClass,
-                                 NamedDecl *D);
+                                 DeclAccessPair Found);
   AccessResult CheckMemberOperatorAccess(SourceLocation Loc,
                                          Expr *ObjectExpr,
                                          Expr *ArgExpr,
