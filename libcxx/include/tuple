@@ -748,7 +748,7 @@ struct __find_exactly_one_t_helper <_T1, _Idx, _Head, _Args...> {
     static constexpr size_t value =
         std::conditional<
             std::is_same<_T1, _Head>::value,
-            __find_exactly_one_t_checker<_T1, _Idx,   _Args...>,
+            __find_exactly_one_t_checker<_T1, _Idx,   _Args...>,
             __find_exactly_one_t_helper <_T1, _Idx+1, _Args...>
         >::type::value;
     };
