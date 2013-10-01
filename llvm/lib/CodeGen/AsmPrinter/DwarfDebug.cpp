@@ -775,7 +775,7 @@ CompileUnit *DwarfDebug::constructCompileUnit(const MDNode *N) {
     if (!CompilationDir.empty())
       NewCU->addString(Die, dwarf::DW_AT_comp_dir, CompilationDir);
 
-    // Flag to let the linker know we have emitted new style pubnames. Only
+    // Flags to let the linker know we have emitted new style pubnames. Only
     // emit it here if we don't have a skeleton CU for split dwarf.
     if (GenerateGnuPubSections) {
       if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
@@ -2964,7 +2964,7 @@ CompileUnit *DwarfDebug::constructSkeletonCU(const CompileUnit *CU) {
   if (!CompilationDir.empty())
     NewCU->addLocalString(Die, dwarf::DW_AT_comp_dir, CompilationDir);
 
-  // Flag to let the linker know we have emitted new style pubnames.
+  // Flags to let the linker know we have emitted new style pubnames.
   if (GenerateGnuPubSections) {
     if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
       NewCU->addLabel(Die, dwarf::DW_AT_GNU_pubnames, dwarf::DW_FORM_sec_offset,
