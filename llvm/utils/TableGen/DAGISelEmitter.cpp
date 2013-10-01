@@ -81,15 +81,13 @@ struct PatternSortingPredicate {
     const TreePatternNode *LHSSrc = LHS->getSrcPattern();
     const TreePatternNode *RHSSrc = RHS->getSrcPattern();
 
-    if (LHSSrc->getNumTypes() != 0 && RHSSrc->getNumTypes() != 0 &&
-        LHSSrc->getType(0) != RHSSrc->getType(0)) {
-      MVT::SimpleValueType V1 = LHSSrc->getType(0), V2 = RHSSrc->getType(0);
-      if (MVT(V1).isVector() != MVT(V2).isVector())
-        return MVT(V2).isVector();
+    MVT LHSVT = (LHSSrc->getNumTypes() != 0 ? LHSSrc->getType(0) : MVT::Other);
+    MVT RHSVT = (RHSSrc->getNumTypes() != 0 ? RHSSrc->getType(0) : MVT::Other);
+    if (LHSVT.isVector() != RHSVT.isVector())
+      return RHSVT.isVector();
 
-      if (MVT(V1).isFloatingPoint() != MVT(V2).isFloatingPoint())
-        return MVT(V2).isFloatingPoint();
-    }
+    if (LHSVT.isFloatingPoint() != RHSVT.isFloatingPoint())
+      return RHSVT.isFloatingPoint();
 
     // Otherwise, if the patterns might both match, sort based on complexity,
     // which means that we prefer to match patterns that cover more nodes in the
