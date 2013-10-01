@@ -15,6 +15,9 @@ include(LLVMParseArguments)
 # runtime libraries.
 cmake_minimum_required(VERSION 2.8.8)
 
+# Top level target used to build all compiler-rt libraries.
+add_custom_target(compiler-rt)
+
 # Compute the Clang version from the LLVM version.
 # FIXME: We should be able to reuse CLANG_VERSION variable calculated
 #        in Clang cmake files, instead of copying the rules here.
