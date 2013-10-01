@@ -1598,7 +1598,7 @@ void SelectionDAGLegalize::ExpandDYNAMIC_STACKALLOC(SDNode* Node,
 /// LegalizeSetCCCondCode - Legalize a SETCC with given LHS and RHS and
 /// condition code CC on the current target.
 /// If the SETCC has been legalized using AND / OR, then the legalized node
-/// will be stored in LHS and RHS and CC will be set to SDValue().
+/// will be stored in LHS.  RHS and CC will be set to SDValue().
 /// If the SETCC has been legalized by using getSetCCSwappedOperands(),
 /// then the values of LHS and RHS will be swapped and CC will be set to the
 /// new condition.
@@ -3629,7 +3629,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
 
     if (Legalized) {
       // If we exapanded the SETCC by swapping LHS and RHS, create a new SETCC
-      // node..
+      // node.
       if (Tmp3.getNode())
         Tmp1 = DAG.getNode(ISD::SETCC, dl, Node->getValueType(0),
                            Tmp1, Tmp2, Tmp3);
