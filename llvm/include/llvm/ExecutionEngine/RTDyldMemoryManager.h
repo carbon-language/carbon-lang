@@ -50,12 +50,19 @@ public:
   /// Register the EH frames with the runtime so that c++ exceptions work.
   virtual void registerEHFrames(StringRef SectionData);
 
+  /// This method returns the address of the specified function or variable.
+  /// It is used to resolve symbols during module linking.
+  virtual uint64_t getSymbolAddress(const std::string &Name);
+
   /// This method returns the address of the specified function. As such it is
   /// only useful for resolving library symbols, not code generated symbols.
   ///
   /// If \p AbortOnFailure is false and no function with the given name is
   /// found, this function returns a null pointer. Otherwise, it prints a
   /// message to stderr and aborts.
+  ///
+  /// This function is deprecated for memory managers used to be used with
+  /// MCJIT or RuntimeDyld.  Use getSymbolAddress instead.
   virtual void *getPointerToNamedFunction(const std::string &Name,
                                           bool AbortOnFailure = true);
 

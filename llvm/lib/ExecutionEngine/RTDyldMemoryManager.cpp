@@ -68,8 +68,10 @@ static int jit_noop() {
   return 0;
 }
 
-void *RTDyldMemoryManager::getPointerToNamedFunction(const std::string &Name,
-                                                     bool AbortOnFailure) {
+uint64_t RTDyldMemoryManager::getSymbolAddress(const std::string &Name) {
+  // This implementation assumes that the host program is the target.
+  // Clients generating code for a remote target should implement their own
+  // memory manager.
 #if defined(__linux__)
   //===--------------------------------------------------------------------===//
   // Function stubs that are invoked instead of certain library calls
@@ -80,14 +82,14 @@ void *RTDyldMemoryManager::getPointerToNamedFunction(const std::string &Name,
   // not inlined, and hiding their real definitions in a separate archive file
   // that the dynamic linker can't see. For more info, search for
   // 'libc_nonshared.a' on Google, or read http://llvm.org/PR274.
-  if (Name == "stat") return (void*)(intptr_t)&stat;
-  if (Name == "fstat") return (void*)(intptr_t)&fstat;
-  if (Name == "lstat") return (void*)(intptr_t)&lstat;
-  if (Name == "stat64") return (void*)(intptr_t)&stat64;
-  if (Name == "fstat64") return (void*)(intptr_t)&fstat64;
-  if (Name == "lstat64") return (void*)(intptr_t)&lstat64;
-  if (Name == "atexit") return (void*)(intptr_t)&atexit;
-  if (Name == "mknod") return (void*)(intptr_t)&mknod;
+  if (Name == "stat") return (uint64_t)&stat;
+  if (Name == "fstat") return (uint64_t)&fstat;
+  if (Name == "lstat") return (uint64_t)&lstat;
+  if (Name == "stat64") return (uint64_t)&stat64;
+  if (Name == "fstat64") return (uint64_t)&fstat64;
+  if (Name == "lstat64") return (uint64_t)&lstat64;
+  if (Name == "atexit") return (uint64_t)&atexit;
+  if (Name == "mknod") return (uint64_t)&mknod;
 #endif // __linux__
 
   // We should not invoke parent's ctors/dtors from generated main()!
@@ -96,23 +98,31 @@ void *RTDyldMemoryManager::getPointerToNamedFunction(const std::string &Name,
   // (and register wrong callee's dtors with atexit(3)).
   // We expect ExecutionEngine::runStaticConstructorsDestructors()
   // is called before ExecutionEngine::runFunctionAsMain() is called.
-  if (Name == "__main") return (void*)(intptr_t)&jit_noop;
+  if (Name == "__main") return (uint64_t)&jit_noop;
 
   const char *NameStr = Name.c_str();
   void *Ptr = sys::DynamicLibrary::SearchForAddressOfSymbol(NameStr);
-  if (Ptr) return Ptr;
+  if (Ptr)
+    return (uint64_t)Ptr;
 
   // If it wasn't found and if it starts with an underscore ('_') character,
   // try again without the underscore.
   if (NameStr[0] == '_') {
     Ptr = sys::DynamicLibrary::SearchForAddressOfSymbol(NameStr+1);
-    if (Ptr) return Ptr;
+    if (Ptr)
+      return (uint64_t)Ptr;
   }
+  return 0;
+}
 
-  if (AbortOnFailure)
+void *RTDyldMemoryManager::getPointerToNamedFunction(const std::string &Name,
+                                                     bool AbortOnFailure) {
+  uint64_t Addr = getSymbolAddress(Name);
+
+  if (!Addr && AbortOnFailure)
     report_fatal_error("Program used external function '" + Name +
                        "' which could not be resolved!");
-  return 0;
+  return (void*)Addr;
 }
 
 } // namespace llvm

@@ -460,18 +460,18 @@ int main(int argc, char **argv, char * const *envp) {
   //
   // Run static constructors.
   if (!RemoteMCJIT) {
-      if (UseMCJIT && !ForceInterpreter) {
-        // Give MCJIT a chance to apply relocations and set page permissions.
-        EE->finalizeObject();
-      }
-      EE->runStaticConstructorsDestructors(false);
-  }
+    if (UseMCJIT && !ForceInterpreter) {
+      // Give MCJIT a chance to apply relocations and set page permissions.
+      EE->finalizeObject();
+    }
+    EE->runStaticConstructorsDestructors(false);
 
-  if (NoLazyCompilation) {
-    for (Module::iterator I = Mod->begin(), E = Mod->end(); I != E; ++I) {
-      Function *Fn = &*I;
-      if (Fn != EntryFn && !Fn->isDeclaration())
-        EE->getPointerToFunction(Fn);
+    if (!UseMCJIT && NoLazyCompilation) {
+      for (Module::iterator I = Mod->begin(), E = Mod->end(); I != E; ++I) {
+        Function *Fn = &*I;
+        if (Fn != EntryFn && !Fn->isDeclaration())
+          EE->getPointerToFunction(Fn);
+      }
     }
   }
 
@@ -484,12 +484,10 @@ int main(int argc, char **argv, char * const *envp) {
     RemoteTarget Target;
     Target.create();
 
-    // Ask for a pointer to the entry function. This triggers the actual
-    // compilation.
-    (void)EE->getPointerToFunction(EntryFn);
+    // Trigger compilation.
+    EE->generateCodeForModule(Mod);
 
-    // Enough has been compiled to execute the entry function now, so
-    // layout the target memory.
+    // Layout the target memory.
     layoutRemoteTargetMemory(&Target, MM);
 
     // Since we're executing in a (at least simulated) remote address space,
