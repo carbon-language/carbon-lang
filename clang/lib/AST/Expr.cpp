@@ -2654,9 +2654,6 @@ bool Expr::isConstantInitializer(ASTContext &Ctx, bool IsForRef) const {
     return Exp->isConstantInitializer(Ctx, false);
   }
   case InitListExprClass: {
-    // FIXME: This doesn't deal with fields with reference types correctly.
-    // FIXME: This incorrectly allows pointers cast to integers to be assigned
-    // to bitfields.
     const InitListExpr *ILE = cast<InitListExpr>(this);
     if (ILE->getType()->isArrayType()) {
       unsigned numInits = ILE->getNumInits();

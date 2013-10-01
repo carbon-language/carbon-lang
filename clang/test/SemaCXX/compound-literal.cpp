@@ -76,3 +76,13 @@ namespace brace_initializers {
     (void)(PrivateDtor){1, 2}; // expected-error {{temporary of type 'brace_initializers::PrivateDtor' has private destructor}}
   }
 }
+
+// This doesn't necessarily need to be an error, but CodeGen can't handle it
+// at the moment.
+int PR17415 = (int){PR17415}; // expected-error {{initializer element is not a compile-time constant}}
+
+// Make sure we accept this.  (Not sure if we actually should... but we do
+// at the moment.)
+template<unsigned> struct Value { };
+template<typename T>
+int &check_narrowed(Value<sizeof((T){1.1})>);

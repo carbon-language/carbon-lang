@@ -4717,7 +4717,10 @@ Sema::BuildCompoundLiteralExpr(SourceLocation LParenLoc, TypeSourceInfo *TInfo,
   LiteralExpr = Result.get();
 
   bool isFileScope = getCurFunctionOrMethodDecl() == 0;
-  if (!getLangOpts().CPlusPlus && isFileScope) { // 6.5.2.5p3
+  if (isFileScope &&
+      !LiteralExpr->isTypeDependent() &&
+      !LiteralExpr->isValueDependent() &&
+      !literalType->isDependentType()) { // 6.5.2.5p3
     if (CheckForConstantInitializer(LiteralExpr, literalType))
       return ExprError();
   }
