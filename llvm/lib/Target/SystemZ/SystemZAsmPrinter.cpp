@@ -36,6 +36,15 @@ static MCInst lowerRILow(const MachineInstr *MI, unsigned Opcode) {
 }
 
 // Return an RI instruction like MI with opcode Opcode, but with the
+// GR64 register operands turned into GRH32s.
+static MCInst lowerRIHigh(const MachineInstr *MI, unsigned Opcode) {
+  return MCInstBuilder(Opcode)
+    .addReg(SystemZMC::getRegAsGRH32(MI->getOperand(0).getReg()))
+    .addReg(SystemZMC::getRegAsGRH32(MI->getOperand(1).getReg()))
+    .addImm(MI->getOperand(2).getImm());
+}
+
+// Return an RI instruction like MI with opcode Opcode, but with the
 // R2 register turned into a GR64.
 static MCInst lowerRIEfLow(const MachineInstr *MI, unsigned Opcode) {
   return MCInstBuilder(Opcode)
@@ -112,6 +121,14 @@ void SystemZAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   LOWER_LOW(XILF);
 
 #undef LOWER_LOW
+
+#define LOWER_HIGH(NAME) \
+  case SystemZ::NAME##64: LoweredMI = lowerRIHigh(MI, SystemZ::NAME); break
+
+  LOWER_HIGH(IIHL);
+  LOWER_HIGH(IIHH);
+
+#undef LOWER_HIGH
 
   default:
     Lower.lower(MI, LoweredMI);

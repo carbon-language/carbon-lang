@@ -1378,6 +1378,14 @@ class UnaryRRPseudo<string key, SDPatternOperator operator,
   let OpType = "reg";
 }
 
+// Like BinaryRI, but expanded after RA depending on the choice of register.
+class BinaryRIPseudo<SDPatternOperator operator, RegisterOperand cls,
+                     Immediate imm>
+  : Pseudo<(outs cls:$R1), (ins cls:$R1src, imm:$I2),
+           [(set cls:$R1, (operator cls:$R1src, imm:$I2))]> {
+  let Constraints = "$R1 = $R1src";
+}
+
 // Like StoreRXY, but expanded after RA depending on the choice of registers.
 class StoreRXYPseudo<SDPatternOperator operator, RegisterOperand cls,
                      bits<5> bytes, AddressingMode mode = bdxaddr20only>

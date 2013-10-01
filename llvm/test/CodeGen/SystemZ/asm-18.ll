@@ -315,3 +315,41 @@ define void @f14(i32 %x, i32 %y) {
   call void asm sideeffect "blah $0", "r"(i32 %val)
   ret void
 }
+
+; Test immediate insertion involving high registers.
+define void @f15() {
+; CHECK-LABEL: f15:
+; CHECK: stepa [[REG:%r[0-5]]]
+; CHECK: iihh [[REG]], 4660
+; CHECK: stepb [[REG]]
+; CHECK: iihl [[REG]], 34661
+; CHECK: stepc [[REG]]
+; CHECK: br %r14
+  %res1 = call i32 asm "stepa $0", "=h"()
+  %and1 = and i32 %res1, 65535
+  %or1 = or i32 %and1, 305397760
+  %res2 = call i32 asm "stepb $0, $1", "=h,h"(i32 %or1)
+  %and2 = and i32 %res2, -65536
+  %or2 = or i32 %and2, 34661
+  call void asm sideeffect "stepc $0", "h"(i32 %or2)
+  ret void
+}
+
+; Test immediate insertion involving low registers.
+define void @f16() {
+; CHECK-LABEL: f16:
+; CHECK: stepa [[REG:%r[0-5]]]
+; CHECK: iilh [[REG]], 4660
+; CHECK: stepb [[REG]]
+; CHECK: iill [[REG]], 34661
+; CHECK: stepc [[REG]]
+; CHECK: br %r14
+  %res1 = call i32 asm "stepa $0", "=r"()
+  %and1 = and i32 %res1, 65535
+  %or1 = or i32 %and1, 305397760
+  %res2 = call i32 asm "stepb $0, $1", "=r,r"(i32 %or1)
+  %and2 = and i32 %res2, -65536
+  %or2 = or i32 %and2, 34661
+  call void asm sideeffect "stepc $0", "r"(i32 %or2)
+  ret void
+}

@@ -629,12 +629,20 @@ defm : InsertMem<"inserti8", ICY, GR64, azextloadi8, bdxaddr20pair>;
 // Insertions of a 16-bit immediate, leaving other bits unaffected.
 // We don't have or_as_insert equivalents of these operations because
 // OI is available instead.
+//
+// IIxMux expands to II[LH]x, depending on the choice of register.
+def IILMux : BinaryRIPseudo<insertll, GRX32, imm32ll16>,
+             Requires<[FeatureHighWord]>;
+def IIHMux : BinaryRIPseudo<insertlh, GRX32, imm32lh16>,
+             Requires<[FeatureHighWord]>;
 def IILL : BinaryRI<"iill", 0xA53, insertll, GR32, imm32ll16>;
 def IILH : BinaryRI<"iilh", 0xA52, insertlh, GR32, imm32lh16>;
+def IIHL : BinaryRI<"iihl", 0xA51, insertll, GRH32, imm32ll16>;
+def IIHH : BinaryRI<"iihh", 0xA50, insertlh, GRH32, imm32lh16>;
 def IILL64 : BinaryAliasRI<insertll, GR64, imm64ll16>;
 def IILH64 : BinaryAliasRI<insertlh, GR64, imm64lh16>;
-def IIHL : BinaryRI<"iihl", 0xA51, inserthl, GR64, imm64hl16>;
-def IIHH : BinaryRI<"iihh", 0xA50, inserthh, GR64, imm64hh16>;
+def IIHL64 : BinaryAliasRI<inserthl, GR64, imm64hl16>;
+def IIHH64 : BinaryAliasRI<inserthh, GR64, imm64hh16>;
 
 // ...likewise for 32-bit immediates.  For GR32s this is a general
 // full-width move.  (We use IILF rather than something like LLILF
