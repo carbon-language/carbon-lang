@@ -245,6 +245,22 @@
 	srlk	%r0,%r0,0(%r1,%r2)
 
 #CHECK: error: invalid operand
+#CHECK: stch	%r0, -524289
+#CHECK: error: invalid operand
+#CHECK: stch	%r0, 524288
+
+	stch	%r0, -524289
+	stch	%r0, 524288
+
+#CHECK: error: invalid operand
+#CHECK: sthh	%r0, -524289
+#CHECK: error: invalid operand
+#CHECK: sthh	%r0, 524288
+
+	sthh	%r0, -524289
+	sthh	%r0, 524288
+
+#CHECK: error: invalid operand
 #CHECK: stfh	%r0, -524289
 #CHECK: error: invalid operand
 #CHECK: stfh	%r0, 524288

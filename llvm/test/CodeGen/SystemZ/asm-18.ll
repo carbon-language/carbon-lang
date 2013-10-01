@@ -146,3 +146,49 @@ define void @f6(i16 *%ptr1, i16 *%ptr2) {
                            "h,r,h,r"(i32 %ext1, i32 %ext2, i32 %ext3, i32 %ext4)
   ret void
 }
+
+; Test truncating stores of high and low registers into 8-bit memory.
+define void @f7(i8 *%ptr1, i8 *%ptr2) {
+; CHECK-LABEL: f7:
+; CHECK: blah [[REG1:%r[0-5]]], [[REG2:%r[0-5]]]
+; CHECK-DAG: stch [[REG1]], 0(%r2)
+; CHECK-DAG: stc [[REG2]], 0(%r3)
+; CHECK-DAG: stch [[REG1]], 4096(%r2)
+; CHECK-DAG: stcy [[REG2]], 524287(%r3)
+; CHECK: br %r14
+  %res = call { i32, i32 } asm "blah $0, $1", "=h,=r"()
+  %res1 = extractvalue { i32, i32 } %res, 0
+  %res2 = extractvalue { i32, i32 } %res, 1
+  %trunc1 = trunc i32 %res1 to i8
+  %trunc2 = trunc i32 %res2 to i8
+  %ptr3 = getelementptr i8 *%ptr1, i64 4096
+  %ptr4 = getelementptr i8 *%ptr2, i64 524287
+  store i8 %trunc1, i8 *%ptr1
+  store i8 %trunc2, i8 *%ptr2
+  store i8 %trunc1, i8 *%ptr3
+  store i8 %trunc2, i8 *%ptr4
+  ret void
+}
+
+; Test truncating stores of high and low registers into 16-bit memory.
+define void @f8(i16 *%ptr1, i16 *%ptr2) {
+; CHECK-LABEL: f8:
+; CHECK: blah [[REG1:%r[0-5]]], [[REG2:%r[0-5]]]
+; CHECK-DAG: sthh [[REG1]], 0(%r2)
+; CHECK-DAG: sth [[REG2]], 0(%r3)
+; CHECK-DAG: sthh [[REG1]], 4096(%r2)
+; CHECK-DAG: sthy [[REG2]], 524286(%r3)
+; CHECK: br %r14
+  %res = call { i32, i32 } asm "blah $0, $1", "=h,=r"()
+  %res1 = extractvalue { i32, i32 } %res, 0
+  %res2 = extractvalue { i32, i32 } %res, 1
+  %trunc1 = trunc i32 %res1 to i16
+  %trunc2 = trunc i32 %res2 to i16
+  %ptr3 = getelementptr i16 *%ptr1, i64 2048
+  %ptr4 = getelementptr i16 *%ptr2, i64 262143
+  store i16 %trunc1, i16 *%ptr1
+  store i16 %trunc2, i16 *%ptr2
+  store i16 %trunc1, i16 *%ptr3
+  store i16 %trunc2, i16 *%ptr4
+  ret void
+}

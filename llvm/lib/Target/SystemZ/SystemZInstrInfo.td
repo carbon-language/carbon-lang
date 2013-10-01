@@ -488,10 +488,22 @@ def LLGFRL : UnaryRILPC<"llgfrl", 0xC4E, aligned_azextloadi32, GR64>;
 def : Pat<(i32 (trunc GR64:$src)),
           (EXTRACT_SUBREG GR64:$src, subreg_l32)>;
 
-// Truncations of 32-bit registers to memory.
-defm STC   : StoreRXPair<"stc", 0x42, 0xE372, truncstorei8,  GR32, 1>;
-defm STH   : StoreRXPair<"sth", 0x40, 0xE370, truncstorei16, GR32, 2>;
-def  STHRL : StoreRILPC<"sthrl", 0xC47, aligned_truncstorei16, GR32>;
+// Truncations of 32-bit registers to 8-bit memory.  STCMux expands to
+// STC, STCY or STCH, depending on the choice of register.
+def STCMux : StoreRXYPseudo<truncstorei8, GRX32, 1>,
+             Requires<[FeatureHighWord]>;
+defm STC : StoreRXPair<"stc", 0x42, 0xE372, truncstorei8, GR32, 1>;
+def STCH : StoreRXY<"stch", 0xE3C3, truncstorei8, GRH32, 1>,
+           Requires<[FeatureHighWord]>;
+
+// Truncations of 32-bit registers to 16-bit memory.  STHMux expands to
+// STH, STHY or STHH, depending on the choice of register.
+def STHMux : StoreRXYPseudo<truncstorei16, GRX32, 1>,
+             Requires<[FeatureHighWord]>;
+defm STH : StoreRXPair<"sth", 0x40, 0xE370, truncstorei16, GR32, 2>;
+def STHH : StoreRXY<"sthh", 0xE3C7, truncstorei16, GRH32, 2>,
+           Requires<[FeatureHighWord]>;
+def STHRL : StoreRILPC<"sthrl", 0xC47, aligned_truncstorei16, GR32>;
 
 // Truncations of 64-bit registers to memory.
 defm : StoreGR64Pair<STC, STCY, truncstorei8>;

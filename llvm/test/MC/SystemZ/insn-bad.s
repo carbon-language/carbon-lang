@@ -2915,6 +2915,11 @@
 	stc	%r0, -1
 	stc	%r0, 4096
 
+#CHECK: error: {{(instruction requires: high-word)?}}
+#CHECK: stch	%r0, 0
+
+	stch	%r0, 0
+
 #CHECK: error: invalid operand
 #CHECK: stcy	%r0, -524289
 #CHECK: error: invalid operand
@@ -2984,6 +2989,11 @@
 
 	sth	%r0, -1
 	sth	%r0, 4096
+
+#CHECK: error: {{(instruction requires: high-word)?}}
+#CHECK: sthh	%r0, 0
+
+	sthh	%r0, 0
 
 #CHECK: error: offset out of range
 #CHECK: sthrl	%r0, -0x1000000002
