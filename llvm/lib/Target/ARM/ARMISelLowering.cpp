@@ -1015,6 +1015,7 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::BR_JT:         return "ARMISD::BR_JT";
   case ARMISD::BR2_JT:        return "ARMISD::BR2_JT";
   case ARMISD::RET_FLAG:      return "ARMISD::RET_FLAG";
+  case ARMISD::INTRET_FLAG:   return "ARMISD::INTRET_FLAG";
   case ARMISD::PIC_ADD:       return "ARMISD::PIC_ADD";
   case ARMISD::CMP:           return "ARMISD::CMP";
   case ARMISD::CMN:           return "ARMISD::CMN";
@@ -1966,6 +1967,12 @@ ARMTargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
   if (isVarArg && !Outs.empty())
     return false;
 
+  // Exception-handling functions need a special set of instructions to indicate
+  // a return to the hardware. Tail-calling another function would probably
+  // break this.
+  if (CallerF->hasFnAttribute("interrupt"))
+    return false;
+
   // Also avoid sibcall optimization if either caller or callee uses struct
   // return semantics.
   if (isCalleeStructRet || isCallerStructRet)
@@ -2094,6 +2101,39 @@ ARMTargetLowering::CanLowerReturn(CallingConv::ID CallConv,
                                                     isVarArg));
 }
 
+static SDValue LowerInterruptReturn(SmallVectorImpl<SDValue> &RetOps,
+                                    SDLoc DL, SelectionDAG &DAG) {
+  const MachineFunction &MF = DAG.getMachineFunction();
+  const Function *F = MF.getFunction();
+
+  StringRef IntKind = F->getFnAttribute("interrupt").getValueAsString();
+
+  // See ARM ARM v7 B1.8.3. On exception entry LR is set to a possibly offset
+  // version of the "preferred return address". These offsets affect the return
+  // instruction if this is a return from PL1 without hypervisor extensions.
+  //    IRQ/FIQ: +4     "subs pc, lr, #4"
+  //    SWI:     0      "subs pc, lr, #0"
+  //    ABORT:   +4     "subs pc, lr, #4"
+  //    UNDEF:   +4/+2  "subs pc, lr, #0"
+  // UNDEF varies depending on where the exception came from ARM or Thumb
+  // mode. Alongside GCC, we throw our hands up in disgust and pretend it's 0.
+
+  int64_t LROffset;
+  if (IntKind == "" || IntKind == "IRQ" || IntKind == "FIQ" ||
+      IntKind == "ABORT")
+    LROffset = 4;
+  else if (IntKind == "SWI" || IntKind == "UNDEF")
+    LROffset = 0;
+  else
+    report_fatal_error("Unsupported interrupt attribute. If present, value "
+                       "must be one of: IRQ, FIQ, SWI, ABORT or UNDEF");
+
+  RetOps.insert(RetOps.begin() + 1, DAG.getConstant(LROffset, MVT::i32, false));
+
+  return DAG.getNode(ARMISD::INTRET_FLAG, DL, MVT::Other,
+                     RetOps.data(), RetOps.size());
+}
+
 SDValue
 ARMTargetLowering::LowerReturn(SDValue Chain,
                                CallingConv::ID CallConv, bool isVarArg,
@@ -2179,6 +2219,19 @@ ARMTargetLowering::LowerReturn(SDValue Chain,
   if (Flag.getNode())
     RetOps.push_back(Flag);
 
+  // CPUs which aren't M-class use a special sequence to return from
+  // exceptions (roughly, any instruction setting pc and cpsr simultaneously,
+  // though we use "subs pc, lr, #N").
+  //
+  // M-class CPUs actually use a normal return sequence with a special
+  // (hardware-provided) value in LR, so the normal code path works.
+  if (DAG.getMachineFunction().getFunction()->hasFnAttribute("interrupt") &&
+      !Subtarget->isMClass()) {
+    if (Subtarget->isThumb1Only())
+      report_fatal_error("interrupt attribute is not supported in Thumb1");
+    return LowerInterruptReturn(RetOps, dl, DAG);
+  }
+
   return DAG.getNode(ARMISD::RET_FLAG, dl, MVT::Other,
                      RetOps.data(), RetOps.size());
 }
@@ -2235,7 +2288,8 @@ bool ARMTargetLowering::isUsedByReturnOnly(SDNode *N, SDValue &Chain) const {
   bool HasRet = false;
   for (SDNode::use_iterator UI = Copy->use_begin(), UE = Copy->use_end();
        UI != UE; ++UI) {
-    if (UI->getOpcode() != ARMISD::RET_FLAG)
+    if (UI->getOpcode() != ARMISD::RET_FLAG &&
+        UI->getOpcode() != ARMISD::INTRET_FLAG)
       return false;
     HasRet = true;
   }

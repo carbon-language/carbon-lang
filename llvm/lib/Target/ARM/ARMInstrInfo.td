@@ -121,7 +121,8 @@ def ARMcall_nolink   : SDNode<"ARMISD::CALL_NOLINK", SDT_ARMcall,
 
 def ARMretflag       : SDNode<"ARMISD::RET_FLAG", SDTNone,
                               [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
-
+def ARMintretflag    : SDNode<"ARMISD::INTRET_FLAG", SDT_ARMcall,
+                              [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
 def ARMcmov          : SDNode<"ARMISD::CMOV", SDT_ARMCMov,
                               [SDNPInGlue]>;
 
@@ -1925,6 +1926,12 @@ let isReturn = 1, isTerminator = 1, isBarrier = 1 in {
                Requires<[IsARM, NoV4T]>, Sched<[WriteBr]> {
     let Inst{27-0} = 0b0001101000001111000000001110;
   }
+
+  // Exception return: N.b. doesn't set CPSR as far as we're concerned (it sets
+  // the user-space one).
+  def SUBS_PC_LR : ARMPseudoInst<(outs), (ins i32imm:$offset, pred:$p),
+                                 4, IIC_Br,
+                                 [(ARMintretflag imm:$offset)]>;
 }
 
 // Indirect branches

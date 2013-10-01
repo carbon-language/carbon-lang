@@ -51,20 +51,34 @@ ARMBaseRegisterInfo::ARMBaseRegisterInfo(const ARMSubtarget &sti)
 
 const uint16_t*
 ARMBaseRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
-  bool ghcCall = false;
- 
-  if (MF) {
-    const Function *F = MF->getFunction();
-    ghcCall = (F ? F->getCallingConv() == CallingConv::GHC : false);
-  }
- 
-  if (ghcCall)
+  const uint16_t *RegList = (STI.isTargetIOS() && !STI.isAAPCS_ABI())
+                                ? CSR_iOS_SaveList
+                                : CSR_AAPCS_SaveList;
+
+  if (!MF) return RegList;
+
+  const Function *F = MF->getFunction();
+  if (F->getCallingConv() == CallingConv::GHC) {
     // GHC set of callee saved regs is empty as all those regs are
     // used for passing STG regs around
     return CSR_NoRegs_SaveList;
-  else
-    return (STI.isTargetIOS() && !STI.isAAPCS_ABI())
-      ? CSR_iOS_SaveList : CSR_AAPCS_SaveList;
+  } else if (F->hasFnAttribute("interrupt")) {
+    if (STI.isMClass()) {
+      // M-class CPUs have hardware which saves the registers needed to allow a
+      // function conforming to the AAPCS to function as a handler.
+      return CSR_AAPCS_SaveList;
+    } else if (F->getFnAttribute("interrupt").getValueAsString() == "FIQ") {
+      // Fast interrupt mode gives the handler a private copy of R8-R14, so less
+      // need to be saved to restore user-mode state.
+      return CSR_FIQ_SaveList;
+    } else {
+      // Generally only R13-R14 (i.e. SP, LR) are automatically preserved by
+      // exception handling.
+      return CSR_GenericInt_SaveList;
+    }
+  }
+
+  return RegList;
 }
 
 const uint32_t*

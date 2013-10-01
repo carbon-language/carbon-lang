@@ -3758,9 +3758,12 @@ def t2RFEIA  : T2RFE<0b111010011001,
                    [/* For disassembly only; pattern left blank */]>;
 
 // B9.3.19 SUBS PC, LR, #imm (Thumb2) system instruction.
-let Defs = [PC], Uses = [LR] in
+// Exception return instruction is "subs pc, lr, #imm".
+let isReturn = 1, isBarrier = 1, isTerminator = 1, Defs = [PC] in
 def t2SUBS_PC_LR : T2I <(outs), (ins imm0_255:$imm), NoItinerary,
-                   "subs", "\tpc, lr, $imm", []>, Requires<[IsThumb2]> {
+                        "subs", "\tpc, lr, $imm",
+                        [(ARMintretflag imm0_255:$imm)]>,
+                   Requires<[IsThumb2]> {
   let Inst{31-8} = 0b111100111101111010001111;
 
   bits<8> imm;

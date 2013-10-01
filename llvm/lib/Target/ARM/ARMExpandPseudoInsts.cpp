@@ -962,6 +962,18 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
       ExpandMOV32BitImm(MBB, MBBI);
       return true;
 
+    case ARM::SUBS_PC_LR: {
+      MachineInstrBuilder MIB =
+          BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(ARM::SUBri), ARM::PC)
+              .addReg(ARM::LR)
+              .addOperand(MI.getOperand(0))
+              .addOperand(MI.getOperand(1))
+              .addOperand(MI.getOperand(2))
+              .addReg(ARM::CPSR, RegState::Undef);
+      TransferImpOps(MI, MIB, MIB);
+      MI.eraseFromParent();
+      return true;
+    }
     case ARM::VLDMQIA: {
       unsigned NewOpc = ARM::VLDMDIA;
       MachineInstrBuilder MIB =

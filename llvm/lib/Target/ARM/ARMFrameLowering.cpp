@@ -175,6 +175,10 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
     unsigned Reg = CSI[i].getReg();
     int FI = CSI[i].getFrameIdx();
     switch (Reg) {
+    case ARM::R0:
+    case ARM::R1:
+    case ARM::R2:
+    case ARM::R3:
     case ARM::R4:
     case ARM::R5:
     case ARM::R6:
@@ -189,6 +193,7 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
     case ARM::R9:
     case ARM::R10:
     case ARM::R11:
+    case ARM::R12:
       if (Reg == FramePtr)
         FramePtrSpillFI = FI;
       if (STI.isTargetIOS()) {
@@ -373,7 +378,7 @@ void ARMFrameLowering::emitEpilogue(MachineFunction &MF,
       emitSPUpdate(isARM, MBB, MBBI, dl, TII, NumBytes);
   } else {
     // Unwind MBBI to point to first LDR / VLDRD.
-    const uint16_t *CSRegs = RegInfo->getCalleeSavedRegs();
+    const uint16_t *CSRegs = RegInfo->getCalleeSavedRegs(&MF);
     if (MBBI != MBB.begin()) {
       do
         --MBBI;
@@ -658,6 +663,8 @@ void ARMFrameLowering::emitPopInst(MachineBasicBlock &MBB,
   unsigned RetOpcode = MI->getOpcode();
   bool isTailCall = (RetOpcode == ARM::TCRETURNdi ||
                      RetOpcode == ARM::TCRETURNri);
+  bool isInterrupt =
+      RetOpcode == ARM::SUBS_PC_LR || RetOpcode == ARM::t2SUBS_PC_LR;
 
   SmallVector<unsigned, 4> Regs;
   unsigned i = CSI.size();
@@ -672,7 +679,8 @@ void ARMFrameLowering::emitPopInst(MachineBasicBlock &MBB,
       if (Reg >= ARM::D8 && Reg < ARM::D8 + NumAlignedDPRCS2Regs)
         continue;
 
-      if (Reg == ARM::LR && !isTailCall && !isVarArg && STI.hasV5TOps()) {
+      if (Reg == ARM::LR && !isTailCall && !isVarArg && !isInterrupt &&
+          STI.hasV5TOps()) {
         Reg = ARM::PC;
         LdmOpc = AFI->isThumbFunction() ? ARM::t2LDMIA_RET : ARM::LDMIA_RET;
         // Fold the return instruction into the LDM.
@@ -1199,7 +1207,7 @@ ARMFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
 
   // Don't spill FP if the frame can be eliminated. This is determined
   // by scanning the callee-save registers to see if any is used.
-  const uint16_t *CSRegs = RegInfo->getCalleeSavedRegs();
+  const uint16_t *CSRegs = RegInfo->getCalleeSavedRegs(&MF);
   for (unsigned i = 0; CSRegs[i]; ++i) {
     unsigned Reg = CSRegs[i];
     bool Spilled = false;
@@ -1226,6 +1234,8 @@ ARMFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
       case ARM::LR:
         LRSpilled = true;
         // Fallthrough
+      case ARM::R0: case ARM::R1:
+      case ARM::R2: case ARM::R3:
       case ARM::R4: case ARM::R5:
       case ARM::R6: case ARM::R7:
         CS1Spilled = true;
@@ -1240,6 +1250,8 @@ ARMFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
       }
 
       switch (Reg) {
+      case ARM::R0: case ARM::R1:
+      case ARM::R2: case ARM::R3:
       case ARM::R4: case ARM::R5:
       case ARM::R6: case ARM::R7:
       case ARM::LR:
@@ -1295,8 +1307,12 @@ ARMFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
     if (!LRSpilled && CS1Spilled) {
       MRI.setPhysRegUsed(ARM::LR);
       NumGPRSpills++;
-      UnspilledCS1GPRs.erase(std::find(UnspilledCS1GPRs.begin(),
-                                    UnspilledCS1GPRs.end(), (unsigned)ARM::LR));
+      SmallVectorImpl<unsigned>::iterator LRPos;
+      LRPos = std::find(UnspilledCS1GPRs.begin(), UnspilledCS1GPRs.end(),
+                        (unsigned)ARM::LR);
+      if (LRPos != UnspilledCS1GPRs.end())
+        UnspilledCS1GPRs.erase(LRPos);
+
       ForceLRSpill = false;
       ExtraCSSpill = true;
     }

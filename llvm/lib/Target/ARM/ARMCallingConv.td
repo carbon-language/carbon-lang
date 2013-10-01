@@ -207,4 +207,24 @@ def CSR_AAPCS_ThisReturn : CalleeSavedRegs<(add LR, R11, R10, R9, R8, R7, R6,
 def CSR_iOS : CalleeSavedRegs<(add LR, R7, R6, R5, R4, (sub CSR_AAPCS, R9))>;
 
 def CSR_iOS_ThisReturn : CalleeSavedRegs<(add LR, R7, R6, R5, R4,
-                                          (sub CSR_AAPCS_ThisReturn, R9))>;
+                                         (sub CSR_AAPCS_ThisReturn, R9))>;
+
+// The "interrupt" attribute is used to generate code that is acceptable in
+// exception-handlers of various kinds. It makes us use a different return
+// instruction (handled elsewhere) and affects which registers we must return to
+// our "caller" in the same state as we receive them.
+
+// For most interrupts, all registers except SP and LR are shared with
+// user-space. We mark LR to be saved anyway, since this is what the ARM backend
+// generally does rather than tracking its liveness as a normal register.
+def CSR_GenericInt : CalleeSavedRegs<(add LR, (sequence "R%u", 12, 0))>;
+
+// The fast interrupt handlers have more private state and get their own copies
+// of R8-R12, in addition to SP and LR. As before, mark LR for saving too.
+
+// FIXME: we mark R11 as callee-saved since it's often the frame-pointer, and
+// current frame lowering expects to encounter it while processing callee-saved
+// registers.
+def CSR_FIQ : CalleeSavedRegs<(add LR, R11, (sequence "R%u", 7, 0))>;
+
+
