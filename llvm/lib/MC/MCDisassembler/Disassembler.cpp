@@ -20,6 +20,7 @@
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCSymbolizer.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/MemoryObject.h"
 #include "llvm/Support/TargetRegistry.h"
 
@@ -143,6 +144,36 @@ public:
 };
 } // end anonymous namespace
 
+/// \brief Emits the comments that are stored in \p DC comment stream.
+/// Each comment in the comment stream must end with a newline.
+static void emitComments(LLVMDisasmContext *DC,
+                         formatted_raw_ostream &FormattedOS) {
+  // Flush the stream before taking its content.
+  DC->CommentStream.flush();
+  StringRef Comments = DC->CommentsToEmit.str();
+  // Get the default information for printing a comment.
+  const MCAsmInfo *MAI = DC->getAsmInfo();
+  const char *CommentBegin = MAI->getCommentString();
+  unsigned CommentColumn = MAI->getCommentColumn();
+  bool IsFirst = true;
+  while (!Comments.empty()) {
+    if (!IsFirst)
+      FormattedOS << '\n';
+    // Emit a line of comments.
+    FormattedOS.PadToColumn(CommentColumn);
+    size_t Position = Comments.find('\n');
+    FormattedOS << CommentBegin << ' ' << Comments.substr(0, Position);
+    // Move after the newline character.
+    Comments = Comments.substr(Position+1);
+    IsFirst = false;
+  }
+  FormattedOS.flush();
+
+  // Tell the comment stream that the vector changed underneath it.
+  DC->CommentsToEmit.clear();
+  DC->CommentStream.resync();
+}
+
 //
 // LLVMDisasmInstruction() disassembles a single instruction using the
 // disassembler context specified in the parameter DC.  The bytes of the
@@ -167,8 +198,10 @@ size_t LLVMDisasmInstruction(LLVMDisasmContextRef DCR, uint8_t *Bytes,
   const MCDisassembler *DisAsm = DC->getDisAsm();
   MCInstPrinter *IP = DC->getIP();
   MCDisassembler::DecodeStatus S;
+  SmallVector<char, 64> InsnStr;
+  raw_svector_ostream Annotations(InsnStr);
   S = DisAsm->getInstruction(Inst, Size, MemoryObject, PC,
-                             /*REMOVE*/ nulls(), DC->CommentStream);
+                             /*REMOVE*/ nulls(), Annotations);
   switch (S) {
   case MCDisassembler::Fail:
   case MCDisassembler::SoftFail:
@@ -176,17 +209,15 @@ size_t LLVMDisasmInstruction(LLVMDisasmContextRef DCR, uint8_t *Bytes,
     return 0;
 
   case MCDisassembler::Success: {
-    DC->CommentStream.flush();
-    StringRef Comments = DC->CommentsToEmit.str();
+    Annotations.flush();
+    StringRef AnnotationsStr = Annotations.str();
 
     SmallVector<char, 64> InsnStr;
     raw_svector_ostream OS(InsnStr);
-    IP->printInst(&Inst, OS, Comments);
-    OS.flush();
+    formatted_raw_ostream FormattedOS(OS);
+    IP->printInst(&Inst, FormattedOS, AnnotationsStr);
 
-    // Tell the comment stream that the vector changed underneath it.
-    DC->CommentsToEmit.clear();
-    DC->CommentStream.resync();
+    emitComments(DC, FormattedOS);
 
     assert(OutStringSize != 0 && "Output buffer cannot be zero size");
     size_t OutputSize = std::min(OutStringSize-1, InsnStr.size());
@@ -231,6 +262,12 @@ int LLVMSetDisasmOptions(LLVMDisasmContextRef DCR, uint64_t Options){
         DC->setIP(IP);
         Options &= ~LLVMDisassembler_Option_AsmPrinterVariant;
       }
+  }
+  if (Options & LLVMDisassembler_Option_SetInstrComments) {
+    LLVMDisasmContext *DC = (LLVMDisasmContext *)DCR;
+    MCInstPrinter *IP = DC->getIP();
+    IP->setCommentStream(DC->CommentStream);
+    Options &= ~LLVMDisassembler_Option_SetInstrComments;
   }
   return (Options == 0);
 }
