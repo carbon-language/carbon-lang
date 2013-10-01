@@ -16,69 +16,36 @@
 #include <cassert>
 using namespace llvm;
 
-namespace {
-  class CountArangeDescriptors {
-  public:
-    CountArangeDescriptors(uint32_t &count_ref) : Count(count_ref) {}
-    void operator()(const DWARFDebugArangeSet &Set) {
-      Count += Set.getNumDescriptors();
-    }
-    uint32_t &Count;
-  };
-
-  class AddArangeDescriptors {
-  public:
-    AddArangeDescriptors(DWARFDebugAranges::RangeColl &Ranges,
-                         DWARFDebugAranges::ParsedCUOffsetColl &CUOffsets)
-      : RangeCollection(Ranges),
-        CUOffsetCollection(CUOffsets) {}
-    void operator()(const DWARFDebugArangeSet &Set) {
-      DWARFDebugAranges::Range Range;
-      Range.CUOffset = Set.getCompileUnitDIEOffset();
-      CUOffsetCollection.insert(Range.CUOffset);
-
-      for (uint32_t i = 0, n = Set.getNumDescriptors(); i < n; ++i) {
-        const DWARFDebugArangeSet::Descriptor *ArangeDescPtr =
-            Set.getDescriptor(i);
-        Range.LowPC = ArangeDescPtr->Address;
-        Range.Length = ArangeDescPtr->Length;
-
-        // Insert each item in increasing address order so binary searching
-        // can later be done!
-        DWARFDebugAranges::RangeColl::iterator InsertPos =
-          std::lower_bound(RangeCollection.begin(), RangeCollection.end(),
-                           Range);
-        RangeCollection.insert(InsertPos, Range);
-      }
-
-    }
-    DWARFDebugAranges::RangeColl &RangeCollection;
-    DWARFDebugAranges::ParsedCUOffsetColl &CUOffsetCollection;
-  };
-}
-
 void DWARFDebugAranges::extract(DataExtractor DebugArangesData) {
   if (!DebugArangesData.isValidOffset(0))
     return;
-  uint32_t offset = 0;
+  uint32_t Offset = 0;
+  typedef std::vector<DWARFDebugArangeSet> RangeSetColl;
+  RangeSetColl Sets;
+  DWARFDebugArangeSet Set;
+  uint32_t TotalRanges = 0;
 
-  typedef std::vector<DWARFDebugArangeSet> SetCollection;
-  SetCollection sets;
-
-  DWARFDebugArangeSet set;
-  Range range;
-  while (set.extract(DebugArangesData, &offset))
-    sets.push_back(set);
-
-  uint32_t count = 0;
-
-  std::for_each(sets.begin(), sets.end(), CountArangeDescriptors(count));
-
-  if (count > 0) {
-    Aranges.reserve(count);
-    AddArangeDescriptors range_adder(Aranges, ParsedCUOffsets);
-    std::for_each(sets.begin(), sets.end(), range_adder);
+  while (Set.extract(DebugArangesData, &Offset)) {
+    Sets.push_back(Set);
+    TotalRanges += Set.getNumDescriptors();
   }
+  if (TotalRanges == 0)
+    return;
+
+  Aranges.reserve(TotalRanges);
+  for (RangeSetColl::const_iterator I = Sets.begin(), E = Sets.end(); I != E;
+       ++I) {
+    uint32_t CUOffset = I->getCompileUnitDIEOffset();
+
+    for (uint32_t i = 0, n = I->getNumDescriptors(); i < n; ++i) {
+      const DWARFDebugArangeSet::Descriptor *ArangeDescPtr =
+          I->getDescriptor(i);
+      uint64_t LowPC = ArangeDescPtr->Address;
+      uint64_t HighPC = LowPC + ArangeDescPtr->Length;
+      appendRange(CUOffset, LowPC, HighPC);
+    }
+  }
+  sortAndMinimize();
 }
 
 void DWARFDebugAranges::generate(DWARFContext *CTX) {
