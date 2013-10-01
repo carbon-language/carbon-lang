@@ -50,3 +50,51 @@ define i32 @f2(i32 %old) {
   %new = call i32 asm "stepb $1, $2", "=&h,0,h"(i32 %tmp, i32 %tmp)
   ret i32 %new
 }
+
+; Test sign-extending 8-bit loads into mixtures of high and low registers.
+define void @f3(i8 *%ptr1, i8 *%ptr2) {
+; CHECK-LABEL: f3:
+; CHECK-DAG: lbh [[REG1:%r[0-5]]], 0(%r2)
+; CHECK-DAG: lb [[REG2:%r[0-5]]], 0(%r3)
+; CHECK-DAG: lbh [[REG3:%r[0-5]]], 4096(%r2)
+; CHECK-DAG: lb [[REG4:%r[0-5]]], 524287(%r3)
+; CHECK: blah [[REG1]], [[REG2]]
+; CHECK: br %r14
+  %ptr3 = getelementptr i8 *%ptr1, i64 4096
+  %ptr4 = getelementptr i8 *%ptr2, i64 524287
+  %val1 = load i8 *%ptr1
+  %val2 = load i8 *%ptr2
+  %val3 = load i8 *%ptr3
+  %val4 = load i8 *%ptr4
+  %ext1 = sext i8 %val1 to i32
+  %ext2 = sext i8 %val2 to i32
+  %ext3 = sext i8 %val3 to i32
+  %ext4 = sext i8 %val4 to i32
+  call void asm sideeffect "blah $0, $1, $2, $3",
+                           "h,r,h,r"(i32 %ext1, i32 %ext2, i32 %ext3, i32 %ext4)
+  ret void
+}
+
+; Test sign-extending 16-bit loads into mixtures of high and low registers.
+define void @f4(i16 *%ptr1, i16 *%ptr2) {
+; CHECK-LABEL: f4:
+; CHECK-DAG: lhh [[REG1:%r[0-5]]], 0(%r2)
+; CHECK-DAG: lh [[REG2:%r[0-5]]], 0(%r3)
+; CHECK-DAG: lhh [[REG3:%r[0-5]]], 4096(%r2)
+; CHECK-DAG: lhy [[REG4:%r[0-5]]], 524286(%r3)
+; CHECK: blah [[REG1]], [[REG2]]
+; CHECK: br %r14
+  %ptr3 = getelementptr i16 *%ptr1, i64 2048
+  %ptr4 = getelementptr i16 *%ptr2, i64 262143
+  %val1 = load i16 *%ptr1
+  %val2 = load i16 *%ptr2
+  %val3 = load i16 *%ptr3
+  %val4 = load i16 *%ptr4
+  %ext1 = sext i16 %val1 to i32
+  %ext2 = sext i16 %val2 to i32
+  %ext3 = sext i16 %val3 to i32
+  %ext4 = sext i16 %val4 to i32
+  call void asm sideeffect "blah $0, $1, $2, $3",
+                           "h,r,h,r"(i32 %ext1, i32 %ext2, i32 %ext3, i32 %ext4)
+  ret void
+}

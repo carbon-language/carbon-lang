@@ -1390,6 +1390,11 @@
 	lb	%r0, -524289
 	lb	%r0, 524288
 
+#CHECK: error: {{(instruction requires: high-word)?}}
+#CHECK: lbh	%r0, 0
+
+	lbh	%r0, 0
+
 #CHECK: error: invalid register pair
 #CHECK: lcxbr	%f0, %f2
 #CHECK: error: invalid register pair
@@ -1559,6 +1564,11 @@
 
 	lh	%r0, -1
 	lh	%r0, 4096
+
+#CHECK: error: {{(instruction requires: high-word)?}}
+#CHECK: lhh	%r0, 0
+
+	lhh	%r0, 0
 
 #CHECK: error: invalid operand
 #CHECK: lhi	%r0, -32769

@@ -408,9 +408,21 @@ let Defs = [CC], CCValues = 0xE, CompareZeroCCMask = 0xE in
 def : Pat<(sext_inreg GR64:$src, i32),
           (LGFR (EXTRACT_SUBREG GR64:$src, subreg_l32))>;
 
-// 32-bit extensions from memory.
-def  LB   : UnaryRXY<"lb", 0xE376, asextloadi8, GR32, 1>;
+// 32-bit extensions from 8-bit memory.  LBMux expands to LB or LBH,
+// depending on the choice of register.
+def LBMux : UnaryRXYPseudo<"lb", asextloadi8, GRX32, 1>,
+            Requires<[FeatureHighWord]>;
+def LB  : UnaryRXY<"lb", 0xE376, asextloadi8, GR32, 1>;
+def LBH : UnaryRXY<"lbh", 0xE3C0, asextloadi8, GRH32, 1>,
+          Requires<[FeatureHighWord]>;
+
+// 32-bit extensions from 16-bit memory.  LHMux expands to LH or LHH,
+// depending on the choice of register.
+def LHMux : UnaryRXYPseudo<"lh", asextloadi16, GRX32, 2>,
+            Requires<[FeatureHighWord]>;
 defm LH   : UnaryRXPair<"lh", 0x48, 0xE378, asextloadi16, GR32, 2>;
+def  LHH  : UnaryRXY<"lhh", 0xE3C4, asextloadi16, GRH32, 2>,
+            Requires<[FeatureHighWord]>;
 def  LHRL : UnaryRILPC<"lhrl", 0xC45, aligned_asextloadi16, GR32>;
 
 // 64-bit extensions from memory.

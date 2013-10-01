@@ -806,6 +806,14 @@ SystemZInstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
     splitMove(MI, SystemZ::STD);
     return true;
 
+  case SystemZ::LBMux:
+    expandRXYPseudo(MI, SystemZ::LB, SystemZ::LBH);
+    return true;
+
+  case SystemZ::LHMux:
+    expandRXYPseudo(MI, SystemZ::LH, SystemZ::LHH);
+    return true;
+
   case SystemZ::LMux:
     expandRXYPseudo(MI, SystemZ::L, SystemZ::LFH);
     return true;

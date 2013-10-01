@@ -73,12 +73,28 @@
 	fixbra	%f2, 0, %f0, 0
 
 #CHECK: error: invalid operand
+#CHECK: lbh	%r0, -524289
+#CHECK: error: invalid operand
+#CHECK: lbh	%r0, 524288
+
+	lbh	%r0, -524289
+	lbh	%r0, 524288
+
+#CHECK: error: invalid operand
 #CHECK: lfh	%r0, -524289
 #CHECK: error: invalid operand
 #CHECK: lfh	%r0, 524288
 
 	lfh	%r0, -524289
 	lfh	%r0, 524288
+
+#CHECK: error: invalid operand
+#CHECK: lhh	%r0, -524289
+#CHECK: error: invalid operand
+#CHECK: lhh	%r0, 524288
+
+	lhh	%r0, -524289
+	lhh	%r0, 524288
 
 #CHECK: error: invalid operand
 #CHECK: loc	%r0,0,-1
