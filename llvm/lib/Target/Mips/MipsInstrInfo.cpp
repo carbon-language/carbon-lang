@@ -219,7 +219,7 @@ AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
 
   // If there is only one terminator instruction, process it.
   if (!SecondLastOpc) {
-    // Unconditional branch
+    // Unconditional branch.
     if (LastOpc == UncondBrOpc) {
       TBB = LastInst->getOperand(0).getMBB();
       return BT_Uncond;
