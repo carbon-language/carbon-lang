@@ -29,13 +29,7 @@
 // CHECK: [[MEMFUNPTR]] = {{.*}}, metadata [[FTYPE:![0-9]*]], metadata !"_ZTS3foo"} ; [ DW_TAG_ptr_to_member_type ]
 // CHECK: [[FTYPE]] = {{.*}}, metadata [[FARGS:![0-9]*]], i32 0, null, null, null} ; [ DW_TAG_subroutine_type ]
 // CHECK: [[FARGS]] = metadata !{null, metadata [[FARG1:![0-9]*]]}
-// CHECK: [[FARG1]] = {{.*}} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [artificial] [from foo]
-//
-// We could just emit a declaration of 'foo' here, rather than the entire
-// definition (same goes for any time we emit a member (function or data)
-// pointer type)
-// CHECK: [[FOO]] = {{.*}}, metadata !"_ZTS3foo"} ; [ DW_TAG_structure_type ] [foo]
-// CHECK: metadata !"f", metadata !"_ZN3foo1fEv", i32 {{[0-9]*}}, metadata [[FTYPE:![0-9]*]],
+// CHECK: [[FARG1]] = {{.*}} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [artificial] [from _ZTS3foo]
 //
 // CHECK: [[TCARG6]] = {{.*}}metadata !"f", metadata [[FUNPTR:![0-9]*]], void ()* @_Z4funcv, {{.*}} ; [ DW_TAG_template_value_parameter ]
 // CHECK: [[FUNPTR]] = {{.*}}, metadata [[FUNTYPE:![0-9]*]]} ; [ DW_TAG_pointer_type ]
@@ -47,6 +41,13 @@
 // CHECK: [[TCARG8_1]] = {{.*}}metadata !"", metadata [[INT]], i32 1, {{.*}} ; [ DW_TAG_template_value_parameter ]
 // CHECK: [[TCARG8_2]] = {{.*}}metadata !"", metadata [[INT]], i32 2, {{.*}} ; [ DW_TAG_template_value_parameter ]
 // CHECK: [[TCARG8_3]] = {{.*}}metadata !"", metadata [[INT]], i32 3, {{.*}} ; [ DW_TAG_template_value_parameter ]
+//
+// We could just emit a declaration of 'foo' here, rather than the entire
+// definition (same goes for any time we emit a member (function or data)
+// pointer type)
+// CHECK: [[FOO]] = {{.*}}, metadata !"_ZTS3foo"} ; [ DW_TAG_structure_type ] [foo]
+// CHECK: metadata !"f", metadata !"_ZN3foo1fEv", i32 {{[0-9]*}}, metadata [[FTYPE:![0-9]*]],
+//
 
 
 // CHECK: [[TCNESTED:![0-9]*]] = metadata !{i32 {{[0-9]*}}, metadata !{{[0-9]*}}, metadata [[TC]], {{.*}} ; [ DW_TAG_structure_type ] [nested]
@@ -74,7 +75,7 @@
 // CHECK: metadata [[PTOARGS:![0-9]*]], metadata !"{{.*}}"} ; [ DW_TAG_structure_type ] [PaddingAtEndTemplate<&PaddedObj>]
 // CHECK: [[PTOARGS]] = metadata !{metadata [[PTOARG1:![0-9]*]]}
 // CHECK: [[PTOARG1]] = {{.*}}metadata !"", metadata [[CONST_PADDINGATEND_PTR:![0-9]*]], { i32, i8, [3 x i8] }* @PaddedObj, {{.*}} ; [ DW_TAG_template_value_parameter ]
-// CHECK: [[CONST_PADDINGATEND_PTR]] = {{.*}} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from PaddingAtEnd]
+// CHECK: [[CONST_PADDINGATEND_PTR]] = {{.*}} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from _ZTS12PaddingAtEnd]
 
 // CHECK: metadata [[TCNESTED]], i32 0, i32 1, %"struct.TC<unsigned int, 2, &glb, &foo::e, &foo::f, &func, tmpl_impl, 1, 2, 3>::nested"* @tci, null} ; [ DW_TAG_variable ] [tci]
 
