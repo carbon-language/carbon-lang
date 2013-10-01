@@ -1880,7 +1880,7 @@ The semantics are as follows:
   possible the function itself will make the necessary "lr" adjustments so that
   the "preferred return address" is selected.
 
-  Unfortunately the compiler is unable to make this guarantee for nn "UNDEF"
+  Unfortunately the compiler is unable to make this guarantee for an "UNDEF"
   handler, where the offset from "lr" to the preferred return address depends on
   the execution state of the code which generated the exception. In this case
   a sequence equivalent to "movs pc, lr" will be used.
