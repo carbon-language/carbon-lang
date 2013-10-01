@@ -28,7 +28,7 @@
 using namespace llvm;
 
 AMDGPUInstrInfo::AMDGPUInstrInfo(TargetMachine &tm)
-  : AMDGPUGenInstrInfo(0,0), RI(tm), TM(tm) { }
+  : AMDGPUGenInstrInfo(-1,-1), RI(tm), TM(tm) { }
 
 const AMDGPURegisterInfo &AMDGPUInstrInfo::getRegisterInfo() const {
   return RI;

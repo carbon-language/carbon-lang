@@ -651,6 +651,11 @@ bool isJump(unsigned Opcode) {
   return Opcode == AMDGPU::JUMP || Opcode == AMDGPU::JUMP_COND;
 }
 
+static bool isBranch(unsigned Opcode) {
+  return Opcode == AMDGPU::BRANCH || Opcode == AMDGPU::BRANCH_COND_i32 ||
+      Opcode == AMDGPU::BRANCH_COND_f32;
+}
+
 bool
 R600InstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
                              MachineBasicBlock *&TBB,
@@ -669,6 +674,10 @@ R600InstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
       return false;
     --I;
   }
+  // AMDGPU::BRANCH* instructions are only available after isel and are not
+  // handled
+  if (isBranch(I->getOpcode()))
+    return true;
   if (!isJump(static_cast<MachineInstr *>(I)->getOpcode())) {
     return false;
   }

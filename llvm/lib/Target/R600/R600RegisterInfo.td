@@ -138,8 +138,6 @@ def R600_Addr : RegisterClass <"AMDGPU", [i32], 127, (add (sequence "Addr%u_X", 
 def R600_LDS_SRC_REG : RegisterClass<"AMDGPU", [i32], 32,
   (add OQA, OQB, OQAP, OQBP, LDS_DIRECT_A, LDS_DIRECT_B)>;
 
-} // End isAllocatable = 0
-
 def R600_KC0_X : RegisterClass <"AMDGPU", [f32, i32], 32,
                               (add (sequence "KC0_%u_X", 128, 159))>;
 
@@ -172,6 +170,8 @@ def R600_KC1 : RegisterClass <"AMDGPU", [f32, i32], 32,
                                    (interleave R600_KC1_X, R600_KC1_Y,
                                                R600_KC1_Z, R600_KC1_W)>;
 
+} // End isAllocatable = 0
+
 def R600_TReg32_X : RegisterClass <"AMDGPU", [f32, i32], 32,
                                    (add (sequence "T%u_X", 0, 127), AR_X)>;
 
@@ -192,6 +192,7 @@ def R600_Reg32 : RegisterClass <"AMDGPU", [f32, i32], 32, (add
     R600_TReg32,
     R600_ArrayBase,
     R600_Addr,
+    R600_KC0, R600_KC1,
     ZERO, HALF, ONE, ONE_INT, PV_X, ALU_LITERAL_X, NEG_ONE, NEG_HALF,
     ALU_CONST, ALU_PARAM, OQAP
     )>;

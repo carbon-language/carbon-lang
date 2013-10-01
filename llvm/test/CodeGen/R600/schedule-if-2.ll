@@ -1,4 +1,4 @@
-;RUN: llc < %s -march=r600 -mcpu=cayman -stress-sched -verify-misched
+;RUN: llc < %s -march=r600 -mcpu=cayman -stress-sched -verify-misched -verify-machineinstrs
 ;REQUIRES: asserts
 
 define void @main() {

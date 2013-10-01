@@ -118,15 +118,15 @@ class ILFormat<dag outs, dag ins, string asmstr, list<dag> pattern>
 // Multiclass Instruction formats
 //===--------------------------------------------------------------------===//
 // Multiclass that handles branch instructions
-multiclass BranchConditional<SDNode Op> {
+multiclass BranchConditional<SDNode Op, RegisterClass rci, RegisterClass rcf> {
     def _i32 : ILFormat<(outs),
-  (ins brtarget:$target, GPRI32:$src0),
+  (ins brtarget:$target, rci:$src0),
         "; i32 Pseudo branch instruction",
-  [(Op bb:$target, GPRI32:$src0)]>;
+  [(Op bb:$target, (i32 rci:$src0))]>;
     def _f32 : ILFormat<(outs),
-  (ins brtarget:$target, GPRF32:$src0),
+  (ins brtarget:$target, rcf:$src0),
         "; f32 Pseudo branch instruction",
-  [(Op bb:$target, GPRF32:$src0)]>;
+  [(Op bb:$target, (f32 rcf:$src0))]>;
 }
 
 // Only scalar types should generate flow control
