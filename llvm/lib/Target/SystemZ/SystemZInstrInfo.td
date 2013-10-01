@@ -456,9 +456,21 @@ let neverHasSideEffects = 1 in {
 def : Pat<(and GR64:$src, 0xffffffff),
           (LLGFR (EXTRACT_SUBREG GR64:$src, subreg_l32))>;
 
-// 32-bit extensions from memory.
-def LLC   : UnaryRXY<"llc", 0xE394, azextloadi8,  GR32, 1>;
+// 32-bit extensions from 8-bit memory.  LLCMux expands to LLC or LLCH,
+// depending on the choice of register.
+def LLCMux : UnaryRXYPseudo<"llc", azextloadi8, GRX32, 1>,
+             Requires<[FeatureHighWord]>;
+def LLC  : UnaryRXY<"llc", 0xE394, azextloadi8, GR32, 1>;
+def LLCH : UnaryRXY<"llch", 0xE3C2, azextloadi8, GR32, 1>,
+           Requires<[FeatureHighWord]>;
+
+// 32-bit extensions from 16-bit memory.  LLHMux expands to LLH or LLHH,
+// depending on the choice of register.
+def LLHMux : UnaryRXYPseudo<"llh", azextloadi16, GRX32, 2>,
+             Requires<[FeatureHighWord]>;
 def LLH   : UnaryRXY<"llh", 0xE395, azextloadi16, GR32, 2>;
+def LLHH  : UnaryRXY<"llhh", 0xE3C6, azextloadi16, GR32, 2>,
+            Requires<[FeatureHighWord]>;
 def LLHRL : UnaryRILPC<"llhrl", 0xC42, aligned_azextloadi16, GR32>;
 
 // 64-bit extensions from memory.

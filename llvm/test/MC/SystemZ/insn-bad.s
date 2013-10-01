@@ -1611,6 +1611,11 @@
 	llc	%r0, -524289
 	llc	%r0, 524288
 
+#CHECK: error: {{(instruction requires: high-word)?}}
+#CHECK: llch	%r0, 0
+
+	llch	%r0, 0
+
 #CHECK: error: invalid operand
 #CHECK: llgc	%r0, -524289
 #CHECK: error: invalid operand
@@ -1670,6 +1675,11 @@
 
 	llh	%r0, -524289
 	llh	%r0, 524288
+
+#CHECK: error: {{(instruction requires: high-word)?}}
+#CHECK: llhh	%r0, 0
+
+	llhh	%r0, 0
 
 #CHECK: error: offset out of range
 #CHECK: llhrl	%r0, -0x1000000002

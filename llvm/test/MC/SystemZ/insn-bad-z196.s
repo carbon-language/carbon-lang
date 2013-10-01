@@ -97,6 +97,22 @@
 	lhh	%r0, 524288
 
 #CHECK: error: invalid operand
+#CHECK: llch	%r0, -524289
+#CHECK: error: invalid operand
+#CHECK: llch	%r0, 524288
+
+	llch	%r0, -524289
+	llch	%r0, 524288
+
+#CHECK: error: invalid operand
+#CHECK: llhh	%r0, -524289
+#CHECK: error: invalid operand
+#CHECK: llhh	%r0, 524288
+
+	llhh	%r0, -524289
+	llhh	%r0, 524288
+
+#CHECK: error: invalid operand
 #CHECK: loc	%r0,0,-1
 #CHECK: error: invalid operand
 #CHECK: loc	%r0,0,16

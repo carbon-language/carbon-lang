@@ -814,6 +814,14 @@ SystemZInstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
     expandRXYPseudo(MI, SystemZ::LH, SystemZ::LHH);
     return true;
 
+  case SystemZ::LLCMux:
+    expandRXYPseudo(MI, SystemZ::LLC, SystemZ::LLCH);
+    return true;
+
+  case SystemZ::LLHMux:
+    expandRXYPseudo(MI, SystemZ::LLH, SystemZ::LLHH);
+    return true;
+
   case SystemZ::LMux:
     expandRXYPseudo(MI, SystemZ::L, SystemZ::LFH);
     return true;
