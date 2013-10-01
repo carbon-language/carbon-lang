@@ -28,13 +28,20 @@ protected:
 
 namespace {
 
+// FIXME: Ensure creating an execution engine does not crash when constructed
+//        with a null module.
+/*
+TEST_F(MCJITTest, null_module) {
+  createJIT(0);
+}
+*/
+
 // FIXME: In order to JIT an empty module, there needs to be
 // an interface to ExecutionEngine that forces compilation but
-// does require retrieval of a pointer to a function/global.
+// does not require retrieval of a pointer to a function/global.
 /*
 TEST_F(MCJITTest, empty_module) {
   createJIT(M.take());
-  TheJIT->finalizeObject();
   //EXPECT_NE(0, TheJIT->getObjectImage())
   //  << "Unable to generate executable loaded object image";
 }
@@ -47,7 +54,6 @@ TEST_F(MCJITTest, global_variable) {
   GlobalValue *Global = insertGlobalInt32(M.get(), "test_global", initialValue);
   createJIT(M.take());
   void *globalPtr =  TheJIT->getPointerToGlobal(Global);
-  TheJIT->finalizeObject();
   EXPECT_TRUE(0 != globalPtr)
     << "Unable to get pointer to global value from JIT";
 
@@ -60,15 +66,19 @@ TEST_F(MCJITTest, add_function) {
 
   Function *F = insertAddFunction(M.get());
   createJIT(M.take());
-  void *addPtr = TheJIT->getPointerToFunction(F);
-  TheJIT->finalizeObject();
+  uint64_t addPtr = TheJIT->getFunctionAddress(F->getName().str());
   EXPECT_TRUE(0 != addPtr)
     << "Unable to get pointer to function from JIT";
 
-  int (*AddPtrTy)(int, int) = (int(*)(int, int))(intptr_t)addPtr;
-  EXPECT_EQ(0, AddPtrTy(0, 0));
-  EXPECT_EQ(3, AddPtrTy(1, 2));
-  EXPECT_EQ(-5, AddPtrTy(-2, -3));
+  ASSERT_TRUE(addPtr != 0) << "Unable to get pointer to function .";
+  int (*AddPtr)(int, int) = (int(*)(int, int))addPtr ;
+  EXPECT_EQ(0,   AddPtr(0, 0));
+  EXPECT_EQ(1,   AddPtr(1, 0));
+  EXPECT_EQ(3,   AddPtr(1, 2));
+  EXPECT_EQ(-5,  AddPtr(-2, -3));
+  EXPECT_EQ(30,  AddPtr(10, 20));
+  EXPECT_EQ(-30, AddPtr(-10, -20));
+  EXPECT_EQ(-40, AddPtr(-10, -30));
 }
 
 TEST_F(MCJITTest, run_main) {
@@ -77,12 +87,11 @@ TEST_F(MCJITTest, run_main) {
   int rc = 6;
   Function *Main = insertMainFunction(M.get(), 6);
   createJIT(M.take());
-  void *vPtr = TheJIT->getPointerToFunction(Main);
-  TheJIT->finalizeObject();
-  EXPECT_TRUE(0 != vPtr)
+  uint64_t ptr = TheJIT->getFunctionAddress(Main->getName().str());
+  EXPECT_TRUE(0 != ptr)
     << "Unable to get pointer to main() from JIT";
 
-  int (*FuncPtr)(void) = (int(*)(void))(intptr_t)vPtr;
+  int (*FuncPtr)(void) = (int(*)(void))ptr;
   int returnCode = FuncPtr();
   EXPECT_EQ(returnCode, rc);
 }
@@ -99,11 +108,10 @@ TEST_F(MCJITTest, return_global) {
   endFunctionWithRet(ReturnGlobal, ReadGlobal);
 
   createJIT(M.take());
-  void *rgvPtr = TheJIT->getPointerToFunction(ReturnGlobal);
-  TheJIT->finalizeObject();
+  uint64_t rgvPtr = TheJIT->getFunctionAddress(ReturnGlobal->getName().str());
   EXPECT_TRUE(0 != rgvPtr);
 
-  int32_t(*FuncPtr)(void) = (int32_t(*)(void))(intptr_t)rgvPtr;
+  int32_t(*FuncPtr)(void) = (int32_t(*)(void))rgvPtr;
   EXPECT_EQ(initialNum, FuncPtr())
     << "Invalid value for global returned from JITted function";
 }
@@ -131,10 +139,9 @@ TEST_F(MCJITTest, increment_global) {
 
   createJIT(M.take());
   void *gvPtr = TheJIT->getPointerToGlobal(GV);
-  TheJIT->finalizeObject();
   EXPECT_EQ(initialNum, *(int32_t*)gvPtr);
 
-  void *vPtr = TheJIT->getPointerToFunction(IncrementGlobal);
+  void *vPtr = TheJIT->getFunctionAddress(IncrementGlobal->getName().str());
   EXPECT_TRUE(0 != vPtr)
     << "Unable to get pointer to main() from JIT";
 
@@ -172,67 +179,15 @@ TEST_F(MCJITTest, multiple_functions) {
   }
 
   createJIT(M.take());
-  void *vPtr = TheJIT->getPointerToFunction(Outer);
-  TheJIT->finalizeObject();
-  EXPECT_TRUE(0 != vPtr)
+  uint64_t ptr = TheJIT->getFunctionAddress(Outer->getName().str());
+  EXPECT_TRUE(0 != ptr)
     << "Unable to get pointer to outer function from JIT";
 
-  int32_t(*FuncPtr)(void) = (int32_t(*)(void))(intptr_t)vPtr;
+  int32_t(*FuncPtr)(void) = (int32_t(*)(void))ptr;
   EXPECT_EQ(innerRetVal, FuncPtr())
     << "Incorrect result returned from function";
 }
 
 #endif /*!defined(__arm__)*/
-
-// FIXME: ExecutionEngine has no support empty modules
-/*
-TEST_F(MCJITTest, multiple_empty_modules) {
-  SKIP_UNSUPPORTED_PLATFORM;
-
-  createJIT(M.take());
-  // JIT-compile
-  EXPECT_NE(0, TheJIT->getObjectImage())
-    << "Unable to generate executable loaded object image";
-
-  TheJIT->addModule(createEmptyModule("<other module>"));
-  TheJIT->addModule(createEmptyModule("<other other module>"));
-
-  // JIT again
-  EXPECT_NE(0, TheJIT->getObjectImage())
-    << "Unable to generate executable loaded object image";
-}
-*/
-
-// FIXME: MCJIT must support multiple modules
-/*
-TEST_F(MCJITTest, multiple_modules) {
-  SKIP_UNSUPPORTED_PLATFORM;
-
-  Function *Callee = insertAddFunction(M.get());
-  createJIT(M.take());
-
-  // caller function is defined in a different module
-  M.reset(createEmptyModule("<caller module>"));
-
-  Function *CalleeRef = insertExternalReferenceToFunction(M.get(), Callee);
-  Function *Caller = insertSimpleCallFunction(M.get(), CalleeRef);
-
-  TheJIT->addModule(M.take());
-
-  // get a function pointer in a module that was not used in EE construction
-  void *vPtr = TheJIT->getPointerToFunction(Caller);
-  TheJIT->finalizeObject();
-  EXPECT_NE(0, vPtr)
-    << "Unable to get pointer to caller function from JIT";
-
-  int(*FuncPtr)(int, int) = (int(*)(int, int))(intptr_t)vPtr;
-  EXPECT_EQ(0, FuncPtr(0, 0));
-  EXPECT_EQ(30, FuncPtr(10, 20));
-  EXPECT_EQ(-30, FuncPtr(-10, -20));
-
-  // ensure caller is destroyed before callee (free use before def)
-  M.reset();
-}
-*/
 
 }
