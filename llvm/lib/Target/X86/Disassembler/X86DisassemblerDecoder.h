@@ -541,10 +541,6 @@ struct InternalInstruction {
 
   /* opcode state */
 
-  /* The value of the two-byte escape prefix (usually 0x0f) */
-  uint8_t twoByteEscape;
-  /* The value of the three-byte escape prefix (usually 0x38 or 0x3a) */
-  uint8_t threeByteEscape;
   /* The last byte of the opcode, not counting any ModR/M extension */
   uint8_t opcode;
   /* The ModR/M byte of the instruction, if it is an opcode extension */
