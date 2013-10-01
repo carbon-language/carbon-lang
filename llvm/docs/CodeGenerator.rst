@@ -1614,7 +1614,7 @@ Implementing a Native Assembler
 ===============================
 
 Though you're probably reading this because you want to write or maintain a
-compiler backend, LLVM also fully supports building a native assemblers too.
+compiler backend, LLVM also fully supports building a native assembler.
 We've tried hard to automate the generation of the assembler from the .td files
 (in particular the instruction syntax and encodings), which means that a large
 part of the manual and repetitive data entry can be factored and shared with the
