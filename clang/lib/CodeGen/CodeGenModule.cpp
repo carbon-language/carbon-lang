@@ -243,14 +243,14 @@ llvm::MDNode *CodeGenModule::getTBAAStructTagInfo(QualType BaseTy,
   return TBAA->getTBAAStructTagInfo(BaseTy, AccessN, O);
 }
 
-/// Decorate the instruction with a TBAA tag. For both scalar TBAA
-/// and struct-path aware TBAA, the tag has the same format:
-/// base type, access type and offset.
+/// Decorate the instruction with a TBAA tag. For scalar TBAA, the tag
+/// is the same as the type. For struct-path aware TBAA, the tag
+/// is different from the type: base type, access type and offset.
 /// When ConvertTypeToTag is true, we create a tag based on the scalar type.
 void CodeGenModule::DecorateInstruction(llvm::Instruction *Inst,
                                         llvm::MDNode *TBAAInfo,
                                         bool ConvertTypeToTag) {
-  if (ConvertTypeToTag && TBAA)
+  if (ConvertTypeToTag && TBAA && CodeGenOpts.StructPathTBAA)
     Inst->setMetadata(llvm::LLVMContext::MD_tbaa,
                       TBAA->getTBAAScalarTagInfo(TBAAInfo));
   else

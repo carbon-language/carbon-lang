@@ -2183,9 +2183,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                     options::OPT_fno_strict_aliasing,
                     getToolChain().IsStrictAliasingDefault()))
     CmdArgs.push_back("-relaxed-aliasing");
-  if (!Args.hasFlag(options::OPT_fstruct_path_tbaa,
-                    options::OPT_fno_struct_path_tbaa))
-    CmdArgs.push_back("-no-struct-path-tbaa");
+  if (Args.hasArg(options::OPT_fstruct_path_tbaa))
+    CmdArgs.push_back("-struct-path-tbaa");
   if (Args.hasFlag(options::OPT_fstrict_enums, options::OPT_fno_strict_enums,
                    false))
     CmdArgs.push_back("-fstrict-enums");
