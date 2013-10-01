@@ -84,6 +84,25 @@ private:
   unsigned breakProtrudingToken(const FormatToken &Current, LineState &State,
                                 bool DryRun);
 
+  /// \brief Appends the next token to \p State and updates information
+  /// necessary for indentation.
+  ///
+  /// Puts the token on the current line.
+  ///
+  /// If \p DryRun is \c false, also creates and stores the required
+  /// \c Replacement.
+  void addTokenOnCurrentLine(LineState &State, bool DryRun,
+                             unsigned ExtraSpaces);
+
+  /// \brief Appends the next token to \p State and updates information
+  /// necessary for indentation.
+  ///
+  /// Adds a line break and necessary indentation.
+  ///
+  /// If \p DryRun is \c false, also creates and stores the required
+  /// \c Replacement.
+  unsigned addTokenOnNewLine(LineState &State, bool DryRun);
+
   /// \brief Adds a multiline token to the \p State.
   ///
   /// \returns Extra penalty for the first line of the literal: last line is
