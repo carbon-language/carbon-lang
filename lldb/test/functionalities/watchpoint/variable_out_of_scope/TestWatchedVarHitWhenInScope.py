@@ -28,9 +28,7 @@ class WatchedVariableHitWhenInScopeTestCase(TestBase):
         self.setTearDownCleanup(dictionary=self.d)
         self.watched_var()
 
-    @expectedFailureDarwin
-    @expectedFailureFreeBSD
-    @expectedFailurex86_64
+    @unittest2.expectedFailure
     @dwarf_test
     def test_watched_var_should_only_hit_when_in_scope_with_dwarf(self):
         """Test that a variable watchpoint should only hit when in scope."""
