@@ -876,6 +876,8 @@ RegisterEntryNotAvailable (register_map_entry_t *reg_entry)
     reg_entry->nub_info.reg_dwarf = INVALID_NUB_REGNUM;
     reg_entry->nub_info.reg_generic = INVALID_NUB_REGNUM;
     reg_entry->nub_info.reg_gdb = INVALID_NUB_REGNUM;
+    reg_entry->nub_info.pseudo_regs = NULL;
+    reg_entry->nub_info.update_regs = NULL;
 }
 
 
@@ -2833,7 +2835,8 @@ RNBRemote::HandlePacket_g (const char *p)
     }
     
     for (uint32_t reg = 0; reg < g_num_reg_entries; reg++)
-        register_value_in_hex_fixed_width (ostrm, pid, tid, &g_reg_entries[reg], NULL);
+        if (g_reg_entries[reg].nub_info.pseudo_regs == NULL) // skip registers that are a slice of a real register
+            register_value_in_hex_fixed_width (ostrm, pid, tid, &g_reg_entries[reg], NULL);
 
     return SendPacket (ostrm.str ());
 }
@@ -2896,15 +2899,17 @@ RNBRemote::HandlePacket_G (const char *p)
     for (uint32_t reg = 0; reg < g_num_reg_entries; reg++)
     {
         const register_map_entry_t *reg_entry = &g_reg_entries[reg];
-
-        reg_value.info = reg_entry->nub_info;
-        if (packet.GetHexBytes (reg_value.value.v_sint8, reg_entry->gdb_size, 0xcc) != reg_entry->gdb_size)
-            break;
-
-        if (reg_entry->fail_value == NULL)
+        if (reg_entry->nub_info.pseudo_regs == NULL) // skip registers that are a slice of a real register
         {
-            if (!DNBThreadSetRegisterValueByID (pid, tid, reg_entry->nub_info.set, reg_entry->nub_info.reg, &reg_value))
-                return SendPacket ("E15");
+            reg_value.info = reg_entry->nub_info;
+            if (packet.GetHexBytes (reg_value.value.v_sint8, reg_entry->gdb_size, 0xcc) != reg_entry->gdb_size)
+                break;
+    
+            if (reg_entry->fail_value == NULL)
+            {
+                if (!DNBThreadSetRegisterValueByID (pid, tid, reg_entry->nub_info.set, reg_entry->nub_info.reg, &reg_value))
+                    return SendPacket ("E15");
+            }
         }
     }
     return SendPacket ("OK");
