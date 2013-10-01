@@ -252,7 +252,7 @@ bool Parser::ParseOpenMPSimpleVarList(OpenMPDirectiveKind Kind,
 /// \brief Parsing of OpenMP clauses.
 ///
 ///    clause:
-///       default-clause|private-clause|shared-clause
+///       default-clause|private-clause|firstprivate-clause|shared-clause
 ///
 OMPClause *Parser::ParseOpenMPClause(OpenMPDirectiveKind DKind,
                                      OpenMPClauseKind CKind, bool FirstClause) {
@@ -278,6 +278,7 @@ OMPClause *Parser::ParseOpenMPClause(OpenMPDirectiveKind DKind,
     Clause = ParseOpenMPSimpleClause(CKind);
     break;
   case OMPC_private:
+  case OMPC_firstprivate:
   case OMPC_shared:
     Clause = ParseOpenMPVarListClause(CKind);
     break;
@@ -330,6 +331,8 @@ OMPClause *Parser::ParseOpenMPSimpleClause(OpenMPClauseKind Kind) {
 ///
 ///    private-clause:
 ///       'private' '(' list ')'
+///    firstprivate-clause:
+///       'firstprivate' '(' list ')'
 ///    shared-clause:
 ///       'shared' '(' list ')'
 ///

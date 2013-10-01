@@ -1934,6 +1934,10 @@ void OMPClauseEnqueue::VisitOMPClauseList(T *Node) {
 void OMPClauseEnqueue::VisitOMPPrivateClause(const OMPPrivateClause *C) {
   VisitOMPClauseList(C);
 }
+void OMPClauseEnqueue::VisitOMPFirstprivateClause(
+                                        const OMPFirstprivateClause *C) {
+  VisitOMPClauseList(C);
+}
 void OMPClauseEnqueue::VisitOMPSharedClause(const OMPSharedClause *C) {
   VisitOMPClauseList(C);
 }

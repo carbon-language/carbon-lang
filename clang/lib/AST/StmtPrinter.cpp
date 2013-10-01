@@ -619,6 +619,14 @@ void OMPClausePrinter::VisitOMPPrivateClause(OMPPrivateClause *Node) {
   }
 }
 
+void OMPClausePrinter::VisitOMPFirstprivateClause(OMPFirstprivateClause *Node) {
+  if (!Node->varlist_empty()) {
+    OS << "firstprivate";
+    VisitOMPClauseList(Node, '(');
+    OS << ")";
+  }
+}
+
 void OMPClausePrinter::VisitOMPSharedClause(OMPSharedClause *Node) {
   if (!Node->varlist_empty()) {
     OS << "shared";

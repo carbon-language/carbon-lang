@@ -249,6 +249,67 @@ public:
   }
 };
 
+/// \brief This represents clause 'firstprivate' in the '#pragma omp ...'
+/// directives.
+///
+/// \code
+/// #pragma omp parallel firstprivate(a,b)
+/// \endcode
+/// In this example directive '#pragma omp parallel' has clause 'firstprivate'
+/// with the variables 'a' and 'b'.
+///
+class OMPFirstprivateClause : public OMPClause,
+                              public OMPVarList<OMPFirstprivateClause> {
+  /// \brief Build clause with number of variables \a N.
+  ///
+  /// \param StartLoc Starting location of the clause.
+  /// \param LParenLoc Location of '('.
+  /// \param EndLoc Ending location of the clause.
+  /// \param N Number of the variables in the clause.
+  ///
+  OMPFirstprivateClause(SourceLocation StartLoc, SourceLocation LParenLoc,
+                   SourceLocation EndLoc, unsigned N)
+    : OMPClause(OMPC_firstprivate, StartLoc, EndLoc),
+      OMPVarList<OMPFirstprivateClause>(LParenLoc, N) { }
+
+  /// \brief Build an empty clause.
+  ///
+  /// \param N Number of variables.
+  ///
+  explicit OMPFirstprivateClause(unsigned N)
+    : OMPClause(OMPC_firstprivate, SourceLocation(), SourceLocation()),
+      OMPVarList<OMPFirstprivateClause>(SourceLocation(), N) { }
+public:
+  /// \brief Creates clause with a list of variables \a VL.
+  ///
+  /// \param C AST context.
+  /// \param StartLoc Starting location of the clause.
+  /// \param LParenLoc Location of '('.
+  /// \param EndLoc Ending location of the clause.
+  /// \param VL List of references to the variables.
+  ///
+  static OMPFirstprivateClause *Create(const ASTContext &C,
+                                       SourceLocation StartLoc,
+                                       SourceLocation LParenLoc,
+                                       SourceLocation EndLoc,
+                                       ArrayRef<Expr *> VL);
+  /// \brief Creates an empty clause with the place for \a N variables.
+  ///
+  /// \param C AST context.
+  /// \param N The number of variables.
+  ///
+  static OMPFirstprivateClause *CreateEmpty(const ASTContext &C, unsigned N);
+
+  StmtRange children() {
+    return StmtRange(reinterpret_cast<Stmt **>(varlist_begin()),
+                     reinterpret_cast<Stmt **>(varlist_end()));
+  }
+
+  static bool classof(const OMPClause *T) {
+    return T->getClauseKind() == OMPC_firstprivate;
+  }
+};
+
 /// \brief This represents clause 'shared' in the '#pragma omp ...' directives.
 ///
 /// \code

@@ -64,10 +64,18 @@ int main(int argc, char **argv) {
   #pragma omp parallel private(S2::S2s) // expected-error {{shared variable cannot be private}}
   #pragma omp parallel private(e, g) // expected-error 2 {{private variable must have an accessible, unambiguous default constructor}}
   #pragma omp parallel private(threadvar) // expected-error {{threadprivate or thread local variable cannot be private}}
+  #pragma omp parallel shared(i), private(i) // expected-error {{shared variable cannot be private}} expected-note {{defined as shared}}
+  foo();
+  #pragma omp parallel firstprivate(i) private(i) // expected-error {{firstprivate variable cannot be private}} expected-note {{defined as firstprivate}}
   foo();
   #pragma omp parallel private(i)
   #pragma omp parallel private(j) // expected-error {{arguments of OpenMP clause 'private' cannot be of reference type 'int &'}}
   foo();
+  #pragma omp parallel firstprivate(i)
+  for (int k = 0; k < 10; ++k) {
+    #pragma omp parallel private(i)
+    foo();
+  }
 
   return 0;
 }

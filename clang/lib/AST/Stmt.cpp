@@ -1145,6 +1145,29 @@ OMPPrivateClause *OMPPrivateClause::CreateEmpty(const ASTContext &C,
   return new (Mem) OMPPrivateClause(N);
 }
 
+OMPFirstprivateClause *OMPFirstprivateClause::Create(const ASTContext &C,
+                                                     SourceLocation StartLoc,
+                                                     SourceLocation LParenLoc,
+                                                     SourceLocation EndLoc,
+                                                     ArrayRef<Expr *> VL) {
+  void *Mem = C.Allocate(sizeof(OMPFirstprivateClause) +
+                         sizeof(Expr *) * VL.size(),
+                         llvm::alignOf<OMPFirstprivateClause>());
+  OMPFirstprivateClause *Clause = new (Mem) OMPFirstprivateClause(StartLoc,
+                                                                  LParenLoc,
+                                                                  EndLoc,
+                                                                  VL.size());
+  Clause->setVarRefs(VL);
+  return Clause;
+}
+
+OMPFirstprivateClause *OMPFirstprivateClause::CreateEmpty(const ASTContext &C,
+                                                          unsigned N) {
+  void *Mem = C.Allocate(sizeof(OMPFirstprivateClause) + sizeof(Expr *) * N,
+                         llvm::alignOf<OMPFirstprivateClause>());
+  return new (Mem) OMPFirstprivateClause(N);
+}
+
 OMPSharedClause *OMPSharedClause::Create(const ASTContext &C,
                                          SourceLocation StartLoc,
                                          SourceLocation LParenLoc,

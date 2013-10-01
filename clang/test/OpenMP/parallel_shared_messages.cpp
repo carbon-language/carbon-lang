@@ -68,7 +68,13 @@ int main(int argc, char **argv) {
   #pragma omp parallel shared(h) // expected-error {{threadprivate or thread local variable cannot be shared}}
   #pragma omp parallel private(i), shared(i) // expected-error {{private variable cannot be shared}} expected-note {{defined as private}}
   foo();
+  #pragma omp parallel firstprivate(i), shared(i) // expected-error {{firstprivate variable cannot be shared}} expected-note {{defined as firstprivate}}
+  foo();
   #pragma omp parallel private(i)
+  #pragma omp parallel shared(i)
+  #pragma omp parallel shared(j)
+  foo();
+  #pragma omp parallel firstprivate(i)
   #pragma omp parallel shared(i)
   #pragma omp parallel shared(j)
   foo();

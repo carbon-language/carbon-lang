@@ -278,6 +278,10 @@ void OMPClauseProfiler::VisitOMPClauseList(T *Node) {
 void OMPClauseProfiler::VisitOMPPrivateClause(const OMPPrivateClause *C) {
   VisitOMPClauseList(C);
 }
+void OMPClauseProfiler::VisitOMPFirstprivateClause(
+                                         const OMPFirstprivateClause *C) {
+  VisitOMPClauseList(C);
+}
 void OMPClauseProfiler::VisitOMPSharedClause(const OMPSharedClause *C) {
   VisitOMPClauseList(C);
 }
