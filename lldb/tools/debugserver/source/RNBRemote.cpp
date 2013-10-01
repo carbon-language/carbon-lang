@@ -171,6 +171,7 @@ RNBRemote::CreatePacketTable  ()
     t.push_back (Packet (query_vattachorwait_supported, &RNBRemote::HandlePacket_qVAttachOrWaitSupported,NULL, "qVAttachOrWaitSupported", "Replys with OK if the 'vAttachOrWait' packet is supported."));
     t.push_back (Packet (query_sync_thread_state_supported, &RNBRemote::HandlePacket_qSyncThreadStateSupported,NULL, "qSyncThreadStateSupported", "Replys with OK if the 'QSyncThreadState:' packet is supported."));
     t.push_back (Packet (query_host_info,               &RNBRemote::HandlePacket_qHostInfo,     NULL, "qHostInfo", "Replies with multiple 'key:value;' tuples appended to each other."));
+    t.push_back (Packet (query_gdb_server_version,      &RNBRemote::HandlePacket_qGDBServerVersion,       NULL, "qGDBServerVersion", "Replies with multiple 'key:value;' tuples appended to each other."));
     t.push_back (Packet (query_process_info,            &RNBRemote::HandlePacket_qProcessInfo,     NULL, "qProcessInfo", "Replies with multiple 'key:value;' tuples appended to each other."));
 //  t.push_back (Packet (query_symbol_lookup,           &RNBRemote::HandlePacket_UNIMPLEMENTED, NULL, "qSymbol", "Notify that host debugger is ready to do symbol lookups"));
     t.push_back (Packet (start_noack_mode,              &RNBRemote::HandlePacket_QStartNoAckMode        , NULL, "QStartNoAckMode", "Request that " DEBUGSERVER_PROGRAM_NAME " stop acking remote protocol packets"));
@@ -3964,6 +3965,19 @@ RNBRemote::HandlePacket_qHostInfo (const char *p)
     return SendPacket (strm.str());
 }
 
+rnb_err_t
+RNBRemote::HandlePacket_qGDBServerVersion (const char *p)
+{
+    std::ostringstream strm;
+    
+    if (DEBUGSERVER_PROGRAM_NAME)
+        strm << "name:" DEBUGSERVER_PROGRAM_NAME ";";
+    else
+        strm << "name:debugserver;";
+    strm << "version:" << DEBUGSERVER_VERSION_NUM << ";";
+
+    return SendPacket (strm.str());
+}
 
 // Note that all numeric values returned by qProcessInfo are hex encoded,
 // including the pid and the cpu type.

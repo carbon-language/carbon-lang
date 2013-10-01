@@ -170,12 +170,12 @@ This packet must be sent  _prior_ to sending a "A" packet.
 //  depending on the actual CPU type that is used.
 //----------------------------------------------------------------------
 
-With LLDB, for register information, remote GDB servers can add support for
-the "qRegisterInfoN" packet where "N" is a zero based register number that
-must start at zero and increase by one for each register that is supported.
-The response is done in typical GDB remote fashion where a serious of
-"KEY:VALUE;" pairs are returned. An example for the x86_64 registers is
-included below:
+With LLDB, for register information, remote GDB servers can add
+support for the "qRegisterInfoN" packet where "N" is a zero based
+base16 register number that must start at zero and increase by one
+for each register that is supported.  The response is done in typical
+GDB remote fashion where a serious of "KEY:VALUE;" pairs are returned.
+An example for the x86_64 registers is included below:
 
 send packet: $qRegisterInfo0#00
 read packet: $name:rax;bitsize:64;offset:0;encoding:uint;format:hex;set:General Purpose Registers;gcc:0;dwarf:0;#00
@@ -298,8 +298,14 @@ read packet: $E45#00
 
 As we see above we keep making subsequent calls to the remote server to
 discover all registers by increasing the number appended to qRegisterInfo and
-we get a response back that is a series of "key=value;" strings. The keys and
-values are detailed below:
+we get a response back that is a series of "key=value;" strings. 
+
+The register offsets may end up describing a register context with gaps.  The
+actual register context structure used may have gaps due to alignment issues.
+Implementations of the g/G packet construction/parsing must handle this padding
+if it exists.  
+
+The keys and values are detailed below:
 
 Key         Value
 ==========  ================================================================
@@ -308,10 +314,12 @@ name        The primary register name as a string ("rbp" for example)
 alt-name    An alternate name for a register as a string ("fp" for example for
             the above "rbp")
 
-bitsize     Size in bits of a register (32, 64, etc)
+bitsize     Size in bits of a register (32, 64, etc).  Base 10.
 
 offset      The offset within the "g" and "G" packet of the register data for
-            this register
+            this register.  This is the byte offset once the data has been
+            transformed into binary, not the character offset into the g/G 
+            packet.  Base 10.
 
 encoding    The encoding type of the register which must be one of: 
 
@@ -476,6 +484,53 @@ ostype: is a string the represents the OS being debugged (darwin, linux, freebsd
 vendor: is a string that represents the vendor (apple)
 endian: is one of "little", "big", or "pdp"
 ptrsize: is a number that represents how big pointers are in bytes on the debug target
+
+//----------------------------------------------------------------------
+// "qGDBServerVersion"
+//
+// BRIEF
+//  Get version information about this implementation of the gdb-remote 
+//  protocol.
+//
+// PRIORITY TO IMPLEMENT
+//  High. This packet is usually very easy to implement and can help
+//  LLDB to work around bugs in a server's implementation when they 
+//  are found.
+//----------------------------------------------------------------------
+
+The goal of this packet is to provide enough information about an
+implementation of the gdb-remote-protocol server that lldb can
+work around implementation problems that are discovered after the
+version has been released/deployed.  The name and version number
+should be sufficiently unique that lldb can unambiguously identify
+the origin of the program (for instance, debugserver from lldb) and
+the version/submission number/patch level of the program - whatever
+is appropriate for your server implementation.
+
+The packet follows the key-value pair model, semicolon separated.
+
+send packet: $qGDBServerVersion#00
+read packet: $name:debugserver;version:310.2;#00
+
+Other clients may find other key-value pairs to be useful for identifying
+a gdb stub.  Patch level, release name, build number may all be keys that 
+better describe your implementation's version.  
+Suggested key names:
+
+  name   : the name of your remote server - "debugserver" is the lldb standard
+           implementation
+
+  version : identifies the version number of this server
+
+  patch_level : the patch level of this server
+
+  release_name : the name of this release, if your project uses names
+
+  build_number : if you use a build system with increasing build numbers,
+                 this may be the right key name for your server
+
+  major_version : major version number
+  minor_version : minor version number
 
 //----------------------------------------------------------------------
 // "qProcessInfo"
