@@ -22,6 +22,7 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/IR/Metadata.h"
 #include "llvm/Support/Dwarf.h"
 
 namespace llvm {
@@ -206,6 +207,8 @@ namespace llvm {
     /// Gets the parent scope for this scope node or returns a
     /// default constructed scope.
     DIScopeRef getContext() const;
+    /// If the scope node has a name, return that, else return an empty string.
+    StringRef getName() const;
     StringRef getFilename() const;
     StringRef getDirectory() const;
 
@@ -242,6 +245,16 @@ namespace llvm {
       assert(DIDescriptor(Iter->second).isType() &&
              "MDNode in DITypeIdentifierMap should be a DIType.");
       return T(Iter->second);
+    }
+    StringRef getName() const {
+      if (!Val)
+        return StringRef();
+
+      if (const MDNode *MD = dyn_cast<MDNode>(Val))
+        return T(MD).getName();
+
+      const MDString *MS = cast<MDString>(Val);
+      return MS->getString();
     }
     operator Value *() const { return const_cast<Value*>(Val); }
   };
@@ -321,9 +334,6 @@ namespace llvm {
       return DbgNode && isType();
     }
 
-    /// isUnsignedDIType - Return true if type encoding is unsigned.
-    bool isUnsignedDIType();
-
     /// replaceAllUsesWith - Replace all uses of debug info referenced by
     /// this descriptor.
     void replaceAllUsesWith(DIDescriptor &D);
@@ -351,11 +361,7 @@ namespace llvm {
   public:
     explicit DIDerivedType(const MDNode *N = 0) : DIType(N) {}
 
-    DIType getTypeDerivedFrom() const { return getFieldAs<DIType>(9); }
-
-    /// getOriginalTypeSize - If this type is derived from a base type then
-    /// return base type size.
-    uint64_t getOriginalTypeSize() const;
+    DITypeRef getTypeDerivedFrom() const { return getFieldAs<DITypeRef>(9); }
 
     /// getObjCProperty - Return property node, if this ivar is
     /// associated with one.
