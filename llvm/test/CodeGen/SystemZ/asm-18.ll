@@ -525,3 +525,32 @@ define i32 @f24(i32 %old) {
                        "=r,h,h,0"(i32 %res1, i32 %and3, i32 %and4)
   ret i32 %res2
 }
+
+; Test TMxx involving mixtures of high and low registers.
+define i32 @f25(i32 %old) {
+; CHECK-LABEL: f25:
+; CHECK-DAG: tmll %r2, 1
+; CHECK-DAG: tmlh %r2, 1
+; CHECK: stepa [[REG1:%r[0-5]]],
+; CHECK-DAG: tmhl [[REG1]], 1
+; CHECK-DAG: tmhh [[REG1]], 1
+; CHECK: stepb %r2,
+; CHECK: br %r14
+  %and1 = and i32 %old, 1
+  %and2 = and i32 %old, 65536
+  %cmp1 = icmp eq i32 %and1, 0
+  %cmp2 = icmp eq i32 %and2, 0
+  %sel1 = select i1 %cmp1, i32 100, i32 200
+  %sel2 = select i1 %cmp2, i32 100, i32 200
+  %res1 = call i32 asm "stepa $0, $1, $2",
+                       "=h,r,r"(i32 %sel1, i32 %sel2)
+  %and3 = and i32 %res1, 1
+  %and4 = and i32 %res1, 65536
+  %cmp3 = icmp eq i32 %and3, 0
+  %cmp4 = icmp eq i32 %and4, 0
+  %sel3 = select i1 %cmp3, i32 100, i32 200
+  %sel4 = select i1 %cmp4, i32 100, i32 200
+  %res2 = call i32 asm "stepb $0, $1, $2",
+                       "=r,h,h"(i32 %sel3, i32 %sel4)
+  ret i32 %res2
+}

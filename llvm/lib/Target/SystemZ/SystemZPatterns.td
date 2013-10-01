@@ -113,11 +113,11 @@ multiclass CondStores64<Instruction insn, Instruction insninv,
 }
 
 // INSN performs a comparison between a 32-bit register and a constant.
-// Record that it is equivalent to comparing the low word of a GR64 with IMM.
+// Record that it is equivalent to comparing subreg SUBREG of a GR64 with IMM.
 class CompareGR64RI<Instruction insn, SDPatternOperator compare,
-                    Immediate imm>
+                    Immediate imm, SubRegIndex subreg>
   : Pat<(compare GR64:$R1, imm:$I2),
-        (insn (EXTRACT_SUBREG GR64:$R1, subreg_l32),
+        (insn (EXTRACT_SUBREG GR64:$R1, subreg),
               (imm.OperandTransform imm:$I2))>;
 
 // Try to use MVC instruction INSN for a load of type LOAD followed by a store

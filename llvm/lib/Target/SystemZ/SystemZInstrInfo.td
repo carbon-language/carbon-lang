@@ -1140,16 +1140,22 @@ let mayLoad = 1, Defs = [CC], Uses = [R0L] in
 
 // Test under mask.
 let Defs = [CC] in {
+  // TMxMux expands to TM[LH]x, depending on the choice of register.
+  def TMLMux : CompareRIPseudo<z_tm_reg, GRX32, imm32ll16>,
+               Requires<[FeatureHighWord]>;
+  def TMHMux : CompareRIPseudo<z_tm_reg, GRX32, imm32lh16>,
+               Requires<[FeatureHighWord]>;
   def TMLL : CompareRI<"tmll", 0xA71, z_tm_reg, GR32, imm32ll16>;
   def TMLH : CompareRI<"tmlh", 0xA70, z_tm_reg, GR32, imm32lh16>;
-
-  def TMHL : CompareRI<"tmhl", 0xA73, z_tm_reg, GR64, imm64hl16>;
-  def TMHH : CompareRI<"tmhh", 0xA72, z_tm_reg, GR64, imm64hh16>;
+  def TMHL : CompareRI<"tmhl", 0xA73, z_tm_reg, GRH32, imm32ll16>;
+  def TMHH : CompareRI<"tmhh", 0xA72, z_tm_reg, GRH32, imm32lh16>;
 
   defm TM : CompareSIPair<"tm", 0x91, 0xEB51, z_tm_mem, anyextloadi8, imm32zx8>;
 }
-def : CompareGR64RI<TMLL, z_tm_reg, imm64ll16>;
-def : CompareGR64RI<TMLH, z_tm_reg, imm64lh16>;
+def : CompareGR64RI<TMLL, z_tm_reg, imm64ll16, subreg_l32>;
+def : CompareGR64RI<TMLH, z_tm_reg, imm64lh16, subreg_l32>;
+def : CompareGR64RI<TMHL, z_tm_reg, imm64hl16, subreg_h32>;
+def : CompareGR64RI<TMHH, z_tm_reg, imm64hh16, subreg_h32>;
 
 //===----------------------------------------------------------------------===//
 // Prefetch

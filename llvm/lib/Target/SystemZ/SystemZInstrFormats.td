@@ -1386,6 +1386,11 @@ class BinaryRIPseudo<SDPatternOperator operator, RegisterOperand cls,
   let Constraints = "$R1 = $R1src";
 }
 
+// Like CompareRI, but expanded after RA depending on the choice of register.
+class CompareRIPseudo<SDPatternOperator operator, RegisterOperand cls,
+                      Immediate imm>
+  : Pseudo<(outs), (ins cls:$R1, imm:$I2), [(operator cls:$R1, imm:$I2)]>;
+
 // Like StoreRXY, but expanded after RA depending on the choice of registers.
 class StoreRXYPseudo<SDPatternOperator operator, RegisterOperand cls,
                      bits<5> bytes, AddressingMode mode = bdxaddr20only>
