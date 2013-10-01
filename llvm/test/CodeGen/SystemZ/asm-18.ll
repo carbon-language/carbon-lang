@@ -500,3 +500,28 @@ define i32 @f23(i32 %old) {
                        "=r,h,h,0"(i32 %res1, i32 %and3, i32 %and4)
   ret i32 %res2
 }
+
+; Test RISB[LH]G insertions involving mixtures of high and low registers.
+define i32 @f24(i32 %old) {
+; CHECK-LABEL: f24:
+; CHECK-DAG: risblg [[REG1:%r[0-5]]], %r2, 28, 158, 1
+; CHECK-DAG: risbhg [[REG2:%r[0-5]]], %r2, 24, 158, 29
+; CHECK: stepa %r2, [[REG1]], [[REG2]]
+; CHECK-DAG: risbhg [[REG3:%r[0-5]]], [[REG2]], 25, 159, 62
+; CHECK-DAG: risblg %r2, [[REG2]], 24, 152, 37
+; CHECK: stepb [[REG2]], [[REG3]], %r2
+; CHECK: br %r14
+  %shift1 = shl i32 %old, 1
+  %and1 = and i32 %shift1, 14
+  %shift2 = lshr i32 %old, 3
+  %and2 = and i32 %shift2, 254
+  %res1 = call i32 asm "stepa $1, $2, $3",
+                       "=h,r,r,0"(i32 %old, i32 %and1, i32 %and2)
+  %shift3 = lshr i32 %res1, 2
+  %and3 = and i32 %shift3, 127
+  %shift4 = shl i32 %res1, 5
+  %and4 = and i32 %shift4, 128
+  %res2 = call i32 asm "stepb $1, $2, $3",
+                       "=r,h,h,0"(i32 %res1, i32 %and3, i32 %and4)
+  ret i32 %res2
+}

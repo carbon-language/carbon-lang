@@ -266,8 +266,8 @@ class SystemZDAGToDAGISel : public SelectionDAGISel {
   // Return true on success.
   bool expandRxSBG(RxSBGOperands &RxSBG) const;
 
-  // Return an undefined i64 value.
-  SDValue getUNDEF64(SDLoc DL) const;
+  // Return an undefined value of type VT.
+  SDValue getUNDEF(SDLoc DL, EVT VT) const;
 
   // Convert N to VT, if it isn't already.
   SDValue convertTo(SDLoc DL, EVT VT, SDValue N) const;
@@ -832,15 +832,15 @@ bool SystemZDAGToDAGISel::expandRxSBG(RxSBGOperands &RxSBG) const {
   }
 }
 
-SDValue SystemZDAGToDAGISel::getUNDEF64(SDLoc DL) const {
-  SDNode *N = CurDAG->getMachineNode(TargetOpcode::IMPLICIT_DEF, DL, MVT::i64);
+SDValue SystemZDAGToDAGISel::getUNDEF(SDLoc DL, EVT VT) const {
+  SDNode *N = CurDAG->getMachineNode(TargetOpcode::IMPLICIT_DEF, DL, VT);
   return SDValue(N, 0);
 }
 
 SDValue SystemZDAGToDAGISel::convertTo(SDLoc DL, EVT VT, SDValue N) const {
   if (N.getValueType() == MVT::i32 && VT == MVT::i64)
     return CurDAG->getTargetInsertSubreg(SystemZ::subreg_l32,
-                                         DL, VT, getUNDEF64(DL), N);
+                                         DL, VT, getUNDEF(DL, MVT::i64), N);
   if (N.getValueType() == MVT::i64 && VT == MVT::i32)
     return CurDAG->getTargetExtractSubreg(SystemZ::subreg_l32, DL, VT, N);
   assert(N.getValueType() == VT && "Unexpected value types");
@@ -880,14 +880,22 @@ SDNode *SystemZDAGToDAGISel::tryRISBGZero(SDNode *N) {
     }
   }  
 
+  unsigned Opcode = SystemZ::RISBG;
+  EVT OpcodeVT = MVT::i64;
+  if (VT == MVT::i32 && Subtarget.hasHighWord()) {
+    Opcode = SystemZ::RISBMux;
+    OpcodeVT = MVT::i32;
+    RISBG.Start &= 31;
+    RISBG.End &= 31;
+  }
   SDValue Ops[5] = {
-    getUNDEF64(SDLoc(N)),
-    convertTo(SDLoc(N), MVT::i64, RISBG.Input),
+    getUNDEF(SDLoc(N), OpcodeVT),
+    convertTo(SDLoc(N), OpcodeVT, RISBG.Input),
     CurDAG->getTargetConstant(RISBG.Start, MVT::i32),
     CurDAG->getTargetConstant(RISBG.End | 128, MVT::i32),
     CurDAG->getTargetConstant(RISBG.Rotate, MVT::i32)
   };
-  N = CurDAG->getMachineNode(SystemZ::RISBG, SDLoc(N), MVT::i64, Ops);
+  N = CurDAG->getMachineNode(Opcode, SDLoc(N), OpcodeVT, Ops);
   return convertTo(SDLoc(N), VT, SDValue(N, 0)).getNode();
 }
 
