@@ -287,3 +287,31 @@ define void @f12() {
                                      i32 1000000000, i32 400000)
   ret void
 }
+
+; Test selects involving high registers.
+define void @f13(i32 %x, i32 %y) {
+; CHECK-LABEL: f13:
+; CHECK: llihl [[REG:%r[0-5]]], 0
+; CHECK: cije %r2, 0
+; CHECK: iihf [[REG]], 2102030405
+; CHECK: blah [[REG]]
+; CHECK: br %r14
+  %cmp = icmp eq i32 %x, 0
+  %val = select i1 %cmp, i32 0, i32 2102030405
+  call void asm sideeffect "blah $0", "h"(i32 %val)
+  ret void
+}
+
+; Test selects involving low registers.
+define void @f14(i32 %x, i32 %y) {
+; CHECK-LABEL: f14:
+; CHECK: lhi [[REG:%r[0-5]]], 0
+; CHECK: cije %r2, 0
+; CHECK: iilf [[REG]], 2102030405
+; CHECK: blah [[REG]]
+; CHECK: br %r14
+  %cmp = icmp eq i32 %x, 0
+  %val = select i1 %cmp, i32 0, i32 2102030405
+  call void asm sideeffect "blah $0", "r"(i32 %val)
+  ret void
+}

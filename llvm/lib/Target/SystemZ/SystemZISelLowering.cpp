@@ -2874,6 +2874,7 @@ SystemZTargetLowering::emitStringWrapper(MachineInstr *MI,
 MachineBasicBlock *SystemZTargetLowering::
 EmitInstrWithCustomInserter(MachineInstr *MI, MachineBasicBlock *MBB) const {
   switch (MI->getOpcode()) {
+  case SystemZ::Select32Mux:
   case SystemZ::Select32:
   case SystemZ::SelectF32:
   case SystemZ::Select64:

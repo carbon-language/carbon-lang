@@ -198,8 +198,9 @@ let Defs = [CC] in {
 // Select instructions
 //===----------------------------------------------------------------------===//
 
-def Select32 : SelectWrapper<GR32>;
-def Select64 : SelectWrapper<GR64>;
+def Select32Mux : SelectWrapper<GRX32>, Requires<[FeatureHighWord]>;
+def Select32    : SelectWrapper<GR32>;
+def Select64    : SelectWrapper<GR64>;
 
 defm CondStore8  : CondStores<GR32, nonvolatile_truncstorei8,
                               nonvolatile_anyextloadi8, bdxaddr20only>;
