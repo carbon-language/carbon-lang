@@ -1076,8 +1076,13 @@ let Defs = [CC], CCValues = 0xE in {
   def CHI  : CompareRI<"chi",  0xA7E, z_scmp, GR32, imm32sx16>;
   def CGHI : CompareRI<"cghi", 0xA7F, z_scmp, GR64, imm64sx16>;
 
-  // Comparison with a signed 32-bit immediate.
+  // Comparison with a signed 32-bit immediate.  CFIMux expands to CFI or CIH,
+  // depending on the choice of register.
+  def CFIMux : CompareRIPseudo<z_scmp, GRX32, simm32>,
+               Requires<[FeatureHighWord]>;
   def CFI  : CompareRIL<"cfi",  0xC2D, z_scmp, GR32, simm32>;
+  def CIH  : CompareRIL<"cih",  0xCCD, z_scmp, GRH32, simm32>,
+             Requires<[FeatureHighWord]>;
   def CGFI : CompareRIL<"cgfi", 0xC2C, z_scmp, GR64, imm64sx32>;
 
   // Comparison with memory.
@@ -1106,8 +1111,13 @@ let Defs = [CC], CCValues = 0xE, IsLogical = 1 in {
   def CLGFR : CompareRRE<"clgf", 0xB931, null_frag, GR64, GR32>;
   def CLGR  : CompareRRE<"clg",  0xB921, z_ucmp,    GR64, GR64>;
 
-  // Comparison with a signed 32-bit immediate.
+  // Comparison with an unsigned 32-bit immediate.  CLFIMux expands to CLFI
+  // or CLIH, depending on the choice of register.
+  def CLFIMux : CompareRIPseudo<z_ucmp, GRX32, uimm32>,
+                Requires<[FeatureHighWord]>;
   def CLFI  : CompareRIL<"clfi",  0xC2F, z_ucmp, GR32, uimm32>;
+  def CLIH  : CompareRIL<"clih",  0xCCF, z_ucmp, GR32, uimm32>,
+              Requires<[FeatureHighWord]>;
   def CLGFI : CompareRIL<"clgfi", 0xC2E, z_ucmp, GR64, imm64zx32>;
 
   // Comparison with memory.

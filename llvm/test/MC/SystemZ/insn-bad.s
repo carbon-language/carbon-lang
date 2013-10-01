@@ -679,6 +679,11 @@
 	chy	%r0, -524289
 	chy	%r0, 524288
 
+#CHECK: error: {{(instruction requires: high-word)?}}
+#CHECK: cih	%r0, 0
+
+	cih	%r0, 0
+
 #CHECK: error: invalid operand
 #CHECK: cij	%r0, -129, 0, 0
 #CHECK: error: invalid operand
@@ -960,6 +965,11 @@
 	cli	0(%r1,%r2), 0
 	cli	0, -1
 	cli	0, 256
+
+#CHECK: error: {{(instruction requires: high-word)?}}
+#CHECK: clih	%r0, 0
+
+	clih	%r0, 0
 
 #CHECK: error: invalid operand
 #CHECK: clij	%r0, -1, 0, 0

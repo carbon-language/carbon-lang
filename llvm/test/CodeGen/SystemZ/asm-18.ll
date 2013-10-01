@@ -669,3 +669,37 @@ define void @f30() {
   call void asm sideeffect "stepd $0", "r"(i32 %add3)
   ret void
 }
+
+; Test large immediate comparison involving high registers.
+define i32 @f31() {
+; CHECK-LABEL: f31:
+; CHECK: stepa [[REG1:%r[0-5]]]
+; CHECK: cih [[REG1]], 1000000000
+; CHECK: stepb [[REG2:%r[0-5]]]
+; CHECK: clih [[REG2]], 1000000000
+; CHECK: br %r14
+  %res1 = call i32 asm "stepa $0", "=h"()
+  %cmp1 = icmp sle i32 %res1, 1000000000
+  %sel1 = select i1 %cmp1, i32 0, i32 1
+  %res2 = call i32 asm "stepb $0, $1", "=h,r"(i32 %sel1)
+  %cmp2 = icmp ule i32 %res2, 1000000000
+  %sel2 = select i1 %cmp2, i32 0, i32 1
+  ret i32 %sel2
+}
+
+; Test large immediate comparison involving low registers.
+define i32 @f32() {
+; CHECK-LABEL: f32:
+; CHECK: stepa [[REG1:%r[0-5]]]
+; CHECK: cfi [[REG1]], 1000000000
+; CHECK: stepb [[REG2:%r[0-5]]]
+; CHECK: clfi [[REG2]], 1000000000
+; CHECK: br %r14
+  %res1 = call i32 asm "stepa $0", "=r"()
+  %cmp1 = icmp sle i32 %res1, 1000000000
+  %sel1 = select i1 %cmp1, i32 0, i32 1
+  %res2 = call i32 asm "stepb $0, $1", "=r,r"(i32 %sel1)
+  %cmp2 = icmp ule i32 %res2, 1000000000
+  %sel2 = select i1 %cmp2, i32 0, i32 1
+  ret i32 %sel2
+}
