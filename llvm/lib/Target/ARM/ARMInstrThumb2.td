@@ -3652,18 +3652,21 @@ def : t2InstAlias<"cps.w $mode", (t2CPS1p imm0_31:$mode), 0>;
 
 // A6.3.4 Branches and miscellaneous control
 // Table A6-14 Change Processor State, and hint instructions
-def t2HINT : T2I<(outs), (ins imm0_4:$imm), NoItinerary, "hint", "\t$imm",[]> {
+def t2HINT : T2I<(outs), (ins imm0_255:$imm), NoItinerary, "hint", "\t$imm",[]> {
   bits<3> imm;
   let Inst{31-3} = 0b11110011101011111000000000000;
   let Inst{2-0} = imm;
 }
 
-def : t2InstAlias<"hint$p.w $imm", (t2HINT imm0_4:$imm, pred:$p)>;
+def : t2InstAlias<"hint$p.w $imm", (t2HINT imm0_255:$imm, pred:$p)>;
 def : t2InstAlias<"nop$p.w", (t2HINT 0, pred:$p)>;
 def : t2InstAlias<"yield$p.w", (t2HINT 1, pred:$p)>;
 def : t2InstAlias<"wfe$p.w", (t2HINT 2, pred:$p)>;
 def : t2InstAlias<"wfi$p.w", (t2HINT 3, pred:$p)>;
 def : t2InstAlias<"sev$p.w", (t2HINT 4, pred:$p)>;
+def : t2InstAlias<"sevl$p.w", (t2HINT 5, pred:$p)> {
+  let Predicates = [IsThumb2, HasV8];
+}
 
 def t2DBG : T2I<(outs), (ins imm0_15:$opt), NoItinerary, "dbg", "\t$opt", []> {
   bits<4> opt;

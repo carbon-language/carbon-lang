@@ -37,10 +37,9 @@
 # Undefined encoding space for hint instructions
 #------------------------------------------------------------------------------
 
-[0xaf 0xf3 0x05 0x80]
+[0x60 0xbf]
 # CHECK: invalid instruction encoding
-# CHECK-NEXT: [0xaf 0xf3 0x05 0x80]
-
+# CHECK-NEXT: [0x60 0xbf]
 
 #------------------------------------------------------------------------------
 # Undefined encoding for it

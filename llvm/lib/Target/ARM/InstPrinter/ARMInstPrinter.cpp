@@ -84,6 +84,11 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
     case 2: O << "\twfe"; break;
     case 3: O << "\twfi"; break;
     case 4: O << "\tsev"; break;
+    case 5:
+      if ((getAvailableFeatures() & ARM::HasV8Ops)) {
+        O << "\tsevl";
+        break;
+      } // Fallthrough for non-v8
     default:
       // Anything else should just print normally.
       printInstruction(MI, O);

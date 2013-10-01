@@ -69,3 +69,16 @@
 @ CHECK-V7: error: invalid operand for instruction
 @ CHECK-V7: error: invalid operand for instruction
 @ CHECK-V7: error: invalid operand for instruction
+
+@------------------------------------------------------------------------------
+@ SEVL
+@------------------------------------------------------------------------------
+        sevl
+        sevl.w
+        it ge
+        sevlge
+
+@ CHECK-V8: sevl @ encoding: [0x50,0xbf]
+@ CHECK-V8: sevl.w @ encoding: [0xaf,0xf3,0x05,0x80]
+@ CHECK-V8: it ge @ encoding: [0xa8,0xbf]
+@ CHECK-V8: sevlge @ encoding: [0x50,0xbf]

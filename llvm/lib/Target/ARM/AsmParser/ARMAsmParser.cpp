@@ -679,13 +679,6 @@ public:
     int64_t Value = CE->getValue();
     return ((Value & 3) == 0) && Value >= -1020 && Value <= 1020;
   }
-  bool isImm0_4() const {
-    if (!isImm()) return false;
-    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
-    if (!CE) return false;
-    int64_t Value = CE->getValue();
-    return Value >= 0 && Value < 5;
-  }
   bool isImm0_1020s4() const {
     if (!isImm()) return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
@@ -7687,11 +7680,6 @@ MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
     return Error(IDLoc, "instruction variant requires ARMv6 or later");
   case Match_RequiresThumb2:
     return Error(IDLoc, "instruction variant requires Thumb2");
-  case Match_ImmRange0_4: {
-    SMLoc ErrorLoc = ((ARMOperand*)Operands[ErrorInfo])->getStartLoc();
-    if (ErrorLoc == SMLoc()) ErrorLoc = IDLoc;
-    return Error(ErrorLoc, "immediate operand must be in the range [0,4]");
-  }
   case Match_ImmRange0_15: {
     SMLoc ErrorLoc = ((ARMOperand*)Operands[ErrorInfo])->getStartLoc();
     if (ErrorLoc == SMLoc()) ErrorLoc = IDLoc;

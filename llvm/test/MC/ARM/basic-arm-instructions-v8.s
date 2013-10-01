@@ -50,3 +50,10 @@
 @ CHECK-V7: error: invalid operand for instruction
 @ CHECK-V7: error: invalid operand for instruction
 @ CHECK-V7: error: invalid operand for instruction
+
+@------------------------------------------------------------------------------
+@ SEVL
+@------------------------------------------------------------------------------
+        sevl
+
+@ CHECK: sevl @ encoding: [0x05,0xf0,0x20,0xe3]

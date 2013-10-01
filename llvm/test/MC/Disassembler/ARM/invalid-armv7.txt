@@ -69,14 +69,6 @@
 # Undefined encoding space for hint instructions
 #------------------------------------------------------------------------------
 
-[0x05 0xf0 0x20 0xe3]
-# CHECK: invalid instruction encoding
-# CHECK-NEXT: [0x05 0xf0 0x20 0xe3]
-
-[0x41 0xf0 0x20 0xe3]
-# CHECK: invalid instruction encoding
-# CHECK-NEXT: [0x41 0xf0 0x20 0xe3]
-
 # FIXME: is it "dbg #14" or not????
 [0xfe 0xf0 0x20 0xe3]
 # CHCK: invalid instruction encoding
