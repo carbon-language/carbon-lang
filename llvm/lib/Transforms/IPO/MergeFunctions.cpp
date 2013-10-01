@@ -836,6 +836,18 @@ bool MergeFunctions::insert(ComparableFunction &NewF) {
 
   const ComparableFunction &OldF = *Result.first;
 
+  // Don't merge tiny functions, since it can just end up making the function
+  // larger.
+  // FIXME: Should still merge them if they are unnamed_addr and produce an
+  // alias.
+  if (NewF.getFunc()->size() == 1) {
+    if (NewF.getFunc()->front().size() <= 2) {
+      DEBUG(dbgs() << NewF.getFunc()->getName()
+            << " is to small to bother merging\n");
+      return false;
+    }
+  }
+
   // Never thunk a strong function to a weak function.
   assert(!OldF.getFunc()->mayBeOverridden() ||
          NewF.getFunc()->mayBeOverridden());
