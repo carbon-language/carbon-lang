@@ -177,11 +177,13 @@ addMSAIntType(MVT::SimpleValueType Ty, const TargetRegisterClass *RC) {
   setOperationAction(ISD::MUL, Ty, Legal);
   setOperationAction(ISD::OR, Ty, Legal);
   setOperationAction(ISD::SDIV, Ty, Legal);
+  setOperationAction(ISD::SREM, Ty, Legal);
   setOperationAction(ISD::SHL, Ty, Legal);
   setOperationAction(ISD::SRA, Ty, Legal);
   setOperationAction(ISD::SRL, Ty, Legal);
   setOperationAction(ISD::SUB, Ty, Legal);
   setOperationAction(ISD::UDIV, Ty, Legal);
+  setOperationAction(ISD::UREM, Ty, Legal);
   setOperationAction(ISD::VECTOR_SHUFFLE, Ty, Custom);
   setOperationAction(ISD::VSELECT, Ty, Legal);
   setOperationAction(ISD::XOR, Ty, Legal);
@@ -1424,6 +1426,18 @@ SDValue MipsSETargetLowering::lowerINTRINSIC_WO_CHAIN(SDValue Op,
   case Intrinsic::mips_mini_u_d:
     return DAG.getNode(MipsISD::VUMIN, DL, Op->getValueType(0),
                        Op->getOperand(1), lowerMSASplatImm(Op, 2, DAG));
+  case Intrinsic::mips_mod_s_b:
+  case Intrinsic::mips_mod_s_h:
+  case Intrinsic::mips_mod_s_w:
+  case Intrinsic::mips_mod_s_d:
+    return DAG.getNode(ISD::SREM, DL, Op->getValueType(0), Op->getOperand(1),
+                       Op->getOperand(2));
+  case Intrinsic::mips_mod_u_b:
+  case Intrinsic::mips_mod_u_h:
+  case Intrinsic::mips_mod_u_w:
+  case Intrinsic::mips_mod_u_d:
+    return DAG.getNode(ISD::UREM, DL, Op->getValueType(0), Op->getOperand(1),
+                       Op->getOperand(2));
   case Intrinsic::mips_mulv_b:
   case Intrinsic::mips_mulv_h:
   case Intrinsic::mips_mulv_w:

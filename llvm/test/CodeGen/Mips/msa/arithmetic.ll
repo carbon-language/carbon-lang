@@ -435,3 +435,131 @@ define void @div_u_v2i64(<2 x i64>* %c, <2 x i64>* %a, <2 x i64>* %b) nounwind {
   ret void
   ; CHECK: .size div_u_v2i64
 }
+
+define void @mod_s_v16i8(<16 x i8>* %c, <16 x i8>* %a, <16 x i8>* %b) nounwind {
+  ; CHECK: mod_s_v16i8:
+
+  %1 = load <16 x i8>* %a
+  ; CHECK-DAG: ld.b [[R1:\$w[0-9]+]], 0($5)
+  %2 = load <16 x i8>* %b
+  ; CHECK-DAG: ld.b [[R2:\$w[0-9]+]], 0($6)
+  %3 = srem <16 x i8> %1, %2
+  ; CHECK-DAG: mod_s.b [[R3:\$w[0-9]+]], [[R1]], [[R2]]
+  store <16 x i8> %3, <16 x i8>* %c
+  ; CHECK-DAG: st.b [[R3]], 0($4)
+
+  ret void
+  ; CHECK: .size mod_s_v16i8
+}
+
+define void @mod_s_v8i16(<8 x i16>* %c, <8 x i16>* %a, <8 x i16>* %b) nounwind {
+  ; CHECK: mod_s_v8i16:
+
+  %1 = load <8 x i16>* %a
+  ; CHECK-DAG: ld.h [[R1:\$w[0-9]+]], 0($5)
+  %2 = load <8 x i16>* %b
+  ; CHECK-DAG: ld.h [[R2:\$w[0-9]+]], 0($6)
+  %3 = srem <8 x i16> %1, %2
+  ; CHECK-DAG: mod_s.h [[R3:\$w[0-9]+]], [[R1]], [[R2]]
+  store <8 x i16> %3, <8 x i16>* %c
+  ; CHECK-DAG: st.h [[R3]], 0($4)
+
+  ret void
+  ; CHECK: .size mod_s_v8i16
+}
+
+define void @mod_s_v4i32(<4 x i32>* %c, <4 x i32>* %a, <4 x i32>* %b) nounwind {
+  ; CHECK: mod_s_v4i32:
+
+  %1 = load <4 x i32>* %a
+  ; CHECK-DAG: ld.w [[R1:\$w[0-9]+]], 0($5)
+  %2 = load <4 x i32>* %b
+  ; CHECK-DAG: ld.w [[R2:\$w[0-9]+]], 0($6)
+  %3 = srem <4 x i32> %1, %2
+  ; CHECK-DAG: mod_s.w [[R3:\$w[0-9]+]], [[R1]], [[R2]]
+  store <4 x i32> %3, <4 x i32>* %c
+  ; CHECK-DAG: st.w [[R3]], 0($4)
+
+  ret void
+  ; CHECK: .size mod_s_v4i32
+}
+
+define void @mod_s_v2i64(<2 x i64>* %c, <2 x i64>* %a, <2 x i64>* %b) nounwind {
+  ; CHECK: mod_s_v2i64:
+
+  %1 = load <2 x i64>* %a
+  ; CHECK-DAG: ld.d [[R1:\$w[0-9]+]], 0($5)
+  %2 = load <2 x i64>* %b
+  ; CHECK-DAG: ld.d [[R2:\$w[0-9]+]], 0($6)
+  %3 = srem <2 x i64> %1, %2
+  ; CHECK-DAG: mod_s.d [[R3:\$w[0-9]+]], [[R1]], [[R2]]
+  store <2 x i64> %3, <2 x i64>* %c
+  ; CHECK-DAG: st.d [[R3]], 0($4)
+
+  ret void
+  ; CHECK: .size mod_s_v2i64
+}
+
+define void @mod_u_v16i8(<16 x i8>* %c, <16 x i8>* %a, <16 x i8>* %b) nounwind {
+  ; CHECK: mod_u_v16i8:
+
+  %1 = load <16 x i8>* %a
+  ; CHECK-DAG: ld.b [[R1:\$w[0-9]+]], 0($5)
+  %2 = load <16 x i8>* %b
+  ; CHECK-DAG: ld.b [[R2:\$w[0-9]+]], 0($6)
+  %3 = urem <16 x i8> %1, %2
+  ; CHECK-DAG: mod_u.b [[R3:\$w[0-9]+]], [[R1]], [[R2]]
+  store <16 x i8> %3, <16 x i8>* %c
+  ; CHECK-DAG: st.b [[R3]], 0($4)
+
+  ret void
+  ; CHECK: .size mod_u_v16i8
+}
+
+define void @mod_u_v8i16(<8 x i16>* %c, <8 x i16>* %a, <8 x i16>* %b) nounwind {
+  ; CHECK: mod_u_v8i16:
+
+  %1 = load <8 x i16>* %a
+  ; CHECK-DAG: ld.h [[R1:\$w[0-9]+]], 0($5)
+  %2 = load <8 x i16>* %b
+  ; CHECK-DAG: ld.h [[R2:\$w[0-9]+]], 0($6)
+  %3 = urem <8 x i16> %1, %2
+  ; CHECK-DAG: mod_u.h [[R3:\$w[0-9]+]], [[R1]], [[R2]]
+  store <8 x i16> %3, <8 x i16>* %c
+  ; CHECK-DAG: st.h [[R3]], 0($4)
+
+  ret void
+  ; CHECK: .size mod_u_v8i16
+}
+
+define void @mod_u_v4i32(<4 x i32>* %c, <4 x i32>* %a, <4 x i32>* %b) nounwind {
+  ; CHECK: mod_u_v4i32:
+
+  %1 = load <4 x i32>* %a
+  ; CHECK-DAG: ld.w [[R1:\$w[0-9]+]], 0($5)
+  %2 = load <4 x i32>* %b
+  ; CHECK-DAG: ld.w [[R2:\$w[0-9]+]], 0($6)
+  %3 = urem <4 x i32> %1, %2
+  ; CHECK-DAG: mod_u.w [[R3:\$w[0-9]+]], [[R1]], [[R2]]
+  store <4 x i32> %3, <4 x i32>* %c
+  ; CHECK-DAG: st.w [[R3]], 0($4)
+
+  ret void
+  ; CHECK: .size mod_u_v4i32
+}
+
+define void @mod_u_v2i64(<2 x i64>* %c, <2 x i64>* %a, <2 x i64>* %b) nounwind {
+  ; CHECK: mod_u_v2i64:
+
+  %1 = load <2 x i64>* %a
+  ; CHECK-DAG: ld.d [[R1:\$w[0-9]+]], 0($5)
+  %2 = load <2 x i64>* %b
+  ; CHECK-DAG: ld.d [[R2:\$w[0-9]+]], 0($6)
+  %3 = urem <2 x i64> %1, %2
+  ; CHECK-DAG: mod_u.d [[R3:\$w[0-9]+]], [[R1]], [[R2]]
+  store <2 x i64> %3, <2 x i64>* %c
+  ; CHECK-DAG: st.d [[R3]], 0($4)
+
+  ret void
+  ; CHECK: .size mod_u_v2i64
+}

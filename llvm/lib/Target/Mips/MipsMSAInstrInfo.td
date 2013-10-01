@@ -2102,15 +2102,15 @@ class MINI_U_W_DESC : MSA_I5_DESC_BASE<"mini_u.w", MipsVUMin, vsplati32_uimm5,
 class MINI_U_D_DESC : MSA_I5_DESC_BASE<"mini_u.d", MipsVUMin, vsplati64_uimm5,
                                        MSA128DOpnd>;
 
-class MOD_S_B_DESC : MSA_3R_DESC_BASE<"mod_s.b", int_mips_mod_s_b, MSA128BOpnd>;
-class MOD_S_H_DESC : MSA_3R_DESC_BASE<"mod_s.h", int_mips_mod_s_h, MSA128HOpnd>;
-class MOD_S_W_DESC : MSA_3R_DESC_BASE<"mod_s.w", int_mips_mod_s_w, MSA128WOpnd>;
-class MOD_S_D_DESC : MSA_3R_DESC_BASE<"mod_s.d", int_mips_mod_s_d, MSA128DOpnd>;
+class MOD_S_B_DESC : MSA_3R_DESC_BASE<"mod_s.b", srem, MSA128BOpnd>;
+class MOD_S_H_DESC : MSA_3R_DESC_BASE<"mod_s.h", srem, MSA128HOpnd>;
+class MOD_S_W_DESC : MSA_3R_DESC_BASE<"mod_s.w", srem, MSA128WOpnd>;
+class MOD_S_D_DESC : MSA_3R_DESC_BASE<"mod_s.d", srem, MSA128DOpnd>;
 
-class MOD_U_B_DESC : MSA_3R_DESC_BASE<"mod_u.b", int_mips_mod_u_b, MSA128BOpnd>;
-class MOD_U_H_DESC : MSA_3R_DESC_BASE<"mod_u.h", int_mips_mod_u_h, MSA128HOpnd>;
-class MOD_U_W_DESC : MSA_3R_DESC_BASE<"mod_u.w", int_mips_mod_u_w, MSA128WOpnd>;
-class MOD_U_D_DESC : MSA_3R_DESC_BASE<"mod_u.d", int_mips_mod_u_d, MSA128DOpnd>;
+class MOD_U_B_DESC : MSA_3R_DESC_BASE<"mod_u.b", urem, MSA128BOpnd>;
+class MOD_U_H_DESC : MSA_3R_DESC_BASE<"mod_u.h", urem, MSA128HOpnd>;
+class MOD_U_W_DESC : MSA_3R_DESC_BASE<"mod_u.w", urem, MSA128WOpnd>;
+class MOD_U_D_DESC : MSA_3R_DESC_BASE<"mod_u.d", urem, MSA128DOpnd>;
 
 class MOVE_V_DESC {
   dag OutOperandList = (outs MSA128B:$wd);
