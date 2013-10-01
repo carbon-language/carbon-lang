@@ -470,8 +470,7 @@ RValue CodeGenFunction::EmitAtomicExpr(AtomicExpr *E, llvm::Value *Dest) {
                getContext().getSizeType());
     }
     // Atomic address is the first or second parameter
-    Args.add(RValue::get(EmitCastToVoidPtr(Ptr)),
-             getContext().VoidPtrTy);
+    Args.add(RValue::get(EmitCastToVoidPtr(Ptr)), getContext().VoidPtrTy);
 
     std::string LibCallName;
     QualType RetTy;
@@ -494,8 +493,7 @@ RValue CodeGenFunction::EmitAtomicExpr(AtomicExpr *E, llvm::Value *Dest) {
       Args.add(RValue::get(EmitCastToVoidPtr(Val1)),
                getContext().VoidPtrTy);
       AddDirectArgument(*this, Args, UseOptimizedLibcall, Val2, MemTy);
-      Args.add(RValue::get(Order),
-               getContext().IntTy);
+      Args.add(RValue::get(Order), getContext().IntTy);
       Order = OrderFail;
       break;
     // void __atomic_exchange(size_t size, void *mem, void *val, void *return,
@@ -873,8 +871,7 @@ llvm::Value *AtomicInfo::materializeRValue(RValue rvalue) const {
 /// Note that the r-value is expected to be an r-value *of the atomic
 /// type*; this means that for aggregate r-values, it should include
 /// storage for any padding that was necessary.
-void CodeGenFunction::EmitAtomicStore(RValue rvalue, LValue dest,
-                                      bool isInit) {
+void CodeGenFunction::EmitAtomicStore(RValue rvalue, LValue dest, bool isInit) {
   // If this is an aggregate r-value, it should agree in type except
   // maybe for address-space qualification.
   assert(!rvalue.isAggregate() ||

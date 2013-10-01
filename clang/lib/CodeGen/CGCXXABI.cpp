@@ -1,4 +1,4 @@
-//===----- CGCXXABI.cpp - Interface to C++ ABIs -----------------*- C++ -*-===//
+//===----- CGCXXABI.cpp - Interface to C++ ABIs ---------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
