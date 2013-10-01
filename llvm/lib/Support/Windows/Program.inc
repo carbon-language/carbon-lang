@@ -24,15 +24,10 @@
 //===          and must not be UNIX code
 //===----------------------------------------------------------------------===//
 
-namespace {
-  struct Win32ProcessInfo {
-    HANDLE hProcess;
-    DWORD  dwProcessId;
-  };
-}
-
 namespace llvm {
 using namespace sys;
+
+ProcessInfo::ProcessInfo() : Pid(0), ProcessHandle(0), ReturnCode(0) {}
 
 // This function just uses the PATH environment variable to find the program.
 std::string sys::FindProgramByName(const std::string &progName) {
@@ -171,13 +166,9 @@ static unsigned int ArgLenWithQuotes(const char *Str) {
 
 }
 
-static bool Execute(void **Data,
-                    StringRef Program,
-                    const char** args,
-                    const char** envp,
-                    const StringRef** redirects,
-                    unsigned memoryLimit,
-                    std::string* ErrMsg) {
+static bool Execute(ProcessInfo &PI, StringRef Program, const char **args,
+                    const char **envp, const StringRef **redirects,
+                    unsigned memoryLimit, std::string *ErrMsg) {
   if (!sys::fs::can_execute(Program)) {
     if (ErrMsg)
       *ErrMsg = "program not executable";
@@ -316,12 +307,9 @@ static bool Execute(void **Data,
                ProgramStr + "'");
     return false;
   }
-  if (Data) {
-    Win32ProcessInfo* wpi = new Win32ProcessInfo;
-    wpi->hProcess = pi.hProcess;
-    wpi->dwProcessId = pi.dwProcessId;
-    *Data = wpi;
-  }
+
+  PI.Pid = pi.dwProcessId;
+  PI.ProcessHandle = pi.hProcess;
 
   // Make sure these get closed no matter what.
   ScopedCommonHandle hThread(pi.hThread);
@@ -351,68 +339,72 @@ static bool Execute(void **Data,
     }
   }
 
-  // Don't leak the handle if the caller doesn't want it.
-  if (!Data)
-    CloseHandle(pi.hProcess);
-
   return true;
 }
 
-static int WaitAux(Win32ProcessInfo *wpi, unsigned secondsToWait,
-                   std::string *ErrMsg) {
-  // Wait for the process to terminate.
-  HANDLE hProcess = wpi->hProcess;
-  DWORD millisecondsToWait = INFINITE;
-  if (secondsToWait > 0)
-    millisecondsToWait = secondsToWait * 1000;
+namespace llvm {
+ProcessInfo sys::Wait(const ProcessInfo &PI, unsigned SecondsToWait,
+                      bool WaitUntilChildTerminates, std::string *ErrMsg) {
+  assert(PI.Pid && "invalid pid to wait on, process not started?");
+  assert(PI.ProcessHandle &&
+         "invalid process handle to wait on, process not started?");
+  DWORD milliSecondsToWait = 0;
+  if (WaitUntilChildTerminates)
+    milliSecondsToWait = INFINITE;
+  else if (SecondsToWait > 0)
+    milliSecondsToWait = SecondsToWait * 1000;
 
-  if (WaitForSingleObject(hProcess, millisecondsToWait) == WAIT_TIMEOUT) {
-    if (!TerminateProcess(hProcess, 1)) {
-      MakeErrMsg(ErrMsg, "Failed to terminate timed-out program.");
-      // -2 indicates a crash or timeout as opposed to failure to execute.
-      return -2;
+  ProcessInfo WaitResult = PI;
+  DWORD WaitStatus = WaitForSingleObject(PI.ProcessHandle, milliSecondsToWait);
+  if (WaitStatus == WAIT_TIMEOUT) {
+    if (SecondsToWait) {
+      if (!TerminateProcess(PI.ProcessHandle, 1)) {
+        if (ErrMsg)
+          MakeErrMsg(ErrMsg, "Failed to terminate timed-out program.");
+
+        // -2 indicates a crash or timeout as opposed to failure to execute.
+        WaitResult.ReturnCode = -2;
+        CloseHandle(PI.ProcessHandle);
+        return WaitResult;
+      }
+      WaitForSingleObject(PI.ProcessHandle, INFINITE);
+      CloseHandle(PI.ProcessHandle);
+    } else {
+      // Non-blocking wait.
+      return ProcessInfo();
     }
-    WaitForSingleObject(hProcess, INFINITE);
   }
 
   // Get its exit status.
   DWORD status;
-  BOOL rc = GetExitCodeProcess(hProcess, &status);
+  BOOL rc = GetExitCodeProcess(PI.ProcessHandle, &status);
   DWORD err = GetLastError();
+  CloseHandle(PI.ProcessHandle);
 
   if (!rc) {
     SetLastError(err);
-    MakeErrMsg(ErrMsg, "Failed getting status for program.");
+    if (ErrMsg)
+      MakeErrMsg(ErrMsg, "Failed getting status for program.");
+
     // -2 indicates a crash or timeout as opposed to failure to execute.
-    return -2;
+    WaitResult.ReturnCode = -2;
+    return WaitResult;
   }
 
   if (!status)
-    return 0;
+    return WaitResult;
 
   // Pass 10(Warning) and 11(Error) to the callee as negative value.
   if ((status & 0xBFFF0000U) == 0x80000000U)
-    return (int)status;
+    WaitResult.ReturnCode = static_cast<int>(status);
+  else if (status & 0xFF)
+    WaitResult.ReturnCode = status & 0x7FFFFFFF;
+  else
+    WaitResult.ReturnCode = 1;
 
-  if (status & 0xFF)
-    return status & 0x7FFFFFFF;
-
-  return 1;
+  return WaitResult;
 }
 
-static int Wait(void *&Data, StringRef Program, unsigned secondsToWait,
-                std::string *ErrMsg) {
-  Win32ProcessInfo *wpi = reinterpret_cast<Win32ProcessInfo *>(Data);
-  int Ret = WaitAux(wpi, secondsToWait, ErrMsg);
-
-  CloseHandle(wpi->hProcess);
-  delete wpi;
-  Data = 0;
-
-  return Ret;
-}
-
-namespace llvm {
 error_code sys::ChangeStdinToBinary(){
   int result = _setmode( _fileno(stdin), _O_BINARY );
   if (result == -1)
@@ -449,5 +441,4 @@ bool llvm::sys::argumentsFitWithinSystemLimits(ArrayRef<const char*> Args) {
   }
   return true;
 }
-
 }

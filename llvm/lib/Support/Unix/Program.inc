@@ -47,6 +47,8 @@
 namespace llvm {
 using namespace sys;
 
+ProcessInfo::ProcessInfo() : Pid(0), ReturnCode(0) {}
+
 // This function just uses the PATH environment variable to find the program.
 std::string
 sys::FindProgramByName(const std::string& progName) {
@@ -175,9 +177,16 @@ static void SetMemoryLimits (unsigned size)
 
 }
 
-static bool Execute(void **Data, StringRef Program, const char **args,
+static bool Execute(ProcessInfo &PI, StringRef Program, const char **args,
                     const char **envp, const StringRef **redirects,
                     unsigned memoryLimit, std::string *ErrMsg) {
+  if (!llvm::sys::fs::exists(Program)) {
+    if (ErrMsg)
+      *ErrMsg = std::string("Executable \"") + Program.str() +
+                std::string("\" doesn't exist!");
+    return false;
+  }
+
   // If this OS has posix_spawn and there is no memory limit being implied, use
   // posix_spawn.  It is more efficient than fork/exec.
 #ifdef HAVE_POSIX_SPAWN
@@ -239,8 +248,8 @@ static bool Execute(void **Data, StringRef Program, const char **args,
     if (Err)
      return !MakeErrMsg(ErrMsg, "posix_spawn failed", Err);
 
-    if (Data)
-      *Data = reinterpret_cast<void*>(PID);
+    PI.Pid = PID;
+
     return true;
   }
 #endif
@@ -303,56 +312,71 @@ static bool Execute(void **Data, StringRef Program, const char **args,
       break;
   }
 
-  if (Data)
-    *Data = reinterpret_cast<void*>(child);
+  PI.Pid = child;
 
   return true;
 }
 
-static int Wait(void *&Data, StringRef Program, unsigned secondsToWait,
-                std::string *ErrMsg) {
+namespace llvm {
+
+ProcessInfo sys::Wait(const ProcessInfo &PI, unsigned SecondsToWait,
+                      bool WaitUntilTerminates, std::string *ErrMsg) {
 #ifdef HAVE_SYS_WAIT_H
   struct sigaction Act, Old;
-  assert(Data && "invalid pid to wait on, process not started?");
+  assert(PI.Pid && "invalid pid to wait on, process not started?");
 
-  // Install a timeout handler.  The handler itself does nothing, but the simple
-  // fact of having a handler at all causes the wait below to return with EINTR,
-  // unlike if we used SIG_IGN.
-  if (secondsToWait) {
+  int WaitPidOptions = 0;
+  pid_t ChildPid = PI.Pid;
+  if (WaitUntilTerminates) {
+    SecondsToWait = 0;
+    ChildPid = -1; // mimic a wait() using waitpid()
+  } else if (SecondsToWait) {
+    // Install a timeout handler.  The handler itself does nothing, but the
+    // simple fact of having a handler at all causes the wait below to return
+    // with EINTR, unlike if we used SIG_IGN.
     memset(&Act, 0, sizeof(Act));
     Act.sa_handler = TimeOutHandler;
     sigemptyset(&Act.sa_mask);
     sigaction(SIGALRM, &Act, &Old);
-    alarm(secondsToWait);
-  }
+    alarm(SecondsToWait);
+  } else if (SecondsToWait == 0)
+    WaitPidOptions = WNOHANG;
 
   // Parent process: Wait for the child process to terminate.
   int status;
-  uint64_t pid = reinterpret_cast<uint64_t>(Data);
-  pid_t child = static_cast<pid_t>(pid);
-  while (waitpid(pid, &status, 0) != child)
-    if (secondsToWait && errno == EINTR) {
-      // Kill the child.
-      kill(child, SIGKILL);
+  ProcessInfo WaitResult;
+  WaitResult.Pid = waitpid(ChildPid, &status, WaitPidOptions);
+  if (WaitResult.Pid != PI.Pid) {
+    if (WaitResult.Pid == 0) {
+      // Non-blocking wait.
+      return WaitResult;
+    } else {
+      if (SecondsToWait && errno == EINTR) {
+        // Kill the child.
+        kill(PI.Pid, SIGKILL);
 
-      // Turn off the alarm and restore the signal handler
-      alarm(0);
-      sigaction(SIGALRM, &Old, 0);
+        // Turn off the alarm and restore the signal handler
+        alarm(0);
+        sigaction(SIGALRM, &Old, 0);
 
-      // Wait for child to die
-      if (wait(&status) != child)
-        MakeErrMsg(ErrMsg, "Child timed out but wouldn't die");
-      else
-        MakeErrMsg(ErrMsg, "Child timed out", 0);
+        // Wait for child to die
+        if (wait(&status) != ChildPid)
+          MakeErrMsg(ErrMsg, "Child timed out but wouldn't die");
+        else
+          MakeErrMsg(ErrMsg, "Child timed out", 0);
 
-      return -2;   // Timeout detected
-    } else if (errno != EINTR) {
-      MakeErrMsg(ErrMsg, "Error waiting for child process");
-      return -1;
+        WaitResult.ReturnCode = -2; // Timeout detected
+        return WaitResult;
+      } else if (errno != EINTR) {
+        MakeErrMsg(ErrMsg, "Error waiting for child process");
+        WaitResult.ReturnCode = -1;
+        return WaitResult;
+      }
     }
+  }
 
   // We exited normally without timeout, so turn off the timer.
-  if (secondsToWait) {
+  if (SecondsToWait && !WaitUntilTerminates) {
     alarm(0);
     sigaction(SIGALRM, &Old, 0);
   }
@@ -362,24 +386,19 @@ static int Wait(void *&Data, StringRef Program, unsigned secondsToWait,
   int result = 0;
   if (WIFEXITED(status)) {
     result = WEXITSTATUS(status);
-#ifdef HAVE_POSIX_SPAWN
-    // The posix_spawn child process returns 127 on any kind of error.
-    // Following the POSIX convention for command-line tools (which posix_spawn
-    // itself apparently does not), check to see if the failure was due to some
-    // reason other than the file not existing, and return 126 in this case.
-    bool Exists;
-    if (result == 127 && !llvm::sys::fs::exists(Program, Exists) && Exists)
-      result = 126;
-#endif
+    WaitResult.ReturnCode = result;
+
     if (result == 127) {
       if (ErrMsg)
         *ErrMsg = llvm::sys::StrError(ENOENT);
-      return -1;
+      WaitResult.ReturnCode = -1;
+      return WaitResult;
     }
     if (result == 126) {
       if (ErrMsg)
         *ErrMsg = "Program could not be executed";
-      return -1;
+      WaitResult.ReturnCode = -1;
+      return WaitResult;
     }
   } else if (WIFSIGNALED(status)) {
     if (ErrMsg) {
@@ -391,17 +410,15 @@ static int Wait(void *&Data, StringRef Program, unsigned secondsToWait,
     }
     // Return a special value to indicate that the process received an unhandled
     // signal during execution as opposed to failing to execute.
-    return -2;
+    WaitResult.ReturnCode = -2;
   }
-  return result;
 #else
   if (ErrMsg)
     *ErrMsg = "Program::Wait is not implemented on this platform yet!";
-  return -1;
+  WaitResult.ReturnCode = -2;
 #endif
+  return WaitResult;
 }
-
-namespace llvm {
 
 error_code sys::ChangeStdinToBinary(){
   // Do nothing, as Unix doesn't differentiate between text and binary.
@@ -438,5 +455,4 @@ bool llvm::sys::argumentsFitWithinSystemLimits(ArrayRef<const char*> Args) {
   }
   return true;
 }
-
 }

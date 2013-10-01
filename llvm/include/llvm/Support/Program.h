@@ -30,6 +30,28 @@ namespace sys {
   const char EnvPathSeparator = ';';
 #endif
 
+/// @brief This struct encapsulates information about a process.
+struct ProcessInfo {
+#if defined(LLVM_ON_UNIX)
+  typedef pid_t ProcessId;
+#elif defined(LLVM_ON_WIN32)
+  typedef unsigned long ProcessId; // Must match the type of DWORD on Windows.
+  typedef void * HANDLE; // Must match the type of HANDLE on Windows.
+  /// The handle to the process (available on Windows only).
+  HANDLE ProcessHandle;
+#else
+#error "ProcessInfo is not defined for this platform!"
+#endif
+
+  /// The process identifier.
+  ProcessId Pid;
+
+  /// The return code, set after execution.
+  int ReturnCode;
+
+  ProcessInfo();
+};
+
   /// This static constructor (factory) will attempt to locate a program in
   /// the operating system's file system using some pre-determined set of
   /// locations to search (e.g. the PATH on Unix). Paths with slashes are
@@ -87,15 +109,41 @@ namespace sys {
       ///< program.
       bool *ExecutionFailed = 0);
 
-  /// Similar to ExecuteAndWait, but return immediately.
-  void ExecuteNoWait(StringRef Program, const char **args, const char **env = 0,
-                     const StringRef **redirects = 0, unsigned memoryLimit = 0,
-                     std::string *ErrMsg = 0);
+  /// Similar to ExecuteAndWait, but returns immediately.
+  /// @returns The \see ProcessInfo of the newly launced process.
+  /// \Note On Microsoft Windows systems, users will need to either call \see
+  /// Wait until the process finished execution or win32 CloseHandle() API on
+  /// ProcessInfo.ProcessHandle to avoid memory leaks.
+  ProcessInfo
+  ExecuteNoWait(StringRef Program, const char **args, const char **env = 0,
+                const StringRef **redirects = 0, unsigned memoryLimit = 0,
+                std::string *ErrMsg = 0, bool *ExecutionFailed = 0);
 
-  // Return true if the given arguments fit within system-specific
-  // argument length limits.
+  /// Return true if the given arguments fit within system-specific
+  /// argument length limits.
   bool argumentsFitWithinSystemLimits(ArrayRef<const char*> Args);
-}
+
+  /// This function waits for the process specified by \p PI to finish.
+  /// \returns A \see ProcessInfo struct with Pid set to:
+  /// \li The process id of the child process if the child process has changed
+  /// state.
+  /// \li 0 if the child process has not changed state.
+  /// \Note Users of this function should always check the ReturnCode member of
+  /// the \see ProcessInfo returned from this function.
+  ProcessInfo Wait(
+      const ProcessInfo &PI, ///< The child process that should be waited on.
+      unsigned SecondsToWait, ///< If non-zero, this specifies the amount of
+      ///< time to wait for the child process to exit. If the time expires, the
+      ///< child is killed and this function returns. If zero, this function
+      ///< will perform a non-blocking wait on the child process.
+      bool WaitUntilTerminates, ///< If true, ignores \p SecondsToWait and waits
+      ///< until child has terminated.
+      std::string *ErrMsg = 0 ///< If non-zero, provides a pointer to a string
+      ///< instance in which error messages will be returned. If the string
+      ///< is non-empty upon return an error occurred while invoking the
+      ///< program.
+      );
+  }
 }
 
 #endif
