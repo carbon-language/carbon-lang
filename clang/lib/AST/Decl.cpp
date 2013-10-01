@@ -1092,6 +1092,19 @@ static LinkageInfo getLVForLocalDecl(const NamedDecl *D,
                      LV.isVisibilityExplicit());
 }
 
+static inline const CXXRecordDecl*
+getOutermostEnclosingLambda(const CXXRecordDecl *Record) {
+  const CXXRecordDecl *Ret = Record;
+  while (Record && Record->isLambda()) {
+    Ret = Record;
+    if (!Record->getParent()) break;
+    // Get the Containing Class of this Lambda Class
+    Record = dyn_cast_or_null<CXXRecordDecl>(
+      Record->getParent()->getParent());
+  }
+  return Ret;
+}
+
 static LinkageInfo computeLVForDecl(const NamedDecl *D,
                                     LVComputationKind computation) {
   // Objective-C: treat all Objective-C declarations as having external
@@ -1122,9 +1135,24 @@ static LinkageInfo computeLVForDecl(const NamedDecl *D,
           return LinkageInfo::internal();
         }
 
-        // This lambda has its linkage/visibility determined by its owner.
-        return getLVForClosure(D->getDeclContext()->getRedeclContext(),
-                               Record->getLambdaContextDecl(), computation);
+        // This lambda has its linkage/visibility determined:
+        //  - either by the outermost lambda if that lambda has no mangling 
+        //    number. 
+        //  - or by the parent of the outer most lambda
+        // This prevents infinite recursion in settings such as nested lambdas 
+        // used in NSDMI's, for e.g. 
+        //  struct L {
+        //    int t{};
+        //    int t2 = ([](int a) { return [](int b) { return b; };})(t)(t);    
+        //  };
+        const CXXRecordDecl *OuterMostLambda = 
+            getOutermostEnclosingLambda(Record);
+        if (!OuterMostLambda->getLambdaManglingNumber())
+          return LinkageInfo::internal();
+        
+        return getLVForClosure(
+                  OuterMostLambda->getDeclContext()->getRedeclContext(),
+                  OuterMostLambda->getLambdaContextDecl(), computation);
       }
       
       break;
