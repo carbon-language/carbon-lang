@@ -569,7 +569,7 @@ Value *SCEVExpander::expandAddToGEP(const SCEV *const *op_begin,
   }
 
   // Save the original insertion point so we can restore it when we're done.
-  BuilderType::InsertPointGuard Guard(Builder);
+  BuilderType::InsertPoint SaveInsertPt = Builder.saveIP();
 
   // Move the insertion point out of as many loops as we can.
   while (const Loop *L = SE.LI->getLoopFor(Builder.GetInsertBlock())) {
@@ -603,6 +603,9 @@ Value *SCEVExpander::expandAddToGEP(const SCEV *const *op_begin,
                                  "scevgep");
   Ops.push_back(SE.getUnknown(GEP));
   rememberInstruction(GEP);
+
+  // Restore the original insert point.
+  Builder.restoreIP(SaveInsertPt);
 
   return expand(SE.getAddExpr(Ops));
 }
