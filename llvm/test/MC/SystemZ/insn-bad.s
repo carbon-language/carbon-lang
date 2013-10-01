@@ -612,6 +612,11 @@
 	ch	%r0, -1
 	ch	%r0, 4096
 
+#CHECK: error: {{(instruction requires: high-word)?}}
+#CHECK: chf	%r0, 0
+
+	chf	%r0, 0
+
 #CHECK: error: invalid operand
 #CHECK: chhsi	-1, 0
 #CHECK: error: invalid operand
@@ -765,6 +770,11 @@
 	clc	0(%r1,%r2), 0(%r1)
 	clc	0(1,%r2), 0(%r1,%r2)
 	clc	0(-), 0
+
+#CHECK: error: {{(instruction requires: high-word)?}}
+#CHECK: clhf	%r0, 0
+
+	clhf	%r0, 0
 
 #CHECK: error: invalid operand
 #CHECK: clfhsi	-1, 0

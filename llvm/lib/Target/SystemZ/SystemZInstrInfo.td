@@ -1087,7 +1087,11 @@ let Defs = [CC], CCValues = 0xE in {
 
   // Comparison with memory.
   defm CH    : CompareRXPair<"ch", 0x49, 0xE379, z_scmp, GR32, asextloadi16, 2>;
+  def  CMux  : CompareRXYPseudo<z_scmp, GRX32, load, 4>,
+               Requires<[FeatureHighWord]>;
   defm C     : CompareRXPair<"c",  0x59, 0xE359, z_scmp, GR32, load, 4>;
+  def  CHF   : CompareRXY<"chf", 0xE3CD, z_scmp, GRH32, load, 4>,
+               Requires<[FeatureHighWord]>;
   def  CGH   : CompareRXY<"cgh", 0xE334, z_scmp, GR64, asextloadi16, 2>;
   def  CGF   : CompareRXY<"cgf", 0xE330, z_scmp, GR64, asextloadi32, 4>;
   def  CG    : CompareRXY<"cg",  0xE320, z_scmp, GR64, load, 8>;
@@ -1121,7 +1125,11 @@ let Defs = [CC], CCValues = 0xE, IsLogical = 1 in {
   def CLGFI : CompareRIL<"clgfi", 0xC2E, z_ucmp, GR64, imm64zx32>;
 
   // Comparison with memory.
+  def  CLMux  : CompareRXYPseudo<z_ucmp, GRX32, load, 4>,
+                Requires<[FeatureHighWord]>;
   defm CL     : CompareRXPair<"cl", 0x55, 0xE355, z_ucmp, GR32, load, 4>;
+  def  CLHF   : CompareRXY<"clhf", 0xE3CF, z_ucmp, GRH32, load, 4>,
+                Requires<[FeatureHighWord]>;
   def  CLGF   : CompareRXY<"clgf", 0xE331, z_ucmp, GR64, azextloadi32, 4>;
   def  CLG    : CompareRXY<"clg",  0xE321, z_ucmp, GR64, load, 8>;
   def  CLHRL  : CompareRILPC<"clhrl",  0xC67, z_ucmp, GR32,

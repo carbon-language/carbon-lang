@@ -974,6 +974,14 @@ SystemZInstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
     expandRIPseudo(MI, SystemZ::CLFI, SystemZ::CLIH, false);
     return true;
 
+  case SystemZ::CMux:
+    expandRXYPseudo(MI, SystemZ::C, SystemZ::CHF);
+    return true;
+
+  case SystemZ::CLMux:
+    expandRXYPseudo(MI, SystemZ::CL, SystemZ::CLHF);
+    return true;
+
   case SystemZ::RISBMux: {
     bool DestIsHigh = isHighReg(MI->getOperand(0).getReg());
     bool SrcIsHigh = isHighReg(MI->getOperand(2).getReg());

@@ -703,3 +703,43 @@ define i32 @f32() {
   %sel2 = select i1 %cmp2, i32 0, i32 1
   ret i32 %sel2
 }
+
+; Test memory comparison involving high registers.
+define void @f33(i32 *%ptr1, i32 *%ptr2) {
+; CHECK-LABEL: f33:
+; CHECK: stepa [[REG1:%r[0-5]]]
+; CHECK: chf [[REG1]], 0(%r2)
+; CHECK: stepb [[REG2:%r[0-5]]]
+; CHECK: clhf [[REG2]], 0(%r3)
+; CHECK: br %r14
+  %res1 = call i32 asm "stepa $0", "=h"()
+  %load1 = load i32 *%ptr1
+  %cmp1 = icmp sle i32 %res1, %load1
+  %sel1 = select i1 %cmp1, i32 0, i32 1
+  %res2 = call i32 asm "stepb $0, $1", "=h,r"(i32 %sel1)
+  %load2 = load i32 *%ptr2
+  %cmp2 = icmp ule i32 %res2, %load2
+  %sel2 = select i1 %cmp2, i32 0, i32 1
+  store i32 %sel2, i32 *%ptr1
+  ret void
+}
+
+; Test memory comparison involving low registers.
+define void @f34(i32 *%ptr1, i32 *%ptr2) {
+; CHECK-LABEL: f34:
+; CHECK: stepa [[REG1:%r[0-5]]]
+; CHECK: c [[REG1]], 0(%r2)
+; CHECK: stepb [[REG2:%r[0-5]]]
+; CHECK: cl [[REG2]], 0(%r3)
+; CHECK: br %r14
+  %res1 = call i32 asm "stepa $0", "=r"()
+  %load1 = load i32 *%ptr1
+  %cmp1 = icmp sle i32 %res1, %load1
+  %sel1 = select i1 %cmp1, i32 0, i32 1
+  %res2 = call i32 asm "stepb $0, $1", "=r,r"(i32 %sel1)
+  %load2 = load i32 *%ptr2
+  %cmp2 = icmp ule i32 %res2, %load2
+  %sel2 = select i1 %cmp2, i32 0, i32 1
+  store i32 %sel2, i32 *%ptr1
+  ret void
+}

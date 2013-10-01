@@ -1355,7 +1355,7 @@ class UnaryRIPseudo<SDPatternOperator operator, RegisterOperand cls,
   : Pseudo<(outs cls:$R1), (ins imm:$I2),
            [(set cls:$R1, (operator imm:$I2))]>;
 
-// Like UnaryRXY, but expanded after RA depending on the choice of registers.
+// Like UnaryRXY, but expanded after RA depending on the choice of register.
 class UnaryRXYPseudo<string key, SDPatternOperator operator,
                      RegisterOperand cls, bits<5> bytes,
                      AddressingMode mode = bdxaddr20only>
@@ -1410,7 +1410,19 @@ class CompareRIPseudo<SDPatternOperator operator, RegisterOperand cls,
                       Immediate imm>
   : Pseudo<(outs), (ins cls:$R1, imm:$I2), [(operator cls:$R1, imm:$I2)]>;
 
-// Like StoreRXY, but expanded after RA depending on the choice of registers.
+// Like CompareRXY, but expanded after RA depending on the choice of register.
+class CompareRXYPseudo<SDPatternOperator operator, RegisterOperand cls,
+                       SDPatternOperator load, bits<5> bytes,
+                       AddressingMode mode = bdxaddr20only>
+  : Pseudo<(outs), (ins cls:$R1, mode:$XBD2),
+           [(operator cls:$R1, (load mode:$XBD2))]> {
+  let mayLoad = 1;
+  let Has20BitOffset = 1;
+  let HasIndex = 1;
+  let AccessBytes = bytes;
+}
+
+// Like StoreRXY, but expanded after RA depending on the choice of register.
 class StoreRXYPseudo<SDPatternOperator operator, RegisterOperand cls,
                      bits<5> bytes, AddressingMode mode = bdxaddr20only>
   : Pseudo<(outs), (ins cls:$R1, mode:$XBD2),
