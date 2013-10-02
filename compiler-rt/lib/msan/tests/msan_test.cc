@@ -1517,6 +1517,7 @@ TEST(MemorySanitizer, localtime) {
   EXPECT_NOT_POISONED(time->tm_hour);
   EXPECT_NOT_POISONED(time->tm_year);
   EXPECT_NOT_POISONED(time->tm_isdst);
+  EXPECT_NE(0, strlen(time->tm_zone));
 }
 
 TEST(MemorySanitizer, localtime_r) {
@@ -1528,6 +1529,7 @@ TEST(MemorySanitizer, localtime_r) {
   EXPECT_NOT_POISONED(time.tm_hour);
   EXPECT_NOT_POISONED(time.tm_year);
   EXPECT_NOT_POISONED(time.tm_isdst);
+  EXPECT_NE(0, strlen(time.tm_zone));
 }
 
 TEST(MemorySanitizer, mmap) {

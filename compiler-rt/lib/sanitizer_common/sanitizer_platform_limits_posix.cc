@@ -882,4 +882,17 @@ CHECK_SIZE_AND_OFFSET(wordexp_t, we_wordv);
 CHECK_SIZE_AND_OFFSET(wordexp_t, we_offs);
 #endif
 
+CHECK_TYPE_SIZE(tm);
+CHECK_SIZE_AND_OFFSET(tm, tm_sec);
+CHECK_SIZE_AND_OFFSET(tm, tm_min);
+CHECK_SIZE_AND_OFFSET(tm, tm_hour);
+CHECK_SIZE_AND_OFFSET(tm, tm_mday);
+CHECK_SIZE_AND_OFFSET(tm, tm_mon);
+CHECK_SIZE_AND_OFFSET(tm, tm_year);
+CHECK_SIZE_AND_OFFSET(tm, tm_wday);
+CHECK_SIZE_AND_OFFSET(tm, tm_yday);
+CHECK_SIZE_AND_OFFSET(tm, tm_isdst);
+CHECK_SIZE_AND_OFFSET(tm, tm_gmtoff);
+CHECK_SIZE_AND_OFFSET(tm, tm_zone);
+
 #endif  // SANITIZER_LINUX || SANITIZER_MAC

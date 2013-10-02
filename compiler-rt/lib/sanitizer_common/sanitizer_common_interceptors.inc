@@ -403,43 +403,50 @@ INTERCEPTOR(unsigned long, time, unsigned long *t) {
 
 
 #if SANITIZER_INTERCEPT_LOCALTIME_AND_FRIENDS
-INTERCEPTOR(void *, localtime, unsigned long *timep) {
+static void unpoison_tm(void *ctx, __sanitizer_tm *tm) {
+  COMMON_INTERCEPTOR_WRITE_RANGE(ctx, tm, sizeof(*tm));
+  if (tm->tm_zone)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, tm->tm_zone,
+                                   REAL(strlen(tm->tm_zone)) + 1);
+}
+
+INTERCEPTOR(__sanitizer_tm *, localtime, unsigned long *timep) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, localtime, timep);
-  void *res = REAL(localtime)(timep);
+  __sanitizer_tm *res = REAL(localtime)(timep);
   if (res) {
     COMMON_INTERCEPTOR_READ_RANGE(ctx, timep, sizeof(*timep));
-    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, res, struct_tm_sz);
+    unpoison_tm(ctx, res);
   }
   return res;
 }
-INTERCEPTOR(void *, localtime_r, unsigned long *timep, void *result) {
+INTERCEPTOR(__sanitizer_tm *, localtime_r, unsigned long *timep, void *result) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, localtime_r, timep, result);
-  void *res = REAL(localtime_r)(timep, result);
+  __sanitizer_tm *res = REAL(localtime_r)(timep, result);
   if (res) {
     COMMON_INTERCEPTOR_READ_RANGE(ctx, timep, sizeof(*timep));
-    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, res, struct_tm_sz);
+    unpoison_tm(ctx, res);
   }
   return res;
 }
-INTERCEPTOR(void *, gmtime, unsigned long *timep) {
+INTERCEPTOR(__sanitizer_tm *, gmtime, unsigned long *timep) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, gmtime, timep);
-  void *res = REAL(gmtime)(timep);
+  __sanitizer_tm *res = REAL(gmtime)(timep);
   if (res) {
     COMMON_INTERCEPTOR_READ_RANGE(ctx, timep, sizeof(*timep));
-    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, res, struct_tm_sz);
+    unpoison_tm(ctx, res);
   }
   return res;
 }
-INTERCEPTOR(void *, gmtime_r, unsigned long *timep, void *result) {
+INTERCEPTOR(__sanitizer_tm *, gmtime_r, unsigned long *timep, void *result) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, gmtime_r, timep, result);
-  void *res = REAL(gmtime_r)(timep, result);
+  __sanitizer_tm *res = REAL(gmtime_r)(timep, result);
   if (res) {
     COMMON_INTERCEPTOR_READ_RANGE(ctx, timep, sizeof(*timep));
-    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, res, struct_tm_sz);
+    unpoison_tm(ctx, res);
   }
   return res;
 }
@@ -463,22 +470,22 @@ INTERCEPTOR(char *, ctime_r, unsigned long *timep, char *result) {
   }
   return res;
 }
-INTERCEPTOR(char *, asctime, void *tm) {
+INTERCEPTOR(char *, asctime, __sanitizer_tm *tm) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, asctime, tm);
   char *res = REAL(asctime)(tm);
   if (res) {
-    COMMON_INTERCEPTOR_READ_RANGE(ctx, tm, struct_tm_sz);
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, tm, sizeof(*tm));
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, res, REAL(strlen)(res) + 1);
   }
   return res;
 }
-INTERCEPTOR(char *, asctime_r, void *tm, char *result) {
+INTERCEPTOR(char *, asctime_r, __sanitizer_tm *tm, char *result) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, asctime_r, tm, result);
   char *res = REAL(asctime_r)(tm, result);
   if (res) {
-    COMMON_INTERCEPTOR_READ_RANGE(ctx, tm, struct_tm_sz);
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, tm, sizeof(*tm));
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, res, REAL(strlen)(res) + 1);
   }
   return res;
