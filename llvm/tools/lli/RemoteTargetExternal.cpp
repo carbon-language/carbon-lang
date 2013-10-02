@@ -123,7 +123,7 @@ void RemoteTargetExternal::Receive(LLIMessageType ExpectedMsgType) {
   uint32_t MsgType;
   rc = ReadBytes(&MsgType, 4);
   assert(rc == 4 && "Error reading message type.");
-  assert(MsgType == ExpectedMsgType && "Error: received unexpected message type.");
+  assert(MsgType == (uint32_t)ExpectedMsgType && "Error: received unexpected message type.");
 
   uint32_t DataSize;
   rc = ReadBytes(&DataSize, 4);
@@ -142,7 +142,7 @@ void RemoteTargetExternal::Receive(LLIMessageType ExpectedMsgType, uint64_t &Dat
   uint32_t MsgType;
   rc = ReadBytes(&MsgType, 4);
   assert(rc == 4 && "Error reading message type.");
-  assert(MsgType == ExpectedMsgType && "Error: received unexpected message type.");
+  assert(MsgType == (uint32_t)ExpectedMsgType && "Error: received unexpected message type.");
 
   uint32_t DataSize;
   rc = ReadBytes(&DataSize, 4);
