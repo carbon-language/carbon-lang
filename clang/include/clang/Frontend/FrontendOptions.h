@@ -163,7 +163,9 @@ public:
     /// \brief Enable migration to modern ObjC property.
     ObjCMT_Property = 0x4,
     /// \brief Enable migration to modern ObjC readonly property.
-    ObjCMT_ReadonlyProperty = 0x8
+    ObjCMT_ReadonlyProperty = 0x8,
+    ObjCMT_All = (ObjCMT_Literals | ObjCMT_Subscripting |
+                  ObjCMT_Property | ObjCMT_ReadonlyProperty)
   };
   unsigned ObjCMTAction;
 

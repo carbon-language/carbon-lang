@@ -75,10 +75,7 @@ class ObjCMigrateASTConsumer : public ASTConsumer {
                                   const ObjCMethodDecl *MethodDecl);
 public:
   std::string MigrateDir;
-  bool MigrateLiterals;
-  bool MigrateSubscripting;
-  bool MigrateProperty;
-  bool MigrateReadonlyProperty;
+  unsigned ASTMigrateActions;
   unsigned  FileId;
   OwningPtr<NSAPI> NSAPIObj;
   OwningPtr<edit::EditedSource> Editor;
@@ -91,20 +88,14 @@ public:
   llvm::SmallVector<const Decl *, 8> CFFunctionIBCandidates;
   
   ObjCMigrateASTConsumer(StringRef migrateDir,
-                         bool migrateLiterals,
-                         bool migrateSubscripting,
-                         bool migrateProperty,
-                         bool migrateReadonlyProperty,
+                         unsigned astMigrateActions,
                          FileRemapper &remapper,
                          FileManager &fileMgr,
                          const PPConditionalDirectiveRecord *PPRec,
                          Preprocessor &PP,
                          bool isOutputFile = false)
   : MigrateDir(migrateDir),
-    MigrateLiterals(migrateLiterals),
-    MigrateSubscripting(migrateSubscripting),
-    MigrateProperty(migrateProperty), 
-    MigrateReadonlyProperty(migrateReadonlyProperty), 
+    ASTMigrateActions(astMigrateActions),
     FileId(0), Remapper(remapper), FileMgr(fileMgr), PPRec(PPRec), PP(PP),
     IsOutputFile(isOutputFile) { }
 
@@ -134,15 +125,10 @@ protected:
 }
 
 ObjCMigrateAction::ObjCMigrateAction(FrontendAction *WrappedAction,
-                             StringRef migrateDir,
-                             bool migrateLiterals,
-                             bool migrateSubscripting,
-                             bool migrateProperty,
-                             bool migrateReadonlyProperty)
+                                     StringRef migrateDir,
+                                     unsigned migrateAction)
   : WrapperFrontendAction(WrappedAction), MigrateDir(migrateDir),
-    MigrateLiterals(migrateLiterals), MigrateSubscripting(migrateSubscripting),
-    MigrateProperty(migrateProperty),
-    MigrateReadonlyProperty(migrateReadonlyProperty),
+    ObjCMigAction(migrateAction),
     CompInst(0) {
   if (MigrateDir.empty())
     MigrateDir = "."; // user current directory if none is given.
@@ -156,10 +142,7 @@ ASTConsumer *ObjCMigrateAction::CreateASTConsumer(CompilerInstance &CI,
   ASTConsumer *
     WrappedConsumer = WrapperFrontendAction::CreateASTConsumer(CI, InFile);
   ASTConsumer *MTConsumer = new ObjCMigrateASTConsumer(MigrateDir,
-                                                       MigrateLiterals,
-                                                       MigrateSubscripting,
-                                                       MigrateProperty,
-                                                       MigrateReadonlyProperty,
+                                                       ObjCMigAction,
                                                        Remapper,
                                                     CompInst->getFileManager(),
                                                        PPRec,
@@ -189,13 +172,13 @@ public:
   bool shouldWalkTypesOfTypeLocs() const { return false; }
 
   bool VisitObjCMessageExpr(ObjCMessageExpr *E) {
-    if (Consumer.MigrateLiterals) {
+    if (Consumer.ASTMigrateActions & FrontendOptions::ObjCMT_Literals) {
       edit::Commit commit(*Consumer.Editor);
       edit::rewriteToObjCLiteralSyntax(E, *Consumer.NSAPIObj, commit, &PMap);
       Consumer.Editor->commit(commit);
     }
 
-    if (Consumer.MigrateSubscripting) {
+    if (Consumer.ASTMigrateActions & FrontendOptions::ObjCMT_Subscripting) {
       edit::Commit commit(*Consumer.Editor);
       edit::rewriteToObjCSubscriptSyntax(E, *Consumer.NSAPIObj, commit);
       Consumer.Editor->commit(commit);
@@ -841,7 +824,7 @@ bool ObjCMigrateASTConsumer::migrateProperty(ASTContext &Ctx,
     Editor->commit(commit);
     return true;
   }
-  else if (MigrateReadonlyProperty) {
+  else if (ASTMigrateActions & FrontendOptions::ObjCMT_ReadonlyProperty) {
     // Try a non-void method with no argument (and no setter or property of same name
     // as a 'readonly' property.
     edit::Commit commit(*Editor);
@@ -1341,7 +1324,7 @@ IsReallyASystemHeader(ASTContext &Ctx, const FileEntry *file, FileID FID) {
 void ObjCMigrateASTConsumer::HandleTranslationUnit(ASTContext &Ctx) {
   
   TranslationUnitDecl *TU = Ctx.getTranslationUnitDecl();
-  if (MigrateProperty) {
+  if (ASTMigrateActions & FrontendOptions::ObjCMT_Property) {
     for (DeclContext::decl_iterator D = TU->decls_begin(), DEnd = TU->decls_end();
          D != DEnd; ++D) {
       if (unsigned FID =
@@ -1419,10 +1402,7 @@ ASTConsumer *MigrateSourceAction::CreateASTConsumer(CompilerInstance &CI,
     PPRec = new PPConditionalDirectiveRecord(CI.getSourceManager());
   CI.getPreprocessor().addPPCallbacks(PPRec);
   return new ObjCMigrateASTConsumer(CI.getFrontendOpts().OutputFile,
-                                    /*MigrateLiterals=*/true,
-                                    /*MigrateSubscripting=*/true,
-                                    /*MigrateProperty*/true,
-                                    /*MigrateReadonlyProperty*/true,
+                                    FrontendOptions::ObjCMT_All,
                                     Remapper,
                                     CI.getFileManager(),
                                     PPRec,

@@ -57,18 +57,12 @@ public:
 /// \brief Migrates to modern ObjC syntax.
 class ObjCMigrateAction : public WrapperFrontendAction {
   std::string MigrateDir;
-  bool MigrateLiterals;
-  bool MigrateSubscripting;
-  bool MigrateProperty;
-  bool MigrateReadonlyProperty;
+  unsigned    ObjCMigAction;
   FileRemapper Remapper;
   CompilerInstance *CompInst;
 public:
   ObjCMigrateAction(FrontendAction *WrappedAction, StringRef migrateDir,
-                    bool migrateLiterals,
-                    bool migrateSubscripting,
-                    bool migrateProperty,
-                    bool migrateReadonlyProperty);
+                    unsigned migrateAction);
 
 protected:
   virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,StringRef InFile);

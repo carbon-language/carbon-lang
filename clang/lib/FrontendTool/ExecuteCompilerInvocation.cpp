@@ -162,10 +162,7 @@ static FrontendAction *CreateFrontendAction(CompilerInstance &CI) {
 
   if (FEOpts.ObjCMTAction != FrontendOptions::ObjCMT_None) {
     Act = new arcmt::ObjCMigrateAction(Act, FEOpts.MTMigrateDir,
-                   FEOpts.ObjCMTAction & FrontendOptions::ObjCMT_Literals,
-                   FEOpts.ObjCMTAction & FrontendOptions::ObjCMT_Subscripting,
-                   FEOpts.ObjCMTAction & FrontendOptions::ObjCMT_Property,
-                   FEOpts.ObjCMTAction & FrontendOptions::ObjCMT_ReadonlyProperty);
+                                       FEOpts.ObjCMTAction);
   }
 #endif
 
