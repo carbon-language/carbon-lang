@@ -63,7 +63,7 @@ I386-NEXT:     Offset: 0x4000
 I386-NEXT:     VirtualAddress: 0x4000
 I386-NEXT:     PhysicalAddress: 0x4000
 I386-NEXT:     FileSize: 4
-I386-NEXT:     MemSize: 16392
+I386-NEXT:     MemSize: 16389
 I386-NEXT:     Flags [ (0x6)
 I386-NEXT:       PF_R (0x4)
 I386-NEXT:       PF_W (0x2)

@@ -56,10 +56,12 @@ bool LayoutPass::CompareAtoms::operator()(const DefinedAtom *left,
 
   // Sort atoms by their ordinal overrides only if they fall in the same
   // chain.
-  const DefinedAtom *leftAtom = _layout._followOnRoots.find(left)->second;
-  const DefinedAtom *rightAtom = _layout._followOnRoots.find(right)->second;
+  auto leftAtom = _layout._followOnRoots.find(left);
+  auto rightAtom = _layout._followOnRoots.find(right);
 
-  if (leftAtom == rightAtom) {
+  if (leftAtom != _layout._followOnRoots.end() &&
+      rightAtom != _layout._followOnRoots.end() &&
+      leftAtom->second == rightAtom->second) {
     if ((lPos != end) && (rPos != end)) {
       return lPos->second < rPos->second;
     }
