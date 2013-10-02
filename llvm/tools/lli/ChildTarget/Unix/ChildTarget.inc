@@ -15,7 +15,28 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
+#endif
+
+#ifdef __APPLE__
+#include <mach/mach.h>
+#endif
+
+#if defined(__mips__)
+#  if defined(__OpenBSD__)
+#    include <mips64/sysarch.h>
+#  else
+#    include <sys/cachectl.h>
+#  endif
+#endif
+
+#ifdef __APPLE__
+extern "C" void sys_icache_invalidate(const void *Addr, size_t len);
+#else
+extern "C" void __clear_cache(void *, void*);
+#endif
 
 namespace {
 
