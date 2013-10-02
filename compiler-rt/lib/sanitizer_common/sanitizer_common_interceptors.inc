@@ -1139,10 +1139,10 @@ INTERCEPTOR(struct __sanitizer_hostent *, gethostbyaddr, void *addr, int len,
   return res;
 }
 
-INTERCEPTOR(struct __sanitizer_hostent *, gethostent) {
+INTERCEPTOR(struct __sanitizer_hostent *, gethostent, int fake) {
   void *ctx;
-  COMMON_INTERCEPTOR_ENTER(ctx, gethostent);
-  struct __sanitizer_hostent *res = REAL(gethostent)();
+  COMMON_INTERCEPTOR_ENTER(ctx, gethostent, fake);
+  struct __sanitizer_hostent *res = REAL(gethostent)(fake);
   if (res) write_hostent(ctx, res);
   return res;
 }
@@ -1546,10 +1546,10 @@ INTERCEPTOR(char *, getcwd, char *buf, SIZE_T size) {
 #endif
 
 #if SANITIZER_INTERCEPT_GET_CURRENT_DIR_NAME
-INTERCEPTOR(char *, get_current_dir_name) {
+INTERCEPTOR(char *, get_current_dir_name, int fake) {
   void *ctx;
-  COMMON_INTERCEPTOR_ENTER(ctx, get_current_dir_name);
-  char *res = REAL(get_current_dir_name)();
+  COMMON_INTERCEPTOR_ENTER(ctx, get_current_dir_name, fake);
+  char *res = REAL(get_current_dir_name)(fake);
   if (res)
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, res, REAL(strlen)(res) + 1);
   return res;
