@@ -467,12 +467,10 @@ int main(int argc, char **argv, char * const *envp) {
   // Reset errno to zero on entry to main.
   errno = 0;
 
-  // Remote target MCJIT doesn't (yet) support static constructors. No reason
-  // it couldn't. This is a limitation of the LLI implemantation, not the
-  // MCJIT itself. FIXME.
-  //
-  // Run static constructors.
+  int Result;
+
   if (!RemoteMCJIT) {
+    // Run static constructors.
     if (UseMCJIT && !ForceInterpreter) {
       // Give MCJIT a chance to apply relocations and set page permissions.
       EE->finalizeObject();
@@ -486,10 +484,41 @@ int main(int argc, char **argv, char * const *envp) {
           EE->getPointerToFunction(Fn);
       }
     }
-  }
 
-  int Result;
-  if (RemoteMCJIT) {
+    // Trigger compilation separately so code regions that need to be 
+    // invalidated will be known.
+    (void)EE->getPointerToFunction(EntryFn);
+    // Clear instruction cache before code will be executed.
+    if (RTDyldMM)
+      static_cast<SectionMemoryManager*>(RTDyldMM)->invalidateInstructionCache();
+
+    // Run main.
+    Result = EE->runFunctionAsMain(EntryFn, InputArgv, envp);
+
+    // Run static destructors.
+    EE->runStaticConstructorsDestructors(true);
+
+    // If the program didn't call exit explicitly, we should call it now.
+    // This ensures that any atexit handlers get called correctly.
+    if (Function *ExitF = dyn_cast<Function>(Exit)) {
+      std::vector<GenericValue> Args;
+      GenericValue ResultGV;
+      ResultGV.IntVal = APInt(32, Result);
+      Args.push_back(ResultGV);
+      EE->runFunction(ExitF, Args);
+      errs() << "ERROR: exit(" << Result << ") returned!\n";
+      abort();
+    } else {
+      errs() << "ERROR: exit defined with wrong prototype!\n";
+      abort();
+    }
+  } else {
+    // else == "if (RemoteMCJIT)"
+
+    // Remote target MCJIT doesn't (yet) support static constructors. No reason
+    // it couldn't. This is a limitation of the LLI implemantation, not the
+    // MCJIT itself. FIXME.
+    //
     RecordingMemoryManager *MM = static_cast<RecordingMemoryManager*>(RTDyldMM);
     // Everything is prepared now, so lay out our program for the target
     // address space, assign the section addresses to resolve any relocations,
@@ -536,39 +565,12 @@ int main(int argc, char **argv, char * const *envp) {
     if (Target->executeCode(Entry, Result))
       errs() << "ERROR: " << Target->getErrorMsg() << "\n";
 
+    // Like static constructors, the remote target MCJIT support doesn't handle
+    // this yet. It could. FIXME.
+
+    // Stop the remote target
     Target->stop();
-  } else { // !RemoteMCJIT
-    // Trigger compilation separately so code regions that need to be 
-    // invalidated will be known.
-    (void)EE->getPointerToFunction(EntryFn);
-    // Clear instruction cache before code will be executed.
-    if (RTDyldMM)
-      static_cast<SectionMemoryManager*>(RTDyldMM)->invalidateInstructionCache();
-
-    // Run main.
-    Result = EE->runFunctionAsMain(EntryFn, InputArgv, envp);
   }
 
-  // Like static constructors, the remote target MCJIT support doesn't handle
-  // this yet. It could. FIXME.
-  if (!RemoteMCJIT) {
-    // Run static destructors.
-    EE->runStaticConstructorsDestructors(true);
-
-    // If the program didn't call exit explicitly, we should call it now.
-    // This ensures that any atexit handlers get called correctly.
-    if (Function *ExitF = dyn_cast<Function>(Exit)) {
-      std::vector<GenericValue> Args;
-      GenericValue ResultGV;
-      ResultGV.IntVal = APInt(32, Result);
-      Args.push_back(ResultGV);
-      EE->runFunction(ExitF, Args);
-      errs() << "ERROR: exit(" << Result << ") returned!\n";
-      abort();
-    } else {
-      errs() << "ERROR: exit defined with wrong prototype!\n";
-      abort();
-    }
-  }
   return Result;
 }
