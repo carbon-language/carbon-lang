@@ -1385,10 +1385,8 @@ InnerLoopVectorizer::addRuntimeCheck(LoopVectorizationLegality *Legal,
   SmallVector<TrackingVH<Value> , 2> Starts;
   SmallVector<TrackingVH<Value> , 2> Ends;
 
+  LLVMContext &Ctx = Loc->getContext();
   SCEVExpander Exp(*SE, "induction");
-
-  // Use this type for pointer arithmetic.
-  Type* PtrArithTy = Type::getInt8PtrTy(Loc->getContext(), 0);
 
   for (unsigned i = 0; i < NumPointers; ++i) {
     Value *Ptr = PtrRtCheck->Pointers[i];
@@ -1401,6 +1399,10 @@ InnerLoopVectorizer::addRuntimeCheck(LoopVectorizationLegality *Legal,
       Ends.push_back(Ptr);
     } else {
       DEBUG(dbgs() << "LV: Adding RT check for range:" << *Ptr << '\n');
+      unsigned AS = Ptr->getType()->getPointerAddressSpace();
+
+      // Use this type for pointer arithmetic.
+      Type *PtrArithTy = Type::getInt8PtrTy(Ctx, AS);
 
       Value *Start = Exp.expandCodeFor(PtrRtCheck->Starts[i], PtrArithTy, Loc);
       Value *End = Exp.expandCodeFor(PtrRtCheck->Ends[i], PtrArithTy, Loc);
@@ -1422,10 +1424,20 @@ InnerLoopVectorizer::addRuntimeCheck(LoopVectorizationLegality *Legal,
       if (PtrRtCheck->DependencySetId[i] == PtrRtCheck->DependencySetId[j])
        continue;
 
-      Value *Start0 = ChkBuilder.CreateBitCast(Starts[i], PtrArithTy, "bc");
-      Value *Start1 = ChkBuilder.CreateBitCast(Starts[j], PtrArithTy, "bc");
-      Value *End0 =   ChkBuilder.CreateBitCast(Ends[i],   PtrArithTy, "bc");
-      Value *End1 =   ChkBuilder.CreateBitCast(Ends[j],   PtrArithTy, "bc");
+      unsigned AS0 = Starts[i]->getType()->getPointerAddressSpace();
+      unsigned AS1 = Starts[j]->getType()->getPointerAddressSpace();
+
+      assert((AS0 == Ends[j]->getType()->getPointerAddressSpace()) &&
+             (AS1 == Ends[i]->getType()->getPointerAddressSpace()) &&
+             "Trying to bounds check pointers with different address spaces");
+
+      Type *PtrArithTy0 = Type::getInt8PtrTy(Ctx, AS0);
+      Type *PtrArithTy1 = Type::getInt8PtrTy(Ctx, AS1);
+
+      Value *Start0 = ChkBuilder.CreateBitCast(Starts[i], PtrArithTy0, "bc");
+      Value *Start1 = ChkBuilder.CreateBitCast(Starts[j], PtrArithTy1, "bc");
+      Value *End0 =   ChkBuilder.CreateBitCast(Ends[i],   PtrArithTy1, "bc");
+      Value *End1 =   ChkBuilder.CreateBitCast(Ends[j],   PtrArithTy0, "bc");
 
       Value *Cmp0 = ChkBuilder.CreateICmpULE(Start0, End1, "bound0");
       Value *Cmp1 = ChkBuilder.CreateICmpULE(Start1, End0, "bound1");
@@ -1440,9 +1452,8 @@ InnerLoopVectorizer::addRuntimeCheck(LoopVectorizationLegality *Legal,
   // We have to do this trickery because the IRBuilder might fold the check to a
   // constant expression in which case there is no Instruction anchored in a
   // the block.
-  LLVMContext &Ctx = Loc->getContext();
-  Instruction * Check = BinaryOperator::CreateAnd(MemoryRuntimeCheck,
-                                                  ConstantInt::getTrue(Ctx));
+  Instruction *Check = BinaryOperator::CreateAnd(MemoryRuntimeCheck,
+                                                 ConstantInt::getTrue(Ctx));
   ChkBuilder.Insert(Check, "memcheck.conflict");
   return Check;
 }
@@ -3166,9 +3177,36 @@ bool AccessAnalysis::canCheckPtrAtRT(
 
   if (IsDepCheckNeeded && CanDoRT && RunningDepId == 2)
     NumComparisons = 0; // Only one dependence set.
-  else
+  else {
     NumComparisons = (NumWritePtrChecks * (NumReadPtrChecks +
                                            NumWritePtrChecks - 1));
+  }
+
+  // If the pointers that we would use for the bounds comparison have different
+  // address spaces, assume the values aren't directly comparable, so we can't
+  // use them for the runtime check. We also have to assume they could
+  // overlap. In the future there should be metadata for whether address spaces
+  // are disjoint.
+  unsigned NumPointers = RtCheck.Pointers.size();
+  for (unsigned i = 0; i < NumPointers; ++i) {
+    for (unsigned j = i + 1; j < NumPointers; ++j) {
+      // Only need to check pointers between two different dependency sets.
+      if (RtCheck.DependencySetId[i] == RtCheck.DependencySetId[j])
+       continue;
+
+      Value *PtrI = RtCheck.Pointers[i];
+      Value *PtrJ = RtCheck.Pointers[j];
+
+      unsigned ASi = PtrI->getType()->getPointerAddressSpace();
+      unsigned ASj = PtrJ->getType()->getPointerAddressSpace();
+      if (ASi != ASj) {
+        DEBUG(dbgs() << "LV: Runtime check would require comparison between"
+                       " different address spaces\n");
+        return false;
+      }
+    }
+  }
+
   return CanDoRT;
 }
 
