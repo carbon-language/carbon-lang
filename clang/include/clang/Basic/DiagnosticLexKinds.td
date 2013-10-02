@@ -422,7 +422,7 @@ def warn_pragma_warning_spec_invalid :
           " 'error', 'once', 'suppress', 1, 2, 3, or 4">,
   InGroup<UnknownPragmas>;
 def warn_pragma_warning_push_level :
-  ExtWarn<"#pragma warning(push, level) requires a level between 1 and 4">,
+  ExtWarn<"#pragma warning(push, level) requires a level between 0 and 4">,
   InGroup<UnknownPragmas>;
 def warn_pragma_warning_expected_number :
   ExtWarn<"#pragma warning expected a warning number">,

@@ -528,7 +528,7 @@ void PrintPPOutputPPCallbacks::PragmaWarningPush(SourceLocation Loc,
   startNewLineIfNeeded();
   MoveToLine(Loc);
   OS << "#pragma warning(push";
-  if (Level)
+  if (Level >= 0)
     OS << ", " << Level;
   OS << ')';
   setEmittedDirectiveOnThisLine();

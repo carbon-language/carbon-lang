@@ -1007,22 +1007,22 @@ public:
   }
 };
 
-// Returns 0 on failure.
-static unsigned LexSimpleUint(Preprocessor &PP, Token &Tok) {
+// Returns -1 on failure.
+static int LexSimpleInt(Preprocessor &PP, Token &Tok) {
   assert(Tok.is(tok::numeric_constant));
   SmallString<8> IntegerBuffer;
   bool NumberInvalid = false;
   StringRef Spelling = PP.getSpelling(Tok, IntegerBuffer, &NumberInvalid);
   if (NumberInvalid)
-    return 0;
+    return -1;
   NumericLiteralParser Literal(Spelling, Tok.getLocation(), PP);
   if (Literal.hadError || !Literal.isIntegerLiteral() || Literal.hasUDSuffix())
-    return 0;
+    return -1;
   llvm::APInt APVal(32, 0);
   if (Literal.GetIntegerValue(APVal))
-    return 0;
+    return -1;
   PP.Lex(Tok);
-  return unsigned(APVal.getLimitedValue(UINT_MAX));
+  return int(APVal.getLimitedValue(INT_MAX));
 }
 
 /// "\#pragma warning(...)".  MSVC's diagnostics do not map cleanly to clang's
@@ -1055,13 +1055,13 @@ struct PragmaWarningHandler : public PragmaHandler {
 
     if (II->isStr("push")) {
       // #pragma warning( push[ ,n ] )
-      unsigned Level = 0;
+      int Level = -1;
       PP.Lex(Tok);
       if (Tok.is(tok::comma)) {
         PP.Lex(Tok);
         if (Tok.is(tok::numeric_constant))
-          Level = LexSimpleUint(PP, Tok);
-        if (Level < 1 || Level > 4) {
+          Level = LexSimpleInt(PP, Tok);
+        if (Level < 0 || Level > 4) {
           PP.Diag(Tok, diag::warn_pragma_warning_push_level);
           return;
         }
@@ -1104,8 +1104,8 @@ struct PragmaWarningHandler : public PragmaHandler {
         SmallVector<int, 4> Ids;
         PP.Lex(Tok);
         while (Tok.is(tok::numeric_constant)) {
-          unsigned Id = LexSimpleUint(PP, Tok);
-          if (Id == 0 || Id >= INT_MAX) {
+          int Id = LexSimpleInt(PP, Tok);
+          if (Id <= 0) {
             PP.Diag(Tok, diag::warn_pragma_warning_expected_number);
             return;
           }
