@@ -105,7 +105,7 @@ struct FloatCastOverflowData {
 RECOVERABLE(float_cast_overflow, FloatCastOverflowData *Data, ValueHandle From)
 
 struct InvalidValueData {
-  // FIXME: SourceLocation Loc;
+  SourceLocation Loc;
   const TypeDescriptor &Type;
 };
 

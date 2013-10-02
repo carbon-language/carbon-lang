@@ -246,15 +246,16 @@ void __ubsan::__ubsan_handle_float_cast_overflow_abort(
 
 void __ubsan::__ubsan_handle_load_invalid_value(InvalidValueData *Data,
                                                 ValueHandle Val) {
-  // TODO: Add deduplication once a SourceLocation is generated for this check.
-  Diag(getCallerLocation(), DL_Error,
+  SourceLocation Loc = Data->Loc.acquire();
+  if (Loc.isDisabled())
+    return;
+
+  Diag(Loc, DL_Error,
        "load of value %0, which is not a valid value for type %1")
     << Value(Data->Type, Val) << Data->Type;
 }
 void __ubsan::__ubsan_handle_load_invalid_value_abort(InvalidValueData *Data,
                                                       ValueHandle Val) {
-  Diag(getCallerLocation(), DL_Error,
-       "load of value %0, which is not a valid value for type %1")
-    << Value(Data->Type, Val) << Data->Type;
+  __ubsan_handle_load_invalid_value(Data, Val);
   Die();
 }
