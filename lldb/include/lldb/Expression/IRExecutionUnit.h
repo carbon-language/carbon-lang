@@ -287,7 +287,8 @@ private:
         ///     Allocated space.
         //------------------------------------------------------------------
         virtual uint8_t *allocateCodeSection(uintptr_t Size, unsigned Alignment,
-                                             unsigned SectionID);
+                                             unsigned SectionID,
+                                             llvm::StringRef SectionName);
         
         //------------------------------------------------------------------
         /// Allocate space for data, and add it to the m_spaceBlocks map
@@ -308,7 +309,9 @@ private:
         ///     Allocated space.
         //------------------------------------------------------------------
         virtual uint8_t *allocateDataSection(uintptr_t Size, unsigned Alignment,
-                                             unsigned SectionID, bool IsReadOnly);
+                                             unsigned SectionID,
+                                             llvm::StringRef SectionName,
+                                             bool IsReadOnly);
         
         //------------------------------------------------------------------
         /// Allocate space for a global variable, and add it to the

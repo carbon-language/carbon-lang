@@ -490,11 +490,12 @@ IRExecutionUnit::MemoryManager::allocateSpace(intptr_t Size, unsigned Alignment)
 uint8_t *
 IRExecutionUnit::MemoryManager::allocateCodeSection(uintptr_t Size,
                                                     unsigned Alignment,
-                                                    unsigned SectionID)
+                                                    unsigned SectionID,
+                                                    llvm::StringRef SectionName)
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
-    uint8_t *return_value = m_default_mm_ap->allocateCodeSection(Size, Alignment, SectionID);
+    uint8_t *return_value = m_default_mm_ap->allocateCodeSection(Size, Alignment, SectionID, SectionName);
     
     m_parent.m_records.push_back(AllocationRecord((uintptr_t)return_value,
                                                   lldb::ePermissionsReadable | lldb::ePermissionsExecutable,
@@ -515,11 +516,12 @@ uint8_t *
 IRExecutionUnit::MemoryManager::allocateDataSection(uintptr_t Size,
                                                     unsigned Alignment,
                                                     unsigned SectionID,
+                                                    llvm::StringRef SectionName,
                                                     bool IsReadOnly)
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
-    uint8_t *return_value = m_default_mm_ap->allocateDataSection(Size, Alignment, SectionID, IsReadOnly);
+    uint8_t *return_value = m_default_mm_ap->allocateDataSection(Size, Alignment, SectionID, SectionName, IsReadOnly);
     
     m_parent.m_records.push_back(AllocationRecord((uintptr_t)return_value,
                                                   lldb::ePermissionsReadable | lldb::ePermissionsWritable,
