@@ -1130,6 +1130,7 @@ struct MSanInterceptorContext {
   if (msan_init_is_running) return REAL(func)(__VA_ARGS__);   \
   MSanInterceptorContext msan_ctx = {IsInInterceptorScope()}; \
   ctx = (void *)&msan_ctx;                                    \
+  (void)ctx;                                                  \
   InterceptorScope interceptor_scope;                         \
   ENSURE_MSAN_INITED();
 #define COMMON_INTERCEPTOR_FD_ACQUIRE(ctx, fd) \
