@@ -3710,8 +3710,8 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
         Stores.push_back(St);
         DepChecker.addAccess(St);
       }
-    } // next instr.
-  } // next block.
+    } // Next instr.
+  } // Next block.
 
   // Now we have two lists that hold the loads and the stores.
   // Next, we find the pointers that they use.
@@ -3805,7 +3805,7 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
   if (NumComparisons == 0 && NeedRTCheck)
     NeedRTCheck = false;
 
-  // Check that we did not collect too many pointers or found a unsizeable
+  // Check that we did not collect too many pointers or found an unsizeable
   // pointer.
   if (!CanDoRT || NumComparisons > RuntimeMemoryCheckThreshold) {
     PtrRtCheck.reset();
