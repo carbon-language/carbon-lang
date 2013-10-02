@@ -246,17 +246,12 @@ if( WIN32 AND NOT CYGWIN )
 endif()
 
 # Define options to control the inclusion and default build behavior for
-# components which may not strictly be necessary (tools, runtime, examples, and
-# tests).
+# components which may not strictly be necessary (tools, examples, and tests).
 #
 # This is primarily to support building smaller or faster project files.
 option(LLVM_INCLUDE_TOOLS "Generate build targets for the LLVM tools." ON)
 option(LLVM_BUILD_TOOLS
   "Build the LLVM tools. If OFF, just generate build targets." ON)
-
-option(LLVM_INCLUDE_RUNTIME "Generate build targets for the LLVM runtimes" ON)
-option(LLVM_BUILD_RUNTIME
-  "Build the LLVM runtime libraries. If OFF, just generate build targets." ON)
 
 option(LLVM_BUILD_EXAMPLES
   "Build the LLVM example programs. If OFF, just generate build targets." OFF)
@@ -469,10 +464,6 @@ add_subdirectory(projects)
 
 if( LLVM_INCLUDE_TOOLS )
   add_subdirectory(tools)
-endif()
-
-if( LLVM_INCLUDE_RUNTIME )
-  add_subdirectory(runtime)
 endif()
 
 if( LLVM_INCLUDE_EXAMPLES )

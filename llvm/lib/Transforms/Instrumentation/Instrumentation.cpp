@@ -24,10 +24,7 @@ void llvm::initializeInstrumentation(PassRegistry &Registry) {
   initializeAddressSanitizerPass(Registry);
   initializeAddressSanitizerModulePass(Registry);
   initializeBoundsCheckingPass(Registry);
-  initializeEdgeProfilerPass(Registry);
   initializeGCOVProfilerPass(Registry);
-  initializeOptimalEdgeProfilerPass(Registry);
-  initializePathProfilerPass(Registry);
   initializeMemorySanitizerPass(Registry);
   initializeThreadSanitizerPass(Registry);
   initializeDataFlowSanitizerPass(Registry);

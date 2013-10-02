@@ -35,17 +35,7 @@ add_llvm_library(LLVMAnalysis
   ModuleDebugInfoPrinter.cpp
   NoAliasAnalysis.cpp
   PHITransAddr.cpp
-  PathNumbering.cpp
-  PathProfileInfo.cpp
-  PathProfileVerifier.cpp
   PostDominators.cpp
-  ProfileEstimatorPass.cpp
-  ProfileInfo.cpp
-  ProfileInfoLoader.cpp
-  ProfileInfoLoaderPass.cpp
-  ProfileVerifierPass.cpp
-  ProfileDataLoader.cpp
-  ProfileDataLoaderPass.cpp
   PtrUseVisitor.cpp
   RegionInfo.cpp
   RegionPass.cpp

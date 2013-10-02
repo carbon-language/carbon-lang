@@ -22,7 +22,6 @@
 #include "llvm/Analysis/CFG.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/LoopInfo.h"
-#include "llvm/Analysis/ProfileInfo.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Type.h"
@@ -45,7 +44,6 @@ namespace {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addPreserved<DominatorTree>();
       AU.addPreserved<LoopInfo>();
-      AU.addPreserved<ProfileInfo>();
 
       // No loop canonicalization guarantees are broken by this pass.
       AU.addPreservedID(LoopSimplifyID);
@@ -213,10 +211,9 @@ BasicBlock *llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum,
 
   DominatorTree *DT = P->getAnalysisIfAvailable<DominatorTree>();
   LoopInfo *LI = P->getAnalysisIfAvailable<LoopInfo>();
-  ProfileInfo *PI = P->getAnalysisIfAvailable<ProfileInfo>();
 
   // If we have nothing to update, just return.
-  if (DT == 0 && LI == 0 && PI == 0)
+  if (DT == 0 && LI == 0)
     return NewBB;
 
   // Now update analysis information.  Since the only predecessor of NewBB is
@@ -368,10 +365,6 @@ BasicBlock *llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum,
              "without LoopSimplify!");
     }
   }
-
-  // Update ProfileInfo if it is around.
-  if (PI)
-    PI->splitEdge(TIBB, DestBB, NewBB, MergeIdenticalEdges);
 
   return NewBB;
 }

@@ -74,9 +74,6 @@ namespace {
       (void) llvm::createDomPrinterPass();
       (void) llvm::createDomOnlyViewerPass();
       (void) llvm::createDomViewerPass();
-      (void) llvm::createEdgeProfilerPass();
-      (void) llvm::createOptimalEdgeProfilerPass();
-      (void) llvm::createPathProfilerPass();
       (void) llvm::createGCOVProfilerPass();
       (void) llvm::createFunctionInliningPass();
       (void) llvm::createAlwaysInlinerPass();
@@ -102,18 +99,11 @@ namespace {
       (void) llvm::createLowerInvokePass();
       (void) llvm::createLowerSwitchPass();
       (void) llvm::createNoAAPass();
-      (void) llvm::createNoProfileInfoPass();
       (void) llvm::createObjCARCAliasAnalysisPass();
       (void) llvm::createObjCARCAPElimPass();
       (void) llvm::createObjCARCExpandPass();
       (void) llvm::createObjCARCContractPass();
       (void) llvm::createObjCARCOptPass();
-      (void) llvm::createProfileEstimatorPass();
-      (void) llvm::createProfileVerifierPass();
-      (void) llvm::createPathProfileVerifierPass();
-      (void) llvm::createProfileLoaderPass();
-      (void) llvm::createProfileMetadataLoaderPass();
-      (void) llvm::createPathProfileLoaderPass();
       (void) llvm::createPromoteMemoryToRegisterPass();
       (void) llvm::createDemoteRegisterToMemoryPass();
       (void) llvm::createPruneEHPass();

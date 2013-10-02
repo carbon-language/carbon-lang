@@ -35,15 +35,6 @@ namespace llvm {
 class ModulePass;
 class FunctionPass;
 
-// Insert edge profiling instrumentation
-ModulePass *createEdgeProfilerPass();
-
-// Insert optimal edge profiling instrumentation
-ModulePass *createOptimalEdgeProfilerPass();
-
-// Insert path profiling instrumentation
-ModulePass *createPathProfilerPass();
-
 // Insert GCOV profiling instrumentation
 struct GCOVOptions {
   static GCOVOptions getDefault();

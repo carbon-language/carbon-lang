@@ -24,7 +24,6 @@
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Analysis/Dominators.h"
-#include "llvm/Analysis/ProfileInfo.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
@@ -50,7 +49,6 @@ namespace {
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addPreserved<DominatorTree>();
-      AU.addPreserved<ProfileInfo>();
     }
   };
 }
@@ -87,9 +85,7 @@ bool UnreachableBlockElim::runOnFunction(Function &F) {
     }
 
   // Actually remove the blocks now.
-  ProfileInfo *PI = getAnalysisIfAvailable<ProfileInfo>();
   for (unsigned i = 0, e = DeadBlocks.size(); i != e; ++i) {
-    if (PI) PI->removeBlock(DeadBlocks[i]);
     DeadBlocks[i]->eraseFromParent();
   }
 

@@ -22,7 +22,6 @@
 #include "llvm/Analysis/DominatorInternals.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/InstructionSimplify.h"
-#include "llvm/Analysis/ProfileInfo.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"
@@ -80,7 +79,6 @@ namespace {
     const TargetLowering *TLI;
     const TargetLibraryInfo *TLInfo;
     DominatorTree *DT;
-    ProfileInfo *PFI;
 
     /// CurInstIterator - As we scan instructions optimizing them, this is the
     /// next instruction to optimize.  Xforms that can invalidate this should
@@ -111,7 +109,6 @@ namespace {
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addPreserved<DominatorTree>();
-      AU.addPreserved<ProfileInfo>();
       AU.addRequired<TargetLibraryInfo>();
     }
 
@@ -151,7 +148,6 @@ bool CodeGenPrepare::runOnFunction(Function &F) {
   if (TM) TLI = TM->getTargetLowering();
   TLInfo = &getAnalysis<TargetLibraryInfo>();
   DT = getAnalysisIfAvailable<DominatorTree>();
-  PFI = getAnalysisIfAvailable<ProfileInfo>();
   OptSize = F.getAttributes().hasAttribute(AttributeSet::FunctionIndex,
                                            Attribute::OptimizeForSize);
 
@@ -441,10 +437,6 @@ void CodeGenPrepare::EliminateMostlyEmptyBlock(BasicBlock *BB) {
     BasicBlock *NewIDom = DT->findNearestCommonDominator(BBIDom, DestBBIDom);
     DT->changeImmediateDominator(DestBB, NewIDom);
     DT->eraseNode(BB);
-  }
-  if (PFI) {
-    PFI->replaceAllUses(BB, DestBB);
-    PFI->removeEdge(ProfileInfo::getEdge(BB, DestBB));
   }
   BB->eraseFromParent();
   ++NumBlocksElim;
