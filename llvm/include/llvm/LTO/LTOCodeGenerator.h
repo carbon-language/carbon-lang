@@ -79,6 +79,11 @@ struct LTOCodeGenerator {
   // and LTOCodeGenerator::writeMergedModules().
   //
   void setCodeGenDebugOptions(const char *opts);
+  
+  // Parse the options set in setCodeGenDebugOptions. Like
+  // setCodeGenDebugOptions, this must be called before
+  // LTOCodeGenerator::compilexxx() and LTOCodeGenerator::writeMergedModules()
+  void parseCodeGenDebugOptions();
 
   // Write the merged module to the file specified by the given path.
   // Return true on success.

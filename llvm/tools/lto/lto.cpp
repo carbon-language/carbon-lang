@@ -40,6 +40,9 @@ static std::string sLastErrorString;
 // *** Not thread safe ***
 static bool initialized = false;
 
+// Holds the command-line option parsing state of the LTO module.
+static bool parsedOptions = false;
+
 // Initialize the configured targets if they have not been initialized.
 static void lto_initialize() {
   if (!initialized) {
@@ -261,6 +264,10 @@ void lto_codegen_add_must_preserve_symbol(lto_code_gen_t cg,
 /// that contains the merged contents of all modules added so far. Returns true
 /// on error (check lto_get_error_message() for details).
 bool lto_codegen_write_merged_modules(lto_code_gen_t cg, const char *path) {
+  if (!parsedOptions) {
+    cg->parseCodeGenDebugOptions();
+    parsedOptions = true;
+  }
   return !cg->writeMergedModules(path, sLastErrorString);
 }
 
@@ -271,6 +278,10 @@ bool lto_codegen_write_merged_modules(lto_code_gen_t cg, const char *path) {
 /// lto_codegen_compile() is called again. On failure, returns NULL (check
 /// lto_get_error_message() for details).
 const void *lto_codegen_compile(lto_code_gen_t cg, size_t *length) {
+  if (!parsedOptions) {
+    cg->parseCodeGenDebugOptions();
+    parsedOptions = true;
+  }
   return cg->compile(length, DisableOpt, DisableInline, DisableGVNLoadPRE,
                      sLastErrorString);
 }
@@ -279,6 +290,10 @@ const void *lto_codegen_compile(lto_code_gen_t cg, size_t *length) {
 /// native object file. The name of the file is written to name. Returns true on
 /// error.
 bool lto_codegen_compile_to_file(lto_code_gen_t cg, const char **name) {
+  if (!parsedOptions) {
+    cg->parseCodeGenDebugOptions();
+    parsedOptions = true;
+  }
   return !cg->compile_to_file(name, DisableOpt, DisableInline, DisableGVNLoadPRE,
                               sLastErrorString);
 }
