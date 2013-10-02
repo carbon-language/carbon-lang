@@ -2784,7 +2784,7 @@ CodeGenFunction::EmitARCStoreStrong(const BinaryOperator *e,
 
   // If the RHS was emitted retained, expand this.
   if (hasImmediateRetain) {
-    llvm::Value *oldValue = EmitLoadOfScalar(lvalue);
+    llvm::Value *oldValue = EmitLoadOfScalar(lvalue, SourceLocation());
     EmitStoreOfScalar(value, lvalue);
     EmitARCRelease(oldValue, lvalue.isARCPreciseLifetime());
   } else {
