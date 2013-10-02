@@ -191,7 +191,9 @@ static int getLatency(LLVMDisasmContext *DC, const MCInst &Inst) {
   const MCInstrDesc& Desc = DC->getInstrInfo()->get(Inst.getOpcode());
   unsigned SCClass = Desc.getSchedClass();
   const MCSchedClassDesc *SCDesc = SCModel->getSchedClassDesc(SCClass);
-  if (!SCDesc || !SCDesc->isValid())
+  // Resolving the variant SchedClass requires an MI to pass to
+  // SubTargetInfo::resolveSchedClass.
+  if (!SCDesc || !SCDesc->isValid() || SCDesc->isVariant())
     return NoInformationAvailable;
 
   // Compute output latency.
