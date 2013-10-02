@@ -52,6 +52,7 @@ let TargetPrefix = "R600", isTarget = 1 in {
   def int_R600_txb : TextureIntrinsicFloatInput;
   def int_R600_txbc : TextureIntrinsicFloatInput;
   def int_R600_txf : TextureIntrinsicInt32Input;
+  def int_R600_ldptr : TextureIntrinsicInt32Input;
   def int_R600_txq : TextureIntrinsicInt32Input;
   def int_R600_ddx : TextureIntrinsicFloatInput;
   def int_R600_ddy : TextureIntrinsicFloatInput;

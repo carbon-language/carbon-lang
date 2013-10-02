@@ -881,6 +881,9 @@ def TEX_SAMPLE_C_L : R600_TEX <0x19, "TEX_SAMPLE_C_L">;
 def TEX_SAMPLE_LB : R600_TEX <0x12, "TEX_SAMPLE_LB">;
 def TEX_SAMPLE_C_LB : R600_TEX <0x1A, "TEX_SAMPLE_C_LB">;
 def TEX_LD : R600_TEX <0x03, "TEX_LD">;
+def TEX_LDPTR : R600_TEX <0x03, "TEX_LDPTR"> {
+  let INST_MOD = 1;
+}
 def TEX_GET_TEXTURE_RESINFO : R600_TEX <0x04, "TEX_GET_TEXTURE_RESINFO">;
 def TEX_GET_GRADIENTS_H : R600_TEX <0x07, "TEX_GET_GRADIENTS_H">;
 def TEX_GET_GRADIENTS_V : R600_TEX <0x08, "TEX_GET_GRADIENTS_V">;
@@ -899,6 +902,7 @@ defm : TexPattern<6, TEX_LD, v4i32>;
 defm : TexPattern<7, TEX_GET_TEXTURE_RESINFO, v4i32>;
 defm : TexPattern<8, TEX_GET_GRADIENTS_H>;
 defm : TexPattern<9, TEX_GET_GRADIENTS_V>;
+defm : TexPattern<10, TEX_LDPTR, v4i32>;
 
 //===----------------------------------------------------------------------===//
 // Helper classes for common instructions

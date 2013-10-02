@@ -609,7 +609,8 @@ SDValue R600TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const 
     case AMDGPUIntrinsic::R600_txf:
     case AMDGPUIntrinsic::R600_txq:
     case AMDGPUIntrinsic::R600_ddx:
-    case AMDGPUIntrinsic::R600_ddy: {
+    case AMDGPUIntrinsic::R600_ddy:
+    case AMDGPUIntrinsic::R600_ldptr: {
       unsigned TextureOp;
       switch (IntrinsicID) {
       case AMDGPUIntrinsic::R600_tex:
@@ -641,6 +642,9 @@ SDValue R600TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const 
         break;
       case AMDGPUIntrinsic::R600_ddy:
         TextureOp = 9;
+        break;
+      case AMDGPUIntrinsic::R600_ldptr:
+        TextureOp = 10;
         break;
       default:
         llvm_unreachable("Unknow Texture Operation");
