@@ -45,6 +45,12 @@ OutputFilename("o", cl::init(""),
   cl::desc("Override output filename"),
   cl::value_desc("filename"));
 
+static cl::list<std::string>
+ExportedSymbols("exported-symbol",
+  cl::desc("Symbol to export from the resulting object file"),
+  cl::ZeroOrMore);
+
+
 int main(int argc, char **argv) {
   // Print a stack trace if we signal out.
   sys::PrintStackTraceOnErrorSignal();
@@ -106,6 +112,10 @@ int main(int argc, char **argv) {
       return 1;
     }
   }
+
+  // Add all the exported symbols to the table of symbols to preserve.
+  for (unsigned i = 0; i < ExportedSymbols.size(); ++i)
+    CodeGen.addMustPreserveSymbol(ExportedSymbols[i].c_str());
 
   if (!OutputFilename.empty()) {
     size_t len = 0;
