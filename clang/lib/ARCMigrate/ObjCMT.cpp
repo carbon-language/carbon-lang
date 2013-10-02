@@ -806,6 +806,8 @@ bool ObjCMigrateASTConsumer::migrateProperty(ASTContext &Ctx,
   }
   
   if (SetterMethod) {
+    if ((ASTMigrateActions & FrontendOptions::ObjCMT_ReadwriteProperty) == 0)
+      return false;
     if (SetterMethod->isDeprecated() ||
         !AttributesMatch(Method, SetterMethod))
       return false;
@@ -1324,7 +1326,7 @@ IsReallyASystemHeader(ASTContext &Ctx, const FileEntry *file, FileID FID) {
 void ObjCMigrateASTConsumer::HandleTranslationUnit(ASTContext &Ctx) {
   
   TranslationUnitDecl *TU = Ctx.getTranslationUnitDecl();
-  if (ASTMigrateActions & FrontendOptions::ObjCMT_Property) {
+  if (ASTMigrateActions & FrontendOptions::ObjCMT_MigrateDecls) {
     for (DeclContext::decl_iterator D = TU->decls_begin(), DEnd = TU->decls_end();
          D != DEnd; ++D) {
       if (unsigned FID =
@@ -1402,7 +1404,7 @@ ASTConsumer *MigrateSourceAction::CreateASTConsumer(CompilerInstance &CI,
     PPRec = new PPConditionalDirectiveRecord(CI.getSourceManager());
   CI.getPreprocessor().addPPCallbacks(PPRec);
   return new ObjCMigrateASTConsumer(CI.getFrontendOpts().OutputFile,
-                                    FrontendOptions::ObjCMT_All,
+                                    FrontendOptions::ObjCMT_MigrateAll,
                                     Remapper,
                                     CI.getFileManager(),
                                     PPRec,

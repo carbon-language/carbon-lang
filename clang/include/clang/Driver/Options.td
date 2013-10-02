@@ -165,8 +165,12 @@ def objcmt_migrate_subscripting : Flag<["-"], "objcmt-migrate-subscripting">, Fl
   HelpText<"Enable migration to modern ObjC subscripting">;
 def objcmt_migrate_property : Flag<["-"], "objcmt-migrate-property">, Flags<[CC1Option]>,
   HelpText<"Enable migration to modern ObjC property">;
+def objcmt_migrate_all : Flag<["-"], "objcmt-migrate-all">, Flags<[CC1Option]>,
+  HelpText<"Enable migration to modern ObjC">;
 def objcmt_migrate_readonly_property : Flag<["-"], "objcmt-migrate-readonly-property">, Flags<[CC1Option]>,
   HelpText<"Enable migration to modern ObjC readonly property">;
+def objcmt_migrate_readwrite_property : Flag<["-"], "objcmt-migrate-readwrite-property">, Flags<[CC1Option]>,
+  HelpText<"Enable migration to modern ObjC readwrite property">;
 // Make sure all other -ccc- options are rejected.
 def ccc_ : Joined<["-"], "ccc-">, Group<internal_Group>, Flags<[Unsupported]>;
 
