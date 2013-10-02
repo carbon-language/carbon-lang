@@ -231,7 +231,7 @@ public:
 
   StructurizeCFG() :
     RegionPass(ID) {
-    initializeRegionInfoPass(*PassRegistry::getPassRegistry());
+    initializeStructurizeCFGPass(*PassRegistry::getPassRegistry());
   }
 
   using Pass::doInitialization;
@@ -244,6 +244,7 @@ public:
   }
 
   void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.addRequiredID(LowerSwitchID);
     AU.addRequired<DominatorTree>();
     AU.addPreserved<DominatorTree>();
     RegionPass::getAnalysisUsage(AU);
@@ -256,6 +257,7 @@ char StructurizeCFG::ID = 0;
 
 INITIALIZE_PASS_BEGIN(StructurizeCFG, "structurizecfg", "Structurize the CFG",
                       false, false)
+INITIALIZE_PASS_DEPENDENCY(LowerSwitch)
 INITIALIZE_PASS_DEPENDENCY(DominatorTree)
 INITIALIZE_PASS_DEPENDENCY(RegionInfo)
 INITIALIZE_PASS_END(StructurizeCFG, "structurizecfg", "Structurize the CFG",
