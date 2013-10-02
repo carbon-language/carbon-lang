@@ -25,3 +25,16 @@ void f3(void (*f)(void), void (*g)(void)) {
   (*g)();
   clang_analyzer_eval(!g); // expected-warning{{FALSE}}
 }
+
+void nullFunctionPointerConstant() {
+  void (*f)(void) = 0;
+  f(); // expected-warning{{Called function pointer is null}}
+  clang_analyzer_eval(0); // no-warning
+}
+
+void nullFunctionPointerConstraint(void (*f)(void)) {
+  if (f)
+    return;
+  f(); // expected-warning{{Called function pointer is null}}
+  clang_analyzer_eval(0); // no-warning
+}

@@ -249,6 +249,7 @@ void CallAndMessageChecker::checkPreStmt(const CallExpr *CE,
       BT_call_null.reset(
         new BuiltinBug("Called function pointer is null (null dereference)"));
     emitBadCall(BT_call_null.get(), C, Callee);
+    return;
   }
 
   C.addTransition(StNonNull);
