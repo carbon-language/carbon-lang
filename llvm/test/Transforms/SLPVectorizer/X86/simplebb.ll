@@ -23,3 +23,24 @@ entry:
   ret void
 }
 
+; Simple 3-pair chain with loads and stores, obfuscated with bitcasts
+; CHECK: test2
+; CHECK: store <2 x double>
+; CHECK: ret
+define void @test2(double* %a, double* %b, i8* %e) {
+entry:
+  %i0 = load double* %a, align 8
+  %i1 = load double* %b, align 8
+  %mul = fmul double %i0, %i1
+  %arrayidx3 = getelementptr inbounds double* %a, i64 1
+  %i3 = load double* %arrayidx3, align 8
+  %arrayidx4 = getelementptr inbounds double* %b, i64 1
+  %i4 = load double* %arrayidx4, align 8
+  %mul5 = fmul double %i3, %i4
+  %c = bitcast i8* %e to double*
+  store double %mul, double* %c, align 8
+  %carrayidx5 = getelementptr inbounds i8* %e, i64 8
+  %arrayidx5 = bitcast i8* %carrayidx5 to double*
+  store double %mul5, double* %arrayidx5, align 8
+  ret void
+}

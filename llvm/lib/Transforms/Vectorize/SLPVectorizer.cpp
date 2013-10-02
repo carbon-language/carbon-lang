@@ -25,8 +25,8 @@
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
-#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
+#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/IR/DataLayout.h"
@@ -318,10 +318,7 @@ private:
     /// \returns true if the scalars in VL are equal to this entry.
     bool isSame(ArrayRef<Value *> VL) const {
       assert(VL.size() == Scalars.size() && "Invalid size");
-      for (int i = 0, e = VL.size(); i != e; ++i)
-        if (VL[i] != Scalars[i])
-          return false;
-      return true;
+      return std::equal(VL.begin(), VL.end(), Scalars.begin());
     }
 
     /// A vector of scalars.
@@ -1783,10 +1780,8 @@ unsigned SLPVectorizer::collectStores(BasicBlock *BB, BoUpSLP &R) {
     if (Ty->isAggregateType() || Ty->isVectorTy())
       return 0;
 
-    // Find the base of the GEP.
-    Value *Ptr = SI->getPointerOperand();
-    if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Ptr))
-      Ptr = GEP->getPointerOperand();
+    // Find the base pointer.
+    Value *Ptr = GetUnderlyingObject(SI->getPointerOperand(), DL);
 
     // Save the store locations.
     StoreRefs[Ptr].push_back(SI);
