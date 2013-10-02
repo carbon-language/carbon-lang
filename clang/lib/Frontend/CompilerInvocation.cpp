@@ -803,6 +803,14 @@ static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
     Opts.ObjCMTAction |= FrontendOptions::ObjCMT_ReadonlyProperty;
   if (Args.hasArg(OPT_objcmt_migrate_readwrite_property))
     Opts.ObjCMTAction |= FrontendOptions::ObjCMT_ReadwriteProperty;
+  if (Args.hasArg(OPT_objcmt_migrate_annotation))
+    Opts.ObjCMTAction |= FrontendOptions::ObjCMT_Annotation;
+  if (Args.hasArg(OPT_objcmt_migrate_instancetype))
+    Opts.ObjCMTAction |= FrontendOptions::ObjCMT_Instancetype;
+  if (Args.hasArg(OPT_objcmt_migrate_nsmacros))
+    Opts.ObjCMTAction |= FrontendOptions::ObjCMT_NsMacros;
+  if (Args.hasArg(OPT_objcmt_migrate_protocol_conformance))
+    Opts.ObjCMTAction |= FrontendOptions::ObjCMT_ProtocolConformance;
   if (Args.hasArg(OPT_objcmt_migrate_all))
     Opts.ObjCMTAction |= FrontendOptions::ObjCMT_MigrateDecls;
 

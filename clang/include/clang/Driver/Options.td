@@ -171,6 +171,14 @@ def objcmt_migrate_readonly_property : Flag<["-"], "objcmt-migrate-readonly-prop
   HelpText<"Enable migration to modern ObjC readonly property">;
 def objcmt_migrate_readwrite_property : Flag<["-"], "objcmt-migrate-readwrite-property">, Flags<[CC1Option]>,
   HelpText<"Enable migration to modern ObjC readwrite property">;
+def objcmt_migrate_annotation : Flag<["-"], "objcmt-migrate-annotation">, Flags<[CC1Option]>,
+  HelpText<"Enable migration to property and method annotations">;
+def objcmt_migrate_instancetype : Flag<["-"], "objcmt-migrate-instancetype">, Flags<[CC1Option]>,
+  HelpText<"Enable migration to infer instancetype for method result type">;
+def objcmt_migrate_nsmacros : Flag<["-"], "objcmt-migrate-ns-macros">, Flags<[CC1Option]>,
+  HelpText<"Enable migration to NS_ENUM/NS_OPTIONS macros">;
+def objcmt_migrate_protocol_conformance : Flag<["-"], "objcmt-migrate-protocol-conformance">, Flags<[CC1Option]>,
+  HelpText<"Enable migration to add protocol conformance on classes">;
 // Make sure all other -ccc- options are rejected.
 def ccc_ : Joined<["-"], "ccc-">, Group<internal_Group>, Flags<[Unsupported]>;
 
