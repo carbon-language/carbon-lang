@@ -20,6 +20,22 @@ class DWARFContext;
 
 class DWARFDebugAranges {
 public:
+  void clear() {
+    Aranges.clear();
+    ParsedCUOffsets.clear();
+  }
+
+  void generate(DWARFContext *CTX);
+
+  // Use appendRange multiple times and then call sortAndMinimize.
+  void appendRange(uint32_t CUOffset, uint64_t LowPC, uint64_t HighPC);
+
+  uint32_t findAddress(uint64_t Address) const;
+
+private:
+  void extract(DataExtractor DebugArangesData);
+  void sortAndMinimize();
+
   struct Range {
     explicit Range(uint64_t LowPC = -1ULL, uint64_t HighPC = -1ULL,
                    uint32_t CUOffset = -1U)
@@ -50,31 +66,15 @@ public:
       return Left.HighPC() >= Right.LowPC;
     }
 
-    void dump(raw_ostream &OS) const;
     uint64_t LowPC; // Start of address range.
     uint32_t Length; // End of address range (not including this address).
     uint32_t CUOffset; // Offset of the compile unit or die.
   };
 
-  void clear() {
-    Aranges.clear();
-    ParsedCUOffsets.clear();
-  }
-  void extract(DataExtractor DebugArangesData);
-  void generate(DWARFContext *CTX);
-
-  // Use appendRange multiple times and then call sortAndMinimize.
-  void appendRange(uint32_t CUOffset, uint64_t LowPC, uint64_t HighPC);
-  void sortAndMinimize();
-
-  void dump(raw_ostream &OS) const;
-  uint32_t findAddress(uint64_t Address) const;
-
   typedef std::vector<Range>              RangeColl;
   typedef RangeColl::const_iterator       RangeCollIterator;
   typedef DenseSet<uint32_t>              ParsedCUOffsetColl;
 
-private:
   RangeColl Aranges;
   ParsedCUOffsetColl ParsedCUOffsets;
 };

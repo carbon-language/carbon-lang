@@ -231,13 +231,7 @@ const DWARFDebugAranges *DWARFContext::getDebugAranges() {
   if (Aranges)
     return Aranges.get();
 
-  DataExtractor arangesData(getARangeSection(), isLittleEndian(), 0);
-
   Aranges.reset(new DWARFDebugAranges());
-  Aranges->extract(arangesData);
-  // Generate aranges from DIEs: even if .debug_aranges section is present,
-  // it may describe only a small subset of compilation units, so we need to
-  // manually build aranges for the rest of them.
   Aranges->generate(this);
   return Aranges.get();
 }

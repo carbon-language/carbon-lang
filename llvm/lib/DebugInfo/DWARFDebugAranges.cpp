@@ -45,32 +45,29 @@ void DWARFDebugAranges::extract(DataExtractor DebugArangesData) {
       appendRange(CUOffset, LowPC, HighPC);
     }
   }
-  sortAndMinimize();
 }
 
 void DWARFDebugAranges::generate(DWARFContext *CTX) {
-  if (CTX) {
-    const uint32_t num_compile_units = CTX->getNumCompileUnits();
-    for (uint32_t cu_idx = 0; cu_idx < num_compile_units; ++cu_idx) {
-      if (DWARFCompileUnit *cu = CTX->getCompileUnitAtIndex(cu_idx)) {
-        uint32_t CUOffset = cu->getOffset();
-        if (ParsedCUOffsets.insert(CUOffset).second)
-          cu->buildAddressRangeTable(this, true, CUOffset);
-      }
+  clear();
+  if (!CTX)
+    return;
+
+  // Extract aranges from .debug_aranges section.
+  DataExtractor ArangesData(CTX->getARangeSection(), CTX->isLittleEndian(), 0);
+  extract(ArangesData);
+
+  // Generate aranges from DIEs: even if .debug_aranges section is present,
+  // it may describe only a small subset of compilation units, so we need to
+  // manually build aranges for the rest of them.
+  for (uint32_t i = 0, n = CTX->getNumCompileUnits(); i < n; ++i) {
+    if (DWARFCompileUnit *CU = CTX->getCompileUnitAtIndex(i)) {
+      uint32_t CUOffset = CU->getOffset();
+      if (ParsedCUOffsets.insert(CUOffset).second)
+        CU->buildAddressRangeTable(this, true, CUOffset);
     }
   }
+
   sortAndMinimize();
-}
-
-void DWARFDebugAranges::dump(raw_ostream &OS) const {
-  for (RangeCollIterator I = Aranges.begin(), E = Aranges.end(); I != E; ++I) {
-    I->dump(OS);
-  }
-}
-
-void DWARFDebugAranges::Range::dump(raw_ostream &OS) const {
-  OS << format("{0x%8.8x}: [0x%8.8" PRIx64 " - 0x%8.8" PRIx64 ")\n",
-               CUOffset, LowPC, HighPC());
 }
 
 void DWARFDebugAranges::appendRange(uint32_t CUOffset, uint64_t LowPC,
