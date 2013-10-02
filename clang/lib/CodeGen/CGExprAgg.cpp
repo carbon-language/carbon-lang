@@ -208,7 +208,7 @@ void AggExprEmitter::EmitAggLoadOfLValue(const Expr *E) {
 
   // If the type of the l-value is atomic, then do an atomic load.
   if (LV.getType()->isAtomicType()) {
-    CGF.EmitAtomicLoad(LV, Dest);
+    CGF.EmitAtomicLoad(LV, E->getExprLoc(), Dest);
     return;
   }
 
@@ -1010,7 +1010,7 @@ static bool isSimpleZero(const Expr *E, CodeGenFunction &CGF) {
 
 
 void 
-AggExprEmitter::EmitInitializationToLValue(Expr* E, LValue LV) {
+AggExprEmitter::EmitInitializationToLValue(Expr *E, LValue LV) {
   QualType type = LV.getType();
   // FIXME: Ignore result?
   // FIXME: Are initializers affected by volatile?

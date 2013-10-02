@@ -1221,7 +1221,8 @@ public:
 
   /// EmitFunctionEpilog - Emit the target specific LLVM code to return the
   /// given temporary.
-  void EmitFunctionEpilog(const CGFunctionInfo &FI, bool EmitRetDbgLoc);
+  void EmitFunctionEpilog(const CGFunctionInfo &FI, bool EmitRetDbgLoc,
+                          SourceLocation EndLoc);
 
   /// EmitStartEHSpec - Emit the start of the exception spec.
   void EmitStartEHSpec(const Decl *D);
@@ -1568,7 +1569,8 @@ public:
 
   void EmitDelegateCXXConstructorCall(const CXXConstructorDecl *Ctor,
                                       CXXCtorType CtorType,
-                                      const FunctionArgList &Args);
+                                      const FunctionArgList &Args,
+                                      SourceLocation Loc);
   // It's important not to confuse this and the previous function. Delegating
   // constructors are the C++0x feature. The constructor delegate optimization
   // is used to reduce duplication in the base and complete consturctors where
@@ -1843,7 +1845,8 @@ public:
 
   llvm::Function *EmitCapturedStmt(const CapturedStmt &S, CapturedRegionKind K);
   llvm::Function *GenerateCapturedStmtFunction(const CapturedDecl *CD,
-                                               const RecordDecl *RD);
+                                               const RecordDecl *RD,
+                                               SourceLocation Loc);
 
   //===--------------------------------------------------------------------===//
   //                         LValue Expression Emission
@@ -1886,11 +1889,12 @@ public:
   /// that the address will be used to access the object.
   LValue EmitCheckedLValue(const Expr *E, TypeCheckKind TCK);
 
-  RValue convertTempToRValue(llvm::Value *addr, QualType type);
+  RValue convertTempToRValue(llvm::Value *addr, QualType type,
+                             SourceLocation Loc);
 
   void EmitAtomicInit(Expr *E, LValue lvalue);
 
-  RValue EmitAtomicLoad(LValue lvalue,
+  RValue EmitAtomicLoad(LValue lvalue, SourceLocation loc,
                         AggValueSlot slot = AggValueSlot::ignored());
 
   void EmitAtomicStore(RValue rvalue, LValue lvalue, bool isInit);
@@ -1908,6 +1912,7 @@ public:
   /// the LLVM value representation.
   llvm::Value *EmitLoadOfScalar(llvm::Value *Addr, bool Volatile,
                                 unsigned Alignment, QualType Ty,
+                                SourceLocation Loc,
                                 llvm::MDNode *TBAAInfo = 0,
                                 QualType TBAABaseTy = QualType(),
                                 uint64_t TBAAOffset = 0);
@@ -1916,7 +1921,7 @@ public:
   /// care to appropriately convert from the memory representation to
   /// the LLVM value representation.  The l-value must be a simple
   /// l-value.
-  llvm::Value *EmitLoadOfScalar(LValue lvalue);
+  llvm::Value *EmitLoadOfScalar(LValue lvalue, SourceLocation Loc);
 
   /// EmitStoreOfScalar - Store a scalar value to an address, taking
   /// care to appropriately convert from the memory representation to
@@ -1937,7 +1942,7 @@ public:
   /// EmitLoadOfLValue - Given an expression that represents a value lvalue,
   /// this method emits the address of the lvalue, then loads the result as an
   /// rvalue, returning the rvalue.
-  RValue EmitLoadOfLValue(LValue V);
+  RValue EmitLoadOfLValue(LValue V, SourceLocation Loc);
   RValue EmitLoadOfExtVectorElementLValue(LValue V);
   RValue EmitLoadOfBitfieldLValue(LValue LV);
 
@@ -1947,8 +1952,8 @@ public:
   void EmitStoreThroughLValue(RValue Src, LValue Dst, bool isInit=false);
   void EmitStoreThroughExtVectorComponentLValue(RValue Src, LValue Dst);
 
-  /// EmitStoreThroughLValue - Store Src into Dst with same constraints as
-  /// EmitStoreThroughLValue.
+  /// EmitStoreThroughBitfieldLValue - Store Src into Dst with same constraints
+  /// as EmitStoreThroughLValue.
   ///
   /// \param Result [out] - If non-null, this will be set to a Value* for the
   /// bit-field contents after the store, appropriate for use as the result of
@@ -1986,7 +1991,7 @@ public:
   LValue EmitMaterializeTemporaryExpr(const MaterializeTemporaryExpr *E);
   LValue EmitOpaqueValueLValue(const OpaqueValueExpr *e);
 
-  RValue EmitRValueForField(LValue LV, const FieldDecl *FD);
+  RValue EmitRValueForField(LValue LV, const FieldDecl *FD, SourceLocation Loc);
 
   class ConstantEmission {
     llvm::PointerIntPair<llvm::Constant*, 1, bool> ValueAndIsReference;
@@ -2282,7 +2287,7 @@ public:
   void EmitStoreOfComplex(ComplexPairTy V, LValue dest, bool isInit);
 
   /// EmitLoadOfComplex - Load a complex number from the specified l-value.
-  ComplexPairTy EmitLoadOfComplex(LValue src);
+  ComplexPairTy EmitLoadOfComplex(LValue src, SourceLocation loc);
 
   /// CreateStaticVarDecl - Create a zero-initialized LLVM global for
   /// a static local variable.
@@ -2438,7 +2443,8 @@ public:
   /// EmitDelegateCallArg - We are performing a delegate call; that
   /// is, the current function is delegating to another one.  Produce
   /// a r-value suitable for passing the given parameter.
-  void EmitDelegateCallArg(CallArgList &args, const VarDecl *param);
+  void EmitDelegateCallArg(CallArgList &args, const VarDecl *param,
+                           SourceLocation loc);
 
   /// SetFPAccuracy - Set the minimum required accuracy of the given floating
   /// point operation, expressed as the maximum relative error in ulp.
@@ -2470,7 +2476,8 @@ private:
 
   llvm::Value* EmitAsmInputLValue(const TargetInfo::ConstraintInfo &Info,
                                   LValue InputValue, QualType InputType,
-                                  std::string &ConstraintStr);
+                                  std::string &ConstraintStr,
+                                  SourceLocation Loc);
 
   /// EmitCallArgs - Emit call arguments for a function.
   /// The CallArgTypeInfo parameter is used for iterating over the known

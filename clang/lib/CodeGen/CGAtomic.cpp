@@ -106,7 +106,8 @@ namespace {
 
     /// Turn an atomic-layout object into an r-value.
     RValue convertTempToRValue(llvm::Value *addr,
-                               AggValueSlot resultSlot) const;
+                               AggValueSlot resultSlot,
+                               SourceLocation loc) const;
 
     /// Copy an atomic r-value into atomic-layout memory.
     void emitCopyIntoMemory(RValue rvalue, LValue lvalue) const;
@@ -321,11 +322,12 @@ EmitValToTemp(CodeGenFunction &CGF, Expr *E) {
 
 static void
 AddDirectArgument(CodeGenFunction &CGF, CallArgList &Args,
-                  bool UseOptimizedLibcall, llvm::Value *Val, QualType ValTy) {
+                  bool UseOptimizedLibcall, llvm::Value *Val, QualType ValTy,
+                  SourceLocation Loc) {
   if (UseOptimizedLibcall) {
     // Load value and pass it to the function directly.
     unsigned Align = CGF.getContext().getTypeAlignInChars(ValTy).getQuantity();
-    Val = CGF.EmitLoadOfScalar(Val, false, Align, ValTy);
+    Val = CGF.EmitLoadOfScalar(Val, false, Align, ValTy, Loc);
     Args.add(RValue::get(Val), ValTy);
   } else {
     // Non-optimized functions always take a reference.
@@ -490,9 +492,9 @@ RValue CodeGenFunction::EmitAtomicExpr(AtomicExpr *E, llvm::Value *Dest) {
       LibCallName = "__atomic_compare_exchange";
       RetTy = getContext().BoolTy;
       HaveRetTy = true;
-      Args.add(RValue::get(EmitCastToVoidPtr(Val1)),
-               getContext().VoidPtrTy);
-      AddDirectArgument(*this, Args, UseOptimizedLibcall, Val2, MemTy);
+      Args.add(RValue::get(EmitCastToVoidPtr(Val1)), getContext().VoidPtrTy);
+      AddDirectArgument(*this, Args, UseOptimizedLibcall, Val2, MemTy,
+                        E->getExprLoc());
       Args.add(RValue::get(Order), getContext().IntTy);
       Order = OrderFail;
       break;
@@ -503,7 +505,8 @@ RValue CodeGenFunction::EmitAtomicExpr(AtomicExpr *E, llvm::Value *Dest) {
     case AtomicExpr::AO__atomic_exchange_n:
     case AtomicExpr::AO__atomic_exchange:
       LibCallName = "__atomic_exchange";
-      AddDirectArgument(*this, Args, UseOptimizedLibcall, Val1, MemTy);
+      AddDirectArgument(*this, Args, UseOptimizedLibcall, Val1, MemTy,
+                        E->getExprLoc());
       break;
     // void __atomic_store(size_t size, void *mem, void *val, int order)
     // void __atomic_store_N(T *mem, T val, int order)
@@ -513,7 +516,8 @@ RValue CodeGenFunction::EmitAtomicExpr(AtomicExpr *E, llvm::Value *Dest) {
       LibCallName = "__atomic_store";
       RetTy = getContext().VoidTy;
       HaveRetTy = true;
-      AddDirectArgument(*this, Args, UseOptimizedLibcall, Val1, MemTy);
+      AddDirectArgument(*this, Args, UseOptimizedLibcall, Val1, MemTy,
+                        E->getExprLoc());
       break;
     // void __atomic_load(size_t size, void *mem, void *return, int order)
     // T __atomic_load_N(T *mem, int order)
@@ -526,31 +530,36 @@ RValue CodeGenFunction::EmitAtomicExpr(AtomicExpr *E, llvm::Value *Dest) {
     case AtomicExpr::AO__c11_atomic_fetch_add:
     case AtomicExpr::AO__atomic_fetch_add:
       LibCallName = "__atomic_fetch_add";
-      AddDirectArgument(*this, Args, UseOptimizedLibcall, Val1, MemTy);
+      AddDirectArgument(*this, Args, UseOptimizedLibcall, Val1, MemTy,
+                        E->getExprLoc());
       break;
     // T __atomic_fetch_and_N(T *mem, T val, int order)
     case AtomicExpr::AO__c11_atomic_fetch_and:
     case AtomicExpr::AO__atomic_fetch_and:
       LibCallName = "__atomic_fetch_and";
-      AddDirectArgument(*this, Args, UseOptimizedLibcall, Val1, MemTy);
+      AddDirectArgument(*this, Args, UseOptimizedLibcall, Val1, MemTy,
+                        E->getExprLoc());
       break;
     // T __atomic_fetch_or_N(T *mem, T val, int order)
     case AtomicExpr::AO__c11_atomic_fetch_or:
     case AtomicExpr::AO__atomic_fetch_or:
       LibCallName = "__atomic_fetch_or";
-      AddDirectArgument(*this, Args, UseOptimizedLibcall, Val1, MemTy);
+      AddDirectArgument(*this, Args, UseOptimizedLibcall, Val1, MemTy,
+                        E->getExprLoc());
       break;
     // T __atomic_fetch_sub_N(T *mem, T val, int order)
     case AtomicExpr::AO__c11_atomic_fetch_sub:
     case AtomicExpr::AO__atomic_fetch_sub:
       LibCallName = "__atomic_fetch_sub";
-      AddDirectArgument(*this, Args, UseOptimizedLibcall, Val1, MemTy);
+      AddDirectArgument(*this, Args, UseOptimizedLibcall, Val1, MemTy,
+                        E->getExprLoc());
       break;
     // T __atomic_fetch_xor_N(T *mem, T val, int order)
     case AtomicExpr::AO__c11_atomic_fetch_xor:
     case AtomicExpr::AO__atomic_fetch_xor:
       LibCallName = "__atomic_fetch_xor";
-      AddDirectArgument(*this, Args, UseOptimizedLibcall, Val1, MemTy);
+      AddDirectArgument(*this, Args, UseOptimizedLibcall, Val1, MemTy,
+                        E->getExprLoc());
       break;
     default: return EmitUnsupportedRValue(E, "atomic library call");
     }
@@ -584,7 +593,7 @@ RValue CodeGenFunction::EmitAtomicExpr(AtomicExpr *E, llvm::Value *Dest) {
       return Res;
     if (E->getType()->isVoidType())
       return RValue::get(0);
-    return convertTempToRValue(Dest, E->getType());
+    return convertTempToRValue(Dest, E->getType(), E->getExprLoc());
   }
 
   bool IsStore = E->getOp() == AtomicExpr::AO__c11_atomic_store ||
@@ -639,7 +648,7 @@ RValue CodeGenFunction::EmitAtomicExpr(AtomicExpr *E, llvm::Value *Dest) {
     }
     if (E->getType()->isVoidType())
       return RValue::get(0);
-    return convertTempToRValue(OrigDest, E->getType());
+    return convertTempToRValue(OrigDest, E->getType(), E->getExprLoc());
   }
 
   // Long case, when Order isn't obviously constant.
@@ -701,7 +710,7 @@ RValue CodeGenFunction::EmitAtomicExpr(AtomicExpr *E, llvm::Value *Dest) {
   Builder.SetInsertPoint(ContBB);
   if (E->getType()->isVoidType())
     return RValue::get(0);
-  return convertTempToRValue(OrigDest, E->getType());
+  return convertTempToRValue(OrigDest, E->getType(), E->getExprLoc());
 }
 
 llvm::Value *AtomicInfo::emitCastToAtomicIntPointer(llvm::Value *addr) const {
@@ -713,7 +722,8 @@ llvm::Value *AtomicInfo::emitCastToAtomicIntPointer(llvm::Value *addr) const {
 }
 
 RValue AtomicInfo::convertTempToRValue(llvm::Value *addr,
-                                       AggValueSlot resultSlot) const {
+                                       AggValueSlot resultSlot,
+                                       SourceLocation loc) const {
   if (EvaluationKind == TEK_Aggregate)
     return resultSlot.asRValue();
 
@@ -723,12 +733,13 @@ RValue AtomicInfo::convertTempToRValue(llvm::Value *addr,
 
   // Otherwise, just convert the temporary to an r-value using the
   // normal conversion routine.
-  return CGF.convertTempToRValue(addr, getValueType());
+  return CGF.convertTempToRValue(addr, getValueType(), loc);
 }
 
 /// Emit a load from an l-value of atomic type.  Note that the r-value
 /// we produce is an r-value of the atomic *value* type.
-RValue CodeGenFunction::EmitAtomicLoad(LValue src, AggValueSlot resultSlot) {
+RValue CodeGenFunction::EmitAtomicLoad(LValue src, SourceLocation loc,
+                                       AggValueSlot resultSlot) {
   AtomicInfo atomics(*this, src);
 
   // Check whether we should use a library call.
@@ -755,7 +766,7 @@ RValue CodeGenFunction::EmitAtomicLoad(LValue src, AggValueSlot resultSlot) {
     emitAtomicLibcall(*this, "__atomic_load", getContext().VoidTy, args);
 
     // Produce the r-value.
-    return atomics.convertTempToRValue(tempAddr, resultSlot);
+    return atomics.convertTempToRValue(tempAddr, resultSlot, loc);
   }
 
   // Okay, we're doing this natively.
@@ -813,7 +824,7 @@ RValue CodeGenFunction::EmitAtomicLoad(LValue src, AggValueSlot resultSlot) {
   Builder.CreateAlignedStore(result, castTemp, tempAlignment.getQuantity())
     ->setVolatile(tempIsVolatile);
 
-  return atomics.convertTempToRValue(temp, resultSlot);
+  return atomics.convertTempToRValue(temp, resultSlot, loc);
 }
 
 

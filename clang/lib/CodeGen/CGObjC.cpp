@@ -925,7 +925,7 @@ CodeGenFunction::generateObjCGetterBody(const ObjCImplementationDecl *classImpl,
     QualType ivarType = ivar->getType();
     switch (getEvaluationKind(ivarType)) {
     case TEK_Complex: {
-      ComplexPairTy pair = EmitLoadOfComplex(LV);
+      ComplexPairTy pair = EmitLoadOfComplex(LV, SourceLocation());
       EmitStoreOfComplex(pair,
                          MakeNaturalAlignAddrLValue(ReturnValue, ivarType),
                          /*init*/ true);
@@ -949,7 +949,7 @@ CodeGenFunction::generateObjCGetterBody(const ObjCImplementationDecl *classImpl,
         // Otherwise we want to do a simple load, suppressing the
         // final autorelease.
         } else {
-          value = EmitLoadOfLValue(LV).getScalarVal();
+          value = EmitLoadOfLValue(LV, SourceLocation()).getScalarVal();
           AutoreleaseResult = false;
         }
 
@@ -1402,7 +1402,7 @@ llvm::Value *CodeGenFunction::LoadObjCSelf() {
   VarDecl *Self = cast<ObjCMethodDecl>(CurFuncDecl)->getSelfDecl();
   DeclRefExpr DRE(Self, /*is enclosing local*/ (CurFuncDecl != CurCodeDecl),
                   Self->getType(), VK_LValue, SourceLocation());
-  return EmitLoadOfScalar(EmitDeclRefLValue(&DRE));
+  return EmitLoadOfScalar(EmitDeclRefLValue(&DRE), SourceLocation());
 }
 
 QualType CodeGenFunction::TypeOfSelfObject() {
@@ -2082,7 +2082,7 @@ llvm::Value *CodeGenFunction::EmitARCStoreStrong(LValue dst,
   newValue = EmitARCRetain(type, newValue);
 
   // Read the old value.
-  llvm::Value *oldValue = EmitLoadOfScalar(dst);
+  llvm::Value *oldValue = EmitLoadOfScalar(dst, SourceLocation());
 
   // Store.  We do this before the release so that any deallocs won't
   // see the old value.
@@ -2353,7 +2353,8 @@ static TryEmitResult tryEmitARCRetainLoadOfScalar(CodeGenFunction &CGF,
   case Qualifiers::OCL_ExplicitNone:
   case Qualifiers::OCL_Strong:
   case Qualifiers::OCL_Autoreleasing:
-    return TryEmitResult(CGF.EmitLoadOfLValue(lvalue).getScalarVal(),
+    return TryEmitResult(CGF.EmitLoadOfLValue(lvalue,
+                                              SourceLocation()).getScalarVal(),
                          false);
 
   case Qualifiers::OCL_Weak:
@@ -2379,7 +2380,8 @@ static TryEmitResult tryEmitARCRetainLoadOfScalar(CodeGenFunction &CGF,
     LValue lv = CGF.EmitLValue(e);
     
     // Load the object pointer.
-    llvm::Value *result = CGF.EmitLoadOfLValue(lv).getScalarVal();
+    llvm::Value *result = CGF.EmitLoadOfLValue(lv,
+                                               SourceLocation()).getScalarVal();
     
     // Set the source pointer to NULL.
     CGF.EmitStoreOfScalar(getNullForVariable(lv.getAddress()), lv);

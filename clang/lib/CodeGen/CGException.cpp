@@ -945,7 +945,8 @@ static llvm::Value *CallBeginCatch(CodeGenFunction &CGF,
 /// parameter during catch initialization.
 static void InitCatchParam(CodeGenFunction &CGF,
                            const VarDecl &CatchParam,
-                           llvm::Value *ParamAddr) {
+                           llvm::Value *ParamAddr,
+                           SourceLocation Loc) {
   // Load the exception from where the landing pad saved it.
   llvm::Value *Exn = CGF.getExceptionFromSlot();
 
@@ -1052,11 +1053,11 @@ static void InitCatchParam(CodeGenFunction &CGF,
                                   CGF.getContext().getDeclAlign(&CatchParam));
     switch (TEK) {
     case TEK_Complex:
-      CGF.EmitStoreOfComplex(CGF.EmitLoadOfComplex(srcLV), destLV,
+      CGF.EmitStoreOfComplex(CGF.EmitLoadOfComplex(srcLV, Loc), destLV,
                              /*init*/ true);
       return;
     case TEK_Scalar: {
-      llvm::Value *ExnLoad = CGF.EmitLoadOfScalar(srcLV);
+      llvm::Value *ExnLoad = CGF.EmitLoadOfScalar(srcLV, Loc);
       CGF.EmitStoreOfScalar(ExnLoad, destLV, /*init*/ true);
       return;
     }
@@ -1150,7 +1151,7 @@ static void BeginCatch(CodeGenFunction &CGF, const CXXCatchStmt *S) {
 
   // Emit the local.
   CodeGenFunction::AutoVarEmission var = CGF.EmitAutoVarAlloca(*CatchParam);
-  InitCatchParam(CGF, *CatchParam, var.getObjectAddress(CGF));
+  InitCatchParam(CGF, *CatchParam, var.getObjectAddress(CGF), S->getLocStart());
   CGF.EmitAutoVarCleanups(var);
 }
 

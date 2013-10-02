@@ -337,7 +337,7 @@ void CodeGenFunction::GenerateThunk(llvm::Function *Fn,
   for (FunctionDecl::param_const_iterator I = MD->param_begin(),
        E = MD->param_end(); I != E; ++I) {
     ParmVarDecl *param = *I;
-    EmitDelegateCallArg(CallArgs, param);
+    EmitDelegateCallArg(CallArgs, param, param->getLocStart());
   }
 
   // Get our callee.
