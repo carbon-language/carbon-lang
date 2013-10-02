@@ -19,6 +19,7 @@ set(LLVM_TEST_DEPENDS
           LLVMHello
           llc
           lli
+          lli-child-target
           llvm-ar
           llvm-as
           llvm-bcanalyzer
@@ -28,7 +29,7 @@ set(LLVM_TEST_DEPENDS
           llvm-extract
           llvm-dwarfdump
           llvm-link
-	   llvm-lto
+          llvm-lto
           llvm-mc
           llvm-mcmarkup
           llvm-nm

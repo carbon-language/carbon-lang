@@ -1,4 +1,4 @@
-;===- ./tools/lli/LLVMBuild.txt --------------------------------*- Conf -*--===;
+;===- ./tools/lli/ChildTarget/LLVMBuild.txt --------------------*- Conf -*--===;
 ;
 ;                     The LLVM Compiler Infrastructure
 ;
@@ -15,11 +15,7 @@
 ;
 ;===------------------------------------------------------------------------===;
 
-[common]
-subdirectories = ChildTarget
-
 [component_0]
 type = Tool
-name = lli
-parent = Tools
-required_libraries = AsmParser BitReader IRReader Instrumentation Interpreter JIT MCJIT NativeCodeGen SelectionDAG Native
+name = lli-child-target
+parent = lli
