@@ -174,6 +174,52 @@ static void emitComments(LLVMDisasmContext *DC,
   DC->CommentStream.resync();
 }
 
+/// \brief Gets latency information for \p Inst, based on \p DC information.
+/// \return The maximum expected latency over all the definitions or -1
+/// if no information are available.
+static int getLatency(LLVMDisasmContext *DC, const MCInst &Inst) {
+  // Try to compute scheduling information.
+  const MCSubtargetInfo *STI = DC->getSubtargetInfo();
+  const MCSchedModel *SCModel = STI->getSchedModel();
+  const int NoInformationAvailable = -1;
+
+  // Check if we have a scheduling model for instructions.
+  if (!SCModel || !SCModel->hasInstrSchedModel())
+    return NoInformationAvailable;
+
+  // Get the scheduling class of the requested instruction.
+  const MCInstrDesc& Desc = DC->getInstrInfo()->get(Inst.getOpcode());
+  unsigned SCClass = Desc.getSchedClass();
+  const MCSchedClassDesc *SCDesc = SCModel->getSchedClassDesc(SCClass);
+  if (!SCDesc || !SCDesc->isValid())
+    return NoInformationAvailable;
+
+  // Compute output latency.
+  int Latency = 0;
+  for (unsigned DefIdx = 0, DefEnd = SCDesc->NumWriteLatencyEntries;
+       DefIdx != DefEnd; ++DefIdx) {
+    // Lookup the definition's write latency in SubtargetInfo.
+    const MCWriteLatencyEntry *WLEntry = STI->getWriteLatencyEntry(SCDesc,
+                                                                   DefIdx);
+    Latency = std::max(Latency, WLEntry->Cycles);
+  }
+
+  return Latency;
+}
+
+
+/// \brief Emits latency information in DC->CommentStream for \p Inst, based
+/// on the information available in \p DC.
+static void emitLatency(LLVMDisasmContext *DC, const MCInst &Inst) {
+  int Latency = getLatency(DC, Inst);
+
+  // Report only interesting latency.
+  if (Latency < 2)
+    return;
+
+  DC->CommentStream << "Latency: " << Latency << '\n';
+}
+
 //
 // LLVMDisasmInstruction() disassembles a single instruction using the
 // disassembler context specified in the parameter DC.  The bytes of the
@@ -217,6 +263,9 @@ size_t LLVMDisasmInstruction(LLVMDisasmContextRef DCR, uint8_t *Bytes,
     formatted_raw_ostream FormattedOS(OS);
     IP->printInst(&Inst, FormattedOS, AnnotationsStr);
 
+    if (DC->getOptions() & LLVMDisassembler_Option_PrintLatency)
+      emitLatency(DC, Inst);
+
     emitComments(DC, FormattedOS);
 
     assert(OutStringSize != 0 && "Output buffer cannot be zero size");
@@ -239,12 +288,14 @@ int LLVMSetDisasmOptions(LLVMDisasmContextRef DCR, uint64_t Options){
       LLVMDisasmContext *DC = (LLVMDisasmContext *)DCR;
       MCInstPrinter *IP = DC->getIP();
       IP->setUseMarkup(1);
+      DC->addOptions(LLVMDisassembler_Option_UseMarkup);
       Options &= ~LLVMDisassembler_Option_UseMarkup;
   }
   if (Options & LLVMDisassembler_Option_PrintImmHex){
       LLVMDisasmContext *DC = (LLVMDisasmContext *)DCR;
       MCInstPrinter *IP = DC->getIP();
       IP->setPrintImmHex(1);
+      DC->addOptions(LLVMDisassembler_Option_PrintImmHex);
       Options &= ~LLVMDisassembler_Option_PrintImmHex;
   }
   if (Options & LLVMDisassembler_Option_AsmPrinterVariant){
@@ -260,6 +311,7 @@ int LLVMSetDisasmOptions(LLVMDisasmContextRef DCR, uint64_t Options){
           AsmPrinterVariant, *MAI, *MII, *MRI, *STI);
       if (IP) {
         DC->setIP(IP);
+        DC->addOptions(LLVMDisassembler_Option_AsmPrinterVariant);
         Options &= ~LLVMDisassembler_Option_AsmPrinterVariant;
       }
   }
@@ -267,7 +319,13 @@ int LLVMSetDisasmOptions(LLVMDisasmContextRef DCR, uint64_t Options){
     LLVMDisasmContext *DC = (LLVMDisasmContext *)DCR;
     MCInstPrinter *IP = DC->getIP();
     IP->setCommentStream(DC->CommentStream);
+    DC->addOptions(LLVMDisassembler_Option_SetInstrComments);
     Options &= ~LLVMDisassembler_Option_SetInstrComments;
+  }
+  if (Options & LLVMDisassembler_Option_PrintLatency) {
+    LLVMDisasmContext *DC = (LLVMDisasmContext *)DCR;
+    DC->addOptions(LLVMDisassembler_Option_PrintLatency);
+    Options &= ~LLVMDisassembler_Option_PrintLatency;
   }
   return (Options == 0);
 }
