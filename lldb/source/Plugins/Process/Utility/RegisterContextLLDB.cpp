@@ -620,6 +620,10 @@ RegisterContextLLDB::GetFullUnwindPlanForFrame ()
         arch_default_unwind_plan_sp.reset (new UnwindPlan (lldb::eRegisterKindGeneric));
         abi->CreateDefaultUnwindPlan(*arch_default_unwind_plan_sp);
     }
+    else
+    {
+        UnwindLogMsgVerbose ("unable to get ABI for default UnwindPlan");
+    }
 
     bool behaves_like_zeroth_frame = false;
     if (IsFrameZero ()
@@ -759,7 +763,8 @@ RegisterContextLLDB::GetFullUnwindPlanForFrame ()
     }
 
     // If nothing else, use the architectural default UnwindPlan and hope that does the job.
-    UnwindLogMsgVerbose ("frame uses %s for full UnwindPlan", arch_default_unwind_plan_sp->GetSourceName().GetCString());
+    if (arch_default_unwind_plan_sp)
+        UnwindLogMsgVerbose ("frame uses %s for full UnwindPlan", arch_default_unwind_plan_sp->GetSourceName().GetCString());
     return arch_default_unwind_plan_sp;
 }
 
