@@ -194,12 +194,19 @@ protected:
     /// Resolve().
     SOEntryList m_removed_soentries;
 
-    /// Reads @p size bytes from the inferiors address space starting at @p
-    /// addr.
+    /// Reads an unsigned integer of @p size bytes from the inferior's address
+    /// space starting at @p addr.
     ///
     /// @returns addr + size if the read was successful and false otherwise.
     lldb::addr_t
-    ReadMemory(lldb::addr_t addr, void *dst, size_t size);
+    ReadWord(lldb::addr_t addr, uint64_t *dst, size_t size);
+
+    /// Reads an address from the inferior's address space starting at @p addr.
+    ///
+    /// @returns addr + target address size if the read was successful and
+    /// 0 otherwise.
+    lldb::addr_t
+    ReadPointer(lldb::addr_t addr, lldb::addr_t *dst);
 
     /// Reads a null-terminated C string from the memory location starting at @p
     /// addr.
