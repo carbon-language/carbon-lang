@@ -48,7 +48,7 @@ static bool isRecordReturnIndirect(const RecordType *RT, CodeGen::CodeGenTypes &
   const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl());
   if (!RD)
     return false;
-  return CGT.CGM.getCXXABI().isReturnTypeIndirect(RD);
+  return CGT.getCXXABI().isReturnTypeIndirect(RD);
 }
 
 
@@ -64,7 +64,7 @@ static CGCXXABI::RecordArgABI getRecordArgABI(const RecordType *RT,
   const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl());
   if (!RD)
     return CGCXXABI::RAA_Default;
-  return CGT.CGM.getCXXABI().getRecordArgABI(RD);
+  return CGT.getCXXABI().getRecordArgABI(RD);
 }
 
 static CGCXXABI::RecordArgABI getRecordArgABI(QualType T,

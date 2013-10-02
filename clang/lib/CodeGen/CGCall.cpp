@@ -182,8 +182,7 @@ CodeGenTypes::arrangeCXXMethodDeclaration(const CXXMethodDecl *MD) {
 
   if (MD->isInstance()) {
     // The abstract case is perfectly fine.
-    const CXXRecordDecl *ThisType =
-        CGM.getCXXABI().getThisArgumentTypeForMethod(MD);
+    const CXXRecordDecl *ThisType = TheCXXABI.getThisArgumentTypeForMethod(MD);
     return arrangeCXXMethodType(ThisType, prototype.getTypePtr());
   }
 
