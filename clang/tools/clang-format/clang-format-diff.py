@@ -60,9 +60,12 @@ def main():
     match = re.search('^@@.*\+(\d+)(,(\d+))?', line)
     if match:
       start_line = int(match.group(1))
-      end_line = start_line
+      line_count = 1
       if match.group(3):
-        end_line = start_line + int(match.group(3))
+        line_count = int(match.group(3))
+      if line_count == 0:
+        continue
+      end_line = start_line + line_count - 1;
       lines_by_file.setdefault(filename, []).extend(
           ['-lines', str(start_line) + ':' + str(end_line)])
 
