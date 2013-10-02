@@ -6,7 +6,7 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 @B = common global [1024 x float] zeroinitializer, align 16
 
 ; Make sure we can vectorize in the presence of hoistable conditional loads.
-; CHECK: hoist_cond_load
+; CHECK-LABEL: @hoist_cond_load(
 ; CHECK: load <2 x float>
 
 define void @hoist_cond_load() {
@@ -38,7 +38,7 @@ for.end:
 
 ; However, we can't hoist loads whose address we have not seen unconditionally
 ; accessed.
-; CHECK:     dont_hoist_cond_load
+; CHECK-LABEL: @dont_hoist_cond_load(
 ; CHECK-NOT: load <2 x float>
 
 define void @dont_hoist_cond_load() {

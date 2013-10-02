@@ -9,7 +9,7 @@ target triple = "x86_64-apple-macosx10.8.0"
 @a = common global [2048 x i32] zeroinitializer, align 16
 
 ; The program below gathers and scatters data. We better not vectorize it.
-;CHECK: cost_model_1
+;CHECK-LABEL: @cost_model_1(
 ;CHECK-NOT: <2 x i32>
 ;CHECK-NOT: <4 x i32>
 ;CHECK-NOT: <8 x i32>

@@ -8,7 +8,7 @@ target datalayout = "e-p:32:32:32-S128-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:
 
 ; PR16592
 
-; CHECK: safe
+; CHECK-LABEL: @safe(
 ; CHECK: <4 x float>
 
 define void @safe(float* %A, float* %B, float %K) {
@@ -34,7 +34,7 @@ return:
 
 ; In a non-default address space we don't have this rule.
 
-; CHECK: notsafe
+; CHECK-LABEL: @notsafe(
 ; CHECK-NOT: <4 x float>
 
 define void @notsafe(float addrspace(5) * %A, float* %B, float %K) {

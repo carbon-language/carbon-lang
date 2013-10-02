@@ -9,7 +9,7 @@ target triple = "x86_64-apple-macosx10.8.0"
 
 
 ; This test checks that we add metadata to vectorized loops
-; CHECK: _Z4foo1Pii
+; CHECK-LABEL: @_Z4foo1Pii(
 ; CHECK: <4 x i32>
 ; CHECK: llvm.loop
 ; CHECK: ret
@@ -41,7 +41,7 @@ _ZSt10accumulateIPiiET0_T_S2_S1_.exit:            ; preds = %for.body.i, %entry
 }
 
 ; This test checks that we don't vectorize loops that are marked with the "width" == 1 metadata.
-; CHECK: _Z4foo2Pii
+; CHECK-LABEL: @_Z4foo2Pii(
 ; CHECK-NOT: <4 x i32>
 ; CHECK: llvm.loop
 ; CHECK: ret

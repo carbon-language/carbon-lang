@@ -12,7 +12,7 @@ target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f3
 ; We used to vectorize this loop. But it has a value that is used outside of the
 ; and is not a recognized reduction variable "tmp17".
 
-; CHECK-LABEL: main
+; CHECK-LABEL: @main(
 ; CHECK-NOT: <2 x i32>
 
 define i32 @main()  {
@@ -43,7 +43,7 @@ f1.exit.loopexit:
 ; loop user. We currently don't handle this case.
 ; PR17179
 
-; CHECK-LABEL: test2
+; CHECK-LABEL: @test2(
 ; CHECK-NOT:  <2 x
 
 @x1 = common global i32 0, align 4

@@ -4,7 +4,7 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 
 ;PR 15830.
 
-;CHECK: foo
+;CHECK-LABEL: @foo(
 ; When scalarizing stores we need to preserve the original order.
 ; Make sure that we are extracting in the correct order (0101, and not 0011).
 ;CHECK: extractelement <2 x i64> {{.*}}, i32 0

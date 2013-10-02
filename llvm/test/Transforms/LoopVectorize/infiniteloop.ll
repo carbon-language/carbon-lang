@@ -14,7 +14,7 @@ target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f3
 ;   // return SCEVCouldNotCompute.
 ; For an infinite loop SE can return any number.
 
-; CHECK: fn1
+; CHECK-LABEL: @fn1(
 define void @fn1()  {
 entry:
   store i64 0, i64* @a, align 8

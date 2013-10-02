@@ -9,7 +9,7 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 ;  for (i = 0; i < 1024; ++i)
 ;    A[i] = A[i + 1] + 1;
 
-; CHECK: f1_vec
+; CHECK-LABEL: @f1_vec(
 ; CHECK: <2 x i32>
 
 define void @f1_vec(i32* %A) {
@@ -35,7 +35,7 @@ for.end:
 ;  for (i = 0; i < 1024; ++i)
 ;    A[i+1] = A[i] + 1;
 
-; CHECK: f2_novec
+; CHECK-LABEL: @f2_novec(
 ; CHECK-NOT: <2 x i32>
 
 define void @f2_novec(i32* %A) {
@@ -61,7 +61,7 @@ for.end:
 ;  for (i = 0; i < 1024; ++i)
 ;    A[i+2] = A[i] + 1;
 
-; CHECK: f3_vec_len
+; CHECK-LABEL: @f3_vec_len(
 ; CHECK: <2 x i32>
 
 ; WIDTH: f3_vec_len
@@ -96,7 +96,7 @@ for.end:
 ;     A[i] = B[i + 1];
 ;   }
 
-; CHECK: f5
+; CHECK-LABEL: @f5(
 ; CHECK-NOT: <2 x i32>
 
 define void @f5(i32*  %A, i32* %B) {
@@ -127,7 +127,7 @@ for.end:
 ;     tmp = a[i];
 ;   }
 
-; CHECK: f6
+; CHECK-LABEL: @f6
 ; CHECK-NOT: <2 x i32>
 
 define i32 @f6(i32* %a, i32 %tmp) {

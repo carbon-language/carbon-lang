@@ -5,7 +5,7 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 ; Make sure consecutive vector generates correct negative indices.
 ; PR15882
 
-; CHECK: reverse_induction_i64
+; CHECK-LABEL: @reverse_induction_i64(
 ; CHECK: add <4 x i64> %[[SPLAT:.*]], <i64 0, i64 -1, i64 -2, i64 -3>
 ; CHECK: add <4 x i64> %[[SPLAT]], <i64 -4, i64 -5, i64 -6, i64 -7>
 
@@ -29,7 +29,7 @@ loopend:
   ret i32 %inc.redux
 }
 
-; CHECK: reverse_induction_i128
+; CHECK-LABEL: @reverse_induction_i128(
 ; CHECK: add <4 x i128> %[[SPLAT:.*]], <i128 0, i128 -1, i128 -2, i128 -3>
 ; CHECK: add <4 x i128> %[[SPLAT]], <i128 -4, i128 -5, i128 -6, i128 -7>
 define i32 @reverse_induction_i128(i128 %startval, i32 * %ptr) {
@@ -52,7 +52,7 @@ loopend:
   ret i32 %inc.redux
 }
 
-; CHECK: reverse_induction_i16
+; CHECK-LABEL: @reverse_induction_i16(
 ; CHECK: add <4 x i16> %[[SPLAT:.*]], <i16 0, i16 -1, i16 -2, i16 -3>
 ; CHECK: add <4 x i16> %[[SPLAT]], <i16 -4, i16 -5, i16 -6, i16 -7>
 
@@ -93,7 +93,7 @@ loopend:
 ;   }
 ; }
 
-; CHECK: reverse_forward_induction_i64_i8
+; CHECK-LABEL: @reverse_forward_induction_i64_i8(
 ; CHECK: vector.body
 ; CHECK: %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
 ; CHECK: %normalized.idx = sub i64 %index, 0
@@ -120,7 +120,7 @@ while.end:
   ret void
 }
 
-; CHECK: reverse_forward_induction_i64_i8_signed
+; CHECK-LABEL: @reverse_forward_induction_i64_i8_signed(
 ; CHECK: vector.body:
 ; CHECK:  %index = phi i64 [ 129, %vector.ph ], [ %index.next, %vector.body ]
 ; CHECK:  %normalized.idx = sub i64 %index, 129
