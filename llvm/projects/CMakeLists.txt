@@ -14,7 +14,11 @@ endforeach(entry)
 # Also add in libc++ and compiler-rt trees if present (and we have
 # a sufficiently recent version of CMake where required).
 if(${LLVM_BUILD_RUNTIME})
-  add_llvm_external_project(libcxx)
+  # MSVC isn't quite working with libc++ yet, disable it until issues are
+  # fixed.
+  if(NOT MSVC)
+    add_llvm_external_project(libcxx)
+  endif()
   if(${CMAKE_VERSION} VERSION_GREATER 2.8.7)
     add_llvm_external_project(compiler-rt)
   else()
