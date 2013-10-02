@@ -235,6 +235,8 @@ TEST_F(MCJITMultipleModuleTest, two_module_global_variables_case) {
 // Module C { Extern FA, Function FC which calls FA },
 // execute FC, FB, FA
 TEST_F(MCJITMultipleModuleTest, three_module_case) {
+  SKIP_UNSUPPORTED_PLATFORM;
+
   OwningPtr<Module> A, B, C;
   Function *FA, *FB, *FC;
   createThreeModuleCase(A, FA, B, FB, C, FC);
@@ -258,6 +260,8 @@ TEST_F(MCJITMultipleModuleTest, three_module_case) {
 // Module C { Extern FA, Function FC which calls FA },
 // execute FA, FB, FC
 TEST_F(MCJITMultipleModuleTest, three_module_case_reverse_order) {
+  SKIP_UNSUPPORTED_PLATFORM;
+
   OwningPtr<Module> A, B, C;
   Function *FA, *FB, *FC;
   createThreeModuleCase(A, FA, B, FB, C, FC);
@@ -281,6 +285,8 @@ TEST_F(MCJITMultipleModuleTest, three_module_case_reverse_order) {
 // Module C { Extern FB, Function FC which calls FB },
 // execute FC, FB, FA
 TEST_F(MCJITMultipleModuleTest, three_module_chain_case) {
+  SKIP_UNSUPPORTED_PLATFORM;
+
   OwningPtr<Module> A, B, C;
   Function *FA, *FB, *FC;
   createThreeModuleChainedCallsCase(A, FA, B, FB, C, FC);
@@ -304,6 +310,8 @@ TEST_F(MCJITMultipleModuleTest, three_module_chain_case) {
 // Module C { Extern FB, Function FC which calls FB },
 // execute FA, FB, FC
 TEST_F(MCJITMultipleModuleTest, three_modules_chain_case_reverse_order) {
+  SKIP_UNSUPPORTED_PLATFORM;
+
   OwningPtr<Module> A, B, C;
   Function *FA, *FB, *FC;
   createThreeModuleChainedCallsCase(A, FA, B, FB, C, FC);
