@@ -464,7 +464,7 @@ namespace {
 
     /// allocateCodeSection - Allocate memory for a code section.
     uint8_t *allocateCodeSection(uintptr_t Size, unsigned Alignment,
-                                 unsigned SectionID) {
+                                 unsigned SectionID, StringRef SectionName) {
       // Grow the required block size to account for the block header
       Size += sizeof(*CurBlock);
 
@@ -510,7 +510,8 @@ namespace {
 
     /// allocateDataSection - Allocate memory for a data section.
     uint8_t *allocateDataSection(uintptr_t Size, unsigned Alignment,
-                                 unsigned SectionID, bool IsReadOnly) {
+                                 unsigned SectionID, StringRef SectionName,
+                                 bool IsReadOnly) {
       return (uint8_t*)DataAllocator.Allocate(Size, Alignment);
     }
 

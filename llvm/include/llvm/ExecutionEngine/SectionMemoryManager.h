@@ -49,7 +49,8 @@ public:
   /// The value of \p Alignment must be a power of two.  If \p Alignment is zero
   /// a default alignment of 16 will be used.
   virtual uint8_t *allocateCodeSection(uintptr_t Size, unsigned Alignment,
-                                       unsigned SectionID);
+                                       unsigned SectionID,
+                                       StringRef SectionName);
 
   /// \brief Allocates a memory block of (at least) the given size suitable for
   /// executable code.
@@ -58,6 +59,7 @@ public:
   /// a default alignment of 16 will be used.
   virtual uint8_t *allocateDataSection(uintptr_t Size, unsigned Alignment,
                                        unsigned SectionID,
+                                       StringRef SectionName,
                                        bool isReadOnly);
 
   /// \brief Update section-specific memory permissions and other attributes.

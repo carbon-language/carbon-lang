@@ -27,7 +27,8 @@ RecordingMemoryManager::~RecordingMemoryManager() {
 }
 
 uint8_t *RecordingMemoryManager::
-allocateCodeSection(uintptr_t Size, unsigned Alignment, unsigned SectionID) {
+allocateCodeSection(uintptr_t Size, unsigned Alignment, unsigned SectionID,
+                    StringRef SectionName) {
   // The recording memory manager is just a local copy of the remote target.
   // The alignment requirement is just stored here for later use. Regular
   // heap storage is sufficient here, but we're using mapped memory to work
@@ -39,7 +40,8 @@ allocateCodeSection(uintptr_t Size, unsigned Alignment, unsigned SectionID) {
 
 uint8_t *RecordingMemoryManager::
 allocateDataSection(uintptr_t Size, unsigned Alignment,
-                    unsigned SectionID, bool IsReadOnly) {
+                    unsigned SectionID, StringRef SectionName,
+                    bool IsReadOnly) {
   // The recording memory manager is just a local copy of the remote target.
   // The alignment requirement is just stored here for later use. Regular
   // heap storage is sufficient here, but we're using mapped memory to work

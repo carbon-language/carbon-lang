@@ -60,9 +60,10 @@ public:
   SmallVector<sys::MemoryBlock, 16> DataMemory;
 
   uint8_t *allocateCodeSection(uintptr_t Size, unsigned Alignment,
-                               unsigned SectionID);
+                               unsigned SectionID, StringRef SectionName);
   uint8_t *allocateDataSection(uintptr_t Size, unsigned Alignment,
-                               unsigned SectionID, bool IsReadOnly);
+                               unsigned SectionID, StringRef SectionName,
+                               bool IsReadOnly);
 
   virtual void *getPointerToNamedFunction(const std::string &Name,
                                           bool AbortOnFailure = true) {
@@ -80,7 +81,8 @@ public:
 
 uint8_t *TrivialMemoryManager::allocateCodeSection(uintptr_t Size,
                                                    unsigned Alignment,
-                                                   unsigned SectionID) {
+                                                   unsigned SectionID,
+                                                   StringRef SectionName) {
   sys::MemoryBlock MB = sys::Memory::AllocateRWX(Size, 0, 0);
   FunctionMemory.push_back(MB);
   return (uint8_t*)MB.base();
@@ -89,6 +91,7 @@ uint8_t *TrivialMemoryManager::allocateCodeSection(uintptr_t Size,
 uint8_t *TrivialMemoryManager::allocateDataSection(uintptr_t Size,
                                                    unsigned Alignment,
                                                    unsigned SectionID,
+                                                   StringRef SectionName,
                                                    bool IsReadOnly) {
   sys::MemoryBlock MB = sys::Memory::AllocateRWX(Size, 0, 0);
   DataMemory.push_back(MB);

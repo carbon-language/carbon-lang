@@ -171,13 +171,14 @@ void *LLVMGetPointerToGlobal(LLVMExecutionEngineRef EE, LLVMValueRef Global);
 
 /*===-- Operations on memory managers -------------------------------------===*/
 
-typedef uint8_t *(*LLVMMemoryManagerAllocateCodeSectionCallback)(void *Opaque,
-						    uintptr_t Size, unsigned Alignment,
-						    unsigned SectionID);
-typedef uint8_t *(*LLVMMemoryManagerAllocateDataSectionCallback)(void *Opaque,
-						    uintptr_t Size, unsigned Alignment,
-						    unsigned SectionID, LLVMBool IsReadOnly);
-typedef LLVMBool (*LLVMMemoryManagerFinalizeMemoryCallback)(void *Opaque, char **ErrMsg);
+typedef uint8_t *(*LLVMMemoryManagerAllocateCodeSectionCallback)(
+  void *Opaque, uintptr_t Size, unsigned Alignment, unsigned SectionID,
+  const char *SectionName);
+typedef uint8_t *(*LLVMMemoryManagerAllocateDataSectionCallback)(
+  void *Opaque, uintptr_t Size, unsigned Alignment, unsigned SectionID,
+  const char *SectionName, LLVMBool IsReadOnly);
+typedef LLVMBool (*LLVMMemoryManagerFinalizeMemoryCallback)(
+  void *Opaque, char **ErrMsg);
 typedef void (*LLVMMemoryManagerDestroyCallback)(void *Opaque);
 
 /**

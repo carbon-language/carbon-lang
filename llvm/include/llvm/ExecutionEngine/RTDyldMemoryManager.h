@@ -38,14 +38,16 @@ public:
   /// executable code. The SectionID is a unique identifier assigned by the JIT
   /// engine, and optionally recorded by the memory manager to access a loaded
   /// section.
-  virtual uint8_t *allocateCodeSection(uintptr_t Size, unsigned Alignment,
-                                       unsigned SectionID) = 0;
-
+  virtual uint8_t *allocateCodeSection(
+    uintptr_t Size, unsigned Alignment, unsigned SectionID,
+    StringRef SectionName) = 0;
+  
   /// Allocate a memory block of (at least) the given size suitable for data.
   /// The SectionID is a unique identifier assigned by the JIT engine, and
   /// optionally recorded by the memory manager to access a loaded section.
-  virtual uint8_t *allocateDataSection(uintptr_t Size, unsigned Alignment,
-                                       unsigned SectionID, bool IsReadOnly) = 0;
+  virtual uint8_t *allocateDataSection(
+    uintptr_t Size, unsigned Alignment, unsigned SectionID,
+    StringRef SectionName, bool IsReadOnly) = 0;
 
   /// Register the EH frames with the runtime so that c++ exceptions work.
   virtual void registerEHFrames(StringRef SectionData);

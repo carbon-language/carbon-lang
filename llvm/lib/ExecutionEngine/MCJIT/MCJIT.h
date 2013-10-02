@@ -35,14 +35,15 @@ public:
 
   // Functions deferred to client memory manager
   virtual uint8_t *allocateCodeSection(uintptr_t Size, unsigned Alignment,
-                                       unsigned SectionID) {
-    return ClientMM->allocateCodeSection(Size, Alignment, SectionID);
+                                       unsigned SectionID, StringRef SectionName) {
+    return ClientMM->allocateCodeSection(Size, Alignment, SectionID, SectionName);
   }
 
   virtual uint8_t *allocateDataSection(uintptr_t Size, unsigned Alignment,
-                                       unsigned SectionID, bool IsReadOnly) {
+                                       unsigned SectionID, StringRef SectionName,
+                                       bool IsReadOnly) {
     return ClientMM->allocateDataSection(Size, Alignment,
-                                         SectionID, IsReadOnly);
+                                         SectionID, SectionName, IsReadOnly);
   }
 
   virtual void registerEHFrames(StringRef SectionData) {

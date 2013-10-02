@@ -351,12 +351,13 @@ public:
                              void *Opaque);
   virtual ~SimpleBindingMemoryManager();
   
-  virtual uint8_t *allocateCodeSection(uintptr_t Size, unsigned Alignment,
-                                       unsigned SectionID);
+  virtual uint8_t *allocateCodeSection(
+    uintptr_t Size, unsigned Alignment, unsigned SectionID,
+    StringRef SectionName);
 
-  virtual uint8_t *allocateDataSection(uintptr_t Size, unsigned Alignment,
-                                       unsigned SectionID,
-                                       bool isReadOnly);
+  virtual uint8_t *allocateDataSection(
+    uintptr_t Size, unsigned Alignment, unsigned SectionID,
+    StringRef SectionName, bool isReadOnly);
 
   virtual bool finalizeMemory(std::string *ErrMsg);
   
@@ -384,13 +385,17 @@ SimpleBindingMemoryManager::~SimpleBindingMemoryManager() {
 }
 
 uint8_t *SimpleBindingMemoryManager::allocateCodeSection(
-  uintptr_t Size, unsigned Alignment, unsigned SectionID) {
-  return Functions.AllocateCodeSection(Opaque, Size, Alignment, SectionID);
+  uintptr_t Size, unsigned Alignment, unsigned SectionID,
+  StringRef SectionName) {
+  return Functions.AllocateCodeSection(Opaque, Size, Alignment, SectionID,
+                                       SectionName.str().c_str());
 }
 
 uint8_t *SimpleBindingMemoryManager::allocateDataSection(
-  uintptr_t Size, unsigned Alignment, unsigned SectionID, bool isReadOnly) {
+  uintptr_t Size, unsigned Alignment, unsigned SectionID,
+  StringRef SectionName, bool isReadOnly) {
   return Functions.AllocateDataSection(Opaque, Size, Alignment, SectionID,
+                                       SectionName.str().c_str(),
                                        isReadOnly);
 }
 

@@ -1337,8 +1337,8 @@ void RuntimeDyldELF::finalizeLoad() {
     // Allocate memory for the section
     unsigned SectionID = Sections.size();
     size_t TotalSize = numGOTEntries * getGOTEntrySize();
-    uint8_t *Addr = MemMgr->allocateDataSection(TotalSize, getGOTEntrySize(),
-                                                SectionID, false);
+    uint8_t *Addr = MemMgr->allocateDataSection(
+      TotalSize, getGOTEntrySize(), SectionID, ".got", false);
     if (!Addr)
       report_fatal_error("Unable to allocate memory for GOT!");
     Sections.push_back(SectionEntry(".got", Addr, TotalSize, 0));

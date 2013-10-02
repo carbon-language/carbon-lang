@@ -19,9 +19,10 @@
 namespace llvm {
 
 uint8_t *SectionMemoryManager::allocateDataSection(uintptr_t Size,
-                                                    unsigned Alignment,
-                                                    unsigned SectionID,
-                                                    bool IsReadOnly) {
+                                                   unsigned Alignment,
+                                                   unsigned SectionID,
+                                                   StringRef SectionName,
+                                                   bool IsReadOnly) {
   if (IsReadOnly)
     return allocateSection(RODataMem, Size, Alignment);
   return allocateSection(RWDataMem, Size, Alignment);
@@ -29,7 +30,8 @@ uint8_t *SectionMemoryManager::allocateDataSection(uintptr_t Size,
 
 uint8_t *SectionMemoryManager::allocateCodeSection(uintptr_t Size,
                                                    unsigned Alignment,
-                                                   unsigned SectionID) {
+                                                   unsigned SectionID,
+                                                   StringRef SectionName) {
   return allocateSection(CodeMem, Size, Alignment);
 }
 

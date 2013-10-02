@@ -281,11 +281,11 @@ TEST(JITMemoryManagerTest, TestManyStubs) {
 TEST(JITMemoryManagerTest, AllocateSection) {
   OwningPtr<JITMemoryManager> MemMgr(
       JITMemoryManager::CreateDefaultMemManager());
-  uint8_t *code1 = MemMgr->allocateCodeSection(256, 0, 1);
-  uint8_t *data1 = MemMgr->allocateDataSection(256, 16, 2, true);
-  uint8_t *code2 = MemMgr->allocateCodeSection(257, 32, 3);
-  uint8_t *data2 = MemMgr->allocateDataSection(256, 64, 4, false);
-  uint8_t *code3 = MemMgr->allocateCodeSection(258, 64, 5);
+  uint8_t *code1 = MemMgr->allocateCodeSection(256, 0, 1, StringRef());
+  uint8_t *data1 = MemMgr->allocateDataSection(256, 16, 2, StringRef(), true);
+  uint8_t *code2 = MemMgr->allocateCodeSection(257, 32, 3, StringRef());
+  uint8_t *data2 = MemMgr->allocateDataSection(256, 64, 4, StringRef(), false);
+  uint8_t *code3 = MemMgr->allocateCodeSection(258, 64, 5, StringRef());
 
   EXPECT_NE((uint8_t*)0, code1);
   EXPECT_NE((uint8_t*)0, code2);

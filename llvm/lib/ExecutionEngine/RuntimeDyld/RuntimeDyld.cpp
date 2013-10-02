@@ -182,8 +182,8 @@ void RuntimeDyldImpl::emitCommonSymbols(ObjectImage &Obj,
                                         SymbolTableMap &SymbolTable) {
   // Allocate memory for the section
   unsigned SectionID = Sections.size();
-  uint8_t *Addr = MemMgr->allocateDataSection(TotalSize, sizeof(void*),
-                                              SectionID, false);
+  uint8_t *Addr = MemMgr->allocateDataSection(
+    TotalSize, sizeof(void*), SectionID, StringRef(), false);
   if (!Addr)
     report_fatal_error("Unable to allocate memory for common symbols!");
   uint64_t Offset = 0;
@@ -278,8 +278,9 @@ unsigned RuntimeDyldImpl::emitSection(ObjectImage &Obj,
   if (IsRequired) {
     Allocate = DataSize + StubBufSize;
     Addr = IsCode
-      ? MemMgr->allocateCodeSection(Allocate, Alignment, SectionID)
-      : MemMgr->allocateDataSection(Allocate, Alignment, SectionID, IsReadOnly);
+      ? MemMgr->allocateCodeSection(Allocate, Alignment, SectionID, Name)
+      : MemMgr->allocateDataSection(Allocate, Alignment, SectionID, Name,
+                                    IsReadOnly);
     if (!Addr)
       report_fatal_error("Unable to allocate section memory!");
 

@@ -50,10 +50,11 @@ public:
   const_code_iterator   code_end() const { return AllocatedCodeMem.end(); }
 
   uint8_t *allocateCodeSection(uintptr_t Size, unsigned Alignment,
-                                       unsigned SectionID);
+                               unsigned SectionID, StringRef SectionName);
 
   uint8_t *allocateDataSection(uintptr_t Size, unsigned Alignment,
-                                       unsigned SectionID, bool IsReadOnly);
+                               unsigned SectionID, StringRef SectionName,
+                               bool IsReadOnly);
 
   void *getPointerToNamedFunction(const std::string &Name,
                                   bool AbortOnFailure = true);
