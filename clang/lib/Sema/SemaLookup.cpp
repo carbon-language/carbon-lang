@@ -3384,8 +3384,8 @@ public:
                          bool InBaseClass);
   void FoundName(StringRef Name);
   void addKeywordResult(StringRef Keyword);
-  void addName(StringRef Name, NamedDecl *ND, unsigned Distance,
-               NestedNameSpecifier *NNS=NULL, bool isKeyword=false);
+  void addName(StringRef Name, NamedDecl *ND, NestedNameSpecifier *NNS = NULL,
+               bool isKeyword = false);
   void addCorrection(TypoCorrection Correction);
 
   typedef TypoResultsMap::iterator result_iterator;
@@ -3439,6 +3439,19 @@ void TypoCorrectionConsumer::FoundDecl(NamedDecl *ND, NamedDecl *Hiding,
 }
 
 void TypoCorrectionConsumer::FoundName(StringRef Name) {
+  // Compute the edit distance between the typo and the name of this
+  // entity, and add the identifier to the list of results.
+  addName(Name, NULL);
+}
+
+void TypoCorrectionConsumer::addKeywordResult(StringRef Keyword) {
+  // Compute the edit distance between the typo and this keyword,
+  // and add the keyword to the list of results.
+  addName(Keyword, NULL, NULL, true);
+}
+
+void TypoCorrectionConsumer::addName(StringRef Name, NamedDecl *ND,
+                                     NestedNameSpecifier *NNS, bool isKeyword) {
   // Use a simple length-based heuristic to determine the minimum possible
   // edit distance. If the minimum isn't good enough, bail out early.
   unsigned MinED = abs((int)Name.size() - (int)Typo.size());
@@ -3447,25 +3460,11 @@ void TypoCorrectionConsumer::FoundName(StringRef Name) {
 
   // Compute an upper bound on the allowable edit distance, so that the
   // edit-distance algorithm can short-circuit.
-  unsigned UpperBound = (Typo.size() + 2) / 3;
+  unsigned UpperBound = (Typo.size() + 2) / 3 + 1;
+  unsigned ED = Typo.edit_distance(Name, true, UpperBound);
+  if (ED >= UpperBound) return;
 
-  // Compute the edit distance between the typo and the name of this
-  // entity, and add the identifier to the list of results.
-  addName(Name, NULL, Typo.edit_distance(Name, true, UpperBound));
-}
-
-void TypoCorrectionConsumer::addKeywordResult(StringRef Keyword) {
-  // Compute the edit distance between the typo and this keyword,
-  // and add the keyword to the list of results.
-  addName(Keyword, NULL, Typo.edit_distance(Keyword), NULL, true);
-}
-
-void TypoCorrectionConsumer::addName(StringRef Name,
-                                     NamedDecl *ND,
-                                     unsigned Distance,
-                                     NestedNameSpecifier *NNS,
-                                     bool isKeyword) {
-  TypoCorrection TC(&SemaRef.Context.Idents.get(Name), ND, NNS, Distance);
+  TypoCorrection TC(&SemaRef.Context.Idents.get(Name), ND, NNS, ED);
   if (isKeyword) TC.makeKeyword();
   addCorrection(TC);
 }
@@ -3728,8 +3727,8 @@ void NamespaceSpecifierSet::AddRecord(RecordDecl *RD) {
   if (NamespaceDeclChain.empty()) {
     NamespaceDeclChain = FullNamespaceDeclChain;
     NNS = NestedNameSpecifier::GlobalSpecifier(Context);
-  } else if (NamespaceDecl *ND =
-                 dyn_cast_or_null<NamespaceDecl>(NamespaceDeclChain.back())) {
+  } else if (NamedDecl *ND =
+                 dyn_cast_or_null<NamedDecl>(NamespaceDeclChain.back())) {
     IdentifierInfo *Name = ND->getIdentifier();
     if (std::find(CurContextIdentifiers.begin(), CurContextIdentifiers.end(),
                   Name) != CurContextIdentifiers.end() ||
@@ -4102,6 +4101,12 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
       locs->second.count(TypoName.getLoc()) > 0)
     return TypoCorrection();
 
+  // Don't try to correct the identifier "vector" when in AltiVec mode.
+  // TODO: Figure out why typo correction misbehaves in this case, fix it, and
+  // remove this workaround.
+  if (getLangOpts().AltiVec && Typo->isStr("vector"))
+    return TypoCorrection();
+
   NamespaceSpecifierSet Namespaces(Context, CurContext, SS);
 
   TypoCorrectionConsumer Consumer(*this, Typo);
@@ -4171,8 +4176,9 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
       (IsUnqualifiedLookup || (QualifiedDC && QualifiedDC->isNamespace()));
   // In a few cases we *only* want to search for corrections based on just
   // adding or changing the nested name specifier.
-  bool AllowOnlyNNSChanges = Typo->getName().size() < 3;
-  
+  unsigned TypoLen = Typo->getName().size();
+  bool AllowOnlyNNSChanges = TypoLen < 3;
+
   if (IsUnqualifiedLookup || SearchNamespaces) {
     // For unqualified lookup, look through all of the names that we have
     // seen in this translation unit.
@@ -4207,7 +4213,7 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
   // Make sure the best edit distance (prior to adding any namespace qualifiers)
   // is not more that about a third of the length of the typo's identifier.
   unsigned ED = Consumer.getBestEditDistance(true);
-  if (ED > 0 && Typo->getName().size() / ED < 3)
+  if (ED > 0 && TypoLen / ED < 3)
     return FailedCorrection(Typo, TypoName.getLoc(), RecordFailure,
                             IsUnqualifiedLookup);
 
@@ -4235,7 +4241,7 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
       if (CXXRecordDecl *CD = (*TI)->getAsCXXRecordDecl()) {
         if (!CD->isDependentType() && !CD->isAnonymousStructOrUnion() &&
             !CD->isUnion())
-          Namespaces.AddRecord(CD);
+          Namespaces.AddRecord(CD->getCanonicalDecl());
       }
     }
   }
@@ -4247,7 +4253,6 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
   TmpRes.suppressDiagnostics();
   while (!Consumer.empty()) {
     TypoCorrectionConsumer::distance_iterator DI = Consumer.begin();
-    unsigned ED = DI->first;
     for (TypoCorrectionConsumer::result_iterator I = DI->second.begin(),
                                               IEnd = DI->second.end();
          I != IEnd; /* Increment in loop. */) {
@@ -4359,7 +4364,7 @@ retry_lookup:
 
     if (DI->second.empty())
       Consumer.erase(DI);
-    else if (!getLangOpts().CPlusPlus || QualifiedResults.empty() || !ED)
+    else if (!getLangOpts().CPlusPlus || QualifiedResults.empty() || !DI->first)
       // If there are results in the closest possible bucket, stop
       break;
 
@@ -4386,9 +4391,19 @@ retry_lookup:
               continue;
           }
 
-          // FIXME: Stop searching once the namespaces are too far away to create
-          // acceptable corrections for this identifier (since the namespaces
-          // are sorted in ascending order by edit distance).
+          TypoCorrection TC(*QRI);
+          TC.ClearCorrectionDecls();
+          TC.setCorrectionSpecifier(NI->NameSpecifier);
+          TC.setQualifierDistance(NI->EditDistance);
+          TC.setCallbackDistance(0); // Reset the callback distance
+
+          // If the current correction candidate and namespace combination are
+          // too far away from the original typo based on the normalized edit
+          // distance, then skip performing a qualified name lookup.
+          unsigned TmpED = TC.getEditDistance(true);
+          if (QRI->getCorrectionAsIdentifierInfo() != Typo &&
+              TmpED && TypoLen / TmpED < 3)
+            continue;
 
           TmpRes.clear();
           TmpRes.setLookupName(QRI->getCorrectionAsIdentifierInfo());
@@ -4399,11 +4414,6 @@ retry_lookup:
           switch (TmpRes.getResultKind()) {
           case LookupResult::Found:
           case LookupResult::FoundOverloaded: {
-            TypoCorrection TC(*QRI);
-            TC.ClearCorrectionDecls();
-            TC.setCorrectionSpecifier(NI->NameSpecifier);
-            TC.setQualifierDistance(NI->EditDistance);
-            TC.setCallbackDistance(0); // Reset the callback distance
             for (LookupResult::iterator TRD = TmpRes.begin(),
                                      TRDEnd = TmpRes.end();
                  TRD != TRDEnd; ++TRD) {
@@ -4436,7 +4446,7 @@ retry_lookup:
   TypoResultsMap &BestResults = Consumer.getBestResults();
   ED = Consumer.getBestEditDistance(true);
 
-  if (!AllowOnlyNNSChanges && ED > 0 && Typo->getName().size() / ED < 3) {
+  if (!AllowOnlyNNSChanges && ED > 0 && TypoLen / ED < 3) {
     // If this was an unqualified lookup and we believe the callback
     // object wouldn't have filtered out possible corrections, note
     // that no correction was found.
