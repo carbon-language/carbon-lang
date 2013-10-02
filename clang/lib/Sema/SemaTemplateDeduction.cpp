@@ -3745,11 +3745,8 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *ConversionTemplate,
   const bool IsGenericLambdaConversionOperator = 
       isLambdaConversionOperator(Conv);
   if (IsGenericLambdaConversionOperator) {
-    const Type *FromTypePtr = P.getTypePtr();
     const Type *ToTypePtr = A.getTypePtr();
 
-    assert(P->isPointerType()); 
-    FromTypePtr = P->getPointeeType().getTypePtr();
     assert(A->isPointerType());
     ToTypePtr = A->getPointeeType().getTypePtr();
     
@@ -3781,11 +3778,11 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *ConversionTemplate,
                                                     0, CallOpSpec, OpInfo))
       return Result;
  
-    bool HadToDeduceReturnTypeDuringCurrentCall = false;
+    // bool HadToDeduceReturnTypeDuringCurrentCall = false;
     // If we need to deduce the return type, do so (instantiates the callop).
     if (GenericLambdaCallOperatorHasDeducedReturnType && 
         CallOpSpec->getResultType()->isUndeducedType()) {
-      HadToDeduceReturnTypeDuringCurrentCall = true;
+      // HadToDeduceReturnTypeDuringCurrentCall = true;
       DeduceReturnType(CallOpSpec, CallOpSpec->getPointOfInstantiation(),
                       /*Diagnose*/ true);
     }
