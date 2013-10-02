@@ -41,6 +41,7 @@
 #include "llvm/Support/PluginLoader.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Process.h"
+#include "llvm/Support/Program.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/TargetSelect.h"
@@ -82,6 +83,18 @@ namespace {
   cl::opt<bool> RemoteMCJIT("remote-mcjit",
     cl::desc("Execute MCJIT'ed code in a separate process."),
     cl::init(false));
+
+  // Manually specify the child process for remote execution. This overrides
+  // the simulated remote execution that allocates address space for child
+  // execution. The child process resides in the disk and communicates with lli
+  // via stdin/stdout pipes.
+  cl::opt<std::string>
+  MCJITRemoteProcess("mcjit-remote-process",
+            cl::desc("Specify the filename of the process to launch "
+                     "for remote MCJIT execution.  If none is specified,"
+                     "\n\tremote execution will be simulated in-process."),
+            cl::value_desc("filename"),
+            cl::init(""));
 
   // Determine optimization level.
   cl::opt<char>
@@ -481,30 +494,50 @@ int main(int argc, char **argv, char * const *envp) {
     // Everything is prepared now, so lay out our program for the target
     // address space, assign the section addresses to resolve any relocations,
     // and send it to the target.
-    RemoteTarget Target;
-    Target.create();
+
+    OwningPtr<RemoteTarget> Target;
+    if (!MCJITRemoteProcess.empty()) { // Remote execution on a child process
+      if (!RemoteTarget::hostSupportsExternalRemoteTarget()) {
+        errs() << "Warning: host does not support external remote targets.\n"
+               << "  Defaulting to simulated remote execution\n";
+        Target.reset(RemoteTarget::createRemoteTarget());
+      } else {
+        std::string ChildEXE = sys::FindProgramByName(MCJITRemoteProcess);
+        if (ChildEXE == "") {
+          errs() << "Unable to find child target: '\''" << MCJITRemoteProcess << "\'\n";
+          return -1;
+        }
+        Target.reset(RemoteTarget::createExternalRemoteTarget(MCJITRemoteProcess));
+      }
+    } else {
+      // No child process name provided, use simulated remote execution.
+      Target.reset(RemoteTarget::createRemoteTarget());
+    }
+
+    // Create the remote target
+    Target->create();
 
     // Trigger compilation.
     EE->generateCodeForModule(Mod);
 
     // Layout the target memory.
-    layoutRemoteTargetMemory(&Target, MM);
+    layoutRemoteTargetMemory(Target.get(), MM);
 
     // Since we're executing in a (at least simulated) remote address space,
     // we can't use the ExecutionEngine::runFunctionAsMain(). We have to
     // grab the function address directly here and tell the remote target
     // to execute the function.
     // FIXME: argv and envp handling.
-    uint64_t Entry = (uint64_t)EE->getPointerToFunction(EntryFn);
+    uint64_t Entry = EE->getFunctionAddress(EntryFn->getName().str());
 
     DEBUG(dbgs() << "Executing '" << EntryFn->getName() << "' at 0x"
                  << format("%llx", Entry) << "\n");
 
-    if (Target.executeCode(Entry, Result))
-      errs() << "ERROR: " << Target.getErrorMsg() << "\n";
+    if (Target->executeCode(Entry, Result))
+      errs() << "ERROR: " << Target->getErrorMsg() << "\n";
 
-    Target.stop();
-  } else {
+    Target->stop();
+  } else { // !RemoteMCJIT
     // Trigger compilation separately so code regions that need to be 
     // invalidated will be known.
     (void)EE->getPointerToFunction(EntryFn);

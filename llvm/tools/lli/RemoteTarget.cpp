@@ -13,12 +13,43 @@
 //===----------------------------------------------------------------------===//
 
 #include "RemoteTarget.h"
+#include "RemoteTargetExternal.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Memory.h"
 #include <stdlib.h>
 #include <string>
+
 using namespace llvm;
+
+// Static methods
+RemoteTarget *RemoteTarget::createRemoteTarget() {
+  return new RemoteTarget;
+}
+
+RemoteTarget *RemoteTarget::createExternalRemoteTarget(std::string &ChildName) {
+#ifdef LLVM_ON_UNIX
+  return new RemoteTargetExternal(ChildName);
+#else
+  return 0;
+#endif
+}
+
+bool RemoteTarget::hostSupportsExternalRemoteTarget() {
+#ifdef LLVM_ON_UNIX
+  return true;
+#else
+  return false;
+#endif
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Simulated remote execution
+//
+// This implementation will simply move generated code and data to a new memory
+// location in the current executable and let it run from there.
+////////////////////////////////////////////////////////////////////////////////
 
 bool RemoteTarget::allocateSpace(size_t Size, unsigned Alignment,
                                  uint64_t &Address) {

@@ -10,6 +10,8 @@
 LEVEL := ../..
 TOOLNAME := lli
 
+PARALLEL_DIRS := ChildTarget
+
 include $(LEVEL)/Makefile.config
 
 LINK_COMPONENTS := mcjit jit instrumentation interpreter nativecodegen bitreader asmparser irreader selectiondag native

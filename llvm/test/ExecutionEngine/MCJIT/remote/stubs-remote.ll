@@ -1,4 +1,4 @@
-; RUN: %lli_mcjit -remote-mcjit -disable-lazy-compilation=false %s
+; RUN: %lli_mcjit -remote-mcjit -disable-lazy-compilation=false -mcjit-remote-process=lli-child-target %s
 ; XFAIL:  mips
 
 define i32 @main() nounwind {

@@ -1,6 +1,8 @@
 
 set(LLVM_LINK_COMPONENTS mcjit jit interpreter nativecodegen bitreader asmparser irreader selectiondag native instrumentation)
 
+add_subdirectory(ChildTarget)
+
 if( LLVM_USE_OPROFILE )
   set(LLVM_LINK_COMPONENTS
     ${LLVM_LINK_COMPONENTS}
@@ -21,4 +23,5 @@ add_llvm_tool(lli
   lli.cpp
   RecordingMemoryManager.cpp
   RemoteTarget.cpp
+  RemoteTargetExternal.cpp
   )
