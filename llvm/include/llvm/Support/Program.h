@@ -111,7 +111,7 @@ struct ProcessInfo {
 
   /// Similar to ExecuteAndWait, but returns immediately.
   /// @returns The \see ProcessInfo of the newly launced process.
-  /// \Note On Microsoft Windows systems, users will need to either call \see
+  /// \note On Microsoft Windows systems, users will need to either call \see
   /// Wait until the process finished execution or win32 CloseHandle() API on
   /// ProcessInfo.ProcessHandle to avoid memory leaks.
   ProcessInfo
@@ -128,7 +128,7 @@ struct ProcessInfo {
   /// \li The process id of the child process if the child process has changed
   /// state.
   /// \li 0 if the child process has not changed state.
-  /// \Note Users of this function should always check the ReturnCode member of
+  /// \note Users of this function should always check the ReturnCode member of
   /// the \see ProcessInfo returned from this function.
   ProcessInfo Wait(
       const ProcessInfo &PI, ///< The child process that should be waited on.
