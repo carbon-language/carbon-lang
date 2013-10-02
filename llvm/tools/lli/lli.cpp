@@ -536,7 +536,7 @@ int main(int argc, char **argv, char * const *envp) {
           errs() << "Unable to find child target: '\''" << MCJITRemoteProcess << "\'\n";
           return -1;
         }
-        Target.reset(RemoteTarget::createExternalRemoteTarget(MCJITRemoteProcess));
+        Target.reset(RemoteTarget::createExternalRemoteTarget(ChildEXE));
       }
     } else {
       // No child process name provided, use simulated remote execution.
