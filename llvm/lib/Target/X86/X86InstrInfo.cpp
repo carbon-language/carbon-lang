@@ -3104,14 +3104,11 @@ static unsigned getLoadStoreRegOpcode(unsigned Reg,
     if (X86::VK8RegClass.hasSubClassEq(RC)  || 
       X86::VK16RegClass.hasSubClassEq(RC))
       return load ? X86::KMOVWkm : X86::KMOVWmk;
-
-    if (X86::FR32XRegClass.hasSubClassEq(RC))
+    if (RC->getSize() == 4 && X86::FR32XRegClass.hasSubClassEq(RC))
       return load ? X86::VMOVSSZrm : X86::VMOVSSZmr;
-    if (X86::FR64XRegClass.hasSubClassEq(RC))
+    if (RC->getSize() == 8 && X86::FR64XRegClass.hasSubClassEq(RC))
       return load ? X86::VMOVSDZrm : X86::VMOVSDZmr;
-    if (X86::VR128XRegClass.hasSubClassEq(RC) ||
-        X86::VR256XRegClass.hasSubClassEq(RC) ||
-        X86::VR512RegClass.hasSubClassEq(RC))
+    if (X86::VR512RegClass.hasSubClassEq(RC))
       return load ? X86::VMOVUPSZrm : X86::VMOVUPSZmr;
   }
 

@@ -116,3 +116,12 @@ define <4 x i32> @test14(i32 %x) {
    %res = insertelement <4 x i32>zeroinitializer, i32 %x, i32 0
    ret <4 x i32>%res
 }
+
+; CHECK-LABEL: @test15
+; CHECK: vmovdz  (%rdi)
+; CHECK: ret
+define <4 x i32> @test15(i32* %x) {
+   %y = load i32* %x, align 4
+   %res = insertelement <4 x i32>zeroinitializer, i32 %y, i32 0
+   ret <4 x i32>%res
+}
