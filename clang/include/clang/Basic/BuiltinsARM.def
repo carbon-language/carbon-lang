@@ -58,6 +58,9 @@ BUILTIN(__builtin_arm_crc32cw, "UiUiUi", "nc")
 BUILTIN(__builtin_arm_crc32d, "UiUiLLUi", "nc")
 BUILTIN(__builtin_arm_crc32cd, "UiUiLLUi", "nc")
 
+// HINT
+BUILTIN(__builtin_arm_sevl, "v", "")
+
 // NEON
 #define GET_NEON_BUILTINS
 #include "clang/Basic/arm_neon.inc"

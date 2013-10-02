@@ -2372,6 +2372,11 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     return Builder.CreateCall(F);
   }
 
+  if (BuiltinID == ARM::BI__builtin_arm_sevl) {
+    Function *F = CGM.getIntrinsic(Intrinsic::arm_sevl);
+    return Builder.CreateCall(F);
+  }
+
   // CRC32
   Intrinsic::ID CRCIntrinsicID = Intrinsic::not_intrinsic;
   switch (BuiltinID) {
