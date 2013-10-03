@@ -146,8 +146,14 @@ void llvm::PointerMayBeCaptured(const Value *V, CaptureTracker *Tracker) {
     case Instruction::PHI:
     case Instruction::Select:
       // The original value is not captured via this if the new value isn't.
+      Count = 0;
       for (Instruction::use_iterator UI = I->use_begin(), UE = I->use_end();
            UI != UE; ++UI) {
+        // If there are lots of uses, conservatively say that the value
+        // is captured to avoid taking too much compile time.
+        if (Count++ >= Threshold)
+          return Tracker->tooManyUses();
+
         Use *U = &UI.getUse();
         if (Visited.insert(U))
           if (Tracker->shouldExplore(U))
