@@ -125,6 +125,19 @@ ExprInspection checks
       clang_analyzer_eval(value == 42); // expected-warning{{TRUE}}
     }
 
+- void clang_analyzer_warnIfReached();
+
+  Generate a warning if this line of code gets reached by the analyzer.
+
+  Example usage::
+
+    if (true) {
+      clang_analyzer_warnIfReached();  // expected-warning{{REACHABLE}}
+    }
+    else {
+      clang_analyzer_warnIfReached();  // no-warning
+    }
+
 
 Statistics
 ==========

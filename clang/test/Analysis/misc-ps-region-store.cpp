@@ -1,5 +1,7 @@
-// RUN: %clang_cc1 -triple i386-apple-darwin9 -analyze -analyzer-checker=core,alpha.core -analyzer-store=region -verify -fblocks -analyzer-opt-analyze-nested-blocks %s -fexceptions -fcxx-exceptions
-// RUN: %clang_cc1 -triple x86_64-apple-darwin9 -analyze -analyzer-checker=core,alpha.core -analyzer-store=region -verify -fblocks -analyzer-opt-analyze-nested-blocks %s -fexceptions -fcxx-exceptions
+// RUN: %clang_cc1 -triple i386-apple-darwin9 -analyze -analyzer-checker=core,alpha.core,debug.ExprInspection -analyzer-store=region -verify -fblocks -analyzer-opt-analyze-nested-blocks %s -fexceptions -fcxx-exceptions
+// RUN: %clang_cc1 -triple x86_64-apple-darwin9 -analyze -analyzer-checker=core,alpha.core,debug.ExprInspection -analyzer-store=region -verify -fblocks -analyzer-opt-analyze-nested-blocks %s -fexceptions -fcxx-exceptions
+
+void clang_analyzer_warnIfReached();
 
 // Test basic handling of references.
 char &test1_aux();
@@ -54,9 +56,7 @@ int test_init_in_condition_switch() {
       if (x == 2)
         return 0;
       else {
-        // Unreachable.
-        int *p = 0;
-        *p = 0xDEADBEEF; // no-warning
+        clang_analyzer_warnIfReached();  // unreachable
       }
     default:
       break;
@@ -74,8 +74,7 @@ int test_init_in_condition_while() {
   if (z == 2)
     return 0;
   
-  int *p = 0;
-  *p = 0xDEADBEEF; // no-warning
+  clang_analyzer_warnIfReached();  // unreachable
   return 0;
 }
 
@@ -89,8 +88,7 @@ int test_init_in_condition_for() {
   if (z == 1)
     return 0;
     
-  int *p = 0;
-  *p = 0xDEADBEEF; // no-warning
+  clang_analyzer_warnIfReached();  // unreachable
   return 0;
 }
 
@@ -117,8 +115,7 @@ int TestHandleThis::null_deref_negative() {
   if (x == 10) {
     return 1;
   }
-  int *p = 0;
-  *p = 0xDEADBEEF; // no-warning
+  clang_analyzer_warnIfReached();  // unreachable
   return 0;  
 }
 
@@ -127,8 +124,7 @@ int TestHandleThis::null_deref_positive() {
   if (x == 9) {
     return 1;
   }
-  int *p = 0;
-  *p = 0xDEADBEEF; // expected-warning{{null pointer}}
+  clang_analyzer_warnIfReached();  // expected-warning{{REACHABLE}}
   return 0;  
 }
 
@@ -143,9 +139,9 @@ void pr7675_test() {
   pr7675(10);
   pr7675('c');
   pr7675_i(4.0i);
-  // Add null deref to ensure we are analyzing the code up to this point.
-  int *p = 0;
-  *p = 0xDEADBEEF; // expected-warning{{null pointer}}
+
+  // Add check to ensure we are analyzing the code up to this point.
+  clang_analyzer_warnIfReached();  // expected-warning{{REACHABLE}}
 }
 
 // <rdar://problem/8375510> - CFGBuilder should handle temporaries.
@@ -328,26 +324,23 @@ class RDar9267815 {
 };
 
 void RDar9267815::test_pos() {
-  int *p = 0;
   if (x == 42)
     return;
-  *p = 0xDEADBEEF; // expected-warning {{null}}
+  clang_analyzer_warnIfReached();  // expected-warning{{REACHABLE}}
 }
 void RDar9267815::test() {
-  int *p = 0;
   if (x == 42)
     return;
   if (x == 42)
-    *p = 0xDEADBEEF; // no-warning
+    clang_analyzer_warnIfReached();  // no-warning
 }
 
 void RDar9267815::test2() {
-  int *p = 0;
   if (x == 42)
     return;
   invalidate();
   if (x == 42)
-    *p = 0xDEADBEEF; // expected-warning {{null}}
+    clang_analyzer_warnIfReached();  // expected-warning{{REACHABLE}}
 }
 
 // Test reference parameters.
@@ -440,8 +433,7 @@ int rdar9948787_negative() {
     unsigned value = classWithStatic.value;
     if (value == 1)
       return 1;
-    int *p = 0;
-    *p = 0xDEADBEEF; // no-warning
+    clang_analyzer_warnIfReached();  // no-warning
     return 0;
 }
 
@@ -450,8 +442,7 @@ int rdar9948787_positive() {
     unsigned value = classWithStatic.value;
     if (value == 0)
       return 1;
-    int *p = 0;
-    *p = 0xDEADBEEF; // expected-warning {{null}}
+    clang_analyzer_warnIfReached();  // expected-warning{{REACHABLE}}
     return 0;
 }
 
@@ -467,8 +458,7 @@ void rdar10202899_test1() {
 void rdar10202899_test2() {
   if (val == rdar10202899_ValTA)
    return;
-  int *p = 0;
-  *p = 0xDEADBEEF;
+  clang_analyzer_warnIfReached();  // no-warning
 }
 
 void rdar10202899_test3() {
@@ -476,8 +466,7 @@ void rdar10202899_test3() {
     case rdar10202899_ValTA: return;
     default: ;
   };
-  int *p = 0;
-  *p = 0xDEADBEEF;
+  clang_analyzer_warnIfReached();  // no-warning
 }
 
 // This used to crash the analyzer because of the unnamed bitfield.
@@ -489,13 +478,12 @@ void PR11249()
     char f2[1];
     char f3;
   } V = { 1, {2}, 3 };
-  int *p = 0;
   if (V.f1 != 1)
-    *p = 0xDEADBEEF;  // no-warning
+    clang_analyzer_warnIfReached();  // no-warning
   if (V.f2[0] != 2)
-    *p = 0xDEADBEEF;  // no-warning
+    clang_analyzer_warnIfReached();  // no-warning
   if (V.f3 != 3)
-    *p = 0xDEADBEEF;  // no-warning
+    clang_analyzer_warnIfReached();  // no-warning
 }
 
 // Handle doing a load from the memory associated with the code for
@@ -599,12 +587,10 @@ void rdar10924675(unsigned short x[], int index, int index2) {
 void rdar11401827() {
   int x = int();
   if (!x) {
-    int *p = 0;
-    *p = 0xDEADBEEF; // expected-warning {{null pointer}}
+    clang_analyzer_warnIfReached();  // expected-warning{{REACHABLE}}
   }
   else {
-    int *p = 0;
-    *p = 0xDEADBEEF;
+    clang_analyzer_warnIfReached();  // no-warning
   }
 }
 
@@ -701,8 +687,7 @@ const Rdar12755044_foo *radar12755044() {
 void rdar12759044() {
   int flag = 512;
   if (!(flag & 512)) {
-   int *p = 0;
-   *p = 0xDEADBEEF; // no-warning
+    clang_analyzer_warnIfReached();  // no-warning
   }
 }
 

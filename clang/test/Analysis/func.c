@@ -1,6 +1,7 @@
 // RUN: %clang_cc1 -analyze -analyzer-checker=core,alpha.core,debug.ExprInspection -analyzer-store=region -verify %s
 
 void clang_analyzer_eval(int);
+void clang_analyzer_warnIfReached();
 
 void f(void) {
   void (*p)(void);
@@ -29,12 +30,12 @@ void f3(void (*f)(void), void (*g)(void)) {
 void nullFunctionPointerConstant() {
   void (*f)(void) = 0;
   f(); // expected-warning{{Called function pointer is null}}
-  clang_analyzer_eval(0); // no-warning
+  clang_analyzer_warnIfReached(); // no-warning
 }
 
 void nullFunctionPointerConstraint(void (*f)(void)) {
   if (f)
     return;
   f(); // expected-warning{{Called function pointer is null}}
-  clang_analyzer_eval(0); // no-warning
+  clang_analyzer_warnIfReached(); // no-warning
 }
