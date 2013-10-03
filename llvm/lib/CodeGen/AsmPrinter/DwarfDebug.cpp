@@ -2427,9 +2427,6 @@ void DwarfDebug::emitDebugPubNames(bool GnuStyle) {
     CompileUnit *TheCU = I->second;
     unsigned ID = TheCU->getUniqueID();
 
-    if (TheCU->getGlobalNames().empty())
-      continue;
-
     // Start the dwarf pubnames section.
     Asm->OutStreamer.SwitchSection(PSec);
 
