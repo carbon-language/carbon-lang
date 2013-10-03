@@ -11,7 +11,6 @@
 namespace clang { namespace ento { namespace categories {
 
 const char *CoreFoundationObjectiveC = "Core Foundation/Objective-C";
-const char *LogicError = "Logic error";
 const char *MemoryCoreFoundationObjectiveC =
   "Memory (Core Foundation/Objective-C)";
 const char *UnixAPI = "Unix API";
