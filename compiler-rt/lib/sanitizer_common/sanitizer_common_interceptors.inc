@@ -15,6 +15,7 @@
 //   COMMON_INTERCEPTOR_ENTER
 //   COMMON_INTERCEPTOR_READ_RANGE
 //   COMMON_INTERCEPTOR_WRITE_RANGE
+//   COMMON_INTERCEPTOR_INITIALIZE_RANGE
 //   COMMON_INTERCEPTOR_FD_ACQUIRE
 //   COMMON_INTERCEPTOR_FD_RELEASE
 //   COMMON_INTERCEPTOR_SET_THREAD_NAME
@@ -27,6 +28,10 @@
 #if SANITIZER_WINDOWS
 #define va_copy(dst, src) ((dst) = (src))
 #endif // _WIN32
+
+#ifndef COMMON_INTERCEPTOR_INITIALIZE_RANGE
+# define COMMON_INTERCEPTOR_INITIALIZE_RANGE(ctx, p, size)
+#endif
 
 #if SANITIZER_INTERCEPT_STRCMP
 static inline int CharCmpX(unsigned char c1, unsigned char c2) {
@@ -405,9 +410,12 @@ INTERCEPTOR(unsigned long, time, unsigned long *t) {
 #if SANITIZER_INTERCEPT_LOCALTIME_AND_FRIENDS
 static void unpoison_tm(void *ctx, __sanitizer_tm *tm) {
   COMMON_INTERCEPTOR_WRITE_RANGE(ctx, tm, sizeof(*tm));
-  if (tm->tm_zone)
-    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, tm->tm_zone,
-                                   REAL(strlen(tm->tm_zone)) + 1);
+  if (tm->tm_zone) {
+    // Can not use COMMON_INTERCEPTOR_WRITE_RANGE here, because tm->tm_zone
+    // can point to shared memory and tsan would report a data race.
+    COMMON_INTERCEPTOR_INITIALIZE_RANGE(ctx, tm->tm_zone,
+                                        REAL(strlen(tm->tm_zone)) + 1);
+  }
 }
 
 INTERCEPTOR(__sanitizer_tm *, localtime, unsigned long *timep) {
