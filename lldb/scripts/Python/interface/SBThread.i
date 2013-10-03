@@ -41,11 +41,27 @@ See also SBProcess and SBFrame."
 class SBThread
 {
 public:
+    //------------------------------------------------------------------
+    // Broadcaster bits.
+    //------------------------------------------------------------------
+    enum
+    {
+        eBroadcastBitStackChanged           = (1 << 0),
+        eBroadcastBitThreadSuspended        = (1 << 1),
+        eBroadcastBitThreadResumed          = (1 << 2),
+        eBroadcastBitSelectedFrameChanged   = (1 << 3),
+        eBroadcastBitThreadSelected         = (1 << 4)
+    };
+
+
     SBThread ();
 
     SBThread (const lldb::SBThread &thread);
 
    ~SBThread();
+
+    static const char *
+    GetBroadcasterClassName ();
     
     static bool
     EventIsThreadEvent (const SBEvent &event);
