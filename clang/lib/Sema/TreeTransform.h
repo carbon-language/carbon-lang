@@ -33,6 +33,7 @@
 #include "clang/Sema/ScopeInfo.h"
 #include "clang/Sema/SemaDiagnostic.h"
 #include "clang/Sema/SemaInternal.h"
+#include "clang/Sema/Template.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <algorithm>
@@ -593,6 +594,11 @@ public:
 
   /// \brief Transform the captures and body of a lambda expression.
   ExprResult TransformLambdaScope(LambdaExpr *E, CXXMethodDecl *CallOperator);
+
+  TemplateParameterList *TransformTemplateParameterList(
+        TemplateParameterList *TPL) {
+    return TPL;
+  }
 
   ExprResult TransformAddressOfOperand(Expr *E);
   ExprResult TransformDependentScopeDeclRefExpr(DependentScopeDeclRefExpr *E,
@@ -4573,6 +4579,19 @@ template<typename Derived>
 QualType TreeTransform<Derived>::TransformDecltypeType(TypeLocBuilder &TLB,
                                                        DecltypeTypeLoc TL) {
   const DecltypeType *T = TL.getTypePtr();
+  // Don't transform a decltype construct that has already been transformed 
+  // into a non-dependent type.
+  // Allows the following to compile:
+  // auto L = [](auto a) {
+  //   return [](auto b) ->decltype(a) {
+  //     return b;
+  //  };
+  //};  
+  if (!T->isInstantiationDependentType()) {
+    DecltypeTypeLoc NewTL = TLB.push<DecltypeTypeLoc>(TL.getType());
+    NewTL.setNameLoc(TL.getNameLoc());
+    return NewTL.getType();
+  }
 
   // decltype expressions are not potentially evaluated contexts
   EnterExpressionEvaluationContext Unevaluated(SemaRef, Sema::Unevaluated, 0,
@@ -8284,24 +8303,27 @@ template<typename Derived>
 ExprResult
 TreeTransform<Derived>::TransformLambdaExpr(LambdaExpr *E) {
  
-  // FIXME: Implement nested generic lambda transformations.
-  if (E->isGenericLambda()) {
-    getSema().Diag(E->getIntroducerRange().getBegin(), 
-      diag::err_glambda_not_fully_implemented) 
-      << " template transformation of generic lambdas not implemented yet";
-    return ExprError();
+  getSema().PushLambdaScope();
+  LambdaScopeInfo *LSI = getSema().getCurLambda();
+  TemplateParameterList *const OrigTPL = E->getTemplateParameterList();
+  TemplateParameterList *NewTPL = 0;
+  // Transform the template parameters, and add them to the 
+  // current instantiation scope.
+  if (OrigTPL) {
+      NewTPL = getDerived().TransformTemplateParameterList(OrigTPL);
   }
-  // Transform the type of the lambda parameters and start the definition of
-  // the lambda itself.
-  TypeSourceInfo *MethodTy
-    = TransformType(E->getCallOperator()->getTypeSourceInfo());
-  if (!MethodTy)
+  LSI->GLTemplateParameterList = NewTPL;
+   // Transform the type of the lambda parameters and start the definition of
+   // the lambda itself.
+  TypeSourceInfo *OldCallOpTSI = E->getCallOperator()->getTypeSourceInfo(); 
+  TypeSourceInfo *NewCallOpTSI = TransformType(OldCallOpTSI);
+  if (!NewCallOpTSI)
     return ExprError();
 
   // Create the local class that will describe the lambda.
   CXXRecordDecl *Class
     = getSema().createLambdaClosureType(E->getIntroducerRange(),
-                                        MethodTy,
+                                        NewCallOpTSI,
                                         /*KnownDependent=*/false);
   getDerived().transformedLocalDecl(E->getLambdaClass(), Class);
 
@@ -8313,19 +8335,49 @@ TreeTransform<Derived>::TransformLambdaExpr(LambdaExpr *E) {
         E->getCallOperator()->param_size(),
         0, ParamTypes, &Params))
     return ExprError();
-  getSema().PushLambdaScope();
-  LambdaScopeInfo *LSI = getSema().getCurLambda();
-  // TODO: Fix for nested lambdas
-  LSI->GLTemplateParameterList = 0;
+
   // Build the call operator.
-  CXXMethodDecl *CallOperator
+  CXXMethodDecl *NewCallOperator
     = getSema().startLambdaDefinition(Class, E->getIntroducerRange(),
-                                      MethodTy,
+                                      NewCallOpTSI,
                                       E->getCallOperator()->getLocEnd(),
                                       Params);
-  getDerived().transformAttrs(E->getCallOperator(), CallOperator);
-
-  return getDerived().TransformLambdaScope(E, CallOperator);
+  LSI->CallOperator = NewCallOperator;
+  // Fix the Decl Contexts of the parameters within the call op function 
+  // prototype.
+  getDerived().transformAttrs(E->getCallOperator(), NewCallOperator);
+  
+  TypeLoc NewCallOpTL = NewCallOpTSI->getTypeLoc();
+  FunctionProtoTypeLoc NewFPTL = NewCallOpTL.castAs<FunctionProtoTypeLoc>();
+  ParmVarDecl **NewParamDeclArray = NewFPTL.getParmArray();
+  const unsigned NewNumArgs = NewFPTL.getNumArgs();
+  for (unsigned I = 0; I < NewNumArgs; ++I) {
+      NewParamDeclArray[I]->setOwningFunction(NewCallOperator);
+  }
+  // If this is a non-generic lambda, the parameters do not get added to the
+  // current instantiation scope, so add them.  This feels kludgey.
+  // Anyway, it allows the following to compile when the enclosing template
+  // is specialized and the entire lambda expression has to be
+  // transformed.  Without this FindInstantiatedDecl causes an assertion.
+  // template<class T> void foo(T t) {
+  //    auto L = [](auto a) { 
+  //      auto M = [](char b) { <-- note: non-generic lambda
+  //        auto N = [](auto c) {
+  //          int x = sizeof(a);        
+  //          x = sizeof(b); <-- specifically this line
+  //          x = sizeof(c);
+  //        };  
+  //      };    
+  //    };
+  //  }
+  //  foo('a');
+  //
+  if (!E->isGenericLambda()) {
+    for (unsigned I = 0; I < NewNumArgs; ++I)
+      SemaRef.CurrentInstantiationScope->InstantiatedLocal(
+                                   NewParamDeclArray[I], NewParamDeclArray[I]);
+  }
+  return getDerived().TransformLambdaScope(E, NewCallOperator);
 }
 
 template<typename Derived>
