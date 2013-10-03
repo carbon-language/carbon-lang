@@ -215,6 +215,10 @@ public:
                                    CharUnits cookieSize);
 
 private:
+  MicrosoftMangleContext &getMangleContext() {
+    return cast<MicrosoftMangleContext>(CodeGen::CGCXXABI::getMangleContext());
+  }
+
   llvm::Constant *getZeroInt() {
     return llvm::ConstantInt::get(CGM.IntTy, 0);
   }
@@ -678,11 +682,11 @@ llvm::Value *MicrosoftCXXABI::getVTableAddressPointInStructor(
   return VTableAddressPoint;
 }
 
-static void mangleVFTableName(CodeGenModule &CGM, const CXXRecordDecl *RD,
-                              const VFPtrInfo &VFPtr, SmallString<256> &Name) {
+static void mangleVFTableName(MicrosoftMangleContext &MangleContext,
+                              const CXXRecordDecl *RD, const VFPtrInfo &VFPtr,
+                              SmallString<256> &Name) {
   llvm::raw_svector_ostream Out(Name);
-  CGM.getCXXABI().getMangleContext().mangleCXXVFTable(
-      RD, VFPtr.PathToMangle, Out);
+  MangleContext.mangleCXXVFTable(RD, VFPtr.PathToMangle, Out);
 }
 
 llvm::Constant *MicrosoftCXXABI::getVTableAddressPointForConstExpr(
@@ -722,7 +726,7 @@ llvm::GlobalVariable *MicrosoftCXXABI::getAddrOfVTable(const CXXRecordDecl *RD,
     llvm::StringSet<> ObservedMangledNames;
     for (size_t J = 0, F = VFPtrs.size(); J != F; ++J) {
       SmallString<256> Name;
-      mangleVFTableName(CGM, RD, VFPtrs[J], Name);
+      mangleVFTableName(getMangleContext(), RD, VFPtrs[J], Name);
       if (!ObservedMangledNames.insert(Name.str()))
         llvm_unreachable("Already saw this mangling before?");
     }
@@ -739,7 +743,7 @@ llvm::GlobalVariable *MicrosoftCXXABI::getAddrOfVTable(const CXXRecordDecl *RD,
             .getNumVTableComponents());
 
     SmallString<256> Name;
-    mangleVFTableName(CGM, RD, VFPtrs[J], Name);
+    mangleVFTableName(getMangleContext(), RD, VFPtrs[J], Name);
     VTable = CGM.CreateOrReplaceCXXRuntimeVariable(
         Name.str(), ArrayType, llvm::GlobalValue::ExternalLinkage);
     VTable->setUnnamedAddr(true);

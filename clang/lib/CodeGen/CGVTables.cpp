@@ -650,9 +650,9 @@ CodeGenVTables::GenerateConstructionVTable(const CXXRecordDecl *RD,
   // Get the mangled construction vtable name.
   SmallString<256> OutName;
   llvm::raw_svector_ostream Out(OutName);
-  CGM.getCXXABI().getMangleContext().
-    mangleCXXCtorVTable(RD, Base.getBaseOffset().getQuantity(), Base.getBase(), 
-                        Out);
+  cast<ItaniumMangleContext>(CGM.getCXXABI().getMangleContext())
+      .mangleCXXCtorVTable(RD, Base.getBaseOffset().getQuantity(),
+                           Base.getBase(), Out);
   Out.flush();
   StringRef Name = OutName.str();
 

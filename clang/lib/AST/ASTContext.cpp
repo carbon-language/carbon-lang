@@ -7981,9 +7981,9 @@ MangleContext *ASTContext::createMangleContext() {
   case TargetCXXABI::GenericItanium:
   case TargetCXXABI::GenericARM:
   case TargetCXXABI::iOS:
-    return createItaniumMangleContext(*this, getDiagnostics());
+    return ItaniumMangleContext::create(*this, getDiagnostics());
   case TargetCXXABI::Microsoft:
-    return createMicrosoftMangleContext(*this, getDiagnostics());
+    return MicrosoftMangleContext::create(*this, getDiagnostics());
   }
   llvm_unreachable("Unsupported ABI");
 }

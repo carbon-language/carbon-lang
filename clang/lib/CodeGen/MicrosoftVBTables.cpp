@@ -170,7 +170,8 @@ VBTableBuilder::getAddrOfVBTable(const CXXRecordDecl *ReusingBase,
 
   SmallString<256> OutName;
   llvm::raw_svector_ostream Out(OutName);
-  MangleContext &Mangler = CGM.getCXXABI().getMangleContext();
+  MicrosoftMangleContext &Mangler =
+      cast<MicrosoftMangleContext>(CGM.getCXXABI().getMangleContext());
   Mangler.mangleCXXVBTable(MostDerived, BasePath, Out);
   Out.flush();
   StringRef Name = OutName.str();
