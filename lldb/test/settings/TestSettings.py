@@ -2,7 +2,7 @@
 Test lldb settings command.
 """
 
-import os, time
+import os, time, re
 import unittest2
 import lldb
 from lldbtest import *
@@ -122,7 +122,11 @@ class SettingsCommandTestCase(TestBase):
         self.addTearDownHook(cleanup)
 
         self.runCmd("settings show frame-format")
-        self.format_string = self.res.GetOutput()
+        m = re.match(
+                '^frame-format \(string\) = "(.*)\"$',
+                self.res.GetOutput())
+        self.assertTrue(m, "Bad settings string")
+        self.format_string = m.group(1)
 
         # Change the default format to print function.name rather than function.name-with-args
         format_string = "frame #${frame.index}: ${frame.pc}{ ${module.file.basename}`${function.name}{${function.pc-offset}}}{ at ${line.file.fullpath}:${line.number}}\n"
