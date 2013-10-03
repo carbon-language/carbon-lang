@@ -1,4 +1,4 @@
-##===- lib/Linker/Makefile ---------------------------------*- Makefile -*-===##
+##===- lib/LTO/Makefile ------------------------------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
