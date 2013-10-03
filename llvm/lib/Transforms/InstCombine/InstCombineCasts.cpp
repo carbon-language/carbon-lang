@@ -1229,6 +1229,19 @@ Instruction *InstCombiner::visitFPTrunc(FPTruncInst &CI) {
     }
   }
 
+  // (fptrunc (select cond, R1, Cst)) -->
+  // (select cond, (fptrunc R1), (fptrunc Cst))
+  SelectInst *SI = dyn_cast<SelectInst>(CI.getOperand(0));
+  if (SI &&
+      (isa<ConstantFP>(SI->getOperand(1)) ||
+       isa<ConstantFP>(SI->getOperand(2)))) {
+    Value *LHSTrunc = Builder->CreateFPTrunc(SI->getOperand(1),
+                                             CI.getType());
+    Value *RHSTrunc = Builder->CreateFPTrunc(SI->getOperand(2),
+                                             CI.getType());
+    return SelectInst::Create(SI->getOperand(0), LHSTrunc, RHSTrunc);
+  }
+
   IntrinsicInst *II = dyn_cast<IntrinsicInst>(CI.getOperand(0));
   if (II) {
     switch (II->getIntrinsicID()) {

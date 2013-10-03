@@ -31,4 +31,16 @@ define half @test4(float %a) {
   ret half %c
 }
 
+; CHECK: test5
+define half @test5(float %a, float %b, float %c) {
+; CHECK: fcmp ogt
+; CHECK: fptrunc
+; CHECK: select
+; CHECK: half 0xH3C00
+  %d = fcmp ogt float %a, %b
+  %e = select i1 %d, float %c, float 1.0
+  %f = fptrunc float %e to half
+  ret half %f
+}
+
 declare float @llvm.fabs.f32(float) nounwind readonly
