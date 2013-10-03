@@ -32,19 +32,21 @@
 
 <div id="content">
   <!--*********************************************************************-->
-  <h1>"OpenMP*" Support for the OpenMP language</h1>
+  <h1>"OpenMP&reg;" Support for the OpenMP language</h1>
   <!--*********************************************************************-->
 
   <p>The OpenMP subproject of LLVM is intended to contain all of the
      components required to build an executing OpenMP program that are
      outside the compiler itself. Support for OpenMP 3.1 in Clang is in the
      process of being promoted into the Clang mainline, and can be
-     found at <a href="http://clang-omp.github.io/">OpenMP/Clang</a>.      
+     found at <a href="http://clang-omp.github.io/">OpenMP/Clang</a>. 
   </p>
 
   <p>Here you can find the code for the runtime library against which
     code compiled by the OpenMP/Clang compiler must be linked before it
-    can run.
+    can run. This code is also available
+    at <a href="http://openmprtl.org/">openmprtl.org</a>; we intend to
+    keep the different sites in sync.
   </p>
 
   <p>We are, however, still missing test code. Any contributions in
@@ -65,9 +67,13 @@
     <ul>
         <li>Correctness as defined by the 
           <a href="http://www.openmp.org/mp-documents/OpenMP3.1.pdf">OpenMP
-          3.1 standard (PDF)</a> </li>
+          3.1 standard (PDF)</a> now, and <a href="http://www.openmp.org/mp-documents/OpenMP4.0.0.pdf">OpenMP
+          4.0 standard (PDF)</a> in the future.</li>
         <li>High performance.</li>
-        <li>ABI compatibility Intel's existing OpenMP compiler.</li>
+        <li>ABI compatibility with <a href="http://gcc.gnu.org">Gcc</a> and
+        <a href="http://software.intel.com/en-us/intel-compilers">Intel's
+        existing OpenMP compilers.</a>
+        </li>
     </ul>
 
   <!--=====================================================================-->
@@ -87,19 +93,17 @@
     the Intel compiler.
   </p>
   
-  <p>A full OS compatibility matrix is in a
-    <a href="runtime/README.txt">runtime/README.txt</a>
+  <p>A full OS compatibility matrix is in 
+    <a href="README.txt">README.txt</a>
   </p>
 
 
   <!--=====================================================================-->
-  <h2 id="dir-structure">Current Status</h2>
+  <h2 id="dir-structure">Status</h2>
   <!--=====================================================================-->
 
    <p>Currently the runtime is built with either gcc or icc. Obviously
-   it would be good also to build with Clang. If anyone wants to
-   submit patches to do that (or replace the complicated historical
-   build system with CMake) that'd be great!
+   it would also be good to build with Clang.
    </p>
  
 
@@ -126,7 +130,7 @@
   </ul>
   
   <p>Full details of how to build are in the
-    <a href="runtime/README.txt">runtime/README.txt</a>
+    <a href="README.txt">README.txt</a>
   </p>
 
   <!--=====================================================================-->
@@ -146,9 +150,22 @@
   <!--=====================================================================-->
 
 <ul>
-<li><a href="runtime/doc/Reference.pdf">Runtime design (PDF)</a></li>
+<li><a href="Reference.pdf">Runtime design (PDF)</a></li>
 </ul>
 
+  <!--=====================================================================-->
+  <h2>Copyright notices</h2>
+  <!--=====================================================================-->
+<ul>
+<li>
+  The OpenMP name and the OpenMP logo are registered trademarks of the
+  OpenMP Architecture Review Board.
+</li>
+<li>
+  Intel is a trademark of Intel Corporation in the U.S. and/or other
+  countries.
+</li>
+</ul>
 </div>
 </body>
 </html>
