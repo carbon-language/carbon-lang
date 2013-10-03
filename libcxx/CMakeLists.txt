@@ -26,6 +26,10 @@ MACRO_ENSURE_OUT_OF_SOURCE_BUILD(
  build directory and run 'cmake /path/to/${PROJECT_NAME} [options]' there."
  )
 
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+  set(LIBCXX_BUILT_STANDALONE 1)
+endif()
+
 #===============================================================================
 # Setup CMake Options
 #===============================================================================

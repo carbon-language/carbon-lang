@@ -8,7 +8,12 @@ endmacro()
 
 include(FindPythonInterp)
 if(PYTHONINTERP_FOUND)
-  set(LIT_EXECUTABLE "" CACHE FILEPATH "Path to LLVM's lit.py.")
+  if(LIBCXX_BUILT_STANDALONE)
+    set(LIT_EXECUTABLE "" CACHE FILEPATH "Path to LLVM's lit.py.")
+  else()
+    set(LIT_EXECUTABLE "${CMAKE_SOURCE_DIR}/utils/lit/lit.py")
+  endif()
+
   set(LIT_ARGS_DEFAULT "-sv")
   if (MSVC OR XCODE)
     set(LIT_ARGS_DEFAULT "${LIT_ARGS_DEFAULT} --no-progress-bar")
@@ -19,7 +24,7 @@ if(PYTHONINTERP_FOUND)
   separate_arguments(LIT_ARGS)
 
   set(LIBCXX_COMPILER ${CMAKE_CXX_COMPILER})
-  set(LIBCXX_SOURCE_DIR ${CMAKE_SOURCE_DIR})
+  set(LIBCXX_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/..)
   set(LIBCXX_BINARY_DIR ${CMAKE_BINARY_DIR})
   set(PYTHON_EXECUTABLE ${PYTHON_EXECUTABLE})
   pythonize_bool(LIBCXX_ENABLE_SHARED)
@@ -37,7 +42,7 @@ if(PYTHONINTERP_FOUND)
             ${LIT_EXECUTABLE}
             ${LIT_ARGS}
             ${CMAKE_CURRENT_BINARY_DIR}
-    DEPENDS
+    DEPENDS cxx
     COMMENT "Running libcxx tests")
 else()
   message(WARNING "Could not find Python, no check target will be available!")
