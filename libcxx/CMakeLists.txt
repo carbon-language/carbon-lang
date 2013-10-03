@@ -143,7 +143,7 @@ if ("${LIBCXX_CXX_ABI}" STREQUAL "libsupc++")
     )
 elseif ("${LIBCXX_CXX_ABI}" STREQUAL "libcxxabi")
   setup_abi_lib("LIBCXX_LIBCXXABI_INCLUDE_PATHS" ""
-    "c++abi" "cxxabi.h;cxa_demangle.h" ""
+    "c++abi" "cxxabi.h" ""
     )
 elseif ("${LIBCXX_CXX_ABI}" STREQUAL "libcxxrt")
   setup_abi_lib("LIBCXX_LIBCXXRT_INCLUDE_PATHS" "-DLIBCXXRT"
