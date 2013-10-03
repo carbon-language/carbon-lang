@@ -3,4 +3,4 @@
 // Note that we filter out all but the last -m(no)sse.
 
 // Test that we don't produce an error with -mieee-fp.
-// RUN: %clang -S %s -mieee-fp
+// RUN: %clang -S -emit-llvm %s -mieee-fp -o %t.s
