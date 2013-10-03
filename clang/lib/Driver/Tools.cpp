@@ -765,7 +765,8 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
   } else if (Triple.isOSDarwin()) {
     // The backend is hardwired to assume AAPCS for M-class processors, ensure
     // the frontend matches that.
-    if (StringRef(CPUName).startswith("cortex-m")) {
+    if (Triple.getEnvironment() == llvm::Triple::EABI ||
+        StringRef(CPUName).startswith("cortex-m")) {
       ABIName = "aapcs";
     } else {
       ABIName = "apcs-gnu";
