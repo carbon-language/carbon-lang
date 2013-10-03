@@ -1227,12 +1227,12 @@ def VMOVPQIto64Zrr : I<0x7E, MRMDestReg, (outs GR64:$dst), (ins VR128X:$src),
                       IIC_SSE_MOVD_ToGP>, TB, OpSize, EVEX, VEX_LIG, VEX_W,
                       Requires<[HasAVX512, In64BitMode]>;
 
-def VMOVPQIto64Zmr : I<0x7E, MRMDestMem, (outs),
+def VMOVPQIto64Zmr : I<0xD6, MRMDestMem, (outs),
                        (ins i64mem:$dst, VR128X:$src),
                        "vmovq{z}\t{$src, $dst|$dst, $src}",
                        [(store (extractelt (v2i64 VR128X:$src), (iPTR 0)),
                                addr:$dst)], IIC_SSE_MOVDQ>,
-                       EVEX, VEX_LIG, VEX_W, TB, EVEX_CD8<64, CD8VT1>,
+                       EVEX, OpSize, VEX_LIG, VEX_W, TB, EVEX_CD8<64, CD8VT1>,
                        Sched<[WriteStore]>, Requires<[HasAVX512, In64BitMode]>;
 
 // Move Scalar Single to Double Int
@@ -1250,7 +1250,7 @@ def VMOVSS2DIZmr  : AVX512SI<0x7E, MRMDestMem, (outs),
 
 // Move Quadword Int to Packed Quadword Int
 //
-def VMOVQI2PQIZrm : AVX512SI<0x7E, MRMSrcMem, (outs VR128X:$dst),
+def VMOVQI2PQIZrm : AVX512SI<0x6E, MRMSrcMem, (outs VR128X:$dst),
                       (ins i64mem:$src),
                       "vmovq{z}\t{$src, $dst|$dst, $src}",
                       [(set VR128X:$dst,
