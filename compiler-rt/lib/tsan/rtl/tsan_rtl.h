@@ -29,6 +29,7 @@
 #include "sanitizer_common/sanitizer_allocator.h"
 #include "sanitizer_common/sanitizer_allocator_internal.h"
 #include "sanitizer_common/sanitizer_common.h"
+#include "sanitizer_common/sanitizer_libignore.h"
 #include "sanitizer_common/sanitizer_suppressions.h"
 #include "sanitizer_common/sanitizer_thread_registry.h"
 #include "tsan_clock.h"
@@ -434,6 +435,7 @@ struct ThreadState {
   const int unique_id;
   int in_rtl;
   bool in_symbolizer;
+  bool in_ignored_lib;
   bool is_alive;
   bool is_freeing;
   bool is_vptr_access;
@@ -598,6 +600,7 @@ void MapThreadTrace(uptr addr, uptr size);
 void DontNeedShadowFor(uptr addr, uptr size);
 void InitializeShadowMemory();
 void InitializeInterceptors();
+void InitializeLibIgnore();
 void InitializeDynamicAnnotations();
 
 void ReportRace(ThreadState *thr);

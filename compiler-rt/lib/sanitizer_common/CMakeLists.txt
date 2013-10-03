@@ -6,6 +6,7 @@ set(SANITIZER_SOURCES
   sanitizer_common.cc
   sanitizer_flags.cc
   sanitizer_libc.cc
+  sanitizer_libignore.cc
   sanitizer_linux.cc
   sanitizer_mac.cc
   sanitizer_platform_limits_linux.cc
@@ -44,6 +45,7 @@ set(SANITIZER_HEADERS
   sanitizer_internal_defs.h
   sanitizer_lfstack.h
   sanitizer_libc.h
+  sanitizer_libignore.h
   sanitizer_linux.h
   sanitizer_list.h
   sanitizer_mutex.h

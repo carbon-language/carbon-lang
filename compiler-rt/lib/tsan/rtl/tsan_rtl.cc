@@ -214,6 +214,7 @@ void Initialize(ThreadState *thr) {
     __sanitizer_set_report_path(flags()->log_path);
   InitializeSuppressions();
 #ifndef TSAN_GO
+  InitializeLibIgnore();
   // Initialize external symbolizer before internal threads are started.
   const char *external_symbolizer = flags()->external_symbolizer_path;
   if (external_symbolizer != 0 && external_symbolizer[0] != '\0') {

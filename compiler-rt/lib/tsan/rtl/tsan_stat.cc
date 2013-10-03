@@ -371,6 +371,8 @@ void StatOutput(u64 *stat) {
   name[StatInt_sigprocmask]              = "  sigprocmask                     ";
   name[StatInt_backtrace]                = "  backtrace                       ";
   name[StatInt_backtrace_symbols]        = "  backtrace_symbols               ";
+  name[StatInt_dlopen]                   = "  dlopen                          ";
+  name[StatInt_dlclose]                  = "  dlclose                         ";
 
   name[StatAnnotation]                   = "Dynamic annotations               ";
   name[StatAnnotateHappensBefore]        = "  HappensBefore                   ";

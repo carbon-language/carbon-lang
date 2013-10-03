@@ -22,6 +22,7 @@ void InitializeSuppressions();
 void PrintMatchedSuppressions();
 uptr IsSuppressed(ReportType typ, const ReportStack *stack, Suppression **sp);
 uptr IsSuppressed(ReportType typ, const ReportLocation *loc, Suppression **sp);
+SuppressionContext *GetSuppressionContext();
 
 }  // namespace __tsan
 

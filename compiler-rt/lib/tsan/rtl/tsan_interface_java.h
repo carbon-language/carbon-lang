@@ -34,11 +34,7 @@ extern "C" {
 
 typedef unsigned long jptr;  // NOLINT
 
-// Must be called before any other callback from Java, right after dlopen
-// of JVM shared lib. If libjvm_path is specified, then all interceptors
-// coming directly from JVM will be ignored.
-void __tsan_java_preinit(const char *libjvm_path) INTERFACE_ATTRIBUTE;
-// Must be called after __tsan_java_preinit but before any other callback.
+// Must be called before any other callback from Java.
 void __tsan_java_init(jptr heap_begin, jptr heap_size) INTERFACE_ATTRIBUTE;
 // Must be called when the application exits.
 // Not necessary the last callback (concurrently running threads are OK).

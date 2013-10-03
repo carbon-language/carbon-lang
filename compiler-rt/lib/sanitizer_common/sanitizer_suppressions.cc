@@ -20,7 +20,7 @@
 namespace __sanitizer {
 
 static const char *const kTypeStrings[SuppressionTypeCount] = {
-  "none", "race", "mutex", "thread", "signal", "leak"
+  "none", "race", "mutex", "thread", "signal", "leak", "called_from_lib"
 };
 
 bool TemplateMatch(char *templ, const char *str) {
@@ -129,8 +129,13 @@ void SuppressionContext::Parse(const char *str) {
   }
 }
 
-uptr SuppressionContext::SuppressionCount() {
+uptr SuppressionContext::SuppressionCount() const {
   return suppressions_.size();
+}
+
+const Suppression *SuppressionContext::SuppressionAt(uptr i) const {
+  CHECK_LT(i, suppressions_.size());
+  return &suppressions_[i];
 }
 
 void SuppressionContext::GetMatched(

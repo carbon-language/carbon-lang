@@ -366,6 +366,8 @@ enum StatType {
   StatInt_sigprocmask,
   StatInt_backtrace,
   StatInt_backtrace_symbols,
+  StatInt_dlopen,
+  StatInt_dlclose,
 
   // Dynamic annotations.
   StatAnnotation,

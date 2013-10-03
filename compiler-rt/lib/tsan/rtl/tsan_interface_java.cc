@@ -96,8 +96,6 @@ class ScopedJavaFunc {
 
 static u64 jctx_buf[sizeof(JavaContext) / sizeof(u64) + 1];
 static JavaContext *jctx;
-extern atomic_uintptr_t libjvm_begin;
-extern atomic_uintptr_t libjvm_end;
 
 static BlockDesc *getblock(uptr addr) {
   uptr i = (addr - jctx->heap_begin) / kHeapAlignment;
@@ -165,17 +163,6 @@ SyncVar* GetAndRemoveJavaSync(ThreadState *thr, uptr pc, uptr addr) {
   (void)pc; \
   ScopedJavaFunc scoped(thr, caller_pc); \
 /**/
-
-void __tsan_java_preinit(const char *libjvm_path) {
-  SCOPED_JAVA_FUNC(__tsan_java_preinit);
-  if (libjvm_path) {
-    uptr begin, end;
-    if (GetCodeRangeForFile(libjvm_path, &begin, &end)) {
-      atomic_store(&libjvm_begin, begin, memory_order_relaxed);
-      atomic_store(&libjvm_end, end, memory_order_relaxed);
-    }
-  }
-}
 
 void __tsan_java_init(jptr heap_begin, jptr heap_size) {
   SCOPED_JAVA_FUNC(__tsan_java_init);

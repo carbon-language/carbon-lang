@@ -20,7 +20,6 @@ void *Thread(void *p) {
 
 int main() {
   jptr jheap = (jptr)malloc(kHeapSize);
-  __tsan_java_preinit("[vdso]");
   __tsan_java_init(jheap, kHeapSize);
   pthread_t th;
   pthread_create(&th, 0, Thread, (void*)(jheap + kHeapSize / 4));
