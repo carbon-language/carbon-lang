@@ -5533,4 +5533,5 @@ def : InstAlias<"umull${s}${p} $RdLo, $RdHi, $Rn, $Rm",
 
 // 'it' blocks in ARM mode just validate the predicates. The IT itself
 // is discarded.
-def ITasm : ARMAsmPseudo<"it$mask $cc", (ins it_pred:$cc, it_mask:$mask)>;
+def ITasm : ARMAsmPseudo<"it$mask $cc", (ins it_pred:$cc, it_mask:$mask)>,
+         ComplexDeprecationPredicate<"IT">;

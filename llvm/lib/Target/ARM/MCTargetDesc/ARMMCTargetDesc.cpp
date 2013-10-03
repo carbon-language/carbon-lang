@@ -63,6 +63,17 @@ static bool getMCRDeprecationInfo(MCInst &MI, MCSubtargetInfo &STI,
   return false;
 }
 
+static bool getITDeprecationInfo(MCInst &MI, MCSubtargetInfo &STI,
+                                  std::string &Info) {
+  if (STI.getFeatureBits() & llvm::ARM::HasV8Ops &&
+      MI.getOperand(1).isImm() && MI.getOperand(1).getImm() != 8) {
+    Info = "applying IT instruction to more than one subsequent instruction is deprecated";
+    return true;
+  }
+
+  return false;
+}
+
 #define GET_INSTRINFO_MC_DESC
 #include "ARMGenInstrInfo.inc"
 
