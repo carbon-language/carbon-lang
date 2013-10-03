@@ -88,8 +88,8 @@ ValueObjectPrinter::PrintValueObject ()
 
     if (val_summary_ok)
         PrintChildrenIfNeeded (value_printed, summary_printed);
-    
-    m_stream->EOL();
+    else
+        m_stream->EOL();
     
     return true;
 }
