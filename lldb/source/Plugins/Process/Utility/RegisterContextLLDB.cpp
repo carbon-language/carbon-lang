@@ -622,7 +622,7 @@ RegisterContextLLDB::GetFullUnwindPlanForFrame ()
     }
     else
     {
-        UnwindLogMsgVerbose ("unable to get architectural default UnwindPlan from ABI plugin");
+        UnwindLogMsg ("unable to get architectural default UnwindPlan from ABI plugin");
     }
 
     bool behaves_like_zeroth_frame = false;
@@ -766,7 +766,7 @@ RegisterContextLLDB::GetFullUnwindPlanForFrame ()
     if (arch_default_unwind_plan_sp)
         UnwindLogMsgVerbose ("frame uses %s for full UnwindPlan", arch_default_unwind_plan_sp->GetSourceName().GetCString());
     else
-        UnwindLogMsgVerbose ("Unable to find any UnwindPlan for full unwind of this frame.");
+        UnwindLogMsg ("Unable to find any UnwindPlan for full unwind of this frame.");
 
     return arch_default_unwind_plan_sp;
 }
