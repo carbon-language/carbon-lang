@@ -20,11 +20,17 @@
 
 #include "typeinfo"
 
-#if !defined(LIBCXXRT) && !defined(_LIBCPPABI_VERSION) && !defined(__GLIBCXX__)
+#if !defined(LIBCXXRT) && !defined(_LIBCPPABI_VERSION)
 
 std::bad_cast::bad_cast() _NOEXCEPT
 {
 }
+
+std::bad_typeid::bad_typeid() _NOEXCEPT
+{
+}
+
+#ifndef __GLIBCXX__
 
 std::bad_cast::~bad_cast() _NOEXCEPT
 {
@@ -34,10 +40,6 @@ const char*
 std::bad_cast::what() const _NOEXCEPT
 {
   return "std::bad_cast";
-}
-
-std::bad_typeid::bad_typeid() _NOEXCEPT
-{
 }
 
 std::bad_typeid::~bad_typeid() _NOEXCEPT
@@ -67,4 +69,5 @@ std::bad_typeid::what() const _NOEXCEPT
   }
 #endif
 
-#endif  // !LIBCXXRT && !_LIBCPPABI_VERSION && !__GLIBCXX__
+#endif  // !__GLIBCXX__
+#endif  // !LIBCXXRT && !_LIBCPPABI_VERSION
