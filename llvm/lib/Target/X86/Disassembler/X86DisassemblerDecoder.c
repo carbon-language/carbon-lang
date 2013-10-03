@@ -538,7 +538,7 @@ static int readPrefixes(struct InternalInstruction* insn) {
       return -1;
     }
 
-    if ((byte1 & 0x38) != 0x0) { // 0 in these 3 bits is a POP instruction.
+    if ((byte1 & 0x38) != 0x0) { /* 0 in these 3 bits is a POP instruction. */
       insn->vexXopType = TYPE_XOP;
       insn->necessaryPrefixLocation = insn->readerCursor - 1;
     }
