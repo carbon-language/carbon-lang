@@ -541,4 +541,6 @@ ValueObjectPrinter::PrintChildrenIfNeeded (bool value_printed,
     {
             m_stream->PutCString("{...}\n");
     }
+    else
+        m_stream->EOL();
 }
