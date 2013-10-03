@@ -79,10 +79,8 @@ extern bool PollyTrackFailures;
 /// function.
 class ScopDetection : public FunctionPass {
   //===--------------------------------------------------------------------===//
-  // DO NOT IMPLEMENT
-  ScopDetection(const ScopDetection &);
-  // DO NOT IMPLEMENT
-  const ScopDetection &operator=(const ScopDetection &);
+  ScopDetection(const ScopDetection &) LLVM_DELETED_FUNCTION;
+  const ScopDetection &operator=(const ScopDetection &) LLVM_DELETED_FUNCTION;
 
   /// @brief Analysis passes used.
   //@{

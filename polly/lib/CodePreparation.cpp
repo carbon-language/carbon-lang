@@ -52,10 +52,9 @@ namespace {
 /// @brief Prepare the IR for the scop detection.
 ///
 class CodePreparation : public FunctionPass {
-  // DO NOT IMPLEMENT.
-  CodePreparation(const CodePreparation &);
-  // DO NOT IMPLEMENT.
-  const CodePreparation &operator=(const CodePreparation &);
+  CodePreparation(const CodePreparation &) LLVM_DELETED_FUNCTION;
+  const CodePreparation &operator=(
+      const CodePreparation &) LLVM_DELETED_FUNCTION;
 
   LoopInfo *LI;
   ScalarEvolution *SE;

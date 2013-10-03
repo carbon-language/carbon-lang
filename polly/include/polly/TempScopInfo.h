@@ -216,10 +216,8 @@ typedef std::map<const Region *, TempScop *> TempScopMapType;
 ///
 class TempScopInfo : public FunctionPass {
   //===-------------------------------------------------------------------===//
-  // DO NOT IMPLEMENT
-  TempScopInfo(const TempScopInfo &);
-  // DO NOT IMPLEMENT
-  const TempScopInfo &operator=(const TempScopInfo &);
+  TempScopInfo(const TempScopInfo &) LLVM_DELETED_FUNCTION;
+  const TempScopInfo &operator=(const TempScopInfo &) LLVM_DELETED_FUNCTION;
 
   // The ScalarEvolution to help building Scop.
   ScalarEvolution *SE;

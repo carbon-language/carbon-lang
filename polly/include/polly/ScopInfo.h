@@ -88,10 +88,8 @@ public:
   };
 
 private:
-  // DO NOT IMPLEMENT
-  MemoryAccess(const MemoryAccess &);
-  // DO NOT IMPLEMENT
-  const MemoryAccess &operator=(const MemoryAccess &);
+  MemoryAccess(const MemoryAccess &) LLVM_DELETED_FUNCTION;
+  const MemoryAccess &operator=(const MemoryAccess &) LLVM_DELETED_FUNCTION;
 
   isl_map *AccessRelation;
   enum AccessType Type;
@@ -205,10 +203,8 @@ public:
 /// At the moment every statement represents a single basic block of LLVM-IR.
 class ScopStmt {
   //===-------------------------------------------------------------------===//
-  // DO NOT IMPLEMENT
-  ScopStmt(const ScopStmt &);
-  // DO NOT IMPLEMENT
-  const ScopStmt &operator=(const ScopStmt &);
+  ScopStmt(const ScopStmt &) LLVM_DELETED_FUNCTION;
+  const ScopStmt &operator=(const ScopStmt &) LLVM_DELETED_FUNCTION;
 
   /// Polyhedral description
   //@{
@@ -421,10 +417,8 @@ static inline raw_ostream &operator<<(raw_ostream &O, const ScopStmt &S) {
 ///   can take and relations between different parameters.
 class Scop {
   //===-------------------------------------------------------------------===//
-  // DO NOT IMPLEMENT
-  Scop(const Scop &);
-  // DO NOT IMPLEMENT
-  const Scop &operator=(const Scop &);
+  Scop(const Scop &) LLVM_DELETED_FUNCTION;
+  const Scop &operator=(const Scop &) LLVM_DELETED_FUNCTION;
 
   ScalarEvolution *SE;
 
@@ -616,10 +610,8 @@ static inline raw_ostream &operator<<(raw_ostream &O, const Scop &scop) {
 ///
 class ScopInfo : public RegionPass {
   //===-------------------------------------------------------------------===//
-  // DO NOT IMPLEMENT
-  ScopInfo(const ScopInfo &);
-  // DO NOT IMPLEMENT
-  const ScopInfo &operator=(const ScopInfo &);
+  ScopInfo(const ScopInfo &) LLVM_DELETED_FUNCTION;
+  const ScopInfo &operator=(const ScopInfo &) LLVM_DELETED_FUNCTION;
 
   // The Scop
   Scop *scop;

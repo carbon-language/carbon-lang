@@ -71,10 +71,8 @@ class TempScop;
 ///
 /// Note: Pointers in MayAliasSet only must-alias with each other now.
 class MayAliasSet {
-  // DO NOT IMPLEMENT
-  MayAliasSet(const MayAliasSet &);
-  // DO NOT IMPLEMENT
-  const MayAliasSet &operator=(const MayAliasSet &);
+  MayAliasSet(const MayAliasSet &) LLVM_DELETED_FUNCTION;
+  const MayAliasSet &operator=(const MayAliasSet &) LLVM_DELETED_FUNCTION;
 
   // TODO: Use CallbackVH to update the set when some base pointers are deleted
   // by some pass.
@@ -107,10 +105,9 @@ public:
 //===----------------------------------------------------------------------===//
 /// @brief Compute and manage the may-alias sets in a TempSCoP or SCoP.
 class MayAliasSetInfo {
-  // DO NOT IMPLEMENT
-  MayAliasSetInfo(const MayAliasSetInfo &);
-  // DO NOT IMPLEMENT
-  const MayAliasSetInfo &operator=(const MayAliasSetInfo &);
+  MayAliasSetInfo(const MayAliasSetInfo &) LLVM_DELETED_FUNCTION;
+  const MayAliasSetInfo &operator=(
+      const MayAliasSetInfo &) LLVM_DELETED_FUNCTION;
 
   SpecificBumpPtrAllocator<MayAliasSet> MayASAllocator;
 
