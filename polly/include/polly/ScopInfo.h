@@ -12,7 +12,7 @@
 // The pass creates a polyhedral description of the Scops detected by the Scop
 // detection derived from their LLVM-IR code.
 //
-// This represantation is shared among several tools in the polyhedral
+// This representation is shared among several tools in the polyhedral
 // community, which are e.g. CLooG, Pluto, Loopo, Graphite.
 //
 //===----------------------------------------------------------------------===//
@@ -72,13 +72,13 @@ public:
   ///
   /// * A must-write access
   ///
-  /// A certain set of memory locactions is definitely written. The old value is
+  /// A certain set of memory locations is definitely written. The old value is
   /// replaced by a newly calculated value. The old value is not read or used at
   /// all.
   ///
   /// * A may-write access
   ///
-  /// A certain set of memory locactions may be written. The memory location may
+  /// A certain set of memory locations may be written. The memory location may
   /// contain a new value if there is actually a write or the old value may
   /// remain, if no write happens.
   enum AccessType {
@@ -157,24 +157,24 @@ public:
 
   /// Get the stride of this memory access in the specified Schedule. Schedule
   /// is a map from the statement to a schedule where the innermost dimension is
-  /// the dimension of the innermost loop containing the statemenet.
+  /// the dimension of the innermost loop containing the statement.
   isl_set *getStride(__isl_take const isl_map *Schedule) const;
 
   /// Is the stride of the access equal to a certain width? Schedule is a map
   /// from the statement to a schedule where the innermost dimension is the
-  /// dimension of the innermost loop containing the statemenet.
+  /// dimension of the innermost loop containing the statement.
   bool isStrideX(__isl_take const isl_map *Schedule, int StrideWidth) const;
 
   /// Is consecutive memory accessed for a given statement instance set?
   /// Schedule is a map from the statement to a schedule where the innermost
   /// dimension is the dimension of the innermost loop containing the
-  /// statemenet.
+  /// statement.
   bool isStrideOne(__isl_take const isl_map *Schedule) const;
 
   /// Is always the same memory accessed for a given statement instance set?
   /// Schedule is a map from the statement to a schedule where the innermost
   /// dimension is the dimension of the innermost loop containing the
-  /// statemenet.
+  /// statement.
   bool isStrideZero(__isl_take const isl_map *Schedule) const;
 
   /// @brief Get the statement that contains this memory access.
@@ -233,7 +233,7 @@ class ScopStmt {
   ///     Domain: 0 <= i <= 100 + b
   ///             0 <= j <= i
   ///
-  /// A pair of statment and iteration vector (S, (5,3)) is called statment
+  /// A pair of statement and iteration vector (S, (5,3)) is called statement
   /// instance.
   isl_set *Domain;
 
@@ -287,7 +287,7 @@ class ScopStmt {
 
   std::string BaseName;
 
-  /// Build the statment.
+  /// Build the statement.
   //@{
   __isl_give isl_set *buildConditionSet(const Comparison &Cmp);
   __isl_give isl_set *addConditionsToDomain(__isl_take isl_set *Domain,
@@ -435,7 +435,7 @@ class Scop {
   unsigned MaxLoopDepth;
 
   typedef std::vector<ScopStmt *> StmtSet;
-  /// The Statments in this Scop.
+  /// The statements in this Scop.
   StmtSet Stmts;
 
   /// Parameters of this Scop
@@ -446,7 +446,7 @@ class Scop {
   typedef std::map<const SCEV *, int> ParamIdType;
   ParamIdType ParameterIds;
 
-  // Isl context.
+  /// Isl context.
   isl_ctx *IslCtx;
 
   /// Constraints on parameters.
@@ -473,7 +473,7 @@ class Scop {
   /// @brief Add the bounds of the parameters to the context.
   void addParameterBounds();
 
-  /// Build the Scop and Statement with precalculate scop information.
+  /// Build the Scop and Statement with precalculated scop information.
   void buildScop(TempScop &TempScop, const Region &CurRegion,
                  // Loops in Scop containing CurRegion
                  SmallVectorImpl<Loop *> &NestLoops,
