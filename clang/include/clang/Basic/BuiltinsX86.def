@@ -644,7 +644,7 @@ BUILTIN(__builtin_ia32_pext_di, "ULLiULLiULLi", "")
 
 // TBM
 BUILTIN(__builtin_ia32_bextri_u32, "UiUiIUi", "")
-BUILTIN(__builtin_ia32_bextri_u64, "ULLiULLiIUi", "")
+BUILTIN(__builtin_ia32_bextri_u64, "ULLiULLiIULLi", "")
 BUILTIN(__builtin_ia32_blcfill_u32, "UiUi", "")
 BUILTIN(__builtin_ia32_blcfill_u64, "ULLiULLi", "")
 BUILTIN(__builtin_ia32_blci_u32, "UiUi", "")

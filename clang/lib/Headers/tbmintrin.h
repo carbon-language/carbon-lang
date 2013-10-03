@@ -35,7 +35,7 @@
 #define __bextri_u32(a, b) (__builtin_ia32_bextri_u32((a), (b)))
 
 #ifdef __x86_64__
-#define __bextri_u64(a, b) (__builtin_ia32_bextri_u64((a), (b)))
+#define __bextri_u64(a, b) (__builtin_ia32_bextri_u64((a), (int)(b)))
 #endif
 
 static __inline__ unsigned int __attribute__((__always_inline__, __nodebug__))

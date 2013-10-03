@@ -15,6 +15,11 @@ unsigned long long test__bextri_u64(unsigned long long a) {
   return __bextri_u64(a, 2);
 }
 
+unsigned long long test__bextri_u64_bigint(unsigned long long a) {
+  // CHECK: call i64 @llvm.x86.tbm.bextri.u64
+  return __bextri_u64(a, 0x7fffffffffLL);
+}
+
 unsigned int test__blcfill_u32(unsigned int a) {
   // CHECK: call i32 @llvm.x86.tbm.blcfill.u32
   return __blcfill_u32(a);
