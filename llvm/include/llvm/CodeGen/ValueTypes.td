@@ -64,22 +64,23 @@ def v8i64  : ValueType<512, 40>;   //  8 x i64 vector value
 def v16i64 : ValueType<1024,41>;   // 16 x i64 vector value
 
 def v2f16  : ValueType<32 , 42>;   //  2 x f16 vector value
-def v8f16  : ValueType<128, 43>;   //  8 x f16 vector value
-def v1f32  : ValueType<32 , 44>;   //  1 x f32 vector value
-def v2f32  : ValueType<64 , 45>;   //  2 x f32 vector value
-def v4f32  : ValueType<128, 46>;   //  4 x f32 vector value
-def v8f32  : ValueType<256, 47>;   //  8 x f32 vector value
-def v16f32 : ValueType<512, 48>;   // 16 x f32 vector value
-def v1f64  : ValueType<64, 49>;    //  1 x f64 vector value
-def v2f64  : ValueType<128, 50>;   //  2 x f64 vector value
-def v4f64  : ValueType<256, 51>;   //  4 x f64 vector value
-def v8f64  : ValueType<512, 52>;   //  8 x f64 vector value
+def v4f16  : ValueType<64 , 43>;   //  4 x f16 vector value
+def v8f16  : ValueType<128, 44>;   //  8 x f16 vector value
+def v1f32  : ValueType<32 , 45>;   //  1 x f32 vector value
+def v2f32  : ValueType<64 , 46>;   //  2 x f32 vector value
+def v4f32  : ValueType<128, 47>;   //  4 x f32 vector value
+def v8f32  : ValueType<256, 48>;   //  8 x f32 vector value
+def v16f32 : ValueType<512, 49>;   // 16 x f32 vector value
+def v1f64  : ValueType<64, 50>;    //  1 x f64 vector value
+def v2f64  : ValueType<128, 51>;   //  2 x f64 vector value
+def v4f64  : ValueType<256, 52>;   //  4 x f64 vector value
+def v8f64  : ValueType<512, 53>;   //  8 x f64 vector value
 
 
-def x86mmx : ValueType<64 , 53>;   // X86 MMX value
-def FlagVT : ValueType<0  , 54>;   // Pre-RA sched glue
-def isVoid : ValueType<0  , 55>;   // Produces no value
-def untyped: ValueType<8  , 56>;   // Produces an untyped value
+def x86mmx : ValueType<64 , 54>;   // X86 MMX value
+def FlagVT : ValueType<0  , 55>;   // Pre-RA sched glue
+def isVoid : ValueType<0  , 56>;   // Produces no value
+def untyped: ValueType<8  , 57>;   // Produces an untyped value
 def MetadataVT: ValueType<0, 250>; // Metadata
 
 // Pseudo valuetype mapped to the current pointer size to any address space.
