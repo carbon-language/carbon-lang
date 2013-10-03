@@ -2602,7 +2602,7 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
                   llvm_i32_ty], [IntrNoMem]>;
   def int_x86_tbm_bextri_u64 : GCCBuiltin<"__builtin_ia32_bextri_u64">,
         Intrinsic<[llvm_i64_ty], [llvm_i64_ty,
-                  llvm_i32_ty], [IntrNoMem]>;
+                  llvm_i64_ty], [IntrNoMem]>;
   def int_x86_tbm_blcfill_u32 : GCCBuiltin<"__builtin_ia32_blcfill_u32">,
         Intrinsic<[llvm_i32_ty], [llvm_i32_ty],
                   [IntrNoMem]>;

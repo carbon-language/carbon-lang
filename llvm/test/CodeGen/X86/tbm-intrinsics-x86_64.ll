@@ -26,11 +26,11 @@ entry:
   ; CHECK-LABEL: test_x86_tbm_bextri_u64:
   ; CHECK-NOT: mov
   ; CHECK: bextr $
-  %0 = tail call i64 @llvm.x86.tbm.bextri.u64(i64 %a, i32 2814)
+  %0 = tail call i64 @llvm.x86.tbm.bextri.u64(i64 %a, i64 2814)
   ret i64 %0
 }
 
-declare i64 @llvm.x86.tbm.bextri.u64(i64, i32) nounwind readnone
+declare i64 @llvm.x86.tbm.bextri.u64(i64, i64) nounwind readnone
 
 define i64 @test_x86_tbm_bextri_u64_m(i64* nocapture %a) nounwind readonly {
 entry:
@@ -38,7 +38,7 @@ entry:
   ; CHECK-NOT: mov
   ; CHECK: bextr $
   %tmp1 = load i64* %a, align 8
-  %0 = tail call i64 @llvm.x86.tbm.bextri.u64(i64 %tmp1, i32 2814)
+  %0 = tail call i64 @llvm.x86.tbm.bextri.u64(i64 %tmp1, i64 2814)
   ret i64 %0
 }
 

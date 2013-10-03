@@ -17578,22 +17578,6 @@ static SDValue PerformAndCombine(SDNode *N, SelectionDAG &DAG,
       if (N1.getOpcode() == ISD::ADD && N1.getOperand(0) == N0 &&
           isAllOnes(N1.getOperand(1)))
         return DAG.getNode(X86ISD::BLSR, DL, VT, N0);
-
-      // Check for BEXTR
-      if (N0.getOpcode() == ISD::SRA || N0.getOpcode() == ISD::SRL) {
-        ConstantSDNode *MaskNode = dyn_cast<ConstantSDNode>(N1);
-        ConstantSDNode *ShiftNode = dyn_cast<ConstantSDNode>(N0.getOperand(1));
-        if (MaskNode && ShiftNode) {
-          uint64_t Mask = MaskNode->getZExtValue();
-          uint64_t Shift = ShiftNode->getZExtValue();
-          if (isMask_64(Mask)) {
-            uint64_t MaskSize = CountPopulation_64(Mask);
-            if (Shift + MaskSize <= VT.getSizeInBits())
-              return DAG.getNode(X86ISD::BEXTR, DL, VT, N0.getOperand(0),
-                                 DAG.getConstant(Shift | (MaskSize << 8), VT));
-          }
-        }
-      }
     }
 
     if (Subtarget->hasBMI2()) {
@@ -17621,6 +17605,23 @@ static SDValue PerformAndCombine(SDNode *N, SelectionDAG &DAG,
         }
       }
     }
+
+    // Check for BEXTR.
+    if ((Subtarget->hasBMI() || Subtarget->hasTBM()) &&
+        (N0.getOpcode() == ISD::SRA || N0.getOpcode() == ISD::SRL)) {
+      ConstantSDNode *MaskNode = dyn_cast<ConstantSDNode>(N1);
+      ConstantSDNode *ShiftNode = dyn_cast<ConstantSDNode>(N0.getOperand(1));
+      if (MaskNode && ShiftNode) {
+        uint64_t Mask = MaskNode->getZExtValue();
+        uint64_t Shift = ShiftNode->getZExtValue();
+        if (isMask_64(Mask)) {
+          uint64_t MaskSize = CountPopulation_64(Mask);
+          if (Shift + MaskSize <= VT.getSizeInBits())
+            return DAG.getNode(X86ISD::BEXTR, DL, VT, N0.getOperand(0),
+                               DAG.getConstant(Shift | (MaskSize << 8), VT));
+        }
+      }
+    } // BEXTR
 
     return SDValue();
   }
