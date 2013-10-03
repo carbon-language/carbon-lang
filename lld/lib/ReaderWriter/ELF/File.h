@@ -278,6 +278,7 @@ public:
     if (SymI != SymE)
       ++SymI;
 
+    int commonOrd = 0;
     for (; SymI != SymE; ++SymI) {
       const Elf_Shdr *section = _objFile->getSection(&*SymI);
 
@@ -302,6 +303,7 @@ public:
       } else if (isCommonSymbol(&*SymI)) {
         auto *newAtom = new (_readerStorage)
           ELFCommonAtom<ELFT>(*this, *symbolName, &*SymI);
+        newAtom->setOrdinal(commonOrd++);
         _definedAtoms._atoms.push_back(newAtom);
         _symbolToAtomMapping.insert(std::make_pair(&*SymI, newAtom));
       } else {

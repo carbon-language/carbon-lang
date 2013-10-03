@@ -5,16 +5,16 @@
 
 RUN: lld -flavor gnu -target x86_64 %p/Inputs/largebss.o --output-filetype=yaml --noinhibit-exec | FileCheck %s
 
-CHECK:  - name:            largebss
-CHECK:    scope:           global
-CHECK:    type:            zero-fill
-CHECK:    size:            4000
-CHECK:    section-name:    .bss
 CHECK:  - name:            largecommon
 CHECK:    scope:           global
 CHECK:    type:            zero-fill
 CHECK:    size:            4000
 CHECK:    merge:           as-tentative
+CHECK:    section-name:    .bss
+CHECK:  - name:            largebss
+CHECK:    scope:           global
+CHECK:    type:            zero-fill
+CHECK:    size:            4000
 CHECK:    section-name:    .bss
 CHECK:  - name:            largetbss
 CHECK:    scope:           global
