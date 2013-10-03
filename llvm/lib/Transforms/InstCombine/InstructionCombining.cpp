@@ -1186,14 +1186,16 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   // The GEP pattern is emitted by the SCEV expander for certain kinds of
   // pointer arithmetic.
   if (TD && GEP.getNumIndices() == 1 &&
-      match(GEP.getOperand(1), m_Neg(m_PtrToInt(m_Value()))) &&
-      GEP.getType() == Builder->getInt8PtrTy() &&
-      GEP.getOperand(1)->getType()->getScalarSizeInBits() ==
-          TD->getPointerSizeInBits(GEP.getPointerAddressSpace())) {
-    Operator *Index = cast<Operator>(GEP.getOperand(1));
-    Value *PtrToInt = Builder->CreatePtrToInt(PtrOp, Index->getType());
-    Value *NewSub = Builder->CreateSub(PtrToInt, Index->getOperand(1));
-    return CastInst::Create(Instruction::IntToPtr, NewSub, GEP.getType());
+      match(GEP.getOperand(1), m_Neg(m_PtrToInt(m_Value())))) {
+    unsigned AS = GEP.getPointerAddressSpace();
+    if (GEP.getType() == Builder->getInt8PtrTy(AS) &&
+        GEP.getOperand(1)->getType()->getScalarSizeInBits() ==
+        TD->getPointerSizeInBits(AS)) {
+      Operator *Index = cast<Operator>(GEP.getOperand(1));
+      Value *PtrToInt = Builder->CreatePtrToInt(PtrOp, Index->getType());
+      Value *NewSub = Builder->CreateSub(PtrToInt, Index->getOperand(1));
+      return CastInst::Create(Instruction::IntToPtr, NewSub, GEP.getType());
+    }
   }
 
   // Handle gep(bitcast x) and gep(gep x, 0, 0, 0).
