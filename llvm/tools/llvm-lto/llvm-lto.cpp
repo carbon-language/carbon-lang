@@ -50,6 +50,10 @@ ExportedSymbols("exported-symbol",
   cl::desc("Symbol to export from the resulting object file"),
   cl::ZeroOrMore);
 
+static cl::list<std::string>
+DSOSymbols("dso-symbol",
+  cl::desc("Symbol to put in the symtab in the resulting dso"),
+  cl::ZeroOrMore);
 
 int main(int argc, char **argv) {
   // Print a stack trace if we signal out.
@@ -116,6 +120,10 @@ int main(int argc, char **argv) {
   // Add all the exported symbols to the table of symbols to preserve.
   for (unsigned i = 0; i < ExportedSymbols.size(); ++i)
     CodeGen.addMustPreserveSymbol(ExportedSymbols[i].c_str());
+
+  // Add all the dso symbols to the table of symbols to expose.
+  for (unsigned i = 0; i < DSOSymbols.size(); ++i)
+    CodeGen.addDSOSymbol(DSOSymbols[i].c_str());
 
   if (!OutputFilename.empty()) {
     size_t len = 0;

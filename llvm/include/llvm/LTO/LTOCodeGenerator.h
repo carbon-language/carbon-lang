@@ -73,6 +73,10 @@ struct LTOCodeGenerator {
 
   void addMustPreserveSymbol(const char *sym) { MustPreserveSymbols[sym] = 1; }
 
+  void addDSOSymbol(const char* Sym) {
+    DSOSymbols[Sym] = 1;
+  }
+
   // To pass options to the driver and optimization passes. These options are
   // not necessarily for debugging purpose (The function name is misleading).
   // This function should be called before LTOCodeGenerator::compilexxx(),
@@ -126,6 +130,7 @@ private:
   void applyScopeRestrictions();
   void applyRestriction(llvm::GlobalValue &GV,
                         std::vector<const char*> &MustPreserveList,
+                        std::vector<const char*> &SymtabList,
                         llvm::SmallPtrSet<llvm::GlobalValue*, 8> &AsmUsed,
                         llvm::Mangler &Mangler);
   bool determineTarget(std::string &errMsg);
@@ -138,6 +143,7 @@ private:
   bool EmitDwarfDebugInfo;
   bool ScopeRestrictionsDone;
   lto_codegen_model CodeModel;
+  StringSet DSOSymbols;
   StringSet MustPreserveSymbols;
   StringSet AsmUndefinedRefs;
   llvm::MemoryBuffer *NativeObjectFile;

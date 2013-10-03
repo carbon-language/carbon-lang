@@ -104,12 +104,32 @@ Pass *createPruneEHPass();
 
 //===----------------------------------------------------------------------===//
 /// createInternalizePass - This pass loops over all of the functions in the
-/// input module, internalizing all globals (functions and variables) not in the
-/// given exportList.
+/// input module, internalizing all globals (functions and variables) it can.
+////
+/// The symbols in \p ExportList are never internalized.
+///
+/// The symbol in DSOList are internalized if it is safe to drop them from
+/// the symbol table.
+///
+/// For example of the difference, consider a dynamic library being built from
+/// two translation units. The first one compiled to a native object
+/// (ELF/MachO/COFF) and second one compiled to IL. Translation unit A has a
+/// copy of linkonce_odr unnamed_addr function F. The translation unit B has a
+/// copy of the linkonce_odr unnamed_addr functions F and G.
+///
+/// Assume the linker decides to keep the copy of F in B. This means that LLVM
+/// must produce F in the object file it passes to the linker, otherwise we
+/// will have an undefined reference. For G the situation is different. The
+/// linker puts the function in the DSOList, since it is only wanted for the
+/// symbol table. With this information internalize can now reason that since
+/// the function is a linkonce_odr and its address is not important, it can be
+/// omitted. Any other shared library needing this function will have a copy of
+/// it.
 ///
 /// Note that commandline options that are used with the above function are not
 /// used now!
-ModulePass *createInternalizePass(ArrayRef<const char *> ExportList);
+ModulePass *createInternalizePass(ArrayRef<const char *> ExportList,
+                                  ArrayRef<const char *> DSOList);
 /// createInternalizePass - Same as above, but with an empty exportList.
 ModulePass *createInternalizePass();
 

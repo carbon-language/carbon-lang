@@ -29,7 +29,7 @@
  * @{
  */
 
-#define LTO_API_VERSION 4
+#define LTO_API_VERSION 5
 
 typedef enum {
     LTO_SYMBOL_ALIGNMENT_MASK              = 0x0000001F, /* log2 of alignment */
@@ -253,12 +253,20 @@ lto_codegen_set_assembler_args(lto_code_gen_t cg, const char **args,
                                int nargs);
 
 /**
- * Adds to a list of all global symbols that must exist in the final
- * generated code.  If a function is not listed, it might be
- * inlined into every usage and optimized away.
+ * Tells LTO optimization passes that this symbol must be preserved
+ * because it is referenced by native code or a command line option.
  */
 extern void
 lto_codegen_add_must_preserve_symbol(lto_code_gen_t cg, const char* symbol);
+
+
+/**
+ * Tells LTO optimization passes that a dynamic shared library is being
+ * built and this symbol may be exported. Unless IR semantics allow the symbol
+ * to be made local to the library, it should remain so it can be exported by
+ * the shared library.
+ */
+extern void lto_codegen_add_dso_symbol(lto_code_gen_t cg, const char *symbol);
 
 /**
  * Writes a new object file at the specified path that contains the

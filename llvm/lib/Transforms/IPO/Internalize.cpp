@@ -44,13 +44,20 @@ APIList("internalize-public-api-list", cl::value_desc("list"),
         cl::desc("A list of symbol names to preserve"),
         cl::CommaSeparated);
 
+static cl::list<std::string>
+DSOList("internalize-dso-list", cl::value_desc("list"),
+        cl::desc("A list of symbol names need for a dso symbol table"),
+        cl::CommaSeparated);
+
 namespace {
   class InternalizePass : public ModulePass {
     std::set<std::string> ExternalNames;
+    std::set<std::string> DSONames;
   public:
     static char ID; // Pass identification, replacement for typeid
     explicit InternalizePass();
-    explicit InternalizePass(ArrayRef<const char *> ExportList);
+    explicit InternalizePass(ArrayRef<const char *> ExportList,
+                             ArrayRef<const char *> DSOList);
     void LoadFile(const char *Filename);
     virtual bool runOnModule(Module &M);
 
@@ -71,14 +78,20 @@ InternalizePass::InternalizePass()
   if (!APIFile.empty())           // If a filename is specified, use it.
     LoadFile(APIFile.c_str());
   ExternalNames.insert(APIList.begin(), APIList.end());
+  DSONames.insert(DSOList.begin(), DSOList.end());
 }
 
-InternalizePass::InternalizePass(ArrayRef<const char *> ExportList)
+InternalizePass::InternalizePass(ArrayRef<const char *> ExportList,
+                                 ArrayRef<const char *> DSOList)
   : ModulePass(ID){
   initializeInternalizePassPass(*PassRegistry::getPassRegistry());
   for(ArrayRef<const char *>::const_iterator itr = ExportList.begin();
         itr != ExportList.end(); itr++) {
     ExternalNames.insert(*itr);
+  }
+  for(ArrayRef<const char *>::const_iterator itr = DSOList.begin();
+        itr != DSOList.end(); itr++) {
+    DSONames.insert(*itr);
   }
 }
 
@@ -99,7 +112,8 @@ void InternalizePass::LoadFile(const char *Filename) {
 }
 
 static bool shouldInternalize(const GlobalValue &GV,
-                              const std::set<std::string> &ExternalNames) {
+                              const std::set<std::string> &ExternalNames,
+                              const std::set<std::string> &DSONames) {
   // Function must be defined here
   if (GV.isDeclaration())
     return false;
@@ -116,7 +130,20 @@ static bool shouldInternalize(const GlobalValue &GV,
   if (ExternalNames.count(GV.getName()))
     return false;
 
-  return true;
+  // Not needed for the symbol table?
+  if (!DSONames.count(GV.getName()))
+    return true;
+
+  // Not a linkonce. Someone can depend on it being on the symbol table.
+  if (!GV.hasLinkOnceLinkage())
+    return false;
+
+  // The address is not important, we can hide it.
+  if (GV.hasUnnamedAddr())
+    return true;
+
+  // FIXME: Check if the address is used.
+  return false;
 }
 
 bool InternalizePass::runOnModule(Module &M) {
@@ -145,7 +172,7 @@ bool InternalizePass::runOnModule(Module &M) {
   // Mark all functions not in the api as internal.
   // FIXME: maybe use private linkage?
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
-    if (!shouldInternalize(*I, ExternalNames))
+    if (!shouldInternalize(*I, ExternalNames, DSONames))
       continue;
 
     I->setLinkage(GlobalValue::InternalLinkage);
@@ -182,7 +209,7 @@ bool InternalizePass::runOnModule(Module &M) {
   // FIXME: maybe use private linkage?
   for (Module::global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ++I) {
-    if (!shouldInternalize(*I, ExternalNames))
+    if (!shouldInternalize(*I, ExternalNames, DSONames))
       continue;
 
     I->setLinkage(GlobalValue::InternalLinkage);
@@ -194,7 +221,7 @@ bool InternalizePass::runOnModule(Module &M) {
   // Mark all aliases that are not in the api as internal as well.
   for (Module::alias_iterator I = M.alias_begin(), E = M.alias_end();
        I != E; ++I) {
-    if (!shouldInternalize(*I, ExternalNames))
+    if (!shouldInternalize(*I, ExternalNames, DSONames))
       continue;
 
     I->setLinkage(GlobalValue::InternalLinkage);
@@ -210,6 +237,7 @@ ModulePass *llvm::createInternalizePass() {
   return new InternalizePass();
 }
 
-ModulePass *llvm::createInternalizePass(ArrayRef<const char *> ExportList) {
-  return new InternalizePass(ExportList);
+ModulePass *llvm::createInternalizePass(ArrayRef<const char *> ExportList,
+                                        ArrayRef<const char *> DSOList) {
+  return new InternalizePass(ExportList, DSOList);
 }
