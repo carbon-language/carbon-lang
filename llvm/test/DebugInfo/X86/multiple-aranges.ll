@@ -27,7 +27,7 @@
 ; CHECK-NEXT: .byte   255
 ; CHECK-NEXT: .byte   255
 ; CHECK-NEXT: .quad   rainbows
-; CHECK-NEXT: .Lset1 = .L.data_end-rainbows
+; CHECK-NEXT: .Lset1 = .Ldebug_end0-rainbows
 ; CHECK-NEXT: .quad   .Lset1
 ; CHECK-NEXT: .quad   0                       # ARange terminator
 ; CHECK-NEXT: .quad   0

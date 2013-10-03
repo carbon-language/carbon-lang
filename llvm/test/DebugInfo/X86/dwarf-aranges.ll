@@ -1,47 +1,38 @@
-; RUN: llc < %s | FileCheck -check-prefix=CHECK-HEADER %s
-; RUN: llc < %s | FileCheck -check-prefix=CHECK-CODE %s
-; RUN: llc < %s | FileCheck -check-prefix=CHECK-DATA %s
-; RUN: llc < %s | FileCheck -check-prefix=CHECK-BSS %s
-; RUN: llc < %s | FileCheck -check-prefix=CHECK-CUSTOM %s
+; RUN: llc < %s | FileCheck %s
 
 
 ; -- header --
-; CHECK-HEADER: .short 2 # DWARF Arange version number
-; CHECK-HEADER-NEXT: .long .L.debug_info_begin0
-; CHECK-HEADER-NEXT: .byte 8 # Address Size (in bytes)
-; CHECK-HEADER-NEXT: .byte 0 # Segment Size (in bytes)
+; CHECK: .short 2 # DWARF Arange version number
+; CHECK-NEXT: .long .L.debug_info_begin0
+; CHECK-NEXT: .byte 8 # Address Size (in bytes)
+; CHECK-NEXT: .byte 0 # Segment Size (in bytes)
 ; -- alignment --
-; CHECK-HEADER-NEXT: .byte
-; CHECK-HEADER-NEXT: .byte
-; CHECK-HEADER-NEXT: .byte
-; CHECK-HEADER-NEXT: .byte
-; -- finish --
-; CHECK-HEADER: # ARange terminator
-
-; <text section> - it should have made one span covering all functions in this CU.
-; CHECK-CODE: .short 2 # DWARF Arange version number
-; CHECK-CODE: .quad .Lfunc_begin0
-; CHECK-CODE-NEXT: .Lset1 = .L.text_end-.Lfunc_begin0
-; CHECK-CODE: # ARange terminator
-
-; <data section> - it should have made one span covering all vars in this CU.
-; CHECK-DATA: .short 2 # DWARF Arange version number
-; CHECK-DATA: .quad some_data
-; CHECK-DATA-NEXT: -some_data
-; CHECK-DATA: # ARange terminator
+; CHECK-NEXT: .byte
+; CHECK-NEXT: .byte
+; CHECK-NEXT: .byte
+; CHECK-NEXT: .byte
 
 ; <common symbols> - it should have made one span for each symbol.
-; CHECK-BSS: .short 2 # DWARF Arange version number
-; CHECK-BSS: .quad some_bss
-; CHECK-BSS-NEXT: .quad 4
-; CHECK-BSS: # ARange terminator
+; CHECK-NEXT: .quad some_bss
+; CHECK-NEXT: .quad 4
+
+; <data section> - it should have made one span covering all vars in this CU.
+; CHECK-NEXT: .quad some_data
+; CHECK-NEXT: .Lset0 = .Ldebug_end1-some_data
+; CHECK-NEXT: .quad .Lset0
+
+; <text section> - it should have made one span covering all functions in this CU.
+; CHECK-NEXT: .quad .Lfunc_begin0
+; CHECK-NEXT: .Lset1 = .Ldebug_end2-.Lfunc_begin0
+; CHECK-NEXT: .quad .Lset1
 
 ; <other sections> - it should have made one span covering all vars in this CU.
-; CHECK-CUSTOM: .short 2 # DWARF Arange version number
-; CHECK-CUSTOM: .quad some_other
-; CHECK-CUSTOM-NEXT: -some_other
-; CHECK-CUSTOM: # ARange terminator
+; CHECK-NEXT: .quad some_other
+; CHECK-NEXT: .Lset2 = .Ldebug_end3-some_other
+; CHECK-NEXT: .quad .Lset2
 
+; -- finish --
+; CHECK-NEXT: # ARange terminator
 
 
 
@@ -50,7 +41,7 @@
 ;
 ; int some_data = 4;
 ; int some_bss;
-; int some_other __attribute__ ((section ("strangesection"))) = 5;
+; int some_other __attribute__ ((section ("strange+section"))) = 5;
 ; 
 ; void some_code()
 ; {
@@ -60,7 +51,7 @@
 target triple = "x86_64-unknown-linux-gnu"
 
 @some_data = global i32 4, align 4
-@some_other = global i32 5, section "strangesection", align 4
+@some_other = global i32 5, section "strange+section", align 4
 @some_bss = common global i32 0, align 4
 
 define void @some_code() {

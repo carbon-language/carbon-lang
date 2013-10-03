@@ -312,6 +312,13 @@ static StringRef getObjCMethodName(StringRef In) {
   return In.slice(In.find(' ') + 1, In.find(']'));
 }
 
+// Helper for sorting sections into a stable output order.
+static bool SectionSort(const MCSection *A, const MCSection *B) {
+    std::string LA = (A ? A->getLabelBeginName() : "");
+    std::string LB = (B ? B->getLabelBeginName() : "");
+    return LA < LB;
+}
+
 // Add the various names to the Dwarf accelerator table names.
 // TODO: Determine whether or not we should add names for programs
 // that do not have a DW_AT_name or DW_AT_linkage_name field - this
@@ -1119,14 +1126,29 @@ void DwarfDebug::endSections() {
     }
   }
 
-  // Add terminating symbols for each section.
+  // Build a list of sections used.
+  std::vector<const MCSection *> Sections;
   for (SectionMapType::iterator it = SectionMap.begin(); it != SectionMap.end();
        it++) {
     const MCSection *Section = it->first;
+    Sections.push_back(Section);
+  }
+
+  // Sort the sections into order.
+  // This is only done to ensure consistent output order across different runs.
+  std::sort(Sections.begin(), Sections.end(), SectionSort);
+
+  // Add terminating symbols for each section.
+  for (unsigned ID=0;ID<Sections.size();ID++) {
+    const MCSection *Section = Sections[ID];
     MCSymbol *Sym = NULL;
 
     if (Section) {
-      Sym = Asm->GetTempSymbol(Section->getLabelEndName());
+      // We can't call MCSection::getLabelEndName, as it's only safe to do so
+      // if we know the section name up-front. For user-created sections, the resulting
+      // label may not be valid to use as a label. (section names can use a greater
+      // set of characters on some systems)
+      Sym = Asm->GetTempSymbol("debug_end", ID);
       Asm->OutStreamer.SwitchSection(Section);
       Asm->OutStreamer.EmitLabel(Sym);
     }
@@ -2744,12 +2766,6 @@ struct SymbolCUSorter {
     return IA < IB;
   }
 };
-
-static bool SectionSort(const MCSection *A, const MCSection *B) {
-    std::string LA = (A ? A->getLabelBeginName() : "");
-    std::string LB = (B ? B->getLabelBeginName() : "");
-    return LA < LB;
-}
 
 static bool CUSort(const CompileUnit *A, const CompileUnit *B) {
     return (A->getUniqueID() < B->getUniqueID());
