@@ -1316,6 +1316,16 @@ class Cursor(Structure):
 
         return self._referenced
 
+    @property
+    def brief_comment(self):
+        """Returns the brief comment text associated with that Cursor"""
+        return conf.lib.clang_Cursor_getBriefCommentText(self)
+    
+    @property
+    def raw_comment(self):
+        """Returns the raw comment text associated with that Cursor"""
+        return conf.lib.clang_Cursor_getRawCommentText(self)
+
     def get_arguments(self):
         """Return an iterator for accessing the arguments of this cursor."""
         num_args = conf.lib.clang_Cursor_getNumArguments(self)
@@ -1686,6 +1696,11 @@ class Type(Structure):
         Retrieve the offset of a field in the record.
         """
         return conf.lib.clang_Type_getOffsetOf(self, c_char_p(fieldname))
+
+    @property
+    def spelling(self):
+        """Retrieve the spelling of this Type."""
+        return conf.lib.clang_getTypeSpelling(self)
 
     def __eq__(self, other):
         if type(other) != type(self):
@@ -3026,6 +3041,11 @@ functionList = [
    _CXString,
    _CXString.from_result),
 
+  ("clang_getTypeSpelling",
+   [Type],
+   _CXString,
+   _CXString.from_result),
+
   ("clang_hashCursor",
    [Cursor],
    c_uint),
@@ -3129,6 +3149,16 @@ functionList = [
   ("clang_Cursor_isBitField",
    [Cursor],
    bool),
+
+  ("clang_Cursor_getBriefCommentText",
+   [Cursor],
+   _CXString,
+   _CXString.from_result),
+
+  ("clang_Cursor_getRawCommentText",
+   [Cursor],
+   _CXString,
+   _CXString.from_result),
 
   ("clang_Type_getAlignOf",
    [Type],

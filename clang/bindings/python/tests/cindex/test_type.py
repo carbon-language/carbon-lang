@@ -132,6 +132,22 @@ def test_equal():
     assert a.type != None
     assert a.type != 'foo'
 
+def test_type_spelling():
+    """Ensure Type.spelling works."""
+    tu = get_tu('int c[5]; int i[]; int x; int v[x];')
+    c = get_cursor(tu, 'c')
+    i = get_cursor(tu, 'i')
+    x = get_cursor(tu, 'x')
+    v = get_cursor(tu, 'v')
+    assert c is not None
+    assert i is not None
+    assert x is not None
+    assert v is not None
+    assert c.type.spelling == "int [5]"
+    assert i.type.spelling == "int []"
+    assert x.type.spelling == "int"
+    assert v.type.spelling == "int [x]"
+
 def test_typekind_spelling():
     """Ensure TypeKind.spelling works."""
     tu = get_tu('int a;')
