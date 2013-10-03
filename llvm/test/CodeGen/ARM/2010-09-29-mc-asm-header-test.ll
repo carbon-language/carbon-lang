@@ -27,6 +27,7 @@
 
 ; V8-NEON:      .syntax unified
 ; V8-NEON: .eabi_attribute 6, 14
+; V8-NEON: .fpu neon
 ; V8-NEON: .eabi_attribute 12, 3
 
 ; V8-FPARMv8-NEON:      .syntax unified
