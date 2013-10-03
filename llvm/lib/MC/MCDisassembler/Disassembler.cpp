@@ -102,6 +102,7 @@ LLVMDisasmContextRef LLVMCreateDisasmCPU(const char *Triple, const char *CPU,
   if (!DC)
     return 0;
 
+  DC->setCPU(CPU);
   return DC;
 }
 
@@ -174,6 +175,32 @@ static void emitComments(LLVMDisasmContext *DC,
   DC->CommentStream.resync();
 }
 
+/// \brief Gets latency information for \p Inst form the itinerary
+/// scheduling model, based on \p DC information.
+/// \return The maximum expected latency over all the operands or -1
+/// if no information are available.
+static int getItineraryLatency(LLVMDisasmContext *DC, const MCInst &Inst) {
+  const int NoInformationAvailable = -1;
+
+  // Check if we have a CPU to get the itinerary information.
+  if (DC->getCPU().empty())
+    return NoInformationAvailable;
+
+  // Get itinerary information.
+  const MCSubtargetInfo *STI = DC->getSubtargetInfo();
+  InstrItineraryData IID = STI->getInstrItineraryForCPU(DC->getCPU());
+  // Get the scheduling class of the requested instruction.
+  const MCInstrDesc& Desc = DC->getInstrInfo()->get(Inst.getOpcode());
+  unsigned SCClass = Desc.getSchedClass();
+
+  int Latency = 0;
+  for (unsigned OpIdx = 0, OpIdxEnd = Inst.getNumOperands(); OpIdx != OpIdxEnd;
+       ++OpIdx)
+    Latency = std::max(Latency, IID.getOperandCycle(SCClass, OpIdx));
+
+  return Latency;
+}
+
 /// \brief Gets latency information for \p Inst, based on \p DC information.
 /// \return The maximum expected latency over all the definitions or -1
 /// if no information are available.
@@ -185,7 +212,9 @@ static int getLatency(LLVMDisasmContext *DC, const MCInst &Inst) {
 
   // Check if we have a scheduling model for instructions.
   if (!SCModel || !SCModel->hasInstrSchedModel())
-    return NoInformationAvailable;
+    // Try to fall back to the itinerary model if we do not have a
+    // scheduling model.
+    return getItineraryLatency(DC, Inst);
 
   // Get the scheduling class of the requested instruction.
   const MCInstrDesc& Desc = DC->getInstrInfo()->get(Inst.getOpcode());

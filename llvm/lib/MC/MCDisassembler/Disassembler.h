@@ -75,6 +75,8 @@ private:
   llvm::OwningPtr<llvm::MCInstPrinter> IP;
   // The options used to set up the disassembler.
   uint64_t Options;
+  // The CPU string.
+  std::string CPU;
 
 public:
   // Comment stream and backing vector.
@@ -119,6 +121,8 @@ public:
   void setIP(MCInstPrinter *NewIP) { IP.reset(NewIP); }
   uint64_t getOptions() const { return Options; }
   void addOptions(uint64_t Options) { this->Options |= Options; }
+  StringRef getCPU() const { return CPU; }
+  void setCPU(const char *CPU) { this->CPU = CPU; }
 };
 
 } // namespace llvm
