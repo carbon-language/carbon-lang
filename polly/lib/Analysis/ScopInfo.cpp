@@ -36,7 +36,6 @@
 #define DEBUG_TYPE "polly-scops"
 #include "llvm/Support/Debug.h"
 
-#include "isl/int.h"
 #include "isl/constraint.h"
 #include "isl/set.h"
 #include "isl/map.h"
