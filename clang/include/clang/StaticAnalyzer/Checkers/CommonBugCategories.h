@@ -15,6 +15,7 @@ namespace clang {
   namespace ento {
     namespace categories {
       extern const char *CoreFoundationObjectiveC;
+      extern const char *LogicError;
       extern const char *MemoryCoreFoundationObjectiveC;
       extern const char *UnixAPI;
     }

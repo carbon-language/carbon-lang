@@ -15,6 +15,7 @@
 #define LLVM_CLANG_ANALYSIS_BUGTYPE
 
 #include "clang/Basic/LLVM.h"
+#include "clang/StaticAnalyzer/Checkers/CommonBugCategories.h"
 #include "llvm/ADT/FoldingSet.h"
 #include <string>
 
@@ -54,10 +55,10 @@ class BuiltinBug : public BugType {
   const std::string desc;
 public:
   BuiltinBug(const char *name, const char *description)
-    : BugType(name, "Logic error"), desc(description) {}
+    : BugType(name, categories::LogicError), desc(description) {}
   
   BuiltinBug(const char *name)
-    : BugType(name, "Logic error"), desc(name) {}
+    : BugType(name, categories::LogicError), desc(name) {}
   
   StringRef getDescription() const { return desc; }
 };

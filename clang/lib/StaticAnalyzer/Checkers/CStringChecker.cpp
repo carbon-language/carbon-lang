@@ -231,7 +231,7 @@ ProgramStateRef CStringChecker::checkNonNull(CheckerContext &C,
       return NULL;
 
     if (!BT_Null)
-      BT_Null.reset(new BuiltinBug("Unix API",
+      BT_Null.reset(new BuiltinBug(categories::UnixAPI,
         "Null pointer argument in call to byte string function"));
 
     SmallString<80> buf;
@@ -525,7 +525,7 @@ void CStringChecker::emitOverlapBug(CheckerContext &C, ProgramStateRef state,
     return;
 
   if (!BT_Overlap)
-    BT_Overlap.reset(new BugType("Unix API", "Improper arguments"));
+    BT_Overlap.reset(new BugType(categories::UnixAPI, "Improper arguments"));
 
   // Generate a report for this bug.
   BugReport *report = 
@@ -702,7 +702,7 @@ SVal CStringChecker::getCStringLength(CheckerContext &C, ProgramStateRef &state,
 
       if (ExplodedNode *N = C.addTransition(state)) {
         if (!BT_NotCString)
-          BT_NotCString.reset(new BuiltinBug("Unix API",
+          BT_NotCString.reset(new BuiltinBug(categories::UnixAPI,
             "Argument is not a null-terminated string."));
 
         SmallString<120> buf;
@@ -762,7 +762,7 @@ SVal CStringChecker::getCStringLength(CheckerContext &C, ProgramStateRef &state,
 
     if (ExplodedNode *N = C.addTransition(state)) {
       if (!BT_NotCString)
-        BT_NotCString.reset(new BuiltinBug("Unix API",
+        BT_NotCString.reset(new BuiltinBug(categories::UnixAPI,
           "Argument is not a null-terminated string."));
 
       SmallString<120> buf;
