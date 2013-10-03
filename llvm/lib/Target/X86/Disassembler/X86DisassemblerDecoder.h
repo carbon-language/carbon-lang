@@ -453,7 +453,7 @@ typedef enum {
 typedef enum {
   VEX_LOB_0F = 0x1,
   VEX_LOB_0F38 = 0x2,
-  VEX_LOB_0F3A = 0x3,
+  VEX_LOB_0F3A = 0x3
 } VEXLeadingOpcodeByte;
 
 typedef enum {
