@@ -3824,6 +3824,10 @@ public:
     return const_cast<InitListExpr *>(this)->getInitializedFieldInUnion();
   }
   void setInitializedFieldInUnion(FieldDecl *FD) {
+    assert((FD == 0
+            || getInitializedFieldInUnion() == 0
+            || getInitializedFieldInUnion() == FD)
+           && "Only one field of a union may be initialized at a time!");
     ArrayFillerOrUnionFieldInit = FD;
   }
 

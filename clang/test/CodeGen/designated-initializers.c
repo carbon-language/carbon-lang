@@ -81,6 +81,63 @@ struct overwrite_string_struct5 {
 // CHECK: [6 x i8] c"foo\00y\00", i32 1
 
 
+// CHECK: @u1 = {{.*}} { i32 65535 }
+union u_FFFF { char c; long l; } u1 = { .l = 0xFFFF };
+
+
+/// PR16644
+typedef union u_16644 {
+  struct s_16644 {
+    int zero;
+    int one;
+    int two;
+    int three;
+  } a;
+  int b[4];
+} union_16644_t;
+
+// CHECK: @union_16644_instance_0 = {{.*}} { i32 0, i32 0, i32 0, i32 3 } }
+union_16644_t union_16644_instance_0 =
+{
+  .b[0]    = 0,
+  .a.one   = 1,
+  .b[2]    = 2,
+  .a.three = 3,
+};
+
+// CHECK: @union_16644_instance_1 = {{.*}} [i32 10, i32 0, i32 0, i32 0]
+union_16644_t union_16644_instance_1 =
+{
+  .a.three = 13,
+  .b[2]    = 12,
+  .a.one   = 11,
+  .b[0]    = 10,
+};
+
+// CHECK: @union_16644_instance_2 = {{.*}} [i32 0, i32 20, i32 0, i32 0]
+union_16644_t union_16644_instance_2 =
+{
+  .a.one   = 21,
+  .b[1]    = 20,
+};
+
+// CHECK: @union_16644_instance_3 = {{.*}} { i32 0, i32 31, i32 0, i32 0 }
+union_16644_t union_16644_instance_3 =
+{
+  .b[1]    = 30,
+  .a = {
+    .one = 31
+  }
+};
+
+// CHECK: @union_16644_instance_4 = {{.*}} { i32 5, i32 2, i32 0, i32 0 } {{.*}} [i32 0, i32 4, i32 0, i32 0]
+union_16644_t union_16644_instance_4[2] =
+{
+  [0].a.one = 2,
+  [1].a.zero = 3,
+  [0].a.zero = 5,
+  [1].b[1] = 4
+};
 
 void test1(int argc, char **argv)
 {
