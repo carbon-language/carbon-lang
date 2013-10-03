@@ -2849,7 +2849,7 @@ SymbolFileDWARF::ResolveSymbolContext(const FileSpec& file_spec, uint32_t line, 
             for (cu_idx = 0; (dwarf_cu = debug_info->GetCompileUnitAtIndex(cu_idx)) != NULL; ++cu_idx)
             {
                 CompileUnit *dc_cu = GetCompUnitForDWARFCompUnit(dwarf_cu, cu_idx);
-                const bool full_match = file_spec.GetDirectory();
+                const bool full_match = (bool)file_spec.GetDirectory();
                 bool file_spec_matches_cu_file_spec = dc_cu != NULL && FileSpec::Equal(file_spec, *dc_cu, full_match);
                 if (check_inlines || file_spec_matches_cu_file_spec)
                 {

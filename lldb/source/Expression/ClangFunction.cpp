@@ -162,14 +162,14 @@ ClangFunction::CompileFunction (Stream &errors)
 
         if (trust_function)
         {
-            type_name = function_clang_type.GetFunctionArgumentTypeAtIndex(i).GetTypeName();
+            type_name = function_clang_type.GetFunctionArgumentTypeAtIndex(i).GetTypeName().AsCString("");
         }
         else
         {
             ClangASTType clang_qual_type = m_arg_values.GetValueAtIndex(i)->GetClangType ();
             if (clang_qual_type)
             {
-                type_name = clang_qual_type.GetTypeName();
+                type_name = clang_qual_type.GetTypeName().AsCString("");
             }
             else
             {   

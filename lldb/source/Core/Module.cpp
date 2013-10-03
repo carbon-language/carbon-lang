@@ -614,7 +614,7 @@ Module::FindCompileUnits (const FileSpec &path,
     const size_t num_compile_units = GetNumCompileUnits();
     SymbolContext sc;
     sc.module_sp = shared_from_this();
-    const bool compare_directory = path.GetDirectory();
+    const bool compare_directory = (bool)path.GetDirectory();
     for (size_t i=0; i<num_compile_units; ++i)
     {
         sc.comp_unit = GetCompileUnitAtIndex(i).get();
@@ -1509,14 +1509,14 @@ Module::MatchesModuleSpec (const ModuleSpec &module_ref)
     const FileSpec &file_spec = module_ref.GetFileSpec();
     if (file_spec)
     {
-        if (!FileSpec::Equal (file_spec, m_file, file_spec.GetDirectory()))
+        if (!FileSpec::Equal (file_spec, m_file, (bool)file_spec.GetDirectory()))
             return false;
     }
 
     const FileSpec &platform_file_spec = module_ref.GetPlatformFileSpec();
     if (platform_file_spec)
     {
-        if (!FileSpec::Equal (platform_file_spec, GetPlatformFileSpec (), platform_file_spec.GetDirectory()))
+        if (!FileSpec::Equal (platform_file_spec, GetPlatformFileSpec (), (bool)platform_file_spec.GetDirectory()))
             return false;
     }
     

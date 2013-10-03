@@ -990,7 +990,7 @@ Host::GetLLDBPath (PathType path_type, FileSpec &file_spec)
                 g_lldb_so_dir = lldb_file_spec.GetDirectory();
             }
             file_spec.GetDirectory() = g_lldb_so_dir;
-            return file_spec.GetDirectory();
+            return (bool)file_spec.GetDirectory();
         }
         break;
 
@@ -1021,7 +1021,7 @@ Host::GetLLDBPath (PathType path_type, FileSpec &file_spec)
                 }
             }
             file_spec.GetDirectory() = g_lldb_support_exe_dir;
-            return file_spec.GetDirectory();
+            return (bool)file_spec.GetDirectory();
         }
         break;
 
@@ -1053,7 +1053,7 @@ Host::GetLLDBPath (PathType path_type, FileSpec &file_spec)
 #endif
             }
             file_spec.GetDirectory() = g_lldb_headers_dir;
-            return file_spec.GetDirectory();
+            return (bool)file_spec.GetDirectory();
         }
         break;
 
@@ -1098,7 +1098,7 @@ Host::GetLLDBPath (PathType path_type, FileSpec &file_spec)
                 }
             }
             file_spec.GetDirectory() = g_lldb_python_dir;
-            return file_spec.GetDirectory();
+            return (bool)file_spec.GetDirectory();
         }
         break;
 #endif
@@ -1165,7 +1165,7 @@ Host::GetLLDBPath (PathType path_type, FileSpec &file_spec)
                 }
             }
             file_spec.GetDirectory() = g_lldb_user_plugin_dir;
-            return file_spec.GetDirectory();
+            return (bool)file_spec.GetDirectory();
 #elif defined (__linux__)
             static ConstString g_lldb_user_plugin_dir;
             if (!g_lldb_user_plugin_dir)
@@ -1196,7 +1196,7 @@ Host::GetLLDBPath (PathType path_type, FileSpec &file_spec)
                     g_lldb_user_plugin_dir.SetCString(lldb_file_spec.GetPath().c_str());
             }
             file_spec.GetDirectory() = g_lldb_user_plugin_dir;
-            return file_spec.GetDirectory();
+            return (bool)file_spec.GetDirectory();
 #endif
             // TODO: where would user LLDB plug-ins be located on other systems?
             return false;

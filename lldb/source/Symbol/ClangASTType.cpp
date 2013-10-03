@@ -2987,7 +2987,7 @@ ClangASTType::GetChildClangTypeAtIndex (ExecutionContext *exe_ctx,
                             // Base classes should be a multiple of 8 bits in size
                             child_byte_offset = bit_offset/8;
                             ClangASTType base_class_clang_type(m_ast, base_class->getType());
-                            child_name = base_class_clang_type.GetTypeName();
+                            child_name = base_class_clang_type.GetTypeName().AsCString("");
                             uint64_t base_class_clang_type_bit_size = base_class_clang_type.GetBitSize();
                             
                             // Base classes bit sizes should be a multiple of 8 bits in size

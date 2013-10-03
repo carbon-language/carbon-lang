@@ -76,7 +76,7 @@ GetValidTypeName_Impl (const ConstString& type)
 {
     int strip_len = 0;
     
-    if (type == false)
+    if ((bool)type == false)
         return type;
     
     const char* type_cstr = type.AsCString();

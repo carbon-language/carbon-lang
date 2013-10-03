@@ -361,7 +361,7 @@ bool
 SearchFilterByModule::ModulePasses (const FileSpec &spec)
 {
     // Do a full match only if "spec" has a directory
-    const bool full_match = spec.GetDirectory();
+    const bool full_match = (bool)spec.GetDirectory();
     return FileSpec::Equal(spec, m_module_spec, full_match);
 }
 
@@ -409,7 +409,7 @@ SearchFilterByModule::Search (Searcher &searcher)
     for (size_t i = 0; i < num_modules; i++)
     {
         Module* module = target_modules.GetModulePointerAtIndexUnlocked(i);
-        const bool full_match = m_module_spec.GetDirectory();
+        const bool full_match = (bool)m_module_spec.GetDirectory();
         if (FileSpec::Equal (m_module_spec, module->GetFileSpec(), full_match))
         {
             SymbolContext matchingContext(m_target_sp, module->shared_from_this());

@@ -319,7 +319,7 @@ bool
 ConstString::GetMangledCounterpart (ConstString &counterpart) const
 {
     counterpart.m_string = StringPool().GetMangledCounterpart(m_string);
-    return counterpart;
+    return (bool)counterpart;
 }
 
 void

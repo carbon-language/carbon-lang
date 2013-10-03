@@ -363,7 +363,7 @@ TargetList::FindTargetWithExecutableAndArchitecture
 {
     Mutex::Locker locker (m_target_list_mutex);
     TargetSP target_sp;
-    bool full_match = exe_file_spec.GetDirectory();
+    bool full_match = (bool)exe_file_spec.GetDirectory();
 
     collection::const_iterator pos, end = m_target_list.end();
     for (pos = m_target_list.begin(); pos != end; ++pos)

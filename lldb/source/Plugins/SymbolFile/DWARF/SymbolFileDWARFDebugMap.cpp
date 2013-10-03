@@ -847,7 +847,7 @@ SymbolFileDWARFDebugMap::ResolveSymbolContext (const FileSpec& file_spec, uint32
             if (GetFileSpecForSO (i, so_file_spec))
             {
                 // Match the full path if the incoming file_spec has a directory (not just a basename)
-                const bool full_match = file_spec.GetDirectory();
+                const bool full_match = (bool)file_spec.GetDirectory();
                 resolve = FileSpec::Equal (file_spec, so_file_spec, full_match);
             }
         }
