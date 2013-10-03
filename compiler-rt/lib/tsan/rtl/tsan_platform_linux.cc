@@ -19,6 +19,7 @@
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_libc.h"
 #include "sanitizer_common/sanitizer_procmaps.h"
+#include "sanitizer_common/sanitizer_stoptheworld.h"
 #include "tsan_platform.h"
 #include "tsan_rtl.h"
 #include "tsan_flags.h"
@@ -106,8 +107,21 @@ void WriteMemoryProfile(char *buf, uptr buf_size) {
       mi.arena >> 20, mi.hblkhd >> 20, mi.fordblks >> 20, mi.keepcost >> 20);
 }
 
-void FlushShadowMemory() {
+uptr GetRSS() {
+  uptr mem[7] = {};
+  __sanitizer::GetMemoryProfile(FillProfileCallback, mem, 7);
+  return mem[6];
+}
+
+
+void FlushShadowMemoryCallback(
+    const SuspendedThreadsList &suspended_threads_list,
+    void *argument) {
   FlushUnneededShadowMemory(kLinuxShadowBeg, kLinuxShadowEnd - kLinuxShadowBeg);
+}
+
+void FlushShadowMemory() {
+  StopTheWorld(FlushShadowMemoryCallback, 0);
 }
 
 #ifndef TSAN_GO

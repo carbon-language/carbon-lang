@@ -134,6 +134,7 @@ static inline uptr AlternativeAddress(uptr addr) {
 
 void FlushShadowMemory();
 void WriteMemoryProfile(char *buf, uptr buf_size);
+uptr GetRSS();
 
 const char *InitializePlatform();
 void FinalizePlatform();

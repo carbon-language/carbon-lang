@@ -59,6 +59,7 @@ void InitializeFlags(Flags *f, const char *env) {
   f->profile_memory = "";
   f->flush_memory_ms = 0;
   f->flush_symbolizer_ms = 5000;
+  f->memory_limit_mb = 0;
   f->stop_on_start = false;
   f->running_on_valgrind = false;
   f->external_symbolizer_path = "";
@@ -92,6 +93,7 @@ void InitializeFlags(Flags *f, const char *env) {
   ParseFlag(env, &f->profile_memory, "profile_memory");
   ParseFlag(env, &f->flush_memory_ms, "flush_memory_ms");
   ParseFlag(env, &f->flush_symbolizer_ms, "flush_symbolizer_ms");
+  ParseFlag(env, &f->memory_limit_mb, "memory_limit_mb");
   ParseFlag(env, &f->stop_on_start, "stop_on_start");
   ParseFlag(env, &f->external_symbolizer_path, "external_symbolizer_path");
   ParseFlag(env, &f->history_size, "history_size");
