@@ -4171,30 +4171,6 @@ DeclContext *Sema::FindInstantiatedContext(SourceLocation Loc, DeclContext* DC,
 NamedDecl *Sema::FindInstantiatedDecl(SourceLocation Loc, NamedDecl *D,
                           const MultiLevelTemplateArgumentList &TemplateArgs) {
   DeclContext *ParentDC = D->getDeclContext();
-
-  // If we have a parameter from a non-dependent context with a non-dependent
-  // type it obviously can not be mapped to a different instantiated decl.
-  // Consider the code below, with explicit return types, when N gets
-  // specialized ...:
-  // template<class T> void fooT(T t) {
-  //   auto L = [](auto a) -> void { 
-  //     auto M = [](char b) -> void {
-  //       auto N = [](auto c) -> void {
-  //         int x = sizeof(a) + sizeof(b) +
-  //                 sizeof(c);
-  //       };  
-  //       N('a');
-  //     };    
-  //   };
-  //   L(3.14);
-  // }
-  // fooT('a'); 
-  // ... without this check below, findInstantiationOf fails with
-  // an assertion violation.
-  if (isa<ParmVarDecl>(D) && !ParentDC->isDependentContext() &&
-      !cast<ParmVarDecl>(D)->getType()->isInstantiationDependentType())
-    return D;
-
   if (isa<ParmVarDecl>(D) || isa<NonTypeTemplateParmDecl>(D) ||
       isa<TemplateTypeParmDecl>(D) || isa<TemplateTemplateParmDecl>(D) ||
       (ParentDC->isFunctionOrMethod() && ParentDC->isDependentContext()) ||
