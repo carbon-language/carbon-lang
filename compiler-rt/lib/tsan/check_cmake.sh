@@ -11,3 +11,4 @@ ninja check-sanitizer
 ninja check-tsan
 ninja check-asan
 ninja check-msan
+ninja check-lsan
