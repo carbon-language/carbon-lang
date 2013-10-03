@@ -1110,8 +1110,8 @@ void DwarfDebug::finalizeModuleInfo() {
 
 void DwarfDebug::endSections() {
    // Filter labels by section.
-  for (size_t n = 0; n < Labels.size(); n++) {
-    const SymbolCU &SCU = Labels[n];
+  for (size_t n = 0; n < ArangeLabels.size(); n++) {
+    const SymbolCU &SCU = ArangeLabels[n];
     if (SCU.Sym->isInSection()) {
       // Make a note of this symbol and it's section.
       const MCSection *Section = &SCU.Sym->getSection();
@@ -1138,10 +1138,7 @@ void DwarfDebug::endSections() {
     }
 
     // Insert a final terminator.
-    SymbolCU Entry;
-    Entry.CU = NULL;
-    Entry.Sym = Sym;
-    SectionMap[Section].push_back(Entry);
+    SectionMap[Section].push_back(SymbolCU(NULL, Sym));
   }
 }
 

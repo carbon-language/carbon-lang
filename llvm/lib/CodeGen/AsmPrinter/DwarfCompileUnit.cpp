@@ -181,12 +181,6 @@ void CompileUnit::addLabel(DIE *Die, uint16_t Attribute, uint16_t Form,
                            const MCSymbol *Label) {
   DIEValue *Value = new (DIEValueAllocator) DIELabel(Label);
   Die->addValue(Attribute, Form, Value);
-
-  SymbolCU Entry;
-  Entry.CU = this;
-  Entry.Sym = Label;
-
-  DD->addLabel(Entry);
 }
 
 /// addLabelAddress - Add a dwarf label attribute data and value using
@@ -194,13 +188,8 @@ void CompileUnit::addLabel(DIE *Die, uint16_t Attribute, uint16_t Form,
 ///
 void CompileUnit::addLabelAddress(DIE *Die, uint16_t Attribute,
                                   MCSymbol *Label) {
-  if (Label) {
-    SymbolCU Entry;
-    Entry.CU = this;
-    Entry.Sym = Label;
-
-    DD->addLabel(Entry);
-  }
+  if (Label)
+    DD->addArangeLabel(SymbolCU(this, Label));
 
   if (!DD->useSplitDwarf()) {
     if (Label != NULL) {
@@ -221,6 +210,7 @@ void CompileUnit::addLabelAddress(DIE *Die, uint16_t Attribute,
 /// form given and an op of either DW_FORM_addr or DW_FORM_GNU_addr_index.
 ///
 void CompileUnit::addOpAddress(DIE *Die, const MCSymbol *Sym) {
+  DD->addArangeLabel(SymbolCU(this, Sym));
   if (!DD->useSplitDwarf()) {
     addUInt(Die, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_addr);
     addLabel(Die, 0, dwarf::DW_FORM_udata, Sym);

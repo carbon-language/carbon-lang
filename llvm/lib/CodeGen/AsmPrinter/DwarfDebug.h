@@ -303,6 +303,7 @@ public:
 
 /// \brief Helper used to pair up a symbol and it's DWARF compile unit.
 struct SymbolCU {
+  SymbolCU(CompileUnit *CU, const MCSymbol *Sym) : Sym(Sym), CU(CU) {}
   const MCSymbol *Sym;
   CompileUnit *CU;
 };
@@ -363,8 +364,8 @@ class DwarfDebug {
   // separated by a zero byte, mapped to a unique id.
   StringMap<unsigned, BumpPtrAllocator&> SourceIdMap;
 
-  // List of all labels used in the output.
-  std::vector<SymbolCU> Labels;
+  // List of all labels used in aranges generation.
+  std::vector<SymbolCU> ArangeLabels;
 
   // Size of each symbol emitted (for those symbols that have a specific size).
   DenseMap <const MCSymbol *, uint64_t> SymSize;
@@ -731,7 +732,7 @@ public:
   void addTypeUnitType(DIE *Die) { TypeUnits.push_back(Die); }
 
   /// \brief Add a label so that arange data can be generated for it.
-  void addLabel(SymbolCU SCU) { Labels.push_back(SCU); }
+  void addArangeLabel(SymbolCU SCU) { ArangeLabels.push_back(SCU); }
 
   /// \brief For symbols that have a size designated (e.g. common symbols),
   /// this tracks that size.
