@@ -79,7 +79,8 @@ namespace X86Local {
     DC = 7, DD = 8, DE = 9, DF = 10,
     XD = 11,  XS = 12,
     T8 = 13,  P_TA = 14,
-    A6 = 15,  A7 = 16, T8XD = 17, T8XS = 18, TAXD = 19
+    A6 = 15,  A7 = 16, T8XD = 17, T8XS = 18, TAXD = 19,
+    XOP8 = 20, XOP9 = 21, XOPA = 22
   };
 }
 
@@ -133,6 +134,10 @@ namespace X86Local {
 
 #define THREE_BYTE_38_EXTENSION_TABLES \
   EXTENSION_TABLE(F3)
+
+#define XOP9_MAP_EXTENSION_TABLES \
+  EXTENSION_TABLE(01)             \
+  EXTENSION_TABLE(02)
 
 using namespace X86Disassembler;
 
@@ -908,6 +913,7 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
   uint8_t       opcodeToSet = 0;
 
   switch (Prefix) {
+  default: llvm_unreachable("Invalid prefix!");
   // Extended two-byte opcodes can start with f2 0f, f3 0f, or 0f
   case X86Local::XD:
   case X86Local::XS:
@@ -1021,6 +1027,63 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
       filter = new DumbFilter();
     opcodeToSet = Opcode;
     break;
+  case X86Local::XOP8:
+    opcodeType = XOP8_MAP;
+    if (needsModRMForDecode(Form))
+      filter = new ModFilter(isRegFormat(Form));
+    else
+      filter = new DumbFilter();
+    opcodeToSet = Opcode;
+    break;
+  case X86Local::XOP9:
+    opcodeType = XOP9_MAP;
+    switch (Opcode) {
+    default:
+      if (needsModRMForDecode(Form))
+        filter = new ModFilter(isRegFormat(Form));
+      else
+        filter = new DumbFilter();
+      break;
+#define EXTENSION_TABLE(n) case 0x##n:
+    XOP9_MAP_EXTENSION_TABLES
+#undef EXTENSION_TABLE
+      switch (Form) {
+      default:
+        llvm_unreachable("Unhandled XOP9 extended opcode");
+      case X86Local::MRM0r:
+      case X86Local::MRM1r:
+      case X86Local::MRM2r:
+      case X86Local::MRM3r:
+      case X86Local::MRM4r:
+      case X86Local::MRM5r:
+      case X86Local::MRM6r:
+      case X86Local::MRM7r:
+        filter = new ExtendedFilter(true, Form - X86Local::MRM0r);
+        break;
+      case X86Local::MRM0m:
+      case X86Local::MRM1m:
+      case X86Local::MRM2m:
+      case X86Local::MRM3m:
+      case X86Local::MRM4m:
+      case X86Local::MRM5m:
+      case X86Local::MRM6m:
+      case X86Local::MRM7m:
+        filter = new ExtendedFilter(false, Form - X86Local::MRM0m);
+        break;
+      MRM_MAPPING
+      } // switch (Form)
+      break;
+    } // switch (Opcode)
+    opcodeToSet = Opcode;
+    break;
+  case X86Local::XOPA:
+    opcodeType = XOPA_MAP;
+    if (needsModRMForDecode(Form))
+      filter = new ModFilter(isRegFormat(Form));
+    else
+      filter = new DumbFilter();
+    opcodeToSet = Opcode;
+    break;
   case X86Local::D8:
   case X86Local::D9:
   case X86Local::DA:
@@ -1041,7 +1104,7 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
     opcodeToSet = 0xd8 + (Prefix - X86Local::D8);
     break;
   case X86Local::REP:
-  default:
+  case 0:
     opcodeType = ONEBYTE;
     switch (Opcode) {
 #define EXTENSION_TABLE(n) case 0x##n:

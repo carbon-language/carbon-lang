@@ -40,7 +40,10 @@ private:
   /// [3] three-byte opcodes of the form 0f 3a __
   /// [4] three-byte opcodes of the form 0f a6 __
   /// [5] three-byte opcodes of the form 0f a7 __
-  ContextDecision* Tables[6];
+  /// [6] XOP8 map opcode
+  /// [7] XOP9 map opcode
+  /// [8] XOPA map opcode
+  ContextDecision* Tables[9];
 
   // Table of ModRM encodings.
   typedef std::map<std::vector<unsigned>, unsigned> ModRMMapTy;

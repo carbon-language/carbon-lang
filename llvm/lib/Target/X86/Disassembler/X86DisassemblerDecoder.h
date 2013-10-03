@@ -59,6 +59,15 @@ extern "C" {
 #define lFromVEX2of2(vex)       (((vex) & 0x4) >> 2)
 #define ppFromVEX2of2(vex)      ((vex) & 0x3)
 
+#define rFromXOP2of3(xop)       (((~(xop)) & 0x80) >> 7)
+#define xFromXOP2of3(xop)       (((~(xop)) & 0x40) >> 6)
+#define bFromXOP2of3(xop)       (((~(xop)) & 0x20) >> 5)
+#define mmmmmFromXOP2of3(xop)   ((xop) & 0x1f)
+#define wFromXOP3of3(xop)       (((xop) & 0x80) >> 7)
+#define vvvvFromXOP3of3(vex)    (((~(vex)) & 0x78) >> 3)
+#define lFromXOP3of3(xop)       (((xop) & 0x4) >> 2)
+#define ppFromXOP3of3(xop)      ((xop) & 0x3)
+
 /*
  * These enums represent Intel registers for use by the decoder.
  */
@@ -444,8 +453,14 @@ typedef enum {
 typedef enum {
   VEX_LOB_0F = 0x1,
   VEX_LOB_0F38 = 0x2,
-  VEX_LOB_0F3A = 0x3
+  VEX_LOB_0F3A = 0x3,
 } VEXLeadingOpcodeByte;
+
+typedef enum {
+  XOP_MAP_SELECT_8 = 0x8,
+  XOP_MAP_SELECT_9 = 0x9,
+  XOP_MAP_SELECT_A = 0xA
+} XOPMapSelect;
 
 /*
  * VEXPrefixCode - Possible values for the VEX.pp field
@@ -457,6 +472,13 @@ typedef enum {
   VEX_PREFIX_F3 = 0x2,
   VEX_PREFIX_F2 = 0x3
 } VEXPrefixCode;
+
+typedef enum {
+  TYPE_NO_VEX_XOP = 0x0,
+  TYPE_VEX_2B = 0x1,
+  TYPE_VEX_3B = 0x2,
+  TYPE_XOP = 0x3
+} VEXXOPType;
 
 typedef uint8_t BOOL;
 
@@ -514,10 +536,10 @@ struct InternalInstruction {
   uint8_t prefixPresent[0x100];
   /* contains the location (for use with the reader) of the prefix byte */
   uint64_t prefixLocations[0x100];
-  /* The value of the VEX prefix, if present */
-  uint8_t vexPrefix[3];
+  /* The value of the VEX/XOP prefix, if present */
+  uint8_t vexXopPrefix[3];
   /* The length of the VEX prefix (0 if not present) */
-  uint8_t vexSize;
+  VEXXOPType vexXopType;
   /* The value of the REX prefix, if present */
   uint8_t rexPrefix;
   /* The location where a mandatory prefix would have to be (i.e., right before

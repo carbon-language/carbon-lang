@@ -1912,7 +1912,7 @@ let Predicates = [HasBMI2] in {
 //===----------------------------------------------------------------------===//
 // TBM Instructions
 //
-let isAsmParserOnly = 1, Predicates = [HasTBM], Defs = [EFLAGS] in {
+let Predicates = [HasTBM], Defs = [EFLAGS] in {
 
 multiclass tbm_ternary_imm_intr<bits<8> opc, RegisterClass RC, string OpcodeStr,
                                 X86MemOperand x86memop, PatFrag ld_frag,
@@ -1987,7 +1987,7 @@ defm T1MSKC  : tbm_binary_intr<0x01, "t1mskc", MRM7r, MRM7m,
 defm TZMSK   : tbm_binary_intr<0x01, "tzmsk", MRM4r, MRM4m,
                                int_x86_tbm_tzmsk_u32,
                                int_x86_tbm_tzmsk_u64>;
-} // isAsmParserOnly, HasTBM, EFLAGS
+} // HasTBM, EFLAGS
 
 //===----------------------------------------------------------------------===//
 // Pattern fragments to auto generate TBM instructions.
