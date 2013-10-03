@@ -808,9 +808,16 @@ DIE *CompileUnit::getOrCreateContextDIE(DIDescriptor Context) {
 
 /// addToContextOwner - Add Die into the list of its context owner's children.
 void CompileUnit::addToContextOwner(DIE *Die, DIDescriptor Context) {
-  if (DIE *ContextDIE = getOrCreateContextDIE(Context))
+  assert(!Die->getParent());
+  if (DIE *ContextDIE = getOrCreateContextDIE(Context)) {
+    if (Die->getParent()) {
+      // While creating the context, if this is a type member, we will have
+      // added the child to the context already.
+      assert(Die->getParent() == ContextDIE);
+      return;
+    }
     ContextDIE->addChild(Die);
-  else
+  } else
     addDie(Die);
 }
 
@@ -1124,6 +1131,7 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
           ElemDie = createStaticMemberDIE(DDTy);
         else
           ElemDie = createMemberDIE(DDTy);
+        Buffer.addChild(ElemDie);
       } else if (Element.isObjCProperty()) {
         DIObjCProperty Property(Element);
         ElemDie = new DIE(Property.getTag());
@@ -1159,9 +1167,9 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
           Entry = createDIEEntry(ElemDie);
           insertDIEEntry(Element, Entry);
         }
+        Buffer.addChild(ElemDie);
       } else
         continue;
-      Buffer.addChild(ElemDie);
     }
 
     if (CTy.isAppleBlockExtension())
@@ -1171,8 +1179,6 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
     if (DIDescriptor(ContainingType).isCompositeType())
       addDIEEntry(&Buffer, dwarf::DW_AT_containing_type, dwarf::DW_FORM_ref4,
                   getOrCreateTypeDIE(DIType(ContainingType)));
-    else
-      addToContextOwner(&Buffer, DD->resolve(CTy.getContext()));
 
     if (CTy.isObjcClassComplete())
       addFlag(&Buffer, dwarf::DW_AT_APPLE_objc_complete_type);

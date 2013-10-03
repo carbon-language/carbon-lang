@@ -169,10 +169,7 @@ namespace llvm {
     /// addChild - Add a child to the DIE.
     ///
     void addChild(DIE *Child) {
-      if (Child->getParent()) {
-        assert (Child->getParent() == this && "Unexpected DIE Parent!");
-        return;
-      }
+      assert(!Child->getParent());
       Abbrev.setChildrenFlag(dwarf::DW_CHILDREN_yes);
       Children.push_back(Child);
       Child->Parent = this;

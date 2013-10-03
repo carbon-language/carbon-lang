@@ -838,12 +838,6 @@ void DwarfDebug::constructSubprogramDIE(CompileUnit *TheCU,
 
   DIE *SubprogramDie = TheCU->getOrCreateSubprogramDIE(SP);
 
-  // Add to map.
-  TheCU->insertDIE(N, SubprogramDie);
-
-  // Add to context owner.
-  TheCU->addToContextOwner(SubprogramDie, SP.getContext());
-
   // Expose as a global name.
   TheCU->addGlobalName(SP.getName(), SubprogramDie);
 }
