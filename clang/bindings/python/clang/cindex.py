@@ -1487,6 +1487,7 @@ TypeKind.VECTOR = TypeKind(113)
 TypeKind.INCOMPLETEARRAY = TypeKind(114)
 TypeKind.VARIABLEARRAY = TypeKind(115)
 TypeKind.DEPENDENTSIZEDARRAY = TypeKind(116)
+TypeKind.MEMBERPOINTER = TypeKind(117)
 
 class Type(Structure):
     """
@@ -1661,6 +1662,12 @@ class Type(Structure):
         Retrieve the size of the constant array.
         """
         return conf.lib.clang_getArraySize(self)
+
+    def get_class_type(self):
+        """
+        Retrieve the class type of the member pointer type.
+        """
+        return conf.lib.clang_Type_getClassType(self)
 
     def get_align(self):
         """
@@ -2693,6 +2700,11 @@ functionList = [
   ("clang_getArraySize",
    [Type],
    c_longlong),
+
+  ("clang_Type_getClassType",
+   [Type],
+   Type,
+   Type.from_result),
 
   ("clang_getFieldDeclBitWidth",
    [Cursor],

@@ -34,6 +34,11 @@ T tbar(int[size]);
 
 void foo(int i, int incomplete_array[]) { int variable_array[i]; }
 
+struct Blob {
+  int i;
+};
+int Blob::*member_pointer;
+
 // RUN: c-index-test -test-print-type %s | FileCheck %s
 // CHECK: Namespace=outer:1:11 (Definition) [type=] [typekind=Invalid] [isPOD=0]
 // CHECK: ClassTemplate=Foo:4:8 (Definition) [type=] [typekind=Invalid] [isPOD=0]
@@ -73,3 +78,4 @@ void foo(int i, int incomplete_array[]) { int variable_array[i]; }
 // CHECK: ParmDecl=:33:11 (Definition) [type=int [size]] [typekind=DependentSizedArray] [isPOD=0]
 // CHECK: ParmDecl=incomplete_array:35:21 (Definition) [type=int []] [typekind=IncompleteArray] [isPOD=1]
 // CHECK: VarDecl=variable_array:35:47 (Definition) [type=int [i]] [typekind=VariableArray] [isPOD=1]
+// CHECK: VarDecl=member_pointer:40:12 (Definition) [type=int Blob::*] [typekind=MemberPointer] [isPOD=1]

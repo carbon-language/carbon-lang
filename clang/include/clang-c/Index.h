@@ -2678,7 +2678,8 @@ enum CXTypeKind {
   CXType_Vector = 113,
   CXType_IncompleteArray = 114,
   CXType_VariableArray = 115,
-  CXType_DependentSizedArray = 116
+  CXType_DependentSizedArray = 116,
+  CXType_MemberPointer = 117
 };
 
 /**
@@ -2967,6 +2968,13 @@ enum CXTypeLayoutError {
  *   CXTypeLayoutError_NotConstantSize is returned.
  */
 CINDEX_LINKAGE long long clang_Type_getAlignOf(CXType T);
+
+/**
+ * \brief Return the class type of an member pointer type.
+ *
+ * If a non-member-pointer type is passed in, an invalid type is returned.
+ */
+CINDEX_LINKAGE CXType clang_Type_getClassType(CXType T);
 
 /**
  * \brief Return the size of a type in bytes as per C++[expr.sizeof] standard.

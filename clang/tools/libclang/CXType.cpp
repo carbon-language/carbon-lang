@@ -89,6 +89,7 @@ static CXTypeKind GetTypeKind(QualType T) {
     TKCASE(VariableArray);
     TKCASE(DependentSizedArray);
     TKCASE(Vector);
+    TKCASE(MemberPointer);
     default:
       return CXType_Unexposed;
   }
@@ -365,6 +366,9 @@ CXType clang_getPointeeType(CXType CT) {
     case Type::ObjCObjectPointer:
       T = cast<ObjCObjectPointerType>(TP)->getPointeeType();
       break;
+    case Type::MemberPointer:
+      T = cast<MemberPointerType>(TP)->getPointeeType();
+      break;
     default:
       T = QualType();
       break;
@@ -478,6 +482,7 @@ CXString clang_getTypeKindSpelling(enum CXTypeKind K) {
     TKIND(VariableArray);
     TKIND(DependentSizedArray);
     TKIND(Vector);
+    TKIND(MemberPointer);
   }
 #undef TKIND
   return cxstring::createRef(s);
@@ -705,6 +710,17 @@ long long clang_Type_getAlignOf(CXType T) {
   // if (QT->isFunctionType()) return 4; // Bug #15511 - should be 1
   // if (QT->isVoidType()) return 1;
   return Ctx.getTypeAlignInChars(QT).getQuantity();
+}
+
+CXType clang_Type_getClassType(CXType CT) {
+  QualType ET = QualType();
+  QualType T = GetQualType(CT);
+  const Type *TP = T.getTypePtrOrNull();
+
+  if (TP && TP->getTypeClass() == Type::MemberPointer) {
+    ET = QualType(cast<MemberPointerType> (TP)->getClass(), 0);
+  }
+  return MakeCXType(ET, GetTU(CT));
 }
 
 long long clang_Type_getSizeOf(CXType T) {
