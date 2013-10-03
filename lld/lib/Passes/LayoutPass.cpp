@@ -527,7 +527,7 @@ void LayoutPass::perform(MutableFile &mergedFile) {
   });
 
   // sort the atoms
-  std::sort(atomRange.begin(), atomRange.end(), _compareAtoms);
+  std::stable_sort(atomRange.begin(), atomRange.end(), _compareAtoms);
 
   DEBUG({
     llvm::dbgs() << "sorted atoms:\n";
