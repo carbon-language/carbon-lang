@@ -417,8 +417,10 @@ static ld_plugin_status all_symbols_read_hook(void) {
     bool err = lto_codegen_write_merged_modules(code_gen, path.c_str());
     if (err)
       (*message)(LDPL_FATAL, "Failed to write the output file.");
-    if (options::generate_bc_file == options::BC_ONLY)
+    if (options::generate_bc_file == options::BC_ONLY) {
+      lto_codegen_dispose(code_gen);
       exit(0);
+    }
   }
   const char *objPath;
   if (lto_codegen_compile_to_file(code_gen, &objPath)) {
