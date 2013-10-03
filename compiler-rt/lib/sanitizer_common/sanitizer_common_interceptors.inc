@@ -19,6 +19,7 @@
 //   COMMON_INTERCEPTOR_FD_ACQUIRE
 //   COMMON_INTERCEPTOR_FD_RELEASE
 //   COMMON_INTERCEPTOR_SET_THREAD_NAME
+//   COMMON_INTERCEPTOR_ON_EXIT
 //===----------------------------------------------------------------------===//
 #include "interception/interception.h"
 #include "sanitizer_platform_interceptors.h"
@@ -2159,6 +2160,20 @@ INTERCEPTOR(char **, backtrace_symbols, void **buffer, int size) {
 #define INIT_BACKTRACE
 #endif
 
+#if SANITIZER_INTERCEPT__EXIT
+INTERCEPTOR(void, _exit, int status) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, _exit, status);
+  int status1 = COMMON_INTERCEPTOR_ON_EXIT(ctx);
+  if (status == 0)
+    status = status1;
+  REAL(_exit)(status);
+}
+#define INIT__EXIT INTERCEPT_FUNCTION(_exit);
+#else
+#define INIT__EXIT
+#endif
+
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
   INIT_STRCMP;                             \
   INIT_STRNCMP;                            \
@@ -2235,4 +2250,6 @@ INTERCEPTOR(char **, backtrace_symbols, void **buffer, int size) {
   INIT_SIGSETOPS;                          \
   INIT_SIGPENDING;                         \
   INIT_SIGPROCMASK;                        \
-  INIT_BACKTRACE;
+  INIT_BACKTRACE;                          \
+  INIT__EXIT;                              \
+/**/

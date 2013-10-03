@@ -94,6 +94,11 @@ void SetThreadName(const char *name) {
     asanThreadRegistry().SetThreadName(t->tid(), name);
 }
 
+static int OnExit() {
+  // FIXME: ask frontend whether we need to return failure.
+  return 0;
+}
+
 }  // namespace __asan
 
 // ---------------------- Wrappers ---------------- {{{1
@@ -126,6 +131,7 @@ DECLARE_REAL_AND_INTERCEPTOR(void, free, void *)
   } while (false)
 #define COMMON_INTERCEPTOR_SET_THREAD_NAME(ctx, name) SetThreadName(name)
 #define COMMON_INTERCEPTOR_BLOCK_REAL(name) REAL(name)
+#define COMMON_INTERCEPTOR_ON_EXIT(ctx) OnExit()
 #include "sanitizer_common/sanitizer_common_interceptors.inc"
 
 #define COMMON_SYSCALL_PRE_READ_RANGE(p, s) ASAN_READ_RANGE(p, s)

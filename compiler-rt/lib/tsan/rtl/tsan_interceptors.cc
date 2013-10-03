@@ -1852,6 +1852,12 @@ TSAN_INTERCEPTOR(int, fork, int fake) {
   return pid;
 }
 
+static int OnExit(ThreadState *thr) {
+  int status = Finalize(thr);
+  REAL(fflush)(0);
+  return status;
+}
+
 struct TsanInterceptorContext {
   ThreadState *thr;
   const uptr caller_pc;
@@ -1893,6 +1899,8 @@ struct TsanInterceptorContext {
 #define COMMON_INTERCEPTOR_SET_THREAD_NAME(ctx, name) \
   ThreadSetName(((TsanInterceptorContext *) ctx)->thr, name)
 #define COMMON_INTERCEPTOR_BLOCK_REAL(name) BLOCK_REAL(name)
+#define COMMON_INTERCEPTOR_ON_EXIT(ctx) \
+  OnExit(((TsanInterceptorContext *) ctx)->thr)
 #include "sanitizer_common/sanitizer_common_interceptors.inc"
 
 #define TSAN_SYSCALL() \
@@ -1958,19 +1966,10 @@ static void syscall_post_fork(uptr pc, int res) {
   syscall_post_fork(GET_CALLER_PC(), res)
 #include "sanitizer_common/sanitizer_common_syscalls.inc"
 
-TSAN_INTERCEPTOR(void, _exit, int status) {
-  ThreadState * thr = cur_thread();
-  int status1 = Finalize(thr);
-  REAL(fflush)(0);
-  if (status == 0)
-    status = status1;
-  REAL(_exit)(status);
-}
-
 namespace __tsan {
 
 static void finalize(void *arg) {
-  ThreadState * thr = cur_thread();
+  ThreadState *thr = cur_thread();
   uptr pc = 0;
   atexit_ctx->exit(thr, pc);
   int status = Finalize(thr);

@@ -1112,6 +1112,11 @@ struct MSanInterceptorContext {
   bool in_interceptor_scope;
 };
 
+static int OnExit() {
+  // FIXME: ask frontend whether we need to return failure.
+  return 0;
+}
+
 // A version of CHECK_UNPOISED using a saved scope value. Used in common
 // interceptors.
 #define CHECK_UNPOISONED_CTX(ctx, x, n)                         \
@@ -1148,6 +1153,7 @@ struct MSanInterceptorContext {
   do {                                                \
   } while (false)  // FIXME
 #define COMMON_INTERCEPTOR_BLOCK_REAL(name) REAL(name)
+#define COMMON_INTERCEPTOR_ON_EXIT(ctx) OnExit()
 #include "sanitizer_common/sanitizer_common_interceptors.inc"
 
 #define COMMON_SYSCALL_PRE_READ_RANGE(p, s) CHECK_UNPOISONED(p, s)
