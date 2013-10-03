@@ -1958,7 +1958,26 @@ static void syscall_post_fork(uptr pc, int res) {
   syscall_post_fork(GET_CALLER_PC(), res)
 #include "sanitizer_common/sanitizer_common_syscalls.inc"
 
+TSAN_INTERCEPTOR(void, _exit, int status) {
+  ThreadState * thr = cur_thread();
+  int status1 = Finalize(thr);
+  REAL(fflush)(0);
+  if (status == 0)
+    status = status1;
+  REAL(_exit)(status);
+}
+
 namespace __tsan {
+
+static void finalize(void *arg) {
+  ThreadState * thr = cur_thread();
+  uptr pc = 0;
+  atexit_ctx->exit(thr, pc);
+  int status = Finalize(thr);
+  REAL(fflush)(0);
+  if (status)
+    REAL(_exit)(status);
+}
 
 void ProcessPendingSignals(ThreadState *thr) {
   CHECK_EQ(thr->in_rtl, 0);
@@ -2007,16 +2026,6 @@ void ProcessPendingSignals(ThreadState *thr) {
   pthread_sigmask(SIG_SETMASK, &oldset, 0);
   CHECK_EQ(thr->in_signal_handler, true);
   thr->in_signal_handler = false;
-}
-
-static void finalize(void *arg) {
-  ThreadState * thr = cur_thread();
-  uptr pc = 0;
-  atexit_ctx->exit(thr, pc);
-  int status = Finalize(cur_thread());
-  REAL(fflush)(0);
-  if (status)
-    _exit(status);
 }
 
 static void unreachable() {
@@ -2199,6 +2208,7 @@ void InitializeInterceptors() {
   TSAN_INTERCEPT(dlclose);
   TSAN_INTERCEPT(on_exit);
   TSAN_INTERCEPT(__cxa_atexit);
+  TSAN_INTERCEPT(_exit);
 
   // Need to setup it, because interceptors check that the function is resolved.
   // But atexit is emitted directly into the module, so can't be resolved.

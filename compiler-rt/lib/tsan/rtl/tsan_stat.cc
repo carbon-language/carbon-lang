@@ -142,6 +142,7 @@ void StatOutput(u64 *stat) {
   name[StatInt_strcasecmp]               = "  strcasecmp                      ";
   name[StatInt_strncasecmp]              = "  strncasecmp                     ";
   name[StatInt_atexit]                   = "  atexit                          ";
+  name[StatInt__exit]                    = "  _exit                           ";
   name[StatInt___cxa_guard_acquire]      = "  __cxa_guard_acquire             ";
   name[StatInt___cxa_guard_release]      = "  __cxa_guard_release             ";
   name[StatInt___cxa_guard_abort]        = "  __cxa_guard_abort               ";

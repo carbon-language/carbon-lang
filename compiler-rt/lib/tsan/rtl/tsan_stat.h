@@ -139,6 +139,7 @@ enum StatType {
   StatInt_strstr,
   StatInt_strdup,
   StatInt_atexit,
+  StatInt__exit,
   StatInt___cxa_guard_acquire,
   StatInt___cxa_guard_release,
   StatInt___cxa_guard_abort,

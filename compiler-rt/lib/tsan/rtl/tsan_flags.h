@@ -75,6 +75,9 @@ struct Flags {
   int flush_memory_ms;
   // Flush symbolizer caches every X ms.
   int flush_symbolizer_ms;
+  // Resident memory limit in MB to aim at.
+  // If the process consumes more memory, then TSan will flush shadow memory.
+  int memory_limit_mb;
   // Stops on start until __tsan_resume() is called (for debugging).
   bool stop_on_start;
   // Controls whether RunningOnValgrind() returns true or false.
