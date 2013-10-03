@@ -121,6 +121,7 @@
 // RUN:     -fsee -fno-see                                                    \
 // RUN:     -ftracer -fno-tracer                                              \
 // RUN:     -funroll-all-loops -fno-unroll-all-loops                          \
+// RUN:     -fuse-ld=gold                                                     \
 // RUN:     -fno-builtin-foobar                                               \
 // RUN:     -fno-builtin-strcat -fno-builtin-strcpy                           \
 // RUN:     -fno-var-tracking                                                 \
