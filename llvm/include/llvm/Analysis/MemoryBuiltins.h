@@ -85,7 +85,7 @@ static inline CallInst *extractMallocCall(Value *I,
 /// isArrayMalloc - Returns the corresponding CallInst if the instruction
 /// is a call to malloc whose array size can be determined and the array size
 /// is not constant 1.  Otherwise, return NULL.
-const CallInst *isArrayMalloc(const Value *I, const DataLayout *TD,
+const CallInst *isArrayMalloc(const Value *I, const DataLayout *DL,
                               const TargetLibraryInfo *TLI);
 
 /// getMallocType - Returns the PointerType resulting from the malloc call.
@@ -107,7 +107,7 @@ Type *getMallocAllocatedType(const CallInst *CI, const TargetLibraryInfo *TLI);
 /// then return that multiple.  For non-array mallocs, the multiple is
 /// constant 1.  Otherwise, return NULL for mallocs whose array size cannot be
 /// determined.
-Value *getMallocArraySize(CallInst *CI, const DataLayout *TD,
+Value *getMallocArraySize(CallInst *CI, const DataLayout *DL,
                           const TargetLibraryInfo *TLI,
                           bool LookThroughSExt = false);
 
@@ -147,7 +147,7 @@ static inline CallInst *isFreeCall(Value *I, const TargetLibraryInfo *TLI) {
 /// underlying object pointed to by Ptr.
 /// If RoundToAlign is true, then Size is rounded up to the aligment of allocas,
 /// byval arguments, and global variables.
-bool getObjectSize(const Value *Ptr, uint64_t &Size, const DataLayout *TD,
+bool getObjectSize(const Value *Ptr, uint64_t &Size, const DataLayout *DL,
                    const TargetLibraryInfo *TLI, bool RoundToAlign = false);
 
 
@@ -159,7 +159,7 @@ typedef std::pair<APInt, APInt> SizeOffsetType;
 class ObjectSizeOffsetVisitor
   : public InstVisitor<ObjectSizeOffsetVisitor, SizeOffsetType> {
 
-  const DataLayout *TD;
+  const DataLayout *DL;
   const TargetLibraryInfo *TLI;
   bool RoundToAlign;
   unsigned IntTyBits;
@@ -173,7 +173,7 @@ class ObjectSizeOffsetVisitor
   }
 
 public:
-  ObjectSizeOffsetVisitor(const DataLayout *TD, const TargetLibraryInfo *TLI,
+  ObjectSizeOffsetVisitor(const DataLayout *DL, const TargetLibraryInfo *TLI,
                           LLVMContext &Context, bool RoundToAlign = false);
 
   SizeOffsetType compute(Value *V);
@@ -220,7 +220,7 @@ class ObjectSizeOffsetEvaluator
   typedef DenseMap<const Value*, WeakEvalType> CacheMapTy;
   typedef SmallPtrSet<const Value*, 8> PtrSetTy;
 
-  const DataLayout *TD;
+  const DataLayout *DL;
   const TargetLibraryInfo *TLI;
   LLVMContext &Context;
   BuilderTy Builder;
@@ -235,7 +235,7 @@ class ObjectSizeOffsetEvaluator
   SizeOffsetEvalType compute_(Value *V);
 
 public:
-  ObjectSizeOffsetEvaluator(const DataLayout *TD, const TargetLibraryInfo *TLI,
+  ObjectSizeOffsetEvaluator(const DataLayout *DL, const TargetLibraryInfo *TLI,
                             LLVMContext &Context);
   SizeOffsetEvalType compute(Value *V);
 

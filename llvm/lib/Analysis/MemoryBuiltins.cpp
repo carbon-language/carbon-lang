@@ -205,7 +205,7 @@ const CallInst *llvm::extractMallocCall(const Value *I,
   return isMallocLikeFn(I, TLI) ? dyn_cast<CallInst>(I) : 0;
 }
 
-static Value *computeArraySize(const CallInst *CI, const DataLayout *TD,
+static Value *computeArraySize(const CallInst *CI, const DataLayout *DL,
                                const TargetLibraryInfo *TLI,
                                bool LookThroughSExt = false) {
   if (!CI)
@@ -213,12 +213,12 @@ static Value *computeArraySize(const CallInst *CI, const DataLayout *TD,
 
   // The size of the malloc's result type must be known to determine array size.
   Type *T = getMallocAllocatedType(CI, TLI);
-  if (!T || !T->isSized() || !TD)
+  if (!T || !T->isSized() || !DL)
     return 0;
 
-  unsigned ElementSize = TD->getTypeAllocSize(T);
+  unsigned ElementSize = DL->getTypeAllocSize(T);
   if (StructType *ST = dyn_cast<StructType>(T))
-    ElementSize = TD->getStructLayout(ST)->getSizeInBytes();
+    ElementSize = DL->getStructLayout(ST)->getSizeInBytes();
 
   // If malloc call's arg can be determined to be a multiple of ElementSize,
   // return the multiple.  Otherwise, return NULL.
@@ -235,10 +235,10 @@ static Value *computeArraySize(const CallInst *CI, const DataLayout *TD,
 /// is a call to malloc whose array size can be determined and the array size
 /// is not constant 1.  Otherwise, return NULL.
 const CallInst *llvm::isArrayMalloc(const Value *I,
-                                    const DataLayout *TD,
+                                    const DataLayout *DL,
                                     const TargetLibraryInfo *TLI) {
   const CallInst *CI = extractMallocCall(I, TLI);
-  Value *ArraySize = computeArraySize(CI, TD, TLI);
+  Value *ArraySize = computeArraySize(CI, DL, TLI);
 
   if (ConstantInt *ConstSize = dyn_cast_or_null<ConstantInt>(ArraySize))
     if (ConstSize->isOne())
@@ -296,11 +296,11 @@ Type *llvm::getMallocAllocatedType(const CallInst *CI,
 /// then return that multiple.  For non-array mallocs, the multiple is
 /// constant 1.  Otherwise, return NULL for mallocs whose array size cannot be
 /// determined.
-Value *llvm::getMallocArraySize(CallInst *CI, const DataLayout *TD,
+Value *llvm::getMallocArraySize(CallInst *CI, const DataLayout *DL,
                                 const TargetLibraryInfo *TLI,
                                 bool LookThroughSExt) {
   assert(isMallocLikeFn(CI, TLI) && "getMallocArraySize and not malloc call");
-  return computeArraySize(CI, TD, TLI, LookThroughSExt);
+  return computeArraySize(CI, DL, TLI, LookThroughSExt);
 }
 
 
@@ -362,12 +362,12 @@ const CallInst *llvm::isFreeCall(const Value *I, const TargetLibraryInfo *TLI) {
 /// object size in Size if successful, and false otherwise.
 /// If RoundToAlign is true, then Size is rounded up to the aligment of allocas,
 /// byval arguments, and global variables.
-bool llvm::getObjectSize(const Value *Ptr, uint64_t &Size, const DataLayout *TD,
+bool llvm::getObjectSize(const Value *Ptr, uint64_t &Size, const DataLayout *DL,
                          const TargetLibraryInfo *TLI, bool RoundToAlign) {
-  if (!TD)
+  if (!DL)
     return false;
 
-  ObjectSizeOffsetVisitor Visitor(TD, TLI, Ptr->getContext(), RoundToAlign);
+  ObjectSizeOffsetVisitor Visitor(DL, TLI, Ptr->getContext(), RoundToAlign);
   SizeOffsetType Data = Visitor.compute(const_cast<Value*>(Ptr));
   if (!Visitor.bothKnown(Data))
     return false;
@@ -394,12 +394,12 @@ APInt ObjectSizeOffsetVisitor::align(APInt Size, uint64_t Align) {
   return Size;
 }
 
-ObjectSizeOffsetVisitor::ObjectSizeOffsetVisitor(const DataLayout *TD,
+ObjectSizeOffsetVisitor::ObjectSizeOffsetVisitor(const DataLayout *DL,
                                                  const TargetLibraryInfo *TLI,
                                                  LLVMContext &Context,
                                                  bool RoundToAlign)
-: TD(TD), TLI(TLI), RoundToAlign(RoundToAlign) {
-  IntegerType *IntTy = TD->getIntPtrType(Context);
+: DL(DL), TLI(TLI), RoundToAlign(RoundToAlign) {
+  IntegerType *IntTy = DL->getIntPtrType(Context);
   IntTyBits = IntTy->getBitWidth();
   Zero = APInt::getNullValue(IntTyBits);
 }
@@ -442,7 +442,7 @@ SizeOffsetType ObjectSizeOffsetVisitor::visitAllocaInst(AllocaInst &I) {
   if (!I.getAllocatedType()->isSized())
     return unknown();
 
-  APInt Size(IntTyBits, TD->getTypeAllocSize(I.getAllocatedType()));
+  APInt Size(IntTyBits, DL->getTypeAllocSize(I.getAllocatedType()));
   if (!I.isArrayAllocation())
     return std::make_pair(align(Size, I.getAlignment()), Zero);
 
@@ -461,7 +461,7 @@ SizeOffsetType ObjectSizeOffsetVisitor::visitArgument(Argument &A) {
     return unknown();
   }
   PointerType *PT = cast<PointerType>(A.getType());
-  APInt Size(IntTyBits, TD->getTypeAllocSize(PT->getElementType()));
+  APInt Size(IntTyBits, DL->getTypeAllocSize(PT->getElementType()));
   return std::make_pair(align(Size, A.getParamAlignment()), Zero);
 }
 
@@ -534,7 +534,7 @@ ObjectSizeOffsetVisitor::visitExtractValueInst(ExtractValueInst&) {
 SizeOffsetType ObjectSizeOffsetVisitor::visitGEPOperator(GEPOperator &GEP) {
   SizeOffsetType PtrData = compute(GEP.getPointerOperand());
   APInt Offset(IntTyBits, 0);
-  if (!bothKnown(PtrData) || !GEP.accumulateConstantOffset(*TD, Offset))
+  if (!bothKnown(PtrData) || !GEP.accumulateConstantOffset(*DL, Offset))
     return unknown();
 
   return std::make_pair(PtrData.first, PtrData.second + Offset);
@@ -550,7 +550,7 @@ SizeOffsetType ObjectSizeOffsetVisitor::visitGlobalVariable(GlobalVariable &GV){
   if (!GV.hasDefinitiveInitializer())
     return unknown();
 
-  APInt Size(IntTyBits, TD->getTypeAllocSize(GV.getType()->getElementType()));
+  APInt Size(IntTyBits, DL->getTypeAllocSize(GV.getType()->getElementType()));
   return std::make_pair(align(Size, GV.getAlignment()), Zero);
 }
 
@@ -586,12 +586,11 @@ SizeOffsetType ObjectSizeOffsetVisitor::visitInstruction(Instruction &I) {
   return unknown();
 }
 
-
-ObjectSizeOffsetEvaluator::ObjectSizeOffsetEvaluator(const DataLayout *TD,
-                                                   const TargetLibraryInfo *TLI,
+ObjectSizeOffsetEvaluator::ObjectSizeOffsetEvaluator(const DataLayout *DL,
+                                                     const TargetLibraryInfo *TLI,
                                                      LLVMContext &Context)
-: TD(TD), TLI(TLI), Context(Context), Builder(Context, TargetFolder(TD)) {
-  IntTy = TD->getIntPtrType(Context);
+: DL(DL), TLI(TLI), Context(Context), Builder(Context, TargetFolder(DL)) {
+  IntTy = DL->getIntPtrType(Context);
   Zero = ConstantInt::get(IntTy, 0);
 }
 
@@ -615,7 +614,7 @@ SizeOffsetEvalType ObjectSizeOffsetEvaluator::compute(Value *V) {
 }
 
 SizeOffsetEvalType ObjectSizeOffsetEvaluator::compute_(Value *V) {
-  ObjectSizeOffsetVisitor Visitor(TD, TLI, Context);
+  ObjectSizeOffsetVisitor Visitor(DL, TLI, Context);
   SizeOffsetType Const = Visitor.compute(V);
   if (Visitor.bothKnown(Const))
     return std::make_pair(ConstantInt::get(Context, Const.first),
@@ -675,7 +674,7 @@ SizeOffsetEvalType ObjectSizeOffsetEvaluator::visitAllocaInst(AllocaInst &I) {
   assert(I.isArrayAllocation());
   Value *ArraySize = I.getArraySize();
   Value *Size = ConstantInt::get(ArraySize->getType(),
-                                 TD->getTypeAllocSize(I.getAllocatedType()));
+                                 DL->getTypeAllocSize(I.getAllocatedType()));
   Size = Builder.CreateMul(Size, ArraySize);
   return std::make_pair(Size, Zero);
 }
@@ -727,7 +726,7 @@ ObjectSizeOffsetEvaluator::visitGEPOperator(GEPOperator &GEP) {
   if (!bothKnown(PtrData))
     return unknown();
 
-  Value *Offset = EmitGEPOffset(&Builder, *TD, &GEP, /*NoAssumptions=*/true);
+  Value *Offset = EmitGEPOffset(&Builder, *DL, &GEP, /*NoAssumptions=*/true);
   Offset = Builder.CreateAdd(PtrData.second, Offset);
   return std::make_pair(PtrData.first, Offset);
 }
