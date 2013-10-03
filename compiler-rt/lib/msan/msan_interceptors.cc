@@ -1112,10 +1112,14 @@ struct MSanInterceptorContext {
   bool in_interceptor_scope;
 };
 
-static int OnExit() {
+namespace __msan {
+
+int OnExit() {
   // FIXME: ask frontend whether we need to return failure.
   return 0;
 }
+
+}  // namespace __msan
 
 // A version of CHECK_UNPOISED using a saved scope value. Used in common
 // interceptors.

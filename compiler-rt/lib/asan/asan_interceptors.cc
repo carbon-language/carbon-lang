@@ -94,7 +94,7 @@ void SetThreadName(const char *name) {
     asanThreadRegistry().SetThreadName(t->tid(), name);
 }
 
-static int OnExit() {
+int OnExit() {
   // FIXME: ask frontend whether we need to return failure.
   return 0;
 }
