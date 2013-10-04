@@ -4,9 +4,6 @@
 ; RUN: llvm-lto -o %t3 -exported-symbol=main %t1
 ; RUN: llvm-nm %t3 | FileCheck %s -check-prefix=EXPORT
 
-; FIXME: we can now build LTO on windows, debug why this fails.
-; XFAIL: win32
-
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
 

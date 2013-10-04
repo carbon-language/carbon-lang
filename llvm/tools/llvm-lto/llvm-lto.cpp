@@ -136,7 +136,8 @@ int main(int argc, char **argv) {
       return 1;
     }
 
-    raw_fd_ostream FileStream(OutputFilename.c_str(), ErrorInfo);
+    raw_fd_ostream FileStream(OutputFilename.c_str(), ErrorInfo,
+                              sys::fs::F_Binary);
     if (!ErrorInfo.empty()) {
       errs() << argv[0] << ": error opening the file '" << OutputFilename
              << "': " << ErrorInfo << "\n";
