@@ -1,13 +1,17 @@
-; RUN: llc -march=mipsel -force-mips-long-branch < %s | FileCheck %s -check-prefix=O32
-; RUN: llc -march=mips64el -mcpu=mips64 -mattr=n64  -force-mips-long-branch < %s | FileCheck %s -check-prefix=N64
+; RUN: llc -march=mipsel -force-mips-long-branch -disable-mips-delay-filler < %s | FileCheck %s -check-prefix=O32
+; RUN: llc -march=mips64el -mcpu=mips64 -mattr=n64  -force-mips-long-branch -disable-mips-delay-filler < %s | FileCheck %s -check-prefix=N64
 
 @g0 = external global i32
 
 define void @foo1(i32 %s) nounwind {
 entry:
+; O32: nop
+; O32: addiu $sp, $sp, -8
 ; O32: bal
 ; O32: lui $1, 0
 ; O32: addiu $1, $1, {{[0-9]+}} 
+; N64: nop
+; N64: daddiu $sp, $sp, -16
 ; N64: lui $1, 0
 ; N64: daddiu $1, $1, 0
 ; N64: dsll $1, $1, 16
