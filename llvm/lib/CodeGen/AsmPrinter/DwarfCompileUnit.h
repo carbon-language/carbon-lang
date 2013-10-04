@@ -66,18 +66,18 @@ class CompileUnit {
 
   /// GlobalNames - A map of globally visible named entities for this unit.
   ///
-  StringMap<DIE*> GlobalNames;
+  StringMap<DIE *> GlobalNames;
 
   /// GlobalTypes - A map of globally visible types for this unit.
   ///
-  StringMap<DIE*> GlobalTypes;
+  StringMap<DIE *> GlobalTypes;
 
   /// AccelNames - A map of names for the name accelerator table.
   ///
-  StringMap<std::vector<DIE*> > AccelNames;
-  StringMap<std::vector<DIE*> > AccelObjC;
-  StringMap<std::vector<DIE*> > AccelNamespace;
-  StringMap<std::vector<std::pair<DIE*, unsigned> > > AccelTypes;
+  StringMap<std::vector<DIE *> > AccelNames;
+  StringMap<std::vector<DIE *> > AccelObjC;
+  StringMap<std::vector<DIE *> > AccelNamespace;
+  StringMap<std::vector<std::pair<DIE *, unsigned> > > AccelTypes;
 
   /// DIEBlocks - A list of all the DIEBlocks in use.
   std::vector<DIEBlock *> DIEBlocks;
@@ -146,9 +146,7 @@ public:
   /// specified debug variable.
   DIE *getDIE(const MDNode *N) const { return MDNodeToDieMap.lookup(N); }
 
-  DIEBlock *getDIEBlock() {
-    return new (DIEValueAllocator) DIEBlock();
-  }
+  DIEBlock *getDIEBlock() { return new (DIEValueAllocator) DIEBlock(); }
 
   /// insertDIE - Insert DIE into the map.
   void insertDIE(const MDNode *N, DIE *D) {
@@ -168,20 +166,14 @@ public:
 
   /// addDie - Adds or interns the DIE to the compile unit.
   ///
-  void addDie(DIE *Buffer) {
-    this->CUDie->addChild(Buffer);
-  }
+  void addDie(DIE *Buffer) { this->CUDie->addChild(Buffer); }
 
   // getIndexTyDie - Get an anonymous type for index type.
-  DIE *getIndexTyDie() {
-    return IndexTyDie;
-  }
+  DIE *getIndexTyDie() { return IndexTyDie; }
 
   // setIndexTyDie - Set D as anonymous type for index which can be reused
   // later.
-  void setIndexTyDie(DIE *D) {
-    IndexTyDie = D;
-  }
+  void setIndexTyDie(DIE *D) { IndexTyDie = D; }
 
   /// addFlag - Add a flag that is true to the DIE.
   void addFlag(DIE *Die, uint16_t Attribute);
@@ -204,8 +196,7 @@ public:
 
   /// addExpr - Add a Dwarf expression attribute data and value.
   ///
-  void addExpr(DIE *Die, uint16_t Attribute, uint16_t Form,
-               const MCExpr *Expr);
+  void addExpr(DIE *Die, uint16_t Attribute, uint16_t Form, const MCExpr *Expr);
 
   /// addLabel - Add a Dwarf label attribute data and value.
   ///
@@ -225,8 +216,8 @@ public:
 
   /// addDelta - Add a label delta attribute data and value.
   ///
-  void addDelta(DIE *Die, uint16_t Attribute, uint16_t Form,
-                const MCSymbol *Hi, const MCSymbol *Lo);
+  void addDelta(DIE *Die, uint16_t Attribute, uint16_t Form, const MCSymbol *Hi,
+                const MCSymbol *Lo);
 
   /// addDIEEntry - Add a DIE attribute data and value.
   ///
@@ -247,8 +238,8 @@ public:
 
   /// addAddress - Add an address attribute to a die based on the location
   /// provided.
-  void addAddress(DIE *Die, uint16_t Attribute,
-                  const MachineLocation &Location, bool Indirect = false);
+  void addAddress(DIE *Die, uint16_t Attribute, const MachineLocation &Location,
+                  bool Indirect = false);
 
   /// addConstantValue - Add constant value entry in variable DIE.
   void addConstantValue(DIE *Die, const MachineOperand &MO, DIType Ty);
@@ -327,23 +318,19 @@ public:
   void addPubTypes(DISubprogram SP);
 
   /// constructTypeDIE - Construct basic type die from DIBasicType.
-  void constructTypeDIE(DIE &Buffer,
-                        DIBasicType BTy);
+  void constructTypeDIE(DIE &Buffer, DIBasicType BTy);
 
   /// constructTypeDIE - Construct derived type die from DIDerivedType.
-  void constructTypeDIE(DIE &Buffer,
-                        DIDerivedType DTy);
+  void constructTypeDIE(DIE &Buffer, DIDerivedType DTy);
 
   /// constructTypeDIE - Construct type DIE from DICompositeType.
-  void constructTypeDIE(DIE &Buffer,
-                        DICompositeType CTy);
+  void constructTypeDIE(DIE &Buffer, DICompositeType CTy);
 
   /// constructSubrangeDIE - Construct subrange DIE from DISubrange.
   void constructSubrangeDIE(DIE &Buffer, DISubrange SR, DIE *IndexTy);
 
   /// constructArrayTypeDIE - Construct array type DIE from DICompositeType.
-  void constructArrayTypeDIE(DIE &Buffer,
-                             DICompositeType *CTy);
+  void constructArrayTypeDIE(DIE &Buffer, DICompositeType *CTy);
 
   /// constructEnumTypeDIE - Construct enum type DIE from DIEnumerator.
   DIE *constructEnumTypeDIE(DIEnumerator ETy);
