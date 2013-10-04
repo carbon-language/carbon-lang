@@ -87,9 +87,6 @@ class CompileUnit {
   /// corresponds to the MDNode mapped with the subprogram DIE.
   DenseMap<DIE *, const MDNode *> ContainingTypeMap;
 
-  /// Offset of the CUDie from beginning of debug info section.
-  unsigned DebugInfoOffset;
-
   /// getLowerBoundDefault - Return the default lower bound for an array. If the
   /// DWARF version doesn't handle the language, return -1.
   int64_t getDefaultLowerBound() const;
@@ -104,7 +101,6 @@ public:
   uint16_t getLanguage() const { return DICompileUnit(Node).getLanguage(); }
   const MDNode *getNode() const { return Node; }
   DIE *getCUDie() const { return CUDie.get(); }
-  unsigned getDebugInfoOffset() const { return DebugInfoOffset; }
   const StringMap<DIE *> &getGlobalNames() const { return GlobalNames; }
   const StringMap<DIE *> &getGlobalTypes() const { return GlobalTypes; }
 
@@ -122,7 +118,6 @@ public:
     return AccelTypes;
   }
 
-  void setDebugInfoOffset(unsigned DbgInfoOff) { DebugInfoOffset = DbgInfoOff; }
   /// hasContent - Return true if this compile unit has something to write out.
   ///
   bool hasContent() const { return !CUDie->getChildren().empty(); }
