@@ -124,8 +124,8 @@ public:
   void mangleNumber(const llvm::APSInt &Value);
   void mangleType(QualType T, SourceRange Range,
                   QualifierMangleMode QMM = QMM_Mangle);
-  void mangleFunctionType(const FunctionType *T, const FunctionDecl *D,
-                          bool IsStructor, bool IsInstMethod);
+  void mangleFunctionType(const FunctionType *T, const FunctionDecl *D = 0,
+                          bool ForceInstMethod = false);
   void manglePostfix(const DeclContext *DC, bool NoFunction = false);
 
 private:
@@ -320,15 +320,6 @@ void MicrosoftCXXNameMangler::mangleFunctionEncoding(const FunctionDecl *FD) {
   QualType T = TSI ? TSI->getType() : FD->getType();
   const FunctionProtoType *FT = T->castAs<FunctionProtoType>();
 
-  bool InStructor = false, InInstMethod = false;
-  const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD);
-  if (MD) {
-    if (MD->isInstance())
-      InInstMethod = true;
-    if (isa<CXXConstructorDecl>(MD) || isa<CXXDestructorDecl>(MD))
-      InStructor = true;
-  }
-
   // extern "C" functions can hold entities that must be mangled.
   // As it stands, these functions still need to get expressed in the full
   // external name.  They have their class and type omitted, replaced with '9'.
@@ -336,7 +327,7 @@ void MicrosoftCXXNameMangler::mangleFunctionEncoding(const FunctionDecl *FD) {
     // First, the function class.
     mangleFunctionClass(FD);
 
-    mangleFunctionType(FT, FD, InStructor, InInstMethod);
+    mangleFunctionType(FT, FD);
   } else
     Out << '9';
 }
@@ -1174,7 +1165,7 @@ void MicrosoftCXXNameMangler::mangleType(QualType T, SourceRange Range,
   case QMM_Mangle:
     if (const FunctionType *FT = dyn_cast<FunctionType>(T)) {
       Out << '6';
-      mangleFunctionType(FT, 0, false, false);
+      mangleFunctionType(FT);
       return;
     }
     mangleQualifiers(Quals, false);
@@ -1307,7 +1298,7 @@ void MicrosoftCXXNameMangler::mangleType(const FunctionProtoType *T,
   // structor type.
   // FIXME: This may not be lambda-friendly.
   Out << "$$A6";
-  mangleFunctionType(T, NULL, false, false);
+  mangleFunctionType(T);
 }
 void MicrosoftCXXNameMangler::mangleType(const FunctionNoProtoType *T,
                                          SourceRange) {
@@ -1316,14 +1307,21 @@ void MicrosoftCXXNameMangler::mangleType(const FunctionNoProtoType *T,
 
 void MicrosoftCXXNameMangler::mangleFunctionType(const FunctionType *T,
                                                  const FunctionDecl *D,
-                                                 bool IsStructor,
-                                                 bool IsInstMethod) {
+                                                 bool ForceInstMethod) {
   // <function-type> ::= <this-cvr-qualifiers> <calling-convention>
   //                     <return-type> <argument-list> <throw-spec>
   const FunctionProtoType *Proto = cast<FunctionProtoType>(T);
 
   SourceRange Range;
   if (D) Range = D->getSourceRange();
+
+  bool IsStructor = false, IsInstMethod = ForceInstMethod;
+  if (const CXXMethodDecl *MD = dyn_cast_or_null<CXXMethodDecl>(D)) {
+    if (MD->isInstance())
+      IsInstMethod = true;
+    if (isa<CXXConstructorDecl>(MD) || isa<CXXDestructorDecl>(MD))
+      IsStructor = true;
+  }
 
   // If this is a C++ instance method, mangle the CVR qualifiers for the
   // this pointer.
@@ -1600,7 +1598,7 @@ void MicrosoftCXXNameMangler::mangleType(const MemberPointerType *T,
   if (const FunctionProtoType *FPT = PointeeType->getAs<FunctionProtoType>()) {
     Out << '8';
     mangleName(T->getClass()->castAs<RecordType>()->getDecl());
-    mangleFunctionType(FPT, NULL, false, true);
+    mangleFunctionType(FPT, 0, true);
   } else {
     if (PointersAre64Bit && !T->getPointeeType()->isFunctionType())
       Out << 'E';
@@ -1749,7 +1747,7 @@ void MicrosoftCXXNameMangler::mangleType(const BlockPointerType *T,
   Out << "_E";
 
   QualType pointee = T->getPointeeType();
-  mangleFunctionType(pointee->castAs<FunctionProtoType>(), NULL, false, false);
+  mangleFunctionType(pointee->castAs<FunctionProtoType>());
 }
 
 void MicrosoftCXXNameMangler::mangleType(const InjectedClassNameType *,
@@ -1882,7 +1880,7 @@ void MicrosoftMangleContextImpl::mangleThunk(const CXXMethodDecl *MD,
     Out << "Q";
   }
   // FIXME: mangle return adjustment? Most likely includes using an overridee FPT?
-  Mangler.mangleFunctionType(MD->getType()->castAs<FunctionProtoType>(), MD, false, true);
+  Mangler.mangleFunctionType(MD->getType()->castAs<FunctionProtoType>(), MD);
 }
 
 void MicrosoftMangleContextImpl::mangleCXXDtorThunk(const CXXDestructorDecl *DD,
