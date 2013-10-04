@@ -1,12 +1,9 @@
 # RUN: llvm-mc -show-encoding -triple mips-unknown-unknown %s | FileCheck %s
-# RUN: llvm-mc -filetype=obj -triple mips-unknown-unknown %s | \
-# RUN: llvm-readobj -h | FileCheck -check-prefix=CHECK-ELF %s
 #
 # CHECK:  .text
 # CHECK:  $BB0_2:
 $BB0_2:
-    .ent directives_test
-    .abicalls
+  .ent directives_test
     .frame    $sp,0,$ra
     .mask     0x00000000,0
     .fmask    0x00000000,0
@@ -46,5 +43,3 @@ $JTI0_0:
 # CHECK:    and     $3, $15, $15       # encoding: [0x01,0xef,0x18,0x24]
     abs.s  f6,FPU_MASK
     and    r3,$t7,STORE_MASK
-
-# CHECK-ELF: Flags [ (0x6)

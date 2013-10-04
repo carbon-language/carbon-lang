@@ -673,10 +673,8 @@ bool AsmParser::Run(bool NoInitialTextSection, bool NoFinalize) {
 
   // Finalize the output stream if there are no errors and if the client wants
   // us to.
-  if (!HadError && !NoFinalize) {
-    getTargetParser().emitEndOfAsmFile(Out);
+  if (!HadError && !NoFinalize)
     Out.Finish();
-  }
 
   return HadError;
 }

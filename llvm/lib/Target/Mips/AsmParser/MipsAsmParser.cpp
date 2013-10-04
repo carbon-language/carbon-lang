@@ -7,8 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "AsmParser/MipsAsmFlags.h"
-#include "MCTargetDesc/MipsELFStreamer.h"
 #include "MCTargetDesc/MipsMCTargetDesc.h"
 #include "MipsRegisterInfo.h"
 #include "llvm/ADT/StringSwitch.h"
@@ -61,7 +59,6 @@ class MipsAsmParser : public MCTargetAsmParser {
   MCSubtargetInfo &STI;
   MCAsmParser &Parser;
   MipsAssemblerOptions Options;
-  MipsMCAsmFlags Flags;
   bool hasConsumedDollar;
 
 #define GET_ASSEMBLER_HEADER
@@ -231,8 +228,6 @@ class MipsAsmParser : public MCTargetAsmParser {
 
   bool processInstruction(MCInst &Inst, SMLoc IDLoc,
                         SmallVectorImpl<MCInst> &Instructions);
-  void emitEndOfAsmFile(MCStreamer &Out);
-
 public:
   MipsAsmParser(MCSubtargetInfo &sti, MCAsmParser &parser,
                 const MCInstrInfo &MII)
@@ -2177,21 +2172,7 @@ bool MipsAsmParser::ParseDirective(AsmToken DirectiveID) {
     return false;
   }
 
-  if (IDVal == ".abicalls") {
-    Flags.setRelocationModel(MipsMCAsmFlags::MAF_RM_CPIC);
-    if (Parser.getTok().isNot(AsmToken::EndOfStatement))
-      return Error(Parser.getTok().getLoc(), "unexpected token in directive");
-    return false;
-  }
-
   return true;
-}
-
-/// End of assembly processing such as updating ELF header flags.
-void MipsAsmParser::emitEndOfAsmFile(MCStreamer &OutStreamer) {
-  if (MipsELFStreamer *MES = dyn_cast<MipsELFStreamer>(&OutStreamer))
-    MES->emitELFHeaderFlagsAsm(Flags);
-  MCTargetAsmParser::emitEndOfAsmFile(OutStreamer);
 }
 
 extern "C" void LLVMInitializeMipsAsmParser() {
