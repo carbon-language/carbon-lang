@@ -4,6 +4,8 @@
 ; RUN: llc -march=mips64el -mcpu=mips64r2 -mattr=n32 -relocation-model=static < %s | FileCheck %s -check-prefix=STATIC-N32
 ; RUN: llc -march=mips64el -mcpu=mips64r2 -mattr=n64 -relocation-model=pic < %s | FileCheck %s -check-prefix=PIC-N64
 ; RUN: llc -march=mips64el -mcpu=mips64r2 -mattr=n64 -relocation-model=static < %s | FileCheck %s -check-prefix=STATIC-N64
+; RUN: llc -mtriple=mipsel-linux-gnu -march=mipsel -mcpu=mips32 -mattr=+mips16 -soft-float -mips16-hard-float -relocation-model=static   < %s | FileCheck %s -check-prefix=STATIC-MIPS16-1
+; RUN: llc -mtriple=mipsel-linux-gnu -march=mipsel -mcpu=mips32 -mattr=+mips16 -soft-float -mips16-hard-float -relocation-model=static   < %s | FileCheck %s -check-prefix=STATIC-MIPS16-2
 
 @reg = common global i8* null, align 4
 
@@ -36,6 +38,14 @@ entry:
 ; STATIC-N64: daddiu ${{[0-9]+}}, $[[R2]], %got_ofst($tmp[[T2]])
 ; STATIC-N64: ld  $[[R3:[0-9]+]], %got_page($tmp[[T3:[0-9]+]])
 ; STATIC-N64: daddiu ${{[0-9]+}}, $[[R3]], %got_ofst($tmp[[T3]])
+; STATIC-MIPS16-1: .ent	f
+; STATIC-MIPS16-2: .ent	f
+; STATIC-MIPS16-1: li  $[[R1_16:[0-9]+]], %hi($tmp[[TI_16:[0-9]+]])
+; STATIC-MIPS16-1: sll ${{[0-9]+}},  $[[R1_16]], 16
+; STATIC-MIPS16-2: li  ${{[0-9]+}}, %lo($tmp{{[0-9]+}})
+; STATIC-MIPS16-1 jal	dummy
+; STATIC-MIPS16-2 jal	dummy
+
 define void @f() nounwind {
 entry:
   %call = tail call i8* @dummy(i8* blockaddress(@f, %baz))
