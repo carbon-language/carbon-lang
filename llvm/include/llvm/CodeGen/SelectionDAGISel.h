@@ -113,8 +113,6 @@ public:
     OPC_MoveChild,
     OPC_MoveParent,
     OPC_CheckSame,
-    OPC_CheckChild0Same, OPC_CheckChild1Same,
-    OPC_CheckChild2Same, OPC_CheckChild3Same,
     OPC_CheckPatternPredicate,
     OPC_CheckPredicate,
     OPC_CheckOpcode,

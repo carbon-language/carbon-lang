@@ -51,11 +51,7 @@ static void ContractNodes(OwningPtr<Matcher> &MatcherPtr,
       if (MC->getChildNo() < 8 &&  // Only have CheckChildType0...7
           CT->getResNo() == 0)     // CheckChildType checks res #0
         New = new CheckChildTypeMatcher(MC->getChildNo(), CT->getType());
-
-    if (CheckSameMatcher *CS = dyn_cast<CheckSameMatcher>(MC->getNext()))
-      if (MC->getChildNo() < 4)  // Only have CheckChildSame0...3
-        New = new CheckChildSameMatcher(MC->getChildNo(), CS->getMatchNumber());
-
+    
     if (New) {
       // Insert the new node.
       New->setNext(MatcherPtr.take());

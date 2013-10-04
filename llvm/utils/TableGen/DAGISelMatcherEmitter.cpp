@@ -242,12 +242,6 @@ EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
        << cast<CheckSameMatcher>(N)->getMatchNumber() << ",\n";
     return 2;
 
-  case Matcher::CheckChildSame:
-    OS << "OPC_CheckChild"
-       << cast<CheckChildSameMatcher>(N)->getChildNo() << "Same, "
-       << cast<CheckChildSameMatcher>(N)->getMatchNumber() << ",\n";
-    return 2;
-
   case Matcher::CheckPatternPredicate: {
     StringRef Pred =cast<CheckPatternPredicateMatcher>(N)->getPredicate();
     OS << "OPC_CheckPatternPredicate, " << getPatternPredicate(Pred) << ',';
@@ -759,7 +753,6 @@ void MatcherTableEmitter::EmitHistogram(const Matcher *M,
     case Matcher::MoveChild: OS << "OPC_MoveChild"; break;
     case Matcher::MoveParent: OS << "OPC_MoveParent"; break;
     case Matcher::CheckSame: OS << "OPC_CheckSame"; break;
-    case Matcher::CheckChildSame: OS << "OPC_CheckChildSame"; break;
     case Matcher::CheckPatternPredicate:
       OS << "OPC_CheckPatternPredicate"; break;
     case Matcher::CheckPredicate: OS << "OPC_CheckPredicate"; break;

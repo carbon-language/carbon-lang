@@ -134,10 +134,6 @@ void CheckSameMatcher::printImpl(raw_ostream &OS, unsigned indent) const {
   OS.indent(indent) << "CheckSame " << MatchNumber << '\n';
 }
 
-void CheckChildSameMatcher::printImpl(raw_ostream &OS, unsigned indent) const {
-  OS.indent(indent) << "CheckChild" << ChildNo << "Same\n";
-}
-
 void CheckPatternPredicateMatcher::
 printImpl(raw_ostream &OS, unsigned indent) const {
   OS.indent(indent) << "CheckPatternPredicate " << Predicate << '\n';
