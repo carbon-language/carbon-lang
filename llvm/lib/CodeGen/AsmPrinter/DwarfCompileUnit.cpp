@@ -782,7 +782,7 @@ DIE *CompileUnit::getOrCreateTypeDIE(const MDNode *TyNode) {
     return TyDIE;
 
   // Create new type.
-  TyDIE = new DIE(dwarf::DW_TAG_base_type);
+  TyDIE = new DIE(Ty.getTag());
   insertDIE(Ty, TyDIE);
   if (Ty.isBasicType())
     constructTypeDIE(*TyDIE, DIBasicType(Ty));
@@ -904,13 +904,10 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DIBasicType BTy) {
   if (!Name.empty())
     addString(&Buffer, dwarf::DW_AT_name, Name);
 
-  if (BTy.getTag() == dwarf::DW_TAG_unspecified_type) {
-    Buffer.setTag(dwarf::DW_TAG_unspecified_type);
-    // An unspecified type only has a name attribute.
+  // An unspecified type only has a name attribute.
+  if (BTy.getTag() == dwarf::DW_TAG_unspecified_type)
     return;
-  }
 
-  Buffer.setTag(dwarf::DW_TAG_base_type);
   addUInt(&Buffer, dwarf::DW_AT_encoding, dwarf::DW_FORM_data1,
           BTy.getEncoding());
 
@@ -923,12 +920,12 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DIDerivedType DTy) {
   // Get core information.
   StringRef Name = DTy.getName();
   uint64_t Size = DTy.getSizeInBits() >> 3;
-  uint16_t Tag = DTy.getTag();
 
   // FIXME - Workaround for templates.
-  if (Tag == dwarf::DW_TAG_inheritance) Tag = dwarf::DW_TAG_reference_type;
+  if (Buffer.getTag() == dwarf::DW_TAG_inheritance)
+    Buffer.setTag(dwarf::DW_TAG_reference_type);
 
-  Buffer.setTag(Tag);
+  uint16_t Tag = Buffer.getTag();
 
   // Map to main type, void will not have a type.
   DIType FromTy = DTy.getTypeDerivedFrom();
@@ -990,8 +987,7 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
   StringRef Name = CTy.getName();
 
   uint64_t Size = CTy.getSizeInBits() >> 3;
-  uint16_t Tag = CTy.getTag();
-  Buffer.setTag(Tag);
+  uint16_t Tag = Buffer.getTag();
 
   switch (Tag) {
   case dwarf::DW_TAG_array_type:
@@ -1566,7 +1562,6 @@ void CompileUnit::constructSubrangeDIE(DIE &Buffer, DISubrange SR,
 /// constructArrayTypeDIE - Construct array type DIE from DICompositeType.
 void CompileUnit::constructArrayTypeDIE(DIE &Buffer,
                                         DICompositeType *CTy) {
-  Buffer.setTag(dwarf::DW_TAG_array_type);
   if (CTy->isVector())
     addFlag(&Buffer, dwarf::DW_AT_GNU_vector);
 
@@ -1626,11 +1621,8 @@ DIE *CompileUnit::constructVariableDIE(DbgVariable *DV,
                                        bool isScopeAbstract) {
   StringRef Name = DV->getName();
 
-  // Translate tag to proper Dwarf tag.
-  uint16_t Tag = DV->getTag();
-
   // Define variable debug information entry.
-  DIE *VariableDie = new DIE(Tag);
+  DIE *VariableDie = new DIE(DV->getTag());
   DbgVariable *AbsVar = DV->getAbstractVariable();
   DIE *AbsDIE = AbsVar ? AbsVar->getDIE() : NULL;
   if (AbsDIE)
