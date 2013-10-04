@@ -15,7 +15,7 @@
 #ifndef LLVM_CLANG_SA_LIB_CHECKERS_CLANGSACHECKERS_H
 #define LLVM_CLANG_SA_LIB_CHECKERS_CLANGSACHECKERS_H
 
-#include "clang/StaticAnalyzer/Checkers/CommonBugCategories.h"
+#include "clang/StaticAnalyzer/Core/BugReporter/CommonBugCategories.h"
 
 namespace clang {
 

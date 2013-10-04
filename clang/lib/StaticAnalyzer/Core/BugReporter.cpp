@@ -2488,7 +2488,7 @@ static void dropFunctionEntryEdge(PathPieces &Path,
 //===----------------------------------------------------------------------===//
 // Methods for BugType and subclasses.
 //===----------------------------------------------------------------------===//
-BugType::~BugType() { }
+void BugType::anchor() { }
 
 void BugType::FlushReports(BugReporter &BR) {}
 

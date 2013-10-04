@@ -7,16 +7,17 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_STATIC_ANALYZER_CHECKER_CATEGORIES_H
-#define LLVM_CLANG_STATIC_ANALYZER_CHECKER_CATEGORIES_H
+#ifndef LLVM_CLANG_STATIC_ANALYZER_BUG_CATEGORIES_H
+#define LLVM_CLANG_STATIC_ANALYZER_BUG_CATEGORIES_H
 
 // Common strings used for the "category" of many static analyzer issues.
 namespace clang {
   namespace ento {
     namespace categories {
-      extern const char *CoreFoundationObjectiveC;
-      extern const char *MemoryCoreFoundationObjectiveC;
-      extern const char *UnixAPI;
+      extern const char * const CoreFoundationObjectiveC;
+      extern const char * const LogicError;
+      extern const char * const MemoryCoreFoundationObjectiveC;
+      extern const char * const UnixAPI;
     }
   }
 }

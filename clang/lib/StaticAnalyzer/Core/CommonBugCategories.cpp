@@ -7,12 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/StaticAnalyzer/Core/BugReporter/CommonBugCategories.h"
+
 // Common strings used for the "category" of many static analyzer issues.
 namespace clang { namespace ento { namespace categories {
 
-const char *CoreFoundationObjectiveC = "Core Foundation/Objective-C";
-const char *MemoryCoreFoundationObjectiveC =
+const char * const CoreFoundationObjectiveC = "Core Foundation/Objective-C";
+const char * const LogicError = "Logic error";
+const char * const MemoryCoreFoundationObjectiveC =
   "Memory (Core Foundation/Objective-C)";
-const char *UnixAPI = "Unix API";
+const char * const UnixAPI = "Unix API";
 }}}
-
