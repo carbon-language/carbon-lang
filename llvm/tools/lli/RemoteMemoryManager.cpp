@@ -36,8 +36,10 @@ allocateCodeSection(uintptr_t Size, unsigned Alignment, unsigned SectionID,
   // heap storage is sufficient here, but we're using mapped memory to work
   // around a bug in MCJIT.
   sys::MemoryBlock Block = allocateSection(Size);
+  // AllocatedSections will own this memory.
   AllocatedSections.push_back( Allocation(Block, Alignment, true) );
-  UnmappedSections.push_back( &AllocatedSections.back() );
+  // UnmappedSections has the same information but does not own the memory.
+  UnmappedSections.push_back( Allocation(Block, Alignment, true) );
   return (uint8_t*)Block.base();
 }
 
@@ -50,8 +52,10 @@ allocateDataSection(uintptr_t Size, unsigned Alignment,
   // heap storage is sufficient here, but we're using mapped memory to work
   // around a bug in MCJIT.
   sys::MemoryBlock Block = allocateSection(Size);
+  // AllocatedSections will own this memory.
   AllocatedSections.push_back( Allocation(Block, Alignment, false) );
-  UnmappedSections.push_back( &AllocatedSections.back() );
+  // UnmappedSections has the same information but does not own the memory.
+  UnmappedSections.push_back( Allocation(Block, Alignment, false) );
   return (uint8_t*)Block.base();
 }
 
@@ -86,43 +90,39 @@ void RemoteMemoryManager::notifyObjectLoaded(ExecutionEngine *EE,
   // all the data sections.
   uint64_t CurOffset = 0;
   unsigned MaxAlign = Target->getPageAlignment();
-  SmallVector<std::pair<const Allocation*, uint64_t>, 16> Offsets;
+  SmallVector<std::pair<Allocation&, uint64_t>, 16> Offsets;
   unsigned NumSections = UnmappedSections.size();
   // We're going to go through the list twice to separate code and data, but
   // it's a very small list, so that's OK.
   for (size_t i = 0, e = NumSections; i != e; ++i) {
-    const Allocation *Section = UnmappedSections[i];
-    assert(Section);
-    if (Section->IsCode) {
-      unsigned Size = Section->MB.size();
-      unsigned Align = Section->Alignment;
+    Allocation &Section = UnmappedSections[i];
+    if (Section.IsCode) {
+      unsigned Size = Section.MB.size();
+      unsigned Align = Section.Alignment;
       DEBUG(dbgs() << "code region: size " << Size
                   << ", alignment " << Align << "\n");
       // Align the current offset up to whatever is needed for the next
       // section.
       CurOffset = (CurOffset + Align - 1) / Align * Align;
       // Save off the address of the new section and allocate its space.
-      Offsets.push_back(std::pair<const Allocation*,uint64_t>(Section, 
-                                                              CurOffset));
+      Offsets.push_back(std::pair<Allocation&,uint64_t>(Section, CurOffset));
       CurOffset += Size;
     }
   }
   // Adjust to keep code and data aligned on seperate pages.
   CurOffset = (CurOffset + MaxAlign - 1) / MaxAlign * MaxAlign;
   for (size_t i = 0, e = NumSections; i != e; ++i) {
-    const Allocation *Section = UnmappedSections[i];
-    assert(Section);
-    if (!Section->IsCode) {
-      unsigned Size = Section->MB.size();
-      unsigned Align = Section->Alignment;
+    Allocation &Section = UnmappedSections[i];
+    if (!Section.IsCode) {
+      unsigned Size = Section.MB.size();
+      unsigned Align = Section.Alignment;
       DEBUG(dbgs() << "data region: size " << Size
                   << ", alignment " << Align << "\n");
       // Align the current offset up to whatever is needed for the next
       // section.
       CurOffset = (CurOffset + Align - 1) / Align * Align;
       // Save off the address of the new section and allocate its space.
-      Offsets.push_back(std::pair<const Allocation*,uint64_t>(Section, 
-                                                              CurOffset));
+      Offsets.push_back(std::pair<Allocation&,uint64_t>(Section, CurOffset));
       CurOffset += Size;
     }
   }
@@ -136,9 +136,9 @@ void RemoteMemoryManager::notifyObjectLoaded(ExecutionEngine *EE,
   // copies of the sections.
   for (unsigned i = 0, e = Offsets.size(); i != e; ++i) {
     uint64_t Addr = RemoteAddr + Offsets[i].second;
-    EE->mapSectionAddress(const_cast<void*>(Offsets[i].first->MB.base()), Addr);
+    EE->mapSectionAddress(const_cast<void*>(Offsets[i].first.MB.base()), Addr);
 
-    DEBUG(dbgs() << "  Mapping local: " << Offsets[i].first->MB.base()
+    DEBUG(dbgs() << "  Mapping local: " << Offsets[i].first.MB.base()
                  << " to remote: 0x" << format("%llx", Addr) << "\n");
 
     MappedSections[Addr] = Offsets[i].first;
@@ -149,20 +149,20 @@ void RemoteMemoryManager::notifyObjectLoaded(ExecutionEngine *EE,
 
 bool RemoteMemoryManager::finalizeMemory(std::string *ErrMsg) {
   // FIXME: Make this function thread safe.
-  for (DenseMap<uint64_t, const Allocation*>::iterator
+  for (DenseMap<uint64_t, Allocation>::iterator
          I = MappedSections.begin(), E = MappedSections.end();
        I != E; ++I) {
     uint64_t RemoteAddr = I->first;
-    const Allocation *Section = I->second;
-    if (Section->IsCode) {
-      Target->loadCode(RemoteAddr, Section->MB.base(), Section->MB.size());
+    const Allocation &Section = I->second;
+    if (Section.IsCode) {
+      Target->loadCode(RemoteAddr, Section.MB.base(), Section.MB.size());
 
-      DEBUG(dbgs() << "  loading code: " << Section->MB.base()
+      DEBUG(dbgs() << "  loading code: " << Section.MB.base()
             << " to remote: 0x" << format("%llx", RemoteAddr) << "\n");
     } else {
-      Target->loadData(RemoteAddr, Section->MB.base(), Section->MB.size());
+      Target->loadData(RemoteAddr, Section.MB.base(), Section.MB.size());
 
-      DEBUG(dbgs() << "  loading data: " << Section->MB.base()
+      DEBUG(dbgs() << "  loading data: " << Section.MB.base()
             << " to remote: 0x" << format("%llx", RemoteAddr) << "\n");
     }
   }

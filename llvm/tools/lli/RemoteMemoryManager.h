@@ -30,6 +30,7 @@ class RemoteMemoryManager : public JITMemoryManager {
 public:
   // Notice that this structure takes ownership of the memory allocated.
   struct Allocation {
+    Allocation() {}
     Allocation(sys::MemoryBlock mb, unsigned a, bool code)
       : MB(mb), Alignment(a), IsCode(code) {}
 
@@ -48,11 +49,11 @@ private:
   // have allocated locally but have not yet remapped for the remote target.
   // When we receive notification of a completed module load, we will map
   // these sections into the remote target.
-  SmallVector<const Allocation *, 2>  UnmappedSections;
+  SmallVector<Allocation, 2>  UnmappedSections;
 
   // This map tracks the sections we have remapped for the remote target
   // but have not yet copied to the target.
-  DenseMap<uint64_t, const Allocation *>  MappedSections;
+  DenseMap<uint64_t, Allocation>  MappedSections;
 
   // FIXME: This is part of a work around to keep sections near one another
   // when MCJIT performs relocations after code emission but before
