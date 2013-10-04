@@ -209,13 +209,3 @@
 // On OpenBSD, -nopie needs to be passed through to the linker.
 // RUN: %clang %s -target i386-pc-openbsd -nopie -### 2>&1 \
 // RUN:   | FileCheck %s --check-prefix=CHECK-NOPIE-LD
-//
-// For MIPS -fPIC -static means to compile as -fPIC but link with -static.
-// RUN: %clang -c %s -target mips-linux-gnu -fpic -static -### 2>&1 \
-// RUN:   | FileCheck %s --check-prefix=CHECK-PIC1
-// RUN: %clang -c %s -target mips-linux-gnu -### 2>&1 \
-// RUN:   | FileCheck %s --check-prefix=CHECK-NO-PIC
-// RUN: %clang -c %s -target mips-linux-gnu -fpic -### 2>&1 \
-// RUN:   | FileCheck %s --check-prefix=CHECK-PIC1
-// RUN: %clang -c %s -target mips-linux-gnu -static -### 2>&1 \
-// RUN:   | FileCheck %s --check-prefix=CHECK-NO-PIC
