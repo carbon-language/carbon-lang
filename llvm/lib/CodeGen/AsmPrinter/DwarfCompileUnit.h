@@ -166,7 +166,7 @@ public:
 
   /// addDie - Adds or interns the DIE to the compile unit.
   ///
-  void addDie(DIE *Buffer) { this->CUDie->addChild(Buffer); }
+  void addDie(DIE *Buffer) { CUDie->addChild(Buffer); }
 
   // getIndexTyDie - Get an anonymous type for index type.
   DIE *getIndexTyDie() { return IndexTyDie; }
