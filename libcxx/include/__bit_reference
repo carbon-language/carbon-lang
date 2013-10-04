@@ -82,7 +82,7 @@ class __bit_reference<_Cp, false>
 };
 
 template <class _Cp>
-_LIBCPP_INLINE_VISIBILITY inline
+inline _LIBCPP_INLINE_VISIBILITY
 void
 swap(__bit_reference<_Cp> __x, __bit_reference<_Cp> __y) _NOEXCEPT
 {
@@ -92,7 +92,7 @@ swap(__bit_reference<_Cp> __x, __bit_reference<_Cp> __y) _NOEXCEPT
 }
 
 template <class _Cp, class _Dp>
-_LIBCPP_INLINE_VISIBILITY inline
+inline _LIBCPP_INLINE_VISIBILITY
 void
 swap(__bit_reference<_Cp> __x, __bit_reference<_Dp> __y) _NOEXCEPT
 {
@@ -102,7 +102,7 @@ swap(__bit_reference<_Cp> __x, __bit_reference<_Dp> __y) _NOEXCEPT
 }
 
 template <class _Cp>
-_LIBCPP_INLINE_VISIBILITY inline
+inline _LIBCPP_INLINE_VISIBILITY
 void
 swap(__bit_reference<_Cp> __x, bool& __y) _NOEXCEPT
 {
@@ -112,7 +112,7 @@ swap(__bit_reference<_Cp> __x, bool& __y) _NOEXCEPT
 }
 
 template <class _Cp>
-_LIBCPP_INLINE_VISIBILITY inline
+inline _LIBCPP_INLINE_VISIBILITY
 void
 swap(bool& __x, __bit_reference<_Cp> __y) _NOEXCEPT
 {
@@ -379,7 +379,7 @@ __fill_n_true(__bit_iterator<_Cp, false> __first, typename _Cp::size_type __n)
 }
 
 template <class _Cp>
-_LIBCPP_INLINE_VISIBILITY inline
+inline _LIBCPP_INLINE_VISIBILITY
 void
 fill_n(__bit_iterator<_Cp, false> __first, typename _Cp::size_type __n, bool __value_)
 {

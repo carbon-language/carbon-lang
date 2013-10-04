@@ -140,9 +140,9 @@ _LIBCPP_NEW_DELETE_VIS void  operator delete[](void* __p, const std::nothrow_t&)
 
 #undef _LIBCPP_NEW_DELETE_VIS
 
-_LIBCPP_INLINE_VISIBILITY inline void* operator new  (std::size_t, void* __p) _NOEXCEPT {return __p;}
-_LIBCPP_INLINE_VISIBILITY inline void* operator new[](std::size_t, void* __p) _NOEXCEPT {return __p;}
-_LIBCPP_INLINE_VISIBILITY inline void  operator delete  (void*, void*) _NOEXCEPT {}
-_LIBCPP_INLINE_VISIBILITY inline void  operator delete[](void*, void*) _NOEXCEPT {}
+inline _LIBCPP_INLINE_VISIBILITY void* operator new  (std::size_t, void* __p) _NOEXCEPT {return __p;}
+inline _LIBCPP_INLINE_VISIBILITY void* operator new[](std::size_t, void* __p) _NOEXCEPT {return __p;}
+inline _LIBCPP_INLINE_VISIBILITY void  operator delete  (void*, void*) _NOEXCEPT {}
+inline _LIBCPP_INLINE_VISIBILITY void  operator delete[](void*, void*) _NOEXCEPT {}
 
 #endif  // _LIBCPP_NEW

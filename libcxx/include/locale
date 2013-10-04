@@ -239,7 +239,7 @@ __mb_cur_max_l(locale_t __l)
   return MB_CUR_MAX_L(__l);
 }
 #else  // _LIBCPP_LOCALE__L_EXTENSIONS
-_LIBCPP_ALWAYS_INLINE inline
+inline _LIBCPP_ALWAYS_INLINE
 decltype(MB_CUR_MAX) __mb_cur_max_l(locale_t __l)
 {
   __locale_raii __current(uselocale(__l), uselocale);
@@ -247,7 +247,7 @@ decltype(MB_CUR_MAX) __mb_cur_max_l(locale_t __l)
 }
 #endif // _LIBCPP_LOCALE__L_EXTENSIONS
 
-_LIBCPP_ALWAYS_INLINE inline
+inline _LIBCPP_ALWAYS_INLINE
 wint_t __btowc_l(int __c, locale_t __l)
 {
 #ifdef _LIBCPP_LOCALE__L_EXTENSIONS
@@ -258,7 +258,7 @@ wint_t __btowc_l(int __c, locale_t __l)
 #endif
 }
 
-_LIBCPP_ALWAYS_INLINE inline
+inline _LIBCPP_ALWAYS_INLINE
 int __wctob_l(wint_t __c, locale_t __l)
 {
 #ifdef _LIBCPP_LOCALE__L_EXTENSIONS
@@ -269,7 +269,7 @@ int __wctob_l(wint_t __c, locale_t __l)
 #endif
 }
 
-_LIBCPP_ALWAYS_INLINE inline
+inline _LIBCPP_ALWAYS_INLINE
 size_t __wcsnrtombs_l(char *__dest, const wchar_t **__src, size_t __nwc,
                       size_t __len, mbstate_t *__ps, locale_t __l)
 {
@@ -281,7 +281,7 @@ size_t __wcsnrtombs_l(char *__dest, const wchar_t **__src, size_t __nwc,
 #endif
 }
 
-_LIBCPP_ALWAYS_INLINE inline
+inline _LIBCPP_ALWAYS_INLINE
 size_t __wcrtomb_l(char *__s, wchar_t __wc, mbstate_t *__ps, locale_t __l)
 {
 #ifdef _LIBCPP_LOCALE__L_EXTENSIONS
@@ -292,7 +292,7 @@ size_t __wcrtomb_l(char *__s, wchar_t __wc, mbstate_t *__ps, locale_t __l)
 #endif
 }
 
-_LIBCPP_ALWAYS_INLINE inline
+inline _LIBCPP_ALWAYS_INLINE
 size_t __mbsnrtowcs_l(wchar_t * __dest, const char **__src, size_t __nms,
                       size_t __len, mbstate_t *__ps, locale_t __l)
 {
@@ -304,7 +304,7 @@ size_t __mbsnrtowcs_l(wchar_t * __dest, const char **__src, size_t __nms,
 #endif
 }
 
-_LIBCPP_ALWAYS_INLINE inline
+inline _LIBCPP_ALWAYS_INLINE
 size_t __mbrtowc_l(wchar_t *__pwc, const char *__s, size_t __n,
                    mbstate_t *__ps, locale_t __l)
 {
@@ -316,7 +316,7 @@ size_t __mbrtowc_l(wchar_t *__pwc, const char *__s, size_t __n,
 #endif
 }
 
-_LIBCPP_ALWAYS_INLINE inline
+inline _LIBCPP_ALWAYS_INLINE
 int __mbtowc_l(wchar_t *__pwc, const char *__pmb, size_t __max, locale_t __l)
 {
 #ifdef _LIBCPP_LOCALE__L_EXTENSIONS
@@ -327,7 +327,7 @@ int __mbtowc_l(wchar_t *__pwc, const char *__pmb, size_t __max, locale_t __l)
 #endif
 }
 
-_LIBCPP_ALWAYS_INLINE inline
+inline _LIBCPP_ALWAYS_INLINE
 size_t __mbrlen_l(const char *__s, size_t __n, mbstate_t *__ps, locale_t __l)
 {
 #ifdef _LIBCPP_LOCALE__L_EXTENSIONS
@@ -338,7 +338,7 @@ size_t __mbrlen_l(const char *__s, size_t __n, mbstate_t *__ps, locale_t __l)
 #endif
 }
 
-_LIBCPP_ALWAYS_INLINE inline
+inline _LIBCPP_ALWAYS_INLINE
 lconv *__localeconv_l(locale_t __l)
 {
 #ifdef _LIBCPP_LOCALE__L_EXTENSIONS
@@ -349,7 +349,7 @@ lconv *__localeconv_l(locale_t __l)
 #endif
 }
 
-_LIBCPP_ALWAYS_INLINE inline
+inline _LIBCPP_ALWAYS_INLINE
 size_t __mbsrtowcs_l(wchar_t *__dest, const char **__src, size_t __len,
                      mbstate_t *__ps, locale_t __l)
 {

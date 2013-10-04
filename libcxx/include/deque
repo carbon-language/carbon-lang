@@ -2811,7 +2811,7 @@ deque<_Tp, _Allocator>::clear() _NOEXCEPT
 }
 
 template <class _Tp, class _Allocator>
-_LIBCPP_INLINE_VISIBILITY inline
+inline _LIBCPP_INLINE_VISIBILITY
 bool
 operator==(const deque<_Tp, _Allocator>& __x, const deque<_Tp, _Allocator>& __y)
 {
@@ -2820,7 +2820,7 @@ operator==(const deque<_Tp, _Allocator>& __x, const deque<_Tp, _Allocator>& __y)
 }
 
 template <class _Tp, class _Allocator>
-_LIBCPP_INLINE_VISIBILITY inline
+inline _LIBCPP_INLINE_VISIBILITY
 bool
 operator!=(const deque<_Tp, _Allocator>& __x, const deque<_Tp, _Allocator>& __y)
 {
@@ -2828,7 +2828,7 @@ operator!=(const deque<_Tp, _Allocator>& __x, const deque<_Tp, _Allocator>& __y)
 }
 
 template <class _Tp, class _Allocator>
-_LIBCPP_INLINE_VISIBILITY inline
+inline _LIBCPP_INLINE_VISIBILITY
 bool
 operator< (const deque<_Tp, _Allocator>& __x, const deque<_Tp, _Allocator>& __y)
 {
@@ -2836,7 +2836,7 @@ operator< (const deque<_Tp, _Allocator>& __x, const deque<_Tp, _Allocator>& __y)
 }
 
 template <class _Tp, class _Allocator>
-_LIBCPP_INLINE_VISIBILITY inline
+inline _LIBCPP_INLINE_VISIBILITY
 bool
 operator> (const deque<_Tp, _Allocator>& __x, const deque<_Tp, _Allocator>& __y)
 {
@@ -2844,7 +2844,7 @@ operator> (const deque<_Tp, _Allocator>& __x, const deque<_Tp, _Allocator>& __y)
 }
 
 template <class _Tp, class _Allocator>
-_LIBCPP_INLINE_VISIBILITY inline
+inline _LIBCPP_INLINE_VISIBILITY
 bool
 operator>=(const deque<_Tp, _Allocator>& __x, const deque<_Tp, _Allocator>& __y)
 {
@@ -2852,7 +2852,7 @@ operator>=(const deque<_Tp, _Allocator>& __x, const deque<_Tp, _Allocator>& __y)
 }
 
 template <class _Tp, class _Allocator>
-_LIBCPP_INLINE_VISIBILITY inline
+inline _LIBCPP_INLINE_VISIBILITY
 bool
 operator<=(const deque<_Tp, _Allocator>& __x, const deque<_Tp, _Allocator>& __y)
 {
@@ -2860,7 +2860,7 @@ operator<=(const deque<_Tp, _Allocator>& __x, const deque<_Tp, _Allocator>& __y)
 }
 
 template <class _Tp, class _Allocator>
-_LIBCPP_INLINE_VISIBILITY inline
+inline _LIBCPP_INLINE_VISIBILITY
 void
 swap(deque<_Tp, _Allocator>& __x, deque<_Tp, _Allocator>& __y)
     _NOEXCEPT_(_NOEXCEPT_(__x.swap(__y)))

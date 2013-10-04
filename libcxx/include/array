@@ -224,7 +224,7 @@ array<_Tp, _Size>::at(size_type __n) const
 }
 
 template <class _Tp, size_t _Size>
-_LIBCPP_INLINE_VISIBILITY inline
+inline _LIBCPP_INLINE_VISIBILITY
 bool
 operator==(const array<_Tp, _Size>& __x, const array<_Tp, _Size>& __y)
 {
@@ -232,7 +232,7 @@ operator==(const array<_Tp, _Size>& __x, const array<_Tp, _Size>& __y)
 }
 
 template <class _Tp, size_t _Size>
-_LIBCPP_INLINE_VISIBILITY inline
+inline _LIBCPP_INLINE_VISIBILITY
 bool
 operator!=(const array<_Tp, _Size>& __x, const array<_Tp, _Size>& __y)
 {
@@ -240,7 +240,7 @@ operator!=(const array<_Tp, _Size>& __x, const array<_Tp, _Size>& __y)
 }
 
 template <class _Tp, size_t _Size>
-_LIBCPP_INLINE_VISIBILITY inline
+inline _LIBCPP_INLINE_VISIBILITY
 bool
 operator<(const array<_Tp, _Size>& __x, const array<_Tp, _Size>& __y)
 {
@@ -248,7 +248,7 @@ operator<(const array<_Tp, _Size>& __x, const array<_Tp, _Size>& __y)
 }
 
 template <class _Tp, size_t _Size>
-_LIBCPP_INLINE_VISIBILITY inline
+inline _LIBCPP_INLINE_VISIBILITY
 bool
 operator>(const array<_Tp, _Size>& __x, const array<_Tp, _Size>& __y)
 {
@@ -256,7 +256,7 @@ operator>(const array<_Tp, _Size>& __x, const array<_Tp, _Size>& __y)
 }
 
 template <class _Tp, size_t _Size>
-_LIBCPP_INLINE_VISIBILITY inline
+inline _LIBCPP_INLINE_VISIBILITY
 bool
 operator<=(const array<_Tp, _Size>& __x, const array<_Tp, _Size>& __y)
 {
@@ -264,7 +264,7 @@ operator<=(const array<_Tp, _Size>& __x, const array<_Tp, _Size>& __y)
 }
 
 template <class _Tp, size_t _Size>
-_LIBCPP_INLINE_VISIBILITY inline
+inline _LIBCPP_INLINE_VISIBILITY
 bool
 operator>=(const array<_Tp, _Size>& __x, const array<_Tp, _Size>& __y)
 {
@@ -272,7 +272,7 @@ operator>=(const array<_Tp, _Size>& __x, const array<_Tp, _Size>& __y)
 }
 
 template <class _Tp, size_t _Size>
-_LIBCPP_INLINE_VISIBILITY inline
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if
 <
     __is_swappable<_Tp>::value,
@@ -307,7 +307,7 @@ public:
 };
 
 template <size_t _Ip, class _Tp, size_t _Size>
-_LIBCPP_INLINE_VISIBILITY inline _LIBCPP_CONSTEXPR_AFTER_CXX11
+inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
 _Tp&
 get(array<_Tp, _Size>& __a) _NOEXCEPT
 {
@@ -316,7 +316,7 @@ get(array<_Tp, _Size>& __a) _NOEXCEPT
 }
 
 template <size_t _Ip, class _Tp, size_t _Size>
-_LIBCPP_INLINE_VISIBILITY inline _LIBCPP_CONSTEXPR_AFTER_CXX11
+inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
 const _Tp&
 get(const array<_Tp, _Size>& __a) _NOEXCEPT
 {
@@ -327,7 +327,7 @@ get(const array<_Tp, _Size>& __a) _NOEXCEPT
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <size_t _Ip, class _Tp, size_t _Size>
-_LIBCPP_INLINE_VISIBILITY inline _LIBCPP_CONSTEXPR_AFTER_CXX11
+inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
 _Tp&&
 get(array<_Tp, _Size>&& __a) _NOEXCEPT
 {

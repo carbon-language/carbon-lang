@@ -594,7 +594,7 @@ struct __get_pair<1>
 };
 
 template <size_t _Ip, class _T1, class _T2>
-_LIBCPP_INLINE_VISIBILITY inline _LIBCPP_CONSTEXPR_AFTER_CXX11
+inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
 typename tuple_element<_Ip, pair<_T1, _T2> >::type&
 get(pair<_T1, _T2>& __p) _NOEXCEPT
 {
@@ -602,7 +602,7 @@ get(pair<_T1, _T2>& __p) _NOEXCEPT
 }
 
 template <size_t _Ip, class _T1, class _T2>
-_LIBCPP_INLINE_VISIBILITY inline _LIBCPP_CONSTEXPR_AFTER_CXX11
+inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
 const typename tuple_element<_Ip, pair<_T1, _T2> >::type&
 get(const pair<_T1, _T2>& __p) _NOEXCEPT
 {
@@ -612,7 +612,7 @@ get(const pair<_T1, _T2>& __p) _NOEXCEPT
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <size_t _Ip, class _T1, class _T2>
-_LIBCPP_INLINE_VISIBILITY inline _LIBCPP_CONSTEXPR_AFTER_CXX11
+inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
 typename tuple_element<_Ip, pair<_T1, _T2> >::type&&
 get(pair<_T1, _T2>&& __p) _NOEXCEPT
 {
@@ -623,42 +623,42 @@ get(pair<_T1, _T2>&& __p) _NOEXCEPT
 
 #if _LIBCPP_STD_VER > 11
 template <class _T1, class _T2>
-_LIBCPP_INLINE_VISIBILITY inline
+inline _LIBCPP_INLINE_VISIBILITY
 constexpr _T1 & get(pair<_T1, _T2>& __p) _NOEXCEPT
 {
     return __get_pair<0>::get(__p);
 }
 
 template <class _T1, class _T2>
-_LIBCPP_INLINE_VISIBILITY inline
+inline _LIBCPP_INLINE_VISIBILITY
 constexpr _T1 const & get(pair<_T1, _T2> const& __p) _NOEXCEPT
 {
     return __get_pair<0>::get(__p);
 }
 
 template <class _T1, class _T2>
-_LIBCPP_INLINE_VISIBILITY inline
+inline _LIBCPP_INLINE_VISIBILITY
 constexpr _T1 && get(pair<_T1, _T2>&& __p) _NOEXCEPT
 {
     return __get_pair<0>::get(_VSTD::move(__p));
 }
 
 template <class _T1, class _T2>
-_LIBCPP_INLINE_VISIBILITY inline
+inline _LIBCPP_INLINE_VISIBILITY
 constexpr _T1 & get(pair<_T2, _T1>& __p) _NOEXCEPT
 {
     return __get_pair<1>::get(__p);
 }
 
 template <class _T1, class _T2>
-_LIBCPP_INLINE_VISIBILITY inline
+inline _LIBCPP_INLINE_VISIBILITY
 constexpr _T1 const & get(pair<_T2, _T1> const& __p) _NOEXCEPT
 {
     return __get_pair<1>::get(__p);
 }
 
 template <class _T1, class _T2>
-_LIBCPP_INLINE_VISIBILITY inline
+inline _LIBCPP_INLINE_VISIBILITY
 constexpr _T1 && get(pair<_T2, _T1>&& __p) _NOEXCEPT
 {
     return __get_pair<1>::get(_VSTD::move(__p));
@@ -754,7 +754,7 @@ template<class... _Tp>
 
 #if _LIBCPP_STD_VER > 11
 template<class _T1, class _T2 = _T1>
-_LIBCPP_INLINE_VISIBILITY inline
+inline _LIBCPP_INLINE_VISIBILITY
 _T1 exchange(_T1& __obj, _T2 && __new_value)
 {
     _T1 __old_value = _VSTD::move(__obj);

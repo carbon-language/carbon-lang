@@ -52,7 +52,7 @@ wint_t btowc_l( int c, locale_t loc );
 int wctob_l( wint_t c, locale_t loc );
 typedef _VSTD::remove_pointer<locale_t>::type __locale_struct;
 typedef _VSTD::unique_ptr<__locale_struct, decltype(&uselocale)> __locale_raii;
-_LIBCPP_ALWAYS_INLINE inline
+inline _LIBCPP_ALWAYS_INLINE
 decltype(MB_CUR_MAX) MB_CUR_MAX_L( locale_t __l )
 {
   __locale_raii __current( uselocale(__l), uselocale );
