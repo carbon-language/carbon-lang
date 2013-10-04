@@ -1014,7 +1014,7 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
     DIType DTy = CTy.getTypeDerivedFrom();
     if (DTy) {
       addType(&Buffer, DTy);
-      addUInt(&Buffer, dwarf::DW_AT_enum_class, dwarf::DW_FORM_flag, 1);
+      addFlag(&Buffer, dwarf::DW_AT_enum_class);
     }
   }
     break;

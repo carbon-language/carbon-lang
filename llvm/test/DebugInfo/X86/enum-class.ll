@@ -30,12 +30,12 @@
 
 ; CHECK: DW_TAG_enumeration_type [3]
 ; CHECK: DW_AT_type [DW_FORM_ref4]
-; CHECK: DW_AT_enum_class [DW_FORM_flag]    (0x01)
+; CHECK: DW_AT_enum_class [DW_FORM_flag_present] (true)
 ; CHECK: DW_AT_name [DW_FORM_strp]      ( .debug_str[{{.*}}] = "A")
 
 ; CHECK: DW_TAG_enumeration_type [3] *
 ; CHECK: DW_AT_type [DW_FORM_ref4]
-; CHECK: DW_AT_enum_class [DW_FORM_flag]    (0x01)
+; CHECK: DW_AT_enum_class [DW_FORM_flag_present] (true)
 ; CHECK: DW_AT_name [DW_FORM_strp]          ( .debug_str[{{.*}}] = "B")
 
 ; CHECK: DW_TAG_enumeration_type [6]
