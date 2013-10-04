@@ -196,7 +196,7 @@ EmulateInstructionARM::GetPluginDescriptionStatic ()
 EmulateInstruction *
 EmulateInstructionARM::CreateInstance (const ArchSpec &arch, InstructionType inst_type)
 {
-    if (EmulateInstructionARM::SupportsEmulatingIntructionsOfTypeStatic(inst_type))
+    if (EmulateInstructionARM::SupportsEmulatingInstructionsOfTypeStatic(inst_type))
     {
         if (arch.GetTriple().getArch() == llvm::Triple::arm)
         {

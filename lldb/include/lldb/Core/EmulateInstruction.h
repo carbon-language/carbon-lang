@@ -394,7 +394,7 @@ public:
     // Mandatory overrides
     //----------------------------------------------------------------------    
     virtual bool
-    SupportsEmulatingIntructionsOfType (InstructionType inst_type) = 0;
+    SupportsEmulatingInstructionsOfType (InstructionType inst_type) = 0;
     
     virtual bool
     SetTargetTriple (const ArchSpec &arch) = 0;

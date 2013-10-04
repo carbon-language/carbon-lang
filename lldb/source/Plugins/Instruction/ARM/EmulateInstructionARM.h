@@ -79,7 +79,7 @@ public:
                     InstructionType inst_type);
     
     static bool
-    SupportsEmulatingIntructionsOfTypeStatic (InstructionType inst_type)
+    SupportsEmulatingInstructionsOfTypeStatic (InstructionType inst_type)
     {
         switch (inst_type)
         {
@@ -149,9 +149,9 @@ public:
 //    }
     
     virtual bool
-    SupportsEmulatingIntructionsOfType (InstructionType inst_type)
+    SupportsEmulatingInstructionsOfType (InstructionType inst_type)
     {
-        return SupportsEmulatingIntructionsOfTypeStatic (inst_type);
+        return SupportsEmulatingInstructionsOfTypeStatic (inst_type);
     }
 
     virtual bool
