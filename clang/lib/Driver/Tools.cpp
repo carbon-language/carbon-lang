@@ -2139,7 +2139,13 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (KernelOrKext &&
       (!Triple.isiOS() || Triple.isOSVersionLT(6)))
     PIC = PIE = false;
-  if (Args.hasArg(options::OPT_static))
+  // Usually '-static' implies no-PIC. But for MIPS '-fPIC -static' means
+  // to compile as -fPIC but link with -static.
+  if (Args.hasArg(options::OPT_static) &&
+      getToolChain().getArch() != llvm::Triple::mips &&
+      getToolChain().getArch() != llvm::Triple::mipsel &&
+      getToolChain().getArch() != llvm::Triple::mips64 &&
+      getToolChain().getArch() != llvm::Triple::mips64el)
     PIC = PIE = false;
 
   if (Arg *A = Args.getLastArg(options::OPT_mdynamic_no_pic)) {
