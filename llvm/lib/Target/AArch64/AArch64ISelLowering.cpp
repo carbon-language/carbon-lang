@@ -297,7 +297,20 @@ AArch64TargetLowering::AArch64TargetLowering(AArch64TargetMachine &TM)
     setOperationAction(ISD::BUILD_VECTOR, MVT::v1f64, Custom);
     setOperationAction(ISD::BUILD_VECTOR, MVT::v2f64, Custom);
 
+    setOperationAction(ISD::VECTOR_SHUFFLE, MVT::v4i16, Custom);
+    setOperationAction(ISD::VECTOR_SHUFFLE, MVT::v8i16, Custom);
+    setOperationAction(ISD::VECTOR_SHUFFLE, MVT::v2i32, Custom);
+    setOperationAction(ISD::VECTOR_SHUFFLE, MVT::v4i32, Custom);
+    setOperationAction(ISD::VECTOR_SHUFFLE, MVT::v2f32, Custom);
+    setOperationAction(ISD::VECTOR_SHUFFLE, MVT::v4f32, Custom);
+    setOperationAction(ISD::VECTOR_SHUFFLE, MVT::v1f64, Custom);
+    setOperationAction(ISD::VECTOR_SHUFFLE, MVT::v2f64, Custom);
+
+    setOperationAction(ISD::CONCAT_VECTORS, MVT::v8i16, Legal);
+    setOperationAction(ISD::CONCAT_VECTORS, MVT::v4i32, Legal);
     setOperationAction(ISD::CONCAT_VECTORS, MVT::v2i64, Legal);
+    setOperationAction(ISD::CONCAT_VECTORS, MVT::v4f32, Legal);
+    setOperationAction(ISD::CONCAT_VECTORS, MVT::v2f64, Legal);
 
     setOperationAction(ISD::SETCC, MVT::v8i8, Custom);
     setOperationAction(ISD::SETCC, MVT::v16i8, Custom);
@@ -856,6 +869,8 @@ const char *AArch64TargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "AArch64ISD::NEON_QSHLs";
   case AArch64ISD::NEON_QSHLu:
     return "AArch64ISD::NEON_QSHLu";
+  case AArch64ISD::NEON_VDUPLANE:
+    return "AArch64ISD::NEON_VDUPLANE";
   default:
     return NULL;
   }
@@ -2687,6 +2702,7 @@ AArch64TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::VASTART: return LowerVASTART(Op, DAG);
   case ISD::BUILD_VECTOR:
     return LowerBUILD_VECTOR(Op, DAG, getSubtarget());
+  case ISD::VECTOR_SHUFFLE: return LowerVECTOR_SHUFFLE(Op, DAG);
   }
 
   return SDValue();
@@ -3473,6 +3489,35 @@ AArch64TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG,
       }
     }
   }
+  return SDValue();
+}
+
+SDValue
+AArch64TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op,
+                                                SelectionDAG &DAG) const {
+  SDValue V1 = Op.getOperand(0);
+  SDLoc dl(Op);
+  EVT VT = Op.getValueType();
+  ShuffleVectorSDNode *SVN = cast<ShuffleVectorSDNode>(Op.getNode());
+
+  // Convert shuffles that are directly supported on NEON to target-specific
+  // DAG nodes, instead of keeping them as shuffles and matching them again
+  // during code selection.  This is more efficient and avoids the possibility
+  // of inconsistencies between legalization and selection.
+  ArrayRef<int> ShuffleMask = SVN->getMask();
+
+  unsigned EltSize = VT.getVectorElementType().getSizeInBits();
+  if (EltSize <= 64) {
+    if (ShuffleVectorSDNode::isSplatMask(&ShuffleMask[0], VT)) {
+      int Lane = SVN->getSplatIndex();
+      // If this is undef splat, generate it via "just" vdup, if possible.
+      if (Lane == -1) Lane = 0;
+
+      return DAG.getNode(AArch64ISD::NEON_VDUPLANE, dl, VT, V1,
+                         DAG.getConstant(Lane, MVT::i64));
+    }
+  }
+
   return SDValue();
 }
 

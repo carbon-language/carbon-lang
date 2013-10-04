@@ -85,6 +85,9 @@ static DecodeStatus DecodeFPR64RegisterClass(llvm::MCInst &Inst, unsigned RegNo,
 static DecodeStatus DecodeFPR128RegisterClass(llvm::MCInst &Inst,
                                               unsigned RegNo, uint64_t Address,
                                               const void *Decoder);
+static DecodeStatus DecodeFPR128LoRegisterClass(llvm::MCInst &Inst,
+                                                unsigned RegNo, uint64_t Address,
+                                                const void *Decoder);
 
 static DecodeStatus DecodeAddrRegExtendOperand(llvm::MCInst &Inst,
                                                unsigned OptionHiS,
@@ -347,6 +350,15 @@ DecodeFPR128RegisterClass(llvm::MCInst &Inst, unsigned RegNo,
   uint16_t Register = getReg(Decoder, AArch64::FPR128RegClassID, RegNo);
   Inst.addOperand(MCOperand::CreateReg(Register));
   return MCDisassembler::Success;
+}
+
+static DecodeStatus
+DecodeFPR128LoRegisterClass(llvm::MCInst &Inst, unsigned RegNo,
+                            uint64_t Address, const void *Decoder) {
+  if (RegNo > 15)
+    return MCDisassembler::Fail;
+
+  return DecodeFPR128RegisterClass(Inst, RegNo, Address, Decoder);
 }
 
 static DecodeStatus DecodeAddrRegExtendOperand(llvm::MCInst &Inst,

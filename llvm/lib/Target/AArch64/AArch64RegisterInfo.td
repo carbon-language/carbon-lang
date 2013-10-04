@@ -145,14 +145,21 @@ def FPR32 : RegisterClass<"AArch64", [f32, v1i32, v1f32], 32,
                           (sequence "S%u", 0, 31)> {
 }
 
-def FPR64 : RegisterClass<"AArch64", [f64, v2f32, v2i32, v4i16, v8i8, v1i64, v1f64],
+def FPR64 : RegisterClass<"AArch64",
+                          [f64, v2f32, v2i32, v4i16, v8i8, v1i64, v1f64],
                           64, (sequence "D%u", 0, 31)>;
 
 def FPR128 : RegisterClass<"AArch64",
-                           [f128,v2f64, v2i64, v4f32, v4i32, v8i16, v16i8], 128,
-                           (sequence "Q%u", 0, 31)>;
+                           [f128,v2f64, v2i64, v4f32, v4i32, v8i16, v16i8],
+                           128, (sequence "Q%u", 0, 31)>;
 
+def FPR64Lo : RegisterClass<"AArch64",
+                            [f64, v2f32, v2i32, v4i16, v8i8, v1i64, v1f64],
+                            64, (sequence "D%u", 0, 15)>;
 
+def FPR128Lo : RegisterClass<"AArch64",
+                             [f128,v2f64, v2i64, v4f32, v4i32, v8i16, v16i8],
+                             128, (sequence "Q%u", 0, 15)>;
 
 //===----------------------------------------------------------------------===//
 //  Vector registers:
@@ -167,6 +174,10 @@ def VPR64AsmOperand : AsmOperandClass {
 def VPR64 : RegisterOperand<FPR64, "printVPRRegister">;
 
 def VPR128 : RegisterOperand<FPR128, "printVPRRegister">;
+
+def VPR64Lo : RegisterOperand<FPR64Lo, "printVPRRegister">;
+
+def VPR128Lo : RegisterOperand<FPR128Lo, "printVPRRegister">;
 
 // Flags register
 def NZCV : Register<"nzcv"> {

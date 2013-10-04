@@ -139,7 +139,10 @@ namespace AArch64ISD {
 
     // Vector saturating shift
     NEON_QSHLs,
-    NEON_QSHLu
+    NEON_QSHLu,
+
+    // Vector dup by lane
+    NEON_VDUPLANE
   };
 }
 
@@ -178,6 +181,8 @@ public:
 
   SDValue LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG,
                             const AArch64Subtarget *ST) const;
+
+  SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const;
 
   void SaveVarArgRegisters(CCState &CCInfo, SelectionDAG &DAG, SDLoc DL,
                            SDValue &Chain) const;
