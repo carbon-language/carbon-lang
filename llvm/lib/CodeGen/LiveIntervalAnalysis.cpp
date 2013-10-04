@@ -545,7 +545,7 @@ void LiveIntervals::addKillFlags(const VirtRegMap *VRM) {
       if (!MI)
         continue;
 
-      // Check if any of the reguints are live beyond the end of RI. That could
+      // Check if any of the regunits are live beyond the end of RI. That could
       // happen when a physreg is defined as a copy of a virtreg:
       //
       //   %EAX = COPY %vreg5

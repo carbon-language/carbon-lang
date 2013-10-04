@@ -78,7 +78,7 @@ void ProcessImplicitDefs::processImplicitDef(MachineInstr *MI) {
   unsigned Reg = MI->getOperand(0).getReg();
 
   if (TargetRegisterInfo::isVirtualRegister(Reg)) {
-    // For virtual regiusters, mark all uses as <undef>, and convert users to
+    // For virtual registers, mark all uses as <undef>, and convert users to
     // implicit-def when possible.
     for (MachineRegisterInfo::use_nodbg_iterator UI =
          MRI->use_nodbg_begin(Reg),
