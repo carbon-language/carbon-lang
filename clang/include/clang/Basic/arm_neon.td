@@ -40,16 +40,25 @@ def OP_MLS_N : Op;
 def OP_MLAL_N : Op;
 def OP_MLSL_N : Op;
 def OP_MUL_LN: Op;
+def OP_MULX_LN: Op;
 def OP_MULL_LN : Op;
+def OP_MULLHi_LN : Op;
 def OP_MLA_LN: Op;
 def OP_MLS_LN: Op;
 def OP_MLAL_LN : Op;
+def OP_MLALHi_LN : Op;
 def OP_MLSL_LN : Op;
+def OP_MLSLHi_LN : Op;
 def OP_QDMULL_LN : Op;
+def OP_QDMULLHi_LN : Op;
 def OP_QDMLAL_LN : Op;
+def OP_QDMLALHi_LN : Op;
 def OP_QDMLSL_LN : Op;
+def OP_QDMLSLHi_LN : Op;
 def OP_QDMULH_LN : Op;
 def OP_QRDMULH_LN : Op;
+def OP_FMS_LN : Op;
+def OP_FMS_LNQ : Op;
 def OP_EQ    : Op;
 def OP_GE    : Op;
 def OP_LE    : Op;
@@ -146,6 +155,7 @@ class NoTestOpInst<string n, string p, string t, Op o> : Inst<n, p, t, o> {}
 // f: float (int args)
 // d: default
 // g: default, ignore 'Q' size modifier.
+// j: default, force 'Q' size modifier.
 // w: double width elements, same num elts
 // n: double width elements, half num elts
 // h: half width elements, double num elts
@@ -503,7 +513,7 @@ def MLS     : IOpInst<"vmls", "dddd", "csifUcUsUiQcQsQiQfQUcQUsQUiQd", OP_MLS>;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Multiplication Extended
-def MULX : SInst<"vmulx", "ddd", "fQfQd">;
+def MULX : SInst<"vmulx", "ddd", "fdQfQd">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Division
@@ -628,6 +638,63 @@ def VRSUBHN_HIGH : SOpInst<"vrsubhn_high", "qhkk", "silUsUiUl", OP_RSUBHNHi>;
 def VQDMULL_HIGH : SOpInst<"vqdmull_high", "wkk", "si", OP_QDMULLHi>;
 def VQDMLAL_HIGH : SOpInst<"vqdmlal_high", "wwkk", "si", OP_QDMLALHi>;
 def VQDMLSL_HIGH : SOpInst<"vqdmlsl_high", "wwkk", "si", OP_QDMLSLHi>;
+
+////////////////////////////////////////////////////////////////////////////////
+
+def VMLA_LANEQ   : IOpInst<"vmla_laneq", "dddji",
+                           "siUsUifQsQiQUsQUiQf", OP_MLA_LN>;
+def VMLS_LANEQ   : IOpInst<"vmls_laneq", "dddji",
+                           "siUsUifQsQiQUsQUiQf", OP_MLS_LN>;
+
+def VFMA_LANE    : IInst<"vfma_lane", "dddgi", "fdQfQd">;
+def VFMA_LANEQ   : IInst<"vfma_laneq", "dddji", "fdQfQd">;
+def VFMS_LANE    : IOpInst<"vfms_lane", "dddgi", "fdQfQd", OP_FMS_LN>;
+def VFMS_LANEQ   : IOpInst<"vfms_laneq", "dddji", "fdQfQd", OP_FMS_LNQ>;
+
+def VMLAL_LANEQ  : SOpInst<"vmlal_laneq", "wwdki", "siUsUi", OP_MLAL_LN>;
+def VMLAL_HIGH_LANE   : SOpInst<"vmlal_high_lane", "wwkdi", "siUsUi",
+                                OP_MLALHi_LN>;
+def VMLAL_HIGH_LANEQ  : SOpInst<"vmlal_high_laneq", "wwkki", "siUsUi",
+                                OP_MLALHi_LN>;
+def VMLSL_LANEQ  : SOpInst<"vmlsl_laneq", "wwdki", "siUsUi", OP_MLSL_LN>;
+def VMLSL_HIGH_LANE   : SOpInst<"vmlsl_high_lane", "wwkdi", "siUsUi",
+                                OP_MLSLHi_LN>;
+def VMLSL_HIGH_LANEQ  : SOpInst<"vmlsl_high_laneq", "wwkki", "siUsUi",
+                                OP_MLSLHi_LN>;
+
+def VQDMLAL_LANEQ  : SOpInst<"vqdmlal_laneq", "wwdki", "si", OP_QDMLAL_LN>;
+def VQDMLAL_HIGH_LANE   : SOpInst<"vqdmlal_high_lane", "wwkdi", "si",
+                                OP_QDMLALHi_LN>;
+def VQDMLAL_HIGH_LANEQ  : SOpInst<"vqdmlal_high_laneq", "wwkki", "si",
+                                OP_QDMLALHi_LN>;
+def VQDMLSL_LANEQ  : SOpInst<"vqdmlsl_laneq", "wwdki", "si", OP_QDMLSL_LN>;
+def VQDMLSL_HIGH_LANE   : SOpInst<"vqdmlsl_high_lane", "wwkdi", "si",
+                                OP_QDMLSLHi_LN>;
+def VQDMLSL_HIGH_LANEQ  : SOpInst<"vqdmlsl_high_laneq", "wwkki", "si",
+                                OP_QDMLSLHi_LN>;
+
+// Newly add double parameter for vmul_lane in aarch64
+def VMUL_LANE_A64 : IOpInst<"vmul_lane", "ddgi", "dQd", OP_MUL_LN>;
+
+def VMUL_LANEQ   : IOpInst<"vmul_laneq", "ddji",
+                           "sifdUsUiQsQiQfQUsQUiQfQd", OP_MUL_LN>;
+def VMULL_LANEQ  : SOpInst<"vmull_laneq", "wdki", "siUsUi", OP_MULL_LN>;
+def VMULL_HIGH_LANE   : SOpInst<"vmull_high_lane", "wkdi", "siUsUi",
+                                OP_MULLHi_LN>;
+def VMULL_HIGH_LANEQ  : SOpInst<"vmull_high_laneq", "wkki", "siUsUi",
+                                OP_MULLHi_LN>;
+
+def VQDMULL_LANEQ  : SOpInst<"vqdmull_laneq", "wdki", "si", OP_QDMULL_LN>;
+def VQDMULL_HIGH_LANE   : SOpInst<"vqdmull_high_lane", "wkdi", "si",
+                                  OP_QDMULLHi_LN>;
+def VQDMULL_HIGH_LANEQ  : SOpInst<"vqdmull_high_laneq", "wkki", "si",
+                                  OP_QDMULLHi_LN>;
+
+def VQDMULH_LANEQ  : SOpInst<"vqdmulh_laneq", "ddji", "siQsQi", OP_QDMULH_LN>;
+def VQRDMULH_LANEQ : SOpInst<"vqrdmulh_laneq", "ddji", "siQsQi", OP_QRDMULH_LN>;
+
+def VMULX_LANE : IOpInst<"vmulx_lane", "ddgi", "fdQfQd", OP_MULX_LN>;
+def VMULX_LANEQ : IOpInst<"vmulx_laneq", "ddji", "fdQfQd", OP_MULX_LN>;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Scalar Arithmetic

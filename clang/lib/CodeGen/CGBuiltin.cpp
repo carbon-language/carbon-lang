@@ -2222,6 +2222,46 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
   }
 
   // AArch64-only builtins
+  case AArch64::BI__builtin_neon_vfma_lane_v:
+  case AArch64::BI__builtin_neon_vfmaq_laneq_v: {
+    Value *F = CGM.getIntrinsic(Intrinsic::fma, Ty);
+    Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
+    Ops[1] = Builder.CreateBitCast(Ops[1], Ty);
+
+    Ops[2] = Builder.CreateBitCast(Ops[2], Ty);
+    Ops[2] = EmitNeonSplat(Ops[2], cast<ConstantInt>(Ops[3]));
+    return Builder.CreateCall3(F, Ops[2], Ops[1], Ops[0]);
+  }
+  case AArch64::BI__builtin_neon_vfmaq_lane_v: {
+    Value *F = CGM.getIntrinsic(Intrinsic::fma, Ty);
+    Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
+    Ops[1] = Builder.CreateBitCast(Ops[1], Ty);
+
+    llvm::VectorType *VTy = cast<llvm::VectorType>(Ty);
+    llvm::Type *STy = llvm::VectorType::get(VTy->getElementType(),
+                                            VTy->getNumElements() / 2);
+    Ops[2] = Builder.CreateBitCast(Ops[2], STy);
+    Value* SV = llvm::ConstantVector::getSplat(VTy->getNumElements(),
+                                               cast<ConstantInt>(Ops[3]));
+    Ops[2] = Builder.CreateShuffleVector(Ops[2], Ops[2], SV, "lane");
+
+    return Builder.CreateCall3(F, Ops[2], Ops[1], Ops[0]);
+  }
+  case AArch64::BI__builtin_neon_vfma_laneq_v: {
+    Value *F = CGM.getIntrinsic(Intrinsic::fma, Ty);
+    Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
+    Ops[1] = Builder.CreateBitCast(Ops[1], Ty);
+
+    llvm::VectorType *VTy = cast<llvm::VectorType>(Ty);
+    llvm::Type *STy = llvm::VectorType::get(VTy->getElementType(),
+                                            VTy->getNumElements() * 2);
+    Ops[2] = Builder.CreateBitCast(Ops[2], STy);
+    Value* SV = llvm::ConstantVector::getSplat(VTy->getNumElements(),
+                                               cast<ConstantInt>(Ops[3]));
+    Ops[2] = Builder.CreateShuffleVector(Ops[2], Ops[2], SV, "lane");
+
+    return Builder.CreateCall3(F, Ops[2], Ops[1], Ops[0]);
+  }
   case AArch64::BI__builtin_neon_vfms_v:
   case AArch64::BI__builtin_neon_vfmsq_v: {
     Value *F = CGM.getIntrinsic(Intrinsic::fma, Ty);
