@@ -183,4 +183,13 @@ TEST(SanitizerCommon, FindPathToBinary) {
 }
 #endif
 
+TEST(SanitizerCommon, StripPathPrefix) {
+  EXPECT_EQ(0, StripPathPrefix(0, "prefix"));
+  EXPECT_STREQ("foo", StripPathPrefix("foo", 0));
+  EXPECT_STREQ("dir/file.cc",
+               StripPathPrefix("/usr/lib/dir/file.cc", "/usr/lib/"));
+  EXPECT_STREQ("/file.cc", StripPathPrefix("/usr/myroot/file.cc", "/myroot"));
+  EXPECT_STREQ("file.h", StripPathPrefix("/usr/lib/./file.h", "/usr/lib/"));
+}
+
 }  // namespace __sanitizer

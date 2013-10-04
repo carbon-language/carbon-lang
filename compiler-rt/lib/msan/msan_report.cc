@@ -36,8 +36,7 @@ class Decorator: private __sanitizer::AnsiColorDecorator {
 
 static void PrintStack(const uptr *trace, uptr size) {
   SymbolizerScope sym_scope;
-  StackTrace::PrintStack(trace, size, true,
-                         common_flags()->strip_path_prefix, 0);
+  StackTrace::PrintStack(trace, size, true, 0);
 }
 
 static void DescribeOrigin(u32 origin) {
@@ -80,10 +79,7 @@ static void ReportSummary(const char *error_type, StackTrace *stack) {
     SymbolizerScope sym_scope;
     getSymbolizer()->SymbolizeCode(pc, &ai, 1);
   }
-  ReportErrorSummary(error_type,
-                     StripPathPrefix(ai.file,
-                                     common_flags()->strip_path_prefix),
-                     ai.line, ai.function);
+  ReportErrorSummary(error_type, ai.file, ai.line, ai.function);
 }
 
 void ReportUMR(StackTrace *stack, u32 origin) {

@@ -119,6 +119,7 @@ void InitializeFlags(Flags *f, const char *env) {
   }
 
   common_flags()->allocator_may_return_null = f->allocator_may_return_null;
+  common_flags()->strip_path_prefix = f->strip_path_prefix;
 }
 
 }  // namespace __tsan

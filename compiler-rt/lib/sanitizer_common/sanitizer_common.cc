@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "sanitizer_common.h"
+#include "sanitizer_flags.h"
 #include "sanitizer_libc.h"
 
 namespace __sanitizer {
@@ -136,13 +137,41 @@ void *MmapAlignedOrDie(uptr size, uptr alignment, const char *mem_type) {
   return (void*)res;
 }
 
+const char *StripPathPrefix(const char *filepath,
+                            const char *strip_path_prefix) {
+  if (filepath == 0) return 0;
+  if (strip_path_prefix == 0) return filepath;
+  const char *pos = internal_strstr(filepath, strip_path_prefix);
+  if (pos == 0) return filepath;
+  pos += internal_strlen(strip_path_prefix);
+  if (pos[0] == '.' && pos[1] == '/')
+    pos += 2;
+  return pos;
+}
+
+void PrintSourceLocation(const char *file, int line, int column) {
+  CHECK(file);
+  Printf("%s", StripPathPrefix(file, common_flags()->strip_path_prefix));
+  if (line > 0) {
+    Printf(":%d", line);
+    if (column > 0)
+      Printf(":%d", column);
+  }
+}
+
+void PrintModuleAndOffset(const char *module, uptr offset) {
+  Printf("(%s+0x%zx)",
+         StripPathPrefix(module, common_flags()->strip_path_prefix), offset);
+}
+
 void ReportErrorSummary(const char *error_type, const char *file,
                         int line, const char *function) {
   const int kMaxSize = 1024;  // We don't want a summary too long.
   InternalScopedBuffer<char> buff(kMaxSize);
-  internal_snprintf(buff.data(), kMaxSize, "%s: %s %s:%d %s",
-                    SanitizerToolName, error_type,
-                    file ? file : "??", line, function ? function : "??");
+  internal_snprintf(
+      buff.data(), kMaxSize, "%s: %s %s:%d %s", SanitizerToolName, error_type,
+      file ? StripPathPrefix(file, common_flags()->strip_path_prefix) : "??",
+      line, function ? function : "??");
   __sanitizer_report_error_summary(buff.data());
 }
 

@@ -34,8 +34,7 @@ struct StackTrace {
   uptr size;
   uptr max_size;
   uptr trace[kStackTraceMax];
-  static void PrintStack(const uptr *addr, uptr size,
-                         bool symbolize, const char *strip_file_prefix,
+  static void PrintStack(const uptr *addr, uptr size, bool symbolize,
                          SymbolizeCallback symbolize_callback);
   void CopyTo(uptr *dst, uptr dst_size) {
     for (uptr i = 0; i < size && i < dst_size; i++)
@@ -67,10 +66,6 @@ struct StackTrace {
   static void UncompressStack(StackTrace *stack,
                               u32 *compressed, uptr size);
 };
-
-
-const char *StripPathPrefix(const char *filepath,
-                            const char *strip_file_prefix);
 
 void GetStackTrace(StackTrace *stack, uptr max_s, uptr pc, uptr bp,
                    uptr stack_top, uptr stack_bottom, bool fast);

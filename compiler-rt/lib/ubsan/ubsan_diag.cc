@@ -72,25 +72,23 @@ static void renderLocation(Location Loc) {
   case Location::LK_Source: {
     SourceLocation SLoc = Loc.getSourceLocation();
     if (SLoc.isInvalid())
-      Printf("<unknown>:");
-    else {
-      Printf("%s:%d:", SLoc.getFilename(), SLoc.getLine());
-      if (SLoc.getColumn())
-        Printf("%d:", SLoc.getColumn());
-    }
+      Printf("<unknown>");
+    else
+      PrintSourceLocation(SLoc.getFilename(), SLoc.getLine(), SLoc.getColumn());
     break;
   }
   case Location::LK_Module:
-    Printf("%s:0x%zx:", Loc.getModuleLocation().getModuleName(),
-           Loc.getModuleLocation().getOffset());
+    PrintModuleAndOffset(Loc.getModuleLocation().getModuleName(),
+                         Loc.getModuleLocation().getOffset());
     break;
   case Location::LK_Memory:
-    Printf("%p:", Loc.getMemoryLocation());
+    Printf("%p", Loc.getMemoryLocation());
     break;
   case Location::LK_Null:
-    Printf("<unknown>:");
+    Printf("<unknown>");
     break;
   }
+  Printf(":");
 }
 
 static void renderText(const char *Message, const Diag::Arg *Args) {

@@ -550,10 +550,7 @@ static void ReportSummary(const char *error_type, StackTrace *stack) {
     // Maybe sometimes we need to choose another frame (e.g. skip memcpy/etc).
     uptr pc = StackTrace::GetPreviousInstructionPc(stack->trace[0]);
     getSymbolizer()->SymbolizeCode(pc, &ai, 1);
-    ReportErrorSummary(error_type,
-                       StripPathPrefix(ai.file,
-                                       common_flags()->strip_path_prefix),
-                       ai.line, ai.function);
+    ReportErrorSummary(error_type, ai.file, ai.line, ai.function);
   }
   // FIXME: do we need to print anything at all if there is no symbolizer?
 }

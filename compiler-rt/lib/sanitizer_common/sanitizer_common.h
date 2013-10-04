@@ -132,6 +132,13 @@ uptr ReadFileToBuffer(const char *file_name, char **buff,
 // in '*buff_size'.
 void *MapFileToMemory(const char *file_name, uptr *buff_size);
 
+// Error report formatting.
+const char *StripPathPrefix(const char *filepath,
+                            const char *strip_file_prefix);
+void PrintSourceLocation(const char *file, int line, int column);
+void PrintModuleAndOffset(const char *module, uptr offset);
+
+
 // OS
 void DisableCoreDumper();
 void DumpProcessMap();
