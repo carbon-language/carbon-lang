@@ -3,7 +3,7 @@
 
 ; test that the DW_AT_specification is a back edge in the file.
 
-; CHECK: 0x0000[[OFFSET:[0-9a-f]*]]: DW_TAG_subprogram [5] *
+; CHECK: 0x0000[[OFFSET:[0-9a-f]*]]: DW_TAG_subprogram [7] *
 ; CHECK: DW_AT_specification [DW_FORM_ref4]      (cu + 0x[[OFFSET]] => {0x0000[[OFFSET]]})
 
 
