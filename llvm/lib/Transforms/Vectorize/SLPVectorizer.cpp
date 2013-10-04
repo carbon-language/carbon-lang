@@ -206,6 +206,112 @@ static bool CanReuseExtract(ArrayRef<Value *> VL) {
   return true;
 }
 
+static bool all_equal(SmallVectorImpl<Value *> &V) {
+  Value *First = V[0];
+  for (int i = 1, e = V.size(); i != e; ++i)
+    if (V[i] != First)
+      return false;
+  return true;
+}
+
+static void reorderInputsAccordingToOpcode(ArrayRef<Value *> VL,
+                                           SmallVectorImpl<Value *> &Left,
+                                           SmallVectorImpl<Value *> &Right) {
+
+  SmallVector<Value *, 16> OrigLeft, OrigRight;
+
+  bool AllSameOpcodeLeft = true;
+  bool AllSameOpcodeRight = true;
+  for (unsigned i = 0, e = VL.size(); i != e; ++i) {
+    Instruction *I = cast<Instruction>(VL[i]);
+    Value *V0 = I->getOperand(0);
+    Value *V1 = I->getOperand(1);
+
+    OrigLeft.push_back(V0);
+    OrigRight.push_back(V1);
+
+    Instruction *I0 = dyn_cast<Instruction>(V0);
+    Instruction *I1 = dyn_cast<Instruction>(V1);
+
+    // Check whether all operands on one side have the same opcode. In this case
+    // we want to preserve the original order and not make things worse by
+    // reordering.
+    AllSameOpcodeLeft = I0;
+    AllSameOpcodeRight = I1;
+
+    if (i && AllSameOpcodeLeft) {
+      if(Instruction *P0 = dyn_cast<Instruction>(OrigLeft[i-1])) {
+        if(P0->getOpcode() != I0->getOpcode())
+          AllSameOpcodeLeft = false;
+      } else
+        AllSameOpcodeLeft = false;
+    }
+    if (i && AllSameOpcodeRight) {
+      if(Instruction *P1 = dyn_cast<Instruction>(OrigRight[i-1])) {
+        if(P1->getOpcode() != I1->getOpcode())
+          AllSameOpcodeRight = false;
+      } else
+        AllSameOpcodeRight = false;
+    }
+
+    // Sort two opcodes. In the code below we try to preserve the ability to use
+    // broadcast of values instead of individual inserts.
+    // vl1 = load
+    // vl2 = phi
+    // vr1 = load
+    // vr2 = vr2
+    //    = vl1 x vr1
+    //    = vl2 x vr2
+    // If we just sorted according to opcode we would leave the first line in
+    // tact but we would swap vl2 with vr2 because opcode(phi) > opcode(load).
+    //    = vl1 x vr1
+    //    = vr2 x vl2
+    // Because vr2 and vr1 are from the same load we loose the opportunity of a
+    // broadcast for the packed right side in the backend: we have [vr1, vl2]
+    // instead of [vr1, vr2=vr1].
+    if (I0 && I1) {
+       if(!i && I0->getOpcode() > I1->getOpcode()) {
+         Left.push_back(I1);
+         Right.push_back(I0);
+       } else if (i && I0->getOpcode() > I1->getOpcode() && Right[i-1] != I1) {
+         // Try not to destroy a broad cast for no apparent benefit.
+         Left.push_back(I1);
+         Right.push_back(I0);
+       } else if (i && I0->getOpcode() == I1->getOpcode() && Right[i-1] ==  I0) {
+         // Try preserve broadcasts.
+         Left.push_back(I1);
+         Right.push_back(I0);
+       } else if (i && I0->getOpcode() == I1->getOpcode() && Left[i-1] == I1) {
+         // Try preserve broadcasts.
+         Left.push_back(I1);
+         Right.push_back(I0);
+       } else {
+         Left.push_back(I0);
+         Right.push_back(I1);
+       }
+       continue;
+    }
+    // One opcode, put the instruction on the right.
+    if (I0) {
+      Left.push_back(V1);
+      Right.push_back(I0);
+      continue;
+    }
+    Left.push_back(V0);
+    Right.push_back(V1);
+  }
+
+  bool LeftBroadcast = all_equal(Left);
+  bool RightBroadcast = all_equal(Right);
+
+  // Don't reorder if the operands where good to begin with.
+  if (!(LeftBroadcast || RightBroadcast) &&
+      (AllSameOpcodeRight || AllSameOpcodeLeft)) {
+    Left = OrigLeft;
+    Right = OrigRight;
+  }
+}
+
 /// Bottom Up SLP Vectorizer.
 class BoUpSLP {
 public:
@@ -775,6 +881,16 @@ void BoUpSLP::buildTree_rec(ArrayRef<Value *> VL, unsigned Depth) {
       newTreeEntry(VL, true);
       DEBUG(dbgs() << "SLP: added a vector of bin op.\n");
 
+      // Sort operands of the instructions so that each side is more likely to
+      // have the same opcode.
+      if (isa<BinaryOperator>(VL0) && VL0->isCommutative()) {
+        ValueList Left, Right;
+        reorderInputsAccordingToOpcode(VL, Left, Right);
+        buildTree_rec(Left, Depth + 1);
+        buildTree_rec(Right, Depth + 1);
+        return;
+      }
+
       for (unsigned i = 0, e = VL0->getNumOperands(); i < e; ++i) {
         ValueList Operands;
         // Prepare the operand vector.
@@ -1331,10 +1447,13 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
     case Instruction::Or:
     case Instruction::Xor: {
       ValueList LHSVL, RHSVL;
-      for (int i = 0, e = E->Scalars.size(); i < e; ++i) {
-        LHSVL.push_back(cast<Instruction>(E->Scalars[i])->getOperand(0));
-        RHSVL.push_back(cast<Instruction>(E->Scalars[i])->getOperand(1));
-      }
+      if (isa<BinaryOperator>(VL0) && VL0->isCommutative())
+        reorderInputsAccordingToOpcode(E->Scalars, LHSVL, RHSVL);
+      else
+        for (int i = 0, e = E->Scalars.size(); i < e; ++i) {
+          LHSVL.push_back(cast<Instruction>(E->Scalars[i])->getOperand(0));
+          RHSVL.push_back(cast<Instruction>(E->Scalars[i])->getOperand(1));
+        }
 
       setInsertPointAfterBundle(E->Scalars);
 
