@@ -11,3 +11,4 @@ __tsan_acquire
 Annotate*
 WTFAnnotate*
 RunningOnValgrind
+ValgrindSlowdown
