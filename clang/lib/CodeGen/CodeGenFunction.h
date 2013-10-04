@@ -2155,6 +2155,8 @@ public:
   llvm::Value *EmitNeonSplat(llvm::Value *V, llvm::Constant *Idx);
   llvm::Value *EmitNeonShiftVector(llvm::Value *V, llvm::Type *Ty,
                                    bool negateForRightShift);
+  llvm::Value *EmitNeonRShiftImm(llvm::Value *Vec, llvm::Value *Amt,
+                                 llvm::Type *Ty, bool usgn, const char *name);
 
   llvm::Value *BuildVector(ArrayRef<llvm::Value*> Ops);
   llvm::Value *EmitX86BuiltinExpr(unsigned BuiltinID, const CallExpr *E);
