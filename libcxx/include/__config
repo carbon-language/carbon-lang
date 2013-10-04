@@ -79,6 +79,9 @@
 #  endif
 #  if defined(_MSC_VER) && !defined(__clang__)
 #    define _LIBCPP_MSVC // Using Microsoft Visual C++ compiler
+#    define _LIBCPP_TOSTRING2(x) #x
+#    define _LIBCPP_TOSTRING(x) _LIBCPP_TOSTRING2(x)
+#    define _LIBCPP_WARNING(x) __pragma(message(__FILE__ "(" _LIBCPP_TOSTRING(__LINE__) ") : warning note: " x))
 #  endif
 #  // If mingw not explicitly detected, assume using MS C runtime only.
 #  ifndef __MINGW32__

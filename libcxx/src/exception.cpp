@@ -1,3 +1,5 @@
+
+
 //===------------------------ exception.cpp -------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
@@ -38,6 +40,13 @@
   static std::terminate_handler  __terminate_handler;
   static std::unexpected_handler __unexpected_handler;
 #endif // __has_include(<cxxabi.h>)
+
+_LIBCPP_NORETURN
+static void _libcpp_abort(const char* msg)
+{
+    printf("%s\n", msg);
+    abort();
+}
 
 namespace std
 {
@@ -89,15 +98,13 @@ terminate() _NOEXCEPT
 #endif  // _LIBCPP_NO_EXCEPTIONS
         (*get_terminate())();
         // handler should not return
-        printf("terminate_handler unexpectedly returned\n");
-        ::abort ();
+        _libcpp_abort("terminate_handler unexpectedly returned\n");
 #ifndef _LIBCPP_NO_EXCEPTIONS
     }
     catch (...)
     {
         // handler should not throw exception
-        printf("terminate_handler unexpectedly threw an exception\n");
-        ::abort ();
+        _libcpp_abort("terminate_handler unexpectedly threw an exception\n");
     }
 #endif  // _LIBCPP_NO_EXCEPTIONS
 }
@@ -111,11 +118,15 @@ bool uncaught_exception() _NOEXCEPT
     // on Darwin, there is a helper function so __cxa_get_globals is private
     return __cxa_uncaught_exception();
 #else  // __APPLE__
-    #warning uncaught_exception not yet implemented
-    printf("uncaught_exception not yet implemented\n");
-    ::abort();
+#   if defined(_MSC_VER) && ! defined(__clang__)
+        _LIBCPP_WARNING("uncaught_exception not yet implemented")
+#   else
+#       warning uncaught_exception not yet implemented
+#   endif
+    _libcpp_abort("uncaught_exception not yet implemented\n");
 #endif  // __APPLE__
 }
+
 
 #ifndef _LIBCPPABI_VERSION
 
@@ -149,9 +160,12 @@ exception_ptr::~exception_ptr() _NOEXCEPT
 #if HAVE_DEPENDENT_EH_ABI
     __cxa_decrement_exception_refcount(__ptr_);
 #else
-    #warning exception_ptr not yet implemented
-    printf("exception_ptr not yet implemented\n");
-    ::abort();
+#   if defined(_MSC_VER) && ! defined(__clang__)
+        _LIBCPP_WARNING("exception_ptr not yet implemented")
+#   else
+#       warning exception_ptr not yet implemented
+#   endif
+    _libcpp_abort("exception_ptr not yet implemented\n");
 #endif  // __APPLE__
 }
 
@@ -161,9 +175,14 @@ exception_ptr::exception_ptr(const exception_ptr& other) _NOEXCEPT
 #if HAVE_DEPENDENT_EH_ABI
     __cxa_increment_exception_refcount(__ptr_);
 #else
-    #warning exception_ptr not yet implemented
-    printf("exception_ptr not yet implemented\n");
-    ::abort();
+
+#   if defined(_MSC_VER) && ! defined(__clang__)
+        _LIBCPP_WARNING("exception_ptr not yet implemented")
+#   else
+#       warning exception_ptr not yet implemented
+#   endif
+    _libcpp_abort("exception_ptr not yet implemented\n");
+
 #endif  // __APPLE__
 }
 
@@ -178,9 +197,14 @@ exception_ptr& exception_ptr::operator=(const exception_ptr& other) _NOEXCEPT
     }
     return *this;
 #else  // __APPLE__
-    #warning exception_ptr not yet implemented
-    printf("exception_ptr not yet implemented\n");
-    ::abort();
+
+#   if defined(_MSC_VER) && ! defined(__clang__)
+        _LIBCPP_WARNING("exception_ptr not yet implemented")
+#   else
+#       warning exception_ptr not yet implemented
+#   endif
+    _libcpp_abort("exception_ptr not yet implemented\n");
+
 #endif  // __APPLE__
 }
 
@@ -213,9 +237,12 @@ exception_ptr current_exception() _NOEXCEPT
     ptr.__ptr_ = __cxa_current_primary_exception();
     return ptr;
 #else  // __APPLE__
-    #warning exception_ptr not yet implemented
-    printf("exception_ptr not yet implemented\n");
-    ::abort();
+#   if defined(_MSC_VER) && ! defined(__clang__)
+        _LIBCPP_WARNING( "exception_ptr not yet implemented" )
+#   else
+#       warning exception_ptr not yet implemented
+#   endif
+    _libcpp_abort("exception_ptr not yet implemented\n");
 #endif  // __APPLE__
 }
 
@@ -227,9 +254,12 @@ void rethrow_exception(exception_ptr p)
     // if p.__ptr_ is NULL, above returns so we terminate
     terminate();
 #else  // __APPLE__
-    #warning exception_ptr not yet implemented
-    printf("exception_ptr not yet implemented\n");
-    ::abort();
+#   if defined(_MSC_VER) && ! defined(__clang__)
+        _LIBCPP_WARNING("exception_ptr not yet implemented")
+#   else
+#       warning exception_ptr not yet implemented
+#   endif
+    _libcpp_abort("exception_ptr not yet implemented\n");
 #endif  // __APPLE__
 }
 } // std
