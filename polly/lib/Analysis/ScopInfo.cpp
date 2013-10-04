@@ -411,12 +411,13 @@ static isl_map *getEqualAndLarger(isl_space *setDomain) {
   isl_space *Space = isl_space_map_from_set(setDomain);
   isl_map *Map = isl_map_universe(isl_space_copy(Space));
   isl_local_space *MapLocalSpace = isl_local_space_from_space(Space);
+  unsigned lastDimension = isl_map_dim(Map, isl_dim_in) - 1;
 
   // Set all but the last dimension to be equal for the input and output
   //
   //   input[i0, i1, ..., iX] -> output[o0, o1, ..., oX]
   //     : i0 = o0, i1 = o1, ..., i(X-1) = o(X-1)
-  for (unsigned i = 0; i < isl_map_dim(Map, isl_dim_in) - 1; ++i)
+  for (unsigned i = 0; i < lastDimension; ++i)
     Map = isl_map_equate(Map, isl_dim_in, i, isl_dim_out, i);
 
   // Set the last dimension of the input to be strict smaller than the
@@ -424,7 +425,6 @@ static isl_map *getEqualAndLarger(isl_space *setDomain) {
   //
   //   input[?,?,?,...,iX] -> output[?,?,?,...,oX] : iX < oX
   //
-  unsigned lastDimension = isl_map_dim(Map, isl_dim_in) - 1;
   isl_val *v;
   isl_ctx *Ctx = isl_map_get_ctx(Map);
   isl_constraint *c = isl_inequality_alloc(isl_local_space_copy(MapLocalSpace));
