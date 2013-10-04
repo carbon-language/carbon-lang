@@ -1181,7 +1181,9 @@ TSAN_INTERCEPTOR(int, pthread_barrier_wait, void *b) {
 }
 
 TSAN_INTERCEPTOR(int, pthread_once, void *o, void (*f)()) {
-  SCOPED_TSAN_INTERCEPTOR(pthread_once, o, f);
+  SCOPED_INTERCEPTOR_RAW(pthread_once, o, f);
+  // Using SCOPED_INTERCEPTOR_RAW, because if we are called from an ignored lib,
+  // the user callback must be executed with thr->in_rtl == 0.
   if (o == 0 || f == 0)
     return EINVAL;
   atomic_uint32_t *a = static_cast<atomic_uint32_t*>(o);
@@ -1193,14 +1195,16 @@ TSAN_INTERCEPTOR(int, pthread_once, void *o, void (*f)()) {
     (*f)();
     CHECK_EQ(thr->in_rtl, 0);
     thr->in_rtl = old_in_rtl;
-    Release(thr, pc, (uptr)o);
+    if (!thr->in_ignored_lib)
+      Release(thr, pc, (uptr)o);
     atomic_store(a, 2, memory_order_release);
   } else {
     while (v != 2) {
       pthread_yield();
       v = atomic_load(a, memory_order_acquire);
     }
-    Acquire(thr, pc, (uptr)o);
+    if (!thr->in_ignored_lib)
+      Acquire(thr, pc, (uptr)o);
   }
   return 0;
 }
