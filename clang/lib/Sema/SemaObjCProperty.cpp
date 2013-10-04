@@ -126,7 +126,7 @@ CheckPropertyAgainstProtocol(Sema &S, ObjCPropertyDecl *Prop,
   DeclContext::lookup_result R = Proto->lookup(Prop->getDeclName());
   for (unsigned I = 0, N = R.size(); I != N; ++I) {
     if (ObjCPropertyDecl *ProtoProp = dyn_cast<ObjCPropertyDecl>(R[I])) {
-      S.DiagnosePropertyMismatch(Prop, ProtoProp, Proto->getIdentifier());
+      S.DiagnosePropertyMismatch(Prop, ProtoProp, Proto->getIdentifier(), true);
       return;
     }
   }
@@ -208,7 +208,7 @@ Decl *Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
       DeclContext::lookup_result R = Super->lookup(Res->getDeclName());
       for (unsigned I = 0, N = R.size(); I != N; ++I) {
         if (ObjCPropertyDecl *SuperProp = dyn_cast<ObjCPropertyDecl>(R[I])) {
-          DiagnosePropertyMismatch(Res, SuperProp, Super->getIdentifier());
+          DiagnosePropertyMismatch(Res, SuperProp, Super->getIdentifier(), false);
           FoundInSuper = true;
           break;
         }
@@ -1353,31 +1353,41 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
 void
 Sema::DiagnosePropertyMismatch(ObjCPropertyDecl *Property,
                                ObjCPropertyDecl *SuperProperty,
-                               const IdentifierInfo *inheritedName) {
+                               const IdentifierInfo *inheritedName,
+                               bool OverridingProtocolProperty) {
   ObjCPropertyDecl::PropertyAttributeKind CAttr =
-  Property->getPropertyAttributes();
+    Property->getPropertyAttributes();
   ObjCPropertyDecl::PropertyAttributeKind SAttr =
-  SuperProperty->getPropertyAttributes();
-  if ((CAttr & ObjCPropertyDecl::OBJC_PR_readonly)
-      && (SAttr & ObjCPropertyDecl::OBJC_PR_readwrite))
-    Diag(Property->getLocation(), diag::warn_readonly_property)
-      << Property->getDeclName() << inheritedName;
-  if ((CAttr & ObjCPropertyDecl::OBJC_PR_copy)
-      != (SAttr & ObjCPropertyDecl::OBJC_PR_copy))
-    Diag(Property->getLocation(), diag::warn_property_attribute)
-      << Property->getDeclName() << "copy" << inheritedName;
-  else if (!(SAttr & ObjCPropertyDecl::OBJC_PR_readonly)){
-    unsigned CAttrRetain = 
-      (CAttr & 
-       (ObjCPropertyDecl::OBJC_PR_retain | ObjCPropertyDecl::OBJC_PR_strong));
-    unsigned SAttrRetain = 
-      (SAttr & 
-       (ObjCPropertyDecl::OBJC_PR_retain | ObjCPropertyDecl::OBJC_PR_strong));
-    bool CStrong = (CAttrRetain != 0);
-    bool SStrong = (SAttrRetain != 0);
-    if (CStrong != SStrong)
+    SuperProperty->getPropertyAttributes();
+  
+  // We allow readonly properties without an explicit ownership
+  // (assign/unsafe_unretained/weak/retain/strong/copy) in super class
+  // to be overridden by a property with any explicit ownership in the subclass.
+  if (!OverridingProtocolProperty &&
+      !getOwnershipRule(SAttr) && getOwnershipRule(CAttr))
+    ;
+  else {
+    if ((CAttr & ObjCPropertyDecl::OBJC_PR_readonly)
+        && (SAttr & ObjCPropertyDecl::OBJC_PR_readwrite))
+      Diag(Property->getLocation(), diag::warn_readonly_property)
+        << Property->getDeclName() << inheritedName;
+    if ((CAttr & ObjCPropertyDecl::OBJC_PR_copy)
+        != (SAttr & ObjCPropertyDecl::OBJC_PR_copy))
       Diag(Property->getLocation(), diag::warn_property_attribute)
-        << Property->getDeclName() << "retain (or strong)" << inheritedName;
+        << Property->getDeclName() << "copy" << inheritedName;
+    else if (!(SAttr & ObjCPropertyDecl::OBJC_PR_readonly)){
+      unsigned CAttrRetain =
+        (CAttr &
+         (ObjCPropertyDecl::OBJC_PR_retain | ObjCPropertyDecl::OBJC_PR_strong));
+      unsigned SAttrRetain =
+        (SAttr &
+         (ObjCPropertyDecl::OBJC_PR_retain | ObjCPropertyDecl::OBJC_PR_strong));
+      bool CStrong = (CAttrRetain != 0);
+      bool SStrong = (SAttrRetain != 0);
+      if (CStrong != SStrong)
+        Diag(Property->getLocation(), diag::warn_property_attribute)
+          << Property->getDeclName() << "retain (or strong)" << inheritedName;
+    }
   }
 
   if ((CAttr & ObjCPropertyDecl::OBJC_PR_nonatomic)
