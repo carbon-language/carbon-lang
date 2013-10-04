@@ -176,6 +176,11 @@ public:
   virtual void convertToMapAndConstraints(unsigned Kind,
                       const SmallVectorImpl<MCParsedAsmOperand*> &Operands) = 0;
 
+  /// End of assembly processing.
+  /// This gets called when all assembly has been read and gives the local
+  /// Target AsmParsers an opportunity for any final data processing, etc..
+  virtual void emitEndOfAsmFile(MCStreamer &Out) {}
+
   virtual const MCExpr *applyModifierToExpr(const MCExpr *E,
                                             MCSymbolRefExpr::VariantKind,
                                             MCContext &Ctx) {

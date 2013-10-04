@@ -673,8 +673,10 @@ bool AsmParser::Run(bool NoInitialTextSection, bool NoFinalize) {
 
   // Finalize the output stream if there are no errors and if the client wants
   // us to.
-  if (!HadError && !NoFinalize)
+  if (!HadError && !NoFinalize) {
+    getTargetParser().emitEndOfAsmFile(Out);
     Out.Finish();
+  }
 
   return HadError;
 }
@@ -779,7 +781,8 @@ bool AsmParser::parsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) {
           // temporary label to the streamer and refer to it.
           MCSymbol *Sym = Ctx.CreateTempSymbol();
           Out.EmitLabel(Sym);
-          Res = MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_None, getContext());
+          Res = MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_None,
+                                        getContext());
           EndLoc = FirstTokenLoc;
           return false;
         } else

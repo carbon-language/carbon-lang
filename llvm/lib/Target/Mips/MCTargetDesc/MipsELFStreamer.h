@@ -13,6 +13,7 @@
 
 namespace llvm {
 class MipsAsmPrinter;
+class MipsMCAsmFlags;
 class MipsSubtarget;
 class MCSymbol;
 
@@ -26,6 +27,7 @@ public:
 
   ~MipsELFStreamer() {}
   void emitELFHeaderFlagsCG(const MipsSubtarget &Subtarget);
+  void emitELFHeaderFlagsAsm(const MipsMCAsmFlags &MAFlags);
   void emitMipsSTOCG(const MipsSubtarget &Subtarget,
                      MCSymbol *Sym,
                      unsigned Val);

@@ -7,6 +7,7 @@
 //
 //===-------------------------------------------------------------------===//
 #include "MCTargetDesc/MipsELFStreamer.h"
+#include "AsmParser/MipsAsmFlags.h"
 #include "MipsSubtarget.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCELF.h"
@@ -66,10 +67,26 @@ namespace llvm {
     Reloc::Model RM = Subtarget.getRelocationModel();
     if (RM == Reloc::PIC_ || RM == Reloc::Default)
       EFlags |= ELF::EF_MIPS_PIC;
-    else if (RM == Reloc::Static)
+
+    MCA.setELFHeaderEFlags(EFlags);
+  }
+
+  // For llvm-mc. Set a group of ELF header flags
+  void MipsELFStreamer::emitELFHeaderFlagsAsm(const MipsMCAsmFlags &Flags) {
+
+    // Update e_header flags
+    MCAssembler &MCA = getAssembler();
+    unsigned EFlags = MCA.getELFHeaderEFlags();
+
+    // Relocation Model
+    if (Flags.isModelCpic() || Flags.isModelDefault())
+      EFlags |= ELF::EF_MIPS_CPIC;
+    if (Flags.isModelStatic())
       ; // Do nothing for Reloc::Static
+    else if (Flags.isModelPic() || Flags.isModelDefault())
+      EFlags |= ELF::EF_MIPS_PIC;
     else
-      llvm_unreachable("Unsupported relocation model for e_flags");
+      assert(0 && "Unsupported relocation model for e_flags");
 
     MCA.setELFHeaderEFlags(EFlags);
   }
