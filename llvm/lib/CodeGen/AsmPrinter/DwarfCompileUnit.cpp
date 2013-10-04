@@ -920,11 +920,6 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DIDerivedType DTy) {
   // Get core information.
   StringRef Name = DTy.getName();
   uint64_t Size = DTy.getSizeInBits() >> 3;
-
-  // FIXME - Workaround for templates.
-  if (Buffer.getTag() == dwarf::DW_TAG_inheritance)
-    Buffer.setTag(dwarf::DW_TAG_reference_type);
-
   uint16_t Tag = Buffer.getTag();
 
   // Map to main type, void will not have a type.
