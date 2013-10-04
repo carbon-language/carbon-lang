@@ -1503,36 +1503,20 @@ public:
     Warnings.push_back(DelayedDiag(Warning, OptionalNotes()));
   }
   
-  void warnUseOfTempWhileConsumed(StringRef MethodName, SourceLocation Loc) {
+  void warnUseOfTempInInvalidState(StringRef MethodName, StringRef State,
+                                   SourceLocation Loc) {
                                                     
     PartialDiagnosticAt Warning(Loc, S.PDiag(
-      diag::warn_use_of_temp_while_consumed) << MethodName);
+      diag::warn_use_of_temp_in_invalid_state) << MethodName << State);
     
     Warnings.push_back(DelayedDiag(Warning, OptionalNotes()));
   }
   
-  void warnUseOfTempInUnknownState(StringRef MethodName, SourceLocation Loc) {
+  void warnUseInInvalidState(StringRef MethodName, StringRef VariableName,
+                                  StringRef State, SourceLocation Loc) {
   
-    PartialDiagnosticAt Warning(Loc, S.PDiag(
-      diag::warn_use_of_temp_in_unknown_state) << MethodName);
-    
-    Warnings.push_back(DelayedDiag(Warning, OptionalNotes()));
-  }
-  
-  void warnUseWhileConsumed(StringRef MethodName, StringRef VariableName,
-                            SourceLocation Loc) {
-  
-    PartialDiagnosticAt Warning(Loc, S.PDiag(diag::warn_use_while_consumed) <<
-                                MethodName << VariableName);
-    
-    Warnings.push_back(DelayedDiag(Warning, OptionalNotes()));
-  }
-  
-  void warnUseInUnknownState(StringRef MethodName, StringRef VariableName,
-                             SourceLocation Loc) {
-
-    PartialDiagnosticAt Warning(Loc, S.PDiag(diag::warn_use_in_unknown_state) <<
-                                MethodName << VariableName);
+    PartialDiagnosticAt Warning(Loc, S.PDiag(diag::warn_use_in_invalid_state) <<
+                                MethodName << VariableName << State);
     
     Warnings.push_back(DelayedDiag(Warning, OptionalNotes()));
   }
@@ -1570,7 +1554,7 @@ clang::sema::AnalysisBasedWarnings::AnalysisBasedWarnings(Sema &s)
     (D.getDiagnosticLevel(diag::warn_double_lock, SourceLocation()) !=
      DiagnosticsEngine::Ignored);
   DefaultPolicy.enableConsumedAnalysis = (unsigned)
-    (D.getDiagnosticLevel(diag::warn_use_while_consumed, SourceLocation()) !=
+    (D.getDiagnosticLevel(diag::warn_use_in_invalid_state, SourceLocation()) !=
      DiagnosticsEngine::Ignored);
 }
 

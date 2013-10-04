@@ -1041,8 +1041,11 @@ static void handleConsumesAttr(Sema &S, Decl *D, const AttributeList &Attr) {
                           Attr.getAttributeSpellingListIndex()));
 }
 
-static void handleCallableWhenUnconsumedAttr(Sema &S, Decl *D,
-                                             const AttributeList &Attr) {
+static void handleCallableWhenAttr(Sema &S, Decl *D,
+                                   const AttributeList &Attr) {
+  
+  if (!checkAttributeAtLeastNumArgs(S, Attr, 1)) return;
+
   if (!isa<CXXMethodDecl>(D)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type) <<
       Attr.getName() << ExpectedMethod;
@@ -1052,9 +1055,34 @@ static void handleCallableWhenUnconsumedAttr(Sema &S, Decl *D,
   if (!checkForConsumableClass(S, cast<CXXMethodDecl>(D), Attr))
     return;
   
+  SmallVector<CallableWhenAttr::ConsumedState, 3> States;
+  for (unsigned ArgIndex = 0; ArgIndex < Attr.getNumArgs(); ++ArgIndex) {
+    CallableWhenAttr::ConsumedState CallableState;
+    
+    if (Attr.isArgExpr(ArgIndex) &&
+        isa<StringLiteral>(Attr.getArgAsExpr(ArgIndex))) {
+      
+      Expr *Arg = Attr.getArgAsExpr(ArgIndex);
+      StringRef StateString = cast<StringLiteral>(Arg)->getString();
+      
+      if (!CallableWhenAttr::ConvertStrToConsumedState(StateString,
+                                                       CallableState)) {
+        S.Diag(Arg->getExprLoc(), diag::warn_attribute_type_not_supported)
+          << Attr.getName() << StateString;
+        return;
+      }
+      
+      States.push_back(CallableState);
+    } else {
+      S.Diag(Attr.getLoc(), diag::err_attribute_argument_type) << Attr.getName()
+        << AANT_ArgumentString;
+      return;
+    }
+  }
+  
   D->addAttr(::new (S.Context)
-             CallableWhenUnconsumedAttr(Attr.getRange(), S.Context,
-                                        Attr.getAttributeSpellingListIndex()));
+             CallableWhenAttr(Attr.getRange(), S.Context, States.data(),
+               States.size(), Attr.getAttributeSpellingListIndex()));
 }
 
 static void handleTestsConsumedAttr(Sema &S, Decl *D,
@@ -4767,8 +4795,8 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
   case AttributeList::AT_Consumes:
     handleConsumesAttr(S, D, Attr);
     break;
-  case AttributeList::AT_CallableWhenUnconsumed:
-    handleCallableWhenUnconsumedAttr(S, D, Attr);
+  case AttributeList::AT_CallableWhen:
+    handleCallableWhenAttr(S, D, Attr);
     break;
   case AttributeList::AT_TestsConsumed:
     handleTestsConsumedAttr(S, D, Attr);

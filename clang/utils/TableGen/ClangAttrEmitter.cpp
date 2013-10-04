@@ -136,6 +136,7 @@ namespace {
     virtual void writeHasChildren(raw_ostream &OS) const { OS << "false"; }
 
     virtual bool isEnumArg() const { return false; }
+    virtual bool isVariadicEnumArg() const { return false; }
   };
 
   class SimpleArgument : public Argument {
@@ -474,7 +475,7 @@ namespace {
          << ";\n";
       OS << "  " << getLowerName() << ".reserve(" << getLowerName()
          << "Size);\n";
-      OS << "  for (unsigned i = " << getLowerName() << "Size; i; --i)\n";
+      OS << "    for (unsigned i = " << getLowerName() << "Size; i; --i)\n";
       
       std::string read = ReadPCHRecord(type);
       OS << "    " << getLowerName() << ".push_back(" << read << ");\n";
@@ -588,6 +589,93 @@ namespace {
       OS << "    }\n";
     }
 
+    void writeConversion(raw_ostream &OS) const {
+      OS << "  static bool ConvertStrTo" << type << "(StringRef Val, ";
+      OS << type << " &Out) {\n";
+      OS << "    Optional<" << type << "> R = llvm::StringSwitch<Optional<";
+      OS << type << "> >(Val)\n";
+      for (size_t I = 0; I < enums.size(); ++I) {
+        OS << "      .Case(\"" << values[I] << "\", ";
+        OS << getAttrName() << "Attr::" << enums[I] << ")\n";
+      }
+      OS << "      .Default(Optional<" << type << ">());\n";
+      OS << "    if (R) {\n";
+      OS << "      Out = *R;\n      return true;\n    }\n";
+      OS << "    return false;\n";
+      OS << "  }\n";
+    }
+  };
+  
+  class VariadicEnumArgument: public VariadicArgument {
+    std::string type, QualifiedTypeName;
+    std::vector<StringRef> values, enums, uniques;
+  public:
+    VariadicEnumArgument(Record &Arg, StringRef Attr)
+      : VariadicArgument(Arg, Attr, Arg.getValueAsString("Type")),
+        type(Arg.getValueAsString("Type")),
+        values(getValueAsListOfStrings(Arg, "Values")),
+        enums(getValueAsListOfStrings(Arg, "Enums")),
+        uniques(enums)
+    {
+      // Calculate the various enum values
+      std::sort(uniques.begin(), uniques.end());
+      uniques.erase(std::unique(uniques.begin(), uniques.end()), uniques.end());
+      
+      QualifiedTypeName = getAttrName().str() + "Attr::" + type;
+      
+      // FIXME: Emit a proper error
+      assert(!uniques.empty());
+    }
+
+    bool isVariadicEnumArg() const { return true; }
+    
+    void writeDeclarations(raw_ostream &OS) const {
+      std::vector<StringRef>::const_iterator i = uniques.begin(),
+                                             e = uniques.end();
+      // The last one needs to not have a comma.
+      --e;
+
+      OS << "public:\n";
+      OS << "  enum " << type << " {\n";
+      for (; i != e; ++i)
+        OS << "    " << *i << ",\n";
+      OS << "    " << *e << "\n";
+      OS << "  };\n";
+      OS << "private:\n";
+      
+      VariadicArgument::writeDeclarations(OS);
+    }
+    void writeDump(raw_ostream &OS) const {
+      OS << "    for (" << getAttrName() << "Attr::" << getLowerName()
+         << "_iterator I = SA->" << getLowerName() << "_begin(), E = SA->"
+         << getLowerName() << "_end(); I != E; ++I) {\n";
+      OS << "      switch(*I) {\n";
+      for (std::vector<StringRef>::const_iterator UI = uniques.begin(),
+           UE = uniques.end(); UI != UE; ++UI) {
+        OS << "    case " << getAttrName() << "Attr::" << *UI << ":\n";
+        OS << "      OS << \" " << *UI << "\";\n";
+        OS << "      break;\n";
+      }
+      OS << "      }\n";
+      OS << "    }\n";
+    }
+    void writePCHReadDecls(raw_ostream &OS) const {
+      OS << "    unsigned " << getLowerName() << "Size = Record[Idx++];\n";
+      OS << "    SmallVector<" << QualifiedTypeName << ", 4> " << getLowerName()
+         << ";\n";
+      OS << "    " << getLowerName() << ".reserve(" << getLowerName()
+         << "Size);\n";
+      OS << "    for (unsigned i = " << getLowerName() << "Size; i; --i)\n";
+      OS << "      " << getLowerName() << ".push_back(" << "static_cast<"
+         << QualifiedTypeName << ">(Record[Idx++]));\n";
+    }
+    void writePCHWrite(raw_ostream &OS) const{
+      OS << "    Record.push_back(SA->" << getLowerName() << "_size());\n";
+      OS << "    for (" << getAttrName() << "Attr::" << getLowerName()
+         << "_iterator i = SA->" << getLowerName() << "_begin(), e = SA->"
+         << getLowerName() << "_end(); i != e; ++i)\n";
+      OS << "      " << WritePCHRecord(QualifiedTypeName, "(*i)");
+    }
     void writeConversion(raw_ostream &OS) const {
       OS << "  static bool ConvertStrTo" << type << "(StringRef Val, ";
       OS << type << " &Out) {\n";
@@ -768,6 +856,8 @@ static Argument *createArgument(Record &Arg, StringRef Attr,
     Ptr = new SimpleArgument(Arg, Attr, "SourceLocation");
   else if (ArgName == "VariadicUnsignedArgument")
     Ptr = new VariadicArgument(Arg, Attr, "unsigned");
+  else if (ArgName == "VariadicEnumArgument")
+    Ptr = new VariadicEnumArgument(Arg, Attr);
   else if (ArgName == "VariadicExprArgument")
     Ptr = new VariadicExprArgument(Arg, Attr);
   else if (ArgName == "VersionArgument")
@@ -1051,6 +1141,9 @@ void EmitClangAttrClass(RecordKeeper &Records, raw_ostream &OS) {
       if ((*ai)->isEnumArg()) {
         EnumArgument *EA = (EnumArgument *)*ai;
         EA->writeConversion(OS);
+      } else if ((*ai)->isVariadicEnumArg()) {
+        VariadicEnumArgument *VEA = (VariadicEnumArgument *)*ai;
+        VEA->writeConversion(OS);
       }
     }
 

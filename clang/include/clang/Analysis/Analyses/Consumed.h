@@ -25,6 +25,15 @@
 namespace clang {
 namespace consumed {
   
+  enum ConsumedState {
+    // No state information for the given variable.
+    CS_None,
+    
+    CS_Unknown,
+    CS_Unconsumed,
+    CS_Consumed
+  };
+  
   class ConsumedStmtVisitor;
   
   typedef SmallVector<PartialDiagnosticAt, 1> OptionalNotes;
@@ -71,50 +80,27 @@ namespace consumed {
     /// \param MethodName -- The name of the method that was incorrectly
     /// invoked.
     ///
-    /// \param Loc -- The SourceLocation of the method invocation.
-    virtual void warnUseOfTempWhileConsumed(StringRef MethodName,
-                                            SourceLocation Loc) {}
-
-    /// \brief Warn about use-in-unknown-state errors.
-    /// \param MethodName -- The name of the method that was incorrectly
-    /// invoked.
+    /// \param State -- The state the object was used in.
     ///
     /// \param Loc -- The SourceLocation of the method invocation.
-    virtual void warnUseOfTempInUnknownState(StringRef MethodName,
+    virtual void warnUseOfTempInInvalidState(StringRef MethodName,
+                                             StringRef State,
                                              SourceLocation Loc) {}
 
     /// \brief Warn about use-while-consumed errors.
     /// \param MethodName -- The name of the method that was incorrectly
     /// invoked.
     ///
-    /// \param VariableName -- The name of the variable that holds the unique
-    /// value.
-    ///
-    /// \param Loc -- The SourceLocation of the method invocation.
-    virtual void warnUseWhileConsumed(StringRef MethodName,
-                                      StringRef VariableName,
-                                      SourceLocation Loc) {}
-
-    /// \brief Warn about use-in-unknown-state errors.
-    /// \param MethodName -- The name of the method that was incorrectly
-    /// invoked.
+    /// \param State -- The state the object was used in.
     ///
     /// \param VariableName -- The name of the variable that holds the unique
     /// value.
     ///
     /// \param Loc -- The SourceLocation of the method invocation.
-    virtual void warnUseInUnknownState(StringRef MethodName,
+    virtual void warnUseInInvalidState(StringRef MethodName,
                                        StringRef VariableName,
+                                       StringRef State,
                                        SourceLocation Loc) {}
-  };
-
-  enum ConsumedState {
-    // No state information for the given variable.
-    CS_None,
-    
-    CS_Unknown,
-    CS_Unconsumed,
-    CS_Consumed
   };
 
   class ConsumedStateMap {
