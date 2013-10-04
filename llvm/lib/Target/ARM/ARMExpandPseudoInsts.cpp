@@ -692,10 +692,9 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
       unsigned newOpc = Opcode == ARM::VMOVScc ? ARM::VMOVS : ARM::VMOVD;
       BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(newOpc),
               MI.getOperand(1).getReg())
-        .addReg(MI.getOperand(2).getReg(),
-                getKillRegState(MI.getOperand(2).isKill()))
+        .addOperand(MI.getOperand(2))
         .addImm(MI.getOperand(3).getImm()) // 'pred'
-        .addReg(MI.getOperand(4).getReg());
+        .addOperand(MI.getOperand(4));
 
       MI.eraseFromParent();
       return true;
@@ -705,10 +704,9 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
       unsigned Opc = AFI->isThumbFunction() ? ARM::t2MOVr : ARM::MOVr;
       BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(Opc),
               MI.getOperand(1).getReg())
-        .addReg(MI.getOperand(2).getReg(),
-                getKillRegState(MI.getOperand(2).isKill()))
+        .addOperand(MI.getOperand(2))
         .addImm(MI.getOperand(3).getImm()) // 'pred'
-        .addReg(MI.getOperand(4).getReg())
+        .addOperand(MI.getOperand(4))
         .addReg(0); // 's' bit
 
       MI.eraseFromParent();
@@ -717,11 +715,10 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
     case ARM::MOVCCsi: {
       BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(ARM::MOVsi),
               (MI.getOperand(1).getReg()))
-        .addReg(MI.getOperand(2).getReg(),
-                getKillRegState(MI.getOperand(2).isKill()))
+        .addOperand(MI.getOperand(2))
         .addImm(MI.getOperand(3).getImm())
         .addImm(MI.getOperand(4).getImm()) // 'pred'
-        .addReg(MI.getOperand(5).getReg())
+        .addOperand(MI.getOperand(5))
         .addReg(0); // 's' bit
 
       MI.eraseFromParent();
@@ -730,13 +727,11 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
     case ARM::MOVCCsr: {
       BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(ARM::MOVsr),
               (MI.getOperand(1).getReg()))
-        .addReg(MI.getOperand(2).getReg(),
-                getKillRegState(MI.getOperand(2).isKill()))
-        .addReg(MI.getOperand(3).getReg(),
-                getKillRegState(MI.getOperand(3).isKill()))
+        .addOperand(MI.getOperand(2))
+        .addOperand(MI.getOperand(3))
         .addImm(MI.getOperand(4).getImm())
         .addImm(MI.getOperand(5).getImm()) // 'pred'
-        .addReg(MI.getOperand(6).getReg())
+        .addOperand(MI.getOperand(6))
         .addReg(0); // 's' bit
 
       MI.eraseFromParent();
@@ -749,7 +744,7 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
               MI.getOperand(1).getReg())
         .addImm(MI.getOperand(2).getImm())
         .addImm(MI.getOperand(3).getImm()) // 'pred'
-        .addReg(MI.getOperand(4).getReg());
+        .addOperand(MI.getOperand(4));
       MI.eraseFromParent();
       return true;
     }
@@ -760,7 +755,7 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
               MI.getOperand(1).getReg())
         .addImm(MI.getOperand(2).getImm())
         .addImm(MI.getOperand(3).getImm()) // 'pred'
-        .addReg(MI.getOperand(4).getReg())
+        .addOperand(MI.getOperand(4))
         .addReg(0); // 's' bit
 
       MI.eraseFromParent();
@@ -773,7 +768,7 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
               MI.getOperand(1).getReg())
         .addImm(MI.getOperand(2).getImm())
         .addImm(MI.getOperand(3).getImm()) // 'pred'
-        .addReg(MI.getOperand(4).getReg())
+        .addOperand(MI.getOperand(4))
         .addReg(0); // 's' bit
 
       MI.eraseFromParent();
@@ -793,10 +788,10 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
       }
       BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(NewOpc),
               MI.getOperand(1).getReg())
-        .addReg(MI.getOperand(2).getReg())
+        .addOperand(MI.getOperand(2))
         .addImm(MI.getOperand(3).getImm())
         .addImm(MI.getOperand(4).getImm()) // 'pred'
-        .addReg(MI.getOperand(5).getReg())
+        .addOperand(MI.getOperand(5))
         .addReg(0); // 's' bit
       MI.eraseFromParent();
       return true;
