@@ -400,8 +400,12 @@ static void UpdatePHINodes(BasicBlock *OrigBB, BasicBlock *NewBB,
       // If all incoming values for the new PHI would be the same, just don't
       // make a new PHI.  Instead, just remove the incoming values from the old
       // PHI.
-      for (unsigned i = 0, e = Preds.size(); i != e; ++i)
-        PN->removeIncomingValue(Preds[i], false);
+      for (unsigned i = 0, e = Preds.size(); i != e; ++i) {
+        // Explicitly check the BB index here to handle duplicates in Preds.
+        int Idx = PN->getBasicBlockIndex(Preds[i]);
+        if (Idx >= 0)
+          PN->removeIncomingValue(Idx, false);
+      }
     } else {
       // If the values coming into the block are not the same, we need a PHI.
       // Create the new PHI node, insert it into NewBB at the end of the block
