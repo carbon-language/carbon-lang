@@ -39,7 +39,7 @@
 // in this shared library, so that they can be overriden by programs
 // that define non-weak copies of the functions.
 
-__attribute__((__weak__, __visibility__("default")))
+_LIBCPP_WEAK _LIBCPP_FUNC_VIS
 void *
 operator new(std::size_t size)
 #if !__has_feature(cxx_noexcept)
@@ -66,7 +66,7 @@ operator new(std::size_t size)
     return p;
 }
 
-__attribute__((__weak__, __visibility__("default")))
+_LIBCPP_WEAK _LIBCPP_FUNC_VIS
 void*
 operator new(size_t size, const std::nothrow_t&) _NOEXCEPT
 {
@@ -85,7 +85,7 @@ operator new(size_t size, const std::nothrow_t&) _NOEXCEPT
     return p;
 }
 
-__attribute__((__weak__, __visibility__("default")))
+_LIBCPP_WEAK _LIBCPP_FUNC_VIS
 void*
 operator new[](size_t size)
 #if !__has_feature(cxx_noexcept)
@@ -95,7 +95,7 @@ operator new[](size_t size)
     return ::operator new(size);
 }
 
-__attribute__((__weak__, __visibility__("default")))
+_LIBCPP_WEAK _LIBCPP_FUNC_VIS
 void*
 operator new[](size_t size, const std::nothrow_t&) _NOEXCEPT
 {
@@ -114,7 +114,7 @@ operator new[](size_t size, const std::nothrow_t&) _NOEXCEPT
     return p;
 }
 
-__attribute__((__weak__, __visibility__("default")))
+_LIBCPP_WEAK _LIBCPP_FUNC_VIS
 void
 operator delete(void* ptr) _NOEXCEPT
 {
@@ -122,21 +122,21 @@ operator delete(void* ptr) _NOEXCEPT
         ::free(ptr);
 }
 
-__attribute__((__weak__, __visibility__("default")))
+_LIBCPP_WEAK _LIBCPP_FUNC_VIS
 void
 operator delete(void* ptr, const std::nothrow_t&) _NOEXCEPT
 {
     ::operator delete(ptr);
 }
 
-__attribute__((__weak__, __visibility__("default")))
+_LIBCPP_WEAK _LIBCPP_FUNC_VIS
 void
 operator delete[] (void* ptr) _NOEXCEPT
 {
     ::operator delete (ptr);
 }
 
-__attribute__((__weak__, __visibility__("default")))
+_LIBCPP_WEAK _LIBCPP_FUNC_VIS
 void
 operator delete[] (void* ptr, const std::nothrow_t&) _NOEXCEPT
 {

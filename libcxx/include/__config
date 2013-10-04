@@ -434,6 +434,7 @@ using namespace _LIBCPP_NAMESPACE __attribute__((__strong__));
 #define _LIBCPP_END_NAMESPACE_STD  }
 #define _VSTD std
 
+#  define _LIBCPP_WEAK
 namespace std {
 }
 
@@ -600,6 +601,10 @@ template <unsigned> struct __static_assert_check {};
 #  elif (defined(_MSC_VER) && !defined(__clang__)) && !defined(_CPPRTTI)
 #    define _LIBCPP_NO_RTTI
 #  endif
+#endif
+
+#ifndef _LIBCPP_WEAK
+#  define _LIBCPP_WEAK __attribute__((__weak__))
 #endif
 
 #endif  // _LIBCPP_CONFIG
