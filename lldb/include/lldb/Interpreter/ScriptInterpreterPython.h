@@ -282,7 +282,7 @@ private:
             Py_XINCREF(m_object);
         }
         
-        operator bool ()
+        explicit operator bool ()
         {
             return m_object && m_object != Py_None;
         }
@@ -351,7 +351,7 @@ private:
     public:
         PythonInputReaderManager (ScriptInterpreterPython *interpreter);
         
-        operator bool()
+        explicit operator bool()
         {
             return m_error;
         }

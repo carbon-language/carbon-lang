@@ -288,7 +288,7 @@ public:
     }
 
     
-    operator bool () const
+    explicit operator bool () const
     {
         if (m_file)
             return true;

@@ -92,7 +92,7 @@ public:
     ///     /b True this object contains a valid namespace decl, \b 
     ///     false otherwise.
     //------------------------------------------------------------------
-    operator bool() const
+    explicit operator bool() const
     {
         return m_current_value;
     }

@@ -1900,12 +1900,12 @@ FormatPromptRecurse
                                                 if (var_name_begin[0] == 'n' || var_name_begin[5] == 'f')
                                                 {
                                                     format_file_spec.GetFilename() = exe_module->GetFileSpec().GetFilename();
-                                                    var_success = format_file_spec;
+                                                    var_success = (bool)format_file_spec;
                                                 }
                                                 else
                                                 {
                                                     format_file_spec = exe_module->GetFileSpec();
-                                                    var_success = format_file_spec;
+                                                    var_success = (bool)format_file_spec;
                                                 }
                                             }
                                         }
@@ -2065,12 +2065,12 @@ FormatPromptRecurse
                                             if (IsToken (var_name_begin, "basename}"))
                                             {
                                                 format_file_spec.GetFilename() = module->GetFileSpec().GetFilename();
-                                                var_success = format_file_spec;
+                                                var_success = (bool)format_file_spec;
                                             }
                                             else if (IsToken (var_name_begin, "fullpath}"))
                                             {
                                                 format_file_spec = module->GetFileSpec();
-                                                var_success = format_file_spec;
+                                                var_success = (bool)format_file_spec;
                                             }
                                         }
                                     }
@@ -2089,12 +2089,12 @@ FormatPromptRecurse
                                     if (IsToken (var_name_begin, "basename}"))
                                     {
                                         format_file_spec.GetFilename() = sc->comp_unit->GetFilename();
-                                        var_success = format_file_spec;
+                                        var_success = (bool)format_file_spec;
                                     }
                                     else if (IsToken (var_name_begin, "fullpath}"))
                                     {
                                         format_file_spec = *sc->comp_unit;
-                                        var_success = format_file_spec;
+                                        var_success = (bool)format_file_spec;
                                     }
                                 }
                             }
@@ -2353,12 +2353,12 @@ FormatPromptRecurse
                                         if (IsToken (var_name_begin, "basename}"))
                                         {
                                             format_file_spec.GetFilename() = sc->line_entry.file.GetFilename();
-                                            var_success = format_file_spec;
+                                            var_success = (bool)format_file_spec;
                                         }
                                         else if (IsToken (var_name_begin, "fullpath}"))
                                         {
                                             format_file_spec = sc->line_entry.file;
-                                            var_success = format_file_spec;
+                                            var_success = (bool)format_file_spec;
                                         }
                                     }
                                     else if (IsTokenWithFormat (var_name_begin, "number", token_format, "%" PRIu64, exe_ctx, sc))

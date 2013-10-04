@@ -714,7 +714,7 @@ public:
         return ptr_; 
     }
     
-    operator bool() const
+    explicit operator bool() const
     {
         return ptr_ != 0;
     }

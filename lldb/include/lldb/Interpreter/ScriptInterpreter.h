@@ -41,7 +41,7 @@ public:
         return m_object;
     }
     
-    operator bool ()
+    explicit operator bool ()
     {
         return m_object != NULL;
     }

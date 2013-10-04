@@ -177,7 +177,7 @@ public:
     ///     A pointer to this object if either the directory or filename
     ///     is valid, NULL otherwise.
     //------------------------------------------------------------------
-    operator bool() const;
+    explicit operator bool() const;
 
     //------------------------------------------------------------------
     /// Logical NOT operator.

@@ -44,7 +44,7 @@ SBModuleSpec::~SBModuleSpec ()
 bool
 SBModuleSpec::IsValid () const
 {
-    return *m_opaque_ap;
+    return m_opaque_ap->operator bool();
 }
 
 void

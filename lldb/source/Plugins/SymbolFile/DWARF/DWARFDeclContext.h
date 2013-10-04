@@ -54,7 +54,7 @@ public:
         }
 
         // Test operator
-        operator bool() const
+        explicit operator bool() const
         {
             return tag != 0;
         }

@@ -61,7 +61,7 @@ SBFileSpec::operator = (const SBFileSpec &rhs)
 bool
 SBFileSpec::IsValid() const
 {
-    return *m_opaque_ap;
+    return m_opaque_ap->operator bool();
 }
 
 bool

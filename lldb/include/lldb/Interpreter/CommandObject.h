@@ -42,7 +42,7 @@ public:
             return (*help_callback)();
         }
         
-        operator bool() const
+        explicit operator bool() const
         {
             return (help_callback != NULL);
         }

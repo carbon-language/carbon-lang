@@ -2625,7 +2625,7 @@ SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (ClangASTType &clang_type)
             }
         }
 
-        return clang_type;
+        return (bool)clang_type;
 
     case DW_TAG_enumeration_type:
         clang_type.StartTagDeclarationDefinition ();
@@ -2637,7 +2637,7 @@ SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (ClangASTType &clang_type)
             ParseChildEnumerators(sc, clang_type, is_signed, type->GetByteSize(), dwarf_cu, die);
         }
         clang_type.CompleteTagDeclarationDefinition ();
-        return clang_type;
+        return (bool)clang_type;
 
     default:
         assert(false && "not a forward clang type decl!");

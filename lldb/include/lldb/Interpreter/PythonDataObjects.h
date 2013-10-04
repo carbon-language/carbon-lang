@@ -105,7 +105,7 @@ namespace lldb_private {
         PythonString
         Str ();
         
-        operator bool () const
+        explicit operator bool () const
         {
             return m_py_obj != NULL;
         }

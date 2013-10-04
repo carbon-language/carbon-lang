@@ -98,7 +98,7 @@ public:
     // Tests
     //----------------------------------------------------------------------
 
-    operator bool () const
+    explicit operator bool () const
     {
         return m_type != NULL && m_ast != NULL;
     }
