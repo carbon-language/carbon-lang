@@ -1311,6 +1311,13 @@ DIE *CompileUnit::getOrCreateNameSpace(DINameSpace NS) {
 
 /// getOrCreateSubprogramDIE - Create new DIE using SP.
 DIE *CompileUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
+  // Construct the context before querying for the existence of the DIE in case
+  // such construction creates the DIE (as is the case for member function
+  // declarations).
+  DIE *ContextDIE = getOrCreateContextDIE(SP.getContext());
+  if (!ContextDIE)
+    ContextDIE = CUDie.get();
+
   DIE *SPDie = DD->getSPDIE(SP);
   if (SPDie)
     return SPDie;
@@ -1327,7 +1334,7 @@ DIE *CompileUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
   }
 
   // Add to context owner.
-  addToContextOwner(SPDie, SP.getContext());
+  ContextDIE->addChild(SPDie);
 
   // Add function template parameters.
   addTemplateParams(*SPDie, SP.getTemplateParams());

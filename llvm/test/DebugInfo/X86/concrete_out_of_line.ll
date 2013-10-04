@@ -7,14 +7,14 @@
 ; first check that we have a TAG_subprogram at a given offset and it has
 ; AT_inline.
 
-; CHECK: 0x0000011e:   DW_TAG_subprogram [18]
+; CHECK: 0x0000011e:   DW_TAG_subprogram [17]
 ; CHECK-NEXT:     DW_AT_specification
 ; CHECK-NEXT:     DW_AT_inline
 
 
 ; and then that a TAG_subprogram refers to it with AT_abstract_origin.
 
-; CHECK: 0x0000015f:   DW_TAG_subprogram [20]
+; CHECK: 0x0000015f:   DW_TAG_subprogram [19]
 ; CHECK-NEXT: DW_AT_abstract_origin [DW_FORM_ref4]    (cu + 0x011e => {0x0000011e})
 
 define i32 @_ZN17nsAutoRefCnt7ReleaseEv() {
