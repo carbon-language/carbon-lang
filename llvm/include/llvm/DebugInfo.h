@@ -161,7 +161,7 @@ namespace llvm {
     explicit DISubrange(const MDNode *N = 0) : DIDescriptor(N) {}
 
     int64_t getLo() const { return getInt64Field(1); }
-    int64_t  getCount() const { return getInt64Field(2); }
+    int64_t getCount() const { return getInt64Field(2); }
     bool Verify() const;
   };
 
