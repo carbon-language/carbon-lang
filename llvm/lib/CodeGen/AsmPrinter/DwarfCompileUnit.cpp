@@ -100,10 +100,9 @@ int64_t CompileUnit::getDefaultLowerBound() const {
 /// addFlag - Add a flag that is true.
 void CompileUnit::addFlag(DIE *Die, uint16_t Attribute) {
   if (DD->getDwarfVersion() >= 4)
-    Die->addValue(Attribute, dwarf::DW_FORM_flag_present,
-                  DIEIntegerOne);
+    Die->addValue(Attribute, dwarf::DW_FORM_flag_present, DIEIntegerOne);
   else
-    addUInt(Die, Attribute, dwarf::DW_FORM_flag, 1);
+    Die->addValue(Attribute, dwarf::DW_FORM_flag, DIEIntegerOne);
 }
 
 /// addUInt - Add an unsigned integer attribute data and value.
