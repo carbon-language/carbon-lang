@@ -46,6 +46,11 @@ public:
                                          SectionID, SectionName, IsReadOnly);
   }
 
+  virtual void notifyObjectLoaded(ExecutionEngine *EE,
+                                  const ObjectImage *Obj) {
+    ClientMM->notifyObjectLoaded(EE, Obj);
+  }
+
   virtual void registerEHFrames(StringRef SectionData) {
     ClientMM->registerEHFrames(SectionData);
   }

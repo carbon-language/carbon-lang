@@ -15,7 +15,7 @@
 
 #define DEBUG_TYPE "lli"
 #include "llvm/IR/LLVMContext.h"
-#include "RecordingMemoryManager.h"
+#include "RemoteMemoryManager.h"
 #include "RemoteTarget.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Bitcode/ReaderWriter.h"
@@ -131,6 +131,12 @@ namespace {
             cl::value_desc("function"),
             cl::init("main"));
 
+  cl::list<std::string>
+  ExtraModules("extra-modules",
+         cl::CommaSeparated,
+         cl::desc("Extra modules to be loaded"),
+         cl::value_desc("<input bitcode 2>,<input bitcode 3>,..."));
+
   cl::opt<std::string>
   FakeArgv0("fake-argv0",
             cl::desc("Override the 'argv[0]' value passed into the executing"
@@ -222,82 +228,6 @@ static void do_shutdown() {
 #endif
 }
 
-void layoutRemoteTargetMemory(RemoteTarget *T, RecordingMemoryManager *JMM) {
-  // Lay out our sections in order, with all the code sections first, then
-  // all the data sections.
-  uint64_t CurOffset = 0;
-  unsigned MaxAlign = T->getPageAlignment();
-  SmallVector<std::pair<const void*, uint64_t>, 16> Offsets;
-  SmallVector<unsigned, 16> Sizes;
-  for (RecordingMemoryManager::const_code_iterator I = JMM->code_begin(),
-                                                   E = JMM->code_end();
-       I != E; ++I) {
-    DEBUG(dbgs() << "code region: size " << I->first.size()
-                 << ", alignment " << I->second << "\n");
-    // Align the current offset up to whatever is needed for the next
-    // section.
-    unsigned Align = I->second;
-    CurOffset = (CurOffset + Align - 1) / Align * Align;
-    // Save off the address of the new section and allocate its space.
-    Offsets.push_back(std::pair<const void*,uint64_t>(I->first.base(), CurOffset));
-    Sizes.push_back(I->first.size());
-    CurOffset += I->first.size();
-  }
-  // Adjust to keep code and data aligned on seperate pages.
-  CurOffset = (CurOffset + MaxAlign - 1) / MaxAlign * MaxAlign;
-  unsigned FirstDataIndex = Offsets.size();
-  for (RecordingMemoryManager::const_data_iterator I = JMM->data_begin(),
-                                                   E = JMM->data_end();
-       I != E; ++I) {
-    DEBUG(dbgs() << "data region: size " << I->first.size()
-                 << ", alignment " << I->second << "\n");
-    // Align the current offset up to whatever is needed for the next
-    // section.
-    unsigned Align = I->second;
-    CurOffset = (CurOffset + Align - 1) / Align * Align;
-    // Save off the address of the new section and allocate its space.
-    Offsets.push_back(std::pair<const void*,uint64_t>(I->first.base(), CurOffset));
-    Sizes.push_back(I->first.size());
-    CurOffset += I->first.size();
-  }
-
-  // Allocate space in the remote target.
-  uint64_t RemoteAddr;
-  if (T->allocateSpace(CurOffset, MaxAlign, RemoteAddr))
-    report_fatal_error(T->getErrorMsg());
-  // Map the section addresses so relocations will get updated in the local
-  // copies of the sections.
-  for (unsigned i = 0, e = Offsets.size(); i != e; ++i) {
-    uint64_t Addr = RemoteAddr + Offsets[i].second;
-    EE->mapSectionAddress(const_cast<void*>(Offsets[i].first), Addr);
-
-    DEBUG(dbgs() << "  Mapping local: " << Offsets[i].first
-                 << " to remote: 0x" << format("%llx", Addr) << "\n");
-
-  }
-
-  // Trigger application of relocations
-  EE->finalizeObject();
-
-  // Now load it all to the target.
-  for (unsigned i = 0, e = Offsets.size(); i != e; ++i) {
-    uint64_t Addr = RemoteAddr + Offsets[i].second;
-
-    if (i < FirstDataIndex) {
-      T->loadCode(Addr, Offsets[i].first, Sizes[i]);
-
-      DEBUG(dbgs() << "  loading code: " << Offsets[i].first
-            << " to remote: 0x" << format("%llx", Addr) << "\n");
-    } else {
-      T->loadData(Addr, Offsets[i].first, Sizes[i]);
-
-      DEBUG(dbgs() << "  loading data: " << Offsets[i].first
-            << " to remote: 0x" << format("%llx", Addr) << "\n");
-    }
-
-  }
-}
-
 //===----------------------------------------------------------------------===//
 // main Driver function
 //
@@ -370,7 +300,7 @@ int main(int argc, char **argv, char * const *envp) {
   if (UseMCJIT && !ForceInterpreter) {
     builder.setUseMCJIT(true);
     if (RemoteMCJIT)
-      RTDyldMM = new RecordingMemoryManager();
+      RTDyldMM = new RemoteMemoryManager();
     else
       RTDyldMM = new SectionMemoryManager();
     builder.setMCJITMemoryManager(RTDyldMM);
@@ -418,6 +348,16 @@ int main(int argc, char **argv, char * const *envp) {
     else
       errs() << argv[0] << ": unknown error creating EE!\n";
     exit(1);
+  }
+
+  // Load any additional modules specified on the command line.
+  for (unsigned i = 0, e = ExtraModules.size(); i != e; ++i) {
+    Module *XMod = ParseIRFile(ExtraModules[i], Err, Context);
+    if (!XMod) {
+      Err.print(argv[0], errs());
+      return 1;
+    }
+    EE->addModule(XMod);
   }
 
   // The following functions have no effect if their respective profiling
@@ -519,7 +459,7 @@ int main(int argc, char **argv, char * const *envp) {
     // it couldn't. This is a limitation of the LLI implemantation, not the
     // MCJIT itself. FIXME.
     //
-    RecordingMemoryManager *MM = static_cast<RecordingMemoryManager*>(RTDyldMM);
+    RemoteMemoryManager *MM = static_cast<RemoteMemoryManager*>(RTDyldMM);
     // Everything is prepared now, so lay out our program for the target
     // address space, assign the section addresses to resolve any relocations,
     // and send it to the target.
@@ -543,19 +483,30 @@ int main(int argc, char **argv, char * const *envp) {
       Target.reset(RemoteTarget::createRemoteTarget());
     }
 
-    // Create the remote target
+    // Give the memory manager a pointer to our remote target interface object.
+    MM->setRemoteTarget(Target.get());
+
+    // Create the remote target.
     Target->create();
 
+// FIXME: Don't commit like this.  I don't think these calls are necessary.
+#if 0
     // Trigger compilation.
     EE->generateCodeForModule(Mod);
 
-    // Layout the target memory.
-    layoutRemoteTargetMemory(Target.get(), MM);
+    // Get everything ready to execute.
+    EE->finalizeModule(Mod);
+#endif
 
     // Since we're executing in a (at least simulated) remote address space,
     // we can't use the ExecutionEngine::runFunctionAsMain(). We have to
     // grab the function address directly here and tell the remote target
     // to execute the function.
+    //
+    // Our memory manager will map generated code into the remote address
+    // space as it is loaded and copy the bits over during the finalizeMemory
+    // operation.
+    //
     // FIXME: argv and envp handling.
     uint64_t Entry = EE->getFunctionAddress(EntryFn->getName().str());
 

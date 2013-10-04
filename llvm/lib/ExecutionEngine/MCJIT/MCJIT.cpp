@@ -513,6 +513,7 @@ void MCJIT::UnregisterJITEventListener(JITEventListener *L) {
 }
 void MCJIT::NotifyObjectEmitted(const ObjectImage& Obj) {
   MutexGuard locked(lock);
+  MemMgr.notifyObjectLoaded(this, &Obj);
   for (unsigned I = 0, S = EventListeners.size(); I < S; ++I) {
     EventListeners[I]->NotifyObjectEmitted(Obj);
   }
