@@ -90,7 +90,7 @@ void RemoteMemoryManager::notifyObjectLoaded(ExecutionEngine *EE,
   // all the data sections.
   uint64_t CurOffset = 0;
   unsigned MaxAlign = Target->getPageAlignment();
-  SmallVector<std::pair<Allocation&, uint64_t>, 16> Offsets;
+  SmallVector<std::pair<Allocation, uint64_t>, 16> Offsets;
   unsigned NumSections = UnmappedSections.size();
   // We're going to go through the list twice to separate code and data, but
   // it's a very small list, so that's OK.
@@ -105,7 +105,7 @@ void RemoteMemoryManager::notifyObjectLoaded(ExecutionEngine *EE,
       // section.
       CurOffset = (CurOffset + Align - 1) / Align * Align;
       // Save off the address of the new section and allocate its space.
-      Offsets.push_back(std::pair<Allocation&,uint64_t>(Section, CurOffset));
+      Offsets.push_back(std::pair<Allocation,uint64_t>(Section, CurOffset));
       CurOffset += Size;
     }
   }
@@ -122,7 +122,7 @@ void RemoteMemoryManager::notifyObjectLoaded(ExecutionEngine *EE,
       // section.
       CurOffset = (CurOffset + Align - 1) / Align * Align;
       // Save off the address of the new section and allocate its space.
-      Offsets.push_back(std::pair<Allocation&,uint64_t>(Section, CurOffset));
+      Offsets.push_back(std::pair<Allocation,uint64_t>(Section, CurOffset));
       CurOffset += Size;
     }
   }
