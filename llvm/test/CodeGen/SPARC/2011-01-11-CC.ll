@@ -103,3 +103,35 @@ entry:
   %1 = select i1 %0, double %f1, double %f2
   ret double %1
 }
+
+define i32 @test_float_cc(double %a, double %b, i32 %c, i32 %d) {
+entry:
+; V8-LABEL: test_float_cc
+; V8:       fcmpd
+; V8:       {{fbl|fbuge}} .LBB
+; V8:       fcmpd
+; V8:       {{fbule|fbg}} .LBB
+
+; V9-LABEL: test_float_cc
+; V9:       fcmpd
+; V9:       {{fbl|fbuge}} .LBB
+; V9:       fcmpd
+; V9:       {{fbule|fbg}} .LBB
+
+   %0 = fcmp uge double %a, 0.000000e+00
+   br i1 %0, label %loop, label %loop.2
+
+loop:
+   %1 = icmp eq i32 %c, 10
+   br i1 %1, label %loop, label %exit.0
+
+loop.2:
+   %2 = fcmp ogt double %b, 0.000000e+00
+   br i1 %2, label %exit.1, label %loop
+
+exit.0:
+   ret i32 0
+
+exit.1:
+   ret i32 1
+}
