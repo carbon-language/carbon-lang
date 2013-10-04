@@ -14,7 +14,6 @@
 #include "TreeTransform.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
-#include "clang/AST/ASTLambda.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/Expr.h"
 #include "clang/Basic/LangOptions.h"
@@ -131,11 +130,6 @@ Sema::getTemplateInstantiationArgs(NamedDecl *D,
         assert(Function->getPrimaryTemplate() && "No function template?");
         if (Function->getPrimaryTemplate()->isMemberSpecialization())
           break;
-
-        // If this function is a generic lambda specialization, we are done.
-        if (isGenericLambdaCallOperatorSpecialization(Function))
-          break;
-
       } else if (FunctionTemplateDecl *FunTmpl
                                    = Function->getDescribedFunctionTemplate()) {
         // Add the "injected" template arguments.
@@ -917,56 +911,13 @@ namespace {
     }
 
     ExprResult TransformLambdaScope(LambdaExpr *E,
-                                    CXXMethodDecl *NewCallOperator) {
-      // If a lambda is undergoing transformation for instance in the
-      // call to foo('a') below:
-      //  template<class T> void foo(T t) {
-      //    auto L1 = [](T a) { return a; };
-      //    auto L2 = [](char b) { return b; };
-      //    auto L3 = [](auto c) { return c; };
-      //  }
-      // The AST nodes of the OldCallOperators within the primary template foo
-      // are connected to the NewCallOperators within the specialization of foo.
-      //  - In the case of L1 and L2 we set the NewCallOperator to be considered
-      //    an instantiation of the OldCallOperator.
-      //  - In the generic lambda case, we set the NewTemplate to be considered
-      //    an "instantiation" of the OldTemplate.
-      // See the documentation and use of get/setInstantiationOfMemberFunction
-      // and get/setInstantiatedFromMemberTemplate to appreciate the relevance
-      // of creating these links. 
-      // And so it goes on and on with nested generic lambdas.
-      CXXMethodDecl *const OldCallOperator = E->getCallOperator();
-      FunctionTemplateDecl *const NewCallOperatorTemplate = 
-          NewCallOperator->getDescribedFunctionTemplate();
-      FunctionTemplateDecl *const OldCallOperatorTemplate = 
-          OldCallOperator->getDescribedFunctionTemplate();
+                                    CXXMethodDecl *CallOperator) {
+      CallOperator->setInstantiationOfMemberFunction(E->getCallOperator(),
+                                                     TSK_ImplicitInstantiation);
+      return TreeTransform<TemplateInstantiator>::
+         TransformLambdaScope(E, CallOperator);
+    }
 
-      if (!NewCallOperatorTemplate)
-        NewCallOperator->setInstantiationOfMemberFunction(OldCallOperator,
-                                                    TSK_ImplicitInstantiation);
-      else {
-        NewCallOperatorTemplate->setInstantiatedFromMemberTemplate(
-                                                      OldCallOperatorTemplate);
-        // Set this as a specialization so we don't go digging into the 
-        // OldCallOperatorTemplate when retrieving the 
-        // 'FunctionDecl::getTemplateInstantiationPattern()' 
-        NewCallOperatorTemplate->setMemberSpecialization();
-      }
-      return inherited::TransformLambdaScope(E, NewCallOperator);
-    }
-    TemplateParameterList *TransformTemplateParameterList(
-                              TemplateParameterList *OrigTPL)  {
-      TemplateParameterList *NewTPL = 0;
-      if (OrigTPL) {
-        if (!OrigTPL->size()) return OrigTPL; // size 0, do nothing
-         
-        DeclContext *Owner = OrigTPL->getParam(0)->getDeclContext();
-        TemplateDeclInstantiator  DeclInstantiator(getSema(), 
-                          /* DeclContext *Owner */ Owner, TemplateArgs);
-        NewTPL = DeclInstantiator.SubstTemplateParams(OrigTPL);
-      }
-      return NewTPL;  
-    }
   private:
     ExprResult transformNonTypeTemplateParmRef(NonTypeTemplateParmDecl *parm,
                                                SourceLocation loc,
