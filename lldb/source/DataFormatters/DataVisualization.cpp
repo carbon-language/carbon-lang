@@ -40,6 +40,12 @@ DataVisualization::GetCurrentRevision ()
     return GetFormatManager().GetCurrentRevision();
 }
 
+bool
+DataVisualization::ShouldPrintAsOneLiner (ValueObject& valobj)
+{
+    return GetFormatManager().ShouldPrintAsOneLiner(valobj);
+}
+
 lldb::TypeFormatImplSP
 DataVisualization::ValueFormats::GetFormat (ValueObject& valobj, lldb::DynamicValueType use_dynamic)
 {

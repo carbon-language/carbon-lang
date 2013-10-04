@@ -130,13 +130,10 @@ class AnonymousTestCase(TestBase):
 
         # These should display correctly.
         self.expect("expression pz", VARIABLES_DISPLAYED_CORRECTLY,
-            substrs = ["(type_z *) $0 = 0x0000"])
+            substrs = ["(type_z *) $", " = 0x0000"])
 
         self.expect("expression z.y", VARIABLES_DISPLAYED_CORRECTLY,
-            substrs = ["(type_y) $1 = {"])
-
-        self.expect("expression z", VARIABLES_DISPLAYED_CORRECTLY,
-            substrs = ["dummy = 2"])
+            substrs = ["(type_y) $", "dummy = 2"])
 
     def expr_null(self):
         self.common_setup(self.line2)

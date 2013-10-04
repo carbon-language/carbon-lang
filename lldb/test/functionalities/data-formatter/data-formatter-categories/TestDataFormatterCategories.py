@@ -292,7 +292,7 @@ class CategoriesDataFormatterTestCase(TestBase):
 
         self.expect("frame variable c1 r1 c_ptr r_ptr",
                     substrs = ['ACircle',
-                               '(Rectangle) r1 = {', 'w = 5', 'h = 6',
+                               '(Rectangle) r1 = ', 'w = 5', 'h = 6',
                                'ACircle',
                                'ARectangleStar'])
         

@@ -238,7 +238,7 @@ namespace lldb_private {
         }
         
         bool
-        IsOneliner () const
+        IsOneLiner () const
         {
             return m_flags.GetShowMembersOneLiner();
         }
@@ -280,7 +280,7 @@ namespace lldb_private {
         }
         
         void
-        SetIsOneliner (bool value)
+        SetIsOneLiner (bool value)
         {
             m_flags.SetShowMembersOneLiner(value);
         }

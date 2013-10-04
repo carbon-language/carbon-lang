@@ -260,6 +260,9 @@ public:
     bool
     PrintValueObject ();
     
+    bool
+    PrintChildrenOneLiner (bool hide_names);
+    
 protected:
     
     // only this class (and subclasses, if any) should ever be concerned with

@@ -38,10 +38,10 @@ class PersistenttypesTestCase(TestBase):
         self.runCmd("next")
 
         self.expect("memory read foo -t $foobar",
-                    substrs = ['($foobar) 0x', ' = {', "a = 'H'","b = 'e'","c = 'l'","d = 'l'"]) # persistent types are OK to use for memory read
+                    substrs = ['($foobar) 0x', ' = ', "a = 'H'","b = 'e'","c = 'l'","d = 'l'"]) # persistent types are OK to use for memory read
 
         self.expect("memory read foo -t foobar",
-                    substrs = ['($foobar) 0x', ' = {', "a = 'H'","b = 'e'","c = 'l'","d = 'l'"],matching=False,error=True) # the type name is $foobar, make sure we settle for nothing less
+                    substrs = ['($foobar) 0x', ' = ', "a = 'H'","b = 'e'","c = 'l'","d = 'l'"],matching=False,error=True) # the type name is $foobar, make sure we settle for nothing less
 
 
 if __name__ == '__main__':

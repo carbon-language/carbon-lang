@@ -67,10 +67,10 @@ class LibcxxMultiMapDataFormatterTestCase(TestBase):
 
         self.expect('frame variable ii',
                     substrs = ['size=2',
-                               '[0] = {',
+                               '[0] = ',
                                'first = 0',
                                'second = 0',
-                               '[1] = {',
+                               '[1] = ',
                                'first = 1',
                                'second = 1'])
 
@@ -78,10 +78,10 @@ class LibcxxMultiMapDataFormatterTestCase(TestBase):
 
         self.expect('frame variable ii',
                     substrs = ['size=4',
-                               '[2] = {',
+                               '[2] = ',
                                'first = 2',
                                'second = 0',
-                               '[3] = {',
+                               '[3] = ',
                                'first = 3',
                                'second = 1'])
 
@@ -89,19 +89,19 @@ class LibcxxMultiMapDataFormatterTestCase(TestBase):
 
         self.expect("frame variable ii",
                     substrs = ['size=8',
-                               '[5] = {',
+                               '[5] = ',
                                'first = 5',
                                'second = 0',
-                               '[7] = {',
+                               '[7] = ',
                                'first = 7',
                                'second = 1'])
 
         self.expect("p ii",
                     substrs = ['size=8',
-                               '[5] = {',
+                               '[5] = ',
                                'first = 5',
                                'second = 0',
-                               '[7] = {',
+                               '[7] = ',
                                'first = 7',
                                'second = 1'])
 

@@ -305,6 +305,66 @@ FormatManager::GetSingleItemFormat(lldb::Format vector_format)
     }
 }
 
+bool
+FormatManager::ShouldPrintAsOneLiner (ValueObject& valobj)
+{
+    // if this object has a summary, don't try to do anything special to it
+    // if the user wants one-liner, they can ask for it in summary :)
+    if (valobj.GetSummaryFormat().get() != nullptr)
+        return false;
+    
+    // no children, no party
+    if (valobj.GetNumChildren() == 0)
+        return false;
+    
+    size_t total_children_name_len = 0;
+    
+    for (size_t idx = 0;
+         idx < valobj.GetNumChildren();
+         idx++)
+    {
+        ValueObjectSP child_sp(valobj.GetChildAtIndex(idx, true));
+        // something is wrong here - bail out
+        if (!child_sp)
+            return false;
+        // if we decided to define synthetic children for a type, we probably care enough
+        // to show them, but avoid nesting children in children
+        if (child_sp->GetSyntheticChildren().get() != nullptr)
+            return false;
+        
+        total_children_name_len += child_sp->GetName().GetLength();
+        
+        // 50 itself is a "randomly" chosen number - the idea is that
+        // overly long structs should not get this treatment
+        // FIXME: maybe make this a user-tweakable setting?
+        if (total_children_name_len > 50)
+            return false;
+        
+        // if a summary is there..
+        if (child_sp->GetSummaryFormat())
+        {
+            // and it wants children, then bail out
+            if (child_sp->GetSummaryFormat()->DoesPrintChildren())
+                return false;
+        }
+        
+        // if there is a base-class...
+        if (child_sp->IsBaseClass())
+        {
+            // and it has children..
+            if (child_sp->GetNumChildren())
+            {
+                // ...and no summary...
+                // (if it had a summary and the summary wanted children, we would have bailed out anyway
+                //  so this only makes us bail out if this has no summary and we would then print children)
+                if (!child_sp->GetSummaryFormat())
+                    return false; // then bail out
+            }
+        }
+    }
+    return true;
+}
+
 ConstString
 FormatManager::GetValidTypeName (const ConstString& type)
 {

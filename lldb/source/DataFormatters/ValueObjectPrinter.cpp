@@ -14,6 +14,7 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Core/Debugger.h"
+#include "lldb/DataFormatters/DataVisualization.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Target/Target.h"
 
@@ -97,6 +98,8 @@ ValueObjectPrinter::PrintValueObject ()
 bool
 ValueObjectPrinter::GetDynamicValueIfNeeded ()
 {
+    if (m_valobj)
+        return true;
     bool update_success = m_orig_valobj->UpdateValueIfNeeded (true);
     if (!update_success)
         return false;
@@ -522,6 +525,55 @@ ValueObjectPrinter::PrintChildren (uint32_t curr_ptr_depth)
     }
 }
 
+bool
+ValueObjectPrinter::PrintChildrenOneLiner (bool hide_names)
+{
+    if (!GetDynamicValueIfNeeded () || m_valobj == nullptr)
+        return false;
+    
+    ValueObject* synth_m_valobj = GetValueObjectForChildrenGeneration();
+    
+    bool print_dotdotdot = false;
+    size_t num_children = GetMaxNumChildrenToPrint(print_dotdotdot);
+    
+    if (num_children)
+    {
+        m_stream->PutChar('(');
+        
+        for (uint32_t idx=0; idx<num_children; ++idx)
+        {
+            lldb::ValueObjectSP child_sp(synth_m_valobj->GetChildAtIndex(idx, true));
+            lldb::ValueObjectSP child_dyn_sp = child_sp.get() ? child_sp->GetDynamicValue(options.m_use_dynamic) : child_sp;
+            if (child_dyn_sp)
+                child_sp = child_dyn_sp;
+            if (child_sp)
+            {
+                if (idx)
+                    m_stream->PutCString(", ");
+                if (!hide_names)
+                {
+                    const char* name = child_sp.get()->GetName().AsCString();
+                    if (name && *name)
+                    {
+                        m_stream->PutCString(name);
+                        m_stream->PutCString(" = ");
+                    }
+                }
+                child_sp->DumpPrintableRepresentation(*m_stream,
+                                                      ValueObject::eValueObjectRepresentationStyleSummary,
+                                                      lldb::eFormatInvalid,
+                                                      ValueObject::ePrintableRepresentationSpecialCasesDisable);
+            }
+        }
+        
+        if (print_dotdotdot)
+            m_stream->PutCString(", ...)");
+        else
+            m_stream->PutChar(')');
+    }
+    return true;
+}
+
 void
 ValueObjectPrinter::PrintChildrenIfNeeded (bool value_printed,
                                            bool summary_printed)
@@ -532,10 +584,18 @@ ValueObjectPrinter::PrintChildrenIfNeeded (bool value_printed,
     
     uint32_t curr_ptr_depth = m_ptr_depth;
     bool print_children = ShouldPrintChildren (is_failed_description,curr_ptr_depth);
+    bool print_oneline = (curr_ptr_depth > 0 || options.m_show_types) ? false : DataVisualization::ShouldPrintAsOneLiner(*m_valobj);
     
     if (print_children)
     {
-        PrintChildren (curr_ptr_depth);
+        if (print_oneline)
+        {
+            m_stream->PutChar(' ');
+            PrintChildrenOneLiner (false);
+            m_stream->EOL();
+        }
+        else
+            PrintChildren (curr_ptr_depth);
     }
     else if (m_curr_depth >= options.m_max_depth && IsAggregate() && ShouldPrintValueObject())
     {

@@ -190,6 +190,13 @@ public:
     static lldb::Format
     GetSingleItemFormat (lldb::Format vector_format);
     
+    // this returns true if the ValueObjectPrinter is *highly encouraged*
+    // to actually represent this ValueObject in one-liner format
+    // If this object has a summary formatter, however, we should not
+    // try and do one-lining, just let the summary do the right thing
+    bool
+    ShouldPrintAsOneLiner (ValueObject& valobj);
+    
     void
     Changed ()
     {

@@ -36,6 +36,9 @@ public:
     static uint32_t
     GetCurrentRevision ();
     
+    static bool
+    ShouldPrintAsOneLiner (ValueObject& valobj);
+    
     class ValueFormats
     {
     public:

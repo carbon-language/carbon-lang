@@ -23,6 +23,7 @@
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/DataFormatters/TypeSummary.h"
+#include "lldb/DataFormatters/ValueObjectPrinter.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Symbol/ClangASTType.h"
 #include "lldb/Target/StackFrame.h"
@@ -65,51 +66,12 @@ StringSummaryFormat::FormatObject (ValueObject *valobj,
     if (frame)
         sc = frame->GetSymbolContext(lldb::eSymbolContextEverything);
     
-    if (IsOneliner())
+    if (IsOneLiner())
     {
-        ValueObject* object;
-        
-        ValueObjectSP synth_valobj = valobj->GetSyntheticValue();
-        if (synth_valobj)
-            object = synth_valobj.get();
-        else
-            object = valobj;
-        
-        const uint32_t num_children = object->GetNumChildren();
-        if (num_children)
-        {
-            s.PutChar('(');
-            
-            for (uint32_t idx=0; idx<num_children; ++idx)
-            {
-                lldb::ValueObjectSP child_sp(object->GetChildAtIndex(idx, true));
-                if (child_sp.get())
-                {
-                    if (idx)
-                        s.PutCString(", ");
-                    if (!HideNames())
-                    {
-                        s.PutCString(child_sp.get()->GetName().AsCString());
-                        s.PutCString(" = ");
-                    }
-                    child_sp.get()->DumpPrintableRepresentation(s,
-                                                                ValueObject::eValueObjectRepresentationStyleSummary,
-                                                                lldb::eFormatInvalid,
-                                                                ValueObject::ePrintableRepresentationSpecialCasesDisable);
-                }
-            }
-            
-            s.PutChar(')');
-            
-            retval.assign(s.GetString());
-            return true;
-        }
-        else
-        {
-            retval.assign("error: oneliner for no children");
-            return false;
-        }
-        
+        ValueObjectPrinter printer(valobj,&s,DumpValueObjectOptions());
+        printer.PrintChildrenOneLiner(HideNames());
+        retval.assign(s.GetData());
+        return true;
     }
     else
     {
@@ -135,7 +97,7 @@ StringSummaryFormat::GetDescription ()
                  Cascades() ? "" : " (not cascading)",
                  !DoesPrintChildren() ? "" : " (show children)",
                  !DoesPrintValue() ? " (hide value)" : "",
-                 IsOneliner() ? " (one-line printout)" : "",
+                 IsOneLiner() ? " (one-line printout)" : "",
                  SkipsPointers() ? " (skip pointers)" : "",
                  SkipsReferences() ? " (skip references)" : "",
                  HideNames() ? " (hide member names)" : "");
@@ -171,7 +133,7 @@ CXXFunctionSummaryFormat::GetDescription ()
                  Cascades() ? "" : " (not cascading)",
                  !DoesPrintChildren() ? "" : " (show children)",
                  !DoesPrintValue() ? " (hide value)" : "",
-                 IsOneliner() ? " (one-line printout)" : "",
+                 IsOneLiner() ? " (one-line printout)" : "",
                  SkipsPointers() ? " (skip pointers)" : "",
                  SkipsReferences() ? " (skip references)" : "",
                  HideNames() ? " (hide member names)" : "");
@@ -238,7 +200,7 @@ ScriptSummaryFormat::GetDescription ()
     sstr.Printf ("%s%s%s%s%s%s%s\n%s",       Cascades() ? "" : " (not cascading)",
                  !DoesPrintChildren() ? "" : " (show children)",
                  !DoesPrintValue() ? " (hide value)" : "",
-                 IsOneliner() ? " (one-line printout)" : "",
+                 IsOneLiner() ? " (one-line printout)" : "",
                  SkipsPointers() ? " (skip pointers)" : "",
                  SkipsReferences() ? " (skip references)" : "",
                  HideNames() ? " (hide member names)" : "",

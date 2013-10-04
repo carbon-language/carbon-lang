@@ -74,10 +74,10 @@ class StdMapDataFormatterTestCase(TestBase):
 
         self.expect('frame variable ii',
                     substrs = ['map has 2 items',
-                               '[0] = {',
+                               '[0] = ',
                                'first = 0',
                                'second = 0',
-                               '[1] = {',
+                               '[1] = ',
                                'first = 1',
                                'second = 1'])
 
@@ -85,10 +85,10 @@ class StdMapDataFormatterTestCase(TestBase):
 
         self.expect('frame variable ii',
                     substrs = ['map has 4 items',
-                               '[2] = {',
+                               '[2] = ',
                                'first = 2',
                                'second = 0',
-                               '[3] = {',
+                               '[3] = ',
                                'first = 3',
                                'second = 1'])
 
@@ -96,19 +96,19 @@ class StdMapDataFormatterTestCase(TestBase):
 
         self.expect("frame variable ii",
                     substrs = ['map has 9 items',
-                               '[5] = {',
+                               '[5] = ',
                                'first = 5',
                                'second = 0',
-                               '[7] = {',
+                               '[7] = ',
                                'first = 7',
                                'second = 1'])
         
         self.expect("p ii",
                     substrs = ['map has 9 items',
-                               '[5] = {',
+                               '[5] = ',
                                'first = 5',
                                'second = 0',
-                               '[7] = {',
+                               '[7] = ',
                                'first = 7',
                                'second = 1'])
 

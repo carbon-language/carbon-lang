@@ -297,7 +297,7 @@ class ObjCDataFormatterTestCase(TestBase):
         self.runCmd("type summary add --summary-string \"a test\" MyClass")
         
         self.expect("frame variable *object2",
-                    substrs = ['*object2 = {',
+                    substrs = ['*object2 =',
                                'MyClass = a test',
                                'backup = ']);
         
