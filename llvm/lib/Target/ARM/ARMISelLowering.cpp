@@ -1779,24 +1779,26 @@ ARMTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
                                   RegsToPass[i].second.getValueType()));
 
   // Add a register mask operand representing the call-preserved registers.
-  const uint32_t *Mask;
-  const TargetRegisterInfo *TRI = getTargetMachine().getRegisterInfo();
-  const ARMBaseRegisterInfo *ARI = static_cast<const ARMBaseRegisterInfo*>(TRI);
-  if (isThisReturn) {
-    // For 'this' returns, use the R0-preserving mask if applicable
-    Mask = ARI->getThisReturnPreservedMask(CallConv);
-    if (!Mask) {
-      // Set isThisReturn to false if the calling convention is not one that
-      // allows 'returned' to be modeled in this way, so LowerCallResult does
-      // not try to pass 'this' straight through 
-      isThisReturn = false;
+  if (!isTailCall) {
+    const uint32_t *Mask;
+    const TargetRegisterInfo *TRI = getTargetMachine().getRegisterInfo();
+    const ARMBaseRegisterInfo *ARI = static_cast<const ARMBaseRegisterInfo*>(TRI);
+    if (isThisReturn) {
+      // For 'this' returns, use the R0-preserving mask if applicable
+      Mask = ARI->getThisReturnPreservedMask(CallConv);
+      if (!Mask) {
+        // Set isThisReturn to false if the calling convention is not one that
+        // allows 'returned' to be modeled in this way, so LowerCallResult does
+        // not try to pass 'this' straight through
+        isThisReturn = false;
+        Mask = ARI->getCallPreservedMask(CallConv);
+      }
+    } else
       Mask = ARI->getCallPreservedMask(CallConv);
-    }
-  } else
-    Mask = ARI->getCallPreservedMask(CallConv);
 
-  assert(Mask && "Missing call preserved mask for calling convention");
-  Ops.push_back(DAG.getRegisterMask(Mask));
+    assert(Mask && "Missing call preserved mask for calling convention");
+    Ops.push_back(DAG.getRegisterMask(Mask));
+  }
 
   if (InFlag.getNode())
     Ops.push_back(InFlag);
