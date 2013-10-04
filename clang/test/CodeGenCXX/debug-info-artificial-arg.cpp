@@ -23,7 +23,7 @@ int main(int argc, char **argv) {
 }
 
 // CHECK: ![[CLASSTYPE:.*]] = {{.*}} ; [ DW_TAG_class_type ] [A]
-// CHECK: ![[ARTARG:.*]] = {{.*}} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [artificial] [from _ZTS1A]
+// CHECK: ![[ARTARG:.*]] = {{.*}} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [artificial] [from A]
 // CHECK: metadata ![[CLASSTYPE]], {{.*}} ; [ DW_TAG_subprogram ] [line 12] [A]
 // CHECK: metadata [[FUNCTYPE:![0-9]*]], i32 0, null, null, null} ; [ DW_TAG_subroutine_type ]
 // CHECK: [[FUNCTYPE]] = metadata !{null, metadata ![[ARTARG]], metadata !{{.*}}, metadata !{{.*}}}

@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -emit-llvm -std=c++11 -g %s -o - | FileCheck %s
 // CHECK: metadata !"_ZTS1A"} ; [ DW_TAG_class_type ] [A]
 // CHECK: metadata !"_ZN1A3fooEiS_3$_0", {{.*}} [protected]
-// CHECK: ![[THISTYPE:[0-9]+]] = {{.*}} ; [ DW_TAG_pointer_type ] {{.*}} [artificial] [from _ZTS1A]
+// CHECK: ![[THISTYPE:[0-9]+]] = {{.*}} ; [ DW_TAG_pointer_type ] {{.*}} [artificial] [from A]
 // CHECK: DW_TAG_ptr_to_member_type
 // CHECK: {{.*}}metadata ![[MEMFUNTYPE:[0-9]+]], metadata !{{.*}}} ; [ DW_TAG_ptr_to_member_type ] {{.*}} [from ]
 // CHECK: ![[MEMFUNTYPE]] = {{.*}}metadata ![[MEMFUNARGS:[0-9]+]], i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] {{.*}} [from ]
