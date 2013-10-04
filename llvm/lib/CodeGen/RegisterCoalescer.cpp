@@ -434,7 +434,7 @@ bool RegisterCoalescer::adjustCopiesBackFrom(const CoalescerPair &CP,
     LIS->getInterval(CP.isFlipped() ? CP.getSrcReg() : CP.getDstReg());
   SlotIndex CopyIdx = LIS->getInstructionIndex(CopyMI).getRegSlot();
 
-  // BValNo is a value number in B that is defined by a copy from A.  'B3' in
+  // BValNo is a value number in B that is defined by a copy from A.  'B1' in
   // the example above.
   LiveInterval::iterator BLR = IntB.FindLiveRangeContaining(CopyIdx);
   if (BLR == IntB.end()) return false;
