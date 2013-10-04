@@ -152,9 +152,6 @@ namespace llvm {
     /// Climb up the parent chain to get the compile unit DIE this DIE belongs
     /// to.
     DIE *getCompileUnit();
-    /// Similar to getCompileUnit, returns null when DIE is not added to an
-    /// owner yet.
-    DIE *checkCompileUnit();
     void setTag(uint16_t Tag) { Abbrev.setTag(Tag); }
     void setOffset(unsigned O) { Offset = O; }
     void setSize(unsigned S) { Size = S; }

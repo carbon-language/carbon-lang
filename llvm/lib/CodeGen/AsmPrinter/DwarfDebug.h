@@ -150,12 +150,11 @@ class DbgVariable {
   DbgVariable *AbsVar;               // Corresponding Abstract variable, if any.
   const MachineInstr *MInsn;         // DBG_VALUE instruction of the variable.
   int FrameIndex;
-  DwarfDebug *DD;
 public:
   // AbsVar may be NULL.
-  DbgVariable(DIVariable V, DbgVariable *AV, DwarfDebug *DD)
+  DbgVariable(DIVariable V, DbgVariable *AV)
     : Var(V), TheDIE(0), DotDebugLocOffset(~0U), AbsVar(AV), MInsn(0),
-      FrameIndex(~0), DD(DD) {}
+      FrameIndex(~0) {}
 
   // Accessors.
   DIVariable getVariable()           const { return Var; }
@@ -327,30 +326,6 @@ class DwarfDebug {
 
   // Maps subprogram MDNode with its corresponding CompileUnit.
   DenseMap <const MDNode *, CompileUnit *> SPMap;
-
-  /// Maps type MDNode with its corresponding DIE. These DIEs can be
-  /// shared across CUs, that is why we keep the map here instead
-  /// of in CompileUnit.
-  DenseMap<const MDNode *, DIE *> MDTypeNodeToDieMap;
-  /// Maps subprogram MDNode with its corresponding DIE.
-  DenseMap<const MDNode *, DIE *> MDSPNodeToDieMap;
-  /// Maps static member MDNode with its corresponding DIE.
-  DenseMap<const MDNode *, DIE *> MDStaticMemberNodeToDieMap;
-
-  /// Specifies a worklist item. Sometimes, when we try to add an attribute to
-  /// a DIE, the DIE is not yet added to its owner yet, so we don't know whether
-  /// we should use ref_addr or ref4. We create a worklist that will be
-  /// processed during finalization to add attributes with the correct form
-  /// (ref_addr or ref4).
-  struct DIEEntryWorkItem {
-    DIE *Die;
-    uint16_t Attribute;
-    DIEEntry *Entry;
-    DIEEntryWorkItem(DIE *D, uint16_t A, DIEEntry *E) :
-      Die(D), Attribute(A), Entry(E) {
-    }
-  };
-  SmallVector<DIEEntryWorkItem, 64> DIEEntryWorklist;
 
   // Used to uniquely define abbreviations.
   FoldingSet<DIEAbbrev> AbbreviationsSet;
@@ -686,28 +661,6 @@ public:
   DwarfDebug(AsmPrinter *A, Module *M);
   ~DwarfDebug();
 
-  void insertTypeDIE(const MDNode *TypeMD, DIE *Die) {
-    MDTypeNodeToDieMap.insert(std::make_pair(TypeMD, Die));
-  }
-  DIE *getTypeDIE(const MDNode *TypeMD) {
-    return MDTypeNodeToDieMap.lookup(TypeMD);
-  }
-  void insertSPDIE(const MDNode *SPMD, DIE *Die) {
-    MDSPNodeToDieMap.insert(std::make_pair(SPMD, Die));
-  }
-  DIE *getSPDIE(const MDNode *SPMD) {
-    return MDSPNodeToDieMap.lookup(SPMD);
-  }
-  void insertStaticMemberDIE(const MDNode *StaticMD, DIE *Die) {
-    MDStaticMemberNodeToDieMap.insert(std::make_pair(StaticMD, Die));
-  }
-  DIE *getStaticMemberDIE(const MDNode *StaticMD) {
-    return MDStaticMemberNodeToDieMap.lookup(StaticMD);
-  }
-  void insertDIEEntryWorklist(DIE *Die, uint16_t Attribute, DIEEntry *Entry) {
-    DIEEntryWorklist.push_back(DIEEntryWorkItem(Die, Attribute, Entry));
-  }
-
   /// \brief Emit all Dwarf sections that should come prior to the
   /// content.
   void beginModule();
@@ -769,11 +722,6 @@ public:
   T resolve(DIRef<T> Ref) const {
     return Ref.resolve(TypeIdentifierMap);
   }
-
-  /// When we don't know whether the correct form is ref4 or ref_addr, we create
-  /// a worklist item and insert it to DIEEntryWorklist.
-  void addDIEEntry(DIE *Die, uint16_t Attribute, uint16_t Form,
-                   DIEEntry *Entry);
 
   /// isSubprogramContext - Return true if Context is either a subprogram
   /// or another context nested inside a subprogram.

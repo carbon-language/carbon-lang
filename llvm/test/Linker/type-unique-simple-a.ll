@@ -1,22 +1,7 @@
-; REQUIRES: object-emission
+; RUN: llvm-link %s %p/type-unique-simple-b.ll -S -o - | FileCheck %s
 
-; RUN: llvm-link %s %p/type-unique-simple-b.ll -S -o %t
-; RUN: cat %t | FileCheck %s -check-prefix=LINK
-; RUN: llc -filetype=obj -O0 < %t > %t2
-; RUN: llvm-dwarfdump -debug-dump=info %t2 | FileCheck %s
-; CHECK: 0x[[INT:.*]]: DW_TAG_base_type
-; CHECK-NEXT: DW_AT_name {{.*}} = "int"
-; CHECK-NOT: DW_TAG_base_type
-; CHECK: 0x[[BASE:.*]]: DW_TAG_structure_type
-; CHECK-NEXT: DW_AT_name {{.*}} = "Base"
+; CHECK: DW_TAG_structure_type
 ; CHECK-NOT: DW_TAG_structure_type
-; CHECK: DW_TAG_formal_parameter
-; CHECK: DW_AT_type [DW_FORM_ref_addr] {{.*}}[[INT]])
-; CHECK: DW_TAG_variable
-; CHECK: DW_AT_type [DW_FORM_ref_addr] {{.*}}[[BASE]])
-
-; LINK: DW_TAG_structure_type
-; LINK-NOT: DW_TAG_structure_type
 ; Content of header files:
 ; struct Base {
 ;   int a;

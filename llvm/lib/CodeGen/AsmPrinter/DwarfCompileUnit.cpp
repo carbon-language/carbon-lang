@@ -232,7 +232,7 @@ void CompileUnit::addDelta(DIE *Die, uint16_t Attribute, uint16_t Form,
 ///
 void CompileUnit::addDIEEntry(DIE *Die, uint16_t Attribute, uint16_t Form,
                               DIE *Entry) {
-  DD->addDIEEntry(Die, Attribute, Form, createDIEEntry(Entry));
+  Die->addValue(Attribute, Form, createDIEEntry(Entry));
 }
 
 /// addBlock - Add block data.
@@ -524,7 +524,7 @@ void CompileUnit::addBlockByrefAddress(const DbgVariable &DV, DIE *Die,
 
   if (Tag == dwarf::DW_TAG_pointer_type) {
     DIDerivedType DTy = DIDerivedType(Ty);
-    TmpTy = DD->resolve(DTy.getTypeDerivedFrom());
+    TmpTy = DTy.getTypeDerivedFrom();
     isPointer = true;
   }
 
@@ -591,10 +591,9 @@ void CompileUnit::addBlockByrefAddress(const DbgVariable &DV, DIE *Die,
 }
 
 /// isTypeSigned - Return true if the type is signed.
-static bool isTypeSigned(DwarfDebug *DD, DIType Ty, int *SizeInBits) {
+static bool isTypeSigned(DIType Ty, int *SizeInBits) {
   if (Ty.isDerivedType())
-    return isTypeSigned(DD, DD->resolve(DIDerivedType(Ty).getTypeDerivedFrom()),
-                        SizeInBits);
+    return isTypeSigned(DIDerivedType(Ty).getTypeDerivedFrom(), SizeInBits);
   if (Ty.isBasicType())
     if (DIBasicType(Ty).getEncoding() == dwarf::DW_ATE_signed
         || DIBasicType(Ty).getEncoding() == dwarf::DW_ATE_signed_char) {
@@ -602,51 +601,6 @@ static bool isTypeSigned(DwarfDebug *DD, DIType Ty, int *SizeInBits) {
       return true;
     }
   return false;
-}
-
-/// Return true if type encoding is unsigned.
-static bool isUnsignedDIType(DwarfDebug *DD, DIType Ty) {
-  DIDerivedType DTy(Ty);
-  if (DTy.isDerivedType())
-    return isUnsignedDIType(DD, DD->resolve(DTy.getTypeDerivedFrom()));
-
-  DIBasicType BTy(Ty);
-  if (BTy.isBasicType()) {
-    unsigned Encoding = BTy.getEncoding();
-    if (Encoding == dwarf::DW_ATE_unsigned ||
-        Encoding == dwarf::DW_ATE_unsigned_char ||
-        Encoding == dwarf::DW_ATE_boolean)
-      return true;
-  }
-  return false;
-}
-
-/// If this type is derived from a base type then return base type size.
-static uint64_t getOriginalTypeSize(DwarfDebug *DD, DIDerivedType Ty) {
-  unsigned Tag = Ty.getTag();
-
-  if (Tag != dwarf::DW_TAG_member && Tag != dwarf::DW_TAG_typedef &&
-      Tag != dwarf::DW_TAG_const_type && Tag != dwarf::DW_TAG_volatile_type &&
-      Tag != dwarf::DW_TAG_restrict_type)
-    return Ty.getSizeInBits();
-
-  DIType BaseType = DD->resolve(Ty.getTypeDerivedFrom());
-
-  // If this type is not derived from any type then take conservative approach.
-  if (!BaseType.isValid())
-    return Ty.getSizeInBits();
-
-  // If this is a derived type, go ahead and get the base type, unless it's a
-  // reference then it's just the size of the field. Pointer types have no need
-  // of this since they're a different type of qualification on the type.
-  if (BaseType.getTag() == dwarf::DW_TAG_reference_type ||
-      BaseType.getTag() == dwarf::DW_TAG_rvalue_reference_type)
-    return Ty.getSizeInBits();
-
-  if (BaseType.isDerivedType())
-    return getOriginalTypeSize(DD, DIDerivedType(BaseType));
-
-  return BaseType.getSizeInBits();
 }
 
 /// addConstantValue - Add constant value entry in variable DIE.
@@ -657,7 +611,7 @@ void CompileUnit::addConstantValue(DIE *Die, const MachineOperand &MO,
   // udata/sdata over dataN as suggested by the DWARF spec)
   assert(MO.isImm() && "Invalid machine operand!");
   int SizeInBits = -1;
-  bool SignedConstant = isTypeSigned(DD, Ty, &SizeInBits);
+  bool SignedConstant = isTypeSigned(Ty, &SizeInBits);
   uint16_t Form;
 
   // If we're a signed constant definitely use sdata.
@@ -827,13 +781,13 @@ DIE *CompileUnit::getOrCreateTypeDIE(const MDNode *TyNode) {
   DIType Ty(TyNode);
   if (!Ty.isType())
     return NULL;
-  DIE *TyDIE = DD->getTypeDIE(Ty);
+  DIE *TyDIE = getDIE(Ty);
   if (TyDIE)
     return TyDIE;
 
   // Create new type.
   TyDIE = new DIE(dwarf::DW_TAG_base_type);
-  DD->insertTypeDIE(Ty, TyDIE);
+  insertDIE(Ty, TyDIE);
   if (Ty.isBasicType())
     constructTypeDIE(*TyDIE, DIBasicType(Ty));
   else if (Ty.isCompositeType())
@@ -869,7 +823,7 @@ void CompileUnit::addType(DIE *Entity, DIType Ty, uint16_t Attribute) {
   DIEEntry *Entry = getDIEEntry(Ty);
   // If it exists then use the existing value.
   if (Entry) {
-    DD->addDIEEntry(Entity, Attribute, dwarf::DW_FORM_ref4, Entry);
+    Entity->addValue(Attribute, dwarf::DW_FORM_ref4, Entry);
     return;
   }
 
@@ -879,7 +833,7 @@ void CompileUnit::addType(DIE *Entity, DIType Ty, uint16_t Attribute) {
   // Set up proxy.
   Entry = createDIEEntry(Buffer);
   insertDIEEntry(Ty, Entry);
-  DD->addDIEEntry(Entity, Attribute, dwarf::DW_FORM_ref4, Entry);
+  Entity->addValue(Attribute, dwarf::DW_FORM_ref4, Entry);
 
   // If this is a complete composite type then include it in the
   // list of global types.
@@ -981,7 +935,7 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DIDerivedType DTy) {
   Buffer.setTag(Tag);
 
   // Map to main type, void will not have a type.
-  DIType FromTy = DD->resolve(DTy.getTypeDerivedFrom());
+  DIType FromTy = DTy.getTypeDerivedFrom();
   if (FromTy)
     addType(&Buffer, FromTy);
 
@@ -1059,7 +1013,7 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
         Buffer.addChild(ElemDie);
       }
     }
-    DIType DTy = DD->resolve(CTy.getTypeDerivedFrom());
+    DIType DTy = CTy.getTypeDerivedFrom();
     if (DTy) {
       addType(&Buffer, DTy);
       addUInt(&Buffer, dwarf::DW_AT_enum_class, dwarf::DW_FORM_flag, 1);
@@ -1125,8 +1079,7 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
         DIDerivedType DDTy(Element);
         if (DDTy.getTag() == dwarf::DW_TAG_friend) {
           ElemDie = new DIE(dwarf::DW_TAG_friend);
-          addType(ElemDie, DD->resolve(DDTy.getTypeDerivedFrom()),
-                  dwarf::DW_AT_friend);
+          addType(ElemDie, DDTy.getTypeDerivedFrom(), dwarf::DW_AT_friend);
         } else if (DDTy.isStaticMember())
           ElemDie = createStaticMemberDIE(DDTy);
         else
@@ -1267,7 +1220,7 @@ CompileUnit::getOrCreateTemplateValueParameterDIE(DITemplateValueParameter VP) {
     addString(ParamDIE, dwarf::DW_AT_name, VP.getName());
   if (Value *Val = VP.getValue()) {
     if (ConstantInt *CI = dyn_cast<ConstantInt>(Val))
-      addConstantValue(ParamDIE, CI, isUnsignedDIType(DD, VP.getType()));
+      addConstantValue(ParamDIE, CI, VP.getType().isUnsignedDIType());
     else if (GlobalValue *GV = dyn_cast<GlobalValue>(Val)) {
       // For declaration non-type template parameters (such as global values and
       // functions)
@@ -1318,14 +1271,14 @@ DIE *CompileUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
   if (!ContextDIE)
     ContextDIE = CUDie.get();
 
-  DIE *SPDie = DD->getSPDIE(SP);
+  DIE *SPDie = getDIE(SP);
   if (SPDie)
     return SPDie;
 
   SPDie = new DIE(dwarf::DW_TAG_subprogram);
 
   // DW_TAG_inlined_subroutine may refer to this DIE.
-  DD->insertSPDIE(SP, SPDie);
+  insertDIE(SP, SPDie);
 
   DISubprogram SPDecl = SP.getFunctionDeclaration();
   DIE *DeclDie = NULL;
@@ -1472,7 +1425,7 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
     // But that class might not exist in the DWARF yet.
     // Creating the class will create the static member decl DIE.
     getOrCreateContextDIE(DD->resolve(SDMDecl.getContext()));
-    VariableDIE = DD->getStaticMemberDIE(SDMDecl);
+    VariableDIE = getDIE(SDMDecl);
     assert(VariableDIE && "Static member decl has no context?");
     IsStaticMember = true;
   }
@@ -1561,7 +1514,7 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
     // emitting AT_const_value multiple times, we only add AT_const_value when
     // it is not a static member.
     if (!IsStaticMember)
-      addConstantValue(VariableDIE, CI, isUnsignedDIType(DD, GTy));
+      addConstantValue(VariableDIE, CI, GTy.isUnsignedDIType());
   } else if (const ConstantExpr *CE = getMergedGlobalExpr(N->getOperand(11))) {
     addToAccelTable = true;
     // GV is a merged global.
@@ -1622,7 +1575,7 @@ void CompileUnit::constructArrayTypeDIE(DIE &Buffer,
     addFlag(&Buffer, dwarf::DW_AT_GNU_vector);
 
   // Emit the element type.
-  addType(&Buffer, DD->resolve(CTy->getTypeDerivedFrom()));
+  addType(&Buffer, CTy->getTypeDerivedFrom());
 
   // Get an anonymous type for index type.
   // FIXME: This type should be passed down from the front end
@@ -1666,7 +1619,7 @@ void CompileUnit::constructContainingTypeDIEs() {
     DIE *SPDie = CI->first;
     const MDNode *N = CI->second;
     if (!N) continue;
-    DIE *NDie = DD->getTypeDIE(N);
+    DIE *NDie = getDIE(N);
     if (!NDie) continue;
     addDIEEntry(SPDie, dwarf::DW_AT_containing_type, dwarf::DW_FORM_ref4, NDie);
   }
@@ -1729,7 +1682,7 @@ DIE *CompileUnit::constructVariableDIE(DbgVariable *DV,
       addConstantFPValue(VariableDie, DVInsn->getOperand(0));
     else if (DVInsn->getOperand(0).isCImm())
       addConstantValue(VariableDie, DVInsn->getOperand(0).getCImm(),
-                       isUnsignedDIType(DD, DV->getType()));
+                       DV->getType().isUnsignedDIType());
 
     DV->setDIE(VariableDie);
     return VariableDie;
@@ -1757,7 +1710,7 @@ DIE *CompileUnit::createMemberDIE(DIDerivedType DT) {
   if (!Name.empty())
     addString(MemberDie, dwarf::DW_AT_name, Name);
 
-  addType(MemberDie, DD->resolve(DT.getTypeDerivedFrom()));
+  addType(MemberDie, DT.getTypeDerivedFrom());
 
   addSourceLine(MemberDie, DT);
 
@@ -1765,12 +1718,11 @@ DIE *CompileUnit::createMemberDIE(DIDerivedType DT) {
   addUInt(MemLocationDie, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_plus_uconst);
 
   uint64_t Size = DT.getSizeInBits();
-  uint64_t FieldSize = getOriginalTypeSize(DD, DT);
+  uint64_t FieldSize = DT.getOriginalTypeSize();
 
   if (Size != FieldSize) {
     // Handle bitfield.
-    addUInt(MemberDie, dwarf::DW_AT_byte_size, 0,
-            getOriginalTypeSize(DD, DT)>>3);
+    addUInt(MemberDie, dwarf::DW_AT_byte_size, 0, DT.getOriginalTypeSize()>>3);
     addUInt(MemberDie, dwarf::DW_AT_bit_size, 0, DT.getSizeInBits());
 
     uint64_t Offset = DT.getOffsetInBits();
@@ -1845,7 +1797,7 @@ DIE *CompileUnit::createStaticMemberDIE(const DIDerivedType DT) {
     return NULL;
 
   DIE *StaticMemberDIE = new DIE(DT.getTag());
-  DIType Ty = DD->resolve(DT.getTypeDerivedFrom());
+  DIType Ty = DT.getTypeDerivedFrom();
 
   addString(StaticMemberDIE, dwarf::DW_AT_name, DT.getName());
   addType(StaticMemberDIE, Ty);
@@ -1866,10 +1818,10 @@ DIE *CompileUnit::createStaticMemberDIE(const DIDerivedType DT) {
             dwarf::DW_ACCESS_public);
 
   if (const ConstantInt *CI = dyn_cast_or_null<ConstantInt>(DT.getConstant()))
-    addConstantValue(StaticMemberDIE, CI, isUnsignedDIType(DD, Ty));
+    addConstantValue(StaticMemberDIE, CI, Ty.isUnsignedDIType());
   if (const ConstantFP *CFP = dyn_cast_or_null<ConstantFP>(DT.getConstant()))
     addConstantFPValue(StaticMemberDIE, CFP);
 
-  DD->insertStaticMemberDIE(DT, StaticMemberDIE);
+  insertDIE(DT, StaticMemberDIE);
   return StaticMemberDIE;
 }

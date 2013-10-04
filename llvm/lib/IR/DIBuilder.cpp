@@ -303,7 +303,7 @@ DIBuilder::createPointerType(DIType PointeeTy, uint64_t SizeInBits,
     ConstantInt::get(Type::getInt64Ty(VMContext), AlignInBits),
     ConstantInt::get(Type::getInt64Ty(VMContext), 0), // Offset
     ConstantInt::get(Type::getInt32Ty(VMContext), 0), // Flags
-    PointeeTy.getRef()
+    PointeeTy
   };
   return DIDerivedType(MDNode::get(VMContext, Elts));
 }
