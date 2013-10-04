@@ -28,7 +28,9 @@
 
 // Note:  optimize for size
 
+#if ! defined(_LIBCPP_MSVC)
 #pragma GCC visibility push(hidden)
+#endif
 
 namespace
 {
@@ -91,7 +93,9 @@ __libcpp_nmstr::~__libcpp_nmstr()
 
 }
 
+#if ! defined(_LIBCPP_MSVC)
 #pragma GCC visibility pop
+#endif
 
 namespace std  // purposefully not using versioning namespace
 {
