@@ -292,7 +292,7 @@ public:
                           MachineLocation Location);
 
   /// addToContextOwner - Add Die into the list of its context owner's children.
-  void addToContextOwner(DIE *Die, DIDescriptor Context);
+  void addToContextOwner(DIE *Die, DIScope Context);
 
   /// addType - Add a new type attribute to the specified entity. This takes
   /// and attribute parameter because DW_AT_friend attributes are also
@@ -362,7 +362,7 @@ public:
   DIE *createStaticMemberDIE(DIDerivedType DT);
 
   /// getOrCreateContextDIE - Get context owner's DIE.
-  DIE *getOrCreateContextDIE(DIDescriptor Context);
+  DIE *getOrCreateContextDIE(DIScope Context);
 
 private:
 

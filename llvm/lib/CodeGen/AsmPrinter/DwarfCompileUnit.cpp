@@ -745,7 +745,7 @@ void CompileUnit::addTemplateParams(DIE &Buffer, DIArray TParams) {
 }
 
 /// getOrCreateContextDIE - Get context owner's DIE.
-DIE *CompileUnit::getOrCreateContextDIE(DIDescriptor Context) {
+DIE *CompileUnit::getOrCreateContextDIE(DIScope Context) {
   if (Context.isType())
     return getOrCreateTypeDIE(DIType(Context));
   else if (Context.isNameSpace())
@@ -757,7 +757,7 @@ DIE *CompileUnit::getOrCreateContextDIE(DIDescriptor Context) {
 }
 
 /// addToContextOwner - Add Die into the list of its context owner's children.
-void CompileUnit::addToContextOwner(DIE *Die, DIDescriptor Context) {
+void CompileUnit::addToContextOwner(DIE *Die, DIScope Context) {
   assert(!Die->getParent());
   if (DIE *ContextDIE = getOrCreateContextDIE(Context)) {
     if (Die->getParent()) {
@@ -872,7 +872,7 @@ void CompileUnit::addGlobalName(StringRef Name, DIE *Die) {
 /// addGlobalType - Add a new global type to the compile unit.
 ///
 void CompileUnit::addGlobalType(DIType Ty) {
-  DIDescriptor Context = DD->resolve(Ty.getContext());
+  DIScope Context = DD->resolve(Ty.getContext());
   if (!Ty.getName().empty() && !Ty.isForwardDecl() &&
       (!Context || Context.isCompileUnit() || Context.isFile() ||
        Context.isNameSpace()))
@@ -1398,7 +1398,7 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
   if (!GV.isGlobalVariable())
     return;
 
-  DIDescriptor GVContext = GV.getContext();
+  DIScope GVContext = GV.getContext();
   DIType GTy = GV.getType();
 
   // If this is a static data member definition, some attributes belong
