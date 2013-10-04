@@ -966,13 +966,11 @@ static bool shouldCreateTypeUnit(DICompositeType CTy, const DwarfDebug *DD) {
   case dwarf::DW_TAG_enumeration_type:
   case dwarf::DW_TAG_class_type:
     // If this is a class, structure, union, or enumeration type
-    // that is not a declaration, is a type definition, and not scoped
+    // that is a definition (not a declaration), and not scoped
     // inside a function then separate this out as a type unit.
-    if (CTy.isForwardDecl() || !isTypeUnitScoped(CTy, DD))
-      return 0;
-    return 1;
+    return !CTy.isForwardDecl() && isTypeUnitScoped(CTy, DD);
   default:
-    return 0;
+    return false;
   }
 }
 
