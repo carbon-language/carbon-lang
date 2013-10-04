@@ -38,7 +38,7 @@ namespace lldb_private {
             eType64,
             eTypeBytes
         };
-        
+
         Opcode () : m_type (eTypeInvalid)
         {
         }
@@ -78,7 +78,7 @@ namespace lldb_private {
         {
             return m_type;
         }
-    
+
         uint8_t
         GetOpcode8 (uint8_t invalid_opcode = UINT8_MAX) const
         {
@@ -91,7 +91,6 @@ namespace lldb_private {
             case Opcode::eType32:       break;
             case Opcode::eType64:       break;
             case Opcode::eTypeBytes:    break;
-                break;
             }
             return invalid_opcode;
         }
@@ -157,7 +156,7 @@ namespace lldb_private {
             m_type = eType16;
             m_data.inst16 = inst;
         }
-        
+
         void
         SetOpcode16_2 (uint32_t inst)
         {
@@ -206,7 +205,7 @@ namespace lldb_private {
                 return m_data.inst.bytes;
             return NULL;
         }
-        
+
         uint32_t
         GetByteSize () const
         {
@@ -222,7 +221,7 @@ namespace lldb_private {
             }
             return 0;
         }
-        
+
         // Get the opcode exactly as it would be laid out in memory.
         uint32_t
         GetData (DataExtractor &data) const;
@@ -246,7 +245,7 @@ namespace lldb_private {
             }
             return NULL;
         }
-        
+
         lldb::ByteOrder
         GetDataByteOrder () const;
 
@@ -257,7 +256,7 @@ namespace lldb_private {
             uint16_t inst16;
             uint32_t inst32;
             uint64_t inst64;
-            struct 
+            struct
             {
                 uint8_t bytes[16]; // This must be big enough to handle any opcode for any supported target.
                 uint8_t length;

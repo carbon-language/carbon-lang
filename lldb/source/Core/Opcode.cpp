@@ -31,18 +31,18 @@ Opcode::Dump (Stream *s, uint32_t min_byte_width)
     int bytes_written = 0;
     switch (m_type)
     {
-    case Opcode::eTypeInvalid:  
-        bytes_written = s->PutCString ("<invalid>"); 
+    case Opcode::eTypeInvalid:
+        bytes_written = s->PutCString ("<invalid>");
         break;
-    case Opcode::eType8:        
-        bytes_written = s->Printf ("0x%2.2x", m_data.inst8); 
+    case Opcode::eType8:
+        bytes_written = s->Printf ("0x%2.2x", m_data.inst8);
         break;
     case Opcode::eType16:
-        bytes_written = s->Printf ("0x%4.4x", m_data.inst16); 
+        bytes_written = s->Printf ("0x%4.4x", m_data.inst16);
         break;
     case Opcode::eType16_2:
     case Opcode::eType32:
-        bytes_written = s->Printf ("0x%8.8x", m_data.inst32); 
+        bytes_written = s->Printf ("0x%8.8x", m_data.inst32);
         break;
 
     case Opcode::eType64:
@@ -55,12 +55,12 @@ Opcode::Dump (Stream *s, uint32_t min_byte_width)
             {
                 if (i > 0)
                     bytes_written += s->PutChar (' ');
-                bytes_written += s->Printf ("%2.2x", m_data.inst.bytes[i]); 
+                bytes_written += s->Printf ("%2.2x", m_data.inst.bytes[i]);
             }
         }
         break;
     }
-    
+
     // Add spaces to make sure bytes dispay comes out even in case opcodes
     // aren't all the same size
     if (bytes_written < min_byte_width)
@@ -89,7 +89,7 @@ uint32_t
 Opcode::GetData (DataExtractor &data) const
 {
     uint32_t byte_size = GetByteSize ();
-    
+
     DataBufferSP buffer_sp;
     if (byte_size > 0)
     {
@@ -97,7 +97,7 @@ Opcode::GetData (DataExtractor &data) const
         {
             case Opcode::eTypeInvalid:
                 break;
-                
+
             case Opcode::eType8:    buffer_sp.reset (new DataBufferHeap (&m_data.inst8,  byte_size)); break;
             case Opcode::eType16:   buffer_sp.reset (new DataBufferHeap (&m_data.inst16, byte_size)); break;
             case Opcode::eType16_2:
@@ -119,7 +119,7 @@ Opcode::GetData (DataExtractor &data) const
                 break;
         }
     }
-    
+
     if (buffer_sp)
     {
         data.SetByteOrder(GetDataByteOrder());
