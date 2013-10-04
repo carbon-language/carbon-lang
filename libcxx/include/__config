@@ -590,4 +590,16 @@ template <unsigned> struct __static_assert_check {};
 #define _LIBCPP_DEPRECATED_AFTER_CXX11 [[deprecated]]
 #endif
 
+// Try to find out if RTTI is disabled.
+// g++ and cl.exe have RTTI on by default and define a macro when it is.
+// g++ only defines the macro in 4.3.2 and onwards.
+#if !defined(_LIBCPP_NO_RTTI)
+#  if defined(__GNUG__) && (__GNUC__ >= 4 && \
+   (__GNUC_MINOR__ >= 3 || __GNUC_PATCHLEVEL__ >= 2)) && !defined(__GXX_RTTI)
+#    define _LIBCPP_NO_RTTI
+#  elif (defined(_MSC_VER) && !defined(__clang__)) && !defined(_CPPRTTI)
+#    define _LIBCPP_NO_RTTI
+#  endif
+#endif
+
 #endif  // _LIBCPP_CONFIG
