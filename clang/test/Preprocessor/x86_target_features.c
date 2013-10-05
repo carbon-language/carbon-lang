@@ -211,3 +211,7 @@
 // RUN: %clang -target i386-unknown-unknown -march=bdver2 -mno-tbm -x c -E -dM -o - %s | FileCheck --check-prefix=NOTBM %s
 
 // NOTBM-NOT: #define __TBM__ 1
+
+// RUN: %clang -target i386-unknown-unknown -march=pentiumpro -mcx16 -x c -E -dM -o - %s | FileCheck --check-prefix=MCX16 %s
+
+// MCX16: #define __GCC_HAVE_SYNC_COMPARE_AND_SWAP_16 1
