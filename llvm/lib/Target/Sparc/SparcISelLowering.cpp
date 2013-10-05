@@ -2046,7 +2046,7 @@ static SDValue LowerSINT_TO_FP(SDValue Op, SelectionDAG &DAG,
   assert(Op.getOperand(0).getValueType() == MVT::i32);
   SDValue Tmp = DAG.getNode(ISD::BITCAST, dl, MVT::f32, Op.getOperand(0));
   // Convert the int value to FP in an FP register.
-  if (Op.getValueType() == MVT::f128 && hasHardQuad)
+  if (Op.getValueType() == MVT::f128 && !hasHardQuad)
     return TLI.LowerF128Op(Op, DAG,
                            TLI.getLibcallName(RTLIB::SINTTOFP_I32_F128), 1);
   return DAG.getNode(SPISD::ITOF, dl, Op.getValueType(), Tmp);

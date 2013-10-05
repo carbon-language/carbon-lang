@@ -113,3 +113,16 @@ entry:
 }
 
 declare fp128 @llvm.fabs.f128(fp128) nounwind readonly
+
+; HARD-LABEL: int_to_f128
+; HARD:       fitoq
+
+; SOFT-LABEL: int_to_f128
+; SOFT:       _Q_itoq
+
+define void @int_to_f128(fp128* noalias sret %scalar.result, i32 %i) {
+entry:
+  %0 = sitofp i32 %i to fp128
+  store fp128 %0, fp128* %scalar.result, align 8
+  ret void
+}
