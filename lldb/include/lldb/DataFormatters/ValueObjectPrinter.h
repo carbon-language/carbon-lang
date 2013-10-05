@@ -273,6 +273,15 @@ protected:
                         uint32_t ptr_depth,
                         uint32_t curr_depth);
     
+    // we should actually be using delegating constructors here
+    // but some versions of GCC still have trouble with those
+    void
+    Init (ValueObject* valobj,
+          Stream* s,
+          const DumpValueObjectOptions& options,
+          uint32_t ptr_depth,
+          uint32_t curr_depth);
+    
     bool
     GetDynamicValueIfNeeded ();
     

@@ -23,48 +23,45 @@ using namespace lldb_private;
 
 ValueObjectPrinter::ValueObjectPrinter (ValueObject* valobj,
                                         Stream* s,
-                                        const DumpValueObjectOptions& options) :
-    m_orig_valobj(valobj),
-    m_valobj(nullptr),
-    m_stream(s),
-    options(options),
-    m_ptr_depth(options.m_max_ptr_depth),
-    m_curr_depth(0),
-    m_should_print(eLazyBoolCalculate),
-    m_is_nil(eLazyBoolCalculate),
-    m_is_ptr(eLazyBoolCalculate),
-    m_is_ref(eLazyBoolCalculate),
-    m_is_aggregate(eLazyBoolCalculate),
-    m_summary_formatter({nullptr,false}),
-    m_value(),
-    m_summary(),
-    m_error()
+                                        const DumpValueObjectOptions& options)
 {
-    assert (m_orig_valobj && "cannot print a NULL ValueObject");
-    assert (m_stream && "cannot print to a NULL Stream");
+    Init(valobj,s,options,options.m_max_ptr_depth,0);
 }
 
 ValueObjectPrinter::ValueObjectPrinter (ValueObject* valobj,
                                         Stream* s,
                                         const DumpValueObjectOptions& options,
                                         uint32_t ptr_depth,
-                                        uint32_t curr_depth) :
-    m_orig_valobj(valobj),
-    m_valobj(nullptr),
-    m_stream(s),
-    options(options),
-    m_ptr_depth(ptr_depth),
-    m_curr_depth(curr_depth),
-    m_should_print(eLazyBoolCalculate),
-    m_is_nil(eLazyBoolCalculate),
-    m_is_ptr(eLazyBoolCalculate),
-    m_is_ref(eLazyBoolCalculate),
-    m_is_aggregate(eLazyBoolCalculate),
-    m_summary_formatter({nullptr,false}),
-    m_value(),
-    m_summary(),
-    m_error()
-{ }
+                                        uint32_t curr_depth)
+{
+    Init(valobj,s,options,ptr_depth,curr_depth);
+}
+
+void
+ValueObjectPrinter::Init (ValueObject* valobj,
+                          Stream* s,
+                          const DumpValueObjectOptions& options,
+                          uint32_t ptr_depth,
+                          uint32_t curr_depth)
+{
+    m_orig_valobj = valobj;
+    m_valobj = nullptr;
+    m_stream = s;
+    this->options = options;
+    m_ptr_depth = ptr_depth;
+    m_curr_depth = curr_depth;
+    assert (m_orig_valobj && "cannot print a NULL ValueObject");
+    assert (m_stream && "cannot print to a NULL Stream");
+    m_should_print = eLazyBoolCalculate;
+    m_is_nil = eLazyBoolCalculate;
+    m_is_ptr = eLazyBoolCalculate;
+    m_is_ref = eLazyBoolCalculate;
+    m_is_aggregate = eLazyBoolCalculate;
+    m_summary_formatter = {nullptr,false};
+    m_value.assign("");
+    m_summary.assign("");
+    m_error.assign("");
+}
 
 bool
 ValueObjectPrinter::PrintValueObject ()
