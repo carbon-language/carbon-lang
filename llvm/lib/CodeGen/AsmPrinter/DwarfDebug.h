@@ -713,9 +713,8 @@ public:
   /// Returns the Dwarf Version.
   unsigned getDwarfVersion() const { return DwarfVersion; }
 
-  /// Find the MDNode for the given scope reference.
-  template <typename T>
-  T resolve(DIRef<T> Ref) const {
+  /// Find the MDNode for the given reference.
+  template <typename T> T resolve(DIRef<T> Ref) const {
     return Ref.resolve(TypeIdentifierMap);
   }
 

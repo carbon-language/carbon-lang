@@ -353,7 +353,7 @@ private:
   DIEEntry *createDIEEntry(DIE *Entry);
 
   /// resolve - Look in the DwarfDebug map for the MDNode that
-  /// corresponds to a scope reference.
+  /// corresponds to the reference.
   template <typename T> T resolve(DIRef<T> Ref) const {
     return DD->resolve(Ref);
   }
