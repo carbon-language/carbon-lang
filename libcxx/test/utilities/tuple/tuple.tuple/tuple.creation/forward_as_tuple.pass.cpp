@@ -51,6 +51,15 @@ test2a(const Tuple& t)
     assert(std::get<1>(t) == 'a');
 }
 
+#if _LIBCPP_STD_VER > 11
+template <class Tuple>
+constexpr int 
+test3(const Tuple& t)
+{
+    return std::tuple_size<Tuple>::value;
+}
+#endif
+
 int main()
 {
     {
@@ -67,5 +76,8 @@ int main()
         double i = 2.5;
         char c = 'a';
         test2a(std::forward_as_tuple(i, c));
+#if _LIBCPP_STD_VER > 11
+        static_assert ( test3 (std::forward_as_tuple(i, c)) == 2, "" );
+#endif
     }
 }
