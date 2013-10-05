@@ -1939,54 +1939,35 @@ defm BEXTRI64 : tbm_ternary_imm_intr<0x10, GR64, "bextr", i64mem, loadi64,
 
 multiclass tbm_binary_rm<bits<8> opc, Format FormReg, Format FormMem,
                          RegisterClass RC, string OpcodeStr,
-                         X86MemOperand x86memop, PatFrag ld_frag,
-                         Intrinsic Int> {
+                         X86MemOperand x86memop, PatFrag ld_frag> {
+let hasSideEffects = 0 in {
   def rr : I<opc,  FormReg, (outs RC:$dst), (ins RC:$src),
              !strconcat(OpcodeStr,"\t{$src, $dst|$dst, $src}"),
-             [(set RC:$dst, (Int RC:$src))]>,
-           XOP, XOP9,  VEX_4V;
+             []>, XOP, XOP9, VEX_4V;
+  let mayLoad = 1 in
   def rm : I<opc,  FormMem, (outs RC:$dst), (ins x86memop:$src),
              !strconcat(OpcodeStr,"\t{$src, $dst|$dst, $src}"),
-             [(set RC:$dst, (Int (ld_frag addr:$src)))]>,
-           XOP, XOP9,  VEX_4V;
+             []>, XOP, XOP9, VEX_4V;
+}
 }
 
 multiclass tbm_binary_intr<bits<8> opc, string OpcodeStr,
-                           Format FormReg, Format FormMem,
-                           Intrinsic Int32, Intrinsic Int64> {
+                           Format FormReg, Format FormMem> {
   defm _32 : tbm_binary_rm<opc, FormReg, FormMem, GR32, OpcodeStr, i32mem,
-                           loadi32, Int32>;
+                           loadi32>;
   defm _64 : tbm_binary_rm<opc, FormReg, FormMem, GR64, OpcodeStr, i64mem,
-                           loadi64, Int64>, VEX_W;
+                           loadi64>, VEX_W;
 }
 
-defm BLCFILL : tbm_binary_intr<0x01, "blcfill", MRM1r, MRM1m,
-                               int_x86_tbm_blcfill_u32,
-                               int_x86_tbm_blcfill_u64>;
-defm BLCI    : tbm_binary_intr<0x02, "blci", MRM6r, MRM6m,
-                               int_x86_tbm_blci_u32,
-                               int_x86_tbm_blci_u64>;
-defm BLCIC   : tbm_binary_intr<0x01, "blcic", MRM5r, MRM5m,
-                               int_x86_tbm_blcic_u32,
-                               int_x86_tbm_blcic_u64>;
-defm BLCMSK  : tbm_binary_intr<0x02, "blcmsk", MRM1r, MRM1m,
-                               int_x86_tbm_blcmsk_u32,
-                               int_x86_tbm_blcmsk_u64>;
-defm BLCS    : tbm_binary_intr<0x01, "blcs", MRM3r, MRM3m,
-                               int_x86_tbm_blcs_u32,
-                               int_x86_tbm_blcs_u64>;
-defm BLSFILL : tbm_binary_intr<0x01, "blsfill", MRM2r, MRM2m,
-                               int_x86_tbm_blsfill_u32,
-                               int_x86_tbm_blsfill_u64>;
-defm BLSIC   : tbm_binary_intr<0x01, "blsic", MRM6r, MRM6m,
-                               int_x86_tbm_blsic_u32,
-                               int_x86_tbm_blsic_u64>;
-defm T1MSKC  : tbm_binary_intr<0x01, "t1mskc", MRM7r, MRM7m,
-                               int_x86_tbm_t1mskc_u32,
-                               int_x86_tbm_t1mskc_u64>;
-defm TZMSK   : tbm_binary_intr<0x01, "tzmsk", MRM4r, MRM4m,
-                               int_x86_tbm_tzmsk_u32,
-                               int_x86_tbm_tzmsk_u64>;
+defm BLCFILL : tbm_binary_intr<0x01, "blcfill", MRM1r, MRM1m>;
+defm BLCI    : tbm_binary_intr<0x02, "blci", MRM6r, MRM6m>;
+defm BLCIC   : tbm_binary_intr<0x01, "blcic", MRM5r, MRM5m>;
+defm BLCMSK  : tbm_binary_intr<0x02, "blcmsk", MRM1r, MRM1m>;
+defm BLCS    : tbm_binary_intr<0x01, "blcs", MRM3r, MRM3m>;
+defm BLSFILL : tbm_binary_intr<0x01, "blsfill", MRM2r, MRM2m>;
+defm BLSIC   : tbm_binary_intr<0x01, "blsic", MRM6r, MRM6m>;
+defm T1MSKC  : tbm_binary_intr<0x01, "t1mskc", MRM7r, MRM7m>;
+defm TZMSK   : tbm_binary_intr<0x01, "tzmsk", MRM4r, MRM4m>;
 } // HasTBM, EFLAGS
 
 //===----------------------------------------------------------------------===//
