@@ -1250,9 +1250,16 @@ void RuntimeDyldELF::processRelocationRef(unsigned SectionID,
 }
 
 void RuntimeDyldELF::updateGOTEntries(StringRef Name, uint64_t Addr) {
-  for (int i = 0, e = GOTEntries.size(); i != e; ++i) {
-    if (GOTEntries[i].SymbolName != 0 && GOTEntries[i].SymbolName == Name) {
-      GOTEntries[i].Offset = Addr;
+
+  SmallVectorImpl<std::pair<SID, GOTRelocations> >::iterator it;
+  SmallVectorImpl<std::pair<SID, GOTRelocations> >::iterator end = GOTs.end();
+
+  for (it = GOTs.begin(); it != end; ++it) {
+    GOTRelocations &GOTEntries = it->second;
+    for (int i = 0, e = GOTEntries.size(); i != e; ++i) {
+      if (GOTEntries[i].SymbolName != 0 && GOTEntries[i].SymbolName == Name) {
+        GOTEntries[i].Offset = Addr;
+      }
     }
   }
 }
@@ -1283,69 +1290,80 @@ size_t RuntimeDyldELF::getGOTEntrySize() {
 
 uint64_t RuntimeDyldELF::findGOTEntry(uint64_t LoadAddress,
                                       uint64_t Offset) {
-  assert(GOTSectionID != 0
-         && "Attempting to lookup GOT entry but the GOT was never allocated.");
-  if (GOTSectionID == 0) {
-    return 0;
-  }
 
-  size_t GOTEntrySize = getGOTEntrySize();
+  const size_t GOTEntrySize = getGOTEntrySize();
 
-  // Find the matching entry in our vector.
+  SmallVectorImpl<std::pair<SID, GOTRelocations> >::const_iterator it;
+  SmallVectorImpl<std::pair<SID, GOTRelocations> >::const_iterator end = GOTs.end();
+
   int GOTIndex = -1;
-  uint64_t SymbolOffset = 0;
-  for (int i = 0, e = GOTEntries.size(); i != e; ++i) {
-    if (GOTEntries[i].SymbolName == 0) {
-      if (getSectionLoadAddress(GOTEntries[i].SectionID) == LoadAddress &&
-          GOTEntries[i].Offset == Offset) {
-        GOTIndex = i;
-        SymbolOffset = GOTEntries[i].Offset;
-        break;
-      }
-    } else {
-      // GOT entries for external symbols use the addend as the address when
-      // the external symbol has been resolved.
-      if (GOTEntries[i].Offset == LoadAddress) {
-        GOTIndex = i;
-        // Don't use the Addend here.  The relocation handler will use it.
-        break;
+  for (it = GOTs.begin(); it != end; ++it) {
+    SID GOTSectionID = it->first;
+    const GOTRelocations &GOTEntries = it->second;
+
+    // Find the matching entry in our vector.
+    uint64_t SymbolOffset = 0;
+    for (int i = 0, e = GOTEntries.size(); i != e; ++i) {
+      if (GOTEntries[i].SymbolName == 0) {
+        if (getSectionLoadAddress(GOTEntries[i].SectionID) == LoadAddress &&
+            GOTEntries[i].Offset == Offset) {
+          GOTIndex = i;
+          SymbolOffset = GOTEntries[i].Offset;
+          break;
+        }
+      } else {
+        // GOT entries for external symbols use the addend as the address when
+        // the external symbol has been resolved.
+        if (GOTEntries[i].Offset == LoadAddress) {
+          GOTIndex = i;
+          // Don't use the Addend here.  The relocation handler will use it.
+          break;
+        }
       }
     }
+
+    if (GOTIndex != -1) {
+      if (GOTEntrySize == sizeof(uint64_t)) {
+        uint64_t *LocalGOTAddr = (uint64_t*)getSectionAddress(GOTSectionID);
+        // Fill in this entry with the address of the symbol being referenced.
+        LocalGOTAddr[GOTIndex] = LoadAddress + SymbolOffset;
+      } else {
+        uint32_t *LocalGOTAddr = (uint32_t*)getSectionAddress(GOTSectionID);
+        // Fill in this entry with the address of the symbol being referenced.
+        LocalGOTAddr[GOTIndex] = (uint32_t)(LoadAddress + SymbolOffset);
+      }
+
+      // Calculate the load address of this entry
+      return getSectionLoadAddress(GOTSectionID) + (GOTIndex * GOTEntrySize);
+    }
   }
+
   assert(GOTIndex != -1 && "Unable to find requested GOT entry.");
-  if (GOTIndex == -1)
-    return 0;
-
-  if (GOTEntrySize == sizeof(uint64_t)) {
-    uint64_t *LocalGOTAddr = (uint64_t*)getSectionAddress(GOTSectionID);
-    // Fill in this entry with the address of the symbol being referenced.
-    LocalGOTAddr[GOTIndex] = LoadAddress + SymbolOffset;
-  } else {
-    uint32_t *LocalGOTAddr = (uint32_t*)getSectionAddress(GOTSectionID);
-    // Fill in this entry with the address of the symbol being referenced.
-    LocalGOTAddr[GOTIndex] = (uint32_t)(LoadAddress + SymbolOffset);
-  }
-
-  // Calculate the load address of this entry
-  return getSectionLoadAddress(GOTSectionID) + (GOTIndex * GOTEntrySize);
+  return 0;
 }
 
 void RuntimeDyldELF::finalizeLoad() {
-  // Allocate the GOT if necessary
-  size_t numGOTEntries = GOTEntries.size();
-  if (numGOTEntries != 0) {
-    // Allocate memory for the section
-    unsigned SectionID = Sections.size();
-    size_t TotalSize = numGOTEntries * getGOTEntrySize();
-    uint8_t *Addr = MemMgr->allocateDataSection(
-      TotalSize, getGOTEntrySize(), SectionID, ".got", false);
-    if (!Addr)
-      report_fatal_error("Unable to allocate memory for GOT!");
-    Sections.push_back(SectionEntry(".got", Addr, TotalSize, 0));
-    // For now, initialize all GOT entries to zero.  We'll fill them in as
-    // needed when GOT-based relocations are applied.
-    memset(Addr, 0, TotalSize);
-    GOTSectionID = SectionID;
+  if (MemMgr) {
+    // Allocate the GOT if necessary
+    size_t numGOTEntries = GOTEntries.size();
+    if (numGOTEntries != 0) {
+      // Allocate memory for the section
+      unsigned SectionID = Sections.size();
+      size_t TotalSize = numGOTEntries * getGOTEntrySize();
+      uint8_t *Addr = MemMgr->allocateDataSection(TotalSize, getGOTEntrySize(),
+                                                  SectionID, ".got", false);
+      if (!Addr)
+        report_fatal_error("Unable to allocate memory for GOT!");
+
+      GOTs.push_back(std::make_pair(SectionID, GOTEntries));
+      Sections.push_back(SectionEntry(".got", Addr, TotalSize, 0));
+      // For now, initialize all GOT entries to zero.  We'll fill them in as
+      // needed when GOT-based relocations are applied.
+      memset(Addr, 0, TotalSize);
+    }
+  }
+  else {
+    report_fatal_error("Unable to allocate memory for GOT!");
   }
 }
 

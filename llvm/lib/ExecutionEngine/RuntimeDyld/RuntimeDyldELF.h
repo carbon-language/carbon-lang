@@ -15,6 +15,7 @@
 #define LLVM_RUNTIME_DYLD_ELF_H
 
 #include "RuntimeDyldImpl.h"
+#include "llvm/ADT/DenseMap.h"
 
 using namespace llvm;
 
@@ -91,12 +92,15 @@ class RuntimeDyldELF : public RuntimeDyldImpl {
 
   virtual void updateGOTEntries(StringRef Name, uint64_t Addr);
 
-  SmallVector<RelocationValueRef, 2>  GOTEntries;
-  unsigned GOTSectionID;
+  // Relocation entries for symbols whose position-independant offset is
+  // updated in a global offset table.
+  typedef unsigned SID; // Type for SectionIDs
+  typedef SmallVector<RelocationValueRef, 2> GOTRelocations;
+  GOTRelocations GOTEntries; // List of entries requiring finalization.
+  SmallVector<std::pair<SID, GOTRelocations>, 8> GOTs; // Allocated tables.
 
 public:
-  RuntimeDyldELF(RTDyldMemoryManager *mm) : RuntimeDyldImpl(mm),
-                                            GOTSectionID(0)
+  RuntimeDyldELF(RTDyldMemoryManager *mm) : RuntimeDyldImpl(mm)
                                           {}
 
   virtual void resolveRelocation(const RelocationEntry &RE, uint64_t Value);
