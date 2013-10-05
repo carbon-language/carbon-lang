@@ -22,6 +22,8 @@
 class ReplacementHandling {
 public:
 
+  ReplacementHandling() : DoFormat(false) {}
+
   /// \brief Finds the path to the executable 'clang-apply-replacements'.
   ///
   /// The executable is searched for on the PATH. If not found, looks in the
