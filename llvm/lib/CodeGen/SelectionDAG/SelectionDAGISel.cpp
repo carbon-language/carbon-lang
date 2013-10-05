@@ -2101,6 +2101,18 @@ CheckSame(const unsigned char *MatcherTable, unsigned &MatcherIndex,
   return N == RecordedNodes[RecNo].first;
 }
 
+/// CheckChildSame - Implements OP_CheckChildXSame.
+LLVM_ATTRIBUTE_ALWAYS_INLINE static bool
+CheckChildSame(const unsigned char *MatcherTable, unsigned &MatcherIndex,
+             SDValue N,
+             const SmallVectorImpl<std::pair<SDValue, SDNode*> > &RecordedNodes,
+             unsigned ChildNo) {
+  if (ChildNo >= N.getNumOperands())
+    return false;  // Match fails if out of range child #.
+  return ::CheckSame(MatcherTable, MatcherIndex, N.getOperand(ChildNo),
+                     RecordedNodes);
+}
+
 /// CheckPatternPredicate - Implements OP_CheckPatternPredicate.
 LLVM_ATTRIBUTE_ALWAYS_INLINE static bool
 CheckPatternPredicate(const unsigned char *MatcherTable, unsigned &MatcherIndex,
@@ -2214,6 +2226,13 @@ static unsigned IsPredicateKnownToFail(const unsigned char *Table,
     return Index-1;  // Could not evaluate this predicate.
   case SelectionDAGISel::OPC_CheckSame:
     Result = !::CheckSame(Table, Index, N, RecordedNodes);
+    return Index;
+  case SelectionDAGISel::OPC_CheckChild0Same:
+  case SelectionDAGISel::OPC_CheckChild1Same:
+  case SelectionDAGISel::OPC_CheckChild2Same:
+  case SelectionDAGISel::OPC_CheckChild3Same:
+    Result = !::CheckChildSame(Table, Index, N, RecordedNodes,
+                        Table[Index-1] - SelectionDAGISel::OPC_CheckChild0Same);
     return Index;
   case SelectionDAGISel::OPC_CheckPatternPredicate:
     Result = !::CheckPatternPredicate(Table, Index, SDISel);
@@ -2512,6 +2531,14 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
     case OPC_CheckSame:
       if (!::CheckSame(MatcherTable, MatcherIndex, N, RecordedNodes)) break;
       continue;
+
+    case OPC_CheckChild0Same: case OPC_CheckChild1Same:
+    case OPC_CheckChild2Same: case OPC_CheckChild3Same:
+      if (!::CheckChildSame(MatcherTable, MatcherIndex, N, RecordedNodes,
+                            Opcode-OPC_CheckChild0Same))
+        break;
+      continue;
+
     case OPC_CheckPatternPredicate:
       if (!::CheckPatternPredicate(MatcherTable, MatcherIndex, *this)) break;
       continue;

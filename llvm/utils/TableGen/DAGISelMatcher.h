@@ -55,6 +55,7 @@ public:
 
     // Predicate checking.
     CheckSame,            // Fail if not same as prev match.
+    CheckChildSame,       // Fail if child not same as prev match.
     CheckPatternPredicate,
     CheckPredicate,       // Fail if node predicate fails.
     CheckOpcode,          // Fail if not opcode.
@@ -122,6 +123,7 @@ public:
     switch (getKind()) {
     default: return false;
     case CheckSame:
+    case CheckChildSame:
     case CheckPatternPredicate:
     case CheckPredicate:
     case CheckOpcode:
@@ -390,6 +392,34 @@ private:
     return cast<CheckSameMatcher>(M)->getMatchNumber() == getMatchNumber();
   }
   virtual unsigned getHashImpl() const { return getMatchNumber(); }
+};
+
+/// CheckChildSameMatcher - This checks to see if child node is exactly the same
+/// node as the specified match that was recorded with 'Record'.  This is used
+/// when patterns have the same name in them, like '(mul GPR:$in, GPR:$in)'.
+class CheckChildSameMatcher : public Matcher {
+  unsigned ChildNo;
+  unsigned MatchNumber;
+public:
+  CheckChildSameMatcher(unsigned childno, unsigned matchnumber)
+    : Matcher(CheckChildSame), ChildNo(childno), MatchNumber(matchnumber) {}
+
+  unsigned getChildNo() const { return ChildNo; }
+  unsigned getMatchNumber() const { return MatchNumber; }
+
+  static inline bool classof(const Matcher *N) {
+    return N->getKind() == CheckChildSame;
+  }
+
+  virtual bool isSafeToReorderWithPatternPredicate() const { return true; }
+
+private:
+  virtual void printImpl(raw_ostream &OS, unsigned indent) const;
+  virtual bool isEqualImpl(const Matcher *M) const {
+    return cast<CheckChildSameMatcher>(M)->ChildNo == ChildNo &&
+           cast<CheckChildSameMatcher>(M)->MatchNumber == MatchNumber;
+  }
+  virtual unsigned getHashImpl() const { return (MatchNumber << 2) | ChildNo; }
 };
 
 /// CheckPatternPredicateMatcher - This checks the target-specific predicate
