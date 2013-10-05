@@ -187,8 +187,8 @@ TEST_F(IRBuilderTest, RAIIHelpersTest) {
   EXPECT_FALSE(Builder.getFastMathFlags().allowReciprocal());
   MDBuilder MDB(M->getContext());
 
-  MDNode *FPMathA = MDB.createFPMath(0.01);
-  MDNode *FPMathB = MDB.createFPMath(0.1);
+  MDNode *FPMathA = MDB.createFPMath(0.01f);
+  MDNode *FPMathB = MDB.createFPMath(0.1f);
 
   Builder.SetDefaultFPMathTag(FPMathA);
 
