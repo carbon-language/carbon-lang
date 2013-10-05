@@ -2210,7 +2210,7 @@ static StringRef getMultilibDir(const llvm::Triple &Triple,
 Linux::Linux(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
   : Generic_ELF(D, Triple, Args) {
   llvm::Triple::ArchType Arch = Triple.getArch();
-  std::string SysRoot = computeSysRoot(Args);
+  std::string SysRoot = computeSysRoot();
 
   // Cross-compiling binutils and GCC installations (vanilla and openSUSE at
   // least) put various tools in a triple-prefixed directory off of the parent
@@ -2390,7 +2390,7 @@ void Linux::addClangTargetOptions(const ArgList &DriverArgs,
     CC1Args.push_back("-fuse-init-array");
 }
 
-std::string Linux::computeSysRoot(const ArgList &Args) const {
+std::string Linux::computeSysRoot() const {
   if (!getDriver().SysRoot.empty())
     return getDriver().SysRoot;
 
@@ -2408,7 +2408,7 @@ std::string Linux::computeSysRoot(const ArgList &Args) const {
 void Linux::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
                                       ArgStringList &CC1Args) const {
   const Driver &D = getDriver();
-  std::string SysRoot = computeSysRoot(DriverArgs);
+  std::string SysRoot = computeSysRoot();
 
   if (DriverArgs.hasArg(options::OPT_nostdinc))
     return;

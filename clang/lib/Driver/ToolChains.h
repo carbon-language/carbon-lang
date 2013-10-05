@@ -591,7 +591,7 @@ private:
                                        const llvm::opt::ArgList &DriverArgs,
                                        llvm::opt::ArgStringList &CC1Args);
 
-  std::string computeSysRoot(const llvm::opt::ArgList &Args) const;
+  std::string computeSysRoot() const;
 };
 
 class LLVM_LIBRARY_VISIBILITY Hexagon_TC : public Linux {
