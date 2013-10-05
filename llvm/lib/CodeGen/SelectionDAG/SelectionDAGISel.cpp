@@ -408,9 +408,13 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
       EntryMBB->insert(EntryMBB->begin(), MI);
     else {
       MachineInstr *Def = RegInfo->getVRegDef(Reg);
-      MachineBasicBlock::iterator InsertPos = Def;
-      // FIXME: VR def may not be in entry block.
-      Def->getParent()->insert(llvm::next(InsertPos), MI);
+      if (Def) {
+        MachineBasicBlock::iterator InsertPos = Def;
+        // FIXME: VR def may not be in entry block.
+        Def->getParent()->insert(llvm::next(InsertPos), MI);
+      } else
+        DEBUG(dbgs() << "Dropping debug info for dead vreg"
+              << TargetRegisterInfo::virtReg2Index(Reg) << "\n");
     }
 
     // If Reg is live-in then update debug info to track its copy in a vreg.
