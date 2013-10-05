@@ -941,22 +941,22 @@ FormatManager::LoadObjCFormatters()
     AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSArraySummaryProvider, "NSArray summary provider", ConstString("__NSArrayI"), appkit_flags);
     AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSArraySummaryProvider, "NSArray summary provider", ConstString("__NSArrayM"), appkit_flags);
     AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSArraySummaryProvider, "NSArray summary provider", ConstString("__NSCFArray"), appkit_flags);
-    AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSArraySummaryProvider, "NSArray summary provider", ConstString("CFArrayRef"), appkit_flags);
-    AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSArraySummaryProvider, "NSArray summary provider", ConstString("CFMutableArrayRef"), appkit_flags);
+    AddCXXSummary(corefoundation_category_sp, lldb_private::formatters::NSArraySummaryProvider, "NSArray summary provider", ConstString("CFArrayRef"), appkit_flags);
+    AddCXXSummary(corefoundation_category_sp, lldb_private::formatters::NSArraySummaryProvider, "NSArray summary provider", ConstString("CFMutableArrayRef"), appkit_flags);
 
     AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSDictionarySummaryProvider<false>, "NSDictionary summary provider", ConstString("NSDictionary"), appkit_flags);
     AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSDictionarySummaryProvider<false>, "NSDictionary summary provider", ConstString("NSMutableDictionary"), appkit_flags);
     AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSDictionarySummaryProvider<false>, "NSDictionary summary provider", ConstString("__NSCFDictionary"), appkit_flags);
     AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSDictionarySummaryProvider<false>, "NSDictionary summary provider", ConstString("__NSDictionaryI"), appkit_flags);
     AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSDictionarySummaryProvider<false>, "NSDictionary summary provider", ConstString("__NSDictionaryM"), appkit_flags);
-    AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSDictionarySummaryProvider<true>, "NSDictionary summary provider", ConstString("CFDictionaryRef"), appkit_flags);
-    AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSDictionarySummaryProvider<true>, "NSDictionary summary provider", ConstString("CFMutableDictionaryRef"), appkit_flags);
+    AddCXXSummary(corefoundation_category_sp, lldb_private::formatters::NSDictionarySummaryProvider<true>, "NSDictionary summary provider", ConstString("CFDictionaryRef"), appkit_flags);
+    AddCXXSummary(corefoundation_category_sp, lldb_private::formatters::NSDictionarySummaryProvider<true>, "NSDictionary summary provider", ConstString("CFMutableDictionaryRef"), appkit_flags);
     
     AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSSetSummaryProvider<false>, "NSSet summary", ConstString("NSSet"), appkit_flags);
     AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSSetSummaryProvider<false>, "NSMutableSet summary", ConstString("NSMutableSet"), appkit_flags);
-    AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSSetSummaryProvider<true>, "CFSetRef summary", ConstString("CFSetRef"), appkit_flags);
-    AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSSetSummaryProvider<true>, "CFMutableSetRef summary", ConstString("CFMutableSetRef"), appkit_flags);
-    AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSSetSummaryProvider<false>, "__NSCFSet summary", ConstString("__NSCFSet"), appkit_flags);
+    AddCXXSummary(corefoundation_category_sp, lldb_private::formatters::NSSetSummaryProvider<true>, "CFSetRef summary", ConstString("CFSetRef"), appkit_flags);
+    AddCXXSummary(corefoundation_category_sp, lldb_private::formatters::NSSetSummaryProvider<true>, "CFMutableSetRef summary", ConstString("CFMutableSetRef"), appkit_flags);
+    AddCXXSummary(corefoundation_category_sp, lldb_private::formatters::NSSetSummaryProvider<false>, "__NSCFSet summary", ConstString("__NSCFSet"), appkit_flags);
     AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSSetSummaryProvider<false>, "__NSSetI summary", ConstString("__NSSetI"), appkit_flags);
     AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSSetSummaryProvider<false>, "__NSSetM summary", ConstString("__NSSetM"), appkit_flags);
     AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSSetSummaryProvider<false>, "NSCountedSet summary", ConstString("NSCountedSet"), appkit_flags);
@@ -973,16 +973,16 @@ FormatManager::LoadObjCFormatters()
     AddCXXSynthetic(appkit_category_sp, lldb_private::formatters::NSArraySyntheticFrontEndCreator, "NSArray synthetic children", ConstString("__NSArrayI"), ScriptedSyntheticChildren::Flags());
     AddCXXSynthetic(appkit_category_sp, lldb_private::formatters::NSArraySyntheticFrontEndCreator, "NSArray synthetic children", ConstString("NSArray"), ScriptedSyntheticChildren::Flags());
     AddCXXSynthetic(appkit_category_sp, lldb_private::formatters::NSArraySyntheticFrontEndCreator, "NSArray synthetic children", ConstString("NSMutableArray"), ScriptedSyntheticChildren::Flags());
-    AddCXXSynthetic(appkit_category_sp, lldb_private::formatters::NSArraySyntheticFrontEndCreator, "NSArray synthetic children", ConstString("__NSCFArray"), ScriptedSyntheticChildren::Flags());
-    AddCXXSynthetic(appkit_category_sp, lldb_private::formatters::NSArraySyntheticFrontEndCreator, "NSArray synthetic children", ConstString("CFMutableArrayRef"), ScriptedSyntheticChildren::Flags());
-    AddCXXSynthetic(appkit_category_sp, lldb_private::formatters::NSArraySyntheticFrontEndCreator, "NSArray synthetic children", ConstString("CFArrayRef"), ScriptedSyntheticChildren::Flags());
+    AddCXXSynthetic(corefoundation_category_sp, lldb_private::formatters::NSArraySyntheticFrontEndCreator, "NSArray synthetic children", ConstString("__NSCFArray"), ScriptedSyntheticChildren::Flags());
+    AddCXXSynthetic(corefoundation_category_sp, lldb_private::formatters::NSArraySyntheticFrontEndCreator, "NSArray synthetic children", ConstString("CFMutableArrayRef"), ScriptedSyntheticChildren::Flags());
+    AddCXXSynthetic(corefoundation_category_sp, lldb_private::formatters::NSArraySyntheticFrontEndCreator, "NSArray synthetic children", ConstString("CFArrayRef"), ScriptedSyntheticChildren::Flags());
 
     AddCXXSynthetic(appkit_category_sp, lldb_private::formatters::NSDictionarySyntheticFrontEndCreator, "NSDictionary synthetic children", ConstString("__NSDictionaryM"), ScriptedSyntheticChildren::Flags());
     AddCXXSynthetic(appkit_category_sp, lldb_private::formatters::NSDictionarySyntheticFrontEndCreator, "NSDictionary synthetic children", ConstString("__NSDictionaryI"), ScriptedSyntheticChildren::Flags());
     AddCXXSynthetic(appkit_category_sp, lldb_private::formatters::NSDictionarySyntheticFrontEndCreator, "NSDictionary synthetic children", ConstString("NSDictionary"), ScriptedSyntheticChildren::Flags());
     AddCXXSynthetic(appkit_category_sp, lldb_private::formatters::NSDictionarySyntheticFrontEndCreator, "NSDictionary synthetic children", ConstString("NSMutableDictionary"), ScriptedSyntheticChildren::Flags());
-    AddCXXSynthetic(appkit_category_sp, lldb_private::formatters::NSDictionarySyntheticFrontEndCreator, "NSDictionary synthetic children", ConstString("CFDictionaryRef"), ScriptedSyntheticChildren::Flags());
-    AddCXXSynthetic(appkit_category_sp, lldb_private::formatters::NSDictionarySyntheticFrontEndCreator, "NSDictionary synthetic children", ConstString("CFMutableDictionaryRef"), ScriptedSyntheticChildren::Flags());
+    AddCXXSynthetic(corefoundation_category_sp, lldb_private::formatters::NSDictionarySyntheticFrontEndCreator, "NSDictionary synthetic children", ConstString("CFDictionaryRef"), ScriptedSyntheticChildren::Flags());
+    AddCXXSynthetic(corefoundation_category_sp, lldb_private::formatters::NSDictionarySyntheticFrontEndCreator, "NSDictionary synthetic children", ConstString("CFMutableDictionaryRef"), ScriptedSyntheticChildren::Flags());
 
     AddCXXSynthetic(appkit_category_sp, lldb_private::formatters::NSSetSyntheticFrontEndCreator, "NSSet synthetic children", ConstString("NSSet"), ScriptedSyntheticChildren::Flags());
     AddCXXSynthetic(appkit_category_sp, lldb_private::formatters::NSSetSyntheticFrontEndCreator, "__NSSetI synthetic children", ConstString("__NSSetI"), ScriptedSyntheticChildren::Flags());
@@ -992,22 +992,22 @@ FormatManager::LoadObjCFormatters()
     AddCXXSynthetic(appkit_category_sp, lldb_private::formatters::NSSetSyntheticFrontEndCreator, "__NSOrderedSetI synthetic children", ConstString("__NSOrderedSetI"), ScriptedSyntheticChildren::Flags());
     AddCXXSynthetic(appkit_category_sp, lldb_private::formatters::NSSetSyntheticFrontEndCreator, "__NSOrderedSetM synthetic children", ConstString("__NSOrderedSetM"), ScriptedSyntheticChildren::Flags());
     
-    AddCXXSummary(appkit_category_sp,lldb_private::formatters::CFBagSummaryProvider, "CFBag summary provider", ConstString("CFBagRef"), appkit_flags);
-    AddCXXSummary(appkit_category_sp,lldb_private::formatters::CFBagSummaryProvider, "CFBag summary provider", ConstString("__CFBag"), appkit_flags);
-    AddCXXSummary(appkit_category_sp,lldb_private::formatters::CFBagSummaryProvider, "CFBag summary provider", ConstString("const struct __CFBag"), appkit_flags);
-    AddCXXSummary(appkit_category_sp,lldb_private::formatters::CFBagSummaryProvider, "CFBag summary provider", ConstString("CFMutableBagRef"), appkit_flags);
+    AddCXXSummary(corefoundation_category_sp,lldb_private::formatters::CFBagSummaryProvider, "CFBag summary provider", ConstString("CFBagRef"), appkit_flags);
+    AddCXXSummary(corefoundation_category_sp,lldb_private::formatters::CFBagSummaryProvider, "CFBag summary provider", ConstString("__CFBag"), appkit_flags);
+    AddCXXSummary(corefoundation_category_sp,lldb_private::formatters::CFBagSummaryProvider, "CFBag summary provider", ConstString("const struct __CFBag"), appkit_flags);
+    AddCXXSummary(corefoundation_category_sp,lldb_private::formatters::CFBagSummaryProvider, "CFBag summary provider", ConstString("CFMutableBagRef"), appkit_flags);
     
-    AddCXXSummary(appkit_category_sp,lldb_private::formatters::CFBinaryHeapSummaryProvider, "CFBinaryHeap summary provider", ConstString("CFBinaryHeapRef"), appkit_flags);
-    AddCXXSummary(appkit_category_sp,lldb_private::formatters::CFBinaryHeapSummaryProvider, "CFBinaryHeap summary provider", ConstString("__CFBinaryHeap"), appkit_flags);
+    AddCXXSummary(corefoundation_category_sp,lldb_private::formatters::CFBinaryHeapSummaryProvider, "CFBinaryHeap summary provider", ConstString("CFBinaryHeapRef"), appkit_flags);
+    AddCXXSummary(corefoundation_category_sp,lldb_private::formatters::CFBinaryHeapSummaryProvider, "CFBinaryHeap summary provider", ConstString("__CFBinaryHeap"), appkit_flags);
 
     AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSStringSummaryProvider, "NSString summary provider", ConstString("NSString"), appkit_flags);
-    AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSStringSummaryProvider, "NSString summary provider", ConstString("CFStringRef"), appkit_flags);
-    AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSStringSummaryProvider, "NSString summary provider", ConstString("CFMutableStringRef"), appkit_flags);
+    AddCXXSummary(corefoundation_category_sp, lldb_private::formatters::NSStringSummaryProvider, "NSString summary provider", ConstString("CFStringRef"), appkit_flags);
+    AddCXXSummary(corefoundation_category_sp, lldb_private::formatters::NSStringSummaryProvider, "NSString summary provider", ConstString("CFMutableStringRef"), appkit_flags);
     AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSStringSummaryProvider, "NSString summary provider", ConstString("NSMutableString"), appkit_flags);
-    AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSStringSummaryProvider, "NSString summary provider", ConstString("__NSCFConstantString"), appkit_flags);
-    AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSStringSummaryProvider, "NSString summary provider", ConstString("__NSCFString"), appkit_flags);
-    AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSStringSummaryProvider, "NSString summary provider", ConstString("NSCFConstantString"), appkit_flags);
-    AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSStringSummaryProvider, "NSString summary provider", ConstString("NSCFString"), appkit_flags);
+    AddCXXSummary(corefoundation_category_sp, lldb_private::formatters::NSStringSummaryProvider, "NSString summary provider", ConstString("__NSCFConstantString"), appkit_flags);
+    AddCXXSummary(corefoundation_category_sp, lldb_private::formatters::NSStringSummaryProvider, "NSString summary provider", ConstString("__NSCFString"), appkit_flags);
+    AddCXXSummary(corefoundation_category_sp, lldb_private::formatters::NSStringSummaryProvider, "NSString summary provider", ConstString("NSCFConstantString"), appkit_flags);
+    AddCXXSummary(corefoundation_category_sp, lldb_private::formatters::NSStringSummaryProvider, "NSString summary provider", ConstString("NSCFString"), appkit_flags);
     AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSStringSummaryProvider, "NSString summary provider", ConstString("NSPathStore2"), appkit_flags);
     
     AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSAttributedStringSummaryProvider, "NSAttributedString summary provider", ConstString("NSAttributedString"), appkit_flags);
@@ -1019,9 +1019,9 @@ FormatManager::LoadObjCFormatters()
     AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSDataSummaryProvider<false>, "NSData summary provider", ConstString("NSData"), appkit_flags);
     AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSDataSummaryProvider<false>, "NSData summary provider", ConstString("NSConcreteData"), appkit_flags);
     AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSDataSummaryProvider<false>, "NSData summary provider", ConstString("NSConcreteMutableData"), appkit_flags);
-    AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSDataSummaryProvider<false>, "NSData summary provider", ConstString("__NSCFData"), appkit_flags);
-    AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSDataSummaryProvider<true>, "NSData summary provider", ConstString("CFDataRef"), appkit_flags);
-    AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSDataSummaryProvider<true>, "NSData summary provider", ConstString("CFMutableDataRef"), appkit_flags);
+    AddCXXSummary(corefoundation_category_sp, lldb_private::formatters::NSDataSummaryProvider<false>, "NSData summary provider", ConstString("__NSCFData"), appkit_flags);
+    AddCXXSummary(corefoundation_category_sp, lldb_private::formatters::NSDataSummaryProvider<true>, "NSData summary provider", ConstString("CFDataRef"), appkit_flags);
+    AddCXXSummary(corefoundation_category_sp, lldb_private::formatters::NSDataSummaryProvider<true>, "NSData summary provider", ConstString("CFMutableDataRef"), appkit_flags);
 
     AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSMachPortSummaryProvider, "NSMachPort summary provider", ConstString("NSMachPort"), appkit_flags);
 
@@ -1032,10 +1032,10 @@ FormatManager::LoadObjCFormatters()
     AddStringSummary(appkit_category_sp,"name:${var.name%S} reason:${var.reason%S}",ConstString("NSException"),appkit_flags);
 
     AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSNumberSummaryProvider, "NSNumber summary provider", ConstString("NSNumber"), appkit_flags);
-    AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSNumberSummaryProvider, "NSNumber summary provider", ConstString("__NSCFBoolean"), appkit_flags);
-    AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSNumberSummaryProvider, "NSNumber summary provider", ConstString("__NSCFNumber"), appkit_flags);
-    AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSNumberSummaryProvider, "NSNumber summary provider", ConstString("NSCFBoolean"), appkit_flags);
-    AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSNumberSummaryProvider, "NSNumber summary provider", ConstString("NSCFNumber"), appkit_flags);
+    AddCXXSummary(corefoundation_category_sp, lldb_private::formatters::NSNumberSummaryProvider, "NSNumber summary provider", ConstString("__NSCFBoolean"), appkit_flags);
+    AddCXXSummary(corefoundation_category_sp, lldb_private::formatters::NSNumberSummaryProvider, "NSNumber summary provider", ConstString("__NSCFNumber"), appkit_flags);
+    AddCXXSummary(corefoundation_category_sp, lldb_private::formatters::NSNumberSummaryProvider, "NSNumber summary provider", ConstString("NSCFBoolean"), appkit_flags);
+    AddCXXSummary(corefoundation_category_sp, lldb_private::formatters::NSNumberSummaryProvider, "NSNumber summary provider", ConstString("NSCFNumber"), appkit_flags);
     
     AddCXXSummary(appkit_category_sp, lldb_private::formatters::RuntimeSpecificDescriptionSummaryProvider, "NSDecimalNumber summary provider", ConstString("NSDecimalNumber"), appkit_flags);
     AddCXXSummary(appkit_category_sp, lldb_private::formatters::RuntimeSpecificDescriptionSummaryProvider, "NSHost summary provider", ConstString("NSHost"), appkit_flags);
@@ -1043,7 +1043,7 @@ FormatManager::LoadObjCFormatters()
     AddCXXSummary(appkit_category_sp, lldb_private::formatters::RuntimeSpecificDescriptionSummaryProvider, "NSValue summary provider", ConstString("NSValue"), appkit_flags);
     
     AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSURLSummaryProvider, "NSURL summary provider", ConstString("NSURL"), appkit_flags);
-    AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSURLSummaryProvider, "NSURL summary provider", ConstString("CFURLRef"), appkit_flags);
+    AddCXXSummary(corefoundation_category_sp, lldb_private::formatters::NSURLSummaryProvider, "NSURL summary provider", ConstString("CFURLRef"), appkit_flags);
     
     AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSDateSummaryProvider, "NSDate summary provider", ConstString("NSDate"), appkit_flags);
     AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSDateSummaryProvider, "NSDate summary provider", ConstString("__NSDate"), appkit_flags);
@@ -1057,7 +1057,7 @@ FormatManager::LoadObjCFormatters()
     // CFAbsoluteTime is actually a double rather than a pointer to an object
     // we do not care about the numeric value, since it is probably meaningless to users
     appkit_flags.SetDontShowValue(true);
-    AddCXXSummary(appkit_category_sp, lldb_private::formatters::CFAbsoluteTimeSummaryProvider, "CFAbsoluteTime summary provider", ConstString("CFAbsoluteTime"), appkit_flags);
+    AddCXXSummary(corefoundation_category_sp, lldb_private::formatters::CFAbsoluteTimeSummaryProvider, "CFAbsoluteTime summary provider", ConstString("CFAbsoluteTime"), appkit_flags);
     appkit_flags.SetDontShowValue(false);
     
     AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSIndexSetSummaryProvider, "NSIndexSet summary provider", ConstString("NSIndexSet"), appkit_flags);
@@ -1068,10 +1068,10 @@ FormatManager::LoadObjCFormatters()
                      ConstString("CFGregorianDate"),
                      appkit_flags);
     
-    AddCXXSummary(appkit_category_sp, lldb_private::formatters::CFBitVectorSummaryProvider, "CFBitVector summary provider", ConstString("CFBitVectorRef"), appkit_flags);
-    AddCXXSummary(appkit_category_sp, lldb_private::formatters::CFBitVectorSummaryProvider, "CFBitVector summary provider", ConstString("CFMutableBitVectorRef"), appkit_flags);
-    AddCXXSummary(appkit_category_sp, lldb_private::formatters::CFBitVectorSummaryProvider, "CFBitVector summary provider", ConstString("__CFBitVector"), appkit_flags);
-    AddCXXSummary(appkit_category_sp, lldb_private::formatters::CFBitVectorSummaryProvider, "CFBitVector summary provider", ConstString("__CFMutableBitVector"), appkit_flags);
+    AddCXXSummary(corefoundation_category_sp, lldb_private::formatters::CFBitVectorSummaryProvider, "CFBitVector summary provider", ConstString("CFBitVectorRef"), appkit_flags);
+    AddCXXSummary(corefoundation_category_sp, lldb_private::formatters::CFBitVectorSummaryProvider, "CFBitVector summary provider", ConstString("CFMutableBitVectorRef"), appkit_flags);
+    AddCXXSummary(corefoundation_category_sp, lldb_private::formatters::CFBitVectorSummaryProvider, "CFBitVector summary provider", ConstString("__CFBitVector"), appkit_flags);
+    AddCXXSummary(corefoundation_category_sp, lldb_private::formatters::CFBitVectorSummaryProvider, "CFBitVector summary provider", ConstString("__CFMutableBitVector"), appkit_flags);
 #endif // LLDB_DISABLE_PYTHON
     
     TypeCategoryImpl::SharedPointer vectors_category_sp = GetCategory(m_vectortypes_category_name);
