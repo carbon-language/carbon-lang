@@ -34,142 +34,124 @@
 
 #define __bextri_u32(a, b) (__builtin_ia32_bextri_u32((a), (b)))
 
-#ifdef __x86_64__
-#define __bextri_u64(a, b) (__builtin_ia32_bextri_u64((a), (int)(b)))
-#endif
-
 static __inline__ unsigned int __attribute__((__always_inline__, __nodebug__))
 __blcfill_u32(unsigned int a)
 {
-  return __builtin_ia32_blcfill_u32(a);
+  return a & (a + 1);
 }
-
-#ifdef __x86_64__
-static __inline__ unsigned long long __attribute__((__always_inline__,
-                                                    __nodebug__))
-__blcfill_u64(unsigned long long a)
-{
-  return __builtin_ia32_blcfill_u64(a);
-}
-#endif
 
 static __inline__ unsigned int __attribute__((__always_inline__, __nodebug__))
 __blci_u32(unsigned int a)
 {
-  return __builtin_ia32_blci_u32(a);
+  return a | ~(a + 1);
 }
-
-#ifdef __x86_64__
-static __inline__ unsigned long long __attribute__((__always_inline__,
-                                                    __nodebug__))
-__blci_u64(unsigned long long a)
-{
-  return __builtin_ia32_blci_u64(a);
-}
-#endif
 
 static __inline__ unsigned int __attribute__((__always_inline__, __nodebug__))
 __blcic_u32(unsigned int a)
 {
-  return __builtin_ia32_blcic_u32(a);
+  return ~a & (a + 1);
 }
-
-#ifdef __x86_64__
-static __inline__ unsigned long long __attribute__((__always_inline__,
-                                                    __nodebug__))
-__blcic_u64(unsigned long long a)
-{
-  return __builtin_ia32_blcic_u64(a);
-}
-#endif
 
 static __inline__ unsigned int __attribute__((__always_inline__, __nodebug__))
 __blcmsk_u32(unsigned int a)
 {
-  return __builtin_ia32_blcmsk_u32(a);
+  return a ^ (a + 1);
 }
-
-#ifdef __x86_64__
-static __inline__ unsigned long long __attribute__((__always_inline__,
-                                                    __nodebug__))
-__blcmsk_u64(unsigned long long a)
-{
-  return __builtin_ia32_blcmsk_u64(a);
-}
-#endif
 
 static __inline__ unsigned int __attribute__((__always_inline__, __nodebug__))
 __blcs_u32(unsigned int a)
 {
-  return __builtin_ia32_blcs_u32(a);
+  return a | (a + 1);
 }
-
-#ifdef __x86_64__
-static __inline__ unsigned long long __attribute__((__always_inline__,
-                                                    __nodebug__))
-__blcs_u64(unsigned long long a)
-{
-  return __builtin_ia32_blcs_u64(a);
-}
-#endif
 
 static __inline__ unsigned int __attribute__((__always_inline__, __nodebug__))
 __blsfill_u32(unsigned int a)
 {
-  return __builtin_ia32_blsfill_u32(a);
+  return a | (a - 1);
 }
-
-#ifdef __x86_64__
-static __inline__ unsigned long long __attribute__((__always_inline__,
-                                                    __nodebug__))
-__blsfill_u64(unsigned long long a)
-{
-  return __builtin_ia32_blsfill_u64(a);
-}
-#endif
 
 static __inline__ unsigned int __attribute__((__always_inline__, __nodebug__))
 __blsic_u32(unsigned int a)
 {
-  return __builtin_ia32_blsic_u32(a);
+  return ~a | (a - 1);
 }
-
-#ifdef __x86_64__
-static __inline__ unsigned long long __attribute__((__always_inline__,
-                                                    __nodebug__))
-__blsic_u64(unsigned long long a)
-{
-  return __builtin_ia32_blsic_u64(a);
-}
-#endif
 
 static __inline__ unsigned int __attribute__((__always_inline__, __nodebug__))
 __t1mskc_u32(unsigned int a)
 {
-  return __builtin_ia32_t1mskc_u32(a);
+  return ~a | (a + 1);
 }
-
-#ifdef __x86_64__
-static __inline__ unsigned long long __attribute__((__always_inline__,
-                                                    __nodebug__))
-__t1mskc_u64(unsigned long long a)
-{
-  return __builtin_ia32_t1mskc_u64(a);
-}
-#endif
 
 static __inline__ unsigned int __attribute__((__always_inline__, __nodebug__))
 __tzmsk_u32(unsigned int a)
 {
-  return __builtin_ia32_tzmsk_u32(a);
+  return ~a & (a - 1);
 }
 
 #ifdef __x86_64__
+#define __bextri_u64(a, b) (__builtin_ia32_bextri_u64((a), (int)(b)))
+
+static __inline__ unsigned long long __attribute__((__always_inline__,
+                                                    __nodebug__))
+__blcfill_u64(unsigned long long a)
+{
+  return a & (a + 1);
+}
+
+static __inline__ unsigned long long __attribute__((__always_inline__,
+                                                    __nodebug__))
+__blci_u64(unsigned long long a)
+{
+  return a | ~(a + 1);
+}
+
+static __inline__ unsigned long long __attribute__((__always_inline__,
+                                                    __nodebug__))
+__blcic_u64(unsigned long long a)
+{
+  return ~a & (a + 1);
+}
+
+static __inline__ unsigned long long __attribute__((__always_inline__,
+                                                    __nodebug__))
+__blcmsk_u64(unsigned long long a)
+{
+  return a ^ (a + 1);
+}
+
+static __inline__ unsigned long long __attribute__((__always_inline__,
+                                                    __nodebug__))
+__blcs_u64(unsigned long long a)
+{
+  return a | (a + 1);
+}
+
+static __inline__ unsigned long long __attribute__((__always_inline__,
+                                                    __nodebug__))
+__blsfill_u64(unsigned long long a)
+{
+  return a | (a - 1);
+}
+
+static __inline__ unsigned long long __attribute__((__always_inline__,
+                                                    __nodebug__))
+__blsic_u64(unsigned long long a)
+{
+  return ~a | (a - 1);
+}
+
+static __inline__ unsigned long long __attribute__((__always_inline__,
+                                                    __nodebug__))
+__t1mskc_u64(unsigned long long a)
+{
+  return ~a | (a + 1);
+}
+
 static __inline__ unsigned long long __attribute__((__always_inline__,
                                                     __nodebug__))
 __tzmsk_u64(unsigned long long a)
 {
-  return __builtin_ia32_tzmsk_u64(a);
+  return ~a & (a - 1);
 }
 #endif
 
