@@ -1,26 +1,33 @@
-; RUN: llc < %s -mtriple=i686-pc-linux-gnu -asm-verbose=false -o %t
-; RUN: grep globl %t | count 6
-; RUN: grep weak %t  | count 1
-; RUN: grep hidden %t | count 1
-; RUN: grep protected %t | count 1
+; RUN: llc < %s -mtriple=i686-pc-linux-gnu -asm-verbose=false | FileCheck %s
 
 @bar = external global i32
+
+; CHECK-DAG: .globl	foo1
 @foo1 = alias i32* @bar
+
+; CHECK-DAG: .globl	foo2
 @foo2 = alias i32* @bar
 
 %FunTy = type i32()
 
 declare i32 @foo_f()
+; CHECK-DAG: .weak	bar_f
 @bar_f = alias weak %FunTy* @foo_f
 
 @bar_i = alias internal i32* @bar
 
+; CHECK-DAG: .globl	A
 @A = alias bitcast (i32* @bar to i64*)
 
+; CHECK-DAG: .globl	bar_h
+; CHECK-DAG: .hidden	bar_h
 @bar_h = hidden alias i32* @bar
 
+; CHECK-DAG: .globl	bar_p
+; CHECK-DAG: .protected	bar_p
 @bar_p = protected alias i32* @bar
 
+; CHECK-DAG: .globl	test
 define i32 @test() {
 entry:
    %tmp = load i32* @foo1
