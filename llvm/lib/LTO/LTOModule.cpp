@@ -591,8 +591,7 @@ namespace {
       return Symbols.end();
     }
 
-    RecordStreamer(MCContext &Context)
-        : MCStreamer(SK_RecordStreamer, Context) {}
+    RecordStreamer(MCContext &Context) : MCStreamer(Context) {}
 
     virtual void EmitInstruction(const MCInst &Inst) {
       // Scan for values.
@@ -666,10 +665,6 @@ namespace {
     virtual void FinishImpl() {}
     virtual void EmitCFIEndProcImpl(MCDwarfFrameInfo &Frame) {
       RecordProcEnd(Frame);
-    }
-
-    static bool classof(const MCStreamer *S) {
-      return S->getKind() == SK_RecordStreamer;
     }
   };
 } // end anonymous namespace

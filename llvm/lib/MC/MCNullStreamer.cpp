@@ -19,7 +19,7 @@ namespace {
 
   class MCNullStreamer : public MCStreamer {
   public:
-    MCNullStreamer(MCContext &Context) : MCStreamer(SK_NullStreamer, Context) {}
+    MCNullStreamer(MCContext &Context) : MCStreamer(Context) {}
 
     /// @name MCStreamer Interface
     /// @{
@@ -109,13 +109,6 @@ namespace {
     virtual void EmitCFIEndProcImpl(MCDwarfFrameInfo &Frame) {
       RecordProcEnd(Frame);
     }
-
-    /// @}
-
-    static bool classof(const MCStreamer *S) {
-      return S->getKind() == SK_NullStreamer;
-    }
-
   };
 
 }

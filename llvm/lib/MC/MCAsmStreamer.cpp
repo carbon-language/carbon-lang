@@ -25,6 +25,7 @@
 #include "llvm/MC/MCSectionCOFF.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCSymbol.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/FormattedStream.h"
@@ -32,6 +33,9 @@
 #include "llvm/Support/Path.h"
 #include <cctype>
 using namespace llvm;
+
+static cl::opt<bool> PrintHackDirectives("print-hack-directives",
+                                         cl::init(false), cl::Hidden);
 
 namespace {
 
@@ -71,7 +75,7 @@ public:
                 MCInstPrinter *printer, MCCodeEmitter *emitter,
                 MCAsmBackend *asmbackend,
                 bool showInst)
-    : MCStreamer(SK_AsmStreamer, Context), OS(os), MAI(Context.getAsmInfo()),
+    : MCStreamer(Context), OS(os), MAI(Context.getAsmInfo()),
       InstPrinter(printer), Emitter(emitter), AsmBackend(asmbackend),
       CommentStream(CommentToEmit), IsVerboseAsm(isVerboseAsm),
       ShowInst(showInst), UseLoc(useLoc), UseCFI(useCFI),
@@ -255,6 +259,11 @@ public:
   virtual void EmitPad(int64_t Offset);
   virtual void EmitRegSave(const SmallVectorImpl<unsigned> &RegList, bool);
 
+  /// Mips-related methods.
+  virtual void emitMipsHackELFFlags(unsigned Flags);
+  virtual void emitMipsHackSTOCG(MCSymbol *Sym, unsigned Val);
+
+
   virtual void EmitTCEntry(const MCSymbol &S);
 
   virtual void EmitInstruction(const MCInst &Inst);
@@ -269,12 +278,6 @@ public:
   virtual void EmitRawText(StringRef String);
 
   virtual void FinishImpl();
-
-  /// @}
-
-  static bool classof(const MCStreamer *S) {
-    return S->getKind() == SK_AsmStreamer;
-  }
 };
 
 } // end anonymous namespace.
@@ -1370,6 +1373,26 @@ void MCAsmStreamer::EmitRegSave(const SmallVectorImpl<unsigned> &RegList,
   }
 
   OS << "}";
+  EmitEOL();
+}
+
+void MCAsmStreamer::emitMipsHackSTOCG(MCSymbol *Sym, unsigned Val) {
+  if (!PrintHackDirectives)
+    return;
+
+  OS << "\t.mips_hack_stocg ";
+  OS << Sym->getName();
+  OS << ", ";
+  OS << Val;
+  EmitEOL();
+}
+
+void MCAsmStreamer::emitMipsHackELFFlags(unsigned Flags) {
+  if (!PrintHackDirectives)
+    return;
+
+  OS << "\t.mips_hack_elf_flags 0x";
+  OS.write_hex(Flags);
   EmitEOL();
 }
 

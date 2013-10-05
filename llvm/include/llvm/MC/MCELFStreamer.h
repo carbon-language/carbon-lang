@@ -28,20 +28,14 @@ class MCSymbolData;
 class raw_ostream;
 
 class MCELFStreamer : public MCObjectStreamer {
-protected:
-  MCELFStreamer(StreamerKind Kind, MCContext &Context, MCAsmBackend &TAB,
-                raw_ostream &OS, MCCodeEmitter *Emitter)
-      : MCObjectStreamer(Kind, Context, TAB, OS, Emitter) {}
-
 public:
   MCELFStreamer(MCContext &Context, MCAsmBackend &TAB, raw_ostream &OS,
                 MCCodeEmitter *Emitter)
-      : MCObjectStreamer(SK_ELFStreamer, Context, TAB, OS, Emitter) {}
+      : MCObjectStreamer(Context, TAB, OS, Emitter) {}
 
   MCELFStreamer(MCContext &Context, MCAsmBackend &TAB, raw_ostream &OS,
                 MCCodeEmitter *Emitter, MCAssembler *Assembler)
-      : MCObjectStreamer(SK_ELFStreamer, Context, TAB, OS, Emitter,
-                         Assembler) {}
+      : MCObjectStreamer(Context, TAB, OS, Emitter, Assembler) {}
 
   virtual ~MCELFStreamer();
 
@@ -88,11 +82,6 @@ public:
   virtual void Flush();
 
   virtual void FinishImpl();
-  /// @}
-
-  static bool classof(const MCStreamer *S) {
-    return S->getKind() == SK_ELFStreamer || S->getKind() == SK_ARMELFStreamer;
-  }
 
 private:
   virtual void EmitInstToFragment(const MCInst &Inst);
@@ -121,6 +110,15 @@ private:
   void SetSectionText();
   void SetSectionBss();
 };
+
+MCELFStreamer *createMipsELFStreamer(MCContext &Context, MCAsmBackend &TAB,
+                                     raw_ostream &OS, MCCodeEmitter *Emitter,
+                                     bool RelaxAll, bool NoExecStack);
+
+MCELFStreamer *createARMELFStreamer(MCContext &Context, MCAsmBackend &TAB,
+                                    raw_ostream &OS, MCCodeEmitter *Emitter,
+                                    bool RelaxAll, bool NoExecStack,
+                                    bool IsThumb);
 
 } // end namespace llvm
 

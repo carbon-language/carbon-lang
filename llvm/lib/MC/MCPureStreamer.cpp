@@ -29,7 +29,7 @@ private:
 public:
   MCPureStreamer(MCContext &Context, MCAsmBackend &TAB, raw_ostream &OS,
                  MCCodeEmitter *Emitter)
-      : MCObjectStreamer(SK_PureStreamer, Context, TAB, OS, Emitter) {}
+      : MCObjectStreamer(Context, TAB, OS, Emitter) {}
 
   /// @name MCStreamer Interface
   /// @{
@@ -97,12 +97,6 @@ public:
   virtual bool EmitDwarfFileDirective(unsigned FileNo, StringRef Directory,
                                       StringRef Filename, unsigned CUID = 0) {
     report_fatal_error("unsupported directive in pure streamer");
-  }
-
-  /// @}
-
-  static bool classof(const MCStreamer *S) {
-    return S->getKind() == SK_PureStreamer;
   }
 };
 

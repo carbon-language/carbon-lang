@@ -75,10 +75,6 @@ public:
   virtual void EmitWin64EHHandlerData();
   virtual void FinishImpl();
 
-  static bool classof(const MCStreamer *S) {
-    return S->getKind() == SK_WinCOFFStreamer;
-  }
-
 private:
   virtual void EmitInstToData(const MCInst &Inst) {
     MCDataFragment *DF = getOrCreateDataFragment();
@@ -134,8 +130,7 @@ private:
 
 WinCOFFStreamer::WinCOFFStreamer(MCContext &Context, MCAsmBackend &MAB,
                                  MCCodeEmitter &CE, raw_ostream &OS)
-    : MCObjectStreamer(SK_WinCOFFStreamer, Context, MAB, OS, &CE),
-      CurSymbol(NULL) {}
+    : MCObjectStreamer(Context, MAB, OS, &CE), CurSymbol(NULL) {}
 
 void WinCOFFStreamer::AddCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                                       unsigned ByteAlignment, bool External) {

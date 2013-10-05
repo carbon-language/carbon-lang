@@ -40,11 +40,10 @@ class MCObjectStreamer : public MCStreamer {
   virtual void EmitCFIEndProcImpl(MCDwarfFrameInfo &Frame);
 
 protected:
-  MCObjectStreamer(StreamerKind Kind, MCContext &Context, MCAsmBackend &TAB,
-                   raw_ostream &_OS, MCCodeEmitter *_Emitter);
-  MCObjectStreamer(StreamerKind Kind, MCContext &Context, MCAsmBackend &TAB,
-                   raw_ostream &_OS, MCCodeEmitter *_Emitter,
-                   MCAssembler *_Assembler);
+  MCObjectStreamer(MCContext &Context, MCAsmBackend &TAB, raw_ostream &_OS,
+                   MCCodeEmitter *_Emitter);
+  MCObjectStreamer(MCContext &Context, MCAsmBackend &TAB, raw_ostream &_OS,
+                   MCCodeEmitter *_Emitter, MCAssembler *_Assembler);
   ~MCObjectStreamer();
 
 public:
@@ -116,12 +115,6 @@ public:
   virtual void EmitFill(uint64_t NumBytes, uint8_t FillValue);
   virtual void EmitZeros(uint64_t NumBytes);
   virtual void FinishImpl();
-
-  /// @}
-
-  static bool classof(const MCStreamer *S) {
-    return S->getKind() >= SK_ELFStreamer && S->getKind() <= SK_WinCOFFStreamer;
-  }
 };
 
 } // end namespace llvm

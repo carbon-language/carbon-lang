@@ -683,8 +683,10 @@ unsigned DwarfDebug::getOrCreateSourceID(StringRef FileName,
                                          StringRef DirName, unsigned CUID) {
   // If we use .loc in assembly, we can't separate .file entries according to
   // compile units. Thus all files will belong to the default compile unit.
-  if (Asm->TM.hasMCUseLoc() &&
-      Asm->OutStreamer.getKind() == MCStreamer::SK_AsmStreamer)
+
+  // FIXME: add a better feature test than hasRawTextSupport. Even better,
+  // extend .file to support this.
+  if (Asm->TM.hasMCUseLoc() && Asm->OutStreamer.hasRawTextSupport())
     CUID = 0;
 
   // If FE did not provide a file name, then assume stdin.
@@ -752,9 +754,8 @@ CompileUnit *DwarfDebug::constructCompileUnit(const MDNode *N) {
 
   // Use a single line table if we are using .loc and generating assembly.
   bool UseTheFirstCU =
-    (Asm->TM.hasMCUseLoc() &&
-     Asm->OutStreamer.getKind() == MCStreamer::SK_AsmStreamer) ||
-    (NewCU->getUniqueID() == 0);
+      (Asm->TM.hasMCUseLoc() && Asm->OutStreamer.hasRawTextSupport()) ||
+      (NewCU->getUniqueID() == 0);
 
   if (!useSplitDwarf()) {
     // DW_AT_stmt_list is a offset of line number information for this
@@ -1601,8 +1602,7 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
   LexicalScope *FnScope = LScopes.getCurrentFunctionScope();
   CompileUnit *TheCU = SPMap.lookup(FnScope->getScopeNode());
   assert(TheCU && "Unable to find compile unit!");
-  if (Asm->TM.hasMCUseLoc() &&
-      Asm->OutStreamer.getKind() == MCStreamer::SK_AsmStreamer)
+  if (Asm->TM.hasMCUseLoc() && Asm->OutStreamer.hasRawTextSupport())
     // Use a single line table if we are using .loc and generating assembly.
     Asm->OutStreamer.getContext().setDwarfCompileUnitID(0);
   else

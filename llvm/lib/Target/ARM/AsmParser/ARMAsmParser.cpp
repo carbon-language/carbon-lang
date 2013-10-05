@@ -260,13 +260,6 @@ public:
 
     // Not in an ITBlock to start with.
     ITState.CurPosition = ~0U;
-
-    // Set ELF header flags.
-    // FIXME: This should eventually end up somewhere else where more
-    // intelligent flag decisions can be made. For now we are just maintaining
-    // the statu/parseDirects quo for ARM and setting EF_ARM_EABI_VER5 as the default.
-    if (MCELFStreamer *MES = dyn_cast<MCELFStreamer>(&Parser.getStreamer()))
-      MES->getAssembler().setELFHeaderEFlags(ELF::EF_ARM_EABI_VER5);
   }
 
   // Implementation of the MCTargetAsmParser interface:

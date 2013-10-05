@@ -12,16 +12,15 @@
 //===----------------------------------------------------------------------===//
 
 #include "ARMBaseInfo.h"
-#include "ARMELFStreamer.h"
 #include "ARMMCAsmInfo.h"
 #include "ARMMCTargetDesc.h"
 #include "InstPrinter/ARMInstPrinter.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/MC/MCCodeGenInfo.h"
+#include "llvm/MC/MCELFStreamer.h"
 #include "llvm/MC/MCInstrAnalysis.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
-#include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/TargetRegistry.h"

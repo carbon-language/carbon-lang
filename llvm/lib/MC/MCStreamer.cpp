@@ -22,8 +22,8 @@
 #include <cstdlib>
 using namespace llvm;
 
-MCStreamer::MCStreamer(StreamerKind Kind, MCContext &Ctx)
-    : Kind(Kind), Context(Ctx), EmitEHFrame(true), EmitDebugFrame(false),
+MCStreamer::MCStreamer(MCContext &Ctx)
+    : Context(Ctx), EmitEHFrame(true), EmitDebugFrame(false),
       CurrentW64UnwindInfo(0), LastSymbol(0), AutoInitSections(false) {
   SectionStack.push_back(std::pair<MCSectionSubPair, MCSectionSubPair>());
 }
@@ -601,6 +601,12 @@ void MCStreamer::EmitPad(int64_t Offset) {
 void MCStreamer::EmitRegSave(const SmallVectorImpl<unsigned> &RegList, bool) {
   errs() << "Not implemented yet\n";
   abort();
+}
+
+void MCStreamer::emitMipsHackELFFlags(unsigned Flags) {
+}
+
+void MCStreamer::emitMipsHackSTOCG(MCSymbol *Sym, unsigned Val) {
 }
 
 void MCStreamer::EmitTCEntry(const MCSymbol &S) {

@@ -49,23 +49,6 @@ typedef std::pair<const MCSection *, const MCExpr *> MCSectionSubPair;
 /// a .s file, and implementations that write out .o files of various formats.
 ///
 class MCStreamer {
-public:
-  enum StreamerKind {
-    SK_AsmStreamer,
-    SK_NullStreamer,
-    SK_RecordStreamer,
-
-    // MCObjectStreamer subclasses.
-    SK_ELFStreamer,
-    SK_ARMELFStreamer,
-    SK_MachOStreamer,
-    SK_PureStreamer,
-    SK_MipsELFStreamer,
-    SK_WinCOFFStreamer
-  };
-
-private:
-  const StreamerKind Kind;
   MCContext &Context;
 
   MCStreamer(const MCStreamer &) LLVM_DELETED_FUNCTION;
@@ -97,7 +80,7 @@ private:
   bool AutoInitSections;
 
 protected:
-  MCStreamer(StreamerKind Kind, MCContext &Ctx);
+  MCStreamer(MCContext &Ctx);
 
   const MCExpr *BuildSymbolDiff(MCContext &Context, const MCSymbol *A,
                                 const MCSymbol *B);
@@ -117,8 +100,6 @@ protected:
 
 public:
   virtual ~MCStreamer();
-
-  StreamerKind getKind() const { return Kind; }
 
   /// State management
   ///
@@ -631,6 +612,10 @@ public:
   virtual void EmitPad(int64_t Offset);
   virtual void EmitRegSave(const SmallVectorImpl<unsigned> &RegList,
                            bool isVector);
+
+  /// Mips-related methods.
+  virtual void emitMipsHackELFFlags(unsigned Flags);
+  virtual void emitMipsHackSTOCG(MCSymbol *Sym, unsigned Val);
 
   /// PPC-related methods.
   /// FIXME: Eventually replace it with some "target MC streamer" and move

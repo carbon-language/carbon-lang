@@ -37,7 +37,7 @@ private:
 public:
   MCMachOStreamer(MCContext &Context, MCAsmBackend &MAB, raw_ostream &OS,
                   MCCodeEmitter *Emitter)
-      : MCObjectStreamer(SK_MachOStreamer, Context, MAB, OS, Emitter) {}
+      : MCObjectStreamer(Context, MAB, OS, Emitter) {}
 
   /// @name MCStreamer Interface
   /// @{
@@ -86,12 +86,6 @@ public:
   }
 
   virtual void FinishImpl();
-
-  /// @}
-
-  static bool classof(const MCStreamer *S) {
-    return S->getKind() == SK_MachOStreamer;
-  }
 };
 
 } // end anonymous namespace.

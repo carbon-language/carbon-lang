@@ -63,8 +63,8 @@ class ARMELFStreamer : public MCELFStreamer {
 public:
   ARMELFStreamer(MCContext &Context, MCAsmBackend &TAB, raw_ostream &OS,
                  MCCodeEmitter *Emitter, bool IsThumb)
-      : MCELFStreamer(SK_ARMELFStreamer, Context, TAB, OS, Emitter),
-        IsThumb(IsThumb), MappingSymbolCounter(0), LastEMS(EMS_None) {
+      : MCELFStreamer(Context, TAB, OS, Emitter), IsThumb(IsThumb),
+        MappingSymbolCounter(0), LastEMS(EMS_None) {
     Reset();
   }
 
@@ -139,10 +139,6 @@ public:
     case MCAF_SubsectionsViaSymbols:
       return;
     }
-  }
-
-  static bool classof(const MCStreamer *S) {
-    return S->getKind() == SK_ARMELFStreamer;
   }
 
 private:
@@ -498,6 +494,11 @@ namespace llvm {
                                       bool RelaxAll, bool NoExecStack,
                                       bool IsThumb) {
     ARMELFStreamer *S = new ARMELFStreamer(Context, TAB, OS, Emitter, IsThumb);
+    // FIXME: This should eventually end up somewhere else where more
+    // intelligent flag decisions can be made. For now we are just maintaining
+    // the status quo for ARM and setting EF_ARM_EABI_VER5 as the default.
+    S->getAssembler().setELFHeaderEFlags(ELF::EF_ARM_EABI_VER5);
+
     if (RelaxAll)
       S->getAssembler().setRelaxAll(true);
     if (NoExecStack)
