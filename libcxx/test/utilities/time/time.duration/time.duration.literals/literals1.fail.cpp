@@ -7,16 +7,15 @@
 // Source Licenses. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-#include <string>
+#include <chrono>
 #include <cassert>
 
 int main()
 {
 #if _LIBCPP_STD_VER > 11 
-    using std::string;
-
-    string foo  =   ""s;  // should fail w/conversion operator not found
+    std::chrono::hours h  = 4h;  // should fail w/conversion operator not found
 #else
 #error
 #endif
 }
+

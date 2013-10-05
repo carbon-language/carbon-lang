@@ -942,12 +942,9 @@ typedef steady_clock high_resolution_clock;
 
 } // chrono
 
-#if _LIBCPP_STD_VER > 11 
-// Literal suffixes for chrono types
-// inline // Deviation from N3690.
-//    We believe the inline to be a defect and have submitted an LWG issue.
-//    An LWG issue number has not yet been assigned.
-namespace literals
+#if _LIBCPP_STD_VER > 11
+// Suffixes for duration literals [time.duration.literals]
+inline namespace literals
 { 
   inline namespace chrono_literals
   {
@@ -1018,6 +1015,11 @@ namespace literals
     }
 
 }}
+
+namespace chrono { // hoist the literals into namespace std::chrono
+   using namespace literals::chrono_literals;
+}
+
 #endif
 
 _LIBCPP_END_NAMESPACE_STD
