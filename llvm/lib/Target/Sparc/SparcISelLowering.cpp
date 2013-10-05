@@ -2298,12 +2298,16 @@ static SDValue LowerF128Load(SDValue Op, SelectionDAG &DAG)
   assert(LdNode && LdNode->getOffset().getOpcode() == ISD::UNDEF
          && "Unexpected node type");
 
+  unsigned alignment = LdNode->getAlignment();
+  if (alignment > 8)
+    alignment = 8;
+
   SDValue Hi64 = DAG.getLoad(MVT::f64,
                              dl,
                              LdNode->getChain(),
                              LdNode->getBasePtr(),
                              LdNode->getPointerInfo(),
-                             false, false, false, 8);
+                             false, false, false, alignment);
   EVT addrVT = LdNode->getBasePtr().getValueType();
   SDValue LoPtr = DAG.getNode(ISD::ADD, dl, addrVT,
                               LdNode->getBasePtr(),
@@ -2313,7 +2317,7 @@ static SDValue LowerF128Load(SDValue Op, SelectionDAG &DAG)
                              LdNode->getChain(),
                              LoPtr,
                              LdNode->getPointerInfo(),
-                             false, false, false, 8);
+                             false, false, false, alignment);
 
   SDValue SubRegEven = DAG.getTargetConstant(SP::sub_even64, MVT::i32);
   SDValue SubRegOdd  = DAG.getTargetConstant(SP::sub_odd64, MVT::i32);
@@ -2357,13 +2361,18 @@ static SDValue LowerF128Store(SDValue Op, SelectionDAG &DAG) {
                                     MVT::f64,
                                     StNode->getValue(),
                                     SubRegOdd);
+
+  unsigned alignment = StNode->getAlignment();
+  if (alignment > 8)
+    alignment = 8;
+
   SDValue OutChains[2];
   OutChains[0] = DAG.getStore(StNode->getChain(),
                               dl,
                               SDValue(Hi64, 0),
                               StNode->getBasePtr(),
                               MachinePointerInfo(),
-                              false, false, 8);
+                              false, false, alignment);
   EVT addrVT = StNode->getBasePtr().getValueType();
   SDValue LoPtr = DAG.getNode(ISD::ADD, dl, addrVT,
                               StNode->getBasePtr(),
@@ -2373,7 +2382,7 @@ static SDValue LowerF128Store(SDValue Op, SelectionDAG &DAG) {
                              SDValue(Lo64, 0),
                              LoPtr,
                              MachinePointerInfo(),
-                             false, false, 8);
+                             false, false, alignment);
   return DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
                      &OutChains[0], 2);
 }
