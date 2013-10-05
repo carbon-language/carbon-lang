@@ -15,6 +15,7 @@
 #define CODEGEN_ASMPRINTER_DWARFCOMPILEUNIT_H
 
 #include "DIE.h"
+#include "DwarfDebug.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringMap.h"
@@ -23,8 +24,6 @@
 
 namespace llvm {
 
-class DwarfDebug;
-class DwarfUnits;
 class MachineLocation;
 class MachineOperand;
 class ConstantInt;
@@ -352,6 +351,12 @@ private:
   /// createDIEEntry - Creates a new DIEEntry to be a proxy for a debug
   /// information entry.
   DIEEntry *createDIEEntry(DIE *Entry);
+
+  /// resolve - Look in the DwarfDebug map for the MDNode that
+  /// corresponds to a scope reference.
+  template <typename T> T resolve(DIRef<T> Ref) const {
+    return DD->resolve(Ref);
+  }
 
 private:
 

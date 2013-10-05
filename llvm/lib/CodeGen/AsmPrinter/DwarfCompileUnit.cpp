@@ -807,7 +807,7 @@ DIE *CompileUnit::getOrCreateTypeDIE(const MDNode *TyNode) {
     addAccelType(Ty.getName(), std::make_pair(TyDIE, Flags));
   }
 
-  addToContextOwner(TyDIE, DD->resolve(Ty.getContext()));
+  addToContextOwner(TyDIE, resolve(Ty.getContext()));
   return TyDIE;
 }
 
@@ -872,7 +872,7 @@ void CompileUnit::addGlobalName(StringRef Name, DIE *Die) {
 /// addGlobalType - Add a new global type to the compile unit.
 ///
 void CompileUnit::addGlobalType(DIType Ty) {
-  DIScope Context = DD->resolve(Ty.getContext());
+  DIScope Context = resolve(Ty.getContext());
   if (!Ty.getName().empty() && !Ty.isForwardDecl() &&
       (!Context || Context.isCompileUnit() || Context.isFile() ||
        Context.isNameSpace()))
@@ -937,7 +937,7 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DIDerivedType DTy) {
 
   if (Tag == dwarf::DW_TAG_ptr_to_member_type)
       addDIEEntry(&Buffer, dwarf::DW_AT_containing_type, dwarf::DW_FORM_ref4,
-                  getOrCreateTypeDIE(DD->resolve(DTy.getClassType())));
+                  getOrCreateTypeDIE(resolve(DTy.getClassType())));
   // Add source line info if available and TyDesc is not a forward declaration.
   if (!DTy.isForwardDecl())
     addSourceLine(&Buffer, DTy);
@@ -1113,7 +1113,7 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
     if (CTy.isAppleBlockExtension())
       addFlag(&Buffer, dwarf::DW_AT_APPLE_block);
 
-    DICompositeType ContainingType(DD->resolve(CTy.getContainingType()));
+    DICompositeType ContainingType(resolve(CTy.getContainingType()));
     if (DIDescriptor(ContainingType).isCompositeType())
       addDIEEntry(&Buffer, dwarf::DW_AT_containing_type, dwarf::DW_FORM_ref4,
                   getOrCreateTypeDIE(DIType(ContainingType)));
@@ -1325,7 +1325,7 @@ DIE *CompileUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
     addUInt(Block, 0, dwarf::DW_FORM_udata, SP.getVirtualIndex());
     addBlock(SPDie, dwarf::DW_AT_vtable_elem_location, 0, Block);
     ContainingTypeMap.insert(std::make_pair(SPDie,
-                                    DD->resolve(SP.getContainingType())));
+                                            resolve(SP.getContainingType())));
   }
 
   if (!SP.isDefinition()) {
@@ -1409,7 +1409,7 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
     // We need the declaration DIE that is in the static member's class.
     // But that class might not exist in the DWARF yet.
     // Creating the class will create the static member decl DIE.
-    getOrCreateContextDIE(DD->resolve(SDMDecl.getContext()));
+    getOrCreateContextDIE(resolve(SDMDecl.getContext()));
     VariableDIE = getDIE(SDMDecl);
     assert(VariableDIE && "Static member decl has no context?");
     IsStaticMember = true;
