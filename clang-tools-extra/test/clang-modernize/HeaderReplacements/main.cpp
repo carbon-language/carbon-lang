@@ -7,7 +7,7 @@
 // RUN: rm -rf %T/SerializeTest
 // RUN: mkdir -p %T/SerializeTest
 // RUN: cp %S/main.cpp %S/common.cpp %S/common.h %T/SerializeTest
-// RUN: clang-modernize -loop-convert -serialize-replacements -include=%T/SerializeTest %T/SerializeTest/main.cpp %T/SerializeTest/common.cpp --
+// RUN: clang-modernize -loop-convert -serialize-replacements -serialize-dir=%T/SerializeTest -include=%T/SerializeTest %T/SerializeTest/main.cpp %T/SerializeTest/common.cpp --
 // Check that only 1 file is generated per translation unit
 // RUN: ls -1 %T/SerializeTest | FileCheck %s --check-prefix=MAIN_CPP
 // RUN: ls -1 %T/SerializeTest | FileCheck %s --check-prefix=COMMON_CPP

@@ -47,8 +47,7 @@ public:
       : Transform("ReplaceAutoPtr", Options) {}
 
   /// \see Transform::run().
-  virtual int apply(const FileOverrides &InputStates,
-                    const clang::tooling::CompilationDatabase &Database,
+  virtual int apply(const clang::tooling::CompilationDatabase &Database,
                     const std::vector<std::string> &SourcePaths) LLVM_OVERRIDE;
 };
 

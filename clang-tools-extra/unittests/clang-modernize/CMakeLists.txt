@@ -15,8 +15,6 @@ include_directories(
   )
 
 add_extra_unittest(ClangModernizeTests
-  FileOverridesTest.cpp
-  ReformattingTest.cpp
   IncludeExcludeTest.cpp
   PerfSupportTest.cpp
   TransformTest.cpp

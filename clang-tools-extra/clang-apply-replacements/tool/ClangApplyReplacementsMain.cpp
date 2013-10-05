@@ -228,7 +228,7 @@ int main(int argc, char **argv) {
   if (ErrorCode) {
     errs() << "Trouble iterating over directory '" << Directory
            << "': " << ErrorCode.message() << "\n";
-    return false;
+    return 1;
   }
 
   // Remove the TUReplacementFiles (triggered by "remove-change-desc-files"

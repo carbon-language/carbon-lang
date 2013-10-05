@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "gtest/gtest.h"
-#include "Core/FileOverrides.h"
+#include "Core/ReplacementHandling.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Regex.h"
@@ -28,10 +28,13 @@ TEST(UniqueHeaderName, testUniqueHeaderName) {
   append(SourceFile, "project/lib/feature.cpp");
   native(SourceFile.str().str(), SourceFile);
 
+  llvm::SmallString<128> DestDir(TmpDir);
+  append(DestDir, "replacements");
+
   llvm::SmallString<128> FullActualPath;
   llvm::SmallString<128> Error;
-  bool Result =
-      generateReplacementsFileName(SourceFile, FullActualPath, Error);
+  bool Result = ReplacementHandling::generateReplacementsFileName(
+      DestDir, SourceFile, FullActualPath, Error);
 
   ASSERT_TRUE(Result);
   EXPECT_TRUE(Error.empty());
@@ -45,7 +48,7 @@ TEST(UniqueHeaderName, testUniqueHeaderName) {
   llvm::SmallString<128> ActualName =
       llvm::sys::path::filename(FullActualPath);
 
-  EXPECT_STREQ(ExpectedPath.c_str(), ActualPath.c_str());
+  EXPECT_STREQ(DestDir.c_str(), ActualPath.c_str());
 
   llvm::StringRef ExpectedName =
       "^feature.cpp_[0-9a-f]{2}_[0-9a-f]{2}_[0-9a-f]{2}_[0-9a-f]{2}_["

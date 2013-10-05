@@ -20,8 +20,7 @@ using clang::ast_matchers::MatchFinder;
 using namespace clang;
 using namespace clang::tooling;
 
-int UseAutoTransform::apply(const FileOverrides &InputStates,
-                            const clang::tooling::CompilationDatabase &Database,
+int UseAutoTransform::apply(const clang::tooling::CompilationDatabase &Database,
                             const std::vector<std::string> &SourcePaths) {
   ClangTool UseAutoTool(Database, SourcePaths);
 
@@ -36,8 +35,6 @@ int UseAutoTransform::apply(const FileOverrides &InputStates,
 
   Finder.addMatcher(makeIteratorDeclMatcher(), &ReplaceIterators);
   Finder.addMatcher(makeDeclWithNewMatcher(), &ReplaceNew);
-
-  setOverrides(InputStates);
 
   if (int Result = UseAutoTool.run(createActionFactory(Finder))) {
     llvm::errs() << "Error encountered during translation.\n";

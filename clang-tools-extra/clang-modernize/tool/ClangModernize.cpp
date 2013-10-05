@@ -15,23 +15,20 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#include "Core/FileOverrides.h"
 #include "Core/PerfSupport.h"
-#include "Core/SyntaxCheck.h"
+#include "Core/ReplacementHandling.h"
 #include "Core/Transform.h"
 #include "Core/Transforms.h"
-#include "Core/Reformatting.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/DiagnosticOptions.h"
 #include "clang/Basic/SourceManager.h"
+#include "clang/Format/Format.h"
 #include "clang/Frontend/FrontendActions.h"
-#include "clang/Rewrite/Core/Rewriter.h"
 #include "clang/Tooling/CommonOptionsParser.h"
 #include "clang/Tooling/Tooling.h"
-#include "clang-apply-replacements/Tooling/ApplyReplacements.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringSwitch.h"
-#include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/Path.h"
 #include "llvm/Support/Signals.h"
 
 namespace cl = llvm::cl;
@@ -81,13 +78,29 @@ static cl::opt<bool> FinalSyntaxCheck(
     cl::desc("Check for correct syntax after applying transformations"),
     cl::init(false));
 
-static cl::opt<std::string> FormatStyleOpt(
-    "format-style",
-    cl::desc("Coding style to use on the replacements, either a builtin style\n"
-             "or a YAML config file (see: clang-format -dump-config).\n"
-             "Currently supports 4 builtins style:\n"
-             "  LLVM, Google, Chromium, Mozilla.\n"),
-    cl::value_desc("string"));
+static cl::OptionCategory FormattingCategory("Formatting Options");
+
+static cl::opt<bool> DoFormat(
+    "format",
+    cl::desc("Enable formatting of code changed by applying replacements.\n"
+             "Use -style to choose formatting style.\n"),
+    cl::cat(FormattingCategory));
+
+static cl::opt<std::string>
+FormatStyleOpt("style", cl::desc(format::StyleOptionHelpDescription),
+               cl::init("LLVM"), cl::cat(FormattingCategory));
+
+// FIXME: Consider making the default behaviour for finding a style
+// configuration file to start the search anew for every file being changed to
+// handle situations where the style is different for different parts of a
+// project.
+
+static cl::opt<std::string> FormatStyleConfig(
+    "style-config",
+    cl::desc("Path to a directory containing a .clang-format file\n"
+             "describing a formatting style to use for formatting\n"
+             "code when -style=file.\n"),
+    cl::init(""), cl::cat(FormattingCategory));
 
 static cl::opt<bool>
 SummaryMode("summary", cl::desc("Print transform summary"),
@@ -98,29 +111,46 @@ static cl::opt<std::string> TimingDirectoryName(
                      "directory. Default: ./migrate_perf"),
     cl::ValueOptional, cl::value_desc("directory name"));
 
+static cl::OptionCategory IncludeExcludeCategory("Inclusion/Exclusion Options");
+
 static cl::opt<std::string>
 IncludePaths("include",
              cl::desc("Comma seperated list of paths to consider to be "
-                      "transformed"));
+                      "transformed"),
+             cl::cat(IncludeExcludeCategory));
+
 static cl::opt<std::string>
-ExcludePaths("exclude",
-             cl::desc("Comma seperated list of paths that can not "
-                      "be transformed"));
+ExcludePaths("exclude", cl::desc("Comma seperated list of paths that can not "
+                                 "be transformed"),
+             cl::cat(IncludeExcludeCategory));
+
 static cl::opt<std::string>
 IncludeFromFile("include-from", cl::value_desc("filename"),
                 cl::desc("File containing a list of paths to consider to "
-                         "be transformed"));
+                         "be transformed"),
+                cl::cat(IncludeExcludeCategory));
+
 static cl::opt<std::string>
 ExcludeFromFile("exclude-from", cl::value_desc("filename"),
                 cl::desc("File containing a list of paths that can not be "
-                         "transforms"));
+                         "transforms"),
+                cl::cat(IncludeExcludeCategory));
+
+static cl::OptionCategory SerializeCategory("Serialization Options");
 
 static cl::opt<bool>
-SerializeReplacements("serialize-replacements",
-                      cl::Hidden,
-                      cl::desc("Serialize translation unit replacements to "
-                               "disk instead of changing files."),
-                      cl::init(false));
+SerializeOnly("serialize-replacements",
+              cl::desc("Serialize translation unit replacements to "
+                       "disk instead of changing files."),
+              cl::init(false),
+              cl::cat(SerializeCategory));
+
+static cl::opt<std::string>
+SerializeLocation("serialize-dir",
+                  cl::desc("Path to an existing directory in which to write\n"
+                           "serialized replacements. Default behaviour is to\n"
+                           "write to a temporary directory.\n"),
+                  cl::cat(SerializeCategory));
 
 cl::opt<std::string> SupportedCompilers(
     "for-compilers", cl::value_desc("string"),
@@ -184,102 +214,6 @@ static CompilerVersions handleSupportedCompilers(const char *ProgName,
   return RequiredVersions;
 }
 
-/// \brief Creates the Reformatter if the format style option is provided,
-/// return a null pointer otherwise.
-///
-/// \param ProgName The name of the program, \c argv[0], used to print errors.
-/// \param Error If the \c -format-style is provided but with wrong parameters
-/// this is parameter is set to \c true, left untouched otherwise. An error
-/// message is printed with an explanation.
-static Reformatter *handleFormatStyle(const char *ProgName, bool &Error) {
-  if (FormatStyleOpt.getNumOccurrences() > 0) {
-    format::FormatStyle Style;
-    if (!format::getPredefinedStyle(FormatStyleOpt, &Style)) {
-      llvm::StringRef ConfigFilePath = FormatStyleOpt;
-      llvm::OwningPtr<llvm::MemoryBuffer> Text;
-      llvm::error_code ec;
-
-      ec = llvm::MemoryBuffer::getFile(ConfigFilePath, Text);
-      if (!ec)
-        ec = parseConfiguration(Text->getBuffer(), &Style);
-
-      if (ec) {
-        llvm::errs() << ProgName << ": invalid format style " << FormatStyleOpt
-                     << ": " << ec.message() << "\n";
-        Error = true;
-        return 0;
-      }
-    }
-
-    // force mode to C++11
-    Style.Standard = clang::format::FormatStyle::LS_Cpp11;
-    return new Reformatter(Style);
-  }
-  return 0;
-}
-
-/// \brief Use \c ChangesReformatter to reformat all changed regions of all
-/// files stored in \c Overrides and write the result to disk.
-///
-/// \returns \li true if reformatting replacements were successfully applied
-///              without conflicts and all files were successfully written to
-///              disk.
-///          \li false if reformatting could not be successfully applied or
-///              if at least one file failed to write to disk.
-void reformat(Reformatter &ChangesReformatter, FileOverrides &Overrides,
-              DiagnosticsEngine &Diagnostics) {
-  FileManager Files((FileSystemOptions()));
-  SourceManager SM(Diagnostics, Files);
-
-  replace::TUReplacements AllReplacements(1);
-  ChangesReformatter.reformatChanges(Overrides, SM,
-                                     AllReplacements.front().Replacements);
-
-  replace::FileToReplacementsMap GroupedReplacements;
-  if (!replace::mergeAndDeduplicate(AllReplacements, GroupedReplacements, SM)) {
-    llvm::errs() << "Warning: Reformatting produced conflicts.\n";
-    return;
-  }
-
-  Rewriter DestRewriter(SM, LangOptions());
-  if (!replace::applyReplacements(GroupedReplacements, DestRewriter)) {
-    llvm::errs() << "Warning: Failed to apply reformatting conflicts!\n";
-    return;
-  }
-
-  Overrides.updateState(DestRewriter);
-}
-
-bool serializeReplacements(const replace::TUReplacements &Replacements) {
-  bool Errors = false;
-  for (replace::TUReplacements::const_iterator I = Replacements.begin(),
-                                               E = Replacements.end();
-       I != E; ++I) {
-    llvm::SmallString<128> ReplacementsFileName;
-    llvm::SmallString<64> Error;
-    bool Result = generateReplacementsFileName(I->MainSourceFile,
-                                               ReplacementsFileName, Error);
-    if (!Result) {
-      llvm::errs() << "Failed to generate replacements filename:" << Error
-                   << "\n";
-      Errors = true;
-      continue;
-    }
-
-    std::string ErrorInfo;
-    llvm::raw_fd_ostream ReplacementsFile(ReplacementsFileName.c_str(),
-                                          ErrorInfo, llvm::sys::fs::F_Binary);
-    if (!ErrorInfo.empty()) {
-      llvm::errs() << "Error opening file: " << ErrorInfo << "\n";
-      Errors = true;
-      continue;
-    }
-    llvm::yaml::Output YAML(ReplacementsFile);
-    YAML << const_cast<TranslationUnitReplacements &>(*I);
-  }
-  return !Errors;
-}
-
 CompilationDatabase *autoDetectCompilations(std::string &ErrorMessage) {
   // Auto-detect a compilation database from BuildPath.
   if (BuildPath.getNumOccurrences() > 0)
@@ -332,6 +266,7 @@ static bool isFileExplicitlyExcludedPredicate(llvm::StringRef FilePath) {
 int main(int argc, const char **argv) {
   llvm::sys::PrintStackTraceOnErrorSignal();
   Transforms TransformManager;
+  ReplacementHandling ReplacementHandler;
 
   TransformManager.registerTransforms();
 
@@ -386,26 +321,13 @@ int main(int argc, const char **argv) {
   // Enable timming.
   GlobalOptions.EnableTiming = TimingDirectoryName.getNumOccurrences() > 0;
 
-  // Check the reformatting style option
   bool CmdSwitchError = false;
-  llvm::OwningPtr<Reformatter> ChangesReformatter(
-      handleFormatStyle(argv[0], CmdSwitchError));
-
   CompilerVersions RequiredVersions =
       handleSupportedCompilers(argv[0], CmdSwitchError);
   if (CmdSwitchError)
     return 1;
 
   TransformManager.createSelectedTransforms(GlobalOptions, RequiredVersions);
-
-  llvm::IntrusiveRefCntPtr<clang::DiagnosticOptions> DiagOpts(
-      new DiagnosticOptions());
-  DiagnosticsEngine Diagnostics(
-      llvm::IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs()),
-      DiagOpts.getPtr());
-
-  // FIXME: Make this DiagnosticsEngine available to all Transforms probably via
-  // GlobalOptions.
 
   if (TransformManager.begin() == TransformManager.end()) {
     if (SupportedCompilers.empty())
@@ -417,28 +339,52 @@ int main(int argc, const char **argv) {
     return 1;
   }
 
-  // If SerializeReplacements is requested, then change reformatting must be
-  // turned off and only one transform should be requested. Reformatting is
-  // basically another transform so even if there's only one other transform,
-  // the reformatting pass would make two.
-  if (SerializeReplacements &&
+  llvm::IntrusiveRefCntPtr<clang::DiagnosticOptions> DiagOpts(
+      new DiagnosticOptions());
+  DiagnosticsEngine Diagnostics(
+      llvm::IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs()),
+      DiagOpts.getPtr());
+
+  // FIXME: Make this DiagnosticsEngine available to all Transforms probably via
+  // GlobalOptions.
+
+  // If SerializeReplacements is requested, then code reformatting must be
+  // turned off and only one transform should be requested.
+  if (SerializeOnly &&
       (std::distance(TransformManager.begin(), TransformManager.end()) > 1 ||
-       ChangesReformatter)) {
+       DoFormat)) {
     llvm::errs() << "Serialization of replacements requested for multiple "
                     "transforms.\nChanges from only one transform can be "
                     "serialized.\n";
     return 1;
   }
 
+  // If we're asked to apply changes to files on disk, need to locate
+  // clang-apply-replacements.
+  if (!SerializeOnly) {
+    if (!ReplacementHandler.findClangApplyReplacements(argv[0])) {
+      llvm::errs() << "Could not find clang-apply-replacements\n";
+      return 1;
+    }
+
+    if (DoFormat)
+      ReplacementHandler.enableFormatting(FormatStyleOpt, FormatStyleConfig);
+  }
+
+  StringRef TempDestinationDir;
+  if (SerializeLocation.getNumOccurrences() > 0)
+    ReplacementHandler.setDestinationDir(SerializeLocation);
+  else
+    TempDestinationDir = ReplacementHandler.useTempDestinationDir();
+
   SourcePerfData PerfData;
-  FileOverrides FileStates;
 
   for (Transforms::const_iterator I = TransformManager.begin(),
                                   E = TransformManager.end();
        I != E; ++I) {
     Transform *T = *I;
 
-    if (T->apply(FileStates, *Compilations, Sources) != 0) {
+    if (T->apply(*Compilations, Sources) != 0) {
       // FIXME: Improve ClangTool to not abort if just one file fails.
       return 1;
     }
@@ -456,64 +402,24 @@ int main(int argc, const char **argv) {
       llvm::outs() << "\n";
     }
 
-    // Collect all TranslationUnitReplacements generated from the translation
-    // units the transform worked on and store them in AllReplacements.
-    replace::TUReplacements AllReplacements;
-    const TUReplacementsMap &ReplacementsMap = T->getAllReplacements();
-    const TranslationUnitReplacements &(
-        TUReplacementsMap::value_type::*getValue)() const =
-        &TUReplacementsMap::value_type::getValue;
-    std::transform(ReplacementsMap.begin(), ReplacementsMap.end(),
-                   std::back_inserter(AllReplacements),
-                   std::mem_fun_ref(getValue));
-
-    if (SerializeReplacements)
-      serializeReplacements(AllReplacements);
-
-    FileManager Files((FileSystemOptions()));
-    SourceManager SM(Diagnostics, Files);
-
-    // Make sure SourceManager is updated to have the same initial state as the
-    // transforms.
-    FileStates.applyOverrides(SM);
-
-    replace::FileToReplacementsMap GroupedReplacements;
-    if (!replace::mergeAndDeduplicate(AllReplacements, GroupedReplacements,
-                                      SM)) {
-      llvm::outs() << "Transform " << T->getName()
-                   << " resulted in conflicts. Discarding all "
-                   << "replacements.\n";
-      continue;
-    }
-
-    // Apply replacements and update FileStates with new state.
-    Rewriter DestRewriter(SM, LangOptions());
-    if (!replace::applyReplacements(GroupedReplacements, DestRewriter)) {
-      llvm::outs() << "Some replacements failed to apply. Discarding "
-                      "all replacements.\n";
-      continue;
-    }
-
-    // Update contents of files in memory to serve as initial state for next
-    // transform.
-    FileStates.updateState(DestRewriter);
-
-    // Update changed ranges for reformatting
-    if (ChangesReformatter)
-      FileStates.adjustChangedRanges(GroupedReplacements);
-  }
-
-  // Skip writing final file states to disk if we were asked to serialize
-  // replacements. Otherwise reformat changes if reformatting is enabled.
-  if (!SerializeReplacements) {
-    if (ChangesReformatter)
-      reformat(*ChangesReformatter, FileStates, Diagnostics);
-    FileStates.writeToDisk(Diagnostics);
-  }
-
-  if (FinalSyntaxCheck)
-    if (!doSyntaxCheck(*Compilations, Sources, FileStates))
+    if (!ReplacementHandler.serializeReplacements(T->getAllReplacements()))
       return 1;
+
+    if (!SerializeOnly)
+      if (!ReplacementHandler.applyReplacements())
+        return 1;
+  }
+
+  // Let the user know which temporary directory the replacements got written
+  // to.
+  if (SerializeOnly && !TempDestinationDir.empty())
+    llvm::errs() << "Replacements serialized to: " << TempDestinationDir << "\n";
+
+  if (FinalSyntaxCheck) {
+    ClangTool SyntaxTool(*Compilations, SourcePaths);
+    if (SyntaxTool.run(newFrontendActionFactory<SyntaxOnlyAction>()) != 0)
+      return 1;
+  }
 
   // Report execution times.
   if (GlobalOptions.EnableTiming && !PerfData.empty()) {

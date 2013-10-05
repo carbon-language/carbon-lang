@@ -24,8 +24,7 @@ using clang::ast_matchers::MatchFinder;
 using namespace clang::tooling;
 using namespace clang;
 
-int UseNullptrTransform::apply(const FileOverrides &InputStates,
-                               const CompilationDatabase &Database,
+int UseNullptrTransform::apply(const CompilationDatabase &Database,
                                const std::vector<std::string> &SourcePaths) {
   ClangTool UseNullptrTool(Database, SourcePaths);
 
@@ -35,8 +34,6 @@ int UseNullptrTransform::apply(const FileOverrides &InputStates,
   NullptrFixer Fixer(AcceptedChanges, Options().MaxRiskLevel, /*Owner=*/ *this);
 
   Finder.addMatcher(makeCastSequenceMatcher(), &Fixer);
-
-  setOverrides(InputStates);
 
   if (int result = UseNullptrTool.run(createActionFactory(Finder))) {
     llvm::errs() << "Error encountered during translation.\n";

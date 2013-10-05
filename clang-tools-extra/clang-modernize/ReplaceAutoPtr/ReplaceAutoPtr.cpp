@@ -22,8 +22,7 @@ using namespace clang::tooling;
 using namespace clang::ast_matchers;
 
 int
-ReplaceAutoPtrTransform::apply(const FileOverrides &InputStates,
-                               const CompilationDatabase &Database,
+ReplaceAutoPtrTransform::apply(const CompilationDatabase &Database,
                                const std::vector<std::string> &SourcePaths) {
   ClangTool Tool(Database, SourcePaths);
   unsigned AcceptedChanges = 0;
@@ -34,8 +33,6 @@ ReplaceAutoPtrTransform::apply(const FileOverrides &InputStates,
   Finder.addMatcher(makeAutoPtrTypeLocMatcher(), &Replacer);
   Finder.addMatcher(makeAutoPtrUsingDeclMatcher(), &Replacer);
   Finder.addMatcher(makeTransferOwnershipExprMatcher(), &Fixer);
-
-  setOverrides(InputStates);
 
   if (Tool.run(createActionFactory(Finder))) {
     llvm::errs() << "Error encountered during translation.\n";

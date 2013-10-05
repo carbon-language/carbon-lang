@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "gtest/gtest.h"
-#include "Core/FileOverrides.h"
 #include "Core/Transform.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/DeclGroup.h"
@@ -26,8 +25,7 @@ public:
   DummyTransform(llvm::StringRef Name, const TransformOptions &Options)
       : Transform(Name, Options) {}
 
-  virtual int apply(const FileOverrides &,
-                    const tooling::CompilationDatabase &,
+  virtual int apply(const tooling::CompilationDatabase &,
                     const std::vector<std::string> &) { return 0; }
 
   void setAcceptedChanges(unsigned Changes) {
@@ -38,10 +36,6 @@ public:
   }
   void setDeferredChanges(unsigned Changes) {
     Transform::setDeferredChanges(Changes);
-  }
-
-  void setOverrides(FileOverrides &Overrides) {
-    Transform::setOverrides(Overrides);
   }
 
 };
@@ -158,11 +152,6 @@ TEST(Transform, Timings) {
   // record timings. For that, we need to forward handleBeginSource() and
   // handleEndSource() calls to it.
   CallbackForwarder Callbacks(T);
-
-  // Transform's handle* functions require FileOverrides to be set, even if
-  // there aren't any.
-  FileOverrides Overrides;
-  T.setOverrides(Overrides);
 
   Tool.run(clang::tooling::newFrontendActionFactory(&Factory, &Callbacks));
 

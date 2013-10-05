@@ -34,7 +34,6 @@ add_dependencies(clang-modernize
   )
 
 target_link_libraries(clang-modernize
-  clangApplyReplacements
   modernizeCore
   )
 

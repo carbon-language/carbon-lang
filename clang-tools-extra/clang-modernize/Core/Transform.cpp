@@ -14,7 +14,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "Core/Transform.h"
-#include "Core/FileOverrides.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/SourceManager.h"
@@ -76,7 +75,7 @@ private:
 } // namespace
 
 Transform::Transform(llvm::StringRef Name, const TransformOptions &Options)
-    : Name(Name), GlobalOptions(Options), Overrides(0) {
+    : Name(Name), GlobalOptions(Options) {
   Reset();
 }
 
@@ -95,9 +94,6 @@ bool Transform::isFileModifiable(const SourceManager &SM,
 }
 
 bool Transform::handleBeginSource(CompilerInstance &CI, StringRef Filename) {
-  assert(Overrides != 0 && "Subclass transform didn't provide InputState");
-
-  Overrides->applyOverrides(CI.getSourceManager());
   CurrentSource = Filename;
 
   if (Options().EnableTiming) {
