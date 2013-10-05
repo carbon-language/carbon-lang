@@ -84,6 +84,26 @@ entry:
   ret i64 %2
 }
 
+define i32 @test_x86_tbm_blci_u32_b(i32 %a) nounwind readnone {
+entry:
+  ; CHECK-LABEL: test_x86_tbm_blci_u32_b:
+  ; CHECK-NOT: mov
+  ; CHECK: blci %
+  %0 = sub i32 -2, %a
+  %1 = or i32 %0, %a
+  ret i32 %1
+}
+
+define i64 @test_x86_tbm_blci_u64_b(i64 %a) nounwind readnone {
+entry:
+  ; CHECK-LABEL: test_x86_tbm_blci_u64_b:
+  ; CHECK-NOT: mov
+  ; CHECK: blci %
+  %0 = sub i64 -2, %a
+  %1 = or i64 %0, %a
+  ret i64 %1
+}
+
 define i32 @test_x86_tbm_blcic_u32(i32 %a) nounwind readnone {
 entry:
   ; CHECK-LABEL: test_x86_tbm_blcic_u32:

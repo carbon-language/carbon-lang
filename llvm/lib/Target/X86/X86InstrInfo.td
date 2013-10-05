@@ -2014,6 +2014,12 @@ let Predicates = [HasTBM] in {
   def : Pat<(or GR64:$src, (not (add GR64:$src, 1))),
             (BLCI_64rr GR64:$src)>;
 
+  // Extra patterns because opt can optimize the above patterns to this.
+  def : Pat<(or GR32:$src, (sub -2, GR32:$src)),
+            (BLCI_32rr GR32:$src)>;
+  def : Pat<(or GR64:$src, (sub -2, GR64:$src)),
+            (BLCI_64rr GR64:$src)>;
+
   def : Pat<(and (not GR32:$src), (add GR32:$src, 1)),
             (BLCIC_32rr GR32:$src)>;
   def : Pat<(and (not GR64:$src), (add GR64:$src, 1)),
