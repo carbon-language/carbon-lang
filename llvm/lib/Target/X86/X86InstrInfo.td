@@ -1953,10 +1953,10 @@ let hasSideEffects = 0 in {
 
 multiclass tbm_binary_intr<bits<8> opc, string OpcodeStr,
                            Format FormReg, Format FormMem> {
-  defm _32 : tbm_binary_rm<opc, FormReg, FormMem, GR32, OpcodeStr, i32mem,
-                           loadi32>;
-  defm _64 : tbm_binary_rm<opc, FormReg, FormMem, GR64, OpcodeStr, i64mem,
-                           loadi64>, VEX_W;
+  defm NAME#32 : tbm_binary_rm<opc, FormReg, FormMem, GR32, OpcodeStr, i32mem,
+                               loadi32>;
+  defm NAME#64 : tbm_binary_rm<opc, FormReg, FormMem, GR64, OpcodeStr, i64mem,
+                               loadi64>, VEX_W;
 }
 
 defm BLCFILL : tbm_binary_intr<0x01, "blcfill", MRM1r, MRM1m>;
@@ -1986,55 +1986,55 @@ let Predicates = [HasTBM] in {
 
   // FIXME: patterns for the load versions are not implemented
   def : Pat<(and GR32:$src, (add GR32:$src, 1)),
-            (BLCFILL_32rr GR32:$src)>;
+            (BLCFILL32rr GR32:$src)>;
   def : Pat<(and GR64:$src, (add GR64:$src, 1)),
-            (BLCFILL_64rr GR64:$src)>;
+            (BLCFILL64rr GR64:$src)>;
 
   def : Pat<(or GR32:$src, (not (add GR32:$src, 1))),
-            (BLCI_32rr GR32:$src)>;
+            (BLCI32rr GR32:$src)>;
   def : Pat<(or GR64:$src, (not (add GR64:$src, 1))),
-            (BLCI_64rr GR64:$src)>;
+            (BLCI64rr GR64:$src)>;
 
   // Extra patterns because opt can optimize the above patterns to this.
   def : Pat<(or GR32:$src, (sub -2, GR32:$src)),
-            (BLCI_32rr GR32:$src)>;
+            (BLCI32rr GR32:$src)>;
   def : Pat<(or GR64:$src, (sub -2, GR64:$src)),
-            (BLCI_64rr GR64:$src)>;
+            (BLCI64rr GR64:$src)>;
 
   def : Pat<(and (not GR32:$src), (add GR32:$src, 1)),
-            (BLCIC_32rr GR32:$src)>;
+            (BLCIC32rr GR32:$src)>;
   def : Pat<(and (not GR64:$src), (add GR64:$src, 1)),
-            (BLCIC_64rr GR64:$src)>;
+            (BLCIC64rr GR64:$src)>;
 
   def : Pat<(xor GR32:$src, (add GR32:$src, 1)),
-            (BLCMSK_32rr GR32:$src)>;
+            (BLCMSK32rr GR32:$src)>;
   def : Pat<(xor GR64:$src, (add GR64:$src, 1)),
-            (BLCMSK_64rr GR64:$src)>;
+            (BLCMSK64rr GR64:$src)>;
 
   def : Pat<(or GR32:$src, (add GR32:$src, 1)),
-            (BLCS_32rr GR32:$src)>;
+            (BLCS32rr GR32:$src)>;
   def : Pat<(or GR64:$src, (add GR64:$src, 1)),
-            (BLCS_64rr GR64:$src)>;
+            (BLCS64rr GR64:$src)>;
 
   def : Pat<(or GR32:$src, (add GR32:$src, -1)),
-            (BLSFILL_32rr GR32:$src)>;
+            (BLSFILL32rr GR32:$src)>;
   def : Pat<(or GR64:$src, (add GR64:$src, -1)),
-            (BLSFILL_64rr GR64:$src)>;
+            (BLSFILL64rr GR64:$src)>;
 
   def : Pat<(or (not GR32:$src), (add GR32:$src, -1)),
-            (BLSIC_32rr GR32:$src)>;
+            (BLSIC32rr GR32:$src)>;
   def : Pat<(or (not GR64:$src), (add GR64:$src, -1)),
-            (BLSIC_64rr GR64:$src)>;
+            (BLSIC64rr GR64:$src)>;
 
   def : Pat<(or (not GR32:$src), (add GR32:$src, 1)),
-            (T1MSKC_32rr GR32:$src)>;
+            (T1MSKC32rr GR32:$src)>;
   def : Pat<(or (not GR64:$src), (add GR64:$src, 1)),
-            (T1MSKC_64rr GR64:$src)>;
+            (T1MSKC64rr GR64:$src)>;
 
   def : Pat<(and (not GR32:$src), (add GR32:$src, -1)),
-            (TZMSK_32rr GR32:$src)>;
+            (TZMSK32rr GR32:$src)>;
   def : Pat<(and (not GR64:$src), (add GR64:$src, -1)),
-            (TZMSK_64rr GR64:$src)>;
+            (TZMSK64rr GR64:$src)>;
 } // HasTBM
 
 //===----------------------------------------------------------------------===//
