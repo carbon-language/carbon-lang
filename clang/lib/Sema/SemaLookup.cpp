@@ -4098,7 +4098,7 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
   // Abort if typo correction already failed for this specific typo.
   IdentifierSourceLocations::iterator locs = TypoCorrectionFailures.find(Typo);
   if (locs != TypoCorrectionFailures.end() &&
-      locs->second.count(TypoName.getLoc()) > 0)
+      locs->second.count(TypoName.getLoc()))
     return TypoCorrection();
 
   // Don't try to correct the identifier "vector" when in AltiVec mode.
