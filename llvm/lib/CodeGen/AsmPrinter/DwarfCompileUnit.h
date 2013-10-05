@@ -87,10 +87,6 @@ class CompileUnit {
   /// corresponds to the MDNode mapped with the subprogram DIE.
   DenseMap<DIE *, const MDNode *> ContainingTypeMap;
 
-  /// getLowerBoundDefault - Return the default lower bound for an array. If the
-  /// DWARF version doesn't handle the language, return -1.
-  int64_t getDefaultLowerBound() const;
-
 public:
   CompileUnit(unsigned UID, DIE *D, const MDNode *N, AsmPrinter *A,
               DwarfDebug *DW, DwarfUnits *DWU);
@@ -130,6 +126,9 @@ public:
   ///
   void addGlobalType(DIType Ty);
 
+  /// addPubTypes - Add a set of types from the subprogram to the global types.
+  void addPubTypes(DISubprogram SP);
+
   /// addAccelName - Add a new name to the name accelerator table.
   void addAccelName(StringRef Name, DIE *Die);
 
@@ -153,27 +152,9 @@ public:
     MDNodeToDieMap.insert(std::make_pair(N, D));
   }
 
-  /// getDIEEntry - Returns the debug information entry for the specified
-  /// debug variable.
-  DIEEntry *getDIEEntry(const MDNode *N) const {
-    return MDNodeToDIEEntryMap.lookup(N);
-  }
-
-  /// insertDIEEntry - Insert debug information entry into the map.
-  void insertDIEEntry(const MDNode *N, DIEEntry *E) {
-    MDNodeToDIEEntryMap.insert(std::make_pair(N, E));
-  }
-
   /// addDie - Adds or interns the DIE to the compile unit.
   ///
   void addDie(DIE *Buffer) { CUDie->addChild(Buffer); }
-
-  // getIndexTyDie - Get an anonymous type for index type.
-  DIE *getIndexTyDie() { return IndexTyDie; }
-
-  // setIndexTyDie - Set D as anonymous type for index which can be reused
-  // later.
-  void setIndexTyDie(DIE *D) { IndexTyDie = D; }
 
   /// addFlag - Add a flag that is true to the DIE.
   void addFlag(DIE *Die, uint16_t Attribute);
@@ -308,15 +289,20 @@ public:
   /// new DIE for the given DITemplateValueParameter.
   DIE *getOrCreateTemplateValueParameterDIE(DITemplateValueParameter TVP);
 
-  /// createDIEEntry - Creates a new DIEEntry to be a proxy for a debug
-  /// information entry.
-  DIEEntry *createDIEEntry(DIE *Entry);
+  /// getOrCreateContextDIE - Get context owner's DIE.
+  DIE *getOrCreateContextDIE(DIScope Context);
 
   /// createGlobalVariableDIE - create global variable DIE.
   void createGlobalVariableDIE(const MDNode *N);
 
-  void addPubTypes(DISubprogram SP);
+  /// constructContainingTypeDIEs - Construct DIEs for types that contain
+  /// vtables.
+  void constructContainingTypeDIEs();
 
+  /// constructVariableDIE - Construct a DIE for the given DbgVariable.
+  DIE *constructVariableDIE(DbgVariable *DV, bool isScopeAbstract);
+
+private:
   /// constructTypeDIE - Construct basic type die from DIBasicType.
   void constructTypeDIE(DIE &Buffer, DIBasicType BTy);
 
@@ -335,21 +321,37 @@ public:
   /// constructEnumTypeDIE - Construct enum type DIE from DIEnumerator.
   DIE *constructEnumTypeDIE(DIEnumerator ETy);
 
-  /// constructContainingTypeDIEs - Construct DIEs for types that contain
-  /// vtables.
-  void constructContainingTypeDIEs();
-
-  /// constructVariableDIE - Construct a DIE for the given DbgVariable.
-  DIE *constructVariableDIE(DbgVariable *DV, bool isScopeAbstract);
-
   /// createMemberDIE - Create new member DIE.
   DIE *createMemberDIE(DIDerivedType DT);
 
   /// createStaticMemberDIE - Create new static data member DIE.
   DIE *createStaticMemberDIE(DIDerivedType DT);
 
-  /// getOrCreateContextDIE - Get context owner's DIE.
-  DIE *getOrCreateContextDIE(DIScope Context);
+  /// getLowerBoundDefault - Return the default lower bound for an array. If the
+  /// DWARF version doesn't handle the language, return -1.
+  int64_t getDefaultLowerBound() const;
+
+  /// getDIEEntry - Returns the debug information entry for the specified
+  /// debug variable.
+  DIEEntry *getDIEEntry(const MDNode *N) const {
+    return MDNodeToDIEEntryMap.lookup(N);
+  }
+
+  /// insertDIEEntry - Insert debug information entry into the map.
+  void insertDIEEntry(const MDNode *N, DIEEntry *E) {
+    MDNodeToDIEEntryMap.insert(std::make_pair(N, E));
+  }
+
+  // getIndexTyDie - Get an anonymous type for index type.
+  DIE *getIndexTyDie() { return IndexTyDie; }
+
+  // setIndexTyDie - Set D as anonymous type for index which can be reused
+  // later.
+  void setIndexTyDie(DIE *D) { IndexTyDie = D; }
+
+  /// createDIEEntry - Creates a new DIEEntry to be a proxy for a debug
+  /// information entry.
+  DIEEntry *createDIEEntry(DIE *Entry);
 
 private:
 

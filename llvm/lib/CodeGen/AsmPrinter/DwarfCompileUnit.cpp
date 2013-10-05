@@ -880,7 +880,7 @@ void CompileUnit::addGlobalType(DIType Ty) {
       GlobalTypes[Ty.getName()] = Entry->getEntry();
 }
 
-/// addPubTypes - Add type for pubtypes section.
+/// addPubTypes - Add subprogram argument types for pubtypes section.
 void CompileUnit::addPubTypes(DISubprogram SP) {
   DICompositeType SPTy = SP.getType();
   uint16_t SPTag = SPTy.getTag();
