@@ -1,4 +1,5 @@
 ; RUN: %lli_mcjit -extra-modules=%p/cross-module-b.ir -relocation-model=pic -code-model=small %s > /dev/null
+; XFAIL: mips, i686, i386, aarch64, arm
 
 declare i32 @FB()
 
