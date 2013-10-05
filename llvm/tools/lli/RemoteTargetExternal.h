@@ -88,7 +88,7 @@ public:
   virtual void stop();
 
   RemoteTargetExternal(std::string &Name) : RemoteTarget(), ChildName(Name) {}
-  virtual ~RemoteTargetExternal() {}
+  virtual ~RemoteTargetExternal();
 
 private:
   std::string ChildName;

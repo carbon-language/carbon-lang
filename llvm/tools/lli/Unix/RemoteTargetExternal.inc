@@ -89,4 +89,8 @@ void RemoteTargetExternal::Wait() {
   wait(NULL);
 }
 
+RemoteTargetExternal::~RemoteTargetExternal() {
+  delete static_cast<ConnectionData_t *>(ConnectionData);
+}
+
 } // namespace llvm

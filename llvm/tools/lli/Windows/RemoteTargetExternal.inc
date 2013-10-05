@@ -29,4 +29,7 @@ int RemoteTargetExternal::ReadBytes(void *Data, size_t Size) {
 void RemoteTargetExternal::Wait() {
 }
 
+RemoteTargetExternal::~RemoteTargetExternal() {
+}
+
 } // namespace llvm

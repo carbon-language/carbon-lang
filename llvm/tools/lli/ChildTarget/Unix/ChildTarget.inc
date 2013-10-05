@@ -49,6 +49,10 @@ struct ConnectionData_t {
 
 } // namespace
 
+LLIChildTarget::~LLIChildTarget() {
+  delete static_cast<ConnectionData_t *>(ConnectionData);
+}
+
 // OS-specific methods
 void LLIChildTarget::initializeConnection() {
   // Store the parent ends of the pipes

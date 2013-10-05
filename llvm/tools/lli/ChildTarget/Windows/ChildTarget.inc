@@ -12,6 +12,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+LLIChildTarget::~LLIChildTarget() {
+}
+
 // The RemoteTargetExternal implementation should prevent us from ever getting
 // here on Windows, but nothing prevents a user from running this directly.
 void LLIChildTarget::initializeConnection() {

@@ -11,6 +11,7 @@ using namespace llvm;
 
 class LLIChildTarget {
 public:
+  ~LLIChildTarget(); // OS-specific destructor
   void initialize();
   LLIMessageType waitForIncomingMessage();
   void handleMessage(LLIMessageType messageType);
