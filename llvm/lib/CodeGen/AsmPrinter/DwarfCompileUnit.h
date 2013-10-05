@@ -86,6 +86,12 @@ class CompileUnit {
   /// corresponds to the MDNode mapped with the subprogram DIE.
   DenseMap<DIE *, const MDNode *> ContainingTypeMap;
 
+  // DIEValueAllocator - All DIEValues are allocated through this allocator.
+  BumpPtrAllocator DIEValueAllocator;
+
+  // DIEIntegerOne - A preallocated DIEValue because 1 is used frequently.
+  DIEInteger *DIEIntegerOne;
+
 public:
   CompileUnit(unsigned UID, DIE *D, const MDNode *N, AsmPrinter *A,
               DwarfDebug *DW, DwarfUnits *DWU);
@@ -357,12 +363,6 @@ private:
   template <typename T> T resolve(DIRef<T> Ref) const {
     return DD->resolve(Ref);
   }
-
-private:
-
-  // DIEValueAllocator - All DIEValues are allocated through this allocator.
-  BumpPtrAllocator DIEValueAllocator;
-  DIEInteger *DIEIntegerOne;
 };
 
 } // end llvm namespace
