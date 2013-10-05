@@ -165,9 +165,10 @@ waitpid_thread (void *arg)
 static bool
 spawn_waitpid_thread (pid_t pid)
 {
-    pthread_t thread = THREAD_NULL;
-    ::pthread_create (&thread, NULL, waitpid_thread, (void *)(intptr_t)pid);
-    if (thread != THREAD_NULL)
+    pthread_t thread;
+    int ret = ::pthread_create (&thread, NULL, waitpid_thread, (void *)(intptr_t)pid);
+    // pthread_create returns 0 if successful
+    if (ret == 0)
     {
         ::pthread_detach (thread);
         return true;

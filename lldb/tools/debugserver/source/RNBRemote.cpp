@@ -815,7 +815,7 @@ best_guess_cpu_type ()
  (end of string).  */
 
 std::vector<uint8_t>
-decode_binary_data (const char *str, int len)
+decode_binary_data (const char *str, size_t len)
 {
     std::vector<uint8_t> bytes;
     if (len == 0)
@@ -1253,7 +1253,7 @@ RNBRemote::HandlePacket_A (const char *p)
         return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Null packet for 'A' pkt");
     }
     p++;
-    if (p == '\0' || !isdigit (*p))
+    if (*p == '\0' || !isdigit (*p))
     {
         return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "arglen not specified on 'A' pkt");
     }
