@@ -22,21 +22,8 @@ struct X
     constexpr X(int i) : i_(i) {}
 };
 
-namespace std
-{
-
-template <>
-struct less<X>
-{
-    constexpr
-    bool
-    operator()(const X& x, const X& y) const
-    {
-        return x.i_ < y.i_;
-    }
-};
-
-}
+constexpr bool operator < ( const X &rhs, const X &lhs )
+    { return rhs.i_ < lhs.i_ ; }
 
 #endif
 

@@ -15,11 +15,25 @@
 #include <type_traits>
 #include <cassert>
 
+#if _LIBCPP_STD_VER > 11
+
+struct X
+{
+    int i_;
+
+    constexpr X(int i) : i_(i) {}
+};
+
+constexpr bool operator == ( const X &rhs, const X &lhs )
+    { return rhs.i_ == lhs.i_ ; }
+    
+#endif
+
 int main()
 {
 #if _LIBCPP_STD_VER > 11
     {
-    typedef int T;
+    typedef X T;
     typedef std::optional<T> O;
     
     constexpr O o1;     // disengaged
