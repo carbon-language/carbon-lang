@@ -28,6 +28,7 @@ namespace std
 
     // Primary classification traits:
     template <class T> struct is_void;
+    template <class T> struct is_null_pointer;  // C++14
     template <class T> struct is_integral;
     template <class T> struct is_floating_point;
     template <class T> struct is_array;
@@ -298,6 +299,11 @@ template <>          struct ____is_nullptr_t<nullptr_t> : public true_type {};
 template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY __is_nullptr_t
     : public ____is_nullptr_t<typename remove_cv<_Tp>::type> {};
 
+#if _LIBCPP_STD_VER > 11
+template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_null_pointer
+    : public ____is_nullptr_t<typename remove_cv<_Tp>::type> {};
+#endif
+
 // is_integral
 
 template <class _Tp> struct __is_integral                     : public false_type {};
@@ -422,7 +428,7 @@ template <class _Tp, bool = is_class<_Tp>::value ||
                             is_union<_Tp>::value ||
                             is_void<_Tp>::value  ||
                             is_reference<_Tp>::value ||
-                            is_same<_Tp, nullptr_t>::value >
+                            __is_nullptr_t<_Tp>::value >
 struct __is_function
     : public integral_constant<bool, sizeof(__is_function_imp::__test<_Tp>(__is_function_imp::__source<_Tp>())) == 1>
     {};

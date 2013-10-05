@@ -9,17 +9,17 @@
 
 // type_traits
 
-// class
+// nullptr_t
+//	is_null_pointer
 
 #include <type_traits>
 
+#if _LIBCPP_STD_VER > 11
 template <class T>
-void test_class_imp()
+void test_nullptr_imp()
 {
     static_assert(!std::is_void<T>::value, "");
-#if _LIBCPP_STD_VER > 11
-    static_assert(!std::is_null_pointer<T>::value, "");
-#endif
+    static_assert( std::is_null_pointer<T>::value, "");
     static_assert(!std::is_integral<T>::value, "");
     static_assert(!std::is_floating_point<T>::value, "");
     static_assert(!std::is_array<T>::value, "");
@@ -30,26 +30,23 @@ void test_class_imp()
     static_assert(!std::is_member_function_pointer<T>::value, "");
     static_assert(!std::is_enum<T>::value, "");
     static_assert(!std::is_union<T>::value, "");
-    static_assert( std::is_class<T>::value, "");
+    static_assert(!std::is_class<T>::value, "");
     static_assert(!std::is_function<T>::value, "");
 }
 
 template <class T>
-void test_class()
+void test_nullptr()
 {
-    test_class_imp<T>();
-    test_class_imp<const T>();
-    test_class_imp<volatile T>();
-    test_class_imp<const volatile T>();
+    test_nullptr_imp<T>();
+    test_nullptr_imp<const T>();
+    test_nullptr_imp<volatile T>();
+    test_nullptr_imp<const volatile T>();
 }
-
-class Class
-{
-    int _;
-    double __;
-};
 
 int main()
 {
-    test_class<Class>();
+    test_nullptr<std::nullptr_t>();
 }
+#else
+int main() {}
+#endif
