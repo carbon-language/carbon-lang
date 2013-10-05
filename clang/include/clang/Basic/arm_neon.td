@@ -165,6 +165,7 @@ class NoTestOpInst<string n, string p, string t, Op o> : Inst<n, p, t, o> {}
 // i: constant int
 // l: constant uint64
 // s: scalar of element type
+// r: scalar of double width element type
 // a: scalar of element type (splat to vector type)
 // k: default elt width, double num elts
 // #: array of default vectors
@@ -695,6 +696,15 @@ def VQRDMULH_LANEQ : SOpInst<"vqrdmulh_laneq", "ddji", "siQsQi", OP_QRDMULH_LN>;
 
 def VMULX_LANE : IOpInst<"vmulx_lane", "ddgi", "fdQfQd", OP_MULX_LN>;
 def VMULX_LANEQ : IOpInst<"vmulx_laneq", "ddji", "fdQfQd", OP_MULX_LN>;
+
+////////////////////////////////////////////////////////////////////////////////
+// Across vectors class
+def VADDLV  : SInst<"vaddlv", "rd", "csiUcUsUiQcQsQiQUcQUsQUi">;
+def VMAXV   : SInst<"vmaxv", "sd", "csiUcUsUiQcQsQiQUcQUsQUiQf">;
+def VMINV   : SInst<"vminv", "sd", "csiUcUsUiQcQsQiQUcQUsQUiQf">;
+def VADDV   : SInst<"vaddv", "sd", "csiUcUsUiQcQsQiQUcQUsQUi">;
+def FMAXNMV : SInst<"vmaxnmv", "sd", "Qf">;
+def FMINNMV : SInst<"vminnmv", "sd", "Qf">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Scalar Arithmetic

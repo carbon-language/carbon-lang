@@ -484,6 +484,8 @@ static char ModType(const char mod, char type, bool &quad, bool &poly,
       scal = true;
       usgn = true;
       break;
+    case 'r':
+      type = Widen(type);
     case 's':
     case 'a':
       scal = true;
@@ -1878,6 +1880,12 @@ static unsigned GetNeonEnum(const std::string &proto, StringRef typestr) {
   return Flags.getFlags();
 }
 
+static bool ProtoHasScalar(const std::string proto)
+{
+  return (proto.find('s') != std::string::npos
+          || proto.find('r') != std::string::npos);
+}
+
 // Generate the definition for this intrinsic, e.g. __builtin_neon_cls(a)
 static std::string GenBuiltin(const std::string &name, const std::string &proto,
                               StringRef typestr, ClassKind ck) {
@@ -1892,7 +1900,7 @@ static std::string GenBuiltin(const std::string &name, const std::string &proto,
   // Check if the prototype has a scalar operand with the type of the vector
   // elements.  If not, bitcasting the args will take care of arg checking.
   // The actual signedness etc. will be taken care of with special enums.
-  if (proto.find('s') == std::string::npos)
+  if (!ProtoHasScalar(proto))
     ck = ClassB;
 
   if (proto[0] != 'v') {
@@ -2003,7 +2011,7 @@ static std::string GenBuiltinDef(const std::string &name,
   // If all types are the same size, bitcasting the args will take care
   // of arg checking.  The actual signedness etc. will be taken care of with
   // special enums.
-  if (proto.find('s') == std::string::npos)
+  if (!ProtoHasScalar(proto))
     ck = ClassB;
 
   s += MangleName(name, typestr, ck);
@@ -2413,7 +2421,7 @@ NeonEmitter::genIntrinsicRangeCheckCode(raw_ostream &OS,
         else
           PrintFatalError(R->getLoc(),
               "Fixed point convert name should contains \"32\" or \"64\"");
-      } else if (Proto.find('s') == std::string::npos) {
+      } else if (!ProtoHasScalar(Proto)) {
         // Builtins which are overloaded by type will need to have their upper
         // bound computed at Sema time based on the type constant.
         ck = ClassB;
@@ -2510,7 +2518,7 @@ NeonEmitter::genOverloadTypeCheckCode(raw_ostream &OS,
 
     // Functions which have a scalar argument cannot be overloaded, no need to
     // check them if we are emitting the type checking code.
-    if (Proto.find('s') != std::string::npos)
+    if (ProtoHasScalar(Proto))
       continue;
 
     SmallVector<StringRef, 16> TypeVec;
