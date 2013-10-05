@@ -2202,6 +2202,131 @@ multiclass Neon_sshll2_0<SDNode ext>
 defm NI_sext_high : Neon_sshll2_0<sext>;
 defm NI_zext_high : Neon_sshll2_0<zext>;
 
+
+//===----------------------------------------------------------------------===//
+// Multiclasses for NeonI_Across
+//===----------------------------------------------------------------------===//
+
+// Variant 1
+
+multiclass NeonI_2VAcross_1<bit u, bits<5> opcode,
+                            string asmop, SDPatternOperator opnode>
+{
+    def _1h8b:  NeonI_2VAcross<0b0, u, 0b00, opcode,
+                (outs FPR16:$Rd), (ins VPR64:$Rn),
+                asmop # "\t$Rd, $Rn.8b",
+                [(set (v1i16 FPR16:$Rd),
+                    (v1i16 (opnode (v8i8 VPR64:$Rn))))],
+                NoItinerary>;
+
+    def _1h16b: NeonI_2VAcross<0b1, u, 0b00, opcode,
+                (outs FPR16:$Rd), (ins VPR128:$Rn),
+                asmop # "\t$Rd, $Rn.16b",
+                [(set (v1i16 FPR16:$Rd),
+                    (v1i16 (opnode (v16i8 VPR128:$Rn))))],
+                NoItinerary>;
+
+    def _1s4h:  NeonI_2VAcross<0b0, u, 0b01, opcode,
+                (outs FPR32:$Rd), (ins VPR64:$Rn),
+                asmop # "\t$Rd, $Rn.4h",
+                [(set (v1i32 FPR32:$Rd),
+                    (v1i32 (opnode (v4i16 VPR64:$Rn))))],
+                NoItinerary>;
+
+    def _1s8h:  NeonI_2VAcross<0b1, u, 0b01, opcode,
+                (outs FPR32:$Rd), (ins VPR128:$Rn),
+                asmop # "\t$Rd, $Rn.8h",
+                [(set (v1i32 FPR32:$Rd),
+                    (v1i32 (opnode (v8i16 VPR128:$Rn))))],
+                NoItinerary>;
+
+    // _1d2s doesn't exist!
+
+    def _1d4s:  NeonI_2VAcross<0b1, u, 0b10, opcode,
+                (outs FPR64:$Rd), (ins VPR128:$Rn),
+                asmop # "\t$Rd, $Rn.4s",
+                [(set (v1i64 FPR64:$Rd),
+                    (v1i64 (opnode (v4i32 VPR128:$Rn))))],
+                NoItinerary>;
+}
+
+defm SADDLV : NeonI_2VAcross_1<0b0, 0b00011, "saddlv", int_aarch64_neon_saddlv>;
+defm UADDLV : NeonI_2VAcross_1<0b1, 0b00011, "uaddlv", int_aarch64_neon_uaddlv>;
+
+// Variant 2
+
+multiclass NeonI_2VAcross_2<bit u, bits<5> opcode,
+                            string asmop, SDPatternOperator opnode>
+{
+    def _1b8b:  NeonI_2VAcross<0b0, u, 0b00, opcode,
+                (outs FPR8:$Rd), (ins VPR64:$Rn),
+                asmop # "\t$Rd, $Rn.8b",
+                [(set (v1i8 FPR8:$Rd),
+                    (v1i8 (opnode (v8i8 VPR64:$Rn))))],
+                NoItinerary>;
+
+    def _1b16b: NeonI_2VAcross<0b1, u, 0b00, opcode,
+                (outs FPR8:$Rd), (ins VPR128:$Rn),
+                asmop # "\t$Rd, $Rn.16b",
+                [(set (v1i8 FPR8:$Rd),
+                    (v1i8 (opnode (v16i8 VPR128:$Rn))))],
+                NoItinerary>;
+
+    def _1h4h:  NeonI_2VAcross<0b0, u, 0b01, opcode,
+                (outs FPR16:$Rd), (ins VPR64:$Rn),
+                asmop # "\t$Rd, $Rn.4h",
+                [(set (v1i16 FPR16:$Rd),
+                    (v1i16 (opnode (v4i16 VPR64:$Rn))))],
+                NoItinerary>;
+
+    def _1h8h:  NeonI_2VAcross<0b1, u, 0b01, opcode,
+                (outs FPR16:$Rd), (ins VPR128:$Rn),
+                asmop # "\t$Rd, $Rn.8h",
+                [(set (v1i16 FPR16:$Rd),
+                    (v1i16 (opnode (v8i16 VPR128:$Rn))))],
+                NoItinerary>;
+
+    // _1s2s doesn't exist!
+
+    def _1s4s:  NeonI_2VAcross<0b1, u, 0b10, opcode,
+                (outs FPR32:$Rd), (ins VPR128:$Rn),
+                asmop # "\t$Rd, $Rn.4s",
+                [(set (v1i32 FPR32:$Rd),
+                    (v1i32 (opnode (v4i32 VPR128:$Rn))))],
+                NoItinerary>;
+}
+
+defm SMAXV : NeonI_2VAcross_2<0b0, 0b01010, "smaxv", int_aarch64_neon_smaxv>;
+defm UMAXV : NeonI_2VAcross_2<0b1, 0b01010, "umaxv", int_aarch64_neon_umaxv>;
+
+defm SMINV : NeonI_2VAcross_2<0b0, 0b11010, "sminv", int_aarch64_neon_sminv>;
+defm UMINV : NeonI_2VAcross_2<0b1, 0b11010, "uminv", int_aarch64_neon_uminv>;
+
+defm ADDV : NeonI_2VAcross_2<0b0, 0b11011, "addv", int_aarch64_neon_vaddv>;
+
+// Variant 3
+
+multiclass NeonI_2VAcross_3<bit u, bits<5> opcode, bits<2> size,
+                            string asmop, SDPatternOperator opnode>
+{
+    def _1s4s:  NeonI_2VAcross<0b1, u, size, opcode,
+                (outs FPR32:$Rd), (ins VPR128:$Rn),
+                asmop # "\t$Rd, $Rn.4s",
+                [(set (v1f32 FPR32:$Rd),
+                    (v1f32 (opnode (v4f32 VPR128:$Rn))))],
+                NoItinerary>;
+}
+
+defm FMAXNMV : NeonI_2VAcross_3<0b1, 0b01100, 0b00, "fmaxnmv",
+                                int_aarch64_neon_vmaxnmv>;
+defm FMINNMV : NeonI_2VAcross_3<0b1, 0b01100, 0b10, "fminnmv",
+                                int_aarch64_neon_vminnmv>;
+
+defm FMAXV : NeonI_2VAcross_3<0b1, 0b01111, 0b00, "fmaxv",
+                              int_aarch64_neon_vmaxv>;
+defm FMINV : NeonI_2VAcross_3<0b1, 0b01111, 0b10, "fminv",
+                              int_aarch64_neon_vminv>;
+
 // The followings are for instruction class (3V Diff)
 
 // normal long/long2 pattern

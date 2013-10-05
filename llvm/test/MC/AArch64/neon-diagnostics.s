@@ -3608,3 +3608,166 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR:        sqrdmulh v0.2d, v1.2d, v22.d[1]
 // CHECK-ERROR:                    ^
+
+//----------------------------------------------------------------------
+// Across vectors
+//----------------------------------------------------------------------
+
+        saddlv b0, v1.8b
+        saddlv b0, v1.16b
+        saddlv h0, v1.4h
+        saddlv h0, v1.8h
+        saddlv s0, v1.2s
+        saddlv s0, v1.4s
+        saddlv d0, v1.2s
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        saddlv b0, v1.8b
+// CHECK-ERROR:               ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        saddlv b0, v1.16b
+// CHECK-ERROR:               ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        saddlv h0, v1.4h
+// CHECK-ERROR:                      ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        saddlv h0, v1.8h
+// CHECK-ERROR:                      ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        saddlv s0, v1.2s
+// CHECK-ERROR:                      ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        saddlv s0, v1.4s
+// CHECK-ERROR:                      ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        saddlv d0, v1.2s
+// CHECK-ERROR:                   ^
+
+        uaddlv b0, v1.8b
+        uaddlv b0, v1.16b
+        uaddlv h0, v1.4h
+        uaddlv h0, v1.8h
+        uaddlv s0, v1.2s
+        uaddlv s0, v1.4s
+        uaddlv d0, v1.2s
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        uaddlv b0, v1.8b
+// CHECK-ERROR:               ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        uaddlv b0, v1.16b
+// CHECK-ERROR:               ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        uaddlv h0, v1.4h
+// CHECK-ERROR:                      ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        uaddlv h0, v1.8h
+// CHECK-ERROR:                      ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        uaddlv s0, v1.2s
+// CHECK-ERROR:                      ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        uaddlv s0, v1.4s
+// CHECK-ERROR:                      ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        uaddlv d0, v1.2s
+// CHECK-ERROR:                   ^
+
+        smaxv s0, v1.2s
+        sminv s0, v1.2s
+        umaxv s0, v1.2s
+        uminv s0, v1.2s
+        addv s0, v1.2s
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        smaxv s0, v1.2s
+// CHECK-ERROR:                  ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        sminv s0, v1.2s
+// CHECK-ERROR:                  ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        umaxv s0, v1.2s
+// CHECK-ERROR:                  ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        uminv s0, v1.2s
+// CHECK-ERROR:                  ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        addv s0, v1.2s
+// CHECK-ERROR:                 ^
+
+        smaxv d0, v1.2d
+        sminv d0, v1.2d
+        umaxv d0, v1.2d
+        uminv d0, v1.2d
+        addv d0, v1.2d
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        smaxv d0, v1.2d
+// CHECK-ERROR:              ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        sminv d0, v1.2d
+// CHECK-ERROR:              ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        umaxv d0, v1.2d
+// CHECK-ERROR:              ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        uminv d0, v1.2d
+// CHECK-ERROR:              ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        addv d0, v1.2d
+// CHECK-ERROR:             ^
+
+        fmaxnmv b0, v1.16b
+        fminnmv b0, v1.16b
+        fmaxv b0, v1.16b
+        fminv b0, v1.16b
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        fmaxnmv b0, v1.16b
+// CHECK-ERROR:                ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        fminnmv b0, v1.16b
+// CHECK-ERROR:                ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        fmaxv b0, v1.16b
+// CHECK-ERROR:              ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        fminv b0, v1.16b
+// CHECK-ERROR:              ^
+
+        fmaxnmv h0, v1.8h
+        fminnmv h0, v1.8h
+        fmaxv h0, v1.8h
+        fminv h0, v1.8h
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        fmaxnmv h0, v1.8h
+// CHECK-ERROR:                ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        fminnmv h0, v1.8h
+// CHECK-ERROR:                ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        fmaxv h0, v1.8h
+// CHECK-ERROR:              ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        fminv h0, v1.8h
+// CHECK-ERROR:              ^
+
+        fmaxnmv d0, v1.2d
+        fminnmv d0, v1.2d
+        fmaxv d0, v1.2d
+        fminv d0, v1.2d
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        fmaxnmv d0, v1.2d
+// CHECK-ERROR:                ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        fminnmv d0, v1.2d
+// CHECK-ERROR:                ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        fmaxv d0, v1.2d
+// CHECK-ERROR:              ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        fminv d0, v1.2d
+// CHECK-ERROR:              ^
+

@@ -1159,5 +1159,24 @@ class NeonI_ScalarPair<bit u, bits<2> size, bits<5> opcode,
   // Inherit Rd in 4-0
 }
 
+// Format AdvSIMD 2 vector across lanes
+class NeonI_2VAcross<bit q, bit u, bits<2> size, bits<5> opcode,
+                     dag outs, dag ins, string asmstr,
+                     list<dag> patterns, InstrItinClass itin>
+  : A64InstRdn<outs, ins, asmstr, patterns, itin>
+{
+  let Inst{31} = 0b0;
+  let Inst{30} = q;
+  let Inst{29} = u;
+  let Inst{28-24} = 0b01110;
+  let Inst{23-22} = size;
+  let Inst{21-17} = 0b11000;
+  let Inst{16-12} = opcode;
+  let Inst{11-10} = 0b10;
+
+  // Inherit Rn in 9-5
+  // Inherit Rd in 4-0
+}
+
 }
 

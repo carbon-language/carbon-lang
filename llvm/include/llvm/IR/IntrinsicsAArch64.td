@@ -65,6 +65,25 @@ def int_aarch64_neon_vuqshrn : Neon_N2V_Narrow_Intrinsic;
 def int_aarch64_neon_vsqrshrn : Neon_N2V_Narrow_Intrinsic;
 def int_aarch64_neon_vuqrshrn : Neon_N2V_Narrow_Intrinsic;
 
+// Vector across
+class Neon_Across_Intrinsic
+  : Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty], [IntrNoMem]>;
+
+class Neon_2Arg_Across_Float_Intrinsic
+  : Intrinsic<[llvm_anyvector_ty], [llvm_v4f32_ty], [IntrNoMem]>;
+
+def int_aarch64_neon_saddlv : Neon_Across_Intrinsic;
+def int_aarch64_neon_uaddlv : Neon_Across_Intrinsic;
+def int_aarch64_neon_smaxv  : Neon_Across_Intrinsic;
+def int_aarch64_neon_umaxv  : Neon_Across_Intrinsic;
+def int_aarch64_neon_sminv  : Neon_Across_Intrinsic;
+def int_aarch64_neon_uminv  : Neon_Across_Intrinsic;
+def int_aarch64_neon_vaddv  : Neon_Across_Intrinsic;
+def int_aarch64_neon_vmaxv  : Neon_Across_Intrinsic;
+def int_aarch64_neon_vminv  : Neon_Across_Intrinsic;
+def int_aarch64_neon_vmaxnmv : Neon_Across_Intrinsic;
+def int_aarch64_neon_vminnmv : Neon_Across_Intrinsic;
+
 // Scalar Add
 def int_aarch64_neon_vaddds :
   Intrinsic<[llvm_v1i64_ty], [llvm_v1i64_ty, llvm_v1i64_ty], [IntrNoMem]>;
