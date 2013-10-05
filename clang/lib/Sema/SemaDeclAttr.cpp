@@ -1059,25 +1059,19 @@ static void handleCallableWhenAttr(Sema &S, Decl *D,
   for (unsigned ArgIndex = 0; ArgIndex < Attr.getNumArgs(); ++ArgIndex) {
     CallableWhenAttr::ConsumedState CallableState;
     
-    if (Attr.isArgExpr(ArgIndex) &&
-        isa<StringLiteral>(Attr.getArgAsExpr(ArgIndex))) {
-      
-      Expr *Arg = Attr.getArgAsExpr(ArgIndex);
-      StringRef StateString = cast<StringLiteral>(Arg)->getString();
-      
-      if (!CallableWhenAttr::ConvertStrToConsumedState(StateString,
-                                                       CallableState)) {
-        S.Diag(Arg->getExprLoc(), diag::warn_attribute_type_not_supported)
-          << Attr.getName() << StateString;
-        return;
-      }
-      
-      States.push_back(CallableState);
-    } else {
-      S.Diag(Attr.getLoc(), diag::err_attribute_argument_type) << Attr.getName()
-        << AANT_ArgumentString;
+    StringRef StateString;
+    SourceLocation Loc;
+    if (!S.checkStringLiteralArgumentAttr(Attr, ArgIndex, StateString, &Loc))
+      return;
+
+    if (!CallableWhenAttr::ConvertStrToConsumedState(StateString,
+                                                      CallableState)) {
+      S.Diag(Loc, diag::warn_attribute_type_not_supported)
+        << Attr.getName() << StateString;
       return;
     }
+      
+    States.push_back(CallableState);
   }
   
   D->addAttr(::new (S.Context)
