@@ -42,39 +42,42 @@ std::string sys::FindProgramByName(const std::string &progName) {
 
   // At this point, the file name is valid and does not contain slashes.
   // Let Windows search for it.
-  SmallVector<wchar_t, MAX_PATH> progNameUnicode;
-  if (windows::UTF8ToUTF16(progName, progNameUnicode))
+  std::string buffer;
+  buffer.resize(MAX_PATH);
+  char *dummy = NULL;
+  DWORD len = SearchPath(NULL, progName.c_str(), ".exe", MAX_PATH,
+                         &buffer[0], &dummy);
+
+  // See if it wasn't found.
+  if (len == 0)
     return "";
 
-  SmallVector<wchar_t, MAX_PATH> buffer;
-  DWORD len = MAX_PATH;
-  do {
-    buffer.reserve(len);
-    len = ::SearchPathW(NULL, progNameUnicode.data(), L".exe",
-                        buffer.capacity(), buffer.data(), NULL);
+  // See if we got the entire path.
+  if (len < MAX_PATH)
+    return buffer;
 
-    // See if it wasn't found.
-    if (len == 0)
+  // Buffer was too small; grow and retry.
+  while (true) {
+    buffer.resize(len+1);
+    DWORD len2 = SearchPath(NULL, progName.c_str(), ".exe", len+1, &buffer[0], &dummy);
+
+    // It is unlikely the search failed, but it's always possible some file
+    // was added or removed since the last search, so be paranoid...
+    if (len2 == 0)
       return "";
+    else if (len2 <= len)
+      return buffer;
 
-    // Buffer was too small; grow and retry.
-  } while (len > buffer.capacity());
-
-  buffer.set_size(len);
-  SmallVector<char, MAX_PATH> result;
-  if (windows::UTF16ToUTF8(buffer.begin(), buffer.size(), result))
-    return "";
-
-  return std::string(result.data(), result.size());
+    len = len2;
+  }
 }
 
 static HANDLE RedirectIO(const StringRef *path, int fd, std::string* ErrMsg) {
   HANDLE h;
   if (path == 0) {
-    if (!DuplicateHandle(GetCurrentProcess(), (HANDLE)_get_osfhandle(fd),
-                         GetCurrentProcess(), &h,
-                         0, TRUE, DUPLICATE_SAME_ACCESS))
-      return INVALID_HANDLE_VALUE;
+    DuplicateHandle(GetCurrentProcess(), (HANDLE)_get_osfhandle(fd),
+                    GetCurrentProcess(), &h,
+                    0, TRUE, DUPLICATE_SAME_ACCESS);
     return h;
   }
 
@@ -89,13 +92,9 @@ static HANDLE RedirectIO(const StringRef *path, int fd, std::string* ErrMsg) {
   sa.lpSecurityDescriptor = 0;
   sa.bInheritHandle = TRUE;
 
-  SmallVector<wchar_t, 128> fnameUnicode;
-  if (windows::UTF8ToUTF16(fname, fnameUnicode))
-    return INVALID_HANDLE_VALUE;
-
-  h = CreateFileW(fnameUnicode.data(), fd ? GENERIC_WRITE : GENERIC_READ,
-                  FILE_SHARE_READ, &sa, fd == 0 ? OPEN_EXISTING : CREATE_ALWAYS,
-                  FILE_ATTRIBUTE_NORMAL, NULL);
+  h = CreateFile(fname.c_str(), fd ? GENERIC_WRITE : GENERIC_READ,
+                 FILE_SHARE_READ, &sa, fd == 0 ? OPEN_EXISTING : CREATE_ALWAYS,
+                 FILE_ATTRIBUTE_NORMAL, NULL);
   if (h == INVALID_HANDLE_VALUE) {
     MakeErrMsg(ErrMsg, std::string(fname) + ": Can't open file for " +
         (fd ? "input: " : "output: "));
@@ -219,28 +218,34 @@ static bool Execute(ProcessInfo &PI, StringRef Program, const char **args,
   *p = 0;
 
   // The pointer to the environment block for the new process.
-  std::vector<wchar_t> EnvBlock;
+  OwningArrayPtr<char> envblock;
 
   if (envp) {
     // An environment block consists of a null-terminated block of
     // null-terminated strings. Convert the array of environment variables to
     // an environment block by concatenating them.
-    for (unsigned i = 0; envp[i]; ++i) {
-      SmallVector<wchar_t, MAX_PATH> EnvString;
-      if (error_code ec = windows::UTF8ToUTF16(envp[i], EnvString)) {
-        SetLastError(ec.value());
-        MakeErrMsg(ErrMsg, "Unable to convert environment variable to UTF-16");
-        return false;
-      }
 
-      EnvBlock.insert(EnvBlock.end(), EnvString.begin(), EnvString.end());
-      EnvBlock.push_back(0);
+    // First, determine the length of the environment block.
+    len = 0;
+    for (unsigned i = 0; envp[i]; i++)
+      len += strlen(envp[i]) + 1;
+
+    // Now build the environment block.
+    envblock.reset(new char[len+1]);
+    p = envblock.get();
+
+    for (unsigned i = 0; envp[i]; i++) {
+      const char *ev = envp[i];
+      size_t len = strlen(ev) + 1;
+      memcpy(p, ev, len);
+      p += len;
     }
-    EnvBlock.push_back(0);
+
+    *p = 0;
   }
 
   // Create a child process.
-  STARTUPINFOW si;
+  STARTUPINFO si;
   memset(&si, 0, sizeof(si));
   si.cb = sizeof(si);
   si.hStdInput = INVALID_HANDLE_VALUE;
@@ -264,14 +269,9 @@ static bool Execute(ProcessInfo &PI, StringRef Program, const char **args,
     if (redirects[1] && redirects[2] && *(redirects[1]) == *(redirects[2])) {
       // If stdout and stderr should go to the same place, redirect stderr
       // to the handle already open for stdout.
-      if (!DuplicateHandle(GetCurrentProcess(), si.hStdOutput,
-                           GetCurrentProcess(), &si.hStdError,
-                           0, TRUE, DUPLICATE_SAME_ACCESS)) {
-        CloseHandle(si.hStdInput);
-        CloseHandle(si.hStdOutput);
-        MakeErrMsg(ErrMsg, "can't dup stderr to stdout");
-        return false;
-      }
+      DuplicateHandle(GetCurrentProcess(), si.hStdOutput,
+                      GetCurrentProcess(), &si.hStdError,
+                      0, TRUE, DUPLICATE_SAME_ACCESS);
     } else {
       // Just redirect stderr
       si.hStdError = RedirectIO(redirects[2], 2, ErrMsg);
@@ -289,27 +289,9 @@ static bool Execute(ProcessInfo &PI, StringRef Program, const char **args,
 
   fflush(stdout);
   fflush(stderr);
-
-  SmallVector<wchar_t, MAX_PATH> ProgramUtf16;
-  if (error_code ec = windows::UTF8ToUTF16(Program, ProgramUtf16)) {
-    SetLastError(ec.value());
-    MakeErrMsg(ErrMsg,
-               std::string("Unable to convert application name to UTF-16"));
-    return false;
-  }
-
-  SmallVector<wchar_t, MAX_PATH> CommandUtf16;
-  if (error_code ec = windows::UTF8ToUTF16(command.get(), CommandUtf16)) {
-    SetLastError(ec.value());
-    MakeErrMsg(ErrMsg,
-               std::string("Unable to convert command-line to UTF-16"));
-    return false;
-  }
-
-  BOOL rc = CreateProcessW(ProgramUtf16.data(), CommandUtf16.data(), 0, 0,
-                           TRUE, CREATE_UNICODE_ENVIRONMENT,
-                           EnvBlock.empty() ? 0 : EnvBlock.data(), 0, &si,
-                           &pi);
+  std::string ProgramStr = Program;
+  BOOL rc = CreateProcess(ProgramStr.c_str(), command.get(), NULL, NULL, TRUE,
+                          0, envblock.get(), NULL, &si, &pi);
   DWORD err = GetLastError();
 
   // Regardless of whether the process got created or not, we are done with
@@ -322,7 +304,7 @@ static bool Execute(ProcessInfo &PI, StringRef Program, const char **args,
   if (!rc) {
     SetLastError(err);
     MakeErrMsg(ErrMsg, std::string("Couldn't execute program '") +
-               Program.str() + "'");
+               ProgramStr + "'");
     return false;
   }
 

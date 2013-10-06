@@ -31,6 +31,7 @@
 #include "llvm/Support/system_error.h"
 #include <windows.h>
 #include <wincrypt.h>
+#include <shlobj.h>
 #include <cassert>
 #include <string>
 #include <vector>

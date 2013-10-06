@@ -128,7 +128,7 @@ retry_random_path:
       BYTE val = 0;
       if (!::CryptGenRandom(CryptoProvider, 1, &val))
           return windows_error(::GetLastError());
-      random_path_utf16.push_back(L"0123456789abcdef"[val & 15]);
+      random_path_utf16.push_back("0123456789abcdef"[val & 15]);
     }
     else
       random_path_utf16.push_back(*i);
@@ -241,23 +241,22 @@ TimeValue file_status::getLastModificationTime() const {
 }
 
 error_code current_path(SmallVectorImpl<char> &result) {
-  SmallVector<wchar_t, MAX_PATH> cur_path;
-  DWORD len = MAX_PATH;
+  SmallVector<wchar_t, 128> cur_path;
+  cur_path.reserve(128);
+retry_cur_dir:
+  DWORD len = ::GetCurrentDirectoryW(cur_path.capacity(), cur_path.data());
 
-  do {
+  // A zero return value indicates a failure other than insufficient space.
+  if (len == 0)
+    return windows_error(::GetLastError());
+
+  // If there's insufficient space, the len returned is larger than the len
+  // given.
+  if (len > cur_path.capacity()) {
     cur_path.reserve(len);
-    len = ::GetCurrentDirectoryW(cur_path.capacity(), cur_path.data());
+    goto retry_cur_dir;
+  }
 
-    // A zero return value indicates a failure other than insufficient space.
-    if (len == 0)
-      return windows_error(::GetLastError());
-
-    // If there's insufficient space, the len returned is larger than the len
-    // given.
-  } while (len > cur_path.capacity());
-
-  // On success, GetCurrentDirectoryW returns the number of characters not
-  // including the null-terminator.
   cur_path.set_size(len);
   return UTF16ToUTF8(cur_path.begin(), cur_path.size(), result);
 }

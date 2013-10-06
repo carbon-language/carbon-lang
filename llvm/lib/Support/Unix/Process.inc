@@ -190,14 +190,6 @@ Optional<std::string> Process::GetEnv(StringRef Name) {
   return std::string(Val);
 }
 
-error_code Process::GetArgumentVector(SmallVectorImpl<const char *> &ArgsOut,
-                                      ArrayRef<const char *> ArgsIn,
-                                      SpecificBumpPtrAllocator<char> &) {
-  ArgsOut.append(ArgsIn.begin(), ArgsIn.end());
-
-  return error_code::success();
-}
-
 bool Process::StandardInIsUserInput() {
   return FileDescriptorIsDisplayed(STDIN_FILENO);
 }

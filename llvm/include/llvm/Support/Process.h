@@ -25,11 +25,8 @@
 #ifndef LLVM_SUPPORT_PROCESS_H
 #define LLVM_SUPPORT_PROCESS_H
 
-#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/Config/llvm-config.h"
-#include "llvm/Support/Allocator.h"
-#include "llvm/Support/system_error.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/TimeValue.h"
 
@@ -170,14 +167,6 @@ public:
   // This function returns the environment variable \arg name's value as a UTF-8
   // string. \arg Name is assumed to be in UTF-8 encoding too.
   static Optional<std::string> GetEnv(StringRef name);
-
-  /// This function returns a SmallVector containing the arguments passed from
-  /// the operating system to the program.  This function expects to be handed
-  /// the vector passed in from main.
-  static error_code
-  GetArgumentVector(SmallVectorImpl<const char *> &Args,
-                    ArrayRef<const char *> ArgsFromMain,
-                    SpecificBumpPtrAllocator<char> &ArgAllocator);
 
   /// This function determines if the standard input is connected directly
   /// to a user's input (keyboard probably), rather than coming from a file
