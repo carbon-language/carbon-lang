@@ -1232,10 +1232,6 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     { X86::VMAXPDZrr,         X86::VMAXPDZrm,           0 },
     { X86::VPERMPDZri,        X86::VPERMPDZmi,          0 },
     { X86::VPERMPSZrr,        X86::VPERMPSZrm,          0 },
-    { X86::VPERMI2Drr,        X86::VPERMI2Drm,          0 },
-    { X86::VPERMI2Qrr,        X86::VPERMI2Qrm,          0 },
-    { X86::VPERMI2PSrr,       X86::VPERMI2PSrm,         0 },
-    { X86::VPERMI2PDrr,       X86::VPERMI2PDrm,         0 },
     { X86::VPSLLVDZrr,        X86::VPSLLVDZrm,          0 },
     { X86::VPSLLVQZrr,        X86::VPSLLVQZrm,          0 },
     { X86::VPSRAVDZrr,        X86::VPSRAVDZrm,          0 },
@@ -1425,6 +1421,11 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     { X86::VFMSUBADDPD4rr,        X86::VFMSUBADDPD4rm,        TB_ALIGN_16 },
     { X86::VFMSUBADDPS4rrY,       X86::VFMSUBADDPS4rmY,       TB_ALIGN_32 },
     { X86::VFMSUBADDPD4rrY,       X86::VFMSUBADDPD4rmY,       TB_ALIGN_32 },
+    // AVX-512 VPERMI instructions with 3 source operands.
+    { X86::VPERMI2Drr,            X86::VPERMI2Drm,            0 },
+    { X86::VPERMI2Qrr,            X86::VPERMI2Qrm,            0 },
+    { X86::VPERMI2PSrr,           X86::VPERMI2PSrm,           0 },
+    { X86::VPERMI2PDrr,           X86::VPERMI2PDrm,           0 },
   };
 
   for (unsigned i = 0, e = array_lengthof(OpTbl3); i != e; ++i) {

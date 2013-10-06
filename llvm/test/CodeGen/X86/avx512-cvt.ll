@@ -184,3 +184,34 @@ define <16 x float> @uitof32(<16 x i32> %a) nounwind {
   ret <16 x float> %b
 }
 
+; CHECK-LABEL: @fptosi02
+; CHECK vcvttss2siz
+; CHECK: ret
+define i32 @fptosi02(float %a) nounwind {
+  %b = fptosi float %a to i32
+  ret i32 %b
+}
+
+; CHECK-LABEL: @fptoui02
+; CHECK vcvttss2usiz
+; CHECK: ret
+define i32 @fptoui02(float %a) nounwind {
+  %b = fptoui float %a to i32
+  ret i32 %b
+}
+
+; CHECK-LABEL: @uitofp02
+; CHECK vcvtusi2ss
+; CHECK: ret
+define float @uitofp02(i32 %a) nounwind {
+  %b = uitofp i32 %a to float
+  ret float %b
+}
+
+; CHECK-LABEL: @uitofp03
+; CHECK vcvtusi2sd
+; CHECK: ret
+define double @uitofp03(i32 %a) nounwind {
+  %b = uitofp i32 %a to double
+  ret double %b
+}

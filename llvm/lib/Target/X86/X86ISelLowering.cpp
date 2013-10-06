@@ -1330,7 +1330,16 @@ void X86TargetLowering::resetOperationActions() {
     setOperationAction(ISD::FMA,                MVT::v16f32, Legal);
     setOperationAction(ISD::SDIV,               MVT::v16i32, Custom);
 
-
+    setOperationAction(ISD::FP_TO_SINT,         MVT::i32, Legal);
+    setOperationAction(ISD::FP_TO_UINT,         MVT::i32, Legal);
+    setOperationAction(ISD::SINT_TO_FP,         MVT::i32, Legal);
+    setOperationAction(ISD::UINT_TO_FP,         MVT::i32, Legal);
+    if (Subtarget->is64Bit()) {
+      setOperationAction(ISD::FP_TO_UINT,       MVT::i64, Legal);
+      setOperationAction(ISD::FP_TO_SINT,       MVT::i64, Legal);
+      setOperationAction(ISD::SINT_TO_FP,       MVT::i64, Legal);
+      setOperationAction(ISD::UINT_TO_FP,       MVT::i64, Legal);
+    }
     setOperationAction(ISD::FP_TO_SINT,         MVT::v16i32, Legal);
     setOperationAction(ISD::FP_TO_UINT,         MVT::v16i32, Legal);
     setOperationAction(ISD::FP_TO_UINT,         MVT::v8i32, Legal);
