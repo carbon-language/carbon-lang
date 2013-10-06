@@ -934,7 +934,7 @@ bool AsmPrinter::doFinalization(Module &M) {
 
       if (I->hasExternalLinkage() || !MAI->getWeakRefDirective())
         OutStreamer.EmitSymbolAttribute(Name, MCSA_Global);
-      else if (I->hasWeakLinkage())
+      else if (I->hasWeakLinkage() || I->hasLinkOnceLinkage())
         OutStreamer.EmitSymbolAttribute(Name, MCSA_WeakReference);
       else
         assert(I->hasLocalLinkage() && "Invalid alias linkage");

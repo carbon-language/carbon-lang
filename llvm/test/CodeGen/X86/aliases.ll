@@ -14,6 +14,9 @@ declare i32 @foo_f()
 ; CHECK-DAG: .weak	bar_f
 @bar_f = alias weak %FunTy* @foo_f
 
+@bar_l = alias linkonce_odr i32* @bar
+; CHECK-DAG: .weak	bar_l
+
 @bar_i = alias internal i32* @bar
 
 ; CHECK-DAG: .globl	A

@@ -627,18 +627,17 @@ bool LLParser::ParseAlias(const std::string &Name, LocTy NameLoc,
                           unsigned Visibility) {
   assert(Lex.getKind() == lltok::kw_alias);
   Lex.Lex();
-  unsigned Linkage;
   LocTy LinkageLoc = Lex.getLoc();
-  if (ParseOptionalLinkage(Linkage))
+  unsigned L;
+  if (ParseOptionalLinkage(L))
     return true;
 
-  if (Linkage != GlobalValue::ExternalLinkage &&
-      Linkage != GlobalValue::WeakAnyLinkage &&
-      Linkage != GlobalValue::WeakODRLinkage &&
-      Linkage != GlobalValue::InternalLinkage &&
-      Linkage != GlobalValue::PrivateLinkage &&
-      Linkage != GlobalValue::LinkerPrivateLinkage &&
-      Linkage != GlobalValue::LinkerPrivateWeakLinkage)
+  GlobalValue::LinkageTypes Linkage = (GlobalValue::LinkageTypes) L;
+
+  if(!GlobalValue::isExternalLinkage(Linkage) &&
+     !GlobalValue::isLocalLinkage(Linkage) &&
+     !GlobalValue::isWeakLinkage(Linkage) &&
+     !GlobalValue::isLinkOnceLinkage(Linkage))
     return Error(LinkageLoc, "invalid linkage type for alias");
 
   Constant *Aliasee;
