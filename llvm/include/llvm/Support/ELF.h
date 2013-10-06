@@ -1447,7 +1447,12 @@ enum {
   PT_ARM_ARCHEXT = 0x70000000, // Platform architecture compatibility info
   // These all contain stack unwind tables.
   PT_ARM_EXIDX   = 0x70000001,
-  PT_ARM_UNWIND  = 0x70000001
+  PT_ARM_UNWIND  = 0x70000001,
+
+  // MIPS program header types.
+  PT_MIPS_REGINFO  = 0x70000000,  // Register usage information.
+  PT_MIPS_RTPROC   = 0x70000001,  // Runtime procedure table.
+  PT_MIPS_OPTIONS  = 0x70000002   // Options segment.
 };
 
 // Segment flag bits.
