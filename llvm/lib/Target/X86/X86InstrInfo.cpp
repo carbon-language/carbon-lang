@@ -4166,6 +4166,10 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   unsigned Size = MFI->getObjectSize(FrameIndex);
   unsigned Alignment = MFI->getObjectAlignment(FrameIndex);
+  // If the function stack isn't realigned we don't want to fold instructions
+  // that need increased alignment.
+  if (!RI.needsStackRealignment(MF))
+    Alignment = std::min(Alignment, TM.getFrameLowering()->getStackAlignment());
   if (Ops.size() == 2 && Ops[0] == 0 && Ops[1] == 1) {
     unsigned NewOpc = 0;
     unsigned RCSize = 0;
