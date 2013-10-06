@@ -66,9 +66,11 @@ define i32 @test_select_int_fcc(float %f, i32 %a, i32 %b) nounwind readnone noin
 entry:
 ;V8-LABEL: test_select_int_fcc:
 ;V8: fcmps
+;V8-NEXT: nop
 ;V8: {{fbe|fbne}}
 ;V9-LABEL: test_select_int_fcc:
 ;V9: fcmps
+;V9-NEXT-NOT: nop
 ;V9-NOT: {{fbe|fbne}}
 ;V9: mov{{e|ne}} %fcc0
   %0 = fcmp une float %f, 0.000000e+00
@@ -95,9 +97,11 @@ define double @test_select_dfp_fcc(double %f, double %f1, double %f2) nounwind r
 entry:
 ;V8-LABEL: test_select_dfp_fcc:
 ;V8: fcmpd
+;V8-NEXT: nop
 ;V8: {{fbne|fbe}}
 ;V9-LABEL: test_select_dfp_fcc:
 ;V9: fcmpd
+;V9-NEXT-NOT: nop
 ;V9-NOT: {{fbne|fbe}}
 ;V9: fmovd{{e|ne}} %fcc0
   %0 = fcmp une double %f, 0.000000e+00

@@ -64,6 +64,7 @@ entry:
 
 ; HARD-LABEL: f128_compare
 ; HARD:       fcmpq
+; HARD-NEXT:  nop
 
 ; SOFT-LABEL: f128_compare
 ; SOFT:       _Q_cmp

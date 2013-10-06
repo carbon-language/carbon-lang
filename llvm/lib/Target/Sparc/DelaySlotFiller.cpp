@@ -14,6 +14,7 @@
 
 #define DEBUG_TYPE "delay-slot-filler"
 #include "Sparc.h"
+#include "SparcSubtarget.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -39,10 +40,13 @@ namespace {
     /// layout, etc.
     ///
     TargetMachine &TM;
+    const SparcSubtarget *Subtarget;
 
     static char ID;
     Filler(TargetMachine &tm)
-      : MachineFunctionPass(ID), TM(tm) { }
+      : MachineFunctionPass(ID), TM(tm),
+        Subtarget(&TM.getSubtarget<SparcSubtarget>()) {
+    }
 
     virtual const char *getPassName() const {
       return "SPARC Delay Slot Filler";
@@ -102,6 +106,8 @@ FunctionPass *llvm::createSparcDelaySlotFillerPass(TargetMachine &tm) {
 bool Filler::runOnMachineBasicBlock(MachineBasicBlock &MBB) {
   bool Changed = false;
 
+  const TargetInstrInfo *TII = TM.getInstrInfo();
+
   for (MachineBasicBlock::iterator I = MBB.begin(); I != MBB.end(); ) {
     MachineBasicBlock::iterator MI = I;
     ++I;
@@ -111,6 +117,14 @@ bool Filler::runOnMachineBasicBlock(MachineBasicBlock &MBB) {
         (MI->getOpcode() == SP::RESTORErr
          || MI->getOpcode() == SP::RESTOREri)) {
       Changed |= tryCombineRestoreWithPrevInst(MBB, MI);
+      continue;
+    }
+
+    if (!Subtarget->isV9() &&
+        (MI->getOpcode() == SP::FCMPS || MI->getOpcode() == SP::FCMPD
+         || MI->getOpcode() == SP::FCMPQ)) {
+      BuildMI(MBB, I, MI->getDebugLoc(), TII->get(SP::NOP));
+      Changed = true;
       continue;
     }
 
@@ -126,7 +140,6 @@ bool Filler::runOnMachineBasicBlock(MachineBasicBlock &MBB) {
     ++FilledSlots;
     Changed = true;
 
-    const TargetInstrInfo *TII = TM.getInstrInfo();
     if (D == MBB.end())
       BuildMI(MBB, I, MI->getDebugLoc(), TII->get(SP::NOP));
     else

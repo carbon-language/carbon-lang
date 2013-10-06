@@ -807,20 +807,22 @@ def FDIVQ  : F3_3<2, 0b110100, 0b001001111,
 // Floating-point Compare Instructions, p. 148
 // Note: the 2nd template arg is different for these guys.
 // Note 2: the result of a FCMP is not available until the 2nd cycle
-// after the instr is retired, but there is no interlock. This behavior
-// is modelled with a forced noop after the instruction.
+// after the instr is retired, but there is no interlock in Sparc V8.
+// This behavior is modeled with a forced noop after the instruction in
+// DelaySlotFiller.
+
 let Defs = [FCC] in {
   def FCMPS  : F3_3c<2, 0b110101, 0b001010001,
                    (outs), (ins FPRegs:$src1, FPRegs:$src2),
-                   "fcmps $src1, $src2\n\tnop",
+                   "fcmps $src1, $src2",
                    [(SPcmpfcc f32:$src1, f32:$src2)]>;
   def FCMPD  : F3_3c<2, 0b110101, 0b001010010,
                    (outs), (ins DFPRegs:$src1, DFPRegs:$src2),
-                   "fcmpd $src1, $src2\n\tnop",
+                   "fcmpd $src1, $src2",
                    [(SPcmpfcc f64:$src1, f64:$src2)]>;
   def FCMPQ  : F3_3c<2, 0b110101, 0b001010011,
                    (outs), (ins QFPRegs:$src1, QFPRegs:$src2),
-                   "fcmpq $src1, $src2\n\tnop",
+                   "fcmpq $src1, $src2",
                    [(SPcmpfcc f128:$src1, f128:$src2)]>,
                    Requires<[HasHardQuad]>;
 }
