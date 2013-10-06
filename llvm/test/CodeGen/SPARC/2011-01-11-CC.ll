@@ -1,5 +1,6 @@
 ; RUN: llc -march=sparc <%s | FileCheck %s -check-prefix=V8
 ; RUN: llc -march=sparc -mattr=v9 <%s | FileCheck %s -check-prefix=V9
+; RUN: llc -mtriple=sparc64-unknown-linux <%s | FileCheck %s -check-prefix=SPARC64
 
 
 define i32 @test_addx(i64 %a, i64 %b, i64 %c) nounwind readnone noinline {
@@ -156,6 +157,16 @@ exit.1:
 ; V9:       subxcc
 ; V9:       subxcc
 ; V9:       subxcc
+
+; SPARC64-LABEL: test_adde_sube
+; SPARC64:       addcc
+; SPARC64:       addxcc
+; SPARC64:       addxcc
+; SPARC64:       addxcc
+; SPARC64:       subcc
+; SPARC64:       subxcc
+; SPARC64:       subxcc
+; SPARC64:       subxcc
 
 
 define void @test_adde_sube(i8* %a, i8* %b, i8* %sum, i8* %diff) {

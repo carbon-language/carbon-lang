@@ -153,13 +153,6 @@ def : Pat<(xor i64:$a, (not i64:$b)), (XNORrr $a, $b)>;
 def : Pat<(add i64:$a, i64:$b), (ADDrr $a, $b)>;
 def : Pat<(sub i64:$a, i64:$b), (SUBrr $a, $b)>;
 
-// Add/sub with carry were renamed to addc/subc in SPARC v9.
-def : Pat<(adde i64:$a, i64:$b), (ADDXrr $a, $b)>;
-def : Pat<(sube i64:$a, i64:$b), (SUBXrr $a, $b)>;
-
-def : Pat<(addc i64:$a, i64:$b), (ADDCCrr $a, $b)>;
-def : Pat<(subc i64:$a, i64:$b), (SUBCCrr $a, $b)>;
-
 def : Pat<(SPcmpicc i64:$a, i64:$b), (CMPrr $a, $b)>;
 
 def : Pat<(tlsadd i64:$a, i64:$b, tglobaltlsaddr:$sym),
