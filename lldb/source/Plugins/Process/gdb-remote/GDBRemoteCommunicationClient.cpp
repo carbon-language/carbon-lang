@@ -2212,7 +2212,7 @@ GDBRemoteCommunicationClient::KillSpawnedProcess (lldb::pid_t pid)
     stream.Printf ("qKillSpawnedProcess:%" PRId64 , pid);
     const char *packet = stream.GetData();
     int packet_len = stream.GetSize();
-    pid = LLDB_INVALID_PROCESS_ID;
+
     StringExtractorGDBRemote response;
     if (SendPacketAndWaitForResponse(packet, packet_len, response, false))
     {
