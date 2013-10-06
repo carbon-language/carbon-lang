@@ -30,10 +30,12 @@
     #if defined(LIBCXXRT) || __has_include(<cxxabi.h>)
         #include <cxxabi.h>
     #endif  // __has_include(<cxxabi.h>)
-    #ifndef _LIBCPPABI_VERSION
+    #if !defined(_LIBCPPABI_VERSION) && !defined(__GLIBCXX__)
         static std::new_handler __new_handler;
     #endif  // _LIBCPPABI_VERSION
 #endif
+
+#ifndef __GLIBCXX__
 
 // Implement all new and delete operators as weak definitions
 // in this shared library, so that they can be overriden by programs
@@ -143,12 +145,18 @@ operator delete[] (void* ptr, const std::nothrow_t&) _NOEXCEPT
     ::operator delete[](ptr);
 }
 
+#endif // !__GLIBCXX__
+
 namespace std
 {
 
+#ifndef __GLIBCXX__
 const nothrow_t nothrow = {};
+#endif
 
 #ifndef _LIBCPPABI_VERSION
+
+#ifndef __GLIBCXX__
 
 new_handler
 set_new_handler(new_handler handler) _NOEXCEPT
@@ -162,11 +170,15 @@ get_new_handler() _NOEXCEPT
     return __sync_fetch_and_add(&__new_handler, (new_handler)0);
 }
 
+#endif // !__GLIBCXX__
+
 #ifndef LIBCXXRT
 
 bad_alloc::bad_alloc() _NOEXCEPT
 {
 }
+
+#ifndef __GLIBCXX__
 
 bad_alloc::~bad_alloc() _NOEXCEPT
 {
@@ -177,6 +189,8 @@ bad_alloc::what() const _NOEXCEPT
 {
     return "std::bad_alloc";
 }
+
+#endif // !__GLIBCXX__
 
 #endif //LIBCXXRT
 

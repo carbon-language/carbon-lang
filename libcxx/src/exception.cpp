@@ -213,9 +213,13 @@ nested_exception::nested_exception() _NOEXCEPT
 {
 }
 
+#if !defined(__GLIBCXX__)
+
 nested_exception::~nested_exception() _NOEXCEPT
 {
 }
+
+#endif
 
 _LIBCPP_NORETURN
 void
