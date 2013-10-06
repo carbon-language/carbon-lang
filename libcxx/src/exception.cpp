@@ -12,6 +12,7 @@
 #include <stdio.h>
 
 #include "exception"
+#include "new"
 
 #ifndef __has_include
 #define __has_include(inc) 0
@@ -154,11 +155,41 @@ const char* bad_exception::what() const _NOEXCEPT
 
 #endif
 
+#if defined(__GLIBCXX__)
+
+// libsupc++ does not implement the dependent EH ABI and the functionality
+// it uses to implement std::exception_ptr (which it declares as an alias of
+// std::__exception_ptr::exception_ptr) is not directly exported to clients. So
+// we have little choice but to hijack std::__exception_ptr::exception_ptr's
+// (which fortunately has the same layout as our std::exception_ptr) copy
+// constructor, assignment operator and destructor (which are part of its
+// stable ABI), and its rethrow_exception(std::__exception_ptr::exception_ptr)
+// function.
+
+namespace __exception_ptr
+{
+
+struct exception_ptr
+{
+    void* __ptr_;
+
+    exception_ptr(const exception_ptr&) _NOEXCEPT;
+    exception_ptr& operator=(const exception_ptr&) _NOEXCEPT;
+    ~exception_ptr() _NOEXCEPT;
+};
+
+}
+
+_LIBCPP_NORETURN void rethrow_exception(__exception_ptr::exception_ptr);
+
+#endif
 
 exception_ptr::~exception_ptr() _NOEXCEPT
 {
 #if HAVE_DEPENDENT_EH_ABI
     __cxa_decrement_exception_refcount(__ptr_);
+#elif defined(__GLIBCXX__)
+    reinterpret_cast<__exception_ptr::exception_ptr*>(this)->~exception_ptr();
 #else
 #   if defined(_MSC_VER) && ! defined(__clang__)
         _LIBCPP_WARNING("exception_ptr not yet implemented")
@@ -166,7 +197,7 @@ exception_ptr::~exception_ptr() _NOEXCEPT
 #       warning exception_ptr not yet implemented
 #   endif
     _libcpp_abort("exception_ptr not yet implemented\n");
-#endif  // __APPLE__
+#endif
 }
 
 exception_ptr::exception_ptr(const exception_ptr& other) _NOEXCEPT
@@ -174,16 +205,17 @@ exception_ptr::exception_ptr(const exception_ptr& other) _NOEXCEPT
 {
 #if HAVE_DEPENDENT_EH_ABI
     __cxa_increment_exception_refcount(__ptr_);
+#elif defined(__GLIBCXX__)
+    new (reinterpret_cast<void*>(this)) __exception_ptr::exception_ptr(
+        reinterpret_cast<const __exception_ptr::exception_ptr&>(other));
 #else
-
 #   if defined(_MSC_VER) && ! defined(__clang__)
         _LIBCPP_WARNING("exception_ptr not yet implemented")
 #   else
 #       warning exception_ptr not yet implemented
 #   endif
     _libcpp_abort("exception_ptr not yet implemented\n");
-
-#endif  // __APPLE__
+#endif
 }
 
 exception_ptr& exception_ptr::operator=(const exception_ptr& other) _NOEXCEPT
@@ -196,16 +228,18 @@ exception_ptr& exception_ptr::operator=(const exception_ptr& other) _NOEXCEPT
         __ptr_ = other.__ptr_;
     }
     return *this;
-#else  // __APPLE__
-
+#elif defined(__GLIBCXX__)
+    *reinterpret_cast<__exception_ptr::exception_ptr*>(this) =
+        reinterpret_cast<const __exception_ptr::exception_ptr&>(other);
+    return *this;
+#else
 #   if defined(_MSC_VER) && ! defined(__clang__)
         _LIBCPP_WARNING("exception_ptr not yet implemented")
 #   else
 #       warning exception_ptr not yet implemented
 #   endif
     _libcpp_abort("exception_ptr not yet implemented\n");
-
-#endif  // __APPLE__
+#endif
 }
 
 nested_exception::nested_exception() _NOEXCEPT
@@ -230,6 +264,7 @@ nested_exception::rethrow_nested() const
     rethrow_exception(__ptr_);
 }
 
+#if !defined(__GLIBCXX__)
 
 exception_ptr current_exception() _NOEXCEPT
 {
@@ -240,15 +275,17 @@ exception_ptr current_exception() _NOEXCEPT
     exception_ptr ptr;
     ptr.__ptr_ = __cxa_current_primary_exception();
     return ptr;
-#else  // __APPLE__
+#else
 #   if defined(_MSC_VER) && ! defined(__clang__)
         _LIBCPP_WARNING( "exception_ptr not yet implemented" )
 #   else
 #       warning exception_ptr not yet implemented
 #   endif
     _libcpp_abort("exception_ptr not yet implemented\n");
-#endif  // __APPLE__
+#endif
 }
+
+#endif  // !__GLIBCXX__
 
 _LIBCPP_NORETURN
 void rethrow_exception(exception_ptr p)
@@ -257,13 +294,15 @@ void rethrow_exception(exception_ptr p)
     __cxa_rethrow_primary_exception(p.__ptr_);
     // if p.__ptr_ is NULL, above returns so we terminate
     terminate();
-#else  // __APPLE__
+#elif defined(__GLIBCXX__)
+    rethrow_exception(reinterpret_cast<__exception_ptr::exception_ptr&>(p));
+#else
 #   if defined(_MSC_VER) && ! defined(__clang__)
         _LIBCPP_WARNING("exception_ptr not yet implemented")
 #   else
 #       warning exception_ptr not yet implemented
 #   endif
     _libcpp_abort("exception_ptr not yet implemented\n");
-#endif  // __APPLE__
+#endif
 }
 } // std
