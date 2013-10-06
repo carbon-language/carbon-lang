@@ -128,7 +128,7 @@ macro(add_tablegen target project)
   endif()
 
   if( MINGW )
-    target_link_libraries(${target} imagehlp psapi)
+    target_link_libraries(${target} imagehlp psapi shell32)
     if(CMAKE_SIZEOF_VOID_P MATCHES "8")
       set_target_properties(${target} PROPERTIES LINK_FLAGS -Wl,--stack,16777216)
     endif(CMAKE_SIZEOF_VOID_P MATCHES "8")
