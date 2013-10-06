@@ -44,35 +44,40 @@ static bool isAggregateTypeForABI(QualType T) {
 
 ABIInfo::~ABIInfo() {}
 
-static bool isRecordReturnIndirect(const RecordType *RT, CodeGen::CodeGenTypes &CGT) {
+static bool isRecordReturnIndirect(const RecordType *RT,
+                                   CGCXXABI &CXXABI) {
   const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl());
   if (!RD)
     return false;
-  return CGT.getCXXABI().isReturnTypeIndirect(RD);
+  return CXXABI.isReturnTypeIndirect(RD);
 }
 
 
-static bool isRecordReturnIndirect(QualType T, CodeGen::CodeGenTypes &CGT) {
+static bool isRecordReturnIndirect(QualType T, CGCXXABI &CXXABI) {
   const RecordType *RT = T->getAs<RecordType>();
   if (!RT)
     return false;
-  return isRecordReturnIndirect(RT, CGT);
+  return isRecordReturnIndirect(RT, CXXABI);
 }
 
 static CGCXXABI::RecordArgABI getRecordArgABI(const RecordType *RT,
-                                              CodeGen::CodeGenTypes &CGT) {
+                                              CGCXXABI &CXXABI) {
   const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl());
   if (!RD)
     return CGCXXABI::RAA_Default;
-  return CGT.getCXXABI().getRecordArgABI(RD);
+  return CXXABI.getRecordArgABI(RD);
 }
 
 static CGCXXABI::RecordArgABI getRecordArgABI(QualType T,
-                                              CodeGen::CodeGenTypes &CGT) {
+                                              CGCXXABI &CXXABI) {
   const RecordType *RT = T->getAs<RecordType>();
   if (!RT)
     return CGCXXABI::RAA_Default;
-  return getRecordArgABI(RT, CGT);
+  return getRecordArgABI(RT, CXXABI);
+}
+
+CGCXXABI &ABIInfo::getCXXABI() const {
+  return CGT.getCXXABI();
 }
 
 ASTContext &ABIInfo::getContext() const {
@@ -391,7 +396,7 @@ ABIArgInfo DefaultABIInfo::classifyArgumentType(QualType Ty) const {
   if (isAggregateTypeForABI(Ty)) {
     // Records with non trivial destructors/constructors should not be passed
     // by value.
-    if (isRecordReturnIndirect(Ty, CGT))
+    if (isRecordReturnIndirect(Ty, getCXXABI()))
       return ABIArgInfo::getIndirect(0, /*ByVal=*/false);
 
     return ABIArgInfo::getIndirect(0);
@@ -461,7 +466,7 @@ llvm::Value *PNaClABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
 /// \brief Classify argument of given type \p Ty.
 ABIArgInfo PNaClABIInfo::classifyArgumentType(QualType Ty) const {
   if (isAggregateTypeForABI(Ty)) {
-    if (CGCXXABI::RecordArgABI RAA = getRecordArgABI(Ty, CGT))
+    if (CGCXXABI::RecordArgABI RAA = getRecordArgABI(Ty, getCXXABI()))
       return ABIArgInfo::getIndirect(0, RAA == CGCXXABI::RAA_DirectInMemory);
     return ABIArgInfo::getIndirect(0);
   } else if (const EnumType *EnumTy = Ty->getAs<EnumType>()) {
@@ -695,7 +700,7 @@ ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy,
 
   if (isAggregateTypeForABI(RetTy)) {
     if (const RecordType *RT = RetTy->getAs<RecordType>()) {
-      if (isRecordReturnIndirect(RT, CGT))
+      if (isRecordReturnIndirect(RT, getCXXABI()))
         return ABIArgInfo::getIndirect(0, /*ByVal=*/false);
 
       // Structures with flexible arrays are always indirect.
@@ -880,7 +885,7 @@ ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty,
       if (IsWin32StructABI)
         return getIndirectResult(Ty, true, FreeRegs);
 
-      if (CGCXXABI::RecordArgABI RAA = getRecordArgABI(RT, CGT))
+      if (CGCXXABI::RecordArgABI RAA = getRecordArgABI(RT, getCXXABI()))
         return getIndirectResult(Ty, RAA == CGCXXABI::RAA_DirectInMemory, FreeRegs);
 
       // Structures with flexible arrays are always indirect.
@@ -1606,7 +1611,7 @@ void X86_64ABIInfo::classify(QualType Ty, uint64_t OffsetBase,
     // AMD64-ABI 3.2.3p2: Rule 2. If a C++ object has either a non-trivial
     // copy constructor or a non-trivial destructor, it is passed by invisible
     // reference.
-    if (getRecordArgABI(RT, CGT))
+    if (getRecordArgABI(RT, getCXXABI()))
       return;
 
     const RecordDecl *RD = RT->getDecl();
@@ -1756,7 +1761,7 @@ ABIArgInfo X86_64ABIInfo::getIndirectResult(QualType Ty,
             ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
   }
 
-  if (CGCXXABI::RecordArgABI RAA = getRecordArgABI(Ty, CGT))
+  if (CGCXXABI::RecordArgABI RAA = getRecordArgABI(Ty, getCXXABI()))
     return ABIArgInfo::getIndirect(0, RAA == CGCXXABI::RAA_DirectInMemory);
 
   // Compute the byval alignment. We specify the alignment of the byval in all
@@ -2246,7 +2251,7 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(
     // COMPLEX_X87, it is passed in memory.
   case X87:
   case ComplexX87:
-    if (getRecordArgABI(Ty, CGT) == CGCXXABI::RAA_Indirect)
+    if (getRecordArgABI(Ty, getCXXABI()) == CGCXXABI::RAA_Indirect)
       ++neededInt;
     return getIndirectResult(Ty, freeIntRegs);
 
@@ -2612,10 +2617,10 @@ ABIArgInfo WinX86_64ABIInfo::classify(QualType Ty, bool IsReturnType) const {
 
   if (const RecordType *RT = Ty->getAs<RecordType>()) {
     if (IsReturnType) {
-      if (isRecordReturnIndirect(RT, CGT))
+      if (isRecordReturnIndirect(RT, getCXXABI()))
         return ABIArgInfo::getIndirect(0, false);
     } else {
-      if (CGCXXABI::RecordArgABI RAA = getRecordArgABI(RT, CGT))
+      if (CGCXXABI::RecordArgABI RAA = getRecordArgABI(RT, getCXXABI()))
         return ABIArgInfo::getIndirect(0, RAA == CGCXXABI::RAA_DirectInMemory);
     }
 
@@ -2877,7 +2882,7 @@ PPC64_SVR4_ABIInfo::classifyArgumentType(QualType Ty) const {
     return ABIArgInfo::getDirect();
 
   if (isAggregateTypeForABI(Ty)) {
-    if (CGCXXABI::RecordArgABI RAA = getRecordArgABI(Ty, CGT))
+    if (CGCXXABI::RecordArgABI RAA = getRecordArgABI(Ty, getCXXABI()))
       return ABIArgInfo::getIndirect(0, RAA == CGCXXABI::RAA_DirectInMemory);
 
     return ABIArgInfo::getIndirect(0);
@@ -3377,7 +3382,7 @@ ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty, int *VFPRegs,
             ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
   }
 
-  if (CGCXXABI::RecordArgABI RAA = getRecordArgABI(Ty, CGT))
+  if (CGCXXABI::RecordArgABI RAA = getRecordArgABI(Ty, getCXXABI()))
     return ABIArgInfo::getIndirect(0, RAA == CGCXXABI::RAA_DirectInMemory);
 
   // Ignore empty records.
@@ -3545,7 +3550,7 @@ ABIArgInfo ARMABIInfo::classifyReturnType(QualType RetTy) const {
 
   // Structures with either a non-trivial destructor or a non-trivial
   // copy constructor are always indirect.
-  if (isRecordReturnIndirect(RetTy, CGT))
+  if (isRecordReturnIndirect(RetTy, getCXXABI()))
     return ABIArgInfo::getIndirect(0, /*ByVal=*/false);
 
   // Are we following APCS?
@@ -3875,7 +3880,7 @@ ABIArgInfo AArch64ABIInfo::classifyGenericType(QualType Ty,
     return tryUseRegs(Ty, FreeIntRegs, RegsNeeded, /*IsInt=*/ true);
   }
 
-  if (CGCXXABI::RecordArgABI RAA = getRecordArgABI(Ty, CGT)) {
+  if (CGCXXABI::RecordArgABI RAA = getRecordArgABI(Ty, getCXXABI())) {
     if (FreeIntRegs > 0 && RAA == CGCXXABI::RAA_Indirect)
       --FreeIntRegs;
     return ABIArgInfo::getIndirect(0, RAA == CGCXXABI::RAA_DirectInMemory);
@@ -4533,7 +4538,7 @@ ABIArgInfo SystemZABIInfo::classifyReturnType(QualType RetTy) const {
 
 ABIArgInfo SystemZABIInfo::classifyArgumentType(QualType Ty) const {
   // Handle the generic C++ ABI.
-  if (CGCXXABI::RecordArgABI RAA = getRecordArgABI(Ty, CGT))
+  if (CGCXXABI::RecordArgABI RAA = getRecordArgABI(Ty, getCXXABI()))
     return ABIArgInfo::getIndirect(0, RAA == CGCXXABI::RAA_DirectInMemory);
 
   // Integers and enums are extended to full register width.
@@ -4770,7 +4775,7 @@ MipsABIInfo::classifyArgumentType(QualType Ty, uint64_t &Offset) const {
     if (TySize == 0)
       return ABIArgInfo::getIgnore();
 
-    if (CGCXXABI::RecordArgABI RAA = getRecordArgABI(Ty, CGT)) {
+    if (CGCXXABI::RecordArgABI RAA = getRecordArgABI(Ty, getCXXABI())) {
       Offset = OrigOffset + MinABIStackAlignInBytes;
       return ABIArgInfo::getIndirect(0, RAA == CGCXXABI::RAA_DirectInMemory);
     }
@@ -4842,7 +4847,7 @@ ABIArgInfo MipsABIInfo::classifyReturnType(QualType RetTy) const {
     return ABIArgInfo::getIgnore();
 
   if (isAggregateTypeForABI(RetTy) || RetTy->isVectorType()) {
-    if (isRecordReturnIndirect(RetTy, CGT))
+    if (isRecordReturnIndirect(RetTy, getCXXABI()))
       return ABIArgInfo::getIndirect(0);
 
     if (Size <= 128) {
@@ -5063,7 +5068,7 @@ ABIArgInfo HexagonABIInfo::classifyArgumentType(QualType Ty) const {
   if (isEmptyRecord(getContext(), Ty, true))
     return ABIArgInfo::getIgnore();
 
-  if (CGCXXABI::RecordArgABI RAA = getRecordArgABI(Ty, CGT))
+  if (CGCXXABI::RecordArgABI RAA = getRecordArgABI(Ty, getCXXABI()))
     return ABIArgInfo::getIndirect(0, RAA == CGCXXABI::RAA_DirectInMemory);
 
   uint64_t Size = getContext().getTypeSize(Ty);
@@ -5099,7 +5104,7 @@ ABIArgInfo HexagonABIInfo::classifyReturnType(QualType RetTy) const {
 
   // Structures with either a non-trivial destructor or a non-trivial
   // copy constructor are always indirect.
-  if (isRecordReturnIndirect(RetTy, CGT))
+  if (isRecordReturnIndirect(RetTy, getCXXABI()))
     return ABIArgInfo::getIndirect(0, /*ByVal=*/false);
 
   if (isEmptyRecord(getContext(), RetTy, true))

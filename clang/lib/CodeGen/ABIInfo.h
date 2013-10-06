@@ -25,6 +25,7 @@ namespace clang {
   class TargetInfo;
 
   namespace CodeGen {
+    class CGCXXABI;
     class CGFunctionInfo;
     class CodeGenFunction;
     class CodeGenTypes;
@@ -194,6 +195,7 @@ namespace clang {
 
     virtual ~ABIInfo();
 
+    CodeGen::CGCXXABI &getCXXABI() const;
     ASTContext &getContext() const;
     llvm::LLVMContext &getVMContext() const;
     const llvm::DataLayout &getDataLayout() const;
