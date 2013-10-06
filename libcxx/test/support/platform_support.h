@@ -42,19 +42,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string>
+#if defined(_LIBCPP_MSVCRT) || defined(__MINGW32__)
+#include <io.h> // _mktemp
+#endif
 
 inline
 std::string
 get_temp_file_name()
 {
-#ifdef _LIBCPP_MSVCRT
-   char* p = _tempnam( NULL, NULL );
-   if (p == nullptr)
-       abort();
-    std::string s(p);
-    free( p );
-#else
    std::string s("temp.XXXXXX");
+#if defined(_LIBCPP_MSVCRT) || defined(__MINGW32__)
+   _mktemp(&s[0]);
+#else
    mktemp(&s[0]);
 #endif
    return s;
