@@ -2730,6 +2730,38 @@ FindDirectlyOverriddenMethodInBases(const CXXMethodDecl *MD,
   return 0;
 }
 
+static void GroupNewVirtualOverloads(
+    const CXXRecordDecl *RD,
+    SmallVector<const CXXMethodDecl *, 10> &VirtualMethods) {
+  // Put the virtual methods into VirtualMethods in the proper order:
+  // 1) Group overloads by declaration name. New groups are added to the
+  //    vftable in the order of their first declarations in this class
+  //    (including overrides).
+  // 2) In each group, new overloads appear in the reverse order of declaration.
+  typedef SmallVector<const CXXMethodDecl *, 1> MethodGroup;
+  SmallVector<MethodGroup, 10> Groups;
+  typedef llvm::DenseMap<DeclarationName, unsigned> VisitedGroupIndicesTy;
+  VisitedGroupIndicesTy VisitedGroupIndices;
+  for (CXXRecordDecl::method_iterator I = RD->method_begin(),
+       E = RD->method_end(); I != E; ++I) {
+    const CXXMethodDecl *MD = *I;
+    if (!MD->isVirtual())
+      continue;
+
+    VisitedGroupIndicesTy::iterator J;
+    bool Inserted;
+    llvm::tie(J, Inserted) = VisitedGroupIndices.insert(
+        std::make_pair(MD->getDeclName(), Groups.size()));
+    if (Inserted)
+      Groups.push_back(MethodGroup(1, MD));
+    else
+      Groups[J->second].push_back(MD);
+  }
+
+  for (unsigned I = 0, E = Groups.size(); I != E; ++I)
+    VirtualMethods.append(Groups[I].rbegin(), Groups[I].rend());
+}
+
 void VFTableBuilder::AddMethods(BaseSubobject Base, unsigned BaseDepth,
                                 const CXXRecordDecl *LastVBase,
                                 BasesSetVectorTy &VisitedBases) {
@@ -2766,6 +2798,10 @@ void VFTableBuilder::AddMethods(BaseSubobject Base, unsigned BaseDepth,
       llvm_unreachable("Found a duplicate primary base!");
   }
 
+  SmallVector<const CXXMethodDecl*, 10> VirtualMethods;
+  // Put virtual methods in the proper order.
+  GroupNewVirtualOverloads(RD, VirtualMethods);
+
   // Now go through all virtual member functions and add them to the current
   // vftable. This is done by
   //  - replacing overridden methods in their existing slots, as long as they
@@ -2774,12 +2810,8 @@ void VFTableBuilder::AddMethods(BaseSubobject Base, unsigned BaseDepth,
   //    sub-bases;
   //  - adding new slots for methods that require Return adjustment.
   // We keep track of the methods visited in the sub-bases in MethodInfoMap.
-  for (CXXRecordDecl::method_iterator I = RD->method_begin(),
-       E = RD->method_end(); I != E; ++I) {
-    const CXXMethodDecl *MD = *I;
-
-    if (!MD->isVirtual())
-      continue;
+  for (unsigned I = 0, E = VirtualMethods.size(); I != E; ++I) {
+    const CXXMethodDecl *MD = VirtualMethods[I];
 
     FinalOverriders::OverriderInfo Overrider =
         Overriders.getOverrider(MD, Base.getBaseOffset());
