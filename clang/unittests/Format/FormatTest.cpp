@@ -1492,6 +1492,18 @@ TEST_F(FormatTest, SeparatesLogicalBlocks) {
                    "protected:\n"
                    "int h;\n"
                    "};"));
+  EXPECT_EQ("class A {\n"
+            "protected:\n"
+            "public:\n"
+            "  void f();\n"
+            "};",
+            format("class A {\n"
+                   "protected:\n"
+                   "\n"
+                   "public:\n"
+                   "\n"
+                   "  void f();\n"
+                   "};"));
 }
 
 TEST_F(FormatTest, FormatsClasses) {

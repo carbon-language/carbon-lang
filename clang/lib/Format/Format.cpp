@@ -832,7 +832,7 @@ public:
 
     std::vector<int> IndentForLevel;
     bool PreviousLineWasTouched = false;
-    const FormatToken *PreviousLineLastToken = 0;
+    const AnnotatedLine *PreviousLine = NULL;
     bool FormatPPDirective = false;
     for (SmallVectorImpl<AnnotatedLine *>::iterator I = AnnotatedLines.begin(),
                                                     E = AnnotatedLines.end();
@@ -872,7 +872,7 @@ public:
             // Insert a break even if there is a structural error in case where
             // we break apart a line consisting of multiple unwrapped lines.
             (FirstTok->NewlinesBefore == 0 || !StructuralError)) {
-          formatFirstToken(*TheLine.First, PreviousLineLastToken, Indent,
+          formatFirstToken(*TheLine.First, PreviousLine, Indent,
                            TheLine.InPPDirective);
         } else {
           Indent = LevelIndent = FirstTok->OriginalColumn;
@@ -914,7 +914,7 @@ public:
             // Remove trailing whitespace of the previous line if it was
             // touched.
             if (PreviousLineWasTouched || touchesEmptyLineBefore(TheLine)) {
-              formatFirstToken(*Tok, PreviousLineLastToken, LevelIndent,
+              formatFirstToken(*Tok, PreviousLine, LevelIndent,
                                TheLine.InPPDirective);
             } else {
               Whitespaces.addUntouchableToken(*Tok, TheLine.InPPDirective);
@@ -933,7 +933,7 @@ public:
         // last token.
         PreviousLineWasTouched = false;
       }
-      PreviousLineLastToken = TheLine.Last;
+      PreviousLine = *I;
     }
     return Whitespaces.generateReplacements();
   }
@@ -1222,7 +1222,7 @@ private:
   /// of the \c UnwrappedLine if there was no structural parsing error.
   /// Returns the indent level of the \c UnwrappedLine.
   void formatFirstToken(const FormatToken &RootToken,
-                        const FormatToken *PreviousToken, unsigned Indent,
+                        const AnnotatedLine *PreviousLine, unsigned Indent,
                         bool InPPDirective) {
     unsigned Newlines =
         std::min(RootToken.NewlinesBefore, Style.MaxEmptyLinesToKeep + 1);
@@ -1235,9 +1235,13 @@ private:
       Newlines = 1;
 
     // Insert extra new line before access specifiers.
-    if (PreviousToken && PreviousToken->isOneOf(tok::semi, tok::r_brace) &&
+    if (PreviousLine && PreviousLine->Last->isOneOf(tok::semi, tok::r_brace) &&
         RootToken.isAccessSpecifier() && RootToken.NewlinesBefore == 1)
       ++Newlines;
+
+    // Remove empty lines after access specifiers.
+    if (PreviousLine && PreviousLine->First->isAccessSpecifier())
+      Newlines = std::min(1u, Newlines);
 
     Whitespaces.replaceWhitespace(
         RootToken, Newlines, Indent / Style.IndentWidth, Indent, Indent,
