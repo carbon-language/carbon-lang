@@ -72,7 +72,7 @@
 #define __builtin_nans(__dummy)  _Snan._Double
 #define __builtin_nansf(__dummy) _FSnan._Float
 #define __builtin_nansl(__dummy) _LSnan._Long_double
-#endif ! defined(__clang__)
+#endif // ! defined(__clang__)
 
 #endif // _LIBCPP_MSVCRT
 
