@@ -618,7 +618,6 @@ defm VPBLENDMQZ : avx512_blendmask<0x64, "vpblendmq", VK8WM, VR512, f512mem,
                                 memopv8i64, vselect, v8i64>, VEX_W, 
                                 EVEX_CD8<64, CD8VF>, EVEX_V512;
 
-
 let Predicates = [HasAVX512] in {
 def : Pat<(v8f32 (vselect (v8i1 VK8WM:$mask), (v8f32 VR256X:$src1),
                             (v8f32 VR256X:$src2))),
@@ -3029,6 +3028,17 @@ defm VSHUFPSZ  : avx512_shufp<VR512, f512mem, v16f32, "vshufps", memopv16f32,
 defm VSHUFPDZ  : avx512_shufp<VR512, f512mem, v8f64, "vshufpd", memopv8f64,
                   SSEPackedDouble>, OpSize, VEX_W, EVEX_V512, EVEX_CD8<64, CD8VF>;
 
+def : Pat<(v16i32 (X86Shufp VR512:$src1, VR512:$src2, (i8 imm:$imm))),
+          (VSHUFPSZrri VR512:$src1, VR512:$src2, imm:$imm)>;
+def : Pat<(v16i32 (X86Shufp VR512:$src1,
+                    (memopv16i32 addr:$src2), (i8 imm:$imm))),
+          (VSHUFPSZrmi VR512:$src1, addr:$src2, imm:$imm)>;
+
+def : Pat<(v8i64 (X86Shufp VR512:$src1, VR512:$src2, (i8 imm:$imm))),
+          (VSHUFPDZrri VR512:$src1, VR512:$src2, imm:$imm)>;
+def : Pat<(v8i64 (X86Shufp VR512:$src1,
+                            (memopv8i64 addr:$src2), (i8 imm:$imm))),
+          (VSHUFPDZrmi VR512:$src1, addr:$src2, imm:$imm)>;
 
 multiclass avx512_alignr<string OpcodeStr, RegisterClass RC,
                        X86MemOperand x86memop> {

@@ -6139,6 +6139,10 @@ LowerVECTOR_SHUFFLEtoBlend(ShuffleVectorSDNode *SVOp,
   MVT EltVT = VT.getVectorElementType();
   unsigned NumElems = VT.getVectorNumElements();
 
+  // There is no blend with immediate in AVX-512.
+  if (VT.is512BitVector())
+    return SDValue();
+
   if (!Subtarget->hasSSE41() || EltVT == MVT::i8)
     return SDValue();
   if (!Subtarget->hasInt256() && VT == MVT::v16i16)
