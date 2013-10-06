@@ -1695,7 +1695,7 @@ void X86_64ABIInfo::classify(QualType Ty, uint64_t OffsetBase,
 
         uint64_t EB_Lo = Offset / 64;
         uint64_t EB_Hi = (Offset + Size - 1) / 64;
-        FieldLo = FieldHi = NoClass;
+
         if (EB_Lo) {
           assert(EB_Hi == EB_Lo && "Invalid classification, type > 16 bytes.");
           FieldLo = NoClass;
