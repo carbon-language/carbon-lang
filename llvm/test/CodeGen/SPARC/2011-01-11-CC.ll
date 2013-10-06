@@ -135,3 +135,42 @@ exit.0:
 exit.1:
    ret i32 1
 }
+
+; V8-LABEL: test_adde_sube
+; V8:       addcc
+; V8:       addxcc
+; V8:       addxcc
+; V8:       addxcc
+; V8:       subcc
+; V8:       subxcc
+; V8:       subxcc
+; V8:       subxcc
+
+
+; V9-LABEL: test_adde_sube
+; V9:       addcc
+; V9:       addxcc
+; V9:       addxcc
+; V9:       addxcc
+; V9:       subcc
+; V9:       subxcc
+; V9:       subxcc
+; V9:       subxcc
+
+
+define void @test_adde_sube(i8* %a, i8* %b, i8* %sum, i8* %diff) {
+entry:
+   %0 = bitcast i8* %a to i128*
+   %1 = bitcast i8* %b to i128*
+   %2 = load i128* %0
+   %3 = load i128* %1
+   %4 = add i128 %2, %3
+   %5 = bitcast i8* %sum to i128*
+   store i128 %4, i128* %5
+   tail call void asm sideeffect "", "=*m,*m"(i128 *%0, i128* %5) nounwind
+   %6 = load i128* %0
+   %7 = sub i128 %2, %6
+   %8 = bitcast i8* %diff to i128*
+   store i128 %7, i128* %8
+   ret void
+}

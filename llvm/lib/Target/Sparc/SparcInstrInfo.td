@@ -504,13 +504,13 @@ def LEA_ADDri   : F3_2<2, 0b000000,
 let Defs = [ICC] in
   defm ADDCC  : F3_12<"addcc", 0b010000, addc>;
 
-let Uses = [ICC] in
-  defm ADDX  : F3_12<"addx", 0b001000, adde>;
+let Uses = [ICC], Defs = [ICC] in
+  defm ADDX  : F3_12<"addxcc", 0b001000, adde>;
 
 // Section B.15 - Subtract Instructions, p. 110
 defm SUB    : F3_12  <"sub"  , 0b000100, sub>;
-let Uses = [ICC] in
-  defm SUBX   : F3_12  <"subx" , 0b001100, sube>;
+let Uses = [ICC], Defs = [ICC] in
+  defm SUBX   : F3_12  <"subxcc" , 0b001100, sube>;
 
 let Defs = [ICC] in
   defm SUBCC  : F3_12  <"subcc", 0b010100, subc>;
