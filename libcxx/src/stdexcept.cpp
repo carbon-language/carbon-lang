@@ -127,7 +127,7 @@ logic_error::operator=(const logic_error& le) _NOEXCEPT
     return *this;
 }
 
-#ifndef _LIBCPPABI_VERSION
+#if !defined(_LIBCPPABI_VERSION) && !defined(LIBSTDCXX)
 
 logic_error::~logic_error() _NOEXCEPT
 {
@@ -171,7 +171,7 @@ runtime_error::operator=(const runtime_error& le) _NOEXCEPT
     return *this;
 }
 
-#ifndef _LIBCPPABI_VERSION
+#if !defined(_LIBCPPABI_VERSION) && !defined(LIBSTDCXX)
 
 runtime_error::~runtime_error() _NOEXCEPT
 {

@@ -248,11 +248,18 @@ End of search list.
      We can now run CMake:
      <ul>
        <li><code>CC=clang CXX=clang++ cmake -G "Unix Makefiles"
-                -DLIBCXX_CXX_ABI=libsupc++
+                -DLIBCXX_CXX_ABI=libstdc++
                 -DLIBCXX_LIBSUPCXX_INCLUDE_PATHS="/usr/include/c++/4.7/;/usr/include/c++/4.7/x86_64-linux-gnu/"
                 -DCMAKE_BUILD_TYPE=Release
                 -DCMAKE_INSTALL_PREFIX=/usr
                 &lt;libc++-source-dir&gt;</code></li>
+       <li>You can also substitute <code>-DLIBCXX_CXX_ABI=libsupc++</code>
+       above, which will cause the library to be linked to libsupc++ instead
+       of libstdc++, but this is only recommended if you know that you will
+       never need to link against libstdc++ in the same executable as libc++.
+       GCC ships libsupc++ separately but only as a static library.  If a
+       program also needs to link against libstdc++, it will provide its
+       own copy of libsupc++ and this can lead to subtle problems.
        <li><code>make</code></li>
        <li><code>sudo make install</code></li>
      </ul>
