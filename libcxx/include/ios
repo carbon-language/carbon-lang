@@ -319,7 +319,7 @@ public:
     _LIBCPP_INLINE_VISIBILITY bool bad() const;
 
     _LIBCPP_INLINE_VISIBILITY iostate exceptions() const;
-    _LIBCPP_INLINE_VISIBILITY void exceptions(iostate __except);
+    _LIBCPP_INLINE_VISIBILITY void exceptions(iostate __iostate);
 
     void __set_badbit_and_consider_rethrow();
     void __set_failbit_and_consider_rethrow();
@@ -553,9 +553,9 @@ ios_base::exceptions() const
 
 inline _LIBCPP_INLINE_VISIBILITY
 void
-ios_base::exceptions(iostate __except)
+ios_base::exceptions(iostate __iostate)
 {
-    __exceptions_ = __except;
+    __exceptions_ = __iostate;
     clear(__rdstate_);
 }
 
@@ -585,7 +585,7 @@ public:
     _LIBCPP_ALWAYS_INLINE bool bad() const  {return ios_base::bad();}
 
     _LIBCPP_ALWAYS_INLINE iostate exceptions() const {return ios_base::exceptions();}
-    _LIBCPP_ALWAYS_INLINE void exceptions(iostate __except) {ios_base::exceptions(__except);}
+    _LIBCPP_ALWAYS_INLINE void exceptions(iostate __iostate) {ios_base::exceptions(__iostate);}
 
     // 27.5.4.1 Constructor/destructor:
     _LIBCPP_INLINE_VISIBILITY
