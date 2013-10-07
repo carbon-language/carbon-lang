@@ -5,7 +5,9 @@ clang-modernize Usage
 ``clang-modernize [options] [<sources>...] [-- [args]]``
 
 ``<source#>`` specifies the path to the source to migrate. This path may be
-relative to the current directory.
+relative to the current directory. If no sources are provided, a compilation
+database provided with `-p`_ can be used to provide sources together with the
+`include/exclude options`_.
 
 By default all transformations are applied. There are two ways to enable a
 subset of the transformations:
@@ -29,6 +31,8 @@ General Command Line Options
 
   Displays the version information of this tool.
 
+.. _-p:
+
 .. option:: -p=<build-path>
 
   ``<build-path>`` is the directory containing a *compilation databasefile*, a
@@ -40,8 +44,8 @@ General Command Line Options
 
   This option is ignored if ``--`` is present.
 
-  Files in the compilation database that can be transformed if no sources are
-  provided and file paths are explicitly included using ``-include`` or
+  Files in the compilation database will be transformed if no sources are
+  provided and paths to files are explicitly included using ``-include`` or
   ``-include-from``.
   In order to transform all files in a compilation database the following
   command line can be used:
@@ -49,6 +53,8 @@ General Command Line Options
     ``clang-modernize -p=<build-path> -include=<project_root>``
 
   Use ``-exclude`` or ``-exclude-from`` to limit the scope of ``-include``.
+
+.. _Ninja: http://martine.github.io/ninja/
 
 .. option:: -- [args]
 
@@ -61,34 +67,6 @@ General Command Line Options
   proceeding through parent directories. If no compilation database is found or
   one is found and cannot be used for any reason then ``-std=c++11`` is used as
   the only compiler argument.
-
-.. _Ninja: http://martine.github.io/ninja/
-
-.. option:: -include=<path1>,<path2>,...,<pathN>
-
-  Use this option to indicate which directories contain files that can be
-  changed by the modernizer. Inidividual files may be specified if desired.
-  Multiple paths can be specified as a comma-separated list. Sources mentioned
-  explicitly on the command line are always included so this option controls
-  which other files (e.g. headers) may be changed while transforming
-  translation units.
-
-.. option:: -exclude=<path1>,<path2>,...,<pathN>
-
-  Used with ``-include`` to provide finer control over which files and
-  directories can be transformed. Individual files and files within directories
-  specified by this option **will not** be transformed. Multiple paths can be
-  specified as a comma-separated list.
-
-.. option:: -include-from=<filename>
-
-  Like ``-include`` but read paths from the given file. Paths should be one per
-  line.
-
-.. option:: -exclude-from=<filename>
-
-  Like ``-exclude`` but read paths from the given file. Paths are listed one
-  per line.
 
 .. option:: -risk=<risk-level>
 
@@ -114,43 +92,6 @@ General Command Line Options
   last transform did not introduce syntax errors. Syntax errors introduced by
   earlier transforms are already caught when subsequent transforms parse the
   file.
-
-.. option:: -format-style=<string>
-
-  After all transformations have been applied, reformat the changes using the
-  style ``string`` given as argument to the option. The style can be a builtin
-  style, one of LLVM, Google, Chromium, Mozilla; or a YAML configuration file.
-
-  If you want a place to start for using your own custom configuration file,
-  ClangFormat_ can generate a file with ``clang-format -dump-config``.
-
-  Example:
-
-  .. code-block:: c++
-    :emphasize-lines: 10-12,18
-
-      // file.cpp
-      for (std::vector<int>::const_iterator I = my_container.begin(),
-                                            E = my_container.end();
-           I != E; ++I) {
-        std::cout << *I << std::endl;
-      }
-
-      // No reformatting:
-      //     clang-modernize -use-auto file.cpp --
-      for (auto I = my_container.begin(),
-                                            E = my_container.end();
-           I != E; ++I) {
-        std::cout << *I << std::endl;
-      }
-
-      // With reformatting enabled:
-      //     clang-modernize -format-style=LLVM -use-auto file.cpp --
-      for (auto I = my_container.begin(), E = my_container.end(); I != E; ++I) {
-        std::cout << *I << std::endl;
-      }
-
-.. _ClangFormat: http://clang.llvm.org/docs/ClangFormat.html
 
 .. option:: -summary
 
@@ -221,6 +162,101 @@ General Command Line Options
 
   The time recorded for a transform includes parsing and creating source code
   replacements.
+
+.. option:: -serialize-replacements
+
+  Causes the modernizer to generate replacements and serialize them to disk but
+  not apply them. This can be useful for debugging or for manually running
+  ``clang-apply-replacements``. Replacements are serialized in YAML_ format.
+  By default serialzied replacements are written to a temporary directory whose
+  name is written to stderr when serialization is complete.
+
+.. _YAML: http://www.yaml.org/
+
+.. option:: -serialize-dir=<string>
+
+  Choose a directory to serialize replacements to. The directory must exist.
+
+.. _include/exclude options:
+
+Path Inclusion/Exclusion Options
+================================
+
+.. option:: -include=<path1>,<path2>,...,<pathN>
+
+  Use this option to indicate which directories contain files that can be
+  changed by the modernizer. Inidividual files may be specified if desired.
+  Multiple paths can be specified as a comma-separated list. Sources mentioned
+  explicitly on the command line are always included so this option controls
+  which other files (e.g. headers) may be changed while transforming
+  translation units.
+
+.. option:: -exclude=<path1>,<path2>,...,<pathN>
+
+  Used with ``-include`` to provide finer control over which files and
+  directories can be transformed. Individual files and files within directories
+  specified by this option **will not** be transformed. Multiple paths can be
+  specified as a comma-separated list.
+
+.. option:: -include-from=<filename>
+
+  Like ``-include`` but read paths from the given file. Paths should be one per
+  line.
+
+.. option:: -exclude-from=<filename>
+
+  Like ``-exclude`` but read paths from the given file. Paths are listed one
+  per line.
+
+Formatting Command Line Options
+===============================
+
+.. option:: -format
+
+  Enable reformatting of code changed by transforms. Formatting is done after
+  every transform.
+
+.. option:: -style=<string>
+
+  Specifies how formatting should be done. The behaviour of this option is
+  identical to the same option provided by clang-format_. Refer to
+  `clang-format's style options`_ for more details.
+
+.. option:: -style-config=<dir>
+
+  When using ``-style=file``, the default behaviour is to look for
+  ``.clang-format`` starting in the current directory and then in ancestors. To
+  specify a directory to find the style configuration file, use this option.
+
+Example:
+
+.. code-block:: c++
+  :emphasize-lines: 10-12,18
+
+    // file.cpp
+    for (std::vector<int>::const_iterator I = my_container.begin(),
+                                          E = my_container.end();
+         I != E; ++I) {
+      std::cout << *I << std::endl;
+    }
+
+    // No reformatting:
+    //     clang-modernize -use-auto file.cpp
+    for (auto I = my_container.begin(),
+                                          E = my_container.end();
+         I != E; ++I) {
+      std::cout << *I << std::endl;
+    }
+
+    // With reformatting enabled:
+    //     clang-modernize -format -use-auto file.cpp
+    for (auto I = my_container.begin(), E = my_container.end(); I != E; ++I) {
+      std::cout << *I << std::endl;
+    }
+
+.. _clang-format: http://clang.llvm.org/docs/ClangFormat.html
+.. _clang-format's style options: http://clang.llvm.org/docs/ClangFormatStyleOptions.html
+
 
 .. _transform-specific-command-line-options:
 
