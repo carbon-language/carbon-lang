@@ -614,7 +614,7 @@ Syntax::
 
     @<Name> = alias [Linkage] [Visibility] <AliaseeTy> @<Aliasee>
 
-The linkgage must be one of ``private``, ``linker_private``,
+The linkage must be one of ``private``, ``linker_private``,
 ``linker_private_weak``, ``internal``, ``linkonce``, ``weak``,
 ``linkonce_odr``, ``weak_odr``, ``linkonce_odr_auto_hide``, ``external``. Note
 that some system linkers might not correctly handle dropping a weak symbol that
