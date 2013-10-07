@@ -4774,18 +4774,6 @@ def VMOVQd64rr_alt : VS2I<0x7E, MRMDestReg, (outs GR64:$dst), (ins VR128:$src),
                           IIC_SSE_MOVDQ>, VEX, VEX_W;
 } // SchedRW
 
-// Instructions for the disassembler
-// xr = XMM register
-// xm = mem64
-
-let SchedRW = [WriteMove] in {
-let Predicates = [UseAVX] in
-def VMOVQxrxr: I<0x7E, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
-                 "vmovq\t{$src, $dst|$dst, $src}", []>, VEX, XS;
-def MOVQxrxr : I<0x7E, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
-                 "movq\t{$src, $dst|$dst, $src}", [], IIC_SSE_MOVQ_RR>, XS;
-} // SchedRW
-
 //===---------------------------------------------------------------------===//
 // SSE3 - Replicate Single FP - MOVSHDUP and MOVSLDUP
 //===---------------------------------------------------------------------===//
