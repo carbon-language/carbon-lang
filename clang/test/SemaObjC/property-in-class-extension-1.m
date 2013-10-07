@@ -8,19 +8,20 @@
 
 @property (nonatomic, readonly) NSString* addingMemoryModel;
 
-@property (nonatomic, copy, readonly) NSString* matchingMemoryModel;
+@property (nonatomic, copy, readonly) NSString* matchingMemoryModel; // expected-warning {{property attributes 'readonly' and 'copy' are mutually exclusive}}
 
-@property (nonatomic, retain, readonly) NSString* addingNoNewMemoryModel;
+@property (nonatomic, retain, readonly) NSString* addingNoNewMemoryModel; // expected-warning {{property attributes 'readonly' and 'retain' are mutually exclusive}}
 
 @property (readonly) NSString* none;
 @property (readonly) NSString* none1;
 
-@property (assign, readonly) NSString* changeMemoryModel; // expected-note {{property declared here}}
+@property (assign, readonly) NSString* changeMemoryModel; // expected-note {{property declared here}} \
+                                                          // expected-warning {{property attributes 'readonly' and 'assign' are mutually exclusive}}
 
 @property (readonly) __weak id weak_prop;
 @property (readonly) __weak id weak_prop1;
 
-@property (assign, readonly) NSString* assignProperty;
+@property (assign, readonly) NSString* assignProperty; // expected-warning {{property attributes 'readonly' and 'assign' are mutually exclusive}}
 
 @property (readonly) NSString* readonlyProp;
 

@@ -321,6 +321,21 @@ static unsigned getOwnershipRule(unsigned attr) {
                  ObjCPropertyDecl::OBJC_PR_unsafe_unretained);
 }
 
+static const char *NameOfOwnershipAttribute(unsigned attr) {
+  if (attr & ObjCPropertyDecl::OBJC_PR_assign)
+    return "assign";
+  if (attr & ObjCPropertyDecl::OBJC_PR_retain )
+    return "retain";
+  if (attr & ObjCPropertyDecl::OBJC_PR_copy)
+    return "copy";
+  if (attr & ObjCPropertyDecl::OBJC_PR_weak)
+    return "weak";
+  if (attr & ObjCPropertyDecl::OBJC_PR_strong)
+    return "strong";
+  assert(attr & ObjCPropertyDecl::OBJC_PR_unsafe_unretained);
+  return "unsafe_unretained";
+}
+
 ObjCPropertyDecl *
 Sema::HandlePropertyInClassExtension(Scope *S,
                                      SourceLocation AtLoc,
@@ -434,6 +449,8 @@ Sema::HandlePropertyInClassExtension(Scope *S,
   // with continuation class's readwrite property attribute!
   unsigned PIkind = PIDecl->getPropertyAttributesAsWritten();
   if (isReadWrite && (PIkind & ObjCPropertyDecl::OBJC_PR_readonly)) {
+    PIkind &= ~ObjCPropertyDecl::OBJC_PR_readonly;
+    PIkind |= ObjCPropertyDecl::OBJC_PR_readwrite;
     PIkind |= deduceWeakPropertyFromType(*this, PIDecl->getType());
     unsigned ClassExtensionMemoryModel = getOwnershipRule(Attributes);
     unsigned PrimaryClassMemoryModel = getOwnershipRule(PIkind);
@@ -775,75 +792,6 @@ DiagnosePropertyMismatchDeclInProtocols(Sema &S, SourceLocation AtLoc,
     S.Diag(AtLoc, diag::note_property_synthesize);
 }
 
-/// DiagnoseClassAndClassExtPropertyMismatch - diagnose inconsistant property
-/// attribute declared in primary class and attributes overridden in any of its
-/// class extensions.
-static void
-DiagnoseClassAndClassExtPropertyMismatch(Sema &S, ObjCInterfaceDecl *ClassDecl, 
-                                         ObjCPropertyDecl *property) {
-  unsigned Attributes = property->getPropertyAttributesAsWritten();
-  bool warn = (Attributes & ObjCDeclSpec::DQ_PR_readonly);
-  for (ObjCInterfaceDecl::known_extensions_iterator
-         Ext = ClassDecl->known_extensions_begin(),
-         ExtEnd = ClassDecl->known_extensions_end();
-       Ext != ExtEnd; ++Ext) {
-    ObjCPropertyDecl *ClassExtProperty = 0;
-    DeclContext::lookup_result R = Ext->lookup(property->getDeclName());
-    for (unsigned I = 0, N = R.size(); I != N; ++I) {
-      ClassExtProperty = dyn_cast<ObjCPropertyDecl>(R[0]);
-      if (ClassExtProperty)
-        break;
-    }
-
-    if (ClassExtProperty) {
-      warn = false;
-      unsigned classExtPropertyAttr = 
-        ClassExtProperty->getPropertyAttributesAsWritten();
-      // We are issuing the warning that we postponed because class extensions
-      // can override readonly->readwrite and 'setter' attributes originally
-      // placed on class's property declaration now make sense in the overridden
-      // property.
-      if (Attributes & ObjCDeclSpec::DQ_PR_readonly) {
-        if (!classExtPropertyAttr ||
-            (classExtPropertyAttr & 
-              (ObjCDeclSpec::DQ_PR_readwrite|
-               ObjCDeclSpec::DQ_PR_assign |
-               ObjCDeclSpec::DQ_PR_unsafe_unretained |
-               ObjCDeclSpec::DQ_PR_copy |
-               ObjCDeclSpec::DQ_PR_retain |
-               ObjCDeclSpec::DQ_PR_strong)))
-          continue;
-        warn = true;
-        break;
-      }
-    }
-  }
-  if (warn) {
-    unsigned setterAttrs = (ObjCDeclSpec::DQ_PR_assign |
-                            ObjCDeclSpec::DQ_PR_unsafe_unretained |
-                            ObjCDeclSpec::DQ_PR_copy |
-                            ObjCDeclSpec::DQ_PR_retain |
-                            ObjCDeclSpec::DQ_PR_strong);
-    if (Attributes & setterAttrs) {
-      const char * which =     
-      (Attributes & ObjCDeclSpec::DQ_PR_assign) ?
-      "assign" :
-      (Attributes & ObjCDeclSpec::DQ_PR_unsafe_unretained) ?
-      "unsafe_unretained" :
-      (Attributes & ObjCDeclSpec::DQ_PR_copy) ?
-      "copy" : 
-      (Attributes & ObjCDeclSpec::DQ_PR_retain) ?
-      "retain" : "strong";
-      
-      S.Diag(property->getLocation(), 
-             diag::warn_objc_property_attr_mutually_exclusive)
-      << "readonly" << which;
-    }
-  }
-  
-  
-}
-
 /// ActOnPropertyImplDecl - This routine performs semantic checks and
 /// builds the AST node for a property implementation declaration; declared
 /// as \@synthesize or \@dynamic.
@@ -942,8 +890,6 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
     }
     if (Synthesize && isa<ObjCProtocolDecl>(property->getDeclContext()))
       DiagnosePropertyMismatchDeclInProtocols(*this, AtLoc, IDecl, property);
-    
-    DiagnoseClassAndClassExtPropertyMismatch(*this, IDecl, property);
         
   } else if ((CatImplClass = dyn_cast<ObjCCategoryImplDecl>(ClassImpDecl))) {
     if (Synthesize) {
@@ -2055,55 +2001,30 @@ void Sema::CheckObjCPropertyAttributes(Decl *PDecl,
   // FIXME: Improve the reported location.
   if (!PDecl || PDecl->isInvalidDecl())
     return;
-
-  ObjCPropertyDecl *PropertyDecl = cast<ObjCPropertyDecl>(PDecl);
-  QualType PropertyTy = PropertyDecl->getType(); 
-
-  if (getLangOpts().ObjCAutoRefCount &&
-      (Attributes & ObjCDeclSpec::DQ_PR_readonly) &&
-      PropertyTy->isObjCRetainableType()) {
-    // 'readonly' property with no obvious lifetime.
-    // its life time will be determined by its backing ivar.
-    unsigned rel = (ObjCDeclSpec::DQ_PR_unsafe_unretained |
-                    ObjCDeclSpec::DQ_PR_copy |
-                    ObjCDeclSpec::DQ_PR_retain |
-                    ObjCDeclSpec::DQ_PR_strong |
-                    ObjCDeclSpec::DQ_PR_weak |
-                    ObjCDeclSpec::DQ_PR_assign);
-    if ((Attributes & rel) == 0)
-      return;
-  }
   
-  if (propertyInPrimaryClass) {
-    // we postpone most property diagnosis until class's implementation
-    // because, its readonly attribute may be overridden in its class 
-    // extensions making other attributes, which make no sense, to make sense.
-    if ((Attributes & ObjCDeclSpec::DQ_PR_readonly) &&
-        (Attributes & ObjCDeclSpec::DQ_PR_readwrite))
-      Diag(Loc, diag::err_objc_property_attr_mutually_exclusive) 
-        << "readonly" << "readwrite";
-  }
-  // readonly and readwrite/assign/retain/copy conflict.
-  else if ((Attributes & ObjCDeclSpec::DQ_PR_readonly) &&
-           (Attributes & (ObjCDeclSpec::DQ_PR_readwrite |
-                     ObjCDeclSpec::DQ_PR_assign |
-                     ObjCDeclSpec::DQ_PR_unsafe_unretained |
-                     ObjCDeclSpec::DQ_PR_copy |
-                     ObjCDeclSpec::DQ_PR_retain |
-                     ObjCDeclSpec::DQ_PR_strong))) {
-    const char * which = (Attributes & ObjCDeclSpec::DQ_PR_readwrite) ?
-                          "readwrite" :
-                         (Attributes & ObjCDeclSpec::DQ_PR_assign) ?
-                          "assign" :
-                         (Attributes & ObjCDeclSpec::DQ_PR_unsafe_unretained) ?
-                          "unsafe_unretained" :
-                         (Attributes & ObjCDeclSpec::DQ_PR_copy) ?
-                          "copy" : "retain";
+  if ((Attributes & ObjCDeclSpec::DQ_PR_readonly) &&
+      (Attributes & ObjCDeclSpec::DQ_PR_readwrite))
+    Diag(Loc, diag::err_objc_property_attr_mutually_exclusive)
+    << "readonly" << "readwrite";
+  
+  ObjCPropertyDecl *PropertyDecl = cast<ObjCPropertyDecl>(PDecl);
+  QualType PropertyTy = PropertyDecl->getType();
+  unsigned PropertyOwnership = getOwnershipRule(Attributes);
 
-    Diag(Loc, (Attributes & (ObjCDeclSpec::DQ_PR_readwrite)) ?
-                 diag::err_objc_property_attr_mutually_exclusive :
-                 diag::warn_objc_property_attr_mutually_exclusive)
-      << "readonly" << which;
+  if (Attributes & ObjCDeclSpec::DQ_PR_readonly) {
+    if (getLangOpts().ObjCAutoRefCount &&
+        PropertyTy->isObjCRetainableType() &&
+        !PropertyOwnership) {
+      // 'readonly' property with no obvious lifetime.
+      // its life time will be determined by its backing ivar.
+      return;
+    }
+    else if (PropertyOwnership) {
+      if (!getSourceManager().isInSystemHeader(Loc))
+        Diag(Loc, diag::warn_objc_property_attr_mutually_exclusive)
+          << "readonly" << NameOfOwnershipAttribute(Attributes);
+      return;
+    }
   }
 
   // Check for copy or retain on non-object types.

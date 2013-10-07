@@ -1,5 +1,4 @@
 // RUN: %clang_cc1  -fsyntax-only -verify -Weverything %s
-// expected-no-diagnostics
 // rdar://12103434
 
 @class NSString;
@@ -8,7 +7,7 @@
 
 @interface MyClass  : NSObject
 
-@property (nonatomic, copy, readonly) NSString* name;
+@property (nonatomic, copy, readonly) NSString* name; // expected-warning {{property attributes 'readonly' and 'copy' are mutually exclusive}}
 
 @end
 
