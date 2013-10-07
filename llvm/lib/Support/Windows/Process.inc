@@ -161,8 +161,9 @@ Optional<std::string> Process::GetEnv(StringRef Name) {
   SmallVector<wchar_t, MAX_PATH> Buf;
   size_t Size = MAX_PATH;
   do {
-    Buf.resize(Size);
-    Size = GetEnvironmentVariableW(&NameUTF16[0], &Buf[0], Buf.capacity());
+    Buf.reserve(Size);
+    Size =
+        GetEnvironmentVariableW(NameUTF16.data(), Buf.data(), Buf.capacity());
     if (Size == 0)
       return None;
 
@@ -172,9 +173,9 @@ Optional<std::string> Process::GetEnv(StringRef Name) {
 
   // Convert the result from UTF-16 to UTF-8.
   SmallVector<char, MAX_PATH> Res;
-  if (error_code ec = windows::UTF16ToUTF8(&Buf[0], Size, Res))
+  if (error_code ec = windows::UTF16ToUTF8(Buf.data(), Size, Res))
     return None;
-  return std::string(&Res[0]);
+  return std::string(Res.data());
 }
 
 error_code
