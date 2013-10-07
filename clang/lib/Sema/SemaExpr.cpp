@@ -11209,36 +11209,255 @@ diagnoseUncapturableValueReference(Sema &S, SourceLocation loc,
   // capture.
 }
 
-/// \brief Capture the given variable in the captured region.
-static ExprResult captureInCapturedRegion(Sema &S, CapturedRegionScopeInfo *RSI,
-                                          VarDecl *Var, QualType FieldType,
-                                          QualType DeclRefType,
-                                          SourceLocation Loc,
-                                          bool RefersToEnclosingLocal) {
-  // The current implemention assumes that all variables are captured
-  // by references. Since there is no capture by copy, no expression evaluation
-  // will be needed.
-  //
-  RecordDecl *RD = RSI->TheRecordDecl;
-
-  FieldDecl *Field
-    = FieldDecl::Create(S.Context, RD, Loc, Loc, 0, FieldType,
-                        S.Context.getTrivialTypeSourceInfo(FieldType, Loc),
-                        0, false, ICIS_NoInit);
-  Field->setImplicit(true);
-  Field->setAccess(AS_private);
-  RD->addDecl(Field);
-
-  Expr *Ref = new (S.Context) DeclRefExpr(Var, RefersToEnclosingLocal,
-                                          DeclRefType, VK_LValue, Loc);
-  Var->setReferenced(true);
-  Var->markUsed(S.Context);
-
-  return Ref;
+ 
+static bool isVariableAlreadyCapturedInScopeInfo(CapturingScopeInfo *CSI, VarDecl *Var, 
+                                      bool &SubCapturesAreNested,
+                                      QualType &CaptureType, 
+                                      QualType &DeclRefType) {
+   // Check whether we've already captured it.
+  if (CSI->CaptureMap.count(Var)) {
+    // If we found a capture, any subcaptures are nested.
+    SubCapturesAreNested = true;
+      
+    // Retrieve the capture type for this variable.
+    CaptureType = CSI->getCapture(Var).getCaptureType();
+      
+    // Compute the type of an expression that refers to this variable.
+    DeclRefType = CaptureType.getNonReferenceType();
+      
+    const CapturingScopeInfo::Capture &Cap = CSI->getCapture(Var);
+    if (Cap.isCopyCapture() &&
+        !(isa<LambdaScopeInfo>(CSI) && cast<LambdaScopeInfo>(CSI)->Mutable))
+      DeclRefType.addConst();
+    return true;
+  }
+  return false;
 }
 
-/// \brief Capture the given variable in the given lambda expression.
-static ExprResult captureInLambda(Sema &S, LambdaScopeInfo *LSI,
+// Only block literals, captured statements, and lambda expressions can
+// capture; other scopes don't work.
+static DeclContext *getParentOfCapturingContextOrNull(DeclContext *DC, VarDecl *Var, 
+                                 SourceLocation Loc, 
+                                 const bool Diagnose, Sema &S) {
+  if (isa<BlockDecl>(DC) || isa<CapturedDecl>(DC))
+    return DC->getParent();
+  else if (isa<CXXMethodDecl>(DC) &&
+                cast<CXXMethodDecl>(DC)->getOverloadedOperator() == OO_Call &&
+                cast<CXXRecordDecl>(DC->getParent())->isLambda())
+    return DC->getParent()->getParent();
+  else {
+    if (Diagnose)
+       diagnoseUncapturableValueReference(S, Loc, Var, DC);
+  }
+  return 0;
+}
+
+// Certain capturing entities (lambdas, blocks etc.) are not allowed to capture 
+// certain types of variables (unnamed, variably modified types etc.)
+// so check for eligibility.
+static bool isVariableCapturable(CapturingScopeInfo *CSI, VarDecl *Var, 
+                                 SourceLocation Loc, 
+                                 const bool Diagnose, Sema &S) {
+
+  bool IsBlock = isa<BlockScopeInfo>(CSI);
+  bool IsLambda = isa<LambdaScopeInfo>(CSI);
+
+  // Lambdas are not allowed to capture unnamed variables
+  // (e.g. anonymous unions).
+  // FIXME: The C++11 rule don't actually state this explicitly, but I'm
+  // assuming that's the intent.
+  if (IsLambda && !Var->getDeclName()) {
+    if (Diagnose) {
+      S.Diag(Loc, diag::err_lambda_capture_anonymous_var);
+      S.Diag(Var->getLocation(), diag::note_declared_at);
+    }
+    return false;
+  }
+
+  // Prohibit variably-modified types; they're difficult to deal with.
+  if (Var->getType()->isVariablyModifiedType()) {
+    if (Diagnose) {
+      if (IsBlock)
+        S.Diag(Loc, diag::err_ref_vm_type);
+      else
+        S.Diag(Loc, diag::err_lambda_capture_vm_type) << Var->getDeclName();
+      S.Diag(Var->getLocation(), diag::note_previous_decl) 
+        << Var->getDeclName();
+    }
+    return false;
+  }
+  // Prohibit structs with flexible array members too.
+  // We cannot capture what is in the tail end of the struct.
+  if (const RecordType *VTTy = Var->getType()->getAs<RecordType>()) {
+    if (VTTy->getDecl()->hasFlexibleArrayMember()) {
+      if (Diagnose) {
+        if (IsBlock)
+          S.Diag(Loc, diag::err_ref_flexarray_type);
+        else
+          S.Diag(Loc, diag::err_lambda_capture_flexarray_type)
+            << Var->getDeclName();
+        S.Diag(Var->getLocation(), diag::note_previous_decl)
+          << Var->getDeclName();
+      }
+      return false;
+    }
+  }
+  const bool HasBlocksAttr = Var->hasAttr<BlocksAttr>();
+  // Lambdas and captured statements are not allowed to capture __block
+  // variables; they don't support the expected semantics.
+  if (HasBlocksAttr && (IsLambda || isa<CapturedRegionScopeInfo>(CSI))) {
+    if (Diagnose) {
+      S.Diag(Loc, diag::err_capture_block_variable)
+        << Var->getDeclName() << !IsLambda;
+      S.Diag(Var->getLocation(), diag::note_previous_decl)
+        << Var->getDeclName();
+    }
+    return false;
+  }
+
+  return true;
+}
+
+// Returns true if the capture by block was successful.
+static bool captureInBlock(BlockScopeInfo *BSI, VarDecl *Var, 
+                                 SourceLocation Loc, 
+                                 const bool BuildAndDiagnose, 
+                                 QualType &CaptureType,
+                                 QualType &DeclRefType, 
+                                 const bool Nested,
+                                 Sema &S) {
+  Expr *CopyExpr = 0;
+  bool ByRef = false;
+      
+  // Blocks are not allowed to capture arrays.
+  if (CaptureType->isArrayType()) {
+    if (BuildAndDiagnose) {
+      S.Diag(Loc, diag::err_ref_array_type);
+      S.Diag(Var->getLocation(), diag::note_previous_decl) 
+      << Var->getDeclName();
+    }
+    return false;
+  }
+
+  // Forbid the block-capture of autoreleasing variables.
+  if (CaptureType.getObjCLifetime() == Qualifiers::OCL_Autoreleasing) {
+    if (BuildAndDiagnose) {
+      S.Diag(Loc, diag::err_arc_autoreleasing_capture)
+        << /*block*/ 0;
+      S.Diag(Var->getLocation(), diag::note_previous_decl)
+        << Var->getDeclName();
+    }
+    return false;
+  }
+  const bool HasBlocksAttr = Var->hasAttr<BlocksAttr>();
+  if (HasBlocksAttr || CaptureType->isReferenceType()) {
+    // Block capture by reference does not change the capture or
+    // declaration reference types.
+    ByRef = true;
+  } else {
+    // Block capture by copy introduces 'const'.
+    CaptureType = CaptureType.getNonReferenceType().withConst();
+    DeclRefType = CaptureType;
+                
+    if (S.getLangOpts().CPlusPlus && BuildAndDiagnose) {
+      if (const RecordType *Record = DeclRefType->getAs<RecordType>()) {
+        // The capture logic needs the destructor, so make sure we mark it.
+        // Usually this is unnecessary because most local variables have
+        // their destructors marked at declaration time, but parameters are
+        // an exception because it's technically only the call site that
+        // actually requires the destructor.
+        if (isa<ParmVarDecl>(Var))
+          S.FinalizeVarWithDestructor(Var, Record);
+
+        // Enter a new evaluation context to insulate the copy
+        // full-expression.
+        EnterExpressionEvaluationContext scope(S, S.PotentiallyEvaluated);
+
+        // According to the blocks spec, the capture of a variable from
+        // the stack requires a const copy constructor.  This is not true
+        // of the copy/move done to move a __block variable to the heap.
+        Expr *DeclRef = new (S.Context) DeclRefExpr(Var, Nested,
+                                                  DeclRefType.withConst(), 
+                                                  VK_LValue, Loc);
+            
+        ExprResult Result
+          = S.PerformCopyInitialization(
+              InitializedEntity::InitializeBlock(Var->getLocation(),
+                                                  CaptureType, false),
+              Loc, S.Owned(DeclRef));
+            
+        // Build a full-expression copy expression if initialization
+        // succeeded and used a non-trivial constructor.  Recover from
+        // errors by pretending that the copy isn't necessary.
+        if (!Result.isInvalid() &&
+            !cast<CXXConstructExpr>(Result.get())->getConstructor()
+                ->isTrivial()) {
+          Result = S.MaybeCreateExprWithCleanups(Result);
+          CopyExpr = Result.take();
+        }
+      }
+    }
+  }
+
+  // Actually capture the variable.
+  if (BuildAndDiagnose)
+    BSI->addCapture(Var, HasBlocksAttr, ByRef, Nested, Loc, 
+                    SourceLocation(), CaptureType, CopyExpr);
+
+  return true;
+
+}
+
+
+/// \brief Capture the given variable in the captured region.
+static bool captureInCapturedRegion(CapturedRegionScopeInfo *RSI,
+                                    VarDecl *Var, 
+                                    SourceLocation Loc, 
+                                    const bool BuildAndDiagnose, 
+                                    QualType &CaptureType,
+                                    QualType &DeclRefType, 
+                                    const bool RefersToEnclosingLocal,
+                                    Sema &S) {
+  
+  // By default, capture variables by reference.
+  bool ByRef = true;
+  // Using an LValue reference type is consistent with Lambdas (see below).
+  CaptureType = S.Context.getLValueReferenceType(DeclRefType);
+  Expr *CopyExpr = 0;
+  if (BuildAndDiagnose) {
+    // The current implementation assumes that all variables are captured
+    // by references. Since there is no capture by copy, no expression evaluation
+    // will be needed.
+    //
+    RecordDecl *RD = RSI->TheRecordDecl;
+
+    FieldDecl *Field
+      = FieldDecl::Create(S.Context, RD, Loc, Loc, 0, CaptureType,
+                          S.Context.getTrivialTypeSourceInfo(CaptureType, Loc),
+                          0, false, ICIS_NoInit);
+    Field->setImplicit(true);
+    Field->setAccess(AS_private);
+    RD->addDecl(Field);
+ 
+    CopyExpr = new (S.Context) DeclRefExpr(Var, RefersToEnclosingLocal,
+                                            DeclRefType, VK_LValue, Loc);
+    Var->setReferenced(true);
+    Var->markUsed(S.Context);
+  }
+
+  // Actually capture the variable.
+  if (BuildAndDiagnose)
+    RSI->addCapture(Var, /*isBlock*/false, ByRef, RefersToEnclosingLocal, Loc,
+                    SourceLocation(), CaptureType, CopyExpr);
+  
+  
+  return true;
+}
+
+/// \brief Create a field within the lambda class for the variable
+///  being captured.  Handle Array captures.  
+static ExprResult addAsFieldToClosureType(Sema &S, 
+                                 LambdaScopeInfo *LSI,
                                   VarDecl *Var, QualType FieldType, 
                                   QualType DeclRefType,
                                   SourceLocation Loc,
@@ -11355,7 +11574,105 @@ static ExprResult captureInLambda(Sema &S, LambdaScopeInfo *LSI,
   return Result;
 }
 
-bool Sema::tryCaptureVariable(VarDecl *Var, SourceLocation Loc, 
+
+
+/// \brief Capture the given variable in the lambda.
+static bool captureInLambda(LambdaScopeInfo *LSI,
+                            VarDecl *Var, 
+                            SourceLocation Loc, 
+                            const bool BuildAndDiagnose, 
+                            QualType &CaptureType,
+                            QualType &DeclRefType, 
+                            const bool RefersToEnclosingLocal,
+                            const Sema::TryCaptureKind Kind, 
+                            SourceLocation EllipsisLoc,
+                            const bool IsTopScope,
+                            Sema &S) {
+
+  // Determine whether we are capturing by reference or by value.
+  bool ByRef = false;
+  if (IsTopScope && Kind != Sema::TryCapture_Implicit) {
+    ByRef = (Kind == Sema::TryCapture_ExplicitByRef);
+  } else {
+    ByRef = (LSI->ImpCaptureStyle == LambdaScopeInfo::ImpCap_LambdaByref);
+  }
+    
+  // Compute the type of the field that will capture this variable.
+  if (ByRef) {
+    // C++11 [expr.prim.lambda]p15:
+    //   An entity is captured by reference if it is implicitly or
+    //   explicitly captured but not captured by copy. It is
+    //   unspecified whether additional unnamed non-static data
+    //   members are declared in the closure type for entities
+    //   captured by reference.
+    //
+    // FIXME: It is not clear whether we want to build an lvalue reference
+    // to the DeclRefType or to CaptureType.getNonReferenceType(). GCC appears
+    // to do the former, while EDG does the latter. Core issue 1249 will 
+    // clarify, but for now we follow GCC because it's a more permissive and
+    // easily defensible position.
+    CaptureType = S.Context.getLValueReferenceType(DeclRefType);
+  } else {
+    // C++11 [expr.prim.lambda]p14:
+    //   For each entity captured by copy, an unnamed non-static
+    //   data member is declared in the closure type. The
+    //   declaration order of these members is unspecified. The type
+    //   of such a data member is the type of the corresponding
+    //   captured entity if the entity is not a reference to an
+    //   object, or the referenced type otherwise. [Note: If the
+    //   captured entity is a reference to a function, the
+    //   corresponding data member is also a reference to a
+    //   function. - end note ]
+    if (const ReferenceType *RefType = CaptureType->getAs<ReferenceType>()){
+      if (!RefType->getPointeeType()->isFunctionType())
+        CaptureType = RefType->getPointeeType();
+    }
+
+    // Forbid the lambda copy-capture of autoreleasing variables.
+    if (CaptureType.getObjCLifetime() == Qualifiers::OCL_Autoreleasing) {
+      if (BuildAndDiagnose) {
+        S.Diag(Loc, diag::err_arc_autoreleasing_capture) << /*lambda*/ 1;
+        S.Diag(Var->getLocation(), diag::note_previous_decl)
+          << Var->getDeclName();
+      }
+      return false;
+    }
+  }
+
+  // Capture this variable in the lambda.
+  Expr *CopyExpr = 0;
+  if (BuildAndDiagnose) {
+    ExprResult Result = addAsFieldToClosureType(S, LSI, Var, 
+                                        CaptureType, DeclRefType, Loc,
+                                        RefersToEnclosingLocal);
+    if (!Result.isInvalid())
+      CopyExpr = Result.take();
+  }
+    
+  // Compute the type of a reference to this captured variable.
+  if (ByRef)
+    DeclRefType = CaptureType.getNonReferenceType();
+  else {
+    // C++ [expr.prim.lambda]p5:
+    //   The closure type for a lambda-expression has a public inline 
+    //   function call operator [...]. This function call operator is 
+    //   declared const (9.3.1) if and only if the lambda-expression’s 
+    //   parameter-declaration-clause is not followed by mutable.
+    DeclRefType = CaptureType.getNonReferenceType();
+    if (!LSI->Mutable && !CaptureType->isReferenceType())
+      DeclRefType.addConst();      
+  }
+    
+  // Add the capture.
+  if (BuildAndDiagnose)
+    LSI->addCapture(Var, /*IsBlock=*/false, ByRef, RefersToEnclosingLocal, 
+                    Loc, EllipsisLoc, CaptureType, CopyExpr);
+      
+  return true;
+}
+
+
+bool Sema::tryCaptureVariable(VarDecl *Var, SourceLocation ExprLoc, 
                               TryCaptureKind Kind, SourceLocation EllipsisLoc,
                               bool BuildAndDiagnose, 
                               QualType &CaptureType,
@@ -11363,6 +11680,10 @@ bool Sema::tryCaptureVariable(VarDecl *Var, SourceLocation Loc,
   bool Nested = false;
   
   DeclContext *DC = CurContext;
+  const unsigned MaxFunctionScopesIndex = FunctionScopes.size() - 1;  
+
+  // If the variable is declared in the current context (and is not an 
+  // init-capture), there is no need to capture it.
   if (!Var->isInitCapture() && Var->getDeclContext() == DC) return true;
   if (!Var->hasLocalStorage()) return true;
 
@@ -11371,108 +11692,46 @@ bool Sema::tryCaptureVariable(VarDecl *Var, SourceLocation Loc,
   // Walk up the stack to determine whether we can capture the variable,
   // performing the "simple" checks that don't depend on type. We stop when
   // we've either hit the declared scope of the variable or find an existing
-  // capture of that variable.
+  // capture of that variable.  We start from the innermost capturing-entity
+  // (the DC) and ensure that all intervening capturing-entities 
+  // (blocks/lambdas etc.) between the innermost capturer and the variable`s
+  // declcontext can either capture the variable or have already captured
+  // the variable.
   CaptureType = Var->getType();
   DeclRefType = CaptureType.getNonReferenceType();
   bool Explicit = (Kind != TryCapture_Implicit);
-  unsigned FunctionScopesIndex = FunctionScopes.size() - 1;
+  unsigned FunctionScopesIndex = MaxFunctionScopesIndex;
   do {
     // Only block literals, captured statements, and lambda expressions can
     // capture; other scopes don't work.
-    DeclContext *ParentDC;
-    if (isa<BlockDecl>(DC) || isa<CapturedDecl>(DC))
-      ParentDC = DC->getParent();
-    else if (isa<CXXMethodDecl>(DC) &&
-             cast<CXXMethodDecl>(DC)->getOverloadedOperator() == OO_Call &&
-             cast<CXXRecordDecl>(DC->getParent())->isLambda())
-      ParentDC = DC->getParent()->getParent();
-    else {
-      if (BuildAndDiagnose)
-        diagnoseUncapturableValueReference(*this, Loc, Var, DC);
-      return true;
-    }
+    DeclContext *ParentDC = getParentOfCapturingContextOrNull(DC, Var, 
+                                                              ExprLoc, 
+                                                              BuildAndDiagnose,
+                                                              *this);
+    if (!ParentDC) return true;
+    
+    FunctionScopeInfo  *FSI = FunctionScopes[FunctionScopesIndex];
+    CapturingScopeInfo *CSI = cast<CapturingScopeInfo>(FSI);
 
-    CapturingScopeInfo *CSI =
-      cast<CapturingScopeInfo>(FunctionScopes[FunctionScopesIndex]);
 
     // Check whether we've already captured it.
-    if (CSI->isCaptured(Var)) {
-      const CapturingScopeInfo::Capture &Cap = CSI->getCapture(Var);
-
-      // If we found a capture, any subcaptures are nested.
-      Nested = true;
-      
-      // Retrieve the capture type for this variable.
-      CaptureType = Cap.getCaptureType();
-      
-      // Compute the type of an expression that refers to this variable.
-      DeclRefType = CaptureType.getNonReferenceType();
-      
-      if (Cap.isCopyCapture() &&
-          !(isa<LambdaScopeInfo>(CSI) && cast<LambdaScopeInfo>(CSI)->Mutable))
-        DeclRefType.addConst();
+    if (isVariableAlreadyCapturedInScopeInfo(CSI, Var, Nested, CaptureType, 
+                                             DeclRefType)) 
       break;
-    }
-
     bool IsBlock = isa<BlockScopeInfo>(CSI);
     bool IsLambda = isa<LambdaScopeInfo>(CSI);
-
-    // Lambdas are not allowed to capture unnamed variables
-    // (e.g. anonymous unions).
-    // FIXME: The C++11 rule don't actually state this explicitly, but I'm
-    // assuming that's the intent.
-    if (IsLambda && !Var->getDeclName()) {
-      if (BuildAndDiagnose) {
-        Diag(Loc, diag::err_lambda_capture_anonymous_var);
-        Diag(Var->getLocation(), diag::note_declared_at);
-      }
-      return true;
-    }
-
-    // Prohibit variably-modified types; they're difficult to deal with.
-    if (Var->getType()->isVariablyModifiedType()) {
-      if (BuildAndDiagnose) {
-        if (IsBlock)
-          Diag(Loc, diag::err_ref_vm_type);
-        else
-          Diag(Loc, diag::err_lambda_capture_vm_type) << Var->getDeclName();
-        Diag(Var->getLocation(), diag::note_previous_decl) 
-          << Var->getDeclName();
-      }
-      return true;
-    }
-    // Prohibit structs with flexible array members too.
-    // We cannot capture what is in the tail end of the struct.
-    if (const RecordType *VTTy = Var->getType()->getAs<RecordType>()) {
-      if (VTTy->getDecl()->hasFlexibleArrayMember()) {
-        if (BuildAndDiagnose) {
-          if (IsBlock)
-            Diag(Loc, diag::err_ref_flexarray_type);
-          else
-            Diag(Loc, diag::err_lambda_capture_flexarray_type)
-              << Var->getDeclName();
-          Diag(Var->getLocation(), diag::note_previous_decl)
-            << Var->getDeclName();
-        }
-        return true;
-      }
-    }
-    // Lambdas and captured statements are not allowed to capture __block
-    // variables; they don't support the expected semantics.
-    if (HasBlocksAttr && (IsLambda || isa<CapturedRegionScopeInfo>(CSI))) {
-      if (BuildAndDiagnose) {
-        Diag(Loc, diag::err_capture_block_variable)
-          << Var->getDeclName() << !IsLambda;
-        Diag(Var->getLocation(), diag::note_previous_decl) 
-          << Var->getDeclName();
-      }
-      return true;
-    }
-
+   
+    // Certain capturing entities (lambdas, blocks etc.) are not allowed to capture 
+    // certain types of variables (unnamed, variably modified types etc.)
+    // so check for eligibility.
+    if (!isVariableCapturable(CSI, Var, ExprLoc, BuildAndDiagnose, *this))
+       return true;    
+    
     if (CSI->ImpCaptureStyle == CapturingScopeInfo::ImpCap_None && !Explicit) {
-      // No capture-default
+      // No capture-default, and this is not an explicit capture 
+      // so cannot capture this variable.  
       if (BuildAndDiagnose) {
-        Diag(Loc, diag::err_lambda_impcap) << Var->getDeclName();
+        Diag(ExprLoc, diag::err_lambda_impcap) << Var->getDeclName();
         Diag(Var->getLocation(), diag::note_previous_decl) 
           << Var->getDeclName();
         Diag(cast<LambdaScopeInfo>(CSI)->Lambda->getLocStart(),
@@ -11486,203 +11745,37 @@ bool Sema::tryCaptureVariable(VarDecl *Var, SourceLocation Loc,
     Explicit = false;
   } while (!Var->getDeclContext()->Equals(DC));
 
-  // Walk back down the scope stack, computing the type of the capture at
-  // each step, checking type-specific requirements, and adding captures if
-  // requested.
-  for (unsigned I = ++FunctionScopesIndex, N = FunctionScopes.size(); I != N; 
+  // Walk back down the scope stack, (e.g. from outer lambda to inner lambda)
+  // computing the type of the capture at each step, checking type-specific 
+  // requirements, and adding captures if requested. 
+  // If the variable had already been captured previously, we start capturing 
+  // at the lambda nested within that one.   
+  for (unsigned I = ++FunctionScopesIndex, N = MaxFunctionScopesIndex + 1; I != N; 
        ++I) {
     CapturingScopeInfo *CSI = cast<CapturingScopeInfo>(FunctionScopes[I]);
     
-    // Compute the type of the capture and of a reference to the capture within
-    // this scope.
-    if (isa<BlockScopeInfo>(CSI)) {
-      Expr *CopyExpr = 0;
-      bool ByRef = false;
-      
-      // Blocks are not allowed to capture arrays.
-      if (CaptureType->isArrayType()) {
-        if (BuildAndDiagnose) {
-          Diag(Loc, diag::err_ref_array_type);
-          Diag(Var->getLocation(), diag::note_previous_decl) 
-          << Var->getDeclName();
-        }
+    if (BlockScopeInfo *BSI = dyn_cast<BlockScopeInfo>(CSI)) {
+      if (!captureInBlock(BSI, Var, ExprLoc, 
+                          BuildAndDiagnose, CaptureType, 
+                          DeclRefType, Nested, *this))
         return true;
-      }
-
-      // Forbid the block-capture of autoreleasing variables.
-      if (CaptureType.getObjCLifetime() == Qualifiers::OCL_Autoreleasing) {
-        if (BuildAndDiagnose) {
-          Diag(Loc, diag::err_arc_autoreleasing_capture)
-            << /*block*/ 0;
-          Diag(Var->getLocation(), diag::note_previous_decl)
-            << Var->getDeclName();
-        }
-        return true;
-      }
-
-      if (HasBlocksAttr || CaptureType->isReferenceType()) {
-        // Block capture by reference does not change the capture or
-        // declaration reference types.
-        ByRef = true;
-      } else {
-        // Block capture by copy introduces 'const'.
-        CaptureType = CaptureType.getNonReferenceType().withConst();
-        DeclRefType = CaptureType;
-                
-        if (getLangOpts().CPlusPlus && BuildAndDiagnose) {
-          if (const RecordType *Record = DeclRefType->getAs<RecordType>()) {
-            // The capture logic needs the destructor, so make sure we mark it.
-            // Usually this is unnecessary because most local variables have
-            // their destructors marked at declaration time, but parameters are
-            // an exception because it's technically only the call site that
-            // actually requires the destructor.
-            if (isa<ParmVarDecl>(Var))
-              FinalizeVarWithDestructor(Var, Record);
-
-            // Enter a new evaluation context to insulate the copy
-            // full-expression.
-            EnterExpressionEvaluationContext scope(*this, PotentiallyEvaluated);
-
-            // According to the blocks spec, the capture of a variable from
-            // the stack requires a const copy constructor.  This is not true
-            // of the copy/move done to move a __block variable to the heap.
-            Expr *DeclRef = new (Context) DeclRefExpr(Var, Nested,
-                                                      DeclRefType.withConst(), 
-                                                      VK_LValue, Loc);
-            
-            ExprResult Result
-              = PerformCopyInitialization(
-                  InitializedEntity::InitializeBlock(Var->getLocation(),
-                                                     CaptureType, false),
-                  Loc, Owned(DeclRef));
-            
-            // Build a full-expression copy expression if initialization
-            // succeeded and used a non-trivial constructor.  Recover from
-            // errors by pretending that the copy isn't necessary.
-            if (!Result.isInvalid() &&
-                !cast<CXXConstructExpr>(Result.get())->getConstructor()
-                   ->isTrivial()) {
-              Result = MaybeCreateExprWithCleanups(Result);
-              CopyExpr = Result.take();
-            }
-          }
-        }
-      }
-
-      // Actually capture the variable.
-      if (BuildAndDiagnose)
-        CSI->addCapture(Var, HasBlocksAttr, ByRef, Nested, Loc, 
-                        SourceLocation(), CaptureType, CopyExpr);
       Nested = true;
-      continue;
-    }
-
-    if (CapturedRegionScopeInfo *RSI = dyn_cast<CapturedRegionScopeInfo>(CSI)) {
-      // By default, capture variables by reference.
-      bool ByRef = true;
-      // Using an LValue reference type is consistent with Lambdas (see below).
-      CaptureType = Context.getLValueReferenceType(DeclRefType);
-
-      Expr *CopyExpr = 0;
-      if (BuildAndDiagnose) {
-        ExprResult Result = captureInCapturedRegion(*this, RSI, Var,
-                                                    CaptureType, DeclRefType,
-                                                    Loc, Nested);
-        if (!Result.isInvalid())
-          CopyExpr = Result.take();
-      }
-
-      // Actually capture the variable.
-      if (BuildAndDiagnose)
-        CSI->addCapture(Var, /*isBlock*/false, ByRef, Nested, Loc,
-                        SourceLocation(), CaptureType, CopyExpr);
-      Nested = true;
-      continue;
-    }
-
-    LambdaScopeInfo *LSI = cast<LambdaScopeInfo>(CSI);
-    
-    // Determine whether we are capturing by reference or by value.
-    bool ByRef = false;
-    if (I == N - 1 && Kind != TryCapture_Implicit) {
-      ByRef = (Kind == TryCapture_ExplicitByRef);
-    } else {
-      ByRef = (LSI->ImpCaptureStyle == LambdaScopeInfo::ImpCap_LambdaByref);
-    }
-    
-    // Compute the type of the field that will capture this variable.
-    if (ByRef) {
-      // C++11 [expr.prim.lambda]p15:
-      //   An entity is captured by reference if it is implicitly or
-      //   explicitly captured but not captured by copy. It is
-      //   unspecified whether additional unnamed non-static data
-      //   members are declared in the closure type for entities
-      //   captured by reference.
-      //
-      // FIXME: It is not clear whether we want to build an lvalue reference
-      // to the DeclRefType or to CaptureType.getNonReferenceType(). GCC appears
-      // to do the former, while EDG does the latter. Core issue 1249 will 
-      // clarify, but for now we follow GCC because it's a more permissive and
-      // easily defensible position.
-      CaptureType = Context.getLValueReferenceType(DeclRefType);
-    } else {
-      // C++11 [expr.prim.lambda]p14:
-      //   For each entity captured by copy, an unnamed non-static
-      //   data member is declared in the closure type. The
-      //   declaration order of these members is unspecified. The type
-      //   of such a data member is the type of the corresponding
-      //   captured entity if the entity is not a reference to an
-      //   object, or the referenced type otherwise. [Note: If the
-      //   captured entity is a reference to a function, the
-      //   corresponding data member is also a reference to a
-      //   function. - end note ]
-      if (const ReferenceType *RefType = CaptureType->getAs<ReferenceType>()){
-        if (!RefType->getPointeeType()->isFunctionType())
-          CaptureType = RefType->getPointeeType();
-      }
-
-      // Forbid the lambda copy-capture of autoreleasing variables.
-      if (CaptureType.getObjCLifetime() == Qualifiers::OCL_Autoreleasing) {
-        if (BuildAndDiagnose) {
-          Diag(Loc, diag::err_arc_autoreleasing_capture) << /*lambda*/ 1;
-          Diag(Var->getLocation(), diag::note_previous_decl)
-            << Var->getDeclName();
-        }
+    } else if (CapturedRegionScopeInfo *RSI = dyn_cast<CapturedRegionScopeInfo>(CSI)) {
+      if (!captureInCapturedRegion(RSI, Var, ExprLoc, 
+                                   BuildAndDiagnose, CaptureType, 
+                                   DeclRefType, Nested, *this))
         return true;
-      }
+      Nested = true;
+    } else {
+      LambdaScopeInfo *LSI = cast<LambdaScopeInfo>(CSI);
+      if (!captureInLambda(LSI, Var, ExprLoc, 
+                           BuildAndDiagnose, CaptureType, 
+                           DeclRefType, Nested, Kind, EllipsisLoc, 
+                            /*IsTopScope*/I == N - 1, *this))
+        return true;
+      Nested = true;
     }
-
-    // Capture this variable in the lambda.
-    Expr *CopyExpr = 0;
-    if (BuildAndDiagnose) {
-      ExprResult Result = captureInLambda(*this, LSI, Var, CaptureType,
-                                          DeclRefType, Loc,
-                                          Nested);
-      if (!Result.isInvalid())
-        CopyExpr = Result.take();
-    }
-    
-    // Compute the type of a reference to this captured variable.
-    if (ByRef)
-      DeclRefType = CaptureType.getNonReferenceType();
-    else {
-      // C++ [expr.prim.lambda]p5:
-      //   The closure type for a lambda-expression has a public inline 
-      //   function call operator [...]. This function call operator is 
-      //   declared const (9.3.1) if and only if the lambda-expression’s 
-      //   parameter-declaration-clause is not followed by mutable.
-      DeclRefType = CaptureType.getNonReferenceType();
-      if (!LSI->Mutable && !CaptureType->isReferenceType())
-        DeclRefType.addConst();      
-    }
-    
-    // Add the capture.
-    if (BuildAndDiagnose)
-      CSI->addCapture(Var, /*IsBlock=*/false, ByRef, Nested, Loc,
-                      EllipsisLoc, CaptureType, CopyExpr);
-    Nested = true;
   }
-
   return false;
 }
 
