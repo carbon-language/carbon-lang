@@ -391,26 +391,41 @@ static const EnumEntry<unsigned> ElfSectionFlags[] = {
   LLVM_READOBJ_ENUM_ENT(ELF, SHF_MIPS_NOSTRIP    )
 };
 
-static const EnumEntry<unsigned> ElfSegmentTypes[] = {
-  LLVM_READOBJ_ENUM_ENT(ELF, PT_NULL   ),
-  LLVM_READOBJ_ENUM_ENT(ELF, PT_LOAD   ),
-  LLVM_READOBJ_ENUM_ENT(ELF, PT_DYNAMIC),
-  LLVM_READOBJ_ENUM_ENT(ELF, PT_INTERP ),
-  LLVM_READOBJ_ENUM_ENT(ELF, PT_NOTE   ),
-  LLVM_READOBJ_ENUM_ENT(ELF, PT_SHLIB  ),
-  LLVM_READOBJ_ENUM_ENT(ELF, PT_PHDR   ),
-  LLVM_READOBJ_ENUM_ENT(ELF, PT_TLS    ),
+static const char *getElfSegmentType(unsigned Arch, unsigned Type) {
+  // Check potentially overlapped processor-specific
+  // program header type.
+  switch (Arch) {
+  case ELF::EM_ARM:
+    switch (Type) {
+    LLVM_READOBJ_ENUM_CASE(ELF, PT_ARM_EXIDX);
+    }
+  case ELF::EM_MIPS:
+  case ELF::EM_MIPS_RS3_LE:
+    switch (Type) {
+    LLVM_READOBJ_ENUM_CASE(ELF, PT_MIPS_REGINFO);
+    LLVM_READOBJ_ENUM_CASE(ELF, PT_MIPS_RTPROC);
+    LLVM_READOBJ_ENUM_CASE(ELF, PT_MIPS_OPTIONS);
+    }
+  }
 
-  LLVM_READOBJ_ENUM_ENT(ELF, PT_GNU_EH_FRAME),
-  LLVM_READOBJ_ENUM_ENT(ELF, PT_SUNW_EH_FRAME),
-  LLVM_READOBJ_ENUM_ENT(ELF, PT_SUNW_UNWIND),
+  switch (Type) {
+  LLVM_READOBJ_ENUM_CASE(ELF, PT_NULL   );
+  LLVM_READOBJ_ENUM_CASE(ELF, PT_LOAD   );
+  LLVM_READOBJ_ENUM_CASE(ELF, PT_DYNAMIC);
+  LLVM_READOBJ_ENUM_CASE(ELF, PT_INTERP );
+  LLVM_READOBJ_ENUM_CASE(ELF, PT_NOTE   );
+  LLVM_READOBJ_ENUM_CASE(ELF, PT_SHLIB  );
+  LLVM_READOBJ_ENUM_CASE(ELF, PT_PHDR   );
+  LLVM_READOBJ_ENUM_CASE(ELF, PT_TLS    );
 
-  LLVM_READOBJ_ENUM_ENT(ELF, PT_GNU_STACK),
-  LLVM_READOBJ_ENUM_ENT(ELF, PT_GNU_RELRO),
+  LLVM_READOBJ_ENUM_CASE(ELF, PT_GNU_EH_FRAME);
+  LLVM_READOBJ_ENUM_CASE(ELF, PT_SUNW_UNWIND);
 
-  LLVM_READOBJ_ENUM_ENT(ELF, PT_ARM_EXIDX),
-  LLVM_READOBJ_ENUM_ENT(ELF, PT_ARM_UNWIND)
-};
+  LLVM_READOBJ_ENUM_CASE(ELF, PT_GNU_STACK);
+  LLVM_READOBJ_ENUM_CASE(ELF, PT_GNU_RELRO);
+  default: return "";
+  }
+}
 
 static const EnumEntry<unsigned> ElfSegmentFlags[] = {
   LLVM_READOBJ_ENUM_ENT(ELF, PF_X),
@@ -790,7 +805,9 @@ void ELFDumper<ELFT>::printProgramHeaders() {
                                     PE = Obj->end_program_headers();
                                     PI != PE; ++PI) {
     DictScope P(W, "ProgramHeader");
-    W.printEnum  ("Type", PI->p_type, makeArrayRef(ElfSegmentTypes));
+    W.printHex   ("Type",
+                  getElfSegmentType(Obj->getHeader()->e_machine, PI->p_type),
+                  PI->p_type);
     W.printHex   ("Offset", PI->p_offset);
     W.printHex   ("VirtualAddress", PI->p_vaddr);
     W.printHex   ("PhysicalAddress", PI->p_paddr);
