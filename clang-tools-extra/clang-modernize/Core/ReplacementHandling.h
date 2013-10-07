@@ -106,7 +106,9 @@ public:
 
   /// \brief Helper to create a temporary directory name.
   ///
-  /// \param[out] Resulting name is placed here.
+  /// \post The directory named by the returned string exists.
+  ///
+  /// \returns A temp directory name.
   static std::string generateTempDir();
 
 private:
