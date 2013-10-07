@@ -5538,3 +5538,62 @@ float64_t test_vpminqd_f64(float64x2_t a) {
 // CHECK: fminp {{d[0-9]+}}, {{v[0-9]+}}.2d
 }
 
+int16_t test_vqdmulhh_s16(int16_t a, int16_t b) {
+// CHECK: test_vqdmulhh_s16
+  return vqdmulhh_s16(a, b);
+// CHECK: sqdmulh {{h[0-9]+}}, {{h[0-9]+}}, {{h[0-9]+}}
+}
+
+int32_t test_vqdmulhs_s32(int32_t a, int32_t b) {
+// CHECK: test_vqdmulhs_s32
+  return vqdmulhs_s32(a, b);
+// CHECK: sqdmulh {{s[0-9]+}}, {{s[0-9]+}}, {{s[0-9]+}}
+}
+
+int16_t test_vqrdmulhh_s16(int16_t a, int16_t b) {
+// CHECK: test_vqrdmulhh_s16
+  return vqrdmulhh_s16(a, b);
+// CHECK: sqrdmulh {{h[0-9]+}}, {{h[0-9]+}}, {{h[0-9]+}}
+}
+
+int32_t test_vqrdmulhs_s32(int32_t a, int32_t b) {
+// CHECK: test_vqrdmulhs_s32
+  return vqrdmulhs_s32(a, b);
+// CHECK: sqrdmulh {{s[0-9]+}}, {{s[0-9]+}}, {{s[0-9]+}}
+}
+
+float32_t test_vmulxs_f32(float32_t a, float32_t b) {
+// CHECK: test_vmulxs_f32
+  return vmulxs_f32(a, b);
+// CHECK: fmulx {{s[0-9]+}}, {{s[0-9]+}}, {{s[0-9]+}}
+}
+
+float64_t test_vmulxd_f64(float64_t a, float64_t b) {
+// CHECK: test_vmulxd_f64
+  return vmulxd_f64(a, b);
+// CHECK: fmulx {{d[0-9]+}}, {{d[0-9]+}}, {{d[0-9]+}}
+}
+
+float32_t test_vrecpss_f32(float32_t a, float32_t b) {
+// CHECK: test_vrecpss_f32
+  return vrecpss_f32(a, b);
+// CHECK: frecps {{s[0-9]+}}, {{s[0-9]+}}, {{s[0-9]+}}
+}
+
+float64_t test_vrecpsd_f64(float64_t a, float64_t b) {
+// CHECK: test_vrecpsd_f64
+  return vrecpsd_f64(a, b);
+// CHECK: frecps {{d[0-9]+}}, {{d[0-9]+}}, {{d[0-9]+}}
+}
+
+float32_t test_vrsqrtss_f32(float32_t a, float32_t b) {
+// CHECK: test_vrsqrtss_f32
+  return vrsqrtss_f32(a, b);
+// CHECK: frsqrts {{s[0-9]+}}, {{s[0-9]+}}, {{s[0-9]+}}
+}
+
+float64_t test_vrsqrtsd_f64(float64_t a, float64_t b) {
+// CHECK: test_vrsqrtsd_f64
+  return vrsqrtsd_f64(a, b);
+// CHECK: frsqrts {{d[0-9]+}}, {{d[0-9]+}}, {{d[0-9]+}}
+}

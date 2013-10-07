@@ -1945,6 +1945,31 @@ static Value *EmitAArch64ScalarBuiltinExpr(CodeGenFunction &CGF,
   case AArch64::BI__builtin_neon_vminnmvq_f32:
     Int = Intrinsic::aarch64_neon_vminnmv;
     AcrossVec = true; ExtendEle = false; s = "vminnmv"; break;
+  // Scalar Integer Saturating Doubling Multiply Half High
+  case AArch64::BI__builtin_neon_vqdmulhh_s16:
+  case AArch64::BI__builtin_neon_vqdmulhs_s32:
+    Int = Intrinsic::arm_neon_vqdmulh;
+    s = "vqdmulh"; OverloadInt = true; break;
+  // Scalar Integer Saturating Rounding Doubling Multiply Half High
+  case AArch64::BI__builtin_neon_vqrdmulhh_s16:
+  case AArch64::BI__builtin_neon_vqrdmulhs_s32:
+    Int = Intrinsic::arm_neon_vqrdmulh;
+    s = "vqrdmulh"; OverloadInt = true; break;
+  // Scalar Floating-point Multiply Extended
+  case AArch64::BI__builtin_neon_vmulxs_f32:
+  case AArch64::BI__builtin_neon_vmulxd_f64:
+    Int = Intrinsic::aarch64_neon_vmulx;
+    s = "vmulx"; OverloadInt = true; break;
+  // Scalar Floating-point Reciprocal Step and
+  case AArch64::BI__builtin_neon_vrecpss_f32:
+  case AArch64::BI__builtin_neon_vrecpsd_f64:
+    Int = Intrinsic::arm_neon_vrecps;
+    s = "vrecps"; OverloadInt = true; break;
+  // Scalar Floating-point Reciprocal Square Root Step
+  case AArch64::BI__builtin_neon_vrsqrtss_f32:
+  case AArch64::BI__builtin_neon_vrsqrtsd_f64:
+    Int = Intrinsic::arm_neon_vrsqrts;
+    s = "vrsqrts"; OverloadInt = true; break;
   }
 
   if (!Int)

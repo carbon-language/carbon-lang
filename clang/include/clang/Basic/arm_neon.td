@@ -745,4 +745,24 @@ def SCALAR_FMINP : SInst<"vpmin", "sd", "SfSQd">;
 def SCALAR_FMAXNMP : SInst<"vpmaxnm", "sd", "SfSQd">;
 def SCALAR_FMINNMP : SInst<"vpminnm", "sd", "SfSQd">;
 
+////////////////////////////////////////////////////////////////////////////////
+// Scalar Integer Saturating Doubling Multiply Half High
+def SCALAR_SQDMULH : SInst<"vqdmulh", "sss", "SsSi">;
+
+////////////////////////////////////////////////////////////////////////////////
+// Scalar Integer Saturating Rounding Doubling Multiply Half High
+def SCALAR_SQRDMULH : SInst<"vqrdmulh", "sss", "SsSi">;
+
+////////////////////////////////////////////////////////////////////////////////
+// Scalar Floating-point Multiply Extended
+def SCALAR_FMULX : IInst<"vmulx", "sss", "SfSd">;
+
+////////////////////////////////////////////////////////////////////////////////
+// Scalar Floating-point Reciprocal Step
+def SCALAR_FRECPS : IInst<"vrecps", "sss", "SfSd">;
+
+////////////////////////////////////////////////////////////////////////////////
+// Scalar Floating-point Reciprocal Square Root Step
+def SCALAR_FRSQRTS : IInst<"vrsqrts", "sss", "SfSd">;
+
 }
