@@ -141,7 +141,6 @@ void WalkAST::VisitCallExpr(CallExpr *CE) {
     if (containsBadStrncatPattern(CE)) {
       const Expr *DstArg = CE->getArg(0);
       const Expr *LenArg = CE->getArg(2);
-      SourceRange R = LenArg->getSourceRange();
       PathDiagnosticLocation Loc =
         PathDiagnosticLocation::createBegin(LenArg, BR.getSourceManager(), AC);
 
@@ -159,7 +158,7 @@ void WalkAST::VisitCallExpr(CallExpr *CE) {
       os << "se a safer 'strlcat' API";
 
       BR.EmitBasicReport(FD, "Anti-pattern in the argument", "C String API",
-                         os.str(), Loc, &R, 1);
+                         os.str(), Loc, LenArg->getSourceRange());
     }
   }
 

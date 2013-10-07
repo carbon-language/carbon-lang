@@ -466,20 +466,7 @@ public:
   void EmitBasicReport(const Decl *DeclWithIssue,
                        StringRef BugName, StringRef BugCategory,
                        StringRef BugStr, PathDiagnosticLocation Loc,
-                       SourceRange* RangeBeg, unsigned NumRanges);
-
-  void EmitBasicReport(const Decl *DeclWithIssue,
-                       StringRef BugName, StringRef BugCategory,
-                       StringRef BugStr, PathDiagnosticLocation Loc) {
-    EmitBasicReport(DeclWithIssue, BugName, BugCategory, BugStr, Loc, 0, 0);
-  }
-
-  void EmitBasicReport(const Decl *DeclWithIssue,
-                       StringRef BugName, StringRef Category,
-                       StringRef BugStr, PathDiagnosticLocation Loc,
-                       SourceRange R) {
-    EmitBasicReport(DeclWithIssue, BugName, Category, BugStr, Loc, &R, 1);
-  }
+                       ArrayRef<SourceRange> Ranges = None);
 
 private:
   llvm::StringMap<BugType *> StrBugTypes;

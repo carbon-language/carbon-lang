@@ -140,12 +140,11 @@ void WalkAST::VisitCallExpr(CallExpr *CE) {
         << Name << "' must be a C array of pointer-sized values, not '"
         << Arg->getType().getAsString() << "'";
 
-    SourceRange R = Arg->getSourceRange();
     PathDiagnosticLocation CELoc =
         PathDiagnosticLocation::createBegin(CE, BR.getSourceManager(), AC);
     BR.EmitBasicReport(AC->getDecl(),
                        OsName.str(), categories::CoreFoundationObjectiveC,
-                       Os.str(), CELoc, &R, 1);
+                       Os.str(), CELoc, Arg->getSourceRange());
   }
 
   // Recurse and check children.

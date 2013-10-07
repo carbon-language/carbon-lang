@@ -239,7 +239,7 @@ public:
         BR.EmitBasicReport(D, "Allocator sizeof operand mismatch",
             categories::UnixAPI,
             OS.str(),
-            L, Ranges.data(), Ranges.size());
+            L, Ranges);
       }
     }
   }

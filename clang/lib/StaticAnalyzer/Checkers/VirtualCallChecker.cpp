@@ -191,7 +191,7 @@ void WalkAST::ReportVirtualCall(const CallExpr *CE, bool isPure) {
                        "Call pure virtual function during construction or "
                        "Destruction",
                        "Cplusplus",
-                       os.str(), CELoc, &R, 1);
+                       os.str(), CELoc, R);
     return;
   }
   else {
@@ -201,7 +201,7 @@ void WalkAST::ReportVirtualCall(const CallExpr *CE, bool isPure) {
                        "Call virtual function during construction or "
                        "Destruction",
                        "Cplusplus",
-                       os.str(), CELoc, &R, 1);
+                       os.str(), CELoc, R);
     return;
   }
 }

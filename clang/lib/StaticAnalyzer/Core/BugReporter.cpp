@@ -3428,13 +3428,15 @@ void BugReporter::EmitBasicReport(const Decl *DeclWithIssue,
                                   StringRef name,
                                   StringRef category,
                                   StringRef str, PathDiagnosticLocation Loc,
-                                  SourceRange* RBeg, unsigned NumRanges) {
+                                  ArrayRef<SourceRange> Ranges) {
 
   // 'BT' is owned by BugReporter.
   BugType *BT = getBugTypeForName(name, category);
   BugReport *R = new BugReport(*BT, str, Loc);
   R->setDeclWithIssue(DeclWithIssue);
-  for ( ; NumRanges > 0 ; --NumRanges, ++RBeg) R->addRange(*RBeg);
+  for (ArrayRef<SourceRange>::iterator I = Ranges.begin(), E = Ranges.end();
+       I != E; ++I)
+    R->addRange(*I);
   emitReport(R);
 }
 
