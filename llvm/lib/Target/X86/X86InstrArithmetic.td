@@ -497,6 +497,21 @@ def DEC64_32r : I<0xFF, MRM1r, (outs GR32:$dst), (ins GR32:$src1),
                 Requires<[In64BitMode]>;
 } // isConvertibleToThreeAddress = 1, CodeSize = 2
 
+let isCodeGenOnly = 1, CodeSize = 2 in {
+def INC32_16r : I<0xFF, MRM0r, (outs GR16:$dst), (ins GR16:$src1),
+                  "inc{w}\t$dst", [], IIC_UNARY_REG>,
+                OpSize, Requires<[In32BitMode]>;
+def INC32_32r : I<0xFF, MRM0r, (outs GR32:$dst), (ins GR32:$src1),
+                  "inc{l}\t$dst", [], IIC_UNARY_REG>,
+                Requires<[In32BitMode]>;
+def DEC32_16r : I<0xFF, MRM1r, (outs GR16:$dst), (ins GR16:$src1),
+                  "dec{w}\t$dst", [], IIC_UNARY_REG>,
+                OpSize, Requires<[In32BitMode]>;
+def DEC32_32r : I<0xFF, MRM1r, (outs GR32:$dst), (ins GR32:$src1),
+                  "dec{l}\t$dst", [], IIC_UNARY_REG>,
+                Requires<[In32BitMode]>;
+} // isCodeGenOnly = 1, CodeSize = 2
+
 } // Constraints = "$src1 = $dst", SchedRW
 
 let CodeSize = 2, SchedRW = [WriteALULd, WriteRMW] in {
@@ -577,7 +592,6 @@ let CodeSize = 2, SchedRW = [WriteALULd, WriteRMW] in {
                    (implicit EFLAGS)], IIC_UNARY_MEM>;
 } // CodeSize = 2, SchedRW
 } // Defs = [EFLAGS]
-
 
 /// X86TypeInfo - This is a bunch of information that describes relevant X86
 /// information about value types.  For example, it can tell you what the
