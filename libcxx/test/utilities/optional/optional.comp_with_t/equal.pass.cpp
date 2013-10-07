@@ -23,8 +23,8 @@ struct X
     constexpr X(int i) : i_(i) {}
 };
 
-constexpr bool operator == ( const X &rhs, const X &lhs )
-    { return rhs.i_ == lhs.i_ ; }
+constexpr bool operator == ( const X &lhs, const X &rhs )
+    { return lhs.i_ == rhs.i_ ; }
     
 #endif
 
