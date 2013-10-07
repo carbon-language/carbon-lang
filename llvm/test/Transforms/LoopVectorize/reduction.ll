@@ -467,3 +467,30 @@ for.body:
 for.end:
   ret i32 %p.addr.02
 }
+
+; Don't vectorize a reduction value that is not the last in a reduction cyle. We
+; would loose iterations (VF-1) on the operations after that use.
+; PR17498
+
+; CHECK-LABEL: not_last_operation
+; CHECK-NOT: x i32>
+define i32 @not_last_operation(i32 %p, i32 %val) {
+entry:
+  %tobool = icmp eq i32 %p, 0
+  br label %for.body
+
+for.body:
+  %inc613.1 = phi i32 [ 0, %entry ], [ %inc6.1, %for.body ]
+  %inc511.1 = phi i32 [ %val, %entry ], [ %inc5.1, %for.body ]
+  %0 = zext i1 %tobool to i32
+  %inc4.1 = xor i32 %0, 1
+  %inc511.1.inc4.1 = add nsw i32 %inc511.1, %inc4.1
+  %inc5.1 = add nsw i32 %inc511.1.inc4.1, 1
+  %inc6.1 = add nsw i32 %inc613.1, 1
+  %exitcond.1 = icmp eq i32 %inc6.1, 22
+  br i1 %exitcond.1, label %exit, label %for.body
+
+exit:
+  %inc.2 = add nsw i32 %inc511.1.inc4.1, 2
+  ret i32 %inc.2
+}

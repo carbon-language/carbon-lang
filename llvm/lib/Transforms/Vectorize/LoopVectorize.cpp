@@ -4015,6 +4015,12 @@ bool LoopVectorizationLegality::AddReductionVar(PHINode *Phi,
         if (ExitInstruction != 0 || Cur == Phi)
           return false;
 
+        // The instruction used by an outside user must be the last instruction
+        // before we feed back to the reduction phi. Otherwise, we loose VF-1
+        // operations on the value.
+        if (std::find(Phi->op_begin(), Phi->op_end(), Cur) == Phi->op_end())
+         return false;
+
         ExitInstruction = Cur;
         continue;
       }
