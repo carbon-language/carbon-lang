@@ -32,6 +32,21 @@ using namespace llvm;
 namespace {
 typedef MachineBasicBlock::iterator Iter;
 
+static std::pair<unsigned, unsigned> getMFHiLoOpc(unsigned Src) {
+  if (Mips::ACC64RegClass.contains(Src))
+    return std::make_pair((unsigned)Mips::PseudoMFHI,
+                          (unsigned)Mips::PseudoMFLO);
+
+  if (Mips::ACC64DSPRegClass.contains(Src))
+    return std::make_pair((unsigned)Mips::MFHI_DSP, (unsigned)Mips::MFLO_DSP);
+
+  if (Mips::ACC128RegClass.contains(Src))
+    return std::make_pair((unsigned)Mips::PseudoMFHI64,
+                          (unsigned)Mips::PseudoMFLO64);
+
+  return std::make_pair(0, 0);
+}
+
 /// Helper class to expand pseudos.
 class ExpandPseudo {
 public:
@@ -43,10 +58,11 @@ private:
   void expandLoadCCond(MachineBasicBlock &MBB, Iter I);
   void expandStoreCCond(MachineBasicBlock &MBB, Iter I);
   void expandLoadACC(MachineBasicBlock &MBB, Iter I, unsigned RegSize);
-  void expandStoreACC(MachineBasicBlock &MBB, Iter I, unsigned RegSize);
+  void expandStoreACC(MachineBasicBlock &MBB, Iter I, unsigned MFHiOpc,
+                      unsigned MFLoOpc, unsigned RegSize);
   bool expandCopy(MachineBasicBlock &MBB, Iter I);
-  bool expandCopyACC(MachineBasicBlock &MBB, Iter I, unsigned Dst,
-                     unsigned Src, unsigned RegSize);
+  bool expandCopyACC(MachineBasicBlock &MBB, Iter I, unsigned MFHiOpc,
+                     unsigned MFLoOpc);
 
   MachineFunction &MF;
   MachineRegisterInfo &MRI;
@@ -83,11 +99,13 @@ bool ExpandPseudo::expandInstr(MachineBasicBlock &MBB, Iter I) {
     expandLoadACC(MBB, I, 8);
     break;
   case Mips::STORE_ACC64:
+    expandStoreACC(MBB, I, Mips::PseudoMFHI, Mips::PseudoMFLO, 4);
+    break;
   case Mips::STORE_ACC64DSP:
-    expandStoreACC(MBB, I, 4);
+    expandStoreACC(MBB, I, Mips::MFHI_DSP, Mips::MFLO_DSP, 4);
     break;
   case Mips::STORE_ACC128:
-    expandStoreACC(MBB, I, 8);
+    expandStoreACC(MBB, I, Mips::PseudoMFHI64, Mips::PseudoMFLO64, 8);
     break;
   case TargetOpcode::COPY:
     if (!expandCopy(MBB, I))
@@ -171,10 +189,11 @@ void ExpandPseudo::expandLoadACC(MachineBasicBlock &MBB, Iter I,
 }
 
 void ExpandPseudo::expandStoreACC(MachineBasicBlock &MBB, Iter I,
+                                  unsigned MFHiOpc, unsigned MFLoOpc,
                                   unsigned RegSize) {
-  //  copy $vr0, lo
+  //  mflo $vr0, src
   //  store $vr0, FI
-  //  copy $vr1, hi
+  //  mfhi $vr1, src
   //  store $vr1, FI + 4
 
   assert(I->getOperand(0).isReg() && I->getOperand(1).isFI());
@@ -189,33 +208,29 @@ void ExpandPseudo::expandStoreACC(MachineBasicBlock &MBB, Iter I,
   unsigned VR1 = MRI.createVirtualRegister(RC);
   unsigned Src = I->getOperand(0).getReg(), FI = I->getOperand(1).getIndex();
   unsigned SrcKill = getKillRegState(I->getOperand(0).isKill());
-  unsigned Lo = RegInfo.getSubReg(Src, Mips::sub_lo);
-  unsigned Hi = RegInfo.getSubReg(Src, Mips::sub_hi);
   DebugLoc DL = I->getDebugLoc();
 
-  BuildMI(MBB, I, DL, TII.get(TargetOpcode::COPY), VR0).addReg(Lo, SrcKill);
+  BuildMI(MBB, I, DL, TII.get(MFLoOpc), VR0).addReg(Src);
   TII.storeRegToStack(MBB, I, VR0, true, FI, RC, &RegInfo, 0);
-  BuildMI(MBB, I, DL, TII.get(TargetOpcode::COPY), VR1).addReg(Hi, SrcKill);
+  BuildMI(MBB, I, DL, TII.get(MFHiOpc), VR1).addReg(Src, SrcKill);
   TII.storeRegToStack(MBB, I, VR1, true, FI, RC, &RegInfo, RegSize);
 }
 
 bool ExpandPseudo::expandCopy(MachineBasicBlock &MBB, Iter I) {
-  unsigned Dst = I->getOperand(0).getReg(), Src = I->getOperand(1).getReg();
+  unsigned Src = I->getOperand(1).getReg();
+  std::pair<unsigned, unsigned> Opcodes = getMFHiLoOpc(Src);
 
-  if (Mips::ACC64DSPRegClass.contains(Dst, Src))
-    return expandCopyACC(MBB, I, Dst, Src, 4);
+  if (!Opcodes.first)
+    return false;
 
-  if (Mips::ACC128RegClass.contains(Dst, Src))
-    return expandCopyACC(MBB, I, Dst, Src, 8);
-
-  return false;
+  return expandCopyACC(MBB, I, Opcodes.first, Opcodes.second);
 }
 
-bool ExpandPseudo::expandCopyACC(MachineBasicBlock &MBB, Iter I, unsigned Dst,
-                                 unsigned Src, unsigned RegSize) {
-  //  copy $vr0, src_lo
+bool ExpandPseudo::expandCopyACC(MachineBasicBlock &MBB, Iter I,
+                                 unsigned MFHiOpc, unsigned MFLoOpc) {
+  //  mflo $vr0, src
   //  copy dst_lo, $vr0
-  //  copy $vr1, src_hi
+  //  mfhi $vr1, src
   //  copy dst_hi, $vr1
 
   const MipsSEInstrInfo &TII =
@@ -223,20 +238,20 @@ bool ExpandPseudo::expandCopyACC(MachineBasicBlock &MBB, Iter I, unsigned Dst,
   const MipsRegisterInfo &RegInfo =
     *static_cast<const MipsRegisterInfo*>(MF.getTarget().getRegisterInfo());
 
-  const TargetRegisterClass *RC = RegInfo.intRegClass(RegSize);
+  unsigned Dst = I->getOperand(0).getReg(), Src = I->getOperand(1).getReg();
+  unsigned VRegSize = RegInfo.getMinimalPhysRegClass(Dst)->getSize() / 2;
+  const TargetRegisterClass *RC = RegInfo.intRegClass(VRegSize);
   unsigned VR0 = MRI.createVirtualRegister(RC);
   unsigned VR1 = MRI.createVirtualRegister(RC);
   unsigned SrcKill = getKillRegState(I->getOperand(1).isKill());
   unsigned DstLo = RegInfo.getSubReg(Dst, Mips::sub_lo);
   unsigned DstHi = RegInfo.getSubReg(Dst, Mips::sub_hi);
-  unsigned SrcLo = RegInfo.getSubReg(Src, Mips::sub_lo);
-  unsigned SrcHi = RegInfo.getSubReg(Src, Mips::sub_hi);
   DebugLoc DL = I->getDebugLoc();
 
-  BuildMI(MBB, I, DL, TII.get(TargetOpcode::COPY), VR0).addReg(SrcLo, SrcKill);
+  BuildMI(MBB, I, DL, TII.get(MFLoOpc), VR0).addReg(Src);
   BuildMI(MBB, I, DL, TII.get(TargetOpcode::COPY), DstLo)
     .addReg(VR0, RegState::Kill);
-  BuildMI(MBB, I, DL, TII.get(TargetOpcode::COPY), VR1).addReg(SrcHi, SrcKill);
+  BuildMI(MBB, I, DL, TII.get(MFHiOpc), VR1).addReg(Src, SrcKill);
   BuildMI(MBB, I, DL, TII.get(TargetOpcode::COPY), DstHi)
     .addReg(VR1, RegState::Kill);
   return true;

@@ -87,6 +87,9 @@ private:
   std::pair<bool, bool> compareOpndSize(unsigned Opc,
                                         const MachineFunction &MF) const;
 
+  void expandPseudoMFHiLo(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
+                          unsigned NewOpc) const;
+
   /// Expand pseudo Int-to-FP conversion instructions.
   ///
   /// For example, the following pseudo instruction

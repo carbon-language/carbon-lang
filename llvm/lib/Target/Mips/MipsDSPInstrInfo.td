@@ -469,11 +469,14 @@ class MADD_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
   string Constraints = "$acin = $ac";
 }
 
-class MFHI_DESC_BASE<string instr_asm, RegisterOperand RO, InstrItinClass itin> {
+class MFHI_DESC_BASE<string instr_asm, RegisterOperand RO, SDNode OpNode,
+                     InstrItinClass itin> {
   dag OutOperandList = (outs GPR32Opnd:$rd);
   dag InOperandList = (ins RO:$ac);
   string AsmString = !strconcat(instr_asm, "\t$rd, $ac");
+  list<dag> Pattern = [(set GPR32Opnd:$rd, (OpNode RO:$ac))];
   InstrItinClass Itinerary = itin;
+  int AddedComplexity = 20;
 }
 
 class MTHI_DESC_BASE<string instr_asm, RegisterOperand RO, InstrItinClass itin> {
@@ -736,8 +739,10 @@ class MAQ_SA_W_PHR_DESC : DPA_W_PH_DESC_BASE<"maq_sa.w.phr", MipsMAQ_SA_W_PHR>,
                           Defs<[DSPOutFlag16_19]>;
 
 // Move from/to hi/lo.
-class MFHI_DESC : MFHI_DESC_BASE<"mfhi", HI32DSPOpnd, NoItinerary>;
-class MFLO_DESC : MFHI_DESC_BASE<"mflo", LO32DSPOpnd, NoItinerary>;
+class MFHI_DESC : MFHI_DESC_BASE<"mfhi", ACC64DSPOpnd, MipsExtractHI,
+                                 NoItinerary>;
+class MFLO_DESC : MFHI_DESC_BASE<"mflo", ACC64DSPOpnd, MipsExtractLO,
+                                 NoItinerary>;
 class MTHI_DESC : MTHI_DESC_BASE<"mthi", HI32DSPOpnd, NoItinerary>;
 class MTLO_DESC : MTHI_DESC_BASE<"mtlo", LO32DSPOpnd, NoItinerary>;
 
@@ -1402,11 +1407,6 @@ def : EXTR_W_TY1_R1_Pat<MipsEXTR_RS_W, EXTR_RS_W>;
 def : EXTR_W_TY1_R2_Pat<MipsEXTR_RS_W, EXTRV_RS_W>;
 def : EXTR_W_TY1_R1_Pat<MipsEXTR_S_H, EXTR_S_H>;
 def : EXTR_W_TY1_R2_Pat<MipsEXTR_S_H, EXTRV_S_H>;
-
-// mflo/hi patterns.
-let AddedComplexity = 20 in
-def : DSPPat<(i32 (ExtractLOHI ACC64DSP:$ac, imm:$lohi_idx)),
-             (EXTRACT_SUBREG ACC64DSP:$ac, imm:$lohi_idx)>;
 
 // Indexed load patterns.
 class IndexedLoadPat<SDPatternOperator LoadNode, Instruction Instr> :
