@@ -29,3 +29,21 @@ entry:
   store float %conv, float* %f, align 4
   ret float %conv
 }
+
+define void @PR17495() {
+entry:
+  br i1 undef, label %while.end, label %while.body
+
+while.body:                                       ; preds = %while.body, %entry
+  %x.1.copyload = load i24* undef, align 1
+  %conv = sitofp i24 %x.1.copyload to float
+  %div = fmul float %conv, 0x3E80000000000000
+  store float %div, float* undef, align 4
+  br i1 false, label %while.end, label %while.body
+
+while.end:                                        ; preds = %while.body, %entry
+  ret void
+
+; CHECK-LABEL: @PR17495
+; CHECK-NOT: fildll
+}
