@@ -19,6 +19,10 @@ namespace N {
   };
 }
 
+constexpr unsigned List<int>::*size_left = &List<int>::size;
+List<int> list_left = { 0, 8 };
+typedef List<int> ListInt_left;
+
 template <typename T>
 void pendingInstantiationEmit(T) {}
 void triggerPendingInstantiation() {

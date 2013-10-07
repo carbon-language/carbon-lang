@@ -2108,7 +2108,7 @@ public:
 
 /// FieldDecl - An instance of this class is created by Sema::ActOnField to
 /// represent a member of a struct/union/class.
-class FieldDecl : public DeclaratorDecl {
+class FieldDecl : public DeclaratorDecl, public Mergeable<FieldDecl> {
   // FIXME: This can be packed into the bitfields in Decl.
   bool Mutable : 1;
   mutable unsigned CachedFieldIndex : 31;
@@ -2221,6 +2221,14 @@ public:
   }
 
   SourceRange getSourceRange() const LLVM_READONLY;
+
+  /// Retrieves the canonical declaration of this field.
+  FieldDecl *getCanonicalDecl() {
+    return getFirstDeclaration();
+  }
+  const FieldDecl *getCanonicalDecl() const {
+    return getFirstDeclaration();
+  }
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }

@@ -34,6 +34,10 @@
 
 using namespace clang;
 
+Decl *clang::getPrimaryMergedDecl(Decl *D) {
+  return D->getASTContext().getPrimaryMergedDecl(D);
+}
+
 //===----------------------------------------------------------------------===//
 // NamedDecl Implementation
 //===----------------------------------------------------------------------===//
@@ -3094,6 +3098,10 @@ unsigned FieldDecl::getBitWidthValue(const ASTContext &Ctx) const {
 }
 
 unsigned FieldDecl::getFieldIndex() const {
+  const FieldDecl *Canonical = getCanonicalDecl();
+  if (Canonical != this)
+    return Canonical->getFieldIndex();
+
   if (CachedFieldIndex) return CachedFieldIndex - 1;
 
   unsigned Index = 0;
@@ -3101,7 +3109,7 @@ unsigned FieldDecl::getFieldIndex() const {
 
   for (RecordDecl::field_iterator I = RD->field_begin(), E = RD->field_end();
        I != E; ++I, ++Index)
-    I->CachedFieldIndex = Index + 1;
+    I->getCanonicalDecl()->CachedFieldIndex = Index + 1;
 
   assert(CachedFieldIndex && "failed to find field in parent");
   return CachedFieldIndex - 1;

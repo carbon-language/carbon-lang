@@ -271,6 +271,11 @@ class ASTContext : public RefCountedBase<ASTContext> {
   /// wasting space in the Decl class.
   llvm::DenseMap<const Decl*, AttrVec*> DeclAttrs;
 
+  /// \brief A mapping from non-redeclarable declarations in modules that were
+  /// merged with other declarations to the canonical declaration that they were
+  /// merged into.
+  llvm::DenseMap<Decl*, Decl*> MergedDecls;
+
 public:
   /// \brief A type synonym for the TemplateOrInstantiation mapping.
   typedef llvm::PointerUnion<VarTemplateDecl *, MemberSpecializationInfo *>
@@ -746,7 +751,15 @@ public:
     return import_iterator(FirstLocalImport); 
   }
   import_iterator local_import_end() const { return import_iterator(); }
-  
+
+  Decl *getPrimaryMergedDecl(Decl *D) {
+    Decl *Result = MergedDecls.lookup(D);
+    return Result ? Result : D;
+  }
+  void setPrimaryMergedDecl(Decl *D, Decl *Primary) {
+    MergedDecls[D] = Primary;
+  }
+
   TranslationUnitDecl *getTranslationUnitDecl() const { return TUDecl; }
 
 

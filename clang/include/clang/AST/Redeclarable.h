@@ -175,6 +175,42 @@ public:
   friend class ASTDeclWriter;
 };
 
+/// \brief Get the primary declaration for a declaration from an AST file. That
+/// will be the first-loaded declaration.
+Decl *getPrimaryMergedDecl(Decl *D);
+
+/// \brief Provides common interface for the Decls that cannot be redeclared,
+/// but can be merged if the same declaration is brought in from multiple
+/// modules.
+template<typename decl_type>
+class Mergeable {
+public:
+  Mergeable() {}
+
+  /// \brief Return the first declaration of this declaration or itself if this
+  /// is the only declaration.
+  decl_type *getFirstDeclaration() {
+    decl_type *D = static_cast<decl_type*>(this);
+    if (!D->isFromASTFile())
+      return D;
+    return cast<decl_type>(getPrimaryMergedDecl(const_cast<decl_type*>(D)));
+  }
+
+  /// \brief Return the first declaration of this declaration or itself if this
+  /// is the only declaration.
+  const decl_type *getFirstDeclaration() const {
+    const decl_type *D = static_cast<const decl_type*>(this);
+    if (!D->isFromASTFile())
+      return D;
+    return cast<decl_type>(getPrimaryMergedDecl(const_cast<decl_type*>(D)));
+  }
+
+  /// \brief Returns true if this is the first declaration.
+  bool isFirstDeclaration() const {
+    return getFirstDeclaration() == this;
+  }
+};
+
 }
 
 #endif
