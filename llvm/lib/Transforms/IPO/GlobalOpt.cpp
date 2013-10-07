@@ -50,6 +50,7 @@ STATISTIC(NumSubstitute,"Number of globals with initializers stored into them");
 STATISTIC(NumDeleted   , "Number of globals deleted");
 STATISTIC(NumFnDeleted , "Number of functions deleted");
 STATISTIC(NumGlobUses  , "Number of global uses devirtualized");
+STATISTIC(NumLocalized , "Number of globals localized");
 STATISTIC(NumShrunkToBool  , "Number of global vars shrunk to booleans");
 STATISTIC(NumFastCallFns   , "Number of functions converted to fastcc");
 STATISTIC(NumCtorsEvaluated, "Number of static ctors evaluated");
@@ -136,12 +137,24 @@ struct GlobalStatus {
   /// ever stored to this global, keep track of what value it is.
   Value *StoredOnceValue;
 
+  /// AccessingFunction/HasMultipleAccessingFunctions - These start out
+  /// null/false.  When the first accessing function is noticed, it is recorded.
+  /// When a second different accessing function is noticed,
+  /// HasMultipleAccessingFunctions is set to true.
+  const Function *AccessingFunction;
+  bool HasMultipleAccessingFunctions;
+
+  /// HasNonInstructionUser - Set to true if this global has a user that is not
+  /// an instruction (e.g. a constant expr or GV initializer).
+  bool HasNonInstructionUser;
+
   /// AtomicOrdering - Set to the strongest atomic ordering requirement.
   AtomicOrdering Ordering;
 
-  GlobalStatus()
-      : isCompared(false), isLoaded(false), StoredType(NotStored),
-        StoredOnceValue(0), Ordering(NotAtomic) {}
+  GlobalStatus() : isCompared(false), isLoaded(false), StoredType(NotStored),
+                   StoredOnceValue(0), AccessingFunction(0),
+                   HasMultipleAccessingFunctions(false),
+                   HasNonInstructionUser(false), Ordering(NotAtomic) {}
 };
 
 }
@@ -182,12 +195,21 @@ static bool AnalyzeGlobal(const Value *V, GlobalStatus &GS,
        ++UI) {
     const User *U = *UI;
     if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(U)) {
+      GS.HasNonInstructionUser = true;
+
       // If the result of the constantexpr isn't pointer type, then we won't
       // know to expect it in various places.  Just reject early.
       if (!isa<PointerType>(CE->getType())) return true;
 
       if (AnalyzeGlobal(CE, GS, PHIUsers)) return true;
     } else if (const Instruction *I = dyn_cast<Instruction>(U)) {
+      if (!GS.HasMultipleAccessingFunctions) {
+        const Function *F = I->getParent()->getParent();
+        if (GS.AccessingFunction == 0)
+          GS.AccessingFunction = F;
+        else if (GS.AccessingFunction != F)
+          GS.HasMultipleAccessingFunctions = true;
+      }
       if (const LoadInst *LI = dyn_cast<LoadInst>(I)) {
         GS.isLoaded = true;
         // Don't hack on volatile loads.
@@ -264,10 +286,12 @@ static bool AnalyzeGlobal(const Value *V, GlobalStatus &GS,
         return true;  // Any other non-load instruction might take address!
       }
     } else if (const Constant *C = dyn_cast<Constant>(U)) {
+      GS.HasNonInstructionUser = true;
       // We might have a dead and dangling constant hanging off of here.
       if (!SafeToDestroyConstant(C))
         return true;
     } else {
+      GS.HasNonInstructionUser = true;
       // Otherwise must be some other user.
       return true;
     }
@@ -1914,6 +1938,35 @@ bool GlobalOpt::ProcessGlobal(GlobalVariable *GV,
 bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
                                       Module::global_iterator &GVI,
                                       const GlobalStatus &GS) {
+  // If this is a first class global and has only one accessing function
+  // and this function is main (which we know is not recursive), we replace
+  // the global with a local alloca in this function.
+  //
+  // NOTE: It doesn't make sense to promote non single-value types since we
+  // are just replacing static memory to stack memory.
+  //
+  // If the global is in different address space, don't bring it to stack.
+  if (!GS.HasMultipleAccessingFunctions &&
+      GS.AccessingFunction && !GS.HasNonInstructionUser &&
+      GV->getType()->getElementType()->isSingleValueType() &&
+      GS.AccessingFunction->getName() == "main" &&
+      GS.AccessingFunction->hasExternalLinkage() &&
+      GV->getType()->getAddressSpace() == 0) {
+    DEBUG(dbgs() << "LOCALIZING GLOBAL: " << *GV);
+    Instruction &FirstI = const_cast<Instruction&>(*GS.AccessingFunction
+                                                   ->getEntryBlock().begin());
+    Type *ElemTy = GV->getType()->getElementType();
+    // FIXME: Pass Global's alignment when globals have alignment
+    AllocaInst *Alloca = new AllocaInst(ElemTy, NULL, GV->getName(), &FirstI);
+    if (!isa<UndefValue>(GV->getInitializer()))
+      new StoreInst(GV->getInitializer(), Alloca, &FirstI);
+
+    GV->replaceAllUsesWith(Alloca);
+    GV->eraseFromParent();
+    ++NumLocalized;
+    return true;
+  }
+
   // If the global is never loaded (but may be stored to), it is dead.
   // Delete it now.
   if (!GS.isLoaded) {
