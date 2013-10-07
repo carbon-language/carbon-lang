@@ -6,6 +6,7 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+#include "lld/Core/Resolver.h"
 #include "lld/Driver/InputGraph.h"
 
 using namespace lld;
@@ -18,15 +19,6 @@ bool sortInputElements(const std::unique_ptr<InputElement> &a,
 }
 
 bool InputGraph::addInputElement(std::unique_ptr<InputElement> ie) {
-  switch (ie->kind()) {
-  case InputElement::Kind::Control:
-    ++_numElements;
-    break;
-  case InputElement::Kind::File:
-    ++_numElements;
-    ++_numFiles;
-    break;
-  }
   _inputArgs.push_back(std::move(ie));
   return true;
 }
@@ -34,6 +26,12 @@ bool InputGraph::addInputElement(std::unique_ptr<InputElement> ie) {
 bool InputGraph::assignOrdinals() {
   for (auto &ie : _inputArgs)
     ie->setOrdinal(++_ordinal);
+  return true;
+}
+
+bool InputGraph::assignFileOrdinals(uint64_t &startOrdinal) {
+  for (auto &ie : _inputArgs)
+    ie->assignFileOrdinals(startOrdinal);
   return true;
 }
 
@@ -55,17 +53,68 @@ bool InputGraph::dump(raw_ostream &diagnostics) {
   return true;
 }
 
-llvm::ErrorOr<std::unique_ptr<lld::LinkerInput> >
-FileNode::createLinkerInput(const LinkingContext &ctx) {
-  auto filePath = path(ctx);
-  if (!filePath &&
-      error_code(filePath) == llvm::errc::no_such_file_or_directory)
-    return make_error_code(llvm::errc::no_such_file_or_directory);
-  OwningPtr<llvm::MemoryBuffer> opmb;
-  if (error_code ec = llvm::MemoryBuffer::getFileOrSTDIN(*filePath, opmb))
-    return ec;
+void InputGraph::insertElementsAt(
+    std::vector<std::unique_ptr<InputElement> > inputElements,
+    Position position, int32_t pos) {
+  if (position == InputGraph::Position::BEGIN)
+    pos = 0;
+  else if (position == InputGraph::Position::END)
+    pos = _inputArgs.size();
+  _inputArgs.insert(_inputArgs.begin() + pos,
+                    std::make_move_iterator(inputElements.begin()),
+                    std::make_move_iterator(inputElements.end()));
+}
 
-  std::unique_ptr<MemoryBuffer> mb(opmb.take());
+void InputGraph::insertOneElementAt(std::unique_ptr<InputElement> element,
+                                    Position position, int32_t pos) {
+  if (position == InputGraph::Position::BEGIN)
+    pos = 0;
+  else if (position == InputGraph::Position::END)
+    pos = _inputArgs.size();
+  _inputArgs.insert(_inputArgs.begin() + pos, std::move(element));
+}
 
-  return std::unique_ptr<LinkerInput>(new LinkerInput(std::move(mb), *filePath));
+/// \brief Helper functions for the resolver
+ErrorOr<InputElement *> InputGraph::getNextInputElement() {
+  if (_nextElementIndex >= _inputArgs.size())
+    return make_error_code(input_graph_error::no_more_elements);
+  return _inputArgs[_nextElementIndex++].get();
+}
+
+/// \brief Set the index on what inputElement has to be returned
+ErrorOr<void> InputGraph::setNextElementIndex(uint32_t index) {
+  if (index > _inputArgs.size())
+    return make_error_code(llvm::errc::invalid_argument);
+  _nextElementIndex = index;
+  return error_code::success();
+}
+
+/// InputElement
+
+/// \brief Initialize the Input Element, The ordinal value of an input Element
+/// is initially set to -1, if the user wants to override its ordinal,
+/// let the user do it
+InputElement::InputElement(Kind type, int64_t ordinal)
+    : _kind(type), _ordinal(ordinal), _weight(0),
+      _resolveState(Resolver::StateNoChange), _nextFileIndex(0) {}
+
+/// \brief Assign File ordinals for files contained
+/// in the InputElement
+void FileNode::assignFileOrdinals(uint64_t &startOrdinal) {
+  for (auto &file : _files)
+    file->setOrdinalAndIncrement(startOrdinal);
+}
+
+/// \brief Assign File ordinals for files contained
+/// in the InputElement
+void ControlNode::assignFileOrdinals(uint64_t &startOrdinal) {
+  for (auto &elem : _elements)
+    elem->assignFileOrdinals(startOrdinal);
+}
+
+/// \brief Assign File ordinals for files contained
+/// in the InputElement
+void SimpleFileNode::assignFileOrdinals(uint64_t &startOrdinal) {
+  for (auto &file : _files)
+    file->setOrdinalAndIncrement(startOrdinal);
 }

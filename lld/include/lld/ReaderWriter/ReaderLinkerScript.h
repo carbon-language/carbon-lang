@@ -15,7 +15,6 @@
 
 namespace lld {
 class File;
-class LinkerInput;
 class LinkingContext;
 
 /// \brief ReaderLinkerScript is a class for reading linker scripts
@@ -26,8 +25,8 @@ public:
 
   /// \brief Returns a vector of Files that are contained in the archive file
   ///        pointed to by the Memorybuffer
-  error_code parseFile(LinkerInput &input,
-                       std::vector<std::unique_ptr<File>> &result) const;
+  error_code parseFile(std::unique_ptr<llvm::MemoryBuffer> &mb,
+                       std::vector<std::unique_ptr<File> > &result) const;
 };
 
 } // end namespace lld

@@ -11,7 +11,6 @@
 #define LLD_READER_WRITER_ELF_WRITER_H
 
 #include "lld/Core/File.h"
-#include "lld/Core/InputFiles.h"
 #include "lld/ReaderWriter/Writer.h"
 
 namespace lld {

@@ -15,7 +15,6 @@
 
 namespace lld {
 
-
 ///
 /// The SharedLibraryFile subclass of File is used to represent dynamic
 /// shared libraries being linked against.

@@ -528,18 +528,17 @@ void elf::X86_64LinkingContext::addPasses(PassManager &pm) const {
   ELFLinkingContext::addPasses(pm);
 }
 
-std::vector<std::unique_ptr<File>>
-  elf::X86_64LinkingContext::createInternalFiles(){
-  std::vector<std::unique_ptr<File> > result =
-    ELFLinkingContext::createInternalFiles();
-  std::unique_ptr<X86_64InitFiniFile>
-    initFiniFile(new X86_64InitFiniFile(*this));
-  for (auto ai:initFunctions())
+bool elf::X86_64LinkingContext::createInternalFiles(
+    std::vector<std::unique_ptr<File> > &result) const {
+  ELFLinkingContext::createInternalFiles(result);
+  std::unique_ptr<X86_64InitFiniFile> initFiniFile(
+      new X86_64InitFiniFile(*this));
+  for (auto ai : initFunctions())
     initFiniFile->addInitFunction(ai);
   for (auto ai:finiFunctions())
     initFiniFile->addFiniFunction(ai);
   result.push_back(std::move(initFiniFile));
-  return result;
+  return true;
 }
 
 #define LLD_CASE(name) .Case(#name, llvm::ELF::name)

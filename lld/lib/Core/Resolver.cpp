@@ -8,8 +8,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "lld/Core/Atom.h"
+#include "lld/Core/ArchiveLibraryFile.h"
 #include "lld/Core/File.h"
-#include "lld/Core/InputFiles.h"
+#include "lld/Core/SharedLibraryFile.h"
 #include "lld/Core/Instrumentation.h"
 #include "lld/Core/LLVM.h"
 #include "lld/Core/Resolver.h"
@@ -69,24 +70,126 @@ private:
 
 } // namespace
 
-
-// add all atoms from all initial .o files
-void Resolver::buildInitialAtomList() {
-  ScopedTask task(getDefaultDomain(), "buildInitialAtomList");
- DEBUG_WITH_TYPE("resolver", llvm::dbgs() << "Resolver initial atom list:\n");
-
-  // each input files contributes initial atoms
-  _atoms.reserve(1024);
-  _inputFiles.forEachInitialAtom(*this);
-
-  _completedInitialObjectFiles = true;
-}
-
-
 // called before the first atom in any file is added with doAtom()
-void Resolver::doFile(const File &file) {
+void Resolver::doFile(const File &file) {}
+
+void Resolver::handleFile(const File &file) {
+  int32_t resolverState = Resolver::StateNoChange;
+  doFile(file);
+  for (const DefinedAtom *atom : file.defined()) {
+    doDefinedAtom(*atom);
+    resolverState |= StateNewDefinedAtoms;
+  }
+  for (const UndefinedAtom *undefAtom : file.undefined()) {
+    doUndefinedAtom(*undefAtom);
+    resolverState |= StateNewUndefinedAtoms;
+  }
+  for (const SharedLibraryAtom *shlibAtom : file.sharedLibrary()) {
+    doSharedLibraryAtom(*shlibAtom);
+    resolverState |= StateNewSharedLibraryAtoms;
+  }
+  for (const AbsoluteAtom *absAtom : file.absolute()) {
+    doAbsoluteAtom(*absAtom);
+    resolverState |= StateNewAbsoluteAtoms;
+  }
+  _context.setResolverState(resolverState);
 }
 
+void Resolver::handleArchiveFile(const File &file) {
+  const ArchiveLibraryFile *archiveFile = dyn_cast<ArchiveLibraryFile>(&file);
+
+  // Handle normal archives
+  int64_t undefineGenCount = 0;
+  do {
+    undefineGenCount = _symbolTable.size();
+    std::vector<const UndefinedAtom *> undefines;
+    _symbolTable.undefines(undefines);
+    for (const UndefinedAtom *undefAtom : undefines) {
+      StringRef undefName = undefAtom->name();
+      // load for previous undefine may also have loaded this undefine
+      if (!_symbolTable.isDefined(undefName)) {
+        if (const File *member = archiveFile->find(undefName, false))
+          handleFile(*member);
+      }
+      // If the undefined symbol has an alternative name, try to resolve the
+      // symbol with the name to give it a second chance. This feature is used
+      // for COFF "weak external" symbol.
+      if (!_symbolTable.isDefined(undefName)) {
+        if (const UndefinedAtom *fallbackUndefAtom = undefAtom->fallback()) {
+          _symbolTable.addReplacement(undefAtom, fallbackUndefAtom);
+          _symbolTable.add(*fallbackUndefAtom);
+        }
+      }
+    }
+    // search libraries for overrides of common symbols
+    if (_context.searchArchivesToOverrideTentativeDefinitions()) {
+      std::vector<StringRef> tentDefNames;
+      _symbolTable.tentativeDefinitions(tentDefNames);
+      for (StringRef tentDefName : tentDefNames) {
+        // Load for previous tentative may also have loaded
+        // something that overrode this tentative, so always check.
+        const Atom *curAtom = _symbolTable.findByName(tentDefName);
+        assert(curAtom != nullptr);
+        if (const DefinedAtom *curDefAtom = dyn_cast<DefinedAtom>(curAtom)) {
+          if (curDefAtom->merge() == DefinedAtom::mergeAsTentative) {
+            if (const File *member = archiveFile->find(tentDefName, true))
+              handleFile(*member);
+          }
+        }
+      }
+    }
+  } while (undefineGenCount != _symbolTable.size());
+}
+
+void Resolver::handleSharedLibrary(const File &file) {
+  const SharedLibraryFile *sharedLibrary = dyn_cast<SharedLibraryFile>(&file);
+  int64_t undefineGenCount = 0;
+
+  // Add all the atoms from the shared library
+  handleFile(*sharedLibrary);
+
+  do {
+    undefineGenCount = _symbolTable.size();
+    std::vector<const UndefinedAtom *> undefines;
+    _symbolTable.undefines(undefines);
+    for (const UndefinedAtom *undefAtom : undefines) {
+      StringRef undefName = undefAtom->name();
+      // load for previous undefine may also have loaded this undefine
+      if (!_symbolTable.isDefined(undefName)) {
+        if (const SharedLibraryAtom *shAtom =
+                sharedLibrary->exports(undefName, false))
+          doSharedLibraryAtom(*shAtom);
+      }
+      // If the undefined symbol has an alternative name, try to resolve the
+      // symbol with the name to give it a second chance. This feature is used
+      // for COFF "weak external" symbol.
+      if (!_symbolTable.isDefined(undefName)) {
+        if (const UndefinedAtom *fallbackUndefAtom = undefAtom->fallback()) {
+          _symbolTable.addReplacement(undefAtom, fallbackUndefAtom);
+          _symbolTable.add(*fallbackUndefAtom);
+        }
+      }
+    }
+    // search libraries for overrides of common symbols
+    if (_context.searchSharedLibrariesToOverrideTentativeDefinitions()) {
+      std::vector<StringRef> tentDefNames;
+      _symbolTable.tentativeDefinitions(tentDefNames);
+      for (StringRef tentDefName : tentDefNames) {
+        // Load for previous tentative may also have loaded
+        // something that overrode this tentative, so always check.
+        const Atom *curAtom = _symbolTable.findByName(tentDefName);
+        assert(curAtom != nullptr);
+        if (const DefinedAtom *curDefAtom = dyn_cast<DefinedAtom>(curAtom)) {
+          if (curDefAtom->merge() == DefinedAtom::mergeAsTentative) {
+            if (const SharedLibraryAtom *shAtom =
+                    sharedLibrary->exports(tentDefName, true))
+              doSharedLibraryAtom(*shAtom);
+          }
+        }
+      }
+    }
+  } while (undefineGenCount != _symbolTable.size());
+}
 
 void Resolver::doUndefinedAtom(const UndefinedAtom& atom) {
   DEBUG_WITH_TYPE("resolver", llvm::dbgs()
@@ -187,61 +290,19 @@ void Resolver::addAtoms(const std::vector<const DefinedAtom*>& newAtoms) {
 // if so, keep searching libraries until no more atoms being added
 void Resolver::resolveUndefines() {
   ScopedTask task(getDefaultDomain(), "resolveUndefines");
-  const bool searchArchives =
-      _context.searchArchivesToOverrideTentativeDefinitions();
-  const bool searchSharedLibs =
-      _context.searchSharedLibrariesToOverrideTentativeDefinitions();
+  ErrorOr<File &> nextFile;
 
-  // keep looping until no more undefines were added in last loop
-  unsigned int undefineGenCount;
-  do {
-    undefineGenCount = _symbolTable.size();
-    std::vector<const UndefinedAtom *> undefines;
-    _symbolTable.undefines(undefines);
-    for (const UndefinedAtom *undefAtom : undefines) {
-      StringRef undefName = undefAtom->name();
-      // load for previous undefine may also have loaded this undefine
-      if (!_symbolTable.isDefined(undefName)) {
-        _inputFiles.searchLibraries(undefName,
-                                    true,   // searchSharedLibs
-                                    true,   // searchArchives
-                                    false,  // dataSymbolOnly
-                                    *this);
-      }
-      // If the undefined symbol has an alternative name, try to resolve the
-      // symbol with the name to give it a second chance. This feature is used
-      // for COFF "weak external" symbol.
-      if (!_symbolTable.isDefined(undefName)) {
-        if (const UndefinedAtom *fallbackUndefAtom = undefAtom->fallback()) {
-          _symbolTable.addReplacement(undefAtom, fallbackUndefAtom);
-          _symbolTable.add(*fallbackUndefAtom);
-        }
-      }
-    }
-    // search libraries for overrides of common symbols
-    if (searchArchives || searchSharedLibs) {
-      std::vector<StringRef> tentDefNames;
-      _symbolTable.tentativeDefinitions(tentDefNames);
-      for ( StringRef tentDefName : tentDefNames ) {
-        // Load for previous tentative may also have loaded
-        // something that overrode this tentative, so always check.
-        const Atom *curAtom = _symbolTable.findByName(tentDefName);
-        assert(curAtom != nullptr);
-        if (const DefinedAtom* curDefAtom = dyn_cast<DefinedAtom>(curAtom)) {
-          if (curDefAtom->merge() == DefinedAtom::mergeAsTentative) {
-            // Still tentative definition, so look for override.
-            _inputFiles.searchLibraries(tentDefName,
-                                        searchSharedLibs,
-                                        searchArchives,
-                                        true,  // dataSymbolOnly
-                                        *this);
-          }
-        }
-      }
-    }
-  } while (undefineGenCount != _symbolTable.size());
+  while ((nextFile = _context.nextFile())) {
+    if (error_code(nextFile) == input_graph_error::no_more_files)
+      break;
+    if (nextFile->kind() == File::kindObject)
+      handleFile(*nextFile);
+    if (nextFile->kind() == File::kindArchiveLibrary)
+      handleArchiveFile(*nextFile);
+    if (nextFile->kind() == File::kindSharedLibrary)
+      handleSharedLibrary(*nextFile);
+  }
 }
-
 
 // switch all references to undefined or coalesced away atoms
 // to the new defined atom
@@ -381,31 +442,11 @@ void Resolver::removeCoalescedAwayAtoms() {
                               AtomCoalescedAway(_symbolTable)), _atoms.end());
 }
 
-// check for interactions between symbols defined in this linkage unit
-// and same symbol name in linked dynamic shared libraries
-void Resolver::checkDylibSymbolCollisions() {
-  ScopedTask task(getDefaultDomain(), "checkDylibSymbolCollisions");
-  for ( const Atom *atom : _atoms ) {
-    const DefinedAtom* defAtom = dyn_cast<DefinedAtom>(atom);
-    if (defAtom == nullptr)
-      continue;
-    if ( defAtom->merge() != DefinedAtom::mergeAsTentative )
-      continue;
-    assert(defAtom->scope() != DefinedAtom::scopeTranslationUnit);
-    // See if any shared library also has symbol which
-    // collides with the tentative definition.
-    // SymbolTable will warn if needed.
-    _inputFiles.searchLibraries(defAtom->name(), true, false, false, *this);
-  }
-}
-
-
 void Resolver::linkTimeOptimize() {
   // FIX ME
 }
 
 bool Resolver::resolve() {
-  this->buildInitialAtomList();
   this->resolveUndefines();
   this->updateReferences();
   this->deadStripOptimize();
@@ -414,7 +455,6 @@ bool Resolver::resolve() {
       return true;
   }
   this->removeCoalescedAwayAtoms();
-  this->checkDylibSymbolCollisions();
   this->linkTimeOptimize();
   this->_result.addAtoms(_atoms);
   return false;

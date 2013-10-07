@@ -526,15 +526,10 @@ bool WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ct
         inputGraph.addInputElement(std::unique_ptr<InputElement>(
             new PECOFFLibraryNode(ctx, defaultLibPath)));
 
-  if (!inputGraph.numFiles()) {
+  if (!inputGraph.size()) {
     diagnostics << "No input files\n";
     return false;
   }
-
-  // A list of undefined symbols will be added to the input
-  // file list to force the core linker to try to resolve
-  // the undefined symbols.
-  inputGraph.addInternalFile(ctx.createInternalFiles());
 
   // If /out option was not specified, the default output file name is
   // constructed by replacing an extension of the first input file

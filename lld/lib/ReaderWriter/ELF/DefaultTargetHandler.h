@@ -48,7 +48,9 @@ public:
   void addSection(Section<ELFT> *section) {}
 
   /// \brief add new symbol file
-  void addFiles(InputFiles &) {}
+  bool createImplicitFiles(std::vector<std::unique_ptr<File> > &) {
+    return true;
+  }
 
   /// \brief Finalize the symbol values
   void finalizeSymbolValues() {}

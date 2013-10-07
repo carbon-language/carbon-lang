@@ -145,7 +145,7 @@ bool CoreDriver::parse(int argc, const char *argv[], CoreLinkingContext &ctx,
     }
   }
 
-  if (!inputGraph->numFiles()) {
+  if (!inputGraph->size()) {
     diagnostics << "No input files\n";
     return false;
   }

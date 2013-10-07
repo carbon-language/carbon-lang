@@ -7,7 +7,7 @@ RUN: lld -flavor gnu -target x86_64 %p/Inputs/libfn.a -o %t --noinhibit-exec
 RUN: llvm-readobj -symbols %t | FileCheck %s
 
 SYMFROMARCHIVE:  Symbol {
-SYMFROMARCHIVE:    Name: fn (1)
+SYMFROMARCHIVE:    Name: fn (16)
 SYMFROMARCHIVE:    Size: 11
 SYMFROMARCHIVE:    Binding: Global (0x1)
 SYMFROMARCHIVE:    Type: Function (0x2)

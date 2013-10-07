@@ -15,7 +15,7 @@
 #include "lld/Core/File.h"
 #include "lld/Core/Reference.h"
 #include "lld/ReaderWriter/ELFLinkingContext.h"
-#include "lld/ReaderWriter/ReaderArchive.h"
+#include "lld/ReaderWriter/FileArchive.h"
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallString.h"

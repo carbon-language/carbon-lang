@@ -69,17 +69,6 @@ public:
 
 } // namespace
 
-llvm::ErrorOr<std::unique_ptr<lld::LinkerInput> >
-ELFFileNode::createLinkerInput(const LinkingContext &ctx) {
-  auto inputFile(FileNode::createLinkerInput(ctx));
-
-  if (inputFile) {
-    (*inputFile)->setAsNeeded(_asNeeded);
-    (*inputFile)->setWholeArchive(_isWholeArchive);
-  }
-  return std::move(inputFile);
-}
-
 llvm::ErrorOr<StringRef> ELFFileNode::path(const LinkingContext &) const {
   if (!_isDashlPrefix)
     return _path;
@@ -157,6 +146,8 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
   ctx->setIsStaticExecutable(false);
   ctx->setAllowShlibUndefines(false);
   ctx->setUseShlibUndefines(true);
+
+  int index = 0;
 
   // Process all the arguments and create Input Elements
   for (auto inputArg : *parsedArgs) {
@@ -281,8 +272,8 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
     case OPT_l: {
       std::unique_ptr<InputElement> inputFile =
           std::move(std::unique_ptr<InputElement>(new ELFFileNode(
-              *ctx, inputArg->getValue(), searchPath, isWholeArchive, asNeeded,
-              inputArg->getOption().getID() == OPT_l)));
+              *ctx, inputArg->getValue(), searchPath, index, isWholeArchive,
+              asNeeded, inputArg->getOption().getID() == OPT_l)));
       if (controlNodeStack.empty())
         inputGraph->addInputElement(std::move(inputFile));
       else
@@ -320,12 +311,10 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
     } // end switch on option ID
   }   // end for
 
-  if (!inputGraph->numFiles()) {
+  if (!inputGraph->size()) {
     diagnostics << "No input files\n";
     return false;
   }
-
-  inputGraph->addInternalFile(ctx->createInternalFiles());
 
   // Set default output file name if the output file was not
   // specified.

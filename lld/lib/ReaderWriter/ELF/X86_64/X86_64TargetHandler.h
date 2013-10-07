@@ -35,15 +35,16 @@ public:
     return _relocationHandler;
   }
 
-  virtual void addFiles(InputFiles &f);
+  virtual bool createImplicitFiles(std::vector<std::unique_ptr<File> > &);
 
 private:
   class GOTFile : public SimpleFile {
   public:
     GOTFile(const ELFLinkingContext &eti) : SimpleFile(eti, "GOTFile") {}
     llvm::BumpPtrAllocator _alloc;
-  } _gotFile;
+  };
 
+  std::unique_ptr<GOTFile> _gotFile;
   X86_64TargetRelocationHandler _relocationHandler;
   TargetLayout<X86_64ELFType> _targetLayout;
 };

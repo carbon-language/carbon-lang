@@ -25,10 +25,10 @@ target_link_libraries(lldDriver
   lldMachO
   lldPECOFF
   lldELF
+  lldCore
   lldNative
   lldReaderWriter
   lldYAML
-  lldCore
   LLVMObject
   LLVMOption
   LLVMSupport

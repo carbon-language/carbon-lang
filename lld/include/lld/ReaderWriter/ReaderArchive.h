@@ -24,7 +24,6 @@
 namespace lld {
 class File;
 class LinkingContext;
-class LinkerInput;
 
 /// \brief ReaderArchive is a class for reading archive libraries
 class ReaderArchive : public Reader {
@@ -34,8 +33,8 @@ public:
 
   /// \brief Returns a vector of Files that are contained in the archive file
   ///        pointed to by the Memorybuffer
-  error_code parseFile(LinkerInput &input,
-                       std::vector<std::unique_ptr<File>> &result) const;
+  error_code parseFile(std::unique_ptr<llvm::MemoryBuffer> &mb,
+                       std::vector<std::unique_ptr<File> > &result) const;
 
 private:
   mutable std::unique_ptr<llvm::object::Archive> _archive;

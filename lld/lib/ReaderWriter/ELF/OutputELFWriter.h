@@ -77,7 +77,7 @@ protected:
   virtual void addDefaultAtoms() = 0;
 
   // Add any runtime files and their atoms to the output
-  virtual void addFiles(InputFiles &);
+  virtual bool createImplicitFiles(std::vector<std::unique_ptr<File> > &);
 
   // Finalize the default atom values
   virtual void finalizeDefaultAtomValues() = 0;
@@ -239,9 +239,11 @@ void OutputELFWriter<ELFT>::assignSectionsWithNoSegments() {
 }
 
 template <class ELFT>
-void OutputELFWriter<ELFT>::addFiles(InputFiles &inputFiles) {
+bool OutputELFWriter<ELFT>::createImplicitFiles(
+    std::vector<std::unique_ptr<File> > &result) {
   // Add all input Files that are defined by the target
-  _targetHandler.addFiles(inputFiles);
+  _targetHandler.createImplicitFiles(result);
+  return true;
 }
 
 template <class ELFT> void OutputELFWriter<ELFT>::createDefaultSections() {

@@ -26,16 +26,17 @@ template<class ELFT>
 class DynamicLibraryWriter : public OutputELFWriter<ELFT> {
 public:
   DynamicLibraryWriter(const ELFLinkingContext &context)
-      : OutputELFWriter<ELFT>(context), _runtimeFile(context) {}
+      : OutputELFWriter<ELFT>(context),
+        _runtimeFile(new CRuntimeFile<ELFT>(context)) {}
 
 private:
   void buildDynamicSymbolTable(const File &file);
   void addDefaultAtoms();
-  virtual void addFiles(InputFiles &);
+  virtual bool createImplicitFiles(std::vector<std::unique_ptr<File> > &);
   void finalizeDefaultAtomValues();
 
   llvm::BumpPtrAllocator _alloc;
-  CRuntimeFile<ELFT> _runtimeFile;
+  std::unique_ptr<CRuntimeFile<ELFT> > _runtimeFile;
 };
 
 //===----------------------------------------------------------------------===//
@@ -62,19 +63,18 @@ void DynamicLibraryWriter<ELFT>::buildDynamicSymbolTable(const File &file) {
 }
 
 template <class ELFT> void DynamicLibraryWriter<ELFT>::addDefaultAtoms() {
-  _runtimeFile.addAbsoluteAtom("_end");
+  _runtimeFile->addAbsoluteAtom("_end");
 }
 
 /// \brief Hook in lld to add CRuntime file
 template <class ELFT>
-void DynamicLibraryWriter<ELFT>::addFiles(InputFiles &inputFiles) {
+bool DynamicLibraryWriter<ELFT>::createImplicitFiles(
+    std::vector<std::unique_ptr<File> > &result) {
   // Add the default atoms as defined by executables
   addDefaultAtoms();
-  // Add the runtime file
-  inputFiles.prependFile(_runtimeFile);
-  // Add the Linker internal file for symbols that are defined by
-  // command line options
-  OutputELFWriter<ELFT>::addFiles(inputFiles);
+  OutputELFWriter<ELFT>::createImplicitFiles(result);
+  result.push_back(std::move(_runtimeFile));
+  return true;
 }
 
 template <class ELFT>

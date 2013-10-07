@@ -15,7 +15,6 @@
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Path.h"
 #include "lld/Core/ArchiveLibraryFile.h"
-#include "lld/Core/InputFiles.h"
 #include "lld/Core/PassManager.h"
 #include "lld/Passes/LayoutPass.h"
 #include "lld/ReaderWriter/PECOFFLinkingContext.h"

@@ -32,10 +32,6 @@ public:
   virtual ErrorOr<std::string> stringFromRelocKind(Reference::Kind kind) const;
   virtual bool validateImpl(raw_ostream &diagnostics);
 
-  virtual error_code
-  parseFile(LinkerInput &input,
-            std::vector<std::unique_ptr<File> > &result) const;
-
   uint32_t getCPUType() const;
   uint32_t getCPUSubType() const;
 
@@ -71,6 +67,8 @@ public:
   bool minOS(StringRef mac, StringRef iOS) const;
   void setDoNothing(bool value) { _doNothing = value; }
   bool doNothing() const { return _doNothing; }
+
+  virtual Reader &getDefaultReader() const { return *_machoReader; }
 
   /// \brief The dylib's binary compatibility version, in the raw uint32 format.
   ///

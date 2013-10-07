@@ -30,7 +30,6 @@
 
 #include "lld/Core/DefinedAtom.h"
 #include "lld/Core/File.h"
-#include "lld/Core/InputFiles.h"
 #include "lld/ReaderWriter/AtomLayout.h"
 #include "lld/ReaderWriter/PECOFFLinkingContext.h"
 #include "lld/ReaderWriter/Writer.h"

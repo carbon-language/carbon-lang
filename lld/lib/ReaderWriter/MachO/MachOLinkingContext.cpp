@@ -242,19 +242,6 @@ void MachOLinkingContext::addPasses(PassManager &pm) const {
   pm.add(std::unique_ptr<Pass>(new LayoutPass()));
 }
 
-error_code MachOLinkingContext::parseFile(
-    LinkerInput &input,
-    std::vector<std::unique_ptr<File>> &result) const {
-  //  if (!_machoReader)
-  //    _machoReader = createReaderMachO(*this);
-  //  error_code ec = _machoReader->parseFile(input,result);
-  //  if (ec) {
-  return _yamlReader->parseFile(input, result);
-  //  }
-
-  return error_code::success();
-}
-
 Writer &MachOLinkingContext::writer() const {
   if (!_writer) {
     _writer = createWriterMachO(*this);

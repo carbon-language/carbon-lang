@@ -11,7 +11,6 @@
 
 #include "gtest/gtest.h"
 
-#include "lld/Core/LinkerInput.h"
 #include "lld/Driver/Driver.h"
 
 #include "llvm/Support/raw_ostream.h"
@@ -30,7 +29,7 @@ protected:
   std::string &errorMessage() { return  _errorMessage; }
 
   // Convenience method for getting number of input files.
-  int inputFileCount() { return linkingContext()->inputGraph().numFiles(); }
+  int inputFileCount() { return linkingContext()->inputGraph().size(); }
 
   // Convenience method for getting i'th input files name.
   std::string inputFile(unsigned index) {

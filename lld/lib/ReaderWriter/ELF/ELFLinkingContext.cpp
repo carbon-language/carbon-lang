@@ -108,25 +108,6 @@ bool ELFLinkingContext::isRelativeReloc(const Reference &) const {
   return false;
 }
 
-error_code ELFLinkingContext::parseFile(LinkerInput &input,
-    std::vector<std::unique_ptr<File>> &result) const {
-  ScopedTask task(getDefaultDomain(), "parseFile");
-  error_code ec = _elfReader->parseFile(input, result);
-  if (!ec)
-    return ec;
-
-  // Not an ELF file, check file extension to see if it might be yaml
-  StringRef path = input.getBuffer().getBufferIdentifier();
-  if (path.endswith(".objtxt")) {
-    ec = _yamlReader->parseFile(input, result);
-    if (!ec)
-      return ec;
-  }
-
-  // Not a yaml file, assume it is a linkerscript
-  return _linkerScriptReader->parseFile(input, result);
-}
-
 Writer &ELFLinkingContext::writer() const { return *_writer; }
 
 std::unique_ptr<ELFLinkingContext>
@@ -194,7 +175,7 @@ llvm::ErrorOr<StringRef> ELFLinkingContext::searchLibrary(
   return libName;
 }
 
-std::unique_ptr<File> ELFLinkingContext::createUndefinedSymbolFile() {
+std::unique_ptr<File> ELFLinkingContext::createUndefinedSymbolFile() const {
   if (_initialUndefinedSymbols.empty())
     return nullptr;
   std::unique_ptr<SimpleFile> undefinedSymFile(

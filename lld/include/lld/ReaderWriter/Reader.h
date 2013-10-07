@@ -19,7 +19,6 @@
 namespace lld {
 class ELFLinkingContext;
 class File;
-class LinkerInput;
 class LinkingContext;
 class PECOFFLinkingContext;
 
@@ -36,8 +35,9 @@ public:
   /// file) and create a File object.
   ///
   /// On success, the resulting File object takes ownership of the MemoryBuffer.
-  virtual error_code parseFile(LinkerInput &input,
-                          std::vector<std::unique_ptr<File>> &result) const = 0;
+  virtual error_code
+  parseFile(std::unique_ptr<MemoryBuffer> &mb,
+            std::vector<std::unique_ptr<File> > &result) const = 0;
 
 protected:
   // only concrete subclasses can be instantiated

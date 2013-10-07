@@ -27,7 +27,6 @@
 
 #include "lld/Core/DefinedAtom.h"
 #include "lld/Core/File.h"
-#include "lld/Core/InputFiles.h"
 #include "lld/Core/Reference.h"
 #include "lld/Core/SharedLibraryAtom.h"
 #include "lld/ReaderWriter/MachOLinkingContext.h"
@@ -339,7 +338,7 @@ public:
   MachOWriter(const MachOLinkingContext &context);
 
   virtual error_code  writeFile(const lld::File &file, StringRef path);
-  virtual void        addFiles(InputFiles&);
+  virtual bool createImplicitFiles(std::vector<std::unique_ptr<File> > &);
 
   uint64_t    addressOfAtom(const Atom *atom);
   void        findSegment(StringRef segmentName, uint32_t *segIndex,
@@ -369,14 +368,14 @@ private:
 
   const MachOLinkingContext &_context;
   mach_o::KindHandler &_referenceKindHandler;
-  CRuntimeFile _cRuntimeFile;
-  LoadCommandsChunk          *_loadCommandsChunk;
-  LoadCommandPaddingChunk    *_paddingChunk;
-  AtomToAddress               _atomToAddress;
-  std::vector<Chunk*>         _chunks;
-  std::vector<SectionChunk*>  _sectionChunks;
-  std::vector<LinkEditChunk*> _linkEditChunks;
-  BindingInfoChunk           *_bindingInfo;
+  std::unique_ptr<CRuntimeFile> _cRuntimeFile;
+  LoadCommandsChunk *_loadCommandsChunk;
+  LoadCommandPaddingChunk *_paddingChunk;
+  AtomToAddress _atomToAddress;
+  std::vector<Chunk *> _chunks;
+  std::vector<SectionChunk *> _sectionChunks;
+  std::vector<LinkEditChunk *> _linkEditChunks;
+  BindingInfoChunk *_bindingInfo;
   LazyBindingInfoChunk       *_lazyBindingInfo;
   SymbolTableChunk           *_symbolTableChunk;
   SymbolStringsChunk         *_stringsChunk;
@@ -1264,9 +1263,10 @@ uint32_t SymbolStringsChunk::stringIndex(StringRef str) {
 
 MachOWriter::MachOWriter(const MachOLinkingContext &context)
     : _context(context), _referenceKindHandler(context.kindHandler()),
-      _cRuntimeFile(context), _bindingInfo(nullptr), _lazyBindingInfo(nullptr),
-      _symbolTableChunk(nullptr), _stringsChunk(nullptr), _entryAtom(nullptr),
-      _linkEditStartOffset(0), _linkEditStartAddress(0) {}
+      _cRuntimeFile(new CRuntimeFile(context)), _bindingInfo(nullptr),
+      _lazyBindingInfo(nullptr), _symbolTableChunk(nullptr),
+      _stringsChunk(nullptr), _entryAtom(nullptr), _linkEditStartOffset(0),
+      _linkEditStartAddress(0) {}
 
 void MachOWriter::build(const lld::File &file) {
   // Create objects for each chunk.
@@ -1487,10 +1487,11 @@ error_code MachOWriter::writeFile(const lld::File &file, StringRef path) {
   return buffer->commit();
 }
 
-void MachOWriter::addFiles(InputFiles &inputFiles) {
-  inputFiles.prependFile(_cRuntimeFile);
+bool
+MachOWriter::createImplicitFiles(std::vector<std::unique_ptr<File> > &result) {
+  result.push_back(std::move(_cRuntimeFile));
+  return true;
 }
-
 
 } // namespace mach_o
 

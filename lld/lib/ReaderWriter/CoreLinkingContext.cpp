@@ -272,6 +272,7 @@ private:
 CoreLinkingContext::CoreLinkingContext() {}
 
 bool CoreLinkingContext::validateImpl(raw_ostream &diagnostics) {
+  _reader = createReaderYAML(*this);
   return true;
 }
 
@@ -286,13 +287,6 @@ void CoreLinkingContext::addPasses(PassManager &pm) const {
     else
       llvm_unreachable("bad pass name");
   }
-}
-
-error_code CoreLinkingContext::parseFile(LinkerInput &input,
-    std::vector<std::unique_ptr<File>> &result) const {
-  if (!_reader)
-    _reader = createReaderYAML(*this);
-  return _reader->parseFile(input, result);
 }
 
 Writer &CoreLinkingContext::writer() const {

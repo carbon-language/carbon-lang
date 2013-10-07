@@ -250,22 +250,22 @@ public:
   /// Instantiates a File object from a native object file.  Ownership
   /// of the MemoryBuffer is transfered to the resulting File object.
   static error_code make(const LinkingContext &context,
-                         LinkerInput &input,
-                         std::vector<std::unique_ptr<lld::File>> &result) {
+                         std::unique_ptr<MemoryBuffer> mb,
+                         std::vector<std::unique_ptr<lld::File> > &result) {
     const uint8_t *const base =
-        reinterpret_cast<const uint8_t *>(input.getBuffer().getBufferStart());
-    StringRef path(input.getBuffer().getBufferIdentifier());
-    const NativeFileHeader* const header =
-                       reinterpret_cast<const NativeFileHeader*>(base);
+        reinterpret_cast<const uint8_t *>(mb->getBufferStart());
+    StringRef path(mb->getBufferIdentifier());
+    const NativeFileHeader *const header =
+        reinterpret_cast<const NativeFileHeader *>(base);
     const NativeChunk *const chunks =
-      reinterpret_cast<const NativeChunk*>(base + sizeof(NativeFileHeader));
+        reinterpret_cast<const NativeChunk *>(base + sizeof(NativeFileHeader));
     // make sure magic matches
     if ( memcmp(header->magic, NATIVE_FILE_HEADER_MAGIC, 16) != 0 )
       return make_error_code(native_reader_error::unknown_file_format);
 
     // make sure mapped file contains all needed data
-    const size_t fileSize = input.getBuffer().getBufferSize();
-    if ( header->fileSize > fileSize )
+    const size_t fileSize = mb->getBufferSize();
+    if (header->fileSize > fileSize)
       return make_error_code(native_reader_error::file_too_short);
 
     DEBUG_WITH_TYPE("ReaderNative",
@@ -274,8 +274,7 @@ public:
                                  << header->chunkCount << "\n");
 
     // instantiate NativeFile object and add values to it as found
-    std::unique_ptr<File> file(new File(context, std::move(input.takeBuffer()),
-                                        path));
+    std::unique_ptr<File> file(new File(context, std::move(mb), path));
 
     // process each chunk
     for (uint32_t i = 0; i < header->chunkCount; ++i) {
@@ -930,9 +929,9 @@ public:
   Reader(const LinkingContext &context) : lld::Reader(context) {}
 
   virtual error_code
-  parseFile(LinkerInput &input,
-            std::vector<std::unique_ptr<lld::File>> &result) const {
-    return File::make(_context, input, result);
+  parseFile(std::unique_ptr<MemoryBuffer> &mb,
+            std::vector<std::unique_ptr<lld::File> > &result) const {
+    return File::make(_context, std::move(mb), result);
   }
 };
 } // end namespace native

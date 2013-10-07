@@ -10,7 +10,6 @@
 #include "lld/Driver/Driver.h"
 
 #include "lld/Core/LLVM.h"
-#include "lld/Core/InputFiles.h"
 #include "lld/Core/Instrumentation.h"
 #include "lld/Core/PassManager.h"
 #include "lld/Core/Parallel.h"
@@ -41,41 +40,21 @@ bool Driver::link(const LinkingContext &context, raw_ostream &diagnostics) {
     llvm::cl::ParseCommandLineOptions(numArgs + 1, args);
   }
   InputGraph &inputGraph = context.inputGraph();
-  if (!inputGraph.numFiles())
+  if (!inputGraph.size())
     return false;
+
+  bool fail = false;
 
   // Read inputs
   ScopedTask readTask(getDefaultDomain(), "Read Args");
-  std::vector<std::vector<std::unique_ptr<File> > > files(
-      inputGraph.numFiles());
-  size_t index = 0;
-  std::atomic<bool> fail(false);
   TaskGroup tg;
-  std::vector<std::unique_ptr<LinkerInput> > linkerInputs;
+  int index = 0;
   for (auto &ie : inputGraph.inputElements()) {
-    if (ie->kind() == InputElement::Kind::File) {
-      FileNode *fileNode = (llvm::dyn_cast<FileNode>)(ie.get());
-      auto linkerInput = fileNode->createLinkerInput(context);
-      if (!linkerInput) {
-        llvm::outs() << fileNode->errStr(error_code(linkerInput)) << "\n";
-        return false;
-      }
-      linkerInputs.push_back(std::move(*linkerInput));
-    }
-    else {
-      llvm_unreachable("Not handling other types of InputElements");
-    }
-  }
-  for (const auto &input : linkerInputs) {
-    if (context.logInputFiles())
-      llvm::outs() << input->getUserPath() << "\n";
-
-    tg.spawn([ &, index]{
-      if (error_code ec = context.parseFile(*input, files[index])) {
-        diagnostics << "Failed to read file: " << input->getUserPath() << ": "
-                    << ec.message() << "\n";
+    tg.spawn([&, index] {
+      if (error_code ec = ie->parse(context, diagnostics)) {
+        FileNode *fileNode = (llvm::dyn_cast<FileNode>)(ie.get());
+        diagnostics << fileNode->errStr(ec) << "\n";
         fail = true;
-        return;
       }
     });
     ++index;
@@ -86,23 +65,36 @@ bool Driver::link(const LinkingContext &context, raw_ostream &diagnostics) {
   if (fail)
     return false;
 
-  InputFiles inputs;
+  std::unique_ptr<SimpleFileNode> fileNode(
+      new SimpleFileNode("Internal Files"));
 
-  for (auto &f : inputGraph.internalFiles())
-    inputs.appendFile(*f.get());
+  InputGraph::FileVectorT internalFiles;
+  context.createInternalFiles(internalFiles);
 
-  for (auto &f : files)
-    inputs.appendFiles(f);
+  if (internalFiles.size()) {
+    fileNode->appendInputFiles(std::move(internalFiles));
+  }
 
   // Give target a chance to add files.
-  context.addImplicitFiles(inputs);
+  InputGraph::FileVectorT implicitFiles;
+  context.createImplicitFiles(implicitFiles);
+  if (implicitFiles.size()) {
+    fileNode->appendInputFiles(std::move(implicitFiles));
+  }
 
-  // assign an ordinal to each file so sort() can preserve command line order
-  inputs.assignFileOrdinals();
+  context.inputGraph().insertOneElementAt(std::move(fileNode),
+                                          InputGraph::Position::BEGIN);
+
+  context.inputGraph().assignOrdinals();
+
+  context.inputGraph().doPostProcess();
+
+  uint64_t ordinal = 0;
+  context.inputGraph().assignFileOrdinals(ordinal);
 
   // Do core linking.
   ScopedTask resolveTask(getDefaultDomain(), "Resolve");
-  Resolver resolver(context, inputs);
+  Resolver resolver(context);
   if (resolver.resolve()) {
     if (!context.allowRemainingUndefines())
       return false;

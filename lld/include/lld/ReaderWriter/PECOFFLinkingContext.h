@@ -56,16 +56,15 @@ public:
     IMAGE_DLL
   };
 
-  virtual error_code
-  parseFile(LinkerInput &input,
-            std::vector<std::unique_ptr<File> > &result) const;
+  virtual Reader &getDefaultReader() const { return *_reader; }
 
   virtual Writer &writer() const;
   virtual bool validateImpl(raw_ostream &diagnostics);
 
   virtual void addPasses(PassManager &pm) const;
 
-  virtual void addImplicitFiles(InputFiles &) const;
+  virtual bool
+  createImplicitFiles(std::vector<std::unique_ptr<File> > &result) const;
 
   void appendInputSearchPath(StringRef dirPath) {
     _inputSearchPaths.push_back(dirPath);
@@ -177,10 +176,10 @@ public:
 
 protected:
   /// Method to create a internal file for the entry symbol
-  virtual std::unique_ptr<File> createEntrySymbolFile();
+  virtual std::unique_ptr<File> createEntrySymbolFile() const;
 
   /// Method to create a internal file for an undefined symbol
-  virtual std::unique_ptr<File> createUndefinedSymbolFile();
+  virtual std::unique_ptr<File> createUndefinedSymbolFile() const;
 
 private:
   // The start address for the program. The default value for the executable is

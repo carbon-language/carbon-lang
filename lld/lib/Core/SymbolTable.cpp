@@ -12,7 +12,6 @@
 #include "lld/Core/Atom.h"
 #include "lld/Core/DefinedAtom.h"
 #include "lld/Core/File.h"
-#include "lld/Core/InputFiles.h"
 #include "lld/Core/LLVM.h"
 #include "lld/Core/Resolver.h"
 #include "lld/Core/SharedLibraryAtom.h"

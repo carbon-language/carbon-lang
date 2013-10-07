@@ -25,19 +25,19 @@ PLT: references:
 PLT:  kind: R_X86_64_IRELATIVE
 PLT:  target: hey
 
-PLT: name:  plt
-PLT: scope: global
-PLT: references:
-PLT:   kind:   R_X86_64_PC32
-PLT:   target: [[PLTNAME:[-a-zA-Z0-9_]+]]
-PLT:   kind: layout-before
-PLT:   target: __hey_1
-
 PLT: name: main
 PLT: scope: global
 PLT: references:
 PLT:   kind: R_X86_64_PC32
+PLT:   target: [[PLTNAME:[-a-zA-Z0-9_]+]]
+
+PLT: name:  plt
+PLT: scope: global
+PLT: references:
+PLT:   kind:   R_X86_64_PC32
 PLT:   target: [[PLTNAME]]
+PLT:   kind: layout-before
+PLT:   target: __hey_1
 
 // Make sure the target of main's relocation is a stub with a PC32 relocation.
 // This relocation is to the got atom, but you can't really write that check in
@@ -60,7 +60,7 @@ BIN-NEXT: {{[0-9a-f]+}} 00000000 00000000
 
 RELATIVEADDEND:      Relocations [
 RELATIVEADDEND-NEXT:   Section (1) .rela.plt {
-RELATIVEADDEND-NEXT:     0x401000 R_X86_64_IRELATIVE - 0x4000E0
+RELATIVEADDEND-NEXT:     0x401000 R_X86_64_IRELATIVE - 0x4000FC
 RELATIVEADDEND-NEXT:   }
 RELATIVEADDEND-NEXT: ]
 

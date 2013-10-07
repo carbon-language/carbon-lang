@@ -15,7 +15,6 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Path.h"
-#include "lld/Core/InputFiles.h"
 #include "lld/Core/PassManager.h"
 #include "lld/Passes/LayoutPass.h"
 #include "lld/ReaderWriter/PECOFFLinkingContext.h"
@@ -28,12 +27,6 @@
 namespace lld {
 
 namespace {} // anonymous namespace
-
-error_code PECOFFLinkingContext::parseFile(
-    LinkerInput &input,
-    std::vector<std::unique_ptr<File>> &result) const {
-  return _reader->parseFile(input, result);
-}
 
 bool PECOFFLinkingContext::validateImpl(raw_ostream &diagnostics) {
   if (_stackReserve < _stackCommit) {
@@ -75,7 +68,7 @@ bool PECOFFLinkingContext::validateImpl(raw_ostream &diagnostics) {
   return true;
 }
 
-std::unique_ptr<File> PECOFFLinkingContext::createEntrySymbolFile() {
+std::unique_ptr<File> PECOFFLinkingContext::createEntrySymbolFile() const {
   if (entrySymbolName().empty())
     return nullptr;
   std::unique_ptr<SimpleFile> entryFile(
@@ -85,7 +78,7 @@ std::unique_ptr<File> PECOFFLinkingContext::createEntrySymbolFile() {
   return std::move(entryFile);
 }
 
-std::unique_ptr<File> PECOFFLinkingContext::createUndefinedSymbolFile() {
+std::unique_ptr<File> PECOFFLinkingContext::createUndefinedSymbolFile() const {
   if (_initialUndefinedSymbols.empty())
     return nullptr;
   std::unique_ptr<SimpleFile> undefinedSymFile(
@@ -96,9 +89,16 @@ std::unique_ptr<File> PECOFFLinkingContext::createUndefinedSymbolFile() {
   return std::move(undefinedSymFile);
 }
 
-void PECOFFLinkingContext::addImplicitFiles(InputFiles &files) const {
-  auto *linkerFile = new (_alloc) coff::LinkerGeneratedSymbolFile(*this);
-  files.appendFile(*linkerFile);
+bool PECOFFLinkingContext::createImplicitFiles(
+    std::vector<std::unique_ptr<File> > &) const {
+  std::unique_ptr<SimpleFileNode> fileNode(
+      new SimpleFileNode("Implicit Files"));
+  std::unique_ptr<File> linkerGeneratedSymFile(
+      new coff::LinkerGeneratedSymbolFile(*this));
+  fileNode->appendInputFile(std::move(linkerGeneratedSymFile));
+  inputGraph().insertOneElementAt(std::move(fileNode),
+                                  InputGraph::Position::END);
+  return true;
 }
 
 /// Try to find the input library file from the search paths and append it to

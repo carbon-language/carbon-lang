@@ -69,6 +69,28 @@ enum class linker_script_reader_error {
 inline llvm::error_code make_error_code(linker_script_reader_error e) {
   return llvm::error_code(static_cast<int>(e), linker_script_reader_category());
 }
+
+/// \brief Errors returned by InputGraph functionality
+const llvm::error_category &input_graph_error_category();
+
+struct input_graph_error {
+  enum _ {
+    success = 0,
+    failure = 1,
+    no_more_elements,
+    no_more_files,
+  };
+  _ v_;
+
+  input_graph_error(_ v) : v_(v) {}
+  explicit input_graph_error(int v) : v_(_(v)) {}
+  operator int() const { return v_; }
+};
+
+inline llvm::error_code make_error_code(input_graph_error e) {
+  return llvm::error_code(static_cast<int>(e), input_graph_error_category());
+}
+
 } // end namespace lld
 
 namespace llvm {
@@ -83,6 +105,9 @@ struct is_error_code_enum<lld::yaml_reader_error::_> : true_type { };
 
 template <>
 struct is_error_code_enum<lld::linker_script_reader_error> : true_type { };
+
+template <> struct is_error_code_enum<lld::input_graph_error> : true_type {};
+template <> struct is_error_code_enum<lld::input_graph_error::_> : true_type {};
 } // end namespace llvm
 
 #endif

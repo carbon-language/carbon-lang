@@ -16,7 +16,6 @@
 #include "lld/Driver/Driver.h"
 #include "lld/ReaderWriter/PECOFFLinkingContext.h"
 #include "lld/ReaderWriter/Reader.h"
-#include "lld/ReaderWriter/ReaderArchive.h"
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Object/COFF.h"
@@ -722,21 +721,16 @@ private:
 class ReaderCOFF : public Reader {
 public:
   explicit ReaderCOFF(PECOFFLinkingContext &context)
-      : Reader(context), _readerArchive(context, *this),
-        _PECOFFLinkingContext(context) {}
+      : Reader(context), _PECOFFLinkingContext(context) {}
 
-  error_code parseFile(LinkerInput &input,
+  error_code parseFile(std::unique_ptr<MemoryBuffer> &mb,
                        std::vector<std::unique_ptr<File> > &result) const {
-    StringRef magic(input.getBuffer().getBufferStart(),
-                    input.getBuffer().getBufferSize());
+    StringRef magic(mb->getBufferStart(), mb->getBufferSize());
     // The input file should be an archive file, a regular COFF file, or an an
     // import library member file. Try to parse in that order. If the input file
     // does not start with a known magic, parseCOFFImportLibrary will return an
     // error object.
     llvm::sys::fs::file_magic fileType = llvm::sys::fs::identify_magic(magic);
-    if (fileType == llvm::sys::fs::file_magic::archive)
-      return _readerArchive.parseFile(input, result);
-    std::unique_ptr<MemoryBuffer> mb(input.takeBuffer());
     if (fileType == llvm::sys::fs::file_magic::coff_object)
       return parseCOFFFile(mb, result);
     return lld::coff::parseCOFFImportLibrary(_context, mb, result);
@@ -808,7 +802,6 @@ private:
     return error_code::success();
   }
 
-  ReaderArchive _readerArchive;
   PECOFFLinkingContext &_PECOFFLinkingContext;
   mutable BumpPtrStringSaver _stringSaver;
 };

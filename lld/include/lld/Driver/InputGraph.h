@@ -17,8 +17,11 @@
 #define LLD_DRIVER_INPUT_GRAPH_H
 
 #include "lld/Core/File.h"
-#include "lld/Core/LLVM.h"
-#include "lld/Core/LinkerInput.h"
+#include "llvm/ADT/StringRef.h"
+#include "llvm/Option/ArgList.h"
+
+#include "llvm/Support/ErrorOr.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 
 #include <memory>
@@ -47,8 +50,16 @@ public:
   typedef std::vector<std::unique_ptr<File> > FileVectorT;
   typedef FileVectorT::iterator FileIterT;
 
+  /// Where do we want to insert the input element when calling the
+  /// insertElementAt, insertOneElementAt API's.
+  enum Position : uint8_t {
+    ANY,
+    BEGIN,
+    END
+  };
+
   /// \brief Initialize the inputgraph
-  InputGraph() : _ordinal(0), _numElements(0), _numFiles(0) {}
+  InputGraph() : _ordinal(0), _nextElementIndex(0) {}
 
   /// \brief Adds a node into the InputGraph
   virtual bool addInputElement(std::unique_ptr<InputElement>);
@@ -56,32 +67,17 @@ public:
   /// \brief Set Ordinals for all the InputElements that form the InputGraph
   virtual bool assignOrdinals();
 
+  /// \brief Set ordinals for all the Files that are part of the InputElements
+  virtual bool assignFileOrdinals(uint64_t &ordinal);
+
   /// Destructor
   virtual ~InputGraph() {}
-
-  /// Total number of InputFiles
-  virtual int64_t numFiles() const { return _numFiles; }
-
-  /// Total number of InputElements
-  virtual int64_t numElements() const { return _numElements; }
-
-  /// Total number of Internal files
-  virtual int64_t numInternalFiles() const { return _internalFiles.size(); }
 
   /// \brief Do postprocessing of the InputGraph if there is a need for the
   /// to provide additional information to the user, also rearranges
   /// InputElements by their ordinals. If an user wants to place an input file
   /// at the desired position, the user can do that
   virtual void doPostProcess();
-
-  virtual void addInternalFile(std::vector<std::unique_ptr<File> > inputFiles) {
-    for (auto &ai : inputFiles)
-      _internalFiles.push_back(std::move(ai));
-  }
-
-  range<FileIterT> internalFiles() {
-    return make_range(_internalFiles.begin(), _internalFiles.end());
-  }
 
   range<InputElementIterT> inputElements() {
     return make_range(_inputArgs.begin(), _inputArgs.end());
@@ -90,6 +86,9 @@ public:
   /// \brief Validate the input graph
   virtual bool validate();
 
+  // \brief Does the inputGraph contain any elements
+  int64_t size() const { return _inputArgs.size(); }
+
   /// \brief Dump the input Graph
   virtual bool dump(raw_ostream &diagnostics = llvm::errs());
 
@@ -97,17 +96,31 @@ public:
     return (*_inputArgs[index]);
   }
 
-private:
+  /// \brief Insert a vector of elements into the input graph at position.
+  virtual void insertElementsAt(std::vector<std::unique_ptr<InputElement> >,
+                                Position position, int32_t pos = 0);
+
+  /// \brief Insert an element into the input graph at position.
+  virtual void insertOneElementAt(std::unique_ptr<InputElement>,
+                                  Position position, int32_t pos = 0);
+
+  /// \brief Helper functions for the resolver
+  virtual ErrorOr<InputElement *> getNextInputElement();
+
+  /// \brief Set the index on what inputElement has to be returned
+  virtual ErrorOr<void> setNextElementIndex(uint32_t index = 0);
+
+  /// \brief Reset the inputGraph for the inputGraph to start processing
+  /// files from the beginning
+  virtual ErrorOr<void> reset() { return setNextElementIndex(0); }
+
+protected:
   // Input arguments
   InputElementVectorT _inputArgs;
-  // Extra Input files
-  FileVectorT _internalFiles;
   // Ordinals
   int64_t _ordinal;
-  // Total number of InputElements
-  int64_t _numElements;
-  // Total number of FileNodes
-  int64_t _numFiles;
+  // Index of the next element to be processed
+  uint32_t _nextElementIndex;
 };
 
 /// \brief This describes each element in the InputGraph. The Kind
@@ -115,16 +128,16 @@ private:
 class InputElement {
 public:
   /// Each input element in the graph can be a File or a control
-  enum class Kind : uint8_t{
-    Control, // Represents a type associated with ControlNodes
-    File     // Represents a type associated with File Nodes
+  enum class Kind : uint8_t {
+    Control,    // Represents a type associated with ControlNodes
+    SimpleFile, // Represents a type reserved for internal files
+    File        // Represents a type associated with File Nodes
   };
 
   /// \brief Initialize the Input Element, The ordinal value of an input Element
   /// is initially set to -1, if the user wants to override its ordinal,
   /// let the user do it
-  InputElement(Kind type, int64_t ordinal = -1)
-      : _kind(type), _ordinal(-1), _weight(0) {}
+  InputElement(Kind type, int64_t ordinal = -1);
 
   virtual ~InputElement() {}
 
@@ -135,6 +148,10 @@ public:
     if (_ordinal != -1)
       _ordinal = ordinal;
   }
+
+  /// \brief Assign File ordinals for files contained
+  /// in the InputElement
+  virtual void assignFileOrdinals(uint64_t &fileOrdinal) = 0;
 
   virtual int64_t getOrdinal() const { return _ordinal; }
 
@@ -148,10 +165,29 @@ public:
   /// \brief Dump the Input Element
   virtual bool dump(raw_ostream &diagnostics) = 0;
 
-private:
-  Kind _kind;
-  int64_t _ordinal;
-  int64_t _weight;
+  /// \brief parse the input element
+  virtual llvm::error_code parse(const LinkingContext &, raw_ostream &) = 0;
+
+  /// \brief functions for the resolver to use
+
+  /// Get the next file to be processed by the resolver
+  virtual ErrorOr<File &> getNextFile() = 0;
+
+  /// \brief Set the resolver state for the element
+  virtual void setResolverState(int32_t state) { _resolveState = state; }
+
+  /// \brief Get the resolver state for the element
+  virtual int32_t getResolverState() const { return _resolveState; }
+
+  /// Process files again.
+  virtual void resetNextFileIndex() { _nextFileIndex = 0; }
+
+protected:
+  Kind _kind;              // The type of the Element
+  int64_t _ordinal;        // The ordinal value
+  int64_t _weight;         // Weight of the file
+  int32_t _resolveState;   // The resolve state
+  uint32_t _nextFileIndex; // The file that would be processed by the resolver
 };
 
 /// \brief The Control class represents a control node in the InputGraph
@@ -168,7 +204,7 @@ public:
                   ControlNode::ControlKind::Simple,
               int64_t _ordinal = -1)
       : InputElement(InputElement::Kind::Control, _ordinal),
-        _controlKind(controlKind) {}
+        _controlKind(controlKind), _nextElementIndex(0) {}
 
   virtual ~ControlNode() {}
 
@@ -189,26 +225,25 @@ public:
     return a->kind() == InputElement::Kind::Control;
   }
 
-  /// Does the control node have any more elements
-  bool hasMoreElements() const { return (_elements.size() != 0); }
+  range<InputGraph::InputElementIterT> elements() {
+    return make_range(_elements.begin(), _elements.end());
+  }
 
-  /// \brief Iterators to iterate the
-  InputGraph::InputElementIterT begin() { return _elements.begin(); }
-
-  InputGraph::InputElementIterT end() { return _elements.end(); }
-
-  /// \brief Create a lld::File node from the FileNode
-  virtual llvm::ErrorOr<std::unique_ptr<lld::LinkerInput> >
-  createLinkerInput(const LinkingContext &targetInfo) = 0;
-
-private:
-  ControlKind _controlKind;
+  /// \brief Assign File ordinals for files contained
+  /// in the InputElement
+  virtual void assignFileOrdinals(uint64_t &startOrdinal);
 
 protected:
+  ControlKind _controlKind;
   InputGraph::InputElementVectorT _elements;
+  uint32_t _nextElementIndex;
 };
 
 /// \brief Represents an Input file in the graph
+///
+/// This class represents an input to the linker. It create the MemoryBuffer
+/// lazily when needed based on the file path. It can also take a MemoryBuffer
+/// directly.
 class FileNode : public InputElement {
 public:
   FileNode(StringRef path, int64_t ordinal = -1)
@@ -217,6 +252,10 @@ public:
   virtual llvm::ErrorOr<StringRef> path(const LinkingContext &) const {
     return _path;
   }
+
+  // The saved input path thats used when a file is not found while
+  // trying to parse a file
+  StringRef getUserPath() const { return _path; }
 
   virtual ~FileNode() {}
 
@@ -232,12 +271,40 @@ public:
     return twine.str();
   }
 
-  /// \brief Create a lld::File node from the FileNode
-  virtual llvm::ErrorOr<std::unique_ptr<lld::LinkerInput> >
-  createLinkerInput(const LinkingContext &targetInfo);
+  /// \brief Memory buffer pointed by the file.
+  llvm::MemoryBuffer &getBuffer() const {
+    assert(_buffer);
+    return *_buffer;
+  }
+
+  /// \brief Return the memory buffer and transfer ownership.
+  std::unique_ptr<llvm::MemoryBuffer> takeBuffer() {
+    assert(_buffer);
+    return std::move(_buffer);
+  }
+
+  /// \brief Get the list of files
+  range<InputGraph::FileIterT> files() {
+    return make_range(_files.begin(), _files.end());
+  }
+
+  /// \brief  number of files.
+  int64_t numFiles() const { return _files.size(); }
+
+  /// \brief add a file to the list of files
+  virtual void addFiles(InputGraph::FileVectorT files) {
+    for (auto &ai : files)
+      _files.push_back(std::move(ai));
+  }
+
+  /// \brief Assign File ordinals for files contained
+  /// in the InputElement
+  virtual void assignFileOrdinals(uint64_t &startOrdinal);
 
 protected:
   StringRef _path;
+  InputGraph::FileVectorT _files;
+  std::unique_ptr<llvm::MemoryBuffer> _buffer;
 };
 
 /// \brief A Control node which contains a group of InputElements
@@ -256,11 +323,76 @@ public:
     _elements.push_back(std::move(element));
     return true;
   }
-
-  virtual llvm::ErrorOr<std::unique_ptr<lld::LinkerInput> >
-  createLinkerInput(const lld::LinkingContext &) = 0;
 };
 
+/// \brief Represents Internal Input files
+class SimpleFileNode : public InputElement {
+public:
+  SimpleFileNode(StringRef path, int64_t ordinal = -1)
+      : InputElement(InputElement::Kind::SimpleFile, ordinal), _path(path) {}
+
+  virtual llvm::ErrorOr<StringRef> path(const LinkingContext &) const {
+    return _path;
+  }
+
+  // The saved input path thats used when a file is not found while
+  // trying to parse a file
+  StringRef getUserPath() const { return _path; }
+
+  virtual ~SimpleFileNode() {}
+
+  /// \brief Casting support
+  static inline bool classof(const InputElement *a) {
+    return a->kind() == InputElement::Kind::SimpleFile;
+  }
+
+  /// \brief Get the list of files
+  range<InputGraph::FileIterT> files() {
+    return make_range(_files.begin(), _files.end());
+  }
+
+  /// \brief  number of files.
+  int64_t numFiles() const { return _files.size(); }
+
+  /// \brief add a file to the list of files
+  virtual void appendInputFile(std::unique_ptr<File> f) {
+    _files.push_back(std::move(f));
+  }
+
+  /// \brief add a file to the list of files
+  virtual void appendInputFiles(InputGraph::FileVectorT files) {
+    for (auto &ai : files)
+      _files.push_back(std::move(ai));
+  }
+
+  /// \brief validates the Input Element
+  virtual bool validate() { return true; }
+
+  /// \brief Dump the Input Element
+  virtual bool dump(raw_ostream &) { return true; }
+
+  /// \brief parse the input element
+  virtual llvm::error_code parse(const LinkingContext &, raw_ostream &) {
+    return error_code::success();
+  }
+
+  virtual ErrorOr<File &> getNextFile() {
+    if (_nextFileIndex == _files.size())
+      return make_error_code(input_graph_error::no_more_files);
+    return *_files[_nextFileIndex++];
+  }
+
+  // Do nothing here.
+  virtual void resetNextFileIndex() {}
+
+  /// \brief Assign File ordinals for files contained
+  /// in the InputElement
+  virtual void assignFileOrdinals(uint64_t &startOrdinal);
+
+protected:
+  StringRef _path;
+  InputGraph::FileVectorT _files;
+};
 } // namespace lld
 
 #endif // LLD_INPUTGRAPH_H

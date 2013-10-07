@@ -63,7 +63,7 @@ public:
   }
 
   /// \brief Create Internal files for Init/Fini
-  std::vector<std::unique_ptr<File>> createInternalFiles();
+  bool createInternalFiles(std::vector<std::unique_ptr<File> > &result) const;
 };
 
 } // elf

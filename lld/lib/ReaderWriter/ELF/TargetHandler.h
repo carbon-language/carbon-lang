@@ -18,7 +18,6 @@
 
 #include "Layout.h"
 
-#include "lld/Core/InputFiles.h"
 #include "lld/Core/LLVM.h"
 #include "lld/Core/LinkingContext.h"
 #include "lld/ReaderWriter/ELFLinkingContext.h"
@@ -109,7 +108,7 @@ public:
   virtual void addSection(Section<ELFT> *section) = 0;
 
   /// \brief add new symbol file
-  virtual void addFiles(InputFiles &) = 0;
+  virtual bool createImplicitFiles(std::vector<std::unique_ptr<File> > &) = 0;
 
   /// \brief Finalize the symbol values
   virtual void finalizeSymbolValues() = 0;

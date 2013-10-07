@@ -89,10 +89,6 @@ public:
     return true;
   }
 
-  virtual error_code
-  parseFile(LinkerInput &input,
-            std::vector<std::unique_ptr<File> > &result) const;
-
   static std::unique_ptr<ELFLinkingContext> create(llvm::Triple);
 
   /// \brief Does this relocation belong in the dynamic plt relocation table?
@@ -117,6 +113,10 @@ public:
       return _dynamicLinkerPath;
     return getDefaultInterpreter();
   }
+
+  virtual Reader &getDefaultReader() const { return *_elfReader; }
+
+  virtual Reader &getLinkerScriptReader() const { return *_linkerScriptReader; }
 
   /// \brief Does the output have dynamic sections.
   virtual bool isDynamic() const;
@@ -215,7 +215,7 @@ protected:
   virtual Writer &writer() const;
 
   /// Method to create a internal file for an undefined symbol
-  virtual std::unique_ptr<File> createUndefinedSymbolFile();
+  virtual std::unique_ptr<File> createUndefinedSymbolFile() const;
 
   uint16_t _outputELFType; // e.g ET_EXEC
   llvm::Triple _triple;

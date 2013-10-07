@@ -91,21 +91,18 @@ private:
 };
 }
 
-
-std::vector<std::unique_ptr<File>>
-  elf::HexagonLinkingContext::createInternalFiles(){
-  std::vector<std::unique_ptr<File> > result =
-    ELFLinkingContext::createInternalFiles();
-  std::unique_ptr<HexagonInitFiniFile>
-    initFiniFile(new HexagonInitFiniFile(*this));
-  for (auto ai:initFunctions())
+bool elf::HexagonLinkingContext::createInternalFiles(
+    std::vector<std::unique_ptr<File> > &result) const {
+  ELFLinkingContext::createInternalFiles(result);
+  std::unique_ptr<HexagonInitFiniFile> initFiniFile(
+      new HexagonInitFiniFile(*this));
+  for (auto ai : initFunctions())
     initFiniFile->addInitFunction(ai);
   for (auto ai:finiFunctions())
     initFiniFile->addFiniFunction(ai);
   result.push_back(std::move(initFiniFile));
-  return result;
+  return true;
 }
-
 
 ErrorOr<Reference::Kind>
 elf::HexagonLinkingContext::relocKindFromString(StringRef str) const {

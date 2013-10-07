@@ -70,15 +70,6 @@ public:
 
 namespace lld {
 
-llvm::ErrorOr<std::unique_ptr<lld::LinkerInput> >
-MachOFileNode::createLinkerInput(const LinkingContext &ctx) {
-  auto inputFile(FileNode::createLinkerInput(ctx));
-
-  if (inputFile)
-    (*inputFile)->setWholeArchive(_isWholeArchive);
-  return std::move(inputFile);
-}
-
 bool DarwinLdDriver::linkMachO(int argc, const char *argv[],
                                raw_ostream &diagnostics) {
   MachOLinkingContext ctx;
@@ -262,7 +253,7 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
         new MachOFileNode(ctx, (*it)->getValue(), globalWholeArchive)));
   }
 
-  if (!inputGraph->numFiles()) {
+  if (!inputGraph->size()) {
     diagnostics << "No input files\n";
     return false;
   }

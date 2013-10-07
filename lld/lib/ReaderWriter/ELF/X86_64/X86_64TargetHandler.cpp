@@ -15,13 +15,15 @@ using namespace lld;
 using namespace elf;
 
 X86_64TargetHandler::X86_64TargetHandler(X86_64LinkingContext &context)
-    : DefaultTargetHandler(context), _gotFile(context),
+    : DefaultTargetHandler(context), _gotFile(new GOTFile(context)),
       _relocationHandler(context), _targetLayout(context) {}
 
-void X86_64TargetHandler::addFiles(InputFiles &f) {
-  _gotFile.addAtom(*new (_gotFile._alloc) GLOBAL_OFFSET_TABLEAtom(_gotFile));
-  _gotFile.addAtom(*new (_gotFile._alloc) TLSGETADDRAtom(_gotFile));
+bool X86_64TargetHandler::createImplicitFiles(
+    std::vector<std::unique_ptr<File> > &result) {
+  _gotFile->addAtom(*new (_gotFile->_alloc) GLOBAL_OFFSET_TABLEAtom(*_gotFile));
+  _gotFile->addAtom(*new (_gotFile->_alloc) TLSGETADDRAtom(*_gotFile));
   if (_context.isDynamic())
-    _gotFile.addAtom(*new (_gotFile._alloc) DYNAMICAtom(_gotFile));
-  f.appendFile(_gotFile);
+    _gotFile->addAtom(*new (_gotFile->_alloc) DYNAMICAtom(*_gotFile));
+  result.push_back(std::move(_gotFile));
+  return true;
 }

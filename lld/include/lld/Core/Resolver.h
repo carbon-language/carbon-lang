@@ -11,7 +11,6 @@
 #define LLD_CORE_RESOLVER_H_
 
 #include "lld/Core/File.h"
-#include "lld/Core/InputFiles.h"
 #include "lld/Core/SharedLibraryFile.h"
 #include "lld/Core/SymbolTable.h"
 
@@ -27,12 +26,21 @@ class LinkingContext;
 
 /// \brief The Resolver is responsible for merging all input object files
 /// and producing a merged graph.
-class Resolver : public InputFiles::Handler {
+class Resolver {
 public:
-  Resolver(const LinkingContext &context, const InputFiles &inputs)
-      : _context(context), _inputFiles(inputs), _symbolTable(context),
-        _result(context), _haveLLVMObjs(false), _addToFinalSection(false),
-        _completedInitialObjectFiles(false) {}
+  enum ResolverState {
+    StateNoChange = 0,              // The default resolver state
+    StateNewDefinedAtoms = 1,       // New defined atoms were added
+    StateNewUndefinedAtoms = 2,     // New undefined atoms were added
+    StateNewSharedLibraryAtoms = 4, // New shared library atoms were added
+    StateNewAbsoluteAtoms = 8       // New absolute atoms were added
+  };
+
+  Resolver(const LinkingContext &context)
+      : _context(context), _symbolTable(context), _result(context),
+        _haveLLVMObjs(false), _addToFinalSection(false) {}
+
+  virtual ~Resolver() {}
 
   // InputFiles::Handler methods
   virtual void doDefinedAtom(const DefinedAtom&);
@@ -40,6 +48,16 @@ public:
   virtual void doSharedLibraryAtom(const SharedLibraryAtom &);
   virtual void doAbsoluteAtom(const AbsoluteAtom &);
   virtual void doFile(const File&);
+
+  // Handle files, this adds atoms from the current file thats
+  // being processed by the resolver
+  virtual void handleFile(const File &);
+
+  // Handle an archive library file.
+  virtual void handleArchiveFile(const File &);
+
+  // Handle a shared library file.
+  virtual void handleSharedLibrary(const File &);
 
   /// @brief do work of merging and resolving and return list
   bool resolve();
@@ -50,7 +68,7 @@ public:
 
 private:
 
-  void buildInitialAtomList();
+  /// \brief The main function that iterates over the files to resolve
   void resolveUndefines();
   void updateReferences();
   void deadStripOptimize();
@@ -94,7 +112,6 @@ private:
   };
 
   const LinkingContext &_context;
-  const InputFiles &_inputFiles;
   SymbolTable _symbolTable;
   std::vector<const Atom *>     _atoms;
   std::set<const Atom *>        _deadStripRoots;
@@ -102,8 +119,7 @@ private:
   llvm::DenseSet<const Atom *>  _liveAtoms;
   MergedFile                    _result;
   bool                          _haveLLVMObjs;
-  bool                          _addToFinalSection;
-  bool                          _completedInitialObjectFiles;
+  bool _addToFinalSection;
 };
 
 } // namespace lld

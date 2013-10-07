@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "lld/Core/LinkingContext.h"
-#include "lld/Core/InputFiles.h"
+#include "lld/Core/Resolver.h"
 #include "lld/ReaderWriter/Writer.h"
 #include "lld/ReaderWriter/Simple.h"
 
@@ -17,19 +17,20 @@
 namespace lld {
 
 LinkingContext::LinkingContext()
-    : Reader(*this), _deadStrip(false), _globalsAreDeadStripRoots(false),
+    : _deadStrip(false), _globalsAreDeadStripRoots(false),
       _searchArchivesToOverrideTentativeDefinitions(false),
       _searchSharedLibrariesToOverrideTentativeDefinitions(false),
       _warnIfCoalesableAtomsHaveDifferentCanBeNull(false),
       _warnIfCoalesableAtomsHaveDifferentLoadName(false),
-      _printRemainingUndefines(true),
-      _allowRemainingUndefines(false), _logInputFiles(false),
-      _allowShlibUndefines(false), _outputFileType(OutputFileType::Default) {}
+      _printRemainingUndefines(true), _allowRemainingUndefines(false),
+      _logInputFiles(false), _allowShlibUndefines(false),
+      _outputFileType(OutputFileType::Default), _currentInputElement(nullptr) {}
 
 LinkingContext::~LinkingContext() {}
 
 bool LinkingContext::validate(raw_ostream &diagnostics) {
   _yamlReader = createReaderYAML(*this);
+  _nativeReader = createReaderNative(*this);
   return validateImpl(diagnostics);
 }
 
@@ -37,11 +38,12 @@ error_code LinkingContext::writeFile(const File &linkedFile) const {
   return this->writer().writeFile(linkedFile, _outputPath);
 }
 
-void LinkingContext::addImplicitFiles(InputFiles &inputs) const {
-  this->writer().addFiles(inputs);
+bool LinkingContext::createImplicitFiles(
+    std::vector<std::unique_ptr<File> > &result) const {
+  return this->writer().createImplicitFiles(result);
 }
 
-std::unique_ptr<File> LinkingContext::createEntrySymbolFile() {
+std::unique_ptr<File> LinkingContext::createEntrySymbolFile() const {
   if (entrySymbolName().empty())
     return nullptr;
   std::unique_ptr<SimpleFile> entryFile(
@@ -51,7 +53,7 @@ std::unique_ptr<File> LinkingContext::createEntrySymbolFile() {
   return std::move(entryFile);
 }
 
-std::unique_ptr<File> LinkingContext::createUndefinedSymbolFile() {
+std::unique_ptr<File> LinkingContext::createUndefinedSymbolFile() const {
   if (_initialUndefinedSymbols.empty())
     return nullptr;
   std::unique_ptr<SimpleFile> undefinedSymFile(
@@ -62,8 +64,8 @@ std::unique_ptr<File> LinkingContext::createUndefinedSymbolFile() {
   return std::move(undefinedSymFile);
 }
 
-std::vector<std::unique_ptr<File> > LinkingContext::createInternalFiles() {
-  std::vector<std::unique_ptr<File> > result;
+bool LinkingContext::createInternalFiles(
+    std::vector<std::unique_ptr<File> > &result) const {
   std::unique_ptr<File> internalFile;
   internalFile = createEntrySymbolFile();
   if (internalFile)
@@ -71,7 +73,32 @@ std::vector<std::unique_ptr<File> > LinkingContext::createInternalFiles() {
   internalFile = createUndefinedSymbolFile();
   if (internalFile)
     result.push_back(std::move(internalFile));
-  return result;
+  return true;
+}
+
+void LinkingContext::setResolverState(int32_t state) const {
+  _currentInputElement->setResolverState(state);
+}
+
+ErrorOr<File &> LinkingContext::nextFile() const {
+  if (_currentInputElement == nullptr) {
+    ErrorOr<InputElement *> elem = inputGraph().getNextInputElement();
+    if (error_code(elem) == input_graph_error::no_more_elements)
+      return make_error_code(input_graph_error::no_more_files);
+    _currentInputElement = *elem;
+  }
+  do {
+    ErrorOr<File &> nextFile = _currentInputElement->getNextFile();
+    if (error_code(nextFile) == input_graph_error::no_more_files) {
+      ErrorOr<InputElement *> elem = inputGraph().getNextInputElement();
+      if (error_code(elem) == input_graph_error::no_more_elements)
+        return make_error_code(input_graph_error::no_more_files);
+      _currentInputElement = *elem;
+    } else {
+      return std::move(nextFile);
+    }
+  } while (_currentInputElement != nullptr);
+  return make_error_code(input_graph_error::no_more_files);
 }
 
 void LinkingContext::addPasses(PassManager &pm) const {}

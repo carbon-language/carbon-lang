@@ -112,3 +112,28 @@ const llvm::error_category &lld::linker_script_reader_category() {
   return o;
 }
 
+class _input_graph_error_category : public llvm::_do_message {
+public:
+  virtual const char *name() const { return "lld.inputGraph.parse"; }
+
+  virtual std::string message(int ev) const {
+    switch (ev) {
+    case input_graph_error::success:
+      return "Success";
+    default:
+      llvm_unreachable("An enumerator of input_graph_error does not have a "
+                       "message defined.");
+    }
+  }
+
+  virtual llvm::error_condition default_error_condition(int ev) const {
+    if (ev == input_graph_error::success)
+      return llvm::errc::success;
+    return llvm::errc::invalid_argument;
+  }
+};
+
+const llvm::error_category &lld::input_graph_error_category() {
+  static _input_graph_error_category i;
+  return i;
+}

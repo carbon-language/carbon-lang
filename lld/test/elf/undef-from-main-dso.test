@@ -1,7 +1,7 @@
-RUN: lld -flavor gnu -e main -o %t -L%p/Inputs -lundef %p/Inputs/undef.o
+RUN: lld -flavor gnu -e main -o %t -L%p/Inputs  %p/Inputs/undef.o -lundef
 RUN: llvm-readobj -relocations -symbols %t | FileCheck %s
 
-RUN: lld -flavor gnu -e main -o %t -L%p/Inputs -lundef %p/Inputs/undef-pc32.o
+RUN: lld -flavor gnu -e main -o %t -L%p/Inputs  %p/Inputs/undef-pc32.o -lundef
 RUN: llvm-readobj -relocations -symbols %t | FileCheck %s
 
 # DSO source code:
