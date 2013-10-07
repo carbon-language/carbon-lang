@@ -318,9 +318,12 @@ AArch64TargetLowering::AArch64TargetLowering(AArch64TargetMachine &TM)
     setOperationAction(ISD::SETCC, MVT::v8i16, Custom);
     setOperationAction(ISD::SETCC, MVT::v2i32, Custom);
     setOperationAction(ISD::SETCC, MVT::v4i32, Custom);
+    setOperationAction(ISD::SETCC, MVT::v1i64, Custom);
     setOperationAction(ISD::SETCC, MVT::v2i64, Custom);
+    setOperationAction(ISD::SETCC, MVT::v1f32, Custom);
     setOperationAction(ISD::SETCC, MVT::v2f32, Custom);
     setOperationAction(ISD::SETCC, MVT::v4f32, Custom);
+    setOperationAction(ISD::SETCC, MVT::v1f64, Custom);
     setOperationAction(ISD::SETCC, MVT::v2f64, Custom);
   }
 }

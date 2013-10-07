@@ -2991,6 +2991,40 @@ class NeonI_Scalar3Same_D_size<bit u, bits<5> opcode, string asmop>
                 [],
                 NoItinerary>;
 
+multiclass NeonI_Scalar3Same_HS_sizes<bit u, bits<5> opcode,
+                                      string asmop, bit Commutable = 0>
+{
+  let isCommutable = Commutable in {
+    def hhh : NeonI_Scalar3Same<u, 0b01, opcode,
+                                (outs FPR16:$Rd), (ins FPR16:$Rn, FPR16:$Rm),
+                                !strconcat(asmop, " $Rd, $Rn, $Rm"),
+                                [],
+                                NoItinerary>;
+    def sss : NeonI_Scalar3Same<u, 0b10, opcode,
+                                (outs FPR32:$Rd), (ins FPR32:$Rn, FPR32:$Rm),
+                                !strconcat(asmop, " $Rd, $Rn, $Rm"),
+                                [],
+                                NoItinerary>;
+  }
+}
+
+multiclass NeonI_Scalar3Same_SD_sizes<bit u, bit size_high, bits<5> opcode,
+                                      string asmop, bit Commutable = 0>
+{
+  let isCommutable = Commutable in {
+    def sss : NeonI_Scalar3Same<u, {size_high, 0b0}, opcode,
+                                (outs FPR32:$Rd), (ins FPR32:$Rn, FPR32:$Rm),
+                                !strconcat(asmop, " $Rd, $Rn, $Rm"),
+                                [],
+                                NoItinerary>;
+    def ddd : NeonI_Scalar3Same<u, {size_high, 0b1}, opcode,
+                                (outs FPR64:$Rd), (ins FPR64:$Rn, FPR64:$Rm),
+                                !strconcat(asmop, " $Rd, $Rn, $Rm"),
+                                [],
+                                NoItinerary>;
+  }
+}
+
 multiclass NeonI_Scalar3Same_BHSD_sizes<bit u, bits<5> opcode,
                                         string asmop, bit Commutable = 0>
 {
@@ -3018,16 +3052,18 @@ multiclass NeonI_Scalar3Same_BHSD_sizes<bit u, bits<5> opcode,
   }
 }
 
-multiclass Neon_Scalar_D_size_patterns<SDPatternOperator opnode,
-                                       Instruction INSTD> {
+multiclass Neon_Scalar3Same_D_size_patterns<SDPatternOperator opnode,
+                                            Instruction INSTD> {
   def : Pat<(v1i64 (opnode (v1i64 FPR64:$Rn), (v1i64 FPR64:$Rm))),
             (INSTD FPR64:$Rn, FPR64:$Rm)>;        
 }
 
-multiclass Neon_Scalar_BHSD_size_patterns<SDPatternOperator opnode,
-                                          Instruction INSTB, Instruction INSTH,
-                                          Instruction INSTS, Instruction INSTD>
-  : Neon_Scalar_D_size_patterns<opnode, INSTD> {
+multiclass Neon_Scalar3Same_BHSD_size_patterns<SDPatternOperator opnode,
+                                               Instruction INSTB,
+                                               Instruction INSTH,
+                                               Instruction INSTS,
+                                               Instruction INSTD>
+  : Neon_Scalar3Same_D_size_patterns<opnode, INSTD> {
   def: Pat<(v1i8 (opnode (v1i8 FPR8:$Rn), (v1i8 FPR8:$Rm))),
            (INSTB FPR8:$Rn, FPR8:$Rm)>;
 
@@ -3036,6 +3072,24 @@ multiclass Neon_Scalar_BHSD_size_patterns<SDPatternOperator opnode,
 
   def: Pat<(v1i32 (opnode (v1i32 FPR32:$Rn), (v1i32 FPR32:$Rm))),
            (INSTS FPR32:$Rn, FPR32:$Rm)>;
+}
+
+multiclass Neon_Scalar3Same_HS_size_patterns<SDPatternOperator opnode,
+                                             Instruction INSTH,
+                                             Instruction INSTS> {
+  def : Pat<(v1i16 (opnode (v1i16 FPR16:$Rn), (v1i16 FPR16:$Rm))),
+            (INSTH FPR16:$Rn, FPR16:$Rm)>;
+  def : Pat<(v1i32 (opnode (v1i32 FPR32:$Rn), (v1i32 FPR32:$Rm))),
+            (INSTS FPR32:$Rn, FPR32:$Rm)>;
+}
+
+multiclass Neon_Scalar3Same_SD_size_patterns<SDPatternOperator opnode,
+                                             Instruction INSTS,
+                                             Instruction INSTD> {
+  def : Pat<(v1f32 (opnode (v1f32 FPR32:$Rn), (v1f32 FPR32:$Rm))),
+            (INSTS FPR32:$Rn, FPR32:$Rm)>;
+  def : Pat<(v1f64 (opnode (v1f64 FPR64:$Rn), (v1f64 FPR64:$Rm))),
+            (INSTD FPR64:$Rn, FPR64:$Rm)>;
 }
 
 // Scalar Integer Add
@@ -3047,14 +3101,14 @@ def ADDddd : NeonI_Scalar3Same_D_size<0b0, 0b10000, "add">;
 def SUBddd : NeonI_Scalar3Same_D_size<0b1, 0b10000, "sub">;
 
 // Pattern for Scalar Integer Add and Sub with D register only
-defm : Neon_Scalar_D_size_patterns<add, ADDddd>;
-defm : Neon_Scalar_D_size_patterns<sub, SUBddd>;
+defm : Neon_Scalar3Same_D_size_patterns<add, ADDddd>;
+defm : Neon_Scalar3Same_D_size_patterns<sub, SUBddd>;
 
 // Patterns to match llvm.aarch64.* intrinsic for Scalar Add, Sub
-defm : Neon_Scalar_D_size_patterns<int_aarch64_neon_vaddds, ADDddd>;
-defm : Neon_Scalar_D_size_patterns<int_aarch64_neon_vadddu, ADDddd>;
-defm : Neon_Scalar_D_size_patterns<int_aarch64_neon_vsubds, SUBddd>;
-defm : Neon_Scalar_D_size_patterns<int_aarch64_neon_vsubdu, SUBddd>;
+defm : Neon_Scalar3Same_D_size_patterns<int_aarch64_neon_vaddds, ADDddd>;
+defm : Neon_Scalar3Same_D_size_patterns<int_aarch64_neon_vadddu, ADDddd>;
+defm : Neon_Scalar3Same_D_size_patterns<int_aarch64_neon_vsubds, SUBddd>;
+defm : Neon_Scalar3Same_D_size_patterns<int_aarch64_neon_vsubdu, SUBddd>;
 
 // Scalar Integer Saturating Add (Signed, Unsigned)
 defm SQADD : NeonI_Scalar3Same_BHSD_sizes<0b0, 0b00001, "sqadd", 1>;
@@ -3066,21 +3120,57 @@ defm UQSUB : NeonI_Scalar3Same_BHSD_sizes<0b1, 0b00101, "uqsub", 0>;
 
 // Patterns to match llvm.arm.* intrinsic for
 // Scalar Integer Saturating Add, Sub  (Signed, Unsigned)
-defm : Neon_Scalar_D_size_patterns<int_arm_neon_vqadds, SQADDddd>;
-defm : Neon_Scalar_D_size_patterns<int_arm_neon_vqaddu, UQADDddd>;
-defm : Neon_Scalar_D_size_patterns<int_arm_neon_vqsubs, SQSUBddd>;
-defm : Neon_Scalar_D_size_patterns<int_arm_neon_vqsubu, UQSUBddd>;
+defm : Neon_Scalar3Same_D_size_patterns<int_arm_neon_vqadds, SQADDddd>;
+defm : Neon_Scalar3Same_D_size_patterns<int_arm_neon_vqaddu, UQADDddd>;
+defm : Neon_Scalar3Same_D_size_patterns<int_arm_neon_vqsubs, SQSUBddd>;
+defm : Neon_Scalar3Same_D_size_patterns<int_arm_neon_vqsubu, UQSUBddd>;
 
 // Patterns to match llvm.aarch64.* intrinsic for
 // Scalar Integer Saturating Add, Sub  (Signed, Unsigned)
-defm : Neon_Scalar_BHSD_size_patterns<int_aarch64_neon_vqadds, SQADDbbb, SQADDhhh,
-                                      SQADDsss, SQADDddd>;
-defm : Neon_Scalar_BHSD_size_patterns<int_aarch64_neon_vqaddu, UQADDbbb, UQADDhhh,
-                                      UQADDsss, UQADDddd>;
-defm : Neon_Scalar_BHSD_size_patterns<int_aarch64_neon_vqsubs, SQSUBbbb, SQSUBhhh,
-                                      SQSUBsss, SQSUBddd>;
-defm : Neon_Scalar_BHSD_size_patterns<int_aarch64_neon_vqsubu, UQSUBbbb, UQSUBhhh,
-                                      UQSUBsss, UQSUBddd>;
+defm : Neon_Scalar3Same_BHSD_size_patterns<int_aarch64_neon_vqadds, SQADDbbb,
+                                           SQADDhhh, SQADDsss, SQADDddd>;
+defm : Neon_Scalar3Same_BHSD_size_patterns<int_aarch64_neon_vqaddu, UQADDbbb,
+                                           UQADDhhh, UQADDsss, UQADDddd>;
+defm : Neon_Scalar3Same_BHSD_size_patterns<int_aarch64_neon_vqsubs, SQSUBbbb,
+                                           SQSUBhhh, SQSUBsss, SQSUBddd>;
+defm : Neon_Scalar3Same_BHSD_size_patterns<int_aarch64_neon_vqsubu, UQSUBbbb,
+                                           UQSUBhhh, UQSUBsss, UQSUBddd>;
+
+// Scalar Integer Saturating Doubling Multiply Half High
+defm SQDMULH : NeonI_Scalar3Same_HS_sizes<0b0, 0b10110, "sqdmulh", 1>;
+
+// Scalar Integer Saturating Rounding Doubling Multiply Half High
+defm SQRDMULH : NeonI_Scalar3Same_HS_sizes<0b1, 0b10110, "sqrdmulh", 1>;
+
+// Patterns to match llvm.arm.* intrinsic for
+// Scalar Integer Saturating Doubling Multiply Half High and
+// Scalar Integer Saturating Rounding Doubling Multiply Half High
+defm : Neon_Scalar3Same_HS_size_patterns<int_arm_neon_vqdmulh, SQDMULHhhh,
+                                                               SQDMULHsss>;
+defm : Neon_Scalar3Same_HS_size_patterns<int_arm_neon_vqrdmulh, SQRDMULHhhh,
+                                                                SQRDMULHsss>;
+
+// Scalar Floating-point Multiply Extended
+defm FMULX : NeonI_Scalar3Same_SD_sizes<0b0, 0b0, 0b11011, "fmulx", 1>;
+
+// Scalar Floating-point Reciprocal Step
+defm FRECPS : NeonI_Scalar3Same_SD_sizes<0b0, 0b0, 0b11111, "frecps", 0>;
+
+// Scalar Floating-point Reciprocal Square Root Step
+defm FRSQRTS : NeonI_Scalar3Same_SD_sizes<0b0, 0b1, 0b11111, "frsqrts", 0>;
+
+// Patterns to match llvm.arm.* intrinsic for
+// Scalar Floating-point Reciprocal Step and
+// Scalar Floating-point Reciprocal Square Root Step
+defm : Neon_Scalar3Same_SD_size_patterns<int_arm_neon_vrecps, FRECPSsss,
+                                                              FRECPSddd>;
+defm : Neon_Scalar3Same_SD_size_patterns<int_arm_neon_vrsqrts, FRSQRTSsss,
+                                                               FRSQRTSddd>;
+
+// Patterns to match llvm.aarch64.* intrinsic for
+// Scalar Floating-point Multiply Extended,
+defm : Neon_Scalar3Same_SD_size_patterns<int_aarch64_neon_vmulx, FMULXsss,
+                                         FMULXddd>;
 
 // Scalar Integer Shift Left (Signed, Unsigned)
 def SSHLddd : NeonI_Scalar3Same_D_size<0b0, 0b01000, "sshl">;
@@ -3088,13 +3178,13 @@ def USHLddd : NeonI_Scalar3Same_D_size<0b1, 0b01000, "ushl">;
 
 // Patterns to match llvm.arm.* intrinsic for
 // Scalar Integer Shift Left (Signed, Unsigned)
-defm : Neon_Scalar_D_size_patterns<int_arm_neon_vshifts, SSHLddd>;
-defm : Neon_Scalar_D_size_patterns<int_arm_neon_vshiftu, USHLddd>;
+defm : Neon_Scalar3Same_D_size_patterns<int_arm_neon_vshifts, SSHLddd>;
+defm : Neon_Scalar3Same_D_size_patterns<int_arm_neon_vshiftu, USHLddd>;
 
 // Patterns to match llvm.aarch64.* intrinsic for
 // Scalar Integer Shift Left (Signed, Unsigned)
-defm : Neon_Scalar_D_size_patterns<int_aarch64_neon_vshlds, SSHLddd>;
-defm : Neon_Scalar_D_size_patterns<int_aarch64_neon_vshldu, USHLddd>;
+defm : Neon_Scalar3Same_D_size_patterns<int_aarch64_neon_vshlds, SSHLddd>;
+defm : Neon_Scalar3Same_D_size_patterns<int_aarch64_neon_vshldu, USHLddd>;
 
 // Scalar Integer Saturating Shift Left (Signed, Unsigned)
 defm SQSHL: NeonI_Scalar3Same_BHSD_sizes<0b0, 0b01001, "sqshl", 0>;
@@ -3102,15 +3192,15 @@ defm UQSHL: NeonI_Scalar3Same_BHSD_sizes<0b1, 0b01001, "uqshl", 0>;
 
 // Patterns to match llvm.aarch64.* intrinsic for
 // Scalar  Integer Saturating Shift Letf (Signed, Unsigned)
-defm : Neon_Scalar_BHSD_size_patterns<int_aarch64_neon_vqshls, SQSHLbbb, SQSHLhhh,
-                                      SQSHLsss, SQSHLddd>;
-defm : Neon_Scalar_BHSD_size_patterns<int_aarch64_neon_vqshlu, UQSHLbbb, UQSHLhhh,
-                                      UQSHLsss, UQSHLddd>;
+defm : Neon_Scalar3Same_BHSD_size_patterns<int_aarch64_neon_vqshls, SQSHLbbb,
+                                           SQSHLhhh, SQSHLsss, SQSHLddd>;
+defm : Neon_Scalar3Same_BHSD_size_patterns<int_aarch64_neon_vqshlu, UQSHLbbb,
+                                           UQSHLhhh, UQSHLsss, UQSHLddd>;
 
 // Patterns to match llvm.arm.* intrinsic for
 // Scalar  Integer Saturating Shift Letf (Signed, Unsigned)
-defm : Neon_Scalar_D_size_patterns<int_arm_neon_vqshifts, SQSHLddd>;
-defm : Neon_Scalar_D_size_patterns<int_arm_neon_vqshiftu, UQSHLddd>;
+defm : Neon_Scalar3Same_D_size_patterns<int_arm_neon_vqshifts, SQSHLddd>;
+defm : Neon_Scalar3Same_D_size_patterns<int_arm_neon_vqshiftu, UQSHLddd>;
 
 // Scalar Integer Rounding Shift Left (Signed, Unsigned)
 def SRSHLddd: NeonI_Scalar3Same_D_size<0b0, 0b01010, "srshl">;
@@ -3118,13 +3208,13 @@ def URSHLddd: NeonI_Scalar3Same_D_size<0b1, 0b01010, "urshl">;
 
 // Patterns to match llvm.aarch64.* intrinsic for
 // Scalar Integer Rounding Shift Left (Signed, Unsigned)
-defm : Neon_Scalar_D_size_patterns<int_aarch64_neon_vrshlds, SRSHLddd>;
-defm : Neon_Scalar_D_size_patterns<int_aarch64_neon_vrshldu, URSHLddd>;
+defm : Neon_Scalar3Same_D_size_patterns<int_aarch64_neon_vrshlds, SRSHLddd>;
+defm : Neon_Scalar3Same_D_size_patterns<int_aarch64_neon_vrshldu, URSHLddd>;
 
 // Patterns to match llvm.arm.* intrinsic for
 // Scalar Integer Rounding Shift Left (Signed, Unsigned)
-defm : Neon_Scalar_D_size_patterns<int_arm_neon_vrshifts, SRSHLddd>;
-defm : Neon_Scalar_D_size_patterns<int_arm_neon_vrshiftu, URSHLddd>;
+defm : Neon_Scalar3Same_D_size_patterns<int_arm_neon_vrshifts, SRSHLddd>;
+defm : Neon_Scalar3Same_D_size_patterns<int_arm_neon_vrshiftu, URSHLddd>;
 
 // Scalar Integer Saturating Rounding Shift Left (Signed, Unsigned)
 defm SQRSHL: NeonI_Scalar3Same_BHSD_sizes<0b0, 0b01011, "sqrshl", 0>;
@@ -3132,15 +3222,15 @@ defm UQRSHL: NeonI_Scalar3Same_BHSD_sizes<0b1, 0b01011, "uqrshl", 0>;
 
 // Patterns to match llvm.aarch64.* intrinsic for
 // Scalar Integer Saturating Rounding Shift Left (Signed, Unsigned)
-defm : Neon_Scalar_BHSD_size_patterns<int_aarch64_neon_vqrshls, SQRSHLbbb, SQRSHLhhh,
-                                      SQRSHLsss, SQRSHLddd>;
-defm : Neon_Scalar_BHSD_size_patterns<int_aarch64_neon_vqrshlu, UQRSHLbbb, UQRSHLhhh,
-                                      UQRSHLsss, UQRSHLddd>;
+defm : Neon_Scalar3Same_BHSD_size_patterns<int_aarch64_neon_vqrshls, SQRSHLbbb,
+                                           SQRSHLhhh, SQRSHLsss, SQRSHLddd>;
+defm : Neon_Scalar3Same_BHSD_size_patterns<int_aarch64_neon_vqrshlu, UQRSHLbbb,
+                                           UQRSHLhhh, UQRSHLsss, UQRSHLddd>;
 
 // Patterns to match llvm.arm.* intrinsic for
 // Scalar Integer Saturating Rounding Shift Left (Signed, Unsigned)
-defm : Neon_Scalar_D_size_patterns<int_arm_neon_vqrshifts, SQRSHLddd>;
-defm : Neon_Scalar_D_size_patterns<int_arm_neon_vqrshiftu, UQRSHLddd>;
+defm : Neon_Scalar3Same_D_size_patterns<int_arm_neon_vqrshifts, SQRSHLddd>;
+defm : Neon_Scalar3Same_D_size_patterns<int_arm_neon_vqrshiftu, UQRSHLddd>;
 
 // Scalar Reduce Pairwise
 
@@ -4507,3 +4597,7 @@ def : Pat<(v1i32 (scalar_to_vector GPR32:$src)),
 def : Pat<(v1i64 (scalar_to_vector GPR64:$src)),
           (FMOVdx $src)>;
 
+def : Pat<(v1f32 (scalar_to_vector (f32 FPR32:$Rn))),
+          (v1f32 FPR32:$Rn)>;
+def : Pat<(v1f64 (scalar_to_vector (f64 FPR64:$Rn))),
+          (v1f64 FPR64:$Rn)>;

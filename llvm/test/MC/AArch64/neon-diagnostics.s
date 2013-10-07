@@ -826,6 +826,33 @@
 // CHECK-ERROR:        uqsub h1, h2, d2
 // CHECK-ERROR:                      ^
 
+//----------------------------------------------------------------------
+// Scalar Integer Saturating Doubling Multiply Half High (Signed)
+//----------------------------------------------------------------------
+
+    sqdmulh h10, s11, h12
+    sqdmulh s20, h21, s2
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        sqdmulh h10, s11, h12
+// CHECK-ERROR:                     ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        sqdmulh s20, h21, s2
+// CHECK-ERROR:                     ^
+
+//------------------------------------------------------------------------
+// Scalar Integer Saturating Rounding Doubling Multiply Half High (Signed)
+//------------------------------------------------------------------------
+
+    sqrdmulh h10, s11, h12
+    sqrdmulh s20, h21, s2
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        sqrdmulh h10, s11, h12
+// CHECK-ERROR:                      ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        sqrdmulh s20, h21, s2
+// CHECK-ERROR:                      ^
 
 //----------------------------------------------------------------------
 // Vector Shift Left (Signed and Unsigned Integer)
@@ -3771,3 +3798,44 @@
 // CHECK-ERROR:        fminv d0, v1.2d
 // CHECK-ERROR:              ^
 
+//----------------------------------------------------------------------
+// Floating-point Multiply Extended
+//----------------------------------------------------------------------
+
+    fmulx s20, h22, s15
+    fmulx d23, d11, s1
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          fmulx s20, h22, s15
+// CHECK-ERROR:                     ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          fmulx d23, d11, s1
+// CHECK-ERROR:                          ^
+
+//----------------------------------------------------------------------
+// Floating-point Reciprocal Step
+//----------------------------------------------------------------------
+
+    frecps s21, s16, h13
+    frecps d22, s30, d21
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          frecps s21, s16, h13
+// CHECK-ERROR:                           ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          frecps d22, s30, d21
+// CHECK-ERROR:                      ^
+
+//----------------------------------------------------------------------
+// Floating-point Reciprocal Square Root Step
+//----------------------------------------------------------------------
+
+    frsqrts s21, h5, s12
+    frsqrts d8, s22, d18
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          frsqrts s21, h5, s12
+// CHECK-ERROR:                       ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          frsqrts d8, s22, d18
+// CHECK-ERROR:                      ^
