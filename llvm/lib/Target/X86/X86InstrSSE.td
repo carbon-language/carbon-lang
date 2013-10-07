@@ -1104,7 +1104,7 @@ let Predicates = [UseSSE1] in {
 
 // Alias instruction to do FR32 or FR64 reg-to-reg copy using movaps. Upper
 // bits are disregarded. FIXME: Set encoding to pseudo!
-let neverHasSideEffects = 1, SchedRW = [WriteMove] in {
+let isCodeGenOnly = 1, neverHasSideEffects = 1, SchedRW = [WriteMove] in {
 def FsVMOVAPSrr : VPSI<0x28, MRMSrcReg, (outs FR32:$dst), (ins FR32:$src),
                        "movaps\t{$src, $dst|$dst, $src}", [],
                        IIC_SSE_MOVA_P_RR>, VEX;

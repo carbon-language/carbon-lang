@@ -4185,3 +4185,59 @@ _foo2:
 // CHECK: vpgatherqd %xmm8, (%r15,%ymm9,2), %xmm10
 // CHECK: encoding: [0xc4,0x02,0x3d,0x91,0x14,0x4f]
           vpgatherqd %xmm8, (%r15,%ymm9,2), %xmm10
+
+// CHECK: vmovaps %xmm0, %xmm8
+// CHECK: encoding: [0xc5,0x78,0x28,0xc0]
+          vmovaps %xmm0, %xmm8
+
+// CHECK: vmovaps %xmm8, %xmm0
+// CHECK: encoding: [0xc5,0x78,0x29,0xc0]
+          vmovaps %xmm8, %xmm0
+
+// CHECK: vmovaps %ymm0, %ymm8
+// CHECK: encoding: [0xc5,0x7c,0x28,0xc0]
+          vmovaps %ymm0, %ymm8
+
+// CHECK: vmovaps %ymm8, %ymm0
+// CHECK: encoding: [0xc5,0x7c,0x29,0xc0]
+          vmovaps %ymm8, %ymm0
+
+// CHECK: vmovups %xmm0, %xmm8
+// CHECK: encoding: [0xc5,0x78,0x10,0xc0]
+          vmovups %xmm0, %xmm8
+
+// CHECK: vmovups %xmm8, %xmm0
+// CHECK: encoding: [0xc5,0x78,0x11,0xc0]
+          vmovups %xmm8, %xmm0
+
+// CHECK: vmovups %ymm0, %ymm8
+// CHECK: encoding: [0xc5,0x7c,0x10,0xc0]
+          vmovups %ymm0, %ymm8
+
+// CHECK: vmovups %ymm8, %ymm0
+// CHECK: encoding: [0xc5,0x7c,0x11,0xc0]
+          vmovups %ymm8, %ymm0
+
+// CHECK: vmovss %xmm0, %xmm0, %xmm8
+// CHECK: encoding: [0xc5,0x7a,0x10,0xc0]
+          vmovss %xmm0, %xmm0, %xmm8
+
+// CHECK: vmovss %xmm0, %xmm8, %xmm0
+// CHECK: encoding: [0xc5,0xba,0x10,0xc0]
+          vmovss %xmm0, %xmm8, %xmm0
+
+// CHECK: vmovss %xmm8, %xmm0, %xmm0
+// CHECK: encoding: [0xc5,0x7a,0x11,0xc0]
+          vmovss %xmm8, %xmm0, %xmm0
+
+// CHECK: vmovsd %xmm0, %xmm0, %xmm8
+// CHECK: encoding: [0xc5,0x7b,0x10,0xc0]
+          vmovsd %xmm0, %xmm0, %xmm8
+
+// CHECK: vmovsd %xmm0, %xmm8, %xmm0
+// CHECK: encoding: [0xc5,0xbb,0x10,0xc0]
+          vmovsd %xmm0, %xmm8, %xmm0
+
+// CHECK: vmovsd %xmm8, %xmm0, %xmm0
+// CHECK: encoding: [0xc5,0x7b,0x11,0xc0]
+          vmovsd %xmm8, %xmm0, %xmm0
