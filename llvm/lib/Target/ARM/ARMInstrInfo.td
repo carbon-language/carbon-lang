@@ -193,6 +193,9 @@ def HasV5TE          : Predicate<"Subtarget->hasV5TEOps()">,
 def HasV6            : Predicate<"Subtarget->hasV6Ops()">,
                                  AssemblerPredicate<"HasV6Ops", "armv6">;
 def NoV6             : Predicate<"!Subtarget->hasV6Ops()">;
+def HasV6M           : Predicate<"Subtarget->hasV6MOps()">,
+                                 AssemblerPredicate<"HasV6MOps",
+                                                    "armv6m or armv6t2">;
 def HasV6T2          : Predicate<"Subtarget->hasV6T2Ops()">,
                                  AssemblerPredicate<"HasV6T2Ops", "armv6t2">;
 def NoV6T2           : Predicate<"!Subtarget->hasV6T2Ops()">;

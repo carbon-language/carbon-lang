@@ -179,13 +179,13 @@ error: invalid operand for instruction
         wfi
         yield
 
-@ CHECK-ERRORS: error: instruction requires: thumb2
+@ CHECK-ERRORS: error: instruction requires: armv6m or armv6t2
 @ CHECK-ERRORS: wfe
 @ CHECK-ERRORS: ^
-@ CHECK-ERRORS: error: instruction requires: thumb2
+@ CHECK-ERRORS: error: instruction requires: armv6m or armv6t2
 @ CHECK-ERRORS: wfi
 @ CHECK-ERRORS: ^
-@ CHECK-ERRORS: error: instruction requires: thumb2
+@ CHECK-ERRORS: error: instruction requires: armv6m or armv6t2
 @ CHECK-ERRORS: yield
 @ CHECK-ERRORS: ^
 

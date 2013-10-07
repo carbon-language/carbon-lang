@@ -44,12 +44,13 @@ protected:
   ARMProcClassEnum ARMProcClass;
 
   /// HasV4TOps, HasV5TOps, HasV5TEOps,
-  /// HasV6Ops, HasV6T2Ops, HasV7Ops, HasV8Ops -
+  /// HasV6Ops, HasV6MOps, HasV6T2Ops, HasV7Ops, HasV8Ops -
   /// Specify whether target support specific ARM ISA variants.
   bool HasV4TOps;
   bool HasV5TOps;
   bool HasV5TEOps;
   bool HasV6Ops;
+  bool HasV6MOps;
   bool HasV6T2Ops;
   bool HasV7Ops;
   bool HasV8Ops;
