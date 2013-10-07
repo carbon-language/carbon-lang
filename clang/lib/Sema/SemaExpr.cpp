@@ -11687,8 +11687,6 @@ bool Sema::tryCaptureVariable(VarDecl *Var, SourceLocation ExprLoc,
   if (!Var->isInitCapture() && Var->getDeclContext() == DC) return true;
   if (!Var->hasLocalStorage()) return true;
 
-  bool HasBlocksAttr = Var->hasAttr<BlocksAttr>();
-
   // Walk up the stack to determine whether we can capture the variable,
   // performing the "simple" checks that don't depend on type. We stop when
   // we've either hit the declared scope of the variable or find an existing
@@ -11718,8 +11716,6 @@ bool Sema::tryCaptureVariable(VarDecl *Var, SourceLocation ExprLoc,
     if (isVariableAlreadyCapturedInScopeInfo(CSI, Var, Nested, CaptureType, 
                                              DeclRefType)) 
       break;
-    bool IsBlock = isa<BlockScopeInfo>(CSI);
-    bool IsLambda = isa<LambdaScopeInfo>(CSI);
    
     // Certain capturing entities (lambdas, blocks etc.) are not allowed to capture 
     // certain types of variables (unnamed, variably modified types etc.)
