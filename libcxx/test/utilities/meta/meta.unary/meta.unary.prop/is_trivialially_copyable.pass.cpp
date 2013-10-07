@@ -19,8 +19,8 @@ void test_is_trivially_copyable()
 {
     static_assert( std::is_trivially_copyable<T>::value, "");
     static_assert( std::is_trivially_copyable<const T>::value, "");
-    static_assert( std::is_trivially_copyable<volatile T>::value, "");
-    static_assert( std::is_trivially_copyable<const volatile T>::value, "");
+    static_assert(!std::is_trivially_copyable<volatile T>::value, "");
+    static_assert(!std::is_trivially_copyable<const volatile T>::value, "");
 }
 
 template <class T>

@@ -719,6 +719,31 @@ template <class _Tp, size_t _Np> struct _LIBCPP_TYPE_VIS_ONLY remove_all_extents
 template <class _Tp> using remove_all_extents_t = typename remove_all_extents<_Tp>::type;
 #endif
 
+// decay
+
+template <class _Tp>
+struct _LIBCPP_TYPE_VIS_ONLY decay
+{
+private:
+    typedef typename remove_reference<_Tp>::type _Up;
+public:
+    typedef typename conditional
+                     <
+                         is_array<_Up>::value,
+                         typename remove_extent<_Up>::type*,
+                         typename conditional
+                         <
+                              is_function<_Up>::value,
+                              typename add_pointer<_Up>::type,
+                              typename remove_cv<_Up>::type
+                         >::type
+                     >::type type;
+};
+
+#if _LIBCPP_STD_VER > 11
+template <class _Tp> using decay_t = typename decay<_Tp>::type;
+#endif
+
 // is_abstract
 
 namespace __is_abstract_imp
@@ -1356,7 +1381,7 @@ template <class ..._Tp> struct common_type;
 template <class _Tp>
 struct _LIBCPP_TYPE_VIS_ONLY common_type<_Tp>
 {
-    typedef _Tp type;
+    typedef typename decay<_Tp>::type type;
 };
 
 template <class _Tp, class _Up>
@@ -1367,7 +1392,7 @@ private:
     static _Up&& __u();
     static bool __f();
 public:
-    typedef typename remove_reference<decltype(__f() ? __t() : __u())>::type type;
+    typedef typename decay<decltype(__f() ? __t() : __u())>::type type;
 };
 
 template <class _Tp, class _Up, class ..._Vp>
@@ -1545,29 +1570,6 @@ public:
 };
 
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
-
-template <class _Tp>
-struct _LIBCPP_TYPE_VIS_ONLY decay
-{
-private:
-    typedef typename remove_reference<_Tp>::type _Up;
-public:
-    typedef typename conditional
-                     <
-                         is_array<_Up>::value,
-                         typename remove_extent<_Up>::type*,
-                         typename conditional
-                         <
-                              is_function<_Up>::value,
-                              typename add_pointer<_Up>::type,
-                              typename remove_cv<_Up>::type
-                         >::type
-                     >::type type;
-};
-
-#if _LIBCPP_STD_VER > 11
-template <class _Tp> using decay_t = typename decay<_Tp>::type;
-#endif
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 

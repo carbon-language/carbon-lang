@@ -18,9 +18,23 @@ int main()
     static_assert((std::is_same<std::common_type<int>::type, int>::value), "");
     static_assert((std::is_same<std::common_type<char>::type, char>::value), "");
 #if _LIBCPP_STD_VER > 11
-    static_assert((std::is_same<std::common_type_t<int>, int>::value), "");
+    static_assert((std::is_same<std::common_type_t<int>,   int>::value), "");
     static_assert((std::is_same<std::common_type_t<char>, char>::value), "");
 #endif
+
+    static_assert((std::is_same<std::common_type<               int>::type, int>::value), "");
+    static_assert((std::is_same<std::common_type<const          int>::type, int>::value), "");
+    static_assert((std::is_same<std::common_type<      volatile int>::type, int>::value), "");
+    static_assert((std::is_same<std::common_type<const volatile int>::type, int>::value), "");
+
+    static_assert((std::is_same<std::common_type<int,           int>::type, int>::value), "");
+    static_assert((std::is_same<std::common_type<int,     const int>::type, int>::value), "");
+    
+    static_assert((std::is_same<std::common_type<long,       const int>::type, long>::value), "");
+    static_assert((std::is_same<std::common_type<const long,       int>::type, long>::value), "");
+    static_assert((std::is_same<std::common_type<long,    volatile int>::type, long>::value), "");
+    static_assert((std::is_same<std::common_type<volatile long,    int>::type, long>::value), "");
+    static_assert((std::is_same<std::common_type<const long, const int>::type, long>::value), "");
 
     static_assert((std::is_same<std::common_type<double, char>::type, double>::value), "");
     static_assert((std::is_same<std::common_type<short, char>::type, int>::value), "");
