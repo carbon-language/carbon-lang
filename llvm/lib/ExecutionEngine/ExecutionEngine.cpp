@@ -56,9 +56,7 @@ ExecutionEngine *(*ExecutionEngine::InterpCtor)(Module *M,
 
 ExecutionEngine::ExecutionEngine(Module *M)
   : EEState(*this),
-    LazyFunctionCreator(0),
-    ExceptionTableRegister(0),
-    ExceptionTableDeregister(0) {
+    LazyFunctionCreator(0) {
   CompilingLazily         = false;
   GVCompilationDisabled   = false;
   SymbolSearchingDisabled = false;
@@ -70,16 +68,6 @@ ExecutionEngine::~ExecutionEngine() {
   clearAllGlobalMappings();
   for (unsigned i = 0, e = Modules.size(); i != e; ++i)
     delete Modules[i];
-}
-
-void ExecutionEngine::DeregisterAllTables() {
-  if (ExceptionTableDeregister) {
-    DenseMap<const Function*, void*>::iterator it = AllExceptionTables.begin();
-    DenseMap<const Function*, void*>::iterator ite = AllExceptionTables.end();
-    for (; it != ite; ++it)
-      ExceptionTableDeregister(it->second);
-    AllExceptionTables.clear();
-  }
 }
 
 namespace {

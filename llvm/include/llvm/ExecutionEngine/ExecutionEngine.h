@@ -16,7 +16,6 @@
 #define LLVM_EXECUTIONENGINE_EXECUTIONENGINE_H
 
 #include "llvm-c/ExecutionEngine.h"
-#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/ValueMap.h"
@@ -152,15 +151,6 @@ protected:
   /// pointer is invoked to create it.  If this returns null, the JIT will
   /// abort.
   void *(*LazyFunctionCreator)(const std::string &);
-
-  /// ExceptionTableRegister - If Exception Handling is set, the JIT will
-  /// register dwarf tables with this function.
-  typedef void (*EERegisterFn)(void*);
-  EERegisterFn ExceptionTableRegister;
-  EERegisterFn ExceptionTableDeregister;
-  /// This maps functions to their exception tables frames.
-  DenseMap<const Function*, void*> AllExceptionTables;
-
 
 public:
   /// lock - This lock protects the ExecutionEngine, JIT, JITResolver and
@@ -488,41 +478,6 @@ public:
   void InstallLazyFunctionCreator(void* (*P)(const std::string &)) {
     LazyFunctionCreator = P;
   }
-
-  /// InstallExceptionTableRegister - The JIT will use the given function
-  /// to register the exception tables it generates.
-  void InstallExceptionTableRegister(EERegisterFn F) {
-    ExceptionTableRegister = F;
-  }
-  void InstallExceptionTableDeregister(EERegisterFn F) {
-    ExceptionTableDeregister = F;
-  }
-
-  /// RegisterTable - Registers the given pointer as an exception table.  It
-  /// uses the ExceptionTableRegister function.
-  void RegisterTable(const Function *fn, void* res) {
-    if (ExceptionTableRegister) {
-      ExceptionTableRegister(res);
-      AllExceptionTables[fn] = res;
-    }
-  }
-
-  /// DeregisterTable - Deregisters the exception frame previously registered
-  /// for the given function.
-  void DeregisterTable(const Function *Fn) {
-    if (ExceptionTableDeregister) {
-      DenseMap<const Function*, void*>::iterator frame =
-        AllExceptionTables.find(Fn);
-      if(frame != AllExceptionTables.end()) {
-        ExceptionTableDeregister(frame->second);
-        AllExceptionTables.erase(frame);
-      }
-    }
-  }
-
-  /// DeregisterAllTables - Deregisters all previously registered pointers to an
-  /// exception tables.  It uses the ExceptionTableoDeregister function.
-  void DeregisterAllTables();
 
 protected:
   explicit ExecutionEngine(Module *M);
