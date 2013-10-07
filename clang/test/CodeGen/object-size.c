@@ -40,7 +40,7 @@ void test4() {
 // CHECK-LABEL: define void @test5
 void test5() {
   // CHECK:     = load i8** @gp
-  // CHECK-NEXT:= call i64 @llvm.objectsize.i64(i8* %{{.*}}, i1 false)
+  // CHECK-NEXT:= call i64 @llvm.objectsize.i64.p0i8(i8* %{{.*}}, i1 false)
   strcpy(gp, "Hi there");
 }
 

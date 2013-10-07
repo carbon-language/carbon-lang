@@ -186,7 +186,7 @@ void bad_downcast_pointer(S *p) {
   // CHECK: %[[NONNULL:.*]] = icmp ne {{.*}}, null
   // CHECK: br i1 %[[NONNULL]],
 
-  // CHECK: %[[SIZE:.*]] = call i64 @llvm.objectsize.i64(
+  // CHECK: %[[SIZE:.*]] = call i64 @llvm.objectsize.i64.p0i8(
   // CHECK: %[[E1:.*]] = icmp uge i64 %[[SIZE]], 24
   // CHECK: %[[MISALIGN:.*]] = and i64 %{{.*}}, 7
   // CHECK: %[[E2:.*]] = icmp eq i64 %[[MISALIGN]], 0
@@ -207,7 +207,7 @@ void bad_downcast_pointer(S *p) {
 void bad_downcast_reference(S &p) {
   // CHECK: %[[E1:.*]] = icmp ne {{.*}}, null
   // CHECK-NOT: br i1
-  // CHECK: %[[SIZE:.*]] = call i64 @llvm.objectsize.i64(
+  // CHECK: %[[SIZE:.*]] = call i64 @llvm.objectsize.i64.p0i8(
   // CHECK: %[[E2:.*]] = icmp uge i64 %[[SIZE]], 24
   // CHECK: %[[E12:.*]] = and i1 %[[E1]], %[[E2]]
   // CHECK: %[[MISALIGN:.*]] = and i64 %{{.*}}, 7

@@ -31,12 +31,12 @@ void foo() {
   // CHECK-TRAP: %[[CHECK0:.*]] = icmp ne {{.*}}* %[[PTR:.*]], null
 
   // CHECK:      %[[I8PTR:.*]] = bitcast i32* %[[PTR]] to i8*
-  // CHECK-NEXT: %[[SIZE:.*]] = call i64 @llvm.objectsize.i64(i8* %[[I8PTR]], i1 false)
+  // CHECK-NEXT: %[[SIZE:.*]] = call i64 @llvm.objectsize.i64.p0i8(i8* %[[I8PTR]], i1 false)
   // CHECK-NEXT: %[[CHECK1:.*]] = icmp uge i64 %[[SIZE]], 4
   // CHECK-NEXT: %[[CHECK01:.*]] = and i1 %[[CHECK0]], %[[CHECK1]]
 
   // CHECK-TRAP:      %[[I8PTR:.*]] = bitcast i32* %[[PTR]] to i8*
-  // CHECK-TRAP-NEXT: %[[SIZE:.*]] = call i64 @llvm.objectsize.i64(i8* %[[I8PTR]], i1 false)
+  // CHECK-TRAP-NEXT: %[[SIZE:.*]] = call i64 @llvm.objectsize.i64.p0i8(i8* %[[I8PTR]], i1 false)
   // CHECK-TRAP-NEXT: %[[CHECK1:.*]] = icmp uge i64 %[[SIZE]], 4
   // CHECK-TRAP-NEXT: %[[CHECK01:.*]] = and i1 %[[CHECK0]], %[[CHECK1]]
 
