@@ -67,6 +67,9 @@ public:
       if (!ec)
         return ec;
     }
+
+    (void) (_isWholeArchive);
+
     return llvm::error_code::success();
   }
 
