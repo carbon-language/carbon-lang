@@ -182,10 +182,3 @@ unsigned SparcRegisterInfo::getFrameRegister(const MachineFunction &MF) const {
   return SP::I6;
 }
 
-unsigned SparcRegisterInfo::getEHExceptionRegister() const {
-  llvm_unreachable("What is the exception register");
-}
-
-unsigned SparcRegisterInfo::getEHHandlerRegister() const {
-  llvm_unreachable("What is the exception handler register");
-}

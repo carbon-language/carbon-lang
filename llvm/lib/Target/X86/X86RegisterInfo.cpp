@@ -512,14 +512,6 @@ unsigned X86RegisterInfo::getFrameRegister(const MachineFunction &MF) const {
   return TFI->hasFP(MF) ? FramePtr : StackPtr;
 }
 
-unsigned X86RegisterInfo::getEHExceptionRegister() const {
-  llvm_unreachable("What is the exception register");
-}
-
-unsigned X86RegisterInfo::getEHHandlerRegister() const {
-  llvm_unreachable("What is the exception handler register");
-}
-
 namespace llvm {
 unsigned getX86SubSuperRegister(unsigned Reg, MVT::SimpleValueType VT,
                                 bool High) {

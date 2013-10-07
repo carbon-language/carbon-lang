@@ -78,10 +78,6 @@ struct HexagonRegisterInfo : public HexagonGenRegisterInfo {
   unsigned getFrameRegister(const MachineFunction &MF) const;
   unsigned getFrameRegister() const;
   unsigned getStackRegister() const;
-
-  // Exception handling queries.
-  unsigned getEHExceptionRegister() const;
-  unsigned getEHHandlerRegister() const;
 };
 
 } // end namespace llvm

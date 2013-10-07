@@ -691,14 +691,6 @@ unsigned PPCRegisterInfo::getFrameRegister(const MachineFunction &MF) const {
     return TFI->hasFP(MF) ? PPC::X31 : PPC::X1;
 }
 
-unsigned PPCRegisterInfo::getEHExceptionRegister() const {
-  return !Subtarget.isPPC64() ? PPC::R3 : PPC::X3;
-}
-
-unsigned PPCRegisterInfo::getEHHandlerRegister() const {
-  return !Subtarget.isPPC64() ? PPC::R4 : PPC::X4;
-}
-
 unsigned PPCRegisterInfo::getBaseRegister(const MachineFunction &MF) const {
   if (!hasBasePointer(MF))
     return getFrameRegister(MF);

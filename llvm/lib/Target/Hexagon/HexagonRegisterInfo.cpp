@@ -295,13 +295,5 @@ unsigned HexagonRegisterInfo::getStackRegister() const {
   return Hexagon::R29;
 }
 
-unsigned HexagonRegisterInfo::getEHExceptionRegister() const {
-  llvm_unreachable("What is the exception register");
-}
-
-unsigned HexagonRegisterInfo::getEHHandlerRegister() const {
-  llvm_unreachable("What is the exception handler register");
-}
-
 #define GET_REGINFO_TARGET_DESC
 #include "HexagonGenRegisterInfo.inc"

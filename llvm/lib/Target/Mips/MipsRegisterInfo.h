@@ -68,10 +68,6 @@ public:
   /// Debug information queries.
   unsigned getFrameRegister(const MachineFunction &MF) const;
 
-  /// Exception handling queries.
-  unsigned getEHExceptionRegister() const;
-  unsigned getEHHandlerRegister() const;
-
   /// \brief Return GPR register class.
   virtual const TargetRegisterClass *intRegClass(unsigned Size) const = 0;
 
