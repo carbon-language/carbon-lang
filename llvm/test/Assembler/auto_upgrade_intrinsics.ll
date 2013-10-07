@@ -6,6 +6,10 @@ declare i16 @llvm.ctlz.i16(i16)
 declare i32 @llvm.ctlz.i32(i32)
 declare i42 @llvm.ctlz.i42(i42)  ; Not a power-of-2
 
+
+declare i32 @llvm.objectsize.i32(i8*, i1) nounwind readonly
+
+
 define void @test.ctlz(i8 %a, i16 %b, i32 %c, i42 %d) {
 ; CHECK: @test.ctlz
 
@@ -41,4 +45,15 @@ entry:
   call i42 @llvm.cttz.i42(i42 %d)
 
   ret void
+}
+
+
+@a = private global [60 x i8] zeroinitializer, align 1
+
+define i32 @test.objectsize() {
+; CHECK-LABEL: @test.objectsize(
+; CHECK: @llvm.objectsize.i32.p0i8
+; CHECK-DAG: declare i32 @llvm.objectsize.i32.p0i8
+  %s = call i32 @llvm.objectsize.i32(i8* getelementptr inbounds ([60 x i8]* @a, i32 0, i32 0), i1 false)
+  ret i32 %s
 }

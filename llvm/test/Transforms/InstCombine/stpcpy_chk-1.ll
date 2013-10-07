@@ -61,7 +61,7 @@ define i8* @test_simplify5() {
   %src = getelementptr inbounds [12 x i8]* @.str, i32 0, i32 0
 
 ; CHECK: @__memcpy_chk
-  %len = call i32 @llvm.objectsize.i32(i8* %dst, i1 false)
+  %len = call i32 @llvm.objectsize.i32.p0i8(i8* %dst, i1 false)
   %ret = call i8* @__stpcpy_chk(i8* %dst, i8* %src, i32 %len)
 ; CHECK: ret i8* getelementptr inbounds ([60 x i8]* @a, i32 0, i32 11)
   ret i8* %ret
@@ -75,7 +75,7 @@ define i8* @test_simplify6() {
 
 ; CHECK: [[LEN:%[a-z]+]] = call i32 @strlen
 ; CHECK-NEXT: getelementptr inbounds [60 x i8]* @a, i32 0, i32 [[LEN]]
-  %len = call i32 @llvm.objectsize.i32(i8* %dst, i1 false)
+  %len = call i32 @llvm.objectsize.i32.p0i8(i8* %dst, i1 false)
   %ret = call i8* @__stpcpy_chk(i8* %dst, i8* %dst, i32 %len)
   ret i8* %ret
 }
@@ -93,4 +93,4 @@ define void @test_no_simplify1() {
 }
 
 declare i8* @__stpcpy_chk(i8*, i8*, i32) nounwind
-declare i32 @llvm.objectsize.i32(i8*, i1) nounwind readonly
+declare i32 @llvm.objectsize.i32.p0i8(i8*, i1) nounwind readonly

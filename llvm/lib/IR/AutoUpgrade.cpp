@@ -88,6 +88,20 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
     }
     break;
   }
+  case 'o':
+    // We only need to change the name to match the mangling including the
+    // address space.
+    if (F->arg_size() == 2 && Name.startswith("objectsize.")) {
+      Type *Tys[2] = { F->getReturnType(), F->arg_begin()->getType() };
+      if (F->getName() != Intrinsic::getName(Intrinsic::objectsize, Tys)) {
+        F->setName(Name + ".old");
+        NewFn = Intrinsic::getDeclaration(F->getParent(),
+                                          Intrinsic::objectsize, Tys);
+        return true;
+      }
+    }
+    break;
+
   case 'x': {
     if (Name.startswith("x86.sse2.pcmpeq.") ||
         Name.startswith("x86.sse2.pcmpgt.") ||
@@ -314,6 +328,14 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
            "Mismatch between function args and call args");
     CI->replaceAllUsesWith(Builder.CreateCall2(NewFn, CI->getArgOperand(0),
                                                Builder.getFalse(), Name));
+    CI->eraseFromParent();
+    return;
+
+  case Intrinsic::objectsize:
+    CI->replaceAllUsesWith(Builder.CreateCall2(NewFn,
+                                               CI->getArgOperand(0),
+                                               CI->getArgOperand(1),
+                                               Name));
     CI->eraseFromParent();
     return;
 

@@ -60,7 +60,7 @@ bb:
   %3 = load i32* @tabsize, align 4
   %4 = srem i32 %cols, %3
   %5 = sdiv i32 %cols, %3
-  %6 = tail call i32 @llvm.objectsize.i32(i8* null, i1 false)
+  %6 = tail call i32 @llvm.objectsize.i32.p0i8(i8* null, i1 false)
   %7 = tail call i8* @__memset_chk(i8* null, i32 9, i32 %5, i32 %6) nounwind
   br label %bb1
 
@@ -71,7 +71,7 @@ bb1:
   ret void
 }
 
-declare i32 @llvm.objectsize.i32(i8*, i1) nounwind readnone
+declare i32 @llvm.objectsize.i32.p0i8(i8*, i1) nounwind readnone
 declare i8* @__memset_chk(i8*, i32, i32, i32) nounwind
 
 ; rdar://11714607
