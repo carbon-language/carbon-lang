@@ -135,7 +135,7 @@ typedef PVOID (WINAPI *fpSymFunctionTableAccess64)(HANDLE, DWORD64);
 static fpSymFunctionTableAccess64 SymFunctionTableAccess64;
 
 static bool load64BitDebugHelp(void) {
-  HMODULE hLib = ::LoadLibrary(TEXT("Dbghelp.dll"));
+  HMODULE hLib = ::LoadLibraryW(L"Dbghelp.dll");
   if (hLib) {
     StackWalk64 = (fpStackWalk64)
                       ::GetProcAddress(hLib, "StackWalk64");

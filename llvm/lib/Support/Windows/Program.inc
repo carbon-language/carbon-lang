@@ -335,7 +335,7 @@ static bool Execute(ProcessInfo &PI, StringRef Program, const char **args,
   // Assign the process to a job if a memory limit is defined.
   ScopedJobHandle hJob;
   if (memoryLimit != 0) {
-    hJob = CreateJobObject(0, 0);
+    hJob = CreateJobObjectW(0, 0);
     bool success = false;
     if (hJob) {
       JOBOBJECT_EXTENDED_LIMIT_INFORMATION jeli;

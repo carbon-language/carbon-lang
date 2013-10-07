@@ -46,9 +46,9 @@ namespace {
     /*__in*/ LPCWSTR lpTargetFileName,
     /*__in*/ DWORD dwFlags);
 
-  PtrCreateSymbolicLinkW create_symbolic_link_api = PtrCreateSymbolicLinkW(
-    ::GetProcAddress(::GetModuleHandleA("kernel32.dll"),
-                     "CreateSymbolicLinkW"));
+  PtrCreateSymbolicLinkW create_symbolic_link_api =
+      PtrCreateSymbolicLinkW(::GetProcAddress(
+          ::GetModuleHandleW(L"Kernel32.dll"), "CreateSymbolicLinkW"));
 
   error_code TempDir(SmallVectorImpl<wchar_t> &result) {
   retry_temp_dir:
@@ -216,9 +216,28 @@ namespace sys  {
 namespace fs {
 
 std::string getMainExecutable(const char *argv0, void *MainExecAddr) {
-  char pathname[MAX_PATH];
-  DWORD ret = ::GetModuleFileNameA(NULL, pathname, MAX_PATH);
-  return ret != MAX_PATH ? pathname : "";
+  SmallVector<wchar_t, MAX_PATH> PathName;
+  DWORD Size = ::GetModuleFileNameW(NULL, PathName.data(), PathName.capacity());
+
+  // A zero return value indicates a failure other than insufficient space.
+  if (Size == 0)
+    return "";
+
+  // Insufficient space is determined by a return value equal to the size of
+  // the buffer passed in.
+  if (Size == PathName.capacity())
+    return "";
+
+  // On success, GetModuleFileNameW returns the number of characters written to
+  // the buffer not including the NULL terminator.
+  PathName.set_size(Size);
+
+  // Convert the result from UTF-16 to UTF-8.
+  SmallVector<char, MAX_PATH> PathNameUTF8;
+  if (UTF16ToUTF8(PathName.data(), PathName.size(), PathNameUTF8))
+    return "";
+
+  return std::string(PathNameUTF8.data());
 }
 
 UniqueID file_status::getUniqueID() const {
@@ -672,12 +691,11 @@ error_code mapped_file_region::init(int FD, bool CloseFD, uint64_t Offset) {
   case priv:      flprotect = PAGE_WRITECOPY; break;
   }
 
-  FileMappingHandle = ::CreateFileMapping(FileHandle,
-                                          0,
-                                          flprotect,
-                                          (Offset + Size) >> 32,
-                                          (Offset + Size) & 0xffffffff,
-                                          0);
+  FileMappingHandle =
+      ::CreateFileMappingW(FileHandle, 0, flprotect,
+                           (Offset + Size) >> 32,
+                           (Offset + Size) & 0xffffffff,
+                           0);
   if (FileMappingHandle == NULL) {
     error_code ec = windows_error(GetLastError());
     if (FileDescriptor) {
