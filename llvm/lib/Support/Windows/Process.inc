@@ -161,7 +161,7 @@ Optional<std::string> Process::GetEnv(StringRef Name) {
   SmallVector<wchar_t, MAX_PATH> Buf;
   size_t Size = MAX_PATH;
   do {
-    Buf.reserve(Size);
+    Buf.resize(Size);
     Size = GetEnvironmentVariableW(&NameUTF16[0], &Buf[0], Buf.capacity());
     if (Size == 0)
       return None;
