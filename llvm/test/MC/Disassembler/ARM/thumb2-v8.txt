@@ -1,0 +1,5 @@
+# RUN: llvm-mc -triple=thumbv8 -disassemble < %s | FileCheck %s
+# CHECK: sevl
+# CHECK: sevl.w
+0x50 0xbf
+0xaf 0xf3 0x05 0x80
