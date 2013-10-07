@@ -79,7 +79,7 @@ typedef enum NSURLBookmarkResolutionOptions {
 @end
 
 @interface NSNotificationCenter
-+ (instancetype) defaultCenter;
++ (id) defaultCenter;
 @end
 
 @interface UIApplication
