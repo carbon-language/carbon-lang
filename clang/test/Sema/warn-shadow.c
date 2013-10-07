@@ -1,5 +1,7 @@
 // RUN: %clang_cc1 -verify -fsyntax-only -fblocks -Wshadow %s
 
+#include <emmintrin.h>
+
 int i;          // expected-note 3 {{previous declaration is here}}
 
 void foo() {
@@ -58,4 +60,12 @@ void rdar8883302() {
 
 void test8() {
   int bob; // expected-warning {{declaration shadows a variable in the global scope}}
+}
+
+// Test that using two macros from emmintrin do not cause a
+// useless -Wshadow warning.
+void rdar10679282() {
+  __m128i qf = _mm_setzero_si128();
+  qf = _mm_slli_si128(_mm_add_epi64(qf, _mm_srli_si128(qf, 8)), 8); // no-warning
+  (void) qf;
 }
