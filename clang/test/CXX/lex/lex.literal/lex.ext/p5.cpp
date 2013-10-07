@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -std=c++11 -verify %s
+// RUN: %clang_cc1 -fsyntax-only -std=c++11 -verify %s -triple=x86_64-linux-gnu
 
 using size_t = decltype(sizeof(int));
 
