@@ -562,14 +562,13 @@ bool Filler::searchBackward(MachineBasicBlock &MBB, Iter Slot) const {
 
   RegDU.init(*Slot);
 
-  if (searchRange(MBB, ReverseIter(Slot), MBB.rend(), RegDU, MemDU, Filler)) {
-    MBB.splice(llvm::next(Slot), &MBB, llvm::next(Filler).base());
-    MIBundleBuilder(MBB, Slot, llvm::next(llvm::next(Slot)));
-    ++UsefulSlots;
-    return true;
-  }
+  if (!searchRange(MBB, ReverseIter(Slot), MBB.rend(), RegDU, MemDU, Filler))
+    return false;
 
-  return false;
+  MBB.splice(llvm::next(Slot), &MBB, llvm::next(Filler).base());
+  MIBundleBuilder(MBB, Slot, llvm::next(llvm::next(Slot)));
+  ++UsefulSlots;
+  return true;
 }
 
 bool Filler::searchForward(MachineBasicBlock &MBB, Iter Slot) const {
@@ -583,14 +582,13 @@ bool Filler::searchForward(MachineBasicBlock &MBB, Iter Slot) const {
 
   RegDU.setCallerSaved(*Slot);
 
-  if (searchRange(MBB, llvm::next(Slot), MBB.end(), RegDU, NM, Filler)) {
-    MBB.splice(llvm::next(Slot), &MBB, Filler);
-    MIBundleBuilder(MBB, Slot, llvm::next(llvm::next(Slot)));
-    ++UsefulSlots;
-    return true;
-  }
+  if (!searchRange(MBB, llvm::next(Slot), MBB.end(), RegDU, NM, Filler))
+    return false;
 
-  return false;
+  MBB.splice(llvm::next(Slot), &MBB, Filler);
+  MIBundleBuilder(MBB, Slot, llvm::next(llvm::next(Slot)));
+  ++UsefulSlots;
+  return true;
 }
 
 bool Filler::searchSuccBBs(MachineBasicBlock &MBB, Iter Slot) const {
