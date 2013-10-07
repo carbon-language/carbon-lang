@@ -486,6 +486,9 @@ enum Constants {
   DW_OP_lo_user = 0xe0,
   DW_OP_hi_user = 0xff,
 
+  // Extensions for GNU-style thread-local storage.
+  DW_OP_GNU_push_tls_address = 0xe0,
+
   // Extensions for Fission proposal.
   DW_OP_GNU_addr_index = 0xfb,
   DW_OP_GNU_const_index = 0xfc,

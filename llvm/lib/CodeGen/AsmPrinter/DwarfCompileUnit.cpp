@@ -1505,14 +1505,15 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
         // 1) Start with a constNu of the appropriate pointer size
         addUInt(Block, 0, dwarf::DW_FORM_data1,
                 PointerSize == 4 ? dwarf::DW_OP_const4u : dwarf::DW_OP_const8u);
-        // 2) containing the (relocated) address of the TLS variable
+        // 2) containing the (relocated) offset of the TLS variable
+        //    within the module's TLS block.
         addExpr(Block, 0, dwarf::DW_FORM_udata, Expr);
       } else {
         addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_GNU_const_index);
         addUInt(Block, 0, dwarf::DW_FORM_udata, DU->getAddrPoolIndex(Expr));
       }
-      // 3) followed by a custom OP to tell the debugger about TLS (presumably)
-      addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_lo_user);
+      // 3) followed by a custom OP to make the debugger do a TLS lookup.
+      addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_GNU_push_tls_address);
     } else
       addOpAddress(Block, Sym);
     // Do not create specification DIE if context is either compile unit
