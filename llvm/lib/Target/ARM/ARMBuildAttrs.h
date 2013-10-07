@@ -128,7 +128,13 @@ namespace ARMBuildAttrs {
 
     // Tag_ABI_FP_number_model, (=23), uleb128
     AllowRTABI = 2,  // numbers, infinities, and one quiet NaN (see [RTABI])
-    AllowIEE754 = 3 // this code to use all the IEEE 754-defined FP encodings
+    AllowIEE754 = 3, // this code to use all the IEEE 754-defined FP encodings
+
+    // Tag_DIV_use, (=44), uleb128
+    AllowDIVIfExists = 0, // Allow hardware divide if available in arch, or no info exists.
+    DisallowDIV = 1, // Hardware divide explicitly disallowed
+    AllowDIVExt = 2  // Allow hardware divide as optional architecture extension above
+                     // the base arch specified by Tag_CPU_arch and Tag_CPU_arch_profile.
   };
 }
 

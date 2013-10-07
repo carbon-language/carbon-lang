@@ -149,7 +149,7 @@ std::string ARM_MC::ParseARMTriple(StringRef TT, StringRef CPU) {
         isThumb = true;
         if (NoCPU)
           // v6m: FeatureNoARM, FeatureMClass
-          ARMArchFeature = "+v6,+noarm,+mclass";
+          ARMArchFeature = "+v6m,+noarm,+mclass";
         else
           ARMArchFeature = "+v6";
       } else

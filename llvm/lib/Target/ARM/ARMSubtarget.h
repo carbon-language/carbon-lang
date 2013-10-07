@@ -234,6 +234,7 @@ public:
   bool hasV5TOps()  const { return HasV5TOps;  }
   bool hasV5TEOps() const { return HasV5TEOps; }
   bool hasV6Ops()   const { return HasV6Ops;   }
+  bool hasV6MOps()  const { return HasV6MOps;  }
   bool hasV6T2Ops() const { return HasV6T2Ops; }
   bool hasV7Ops()   const { return HasV7Ops;  }
   bool hasV8Ops()   const { return HasV8Ops;  }

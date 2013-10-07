@@ -740,6 +740,33 @@ void ARMAsmPrinter::EmitEndOfAsmFile(Module &M) {
 // to appear in the .ARM.attributes section in ELF.
 // Instead of subclassing the MCELFStreamer, we do the work here.
 
+static ARMBuildAttrs::CPUArch getArchForCPU(StringRef CPU,
+                                            const ARMSubtarget *Subtarget) {
+  if (CPU == "xscale")
+    return ARMBuildAttrs::v5TEJ;
+
+  if (Subtarget->hasV8Ops())
+    return ARMBuildAttrs::v8;
+  else if (Subtarget->hasV7Ops()) {
+    if (Subtarget->isMClass() && Subtarget->hasThumb2DSP())
+      return ARMBuildAttrs::v7E_M;
+    return ARMBuildAttrs::v7;
+  } else if (Subtarget->hasV6T2Ops())
+    return ARMBuildAttrs::v6T2;
+  else if (Subtarget->hasV6MOps())
+    return ARMBuildAttrs::v6S_M;
+  else if (Subtarget->hasV6Ops())
+    return ARMBuildAttrs::v6;
+  else if (Subtarget->hasV5TEOps())
+    return ARMBuildAttrs::v5TE;
+  else if (Subtarget->hasV5TOps())
+    return ARMBuildAttrs::v5T;
+  else if (Subtarget->hasV4TOps())
+    return ARMBuildAttrs::v4T;
+  else
+    return ARMBuildAttrs::v4;
+}
+
 void ARMAsmPrinter::emitAttributes() {
 
   emitARMAttributeSection();
@@ -759,53 +786,44 @@ void ARMAsmPrinter::emitAttributes() {
 
   std::string CPUString = Subtarget->getCPUString();
 
-  if (CPUString == "cortex-a8" ||
-      Subtarget->isCortexA8()) {
-    AttrEmitter->EmitTextAttribute(ARMBuildAttrs::CPU_name, "cortex-a8");
-    AttrEmitter->EmitAttribute(ARMBuildAttrs::CPU_arch, ARMBuildAttrs::v7);
+  if (CPUString != "generic")
+    AttrEmitter->EmitTextAttribute(ARMBuildAttrs::CPU_name, CPUString);
+
+  AttrEmitter->EmitAttribute(ARMBuildAttrs::CPU_arch,
+                             getArchForCPU(CPUString, Subtarget));
+
+  if (Subtarget->isAClass()) {
     AttrEmitter->EmitAttribute(ARMBuildAttrs::CPU_arch_profile,
                                ARMBuildAttrs::ApplicationProfile);
-    AttrEmitter->EmitAttribute(ARMBuildAttrs::ARM_ISA_use,
-                               ARMBuildAttrs::Allowed);
-    AttrEmitter->EmitAttribute(ARMBuildAttrs::THUMB_ISA_use,
-                               ARMBuildAttrs::AllowThumb32);
-    // Fixme: figure out when this is emitted.
-    //AttrEmitter->EmitAttribute(ARMBuildAttrs::WMMX_arch,
-    //                           ARMBuildAttrs::AllowWMMXv1);
-    //
+  } else if (Subtarget->isRClass()) {
+    AttrEmitter->EmitAttribute(ARMBuildAttrs::CPU_arch_profile,
+                               ARMBuildAttrs::RealTimeProfile);
+  } else if (Subtarget->isMClass()){
+    AttrEmitter->EmitAttribute(ARMBuildAttrs::CPU_arch_profile,
+                               ARMBuildAttrs::MicroControllerProfile);
+  }
 
-    /// ADD additional Else-cases here!
-  } else if (CPUString == "xscale") {
-    AttrEmitter->EmitAttribute(ARMBuildAttrs::CPU_arch, ARMBuildAttrs::v5TEJ);
-    AttrEmitter->EmitAttribute(ARMBuildAttrs::ARM_ISA_use,
-                               ARMBuildAttrs::Allowed);
+  AttrEmitter->EmitAttribute(ARMBuildAttrs::ARM_ISA_use, Subtarget->hasARMOps() ?
+                           ARMBuildAttrs::Allowed : ARMBuildAttrs::Not_Allowed);
+  if (Subtarget->isThumb1Only()) {
     AttrEmitter->EmitAttribute(ARMBuildAttrs::THUMB_ISA_use,
                                ARMBuildAttrs::Allowed);
-  } else if (Subtarget->hasV8Ops())
-    AttrEmitter->EmitAttribute(ARMBuildAttrs::CPU_arch, ARMBuildAttrs::v8);
-  else if (Subtarget->hasV7Ops()) {
-    AttrEmitter->EmitAttribute(ARMBuildAttrs::CPU_arch, ARMBuildAttrs::v7);
+  } else if (Subtarget->hasThumb2()) {
     AttrEmitter->EmitAttribute(ARMBuildAttrs::THUMB_ISA_use,
                                ARMBuildAttrs::AllowThumb32);
-  } else if (Subtarget->hasV6T2Ops())
-    AttrEmitter->EmitAttribute(ARMBuildAttrs::CPU_arch, ARMBuildAttrs::v6T2);
-  else if (Subtarget->hasV6Ops())
-    AttrEmitter->EmitAttribute(ARMBuildAttrs::CPU_arch, ARMBuildAttrs::v6);
-  else if (Subtarget->hasV5TEOps())
-    AttrEmitter->EmitAttribute(ARMBuildAttrs::CPU_arch, ARMBuildAttrs::v5TE);
-  else if (Subtarget->hasV5TOps())
-    AttrEmitter->EmitAttribute(ARMBuildAttrs::CPU_arch, ARMBuildAttrs::v5T);
-  else if (Subtarget->hasV4TOps())
-    AttrEmitter->EmitAttribute(ARMBuildAttrs::CPU_arch, ARMBuildAttrs::v4T);
-  else
-    AttrEmitter->EmitAttribute(ARMBuildAttrs::CPU_arch, ARMBuildAttrs::v4);
+  }
 
   if (Subtarget->hasNEON() && emitFPU) {
     /* NEON is not exactly a VFP architecture, but GAS emit one of
      * neon/neon-fp-armv8/neon-vfpv4/vfpv3/vfpv2 for .fpu parameters */
-    if (Subtarget->hasFPARMv8())
-      AttrEmitter->EmitTextAttribute(ARMBuildAttrs::Advanced_SIMD_arch,
-                                     "neon-fp-armv8");
+    if (Subtarget->hasFPARMv8()) {
+      if (Subtarget->hasCrypto())
+        AttrEmitter->EmitTextAttribute(ARMBuildAttrs::Advanced_SIMD_arch,
+                                       "crypto-neon-fp-armv8");
+      else
+        AttrEmitter->EmitTextAttribute(ARMBuildAttrs::Advanced_SIMD_arch,
+                                       "neon-fp-armv8");
+    }
     else if (Subtarget->hasVFP4())
       AttrEmitter->EmitTextAttribute(ARMBuildAttrs::Advanced_SIMD_arch,
                                      "neon-vfpv4");
@@ -825,14 +843,16 @@ void ARMAsmPrinter::emitAttributes() {
     /* VFPv4 + .fpu */
   } else if (Subtarget->hasVFP4()) {
     AttrEmitter->EmitAttribute(ARMBuildAttrs::VFP_arch,
-                               ARMBuildAttrs::AllowFPv4A);
+      Subtarget->isFPOnlySP() ? ARMBuildAttrs::AllowFPv4B :
+                                ARMBuildAttrs::AllowFPv4A);
     if (emitFPU)
       AttrEmitter->EmitTextAttribute(ARMBuildAttrs::VFP_arch, "vfpv4");
 
   /* VFPv3 + .fpu */
   } else if (Subtarget->hasVFP3()) {
     AttrEmitter->EmitAttribute(ARMBuildAttrs::VFP_arch,
-                               ARMBuildAttrs::AllowFPv3A);
+      Subtarget->isFPOnlySP() ? ARMBuildAttrs::AllowFPv3B :
+                                ARMBuildAttrs::AllowFPv3A);
     if (emitFPU)
       AttrEmitter->EmitTextAttribute(ARMBuildAttrs::VFP_arch, "vfpv3");
 
@@ -856,19 +876,21 @@ void ARMAsmPrinter::emitAttributes() {
   }
 
   // Signal various FP modes.
-  if (!TM.Options.UnsafeFPMath) {
-    AttrEmitter->EmitAttribute(ARMBuildAttrs::ABI_FP_denormal,
-                               ARMBuildAttrs::Allowed);
-    AttrEmitter->EmitAttribute(ARMBuildAttrs::ABI_FP_exceptions,
-                               ARMBuildAttrs::Allowed);
-  }
+  if (Subtarget->hasVFP2()) {
+    if (!TM.Options.UnsafeFPMath) {
+      AttrEmitter->EmitAttribute(ARMBuildAttrs::ABI_FP_denormal,
+                                 ARMBuildAttrs::Allowed);
+      AttrEmitter->EmitAttribute(ARMBuildAttrs::ABI_FP_exceptions,
+                                 ARMBuildAttrs::Allowed);
+    }
 
-  if (TM.Options.NoInfsFPMath && TM.Options.NoNaNsFPMath)
-    AttrEmitter->EmitAttribute(ARMBuildAttrs::ABI_FP_number_model,
-                               ARMBuildAttrs::Allowed);
-  else
-    AttrEmitter->EmitAttribute(ARMBuildAttrs::ABI_FP_number_model,
-                               ARMBuildAttrs::AllowIEE754);
+    if (TM.Options.NoInfsFPMath && TM.Options.NoNaNsFPMath)
+      AttrEmitter->EmitAttribute(ARMBuildAttrs::ABI_FP_number_model,
+                                 ARMBuildAttrs::Allowed);
+    else
+      AttrEmitter->EmitAttribute(ARMBuildAttrs::ABI_FP_number_model,
+                                 ARMBuildAttrs::AllowIEE754);
+  }
 
   // FIXME: add more flags to ARMBuildAttrs.h
   // 8-bytes alignment stuff.
@@ -882,8 +904,12 @@ void ARMAsmPrinter::emitAttributes() {
   }
   // FIXME: Should we signal R9 usage?
 
-  if (Subtarget->hasDivide())
-    AttrEmitter->EmitAttribute(ARMBuildAttrs::DIV_use, 1);
+  if (Subtarget->hasDivide()) {
+    // Check if hardware divide is only available in thumb2 or ARM as well.
+    AttrEmitter->EmitAttribute(ARMBuildAttrs::DIV_use,
+      Subtarget->hasDivideInARMMode() ? ARMBuildAttrs::AllowDIVExt :
+                                        ARMBuildAttrs::AllowDIVIfExists);
+  }
 
   AttrEmitter->Finish();
   delete AttrEmitter;

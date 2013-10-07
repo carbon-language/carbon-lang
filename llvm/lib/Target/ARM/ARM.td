@@ -294,7 +294,8 @@ def : ProcessorModel<"cortex-a15",   CortexA9Model,
 def : ProcessorModel<"cortex-r5",   CortexA8Model,
                                     [ProcR5, HasV7Ops, FeatureDB,
                                      FeatureVFP3, FeatureDSPThumb2,
-                                     FeatureHasRAS, FeatureRClass]>;
+                                     FeatureHasRAS, FeatureVFPOnlySP,
+                                     FeatureRClass]>;
 
 // V7M Processors.
 def : ProcNoItin<"cortex-m3",       [HasV7Ops,
