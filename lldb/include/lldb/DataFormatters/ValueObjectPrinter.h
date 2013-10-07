@@ -43,6 +43,7 @@ struct DumpValueObjectOptions
     bool m_hide_root_type;
     bool m_hide_name;
     bool m_hide_value;
+    bool m_be_raw;
     
     DumpValueObjectOptions() :
     m_max_ptr_depth(0),
@@ -61,7 +62,8 @@ struct DumpValueObjectOptions
     m_root_valobj_name(),
     m_hide_root_type(false),  // provide a special compact display for "po"
     m_hide_name(false), // provide a special compact display for "po"
-    m_hide_value(false) // provide a special compact display for "po"
+    m_hide_value(false), // provide a special compact display for "po"
+    m_be_raw(false)
     {}
     
     static const DumpValueObjectOptions
@@ -89,7 +91,8 @@ struct DumpValueObjectOptions
     m_root_valobj_name(rhs.m_root_valobj_name),
     m_hide_root_type(rhs.m_hide_root_type),
     m_hide_name(rhs.m_hide_name),
-    m_hide_value(rhs.m_hide_value)
+    m_hide_value(rhs.m_hide_value),
+    m_be_raw(rhs.m_be_raw)
     {}
     
     DumpValueObjectOptions&
@@ -189,6 +192,7 @@ struct DumpValueObjectOptions
             SetIgnoreCap(true);
             SetHideName(false);
             SetHideValue(false);
+            m_be_raw = true;
         }
         else
         {
@@ -197,6 +201,7 @@ struct DumpValueObjectOptions
             SetIgnoreCap(false);
             SetHideName(false);
             SetHideValue(false);
+            m_be_raw = false;
         }
         return *this;
     }

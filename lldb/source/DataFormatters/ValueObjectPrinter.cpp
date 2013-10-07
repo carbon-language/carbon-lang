@@ -581,7 +581,7 @@ ValueObjectPrinter::PrintChildrenIfNeeded (bool value_printed,
     
     uint32_t curr_ptr_depth = m_ptr_depth;
     bool print_children = ShouldPrintChildren (is_failed_description,curr_ptr_depth);
-    bool print_oneline = (curr_ptr_depth > 0 || options.m_show_types) ? false : DataVisualization::ShouldPrintAsOneLiner(*m_valobj);
+    bool print_oneline = (curr_ptr_depth > 0 || options.m_show_types || options.m_be_raw) ? false : DataVisualization::ShouldPrintAsOneLiner(*m_valobj);
     
     if (print_children)
     {
