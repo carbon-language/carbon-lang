@@ -2,7 +2,7 @@ function(get_system_libs return_var)
   # Returns in `return_var' a list of system libraries used by LLVM.
   if( NOT MSVC )
     if( MINGW )
-      set(system_libs ${system_libs} imagehlp psapi)
+      set(system_libs ${system_libs} imagehlp psapi shell32)
     elseif( CMAKE_HOST_UNIX )
       if( HAVE_LIBRT )
         set(system_libs ${system_libs} rt)

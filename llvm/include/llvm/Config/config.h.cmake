@@ -203,6 +203,9 @@
 /* Define to 1 if you have the `pthread' library (-lpthread). */
 #cmakedefine HAVE_LIBPTHREAD ${HAVE_LIBPTHREAD}
 
+/* Define to 1 if you have the `shell32' library (-lshell32). */
+#cmakedefine HAVE_LIBSHELL32 ${HAVE_LIBSHELL32}
+
 /* Define to 1 if you have the `udis86' library (-ludis86). */
 #undef HAVE_LIBUDIS86
 

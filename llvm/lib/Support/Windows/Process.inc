@@ -11,18 +11,25 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Support/Allocator.h"
+
 #include "Windows.h"
 #include <direct.h>
 #include <io.h>
 #include <malloc.h>
 #include <psapi.h>
+#include <shellapi.h>
 
 #ifdef __MINGW32__
  #if (HAVE_LIBPSAPI != 1)
   #error "libpsapi.a should be present"
  #endif
+ #if (HAVE_LIBSHELL32 != 1)
+  #error "libshell32.a should be present"
+ #endif
 #else
  #pragma comment(lib, "psapi.lib")
+ #pragma comment(lib, "shell32.lib")
 #endif
 
 //===----------------------------------------------------------------------===//
@@ -151,23 +158,56 @@ Optional<std::string> Process::GetEnv(StringRef Name) {
   // Environment variable can be encoded in non-UTF8 encoding, and there's no
   // way to know what the encoding is. The only reliable way to look up
   // multibyte environment variable is to use GetEnvironmentVariableW().
-  std::vector<wchar_t> Buf(16);
-  size_t Size = 0;
-  for (;;) {
-    Size = GetEnvironmentVariableW(&NameUTF16[0], &Buf[0], Buf.size());
-    if (Size < Buf.size())
-      break;
+  SmallVector<wchar_t, MAX_PATH> Buf;
+  size_t Size = MAX_PATH;
+  do {
+    Buf.reserve(Size);
+    Size = GetEnvironmentVariableW(&NameUTF16[0], &Buf[0], Buf.capacity());
+    if (Size == 0)
+      return None;
+
     // Try again with larger buffer.
-    Buf.resize(Size + 1);
-  }
-  if (Size == 0)
-    return None;
+  } while (Size > Buf.capacity());
+  Buf.set_size(Size);
 
   // Convert the result from UTF-16 to UTF-8.
-  SmallVector<char, 128> Res;
+  SmallVector<char, MAX_PATH> Res;
   if (error_code ec = windows::UTF16ToUTF8(&Buf[0], Size, Res))
     return None;
   return std::string(&Res[0]);
+}
+
+error_code
+Process::GetArgumentVector(SmallVectorImpl<const char *> &Args,
+                           ArrayRef<const char *>,
+                           SpecificBumpPtrAllocator<char> &ArgAllocator) {
+  int NewArgCount;
+  error_code ec;
+
+  wchar_t **UnicodeCommandLine = CommandLineToArgvW(GetCommandLineW(),
+                                                    &NewArgCount);
+  if (!UnicodeCommandLine)
+    return windows_error(::GetLastError());
+
+  Args.reserve(NewArgCount);
+
+  for (int i = 0; i < NewArgCount; ++i) {
+    SmallVector<char, MAX_PATH> NewArgString;
+    ec = windows::UTF16ToUTF8(UnicodeCommandLine[i],
+                              wcslen(UnicodeCommandLine[i]),
+                              NewArgString);
+    if (ec)
+      break;
+
+    char *Buffer = ArgAllocator.Allocate(NewArgString.size() + 1);
+    ::memcpy(Buffer, NewArgString.data(), NewArgString.size() + 1);
+    Args.push_back(Buffer);
+  }
+  LocalFree(UnicodeCommandLine);
+  if (ec)
+    return ec;
+
+  return error_code::success();
 }
 
 bool Process::StandardInIsUserInput() {
