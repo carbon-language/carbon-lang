@@ -99,8 +99,7 @@ public:
   // Dump feature info.
   void dump() const;
 
-  /// Retrieve a formatted string of the default features for the specified
-  /// target triple.
+  /// Adds the default features for the specified target triple.
   void getDefaultSubtargetFeatures(const Triple& Triple);
 };
 

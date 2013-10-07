@@ -353,8 +353,7 @@ void SubtargetFeatures::dump() const {
 }
 #endif
 
-/// getDefaultSubtargetFeatures - Return a string listing the features
-/// associated with the target triple.
+/// Adds the default features for the specified target triple.
 ///
 /// FIXME: This is an inelegant way of specifying the features of a
 /// subtarget. It would be better if we could encode this information
