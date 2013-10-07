@@ -56,12 +56,6 @@ protected:
                                          StringRef InFile);
 };
 
-class ASTDumpXMLAction : public ASTFrontendAction {
-protected:
-  virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
-                                         StringRef InFile);
-};
-
 class ASTViewAction : public ASTFrontendAction {
 protected:
   virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,

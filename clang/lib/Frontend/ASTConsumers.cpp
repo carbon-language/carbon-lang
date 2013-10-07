@@ -480,23 +480,3 @@ void DeclContextPrinter::PrintDeclContext(const DeclContext* DC,
 ASTConsumer *clang::CreateDeclContextPrinter() {
   return new DeclContextPrinter();
 }
-
-//===----------------------------------------------------------------------===//
-/// ASTDumperXML - In-depth XML dumping.
-
-namespace {
-class ASTDumpXML : public ASTConsumer {
-  raw_ostream &OS;
-
-public:
-  ASTDumpXML(raw_ostream &OS) : OS(OS) {}
-
-  void HandleTranslationUnit(ASTContext &C) {
-    C.getTranslationUnitDecl()->dumpXML(OS);
-  }  
-};
-}
-
-ASTConsumer *clang::CreateASTDumperXML(raw_ostream &OS) {
-  return new ASTDumpXML(OS);
-}

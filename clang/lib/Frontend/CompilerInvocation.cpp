@@ -648,8 +648,6 @@ static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
       Opts.ProgramAction = frontend::ASTDeclList; break;
     case OPT_ast_dump:
       Opts.ProgramAction = frontend::ASTDump; break;
-    case OPT_ast_dump_xml:
-      Opts.ProgramAction = frontend::ASTDumpXML; break;
     case OPT_ast_print:
       Opts.ProgramAction = frontend::ASTPrint; break;
     case OPT_ast_view:
@@ -1540,7 +1538,6 @@ static void ParsePreprocessorOutputArgs(PreprocessorOutputOptions &Opts,
   switch (Action) {
   case frontend::ASTDeclList:
   case frontend::ASTDump:
-  case frontend::ASTDumpXML:
   case frontend::ASTPrint:
   case frontend::ASTView:
   case frontend::EmitAssembly:

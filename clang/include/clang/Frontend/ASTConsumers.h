@@ -40,10 +40,6 @@ ASTConsumer *CreateASTDumper(StringRef FilterString, bool DumpLookups = false);
 // nodes.
 ASTConsumer *CreateASTDeclNodeLister();
 
-// AST XML-dumper: dumps out the AST to stderr in a very detailed XML
-// format; this is intended for particularly intense debugging.
-ASTConsumer *CreateASTDumperXML(raw_ostream &OS);
-
 // Graphical AST viewer: for each function definition, creates a graph of
 // the AST and displays it with the graph viewer "dotty".  Also outputs
 // function declarations to stderr.

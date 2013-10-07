@@ -37,7 +37,6 @@ static FrontendAction *CreateFrontendBaseAction(CompilerInstance &CI) {
   switch (CI.getFrontendOpts().ProgramAction) {
   case ASTDeclList:            return new ASTDeclListAction();
   case ASTDump:                return new ASTDumpAction();
-  case ASTDumpXML:             return new ASTDumpXMLAction();
   case ASTPrint:               return new ASTPrintAction();
   case ASTView:                return new ASTViewAction();
   case DumpRawTokens:          return new DumpRawTokensAction();

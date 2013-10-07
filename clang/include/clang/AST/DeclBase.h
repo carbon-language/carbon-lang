@@ -937,9 +937,6 @@ public:
   // Same as dump(), but forces color printing.
   LLVM_ATTRIBUTE_USED void dumpColor() const;
   void dump(raw_ostream &Out) const;
-  // Debuggers don't usually respect default arguments.
-  LLVM_ATTRIBUTE_USED void dumpXML() const;
-  void dumpXML(raw_ostream &OS) const;
 
 private:
   void setAttrsImpl(const AttrVec& Attrs, ASTContext &Ctx);
