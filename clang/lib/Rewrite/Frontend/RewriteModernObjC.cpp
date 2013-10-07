@@ -221,6 +221,21 @@ namespace {
       }
       return true;
     }
+    
+    virtual void HandleTopLevelDeclInObjCContainer(DeclGroupRef D) {
+      for (DeclGroupRef::iterator I = D.begin(), E = D.end(); I != E; ++I) {
+        if (TypedefNameDecl *TD = dyn_cast<TypedefNameDecl>(*I)) {
+          if (isTopLevelBlockPointerType(TD->getUnderlyingType()))
+            RewriteBlockPointerDecl(TD);
+          else if (TD->getUnderlyingType()->isFunctionPointerType())
+            CheckFunctionPointerDecl(TD->getUnderlyingType(), TD);
+          else
+            RewriteObjCQualifiedInterfaceTypes(TD);
+        }
+      }
+      return;
+    }
+    
     void HandleTopLevelSingleDecl(Decl *D);
     void HandleDeclInMainFile(Decl *D);
     RewriteModernObjC(std::string inFile, raw_ostream *OS,
