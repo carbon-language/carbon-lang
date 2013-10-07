@@ -483,10 +483,10 @@ let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
 // SSE 1 & 2 - Move FP Scalar Instructions
 //
 // Move Instructions. Register-to-register movss/movsd is not used for FR32/64
-// register copies because it's a partial register update; FsMOVAPSrr/FsMOVAPDrr
-// is used instead. Register-to-register movss/movsd is not modeled as an
-// INSERT_SUBREG because INSERT_SUBREG requires that the insert be implementable
-// in terms of a copy, and just mentioned, we don't use movss/movsd for copies.
+// register copies because it's a partial register update; Register-to-register
+// movss/movsd is not modeled as an INSERT_SUBREG because INSERT_SUBREG requires
+// that the insert be implementable in terms of a copy, and just mentioned, we
+// don't use movss/movsd for copies.
 //===----------------------------------------------------------------------===//
 
 multiclass sse12_move_rr<RegisterClass RC, SDNode OpNode, ValueType vt,
@@ -1100,23 +1100,6 @@ let Predicates = [UseSSE1] in {
             (MOVUPSmr addr:$dst, VR128:$src)>;
   def : Pat<(store (v16i8 VR128:$src), addr:$dst),
             (MOVUPSmr addr:$dst, VR128:$src)>;
-}
-
-// Alias instruction to do FR32 or FR64 reg-to-reg copy using movaps. Upper
-// bits are disregarded. FIXME: Set encoding to pseudo!
-let isCodeGenOnly = 1, neverHasSideEffects = 1, SchedRW = [WriteMove] in {
-def FsVMOVAPSrr : VPSI<0x28, MRMSrcReg, (outs FR32:$dst), (ins FR32:$src),
-                       "movaps\t{$src, $dst|$dst, $src}", [],
-                       IIC_SSE_MOVA_P_RR>, VEX;
-def FsVMOVAPDrr : VPDI<0x28, MRMSrcReg, (outs FR64:$dst), (ins FR64:$src),
-                       "movapd\t{$src, $dst|$dst, $src}", [],
-                       IIC_SSE_MOVA_P_RR>, VEX;
-def FsMOVAPSrr : PSI<0x28, MRMSrcReg, (outs FR32:$dst), (ins FR32:$src),
-                     "movaps\t{$src, $dst|$dst, $src}", [],
-                     IIC_SSE_MOVA_P_RR>;
-def FsMOVAPDrr : PDI<0x28, MRMSrcReg, (outs FR64:$dst), (ins FR64:$src),
-                     "movapd\t{$src, $dst|$dst, $src}", [],
-                     IIC_SSE_MOVA_P_RR>;
 }
 
 // Alias instruction to load FR32 or FR64 from f128mem using movaps. Upper
