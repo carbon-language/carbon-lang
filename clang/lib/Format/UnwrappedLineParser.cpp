@@ -1069,7 +1069,8 @@ void UnwrappedLineParser::parseRecord() {
   nextToken();
   if (FormatTok->Tok.is(tok::identifier) ||
       FormatTok->Tok.is(tok::kw___attribute) ||
-      FormatTok->Tok.is(tok::kw___declspec)) {
+      FormatTok->Tok.is(tok::kw___declspec) ||
+      FormatTok->Tok.is(tok::kw_alignas)) {
     nextToken();
     // We can have macros or attributes in between 'class' and the class name.
     if (FormatTok->Tok.is(tok::l_paren)) {
