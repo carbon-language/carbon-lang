@@ -2711,7 +2711,8 @@ CXXDestructorDecl *Sema::LookupDestructor(CXXRecordDecl *Class) {
 Sema::LiteralOperatorLookupResult
 Sema::LookupLiteralOperator(Scope *S, LookupResult &R,
                             ArrayRef<QualType> ArgTys,
-                            bool AllowRawAndTemplate) {
+                            bool AllowRaw, bool AllowTemplate,
+                            bool AllowStringTemplate) {
   LookupName(R, S);
   assert(R.getResultKind() != LookupResult::Ambiguous &&
          "literal operator lookup can't be ambiguous");
@@ -2719,8 +2720,9 @@ Sema::LookupLiteralOperator(Scope *S, LookupResult &R,
   // Filter the lookup results appropriately.
   LookupResult::Filter F = R.makeFilter();
 
-  bool FoundTemplate = false;
   bool FoundRaw = false;
+  bool FoundTemplate = false;
+  bool FoundStringTemplate = false;
   bool FoundExactMatch = false;
 
   while (F.hasNext()) {
@@ -2728,15 +2730,16 @@ Sema::LookupLiteralOperator(Scope *S, LookupResult &R,
     if (UsingShadowDecl *USD = dyn_cast<UsingShadowDecl>(D))
       D = USD->getTargetDecl();
 
-    bool IsTemplate = isa<FunctionTemplateDecl>(D);
-    bool IsRaw = false;
-    bool IsExactMatch = false;
-
     // If the declaration we found is invalid, skip it.
     if (D->isInvalidDecl()) {
       F.erase();
       continue;
     }
+
+    bool IsRaw = false;
+    bool IsTemplate = false;
+    bool IsStringTemplate = false;
+    bool IsExactMatch = false;
 
     if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
       if (FD->getNumParams() == 1 &&
@@ -2753,19 +2756,31 @@ Sema::LookupLiteralOperator(Scope *S, LookupResult &R,
         }
       }
     }
+    if (FunctionTemplateDecl *FD = dyn_cast<FunctionTemplateDecl>(D)) {
+      TemplateParameterList *Params = FD->getTemplateParameters();
+      if (Params->size() == 1)
+        IsTemplate = true;
+      else
+        IsStringTemplate = true;
+    }
 
     if (IsExactMatch) {
       FoundExactMatch = true;
-      AllowRawAndTemplate = false;
-      if (FoundRaw || FoundTemplate) {
+      AllowRaw = false;
+      AllowTemplate = false;
+      AllowStringTemplate = false;
+      if (FoundRaw || FoundTemplate || FoundStringTemplate) {
         // Go through again and remove the raw and template decls we've
         // already found.
         F.restart();
-        FoundRaw = FoundTemplate = false;
+        FoundRaw = FoundTemplate = FoundStringTemplate = false;
       }
-    } else if (AllowRawAndTemplate && (IsTemplate || IsRaw)) {
-      FoundTemplate |= IsTemplate;
-      FoundRaw |= IsRaw;
+    } else if (AllowRaw && IsRaw) {
+      FoundRaw = true;
+    } else if (AllowTemplate && IsTemplate) {
+      FoundTemplate = true;
+    } else if (AllowStringTemplate && IsStringTemplate) {
+      FoundStringTemplate = true;
     } else {
       F.erase();
     }
@@ -2800,10 +2815,14 @@ Sema::LookupLiteralOperator(Scope *S, LookupResult &R,
   if (FoundTemplate)
     return LOLR_Template;
 
+  if (FoundStringTemplate)
+    return LOLR_StringTemplate;
+
   // Didn't find anything we could use.
   Diag(R.getNameLoc(), diag::err_ovl_no_viable_literal_operator)
     << R.getLookupName() << (int)ArgTys.size() << ArgTys[0]
-    << (ArgTys.size() == 2 ? ArgTys[1] : QualType()) << AllowRawAndTemplate;
+    << (ArgTys.size() == 2 ? ArgTys[1] : QualType()) << AllowRaw
+    << (AllowTemplate || AllowStringTemplate);
   return LOLR_Error;
 }
 

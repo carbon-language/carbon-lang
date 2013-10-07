@@ -2811,7 +2811,8 @@ def err_addr_ovl_no_qualifier : Error<
 def err_ovl_no_viable_literal_operator : Error<
   "no matching literal operator for call to %0"
   "%select{| with argument of type %2| with arguments of types %2 and %3}1"
-  "%select{| or 'const char *', and no matching literal operator template}4">;
+  "%select{| or 'const char *'}4"
+  "%select{|, and no matching literal operator template}5">;
 
 // C++ Template Declarations
 def err_template_param_shadow : Error<
@@ -5913,6 +5914,9 @@ def err_literal_operator_params : Error<
   "parameter declaration for literal operator %0 is not valid">;
 def err_literal_operator_extern_c : Error<
   "literal operator must have C++ linkage">;
+def ext_string_literal_operator_template : ExtWarn<
+  "string literal operator templates are a GNU extension">,
+  InGroup<GNUStringLiteralOperatorTemplate>;
 def warn_user_literal_reserved : Warning<
   "user-defined literal suffixes not starting with '_' are reserved"
   "%select{; no literal will invoke this operator|}0">,

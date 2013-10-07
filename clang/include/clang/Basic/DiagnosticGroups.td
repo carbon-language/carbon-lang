@@ -59,6 +59,8 @@ def GNUConditionalOmittedOperand : DiagGroup<"gnu-conditional-omitted-operand">;
 def ConfigMacros : DiagGroup<"config-macros">;
 def : DiagGroup<"ctor-dtor-privacy">;
 def GNUDesignator : DiagGroup<"gnu-designator">;
+def GNUStringLiteralOperatorTemplate :
+  DiagGroup<"gnu-string-literal-operator-template">;
 
 def DeleteNonVirtualDtor : DiagGroup<"delete-non-virtual-dtor">;
 def AbstractFinalClass : DiagGroup<"abstract-final-class">;
@@ -561,6 +563,7 @@ def GNU : DiagGroup<"gnu", [GNUAlignofExpression, GNUAnonymousStruct,
                             GNUImaginaryConstant, GNULabelsAsValue,
                             RedeclaredClassMember, GNURedeclaredEnum,
                             GNUStatementExpression, GNUStaticFloatInit,
+                            GNUStringLiteralOperatorTemplate,
                             GNUUnionCast, GNUVariableSizedTypeNotAtEnd,
                             ZeroLengthArray, GNUZeroLineDirective,
                             GNUZeroVariadicMacroArguments]>;

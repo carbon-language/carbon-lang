@@ -1461,7 +1461,8 @@ static ExprResult BuildCookedLiteralOperatorCall(Sema &S, Scope *Scope,
 
   LookupResult R(S, OpName, UDSuffixLoc, Sema::LookupOrdinaryName);
   if (S.LookupLiteralOperator(Scope, R, llvm::makeArrayRef(ArgTy, Args.size()),
-                              /*AllowRawAndTemplate*/false) == Sema::LOLR_Error)
+                              /*AllowRaw*/false, /*AllowTemplate*/false,
+                              /*AllowStringTemplate*/false) == Sema::LOLR_Error)
     return ExprError();
 
   return S.BuildLiteralOperatorCall(R, OpNameInfo, Args, LitEndLoc);
@@ -1486,36 +1487,34 @@ Sema::ActOnStringLiteral(const Token *StringToks, unsigned NumStringToks,
   for (unsigned i = 0; i != NumStringToks; ++i)
     StringTokLocs.push_back(StringToks[i].getLocation());
 
-  QualType StrTy = Context.CharTy;
-  if (Literal.isWide())
-    StrTy = Context.getWideCharType();
-  else if (Literal.isUTF16())
-    StrTy = Context.Char16Ty;
-  else if (Literal.isUTF32())
-    StrTy = Context.Char32Ty;
-  else if (Literal.isPascal())
-    StrTy = Context.UnsignedCharTy;
-
+  QualType CharTy = Context.CharTy;
   StringLiteral::StringKind Kind = StringLiteral::Ascii;
-  if (Literal.isWide())
+  if (Literal.isWide()) {
+    CharTy = Context.getWideCharType();
     Kind = StringLiteral::Wide;
-  else if (Literal.isUTF8())
+  } else if (Literal.isUTF8()) {
     Kind = StringLiteral::UTF8;
-  else if (Literal.isUTF16())
+  } else if (Literal.isUTF16()) {
+    CharTy = Context.Char16Ty;
     Kind = StringLiteral::UTF16;
-  else if (Literal.isUTF32())
+  } else if (Literal.isUTF32()) {
+    CharTy = Context.Char32Ty;
     Kind = StringLiteral::UTF32;
+  } else if (Literal.isPascal()) {
+    CharTy = Context.UnsignedCharTy;
+  }
 
+  QualType CharTyConst = CharTy;
   // A C++ string literal has a const-qualified element type (C++ 2.13.4p1).
   if (getLangOpts().CPlusPlus || getLangOpts().ConstStrings)
-    StrTy.addConst();
+    CharTyConst.addConst();
 
   // Get an array type for the string, according to C99 6.4.5.  This includes
   // the nul terminator character as well as the string length for pascal
   // strings.
-  StrTy = Context.getConstantArrayType(StrTy,
+  QualType StrTy = Context.getConstantArrayType(CharTyConst,
                                  llvm::APInt(32, Literal.GetNumStringChars()+1),
-                                       ArrayType::Normal, 0);
+                                 ArrayType::Normal, 0);
 
   // Pass &StringTokLocs[0], StringTokLocs.size() to factory!
   StringLiteral *Lit = StringLiteral::Create(Context, Literal.GetString(),
@@ -1538,12 +1537,57 @@ Sema::ActOnStringLiteral(const Token *StringToks, unsigned NumStringToks,
   // C++11 [lex.ext]p5: The literal L is treated as a call of the form
   //   operator "" X (str, len)
   QualType SizeType = Context.getSizeType();
-  llvm::APInt Len(Context.getIntWidth(SizeType), Literal.GetNumStringChars());
-  IntegerLiteral *LenArg = IntegerLiteral::Create(Context, Len, SizeType,
-                                                  StringTokLocs[0]);
-  Expr *Args[] = { Lit, LenArg };
-  return BuildCookedLiteralOperatorCall(*this, UDLScope, UDSuffix, UDSuffixLoc,
-                                        Args, StringTokLocs.back());
+
+  DeclarationName OpName =
+    Context.DeclarationNames.getCXXLiteralOperatorName(UDSuffix);
+  DeclarationNameInfo OpNameInfo(OpName, UDSuffixLoc);
+  OpNameInfo.setCXXLiteralOperatorNameLoc(UDSuffixLoc);
+
+  QualType ArgTy[] = {
+    Context.getArrayDecayedType(StrTy), SizeType
+  };
+
+  LookupResult R(*this, OpName, UDSuffixLoc, LookupOrdinaryName);
+  switch (LookupLiteralOperator(UDLScope, R, ArgTy,
+                                /*AllowRaw*/false, /*AllowTemplate*/false,
+                                /*AllowStringTemplate*/true)) {
+
+  case LOLR_Cooked: {
+    llvm::APInt Len(Context.getIntWidth(SizeType), Literal.GetNumStringChars());
+    IntegerLiteral *LenArg = IntegerLiteral::Create(Context, Len, SizeType,
+                                                    StringTokLocs[0]);
+    Expr *Args[] = { Lit, LenArg };
+
+    return BuildLiteralOperatorCall(R, OpNameInfo, Args, StringTokLocs.back());
+  }
+
+  case LOLR_StringTemplate: {
+    TemplateArgumentListInfo ExplicitArgs;
+
+    unsigned CharBits = Context.getIntWidth(CharTy);
+    bool CharIsUnsigned = CharTy->isUnsignedIntegerType();
+    llvm::APSInt Value(CharBits, CharIsUnsigned);
+
+    TemplateArgument TypeArg(CharTy);
+    TemplateArgumentLocInfo TypeArgInfo(Context.getTrivialTypeSourceInfo(CharTy));
+    ExplicitArgs.addArgument(TemplateArgumentLoc(TypeArg, TypeArgInfo));
+
+    for (unsigned I = 0, N = Lit->getLength(); I != N; ++I) {
+      Value = Lit->getCodeUnit(I);
+      TemplateArgument Arg(Context, Value, CharTy);
+      TemplateArgumentLocInfo ArgInfo;
+      ExplicitArgs.addArgument(TemplateArgumentLoc(Arg, ArgInfo));
+    }
+    return BuildLiteralOperatorCall(R, OpNameInfo, None, StringTokLocs.back(),
+                                    &ExplicitArgs);
+  }
+  case LOLR_Raw:
+  case LOLR_Template:
+    llvm_unreachable("unexpected literal operator lookup result");
+  case LOLR_Error:
+    return ExprError();
+  }
+  llvm_unreachable("unexpected literal operator lookup result");
 }
 
 ExprResult
@@ -2942,11 +2986,14 @@ ExprResult Sema::ActOnNumericConstant(const Token &Tok, Scope *UDLScope) {
     DeclarationNameInfo OpNameInfo(OpName, UDSuffixLoc);
     OpNameInfo.setCXXLiteralOperatorNameLoc(UDSuffixLoc);
 
+    SourceLocation TokLoc = Tok.getLocation();
+
     // Perform literal operator lookup to determine if we're building a raw
     // literal or a cooked one.
     LookupResult R(*this, OpName, UDSuffixLoc, LookupOrdinaryName);
     switch (LookupLiteralOperator(UDLScope, R, CookedTy,
-                                  /*AllowRawAndTemplate*/true)) {
+                                  /*AllowRaw*/true, /*AllowTemplate*/true,
+                                  /*AllowStringTemplate*/false)) {
     case LOLR_Error:
       return ExprError();
 
@@ -2961,15 +3008,13 @@ ExprResult Sema::ActOnNumericConstant(const Token &Tok, Scope *UDLScope) {
         Lit = IntegerLiteral::Create(Context, ResultVal, CookedTy,
                                      Tok.getLocation());
       }
-      return BuildLiteralOperatorCall(R, OpNameInfo, Lit,
-                                      Tok.getLocation());
+      return BuildLiteralOperatorCall(R, OpNameInfo, Lit, TokLoc);
     }
 
     case LOLR_Raw: {
       // C++11 [lit.ext]p3, p4: If S contains a raw literal operator, the
       // literal is treated as a call of the form
       //   operator "" X ("n")
-      SourceLocation TokLoc = Tok.getLocation();
       unsigned Length = Literal.getUDSuffixOffset();
       QualType StrTy = Context.getConstantArrayType(
           Context.CharTy.withConst(), llvm::APInt(32, Length + 1),
@@ -2980,7 +3025,7 @@ ExprResult Sema::ActOnNumericConstant(const Token &Tok, Scope *UDLScope) {
       return BuildLiteralOperatorCall(R, OpNameInfo, Lit, TokLoc);
     }
 
-    case LOLR_Template:
+    case LOLR_Template: {
       // C++11 [lit.ext]p3, p4: Otherwise (S contains a literal operator
       // template), L is treated as a call fo the form
       //   operator "" X <'c1', 'c2', ... 'ck'>()
@@ -2995,11 +3040,12 @@ ExprResult Sema::ActOnNumericConstant(const Token &Tok, Scope *UDLScope) {
         TemplateArgumentLocInfo ArgInfo;
         ExplicitArgs.addArgument(TemplateArgumentLoc(Arg, ArgInfo));
       }
-      return BuildLiteralOperatorCall(R, OpNameInfo, None, Tok.getLocation(),
+      return BuildLiteralOperatorCall(R, OpNameInfo, None, TokLoc,
                                       &ExplicitArgs);
     }
-
-    llvm_unreachable("unexpected literal operator lookup result");
+    case LOLR_StringTemplate:
+      llvm_unreachable("unexpected literal operator lookup result");
+    }
   }
 
   Expr *Res;
