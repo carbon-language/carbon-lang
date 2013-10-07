@@ -197,8 +197,7 @@ bool MipsPassConfig::addPreEmitPass() {
   const MipsSubtarget &Subtarget = TM.getSubtarget<MipsSubtarget>();
   addPass(createMipsDelaySlotFillerPass(TM));
 
-  if (Subtarget.hasStandardEncoding() ||
-      Subtarget.allowMixed16_32())
+  if (Subtarget.enableLongBranchPass())
     addPass(createMipsLongBranchPass(TM));
   if (Subtarget.inMips16Mode() ||
       Subtarget.allowMixed16_32())
