@@ -47,6 +47,10 @@
 # include <sys/wait.h>
 #endif
 
+#ifdef HAVE_DLFCN_H
+# include <dlfcn.h>
+#endif
+
 #ifndef WEXITSTATUS
 # define WEXITSTATUS(stat_val) ((unsigned)(stat_val) >> 8)
 #endif

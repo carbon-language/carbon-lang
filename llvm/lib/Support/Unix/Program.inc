@@ -36,6 +36,9 @@
 #include <unistd.h>
 #endif
 #ifdef HAVE_POSIX_SPAWN
+#ifdef __sun__
+#define  _RESTRICT_KYWD
+#endif
 #include <spawn.h>
 #if !defined(__APPLE__)
   extern char **environ;
