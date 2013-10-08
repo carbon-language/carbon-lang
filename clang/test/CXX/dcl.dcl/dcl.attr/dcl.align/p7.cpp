@@ -14,3 +14,7 @@ template<typename T, typename A, int N> struct Y {
 
 static_assert(alignof(Y<char, int, sizeof(int)>) == alignof(int), "");
 static_assert(alignof(Y<int, char, 1>) == alignof(int), ""); // expected-note {{in instantiation of}}
+
+void pr16992 () {
+  int x = alignof int;  // expected-error{{missed parenthesis around the type name in alignof}}
+}

@@ -310,6 +310,8 @@ def err_unspecified_vla_size_with_static : Error<
 def warn_deprecated_register : Warning<
   "'register' storage class specifier is deprecated">,
   InGroup<DeprecatedRegister>;
+def err_missed_parenthesis_around_typename : Error<
+  "missed parenthesis around the type name in %0">;
 
 def err_expected_case_before_expression: Error<
   "expected 'case' keyword before expression">;

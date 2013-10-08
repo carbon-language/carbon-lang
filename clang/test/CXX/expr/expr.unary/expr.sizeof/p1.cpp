@@ -26,3 +26,23 @@ void test2() {
   x = sizeof(test2()); // expected-error {{invalid application of 'sizeof' to an incomplete type 'void'}}
   x = sizeof(test2); // expected-error {{invalid application of 'sizeof' to a function type}}
 }
+
+namespace pr16992 {
+
+template<typename T> struct ABC {
+  int func () {
+    return sizeof T;  //expected-error{{missed parenthesis around the type name in sizeof}}
+  }
+};
+
+ABC<int> qq;
+
+template<typename T> struct ABC2 {
+  int func () {
+    return sizeof T::A;
+  }
+};
+
+struct QQ { int A; };
+ABC2<QQ> qq2;
+}

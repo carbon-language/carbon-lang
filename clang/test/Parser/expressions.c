@@ -57,3 +57,13 @@ void test7() {
     ({} // expected-note {{to match}}
     ;   // expected-error {{expected ')'}}
 }
+
+// PR16992
+struct pr16992 { int x; };
+
+void func_16992 () {
+  int x1 = sizeof int;  // expected-error{{missed parenthesis around the type name in sizeof}}
+  int x2 = sizeof struct pr16992;  // expected-error{{missed parenthesis around the type name in sizeof}}
+  int x3 = __alignof int;  // expected-error{{missed parenthesis around the type name in __alignof}}
+  int x4 = _Alignof int;  // expected-error{{missed parenthesis around the type name in _Alignof}}
+}
