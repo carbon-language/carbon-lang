@@ -3613,7 +3613,7 @@ void Sema::CodeCompleteMemberReferenceExpr(Scope *S, Expr *Base,
         bool IsDependent = BaseType->isDependentType();
         if (!IsDependent) {
           for (Scope *DepScope = S; DepScope; DepScope = DepScope->getParent())
-            if (DeclContext *Ctx = (DeclContext *)DepScope->getEntity()) {
+            if (DeclContext *Ctx = DepScope->getEntity()) {
               IsDependent = Ctx->isDependentContext();
               break;
             }
@@ -4151,7 +4151,7 @@ void Sema::CodeCompleteNamespaceDecl(Scope *S)  {
   if (!CodeCompleter)
     return;
   
-  DeclContext *Ctx = (DeclContext *)S->getEntity();
+  DeclContext *Ctx = S->getEntity();
   if (!S->getParent())
     Ctx = Context.getTranslationUnitDecl();
   
@@ -4359,7 +4359,7 @@ void Sema::CodeCompleteConstructorInitializer(
 
 /// \brief Determine whether this scope denotes a namespace.
 static bool isNamespaceScope(Scope *S) {
-  DeclContext *DC = static_cast<DeclContext *>(S->getEntity());
+  DeclContext *DC = S->getEntity();
   if (!DC)
     return false;
 
@@ -6893,7 +6893,7 @@ void Sema::CodeCompleteObjCMethodDecl(Scope *S,
   }
 
   if (!SearchDecl && S) {
-    if (DeclContext *DC = static_cast<DeclContext *>(S->getEntity()))
+    if (DeclContext *DC = S->getEntity())
       SearchDecl = dyn_cast<ObjCContainerDecl>(DC);
   }
 

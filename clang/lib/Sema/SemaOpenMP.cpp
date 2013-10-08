@@ -245,8 +245,7 @@ bool DSAStackTy::isOpenMPLocal(VarDecl *D) {
     isOpenMPLocal =
       CurScope &&
       isa<CapturedDecl>(D->getDeclContext()) &&
-      static_cast<DeclContext *>(
-        CurScope->getFnParent()->getEntity())->Encloses(D->getDeclContext());
+      CurScope->getFnParent()->getEntity()->Encloses(D->getDeclContext());
   }
   return isOpenMPLocal;
 }

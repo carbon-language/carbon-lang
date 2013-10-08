@@ -102,15 +102,14 @@ namespace {
       //   During unqualified name lookup, the names appear as if they
       //   were declared in the nearest enclosing namespace which contains
       //   both the using-directive and the nominated namespace.
-      DeclContext *InnermostFileDC
-        = static_cast<DeclContext*>(InnermostFileScope->getEntity());
+      DeclContext *InnermostFileDC = InnermostFileScope->getEntity();
       assert(InnermostFileDC && InnermostFileDC->isFileContext());
 
       for (; S; S = S->getParent()) {
         // C++ [namespace.udir]p1:
         //   A using-directive shall not appear in class scope, but may
         //   appear in namespace scope or in block scope.
-        DeclContext *Ctx = static_cast<DeclContext*>(S->getEntity());
+        DeclContext *Ctx = S->getEntity();
         if (Ctx && Ctx->isFileContext()) {
           visit(Ctx, Ctx);
         } else if (!Ctx || Ctx->isFunctionOrMethod()) {
@@ -775,7 +774,7 @@ CppNamespaceLookup(Sema &S, LookupResult &R, ASTContext &Context,
 }
 
 static bool isNamespaceOrTranslationUnitScope(Scope *S) {
-  if (DeclContext *Ctx = static_cast<DeclContext*>(S->getEntity()))
+  if (DeclContext *Ctx = S->getEntity())
     return Ctx->isFileContext();
   return false;
 }
@@ -788,12 +787,12 @@ static bool isNamespaceOrTranslationUnitScope(Scope *S) {
 // name lookup should continue searching in this semantic context when
 // it leaves the current template parameter scope.
 static std::pair<DeclContext *, bool> findOuterContext(Scope *S) {
-  DeclContext *DC = static_cast<DeclContext *>(S->getEntity());
+  DeclContext *DC = S->getEntity();
   DeclContext *Lexical = 0;
   for (Scope *OuterS = S->getParent(); OuterS;
        OuterS = OuterS->getParent()) {
     if (OuterS->getEntity()) {
-      Lexical = static_cast<DeclContext *>(OuterS->getEntity());
+      Lexical = OuterS->getEntity();
       break;
     }
   }
@@ -879,7 +878,7 @@ bool Sema::CppLookupName(LookupResult &R, Scope *S) {
   // go through the scope stack to implicitly declare
   if (isImplicitlyDeclaredMemberFunctionName(Name)) {
     for (Scope *PreS = S; PreS; PreS = PreS->getParent())
-      if (DeclContext *DC = static_cast<DeclContext *>(PreS->getEntity()))
+      if (DeclContext *DC = PreS->getEntity())
         DeclareImplicitMemberFunctionsWithName(*this, Name, DC);
   }
 
@@ -918,7 +917,7 @@ bool Sema::CppLookupName(LookupResult &R, Scope *S) {
   FindLocalExternScope FindLocals(R);
 
   for (; S && !isNamespaceOrTranslationUnitScope(S); S = S->getParent()) {
-    DeclContext *Ctx = static_cast<DeclContext*>(S->getEntity());
+    DeclContext *Ctx = S->getEntity();
 
     // Check whether the IdResolver has anything in this scope.
     bool Found = false;
@@ -1101,7 +1100,7 @@ bool Sema::CppLookupName(LookupResult &R, Scope *S) {
       return true;
     }
 
-    DeclContext *Ctx = static_cast<DeclContext *>(S->getEntity());
+    DeclContext *Ctx = S->getEntity();
     if (!Ctx && S->isTemplateParamScope() && OutsideOfTemplateParamDC &&
         S->getParent() && !S->getParent()->isTemplateParamScope()) {
       // We've just searched the last template parameter scope and
@@ -1317,9 +1316,7 @@ bool Sema::LookupName(LookupResult &R, Scope *S, bool AllowBuiltinCreation) {
     if (NameKind == Sema::LookupRedeclarationWithLinkage) {
       // Find the nearest non-transparent declaration scope.
       while (!(S->getFlags() & Scope::DeclScope) ||
-             (S->getEntity() &&
-              static_cast<DeclContext *>(S->getEntity())
-                ->isTransparentContext()))
+             (S->getEntity() && S->getEntity()->isTransparentContext()))
         S = S->getParent();
     }
 
@@ -3216,8 +3213,8 @@ static void LookupVisibleDecls(Scope *S, LookupResult &Result,
 
   if (!S->getEntity() ||
       (!S->getParent() &&
-       !Visited.alreadyVisitedContext((DeclContext *)S->getEntity())) ||
-      ((DeclContext *)S->getEntity())->isFunctionOrMethod()) {
+       !Visited.alreadyVisitedContext(S->getEntity())) ||
+      (S->getEntity())->isFunctionOrMethod()) {
     FindLocalExternScope FindLocals(Result);
     // Walk through the declarations in this Scope.
     for (Scope::decl_iterator D = S->decl_begin(), DEnd = S->decl_end();
@@ -3236,7 +3233,7 @@ static void LookupVisibleDecls(Scope *S, LookupResult &Result,
     // Look into this scope's declaration context, along with any of its
     // parent lookup contexts (e.g., enclosing classes), up to the point
     // where we hit the context stored in the next outer scope.
-    Entity = (DeclContext *)S->getEntity();
+    Entity = S->getEntity();
     DeclContext *OuterCtx = findOuterContext(S).first; // FIXME
 
     for (DeclContext *Ctx = Entity; Ctx && !Ctx->Equals(OuterCtx);

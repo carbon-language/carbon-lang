@@ -5450,7 +5450,7 @@ Sema::CheckTemplateDeclScope(Scope *S, TemplateParameterList *TemplateParams) {
   // C++ [temp]p2:
   //   A template-declaration can appear only as a namespace scope or
   //   class scope declaration.
-  DeclContext *Ctx = static_cast<DeclContext *>(S->getEntity());
+  DeclContext *Ctx = S->getEntity();
   if (Ctx && isa<LinkageSpecDecl>(Ctx) &&
       cast<LinkageSpecDecl>(Ctx)->getLanguage() != LinkageSpecDecl::lang_cxx)
     return Diag(TemplateParams->getTemplateLoc(), diag::err_template_linkage)

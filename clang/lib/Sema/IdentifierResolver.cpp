@@ -100,8 +100,7 @@ bool IdentifierResolver::isDeclInScope(Decl *D, DeclContext *Ctx, Scope *S,
 
   if (Ctx->isFunctionOrMethod() || S->isFunctionPrototypeScope()) {
     // Ignore the scopes associated within transparent declaration contexts.
-    while (S->getEntity() &&
-           ((DeclContext *)S->getEntity())->isTransparentContext())
+    while (S->getEntity() && S->getEntity()->isTransparentContext())
       S = S->getParent();
 
     if (S->isDeclScope(D))

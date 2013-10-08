@@ -997,7 +997,7 @@ Scope *Sema::getScopeForContext(DeclContext *Ctx) {
     // Ignore scopes that cannot have declarations. This is important for
     // out-of-line definitions of static class members.
     if (S->getFlags() & (Scope::DeclScope | Scope::TemplateParamScope))
-      if (DeclContext *Entity = static_cast<DeclContext *> (S->getEntity()))
+      if (DeclContext *Entity = S->getEntity())
         if (Ctx == Entity->getPrimaryContext())
           return S;
   }

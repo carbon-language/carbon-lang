@@ -947,7 +947,7 @@ void Sema::ExitDeclaratorContext(Scope *S) {
   // enforced by an assert in EnterDeclaratorContext.
   Scope *Ancestor = S->getParent();
   while (!Ancestor->getEntity()) Ancestor = Ancestor->getParent();
-  CurContext = (DeclContext*) Ancestor->getEntity();
+  CurContext = Ancestor->getEntity();
 
   // We don't need to do anything with the scope, which is going to
   // disappear.
@@ -1017,8 +1017,7 @@ void Sema::PushOnScopeChains(NamedDecl *D, Scope *S, bool AddToContext) {
   // Move up the scope chain until we find the nearest enclosing
   // non-transparent context. The declaration will be introduced into this
   // scope.
-  while (S->getEntity() &&
-         ((DeclContext *)S->getEntity())->isTransparentContext())
+  while (S->getEntity() && S->getEntity()->isTransparentContext())
     S = S->getParent();
 
   // Add scoped declarations into their context, so that they can be
@@ -1088,7 +1087,7 @@ bool Sema::isDeclInScope(NamedDecl *D, DeclContext *Ctx, Scope *S,
 Scope *Sema::getScopeForDeclContext(Scope *S, DeclContext *DC) {
   DeclContext *TargetDC = DC->getPrimaryContext();
   do {
-    if (DeclContext *ScopeDC = (DeclContext*) S->getEntity())
+    if (DeclContext *ScopeDC = S->getEntity())
       if (ScopeDC->getPrimaryContext() == TargetDC)
         return S;
   } while ((S = S->getParent()));
@@ -1464,8 +1463,7 @@ ObjCInterfaceDecl *Sema::getObjCInterfaceDecl(IdentifierInfo *&Id,
 /// contain non-field names.
 Scope *Sema::getNonFieldDeclScope(Scope *S) {
   while (((S->getFlags() & Scope::DeclScope) == 0) ||
-         (S->getEntity() &&
-          ((DeclContext *)S->getEntity())->isTransparentContext()) ||
+         (S->getEntity() && S->getEntity()->isTransparentContext()) ||
          (S->isClassScope() && !getLangOpts().CPlusPlus))
     S = S->getParent();
   return S;
@@ -5434,6 +5432,18 @@ void Sema::CheckShadow(Scope *S, VarDecl *D, const LookupResult& R) {
   // Don't diagnose declarations at file scope.
   if (D->hasGlobalStorage())
     return;
+
+  // Don't diagnose variables whose declarations and scope are expanded
+  // from the same macro instantiation.
+  SourceLocation DLoc = D->getLocation();
+  if (DLoc.isMacroID()) {
+
+
+
+
+  }
+
+
 
   DeclContext *NewDC = D->getDeclContext();
 
@@ -10466,8 +10476,7 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
              (getLangOpts().CPlusPlus &&
               S->isFunctionPrototypeScope()) ||
              ((S->getFlags() & Scope::DeclScope) == 0) ||
-             (S->getEntity() &&
-              ((DeclContext *)S->getEntity())->isTransparentContext()))
+             (S->getEntity() && S->getEntity()->isTransparentContext()))
         S = S->getParent();
     } else {
       assert(TUK == TUK_Friend);

@@ -6934,7 +6934,7 @@ void Sema::PushUsingDirective(Scope *S, UsingDirectiveDecl *UDir) {
   // If the scope has an associated entity and the using directive is at
   // namespace or translation unit scope, add the UsingDirectiveDecl into
   // its lookup structure so qualified name lookup can find it.
-  DeclContext *Ctx = static_cast<DeclContext*>(S->getEntity());
+  DeclContext *Ctx = S->getEntity();
   if (Ctx && !Ctx->isFunctionOrMethod())
     Ctx->addDecl(UDir);
   else
