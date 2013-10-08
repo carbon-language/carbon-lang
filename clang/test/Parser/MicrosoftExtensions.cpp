@@ -331,6 +331,15 @@ class inline_definition_pure_spec {
    virtual int f2() = 0;
 };
 
+struct pure_virtual_dtor {
+  virtual ~pure_virtual_dtor() = 0;
+};
+pure_virtual_dtor::~pure_virtual_dtor() { }
+
+struct pure_virtual_dtor_inline {
+  virtual ~pure_virtual_dtor_inline() = 0 { }// expected-warning {{function definition with pure-specifier is a Microsoft extension}}
+};
+
 
 int main () {
   // Necessary to force instantiation in -fdelayed-template-parsing mode.
