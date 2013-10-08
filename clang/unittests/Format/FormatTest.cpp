@@ -6587,6 +6587,20 @@ TEST_F(FormatTest, ConstructorInitializerIndentWidth) {
                ", b(b)\n"
                ", c(c) {}",
                Style);
+
+  Style.ConstructorInitializerAllOnOneLineOrOnePerLine = true;
+  Style.ConstructorInitializerIndentWidth = 4;
+  verifyFormat(
+      "SomeClass::Constructor()\n"
+      "    : aaaaaaaa(aaaaaaaa), aaaaaaaa(aaaaaaaa), aaaaaaaa(aaaaaaaa) {}",
+      Style);
+  Style.ConstructorInitializerIndentWidth = 4;
+  Style.ColumnLimit = 60;
+  verifyFormat("SomeClass::Constructor()\n"
+               "    : aaaaaaaa(aaaaaaaa)\n"
+               "    , aaaaaaaa(aaaaaaaa)\n"
+               "    , aaaaaaaa(aaaaaaaa) {}",
+               Style);
 }
 
 TEST_F(FormatTest, FormatsWithWebKitStyle) {

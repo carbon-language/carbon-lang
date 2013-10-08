@@ -44,6 +44,18 @@ static bool startsSegmentOfBuilderTypeCall(const FormatToken &Tok) {
   return Tok.isMemberAccess() && Tok.Previous && Tok.Previous->closesScope();
 }
 
+// Returns \c true if \c Current starts a new parameter.
+static bool startsNextParameter(const FormatToken &Current,
+                                const FormatStyle &Style) {
+  const FormatToken &Previous = *Current.Previous;
+  if (Current.Type == TT_CtorInitializerComma &&
+      Style.BreakConstructorInitializersBeforeComma)
+    return true;
+  return Previous.is(tok::comma) && !Current.isTrailingComment() &&
+         (Previous.Type != TT_CtorInitializerComma ||
+          !Style.BreakConstructorInitializersBeforeComma);
+}
+
 ContinuationIndenter::ContinuationIndenter(const FormatStyle &Style,
                                            SourceManager &SourceMgr,
                                            WhitespaceManager &Whitespaces,
@@ -113,15 +125,9 @@ bool ContinuationIndenter::mustBreak(const LineState &State) {
     return true;
   if (Previous.is(tok::semi) && State.LineContainsContinuedForLoopSection)
     return true;
-  if (Style.BreakConstructorInitializersBeforeComma) {
-    if (Previous.Type == TT_CtorInitializerComma)
-      return false;
-    if (Current.Type == TT_CtorInitializerComma)
-      return true;
-  }
-  if ((Previous.isOneOf(tok::comma, tok::semi) || Current.is(tok::question) ||
-       (Current.Type == TT_ConditionalExpr &&
-        !(Current.is(tok::colon) && Previous.is(tok::question)))) &&
+  if ((startsNextParameter(Current, Style) || Previous.is(tok::semi) ||
+       Current.is(tok::question) ||
+       (Current.Type == TT_ConditionalExpr && Previous.isNot(tok::question))) &&
       State.Stack.back().BreakBeforeParameter && !Current.isTrailingComment() &&
       !Current.isOneOf(tok::r_paren, tok::r_brace))
     return true;
@@ -250,8 +256,7 @@ void ContinuationIndenter::addTokenOnCurrentLine(LineState &State, bool DryRun,
   if (Previous.opensScope() && Previous.Type != TT_ObjCMethodExpr &&
       Current.Type != TT_LineComment)
     State.Stack.back().Indent = State.Column + Spaces;
-  if (Previous.is(tok::comma) && !Current.isTrailingComment() &&
-      State.Stack.back().AvoidBinPacking)
+  if (State.Stack.back().AvoidBinPacking && startsNextParameter(Current, Style))
     State.Stack.back().NoLineBreak = true;
   if (startsSegmentOfBuilderTypeCall(Current))
     State.Stack.back().ContainsUnwrappedBuilder = true;

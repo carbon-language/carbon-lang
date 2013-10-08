@@ -1366,7 +1366,8 @@ bool TokenAnnotator::mustBreakBefore(const AnnotatedLine &Line,
     // FIXME: Fix horrible hack of using BindingStrength to find top-level <>.
     return true;
   } else if (Right.Type == TT_CtorInitializerComma &&
-             Style.BreakConstructorInitializersBeforeComma) {
+             Style.BreakConstructorInitializersBeforeComma &&
+             !Style.ConstructorInitializerAllOnOneLineOrOnePerLine) {
     return true;
   } else if (Right.Previous->BlockKind == BK_Block &&
              Right.Previous->isNot(tok::r_brace) &&
@@ -1450,6 +1451,9 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
   if (Left.Type == TT_CtorInitializerComma &&
       Style.BreakConstructorInitializersBeforeComma)
     return false;
+  if (Right.Type == TT_CtorInitializerComma &&
+      Style.BreakConstructorInitializersBeforeComma)
+    return true;
   if (Right.isBinaryOperator() && Style.BreakBeforeBinaryOperators)
     return true;
   if (Left.is(tok::greater) && Right.is(tok::greater) &&
