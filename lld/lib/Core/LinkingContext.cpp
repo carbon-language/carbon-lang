@@ -81,24 +81,30 @@ void LinkingContext::setResolverState(int32_t state) const {
 }
 
 ErrorOr<File &> LinkingContext::nextFile() const {
+  // When nextFile() is called for the first time, _currentInputElement is not
+  // initialized. Initialize it with the first element of the input graph.
   if (_currentInputElement == nullptr) {
     ErrorOr<InputElement *> elem = inputGraph().getNextInputElement();
     if (error_code(elem) == input_graph_error::no_more_elements)
       return make_error_code(input_graph_error::no_more_files);
     _currentInputElement = *elem;
   }
-  do {
+
+  // Otherwise, try to get the next file of _currentInputElement. If the current
+  // input element points to an archive file, and there's a file left in the
+  // archive, it will succeed. If not, try to get the next file in the input
+  // graph.
+  for (;;) {
     ErrorOr<File &> nextFile = _currentInputElement->getNextFile();
-    if (error_code(nextFile) == input_graph_error::no_more_files) {
-      ErrorOr<InputElement *> elem = inputGraph().getNextInputElement();
-      if (error_code(elem) == input_graph_error::no_more_elements)
-        return make_error_code(input_graph_error::no_more_files);
-      _currentInputElement = *elem;
-    } else {
+    if (error_code(nextFile) != input_graph_error::no_more_files)
       return std::move(nextFile);
-    }
-  } while (_currentInputElement != nullptr);
-  return make_error_code(input_graph_error::no_more_files);
+
+    ErrorOr<InputElement *> elem = inputGraph().getNextInputElement();
+    if (error_code(elem) == input_graph_error::no_more_elements ||
+        *elem == nullptr)
+      return make_error_code(input_graph_error::no_more_files);
+    _currentInputElement = *elem;
+  }
 }
 
 void LinkingContext::addPasses(PassManager &pm) const {}
