@@ -4553,7 +4553,11 @@ static bool handleFunctionTypeAttr(TypeProcessingState &state,
 
     const FunctionProtoType *FnP = cast<FunctionProtoType>(fn);
     if (FnP->isVariadic()) {
-      S.Diag(attr.getLoc(), diag::err_cconv_varargs)
+      // In MS compatibility mode, this is just a warning.
+      const LangOptions &L = S.getLangOpts();
+      unsigned DiagID = L.MicrosoftMode ? diag::warn_cconv_varargs
+                                        : diag::err_cconv_varargs;
+      S.Diag(attr.getLoc(), DiagID)
         << FunctionType::getNameForCallConv(CC);
       attr.setInvalid();
       return true;
