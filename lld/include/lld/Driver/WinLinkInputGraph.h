@@ -39,7 +39,7 @@ public:
 
   /// \brief Parse the input file to lld::File.
   llvm::error_code parse(const LinkingContext &ctx, raw_ostream &diagnostics) {
-    auto filePath = path(ctx);
+    ErrorOr<StringRef> filePath = path(ctx);
     if (!filePath &&
         error_code(filePath) == llvm::errc::no_such_file_or_directory)
       return make_error_code(llvm::errc::no_such_file_or_directory);
