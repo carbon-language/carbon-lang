@@ -200,7 +200,6 @@ private:
 class VTableLayout {
 public:
   typedef std::pair<uint64_t, ThunkInfo> VTableThunkTy;
-  typedef SmallVector<ThunkInfo, 1> ThunkInfoVectorTy;
 
   typedef const VTableComponent *vtable_component_iterator;
   typedef const VTableThunkTy *vtable_thunk_iterator;
@@ -210,7 +209,7 @@ private:
   uint64_t NumVTableComponents;
   llvm::OwningArrayPtr<VTableComponent> VTableComponents;
 
-  /// \brief Contains thunks needed by vtables.
+  /// \brief Contains thunks needed by vtables, sorted by indices.
   uint64_t NumVTableThunks;
   llvm::OwningArrayPtr<VTableThunkTy> VTableThunks;
 
@@ -285,9 +284,12 @@ protected:
   virtual ~VTableContextBase() {}
 
 public:
-  const ThunkInfoVectorTy *getThunkInfo(const CXXMethodDecl *MD) {
+  virtual const ThunkInfoVectorTy *getThunkInfo(GlobalDecl GD) {
+    const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl()->getCanonicalDecl());
     computeVTableRelatedInformation(MD->getParent());
 
+    // This assumes that all the destructors present in the vtable
+    // use exactly the same set of thunks.
     ThunksMapTy::const_iterator I = Thunks.find(MD);
     if (I == Thunks.end()) {
       // We did not find a thunk for this method.
@@ -483,6 +485,14 @@ public:
                                        CharUnits VFPtrOffset);
 
   const MethodVFTableLocation &getMethodVFTableLocation(GlobalDecl GD);
+
+  const ThunkInfoVectorTy *getThunkInfo(GlobalDecl GD) {
+    // Complete destructors don't have a slot in a vftable, so no thunks needed.
+    if (isa<CXXDestructorDecl>(GD.getDecl()) &&
+        GD.getDtorType() == Dtor_Complete)
+      return 0;
+    return VTableContextBase::getThunkInfo(GD);
+  }
 };
 }
 

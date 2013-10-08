@@ -173,7 +173,19 @@ public:
                                  CXXDtorType DtorType, SourceLocation CallLoc,
                                  llvm::Value *This);
 
+  void adjustCallArgsForDestructorThunk(CodeGenFunction &CGF, GlobalDecl GD,
+                                        CallArgList &CallArgs) {
+    assert(GD.getDtorType() == Dtor_Deleting &&
+           "Only deleting destructor thunks are available in this ABI");
+    CallArgs.add(RValue::get(getStructorImplicitParamValue(CGF)),
+                             CGM.getContext().IntTy);
+  }
+
   void emitVirtualInheritanceTables(const CXXRecordDecl *RD);
+
+  void setThunkLinkage(llvm::Function *Thunk, bool ForVTable) {
+    Thunk->setLinkage(llvm::GlobalValue::WeakAnyLinkage);
+  }
 
   void EmitGuardedInit(CodeGenFunction &CGF, const VarDecl &D,
                        llvm::GlobalVariable *DeclPtr,

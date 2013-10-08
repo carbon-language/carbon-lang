@@ -54,6 +54,10 @@ struct ReturnAdjustment {
       LHS.VBaseOffsetOffset == RHS.VBaseOffsetOffset;
   }
 
+  friend bool operator!=(const ReturnAdjustment &LHS, const ReturnAdjustment &RHS) {
+    return !(LHS == RHS);
+  }
+
   friend bool operator<(const ReturnAdjustment &LHS,
                         const ReturnAdjustment &RHS) {
     if (LHS.NonVirtual < RHS.NonVirtual)
@@ -83,6 +87,10 @@ struct ThisAdjustment {
     return LHS.NonVirtual == RHS.NonVirtual && 
       LHS.VCallOffsetOffset == RHS.VCallOffsetOffset;
   }
+
+  friend bool operator!=(const ThisAdjustment &LHS, const ThisAdjustment &RHS) {
+    return !(LHS == RHS);
+  }
   
   friend bool operator<(const ThisAdjustment &LHS,
                         const ThisAdjustment &RHS) {
@@ -94,6 +102,8 @@ struct ThisAdjustment {
   }
 };
 
+class CXXMethodDecl;
+
 /// \brief The \c this pointer adjustment as well as an optional return
 /// adjustment for a thunk.
 struct ThunkInfo {
@@ -103,23 +113,25 @@ struct ThunkInfo {
   /// \brief The return adjustment.
   ReturnAdjustment Return;
 
-  ThunkInfo() { }
+  /// \brief Holds a pointer to the overridden method this thunk is for,
+  /// if needed by the ABI to distinguish different thunks with equal
+  /// adjustments. Otherwise, null.
+  /// CAUTION: In the unlikely event you need to sort ThunkInfos, consider using
+  /// an ABI-specific comparator.
+  const CXXMethodDecl *Method;
 
-  ThunkInfo(const ThisAdjustment &This, const ReturnAdjustment &Return)
-    : This(This), Return(Return) { }
+  ThunkInfo() : Method(0) { }
+
+  ThunkInfo(const ThisAdjustment &This, const ReturnAdjustment &Return,
+            const CXXMethodDecl *Method = 0)
+      : This(This), Return(Return), Method(Method) {}
 
   friend bool operator==(const ThunkInfo &LHS, const ThunkInfo &RHS) {
-    return LHS.This == RHS.This && LHS.Return == RHS.Return;
+    return LHS.This == RHS.This && LHS.Return == RHS.Return &&
+           LHS.Method == RHS.Method;
   }
 
-  friend bool operator<(const ThunkInfo &LHS, const ThunkInfo &RHS) {
-    if (LHS.This < RHS.This)
-      return true;
-      
-    return LHS.This == RHS.This && LHS.Return < RHS.Return;
-  }
-
-  bool isEmpty() const { return This.isEmpty() && Return.isEmpty(); }
+  bool isEmpty() const { return This.isEmpty() && Return.isEmpty() && Method == 0; }
 };  
 
 } // end namespace clang
