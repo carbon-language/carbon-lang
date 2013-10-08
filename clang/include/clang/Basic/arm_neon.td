@@ -777,4 +777,16 @@ def SCALAR_SCVTFD : SInst<"vcvt_f64", "os", "Sl">;
 def SCALAR_UCVTFS : SInst<"vcvt_f32", "ys", "SUi">;
 def SCALAR_UCVTFD : SInst<"vcvt_f64", "os", "SUl">;
 
+////////////////////////////////////////////////////////////////////////////////
+// Scalar Floating-point Reciprocal Estimate
+def SCALAR_FRECPE : IInst<"vrecpe", "ss", "SfSd">;
+
+////////////////////////////////////////////////////////////////////////////////
+// Scalar Floating-point Reciprocal Exponent
+def SCALAR_FRECPX : IInst<"vrecpx", "ss", "SfSd">;
+
+////////////////////////////////////////////////////////////////////////////////
+// Scalar Floating-point Reciprocal Square Root Estimate
+def SCALAR_FRSQRTE : IInst<"vrsqrte", "ss", "SfSd">;
+
 }

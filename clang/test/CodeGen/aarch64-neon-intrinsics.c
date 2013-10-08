@@ -5621,3 +5621,39 @@ float64_t test_vcvtd_f64_u64(uint64_t a) {
 // CHECK: ucvtf {{d[0-9]+}}, {{d[0-9]+}}
   return (float64_t)vcvtd_f64_u64(a);
 }
+
+float32_t test_vrecpes_f32(float32_t a) {
+// CHECK: test_vrecpes_f32
+// CHECK: frecpe {{s[0-9]+}}, {{s[0-9]+}}
+  return vrecpes_f32(a);
+}
+ 
+float64_t test_vrecped_f64(float64_t a) {
+// CHECK: test_vrecped_f64
+// CHECK: frecpe {{d[0-9]+}}, {{d[0-9]+}}
+  return vrecped_f64(a);
+}
+ 
+float32_t test_vrecpxs_f32(float32_t a) {
+// CHECK: test_vrecpxs_f32
+// CHECK: frecpx {{s[0-9]+}}, {{s[0-9]+}}
+  return vrecpxs_f32(a);
+ }
+ 
+float64_t test_vrecpxd_f64(float64_t a) {
+// CHECK: test_vrecpxd_f64
+// CHECK: frecpx {{d[0-9]+}}, {{d[0-9]+}}
+  return vrecpxd_f64(a);
+}
+
+float32_t test_vrsqrtes_f32(float32_t a) {
+// CHECK: vrsqrtes_f32
+// CHECK: frsqrte {{s[0-9]+}}, {{s[0-9]+}}
+  return vrsqrtes_f32(a);
+}
+
+float64_t test_vrsqrted_f64(float64_t a) {
+// CHECK: vrsqrted_f64
+// CHECK: frsqrte {{d[0-9]+}}, {{d[0-9]+}}
+  return vrsqrted_f64(a);
+}
