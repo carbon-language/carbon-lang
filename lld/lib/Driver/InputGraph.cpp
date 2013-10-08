@@ -55,7 +55,7 @@ bool InputGraph::dump(raw_ostream &diagnostics) {
 
 void InputGraph::insertElementsAt(
     std::vector<std::unique_ptr<InputElement> > inputElements,
-    Position position, int32_t pos) {
+    Position position, size_t pos) {
   if (position == InputGraph::Position::BEGIN)
     pos = 0;
   else if (position == InputGraph::Position::END)
@@ -66,7 +66,7 @@ void InputGraph::insertElementsAt(
 }
 
 void InputGraph::insertOneElementAt(std::unique_ptr<InputElement> element,
-                                    Position position, int32_t pos) {
+                                    Position position, size_t pos) {
   if (position == InputGraph::Position::BEGIN)
     pos = 0;
   else if (position == InputGraph::Position::END)

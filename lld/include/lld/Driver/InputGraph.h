@@ -92,17 +92,17 @@ public:
   /// \brief Dump the input Graph
   virtual bool dump(raw_ostream &diagnostics = llvm::errs());
 
-  InputElement &operator[](uint32_t index) const {
+  InputElement &operator[](size_t index) const {
     return (*_inputArgs[index]);
   }
 
   /// \brief Insert a vector of elements into the input graph at position.
   virtual void insertElementsAt(std::vector<std::unique_ptr<InputElement> >,
-                                Position position, int32_t pos = 0);
+                                Position position, size_t pos = 0);
 
   /// \brief Insert an element into the input graph at position.
   virtual void insertOneElementAt(std::unique_ptr<InputElement>,
-                                  Position position, int32_t pos = 0);
+                                  Position position, size_t pos = 0);
 
   /// \brief Helper functions for the resolver
   virtual ErrorOr<InputElement *> getNextInputElement();
