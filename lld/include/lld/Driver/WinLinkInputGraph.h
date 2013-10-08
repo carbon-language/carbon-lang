@@ -38,51 +38,28 @@ public:
   virtual llvm::ErrorOr<StringRef> getPath(const LinkingContext &ctx) const;
 
   /// \brief Parse the input file to lld::File.
-  llvm::error_code parse(const LinkingContext &ctx, raw_ostream &diagnostics) {
-    ErrorOr<StringRef> filePath = getPath(ctx);
-    if (!filePath &&
-        error_code(filePath) == llvm::errc::no_such_file_or_directory)
-      return make_error_code(llvm::errc::no_such_file_or_directory);
-
-    // Create a memory buffer
-    OwningPtr<llvm::MemoryBuffer> opmb;
-    llvm::error_code ec;
-
-    if ((ec = llvm::MemoryBuffer::getFileOrSTDIN(*filePath, opmb)))
+  error_code parse(const LinkingContext &ctx, raw_ostream &diagnostics) {
+    // Read the file to _buffer.
+    if (error_code ec = readFile(ctx, diagnostics))
       return ec;
-
-    std::unique_ptr<MemoryBuffer> mb(opmb.take());
-    _buffer = std::move(mb);
-
-    if (ctx.logInputFiles())
-      diagnostics << _buffer->getBufferIdentifier() << "\n";
-
-    // YAML file is identified by a .objtxt extension
-    // FIXME : Identify YAML files by using a magic
-    if (filePath->endswith(".objtxt")) {
-      ec = _ctx.getYAMLReader().parseFile(_buffer, _files);
-      if (!ec)
-        return ec;
-    }
 
     llvm::sys::fs::file_magic FileType =
         llvm::sys::fs::identify_magic(_buffer->getBuffer());
-
     std::unique_ptr<File> f;
 
     switch (FileType) {
-    case llvm::sys::fs::file_magic::archive:
+    case llvm::sys::fs::file_magic::archive: {
       // Archive File
+      error_code ec;
       f.reset(new FileArchive(ctx, std::move(_buffer), ec, false));
       _files.push_back(std::move(f));
-      break;
+      return ec;
+    }
 
     case llvm::sys::fs::file_magic::coff_object:
     default:
-      ec = _ctx.getDefaultReader().parseFile(_buffer, _files);
-      break;
+      return _ctx.getDefaultReader().parseFile(_buffer, _files);
     }
-    return ec;
   }
 
   /// \brief validates the Input Element

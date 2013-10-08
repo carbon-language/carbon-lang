@@ -105,6 +105,35 @@ void FileNode::assignFileOrdinals(uint64_t &startOrdinal) {
     file->setOrdinalAndIncrement(startOrdinal);
 }
 
+/// \brief Read the file into _buffer.
+error_code
+FileNode::readFile(const LinkingContext &ctx, raw_ostream &diagnostics) {
+  ErrorOr<StringRef> filePath = getPath(ctx);
+  if (!filePath &&
+      error_code(filePath) == llvm::errc::no_such_file_or_directory)
+    return make_error_code(llvm::errc::no_such_file_or_directory);
+
+  // Create a memory buffer
+  OwningPtr<llvm::MemoryBuffer> opmb;
+
+  if (error_code ec = llvm::MemoryBuffer::getFileOrSTDIN(*filePath, opmb))
+    return ec;
+
+  std::unique_ptr<MemoryBuffer> mb(opmb.take());
+  _buffer = std::move(mb);
+
+  if (ctx.logInputFiles())
+    diagnostics << _buffer->getBufferIdentifier() << "\n";
+
+  // YAML file is identified by a .objtxt extension
+  // FIXME : Identify YAML files by using a magic
+  if (filePath->endswith(".objtxt"))
+    if (error_code ec = ctx.getYAMLReader().parseFile(_buffer, _files))
+      return ec;
+  return error_code::success();
+}
+
+
 /// \brief Assign File ordinals for files contained
 /// in the InputElement
 void ControlNode::assignFileOrdinals(uint64_t &startOrdinal) {

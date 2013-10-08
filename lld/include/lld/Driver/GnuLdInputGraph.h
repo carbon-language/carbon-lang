@@ -72,32 +72,9 @@ public:
 
   /// \brief Parse the input file to lld::File.
   llvm::error_code parse(const LinkingContext &ctx, raw_ostream &diagnostics) {
-    ErrorOr<StringRef> filePath = getPath(ctx);
-    if (!filePath &&
-        error_code(filePath) == llvm::errc::no_such_file_or_directory)
-      return make_error_code(llvm::errc::no_such_file_or_directory);
-
-    // Create a memory buffer
-    OwningPtr<llvm::MemoryBuffer> opmb;
-    llvm::error_code ec;
-
-    if ((ec = llvm::MemoryBuffer::getFileOrSTDIN(*filePath, opmb)))
+    // Read the file to _buffer.
+    if (error_code ec = readFile(ctx, diagnostics))
       return ec;
-
-    std::unique_ptr<MemoryBuffer> mb(opmb.take());
-    _buffer = std::move(mb);
-
-    // If tracing is enabled, print the files being processed.
-    if (ctx.logInputFiles())
-      diagnostics << _buffer->getBufferIdentifier() << "\n";
-
-    // YAML file is identified by a .objtxt extension
-    // FIXME : Identify YAML files by using a magic
-    if (filePath->endswith(".objtxt")) {
-      ec = _elfLinkingContext.getYAMLReader().parseFile(_buffer, _files);
-      if (!ec)
-        return ec;
-    }
 
     // Identify File type
     llvm::sys::fs::file_magic FileType =
@@ -107,12 +84,12 @@ public:
     case llvm::sys::fs::file_magic::elf_relocatable:
     case llvm::sys::fs::file_magic::elf_shared_object:
       // Call the default reader to read object files and shared objects
-      ec = _elfLinkingContext.getDefaultReader().parseFile(_buffer, _files);
-      break;
+      return _elfLinkingContext.getDefaultReader().parseFile(_buffer, _files);
 
     case llvm::sys::fs::file_magic::archive: {
       // Process archive files. If Whole Archive option is set,
       // parse all members of the archive.
+      error_code ec;
       std::unique_ptr<FileArchive> fileArchive(
           new FileArchive(ctx, std::move(_buffer), ec, _isWholeArchive));
       if (_isWholeArchive) {
@@ -121,15 +98,14 @@ public:
       } else {
         _files.push_back(std::move(fileArchive));
       }
-      break;
+      return ec;
     }
 
     default:
       // Process Linker script
       _elfLinkingContext.getLinkerScriptReader().parseFile(_buffer, _files);
-      break;
+      return error_code::success();
     }
-    return ec;
   }
 
   /// \brief This is used by Group Nodes, when there is a need to reset the

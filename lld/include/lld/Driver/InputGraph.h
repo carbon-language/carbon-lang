@@ -302,6 +302,9 @@ public:
   virtual void assignFileOrdinals(uint64_t &startOrdinal);
 
 protected:
+  /// \brief Read the file into _buffer.
+  error_code readFile(const LinkingContext &ctx, raw_ostream &diagnostics);
+
   StringRef _path;
   InputGraph::FileVectorT _files;
   std::unique_ptr<llvm::MemoryBuffer> _buffer;
