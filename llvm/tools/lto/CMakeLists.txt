@@ -15,10 +15,16 @@ if( NOT CYGWIN AND LLVM_ENABLE_PIC )
     # 'EXPORTS'.  The file "lto.exports" already contains the list, so we
     # massage it into the correct format here to create "lto.exports.def".
     set(LTO_EXPORTS_DEF ${CMAKE_CURRENT_BINARY_DIR}/lto.exports.def)
+    set(LTO_EXPORTS_DEF_TEMP ${LTO_EXPORTS_DEF}.txt)
     file(READ "lto.exports" exports_list)
-    file(WRITE ${LTO_EXPORTS_DEF} "LIBRARY LTO\n")
-    file(APPEND ${LTO_EXPORTS_DEF} "EXPORTS\n")
-    file(APPEND ${LTO_EXPORTS_DEF} ${exports_list})
+    file(WRITE ${LTO_EXPORTS_DEF_TEMP} "LIBRARY LTO\n")
+    file(APPEND ${LTO_EXPORTS_DEF_TEMP} "EXPORTS\n")
+    file(APPEND ${LTO_EXPORTS_DEF_TEMP} ${exports_list})
+
+    # Copy the file only if it has changed.
+    execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different
+      ${LTO_EXPORTS_DEF_TEMP} ${LTO_EXPORTS_DEF})
+
     set(SHARED_LIB_SOURCES ${SOURCES} ${LTO_EXPORTS_DEF})
   else()
     set(SHARED_LIB_SOURCES ${SOURCES})
