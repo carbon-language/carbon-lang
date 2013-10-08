@@ -197,7 +197,7 @@ public:
   class InsertPointGuard {
     IRBuilderBase &Builder;
     AssertingVH<BasicBlock> Block;
-    AssertingVH<Instruction> Point;
+    BasicBlock::iterator Point;
     DebugLoc DbgLoc;
 
     InsertPointGuard(const InsertPointGuard &) LLVM_DELETED_FUNCTION;
@@ -209,7 +209,7 @@ public:
           DbgLoc(B.getCurrentDebugLocation()) {}
 
     ~InsertPointGuard() {
-      Builder.restoreIP(InsertPoint(Block, BasicBlock::iterator(Point)));
+      Builder.restoreIP(InsertPoint(Block, Point));
       Builder.SetCurrentDebugLocation(DbgLoc);
     }
   };
