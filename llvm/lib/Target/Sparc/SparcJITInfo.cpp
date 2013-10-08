@@ -164,5 +164,3 @@ void SparcJITInfo::relocate(void *Function, MachineRelocation *MR,
     *((unsigned*) RelocPos) |= (unsigned) ResultPtr;
   }
 }
-
-
