@@ -283,7 +283,7 @@ DIDerivedType DIBuilder::createQualifiedType(unsigned Tag, DIType FromTy) {
     ConstantInt::get(Type::getInt64Ty(VMContext), 0), // Align
     ConstantInt::get(Type::getInt64Ty(VMContext), 0), // Offset
     ConstantInt::get(Type::getInt32Ty(VMContext), 0), // Flags
-    FromTy
+    FromTy.getRef()
   };
   return DIDerivedType(MDNode::get(VMContext, Elts));
 }
@@ -321,7 +321,7 @@ DIDerivedType DIBuilder::createMemberPointerType(DIType PointeeTy,
     ConstantInt::get(Type::getInt64Ty(VMContext), 0),
     ConstantInt::get(Type::getInt64Ty(VMContext), 0), // Offset
     ConstantInt::get(Type::getInt32Ty(VMContext), 0), // Flags
-    PointeeTy,
+    PointeeTy.getRef(),
     Base.getRef()
   };
   return DIDerivedType(MDNode::get(VMContext, Elts));
@@ -342,7 +342,7 @@ DIDerivedType DIBuilder::createReferenceType(unsigned Tag, DIType RTy) {
     ConstantInt::get(Type::getInt64Ty(VMContext), 0), // Align
     ConstantInt::get(Type::getInt64Ty(VMContext), 0), // Offset
     ConstantInt::get(Type::getInt32Ty(VMContext), 0), // Flags
-    RTy
+    RTy.getRef()
   };
   return DIDerivedType(MDNode::get(VMContext, Elts));
 }
@@ -362,7 +362,7 @@ DIDerivedType DIBuilder::createTypedef(DIType Ty, StringRef Name, DIFile File,
     ConstantInt::get(Type::getInt64Ty(VMContext), 0), // Align
     ConstantInt::get(Type::getInt64Ty(VMContext), 0), // Offset
     ConstantInt::get(Type::getInt32Ty(VMContext), 0), // Flags
-    Ty
+    Ty.getRef()
   };
   return DIDerivedType(MDNode::get(VMContext, Elts));
 }
@@ -382,7 +382,7 @@ DIDerivedType DIBuilder::createFriend(DIType Ty, DIType FriendTy) {
     ConstantInt::get(Type::getInt64Ty(VMContext), 0), // Align
     ConstantInt::get(Type::getInt64Ty(VMContext), 0), // Offset
     ConstantInt::get(Type::getInt32Ty(VMContext), 0), // Flags
-    FriendTy
+    FriendTy.getRef()
   };
   return DIDerivedType(MDNode::get(VMContext, Elts));
 }
@@ -403,7 +403,7 @@ DIDerivedType DIBuilder::createInheritance(
     ConstantInt::get(Type::getInt64Ty(VMContext), 0), // Align
     ConstantInt::get(Type::getInt64Ty(VMContext), BaseOffset),
     ConstantInt::get(Type::getInt32Ty(VMContext), Flags),
-    BaseTy
+    BaseTy.getRef()
   };
   return DIDerivedType(MDNode::get(VMContext, Elts));
 }
@@ -424,7 +424,7 @@ DIDerivedType DIBuilder::createMemberType(
     ConstantInt::get(Type::getInt64Ty(VMContext), AlignInBits),
     ConstantInt::get(Type::getInt64Ty(VMContext), OffsetInBits),
     ConstantInt::get(Type::getInt32Ty(VMContext), Flags),
-    Ty
+    Ty.getRef()
   };
   return DIDerivedType(MDNode::get(VMContext, Elts));
 }
@@ -448,7 +448,7 @@ DIBuilder::createStaticMemberType(DIDescriptor Scope, StringRef Name,
     ConstantInt::get(Type::getInt64Ty(VMContext), 0/*AlignInBits*/),
     ConstantInt::get(Type::getInt64Ty(VMContext), 0/*OffsetInBits*/),
     ConstantInt::get(Type::getInt32Ty(VMContext), Flags),
-    Ty,
+    Ty.getRef(),
     Val
   };
   return DIDerivedType(MDNode::get(VMContext, Elts));
