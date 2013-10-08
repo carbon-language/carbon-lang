@@ -89,7 +89,7 @@ class SourceLocation {
   friend class SourceManager;
   friend class ASTReader;
   friend class ASTWriter;
-  enum {
+  enum LLVM_ENUM_INT_TYPE(unsigned) {
     MacroIDBit = 1U << 31
   };
 public:
