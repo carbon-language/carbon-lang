@@ -35,11 +35,11 @@ public:
     return a->kind() == InputElement::Kind::File;
   }
 
-  virtual llvm::ErrorOr<StringRef> path(const LinkingContext &ctx) const;
+  virtual llvm::ErrorOr<StringRef> getPath(const LinkingContext &ctx) const;
 
   /// \brief Parse the input file to lld::File.
   llvm::error_code parse(const LinkingContext &ctx, raw_ostream &diagnostics) {
-    ErrorOr<StringRef> filePath = path(ctx);
+    ErrorOr<StringRef> filePath = getPath(ctx);
     if (!filePath &&
         error_code(filePath) == llvm::errc::no_such_file_or_directory)
       return make_error_code(llvm::errc::no_such_file_or_directory);
@@ -107,7 +107,7 @@ public:
   PECOFFLibraryNode(PECOFFLinkingContext &ctx, StringRef path)
       : PECOFFFileNode(ctx, path) {}
 
-  virtual llvm::ErrorOr<StringRef> path(const LinkingContext &ctx) const;
+  virtual llvm::ErrorOr<StringRef> getPath(const LinkingContext &ctx) const;
 };
 
 } // namespace lld

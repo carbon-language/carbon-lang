@@ -249,7 +249,7 @@ public:
   FileNode(StringRef path, int64_t ordinal = -1)
       : InputElement(InputElement::Kind::File, ordinal), _path(path) {}
 
-  virtual llvm::ErrorOr<StringRef> path(const LinkingContext &) const {
+  virtual ErrorOr<StringRef> getPath(const LinkingContext &) const {
     return _path;
   }
 

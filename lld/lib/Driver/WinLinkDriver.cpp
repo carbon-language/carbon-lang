@@ -238,7 +238,7 @@ parseArgs(int argc, const char *argv[], raw_ostream &diagnostics,
 
 } // namespace
 
-llvm::ErrorOr<StringRef> PECOFFFileNode::path(const LinkingContext &) const {
+ErrorOr<StringRef> PECOFFFileNode::getPath(const LinkingContext &) const {
   if (_path.endswith(".lib"))
     return _ctx.searchLibraryFile(_path);
   if (llvm::sys::path::extension(_path).empty())
@@ -246,7 +246,7 @@ llvm::ErrorOr<StringRef> PECOFFFileNode::path(const LinkingContext &) const {
   return _path;
 }
 
-llvm::ErrorOr<StringRef> PECOFFLibraryNode::path(const LinkingContext &) const {
+ErrorOr<StringRef> PECOFFLibraryNode::getPath(const LinkingContext &) const {
   if (!_path.endswith(".lib"))
     return _ctx.searchLibraryFile(_ctx.allocateString(_path.str() + ".lib"));
   return _ctx.searchLibraryFile(_path);
@@ -536,7 +536,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ct
   // with ".exe".
   if (ctx.outputPath().empty()) {
     SmallString<128> firstInputFilePath =
-        *llvm::dyn_cast<FileNode>(&inputGraph[0])->path(ctx);
+        *dyn_cast<FileNode>(&inputGraph[0])->getPath(ctx);
     llvm::sys::path::replace_extension(firstInputFilePath, ".exe");
     ctx.setOutputPath(ctx.allocateString(firstInputFilePath.str()));
   }
