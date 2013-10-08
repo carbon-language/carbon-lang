@@ -20,7 +20,7 @@ entry:
   ret <16 x i16> %shuffle
 }
 
-; CHECK: vmovd
+; CHECK: vmovq
 ; CHECK-NEXT: vmovlhps %xmm
 ; CHECK-NEXT: vinsertf128 $1
 define <4 x i64> @funcC(i64 %q) nounwind uwtable readnone ssp {

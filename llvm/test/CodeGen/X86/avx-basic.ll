@@ -122,10 +122,10 @@ define <16 x i16> @build_vec_16x16(i16 %a) nounwind readonly {
   ret <16 x i16> %res
 }
 
-;;; Check that VMOVPQIto64rr generates the assembly string "vmovd".  Previously
+;;; Check that VMOVPQIto64rr generates the assembly string "vmovq".  Previously
 ;;; an incorrect mnemonic of "movd" was printed for this instruction.
 ; CHECK: VMOVPQIto64rr
-; CHECK: vmovd
+; CHECK: vmovq
 define i64 @VMOVPQIto64rr(<2 x i64> %a) {
 entry:
   %vecext.i = extractelement <2 x i64> %a, i32 0

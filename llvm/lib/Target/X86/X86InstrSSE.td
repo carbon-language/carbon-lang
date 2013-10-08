@@ -4381,12 +4381,12 @@ def VMOVDI2PDIrm : VS2I<0x6E, MRMSrcMem, (outs VR128:$dst), (ins i32mem:$src),
                         IIC_SSE_MOVDQ>,
                       VEX, Sched<[WriteLoad]>;
 def VMOV64toPQIrr : VRS2I<0x6E, MRMSrcReg, (outs VR128:$dst), (ins GR64:$src),
-                        "mov{d|q}\t{$src, $dst|$dst, $src}",
+                        "movq\t{$src, $dst|$dst, $src}",
                         [(set VR128:$dst,
                           (v2i64 (scalar_to_vector GR64:$src)))],
                           IIC_SSE_MOVDQ>, VEX, Sched<[WriteMove]>;
 def VMOV64toSDrr : VRS2I<0x6E, MRMSrcReg, (outs FR64:$dst), (ins GR64:$src),
-                       "mov{d|q}\t{$src, $dst|$dst, $src}",
+                       "movq\t{$src, $dst|$dst, $src}",
                        [(set FR64:$dst, (bitconvert GR64:$src))],
                        IIC_SSE_MOVDQ>, VEX, Sched<[WriteMove]>;
 
@@ -4475,7 +4475,7 @@ def : Pat<(v4i64 (X86Vinsert undef, GR64:$src2, (iPTR 0))),
 //
 let SchedRW = [WriteMove] in {
 def VMOVPQIto64rr : VRS2I<0x7E, MRMDestReg, (outs GR64:$dst), (ins VR128:$src),
-                          "mov{d|q}\t{$src, $dst|$dst, $src}",
+                          "movq\t{$src, $dst|$dst, $src}",
                           [(set GR64:$dst, (vector_extract (v2i64 VR128:$src),
                                                            (iPTR 0)))],
                                                            IIC_SSE_MOVD_ToGP>,
@@ -4497,7 +4497,7 @@ def VMOV64toSDrm : VS2SI<0x7E, MRMSrcMem, (outs FR64:$dst), (ins i64mem:$src),
                         [(set FR64:$dst, (bitconvert (loadi64 addr:$src)))]>,
                         VEX, Sched<[WriteLoad]>;
 def VMOVSDto64rr : VRS2I<0x7E, MRMDestReg, (outs GR64:$dst), (ins FR64:$src),
-                         "mov{d|q}\t{$src, $dst|$dst, $src}",
+                         "movq\t{$src, $dst|$dst, $src}",
                          [(set GR64:$dst, (bitconvert FR64:$src))],
                          IIC_SSE_MOVDQ>, VEX, Sched<[WriteMove]>;
 def VMOVSDto64mr : VRS2I<0x7E, MRMDestMem, (outs), (ins i64mem:$dst, FR64:$src),
@@ -4549,7 +4549,7 @@ def VMOVZDI2PDIrr : VS2I<0x6E, MRMSrcReg, (outs VR128:$dst), (ins GR32:$src),
                                       (v4i32 (scalar_to_vector GR32:$src)))))],
                                       IIC_SSE_MOVDQ>, VEX;
 def VMOVZQI2PQIrr : VS2I<0x6E, MRMSrcReg, (outs VR128:$dst), (ins GR64:$src),
-                       "mov{d|q}\t{$src, $dst|$dst, $src}", // X86-64 only
+                       "movq\t{$src, $dst|$dst, $src}", // X86-64 only
                        [(set VR128:$dst, (v2i64 (X86vzmovl
                                       (v2i64 (scalar_to_vector GR64:$src)))))],
                                       IIC_SSE_MOVDQ>,
@@ -4614,15 +4614,12 @@ let Predicates = [UseSSE2], AddedComplexity = 20 in {
 def : InstAlias<"movq\t{$src, $dst|$dst, $src}",
                 (MOV64toPQIrr VR128:$dst, GR64:$src), 0>;
 def : InstAlias<"movq\t{$src, $dst|$dst, $src}",
-                (MOV64toSDrr FR64:$dst, GR64:$src), 0>;
-def : InstAlias<"movq\t{$src, $dst|$dst, $src}",
                 (MOVPQIto64rr GR64:$dst, VR128:$src), 0>;
-def : InstAlias<"movq\t{$src, $dst|$dst, $src}",
-                (MOVSDto64rr GR64:$dst, FR64:$src), 0>;
-def : InstAlias<"movq\t{$src, $dst|$dst, $src}",
-                (VMOVZQI2PQIrr VR128:$dst, GR64:$src), 0>;
-def : InstAlias<"movq\t{$src, $dst|$dst, $src}",
-                (MOVZQI2PQIrr VR128:$dst, GR64:$src), 0>;
+// Allow "vmovd" but print "vmovq" since we don't need compatibility for AVX.
+def : InstAlias<"vmovd\t{$src, $dst|$dst, $src}",
+                (VMOV64toPQIrr VR128:$dst, GR64:$src), 0>;
+def : InstAlias<"vmovd\t{$src, $dst|$dst, $src}",
+                (VMOVPQIto64rr GR64:$dst, VR128:$src), 0>;
 
 //===---------------------------------------------------------------------===//
 // SSE2 - Move Quadword
@@ -4759,20 +4756,6 @@ let AddedComplexity = 20 in {
               (MOVZPQILo2PQIrr VR128:$src)>;
   }
 }
-
-// Instructions to match in the assembler
-let SchedRW = [WriteMove] in {
-def VMOVQs64rr : VS2I<0x6E, MRMSrcReg, (outs VR128:$dst), (ins GR64:$src),
-                      "movq\t{$src, $dst|$dst, $src}", [],
-                      IIC_SSE_MOVDQ>, VEX, VEX_W;
-def VMOVQd64rr : VS2I<0x7E, MRMDestReg, (outs GR64:$dst), (ins VR128:$src),
-                      "movq\t{$src, $dst|$dst, $src}", [],
-                      IIC_SSE_MOVDQ>, VEX, VEX_W;
-// Recognize "movd" with GR64 destination, but encode as a "movq"
-def VMOVQd64rr_alt : VS2I<0x7E, MRMDestReg, (outs GR64:$dst), (ins VR128:$src),
-                          "movq\t{$src, $dst|$dst, $src}", [],
-                          IIC_SSE_MOVDQ>, VEX, VEX_W;
-} // SchedRW
 
 //===---------------------------------------------------------------------===//
 // SSE3 - Replicate Single FP - MOVSHDUP and MOVSLDUP

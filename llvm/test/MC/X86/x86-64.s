@@ -1375,3 +1375,16 @@ fsub %st(1)
 fsubr %st(1)
 fdiv %st(1)
 fdivr %st(1)
+
+// CHECK: movd %xmm0, %eax
+// CHECK: movd %xmm0, %rax
+// CHECK: movd %xmm0, %rax
+// CHECK: vmovd %xmm0, %eax
+// CHECK: vmovq %xmm0, %rax
+// CHECK: vmovq %xmm0, %rax
+movd %xmm0, %eax
+movd %xmm0, %rax
+movq %xmm0, %rax
+vmovd %xmm0, %eax
+vmovd %xmm0, %rax
+vmovq %xmm0, %rax
