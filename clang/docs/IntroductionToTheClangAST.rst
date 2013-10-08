@@ -46,9 +46,9 @@ Let's look at a simple example AST:
       return result;
     }
 
-    # Clang by default is a frontend for many tools; -cc1 tells it to directly
-    # use the C++ compiler mode.
-    $ clang -cc1 -ast-dump test.cc
+    # Clang by default is a frontend for many tools; -Xclang is used to pass
+    # options directly to the C++ frontend.
+    $ clang -Xclang -ast-dump -fsyntax-only test.cc
     TranslationUnitDecl 0x5aea0d0 <<invalid sloc>>
     ... cutting out internal declarations of clang ...
     `-FunctionDecl 0x5aeab50 <test.cc:1:1, line:4:1> f 'int (int)'
