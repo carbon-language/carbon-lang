@@ -3852,7 +3852,7 @@ ExprResult Sema::BuildCXXDefaultArgExpr(SourceLocation CallLoc,
 
     InstantiatingTemplate Inst(*this, CallLoc, Param,
                                MutiLevelArgList.getInnermost());
-    if (Inst)
+    if (Inst.isInvalid())
       return ExprError();
 
     ExprResult Result;

@@ -1979,7 +1979,7 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
   }
   
   InstantiatingTemplate Inst(*this, PointOfInstantiation, Instantiation);
-  if (Inst)
+  if (Inst.isInvalid())
     return true;
 
   // Enter the scope of this instantiation. We don't use
@@ -2216,7 +2216,7 @@ bool Sema::InstantiateEnum(SourceLocation PointOfInstantiation,
   }
 
   InstantiatingTemplate Inst(*this, PointOfInstantiation, Instantiation);
-  if (Inst)
+  if (Inst.isInvalid())
     return true;
 
   // Enter the scope of this instantiation. We don't use

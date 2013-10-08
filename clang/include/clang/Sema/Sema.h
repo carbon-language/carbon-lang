@@ -6221,7 +6221,7 @@ public:
 
     /// \brief Determines whether we have exceeded the maximum
     /// recursive template instantiations.
-    LLVM_EXPLICIT operator bool() const { return Invalid; }
+    bool isInvalid() const { return Invalid; }
 
   private:
     Sema &SemaRef;

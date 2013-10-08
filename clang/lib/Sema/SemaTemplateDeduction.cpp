@@ -2276,7 +2276,7 @@ Sema::DeduceTemplateArguments(ClassTemplatePartialSpecializationDecl *Partial,
   SmallVector<TemplateArgument, 4> DeducedArgs(Deduced.begin(), Deduced.end());
   InstantiatingTemplate Inst(*this, Partial->getLocation(), Partial,
                              DeducedArgs, Info);
-  if (Inst)
+  if (Inst.isInvalid())
     return TDK_InstantiationDepth;
 
   if (Trap.hasErrorOccurred())
@@ -2440,7 +2440,7 @@ Sema::DeduceTemplateArguments(VarTemplatePartialSpecializationDecl *Partial,
   SmallVector<TemplateArgument, 4> DeducedArgs(Deduced.begin(), Deduced.end());
   InstantiatingTemplate Inst(*this, Partial->getLocation(), Partial,
                              DeducedArgs, Info);
-  if (Inst)
+  if (Inst.isInvalid())
     return TDK_InstantiationDepth;
 
   if (Trap.hasErrorOccurred())
@@ -2528,7 +2528,7 @@ Sema::SubstituteExplicitTemplateArguments(
                              FunctionTemplate, DeducedArgs,
            ActiveTemplateInstantiation::ExplicitTemplateArgumentSubstitution,
                              Info);
-  if (Inst)
+  if (Inst.isInvalid())
     return TDK_InstantiationDepth;
 
   if (CheckTemplateArgumentList(FunctionTemplate,
@@ -2779,7 +2779,7 @@ Sema::FinishTemplateArgumentDeduction(FunctionTemplateDecl *FunctionTemplate,
                              FunctionTemplate, DeducedArgs,
               ActiveTemplateInstantiation::DeducedTemplateArgumentSubstitution,
                              Info);
-  if (Inst)
+  if (Inst.isInvalid())
     return TDK_InstantiationDepth;
 
   ContextRAII SavedContext(*this, FunctionTemplate->getTemplatedDecl());
