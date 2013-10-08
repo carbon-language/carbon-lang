@@ -69,7 +69,7 @@ public:
 
 } // namespace
 
-llvm::ErrorOr<StringRef> ELFFileNode::path(const LinkingContext &) const {
+llvm::ErrorOr<StringRef> ELFFileNode::getPath(const LinkingContext &) const {
   if (!_isDashlPrefix)
     return _path;
   return _elfLinkingContext.searchLibrary(_path, _libraryPaths);

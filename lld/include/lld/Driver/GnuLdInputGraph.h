@@ -42,7 +42,7 @@ public:
     return a->kind() == InputElement::Kind::File;
   }
 
-  virtual llvm::ErrorOr<StringRef> path(const LinkingContext &ctx) const;
+  virtual ErrorOr<StringRef> getPath(const LinkingContext &ctx) const;
 
   /// \brief validates the Input Element
   virtual bool validate() { return true; }
@@ -52,7 +52,7 @@ public:
 
   /// \brief Dump the Input Element
   virtual bool dump(raw_ostream &diagnostics) {
-    diagnostics << "Name    : " << *path(_elfLinkingContext) << "\n";
+    diagnostics << "Name    : " << *getPath(_elfLinkingContext) << "\n";
     diagnostics << "Type    : "
                 << "ELF File"
                 << "\n";
@@ -72,7 +72,7 @@ public:
 
   /// \brief Parse the input file to lld::File.
   llvm::error_code parse(const LinkingContext &ctx, raw_ostream &diagnostics) {
-    ErrorOr<StringRef> filePath = path(ctx);
+    ErrorOr<StringRef> filePath = getPath(ctx);
     if (!filePath &&
         error_code(filePath) == llvm::errc::no_such_file_or_directory)
       return make_error_code(llvm::errc::no_such_file_or_directory);
