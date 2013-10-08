@@ -19,7 +19,7 @@ namespace {
 
   class MCNullStreamer : public MCStreamer {
   public:
-    MCNullStreamer(MCContext &Context) : MCStreamer(Context) {}
+    MCNullStreamer(MCContext &Context) : MCStreamer(Context, 0) {}
 
     /// @name MCStreamer Interface
     /// @{

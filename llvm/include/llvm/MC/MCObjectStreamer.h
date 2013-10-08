@@ -40,10 +40,12 @@ class MCObjectStreamer : public MCStreamer {
   virtual void EmitCFIEndProcImpl(MCDwarfFrameInfo &Frame);
 
 protected:
-  MCObjectStreamer(MCContext &Context, MCAsmBackend &TAB, raw_ostream &_OS,
+  MCObjectStreamer(MCContext &Context, MCTargetStreamer *TargetStreamer,
+                   MCAsmBackend &TAB, raw_ostream &_OS,
                    MCCodeEmitter *_Emitter);
-  MCObjectStreamer(MCContext &Context, MCAsmBackend &TAB, raw_ostream &_OS,
-                   MCCodeEmitter *_Emitter, MCAssembler *_Assembler);
+  MCObjectStreamer(MCContext &Context, MCTargetStreamer *TargetStreamer,
+                   MCAsmBackend &TAB, raw_ostream &_OS, MCCodeEmitter *_Emitter,
+                   MCAssembler *_Assembler);
   ~MCObjectStreamer();
 
 public:

@@ -130,7 +130,7 @@ private:
 
 WinCOFFStreamer::WinCOFFStreamer(MCContext &Context, MCAsmBackend &MAB,
                                  MCCodeEmitter &CE, raw_ostream &OS)
-    : MCObjectStreamer(Context, MAB, OS, &CE), CurSymbol(NULL) {}
+    : MCObjectStreamer(Context, 0, MAB, OS, &CE), CurSymbol(NULL) {}
 
 void WinCOFFStreamer::AddCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                                       unsigned ByteAlignment, bool External) {

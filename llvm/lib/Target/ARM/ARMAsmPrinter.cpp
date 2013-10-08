@@ -1152,6 +1152,8 @@ void ARMAsmPrinter::EmitUnwindingInstruction(const MachineInstr *MI) {
   assert(MI->getFlag(MachineInstr::FrameSetup) &&
       "Only instruction which are involved into frame setup code are allowed");
 
+  MCTargetStreamer &TS = OutStreamer.getTargetStreamer();
+  ARMTargetStreamer &ATS = static_cast<ARMTargetStreamer &>(TS);
   const MachineFunction &MF = *MI->getParent()->getParent();
   const TargetRegisterInfo *RegInfo = MF.getTarget().getRegisterInfo();
   const ARMFunctionInfo &AFI = *MF.getInfo<ARMFunctionInfo>();
@@ -1214,7 +1216,7 @@ void ARMAsmPrinter::EmitUnwindingInstruction(const MachineInstr *MI) {
       RegList.push_back(SrcReg);
       break;
     }
-    OutStreamer.EmitRegSave(RegList, Opc == ARM::VSTMDDB_UPD);
+    ATS.emitRegSave(RegList, Opc == ARM::VSTMDDB_UPD);
   } else {
     // Changes of stack / frame pointer.
     if (SrcReg == ARM::SP) {
@@ -1262,11 +1264,11 @@ void ARMAsmPrinter::EmitUnwindingInstruction(const MachineInstr *MI) {
       if (DstReg == FramePtr && FramePtr != ARM::SP)
         // Set-up of the frame pointer. Positive values correspond to "add"
         // instruction.
-        OutStreamer.EmitSetFP(FramePtr, ARM::SP, -Offset);
+        ATS.emitSetFP(FramePtr, ARM::SP, -Offset);
       else if (DstReg == ARM::SP) {
         // Change of SP by an offset. Positive values correspond to "sub"
         // instruction.
-        OutStreamer.EmitPad(Offset);
+        ATS.emitPad(Offset);
       } else {
         MI->dump();
         llvm_unreachable("Unsupported opcode for unwinding information");

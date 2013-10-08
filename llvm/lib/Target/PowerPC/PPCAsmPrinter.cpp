@@ -23,6 +23,7 @@
 #include "MCTargetDesc/PPCMCExpr.h"
 #include "PPCSubtarget.h"
 #include "PPCTargetMachine.h"
+#include "PPCTargetStreamer.h"
 #include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
@@ -771,6 +772,9 @@ bool PPCLinuxAsmPrinter::doFinalization(Module &M) {
 
   bool isPPC64 = TD->getPointerSizeInBits() == 64;
 
+  PPCTargetStreamer &TS =
+      static_cast<PPCTargetStreamer &>(OutStreamer.getTargetStreamer());
+
   if (isPPC64 && !TOC.empty()) {
     const MCSectionELF *Section = OutStreamer.getContext().getELFSection(".toc",
         ELF::SHT_PROGBITS, ELF::SHF_WRITE | ELF::SHF_ALLOC,
@@ -781,7 +785,7 @@ bool PPCLinuxAsmPrinter::doFinalization(Module &M) {
          E = TOC.end(); I != E; ++I) {
       OutStreamer.EmitLabel(I->second);
       MCSymbol *S = OutContext.GetOrCreateSymbol(I->first->getName());
-      OutStreamer.EmitTCEntry(*S);
+      TS.emitTCEntry(*S);
     }
   }
 

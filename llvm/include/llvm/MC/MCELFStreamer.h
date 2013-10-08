@@ -29,13 +29,15 @@ class raw_ostream;
 
 class MCELFStreamer : public MCObjectStreamer {
 public:
-  MCELFStreamer(MCContext &Context, MCAsmBackend &TAB, raw_ostream &OS,
-                MCCodeEmitter *Emitter)
-      : MCObjectStreamer(Context, TAB, OS, Emitter) {}
+  MCELFStreamer(MCContext &Context, MCTargetStreamer *TargetStreamer,
+                MCAsmBackend &TAB, raw_ostream &OS, MCCodeEmitter *Emitter)
+      : MCObjectStreamer(Context, TargetStreamer, TAB, OS, Emitter) {}
 
-  MCELFStreamer(MCContext &Context, MCAsmBackend &TAB, raw_ostream &OS,
-                MCCodeEmitter *Emitter, MCAssembler *Assembler)
-      : MCObjectStreamer(Context, TAB, OS, Emitter, Assembler) {}
+  MCELFStreamer(MCContext &Context, MCTargetStreamer *TargetStreamer,
+                MCAsmBackend &TAB, raw_ostream &OS, MCCodeEmitter *Emitter,
+                MCAssembler *Assembler)
+      : MCObjectStreamer(Context, TargetStreamer, TAB, OS, Emitter, Assembler) {
+  }
 
   virtual ~MCELFStreamer();
 
@@ -75,8 +77,6 @@ public:
 
   virtual void EmitFileDirective(StringRef Filename);
 
-  virtual void EmitTCEntry(const MCSymbol &S);
-
   virtual void EmitValueToAlignment(unsigned, int64_t, unsigned, unsigned);
 
   virtual void Flush();
@@ -110,10 +110,6 @@ private:
   void SetSectionText();
   void SetSectionBss();
 };
-
-MCELFStreamer *createMipsELFStreamer(MCContext &Context, MCAsmBackend &TAB,
-                                     raw_ostream &OS, MCCodeEmitter *Emitter,
-                                     bool RelaxAll, bool NoExecStack);
 
 MCELFStreamer *createARMELFStreamer(MCContext &Context, MCAsmBackend &TAB,
                                     raw_ostream &OS, MCCodeEmitter *Emitter,

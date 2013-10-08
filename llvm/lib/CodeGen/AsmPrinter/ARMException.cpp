@@ -47,13 +47,18 @@ ARMException::ARMException(AsmPrinter *A)
 
 ARMException::~ARMException() {}
 
+ARMTargetStreamer &ARMException::getTargetStreamer() {
+  MCTargetStreamer &TS = Asm->OutStreamer.getTargetStreamer();
+  return static_cast<ARMTargetStreamer &>(TS);
+}
+
 void ARMException::EndModule() {
 }
 
 /// BeginFunction - Gather pre-function exception information. Assumes it's
 /// being emitted immediately after the function entry point.
 void ARMException::BeginFunction(const MachineFunction *MF) {
-  Asm->OutStreamer.EmitFnStart();
+  getTargetStreamer().emitFnStart();
   if (Asm->MF->getFunction()->needsUnwindTableEntry())
     Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("eh_func_begin",
                                                   Asm->getFunctionNumber()));
@@ -62,8 +67,9 @@ void ARMException::BeginFunction(const MachineFunction *MF) {
 /// EndFunction - Gather and emit post-function exception information.
 ///
 void ARMException::EndFunction() {
+  ARMTargetStreamer &ATS = getTargetStreamer();
   if (!Asm->MF->getFunction()->needsUnwindTableEntry())
-    Asm->OutStreamer.EmitCantUnwind();
+    ATS.emitCantUnwind();
   else {
     Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("eh_func_end",
                                                   Asm->getFunctionNumber()));
@@ -78,11 +84,11 @@ void ARMException::EndFunction() {
             MMI->getPersonalities()[MMI->getPersonalityIndex()]) {
           MCSymbol *PerSym = Asm->Mang->getSymbol(Personality);
           Asm->OutStreamer.EmitSymbolAttribute(PerSym, MCSA_Global);
-          Asm->OutStreamer.EmitPersonality(PerSym);
+          ATS.emitPersonality(PerSym);
         }
 
         // Emit .handlerdata directive.
-        Asm->OutStreamer.EmitHandlerData();
+        ATS.emitHandlerData();
 
         // Emit actual exception table
         EmitExceptionTable();
@@ -90,7 +96,7 @@ void ARMException::EndFunction() {
     }
   }
 
-  Asm->OutStreamer.EmitFnEnd();
+  ATS.emitFnEnd();
 }
 
 void ARMException::EmitTypeInfos(unsigned TTypeEncoding) {

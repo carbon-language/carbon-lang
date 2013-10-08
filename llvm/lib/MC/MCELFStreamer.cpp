@@ -560,15 +560,12 @@ void MCELFStreamer::FinishImpl() {
   this->MCObjectStreamer::FinishImpl();
 }
 
-void MCELFStreamer::EmitTCEntry(const MCSymbol &S) {
-  // Creates a R_PPC64_TOC relocation
-  MCObjectStreamer::EmitSymbolValue(&S, 8);
-}
-
-MCStreamer *llvm::createELFStreamer(MCContext &Context, MCAsmBackend &MAB,
-                                    raw_ostream &OS, MCCodeEmitter *CE,
-                                    bool RelaxAll, bool NoExecStack) {
-  MCELFStreamer *S = new MCELFStreamer(Context, MAB, OS, CE);
+MCStreamer *llvm::createELFStreamer(MCContext &Context,
+                                    MCTargetStreamer *Streamer,
+                                    MCAsmBackend &MAB, raw_ostream &OS,
+                                    MCCodeEmitter *CE, bool RelaxAll,
+                                    bool NoExecStack) {
+  MCELFStreamer *S = new MCELFStreamer(Context, Streamer, MAB, OS, CE);
   if (RelaxAll)
     S->getAssembler().setRelaxAll(true);
   if (NoExecStack)

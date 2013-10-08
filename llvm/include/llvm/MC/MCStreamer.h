@@ -31,6 +31,7 @@ class MCExpr;
 class MCInst;
 class MCInstPrinter;
 class MCSection;
+class MCStreamer;
 class MCSymbol;
 class StringRef;
 class Twine;
@@ -38,6 +39,55 @@ class raw_ostream;
 class formatted_raw_ostream;
 
 typedef std::pair<const MCSection *, const MCExpr *> MCSectionSubPair;
+
+/// Target specific streamer interface. This is used so that targets can
+/// implement support for target specific assembly directives.
+///
+/// If target foo wants to use this, it should implement 3 classes:
+/// * FooTargetStreamer : public MCTargetStreamer
+/// * FooTargetAsmSreamer : public FooTargetStreamer
+/// * FooTargetELFStreamer : public FooTargetStreamer
+///
+/// FooTargetStreamer should have a pure virtual method for each directive. For
+/// example, for a ".bar symbol_name" directive, it should have
+/// virtual emitBar(const MCSymbol &Symbol) = 0;
+///
+/// The FooTargetAsmSreamer and FooTargetELFStreamer classes implement the
+/// method. The assembly streamer just prints ".bar symbol_name". The object
+/// streamer does whatever is needed to implement .bar in the object file.
+///
+/// In the assembly printer and parser the target streamer can be used by
+/// calling getTargetStreamer and casting it to FooTargetStreamer:
+///
+/// MCTargetStreamer &TS = OutStreamer.getTargetStreamer();
+/// FooTargetStreamer &ATS = static_cast<FooTargetStreamer &>(TS);
+///
+/// The base classes FooTargetAsmSreamer and FooTargetELFStreamer should *never*
+/// be treated differently. Callers should always talk to a FooTargetStreamer.
+class MCTargetStreamer {
+protected:
+  OwningPtr<MCStreamer> Streamer;
+
+public:
+  virtual ~MCTargetStreamer();
+  void setStreamer(MCStreamer *S) { Streamer.reset(S); }
+};
+
+// FIXME: declared here because it is used from
+// lib/CodeGen/AsmPrinter/ARMException.cpp.
+class ARMTargetStreamer : public MCTargetStreamer {
+public:
+  virtual void emitFnStart() = 0;
+  virtual void emitFnEnd() = 0;
+  virtual void emitCantUnwind() = 0;
+  virtual void emitPersonality(const MCSymbol *Personality) = 0;
+  virtual void emitHandlerData() = 0;
+  virtual void emitSetFP(unsigned FpReg, unsigned SpReg,
+                         int64_t Offset = 0) = 0;
+  virtual void emitPad(int64_t Offset) = 0;
+  virtual void emitRegSave(const SmallVectorImpl<unsigned> &RegList,
+                           bool isVector) = 0;
+};
 
 /// MCStreamer - Streaming machine code generation interface.  This interface
 /// is intended to provide a programatic interface that is very similar to the
@@ -50,6 +100,7 @@ typedef std::pair<const MCSection *, const MCExpr *> MCSectionSubPair;
 ///
 class MCStreamer {
   MCContext &Context;
+  MCTargetStreamer *TargetStreamer;
 
   MCStreamer(const MCStreamer &) LLVM_DELETED_FUNCTION;
   MCStreamer &operator=(const MCStreamer &) LLVM_DELETED_FUNCTION;
@@ -80,7 +131,7 @@ class MCStreamer {
   bool AutoInitSections;
 
 protected:
-  MCStreamer(MCContext &Ctx);
+  MCStreamer(MCContext &Ctx, MCTargetStreamer *TargetStreamer);
 
   const MCExpr *BuildSymbolDiff(MCContext &Context, const MCSymbol *A,
                                 const MCSymbol *B);
@@ -106,6 +157,11 @@ public:
   virtual void reset();
 
   MCContext &getContext() const { return Context; }
+
+  MCTargetStreamer &getTargetStreamer() {
+    assert(TargetStreamer);
+    return *TargetStreamer;
+  }
 
   unsigned getNumFrameInfos() { return FrameInfos.size(); }
 
@@ -600,28 +656,6 @@ public:
   virtual void EmitRawText(StringRef String);
   void EmitRawText(const Twine &String);
 
-  /// ARM-related methods.
-  /// FIXME: Eventually we should have some "target MC streamer" and move
-  /// these methods there.
-  virtual void EmitFnStart();
-  virtual void EmitFnEnd();
-  virtual void EmitCantUnwind();
-  virtual void EmitPersonality(const MCSymbol *Personality);
-  virtual void EmitHandlerData();
-  virtual void EmitSetFP(unsigned FpReg, unsigned SpReg, int64_t Offset = 0);
-  virtual void EmitPad(int64_t Offset);
-  virtual void EmitRegSave(const SmallVectorImpl<unsigned> &RegList,
-                           bool isVector);
-
-  /// Mips-related methods.
-  virtual void emitMipsHackELFFlags(unsigned Flags);
-  virtual void emitMipsHackSTOCG(MCSymbol *Sym, unsigned Val);
-
-  /// PPC-related methods.
-  /// FIXME: Eventually replace it with some "target MC streamer" and move
-  /// these methods there.
-  virtual void EmitTCEntry(const MCSymbol &S);
-
   /// Flush - Causes any cached state to be written out.
   virtual void Flush() {}
 
@@ -652,9 +686,9 @@ MCStreamer *createNullStreamer(MCContext &Ctx);
 ///
 /// \param ShowInst - Whether to show the MCInst representation inline with
 /// the assembly.
-MCStreamer *createAsmStreamer(MCContext &Ctx, formatted_raw_ostream &OS,
-                              bool isVerboseAsm, bool useLoc, bool useCFI,
-                              bool useDwarfDirectory,
+MCStreamer *createAsmStreamer(MCContext &Ctx, MCTargetStreamer *TargetStreamer,
+                              formatted_raw_ostream &OS, bool isVerboseAsm,
+                              bool useLoc, bool useCFI, bool useDwarfDirectory,
                               MCInstPrinter *InstPrint = 0,
                               MCCodeEmitter *CE = 0, MCAsmBackend *TAB = 0,
                               bool ShowInst = false);
@@ -677,8 +711,9 @@ MCStreamer *createWinCOFFStreamer(MCContext &Ctx, MCAsmBackend &TAB,
 
 /// createELFStreamer - Create a machine code streamer which will generate
 /// ELF format object files.
-MCStreamer *createELFStreamer(MCContext &Ctx, MCAsmBackend &TAB,
-                              raw_ostream &OS, MCCodeEmitter *CE, bool RelaxAll,
+MCStreamer *createELFStreamer(MCContext &Ctx, MCTargetStreamer *TargetStreamer,
+                              MCAsmBackend &TAB, raw_ostream &OS,
+                              MCCodeEmitter *CE, bool RelaxAll,
                               bool NoExecStack);
 
 /// createPureStreamer - Create a machine code streamer which will generate

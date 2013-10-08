@@ -9,6 +9,7 @@
 
 #include "MCTargetDesc/MipsMCTargetDesc.h"
 #include "MipsRegisterInfo.h"
+#include "MipsTargetStreamer.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
@@ -55,6 +56,11 @@ private:
 
 namespace {
 class MipsAsmParser : public MCTargetAsmParser {
+
+  MipsTargetStreamer &getTargetStreamer() {
+    MCTargetStreamer &TS = Parser.getStreamer().getTargetStreamer();
+    return static_cast<MipsTargetStreamer &>(TS);
+  }
 
   MCSubtargetInfo &STI;
   MCAsmParser &Parser;
@@ -2115,7 +2121,7 @@ bool MipsAsmParser::parseDirectiveMipsHackStocg() {
   if (Parser.parseAbsoluteExpression(Flags))
     return TokError("unexpected token");
 
-  Parser.getStreamer().emitMipsHackSTOCG(Sym, Flags);
+  getTargetStreamer().emitMipsHackSTOCG(Sym, Flags);
   return false;
 }
 
@@ -2124,7 +2130,7 @@ bool MipsAsmParser::parseDirectiveMipsHackELFFlags() {
   if (Parser.parseAbsoluteExpression(Flags))
     return TokError("unexpected token");
 
-  Parser.getStreamer().emitMipsHackELFFlags(Flags);
+  getTargetStreamer().emitMipsHackELFFlags(Flags);
   return false;
 }
 

@@ -14,13 +14,16 @@
 #include "PPCMCTargetDesc.h"
 #include "InstPrinter/PPCInstPrinter.h"
 #include "PPCMCAsmInfo.h"
+#include "PPCTargetStreamer.h"
 #include "llvm/MC/MCCodeGenInfo.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
+#include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MachineLocation.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/TargetRegistry.h"
 
 #define GET_INSTRINFO_MC_DESC
@@ -101,6 +104,29 @@ static MCCodeGenInfo *createPPCMCCodeGenInfo(StringRef TT, Reloc::Model RM,
   return X;
 }
 
+namespace {
+class PPCTargetAsmStreamer : public PPCTargetStreamer {
+  formatted_raw_ostream &OS;
+
+public:
+  PPCTargetAsmStreamer(formatted_raw_ostream &OS) : OS(OS) {}
+  virtual void emitTCEntry(const MCSymbol &S) {
+    OS << "\t.tc ";
+    OS << S.getName();
+    OS << "[TC],";
+    OS << S.getName();
+    OS << '\n';
+  }
+};
+
+class PPCTargetELFStreamer : public PPCTargetStreamer {
+  virtual void emitTCEntry(const MCSymbol &S) {
+    // Creates a R_PPC64_TOC relocation
+    Streamer->EmitSymbolValue(&S, 8);
+  }
+};
+}
+
 // This is duplicated code. Refactor this.
 static MCStreamer *createMCStreamer(const Target &T, StringRef TT,
                                     MCContext &Ctx, MCAsmBackend &MAB,
@@ -111,7 +137,20 @@ static MCStreamer *createMCStreamer(const Target &T, StringRef TT,
   if (Triple(TT).isOSDarwin())
     return createMachOStreamer(Ctx, MAB, OS, Emitter, RelaxAll);
 
-  return createELFStreamer(Ctx, MAB, OS, Emitter, RelaxAll, NoExecStack);
+  PPCTargetStreamer *S = new PPCTargetELFStreamer();
+  return createELFStreamer(Ctx, S, MAB, OS, Emitter, RelaxAll, NoExecStack);
+}
+
+static MCStreamer *
+createMCAsmStreamer(MCContext &Ctx, formatted_raw_ostream &OS,
+                    bool isVerboseAsm, bool useLoc, bool useCFI,
+                    bool useDwarfDirectory, MCInstPrinter *InstPrint,
+                    MCCodeEmitter *CE, MCAsmBackend *TAB, bool ShowInst) {
+  PPCTargetStreamer *S = new PPCTargetAsmStreamer(OS);
+
+  return llvm::createAsmStreamer(Ctx, S, OS, isVerboseAsm, useLoc, useCFI,
+                                 useDwarfDirectory, InstPrint, CE, TAB,
+                                 ShowInst);
 }
 
 static MCInstPrinter *createPPCMCInstPrinter(const Target &T,
@@ -170,6 +209,11 @@ extern "C" void LLVMInitializePowerPCTargetMC() {
   TargetRegistry::RegisterMCObjectStreamer(ThePPC32Target, createMCStreamer);
   TargetRegistry::RegisterMCObjectStreamer(ThePPC64Target, createMCStreamer);
   TargetRegistry::RegisterMCObjectStreamer(ThePPC64LETarget, createMCStreamer);
+
+  // Register the asm streamer.
+  TargetRegistry::RegisterAsmStreamer(ThePPC32Target, createMCAsmStreamer);
+  TargetRegistry::RegisterAsmStreamer(ThePPC64Target, createMCAsmStreamer);
+  TargetRegistry::RegisterAsmStreamer(ThePPC64LETarget, createMCAsmStreamer);
 
   // Register the MCInstPrinter.
   TargetRegistry::RegisterMCInstPrinter(ThePPC32Target, createPPCMCInstPrinter);

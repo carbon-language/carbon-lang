@@ -52,6 +52,11 @@ class ARMAsmParser : public MCTargetAsmParser {
   const MCInstrInfo &MII;
   const MCRegisterInfo *MRI;
 
+  ARMTargetStreamer &getTargetStreamer() {
+    MCTargetStreamer &TS = getParser().getStreamer().getTargetStreamer();
+    return static_cast<ARMTargetStreamer &>(TS);
+  }
+
   // Unwind directives state
   SMLoc FnStartLoc;
   SMLoc CantUnwindLoc;
@@ -7961,7 +7966,7 @@ bool ARMAsmParser::parseDirectiveFnStart(SMLoc L) {
   }
 
   FnStartLoc = L;
-  getParser().getStreamer().EmitFnStart();
+  getTargetStreamer().emitFnStart();
   return false;
 }
 
@@ -7974,8 +7979,7 @@ bool ARMAsmParser::parseDirectiveFnEnd(SMLoc L) {
 
   // Reset the unwind directives parser state
   resetUnwindDirectiveParserState();
-
-  getParser().getStreamer().EmitFnEnd();
+  getTargetStreamer().emitFnEnd();
   return false;
 }
 
@@ -7997,7 +8001,7 @@ bool ARMAsmParser::parseDirectiveCantUnwind(SMLoc L) {
     return true;
   }
 
-  getParser().getStreamer().EmitCantUnwind();
+  getTargetStreamer().emitCantUnwind();
   return false;
 }
 
@@ -8028,7 +8032,7 @@ bool ARMAsmParser::parseDirectivePersonality(SMLoc L) {
   Parser.Lex();
 
   MCSymbol *PR = getParser().getContext().GetOrCreateSymbol(Name);
-  getParser().getStreamer().EmitPersonality(PR);
+  getTargetStreamer().emitPersonality(PR);
   return false;
 }
 
@@ -8045,7 +8049,7 @@ bool ARMAsmParser::parseDirectiveHandlerData(SMLoc L) {
     return true;
   }
 
-  getParser().getStreamer().EmitHandlerData();
+  getTargetStreamer().emitHandlerData();
   return false;
 }
 
@@ -8105,9 +8109,8 @@ bool ARMAsmParser::parseDirectiveSetFP(SMLoc L) {
     Offset = CE->getValue();
   }
 
-  getParser().getStreamer().EmitSetFP(static_cast<unsigned>(NewFPReg),
-                                      static_cast<unsigned>(NewSPReg),
-                                      Offset);
+  getTargetStreamer().emitSetFP(static_cast<unsigned>(NewFPReg),
+                                static_cast<unsigned>(NewSPReg), Offset);
   return false;
 }
 
@@ -8136,7 +8139,7 @@ bool ARMAsmParser::parseDirectivePad(SMLoc L) {
   if (!CE)
     return Error(ExLoc, "pad offset must be an immediate");
 
-  getParser().getStreamer().EmitPad(CE->getValue());
+  getTargetStreamer().emitPad(CE->getValue());
   return false;
 }
 
@@ -8168,7 +8171,7 @@ bool ARMAsmParser::parseDirectiveRegSave(SMLoc L, bool IsVector) {
   if (IsVector && !Op->isDPRRegList())
     return Error(L, ".vsave expects DPR registers");
 
-  getParser().getStreamer().EmitRegSave(Op->getRegList(), IsVector);
+  getTargetStreamer().emitRegSave(Op->getRegList(), IsVector);
   return false;
 }
 

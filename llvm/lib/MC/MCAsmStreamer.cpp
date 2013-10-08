@@ -34,9 +34,6 @@
 #include <cctype>
 using namespace llvm;
 
-static cl::opt<bool> PrintHackDirectives("print-hack-directives",
-                                         cl::init(false), cl::Hidden);
-
 namespace {
 
 class MCAsmStreamer : public MCStreamer {
@@ -69,17 +66,15 @@ private:
   virtual void EmitCFIEndProcImpl(MCDwarfFrameInfo &Frame);
 
 public:
-  MCAsmStreamer(MCContext &Context, formatted_raw_ostream &os,
-                bool isVerboseAsm, bool useLoc, bool useCFI,
-                bool useDwarfDirectory,
-                MCInstPrinter *printer, MCCodeEmitter *emitter,
-                MCAsmBackend *asmbackend,
-                bool showInst)
-    : MCStreamer(Context), OS(os), MAI(Context.getAsmInfo()),
-      InstPrinter(printer), Emitter(emitter), AsmBackend(asmbackend),
-      CommentStream(CommentToEmit), IsVerboseAsm(isVerboseAsm),
-      ShowInst(showInst), UseLoc(useLoc), UseCFI(useCFI),
-      UseDwarfDirectory(useDwarfDirectory) {
+  MCAsmStreamer(MCContext &Context, MCTargetStreamer *TargetStreamer,
+                formatted_raw_ostream &os, bool isVerboseAsm, bool useLoc,
+                bool useCFI, bool useDwarfDirectory, MCInstPrinter *printer,
+                MCCodeEmitter *emitter, MCAsmBackend *asmbackend, bool showInst)
+      : MCStreamer(Context, TargetStreamer), OS(os), MAI(Context.getAsmInfo()),
+        InstPrinter(printer), Emitter(emitter), AsmBackend(asmbackend),
+        CommentStream(CommentToEmit), IsVerboseAsm(isVerboseAsm),
+        ShowInst(showInst), UseLoc(useLoc), UseCFI(useCFI),
+        UseDwarfDirectory(useDwarfDirectory) {
     if (InstPrinter && IsVerboseAsm)
       InstPrinter->setCommentStream(CommentStream);
   }
@@ -249,22 +244,6 @@ public:
   virtual void EmitWin64EHSaveXMM(unsigned Register, unsigned Offset);
   virtual void EmitWin64EHPushFrame(bool Code);
   virtual void EmitWin64EHEndProlog();
-
-  virtual void EmitFnStart();
-  virtual void EmitFnEnd();
-  virtual void EmitCantUnwind();
-  virtual void EmitPersonality(const MCSymbol *Personality);
-  virtual void EmitHandlerData();
-  virtual void EmitSetFP(unsigned FpReg, unsigned SpReg, int64_t Offset = 0);
-  virtual void EmitPad(int64_t Offset);
-  virtual void EmitRegSave(const SmallVectorImpl<unsigned> &RegList, bool);
-
-  /// Mips-related methods.
-  virtual void emitMipsHackELFFlags(unsigned Flags);
-  virtual void emitMipsHackSTOCG(MCSymbol *Sym, unsigned Val);
-
-
-  virtual void EmitTCEntry(const MCSymbol &S);
 
   virtual void EmitInstruction(const MCInst &Inst);
 
@@ -1317,93 +1296,6 @@ void MCAsmStreamer::AddEncodingComment(const MCInst &Inst) {
   }
 }
 
-void MCAsmStreamer::EmitFnStart() {
-  OS << "\t.fnstart";
-  EmitEOL();
-}
-
-void MCAsmStreamer::EmitFnEnd() {
-  OS << "\t.fnend";
-  EmitEOL();
-}
-
-void MCAsmStreamer::EmitCantUnwind() {
-  OS << "\t.cantunwind";
-  EmitEOL();
-}
-
-void MCAsmStreamer::EmitHandlerData() {
-  OS << "\t.handlerdata";
-  EmitEOL();
-}
-
-void MCAsmStreamer::EmitPersonality(const MCSymbol *Personality) {
-  OS << "\t.personality " << Personality->getName();
-  EmitEOL();
-}
-
-void MCAsmStreamer::EmitSetFP(unsigned FpReg, unsigned SpReg, int64_t Offset) {
-  OS << "\t.setfp\t";
-  InstPrinter->printRegName(OS, FpReg);
-  OS << ", ";
-  InstPrinter->printRegName(OS, SpReg);
-  if (Offset)
-    OS << ", #" << Offset;
-  EmitEOL();
-}
-
-void MCAsmStreamer::EmitPad(int64_t Offset) {
-  OS << "\t.pad\t#" << Offset;
-  EmitEOL();
-}
-
-void MCAsmStreamer::EmitRegSave(const SmallVectorImpl<unsigned> &RegList,
-                                bool isVector) {
-  assert(RegList.size() && "RegList should not be empty");
-  if (isVector)
-    OS << "\t.vsave\t{";
-  else
-    OS << "\t.save\t{";
-
-  InstPrinter->printRegName(OS, RegList[0]);
-
-  for (unsigned i = 1, e = RegList.size(); i != e; ++i) {
-    OS << ", ";
-    InstPrinter->printRegName(OS, RegList[i]);
-  }
-
-  OS << "}";
-  EmitEOL();
-}
-
-void MCAsmStreamer::emitMipsHackSTOCG(MCSymbol *Sym, unsigned Val) {
-  if (!PrintHackDirectives)
-    return;
-
-  OS << "\t.mips_hack_stocg ";
-  OS << Sym->getName();
-  OS << ", ";
-  OS << Val;
-  EmitEOL();
-}
-
-void MCAsmStreamer::emitMipsHackELFFlags(unsigned Flags) {
-  if (!PrintHackDirectives)
-    return;
-
-  OS << "\t.mips_hack_elf_flags 0x";
-  OS.write_hex(Flags);
-  EmitEOL();
-}
-
-void MCAsmStreamer::EmitTCEntry(const MCSymbol &S) {
-  OS << "\t.tc ";
-  OS << S.getName();
-  OS << "[TC],";
-  OS << S.getName();
-  EmitEOL();
-}
-
 void MCAsmStreamer::EmitInstruction(const MCInst &Inst) {
   assert(getCurrentSection().first &&
          "Cannot emit contents before setting section!");
@@ -1469,11 +1361,12 @@ void MCAsmStreamer::FinishImpl() {
 }
 
 MCStreamer *llvm::createAsmStreamer(MCContext &Context,
+                                    MCTargetStreamer *TargetStreamer,
                                     formatted_raw_ostream &OS,
-                                    bool isVerboseAsm, bool useLoc,
-                                    bool useCFI, bool useDwarfDirectory,
-                                    MCInstPrinter *IP, MCCodeEmitter *CE,
-                                    MCAsmBackend *MAB, bool ShowInst) {
-  return new MCAsmStreamer(Context, OS, isVerboseAsm, useLoc, useCFI,
-                           useDwarfDirectory, IP, CE, MAB, ShowInst);
+                                    bool isVerboseAsm, bool useLoc, bool useCFI,
+                                    bool useDwarfDirectory, MCInstPrinter *IP,
+                                    MCCodeEmitter *CE, MCAsmBackend *MAB,
+                                    bool ShowInst) {
+  return new MCAsmStreamer(Context, TargetStreamer, OS, isVerboseAsm, useLoc,
+                           useCFI, useDwarfDirectory, IP, CE, MAB, ShowInst);
 }

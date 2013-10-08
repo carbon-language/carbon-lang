@@ -37,7 +37,7 @@ private:
 public:
   MCMachOStreamer(MCContext &Context, MCAsmBackend &MAB, raw_ostream &OS,
                   MCCodeEmitter *Emitter)
-      : MCObjectStreamer(Context, MAB, OS, Emitter) {}
+      : MCObjectStreamer(Context, 0, MAB, OS, Emitter) {}
 
   /// @name MCStreamer Interface
   /// @{

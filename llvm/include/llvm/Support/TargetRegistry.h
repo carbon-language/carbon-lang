@@ -46,18 +46,18 @@ namespace llvm {
   class MCRelocationInfo;
   class MCTargetAsmParser;
   class TargetMachine;
+  class MCTargetStreamer;
   class TargetOptions;
   class raw_ostream;
   class formatted_raw_ostream;
 
-  MCStreamer *createAsmStreamer(MCContext &Ctx, formatted_raw_ostream &OS,
-                                bool isVerboseAsm,
+  MCStreamer *createAsmStreamer(MCContext &Ctx,
+                                MCTargetStreamer *TargetStreamer,
+                                formatted_raw_ostream &OS, bool isVerboseAsm,
                                 bool useLoc, bool useCFI,
                                 bool useDwarfDirectory,
-                                MCInstPrinter *InstPrint,
-                                MCCodeEmitter *CE,
-                                MCAsmBackend *TAB,
-                                bool ShowInst);
+                                MCInstPrinter *InstPrint, MCCodeEmitter *CE,
+                                MCAsmBackend *TAB, bool ShowInst);
 
   MCRelocationInfo *createMCRelocationInfo(StringRef TT, MCContext &Ctx);
 
@@ -235,10 +235,22 @@ namespace llvm {
     /// MCSymbolizer, if registered (default = llvm::createMCSymbolizer)
     MCSymbolizerCtorTy MCSymbolizerCtorFn;
 
+    static MCStreamer *
+    createDefaultAsmStreamer(MCContext &Ctx, formatted_raw_ostream &OS,
+                             bool isVerboseAsm, bool useLoc, bool useCFI,
+                             bool useDwarfDirectory, MCInstPrinter *InstPrint,
+                             MCCodeEmitter *CE, MCAsmBackend *TAB,
+                             bool ShowInst) {
+      return llvm::createAsmStreamer(Ctx, 0, OS, isVerboseAsm, useLoc, useCFI,
+                                     useDwarfDirectory, InstPrint, CE, TAB,
+                                     ShowInst);
+    }
+
   public:
-    Target() : AsmStreamerCtorFn(llvm::createAsmStreamer),
-               MCRelocationInfoCtorFn(llvm::createMCRelocationInfo),
-               MCSymbolizerCtorFn(llvm::createMCSymbolizer) {}
+    Target()
+        : AsmStreamerCtorFn(createDefaultAsmStreamer),
+          MCRelocationInfoCtorFn(llvm::createMCRelocationInfo),
+          MCSymbolizerCtorFn(llvm::createMCSymbolizer) {}
 
     /// @name Target Information
     /// @{
@@ -816,7 +828,7 @@ namespace llvm {
     /// @param T - The target being registered.
     /// @param Fn - A function to construct an MCStreamer for the target.
     static void RegisterAsmStreamer(Target &T, Target::AsmStreamerCtorTy Fn) {
-      if (T.AsmStreamerCtorFn == createAsmStreamer)
+      if (T.AsmStreamerCtorFn == Target::createDefaultAsmStreamer)
         T.AsmStreamerCtorFn = Fn;
     }
 

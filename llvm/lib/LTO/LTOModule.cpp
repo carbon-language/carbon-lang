@@ -591,7 +591,7 @@ namespace {
       return Symbols.end();
     }
 
-    RecordStreamer(MCContext &Context) : MCStreamer(Context) {}
+    RecordStreamer(MCContext &Context) : MCStreamer(Context, 0) {}
 
     virtual void EmitInstruction(const MCInst &Inst) {
       // Scan for values.
