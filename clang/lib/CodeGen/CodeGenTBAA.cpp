@@ -50,16 +50,11 @@ llvm::MDNode *CodeGenTBAA::getRoot() {
   return Root;
 }
 
-// For struct-path aware TBAA, the scalar type has the same format as
-// the struct type: name, offset, pointer to another node in the type DAG.
-// For scalar TBAA, the scalar type is the same as the scalar tag:
-// name and a parent pointer.
+// For both scalar TBAA and struct-path aware TBAA, the scalar type has the
+// same format: name, parent node, and offset.
 llvm::MDNode *CodeGenTBAA::createTBAAScalarType(StringRef Name,
                                                 llvm::MDNode *Parent) {
-  if (CodeGenOpts.StructPathTBAA)
-    return MDHelper.createTBAAScalarTypeNode(Name, Parent);
-  else
-    return MDHelper.createTBAANode(Name, Parent);
+  return MDHelper.createTBAAScalarTypeNode(Name, Parent);
 }
 
 llvm::MDNode *CodeGenTBAA::getChar() {
@@ -91,7 +86,7 @@ static bool TypeHasMayAlias(QualType QTy) {
 
 llvm::MDNode *
 CodeGenTBAA::getTBAAInfo(QualType QTy) {
-  // At -O0 TBAA is not emitted for regular types.
+  // At -O0 or relaxed aliasing, TBAA is not emitted for regular types.
   if (CodeGenOpts.OptimizationLevel == 0 || CodeGenOpts.RelaxedAliasing)
     return NULL;
 
@@ -211,8 +206,7 @@ CodeGenTBAA::CollectFields(uint64_t BaseOffset,
   uint64_t Offset = BaseOffset;
   uint64_t Size = Context.getTypeSizeInChars(QTy).getQuantity();
   llvm::MDNode *TBAAInfo = MayAlias ? getChar() : getTBAAInfo(QTy);
-  llvm::MDNode *TBAATag = CodeGenOpts.StructPathTBAA ?
-                          getTBAAScalarTagInfo(TBAAInfo) : TBAAInfo;
+  llvm::MDNode *TBAATag = getTBAAScalarTagInfo(TBAAInfo);
   Fields.push_back(llvm::MDBuilder::TBAAStructField(Offset, Size, TBAATag));
   return true;
 }
@@ -293,11 +287,15 @@ CodeGenTBAA::getTBAAStructTypeInfo(QualType QTy) {
   return StructMetadataCache[Ty] = NULL;
 }
 
+/// Return a TBAA tag node for both scalar TBAA and struct-path aware TBAA.
 llvm::MDNode *
 CodeGenTBAA::getTBAAStructTagInfo(QualType BaseQTy, llvm::MDNode *AccessNode,
                                   uint64_t Offset) {
+  if (!AccessNode)
+    return NULL;
+
   if (!CodeGenOpts.StructPathTBAA)
-    return AccessNode;
+    return getTBAAScalarTagInfo(AccessNode);
 
   const Type *BTy = Context.getCanonicalType(BaseQTy).getTypePtr();
   TBAAPathTag PathTag = TBAAPathTag(BTy, AccessNode, Offset);
@@ -317,6 +315,8 @@ CodeGenTBAA::getTBAAStructTagInfo(QualType BaseQTy, llvm::MDNode *AccessNode,
 
 llvm::MDNode *
 CodeGenTBAA::getTBAAScalarTagInfo(llvm::MDNode *AccessNode) {
+  if (!AccessNode)
+    return NULL;
   if (llvm::MDNode *N = ScalarTagMetadataCache[AccessNode])
     return N;
 

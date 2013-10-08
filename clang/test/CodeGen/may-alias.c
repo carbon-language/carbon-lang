@@ -27,10 +27,12 @@ void test1(struct Test1MA *p1, struct Test1 *p2) {
   // PATH: store i32 3, i32* {{%.*}}, !tbaa [[TAG_test1_x:!.*]]
   p2->x = 3;
 }
-// CHECK: metadata !{metadata !"any pointer", metadata [[TAG_CHAR]]}
-// CHECK: [[TAG_CHAR]] = metadata !{metadata !"omnipotent char", metadata [[TAG_CXX_TBAA:!.*]]}
+// CHECK: metadata !{metadata !"any pointer", metadata [[TYPE_CHAR:!.*]],
+// CHECK: [[TYPE_CHAR]] = metadata !{metadata !"omnipotent char", metadata [[TAG_CXX_TBAA:!.*]],
 // CHECK: [[TAG_CXX_TBAA]] = metadata !{metadata !"Simple C/C++ TBAA"}
-// CHECK: [[TAG_INT]] = metadata !{metadata !"int", metadata [[TAG_CHAR]]}
+// CHECK: [[TAG_CHAR]] = metadata !{metadata [[TYPE_CHAR]], metadata [[TYPE_CHAR]], i64 0}
+// CHECK: [[TAG_INT]] = metadata !{metadata [[TYPE_INT:!.*]], metadata [[TYPE_INT]], i64 0}
+// CHECK: [[TYPE_INT]] = metadata !{metadata !"int", metadata [[TYPE_CHAR]]
 
 // PATH: [[TYPE_CHAR:!.*]] = metadata !{metadata !"omnipotent char", metadata !{{.*}}
 // PATH: [[TAG_CHAR]] = metadata !{metadata [[TYPE_CHAR]], metadata [[TYPE_CHAR]], i64 0}

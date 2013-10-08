@@ -1111,7 +1111,8 @@ llvm::Value *CodeGenFunction::EmitLoadOfScalar(llvm::Value *Addr, bool Volatile,
   if (TBAAInfo) {
     llvm::MDNode *TBAAPath = CGM.getTBAAStructTagInfo(TBAABaseType, TBAAInfo,
                                                       TBAAOffset);
-    CGM.DecorateInstruction(Load, TBAAPath, false/*ConvertTypeToTag*/);
+    if (TBAAPath)
+      CGM.DecorateInstruction(Load, TBAAPath, false/*ConvertTypeToTag*/);
   }
 
   if ((SanOpts->Bool && hasBooleanRepresentation(Ty)) ||
@@ -1224,7 +1225,8 @@ void CodeGenFunction::EmitStoreOfScalar(llvm::Value *Value, llvm::Value *Addr,
   if (TBAAInfo) {
     llvm::MDNode *TBAAPath = CGM.getTBAAStructTagInfo(TBAABaseType, TBAAInfo,
                                                       TBAAOffset);
-    CGM.DecorateInstruction(Store, TBAAPath, false/*ConvertTypeToTag*/);
+    if (TBAAPath)
+      CGM.DecorateInstruction(Store, TBAAPath, false/*ConvertTypeToTag*/);
   }
 }
 
@@ -2511,7 +2513,8 @@ LValue CodeGenFunction::EmitLValueForField(LValue base,
           tbaa = CGM.getTBAAInfo(getContext().CharTy);
         else
           tbaa = CGM.getTBAAInfo(type);
-        CGM.DecorateInstruction(load, tbaa);
+        if (tbaa)
+          CGM.DecorateInstruction(load, tbaa);
       }
 
       addr = load;

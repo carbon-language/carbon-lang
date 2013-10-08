@@ -198,10 +198,12 @@ uint32_t g12(StructC *C, StructD *D, uint64_t count) {
   return b1->a.f32;
 }
 
-// CHECK: [[TAG_char:!.*]] = metadata !{metadata !"omnipotent char", metadata [[TAG_cxx_tbaa:!.*]]}
+// CHECK: [[TYPE_char:!.*]] = metadata !{metadata !"omnipotent char", metadata [[TAG_cxx_tbaa:!.*]],
 // CHECK: [[TAG_cxx_tbaa]] = metadata !{metadata !"Simple C/C++ TBAA"}
-// CHECK: [[TAG_i32]] = metadata !{metadata !"int", metadata [[TAG_char]]}
-// CHECK: [[TAG_i16]] = metadata !{metadata !"short", metadata [[TAG_char]]}
+// CHECK: [[TAG_i32]] = metadata !{metadata [[TYPE_i32:!.*]], metadata [[TYPE_i32]], i64 0}
+// CHECK: [[TYPE_i32]] = metadata !{metadata !"int", metadata [[TYPE_char]],
+// CHECK: [[TAG_i16]] = metadata !{metadata [[TYPE_i16:!.*]], metadata [[TYPE_i16]], i64 0}
+// CHECK: [[TYPE_i16]] = metadata !{metadata !"short", metadata [[TYPE_char]],
 
 // PATH: [[TYPE_CHAR:!.*]] = metadata !{metadata !"omnipotent char", metadata
 // PATH: [[TAG_i32]] = metadata !{metadata [[TYPE_INT:!.*]], metadata [[TYPE_INT]], i64 0}
