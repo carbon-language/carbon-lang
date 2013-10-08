@@ -289,7 +289,7 @@ public:
   }
 
   /// \brief  number of files.
-  int64_t numFiles() const { return _files.size(); }
+  size_t numFiles() const { return _files.size(); }
 
   /// \brief add a file to the list of files
   virtual void addFiles(InputGraph::FileVectorT files) {
@@ -355,7 +355,7 @@ public:
   }
 
   /// \brief  number of files.
-  int64_t numFiles() const { return _files.size(); }
+  size_t numFiles() const { return _files.size(); }
 
   /// \brief add a file to the list of files
   virtual void appendInputFile(std::unique_ptr<File> f) {
