@@ -164,4 +164,7 @@ def int_aarch64_neon_vcvtf32_u32 :
   Intrinsic<[llvm_v1f32_ty], [llvm_v1i32_ty], [IntrNoMem]>;
 def int_aarch64_neon_vcvtf64_u64 :
   Intrinsic<[llvm_v1f64_ty], [llvm_v1i64_ty], [IntrNoMem]>;
+
+// Scalar Floating-point Reciprocal Exponent
+def int_aarch64_neon_vrecpx : Neon_1Arg_Intrinsic;
 }

@@ -213,6 +213,47 @@
 // CHECK-ERROR:         movi v1.16b, #256
 // CHECK-ERROR:                      ^
 
+//----------------------------------------------------------------------
+// Scalar Floating-point Reciprocal Estimate
+//----------------------------------------------------------------------
+
+    frecpe s19, h14
+    frecpe d13, s13
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        frecpe s19, h14
+// CHECK-ERROR:                    ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        frecpe d13, s13
+// CHECK-ERROR:                    ^
+
+//----------------------------------------------------------------------
+// Scalar Floating-point Reciprocal Exponent
+//----------------------------------------------------------------------
+
+    frecpx s18, h10
+    frecpx d16, s19
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        frecpx s18, h10
+// CHECK-ERROR:                    ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        frecpx d16, s19
+// CHECK-ERROR:                    ^
+
+//----------------------------------------------------------------------
+// Scalar Floating-point Reciprocal Square Root Estimate
+//----------------------------------------------------------------------
+
+    frsqrte s22, h13
+    frsqrte d21, s12
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        frsqrte s22, h13
+// CHECK-ERROR:                     ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        frsqrte d21, s12
+// CHECK-ERROR:                     ^
 
 //----------------------------------------------------------------------
 // Vector Move Immediate - bytemask, per doubleword

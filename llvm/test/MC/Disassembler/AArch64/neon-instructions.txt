@@ -1508,3 +1508,27 @@
 # CHECK: ucvtf d21, d14
 0xb6,0xd9,0x21,0x7e
 0xd5,0xd9,0x61,0x7e
+
+#----------------------------------------------------------------------
+# Scalar Floating-point Reciprocal Estimate
+#----------------------------------------------------------------------
+# CHECK: frecpe s19, s14
+# CHECK: frecpe d13, d13
+0xd3,0xd9,0xa1,0x5e
+0xad,0xd9,0xe1,0x5e
+
+#----------------------------------------------------------------------
+# Scalar Floating-point Reciprocal Exponent
+#----------------------------------------------------------------------
+# CHECK: frecpx s18, s10
+# CHECK: frecpx d16, d19
+0x52,0xf9,0xa1,0x5e
+0x70,0xfa,0xe1,0x5e
+
+#----------------------------------------------------------------------
+# Scalar Floating-point Reciprocal Square Root Estimate
+#----------------------------------------------------------------------
+# CHECK: frsqrte s22, s13
+# CHECK: frsqrte d21, d12
+0xb6,0xd9,0xa1,0x7e
+0x95,0xd9,0xe1,0x7e
