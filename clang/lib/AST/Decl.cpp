@@ -702,8 +702,8 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D,
       // require looking at the linkage of this function, and we don't need this
       // for correctness because the type is not part of the function's
       // signature.
-      // FIXME: This is a hack. We should be able to solve this circularity some
-      // other way.
+      // FIXME: This is a hack. We should be able to solve this circularity and 
+      // the one in getLVForClassMember for Functions some other way.
       QualType TypeAsWritten = Function->getType();
       if (TypeSourceInfo *TSI = Function->getTypeSourceInfo())
         TypeAsWritten = TSI->getType();
@@ -830,9 +830,20 @@ static LinkageInfo getLVForClassMember(const NamedDecl *D,
   if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(D)) {
     // If the type of the function uses a type with unique-external
     // linkage, it's not legally usable from outside this translation unit.
-    if (MD->getType()->getLinkage() == UniqueExternalLinkage)
-      return LinkageInfo::uniqueExternal();
-
+    // But only look at the type-as-written. If this function has an auto-deduced
+    // return type, we can't compute the linkage of that type because it could
+    // require looking at the linkage of this function, and we don't need this
+    // for correctness because the type is not part of the function's
+    // signature.
+    // FIXME: This is a hack. We should be able to solve this circularity and the
+    // one in getLVForNamespaceScopeDecl for Functions some other way.
+    {
+      QualType TypeAsWritten = MD->getType();
+      if (TypeSourceInfo *TSI = MD->getTypeSourceInfo())
+        TypeAsWritten = TSI->getType();
+      if (TypeAsWritten->getLinkage() == UniqueExternalLinkage)
+        return LinkageInfo::uniqueExternal();
+    }
     // If this is a method template specialization, use the linkage for
     // the template parameters and arguments.
     if (FunctionTemplateSpecializationInfo *spec
