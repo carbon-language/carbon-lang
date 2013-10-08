@@ -1530,6 +1530,11 @@ TEST_F(FormatTest, FormatsClasses) {
                "  int i;\n"
                "};",
                getLLVMStyleWithColumns(32));
+  verifyFormat("struct aaaaaaaaaaaaa : public aaaaaaaaaaaaaaaaaaa< // break\n"
+               "                           aaaaaaaaaaaaaaaa> {};");
+  verifyFormat("struct aaaaaaaaaaaaaaaaaaaa\n"
+               "    : public aaaaaaaaaaaaaaaaaaa<aaaaaaaaaaaaaaaaaaaaa,\n"
+               "                                 aaaaaaaaaaaaaaaaaaaaaa> {};");
 }
 
 TEST_F(FormatTest, FormatsVariableDeclarationsAfterStructOrClass) {

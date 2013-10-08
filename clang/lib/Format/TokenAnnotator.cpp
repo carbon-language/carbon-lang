@@ -335,7 +335,7 @@ private:
           Contexts.back().FirstObjCSelectorName = Tok->Previous;
       } else if (Contexts.back().ColonIsForRangeExpr) {
         Tok->Type = TT_RangeBasedForLoopColon;
-      } else if (Contexts.size() == 1) {
+      } else if (Contexts.size() == 1 && Line.First->isNot(tok::kw_enum)) {
         Tok->Type = TT_InheritanceColon;
       } else if (Contexts.back().ContextKind == tok::l_paren) {
         Tok->Type = TT_InlineASMColon;

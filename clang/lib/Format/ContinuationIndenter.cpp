@@ -278,9 +278,10 @@ void ContinuationIndenter::addTokenOnCurrentLine(LineState &State, bool DryRun,
     // simple assignment without binary expression on the RHS. Also indent
     // relative to unary operators and the colons of constructor initializers.
     State.Stack.back().LastSpace = State.Column;
-  else if (Previous.Type == TT_InheritanceColon)
+  else if (Previous.Type == TT_InheritanceColon) {
     State.Stack.back().Indent = State.Column;
-  else if (Previous.opensScope()) {
+    State.Stack.back().LastSpace = State.Column;
+  } else if (Previous.opensScope()) {
     // If a function has a trailing call, indent all parameters from the
     // opening parenthesis. This avoids confusing indents like:
     //   OuterFunction(InnerFunctionCall( // break
