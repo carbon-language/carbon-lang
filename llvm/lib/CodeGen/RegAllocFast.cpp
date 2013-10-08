@@ -144,7 +144,7 @@ namespace {
     // not be erased.
     bool isBulkSpilling;
 
-    enum {
+    enum LLVM_ENUM_INT_TYPE(unsigned) {
       spillClean = 1,
       spillDirty = 100,
       spillImpossible = ~0u
