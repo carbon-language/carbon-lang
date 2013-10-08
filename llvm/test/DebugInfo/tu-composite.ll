@@ -11,6 +11,8 @@
 ; CHECK-NEXT: DW_AT_type [DW_FORM_ref4] (cu + {{.*}} => {[[TYPE]]})
 ; CHECK: DW_TAG_typedef
 ; CHECK-NEXT: DW_AT_type [DW_FORM_ref4] (cu + {{.*}} => {[[TYPE2]]})
+; CHECK: DW_TAG_array_type
+; CHECK-NEXT: DW_AT_type [DW_FORM_ref4] (cu + {{.*}} => {[[TYPE2]]})
 ; IR generated from clang -g with the following source:
 ; struct C {
 ;   virtual void foo();
@@ -22,6 +24,7 @@
 ; typedef bar baz;
 ; void test() {
 ;   baz B;
+;   bar A[3];
 ; }
 
 %struct.C = type { i32 (...)** }
@@ -49,8 +52,10 @@ declare void @llvm.dbg.declare(metadata, metadata) #1
 define void @_Z4testv() #0 {
 entry:
   %B = alloca %struct.bar, align 1
+  %A = alloca [3 x %struct.bar], align 1
   call void @llvm.dbg.declare(metadata !{%struct.bar* %B}, metadata !29), !dbg !31
-  ret void, !dbg !32
+  call void @llvm.dbg.declare(metadata !{[3 x %struct.bar]* %A}, metadata !32), !dbg !36
+  ret void, !dbg !37
 }
 
 attributes #0 = { nounwind ssp uwtable "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" }
@@ -91,4 +96,9 @@ attributes #1 = { nounwind readnone }
 !29 = metadata !{i32 786688, metadata !21, metadata !"B", metadata !7, i32 10, metadata !30, i32 0, i32 0} ; [ DW_TAG_auto_variable ] [B] [line 10]
 !30 = metadata !{i32 786454, metadata !1, null, metadata !"baz", i32 8, i64 0, i64 0, i64 0, i32 0, metadata !"_ZTS3bar"} ; [ DW_TAG_typedef ] [baz] [line 8, size 0, align 0, offset 0] [from _ZTS3bar]
 !31 = metadata !{i32 10, i32 0, metadata !21, null}
-!32 = metadata !{i32 11, i32 0, metadata !21, null}
+!32 = metadata !{i32 786688, metadata !21, metadata !"A", metadata !7, i32 11, metadata !33, i32 0, i32 0} ; [ DW_TAG_auto_variable ] [A] [line 11]
+!33 = metadata !{i32 786433, null, null, metadata !"", i32 0, i64 24, i64 8, i32 0, i32 0, metadata !"_ZTS3bar", metadata !34, i32 0, null, null, null} ; [ DW_TAG_array_type ] [line 0, size 24, align 8, offset 0] [from _ZTS3bar]
+!34 = metadata !{metadata !35}
+!35 = metadata !{i32 786465, i64 0, i64 3}        ; [ DW_TAG_subrange_type ] [0, 2]
+!36 = metadata !{i32 11, i32 0, metadata !21, null}
+!37 = metadata !{i32 12, i32 0, metadata !21, null}
