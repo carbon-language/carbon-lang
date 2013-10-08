@@ -116,6 +116,13 @@ static const unsigned InitAbbreviationsSetSize = 9; // log2(512)
 
 namespace llvm {
 
+/// resolve - Look in the DwarfDebug map for the MDNode that
+/// corresponds to the reference.
+template <typename T>
+T DbgVariable::resolve(DIRef<T> Ref) const {
+  return DD->resolve(Ref);
+}
+
 DIType DbgVariable::getType() const {
   DIType Ty = Var.getType();
   // FIXME: isBlockByrefVariable should be reformulated in terms of complex
@@ -149,13 +156,13 @@ DIType DbgVariable::getType() const {
     uint16_t tag = Ty.getTag();
 
     if (tag == dwarf::DW_TAG_pointer_type)
-      subType = DD->resolve(DIDerivedType(Ty).getTypeDerivedFrom());
+      subType = resolve(DIDerivedType(Ty).getTypeDerivedFrom());
 
     DIArray Elements = DICompositeType(subType).getTypeArray();
     for (unsigned i = 0, N = Elements.getNumElements(); i < N; ++i) {
       DIDerivedType DT = DIDerivedType(Elements.getElement(i));
       if (getName() == DT.getName())
-        return (DD->resolve(DT.getTypeDerivedFrom()));
+        return (resolve(DT.getTypeDerivedFrom()));
     }
   }
   return Ty;

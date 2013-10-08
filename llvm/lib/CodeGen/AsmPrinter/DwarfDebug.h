@@ -209,6 +209,11 @@ public:
     return Var.getAddrElement(i);
   }
   DIType getType() const;
+
+private:
+  /// resolve - Look in the DwarfDebug map for the MDNode that
+  /// corresponds to the reference.
+  template <typename T> T resolve(DIRef<T> Ref) const;
 };
 
 /// \brief Collects and handles information specific to a particular
