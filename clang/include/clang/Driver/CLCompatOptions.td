@@ -152,6 +152,8 @@ def _SLASH_nologo : CLIgnoredFlag<"nologo">;
 def _SLASH_Ob1 : CLIgnoredFlag<"Ob1">;
 def _SLASH_Ob2 : CLIgnoredFlag<"Ob2">;
 def _SLASH_RTC : CLIgnoredJoined<"RTC">;
+def _SLASH_sdl : CLIgnoredFlag<"sdl">;
+def _SLASH_sdl_ : CLIgnoredFlag<"sdl-">;
 def _SLASH_vmg : CLIgnoredFlag<"vmg">;
 def _SLASH_w : CLIgnoredJoined<"w">;
 def _SLASH_Zc_forScope : CLIgnoredFlag<"Zc:forScope">;
