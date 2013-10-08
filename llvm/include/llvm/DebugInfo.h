@@ -230,16 +230,7 @@ template <typename T> class DIRef {
 
 public:
   T resolve(const DITypeIdentifierMap &Map) const;
-  StringRef getName() const {
-    if (!Val)
-      return StringRef();
-
-    if (const MDNode *MD = dyn_cast<MDNode>(Val))
-      return T(MD).getName();
-
-    const MDString *MS = cast<MDString>(Val);
-    return MS->getString();
-  }
+  StringRef getName() const;
   operator Value *() const { return const_cast<Value *>(Val); }
 };
 
@@ -258,6 +249,18 @@ T DIRef<T>::resolve(const DITypeIdentifierMap &Map) const {
   assert(DIDescriptor(Iter->second).isType() &&
          "MDNode in DITypeIdentifierMap should be a DIType.");
   return T(Iter->second);
+}
+
+template <typename T>
+StringRef DIRef<T>::getName() const {
+  if (!Val)
+    return StringRef();
+
+  if (const MDNode *MD = dyn_cast<MDNode>(Val))
+    return T(MD).getName();
+
+  const MDString *MS = cast<MDString>(Val);
+  return MS->getString();
 }
 
 /// Specialize getFieldAs to handle fields that are references to DIScopes.
