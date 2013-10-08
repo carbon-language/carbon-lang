@@ -186,7 +186,7 @@ static bool format(std::string FileName) {
     return true;
   }
   if (Code->getBufferSize() == 0)
-    return true; // Empty files are formatted correctly.
+    return false; // Empty files are formatted correctly.
   FileID ID = createInMemoryFile(FileName, Code.get(), Sources, Files);
   std::vector<CharSourceRange> Ranges;
   if (fillRanges(Sources, ID, Code.get(), Ranges))

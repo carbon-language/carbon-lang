@@ -81,7 +81,8 @@ def main():
     stdout, stderr = p.communicate()
     if stderr:
       print stderr
-      return
+    if p.returncode != 0:
+      sys.exit(p.returncode);
 
 
 if __name__ == '__main__':
