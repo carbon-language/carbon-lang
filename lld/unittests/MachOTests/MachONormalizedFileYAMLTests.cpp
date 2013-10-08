@@ -217,7 +217,7 @@ TEST(ObjectFileYAML, oneSection) {
   EXPECT_EQ((uint32_t)(sect.attributes), 
                             (uint32_t)(llvm::MachO::S_ATTR_PURE_INSTRUCTIONS));
   EXPECT_EQ(sect.alignment, 1U);
-  EXPECT_EQ(sect.address, 0x12345678ULL);
+  EXPECT_EQ((uint64_t)sect.address, 0x12345678ULL);
   EXPECT_EQ(sect.content.size(), 2UL);
   EXPECT_EQ((int)(sect.content[0]), 0x90);
   EXPECT_EQ((int)(sect.content[1]), 0x90);
