@@ -33,9 +33,8 @@ Examining the AST
 =================
 
 A good way to familarize yourself with the Clang AST is to actually look
-at it on some simple example code. Clang has a builtin AST-dump modes,
-which can be enabled with the flags ``-ast-dump`` and ``-ast-dump-xml``. Note
-that ``-ast-dump-xml`` currently only works with debug builds of clang.
+at it on some simple example code. Clang has a builtin AST-dump mode,
+which can be enabled with the flag ``-ast-dump``.
 
 Let's look at a simple example AST:
 
@@ -48,39 +47,25 @@ Let's look at a simple example AST:
     }
 
     # Clang by default is a frontend for many tools; -cc1 tells it to directly
-    # use the C++ compiler mode. -undef leaves out some internal declarations.
-    $ clang -cc1 -undef -ast-dump-xml test.cc
+    # use the C++ compiler mode.
+    $ clang -cc1 -ast-dump test.cc
+    TranslationUnitDecl 0x5aea0d0 <<invalid sloc>>
     ... cutting out internal declarations of clang ...
-    <TranslationUnit ptr="0x4871160">
-     <Function ptr="0x48a5800" name="f" prototype="true">
-      <FunctionProtoType ptr="0x4871de0" canonical="0x4871de0">
-       <BuiltinType ptr="0x4871250" canonical="0x4871250"/>
-       <parameters>
-        <BuiltinType ptr="0x4871250" canonical="0x4871250"/>
-       </parameters>
-      </FunctionProtoType>
-      <ParmVar ptr="0x4871d80" name="x" initstyle="c">
-       <BuiltinType ptr="0x4871250" canonical="0x4871250"/>
-      </ParmVar>
-      <Stmt>
-    (CompoundStmt 0x48a5a38 <t2.cc:1:14, line:4:1>
-      (DeclStmt 0x48a59c0 <line:2:3, col:24>
-        0x48a58c0 "int result =
-          (ParenExpr 0x48a59a0 <col:16, col:23> 'int'
-            (BinaryOperator 0x48a5978 <col:17, col:21> 'int' '/'
-              (ImplicitCastExpr 0x48a5960 <col:17> 'int' <LValueToRValue>
-                (DeclRefExpr 0x48a5918 <col:17> 'int' lvalue ParmVar 0x4871d80 'x' 'int'))
-              (IntegerLiteral 0x48a5940 <col:21> 'int' 42)))")
-      (ReturnStmt 0x48a5a18 <line:3:3, col:10>
-        (ImplicitCastExpr 0x48a5a00 <col:10> 'int' <LValueToRValue>
-          (DeclRefExpr 0x48a59d8 <col:10> 'int' lvalue Var 0x48a58c0 'result' 'int'))))
+    `-FunctionDecl 0x5aeab50 <test.cc:1:1, line:4:1> f 'int (int)'
+      |-ParmVarDecl 0x5aeaa90 <line:1:7, col:11> x 'int'
+      `-CompoundStmt 0x5aead88 <col:14, line:4:1>
+        |-DeclStmt 0x5aead10 <line:2:3, col:24>
+        | `-VarDecl 0x5aeac10 <col:3, col:23> result 'int'
+        |   `-ParenExpr 0x5aeacf0 <col:16, col:23> 'int'
+        |     `-BinaryOperator 0x5aeacc8 <col:17, col:21> 'int' '/'
+        |       |-ImplicitCastExpr 0x5aeacb0 <col:17> 'int' <LValueToRValue>
+        |       | `-DeclRefExpr 0x5aeac68 <col:17> 'int' lvalue ParmVar 0x5aeaa90 'x' 'int'
+        |       `-IntegerLiteral 0x5aeac90 <col:21> 'int' 42
+        `-ReturnStmt 0x5aead68 <line:3:3, col:10>
+          `-ImplicitCastExpr 0x5aead50 <col:10> 'int' <LValueToRValue>
+            `-DeclRefExpr 0x5aead28 <col:10> 'int' lvalue Var 0x5aeac10 'result' 'int'
 
-      </Stmt>
-     </Function>
-    </TranslationUnit>
-
-In general, ``-ast-dump-xml`` dumps declarations in an XML-style format and
-statements in an S-expression-style format. The toplevel declaration in
+The toplevel declaration in
 a translation unit is always the `translation unit
 declaration <http://clang.llvm.org/doxygen/classclang_1_1TranslationUnitDecl.html>`_.
 In this example, our first user written declaration is the `function
