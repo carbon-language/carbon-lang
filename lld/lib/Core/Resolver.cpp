@@ -74,7 +74,7 @@ private:
 void Resolver::doFile(const File &file) {}
 
 void Resolver::handleFile(const File &file) {
-  int32_t resolverState = Resolver::StateNoChange;
+  uint32_t resolverState = Resolver::StateNoChange;
   doFile(file);
   for (const DefinedAtom *atom : file.defined()) {
     doDefinedAtom(*atom);

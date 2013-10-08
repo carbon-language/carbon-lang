@@ -312,7 +312,7 @@ public:
   /// types of nodes in the InputGraph. The resolver state is nothing but a
   /// bitmask of various types of states that the resolver handles when adding
   /// atoms.
-  virtual void setResolverState(int32_t resolverState) const;
+  virtual void setResolverState(uint32_t resolverState) const;
 
   /// @}
 

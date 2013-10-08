@@ -76,7 +76,7 @@ bool LinkingContext::createInternalFiles(
   return true;
 }
 
-void LinkingContext::setResolverState(int32_t state) const {
+void LinkingContext::setResolverState(uint32_t state) const {
   _currentInputElement->setResolverState(state);
 }
 
