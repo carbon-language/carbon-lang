@@ -183,10 +183,11 @@ bool checkKeyMgrRegisteredFDEs(uintptr_t pc, void *&fde) {
 }
 
 
-#if !FOR_DYLD
+#if !FOR_DYLD && _LIBUNWIND_BUILD_SJLJ_APIS
 
 #include <System/pthread_machdep.h>
 
+// Accessors to get get/set linked list of frames for sjlj based execeptions.
 _LIBUNWIND_HIDDEN
 struct _Unwind_FunctionContext *__Unwind_SjLj_GetTopOfFunctionStack() {
   return (struct _Unwind_FunctionContext *)
