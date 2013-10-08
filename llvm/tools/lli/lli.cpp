@@ -489,15 +489,6 @@ int main(int argc, char **argv, char * const *envp) {
     // Create the remote target.
     Target->create();
 
-// FIXME: Don't commit like this.  I don't think these calls are necessary.
-#if 0
-    // Trigger compilation.
-    EE->generateCodeForModule(Mod);
-
-    // Get everything ready to execute.
-    EE->finalizeModule(Mod);
-#endif
-
     // Since we're executing in a (at least simulated) remote address space,
     // we can't use the ExecutionEngine::runFunctionAsMain(). We have to
     // grab the function address directly here and tell the remote target
