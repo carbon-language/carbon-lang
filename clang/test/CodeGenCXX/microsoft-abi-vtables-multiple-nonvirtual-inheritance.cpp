@@ -18,7 +18,6 @@
 // RUN: FileCheck --check-prefix=RET-THUNKS-Test3 %s < %t
 // RUN: FileCheck --check-prefix=RET-THUNKS-Test4 %s < %t
 // RUN: FileCheck --check-prefix=RET-THUNKS-Test5 %s < %t
-// RUN: FileCheck --check-prefix=RET-THUNKS-Test6 %s < %t
 
 // RUN: FileCheck --check-prefix=MANGLING %s < %t
 
@@ -459,22 +458,4 @@ struct Test5 : Ret1, Test1 {
 };
 
 Test5 t5;
-
-struct Ret3 : this_adjustment::Test1 { };
-
-struct Test6 : Test1 {
-  virtual Ret3* foo();
-  // RET-THUNKS-Test6: VFTable for 'return_adjustment::Ret1' in 'return_adjustment::Test1' in 'return_adjustment::Test6' (4 entries).
-  // RET-THUNKS-Test6-NEXT: 0 | return_adjustment::Ret3 *return_adjustment::Test6::foo()
-  // RET-THUNKS-Test6-NEXT:     [return adjustment: 4 non-virtual]
-  // RET-THUNKS-Test6-NEXT: 1 | void return_adjustment::Ret1::z()
-  // RET-THUNKS-Test6-NEXT: 2 | return_adjustment::Ret3 *return_adjustment::Test6::foo()
-  // RET-THUNKS-Test6-NEXT: 3 | return_adjustment::Ret3 *return_adjustment::Test6::foo()
-
-  // RET-THUNKS-Test6: VFTable indices for 'return_adjustment::Test6' (1 entries).
-  // RET-THUNKS-Test6-NEXT: 3 | return_adjustment::Ret3 *return_adjustment::Test6::foo()
-};
-
-Test6 t6;
-
 }

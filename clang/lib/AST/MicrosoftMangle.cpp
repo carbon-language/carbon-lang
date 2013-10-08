@@ -15,7 +15,6 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Attr.h"
 #include "clang/AST/CharUnits.h"
-#include "clang/AST/CXXInheritance.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
@@ -1406,8 +1405,7 @@ void MicrosoftCXXNameMangler::mangleFunctionClass(const FunctionDecl *FD) {
   //                   ::= Z # global far
   if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD)) {
     switch (MD->getAccess()) {
-      case AS_none:
-        llvm_unreachable("Unsupported access specifier");
+      default:
       case AS_private:
         if (MD->isStatic())
           Out << 'C';
@@ -1860,70 +1858,36 @@ void MicrosoftMangleContextImpl::mangleName(const NamedDecl *D,
   return Mangler.mangle(D);
 }
 
-static void mangleThunkThisAdjustment(const CXXMethodDecl *MD,
-                                      const ThisAdjustment &Adjustment,
-                                      MicrosoftCXXNameMangler &Mangler,
-                                      raw_ostream &Out) {
-  // FIXME: add support for vtordisp thunks.
-  if (Adjustment.NonVirtual != 0) {
-    switch (MD->getAccess()) {
-    case AS_none:
-      llvm_unreachable("Unsupported access specifier");
-    case AS_private:
-      Out << 'G';
-      break;
-    case AS_protected:
-      Out << 'O';
-      break;
-    case AS_public:
-      Out << 'W';
-    }
-    llvm::APSInt APSNumber(/*BitWidth=*/32, /*isUnsigned=*/true);
-    APSNumber = -Adjustment.NonVirtual;
-    Mangler.mangleNumber(APSNumber);
-  } else {
-    switch (MD->getAccess()) {
-    case AS_none:
-      llvm_unreachable("Unsupported access specifier");
-    case AS_private:
-      Out << 'A';
-      break;
-    case AS_protected:
-      Out << 'I';
-      break;
-    case AS_public:
-      Out << 'Q';
-    }
-  }
-}
-
 void MicrosoftMangleContextImpl::mangleThunk(const CXXMethodDecl *MD,
                                              const ThunkInfo &Thunk,
                                              raw_ostream &Out) {
+  // FIXME: this is not yet a complete implementation, but merely a
+  // reasonably-working stub to avoid crashing when required to emit a thunk.
   MicrosoftCXXNameMangler Mangler(*this, Out);
   Out << "\01?";
   Mangler.mangleName(MD);
-  mangleThunkThisAdjustment(MD, Thunk.This, Mangler, Out);
-  if (!Thunk.Return.isEmpty())
-    assert(Thunk.Method != 0 && "Thunk info should hold the overridee decl");
-
-  const CXXMethodDecl *DeclForFPT = Thunk.Method ? Thunk.Method : MD;
-  Mangler.mangleFunctionType(
-      DeclForFPT->getType()->castAs<FunctionProtoType>(), MD);
+  if (Thunk.This.NonVirtual != 0) {
+    // FIXME: add support for protected/private or use mangleFunctionClass.
+    Out << "W";
+    llvm::APSInt APSNumber(/*BitWidth=*/32 /*FIXME: check on x64*/,
+                           /*isUnsigned=*/true);
+    APSNumber = -Thunk.This.NonVirtual;
+    Mangler.mangleNumber(APSNumber);
+  } else {
+    // FIXME: add support for protected/private or use mangleFunctionClass.
+    Out << "Q";
+  }
+  // FIXME: mangle return adjustment? Most likely includes using an overridee FPT?
+  Mangler.mangleFunctionType(MD->getType()->castAs<FunctionProtoType>(), MD);
 }
 
-void MicrosoftMangleContextImpl::mangleCXXDtorThunk(
-    const CXXDestructorDecl *DD, CXXDtorType Type,
-    const ThisAdjustment &Adjustment, raw_ostream &Out) {
-  // FIXME: Actually, the dtor thunk should be emitted for vector deleting
-  // dtors rather than scalar deleting dtors. Just use the vector deleting dtor
-  // mangling manually until we support both deleting dtor types.
-  assert(Type == Dtor_Deleting);
-  MicrosoftCXXNameMangler Mangler(*this, Out, DD, Type);
-  Out << "\01??_E";
-  Mangler.mangleName(DD->getParent());
-  mangleThunkThisAdjustment(DD, Adjustment, Mangler, Out);
-  Mangler.mangleFunctionType(DD->getType()->castAs<FunctionProtoType>(), DD);
+void MicrosoftMangleContextImpl::mangleCXXDtorThunk(const CXXDestructorDecl *DD,
+                                                    CXXDtorType Type,
+                                                    const ThisAdjustment &,
+                                                    raw_ostream &) {
+  unsigned DiagID = getDiags().getCustomDiagID(DiagnosticsEngine::Error,
+    "cannot mangle thunk for this destructor yet");
+  getDiags().Report(DD->getLocation(), DiagID);
 }
 
 void MicrosoftMangleContextImpl::mangleCXXVFTable(

@@ -93,11 +93,3 @@ void call_vbase_bar(B *obj) {
 //
 // CHECK: ret void
 }
-
-struct C : B {
-  C();
-  // has an implicit vdtor.
-};
-
-// Used to crash on an assertion.
-C::C() {}
