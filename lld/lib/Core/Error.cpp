@@ -20,27 +20,24 @@ public:
   }
 
   virtual std::string message(int ev) const {
-    switch (ev) {
-    case native_reader_error::success:
+    if (native_reader_error(ev) == native_reader_error::success)
       return "Success";
-    case native_reader_error::unknown_file_format:
+    if (native_reader_error(ev) == native_reader_error::unknown_file_format)
       return "Unknown file format";
-    case native_reader_error::file_too_short:
+    if (native_reader_error(ev) == native_reader_error::file_too_short)
       return "file truncated";
-    case native_reader_error::file_malformed:
+    if (native_reader_error(ev) == native_reader_error::file_malformed)
       return "file malformed";
-    case native_reader_error::memory_error:
+    if (native_reader_error(ev) == native_reader_error::memory_error)
       return "out of memory";
-    case native_reader_error::unknown_chunk_type:
+    if (native_reader_error(ev) == native_reader_error::unknown_chunk_type)
       return "unknown chunk type";
-    default:
-      llvm_unreachable("An enumerator of native_reader_error does not have a "
-                       "message defined.");
-    }
+    llvm_unreachable("An enumerator of native_reader_error does not have a "
+                     "message defined.");
   }
 
   virtual llvm::error_condition default_error_condition(int ev) const {
-    if (ev == native_reader_error::success)
+    if (native_reader_error(ev) == native_reader_error::success)
       return llvm::errc::success;
     return llvm::errc::invalid_argument;
   }
@@ -58,21 +55,18 @@ public:
   }
 
   virtual std::string message(int ev) const {
-    switch (ev) {
-    case yaml_reader_error::success:
+    if (yaml_reader_error(ev) == yaml_reader_error::success)
       return "Success";
-    case yaml_reader_error::unknown_keyword:
+    if (yaml_reader_error(ev) == yaml_reader_error::unknown_keyword)
       return "Unknown keyword found in yaml file";
-    case yaml_reader_error::illegal_value:
+    if (yaml_reader_error(ev) == yaml_reader_error::illegal_value)
       return "Bad value found in yaml file";
-    default:
-      llvm_unreachable("An enumerator of yaml_reader_error does not have a "
-                       "message defined.");
-    }
+    llvm_unreachable("An enumerator of yaml_reader_error does not have a "
+                     "message defined.");
   }
 
   virtual llvm::error_condition default_error_condition(int ev) const {
-    if (ev == yaml_reader_error::success)
+    if (yaml_reader_error(ev) == yaml_reader_error::success)
       return llvm::errc::success;
     return llvm::errc::invalid_argument;
   }
@@ -88,20 +82,19 @@ public:
   virtual const char *name() const { return "lld.linker-script.reader"; }
 
   virtual std::string message(int ev) const {
-    switch (ev) {
-    case static_cast<int>(linker_script_reader_error::success):
+    linker_script_reader_error e = linker_script_reader_error(ev);
+    if (e == linker_script_reader_error::success)
       return "Success";
-    case static_cast<int>(linker_script_reader_error::parse_error):
+    if (e == linker_script_reader_error::parse_error)
       return "Error parsing linker script";
-    default:
-      llvm_unreachable(
-          "An enumerator of linker_script_reader_error does not have a "
-          "message defined.");
-    }
+    llvm_unreachable(
+        "An enumerator of linker_script_reader_error does not have a "
+        "message defined.");
   }
 
   virtual llvm::error_condition default_error_condition(int ev) const {
-    if (ev == static_cast<int>(linker_script_reader_error::success))
+    linker_script_reader_error e = linker_script_reader_error(ev);
+    if (e == linker_script_reader_error::success)
       return llvm::errc::success;
     return llvm::errc::invalid_argument;
   }
@@ -117,17 +110,14 @@ public:
   virtual const char *name() const { return "lld.inputGraph.parse"; }
 
   virtual std::string message(int ev) const {
-    switch (ev) {
-    case input_graph_error::success:
+    if (input_graph_error(ev) == input_graph_error::success)
       return "Success";
-    default:
-      llvm_unreachable("An enumerator of input_graph_error does not have a "
-                       "message defined.");
-    }
+    llvm_unreachable("An enumerator of input_graph_error does not have a "
+                     "message defined.");
   }
 
   virtual llvm::error_condition default_error_condition(int ev) const {
-    if (ev == input_graph_error::success)
+    if (input_graph_error(ev) == input_graph_error::success)
       return llvm::errc::success;
     return llvm::errc::invalid_argument;
   }
