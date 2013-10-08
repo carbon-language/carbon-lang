@@ -87,7 +87,7 @@ public:
   virtual bool validate();
 
   // \brief Does the inputGraph contain any elements
-  int64_t size() const { return _inputArgs.size(); }
+  size_t size() const { return _inputArgs.size(); }
 
   /// \brief Dump the input Graph
   virtual bool dump(raw_ostream &diagnostics = llvm::errs());
