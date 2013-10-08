@@ -546,7 +546,6 @@ RecognizableInstr::filter_ret RecognizableInstr::filter() const {
   if (Name == "PUSH64i16"         ||
       Name == "MOVPQI2QImr"       ||
       Name == "VMOVPQI2QImr"      ||
-      Name == "MMX_MOVD64rrv164"  ||
       Name == "MOV64ri64i32"      ||
       Name == "VMASKMOVDQU64"     ||
       Name == "VEXTRACTPSrr64")

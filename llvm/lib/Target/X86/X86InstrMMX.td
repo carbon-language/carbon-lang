@@ -236,10 +236,10 @@ def MMX_MOVD64grr : MMXI<0x7E, MRMDestReg, (outs GR32:$dst), (ins VR64:$src),
                           (MMX_X86movd2w (x86mmx VR64:$src)))],
                           IIC_MMX_MOV_REG_MM>, Sched<[WriteMove]>;
 
-let neverHasSideEffects = 1 in
 def MMX_MOVD64to64rr : MMXRI<0x6E, MRMSrcReg, (outs VR64:$dst), (ins GR64:$src),
                              "movd\t{$src, $dst|$dst, $src}",
-                             [], IIC_MMX_MOV_MM_RM>, Sched<[WriteMove]>;
+                             [(set VR64:$dst, (bitconvert GR64:$src))],
+                             IIC_MMX_MOV_MM_RM>, Sched<[WriteMove]>;
 
 // These are 64 bit moves, but since the OS X assembler doesn't
 // recognize a register-register movq, we write them as
@@ -250,10 +250,6 @@ def MMX_MOVD64from64rr : MMXRI<0x7E, MRMDestReg,
                                "movd\t{$src, $dst|$dst, $src}", 
                              [(set GR64:$dst,
                               (bitconvert VR64:$src))], IIC_MMX_MOV_REG_MM>;
-def MMX_MOVD64rrv164 : MMXRI<0x6E, MRMSrcReg, (outs VR64:$dst), (ins GR64:$src),
-                             "movd\t{$src, $dst|$dst, $src}",
-                             [(set VR64:$dst,
-                              (bitconvert GR64:$src))], IIC_MMX_MOV_MM_RM>;
 let neverHasSideEffects = 1 in
 def MMX_MOVQ64rr : MMXI<0x6F, MRMSrcReg, (outs VR64:$dst), (ins VR64:$src),
                         "movq\t{$src, $dst|$dst, $src}", [],
