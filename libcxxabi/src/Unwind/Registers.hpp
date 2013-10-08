@@ -14,6 +14,7 @@
 #define __REGISTERS_HPP__
 
 #include <stdint.h>
+#include <strings.h>
 
 #include "libunwind.h"
 #include "config.h"
