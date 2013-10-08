@@ -12,7 +12,7 @@ _ZN7Vector39NormalizeEv.exit:                     ; preds = %1, %0
   ; of the vreg holding %agg.result) the dbg_value becomes dangling
   ; and SelectionDAGISel crashes.  It should definitely not
   ; crash. Drop the dbg_value instead.
-  ; CHECK: "matrix"
+  ; CHECK: "Matrix"
   tail call void @llvm.dbg.declare(metadata !{%class.Matrix3.0.6.10* %agg.result}, metadata !45)
   %2 = getelementptr inbounds %class.Matrix3.0.6.10* %agg.result, i32 0, i32 0, i32 8
   ret void
