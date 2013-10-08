@@ -17,7 +17,7 @@
 #ifndef __DWARF2__
 #define __DWARF2__
 
-// dwarf unwind instructions
+// DWARF unwind instructions
 enum {
   DW_CFA_nop                 = 0x0,
   DW_CFA_set_loc             = 0x1,
@@ -54,7 +54,7 @@ enum {
 
 
 // FSF exception handling Pointer-Encoding constants
-// Used in CFI augmentation by gcc compiler
+// Used in CFI augmentation by GCC
 enum {
   DW_EH_PE_ptr       = 0x00,
   DW_EH_PE_uleb128   = 0x01,
@@ -77,7 +77,7 @@ enum {
 };
 
 
-// DWARF  expressions
+// DWARF expressions
 enum {
   DW_OP_addr               = 0x03, // constant address (size target specific)
   DW_OP_deref              = 0x06,
