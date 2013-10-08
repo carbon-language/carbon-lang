@@ -1051,8 +1051,24 @@ namespace DependentInt {
   }
 }
 
+namespace PR17510 {
+class Atom;
+
+template <typename T> class allocator;
+template <typename T, typename A> class vector;
+
+typedef vector<const Atom *, allocator<const Atom *> > AtomVector;
+
+template <typename T, typename A = allocator<const Atom *> > class vector {};
+
+void foo() {
+  vector<Atom *> v;
+  AtomVector v2(v);
+  // CHECK-ELIDE-NOTREE: no known conversion from 'vector<class PR17510::Atom *, [...]>' to 'const vector<const class PR17510::Atom *, [...]>'
+}
+}
+
 // CHECK-ELIDE-NOTREE: {{[0-9]*}} errors generated.
 // CHECK-NOELIDE-NOTREE: {{[0-9]*}} errors generated.
 // CHECK-ELIDE-TREE: {{[0-9]*}} errors generated.
 // CHECK-NOELIDE-TREE: {{[0-9]*}} errors generated.
-

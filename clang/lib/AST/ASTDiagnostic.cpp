@@ -831,8 +831,10 @@ class TemplateDiff {
   void DiffTemplate(const TemplateSpecializationType *FromTST,
                     const TemplateSpecializationType *ToTST) {
     // Begin descent into diffing template tree.
-    TemplateParameterList *Params =
+    TemplateParameterList *ParamsFrom =
         FromTST->getTemplateName().getAsTemplateDecl()->getTemplateParameters();
+    TemplateParameterList *ParamsTo =
+        ToTST->getTemplateName().getAsTemplateDecl()->getTemplateParameters();
     unsigned TotalArgs = 0;
     for (TSTiterator FromIter(Context, FromTST), ToIter(Context, ToTST);
          !FromIter.isEnd() || !ToIter.isEnd(); ++TotalArgs) {
@@ -841,15 +843,18 @@ class TemplateDiff {
       // Get the parameter at index TotalArgs.  If index is larger
       // than the total number of parameters, then there is an
       // argument pack, so re-use the last parameter.
-      NamedDecl *ParamND = Params->getParam(
-          (TotalArgs < Params->size()) ? TotalArgs
-                                       : Params->size() - 1);
+      unsigned ParamIndex = std::min(TotalArgs, ParamsFrom->size() - 1);
+      NamedDecl *ParamND = ParamsFrom->getParam(ParamIndex);
+
       // Handle Types
       if (TemplateTypeParmDecl *DefaultTTPD =
               dyn_cast<TemplateTypeParmDecl>(ParamND)) {
         QualType FromType, ToType;
         FromType = GetType(FromIter, DefaultTTPD);
-        ToType = GetType(ToIter, DefaultTTPD);
+        // A forward declaration can have no default arg but the actual class
+        // can, don't mix up iterators and get the original parameter.
+        ToType = GetType(
+            ToIter, cast<TemplateTypeParmDecl>(ParamsTo->getParam(ParamIndex)));
         Tree.SetNode(FromType, ToType);
         Tree.SetDefault(FromIter.isEnd() && !FromType.isNull(),
                         ToIter.isEnd() && !ToType.isNull());
