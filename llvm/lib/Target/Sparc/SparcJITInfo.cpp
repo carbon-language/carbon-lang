@@ -140,7 +140,6 @@ void SparcJITInfo::relocate(void *Function, MachineRelocation *MR,
     intptr_t ResultPtr = (intptr_t) MR->getResultPointer();
 
     switch ((SP::RelocationType) MR->getRelocationType()) {
-    default: llvm_unreachable("Unknown reloc!");
     case SP::reloc_sparc_hi:
       ResultPtr = (ResultPtr >> 10) & 0x3fffff;
       break;
