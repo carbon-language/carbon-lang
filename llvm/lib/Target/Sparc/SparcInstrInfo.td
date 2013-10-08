@@ -845,10 +845,10 @@ let mayLoad = 1 in
                       [(set i32:$dst,
                           (tlsld ADDRrr:$addr, tglobaltlsaddr:$sym))]>;
 
-let Uses = [O6], isCall = 1 in
+let Uses = [O6], isCall = 1, hasDelaySlot = 1 in
   def TLS_CALL : InstSP<(outs),
                         (ins calltarget:$disp, TLSSym:$sym, variable_ops),
-                        "call $disp, $sym\n\tnop",
+                        "call $disp, $sym",
                         [(tlscall texternalsym:$disp, tglobaltlsaddr:$sym)]> {
   bits<30> disp;
   let op = 1;
