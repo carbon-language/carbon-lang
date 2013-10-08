@@ -72,7 +72,7 @@ namespace normalized {
 
 /// The real mach-o relocation record is 8-bytes on disk and is
 /// encoded in one of two different bit-field patterns.  This
-/// normalized form has the union of all possbile fields.
+/// normalized form has the union of all possible fields.
 struct Relocation {
   Relocation() : offset(0), scattered(false), 
                  type(llvm::MachO::GENERIC_RELOC_VANILLA), 

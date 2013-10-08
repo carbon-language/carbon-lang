@@ -382,7 +382,7 @@ struct ScalarEnumerationTraits<RelocationInfoType> {
                                   llvm::MachO::ARM_RELOC_HALF_SECTDIFF);
       break;
     default:
-      llvm_unreachable("unknown archictecture");
+      llvm_unreachable("unknown architecture");
     }
  }
 };
