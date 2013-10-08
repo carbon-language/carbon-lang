@@ -456,6 +456,13 @@ static char ModType(const char mod, char type, bool &quad, bool &poly,
       if (type == 'd')
         type = 'l';
       break;
+    case 'o':
+      scal = true;
+      type = 'd';
+      usgn = false;
+      break;
+    case 'y':
+      scal = true;
     case 'f':
       if (type == 'h')
         quad = true;

@@ -167,6 +167,8 @@ class NoTestOpInst<string n, string p, string t, Op o> : Inst<n, p, t, o> {}
 // s: scalar of element type
 // r: scalar of double width element type
 // a: scalar of element type (splat to vector type)
+// y: scalar of float
+// o: scalar of double
 // k: default elt width, double num elts
 // #: array of default vectors
 // p: pointer type
@@ -764,5 +766,15 @@ def SCALAR_FRECPS : IInst<"vrecps", "sss", "SfSd">;
 ////////////////////////////////////////////////////////////////////////////////
 // Scalar Floating-point Reciprocal Square Root Step
 def SCALAR_FRSQRTS : IInst<"vrsqrts", "sss", "SfSd">;
+
+////////////////////////////////////////////////////////////////////////////////
+// Scalar Signed Integer Convert To Floating-point
+def SCALAR_SCVTFS : SInst<"vcvt_f32", "ys", "Si">;
+def SCALAR_SCVTFD : SInst<"vcvt_f64", "os", "Sl">;
+
+////////////////////////////////////////////////////////////////////////////////
+// Scalar Unsigned Integer Convert To Floating-point
+def SCALAR_UCVTFS : SInst<"vcvt_f32", "ys", "SUi">;
+def SCALAR_UCVTFD : SInst<"vcvt_f64", "os", "SUl">;
 
 }
