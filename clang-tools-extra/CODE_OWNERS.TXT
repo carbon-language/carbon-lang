@@ -9,5 +9,5 @@ beautification by scripts.  The fields are: name (N), email (E), web-address
 (S).
 
 N: Edwin Vane
-E: edwin.vane@intel.com
+E: revane@gmail.com
 D: clang-modernize
