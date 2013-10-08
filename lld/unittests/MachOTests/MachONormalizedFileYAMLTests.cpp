@@ -290,7 +290,7 @@ TEST(ObjectFileYAML, hello_x86_64) {
                             (uint32_t)(llvm::MachO::S_ATTR_PURE_INSTRUCTIONS 
                                      | llvm::MachO::S_ATTR_SOME_INSTRUCTIONS));
   EXPECT_EQ(sect1.alignment, 0U);
-  EXPECT_EQ(sect1.address, 0x0ULL);
+  EXPECT_EQ((uint64_t)sect1.address, 0x0ULL);
   EXPECT_EQ(sect1.content.size(), 22UL);
   EXPECT_EQ((int)(sect1.content[0]), 0x55);
   EXPECT_EQ((int)(sect1.content[1]), 0x48);
@@ -320,7 +320,7 @@ TEST(ObjectFileYAML, hello_x86_64) {
   EXPECT_EQ((uint32_t)(sect2.type), (uint32_t)(llvm::MachO::S_CSTRING_LITERALS));
   EXPECT_EQ((uint32_t)(sect2.attributes), 0U);
   EXPECT_EQ(sect2.alignment, 0U);
-  EXPECT_EQ(sect2.address, 0x016ULL);
+  EXPECT_EQ((uint64_t)sect2.address, 0x016ULL);
   EXPECT_EQ(sect2.content.size(), 7UL);
   EXPECT_EQ((int)(sect2.content[0]), 0x68);
   EXPECT_EQ((int)(sect2.content[1]), 0x65);
@@ -421,7 +421,7 @@ TEST(ObjectFileYAML, hello_x86) {
                             (uint32_t)(llvm::MachO::S_ATTR_PURE_INSTRUCTIONS 
                                      | llvm::MachO::S_ATTR_SOME_INSTRUCTIONS));
   EXPECT_EQ(sect1.alignment, 0U);
-  EXPECT_EQ(sect1.address, 0x0ULL);
+  EXPECT_EQ((uint64_t)sect1.address, 0x0ULL);
   EXPECT_EQ(sect1.content.size(), 33UL);
   EXPECT_EQ((int)(sect1.content[0]), 0x55);
   EXPECT_EQ((int)(sect1.content[1]), 0x89);
@@ -458,7 +458,7 @@ TEST(ObjectFileYAML, hello_x86) {
   EXPECT_EQ((uint32_t)(sect2.type), (uint32_t)(llvm::MachO::S_CSTRING_LITERALS));
   EXPECT_EQ((uint32_t)(sect2.attributes), 0U);
   EXPECT_EQ(sect2.alignment, 0U);
-  EXPECT_EQ(sect2.address, 0x021ULL);
+  EXPECT_EQ((uint64_t)sect2.address, 0x021ULL);
   EXPECT_EQ(sect2.content.size(), 7UL);
   EXPECT_EQ((int)(sect2.content[0]), 0x68);
   EXPECT_EQ((int)(sect2.content[1]), 0x65);
@@ -549,7 +549,7 @@ TEST(ObjectFileYAML, hello_armv6) {
                             (uint32_t)(llvm::MachO::S_ATTR_PURE_INSTRUCTIONS 
                                      | llvm::MachO::S_ATTR_SOME_INSTRUCTIONS));
   EXPECT_EQ(sect1.alignment, 2U);
-  EXPECT_EQ(sect1.address, 0x0ULL);
+  EXPECT_EQ((uint64_t)sect1.address, 0x0ULL);
   EXPECT_EQ(sect1.content.size(), 32UL);
   EXPECT_EQ((int)(sect1.content[0]), 0x80);
   EXPECT_EQ((int)(sect1.content[1]), 0x40);
@@ -586,7 +586,7 @@ TEST(ObjectFileYAML, hello_armv6) {
   EXPECT_EQ((uint32_t)(sect2.type), (uint32_t)(llvm::MachO::S_CSTRING_LITERALS));
   EXPECT_EQ((uint32_t)(sect2.attributes), 0U);
   EXPECT_EQ(sect2.alignment, 0U);
-  EXPECT_EQ(sect2.address, 0x020ULL);
+  EXPECT_EQ((uint64_t)sect2.address, 0x020ULL);
   EXPECT_EQ(sect2.content.size(), 7UL);
   EXPECT_EQ((int)(sect2.content[0]), 0x68);
   EXPECT_EQ((int)(sect2.content[1]), 0x65);
@@ -691,7 +691,7 @@ TEST(ObjectFileYAML, hello_armv7) {
                             (uint32_t)(llvm::MachO::S_ATTR_PURE_INSTRUCTIONS 
                                      | llvm::MachO::S_ATTR_SOME_INSTRUCTIONS));
   EXPECT_EQ(sect1.alignment, 1U);
-  EXPECT_EQ(sect1.address, 0x0ULL);
+  EXPECT_EQ((uint64_t)sect1.address, 0x0ULL);
   EXPECT_EQ(sect1.content.size(), 22UL);
   EXPECT_EQ((int)(sect1.content[0]), 0x80);
   EXPECT_EQ((int)(sect1.content[1]), 0xb5);
@@ -744,7 +744,7 @@ TEST(ObjectFileYAML, hello_armv7) {
   EXPECT_EQ((uint32_t)(sect2.type), (uint32_t)(llvm::MachO::S_CSTRING_LITERALS));
   EXPECT_EQ((uint32_t)(sect2.attributes), 0U);
   EXPECT_EQ(sect2.alignment, 0U);
-  EXPECT_EQ(sect2.address, 0x016ULL);
+  EXPECT_EQ((uint64_t)sect2.address, 0x016ULL);
   EXPECT_EQ(sect2.content.size(), 7UL);
   EXPECT_EQ((int)(sect2.content[0]), 0x68);
   EXPECT_EQ((int)(sect2.content[1]), 0x65);
