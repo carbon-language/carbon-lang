@@ -520,7 +520,7 @@ void CompileUnit::addBlockByrefAddress(const DbgVariable &DV, DIE *Die,
 
   if (Tag == dwarf::DW_TAG_pointer_type) {
     DIDerivedType DTy = DIDerivedType(Ty);
-    TmpTy = DD->resolve(DTy.getTypeDerivedFrom());
+    TmpTy = resolve(DTy.getTypeDerivedFrom());
     isPointer = true;
   }
 
@@ -969,7 +969,7 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DIDerivedType DTy) {
   uint16_t Tag = Buffer.getTag();
 
   // Map to main type, void will not have a type.
-  DIType FromTy = DD->resolve(DTy.getTypeDerivedFrom());
+  DIType FromTy = resolve(DTy.getTypeDerivedFrom());
   if (FromTy)
     addType(&Buffer, FromTy);
 
@@ -1044,7 +1044,7 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
         Buffer.addChild(ElemDie);
       }
     }
-    DIType DTy = DD->resolve(CTy.getTypeDerivedFrom());
+    DIType DTy = resolve(CTy.getTypeDerivedFrom());
     if (DTy) {
       addType(&Buffer, DTy);
       addFlag(&Buffer, dwarf::DW_AT_enum_class);
@@ -1110,7 +1110,7 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
         DIDerivedType DDTy(Element);
         if (DDTy.getTag() == dwarf::DW_TAG_friend) {
           ElemDie = new DIE(dwarf::DW_TAG_friend);
-          addType(ElemDie, DD->resolve(DDTy.getTypeDerivedFrom()),
+          addType(ElemDie, resolve(DDTy.getTypeDerivedFrom()),
                   dwarf::DW_AT_friend);
         } else if (DDTy.isStaticMember())
           ElemDie = createStaticMemberDIE(DDTy);
@@ -1607,7 +1607,7 @@ void CompileUnit::constructArrayTypeDIE(DIE &Buffer,
     addFlag(&Buffer, dwarf::DW_AT_GNU_vector);
 
   // Emit the element type.
-  addType(&Buffer, DD->resolve(CTy->getTypeDerivedFrom()));
+  addType(&Buffer, resolve(CTy->getTypeDerivedFrom()));
 
   // Get an anonymous type for index type.
   // FIXME: This type should be passed down from the front end
@@ -1739,7 +1739,7 @@ DIE *CompileUnit::createMemberDIE(DIDerivedType DT) {
   if (!Name.empty())
     addString(MemberDie, dwarf::DW_AT_name, Name);
 
-  addType(MemberDie, DD->resolve(DT.getTypeDerivedFrom()));
+  addType(MemberDie, resolve(DT.getTypeDerivedFrom()));
 
   addSourceLine(MemberDie, DT);
 
@@ -1827,7 +1827,7 @@ DIE *CompileUnit::createStaticMemberDIE(const DIDerivedType DT) {
     return NULL;
 
   DIE *StaticMemberDIE = new DIE(DT.getTag());
-  DIType Ty = DD->resolve(DT.getTypeDerivedFrom());
+  DIType Ty = resolve(DT.getTypeDerivedFrom());
 
   addString(StaticMemberDIE, dwarf::DW_AT_name, DT.getName());
   addType(StaticMemberDIE, Ty);
