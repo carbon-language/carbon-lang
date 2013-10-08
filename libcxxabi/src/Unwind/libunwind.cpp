@@ -65,7 +65,7 @@ _LIBUNWIND_EXPORT unw_addr_space_t unw_local_addr_space =
 /// Create a cursor into a thread in another process.
 _LIBUNWIND_EXPORT int unw_init_remote_thread(unw_cursor_t *cursor,
                                              unw_addr_space_t as,
-                                             thread_t thread) {
+                                             void *arg) {
   // special case: unw_init_remote(xx, unw_local_addr_space, xx)
   if (as == (unw_addr_space_t) & sThisAddressSpace)
     return unw_init_local(cursor, NULL); //FIXME
@@ -75,17 +75,17 @@ _LIBUNWIND_EXPORT int unw_init_remote_thread(unw_cursor_t *cursor,
   case CPU_TYPE_I386:
     new ((void *)cursor)
         UnwindCursor<OtherAddressSpace<Pointer32<LittleEndian> >,
-                     Registers_x86>(((unw_addr_space_i386 *)as)->oas, thread);
+                     Registers_x86>(((unw_addr_space_i386 *)as)->oas, arg);
     break;
   case CPU_TYPE_X86_64:
     new ((void *)cursor) UnwindCursor<
         OtherAddressSpace<Pointer64<LittleEndian> >, Registers_x86_64>(
-        ((unw_addr_space_x86_64 *)as)->oas, thread);
+        ((unw_addr_space_x86_64 *)as)->oas, arg);
     break;
   case CPU_TYPE_POWERPC:
     new ((void *)cursor)
         UnwindCursor<OtherAddressSpace<Pointer32<BigEndian> >, Registers_ppc>(
-            ((unw_addr_space_ppc *)as)->oas, thread);
+            ((unw_addr_space_ppc *)as)->oas, arg);
     break;
   default:
     return UNW_EUNSPEC;

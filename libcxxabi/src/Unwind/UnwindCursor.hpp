@@ -17,6 +17,10 @@
 #include <stdlib.h>
 #include <pthread.h>
 
+#if __APPLE__
+  #include <mach-o/dyld.h>
+#endif
+
 #include "libunwind.h"
 
 #include "AddressSpace.hpp"
@@ -382,7 +386,7 @@ class UnwindCursor : public AbstractUnwindCursor{
   typedef typename A::pint_t pint_t;
 public:
                       UnwindCursor(unw_context_t *context, A &as);
-                      UnwindCursor(A &as, thread_t thread);
+                      UnwindCursor(A &as, void *threadArg);
   virtual             ~UnwindCursor() {}
   virtual bool        validReg(int);
   virtual unw_word_t  getReg(int);
@@ -522,12 +526,13 @@ UnwindCursor<A, R>::UnwindCursor(unw_context_t *context, A &as)
 }
 
 template <typename A, typename R>
-UnwindCursor<A, R>::UnwindCursor(A &as, thread_t )
+UnwindCursor<A, R>::UnwindCursor(A &as, void *)
     : _addressSpace(as), _unwindInfoMissing(false), _isSignalFrame(false) {
   bzero(&_info, sizeof(_info));
   // FIXME
-  // fill in _registers from thread
+  // fill in _registers from thread arg
 }
+
 
 template <typename A, typename R>
 bool UnwindCursor<A, R>::validReg(int regNum) {
