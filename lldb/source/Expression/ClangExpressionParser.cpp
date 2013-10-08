@@ -115,7 +115,6 @@ static FrontendAction *CreateFrontendBaseAction(CompilerInstance &CI) {
             
         case ASTDump:                return new ASTDumpAction();
         case ASTPrint:               return new ASTPrintAction();
-        case ASTDumpXML:             return new ASTDumpXMLAction();
         case ASTView:                return new ASTViewAction();
         case DumpRawTokens:          return new DumpRawTokensAction();
         case DumpTokens:             return new DumpTokensAction();
