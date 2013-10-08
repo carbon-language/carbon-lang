@@ -1,5 +1,5 @@
-; RUN: llc < %s -march=x86 -mattr=+sse2 | FileCheck %s -check-prefix=X86-32
-; RUN: llc < %s -march=x86-64 -mattr=+sse2 | FileCheck %s -check-prefix=X86-64
+; RUN: llc < %s -march=x86 -mattr=+sse2,-avx | FileCheck %s -check-prefix=X86-32
+; RUN: llc < %s -march=x86-64 -mattr=+sse2,-avx | FileCheck %s -check-prefix=X86-64
 
 define <4 x i32> @t1(i32 %a) nounwind  {
 entry:

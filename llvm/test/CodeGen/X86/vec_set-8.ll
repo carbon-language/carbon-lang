@@ -1,5 +1,5 @@
-; RUN: llc < %s -mtriple=x86_64-linux | FileCheck %s
-; RUN: llc < %s -mtriple=x86_64-win32 | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-linux -mattr=-avx | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-win32 -mattr=-avx | FileCheck %s
 ; CHECK-NOT: movsd
 ; CHECK: movd {{%rdi|%rcx}}, %xmm0
 ; CHECK-NOT: movsd
