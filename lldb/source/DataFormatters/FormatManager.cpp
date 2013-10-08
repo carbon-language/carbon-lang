@@ -563,6 +563,22 @@ FormatManager::FormatManager() :
 }
 
 static void
+AddFormat (TypeCategoryImpl::SharedPointer category_sp,
+           lldb::Format format,
+           ConstString type_name,
+           TypeFormatImpl::Flags flags,
+           bool regex = false)
+{
+    lldb::TypeFormatImplSP format_sp(new TypeFormatImpl(format, flags));
+    
+    if (regex)
+        category_sp->GetRegexValueNavigator()->Add(RegularExpressionSP(new RegularExpression(type_name.AsCString())),format_sp);
+    else
+        category_sp->GetValueNavigator()->Add(type_name, format_sp);
+}
+
+
+static void
 AddStringSummary(TypeCategoryImpl::SharedPointer category_sp,
                  const char* string,
                  ConstString type_name,
@@ -853,6 +869,11 @@ FormatManager::LoadSystemFormatters()
     AddCXXSummary(sys_category_sp, lldb_private::formatters::WCharSummaryProvider, "wchar_t summary provider", ConstString("wchar_t"), widechar_flags);
 
     AddCXXSummary(sys_category_sp, lldb_private::formatters::Char16SummaryProvider, "unichar summary provider", ConstString("unichar"), widechar_flags);
+    
+    TypeFormatImpl::Flags fourchar_flags;
+    fourchar_flags.SetCascades(true).SetSkipPointers(true).SetSkipReferences(true);
+    
+    AddFormat(sys_category_sp, lldb::eFormatOSType, ConstString("FourCharCode"), fourchar_flags);
     
 #endif
 }
