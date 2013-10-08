@@ -163,6 +163,32 @@ FormatManager::GetFormatAsCString (Format format)
     return NULL;
 }
 
+lldb::TypeFormatImplSP
+FormatManager::GetFormatForType (lldb::TypeNameSpecifierImplSP type_sp)
+{
+    if (!type_sp)
+        return lldb::TypeFormatImplSP();
+    lldb::TypeFormatImplSP format_chosen_sp;
+    uint32_t num_categories = m_categories_map.GetCount();
+    lldb::TypeCategoryImplSP category_sp;
+    uint32_t prio_category = UINT32_MAX;
+    for (uint32_t category_id = 0;
+         category_id < num_categories;
+         category_id++)
+    {
+        category_sp = GetCategoryAtIndex(category_id);
+        if (category_sp->IsEnabled() == false)
+            continue;
+        lldb::TypeFormatImplSP format_current_sp = category_sp->GetFormatForType(type_sp);
+        if (format_current_sp && (format_chosen_sp.get() == NULL || (prio_category > category_sp->GetEnabledPosition())))
+        {
+            prio_category = category_sp->GetEnabledPosition();
+            format_chosen_sp = format_current_sp;
+        }
+    }
+    return format_chosen_sp;
+}
+
 lldb::TypeSummaryImplSP
 FormatManager::GetSummaryForType (lldb::TypeNameSpecifierImplSP type_sp)
 {
@@ -394,6 +420,42 @@ GetTypeForCache (ValueObject& valobj,
     return ConstString();
 }
 
+lldb::TypeFormatImplSP
+FormatManager::GetFormat (ValueObject& valobj,
+                          lldb::DynamicValueType use_dynamic)
+{
+    TypeFormatImplSP retval;
+//    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
+//    ConstString valobj_type(GetTypeForCache(valobj, use_dynamic));
+//    if (valobj_type)
+//    {
+//        if (log)
+//            log->Printf("\n\n[FormatManager::GetSummaryFormat] Looking into cache for type %s", valobj_type.AsCString("<invalid>"));
+//        if (m_format_cache.GetSummary(valobj_type,retval))
+//        {
+//            if (log)
+//            {
+//                log->Printf("[FormatManager::GetSummaryFormat] Cache search success. Returning.");
+//                if (log->GetDebug())
+//                    log->Printf("[FormatManager::GetSummaryFormat] Cache hits: %" PRIu64 " - Cache Misses: %" PRIu64, m_format_cache.GetCacheHits(), m_format_cache.GetCacheMisses());
+//            }
+//            return retval;
+//        }
+//        if (log)
+//            log->Printf("[FormatManager::GetSummaryFormat] Cache search failed. Going normal route");
+//    }
+    retval = m_categories_map.GetFormat(valobj, use_dynamic);
+//    if (valobj_type)
+//    {
+//        if (log)
+//            log->Printf("[FormatManager::GetSummaryFormat] Caching %p for type %s",retval.get(),valobj_type.AsCString("<invalid>"));
+//        m_format_cache.SetSummary(valobj_type,retval);
+//    }
+//    if (log && log->GetDebug())
+//        log->Printf("[FormatManager::GetSummaryFormat] Cache hits: %" PRIu64 " - Cache Misses: %" PRIu64, m_format_cache.GetCacheHits(), m_format_cache.GetCacheMisses());
+    return retval;
+}
+
 lldb::TypeSummaryImplSP
 FormatManager::GetSummaryFormat (ValueObject& valobj,
                                  lldb::DynamicValueType use_dynamic)
@@ -470,7 +532,6 @@ FormatManager::GetSyntheticChildren (ValueObject& valobj,
 
 FormatManager::FormatManager() :
     m_format_cache(),
-    m_value_nav("format",this),
     m_named_summaries_map(this),
     m_last_revision(0),
     m_categories_map(this),

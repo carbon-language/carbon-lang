@@ -246,7 +246,7 @@ ValueObject::UpdateFormatsIfNeeded()
     
     if ( (m_last_format_mgr_revision != DataVisualization::GetCurrentRevision()))
     {
-        SetValueFormat(DataVisualization::ValueFormats::GetFormat (*this, eNoDynamicValues));
+        SetValueFormat(DataVisualization::GetFormat (*this, eNoDynamicValues));
         SetSummaryFormat(DataVisualization::GetSummaryFormat (*this, GetDynamicValueType()));
 #ifndef LLDB_DISABLE_PYTHON
         SetSyntheticChildren(DataVisualization::GetSyntheticChildren (*this, GetDynamicValueType()));

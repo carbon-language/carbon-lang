@@ -34,8 +34,6 @@ namespace lldb_private {
 
 class FormatManager : public IFormatChangeListener
 {
-    typedef FormatNavigator<ConstString, TypeFormatImpl> ValueNavigator;
-    typedef ValueNavigator::MapType ValueMap;
     typedef FormatMap<ConstString, TypeSummaryImpl> NamedSummariesMap;
     typedef TypeCategoryMap::MapType::iterator CategoryMapIterator;
 public:
@@ -43,12 +41,6 @@ public:
     typedef TypeCategoryMap::CallbackType CategoryCallback;
     
     FormatManager ();
-    
-    ValueNavigator&
-    GetValueNavigator ()
-    {
-        return m_value_nav;
-    }
     
     NamedSummariesMap&
     GetNamedSummaryNavigator ()
@@ -126,6 +118,9 @@ public:
     lldb::TypeCategoryImplSP
     GetCategory (const ConstString& category_name,
                  bool can_create = true);
+
+    lldb::TypeFormatImplSP
+    GetFormatForType (lldb::TypeNameSpecifierImplSP type_sp);
     
     lldb::TypeSummaryImplSP
     GetSummaryForType (lldb::TypeNameSpecifierImplSP type_sp);
@@ -142,6 +137,10 @@ public:
     lldb::SyntheticChildrenSP
     GetSyntheticChildrenForType (lldb::TypeNameSpecifierImplSP type_sp);
 #endif
+    
+    lldb::TypeFormatImplSP
+    GetFormat (ValueObject& valobj,
+               lldb::DynamicValueType use_dynamic);
     
     lldb::TypeSummaryImplSP
     GetSummaryFormat (ValueObject& valobj,
@@ -216,7 +215,6 @@ public:
     
 private:
     FormatCache m_format_cache;
-    ValueNavigator m_value_nav;
     NamedSummariesMap m_named_summaries_map;
     uint32_t m_last_revision;
     TypeCategoryMap m_categories_map;

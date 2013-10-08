@@ -84,10 +84,10 @@ SBTypeCategory::GetName()
 uint32_t
 SBTypeCategory::GetNumFormats ()
 {
-    if (!IsDefaultCategory())
+    if (!IsValid())
         return 0;
     
-    return DataVisualization::ValueFormats::GetCount();
+    return m_opaque_sp->GetValueNavigator()->GetCount() + m_opaque_sp->GetRegexValueNavigator()->GetCount();
 }
 
 uint32_t
@@ -127,9 +127,9 @@ SBTypeCategory::GetTypeNameSpecifierForFilterAtIndex (uint32_t index)
 lldb::SBTypeNameSpecifier
 SBTypeCategory::GetTypeNameSpecifierForFormatAtIndex (uint32_t index)
 {
-    if (!IsDefaultCategory())
+    if (!IsValid())
         return SBTypeNameSpecifier();
-    return SBTypeNameSpecifier(DataVisualization::ValueFormats::GetTypeNameSpecifierForFormatAtIndex(index));
+    return SBTypeNameSpecifier(m_opaque_sp->GetTypeNameSpecifierForFormatAtIndex(index));
 }
 
 lldb::SBTypeNameSpecifier
@@ -177,16 +177,23 @@ SBTypeCategory::GetFilterForType (SBTypeNameSpecifier spec)
 SBTypeFormat
 SBTypeCategory::GetFormatForType (SBTypeNameSpecifier spec)
 {
-    if (!IsDefaultCategory())
+    if (!IsValid())
         return SBTypeFormat();
         
     if (!spec.IsValid())
         return SBTypeFormat();
     
-    if (spec.IsRegex())
-        return SBTypeFormat();
+    lldb::TypeFormatImplSP format_sp;
     
-    return SBTypeFormat(DataVisualization::ValueFormats::GetFormat(ConstString(spec.GetName())));
+    if (spec.IsRegex())
+        m_opaque_sp->GetRegexValueNavigator()->GetExact(ConstString(spec.GetName()), format_sp);
+    else
+        m_opaque_sp->GetValueNavigator()->GetExact(ConstString(spec.GetName()), format_sp);
+    
+    if (!format_sp)
+        return lldb::SBTypeFormat();
+    
+    return lldb::SBTypeFormat(format_sp);
 }
 
 #ifndef LLDB_DISABLE_PYTHON
@@ -259,9 +266,9 @@ SBTypeCategory::GetFilterAtIndex (uint32_t index)
 SBTypeFormat
 SBTypeCategory::GetFormatAtIndex (uint32_t index)
 {
-    if (!IsDefaultCategory())
+    if (!IsValid())
         return SBTypeFormat();
-    return SBTypeFormat(DataVisualization::ValueFormats::GetFormatAtIndex((index)));
+    return SBTypeFormat(m_opaque_sp->GetFormatAtIndex((index)));
 }
 
 #ifndef LLDB_DISABLE_PYTHON
@@ -295,7 +302,7 @@ bool
 SBTypeCategory::AddTypeFormat (SBTypeNameSpecifier type_name,
                                SBTypeFormat format)
 {
-    if (!IsDefaultCategory())
+    if (!IsValid())
         return false;
     
     if (!type_name.IsValid())
@@ -305,9 +312,9 @@ SBTypeCategory::AddTypeFormat (SBTypeNameSpecifier type_name,
         return false;
     
     if (type_name.IsRegex())
-        return false;
-    
-    DataVisualization::ValueFormats::Add(ConstString(type_name.GetName()), format.GetSP());
+        m_opaque_sp->GetRegexValueNavigator()->Add(lldb::RegularExpressionSP(new RegularExpression(type_name.GetName())), format.GetSP());
+    else
+        m_opaque_sp->GetValueNavigator()->Add(ConstString(type_name.GetName()), format.GetSP());
     
     return true;
 }
@@ -315,16 +322,16 @@ SBTypeCategory::AddTypeFormat (SBTypeNameSpecifier type_name,
 bool
 SBTypeCategory::DeleteTypeFormat (SBTypeNameSpecifier type_name)
 {
-    if (!IsDefaultCategory())
+    if (!IsValid())
         return false;
     
     if (!type_name.IsValid())
         return false;
     
     if (type_name.IsRegex())
-        return false;
-
-    return DataVisualization::ValueFormats::Delete(ConstString(type_name.GetName()));
+        return m_opaque_sp->GetRegexValueNavigator()->Delete(ConstString(type_name.GetName()));
+    else
+        return m_opaque_sp->GetValueNavigator()->Delete(ConstString(type_name.GetName()));
 }
 
 #ifndef LLDB_DISABLE_PYTHON

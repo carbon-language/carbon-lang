@@ -369,6 +369,8 @@ private:
             m_cascade = true;
             m_skip_pointers = false;
             m_skip_references = false;
+            m_regex = false;
+            m_category.assign("default");
         }
         virtual Error
         SetOptionValue (CommandInterpreter &interpreter,
@@ -389,8 +391,14 @@ private:
                 case 'p':
                     m_skip_pointers = true;
                     break;
+                case 'w':
+                    m_category.assign(option_value);
+                    break;
                 case 'r':
                     m_skip_references = true;
+                    break;
+                case 'x':
+                    m_regex = true;
                     break;
                 default:
                     error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
@@ -409,6 +417,8 @@ private:
         bool m_cascade;
         bool m_skip_references;
         bool m_skip_pointers;
+        bool m_regex;
+        std::string m_category;
     };
     
     OptionGroupOptions m_option_group;
@@ -510,12 +520,32 @@ protected:
 
         // now I have a valid format, let's add it to every type
         
+        TypeCategoryImplSP category_sp;
+        DataVisualization::Categories::GetCategory(ConstString(m_command_options.m_category), category_sp);
+        if (!category_sp)
+            return false;
+        
         for (size_t i = 0; i < argc; i++)
         {
             const char* typeA = command.GetArgumentAtIndex(i);
             ConstString typeCS(typeA);
             if (typeCS)
-                DataVisualization::ValueFormats::Add(typeCS, entry);
+            {
+                if (m_command_options.m_regex)
+                {
+                    RegularExpressionSP typeRX(new RegularExpression());
+                    if (!typeRX->Compile(typeCS.GetCString()))
+                    {
+                        result.AppendError("regex format error (maybe this is not really a regex?)");
+                        result.SetStatus(eReturnStatusFailed);
+                        return false;
+                    }
+                    category_sp->GetRegexSummaryNavigator()->Delete(typeCS);
+                    category_sp->GetRegexValueNavigator()->Add(typeRX, entry);
+                }
+                else
+                    category_sp->GetValueNavigator()->Add(typeCS, entry);
+            }
             else
             {
                 result.AppendError("empty typenames not allowed");
@@ -532,9 +562,12 @@ protected:
 OptionDefinition
 CommandObjectTypeFormatAdd::CommandOptions::g_option_table[] =
 {
+    { LLDB_OPT_SET_ALL, false, "category", 'w', OptionParser::eRequiredArgument, NULL, 0, eArgTypeName,    "Add this to the given category instead of the default one."},
     { LLDB_OPT_SET_ALL, false, "cascade", 'C', OptionParser::eRequiredArgument, NULL, 0, eArgTypeBoolean,    "If true, cascade through typedef chains."},
     { LLDB_OPT_SET_ALL, false, "skip-pointers", 'p', OptionParser::eNoArgument, NULL, 0, eArgTypeNone,         "Don't use this format for pointers-to-type objects."},
     { LLDB_OPT_SET_ALL, false, "skip-references", 'r', OptionParser::eNoArgument, NULL, 0, eArgTypeNone,         "Don't use this format for references-to-type objects."},
+    { LLDB_OPT_SET_ALL, false,  "regex", 'x', OptionParser::eNoArgument, NULL, 0, eArgTypeNone,    "Type names are actually regular expressions."},
+    { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
 
@@ -551,12 +584,89 @@ CommandObjectTypeFormatAdd::CommandOptions::GetNumDefinitions ()
 
 class CommandObjectTypeFormatDelete : public CommandObjectParsed
 {
+private:
+    class CommandOptions : public Options
+    {
+    public:
+        
+        CommandOptions (CommandInterpreter &interpreter) :
+        Options (interpreter)
+        {
+        }
+        
+        virtual
+        ~CommandOptions (){}
+        
+        virtual Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        {
+            Error error;
+            const int short_option = m_getopt_table[option_idx].val;
+            
+            switch (short_option)
+            {
+                case 'a':
+                    m_delete_all = true;
+                    break;
+                case 'w':
+                    m_category = std::string(option_arg);
+                    break;
+                default:
+                    error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
+                    break;
+            }
+            
+            return error;
+        }
+        
+        void
+        OptionParsingStarting ()
+        {
+            m_delete_all = false;
+            m_category = "default";
+        }
+        
+        const OptionDefinition*
+        GetDefinitions ()
+        {
+            return g_option_table;
+        }
+        
+        // Options table: Required for subclasses of Options.
+        
+        static OptionDefinition g_option_table[];
+        
+        // Instance variables to hold the values for command options.
+        
+        bool m_delete_all;
+        std::string m_category;
+        
+    };
+    
+    CommandOptions m_options;
+    
+    virtual Options *
+    GetOptions ()
+    {
+        return &m_options;
+    }
+    
+    static bool
+    PerCategoryCallback(void* param,
+                        const lldb::TypeCategoryImplSP& category_sp)
+    {
+		ConstString *name = (ConstString*)param;
+		category_sp->Delete(*name, eFormatCategoryItemValue | eFormatCategoryItemRegexValue);
+		return true;
+    }
+
 public:
     CommandObjectTypeFormatDelete (CommandInterpreter &interpreter) :
         CommandObjectParsed (interpreter,
                              "type format delete",
                              "Delete an existing formatting style for a type.",
-                             NULL)
+                             NULL),
+    m_options(interpreter)
     {
         CommandArgumentEntry type_arg;
         CommandArgumentData type_style_arg;
@@ -597,8 +707,20 @@ protected:
             return false;
         }
         
+        if (m_options.m_delete_all)
+        {
+            DataVisualization::Categories::LoopThrough(PerCategoryCallback, &typeCS);
+            result.SetStatus(eReturnStatusSuccessFinishNoResult);
+            return result.Succeeded();
+        }
         
-        if (DataVisualization::ValueFormats::Delete(typeCS))
+        lldb::TypeCategoryImplSP category;
+        DataVisualization::Categories::GetCategory(ConstString(m_options.m_category.c_str()), category);
+        
+        bool delete_category = category->Delete(typeCS,
+                                                eFormatCategoryItemValue | eFormatCategoryItemRegexValue);
+        
+        if (delete_category)
         {
             result.SetStatus(eReturnStatusSuccessFinishNoResult);
             return result.Succeeded();
@@ -614,18 +736,100 @@ protected:
     
 };
 
+OptionDefinition
+CommandObjectTypeFormatDelete::CommandOptions::g_option_table[] =
+{
+    { LLDB_OPT_SET_1, false, "all", 'a', OptionParser::eNoArgument, NULL, 0, eArgTypeNone,  "Delete from every category."},
+    { LLDB_OPT_SET_2, false, "category", 'w', OptionParser::eRequiredArgument, NULL, 0, eArgTypeName,  "Delete from given category."},
+    { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
+};
+
 //-------------------------------------------------------------------------
 // CommandObjectTypeFormatClear
 //-------------------------------------------------------------------------
 
 class CommandObjectTypeFormatClear : public CommandObjectParsed
 {
+private:
+    
+    class CommandOptions : public Options
+    {
+    public:
+        
+        CommandOptions (CommandInterpreter &interpreter) :
+        Options (interpreter)
+        {
+        }
+        
+        virtual
+        ~CommandOptions (){}
+        
+        virtual Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        {
+            Error error;
+            const int short_option = m_getopt_table[option_idx].val;
+            
+            switch (short_option)
+            {
+                case 'a':
+                    m_delete_all = true;
+                    break;
+                default:
+                    error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
+                    break;
+            }
+            
+            return error;
+        }
+        
+        void
+        OptionParsingStarting ()
+        {
+            m_delete_all = false;
+        }
+        
+        const OptionDefinition*
+        GetDefinitions ()
+        {
+            return g_option_table;
+        }
+        
+        // Options table: Required for subclasses of Options.
+        
+        static OptionDefinition g_option_table[];
+        
+        // Instance variables to hold the values for command options.
+        
+        bool m_delete_all;
+        bool m_delete_named;
+    };
+    
+    CommandOptions m_options;
+    
+    virtual Options *
+    GetOptions ()
+    {
+        return &m_options;
+    }
+    
+    static bool
+    PerCategoryCallback(void* param,
+                        const lldb::TypeCategoryImplSP& cate)
+    {
+        cate->GetValueNavigator()->Clear();
+        cate->GetRegexValueNavigator()->Clear();
+        return true;
+        
+    }
+    
 public:
     CommandObjectTypeFormatClear (CommandInterpreter &interpreter) :
         CommandObjectParsed (interpreter,
                              "type format clear",
                              "Delete all existing format styles.",
-                             NULL)
+                             NULL),
+    m_options(interpreter)
     {
     }
     
@@ -637,11 +841,34 @@ protected:
     bool
     DoExecute (Args& command, CommandReturnObject &result)
     {
-        DataVisualization::ValueFormats::Clear();
+        if (m_options.m_delete_all)
+            DataVisualization::Categories::LoopThrough(PerCategoryCallback, NULL);
+        
+        else
+        {
+            lldb::TypeCategoryImplSP category;
+            if (command.GetArgumentCount() > 0)
+            {
+                const char* cat_name = command.GetArgumentAtIndex(0);
+                ConstString cat_nameCS(cat_name);
+                DataVisualization::Categories::GetCategory(cat_nameCS, category);
+            }
+            else
+                DataVisualization::Categories::GetCategory(ConstString(NULL), category);
+            category->Clear(eFormatCategoryItemValue | eFormatCategoryItemRegexValue);
+        }
+        
         result.SetStatus(eReturnStatusSuccessFinishResult);
         return result.Succeeded();
     }
     
+};
+
+OptionDefinition
+CommandObjectTypeFormatClear::CommandOptions::g_option_table[] =
+{
+    { LLDB_OPT_SET_ALL, false, "all", 'a', OptionParser::eNoArgument, NULL, 0, eArgTypeNone,  "Clear every category."},
+    { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
 //-------------------------------------------------------------------------
@@ -649,6 +876,7 @@ protected:
 //-------------------------------------------------------------------------
 
 bool CommandObjectTypeFormatList_LoopCallback(void* pt2self, ConstString type, const lldb::TypeFormatImplSP& entry);
+bool CommandObjectTypeRXFormatList_LoopCallback(void* pt2self, lldb::RegularExpressionSP regex, const lldb::TypeFormatImplSP& entry);
 
 class CommandObjectTypeFormatList;
 
@@ -656,18 +884,81 @@ struct CommandObjectTypeFormatList_LoopCallbackParam {
     CommandObjectTypeFormatList* self;
     CommandReturnObject* result;
     RegularExpression* regex;
+    RegularExpression* cate_regex;
     CommandObjectTypeFormatList_LoopCallbackParam(CommandObjectTypeFormatList* S, CommandReturnObject* R,
-                                            RegularExpression* X = NULL) : self(S), result(R), regex(X) {}
+                                            RegularExpression* X = NULL, RegularExpression* CX = NULL) : self(S), result(R), regex(X), cate_regex(CX) {}
 };
 
 class CommandObjectTypeFormatList : public CommandObjectParsed
 {
+    class CommandOptions : public Options
+    {
+    public:
+        
+        CommandOptions (CommandInterpreter &interpreter) :
+        Options (interpreter)
+        {
+        }
+        
+        virtual
+        ~CommandOptions (){}
+        
+        virtual Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        {
+            Error error;
+            const int short_option = m_getopt_table[option_idx].val;
+            
+            switch (short_option)
+            {
+                case 'w':
+                    m_category_regex = std::string(option_arg);
+                    break;
+                default:
+                    error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
+                    break;
+            }
+            
+            return error;
+        }
+        
+        void
+        OptionParsingStarting ()
+        {
+            m_category_regex = "";
+        }
+        
+        const OptionDefinition*
+        GetDefinitions ()
+        {
+            return g_option_table;
+        }
+        
+        // Options table: Required for subclasses of Options.
+        
+        static OptionDefinition g_option_table[];
+        
+        // Instance variables to hold the values for command options.
+        
+        std::string m_category_regex;
+        
+    };
+    
+    CommandOptions m_options;
+    
+    virtual Options *
+    GetOptions ()
+    {
+        return &m_options;
+    }
+
 public:
     CommandObjectTypeFormatList (CommandInterpreter &interpreter) :
         CommandObjectParsed (interpreter,
                              "type format list",
                              "Show a list of current formatting styles.",
-                             NULL)
+                             NULL),
+    m_options(interpreter)
     {
         CommandArgumentEntry type_arg;
         CommandArgumentData type_style_arg;
@@ -691,38 +982,77 @@ protected:
         const size_t argc = command.GetArgumentCount();
         
         CommandObjectTypeFormatList_LoopCallbackParam *param;
+        RegularExpression* cate_regex =
+        m_options.m_category_regex.empty() ? NULL :
+        new RegularExpression(m_options.m_category_regex.c_str());
         
         if (argc == 1)
         {
             RegularExpression* regex = new RegularExpression(command.GetArgumentAtIndex(0));
             regex->Compile(command.GetArgumentAtIndex(0));
-            param = new CommandObjectTypeFormatList_LoopCallbackParam(this,&result,regex);
+            param = new CommandObjectTypeFormatList_LoopCallbackParam(this,&result,regex,cate_regex);
         }
         else
-            param = new CommandObjectTypeFormatList_LoopCallbackParam(this,&result);
-        DataVisualization::ValueFormats::LoopThrough(CommandObjectTypeFormatList_LoopCallback, param);
-        delete param;
+            param = new CommandObjectTypeFormatList_LoopCallbackParam(this,&result,NULL,cate_regex);
+        
+        DataVisualization::Categories::LoopThrough(PerCategoryCallback,param);
+
+        if (cate_regex)
+            delete cate_regex;
+        
         result.SetStatus(eReturnStatusSuccessFinishResult);
         return result.Succeeded();
     }
     
 private:
     
-    bool
-    LoopCallback (ConstString type,
-                  const lldb::TypeFormatImplSP& entry,
-                  RegularExpression* regex,
-                  CommandReturnObject *result)
+    static bool
+    PerCategoryCallback(void* param_vp,
+                        const lldb::TypeCategoryImplSP& cate)
     {
-        if (regex == NULL || regex->Execute(type.AsCString())) 
+        
+        CommandObjectTypeFormatList_LoopCallbackParam* param =
+        (CommandObjectTypeFormatList_LoopCallbackParam*)param_vp;
+        CommandReturnObject* result = param->result;
+        
+        const char* cate_name = cate->GetName();
+        
+        // if the category is disabled or empty and there is no regex, just skip it
+        if ((cate->IsEnabled() == false || cate->GetCount(eFormatCategoryItemValue | eFormatCategoryItemRegexValue) == 0) && param->cate_regex == NULL)
+            return true;
+        
+        // if we have a regex and this category does not match it, just skip it
+        if(param->cate_regex != NULL && strcmp(cate_name,param->cate_regex->GetText()) != 0 && param->cate_regex->Execute(cate_name) == false)
+            return true;
+        
+        result->GetOutputStream().Printf("-----------------------\nCategory: %s (%s)\n-----------------------\n",
+                                         cate_name,
+                                         (cate->IsEnabled() ? "enabled" : "disabled"));
+        
+        cate->GetValueNavigator()->LoopThrough(CommandObjectTypeFormatList_LoopCallback, param_vp);
+        
+        if (cate->GetRegexSummaryNavigator()->GetCount() > 0)
         {
-            result->GetOutputStream().Printf ("%s: %s\n", type.AsCString(), 
-                                              entry->GetDescription().c_str());
+            result->GetOutputStream().Printf("Regex-based summaries (slower):\n");
+            cate->GetRegexValueNavigator()->LoopThrough(CommandObjectTypeRXFormatList_LoopCallback, param_vp);
         }
         return true;
     }
     
+    
+    bool
+    LoopCallback (const char* type,
+                  const lldb::TypeFormatImplSP& entry,
+                  RegularExpression* regex,
+                  CommandReturnObject *result)
+    {
+        if (regex == NULL || strcmp(type,regex->GetText()) == 0 || regex->Execute(type))
+            result->GetOutputStream().Printf ("%s: %s\n", type, entry->GetDescription().c_str());
+        return true;
+    }
+    
     friend bool CommandObjectTypeFormatList_LoopCallback(void* pt2self, ConstString type, const lldb::TypeFormatImplSP& entry);
+    friend bool CommandObjectTypeRXFormatList_LoopCallback(void* pt2self, lldb::RegularExpressionSP regex, const lldb::TypeFormatImplSP& entry);
     
 };
 
@@ -733,9 +1063,25 @@ CommandObjectTypeFormatList_LoopCallback (
                                     const lldb::TypeFormatImplSP& entry)
 {
     CommandObjectTypeFormatList_LoopCallbackParam* param = (CommandObjectTypeFormatList_LoopCallbackParam*)pt2self;
-    return param->self->LoopCallback(type, entry, param->regex, param->result);
+    return param->self->LoopCallback(type.AsCString(), entry, param->regex, param->result);
 }
 
+bool
+CommandObjectTypeRXFormatList_LoopCallback (
+                                             void* pt2self,
+                                             lldb::RegularExpressionSP regex,
+                                             const lldb::TypeFormatImplSP& entry)
+{
+    CommandObjectTypeFormatList_LoopCallbackParam* param = (CommandObjectTypeFormatList_LoopCallbackParam*)pt2self;
+    return param->self->LoopCallback(regex->GetText(), entry, param->regex, param->result);
+}
+
+OptionDefinition
+CommandObjectTypeFormatList::CommandOptions::g_option_table[] =
+{
+    { LLDB_OPT_SET_ALL, false, "category-regex", 'w', OptionParser::eRequiredArgument, NULL, 0, eArgTypeName,  "Only show categories matching this filter."},
+    { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
+};
 
 #ifndef LLDB_DISABLE_PYTHON
 

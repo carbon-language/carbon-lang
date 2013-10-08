@@ -39,40 +39,16 @@ public:
     static bool
     ShouldPrintAsOneLiner (ValueObject& valobj);
     
-    class ValueFormats
-    {
-    public:
-        static lldb::TypeFormatImplSP
-        GetFormat (ValueObject& valobj, lldb::DynamicValueType use_dynamic);
-        
-        static lldb::TypeFormatImplSP
-        GetFormat (const ConstString &type);
-        
-        static void
-        Add (const ConstString &type, const lldb::TypeFormatImplSP &entry);
-        
-        static bool
-        Delete (const ConstString &type);
-        
-        static void
-        Clear ();
-        
-        static void
-        LoopThrough (TypeFormatImpl::ValueCallback callback, void* callback_baton);
-        
-        static size_t
-        GetCount ();
-        
-        static lldb::TypeNameSpecifierImplSP
-        GetTypeNameSpecifierForFormatAtIndex (size_t);
-        
-        static lldb::TypeFormatImplSP
-        GetFormatAtIndex (size_t);
-    };
+    static lldb::TypeFormatImplSP
+    GetFormat (ValueObject& valobj,
+               lldb::DynamicValueType use_dynamic);
+    
+    static lldb::TypeFormatImplSP
+    GetFormatForType (lldb::TypeNameSpecifierImplSP type_sp);
     
     static lldb::TypeSummaryImplSP
-    GetSummaryFormat(ValueObject& valobj,
-                     lldb::DynamicValueType use_dynamic);
+    GetSummaryFormat (ValueObject& valobj,
+                      lldb::DynamicValueType use_dynamic);
 
     static lldb::TypeSummaryImplSP
     GetSummaryForType (lldb::TypeNameSpecifierImplSP type_sp);

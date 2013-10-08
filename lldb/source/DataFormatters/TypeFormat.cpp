@@ -42,7 +42,7 @@ std::string
 TypeFormatImpl::GetDescription()
 {
     StreamString sstr;
-    sstr.Printf ("%s%s%s%s\n",
+    sstr.Printf ("%s%s%s%s",
                  FormatManager::GetFormatAsCString (GetFormat()),
                  Cascades() ? "" : " (not cascading)",
                  SkipsPointers() ? " (skip pointers)" : "",

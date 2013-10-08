@@ -24,6 +24,8 @@ namespace lldb_private {
     class TypeCategoryImpl
     {
     private:
+        typedef FormatNavigator<ConstString, TypeFormatImpl> ValueNavigator;
+        typedef FormatNavigator<lldb::RegularExpressionSP, TypeFormatImpl> RegexValueNavigator;
         
         typedef FormatNavigator<ConstString, TypeSummaryImpl> SummaryNavigator;
         typedef FormatNavigator<lldb::RegularExpressionSP, TypeSummaryImpl> RegexSummaryNavigator;
@@ -35,11 +37,16 @@ namespace lldb_private {
         typedef FormatNavigator<ConstString, ScriptedSyntheticChildren> SynthNavigator;
         typedef FormatNavigator<lldb::RegularExpressionSP, ScriptedSyntheticChildren> RegexSynthNavigator;
 #endif // #ifndef LLDB_DISABLE_PYTHON
-        
+
+        typedef ValueNavigator::MapType ValueMap;
+        typedef RegexValueNavigator::MapType RegexValueMap;
+
         typedef SummaryNavigator::MapType SummaryMap;
         typedef RegexSummaryNavigator::MapType RegexSummaryMap;
+        
         typedef FilterNavigator::MapType FilterMap;
         typedef RegexFilterNavigator::MapType RegexFilterMap;
+
 #ifndef LLDB_DISABLE_PYTHON
         typedef SynthNavigator::MapType SynthMap;
         typedef RegexSynthNavigator::MapType RegexSynthMap;
@@ -49,9 +56,13 @@ namespace lldb_private {
         
         typedef uint16_t FormatCategoryItems;
         static const uint16_t ALL_ITEM_TYPES = UINT16_MAX;
+
+        typedef ValueNavigator::SharedPointer ValueNavigatorSP;
+        typedef RegexValueNavigator::SharedPointer RegexValueNavigatorSP;
         
         typedef SummaryNavigator::SharedPointer SummaryNavigatorSP;
         typedef RegexSummaryNavigator::SharedPointer RegexSummaryNavigatorSP;
+
         typedef FilterNavigator::SharedPointer FilterNavigatorSP;
         typedef RegexFilterNavigator::SharedPointer RegexFilterNavigatorSP;
 #ifndef LLDB_DISABLE_PYTHON
@@ -61,6 +72,18 @@ namespace lldb_private {
         
         TypeCategoryImpl (IFormatChangeListener* clist,
                           ConstString name);
+        
+        ValueNavigatorSP
+        GetValueNavigator ()
+        {
+            return ValueNavigatorSP(m_value_nav);
+        }
+        
+        RegexValueNavigatorSP
+        GetRegexValueNavigator ()
+        {
+            return RegexValueNavigatorSP(m_regex_value_nav);
+        }
         
         SummaryNavigatorSP
         GetSummaryNavigator ()
@@ -85,6 +108,9 @@ namespace lldb_private {
         {
             return RegexFilterNavigatorSP(m_regex_filter_nav);
         }
+
+        ValueNavigator::MapValueType
+        GetFormatForType (lldb::TypeNameSpecifierImplSP type_sp);
         
         SummaryNavigator::MapValueType
         GetSummaryForType (lldb::TypeNameSpecifierImplSP type_sp);
@@ -98,7 +124,13 @@ namespace lldb_private {
 #endif
         
         lldb::TypeNameSpecifierImplSP
+        GetTypeNameSpecifierForFormatAtIndex (size_t index);
+        
+        lldb::TypeNameSpecifierImplSP
         GetTypeNameSpecifierForSummaryAtIndex (size_t index);
+
+        ValueNavigator::MapValueType
+        GetFormatAtIndex (size_t index);
         
         SummaryNavigator::MapValueType
         GetSummaryAtIndex (size_t index);
@@ -145,6 +177,13 @@ namespace lldb_private {
                 return m_enabled_position;
         }
         
+        
+        bool
+        Get (ValueObject& valobj,
+             lldb::TypeFormatImplSP& entry,
+             lldb::DynamicValueType use_dynamic,
+             uint32_t* reason = NULL);
+        
         bool
         Get (ValueObject& valobj,
              lldb::TypeSummaryImplSP& entry,
@@ -183,10 +222,15 @@ namespace lldb_private {
         typedef std::shared_ptr<TypeCategoryImpl> SharedPointer;
         
     private:
+        ValueNavigator::SharedPointer m_value_nav;
+        RegexValueNavigator::SharedPointer m_regex_value_nav;
+        
         SummaryNavigator::SharedPointer m_summary_nav;
         RegexSummaryNavigator::SharedPointer m_regex_summary_nav;
+
         FilterNavigator::SharedPointer m_filter_nav;
         RegexFilterNavigator::SharedPointer m_regex_filter_nav;
+
 #ifndef LLDB_DISABLE_PYTHON
         SynthNavigator::SharedPointer m_synth_nav;
         RegexSynthNavigator::SharedPointer m_regex_synth_nav;
@@ -212,6 +256,9 @@ namespace lldb_private {
         }
         
         friend class TypeCategoryMap;
+        
+        friend class FormatNavigator<ConstString, TypeFormatImpl>;
+        friend class FormatNavigator<lldb::RegularExpressionSP, TypeFormatImpl>;
         
         friend class FormatNavigator<ConstString, TypeSummaryImpl>;
         friend class FormatNavigator<lldb::RegularExpressionSP, TypeSummaryImpl>;

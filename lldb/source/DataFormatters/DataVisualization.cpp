@@ -47,66 +47,19 @@ DataVisualization::ShouldPrintAsOneLiner (ValueObject& valobj)
 }
 
 lldb::TypeFormatImplSP
-DataVisualization::ValueFormats::GetFormat (ValueObject& valobj, lldb::DynamicValueType use_dynamic)
+DataVisualization::GetFormat (ValueObject& valobj, lldb::DynamicValueType use_dynamic)
 {
-    lldb::TypeFormatImplSP entry;
-    GetFormatManager().GetValueNavigator().Get(valobj, entry, use_dynamic);
-    return entry;
+    return GetFormatManager().GetFormat(valobj, use_dynamic);
 }
 
 lldb::TypeFormatImplSP
-DataVisualization::ValueFormats::GetFormat (const ConstString &type)
+DataVisualization::GetFormatForType (lldb::TypeNameSpecifierImplSP type_sp)
 {
-    lldb::TypeFormatImplSP entry;
-    GetFormatManager().GetValueNavigator().Get(type, entry);
-    return entry;
-}
-
-void
-DataVisualization::ValueFormats::Add (const ConstString &type, const lldb::TypeFormatImplSP &entry)
-{
-    GetFormatManager().GetValueNavigator().Add(FormatManager::GetValidTypeName(type),entry);
-}
-
-bool
-DataVisualization::ValueFormats::Delete (const ConstString &type)
-{
-    return GetFormatManager().GetValueNavigator().Delete(type);
-}
-
-void
-DataVisualization::ValueFormats::Clear ()
-{
-    GetFormatManager().GetValueNavigator().Clear();
-}
-
-void
-DataVisualization::ValueFormats::LoopThrough (TypeFormatImpl::ValueCallback callback, void* callback_baton)
-{
-    GetFormatManager().GetValueNavigator().LoopThrough(callback, callback_baton);
-}
-
-size_t
-DataVisualization::ValueFormats::GetCount ()
-{
-    return GetFormatManager().GetValueNavigator().GetCount();
-}
-
-lldb::TypeNameSpecifierImplSP
-DataVisualization::ValueFormats::GetTypeNameSpecifierForFormatAtIndex (size_t index)
-{
-    return GetFormatManager().GetValueNavigator().GetTypeNameSpecifierAtIndex(index);
-}
-
-lldb::TypeFormatImplSP
-DataVisualization::ValueFormats::GetFormatAtIndex (size_t index)
-{
-    return GetFormatManager().GetValueNavigator().GetAtIndex(index);
+    return GetFormatManager().GetFormatForType(type_sp);
 }
 
 lldb::TypeSummaryImplSP
-DataVisualization::GetSummaryFormat (ValueObject& valobj,
-                                     lldb::DynamicValueType use_dynamic)
+DataVisualization::GetSummaryFormat (ValueObject& valobj, lldb::DynamicValueType use_dynamic)
 {
     return GetFormatManager().GetSummaryFormat(valobj, use_dynamic);
 }

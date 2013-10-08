@@ -93,6 +93,10 @@ namespace lldb_private {
         {
             return m_map.size();
         }
+
+        lldb::TypeFormatImplSP
+        GetFormat (ValueObject& valobj,
+                   lldb::DynamicValueType use_dynamic);
         
         lldb::TypeSummaryImplSP
         GetSummaryFormat (ValueObject& valobj,
