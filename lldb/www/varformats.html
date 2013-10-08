@@ -48,14 +48,15 @@
                   style="font-style: italic;">filters</span>, <span
                   style="font-style: italic;">synthetic children</span>.</p>
             
-            <p>To reflect this, the <b>type</b> command has four
-                subcommands (plus one specific for <i>categories</i>):<br>
+            <p>To reflect this, the <b>type</b> command has five
+                subcommands:<br>
               </p>
             
             <p><code>type format</code></p>
             <p><code>type summary</code></p>
             <p><code>type filter</code></p>
             <p><code>type synthetic</code></p>
+            <p><code>type category</code></p>
 
             
             <p>These commands are meant to bind printing options to
@@ -65,7 +66,7 @@
                 the default choices.<br>
               </p>
               
-              <p>Each of the commands has four subcommands available:<br>
+              <p>Each of the commands (except <code>type category</code>) has four subcommands available:<br>
               </p>
               <p><code>add</code>: associates a new printing option to one
               or more types</p>
@@ -1193,7 +1194,7 @@ By default, LLDB will not show you the real type of the object. it can actually 
 					<li><a href="http://developer.apple.com/library/mac/#documentation/Carbon/reference/CoreServicesReferenceCollection/_index.html"><code>CoreServices</code></a>: CS classes
 					<li><code>VectorTypes</code>: compact display for several vector types
 				</ul>
-				If you want to use a custom category for your formatters, all the <code>type ... add</code> (except for <code>type format add</code>),
+				If you want to use a custom category for your formatters, all the <code>type ... add</code>
 				provide a <code>--category</code> (<code>-w</code>) option, that names the category to add the formatter to.
 				To delete the formatter, you then have to specify the correct category.</p>
 				<p>Categories can be in one of two states: enabled and disabled. A category is initially disabled,
@@ -1242,9 +1243,9 @@ By default, LLDB will not show you the real type of the object. it can actually 
           <div class="post">
             <h1 class="postheader">Finding formatters 101</h1>
             <div class="postcontent">
-              <p>While the rules for finding an appropriate format for a
-                type are relatively simple (just go through typedef
-                hierarchies), searching other formatters goes through
+              <p>Searching for a formatter
+	             (including formats, starting in SVN rev <a href="http://llvm.org/viewvc/llvm-project?view=revision&amp;revision=192217">r192217</a>)
+	            given a variable goes through
 				a rather intricate set of rules. Namely, what happens is that LLDB
 				starts looking in each enabled category, according to the order in which
 				they were enabled (latest enabled first). In each category, LLDB does
