@@ -1,7 +1,7 @@
 // RUN: rm -rf %t
-// RUN: %clang_cc1 -objcmt-migrate-readwrite-property -objcmt-migrate-readonly-property -mt-migrate-directory %t %s -x objective-c -fobjc-runtime-has-weak -fobjc-arc -triple x86_64-apple-darwin11
+// RUN: %clang_cc1 -fblocks -objcmt-migrate-readwrite-property -objcmt-migrate-readonly-property -mt-migrate-directory %t %s -x objective-c -fobjc-runtime-has-weak -fobjc-arc -triple x86_64-apple-darwin11
 // RUN: c-arcmt-test -mt-migrate-directory %t | arcmt-test -verify-transformed-files %s.result
-// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fsyntax-only -x objective-c -fobjc-runtime-has-weak -fobjc-arc %s.result
+// RUN: %clang_cc1 -fblocks -triple x86_64-apple-darwin10 -fsyntax-only -x objective-c -fobjc-runtime-has-weak -fobjc-arc %s.result
 
 #define WEBKIT_OBJC_METHOD_ANNOTATION(ANNOTATION) ANNOTATION
 #define WEAK_IMPORT_ATTRIBUTE __attribute__((objc_arc_weak_reference_unavailable))
@@ -214,4 +214,13 @@ DEPRECATED
 - (BOOL)isClass;    // This is a valid property 'class' is not a keyword in ObjC
 - (BOOL)isDouble; // Not a valid property
 
+@end
+
+// rdar://15082818
+@class NSMutableDictionary;
+
+@interface NSArray
+- (id (^)(id, NSArray *, NSMutableDictionary *)) expressionBlock;
+- (id (^)(id, NSArray *, NSMutableDictionary *)) MyBlock;
+- (void) setMyBlock : (id (^)(id, NSArray *, NSMutableDictionary *)) bl;
 @end

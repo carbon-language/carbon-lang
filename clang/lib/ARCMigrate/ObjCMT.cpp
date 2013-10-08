@@ -230,6 +230,36 @@ static void append_attr(std::string &PropertyString, const char *attr) {
   PropertyString += attr;
 }
 
+static
+void MigrateBlockOrFunctionPointerTypeVariable(std::string & PropertyString,
+                                               const std::string& TypeString,
+                                               const char *name) {
+  const char *argPtr = TypeString.c_str();
+  int paren = 0;
+  while (*argPtr) {
+    switch (*argPtr) {
+      case '(':
+        PropertyString += *argPtr;
+        paren++;
+        break;
+      case ')':
+        PropertyString += *argPtr;
+        paren--;
+        break;
+      case '^':
+        PropertyString += '^';
+        if (paren == 1)
+          PropertyString += name;
+        break;
+      default:
+        PropertyString += *argPtr;
+        break;
+    }
+    argPtr++;
+  }
+}
+
+
 static bool rewriteToObjCProperty(const ObjCMethodDecl *Getter,
                                   const ObjCMethodDecl *Setter,
                                   const NSAPI &NS, edit::Commit &commit,
@@ -245,7 +275,7 @@ static bool rewriteToObjCProperty(const ObjCMethodDecl *Getter,
   // Property with no setter may be suggested as a 'readonly' property.
   if (!Setter)
     append_attr(PropertyString, "readonly");
-
+  
   // Short circuit properties that contain the name "delegate" or "dataSource",
   // or have exact name "target" to have unsafe_unretained attribute.
   if (PropertyName.equals("target") ||
@@ -267,15 +297,17 @@ static bool rewriteToObjCProperty(const ObjCMethodDecl *Getter,
         else
           append_attr(PropertyString, "retain");
       }
+      else if (ArgType->isBlockPointerType())
+        append_attr(PropertyString, "copy");
     } else if (propertyLifetime == Qualifiers::OCL_Weak)
       // TODO. More precise determination of 'weak' attribute requires
       // looking into setter's implementation for backing weak ivar.
       append_attr(PropertyString, "weak");
     else if (RetainableObject)
-      append_attr(PropertyString, "retain");
+      append_attr(PropertyString,
+                  ArgType->isBlockPointerType() ? "copy" : "retain");
   }
   PropertyString += ')';
-  
   QualType RT = Getter->getResultType();
   if (!isa<TypedefType>(RT)) {
     // strip off any ARC lifetime qualifier.
@@ -287,26 +319,32 @@ static bool rewriteToObjCProperty(const ObjCMethodDecl *Getter,
     }
   }
   PropertyString += " ";
-  PropertyString += RT.getAsString(Context.getPrintingPolicy());
-  char LastChar = PropertyString[PropertyString.size()-1];
-  if (LastChar != '*')
-    PropertyString += " ";
+  PrintingPolicy SubPolicy(Context.getPrintingPolicy());
+  SubPolicy.SuppressStrongLifetime = true;
+  std::string TypeString = RT.getAsString(SubPolicy);
   if (LengthOfPrefix > 0) {
     // property name must strip off "is" and lower case the first character
     // after that; e.g. isContinuous will become continuous.
     StringRef PropertyNameStringRef(PropertyNameString);
     PropertyNameStringRef = PropertyNameStringRef.drop_front(LengthOfPrefix);
     PropertyNameString = PropertyNameStringRef;
-    std::string NewPropertyNameString = PropertyNameString;
-    bool NoLowering = (isUppercase(NewPropertyNameString[0]) &&
-                       NewPropertyNameString.size() > 1 &&
-                       isUppercase(NewPropertyNameString[1]));
+    bool NoLowering = (isUppercase(PropertyNameString[0]) &&
+                       PropertyNameString.size() > 1 &&
+                       isUppercase(PropertyNameString[1]));
     if (!NoLowering)
-      NewPropertyNameString[0] = toLowercase(NewPropertyNameString[0]);
-    PropertyString += NewPropertyNameString;
+      PropertyNameString[0] = toLowercase(PropertyNameString[0]);
   }
-  else
+  if (RT->isBlockPointerType() || RT->isFunctionPointerType())
+    MigrateBlockOrFunctionPointerTypeVariable(PropertyString,
+                                              TypeString,
+                                              PropertyNameString.c_str());
+  else {
+    char LastChar = TypeString[TypeString.size()-1];
+    PropertyString += TypeString;
+    if (LastChar != '*')
+      PropertyString += ' ';
     PropertyString += PropertyNameString;
+  }
   SourceLocation StartGetterSelectorLoc = Getter->getSelectorStartLoc();
   Selector GetterSelector = Getter->getSelector();
   
