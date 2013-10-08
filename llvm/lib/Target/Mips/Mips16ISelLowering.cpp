@@ -145,6 +145,11 @@ Mips16TargetLowering::Mips16TargetLowering(MipsTargetMachine &TM)
   setOperationAction(ISD::ATOMIC_LOAD_UMIN,   MVT::i32,   Expand);
   setOperationAction(ISD::ATOMIC_LOAD_UMAX,   MVT::i32,   Expand);
 
+  setOperationAction(ISD::ROTR, MVT::i32,  Expand);
+  setOperationAction(ISD::ROTR, MVT::i64,  Expand);
+  setOperationAction(ISD::BSWAP, MVT::i32, Expand);
+  setOperationAction(ISD::BSWAP, MVT::i64, Expand);
+
   computeRegisterProperties();
 }
 
