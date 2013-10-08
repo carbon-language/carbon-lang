@@ -41,7 +41,7 @@ public:
   }
 
   /// \brief Parse the input file to lld::File.
-  llvm::error_code parse(const LinkingContext &ctx, raw_ostream &diagnostics) {
+  error_code parse(const LinkingContext &ctx, raw_ostream &diagnostics) {
     ErrorOr<StringRef> filePath = path(ctx);
     if (!filePath &&
         error_code(filePath) == llvm::errc::no_such_file_or_directory)
@@ -49,16 +49,12 @@ public:
 
     // Create a memory buffer
     OwningPtr<llvm::MemoryBuffer> opmb;
-    llvm::error_code ec;
-
-    if ((ec = llvm::MemoryBuffer::getFileOrSTDIN(*filePath, opmb)))
+    if (error_code ec = llvm::MemoryBuffer::getFileOrSTDIN(*filePath, opmb))
       return ec;
 
     std::unique_ptr<MemoryBuffer> mb(opmb.take());
     _buffer = std::move(mb);
-
-    ec = _ctx.getDefaultReader().parseFile(_buffer, _files);
-    return ec;
+    return _ctx.getDefaultReader().parseFile(_buffer, _files);
   }
 
   /// \brief Return the file that has to be processed by the resolver
