@@ -909,6 +909,18 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(GetElementPtrInst, Value)
 /// must be identical types.
 /// \brief Represent an integer comparison operator.
 class ICmpInst: public CmpInst {
+  void AssertOK() {
+    assert(getPredicate() >= CmpInst::FIRST_ICMP_PREDICATE &&
+           getPredicate() <= CmpInst::LAST_ICMP_PREDICATE &&
+           "Invalid ICmp predicate value");
+    assert(getOperand(0)->getType() == getOperand(1)->getType() &&
+          "Both operands to ICmp instruction are not of the same type!");
+    // Check that the operands are the right type
+    assert((getOperand(0)->getType()->isIntOrIntVectorTy() ||
+            getOperand(0)->getType()->isPtrOrPtrVectorTy()) &&
+           "Invalid operand types for ICmp instruction");
+  }
+
 protected:
   /// \brief Clone an identical ICmpInst
   virtual ICmpInst *clone_impl() const;
@@ -923,15 +935,9 @@ public:
   ) : CmpInst(makeCmpResultType(LHS->getType()),
               Instruction::ICmp, pred, LHS, RHS, NameStr,
               InsertBefore) {
-    assert(pred >= CmpInst::FIRST_ICMP_PREDICATE &&
-           pred <= CmpInst::LAST_ICMP_PREDICATE &&
-           "Invalid ICmp predicate value");
-    assert(getOperand(0)->getType() == getOperand(1)->getType() &&
-          "Both operands to ICmp instruction are not of the same type!");
-    // Check that the operands are the right type
-    assert((getOperand(0)->getType()->isIntOrIntVectorTy() ||
-            getOperand(0)->getType()->getScalarType()->isPointerTy()) &&
-           "Invalid operand types for ICmp instruction");
+#ifndef NDEBUG
+  AssertOK();
+#endif
   }
 
   /// \brief Constructor with insert-at-end semantics.
@@ -944,15 +950,9 @@ public:
   ) : CmpInst(makeCmpResultType(LHS->getType()),
               Instruction::ICmp, pred, LHS, RHS, NameStr,
               &InsertAtEnd) {
-    assert(pred >= CmpInst::FIRST_ICMP_PREDICATE &&
-          pred <= CmpInst::LAST_ICMP_PREDICATE &&
-          "Invalid ICmp predicate value");
-    assert(getOperand(0)->getType() == getOperand(1)->getType() &&
-          "Both operands to ICmp instruction are not of the same type!");
-    // Check that the operands are the right type
-    assert((getOperand(0)->getType()->isIntOrIntVectorTy() ||
-            getOperand(0)->getType()->getScalarType()->isPointerTy()) &&
-           "Invalid operand types for ICmp instruction");
+#ifndef NDEBUG
+  AssertOK();
+#endif
   }
 
   /// \brief Constructor with no-insertion semantics
@@ -963,15 +963,9 @@ public:
     const Twine &NameStr = "" ///< Name of the instruction
   ) : CmpInst(makeCmpResultType(LHS->getType()),
               Instruction::ICmp, pred, LHS, RHS, NameStr) {
-    assert(pred >= CmpInst::FIRST_ICMP_PREDICATE &&
-           pred <= CmpInst::LAST_ICMP_PREDICATE &&
-           "Invalid ICmp predicate value");
-    assert(getOperand(0)->getType() == getOperand(1)->getType() &&
-          "Both operands to ICmp instruction are not of the same type!");
-    // Check that the operands are the right type
-    assert((getOperand(0)->getType()->isIntOrIntVectorTy() ||
-            getOperand(0)->getType()->getScalarType()->isPointerTy()) &&
-           "Invalid operand types for ICmp instruction");
+#ifndef NDEBUG
+  AssertOK();
+#endif
   }
 
   /// For example, EQ->EQ, SLE->SLE, UGT->SGT, etc.
