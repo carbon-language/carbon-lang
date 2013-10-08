@@ -247,9 +247,12 @@ void MigrateBlockOrFunctionPointerTypeVariable(std::string & PropertyString,
         paren--;
         break;
       case '^':
-        PropertyString += '^';
-        if (paren == 1)
+      case '*':
+        PropertyString += (*argPtr);
+        if (paren == 1) {
           PropertyString += name;
+          name = "";
+        }
         break;
       default:
         PropertyString += *argPtr;

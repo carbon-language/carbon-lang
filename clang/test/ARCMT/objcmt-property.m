@@ -223,4 +223,7 @@ DEPRECATED
 - (id (^)(id, NSArray *, NSMutableDictionary *)) expressionBlock;
 - (id (^)(id, NSArray *, NSMutableDictionary *)) MyBlock;
 - (void) setMyBlock : (id (^)(id, NSArray *, NSMutableDictionary *)) bl;
+- (id (*)(id, NSArray *, NSMutableDictionary *)) expressionFuncptr;
+- (id (*)(id, NSArray *, NSMutableDictionary *)) MyFuncptr;
+- (void) setMyFuncptr : (id (*)(id, NSArray *, NSMutableDictionary *)) bl;
 @end

@@ -223,4 +223,7 @@ DEPRECATED
 @property (nonatomic, readonly) id (^expressionBlock)(id, NSArray *, NSMutableDictionary *);
 @property (nonatomic, copy) id (^MyBlock)(id, NSArray *, NSMutableDictionary *);
 
+@property (nonatomic, readonly) id (*expressionFuncptr)(__strong id, NSArray *__strong, NSMutableDictionary *__strong);
+@property (nonatomic) id (*MyFuncptr)(__strong id, NSArray *__strong, NSMutableDictionary *__strong);
+
 @end
