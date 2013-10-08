@@ -152,4 +152,16 @@ def int_aarch64_neon_vpfminnm :
   Intrinsic<[llvm_v1f32_ty], [llvm_v2f32_ty], [IntrNoMem]>;
 def int_aarch64_neon_vpfminnmq :
   Intrinsic<[llvm_v1f64_ty], [llvm_v2f64_ty], [IntrNoMem]>;
+
+// Scalar Signed Integer Convert To Floating-point
+def int_aarch64_neon_vcvtf32_s32 :
+  Intrinsic<[llvm_v1f32_ty], [llvm_v1i32_ty], [IntrNoMem]>;
+def int_aarch64_neon_vcvtf64_s64 :
+  Intrinsic<[llvm_v1f64_ty], [llvm_v1i64_ty], [IntrNoMem]>;
+
+// Scalar Unsigned Integer Convert To Floating-point
+def int_aarch64_neon_vcvtf32_u32 :
+  Intrinsic<[llvm_v1f32_ty], [llvm_v1i32_ty], [IntrNoMem]>;
+def int_aarch64_neon_vcvtf64_u64 :
+  Intrinsic<[llvm_v1f64_ty], [llvm_v1i64_ty], [IntrNoMem]>;
 }

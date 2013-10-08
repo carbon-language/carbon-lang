@@ -1492,3 +1492,19 @@
 # CHECK: frsqrts d8, d22, d18
 0xb5,0xfc,0xac,0x5e
 0xc8,0xfe,0xf2,0x5e
+
+#----------------------------------------------------------------------
+# Scalar Signed Integer Convert To Floating-point
+#----------------------------------------------------------------------
+# CHECK: scvtf s22, s13
+# CHECK: scvtf d21, d12
+0xb6,0xd9,0x21,0x5e
+0x95,0xd9,0x61,0x5e
+
+#----------------------------------------------------------------------
+# Scalar Unsigned Integer Convert To Floating-point
+#----------------------------------------------------------------------
+# CHECK: ucvtf s22, s13
+# CHECK: ucvtf d21, d14
+0xb6,0xd9,0x21,0x7e
+0xd5,0xd9,0x61,0x7e
