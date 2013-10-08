@@ -618,7 +618,7 @@ static bool isUnsignedDIType(DwarfDebug *DD, DIType Ty) {
 }
 
 /// If this type is derived from a base type then return base type size.
-static uint64_t getOriginalTypeSize(DwarfDebug *DD, DIDerivedType Ty) {
+static uint64_t getBaseTypeSize(DwarfDebug *DD, DIDerivedType Ty) {
   unsigned Tag = Ty.getTag();
 
   if (Tag != dwarf::DW_TAG_member && Tag != dwarf::DW_TAG_typedef &&
@@ -640,7 +640,7 @@ static uint64_t getOriginalTypeSize(DwarfDebug *DD, DIDerivedType Ty) {
     return Ty.getSizeInBits();
 
   if (BaseType.isDerivedType())
-    return getOriginalTypeSize(DD, DIDerivedType(BaseType));
+    return getBaseTypeSize(DD, DIDerivedType(BaseType));
 
   return BaseType.getSizeInBits();
 }
@@ -1747,12 +1747,12 @@ DIE *CompileUnit::createMemberDIE(DIDerivedType DT) {
   addUInt(MemLocationDie, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_plus_uconst);
 
   uint64_t Size = DT.getSizeInBits();
-  uint64_t FieldSize = getOriginalTypeSize(DD, DT);
+  uint64_t FieldSize = getBaseTypeSize(DD, DT);
 
   if (Size != FieldSize) {
     // Handle bitfield.
     addUInt(MemberDie, dwarf::DW_AT_byte_size, 0,
-            getOriginalTypeSize(DD, DT)>>3);
+            getBaseTypeSize(DD, DT)>>3);
     addUInt(MemberDie, dwarf::DW_AT_bit_size, 0, DT.getSizeInBits());
 
     uint64_t Offset = DT.getOffsetInBits();
