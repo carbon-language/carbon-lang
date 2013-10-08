@@ -47,6 +47,7 @@ public:
 
   enum Arch {
     arch_unknown,
+    arch_ppc,
     arch_x86,
     arch_x86_64,
     arch_armv6,
@@ -55,7 +56,7 @@ public:
   };
 
   enum class OS {
-    macOSX, iOS, iOS_simulator
+    unknown, macOSX, iOS, iOS_simulator
   };
 
   Arch arch() const { return _arch; }

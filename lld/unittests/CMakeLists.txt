@@ -12,3 +12,4 @@ endfunction()
 
 add_subdirectory(CoreTests)
 add_subdirectory(DriverTests)
+add_subdirectory(MachOTests)

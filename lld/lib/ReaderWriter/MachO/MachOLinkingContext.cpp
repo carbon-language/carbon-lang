@@ -149,20 +149,19 @@ bool MachOLinkingContext::outputTypeHasEntry() const {
 }
 
 bool MachOLinkingContext::minOS(StringRef mac, StringRef iOS) const {
+  uint32_t parsedVersion;
   switch (_os) {
-  case OS::macOSX: {
-    uint32_t parsedVersion;
+  case OS::macOSX:
     if (parsePackedVersion(mac, parsedVersion))
       return false;
     return _osMinVersion >= parsedVersion;
-  }
   case OS::iOS:
-  case OS::iOS_simulator: {
-    uint32_t parsedVersion;
+  case OS::iOS_simulator:
     if (parsePackedVersion(iOS, parsedVersion))
       return false;
     return _osMinVersion >= parsedVersion;
-  }
+  case OS::unknown:
+    break;
   }
   llvm_unreachable("target not configured for iOS or MacOSX");
 }
