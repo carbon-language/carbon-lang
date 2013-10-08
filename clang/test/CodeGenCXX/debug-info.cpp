@@ -93,7 +93,7 @@ struct incomplete;
 incomplete (*x)[3];
 // CHECK: metadata [[INCARRAYPTR:![0-9]*]], i32 0, i32 1, [3 x i8]** @_ZN6pr96081xE, null} ; [ DW_TAG_variable ] [x]
 // CHECK: [[INCARRAYPTR]] = {{.*}}metadata [[INCARRAY:![0-9]*]]} ; [ DW_TAG_pointer_type ]
-// CHECK: [[INCARRAY]] = {{.*}}metadata [[INCTYPE]], metadata {{![0-9]*}}, i32 0, null, null, null} ; [ DW_TAG_array_type ] [line 0, size 0, align 0, offset 0] [from incomplete]
+// CHECK: [[INCARRAY]] = {{.*}}metadata !"_ZTSN6pr960810incompleteE", metadata {{![0-9]*}}, i32 0, null, null, null} ; [ DW_TAG_array_type ] [line 0, size 0, align 0, offset 0] [from _ZTSN6pr960810incompleteE]
 }
 
 // For some reason the argument for PR14763 ended up all the way down here
