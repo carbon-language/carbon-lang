@@ -326,6 +326,7 @@ static void assureFPCallStub(Function &F, Module *M,
 //
 static const char *IntrinsicInline[] =
   {"fabs",
+   "fabsf",
    "llvm.ceil.f32", "llvm.ceil.f64",
    "llvm.copysign.f32", "llvm.copysign.f64",
    "llvm.cos.f32", "llvm.cos.f64",
