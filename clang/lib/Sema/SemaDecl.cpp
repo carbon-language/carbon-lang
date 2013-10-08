@@ -5433,18 +5433,6 @@ void Sema::CheckShadow(Scope *S, VarDecl *D, const LookupResult& R) {
   if (D->hasGlobalStorage())
     return;
 
-  // Don't diagnose variables whose declarations and scope are expanded
-  // from the same macro instantiation.
-  SourceLocation DLoc = D->getLocation();
-  if (DLoc.isMacroID()) {
-
-
-
-
-  }
-
-
-
   DeclContext *NewDC = D->getDeclContext();
 
   // Only diagnose if we're shadowing an unambiguous field or variable.
