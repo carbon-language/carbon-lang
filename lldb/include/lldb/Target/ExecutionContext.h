@@ -461,6 +461,9 @@ public:
 
     uint32_t
     GetAddressByteSize() const;
+    
+    lldb::ByteOrder
+    GetByteOrder() const;
 
     //------------------------------------------------------------------
     /// Returns a pointer to the target object.

@@ -747,6 +747,9 @@ public:
     lldb::SBType
     GetBasicType(lldb::BasicType type);
     
+    lldb::SBValue
+    CreateValueFromAddress (const char *name, lldb::SBAddress addr, lldb::SBType type);
+    
     SBSourceManager
     GetSourceManager();
     

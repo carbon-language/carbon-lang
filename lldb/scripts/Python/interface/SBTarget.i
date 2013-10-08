@@ -723,6 +723,9 @@ public:
 
     lldb::SBBroadcaster
     GetBroadcaster () const;
+              
+    lldb::SBValue
+    CreateValueFromAddress (const char *name, lldb::SBAddress addr, lldb::SBType type);
     
     lldb::SBInstructionList
     ReadInstructions (lldb::SBAddress base_addr, uint32_t count);    

@@ -241,7 +241,15 @@ ExecutionContext::GetAddressByteSize() const
     return sizeof(void *);
 }
 
-
+lldb::ByteOrder
+ExecutionContext::GetByteOrder() const
+{
+    if (m_target_sp && m_target_sp->GetArchitecture().IsValid())
+        m_target_sp->GetArchitecture().GetByteOrder();
+    if (m_process_sp)
+        m_process_sp->GetByteOrder();
+    return lldb::endian::InlHostByteOrder();
+}
 
 RegisterContext *
 ExecutionContext::GetRegisterContext () const

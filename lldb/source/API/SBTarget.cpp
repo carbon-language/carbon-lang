@@ -41,6 +41,7 @@
 #include "lldb/Core/SearchFilter.h"
 #include "lldb/Core/Section.h"
 #include "lldb/Core/STLUtils.h"
+#include "lldb/Core/ValueObjectConstResult.h"
 #include "lldb/Core/ValueObjectList.h"
 #include "lldb/Core/ValueObjectVariable.h"
 #include "lldb/Host/FileSpec.h"
@@ -1860,6 +1861,50 @@ SBTarget::DisableAllWatchpoints ()
         return true;
     }
     return false;
+}
+
+SBValue
+SBTarget::CreateValueFromAddress (const char *name, SBAddress addr, SBType type)
+{
+    SBValue sb_value;
+    lldb::ValueObjectSP new_value_sp;
+    if (IsValid() && name && *name && addr.IsValid() && type.IsValid())
+    {
+        lldb::addr_t address(addr.GetLoadAddress(*this));
+        lldb::TypeImplSP type_impl_sp (type.GetSP());
+        ClangASTType pointer_ast_type(type_impl_sp->GetClangASTType().GetPointerType ());
+        if (pointer_ast_type)
+        {
+            lldb::DataBufferSP buffer(new lldb_private::DataBufferHeap(&address,sizeof(lldb::addr_t)));
+            
+            ExecutionContext exe_ctx (ExecutionContextRef(ExecutionContext(m_opaque_sp.get(),false)));
+            ValueObjectSP ptr_result_valobj_sp(ValueObjectConstResult::Create (exe_ctx.GetBestExecutionContextScope(),
+                                                                               pointer_ast_type,
+                                                                               ConstString(name),
+                                                                               buffer,
+                                                                               exe_ctx.GetByteOrder(),
+                                                                               exe_ctx.GetAddressByteSize()));
+            
+            if (ptr_result_valobj_sp)
+            {
+                ptr_result_valobj_sp->GetValue().SetValueType(Value::eValueTypeLoadAddress);
+                Error err;
+                new_value_sp = ptr_result_valobj_sp->Dereference(err);
+                if (new_value_sp)
+                    new_value_sp->SetName(ConstString(name));
+            }
+        }
+    }
+    sb_value.SetSP(new_value_sp);
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    if (log)
+    {
+        if (new_value_sp)
+            log->Printf ("SBTarget(%p)::CreateValueFromAddress => \"%s\"", m_opaque_sp.get(), new_value_sp->GetName().AsCString());
+        else
+            log->Printf ("SBTarget(%p)::CreateValueFromAddress => NULL", m_opaque_sp.get());
+    }
+    return sb_value;
 }
 
 bool

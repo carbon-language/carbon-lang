@@ -761,17 +761,17 @@ SBValue::CreateValueFromAddress(const char* name, lldb::addr_t address, SBType s
     lldb::TypeImplSP type_impl_sp (sb_type.GetSP());
     if (value_sp && type_impl_sp)
     {
-        ClangASTType pointee_ast_type(type_impl_sp->GetClangASTType().GetPointerType ());
-        if (pointee_ast_type)
+        ClangASTType pointer_ast_type(type_impl_sp->GetClangASTType().GetPointerType ());
+        if (pointer_ast_type)
         {
             lldb::DataBufferSP buffer(new lldb_private::DataBufferHeap(&address,sizeof(lldb::addr_t)));
             
             ExecutionContext exe_ctx (value_sp->GetExecutionContextRef());
             ValueObjectSP ptr_result_valobj_sp(ValueObjectConstResult::Create (exe_ctx.GetBestExecutionContextScope(),
-                                                                               pointee_ast_type,
+                                                                               pointer_ast_type,
                                                                                ConstString(name),
                                                                                buffer,
-                                                                               lldb::endian::InlHostByteOrder(),
+                                                                               exe_ctx.GetByteOrder(),
                                                                                exe_ctx.GetAddressByteSize()));
             
             if (ptr_result_valobj_sp)
