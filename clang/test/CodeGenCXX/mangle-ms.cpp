@@ -304,3 +304,55 @@ inline int templated_inline_function_with_local_type() {
 int call_templated_inline_function_with_local_type() {
   return templated_inline_function_with_local_type<int>();
 }
+
+// PR17371
+struct OverloadedNewDelete {
+  // __cdecl
+  void *operator new(__SIZE_TYPE__);
+  void *operator new[](__SIZE_TYPE__);
+  void operator delete(void *);
+  void operator delete[](void *);
+  // __thiscall
+  int operator+(int);
+};
+
+void *OverloadedNewDelete::operator new(__SIZE_TYPE__ s) { return 0; }
+void *OverloadedNewDelete::operator new[](__SIZE_TYPE__ s) { return 0; }
+void OverloadedNewDelete::operator delete(void *) { }
+void OverloadedNewDelete::operator delete[](void *) { }
+int OverloadedNewDelete::operator+(int x) { return x; };
+
+// CHECK-DAG: ??2OverloadedNewDelete@@SAPAXI@Z
+// CHECK-DAG: ??_UOverloadedNewDelete@@SAPAXI@Z
+// CHECK-DAG: ??3OverloadedNewDelete@@SAXPAX@Z
+// CHECK-DAG: ??_VOverloadedNewDelete@@SAXPAX@Z
+// CHECK-DAG: ??HOverloadedNewDelete@@QAEHH@Z
+
+// X64-DAG:   ??2OverloadedNewDelete@@SAPEAX_K@Z
+// X64-DAG:   ??_UOverloadedNewDelete@@SAPEAX_K@Z
+// X64-DAG:   ??3OverloadedNewDelete@@SAXPEAX@Z
+// X64-DAG:   ??_VOverloadedNewDelete@@SAXPEAX@Z
+// X64-DAG:   ??HOverloadedNewDelete@@QEAAHH@Z
+
+// Indirecting the function type through a typedef will require a calling
+// convention adjustment before building the method decl.
+
+typedef void *__thiscall OperatorNewType(__SIZE_TYPE__);
+typedef void __thiscall OperatorDeleteType(void *);
+
+struct TypedefNewDelete {
+  OperatorNewType operator new;
+  OperatorNewType operator new[];
+  OperatorDeleteType operator delete;
+  OperatorDeleteType operator delete[];
+};
+
+void *TypedefNewDelete::operator new(__SIZE_TYPE__ s) { return 0; }
+void *TypedefNewDelete::operator new[](__SIZE_TYPE__ s) { return 0; }
+void TypedefNewDelete::operator delete(void *) { }
+void TypedefNewDelete::operator delete[](void *) { }
+
+// CHECK-DAG: ??2TypedefNewDelete@@SAPAXI@Z
+// CHECK-DAG: ??_UTypedefNewDelete@@SAPAXI@Z
+// CHECK-DAG: ??3TypedefNewDelete@@SAXPAX@Z
+// CHECK-DAG: ??_VTypedefNewDelete@@SAXPAX@Z

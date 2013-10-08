@@ -6494,10 +6494,8 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
          diag::err_invalid_thread)
       << DeclSpec::getSpecifierName(TSCS);
 
-  if (DC->isRecord() &&
-      D.getDeclSpec().getStorageClassSpec() != DeclSpec::SCS_static &&
-      !D.getDeclSpec().isFriendSpecified())
-    adjustMemberFunctionCC(R);
+  if (D.isFirstDeclarationOfMember())
+    adjustMemberFunctionCC(R, D.isStaticMember());
 
   bool isFriend = false;
   FunctionTemplateDecl *FunctionTemplate = 0;

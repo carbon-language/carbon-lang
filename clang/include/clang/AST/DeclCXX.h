@@ -1677,6 +1677,18 @@ public:
   bool isStatic() const;
   bool isInstance() const { return !isStatic(); }
 
+  /// Returns true if the given operator is implicitly static in a record
+  /// context.
+  static bool isStaticOverloadedOperator(OverloadedOperatorKind OOK) {
+    // [class.free]p1:
+    // Any allocation function for a class T is a static member
+    // (even if not explicitly declared static).
+    // [class.free]p6 Any deallocation function for a class X is a static member
+    // (even if not explicitly declared static).
+    return OOK == OO_New || OOK == OO_Array_New || OOK == OO_Delete ||
+           OOK == OO_Array_Delete;
+  }
+
   bool isConst() const { return getType()->castAs<FunctionType>()->isConst(); }
   bool isVolatile() const { return getType()->castAs<FunctionType>()->isVolatile(); }
 

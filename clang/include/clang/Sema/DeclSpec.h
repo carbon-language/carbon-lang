@@ -2078,6 +2078,16 @@ public:
     return (FunctionDefinitionKind)FunctionDefinition; 
   }
 
+  /// Returns true if this declares a real member and not a friend.
+  bool isFirstDeclarationOfMember() {
+    return getContext() == MemberContext && !getDeclSpec().isFriendSpecified();
+  }
+
+  /// Returns true if this declares a static member.  This cannot be called on a
+  /// declarator outside of a MemberContext because we won't know until
+  /// redeclaration time if the decl is static.
+  bool isStaticMember();
+
   void setRedeclaration(bool Val) { Redeclaration = Val; }
   bool isRedeclaration() const { return Redeclaration; }
 };

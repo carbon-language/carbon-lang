@@ -13,6 +13,7 @@
 
 #include "clang/Sema/DeclSpec.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/DeclCXX.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/NestedNameSpecifier.h"
 #include "clang/AST/TypeLoc.h"
@@ -323,6 +324,13 @@ bool Declarator::isDeclarationOfFunction() const {
   }
 
   llvm_unreachable("Invalid TypeSpecType!");
+}
+
+bool Declarator::isStaticMember() {
+  assert(getContext() == MemberContext);
+  return getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_static ||
+         CXXMethodDecl::isStaticOverloadedOperator(
+             getName().OperatorFunctionId.Operator);
 }
 
 /// getParsedSpecifiers - Return a bitmask of which flavors of specifiers this

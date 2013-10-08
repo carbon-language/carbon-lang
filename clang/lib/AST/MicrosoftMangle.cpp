@@ -316,9 +316,7 @@ void MicrosoftCXXNameMangler::mangleFunctionEncoding(const FunctionDecl *FD) {
 
   // We should never ever see a FunctionNoProtoType at this point.
   // We don't even know how to mangle their types anyway :).
-  TypeSourceInfo *TSI = FD->getTypeSourceInfo();
-  QualType T = TSI ? TSI->getType() : FD->getType();
-  const FunctionProtoType *FT = T->castAs<FunctionProtoType>();
+  const FunctionProtoType *FT = FD->getType()->castAs<FunctionProtoType>();
 
   // extern "C" functions can hold entities that must be mangled.
   // As it stands, these functions still need to get expressed in the full
