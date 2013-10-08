@@ -167,7 +167,7 @@ llvm::ErrorOr<StringRef> ELFLinkingContext::searchLibrary(
       }
     }
     if (foundFile)
-      return StringRef(*new (_alloc) std::string(pathref));
+      return StringRef(*new (_allocator) std::string(pathref));
   }
   if (!llvm::sys::fs::exists(libName))
     return llvm::make_error_code(llvm::errc::no_such_file_or_directory);

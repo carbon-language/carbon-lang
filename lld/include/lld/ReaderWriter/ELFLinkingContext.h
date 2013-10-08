@@ -230,7 +230,6 @@ protected:
   bool _noAllowDynamicLibraries;
   OutputMagic _outputMagic;
   StringRefVector _inputSearchPaths;
-  mutable llvm::BumpPtrAllocator _alloc;
   std::unique_ptr<Reader> _elfReader;
   std::unique_ptr<Writer> _writer;
   std::unique_ptr<Reader> _linkerScriptReader;

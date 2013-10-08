@@ -162,7 +162,7 @@ public:
   virtual ErrorOr<std::string> stringFromRelocKind(Reference::Kind kind) const;
 
   StringRef allocateString(StringRef ref) const {
-    char *x = _alloc.Allocate<char>(ref.size() + 1);
+    char *x = _allocator.Allocate<char>(ref.size() + 1);
     memcpy(x, ref.data(), ref.size());
     x[ref.size()] = '\0';
     return x;
@@ -211,9 +211,8 @@ private:
   std::set<std::string> _noDefaultLibs;
 
   std::vector<StringRef> _inputSearchPaths;
-  mutable std::unique_ptr<Reader> _reader;
-  mutable std::unique_ptr<Writer> _writer;
-  mutable llvm::BumpPtrAllocator _alloc;
+  std::unique_ptr<Reader> _reader;
+  std::unique_ptr<Writer> _writer;
 };
 
 } // end namespace lld

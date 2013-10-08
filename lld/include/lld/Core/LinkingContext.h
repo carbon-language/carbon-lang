@@ -305,14 +305,14 @@ public:
   /// the resolver operates. This uses the currentInputElement. When there are
   /// no more files to be processed an appropriate input_graph_error is
   /// returned.
-  virtual ErrorOr<File &> nextFile() const;
+  virtual ErrorOr<File &> nextFile();
 
   /// Set the resolver state for the current Input element This is used by the
   /// InputGraph to decide the next file that needs to be processed for various
   /// types of nodes in the InputGraph. The resolver state is nothing but a
   /// bitmask of various types of states that the resolver handles when adding
   /// atoms.
-  virtual void setResolverState(uint32_t resolverState) const;
+  virtual void setResolverState(uint32_t resolverState);
 
   /// @}
 
@@ -362,7 +362,7 @@ protected:
   StringRefVector _initialUndefinedSymbols;
   std::unique_ptr<InputGraph> _inputGraph;
   mutable llvm::BumpPtrAllocator _allocator;
-  mutable InputElement *_currentInputElement;
+  InputElement *_currentInputElement;
 
 private:
   /// Validate the subclass bits. Only called by validate.

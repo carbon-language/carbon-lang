@@ -36,7 +36,7 @@ public:
     StateNewAbsoluteAtoms = 8       // New absolute atoms were added
   };
 
-  Resolver(const LinkingContext &context)
+  Resolver(LinkingContext &context)
       : _context(context), _symbolTable(context), _result(context),
         _haveLLVMObjs(false), _addToFinalSection(false) {}
 
@@ -111,7 +111,7 @@ private:
     atom_collection_vector<AbsoluteAtom>        _absoluteAtoms;
   };
 
-  const LinkingContext &_context;
+  LinkingContext &_context;
   SymbolTable _symbolTable;
   std::vector<const Atom *>     _atoms;
   std::set<const Atom *>        _deadStripRoots;

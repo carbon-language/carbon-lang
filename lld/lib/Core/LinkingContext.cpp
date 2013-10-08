@@ -76,11 +76,11 @@ bool LinkingContext::createInternalFiles(
   return true;
 }
 
-void LinkingContext::setResolverState(uint32_t state) const {
+void LinkingContext::setResolverState(uint32_t state) {
   _currentInputElement->setResolverState(state);
 }
 
-ErrorOr<File &> LinkingContext::nextFile() const {
+ErrorOr<File &> LinkingContext::nextFile() {
   // When nextFile() is called for the first time, _currentInputElement is not
   // initialized. Initialize it with the first element of the input graph.
   if (_currentInputElement == nullptr) {

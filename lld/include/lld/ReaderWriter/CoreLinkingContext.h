@@ -35,8 +35,8 @@ protected:
   virtual Writer &writer() const;
 
 private:
-  mutable std::unique_ptr<Reader> _reader;
-  mutable std::unique_ptr<Writer> _writer;
+  std::unique_ptr<Reader> _reader;
+  std::unique_ptr<Writer> _writer;
   std::vector<StringRef> _passNames;
 };
 

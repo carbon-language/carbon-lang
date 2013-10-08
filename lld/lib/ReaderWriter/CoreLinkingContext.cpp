@@ -271,8 +271,9 @@ private:
 
 CoreLinkingContext::CoreLinkingContext() {}
 
-bool CoreLinkingContext::validateImpl(raw_ostream &diagnostics) {
+bool CoreLinkingContext::validateImpl(raw_ostream &) {
   _reader = createReaderYAML(*this);
+  _writer = createWriterYAML(*this);
   return true;
 }
 
@@ -289,11 +290,7 @@ void CoreLinkingContext::addPasses(PassManager &pm) const {
   }
 }
 
-Writer &CoreLinkingContext::writer() const {
-  if (!_writer)
-    _writer = createWriterYAML(*this);
-  return *_writer;
-}
+Writer &CoreLinkingContext::writer() const { return *_writer; }
 
 ErrorOr<Reference::Kind>
 CoreLinkingContext::relocKindFromString(StringRef str) const {

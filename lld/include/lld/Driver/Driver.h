@@ -38,7 +38,7 @@ class Driver {
 protected:
 
   /// Performs link using specified options
-  static bool link(const LinkingContext &context,
+  static bool link(LinkingContext &context,
                    raw_ostream &diagnostics = llvm::errs());
 
 private:

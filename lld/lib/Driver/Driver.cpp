@@ -28,7 +28,7 @@
 namespace lld {
 
 /// This is where the link is actually performed.
-bool Driver::link(const LinkingContext &context, raw_ostream &diagnostics) {
+bool Driver::link(LinkingContext &context, raw_ostream &diagnostics) {
   // Honor -mllvm
   if (!context.llvmOptions().empty()) {
     unsigned numArgs = context.llvmOptions().size();
