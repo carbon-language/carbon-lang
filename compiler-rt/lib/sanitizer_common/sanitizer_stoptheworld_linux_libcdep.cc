@@ -224,6 +224,11 @@ static int TracerThread(void* argument) {
   TracerThreadArgument *tracer_thread_argument =
       (TracerThreadArgument *)argument;
 
+  internal_prctl(PR_SET_PDEATHSIG, SIGKILL, 0, 0, 0);
+  // Check if parent is already dead.
+  if (internal_getppid() == 1)
+    internal__exit(4);
+
   // Wait for the parent thread to finish preparations.
   tracer_thread_argument->mutex.Lock();
   tracer_thread_argument->mutex.Unlock();
