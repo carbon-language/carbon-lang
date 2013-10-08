@@ -300,10 +300,22 @@ As we see above we keep making subsequent calls to the remote server to
 discover all registers by increasing the number appended to qRegisterInfo and
 we get a response back that is a series of "key=value;" strings. 
 
-The register offsets may end up describing a register context with gaps.  The
-actual register context structure used may have gaps due to alignment issues.
-Implementations of the g/G packet construction/parsing must handle this padding
-if it exists.  
+The offset: fields should not leave a gap anywhere in the g/G packet -- the
+register values should be appended one after another.  For instance, if the
+register context for a thread looks like 
+
+struct rctx {
+    uint32_t gpr1;  // offset 0
+    uint32_t gpr2;  // offset 4
+    uint32_t gpr3;  // offset 8
+    uint64_t fp1;   // offset 16
+};
+
+You may end up with a 4-byte gap between gpr3 and fp1 on architectures
+that align values like this.  The correct offset: value for fp1 is 12 -
+in the g/G packet fp1 will immediately follow gpr3, even though the 
+in-memory thread structure has an empty 4 bytes for alignment between 
+these two registers.
 
 The keys and values are detailed below:
 
