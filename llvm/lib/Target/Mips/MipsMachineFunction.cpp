@@ -121,24 +121,20 @@ bool MipsFunctionInfo::isEhDataRegFI(int FI) const {
 }
 
 MachinePointerInfo MipsFunctionInfo::callPtrInfo(const StringRef &Name) {
-  StringMap<const MipsCallEntry *>::const_iterator I;
-  I = ExternalCallEntries.find(Name);
+  const MipsCallEntry *&E = ExternalCallEntries[Name];
 
-  if (I != ExternalCallEntries.end())
-    return MachinePointerInfo(I->getValue());
+  if (!E)
+    E = new MipsCallEntry(Name);
 
-  const MipsCallEntry *E = ExternalCallEntries[Name] = new MipsCallEntry(Name);
   return MachinePointerInfo(E);
 }
 
 MachinePointerInfo MipsFunctionInfo::callPtrInfo(const GlobalValue *Val) {
-  ValueMap<const GlobalValue *, const MipsCallEntry *>::const_iterator I;
-  I = GlobalCallEntries.find(Val);
+  const MipsCallEntry *&E = GlobalCallEntries[Val];
 
-  if (I != GlobalCallEntries.end())
-    return MachinePointerInfo(I->second);
+  if (!E)
+    E = new MipsCallEntry(Val);
 
-  const MipsCallEntry *E = GlobalCallEntries[Val] = new MipsCallEntry(Val);
   return MachinePointerInfo(E);
 }
 

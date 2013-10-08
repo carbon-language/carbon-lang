@@ -241,7 +241,7 @@ void MipsLongBranch::replaceBranch(MachineBasicBlock &MBB, Iter Br,
   // and erase the original branch.
   assert(Br->isBundledWithSucc());
   MachineBasicBlock::instr_iterator II(Br);
-  MIBundleBuilder(&*MIB).append(llvm::next(II)->removeFromBundle());
+  MIBundleBuilder(&*MIB).append((++II)->removeFromBundle());
   Br->eraseFromParent();
 }
 
