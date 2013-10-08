@@ -38,6 +38,9 @@ Transform *ConstructTransform(const TransformOptions &Options) {
   return new T(Options);
 }
 
+/// \brief To group transforms together when printing the help.
+extern llvm::cl::OptionCategory TransformCategory;
+
 /// \brief Class encapsulating the creation of command line bool options
 /// for each transform and instantiating transforms chosen by the user.
 class Transforms {

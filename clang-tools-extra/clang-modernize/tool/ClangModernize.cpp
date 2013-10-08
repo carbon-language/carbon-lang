@@ -22,6 +22,7 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/DiagnosticOptions.h"
 #include "clang/Basic/SourceManager.h"
+#include "clang/Basic/Version.h"
 #include "clang/Format/Format.h"
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/Tooling/CommonOptionsParser.h"
@@ -37,28 +38,51 @@ using namespace clang::tooling;
 
 TransformOptions GlobalOptions;
 
+// All options must belong to locally defined categories for them to get shown
+// by -help. We explicitly hide everything else (except -help and -version).
+static cl::OptionCategory GeneralCategory("Modernizer Options");
+static cl::OptionCategory FormattingCategory("Formatting Options");
+static cl::OptionCategory IncludeExcludeCategory("Inclusion/Exclusion Options");
+static cl::OptionCategory SerializeCategory("Serialization Options");
+
+const cl::OptionCategory *VisibleCategories[] = {
+  &GeneralCategory,   &FormattingCategory, &IncludeExcludeCategory,
+  &SerializeCategory, &TransformCategory,  &TransformsOptionsCategory,
+};
+
 static cl::extrahelp CommonHelp(CommonOptionsParser::HelpMessage);
-static cl::opt<std::string> BuildPath(
-    "p", cl::desc("Build Path"), cl::Optional);
-static cl::list<std::string> SourcePaths(
-    cl::Positional, cl::desc("[<sources>...]"), cl::ZeroOrMore);
 static cl::extrahelp MoreHelp(
     "EXAMPLES:\n\n"
-    "Apply all transforms on a given file, no compilation database:\n\n"
-    "  clang-modernize path/to/file.cpp -- -Ipath/to/include/\n"
+    "Apply all transforms on a file that doesn't require compilation arguments:\n\n"
+    "  clang-modernize file.cpp\n"
     "\n"
-    "Convert for loops to the new ranged-based for loops on all files in a "
-    "subtree\nand reformat the code automatically using the LLVM style:\n\n"
-    "  find path/in/subtree -name '*.cpp' -exec \\\n"
-    "    clang-modernize -p build/path -format-style=LLVM -loop-convert {} ';'\n"
+    "Convert for loops to ranged-based for loops for all files in the compilation\n"
+    "database that belong in a project subtree and then reformat the code\n"
+    "automatically using the LLVM style:\n\n"
+    "    clang-modernize -p build/path -include project/path -format -loop-convert\n"
     "\n"
     "Make use of both nullptr and the override specifier, using git ls-files:\n"
     "\n"
     "  git ls-files '*.cpp' | xargs -I{} clang-modernize -p build/path \\\n"
-    "    -use-nullptr -add-override -override-macros {}\n"
+    "      -use-nullptr -add-override -override-macros {}\n"
     "\n"
-    "Apply all transforms supported by both clang >= 3.0 and gcc >= 4.7:\n\n"
-    "  clang-modernize -for-compilers=clang-3.0,gcc-4.7 foo.cpp -- -Ibar\n");
+    "Apply all transforms supported by both clang >= 3.0 and gcc >= 4.7 to\n"
+    "foo.cpp and any included headers in bar:\n\n"
+    "  clang-modernize -for-compilers=clang-3.0,gcc-4.7 foo.cpp \\\n"
+    "      -include bar -- -std=c++11 -Ibar\n\n");
+
+////////////////////////////////////////////////////////////////////////////////
+/// General Options
+
+// This is set to hidden on purpose. The actual help text for this option is
+// included in CommonOptionsParser::HelpMessage.
+static cl::opt<std::string> BuildPath("p", cl::desc("Build Path"), cl::Optional,
+                                      cl::Hidden, cl::cat(GeneralCategory));
+
+static cl::list<std::string> SourcePaths(cl::Positional,
+                                         cl::desc("[<sources>...]"),
+                                         cl::ZeroOrMore,
+                                         cl::cat(GeneralCategory));
 
 static cl::opt<RiskLevel, /*ExternalStorage=*/true> MaxRiskLevel(
     "risk", cl::desc("Select a maximum risk level:"),
@@ -70,16 +94,35 @@ static cl::opt<RiskLevel, /*ExternalStorage=*/true> MaxRiskLevel(
                           "Enable transformations that are likely to "
                           "change semantics"),
                clEnumValEnd),
-    cl::location(GlobalOptions.MaxRiskLevel),
-    cl::init(RL_Reasonable));
+    cl::location(GlobalOptions.MaxRiskLevel), cl::init(RL_Reasonable),
+    cl::cat(GeneralCategory));
 
 static cl::opt<bool> FinalSyntaxCheck(
     "final-syntax-check",
     cl::desc("Check for correct syntax after applying transformations"),
-    cl::init(false));
+    cl::init(false), cl::cat(GeneralCategory));
 
-static cl::OptionCategory FormattingCategory("Formatting Options");
+static cl::opt<bool> SummaryMode("summary", cl::desc("Print transform summary"),
+                                 cl::init(false), cl::cat(GeneralCategory));
 
+static cl::opt<std::string>
+TimingDirectoryName("perf",
+                    cl::desc("Capture performance data and output to specified "
+                             "directory. Default: ./migrate_perf"),
+                    cl::ValueOptional, cl::value_desc("directory name"),
+                    cl::cat(GeneralCategory));
+
+cl::opt<std::string> SupportedCompilers(
+    "for-compilers", cl::value_desc("string"),
+    cl::desc("Select transforms targeting the intersection of\n"
+             "language features supported by the given compilers.\n"
+             "Takes a comma-seperated list of <compiler>-<version>.\n"
+             "\t<compiler> can be any of: clang, gcc, icc, msvc\n"
+             "\t<version> is <major>[.<minor>]\n"),
+    cl::cat(GeneralCategory));
+
+////////////////////////////////////////////////////////////////////////////////
+/// Format Options
 static cl::opt<bool> DoFormat(
     "format",
     cl::desc("Enable formatting of code changed by applying replacements.\n"
@@ -102,17 +145,8 @@ static cl::opt<std::string> FormatStyleConfig(
              "code when -style=file.\n"),
     cl::init(""), cl::cat(FormattingCategory));
 
-static cl::opt<bool>
-SummaryMode("summary", cl::desc("Print transform summary"),
-            cl::init(false));
-
-static cl::opt<std::string> TimingDirectoryName(
-    "perf", cl::desc("Capture performance data and output to specified "
-                     "directory. Default: ./migrate_perf"),
-    cl::ValueOptional, cl::value_desc("directory name"));
-
-static cl::OptionCategory IncludeExcludeCategory("Inclusion/Exclusion Options");
-
+////////////////////////////////////////////////////////////////////////////////
+/// Include/Exclude Options
 static cl::opt<std::string>
 IncludePaths("include",
              cl::desc("Comma seperated list of paths to consider to be "
@@ -136,7 +170,8 @@ ExcludeFromFile("exclude-from", cl::value_desc("filename"),
                          "transforms"),
                 cl::cat(IncludeExcludeCategory));
 
-static cl::OptionCategory SerializeCategory("Serialization Options");
+////////////////////////////////////////////////////////////////////////////////
+/// Serialization Options
 
 static cl::opt<bool>
 SerializeOnly("serialize-replacements",
@@ -152,13 +187,12 @@ SerializeLocation("serialize-dir",
                            "write to a temporary directory.\n"),
                   cl::cat(SerializeCategory));
 
-cl::opt<std::string> SupportedCompilers(
-    "for-compilers", cl::value_desc("string"),
-    cl::desc("Select transforms targeting the intersection of\n"
-             "language features supported by the given compilers.\n"
-             "Takes a comma-seperated list of <compiler>-<version>.\n"
-             "\t<compiler> can be any of: clang, gcc, icc, msvc\n"
-             "\t<version> is <major>[.<minor>]\n"));
+////////////////////////////////////////////////////////////////////////////////
+
+void printVersion() {
+  llvm::outs() << "clang-modernizer version " CLANG_VERSION_STRING
+               << "\n";
+}
 
 /// \brief Extract the minimum compiler versions as requested on the command
 /// line by the switch \c -for-compilers.
@@ -269,6 +303,24 @@ int main(int argc, const char **argv) {
   ReplacementHandling ReplacementHandler;
 
   TransformManager.registerTransforms();
+
+  // Hide all options we don't define ourselves. Move pre-defined 'help',
+  // 'help-list', and 'version' to our general category.
+  llvm::StringMap<cl::Option*> Options;
+  cl::getRegisteredOptions(Options);
+  const cl::OptionCategory **CategoryEnd =
+      VisibleCategories + llvm::array_lengthof(VisibleCategories);
+  for (llvm::StringMap<cl::Option *>::iterator I = Options.begin(),
+                                               E = Options.end();
+       I != E; ++I) {
+    if (I->first() == "help" || I->first() == "version" ||
+        I->first() == "help-list")
+      I->second->setCategory(GeneralCategory);
+    else if (std::find(VisibleCategories, CategoryEnd, I->second->Category) ==
+             CategoryEnd)
+      I->second->setHiddenFlag(cl::ReallyHidden);
+  }
+  cl::SetVersionPrinter(&printVersion);
 
   // Parse options and generate compilations.
   OwningPtr<CompilationDatabase> Compilations(

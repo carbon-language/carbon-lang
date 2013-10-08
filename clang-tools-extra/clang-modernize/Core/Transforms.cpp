@@ -17,7 +17,7 @@
 
 namespace cl = llvm::cl;
 
-static cl::OptionCategory TransformCategory("Transforms");
+cl::OptionCategory TransformCategory("Transforms");
 
 Transforms::~Transforms() {
   for (std::vector<Transform *>::iterator I = ChosenTransforms.begin(),
