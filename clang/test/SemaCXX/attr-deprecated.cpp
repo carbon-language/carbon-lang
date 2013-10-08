@@ -244,3 +244,9 @@ namespace test7 {
     X *x = new X;  // expected-warning{{'operator new' is deprecated}} expected-warning{{'operator delete' is deprecated}}
   }
 }
+
+// rdar://problem/15044218
+typedef struct TDS {
+} TDS __attribute__((deprecated)); // expected-note {{'TDS' declared here}}
+TDS tds; // expected-warning {{'TDS' is deprecated}}
+struct TDS tds2; // no warning, attribute only applies to the typedef.
