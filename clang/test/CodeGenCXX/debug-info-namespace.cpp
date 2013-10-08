@@ -63,7 +63,7 @@ int func(bool b) {
 // CHECK: [[M8]] = metadata !{i32 {{[0-9]*}}, metadata [[FUNC]], metadata [[F1]], i32 {{[0-9]*}}} ; [ DW_TAG_imported_declaration ]
 // CHECK: [[M9]] = metadata !{i32 {{[0-9]*}}, metadata [[FUNC]], metadata [[I]], i32 {{[0-9]*}}} ; [ DW_TAG_imported_declaration ]
 // CHECK: [[M10]] = metadata !{i32 {{[0-9]*}}, metadata [[FUNC]], metadata [[BAZ:![0-9]*]], i32 {{[0-9]*}}} ; [ DW_TAG_imported_declaration ]
-// CHECK: [[BAZ]] = metadata !{i32 {{[0-9]*}}, metadata [[FOOCPP]], metadata [[NS]], {{.*}} ; [ DW_TAG_typedef ] [baz] {{.*}} [from bar]
+// CHECK: [[BAZ]] = metadata !{i32 {{[0-9]*}}, metadata [[FOOCPP]], metadata [[NS]], {{.*}}, metadata !"_ZTSN1A1B3barE"} ; [ DW_TAG_typedef ] [baz] {{.*}} [from _ZTSN1A1B3barE]
 // CHECK: [[M11]] = metadata !{i32 {{[0-9]*}}, metadata [[FUNC]], metadata [[CTXT]], i32 {{[0-9]*}}, metadata !"X"} ; [ DW_TAG_imported_module ]
 // CHECK: [[M12]] = metadata !{i32 {{[0-9]*}}, metadata [[FUNC]], metadata [[M11]], i32 {{[0-9]*}}, metadata !"Y"} ; [ DW_TAG_imported_module ]
 

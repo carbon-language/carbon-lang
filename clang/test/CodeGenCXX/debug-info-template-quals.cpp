@@ -23,5 +23,5 @@ void foo (const char *c) {
 // CHECK: [[CH]] = {{.*}} ; [ DW_TAG_base_type ] [char] [line 0, size 8, align 8, offset 0, enc DW_ATE_signed_char]
 
 // CHECK: [[R]] = {{.*}}, metadata [[CON2:![0-9]*]]} ; [ DW_TAG_reference_type ] [line 0, size 0, align 0, offset 0] [from ]
-// CHECK: [[CON2]] = {{.*}}, metadata [[BS]]} ; [ DW_TAG_const_type ] [line 0, size 0, align 0, offset 0] [from basic_string<char>]
+// CHECK: [[CON2]] = {{.*}}, metadata !"_ZTS12basic_stringIcE"} ; [ DW_TAG_const_type ] [line 0, size 0, align 0, offset 0] [from _ZTS12basic_stringIcE]
 // CHECK: {{.*}} metadata [[TYPE]], {{.*}}, metadata !{{[0-9]*}}, metadata !{{[0-9]*}}, i32 8} ; [ DW_TAG_subprogram ] [line 7] [def] [scope 8] [assign]
