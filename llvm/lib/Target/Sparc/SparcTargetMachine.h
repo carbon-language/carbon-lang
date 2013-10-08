@@ -17,6 +17,7 @@
 #include "SparcFrameLowering.h"
 #include "SparcISelLowering.h"
 #include "SparcInstrInfo.h"
+#include "SparcJITInfo.h"
 #include "SparcSelectionDAGInfo.h"
 #include "SparcSubtarget.h"
 #include "llvm/IR/DataLayout.h"
@@ -32,6 +33,7 @@ class SparcTargetMachine : public LLVMTargetMachine {
   SparcTargetLowering TLInfo;
   SparcSelectionDAGInfo TSInfo;
   SparcFrameLowering FrameLowering;
+  SparcJITInfo JITInfo;
 public:
   SparcTargetMachine(const Target &T, StringRef TT,
                      StringRef CPU, StringRef FS, const TargetOptions &Options,
@@ -52,10 +54,14 @@ public:
   virtual const SparcSelectionDAGInfo* getSelectionDAGInfo() const {
     return &TSInfo;
   }
+  virtual SparcJITInfo *getJITInfo() {
+    return &JITInfo;
+  }
   virtual const DataLayout       *getDataLayout() const { return &DL; }
 
   // Pass Pipeline Configuration
   virtual TargetPassConfig *createPassConfig(PassManagerBase &PM);
+  virtual bool addCodeEmitter(PassManagerBase &PM, JITCodeEmitter &JCE);
 };
 
 /// SparcV8TargetMachine - Sparc 32-bit target machine

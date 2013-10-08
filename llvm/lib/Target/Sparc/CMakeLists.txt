@@ -21,6 +21,8 @@ add_llvm_target(SparcCodeGen
   SparcSubtarget.cpp
   SparcTargetMachine.cpp
   SparcSelectionDAGInfo.cpp
+  SparcJITInfo.cpp
+  SparcCodeEmitter.cpp
   )
 
 add_dependencies(LLVMSparcCodeGen SparcCommonTableGen intrinsics_gen)

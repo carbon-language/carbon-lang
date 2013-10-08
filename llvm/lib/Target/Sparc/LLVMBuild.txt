@@ -23,6 +23,7 @@ type = TargetGroup
 name = Sparc
 parent = Target
 has_asmprinter = 1
+has_jit = 1
 
 [component_1]
 type = Library

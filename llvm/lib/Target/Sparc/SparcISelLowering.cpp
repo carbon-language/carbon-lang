@@ -1668,6 +1668,7 @@ SDValue SparcTargetLowering::makeAddress(SDValue Op, SelectionDAG &DAG) const {
   switch(getTargetMachine().getCodeModel()) {
   default:
     llvm_unreachable("Unsupported absolute code model");
+  case CodeModel::JITDefault:
   case CodeModel::Small:
     // abs32.
     return makeHiLoPair(Op, SPII::MO_HI, SPII::MO_LO, DAG);

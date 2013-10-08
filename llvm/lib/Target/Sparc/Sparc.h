@@ -26,6 +26,8 @@ namespace llvm {
 
   FunctionPass *createSparcISelDag(SparcTargetMachine &TM);
   FunctionPass *createSparcDelaySlotFillerPass(TargetMachine &TM);
+  FunctionPass *createSparcJITCodeEmitterPass(SparcTargetMachine &TM,
+                                              JITCodeEmitter &JCE);
 
 } // end namespace llvm;
 
