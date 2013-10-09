@@ -992,6 +992,7 @@ public:
     MostDerivedClassIsVirtual(MostDerivedClassIsVirtual), 
     LayoutClass(LayoutClass), Context(MostDerivedClass->getASTContext()), 
     Overriders(MostDerivedClass, MostDerivedClassOffset, LayoutClass) {
+    assert(!Context.getTargetInfo().getCXXABI().isMicrosoft());
 
     LayoutVTable();
 
@@ -1904,6 +1905,21 @@ VTableBuilder::LayoutVTablesForVirtualBases(const CXXRecordDecl *RD,
   }
 }
 
+struct ItaniumThunkInfoComparator {
+  bool operator() (const ThunkInfo &LHS, const ThunkInfo &RHS) {
+    assert(LHS.Method == 0);
+    assert(RHS.Method == 0);
+
+    if (LHS.This != RHS.This)
+      return LHS.This < RHS.This;
+
+    if (LHS.Return != RHS.Return)
+      return LHS.Return < RHS.Return;
+
+    return false;
+  }
+};
+
 /// dumpLayout - Dump the vtable layout.
 void VTableBuilder::dumpLayout(raw_ostream& Out) {
   // FIXME: write more tests that actually use the dumpLayout output to prevent
@@ -2146,7 +2162,8 @@ void VTableBuilder::dumpLayout(raw_ostream& Out) {
       const CXXMethodDecl *MD = I->second;
 
       ThunkInfoVectorTy ThunksVector = Thunks[MD];
-      std::sort(ThunksVector.begin(), ThunksVector.end());
+      std::sort(ThunksVector.begin(), ThunksVector.end(),
+                ItaniumThunkInfoComparator());
 
       Out << "Thunks for '" << MethodName << "' (" << ThunksVector.size();
       Out << (ThunksVector.size() == 1 ? " entry" : " entries") << ").\n";
@@ -2233,7 +2250,17 @@ void VTableBuilder::dumpLayout(raw_ostream& Out) {
 
   Out << '\n';
 }
-  
+
+struct VTableThunksComparator {
+  bool operator()(const VTableLayout::VTableThunkTy &LHS,
+                  const VTableLayout::VTableThunkTy &RHS) {
+    if (LHS.first == RHS.first) {
+      assert(LHS.second == RHS.second &&
+             "Different thunks should have unique indices!");
+    }
+    return LHS.first < RHS.first;
+  }
+};
 }
 
 VTableLayout::VTableLayout(uint64_t NumVTableComponents,
@@ -2252,6 +2279,9 @@ VTableLayout::VTableLayout(uint64_t NumVTableComponents,
             this->VTableComponents.get());
   std::copy(VTableThunks, VTableThunks+NumVTableThunks,
             this->VTableThunks.get());
+  std::sort(this->VTableThunks.get(),
+            this->VTableThunks.get() + NumVTableThunks,
+            VTableThunksComparator());
 }
 
 VTableLayout::~VTableLayout() { }
@@ -2312,7 +2342,6 @@ VTableContext::getVirtualBaseOffsetOffset(const CXXRecordDecl *RD,
 static VTableLayout *CreateVTableLayout(const VTableBuilder &Builder) {
   SmallVector<VTableLayout::VTableThunkTy, 1>
     VTableThunks(Builder.vtable_thunks_begin(), Builder.vtable_thunks_end());
-  std::sort(VTableThunks.begin(), VTableThunks.end());
 
   return new VTableLayout(Builder.getNumVTableComponents(),
                           Builder.vtable_component_begin(),
@@ -2520,18 +2549,14 @@ private:
 
   /// AddMethod - Add a single virtual member function to the vftable
   /// components vector.
-  void AddMethod(const CXXMethodDecl *MD, ThisAdjustment ThisAdjustment,
-                 ReturnAdjustment ReturnAdjustment) {
+  void AddMethod(const CXXMethodDecl *MD, ThunkInfo TI) {
     if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(MD)) {
-      assert(ReturnAdjustment.isEmpty() &&
+      assert(TI.Return.isEmpty() &&
              "Destructor can't have return adjustment!");
       Components.push_back(VTableComponent::MakeDeletingDtor(DD));
     } else {
-      // Add the return adjustment if necessary.
-      if (!ReturnAdjustment.isEmpty() || !ThisAdjustment.isEmpty()) {
-        VTableThunks[Components.size()].Return = ReturnAdjustment;
-        VTableThunks[Components.size()].This = ThisAdjustment;
-      }
+      if (!TI.isEmpty())
+        VTableThunks[Components.size()] = TI;
       Components.push_back(VTableComponent::MakeFunction(MD));
     }
   }
@@ -2816,6 +2841,7 @@ void VFTableBuilder::AddMethods(BaseSubobject Base, unsigned BaseDepth,
     FinalOverriders::OverriderInfo Overrider =
         Overriders.getOverrider(MD, Base.getBaseOffset());
     ThisAdjustment ThisAdjustmentOffset;
+    bool ForceThunk = false;
 
     // Check if this virtual member function overrides
     // a method in one of the visited bases.
@@ -2840,8 +2866,7 @@ void VFTableBuilder::AddMethods(BaseSubobject Base, unsigned BaseDepth,
         AddThunk(MD, VTableThunks[OverriddenMethodInfo.VFTableIndex]);
       }
 
-      if (ComputeReturnAdjustmentBaseOffset(Context, MD, OverriddenMD)
-              .isEmpty()) {
+      if (MD->getResultType() == OverriddenMD->getResultType()) {
         // No return adjustment needed - just replace the overridden method info
         // with the current info.
         MethodInfo MI(OverriddenMethodInfo.VBTableIndex,
@@ -2859,6 +2884,7 @@ void VFTableBuilder::AddMethods(BaseSubobject Base, unsigned BaseDepth,
         // method was in the vftable.
         // For now, just mark the overriden method as shadowed by a new slot.
         OverriddenMethodInfo.Shadowed = true;
+        ForceThunk = true;
 
         // Also apply this adjustment to the shadowed slots.
         if (!ThisAdjustmentOffset.isEmpty()) {
@@ -2907,6 +2933,7 @@ void VFTableBuilder::AddMethods(BaseSubobject Base, unsigned BaseDepth,
           ComputeReturnAdjustmentBaseOffset(Context, OverriderMD, MD);
     }
     if (!ReturnAdjustmentOffset.isEmpty()) {
+      ForceThunk = true;
       ReturnAdjustment.NonVirtual =
           ReturnAdjustmentOffset.NonVirtualOffset.getQuantity();
       if (ReturnAdjustmentOffset.VirtualBase) {
@@ -2918,7 +2945,8 @@ void VFTableBuilder::AddMethods(BaseSubobject Base, unsigned BaseDepth,
       }
     }
 
-    AddMethod(Overrider.Method, ThisAdjustmentOffset, ReturnAdjustment);
+    AddMethod(OverriderMD, ThunkInfo(ThisAdjustmentOffset, ReturnAdjustment,
+                                     ForceThunk ? MD : 0));
   }
 }
 
@@ -2928,6 +2956,20 @@ void PrintBasePath(const VFPtrInfo::BasePath &Path, raw_ostream &Out) {
     Out << "'" << (*I)->getQualifiedNameAsString() << "' in ";
   }
 }
+
+struct MicrosoftThunkInfoStableSortComparator {
+  bool operator() (const ThunkInfo &LHS, const ThunkInfo &RHS) {
+    if (LHS.This != RHS.This)
+      return LHS.This < RHS.This;
+
+    if (LHS.Return != RHS.Return)
+      return LHS.Return < RHS.Return;
+
+    // Keep different thunks with the same adjustments in the order they
+    // were put into the vector.
+    return false;
+  }
+};
 
 void VFTableBuilder::dumpLayout(raw_ostream &Out) {
   Out << "VFTable for ";
@@ -3042,7 +3084,8 @@ void VFTableBuilder::dumpLayout(raw_ostream &Out) {
       const CXXMethodDecl *MD = I->second;
 
       ThunkInfoVectorTy ThunksVector = Thunks[MD];
-      std::sort(ThunksVector.begin(), ThunksVector.end());
+      std::stable_sort(ThunksVector.begin(), ThunksVector.end(),
+                       MicrosoftThunkInfoStableSortComparator());
 
       Out << "Thunks for '" << MethodName << "' (" << ThunksVector.size();
       Out << (ThunksVector.size() == 1 ? " entry" : " entries") << ").\n";
@@ -3218,7 +3261,6 @@ void MicrosoftVFTableContext::computeVTableRelatedInformation(
     assert(VFTableLayouts.count(id) == 0);
     SmallVector<VTableLayout::VTableThunkTy, 1> VTableThunks(
         Builder.vtable_thunks_begin(), Builder.vtable_thunks_end());
-    std::sort(VTableThunks.begin(), VTableThunks.end());
     VFTableLayouts[id] = new VTableLayout(
         Builder.getNumVTableComponents(), Builder.vtable_component_begin(),
         VTableThunks.size(), VTableThunks.data(), EmptyAddressPointsMap, true);

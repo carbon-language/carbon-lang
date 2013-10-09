@@ -154,6 +154,9 @@ struct X: virtual C {
   // TEST4-NOT: VFTable indices for 'Test4::X'
 
   // MANGLING-DAG: @"\01??_7X@Test4@@6B@"
+
+  // Also check the mangling of the thunk.
+  // MANGLING-DAG: define weak x86_thiscallcc void @"\01?f@C@@WPPPPPPPE@AEXXZ"
 };
 
 X x;

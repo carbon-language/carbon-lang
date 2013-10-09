@@ -333,6 +333,9 @@ void CodeGenFunction::GenerateThunk(llvm::Function *Fn,
   // Add our adjusted 'this' pointer.
   CallArgs.add(RValue::get(AdjustedThisPtr), ThisType);
 
+  if (isa<CXXDestructorDecl>(MD))
+    CGM.getCXXABI().adjustCallArgsForDestructorThunk(*this, GD, CallArgs);
+
   // Add the rest of the parameters.
   for (FunctionDecl::param_const_iterator I = MD->param_begin(),
        E = MD->param_end(); I != E; ++I) {
@@ -390,14 +393,8 @@ void CodeGenFunction::GenerateThunk(llvm::Function *Fn,
   setThunkVisibility(CGM, MD, Thunk, Fn);
 }
 
-void CodeGenVTables::EmitThunk(GlobalDecl GD, const ThunkInfo &Thunk, 
-                               bool UseAvailableExternallyLinkage)
-{
-  if (CGM.getTarget().getCXXABI().isMicrosoft()) {
-    // Emission of thunks is not supported yet in Microsoft ABI.
-    return;
-  }
-
+void CodeGenVTables::emitThunk(GlobalDecl GD, const ThunkInfo &Thunk,
+                               bool ForVTable) {
   const CGFunctionInfo &FnInfo = CGM.getTypes().arrangeGlobalDeclaration(GD);
 
   // FIXME: re-use FnInfo in this computation.
@@ -435,9 +432,11 @@ void CodeGenVTables::EmitThunk(GlobalDecl GD, const ThunkInfo &Thunk,
   }
 
   llvm::Function *ThunkFn = cast<llvm::Function>(Entry);
+  bool ABIHasKeyFunctions = CGM.getTarget().getCXXABI().hasKeyFunctions();
+  bool UseAvailableExternallyLinkage = ForVTable && ABIHasKeyFunctions;
 
   if (!ThunkFn->isDeclaration()) {
-    if (UseAvailableExternallyLinkage) {
+    if (!ABIHasKeyFunctions || UseAvailableExternallyLinkage) {
       // There is already a thunk emitted for this function, do nothing.
       return;
     }
@@ -466,14 +465,17 @@ void CodeGenVTables::EmitThunk(GlobalDecl GD, const ThunkInfo &Thunk,
     CodeGenFunction(CGM).GenerateThunk(ThunkFn, FnInfo, GD, Thunk);
   }
 
-  if (UseAvailableExternallyLinkage)
-    ThunkFn->setLinkage(llvm::GlobalValue::AvailableExternallyLinkage);
+  CGM.getCXXABI().setThunkLinkage(ThunkFn, ForVTable);
 }
 
-void CodeGenVTables::MaybeEmitThunkAvailableExternally(GlobalDecl GD,
-                                                       const ThunkInfo &Thunk) {
-  // We only want to do this when building with optimizations.
-  if (!CGM.getCodeGenOpts().OptimizationLevel)
+void CodeGenVTables::maybeEmitThunkForVTable(GlobalDecl GD,
+                                             const ThunkInfo &Thunk) {
+  // If the ABI has key functions, only the TU with the key function should emit
+  // the thunk. However, we can allow inlining of thunks if we emit them with
+  // available_externally linkage together with vtables when optimizations are
+  // enabled.
+  if (CGM.getTarget().getCXXABI().hasKeyFunctions() &&
+      !CGM.getCodeGenOpts().OptimizationLevel)
     return;
 
   // We can't emit thunks for member functions with incomplete types.
@@ -482,7 +484,7 @@ void CodeGenVTables::MaybeEmitThunkAvailableExternally(GlobalDecl GD,
                                 cast<FunctionType>(MD->getType().getTypePtr())))
     return;
 
-  EmitThunk(GD, Thunk, /*UseAvailableExternallyLinkage=*/true);
+  emitThunk(GD, Thunk, /*ForVTable=*/true);
 }
 
 void CodeGenVTables::EmitThunks(GlobalDecl GD)
@@ -494,21 +496,18 @@ void CodeGenVTables::EmitThunks(GlobalDecl GD)
   if (isa<CXXDestructorDecl>(MD) && GD.getDtorType() == Dtor_Base)
     return;
 
+  const VTableContext::ThunkInfoVectorTy *ThunkInfoVector;
   if (VFTContext.isValid()) {
-    // FIXME: This is a temporary solution to force generation of vftables in
-    // Microsoft ABI. Remove when we thread VFTableContext through CodeGen.
-    VFTContext->getVFPtrOffsets(MD->getParent());
-    return;
+    ThunkInfoVector = VFTContext->getThunkInfo(GD);
+  } else {
+    ThunkInfoVector = VTContext.getThunkInfo(GD);
   }
 
-  const VTableContext::ThunkInfoVectorTy *ThunkInfoVector =
-    VTContext.getThunkInfo(MD);
   if (!ThunkInfoVector)
     return;
 
   for (unsigned I = 0, E = ThunkInfoVector->size(); I != E; ++I)
-    EmitThunk(GD, (*ThunkInfoVector)[I],
-              /*UseAvailableExternallyLinkage=*/false);
+    emitThunk(GD, (*ThunkInfoVector)[I], /*ForVTable=*/false);
 }
 
 llvm::Constant *
@@ -603,7 +602,7 @@ CodeGenVTables::CreateVTableInitializer(const CXXRecordDecl *RD,
             VTableThunks[NextVTableThunkIndex].first == I) {
           const ThunkInfo &Thunk = VTableThunks[NextVTableThunkIndex].second;
         
-          MaybeEmitThunkAvailableExternally(GD, Thunk);
+          maybeEmitThunkForVTable(GD, Thunk);
           Init = CGM.GetAddrOfThunk(GD, Thunk);
 
           NextVTableThunkIndex++;
