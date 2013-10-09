@@ -1,4 +1,4 @@
-//===-- RegisterContextLinux_x86_64.h --------------------------*- C++ -*-===//
+//===-- RegisterContextLinux_x86_64.cpp ------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

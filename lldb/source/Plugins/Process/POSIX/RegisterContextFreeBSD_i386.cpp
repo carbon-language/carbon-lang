@@ -1,4 +1,4 @@
-//===-- RegisterContextFreeBSD_i386.h ----------------------------*- C++ -*-===//
+//===-- RegisterContextFreeBSD_i386.cpp ------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
