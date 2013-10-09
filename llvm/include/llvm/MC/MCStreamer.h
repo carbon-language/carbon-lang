@@ -66,11 +66,11 @@ typedef std::pair<const MCSection *, const MCExpr *> MCSectionSubPair;
 /// be treated differently. Callers should always talk to a FooTargetStreamer.
 class MCTargetStreamer {
 protected:
-  OwningPtr<MCStreamer> Streamer;
+  MCStreamer *Streamer;
 
 public:
   virtual ~MCTargetStreamer();
-  void setStreamer(MCStreamer *S) { Streamer.reset(S); }
+  void setStreamer(MCStreamer *S) { Streamer = S; }
 };
 
 // FIXME: declared here because it is used from
@@ -100,7 +100,7 @@ public:
 ///
 class MCStreamer {
   MCContext &Context;
-  MCTargetStreamer *TargetStreamer;
+  OwningPtr<MCTargetStreamer> TargetStreamer;
 
   MCStreamer(const MCStreamer &) LLVM_DELETED_FUNCTION;
   MCStreamer &operator=(const MCStreamer &) LLVM_DELETED_FUNCTION;

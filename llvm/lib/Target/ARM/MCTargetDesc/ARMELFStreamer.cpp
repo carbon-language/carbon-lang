@@ -305,7 +305,7 @@ private:
 } // end anonymous namespace
 
 ARMELFStreamer &ARMTargetELFStreamer::getStreamer() {
-  ARMELFStreamer *S = static_cast<ARMELFStreamer *>(Streamer.get());
+  ARMELFStreamer *S = static_cast<ARMELFStreamer *>(Streamer);
   return *S;
 }
 
