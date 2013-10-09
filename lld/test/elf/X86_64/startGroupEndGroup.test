@@ -22,6 +22,6 @@ RUN: llvm-nm %t1 | FileCheck -check-prefix=RESOLVEDEXTERNAL %s
 RUN: llvm-nm %t2 | FileCheck -check-prefix=RESOLVEDEXTERNAL %s
 RUN: llvm-nm %t3 | FileCheck -check-prefix=RESOLVEDEXTERNAL %s
 
-UNRESOLVED: Undefined Symbol: {{[\/0-9A-Za-z_]+}}libfn1.a(fn1.o) : fn2
+UNRESOLVED: Undefined Symbol: {{[\/0-9A-Za-z_\-\.]+}}libfn1.a(fn1.o) : fn2
 
 RESOLVEDEXTERNAL: {{[0-9a-z]+}} T fn2
