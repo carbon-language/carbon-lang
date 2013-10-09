@@ -290,9 +290,8 @@ void Resolver::addAtoms(const std::vector<const DefinedAtom*>& newAtoms) {
 // if so, keep searching libraries until no more atoms being added
 void Resolver::resolveUndefines() {
   ScopedTask task(getDefaultDomain(), "resolveUndefines");
-  ErrorOr<File &> nextFile;
 
-  while ((nextFile = _context.nextFile())) {
+  while (ErrorOr<File &> nextFile = _context.nextFile()) {
     if (error_code(nextFile) == input_graph_error::no_more_files)
       break;
     if (nextFile->kind() == File::kindObject)
