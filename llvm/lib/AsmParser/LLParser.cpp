@@ -634,10 +634,7 @@ bool LLParser::ParseAlias(const std::string &Name, LocTy NameLoc,
 
   GlobalValue::LinkageTypes Linkage = (GlobalValue::LinkageTypes) L;
 
-  if(!GlobalValue::isExternalLinkage(Linkage) &&
-     !GlobalValue::isLocalLinkage(Linkage) &&
-     !GlobalValue::isWeakLinkage(Linkage) &&
-     !GlobalValue::isLinkOnceLinkage(Linkage))
+  if(!GlobalAlias::isValidLinkage(Linkage))
     return Error(LinkageLoc, "invalid linkage type for alias");
 
   Constant *Aliasee;

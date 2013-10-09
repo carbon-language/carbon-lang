@@ -81,6 +81,11 @@ public:
     return const_cast<GlobalAlias *>(this)->resolveAliasedGlobal(stopOnWeak);
   }
 
+  static bool isValidLinkage(LinkageTypes L) {
+    return isExternalLinkage(L) || isLocalLinkage(L) ||
+      isWeakLinkage(L) || isLinkOnceLinkage(L);
+  }
+
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const Value *V) {
     return V->getValueID() == Value::GlobalAliasVal;

@@ -529,8 +529,7 @@ void Verifier::visitGlobalVariable(GlobalVariable &GV) {
 void Verifier::visitGlobalAlias(GlobalAlias &GA) {
   Assert1(!GA.getName().empty(),
           "Alias name cannot be empty!", &GA);
-  Assert1(GA.hasExternalLinkage() || GA.hasLocalLinkage() ||
-          GA.hasWeakLinkage() || GA.hasLinkOnceLinkage(),
+  Assert1(GlobalAlias::isValidLinkage(GA.getLinkage()),
           "Alias should have external or external weak linkage!", &GA);
   Assert1(GA.getAliasee(),
           "Aliasee cannot be NULL!", &GA);
