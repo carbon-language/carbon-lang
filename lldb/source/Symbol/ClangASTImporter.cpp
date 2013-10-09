@@ -716,3 +716,18 @@ ClangASTImporter::Minion::Imported (clang::Decl *from, clang::Decl *to)
     
     return clang::ASTImporter::Imported(from, to);
 }
+
+clang::Decl *ClangASTImporter::Minion::GetOriginalDecl (clang::Decl *To)
+{
+    ASTContextMetadataSP to_context_md = m_master.GetContextMetadata(&To->getASTContext());
+    
+    if (!to_context_md)
+        return NULL;
+    
+    OriginMap::iterator iter = to_context_md->m_origins.find(To);
+    
+    if (iter == to_context_md->m_origins.end())
+        return NULL;
+    
+    return const_cast<clang::Decl*>(iter->second.decl);
+}

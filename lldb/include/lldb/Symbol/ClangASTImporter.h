@@ -278,6 +278,8 @@ private:
         
         clang::Decl *Imported (clang::Decl *from, clang::Decl *to);
         
+        clang::Decl *GetOriginalDecl (clang::Decl *To);
+        
         std::set<clang::NamedDecl *>   *m_decls_to_deport;
         std::set<clang::NamedDecl *>   *m_decls_already_deported;
         ClangASTImporter               &m_master;
