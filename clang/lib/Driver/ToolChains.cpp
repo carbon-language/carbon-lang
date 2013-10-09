@@ -2174,12 +2174,7 @@ static void addPathIfExists(Twine Path, ToolChain::path_list &Paths) {
   if (llvm::sys::fs::exists(Path)) Paths.push_back(Path.str());
 }
 
-static bool isMipsR2Arch(llvm::Triple::ArchType Arch,
-                         const ArgList &Args) {
-  if (Arch != llvm::Triple::mips &&
-      Arch != llvm::Triple::mipsel)
-    return false;
-
+static bool isMipsR2Arch(const ArgList &Args) {
   Arg *A = Args.getLastArg(options::OPT_march_EQ,
                            options::OPT_mcpu_EQ);
 
@@ -2281,7 +2276,7 @@ Linux::Linux(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
     // the parent prefix of the GCC installation.
     // FIXME: It would be cleaner to model this as a variant of multilib. IE,
     // instead of 'lib64' it would be 'lib/el'.
-    if (IsAndroid && isMipsR2Arch(Triple.getArch(), Args)) {
+    if (IsAndroid && IsMips && isMipsR2Arch(Args)) {
       assert(GCCInstallation.getBiarchSuffix().empty() &&
              "Unexpected bi-arch suffix");
       addPathIfExists(GCCInstallation.getInstallPath() + "/mips-r2", Paths);
