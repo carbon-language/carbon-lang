@@ -839,7 +839,7 @@ public:
                                                             name,
                                                             address,
                                                             eAddressTypeLoad,
-                                                            ret->GetByteSize());
+                                                            map.GetAddressByteSize());
         }
         
         ret->ValueUpdated();
