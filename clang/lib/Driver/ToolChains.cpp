@@ -2181,16 +2181,9 @@ static bool isMipsR2Arch(llvm::Triple::ArchType Arch,
     return false;
 
   Arg *A = Args.getLastArg(options::OPT_march_EQ,
-                           options::OPT_mcpu_EQ,
-                           options::OPT_mips_CPUs_Group);
+                           options::OPT_mcpu_EQ);
 
-  if (!A)
-    return false;
-
-  if (A->getOption().matches(options::OPT_mips_CPUs_Group))
-    return A->getOption().matches(options::OPT_mips32r2);
-
-  return A->getValue() == StringRef("mips32r2");
+  return A && A->getValue() == StringRef("mips32r2");
 }
 
 static StringRef getMultilibDir(const llvm::Triple &Triple,

@@ -846,20 +846,6 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
     }
 }
 
-// Translate MIPS CPU name alias option to CPU name.
-static StringRef getMipsCPUFromAlias(const Arg &A) {
-  if (A.getOption().matches(options::OPT_mips32))
-    return "mips32";
-  if (A.getOption().matches(options::OPT_mips32r2))
-    return "mips32r2";
-  if (A.getOption().matches(options::OPT_mips64))
-    return "mips64";
-  if (A.getOption().matches(options::OPT_mips64r2))
-    return "mips64r2";
-  llvm_unreachable("Unexpected option");
-  return "";
-}
-
 // Get CPU and ABI names. They are not independent
 // so we have to calculate them together.
 static void getMipsCPUAndABI(const ArgList &Args,
@@ -870,13 +856,8 @@ static void getMipsCPUAndABI(const ArgList &Args,
   const char *DefMips64CPU = "mips64";
 
   if (Arg *A = Args.getLastArg(options::OPT_march_EQ,
-                               options::OPT_mcpu_EQ,
-                               options::OPT_mips_CPUs_Group)) {
-    if (A->getOption().matches(options::OPT_mips_CPUs_Group))
-      CPUName = getMipsCPUFromAlias(*A);
-    else
-      CPUName = A->getValue();
-  }
+                               options::OPT_mcpu_EQ))
+    CPUName = A->getValue();
 
   if (Arg *A = Args.getLastArg(options::OPT_mabi_EQ)) {
     ABIName = A->getValue();
