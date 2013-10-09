@@ -2281,26 +2281,29 @@ ClangASTType::GetNumDirectBaseClasses () const
             break;
             
         case clang::Type::ObjCObjectPointer:
-            if (GetCompleteType())
-            {
-                const ObjCObjectPointerType *objc_class_type = qual_type->getAsObjCInterfacePointerType();
-                if (objc_class_type)
-                {
-                    ObjCInterfaceDecl *class_interface_decl = objc_class_type->getInterfaceDecl();
-                    if (class_interface_decl && class_interface_decl->getSuperClass())
-                        count = 1;
-                }
-            }
+            count = GetPointeeType().GetNumDirectBaseClasses();
             break;
             
         case clang::Type::ObjCObject:
-        case clang::Type::ObjCInterface:
             if (GetCompleteType())
             {
                 const ObjCObjectType *objc_class_type = qual_type->getAsObjCQualifiedInterfaceType();
                 if (objc_class_type)
                 {
                     ObjCInterfaceDecl *class_interface_decl = objc_class_type->getInterface();
+                    
+                    if (class_interface_decl && class_interface_decl->getSuperClass())
+                        count = 1;
+                }
+            }
+            break;
+        case clang::Type::ObjCInterface:
+            if (GetCompleteType())
+            {
+                const ObjCInterfaceType *objc_interface_type = qual_type->getAs<ObjCInterfaceType>();
+                if (objc_interface_type)
+                {
+                    ObjCInterfaceDecl *class_interface_decl = objc_interface_type->getInterface();
                     
                     if (class_interface_decl && class_interface_decl->getSuperClass())
                         count = 1;
@@ -2482,12 +2485,16 @@ ClangASTType::GetDirectBaseClassAtIndex (size_t idx, uint32_t *bit_offset_ptr) c
             break;
             
         case clang::Type::ObjCObjectPointer:
+            return GetPointeeType().GetDirectBaseClassAtIndex(idx,bit_offset_ptr);
+            
+        case clang::Type::ObjCObject:
             if (idx == 0 && GetCompleteType())
             {
-                const ObjCObjectPointerType *objc_class_type = qual_type->getAsObjCInterfacePointerType();
+                const ObjCObjectType *objc_class_type = qual_type->getAsObjCQualifiedInterfaceType();
                 if (objc_class_type)
                 {
-                    ObjCInterfaceDecl *class_interface_decl = objc_class_type->getInterfaceDecl();
+                    ObjCInterfaceDecl *class_interface_decl = objc_class_type->getInterface();
+                    
                     if (class_interface_decl)
                     {
                         ObjCInterfaceDecl *superclass_interface_decl = class_interface_decl->getSuperClass();
@@ -2501,15 +2508,13 @@ ClangASTType::GetDirectBaseClassAtIndex (size_t idx, uint32_t *bit_offset_ptr) c
                 }
             }
             break;
-            
-        case clang::Type::ObjCObject:
         case clang::Type::ObjCInterface:
             if (idx == 0 && GetCompleteType())
             {
-                const ObjCObjectType *objc_class_type = qual_type->getAsObjCQualifiedInterfaceType();
-                if (objc_class_type)
+                const ObjCObjectType *objc_interface_type = qual_type->getAs<ObjCInterfaceType>();
+                if (objc_interface_type)
                 {
-                    ObjCInterfaceDecl *class_interface_decl = objc_class_type->getInterface();
+                    ObjCInterfaceDecl *class_interface_decl = objc_interface_type->getInterface();
                     
                     if (class_interface_decl)
                     {
