@@ -300,8 +300,7 @@ public:
   }
 };
 
-// FIXME: rename to ItaniumVTableContext.
-class VTableContext : public VTableContextBase {
+class ItaniumVTableContext : public VTableContextBase {
 private:
   bool IsMicrosoftABI;
 
@@ -328,8 +327,8 @@ private:
   void computeVTableRelatedInformation(const CXXRecordDecl *RD);
 
 public:
-  VTableContext(ASTContext &Context);
-  ~VTableContext();
+  ItaniumVTableContext(ASTContext &Context);
+  ~ItaniumVTableContext();
 
   const VTableLayout &getVTableLayout(const CXXRecordDecl *RD) {
     computeVTableRelatedInformation(RD);

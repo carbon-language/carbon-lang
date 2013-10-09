@@ -496,7 +496,7 @@ void CodeGenVTables::EmitThunks(GlobalDecl GD)
   if (isa<CXXDestructorDecl>(MD) && GD.getDtorType() == Dtor_Base)
     return;
 
-  const VTableContext::ThunkInfoVectorTy *ThunkInfoVector;
+  const VTableContextBase::ThunkInfoVectorTy *ThunkInfoVector;
   if (VFTContext.isValid()) {
     ThunkInfoVector = VFTContext->getThunkInfo(GD);
   } else {

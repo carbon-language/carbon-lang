@@ -921,7 +921,7 @@ void ItaniumCXXABI::emitVTableDefinitions(CodeGenVTables &CGVT,
   if (VTable->hasInitializer())
     return;
 
-  VTableContext &VTContext = CGM.getVTableContext();
+  ItaniumVTableContext &VTContext = CGM.getVTableContext();
   const VTableLayout &VTLayout = VTContext.getVTableLayout(RD);
   llvm::GlobalVariable::LinkageTypes Linkage = CGM.getVTableLinkage(RD);
 
@@ -1012,7 +1012,7 @@ llvm::GlobalVariable *ItaniumCXXABI::getAddrOfVTable(const CXXRecordDecl *RD,
   Out.flush();
   StringRef Name = OutName.str();
 
-  VTableContext &VTContext = CGM.getVTableContext();
+  ItaniumVTableContext &VTContext = CGM.getVTableContext();
   llvm::ArrayType *ArrayType = llvm::ArrayType::get(
       CGM.Int8PtrTy, VTContext.getVTableLayout(RD).getNumVTableComponents());
 

@@ -767,9 +767,8 @@ VCallAndVBaseOffsetBuilder::AddVBaseOffsets(const CXXRecordDecl *RD,
   }
 }
 
-/// VTableBuilder - Class for building vtable layout information.
-// FIXME: rename to ItaniumVTableBuilder.
-class VTableBuilder {
+/// ItaniumVTableBuilder - Class for building vtable layout information.
+class ItaniumVTableBuilder {
 public:
   /// PrimaryBasesSetVectorTy - A set vector of direct and indirect 
   /// primary bases.
@@ -786,7 +785,7 @@ public:
 
 private:
   /// VTables - Global vtable information.
-  VTableContext &VTables;
+  ItaniumVTableContext &VTables;
   
   /// MostDerivedClass - The most derived class for which we're building this
   /// vtable.
@@ -983,15 +982,16 @@ private:
   }
 
 public:
-  VTableBuilder(VTableContext &VTables, const CXXRecordDecl *MostDerivedClass,
-                CharUnits MostDerivedClassOffset, 
-                bool MostDerivedClassIsVirtual, const 
-                CXXRecordDecl *LayoutClass)
-    : VTables(VTables), MostDerivedClass(MostDerivedClass),
-    MostDerivedClassOffset(MostDerivedClassOffset), 
-    MostDerivedClassIsVirtual(MostDerivedClassIsVirtual), 
-    LayoutClass(LayoutClass), Context(MostDerivedClass->getASTContext()), 
-    Overriders(MostDerivedClass, MostDerivedClassOffset, LayoutClass) {
+  ItaniumVTableBuilder(ItaniumVTableContext &VTables,
+                       const CXXRecordDecl *MostDerivedClass,
+                       CharUnits MostDerivedClassOffset,
+                       bool MostDerivedClassIsVirtual,
+                       const CXXRecordDecl *LayoutClass)
+      : VTables(VTables), MostDerivedClass(MostDerivedClass),
+        MostDerivedClassOffset(MostDerivedClassOffset),
+        MostDerivedClassIsVirtual(MostDerivedClassIsVirtual),
+        LayoutClass(LayoutClass), Context(MostDerivedClass->getASTContext()),
+        Overriders(MostDerivedClass, MostDerivedClassOffset, LayoutClass) {
     assert(!Context.getTargetInfo().getCXXABI().isMicrosoft());
 
     LayoutVTable();
@@ -1062,7 +1062,8 @@ public:
   void dumpLayout(raw_ostream&);
 };
 
-void VTableBuilder::AddThunk(const CXXMethodDecl *MD, const ThunkInfo &Thunk) {
+void ItaniumVTableBuilder::AddThunk(const CXXMethodDecl *MD,
+                                    const ThunkInfo &Thunk) {
   assert(!isBuildingConstructorVTable() && 
          "Can't add thunks for construction vtable");
 
@@ -1116,7 +1117,7 @@ ComputeAllOverriddenMethods(const CXXMethodDecl *MD,
   visitAllOverriddenMethods(MD, Collector);
 }
 
-void VTableBuilder::ComputeThisAdjustments() {
+void ItaniumVTableBuilder::ComputeThisAdjustments() {
   // Now go through the method info map and see if any of the methods need
   // 'this' pointer adjustments.
   for (MethodInfoMapTy::const_iterator I = MethodInfoMap.begin(),
@@ -1193,7 +1194,8 @@ void VTableBuilder::ComputeThisAdjustments() {
   }
 }
 
-ReturnAdjustment VTableBuilder::ComputeReturnAdjustment(BaseOffset Offset) {
+ReturnAdjustment
+ItaniumVTableBuilder::ComputeReturnAdjustment(BaseOffset Offset) {
   ReturnAdjustment Adjustment;
   
   if (!Offset.isEmpty()) {
@@ -1216,9 +1218,8 @@ ReturnAdjustment VTableBuilder::ComputeReturnAdjustment(BaseOffset Offset) {
   return Adjustment;
 }
 
-BaseOffset
-VTableBuilder::ComputeThisAdjustmentBaseOffset(BaseSubobject Base,
-                                               BaseSubobject Derived) const {
+BaseOffset ItaniumVTableBuilder::ComputeThisAdjustmentBaseOffset(
+    BaseSubobject Base, BaseSubobject Derived) const {
   const CXXRecordDecl *BaseRD = Base.getBase();
   const CXXRecordDecl *DerivedRD = Derived.getBase();
   
@@ -1263,11 +1264,10 @@ VTableBuilder::ComputeThisAdjustmentBaseOffset(BaseSubobject Base,
   
   return BaseOffset();
 }
-  
-ThisAdjustment 
-VTableBuilder::ComputeThisAdjustment(const CXXMethodDecl *MD, 
-                                     CharUnits BaseOffsetInLayoutClass,
-                                     FinalOverriders::OverriderInfo Overrider) {
+
+ThisAdjustment ItaniumVTableBuilder::ComputeThisAdjustment(
+    const CXXMethodDecl *MD, CharUnits BaseOffsetInLayoutClass,
+    FinalOverriders::OverriderInfo Overrider) {
   // Ignore adjustments for pure virtual member functions.
   if (Overrider.Method->isPure())
     return ThisAdjustment();
@@ -1313,10 +1313,9 @@ VTableBuilder::ComputeThisAdjustment(const CXXMethodDecl *MD,
   
   return Adjustment;
 }
-  
-void 
-VTableBuilder::AddMethod(const CXXMethodDecl *MD,
-                         ReturnAdjustment ReturnAdjustment) {
+
+void ItaniumVTableBuilder::AddMethod(const CXXMethodDecl *MD,
+                                     ReturnAdjustment ReturnAdjustment) {
   if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(MD)) {
     assert(ReturnAdjustment.isEmpty() && 
            "Destructor can't have return adjustment!");
@@ -1345,9 +1344,9 @@ VTableBuilder::AddMethod(const CXXMethodDecl *MD,
 ///
 /// OverridesIndirectMethodInBase will return true if given C::f as the method 
 /// and { A } as the set of bases.
-static bool
-OverridesIndirectMethodInBases(const CXXMethodDecl *MD,
-                               VTableBuilder::PrimaryBasesSetVectorTy &Bases) {
+static bool OverridesIndirectMethodInBases(
+    const CXXMethodDecl *MD,
+    ItaniumVTableBuilder::PrimaryBasesSetVectorTy &Bases) {
   if (Bases.count(MD->getParent()))
     return true;
   
@@ -1363,11 +1362,10 @@ OverridesIndirectMethodInBases(const CXXMethodDecl *MD,
   return false;
 }
 
-bool 
-VTableBuilder::IsOverriderUsed(const CXXMethodDecl *Overrider,
-                               CharUnits BaseOffsetInLayoutClass,
-                               const CXXRecordDecl *FirstBaseInPrimaryBaseChain,
-                               CharUnits FirstBaseOffsetInLayoutClass) const {
+bool ItaniumVTableBuilder::IsOverriderUsed(
+    const CXXMethodDecl *Overrider, CharUnits BaseOffsetInLayoutClass,
+    const CXXRecordDecl *FirstBaseInPrimaryBaseChain,
+    CharUnits FirstBaseOffsetInLayoutClass) const {
   // If the base and the first base in the primary base chain have the same
   // offsets, then this overrider will be used.
   if (BaseOffsetInLayoutClass == FirstBaseOffsetInLayoutClass)
@@ -1381,8 +1379,8 @@ VTableBuilder::IsOverriderUsed(const CXXMethodDecl *Overrider,
   // that the overrider will be used.
   if (Overrider->getParent() == FirstBaseInPrimaryBaseChain)
     return true;
-  
-  VTableBuilder::PrimaryBasesSetVectorTy PrimaryBases;
+
+  ItaniumVTableBuilder::PrimaryBasesSetVectorTy PrimaryBases;
 
   const CXXRecordDecl *RD = FirstBaseInPrimaryBaseChain;
   PrimaryBases.insert(RD);
@@ -1452,13 +1450,13 @@ FindNearestOverriddenMethod(const CXXMethodDecl *MD,
   }
   
   return 0;
-}  
+}
 
-void
-VTableBuilder::AddMethods(BaseSubobject Base, CharUnits BaseOffsetInLayoutClass,
-                          const CXXRecordDecl *FirstBaseInPrimaryBaseChain,
-                          CharUnits FirstBaseOffsetInLayoutClass,
-                          PrimaryBasesSetVectorTy &PrimaryBases) {
+void ItaniumVTableBuilder::AddMethods(
+    BaseSubobject Base, CharUnits BaseOffsetInLayoutClass,
+    const CXXRecordDecl *FirstBaseInPrimaryBaseChain,
+    CharUnits FirstBaseOffsetInLayoutClass,
+    PrimaryBasesSetVectorTy &PrimaryBases) {
   // Itanium C++ ABI 2.5.2:
   //   The order of the virtual function pointers in a virtual table is the
   //   order of declaration of the corresponding member functions in the class.
@@ -1634,7 +1632,7 @@ VTableBuilder::AddMethods(BaseSubobject Base, CharUnits BaseOffsetInLayoutClass,
   }
 }
 
-void VTableBuilder::LayoutVTable() {
+void ItaniumVTableBuilder::LayoutVTable() {
   LayoutPrimaryAndSecondaryVTables(BaseSubobject(MostDerivedClass,
                                                  CharUnits::Zero()),
                                    /*BaseIsMorallyVirtual=*/false,
@@ -1655,12 +1653,10 @@ void VTableBuilder::LayoutVTable() {
   if (IsAppleKext)
     Components.push_back(VTableComponent::MakeVCallOffset(CharUnits::Zero()));
 }
-  
-void
-VTableBuilder::LayoutPrimaryAndSecondaryVTables(BaseSubobject Base,
-                                                bool BaseIsMorallyVirtual,
-                                                bool BaseIsVirtualInLayoutClass,
-                                                CharUnits OffsetInLayoutClass) {
+
+void ItaniumVTableBuilder::LayoutPrimaryAndSecondaryVTables(
+    BaseSubobject Base, bool BaseIsMorallyVirtual,
+    bool BaseIsVirtualInLayoutClass, CharUnits OffsetInLayoutClass) {
   assert(Base.getBase()->isDynamicClass() && "class does not have a vtable!");
 
   // Add vcall and vbase offsets for this vtable.
@@ -1750,9 +1746,10 @@ VTableBuilder::LayoutPrimaryAndSecondaryVTables(BaseSubobject Base,
   LayoutSecondaryVTables(Base, BaseIsMorallyVirtual, OffsetInLayoutClass);
 }
 
-void VTableBuilder::LayoutSecondaryVTables(BaseSubobject Base,
-                                           bool BaseIsMorallyVirtual,
-                                           CharUnits OffsetInLayoutClass) {
+void
+ItaniumVTableBuilder::LayoutSecondaryVTables(BaseSubobject Base,
+                                             bool BaseIsMorallyVirtual,
+                                             CharUnits OffsetInLayoutClass) {
   // Itanium C++ ABI 2.5.2:
   //   Following the primary virtual table of a derived class are secondary 
   //   virtual tables for each of its proper base classes, except any primary
@@ -1808,10 +1805,9 @@ void VTableBuilder::LayoutSecondaryVTables(BaseSubobject Base,
   }
 }
 
-void
-VTableBuilder::DeterminePrimaryVirtualBases(const CXXRecordDecl *RD,
-                                            CharUnits OffsetInLayoutClass,
-                                            VisitedVirtualBasesSetTy &VBases) {
+void ItaniumVTableBuilder::DeterminePrimaryVirtualBases(
+    const CXXRecordDecl *RD, CharUnits OffsetInLayoutClass,
+    VisitedVirtualBasesSetTy &VBases) {
   const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
   
   // Check if this base has a primary base.
@@ -1866,9 +1862,8 @@ VTableBuilder::DeterminePrimaryVirtualBases(const CXXRecordDecl *RD,
   }
 }
 
-void
-VTableBuilder::LayoutVTablesForVirtualBases(const CXXRecordDecl *RD, 
-                                            VisitedVirtualBasesSetTy &VBases) {
+void ItaniumVTableBuilder::LayoutVTablesForVirtualBases(
+    const CXXRecordDecl *RD, VisitedVirtualBasesSetTy &VBases) {
   // Itanium C++ ABI 2.5.2:
   //   Then come the virtual base virtual tables, also in inheritance graph
   //   order, and again excluding primary bases (which share virtual tables with
@@ -1921,9 +1916,9 @@ struct ItaniumThunkInfoComparator {
 };
 
 /// dumpLayout - Dump the vtable layout.
-void VTableBuilder::dumpLayout(raw_ostream& Out) {
+void ItaniumVTableBuilder::dumpLayout(raw_ostream &Out) {
   // FIXME: write more tests that actually use the dumpLayout output to prevent
-  // VTableBuilder regressions.
+  // ItaniumVTableBuilder regressions.
 
   if (isBuildingConstructorVTable()) {
     Out << "Construction vtable for ('";
@@ -2286,15 +2281,15 @@ VTableLayout::VTableLayout(uint64_t NumVTableComponents,
 
 VTableLayout::~VTableLayout() { }
 
-VTableContext::VTableContext(ASTContext &Context)
+ItaniumVTableContext::ItaniumVTableContext(ASTContext &Context)
   : IsMicrosoftABI(Context.getTargetInfo().getCXXABI().isMicrosoft()) {
 }
 
-VTableContext::~VTableContext() {
+ItaniumVTableContext::~ItaniumVTableContext() {
   llvm::DeleteContainerSeconds(VTableLayouts);
 }
 
-uint64_t VTableContext::getMethodVTableIndex(GlobalDecl GD) {
+uint64_t ItaniumVTableContext::getMethodVTableIndex(GlobalDecl GD) {
   MethodVTableIndicesTy::iterator I = MethodVTableIndices.find(GD);
   if (I != MethodVTableIndices.end())
     return I->second;
@@ -2308,9 +2303,9 @@ uint64_t VTableContext::getMethodVTableIndex(GlobalDecl GD) {
   return I->second;
 }
 
-CharUnits 
-VTableContext::getVirtualBaseOffsetOffset(const CXXRecordDecl *RD, 
-                                          const CXXRecordDecl *VBase) {
+CharUnits
+ItaniumVTableContext::getVirtualBaseOffsetOffset(const CXXRecordDecl *RD,
+                                                 const CXXRecordDecl *VBase) {
   ClassPairTy ClassPair(RD, VBase);
   
   VirtualBaseClassOffsetOffsetsMapTy::iterator I = 
@@ -2339,7 +2334,7 @@ VTableContext::getVirtualBaseOffsetOffset(const CXXRecordDecl *RD,
   return I->second;
 }
 
-static VTableLayout *CreateVTableLayout(const VTableBuilder &Builder) {
+static VTableLayout *CreateVTableLayout(const ItaniumVTableBuilder &Builder) {
   SmallVector<VTableLayout::VTableThunkTy, 1>
     VTableThunks(Builder.vtable_thunks_begin(), Builder.vtable_thunks_end());
 
@@ -2351,7 +2346,8 @@ static VTableLayout *CreateVTableLayout(const VTableBuilder &Builder) {
                           /*IsMicrosoftABI=*/false);
 }
 
-void VTableContext::computeVTableRelatedInformation(const CXXRecordDecl *RD) {
+void
+ItaniumVTableContext::computeVTableRelatedInformation(const CXXRecordDecl *RD) {
   assert(!IsMicrosoftABI && "Shouldn't be called in this ABI!");
 
   const VTableLayout *&Entry = VTableLayouts[RD];
@@ -2360,8 +2356,8 @@ void VTableContext::computeVTableRelatedInformation(const CXXRecordDecl *RD) {
   if (Entry)
     return;
 
-  VTableBuilder Builder(*this, RD, CharUnits::Zero(), 
-                        /*MostDerivedClassIsVirtual=*/0, RD);
+  ItaniumVTableBuilder Builder(*this, RD, CharUnits::Zero(),
+                               /*MostDerivedClassIsVirtual=*/0, RD);
   Entry = CreateVTableLayout(Builder);
 
   MethodVTableIndices.insert(Builder.vtable_indices_begin(),
@@ -2381,10 +2377,11 @@ void VTableContext::computeVTableRelatedInformation(const CXXRecordDecl *RD) {
   
   if (VirtualBaseClassOffsetOffsets.count(std::make_pair(RD, VBase)))
     return;
-  
-  for (VTableBuilder::VBaseOffsetOffsetsMapTy::const_iterator I =
-       Builder.getVBaseOffsetOffsets().begin(), 
-       E = Builder.getVBaseOffsetOffsets().end(); I != E; ++I) {
+
+  for (ItaniumVTableBuilder::VBaseOffsetOffsetsMapTy::const_iterator
+           I = Builder.getVBaseOffsetOffsets().begin(),
+           E = Builder.getVBaseOffsetOffsets().end();
+       I != E; ++I) {
     // Insert all types.
     ClassPairTy ClassPair(RD, I->first);
     
@@ -2392,13 +2389,11 @@ void VTableContext::computeVTableRelatedInformation(const CXXRecordDecl *RD) {
   }
 }
 
-VTableLayout *VTableContext::createConstructionVTableLayout(
-                                          const CXXRecordDecl *MostDerivedClass,
-                                          CharUnits MostDerivedClassOffset,
-                                          bool MostDerivedClassIsVirtual,
-                                          const CXXRecordDecl *LayoutClass) {
-  VTableBuilder Builder(*this, MostDerivedClass, MostDerivedClassOffset, 
-                        MostDerivedClassIsVirtual, LayoutClass);
+VTableLayout *ItaniumVTableContext::createConstructionVTableLayout(
+    const CXXRecordDecl *MostDerivedClass, CharUnits MostDerivedClassOffset,
+    bool MostDerivedClassIsVirtual, const CXXRecordDecl *LayoutClass) {
+  ItaniumVTableBuilder Builder(*this, MostDerivedClass, MostDerivedClassOffset,
+                               MostDerivedClassIsVirtual, LayoutClass);
   return CreateVTableLayout(Builder);
 }
 

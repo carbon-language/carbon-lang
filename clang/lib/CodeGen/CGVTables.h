@@ -33,7 +33,7 @@ class CodeGenVTables {
 
   // FIXME: Consider moving VTContext and VFTContext into respective CXXABI
   // classes?
-  VTableContext VTContext;
+  ItaniumVTableContext VTContext;
   OwningPtr<MicrosoftVFTableContext> VFTContext;
   
   /// VTableAddressPointsMapTy - Address points for a single vtable.
@@ -72,7 +72,7 @@ public:
 
   CodeGenVTables(CodeGenModule &CGM);
 
-  VTableContext &getVTableContext() { return VTContext; }
+  ItaniumVTableContext &getVTableContext() { return VTContext; }
 
   MicrosoftVFTableContext &getVFTableContext() { return *VFTContext.get(); }
 
