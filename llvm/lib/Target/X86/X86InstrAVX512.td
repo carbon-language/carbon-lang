@@ -729,12 +729,12 @@ multiclass avx512_cmp_packed<RegisterClass KRC, RegisterClass RC,
 
   // Accept explicit immediate argument form instead of comparison code.
   let neverHasSideEffects = 1 in {
-    def rri_alt : PIi8<0xC2, MRMSrcReg,
+    def rri_alt : AVX512PIi8<0xC2, MRMSrcReg,
                (outs RC:$dst), (ins RC:$src1, RC:$src2, i8imm:$cc),
-               asm_alt, [], IIC_SSE_ALU_F32P_RR, d>;
-    def rmi_alt : PIi8<0xC2, MRMSrcMem,
+               asm_alt, [], d>;
+    def rmi_alt : AVX512PIi8<0xC2, MRMSrcMem,
                (outs RC:$dst), (ins RC:$src1, x86memop:$src2, i8imm:$cc),
-               asm_alt, [], IIC_SSE_ALU_F32P_RM, d>;
+               asm_alt, [], d>;
   }
 }
 
