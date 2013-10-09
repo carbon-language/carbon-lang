@@ -357,6 +357,19 @@ bool DAE::RemoveDeadArgumentsFromCallers(Function &Fn)
   if (Fn.hasLocalLinkage() && !Fn.getFunctionType()->isVarArg())
     return false;
 
+  // If a function seen at compile time is not necessarily the one linked to
+  // the binary being built, it is illegal to change the actual arguments
+  // passing to it. These functions can be captured by isWeakForLinker().
+  // *NOTE* that mayBeOverridden() is insufficient for this purpose as it
+  // dosen't include linkage types like AvailableExternallyLinkage and
+  // LinkOnceODRLinkage. Take link_odr* as an example, it indicates a set of
+  // *EQUIVALENT* globals that can be merged at link-time. However, the
+  // semantic of *EQUIVALENT*-functions includes parameters. Changing
+  // parameters breaks the assumption.
+  //
+  if (Fn.isWeakForLinker())
+    return false;
+
   if (Fn.use_empty())
     return false;
 
