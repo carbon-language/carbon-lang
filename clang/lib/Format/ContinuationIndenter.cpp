@@ -178,7 +178,8 @@ bool ContinuationIndenter::mustBreak(const LineState &State) {
       State.Stack.back().BreakBeforeParameter)
     return true;
   if ((Current.Type == TT_CtorInitializerColon ||
-       (Previous.ClosesTemplateDeclaration && State.ParenLevel == 0)))
+       (Previous.ClosesTemplateDeclaration && State.ParenLevel == 0 &&
+        !Current.isTrailingComment())))
     return true;
 
   if ((Current.Type == TT_StartOfName || Current.is(tok::kw_operator)) &&

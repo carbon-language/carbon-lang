@@ -3586,6 +3586,9 @@ TEST_F(FormatTest, WrapsTemplateDeclarations) {
                "          template <typename> class Baaaaaaar>\n"
                "struct C {};",
                AlwaysBreak);
+  verifyFormat("template <typename T> // T can be A, B or C.\n"
+               "struct C {};",
+               AlwaysBreak);
 }
 
 TEST_F(FormatTest, WrapsAtNestedNameSpecifiers) {
