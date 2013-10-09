@@ -684,11 +684,14 @@ PrivateAutoComplete (StackFrame *frame,
                 
                 VariableList *variable_list = frame->GetVariableList(get_file_globals);
                 
-                const size_t num_variables = variable_list->GetSize();
-                for (size_t i=0; i<num_variables; ++i)
+                if (variable_list)
                 {
-                    Variable *variable = variable_list->GetVariableAtIndex(i).get();
-                    matches.AppendString (variable->GetName().AsCString());
+                    const size_t num_variables = variable_list->GetSize();
+                    for (size_t i=0; i<num_variables; ++i)
+                    {
+                        Variable *variable = variable_list->GetVariableAtIndex(i).get();
+                        matches.AppendString (variable->GetName().AsCString());
+                    }
                 }
             }
         }
