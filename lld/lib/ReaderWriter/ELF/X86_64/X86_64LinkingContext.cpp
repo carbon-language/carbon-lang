@@ -78,7 +78,9 @@ public:
 
 class ELFPassFile : public SimpleFile {
 public:
-  ELFPassFile(const ELFLinkingContext &eti) : SimpleFile(eti, "ELFPassFile") {}
+  ELFPassFile(const ELFLinkingContext &eti) : SimpleFile(eti, "ELFPassFile") {
+    setOrdinal(eti.getNextOrdinalAndIncrement());
+  }
 
   llvm::BumpPtrAllocator _alloc;
 };
@@ -478,9 +480,8 @@ public:
 
 class X86_64InitFiniFile : public SimpleFile {
 public:
-  X86_64InitFiniFile(const ELFLinkingContext &context):
-    SimpleFile(context, "command line option -init/-fini")
-  {}
+  X86_64InitFiniFile(const ELFLinkingContext &context)
+      : SimpleFile(context, "command line option -init/-fini"), _ordinal(0) {}
 
   void addInitFunction(StringRef name) {
     Atom *initFunctionAtom = new (_allocator) SimpleUndefinedAtom(*this, name);
@@ -504,6 +505,7 @@ public:
 
 private:
   llvm::BumpPtrAllocator _allocator;
+  uint64_t _ordinal;
 };
 
 } // end anon namespace

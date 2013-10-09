@@ -299,6 +299,7 @@ void Resolver::resolveUndefines() {
     if (error_code(nextFile) == InputGraphError::no_more_files)
       break;
     if (nextFile->kind() == File::kindObject) {
+      assert(!nextFile->hasOrdinal());
       nextFile->setOrdinal(_context.getNextOrdinalAndIncrement());
       handleFile(*nextFile);
     }

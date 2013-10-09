@@ -220,7 +220,8 @@ protected:
   static atom_collection_empty<SharedLibraryAtom> _noSharedLibraryAtoms;
   static atom_collection_empty<AbsoluteAtom>      _noAbsoluteAtoms;
 
-  StringRef         _path;
+private:
+  StringRef _path;
   Kind              _kind;
   mutable uint64_t  _ordinal;
 };

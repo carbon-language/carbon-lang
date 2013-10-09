@@ -62,9 +62,8 @@ public:
 
 class HexagonInitFiniFile : public SimpleFile {
 public:
-  HexagonInitFiniFile(const ELFLinkingContext &context):
-    SimpleFile(context, "command line option -init/-fini")
-  {}
+  HexagonInitFiniFile(const ELFLinkingContext &context)
+      : SimpleFile(context, "command line option -init/-fini"), _ordinal(0) {}
 
   void addInitFunction(StringRef name) {
     Atom *initFunctionAtom = new (_allocator) SimpleUndefinedAtom(*this, name);
@@ -88,6 +87,7 @@ public:
 
 private:
   llvm::BumpPtrAllocator _allocator;
+  uint64_t _ordinal;
 };
 }
 

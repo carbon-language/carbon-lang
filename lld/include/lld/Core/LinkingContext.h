@@ -316,7 +316,7 @@ public:
   virtual void setResolverState(uint32_t resolverState);
 
   /// Return the next ordinal and Increment it.
-  virtual uint64_t getNextOrdinalAndIncrement() { return _nextOrdinal++; }
+  virtual uint64_t getNextOrdinalAndIncrement() const { return _nextOrdinal++; }
 
   /// @}
 
@@ -367,7 +367,7 @@ protected:
   std::unique_ptr<InputGraph> _inputGraph;
   mutable llvm::BumpPtrAllocator _allocator;
   InputElement *_currentInputElement;
-  uint64_t _nextOrdinal;
+  mutable uint64_t _nextOrdinal;
 
 private:
   /// Validate the subclass bits. Only called by validate.

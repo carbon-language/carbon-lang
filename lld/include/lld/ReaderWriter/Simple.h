@@ -24,10 +24,7 @@ namespace lld {
 class SimpleFile : public MutableFile {
 public:
   SimpleFile(const LinkingContext &context, StringRef path)
-      : MutableFile(context, path) {
-    static uint32_t lastOrdinal = 0;
-    _ordinal = lastOrdinal++;
-  }
+      : MutableFile(context, path) {}
 
   virtual void addAtom(const Atom &atom) {
     if (const DefinedAtom *defAtom = dyn_cast<DefinedAtom>(&atom)) {

@@ -107,7 +107,9 @@ public:
 
 class ELFPassFile : public SimpleFile {
 public:
-  ELFPassFile(const ELFLinkingContext &eti) : SimpleFile(eti, "ELFPassFile") {}
+  ELFPassFile(const ELFLinkingContext &eti) : SimpleFile(eti, "ELFPassFile") {
+    setOrdinal(eti.getNextOrdinalAndIncrement());
+  }
 
   llvm::BumpPtrAllocator _alloc;
 };
