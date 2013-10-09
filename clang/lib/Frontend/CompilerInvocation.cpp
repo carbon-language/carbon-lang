@@ -809,6 +809,8 @@ static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
     Opts.ObjCMTAction |= FrontendOptions::ObjCMT_NsMacros;
   if (Args.hasArg(OPT_objcmt_migrate_protocol_conformance))
     Opts.ObjCMTAction |= FrontendOptions::ObjCMT_ProtocolConformance;
+  if (Args.hasArg(OPT_objcmt_atomic_property))
+    Opts.ObjCMTAction |= FrontendOptions::ObjCMT_AtomicProperty;
   if (Args.hasArg(OPT_objcmt_migrate_all))
     Opts.ObjCMTAction |= FrontendOptions::ObjCMT_MigrateDecls;
 

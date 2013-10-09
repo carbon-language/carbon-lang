@@ -1,0 +1,229 @@
+// RUN: rm -rf %t
+// RUN: %clang_cc1 -fblocks -objcmt-migrate-readwrite-property -objcmt-migrate-readonly-property -objcmt-atomic-property -mt-migrate-directory %t %s -x objective-c -fobjc-runtime-has-weak -fobjc-arc -triple x86_64-apple-darwin11
+// RUN: c-arcmt-test -mt-migrate-directory %t | arcmt-test -verify-transformed-files %s.result
+// RUN: %clang_cc1 -fblocks -triple x86_64-apple-darwin10 -fsyntax-only -x objective-c -fobjc-runtime-has-weak -fobjc-arc %s.result
+
+#define WEBKIT_OBJC_METHOD_ANNOTATION(ANNOTATION) ANNOTATION
+#define WEAK_IMPORT_ATTRIBUTE __attribute__((objc_arc_weak_reference_unavailable))
+#define AVAILABLE_WEBKIT_VERSION_3_0_AND_LATER
+#define DEPRECATED  __attribute__((deprecated)) 
+
+typedef char BOOL;
+@class NSString;
+@protocol NSCopying @end
+
+@interface NSObject <NSCopying>
+@end
+
+@interface NSDictionary : NSObject
+@end
+
+@interface I : NSObject {
+  int ivarVal;
+}
+
+@property (atomic, weak) NSString *WeakProp;
+
+@property (atomic, retain) NSString *StrongProp;
+
+
+- (NSString *) UnavailProp  __attribute__((unavailable));
+- (void) setUnavailProp  : (NSString *)Val;
+
+@property (atomic, retain) NSString *UnavailProp1  __attribute__((unavailable));
+
+
+- (NSString *) UnavailProp2;
+- (void) setUnavailProp2  : (NSString *)Val  __attribute__((unavailable));
+
+@property (atomic, copy) NSDictionary *undoAction;
+
+@end
+
+@implementation I
+@end
+
+@class NSArray;
+
+@interface MyClass2  {
+@private
+    NSArray *_names1;
+    NSArray *_names2;
+    NSArray *_names3;
+    NSArray *_names4;
+}
+
+
+
+
+@property (atomic, retain) NSArray *names2;
+@property (atomic, retain) NSArray *names3;
+@property (atomic, retain) NSArray *names4;
+@property (atomic, retain) NSArray *names1;
+@end
+
+// Properties that contain the name "delegate" or "dataSource",
+// or have exact name "target" have unsafe_unretained attribute.
+@interface NSInvocation 
+@property (atomic, unsafe_unretained) id target;
+
+
+@property (atomic, unsafe_unretained) id dataSource;
+
+@property (atomic, unsafe_unretained) id xxxdelegateYYY;
+
+
+
+
+@property (atomic, retain) id MYtarget;
+
+
+@property (atomic, retain) id targetX;
+
+ 
+@property (atomic) int value;
+
+
+@property (atomic, getter=isContinuous) BOOL continuous;
+
+
+- (id) isAnObject;
+- (void)setAnObject : (id) object;
+
+@property (atomic, getter=isinValid, readonly) BOOL inValid;
+- (void) setInValid : (BOOL) arg;
+
+- (void) Nothing;
+@property (atomic, readonly) int Length;
+@property (atomic, readonly) id object;
++ (double) D;
+@property (atomic, readonly) void *JSObject WEBKIT_OBJC_METHOD_ANNOTATION(AVAILABLE_WEBKIT_VERSION_3_0_AND_LATER);
+@property (atomic, getter=isIgnoringInteractionEvents, readonly) BOOL ignoringInteractionEvents;
+
+@property (atomic, getter=getStringValue, retain) NSString *stringValue;
+@property (atomic, getter=getCounterValue, readonly) BOOL counterValue;
+
+@property (atomic, getter=getns_dixtionary, readonly) NSDictionary *ns_dixtionary;
+
+- (BOOL)is3bar; // watch out
+- (NSString *)get3foo; // watch out
+
+@property (atomic, getter=getM, readonly) BOOL m;
+@property (atomic, getter=getMA, readonly) BOOL MA;
+@property (atomic, getter=getALL, readonly) BOOL ALL;
+@property (atomic, getter=getMANY, readonly) BOOL MANY;
+@property (atomic, getter=getSome, readonly) BOOL some;
+@end
+
+
+@interface NSInvocation(CAT)
+@property (atomic, unsafe_unretained) id target;
+
+
+@property (atomic, unsafe_unretained) id dataSource;
+
+@property (atomic, unsafe_unretained) id xxxdelegateYYY;
+
+
+
+
+@property (atomic, retain) id MYtarget;
+
+
+@property (atomic, retain) id targetX;
+
+
+@property (atomic) int value;
+
+
+@property (atomic, getter=isContinuous) BOOL continuous;
+
+
+- (id) isAnObject;
+- (void)setAnObject : (id) object;
+
+@property (atomic, getter=isinValid, readonly) BOOL inValid;
+- (void) setInValid : (BOOL) arg;
+
+- (void) Nothing;
+@property (atomic, readonly) int Length;
+@property (atomic, readonly) id object;
++ (double) D;
+
+- (BOOL)is3bar; // watch out
+- (NSString *)get3foo; // watch out
+
+@property (atomic, getter=getM, readonly) BOOL m;
+@property (atomic, getter=getMA, readonly) BOOL MA;
+@property (atomic, getter=getALL, readonly) BOOL ALL;
+@property (atomic, getter=getMANY, readonly) BOOL MANY;
+@property (atomic, getter=getSome, readonly) BOOL some;
+@end
+
+DEPRECATED
+@interface I_DEP
+- (BOOL) isinValid;
+- (void) setInValid : (BOOL) arg;
+@end
+
+@interface AnotherOne
+- (BOOL) isinValid DEPRECATED;
+- (void) setInValid : (BOOL) arg;
+- (id)MYtarget;
+- (void)setMYtarget: (id)target DEPRECATED;
+- (BOOL) getM DEPRECATED;
+
+- (id)xxxdelegateYYY DEPRECATED;
+- (void)setXxxdelegateYYY:(id)delegate DEPRECATED;
+@end
+
+// rdar://14987909
+#define NS_AVAILABLE __attribute__((availability(macosx,introduced=10.0)))
+#define NORETURN __attribute__((noreturn))
+#define ALIGNED __attribute__((aligned(16)))
+
+@interface NSURL
+// Do not infer a property.
+- (NSURL *)appStoreReceiptURL NS_AVAILABLE;
+- (void) setAppStoreReceiptURL : (NSURL *)object;
+
+@property (atomic, retain) NSURL *appStoreReceiptURLX NS_AVAILABLE;
+
+
+// Do not infer a property.
+- (NSURL *)appStoreReceiptURLY ;
+- (void) setAppStoreReceiptURLY : (NSURL *)object NS_AVAILABLE;
+
+@property (atomic, readonly) id OkToInfer NS_AVAILABLE;
+
+// Do not infer a property.
+- (NSURL *)appStoreReceiptURLZ ;
+- (void) setAppStoreReceiptURLZ : (NSURL *)object NS_AVAILABLE;
+
+// Do not infer a property.
+- (id) t1 NORETURN NS_AVAILABLE;
+- (void) setT1 : (id) arg NS_AVAILABLE;
+
+@property (atomic, retain) id method1 ALIGNED NS_AVAILABLE;
+
+
+- (NSURL *)init;  // No Change
++ (id)alloc;      // No Change
+
+- (BOOL)is1stClass; // Not a valid property
+@property (atomic, getter=isClass, readonly) BOOL class;    // This is a valid property 'class' is not a keyword in ObjC
+- (BOOL)isDouble; // Not a valid property
+
+@end
+
+// rdar://15082818
+@class NSMutableDictionary;
+
+@interface NSArray
+@property (atomic, readonly) id (^expressionBlock)(id, NSArray *, NSMutableDictionary *);
+@property (atomic, copy) id (^MyBlock)(id, NSArray *, NSMutableDictionary *);
+
+@property (atomic, readonly) id (*expressionFuncptr)(id, NSArray *, NSMutableDictionary *);
+@property (atomic) id (*MyFuncptr)(id, NSArray *, NSMutableDictionary *);
+
+@end

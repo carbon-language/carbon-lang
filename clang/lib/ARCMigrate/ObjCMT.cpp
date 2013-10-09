@@ -266,9 +266,11 @@ void MigrateBlockOrFunctionPointerTypeVariable(std::string & PropertyString,
 static bool rewriteToObjCProperty(const ObjCMethodDecl *Getter,
                                   const ObjCMethodDecl *Setter,
                                   const NSAPI &NS, edit::Commit &commit,
-                                  unsigned LengthOfPrefix) {
+                                  unsigned LengthOfPrefix,
+                                  bool Atomic) {
   ASTContext &Context = NS.getASTContext();
-  std::string PropertyString = "@property (nonatomic";
+  std::string PropertyString = "@property (";
+  PropertyString += (Atomic ? "atomic" : "nonatomic");
   std::string PropertyNameString = Getter->getNameAsString();
   StringRef PropertyName(PropertyNameString);
   if (LengthOfPrefix > 0) {
@@ -866,7 +868,9 @@ bool ObjCMigrateASTConsumer::migrateProperty(ASTContext &Ctx,
       return false;
     edit::Commit commit(*Editor);
     rewriteToObjCProperty(Method, SetterMethod, *NSAPIObj, commit,
-                          LengthOfPrefix);
+                          LengthOfPrefix,
+                          (ASTMigrateActions &
+                           FrontendOptions::ObjCMT_AtomicProperty) != 0);
     Editor->commit(commit);
     return true;
   }
@@ -875,7 +879,9 @@ bool ObjCMigrateASTConsumer::migrateProperty(ASTContext &Ctx,
     // as a 'readonly' property.
     edit::Commit commit(*Editor);
     rewriteToObjCProperty(Method, 0 /*SetterMethod*/, *NSAPIObj, commit,
-                          LengthOfPrefix);
+                          LengthOfPrefix,
+                          (ASTMigrateActions &
+                           FrontendOptions::ObjCMT_AtomicProperty) != 0);
     Editor->commit(commit);
     return true;
   }

@@ -173,6 +173,8 @@ public:
     ObjCMT_NsMacros = 0x40,
     /// \brief Enable migration to add conforming protocols.
     ObjCMT_ProtocolConformance = 0x80,
+    /// \brief prefer 'atomic' property over 'nonatomic'.
+    ObjCMT_AtomicProperty = 0x100,
     ObjCMT_MigrateDecls = (ObjCMT_ReadonlyProperty | ObjCMT_ReadwriteProperty |
                            ObjCMT_Annotation | ObjCMT_Instancetype |
                            ObjCMT_NsMacros | ObjCMT_ProtocolConformance),
