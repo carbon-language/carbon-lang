@@ -324,6 +324,7 @@ static bool rewriteToObjCProperty(const ObjCMethodDecl *Getter,
   PropertyString += " ";
   PrintingPolicy SubPolicy(Context.getPrintingPolicy());
   SubPolicy.SuppressStrongLifetime = true;
+  SubPolicy.SuppressLifetimeQualifiers = true;
   std::string TypeString = RT.getAsString(SubPolicy);
   if (LengthOfPrefix > 0) {
     // property name must strip off "is" and lower case the first character

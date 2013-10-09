@@ -36,7 +36,8 @@ namespace {
   public:
     explicit IncludeStrongLifetimeRAII(PrintingPolicy &Policy) 
       : Policy(Policy), Old(Policy.SuppressStrongLifetime) {
-      Policy.SuppressStrongLifetime = false;
+        if (!Policy.SuppressLifetimeQualifiers)
+          Policy.SuppressStrongLifetime = false;
     }
     
     ~IncludeStrongLifetimeRAII() {
