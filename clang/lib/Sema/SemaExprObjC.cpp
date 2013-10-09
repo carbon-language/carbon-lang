@@ -410,10 +410,24 @@ static ExprResult CheckObjCCollectionLiteralElement(Sema &S, Expr *Element,
     }
   }
   if (ArrayLiteral)
-    if (ObjCStringLiteral *getString = dyn_cast<ObjCStringLiteral>(OrigElement)) {
-      if (getString->getString() && getString->getString()->getNumConcatenated() > 1)
-        S.Diag(Element->getLocStart(), diag::warn_concatenated_nsarray_literal)
-        << Element->getType();
+    if (ObjCStringLiteral *getString =
+          dyn_cast<ObjCStringLiteral>(OrigElement)) {
+      if (StringLiteral *SL = getString->getString()) {
+        unsigned numConcat = SL->getNumConcatenated();
+        if (numConcat > 1) {
+          // Only warn if the concatenated string doesn't come from a macro.
+          bool hasMacro = false;
+          for (unsigned i = 0; i < numConcat ; ++i)
+            if (SL->getStrTokenLoc(i).isMacroID()) {
+              hasMacro = true;
+              break;
+            }
+          if (!hasMacro)
+            S.Diag(Element->getLocStart(),
+                   diag::warn_concatenated_nsarray_literal)
+              << Element->getType();
+        }
+      }
     }
 
   // Make sure that the element has the type that the container factory 

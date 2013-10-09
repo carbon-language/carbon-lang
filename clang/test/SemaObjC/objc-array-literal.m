@@ -45,3 +45,11 @@ id Test14303083() {
   id obj = @[ @"A", (@"B" @"C")];
   return @[ @"A", @"B" @"C"]; // expected-warning {{concatenated NSString literal for an NSArray expression - possibly missing a comma}}
 }
+id radar15147688() {
+#define R15147688_A @"hello"
+#define R15147688_B "world"
+#define CONCATSTR R15147688_A R15147688_B
+  id x = @[ @"stuff", CONCATSTR ]; // no-warning
+  x = @[ @"stuff", @"hello" "world"]; // expected-warning {{concatenated NSString literal for an NSArray expression}}
+  return x;
+}
