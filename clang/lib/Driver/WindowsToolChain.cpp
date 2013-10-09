@@ -126,7 +126,8 @@ static bool getSystemRegistryString(const char *keyPath, const char *valueName,
     strncpy(partialKey, subKey, partialKeyLength);
     partialKey[partialKeyLength] = '\0';
     HKEY hTopKey = NULL;
-    lResult = RegOpenKeyEx(hRootKey, partialKey, 0, KEY_READ, &hTopKey);
+    lResult = RegOpenKeyEx(hRootKey, partialKey, 0, KEY_READ | KEY_WOW64_32KEY,
+                           &hTopKey);
     if (lResult == ERROR_SUCCESS) {
       char keyName[256];
       int bestIndex = -1;
@@ -159,7 +160,8 @@ static bool getSystemRegistryString(const char *keyPath, const char *valueName,
         strncat(bestName, nextKey, sizeof(bestName) - 1);
         bestName[sizeof(bestName) - 1] = '\0';
         // Open the chosen key path remainder.
-        lResult = RegOpenKeyEx(hTopKey, bestName, 0, KEY_READ, &hKey);
+        lResult = RegOpenKeyEx(hTopKey, bestName, 0, KEY_READ | KEY_WOW64_32KEY,
+                               &hKey);
         if (lResult == ERROR_SUCCESS) {
           lResult = RegQueryValueEx(hKey, valueName, NULL, &valueType,
             (LPBYTE)value, &valueSize);
@@ -171,7 +173,8 @@ static bool getSystemRegistryString(const char *keyPath, const char *valueName,
       RegCloseKey(hTopKey);
     }
   } else {
-    lResult = RegOpenKeyEx(hRootKey, subKey, 0, KEY_READ, &hKey);
+    lResult = RegOpenKeyEx(hRootKey, subKey, 0, KEY_READ | KEY_WOW64_32KEY,
+                           &hKey);
     if (lResult == ERROR_SUCCESS) {
       lResult = RegQueryValueEx(hKey, valueName, NULL, &valueType,
         (LPBYTE)value, &valueSize);
