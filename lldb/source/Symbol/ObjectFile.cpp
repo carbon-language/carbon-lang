@@ -459,7 +459,8 @@ size_t
 ObjectFile::CopyData (off_t offset, size_t length, void *dst) const
 {
     // The entire file has already been mmap'ed into m_data, so just copy from there
-    return m_data.CopyByteOrderedData (offset, length, dst, length, lldb::endian::InlHostByteOrder());
+    // Note that the data remains in target byte order.
+    return m_data.CopyData (offset, length, dst);
 }
 
 

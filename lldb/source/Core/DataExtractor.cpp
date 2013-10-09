@@ -949,6 +949,21 @@ DataExtractor::ExtractBytes (offset_t offset, offset_t length, ByteOrder dst_byt
     return 0;
 }
 
+// Extract data as it exists in target memory
+lldb::offset_t
+DataExtractor::CopyData (offset_t offset,
+                         offset_t length,
+                         void *dst) const
+{
+    const uint8_t *src = PeekData (offset, length);
+    if (src)
+    {
+        ::memcpy (dst, src, length);
+        return length;
+    }
+    return 0;
+}
+
 // Extract data and swap if needed when doing the copy
 lldb::offset_t
 DataExtractor::CopyByteOrderedData (offset_t src_offset,
