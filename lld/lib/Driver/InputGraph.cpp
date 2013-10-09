@@ -29,12 +29,6 @@ bool InputGraph::assignOrdinals() {
   return true;
 }
 
-bool InputGraph::assignFileOrdinals(uint64_t &startOrdinal) {
-  for (auto &ie : _inputArgs)
-    ie->assignFileOrdinals(startOrdinal);
-  return true;
-}
-
 void InputGraph::doPostProcess() {
   std::stable_sort(_inputArgs.begin(), _inputArgs.end(), sortInputElements);
 }
@@ -103,13 +97,6 @@ FileNode::FileNode(StringRef path, int64_t ordinal)
     : InputElement(InputElement::Kind::File, ordinal), _path(path),
       _resolveState(Resolver::StateNoChange), _nextFileIndex(0) {}
 
-/// \brief Assign File ordinals for files contained
-/// in the InputElement
-void FileNode::assignFileOrdinals(uint64_t &startOrdinal) {
-  for (auto &file : _files)
-    file->setOrdinalAndIncrement(startOrdinal);
-}
-
 /// \brief Read the file into _buffer.
 error_code
 FileNode::readFile(const LinkingContext &ctx, raw_ostream &diagnostics) {
@@ -147,13 +134,6 @@ void FileNode::resetNextIndex() {
 
 /// ControlNode
 
-/// \brief Assign File ordinals for files contained
-/// in the InputElement
-void ControlNode::assignFileOrdinals(uint64_t &startOrdinal) {
-  for (auto &elem : _elements)
-    elem->assignFileOrdinals(startOrdinal);
-}
-
 /// \brief Get the resolver State. The return value of the resolve
 /// state for a control node is the or'ed value of the resolve states
 /// contained in it.
@@ -177,13 +157,6 @@ void ControlNode::setResolveState(uint32_t resolveState) {
 SimpleFileNode::SimpleFileNode(StringRef path, int64_t ordinal)
     : InputElement(InputElement::Kind::SimpleFile, ordinal), _path(path),
       _nextFileIndex(0), _resolveState(Resolver::StateNoChange) {}
-
-/// \brief Assign File ordinals for files contained
-/// in the InputElement
-void SimpleFileNode::assignFileOrdinals(uint64_t &startOrdinal) {
-  for (auto &file : _files)
-    file->setOrdinalAndIncrement(startOrdinal);
-}
 
 /// Group
 

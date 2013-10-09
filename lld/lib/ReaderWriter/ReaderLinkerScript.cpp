@@ -34,10 +34,6 @@ public:
     return f->kind() == kindLinkerScript;
   }
 
-  virtual void setOrdinalAndIncrement(uint64_t &ordinal) const {
-    _ordinal = ordinal++;
-  }
-
   virtual const LinkingContext &getLinkingContext() const { return _context; }
 
   virtual const atom_collection<DefinedAtom> &defined() const {

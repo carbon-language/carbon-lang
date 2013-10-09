@@ -56,8 +56,6 @@ public:
 
     assert(result.size() == 1);
 
-    result[0]->setOrdinalAndIncrement(_curChildOrd);
-
     // give up the pointer so that this object no longer manages it
     return result[0].release();
   }
@@ -79,21 +77,7 @@ public:
       if ((ec = _context.getDefaultReader().parseFile(mbc, result)))
         return ec;
     }
-    for (auto &file : result)
-      file->setOrdinalAndIncrement(_curChildOrd);
     return error_code::success();
-  }
-
-  /// \brief members
-
-  virtual void setOrdinalAndIncrement(uint64_t &ordinal) const {
-    _ordinal = ordinal++;
-    _curChildOrd = _ordinal;
-    // Leave space in ordinal range for all children
-    for (auto mf = _archive->begin_children(),
-              me = _archive->end_children(); mf != me; ++mf) {
-        ordinal++;
-    }
   }
 
   virtual const atom_collection<DefinedAtom> &defined() const {

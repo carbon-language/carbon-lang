@@ -600,14 +600,6 @@ template <> struct MappingTraits<const lld::File *> {
 
     const lld::File *denormalize(IO &io) { return this; }
 
-    virtual void setOrdinalAndIncrement(uint64_t &ordinal) const {
-      _ordinal = ordinal++;
-      // Assign sequential ordinals to member files
-      for (const ArchMember &member : _members) {
-        member._content->setOrdinalAndIncrement(ordinal);
-      }
-    }
-
     virtual const atom_collection<lld::DefinedAtom> &defined() const {
       return _noDefinedAtoms;
     }

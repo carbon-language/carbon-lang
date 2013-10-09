@@ -67,9 +67,6 @@ public:
   /// \brief Set Ordinals for all the InputElements that form the InputGraph
   virtual bool assignOrdinals();
 
-  /// \brief Set ordinals for all the Files that are part of the InputElements
-  virtual bool assignFileOrdinals(uint64_t &ordinal);
-
   /// Destructor
   virtual ~InputGraph() {}
 
@@ -149,10 +146,6 @@ public:
       _ordinal = ordinal;
   }
 
-  /// \brief Assign File ordinals for files contained
-  /// in the InputElement
-  virtual void assignFileOrdinals(uint64_t &fileOrdinal) = 0;
-
   virtual int64_t getOrdinal() const { return _ordinal; }
 
   virtual int64_t weight() const { return _weight; }
@@ -228,10 +221,6 @@ public:
     return make_range(_elements.begin(), _elements.end());
   }
 
-  /// \brief Assign File ordinals for files contained
-  /// in the InputElement
-  virtual void assignFileOrdinals(uint64_t &startOrdinal);
-
   virtual void resetNextIndex() {
     _currentElementIndex = _nextElementIndex = 0;
     for (auto &elem : _elements)
@@ -305,10 +294,6 @@ public:
     for (auto &ai : files)
       _files.push_back(std::move(ai));
   }
-
-  /// \brief Assign File ordinals for files contained
-  /// in the InputElement
-  virtual void assignFileOrdinals(uint64_t &startOrdinal);
 
   /// \brief Reset the file index if the resolver needs to process
   /// the node again.
@@ -425,10 +410,6 @@ public:
 
   // Do nothing here.
   virtual void resetNextIndex() {}
-
-  /// \brief Assign File ordinals for files contained
-  /// in the InputElement
-  virtual void assignFileOrdinals(uint64_t &startOrdinal);
 
 protected:
   StringRef _path;                // A string associated with this file.

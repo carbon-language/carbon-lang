@@ -304,7 +304,8 @@ public:
   /// The LinkingContext's can override the default behavior to change the way
   /// the resolver operates. This uses the currentInputElement. When there are
   /// no more files to be processed an appropriate InputGraphError is
-  /// returned.
+  /// returned. Ordinals are assigned to files returned by nextFile, which means
+  /// ordinals would be assigned in the way files are resolved.
   virtual ErrorOr<File &> nextFile();
 
   /// Set the resolver state for the current Input element This is used by the
@@ -313,6 +314,9 @@ public:
   /// bitmask of various types of states that the resolver handles when adding
   /// atoms.
   virtual void setResolverState(uint32_t resolverState);
+
+  /// Return the next ordinal and Increment it.
+  virtual uint64_t getNextOrdinalAndIncrement() { return _nextOrdinal++; }
 
   /// @}
 
@@ -363,6 +367,7 @@ protected:
   std::unique_ptr<InputGraph> _inputGraph;
   mutable llvm::BumpPtrAllocator _allocator;
   InputElement *_currentInputElement;
+  uint64_t _nextOrdinal;
 
 private:
   /// Validate the subclass bits. Only called by validate.

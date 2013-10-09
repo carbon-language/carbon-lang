@@ -104,9 +104,6 @@ bool Driver::link(LinkingContext &context, raw_ostream &diagnostics) {
 
   context.inputGraph().doPostProcess();
 
-  uint64_t ordinal = 0;
-  context.inputGraph().assignFileOrdinals(ordinal);
-
   // Do core linking.
   ScopedTask resolveTask(getDefaultDomain(), "Resolve");
   Resolver resolver(context);

@@ -108,8 +108,10 @@ void Resolver::handleArchiveFile(const File &file) {
       StringRef undefName = undefAtom->name();
       // load for previous undefine may also have loaded this undefine
       if (!_symbolTable.isDefined(undefName)) {
-        if (const File *member = archiveFile->find(undefName, false))
+        if (const File *member = archiveFile->find(undefName, false)) {
+          member->setOrdinal(_context.getNextOrdinalAndIncrement());
           handleFile(*member);
+        }
       }
       // If the undefined symbol has an alternative name, try to resolve the
       // symbol with the name to give it a second chance. This feature is used
@@ -132,8 +134,10 @@ void Resolver::handleArchiveFile(const File &file) {
         assert(curAtom != nullptr);
         if (const DefinedAtom *curDefAtom = dyn_cast<DefinedAtom>(curAtom)) {
           if (curDefAtom->merge() == DefinedAtom::mergeAsTentative) {
-            if (const File *member = archiveFile->find(tentDefName, true))
+            if (const File *member = archiveFile->find(tentDefName, true)) {
+              member->setOrdinal(_context.getNextOrdinalAndIncrement());
               handleFile(*member);
+            }
           }
         }
       }
@@ -147,7 +151,6 @@ void Resolver::handleSharedLibrary(const File &file) {
 
   // Add all the atoms from the shared library
   handleFile(*sharedLibrary);
-
   do {
     undefineGenCount = _symbolTable.size();
     std::vector<const UndefinedAtom *> undefines;
@@ -295,12 +298,20 @@ void Resolver::resolveUndefines() {
     _context.setResolverState(Resolver::StateNoChange);
     if (error_code(nextFile) == InputGraphError::no_more_files)
       break;
-    if (nextFile->kind() == File::kindObject)
+    if (nextFile->kind() == File::kindObject) {
+      nextFile->setOrdinal(_context.getNextOrdinalAndIncrement());
       handleFile(*nextFile);
-    if (nextFile->kind() == File::kindArchiveLibrary)
+    }
+    if (nextFile->kind() == File::kindArchiveLibrary) {
+      if (!nextFile->hasOrdinal())
+        nextFile->setOrdinal(_context.getNextOrdinalAndIncrement());
       handleArchiveFile(*nextFile);
-    if (nextFile->kind() == File::kindSharedLibrary)
+    }
+    if (nextFile->kind() == File::kindSharedLibrary) {
+      if (!nextFile->hasOrdinal())
+        nextFile->setOrdinal(_context.getNextOrdinalAndIncrement());
       handleSharedLibrary(*nextFile);
+    }
   }
 }
 

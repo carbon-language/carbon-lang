@@ -24,7 +24,8 @@ LinkingContext::LinkingContext()
       _warnIfCoalesableAtomsHaveDifferentLoadName(false),
       _printRemainingUndefines(true), _allowRemainingUndefines(false),
       _logInputFiles(false), _allowShlibUndefines(false),
-      _outputFileType(OutputFileType::Default), _currentInputElement(nullptr) {}
+      _outputFileType(OutputFileType::Default), _currentInputElement(nullptr),
+      _nextOrdinal(0) {}
 
 LinkingContext::~LinkingContext() {}
 
