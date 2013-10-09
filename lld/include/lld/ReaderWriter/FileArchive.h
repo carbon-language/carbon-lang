@@ -64,7 +64,8 @@ public:
   virtual bool isWholeArchive() const { return _isWholeArchive; }
 
   /// \brief parse each member
-  virtual error_code parseAllMembers(std::vector<std::unique_ptr<File>> &result) const {
+  virtual error_code
+    parseAllMembers(std::vector<std::unique_ptr<File>> &result) const {
     for (auto mf = _archive->begin_children(),
               me = _archive->end_children(); mf != me; ++mf) {
       OwningPtr<MemoryBuffer> buff;
@@ -138,7 +139,6 @@ private:
   atom_collection_vector<UndefinedAtom>     _undefinedAtoms;
   atom_collection_vector<SharedLibraryAtom> _sharedLibraryAtoms;
   atom_collection_vector<AbsoluteAtom>      _absoluteAtoms;
-  mutable uint64_t _curChildOrd;
   bool _isWholeArchive;
 
 public:
