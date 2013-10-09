@@ -403,18 +403,21 @@ GetProcessAndStatInfo (lldb::pid_t pid, ProcessInstanceInfo &process_info, Proce
     // Get the commond line used to start the process.
     buf_sp = ReadProcPseudoFile(pid, "cmdline");
 
-    // Grab Arg0 first.
+    // Grab Arg0 first, if there is one.
     char *cmd = (char *)buf_sp->GetBytes();
-    process_info.SetArg0(cmd);
-
-    // Now process any remaining arguments.
-    Args &info_args = process_info.GetArguments();
-    char *next_arg = cmd + strlen(cmd) + 1;
-    end_buf = cmd + buf_sp->GetByteSize();
-    while (next_arg < end_buf && 0 != *next_arg)
+    if (cmd)
     {
-        info_args.AppendArgument(next_arg);
-        next_arg += strlen(next_arg) + 1;
+        process_info.SetArg0(cmd);
+
+        // Now process any remaining arguments.
+        Args &info_args = process_info.GetArguments();
+        char *next_arg = cmd + strlen(cmd) + 1;
+        end_buf = cmd + buf_sp->GetByteSize();
+        while (next_arg < end_buf && 0 != *next_arg)
+        {
+            info_args.AppendArgument(next_arg);
+            next_arg += strlen(next_arg) + 1;
+        }
     }
 
     // Read /proc/$PID/stat to get our parent pid.
