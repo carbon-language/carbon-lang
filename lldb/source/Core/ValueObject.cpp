@@ -171,13 +171,12 @@ ValueObject::UpdateValueIfNeeded (bool update_format)
     // we have an error or not
     if (GetIsConstant())
     {
-        // if you were asked to update your formatters, but did not get a chance to do it
-        // clear your own values (this serves the purpose of faking a stop-id for frozen
-        // objects (which are regarded as constant, but could have changes behind their backs
-        // because of the frozen-pointer depth limit)
-		// TODO: decouple summary from value and then remove this code and only force-clear the summary
+        // if you are constant, things might still have changed behind your back
+        // (e.g. you are a frozen object and things have changed deeper than you cared to freeze-dry yourself)
+        // in this case, your value has not changed, but "computed" entries might have, so you might now have
+        // a different summary, or a different object description. clear these so we will recompute them
         if (update_format && !did_change_formats)
-            ClearUserVisibleData(eClearUserVisibleDataItemsSummary);
+            ClearUserVisibleData(eClearUserVisibleDataItemsSummary | eClearUserVisibleDataItemsDescription);
         return m_error.Success();
     }
 
