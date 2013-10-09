@@ -531,11 +531,6 @@ RecognizableInstr::filter_ret RecognizableInstr::filter() const {
 
   // Special cases.
 
-  if (Name.find("PCMPISTRI") != Name.npos && Name != "PCMPISTRI")
-    return FILTER_WEAK;
-  if (Name.find("PCMPESTRI") != Name.npos && Name != "PCMPESTRI")
-    return FILTER_WEAK;
-
   if (Name.find("MOV") != Name.npos && Name.find("r0") != Name.npos)
     return FILTER_WEAK;
   if (Name.find("MOVZ") != Name.npos && Name.find("MOVZX") == Name.npos &&
@@ -546,7 +541,6 @@ RecognizableInstr::filter_ret RecognizableInstr::filter() const {
   if (Name == "PUSH64i16"         ||
       Name == "MOVPQI2QImr"       ||
       Name == "VMOVPQI2QImr"      ||
-      Name == "MOV64ri64i32"      ||
       Name == "VMASKMOVDQU64"     ||
       Name == "VEXTRACTPSrr64")
     return FILTER_WEAK;
