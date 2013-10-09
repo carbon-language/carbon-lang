@@ -7,6 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+#if defined(_WIN32)
+// Must be defined before including stdlib.h to enable rand_s().
+#define _CRT_RAND_S
+#include <stdio.h>
+#endif
+
 #include "random"
 #include "system_error"
 
@@ -19,6 +25,25 @@
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
+#if defined(_WIN32)
+random_device::random_device(const string&)
+{
+}
+
+random_device::~random_device()
+{
+}
+
+unsigned
+random_device::operator()()
+{
+    unsigned r;
+    errno_t err = rand_s(&r);
+    if (err)
+        __throw_system_error(err, "random_device rand_s failed.");
+    return r;
+}
+#else
 random_device::random_device(const string& __token)
     : __f_(open(__token.c_str(), O_RDONLY))
 {
@@ -38,6 +63,7 @@ random_device::operator()()
     read(__f_, &r, sizeof(r));
     return r;
 }
+#endif // defined(_WIN32)
 
 double
 random_device::entropy() const _NOEXCEPT
