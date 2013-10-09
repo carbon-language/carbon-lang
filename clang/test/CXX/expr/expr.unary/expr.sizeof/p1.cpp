@@ -31,7 +31,7 @@ namespace pr16992 {
 
 template<typename T> struct ABC {
   int func () {
-    return sizeof T;  //expected-error{{missed parentheses around type name in sizeof}}
+    return sizeof T;  // expected-error {{expected parentheses around type name in sizeof expression}}
   }
 };
 

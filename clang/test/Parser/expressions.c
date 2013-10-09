@@ -62,8 +62,8 @@ void test7() {
 struct pr16992 { int x; };
 
 void func_16992 () {
-  int x1 = sizeof int;  // expected-error{{missed parentheses around type name in sizeof}}
-  int x2 = sizeof struct pr16992;  // expected-error{{missed parentheses around type name in sizeof}}
-  int x3 = __alignof int;  // expected-error{{missed parentheses around type name in __alignof}}
-  int x4 = _Alignof int;  // expected-error{{missed parentheses around type name in _Alignof}}
+  int x1 = sizeof int;            // expected-error {{expected parentheses around type name in sizeof expression}}
+  int x2 = sizeof struct pr16992; // expected-error {{expected parentheses around type name in sizeof expression}}
+  int x3 = __alignof int;         // expected-error {{expected parentheses around type name in __alignof expression}}
+  int x4 = _Alignof int;          // expected-error {{expected parentheses around type name in _Alignof expression}}
 }
