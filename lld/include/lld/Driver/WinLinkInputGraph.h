@@ -70,7 +70,7 @@ public:
 
   virtual ErrorOr<File &> getNextFile() {
     if (_nextFileIndex == _files.size())
-      return make_error_code(input_graph_error::no_more_files);
+      return make_error_code(InputGraphError::no_more_files);
     return *_files[_nextFileIndex++];
   }
 

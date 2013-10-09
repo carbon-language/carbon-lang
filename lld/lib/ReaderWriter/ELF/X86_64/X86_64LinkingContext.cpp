@@ -567,7 +567,7 @@ elf::X86_64LinkingContext::relocKindFromString(StringRef str) const {
           .Default(-1);
 
   if (ret == -1)
-    return make_error_code(yaml_reader_error::illegal_value);
+    return make_error_code(YamlReaderError::illegal_value);
   return ret;
 }
 
@@ -622,6 +622,6 @@ elf::X86_64LinkingContext::stringFromRelocKind(Reference::Kind kind) const {
     return std::string("LLD_R_X86_64_GOTRELINDEX");
   }
 
-  return make_error_code(yaml_reader_error::illegal_value);
+  return make_error_code(YamlReaderError::illegal_value);
 }
 

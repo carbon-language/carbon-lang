@@ -121,12 +121,12 @@ Writer &PECOFFLinkingContext::writer() const { return *_writer; }
 
 ErrorOr<Reference::Kind>
 PECOFFLinkingContext::relocKindFromString(StringRef str) const {
-  return make_error_code(yaml_reader_error::illegal_value);
+  return make_error_code(YamlReaderError::illegal_value);
 }
 
 ErrorOr<std::string>
 PECOFFLinkingContext::stringFromRelocKind(Reference::Kind kind) const {
-  return make_error_code(yaml_reader_error::illegal_value);
+  return make_error_code(YamlReaderError::illegal_value);
 }
 
 void PECOFFLinkingContext::addPasses(PassManager &pm) const {

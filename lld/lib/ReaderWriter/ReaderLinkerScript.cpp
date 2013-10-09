@@ -26,7 +26,7 @@ public:
         new LinkerScriptFile(context, std::move(mb)));
     file->_script = file->_parser.parse();
     if (!file->_script)
-      return linker_script_reader_error::parse_error;
+      return LinkerScriptReaderError::parse_error;
     return std::move(file);
   }
 

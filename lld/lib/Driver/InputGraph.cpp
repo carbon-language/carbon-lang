@@ -77,7 +77,7 @@ void InputGraph::insertOneElementAt(std::unique_ptr<InputElement> element,
 /// \brief Helper functions for the resolver
 ErrorOr<InputElement *> InputGraph::getNextInputElement() {
   if (_nextElementIndex >= _inputArgs.size())
-    return make_error_code(input_graph_error::no_more_elements);
+    return make_error_code(InputGraphError::no_more_elements);
   return _inputArgs[_nextElementIndex++].get();
 }
 

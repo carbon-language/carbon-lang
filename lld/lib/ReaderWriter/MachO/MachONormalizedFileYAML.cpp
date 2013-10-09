@@ -622,7 +622,7 @@ readYaml(std::unique_ptr<MemoryBuffer> &mb) {
 
   // Return error if there were parsing problems.
   if (yin.error())
-    return make_error_code(lld::yaml_reader_error::illegal_value);
+    return make_error_code(lld::YamlReaderError::illegal_value);
 
   // Hand ownership of instantiated NormalizedFile to caller.
   return std::move(f);

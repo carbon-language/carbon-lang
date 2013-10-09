@@ -1284,14 +1284,14 @@ public:
 
     // Quit now if there were parsing errors.
     if (yin.error())
-      return make_error_code(lld::yaml_reader_error::illegal_value);
+      return make_error_code(lld::YamlReaderError::illegal_value);
 
     for (const File *file : createdFiles) {
       // Note: parseFile() should return vector of *const* File
       File *f = const_cast<File *>(file);
       result.emplace_back(f);
     }
-    return make_error_code(lld::yaml_reader_error::success);
+    return make_error_code(lld::YamlReaderError::success);
   }
 };
 } // end namespace yaml

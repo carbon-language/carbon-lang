@@ -194,7 +194,7 @@ public:
 
     // Check if the total size is valid.
     if (end - buf != sizeof(COFF::ImportHeader) + dataSize) {
-      ec = make_error_code(native_reader_error::unknown_file_format);
+      ec = make_error_code(NativeReaderError::unknown_file_format);
       return;
     }
 
@@ -312,7 +312,7 @@ error_code parseCOFFImportLibrary(const LinkingContext &targetInfo,
   // Error if the file is too small or does not start with the magic.
   if (end - buf < static_cast<ptrdiff_t>(sizeof(COFF::ImportHeader)) ||
       memcmp(buf, "\0\0\xFF\xFF", 4))
-    return make_error_code(native_reader_error::unknown_file_format);
+    return make_error_code(NativeReaderError::unknown_file_format);
 
   error_code ec;
   auto file = std::unique_ptr<File>(

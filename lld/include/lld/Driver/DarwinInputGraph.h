@@ -54,7 +54,7 @@ public:
   /// processed
   virtual ErrorOr<File &> getNextFile() {
     if (_files.size() == _nextFileIndex)
-      return make_error_code(input_graph_error::no_more_files);
+      return make_error_code(InputGraphError::no_more_files);
     return *_files[_nextFileIndex++];
   }
 

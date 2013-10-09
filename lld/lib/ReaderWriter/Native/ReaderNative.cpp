@@ -261,12 +261,12 @@ public:
         reinterpret_cast<const NativeChunk *>(base + sizeof(NativeFileHeader));
     // make sure magic matches
     if ( memcmp(header->magic, NATIVE_FILE_HEADER_MAGIC, 16) != 0 )
-      return make_error_code(native_reader_error::unknown_file_format);
+      return make_error_code(NativeReaderError::unknown_file_format);
 
     // make sure mapped file contains all needed data
     const size_t fileSize = mb->getBufferSize();
     if (header->fileSize > fileSize)
-      return make_error_code(native_reader_error::file_too_short);
+      return make_error_code(NativeReaderError::file_too_short);
 
     DEBUG_WITH_TYPE("ReaderNative",
                     llvm::dbgs() << " Native File Header:" << " fileSize="
@@ -282,9 +282,9 @@ public:
       const NativeChunk* chunk = &chunks[i];
       // sanity check chunk is within file
       if ( chunk->fileOffset > fileSize )
-        return make_error_code(native_reader_error::file_malformed);
+        return make_error_code(NativeReaderError::file_malformed);
       if ( (chunk->fileOffset + chunk->fileSize) > fileSize)
-        return make_error_code(native_reader_error::file_malformed);
+        return make_error_code(NativeReaderError::file_malformed);
       // process chunk, based on signature
       switch ( chunk->signature ) {
         case NCS_DefinedAtomsV1:
@@ -321,7 +321,7 @@ public:
           ec = file->processStrings(base, chunk);
           break;
         default:
-          return make_error_code(native_reader_error::unknown_chunk_type);
+          return make_error_code(NativeReaderError::unknown_chunk_type);
       }
       if ( ec ) {
         return ec;
@@ -349,7 +349,7 @@ public:
     }
 
     result.push_back(std::move(file));
-    return make_error_code(native_reader_error::success);
+    return make_error_code(NativeReaderError::success);
   }
 
   virtual ~File() {
@@ -396,11 +396,11 @@ private:
     uint8_t* atomsStart = reinterpret_cast<uint8_t*>
                                 (operator new(atomsArraySize, std::nothrow));
     if (atomsStart == nullptr)
-      return make_error_code(native_reader_error::memory_error);
+      return make_error_code(NativeReaderError::memory_error);
     const size_t ivarElementSize = chunk->fileSize
                                           / chunk->elementCount;
     if ( ivarElementSize != sizeof(NativeDefinedAtomIvarsV1) )
-      return make_error_code(native_reader_error::file_malformed);
+      return make_error_code(NativeReaderError::file_malformed);
     uint8_t* atomsEnd = atomsStart + atomsArraySize;
     const NativeDefinedAtomIvarsV1* ivarData =
                              reinterpret_cast<const NativeDefinedAtomIvarsV1*>
@@ -420,7 +420,7 @@ private:
                     << " count=" << chunk->elementCount
                     << " chunkSize=" << chunk->fileSize
                     << "\n");
-    return make_error_code(native_reader_error::success);
+    return make_error_code(NativeReaderError::success);
   }
 
 
@@ -435,7 +435,7 @@ private:
                     << " count=" << chunk->elementCount
                     << " chunkSize=" << chunk->fileSize
                     << "\n");
-    return make_error_code(native_reader_error::success);
+    return make_error_code(NativeReaderError::success);
   }
 
   // set up pointers to attributes array
@@ -448,7 +448,7 @@ private:
                     << " count=" << chunk->elementCount
                     << " chunkSize=" << chunk->fileSize
                     << "\n");
-    return make_error_code(native_reader_error::success);
+    return make_error_code(NativeReaderError::success);
   }
 
   // instantiate array of UndefinedAtoms from v1 ivar data in file
@@ -459,11 +459,11 @@ private:
     uint8_t* atomsStart = reinterpret_cast<uint8_t*>
                                 (operator new(atomsArraySize, std::nothrow));
     if (atomsStart == nullptr)
-      return make_error_code(native_reader_error::memory_error);
+      return make_error_code(NativeReaderError::memory_error);
     const size_t ivarElementSize = chunk->fileSize
                                           / chunk->elementCount;
     if ( ivarElementSize != sizeof(NativeUndefinedAtomIvarsV1) )
-      return make_error_code(native_reader_error::file_malformed);
+      return make_error_code(NativeReaderError::file_malformed);
     uint8_t* atomsEnd = atomsStart + atomsArraySize;
     const NativeUndefinedAtomIvarsV1* ivarData =
                             reinterpret_cast<const NativeUndefinedAtomIvarsV1*>
@@ -483,7 +483,7 @@ private:
                     << " count=" << chunk->elementCount
                     << " chunkSize=" << chunk->fileSize
                     << "\n");
-    return make_error_code(native_reader_error::success);
+    return make_error_code(NativeReaderError::success);
   }
 
 
@@ -495,11 +495,11 @@ private:
     uint8_t* atomsStart = reinterpret_cast<uint8_t*>
                                 (operator new(atomsArraySize, std::nothrow));
     if (atomsStart == nullptr)
-      return make_error_code(native_reader_error::memory_error);
+      return make_error_code(NativeReaderError::memory_error);
     const size_t ivarElementSize = chunk->fileSize
                                           / chunk->elementCount;
     if ( ivarElementSize != sizeof(NativeSharedLibraryAtomIvarsV1) )
-      return make_error_code(native_reader_error::file_malformed);
+      return make_error_code(NativeReaderError::file_malformed);
     uint8_t* atomsEnd = atomsStart + atomsArraySize;
     const NativeSharedLibraryAtomIvarsV1* ivarData =
                       reinterpret_cast<const NativeSharedLibraryAtomIvarsV1*>
@@ -519,7 +519,7 @@ private:
                     << " count=" << chunk->elementCount
                     << " chunkSize=" << chunk->fileSize
                     << "\n");
-    return make_error_code(native_reader_error::success);
+    return make_error_code(NativeReaderError::success);
   }
 
 
@@ -531,11 +531,11 @@ private:
     uint8_t* atomsStart = reinterpret_cast<uint8_t*>
                                 (operator new(atomsArraySize, std::nothrow));
     if (atomsStart == nullptr)
-      return make_error_code(native_reader_error::memory_error);
+      return make_error_code(NativeReaderError::memory_error);
     const size_t ivarElementSize = chunk->fileSize
                                           / chunk->elementCount;
     if ( ivarElementSize != sizeof(NativeAbsoluteAtomIvarsV1) )
-      return make_error_code(native_reader_error::file_malformed);
+      return make_error_code(NativeReaderError::file_malformed);
     uint8_t* atomsEnd = atomsStart + atomsArraySize;
     const NativeAbsoluteAtomIvarsV1* ivarData =
                       reinterpret_cast<const NativeAbsoluteAtomIvarsV1*>
@@ -555,7 +555,7 @@ private:
                     << " count=" << chunk->elementCount
                     << " chunkSize=" << chunk->fileSize
                     << "\n");
-    return make_error_code(native_reader_error::success);
+    return make_error_code(NativeReaderError::success);
   }
 
 
@@ -565,17 +565,17 @@ private:
   error_code processReferencesV1(const uint8_t *base,
                                  const NativeChunk *chunk) {
     if ( chunk->elementCount == 0 )
-      return make_error_code(native_reader_error::success);
+      return make_error_code(NativeReaderError::success);
     const size_t refSize = sizeof(NativeReferenceV1);
     size_t refsArraySize = chunk->elementCount * refSize;
     uint8_t* refsStart = reinterpret_cast<uint8_t*>
                                 (operator new(refsArraySize, std::nothrow));
     if (refsStart == nullptr)
-      return make_error_code(native_reader_error::memory_error);
+      return make_error_code(NativeReaderError::memory_error);
     const size_t ivarElementSize = chunk->fileSize
                                           / chunk->elementCount;
     if ( ivarElementSize != sizeof(NativeReferenceIvarsV1) )
-      return make_error_code(native_reader_error::file_malformed);
+      return make_error_code(NativeReaderError::file_malformed);
     uint8_t* refsEnd = refsStart + refsArraySize;
     const NativeReferenceIvarsV1* ivarData =
                              reinterpret_cast<const NativeReferenceIvarsV1*>
@@ -595,7 +595,7 @@ private:
                     << " count=" << chunk->elementCount
                     << " chunkSize=" << chunk->fileSize
                     << "\n");
-    return make_error_code(native_reader_error::success);
+    return make_error_code(NativeReaderError::success);
   }
 
   // set up pointers to target table
@@ -637,14 +637,14 @@ private:
         this->_targetsTable[i] = reinterpret_cast<const AbsoluteAtom*>(p);
         continue;
       }
-     return make_error_code(native_reader_error::file_malformed);
+     return make_error_code(NativeReaderError::file_malformed);
     }
     DEBUG_WITH_TYPE("ReaderNative", llvm::dbgs()
                     << " chunk Targets Table:       "
                     << " count=" << chunk->elementCount
                     << " chunkSize=" << chunk->fileSize
                     << "\n");
-    return make_error_code(native_reader_error::success);
+    return make_error_code(NativeReaderError::success);
   }
 
 
@@ -659,7 +659,7 @@ private:
                     << " count=" << chunk->elementCount
                     << " chunkSize=" << chunk->fileSize
                     << "\n");
-    return make_error_code(native_reader_error::success);
+    return make_error_code(NativeReaderError::success);
   }
 
   // set up pointers to string pool in file
@@ -671,7 +671,7 @@ private:
                     << " chunk Strings:             "
                     << " chunkSize=" << chunk->fileSize
                     << "\n");
-    return make_error_code(native_reader_error::success);
+    return make_error_code(NativeReaderError::success);
   }
 
   // set up pointers to content area in file
@@ -683,7 +683,7 @@ private:
                     << " chunk content:             "
                     << " chunkSize=" << chunk->fileSize
                     << "\n");
-    return make_error_code(native_reader_error::success);
+    return make_error_code(NativeReaderError::success);
   }
 
   StringRef string(uint32_t offset) const {

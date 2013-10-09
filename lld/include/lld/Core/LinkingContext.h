@@ -303,7 +303,7 @@ public:
   /// nextFile returns the next file that needs to be processed by the resolver.
   /// The LinkingContext's can override the default behavior to change the way
   /// the resolver operates. This uses the currentInputElement. When there are
-  /// no more files to be processed an appropriate input_graph_error is
+  /// no more files to be processed an appropriate InputGraphError is
   /// returned.
   virtual ErrorOr<File &> nextFile();
 

@@ -127,7 +127,7 @@ public:
   /// processed
   virtual ErrorOr<File &> getNextFile() {
     if (_nextFileIndex == _files.size())
-      return make_error_code(input_graph_error::no_more_files);
+      return make_error_code(InputGraphError::no_more_files);
     return *_files[_nextFileIndex++];
   }
 
@@ -175,7 +175,7 @@ public:
     bool again = false;
     // If there are no elements, move on to the next input element
     if (_elements.size() == 0)
-      return make_error_code(input_graph_error::no_more_files);
+      return make_error_code(InputGraphError::no_more_files);
     // If we have processed all the elements as part of this node
     // check the resolver status for each input element and if the status
     // has not changed, move onto the next file.
@@ -187,7 +187,7 @@ public:
         }
       }
       if (!again)
-        return make_error_code(input_graph_error::no_more_files);
+        return make_error_code(InputGraphError::no_more_files);
       _nextElementIndex = 0;
       // Reset the next file to be processed as part of each element
       for (auto &elem : _elements)
@@ -196,7 +196,7 @@ public:
     auto file = _elements[_nextElementIndex]->getNextFile();
     // Move on to the next element if we have finished processing all
     // the files in the input element
-    if (error_code(file) == input_graph_error::no_more_files)
+    if (error_code(file) == InputGraphError::no_more_files)
       _nextElementIndex++;
     else
       return *file;

@@ -15,7 +15,7 @@ elf::PPCLinkingContext::relocKindFromString(StringRef str) const {
       LLD_CASE(R_PPC_ADDR32).Default(-1);
 
   if (ret == -1)
-    return make_error_code(yaml_reader_error::illegal_value);
+    return make_error_code(YamlReaderError::illegal_value);
   return ret;
 }
 
@@ -32,5 +32,5 @@ elf::PPCLinkingContext::stringFromRelocKind(Reference::Kind kind) const {
     LLD_CASE(R_PPC_ADDR32)
   }
 
-  return make_error_code(yaml_reader_error::illegal_value);
+  return make_error_code(YamlReaderError::illegal_value);
 }

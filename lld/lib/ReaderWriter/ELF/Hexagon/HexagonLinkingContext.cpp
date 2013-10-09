@@ -147,7 +147,7 @@ elf::HexagonLinkingContext::relocKindFromString(StringRef str) const {
       LLD_CASE(R_HEX_TPREL_16_X) LLD_CASE(R_HEX_TPREL_11_X).Default(-1);
 
   if (ret == -1)
-    return make_error_code(yaml_reader_error::illegal_value);
+    return make_error_code(YamlReaderError::illegal_value);
   return ret;
 }
 
@@ -248,5 +248,5 @@ elf::HexagonLinkingContext::stringFromRelocKind(int32_t kind) const {
     LLD_CASE(R_HEX_TPREL_11_X)
   }
 
-  return make_error_code(yaml_reader_error::illegal_value);
+  return make_error_code(YamlReaderError::illegal_value);
 }

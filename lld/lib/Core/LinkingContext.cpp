@@ -85,8 +85,8 @@ ErrorOr<File &> LinkingContext::nextFile() {
   // initialized. Initialize it with the first element of the input graph.
   if (_currentInputElement == nullptr) {
     ErrorOr<InputElement *> elem = inputGraph().getNextInputElement();
-    if (error_code(elem) == input_graph_error::no_more_elements)
-      return make_error_code(input_graph_error::no_more_files);
+    if (error_code(elem) == InputGraphError::no_more_elements)
+      return make_error_code(InputGraphError::no_more_files);
     _currentInputElement = *elem;
   }
 
@@ -96,13 +96,13 @@ ErrorOr<File &> LinkingContext::nextFile() {
   // graph.
   for (;;) {
     ErrorOr<File &> nextFile = _currentInputElement->getNextFile();
-    if (error_code(nextFile) != input_graph_error::no_more_files)
+    if (error_code(nextFile) != InputGraphError::no_more_files)
       return std::move(nextFile);
 
     ErrorOr<InputElement *> elem = inputGraph().getNextInputElement();
-    if (error_code(elem) == input_graph_error::no_more_elements ||
+    if (error_code(elem) == InputGraphError::no_more_elements ||
         *elem == nullptr)
-      return make_error_code(input_graph_error::no_more_files);
+      return make_error_code(InputGraphError::no_more_files);
     _currentInputElement = *elem;
   }
 }

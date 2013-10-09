@@ -15,7 +15,7 @@ elf::X86LinkingContext::relocKindFromString(StringRef str) const {
       LLD_CASE(R_386_PC32).Default(-1);
 
   if (ret == -1)
-    return make_error_code(yaml_reader_error::illegal_value);
+    return make_error_code(YamlReaderError::illegal_value);
   return ret;
 }
 
@@ -32,5 +32,5 @@ elf::X86LinkingContext::stringFromRelocKind(Reference::Kind kind) const {
     LLD_CASE(R_386_PC32)
   }
 
-  return make_error_code(yaml_reader_error::illegal_value);
+  return make_error_code(YamlReaderError::illegal_value);
 }

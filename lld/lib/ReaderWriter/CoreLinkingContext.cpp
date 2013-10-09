@@ -298,7 +298,7 @@ CoreLinkingContext::relocKindFromString(StringRef str) const {
     if (str.equals(p->string))
       return p->value;
   }
-  return make_error_code(yaml_reader_error::illegal_value);
+  return make_error_code(YamlReaderError::illegal_value);
 }
 
 ErrorOr<std::string>
@@ -307,5 +307,5 @@ CoreLinkingContext::stringFromRelocKind(Reference::Kind kind) const {
     if (kind == p->value)
       return std::string(p->string);
   }
-  return make_error_code(yaml_reader_error::illegal_value);
+  return make_error_code(YamlReaderError::illegal_value);
 }
