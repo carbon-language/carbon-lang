@@ -297,7 +297,7 @@ protected:
         uint32_t gpr_flags;
     };
 
-    uint64_t m_gpr_x86_64[k_num_gpr_registers_x86_64];    // 64-bitgeneral purpose registers.
+    uint64_t m_gpr_x86_64[k_num_gpr_registers_x86_64];         // 64-bit general purpose registers.
     RegInfo  m_reg_info;
     FPRType  m_fpr_type;                                       // determines the type of data stored by union FPR, if any.
     FPR      m_fpr;                                            // floating-point registers including extended register sets.
