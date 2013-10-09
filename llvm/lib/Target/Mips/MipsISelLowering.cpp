@@ -555,7 +555,7 @@ static SDValue performANDCombine(SDNode *N, SelectionDAG &DAG,
   // Pattern match EXT.
   //  $dst = and ((sra or srl) $src , pos), (2**size - 1)
   //  => ext $dst, $src, size, pos
-  if (DCI.isBeforeLegalizeOps() || !Subtarget->hasMips32r2())
+  if (DCI.isBeforeLegalizeOps() || !Subtarget->hasExtractInsert())
     return SDValue();
 
   SDValue ShiftRight = N->getOperand(0), Mask = N->getOperand(1);
@@ -596,7 +596,7 @@ static SDValue performORCombine(SDNode *N, SelectionDAG &DAG,
   //  $dst = or (and $src1 , mask0), (and (shl $src, pos), mask1),
   //  where mask1 = (2**size - 1) << pos, mask0 = ~mask1
   //  => ins $dst, $src, size, pos, $src1
-  if (DCI.isBeforeLegalizeOps() || !Subtarget->hasMips32r2())
+  if (DCI.isBeforeLegalizeOps() || !Subtarget->hasExtractInsert())
     return SDValue();
 
   SDValue And0 = N->getOperand(0), And1 = N->getOperand(1);
@@ -1612,7 +1612,8 @@ SDValue MipsTargetLowering::lowerVASTART(SDValue Op, SelectionDAG &DAG) const {
                       MachinePointerInfo(SV), false, false, 0);
 }
 
-static SDValue lowerFCOPYSIGN32(SDValue Op, SelectionDAG &DAG, bool HasR2) {
+static SDValue lowerFCOPYSIGN32(SDValue Op, SelectionDAG &DAG,
+                                bool HasExtractInsert) {
   EVT TyX = Op.getOperand(0).getValueType();
   EVT TyY = Op.getOperand(1).getValueType();
   SDValue Const1 = DAG.getConstant(1, MVT::i32);
@@ -1631,7 +1632,7 @@ static SDValue lowerFCOPYSIGN32(SDValue Op, SelectionDAG &DAG, bool HasR2) {
     DAG.getNode(MipsISD::ExtractElementF64, DL, MVT::i32, Op.getOperand(1),
                 Const1);
 
-  if (HasR2) {
+  if (HasExtractInsert) {
     // ext  E, Y, 31, 1  ; extract bit31 of Y
     // ins  X, E, 31, 1  ; insert extracted bit at bit31 of X
     SDValue E = DAG.getNode(MipsISD::Ext, DL, MVT::i32, Y, Const31, Const1);
@@ -1657,7 +1658,8 @@ static SDValue lowerFCOPYSIGN32(SDValue Op, SelectionDAG &DAG, bool HasR2) {
   return DAG.getNode(MipsISD::BuildPairF64, DL, MVT::f64, LowX, Res);
 }
 
-static SDValue lowerFCOPYSIGN64(SDValue Op, SelectionDAG &DAG, bool HasR2) {
+static SDValue lowerFCOPYSIGN64(SDValue Op, SelectionDAG &DAG,
+                                bool HasExtractInsert) {
   unsigned WidthX = Op.getOperand(0).getValueSizeInBits();
   unsigned WidthY = Op.getOperand(1).getValueSizeInBits();
   EVT TyX = MVT::getIntegerVT(WidthX), TyY = MVT::getIntegerVT(WidthY);
@@ -1668,7 +1670,7 @@ static SDValue lowerFCOPYSIGN64(SDValue Op, SelectionDAG &DAG, bool HasR2) {
   SDValue X = DAG.getNode(ISD::BITCAST, DL, TyX, Op.getOperand(0));
   SDValue Y = DAG.getNode(ISD::BITCAST, DL, TyY, Op.getOperand(1));
 
-  if (HasR2) {
+  if (HasExtractInsert) {
     // ext  E, Y, width(Y) - 1, 1  ; extract bit width(Y)-1 of Y
     // ins  X, E, width(X) - 1, 1  ; insert extracted bit at bit width(X)-1 of X
     SDValue E = DAG.getNode(MipsISD::Ext, DL, TyY, Y,
@@ -1708,12 +1710,13 @@ static SDValue lowerFCOPYSIGN64(SDValue Op, SelectionDAG &DAG, bool HasR2) {
 SDValue
 MipsTargetLowering::lowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG) const {
   if (Subtarget->hasMips64())
-    return lowerFCOPYSIGN64(Op, DAG, Subtarget->hasMips32r2());
+    return lowerFCOPYSIGN64(Op, DAG, Subtarget->hasExtractInsert());
 
-  return lowerFCOPYSIGN32(Op, DAG, Subtarget->hasMips32r2());
+  return lowerFCOPYSIGN32(Op, DAG, Subtarget->hasExtractInsert());
 }
 
-static SDValue lowerFABS32(SDValue Op, SelectionDAG &DAG, bool HasR2) {
+static SDValue lowerFABS32(SDValue Op, SelectionDAG &DAG,
+                           bool HasExtractInsert) {
   SDValue Res, Const1 = DAG.getConstant(1, MVT::i32);
   SDLoc DL(Op);
 
@@ -1725,7 +1728,7 @@ static SDValue lowerFABS32(SDValue Op, SelectionDAG &DAG, bool HasR2) {
                 Const1);
 
   // Clear MSB.
-  if (HasR2)
+  if (HasExtractInsert)
     Res = DAG.getNode(MipsISD::Ins, DL, MVT::i32,
                       DAG.getRegister(Mips::ZERO, MVT::i32),
                       DAG.getConstant(31, MVT::i32), Const1, X);
@@ -1742,7 +1745,8 @@ static SDValue lowerFABS32(SDValue Op, SelectionDAG &DAG, bool HasR2) {
   return DAG.getNode(MipsISD::BuildPairF64, DL, MVT::f64, LowX, Res);
 }
 
-static SDValue lowerFABS64(SDValue Op, SelectionDAG &DAG, bool HasR2) {
+static SDValue lowerFABS64(SDValue Op, SelectionDAG &DAG,
+                           bool HasExtractInsert) {
   SDValue Res, Const1 = DAG.getConstant(1, MVT::i32);
   SDLoc DL(Op);
 
@@ -1750,7 +1754,7 @@ static SDValue lowerFABS64(SDValue Op, SelectionDAG &DAG, bool HasR2) {
   SDValue X = DAG.getNode(ISD::BITCAST, DL, MVT::i64, Op.getOperand(0));
 
   // Clear MSB.
-  if (HasR2)
+  if (HasExtractInsert)
     Res = DAG.getNode(MipsISD::Ins, DL, MVT::i64,
                       DAG.getRegister(Mips::ZERO_64, MVT::i64),
                       DAG.getConstant(63, MVT::i32), Const1, X);
@@ -1765,9 +1769,9 @@ static SDValue lowerFABS64(SDValue Op, SelectionDAG &DAG, bool HasR2) {
 SDValue
 MipsTargetLowering::lowerFABS(SDValue Op, SelectionDAG &DAG) const {
   if (Subtarget->hasMips64() && (Op.getValueType() == MVT::f64))
-    return lowerFABS64(Op, DAG, Subtarget->hasMips32r2());
+    return lowerFABS64(Op, DAG, Subtarget->hasExtractInsert());
 
-  return lowerFABS32(Op, DAG, Subtarget->hasMips32r2());
+  return lowerFABS32(Op, DAG, Subtarget->hasExtractInsert());
 }
 
 SDValue MipsTargetLowering::

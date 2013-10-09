@@ -204,6 +204,7 @@ public:
   bool hasSwap()      const { return HasSwap; }
   bool hasBitCount()  const { return HasBitCount; }
   bool hasFPIdx()     const { return HasFPIdx; }
+  bool hasExtractInsert() const { return !inMips16Mode() && hasMips32r2(); }
 
   const InstrItineraryData &getInstrItineraryData() const { return InstrItins; }
   bool allowMixed16_32() const { return inMips16ModeDefault() |
