@@ -71,62 +71,37 @@ typedef struct LLVMStructLayout *LLVMStructLayoutRef;
   void LLVMInitialize##TargetName##Disassembler(void);
 #include "llvm/Config/Disassemblers.def"
 #undef LLVM_DISASSEMBLER  /* Explicit undef to make SWIG happier */
-  
+
 /** LLVMInitializeAllTargetInfos - The main program should call this function if
     it wants access to all available targets that LLVM is configured to
     support. */
-static inline void LLVMInitializeAllTargetInfos(void) {
-#define LLVM_TARGET(TargetName) LLVMInitialize##TargetName##TargetInfo();
-#include "llvm/Config/Targets.def"
-#undef LLVM_TARGET  /* Explicit undef to make SWIG happier */
-}
+void LLVMInitializeAllTargetInfos(void);
 
 /** LLVMInitializeAllTargets - The main program should call this function if it
     wants to link in all available targets that LLVM is configured to
     support. */
-static inline void LLVMInitializeAllTargets(void) {
-#define LLVM_TARGET(TargetName) LLVMInitialize##TargetName##Target();
-#include "llvm/Config/Targets.def"
-#undef LLVM_TARGET  /* Explicit undef to make SWIG happier */
-}
+void LLVMInitializeAllTargets(void);
 
 /** LLVMInitializeAllTargetMCs - The main program should call this function if
     it wants access to all available target MC that LLVM is configured to
     support. */
-static inline void LLVMInitializeAllTargetMCs(void) {
-#define LLVM_TARGET(TargetName) LLVMInitialize##TargetName##TargetMC();
-#include "llvm/Config/Targets.def"
-#undef LLVM_TARGET  /* Explicit undef to make SWIG happier */
-}
-  
+void LLVMInitializeAllTargetMCs(void);
+
 /** LLVMInitializeAllAsmPrinters - The main program should call this function if
     it wants all asm printers that LLVM is configured to support, to make them
     available via the TargetRegistry. */
-static inline void LLVMInitializeAllAsmPrinters(void) {
-#define LLVM_ASM_PRINTER(TargetName) LLVMInitialize##TargetName##AsmPrinter();
-#include "llvm/Config/AsmPrinters.def"
-#undef LLVM_ASM_PRINTER  /* Explicit undef to make SWIG happier */
-}
-  
+void LLVMInitializeAllAsmPrinters(void);
+
 /** LLVMInitializeAllAsmParsers - The main program should call this function if
     it wants all asm parsers that LLVM is configured to support, to make them
     available via the TargetRegistry. */
-static inline void LLVMInitializeAllAsmParsers(void) {
-#define LLVM_ASM_PARSER(TargetName) LLVMInitialize##TargetName##AsmParser();
-#include "llvm/Config/AsmParsers.def"
-#undef LLVM_ASM_PARSER  /* Explicit undef to make SWIG happier */
-}
-  
+void LLVMInitializeAllAsmParsers(void);
+
 /** LLVMInitializeAllDisassemblers - The main program should call this function
     if it wants all disassemblers that LLVM is configured to support, to make
     them available via the TargetRegistry. */
-static inline void LLVMInitializeAllDisassemblers(void) {
-#define LLVM_DISASSEMBLER(TargetName) \
-  LLVMInitialize##TargetName##Disassembler();
-#include "llvm/Config/Disassemblers.def"
-#undef LLVM_DISASSEMBLER  /* Explicit undef to make SWIG happier */
-}
-  
+void LLVMInitializeAllDisassemblers(void);
+
 /** LLVMInitializeNativeTarget - The main program should call this function to
     initialize the native target corresponding to the host.  This is useful 
     for JIT applications to ensure that the target gets linked in correctly. */
