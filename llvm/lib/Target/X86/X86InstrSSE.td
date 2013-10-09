@@ -3357,7 +3357,8 @@ let Predicates = [UseAVX] in {
   def : Pat<(f32 (X86frcp (load addr:$src))),
             (VRCPSSm (f32 (IMPLICIT_DEF)), addr:$src)>,
             Requires<[HasAVX, OptForSize]>;
-
+}
+let Predicates = [UseAVX] in {
   def : Pat<(int_x86_sse_sqrt_ss VR128:$src),
             (COPY_TO_REGCLASS (VSQRTSSr (f32 (IMPLICIT_DEF)),
                                         (COPY_TO_REGCLASS VR128:$src, FR32)),
@@ -3371,7 +3372,9 @@ let Predicates = [UseAVX] in {
                               VR128)>;
   def : Pat<(int_x86_sse2_sqrt_sd sse_load_f64:$src),
             (VSQRTSDm_Int (v2f64 (IMPLICIT_DEF)), sse_load_f64:$src)>;
+}
 
+let Predicates = [HasAVX] in {
   def : Pat<(int_x86_sse_rsqrt_ss VR128:$src),
             (COPY_TO_REGCLASS (VRSQRTSSr (f32 (IMPLICIT_DEF)),
                                          (COPY_TO_REGCLASS VR128:$src, FR32)),
