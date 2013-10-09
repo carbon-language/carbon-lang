@@ -79,6 +79,9 @@ public:
     DoDestroy();
 
     virtual void
+    DoDidExec();
+
+    virtual void
     RefreshStateAfterStop();
 
     virtual bool

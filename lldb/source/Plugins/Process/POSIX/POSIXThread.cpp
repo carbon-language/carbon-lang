@@ -352,6 +352,10 @@ POSIXThread::Notify(const ProcessMessage &message)
     case ProcessMessage::eNewThreadMessage:
         ThreadNotify(message);
         break;
+
+    case ProcessMessage::eExecMessage:
+        ExecNotify(message);
+        break;
     }
 }
 
@@ -572,6 +576,12 @@ POSIXThread::GetRegisterIndexFromOffset(unsigned offset)
         break;
     }
     return reg;
+}
+
+void
+POSIXThread::ExecNotify(const ProcessMessage &message)
+{
+    SetStopInfo (StopInfo::CreateStopReasonWithExec(*this));
 }
 
 const char *

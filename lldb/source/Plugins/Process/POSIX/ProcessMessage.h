@@ -32,7 +32,8 @@ public:
         eBreakpointMessage,
         eWatchpointMessage,
         eCrashMessage,
-        eNewThreadMessage
+        eNewThreadMessage,
+        eExecMessage
     };
 
     enum CrashReason
@@ -131,6 +132,11 @@ public:
     /// Indicates that the thread @p tid is about to exit with status @p status.
     static ProcessMessage Exit(lldb::tid_t tid, int status) {
         return ProcessMessage(tid, eExitMessage, status);
+    }
+
+    /// Indicates that the thread @p pid has exec'd.
+    static ProcessMessage Exec(lldb::tid_t tid) {
+        return ProcessMessage(tid, eExecMessage);
     }
 
     int GetExitStatus() const {

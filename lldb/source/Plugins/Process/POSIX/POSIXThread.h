@@ -123,6 +123,7 @@ protected:
     void CrashNotify(const ProcessMessage &message);
     void ThreadNotify(const ProcessMessage &message);
     void ExitNotify(const ProcessMessage &message);
+    void ExecNotify(const ProcessMessage &message);
 
     lldb_private::Unwind *
     GetUnwinder();

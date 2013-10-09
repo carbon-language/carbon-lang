@@ -1487,8 +1487,10 @@ ProcessMonitor::MonitorSIGTRAP(ProcessMonitor *monitor,
     }
 
     case (SIGTRAP | (PTRACE_EVENT_EXEC << 8)):
-        // Don't follow the child by default and resume
-        monitor->Resume(pid, SIGCONT);
+        if (log)
+            log->Printf ("ProcessMonitor::%s() received exec event, code = %d", __FUNCTION__, info->si_code ^ SIGTRAP);
+
+        message = ProcessMessage::Exec(pid);
         break;
 
     case (SIGTRAP | (PTRACE_EVENT_EXIT << 8)):
