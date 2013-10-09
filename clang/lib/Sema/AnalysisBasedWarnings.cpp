@@ -1477,6 +1477,13 @@ public:
     }
   }
   
+  void warnLoopStateMismatch(SourceLocation Loc, StringRef VariableName) {
+    PartialDiagnosticAt Warning(Loc, S.PDiag(diag::warn_loop_state_mismatch) <<
+      VariableName);
+    
+    Warnings.push_back(DelayedDiag(Warning, OptionalNotes()));
+  }
+  
   void warnReturnTypestateForUnconsumableType(SourceLocation Loc,
                                               StringRef TypeName) {
     PartialDiagnosticAt Warning(Loc, S.PDiag(

@@ -2213,6 +2213,9 @@ def warn_return_typestate_for_unconsumable_type : Warning<
 def warn_return_typestate_mismatch : Warning<
   "return value not in expected state; expected '%0', observed '%1'">,
   InGroup<Consumed>, DefaultIgnore;
+def warn_loop_state_mismatch : Warning<
+  "state of variable '%0' must match at the entry and exit of loop">,
+  InGroup<Consumed>, DefaultIgnore;
 
 // ConsumedStrict warnings
 def warn_unnecessary_test : Warning<

@@ -494,25 +494,34 @@ void testUnreachableBlock() {
   *var;
 }
 
-void testSimpleForLoop() {
-  ConsumableClass<int> var;
+
+void testForLoop1() {
+  ConsumableClass<int> var0, var1(42);
   
-  for (int i = 0; i < 10; ++i) {
-    *var; // expected-warning {{invalid invocation of method 'operator*' on object 'var' while it is in the 'unknown' state}}
+  for (int i = 0; i < 10; ++i) { // expected-warning {{state of variable 'var1' must match at the entry and exit of loop}}
+    *var0; // expected-warning {{invalid invocation of method 'operator*' on object 'var0' while it is in the 'consumed' state}}
+    
+    *var1;
+    var1.consume();
+    *var1; // expected-warning {{invalid invocation of method 'operator*' on object 'var1' while it is in the 'consumed' state}}
   }
   
-  *var; // expected-warning {{invalid invocation of method 'operator*' on object 'var' while it is in the 'unknown' state}}
+  *var0; // expected-warning {{invalid invocation of method 'operator*' on object 'var0' while it is in the 'consumed' state}}
 }
 
-void testSimpleWhileLoop() {
-  int i = 0;
+void testWhileLoop1() {
+  int i = 10;
   
-  ConsumableClass<int> var;
+  ConsumableClass<int> var0, var1(42);
   
-  while (i < 10) {
-    *var; // expected-warning {{invalid invocation of method 'operator*' on object 'var' while it is in the 'unknown' state}}
-    ++i;
+  while (i-- > 0) {
+    *var0; // expected-warning {{invalid invocation of method 'operator*' on object 'var0' while it is in the 'consumed' state}}
+    
+    *var1;
+    var1.consume();
+    *var1; // expected-warning {{invalid invocation of method 'operator*' on object 'var1' while it is in the 'consumed' state}} \
+           // expected-warning {{state of variable 'var1' must match at the entry and exit of loop}}
   }
   
-  *var; // expected-warning {{invalid invocation of method 'operator*' on object 'var' while it is in the 'unknown' state}}
+  *var0; // expected-warning {{invalid invocation of method 'operator*' on object 'var0' while it is in the 'consumed' state}}
 }

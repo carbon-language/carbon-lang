@@ -49,6 +49,16 @@ namespace consumed {
     /// \brief Emit the warnings and notes left by the analysis.
     virtual void emitDiagnostics() {}
     
+    /// \brief Warn that a variable's state doesn't match at the entry and exit
+    /// of a loop.
+    ///
+    /// \param Loc -- The location of the end of the loop.
+    ///
+    /// \param VariableName -- The name of the variable that has a mismatched
+    /// state.
+    virtual void warnLoopStateMismatch(SourceLocation Loc,
+                                       StringRef VariableName) {}
+    
     // FIXME: This can be removed when the attr propagation fix for templated
     //        classes lands.
     /// \brief Warn about return typestates set for unconsumable types.
@@ -120,16 +130,17 @@ namespace consumed {
       : Reachable(Other.Reachable), From(Other.From), Map(Other.Map) {}
     
     /// \brief Get the consumed state of a given variable.
-    ConsumedState getState(const VarDecl *Var);
+    ConsumedState getState(const VarDecl *Var) const;
     
     /// \brief Merge this state map with another map.
     void intersect(const ConsumedStateMap *Other);
     
+    void intersectAtLoopHead(const CFGBlock *LoopHead, const CFGBlock *LoopBack,
+      const ConsumedStateMap *LoopBackStates,
+      ConsumedWarningsHandlerBase &WarningsHandler);
+    
     /// \brief Return true if this block is reachable.
     bool isReachable() const { return Reachable; }
-    
-    /// \brief Mark all variables as unknown.
-    void makeUnknown();
     
     /// \brief Mark the block as unreachable.
     void markUnreachable();
@@ -144,28 +155,45 @@ namespace consumed {
     
     /// \brief Remove the variable from our state map.
     void remove(const VarDecl *Var);
+    
+    /// \brief Tests to see if there is a mismatch in the states stored in two
+    /// maps.
+    ///
+    /// \param Other -- The second map to compare against.
+    bool operator!=(const ConsumedStateMap *Other) const;
   };
   
   class ConsumedBlockInfo {
-    
-    ConsumedStateMap **StateMapsArray;
-    PostOrderCFGView::CFGBlockSet VisitedBlocks;
+    std::vector<ConsumedStateMap*> StateMapsArray;
+    std::vector<int> VisitOrder;
     
   public:
-    
     ConsumedBlockInfo() : StateMapsArray(NULL) {}
     
-    ConsumedBlockInfo(const CFG *CFGraph)
-      : StateMapsArray(new ConsumedStateMap*[CFGraph->getNumBlockIDs()]()),
-        VisitedBlocks(CFGraph) {}
+    ConsumedBlockInfo(unsigned int NumBlocks, PostOrderCFGView *SortedGraph)
+        : StateMapsArray(NumBlocks, 0), VisitOrder(NumBlocks, 0) {
+      unsigned int VisitOrderCounter = 0;
+      for (PostOrderCFGView::iterator BI = SortedGraph->begin(),
+           BE = SortedGraph->end(); BI != BE; ++BI) {
+        VisitOrder[(*BI)->getBlockID()] = VisitOrderCounter++;
+      }
+    }
+    
+    bool allBackEdgesVisited(const CFGBlock *CurrBlock,
+                             const CFGBlock *TargetBlock);
     
     void addInfo(const CFGBlock *Block, ConsumedStateMap *StateMap,
                  bool &AlreadyOwned);
     void addInfo(const CFGBlock *Block, ConsumedStateMap *StateMap);
     
+    ConsumedStateMap* borrowInfo(const CFGBlock *Block);
+    
+    void discardInfo(const CFGBlock *Block);
+    
     ConsumedStateMap* getInfo(const CFGBlock *Block);
     
-    void markVisited(const CFGBlock *Block);
+    bool isBackEdge(const CFGBlock *From, const CFGBlock *To);
+    bool isBackEdgeTarget(const CFGBlock *Block);
   };
 
   /// A class that handles the analysis of uniqueness violations.
