@@ -17,11 +17,8 @@ RUN: %p/Inputs/group/fn1.o --end-group -o %t2
 RUN: lld -flavor gnu -target x86_64 %p/Inputs/group/1.o --start-group \
 RUN: --whole-archive %p/Inputs/group/libfn.a --no-whole-archive %p/Inputs/group/libfn1.a --end-group -o %t3
 
-RUN: FileCheck --check-prefix=UNRESOLVED %s < %t.err
 RUN: llvm-nm %t1 | FileCheck -check-prefix=RESOLVEDEXTERNAL %s
 RUN: llvm-nm %t2 | FileCheck -check-prefix=RESOLVEDEXTERNAL %s
 RUN: llvm-nm %t3 | FileCheck -check-prefix=RESOLVEDEXTERNAL %s
-
-UNRESOLVED: Undefined Symbol: {{[\/0-9A-Za-z_\-\.]+}}libfn1.a(fn1.o) : fn2
 
 RESOLVEDEXTERNAL: {{[0-9a-z]+}} T fn2
