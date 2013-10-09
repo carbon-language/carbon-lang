@@ -185,9 +185,10 @@ static const int kUnblockedSignals[] = { SIGABRT, SIGILL, SIGFPE, SIGSEGV,
 struct TracerThreadArgument {
   StopTheWorldCallback callback;
   void *callback_argument;
-  // The tracer thread waits on this mutex while the parent finished its
+  // The tracer thread waits on this mutex while the parent finishes its
   // preparations.
   BlockingMutex mutex;
+  uptr parent_pid;
 };
 
 static DieCallbackType old_die_callback;
@@ -226,7 +227,7 @@ static int TracerThread(void* argument) {
 
   internal_prctl(PR_SET_PDEATHSIG, SIGKILL, 0, 0, 0);
   // Check if parent is already dead.
-  if (internal_getppid() == 1)
+  if (internal_getppid() != tracer_thread_argument->parent_pid)
     internal__exit(4);
 
   // Wait for the parent thread to finish preparations.
@@ -370,6 +371,7 @@ void StopTheWorld(StopTheWorldCallback callback, void *argument) {
   struct TracerThreadArgument tracer_thread_argument;
   tracer_thread_argument.callback = callback;
   tracer_thread_argument.callback_argument = argument;
+  tracer_thread_argument.parent_pid = internal_getpid();
   const uptr kTracerStackSize = 2 * 1024 * 1024;
   ScopedStackSpaceWithGuard tracer_stack(kTracerStackSize);
   // Block the execution of TracerThread until after we have set ptrace
