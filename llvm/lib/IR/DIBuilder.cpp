@@ -538,9 +538,9 @@ DIBuilder::createTemplateTypeParameter(DIDescriptor Context, StringRef Name,
                                        unsigned ColumnNo) {
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_template_type_parameter),
-    getNonCompileUnitScope(Context),
+    DIScope(getNonCompileUnitScope(Context)).getRef(),
     MDString::get(VMContext, Name),
-    Ty,
+    Ty.getRef(),
     File,
     ConstantInt::get(Type::getInt32Ty(VMContext), LineNo),
     ConstantInt::get(Type::getInt32Ty(VMContext), ColumnNo)
@@ -556,9 +556,9 @@ DIBuilder::createTemplateValueParameter(unsigned Tag, DIDescriptor Context,
                                         unsigned ColumnNo) {
   Value *Elts[] = {
     GetTagConstant(VMContext, Tag),
-    getNonCompileUnitScope(Context),
+    DIScope(getNonCompileUnitScope(Context)).getRef(),
     MDString::get(VMContext, Name),
-    Ty,
+    Ty.getRef(),
     Val,
     File,
     ConstantInt::get(Type::getInt32Ty(VMContext), LineNo),

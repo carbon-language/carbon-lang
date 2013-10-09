@@ -1078,12 +1078,12 @@ void DebugInfoFinder::processSubprogram(DISubprogram SP) {
     DIDescriptor Element = TParams.getElement(I);
     if (Element.isTemplateTypeParameter()) {
       DITemplateTypeParameter TType(Element);
-      processScope(TType.getContext());
-      processType(TType.getType());
+      processScope(TType.getContext().resolve(TypeIdentifierMap));
+      processType(TType.getType().resolve(TypeIdentifierMap));
     } else if (Element.isTemplateValueParameter()) {
       DITemplateValueParameter TVal(Element);
-      processScope(TVal.getContext());
-      processType(TVal.getType());
+      processScope(TVal.getContext().resolve(TypeIdentifierMap));
+      processType(TVal.getType().resolve(TypeIdentifierMap));
     }
   }
 }

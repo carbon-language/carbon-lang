@@ -1228,7 +1228,7 @@ CompileUnit::getOrCreateTemplateTypeParameterDIE(DITemplateTypeParameter TP) {
   ParamDIE = new DIE(dwarf::DW_TAG_template_type_parameter);
   // Add the type if it exists, it could be void and therefore no type.
   if (TP.getType())
-    addType(ParamDIE, TP.getType());
+    addType(ParamDIE, resolve(TP.getType()));
   if (!TP.getName().empty())
     addString(ParamDIE, dwarf::DW_AT_name, TP.getName());
   return ParamDIE;
@@ -1247,12 +1247,13 @@ CompileUnit::getOrCreateTemplateValueParameterDIE(DITemplateValueParameter VP) {
   // Add the type if there is one, template template and template parameter
   // packs will not have a type.
   if (VP.getType())
-    addType(ParamDIE, VP.getType());
+    addType(ParamDIE, resolve(VP.getType()));
   if (!VP.getName().empty())
     addString(ParamDIE, dwarf::DW_AT_name, VP.getName());
   if (Value *Val = VP.getValue()) {
     if (ConstantInt *CI = dyn_cast<ConstantInt>(Val))
-      addConstantValue(ParamDIE, CI, isUnsignedDIType(DD, VP.getType()));
+      addConstantValue(ParamDIE, CI,
+                       isUnsignedDIType(DD, resolve(VP.getType())));
     else if (GlobalValue *GV = dyn_cast<GlobalValue>(Val)) {
       // For declaration non-type template parameters (such as global values and
       // functions)
