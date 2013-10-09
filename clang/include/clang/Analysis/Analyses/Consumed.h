@@ -165,10 +165,10 @@ namespace consumed {
   
   class ConsumedBlockInfo {
     std::vector<ConsumedStateMap*> StateMapsArray;
-    std::vector<int> VisitOrder;
+    std::vector<unsigned int> VisitOrder;
     
   public:
-    ConsumedBlockInfo() : StateMapsArray(NULL) {}
+    ConsumedBlockInfo() { }
     
     ConsumedBlockInfo(unsigned int NumBlocks, PostOrderCFGView *SortedGraph)
         : StateMapsArray(NumBlocks, 0), VisitOrder(NumBlocks, 0) {
