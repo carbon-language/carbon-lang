@@ -52,7 +52,6 @@ class RegisterCommandsTestCase(TestBase):
         self.buildDefault()
         self.convenience_registers_with_process_attach(test_16bit_regs=False)
 
-    @expectedFailureLinux("llvm.org/pr14600") # Linux doesn't support 16-bit convenience registers
     def test_convenience_registers_16bit_with_process_attach(self):
         """Test convenience registers after a 'process attach'."""
         if not self.getArchitecture() in ['x86_64']:

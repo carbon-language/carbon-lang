@@ -469,15 +469,6 @@ RegisterContext::CalculateExecutionContext (ExecutionContext &exe_ctx)
 bool
 RegisterContext::ConvertBetweenRegisterKinds (int source_rk, uint32_t source_regnum, int target_rk, uint32_t& target_regnum)
 {
-    // FIXME: This works around a problem with 32-bit register mapping on Linux.
-    // A more general fix is needed.
-    if (target_rk == eRegisterKindLLDB)
-    {
-        target_regnum = ConvertRegisterKindToRegisterNumber(source_rk, source_regnum);
-        if (target_regnum != LLDB_INVALID_REGNUM)
-            return true;
-    }
-
     const uint32_t num_registers = GetRegisterCount();
     for (uint32_t reg = 0; reg < num_registers; ++reg)
     {
