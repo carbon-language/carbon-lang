@@ -1035,6 +1035,9 @@ SparcTargetLowering::LowerCall_64(TargetLowering::CallLoweringInfo &CLI,
   SDLoc DL = CLI.DL;
   SDValue Chain = CLI.Chain;
 
+  // Sparc target does not yet support tail call optimization.
+  CLI.IsTailCall = false;
+
   // Analyze operands of the call, assigning locations to each operand.
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState CCInfo(CLI.CallConv, CLI.IsVarArg, DAG.getMachineFunction(),
