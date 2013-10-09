@@ -2224,7 +2224,7 @@ let neverHasSideEffects = 1 in {
               EVEX_4V;
 } // neverHasSideEffects = 1
 }
-
+let Predicates = [HasAVX512] in {
 defm VCVTSI2SSZ   : avx512_vcvtsi<0x2A, GR32, FR32X, i32mem, "cvtsi2ss{l}{z}">,
                                   XS, VEX_LIG, EVEX_CD8<32, CD8VT1>;
 defm VCVTSI642SSZ : avx512_vcvtsi<0x2A, GR64, FR32X, i64mem, "cvtsi2ss{q}{z}">,
@@ -2278,7 +2278,7 @@ def : Pat<(f64 (uint_to_fp GR32:$src)),
           (VCVTUSI2SDZrr (f64 (IMPLICIT_DEF)), GR32:$src)>;
 def : Pat<(f64 (uint_to_fp GR64:$src)),
           (VCVTUSI642SDZrr (f64 (IMPLICIT_DEF)), GR64:$src)>;
-
+}
 
 //===----------------------------------------------------------------------===//
 // AVX-512  Scalar convert from float/double to integer
