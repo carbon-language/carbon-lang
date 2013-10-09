@@ -248,7 +248,7 @@ namespace Variadic {
 struct A {
   void            member_default(int, ...);
   void __cdecl    member_cdecl(int, ...);
-  void __thiscall member_thiscall(int, ...);
+  void __thiscall member_thiscall(int, ...); // expected-error {{variadic function cannot use thiscall calling convention}}
 };
 
 struct B : public A {

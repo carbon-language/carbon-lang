@@ -12,8 +12,7 @@ void __attribute__((stdcall)) nonvariadic1(int a, int b, int c);
 void nonvariadic2(int a, int b, int c);
 void __attribute__((stdcall)) nonvariadic2(int a, int b, int c) { }
 
-// expected-note@+2 {{previous declaration is here}}
-// expected-error@+2 {{function declared 'stdcall' here was previously declared without calling convention}}
+// expected-warning@+2 {{stdcall calling convention ignored on variadic function}}
 void variadic(int a, ...);
 void __attribute__((stdcall)) variadic(int a, ...);
 
@@ -34,7 +33,6 @@ __attribute__((cdecl)) extern void (*b)(int, ...);
 extern void (*c)(int, int);
 __attribute__((stdcall)) extern void (*c)(int, int);
 
-// expected-note@+2 {{previous definition is here}}
-// expected-error@+2 {{redefinition of 'd' with a different type: 'void ((*))(int, ...) __attribute__((stdcall))' vs 'void (*)(int, ...)'}}
+// expected-warning@+2 {{stdcall calling convention ignored on variadic function}}
 extern void (*d)(int, ...);
 __attribute__((stdcall)) extern void (*d)(int, ...);

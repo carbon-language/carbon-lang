@@ -1,5 +1,6 @@
 // RUN: %clang_cc1 -triple i386-pc-linux -emit-llvm < %s | FileCheck %s
-// RUN: %clang_cc1 -triple i386-pc-linux -emit-llvm -fms-compatibility -DWIN < %s | FileCheck --check-prefix=WIN %s
+// RUN: %clang_cc1 -triple i386-pc-linux -emit-llvm -mrtd < %s | FileCheck %s
+// RUN: %clang_cc1 -triple i386-pc-linux -emit-llvm -fms-compatibility < %s
 
 void __fastcall f1(void);
 void __stdcall f2(void);
@@ -51,9 +52,9 @@ void f8(void) {
 }
 
 // PR12535
-#ifdef WIN
 void __fastcall f9(int x, int y) {};
 // WIN: define x86_fastcallcc void @f9({{.*}})
 void __fastcall f10(int x, ...) {};
 // WIN: define void @f10({{.*}})
-#endif
+void __stdcall f11(int x, ...) {};
+// WIN: define void @f11({{.*}})

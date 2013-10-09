@@ -220,6 +220,19 @@ namespace clang {
     CC_IntelOclBicc // __attribute__((intel_ocl_bicc))
   };
 
+  /// \brief Checks whether the given calling convention is callee-cleanup.
+  inline bool isCalleeCleanup(CallingConv CC) {
+    switch (CC) {
+    case CC_X86StdCall:
+    case CC_X86FastCall:
+    case CC_X86ThisCall:
+    case CC_X86Pascal:
+      return true;
+    default:
+      return false;
+    }
+  }
+
   /// \brief The storage duration for an object (per C++ [basic.stc]).
   enum StorageDuration {
     SD_FullExpression, ///< Full-expression storage duration (for temporaries).

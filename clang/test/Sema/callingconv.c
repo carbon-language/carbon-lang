@@ -16,13 +16,12 @@ void __attribute__((fastcall)) test0() { // expected-error {{function with no pr
 void __attribute__((fastcall)) test1(void) {
 }
 
-#ifdef WIN
 void __attribute__((fastcall)) test2(int a, ...) { // expected-warning {{fastcall calling convention ignored on variadic function}}
 }
-#else
-void __attribute__((fastcall)) test2(int a, ...) { // expected-error {{variadic function cannot use fastcall calling convention}}
+void __attribute__((stdcall)) test3(int a, ...) { // expected-warning {{stdcall calling convention ignored on variadic function}}
 }
-#endif
+void __attribute__((thiscall)) test4(int a, ...) { // expected-error {{variadic function cannot use thiscall calling convention}}
+}
 
 void __attribute__((cdecl)) ctest0() {}
 

@@ -4542,22 +4542,26 @@ static bool handleFunctionTypeAttr(TypeProcessingState &state,
     }
   }
 
-  // Diagnose the use of X86 fastcall on varargs or unprototyped functions.
-  if (CC == CC_X86FastCall) {
-    if (isa<FunctionNoProtoType>(fn)) {
-      S.Diag(attr.getLoc(), diag::err_cconv_knr)
-        << FunctionType::getNameForCallConv(CC);
+  // Diagnose use of callee-cleanup calling convention on variadic functions.
+  if (isCalleeCleanup(CC)) {
+    const FunctionProtoType *FnP = dyn_cast<FunctionProtoType>(fn);
+    if (FnP && FnP->isVariadic()) {
+      unsigned DiagID = diag::err_cconv_varargs;
+      // stdcall and fastcall are ignored with a warning for GCC and MS
+      // compatibility.
+      if (CC == CC_X86StdCall || CC == CC_X86FastCall)
+        DiagID = diag::warn_cconv_varargs;
+
+      S.Diag(attr.getLoc(), DiagID) << FunctionType::getNameForCallConv(CC);
       attr.setInvalid();
       return true;
     }
+  }
 
-    const FunctionProtoType *FnP = cast<FunctionProtoType>(fn);
-    if (FnP->isVariadic()) {
-      // In MS compatibility mode, this is just a warning.
-      const LangOptions &L = S.getLangOpts();
-      unsigned DiagID = L.MicrosoftMode ? diag::warn_cconv_varargs
-                                        : diag::err_cconv_varargs;
-      S.Diag(attr.getLoc(), DiagID)
+  // Diagnose the use of X86 fastcall on unprototyped functions.
+  if (CC == CC_X86FastCall) {
+    if (isa<FunctionNoProtoType>(fn)) {
+      S.Diag(attr.getLoc(), diag::err_cconv_knr)
         << FunctionType::getNameForCallConv(CC);
       attr.setInvalid();
       return true;
