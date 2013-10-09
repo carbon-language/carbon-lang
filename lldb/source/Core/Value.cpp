@@ -339,16 +339,30 @@ Value::GetValueAsData (ExecutionContext *exe_ctx,
         break;
 
     case eValueTypeScalar:
-        data.SetByteOrder (lldb::endian::InlHostByteOrder());
-        if (ast_type.IsValid())
-            data.SetAddressByteSize (ast_type.GetPointerByteSize());
-        else
-            data.SetAddressByteSize(sizeof(void *));
-        if (m_value.GetData (data))
-            return error;   // Success;
-        error.SetErrorStringWithFormat("extracting data from value failed");
-        break;
+        {
+            data.SetByteOrder (lldb::endian::InlHostByteOrder());
+            if (ast_type.IsValid())
+                data.SetAddressByteSize (ast_type.GetPointerByteSize());
+            else
+                data.SetAddressByteSize(sizeof(void *));
 
+            uint32_t limit_byte_size = UINT32_MAX;
+            
+            if (ast_type.IsValid() && ast_type.IsScalarType())
+            {
+                uint64_t type_encoding_count = 0;
+                lldb::Encoding type_encoding = ast_type.GetEncoding(type_encoding_count);
+                
+                if (type_encoding == eEncodingUint || type_encoding == eEncodingSint)
+                    limit_byte_size = ast_type.GetByteSize();
+            }
+            
+            if (m_value.GetData (data, limit_byte_size))
+                return error;   // Success;
+            
+            error.SetErrorStringWithFormat("extracting data from value failed");
+            break;
+        }
     case eValueTypeLoadAddress:
         if (exe_ctx == NULL)
         {

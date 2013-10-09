@@ -156,6 +156,10 @@ ValueObjectVariable::UpdateValue ()
         {
             m_resolved_value = m_value;
             m_value.SetContext(Value::eContextTypeVariable, variable);
+            
+            ClangASTType clang_type = GetClangType();
+            if (clang_type.IsValid())
+                m_value.SetClangType(clang_type);
 
             Value::ValueType value_type = m_value.GetValueType();
             
