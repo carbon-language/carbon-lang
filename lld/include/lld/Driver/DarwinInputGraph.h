@@ -42,7 +42,9 @@ public:
 
   /// \brief Parse the input file to lld::File.
   llvm::error_code parse(const LinkingContext &ctx, raw_ostream &diagnostics) {
-    if (error_code ec = readFile(ctx, diagnostics))
+    // Read the file to _buffer.
+    bool isYaml = false;
+    if (error_code ec = readFile(ctx, diagnostics, isYaml))
       return ec;
     (void) (_isWholeArchive);
     return llvm::error_code::success();

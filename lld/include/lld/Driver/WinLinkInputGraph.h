@@ -40,8 +40,11 @@ public:
   /// \brief Parse the input file to lld::File.
   error_code parse(const LinkingContext &ctx, raw_ostream &diagnostics) {
     // Read the file to _buffer.
-    if (error_code ec = readFile(ctx, diagnostics))
+    bool isYaml = false;
+    if (error_code ec = readFile(ctx, diagnostics, isYaml))
       return ec;
+    if (isYaml)
+      return error_code::success();
 
     llvm::sys::fs::file_magic FileType =
         llvm::sys::fs::identify_magic(_buffer->getBuffer());

@@ -99,7 +99,8 @@ FileNode::FileNode(StringRef path, int64_t ordinal)
 
 /// \brief Read the file into _buffer.
 error_code
-FileNode::readFile(const LinkingContext &ctx, raw_ostream &diagnostics) {
+FileNode::readFile(const LinkingContext &ctx, raw_ostream &diagnostics,
+                   bool &isYaml) {
   ErrorOr<StringRef> filePath = getPath(ctx);
   if (!filePath &&
       error_code(filePath) == llvm::errc::no_such_file_or_directory)
@@ -119,9 +120,11 @@ FileNode::readFile(const LinkingContext &ctx, raw_ostream &diagnostics) {
 
   // YAML file is identified by a .objtxt extension
   // FIXME : Identify YAML files by using a magic
-  if (filePath->endswith(".objtxt"))
+  if (filePath->endswith(".objtxt")) {
     if (error_code ec = ctx.getYAMLReader().parseFile(_buffer, _files))
       return ec;
+    isYaml = true;
+  }
   return error_code::success();
 }
 
