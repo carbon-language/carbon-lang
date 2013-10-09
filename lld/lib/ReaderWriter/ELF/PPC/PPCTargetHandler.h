@@ -15,7 +15,7 @@
 
 namespace lld {
 namespace elf {
-typedef llvm::object::ELFType<llvm::support::big, 4, false> PPCELFType;
+typedef llvm::object::ELFType<llvm::support::big, 2, false> PPCELFType;
 class PPCLinkingContext;
 
 class PPCTargetRelocationHandler LLVM_FINAL

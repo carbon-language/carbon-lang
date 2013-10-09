@@ -15,7 +15,7 @@
 
 namespace lld {
 namespace elf {
-typedef llvm::object::ELFType<llvm::support::little, 4, false> X86ELFType;
+typedef llvm::object::ELFType<llvm::support::little, 2, false> X86ELFType;
 class X86LinkingContext;
 
 class X86TargetRelocationHandler LLVM_FINAL

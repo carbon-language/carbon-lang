@@ -14,7 +14,7 @@
 
 namespace lld {
 namespace elf {
-typedef llvm::object::ELFType<llvm::support::little, 4, false> HexagonELFType;
+typedef llvm::object::ELFType<llvm::support::little, 2, false> HexagonELFType;
 class HexagonLinkingContext;
 
 template <class HexagonELFType> class HexagonRuntimeFile
