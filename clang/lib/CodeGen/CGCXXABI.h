@@ -234,6 +234,12 @@ public:
   virtual llvm::BasicBlock *EmitCtorCompleteObjectHandler(CodeGenFunction &CGF,
                                                           const CXXRecordDecl *RD);
 
+  /// Emit the code to initialize hidden members required
+  /// to handle virtual inheritance, if needed by the ABI.
+  virtual void
+  initializeHiddenVirtualInheritanceMembers(CodeGenFunction &CGF,
+                                            const CXXRecordDecl *RD) {}
+
   /// Emit constructor variants required by this ABI.
   virtual void EmitCXXConstructors(const CXXConstructorDecl *D) = 0;
 

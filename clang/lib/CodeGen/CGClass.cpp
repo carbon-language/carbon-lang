@@ -1992,6 +1992,9 @@ void CodeGenFunction::InitializeVTablePointers(const CXXRecordDecl *RD) {
                            /*NearestVBase=*/0, 
                            /*OffsetFromNearestVBase=*/CharUnits::Zero(),
                            /*BaseIsNonVirtualPrimaryBase=*/false, RD, VBases);
+
+  if (RD->getNumVBases())
+    CGM.getCXXABI().initializeHiddenVirtualInheritanceMembers(*this, RD);
 }
 
 llvm::Value *CodeGenFunction::GetVTablePtr(llvm::Value *This,
