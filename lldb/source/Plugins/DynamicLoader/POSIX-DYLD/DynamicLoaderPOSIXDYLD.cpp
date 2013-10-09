@@ -431,14 +431,30 @@ DynamicLoaderPOSIXDYLD::LoadAllCurrentModules()
     ModuleList module_list;
     
     if (!m_rendezvous.Resolve())
+    {
+        Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_DYNAMIC_LOADER));
+        if (log)
+            log->Printf("DynamicLoaderPOSIXDYLD::%s unable to resolve POSIX DYLD rendezvous address",
+                        __func__);
         return;
+    }
 
     for (I = m_rendezvous.begin(), E = m_rendezvous.end(); I != E; ++I)
     {
-        FileSpec file(I->path.c_str(), false);
+        const char *module_path = I->path.c_str();
+        FileSpec file(module_path, false);
         ModuleSP module_sp = LoadModuleAtAddress(file, I->base_addr);
         if (module_sp.get())
+        {
             module_list.Append(module_sp);
+        }
+        else
+        {
+            Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_DYNAMIC_LOADER));
+            if (log)
+                log->Printf("DynamicLoaderPOSIXDYLD::%s failed loading module %s at 0x%" PRIx64,
+                            __func__, module_path, I->base_addr);
+        }
     }
 
     m_process->GetTarget().ModulesDidLoad(module_list);
