@@ -522,10 +522,8 @@ RecognizableInstr::filter_ret RecognizableInstr::filter() const {
 
   // Filter out alternate forms of AVX instructions
   if (Name.find("_alt") != Name.npos ||
-      Name.find("XrYr") != Name.npos ||
       (Name.find("r64r") != Name.npos && Name.find("r64r64") == Name.npos) ||
       Name.find("_64mr") != Name.npos ||
-      Name.find("Xrr") != Name.npos ||
       Name.find("rr64") != Name.npos)
     return FILTER_WEAK;
 
@@ -541,8 +539,7 @@ RecognizableInstr::filter_ret RecognizableInstr::filter() const {
   if (Name == "PUSH64i16"         ||
       Name == "MOVPQI2QImr"       ||
       Name == "VMOVPQI2QImr"      ||
-      Name == "VMASKMOVDQU64"     ||
-      Name == "VEXTRACTPSrr64")
+      Name == "VMASKMOVDQU64")
     return FILTER_WEAK;
 
   // XACQUIRE and XRELEASE reuse REPNE and REP respectively.
