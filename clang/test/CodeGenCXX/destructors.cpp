@@ -6,9 +6,15 @@
 // CHECK: @_ZN5test11OD2Ev = alias {{.*}} @_ZN5test11AD2Ev
 // CHECK: @_ZN5test11SD2Ev = alias bitcast {{.*}} @_ZN5test11AD2Ev
 
+// CHECK: @_ZN6test106foobarIvEC1Ev = alias weak_odr void (%"struct.test10::foobar"*)* @_ZN6test106foobarIvEC2Ev
+
+// CHECK: @_ZN6test116foobarIvEC1Ev = alias linkonce_odr void (%"struct.test11::foobar"*)* @_ZN6test116foobarIvEC2Ev
+
 // CHECK: @_ZN5test312_GLOBAL__N_11DD1Ev = alias internal {{.*}} @_ZN5test312_GLOBAL__N_11DD2Ev
 // CHECK: @_ZN5test312_GLOBAL__N_11DD2Ev = alias internal bitcast {{.*}} @_ZN5test312_GLOBAL__N_11CD2Ev
 // CHECK: @_ZN5test312_GLOBAL__N_11CD1Ev = alias internal {{.*}} @_ZN5test312_GLOBAL__N_11CD2Ev
+
+// CHECK: @_ZN6PR752617allocator_derivedD1Ev = alias linkonce_odr void (%"struct.PR7526::allocator_derived"*)* @_ZN6PR752617allocator_derivedD2Ev
 
 struct A {
   int a;
@@ -44,9 +50,6 @@ namespace PR7526 {
   // CHECK: call void @__cxa_call_unexpected
   allocator::~allocator() throw() { foo(); }
 
-  // CHECK-LABEL: define linkonce_odr void @_ZN6PR752617allocator_derivedD1Ev(%"struct.PR7526::allocator_derived"* %this) unnamed_addr
-  // CHECK-NOT: call void @__cxa_call_unexpected
-  // CHECK:     }
   void foo() {
     allocator_derived ad;
   }
@@ -419,3 +422,25 @@ namespace test9 {
   // CHECK: ret void
 
   // CHECK: attributes [[NUW]] = {{[{].*}} nounwind {{.*[}]}}
+
+
+namespace test10 {
+  template<typename T>
+  struct foobar {
+    foobar() {
+    }
+  };
+
+  template struct foobar<void>;
+}
+
+namespace test11 {
+  void g();
+  template<typename T>
+  struct foobar {
+    foobar() {
+      g();
+    }
+  };
+  foobar<void> x;
+}
