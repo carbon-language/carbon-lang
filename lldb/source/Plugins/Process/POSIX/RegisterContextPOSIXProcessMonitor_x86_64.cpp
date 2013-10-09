@@ -10,6 +10,7 @@
 #include "lldb/Target/Thread.h"
 #include "lldb/Core/RegisterValue.h"
 
+#include "RegisterContextPOSIX_i386.h"
 #include "ProcessPOSIX.h"
 #include "RegisterContextPOSIXProcessMonitor_x86_64.h"
 #include "ProcessMonitor.h"
@@ -22,12 +23,13 @@ using namespace lldb;
   #define NT_X86_XSTATE 0x202
 #endif
 
-#define REG_CONTEXT_SIZE (GetGPRSize() + sizeof(RegisterContextPOSIX_x86_64::FPR))
+#define REG_CONTEXT_SIZE (GetGPRSize() + sizeof(FPR))
 
 static uint32_t
 size_and_rw_bits(size_t size, bool read, bool write)
 {
     uint32_t rw;
+
     if (read)
         rw = 0x3; // READ or READ/WRITE
     else if (write)
@@ -69,17 +71,17 @@ bool
 RegisterContextPOSIXProcessMonitor_x86_64::ReadGPR()
 {
      ProcessMonitor &monitor = GetMonitor();
-     return monitor.ReadGPR(m_thread.GetID(), &m_gpr, GetGPRSize());
+     return monitor.ReadGPR(m_thread.GetID(), &m_gpr_x86_64, GetGPRSize());
 }
 
 bool
 RegisterContextPOSIXProcessMonitor_x86_64::ReadFPR()
 {
     ProcessMonitor &monitor = GetMonitor();
-    if (m_fpr_type == eFXSAVE)
+    if (GetFPRType() == eFXSAVE)
         return monitor.ReadFPR(m_thread.GetID(), &m_fpr.xstate.fxsave, sizeof(m_fpr.xstate.fxsave));
 
-    if (m_fpr_type == eXSAVE)
+    if (GetFPRType() == eXSAVE)
         return monitor.ReadRegisterSet(m_thread.GetID(), &m_iovec, sizeof(m_fpr.xstate.xsave), NT_X86_XSTATE);
     return false;
 }
@@ -88,17 +90,17 @@ bool
 RegisterContextPOSIXProcessMonitor_x86_64::WriteGPR()
 {
     ProcessMonitor &monitor = GetMonitor();
-    return monitor.WriteGPR(m_thread.GetID(), &m_gpr, GetGPRSize());
+    return monitor.WriteGPR(m_thread.GetID(), &m_gpr_x86_64, GetGPRSize());
 }
 
 bool
 RegisterContextPOSIXProcessMonitor_x86_64::WriteFPR()
 {
     ProcessMonitor &monitor = GetMonitor();
-    if (m_fpr_type == eFXSAVE)
+    if (GetFPRType() == eFXSAVE)
         return monitor.WriteFPR(m_thread.GetID(), &m_fpr.xstate.fxsave, sizeof(m_fpr.xstate.fxsave));
 
-    if (m_fpr_type == eXSAVE)
+    if (GetFPRType() == eXSAVE)
         return monitor.WriteRegisterSet(m_thread.GetID(), &m_iovec, sizeof(m_fpr.xstate.xsave), NT_X86_XSTATE);
     return false;
 }
@@ -119,11 +121,54 @@ bool
 RegisterContextPOSIXProcessMonitor_x86_64::WriteRegister(const unsigned reg,
                                                          const RegisterValue &value)
 {
+    unsigned reg_to_write = reg;
+    RegisterValue value_to_write = value;
+
+    // Check if this is a subregister of a full register.
+    const RegisterInfo *reg_info = GetRegisterInfoAtIndex(reg);
+    if (reg_info->invalidate_regs && (reg_info->invalidate_regs[0] != LLDB_INVALID_REGNUM))
+    {
+        RegisterValue full_value;
+        uint32_t full_reg = reg_info->invalidate_regs[0];
+        const RegisterInfo *full_reg_info = GetRegisterInfoAtIndex(full_reg);
+
+        // Read the full register.
+        if (ReadRegister(full_reg_info, full_value))
+        {
+            Error error;
+            ByteOrder byte_order = GetByteOrder();
+            uint8_t dst[RegisterValue::kMaxRegisterByteSize];
+
+            // Get the bytes for the full register.
+            const uint32_t dest_size = full_value.GetAsMemoryData (full_reg_info, 
+                                                                   dst, 
+                                                                   sizeof(dst), 
+                                                                   byte_order, 
+                                                                   error);
+            if (error.Success() && dest_size)
+            {
+                uint8_t src[RegisterValue::kMaxRegisterByteSize];
+
+                // Get the bytes for the source data.
+                const uint32_t src_size = value.GetAsMemoryData (reg_info, src, sizeof(src), byte_order, error);
+                if (error.Success() && src_size && (src_size < dest_size))
+                {
+                    // Copy the src bytes to the destination.
+                    memcpy (dst + (reg_info->byte_offset & 0x1), src, src_size);
+                    // Set this full register as the value to write.
+                    value_to_write.SetBytes(dst, full_value.GetByteSize(), byte_order);
+                    value_to_write.SetType(full_reg_info);
+                    reg_to_write = full_reg;
+                }
+            }
+        }
+    }
+
     ProcessMonitor &monitor = GetMonitor();
     return monitor.WriteRegisterValue(m_thread.GetID(),
-                                      GetRegisterOffset(reg),
-                                      GetRegisterName(reg),
-                                      value);
+                                      GetRegisterOffset(reg_to_write),
+                                      GetRegisterName(reg_to_write),
+                                      value_to_write);
 }
 
 bool
@@ -141,12 +186,28 @@ RegisterContextPOSIXProcessMonitor_x86_64::ReadRegister(const RegisterInfo *reg_
     }
     else
     {
-        bool success = ReadRegister(reg, value);
+        uint32_t full_reg = reg;
+        bool is_subreg = reg_info->invalidate_regs && (reg_info->invalidate_regs[0] != LLDB_INVALID_REGNUM);
 
-        // If an i386 register should be parsed from an x86_64 register...
-        if (success && reg >= k_first_i386 && reg <= k_last_i386)
+        if (is_subreg)
+        {
+            // Read the full aligned 64-bit register.
+            full_reg = reg_info->invalidate_regs[0];
+        }
+
+        bool success = ReadRegister(full_reg, value);
+
+        if (success)
+        {
+            // If our read was not aligned (for ah,bh,ch,dh), shift our returned value one byte to the right.
+            if (is_subreg && (reg_info->byte_offset & 0x1))
+                value.SetUInt64(value.GetAsUInt64() >> 8);
+
+            // If our return byte size was greater than the return value reg size, then
+            // use the type specified by reg_info rather than the uint64_t default
             if (value.GetByteSize() > reg_info->byte_size)
-                value.SetType(reg_info); // ...use the type specified by reg_info rather than the uint64_t default
+                value.SetType(reg_info);
+        }
         return success; 
     }
 
@@ -156,15 +217,17 @@ RegisterContextPOSIXProcessMonitor_x86_64::ReadRegister(const RegisterInfo *reg_
 
         if (byte_order != ByteOrder::eByteOrderInvalid)
         {
-            if (reg >= fpu_stmm0 && reg <= fpu_stmm7)
-               value.SetBytes(m_fpr.xstate.fxsave.stmm[reg - fpu_stmm0].bytes, reg_info->byte_size, byte_order);
-            if (reg >= fpu_xmm0 && reg <= fpu_xmm15)
-                value.SetBytes(m_fpr.xstate.fxsave.xmm[reg - fpu_xmm0].bytes, reg_info->byte_size, byte_order);
-            if (reg >= fpu_ymm0 && reg <= fpu_ymm15)
+            if (reg >= m_reg_info.first_st && reg <= m_reg_info.last_st)
+               value.SetBytes(m_fpr.xstate.fxsave.stmm[reg - m_reg_info.first_st].bytes, reg_info->byte_size, byte_order);
+            if (reg >= m_reg_info.first_mm && reg <= m_reg_info.last_mm)
+               value.SetBytes(m_fpr.xstate.fxsave.stmm[reg - m_reg_info.first_mm].bytes, reg_info->byte_size, byte_order);
+            if (reg >= m_reg_info.first_xmm && reg <= m_reg_info.last_xmm)
+                value.SetBytes(m_fpr.xstate.fxsave.xmm[reg - m_reg_info.first_xmm].bytes, reg_info->byte_size, byte_order);
+            if (reg >= m_reg_info.first_ymm && reg <= m_reg_info.last_ymm)
             {
                 // Concatenate ymm using the register halves in xmm.bytes and ymmh.bytes
                 if (GetFPRType() == eXSAVE && CopyXSTATEtoYMM(reg, byte_order))
-                    value.SetBytes(m_ymm_set.ymm[reg - fpu_ymm0].bytes, reg_info->byte_size, byte_order);
+                    value.SetBytes(m_ymm_set.ymm[reg - m_reg_info.first_ymm].bytes, reg_info->byte_size, byte_order);
                 else
                     return false;
             }
@@ -173,95 +236,80 @@ RegisterContextPOSIXProcessMonitor_x86_64::ReadRegister(const RegisterInfo *reg_
         return false;
     }
 
-    // Note that lldb uses slightly different naming conventions from sys/user.h
-    switch (reg)
+    // Get pointer to m_fpr.xstate.fxsave variable and set the data from it.
+    assert (reg_info->byte_offset < sizeof(m_fpr));
+    uint8_t *src = (uint8_t *)&m_fpr + reg_info->byte_offset; 
+    switch (reg_info->byte_size)
     {
-    default:
-        return false;
-    case fpu_dp:
-        value = m_fpr.xstate.fxsave.dp;
-        break;
-    case fpu_fcw:
-        value = m_fpr.xstate.fxsave.fcw;
-        break;
-    case fpu_fsw:
-        value = m_fpr.xstate.fxsave.fsw;
-        break;
-    case fpu_ip:
-        value = m_fpr.xstate.fxsave.ip;
-        break;
-    case fpu_fop:
-        value = m_fpr.xstate.fxsave.fop;
-        break;
-    case fpu_ftw:
-        value = m_fpr.xstate.fxsave.ftw;
-        break;
-    case fpu_mxcsr:
-        value = m_fpr.xstate.fxsave.mxcsr;
-        break;
-    case fpu_mxcsrmask:
-        value = m_fpr.xstate.fxsave.mxcsrmask;
-        break;
+        case 2:
+            value.SetUInt16(*(uint16_t *)src);
+            return true;
+        case 4:
+            value.SetUInt32(*(uint32_t *)src);
+            return true;
+        case 8:
+            value.SetUInt64(*(uint64_t *)src);
+            return true;
+        default:
+            assert(false && "Unhandled data size.");
+            return false;
     }
-    return true;
 }
 
 bool
 RegisterContextPOSIXProcessMonitor_x86_64::WriteRegister(const RegisterInfo *reg_info, const RegisterValue &value)
 {
     const uint32_t reg = reg_info->kinds[eRegisterKindLLDB];
+
     if (IsGPR(reg))
         return WriteRegister(reg, value);
 
     if (IsFPR(reg, GetFPRType()))
     {
-        switch (reg)
+        if (reg_info->encoding == eEncodingVector)
         {
-        default:
-            if (reg_info->encoding != eEncodingVector)
-                return false;
+            if (reg >= m_reg_info.first_st && reg <= m_reg_info.last_st)
+               ::memcpy (m_fpr.xstate.fxsave.stmm[reg - m_reg_info.first_st].bytes, value.GetBytes(), value.GetByteSize());
 
-            if (reg >= fpu_stmm0 && reg <= fpu_stmm7)
-               ::memcpy (m_fpr.xstate.fxsave.stmm[reg - fpu_stmm0].bytes, value.GetBytes(), value.GetByteSize());
+            if (reg >= m_reg_info.first_mm && reg <= m_reg_info.last_mm)
+               ::memcpy (m_fpr.xstate.fxsave.stmm[reg - m_reg_info.first_mm].bytes, value.GetBytes(), value.GetByteSize());
+ 
+            if (reg >= m_reg_info.first_xmm && reg <= m_reg_info.last_xmm)
+               ::memcpy (m_fpr.xstate.fxsave.xmm[reg - m_reg_info.first_xmm].bytes, value.GetBytes(), value.GetByteSize());
             
-            if (reg >= fpu_xmm0 && reg <= fpu_xmm15)
-               ::memcpy (m_fpr.xstate.fxsave.xmm[reg - fpu_xmm0].bytes, value.GetBytes(), value.GetByteSize());
-            
-            if (reg >= fpu_ymm0 && reg <= fpu_ymm15) {
+            if (reg >= m_reg_info.first_ymm && reg <= m_reg_info.last_ymm)
+            {
                if (GetFPRType() != eXSAVE)
                    return false; // the target processor does not support AVX
 
                // Store ymm register content, and split into the register halves in xmm.bytes and ymmh.bytes
-               ::memcpy (m_ymm_set.ymm[reg - fpu_ymm0].bytes, value.GetBytes(), value.GetByteSize());
+               ::memcpy (m_ymm_set.ymm[reg - m_reg_info.first_ymm].bytes, value.GetBytes(), value.GetByteSize());
                if (false == CopyYMMtoXSTATE(reg, GetByteOrder()))
                    return false;
             }
-            break;
-        case fpu_dp:
-            m_fpr.xstate.fxsave.dp = value.GetAsUInt64();
-            break;
-        case fpu_fcw:
-            m_fpr.xstate.fxsave.fcw = value.GetAsUInt16();
-            break;
-        case fpu_fsw:
-            m_fpr.xstate.fxsave.fsw = value.GetAsUInt16();
-            break;
-        case fpu_ip:
-            m_fpr.xstate.fxsave.ip = value.GetAsUInt64();
-            break;
-        case fpu_fop:
-            m_fpr.xstate.fxsave.fop = value.GetAsUInt16();
-            break;
-        case fpu_ftw:
-            m_fpr.xstate.fxsave.ftw = value.GetAsUInt16();
-            break;
-        case fpu_mxcsr:
-            m_fpr.xstate.fxsave.mxcsr = value.GetAsUInt32();
-            break;
-        case fpu_mxcsrmask:
-            m_fpr.xstate.fxsave.mxcsrmask = value.GetAsUInt32();
-            break;
         }
+        else
+        {
+            // Get pointer to m_fpr.xstate.fxsave variable and set the data to it.
+            assert (reg_info->byte_offset < sizeof(m_fpr));
+            uint8_t *dst = (uint8_t *)&m_fpr + reg_info->byte_offset; 
+            switch (reg_info->byte_size)
+            {
+                case 2:
+                    *(uint16_t *)dst = value.GetAsUInt16();
+                    break;
+                case 4:
+                    *(uint32_t *)dst = value.GetAsUInt32();
+                    break;
+                case 8:
+                    *(uint64_t *)dst = value.GetAsUInt64();
+                    break;
+                default:
+                    assert(false && "Unhandled data size.");
+                    return false;
+            }
+        }
+
         if (WriteFPR())
         {
             if (IsAVX(reg))
@@ -284,20 +332,22 @@ RegisterContextPOSIXProcessMonitor_x86_64::ReadAllRegisterValues(DataBufferSP &d
 
         if (success)
         {
-            ::memcpy (dst, &m_gpr, GetGPRSize());
+            ::memcpy (dst, &m_gpr_x86_64, GetGPRSize());
             dst += GetGPRSize();
         }
         if (GetFPRType() == eFXSAVE)
             ::memcpy (dst, &m_fpr.xstate.fxsave, sizeof(m_fpr.xstate.fxsave));
         
-        if (GetFPRType() == eXSAVE) {
+        if (GetFPRType() == eXSAVE)
+        {
             ByteOrder byte_order = GetByteOrder();
 
             // Assemble the YMM register content from the register halves.
-            for (uint32_t reg = fpu_ymm0; success && reg <= fpu_ymm15; ++reg)
+            for (uint32_t reg  = m_reg_info.first_ymm; success && reg <= m_reg_info.last_ymm; ++reg)
                 success = CopyXSTATEtoYMM(reg, byte_order);
 
-            if (success) {
+            if (success)
+            {
                 // Copy the extended register state including the assembled ymm registers.
                 ::memcpy (dst, &m_fpr, sizeof(m_fpr));
             }
@@ -315,7 +365,7 @@ RegisterContextPOSIXProcessMonitor_x86_64::WriteAllRegisterValues(const DataBuff
         uint8_t *src = data_sp->GetBytes();
         if (src)
         {
-            ::memcpy (&m_gpr, src, GetGPRSize());
+            ::memcpy (&m_gpr_x86_64, src, GetGPRSize());
 
             if (WriteGPR())
             {
@@ -335,7 +385,7 @@ RegisterContextPOSIXProcessMonitor_x86_64::WriteAllRegisterValues(const DataBuff
                         ByteOrder byte_order = GetByteOrder();
 
                         // Parse the YMM register content from the register halves.
-                        for (uint32_t reg = fpu_ymm0; success && reg <= fpu_ymm15; ++reg)
+                        for (uint32_t reg = m_reg_info.first_ymm; success && reg <= m_reg_info.last_ymm; ++reg)
                             success = CopyYMMtoXSTATE(reg, byte_order);
                     }
                 }
@@ -370,11 +420,11 @@ RegisterContextPOSIXProcessMonitor_x86_64::ClearHardwareWatchpoint(uint32_t hw_i
     {
         RegisterValue current_dr7_bits;
 
-        if (ReadRegister(dr7, current_dr7_bits))
+        if (ReadRegister(m_reg_info.first_dr + 7, current_dr7_bits))
         {
             uint64_t new_dr7_bits = current_dr7_bits.GetAsUInt64() & ~(3 << (2*hw_index));
 
-            if (WriteRegister(dr7, RegisterValue(new_dr7_bits)))
+            if (WriteRegister(m_reg_info.first_dr + 7, RegisterValue(new_dr7_bits)))
                 return true;
         }
     }
@@ -388,7 +438,7 @@ RegisterContextPOSIXProcessMonitor_x86_64::HardwareSingleStep(bool enable)
     enum { TRACE_BIT = 0x100 };
     uint64_t rflags;
 
-    if ((rflags = ReadRegisterAsUnsigned(gpr_rflags, -1UL)) == -1UL)
+    if ((rflags = ReadRegisterAsUnsigned(m_reg_info.gpr_flags, -1UL)) == -1UL)
         return false;
     
     if (enable)
@@ -406,7 +456,7 @@ RegisterContextPOSIXProcessMonitor_x86_64::HardwareSingleStep(bool enable)
         rflags &= ~TRACE_BIT;
     }
 
-    return WriteRegisterFromUnsigned(gpr_rflags, rflags);
+    return WriteRegisterFromUnsigned(m_reg_info.gpr_flags, rflags);
 }
 
 bool
@@ -426,12 +476,12 @@ unsigned
 RegisterContextPOSIXProcessMonitor_x86_64::GetRegisterIndexFromOffset(unsigned offset)
 {
     unsigned reg;
-    for (reg = 0; reg < k_num_registers; reg++)
+    for (reg = 0; reg < m_reg_info.num_registers; reg++)
     {
         if (GetRegisterInfo()[reg].byte_offset == offset)
             break;
     }
-    assert(reg < k_num_registers && "Invalid register offset.");
+    assert(reg < m_reg_info.num_registers && "Invalid register offset.");
     return reg;
 }
 
@@ -444,7 +494,7 @@ RegisterContextPOSIXProcessMonitor_x86_64::IsWatchpointHit(uint32_t hw_index)
     {    
         // Reset the debug status and debug control registers
         RegisterValue zero_bits = RegisterValue(uint64_t(0));
-        if (!WriteRegister(dr6, zero_bits) || !WriteRegister(dr7, zero_bits))
+        if (!WriteRegister(m_reg_info.first_dr + 6, zero_bits) || !WriteRegister(m_reg_info.first_dr + 7, zero_bits))
             assert(false && "Could not initialize watchpoint registers");
         m_watchpoints_initialized = true;
     }    
@@ -453,7 +503,7 @@ RegisterContextPOSIXProcessMonitor_x86_64::IsWatchpointHit(uint32_t hw_index)
     {    
         RegisterValue value;
 
-        if (ReadRegister(dr6, value))
+        if (ReadRegister(m_reg_info.first_dr + 6, value))
         {    
             uint64_t val = value.GetAsUInt64();
             is_hit = val & (1 << hw_index);
@@ -466,7 +516,7 @@ RegisterContextPOSIXProcessMonitor_x86_64::IsWatchpointHit(uint32_t hw_index)
 bool
 RegisterContextPOSIXProcessMonitor_x86_64::ClearWatchpointHits()
 {
-    return WriteRegister(dr6, RegisterValue((uint64_t)0));
+    return WriteRegister(m_reg_info.first_dr + 6, RegisterValue((uint64_t)0));
 }
 
 addr_t
@@ -480,7 +530,7 @@ RegisterContextPOSIXProcessMonitor_x86_64::GetWatchpointAddress(uint32_t hw_inde
         {
             RegisterValue value;
 
-            if (ReadRegister(dr0 + hw_index, value))
+            if (ReadRegister(m_reg_info.first_dr + hw_index, value))
                 wp_monitor_addr = value.GetAsUInt64();
         }
     }
@@ -500,12 +550,12 @@ RegisterContextPOSIXProcessMonitor_x86_64::IsWatchpointVacant(uint32_t hw_index)
     {
         // Reset the debug status and debug control registers
         RegisterValue zero_bits = RegisterValue(uint64_t(0));
-        if (!WriteRegister(dr6, zero_bits) || !WriteRegister(dr7, zero_bits))
+        if (!WriteRegister(m_reg_info.first_dr + 6, zero_bits) || !WriteRegister(m_reg_info.first_dr + 7, zero_bits))
             assert(false && "Could not initialize watchpoint registers");
         m_watchpoints_initialized = true;
     }
 
-    if (ReadRegister(dr7, value))
+    if (ReadRegister(m_reg_info.first_dr + 7, value))
     {
         uint64_t val = value.GetAsUInt64();
         is_vacant = (val & (3 << 2*hw_index)) == 0;
@@ -535,7 +585,7 @@ RegisterContextPOSIXProcessMonitor_x86_64::SetHardwareWatchpointWithIndex(addr_t
 
     // Set both dr7 (debug control register) and dri (debug address register).
 
-    // dr7{7-0} encodes the local/gloabl enable bits:
+    // dr7{7-0} encodes the local/global enable bits:
     //  global enable --. .-- local enable
     //                  | |
     //                  v v
@@ -560,15 +610,15 @@ RegisterContextPOSIXProcessMonitor_x86_64::SetHardwareWatchpointWithIndex(addr_t
     {
         RegisterValue current_dr7_bits;
 
-        if (ReadRegister(dr7, current_dr7_bits))
+        if (ReadRegister(m_reg_info.first_dr + 7, current_dr7_bits))
         {
             uint64_t new_dr7_bits = current_dr7_bits.GetAsUInt64() |
                                     (1 << (2*hw_index) |
                                     size_and_rw_bits(size, read, write) <<
                                     (16+4*hw_index));
 
-            if (WriteRegister(dr0 + hw_index, RegisterValue(addr)) &&
-                WriteRegister(dr7, RegisterValue(new_dr7_bits)))
+            if (WriteRegister(m_reg_info.first_dr + hw_index, RegisterValue(addr)) &&
+                WriteRegister(m_reg_info.first_dr + 7, RegisterValue(new_dr7_bits)))
                 return true;
         }
     }
@@ -582,3 +632,4 @@ RegisterContextPOSIXProcessMonitor_x86_64::NumSupportedHardwareWatchpoints()
     // Available debug address registers: dr0, dr1, dr2, dr3
     return 4;
 }
+

@@ -7,36 +7,14 @@
 //
 //===---------------------------------------------------------------------===//
 
-#include "llvm/Support/Compiler.h"
+#include <vector>
+#include "RegisterContextPOSIX_i386.h"
 #include "RegisterContextPOSIX_x86_64.h"
+#include "RegisterContextLinux_i386.h"
 #include "RegisterContextLinux_x86_64.h"
 
 using namespace lldb_private;
-
-// Computes the offset of the given GPR in the user data area.
-#define GPR_OFFSET(regname)                                                 \
-    (offsetof(GPR, regname))
-
-// Update the Linux specific information (offset and size).
-#define UPDATE_GPR_INFO(reg)                                                \
-do {                                                                        \
-    m_register_infos[gpr_##reg].byte_size = sizeof(GPR::reg);               \
-    m_register_infos[gpr_##reg].byte_offset = GPR_OFFSET(reg);              \
-} while(false);
-
-#define UPDATE_I386_GPR_INFO(i386_reg, reg)                                 \
-do {                                                                        \
-    m_register_infos[gpr_##i386_reg].byte_offset = GPR_OFFSET(reg);         \
-} while(false);
-
-#define DR_OFFSET(reg_index)                                                \
-    (LLVM_EXTENSION offsetof(UserArea, u_debugreg[reg_index]))
-
-#define UPDATE_DR_INFO(reg_index)                                                \
-do {                                                                             \
-    m_register_infos[dr##reg_index].byte_size = sizeof(UserArea::u_debugreg[0]); \
-    m_register_infos[dr##reg_index].byte_offset = DR_OFFSET(reg_index);          \
-} while(false);
+using namespace lldb;
 
 typedef struct _GPR
 {
@@ -69,8 +47,6 @@ typedef struct _GPR
     uint64_t gs;
 } GPR;
 
-typedef RegisterContextPOSIX_x86_64::FXSAVE FXSAVE;
-
 struct UserArea
 {
     GPR      gpr;           // General purpose registers.
@@ -94,7 +70,44 @@ struct UserArea
     uint64_t fault_address; // Control register CR3.
 };
 
-RegisterContextLinux_x86_64::RegisterContextLinux_x86_64()
+#define DR_SIZE sizeof(UserArea::u_debugreg[0])
+#define DR_OFFSET(reg_index) \
+    (LLVM_EXTENSION offsetof(UserArea, u_debugreg[reg_index]))
+
+//---------------------------------------------------------------------------
+// Include RegisterInfos_x86_64 to declare our g_register_infos_x86_64 structure.
+//---------------------------------------------------------------------------
+#define DECLARE_REGISTER_INFOS_X86_64_STRUCT
+#include "RegisterInfos_x86_64.h"
+#undef DECLARE_REGISTER_INFOS_X86_64_STRUCT
+
+static const RegisterInfo *
+GetRegisterInfo_i386(const lldb_private::ArchSpec &arch)
+{
+    static std::vector<lldb_private::RegisterInfo> g_register_infos;
+
+    // Allocate RegisterInfo only once
+    if (g_register_infos.empty())
+    {
+        // Copy the register information from base class
+        std::unique_ptr<RegisterContextLinux_i386> reg_interface(new RegisterContextLinux_i386 (arch));
+        const RegisterInfo *base_info = reg_interface->GetRegisterInfo();
+        g_register_infos.insert(g_register_infos.end(), &base_info[0], &base_info[k_num_registers_i386]);
+
+        //---------------------------------------------------------------------------
+        // Include RegisterInfos_x86_64 to update the g_register_infos structure
+        //  with x86_64 offsets.
+        //---------------------------------------------------------------------------
+        #define UPDATE_REGISTER_INFOS_I386_STRUCT_WITH_X86_64_OFFSETS
+        #include "RegisterInfos_x86_64.h"
+        #undef UPDATE_REGISTER_INFOS_I386_STRUCT_WITH_X86_64_OFFSETS
+    }
+
+    return &g_register_infos[0];
+}
+
+RegisterContextLinux_x86_64::RegisterContextLinux_x86_64(const ArchSpec &target_arch) :
+    RegisterInfoInterface(target_arch)
 {
 }
 
@@ -109,65 +122,19 @@ RegisterContextLinux_x86_64::GetGPRSize()
 }
 
 const RegisterInfo *
-RegisterContextLinux_x86_64::GetRegisterInfo(const RegisterInfo *base_info)
+RegisterContextLinux_x86_64::GetRegisterInfo()
 {
-    // Allocate RegisterInfo only once
-    if (m_register_infos.empty())
+    switch (m_target_arch.GetCore())
     {
-        // Copy the register information from base class
-        m_register_infos.insert(m_register_infos.end(), &base_info[0], &base_info[k_num_registers]);
-        // Update the Linux specific register information (offset and size).
-        UpdateRegisterInfo();
+        case ArchSpec::eCore_x86_32_i386:
+        case ArchSpec::eCore_x86_32_i486:
+        case ArchSpec::eCore_x86_32_i486sx:
+            return GetRegisterInfo_i386 (m_target_arch);
+        case ArchSpec::eCore_x86_64_x86_64:
+            return g_register_infos_x86_64;
+        default:
+            assert(false && "Unhandled target architecture.");
+            return NULL;
     }
-    return &m_register_infos[0];
-}
-
-void
-RegisterContextLinux_x86_64::UpdateRegisterInfo()
-{
-    UPDATE_GPR_INFO(rax);
-    UPDATE_GPR_INFO(rbx);
-    UPDATE_GPR_INFO(rcx);
-    UPDATE_GPR_INFO(rdx);
-    UPDATE_GPR_INFO(rdi);
-    UPDATE_GPR_INFO(rsi);
-    UPDATE_GPR_INFO(rbp);
-    UPDATE_GPR_INFO(rsp);
-    UPDATE_GPR_INFO(r8);
-    UPDATE_GPR_INFO(r9);
-    UPDATE_GPR_INFO(r10);
-    UPDATE_GPR_INFO(r11);
-    UPDATE_GPR_INFO(r12);
-    UPDATE_GPR_INFO(r13);
-    UPDATE_GPR_INFO(r14);
-    UPDATE_GPR_INFO(r15);
-    UPDATE_GPR_INFO(rip);
-    UPDATE_GPR_INFO(rflags);
-    UPDATE_GPR_INFO(cs);
-    UPDATE_GPR_INFO(fs);
-    UPDATE_GPR_INFO(gs);
-    UPDATE_GPR_INFO(ss);
-    UPDATE_GPR_INFO(ds);
-    UPDATE_GPR_INFO(es);
-
-    UPDATE_I386_GPR_INFO(eax, rax);
-    UPDATE_I386_GPR_INFO(ebx, rbx);
-    UPDATE_I386_GPR_INFO(ecx, rcx);
-    UPDATE_I386_GPR_INFO(edx, rdx);
-    UPDATE_I386_GPR_INFO(edi, rdi);
-    UPDATE_I386_GPR_INFO(esi, rsi);
-    UPDATE_I386_GPR_INFO(ebp, rbp);
-    UPDATE_I386_GPR_INFO(esp, rsp);
-    UPDATE_I386_GPR_INFO(eip, rip);
-    UPDATE_I386_GPR_INFO(eflags, rflags);
-
-    UPDATE_DR_INFO(0);
-    UPDATE_DR_INFO(1);
-    UPDATE_DR_INFO(2);
-    UPDATE_DR_INFO(3);
-    UPDATE_DR_INFO(4);
-    UPDATE_DR_INFO(5);
-    UPDATE_DR_INFO(6);
-    UPDATE_DR_INFO(7);
 }
 

@@ -21,249 +21,157 @@
 using namespace lldb_private;
 using namespace lldb;
 
-enum
+const uint32_t
+RegisterContextPOSIX_i386::g_gpr_regnums[] =
 {
-    k_first_gpr,
-    gpr_eax = k_first_gpr,
-    gpr_ebx,
-    gpr_ecx,
-    gpr_edx,
-    gpr_edi,
-    gpr_esi,
-    gpr_ebp,
-    gpr_esp,
-    gpr_ss,
-    gpr_eflags,
-#ifdef __FreeBSD__
-    gpr_orig_ax,
-#endif
-    gpr_eip,
-    gpr_cs,
-    gpr_ds,
-    gpr_es,
-    gpr_fs,
-    gpr_gs,
-    k_last_gpr = gpr_gs,
-
-    k_first_fpr,
-    fpu_fcw = k_first_fpr,
-    fpu_fsw,
-    fpu_ftw,
-    fpu_fop,
-    fpu_ip,
-    fpu_cs,
-    fpu_foo,
-    fpu_fos,
-    fpu_mxcsr,
-    fpu_stmm0,
-    fpu_stmm1,
-    fpu_stmm2,
-    fpu_stmm3,
-    fpu_stmm4,
-    fpu_stmm5,
-    fpu_stmm6,
-    fpu_stmm7,
-    fpu_xmm0,
-    fpu_xmm1,
-    fpu_xmm2,
-    fpu_xmm3,
-    fpu_xmm4,
-    fpu_xmm5,
-    fpu_xmm6,
-    fpu_xmm7,
-    k_last_fpr = fpu_xmm7,
-
-    k_num_registers,
-    k_num_gpr_registers = k_last_gpr - k_first_gpr + 1,
-    k_num_fpu_registers = k_last_fpr - k_first_fpr + 1
+    gpr_eax_i386,
+    gpr_ebx_i386,
+    gpr_ecx_i386,
+    gpr_edx_i386,
+    gpr_edi_i386,
+    gpr_esi_i386,
+    gpr_ebp_i386,
+    gpr_esp_i386,
+    gpr_eip_i386,
+    gpr_eflags_i386,
+    gpr_cs_i386,
+    gpr_fs_i386,
+    gpr_gs_i386,
+    gpr_ss_i386,
+    gpr_ds_i386,
+    gpr_es_i386,
+    gpr_ax_i386,
+    gpr_bx_i386,
+    gpr_cx_i386,
+    gpr_dx_i386,
+    gpr_di_i386,
+    gpr_si_i386,
+    gpr_bp_i386,
+    gpr_sp_i386,
+    gpr_ah_i386,
+    gpr_bh_i386,
+    gpr_ch_i386,
+    gpr_dh_i386,
+    gpr_al_i386,
+    gpr_bl_i386,
+    gpr_cl_i386,
+    gpr_dl_i386
 };
+static_assert((sizeof(RegisterContextPOSIX_i386::g_gpr_regnums) / sizeof(RegisterContextPOSIX_i386::g_gpr_regnums[0])) == k_num_gpr_registers_i386,
+    "g_gpr_regnums has wrong number of register infos");
+
+const uint32_t
+RegisterContextPOSIX_i386::g_fpu_regnums[] =
+{
+    fpu_fctrl_i386,
+    fpu_fstat_i386,
+    fpu_ftag_i386,
+    fpu_fop_i386,
+    fpu_fiseg_i386,
+    fpu_fioff_i386,
+    fpu_foseg_i386,
+    fpu_fooff_i386,
+    fpu_mxcsr_i386,
+    fpu_mxcsrmask_i386,
+    fpu_st0_i386,
+    fpu_st1_i386,
+    fpu_st2_i386,
+    fpu_st3_i386,
+    fpu_st4_i386,
+    fpu_st5_i386,
+    fpu_st6_i386,
+    fpu_st7_i386,
+    fpu_mm0_i386,
+    fpu_mm1_i386,
+    fpu_mm2_i386,
+    fpu_mm3_i386,
+    fpu_mm4_i386,
+    fpu_mm5_i386,
+    fpu_mm6_i386,
+    fpu_mm7_i386,
+    fpu_xmm0_i386,
+    fpu_xmm1_i386,
+    fpu_xmm2_i386,
+    fpu_xmm3_i386,
+    fpu_xmm4_i386,
+    fpu_xmm5_i386,
+    fpu_xmm6_i386,
+    fpu_xmm7_i386
+};
+static_assert((sizeof(RegisterContextPOSIX_i386::g_fpu_regnums) / sizeof(RegisterContextPOSIX_i386::g_fpu_regnums[0])) == k_num_fpr_registers_i386,
+    "g_gpr_regnums has wrong number of register infos");
+
+const uint32_t
+RegisterContextPOSIX_i386::g_avx_regnums[] =
+{
+    fpu_ymm0_i386,
+    fpu_ymm1_i386,
+    fpu_ymm2_i386,
+    fpu_ymm3_i386,
+    fpu_ymm4_i386,
+    fpu_ymm5_i386,
+    fpu_ymm6_i386,
+    fpu_ymm7_i386
+};
+static_assert((sizeof(RegisterContextPOSIX_i386::g_avx_regnums) / sizeof(RegisterContextPOSIX_i386::g_avx_regnums[0])) == k_num_avx_registers_i386,
+    "g_gpr_regnums has wrong number of register infos");
+
+uint32_t RegisterContextPOSIX_i386::g_contained_eax[] = { gpr_eax_i386, LLDB_INVALID_REGNUM };
+uint32_t RegisterContextPOSIX_i386::g_contained_ebx[] = { gpr_ebx_i386, LLDB_INVALID_REGNUM };
+uint32_t RegisterContextPOSIX_i386::g_contained_ecx[] = { gpr_ecx_i386, LLDB_INVALID_REGNUM };
+uint32_t RegisterContextPOSIX_i386::g_contained_edx[] = { gpr_edx_i386, LLDB_INVALID_REGNUM };
+uint32_t RegisterContextPOSIX_i386::g_contained_edi[] = { gpr_edi_i386, LLDB_INVALID_REGNUM };
+uint32_t RegisterContextPOSIX_i386::g_contained_esi[] = { gpr_esi_i386, LLDB_INVALID_REGNUM };
+uint32_t RegisterContextPOSIX_i386::g_contained_ebp[] = { gpr_ebp_i386, LLDB_INVALID_REGNUM };
+uint32_t RegisterContextPOSIX_i386::g_contained_esp[] = { gpr_esp_i386, LLDB_INVALID_REGNUM };
+
+uint32_t RegisterContextPOSIX_i386::g_invalidate_eax[] = { gpr_eax_i386, gpr_ax_i386, gpr_ah_i386,  gpr_al_i386, LLDB_INVALID_REGNUM };
+uint32_t RegisterContextPOSIX_i386::g_invalidate_ebx[] = { gpr_ebx_i386, gpr_bx_i386, gpr_bh_i386,  gpr_bl_i386, LLDB_INVALID_REGNUM };
+uint32_t RegisterContextPOSIX_i386::g_invalidate_ecx[] = { gpr_ecx_i386, gpr_cx_i386, gpr_ch_i386,  gpr_cl_i386, LLDB_INVALID_REGNUM };
+uint32_t RegisterContextPOSIX_i386::g_invalidate_edx[] = { gpr_edx_i386, gpr_dx_i386, gpr_dh_i386,  gpr_dl_i386, LLDB_INVALID_REGNUM };
+uint32_t RegisterContextPOSIX_i386::g_invalidate_edi[] = { gpr_edi_i386, gpr_di_i386, LLDB_INVALID_REGNUM };
+uint32_t RegisterContextPOSIX_i386::g_invalidate_esi[] = { gpr_esi_i386, gpr_si_i386, LLDB_INVALID_REGNUM };
+uint32_t RegisterContextPOSIX_i386::g_invalidate_ebp[] = { gpr_ebp_i386, gpr_bp_i386, LLDB_INVALID_REGNUM };
+uint32_t RegisterContextPOSIX_i386::g_invalidate_esp[] = { gpr_esp_i386, gpr_sp_i386, LLDB_INVALID_REGNUM };
 
 // Number of register sets provided by this context.
 enum
 {
-    k_num_register_sets = 2
-};
-
-static const
-uint32_t g_gpr_regnums[k_num_gpr_registers] =
-{
-    gpr_eax,
-    gpr_ebx,
-    gpr_ecx,
-    gpr_edx,
-    gpr_edi,
-    gpr_esi,
-    gpr_ebp,
-    gpr_esp,
-    gpr_ss,
-    gpr_eflags,
-#ifdef __FreeBSD__
-    gpr_orig_ax,
-#endif
-    gpr_eip,
-    gpr_cs,
-    gpr_ds,
-    gpr_es,
-    gpr_fs,
-    gpr_gs,
-};
-
-static const uint32_t
-g_fpu_regnums[k_num_fpu_registers] =
-{
-    fpu_fcw,
-    fpu_fsw,
-    fpu_ftw,
-    fpu_fop,
-    fpu_ip,
-    fpu_cs,
-    fpu_foo,
-    fpu_fos,
-    fpu_mxcsr,
-    fpu_stmm0,
-    fpu_stmm1,
-    fpu_stmm2,
-    fpu_stmm3,
-    fpu_stmm4,
-    fpu_stmm5,
-    fpu_stmm6,
-    fpu_stmm7,
-    fpu_xmm0,
-    fpu_xmm1,
-    fpu_xmm2,
-    fpu_xmm3,
-    fpu_xmm4,
-    fpu_xmm5,
-    fpu_xmm6,
-    fpu_xmm7,
+    k_num_extended_register_sets = 1,
+    k_num_register_sets = 3
 };
 
 static const RegisterSet
 g_reg_sets[k_num_register_sets] =
 {
-    { "General Purpose Registers", "gpr", k_num_gpr_registers, g_gpr_regnums },
-    { "Floating Point Registers",  "fpu", k_num_fpu_registers, g_fpu_regnums }
+    { "General Purpose Registers",  "gpr", k_num_gpr_registers_i386, RegisterContextPOSIX_i386::g_gpr_regnums },
+    { "Floating Point Registers",   "fpu", k_num_fpr_registers_i386, RegisterContextPOSIX_i386::g_fpu_regnums },
+    { "Advanced Vector Extensions", "avx", k_num_avx_registers_i386, RegisterContextPOSIX_i386::g_avx_regnums }
 };
 
-// Computes the offset of the given GPR in the user data area.
-#define GPR_OFFSET(regname) \
-    (offsetof(RegisterContextPOSIX_i386::UserArea, regs) + \
-     offsetof(RegisterContextPOSIX_i386::GPR, regname))
-
-// Computes the offset of the given FPR in the user data area.
-#define FPR_OFFSET(regname) \
-    (offsetof(RegisterContextPOSIX_i386::UserArea, i387) + \
-     offsetof(RegisterContextPOSIX_i386::FPU, regname))
-
-// Number of bytes needed to represent a GPR.
-#define GPR_SIZE(reg) sizeof(((RegisterContextPOSIX_i386::GPR*)NULL)->reg)
-
-// Number of bytes needed to represent a FPR.
-#define FPR_SIZE(reg) sizeof(((RegisterContextPOSIX_i386::FPU*)NULL)->reg)
-
-// Number of bytes needed to represent the i'th FP register.
-#define FP_SIZE sizeof(((RegisterContextPOSIX_i386::MMSReg*)NULL)->bytes)
-
-// Number of bytes needed to represent an XMM register.
-#define XMM_SIZE sizeof(RegisterContextPOSIX_i386::XMMReg)
-
-#define DEFINE_GPR(reg, alt, kind1, kind2, kind3, kind4)        \
-    { #reg, alt, GPR_SIZE(reg), GPR_OFFSET(reg), eEncodingUint, \
-      eFormatHex, { kind1, kind2, kind3, kind4, gpr_##reg }, NULL, NULL }
-
-#define DEFINE_FPR(reg, kind1, kind2, kind3, kind4)              \
-    { #reg, NULL, FPR_SIZE(reg), FPR_OFFSET(reg), eEncodingUint, \
-      eFormatHex, { kind1, kind2, kind3, kind4, fpu_##reg }, NULL, NULL }
-
-#define DEFINE_FP(reg, i)                                          \
-    { #reg#i, NULL, FP_SIZE, LLVM_EXTENSION FPR_OFFSET(reg[i]),    \
-      eEncodingVector, eFormatVectorOfUInt8,                       \
-      { dwarf_##reg##i, dwarf_##reg##i,                            \
-        LLDB_INVALID_REGNUM, gdb_##reg##i, fpu_##reg##i }, NULL, NULL }
-
-#define DEFINE_XMM(reg, i)                                         \
-    { #reg#i, NULL, XMM_SIZE, LLVM_EXTENSION FPR_OFFSET(reg[i]),   \
-       eEncodingVector, eFormatVectorOfUInt8,                      \
-      { dwarf_##reg##i, dwarf_##reg##i,                            \
-        LLDB_INVALID_REGNUM, gdb_##reg##i, fpu_##reg##i }, NULL, NULL }
-
-static RegisterInfo
-g_register_infos[k_num_registers] =
-{
-    // General purpose registers.
-    DEFINE_GPR(eax,    NULL,    gcc_eax,    dwarf_eax,    LLDB_INVALID_REGNUM,    gdb_eax),
-    DEFINE_GPR(ebx,    NULL,    gcc_ebx,    dwarf_ebx,    LLDB_INVALID_REGNUM,    gdb_ebx),
-    DEFINE_GPR(ecx,    NULL,    gcc_ecx,    dwarf_ecx,    LLDB_INVALID_REGNUM,    gdb_ecx),
-    DEFINE_GPR(edx,    NULL,    gcc_edx,    dwarf_edx,    LLDB_INVALID_REGNUM,    gdb_edx),
-    DEFINE_GPR(edi,    NULL,    gcc_edi,    dwarf_edi,    LLDB_INVALID_REGNUM,    gdb_edi),
-    DEFINE_GPR(esi,    NULL,    gcc_esi,    dwarf_esi,    LLDB_INVALID_REGNUM,    gdb_esi),
-    DEFINE_GPR(ebp,    "fp",    gcc_ebp,    dwarf_ebp,    LLDB_INVALID_REGNUM,    gdb_ebp),
-    DEFINE_GPR(esp,    "sp",    gcc_esp,    dwarf_esp,    LLDB_INVALID_REGNUM,    gdb_esp),
-    DEFINE_GPR(ss,     NULL,    LLDB_INVALID_REGNUM,     LLDB_INVALID_REGNUM,     LLDB_INVALID_REGNUM,    gdb_ss),
-    DEFINE_GPR(eflags, "flags", gcc_eflags, dwarf_eflags, LLDB_INVALID_REGNUM,    gdb_eflags),
-    DEFINE_GPR(eip,    "pc",    gcc_eip,    dwarf_eip,    LLDB_INVALID_REGNUM,    gdb_eip),
-    DEFINE_GPR(cs,     NULL,    LLDB_INVALID_REGNUM,     LLDB_INVALID_REGNUM,     LLDB_INVALID_REGNUM,    gdb_cs),
-    DEFINE_GPR(ds,     NULL,    LLDB_INVALID_REGNUM,     LLDB_INVALID_REGNUM,     LLDB_INVALID_REGNUM,    gdb_ds),
-    DEFINE_GPR(es,     NULL,    LLDB_INVALID_REGNUM,     LLDB_INVALID_REGNUM,     LLDB_INVALID_REGNUM,    gdb_es),
-    DEFINE_GPR(fs,     NULL,    LLDB_INVALID_REGNUM,     LLDB_INVALID_REGNUM,     LLDB_INVALID_REGNUM,    gdb_fs),
-    DEFINE_GPR(gs,     NULL,    LLDB_INVALID_REGNUM,     LLDB_INVALID_REGNUM,     LLDB_INVALID_REGNUM,    gdb_gs),
-
-    // Floating point registers.
-    DEFINE_FPR(fcw,       LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, gdb_fcw),
-    DEFINE_FPR(fsw,       LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, gdb_fsw),
-    DEFINE_FPR(ftw,       LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, gdb_ftw),
-    DEFINE_FPR(fop,       LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, gdb_fop),
-    DEFINE_FPR(ip,        LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, gdb_ip),
-    DEFINE_FPR(cs,        LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, gdb_fpu_cs),
-    DEFINE_FPR(foo,       LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, gdb_dp),
-    DEFINE_FPR(fos,       LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, gdb_fpu_ds),
-    DEFINE_FPR(mxcsr,     LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, gdb_mxcsr),
-
-    DEFINE_FP(stmm, 0),
-    DEFINE_FP(stmm, 1),
-    DEFINE_FP(stmm, 2),
-    DEFINE_FP(stmm, 3),
-    DEFINE_FP(stmm, 4),
-    DEFINE_FP(stmm, 5),
-    DEFINE_FP(stmm, 6),
-    DEFINE_FP(stmm, 7),
-
-    // XMM registers
-    DEFINE_XMM(xmm, 0),
-    DEFINE_XMM(xmm, 1),
-    DEFINE_XMM(xmm, 2),
-    DEFINE_XMM(xmm, 3),
-    DEFINE_XMM(xmm, 4),
-    DEFINE_XMM(xmm, 5),
-    DEFINE_XMM(xmm, 6),
-    DEFINE_XMM(xmm, 7),
-
-};
-
-#ifndef NDEBUG
-static size_t k_num_register_infos = (sizeof(g_register_infos)/sizeof(RegisterInfo));
-#endif
-
-unsigned RegisterContextPOSIX_i386::GetRegOffset(unsigned reg)
-{
-    assert(reg < k_num_registers && "Invalid register number.");
-    return g_register_infos[reg].byte_offset;
-}
-
-unsigned RegisterContextPOSIX_i386::GetRegSize(unsigned reg)
-{
-    assert(reg < k_num_registers && "Invalid register number.");
-    return g_register_infos[reg].byte_size;
-}
 
 RegisterContextPOSIX_i386::RegisterContextPOSIX_i386(Thread &thread,
-                                                     uint32_t concrete_frame_idx)
+                                                     uint32_t concrete_frame_idx,
+                                                     RegisterInfoInterface *register_info)
     : RegisterContext(thread, concrete_frame_idx)
 {
+    m_register_info_ap.reset(register_info);
 }
 
 RegisterContextPOSIX_i386::~RegisterContextPOSIX_i386()
 {
+}
+
+RegisterContextPOSIX_i386::FPRType RegisterContextPOSIX_i386::GetFPRType()
+{
+    if (m_fpr_type == eNotValid)
+    {
+        // TODO: Use assembly to call cpuid on the inferior and query ebx or ecx
+        m_fpr_type = eXSAVE; // extended floating-point registers, if available
+        if (false == ReadFPR())
+            m_fpr_type = eFXSAVE; // assume generic floating-point registers
+    }
+    return m_fpr_type;
 }
 
 void
@@ -276,19 +184,40 @@ RegisterContextPOSIX_i386::InvalidateAllRegisters()
 {
 }
 
+unsigned RegisterContextPOSIX_i386::GetRegisterOffset(unsigned reg)
+{
+    assert(reg < k_num_registers_i386 && "Invalid register number.");
+    return GetRegisterInfo()[reg].byte_offset;
+}
+
+unsigned RegisterContextPOSIX_i386::GetRegisterSize(unsigned reg)
+{
+    assert(reg < k_num_registers_i386 && "Invalid register number.");
+    return GetRegisterInfo()[reg].byte_size;
+}
+
+const RegisterInfo *
+RegisterContextPOSIX_i386::GetRegisterInfo()
+{
+    // Commonly, this method is overridden and g_register_infos is copied and specialized.
+    // So, use GetRegisterInfo() rather than g_register_infos in this scope.
+    return m_register_info_ap->GetRegisterInfo ();
+}
+
 size_t
 RegisterContextPOSIX_i386::GetRegisterCount()
 {
-    assert(k_num_register_infos == k_num_registers);
-    return k_num_registers;
+    size_t num_registers = k_num_gpr_registers_i386 + k_num_fpr_registers_i386;
+    if (GetFPRType() == eXSAVE)
+      return num_registers + k_num_avx_registers_i386;
+    return num_registers;
 }
 
 const RegisterInfo *
 RegisterContextPOSIX_i386::GetRegisterInfoAtIndex(size_t reg)
 {
-    assert(k_num_register_infos == k_num_registers);
-    if (reg < k_num_registers)
-        return &g_register_infos[reg];
+    if (reg < k_num_registers_i386)
+        return &GetRegisterInfo()[reg];
     else
         return NULL;
 }
@@ -308,24 +237,11 @@ RegisterContextPOSIX_i386::GetRegisterSet(size_t set)
         return NULL;
 }
 
-unsigned
-RegisterContextPOSIX_i386::GetRegisterIndexFromOffset(unsigned offset)
-{
-    unsigned reg;
-    for (reg = 0; reg < k_num_registers; reg++)
-    {
-        if (g_register_infos[reg].byte_offset == offset)
-            break;
-    }
-    assert(reg < k_num_registers && "Invalid register offset.");
-    return reg;
-}
-
 const char *
 RegisterContextPOSIX_i386::GetRegisterName(unsigned reg)
 {
-    assert(reg < k_num_registers && "Invalid register offset.");
-    return g_register_infos[reg].name;
+    assert(reg < k_num_registers_i386 && "Invalid register offset.");
+    return GetRegisterInfo()[reg].name;
 }
 
 bool
@@ -357,150 +273,23 @@ uint32_t
 RegisterContextPOSIX_i386::ConvertRegisterKindToRegisterNumber(uint32_t kind,
                                                                uint32_t num)
 {
-    if (kind == eRegisterKindGeneric)
-    {
-        switch (num)
-        {
-        case LLDB_REGNUM_GENERIC_PC:    return gpr_eip;
-        case LLDB_REGNUM_GENERIC_SP:    return gpr_esp;
-        case LLDB_REGNUM_GENERIC_FP:    return gpr_ebp;
-        case LLDB_REGNUM_GENERIC_FLAGS: return gpr_eflags;
-        case LLDB_REGNUM_GENERIC_RA:
-        default:
-            return LLDB_INVALID_REGNUM;
-        }
-    }
+    const uint32_t num_regs = GetRegisterCount();
 
-    if (kind == eRegisterKindGCC || kind == eRegisterKindDWARF)
+    assert (kind < kNumRegisterKinds);
+    for (uint32_t reg_idx = 0; reg_idx < num_regs; ++reg_idx)
     {
-        switch (num)
-        {
-        case dwarf_eax:  return gpr_eax;
-        case dwarf_edx:  return gpr_edx;
-        case dwarf_ecx:  return gpr_ecx;
-        case dwarf_ebx:  return gpr_ebx;
-        case dwarf_esi:  return gpr_esi;
-        case dwarf_edi:  return gpr_edi;
-        case dwarf_ebp:  return gpr_ebp;
-        case dwarf_esp:  return gpr_esp;
-        case dwarf_eip:  return gpr_eip;
-        case dwarf_xmm0: return fpu_xmm0;
-        case dwarf_xmm1: return fpu_xmm1;
-        case dwarf_xmm2: return fpu_xmm2;
-        case dwarf_xmm3: return fpu_xmm3;
-        case dwarf_xmm4: return fpu_xmm4;
-        case dwarf_xmm5: return fpu_xmm5;
-        case dwarf_xmm6: return fpu_xmm6;
-        case dwarf_xmm7: return fpu_xmm7;
-        case dwarf_stmm0: return fpu_stmm0;
-        case dwarf_stmm1: return fpu_stmm1;
-        case dwarf_stmm2: return fpu_stmm2;
-        case dwarf_stmm3: return fpu_stmm3;
-        case dwarf_stmm4: return fpu_stmm4;
-        case dwarf_stmm5: return fpu_stmm5;
-        case dwarf_stmm6: return fpu_stmm6;
-        case dwarf_stmm7: return fpu_stmm7;
-        default:
-            return LLDB_INVALID_REGNUM;
-        }
-    }
+        const RegisterInfo *reg_info = GetRegisterInfoAtIndex (reg_idx);
 
-    if (kind == eRegisterKindGDB)
-    {
-        switch (num)
-        {
-        case gdb_eax     : return gpr_eax;
-        case gdb_ebx     : return gpr_ebx;
-        case gdb_ecx     : return gpr_ecx;
-        case gdb_edx     : return gpr_edx;
-        case gdb_esi     : return gpr_esi;
-        case gdb_edi     : return gpr_edi;
-        case gdb_ebp     : return gpr_ebp;
-        case gdb_esp     : return gpr_esp;
-        case gdb_eip     : return gpr_eip;
-        case gdb_eflags  : return gpr_eflags;
-        case gdb_cs      : return gpr_cs;
-        case gdb_ss      : return gpr_ss;
-        case gdb_ds      : return gpr_ds;
-        case gdb_es      : return gpr_es;
-        case gdb_fs      : return gpr_fs;
-        case gdb_gs      : return gpr_gs;
-        case gdb_stmm0   : return fpu_stmm0;
-        case gdb_stmm1   : return fpu_stmm1;
-        case gdb_stmm2   : return fpu_stmm2;
-        case gdb_stmm3   : return fpu_stmm3;
-        case gdb_stmm4   : return fpu_stmm4;
-        case gdb_stmm5   : return fpu_stmm5;
-        case gdb_stmm6   : return fpu_stmm6;
-        case gdb_stmm7   : return fpu_stmm7;
-        case gdb_fcw     : return fpu_fcw;
-        case gdb_fsw     : return fpu_fsw;
-        case gdb_ftw     : return fpu_ftw;
-        case gdb_fpu_cs  : return fpu_cs;
-        case gdb_ip      : return fpu_ip;
-        case gdb_fpu_ds  : return fpu_fos;
-        case gdb_dp      : return fpu_foo;
-        case gdb_fop     : return fpu_fop;
-        case gdb_xmm0    : return fpu_xmm0;
-        case gdb_xmm1    : return fpu_xmm1;
-        case gdb_xmm2    : return fpu_xmm2;
-        case gdb_xmm3    : return fpu_xmm3;
-        case gdb_xmm4    : return fpu_xmm4;
-        case gdb_xmm5    : return fpu_xmm5;
-        case gdb_xmm6    : return fpu_xmm6;
-        case gdb_xmm7    : return fpu_xmm7;
-        case gdb_mxcsr   : return fpu_mxcsr;
-        default:
-            return LLDB_INVALID_REGNUM;
-        }
-    }
-    else if (kind == eRegisterKindLLDB)
-    {
-        return num;
+        if (reg_info->kinds[kind] == num)
+            return reg_idx;
     }
 
     return LLDB_INVALID_REGNUM;
+
 }
 
 bool
 RegisterContextPOSIX_i386::HardwareSingleStep(bool enable)
 {
-    enum { TRACE_BIT = 0x100 };
-    uint64_t eflags;
-
-    if ((eflags = ReadRegisterAsUnsigned(gpr_eflags, -1UL)) == -1UL)
-        return false;
-
-    if (enable)
-    {
-        if (eflags & TRACE_BIT)
-            return true;
-
-        eflags |= TRACE_BIT;
-    }
-    else
-    {
-        if (!(eflags & TRACE_BIT))
-            return false;
-
-        eflags &= ~TRACE_BIT;
-    }
-
-    return WriteRegisterFromUnsigned(gpr_eflags, eflags);
-}
-
-void
-RegisterContextPOSIX_i386::LogGPR(const char *title)
-{
-    Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_REGISTERS));
-    if (log)
-    {
-        if (title)
-            log->Printf ("%s", title);
-        for (uint32_t i=0; i<k_num_gpr_registers; i++)
-        {
-            uint32_t reg = gpr_eax + i;
-            log->Printf("%12s = 0x%8.8" PRIx64, g_register_infos[reg].name, ((uint64_t*)&m_user.regs)[reg]);
-        }
-    }
+    return false;
 }

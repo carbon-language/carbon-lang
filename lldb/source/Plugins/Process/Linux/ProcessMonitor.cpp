@@ -1983,7 +1983,8 @@ ProcessMonitor::ServeOperation(OperationArgs *args)
     // parent thread and start serving operations on the inferior.
     sem_post(&args->m_semaphore);
 
-    for(;;) {
+    for(;;)
+    {
         // wait for next pending operation
         sem_wait(&monitor->m_operation_pending);
 

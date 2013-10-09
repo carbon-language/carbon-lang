@@ -32,7 +32,9 @@
 #include "RegisterContextPOSIX_i386.h"
 #include "RegisterContextPOSIXProcessMonitor_i386.h"
 #include "RegisterContextPOSIXProcessMonitor_x86_64.h"
+#include "RegisterContextLinux_i386.h"
 #include "RegisterContextLinux_x86_64.h"
+#include "RegisterContextFreeBSD_i386.h"
 #include "RegisterContextFreeBSD_x86_64.h"
 
 #include "UnwindLLDB.h"
@@ -141,8 +143,9 @@ POSIXThread::GetRegisterContext()
     {
         m_posix_thread = NULL;
 
-        ArchSpec arch = Host::GetArchitecture();
-        switch (arch.GetCore())
+        const ArchSpec &target_arch = GetProcess()->GetTarget().GetArchitecture();
+        const ArchSpec &host_arch = Host::GetArchitecture();
+        switch (host_arch.GetCore())
         {
         default:
             assert(false && "CPU type not supported!");
@@ -152,9 +155,27 @@ POSIXThread::GetRegisterContext()
         case ArchSpec::eCore_x86_32_i486:
         case ArchSpec::eCore_x86_32_i486sx:
         {
-            RegisterContextPOSIXProcessMonitor_i386 *reg_ctx = new RegisterContextPOSIXProcessMonitor_i386(*this, 0);
-            m_posix_thread = reg_ctx;
-            m_reg_context_sp.reset(reg_ctx);
+            RegisterInfoInterface *reg_interface = NULL;
+
+            switch (target_arch.GetTriple().getOS())
+            {
+                case llvm::Triple::FreeBSD:
+                    reg_interface = new RegisterContextFreeBSD_i386(target_arch);
+                    break;
+                case llvm::Triple::Linux:
+                    reg_interface = new RegisterContextLinux_i386(target_arch);
+                    break;
+                default:
+                    assert(false && "OS not supported");
+                    break;
+            }
+
+            if (reg_interface)
+            {
+                RegisterContextPOSIXProcessMonitor_i386 *reg_ctx = new RegisterContextPOSIXProcessMonitor_i386(*this, 0, reg_interface);
+                m_posix_thread = reg_ctx;
+                m_reg_context_sp.reset(reg_ctx);
+            }
             break;
         }
 
@@ -162,13 +183,13 @@ POSIXThread::GetRegisterContext()
         {
             RegisterInfoInterface *reg_interface = NULL;
 
-            switch (arch.GetTriple().getOS())
+            switch (target_arch.GetTriple().getOS())
             {
                 case llvm::Triple::FreeBSD:
-                    reg_interface = new RegisterContextFreeBSD_x86_64();
+                    reg_interface = new RegisterContextFreeBSD_x86_64(target_arch);
                     break;
                 case llvm::Triple::Linux:
-                    reg_interface = new RegisterContextLinux_x86_64();
+                    reg_interface = new RegisterContextLinux_x86_64(target_arch);
                     break;
                 default:
                     assert(false && "OS not supported");

@@ -12,119 +12,175 @@
 
 #include "lldb/Core/Log.h"
 #include "RegisterContextPOSIX.h"
+#include "RegisterContext_x86.h"
 
 class ProcessMonitor;
 
+//---------------------------------------------------------------------------
 // Internal codes for all x86_64 registers.
+//---------------------------------------------------------------------------
 enum
 {
-    k_first_gpr,
-    gpr_rax = k_first_gpr,
-    gpr_rbx,
-    gpr_rcx,
-    gpr_rdx,
-    gpr_rdi,
-    gpr_rsi,
-    gpr_rbp,
-    gpr_rsp,
-    gpr_r8,
-    gpr_r9,
-    gpr_r10,
-    gpr_r11,
-    gpr_r12,
-    gpr_r13,
-    gpr_r14,
-    gpr_r15,
-    gpr_rip,
-    gpr_rflags,
-    gpr_cs,
-    gpr_fs,
-    gpr_gs,
-    gpr_ss,
-    gpr_ds,
-    gpr_es,
-    k_first_i386,
-    gpr_eax = k_first_i386,
-    gpr_ebx,
-    gpr_ecx,
-    gpr_edx,
-    gpr_edi,
-    gpr_esi,
-    gpr_ebp,
-    gpr_esp,
-    gpr_eip,
-    gpr_eflags, // eRegisterKindLLDB == 33
-    k_last_i386 = gpr_eflags,
-    k_last_gpr = gpr_eflags,
+    k_first_gpr_x86_64,
+    gpr_rax_x86_64 = k_first_gpr_x86_64,
+    gpr_rbx_x86_64,
+    gpr_rcx_x86_64,
+    gpr_rdx_x86_64,
+    gpr_rdi_x86_64,
+    gpr_rsi_x86_64,
+    gpr_rbp_x86_64,
+    gpr_rsp_x86_64,
+    gpr_r8_x86_64,
+    gpr_r9_x86_64,
+    gpr_r10_x86_64,
+    gpr_r11_x86_64,
+    gpr_r12_x86_64,
+    gpr_r13_x86_64,
+    gpr_r14_x86_64,
+    gpr_r15_x86_64,
+    gpr_rip_x86_64,
+    gpr_rflags_x86_64,
+    gpr_cs_x86_64,
+    gpr_fs_x86_64,
+    gpr_gs_x86_64,
+    gpr_ss_x86_64,
+    gpr_ds_x86_64,
+    gpr_es_x86_64,
 
-    k_first_fpr,
-    fpu_fcw = k_first_fpr,
-    fpu_fsw,
-    fpu_ftw,
-    fpu_fop,
-    fpu_ip,
-    fpu_cs,
-    fpu_dp,
-    fpu_ds,
-    fpu_mxcsr,
-    fpu_mxcsrmask,
-    fpu_stmm0,
-    fpu_stmm1,
-    fpu_stmm2,
-    fpu_stmm3,
-    fpu_stmm4,
-    fpu_stmm5,
-    fpu_stmm6,
-    fpu_stmm7,
-    fpu_xmm0,
-    fpu_xmm1,
-    fpu_xmm2,
-    fpu_xmm3,
-    fpu_xmm4,
-    fpu_xmm5,
-    fpu_xmm6,
-    fpu_xmm7,
-    fpu_xmm8,
-    fpu_xmm9,
-    fpu_xmm10,
-    fpu_xmm11,
-    fpu_xmm12,
-    fpu_xmm13,
-    fpu_xmm14,
-    fpu_xmm15,
-    k_last_fpr = fpu_xmm15,
-    k_first_avx,
-    fpu_ymm0 = k_first_avx,
-    fpu_ymm1,
-    fpu_ymm2,
-    fpu_ymm3,
-    fpu_ymm4,
-    fpu_ymm5,
-    fpu_ymm6,
-    fpu_ymm7,
-    fpu_ymm8,
-    fpu_ymm9,
-    fpu_ymm10,
-    fpu_ymm11,
-    fpu_ymm12,
-    fpu_ymm13,
-    fpu_ymm14,
-    fpu_ymm15,
-    k_last_avx = fpu_ymm15,
+    k_first_alias_x86_64,
+    gpr_eax_x86_64 = k_first_alias_x86_64,
+    gpr_ebx_x86_64,
+    gpr_ecx_x86_64,
+    gpr_edx_x86_64,
+    gpr_edi_x86_64,
+    gpr_esi_x86_64,
+    gpr_ebp_x86_64,
+    gpr_esp_x86_64,
+    gpr_r8d_x86_64,    // Low 32 bits of r8
+    gpr_r9d_x86_64,    // Low 32 bits of r9
+    gpr_r10d_x86_64,   // Low 32 bits of r10
+    gpr_r11d_x86_64,   // Low 32 bits of r11
+    gpr_r12d_x86_64,   // Low 32 bits of r12
+    gpr_r13d_x86_64,   // Low 32 bits of r13
+    gpr_r14d_x86_64,   // Low 32 bits of r14
+    gpr_r15d_x86_64,   // Low 32 bits of r15
+    gpr_ax_x86_64,
+    gpr_bx_x86_64,
+    gpr_cx_x86_64,
+    gpr_dx_x86_64,
+    gpr_di_x86_64,
+    gpr_si_x86_64,
+    gpr_bp_x86_64,
+    gpr_sp_x86_64,
+    gpr_r8w_x86_64,    // Low 16 bits of r8
+    gpr_r9w_x86_64,    // Low 16 bits of r9
+    gpr_r10w_x86_64,   // Low 16 bits of r10
+    gpr_r11w_x86_64,   // Low 16 bits of r11
+    gpr_r12w_x86_64,   // Low 16 bits of r12
+    gpr_r13w_x86_64,   // Low 16 bits of r13
+    gpr_r14w_x86_64,   // Low 16 bits of r14
+    gpr_r15w_x86_64,   // Low 16 bits of r15
+    gpr_ah_x86_64,
+    gpr_bh_x86_64,
+    gpr_ch_x86_64,
+    gpr_dh_x86_64,
+    gpr_al_x86_64,
+    gpr_bl_x86_64,
+    gpr_cl_x86_64,
+    gpr_dl_x86_64,
+    gpr_dil_x86_64,
+    gpr_sil_x86_64,
+    gpr_bpl_x86_64,
+    gpr_spl_x86_64,
+    gpr_r8l_x86_64,    // Low 8 bits of r8
+    gpr_r9l_x86_64,    // Low 8 bits of r9
+    gpr_r10l_x86_64,   // Low 8 bits of r10
+    gpr_r11l_x86_64,   // Low 8 bits of r11
+    gpr_r12l_x86_64,   // Low 8 bits of r12
+    gpr_r13l_x86_64,   // Low 8 bits of r13
+    gpr_r14l_x86_64,   // Low 8 bits of r14
+    gpr_r15l_x86_64,   // Low 8 bits of r15
+    k_last_alias_x86_64 = gpr_r15l_x86_64,
 
-    dr0,
-    dr1,
-    dr2,
-    dr3,
-    dr4,
-    dr5,
-    dr6,
-    dr7,
+    k_last_gpr_x86_64 = k_last_alias_x86_64,
 
-    k_num_registers,
-    k_num_gpr_registers = k_last_gpr - k_first_gpr + 1,
-    k_num_fpr_registers = k_last_fpr - k_first_fpr + 1,
-    k_num_avx_registers = k_last_avx - k_first_avx + 1
+    k_first_fpr_x86_64,
+    fpu_fctrl_x86_64 = k_first_fpr_x86_64,
+    fpu_fstat_x86_64,
+    fpu_ftag_x86_64,
+    fpu_fop_x86_64,
+    fpu_fiseg_x86_64,
+    fpu_fioff_x86_64,
+    fpu_foseg_x86_64,
+    fpu_fooff_x86_64,
+    fpu_mxcsr_x86_64,
+    fpu_mxcsrmask_x86_64,
+    fpu_st0_x86_64,
+    fpu_st1_x86_64,
+    fpu_st2_x86_64,
+    fpu_st3_x86_64,
+    fpu_st4_x86_64,
+    fpu_st5_x86_64,
+    fpu_st6_x86_64,
+    fpu_st7_x86_64,
+    fpu_mm0_x86_64,
+    fpu_mm1_x86_64,
+    fpu_mm2_x86_64,
+    fpu_mm3_x86_64,
+    fpu_mm4_x86_64,
+    fpu_mm5_x86_64,
+    fpu_mm6_x86_64,
+    fpu_mm7_x86_64,
+    fpu_xmm0_x86_64,
+    fpu_xmm1_x86_64,
+    fpu_xmm2_x86_64,
+    fpu_xmm3_x86_64,
+    fpu_xmm4_x86_64,
+    fpu_xmm5_x86_64,
+    fpu_xmm6_x86_64,
+    fpu_xmm7_x86_64,
+    fpu_xmm8_x86_64,
+    fpu_xmm9_x86_64,
+    fpu_xmm10_x86_64,
+    fpu_xmm11_x86_64,
+    fpu_xmm12_x86_64,
+    fpu_xmm13_x86_64,
+    fpu_xmm14_x86_64,
+    fpu_xmm15_x86_64,
+    k_last_fpr_x86_64 = fpu_xmm15_x86_64,
+
+    k_first_avx_x86_64,
+    fpu_ymm0_x86_64 = k_first_avx_x86_64,
+    fpu_ymm1_x86_64,
+    fpu_ymm2_x86_64,
+    fpu_ymm3_x86_64,
+    fpu_ymm4_x86_64,
+    fpu_ymm5_x86_64,
+    fpu_ymm6_x86_64,
+    fpu_ymm7_x86_64,
+    fpu_ymm8_x86_64,
+    fpu_ymm9_x86_64,
+    fpu_ymm10_x86_64,
+    fpu_ymm11_x86_64,
+    fpu_ymm12_x86_64,
+    fpu_ymm13_x86_64,
+    fpu_ymm14_x86_64,
+    fpu_ymm15_x86_64,
+    k_last_avx_x86_64 = fpu_ymm15_x86_64,
+
+    dr0_x86_64,
+    dr1_x86_64,
+    dr2_x86_64,
+    dr3_x86_64,
+    dr4_x86_64,
+    dr5_x86_64,
+    dr6_x86_64,
+    dr7_x86_64,
+
+    k_num_registers_x86_64,
+    k_num_gpr_registers_x86_64 = k_last_gpr_x86_64 - k_first_gpr_x86_64 + 1,
+    k_num_fpr_registers_x86_64 = k_last_fpr_x86_64 - k_first_fpr_x86_64 + 1,
+    k_num_avx_registers_x86_64 = k_last_avx_x86_64 - k_first_avx_x86_64 + 1
 };
 
 class RegisterContextPOSIX_x86_64
@@ -171,76 +227,6 @@ public:
     ConvertRegisterKindToRegisterNumber(uint32_t kind, uint32_t num);
 
     //---------------------------------------------------------------------------
-    // Generic floating-point registers
-    //---------------------------------------------------------------------------
-
-    struct MMSReg
-    {
-        uint8_t bytes[10];
-        uint8_t pad[6];
-    };
-
-    struct XMMReg
-    {
-        uint8_t bytes[16]; // 128-bits for each XMM register
-    };
-
-    struct FXSAVE
-    {
-        uint16_t fcw;
-        uint16_t fsw;
-        uint16_t ftw;
-        uint16_t fop;
-        uint64_t ip;
-        uint64_t dp;
-        uint32_t mxcsr;
-        uint32_t mxcsrmask;
-        MMSReg   stmm[8];
-        XMMReg   xmm[16];
-        uint32_t padding[24];
-    };
-
-    //---------------------------------------------------------------------------
-    // Extended floating-point registers
-    //---------------------------------------------------------------------------
-    struct YMMHReg
-    {
-        uint8_t  bytes[16];     // 16 * 8 bits for the high bytes of each YMM register
-    };
-
-    struct YMMReg
-    {
-        uint8_t  bytes[32];     // 16 * 16 bits for each YMM register
-    };
-
-    struct YMM
-    {
-        YMMReg   ymm[16];       // assembled from ymmh and xmm registers
-    };
-
-    struct XSAVE_HDR
-    {
-        uint64_t  xstate_bv;    // OS enabled xstate mask to determine the extended states supported by the processor
-        uint64_t  reserved1[2];
-        uint64_t  reserved2[5];
-    } __attribute__((packed));
-
-    // x86 extensions to FXSAVE (i.e. for AVX processors) 
-    struct XSAVE 
-    {
-        FXSAVE    i387;         // floating point registers typical in i387_fxsave_struct
-        XSAVE_HDR header;       // The xsave_hdr_struct can be used to determine if the following extensions are usable
-        YMMHReg   ymmh[16];     // High 16 bytes of each of 16 YMM registers (the low bytes are in FXSAVE.xmm for compatibility with SSE)
-        // Slot any extensions to the register file here
-    } __attribute__((packed, aligned (64)));
-
-    struct IOVEC
-    {
-        void    *iov_base;      // pointer to XSAVE
-        size_t   iov_len;       // sizeof(XSAVE)
-    };
-
-    //---------------------------------------------------------------------------
     // Note: prefer kernel definitions over user-land
     //---------------------------------------------------------------------------
     enum FPRType
@@ -252,18 +238,73 @@ public:
         eXSAVE
     };
 
-    // Floating-point registers
-    struct FPR
-    {
-        // Thread state for the floating-point unit of the processor read by ptrace.
-        union XSTATE
-        {
-            FXSAVE   fxsave;    // Generic floating-point registers.
-            XSAVE    xsave;     // x86 extended processor state.
-        } xstate;
-    };
+    static uint32_t g_contained_rax[];
+    static uint32_t g_contained_rbx[];
+    static uint32_t g_contained_rcx[];
+    static uint32_t g_contained_rdx[];
+    static uint32_t g_contained_rdi[];
+    static uint32_t g_contained_rsi[];
+    static uint32_t g_contained_rbp[];
+    static uint32_t g_contained_rsp[];
+    static uint32_t g_contained_r8[];
+    static uint32_t g_contained_r9[];
+    static uint32_t g_contained_r10[];
+    static uint32_t g_contained_r11[];
+    static uint32_t g_contained_r12[];
+    static uint32_t g_contained_r13[];
+    static uint32_t g_contained_r14[];
+    static uint32_t g_contained_r15[];
+
+    static uint32_t g_invalidate_rax[];
+    static uint32_t g_invalidate_rbx[];
+    static uint32_t g_invalidate_rcx[];
+    static uint32_t g_invalidate_rdx[];
+    static uint32_t g_invalidate_rdi[];
+    static uint32_t g_invalidate_rsi[];
+    static uint32_t g_invalidate_rbp[];
+    static uint32_t g_invalidate_rsp[];
+    static uint32_t g_invalidate_r8[];
+    static uint32_t g_invalidate_r9[];
+    static uint32_t g_invalidate_r10[];
+    static uint32_t g_invalidate_r11[];
+    static uint32_t g_invalidate_r12[];
+    static uint32_t g_invalidate_r13[];
+    static uint32_t g_invalidate_r14[];
+    static uint32_t g_invalidate_r15[];
 
 protected:
+    struct RegInfo
+    {
+        uint32_t num_registers;
+        uint32_t num_gpr_registers;
+        uint32_t num_fpr_registers;
+        uint32_t num_avx_registers;
+
+        uint32_t last_gpr;
+        uint32_t first_fpr;
+        uint32_t last_fpr;
+
+        uint32_t first_st;
+        uint32_t last_st;
+        uint32_t first_mm;
+        uint32_t last_mm;
+        uint32_t first_xmm;
+        uint32_t last_xmm;
+        uint32_t first_ymm;
+        uint32_t last_ymm;
+
+        uint32_t first_dr;
+        uint32_t gpr_flags;
+    };
+
+    uint64_t m_gpr_x86_64[k_num_gpr_registers_x86_64];    // 64-bitgeneral purpose registers.
+    RegInfo  m_reg_info;
+    FPRType  m_fpr_type;                                       // determines the type of data stored by union FPR, if any.
+    FPR      m_fpr;                                            // floating-point registers including extended register sets.
+    IOVEC    m_iovec;                                          // wrapper for xsave.
+    YMM      m_ymm_set;                                        // copy of ymmh and xmm register halves.
+    std::unique_ptr<RegisterInfoInterface> m_register_info_ap; // Register Info Interface (FreeBSD or Linux)
+
     // Determines if an extended register set is supported on the processor running the inferior process.
     virtual bool
     IsRegisterSetAvailable(size_t set_index);
@@ -271,21 +312,14 @@ protected:
     virtual const lldb_private::RegisterInfo *
     GetRegisterInfo();
 
-    static bool
+    bool
     IsGPR(unsigned reg);
 
-    static bool
+    bool
     IsFPR(unsigned reg);
 
-    static bool
+    bool
     IsAVX(unsigned reg);
-
-    uint64_t m_gpr[k_num_gpr_registers];                       // general purpose registers.
-    FPRType  m_fpr_type;                                       // determines the type of data stored by union FPR, if any.
-    FPR      m_fpr;                                            // floating-point registers including extended register sets.
-    IOVEC    m_iovec;                                          // wrapper for xsave.
-    YMM      m_ymm_set;                                        // copy of ymmh and xmm register halves.
-    std::unique_ptr<RegisterInfoInterface> m_register_info_ap; // Register Info Interface (FreeBSD or Linux)
 
     lldb::ByteOrder GetByteOrder();
 

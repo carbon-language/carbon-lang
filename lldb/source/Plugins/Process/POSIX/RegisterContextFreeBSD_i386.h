@@ -1,4 +1,4 @@
-//===-- RegisterContextFreeBSD_x86_64.h ---------------------------*- C++ -*-===//
+//===-- RegisterContextFreeBSD_i386.h -----------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,17 +7,17 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_RegisterContextFreeBSD_x86_64_H_
-#define liblldb_RegisterContextFreeBSD_x86_64_H_
+#ifndef liblldb_RegisterContextFreeBSD_i386_H_
+#define liblldb_RegisterContextFreeBSD_i386_H_
 
 #include "RegisterContextPOSIX.h"
 
-class RegisterContextFreeBSD_x86_64:
-    public RegisterInfoInterface
+class RegisterContextFreeBSD_i386
+  : public RegisterInfoInterface
 {
 public:
-    RegisterContextFreeBSD_x86_64(const lldb_private::ArchSpec &target_arch);
-    virtual ~RegisterContextFreeBSD_x86_64();
+    RegisterContextFreeBSD_i386(const lldb_private::ArchSpec &target_arch);
+    virtual ~RegisterContextFreeBSD_i386();
 
     size_t
     GetGPRSize();

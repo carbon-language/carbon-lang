@@ -13,6 +13,7 @@
 // C Includes
 // C++ Includes
 // Other libraries and framework includes
+#include "lldb/Core/ArchSpec.h"
 #include "lldb/Target/RegisterContext.h"
 
 //------------------------------------------------------------------------------
@@ -76,13 +77,17 @@ protected:
 class RegisterInfoInterface
 {
 public:
-    virtual ~RegisterInfoInterface() {}
+    RegisterInfoInterface(const lldb_private::ArchSpec& target_arch) : m_target_arch(target_arch) {}
+    virtual ~RegisterInfoInterface () {}
 
     virtual size_t
-    GetGPRSize() = 0;
+    GetGPRSize () = 0;
 
     virtual const lldb_private::RegisterInfo *
-    GetRegisterInfo(const lldb_private::RegisterInfo *base_info) = 0;
+    GetRegisterInfo () = 0;
+
+public:
+    lldb_private::ArchSpec m_target_arch;
 };
 
 #endif // #ifndef liblldb_RegisterContextPOSIX_H_

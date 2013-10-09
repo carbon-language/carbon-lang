@@ -17,8 +17,9 @@ using namespace lldb_private;
 using namespace lldb;
 
 RegisterContextPOSIXProcessMonitor_i386::RegisterContextPOSIXProcessMonitor_i386(Thread &thread,
-                                                                                 uint32_t concrete_frame_idx)
-    : RegisterContextPOSIX_i386(thread, concrete_frame_idx)
+                                                                                 uint32_t concrete_frame_idx,
+                                                                                 RegisterInfoInterface *register_info)
+    : RegisterContextPOSIX_i386(thread, concrete_frame_idx, register_info)
 {
 }
 
@@ -33,30 +34,28 @@ RegisterContextPOSIXProcessMonitor_i386::GetMonitor()
 bool
 RegisterContextPOSIXProcessMonitor_i386::ReadGPR()
 {
-    bool result;
-
-    ProcessMonitor &monitor = GetMonitor();
-    result = monitor.ReadGPR(m_thread.GetID(), &m_user.regs, sizeof(m_user.regs));
-    LogGPR("RegisterContextPOSIXProcessMonitor_i386::ReadGPR()");
-    return result;
+    assert(false);
+    return false;
 }
 
 bool
 RegisterContextPOSIXProcessMonitor_i386::ReadFPR()
 {
-    ProcessMonitor &monitor = GetMonitor();
-    return monitor.ReadFPR(m_thread.GetID(), &m_user.i387, sizeof(m_user.i387));
+    assert(false);
+    return false;
 }
 
 bool
 RegisterContextPOSIXProcessMonitor_i386::WriteGPR()
 {
+    assert(false);
     return false;
 }
 
 bool
 RegisterContextPOSIXProcessMonitor_i386::WriteFPR()
 {
+    assert(false);
     return false;
 }
 
@@ -64,17 +63,13 @@ bool
 RegisterContextPOSIXProcessMonitor_i386::ReadRegister(const RegisterInfo *reg_info,
                                                       RegisterValue &value)
 {
-    const uint32_t reg = reg_info->kinds[eRegisterKindLLDB];
-    ProcessMonitor &monitor = GetMonitor();
-    return monitor.ReadRegisterValue(m_thread.GetID(), GetRegOffset(reg),
-                                     GetRegisterName(reg), GetRegSize(reg), value);
+    assert(false);
+    return false;
 }
 
 bool RegisterContextPOSIXProcessMonitor_i386::WriteRegister(const RegisterInfo *reg_info,
                                                             const RegisterValue &value)
 {
-    const uint32_t reg = reg_info->kinds[eRegisterKindLLDB];
-    ProcessMonitor &monitor = GetMonitor();
-    return monitor.WriteRegisterValue(m_thread.GetID(), GetRegOffset(reg),
-                                      GetRegisterName(reg), value);
+    assert(false);
+    return false;        
 }

@@ -18,7 +18,8 @@ class RegisterContextPOSIXProcessMonitor_i386:
 {
 public:
     RegisterContextPOSIXProcessMonitor_i386(lldb_private::Thread &thread,
-                                            uint32_t concrete_frame_idx);
+                                            uint32_t concrete_frame_idx,
+                                            RegisterInfoInterface *register_info);
 
 protected:
     bool
