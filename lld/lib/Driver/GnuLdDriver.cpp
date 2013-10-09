@@ -254,7 +254,7 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
       break;
 
     case OPT_start_group: {
-      std::unique_ptr<InputElement> controlStart(new ELFGroup(*ctx));
+      std::unique_ptr<InputElement> controlStart(new ELFGroup(*ctx, index++));
       controlNodeStack.push(controlStart.get());
       (llvm::dyn_cast<ControlNode>)(controlNodeStack.top())
           ->processControlEnter();
@@ -266,13 +266,13 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
       (llvm::dyn_cast<ControlNode>)(controlNodeStack.top())
           ->processControlExit();
       controlNodeStack.pop();
-      return true;
+      break;
 
     case OPT_INPUT:
     case OPT_l: {
       std::unique_ptr<InputElement> inputFile =
           std::move(std::unique_ptr<InputElement>(new ELFFileNode(
-              *ctx, inputArg->getValue(), searchPath, index, isWholeArchive,
+              *ctx, inputArg->getValue(), searchPath, index++, isWholeArchive,
               asNeeded, inputArg->getOption().getID() == OPT_l)));
       if (controlNodeStack.empty())
         inputGraph->addInputElement(std::move(inputFile));

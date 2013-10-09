@@ -292,6 +292,7 @@ void Resolver::resolveUndefines() {
   ScopedTask task(getDefaultDomain(), "resolveUndefines");
 
   while (ErrorOr<File &> nextFile = _context.nextFile()) {
+    _context.setResolverState(Resolver::StateNoChange);
     if (error_code(nextFile) == InputGraphError::no_more_files)
       break;
     if (nextFile->kind() == File::kindObject)

@@ -114,10 +114,11 @@ public:
   /// to start processing files as part of the inputelement from beginning.
   /// reset the next file index to 0 only if the node is an archive library or
   /// a shared library
-  virtual void resetNextFileIndex() {
+  virtual void resetNextIndex() {
     if ((!_isWholeArchive && (_files[0]->kind() == File::kindArchiveLibrary)) ||
         (_files[0]->kind() == File::kindSharedLibrary))
       _nextFileIndex = 0;
+    setResolveState(Resolver::StateNoChange);
     return;
   }
 
@@ -144,7 +145,8 @@ private:
 /// \brief Represents a ELF control node
 class ELFGroup : public Group {
 public:
-  ELFGroup(ELFLinkingContext &ctx) : Group(), _elfLinkingContext(ctx) {}
+  ELFGroup(ELFLinkingContext &ctx, int64_t ordinal)
+      : Group(ordinal), _elfLinkingContext(ctx) {}
 
   static inline bool classof(const InputElement *a) {
     return a->kind() == InputElement::Kind::Control;
@@ -165,42 +167,6 @@ public:
       if (error_code ec = ei->parse(ctx, diagnostics))
         return ec;
     return error_code::success();
-  }
-
-  /// \brief Return the file that has to be processed by the resolver
-  /// to resolve atoms. This iterates over all the elements thats part
-  /// of this node.
-  virtual ErrorOr<File &> getNextFile() {
-    // Does the linker need to process the elements again ?
-    bool again = false;
-    // If there are no elements, move on to the next input element
-    if (_elements.size() == 0)
-      return make_error_code(InputGraphError::no_more_files);
-    // If we have processed all the elements as part of this node
-    // check the resolver status for each input element and if the status
-    // has not changed, move onto the next file.
-    if (_nextElementIndex == _elements.size()) {
-      for (auto &elem : _elements) {
-        if (elem->getResolverState() == Resolver::StateNoChange) {
-          again = true;
-          break;
-        }
-      }
-      if (!again)
-        return make_error_code(InputGraphError::no_more_files);
-      _nextElementIndex = 0;
-      // Reset the next file to be processed as part of each element
-      for (auto &elem : _elements)
-        elem->resetNextFileIndex();
-    }
-    auto file = _elements[_nextElementIndex]->getNextFile();
-    // Move on to the next element if we have finished processing all
-    // the files in the input element
-    if (error_code(file) == InputGraphError::no_more_files)
-      _nextElementIndex++;
-    else
-      return *file;
-    return getNextFile();
   }
 
 private:

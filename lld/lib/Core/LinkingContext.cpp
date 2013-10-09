@@ -77,7 +77,7 @@ bool LinkingContext::createInternalFiles(
 }
 
 void LinkingContext::setResolverState(uint32_t state) {
-  _currentInputElement->setResolverState(state);
+  _currentInputElement->setResolveState(state);
 }
 
 ErrorOr<File &> LinkingContext::nextFile() {

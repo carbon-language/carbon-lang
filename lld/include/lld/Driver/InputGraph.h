@@ -173,21 +173,19 @@ public:
   /// Get the next file to be processed by the resolver
   virtual ErrorOr<File &> getNextFile() = 0;
 
-  /// \brief Set the resolver state for the element
-  virtual void setResolverState(int32_t state) { _resolveState = state; }
+  /// \brief Set the resolve state for the element
+  virtual void setResolveState(uint32_t state) = 0;
 
-  /// \brief Get the resolver state for the element
-  virtual int32_t getResolverState() const { return _resolveState; }
+  /// \brief Get the resolve state for the element
+  virtual uint32_t getResolveState() const = 0;
 
-  /// Process files again.
-  virtual void resetNextFileIndex() { _nextFileIndex = 0; }
+  /// \brief Reset the next index
+  virtual void resetNextIndex() = 0;
 
 protected:
   Kind _kind;              // The type of the Element
   int64_t _ordinal;        // The ordinal value
   int64_t _weight;         // Weight of the file
-  int32_t _resolveState;   // The resolve state
-  uint32_t _nextFileIndex; // The file that would be processed by the resolver
 };
 
 /// \brief The Control class represents a control node in the InputGraph
@@ -204,7 +202,8 @@ public:
                   ControlNode::ControlKind::Simple,
               int64_t _ordinal = -1)
       : InputElement(InputElement::Kind::Control, _ordinal),
-        _controlKind(controlKind), _nextElementIndex(0) {}
+        _controlKind(controlKind), _currentElementIndex(0),
+        _nextElementIndex(0) {}
 
   virtual ~ControlNode() {}
 
@@ -233,9 +232,20 @@ public:
   /// in the InputElement
   virtual void assignFileOrdinals(uint64_t &startOrdinal);
 
+  virtual void resetNextIndex() {
+    _currentElementIndex = _nextElementIndex = 0;
+    for (auto &elem : _elements)
+      elem->resetNextIndex();
+  }
+
+  virtual uint32_t getResolveState() const;
+
+  virtual void setResolveState(uint32_t);
+
 protected:
   ControlKind _controlKind;
   InputGraph::InputElementVectorT _elements;
+  uint32_t _currentElementIndex;
   uint32_t _nextElementIndex;
 };
 
@@ -246,8 +256,7 @@ protected:
 /// directly.
 class FileNode : public InputElement {
 public:
-  FileNode(StringRef path, int64_t ordinal = -1)
-      : InputElement(InputElement::Kind::File, ordinal), _path(path) {}
+  FileNode(StringRef path, int64_t ordinal = -1);
 
   virtual ErrorOr<StringRef> getPath(const LinkingContext &) const {
     return _path;
@@ -301,13 +310,29 @@ public:
   /// in the InputElement
   virtual void assignFileOrdinals(uint64_t &startOrdinal);
 
+  /// \brief Reset the file index if the resolver needs to process
+  /// the node again.
+  virtual void resetNextIndex();
+
+  /// \brief Set the resolve state for the FileNode.
+  virtual void setResolveState(uint32_t resolveState) {
+    _resolveState = resolveState;
+  }
+
+  /// \brief Retrieve the resolve state of the FileNode.
+  virtual uint32_t getResolveState() const { return _resolveState; }
+
 protected:
   /// \brief Read the file into _buffer.
   error_code readFile(const LinkingContext &ctx, raw_ostream &diagnostics);
 
-  StringRef _path;
-  InputGraph::FileVectorT _files;
-  std::unique_ptr<llvm::MemoryBuffer> _buffer;
+  StringRef _path;                             // The path of the Input file
+  InputGraph::FileVectorT _files;              // A vector of lld File objects
+  std::unique_ptr<llvm::MemoryBuffer> _buffer; // Memory buffer to actual
+                                               // contents
+  uint32_t _resolveState;                      // The resolve state of the file
+  uint32_t _nextFileIndex; // The next file that would be processed by the
+                           // resolver
 };
 
 /// \brief A Control node which contains a group of InputElements
@@ -316,23 +341,26 @@ protected:
 /// follow the group
 class Group : public ControlNode {
 public:
-  Group() : ControlNode(ControlNode::ControlKind::Group) {}
+  Group(int64_t ordinal)
+      : ControlNode(ControlNode::ControlKind::Group, ordinal) {}
 
   static inline bool classof(const InputElement *a) {
     return a->kind() == InputElement::Kind::Control;
   }
 
+  /// \brief Process input element and add it to the group
   virtual bool processInputElement(std::unique_ptr<InputElement> element) {
     _elements.push_back(std::move(element));
     return true;
   }
+
+  virtual ErrorOr<File &> getNextFile();
 };
 
 /// \brief Represents Internal Input files
 class SimpleFileNode : public InputElement {
 public:
-  SimpleFileNode(StringRef path, int64_t ordinal = -1)
-      : InputElement(InputElement::Kind::SimpleFile, ordinal), _path(path) {}
+  SimpleFileNode(StringRef path, int64_t ordinal = -1);
 
   virtual llvm::ErrorOr<StringRef> path(const LinkingContext &) const {
     return _path;
@@ -379,22 +407,35 @@ public:
     return error_code::success();
   }
 
+  /// \brief Return the next File thats part of this node to the
+  /// resolver.
   virtual ErrorOr<File &> getNextFile() {
     if (_nextFileIndex == _files.size())
       return make_error_code(InputGraphError::no_more_files);
     return *_files[_nextFileIndex++];
   }
 
+  /// \brief Set the resolver state.
+  virtual void setResolveState(uint32_t resolveState) {
+    _resolveState = resolveState;
+  }
+
+  /// \brief Retrieve the resolve state.
+  virtual uint32_t getResolveState() const { return _resolveState; }
+
   // Do nothing here.
-  virtual void resetNextFileIndex() {}
+  virtual void resetNextIndex() {}
 
   /// \brief Assign File ordinals for files contained
   /// in the InputElement
   virtual void assignFileOrdinals(uint64_t &startOrdinal);
 
 protected:
-  StringRef _path;
-  InputGraph::FileVectorT _files;
+  StringRef _path;                // A string associated with this file.
+  InputGraph::FileVectorT _files; // Vector of lld::File objects
+  uint32_t _nextFileIndex; // The next file that would be processed by the
+                           // resolver
+  uint32_t _resolveState;  // The resolve state associated with this Node
 };
 } // namespace lld
 
