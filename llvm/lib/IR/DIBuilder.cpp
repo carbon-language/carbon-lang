@@ -878,7 +878,7 @@ DICompositeType DIBuilder::createForwardDecl(unsigned Tag, StringRef Name,
   Value *Elts[] = {
     GetTagConstant(VMContext, Tag),
     F.getFileNode(),
-    getNonCompileUnitScope(Scope),
+    DIScope(getNonCompileUnitScope(Scope)).getRef(),
     MDString::get(VMContext, Name),
     ConstantInt::get(Type::getInt32Ty(VMContext), Line),
     ConstantInt::get(Type::getInt64Ty(VMContext), SizeInBits),
