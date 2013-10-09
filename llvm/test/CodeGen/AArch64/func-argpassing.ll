@@ -35,15 +35,15 @@ define void @take_struct(%myStruct* byval %structval) {
     %addr0 = getelementptr %myStruct* %structval, i64 0, i32 2
     %addr1 = getelementptr %myStruct* %structval, i64 0, i32 0
 
-    %val0 = load i32* %addr0
+    %val0 = load volatile i32* %addr0
     ; Some weird move means x0 is used for one access
 ; CHECK: ldr [[REG32:w[0-9]+]], [{{x[0-9]+|sp}}, #12]
-    store i32 %val0, i32* @var32
+    store volatile i32 %val0, i32* @var32
 ; CHECK: str [[REG32]], [{{x[0-9]+}}, #:lo12:var32]
 
-    %val1 = load i64* %addr1
+    %val1 = load volatile i64* %addr1
 ; CHECK: ldr [[REG64:x[0-9]+]], [{{x[0-9]+|sp}}]
-    store i64 %val1, i64* @var64
+    store volatile i64 %val1, i64* @var64
 ; CHECK: str [[REG64]], [{{x[0-9]+}}, #:lo12:var64]
 
     ret void
@@ -56,14 +56,14 @@ define void @check_byval_align(i32* byval %ignore, %myStruct* byval align 16 %st
     %addr0 = getelementptr %myStruct* %structval, i64 0, i32 2
     %addr1 = getelementptr %myStruct* %structval, i64 0, i32 0
 
-    %val0 = load i32* %addr0
+    %val0 = load volatile i32* %addr0
     ; Some weird move means x0 is used for one access
 ; CHECK: add x[[STRUCTVAL_ADDR:[0-9]+]], sp, #16
 ; CHECK: ldr [[REG32:w[0-9]+]], [x[[STRUCTVAL_ADDR]], #12]
     store i32 %val0, i32* @var32
 ; CHECK: str [[REG32]], [{{x[0-9]+}}, #:lo12:var32]
 
-    %val1 = load i64* %addr1
+    %val1 = load volatile i64* %addr1
 ; CHECK: ldr [[REG64:x[0-9]+]], [sp, #16]
     store i64 %val1, i64* @var64
 ; CHECK: str [[REG64]], [{{x[0-9]+}}, #:lo12:var64]
@@ -130,17 +130,17 @@ define i32 @struct_on_stack(i8 %var0, i16 %var1, i32 %var2, i64 %var3, i128 %var
                           double %notstacked) {
 ; CHECK-LABEL: struct_on_stack:
     %addr = getelementptr %myStruct* %struct, i64 0, i32 0
-    %val64 = load i64* %addr
-    store i64 %val64, i64* @var64
+    %val64 = load volatile i64* %addr
+    store volatile i64 %val64, i64* @var64
     ; Currently nothing on local stack, so struct should be at sp
 ; CHECK: ldr [[VAL64:x[0-9]+]], [sp]
 ; CHECK: str [[VAL64]], [{{x[0-9]+}}, #:lo12:var64]
 
-    store double %notstacked, double* @vardouble
+    store volatile double %notstacked, double* @vardouble
 ; CHECK-NOT: ldr d0
 ; CHECK: str d0, [{{x[0-9]+}}, #:lo12:vardouble
 
-    %retval = load i32* %stacked
+    %retval = load volatile i32* %stacked
     ret i32 %retval
 ; CHECK: ldr w0, [sp, #16]
 }
@@ -176,10 +176,10 @@ define void @check_i128_stackalign(i32 %val0, i32 %val1, i32 %val2, i32 %val3,
 ; CHECK: check_i128_stackalign
     store i128 %stack2, i128* @var128
     ; Nothing local on stack in current codegen, so first stack is 16 away
-; CHECK: ldr {{x[0-9]+}}, [sp, #16]
+; CHECK: add     x[[REG:[0-9]+]], sp, #16
+; CHECK: ldr {{x[0-9]+}}, [x[[REG]], #8]
     ; Important point is that we address sp+24 for second dword
-; CHECK: add     [[REG:x[0-9]+]], sp, #16
-; CHECK: ldr     {{x[0-9]+}}, {{\[}}[[REG]], #8]
+; CHECK: ldr     {{x[0-9]+}}, [sp, #16]
     ret void
 }
 

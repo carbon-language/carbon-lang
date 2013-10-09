@@ -129,8 +129,9 @@ define float @test_fnmsub_unfused(float %a, float %b, float %c) {
   %diff = fsub float %nega, %prod
 ; CHECK: fnmsub {{s[0-9]+}}, {{s[0-9]+}}, {{s[0-9]+}}, {{s[0-9]+}}
 ; CHECK-NOFAST-NOT: fnmsub {{s[0-9]+}}, {{s[0-9]+}}, {{s[0-9]+}}, {{s[0-9]+}}
-; CHECK-NOFAST: fmul {{s[0-9]+}}, {{s[0-9]+}}, {{s[0-9]+}}
-; CHECK-NOFAST: fneg {{s[0-9]+}}, {{s[0-9]+}}
-; CHECK-NOFAST: fsub {{s[0-9]+}}, {{s[0-9]+}}, {{s[0-9]+}}
+; CHECK-NOFAST-DAG: fmul {{s[0-9]+}}, {{s[0-9]+}}, {{s[0-9]+}}
+; CHECK-NOFAST-DAG: fneg {{s[0-9]+}}, {{s[0-9]+}}
+; CHECK-NOFAST-DAG: fsub {{s[0-9]+}}, {{s[0-9]+}}, {{s[0-9]+}}
+; CHECK-NOFAST: ret
   ret float %diff
 }

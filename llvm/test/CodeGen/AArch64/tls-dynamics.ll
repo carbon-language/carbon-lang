@@ -10,8 +10,8 @@ define i32 @test_generaldynamic() {
   ret i32 %val
 
 ; CHECK: adrp x[[TLSDESC_HI:[0-9]+]], :tlsdesc:general_dynamic_var
-; CHECK: add x0, x[[TLSDESC_HI]], #:tlsdesc_lo12:general_dynamic_var
-; CHECK: ldr [[CALLEE:x[0-9]+]], [x[[TLSDESC_HI]], #:tlsdesc_lo12:general_dynamic_var]
+; CHECK-DAG: add x0, x[[TLSDESC_HI]], #:tlsdesc_lo12:general_dynamic_var
+; CHECK-DAG: ldr [[CALLEE:x[0-9]+]], [x[[TLSDESC_HI]], #:tlsdesc_lo12:general_dynamic_var]
 ; CHECK: .tlsdesccall general_dynamic_var
 ; CHECK-NEXT: blr [[CALLEE]]
 
@@ -19,8 +19,8 @@ define i32 @test_generaldynamic() {
 ; CHECK: ldr w0, [x[[TP]], x0]
 
 ; CHECK-RELOC: R_AARCH64_TLSDESC_ADR_PAGE
-; CHECK-RELOC: R_AARCH64_TLSDESC_ADD_LO12_NC
-; CHECK-RELOC: R_AARCH64_TLSDESC_LD64_LO12_NC
+; CHECK-RELOC-DAG: R_AARCH64_TLSDESC_ADD_LO12_NC
+; CHECK-RELOC-DAG: R_AARCH64_TLSDESC_LD64_LO12_NC
 ; CHECK-RELOC: R_AARCH64_TLSDESC_CALL
 
 }
@@ -31,8 +31,8 @@ define i32* @test_generaldynamic_addr() {
   ret i32* @general_dynamic_var
 
 ; CHECK: adrp x[[TLSDESC_HI:[0-9]+]], :tlsdesc:general_dynamic_var
-; CHECK: add x0, x[[TLSDESC_HI]], #:tlsdesc_lo12:general_dynamic_var
-; CHECK: ldr [[CALLEE:x[0-9]+]], [x[[TLSDESC_HI]], #:tlsdesc_lo12:general_dynamic_var]
+; CHECK-DAG: add x0, x[[TLSDESC_HI]], #:tlsdesc_lo12:general_dynamic_var
+; CHECK-DAG: ldr [[CALLEE:x[0-9]+]], [x[[TLSDESC_HI]], #:tlsdesc_lo12:general_dynamic_var]
 ; CHECK: .tlsdesccall general_dynamic_var
 ; CHECK-NEXT: blr [[CALLEE]]
 
@@ -40,8 +40,8 @@ define i32* @test_generaldynamic_addr() {
 ; CHECK: add x0, [[TP]], x0
 
 ; CHECK-RELOC: R_AARCH64_TLSDESC_ADR_PAGE
-; CHECK-RELOC: R_AARCH64_TLSDESC_ADD_LO12_NC
-; CHECK-RELOC: R_AARCH64_TLSDESC_LD64_LO12_NC
+; CHECK-RELOC-DAG: R_AARCH64_TLSDESC_ADD_LO12_NC
+; CHECK-RELOC-DAG: R_AARCH64_TLSDESC_LD64_LO12_NC
 ; CHECK-RELOC: R_AARCH64_TLSDESC_CALL
 
 }
@@ -55,8 +55,8 @@ define i32 @test_localdynamic() {
   ret i32 %val
 
 ; CHECK: adrp x[[TLSDESC_HI:[0-9]+]], :tlsdesc:_TLS_MODULE_BASE_
-; CHECK: add x0, x[[TLSDESC_HI]], #:tlsdesc_lo12:_TLS_MODULE_BASE_
-; CHECK: ldr [[CALLEE:x[0-9]+]], [x[[TLSDESC_HI]], #:tlsdesc_lo12:_TLS_MODULE_BASE_]
+; CHECK-DAG: add x0, x[[TLSDESC_HI]], #:tlsdesc_lo12:_TLS_MODULE_BASE_
+; CHECK-DAG: ldr [[CALLEE:x[0-9]+]], [x[[TLSDESC_HI]], #:tlsdesc_lo12:_TLS_MODULE_BASE_]
 ; CHECK: .tlsdesccall _TLS_MODULE_BASE_
 ; CHECK-NEXT: blr [[CALLEE]]
 
@@ -66,8 +66,8 @@ define i32 @test_localdynamic() {
 ; CHECK: ldr w0, [x0, [[DTP_OFFSET]]]
 
 ; CHECK-RELOC: R_AARCH64_TLSDESC_ADR_PAGE
-; CHECK-RELOC: R_AARCH64_TLSDESC_ADD_LO12_NC
-; CHECK-RELOC: R_AARCH64_TLSDESC_LD64_LO12_NC
+; CHECK-RELOC-DAG: R_AARCH64_TLSDESC_ADD_LO12_NC
+; CHECK-RELOC-DAG: R_AARCH64_TLSDESC_LD64_LO12_NC
 ; CHECK-RELOC: R_AARCH64_TLSDESC_CALL
 
 }
@@ -78,8 +78,8 @@ define i32* @test_localdynamic_addr() {
   ret i32* @local_dynamic_var
 
 ; CHECK: adrp x[[TLSDESC_HI:[0-9]+]], :tlsdesc:_TLS_MODULE_BASE_
-; CHECK: add x0, x[[TLSDESC_HI]], #:tlsdesc_lo12:_TLS_MODULE_BASE_
-; CHECK: ldr [[CALLEE:x[0-9]+]], [x[[TLSDESC_HI]], #:tlsdesc_lo12:_TLS_MODULE_BASE_]
+; CHECK-DAG: add x0, x[[TLSDESC_HI]], #:tlsdesc_lo12:_TLS_MODULE_BASE_
+; CHECK-DAG: ldr [[CALLEE:x[0-9]+]], [x[[TLSDESC_HI]], #:tlsdesc_lo12:_TLS_MODULE_BASE_]
 ; CHECK: .tlsdesccall _TLS_MODULE_BASE_
 ; CHECK-NEXT: blr [[CALLEE]]
 
@@ -89,8 +89,8 @@ define i32* @test_localdynamic_addr() {
 ; CHECK: add x0, x0, [[DTP_OFFSET]]
 
 ; CHECK-RELOC: R_AARCH64_TLSDESC_ADR_PAGE
-; CHECK-RELOC: R_AARCH64_TLSDESC_ADD_LO12_NC
-; CHECK-RELOC: R_AARCH64_TLSDESC_LD64_LO12_NC
+; CHECK-RELOC-DAG: R_AARCH64_TLSDESC_ADD_LO12_NC
+; CHECK-RELOC-DAG: R_AARCH64_TLSDESC_LD64_LO12_NC
 ; CHECK-RELOC: R_AARCH64_TLSDESC_CALL
 
 }
@@ -110,8 +110,8 @@ define i32 @test_localdynamic_deduplicate() {
   ret i32 %sum
 
 ; CHECK: adrp x[[TLSDESC_HI:[0-9]+]], :tlsdesc:_TLS_MODULE_BASE_
-; CHECK: add x0, x[[TLSDESC_HI]], #:tlsdesc_lo12:_TLS_MODULE_BASE_
-; CHECK: ldr [[CALLEE:x[0-9]+]], [x[[TLSDESC_HI]], #:tlsdesc_lo12:_TLS_MODULE_BASE_]
+; CHECK-DAG: add x0, x[[TLSDESC_HI]], #:tlsdesc_lo12:_TLS_MODULE_BASE_
+; CHECK-DAG: ldr [[CALLEE:x[0-9]+]], [x[[TLSDESC_HI]], #:tlsdesc_lo12:_TLS_MODULE_BASE_]
 ; CHECK: .tlsdesccall _TLS_MODULE_BASE_
 ; CHECK-NEXT: blr [[CALLEE]]
 

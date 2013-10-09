@@ -5,8 +5,8 @@ define i32 @test_floattoi32(float %in) {
 
   %signed = fptosi float %in to i32
   %unsigned = fptoui float %in to i32
-; CHECK: fcvtzu [[UNSIG:w[0-9]+]], {{s[0-9]+}}
-; CHECK: fcvtzs [[SIG:w[0-9]+]], {{s[0-9]+}}
+; CHECK-DAG: fcvtzu [[UNSIG:w[0-9]+]], {{s[0-9]+}}
+; CHECK-DAG: fcvtzs [[SIG:w[0-9]+]], {{s[0-9]+}}
 
   %res = sub i32 %signed, %unsigned
 ; CHECK: sub {{w[0-9]+}}, [[SIG]], [[UNSIG]]
@@ -20,8 +20,8 @@ define i32 @test_doubletoi32(double %in) {
 
   %signed = fptosi double %in to i32
   %unsigned = fptoui double %in to i32
-; CHECK: fcvtzu [[UNSIG:w[0-9]+]], {{d[0-9]+}}
-; CHECK: fcvtzs [[SIG:w[0-9]+]], {{d[0-9]+}}
+; CHECK-DAG: fcvtzu [[UNSIG:w[0-9]+]], {{d[0-9]+}}
+; CHECK-DAG: fcvtzs [[SIG:w[0-9]+]], {{d[0-9]+}}
 
   %res = sub i32 %signed, %unsigned
 ; CHECK: sub {{w[0-9]+}}, [[SIG]], [[UNSIG]]
@@ -35,8 +35,8 @@ define i64 @test_floattoi64(float %in) {
 
   %signed = fptosi float %in to i64
   %unsigned = fptoui float %in to i64
-; CHECK: fcvtzu [[UNSIG:x[0-9]+]], {{s[0-9]+}}
-; CHECK: fcvtzs [[SIG:x[0-9]+]], {{s[0-9]+}}
+; CHECK-DAG: fcvtzu [[UNSIG:x[0-9]+]], {{s[0-9]+}}
+; CHECK-DAG: fcvtzs [[SIG:x[0-9]+]], {{s[0-9]+}}
 
   %res = sub i64 %signed, %unsigned
 ; CHECK: sub {{x[0-9]+}}, [[SIG]], [[UNSIG]]
@@ -50,8 +50,8 @@ define i64 @test_doubletoi64(double %in) {
 
   %signed = fptosi double %in to i64
   %unsigned = fptoui double %in to i64
-; CHECK: fcvtzu [[UNSIG:x[0-9]+]], {{d[0-9]+}}
-; CHECK: fcvtzs [[SIG:x[0-9]+]], {{d[0-9]+}}
+; CHECK-DAG: fcvtzu [[UNSIG:x[0-9]+]], {{d[0-9]+}}
+; CHECK-DAG: fcvtzs [[SIG:x[0-9]+]], {{d[0-9]+}}
 
   %res = sub i64 %signed, %unsigned
 ; CHECK: sub {{x[0-9]+}}, [[SIG]], [[UNSIG]]
@@ -65,8 +65,8 @@ define float @test_i32tofloat(i32 %in) {
 
   %signed = sitofp i32 %in to float
   %unsigned = uitofp i32 %in to float
-; CHECK: ucvtf [[UNSIG:s[0-9]+]], {{w[0-9]+}}
-; CHECK: scvtf [[SIG:s[0-9]+]], {{w[0-9]+}}
+; CHECK-DAG: ucvtf [[UNSIG:s[0-9]+]], {{w[0-9]+}}
+; CHECK-DAG: scvtf [[SIG:s[0-9]+]], {{w[0-9]+}}
 
   %res = fsub float %signed, %unsigned
 ; CHECL: fsub {{s[0-9]+}}, [[SIG]], [[UNSIG]]
@@ -79,8 +79,8 @@ define double @test_i32todouble(i32 %in) {
 
   %signed = sitofp i32 %in to double
   %unsigned = uitofp i32 %in to double
-; CHECK: ucvtf [[UNSIG:d[0-9]+]], {{w[0-9]+}}
-; CHECK: scvtf [[SIG:d[0-9]+]], {{w[0-9]+}}
+; CHECK-DAG: ucvtf [[UNSIG:d[0-9]+]], {{w[0-9]+}}
+; CHECK-DAG: scvtf [[SIG:d[0-9]+]], {{w[0-9]+}}
 
   %res = fsub double %signed, %unsigned
 ; CHECK: fsub {{d[0-9]+}}, [[SIG]], [[UNSIG]]
@@ -93,8 +93,8 @@ define float @test_i64tofloat(i64 %in) {
 
   %signed = sitofp i64 %in to float
   %unsigned = uitofp i64 %in to float
-; CHECK: ucvtf [[UNSIG:s[0-9]+]], {{x[0-9]+}}
-; CHECK: scvtf [[SIG:s[0-9]+]], {{x[0-9]+}}
+; CHECK-DAG: ucvtf [[UNSIG:s[0-9]+]], {{x[0-9]+}}
+; CHECK-DAG: scvtf [[SIG:s[0-9]+]], {{x[0-9]+}}
 
   %res = fsub float %signed, %unsigned
 ; CHECK: fsub {{s[0-9]+}}, [[SIG]], [[UNSIG]]
@@ -107,8 +107,8 @@ define double @test_i64todouble(i64 %in) {
 
   %signed = sitofp i64 %in to double
   %unsigned = uitofp i64 %in to double
-; CHECK: ucvtf [[UNSIG:d[0-9]+]], {{x[0-9]+}}
-; CHECK: scvtf [[SIG:d[0-9]+]], {{x[0-9]+}}
+; CHECK-DAG: ucvtf [[UNSIG:d[0-9]+]], {{x[0-9]+}}
+; CHECK-DAG: scvtf [[SIG:d[0-9]+]], {{x[0-9]+}}
 
   %res = fsub double %signed, %unsigned
 ; CHECK: sub {{d[0-9]+}}, [[SIG]], [[UNSIG]]

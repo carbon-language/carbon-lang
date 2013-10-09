@@ -21,15 +21,15 @@ define void @simple_args() {
   %char1 = load i8* @var8
   %char2 = load i8* @var8_2
   call void @take_i8s(i8 %char1, i8 %char2)
-; CHECK: ldrb w0, [{{x[0-9]+}}, #:lo12:var8]
-; CHECK: ldrb w1, [{{x[0-9]+}}, #:lo12:var8_2]
+; CHECK-DAG: ldrb w0, [{{x[0-9]+}}, #:lo12:var8]
+; CHECK-DAG: ldrb w1, [{{x[0-9]+}}, #:lo12:var8_2]
 ; CHECK: bl take_i8s
 
   %float1 = load float* @varfloat
   %float2 = load float* @varfloat_2
   call void @take_floats(float %float1, float %float2)
-; CHECK: ldr s1, [{{x[0-9]+}}, #:lo12:varfloat_2]
-; CHECK: ldr s0, [{{x[0-9]+}}, #:lo12:varfloat]
+; CHECK-DAG: ldr s1, [{{x[0-9]+}}, #:lo12:varfloat_2]
+; CHECK-DAG: ldr s0, [{{x[0-9]+}}, #:lo12:varfloat]
 ; CHECK: bl take_floats
 
   ret void
@@ -75,16 +75,17 @@ declare void @stacked_fpu(float %var0, double %var1, float %var2, float %var3,
                           float %var8)
 
 define void @check_stack_args() {
+; CHECK-LABEL: check_stack_args:
   call i32 @struct_on_stack(i8 0, i16 12, i32 42, i64 99, i128 1,
                             i32* @var32, %myStruct* byval @varstruct,
                             i32 999, double 1.0)
   ; Want to check that the final double is passed in registers and
   ; that varstruct is passed on the stack. Rather dependent on how a
   ; memcpy gets created, but the following works for now.
-; CHECK: mov x0, sp
-; CHECK: str {{w[0-9]+}}, [x0]
-; CHECK: str {{w[0-9]+}}, [x0, #12]
-; CHECK: fmov d0,
+; CHECK: mov x[[SPREG:[0-9]+]], sp
+; CHECK-DAG: str {{w[0-9]+}}, [x[[SPREG]]]
+; CHECK-DAG: str {{w[0-9]+}}, [x[[SPREG]], #12]
+; CHECK-DAG: fmov d0,
 ; CHECK: bl struct_on_stack
 
   call void @stacked_fpu(float -1.0, double 1.0, float 4.0, float 2.0,

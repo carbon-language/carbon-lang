@@ -150,14 +150,14 @@ define i1 @test_setcc2() {
 ; Technically, everything after the call to __letf2 is redundant, but we'll let
 ; LLVM have its fun for now.
   %val = fcmp ugt fp128 %lhs, %rhs
-; CHECK: bl      __unordtf2
-; CHECK: mov     x[[UNORDERED:[0-9]+]], x0
-
 ; CHECK: bl      __gttf2
 ; CHECK: cmp w0, #0
 ; CHECK: csinc   [[GT:w[0-9]+]], wzr, wzr, le
-; CHECK: cmp w[[UNORDERED]], #0
+
+; CHECK: bl      __unordtf2
+; CHECK: cmp w0, #0
 ; CHECK: csinc   [[UNORDERED:w[0-9]+]], wzr, wzr, eq
+
 ; CHECK: orr     w0, [[UNORDERED]], [[GT]]
 
   ret i1 %val
@@ -174,15 +174,14 @@ define i32 @test_br_cc() {
 
   ; olt == !uge, which LLVM unfortunately "optimizes" this to.
   %cond = fcmp olt fp128 %lhs, %rhs
-; CHECK: bl      __unordtf2
-; CHECK: mov     x[[UNORDERED:[0-9]+]], x0
-
 ; CHECK: bl      __getf2
 ; CHECK: cmp w0, #0
-
 ; CHECK: csinc   [[OGE:w[0-9]+]], wzr, wzr, lt
-; CHECK: cmp w[[UNORDERED]], #0
+
+; CHECK: bl      __unordtf2
+; CHECK: cmp w0, #0
 ; CHECK: csinc   [[UNORDERED:w[0-9]+]], wzr, wzr, eq
+
 ; CHECK: orr     [[UGE:w[0-9]+]], [[UNORDERED]], [[OGE]]
 ; CHECK: cbnz [[UGE]], [[RET29:.LBB[0-9]+_[0-9]+]]
   br i1 %cond, label %iftrue, label %iffalse

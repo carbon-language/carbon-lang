@@ -9,6 +9,7 @@ declare void @llvm.va_start(i8*)
 define void @test_simple(i32 %n, ...) {
 ; CHECK-LABEL: test_simple:
 ; CHECK: sub sp, sp, #[[STACKSIZE:[0-9]+]]
+; CHECK: add x[[VA_LIST:[0-9]+]], {{x[0-9]+}}, #:lo12:var
 ; CHECK: mov x[[FPRBASE:[0-9]+]], sp
 ; CHECK: str q7, [x[[FPRBASE]], #112]
 ; CHECK: add x[[GPRBASE:[0-9]+]], sp, #[[GPRFROMSP:[0-9]+]]
@@ -21,7 +22,6 @@ define void @test_simple(i32 %n, ...) {
 
   %addr = bitcast %va_list* @var to i8*
   call void @llvm.va_start(i8* %addr)
-; CHECK: add x[[VA_LIST:[0-9]+]], {{x[0-9]+}}, #:lo12:var
 ; CHECK: movn [[VR_OFFS:w[0-9]+]], #127
 ; CHECK: str [[VR_OFFS]], [x[[VA_LIST]], #28]
 ; CHECK: movn [[GR_OFFS:w[0-9]+]], #55
@@ -131,12 +131,13 @@ define void @test_va_copy() {
 ; Check beginning and end again:
 
 ; CHECK: ldr [[BLOCK:x[0-9]+]], [{{x[0-9]+}}, #:lo12:var]
-; CHECK: str [[BLOCK]], [{{x[0-9]+}}, #:lo12:second_list]
-
-; CHECK: add x[[DEST_LIST:[0-9]+]], {{x[0-9]+}}, #:lo12:second_list
 ; CHECK: add x[[SRC_LIST:[0-9]+]], {{x[0-9]+}}, #:lo12:var
 
+; CHECK: str [[BLOCK]], [{{x[0-9]+}}, #:lo12:second_list]
+
 ; CHECK: ldr [[BLOCK:x[0-9]+]], [x[[SRC_LIST]], #24]
+; CHECK: add x[[DEST_LIST:[0-9]+]], {{x[0-9]+}}, #:lo12:second_list
+
 ; CHECK: str [[BLOCK]], [x[[DEST_LIST]], #24]
 
   ret void
