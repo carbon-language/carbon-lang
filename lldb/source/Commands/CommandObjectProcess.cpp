@@ -302,7 +302,7 @@ protected:
             if (m_options.launch_info.GetFlags().Test(eLaunchFlagStopAtEntry) == false)
             {
                 result.SetStatus (eReturnStatusSuccessContinuingNoResult);
-                StateType state = process->WaitForProcessToStop (NULL);
+                StateType state = process->WaitForProcessToStop (NULL, NULL, false);
 
                 if (state == eStateStopped)
                 {

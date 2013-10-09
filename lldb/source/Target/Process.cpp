@@ -1230,7 +1230,7 @@ Process::GetNextEvent (EventSP &event_sp)
 
 
 StateType
-Process::WaitForProcessToStop (const TimeValue *timeout, lldb::EventSP *event_sp_ptr)
+Process::WaitForProcessToStop (const TimeValue *timeout, lldb::EventSP *event_sp_ptr, bool wait_always)
 {
     // We can't just wait for a "stopped" event, because the stopped event may have restarted the target.
     // We have to actually check each event, and in the case of a stopped event check the restarted flag
@@ -1242,6 +1242,19 @@ Process::WaitForProcessToStop (const TimeValue *timeout, lldb::EventSP *event_sp
     // other valid state...
     if (state == eStateDetached || state == eStateExited)
         return state;
+
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
+    if (log)
+        log->Printf ("Process::%s (timeout = %p)", __FUNCTION__, timeout);
+
+    if (!wait_always &&
+        StateIsStoppedState(state, true) &&
+        StateIsStoppedState(GetPrivateState(), true)) {
+        if (log)
+            log->Printf("Process::%s returning without waiting for events; process private and public states are already 'stopped'.",
+                        __FUNCTION__);
+        return state;
+    }
 
     while (state != eStateInvalid)
     {

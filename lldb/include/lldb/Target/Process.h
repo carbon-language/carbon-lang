@@ -3316,8 +3316,11 @@ public:
     lldb::StateType
     GetNextEvent (lldb::EventSP &event_sp);
 
+    // Returns the process state when it is stopped. If specified, event_sp_ptr
+    // is set to the event which triggered the stop. If wait_always = false,
+    // and the process is already stopped, this function returns immediately.
     lldb::StateType
-    WaitForProcessToStop (const TimeValue *timeout, lldb::EventSP *event_sp_ptr = NULL);
+    WaitForProcessToStop (const TimeValue *timeout, lldb::EventSP *event_sp_ptr = NULL, bool wait_always = true);
 
     lldb::StateType
     WaitForStateChangedEvents (const TimeValue *timeout, lldb::EventSP &event_sp);
