@@ -244,10 +244,6 @@ public:
     return Context.Sources.createFileID(File, SourceLocation(), SrcMgr::C_User);
   }
 
-  StringRef getFilePath(llvm::StringRef Name) {
-    return TemporaryFiles.lookup(Name);
-  }
-
   std::string getFileContentFromDisk(llvm::StringRef Name) {
     std::string Path = TemporaryFiles.lookup(Name);
     assert(!Path.empty());
@@ -272,55 +268,6 @@ TEST_F(FlushRewrittenFilesTest, StoresChangesOnDisk) {
   EXPECT_FALSE(Context.Rewrite.overwriteChangedFiles());
   EXPECT_EQ("line1\nreplaced\nline3\nline4",
             getFileContentFromDisk("input.cpp"));
-}
-
-TEST_F(FlushRewrittenFilesTest, GetFilePath) {
-  // Create a temporary file.
-  createFile("input.cpp", "line1\nline2\nline3\nline4");
-
-  StringRef FilePath = getFilePath("input.cpp");
-  StringRef TempPath = llvm::sys::path::parent_path(FilePath);
-  StringRef TempFile = llvm::sys::path::filename(FilePath);
-
-  // Save current path.
-  SmallString<512> CurrentPath;
-  llvm::sys::fs::current_path(CurrentPath);
-
-  // Change directory to the temporary directory.
-  EXPECT_FALSE(chdir(TempPath.str().c_str()));
-  llvm::sys::fs::current_path(CurrentPath);
-
-  // Get a FileEntry from the current directory.
-  FileManager Files((FileSystemOptions()));
-  const FileEntry *Entry = Files.getFile(TempFile);
-  ASSERT_TRUE(Entry != NULL);
-
-  // We expect to get just the filename and "." in the FileEntry
-  // since paths are relative to the current directory.
-  EXPECT_EQ(TempFile, Entry->getName());
-  EXPECT_STREQ(".", Entry->getDir()->getName());
-
-  FileID ID = Context.Sources.createFileID(Entry, SourceLocation(),
-                  SrcMgr::C_User);
-
-  Replacement R = Replacement(Context.Sources, Context.getLocation(ID, 2, 1),
-                              5, "replaced");
-
-  // Change back to the original path so we can verify that replacements
-  // are being applied independently of the location.
-  EXPECT_EQ(0, chdir(CurrentPath.c_str()));
-
-  // We expect that the file path of the replacement is using the absolute
-  // path.
-  EXPECT_EQ(R.getFilePath(), getFilePath("input.cpp"));
-
-  // Apply replacements.
-  Replacements Replaces;
-  Replaces.insert(R);
-  EXPECT_TRUE(applyAllReplacements(Replaces, Context.Rewrite));
-  EXPECT_FALSE(Context.Rewrite.overwriteChangedFiles());
-  EXPECT_EQ("line1\nreplaced\nline3\nline4",
-                 getFileContentFromDisk("input.cpp"));
 }
 
 namespace {
