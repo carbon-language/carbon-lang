@@ -285,7 +285,7 @@ def MMX_MOVQ2DQrr : MMXS2SIi8<0xD6, MRMSrcReg, (outs VR128:$dst),
                                     (i64 (bitconvert (x86mmx VR64:$src))))))],
                               IIC_MMX_MOVQ_RR>;
 
-let neverHasSideEffects = 1 in
+let isCodeGenOnly = 1, hasSideEffects = 1 in {
 def MMX_MOVQ2FR64rr: MMXS2SIi8<0xD6, MRMSrcReg, (outs FR64:$dst),
                                (ins VR64:$src), "movq2dq\t{$src, $dst|$dst, $src}",
                                [], IIC_MMX_MOVQ_RR>;
@@ -293,6 +293,7 @@ def MMX_MOVQ2FR64rr: MMXS2SIi8<0xD6, MRMSrcReg, (outs FR64:$dst),
 def MMX_MOVFR642Qrr: MMXSDIi8<0xD6, MRMSrcReg, (outs VR64:$dst),
                               (ins FR64:$src), "movdq2q\t{$src, $dst|$dst, $src}",
                               [], IIC_MMX_MOVQ_RR>;
+}
 } // SchedRW
 
 def MMX_MOVNTQmr  : MMXI<0xE7, MRMDestMem, (outs), (ins i64mem:$dst, VR64:$src),
@@ -300,21 +301,15 @@ def MMX_MOVNTQmr  : MMXI<0xE7, MRMDestMem, (outs), (ins i64mem:$dst, VR64:$src),
                          [(int_x86_mmx_movnt_dq addr:$dst, VR64:$src)],
                          IIC_MMX_MOVQ_RM>, Sched<[WriteStore]>;
 
-let AddedComplexity = 15 in
-// movd to MMX register zero-extends
-def MMX_MOVZDI2PDIrr : MMXI<0x6E, MRMSrcReg, (outs VR64:$dst), (ins GR32:$src),
-                             "movd\t{$src, $dst|$dst, $src}",
-              [(set VR64:$dst,
-                    (x86mmx (X86vzmovl (x86mmx (scalar_to_vector GR32:$src)))))],
-                            IIC_MMX_MOV_MM_RM>, Sched<[WriteMove]>;
-let AddedComplexity = 20 in
-def MMX_MOVZDI2PDIrm : MMXI<0x6E, MRMSrcMem, (outs VR64:$dst),
-                           (ins i32mem:$src),
-                             "movd\t{$src, $dst|$dst, $src}",
-          [(set VR64:$dst,
-                (x86mmx (X86vzmovl (x86mmx
-                                   (scalar_to_vector (loadi32 addr:$src))))))],
-                            IIC_MMX_MOV_MM_RM>, Sched<[WriteLoad]>;
+let Predicates = [HasMMX] in {
+  let AddedComplexity = 15 in
+  // movd to MMX register zero-extends
+  def : Pat<(x86mmx (X86vzmovl (x86mmx (scalar_to_vector GR32:$src)))),
+            (MMX_MOVD64rr GR32:$src)>;
+  let AddedComplexity = 20 in
+  def : Pat<(x86mmx (X86vzmovl (x86mmx (scalar_to_vector (loadi32 addr:$src))))),
+            (MMX_MOVD64rm addr:$src)>;
+}
 
 // Arithmetic Instructions
 defm MMX_PABSB : SS3I_unop_rm_int_mm<0x1C, "pabsb", int_x86_ssse3_pabs_b,
