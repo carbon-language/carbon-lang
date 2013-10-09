@@ -4336,25 +4336,25 @@ def PMOVMSKBrr : PDI<0xD7, MRMSrcReg, (outs GR32:$dst), (ins VR128:$src),
 
 let ExeDomain = SSEPackedInt, SchedRW = [WriteStore] in {
 
-let Uses = [EDI] in
+let Uses = [EDI], Predicates = [HasAVX,In32BitMode] in
 def VMASKMOVDQU : VPDI<0xF7, MRMSrcReg, (outs),
            (ins VR128:$src, VR128:$mask),
            "maskmovdqu\t{$mask, $src|$src, $mask}",
            [(int_x86_sse2_maskmov_dqu VR128:$src, VR128:$mask, EDI)],
            IIC_SSE_MASKMOV>, VEX;
-let Uses = [RDI] in
+let Uses = [RDI], Predicates = [HasAVX,In64BitMode] in
 def VMASKMOVDQU64 : VPDI<0xF7, MRMSrcReg, (outs),
            (ins VR128:$src, VR128:$mask),
            "maskmovdqu\t{$mask, $src|$src, $mask}",
            [(int_x86_sse2_maskmov_dqu VR128:$src, VR128:$mask, RDI)],
            IIC_SSE_MASKMOV>, VEX;
 
-let Uses = [EDI] in
+let Uses = [EDI], Predicates = [UseSSE2,In32BitMode] in
 def MASKMOVDQU : PDI<0xF7, MRMSrcReg, (outs), (ins VR128:$src, VR128:$mask),
            "maskmovdqu\t{$mask, $src|$src, $mask}",
            [(int_x86_sse2_maskmov_dqu VR128:$src, VR128:$mask, EDI)],
            IIC_SSE_MASKMOV>;
-let Uses = [RDI] in
+let Uses = [RDI], Predicates = [UseSSE2,In64BitMode] in
 def MASKMOVDQU64 : PDI<0xF7, MRMSrcReg, (outs), (ins VR128:$src, VR128:$mask),
            "maskmovdqu\t{$mask, $src|$src, $mask}",
            [(int_x86_sse2_maskmov_dqu VR128:$src, VR128:$mask, RDI)],
