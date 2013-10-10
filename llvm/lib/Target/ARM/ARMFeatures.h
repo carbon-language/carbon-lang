@@ -16,10 +16,10 @@
 
 #include "ARM.h"
 
-using namespace llvm;
+namespace llvm {
 
 template<typename InstrType> // could be MachineInstr or MCInst
-bool isV8EligibleForIT(InstrType *Instr, int BLXOperandIndex=0) {
+inline bool isV8EligibleForIT(InstrType *Instr, int BLXOperandIndex = 0) {
   switch (Instr->getOpcode()) {
   default:
     return false;
@@ -86,6 +86,8 @@ bool isV8EligibleForIT(InstrType *Instr, int BLXOperandIndex=0) {
     return Instr->getOperand(0).getReg() != ARM::PC &&
            Instr->getOperand(1).getReg() != ARM::PC;
   }
+}
+
 }
 
 #endif
