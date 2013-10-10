@@ -32,6 +32,7 @@ namespace lld {
 namespace elf {
 
 template <typename ELFT> class DefaultLayout;
+template <typename ELFT> class ScriptLayout;
 
 /// \brief A segment can be divided into segment slices
 ///        depending on how the segments can be split
