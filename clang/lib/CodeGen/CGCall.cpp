@@ -322,6 +322,7 @@ CodeGenTypes::arrangeGlobalDeclaration(GlobalDecl GD) {
 /// additional number of formal parameters considered required.
 static const CGFunctionInfo &
 arrangeFreeFunctionLikeCall(CodeGenTypes &CGT,
+                            CodeGenModule &CGM,
                             const CallArgList &args,
                             const FunctionType *fnType,
                             unsigned numExtraRequiredArgs) {
@@ -340,8 +341,9 @@ arrangeFreeFunctionLikeCall(CodeGenTypes &CGT,
   // explicitly use the variadic convention for unprototyped calls,
   // treat all of the arguments as required but preserve the nominal
   // possibility of variadics.
-  } else if (CGT.CGM.getTargetCodeGenInfo()
-               .isNoProtoCallVariadic(args, cast<FunctionNoProtoType>(fnType))) {
+  } else if (CGM.getTargetCodeGenInfo()
+                .isNoProtoCallVariadic(args,
+                                       cast<FunctionNoProtoType>(fnType))) {
     required = RequiredArgs(args.size());
   }
 
@@ -356,7 +358,7 @@ arrangeFreeFunctionLikeCall(CodeGenTypes &CGT,
 const CGFunctionInfo &
 CodeGenTypes::arrangeFreeFunctionCall(const CallArgList &args,
                                       const FunctionType *fnType) {
-  return arrangeFreeFunctionLikeCall(*this, args, fnType, 0);
+  return arrangeFreeFunctionLikeCall(*this, CGM, args, fnType, 0);
 }
 
 /// A block function call is essentially a free-function call with an
@@ -364,7 +366,7 @@ CodeGenTypes::arrangeFreeFunctionCall(const CallArgList &args,
 const CGFunctionInfo &
 CodeGenTypes::arrangeBlockFunctionCall(const CallArgList &args,
                                        const FunctionType *fnType) {
-  return arrangeFreeFunctionLikeCall(*this, args, fnType, 1);
+  return arrangeFreeFunctionLikeCall(*this, CGM, args, fnType, 1);
 }
 
 const CGFunctionInfo &
