@@ -69,8 +69,9 @@ namespace TargetOpcode {
     DBG_VALUE = 11,
 
     /// REG_SEQUENCE - This variadic instruction is used to form a register that
-    /// represent a consecutive sequence of sub-registers. It's used as register
-    /// coalescing / allocation aid and must be eliminated before code emission.
+    /// represents a consecutive sequence of sub-registers. It's used as a
+    /// register coalescing / allocation aid and must be eliminated before code
+    /// emission.
     // In SDNode form, the first operand encodes the register class created by
     // the REG_SEQUENCE, while each subsequent pair names a vreg + subreg index
     // pair.  Once it has been lowered to a MachineInstr, the regclass operand
