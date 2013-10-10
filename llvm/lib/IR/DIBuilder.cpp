@@ -1041,6 +1041,28 @@ DIVariable DIBuilder::createComplexVariable(unsigned Tag, DIDescriptor Scope,
 }
 
 /// createFunction - Create a new descriptor for the specified function.
+/// FIXME: this is added for dragonegg. Once we update dragonegg
+/// to call resolve function, this will be removed.
+DISubprogram DIBuilder::createFunction(DIScopeRef Context,
+                                       StringRef Name,
+                                       StringRef LinkageName,
+                                       DIFile File, unsigned LineNo,
+                                       DICompositeType Ty,
+                                       bool isLocalToUnit, bool isDefinition,
+                                       unsigned ScopeLine,
+                                       unsigned Flags, bool isOptimized,
+                                       Function *Fn,
+                                       MDNode *TParams,
+                                       MDNode *Decl) {
+  // dragonegg does not generate identifier for types, so using an empty map
+  // to resolve the context should be fine.
+  DITypeIdentifierMap EmptyMap;
+  return createFunction(Context.resolve(EmptyMap), Name, LinkageName, File,
+                        LineNo, Ty, isLocalToUnit, isDefinition, ScopeLine,
+                        Flags, isOptimized, Fn, TParams, Decl);
+}
+
+/// createFunction - Create a new descriptor for the specified function.
 DISubprogram DIBuilder::createFunction(DIDescriptor Context,
                                        StringRef Name,
                                        StringRef LinkageName,
@@ -1058,7 +1080,7 @@ DISubprogram DIBuilder::createFunction(DIDescriptor Context,
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_subprogram),
     File.getFileNode(),
-    getNonCompileUnitScope(Context),
+    DIScope(getNonCompileUnitScope(Context)).getRef(),
     MDString::get(VMContext, Name),
     MDString::get(VMContext, Name),
     MDString::get(VMContext, LinkageName),
@@ -1107,7 +1129,7 @@ DISubprogram DIBuilder::createMethod(DIDescriptor Context,
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_subprogram),
     F.getFileNode(),
-    getNonCompileUnitScope(Context),
+    DIScope(getNonCompileUnitScope(Context)).getRef(),
     MDString::get(VMContext, Name),
     MDString::get(VMContext, Name),
     MDString::get(VMContext, LinkageName),

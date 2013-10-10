@@ -1300,7 +1300,7 @@ DIE *CompileUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
   // Construct the context before querying for the existence of the DIE in case
   // such construction creates the DIE (as is the case for member function
   // declarations).
-  DIE *ContextDIE = getOrCreateContextDIE(SP.getContext());
+  DIE *ContextDIE = getOrCreateContextDIE(resolve(SP.getContext()));
   if (!ContextDIE)
     ContextDIE = CUDie.get();
 

@@ -404,7 +404,7 @@ struct BreakpointPrinter : public ModulePass {
           "A MDNode in llvm.dbg.sp should be null or a DISubprogram.");
         if (!SP)
           continue;
-        getContextName(SP.getContext(), Name);
+        getContextName(SP.getContext().resolve(TypeIdentifierMap), Name);
         Name = Name + SP.getDisplayName().str();
         if (!Name.empty() && Processed.insert(Name)) {
           Out << Name << "\n";

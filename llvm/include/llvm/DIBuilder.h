@@ -562,6 +562,20 @@ namespace llvm {
                                 MDNode *TParam = 0,
                                 MDNode *Decl = 0);
 
+    /// FIXME: this is added for dragonegg. Once we update dragonegg
+    /// to call resolve function, this will be removed.
+    DISubprogram createFunction(DIScopeRef Scope, StringRef Name,
+                                StringRef LinkageName,
+                                DIFile File, unsigned LineNo,
+                                DICompositeType Ty, bool isLocalToUnit,
+                                bool isDefinition,
+                                unsigned ScopeLine,
+                                unsigned Flags = 0,
+                                bool isOptimized = false,
+                                Function *Fn = 0,
+                                MDNode *TParam = 0,
+                                MDNode *Decl = 0);
+
     /// createMethod - Create a new descriptor for the specified C++ method.
     /// See comments in DISubprogram for descriptions of these fields.
     /// @param Scope         Function scope.

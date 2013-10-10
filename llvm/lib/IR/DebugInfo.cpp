@@ -511,8 +511,8 @@ bool DISubprogram::Verify() const {
   if (!isSubprogram())
     return false;
 
-  // Make sure context @ field 2 and type @ field 7 are MDNodes.
-  if (!fieldIsMDNode(DbgNode, 2))
+  // Make sure context @ field 2 is a ScopeRef and type @ field 7 is a MDNode.
+  if (!fieldIsScopeRef(DbgNode, 2))
     return false;
   if (!fieldIsMDNode(DbgNode, 7))
     return false;
@@ -1071,7 +1071,7 @@ void DebugInfoFinder::processLexicalBlock(DILexicalBlock LB) {
 void DebugInfoFinder::processSubprogram(DISubprogram SP) {
   if (!addSubprogram(SP))
     return;
-  processScope(SP.getContext());
+  processScope(SP.getContext().resolve(TypeIdentifierMap));
   processType(SP.getType());
   DIArray TParams = SP.getTemplateParams();
   for (unsigned I = 0, E = TParams.getNumElements(); I != E; ++I) {

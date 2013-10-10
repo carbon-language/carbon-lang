@@ -393,9 +393,10 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(CompileUnit *SPCU,
       // function then gdb prefers the definition at top level and but does not
       // expect specification DIE in parent function. So avoid creating
       // specification DIE for a function defined inside a function.
-      if (SP.isDefinition() && !SP.getContext().isCompileUnit() &&
-          !SP.getContext().isFile() &&
-          !isSubprogramContext(SP.getContext())) {
+      DIScope SPContext = resolve(SP.getContext());
+      if (SP.isDefinition() && !SPContext.isCompileUnit() &&
+          !SPContext.isFile() &&
+          !isSubprogramContext(SPContext)) {
         SPCU->addFlag(SPDie, dwarf::DW_AT_declaration);
 
         // Add arguments.

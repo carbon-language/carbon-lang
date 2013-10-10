@@ -434,7 +434,7 @@ class DISubprogram : public DIScope {
 public:
   explicit DISubprogram(const MDNode *N = 0) : DIScope(N) {}
 
-  DIScope getContext() const { return getFieldAs<DIScope>(2); }
+  DIScopeRef getContext() const { return getFieldAs<DIScopeRef>(2); }
   StringRef getName() const { return getStringField(3); }
   StringRef getDisplayName() const { return getStringField(4); }
   StringRef getLinkageName() const { return getStringField(5); }
