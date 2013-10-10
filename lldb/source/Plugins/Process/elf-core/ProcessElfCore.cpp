@@ -441,7 +441,8 @@ ParseFreeBSDPrStatus(ThreadData *thread_data, DataExtractor &data,
                      ArchSpec &arch)
 {
     lldb::offset_t offset = 0;
-    bool have_padding = (arch.GetMachine() == llvm::Triple::x86_64);
+    bool have_padding = (arch.GetMachine() == llvm::Triple::mips64 ||
+                         arch.GetMachine() == llvm::Triple::x86_64);
     int pr_version = data.GetU32(&offset);
 
     Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_PROCESS));

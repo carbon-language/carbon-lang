@@ -62,6 +62,8 @@ public:
         eCore_thumbv7m,
         eCore_thumbv7em,
         
+        eCore_mips64,
+
         eCore_ppc_generic,
         eCore_ppc_ppc601,
         eCore_ppc_ppc602,
