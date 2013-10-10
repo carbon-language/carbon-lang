@@ -107,6 +107,8 @@ b.build(prepare_builtins, "LLVM_TOOL_LINK",
 
 b.rule("PREPARE_BUILTINS", "%s -o $out $in" % prepare_builtins,
        'PREPARE-BUILTINS $out')
+b.rule("PYTHON_GEN", "python < $in > $out", "PYTHON_GEN $out")
+b.build('generic/lib/convert.cl', "PYTHON_GEN", ['generic/lib/gen_convert.py'])
 
 manifest_deps = set([sys.argv[0], os.path.join(srcdir, 'build', 'metabuild.py'),
                      os.path.join(srcdir, 'build', 'ninja_syntax.py')])
@@ -145,6 +147,7 @@ for target in targets:
     clang_bc_flags = "-target %s -I`dirname $in` %s " \
                      "-Dcl_clang_storage_class_specifiers " \
                      "-Dcl_khr_fp64 " \
+                     "-Dcles_khr_int64 " \
                      "-D__CLC_INTERNAL " \
                      "-emit-llvm" % (target, clang_cl_includes)
     if device['gpu'] != '':
