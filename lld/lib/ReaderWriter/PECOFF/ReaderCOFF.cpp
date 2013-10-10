@@ -726,7 +726,7 @@ public:
   error_code parseFile(std::unique_ptr<MemoryBuffer> &mb,
                        std::vector<std::unique_ptr<File> > &result) const {
     StringRef magic(mb->getBufferStart(), mb->getBufferSize());
-    // The input file should be an archive file, a regular COFF file, or an an
+    // The input file should be an archive file, a regular COFF file, or an
     // import library member file. Try to parse in that order. If the input file
     // does not start with a known magic, parseCOFFImportLibrary will return an
     // error object.
