@@ -213,6 +213,10 @@ namespace {
                 const LiveInterval &LI);
     void report(const char *msg, const MachineBasicBlock *MBB,
                 const LiveInterval &LI);
+    void report(const char *msg, const MachineFunction *MF,
+                const LiveRange &LR);
+    void report(const char *msg, const MachineBasicBlock *MBB,
+                const LiveRange &LR);
 
     void verifyInlineAsm(const MachineInstr *MI);
 
@@ -225,9 +229,10 @@ namespace {
     void verifyLiveVariables();
     void verifyLiveIntervals();
     void verifyLiveInterval(const LiveInterval&);
-    void verifyLiveIntervalValue(const LiveInterval&, VNInfo*);
-    void verifyLiveIntervalSegment(const LiveInterval&,
-                                   LiveInterval::const_iterator);
+    void verifyLiveRangeValue(const LiveRange&, const VNInfo*, unsigned);
+    void verifyLiveRangeSegment(const LiveRange&,
+                                const LiveRange::const_iterator I, unsigned);
+    void verifyLiveRange(const LiveRange&, unsigned);
 
     void verifyStackFrame();
   };
@@ -431,6 +436,18 @@ void MachineVerifier::report(const char *msg, const MachineBasicBlock *MBB,
   else
     *OS << PrintRegUnit(LI.reg, TRI);
   *OS << ' ' << LI << '\n';
+}
+
+void MachineVerifier::report(const char *msg, const MachineBasicBlock *MBB,
+                             const LiveRange &LR) {
+  report(msg, MBB);
+  *OS << "- liverange:    " << LR << "\n";
+}
+
+void MachineVerifier::report(const char *msg, const MachineFunction *MF,
+                             const LiveRange &LR) {
+  report(msg, MF);
+  *OS << "- liverange:    " << LR << "\n";
 }
 
 void MachineVerifier::markReachable(const MachineBasicBlock *MBB) {
@@ -1339,21 +1356,22 @@ void MachineVerifier::verifyLiveIntervals() {
       verifyLiveInterval(*LI);
 }
 
-void MachineVerifier::verifyLiveIntervalValue(const LiveInterval &LI,
-                                              VNInfo *VNI) {
+void MachineVerifier::verifyLiveRangeValue(const LiveRange &LR,
+                                           const VNInfo *VNI,
+                                           unsigned Reg) {
   if (VNI->isUnused())
     return;
 
-  const VNInfo *DefVNI = LI.getVNInfoAt(VNI->def);
+  const VNInfo *DefVNI = LR.getVNInfoAt(VNI->def);
 
   if (!DefVNI) {
-    report("Valno not live at def and not marked unused", MF, LI);
+    report("Valno not live at def and not marked unused", MF, LR);
     *OS << "Valno #" << VNI->id << '\n';
     return;
   }
 
   if (DefVNI != VNI) {
-    report("Live segment at def has different valno", MF, LI);
+    report("Live segment at def has different valno", MF, LR);
     *OS << "Valno #" << VNI->id << " is defined at " << VNI->def
         << " where valno #" << DefVNI->id << " is live\n";
     return;
@@ -1361,15 +1379,15 @@ void MachineVerifier::verifyLiveIntervalValue(const LiveInterval &LI,
 
   const MachineBasicBlock *MBB = LiveInts->getMBBFromIndex(VNI->def);
   if (!MBB) {
-    report("Invalid definition index", MF, LI);
+    report("Invalid definition index", MF, LR);
     *OS << "Valno #" << VNI->id << " is defined at " << VNI->def
-        << " in " << LI << '\n';
+        << " in " << LR << '\n';
     return;
   }
 
   if (VNI->isPHIDef()) {
     if (VNI->def != LiveInts->getMBBStartIdx(MBB)) {
-      report("PHIDef value is not defined at MBB start", MBB, LI);
+      report("PHIDef value is not defined at MBB start", MBB, LR);
       *OS << "Valno #" << VNI->id << " is defined at " << VNI->def
           << ", not at the beginning of BB#" << MBB->getNumber() << '\n';
     }
@@ -1379,136 +1397,139 @@ void MachineVerifier::verifyLiveIntervalValue(const LiveInterval &LI,
   // Non-PHI def.
   const MachineInstr *MI = LiveInts->getInstructionFromIndex(VNI->def);
   if (!MI) {
-    report("No instruction at def index", MBB, LI);
+    report("No instruction at def index", MBB, LR);
     *OS << "Valno #" << VNI->id << " is defined at " << VNI->def << '\n';
     return;
   }
 
-  bool hasDef = false;
-  bool isEarlyClobber = false;
-  for (ConstMIBundleOperands MOI(MI); MOI.isValid(); ++MOI) {
-    if (!MOI->isReg() || !MOI->isDef())
-      continue;
-    if (TargetRegisterInfo::isVirtualRegister(LI.reg)) {
-      if (MOI->getReg() != LI.reg)
+  if (Reg != 0) {
+    bool hasDef = false;
+    bool isEarlyClobber = false;
+    for (ConstMIBundleOperands MOI(MI); MOI.isValid(); ++MOI) {
+      if (!MOI->isReg() || !MOI->isDef())
         continue;
-    } else {
-      if (!TargetRegisterInfo::isPhysicalRegister(MOI->getReg()) ||
-          !TRI->hasRegUnit(MOI->getReg(), LI.reg))
-        continue;
+      if (TargetRegisterInfo::isVirtualRegister(Reg)) {
+        if (MOI->getReg() != Reg)
+          continue;
+      } else {
+        if (!TargetRegisterInfo::isPhysicalRegister(MOI->getReg()) ||
+            !TRI->hasRegUnit(MOI->getReg(), Reg))
+          continue;
+      }
+      hasDef = true;
+      if (MOI->isEarlyClobber())
+        isEarlyClobber = true;
     }
-    hasDef = true;
-    if (MOI->isEarlyClobber())
-      isEarlyClobber = true;
-  }
 
-  if (!hasDef) {
-    report("Defining instruction does not modify register", MI);
-    *OS << "Valno #" << VNI->id << " in " << LI << '\n';
-  }
+    if (!hasDef) {
+      report("Defining instruction does not modify register", MI);
+      *OS << "Valno #" << VNI->id << " in " << LR << '\n';
+    }
 
-  // Early clobber defs begin at USE slots, but other defs must begin at
-  // DEF slots.
-  if (isEarlyClobber) {
-    if (!VNI->def.isEarlyClobber()) {
-      report("Early clobber def must be at an early-clobber slot", MBB, LI);
+    // Early clobber defs begin at USE slots, but other defs must begin at
+    // DEF slots.
+    if (isEarlyClobber) {
+      if (!VNI->def.isEarlyClobber()) {
+        report("Early clobber def must be at an early-clobber slot", MBB, LR);
+        *OS << "Valno #" << VNI->id << " is defined at " << VNI->def << '\n';
+      }
+    } else if (!VNI->def.isRegister()) {
+      report("Non-PHI, non-early clobber def must be at a register slot",
+             MBB, LR);
       *OS << "Valno #" << VNI->id << " is defined at " << VNI->def << '\n';
     }
-  } else if (!VNI->def.isRegister()) {
-    report("Non-PHI, non-early clobber def must be at a register slot",
-           MBB, LI);
-    *OS << "Valno #" << VNI->id << " is defined at " << VNI->def << '\n';
   }
 }
 
-void
-MachineVerifier::verifyLiveIntervalSegment(const LiveInterval &LI,
-                                           LiveInterval::const_iterator I) {
-  const VNInfo *VNI = I->valno;
+void MachineVerifier::verifyLiveRangeSegment(const LiveRange &LR,
+                                             const LiveRange::const_iterator I,
+                                             unsigned Reg) {
+  const LiveRange::Segment &S = *I;
+  const VNInfo *VNI = S.valno;
   assert(VNI && "Live segment has no valno");
 
-  if (VNI->id >= LI.getNumValNums() || VNI != LI.getValNumInfo(VNI->id)) {
-    report("Foreign valno in live segment", MF, LI);
-    *OS << *I << " has a bad valno\n";
+  if (VNI->id >= LR.getNumValNums() || VNI != LR.getValNumInfo(VNI->id)) {
+    report("Foreign valno in live segment", MF, LR);
+    *OS << S << " has a bad valno\n";
   }
 
   if (VNI->isUnused()) {
-    report("Live segment valno is marked unused", MF, LI);
-    *OS << *I << '\n';
+    report("Live segment valno is marked unused", MF, LR);
+    *OS << S << '\n';
   }
 
-  const MachineBasicBlock *MBB = LiveInts->getMBBFromIndex(I->start);
+  const MachineBasicBlock *MBB = LiveInts->getMBBFromIndex(S.start);
   if (!MBB) {
-    report("Bad start of live segment, no basic block", MF, LI);
-    *OS << *I << '\n';
+    report("Bad start of live segment, no basic block", MF, LR);
+    *OS << S << '\n';
     return;
   }
   SlotIndex MBBStartIdx = LiveInts->getMBBStartIdx(MBB);
-  if (I->start != MBBStartIdx && I->start != VNI->def) {
-    report("Live segment must begin at MBB entry or valno def", MBB, LI);
-    *OS << *I << '\n';
+  if (S.start != MBBStartIdx && S.start != VNI->def) {
+    report("Live segment must begin at MBB entry or valno def", MBB, LR);
+    *OS << S << '\n';
   }
 
   const MachineBasicBlock *EndMBB =
-    LiveInts->getMBBFromIndex(I->end.getPrevSlot());
+    LiveInts->getMBBFromIndex(S.end.getPrevSlot());
   if (!EndMBB) {
-    report("Bad end of live segment, no basic block", MF, LI);
-    *OS << *I << '\n';
+    report("Bad end of live segment, no basic block", MF, LR);
+    *OS << S << '\n';
     return;
   }
 
   // No more checks for live-out segments.
-  if (I->end == LiveInts->getMBBEndIdx(EndMBB))
+  if (S.end == LiveInts->getMBBEndIdx(EndMBB))
     return;
 
   // RegUnit intervals are allowed dead phis.
-  if (!TargetRegisterInfo::isVirtualRegister(LI.reg) && VNI->isPHIDef() &&
-      I->start == VNI->def && I->end == VNI->def.getDeadSlot())
+  if (!TargetRegisterInfo::isVirtualRegister(Reg) && VNI->isPHIDef() &&
+      S.start == VNI->def && S.end == VNI->def.getDeadSlot())
     return;
 
   // The live segment is ending inside EndMBB
   const MachineInstr *MI =
-    LiveInts->getInstructionFromIndex(I->end.getPrevSlot());
+    LiveInts->getInstructionFromIndex(S.end.getPrevSlot());
   if (!MI) {
-    report("Live segment doesn't end at a valid instruction", EndMBB, LI);
-    *OS << *I << '\n';
+    report("Live segment doesn't end at a valid instruction", EndMBB, LR);
+    *OS << S << '\n';
     return;
   }
 
   // The block slot must refer to a basic block boundary.
-  if (I->end.isBlock()) {
-    report("Live segment ends at B slot of an instruction", EndMBB, LI);
-    *OS << *I << '\n';
+  if (S.end.isBlock()) {
+    report("Live segment ends at B slot of an instruction", EndMBB, LR);
+    *OS << S << '\n';
   }
 
-  if (I->end.isDead()) {
+  if (S.end.isDead()) {
     // Segment ends on the dead slot.
     // That means there must be a dead def.
-    if (!SlotIndex::isSameInstr(I->start, I->end)) {
-      report("Live segment ending at dead slot spans instructions", EndMBB, LI);
-      *OS << *I << '\n';
+    if (!SlotIndex::isSameInstr(S.start, S.end)) {
+      report("Live segment ending at dead slot spans instructions", EndMBB, LR);
+      *OS << S << '\n';
     }
   }
 
   // A live segment can only end at an early-clobber slot if it is being
   // redefined by an early-clobber def.
-  if (I->end.isEarlyClobber()) {
-    if (I+1 == LI.end() || (I+1)->start != I->end) {
+  if (S.end.isEarlyClobber()) {
+    if (I+1 == LR.end() || (I+1)->start != S.end) {
       report("Live segment ending at early clobber slot must be "
-             "redefined by an EC def in the same instruction", EndMBB, LI);
-      *OS << *I << '\n';
+             "redefined by an EC def in the same instruction", EndMBB, LR);
+      *OS << S << '\n';
     }
   }
 
   // The following checks only apply to virtual registers. Physreg liveness
   // is too weird to check.
-  if (TargetRegisterInfo::isVirtualRegister(LI.reg)) {
+  if (TargetRegisterInfo::isVirtualRegister(Reg)) {
     // A live segment can end with either a redefinition, a kill flag on a
     // use, or a dead flag on a def.
     bool hasRead = false;
     bool hasDeadDef = false;
     for (ConstMIBundleOperands MOI(MI); MOI.isValid(); ++MOI) {
-      if (!MOI->isReg() || MOI->getReg() != LI.reg)
+      if (!MOI->isReg() || MOI->getReg() != Reg)
         continue;
       if (MOI->readsReg())
         hasRead = true;
@@ -1516,15 +1537,15 @@ MachineVerifier::verifyLiveIntervalSegment(const LiveInterval &LI,
         hasDeadDef = true;
     }
 
-    if (I->end.isDead()) {
+    if (S.end.isDead()) {
       if (!hasDeadDef) {
         report("Instruction doesn't have a dead def operand", MI);
-        *OS << *I << " in " << LI << '\n';
+        *OS << S << " in " << LR << '\n';
       }
     } else {
       if (!hasRead) {
         report("Instruction ending live segment doesn't read the register", MI);
-        *OS << *I << " in " << LI << '\n';
+        *OS << S << " in " << LR << '\n';
       }
     }
   }
@@ -1532,7 +1553,7 @@ MachineVerifier::verifyLiveIntervalSegment(const LiveInterval &LI,
   // Now check all the basic blocks in this live segment.
   MachineFunction::const_iterator MFI = MBB;
   // Is this live segment the beginning of a non-PHIDef VN?
-  if (I->start == VNI->def && !VNI->isPHIDef()) {
+  if (S.start == VNI->def && !VNI->isPHIDef()) {
     // Not live-in to any blocks.
     if (MBB == EndMBB)
       return;
@@ -1540,9 +1561,9 @@ MachineVerifier::verifyLiveIntervalSegment(const LiveInterval &LI,
     ++MFI;
   }
   for (;;) {
-    assert(LiveInts->isLiveInToMBB(LI, MFI));
+    assert(LiveInts->isLiveInToMBB(LR, MFI));
     // We don't know how to track physregs into a landing pad.
-    if (!TargetRegisterInfo::isVirtualRegister(LI.reg) &&
+    if (!TargetRegisterInfo::isVirtualRegister(Reg) &&
         MFI->isLandingPad()) {
       if (&*MFI == EndMBB)
         break;
@@ -1558,11 +1579,11 @@ MachineVerifier::verifyLiveIntervalSegment(const LiveInterval &LI,
     for (MachineBasicBlock::const_pred_iterator PI = MFI->pred_begin(),
          PE = MFI->pred_end(); PI != PE; ++PI) {
       SlotIndex PEnd = LiveInts->getMBBEndIdx(*PI);
-      const VNInfo *PVNI = LI.getVNInfoBefore(PEnd);
+      const VNInfo *PVNI = LR.getVNInfoBefore(PEnd);
 
       // All predecessors must have a live-out value.
       if (!PVNI) {
-        report("Register not marked live out of predecessor", *PI, LI);
+        report("Register not marked live out of predecessor", *PI, LR);
         *OS << "Valno #" << VNI->id << " live into BB#" << MFI->getNumber()
             << '@' << LiveInts->getMBBStartIdx(MFI) << ", not live before "
             << PEnd << '\n';
@@ -1571,7 +1592,7 @@ MachineVerifier::verifyLiveIntervalSegment(const LiveInterval &LI,
 
       // Only PHI-defs can take different predecessor values.
       if (!IsPHI && PVNI != VNI) {
-        report("Different value live out of predecessor", *PI, LI);
+        report("Different value live out of predecessor", *PI, LR);
         *OS << "Valno #" << PVNI->id << " live out of BB#"
             << (*PI)->getNumber() << '@' << PEnd
             << "\nValno #" << VNI->id << " live into BB#" << MFI->getNumber()
@@ -1584,13 +1605,17 @@ MachineVerifier::verifyLiveIntervalSegment(const LiveInterval &LI,
   }
 }
 
-void MachineVerifier::verifyLiveInterval(const LiveInterval &LI) {
-  for (LiveInterval::const_vni_iterator I = LI.vni_begin(), E = LI.vni_end();
-       I!=E; ++I)
-    verifyLiveIntervalValue(LI, *I);
+void MachineVerifier::verifyLiveRange(const LiveRange &LR, unsigned Reg) {
+  for (LiveRange::const_vni_iterator I = LR.vni_begin(), E = LR.vni_end();
+       I != E; ++I)
+    verifyLiveRangeValue(LR, *I, Reg);
 
-  for (LiveInterval::const_iterator I = LI.begin(), E = LI.end(); I!=E; ++I)
-    verifyLiveIntervalSegment(LI, I);
+  for (LiveRange::const_iterator I = LR.begin(), E = LR.end(); I != E; ++I)
+    verifyLiveRangeSegment(LR, I, Reg);
+}
+
+void MachineVerifier::verifyLiveInterval(const LiveInterval &LI) {
+  verifyLiveRange(LI, LI.reg);
 
   // Check the LI only has one connected component.
   if (TargetRegisterInfo::isVirtualRegister(LI.reg)) {
