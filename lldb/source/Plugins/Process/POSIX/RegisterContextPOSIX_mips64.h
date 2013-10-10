@@ -111,7 +111,7 @@ public:
     ConvertRegisterKindToRegisterNumber(uint32_t kind, uint32_t num);
 
 protected:
-    uint64_t m_gpr[k_num_gpr_registers_mips64];                // general purpose registers.
+    uint64_t m_gpr_mips64[k_num_gpr_registers_mips64];         // general purpose registers.
     std::unique_ptr<RegisterInfoInterface> m_register_info_ap; // Register Info Interface (FreeBSD or Linux)
 
     // Determines if an extended register set is supported on the processor running the inferior process.

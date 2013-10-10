@@ -29,10 +29,12 @@
 #include "ProcessPOSIX.h"
 #include "ProcessPOSIXLog.h"
 #include "ProcessMonitor.h"
+#include "RegisterContextPOSIXProcessMonitor_mips64.h"
 #include "RegisterContextPOSIXProcessMonitor_x86.h"
 #include "RegisterContextLinux_i386.h"
 #include "RegisterContextLinux_x86_64.h"
 #include "RegisterContextFreeBSD_i386.h"
+#include "RegisterContextFreeBSD_mips64.h"
 #include "RegisterContextFreeBSD_x86_64.h"
 
 #include "UnwindLLDB.h"
@@ -144,24 +146,61 @@ POSIXThread::GetRegisterContext()
         RegisterInfoInterface *reg_interface = NULL;
         const ArchSpec &target_arch = GetProcess()->GetTarget().GetArchitecture();
 
-        switch (target_arch.GetTriple().getOS())
+        switch (target_arch.GetCore())
         {
-            case llvm::Triple::FreeBSD:
-                reg_interface = new RegisterContextFreeBSD_x86_64(target_arch);
-                break;
-            case llvm::Triple::Linux:
-                reg_interface = new RegisterContextLinux_x86_64(target_arch);
-                break;
-            default:
-                assert(false && "OS not supported");
-                break;
-        }
+            case ArchSpec::eCore_mips64:
+            {
+                RegisterInfoInterface *reg_interface = NULL;
 
-        if (reg_interface)
-        {
-            RegisterContextPOSIXProcessMonitor_x86_64 *reg_ctx = new RegisterContextPOSIXProcessMonitor_x86_64(*this, 0, reg_interface);
-            m_posix_thread = reg_ctx;
-            m_reg_context_sp.reset(reg_ctx);
+                switch (target_arch.GetTriple().getOS())
+                {
+                    case llvm::Triple::FreeBSD:
+                        reg_interface = new RegisterContextFreeBSD_mips64(target_arch);
+                        break;
+                    default:
+                        assert(false && "OS not supported");
+                        break;
+                }
+
+                if (reg_interface)
+                {
+                    RegisterContextPOSIXProcessMonitor_mips64 *reg_ctx = new RegisterContextPOSIXProcessMonitor_mips64(*this, 0, reg_interface);
+                    m_posix_thread = reg_ctx;
+                    m_reg_context_sp.reset(reg_ctx);
+                }
+                break;
+            }
+
+            case ArchSpec::eCore_x86_32_i386:
+            case ArchSpec::eCore_x86_32_i486:
+            case ArchSpec::eCore_x86_32_i486sx:
+            case ArchSpec::eCore_x86_64_x86_64:
+            {
+                switch (target_arch.GetTriple().getOS())
+                {
+                    case llvm::Triple::FreeBSD:
+                        reg_interface = new RegisterContextFreeBSD_x86_64(target_arch);
+                        break;
+                    case llvm::Triple::Linux:
+                        reg_interface = new RegisterContextLinux_x86_64(target_arch);
+                        break;
+                    default:
+                        assert(false && "OS not supported");
+                        break;
+                }
+
+                if (reg_interface)
+                {
+                    RegisterContextPOSIXProcessMonitor_x86_64 *reg_ctx = new RegisterContextPOSIXProcessMonitor_x86_64(*this, 0, reg_interface);
+                    m_posix_thread = reg_ctx;
+                    m_reg_context_sp.reset(reg_ctx);
+                }
+                break;
+            }
+
+            default:
+                assert(false && "CPU type not supported!");
+                break;
         }
     }
     return m_reg_context_sp;
@@ -523,6 +562,7 @@ POSIXThread::GetRegisterIndexFromOffset(unsigned offset)
         llvm_unreachable("CPU type not supported!");
         break;
 
+    case ArchSpec::eCore_mips64:
     case ArchSpec::eCore_x86_32_i386:
     case ArchSpec::eCore_x86_32_i486:
     case ArchSpec::eCore_x86_32_i486sx:
@@ -554,6 +594,7 @@ POSIXThread::GetRegisterName(unsigned reg)
         assert(false && "CPU type not supported!");
         break;
 
+    case ArchSpec::eCore_mips64:
     case ArchSpec::eCore_x86_32_i386:
     case ArchSpec::eCore_x86_32_i486:
     case ArchSpec::eCore_x86_32_i486sx:
