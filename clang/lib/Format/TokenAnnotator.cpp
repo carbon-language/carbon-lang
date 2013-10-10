@@ -328,13 +328,15 @@ private:
         Tok->Previous->Type = TT_ObjCSelectorName;
         if (Tok->Previous->ColumnWidth >
             Contexts.back().LongestObjCSelectorName) {
-          Contexts.back().LongestObjCSelectorName =
-              Tok->Previous->ColumnWidth;
+          Contexts.back().LongestObjCSelectorName = Tok->Previous->ColumnWidth;
         }
         if (Contexts.back().FirstObjCSelectorName == NULL)
           Contexts.back().FirstObjCSelectorName = Tok->Previous;
       } else if (Contexts.back().ColonIsForRangeExpr) {
         Tok->Type = TT_RangeBasedForLoopColon;
+      } else if (CurrentToken != NULL &&
+                 CurrentToken->is(tok::numeric_constant)) {
+        Tok->Type = TT_BitFieldColon;
       } else if (Contexts.size() == 1 && Line.First->isNot(tok::kw_enum)) {
         Tok->Type = TT_InheritanceColon;
       } else if (Contexts.back().ContextKind == tok::l_paren) {
@@ -1370,8 +1372,7 @@ bool TokenAnnotator::mustBreakBefore(const AnnotatedLine &Line,
              !Style.ConstructorInitializerAllOnOneLineOrOnePerLine) {
     return true;
   } else if (Right.Previous->BlockKind == BK_Block &&
-             Right.Previous->isNot(tok::r_brace) &&
-             Right.isNot(tok::r_brace)) {
+             Right.Previous->isNot(tok::r_brace) && Right.isNot(tok::r_brace)) {
     return true;
   } else if (Right.is(tok::l_brace) && (Right.BlockKind == BK_Block)) {
     return Style.BreakBeforeBraces == FormatStyle::BS_Allman;

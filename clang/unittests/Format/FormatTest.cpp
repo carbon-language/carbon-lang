@@ -1635,6 +1635,10 @@ TEST_F(FormatTest, FormatsBitfields) {
                "  unsigned sClass : 8;\n"
                "  unsigned ValueKind : 2;\n"
                "};");
+  verifyFormat("struct A {\n"
+               "  int aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa : 1,\n"
+               "      bbbbbbbbbbbbbbbbbbbbbbbbb;\n"
+               "};");
 }
 
 TEST_F(FormatTest, FormatsNamespaces) {

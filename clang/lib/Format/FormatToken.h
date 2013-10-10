@@ -26,6 +26,7 @@ namespace format {
 
 enum TokenType {
   TT_BinaryOperator,
+  TT_BitFieldColon,
   TT_BlockComment,
   TT_CastRParen,
   TT_ConditionalExpr,
