@@ -15,7 +15,6 @@ typedef NS_ENUM(NSInteger, wibble) {
   blarg
 };
 
-
 typedef NS_ENUM(NSUInteger, UITableViewCellStyle) {
     UIViewAutoresizingNone                 = 0,
     UIViewAutoresizingFlexibleLeftMargin,
@@ -25,7 +24,6 @@ typedef NS_ENUM(NSUInteger, UITableViewCellStyle) {
     UIViewAutoresizingFlexibleHeight,
     UIViewAutoresizingFlexibleBottomMargin
 };
-
 
 typedef NS_ENUM(NSInteger, UIViewAnimationTransition) {
     UIViewAnimationTransitionNone,
@@ -52,7 +50,6 @@ typedef NS_OPTIONS(NSUInteger, UI) {
   UIFour = 0x100
 };
 
-
 typedef NS_OPTIONS(NSUInteger, UIPOWER2) {
   UIP2One = 0,
   UIP2Two = 0x1,
@@ -71,7 +68,6 @@ typedef NS_ENUM(NSInteger, UIK) {
   UIKTwo = 2,
 };
 
-
 typedef NS_ENUM(NSInteger, NSTickMarkPosition)  {
     NSTickMarkBelow = 0,
     NSTickMarkAbove = 1,
@@ -87,12 +83,10 @@ typedef NS_OPTIONS(NSUInteger, UITableStyle) {
     UIViewBottomMargin = 0xbadbeef
 };
 
-
 typedef NS_OPTIONS(NSUInteger, UIStyle) {
     UIView0         = 0,
     UIView1 = 0XBADBEEF
 };
-
 
 typedef NS_ENUM(NSUInteger, NSBitmapImageFileType) {
     NSTIFFFileType,
@@ -103,13 +97,11 @@ typedef NS_ENUM(NSUInteger, NSBitmapImageFileType) {
     NSJPEG2000FileType
 };
 
-
 typedef NS_ENUM(NSUInteger, NSAlertStyle) {
     NSWarningAlertStyle = 0,
     NSInformationalAlertStyle = 1,
     NSCriticalAlertStyle = 2
 };
-
 
 enum {
     D_NSTIFFFileType,
@@ -144,7 +136,6 @@ typedef NS_OPTIONS(NSUInteger, NSFOptions) {
     NSFIntegerPersonality NS_ENUM_AVAILABLE(10_5, 6_0) = (5UL << 8),        
     NSFCopyIn NS_ENUM_AVAILABLE(10_5, 6_0) = (1UL << 16),      
 };
-
 
 
 typedef NS_ENUM(NSInteger, UIP) {
