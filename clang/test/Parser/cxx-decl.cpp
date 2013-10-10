@@ -202,6 +202,12 @@ namespace test7 {
   // Comment!
 }
 
+void test8() {
+  struct {} o;
+  // This used to crash.
+  (&o)->(); // expected-error{{expected unqualified-id}}
+}
+
 namespace PR5066 {
   template<typename T> struct X {};
   X<int N> x; // expected-error {{type-id cannot have a name}}
