@@ -206,14 +206,14 @@ namespace llvm {
       return Indexes->getMBBEndIdx(mbb);
     }
 
-    bool isLiveInToMBB(const LiveInterval &li,
+    bool isLiveInToMBB(const LiveRange &LR,
                        const MachineBasicBlock *mbb) const {
-      return li.liveAt(getMBBStartIdx(mbb));
+      return LR.liveAt(getMBBStartIdx(mbb));
     }
 
-    bool isLiveOutOfMBB(const LiveInterval &li,
+    bool isLiveOutOfMBB(const LiveRange &LR,
                         const MachineBasicBlock *mbb) const {
-      return li.liveAt(getMBBEndIdx(mbb).getPrevSlot());
+      return LR.liveAt(getMBBEndIdx(mbb).getPrevSlot());
     }
 
     MachineBasicBlock* getMBBFromIndex(SlotIndex index) const {

@@ -348,15 +348,14 @@ bool LiveIntervals::shrinkToUses(LiveInterval *li,
     WorkList.push_back(std::make_pair(Idx, VNI));
   }
 
-  // Create a new live interval with only minimal live segments per def.
-  LiveInterval NewLI(li->reg, 0);
+  // Create new live ranges with only minimal live segments per def.
+  LiveRange NewLR;
   for (LiveInterval::vni_iterator I = li->vni_begin(), E = li->vni_end();
        I != E; ++I) {
     VNInfo *VNI = *I;
     if (VNI->isUnused())
       continue;
-    NewLI.addSegment(LiveInterval::Segment(VNI->def, VNI->def.getDeadSlot(),
-                                           VNI));
+    NewLR.addSegment(LiveRange::Segment(VNI->def, VNI->def.getDeadSlot(), VNI));
   }
 
   // Keep track of the PHIs that are in use.
@@ -371,7 +370,7 @@ bool LiveIntervals::shrinkToUses(LiveInterval *li,
     SlotIndex BlockStart = getMBBStartIdx(MBB);
 
     // Extend the live range for VNI to be live at Idx.
-    if (VNInfo *ExtVNI = NewLI.extendInBlock(BlockStart, Idx)) {
+    if (VNInfo *ExtVNI = NewLR.extendInBlock(BlockStart, Idx)) {
       (void)ExtVNI;
       assert(ExtVNI == VNI && "Unexpected existing value number");
       // Is this a PHIDef we haven't seen before?
@@ -392,7 +391,7 @@ bool LiveIntervals::shrinkToUses(LiveInterval *li,
 
     // VNI is live-in to MBB.
     DEBUG(dbgs() << " live-in at " << BlockStart << '\n');
-    NewLI.addSegment(LiveInterval::Segment(BlockStart, Idx, VNI));
+    NewLR.addSegment(LiveRange::Segment(BlockStart, Idx, VNI));
 
     // Make sure VNI is live-out from the predecessors.
     for (MachineBasicBlock::const_pred_iterator PI = MBB->pred_begin(),
@@ -413,14 +412,14 @@ bool LiveIntervals::shrinkToUses(LiveInterval *li,
     VNInfo *VNI = *I;
     if (VNI->isUnused())
       continue;
-    LiveInterval::iterator LII = NewLI.FindSegmentContaining(VNI->def);
-    assert(LII != NewLI.end() && "Missing segment for PHI");
-    if (LII->end != VNI->def.getDeadSlot())
+    LiveRange::iterator LRI = NewLR.FindSegmentContaining(VNI->def);
+    assert(LRI != NewLR.end() && "Missing segment for PHI");
+    if (LRI->end != VNI->def.getDeadSlot())
       continue;
     if (VNI->isPHIDef()) {
       // This is a dead PHI. Remove it.
       VNI->markUnused();
-      NewLI.removeSegment(*LII);
+      NewLR.removeSegment(LRI->start, LRI->end);
       DEBUG(dbgs() << "Dead PHI at " << VNI->def << " may separate interval\n");
       CanSeparate = true;
     } else {
@@ -436,7 +435,7 @@ bool LiveIntervals::shrinkToUses(LiveInterval *li,
   }
 
   // Move the trimmed segments back.
-  li->segments.swap(NewLI.segments);
+  li->segments.swap(NewLR.segments);
   DEBUG(dbgs() << "Shrunk: " << *li << '\n');
   return CanSeparate;
 }
@@ -625,13 +624,13 @@ LiveIntervals::getSpillWeight(bool isDef, bool isUse, BlockFrequency freq) {
   return (isDef + isUse) * (freq.getFrequency() * Scale);
 }
 
-LiveInterval::Segment
+LiveRange::Segment
 LiveIntervals::addSegmentToEndOfBlock(unsigned reg, MachineInstr* startInst) {
   LiveInterval& Interval = createEmptyInterval(reg);
   VNInfo* VN = Interval.getNextValue(
     SlotIndex(getInstructionIndex(startInst).getRegSlot()),
     getVNInfoAllocator());
-  LiveInterval::Segment S(
+  LiveRange::Segment S(
      SlotIndex(getInstructionIndex(startInst).getRegSlot()),
      getMBBEndIdx(startInst->getParent()), VN);
   Interval.addSegment(S);
@@ -871,7 +870,7 @@ private:
     assert(NewI != I && "Inconsistent iterators");
     std::copy(llvm::next(I), NewI, I);
     *llvm::prior(NewI)
-      = LiveInterval::Segment(DefVNI->def, NewIdx.getDeadSlot(), DefVNI);
+      = LiveRange::Segment(DefVNI->def, NewIdx.getDeadSlot(), DefVNI);
   }
 
   /// Update LI to reflect an instruction has been moved upwards from OldIdx
@@ -952,7 +951,7 @@ private:
     // DefVNI is a dead def. It may have been moved across other values in LI,
     // so move I up to NewI. Slide [NewI;I) down one position.
     std::copy_backward(NewI, I, llvm::next(I));
-    *NewI = LiveInterval::Segment(DefVNI->def, NewIdx.getDeadSlot(), DefVNI);
+    *NewI = LiveRange::Segment(DefVNI->def, NewIdx.getDeadSlot(), DefVNI);
   }
 
   void updateRegMaskSlots() {
@@ -1143,13 +1142,13 @@ LiveIntervals::repairIntervalsInRange(MachineBasicBlock *MBB,
           if (!lastUseIdx.isValid()) {
             VNInfo *VNI = LI.getNextValue(instrIdx.getRegSlot(),
                                           VNInfoAllocator);
-            LiveInterval::Segment S(instrIdx.getRegSlot(),
-                                    instrIdx.getDeadSlot(), VNI);
+            LiveRange::Segment S(instrIdx.getRegSlot(),
+                                 instrIdx.getDeadSlot(), VNI);
             LII = LI.addSegment(S);
           } else if (LII->start != instrIdx.getRegSlot()) {
             VNInfo *VNI = LI.getNextValue(instrIdx.getRegSlot(),
                                           VNInfoAllocator);
-            LiveInterval::Segment S(instrIdx.getRegSlot(), lastUseIdx, VNI);
+            LiveRange::Segment S(instrIdx.getRegSlot(), lastUseIdx, VNI);
             LII = LI.addSegment(S);
           }
 

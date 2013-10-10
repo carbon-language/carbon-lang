@@ -7,14 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the LiveInterval class.  Given some numbering of each
-// the machine instructions an interval [i, j) is said to be a
-// live interval for register v if there is no instruction with number j' >= j
+// This file implements the LiveRange and LiveInterval classes.  Given some
+// numbering of each the machine instructions an interval [i, j) is said to be a
+// live range for register v if there is no instruction with number j' >= j
 // such that v is live at j' and there is no instruction with number i' < i such
-// that v is live at i'. In this implementation intervals can have holes,
-// i.e. an interval might look like [1,20), [50,65), [1000,1001).  Each
-// individual segment is represented as an instance of LiveInterval::Segment,
-// and the whole range is represented as an instance of LiveInterval.
+// that v is live at i'. In this implementation ranges can have holes,
+// i.e. a range might look like [1,20), [50,65), [1000,1001).  Each
+// individual segment is represented as an instance of LiveRange::Segment,
+// and the whole range is represented as an instance of LiveRange.
 //
 //===----------------------------------------------------------------------===//
 
@@ -35,6 +35,7 @@ namespace llvm {
   class MachineRegisterInfo;
   class TargetRegisterInfo;
   class raw_ostream;
+  template <typename T, unsigned Small> class SmallPtrSet;
 
   /// VNInfo - Value Number Information.
   /// This class holds information about a machine level values, including
@@ -78,10 +79,12 @@ namespace llvm {
     void markUnused() { def = SlotIndex(); }
   };
 
-  /// LiveInterval - This class represents some number of live segments for a
-  /// register or value.  This class also contains a bit of register allocator
-  /// state.
-  class LiveInterval {
+  /// This class represents the liveness of a register, stack slot, etc.
+  /// It manages an ordered list of Segment objects.
+  /// The Segments are organized in a static single assignment form: At places
+  /// where a new value is defined or different values reach a CFG join a new
+  /// segment with a new value number is used.
+  class LiveRange {
   public:
 
     /// This represents a simple continuous liveness interval for a value.
@@ -123,13 +126,8 @@ namespace llvm {
     typedef SmallVector<Segment,4> Segments;
     typedef SmallVector<VNInfo*,4> VNInfoList;
 
-    const unsigned reg;  // the register or stack slot of this interval.
-    float weight;        // weight of this interval
-    Segments segments;   // the segments in which this register is live
+    Segments segments;   // the liveness segments
     VNInfoList valnos;   // value#'s
-
-    LiveInterval(unsigned Reg, float Weight)
-      : reg(Reg), weight(Weight) {}
 
     typedef Segments::iterator iterator;
     iterator begin() { return segments.begin(); }
@@ -141,15 +139,15 @@ namespace llvm {
 
     typedef VNInfoList::iterator vni_iterator;
     vni_iterator vni_begin() { return valnos.begin(); }
-    vni_iterator vni_end() { return valnos.end(); }
+    vni_iterator vni_end()   { return valnos.end(); }
 
     typedef VNInfoList::const_iterator const_vni_iterator;
     const_vni_iterator vni_begin() const { return valnos.begin(); }
-    const_vni_iterator vni_end() const { return valnos.end(); }
+    const_vni_iterator vni_end() const   { return valnos.end(); }
 
     /// advanceTo - Advance the specified iterator to point to the Segment
     /// containing the specified position, or end() if the position is past the
-    /// end of the interval.  If no Segment contains this position, but the
+    /// end of the range.  If no Segment contains this position, but the
     /// position is in a hole, this method returns an iterator pointing to the
     /// Segment immediately after the hole.
     iterator advanceTo(iterator I, SlotIndex Pos) {
@@ -162,7 +160,7 @@ namespace llvm {
 
     /// find - Return an iterator pointing to the first segment that ends after
     /// Pos, or end(). This is the same as advanceTo(begin(), Pos), but faster
-    /// when searching large intervals.
+    /// when searching large ranges.
     ///
     /// If Pos is contained in a Segment, that segment is returned.
     /// If Pos is in a hole, the following Segment is returned.
@@ -170,7 +168,7 @@ namespace llvm {
     iterator find(SlotIndex Pos);
 
     const_iterator find(SlotIndex Pos) const {
-      return const_cast<LiveInterval*>(this)->find(Pos);
+      return const_cast<LiveRange*>(this)->find(Pos);
     }
 
     void clear() {
@@ -197,7 +195,7 @@ namespace llvm {
       return valnos[ValNo];
     }
 
-    /// containsValue - Returns true if VNI belongs to this interval.
+    /// containsValue - Returns true if VNI belongs to this range.
     bool containsValue(const VNInfo *VNI) const {
       return VNI && VNI->id < getNumValNums() && VNI == getValNumInfo(VNI->id);
     }
@@ -211,7 +209,7 @@ namespace llvm {
       return VNI;
     }
 
-    /// createDeadDef - Make sure the interval has a value defined at Def.
+    /// createDeadDef - Make sure the range has a value defined at Def.
     /// If one already exists, return it. Otherwise allocate a new value and
     /// add liveness for a dead def.
     VNInfo *createDeadDef(SlotIndex Def, VNInfo::Allocator &VNInfoAllocator);
@@ -237,32 +235,32 @@ namespace llvm {
     VNInfo* MergeValueNumberInto(VNInfo *V1, VNInfo *V2);
 
     /// Merge all of the live segments of a specific val# in RHS into this live
-    /// interval as the specified value number. The segments in RHS are allowed
-    /// to overlap with segments in the current interval, it will replace the
+    /// range as the specified value number. The segments in RHS are allowed
+    /// to overlap with segments in the current range, it will replace the
     /// value numbers of the overlaped live segments with the specified value
     /// number.
-    void MergeSegmentsInAsValue(const LiveInterval &RHS, VNInfo *LHSValNo);
+    void MergeSegmentsInAsValue(const LiveRange &RHS, VNInfo *LHSValNo);
 
     /// MergeValueInAsValue - Merge all of the segments of a specific val#
-    /// in RHS into this live interval as the specified value number.
+    /// in RHS into this live range as the specified value number.
     /// The segments in RHS are allowed to overlap with segments in the
-    /// current interval, but only if the overlapping segments have the
+    /// current range, but only if the overlapping segments have the
     /// specified value number.
-    void MergeValueInAsValue(const LiveInterval &RHS,
+    void MergeValueInAsValue(const LiveRange &RHS,
                              const VNInfo *RHSValNo, VNInfo *LHSValNo);
 
     bool empty() const { return segments.empty(); }
 
-    /// beginIndex - Return the lowest numbered slot covered by interval.
+    /// beginIndex - Return the lowest numbered slot covered.
     SlotIndex beginIndex() const {
-      assert(!empty() && "Call to beginIndex() on empty interval.");
+      assert(!empty() && "Call to beginIndex() on empty range.");
       return segments.front().start;
     }
 
-    /// endNumber - return the maximum point of the interval of the whole,
+    /// endNumber - return the maximum point of the range of the whole,
     /// exclusive.
     SlotIndex endIndex() const {
-      assert(!empty() && "Call to endIndex() on empty interval.");
+      assert(!empty() && "Call to endIndex() on empty range.");
       return segments.back().end;
     }
 
@@ -315,47 +313,47 @@ namespace llvm {
       return I != end() && I->start <= Idx ? I : end();
     }
 
-    /// overlaps - Return true if the intersection of the two live intervals is
+    /// overlaps - Return true if the intersection of the two live ranges is
     /// not empty.
-    bool overlaps(const LiveInterval& other) const {
+    bool overlaps(const LiveRange &other) const {
       if (other.empty())
         return false;
       return overlapsFrom(other, other.begin());
     }
 
-    /// overlaps - Return true if the two intervals have overlapping segments
+    /// overlaps - Return true if the two ranges have overlapping segments
     /// that are not coalescable according to CP.
     ///
-    /// Overlapping segments where one interval is defined by a coalescable
+    /// Overlapping segments where one range is defined by a coalescable
     /// copy are allowed.
-    bool overlaps(const LiveInterval &Other, const CoalescerPair &CP,
+    bool overlaps(const LiveRange &Other, const CoalescerPair &CP,
                   const SlotIndexes&) const;
 
-    /// overlaps - Return true if the live interval overlaps an interval
-    /// specified by [Start, End).
+    /// overlaps - Return true if the live range overlaps an interval specified
+    /// by [Start, End).
     bool overlaps(SlotIndex Start, SlotIndex End) const;
 
-    /// overlapsFrom - Return true if the intersection of the two live intervals
+    /// overlapsFrom - Return true if the intersection of the two live ranges
     /// is not empty.  The specified iterator is a hint that we can begin
-    /// scanning the Other interval starting at I.
-    bool overlapsFrom(const LiveInterval& other, const_iterator I) const;
+    /// scanning the Other range starting at I.
+    bool overlapsFrom(const LiveRange &Other, const_iterator I) const;
 
-    /// Add the specified Segment to this interval, merging segments as
+    /// Add the specified Segment to this range, merging segments as
     /// appropriate.  This returns an iterator to the inserted segment (which
     /// may have grown since it was inserted).
     iterator addSegment(Segment S) {
       return addSegmentFrom(S, segments.begin());
     }
 
-    /// extendInBlock - If this interval is live before Kill in the basic block
+    /// extendInBlock - If this range is live before Kill in the basic block
     /// that starts at StartIdx, extend it to be live up to Kill, and return
     /// the value. If there is no segment before Kill, return NULL.
     VNInfo *extendInBlock(SlotIndex StartIdx, SlotIndex Kill);
 
-    /// join - Join two live intervals (this, and other) together.  This applies
-    /// mappings to the value numbers in the LHS/RHS intervals as specified.  If
-    /// the intervals are not joinable, this aborts.
-    void join(LiveInterval &Other,
+    /// join - Join two live ranges (this, and other) together.  This applies
+    /// mappings to the value numbers in the LHS/RHS ranges as specified.  If
+    /// the ranges are not joinable, this aborts.
+    void join(LiveRange &Other,
               const int *ValNoAssignments,
               const int *RHSValNoAssignments,
               SmallVectorImpl<VNInfo *> &NewVNInfo);
@@ -369,7 +367,7 @@ namespace llvm {
         endIndex() < End.getBoundaryIndex();
     }
 
-    /// Remove the specified segment from this interval.  Note that the segment
+    /// Remove the specified segment from this range.  Note that the segment
     /// must be a single Segment in its entirety.
     void removeSegment(SlotIndex Start, SlotIndex End,
                        bool RemoveDeadValNo = false);
@@ -382,12 +380,8 @@ namespace llvm {
     /// Also remove the value# from value# list.
     void removeValNo(VNInfo *ValNo);
 
-    /// getSize - Returns the sum of sizes of all the Segment's.
-    ///
-    unsigned getSize() const;
-
-    /// Returns true if the live interval is zero length, i.e. no segments
-    /// span instructions. It doesn't pay to spill such an interval.
+    /// Returns true if the live range is zero length, i.e. no live segments
+    /// span instructions. It doesn't pay to spill such a range.
     bool isZeroLength(SlotIndexes *Indexes) const {
       for (const_iterator i = begin(), e = end(); i != e; ++i)
         if (Indexes->getNextNonNullIndex(i->start).getBaseIndex() <
@@ -396,27 +390,16 @@ namespace llvm {
       return true;
     }
 
-    /// isSpillable - Can this interval be spilled?
-    bool isSpillable() const {
-      return weight != HUGE_VALF;
-    }
-
-    /// markNotSpillable - Mark interval as not spillable
-    void markNotSpillable() {
-      weight = HUGE_VALF;
-    }
-
-    bool operator<(const LiveInterval& other) const {
+    bool operator<(const LiveRange& other) const {
       const SlotIndex &thisIndex = beginIndex();
       const SlotIndex &otherIndex = other.beginIndex();
-      return (thisIndex < otherIndex ||
-              (thisIndex == otherIndex && reg < other.reg));
+      return thisIndex < otherIndex;
     }
 
     void print(raw_ostream &OS) const;
     void dump() const;
 
-    /// \brief Walk the interval and assert if any invariants fail to hold.
+    /// \brief Walk the range and assert if any invariants fail to hold.
     ///
     /// Note that this is a no-op when asserts are disabled.
 #ifdef NDEBUG
@@ -432,6 +415,45 @@ namespace llvm {
     iterator extendSegmentStartTo(iterator I, SlotIndex NewStr);
     void markValNoForDeletion(VNInfo *V);
 
+  };
+
+  inline raw_ostream &operator<<(raw_ostream &OS, const LiveRange &LR) {
+    LR.print(OS);
+    return OS;
+  }
+
+  /// LiveInterval - This class represents the liveness of a register,
+  /// or stack slot.
+  class LiveInterval : public LiveRange {
+  public:
+    const unsigned reg;  // the register or stack slot of this interval.
+    float weight;        // weight of this interval
+
+    LiveInterval(unsigned Reg, float Weight)
+      : reg(Reg), weight(Weight) {}
+
+    /// getSize - Returns the sum of sizes of all the LiveRange's.
+    ///
+    unsigned getSize() const;
+
+    /// isSpillable - Can this interval be spilled?
+    bool isSpillable() const {
+      return weight != HUGE_VALF;
+    }
+
+    /// markNotSpillable - Mark interval as not spillable
+    void markNotSpillable() {
+      weight = HUGE_VALF;
+    }
+
+    bool operator<(const LiveInterval& other) const {
+      const SlotIndex &thisIndex = beginIndex();
+      const SlotIndex &otherIndex = other.beginIndex();
+      return thisIndex < otherIndex ||
+              (thisIndex == otherIndex && reg < other.reg);
+    }
+
+  private:
     LiveInterval& operator=(const LiveInterval& rhs) LLVM_DELETED_FUNCTION;
 
   };
@@ -441,65 +463,65 @@ namespace llvm {
     return OS;
   }
 
-  raw_ostream &operator<<(raw_ostream &OS, const LiveInterval::Segment &S);
+  raw_ostream &operator<<(raw_ostream &OS, const LiveRange::Segment &S);
 
-  inline bool operator<(SlotIndex V, const LiveInterval::Segment &S) {
+  inline bool operator<(SlotIndex V, const LiveRange::Segment &S) {
     return V < S.start;
   }
 
-  inline bool operator<(const LiveInterval::Segment &S, SlotIndex V) {
+  inline bool operator<(const LiveRange::Segment &S, SlotIndex V) {
     return S.start < V;
   }
 
-  /// Helper class for performant LiveInterval bulk updates.
+  /// Helper class for performant LiveRange bulk updates.
   ///
-  /// Calling LiveInterval::addSegment() repeatedly can be expensive on large
+  /// Calling LiveRange::addSegment() repeatedly can be expensive on large
   /// live ranges because segments after the insertion point may need to be
   /// shifted. The LiveRangeUpdater class can defer the shifting when adding
   /// many segments in order.
   ///
-  /// The LiveInterval will be in an invalid state until flush() is called.
+  /// The LiveRange will be in an invalid state until flush() is called.
   class LiveRangeUpdater {
-    LiveInterval *LI;
+    LiveRange *LR;
     SlotIndex LastStart;
-    LiveInterval::iterator WriteI;
-    LiveInterval::iterator ReadI;
-    SmallVector<LiveInterval::Segment, 16> Spills;
+    LiveRange::iterator WriteI;
+    LiveRange::iterator ReadI;
+    SmallVector<LiveRange::Segment, 16> Spills;
     void mergeSpills();
 
   public:
-    /// Create a LiveRangeUpdater for adding segments to LI.
-    /// LI will temporarily be in an invalid state until flush() is called.
-    LiveRangeUpdater(LiveInterval *li = 0) : LI(li) {}
+    /// Create a LiveRangeUpdater for adding segments to LR.
+    /// LR will temporarily be in an invalid state until flush() is called.
+    LiveRangeUpdater(LiveRange *lr = 0) : LR(lr) {}
 
     ~LiveRangeUpdater() { flush(); }
 
-    /// Add a segment to LI and coalesce when possible, just like
-    /// LI.addSegment(). Segments should be added in increasing start order for
+    /// Add a segment to LR and coalesce when possible, just like
+    /// LR.addSegment(). Segments should be added in increasing start order for
     /// best performance.
-    void add(LiveInterval::Segment);
+    void add(LiveRange::Segment);
 
     void add(SlotIndex Start, SlotIndex End, VNInfo *VNI) {
-      add(LiveInterval::Segment(Start, End, VNI));
+      add(LiveRange::Segment(Start, End, VNI));
     }
 
-    /// Return true if the LI is currently in an invalid state, and flush()
+    /// Return true if the LR is currently in an invalid state, and flush()
     /// needs to be called.
     bool isDirty() const { return LastStart.isValid(); }
 
-    /// Flush the updater state to LI so it is valid and contains all added
+    /// Flush the updater state to LR so it is valid and contains all added
     /// segments.
     void flush();
 
     /// Select a different destination live range.
-    void setDest(LiveInterval *li) {
-      if (LI != li && isDirty())
+    void setDest(LiveRange *lr) {
+      if (LR != lr && isDirty())
         flush();
-      LI = li;
+      LR = lr;
     }
 
     /// Get the current destination live range.
-    LiveInterval *getDest() const { return LI; }
+    LiveRange *getDest() const { return LR; }
 
     void dump() const;
     void print(raw_ostream&) const;
@@ -521,15 +543,18 @@ namespace llvm {
     SlotIndex EndPoint;
     bool Kill;
 
+    void init(const LiveRange &LR, SlotIndex Idx) {
+    }
+
   public:
     /// Create a LiveRangeQuery for the given live range and instruction index.
     /// The sub-instruction slot of Idx doesn't matter, only the instruction it
     /// refers to is considered.
-    LiveRangeQuery(const LiveInterval &LI, SlotIndex Idx)
+    LiveRangeQuery(const LiveRange &LR, SlotIndex Idx)
       : EarlyVal(0), LateVal(0), Kill(false) {
       // Find the segment that enters the instruction.
-      LiveInterval::const_iterator I = LI.find(Idx.getBaseIndex());
-      LiveInterval::const_iterator E = LI.end();
+      LiveRange::const_iterator I = LR.find(Idx.getBaseIndex());
+      LiveRange::const_iterator E = LR.end();
       if (I == E)
         return;
       // Is this an instruction live-in segment?
