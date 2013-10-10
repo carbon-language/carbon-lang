@@ -1,4 +1,5 @@
 atomic/atomic.cl
+math/nextafter.cl
 workitem/get_num_groups.ll
 workitem/get_group_id.ll
 workitem/get_local_size.ll

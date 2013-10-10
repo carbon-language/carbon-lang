@@ -45,6 +45,7 @@
 #include <clc/math/log.h>
 #include <clc/math/log2.h>
 #include <clc/math/mad.h>
+#include <clc/math/nextafter.h>
 #include <clc/math/pow.h>
 #include <clc/math/rint.h>
 #include <clc/math/sin.h>
@@ -106,5 +107,10 @@
 #include <clc/atomic/atomic_dec.h>
 #include <clc/atomic/atomic_inc.h>
 #include <clc/atomic/atomic_sub.h>
+
+/* libclc internal defintions */
+#ifdef __CLC_INTERNAL
+#include <math/clc_nextafter.h>
+#endif
 
 #pragma OPENCL EXTENSION all : disable

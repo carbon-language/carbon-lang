@@ -145,6 +145,7 @@ for target in targets:
     clang_bc_flags = "-target %s -I`dirname $in` %s " \
                      "-Dcl_clang_storage_class_specifiers " \
                      "-Dcl_khr_fp64 " \
+                     "-D__CLC_INTERNAL " \
                      "-emit-llvm" % (target, clang_cl_includes)
     if device['gpu'] != '':
       clang_bc_flags += ' -mcpu=' + device['gpu']
