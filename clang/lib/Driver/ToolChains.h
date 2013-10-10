@@ -76,6 +76,7 @@ protected:
   /// Driver, and has logic for fuzzing that where appropriate.
   class GCCInstallationDetector {
     bool IsValid;
+    const Driver &D;
     llvm::Triple GCCTriple;
 
     // FIXME: These might be better as path objects.
@@ -133,6 +134,11 @@ protected:
                                 const std::string &LibDir,
                                 StringRef CandidateTriple,
                                 bool NeedsBiarchSuffix = false);
+
+    void findMultiLibSuffix(std::string &Suffix,
+                            llvm::Triple::ArchType TargetArch,
+                            StringRef Path,
+                            const llvm::opt::ArgList &Args);
   };
 
   GCCInstallationDetector GCCInstallation;

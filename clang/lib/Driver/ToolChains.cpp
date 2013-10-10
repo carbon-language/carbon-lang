@@ -996,7 +996,7 @@ static StringRef getGCCToolchainDir(const ArgList &Args) {
 /// triple.
 Generic_GCC::GCCInstallationDetector::GCCInstallationDetector(
     const Driver &D, const llvm::Triple &TargetTriple, const ArgList &Args)
-    : IsValid(false) {
+    : IsValid(false), D(D) {
   llvm::Triple BiarchVariantTriple =
       TargetTriple.isArch32Bit() ? TargetTriple.get64BitArchVariant()
                                  : TargetTriple.get32BitArchVariant();
@@ -1106,16 +1106,18 @@ void Generic_GCC::GCCInstallationDetector::print(raw_ostream &OS) const {
   };
 
   static const char *const MIPSLibDirs[] = { "/lib" };
-  static const char *const MIPSTriples[] = { "mips-linux-gnu" };
+  static const char *const MIPSTriples[] = { "mips-linux-gnu",
+                                             "mips-mti-linux-gnu" };
   static const char *const MIPSELLibDirs[] = { "/lib" };
   static const char *const MIPSELTriples[] = { "mipsel-linux-gnu",
-                                               "mipsel-linux-android",
-                                               "mips-linux-gnu" };
+                                               "mipsel-linux-android" };
 
   static const char *const MIPS64LibDirs[] = { "/lib64", "/lib" };
-  static const char *const MIPS64Triples[] = { "mips64-linux-gnu" };
+  static const char *const MIPS64Triples[] = { "mips64-linux-gnu",
+                                               "mips-mti-linux-gnu" };
   static const char *const MIPS64ELLibDirs[] = { "/lib64", "/lib" };
-  static const char *const MIPS64ELTriples[] = { "mips64el-linux-gnu" };
+  static const char *const MIPS64ELTriples[] = { "mips64el-linux-gnu",
+                                                 "mips-mti-linux-gnu" };
 
   static const char *const PPCLibDirs[] = { "/lib32", "/lib" };
   static const char *const PPCTriples[] = {
@@ -1195,6 +1197,8 @@ void Generic_GCC::GCCInstallationDetector::print(raw_ostream &OS) const {
                    MIPSELLibDirs + llvm::array_lengthof(MIPSELLibDirs));
     TripleAliases.append(MIPSELTriples,
                          MIPSELTriples + llvm::array_lengthof(MIPSELTriples));
+    TripleAliases.append(MIPSTriples,
+                         MIPSTriples + llvm::array_lengthof(MIPSTriples));
     BiarchLibDirs.append(
         MIPS64ELLibDirs,
         MIPS64ELLibDirs + llvm::array_lengthof(MIPS64ELLibDirs));
@@ -1222,6 +1226,8 @@ void Generic_GCC::GCCInstallationDetector::print(raw_ostream &OS) const {
                          MIPSELLibDirs + llvm::array_lengthof(MIPSELLibDirs));
     BiarchTripleAliases.append(
         MIPSELTriples, MIPSELTriples + llvm::array_lengthof(MIPSELTriples));
+    BiarchTripleAliases.append(
+        MIPSTriples, MIPSTriples + llvm::array_lengthof(MIPSTriples));
     break;
   case llvm::Triple::ppc:
     LibDirs.append(PPCLibDirs, PPCLibDirs + llvm::array_lengthof(PPCLibDirs));
@@ -1301,10 +1307,22 @@ static bool isMips32r2(const ArgList &Args) {
   return A && A->getValue() == StringRef("mips32r2");
 }
 
+static bool isMips64r2(const ArgList &Args) {
+  Arg *A = Args.getLastArg(options::OPT_march_EQ,
+                           options::OPT_mcpu_EQ);
+
+  return A && A->getValue() == StringRef("mips64r2");
+}
+
 static bool isMicroMips(const ArgList &Args) {
   Arg *A = Args.getLastArg(options::OPT_mmicromips,
                            options::OPT_mno_micromips);
   return A && A->getOption().matches(options::OPT_mmicromips);
+}
+
+static bool isMipsNan2008(const ArgList &Args) {
+  Arg *A = Args.getLastArg(options::OPT_mnan_EQ);
+  return A && A->getValue() == StringRef("2008");
 }
 
 // FIXME: There is the same routine in the Tools.cpp.
@@ -1337,24 +1355,89 @@ static bool findTargetBiarchSuffix(std::string &Suffix, StringRef Path,
   return hasCrtBeginObj(Path + Suffix);
 }
 
-static void findMultiLibSuffix(std::string &Suffix,
-                               llvm::Triple::ArchType TargetArch,
-                               StringRef Path,
-                               const ArgList &Args) {
+void Generic_GCC::GCCInstallationDetector::findMultiLibSuffix(
+    std::string &Suffix,
+    llvm::Triple::ArchType TargetArch,
+    StringRef Path,
+    const llvm::opt::ArgList &Args) {
   if (!isMipsArch(TargetArch))
     return;
 
-  if (isMips16(Args))
-    Suffix += "/mips16";
-  else if (isMicroMips(Args))
-    Suffix += "/micromips";
+  // Some MIPS toolchains put libraries and object files compiled
+  // using different options in to the sub-directoris which names
+  // reflects the flags used for compilation. For example sysroot
+  // directory might looks like the following examples:
+  //
+  // /usr
+  //   /lib      <= crt*.o files compiled with '-mips32'
+  // /mips16
+  //   /usr
+  //     /lib    <= crt*.o files compiled with '-mips16'
+  //   /el
+  //     /usr
+  //       /lib  <= crt*.o files compiled with '-mips16 -EL'
+  //
+  // or
+  //
+  // /usr
+  //   /lib      <= crt*.o files compiled with '-mips32r2'
+  // /mips16
+  //   /usr
+  //     /lib    <= crt*.o files compiled with '-mips32r2 -mips16'
+  // /mips32
+  //     /usr
+  //       /lib  <= crt*.o files compiled with '-mips32'
+  //
+  // Unfortunately different toolchains use different and partially
+  // overlapped naming schemes. So we have to make a trick for detection
+  // of using toolchain. We lookup a path which unique for each toolchains.
 
-  if (isSoftFloatABI(Args))
-    Suffix += "/soft-float";
+  bool IsMentorToolChain = hasCrtBeginObj(Path + "/mips16/soft-float");
+  bool IsFSFToolChain = hasCrtBeginObj(Path + "/mips32/mips16/sof");
 
-  if (TargetArch == llvm::Triple::mipsel ||
-      TargetArch == llvm::Triple::mips64el)
-    Suffix += "/el";
+  if (IsMentorToolChain && IsFSFToolChain)
+    D.Diag(diag::err_drv_unknown_toolchain);
+
+  if (IsMentorToolChain) {
+    if (isMips16(Args))
+      Suffix += "/mips16";
+    else if (isMicroMips(Args))
+      Suffix += "/micromips";
+
+    if (isSoftFloatABI(Args))
+      Suffix += "/soft-float";
+
+    if (TargetArch == llvm::Triple::mipsel ||
+        TargetArch == llvm::Triple::mips64el)
+      Suffix += "/el";
+  } else if (IsFSFToolChain) {
+    if (TargetArch == llvm::Triple::mips ||
+        TargetArch == llvm::Triple::mipsel) {
+      if (isMicroMips(Args))
+        Suffix += "/micromips";
+      else if (isMips32r2(Args))
+        Suffix += "";
+      else
+        Suffix += "/mips32";
+
+      if (isMips16(Args))
+        Suffix += "/mips16";
+    } else {
+      if (isMips64r2(Args))
+        Suffix += hasMipsN32ABIArg(Args) ? "/mips64r2" : "/mips64r2/64";
+      else
+        Suffix += hasMipsN32ABIArg(Args) ? "/mips64" : "/mips64/64";
+    }
+
+    if (TargetArch == llvm::Triple::mipsel ||
+        TargetArch == llvm::Triple::mips64el)
+      Suffix += "/el";
+
+    if (isSoftFloatABI(Args))
+      Suffix += "/sof";
+    else if (isMipsNan2008(Args))
+      Suffix += "/nan2008";
+  }
 
   if (!hasCrtBeginObj(Path + Suffix))
     Suffix.clear();
@@ -2338,11 +2421,13 @@ Linux::Linux(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
     const std::string &LibPath = GCCInstallation.getParentLibPath();
     const llvm::Triple &GCCTriple = GCCInstallation.getTriple();
     if (!GCCInstallation.getBiarchSuffix().empty())
-      addPathIfExists(GCCInstallation.getInstallPath(), Paths);
+      addPathIfExists(GCCInstallation.getInstallPath() +
+                      GCCInstallation.getMultiLibSuffix(), Paths);
 
     // See comments above on the multilib variant for details of why this is
     // included even from outside the sysroot.
-    addPathIfExists(LibPath + "/../" + GCCTriple.str() + "/lib", Paths);
+    addPathIfExists(LibPath + "/../" + GCCTriple.str() +
+                    "/lib" + GCCInstallation.getMultiLibSuffix(), Paths);
 
     // See comments above on the multilib variant for details of why this is
     // only included from within the sysroot.
@@ -2385,12 +2470,26 @@ std::string Linux::computeSysRoot() const {
   if (!GCCInstallation.isValid() || !isMipsArch(getTriple().getArch()))
     return std::string();
 
-  std::string Path =
-    (GCCInstallation.getInstallPath() +
-     "/../../../../" + GCCInstallation.getTriple().str() +
-     "/libc" + GCCInstallation.getMultiLibSuffix()).str();
+  // Standalone MIPS toolchains use different names for sysroot folder
+  // and put it into different places. Here we try to check some known
+  // variants.
 
-  return llvm::sys::fs::exists(Path) ? Path : "";
+  const StringRef InstallDir = GCCInstallation.getInstallPath();
+  const StringRef TripleStr = GCCInstallation.getTriple().str();
+  const StringRef MultiLibSuffix = GCCInstallation.getMultiLibSuffix();
+
+  std::string Path =
+    (InstallDir + "/../../../../" + TripleStr + "/libc" + MultiLibSuffix).str();
+
+  if (llvm::sys::fs::exists(Path))
+    return Path;
+
+  Path = (InstallDir + "/../../../../sysroot" + MultiLibSuffix).str();
+
+  if (llvm::sys::fs::exists(Path))
+    return Path;
+
+  return std::string();
 }
 
 void Linux::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
@@ -2439,6 +2538,10 @@ void Linux::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
         DriverArgs, CC1Args,
         GCCInstallation.getInstallPath() + "/../../../../" +
             GCCInstallation.getTriple().str() + "/libc/usr/include");
+
+    addExternCSystemIncludeIfExists(
+        DriverArgs, CC1Args,
+        GCCInstallation.getInstallPath() + "/../../../../sysroot/usr/include");
   }
 
   // Implement generic Debian multiarch support.
