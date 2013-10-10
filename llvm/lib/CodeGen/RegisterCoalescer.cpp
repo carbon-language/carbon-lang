@@ -2015,7 +2015,7 @@ bool RegisterCoalescer::joinVirtRegs(CoalescerPair &CP) {
   // CR_Replace conflicts.
   DEBUG(dbgs() << "\t\trestoring liveness to " << EndPoints.size()
                << " points: " << LHS << '\n');
-  LIS->extendToIndices(&LHS, EndPoints);
+  LIS->extendToIndices(LHS, EndPoints);
   return true;
 }
 

@@ -177,9 +177,9 @@ LiveInterval* LiveIntervals::createInterval(unsigned reg) {
 
 /// computeVirtRegInterval - Compute the live interval of a virtual register,
 /// based on defs and uses.
-void LiveIntervals::computeVirtRegInterval(LiveInterval *LI) {
+void LiveIntervals::computeVirtRegInterval(LiveInterval &LI) {
   assert(LRCalc && "LRCalc not initialized.");
-  assert(LI->empty() && "Should only compute empty intervals.");
+  assert(LI.empty() && "Should only compute empty intervals.");
   LRCalc->reset(MF, getSlotIndexes(), DomTree, &getVNInfoAllocator());
   LRCalc->createDeadDefs(LI);
   LRCalc->extendToUses(LI);
@@ -230,8 +230,8 @@ void LiveIntervals::computeRegMasks() {
 /// computeRegUnitInterval - Compute the live interval of a register unit, based
 /// on the uses and defs of aliasing registers.  The interval should be empty,
 /// or contain only dead phi-defs from ABI blocks.
-void LiveIntervals::computeRegUnitInterval(LiveInterval *LI) {
-  unsigned Unit = LI->reg;
+void LiveIntervals::computeRegUnitInterval(LiveInterval &LI) {
+  unsigned Unit = LI.reg;
 
   assert(LRCalc && "LRCalc not initialized.");
   LRCalc->reset(MF, getSlotIndexes(), DomTree, &getVNInfoAllocator());
@@ -305,7 +305,7 @@ void LiveIntervals::computeLiveInRegUnits() {
 
   // Compute the 'normal' part of the intervals.
   for (unsigned i = 0, e = NewIntvs.size(); i != e; ++i)
-    computeRegUnitInterval(NewIntvs[i]);
+    computeRegUnitInterval(*NewIntvs[i]);
 }
 
 
@@ -440,12 +440,12 @@ bool LiveIntervals::shrinkToUses(LiveInterval *li,
   return CanSeparate;
 }
 
-void LiveIntervals::extendToIndices(LiveInterval *LI,
+void LiveIntervals::extendToIndices(LiveRange &LR,
                                     ArrayRef<SlotIndex> Indices) {
   assert(LRCalc && "LRCalc not initialized.");
   LRCalc->reset(MF, getSlotIndexes(), DomTree, &getVNInfoAllocator());
   for (unsigned i = 0, e = Indices.size(); i != e; ++i)
-    LRCalc->extend(LI, Indices[i]);
+    LRCalc->extend(LR, Indices[i]);
 }
 
 void LiveIntervals::pruneValue(LiveInterval *LI, SlotIndex Kill,

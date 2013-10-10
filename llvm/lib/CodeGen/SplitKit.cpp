@@ -862,13 +862,13 @@ bool SplitEditor::transferValues() {
 
       // The interval [Start;End) is continuously mapped to RegIdx, ParentVNI.
       DEBUG(dbgs() << " [" << Start << ';' << End << ")=" << RegIdx);
-      LiveInterval *LI = &LIS.getInterval(Edit->get(RegIdx));
+      LiveRange &LR = LIS.getInterval(Edit->get(RegIdx));
 
       // Check for a simply defined value that can be blitted directly.
       ValueForcePair VFP = Values.lookup(std::make_pair(RegIdx, ParentVNI->id));
       if (VNInfo *VNI = VFP.getPointer()) {
         DEBUG(dbgs() << ':' << VNI->id);
-        LI->addSegment(LiveInterval::Segment(Start, End, VNI));
+        LR.addSegment(LiveInterval::Segment(Start, End, VNI));
         Start = End;
         continue;
       }
@@ -892,7 +892,7 @@ bool SplitEditor::transferValues() {
 
       // The first block may be live-in, or it may have its own def.
       if (Start != BlockStart) {
-        VNInfo *VNI = LI->extendInBlock(BlockStart, std::min(BlockEnd, End));
+        VNInfo *VNI = LR.extendInBlock(BlockStart, std::min(BlockEnd, End));
         assert(VNI && "Missing def for complex mapped value");
         DEBUG(dbgs() << ':' << VNI->id << "*BB#" << MBB->getNumber());
         // MBB has its own def. Is it also live-out?
@@ -912,7 +912,7 @@ bool SplitEditor::transferValues() {
         if (BlockStart == ParentVNI->def) {
           // This block has the def of a parent PHI, so it isn't live-in.
           assert(ParentVNI->isPHIDef() && "Non-phi defined at block start?");
-          VNInfo *VNI = LI->extendInBlock(BlockStart, std::min(BlockEnd, End));
+          VNInfo *VNI = LR.extendInBlock(BlockStart, std::min(BlockEnd, End));
           assert(VNI && "Missing def for complex mapped parent PHI");
           if (End >= BlockEnd)
             LRC.setLiveOutValue(MBB, VNI); // Live-out as well.
@@ -920,10 +920,10 @@ bool SplitEditor::transferValues() {
           // This block needs a live-in value.  The last block covered may not
           // be live-out.
           if (End < BlockEnd)
-            LRC.addLiveInBlock(LI, MDT[MBB], End);
+            LRC.addLiveInBlock(LR, MDT[MBB], End);
           else {
             // Live-through, and we don't know the value.
-            LRC.addLiveInBlock(LI, MDT[MBB]);
+            LRC.addLiveInBlock(LR, MDT[MBB]);
             LRC.setLiveOutValue(MBB, 0);
           }
         }
@@ -950,7 +950,7 @@ void SplitEditor::extendPHIKillRanges() {
     if (PHIVNI->isUnused() || !PHIVNI->isPHIDef())
       continue;
     unsigned RegIdx = RegAssign.lookup(PHIVNI->def);
-    LiveInterval *LI = &LIS.getInterval(Edit->get(RegIdx));
+    LiveRange &LR = LIS.getInterval(Edit->get(RegIdx));
     LiveRangeCalc &LRC = getLRCalc(RegIdx);
     MachineBasicBlock *MBB = LIS.getMBBFromIndex(PHIVNI->def);
     for (MachineBasicBlock::pred_iterator PI = MBB->pred_begin(),
@@ -962,7 +962,7 @@ void SplitEditor::extendPHIKillRanges() {
       if (Edit->getParent().liveAt(LastUse)) {
         assert(RegAssign.lookup(LastUse) == RegIdx &&
                "Different register assignment in phi predecessor");
-        LRC.extend(LI, End);
+        LRC.extend(LR, End);
       }
     }
   }
@@ -1012,7 +1012,7 @@ void SplitEditor::rewriteAssigned(bool ExtendRanges) {
     } else
       Idx = Idx.getRegSlot(true);
 
-    getLRCalc(RegIdx).extend(LI, Idx.getNextSlot());
+    getLRCalc(RegIdx).extend(*LI, Idx.getNextSlot());
   }
 }
 

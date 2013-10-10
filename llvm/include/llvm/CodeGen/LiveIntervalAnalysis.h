@@ -127,7 +127,7 @@ namespace llvm {
 
     LiveInterval &createAndComputeVirtRegInterval(unsigned Reg) {
       LiveInterval &LI = createEmptyInterval(Reg);
-      computeVirtRegInterval(&LI);
+      computeVirtRegInterval(LI);
       return LI;
     }
 
@@ -160,7 +160,7 @@ namespace llvm {
     /// extended to be live out of the basic block.
     ///
     /// See also LiveRangeCalc::extend().
-    void extendToIndices(LiveInterval *LI, ArrayRef<SlotIndex> Indices);
+    void extendToIndices(LiveRange &LR, ArrayRef<SlotIndex> Indices);
 
     /// pruneValue - If an LI value is live at Kill, prune its live range by
     /// removing any liveness reachable from Kill. Add live range end points to
@@ -369,7 +369,7 @@ namespace llvm {
       if (!LI) {
         // Compute missing ranges on demand.
         RegUnitIntervals[Unit] = LI = new LiveInterval(Unit, HUGE_VALF);
-        computeRegUnitInterval(LI);
+        computeRegUnitInterval(*LI);
       }
       return *LI;
     }
@@ -397,8 +397,8 @@ namespace llvm {
     void dumpInstrs() const;
 
     void computeLiveInRegUnits();
-    void computeRegUnitInterval(LiveInterval*);
-    void computeVirtRegInterval(LiveInterval*);
+    void computeRegUnitInterval(LiveInterval&);
+    void computeVirtRegInterval(LiveInterval&);
 
     class HMEditor;
   };
