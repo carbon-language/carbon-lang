@@ -78,6 +78,14 @@ debugging.
 //  Setup the environment up for a new child process that will soon be
 //  launched using the "A" packet.
 //
+// NB: key/value pairs are sent as-is so gdb-remote protocol meta characters
+//     (e.g. '#' or '$') are not acceptable.  If any non-printable or 
+//     metacharacters are present in the strings, QEnvironmentHexEncoded
+//     should be used instead if it is available.  If you don't want to
+//     scan the environment strings before sending, prefer 
+//     the QEnvironmentHexEncoded packet over QEnvironment, if it is
+//     available.
+//
 // PRIORITY TO IMPLEMENT
 //  Low. Only needed if the remote target wants to launch a target after
 //  making a connection to a GDB server that isn't already connected to
@@ -88,6 +96,31 @@ Both GDB and LLDB support passing down environment variables. Is it ok to
 respond with a "$#00" (unimplemented):
 
 send packet: $QEnvironment:ACK_COLOR_FILENAME=bold yellow#00
+read packet: $OK#00
+
+This packet can be sent one or more times _prior_ to sending a "A" packet.
+
+//----------------------------------------------------------------------
+// "QEnvironmentHexEncoded:HEX-ENCODING(NAME=VALUE)"
+//
+// BRIEF
+//  Setup the environment up for a new child process that will soon be
+//  launched using the "A" packet.
+//
+// The only difference between this packet and QEnvironment is that the
+// environment key-value pair is ascii hex encoded for transmission.
+// This allows values with gdb-remote metacharacters like '#' to be sent.
+//
+// PRIORITY TO IMPLEMENT
+//  Low. Only needed if the remote target wants to launch a target after
+//  making a connection to a GDB server that isn't already connected to
+//  an inferior process.
+//----------------------------------------------------------------------
+
+Both GDB and LLDB support passing down environment variables. Is it ok to
+respond with a "$#00" (unimplemented):
+
+send packet: $QEnvironment:41434b5f434f4c4f525f46494c454e414d453d626f6c642379656c6c6f77#00
 read packet: $OK#00
 
 This packet can be sent one or more times _prior_ to sending a "A" packet.
