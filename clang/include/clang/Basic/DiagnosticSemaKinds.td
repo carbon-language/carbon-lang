@@ -4483,6 +4483,8 @@ def ext_typecheck_addrof_temporary : ExtWarn<
   InGroup<DiagGroup<"address-of-temporary">>, DefaultError;
 def err_typecheck_addrof_temporary : Error<
   "taking the address of a temporary object of type %0">;
+def err_typecheck_addrof_dtor : Error<
+  "taking the address of a destructor">;
 def err_typecheck_unary_expr : Error<
   "invalid argument type %0 to unary expression">;
 def err_typecheck_indirection_requires_pointer : Error<

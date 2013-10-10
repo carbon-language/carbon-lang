@@ -363,3 +363,7 @@ namespace PR7900 {
     (&b)->~A(); // expected-error{{destructor type 'PR7900::A' in object destruction expression does not match the type 'PR7900::B' of the object being destroyed}}
   }
 }
+
+namespace PR16892 {
+  auto p = &A::~A; // expected-error{{taking the address of a destructor}}
+}
