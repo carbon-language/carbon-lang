@@ -628,5 +628,7 @@ ClangFunction::ExecuteFunction(
 clang::ASTConsumer *
 ClangFunction::ASTTransformer (clang::ASTConsumer *passthrough)
 {
-    return new ASTStructExtractor(passthrough, m_wrapper_struct_name.c_str(), *this);
+    m_struct_extractor.reset(new ASTStructExtractor(passthrough, m_wrapper_struct_name.c_str(), *this));
+    
+    return m_struct_extractor.get();
 }

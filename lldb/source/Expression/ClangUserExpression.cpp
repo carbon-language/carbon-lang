@@ -95,15 +95,9 @@ ClangUserExpression::~ClangUserExpression ()
 
 clang::ASTConsumer *
 ClangUserExpression::ASTTransformer (clang::ASTConsumer *passthrough)
-{    
-    ClangASTContext *clang_ast_context = m_target->GetScratchClangASTContext();
-    
-    if (!clang_ast_context)
-        return NULL;
-    
-    if (!m_result_synthesizer.get())
-        m_result_synthesizer.reset(new ASTResultSynthesizer(passthrough,
-                                                            *m_target));
+{
+    m_result_synthesizer.reset(new ASTResultSynthesizer(passthrough,
+                                                        *m_target));
     
     return m_result_synthesizer.get();
 }
