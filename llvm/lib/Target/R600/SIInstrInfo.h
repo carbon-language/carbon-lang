@@ -49,7 +49,15 @@ public:
   virtual bool isSafeToMoveRegClassDefs(const TargetRegisterClass *RC) const;
   int isMIMG(uint16_t Opcode) const;
   int isSMRD(uint16_t Opcode) const;
+  bool isVOP1(uint16_t Opcode) const;
+  bool isVOP2(uint16_t Opcode) const;
+  bool isVOP3(uint16_t Opcode) const;
+  bool isVOPC(uint16_t Opcode) const;
+  bool isInlineConstant(const MachineOperand &MO) const;
+  bool isLiteralConstant(const MachineOperand &MO) const;
 
+  virtual bool verifyInstruction(const MachineInstr *MI,
+                                 StringRef &ErrInfo) const;
   virtual int getIndirectIndexBegin(const MachineFunction &MF) const;
 
   virtual int getIndirectIndexEnd(const MachineFunction &MF) const;

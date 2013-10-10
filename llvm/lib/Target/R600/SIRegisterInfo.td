@@ -43,7 +43,7 @@ def SGPR_32 : RegisterClass<"AMDGPU", [f32, i32], 32,
                             (add (sequence "SGPR%u", 0, 101))>;
 
 // SGPR 64-bit registers
-def SGPR_64 : RegisterTuples<[sub0, sub1],
+def SGPR_64Regs : RegisterTuples<[sub0, sub1],
                              [(add (decimate (trunc SGPR_32, 101), 2)),
                               (add (decimate (shl SGPR_32, 1), 2))]>;
 
@@ -153,8 +153,10 @@ def SReg_32 : RegisterClass<"AMDGPU", [f32, i32], 32,
   (add SGPR_32, M0Reg)
 >;
 
+def SGPR_64 : RegisterClass<"AMDGPU", [v2i32, i64], 64, (add SGPR_64Regs)>;
+
 def SReg_64 : RegisterClass<"AMDGPU", [v2i32, i64, i1], 64,
-  (add SGPR_64, VCCReg, EXECReg)
+  (add SGPR_64Regs, VCCReg, EXECReg)
 >;
 
 def SReg_128 : RegisterClass<"AMDGPU", [i128], 128, (add SGPR_128)>;
