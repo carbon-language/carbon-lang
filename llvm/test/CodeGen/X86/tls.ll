@@ -223,27 +223,22 @@ entry:
 define i16 @f11() {
 ; X32_LINUX-LABEL: f11:
 ; X32_LINUX:      movzwl %gs:s1@NTPOFF, %eax
-; Why is this kill line here, but no where else?
-; X32_LINUX-NEXT: # kill
-; X32_LINUX-NEXT: ret
+; X32_LINUX:      ret
 ; X64_LINUX-LABEL: f11:
 ; X64_LINUX:      movzwl %fs:s1@TPOFF, %eax
-; X64_LINUX-NEXT: # kill
-; X64_LINUX-NEXT: ret
+; X64_LINUX:      ret
 ; X32_WIN-LABEL: f11:
 ; X32_WIN:      movl __tls_index, %eax
 ; X32_WIN-NEXT: movl %fs:__tls_array, %ecx
 ; X32_WIN-NEXT: movl (%ecx,%eax,4), %eax
 ; X32_WIN-NEXT: movzwl _s1@SECREL32(%eax), %eax
-; X32_WIN-NEXT: # kill
-; X32_WIN-NEXT: ret
+; X32_WIN:      ret
 ; X64_WIN-LABEL: f11:
 ; X64_WIN:      movl _tls_index(%rip), %eax
 ; X64_WIN-NEXT: movq %gs:88, %rcx
 ; X64_WIN-NEXT: movq (%rcx,%rax,8), %rax
 ; X64_WIN-NEXT: movzwl s1@SECREL32(%rax), %eax
-; X64_WIN-NEXT: # kill
-; X64_WIN-NEXT: ret
+; X64_WIN:      ret
 
 entry:
 	%tmp1 = load i16* @s1
