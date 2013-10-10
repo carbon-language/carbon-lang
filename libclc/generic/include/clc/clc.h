@@ -86,6 +86,9 @@
 #include <clc/shared/vload.h>
 #include <clc/shared/vstore.h>
 
+/* 6.11.4 Common Functions */
+#include <clc/common/sign.h>
+
 /* 6.11.5 Geometric Functions */
 #include <clc/geometric/cross.h>
 #include <clc/geometric/dot.h>

@@ -1,5 +1,6 @@
 atomic/atomic_impl.ll
 convert.cl
+common/sign.cl
 geometric/cross.cl
 geometric/dot.cl
 geometric/length.cl
