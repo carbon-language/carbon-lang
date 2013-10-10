@@ -617,8 +617,17 @@ void LiveRange::print(raw_ostream &OS) const {
   }
 }
 
+void LiveInterval::print(raw_ostream &OS) const {
+  OS << PrintReg(reg) << ' ';
+  super::print(OS);
+}
+
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
 void LiveRange::dump() const {
+  dbgs() << *this << "\n";
+}
+
+void LiveInterval::dump() const {
   dbgs() << *this << "\n";
 }
 #endif

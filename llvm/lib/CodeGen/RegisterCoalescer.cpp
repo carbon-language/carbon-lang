@@ -1156,10 +1156,12 @@ bool RegisterCoalescer::joinCopy(MachineInstr *CopyMI, bool &Again) {
   TRI->UpdateRegAllocHint(CP.getSrcReg(), CP.getDstReg(), *MF);
 
   DEBUG({
-    dbgs() << "\tJoined. Result = " << PrintReg(CP.getDstReg(), TRI);
-    if (!CP.isPhys())
+    dbgs() << "\tJoined. Result = ";
+    if (CP.isPhys())
+      dbgs() << PrintReg(CP.getDstReg(), TRI);
+    else
       dbgs() << LIS->getInterval(CP.getDstReg());
-     dbgs() << '\n';
+    dbgs() << '\n';
   });
 
   ++numJoins;
@@ -1171,8 +1173,7 @@ bool RegisterCoalescer::joinReservedPhysReg(CoalescerPair &CP) {
   assert(CP.isPhys() && "Must be a physreg copy");
   assert(MRI->isReserved(CP.getDstReg()) && "Not a reserved register");
   LiveInterval &RHS = LIS->getInterval(CP.getSrcReg());
-  DEBUG(dbgs() << "\t\tRHS = " << PrintReg(CP.getSrcReg()) << ' ' << RHS
-               << '\n');
+  DEBUG(dbgs() << "\t\tRHS = " << RHS << '\n');
 
   assert(CP.isFlipped() && RHS.containsOneValue() &&
          "Invalid join with reserved register");
@@ -1968,8 +1969,8 @@ bool RegisterCoalescer::joinVirtRegs(CoalescerPair &CP) {
   JoinVals RHSVals(RHS, CP.getSrcIdx(), NewVNInfo, CP, LIS, TRI);
   JoinVals LHSVals(LHS, CP.getDstIdx(), NewVNInfo, CP, LIS, TRI);
 
-  DEBUG(dbgs() << "\t\tRHS = " << PrintReg(CP.getSrcReg()) << ' ' << RHS
-               << "\n\t\tLHS = " << PrintReg(CP.getDstReg()) << ' ' << LHS
+  DEBUG(dbgs() << "\t\tRHS = " << RHS
+               << "\n\t\tLHS = " << LHS
                << '\n');
 
   // First compute NewVNInfo and the simple value mappings.

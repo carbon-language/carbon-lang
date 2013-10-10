@@ -527,6 +527,8 @@ namespace llvm {
   /// or stack slot.
   class LiveInterval : public LiveRange {
   public:
+    typedef LiveRange super;
+
     const unsigned reg;  // the register or stack slot of this interval.
     float weight;        // weight of this interval
 
@@ -553,6 +555,9 @@ namespace llvm {
       return thisIndex < otherIndex ||
               (thisIndex == otherIndex && reg < other.reg);
     }
+
+    void print(raw_ostream &OS) const;
+    void dump() const;
 
   private:
     LiveInterval& operator=(const LiveInterval& rhs) LLVM_DELETED_FUNCTION;

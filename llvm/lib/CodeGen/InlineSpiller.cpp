@@ -1337,7 +1337,7 @@ void InlineSpiller::spill(LiveRangeEdit &edit) {
 
   DEBUG(dbgs() << "Inline spilling "
                << MRI.getRegClass(edit.getReg())->getName()
-               << ':' << PrintReg(edit.getReg()) << ' ' << edit.getParent()
+               << ':' << edit.getParent()
                << "\nFrom original " << PrintReg(Original) << '\n');
   assert(edit.getParent().isSpillable() &&
          "Attempting to spill already spilled value.");

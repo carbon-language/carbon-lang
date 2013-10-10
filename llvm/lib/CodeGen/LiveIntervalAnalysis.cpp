@@ -141,13 +141,13 @@ void LiveIntervals::print(raw_ostream &OS, const Module* ) const {
   // Dump the regunits.
   for (unsigned i = 0, e = RegUnitRanges.size(); i != e; ++i)
     if (LiveRange *LR = RegUnitRanges[i])
-      OS << PrintRegUnit(i, TRI) << " = " << *LR << '\n';
+      OS << PrintRegUnit(i, TRI) << ' ' << *LR << '\n';
 
   // Dump the virtregs.
   for (unsigned i = 0, e = MRI->getNumVirtRegs(); i != e; ++i) {
     unsigned Reg = TargetRegisterInfo::index2VirtReg(i);
     if (hasInterval(Reg))
-      OS << PrintReg(Reg) << " = " << getInterval(Reg) << '\n';
+      OS << getInterval(Reg) << '\n';
   }
 
   OS << "RegMasks:";

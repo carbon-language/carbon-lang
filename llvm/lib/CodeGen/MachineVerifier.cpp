@@ -419,23 +419,13 @@ void MachineVerifier::report(const char *msg,
 void MachineVerifier::report(const char *msg, const MachineFunction *MF,
                              const LiveInterval &LI) {
   report(msg, MF);
-  *OS << "- interval:    ";
-  if (TargetRegisterInfo::isVirtualRegister(LI.reg))
-    *OS << PrintReg(LI.reg, TRI);
-  else
-    *OS << PrintRegUnit(LI.reg, TRI);
-  *OS << ' ' << LI << '\n';
+  *OS << "- interval:    " << LI << '\n';
 }
 
 void MachineVerifier::report(const char *msg, const MachineBasicBlock *MBB,
                              const LiveInterval &LI) {
   report(msg, MBB);
-  *OS << "- interval:    ";
-  if (TargetRegisterInfo::isVirtualRegister(LI.reg))
-    *OS << PrintReg(LI.reg, TRI);
-  else
-    *OS << PrintRegUnit(LI.reg, TRI);
-  *OS << ' ' << LI << '\n';
+  *OS << "- interval:    " << LI << '\n';
 }
 
 void MachineVerifier::report(const char *msg, const MachineBasicBlock *MBB,
