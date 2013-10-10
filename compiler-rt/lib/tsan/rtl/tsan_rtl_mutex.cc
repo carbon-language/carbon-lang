@@ -138,12 +138,7 @@ int MutexUnlock(ThreadState *thr, uptr pc, uptr addr, bool all) {
     if (s->recursion == 0) {
       StatInc(thr, StatMutexUnlock);
       s->owner_tid = SyncVar::kInvalidTid;
-      if (thr->ignore_sync == 0) {
-        thr->clock.set(thr->tid, thr->fast_state.epoch());
-        thr->fast_synch_epoch = thr->fast_state.epoch();
-        thr->clock.ReleaseStore(&s->clock);
-        StatInc(thr, StatSyncRelease);
-      }
+      ReleaseStoreImpl(thr, pc, &s->clock);
     } else {
       StatInc(thr, StatMutexRecUnlock);
     }
