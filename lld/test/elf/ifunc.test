@@ -67,3 +67,5 @@ RELATIVEADDEND-NEXT: ]
 SHARED: shared-library-atoms
 SHARED: name: hey
 SHARED-NOT: data
+
+XFAIL: darwin
