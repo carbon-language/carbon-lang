@@ -127,6 +127,11 @@ public:
   OperandMatchResultTy
   ParseSysRegOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands);
 
+  bool TryParseVector(uint32_t &RegNum, SMLoc &RegEndLoc, StringRef &Layout,
+                      SMLoc &LayoutLoc);
+
+  OperandMatchResultTy ParseVectorList(SmallVectorImpl<MCParsedAsmOperand *> &);
+
   bool validateInstruction(MCInst &Inst,
                           const SmallVectorImpl<MCParsedAsmOperand*> &Operands);
 
@@ -154,6 +159,7 @@ private:
     k_Immediate,      // Including expressions referencing symbols
     k_Register,
     k_ShiftExtend,
+    k_VectorList,     // A sequential list of 1 to 4 registers.
     k_SysReg,         // The register operand of MRS and MSR instructions
     k_Token,          // The mnemonic; other raw tokens the auto-generated
     k_WrappedRegister // Load/store exclusive permit a wrapped register.
@@ -189,6 +195,13 @@ private:
     bool ImplicitAmount;
   };
 
+  // A vector register list is a sequential list of 1 to 4 registers.
+  struct VectorListOp {
+    unsigned RegNum;
+    unsigned Count;
+    A64Layout::VectorLayout Layout;
+  };
+
   struct SysRegOp {
     const char *Data;
     unsigned Length;
@@ -206,6 +219,7 @@ private:
     struct ImmOp Imm;
     struct RegOp Reg;
     struct ShiftExtendOp ShiftExtend;
+    struct VectorListOp VectorList;
     struct SysRegOp SysReg;
     struct TokOp Tok;
   };
@@ -717,6 +731,12 @@ public:
     return ShiftExtend.Amount == 8 || ShiftExtend.Amount == 16;
   }
 
+  template <A64Layout::VectorLayout Layout, unsigned Count>
+  bool isVectorList() const {
+    return Kind == k_VectorList && VectorList.Layout == Layout &&
+           VectorList.Count == Count;
+  }
+
   template <int MemSize> bool isSImm7Scaled() const {
     if (!isImm())
       return false;
@@ -834,6 +854,18 @@ public:
     AArch64Operand *Op = new AArch64Operand(k_SysReg, S, S);
     Op->Tok.Data = Str.data();
     Op->Tok.Length = Str.size();
+    return Op;
+  }
+
+  static AArch64Operand *CreateVectorList(unsigned RegNum, unsigned Count,
+                                          A64Layout::VectorLayout Layout,
+                                          SMLoc S, SMLoc E) {
+    AArch64Operand *Op = new AArch64Operand(k_VectorList, S, E);
+    Op->VectorList.RegNum = RegNum;
+    Op->VectorList.Count = Count;
+    Op->VectorList.Layout = Layout;
+    Op->StartLoc = S;
+    Op->EndLoc = E;
     return Op;
   }
 
@@ -1184,6 +1216,11 @@ public:
     }
     Inst.addOperand(MCOperand::CreateImm(Imm));
   }
+
+  void addVectorListOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    Inst.addOperand(MCOperand::CreateReg(VectorList.RegNum));
+  }
 };
 
 } // end anonymous namespace.
@@ -1223,7 +1260,6 @@ AArch64AsmParser::ParseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
       else
         return MatchOperand_Success;
     }
-
     // ... or it might be a symbolish thing
   }
     // Fall through
@@ -1267,7 +1303,7 @@ AArch64AsmParser::ParseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
     return ParseOperand(Operands, Mnemonic);
   }
   // The following will likely be useful later, but not in very early cases
-  case AsmToken::LCurly:  // Weird SIMD lists
+  case AsmToken::LCurly: // SIMD vector list is not parsed here
     llvm_unreachable("Don't know how to deal with '{' in operand");
     return MatchOperand_ParseFail;
   }
@@ -1886,6 +1922,132 @@ AArch64AsmParser::ParseShiftExtend(
 
   Operands.push_back(AArch64Operand::CreateShiftExtend(Spec, Amount, false,
                                                        S, E));
+
+  return MatchOperand_Success;
+}
+
+/// Try to parse a vector register token, If it is a vector register,
+/// the token is eaten and return true. Otherwise return false.
+bool AArch64AsmParser::TryParseVector(uint32_t &RegNum, SMLoc &RegEndLoc,
+                                      StringRef &Layout, SMLoc &LayoutLoc) {
+  bool IsVector = true;
+
+  if (!IdentifyRegister(RegNum, RegEndLoc, Layout, LayoutLoc))
+    IsVector = false;
+
+  if (!AArch64MCRegisterClasses[AArch64::FPR64RegClassID].contains(RegNum) &&
+      !AArch64MCRegisterClasses[AArch64::FPR128RegClassID].contains(RegNum))
+    IsVector = false;
+
+  if (Layout.size() == 0)
+    IsVector = false;
+
+  if (!IsVector)
+    Error(Parser.getTok().getLoc(), "expected vector type register");
+
+  Parser.Lex(); // Eat this token.
+  return IsVector;
+}
+
+
+// A vector list contains 1-4 consecutive registers.
+// Now there are two kinds of vector list when number of vector > 1:
+//   (1) {Vn.layout, Vn+1.layout, ... , Vm.layout}
+//   (2) {Vn.layout - Vm.layout}
+AArch64AsmParser::OperandMatchResultTy AArch64AsmParser::ParseVectorList(
+    SmallVectorImpl<MCParsedAsmOperand *> &Operands) {
+  if (Parser.getTok().isNot(AsmToken::LCurly)) {
+    Error(Parser.getTok().getLoc(), "'{' expected");
+    return MatchOperand_ParseFail;
+  }
+  SMLoc SLoc = Parser.getTok().getLoc();
+  Parser.Lex(); // Eat '{' token.
+
+  unsigned Reg, Count = 1;
+  StringRef LayoutStr;
+  SMLoc RegEndLoc, LayoutLoc;
+  if (!TryParseVector(Reg, RegEndLoc, LayoutStr, LayoutLoc))
+    return MatchOperand_ParseFail;
+
+  if (Parser.getTok().is(AsmToken::Minus)) {
+    Parser.Lex(); // Eat the minus.
+
+    unsigned Reg2;
+    StringRef LayoutStr2;
+    SMLoc RegEndLoc2, LayoutLoc2;
+    SMLoc RegLoc2 = Parser.getTok().getLoc();
+
+    if (!TryParseVector(Reg2, RegEndLoc2, LayoutStr2, LayoutLoc2))
+      return MatchOperand_ParseFail;
+    unsigned Space = (Reg < Reg2) ? (Reg2 - Reg) : (Reg2 + 32 - Reg);
+
+    if (LayoutStr != LayoutStr2) {
+      Error(LayoutLoc2, "expected the same vector layout");
+      return MatchOperand_ParseFail;
+    }
+    if (Space == 0 || Space > 3) {
+      Error(RegLoc2, "invalid number of vectors");
+      return MatchOperand_ParseFail;
+    }
+
+    Count += Space;
+  } else {
+    unsigned LastReg = Reg;
+    while (Parser.getTok().is(AsmToken::Comma)) {
+      Parser.Lex(); // Eat the comma.
+      unsigned Reg2;
+      StringRef LayoutStr2;
+      SMLoc RegEndLoc2, LayoutLoc2;
+      SMLoc RegLoc2 = Parser.getTok().getLoc();
+
+      if (!TryParseVector(Reg2, RegEndLoc2, LayoutStr2, LayoutLoc2))
+        return MatchOperand_ParseFail;
+      unsigned Space = (LastReg < Reg2) ? (Reg2 - LastReg)
+                                        : (Reg2 + 32 - LastReg);
+      Count++;
+
+      // The space between two vectors should be 1. And they should have the same layout.
+      // Total count shouldn't be great than 4
+      if (Space != 1) {
+        Error(RegLoc2, "invalid space between two vectors");
+        return MatchOperand_ParseFail;
+      }
+      if (LayoutStr != LayoutStr2) {
+        Error(LayoutLoc2, "expected the same vector layout");
+        return MatchOperand_ParseFail;
+      }
+      if (Count > 4) {
+        Error(RegLoc2, "invalid number of vectors");
+        return MatchOperand_ParseFail;
+      }
+
+      LastReg = Reg2;
+    }
+  }
+
+  if (Parser.getTok().isNot(AsmToken::RCurly)) {
+    Error(Parser.getTok().getLoc(), "'}' expected");
+    return MatchOperand_ParseFail;
+  }
+  SMLoc ELoc = Parser.getTok().getLoc();
+  Parser.Lex(); // Eat '}' token.
+
+  A64Layout::VectorLayout Layout = A64StringToVectorLayout(LayoutStr);
+  if (Count > 1) { // If count > 1, create vector list using super register.
+    bool IsVec64 = (Layout < A64Layout::_16B) ? true : false;
+    static unsigned SupRegIDs[3][2] = {
+      { AArch64::QPairRegClassID, AArch64::DPairRegClassID },
+      { AArch64::QTripleRegClassID, AArch64::DTripleRegClassID },
+      { AArch64::QQuadRegClassID, AArch64::DQuadRegClassID }
+    };
+    unsigned SupRegID = SupRegIDs[Count - 2][static_cast<int>(IsVec64)];
+    unsigned Sub0 = IsVec64 ? AArch64::dsub_0 : AArch64::qsub_0;
+    const MCRegisterInfo *MRI = getContext().getRegisterInfo();
+    Reg = MRI->getMatchingSuperReg(Reg, Sub0,
+                                   &AArch64MCRegisterClasses[SupRegID]);
+  }
+  Operands.push_back(
+      AArch64Operand::CreateVectorList(Reg, Count, Layout, SLoc, ELoc));
 
   return MatchOperand_Success;
 }
