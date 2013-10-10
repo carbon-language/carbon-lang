@@ -108,17 +108,32 @@ bool CodeGenModule::TryEmitDefinitionAsAlias(GlobalDecl AliasDecl,
   // support aliases with that linkage, fail.
   llvm::GlobalValue::LinkageTypes Linkage = getFunctionLinkage(AliasDecl);
 
-  // We can't use an alias if the linkage is not valid for one.
-  if (!llvm::GlobalAlias::isValidLinkage(Linkage))
+  switch (Linkage) {
+  // We can definitely emit aliases to definitions with external linkage.
+  case llvm::GlobalValue::ExternalLinkage:
+  case llvm::GlobalValue::ExternalWeakLinkage:
+    break;
+
+  // Same with local linkage.
+  case llvm::GlobalValue::InternalLinkage:
+  case llvm::GlobalValue::PrivateLinkage:
+  case llvm::GlobalValue::LinkerPrivateLinkage:
+    break;
+
+  // We should try to support linkonce linkages.
+  case llvm::GlobalValue::LinkOnceAnyLinkage:
+  case llvm::GlobalValue::LinkOnceODRLinkage:
     return true;
+
+  // Other linkages will probably never be supported.
+  default:
+    return true;
+  }
 
   llvm::GlobalValue::LinkageTypes TargetLinkage
     = getFunctionLinkage(TargetDecl);
 
-  // Don't create an strong alias to a linker weak symbol. If the linker
-  // decides to drop the symbol, the alias would become undefined.
-  if (llvm::GlobalValue::isWeakForLinker(TargetLinkage) &&
-      !llvm::GlobalValue::isWeakForLinker(Linkage))
+  if (llvm::GlobalValue::isWeakForLinker(TargetLinkage))
     return true;
 
   // Derive the type for the alias.
