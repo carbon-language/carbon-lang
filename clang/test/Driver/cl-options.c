@@ -129,4 +129,11 @@
 // Xclang: "-cc1"
 // Xclang: "hellocc1"
 
+// We support -m32 and -m64.
+// RUN: %clang_cl -Xclang -target -Xclang x86_64-pc-win32 -m32 -### -- %s 2>&1 | FileCheck -check-prefix=M32 %s
+// M32: "-triple" "i{{[0-9]}}86-{{.*}}"
+// RUN: %clang_cl -Xclang -target -Xclang i386-pc-win32 -m64 -### -- %s 2>&1 | FileCheck -check-prefix=M64 %s
+// M64: "-triple" "{{[^-]+}}64-{{.*}}"
+
+
 void f() { }
