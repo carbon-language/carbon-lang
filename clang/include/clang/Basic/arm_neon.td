@@ -498,6 +498,26 @@ def VFMA : SInst<"vfma", "dddd", "fQf">;
 let isA64 = 1 in {
 
 ////////////////////////////////////////////////////////////////////////////////
+// Load/Store
+// With additional QUl, Ql, Qd type.
+def LD1 : WInst<"vld1", "dc",
+                "QUcQUsQUiQUlQcQsQiQlQhQfQdQPcQPsUcUsUiUlcsilhfdPcPs">;
+def LD2 : WInst<"vld2", "2c",
+                "QUcQUsQUiQUlQcQsQiQlQhQfQdQPcQPsUcUsUiUlcsilhfdPcPs">;
+def LD3 : WInst<"vld3", "3c",
+                "QUcQUsQUiQUlQcQsQiQlQhQfQdQPcQPsUcUsUiUlcsilhfdPcPs">;
+def LD4 : WInst<"vld4", "4c",
+                "QUcQUsQUiQUlQcQsQiQlQhQfQdQPcQPsUcUsUiUlcsilhfdPcPs">;
+def ST1 : WInst<"vst1", "vpd",
+                "QUcQUsQUiQUlQcQsQiQlQhQfQdQPcQPsUcUsUiUlcsilhfdPcPs">;
+def ST2 : WInst<"vst2", "vp2",
+                "QUcQUsQUiQUlQcQsQiQlQhQfQdQPcQPsUcUsUiUlcsilhfdPcPs">;
+def ST3 : WInst<"vst3", "vp3",
+                "QUcQUsQUiQUlQcQsQiQlQhQfQdQPcQPsUcUsUiUlcsilhfdPcPs">;
+def ST4 : WInst<"vst4", "vp4",
+                "QUcQUsQUiQUlQcQsQiQlQhQfQdQPcQPsUcUsUiUlcsilhfdPcPs">;
+
+////////////////////////////////////////////////////////////////////////////////
 // Addition
 // With additional Qd type.
 def ADD : IOpInst<"vadd", "ddd", "csilfUcUsUiUlQcQsQiQlQfQUcQUsQUiQUlQd", OP_ADD>;
