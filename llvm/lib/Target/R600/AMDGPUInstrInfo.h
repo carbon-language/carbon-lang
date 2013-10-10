@@ -197,6 +197,9 @@ public:
   virtual void convertToISA(MachineInstr & MI, MachineFunction &MF,
     DebugLoc DL) const;
 
+  /// \brief Given a MIMG \p Opcode that writes all 4 channels, return the
+  /// equivalent opcode that writes \p Channels Channels.
+  int getMaskedMIMGOp(uint16_t Opcode, unsigned Channels) const;
 };
 
 namespace AMDGPU {

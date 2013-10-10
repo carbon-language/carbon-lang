@@ -1162,6 +1162,8 @@ void SITargetLowering::AdjustInstrPostInstrSelection(MachineInstr *MI,
   case 3:  RC = &AMDGPU::VReg_96RegClass; break;
   }
 
+  unsigned NewOpcode = TII->getMaskedMIMGOp(MI->getOpcode(), BitsSet);
+  MI->setDesc(TII->get(NewOpcode));
   MachineRegisterInfo &MRI = MI->getParent()->getParent()->getRegInfo();
   MRI.setRegClass(VReg, RC);
 }

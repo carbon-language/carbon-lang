@@ -472,10 +472,16 @@ class MTBUF_Load_Helper <bits<3> op, string asm, RegisterClass regClass> : MTBUF
   let mayStore = 0;
 }
 
+class MIMG_Mask <string op, int channels> {
+  string Op = op;
+  int Channels = channels;
+}
+
 class MIMG_NoSampler_Helper <bits<7> op, string asm,
+                             RegisterClass dst_rc,
                              RegisterClass src_rc> : MIMG <
   op,
-  (outs VReg_128:$vdata),
+  (outs dst_rc:$vdata),
   (ins i32imm:$dmask, i1imm:$unorm, i1imm:$glc, i1imm:$da, i1imm:$r128,
        i1imm:$tfe, i1imm:$lwe, i1imm:$slc, src_rc:$vaddr,
        SReg_256:$srsrc),
@@ -488,16 +494,29 @@ class MIMG_NoSampler_Helper <bits<7> op, string asm,
   let hasPostISelHook = 1;
 }
 
+multiclass MIMG_NoSampler_Src_Helper <bits<7> op, string asm,
+                                      RegisterClass dst_rc,
+                                      int channels> {
+  def _V1 : MIMG_NoSampler_Helper <op, asm, dst_rc, VReg_32>,
+            MIMG_Mask<asm#"_V1", channels>;
+  def _V2 : MIMG_NoSampler_Helper <op, asm, dst_rc, VReg_64>,
+            MIMG_Mask<asm#"_V2", channels>;
+  def _V4 : MIMG_NoSampler_Helper <op, asm, dst_rc, VReg_128>,
+            MIMG_Mask<asm#"_V4", channels>;
+}
+
 multiclass MIMG_NoSampler <bits<7> op, string asm> {
-  def _V1 : MIMG_NoSampler_Helper <op, asm, VReg_32>;
-  def _V2 : MIMG_NoSampler_Helper <op, asm, VReg_64>;
-  def _V4 : MIMG_NoSampler_Helper <op, asm, VReg_128>;
+  defm _V1 : MIMG_NoSampler_Src_Helper <op, asm, VReg_32, 1>;
+  defm _V2 : MIMG_NoSampler_Src_Helper <op, asm, VReg_64, 2>;
+  defm _V3 : MIMG_NoSampler_Src_Helper <op, asm, VReg_96, 3>;
+  defm _V4 : MIMG_NoSampler_Src_Helper <op, asm, VReg_128, 4>;
 }
 
 class MIMG_Sampler_Helper <bits<7> op, string asm,
+                           RegisterClass dst_rc,
                            RegisterClass src_rc> : MIMG <
   op,
-  (outs VReg_128:$vdata),
+  (outs dst_rc:$vdata),
   (ins i32imm:$dmask, i1imm:$unorm, i1imm:$glc, i1imm:$da, i1imm:$r128,
        i1imm:$tfe, i1imm:$lwe, i1imm:$slc, src_rc:$vaddr,
        SReg_256:$srsrc, SReg_128:$ssamp),
@@ -509,12 +528,26 @@ class MIMG_Sampler_Helper <bits<7> op, string asm,
   let hasPostISelHook = 1;
 }
 
+multiclass MIMG_Sampler_Src_Helper <bits<7> op, string asm,
+                                    RegisterClass dst_rc,
+                                    int channels> {
+  def _V1 : MIMG_Sampler_Helper <op, asm, dst_rc, VReg_32>,
+            MIMG_Mask<asm#"_V1", channels>;
+  def _V2 : MIMG_Sampler_Helper <op, asm, dst_rc, VReg_64>,
+            MIMG_Mask<asm#"_V2", channels>;
+  def _V4 : MIMG_Sampler_Helper <op, asm, dst_rc, VReg_128>,
+            MIMG_Mask<asm#"_V4", channels>;
+  def _V8 : MIMG_Sampler_Helper <op, asm, dst_rc, VReg_256>,
+            MIMG_Mask<asm#"_V8", channels>;
+  def _V16 : MIMG_Sampler_Helper <op, asm, dst_rc, VReg_512>,
+            MIMG_Mask<asm#"_V16", channels>;
+}
+
 multiclass MIMG_Sampler <bits<7> op, string asm> {
-  def _V1 : MIMG_Sampler_Helper <op, asm, VReg_32>;
-  def _V2 : MIMG_Sampler_Helper <op, asm, VReg_64>;
-  def _V4 : MIMG_Sampler_Helper <op, asm, VReg_128>;
-  def _V8 : MIMG_Sampler_Helper <op, asm, VReg_256>;
-  def _V16 : MIMG_Sampler_Helper <op, asm, VReg_512>;
+  defm _V1 : MIMG_Sampler_Src_Helper<op, asm, VReg_32, 1>;
+  defm _V2 : MIMG_Sampler_Src_Helper<op, asm, VReg_64, 2>;
+  defm _V3 : MIMG_Sampler_Src_Helper<op, asm, VReg_96, 3>;
+  defm _V4 : MIMG_Sampler_Src_Helper<op, asm, VReg_128, 4>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -537,6 +570,14 @@ def getCommuteRev : InstrMapping {
   let ColFields = ["IsOrig"];
   let KeyCol = ["1"];
   let ValueCols = [["0"]];
+}
+
+def getMaskedMIMGOp : InstrMapping {
+  let FilterClass = "MIMG_Mask";
+  let RowFields = ["Op"];
+  let ColFields = ["Channels"];
+  let KeyCol = ["4"];
+  let ValueCols = [["1"], ["2"], ["3"] ];
 }
 
 // Maps an commuted opcode to its original version
