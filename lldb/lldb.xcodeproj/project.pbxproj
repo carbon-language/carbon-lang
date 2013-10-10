@@ -4675,7 +4675,6 @@
 					"-framework",
 					Foundation,
 					"-v",
-					"-t",
 				);
 				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
 					"-lllvmclang",
@@ -4734,7 +4733,6 @@
 					"-framework",
 					AppKit,
 					"-v",
-					"-t",
 				);
 				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
 					"-lllvmclang",
@@ -5044,7 +5042,6 @@
 					"-framework",
 					AppKit,
 					"-v",
-					"-t",
 					"-Wl,-v",
 				);
 				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
@@ -5163,7 +5160,6 @@
 					"-framework",
 					AppKit,
 					"-v",
-					"-t",
 					"-Wl,-v",
 				);
 				INSTALL_PATH = "$(LLDB_TOOLS_INSTALL_DIR)";
@@ -5184,7 +5180,6 @@
 					"-framework",
 					AppKit,
 					"-v",
-					"-t",
 					"-Wl,-v",
 				);
 				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
@@ -5227,7 +5222,6 @@
 					"-framework",
 					AppKit,
 					"-v",
-					"-t",
 					"-Wl,-v",
 				);
 				INSTALL_PATH = "$(LLDB_TOOLS_INSTALL_DIR)";
@@ -5248,7 +5242,6 @@
 					"-framework",
 					AppKit,
 					"-v",
-					"-t",
 					"-Wl,-v",
 				);
 				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
@@ -5290,7 +5283,6 @@
 					"-framework",
 					AppKit,
 					"-v",
-					"-t",
 					"-Wl,-v",
 				);
 				INSTALL_PATH = "$(LLDB_TOOLS_INSTALL_DIR)";
@@ -5311,7 +5303,6 @@
 					"-framework",
 					AppKit,
 					"-v",
-					"-t",
 					"-Wl,-v",
 				);
 				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
@@ -5548,7 +5539,6 @@
 					"-framework",
 					Foundation,
 					"-v",
-					"-t",
 				);
 				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
 					"-lllvmclang",
@@ -5632,7 +5622,6 @@
 					"-framework",
 					AppKit,
 					"-v",
-					"-t",
 					"-Wl,-v",
 				);
 				INSTALL_PATH = "$(LLDB_TOOLS_INSTALL_DIR)";
@@ -5652,7 +5641,6 @@
 					"-framework",
 					AppKit,
 					"-v",
-					"-t",
 					"-Wl,-v",
 				);
 				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
