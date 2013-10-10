@@ -1473,10 +1473,12 @@ public:
     if (NumElts == 1)
       return LegalizeKind(TypeScalarizeVector, EltVT);
 
-    // Try to widen vector elements until a legal type is found.
+    // Try to widen vector elements until the element type is a power of two and 
+    // promote it to a legal type later on, for example:
+    // <3 x i8> -> <4 x i8> -> <4 x i32>
     if (EltVT.isInteger()) {
       // Vectors with a number of elements that is not a power of two are always
-      // widened, for example <3 x float> -> <4 x float>.
+      // widened, for example <3 x i8> -> <4 x i8>.
       if (!VT.isPow2VectorType()) {
         NumElts = (unsigned)NextPowerOf2(NumElts);
         EVT NVT = EVT::getVectorVT(Context, EltVT, NumElts);
