@@ -75,6 +75,8 @@ GDBRemoteCommunicationClient::GDBRemoteCommunicationClient(bool is_platform) :
     m_supports_z2 (true),
     m_supports_z3 (true),
     m_supports_z4 (true),
+    m_supports_QEnvironment (true),
+    m_supports_QEnvironmentHexEncoded (true),
     m_curr_tid (LLDB_INVALID_THREAD_ID),
     m_curr_tid_run (LLDB_INVALID_THREAD_ID),
     m_num_supported_hardware_watchpoints (0),
@@ -219,6 +221,8 @@ GDBRemoteCommunicationClient::ResetDiscoverableSettings()
     m_supports_z2 = true;
     m_supports_z3 = true;
     m_supports_z4 = true;
+    m_supports_QEnvironment = true;
+    m_supports_QEnvironmentHexEncoded = true;
     m_host_arch.Clear();
     m_process_arch.Clear();
 }
@@ -1014,15 +1018,61 @@ GDBRemoteCommunicationClient::SendEnvironmentPacket (char const *name_equal_valu
     if (name_equal_value && name_equal_value[0])
     {
         StreamString packet;
-        packet.Printf("QEnvironment:%s", name_equal_value);
-        StringExtractorGDBRemote response;
-        if (SendPacketAndWaitForResponse (packet.GetData(), packet.GetSize(), response, false))
+        bool send_hex_encoding = false;
+        for (const char *p = name_equal_value; *p != '\0' && send_hex_encoding == false; ++p)
         {
-            if (response.IsOKResponse())
-                return 0;
-            uint8_t error = response.GetError();
-            if (error)
-                return error;
+            if (isprint(*p))
+            {
+                switch (*p)
+                {
+                    case '$':
+                    case '#':
+                        send_hex_encoding = true;
+                        break;
+                    default:
+                        break;
+                }
+            }
+            else
+            {
+                // We have non printable characters, lets hex encode this...
+                send_hex_encoding = true;
+            }
+        }
+        
+        StringExtractorGDBRemote response;
+        if (send_hex_encoding)
+        {
+            if (m_supports_QEnvironmentHexEncoded)
+            {
+                packet.PutCString("QEnvironmentHexEncoded:");
+                packet.PutBytesAsRawHex8 (name_equal_value, strlen(name_equal_value));
+                if (SendPacketAndWaitForResponse (packet.GetData(), packet.GetSize(), response, false))
+                {
+                    if (response.IsOKResponse())
+                        return 0;
+                    uint8_t error = response.GetError();
+                    if (error)
+                        return error;
+                    if (response.IsUnsupportedResponse())
+                        m_supports_QEnvironmentHexEncoded = false;
+                }
+            }
+            
+        }
+        else if (m_supports_QEnvironment)
+        {
+            packet.Printf("QEnvironment:%s", name_equal_value);
+            if (SendPacketAndWaitForResponse (packet.GetData(), packet.GetSize(), response, false))
+            {
+                if (response.IsOKResponse())
+                    return 0;
+                uint8_t error = response.GetError();
+                if (error)
+                    return error;
+                if (response.IsUnsupportedResponse())
+                    m_supports_QEnvironment = false;
+            }
         }
     }
     return -1;
