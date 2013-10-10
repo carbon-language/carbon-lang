@@ -18,8 +18,9 @@ IF EXIST %D% GOTO FOUND_V110
 SET D="%ProgramFiles(x86)%\MSBuild\Microsoft.Cpp\v4.0\V110\Platforms\Win32\PlatformToolsets"
 IF EXIST %D% GOTO FOUND_V110
 
-IF NOT SUCCESS == 1 echo Failed to find MSBuild toolsets directory.
-IF NOT SUCCESS == 1 goto FAILED
+IF %SUCCESS% == 1 goto DONE
+echo Failed to find MSBuild toolsets directory.
+goto FAILED
 
 
 :FOUND_V100
@@ -45,6 +46,8 @@ copy Microsoft.Cpp.Win32.LLVM-vs2012_xp.props %D%\LLVM-vs2012_xp
 IF NOT %ERRORLEVEL% == 0 GOTO FAILED
 copy Microsoft.Cpp.Win32.LLVM-vs2012_xp.targets %D%\LLVM-vs2012_xp
 IF NOT %ERRORLEVEL% == 0 GOTO FAILED
+
+:DONE
 echo Done!
 goto END
 
