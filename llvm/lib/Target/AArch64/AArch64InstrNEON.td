@@ -2982,6 +2982,132 @@ defm PMULL2vvv : NeonI_3VDL2_2Op_mull_v3<0b0, 0b1110, "pmull2",
 
 // End of implementation for instruction class (3V Diff)
 
+// The followings are vector load/store multiple N-element structure
+// (class SIMD lselem).
+
+// ld1:         load multiple 1-element structure to 1/2/3/4 registers.
+// ld2/ld3/ld4: load multiple N-element structure to N registers (N = 2, 3, 4).
+//              The structure consists of a sequence of sets of N values.
+//              The first element of the structure is placed in the first lane
+//              of the first first vector, the second element in the first lane
+//              of the second vector, and so on. 
+// E.g. LD1_3V_2S will load 32-bit elements {A, B, C, D, E, F} sequentially into
+// the three 64-bit vectors list {BA, DC, FE}.
+// E.g. LD3_2S will load 32-bit elements {A, B, C, D, E, F} into the three
+// 64-bit vectors list {DA, EB, FC}.
+// Store instructions store multiple structure to N registers like load.
+
+
+class NeonI_LDVList<bit q, bits<4> opcode, bits<2> size,
+                    RegisterOperand VecList, string asmop>
+  : NeonI_LdStMult<q, 1, opcode, size,
+                 (outs VecList:$Rt), (ins GPR64xsp:$Rn),
+                 asmop # "\t$Rt, [$Rn]",
+                 [],
+                 NoItinerary> {
+  let mayLoad = 1;
+  let neverHasSideEffects = 1;
+}
+
+multiclass LDVList_BHSD<bits<4> opcode, string List, string asmop> {
+  def _8B : NeonI_LDVList<0, opcode, 0b00,
+                          !cast<RegisterOperand>(List # "8B_operand"), asmop>;
+
+  def _4H : NeonI_LDVList<0, opcode, 0b01,
+                          !cast<RegisterOperand>(List # "4H_operand"), asmop>;
+
+  def _2S : NeonI_LDVList<0, opcode, 0b10,
+                          !cast<RegisterOperand>(List # "2S_operand"), asmop>;
+
+  def _16B : NeonI_LDVList<1, opcode, 0b00,
+                           !cast<RegisterOperand>(List # "16B_operand"), asmop>;
+
+  def _8H : NeonI_LDVList<1, opcode, 0b01,
+                          !cast<RegisterOperand>(List # "8H_operand"), asmop>;
+
+  def _4S : NeonI_LDVList<1, opcode, 0b10,
+                          !cast<RegisterOperand>(List # "4S_operand"), asmop>;
+
+  def _2D : NeonI_LDVList<1, opcode, 0b11,
+                          !cast<RegisterOperand>(List # "2D_operand"), asmop>;
+}
+
+// Load multiple N-element structure to N consecutive registers (N = 1,2,3,4)
+defm LD1 : LDVList_BHSD<0b0111, "VOne", "ld1">;
+def LD1_1D : NeonI_LDVList<0, 0b0111, 0b11, VOne1D_operand, "ld1">;
+
+defm LD2 : LDVList_BHSD<0b1000, "VPair", "ld2">;
+
+defm LD3 : LDVList_BHSD<0b0100, "VTriple", "ld3">;
+
+defm LD4 : LDVList_BHSD<0b0000, "VQuad", "ld4">;
+
+// Load multiple 1-element structure to N consecutive registers (N = 2,3,4)
+defm LD1_2V : LDVList_BHSD<0b1010, "VPair", "ld1">;
+def LD1_2V_1D : NeonI_LDVList<0, 0b1010, 0b11, VPair1D_operand, "ld1">;
+
+defm LD1_3V : LDVList_BHSD<0b0110, "VTriple", "ld1">;
+def LD1_3V_1D : NeonI_LDVList<0, 0b0110, 0b11, VTriple1D_operand, "ld1">;
+
+defm LD1_4V : LDVList_BHSD<0b0010, "VQuad", "ld1">;
+def LD1_4V_1D : NeonI_LDVList<0, 0b0010, 0b11, VQuad1D_operand, "ld1">;
+
+class NeonI_STVList<bit q, bits<4> opcode, bits<2> size,
+                    RegisterOperand VecList, string asmop>
+  : NeonI_LdStMult<q, 0, opcode, size,
+                 (outs), (ins GPR64xsp:$Rn, VecList:$Rt), 
+                 asmop # "\t$Rt, [$Rn]",
+                 [], 
+                 NoItinerary> {
+  let mayStore = 1;
+  let neverHasSideEffects = 1;
+}
+
+multiclass STVList_BHSD<bits<4> opcode, string List, string asmop> {
+  def _8B : NeonI_STVList<0, opcode, 0b00,
+                          !cast<RegisterOperand>(List # "8B_operand"), asmop>;
+
+  def _4H : NeonI_STVList<0, opcode, 0b01,
+                          !cast<RegisterOperand>(List # "4H_operand"), asmop>;
+
+  def _2S : NeonI_STVList<0, opcode, 0b10,
+                          !cast<RegisterOperand>(List # "2S_operand"), asmop>;
+
+  def _16B : NeonI_STVList<1, opcode, 0b00,
+                           !cast<RegisterOperand>(List # "16B_operand"), asmop>;
+
+  def _8H : NeonI_STVList<1, opcode, 0b01,
+                          !cast<RegisterOperand>(List # "8H_operand"), asmop>;
+
+  def _4S : NeonI_STVList<1, opcode, 0b10,
+                          !cast<RegisterOperand>(List # "4S_operand"), asmop>;
+
+  def _2D : NeonI_STVList<1, opcode, 0b11,
+                          !cast<RegisterOperand>(List # "2D_operand"), asmop>;
+}
+
+// Store multiple N-element structures from N registers (N = 1,2,3,4)
+defm ST1 : STVList_BHSD<0b0111, "VOne", "st1">;
+def ST1_1D : NeonI_STVList<0, 0b0111, 0b11, VOne1D_operand, "st1">;
+
+defm ST2 : STVList_BHSD<0b1000, "VPair", "st2">;
+
+defm ST3 : STVList_BHSD<0b0100, "VTriple", "st3">;
+
+defm ST4 : STVList_BHSD<0b0000, "VQuad", "st4">;
+
+// Store multiple 1-element structures from N consecutive registers (N = 2,3,4)
+defm ST1_2V : STVList_BHSD<0b1010, "VPair", "st1">;
+def ST1_2V_1D : NeonI_STVList<0, 0b1010, 0b11, VPair1D_operand, "st1">;
+
+defm ST1_3V : STVList_BHSD<0b0110, "VTriple", "st1">;
+def ST1_3V_1D : NeonI_STVList<0, 0b0110, 0b11, VTriple1D_operand, "st1">;
+
+defm ST1_4V : STVList_BHSD<0b0010, "VQuad", "st1">;
+def ST1_4V_1D : NeonI_STVList<0, 0b0010, 0b11, VQuad1D_operand, "st1">;
+
+// End of vector load/store multiple N-element structure(class SIMD lselem)
+
 // Scalar Arithmetic
 
 class NeonI_Scalar3Same_D_size<bit u, bits<5> opcode, string asmop>

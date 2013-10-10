@@ -174,6 +174,9 @@ public:
                                  raw_ostream &O);
   void printNeonUImm64MaskOperand(const MCInst *MI, unsigned OpNum,
                                   raw_ostream &O);
+
+  template <A64Layout::VectorLayout Layout, unsigned Count>
+  void printVectorList(const MCInst *MI, unsigned OpNum, raw_ostream &O);
 };
 }
 

@@ -208,7 +208,7 @@ namespace llvm {
     bool is64BitVector() const {
       return (SimpleTy == MVT::v8i8  || SimpleTy == MVT::v4i16 ||
               SimpleTy == MVT::v2i32 || SimpleTy == MVT::v1i64 ||
-              SimpleTy == MVT::v2f32);
+              SimpleTy == MVT::v1f64 || SimpleTy == MVT::v2f32);
     }
 
     /// is128BitVector - Return true if this is a 128-bit vector type.

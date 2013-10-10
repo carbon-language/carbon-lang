@@ -281,6 +281,10 @@ public:
 
   std::pair<unsigned, const TargetRegisterClass*>
   getRegForInlineAsmConstraint(const std::string &Constraint, MVT VT) const;
+
+  virtual bool getTgtMemIntrinsic(IntrinsicInfo &Info, const CallInst &I,
+                                  unsigned Intrinsic) const LLVM_OVERRIDE;
+
 private:
   const InstrItineraryData *Itins;
 
