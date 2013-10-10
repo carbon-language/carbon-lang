@@ -851,6 +851,11 @@ def : Pat <
   (V_CNDMASK_B32_e64 $src0, $src1, $src2)
 >;
 
+def : Pat <
+  (i32 (trunc i64:$val)),
+  (EXTRACT_SUBREG $val, sub0)
+>;
+
 //use two V_CNDMASK_B32_e64 instructions for f64
 def : Pat <
   (f64 (select i1:$src2, f64:$src1, f64:$src0)),
