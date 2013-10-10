@@ -25,6 +25,7 @@ SIRegisterInfo::SIRegisterInfo(AMDGPUTargetMachine &tm)
 
 BitVector SIRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   BitVector Reserved(getNumRegs());
+  Reserved.set(AMDGPU::EXEC);
   return Reserved;
 }
 
