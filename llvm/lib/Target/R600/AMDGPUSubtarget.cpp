@@ -36,6 +36,7 @@ AMDGPUSubtarget::AMDGPUSubtarget(StringRef TT, StringRef CPU, StringRef FS) :
   Gen = AMDGPUSubtarget::R600;
   FP64 = false;
   CaymanISA = false;
+  EnableIRStructurizer = false;
   ParseSubtargetFeatures(GPU, FS);
   DevName = GPU;
 }
@@ -63,6 +64,10 @@ AMDGPUSubtarget::hasHWFP64() const {
 bool
 AMDGPUSubtarget::hasCaymanISA() const {
   return CaymanISA;
+}
+bool
+AMDGPUSubtarget::IsIRStructurizerEnabled() const {
+  return EnableIRStructurizer;
 }
 bool
 AMDGPUSubtarget::isTargetELF() const {

@@ -84,6 +84,7 @@ private:
     switch (MI->getOpcode()) {
     case AMDGPU::KILL:
     case AMDGPU::RETURN:
+    case AMDGPU::IMPLICIT_DEF:
       return true;
     default:
       return false;
