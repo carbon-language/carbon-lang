@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=arm | FileCheck %s
 
 define i64 @f0(i64 %A, i64 %B) {
-; CHECK: f0
+; CHECK-LABEL: f0:
 ; CHECK:      lsrs    r3, r3, #1
 ; CHECK-NEXT: rrx     r2, r2
 ; CHECK-NEXT: subs    r0, r0, r2
@@ -13,7 +13,7 @@ define i64 @f0(i64 %A, i64 %B) {
 }
 
 define i32 @f1(i64 %x, i64 %y) {
-; CHECK: f1
+; CHECK-LABEL: f1:
 ; CHECK: lsl{{.*}}r2
 	%a = shl i64 %x, %y
 	%b = trunc i64 %a to i32
@@ -21,7 +21,7 @@ define i32 @f1(i64 %x, i64 %y) {
 }
 
 define i32 @f2(i64 %x, i64 %y) {
-; CHECK: f2
+; CHECK-LABEL: f2:
 ; CHECK:      lsr{{.*}}r2
 ; CHECK-NEXT: rsb     r3, r2, #32
 ; CHECK-NEXT: sub     r2, r2, #32
@@ -34,7 +34,7 @@ define i32 @f2(i64 %x, i64 %y) {
 }
 
 define i32 @f3(i64 %x, i64 %y) {
-; CHECK: f3
+; CHECK-LABEL: f3:
 ; CHECK:      lsr{{.*}}r2
 ; CHECK-NEXT: rsb     r3, r2, #32
 ; CHECK-NEXT: sub     r2, r2, #32

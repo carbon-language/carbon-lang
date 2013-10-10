@@ -82,7 +82,7 @@ KBBlockZero.exit:                                 ; preds = %bb2.i
 ; <rdar://problem/14379453>
 
 ; Hard-coded registers comes from the ABI.
-; CHECK: wrapDistance:
+; CHECK-LABEL: wrapDistance:
 ; CHECK: cmp r1, #59
 ; CHECK-NEXT: itt le
 ; CHECK-NEXT: suble r0, r2, #1
