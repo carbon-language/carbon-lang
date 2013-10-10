@@ -1,5 +1,6 @@
 ﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">  
-  <Import Project="$(VCTargetsPath)\Platforms\$(Platform)\PlatformToolsets\@VS_VERSION@\Microsoft.Cpp.$(Platform).@VS_VERSION@.props"/>
+  <Import Project="$(VCTargetsPath)\Platforms\$(Platform)\PlatformToolsets\@VS_VERSION@\Microsoft.Cpp.$(Platform).@VS_VERSION@.props" Condition="Exists('$(VCTargetsPath)\Platforms\$(Platform)\PlatformToolsets\@VS_VERSION@\Microsoft.Cpp.$(Platform).@VS_VERSION@.props')"/>
+  <Import Project="$(VCTargetsPath)\Platforms\$(Platform)\PlatformToolsets\@VS_VERSION@\Toolset.props" Condition="Exists('$(VCTargetsPath)\Platforms\$(Platform)\PlatformToolsets\@VS_VERSION@\Toolset.props')"/>
 
   <PropertyGroup>
     <LLVMInstallDir>$(Registry:HKEY_LOCAL_MACHINE\SOFTWARE\LLVM\@REG_KEY@)</LLVMInstallDir>

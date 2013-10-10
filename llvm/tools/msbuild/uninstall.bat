@@ -31,4 +31,20 @@ IF EXIST %D%\LLVM-vs2012_xp del %D%\LLVM-vs2012_xp\Microsoft.Cpp.Win32.LLVM-vs20
 IF EXIST %D%\LLVM-vs2012_xp del %D%\LLVM-vs2012_xp\Microsoft.Cpp.Win32.LLVM-vs2012_xp.targets
 IF EXIST %D%\LLVM-vs2012_xp rmdir %D%\LLVM-vs2012_xp
 
+SET D="%ProgramFiles%\MSBuild\Microsoft.Cpp\v4.0\V120\Platforms\Win32\PlatformToolsets"
+IF EXIST %D%\LLVM-vs2013 del %D%\LLVM-vs2013\toolset.props
+IF EXIST %D%\LLVM-vs2013 del %D%\LLVM-vs2013\toolset.targets
+IF EXIST %D%\LLVM-vs2013 rmdir %D%\LLVM-vs2013
+IF EXIST %D%\LLVM-vs2013_xp del %D%\LLVM-vs2013_xp\toolset.props
+IF EXIST %D%\LLVM-vs2013_xp del %D%\LLVM-vs2013_xp\toolset.targets
+IF EXIST %D%\LLVM-vs2013_xp rmdir %D%\LLVM-vs2013_xp
+
+SET D="%ProgramFiles(x86)%\MSBuild\Microsoft.Cpp\v4.0\V120\Platforms\Win32\PlatformToolsets"
+IF EXIST %D%\LLVM-vs2013 del %D%\LLVM-vs2013\toolset.props
+IF EXIST %D%\LLVM-vs2013 del %D%\LLVM-vs2013\toolset.targets
+IF EXIST %D%\LLVM-vs2013 rmdir %D%\LLVM-vs2013
+IF EXIST %D%\LLVM-vs2013_xp del %D%\LLVM-vs2013_xp\toolset.props
+IF EXIST %D%\LLVM-vs2013_xp del %D%\LLVM-vs2013_xp\toolset.targets
+IF EXIST %D%\LLVM-vs2013_xp rmdir %D%\LLVM-vs2013_xp
+
 echo Done!
