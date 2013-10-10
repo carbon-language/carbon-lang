@@ -231,3 +231,7 @@ sha256msg2 (%rax), %xmm2
 // CHECK: filds	(%rdi)
 // CHECK:  encoding: [0xdf,0x07]
         	filds	(%rdi)
+
+// CHECK: pmovmskb	%xmm5, %rcx
+// CHECK:  encoding: [0x66,0x0f,0xd7,0xcd]
+        	pmovmskb	%xmm5,%rcx

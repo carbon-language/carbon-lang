@@ -4314,6 +4314,8 @@ def PMOVMSKBrr : PDI<0xD7, MRMSrcReg, (outs GR32:$dst), (ins VR128:$src),
            "pmovmskb\t{$src, $dst|$dst, $src}",
            [(set GR32:$dst, (int_x86_sse2_pmovmskb_128 VR128:$src))],
            IIC_SSE_MOVMSK>;
+def PMOVMSKBr64r : PDI<0xD7, MRMSrcReg, (outs GR64:$dst), (ins VR128:$src),
+           "pmovmskb\t{$src, $dst|$dst, $src}", [], IIC_SSE_MOVMSK>;
 
 } // ExeDomain = SSEPackedInt
 
