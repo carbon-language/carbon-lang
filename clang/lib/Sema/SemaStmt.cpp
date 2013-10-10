@@ -1711,6 +1711,9 @@ Sema::ActOnObjCForCollectionStmt(SourceLocation ForLoc,
           << First->getSourceRange());
 
       FirstType = static_cast<Expr*>(First)->getType();
+      if (FirstType.isConstQualified())
+        Diag(ForLoc, diag::err_selector_element_const_type)
+          << FirstType << First->getSourceRange();
     }
     if (!FirstType->isDependentType() &&
         !FirstType->isObjCObjectPointerType() &&

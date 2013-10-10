@@ -772,3 +772,13 @@ void test(NSArray *x) {
   __strong NSMutableArray *y1 = x; // expected-warning {{incompatible pointer types initializing 'NSMutableArray *' with an expression of type 'NSArray *'}}
   PSNS y2 = x; // expected-warning {{incompatible pointer types initializing 'NSMutableArray *' with an expression of type 'NSArray *'}}
 }
+
+// rdar://15123684
+@class NSString;
+
+void foo(NSArray *array) {
+  for (NSString *string in array) {
+    for (string in @[@"blah", @"more blah", string]) { // expected-error {{selector element of type 'NSString *const __strong' cannot be a constant l-value}}
+    }
+  }
+}
