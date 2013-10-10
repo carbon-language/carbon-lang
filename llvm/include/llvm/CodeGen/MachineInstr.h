@@ -893,13 +893,12 @@ public:
   /// Look for the operand that defines it and mark it as IsDead. If
   /// AddIfNotFound is true, add a implicit operand if it's not found. Returns
   /// true if the operand exists / is added.
-  bool addRegisterDead(unsigned IncomingReg, const TargetRegisterInfo *RegInfo,
+  bool addRegisterDead(unsigned Reg, const TargetRegisterInfo *RegInfo,
                        bool AddIfNotFound = false);
 
   /// addRegisterDefined - We have determined MI defines a register. Make sure
   /// there is an operand defining Reg.
-  void addRegisterDefined(unsigned IncomingReg,
-                          const TargetRegisterInfo *RegInfo = 0);
+  void addRegisterDefined(unsigned Reg, const TargetRegisterInfo *RegInfo = 0);
 
   /// setPhysRegsDeadExcept - Mark every physreg used by this instruction as
   /// dead except those in the UsedRegs list.

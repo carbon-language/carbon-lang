@@ -1702,31 +1702,31 @@ void MachineInstr::clearRegisterKills(unsigned Reg,
   }
 }
 
-bool MachineInstr::addRegisterDead(unsigned IncomingReg,
+bool MachineInstr::addRegisterDead(unsigned Reg,
                                    const TargetRegisterInfo *RegInfo,
                                    bool AddIfNotFound) {
-  bool isPhysReg = TargetRegisterInfo::isPhysicalRegister(IncomingReg);
+  bool isPhysReg = TargetRegisterInfo::isPhysicalRegister(Reg);
   bool hasAliases = isPhysReg &&
-    MCRegAliasIterator(IncomingReg, RegInfo, false).isValid();
+    MCRegAliasIterator(Reg, RegInfo, false).isValid();
   bool Found = false;
   SmallVector<unsigned,4> DeadOps;
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
     MachineOperand &MO = getOperand(i);
     if (!MO.isReg() || !MO.isDef())
       continue;
-    unsigned Reg = MO.getReg();
-    if (!Reg)
+    unsigned MOReg = MO.getReg();
+    if (!MOReg)
       continue;
 
-    if (Reg == IncomingReg) {
+    if (MOReg == Reg) {
       MO.setIsDead();
       Found = true;
     } else if (hasAliases && MO.isDead() &&
-               TargetRegisterInfo::isPhysicalRegister(Reg)) {
+               TargetRegisterInfo::isPhysicalRegister(MOReg)) {
       // There exists a super-register that's marked dead.
-      if (RegInfo->isSuperRegister(IncomingReg, Reg))
+      if (RegInfo->isSuperRegister(Reg, MOReg))
         return true;
-      if (RegInfo->isSubRegister(IncomingReg, Reg))
+      if (RegInfo->isSubRegister(Reg, MOReg))
         DeadOps.push_back(i);
     }
   }
@@ -1746,7 +1746,7 @@ bool MachineInstr::addRegisterDead(unsigned IncomingReg,
   if (Found || !AddIfNotFound)
     return Found;
 
-  addOperand(MachineOperand::CreateReg(IncomingReg,
+  addOperand(MachineOperand::CreateReg(Reg,
                                        true  /*IsDef*/,
                                        true  /*IsImp*/,
                                        false /*IsKill*/,
@@ -1754,21 +1754,21 @@ bool MachineInstr::addRegisterDead(unsigned IncomingReg,
   return true;
 }
 
-void MachineInstr::addRegisterDefined(unsigned IncomingReg,
+void MachineInstr::addRegisterDefined(unsigned Reg,
                                       const TargetRegisterInfo *RegInfo) {
-  if (TargetRegisterInfo::isPhysicalRegister(IncomingReg)) {
-    MachineOperand *MO = findRegisterDefOperand(IncomingReg, false, RegInfo);
+  if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
+    MachineOperand *MO = findRegisterDefOperand(Reg, false, RegInfo);
     if (MO)
       return;
   } else {
     for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
       const MachineOperand &MO = getOperand(i);
-      if (MO.isReg() && MO.getReg() == IncomingReg && MO.isDef() &&
+      if (MO.isReg() && MO.getReg() == Reg && MO.isDef() &&
           MO.getSubReg() == 0)
         return;
     }
   }
-  addOperand(MachineOperand::CreateReg(IncomingReg,
+  addOperand(MachineOperand::CreateReg(Reg,
                                        true  /*IsDef*/,
                                        true  /*IsImp*/));
 }
