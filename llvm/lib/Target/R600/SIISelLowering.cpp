@@ -887,8 +887,8 @@ void SITargetLowering::ensureSRegLimit(SelectionDAG &DAG, SDValue &Operand,
     return;
   }
 
-  // This is a conservative aproach, it is possible that we can't determine
-  // the correct register class and copy too often, but better save than sorry.
+  // This is a conservative aproach. It is possible that we can't determine the
+  // correct register class and copy too often, but better safe than sorry.
   SDValue RC = DAG.getTargetConstant(RegClass, MVT::i32);
   SDNode *Node = DAG.getMachineNode(TargetOpcode::COPY_TO_REGCLASS, SDLoc(),
                                     Operand.getValueType(), Operand, RC);
