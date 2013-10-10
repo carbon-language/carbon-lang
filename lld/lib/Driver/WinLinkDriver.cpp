@@ -208,7 +208,7 @@ StringRef getDefaultEntrySymbolName(PECOFFLinkingContext &context) {
 // there's an error in the options.
 std::unique_ptr<llvm::opt::InputArgList>
 parseArgs(int argc, const char *argv[], raw_ostream &diagnostics,
-          bool isDirective) {
+          bool isReadingDirectiveSection) {
   // Parse command line options using WinLinkOptions.td
   std::unique_ptr<llvm::opt::InputArgList> parsedArgs;
   WinLinkOptTable table;
@@ -229,7 +229,7 @@ parseArgs(int argc, const char *argv[], raw_ostream &diagnostics,
   for (auto it = parsedArgs->filtered_begin(OPT_UNKNOWN),
             ie = parsedArgs->filtered_end(); it != ie; ++it) {
     StringRef arg = (*it)->getAsString(*parsedArgs);
-    if (isDirective && arg.startswith("-?"))
+    if (isReadingDirectiveSection && arg.startswith("-?"))
       continue;
     diagnostics << "warning: ignoring unknown argument: " << arg << "\n";
   }
@@ -262,19 +262,18 @@ bool WinLinkDriver::linkPECOFF(int argc, const char *argv[],
   return link(context, diagnostics);
 }
 
-bool WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
-                          raw_ostream &diagnostics, bool isDirective) {
+bool
+WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
+                     raw_ostream &diagnostics, bool isReadingDirectiveSection) {
   std::map<StringRef, StringRef> failIfMismatchMap;
   // Parse the options.
   std::unique_ptr<llvm::opt::InputArgList> parsedArgs = parseArgs(
-      argc, argv, diagnostics, isDirective);
+      argc, argv, diagnostics, isReadingDirectiveSection);
   if (!parsedArgs)
     return false;
 
-  if (!ctx.hasInputGraph())
-    ctx.setInputGraph(std::unique_ptr<InputGraph>(new InputGraph()));
-
-  InputGraph &inputGraph = ctx.inputGraph();
+  // The list of input files.
+  std::vector<std::unique_ptr<InputElement> > inputElements;
 
   // Handle /help
   if (parsedArgs->getLastArg(OPT_help)) {
@@ -461,8 +460,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ct
       break;
 
     case OPT_INPUT:
-      // Add an input file.
-      inputGraph.addInputElement(std::unique_ptr<InputElement>(
+      inputElements.push_back(std::unique_ptr<InputElement>(
           new PECOFFFileNode(ctx, inputArg->getValue())));
       break;
 
@@ -513,7 +511,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ct
   // but useful for us to test lld on Unix.
   if (llvm::opt::Arg *dashdash = parsedArgs->getLastArg(OPT_DASH_DASH)) {
     for (const StringRef value : dashdash->getValues())
-      inputGraph.addInputElement(
+      inputElements.push_back(
           std::unique_ptr<InputElement>(new PECOFFFileNode(ctx, value)));
   }
 
@@ -523,10 +521,10 @@ bool WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ct
     for (const StringRef defaultLibPath : defaultLibs)
       if (ctx.getNoDefaultLibs().find(defaultLibPath) ==
           ctx.getNoDefaultLibs().end())
-        inputGraph.addInputElement(std::unique_ptr<InputElement>(
+        inputElements.push_back(std::unique_ptr<InputElement>(
             new PECOFFLibraryNode(ctx, defaultLibPath)));
 
-  if (!inputGraph.size()) {
+  if (inputElements.size() == 0 && !isReadingDirectiveSection) {
     diagnostics << "No input files\n";
     return false;
   }
@@ -536,10 +534,24 @@ bool WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ct
   // with ".exe".
   if (ctx.outputPath().empty()) {
     SmallString<128> firstInputFilePath =
-        *dyn_cast<FileNode>(&inputGraph[0])->getPath(ctx);
+        *dyn_cast<FileNode>(&*inputElements[0])->getPath(ctx);
     llvm::sys::path::replace_extension(firstInputFilePath, ".exe");
     ctx.setOutputPath(ctx.allocateString(firstInputFilePath.str()));
   }
+
+  // If the core linker already started, we need to explicitly call parse() for
+  // each input element, because the pass to parse input files in Driver::link
+  // has already done.
+  if (isReadingDirectiveSection)
+    for (auto &e : inputElements)
+      if (error_code ec = e->parse(ctx, diagnostics))
+        return ec;
+
+  // Add the input files to the input graph.
+  if (!ctx.hasInputGraph())
+    ctx.setInputGraph(std::unique_ptr<InputGraph>(new InputGraph()));
+  for (auto &e : inputElements)
+    ctx.inputGraph().addInputElement(std::move(e));
 
   // Validate the combination of options used.
   return ctx.validate(diagnostics);

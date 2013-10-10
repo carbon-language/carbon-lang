@@ -5,16 +5,22 @@ header:
 sections:
   - Name:            .text
     Characteristics: [ IMAGE_SCN_CNT_CODE, IMAGE_SCN_MEM_EXECUTE, IMAGE_SCN_MEM_READ ]
-    Alignment:       4
-    SectionData:     B82A000000C3
-  - Name:            .data
-    Characteristics: [ IMAGE_SCN_CNT_INITIALIZED_DATA, IMAGE_SCN_MEM_READ, IMAGE_SCN_MEM_WRITE ]
-    Alignment:       4
-    SectionData:     ""
+    Alignment:       16
+    SectionData:     558BEC56FF15000000008B0D000000008B3103F0FF150000000003C65E5DC3
+    Relocations:
+      - VirtualAddress:  6
+        SymbolName:      __imp__fn
+        Type:            IMAGE_REL_I386_DIR32
+      - VirtualAddress:  12
+        SymbolName:      __imp__var
+        Type:            IMAGE_REL_I386_DIR32
+      - VirtualAddress:  22
+        SymbolName:      __imp___name_with_underscore
+        Type:            IMAGE_REL_I386_DIR32
   - Name:            .drectve
     Characteristics: [ IMAGE_SCN_LNK_INFO, IMAGE_SCN_LNK_REMOVE ]
     Alignment:       2147483648
-    SectionData:     2f73756273797374656d3a636f6e736f6c652c34322e313935202d3f666f6f00
+    SectionData:     2f64656661756c746c69623a766172732e6c6962202f73756273797374656d3a636f6e736f6c652c34322e313935202d3f666f6f00
 symbols:
   - Name:            .text
     Value:           0
@@ -23,24 +29,34 @@ symbols:
     ComplexType:     IMAGE_SYM_DTYPE_NULL
     StorageClass:    IMAGE_SYM_CLASS_STATIC
     NumberOfAuxSymbols: 1
-    AuxiliaryData:   060000000000000000000000000000000000
-  - Name:            .data
+    AuxiliaryData:   1F000000030000008C7450D6000000000000
+  - Name:            __imp__fn
     Value:           0
-    SectionNumber:   2
+    SectionNumber:   0
     SimpleType:      IMAGE_SYM_TYPE_NULL
     ComplexType:     IMAGE_SYM_DTYPE_NULL
-    StorageClass:    IMAGE_SYM_CLASS_STATIC
-    NumberOfAuxSymbols: 1
-    AuxiliaryData:   000000000000000000000000000000000000
-  - Name:            _start
+    StorageClass:    IMAGE_SYM_CLASS_EXTERNAL
+  - Name:            __imp___name_with_underscore
+    Value:           0
+    SectionNumber:   0
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_EXTERNAL
+  - Name:            _main
     Value:           0
     SectionNumber:   1
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_FUNCTION
+    StorageClass:    IMAGE_SYM_CLASS_EXTERNAL
+  - Name:            __imp__var
+    Value:           0
+    SectionNumber:   0
     SimpleType:      IMAGE_SYM_TYPE_NULL
     ComplexType:     IMAGE_SYM_DTYPE_NULL
     StorageClass:    IMAGE_SYM_CLASS_EXTERNAL
   - Name:            .drectve
     Value:           0
-    SectionNumber:   3
+    SectionNumber:   2
     SimpleType:      IMAGE_SYM_TYPE_NULL
     ComplexType:     IMAGE_SYM_DTYPE_NULL
     StorageClass:    IMAGE_SYM_CLASS_STATIC

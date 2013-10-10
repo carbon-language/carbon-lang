@@ -1,15 +1,24 @@
 # Test if the linker can properly parse the .drectve section contents.
-# "drectve.obj" contains "/subsystem:console,42.195 -?foo" in its .drectve
-# section.
+# "drectve.obj" contains "/defaultlib:vars /subsystem:console,42.195 -?foo"
+# in its .drectve section.
 
 # RUN: yaml2obj %p/Inputs/drectve.obj.yaml > %t.obj
 #
-# RUN: lld -flavor link /out:%t.exe /entry:start -- %t.obj >& %t.log
+# RUN: lld -flavor link /out:%t.exe /entry:main /opt:noref /libpath:%p/Inputs \
+# RUN:     -- %t.obj >& %t.log
+#
 # RUN: llvm-readobj -file-headers %t.exe | FileCheck -check-prefix=HEADER %s
+# RUN: llvm-objdump -p %t.exe | FileCheck -check-prefix=IMPORT %s
 # RUN: echo >> %t.log
 # RUN: FileCheck -check-prefix=ERROR %s < %t.log
 
 HEADER: MajorOperatingSystemVersion: 42
 HEADER: MinorOperatingSystemVersion: 195
+
+IMPORT:      DLL Name: vars.dll
+IMPORT-NEXT: Hint/Ord  Name
+IMPORT-NEXT:        0  _name_with_underscore
+IMPORT-NEXT:        1  fn
+IMPORT-NEXT:        1
 
 ERROR-NOT: foo
