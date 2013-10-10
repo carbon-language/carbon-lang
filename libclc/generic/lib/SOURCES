@@ -27,6 +27,7 @@ math/fmin.cl
 math/hypot.cl
 math/mad.cl
 relational/any.cl
+relational/isnan.cl
 shared/clamp.cl
 shared/max.cl
 shared/min.cl
