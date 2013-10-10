@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86-64 -mattr=-avx | FileCheck %s
+; RUN: llc < %s -march=x86-64 -mattr=-avx,-pad-short-functions | FileCheck %s
 
 ; CHECK: test3
 ; CHECK: movd
