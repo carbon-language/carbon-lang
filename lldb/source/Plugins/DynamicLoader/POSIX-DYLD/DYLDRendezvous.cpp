@@ -287,6 +287,21 @@ DYLDRendezvous::ReadSOEntryFromMemory(lldb::addr_t addr, SOEntry &entry)
     
     if (!(addr = ReadPointer(addr, &entry.base_addr)))
         return false;
+
+    // mips adds an extra load offset field to the link map struct on
+    // FreeBSD and NetBSD (need to validate other OSes).
+    // http://svnweb.freebsd.org/base/head/sys/sys/link_elf.h?revision=217153&view=markup#l57
+    const ArchSpec &arch = m_process->GetTarget().GetArchitecture();
+    if (arch.GetCore() == ArchSpec::eCore_mips64)
+    {
+        assert (arch.GetTriple().getOS() == llvm::Triple::FreeBSD ||
+                arch.GetTriple().getOS() == llvm::Triple::NetBSD);
+        addr_t mips_l_offs;
+        if (!(addr = ReadPointer(addr, &mips_l_offs)))
+            return false;
+        if (mips_l_offs != 0 && mips_l_offs != entry.base_addr)
+            return false;
+    }
     
     if (!(addr = ReadPointer(addr, &entry.path_addr)))
         return false;
