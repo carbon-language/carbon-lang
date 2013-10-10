@@ -100,11 +100,8 @@ void MutexLock(ThreadState *thr, uptr pc, uptr addr, int rec) {
   }
   if (s->recursion == 0) {
     StatInc(thr, StatMutexLock);
-    thr->clock.set(thr->tid, thr->fast_state.epoch());
-    thr->clock.acquire(&s->clock);
-    StatInc(thr, StatSyncAcquire);
-    thr->clock.acquire(&s->read_clock);
-    StatInc(thr, StatSyncAcquire);
+    AcquireImpl(thr, pc, &s->clock);
+    AcquireImpl(thr, pc, &s->read_clock);
   } else if (!s->is_recursive) {
     StatInc(thr, StatMutexRecLock);
   }
@@ -141,10 +138,12 @@ int MutexUnlock(ThreadState *thr, uptr pc, uptr addr, bool all) {
     if (s->recursion == 0) {
       StatInc(thr, StatMutexUnlock);
       s->owner_tid = SyncVar::kInvalidTid;
-      thr->clock.set(thr->tid, thr->fast_state.epoch());
-      thr->fast_synch_epoch = thr->fast_state.epoch();
-      thr->clock.ReleaseStore(&s->clock);
-      StatInc(thr, StatSyncRelease);
+      if (thr->ignore_sync == 0) {
+        thr->clock.set(thr->tid, thr->fast_state.epoch());
+        thr->fast_synch_epoch = thr->fast_state.epoch();
+        thr->clock.ReleaseStore(&s->clock);
+        StatInc(thr, StatSyncRelease);
+      }
     } else {
       StatInc(thr, StatMutexRecUnlock);
     }
@@ -168,10 +167,8 @@ void MutexReadLock(ThreadState *thr, uptr pc, uptr addr) {
            addr);
     PrintCurrentStack(thr, pc);
   }
-  thr->clock.set(thr->tid, thr->fast_state.epoch());
-  thr->clock.acquire(&s->clock);
+  AcquireImpl(thr, pc, &s->clock);
   s->last_lock = thr->fast_state.raw();
-  StatInc(thr, StatSyncAcquire);
   thr->mset.Add(s->GetId(), false, thr->fast_state.epoch());
   s->mtx.ReadUnlock();
 }
@@ -190,10 +187,7 @@ void MutexReadUnlock(ThreadState *thr, uptr pc, uptr addr) {
            addr);
     PrintCurrentStack(thr, pc);
   }
-  thr->clock.set(thr->tid, thr->fast_state.epoch());
-  thr->fast_synch_epoch = thr->fast_state.epoch();
-  thr->clock.release(&s->read_clock);
-  StatInc(thr, StatSyncRelease);
+  ReleaseImpl(thr, pc, &s->read_clock);
   s->mtx.Unlock();
   thr->mset.Del(s->GetId(), false);
 }
@@ -211,10 +205,7 @@ void MutexReadOrWriteUnlock(ThreadState *thr, uptr pc, uptr addr) {
     StatInc(thr, StatMutexReadUnlock);
     thr->fast_state.IncrementEpoch();
     TraceAddEvent(thr, thr->fast_state, EventTypeRUnlock, s->GetId());
-    thr->clock.set(thr->tid, thr->fast_state.epoch());
-    thr->fast_synch_epoch = thr->fast_state.epoch();
-    thr->clock.release(&s->read_clock);
-    StatInc(thr, StatSyncRelease);
+    ReleaseImpl(thr, pc, &s->read_clock);
   } else if (s->owner_tid == thr->tid) {
     // Seems to be write unlock.
     thr->fast_state.IncrementEpoch();
@@ -224,14 +215,7 @@ void MutexReadOrWriteUnlock(ThreadState *thr, uptr pc, uptr addr) {
     if (s->recursion == 0) {
       StatInc(thr, StatMutexUnlock);
       s->owner_tid = SyncVar::kInvalidTid;
-      // FIXME: Refactor me, plz.
-      // The sequence of events is quite tricky and doubled in several places.
-      // First, it's a bug to increment the epoch w/o writing to the trace.
-      // Then, the acquire/release logic can be factored out as well.
-      thr->clock.set(thr->tid, thr->fast_state.epoch());
-      thr->fast_synch_epoch = thr->fast_state.epoch();
-      thr->clock.ReleaseStore(&s->clock);
-      StatInc(thr, StatSyncRelease);
+      ReleaseImpl(thr, pc, &s->clock);
     } else {
       StatInc(thr, StatMutexRecUnlock);
     }
@@ -248,10 +232,10 @@ void MutexReadOrWriteUnlock(ThreadState *thr, uptr pc, uptr addr) {
 void Acquire(ThreadState *thr, uptr pc, uptr addr) {
   CHECK_GT(thr->in_rtl, 0);
   DPrintf("#%d: Acquire %zx\n", thr->tid, addr);
+  if (thr->ignore_sync)
+    return;
   SyncVar *s = CTX()->synctab.GetOrCreateAndLock(thr, pc, addr, false);
-  thr->clock.set(thr->tid, thr->fast_state.epoch());
-  thr->clock.acquire(&s->clock);
-  StatInc(thr, StatSyncAcquire);
+  AcquireImpl(thr, pc, &s->clock);
   s->mtx.ReadUnlock();
 }
 
@@ -265,6 +249,9 @@ static void UpdateClockCallback(ThreadContextBase *tctx_base, void *arg) {
 }
 
 void AcquireGlobal(ThreadState *thr, uptr pc) {
+  DPrintf("#%d: AcquireGlobal\n", thr->tid);
+  if (thr->ignore_sync)
+    return;
   ThreadRegistryLock l(CTX()->thread_registry);
   CTX()->thread_registry->RunCallbackForEachThreadLocked(
       UpdateClockCallback, thr);
@@ -273,20 +260,26 @@ void AcquireGlobal(ThreadState *thr, uptr pc) {
 void Release(ThreadState *thr, uptr pc, uptr addr) {
   CHECK_GT(thr->in_rtl, 0);
   DPrintf("#%d: Release %zx\n", thr->tid, addr);
+  if (thr->ignore_sync)
+    return;
   SyncVar *s = CTX()->synctab.GetOrCreateAndLock(thr, pc, addr, true);
-  thr->clock.set(thr->tid, thr->fast_state.epoch());
-  thr->clock.release(&s->clock);
-  StatInc(thr, StatSyncRelease);
+  thr->fast_state.IncrementEpoch();
+  // Can't increment epoch w/o writing to the trace as well.
+  TraceAddEvent(thr, thr->fast_state, EventTypeMop, 0);
+  ReleaseImpl(thr, pc, &s->clock);
   s->mtx.Unlock();
 }
 
 void ReleaseStore(ThreadState *thr, uptr pc, uptr addr) {
   CHECK_GT(thr->in_rtl, 0);
   DPrintf("#%d: ReleaseStore %zx\n", thr->tid, addr);
+  if (thr->ignore_sync)
+    return;
   SyncVar *s = CTX()->synctab.GetOrCreateAndLock(thr, pc, addr, true);
-  thr->clock.set(thr->tid, thr->fast_state.epoch());
-  thr->clock.ReleaseStore(&s->clock);
-  StatInc(thr, StatSyncRelease);
+  thr->fast_state.IncrementEpoch();
+  // Can't increment epoch w/o writing to the trace as well.
+  TraceAddEvent(thr, thr->fast_state, EventTypeMop, 0);
+  ReleaseStoreImpl(thr, pc, &s->clock);
   s->mtx.Unlock();
 }
 
@@ -301,11 +294,50 @@ static void UpdateSleepClockCallback(ThreadContextBase *tctx_base, void *arg) {
 }
 
 void AfterSleep(ThreadState *thr, uptr pc) {
+  DPrintf("#%d: AfterSleep %zx\n", thr->tid);
+  if (thr->ignore_sync)
+    return;
   thr->last_sleep_stack_id = CurrentStackId(thr, pc);
   ThreadRegistryLock l(CTX()->thread_registry);
   CTX()->thread_registry->RunCallbackForEachThreadLocked(
       UpdateSleepClockCallback, thr);
 }
 #endif
+
+void AcquireImpl(ThreadState *thr, uptr pc, SyncClock *c) {
+  if (thr->ignore_sync)
+    return;
+  thr->clock.set(thr->tid, thr->fast_state.epoch());
+  thr->clock.acquire(c);
+  StatInc(thr, StatSyncAcquire);
+}
+
+void ReleaseImpl(ThreadState *thr, uptr pc, SyncClock *c) {
+  if (thr->ignore_sync)
+    return;
+  thr->clock.set(thr->tid, thr->fast_state.epoch());
+  thr->fast_synch_epoch = thr->fast_state.epoch();
+  thr->clock.release(c);
+  StatInc(thr, StatSyncRelease);
+}
+
+void ReleaseStoreImpl(ThreadState *thr, uptr pc, SyncClock *c) {
+  if (thr->ignore_sync)
+    return;
+  thr->clock.set(thr->tid, thr->fast_state.epoch());
+  thr->fast_synch_epoch = thr->fast_state.epoch();
+  thr->clock.ReleaseStore(c);
+  StatInc(thr, StatSyncRelease);
+}
+
+void AcquireReleaseImpl(ThreadState *thr, uptr pc, SyncClock *c) {
+  if (thr->ignore_sync)
+    return;
+  thr->clock.set(thr->tid, thr->fast_state.epoch());
+  thr->fast_synch_epoch = thr->fast_state.epoch();
+  thr->clock.acq_rel(c);
+  StatInc(thr, StatSyncAcquire);
+  StatInc(thr, StatSyncRelease);
+}
 
 }  // namespace __tsan

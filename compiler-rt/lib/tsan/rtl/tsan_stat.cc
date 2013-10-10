@@ -405,6 +405,8 @@ void StatOutput(u64 *stat) {
   name[StatAnnotateIgnoreReadsEnd]       = "  IgnoreReadsEnd                  ";
   name[StatAnnotateIgnoreWritesBegin]    = "  IgnoreWritesBegin               ";
   name[StatAnnotateIgnoreWritesEnd]      = "  IgnoreWritesEnd                 ";
+  name[StatAnnotateIgnoreSyncBegin]      = "  IgnoreSyncBegin                 ";
+  name[StatAnnotateIgnoreSyncEnd]        = "  IgnoreSyncEnd                   ";
   name[StatAnnotatePublishMemoryRange]   = "  PublishMemoryRange              ";
   name[StatAnnotateUnpublishMemoryRange] = "  UnpublishMemoryRange            ";
   name[StatAnnotateThreadName]           = "  ThreadName                      ";

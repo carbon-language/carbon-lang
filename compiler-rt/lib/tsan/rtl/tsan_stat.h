@@ -401,6 +401,8 @@ enum StatType {
   StatAnnotateIgnoreReadsEnd,
   StatAnnotateIgnoreWritesBegin,
   StatAnnotateIgnoreWritesEnd,
+  StatAnnotateIgnoreSyncBegin,
+  StatAnnotateIgnoreSyncEnd,
   StatAnnotatePublishMemoryRange,
   StatAnnotateUnpublishMemoryRange,
   StatAnnotateThreadName,

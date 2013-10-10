@@ -41,8 +41,7 @@ void ThreadContext::OnDead() {
 
 void ThreadContext::OnJoined(void *arg) {
   ThreadState *caller_thr = static_cast<ThreadState *>(arg);
-  caller_thr->clock.acquire(&sync);
-  StatInc(caller_thr, StatSyncAcquire);
+  AcquireImpl(caller_thr, 0, &sync);
   sync.Reset();
 }
 
@@ -59,10 +58,7 @@ void ThreadContext::OnCreated(void *arg) {
   args->thr->fast_state.IncrementEpoch();
   // Can't increment epoch w/o writing to the trace as well.
   TraceAddEvent(args->thr, args->thr->fast_state, EventTypeMop, 0);
-  args->thr->clock.set(args->thr->tid, args->thr->fast_state.epoch());
-  args->thr->fast_synch_epoch = args->thr->fast_state.epoch();
-  args->thr->clock.release(&sync);
-  StatInc(args->thr, StatSyncRelease);
+  ReleaseImpl(args->thr, 0, &sync);
 #ifdef TSAN_GO
   creation_stack.ObtainCurrent(args->thr, args->pc);
 #else
@@ -108,8 +104,7 @@ void ThreadContext::OnStarted(void *arg) {
 #endif
   thr = args->thr;
   thr->fast_synch_epoch = epoch0;
-  thr->clock.set(tid, epoch0);
-  thr->clock.acquire(&sync);
+  AcquireImpl(thr, 0, &sync);
   thr->fast_state.SetHistorySize(flags()->history_size);
   const uptr trace = (epoch0 / kTracePartSize) % TraceParts();
   Trace *thr_trace = ThreadTrace(thr->tid);
@@ -128,10 +123,7 @@ void ThreadContext::OnFinished() {
     thr->fast_state.IncrementEpoch();
     // Can't increment epoch w/o writing to the trace as well.
     TraceAddEvent(thr, thr->fast_state, EventTypeMop, 0);
-    thr->clock.set(thr->tid, thr->fast_state.epoch());
-    thr->fast_synch_epoch = thr->fast_state.epoch();
-    thr->clock.release(&sync);
-    StatInc(thr, StatSyncRelease);
+    ReleaseImpl(thr, 0, &sync);
   }
   epoch1 = thr->fast_state.epoch();
 
@@ -168,6 +160,10 @@ static void MaybeReportThreadLeak(ThreadContextBase *tctx_base, void *arg) {
 static void ThreadCheckIgnore(ThreadState *thr) {
   if (thr->ignore_reads_and_writes) {
     Printf("ThreadSanitizer: thread T%d finished with ignores enabled.\n",
+           thr->tid);
+  }
+  if (thr->ignore_sync) {
+    Printf("ThreadSanitizer: thread T%d finished with sync ignores enabled.\n",
            thr->tid);
   }
 }

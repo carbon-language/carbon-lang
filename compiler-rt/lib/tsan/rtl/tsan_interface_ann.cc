@@ -401,6 +401,16 @@ void INTERFACE_ATTRIBUTE AnnotateIgnoreWritesEnd(char *f, int l) {
   ThreadIgnoreEnd(thr);
 }
 
+void INTERFACE_ATTRIBUTE AnnotateIgnoreSyncBegin(char *f, int l) {
+  SCOPED_ANNOTATION(AnnotateIgnoreSyncBegin);
+  ThreadIgnoreSyncBegin(thr);
+}
+
+void INTERFACE_ATTRIBUTE AnnotateIgnoreSyncEnd(char *f, int l) {
+  SCOPED_ANNOTATION(AnnotateIgnoreSyncEnd);
+  ThreadIgnoreSyncEnd(thr);
+}
+
 void INTERFACE_ATTRIBUTE AnnotatePublishMemoryRange(
     char *f, int l, uptr addr, uptr size) {
   SCOPED_ANNOTATION(AnnotatePublishMemoryRange);
