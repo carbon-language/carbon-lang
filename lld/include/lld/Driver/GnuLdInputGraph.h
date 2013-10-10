@@ -106,8 +106,8 @@ public:
 
     default:
       // Process Linker script
-      _elfLinkingContext.getLinkerScriptReader().parseFile(_buffer, _files);
-      return error_code::success();
+      return _elfLinkingContext.getLinkerScriptReader().parseFile(_buffer,
+                                                                  _files);
     }
   }
 
