@@ -361,59 +361,6 @@ DecodeFPR128LoRegisterClass(llvm::MCInst &Inst, unsigned RegNo,
   return DecodeFPR128RegisterClass(Inst, RegNo, Address, Decoder);
 }
 
-static DecodeStatus DecodeRegisterClassByID(llvm::MCInst &Inst, unsigned RegNo,
-                                            unsigned RegID,
-                                            const void *Decoder) {
-  if (RegNo > 31)
-    return MCDisassembler::Fail;
-
-  uint16_t Register = getReg(Decoder, RegID, RegNo);
-  Inst.addOperand(MCOperand::CreateReg(Register));
-  return MCDisassembler::Success;
-}
-
-static DecodeStatus DecodeDPairRegisterClass(llvm::MCInst &Inst, unsigned RegNo,
-                                             uint64_t Address,
-                                             const void *Decoder) {
-  return DecodeRegisterClassByID(Inst, RegNo, AArch64::DPairRegClassID,
-                                 Decoder);
-}
-
-static DecodeStatus DecodeQPairRegisterClass(llvm::MCInst &Inst, unsigned RegNo,
-                                             uint64_t Address,
-                                             const void *Decoder) {
-  return DecodeRegisterClassByID(Inst, RegNo, AArch64::QPairRegClassID,
-                                 Decoder);
-}
-
-static DecodeStatus DecodeDTripleRegisterClass(llvm::MCInst &Inst,
-                                               unsigned RegNo, uint64_t Address,
-                                               const void *Decoder) {
-  return DecodeRegisterClassByID(Inst, RegNo, AArch64::DTripleRegClassID,
-                                 Decoder);
-}
-
-static DecodeStatus DecodeQTripleRegisterClass(llvm::MCInst &Inst,
-                                               unsigned RegNo, uint64_t Address,
-                                               const void *Decoder) {
-  return DecodeRegisterClassByID(Inst, RegNo, AArch64::QTripleRegClassID,
-                                 Decoder);
-}
-
-static DecodeStatus DecodeDQuadRegisterClass(llvm::MCInst &Inst, unsigned RegNo,
-                                             uint64_t Address,
-                                             const void *Decoder) {
-  return DecodeRegisterClassByID(Inst, RegNo, AArch64::DQuadRegClassID,
-                                 Decoder);
-}
-
-static DecodeStatus DecodeQQuadRegisterClass(llvm::MCInst &Inst, unsigned RegNo,
-                                             uint64_t Address,
-                                             const void *Decoder) {
-  return DecodeRegisterClassByID(Inst, RegNo, AArch64::QQuadRegClassID,
-                                 Decoder);
-}
-
 static DecodeStatus DecodeAddrRegExtendOperand(llvm::MCInst &Inst,
                                                unsigned OptionHiS,
                                                uint64_t Address,
