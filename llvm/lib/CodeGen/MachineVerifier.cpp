@@ -1002,7 +1002,7 @@ void MachineVerifier::checkLiveness(const MachineOperand *MO, unsigned MONum) {
       if (TargetRegisterInfo::isPhysicalRegister(Reg) && !isReserved(Reg)) {
         for (MCRegUnitIterator Units(Reg, TRI); Units.isValid(); ++Units) {
           if (const LiveInterval *LI = LiveInts->getCachedRegUnit(*Units)) {
-            LiveRangeQuery LRQ(*LI, UseIdx);
+            LiveQueryResult LRQ = LI->Query(UseIdx);
             if (!LRQ.valueIn()) {
               report("No live segment at use", MO, MONum);
               *OS << UseIdx << " is not live in " << PrintRegUnit(*Units, TRI)
@@ -1020,7 +1020,7 @@ void MachineVerifier::checkLiveness(const MachineOperand *MO, unsigned MONum) {
         if (LiveInts->hasInterval(Reg)) {
           // This is a virtual register interval.
           const LiveInterval &LI = LiveInts->getInterval(Reg);
-          LiveRangeQuery LRQ(LI, UseIdx);
+          LiveQueryResult LRQ = LI.Query(UseIdx);
           if (!LRQ.valueIn()) {
             report("No live segment at use", MO, MONum);
             *OS << UseIdx << " is not live in " << LI << '\n';

@@ -415,7 +415,8 @@ void ScheduleDAGInstrs::addVRegUseDeps(SUnit *SU, unsigned OperIdx) {
 
   // Lookup this operand's reaching definition.
   assert(LIS && "vreg dependencies requires LiveIntervals");
-  LiveRangeQuery LRQ(LIS->getInterval(Reg), LIS->getInstructionIndex(MI));
+  LiveQueryResult LRQ
+    = LIS->getInterval(Reg).Query(LIS->getInstructionIndex(MI));
   VNInfo *VNI = LRQ.valueIn();
 
   // VNI will be valid because MachineOperand::readsReg() is checked by caller.

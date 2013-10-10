@@ -79,6 +79,65 @@ namespace llvm {
     void markUnused() { def = SlotIndex(); }
   };
 
+  /// Result of a LiveRange query. This class hides the implementation details
+  /// of live ranges, and it should be used as the primary interface for
+  /// examining live ranges around instructions.
+  class LiveQueryResult {
+    VNInfo *const EarlyVal;
+    VNInfo *const LateVal;
+    const SlotIndex EndPoint;
+    const bool Kill;
+
+  public:
+    LiveQueryResult(VNInfo *EarlyVal, VNInfo *LateVal, SlotIndex EndPoint,
+                    bool Kill)
+      : EarlyVal(EarlyVal), LateVal(LateVal), EndPoint(EndPoint), Kill(Kill)
+    {}
+
+    /// Return the value that is live-in to the instruction. This is the value
+    /// that will be read by the instruction's use operands. Return NULL if no
+    /// value is live-in.
+    VNInfo *valueIn() const {
+      return EarlyVal;
+    }
+
+    /// Return true if the live-in value is killed by this instruction. This
+    /// means that either the live range ends at the instruction, or it changes
+    /// value.
+    bool isKill() const {
+      return Kill;
+    }
+
+    /// Return true if this instruction has a dead def.
+    bool isDeadDef() const {
+      return EndPoint.isDead();
+    }
+
+    /// Return the value leaving the instruction, if any. This can be a
+    /// live-through value, or a live def. A dead def returns NULL.
+    VNInfo *valueOut() const {
+      return isDeadDef() ? 0 : LateVal;
+    }
+
+    /// Return the value defined by this instruction, if any. This includes
+    /// dead defs, it is the value created by the instruction's def operands.
+    VNInfo *valueDefined() const {
+      return EarlyVal == LateVal ? 0 : LateVal;
+    }
+
+    /// Return the end point of the last live range segment to interact with
+    /// the instruction, if any.
+    ///
+    /// The end point is an invalid SlotIndex only if the live range doesn't
+    /// intersect the instruction at all.
+    ///
+    /// The end point may be at or past the end of the instruction's basic
+    /// block. That means the value was live out of the block.
+    SlotIndex endPoint() const {
+      return EndPoint;
+    }
+  };
+
   /// This class represents the liveness of a register, stack slot, etc.
   /// It manages an ordered list of Segment objects.
   /// The Segments are organized in a static single assignment form: At places
@@ -376,6 +435,48 @@ namespace llvm {
       removeSegment(S.start, S.end, RemoveDeadValNo);
     }
 
+    /// Query Liveness at Idx.
+    /// The sub-instruction slot of Idx doesn't matter, only the instruction
+    /// it refers to is considered.
+    LiveQueryResult Query(SlotIndex Idx) const {
+      // Find the segment that enters the instruction.
+      const_iterator I = find(Idx.getBaseIndex());
+      const_iterator E = end();
+      if (I == E)
+        return LiveQueryResult(0, 0, SlotIndex(), false);
+
+      // Is this an instruction live-in segment?
+      // If Idx is the start index of a basic block, include live-in segments
+      // that start at Idx.getBaseIndex().
+      VNInfo *EarlyVal = 0;
+      VNInfo *LateVal  = 0;
+      SlotIndex EndPoint;
+      bool Kill = false;
+      if (I->start <= Idx.getBaseIndex()) {
+        EarlyVal = I->valno;
+        EndPoint = I->end;
+        // Move to the potentially live-out segment.
+        if (SlotIndex::isSameInstr(Idx, I->end)) {
+          Kill = true;
+          if (++I == E)
+            return LiveQueryResult(EarlyVal, LateVal, EndPoint, Kill);
+        }
+        // Special case: A PHIDef value can have its def in the middle of a
+        // segment if the value happens to be live out of the layout
+        // predecessor.
+        // Such a value is not live-in.
+        if (EarlyVal->def == Idx.getBaseIndex())
+          EarlyVal = 0;
+      }
+      // I now points to the segment that may be live-through, or defined by
+      // this instr. Ignore segments starting after the current instr.
+      if (!SlotIndex::isEarlierInstr(Idx, I->start)) {
+        LateVal = I->valno;
+        EndPoint = I->end;
+      }
+      return LiveQueryResult(EarlyVal, LateVal, EndPoint, Kill);
+    }
+
     /// removeValNo - Remove all the segments defined by the specified value#.
     /// Also remove the value# from value# list.
     void removeValNo(VNInfo *ValNo);
@@ -531,102 +632,6 @@ namespace llvm {
     X.print(OS);
     return OS;
   }
-
-  /// LiveRangeQuery - Query information about a live range around a given
-  /// instruction. This class hides the implementation details of live ranges,
-  /// and it should be used as the primary interface for examining live ranges
-  /// around instructions.
-  ///
-  class LiveRangeQuery {
-    VNInfo *EarlyVal;
-    VNInfo *LateVal;
-    SlotIndex EndPoint;
-    bool Kill;
-
-    void init(const LiveRange &LR, SlotIndex Idx) {
-    }
-
-  public:
-    /// Create a LiveRangeQuery for the given live range and instruction index.
-    /// The sub-instruction slot of Idx doesn't matter, only the instruction it
-    /// refers to is considered.
-    LiveRangeQuery(const LiveRange &LR, SlotIndex Idx)
-      : EarlyVal(0), LateVal(0), Kill(false) {
-      // Find the segment that enters the instruction.
-      LiveRange::const_iterator I = LR.find(Idx.getBaseIndex());
-      LiveRange::const_iterator E = LR.end();
-      if (I == E)
-        return;
-      // Is this an instruction live-in segment?
-      // If Idx is the start index of a basic block, include live-in segments
-      // that start at Idx.getBaseIndex().
-      if (I->start <= Idx.getBaseIndex()) {
-        EarlyVal = I->valno;
-        EndPoint = I->end;
-        // Move to the potentially live-out segment.
-        if (SlotIndex::isSameInstr(Idx, I->end)) {
-          Kill = true;
-          if (++I == E)
-            return;
-        }
-        // Special case: A PHIDef value can have its def in the middle of a
-        // segment if the value happens to be live out of the layout
-        // predecessor.
-        // Such a value is not live-in.
-        if (EarlyVal->def == Idx.getBaseIndex())
-          EarlyVal = 0;
-      }
-      // I now points to the segment that may be live-through, or defined by
-      // this instr. Ignore segments starting after the current instr.
-      if (SlotIndex::isEarlierInstr(Idx, I->start))
-        return;
-      LateVal = I->valno;
-      EndPoint = I->end;
-    }
-
-    /// Return the value that is live-in to the instruction. This is the value
-    /// that will be read by the instruction's use operands. Return NULL if no
-    /// value is live-in.
-    VNInfo *valueIn() const {
-      return EarlyVal;
-    }
-
-    /// Return true if the live-in value is killed by this instruction. This
-    /// means that either the live range ends at the instruction, or it changes
-    /// value.
-    bool isKill() const {
-      return Kill;
-    }
-
-    /// Return true if this instruction has a dead def.
-    bool isDeadDef() const {
-      return EndPoint.isDead();
-    }
-
-    /// Return the value leaving the instruction, if any. This can be a
-    /// live-through value, or a live def. A dead def returns NULL.
-    VNInfo *valueOut() const {
-      return isDeadDef() ? 0 : LateVal;
-    }
-
-    /// Return the value defined by this instruction, if any. This includes
-    /// dead defs, it is the value created by the instruction's def operands.
-    VNInfo *valueDefined() const {
-      return EarlyVal == LateVal ? 0 : LateVal;
-    }
-
-    /// Return the end point of the last live range segment to interact with
-    /// the instruction, if any.
-    ///
-    /// The end point is an invalid SlotIndex only if the live range doesn't
-    /// intersect the instruction at all.
-    ///
-    /// The end point may be at or past the end of the instruction's basic
-    /// block. That means the value was live out of the block.
-    SlotIndex endPoint() const {
-      return EndPoint;
-    }
-  };
 
   /// ConnectedVNInfoEqClasses - Helper class that can divide VNInfos in a
   /// LiveInterval into equivalence clases of connected components. A

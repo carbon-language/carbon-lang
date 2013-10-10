@@ -908,7 +908,7 @@ void ConnectedVNInfoEqClasses::Distribute(LiveInterval *LIV[],
       Idx = LIS.getSlotIndexes()->getIndexBefore(MI);
     else
       Idx = LIS.getInstructionIndex(MI);
-    LiveRangeQuery LRQ(LI, Idx);
+    LiveQueryResult LRQ = LI.Query(Idx);
     const VNInfo *VNI = MO.readsReg() ? LRQ.valueIn() : LRQ.valueDefined();
     // In the case of an <undef> use that isn't tied to any def, VNI will be
     // NULL. If the use is tied to a def, VNI will be the defined value.

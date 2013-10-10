@@ -329,7 +329,7 @@ bool LiveIntervals::shrinkToUses(LiveInterval *li,
     if (UseMI->isDebugValue() || !UseMI->readsVirtualRegister(li->reg))
       continue;
     SlotIndex Idx = getInstructionIndex(UseMI).getRegSlot();
-    LiveRangeQuery LRQ(*li, Idx);
+    LiveQueryResult LRQ = li->Query(Idx);
     VNInfo *VNI = LRQ.valueIn();
     if (!VNI) {
       // This shouldn't happen: readsVirtualRegister returns true, but there is
@@ -450,7 +450,7 @@ void LiveIntervals::extendToIndices(LiveInterval *LI,
 
 void LiveIntervals::pruneValue(LiveInterval *LI, SlotIndex Kill,
                                SmallVectorImpl<SlotIndex> *EndPoints) {
-  LiveRangeQuery LRQ(*LI, Kill);
+  LiveQueryResult LRQ = LI->Query(Kill);
   VNInfo *VNI = LRQ.valueOut();
   if (!VNI)
     return;
@@ -485,7 +485,7 @@ void LiveIntervals::pruneValue(LiveInterval *LI, SlotIndex Kill,
 
       // Check if VNI is live in to MBB.
       tie(MBBStart, MBBEnd) = Indexes->getMBBRange(MBB);
-      LiveRangeQuery LRQ(*LI, MBBStart);
+      LiveQueryResult LRQ = LI->Query(MBBStart);
       if (LRQ.valueIn() != VNI) {
         // This block isn't part of the VNI segment. Prune the search.
         I.skipChildren();

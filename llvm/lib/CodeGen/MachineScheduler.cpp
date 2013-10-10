@@ -610,7 +610,7 @@ void ScheduleDAGMI::updatePressureDiffs(ArrayRef<unsigned> LiveUses) {
     if (I == BB->end())
       VNI = LI.getVNInfoBefore(LIS->getMBBEndIdx(BB));
     else {
-      LiveRangeQuery LRQ(LI, LIS->getInstructionIndex(I));
+      LiveQueryResult LRQ = LI.Query(LIS->getInstructionIndex(I));
       VNI = LRQ.valueIn();
     }
     // RegisterPressureTracker guarantees that readsReg is true for LiveUses.
@@ -623,7 +623,8 @@ void ScheduleDAGMI::updatePressureDiffs(ArrayRef<unsigned> LiveUses) {
       // If this use comes before the reaching def, it cannot be a last use, so
       // descrease its pressure change.
       if (!SU->isScheduled && SU != &ExitSU) {
-        LiveRangeQuery LRQ(LI, LIS->getInstructionIndex(SU->getInstr()));
+        LiveQueryResult LRQ
+          = LI.Query(LIS->getInstructionIndex(SU->getInstr()));
         if (LRQ.valueIn() == VNI)
           getPressureDiff(SU).addPressureChange(Reg, true, &MRI);
       }
@@ -800,7 +801,8 @@ unsigned ScheduleDAGMI::computeCyclicCriticalPath() {
         continue;
 
       // Only consider uses of the phi.
-      LiveRangeQuery LRQ(LI, LIS->getInstructionIndex(UI->SU->getInstr()));
+      LiveQueryResult LRQ =
+        LI.Query(LIS->getInstructionIndex(UI->SU->getInstr()));
       if (!LRQ.valueIn()->isPHIDef())
         continue;
 

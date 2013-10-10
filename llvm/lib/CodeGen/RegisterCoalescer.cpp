@@ -612,7 +612,7 @@ bool RegisterCoalescer::removeCopyByCommutingDef(const CoalescerPair &CP,
 
   MachineOperand &NewDstMO = DefMI->getOperand(NewDstIdx);
   unsigned NewReg = NewDstMO.getReg();
-  if (NewReg != IntB.reg || !LiveRangeQuery(IntB, AValNo->def).isKill())
+  if (NewReg != IntB.reg || !IntB.Query(AValNo->def).isKill())
     return false;
 
   // Make sure there are no other definitions of IntB that would reach the
@@ -742,7 +742,7 @@ bool RegisterCoalescer::reMaterializeTrivialDef(CoalescerPair &CP,
 
   LiveInterval &SrcInt = LIS->getInterval(SrcReg);
   SlotIndex CopyIdx = LIS->getInstructionIndex(CopyMI);
-  VNInfo *ValNo = LiveRangeQuery(SrcInt, CopyIdx).valueIn();
+  VNInfo *ValNo = SrcInt.Query(CopyIdx).valueIn();
   assert(ValNo && "CopyMI input register not live");
   if (ValNo->isPHIDef() || ValNo->isUnused())
     return false;
@@ -1046,7 +1046,7 @@ bool RegisterCoalescer::joinCopy(MachineInstr *CopyMI, bool &Again) {
   if (CP.getSrcReg() == CP.getDstReg()) {
     LiveInterval &LI = LIS->getInterval(CP.getSrcReg());
     DEBUG(dbgs() << "\tCopy already coalesced: " << LI << '\n');
-    LiveRangeQuery LRQ(LI, LIS->getInstructionIndex(CopyMI));
+    LiveQueryResult LRQ = LI.Query(LIS->getInstructionIndex(CopyMI));
     if (VNInfo *DefVNI = LRQ.valueDefined()) {
       VNInfo *ReadVNI = LRQ.valueIn();
       assert(ReadVNI && "No value before copy and no <undef> flag.");
@@ -1441,7 +1441,7 @@ VNInfo *JoinVals::stripCopies(VNInfo *VNI) {
     unsigned Reg = MI->getOperand(1).getReg();
     if (!TargetRegisterInfo::isVirtualRegister(Reg))
       break;
-    LiveRangeQuery LRQ(LIS->getInterval(Reg), VNI->def);
+    LiveQueryResult LRQ = LIS->getInterval(Reg).Query(VNI->def);
     if (!LRQ.valueIn())
       break;
     VNI = LRQ.valueIn();
@@ -1492,7 +1492,7 @@ JoinVals::analyzeValue(unsigned ValNo, JoinVals &Other) {
     // The <read-undef> flag on the def operand means that old lane values are
     // not important.
     if (Redef) {
-      V.RedefVNI = LiveRangeQuery(LI, VNI->def).valueIn();
+      V.RedefVNI = LI.Query(VNI->def).valueIn();
       assert(V.RedefVNI && "Instruction is reading nonexistent value");
       computeAssignment(V.RedefVNI->id, Other);
       V.ValidLanes |= Vals[V.RedefVNI->id].ValidLanes;
@@ -1509,7 +1509,7 @@ JoinVals::analyzeValue(unsigned ValNo, JoinVals &Other) {
   }
 
   // Find the value in Other that overlaps VNI->def, if any.
-  LiveRangeQuery OtherLRQ(Other.LI, VNI->def);
+  LiveQueryResult OtherLRQ = Other.LI.Query(VNI->def);
 
   // It is possible that both values are defined by the same instruction, or
   // the values are PHIs defined in the same block. When that happens, the two
