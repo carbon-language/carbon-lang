@@ -77,13 +77,13 @@
 
 #define DEFINE_GPR_PSEUDO_16(reg16, reg32)                  \
     { #reg16, NULL, 2, GPR_OFFSET(reg32), eEncodingUint,    \
-      eFormatHex, { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, gpr_##reg16##_i386 }, RegisterContextPOSIX_i386::g_contained_##reg32, RegisterContextPOSIX_i386::g_invalidate_##reg32 }
+      eFormatHex, { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, gpr_##reg16##_i386 }, RegisterContextPOSIX_x86::g_contained_##reg32, RegisterContextPOSIX_x86::g_invalidate_##reg32 }
 #define DEFINE_GPR_PSEUDO_8H(reg8, reg32)                   \
     { #reg8, NULL, 1, GPR_OFFSET(reg32)+1, eEncodingUint,   \
-      eFormatHex, { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, gpr_##reg8##_i386 }, RegisterContextPOSIX_i386::g_contained_##reg32, RegisterContextPOSIX_i386::g_invalidate_##reg32 }
+      eFormatHex, { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, gpr_##reg8##_i386 }, RegisterContextPOSIX_x86::g_contained_##reg32, RegisterContextPOSIX_x86::g_invalidate_##reg32 }
 #define DEFINE_GPR_PSEUDO_8L(reg8, reg32)                   \
     { #reg8, NULL, 1, GPR_OFFSET(reg32), eEncodingUint,     \
-      eFormatHex, { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, gpr_##reg8##_i386 }, RegisterContextPOSIX_i386::g_contained_##reg32, RegisterContextPOSIX_i386::g_invalidate_##reg32 }
+      eFormatHex, { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, gpr_##reg8##_i386 }, RegisterContextPOSIX_x86::g_contained_##reg32, RegisterContextPOSIX_x86::g_invalidate_##reg32 }
  
 static RegisterInfo
 g_register_infos_i386[] =

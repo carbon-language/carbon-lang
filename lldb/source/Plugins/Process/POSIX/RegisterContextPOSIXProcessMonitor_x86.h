@@ -1,4 +1,4 @@
-//===-- RegisterContextPOSIXProcessMonitor_x86_64.h -------------*- C++ -*-===//
+//===-- RegisterContextPOSIXProcessMonitor_x86.h ----------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,13 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_RegisterContextPOSIXProcessMonitor_x86_64_H_
-#define liblldb_RegisterContextPOSIXProcessMonitor_x86_64_H_
+#ifndef liblldb_RegisterContextPOSIXProcessMonitor_x86_H_
+#define liblldb_RegisterContextPOSIXProcessMonitor_x86_H_
 
-#include "Plugins/Process/POSIX/RegisterContextPOSIX_x86_64.h"
+#include "Plugins/Process/POSIX/RegisterContextPOSIX_x86.h"
 
 class RegisterContextPOSIXProcessMonitor_x86_64:
-    public RegisterContextPOSIX_x86_64,
+    public RegisterContextPOSIX_x86,
     public POSIXBreakpointProtocol
 {
 public:

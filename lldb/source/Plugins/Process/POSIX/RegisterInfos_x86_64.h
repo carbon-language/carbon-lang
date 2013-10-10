@@ -74,20 +74,18 @@
       { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM,  \
       LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM }, NULL, NULL }
 
-#define REG_CONTEXT_SIZE (GetGPRSize() + sizeof(RegisterContextPOSIX_x86_64::FPR))
-
 #define DEFINE_GPR_PSEUDO_32(reg32, reg64)          \
     { #reg32, NULL, 4, GPR_OFFSET(reg64), eEncodingUint,   \
-      eFormatHex, { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, gpr_##reg32##_x86_64 }, RegisterContextPOSIX_x86_64::g_contained_##reg64, RegisterContextPOSIX_x86_64::g_invalidate_##reg64 }
+      eFormatHex, { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, gpr_##reg32##_x86_64 }, RegisterContextPOSIX_x86::g_contained_##reg64, RegisterContextPOSIX_x86::g_invalidate_##reg64 }
 #define DEFINE_GPR_PSEUDO_16(reg16, reg64)          \
     { #reg16, NULL, 2, GPR_OFFSET(reg64), eEncodingUint,   \
-      eFormatHex, { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, gpr_##reg16##_x86_64 }, RegisterContextPOSIX_x86_64::g_contained_##reg64, RegisterContextPOSIX_x86_64::g_invalidate_##reg64 }
+      eFormatHex, { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, gpr_##reg16##_x86_64 }, RegisterContextPOSIX_x86::g_contained_##reg64, RegisterContextPOSIX_x86::g_invalidate_##reg64 }
 #define DEFINE_GPR_PSEUDO_8H(reg8, reg64)           \
     { #reg8, NULL, 1, GPR_OFFSET(reg64)+1, eEncodingUint,  \
-      eFormatHex, { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, gpr_##reg8##_x86_64 }, RegisterContextPOSIX_x86_64::g_contained_##reg64, RegisterContextPOSIX_x86_64::g_invalidate_##reg64 }
+      eFormatHex, { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, gpr_##reg8##_x86_64 }, RegisterContextPOSIX_x86::g_contained_##reg64, RegisterContextPOSIX_x86::g_invalidate_##reg64 }
 #define DEFINE_GPR_PSEUDO_8L(reg8, reg64)           \
     { #reg8, NULL, 1, GPR_OFFSET(reg64), eEncodingUint,    \
-      eFormatHex, { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, gpr_##reg8##_x86_64 }, RegisterContextPOSIX_x86_64::g_contained_##reg64, RegisterContextPOSIX_x86_64::g_invalidate_##reg64 }
+      eFormatHex, { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, gpr_##reg8##_x86_64 }, RegisterContextPOSIX_x86::g_contained_##reg64, RegisterContextPOSIX_x86::g_invalidate_##reg64 }
 
 static RegisterInfo
 g_register_infos_x86_64[] =
@@ -260,7 +258,6 @@ static_assert((sizeof(g_register_infos_x86_64) / sizeof(g_register_infos_x86_64[
 #undef DEFINE_XMM
 #undef DEFINE_YMM
 #undef DEFINE_DR
-#undef REG_CONTEXT_SIZE 
 #undef DEFINE_GPR_PSEUDO_32
 #undef DEFINE_GPR_PSEUDO_16
 #undef DEFINE_GPR_PSEUDO_8H

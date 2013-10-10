@@ -1,4 +1,4 @@
-//===-- RegisterContextPOSIXProcessMonitor_x86_64.h ------------*- C++ -*-===//
+//===-- RegisterContextPOSIXProcessMonitor_x86.h ---------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -10,9 +10,8 @@
 #include "lldb/Target/Thread.h"
 #include "lldb/Core/RegisterValue.h"
 
-#include "RegisterContextPOSIX_i386.h"
 #include "ProcessPOSIX.h"
-#include "RegisterContextPOSIXProcessMonitor_x86_64.h"
+#include "RegisterContextPOSIXProcessMonitor_x86.h"
 #include "ProcessMonitor.h"
 
 using namespace lldb_private;
@@ -55,7 +54,7 @@ size_and_rw_bits(size_t size, bool read, bool write)
 RegisterContextPOSIXProcessMonitor_x86_64::RegisterContextPOSIXProcessMonitor_x86_64(Thread &thread,
                                                                                      uint32_t concrete_frame_idx,
                                                                                      RegisterInfoInterface *register_info)
-    : RegisterContextPOSIX_x86_64(thread, concrete_frame_idx, register_info)
+    : RegisterContextPOSIX_x86(thread, concrete_frame_idx, register_info)
 {
 }
 

@@ -7,7 +7,7 @@
 //
 //===---------------------------------------------------------------------===//
 
-#include "RegisterContextPOSIX_i386.h"
+#include "RegisterContextPOSIX_x86.h"
 #include "RegisterContextLinux_i386.h"
 
 using namespace lldb_private;

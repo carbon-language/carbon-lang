@@ -8,8 +8,7 @@
 //===---------------------------------------------------------------------===//
 
 #include <vector>
-#include "RegisterContextPOSIX_i386.h"
-#include "RegisterContextPOSIX_x86_64.h"
+#include "RegisterContextPOSIX_x86.h"
 #include "RegisterContextLinux_i386.h"
 #include "RegisterContextLinux_x86_64.h"
 

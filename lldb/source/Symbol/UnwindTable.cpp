@@ -102,7 +102,7 @@ UnwindTable::GetFuncUnwindersContainingAddress (const Address& addr, SymbolConte
 
     FuncUnwindersSP func_unwinder_sp(new FuncUnwinders(*this, m_assembly_profiler, range));
     m_unwinds.insert (insert_pos, std::make_pair(range.GetBaseAddress().GetFileAddress(), func_unwinder_sp));
-//    StreamFile s(stdout);
+//    StreamFile s(stdout, false);
 //    Dump (s);
     return func_unwinder_sp;
 }
