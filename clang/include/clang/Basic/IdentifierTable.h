@@ -587,7 +587,8 @@ enum ObjCInstanceTypeFamily {
   OIT_Array,
   OIT_Dictionary,
   OIT_Singleton,
-  OIT_Init
+  OIT_Init,
+  OIT_ReturnsSelf
 };
 
 /// \brief Smart pointer class that efficiently represents Objective-C method

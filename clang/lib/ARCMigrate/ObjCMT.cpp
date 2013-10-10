@@ -696,6 +696,28 @@ static void ReplaceWithInstancetype(const ObjCMigrateASTConsumer &ASTC,
   ASTC.Editor->commit(commit);
 }
 
+static void ReplaceWithClasstype(const ObjCMigrateASTConsumer &ASTC,
+                                    ObjCMethodDecl *OM) {
+  ObjCInterfaceDecl *IDecl = OM->getClassInterface();
+  SourceRange R;
+  std::string ClassString;
+  if (TypeSourceInfo *TSInfo =  OM->getResultTypeSourceInfo()) {
+    TypeLoc TL = TSInfo->getTypeLoc();
+    R = SourceRange(TL.getBeginLoc(), TL.getEndLoc()); {
+      ClassString  = IDecl->getName();
+      ClassString += "*";
+    }
+  }
+  else {
+    R = SourceRange(OM->getLocStart(), OM->getLocStart());
+    ClassString = "+ (";
+    ClassString += IDecl->getName(); ClassString += "*)";
+  }
+  edit::Commit commit(*ASTC.Editor);
+  commit.replace(R, ClassString);
+  ASTC.Editor->commit(commit);
+}
+
 void ObjCMigrateASTConsumer::migrateMethodInstanceType(ASTContext &Ctx,
                                                        ObjCContainerDecl *CDecl,
                                                        ObjCMethodDecl *OM) {
@@ -719,6 +741,9 @@ void ObjCMigrateASTConsumer::migrateMethodInstanceType(ASTContext &Ctx,
     case OIT_Init:
       if (OM->getResultType()->isObjCIdType())
         ReplaceWithInstancetype(*this, OM);
+      return;
+    case OIT_ReturnsSelf:
+      migrateFactoryMethod(Ctx, CDecl, OM, OIT_ReturnsSelf);
       return;
   }
   if (!OM->getResultType()->isObjCIdType())
@@ -965,7 +990,7 @@ void ObjCMigrateASTConsumer::migrateFactoryMethod(ASTContext &Ctx,
     return;
   
   std::string MethodName = MethodIdName->getName();
-  if (OIT_Family == OIT_Singleton) {
+  if (OIT_Family == OIT_Singleton || OIT_Family == OIT_ReturnsSelf) {
     StringRef STRefMethodName(MethodName);
     size_t len = 0;
     if (STRefMethodName.startswith("standard"))
@@ -991,7 +1016,10 @@ void ObjCMigrateASTConsumer::migrateFactoryMethod(ASTContext &Ctx,
   LoweredMethodName = StringLoweredMethodName;
   if (!LoweredMethodName.startswith(ClassNamePostfix))
     return;
-  ReplaceWithInstancetype(*this, OM);
+  if (OIT_Family == OIT_ReturnsSelf)
+    ReplaceWithClasstype(*this, OM);
+  else
+    ReplaceWithInstancetype(*this, OM);
 }
 
 static bool IsVoidStarType(QualType Ty) {

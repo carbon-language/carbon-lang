@@ -464,12 +464,12 @@ ObjCInstanceTypeFamily Selector::getInstTypeMethodFamily(Selector sel) {
       if (startsWithWord(name, "array")) return OIT_Array;
       break;
     case 'd':
+      if (startsWithWord(name, "default")) return OIT_ReturnsSelf;
       if (startsWithWord(name, "dictionary")) return OIT_Dictionary;
       break;
     case 's':
-      if (startsWithWord(name, "shared") ||
-          startsWithWord(name, "standard"))
-        return OIT_Singleton;
+      if (startsWithWord(name, "shared")) return OIT_ReturnsSelf;
+      if (startsWithWord(name, "standard")) return OIT_Singleton;
     case 'i':
       if (startsWithWord(name, "init")) return OIT_Init;
     default:
