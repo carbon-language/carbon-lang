@@ -22,7 +22,7 @@
 namespace llvm {
 
 class LiveIntervals;
-class LiveInterval;
+class LiveRange;
 class RegisterClassInfo;
 class MachineInstr;
 
@@ -424,7 +424,7 @@ public:
   void dump() const;
 
 protected:
-  const LiveInterval *getInterval(unsigned Reg) const;
+  const LiveRange *getLiveRange(unsigned Reg) const;
 
   void increaseRegPressure(ArrayRef<unsigned> Regs);
   void decreaseRegPressure(ArrayRef<unsigned> Regs);

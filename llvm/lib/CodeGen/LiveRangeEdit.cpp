@@ -262,9 +262,9 @@ void LiveRangeEdit::eliminateDeadDef(MachineInstr *MI, ToShrinkSet &ToShrink) {
       else if (MOI->isDef()) {
         for (MCRegUnitIterator Units(Reg, MRI.getTargetRegisterInfo());
              Units.isValid(); ++Units) {
-          if (LiveInterval *LI = LIS.getCachedRegUnit(*Units)) {
-            if (VNInfo *VNI = LI->getVNInfoAt(Idx))
-              LI->removeValNo(VNI);
+          if (LiveRange *LR = LIS.getCachedRegUnit(*Units)) {
+            if (VNInfo *VNI = LR->getVNInfoAt(Idx))
+              LR->removeValNo(VNI);
           }
         }
       }

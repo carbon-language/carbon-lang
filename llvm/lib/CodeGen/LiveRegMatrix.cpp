@@ -119,9 +119,11 @@ bool LiveRegMatrix::checkRegUnitInterference(LiveInterval &VirtReg,
   if (VirtReg.empty())
     return false;
   CoalescerPair CP(VirtReg.reg, PhysReg, *TRI);
-  for (MCRegUnitIterator Units(PhysReg, TRI); Units.isValid(); ++Units)
-    if (VirtReg.overlaps(LIS->getRegUnit(*Units), CP, *LIS->getSlotIndexes()))
+  for (MCRegUnitIterator Units(PhysReg, TRI); Units.isValid(); ++Units) {
+    const LiveRange &UnitRange = LIS->getRegUnit(*Units);
+    if (VirtReg.overlaps(UnitRange, CP, *LIS->getSlotIndexes()))
       return true;
+  }
   return false;
 }
 

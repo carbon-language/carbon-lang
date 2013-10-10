@@ -220,13 +220,13 @@ public:
   /// End points where VNI is no longer live are added to Kills.
   /// @param Idx   Starting point for the definition.
   /// @param LocNo Location number to propagate.
-  /// @param LI    Restrict liveness to where LI has the value VNI. May be null.
-  /// @param VNI   When LI is not null, this is the value to restrict to.
+  /// @param LR    Restrict liveness to where LR has the value VNI. May be null.
+  /// @param VNI   When LR is not null, this is the value to restrict to.
   /// @param Kills Append end points of VNI's live range to Kills.
   /// @param LIS   Live intervals analysis.
   /// @param MDT   Dominator tree.
   void extendDef(SlotIndex Idx, unsigned LocNo,
-                 LiveInterval *LI, const VNInfo *VNI,
+                 LiveRange *LR, const VNInfo *VNI,
                  SmallVectorImpl<SlotIndex> *Kills,
                  LiveIntervals &LIS, MachineDominatorTree &MDT,
                  UserValueScopes &UVS);
@@ -495,7 +495,7 @@ bool LDVImpl::collectDebugValues(MachineFunction &mf) {
 }
 
 void UserValue::extendDef(SlotIndex Idx, unsigned LocNo,
-                          LiveInterval *LI, const VNInfo *VNI,
+                          LiveRange *LR, const VNInfo *VNI,
                           SmallVectorImpl<SlotIndex> *Kills,
                           LiveIntervals &LIS, MachineDominatorTree &MDT,
                           UserValueScopes &UVS) {
@@ -509,8 +509,8 @@ void UserValue::extendDef(SlotIndex Idx, unsigned LocNo,
 
     // Limit to VNI's live range.
     bool ToEnd = true;
-    if (LI && VNI) {
-      LiveInterval::Segment *Segment = LI->getSegmentContaining(Start);
+    if (LR && VNI) {
+      LiveInterval::Segment *Segment = LR->getSegmentContaining(Start);
       if (!Segment || Segment->valno != VNI) {
         if (Kills)
           Kills->push_back(Start);
@@ -669,10 +669,10 @@ UserValue::computeIntervals(MachineRegisterInfo &MRI,
 
     // For physregs, use the live range of the first regunit as a guide.
     unsigned Unit = *MCRegUnitIterator(Loc.getReg(), &TRI);
-    LiveInterval *LI = &LIS.getRegUnit(Unit);
-    const VNInfo *VNI = LI->getVNInfoAt(Idx);
+    LiveRange *LR = &LIS.getRegUnit(Unit);
+    const VNInfo *VNI = LR->getVNInfoAt(Idx);
     // Don't track copies from physregs, it is too expensive.
-    extendDef(Idx, LocNo, LI, VNI, 0, LIS, MDT, UVS);
+    extendDef(Idx, LocNo, LR, VNI, 0, LIS, MDT, UVS);
   }
 
   // Finally, erase all the undefs.

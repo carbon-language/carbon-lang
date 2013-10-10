@@ -72,7 +72,7 @@ class InterferenceCache {
       unsigned VirtTag;
 
       /// Fixed interference in RegUnit.
-      LiveInterval *Fixed;
+      LiveRange *Fixed;
 
       /// Iterator pointing into the fixed RegUnit interference.
       LiveInterval::iterator FixedI;

@@ -1466,9 +1466,9 @@ void RAGreedy::calcGapWeights(unsigned PhysReg,
 
   // Add fixed interference.
   for (MCRegUnitIterator Units(PhysReg, TRI); Units.isValid(); ++Units) {
-    const LiveInterval &LI = LIS->getRegUnit(*Units);
-    LiveInterval::const_iterator I = LI.find(StartIdx);
-    LiveInterval::const_iterator E = LI.end();
+    const LiveRange &LR = LIS->getRegUnit(*Units);
+    LiveRange::const_iterator I = LR.find(StartIdx);
+    LiveRange::const_iterator E = LR.end();
 
     // Same loop as above. Mark any overlapped gaps as HUGE_VALF.
     for (unsigned Gap = 0; I != E && I->start < StopIdx; ++I) {

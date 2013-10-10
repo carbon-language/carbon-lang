@@ -204,11 +204,11 @@ void InterferenceCache::Entry::update(unsigned MBBNum) {
   // Fixed interference.
   for (unsigned i = 0, e = RegUnits.size(); i != e; ++i) {
     LiveInterval::iterator &I = RegUnits[i].FixedI;
-    LiveInterval *LI = RegUnits[i].Fixed;
-    if (I == LI->end() || I->start >= Stop)
+    LiveRange *LR = RegUnits[i].Fixed;
+    if (I == LR->end() || I->start >= Stop)
       continue;
-    I = LI->advanceTo(I, Stop);
-    bool Backup = I == LI->end() || I->start >= Stop;
+    I = LR->advanceTo(I, Stop);
+    bool Backup = I == LR->end() || I->start >= Stop;
     if (Backup)
       --I;
     SlotIndex StopI = I->end;

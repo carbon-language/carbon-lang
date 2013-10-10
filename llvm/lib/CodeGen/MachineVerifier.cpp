@@ -1018,16 +1018,16 @@ void MachineVerifier::checkLiveness(const MachineOperand *MO, unsigned MONum) {
       // Check the cached regunit intervals.
       if (TargetRegisterInfo::isPhysicalRegister(Reg) && !isReserved(Reg)) {
         for (MCRegUnitIterator Units(Reg, TRI); Units.isValid(); ++Units) {
-          if (const LiveInterval *LI = LiveInts->getCachedRegUnit(*Units)) {
-            LiveQueryResult LRQ = LI->Query(UseIdx);
+          if (const LiveRange *LR = LiveInts->getCachedRegUnit(*Units)) {
+            LiveQueryResult LRQ = LR->Query(UseIdx);
             if (!LRQ.valueIn()) {
               report("No live segment at use", MO, MONum);
               *OS << UseIdx << " is not live in " << PrintRegUnit(*Units, TRI)
-                  << ' ' << *LI << '\n';
+                  << ' ' << *LR << '\n';
             }
             if (MO->isKill() && !LRQ.isKill()) {
               report("Live range continues after kill flag", MO, MONum);
-              *OS << PrintRegUnit(*Units, TRI) << ' ' << *LI << '\n';
+              *OS << PrintRegUnit(*Units, TRI) << ' ' << *LR << '\n';
             }
           }
         }
@@ -1352,8 +1352,8 @@ void MachineVerifier::verifyLiveIntervals() {
 
   // Verify all the cached regunit intervals.
   for (unsigned i = 0, e = TRI->getNumRegUnits(); i != e; ++i)
-    if (const LiveInterval *LI = LiveInts->getCachedRegUnit(i))
-      verifyLiveInterval(*LI);
+    if (const LiveRange *LR = LiveInts->getCachedRegUnit(i))
+      verifyLiveRange(*LR, i);
 }
 
 void MachineVerifier::verifyLiveRangeValue(const LiveRange &LR,

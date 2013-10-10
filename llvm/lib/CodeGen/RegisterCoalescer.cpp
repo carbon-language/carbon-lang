@@ -874,8 +874,8 @@ bool RegisterCoalescer::reMaterializeTrivialDef(CoalescerPair &CP,
   for (unsigned i = 0, e = NewMIImplDefs.size(); i != e; ++i) {
     unsigned Reg = NewMIImplDefs[i];
     for (MCRegUnitIterator Units(Reg, TRI); Units.isValid(); ++Units)
-      if (LiveInterval *LI = LIS->getCachedRegUnit(*Units))
-        LI->createDeadDef(NewMIIdx.getRegSlot(), LIS->getVNInfoAllocator());
+      if (LiveRange *LR = LIS->getCachedRegUnit(*Units))
+        LR->createDeadDef(NewMIIdx.getRegSlot(), LIS->getVNInfoAllocator());
   }
 
   DEBUG(dbgs() << "Remat: " << *NewMI);
