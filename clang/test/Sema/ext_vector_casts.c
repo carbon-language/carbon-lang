@@ -5,6 +5,9 @@ typedef __attribute__(( ext_vector_type(4) )) int int4;
 typedef __attribute__(( ext_vector_type(8) )) short short8;
 typedef __attribute__(( ext_vector_type(4) )) float float4;
 typedef float t3 __attribute__ ((vector_size (16)));
+typedef __typeof__(sizeof(int)) size_t;
+typedef unsigned long ulong2 __attribute__ ((ext_vector_type(2)));
+typedef size_t stride4 __attribute__((ext_vector_type(4)));
 
 static void test() {
     float2 vec2;
@@ -50,3 +53,24 @@ void inc(float2 f2) {
   f2++; // expected-error{{cannot increment value of type 'float2'}}
   __real f2; // expected-error{{invalid type 'float2' to __real operator}}
 }
+
+typedef enum
+{
+    uchar_stride = 1,
+    uchar4_stride = 4,
+    ushort4_stride = 8,
+    short4_stride = 8,
+    uint4_stride = 16,
+    int4_stride = 16,
+    float4_stride = 16,
+} PixelByteStride;
+
+stride4 RDar15091442_get_stride4(int4 x, PixelByteStride pixelByteStride);
+stride4 RDar15091442_get_stride4(int4 x, PixelByteStride pixelByteStride)
+{
+    stride4 stride;
+    // This previously caused an assertion failure.
+    stride.lo = ((ulong2) x) * pixelByteStride; // no-warning
+    return stride;
+}
+
