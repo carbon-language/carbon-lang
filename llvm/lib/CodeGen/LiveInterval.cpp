@@ -7,14 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the LiveRange and LiveInterval classes.  Given some
+// This file implements the LiveInterval class.  Given some
 // numbering of each the machine instructions an interval [i, j) is said to be a
 // live interval for register v if there is no instruction with number j' > j
 // such that v is live at j' and there is no instruction with number i' < i such
 // that v is live at i'. In this implementation intervals can have holes,
 // i.e. an interval might look like [1,20), [50,65), [1000,1001).  Each
-// individual range is represented as an instance of LiveRange, and the whole
-// interval is represented as an instance of LiveInterval.
+// individual segment is represented as an instance of Segment, and the whole
+// range is represented as an instance of LiveInterval.
 //
 //===----------------------------------------------------------------------===//
 
@@ -55,7 +55,7 @@ VNInfo *LiveInterval::createDeadDef(SlotIndex Def,
   iterator I = find(Def);
   if (I == end()) {
     VNInfo *VNI = getNextValue(Def, VNInfoAllocator);
-    ranges.push_back(LiveRange(Def, Def.getDeadSlot(), VNI));
+    segments.push_back(Segment(Def, Def.getDeadSlot(), VNI));
     return VNI;
   }
   if (SlotIndex::isSameInstr(Def, I->start)) {
@@ -73,7 +73,7 @@ VNInfo *LiveInterval::createDeadDef(SlotIndex Def,
   }
   assert(SlotIndex::isEarlierInstr(Def, I->start) && "Already live at def");
   VNInfo *VNI = getNextValue(Def, VNInfoAllocator);
-  ranges.insert(I, LiveRange(Def, Def.getDeadSlot(), VNI));
+  segments.insert(I, Segment(Def, Def.getDeadSlot(), VNI));
   return VNI;
 }
 
@@ -178,7 +178,7 @@ bool LiveInterval::overlaps(const LiveInterval &Other,
   }
 }
 
-/// overlaps - Return true if the live interval overlaps a range specified
+/// overlaps - Return true if the live interval overlaps a segment specified
 /// by [Start, End).
 bool LiveInterval::overlaps(SlotIndex Start, SlotIndex End) const {
   assert(Start < End && "Invalid range");
@@ -209,129 +209,128 @@ void LiveInterval::RenumberValues() {
     VNInfo *VNI = I->valno;
     if (!Seen.insert(VNI))
       continue;
-    assert(!VNI->isUnused() && "Unused valno used by live range");
+    assert(!VNI->isUnused() && "Unused valno used by live segment");
     VNI->id = (unsigned)valnos.size();
     valnos.push_back(VNI);
   }
 }
 
-/// extendIntervalEndTo - This method is used when we want to extend the range
-/// specified by I to end at the specified endpoint.  To do this, we should
-/// merge and eliminate all ranges that this will overlap with.  The iterator is
-/// not invalidated.
-void LiveInterval::extendIntervalEndTo(iterator I, SlotIndex NewEnd) {
-  assert(I != end() && "Not a valid interval!");
+/// This method is used when we want to extend the segment specified by I to end
+/// at the specified endpoint.  To do this, we should merge and eliminate all
+/// segments that this will overlap with.  The iterator is not invalidated.
+void LiveInterval::extendSegmentEndTo(iterator I, SlotIndex NewEnd) {
+  assert(I != end() && "Not a valid segment!");
   VNInfo *ValNo = I->valno;
 
-  // Search for the first interval that we can't merge with.
+  // Search for the first segment that we can't merge with.
   iterator MergeTo = llvm::next(I);
   for (; MergeTo != end() && NewEnd >= MergeTo->end; ++MergeTo) {
     assert(MergeTo->valno == ValNo && "Cannot merge with differing values!");
   }
 
-  // If NewEnd was in the middle of an interval, make sure to get its endpoint.
+  // If NewEnd was in the middle of an segment, make sure to get its endpoint.
   I->end = std::max(NewEnd, prior(MergeTo)->end);
 
-  // If the newly formed range now touches the range after it and if they have
-  // the same value number, merge the two ranges into one range.
+  // If the newly formed segment now touches the segment after it and if they
+  // have the same value number, merge the two segments into one segment.
   if (MergeTo != end() && MergeTo->start <= I->end &&
       MergeTo->valno == ValNo) {
     I->end = MergeTo->end;
     ++MergeTo;
   }
 
-  // Erase any dead ranges.
-  ranges.erase(llvm::next(I), MergeTo);
+  // Erase any dead segments.
+  segments.erase(llvm::next(I), MergeTo);
 }
 
 
-/// extendIntervalStartTo - This method is used when we want to extend the range
-/// specified by I to start at the specified endpoint.  To do this, we should
-/// merge and eliminate all ranges that this will overlap with.
+/// This method is used when we want to extend the segment specified by I to
+/// start at the specified endpoint.  To do this, we should merge and eliminate
+/// all segments that this will overlap with.
 LiveInterval::iterator
-LiveInterval::extendIntervalStartTo(iterator I, SlotIndex NewStart) {
-  assert(I != end() && "Not a valid interval!");
+LiveInterval::extendSegmentStartTo(iterator I, SlotIndex NewStart) {
+  assert(I != end() && "Not a valid segment!");
   VNInfo *ValNo = I->valno;
 
-  // Search for the first interval that we can't merge with.
+  // Search for the first segment that we can't merge with.
   iterator MergeTo = I;
   do {
     if (MergeTo == begin()) {
       I->start = NewStart;
-      ranges.erase(MergeTo, I);
+      segments.erase(MergeTo, I);
       return I;
     }
     assert(MergeTo->valno == ValNo && "Cannot merge with differing values!");
     --MergeTo;
   } while (NewStart <= MergeTo->start);
 
-  // If we start in the middle of another interval, just delete a range and
-  // extend that interval.
+  // If we start in the middle of another segment, just delete a range and
+  // extend that segment.
   if (MergeTo->end >= NewStart && MergeTo->valno == ValNo) {
     MergeTo->end = I->end;
   } else {
-    // Otherwise, extend the interval right after.
+    // Otherwise, extend the segment right after.
     ++MergeTo;
     MergeTo->start = NewStart;
     MergeTo->end = I->end;
   }
 
-  ranges.erase(llvm::next(MergeTo), llvm::next(I));
+  segments.erase(llvm::next(MergeTo), llvm::next(I));
   return MergeTo;
 }
 
 LiveInterval::iterator
-LiveInterval::addRangeFrom(LiveRange LR, iterator From) {
-  SlotIndex Start = LR.start, End = LR.end;
+LiveInterval::addSegmentFrom(Segment S, iterator From) {
+  SlotIndex Start = S.start, End = S.end;
   iterator it = std::upper_bound(From, end(), Start);
 
-  // If the inserted interval starts in the middle or right at the end of
-  // another interval, just extend that interval to contain the range of LR.
+  // If the inserted segment starts in the middle or right at the end of
+  // another segment, just extend that segment to contain the segment of S.
   if (it != begin()) {
     iterator B = prior(it);
-    if (LR.valno == B->valno) {
+    if (S.valno == B->valno) {
       if (B->start <= Start && B->end >= Start) {
-        extendIntervalEndTo(B, End);
+        extendSegmentEndTo(B, End);
         return B;
       }
     } else {
-      // Check to make sure that we are not overlapping two live ranges with
+      // Check to make sure that we are not overlapping two live segments with
       // different valno's.
       assert(B->end <= Start &&
-             "Cannot overlap two LiveRanges with differing ValID's"
+             "Cannot overlap two segments with differing ValID's"
              " (did you def the same reg twice in a MachineInstr?)");
     }
   }
 
-  // Otherwise, if this range ends in the middle of, or right next to, another
-  // interval, merge it into that interval.
+  // Otherwise, if this segment ends in the middle of, or right next to, another
+  // segment, merge it into that segment.
   if (it != end()) {
-    if (LR.valno == it->valno) {
+    if (S.valno == it->valno) {
       if (it->start <= End) {
-        it = extendIntervalStartTo(it, Start);
+        it = extendSegmentStartTo(it, Start);
 
-        // If LR is a complete superset of an interval, we may need to grow its
+        // If S is a complete superset of a segment, we may need to grow its
         // endpoint as well.
         if (End > it->end)
-          extendIntervalEndTo(it, End);
+          extendSegmentEndTo(it, End);
         return it;
       }
     } else {
-      // Check to make sure that we are not overlapping two live ranges with
+      // Check to make sure that we are not overlapping two live segments with
       // different valno's.
       assert(it->start >= End &&
-             "Cannot overlap two LiveRanges with differing ValID's");
+             "Cannot overlap two segments with differing ValID's");
     }
   }
 
-  // Otherwise, this is just a new range that doesn't interact with anything.
+  // Otherwise, this is just a new segment that doesn't interact with anything.
   // Insert it.
-  return ranges.insert(it, LR);
+  return segments.insert(it, S);
 }
 
 /// extendInBlock - If this interval is live before Kill in the basic
 /// block that starts at StartIdx, extend it to be live up to Kill and return
-/// the value. If there is no live range before Kill, return NULL.
+/// the value. If there is no segment before Kill, return NULL.
 VNInfo *LiveInterval::extendInBlock(SlotIndex StartIdx, SlotIndex Kill) {
   if (empty())
     return 0;
@@ -342,20 +341,21 @@ VNInfo *LiveInterval::extendInBlock(SlotIndex StartIdx, SlotIndex Kill) {
   if (I->end <= StartIdx)
     return 0;
   if (I->end < Kill)
-    extendIntervalEndTo(I, Kill);
+    extendSegmentEndTo(I, Kill);
   return I->valno;
 }
 
-/// removeRange - Remove the specified range from this interval.  Note that
-/// the range must be in a single LiveRange in its entirety.
-void LiveInterval::removeRange(SlotIndex Start, SlotIndex End,
-                               bool RemoveDeadValNo) {
-  // Find the LiveRange containing this span.
+/// Remove the specified segment from this interval.  Note that the segment must
+/// be in a single Segment in its entirety.
+void LiveInterval::removeSegment(SlotIndex Start, SlotIndex End,
+                                 bool RemoveDeadValNo) {
+  // Find the Segment containing this span.
   iterator I = find(Start);
-  assert(I != end() && "Range is not in interval!");
-  assert(I->containsRange(Start, End) && "Range is not entirely in interval!");
+  assert(I != end() && "Segment is not in interval!");
+  assert(I->containsInterval(Start, End)
+         && "Segment is not entirely in interval!");
 
-  // If the span we are removing is at the start of the LiveRange, adjust it.
+  // If the span we are removing is at the start of the Segment, adjust it.
   VNInfo *ValNo = I->valno;
   if (I->start == Start) {
     if (I->end == End) {
@@ -373,28 +373,28 @@ void LiveInterval::removeRange(SlotIndex Start, SlotIndex End,
         }
       }
 
-      ranges.erase(I);  // Removed the whole LiveRange.
+      segments.erase(I);  // Removed the whole Segment.
     } else
       I->start = End;
     return;
   }
 
-  // Otherwise if the span we are removing is at the end of the LiveRange,
+  // Otherwise if the span we are removing is at the end of the Segment,
   // adjust the other way.
   if (I->end == End) {
     I->end = Start;
     return;
   }
 
-  // Otherwise, we are splitting the LiveRange into two pieces.
+  // Otherwise, we are splitting the Segment into two pieces.
   SlotIndex OldEnd = I->end;
   I->end = Start;   // Trim the old interval.
 
   // Insert the new one.
-  ranges.insert(llvm::next(I), LiveRange(End, OldEnd, ValNo));
+  segments.insert(llvm::next(I), Segment(End, OldEnd, ValNo));
 }
 
-/// removeValNo - Remove all the ranges defined by the specified value#.
+/// removeValNo - Remove all the segments defined by the specified value#.
 /// Also remove the value# from value# list.
 void LiveInterval::removeValNo(VNInfo *ValNo) {
   if (empty()) return;
@@ -403,7 +403,7 @@ void LiveInterval::removeValNo(VNInfo *ValNo) {
   do {
     --I;
     if (I->valno == ValNo)
-      ranges.erase(I);
+      segments.erase(I);
   } while (I != E);
   // Now that ValNo is dead, remove it.
   markValNoForDeletion(ValNo);
@@ -418,8 +418,8 @@ void LiveInterval::join(LiveInterval &Other,
                         SmallVectorImpl<VNInfo *> &NewVNInfo) {
   verify();
 
-  // Determine if any of our live range values are mapped.  This is uncommon, so
-  // we want to avoid the interval scan if not.
+  // Determine if any of our values are mapped.  This is uncommon, so we want
+  // to avoid the interval scan if not.
   bool MustMapCurValNos = false;
   unsigned NumVals = getNumValNums();
   unsigned NumNewVals = NewVNInfo.size();
@@ -444,7 +444,7 @@ void LiveInterval::join(LiveInterval &Other,
       assert(nextValNo != 0 && "Huh?");
 
       // If this live range has the same value # as its immediate predecessor,
-      // and if they are neighbors, remove one LiveRange.  This happens when we
+      // and if they are neighbors, remove one Segment.  This happens when we
       // have [0,4:0)[4,7:1) and map 0/1 onto the same value #.
       if (OutIt->valno == nextValNo && OutIt->end == I->start) {
         OutIt->end = I->end;
@@ -458,9 +458,9 @@ void LiveInterval::join(LiveInterval &Other,
         }
       }
     }
-    // If we merge some live ranges, chop off the end.
+    // If we merge some segments, chop off the end.
     ++OutIt;
-    ranges.erase(OutIt, end());
+    segments.erase(OutIt, end());
   }
 
   // Rewrite Other values before changing the VNInfo ids.
@@ -486,28 +486,28 @@ void LiveInterval::join(LiveInterval &Other,
   if (NumNewVals < NumVals)
     valnos.resize(NumNewVals);  // shrinkify
 
-  // Okay, now insert the RHS live ranges into the LHS.
+  // Okay, now insert the RHS live segments into the LHS.
   LiveRangeUpdater Updater(this);
   for (iterator I = Other.begin(), E = Other.end(); I != E; ++I)
     Updater.add(*I);
 }
 
-/// MergeRangesInAsValue - Merge all of the intervals in RHS into this live
-/// interval as the specified value number.  The LiveRanges in RHS are
-/// allowed to overlap with LiveRanges in the current interval, but only if
-/// the overlapping LiveRanges have the specified value number.
-void LiveInterval::MergeRangesInAsValue(const LiveInterval &RHS,
-                                        VNInfo *LHSValNo) {
+/// Merge all of the segments in RHS into this live interval as the specified
+/// value number.  The segments in RHS are allowed to overlap with segments in
+/// the current interval, but only if the overlapping segments have the
+/// specified value number.
+void LiveInterval::MergeSegmentsInAsValue(const LiveInterval &RHS,
+                                          VNInfo *LHSValNo) {
   LiveRangeUpdater Updater(this);
   for (const_iterator I = RHS.begin(), E = RHS.end(); I != E; ++I)
     Updater.add(I->start, I->end, LHSValNo);
 }
 
-/// MergeValueInAsValue - Merge all of the live ranges of a specific val#
+/// MergeValueInAsValue - Merge all of the live segments of a specific val#
 /// in RHS into this live interval as the specified value number.
-/// The LiveRanges in RHS are allowed to overlap with LiveRanges in the
+/// The segments in RHS are allowed to overlap with segments in the
 /// current interval, it will replace the value numbers of the overlaped
-/// live ranges with the specified value number.
+/// segments with the specified value number.
 void LiveInterval::MergeValueInAsValue(const LiveInterval &RHS,
                                        const VNInfo *RHSValNo,
                                        VNInfo *LHSValNo) {
@@ -519,7 +519,7 @@ void LiveInterval::MergeValueInAsValue(const LiveInterval &RHS,
 
 /// MergeValueNumberInto - This method is called when two value nubmers
 /// are found to be equivalent.  This eliminates V1, replacing all
-/// LiveRanges with the V1 value number with the V2 value number.  This can
+/// segments with the V1 value number with the V2 value number.  This can
 /// cause merging of V1/V2 values numbers and compaction of the value space.
 VNInfo* LiveInterval::MergeValueNumberInto(VNInfo *V1, VNInfo *V2) {
   assert(V1 != V2 && "Identical value#'s are always equivalent!");
@@ -535,37 +535,37 @@ VNInfo* LiveInterval::MergeValueNumberInto(VNInfo *V1, VNInfo *V2) {
     std::swap(V1, V2);
   }
 
-  // Merge V1 live ranges into V2.
+  // Merge V1 segments into V2.
   for (iterator I = begin(); I != end(); ) {
-    iterator LR = I++;
-    if (LR->valno != V1) continue;  // Not a V1 LiveRange.
+    iterator S = I++;
+    if (S->valno != V1) continue;  // Not a V1 Segment.
 
     // Okay, we found a V1 live range.  If it had a previous, touching, V2 live
     // range, extend it.
-    if (LR != begin()) {
-      iterator Prev = LR-1;
-      if (Prev->valno == V2 && Prev->end == LR->start) {
-        Prev->end = LR->end;
+    if (S != begin()) {
+      iterator Prev = S-1;
+      if (Prev->valno == V2 && Prev->end == S->start) {
+        Prev->end = S->end;
 
         // Erase this live-range.
-        ranges.erase(LR);
+        segments.erase(S);
         I = Prev+1;
-        LR = Prev;
+        S = Prev;
       }
     }
 
     // Okay, now we have a V1 or V2 live range that is maximally merged forward.
     // Ensure that it is a V2 live-range.
-    LR->valno = V2;
+    S->valno = V2;
 
-    // If we can merge it into later V2 live ranges, do so now.  We ignore any
-    // following V1 live ranges, as they will be merged in subsequent iterations
+    // If we can merge it into later V2 segments, do so now.  We ignore any
+    // following V1 segments, as they will be merged in subsequent iterations
     // of the loop.
     if (I != end()) {
-      if (I->start == LR->end && I->valno == V2) {
-        LR->end = I->end;
-        ranges.erase(I);
-        I = LR+1;
+      if (I->start == S->end && I->valno == V2) {
+        S->end = I->end;
+        segments.erase(I);
+        I = S+1;
       }
     }
   }
@@ -583,12 +583,12 @@ unsigned LiveInterval::getSize() const {
   return Sum;
 }
 
-raw_ostream& llvm::operator<<(raw_ostream& os, const LiveRange &LR) {
-  return os << '[' << LR.start << ',' << LR.end << ':' << LR.valno->id << ")";
+raw_ostream& llvm::operator<<(raw_ostream& os, const LiveInterval::Segment &S) {
+  return os << '[' << S.start << ',' << S.end << ':' << S.valno->id << ")";
 }
 
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
-void LiveRange::dump() const {
+void LiveInterval::Segment::dump() const {
   dbgs() << *this << "\n";
 }
 #endif
@@ -646,10 +646,6 @@ void LiveInterval::verify() const {
 }
 #endif
 
-
-void LiveRange::print(raw_ostream &os) const {
-  os << *this;
-}
 
 //===----------------------------------------------------------------------===//
 //                           LiveRangeUpdater class
@@ -709,8 +705,9 @@ void LiveRangeUpdater::dump() const
 }
 
 // Determine if A and B should be coalesced.
-static inline bool coalescable(const LiveRange &A, const LiveRange &B) {
-  assert(A.start <= B.start && "Unordered live ranges.");
+static inline bool coalescable(const LiveInterval::Segment &A,
+                               const LiveInterval::Segment &B) {
+  assert(A.start <= B.start && "Unordered live segments.");
   if (A.end == B.start)
     return A.valno == B.valno;
   if (A.end < B.start)
@@ -719,7 +716,7 @@ static inline bool coalescable(const LiveRange &A, const LiveRange &B) {
   return true;
 }
 
-void LiveRangeUpdater::add(LiveRange Seg) {
+void LiveRangeUpdater::add(LiveInterval::Segment Seg) {
   assert(LI && "Cannot add to a null destination");
 
   // Flush the state if Start moves backwards.
@@ -788,7 +785,7 @@ void LiveRangeUpdater::add(LiveRange Seg) {
 
   // Finally, append to LI or Spills.
   if (WriteI == E) {
-    LI->ranges.push_back(Seg);
+    LI->segments.push_back(Seg);
     WriteI = ReadI = LI->end();
   } else
     Spills.push_back(Seg);
@@ -829,7 +826,7 @@ void LiveRangeUpdater::flush() {
 
   // Nothing to merge?
   if (Spills.empty()) {
-    LI->ranges.erase(WriteI, ReadI);
+    LI->segments.erase(WriteI, ReadI);
     LI->verify();
     return;
   }
@@ -839,12 +836,13 @@ void LiveRangeUpdater::flush() {
   if (GapSize < Spills.size()) {
     // The gap is too small. Make some room.
     size_t WritePos = WriteI - LI->begin();
-    LI->ranges.insert(ReadI, Spills.size() - GapSize, LiveRange());
+    LI->segments.insert(ReadI, Spills.size() - GapSize,
+                        LiveInterval::Segment());
     // This also invalidated ReadI, but it is recomputed below.
     WriteI = LI->begin() + WritePos;
   } else {
     // Shrink the gap if necessary.
-    LI->ranges.erase(WriteI + Spills.size(), ReadI);
+    LI->segments.erase(WriteI + Spills.size(), ReadI);
   }
   ReadI = WriteI + Spills.size();
   mergeSpills();
@@ -933,11 +931,11 @@ void ConnectedVNInfoEqClasses::Distribute(LiveInterval *LIV[],
     if (unsigned eq = EqClass[I->valno->id]) {
       assert((LIV[eq]->empty() || LIV[eq]->expiredAt(I->start)) &&
              "New intervals should be empty");
-      LIV[eq]->ranges.push_back(*I);
+      LIV[eq]->segments.push_back(*I);
     } else
       *J++ = *I;
   }
-  LI.ranges.erase(J, E);
+  LI.segments.erase(J, E);
 
   // Transfer VNInfos to their new owners and renumber them.
   unsigned j = 0, e = LI.getNumValNums();

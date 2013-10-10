@@ -1400,7 +1400,7 @@ TwoAddressInstructionPass::processTiedPairs(MachineInstr *MI,
         VNInfo *VNI = LI.getNextValue(LastCopyIdx, LIS->getVNInfoAllocator());
         SlotIndex endIdx =
           LIS->getInstructionIndex(MI).getRegSlot(IsEarlyClobber);
-        LI.addRange(LiveRange(LastCopyIdx, endIdx, VNI));
+        LI.addSegment(LiveInterval::Segment(LastCopyIdx, endIdx, VNI));
       }
     }
 
@@ -1457,7 +1457,7 @@ TwoAddressInstructionPass::processTiedPairs(MachineInstr *MI,
 
       SlotIndex UseIdx = MIIdx.getRegSlot(IsEarlyClobber);
       if (I->end == UseIdx)
-        LI.removeRange(LastCopyIdx, UseIdx);
+        LI.removeSegment(LastCopyIdx, UseIdx);
     }
 
   } else if (RemovedKillFlag) {

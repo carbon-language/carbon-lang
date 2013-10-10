@@ -510,14 +510,14 @@ void UserValue::extendDef(SlotIndex Idx, unsigned LocNo,
     // Limit to VNI's live range.
     bool ToEnd = true;
     if (LI && VNI) {
-      LiveRange *Range = LI->getLiveRangeContaining(Start);
-      if (!Range || Range->valno != VNI) {
+      LiveInterval::Segment *Segment = LI->getSegmentContaining(Start);
+      if (!Segment || Segment->valno != VNI) {
         if (Kills)
           Kills->push_back(Start);
         continue;
       }
-      if (Range->end < Stop)
-        Stop = Range->end, ToEnd = false;
+      if (Segment->end < Stop)
+        Stop = Segment->end, ToEnd = false;
     }
 
     // There could already be a short def at Start.

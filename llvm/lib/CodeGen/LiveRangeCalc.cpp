@@ -355,9 +355,9 @@ void LiveRangeCalc::updateSSA() {
 
         // Add liveness since updateLiveIns now skips this node.
         if (I->Kill.isValid())
-          I->LI->addRange(LiveRange(Start, I->Kill, VNI));
+          I->LI->addSegment(LiveInterval::Segment(Start, I->Kill, VNI));
         else {
-          I->LI->addRange(LiveRange(Start, End, VNI));
+          I->LI->addSegment(LiveInterval::Segment(Start, End, VNI));
           LOP = LiveOutPair(VNI, Node);
         }
       } else if (IDomValue.first) {

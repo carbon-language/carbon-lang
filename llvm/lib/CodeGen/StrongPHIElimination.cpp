@@ -347,16 +347,16 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction &MF) {
     assert(DestLI.size() == 1
            && "PHI destination copy's live interval should be a single live "
                "range from the beginning of the BB to the copy instruction.");
-    LiveRange *DestLR = DestLI.begin();
-    VNInfo *NewVNI = NewLI.getVNInfoAt(DestLR->start);
+    LiveInterval::Segment *DestS = DestLI.begin();
+    VNInfo *NewVNI = NewLI.getVNInfoAt(DestS->start);
     if (!NewVNI) {
-      NewVNI = NewLI.createValueCopy(DestLR->valno, LI->getVNInfoAllocator());
+      NewVNI = NewLI.createValueCopy(DestS->valno, LI->getVNInfoAllocator());
       MachineInstr *CopyInstr = I->second;
       CopyInstr->getOperand(1).setIsKill(true);
     }
 
-    LiveRange NewLR(DestLR->start, DestLR->end, NewVNI);
-    NewLI.addRange(NewLR);
+    LiveInterval::Segment NewS(DestS->start, DestS->end, NewVNI);
+    NewLI.addSegment(NewS);
 
     LI->removeInterval(DestReg);
     MRI->replaceRegWith(DestReg, NewReg);
@@ -389,7 +389,7 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction &MF) {
     MachineOperand *LastUse = findLastUse(MBB, SrcReg);
     assert(LastUse);
     SlotIndex LastUseIndex = LI->getInstructionIndex(LastUse->getParent());
-    SrcLI.removeRange(LastUseIndex.getRegSlot(), LI->getMBBEndIdx(MBB));
+    SrcLI.removeSegment(LastUseIndex.getRegSlot(), LI->getMBBEndIdx(MBB));
     LastUse->setIsKill(true);
   }
 
@@ -702,7 +702,7 @@ void StrongPHIElimination::InsertCopiesForPHI(MachineInstr *PHI,
 
       // addLiveRangeToEndOfBlock() also adds the phikill flag to the VNInfo for
       // the newly added range.
-      LI->addLiveRangeToEndOfBlock(CopyReg, CopyInstr);
+      LI->addSegmentToEndOfBlock(CopyReg, CopyInstr);
       InsertedSrcCopySet.insert(std::make_pair(PredBB, SrcReg));
 
       addReg(CopyReg);
@@ -732,7 +732,7 @@ void StrongPHIElimination::InsertCopiesForPHI(MachineInstr *PHI,
     SlotIndex PHIIndex = LI->getInstructionIndex(PHI);
     SlotIndex NextInstrIndex = PHIIndex.getNextIndex();
     if (SrcLI.liveAt(MBBStartIndex) && SrcLI.expiredAt(NextInstrIndex))
-      SrcLI.removeRange(MBBStartIndex, PHIIndex, true);
+      SrcLI.removeSegment(MBBStartIndex, PHIIndex, true);
   }
 
   unsigned DestReg = PHI->getOperand(0).getReg();
@@ -752,9 +752,9 @@ void StrongPHIElimination::InsertCopiesForPHI(MachineInstr *PHI,
     // beginning of the basic block.
     SlotIndex MBBStartIndex = LI->getMBBStartIdx(MBB);
     DestVNI->def = MBBStartIndex;
-    DestLI.addRange(LiveRange(MBBStartIndex,
-                              PHIIndex.getRegSlot(),
-                              DestVNI));
+    DestLI.addSegment(LiveInterval::Segment(MBBStartIndex,
+                                            PHIIndex.getRegSlot(),
+                                            DestVNI));
     return;
   }
 
@@ -777,15 +777,15 @@ void StrongPHIElimination::InsertCopiesForPHI(MachineInstr *PHI,
   SlotIndex DestCopyIndex = LI->getInstructionIndex(CopyInstr);
   VNInfo *CopyVNI = CopyLI.getNextValue(MBBStartIndex,
                                         LI->getVNInfoAllocator());
-  CopyLI.addRange(LiveRange(MBBStartIndex,
-                            DestCopyIndex.getRegSlot(),
-                            CopyVNI));
+  CopyLI.addSegment(LiveInterval::Segment(MBBStartIndex,
+                                          DestCopyIndex.getRegSlot(),
+                                          CopyVNI));
 
   // Adjust DestReg's live interval to adjust for its new definition at
   // CopyInstr.
   LiveInterval &DestLI = LI->createEmptyInterval(DestReg);
   SlotIndex PHIIndex = LI->getInstructionIndex(PHI);
-  DestLI.removeRange(PHIIndex.getRegSlot(), DestCopyIndex.getRegSlot());
+  DestLI.removeSegment(PHIIndex.getRegSlot(), DestCopyIndex.getRegSlot());
 
   VNInfo *DestVNI = DestLI.getVNInfoAt(DestCopyIndex.getRegSlot());
   assert(DestVNI);
@@ -803,10 +803,10 @@ void StrongPHIElimination::MergeLIsAndRename(unsigned Reg, unsigned NewReg) {
 
   // Merge the live ranges of the two registers.
   DenseMap<VNInfo*, VNInfo*> VNMap;
-  for (LiveInterval::iterator LRI = OldLI.begin(), LRE = OldLI.end();
-       LRI != LRE; ++LRI) {
-    LiveRange OldLR = *LRI;
-    VNInfo *OldVN = OldLR.valno;
+  for (LiveInterval::iterator SI = OldLI.begin(), SE = OldLI.end();
+       SI != SE; ++SI) {
+    LiveInterval::Segment OldS = *SI;
+    VNInfo *OldVN = OldS.valno;
 
     VNInfo *&NewVN = VNMap[OldVN];
     if (!NewVN) {
@@ -814,8 +814,8 @@ void StrongPHIElimination::MergeLIsAndRename(unsigned Reg, unsigned NewReg) {
       VNMap[OldVN] = NewVN;
     }
 
-    LiveRange LR(OldLR.start, OldLR.end, NewVN);
-    NewLI.addRange(LR);
+    LiveInterval::Segment S(OldS.start, OldS.end, NewVN);
+    NewLI.addSegment(S);
   }
 
   // Remove the LiveInterval for the register being renamed and replace all

@@ -214,7 +214,7 @@ bool SplitAnalysis::calcLiveBlockInfo() {
 
       // When not live in, the first use should be a def.
       if (!BI.LiveIn) {
-        assert(LVI->start == LVI->valno->def && "Dangling LiveRange start");
+        assert(LVI->start == LVI->valno->def && "Dangling Segment start");
         assert(LVI->start == BI.FirstInstr && "First instr should be a def");
         BI.FirstDef = BI.FirstInstr;
       }
@@ -245,8 +245,8 @@ bool SplitAnalysis::calcLiveBlockInfo() {
           BI.FirstInstr = BI.FirstDef = LVI->start;
         }
 
-        // A LiveRange that starts in the middle of the block must be a def.
-        assert(LVI->start == LVI->valno->def && "Dangling LiveRange start");
+        // A Segment that starts in the middle of the block must be a def.
+        assert(LVI->start == LVI->valno->def && "Dangling Segment start");
         if (!BI.FirstDef)
           BI.FirstDef = LVI->start;
       }
@@ -395,14 +395,14 @@ VNInfo *SplitEditor::defValue(unsigned RegIdx,
   // If the previous value was a simple mapping, add liveness for it now.
   if (VNInfo *OldVNI = InsP.first->second.getPointer()) {
     SlotIndex Def = OldVNI->def;
-    LI->addRange(LiveRange(Def, Def.getDeadSlot(), OldVNI));
+    LI->addSegment(LiveInterval::Segment(Def, Def.getDeadSlot(), OldVNI));
     // No longer a simple mapping.  Switch to a complex, non-forced mapping.
     InsP.first->second = ValueForcePair();
   }
 
   // This is a complex mapping, add liveness for VNI
   SlotIndex Def = VNI->def;
-  LI->addRange(LiveRange(Def, Def.getDeadSlot(), VNI));
+  LI->addSegment(LiveInterval::Segment(Def, Def.getDeadSlot(), VNI));
 
   return VNI;
 }
@@ -423,7 +423,7 @@ void SplitEditor::forceRecompute(unsigned RegIdx, const VNInfo *ParentVNI) {
   // by a trivial live range.
   SlotIndex Def = VNI->def;
   LiveInterval *LI = &LIS.getInterval(Edit->get(RegIdx));
-  LI->addRange(LiveRange(Def, Def.getDeadSlot(), VNI));
+  LI->addSegment(LiveInterval::Segment(Def, Def.getDeadSlot(), VNI));
   // Mark as complex mapped, forced.
   VFP = ValueForcePair(0, true);
 }
@@ -868,7 +868,7 @@ bool SplitEditor::transferValues() {
       ValueForcePair VFP = Values.lookup(std::make_pair(RegIdx, ParentVNI->id));
       if (VNInfo *VNI = VFP.getPointer()) {
         DEBUG(dbgs() << ':' << VNI->id);
-        LI->addRange(LiveRange(Start, End, VNI));
+        LI->addSegment(LiveInterval::Segment(Start, End, VNI));
         Start = End;
         continue;
       }

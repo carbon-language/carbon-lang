@@ -318,9 +318,9 @@ void PHIElimination::LowerPHINode(MachineBasicBlock &MBB,
       if (!IncomingVNI)
         IncomingVNI = IncomingLI.getNextValue(MBBStartIndex,
                                               LIS->getVNInfoAllocator());
-      IncomingLI.addRange(LiveRange(MBBStartIndex,
-                                    DestCopyIndex.getRegSlot(),
-                                    IncomingVNI));
+      IncomingLI.addSegment(LiveInterval::Segment(MBBStartIndex,
+                                                  DestCopyIndex.getRegSlot(),
+                                                  IncomingVNI));
     }
 
     LiveInterval &DestLI = LIS->getInterval(DestReg);
@@ -332,14 +332,14 @@ void PHIElimination::LowerPHINode(MachineBasicBlock &MBB,
       // the copy instruction.
       VNInfo *OrigDestVNI = DestLI.getVNInfoAt(MBBStartIndex);
       assert(OrigDestVNI && "PHI destination should be live at block entry.");
-      DestLI.removeRange(MBBStartIndex, MBBStartIndex.getDeadSlot());
+      DestLI.removeSegment(MBBStartIndex, MBBStartIndex.getDeadSlot());
       DestLI.createDeadDef(DestCopyIndex.getRegSlot(),
                            LIS->getVNInfoAllocator());
       DestLI.removeValNo(OrigDestVNI);
     } else {
       // Otherwise, remove the region from the beginning of MBB to the copy
       // instruction from DestReg's live interval.
-      DestLI.removeRange(MBBStartIndex, DestCopyIndex.getRegSlot());
+      DestLI.removeSegment(MBBStartIndex, DestCopyIndex.getRegSlot());
       VNInfo *DestVNI = DestLI.getVNInfoAt(DestCopyIndex.getRegSlot());
       assert(DestVNI && "PHI destination should be live at its definition.");
       DestVNI->def = DestCopyIndex.getRegSlot();
@@ -460,7 +460,7 @@ void PHIElimination::LowerPHINode(MachineBasicBlock &MBB,
     if (LIS) {
       if (NewSrcInstr) {
         LIS->InsertMachineInstrInMaps(NewSrcInstr);
-        LIS->addLiveRangeToEndOfBlock(IncomingReg, NewSrcInstr);
+        LIS->addSegmentToEndOfBlock(IncomingReg, NewSrcInstr);
       }
 
       if (!SrcUndef &&
@@ -511,8 +511,8 @@ void PHIElimination::LowerPHINode(MachineBasicBlock &MBB,
                  "Cannot find kill instruction");
 
           SlotIndex LastUseIndex = LIS->getInstructionIndex(KillInst);
-          SrcLI.removeRange(LastUseIndex.getRegSlot(),
-                            LIS->getMBBEndIdx(&opBlock));
+          SrcLI.removeSegment(LastUseIndex.getRegSlot(),
+                              LIS->getMBBEndIdx(&opBlock));
         }
       }
     }

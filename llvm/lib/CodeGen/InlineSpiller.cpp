@@ -1295,8 +1295,8 @@ void InlineSpiller::spillAll() {
 
   assert(StackInt->getNumValNums() == 1 && "Bad stack interval values");
   for (unsigned i = 0, e = RegsToSpill.size(); i != e; ++i)
-    StackInt->MergeRangesInAsValue(LIS.getInterval(RegsToSpill[i]),
-                                   StackInt->getValNumInfo(0));
+    StackInt->MergeSegmentsInAsValue(LIS.getInterval(RegsToSpill[i]),
+                                     StackInt->getValNumInfo(0));
   DEBUG(dbgs() << "Merged spilled regs: " << *StackInt << '\n');
 
   // Spill around uses of all RegsToSpill.

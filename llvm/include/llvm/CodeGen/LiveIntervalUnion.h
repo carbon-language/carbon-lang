@@ -32,7 +32,7 @@ typedef SparseBitVector<128> LiveVirtRegBitSet;
 
 /// Compare a live virtual register segment to a LiveIntervalUnion segment.
 inline bool
-overlap(const LiveRange &VRSeg,
+overlap(const LiveInterval::Segment &VRSeg,
         const IntervalMap<SlotIndex, LiveInterval*>::const_iterator &LUSeg) {
   return VRSeg.start < LUSeg.stop() && LUSeg.start() < VRSeg.end;
 }

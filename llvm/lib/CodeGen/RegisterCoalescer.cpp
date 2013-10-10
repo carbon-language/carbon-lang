@@ -436,9 +436,9 @@ bool RegisterCoalescer::adjustCopiesBackFrom(const CoalescerPair &CP,
 
   // BValNo is a value number in B that is defined by a copy from A.  'B1' in
   // the example above.
-  LiveInterval::iterator BLR = IntB.FindLiveRangeContaining(CopyIdx);
-  if (BLR == IntB.end()) return false;
-  VNInfo *BValNo = BLR->valno;
+  LiveInterval::iterator BS = IntB.FindSegmentContaining(CopyIdx);
+  if (BS == IntB.end()) return false;
+  VNInfo *BValNo = BS->valno;
 
   // Get the location that B is defined at.  Two options: either this value has
   // an unknown definition point or it is defined at CopyIdx.  If unknown, we
@@ -447,10 +447,10 @@ bool RegisterCoalescer::adjustCopiesBackFrom(const CoalescerPair &CP,
 
   // AValNo is the value number in A that defines the copy, A3 in the example.
   SlotIndex CopyUseIdx = CopyIdx.getRegSlot(true);
-  LiveInterval::iterator ALR = IntA.FindLiveRangeContaining(CopyUseIdx);
-  // The live range might not exist after fun with physreg coalescing.
-  if (ALR == IntA.end()) return false;
-  VNInfo *AValNo = ALR->valno;
+  LiveInterval::iterator AS = IntA.FindSegmentContaining(CopyUseIdx);
+  // The live segment might not exist after fun with physreg coalescing.
+  if (AS == IntA.end()) return false;
+  VNInfo *AValNo = AS->valno;
 
   // If AValNo is defined as a copy from IntB, we can potentially process this.
   // Get the instruction that defines this value number.
@@ -459,54 +459,54 @@ bool RegisterCoalescer::adjustCopiesBackFrom(const CoalescerPair &CP,
   if (!CP.isCoalescable(ACopyMI) || !ACopyMI->isFullCopy())
     return false;
 
-  // Get the LiveRange in IntB that this value number starts with.
-  LiveInterval::iterator ValLR =
-    IntB.FindLiveRangeContaining(AValNo->def.getPrevSlot());
-  if (ValLR == IntB.end())
+  // Get the Segment in IntB that this value number starts with.
+  LiveInterval::iterator ValS =
+    IntB.FindSegmentContaining(AValNo->def.getPrevSlot());
+  if (ValS == IntB.end())
     return false;
 
-  // Make sure that the end of the live range is inside the same block as
+  // Make sure that the end of the live segment is inside the same block as
   // CopyMI.
-  MachineInstr *ValLREndInst =
-    LIS->getInstructionFromIndex(ValLR->end.getPrevSlot());
-  if (!ValLREndInst || ValLREndInst->getParent() != CopyMI->getParent())
+  MachineInstr *ValSEndInst =
+    LIS->getInstructionFromIndex(ValS->end.getPrevSlot());
+  if (!ValSEndInst || ValSEndInst->getParent() != CopyMI->getParent())
     return false;
 
-  // Okay, we now know that ValLR ends in the same block that the CopyMI
-  // live-range starts.  If there are no intervening live ranges between them in
-  // IntB, we can merge them.
-  if (ValLR+1 != BLR) return false;
+  // Okay, we now know that ValS ends in the same block that the CopyMI
+  // live-range starts.  If there are no intervening live segments between them
+  // in IntB, we can merge them.
+  if (ValS+1 != BS) return false;
 
   DEBUG(dbgs() << "Extending: " << PrintReg(IntB.reg, TRI));
 
-  SlotIndex FillerStart = ValLR->end, FillerEnd = BLR->start;
+  SlotIndex FillerStart = ValS->end, FillerEnd = BS->start;
   // We are about to delete CopyMI, so need to remove it as the 'instruction
   // that defines this value #'. Update the valnum with the new defining
   // instruction #.
   BValNo->def = FillerStart;
 
   // Okay, we can merge them.  We need to insert a new liverange:
-  // [ValLR.end, BLR.begin) of either value number, then we merge the
+  // [ValS.end, BS.begin) of either value number, then we merge the
   // two value numbers.
-  IntB.addRange(LiveRange(FillerStart, FillerEnd, BValNo));
+  IntB.addSegment(LiveInterval::Segment(FillerStart, FillerEnd, BValNo));
 
   // Okay, merge "B1" into the same value number as "B0".
-  if (BValNo != ValLR->valno)
-    IntB.MergeValueNumberInto(BValNo, ValLR->valno);
+  if (BValNo != ValS->valno)
+    IntB.MergeValueNumberInto(BValNo, ValS->valno);
   DEBUG(dbgs() << "   result = " << IntB << '\n');
 
   // If the source instruction was killing the source register before the
   // merge, unset the isKill marker given the live range has been extended.
-  int UIdx = ValLREndInst->findRegisterUseOperandIdx(IntB.reg, true);
+  int UIdx = ValSEndInst->findRegisterUseOperandIdx(IntB.reg, true);
   if (UIdx != -1) {
-    ValLREndInst->getOperand(UIdx).setIsKill(false);
+    ValSEndInst->getOperand(UIdx).setIsKill(false);
   }
 
   // Rewrite the copy. If the copy instruction was killing the destination
   // register before the merge, find the last use and trim the live range. That
   // will also add the isKill marker.
   CopyMI->substituteRegister(IntA.reg, IntB.reg, 0, *TRI);
-  if (ALR->end == CopyIdx)
+  if (AS->end == CopyIdx)
     LIS->shrinkToUses(&IntA);
 
   ++numExtends;
@@ -627,8 +627,8 @@ bool RegisterCoalescer::removeCopyByCommutingDef(const CoalescerPair &CP,
        UE = MRI->use_nodbg_end(); UI != UE; ++UI) {
     MachineInstr *UseMI = &*UI;
     SlotIndex UseIdx = LIS->getInstructionIndex(UseMI);
-    LiveInterval::iterator ULR = IntA.FindLiveRangeContaining(UseIdx);
-    if (ULR == IntA.end() || ULR->valno != AValNo)
+    LiveInterval::iterator US = IntA.FindSegmentContaining(UseIdx);
+    if (US == IntA.end() || US->valno != AValNo)
       continue;
     // If this use is tied to a def, we can't rewrite the register.
     if (UseMI->isRegTiedToDefOperand(UI.getOperandNo()))
@@ -679,8 +679,8 @@ bool RegisterCoalescer::removeCopyByCommutingDef(const CoalescerPair &CP,
       continue;
     }
     SlotIndex UseIdx = LIS->getInstructionIndex(UseMI).getRegSlot(true);
-    LiveInterval::iterator ULR = IntA.FindLiveRangeContaining(UseIdx);
-    if (ULR == IntA.end() || ULR->valno != AValNo)
+    LiveInterval::iterator US = IntA.FindSegmentContaining(UseIdx);
+    if (US == IntA.end() || US->valno != AValNo)
       continue;
     // Kill flags are no longer accurate. They are recomputed after RA.
     UseMO.setIsKill(false);
@@ -710,14 +710,14 @@ bool RegisterCoalescer::removeCopyByCommutingDef(const CoalescerPair &CP,
     UseMI->eraseFromParent();
   }
 
-  // Extend BValNo by merging in IntA live ranges of AValNo. Val# definition
+  // Extend BValNo by merging in IntA live segments of AValNo. Val# definition
   // is updated.
   VNInfo *ValNo = BValNo;
   ValNo->def = AValNo->def;
   for (LiveInterval::iterator AI = IntA.begin(), AE = IntA.end();
        AI != AE; ++AI) {
     if (AI->valno != AValNo) continue;
-    IntB.addRange(LiveRange(AI->start, AI->end, ValNo));
+    IntB.addSegment(LiveInterval::Segment(AI->start, AI->end, ValNo));
   }
   DEBUG(dbgs() << "\t\textended: " << IntB << '\n');
 
@@ -1107,7 +1107,8 @@ bool RegisterCoalescer::joinCopy(MachineInstr *CopyMI, bool &Again) {
     if (reMaterializeTrivialDef(CP, CopyMI, IsDefCopy))
       return true;
 
-    // If we can eliminate the copy without merging the live ranges, do so now.
+    // If we can eliminate the copy without merging the live segments, do so
+    // now.
     if (!CP.isPartial() && !CP.isPhys()) {
       if (adjustCopiesBackFrom(CP, CopyMI) ||
           removeCopyByCommutingDef(CP, CopyMI)) {

@@ -1004,7 +1004,7 @@ void MachineVerifier::checkLiveness(const MachineOperand *MO, unsigned MONum) {
           if (const LiveInterval *LI = LiveInts->getCachedRegUnit(*Units)) {
             LiveRangeQuery LRQ(*LI, UseIdx);
             if (!LRQ.valueIn()) {
-              report("No live range at use", MO, MONum);
+              report("No live segment at use", MO, MONum);
               *OS << UseIdx << " is not live in " << PrintRegUnit(*Units, TRI)
                   << ' ' << *LI << '\n';
             }
@@ -1022,7 +1022,7 @@ void MachineVerifier::checkLiveness(const MachineOperand *MO, unsigned MONum) {
           const LiveInterval &LI = LiveInts->getInterval(Reg);
           LiveRangeQuery LRQ(LI, UseIdx);
           if (!LRQ.valueIn()) {
-            report("No live range at use", MO, MONum);
+            report("No live segment at use", MO, MONum);
             *OS << UseIdx << " is not live in " << LI << '\n';
           }
           // Check for extra kill flags.
@@ -1071,7 +1071,7 @@ void MachineVerifier::checkLiveness(const MachineOperand *MO, unsigned MONum) {
         llvm::next(MRI->def_begin(Reg)) != MRI->def_end())
       report("Multiple virtual register defs in SSA form", MO, MONum);
 
-    // Check LiveInts for a live range, but only for virtual registers.
+    // Check LiveInts for a live segment, but only for virtual registers.
     if (LiveInts && TargetRegisterInfo::isVirtualRegister(Reg) &&
         !LiveInts->isNotInMIMap(MI)) {
       SlotIndex DefIdx = LiveInts->getInstructionIndex(MI);
@@ -1086,7 +1086,7 @@ void MachineVerifier::checkLiveness(const MachineOperand *MO, unsigned MONum) {
               << DefIdx << " in " << LI << '\n';
           }
         } else {
-          report("No live range at def", MO, MONum);
+          report("No live segment at def", MO, MONum);
           *OS << DefIdx << " is not live in " << LI << '\n';
         }
       } else {
@@ -1353,7 +1353,7 @@ void MachineVerifier::verifyLiveIntervalValue(const LiveInterval &LI,
   }
 
   if (DefVNI != VNI) {
-    report("Live range at def has different valno", MF, LI);
+    report("Live segment at def has different valno", MF, LI);
     *OS << "Valno #" << VNI->id << " is defined at " << VNI->def
         << " where valno #" << DefVNI->id << " is live\n";
     return;
@@ -1425,15 +1425,15 @@ void
 MachineVerifier::verifyLiveIntervalSegment(const LiveInterval &LI,
                                            LiveInterval::const_iterator I) {
   const VNInfo *VNI = I->valno;
-  assert(VNI && "Live range has no valno");
+  assert(VNI && "Live segment has no valno");
 
   if (VNI->id >= LI.getNumValNums() || VNI != LI.getValNumInfo(VNI->id)) {
-    report("Foreign valno in live range", MF, LI);
+    report("Foreign valno in live segment", MF, LI);
     *OS << *I << " has a bad valno\n";
   }
 
   if (VNI->isUnused()) {
-    report("Live range valno is marked unused", MF, LI);
+    report("Live segment valno is marked unused", MF, LI);
     *OS << *I << '\n';
   }
 
@@ -1503,7 +1503,7 @@ MachineVerifier::verifyLiveIntervalSegment(const LiveInterval &LI,
   // The following checks only apply to virtual registers. Physreg liveness
   // is too weird to check.
   if (TargetRegisterInfo::isVirtualRegister(LI.reg)) {
-    // A live range can end with either a redefinition, a kill flag on a
+    // A live segment can end with either a redefinition, a kill flag on a
     // use, or a dead flag on a def.
     bool hasRead = false;
     bool hasDeadDef = false;
@@ -1519,12 +1519,11 @@ MachineVerifier::verifyLiveIntervalSegment(const LiveInterval &LI,
     if (I->end.isDead()) {
       if (!hasDeadDef) {
         report("Instruction doesn't have a dead def operand", MI);
-        I->print(*OS);
-        *OS << " in " << LI << '\n';
+        *OS << *I << " in " << LI << '\n';
       }
     } else {
       if (!hasRead) {
-        report("Instruction ending live range doesn't read the register", MI);
+        report("Instruction ending live segment doesn't read the register", MI);
         *OS << *I << " in " << LI << '\n';
       }
     }
@@ -1532,7 +1531,7 @@ MachineVerifier::verifyLiveIntervalSegment(const LiveInterval &LI,
 
   // Now check all the basic blocks in this live segment.
   MachineFunction::const_iterator MFI = MBB;
-  // Is this live range the beginning of a non-PHIDef VN?
+  // Is this live segment the beginning of a non-PHIDef VN?
   if (I->start == VNI->def && !VNI->isPHIDef()) {
     // Not live-in to any blocks.
     if (MBB == EndMBB)

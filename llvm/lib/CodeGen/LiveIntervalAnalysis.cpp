@@ -355,7 +355,8 @@ bool LiveIntervals::shrinkToUses(LiveInterval *li,
     VNInfo *VNI = *I;
     if (VNI->isUnused())
       continue;
-    NewLI.addRange(LiveRange(VNI->def, VNI->def.getDeadSlot(), VNI));
+    NewLI.addSegment(LiveInterval::Segment(VNI->def, VNI->def.getDeadSlot(),
+                                           VNI));
   }
 
   // Keep track of the PHIs that are in use.
@@ -391,7 +392,7 @@ bool LiveIntervals::shrinkToUses(LiveInterval *li,
 
     // VNI is live-in to MBB.
     DEBUG(dbgs() << " live-in at " << BlockStart << '\n');
-    NewLI.addRange(LiveRange(BlockStart, Idx, VNI));
+    NewLI.addSegment(LiveInterval::Segment(BlockStart, Idx, VNI));
 
     // Make sure VNI is live-out from the predecessors.
     for (MachineBasicBlock::const_pred_iterator PI = MBB->pred_begin(),
@@ -412,14 +413,14 @@ bool LiveIntervals::shrinkToUses(LiveInterval *li,
     VNInfo *VNI = *I;
     if (VNI->isUnused())
       continue;
-    LiveInterval::iterator LII = NewLI.FindLiveRangeContaining(VNI->def);
-    assert(LII != NewLI.end() && "Missing live range for PHI");
+    LiveInterval::iterator LII = NewLI.FindSegmentContaining(VNI->def);
+    assert(LII != NewLI.end() && "Missing segment for PHI");
     if (LII->end != VNI->def.getDeadSlot())
       continue;
     if (VNI->isPHIDef()) {
       // This is a dead PHI. Remove it.
       VNI->markUnused();
-      NewLI.removeRange(*LII);
+      NewLI.removeSegment(*LII);
       DEBUG(dbgs() << "Dead PHI at " << VNI->def << " may separate interval\n");
       CanSeparate = true;
     } else {
@@ -434,8 +435,8 @@ bool LiveIntervals::shrinkToUses(LiveInterval *li,
     }
   }
 
-  // Move the trimmed ranges back.
-  li->ranges.swap(NewLI.ranges);
+  // Move the trimmed segments back.
+  li->segments.swap(NewLI.segments);
   DEBUG(dbgs() << "Shrunk: " << *li << '\n');
   return CanSeparate;
 }
@@ -461,13 +462,13 @@ void LiveIntervals::pruneValue(LiveInterval *LI, SlotIndex Kill,
 
   // If VNI isn't live out from KillMBB, the value is trivially pruned.
   if (LRQ.endPoint() < MBBEnd) {
-    LI->removeRange(Kill, LRQ.endPoint());
+    LI->removeSegment(Kill, LRQ.endPoint());
     if (EndPoints) EndPoints->push_back(LRQ.endPoint());
     return;
   }
 
   // VNI is live out of KillMBB.
-  LI->removeRange(Kill, MBBEnd);
+  LI->removeSegment(Kill, MBBEnd);
   if (EndPoints) EndPoints->push_back(MBBEnd);
 
   // Find all blocks that are reachable from KillMBB without leaving VNI's live
@@ -487,21 +488,21 @@ void LiveIntervals::pruneValue(LiveInterval *LI, SlotIndex Kill,
       tie(MBBStart, MBBEnd) = Indexes->getMBBRange(MBB);
       LiveRangeQuery LRQ(*LI, MBBStart);
       if (LRQ.valueIn() != VNI) {
-        // This block isn't part of the VNI live range. Prune the search.
+        // This block isn't part of the VNI segment. Prune the search.
         I.skipChildren();
         continue;
       }
 
       // Prune the search if VNI is killed in MBB.
       if (LRQ.endPoint() < MBBEnd) {
-        LI->removeRange(MBBStart, LRQ.endPoint());
+        LI->removeSegment(MBBStart, LRQ.endPoint());
         if (EndPoints) EndPoints->push_back(LRQ.endPoint());
         I.skipChildren();
         continue;
       }
 
       // VNI is live through MBB.
-      LI->removeRange(MBBStart, MBBEnd);
+      LI->removeSegment(MBBStart, MBBEnd);
       if (EndPoints) EndPoints->push_back(MBBEnd);
       ++I;
     }
@@ -535,7 +536,8 @@ void LiveIntervals::addKillFlags(const VirtRegMap *VRM) {
       RU.push_back(std::make_pair(RUInt, RUInt->find(LI->begin()->end)));
     }
 
-    // Every instruction that kills Reg corresponds to a live range end point.
+    // Every instruction that kills Reg corresponds to a segment range end
+    // point.
     for (LiveInterval::iterator RI = LI->begin(), RE = LI->end(); RI != RE;
          ++RI) {
       // A block index indicates an MBB edge.
@@ -623,18 +625,18 @@ LiveIntervals::getSpillWeight(bool isDef, bool isUse, BlockFrequency freq) {
   return (isDef + isUse) * (freq.getFrequency() * Scale);
 }
 
-LiveRange LiveIntervals::addLiveRangeToEndOfBlock(unsigned reg,
-                                                  MachineInstr* startInst) {
+LiveInterval::Segment
+LiveIntervals::addSegmentToEndOfBlock(unsigned reg, MachineInstr* startInst) {
   LiveInterval& Interval = createEmptyInterval(reg);
   VNInfo* VN = Interval.getNextValue(
     SlotIndex(getInstructionIndex(startInst).getRegSlot()),
     getVNInfoAllocator());
-  LiveRange LR(
+  LiveInterval::Segment S(
      SlotIndex(getInstructionIndex(startInst).getRegSlot()),
      getMBBEndIdx(startInst->getParent()), VN);
-  Interval.addRange(LR);
+  Interval.addSegment(S);
 
-  return LR;
+  return S;
 }
 
 
@@ -798,7 +800,7 @@ private:
   ///    Move def to NewIdx, possibly across another live value.
   ///
   /// 4. Def at OldIdx AND at NewIdx:
-  ///    Remove live range [OldIdx;NewIdx) and value defined at OldIdx.
+  ///    Remove segment [OldIdx;NewIdx) and value defined at OldIdx.
   ///    (Happens when bundling multiple defs together).
   ///
   /// 5. Value read at OldIdx, killed before NewIdx:
@@ -868,7 +870,8 @@ private:
     // intermediate ranges up.
     assert(NewI != I && "Inconsistent iterators");
     std::copy(llvm::next(I), NewI, I);
-    *llvm::prior(NewI) = LiveRange(DefVNI->def, NewIdx.getDeadSlot(), DefVNI);
+    *llvm::prior(NewI)
+      = LiveInterval::Segment(DefVNI->def, NewIdx.getDeadSlot(), DefVNI);
   }
 
   /// Update LI to reflect an instruction has been moved upwards from OldIdx
@@ -949,7 +952,7 @@ private:
     // DefVNI is a dead def. It may have been moved across other values in LI,
     // so move I up to NewI. Slide [NewI;I) down one position.
     std::copy_backward(NewI, I, llvm::next(I));
-    *NewI = LiveRange(DefVNI->def, NewIdx.getDeadSlot(), DefVNI);
+    *NewI = LiveInterval::Segment(DefVNI->def, NewIdx.getDeadSlot(), DefVNI);
   }
 
   void updateRegMaskSlots() {
@@ -1119,9 +1122,9 @@ LiveIntervals::repairIntervalsInRange(MachineBasicBlock *MBB,
               if (LII != LI.begin())
                 prevStart = llvm::prior(LII)->start;
 
-              // FIXME: This could be more efficient if there was a removeRange
-              // method that returned an iterator.
-              LI.removeRange(*LII, true);
+              // FIXME: This could be more efficient if there was a
+              // removeSegment method that returned an iterator.
+              LI.removeSegment(*LII, true);
               if (prevStart.isValid())
                 LII = LI.find(prevStart);
               else
@@ -1140,13 +1143,14 @@ LiveIntervals::repairIntervalsInRange(MachineBasicBlock *MBB,
           if (!lastUseIdx.isValid()) {
             VNInfo *VNI = LI.getNextValue(instrIdx.getRegSlot(),
                                           VNInfoAllocator);
-            LiveRange LR(instrIdx.getRegSlot(), instrIdx.getDeadSlot(), VNI);
-            LII = LI.addRange(LR);
+            LiveInterval::Segment S(instrIdx.getRegSlot(),
+                                    instrIdx.getDeadSlot(), VNI);
+            LII = LI.addSegment(S);
           } else if (LII->start != instrIdx.getRegSlot()) {
             VNInfo *VNI = LI.getNextValue(instrIdx.getRegSlot(),
                                           VNInfoAllocator);
-            LiveRange LR(instrIdx.getRegSlot(), lastUseIdx, VNI);
-            LII = LI.addRange(LR);
+            LiveInterval::Segment S(instrIdx.getRegSlot(), lastUseIdx, VNI);
+            LII = LI.addSegment(S);
           }
 
           if (MO.getSubReg() && !MO.isUndef())

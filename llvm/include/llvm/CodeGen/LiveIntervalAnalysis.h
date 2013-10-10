@@ -137,10 +137,10 @@ namespace llvm {
       VirtRegIntervals[Reg] = 0;
     }
 
-    /// addLiveRangeToEndOfBlock - Given a register and an instruction,
-    /// adds a live range from that instruction to the end of its MBB.
-    LiveRange addLiveRangeToEndOfBlock(unsigned reg,
-                                       MachineInstr* startInst);
+    /// Given a register and an instruction, adds a live segment from that
+    /// instruction to the end of its MBB.
+    LiveInterval::Segment addSegmentToEndOfBlock(unsigned reg,
+                                                 MachineInstr* startInst);
 
     /// shrinkToUses - After removing some uses of a register, shrink its live
     /// range to just the remaining uses. This method does not compute reaching
