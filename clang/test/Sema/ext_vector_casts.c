@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -fno-lax-vector-conversions %s
+// RUN: %clang_cc1 -triple x86_64-apple-macos10.7.0 -fsyntax-only -verify -fno-lax-vector-conversions %s
 
 typedef __attribute__(( ext_vector_type(2) )) float float2;
 typedef __attribute__(( ext_vector_type(4) )) int int4;
