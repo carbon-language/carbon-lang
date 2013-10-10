@@ -611,8 +611,8 @@ Instruction::Dump (lldb_private::Stream *s,
         }
         else
         {
-            // Else, we have ARM which can show up to a uint32_t 0x00000000 (10 spaces)
-            // plus two for padding...
+            // Else, we have ARM or MIPS which can show up to a uint32_t
+            // 0x00000000 (10 spaces) plus two for padding...
             if (max_opcode_byte_size > 0)
                 m_opcode.Dump (&ss, max_opcode_byte_size * 3 + 1);
             else
