@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=r600 -mcpu=tahiti | FileCheck %s
+; RUN: llc < %s -march=r600 -mcpu=tahiti -verify-machineinstrs | FileCheck %s
 
 ; load a f64 value from the global address space.
 ; CHECK: @load_f64

@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=r600 -mcpu=tahiti | FileCheck %s
+; RUN: llc < %s -march=r600 -mcpu=tahiti -verify-machineinstrs | FileCheck %s
 
 ; CHECK: @fadd_f64
 ; CHECK: V_ADD_F64 {{VGPR[0-9]+_VGPR[0-9]+, VGPR[0-9]+_VGPR[0-9]+, VGPR[0-9]+_VGPR[0-9]+}}

@@ -1,4 +1,4 @@
-;RUN: llc < %s -march=r600 -mcpu=verde | FileCheck %s
+;RUN: llc < %s -march=r600 -mcpu=verde -verify-machineinstrs | FileCheck %s
 
 ;CHECK: V_MAX_I32_e32
 

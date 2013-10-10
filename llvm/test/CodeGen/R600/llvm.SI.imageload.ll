@@ -1,4 +1,4 @@
-;RUN: llc < %s -march=r600 -mcpu=verde | FileCheck %s
+;RUN: llc < %s -march=r600 -mcpu=verde -verify-machineinstrs | FileCheck %s
 
 ;CHECK-DAG: IMAGE_LOAD {{VGPR[0-9]+_VGPR[0-9]+_VGPR[0-9]+_VGPR[0-9]+}}, 15, 0, 0, -1
 ;CHECK-DAG: IMAGE_LOAD_MIP {{VGPR[0-9]+_VGPR[0-9]+}}, 3, 0, 0, 0

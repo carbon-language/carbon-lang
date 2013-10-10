@@ -1,4 +1,4 @@
-;RUN: llc < %s -march=r600 -mcpu=verde | FileCheck %s
+;RUN: llc < %s -march=r600 -mcpu=verde -verify-machineinstrs | FileCheck %s
 
 ; This shader has the potential to generated illeagal VGPR to SGPR copies if
 ; the wrong register class is used for the REG_SEQUENCE instructions.

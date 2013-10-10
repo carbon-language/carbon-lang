@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=r600 -mcpu=SI | FileCheck %s
+; RUN: llc < %s -march=r600 -mcpu=SI -verify-machineinstrs | FileCheck %s
 
 ; CHECK: @fma_f32
 ; CHECK: V_FMA_F32 {{VGPR[0-9]+, VGPR[0-9]+, VGPR[0-9]+, VGPR[0-9]+}}

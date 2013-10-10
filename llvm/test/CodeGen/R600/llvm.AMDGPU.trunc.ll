@@ -1,5 +1,5 @@
 ; RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck --check-prefix=R600-CHECK %s
-; RUN: llc < %s -march=r600 -mcpu=verde | FileCheck --check-prefix=SI-CHECK %s
+; RUN: llc < %s -march=r600 -mcpu=verde -verify-machineinstrs | FileCheck --check-prefix=SI-CHECK %s
 
 ; R600-CHECK: @amdgpu_trunc
 ; R600-CHECK: TRUNC T{{[0-9]+\.[XYZW]}}, KC0[2].Z

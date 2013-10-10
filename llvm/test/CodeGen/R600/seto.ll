@@ -1,4 +1,4 @@
-;RUN: llc < %s -march=r600 -mcpu=verde | FileCheck %s
+;RUN: llc < %s -march=r600 -mcpu=verde -verify-machineinstrs | FileCheck %s
 
 ;CHECK: V_CMP_O_F32_e64 SGPR0_SGPR1, {{[SV]GPR[0-9]+, [SV]GPR[0-9]+}}, 0, 0, 0, 0
 

@@ -1,5 +1,5 @@
 
-; RUN: llc < %s -march=r600 -mcpu=SI | FileCheck %s
+; RUN: llc < %s -march=r600 -mcpu=SI -verify-machineinstrs | FileCheck %s
 
 ; CHECK: V_ASHR
 define void @test(i64 addrspace(1)* %out, i32 %a, i32 %b, i32 %c)  {

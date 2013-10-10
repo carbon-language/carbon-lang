@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=r600 -mcpu=verde | FileCheck %s
+; RUN: llc < %s -march=r600 -mcpu=verde -verify-machineinstrs | FileCheck %s
 
 ; On Southern Islands GPUs the local address space(3) uses 32-bit pointers and
 ; the global address space(1) uses 64-bit pointers.  These tests check to make sure

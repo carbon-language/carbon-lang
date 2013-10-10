@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=r600 -mcpu=SI | FileCheck %s
+; RUN: llc < %s -march=r600 -mcpu=SI -verify-machineinstrs | FileCheck %s
 
 ; This test just checks that the compiler doesn't crash.
 ; CHECK-LABEL: @v32i8_to_v8i32

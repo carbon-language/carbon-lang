@@ -1,4 +1,4 @@
-;RUN: llc < %s -march=r600 -mcpu=verde | FileCheck %s
+;RUN: llc < %s -march=r600 -mcpu=verde -verify-machineinstrs | FileCheck %s
 
 ;CHECK_LABEL: @test1
 ;CHECK: TBUFFER_STORE_FORMAT_XYZW {{VGPR[0-9]+_VGPR[0-9]+_VGPR[0-9]+_VGPR[0-9]+}}, 32, -1, 0, -1, 0, 14, 4, {{VGPR[0-9]+}}, {{SGPR[0-9]+_SGPR[0-9]+_SGPR[0-9]+_SGPR[0-9]+}}, -1, 0, 0

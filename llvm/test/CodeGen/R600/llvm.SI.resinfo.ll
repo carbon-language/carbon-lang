@@ -1,4 +1,4 @@
-;RUN: llc < %s -march=r600 -mcpu=verde | FileCheck %s
+;RUN: llc < %s -march=r600 -mcpu=verde -verify-machineinstrs | FileCheck %s
 
 ;CHECK: IMAGE_GET_RESINFO {{VGPR[0-9]+_VGPR[0-9]+_VGPR[0-9]+_VGPR[0-9]+}}, 15, 0, 0, -1
 ;CHECK: IMAGE_GET_RESINFO {{VGPR[0-9]+_VGPR[0-9]+}}, 3, 0, 0, 0

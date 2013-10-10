@@ -1,5 +1,5 @@
 ; RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck --check-prefix=R600-CHECK %s
-; RUN: llc < %s -march=r600 -mcpu=SI | FileCheck --check-prefix=SI-CHECK %s
+; RUN: llc < %s -march=r600 -mcpu=SI -verify-machineinstrs | FileCheck --check-prefix=SI-CHECK %s
 
 ; R600-CHECK: @ngroups_x
 ; R600-CHECK: MEM_RAT_CACHELESS STORE_RAW [[VAL:T[0-9]+\.X]]

@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=r600 -mcpu=tahiti | FileCheck %s
+; RUN: llc < %s -march=r600 -mcpu=tahiti -verify-machineinstrs | FileCheck %s
 
 ; CHECK: @fconst_f64
 ; CHECK: V_MOV_B32_e32 {{VGPR[0-9]+}}, 0.000000e+00

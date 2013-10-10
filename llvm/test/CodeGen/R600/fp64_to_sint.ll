@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=r600 -mcpu=SI | FileCheck %s --check-prefix=CHECK
+; RUN: llc < %s -march=r600 -mcpu=SI -verify-machineinstrs | FileCheck %s --check-prefix=CHECK
 
 ; CHECK: @fp64_to_sint
 ; CHECK: V_CVT_I32_F64_e32

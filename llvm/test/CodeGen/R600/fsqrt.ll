@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=r600 -mcpu=tahiti | FileCheck %s
+; RUN: llc < %s -march=r600 -mcpu=tahiti -verify-machineinstrs | FileCheck %s
 
 ; CHECK: @fsqrt_f32
 ; CHECK: V_SQRT_F32_e32 {{VGPR[0-9]+, VGPR[0-9]+}}

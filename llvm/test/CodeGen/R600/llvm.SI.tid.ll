@@ -1,4 +1,4 @@
-;RUN: llc < %s -march=r600 -mcpu=verde | FileCheck %s
+;RUN: llc < %s -march=r600 -mcpu=verde -verify-machineinstrs | FileCheck %s
 
 ;CHECK: V_MBCNT_LO_U32_B32_e64
 ;CHECK: V_MBCNT_HI_U32_B32_e32
