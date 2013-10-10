@@ -2345,40 +2345,6 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
     return EmitNeonCall(F, Ops, "vcvt_n");
   }
 
-  // Load/Store
-  case AArch64::BI__builtin_neon_vld1_v:
-    return EmitARMBuiltinExpr(ARM::BI__builtin_neon_vld1_v, E);
-  case AArch64::BI__builtin_neon_vld1q_v:
-    return EmitARMBuiltinExpr(ARM::BI__builtin_neon_vld1q_v, E);
-  case AArch64::BI__builtin_neon_vld2_v:
-    return EmitARMBuiltinExpr(ARM::BI__builtin_neon_vld2_v, E);
-  case AArch64::BI__builtin_neon_vld2q_v:
-    return EmitARMBuiltinExpr(ARM::BI__builtin_neon_vld2q_v, E);
-  case AArch64::BI__builtin_neon_vld3_v:
-    return EmitARMBuiltinExpr(ARM::BI__builtin_neon_vld3_v, E);
-  case AArch64::BI__builtin_neon_vld3q_v:
-    return EmitARMBuiltinExpr(ARM::BI__builtin_neon_vld3q_v, E);
-  case AArch64::BI__builtin_neon_vld4_v:
-    return EmitARMBuiltinExpr(ARM::BI__builtin_neon_vld4_v, E);
-  case AArch64::BI__builtin_neon_vld4q_v:
-    return EmitARMBuiltinExpr(ARM::BI__builtin_neon_vld4q_v, E);
-  case AArch64::BI__builtin_neon_vst1_v:
-    return EmitARMBuiltinExpr(ARM::BI__builtin_neon_vst1_v, E);
-  case AArch64::BI__builtin_neon_vst1q_v:
-    return EmitARMBuiltinExpr(ARM::BI__builtin_neon_vst1q_v, E);
-  case AArch64::BI__builtin_neon_vst2_v:
-    return EmitARMBuiltinExpr(ARM::BI__builtin_neon_vst2_v, E);
-  case AArch64::BI__builtin_neon_vst2q_v:
-    return EmitARMBuiltinExpr(ARM::BI__builtin_neon_vst2q_v, E);
-  case AArch64::BI__builtin_neon_vst3_v:
-    return EmitARMBuiltinExpr(ARM::BI__builtin_neon_vst3_v, E);
-  case AArch64::BI__builtin_neon_vst3q_v:
-    return EmitARMBuiltinExpr(ARM::BI__builtin_neon_vst3q_v, E);
-  case AArch64::BI__builtin_neon_vst4_v:
-    return EmitARMBuiltinExpr(ARM::BI__builtin_neon_vst4_v, E);
-  case AArch64::BI__builtin_neon_vst4q_v:
-    return EmitARMBuiltinExpr(ARM::BI__builtin_neon_vst4q_v, E);
-
   // AArch64-only builtins
   case AArch64::BI__builtin_neon_vfma_lane_v:
   case AArch64::BI__builtin_neon_vfmaq_laneq_v: {
