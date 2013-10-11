@@ -195,3 +195,13 @@ typedef NS_ENUM(NSInteger, UIP8_3) {
   Random5 = 0xbadbeef,
   Random6
 } ;
+
+// rdar://15200602
+#define NS_AVAILABLE_MAC(X)  __attribute__((availability(macosx,introduced=X)))
+#define NS_ENUM_AVAILABLE_MAC(X) __attribute__((availability(macosx,introduced=X)))
+
+typedef NS_ENUM(NSInteger, NSModalResponse) {
+    NSModalResponseStop                 = (-1000), // Also used as the default response for sheets
+    NSModalResponseAbort                = (-1001),
+    NSModalResponseContinue             = (-1002), 
+} NS_ENUM_AVAILABLE_MAC(10.9);

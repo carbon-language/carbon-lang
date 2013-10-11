@@ -510,7 +510,8 @@ static bool rewriteToNSEnumDecl(const EnumDecl *EnumDcl,
   SourceRange R(EnumDcl->getLocStart(), EnumDcl->getLocStart());
   commit.replace(R, ClassString);
   SourceLocation EndOfTypedefLoc = TypedefDcl->getLocEnd();
-  EndOfTypedefLoc = trans::findLocationAfterSemi(EndOfTypedefLoc, NS.getASTContext());
+  EndOfTypedefLoc = trans::findLocationAfterSemi(EndOfTypedefLoc, NS.getASTContext(),
+                                                 /*IsDecl*/true);
   SourceLocation BeginOfTypedefLoc = TypedefDcl->getLocStart();
   if (!EndOfTypedefLoc.isInvalid()) {
     // FIXME. This assumes that typedef decl; is immediately preceeded by eoln.

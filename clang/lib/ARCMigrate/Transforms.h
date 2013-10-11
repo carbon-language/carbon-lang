@@ -167,13 +167,15 @@ bool isPlusOne(const Expr *E);
 /// immediately after the semicolon following the statement.
 /// If no semicolon is found or the location is inside a macro, the returned
 /// source location will be invalid.
-SourceLocation findLocationAfterSemi(SourceLocation loc, ASTContext &Ctx);
+SourceLocation findLocationAfterSemi(SourceLocation loc, ASTContext &Ctx,
+                                     bool IsDecl = false);
 
 /// \brief 'Loc' is the end of a statement range. This returns the location
 /// of the semicolon following the statement.
 /// If no semicolon is found or the location is inside a macro, the returned
 /// source location will be invalid.
-SourceLocation findSemiAfterLocation(SourceLocation loc, ASTContext &Ctx);
+SourceLocation findSemiAfterLocation(SourceLocation loc, ASTContext &Ctx,
+                                     bool IsDecl = false);
 
 bool hasSideEffects(Expr *E, ASTContext &Ctx);
 bool isGlobalVar(Expr *E);

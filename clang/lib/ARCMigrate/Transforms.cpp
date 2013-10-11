@@ -122,8 +122,8 @@ bool trans::isPlusOne(const Expr *E) {
 /// If no semicolon is found or the location is inside a macro, the returned
 /// source location will be invalid.
 SourceLocation trans::findLocationAfterSemi(SourceLocation loc,
-                                            ASTContext &Ctx) {
-  SourceLocation SemiLoc = findSemiAfterLocation(loc, Ctx);
+                                            ASTContext &Ctx, bool IsDecl) {
+  SourceLocation SemiLoc = findSemiAfterLocation(loc, Ctx, IsDecl);
   if (SemiLoc.isInvalid())
     return SourceLocation();
   return SemiLoc.getLocWithOffset(1);
@@ -134,7 +134,8 @@ SourceLocation trans::findLocationAfterSemi(SourceLocation loc,
 /// If no semicolon is found or the location is inside a macro, the returned
 /// source location will be invalid.
 SourceLocation trans::findSemiAfterLocation(SourceLocation loc,
-                                            ASTContext &Ctx) {
+                                            ASTContext &Ctx,
+                                            bool IsDecl) {
   SourceManager &SM = Ctx.getSourceManager();
   if (loc.isMacroID()) {
     if (!Lexer::isAtEndOfMacroExpansion(loc, SM, Ctx.getLangOpts(), &loc))
@@ -159,8 +160,13 @@ SourceLocation trans::findSemiAfterLocation(SourceLocation loc,
               file.begin(), tokenBegin, file.end());
   Token tok;
   lexer.LexFromRawLexer(tok);
-  if (tok.isNot(tok::semi))
-    return SourceLocation();
+  if (tok.isNot(tok::semi)) {
+    if (!IsDecl)
+      return SourceLocation();
+    // Declaration may be followed with other tokens; such as an __attribute,
+    // before ending with a semicolon.
+    return findSemiAfterLocation(tok.getLocation(), Ctx, /*IsDecl*/true);
+  }
 
   return tok.getLocation();
 }
