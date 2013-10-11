@@ -166,6 +166,24 @@ XCoreTargetLowering::XCoreTargetLowering(XCoreTargetMachine &XTM)
   setMinFunctionAlignment(1);
 }
 
+bool XCoreTargetLowering::isZExtFree(SDValue Val, EVT VT2) const {
+  if (Val.getOpcode() != ISD::LOAD)
+    return false;
+
+  EVT VT1 = Val.getValueType();
+  if (!VT1.isSimple() || !VT1.isInteger() ||
+      !VT2.isSimple() || !VT2.isInteger())
+    return false;
+
+  switch (VT1.getSimpleVT().SimpleTy) {
+  default: break;
+  case MVT::i8:
+    return true;
+  }
+
+  return false;
+}
+
 SDValue XCoreTargetLowering::
 LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   switch (Op.getOpcode())

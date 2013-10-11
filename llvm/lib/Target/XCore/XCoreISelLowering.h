@@ -83,6 +83,10 @@ namespace llvm {
 
     explicit XCoreTargetLowering(XCoreTargetMachine &TM);
 
+    using TargetLowering::isZExtFree;
+    virtual bool isZExtFree(SDValue Val, EVT VT2) const;
+
+
     virtual unsigned getJumpTableEncoding() const;
     virtual MVT getScalarShiftAmountTy(EVT LHSTy) const { return MVT::i32; }
 
