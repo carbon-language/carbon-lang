@@ -190,10 +190,7 @@ void GetStackTrace(StackTrace *stack, uptr max_s, uptr pc, uptr bp,
 
   uptr stack_top, stack_bottom;
   GetCurrentStackBounds(&stack_top, &stack_bottom);
-  stack->size = 0;
-  stack->trace[0] = pc;
-  stack->max_size = max_s;
-  stack->FastUnwindStack(pc, bp, stack_top, stack_bottom);
+  stack->FastUnwindStack(pc, bp, stack_top, stack_bottom, max_s);
 }
 
 void PrintWarning(uptr pc, uptr bp) {

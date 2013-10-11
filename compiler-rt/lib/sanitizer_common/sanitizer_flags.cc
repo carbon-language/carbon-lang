@@ -32,6 +32,10 @@ void ParseCommonFlagsFromString(const char *str) {
   ParseFlag(str, &f->detect_leaks, "detect_leaks");
   ParseFlag(str, &f->leak_check_at_exit, "leak_check_at_exit");
   ParseFlag(str, &f->allocator_may_return_null, "allocator_may_return_null");
+
+  // Do a sanity check for certain flags.
+  if (f->malloc_context_size < 1)
+    f->malloc_context_size = 1;
 }
 
 static bool GetFlagValue(const char *env, const char *name,

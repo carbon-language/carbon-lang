@@ -47,16 +47,11 @@ void FastUnwindTest::SetUp() {
   // Bottom is one slot before the start because FastUnwindStack uses >.
   fake_bottom = (uptr)&fake_stack[-1];
   start_pc = PC(0);
-
-  // This is common setup done by __asan::GetStackTrace().
-  trace.size = 0;
-  trace.max_size = ARRAY_SIZE(fake_stack);
-  trace.trace[0] = start_pc;
 }
 
 TEST_F(FastUnwindTest, Basic) {
   trace.FastUnwindStack(start_pc, (uptr)&fake_stack[0],
-                        fake_top, fake_bottom);
+                        fake_top, fake_bottom, kStackTraceMax);
   // Should get all on-stack retaddrs and start_pc.
   EXPECT_EQ(6U, trace.size);
   EXPECT_EQ(start_pc, trace.trace[0]);
@@ -70,7 +65,7 @@ TEST_F(FastUnwindTest, FramePointerLoop) {
   // Make one fp point to itself.
   fake_stack[4] = (uptr)&fake_stack[4];
   trace.FastUnwindStack(start_pc, (uptr)&fake_stack[0],
-                        fake_top, fake_bottom);
+                        fake_top, fake_bottom, kStackTraceMax);
   // Should get all on-stack retaddrs up to the 4th slot and start_pc.
   EXPECT_EQ(4U, trace.size);
   EXPECT_EQ(start_pc, trace.trace[0]);
@@ -83,7 +78,7 @@ TEST_F(FastUnwindTest, MisalignedFramePointer) {
   // Make one fp misaligned.
   fake_stack[4] += 3;
   trace.FastUnwindStack(start_pc, (uptr)&fake_stack[0],
-                        fake_top, fake_bottom);
+                        fake_top, fake_bottom, kStackTraceMax);
   // Should get all on-stack retaddrs up to the 4th slot and start_pc.
   EXPECT_EQ(4U, trace.size);
   EXPECT_EQ(start_pc, trace.trace[0]);
@@ -92,5 +87,12 @@ TEST_F(FastUnwindTest, MisalignedFramePointer) {
   }
 }
 
+TEST_F(FastUnwindTest, OneFrameStackTrace) {
+  trace.FastUnwindStack(start_pc, (uptr)&fake_stack[0],
+                        fake_top, fake_bottom, 1);
+  EXPECT_EQ(1U, trace.size);
+  EXPECT_EQ(1U, trace.max_size);
+  EXPECT_EQ(start_pc, trace.trace[0]);
+}
 
 }  // namespace __sanitizer
