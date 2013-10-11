@@ -104,7 +104,7 @@ bool ExpandPostRA::LowerSubregToReg(MachineInstr *MI) {
   }
 
   if (DstSubReg == InsReg) {
-    // No need to insert an identify copy instruction.
+    // No need to insert an identity copy instruction.
     // Watch out for case like this:
     // %RAX<def> = SUBREG_TO_REG 0, %EAX<kill>, 3
     // We must leave %RAX live.
