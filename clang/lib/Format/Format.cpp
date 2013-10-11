@@ -691,18 +691,32 @@ private:
           FormatTok->LastNewlineOffset = WhitespaceLength + i + 1;
           Column = 0;
           break;
+        case '\r':
+        case '\f':
+        case '\v':
+          Column = 0;
+          break;
         case ' ':
           ++Column;
           break;
         case '\t':
           Column += Style.TabWidth - Column % Style.TabWidth;
           break;
+        case '\\':
+          ++Column;
+          if (i + 1 == e || (FormatTok->TokenText[i + 1] != '\r' &&
+                             FormatTok->TokenText[i + 1] != '\n'))
+            FormatTok->Type = TT_ImplicitStringLiteral;
+          break;
         default:
+          FormatTok->Type = TT_ImplicitStringLiteral;
           ++Column;
           break;
         }
       }
 
+      if (FormatTok->Type == TT_ImplicitStringLiteral)
+        break;
       WhitespaceLength += FormatTok->Tok.getLength();
 
       readRawToken(*FormatTok);

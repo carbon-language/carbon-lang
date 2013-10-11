@@ -525,7 +525,8 @@ private:
 
     // Reset token type in case we have already looked at it and then recovered
     // from an error (e.g. failure to find the matching >).
-    if (CurrentToken != NULL && CurrentToken->Type != TT_LambdaLSquare)
+    if (CurrentToken != NULL && CurrentToken->Type != TT_LambdaLSquare &&
+        CurrentToken->Type != TT_ImplicitStringLiteral)
       CurrentToken->Type = TT_Unknown;
   }
 
@@ -1292,6 +1293,8 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
                                          const FormatToken &Tok) {
   if (Tok.Tok.getIdentifierInfo() && Tok.Previous->Tok.getIdentifierInfo())
     return true; // Never ever merge two identifiers.
+  if (Tok.Previous->Type == TT_ImplicitStringLiteral)
+    return Tok.WhitespaceRange.getBegin() != Tok.WhitespaceRange.getEnd();
   if (Line.Type == LT_ObjCMethodDecl) {
     if (Tok.Previous->Type == TT_ObjCMethodSpecifier)
       return true;

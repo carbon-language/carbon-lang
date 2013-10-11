@@ -1890,6 +1890,16 @@ TEST_F(FormatTest, EndOfFileEndsPPDirective) {
   EXPECT_EQ("#define A B", format("#  \\\n define  \\\n    A  \\\n       B"));
 }
 
+TEST_F(FormatTest, DoesntRemoveUnknownTokens) {
+  verifyFormat("#define A \\x20");
+  verifyFormat("#define A \\ x20");
+  EXPECT_EQ("#define A \\ x20", format("#define A \\   x20"));
+  verifyFormat("#define A ''");
+  verifyFormat("#define A ''qqq");
+  verifyFormat("#define A `qqq");
+  verifyFormat("f(\"aaaa, bbbb, \"\\\"ccccc\\\"\");");
+}
+
 TEST_F(FormatTest, IndentsPPDirectiveInReducedSpace) {
   verifyFormat("#define A(BB)", getLLVMStyleWithColumns(13));
   verifyFormat("#define A( \\\n    BB)", getLLVMStyleWithColumns(12));
