@@ -289,20 +289,20 @@ void Resolver::addAtoms(const std::vector<const DefinedAtom*>& newAtoms) {
   }
 }
 
-// Ask symbol table if any undefined atoms still exist. If so, keep searching
-// libraries until no more atoms being added.
-void Resolver::resolveUndefines() {
+// Keep adding atoms until _context.nextFile() returns an error. This function
+// is where undefined atoms are resolved.
+bool Resolver::resolveUndefines() {
   ScopedTask task(getDefaultDomain(), "resolveUndefines");
 
   for (;;) {
     ErrorOr<File &> file = _context.nextFile();
     _context.setResolverState(Resolver::StateNoChange);
     if (error_code(file) == InputGraphError::no_more_files)
-      return;
+      return true;
     if (!file) {
       llvm::errs() << "Error occurred in nextFile: "
                    << error_code(file).message() << "\n";
-      return;
+      return false;
     }
 
     switch (file->kind()) {
@@ -470,7 +470,8 @@ void Resolver::linkTimeOptimize() {
 }
 
 bool Resolver::resolve() {
-  this->resolveUndefines();
+  if (!this->resolveUndefines())
+    return false;
   this->updateReferences();
   this->deadStripOptimize();
   if (this->checkUndefines(false)) {

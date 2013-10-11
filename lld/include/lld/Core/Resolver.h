@@ -69,7 +69,7 @@ public:
 private:
 
   /// \brief The main function that iterates over the files to resolve
-  void resolveUndefines();
+  bool resolveUndefines();
   void updateReferences();
   void deadStripOptimize();
   bool checkUndefines(bool final);
