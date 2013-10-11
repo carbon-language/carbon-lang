@@ -879,12 +879,10 @@ size_t CheckString::Check(const SourceMgr &SM, StringRef Buffer,
   size_t LastPos = 0;
   std::vector<const Pattern *> NotStrings;
 
-  if (CheckTy != Check::CheckLabel) {
-    // Match "dag strings" (with mixed "not strings" if any).
-    LastPos = CheckDag(SM, Buffer, NotStrings, VariableTable);
-    if (LastPos == StringRef::npos)
-      return StringRef::npos;
-  }
+  // Match "dag strings" (with mixed "not strings" if any).
+  LastPos = CheckDag(SM, Buffer, NotStrings, VariableTable);
+  if (LastPos == StringRef::npos)
+    return StringRef::npos;
 
   // Match itself from the last position after matching CHECK-DAG.
   StringRef MatchBuffer = Buffer.substr(LastPos);

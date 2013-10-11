@@ -1,0 +1,11 @@
+; RUN: not FileCheck -input-file %s %s 2>&1 | FileCheck --check-prefix=ERROR %s
+
+bar
+zed
+
+CHECK-LABEL: {{^}}bar
+CHECK-DAG: {{^}}foo
+CHECK-LABEL: {{^}}zed
+
+ERROR: error: expected string not found in input
+ERROR-NEXT: CHECK-DAG: {{.....}}foo
