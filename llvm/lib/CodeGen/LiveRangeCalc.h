@@ -210,7 +210,7 @@ public:
   /// function can only be called once per basic block.  Once the live-in value
   /// has been determined, calculateValues() will add liveness to LI.
   ///
-  /// @param LI      The live range that is live-in to the block.
+  /// @param LR      The live range that is live-in to the block.
   /// @param DomNode The domtree node for the block.
   /// @param Kill    Index in block where LI is killed.  If the value is
   ///                live-through, set Kill = SLotIndex() and also call
