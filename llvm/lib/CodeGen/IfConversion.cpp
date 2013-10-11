@@ -23,6 +23,7 @@
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/TargetSchedule.h"
+#include "llvm/CodeGen/LiveRegUnits.h"
 #include "llvm/MC/MCInstrItineraries.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
@@ -201,11 +202,12 @@ namespace {
     void PredicateBlock(BBInfo &BBI,
                         MachineBasicBlock::iterator E,
                         SmallVectorImpl<MachineOperand> &Cond,
-                        SmallSet<unsigned, 4> &Redefs,
+                        LiveRegUnits &Redefs,
                         SmallSet<unsigned, 4> *LaterRedefs = 0);
     void CopyAndPredicateBlock(BBInfo &ToBBI, BBInfo &FromBBI,
                                SmallVectorImpl<MachineOperand> &Cond,
-                               SmallSet<unsigned, 4> &Redefs,
+                               LiveRegUnits &Redefs,
+                               const LiveRegUnits *DontKill = 0,
                                bool IgnoreBr = false);
     void MergeBlocks(BBInfo &ToBBI, BBInfo &FromBBI, bool AddEdges = true);
 
@@ -964,62 +966,56 @@ void IfConverter::RemoveExtraEdges(BBInfo &BBI) {
     BBI.BB->CorrectExtraCFGEdges(TBB, FBB, !Cond.empty());
 }
 
-/// InitPredRedefs / UpdatePredRedefs - Defs by predicated instructions are
-/// modeled as read + write (sort like two-address instructions). These
-/// routines track register liveness and add implicit uses to if-converted
-/// instructions to conform to the model.
-static void InitPredRedefs(MachineBasicBlock *BB, SmallSet<unsigned,4> &Redefs,
-                           const TargetRegisterInfo *TRI) {
-  for (MachineBasicBlock::livein_iterator I = BB->livein_begin(),
-         E = BB->livein_end(); I != E; ++I) {
-    unsigned Reg = *I;
-    for (MCSubRegIterator SubRegs(Reg, TRI, /*IncludeSelf=*/true);
-         SubRegs.isValid(); ++SubRegs)
-      Redefs.insert(*SubRegs);
-  }
-}
-
-static void UpdatePredRedefs(MachineInstr *MI, SmallSet<unsigned,4> &Redefs,
-                             const TargetRegisterInfo *TRI,
-                             bool AddImpUse = false) {
-  SmallVector<unsigned, 4> Defs;
-  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-    const MachineOperand &MO = MI->getOperand(i);
-    if (!MO.isReg())
-      continue;
-    unsigned Reg = MO.getReg();
-    if (!Reg)
-      continue;
-    if (MO.isDef())
-      Defs.push_back(Reg);
-    else if (MO.isKill()) {
-      for (MCSubRegIterator SubRegs(Reg, TRI, /*IncludeSelf=*/true);
-           SubRegs.isValid(); ++SubRegs)
-        Redefs.erase(*SubRegs);
-    }
-  }
-  MachineInstrBuilder MIB(*MI->getParent()->getParent(), MI);
-  for (unsigned i = 0, e = Defs.size(); i != e; ++i) {
-    unsigned Reg = Defs[i];
-    if (!Redefs.insert(Reg)) {
-      if (AddImpUse)
-        // Treat predicated update as read + write.
-        MIB.addReg(Reg, RegState::Implicit | RegState::Undef);
-    } else {
-      for (MCSubRegIterator SubRegs(Reg, TRI); SubRegs.isValid(); ++SubRegs)
-        Redefs.insert(*SubRegs);
-    }
-  }
-}
-
-static void UpdatePredRedefs(MachineBasicBlock::iterator I,
-                             MachineBasicBlock::iterator E,
-                             SmallSet<unsigned,4> &Redefs,
+/// Behaves like LiveRegUnits::StepForward() but also adds implicit uses to all
+/// values defined in MI which are not live/used by MI.
+static void UpdatePredRedefs(MachineInstr *MI, LiveRegUnits &Redefs,
                              const TargetRegisterInfo *TRI) {
-  while (I != E) {
-    UpdatePredRedefs(I, Redefs, TRI);
-    ++I;
+  for (ConstMIBundleOperands Ops(MI); Ops.isValid(); ++Ops) {
+    if (!Ops->isReg() || !Ops->isKill())
+      continue;
+    unsigned Reg = Ops->getReg();
+    if (Reg == 0)
+      continue;
+    Redefs.RemoveReg(Reg, *TRI);
   }
+  for (MIBundleOperands Ops(MI); Ops.isValid(); ++Ops) {
+    if (!Ops->isReg() || !Ops->isDef())
+      continue;
+    unsigned Reg = Ops->getReg();
+    if (Reg == 0 || Redefs.Contains(Reg, *TRI))
+      continue;
+    Redefs.AddReg(Reg, *TRI);
+
+    MachineOperand &Op = *Ops;
+    MachineInstr *MI = Op.getParent();
+    MachineInstrBuilder MIB(*MI->getParent()->getParent(), MI);
+    MIB.addReg(Reg, RegState::Implicit | RegState::Undef);
+  }
+}
+
+/**
+ * Remove kill flags from operands with a registers in the @p DontKill set.
+ */
+static void RemoveKills(MachineInstr &MI, const LiveRegUnits &DontKill,
+                        const MCRegisterInfo &MCRI) {
+  for (MIBundleOperands O(&MI); O.isValid(); ++O) {
+    if (!O->isReg() || !O->isKill())
+      continue;
+    if (DontKill.Contains(O->getReg(), MCRI))
+      O->setIsKill(false);
+  }
+}
+
+/**
+ * Walks a range of machine instructions and removes kill flags for registers
+ * in the @p DontKill set.
+ */
+static void RemoveKills(MachineBasicBlock::iterator I,
+                        MachineBasicBlock::iterator E,
+                        const LiveRegUnits &DontKill,
+                        const MCRegisterInfo &MCRI) {
+  for ( ; I != E; ++I)
+    RemoveKills(*I, DontKill, MCRI);
 }
 
 /// IfConvertSimple - If convert a simple (split, no rejoin) sub-CFG.
@@ -1052,20 +1048,26 @@ bool IfConverter::IfConvertSimple(BBInfo &BBI, IfcvtKind Kind) {
 
   // Initialize liveins to the first BB. These are potentiall redefined by
   // predicated instructions.
-  SmallSet<unsigned, 4> Redefs;
-  InitPredRedefs(CvtBBI->BB, Redefs, TRI);
-  InitPredRedefs(NextBBI->BB, Redefs, TRI);
+  LiveRegUnits Redefs;
+  Redefs.AddLiveIns(*(CvtBBI->BB), *TRI);
+  Redefs.AddLiveIns(*(NextBBI->BB), *TRI);
+
+  // Compute a set of registers which must not be killed by instructions in
+  // BB1: This is everything live-in to BB2.
+  LiveRegUnits DontKill;
+  DontKill.AddLiveIns(*(NextBBI->BB), *TRI);
 
   if (CvtBBI->BB->pred_size() > 1) {
     BBI.NonPredSize -= TII->RemoveBranch(*BBI.BB);
     // Copy instructions in the true block, predicate them, and add them to
     // the entry block.
-    CopyAndPredicateBlock(BBI, *CvtBBI, Cond, Redefs);
+    CopyAndPredicateBlock(BBI, *CvtBBI, Cond, Redefs, &DontKill);
 
     // RemoveExtraEdges won't work if the block has an unanalyzable branch, so
     // explicitly remove CvtBBI as a successor.
     BBI.BB->removeSuccessor(CvtBBI->BB);
   } else {
+    RemoveKills(CvtBBI->BB->begin(), CvtBBI->BB->end(), DontKill, *TRI);
     PredicateBlock(*CvtBBI, CvtBBI->BB->end(), Cond, Redefs);
 
     // Merge converted block into entry block.
@@ -1151,16 +1153,16 @@ bool IfConverter::IfConvertTriangle(BBInfo &BBI, IfcvtKind Kind) {
 
   // Initialize liveins to the first BB. These are potentially redefined by
   // predicated instructions.
-  SmallSet<unsigned, 4> Redefs;
-  InitPredRedefs(CvtBBI->BB, Redefs, TRI);
-  InitPredRedefs(NextBBI->BB, Redefs, TRI);
+  LiveRegUnits Redefs;
+  Redefs.AddLiveIns(*(CvtBBI->BB), *TRI);
+  Redefs.AddLiveIns(*(NextBBI->BB), *TRI);
 
   bool HasEarlyExit = CvtBBI->FalseBB != NULL;
   if (CvtBBI->BB->pred_size() > 1) {
     BBI.NonPredSize -= TII->RemoveBranch(*BBI.BB);
     // Copy instructions in the true block, predicate them, and add them to
     // the entry block.
-    CopyAndPredicateBlock(BBI, *CvtBBI, Cond, Redefs, true);
+    CopyAndPredicateBlock(BBI, *CvtBBI, Cond, Redefs, 0, true);
 
     // RemoveExtraEdges won't work if the block has an unanalyzable branch, so
     // explicitly remove CvtBBI as a successor.
@@ -1279,8 +1281,8 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI, IfcvtKind Kind,
 
   // Initialize liveins to the first BB. These are potentially redefined by
   // predicated instructions.
-  SmallSet<unsigned, 4> Redefs;
-  InitPredRedefs(BBI1->BB, Redefs, TRI);
+  LiveRegUnits Redefs;
+  Redefs.AddLiveIns(*(BBI1->BB), *TRI);
 
   // Remove the duplicated instructions at the beginnings of both paths.
   MachineBasicBlock::iterator DI1 = BBI1->BB->begin();
@@ -1307,7 +1309,19 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI, IfcvtKind Kind,
       --NumDups1;
   }
 
-  UpdatePredRedefs(BBI1->BB->begin(), DI1, Redefs, TRI);
+  // Compute a set of registers which must not be killed by instructions in BB1:
+  // This is everything used+live in BB2 after the duplicated instructions. We
+  // can compute this set by simulating liveness backwards from the end of BB2.
+  LiveRegUnits DontKill;
+  for (MachineBasicBlock::reverse_instr_iterator I = BBI2->BB->rbegin(),
+       E = MachineBasicBlock::reverse_iterator(DI2); I != E; ++I) {
+    DontKill.StepBackward(*I, *TRI);
+  }
+
+  for (MachineBasicBlock::const_iterator I = BBI1->BB->begin(), E = DI1; I != E;
+       ++I) {
+    Redefs.StepForward(*I, *TRI);
+  }
   BBI.BB->splice(BBI.BB->end(), BBI1->BB, BBI1->BB->begin(), DI1);
   BBI2->BB->erase(BBI2->BB->begin(), DI2);
 
@@ -1324,6 +1338,10 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI, IfcvtKind Kind,
       ++i;
   }
   BBI1->BB->erase(DI1, BBI1->BB->end());
+
+  // Kill flags in the true block for registers living into the false block
+  // must be removed.
+  RemoveKills(BBI1->BB->begin(), BBI1->BB->end(), DontKill, *TRI);
 
   // Remove 'false' block branch and find the last instruction to predicate.
   BBI2->NonPredSize -= TII->RemoveBranch(*BBI2->BB);
@@ -1461,7 +1479,7 @@ static bool MaySpeculate(const MachineInstr *MI,
 void IfConverter::PredicateBlock(BBInfo &BBI,
                                  MachineBasicBlock::iterator E,
                                  SmallVectorImpl<MachineOperand> &Cond,
-                                 SmallSet<unsigned, 4> &Redefs,
+                                 LiveRegUnits &Redefs,
                                  SmallSet<unsigned, 4> *LaterRedefs) {
   bool AnyUnpred = false;
   bool MaySpec = LaterRedefs != 0;
@@ -1487,7 +1505,7 @@ void IfConverter::PredicateBlock(BBInfo &BBI,
 
     // If the predicated instruction now redefines a register as the result of
     // if-conversion, add an implicit kill.
-    UpdatePredRedefs(I, Redefs, TRI, true);
+    UpdatePredRedefs(I, Redefs, TRI);
   }
 
   std::copy(Cond.begin(), Cond.end(), std::back_inserter(BBI.Predicate));
@@ -1504,7 +1522,8 @@ void IfConverter::PredicateBlock(BBInfo &BBI,
 /// the destination block. Skip end of block branches if IgnoreBr is true.
 void IfConverter::CopyAndPredicateBlock(BBInfo &ToBBI, BBInfo &FromBBI,
                                         SmallVectorImpl<MachineOperand> &Cond,
-                                        SmallSet<unsigned, 4> &Redefs,
+                                        LiveRegUnits &Redefs,
+                                        const LiveRegUnits *DontKill,
                                         bool IgnoreBr) {
   MachineFunction &MF = *ToBBI.BB->getParent();
 
@@ -1534,7 +1553,11 @@ void IfConverter::CopyAndPredicateBlock(BBInfo &ToBBI, BBInfo &FromBBI,
 
     // If the predicated instruction now redefines a register as the result of
     // if-conversion, add an implicit kill.
-    UpdatePredRedefs(MI, Redefs, TRI, true);
+    UpdatePredRedefs(MI, Redefs, TRI);
+
+    // Some kill flags may not be correct anymore.
+    if (DontKill != 0)
+      RemoveKills(*MI, *DontKill, *TRI);
   }
 
   if (!IgnoreBr) {
