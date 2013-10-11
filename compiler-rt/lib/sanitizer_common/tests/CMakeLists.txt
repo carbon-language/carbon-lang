@@ -11,6 +11,7 @@ set(SANITIZER_UNITTESTS
   sanitizer_list_test.cc
   sanitizer_mutex_test.cc
   sanitizer_nolibc_test.cc
+  sanitizer_posix_test.cc
   sanitizer_printf_test.cc
   sanitizer_scanf_interceptor_test.cc
   sanitizer_stackdepot_test.cc

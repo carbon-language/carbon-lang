@@ -15,6 +15,7 @@
 #ifndef SANITIZER_PLATFORM_LIMITS_POSIX_H
 #define SANITIZER_PLATFORM_LIMITS_POSIX_H
 
+#include "sanitizer_internal_defs.h"
 #include "sanitizer_platform.h"
 
 namespace __sanitizer {
@@ -821,6 +822,7 @@ namespace __sanitizer {
   extern unsigned IOCTL_TIOCSERSETMULTI;
   extern unsigned IOCTL_TIOCSSERIAL;
 #endif
+
 }  // namespace __sanitizer
 
 #endif

@@ -440,6 +440,12 @@ typedef bool (*string_predicate_t)(const char *);
 uptr GetListOfModules(LoadedModule *modules, uptr max_modules,
                       string_predicate_t filter);
 
+#if SANITIZER_POSIX
+const uptr kPthreadDestructorIterations = 4;
+#else
+// Unused on Windows.
+const uptr kPthreadDestructorIterations = 0;
+#endif
 }  // namespace __sanitizer
 
 #endif  // SANITIZER_COMMON_H
