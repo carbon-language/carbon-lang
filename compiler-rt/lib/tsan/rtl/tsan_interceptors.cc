@@ -1645,21 +1645,23 @@ TSAN_INTERCEPTOR(void*, opendir, char *path) {
 
 TSAN_INTERCEPTOR(int, epoll_ctl, int epfd, int op, int fd, void *ev) {
   SCOPED_TSAN_INTERCEPTOR(epoll_ctl, epfd, op, fd, ev);
-  if (op == EPOLL_CTL_ADD && epfd >= 0) {
-    FdRelease(thr, pc, epfd);
-  }
-  int res = REAL(epoll_ctl)(epfd, op, fd, ev);
-  if (fd >= 0)
+  if (epfd >= 0)
+    FdAccess(thr, pc, epfd);
+  if (epfd >= 0 && fd >= 0)
     FdAccess(thr, pc, fd);
+  if (op == EPOLL_CTL_ADD && epfd >= 0)
+    FdRelease(thr, pc, epfd);
+  int res = REAL(epoll_ctl)(epfd, op, fd, ev);
   return res;
 }
 
 TSAN_INTERCEPTOR(int, epoll_wait, int epfd, void *ev, int cnt, int timeout) {
   SCOPED_TSAN_INTERCEPTOR(epoll_wait, epfd, ev, cnt, timeout);
+  if (epfd >= 0)
+    FdAccess(thr, pc, epfd);
   int res = BLOCK_REAL(epoll_wait)(epfd, ev, cnt, timeout);
-  if (res > 0 && epfd >= 0) {
+  if (res > 0 && epfd >= 0)
     FdAcquire(thr, pc, epfd);
-  }
   return res;
 }
 
