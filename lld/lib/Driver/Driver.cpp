@@ -107,10 +107,8 @@ bool Driver::link(LinkingContext &context, raw_ostream &diagnostics) {
   // Do core linking.
   ScopedTask resolveTask(getDefaultDomain(), "Resolve");
   Resolver resolver(context);
-  if (!resolver.resolve()) {
-    if (!context.allowRemainingUndefines())
-      return false;
-  }
+  if (!resolver.resolve())
+    return false;
   MutableFile &merged = resolver.resultFile();
   resolveTask.end();
 
