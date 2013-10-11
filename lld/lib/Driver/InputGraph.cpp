@@ -170,21 +170,24 @@ ErrorOr<File &> Group::getNextFile() {
   // If there are no elements, move on to the next input element
   if (_elements.size() == 0)
     return make_error_code(InputGraphError::no_more_files);
-  // If we have processed all the elements as part of this node
-  // check the resolver status for each input element and if the status
-  // has not changed, move onto the next file.
-  if (_nextElementIndex == _elements.size()) {
-    if (getResolveState() == Resolver::StateNoChange)
-      return make_error_code(InputGraphError::no_more_files);
-    resetNextIndex();
-  }
-  _currentElementIndex = _nextElementIndex;
-  auto file = _elements[_nextElementIndex]->getNextFile();
-  // Move on to the next element if we have finished processing all
-  // the files in the input element
-  if (error_code(file) == InputGraphError::no_more_files)
-    _nextElementIndex++;
-  else
+
+  for (;;) {
+    // If we have processed all the elements as part of this node
+    // check the resolver status for each input element and if the status
+    // has not changed, move onto the next file.
+    if (_nextElementIndex == _elements.size()) {
+      if (getResolveState() == Resolver::StateNoChange)
+        return make_error_code(InputGraphError::no_more_files);
+      resetNextIndex();
+    }
+    _currentElementIndex = _nextElementIndex;
+    auto file = _elements[_nextElementIndex]->getNextFile();
+    // Move on to the next element if we have finished processing all
+    // the files in the input element
+    if (error_code(file) == InputGraphError::no_more_files) {
+      _nextElementIndex++;
+      continue;
+    }
     return *file;
-  return getNextFile();
+  }
 }
