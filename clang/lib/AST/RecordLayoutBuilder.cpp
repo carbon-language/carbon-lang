@@ -2345,11 +2345,11 @@ static bool mustSkipTailPadding(TargetCXXABI ABI, const CXXRecordDecl *RD) {
 }
 
 static bool isMsLayout(const RecordDecl* D) {
-  return (D->getASTContext().getTargetInfo().getCXXABI().isMicrosoft() ||
-          D->getASTContext().getTargetInfo().getTriple().getOS() ==
-          llvm::Triple::Win32) &&
-          D->getASTContext().getTargetInfo().getPointerWidth(0) == 32;
-  // FIXME: we intend to enable 64 bit mode once it's been verified.
+  // FIXME: Use MS record layout for x64 code and remove MS C++ support from the
+  // Itanium record layout code.
+  return D->getASTContext().getTargetInfo().getCXXABI().isMicrosoft() &&
+         D->getASTContext().getTargetInfo().getTriple().getArch() ==
+             llvm::Triple::x86;
 }
 
 // This section contains an implementation of struct layout that is, up to the
