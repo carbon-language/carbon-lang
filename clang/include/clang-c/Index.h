@@ -3002,6 +3002,23 @@ CINDEX_LINKAGE long long clang_Type_getSizeOf(CXType T);
  */
 CINDEX_LINKAGE long long clang_Type_getOffsetOf(CXType T, const char *S);
 
+enum CXRefQualifierKind {
+  /** \brief No ref-qualifier was provided. */
+  CXRefQualifier_None = 0,
+  /** \brief An lvalue ref-qualifier was provided (\c &). */
+  CXRefQualifier_LValue,
+  /** \brief An rvalue ref-qualifier was provided (\c &&). */
+  CXRefQualifier_RValue
+};
+
+/**
+ * \brief Retrieve the ref-qualifier kind of a function or method.
+ *
+ * The ref-qualifier is returned for C++ functions or methods. For other types
+ * or non-C++ declarations, CXRefQualifier_None is returned.
+ */
+CINDEX_LINKAGE enum CXRefQualifierKind clang_Type_getCXXRefQualifier(CXType T);
+
 /**
  * \brief Returns non-zero if the cursor specifies a Record member that is a
  *   bitfield.

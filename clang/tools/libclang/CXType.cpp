@@ -816,6 +816,24 @@ long long clang_Type_getOffsetOf(CXType PT, const char *S) {
   return CXTypeLayoutError_InvalidFieldName;
 }
 
+enum CXRefQualifierKind clang_Type_getCXXRefQualifier(CXType T) {
+  QualType QT = GetQualType(T);
+  if (QT.isNull())
+    return CXRefQualifier_None;
+  const FunctionProtoType *FD = QT->getAs<FunctionProtoType>();
+  if (!FD)
+    return CXRefQualifier_None;
+  switch (FD->getRefQualifier()) {
+    case RQ_None:
+      return CXRefQualifier_None;
+    case RQ_LValue:
+      return CXRefQualifier_LValue;
+    case RQ_RValue:
+      return CXRefQualifier_RValue;
+  }
+  return CXRefQualifier_None;
+}
+
 unsigned clang_Cursor_isBitField(CXCursor C) {
   if (!clang_isDeclaration(C.kind))
     return 0;
