@@ -96,6 +96,46 @@ define void @mul_v2f64(<2 x double>* %c, <2 x double>* %a, <2 x double>* %b) nou
   ; CHECK: .size mul_v2f64
 }
 
+define void @fma_v4f32(<4 x float>* %d, <4 x float>* %a, <4 x float>* %b,
+                       <4 x float>* %c) nounwind {
+  ; CHECK: fma_v4f32:
+
+  %1 = load <4 x float>* %a
+  ; CHECK-DAG: ld.w [[R1:\$w[0-9]+]], 0($5)
+  %2 = load <4 x float>* %b
+  ; CHECK-DAG: ld.w [[R2:\$w[0-9]+]], 0($6)
+  %3 = load <4 x float>* %c
+  ; CHECK-DAG: ld.w [[R3:\$w[0-9]+]], 0($7)
+  %4 = tail call <4 x float> @llvm.fma.v4f32 (<4 x float> %1, <4 x float> %2,
+                                              <4 x float> %3)
+  ; CHECK-DAG: fmadd.w [[R1]], [[R2]], [[R3]]
+  store <4 x float> %4, <4 x float>* %d
+  ; CHECK-DAG: st.w [[R1]], 0($4)
+
+  ret void
+  ; CHECK: .size fma_v4f32
+}
+
+define void @fma_v2f64(<2 x double>* %d, <2 x double>* %a, <2 x double>* %b,
+                       <2 x double>* %c) nounwind {
+  ; CHECK: fma_v2f64:
+
+  %1 = load <2 x double>* %a
+  ; CHECK-DAG: ld.d [[R1:\$w[0-9]+]], 0($5)
+  %2 = load <2 x double>* %b
+  ; CHECK-DAG: ld.d [[R2:\$w[0-9]+]], 0($6)
+  %3 = load <2 x double>* %c
+  ; CHECK-DAG: ld.d [[R3:\$w[0-9]+]], 0($7)
+  %4 = tail call <2 x double> @llvm.fma.v2f64 (<2 x double> %1, <2 x double> %2,
+                                               <2 x double> %3)
+  ; CHECK-DAG: fmadd.d [[R1]], [[R2]], [[R3]]
+  store <2 x double> %4, <2 x double>* %d
+  ; CHECK-DAG: st.d [[R1]], 0($4)
+
+  ret void
+  ; CHECK: .size fma_v2f64
+}
+
 define void @fdiv_v4f32(<4 x float>* %c, <4 x float>* %a, <4 x float>* %b) nounwind {
   ; CHECK: fdiv_v4f32:
 
@@ -298,5 +338,9 @@ define void @ftrunc_s_v2f64(<2 x i64>* %c, <2 x double>* %a) nounwind {
 
 declare <4 x float>  @llvm.fabs.v4f32(<4 x float>  %Val)
 declare <2 x double> @llvm.fabs.v2f64(<2 x double> %Val)
+declare <4 x float>  @llvm.fma.v4f32(<4 x float>  %a, <4 x float>  %b,
+                                     <4 x float>  %c)
+declare <2 x double> @llvm.fma.v2f64(<2 x double> %a, <2 x double> %b,
+                                     <2 x double> %c)
 declare <4 x float>  @llvm.sqrt.v4f32(<4 x float>  %Val)
 declare <2 x double> @llvm.sqrt.v2f64(<2 x double> %Val)

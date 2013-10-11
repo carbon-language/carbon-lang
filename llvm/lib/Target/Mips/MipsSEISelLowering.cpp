@@ -223,6 +223,7 @@ addMSAFloatType(MVT::SimpleValueType Ty, const TargetRegisterClass *RC) {
     setOperationAction(ISD::FADD,  Ty, Legal);
     setOperationAction(ISD::FDIV,  Ty, Legal);
     setOperationAction(ISD::FLOG2, Ty, Legal);
+    setOperationAction(ISD::FMA,   Ty, Legal);
     setOperationAction(ISD::FMUL,  Ty, Legal);
     setOperationAction(ISD::FRINT, Ty, Legal);
     setOperationAction(ISD::FSQRT, Ty, Legal);
@@ -1332,6 +1333,10 @@ SDValue MipsSETargetLowering::lowerINTRINSIC_WO_CHAIN(SDValue Op,
   case Intrinsic::mips_flog2_w:
   case Intrinsic::mips_flog2_d:
     return DAG.getNode(ISD::FLOG2, DL, Op->getValueType(0), Op->getOperand(1));
+  case Intrinsic::mips_fmadd_w:
+  case Intrinsic::mips_fmadd_d:
+    return DAG.getNode(ISD::FMA, SDLoc(Op), Op->getValueType(0),
+                       Op->getOperand(1), Op->getOperand(2), Op->getOperand(3));
   case Intrinsic::mips_fmul_w:
   case Intrinsic::mips_fmul_d:
     return DAG.getNode(ISD::FMUL, DL, Op->getValueType(0), Op->getOperand(1),
