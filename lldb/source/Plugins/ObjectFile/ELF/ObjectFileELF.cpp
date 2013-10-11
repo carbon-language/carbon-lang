@@ -23,6 +23,7 @@
 #include "lldb/Core/Stream.h"
 #include "lldb/Symbol/DWARFCallFrameInfo.h"
 #include "lldb/Symbol/SymbolContext.h"
+#include "lldb/Target/Target.h"
 #include "lldb/Host/Host.h"
 
 #include "llvm/ADT/PointerUnion.h"
@@ -515,7 +516,7 @@ ObjectFileELF::GetDependentModules(FileSpecList &files)
 }
 
 Address
-ObjectFileELF::GetImageInfoAddress(bool &indirect)
+ObjectFileELF::GetImageInfoAddress(Target *target)
 {
     if (!ParseDynamicSymbols())
         return Address();
@@ -539,13 +540,23 @@ ObjectFileELF::GetImageInfoAddress(bool &indirect)
     {
         ELFDynamic &symbol = m_dynamic_symbols[i];
 
-        if (symbol.d_tag == DT_DEBUG || symbol.d_tag == DT_MIPS_RLD_MAP)
+        if (symbol.d_tag == DT_DEBUG)
         {
-            indirect = (symbol.d_tag == DT_MIPS_RLD_MAP);
             // Compute the offset as the number of previous entries plus the
             // size of d_tag.
             addr_t offset = i * dynsym_hdr->sh_entsize + GetAddressByteSize();
             return Address(dynsym_section_sp, offset);
+        }
+        else if (symbol.d_tag == DT_MIPS_RLD_MAP && target)
+        {
+            addr_t offset = i * dynsym_hdr->sh_entsize + GetAddressByteSize();
+            addr_t dyn_base = dynsym_section_sp->GetLoadBaseAddress(target);
+            if (dyn_base == LLDB_INVALID_ADDRESS)
+                return Address();
+            Address addr;
+            Error error;
+            if (target->ReadPointerFromMemory(dyn_base + offset, false, error, addr))
+                return addr;
         }
     }
 

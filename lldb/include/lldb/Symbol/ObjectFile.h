@@ -506,7 +506,7 @@ public:
     ///     The address of any auxiliary tables, or an invalid address if this
     ///     object file format does not support or contain such information.
     virtual lldb_private::Address
-    GetImageInfoAddress (bool &indirect) { indirect = false; return Address(); }
+    GetImageInfoAddress (Target *target) { return Address(); }
     
     //------------------------------------------------------------------
     /// Returns the address of the Entry Point in this object file - if

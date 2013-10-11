@@ -127,7 +127,7 @@ public:
     GetDependentModules(lldb_private::FileSpecList& files);
 
     virtual lldb_private::Address
-    GetImageInfoAddress(bool &indirect);
+    GetImageInfoAddress(lldb_private::Target *target);
     
     virtual lldb_private::Address
     GetEntryPointAddress ();

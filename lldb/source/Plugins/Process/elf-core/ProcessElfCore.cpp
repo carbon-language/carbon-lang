@@ -338,23 +338,10 @@ ProcessElfCore::GetImageInfoAddress()
 {
     Target *target = &GetTarget();
     ObjectFile *obj_file = target->GetExecutableModule()->GetObjectFile();
-    bool indirect;
-    Address addr = obj_file->GetImageInfoAddress(indirect);
+    Address addr = obj_file->GetImageInfoAddress(target);
 
     if (addr.IsValid())
-    {
-        if (indirect)
-        {
-            Address ind_addr;
-            Error error;
-            if (target->ReadPointerFromMemory(addr.GetLoadAddress(target), false, error, ind_addr))
-                return ind_addr.GetLoadAddress(target);
-        }
-        else
-        {
-            return addr.GetLoadAddress(target);
-        }
-    }
+        return addr.GetLoadAddress(target);
     return LLDB_INVALID_ADDRESS;
 }
 
