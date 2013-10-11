@@ -524,6 +524,7 @@ IRInterpreter::CanInterpret (llvm::Module &module,
             case Instruction::SRem:
             case Instruction::Store:
             case Instruction::Sub:
+            case Instruction::Trunc:
             case Instruction::UDiv:
             case Instruction::URem:
             case Instruction::Xor:
@@ -1164,6 +1165,42 @@ IRInterpreter::Interpret (llvm::Module &module,
                 if (log)
                 {
                     log->Printf("Interpreted a PtrToInt");
+                    log->Printf("  Src : %s", frame.SummarizeValue(src_operand).c_str());
+                    log->Printf("  =   : %s", frame.SummarizeValue(inst).c_str());
+                }
+            }
+                break;
+            case Instruction::Trunc:
+            {
+                const TruncInst *trunc_inst = dyn_cast<TruncInst>(inst);
+                
+                if (!trunc_inst)
+                {
+                    if (log)
+                        log->Printf("getOpcode() returns Trunc, but instruction is not a TruncInst");
+                    error.SetErrorToGenericError();
+                    error.SetErrorString(interpreter_internal_error);
+                    return false;
+                }
+                
+                Value *src_operand = trunc_inst->getOperand(0);
+                
+                lldb_private::Scalar I;
+                
+                if (!frame.EvaluateValue(I, src_operand, module))
+                {
+                    if (log)
+                        log->Printf("Couldn't evaluate %s", PrintValue(src_operand).c_str());
+                    error.SetErrorToGenericError();
+                    error.SetErrorString(bad_value_error);
+                    return false;
+                }
+                
+                frame.AssignValue(inst, I, module);
+                
+                if (log)
+                {
+                    log->Printf("Interpreted a Trunc");
                     log->Printf("  Src : %s", frame.SummarizeValue(src_operand).c_str());
                     log->Printf("  =   : %s", frame.SummarizeValue(inst).c_str());
                 }
