@@ -11687,6 +11687,10 @@ static bool captureInLambda(LambdaScopeInfo *LSI,
       }
       return false;
     }
+
+    if (S.RequireNonAbstractType(Loc, CaptureType,
+                                 diag::err_capture_of_abstract_type))
+      return false;
   }
 
   // Capture this variable in the lambda.

@@ -88,3 +88,15 @@ struct CaptureArrayAndThis {
   }
 };
 
+namespace rdar14468891 {
+  class X {
+  public:
+    virtual ~X() = 0; // expected-note{{unimplemented pure virtual method '~X' in 'X'}}
+  };
+
+  class Y : public X { };
+
+  void capture(X &x) {
+    [x]() {}(); // expected-error{{by-copy capture of value of abstract type 'rdar14468891::X'}}
+  }
+}
