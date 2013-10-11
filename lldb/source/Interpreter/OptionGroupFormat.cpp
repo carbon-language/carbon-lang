@@ -158,7 +158,9 @@ OptionGroupFormat::SetOptionValue (CommandInterpreter &interpreter,
                 else
                 {
                     // Byte size is disabled, make sure it wasn't specified
-                    if (byte_size > 0)
+                    // but if this is an address, it's actually necessary to
+                    // specify one so don't error out
+                    if (byte_size > 0 && format != lldb::eFormatAddressInfo)
                     {
                         error.SetErrorString ("this command doesn't support specifying a byte size");
                         return error;
