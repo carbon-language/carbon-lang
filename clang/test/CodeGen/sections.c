@@ -1,3 +1,5 @@
+// REQUIRES: x86-registered-target
+
 // RUN: %clang_cc1 -triple x86_64-pc-linux-gnu -S -o - < %s | FileCheck %s --check-prefix=PLAIN
 // RUN: %clang_cc1 -triple x86_64-pc-linux-gnu -S -ffunction-sections -fno-function-sections -o - < %s | FileCheck %s --check-prefix=PLAIN
 
