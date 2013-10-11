@@ -9,7 +9,6 @@
 ; RUN: llc < %s -mtriple=armv8-linux-gnueabi -mattr=+neon | FileCheck %s --check-prefix=V8-NEON
 ; RUN: llc < %s -mtriple=armv8-linux-gnueabi -mattr=+fp-armv8 -mattr=+neon | FileCheck %s --check-prefix=V8-FPARMv8-NEON
 ; RUN: llc < %s -mtriple=armv8-linux-gnueabi -mattr=+fp-armv8,+neon,+crypto | FileCheck %s --check-prefix=V8-FPARMv8-NEON-CRYPTO
-; RUN: llc < %s -mtriple=armv7-linux-gnueabi -mattr=-neon,-vfp2 | FileCheck %s --check-prefix=NOFP
 ; RUN: llc < %s -mtriple=armv7-linux-gnueabi -mcpu=cortex-a9 | FileCheck %s --check-prefix=CORTEX-A9
 ; RUN: llc < %s -mtriple=thumbv6m-linux-gnueabi -mcpu=cortex-m0 | FileCheck %s --check-prefix=CORTEX-M0
 ; RUN: llc < %s -mtriple=thumbv7m-linux-gnueabi -mcpu=cortex-m4 | FileCheck %s --check-prefix=CORTEX-M4
@@ -85,10 +84,6 @@
 ; V8-FPARMv8-NEON-CRYPTO: .fpu crypto-neon-fp-armv8
 ; V8-FPARMv8-NEON-CRYPTO: .eabi_attribute 10, 7
 ; V8-FPARMv8-NEON-CRYPTO: .eabi_attribute 12, 3
-
-; NOFP-NOT:   .eabi_attribute 20
-; NOFP-NOT:   .eabi_attribute 21
-; NOFP-NOT:   .eabi_attribute 23
 
 ; CORTEX-A9:  .cpu cortex-a9
 ; CORTEX-A9:  .eabi_attribute 6, 10

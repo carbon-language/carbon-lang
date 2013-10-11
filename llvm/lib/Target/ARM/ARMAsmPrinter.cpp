@@ -876,21 +876,19 @@ void ARMAsmPrinter::emitAttributes() {
   }
 
   // Signal various FP modes.
-  if (Subtarget->hasVFP2()) {
-    if (!TM.Options.UnsafeFPMath) {
-      AttrEmitter->EmitAttribute(ARMBuildAttrs::ABI_FP_denormal,
-                                 ARMBuildAttrs::Allowed);
-      AttrEmitter->EmitAttribute(ARMBuildAttrs::ABI_FP_exceptions,
-                                 ARMBuildAttrs::Allowed);
-    }
-
-    if (TM.Options.NoInfsFPMath && TM.Options.NoNaNsFPMath)
-      AttrEmitter->EmitAttribute(ARMBuildAttrs::ABI_FP_number_model,
-                                 ARMBuildAttrs::Allowed);
-    else
-      AttrEmitter->EmitAttribute(ARMBuildAttrs::ABI_FP_number_model,
-                                 ARMBuildAttrs::AllowIEE754);
+  if (!TM.Options.UnsafeFPMath) {
+    AttrEmitter->EmitAttribute(ARMBuildAttrs::ABI_FP_denormal,
+                               ARMBuildAttrs::Allowed);
+    AttrEmitter->EmitAttribute(ARMBuildAttrs::ABI_FP_exceptions,
+                               ARMBuildAttrs::Allowed);
   }
+
+  if (TM.Options.NoInfsFPMath && TM.Options.NoNaNsFPMath)
+    AttrEmitter->EmitAttribute(ARMBuildAttrs::ABI_FP_number_model,
+                               ARMBuildAttrs::Allowed);
+  else
+    AttrEmitter->EmitAttribute(ARMBuildAttrs::ABI_FP_number_model,
+                               ARMBuildAttrs::AllowIEE754);
 
   // FIXME: add more flags to ARMBuildAttrs.h
   // 8-bytes alignment stuff.

@@ -15,14 +15,14 @@
 ; BASIC-NEXT:     ]
 ; BASIC-NEXT:     Address: 0x0
 ; BASIC-NEXT:     Offset: 0x3C
-; BASIC-NEXT:     Size: 24
+; BASIC-NEXT:     Size: 30
 ; BASIC-NEXT:     Link: 0
 ; BASIC-NEXT:     Info: 0
 ; BASIC-NEXT:     AddressAlignment: 1
 ; BASIC-NEXT:     EntrySize: 0
 ; BASIC-NEXT:     SectionData (
-; BASIC-NEXT:       0000: 41170000 00616561 62690001 0D000000
-; BASIC-NEXT:       0010: 06010801 18011901
+; BASIC-NEXT:       0000: 411D0000 00616561 62690001 13000000
+; BASIC-NEXT:       0010: 06010801 14011501 17031801 1901
 ; BASIC-NEXT:     )
 
 ; CORTEXA8:        Name: .ARM.attributes
