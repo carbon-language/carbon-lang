@@ -1026,20 +1026,6 @@ static bool checkForConsumableClass(Sema &S, const CXXMethodDecl *MD,
   return true;
 }
 
-static void handleConsumesAttr(Sema &S, Decl *D, const AttributeList &Attr) {
-  if (!isa<CXXMethodDecl>(D)) {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type) <<
-      Attr.getName() << ExpectedMethod;
-    return;
-  }
-  
-  if (!checkForConsumableClass(S, cast<CXXMethodDecl>(D), Attr))
-    return;
-  
-  D->addAttr(::new (S.Context)
-             ConsumesAttr(Attr.getRange(), S.Context,
-                          Attr.getAttributeSpellingListIndex()));
-}
 
 static void handleCallableWhenAttr(Sema &S, Decl *D,
                                    const AttributeList &Attr) {
@@ -1079,44 +1065,6 @@ static void handleCallableWhenAttr(Sema &S, Decl *D,
                States.size(), Attr.getAttributeSpellingListIndex()));
 }
 
-
-static void handleTestsTypestateAttr(Sema &S, Decl *D,
-                                     const AttributeList &Attr) {
-  if (!checkAttributeNumArgs(S, Attr, 1)) return;
-  
-  if (!isa<CXXMethodDecl>(D)) {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type) <<
-      Attr.getName() << ExpectedMethod;
-    return;
-  }
-  
-  if (!checkForConsumableClass(S, cast<CXXMethodDecl>(D), Attr))
-    return;
-  
-  TestsTypestateAttr::ConsumedState TestState;
-  
-  if (Attr.isArgIdent(0)) {
-    StringRef Param = Attr.getArgAsIdent(0)->Ident->getName();
-    
-    if (Param == "consumed") {
-      TestState = TestsTypestateAttr::Consumed;
-    } else if (Param == "unconsumed") {
-      TestState = TestsTypestateAttr::Unconsumed;
-    } else {
-      S.Diag(Attr.getLoc(), diag::warn_invalid_test_typestate) << Param;
-      return;
-    }
-    
-  } else {
-    S.Diag(Attr.getLoc(), diag::err_attribute_argument_type) <<
-      Attr.getName() << AANT_ArgumentIdentifier;
-    return;
-  }
-  
-  D->addAttr(::new (S.Context)
-             TestsTypestateAttr(Attr.getRange(), S.Context, TestState,
-                                Attr.getAttributeSpellingListIndex()));
-}
 
 static void handleReturnTypestateAttr(Sema &S, Decl *D,
                                       const AttributeList &Attr) {
@@ -1166,6 +1114,84 @@ static void handleReturnTypestateAttr(Sema &S, Decl *D,
   D->addAttr(::new (S.Context)
              ReturnTypestateAttr(Attr.getRange(), S.Context, ReturnState,
                                  Attr.getAttributeSpellingListIndex()));
+}
+
+
+static void handleSetTypestateAttr(Sema &S, Decl *D, const AttributeList &Attr) {
+  if (!checkAttributeNumArgs(S, Attr, 1)) return;
+
+  if (!isa<CXXMethodDecl>(D)) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type) <<
+      Attr.getName() << ExpectedMethod;
+    return;
+  }
+  
+  if (!checkForConsumableClass(S, cast<CXXMethodDecl>(D), Attr))
+    return;
+  
+  SetTypestateAttr::ConsumedState NewState;
+  
+  if (Attr.isArgIdent(0)) {
+    StringRef Param = Attr.getArgAsIdent(0)->Ident->getName();
+    
+    if (Param == "unknown") {
+      NewState = SetTypestateAttr::Unknown;
+    } else if (Param == "consumed") {
+      NewState = SetTypestateAttr::Consumed;
+    } else if (Param == "unconsumed") {
+      NewState = SetTypestateAttr::Unconsumed;
+    } else {
+      S.Diag(Attr.getLoc(), diag::warn_unknown_consumed_state) << Param;
+      return;
+    }
+    
+  } else {
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_type) <<
+      Attr.getName() << AANT_ArgumentIdentifier;
+    return;
+  }
+  
+  D->addAttr(::new (S.Context)
+             SetTypestateAttr(Attr.getRange(), S.Context, NewState,
+                              Attr.getAttributeSpellingListIndex()));
+}
+
+static void handleTestsTypestateAttr(Sema &S, Decl *D,
+                                        const AttributeList &Attr) {
+  if (!checkAttributeNumArgs(S, Attr, 1)) return;
+  
+  if (!isa<CXXMethodDecl>(D)) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type) <<
+      Attr.getName() << ExpectedMethod;
+    return;
+  }
+  
+  if (!checkForConsumableClass(S, cast<CXXMethodDecl>(D), Attr))
+    return;
+  
+  TestsTypestateAttr::ConsumedState TestState;
+  
+  if (Attr.isArgIdent(0)) {
+    StringRef Param = Attr.getArgAsIdent(0)->Ident->getName();
+    
+    if (Param == "consumed") {
+      TestState = TestsTypestateAttr::Consumed;
+    } else if (Param == "unconsumed") {
+      TestState = TestsTypestateAttr::Unconsumed;
+    } else {
+      S.Diag(Attr.getLoc(), diag::warn_unknown_consumed_state) << Param;
+      return;
+    }
+    
+  } else {
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_type) <<
+      Attr.getName() << AANT_ArgumentIdentifier;
+    return;
+  }
+  
+  D->addAttr(::new (S.Context)
+             TestsTypestateAttr(Attr.getRange(), S.Context, TestState,
+                                Attr.getAttributeSpellingListIndex()));
 }
 
 static void handleExtVectorTypeAttr(Sema &S, Scope *scope, Decl *D,
@@ -4793,17 +4819,17 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
   case AttributeList::AT_Consumable:
     handleConsumableAttr(S, D, Attr);
     break;
-  case AttributeList::AT_Consumes:
-    handleConsumesAttr(S, D, Attr);
-    break;
   case AttributeList::AT_CallableWhen:
     handleCallableWhenAttr(S, D, Attr);
     break;
-  case AttributeList::AT_TestsTypestate:
-    handleTestsTypestateAttr(S, D, Attr);
-    break;
   case AttributeList::AT_ReturnTypestate:
     handleReturnTypestateAttr(S, D, Attr);
+    break;
+  case AttributeList::AT_SetTypestate:
+    handleSetTypestateAttr(S, D, Attr);
+    break;
+  case AttributeList::AT_TestsTypestate:
+    handleTestsTypestateAttr(S, D, Attr);
     break;
 
   // Type safety attributes.

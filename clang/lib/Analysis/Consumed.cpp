@@ -157,6 +157,18 @@ static ConsumedState mapConsumableAttrState(const QualType QT) {
   llvm_unreachable("invalid enum");
 }
 
+static ConsumedState mapSetTypestateAttrState(const SetTypestateAttr *STAttr) {
+  switch (STAttr->getNewState()) {
+  case SetTypestateAttr::Unknown:
+    return CS_Unknown;
+  case SetTypestateAttr::Unconsumed:
+    return CS_Unconsumed;
+  case SetTypestateAttr::Consumed:
+    return CS_Consumed;
+  }
+  llvm_unreachable("invalid_enum");
+}
+
 static ConsumedState
 mapReturnTypestateAttrState(const ReturnTypestateAttr *RTSAttr) {
   switch (RTSAttr->getState()) {
@@ -639,8 +651,9 @@ void ConsumedStmtVisitor::VisitCXXMemberCallExpr(
       if (isTestingFunction(MethodDecl))
         PropagationMap.insert(PairType(Call,
           PropagationInfo(PInfo.getVar(), testsFor(MethodDecl))));
-      else if (MethodDecl->hasAttr<ConsumesAttr>())
-        StateMap->setState(PInfo.getVar(), consumed::CS_Consumed);
+      else if (MethodDecl->hasAttr<SetTypestateAttr>())
+        StateMap->setState(PInfo.getVar(),
+          mapSetTypestateAttrState(MethodDecl->getAttr<SetTypestateAttr>()));
     }
   }
 }
@@ -728,8 +741,9 @@ void ConsumedStmtVisitor::VisitCXXOperatorCallExpr(
         if (isTestingFunction(FunDecl))
           PropagationMap.insert(PairType(Call,
             PropagationInfo(PInfo.getVar(), testsFor(FunDecl))));
-        else if (FunDecl->hasAttr<ConsumesAttr>())
-          StateMap->setState(PInfo.getVar(), consumed::CS_Consumed);
+        else if (FunDecl->hasAttr<SetTypestateAttr>())
+          StateMap->setState(PInfo.getVar(),
+            mapSetTypestateAttrState(FunDecl->getAttr<SetTypestateAttr>()));
       }
     }
   }

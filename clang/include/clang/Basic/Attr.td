@@ -967,25 +967,28 @@ def CallableWhen : InheritableAttr {
                                    ["Unknown", "Consumed", "Unconsumed"]>];
 }
 
-def TestsTypestate : InheritableAttr {
-  let Spellings = [GNU<"tests_typestate">];
-  let Subjects = [CXXMethod];
-  let Args = [EnumArgument<"TestState", "ConsumedState",
-                           ["consumed", "unconsumed"],
-                           ["Consumed", "Unconsumed"]>];
-}
-
-def Consumes : InheritableAttr {
-  let Spellings = [GNU<"consumes">];
-  let Subjects = [CXXMethod];
-}
-
 def ReturnTypestate : InheritableAttr {
   let Spellings = [GNU<"return_typestate">];
   let Subjects = [Function];
   let Args = [EnumArgument<"State", "ConsumedState",
                            ["unknown", "consumed", "unconsumed"],
                            ["Unknown", "Consumed", "Unconsumed"]>];
+}
+
+def SetTypestate : InheritableAttr {
+  let Spellings = [GNU<"set_typestate">];
+  let Subjects = [CXXMethod];
+  let Args = [EnumArgument<"NewState", "ConsumedState",
+                           ["unknown", "consumed", "unconsumed"],
+                           ["Unknown", "Consumed", "Unconsumed"]>];
+}
+
+def TestsTypestate : InheritableAttr {
+  let Spellings = [GNU<"tests_typestate">];
+  let Subjects = [CXXMethod];
+  let Args = [EnumArgument<"TestState", "ConsumedState",
+                           ["consumed", "unconsumed"],
+                           ["Consumed", "Unconsumed"]>];
 }
 
 // Type safety attributes for `void *' pointers and type tags.

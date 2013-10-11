@@ -4,7 +4,7 @@
 
 #define CALLABLE_WHEN(...)      __attribute__ ((callable_when(__VA_ARGS__)))
 #define CONSUMABLE(state)       __attribute__ ((consumable(state)))
-#define CONSUMES                __attribute__ ((consumes))
+#define SET_TYPESTATE(state)    __attribute__ ((set_typestate(state)))
 #define RETURN_TYPESTATE(state) __attribute__ ((return_typestate(state)))
 #define TESTS_TYPESTATE(state)  __attribute__ ((tests_typestate(state)))
 
@@ -23,7 +23,7 @@ public:
   
   ConsumableClass<T>& operator=(ConsumableClass<T>  &other);
   ConsumableClass<T>& operator=(ConsumableClass<T> &&other);
-  ConsumableClass<T>& operator=(nullptr_t) CONSUMES;
+  ConsumableClass<T>& operator=(nullptr_t) SET_TYPESTATE(consumed);
   
   template <typename U>
   ConsumableClass<T>& operator=(ConsumableClass<U>  &other);
@@ -31,7 +31,7 @@ public:
   template <typename U>
   ConsumableClass<T>& operator=(ConsumableClass<U> &&other);
   
-  void operator()(int a) CONSUMES;
+  void operator()(int a) SET_TYPESTATE(consumed);
   void operator*() const CALLABLE_WHEN("unconsumed");
   void unconsumedCall() const CALLABLE_WHEN("unconsumed");
   void callableWhenUnknown() const CALLABLE_WHEN("unconsumed", "unknown");
@@ -44,7 +44,8 @@ public:
   void constCall() const;
   void nonconstCall();
   
-  void consume() CONSUMES;
+  void consume() SET_TYPESTATE(consumed);
+  void unconsume() SET_TYPESTATE(unconsumed);
 };
 
 class CONSUMABLE(unconsumed) DestructorTester {
@@ -484,7 +485,7 @@ void testConditionalMerge() {
   *var; // expected-warning {{invalid invocation of method 'operator*' on object 'var' while it is in the 'consumed' state}}
 }
 
-void testConsumes0() {
+void testSetTypestate() {
   ConsumableClass<int> var(42);
   
   *var;
@@ -492,15 +493,19 @@ void testConsumes0() {
   var.consume();
   
   *var; // expected-warning {{invalid invocation of method 'operator*' on object 'var' while it is in the 'consumed' state}}
+  
+  var.unconsume();
+  
+  *var;
 }
 
-void testConsumes1() {
+void testConsumes0() {
   ConsumableClass<int> var(nullptr);
   
   *var; // expected-warning {{invalid invocation of method 'operator*' on object 'var' while it is in the 'consumed' state}}
 }
 
-void testConsumes2() {
+void testConsumes1() {
   ConsumableClass<int> var(42);
   
   var.unconsumedCall();
