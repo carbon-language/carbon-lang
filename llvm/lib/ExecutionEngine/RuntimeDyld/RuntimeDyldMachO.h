@@ -54,6 +54,22 @@ class RuntimeDyldMachO : public RuntimeDyldImpl {
                          int64_t Addend,
                          bool isPCRel,
                          unsigned Size);
+
+  struct EHFrameRelatedSections {
+    EHFrameRelatedSections() : EHFrameSID(RTDYLD_INVALID_SECTION_ID),
+                               TextSID(RTDYLD_INVALID_SECTION_ID),
+                               ExceptTabSID(RTDYLD_INVALID_SECTION_ID) {}
+    EHFrameRelatedSections(SID EH, SID T, SID Ex) 
+      : EHFrameSID(EH), TextSID(T), ExceptTabSID(Ex) {}
+    SID EHFrameSID;
+    SID TextSID;
+    SID ExceptTabSID;
+  };
+
+  // When a module is loaded we save the SectionID of the EH frame section
+  // in a table until we receive a request to register all unregistered
+  // EH frame sections with the memory manager.
+  SmallVector<EHFrameRelatedSections, 2> UnregisteredEHFrameSections;
 public:
   RuntimeDyldMachO(RTDyldMemoryManager *mm) : RuntimeDyldImpl(mm) {}
 
@@ -65,7 +81,8 @@ public:
                                     const SymbolTableMap &Symbols,
                                     StubMap &Stubs);
   virtual bool isCompatibleFormat(const ObjectBuffer *Buffer) const;
-  virtual StringRef getEHFrameSection();
+  virtual void registerEHFrames();
+  virtual void finalizeLoad(ObjSectionToIDMap &SectionMap);
 };
 
 } // end namespace llvm

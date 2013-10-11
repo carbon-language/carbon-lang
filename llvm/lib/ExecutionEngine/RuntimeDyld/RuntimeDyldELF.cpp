@@ -151,12 +151,17 @@ void DyldELFObject<ELFT>::updateSymbolAddress(const SymbolRef &SymRef,
 
 namespace llvm {
 
-StringRef RuntimeDyldELF::getEHFrameSection() {
-  for (int i = 0, e = Sections.size(); i != e; ++i) {
-    if (Sections[i].Name == ".eh_frame")
-      return StringRef((const char*)Sections[i].Address, Sections[i].Size);
+void RuntimeDyldELF::registerEHFrames() {
+  if (!MemMgr)
+    return;
+  for (int i = 0, e = UnregisteredEHFrameSections.size(); i != e; ++i) {
+    SID EHFrameSID = UnregisteredEHFrameSections[i];
+    uint8_t *EHFrameAddr = Sections[EHFrameSID].Address;
+    uint64_t EHFrameLoadAddr = Sections[EHFrameSID].LoadAddress;
+    size_t EHFrameSize = Sections[EHFrameSID].Size;
+    MemMgr->registerEHFrames(EHFrameAddr, EHFrameLoadAddr, EHFrameSize);
   }
-  return StringRef();
+  UnregisteredEHFrameSections.clear();
 }
 
 ObjectImage *RuntimeDyldELF::createObjectImage(ObjectBuffer *Buffer) {
@@ -1342,7 +1347,8 @@ uint64_t RuntimeDyldELF::findGOTEntry(uint64_t LoadAddress,
   return 0;
 }
 
-void RuntimeDyldELF::finalizeLoad() {
+void RuntimeDyldELF::finalizeLoad(ObjSectionToIDMap &SectionMap) {
+  // If necessary, allocate the global offset table
   if (MemMgr) {
     // Allocate the GOT if necessary
     size_t numGOTEntries = GOTEntries.size();
@@ -1364,6 +1370,18 @@ void RuntimeDyldELF::finalizeLoad() {
   }
   else {
     report_fatal_error("Unable to allocate memory for GOT!");
+  }
+
+  // Look for and record the EH frame section.
+  ObjSectionToIDMap::iterator i, e;
+  for (i = SectionMap.begin(), e = SectionMap.end(); i != e; ++i) {
+    const SectionRef &Section = i->first;
+    StringRef Name;
+    Section.getName(Name);
+    if (Name == ".eh_frame") {
+      UnregisteredEHFrameSections.push_back(i->second);
+      break;
+    }
   }
 }
 

@@ -74,12 +74,19 @@ public:
                                unsigned SectionID, StringRef SectionName,
                                bool IsReadOnly);
 
-  void *getPointerToNamedFunction(const std::string &Name,
-                                  bool AbortOnFailure = true);
+  // For now, remote symbol resolution is not support in lli.  The MCJIT
+  // interface does support this, but clients must provide their own
+  // mechanism for finding remote symbol addresses.  MCJIT will resolve
+  // symbols from Modules it contains.
+  uint64_t getSymbolAddress(const std::string &Name) {}
 
   void notifyObjectLoaded(ExecutionEngine *EE, const ObjectImage *Obj);
 
   bool finalizeMemory(std::string *ErrMsg);
+
+  // For now, remote EH frame registration isn't supported.  Remote symbol
+  // resolution is a prerequisite to supporting remote EH frame registration.
+  void registerEHFrames(uint8_t *Addr, uint64_t LoadAddr, size_t Size) {}
 
   // This is a non-interface function used by lli
   void setRemoteTarget(RemoteTarget *T) { Target = T; }

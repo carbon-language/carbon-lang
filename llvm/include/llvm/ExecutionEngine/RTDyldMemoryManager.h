@@ -53,7 +53,12 @@ public:
     StringRef SectionName, bool IsReadOnly) = 0;
 
   /// Register the EH frames with the runtime so that c++ exceptions work.
-  virtual void registerEHFrames(StringRef SectionData);
+  ///
+  /// \p Addr parameter provides the local address of the EH frame section
+  /// data, while \p LoadAddr provides the address of the data in the target
+  /// address space.  If the section has not been remapped (which will usually
+  /// be the case for local execution) these two values will be the same.
+  virtual void registerEHFrames(uint8_t *Addr, uint64_t LoadAddr, size_t Size);
 
   /// This method returns the address of the specified function or variable.
   /// It is used to resolve symbols during module linking.

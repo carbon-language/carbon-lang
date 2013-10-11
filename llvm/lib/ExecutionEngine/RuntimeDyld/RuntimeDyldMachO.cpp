@@ -55,33 +55,58 @@ static intptr_t computeDelta(SectionEntry *A, SectionEntry *B) {
   return ObjDistance - MemDistance;
 }
 
-StringRef RuntimeDyldMachO::getEHFrameSection() {
-  SectionEntry *Text = NULL;
-  SectionEntry *EHFrame = NULL;
-  SectionEntry *ExceptTab = NULL;
-  for (int i = 0, e = Sections.size(); i != e; ++i) {
-    if (Sections[i].Name == "__eh_frame")
-      EHFrame = &Sections[i];
-    else if (Sections[i].Name == "__text")
-      Text = &Sections[i];
-    else if (Sections[i].Name == "__gcc_except_tab")
-      ExceptTab = &Sections[i];
+void RuntimeDyldMachO::registerEHFrames() {
+
+  if (!MemMgr)
+    return;
+  for (int i = 0, e = UnregisteredEHFrameSections.size(); i != e; ++i) {
+    EHFrameRelatedSections &SectionInfo = UnregisteredEHFrameSections[i];
+    if (SectionInfo.EHFrameSID == RTDYLD_INVALID_SECTION_ID ||
+        SectionInfo.TextSID == RTDYLD_INVALID_SECTION_ID)
+      continue;
+    SectionEntry *Text = &Sections[SectionInfo.TextSID];
+    SectionEntry *EHFrame = &Sections[SectionInfo.EHFrameSID];
+    SectionEntry *ExceptTab = NULL;
+    if (SectionInfo.ExceptTabSID != RTDYLD_INVALID_SECTION_ID)
+      ExceptTab = &Sections[SectionInfo.ExceptTabSID];
+
+    intptr_t DeltaForText = computeDelta(Text, EHFrame);
+    intptr_t DeltaForEH = 0;
+    if (ExceptTab)
+      DeltaForEH = computeDelta(ExceptTab, EHFrame);
+
+    unsigned char *P = EHFrame->Address;
+    unsigned char *End = P + EHFrame->Size;
+    do  {
+      P = processFDE(P, DeltaForText, DeltaForEH);
+    } while(P != End);
+
+    MemMgr->registerEHFrames(EHFrame->Address,
+                             EHFrame->LoadAddress,
+                             EHFrame->Size);
   }
-  if (Text == NULL || EHFrame == NULL)
-    return StringRef();
+  UnregisteredEHFrameSections.clear();
+}
 
-  intptr_t DeltaForText = computeDelta(Text, EHFrame);
-  intptr_t DeltaForEH = 0;
-  if (ExceptTab)
-    DeltaForEH = computeDelta(ExceptTab, EHFrame);
-
-  unsigned char *P = EHFrame->Address;
-  unsigned char *End = P + EHFrame->Size;
-  do  {
-    P = processFDE(P, DeltaForText, DeltaForEH);
-  } while(P != End);
-
-  return StringRef((char*)EHFrame->Address, EHFrame->Size);
+void RuntimeDyldMachO::finalizeLoad(ObjSectionToIDMap &SectionMap) {
+  unsigned EHFrameSID = RTDYLD_INVALID_SECTION_ID;
+  unsigned TextSID = RTDYLD_INVALID_SECTION_ID;
+  unsigned ExceptTabSID = RTDYLD_INVALID_SECTION_ID;
+  ObjSectionToIDMap::iterator i, e;
+  for (i = SectionMap.begin(), e = SectionMap.end(); i != e; ++i) {
+    const SectionRef &Section = i->first;
+    StringRef Name;
+    Section.getName(Name);
+    if (Name == "__eh_frame")
+      EHFrameSID = i->second;
+    else if (Name == "__text")
+      TextSID = i->second;
+    else if (Name == "__gcc_except_tab")
+      ExceptTabSID = i->second;
+  }
+  UnregisteredEHFrameSections.push_back(EHFrameRelatedSections(EHFrameSID,
+                                                               TextSID,
+                                                               ExceptTabSID));
 }
 
 // The target location for the relocation is described by RE.SectionID and

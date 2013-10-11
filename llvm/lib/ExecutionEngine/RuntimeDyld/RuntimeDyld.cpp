@@ -29,8 +29,7 @@ RuntimeDyldImpl::~RuntimeDyldImpl() {}
 
 namespace llvm {
 
-StringRef RuntimeDyldImpl::getEHFrameSection() {
-  return StringRef();
+void RuntimeDyldImpl::registerEHFrames() {
 }
 
 // Resolve the relocations for all symbols we currently know about.
@@ -171,7 +170,7 @@ ObjectImage *RuntimeDyldImpl::loadObject(ObjectBuffer *InputBuffer) {
   }
 
   // Give the subclasses a chance to tie-up any loose ends.
-  finalizeLoad();
+  finalizeLoad(LocalSections);
 
   return obj.take();
 }
@@ -592,8 +591,8 @@ StringRef RuntimeDyld::getErrorString() {
   return Dyld->getErrorString();
 }
 
-StringRef RuntimeDyld::getEHFrameSection() {
-  return Dyld->getEHFrameSection();
+void RuntimeDyld::registerEHFrames() {
+  return Dyld->registerEHFrames();
 }
 
 } // end namespace llvm

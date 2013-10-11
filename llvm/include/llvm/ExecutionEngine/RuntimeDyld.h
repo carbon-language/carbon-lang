@@ -64,9 +64,14 @@ public:
   /// This is the address which will be used for relocation resolution.
   void mapSectionAddress(const void *LocalAddress, uint64_t TargetAddress);
 
-  StringRef getErrorString();
+  /// Register any EH frame sections that have been loaded but not previously
+  /// registered with the memory manager.  Note, RuntimeDyld is responsible
+  /// for identifying the EH frame and calling the memory manager with the
+  /// EH frame section data.  However, the memory manager itself will handle
+  /// the actual target-specific EH frame registration.
+  void registerEHFrames();
 
-  StringRef getEHFrameSection();
+  StringRef getErrorString();
 };
 
 } // end namespace llvm

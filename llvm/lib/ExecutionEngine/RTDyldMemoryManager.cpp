@@ -54,10 +54,15 @@ static const char *processFDE(const char *Entry) {
 }
 #endif
 
-void RTDyldMemoryManager::registerEHFrames(StringRef SectionData) {
+// This implementation handles frame registration for local targets.
+// Memory managers for remote targets should re-implement this function
+// and use the LoadAddr parameter.
+void RTDyldMemoryManager::registerEHFrames(uint8_t *Addr,
+                                           uint64_t LoadAddr,
+                                           size_t Size) {
 #if HAVE_EHTABLE_SUPPORT
-  const char *P = SectionData.data();
-  const char *End = SectionData.data() + SectionData.size();
+  const char *P = (const char *)Addr;
+  const char *End = P + Size;
   do  {
     P = processFDE(P);
   } while(P != End);

@@ -147,6 +147,9 @@ protected:
   typedef SmallVector<SectionEntry, 64> SectionList;
   SectionList Sections;
 
+  typedef unsigned SID; // Type for SectionIDs
+  #define RTDYLD_INVALID_SECTION_ID ((SID)(-1)) 
+
   // Keep a map of sections from object file to the SectionID which
   // references it.
   typedef std::map<SectionRef, unsigned> ObjSectionToIDMap;
@@ -357,9 +360,9 @@ public:
 
   virtual bool isCompatibleFormat(const ObjectBuffer *Buffer) const = 0;
 
-  virtual StringRef getEHFrameSection();
+  virtual void registerEHFrames();
 
-  virtual void finalizeLoad() {}
+  virtual void finalizeLoad(ObjSectionToIDMap &SectionMap) {}
 };
 
 } // end namespace llvm
