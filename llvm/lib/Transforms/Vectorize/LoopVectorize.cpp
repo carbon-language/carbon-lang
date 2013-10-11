@@ -2745,18 +2745,16 @@ bool LoopVectorizationLegality::canVectorize() {
   if (!TheLoop->getExitingBlock())
     return false;
 
-  unsigned NumBlocks = TheLoop->getNumBlocks();
+  // We need to have a loop header.
+  DEBUG(dbgs() << "LV: Found a loop: " <<
+        TheLoop->getHeader()->getName() << '\n');
 
   // Check if we can if-convert non single-bb loops.
+  unsigned NumBlocks = TheLoop->getNumBlocks();
   if (NumBlocks != 1 && !canVectorizeWithIfConvert()) {
     DEBUG(dbgs() << "LV: Can't if-convert the loop.\n");
     return false;
   }
-
-  // We need to have a loop header.
-  BasicBlock *Latch = TheLoop->getLoopLatch();
-  DEBUG(dbgs() << "LV: Found a loop: " <<
-        TheLoop->getHeader()->getName() << '\n');
 
   // ScalarEvolution needs to be able to find the exit count.
   const SCEV *ExitCount = SE->getBackedgeTakenCount(TheLoop);
@@ -2766,6 +2764,7 @@ bool LoopVectorizationLegality::canVectorize() {
   }
 
   // Do not loop-vectorize loops with a tiny trip count.
+  BasicBlock *Latch = TheLoop->getLoopLatch();
   unsigned TC = SE->getSmallConstantTripCount(TheLoop, Latch);
   if (TC > 0u && TC < TinyTripCountVectorThreshold) {
     DEBUG(dbgs() << "LV: Found a loop with a very small trip count. " <<
