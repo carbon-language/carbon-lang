@@ -60,6 +60,44 @@
 // CHECK: ins	v15.s[3], v22.s[2]      // encoding: [0xcf,0x5e,0x1c,0x6e]
 // CHECK: ins	v0.d[0], v4.d[1]        // encoding: [0x80,0x44,0x08,0x6e]
 
+//------------------------------------------------------------------------------
+// Duplicate to all lanes( vector, from element)
+//------------------------------------------------------------------------------
+         dup v1.8b, v2.b[2]
+         dup v11.4h, v7.h[7]
+         dup v17.2s, v20.s[0]
+         dup v1.16b, v2.b[2]
+         dup v11.8h, v7.h[7]
+         dup v17.4s, v20.s[0]
+         dup v5.2d, v1.d[1]         
+
+// CHECK: dup v1.8b, v2.b[2]        // encoding: [0x41,0x04,0x05,0x0e]
+// CHECK: dup v11.4h, v7.h[7]       // encoding: [0xeb,0x04,0x1e,0x0e]
+// CHECK: dup v17.2s, v20.s[0]      // encoding: [0x91,0x06,0x04,0x0e]
+// CHECK: dup v1.16b, v2.b[2]       // encoding: [0x41,0x04,0x05,0x4e]
+// CHECK: dup v11.8h, v7.h[7]       // encoding: [0xeb,0x04,0x1e,0x4e]
+// CHECK: dup v17.4s, v20.s[0]      // encoding: [0x91,0x06,0x04,0x4e]
+// CHECK: dup v5.2d, v1.d[1]        // encoding: [0x25,0x04,0x18,0x4e]
+
+//------------------------------------------------------------------------------
+// Duplicate to all lanes( vector, from main)
+//------------------------------------------------------------------------------
+         dup v1.8b, w1
+         dup v11.4h, w14
+         dup v17.2s, w30
+         dup v1.16b, w2
+         dup v11.8h, w16
+         dup v17.4s, w28
+         dup v5.2d, x0        
+
+// CHECK: dup	v1.8b, w1             // encoding: [0x21,0x0c,0x01,0x0e]
+// CHECK: dup	v11.4h, w14           // encoding: [0xcb,0x0d,0x0a,0x0e]
+// CHECK: dup	v17.2s, w30           // encoding: [0xd1,0x0f,0x14,0x0e]
+// CHECK: dup	v1.16b, w2            // encoding: [0x41,0x0c,0x01,0x4e]
+// CHECK: dup	v11.8h, w16           // encoding: [0x0b,0x0e,0x0a,0x4e]
+// CHECK: dup	v17.4s, w28           // encoding: [0x91,0x0f,0x14,0x4e]
+// CHECK: dup	v5.2d, x0             // encoding: [0x05,0x0c,0x08,0x4e]
+
 
 
 

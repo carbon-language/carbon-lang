@@ -4101,3 +4101,188 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR:        st4 {v31.2s-v1.2s}, [x31]
 // CHECK-ERROR:            ^
+
+         ins v2.b[16], w1
+         ins v7.h[8], w14
+         ins v20.s[5], w30
+         ins v1.d[2], x7
+         ins v2.b[3], b1
+         ins v7.h[2], h14
+         ins v20.s[1], s30
+         ins v1.d[0], d7
+
+// CHECK-ERROR: error: lane number incompatible with layout
+// CHECK-ERROR:         ins v2.b[16], w1
+// CHECK-ERROR:                  ^
+// CHECK-ERROR: error: lane number incompatible with layout
+// CHECK-ERROR:         ins v7.h[8], w14
+// CHECK-ERROR:                  ^
+// CHECK-ERROR: error: lane number incompatible with layout
+// CHECK-ERROR:         ins v20.s[5], w30
+// CHECK-ERROR:                   ^
+// CHECK-ERROR: error: lane number incompatible with layout
+// CHECK-ERROR:         ins v1.d[2], x7
+// CHECK-ERROR:                  ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         ins v2.b[3], b1
+// CHECK-ERROR:                      ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         ins v7.h[2], h14
+// CHECK-ERROR:                      ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         ins v20.s[1], s30
+// CHECK-ERROR:                       ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         ins v1.d[0], d7
+// CHECK-ERROR:                      ^
+
+         smov w1, v0.b[16]
+         smov w14, v6.h[8]
+         smov x1, v0.b[16]
+         smov x14, v6.h[8]
+         smov x20, v9.s[5]
+         smov w1, v0.d[0]
+         smov w14, v6.d[1]
+         smov x1, v0.d[0]
+         smov x14, v6.d[1]
+         smov x20, v9.d[0]
+
+// CHECK-ERROR error: lane number incompatible with layout
+// CHECK-ERROR         smov w1, v0.b[16]
+// CHECK-ERROR                       ^
+// CHECK-ERROR error: lane number incompatible with layout
+// CHECK-ERROR         smov w14, v6.h[8]
+// CHECK-ERROR                        ^
+// CHECK-ERROR error: lane number incompatible with layout
+// CHECK-ERROR         smov x1, v0.b[16]
+// CHECK-ERROR                       ^
+// CHECK-ERROR error: lane number incompatible with layout
+// CHECK-ERROR         smov x14, v6.h[8]
+// CHECK-ERROR                        ^
+// CHECK-ERROR error: lane number incompatible with layout
+// CHECK-ERROR         smov x20, v9.s[5]
+// CHECK-ERROR                        ^
+// CHECK-ERROR error: invalid operand for instruction
+// CHECK-ERROR         smov w1, v0.d[0]
+// CHECK-ERROR                     ^
+// CHECK-ERROR error: invalid operand for instruction
+// CHECK-ERROR         smov w14, v6.d[1]
+// CHECK-ERROR                      ^
+// CHECK-ERROR error: invalid operand for instruction
+// CHECK-ERROR         smov x1, v0.d[0]
+// CHECK-ERROR                     ^
+// CHECK-ERROR error: invalid operand for instruction
+// CHECK-ERROR         smov x14, v6.d[1]
+// CHECK-ERROR                      ^
+// CHECK-ERROR error: invalid operand for instruction
+// CHECK-ERROR         smov x20, v9.d[0]
+// CHECK-ERROR                      ^
+
+         umov w1, v0.b[16]
+         umov w14, v6.h[8]
+         umov w20, v9.s[5]
+         umov x7, v18.d[3]
+         umov w1, v0.d[0]
+         umov s20, v9.s[2]
+         umov d7, v18.d[1]
+
+// CHECK-ERROR error: lane number incompatible with layout
+// CHECK-ERROR         umov w1, v0.b[16]
+// CHECK-ERROR                       ^
+// CHECK-ERROR error: lane number incompatible with layout
+// CHECK-ERROR         umov w14, v6.h[8]
+// CHECK-ERROR                        ^
+// CHECK-ERROR error: lane number incompatible with layout
+// CHECK-ERROR         umov w20, v9.s[5]
+// CHECK-ERROR                        ^
+// CHECK-ERROR error: lane number incompatible with layout
+// CHECK-ERROR         umov x7, v18.d[3]
+// CHECK-ERROR                        ^
+// CHECK-ERROR error: invalid operand for instruction
+// CHECK-ERROR         umov w1, v0.d[0]
+// CHECK-ERROR                     ^
+// CHECK-ERROR error: invalid operand for instruction
+// CHECK-ERROR         umov s20, v9.s[2]
+// CHECK-ERROR              ^
+// CHECK-ERROR error: invalid operand for instruction
+// CHECK-ERROR         umov d7, v18.d[1]
+// CHECK-ERROR              ^
+
+         Ins v1.h[2], v3.b[6]
+         Ins v6.h[7], v7.s[2]
+         Ins v15.d[0], v22.s[2]
+         Ins v0.d[0], v4.b[1]
+
+// CHECK-ERROR error: invalid operand for instruction
+// CHECK-ERROR         Ins v1.h[2], v3.b[6]
+// CHECK-ERROR                         ^
+// CHECK-ERROR error: invalid operand for instruction
+// CHECK-ERROR         Ins v6.h[7], v7.s[2]
+// CHECK-ERROR                         ^
+// CHECK-ERROR error: invalid operand for instruction
+// CHECK-ERROR         Ins v15.d[0], v22.s[2]
+// CHECK-ERROR                           ^
+// CHECK-ERROR error: invalid operand for instruction
+// CHECK-ERROR         Ins v0.d[0], v4.b[1]
+// CHECK-ERROR                         ^
+
+         dup v1.8h, v2.b[2]
+         dup v11.4s, v7.h[7]
+         dup v17.2d, v20.s[0]
+         dup v1.16b, v2.h[2]
+         dup v11.8h, v7.s[3]
+         dup v17.4s, v20.d[0]
+         dup v5.2d, v1.b[1]
+
+// CHECK-ERROR error: invalid operand for instruction
+// CHECK-ERROR         dup v1.8h, v2.b[2]
+// CHECK-ERROR                       ^
+// CHECK-ERROR error: invalid operand for instruction
+// CHECK-ERROR         dup v11.4s, v7.h[7]
+// CHECK-ERROR                        ^
+// CHECK-ERROR error: invalid operand for instruction
+// CHECK-ERROR         dup v17.2d, v20.s[0]
+// CHECK-ERROR                         ^
+// CHECK-ERROR error: invalid operand for instruction
+// CHECK-ERROR         dup v1.16b, v2.h[2]
+// CHECK-ERROR                        ^
+// CHECK-ERROR invalid operand for instruction
+// CHECK-ERROR         dup v11.8h, v7.s[3]
+// CHECK-ERROR                        ^
+// CHECK-ERROR invalid operand for instruction
+// CHECK-ERROR         dup v17.4s, v20.d[0]
+// CHECK-ERROR                         ^
+// CHECK-ERROR invalid operand for instruction
+// CHECK-ERROR         dup v5.2d, v1.b[1]
+// CHECK-ERROR                       ^
+
+         dup v1.8b, b1
+         dup v11.4h, h14
+         dup v17.2s, s30
+         dup v1.16b, d2
+         dup v11.8s, w16
+         dup v17.4d, w28
+         dup v5.2d, w0
+
+// CHECK-ERROR error: invalid operand for instruction
+// CHECK-ERROR         dup v1.8b, b1
+// CHECK-ERROR                    ^
+// CHECK-ERROR error: invalid operand for instruction
+// CHECK-ERROR         dup v11.4h, h14
+// CHECK-ERROR                     ^
+// CHECK-ERROR error: invalid operand for instruction
+// CHECK-ERROR         dup v17.2s, s30
+// CHECK-ERROR                     ^
+// CHECK-ERROR error: invalid operand for instruction
+// CHECK-ERROR         dup v1.16b, d2
+// CHECK-ERROR                     ^
+// CHECK-ERROR error: invalid operand for instruction
+// CHECK-ERROR         dup v11.8s, w16
+// CHECK-ERROR             ^
+// CHECK-ERROR error: invalid operand for instruction
+// CHECK-ERROR         dup v17.4d, w28
+// CHECK-ERROR             ^
+// CHECK-ERROR error: invalid operand for instruction
+// CHECK-ERROR         dup v5.2d, w0
+// CHECK-ERROR                    ^
+

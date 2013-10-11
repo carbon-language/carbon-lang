@@ -297,15 +297,23 @@ AArch64TargetLowering::AArch64TargetLowering(AArch64TargetMachine &TM)
     setOperationAction(ISD::BUILD_VECTOR, MVT::v1f64, Custom);
     setOperationAction(ISD::BUILD_VECTOR, MVT::v2f64, Custom);
 
+    setOperationAction(ISD::VECTOR_SHUFFLE, MVT::v8i8, Custom);
+    setOperationAction(ISD::VECTOR_SHUFFLE, MVT::v16i8, Custom);
     setOperationAction(ISD::VECTOR_SHUFFLE, MVT::v4i16, Custom);
     setOperationAction(ISD::VECTOR_SHUFFLE, MVT::v8i16, Custom);
     setOperationAction(ISD::VECTOR_SHUFFLE, MVT::v2i32, Custom);
     setOperationAction(ISD::VECTOR_SHUFFLE, MVT::v4i32, Custom);
+    setOperationAction(ISD::VECTOR_SHUFFLE, MVT::v1i64, Custom);
+    setOperationAction(ISD::VECTOR_SHUFFLE, MVT::v2i64, Custom);
     setOperationAction(ISD::VECTOR_SHUFFLE, MVT::v2f32, Custom);
     setOperationAction(ISD::VECTOR_SHUFFLE, MVT::v4f32, Custom);
     setOperationAction(ISD::VECTOR_SHUFFLE, MVT::v1f64, Custom);
     setOperationAction(ISD::VECTOR_SHUFFLE, MVT::v2f64, Custom);
 
+    setOperationAction(ISD::CONCAT_VECTORS, MVT::v16i8, Legal);
+    setOperationAction(ISD::CONCAT_VECTORS, MVT::v8i16, Legal);
+    setOperationAction(ISD::CONCAT_VECTORS, MVT::v4i32, Legal);
+    setOperationAction(ISD::CONCAT_VECTORS, MVT::v2i64, Legal);
     setOperationAction(ISD::CONCAT_VECTORS, MVT::v8i16, Legal);
     setOperationAction(ISD::CONCAT_VECTORS, MVT::v4i32, Legal);
     setOperationAction(ISD::CONCAT_VECTORS, MVT::v2i64, Legal);
@@ -866,12 +874,12 @@ const char *AArch64TargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "AArch64ISD::NEON_CMPZ";
   case AArch64ISD::NEON_TST:
     return "AArch64ISD::NEON_TST";
-  case AArch64ISD::NEON_DUPIMM:
-    return "AArch64ISD::NEON_DUPIMM";
   case AArch64ISD::NEON_QSHLs:
     return "AArch64ISD::NEON_QSHLs";
   case AArch64ISD::NEON_QSHLu:
     return "AArch64ISD::NEON_QSHLu";
+  case AArch64ISD::NEON_VDUP:
+    return "AArch64ISD::NEON_VDUP";
   case AArch64ISD::NEON_VDUPLANE:
     return "AArch64ISD::NEON_VDUPLANE";
   default:
@@ -3342,7 +3350,7 @@ static SDValue PerformShiftCombine(SDNode *N,
   case ISD::SHL:
     if (isVShiftLImm(N->getOperand(1), VT, Cnt)) {
       SDValue RHS =
-          DAG.getNode(AArch64ISD::NEON_DUPIMM, SDLoc(N->getOperand(1)), VT,
+          DAG.getNode(AArch64ISD::NEON_VDUP, SDLoc(N->getOperand(1)), VT,
                       DAG.getConstant(Cnt, MVT::i32));
       return DAG.getNode(ISD::SHL, SDLoc(N), VT, N->getOperand(0), RHS);
     }
@@ -3352,7 +3360,7 @@ static SDValue PerformShiftCombine(SDNode *N,
   case ISD::SRL:
     if (isVShiftRImm(N->getOperand(1), VT, Cnt)) {
       SDValue RHS =
-          DAG.getNode(AArch64ISD::NEON_DUPIMM, SDLoc(N->getOperand(1)), VT,
+          DAG.getNode(AArch64ISD::NEON_VDUP, SDLoc(N->getOperand(1)), VT,
                       DAG.getConstant(Cnt, MVT::i32));
       return DAG.getNode(N->getOpcode(), SDLoc(N), VT, N->getOperand(0), RHS);
     }
@@ -3492,6 +3500,107 @@ AArch64TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG,
       }
     }
   }
+
+  unsigned NumElts = VT.getVectorNumElements();
+  bool isOnlyLowElement = true;
+  bool usesOnlyOneValue = true;
+  bool hasDominantValue = false;
+  bool isConstant = true;
+
+  // Map of the number of times a particular SDValue appears in the
+  // element list.
+  DenseMap<SDValue, unsigned> ValueCounts;
+  SDValue Value;
+  for (unsigned i = 0; i < NumElts; ++i) {
+    SDValue V = Op.getOperand(i);
+    if (V.getOpcode() == ISD::UNDEF)
+      continue;
+    if (i > 0)
+      isOnlyLowElement = false;
+    if (!isa<ConstantFPSDNode>(V) && !isa<ConstantSDNode>(V))
+      isConstant = false;
+
+    ValueCounts.insert(std::make_pair(V, 0));
+    unsigned &Count = ValueCounts[V];
+
+    // Is this value dominant? (takes up more than half of the lanes)
+    if (++Count > (NumElts / 2)) {
+      hasDominantValue = true;
+      Value = V;
+    }
+  }
+  if (ValueCounts.size() != 1)
+    usesOnlyOneValue = false;
+  if (!Value.getNode() && ValueCounts.size() > 0)
+    Value = ValueCounts.begin()->first;
+
+  if (ValueCounts.size() == 0)
+    return DAG.getUNDEF(VT);
+
+  // Loads are better lowered with insert_vector_elt.
+  // Keep going if we are hitting this case.
+  if (isOnlyLowElement && !ISD::isNormalLoad(Value.getNode()))
+    return DAG.getNode(ISD::SCALAR_TO_VECTOR, DL, VT, Value);
+
+  unsigned EltSize = VT.getVectorElementType().getSizeInBits();
+  // Use VDUP for non-constant splats.
+  if (hasDominantValue && EltSize <= 64) {
+    if (!isConstant) {
+      SDValue N;
+
+      // If we are DUPing a value that comes directly from a vector, we could
+      // just use DUPLANE. We can only do this if the lane being extracted
+      // is at a constant index, as the DUP from lane instructions only have
+      // constant-index forms.
+      if (Value->getOpcode() == ISD::EXTRACT_VECTOR_ELT &&
+          isa<ConstantSDNode>(Value->getOperand(1))) {
+          N = DAG.getNode(AArch64ISD::NEON_VDUPLANE, DL, VT,
+                        Value->getOperand(0), Value->getOperand(1));
+      } else
+        N = DAG.getNode(AArch64ISD::NEON_VDUP, DL, VT, Value);
+
+      if (!usesOnlyOneValue) {
+        // The dominant value was splatted as 'N', but we now have to insert
+        // all differing elements.
+        for (unsigned I = 0; I < NumElts; ++I) {
+          if (Op.getOperand(I) == Value)
+            continue;
+          SmallVector<SDValue, 3> Ops;
+          Ops.push_back(N);
+          Ops.push_back(Op.getOperand(I));
+          Ops.push_back(DAG.getConstant(I, MVT::i32));
+          N = DAG.getNode(ISD::INSERT_VECTOR_ELT, DL, VT, &Ops[0], 3);
+        }
+      }
+      return N;
+    }
+    if (usesOnlyOneValue && isConstant) {
+      return DAG.getNode(AArch64ISD::NEON_VDUP, DL, VT, Value);
+    }
+  }
+  // If all elements are constants and the case above didn't get hit, fall back
+  // to the default expansion, which will generate a load from the constant
+  // pool.
+  if (isConstant)
+    return SDValue();
+
+  // If all else fails, just use a sequence of INSERT_VECTOR_ELT when we
+  // know the default expansion would otherwise fall back on something even
+  // worse. For a vector with one or two non-undef values, that's
+  // scalar_to_vector for the elements followed by a shuffle (provided the
+  // shuffle is valid for the target) and materialization element by element
+  // on the stack followed by a load for everything else.
+  if (!isConstant && !usesOnlyOneValue) {
+    SDValue Vec = DAG.getUNDEF(VT);
+    for (unsigned i = 0 ; i < NumElts; ++i) {
+      SDValue V = Op.getOperand(i);
+      if (V.getOpcode() == ISD::UNDEF)
+        continue;
+      SDValue LaneIdx = DAG.getConstant(i, MVT::i32);
+      Vec = DAG.getNode(ISD::INSERT_VECTOR_ELT, DL, VT, Vec, V, LaneIdx);
+    }
+    return Vec;
+  }
   return SDValue();
 }
 
@@ -3499,6 +3608,7 @@ SDValue
 AArch64TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op,
                                                 SelectionDAG &DAG) const {
   SDValue V1 = Op.getOperand(0);
+  SDValue V2 = Op.getOperand(1);
   SDLoc dl(Op);
   EVT VT = Op.getValueType();
   ShuffleVectorSDNode *SVN = cast<ShuffleVectorSDNode>(Op.getNode());
@@ -3516,9 +3626,89 @@ AArch64TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op,
       // If this is undef splat, generate it via "just" vdup, if possible.
       if (Lane == -1) Lane = 0;
 
+      // Test if V1 is a SCALAR_TO_VECTOR.
+      if (V1.getOpcode() == ISD::SCALAR_TO_VECTOR) {
+        return DAG.getNode(AArch64ISD::NEON_VDUP, dl, VT, V1.getOperand(0));
+      }
+      // Test if V1 is a BUILD_VECTOR which is equivalent to a SCALAR_TO_VECTOR.
+      if (V1.getOpcode() == ISD::BUILD_VECTOR) {
+        bool IsScalarToVector = true;
+        for (unsigned i = 0, e = V1.getNumOperands(); i != e; ++i)
+          if (V1.getOperand(i).getOpcode() != ISD::UNDEF &&
+              i != (unsigned)Lane) {
+            IsScalarToVector = false;
+            break;
+          }
+        if (IsScalarToVector)
+          return DAG.getNode(AArch64ISD::NEON_VDUP, dl, VT,
+                             V1.getOperand(Lane));
+      }
       return DAG.getNode(AArch64ISD::NEON_VDUPLANE, dl, VT, V1,
                          DAG.getConstant(Lane, MVT::i64));
     }
+    // For shuffle mask like "0, 1, 2, 3, 4, 5, 13, 7", try to generate insert
+    // by element from V2 to V1 .
+    // If shuffle mask is like "0, 1, 10, 11, 12, 13, 14, 15", V2 would be a
+    // better choice to be inserted than V1 as less insert needed, so we count
+    // element to be inserted for both V1 and V2, and select less one as insert
+    // target.
+
+    // Collect elements need to be inserted and their index.
+    SmallVector<int, 8> NV1Elt;
+    SmallVector<int, 8> N1Index;
+    SmallVector<int, 8> NV2Elt;
+    SmallVector<int, 8> N2Index;
+    int Length = ShuffleMask.size();
+    int V1EltNum = V1.getValueType().getVectorNumElements();
+    for (int I = 0; I != Length; ++I) {
+      if (ShuffleMask[I] != I) {
+        NV1Elt.push_back(ShuffleMask[I]);
+        N1Index.push_back(I);
+      }
+    }
+    for (int I = 0; I != Length; ++I) {
+      if (ShuffleMask[I] != (I + V1EltNum)) {
+        NV2Elt.push_back(ShuffleMask[I]);
+        N2Index.push_back(I);
+      }
+    }
+
+    // Decide which to be inserted. If all lanes mismatch, neither V1 nor V2
+    // will be inserted.
+    SDValue InsV = V1;
+    SmallVector<int, 8> InsMasks = NV1Elt;
+    SmallVector<int, 8> InsIndex = N1Index;
+    if ((int)NV1Elt.size() != Length || (int)NV2Elt.size() != Length) {
+      if (NV1Elt.size() > NV2Elt.size()) {
+        InsV = V2;
+        InsMasks = NV2Elt;
+        InsIndex = N2Index;
+      }
+    } else {
+      InsV = DAG.getNode(ISD::UNDEF, dl, VT);
+    }
+
+    SDValue PassN;
+
+    for (int I = 0, E = InsMasks.size(); I != E; ++I) {
+      SDValue ExtV = V1;
+      int Mask = InsMasks[I];
+      if (Mask > V1EltNum) {
+        ExtV = V2;
+        Mask -= V1EltNum;
+      }
+      // Any value type smaller than i32 is illegal in AArch64, and this lower
+      // function is called after legalize pass, so we need to legalize
+      // the result here.
+      EVT EltVT = MVT::i32;
+      if(EltSize == 64)
+        EltVT = MVT::i64;
+      PassN = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, EltVT, ExtV,
+                          DAG.getConstant(Mask, MVT::i64));
+      PassN = DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, VT, InsV, PassN,
+                          DAG.getConstant(InsIndex[I], MVT::i64));
+    }
+    return PassN;
   }
 
   return SDValue();

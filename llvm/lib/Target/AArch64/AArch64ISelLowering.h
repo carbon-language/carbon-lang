@@ -134,12 +134,12 @@ namespace AArch64ISD {
     // Vector compare bitwise test
     NEON_TST,
 
-    // Operation for the immediate in vector shift
-    NEON_DUPIMM,
-
     // Vector saturating shift
     NEON_QSHLs,
     NEON_QSHLu,
+
+    // Vector dup
+    NEON_VDUP,
 
     // Vector dup by lane
     NEON_VDUPLANE
@@ -296,6 +296,10 @@ enum NeonModImmType {
   Neon_Mov_Imm,
   Neon_Mvn_Imm
 };
+
+extern SDValue ScanBUILD_VECTOR(SDValue Op, bool &isOnlyLowElement,
+                                bool &usesOnlyOneValue, bool &hasDominantValue,
+                                bool &isConstant, bool &isUNDEF);
 } // namespace llvm
 
 #endif // LLVM_TARGET_AARCH64_ISELLOWERING_H
