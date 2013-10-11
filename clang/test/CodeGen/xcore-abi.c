@@ -20,9 +20,9 @@ void testva (int n, ...) {
   char* v1 = va_arg (ap, char*);
   f(v1);
   // CHECK: [[I:%[a-z0-9]+]] = load i8** [[AP]]
+  // CHECK: [[P:%[a-z0-9]+]] = bitcast i8* [[I]] to i8**
   // CHECK: [[IN:%[a-z0-9]+]] = getelementptr i8* [[I]], i32 4
   // CHECK: store i8* [[IN]], i8** [[AP]]
-  // CHECK: [[P:%[a-z0-9]+]] = bitcast i8* [[I]] to i8**
   // CHECK: [[V1:%[a-z0-9]+]] = load i8** [[P]]
   // CHECK: store i8* [[V1]], i8** [[V:%[a-z0-9]+]], align 4
   // CHECK: [[V2:%[a-z0-9]+]] = load i8** [[V]], align 4
@@ -40,9 +40,9 @@ void testva (int n, ...) {
   int v3 = va_arg (ap, int);
   f(&v3);
   // CHECK: [[I:%[a-z0-9]+]] = load i8** [[AP]]
+  // CHECK: [[P:%[a-z0-9]+]] = bitcast i8* [[I]] to i32*
   // CHECK: [[IN:%[a-z0-9]+]] = getelementptr i8* [[I]], i32 4
   // CHECK: store i8* [[IN]], i8** [[AP]]
-  // CHECK: [[P:%[a-z0-9]+]] = bitcast i8* [[I]] to i32*
   // CHECK: [[V1:%[a-z0-9]+]] = load i32* [[P]]
   // CHECK: store i32 [[V1]], i32* [[V:%[a-z0-9]+]], align 4
   // CHECK: [[V2:%[a-z0-9]+]] = bitcast i32* [[V]] to i8*
@@ -51,9 +51,9 @@ void testva (int n, ...) {
   long long int v4 = va_arg (ap, long long int);
   f(&v4);
   // CHECK: [[I:%[a-z0-9]+]] = load i8** [[AP]]
-  // CHECK: [[IN:%[a-z0-9]+]] = getelementptr i8* [[I]], i32 4
-  // CHECK: store i8* [[IN]], i8** [[AP]]
   // CHECK: [[P:%[a-z0-9]+]] = bitcast i8* [[I]] to i64*
+  // CHECK: [[IN:%[a-z0-9]+]] = getelementptr i8* [[I]], i32 8
+  // CHECK: store i8* [[IN]], i8** [[AP]]
   // CHECK: [[V1:%[a-z0-9]+]] = load i64* [[P]]
   // CHECK: store i64 [[V1]], i64* [[V:%[a-z0-9]+]], align 8
   // CHECK:[[V2:%[a-z0-9]+]] = bitcast i64* [[V]] to i8*
@@ -62,10 +62,10 @@ void testva (int n, ...) {
   struct x v5 = va_arg (ap, struct x);  // typical agregate type
   f(&v5);
   // CHECK: [[I:%[a-z0-9]+]] = load i8** [[AP]]
-  // CHECK: [[IN:%[a-z0-9]+]] = getelementptr i8* [[I]], i32 4
-  // CHECK: store i8* [[IN]], i8** [[AP]]
   // CHECK: [[I2:%[a-z0-9]+]] = bitcast i8* [[I]] to %struct.x**
   // CHECK: [[P:%[a-z0-9]+]] = load %struct.x** [[I2]]
+  // CHECK: [[IN:%[a-z0-9]+]] = getelementptr i8* [[I]], i32 4
+  // CHECK: store i8* [[IN]], i8** [[AP]]
   // CHECK: [[V1:%[a-z0-9]+]] = bitcast %struct.x* [[V:%[a-z0-9]+]] to i8*
   // CHECK: [[P1:%[a-z0-9]+]] = bitcast %struct.x* [[P]] to i8*
   // CHECK: call void @llvm.memcpy.p0i8.p0i8.i32(i8* [[V1]], i8* [[P1]], i32 20, i32 4, i1 false)
@@ -75,10 +75,10 @@ void testva (int n, ...) {
   int* v6 = va_arg (ap, int[4]);  // an unusual agregate type
   f(v6);
   // CHECK: [[I:%[a-z0-9]+]] = load i8** [[AP]]
-  // CHECK: [[IN:%[a-z0-9]+]] = getelementptr i8* [[I]], i32 4
-  // CHECK: store i8* [[IN]], i8** [[AP]]
   // CHECK: [[I2:%[a-z0-9]+]] = bitcast i8* [[I]] to [4 x i32]**
   // CHECK: [[P:%[a-z0-9]+]] = load [4 x i32]** [[I2]]
+  // CHECK: [[IN:%[a-z0-9]+]] = getelementptr i8* [[I]], i32 4
+  // CHECK: store i8* [[IN]], i8** [[AP]]
   // CHECK: [[V1:%[a-z0-9]+]] = bitcast [4 x i32]* [[V0:%[a-z0-9]+]] to i8*
   // CHECK: [[P1:%[a-z0-9]+]] = bitcast [4 x i32]* [[P]] to i8*
   // CHECK: call void @llvm.memcpy.p0i8.p0i8.i32(i8* [[V1]], i8* [[P1]], i32 16, i32 4, i1 false)
@@ -87,6 +87,17 @@ void testva (int n, ...) {
   // CHECK: [[V3:%[a-z0-9]+]] = load i32** [[V]], align 4
   // CHECK: [[V4:%[a-z0-9]+]] = bitcast i32* [[V3]] to i8*
   // CHECK: call void @f(i8* [[V4]])
+
+  double v7 = va_arg (ap, double);
+  f(&v7);
+  // CHECK: [[I:%[a-z0-9]+]] = load i8** [[AP]]
+  // CHECK: [[P:%[a-z0-9]+]] = bitcast i8* [[I]] to double*
+  // CHECK: [[IN:%[a-z0-9]+]] = getelementptr i8* [[I]], i32 8
+  // CHECK: store i8* [[IN]], i8** [[AP]]
+  // CHECK: [[V1:%[a-z0-9]+]] = load double* [[P]]
+  // CHECK: store double [[V1]], double* [[V:%[a-z0-9]+]], align 8
+  // CHECK: [[V2:%[a-z0-9]+]] = bitcast double* [[V]] to i8*
+  // CHECK: call void @f(i8* [[V2]])
 }
 
 void testbuiltin (void) {
