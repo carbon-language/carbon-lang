@@ -853,7 +853,8 @@ extern "C" void *__tsan_thread_start_func(void *arg) {
   {
     ThreadState *thr = cur_thread();
     ScopedInRtl in_rtl;
-    if (pthread_setspecific(g_thread_finalize_key, (void*)4)) {
+    if (pthread_setspecific(g_thread_finalize_key,
+                            (void *)kPthreadDestructorIterations)) {
       Printf("ThreadSanitizer: failed to set thread key\n");
       Die();
     }

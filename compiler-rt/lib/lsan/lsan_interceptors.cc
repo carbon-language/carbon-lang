@@ -192,9 +192,6 @@ struct ThreadParam {
   atomic_uintptr_t tid;
 };
 
-// PTHREAD_DESTRUCTOR_ITERATIONS from glibc.
-const uptr kPthreadDestructorIterations = 4;
-
 extern "C" void *__lsan_thread_start_func(void *arg) {
   ThreadParam *p = (ThreadParam*)arg;
   void* (*callback)(void *arg) = p->callback;
