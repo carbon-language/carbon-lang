@@ -1,14 +1,14 @@
 // RUN: %clang_cc1 %s -triple x86_64-apple-darwin10 -emit-llvm -o - -mconstructor-aliases -fcxx-exceptions -fexceptions | FileCheck %s
 
-// CHECK: @_ZN5test01AD1Ev = alias {{.*}} @_ZN5test01AD2Ev
-// CHECK: @_ZN5test11MD2Ev = alias {{.*}} @_ZN5test11AD2Ev
-// CHECK: @_ZN5test11ND2Ev = alias {{.*}} @_ZN5test11AD2Ev
-// CHECK: @_ZN5test11OD2Ev = alias {{.*}} @_ZN5test11AD2Ev
-// CHECK: @_ZN5test11SD2Ev = alias bitcast {{.*}} @_ZN5test11AD2Ev
+// CHECK-DAG: @_ZN5test01AD1Ev = alias {{.*}} @_ZN5test01AD2Ev
+// CHECK-DAG: @_ZN5test11MD2Ev = alias {{.*}} @_ZN5test11AD2Ev
+// CHECK-DAG: @_ZN5test11ND2Ev = alias {{.*}} @_ZN5test11AD2Ev
+// CHECK-DAG: @_ZN5test11OD2Ev = alias {{.*}} @_ZN5test11AD2Ev
+// CHECK-DAG: @_ZN5test11SD2Ev = alias bitcast {{.*}} @_ZN5test11AD2Ev
 
-// CHECK: @_ZN5test312_GLOBAL__N_11DD1Ev = alias internal {{.*}} @_ZN5test312_GLOBAL__N_11DD2Ev
-// CHECK: @_ZN5test312_GLOBAL__N_11DD2Ev = alias internal bitcast {{.*}} @_ZN5test312_GLOBAL__N_11CD2Ev
-// CHECK: @_ZN5test312_GLOBAL__N_11CD1Ev = alias internal {{.*}} @_ZN5test312_GLOBAL__N_11CD2Ev
+// CHECK-DAG: @_ZN5test312_GLOBAL__N_11DD1Ev = alias internal {{.*}} @_ZN5test312_GLOBAL__N_11DD2Ev
+// CHECK-DAG: @_ZN5test312_GLOBAL__N_11DD2Ev = alias internal bitcast {{.*}} @_ZN5test312_GLOBAL__N_11CD2Ev
+// CHECK-DAG: @_ZN5test312_GLOBAL__N_11CD1Ev = alias internal {{.*}} @_ZN5test312_GLOBAL__N_11CD2Ev
 
 struct A {
   int a;
