@@ -50,10 +50,9 @@ bool Driver::link(LinkingContext &context, raw_ostream &diagnostics) {
   // Read inputs
   ScopedTask readTask(getDefaultDomain(), "Read Args");
   TaskGroup tg;
-  int index = 0;
   std::mutex diagnosticsMutex;
   for (auto &ie : inputGraph.inputElements()) {
-    tg.spawn([&, index] {
+    tg.spawn([&] {
       // Writes to the same output stream is not guaranteed to be thread-safe.
       // We buffer the diagnostics output to a separate string-backed output
       // stream, acquire the lock, and then print it out.
@@ -72,7 +71,6 @@ bool Driver::link(LinkingContext &context, raw_ostream &diagnostics) {
         diagnostics << buf;
       }
     });
-    ++index;
   }
   tg.sync();
   readTask.end();
