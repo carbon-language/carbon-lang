@@ -112,8 +112,6 @@ bool LayoutPass::CompareAtoms::operator()(const DefinedAtom *left,
   DEBUG(llvm::dbgs() << "Unordered\n");
 
   llvm_unreachable("Atoms with Same Ordinal!");
-
-  return false;
 }
 
 // Returns the atom immediately followed by the given atom in the followon
