@@ -107,7 +107,7 @@ bool Driver::link(LinkingContext &context, raw_ostream &diagnostics) {
   // Do core linking.
   ScopedTask resolveTask(getDefaultDomain(), "Resolve");
   Resolver resolver(context);
-  if (resolver.resolve()) {
+  if (!resolver.resolve()) {
     if (!context.allowRemainingUndefines())
       return false;
   }

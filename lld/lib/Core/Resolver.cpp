@@ -475,12 +475,12 @@ bool Resolver::resolve() {
   this->deadStripOptimize();
   if (this->checkUndefines(false)) {
     if (!_context.allowRemainingUndefines())
-      return true;
+      return false;
   }
   this->removeCoalescedAwayAtoms();
   this->linkTimeOptimize();
   this->_result.addAtoms(_atoms);
-  return false;
+  return true;
 }
 
 void Resolver::MergedFile::addAtom(const Atom& atom) {
