@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -triple i386-unknown-unknown %s -emit-llvm -o - -O3 | FileCheck %s
-// RUN: %clang_cc1 -triple i386-unknown-unknown %s -emit-llvm -o - -O3 -struct-path-tbaa | FileCheck %s --check-prefix=PATH
+// RUN: %clang_cc1 -triple i386-unknown-unknown %s -emit-llvm -o - -O3 -no-struct-path-tbaa | FileCheck %s
+// RUN: %clang_cc1 -triple i386-unknown-unknown %s -emit-llvm -o - -O3 | FileCheck %s --check-prefix=PATH
 
 static int f0(int n) {
   struct s0 {
