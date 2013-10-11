@@ -1079,10 +1079,8 @@ RecordLayoutBuilder::LayoutNonVirtualBases(const CXXRecordDecl *RD) {
       cast<CXXRecordDecl>(I->getType()->castAs<RecordType>()->getDecl());
 
     // Remember if this base has virtual bases itself.
-    if (BaseDecl->getNumVBases()) {
-      const ASTRecordLayout &Layout = Context.getASTRecordLayout(BaseDecl);
+    if (BaseDecl->getNumVBases())
       HasNonVirtualBaseWithVBTable = true;
-    }
 
     // Skip the primary base, because we've already laid it out.  The
     // !PrimaryBaseIsVirtual check is required because we might have a
