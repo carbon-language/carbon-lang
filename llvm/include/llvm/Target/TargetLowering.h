@@ -1183,35 +1183,6 @@ public:
     return false;
   }
 
-  /// Return true if the target supplies and combines to a paired load
-  /// two loaded values of type LoadedType next to each other in memory.
-  /// RequiredAlignment gives the minimal alignment constraints that must be met to
-  /// be able to select this paired load.
-  ///
-  /// This information is *not* used to generate actual paired loads, but it is used
-  /// to generate a sequence of loads that is easier to combine into a paired load.
-  /// For instance, something like this:
-  /// a = load i64* addr
-  /// b = trunc i64 a to i32
-  /// c = lshr i64 a, 32
-  /// d = trunc i64 c to i32
-  /// will be optimized into:
-  /// b = load i32* addr1
-  /// d = load i32* addr2
-  /// Where addr1 = addr2 +/- sizeof(i32).
-  ///
-  /// In other words, unless the target performs a post-isel load combining, this 
-  /// information should not be provided because it will generate more loads.
-  virtual bool hasPairedLoad(Type * /*LoadedType*/,
-                             unsigned & /*RequiredAligment*/) const {
-    return false;
-  }
-
-  virtual bool hasPairedLoad(EVT /*LoadedType*/,
-                             unsigned & /*RequiredAligment*/) const {
-    return false;
-  }
-
   /// Return true if zero-extending the specific node Val to type VT2 is free
   /// (either because it's implicitly zero-extended such as ARM ldrb / ldrh or
   /// because it's folded such as X86 zero-extending loads).
