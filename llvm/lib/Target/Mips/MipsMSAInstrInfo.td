@@ -295,6 +295,8 @@ def vsplati64_simm5 : SplatComplexPattern<vsplat_simm5, v2i64, 1,
 def vsplat_uimm_pow2 : ComplexPattern<vAny, 1, "selectVSplatUimmPow2",
                                       [build_vector, bitconvert]>;
 
+def fms : PatFrag<(ops node:$wd, node:$ws, node:$wt),
+                  (fsub node:$wd, (fmul node:$ws, node:$wt))>;
 // Immediates
 def immSExt5 : ImmLeaf<i32, [{return isInt<5>(Imm);}]>;
 def immSExt10: ImmLeaf<i32, [{return isInt<10>(Imm);}]>;
@@ -1816,10 +1818,8 @@ class FMIN_A_W_DESC : MSA_3RF_DESC_BASE<"fmin_a.w", int_mips_fmin_a_w,
 class FMIN_A_D_DESC : MSA_3RF_DESC_BASE<"fmin_a.d", int_mips_fmin_a_d,
                                         MSA128DOpnd>;
 
-class FMSUB_W_DESC : MSA_3RF_4RF_DESC_BASE<"fmsub.w", int_mips_fmsub_w,
-                                           MSA128WOpnd>;
-class FMSUB_D_DESC : MSA_3RF_4RF_DESC_BASE<"fmsub.d", int_mips_fmsub_d,
-                                           MSA128DOpnd>;
+class FMSUB_W_DESC : MSA_3RF_4RF_DESC_BASE<"fmsub.w", fms, MSA128WOpnd>;
+class FMSUB_D_DESC : MSA_3RF_4RF_DESC_BASE<"fmsub.d", fms, MSA128DOpnd>;
 
 class FMUL_W_DESC : MSA_3RF_DESC_BASE<"fmul.w", fmul, MSA128WOpnd>;
 class FMUL_D_DESC : MSA_3RF_DESC_BASE<"fmul.d", fmul, MSA128DOpnd>;

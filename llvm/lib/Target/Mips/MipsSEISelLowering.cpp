@@ -1341,6 +1341,13 @@ SDValue MipsSETargetLowering::lowerINTRINSIC_WO_CHAIN(SDValue Op,
   case Intrinsic::mips_fmul_d:
     return DAG.getNode(ISD::FMUL, DL, Op->getValueType(0), Op->getOperand(1),
                        Op->getOperand(2));
+  case Intrinsic::mips_fmsub_w:
+  case Intrinsic::mips_fmsub_d: {
+    EVT ResTy = Op->getValueType(0);
+    return DAG.getNode(ISD::FSUB, SDLoc(Op), ResTy, Op->getOperand(1),
+                       DAG.getNode(ISD::FMUL, SDLoc(Op), ResTy,
+                                   Op->getOperand(2), Op->getOperand(3)));
+  }
   case Intrinsic::mips_frint_w:
   case Intrinsic::mips_frint_d:
     return DAG.getNode(ISD::FRINT, DL, Op->getValueType(0), Op->getOperand(1));
