@@ -1,4 +1,5 @@
 ; RUN: llc -march=xcore < %s | FileCheck %s
+; RUN: llc -march=xcore -O=0 < %s | FileCheck %s -check-prefix=PHINODE
 
 declare i8 addrspace(1)* @llvm.xcore.getst.p1i8.p1i8(i8 addrspace(1)* %r)
 declare void @llvm.xcore.msync.p1i8(i8 addrspace(1)* %r)
@@ -100,6 +101,44 @@ define i32 @f_tlExpr () {
   ret i32 add(
       i32 ptrtoint( i32* getelementptr inbounds ([2 x i32]* @tle, i32 0, i32 0) to i32),
       i32 ptrtoint( i32* getelementptr inbounds ([2 x i32]* @tle, i32 0, i32 0) to i32))
+}
+
+define void @phiNode1() {
+; N.B. lowering of duplicate constexpr in a PHI node requires -O=0
+; PHINODE-LABEL: phiNode1:
+; PHINODE: get r11, id
+; PHINODE-LABEL: .LBB11_1:
+; PHINODE: get r11, id
+; PHINODE: bu .LBB11_1
+entry:
+  br label %ConstantExpPhiNode
+ConstantExpPhiNode:
+  %ptr = phi i32* [ getelementptr inbounds ([3 x i32]* @tl, i32 0, i32 0), %entry ],
+                  [ getelementptr inbounds ([3 x i32]* @tl, i32 0, i32 0), %ConstantExpPhiNode ]
+  br label %ConstantExpPhiNode
+exit:
+  ret void
+}
+
+define void @phiNode2( i1 %bool) {
+; N.B. check an extra 'Node_crit_edge' (LBB12_1) is inserted
+; PHINODE-LABEL: phiNode2:
+; PHINODE: bf {{r[0-9]}}, .LBB12_3
+; PHINODE: bu .LBB12_1
+; PHINODE-LABEL: .LBB12_1:
+; PHINODE: get r11, id
+; PHINODE-LABEL: .LBB12_2:
+; PHINODE: get r11, id
+; PHINODE: bu .LBB12_2
+; PHINODE-LABEL: .LBB12_3:
+entry:
+  br i1 %bool, label %ConstantExpPhiNode, label %exit
+ConstantExpPhiNode:
+  %ptr = phi i32* [ getelementptr inbounds ([3 x i32]* @tl, i32 0, i32 0), %entry ],
+                  [ getelementptr inbounds ([3 x i32]* @tl, i32 0, i32 0), %ConstantExpPhiNode ]
+  br label %ConstantExpPhiNode
+exit:
+  ret void
 }
 
 ; CHECK-LABEL: tl:

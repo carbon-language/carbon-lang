@@ -24,6 +24,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/NoFolder.h"
 #include "llvm/Support/ValueHandle.h"
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
 
 #define DEBUG_TYPE "xcore-lower-thread-local"
 
@@ -124,32 +125,42 @@ createReplacementInstr(ConstantExpr *CE, Instruction *Instr) {
   }
 }
 
-static bool replaceConstantExprOp(ConstantExpr *CE) {
+static bool replaceConstantExprOp(ConstantExpr *CE, Pass *P) {
   do {
     SmallVector<WeakVH,8> WUsers;
     for (Value::use_iterator I = CE->use_begin(), E = CE->use_end();
          I != E; ++I)
       WUsers.push_back(WeakVH(*I));
+    std::sort(WUsers.begin(), WUsers.end());
+    WUsers.erase(std::unique(WUsers.begin(), WUsers.end()), WUsers.end());
     while (!WUsers.empty())
       if (WeakVH WU = WUsers.pop_back_val()) {
-        if (Instruction *Instr = dyn_cast<Instruction>(WU)) {
+        if (PHINode *PN = dyn_cast<PHINode>(WU)) {
+          for (int I = 0, E = PN->getNumIncomingValues(); I < E; ++I)
+            if (PN->getIncomingValue(I) == CE) {
+              BasicBlock *PredBB = PN->getIncomingBlock(I);
+              if (PredBB->getTerminator()->getNumSuccessors() > 1)
+                PredBB = SplitEdge(PredBB, PN->getParent(), P);
+              Instruction *InsertPos = PredBB->getTerminator();
+              Instruction *NewInst = createReplacementInstr(CE, InsertPos);
+              PN->setOperand(I, NewInst);
+            }
+        } else if (Instruction *Instr = dyn_cast<Instruction>(WU)) {
           Instruction *NewInst = createReplacementInstr(CE, Instr);
-          assert(NewInst && "Must build an instruction\n");
-          // If NewInst uses a CE being handled in an earlier recursion the
-          // earlier recursion's do-while-hasNUsesOrMore(1) will run again.
           Instr->replaceUsesOfWith(CE, NewInst);
         } else {
           ConstantExpr *CExpr = dyn_cast<ConstantExpr>(WU);
-          if (!CExpr || !replaceConstantExprOp(CExpr))
+          if (!CExpr || !replaceConstantExprOp(CExpr, P))
             return false;
         }
       }
-  } while (CE->hasNUsesOrMore(1)); // Does a recursion's NewInst use CE?
+  } while (CE->hasNUsesOrMore(1)); // We need to check becasue a recursive
+  // sibbling may have used 'CE' when createReplacementInstr was called.
   CE->destroyConstant();
   return true;
 }
 
-static bool rewriteNonInstructionUses(GlobalVariable *GV) {
+static bool rewriteNonInstructionUses(GlobalVariable *GV, Pass *P) {
   SmallVector<WeakVH,8> WUsers;
   for (Value::use_iterator I = GV->use_begin(), E = GV->use_end(); I != E; ++I)
     if (!isa<Instruction>(*I))
@@ -157,7 +168,7 @@ static bool rewriteNonInstructionUses(GlobalVariable *GV) {
   while (!WUsers.empty())
     if (WeakVH WU = WUsers.pop_back_val()) {
       ConstantExpr *CE = dyn_cast<ConstantExpr>(WU);
-      if (!CE || !replaceConstantExprOp(CE))
+      if (!CE || !replaceConstantExprOp(CE, P))
         return false;
     }
   return true;
@@ -175,7 +186,7 @@ bool XCoreLowerThreadLocal::lowerGlobal(GlobalVariable *GV) {
     return false;
 
   // Skip globals that we can't lower and leave it for the backend to error.
-  if (!rewriteNonInstructionUses(GV) ||
+  if (!rewriteNonInstructionUses(GV, this) ||
       !GV->getType()->isSized() || isZeroLengthArray(GV->getType()))
     return false;
 
