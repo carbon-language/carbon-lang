@@ -17,6 +17,7 @@
 ; CHECK: NULL
 
 ; CHECK: [[TYPE2:.*]]: DW_TAG_structure_type
+; CHECK: DW_AT_name [DW_FORM_strp] {{.*}}= "bar")
 ; CHECK: DW_TAG_structure_type
 ; CHECK: DW_AT_name [DW_FORM_strp] {{.*}}= "D")
 ; CHECK: DW_TAG_member
