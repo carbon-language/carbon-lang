@@ -663,6 +663,30 @@ protected:
   virtual Tool *buildAssembler() const;
 };
 
+
+class LLVM_LIBRARY_VISIBILITY XCore : public ToolChain {
+public:
+  XCore(const Driver &D, const llvm::Triple &Triple,
+          const llvm::opt::ArgList &Args);
+protected:
+  virtual Tool *buildAssembler() const;
+  virtual Tool *buildLinker() const;
+public:
+  virtual bool isPICDefault() const;
+  virtual bool isPIEDefault() const;
+  virtual bool isPICDefaultForced() const;
+  virtual bool SupportsProfiling() const;
+  virtual bool hasBlocksRuntime() const;
+  virtual void AddClangSystemIncludeArgs(const llvm::opt::ArgList &DriverArgs,
+                            llvm::opt::ArgStringList &CC1Args) const;
+  virtual void addClangTargetOptions(const llvm::opt::ArgList &DriverArgs,
+                                     llvm::opt::ArgStringList &CC1Args) const;
+  virtual void AddClangCXXStdlibIncludeArgs(const llvm::opt::ArgList &DriverArgs,
+                               llvm::opt::ArgStringList &CC1Args) const;
+  virtual void AddCXXStdlibLibArgs(const llvm::opt::ArgList &Args,
+                                   llvm::opt::ArgStringList &CmdArgs) const;
+};
+
 } // end namespace toolchains
 } // end namespace driver
 } // end namespace clang

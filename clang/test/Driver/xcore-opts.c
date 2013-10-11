@@ -1,7 +1,12 @@
-// RUN: %clang -target xcore %s -### -o %t.o 2>&1 | FileCheck %s
+// RUN: %clang -target xcore %s -g -Wl,L1Arg,L2Arg -Wa,A1Arg,A2Arg -### -o %t.o 2>&1 | FileCheck %s
 
+// CHECK: "-nostdsysteminc"
 // CHECK: "-momit-leaf-frame-pointer"
 // CHECK-NOT: "-mdisable-fp-elim"
 // CHECK: "-fno-signed-char"
 // CHECK: "-fno-common"
+// CHECH: /xcc" "-o"
+// CHECK: "-c" "-g" "A1Arg" "A2Arg"
+// CHECK: /xcc" "-o"
+// CHEXK: "L1Arg" "L2Arg"
 

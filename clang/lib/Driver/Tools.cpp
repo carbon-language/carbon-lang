@@ -6781,3 +6781,58 @@ Command *visualstudio::Compile::GetCommand(Compilation &C, const JobAction &JA,
 
   return new Command(JA, *this, Args.MakeArgString(Exec), CmdArgs);
 }
+
+
+/// XCore Tools
+// We pass assemble and link construction to the xcc tool.
+
+void XCore::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
+                                       const InputInfo &Output,
+                                       const InputInfoList &Inputs,
+                                       const ArgList &Args,
+                                       const char *LinkingOutput) const {
+  ArgStringList CmdArgs;
+
+  CmdArgs.push_back("-o");
+  CmdArgs.push_back(Output.getFilename());
+
+  CmdArgs.push_back("-c");
+
+  if (Args.hasArg(options::OPT_g_Group)) {
+    CmdArgs.push_back("-g");
+  }
+
+  Args.AddAllArgValues(CmdArgs, options::OPT_Wa_COMMA,
+                       options::OPT_Xassembler);
+
+  for (InputInfoList::const_iterator
+       it = Inputs.begin(), ie = Inputs.end(); it != ie; ++it) {
+    const InputInfo &II = *it;
+    CmdArgs.push_back(II.getFilename());
+  }
+
+  const char *Exec =
+    Args.MakeArgString(getToolChain().GetProgramPath("xcc"));
+  C.addCommand(new Command(JA, *this, Exec, CmdArgs));
+}
+
+void XCore::Link::ConstructJob(Compilation &C, const JobAction &JA,
+                                   const InputInfo &Output,
+                                   const InputInfoList &Inputs,
+                                   const ArgList &Args,
+                                   const char *LinkingOutput) const {
+  ArgStringList CmdArgs;
+
+  if (Output.isFilename()) {
+    CmdArgs.push_back("-o");
+    CmdArgs.push_back(Output.getFilename());
+  } else {
+    assert(Output.isNothing() && "Invalid output.");
+  }
+
+  AddLinkerInputs(getToolChain(), Inputs, Args, CmdArgs);
+
+  const char *Exec =
+    Args.MakeArgString(getToolChain().GetProgramPath("xcc"));
+  C.addCommand(new Command(JA, *this, Exec, CmdArgs));
+}

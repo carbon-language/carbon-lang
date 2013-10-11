@@ -1952,6 +1952,10 @@ const ToolChain &Driver::getToolChain(const ArgList &Args,
         TC = new toolchains::Hexagon_TC(*this, Target, Args);
         break;
       }
+      if (Target.getArch() == llvm::Triple::xcore) {
+        TC = new toolchains::XCore(*this, Target, Args);
+        break;
+      }
       TC = new toolchains::Generic_GCC(*this, Target, Args);
       break;
     }
