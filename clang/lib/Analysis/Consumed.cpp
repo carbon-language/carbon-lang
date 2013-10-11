@@ -51,14 +51,14 @@ using namespace consumed;
 // Key method definition
 ConsumedWarningsHandlerBase::~ConsumedWarningsHandlerBase() {}
 
-static SourceLocation getWarningLocForLoopExit(const CFGBlock *ExitBlock) {
+static SourceLocation getLastStmtLoc(const CFGBlock *Block) {
   // Find the source location of the last statement in the block, if the block
   // is not empty.
-  if (const Stmt *StmtNode = ExitBlock->getTerminator()) {
+  if (const Stmt *StmtNode = Block->getTerminator()) {
     return StmtNode->getLocStart();
   } else {
-    for (CFGBlock::const_reverse_iterator BI = ExitBlock->rbegin(),
-         BE = ExitBlock->rend(); BI != BE; ++BI) {
+    for (CFGBlock::const_reverse_iterator BI = Block->rbegin(),
+         BE = Block->rend(); BI != BE; ++BI) {
       // FIXME: Handle other CFGElement kinds.
       if (Optional<CFGStmt> CS = BI->getAs<CFGStmt>())
         return CS->getStmt()->getLocStart();
@@ -66,10 +66,10 @@ static SourceLocation getWarningLocForLoopExit(const CFGBlock *ExitBlock) {
   }
   
   // The block is empty, and has a single predecessor. Use its exit location.
-  assert(ExitBlock->pred_size() == 1 && *ExitBlock->pred_begin() &&
-         ExitBlock->succ_size() != 0);
+  assert(Block->pred_size() == 1 && *Block->pred_begin() &&
+         Block->succ_size() != 0);
     
-  return getWarningLocForLoopExit(*ExitBlock->pred_begin());
+  return getLastStmtLoc(*Block->pred_begin());
 }
 
 static ConsumedState invertConsumedUnconsumed(ConsumedState State) {
@@ -340,10 +340,6 @@ class ConsumedStmtVisitor : public ConstStmtVisitor<ConsumedStmtVisitor> {
   ConsumedAnalyzer &Analyzer;
   ConsumedStateMap *StateMap;
   MapType PropagationMap;
-  
-  void checkCallability(const PropagationInfo &PInfo,
-                        const FunctionDecl *FunDecl,
-                        const CallExpr *Call);
   void forwardInfo(const Stmt *From, const Stmt *To);
   void handleTestingFunctionCall(const CallExpr *Call, const VarDecl *Var);
   bool isLikeMoveAssignment(const CXXMethodDecl *MethodDecl);
@@ -351,12 +347,16 @@ class ConsumedStmtVisitor : public ConstStmtVisitor<ConsumedStmtVisitor> {
                            QualType ReturnType);
   
 public:
+  void checkCallability(const PropagationInfo &PInfo,
+                        const FunctionDecl *FunDecl,
+                        SourceLocation BlameLoc);
 
   void Visit(const Stmt *StmtNode);
   
   void VisitBinaryOperator(const BinaryOperator *BinOp);
   void VisitCallExpr(const CallExpr *Call);
   void VisitCastExpr(const CastExpr *Cast);
+  void VisitCXXBindTemporaryExpr(const CXXBindTemporaryExpr *Temp);
   void VisitCXXConstructExpr(const CXXConstructExpr *Call);
   void VisitCXXMemberCallExpr(const CXXMemberCallExpr *Call);
   void VisitCXXOperatorCallExpr(const CXXOperatorCallExpr *Call);
@@ -389,7 +389,7 @@ public:
 
 void ConsumedStmtVisitor::checkCallability(const PropagationInfo &PInfo,
                                            const FunctionDecl *FunDecl,
-                                           const CallExpr *Call) {
+                                           SourceLocation BlameLoc) {
   
   if (!FunDecl->hasAttr<CallableWhenAttr>())
     return;
@@ -407,7 +407,7 @@ void ConsumedStmtVisitor::checkCallability(const PropagationInfo &PInfo,
     
     Analyzer.WarningsHandler.warnUseInInvalidState(
       FunDecl->getNameAsString(), Var->getNameAsString(),
-      stateToString(VarState), Call->getExprLoc());
+      stateToString(VarState), BlameLoc);
     
   } else if (PInfo.isState()) {
     
@@ -417,8 +417,7 @@ void ConsumedStmtVisitor::checkCallability(const PropagationInfo &PInfo,
       return;
     
     Analyzer.WarningsHandler.warnUseOfTempInInvalidState(
-      FunDecl->getNameAsString(), stateToString(PInfo.getState()),
-      Call->getExprLoc());
+      FunDecl->getNameAsString(), stateToString(PInfo.getState()), BlameLoc);
   }
 }
 
@@ -581,6 +580,12 @@ void ConsumedStmtVisitor::VisitCastExpr(const CastExpr *Cast) {
   forwardInfo(Cast->getSubExpr(), Cast);
 }
 
+void ConsumedStmtVisitor::VisitCXXBindTemporaryExpr(
+  const CXXBindTemporaryExpr *Temp) {
+  
+  forwardInfo(Temp->getSubExpr(), Temp);
+}
+
 void ConsumedStmtVisitor::VisitCXXConstructExpr(const CXXConstructExpr *Call) {
   CXXConstructorDecl *Constructor = Call->getConstructor();
 
@@ -622,6 +627,7 @@ void ConsumedStmtVisitor::VisitCXXConstructExpr(const CXXConstructExpr *Call) {
   }
 }
 
+
 void ConsumedStmtVisitor::VisitCXXMemberCallExpr(
   const CXXMemberCallExpr *Call) {
   
@@ -633,7 +639,7 @@ void ConsumedStmtVisitor::VisitCXXMemberCallExpr(
     PropagationInfo PInfo = Entry->second;
     const CXXMethodDecl *MethodDecl = Call->getMethodDecl();
     
-    checkCallability(PInfo, MethodDecl, Call);
+    checkCallability(PInfo, MethodDecl, Call->getExprLoc());
     
     if (PInfo.isVar()) {
       if (isTestingFunction(MethodDecl))
@@ -721,7 +727,7 @@ void ConsumedStmtVisitor::VisitCXXOperatorCallExpr(
     if (Entry != PropagationMap.end()) {
       PropagationInfo PInfo = Entry->second;
       
-      checkCallability(PInfo, FunDecl, Call);
+      checkCallability(PInfo, FunDecl, Call->getExprLoc());
       
       if (PInfo.isVar()) {
         if (isTestingFunction(FunDecl))
@@ -1052,7 +1058,7 @@ void ConsumedStateMap::intersectAtLoopHead(const CFGBlock *LoopHead,
   ConsumedWarningsHandlerBase &WarningsHandler) {
   
   ConsumedState LocalState;
-  SourceLocation BlameLoc = getWarningLocForLoopExit(LoopBack);
+  SourceLocation BlameLoc = getLastStmtLoc(LoopBack);
   
   for (MapType::const_iterator DMI = LoopBackStates->Map.begin(),
        DME = LoopBackStates->Map.end(); DMI != DME; ++DMI) {
@@ -1266,8 +1272,37 @@ void ConsumedAnalyzer::run(AnalysisDeclContext &AC) {
       case CFGElement::Statement:
         Visitor.Visit(BI->castAs<CFGStmt>().getStmt());
         break;
-      case CFGElement::AutomaticObjectDtor:
-        CurrStates->remove(BI->castAs<CFGAutomaticObjDtor>().getVarDecl());
+        
+      case CFGElement::TemporaryDtor: {
+        const CFGTemporaryDtor DTor = BI->castAs<CFGTemporaryDtor>();
+        const CXXBindTemporaryExpr *BTE = DTor.getBindTemporaryExpr();
+        PropagationInfo PInfo = Visitor.getInfo(BTE);
+        
+        if (PInfo.isValid())
+          Visitor.checkCallability(PInfo,
+                                   DTor.getDestructorDecl(AC.getASTContext()),
+                                   BTE->getExprLoc());
+        break;
+      }
+      
+      case CFGElement::AutomaticObjectDtor: {
+        const CFGAutomaticObjDtor DTor = BI->castAs<CFGAutomaticObjDtor>();
+        
+        const VarDecl *Var = DTor.getVarDecl();
+        ConsumedState VarState = CurrStates->getState(Var);
+        
+        if (VarState != CS_None) {
+          PropagationInfo PInfo(Var);
+          
+          Visitor.checkCallability(PInfo,
+                                   DTor.getDestructorDecl(AC.getASTContext()),
+                                   getLastStmtLoc(CurrBlock));
+          
+          CurrStates->remove(Var);
+        }
+        break;
+      }
+      
       default:
         break;
       }

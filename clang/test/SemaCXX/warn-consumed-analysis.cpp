@@ -14,7 +14,7 @@ template <typename T>
 class CONSUMABLE(unconsumed) ConsumableClass {
   T var;
   
-  public:
+public:
   ConsumableClass();
   ConsumableClass(nullptr_t p) RETURN_TYPESTATE(consumed);
   ConsumableClass(T val) RETURN_TYPESTATE(unconsumed);
@@ -44,6 +44,15 @@ class CONSUMABLE(unconsumed) ConsumableClass {
   void nonconstCall();
   
   void consume() CONSUMES;
+};
+
+class CONSUMABLE(unconsumed) DestructorTester {
+public:
+  DestructorTester(int);
+  
+  void operator*();
+  
+  ~DestructorTester() CALLABLE_WHEN("consumed");
 };
 
 void baf0(const ConsumableClass<int>  var);
@@ -81,6 +90,17 @@ void testInitialization() {
   } else {
     *var0; // expected-warning {{invalid invocation of method 'operator*' on object 'var0' while it is in the 'consumed' state}}
   }
+}
+
+void testDestruction() {
+  DestructorTester D0(42), D1(42);
+  
+  *D0;
+  *D1;
+  
+  D0.~DestructorTester(); // expected-warning {{invalid invocation of method '~DestructorTester' on object 'D0' while it is in the 'unconsumed' state}}
+  
+  return; // expected-warning {{invalid invocation of method '~DestructorTester' on object 'D0' while it is in the 'unconsumed' state}} expected-warning {{invalid invocation of method '~DestructorTester' on object 'D1' while it is in the 'unconsumed' state}}
 }
 
 void testTempValue() {
