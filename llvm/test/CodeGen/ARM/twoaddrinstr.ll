@@ -5,11 +5,9 @@ define void @PR13378() nounwind {
 ; This was orriginally a crasher trying to schedule the instructions.
 ; CHECK-LABEL:      PR13378:
 ; CHECK:        vld1.32
-; CHECK-NEXT:   vst1.32
-; CHECK-NEXT:   vst1.32
-; CHECK-NEXT:   vmov.f32
-; CHECK-NEXT:   vmov.f32
-; CHECK-NEXT:   vst1.32
+; CHECK:        vst1.32
+; CHECK:        vst1.32
+; CHECK:        vst1.32
 
 entry:
   %0 = load <4 x float>* undef, align 4

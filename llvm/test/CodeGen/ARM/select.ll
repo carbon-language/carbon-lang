@@ -58,8 +58,8 @@ entry:
 
 define double @f7(double %a, double %b) {
 ;CHECK-LABEL: f7:
-;CHECK: movlt
-;CHECK: movge
+;CHECK-DAG: movlt
+;CHECK-DAG: movge
 ;CHECK-VFP-LABEL: f7:
 ;CHECK-VFP: vmovmi
     %tmp = fcmp olt double %a, 1.234e+00
@@ -76,9 +76,9 @@ define double @f7(double %a, double %b) {
 ; block generated, odds are good that we have close to the ideal code for this:
 ;
 ; CHECK-NEON-LABEL: f8:
-; CHECK-NEON:      movw    [[R3:r[0-9]+]], #1123
-; CHECK-NEON:      adr     [[R2:r[0-9]+]], LCPI7_0
-; CHECK-NEON-NEXT: cmp     r0, [[R3]]
+; CHECK-NEON-DAG:  movw    [[R3:r[0-9]+]], #1123
+; CHECK-NEON-DAG:  adr     [[R2:r[0-9]+]], LCPI7_0
+; CHECK-NEON:      cmp     r0, [[R3]]
 ; CHECK-NEON-NEXT: it      eq
 ; CHECK-NEON-NEXT: addeq{{.*}} [[R2]], #4
 ; CHECK-NEON-NEXT: ldr

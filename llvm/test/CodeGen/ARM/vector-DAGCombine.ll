@@ -205,8 +205,8 @@ entry:
 ; CHECK-LABEL: t5:
 ; CHECK: vld1.32 {[[REG1:d[0-9]+]][1]}, [r0]
 ; CHECK: vorr [[REG2:d[0-9]+]], [[REG1]], [[REG1]]
-; CHECK: vld1.32 {[[REG1]][0]}, [r1]
-; CHECK: vld1.32 {[[REG2]][0]}, [r2]
+; CHECK-DAG: vld1.32 {[[REG1]][0]}, [r1]
+; CHECK-DAG: vld1.32 {[[REG2]][0]}, [r2]
 ; CHECK: vmull.u8 q{{[0-9]+}}, [[REG1]], [[REG2]]
 define <8 x i16> @t5(i8* nocapture %sp0, i8* nocapture %sp1, i8* nocapture %sp2) {
 entry:
@@ -230,15 +230,15 @@ entry:
 define <2 x i8> @test_truncate(<2 x i128> %in) {
 ; CHECK-LABEL: test_truncate:
 ; CHECK: mov [[BASE:r[0-9]+]], sp
-; CHECK-NEXT: vld1.32 {[[REG1:d[0-9]+]][0]}, {{\[}}[[BASE]]:32]
-; CHECK-NEXT: add [[BASE2:r[0-9]+]], [[BASE]], #4
-; CHECK-NEXT: vld1.32 {[[REG1]][1]}, {{\[}}[[BASE2]]:32]
+; CHECK-DAG: vld1.32 {[[REG1:d[0-9]+]][0]}, {{\[}}[[BASE]]:32]
+; CHECK-DAG: add [[BASE2:r[0-9]+]], [[BASE]], #4
+; CHECK-DAG: vld1.32 {[[REG1]][1]}, {{\[}}[[BASE2]]:32]
 ; REG2 Should map on the same Q register as REG1, i.e., REG2 = REG1 - 1, but we
 ; cannot express that.
-; CHECK-NEXT: vmov.32 [[REG2:d[0-9]+]][0], r0
-; CHECK-NEXT: vmov.32 [[REG2]][1], r1
+; CHECK-DAG: vmov.32 [[REG2:d[0-9]+]][0], r0
+; CHECK-DAG: vmov.32 [[REG2]][1], r1
 ; The Q register used here should match floor(REG1/2), but we cannot express that.
-; CHECK-NEXT: vmovn.i64 [[RES:d[0-9]+]], q{{[0-9]+}}
+; CHECK:      vmovn.i64 [[RES:d[0-9]+]], q{{[0-9]+}}
 ; CHECK-NEXT: vmov r0, r1, [[RES]]
 entry:
   %res = trunc <2 x i128> %in to <2 x i8>

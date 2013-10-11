@@ -14,9 +14,9 @@
 ;CHECK-LABEL: foo2:
 ;CHECK: 	sub	sp, sp, #8
 ;CHECK: 	push	{r11, lr}
-;CHECK: 	str	r0, [sp, #8]
-;CHECK: 	add	r0, sp, #8
-;CHECK: 	str	r2, [sp, #12]
+;CHECK-DAG: 	str	[[R0:r0]], [sp, #8]
+;CHECK-DAG: 	add	[[R0]], sp, #8
+;CHECK-DAG: 	str	r2, [sp, #12]
 ;CHECK: 	bl	fooUseParam
 ;CHECK: 	add	r0, sp, #12
 ;CHECK: 	bl	fooUseParam
@@ -36,8 +36,8 @@
 ;CHECK-LABEL: doFoo2:
 ;CHECK: 	push	{r11, lr}
 ;CHECK: 	ldr	r0,
-;CHECK: 	mov	r1, #0
-;CHECK: 	ldr	r0, [r0]
+;CHECK-DAG: 	mov	r1, #0
+;CHECK-DAG: 	ldr	r0, [r0]
 ;CHECK: 	mov	r2, r0
 ;CHECK: 	bl	foo2
 ;CHECK: 	pop	{r11, lr}

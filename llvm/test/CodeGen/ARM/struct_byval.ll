@@ -32,9 +32,9 @@ entry:
 define i32 @h() nounwind ssp {
 entry:
 ; CHECK-LABEL: h:
-; CHECK: vld1
-; CHECK: sub
-; CHECK: vst1
+; CHECK-DAG: vld1.32 {[[R0:d[0-9]+]], [[R1:d[0-9]+]]}
+; CHECK-DAG: sub
+; CHECK-DAG: vst1.32 {[[R0]], [[R1]]}
 ; CHECK: bne
   %st = alloca %struct.LargeStruct, align 16
   %call = call i32 @e3(%struct.LargeStruct* byval align 16 %st)
