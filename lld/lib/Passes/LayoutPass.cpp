@@ -111,6 +111,8 @@ bool LayoutPass::CompareAtoms::operator()(const DefinedAtom *left,
 
   DEBUG(llvm::dbgs() << "Unordered\n");
 
+  llvm_unreachable("Atoms with Same Ordinal!");
+
   return false;
 }
 
@@ -527,7 +529,7 @@ void LayoutPass::perform(MutableFile &mergedFile) {
   });
 
   // sort the atoms
-  std::stable_sort(atomRange.begin(), atomRange.end(), _compareAtoms);
+  std::sort(atomRange.begin(), atomRange.end(), _compareAtoms);
 
   DEBUG({
     llvm::dbgs() << "sorted atoms:\n";
