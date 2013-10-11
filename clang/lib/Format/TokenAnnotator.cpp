@@ -464,6 +464,10 @@ private:
     next();
     if (CurrentToken == NULL)
       return;
+    if (CurrentToken->Tok.is(tok::numeric_constant)) {
+      CurrentToken->SpacesRequiredBefore = 1;
+      return;
+    }
     // Hashes in the middle of a line can lead to any strange token
     // sequence.
     if (CurrentToken->Tok.getIdentifierInfo() == NULL)
@@ -1051,9 +1055,9 @@ void TokenAnnotator::calculateFormattingInformation(AnnotatedLine &Line) {
   while (Current != NULL) {
     if (Current->Type == TT_LineComment)
       Current->SpacesRequiredBefore = Style.SpacesBeforeTrailingComments;
-    else
-      Current->SpacesRequiredBefore =
-          spaceRequiredBefore(Line, *Current) ? 1 : 0;
+    else if (Current->SpacesRequiredBefore == 0 &&
+             spaceRequiredBefore(Line, *Current))
+      Current->SpacesRequiredBefore = 1;
 
     Current->MustBreakBefore =
         Current->MustBreakBefore || mustBreakBefore(Line, *Current);

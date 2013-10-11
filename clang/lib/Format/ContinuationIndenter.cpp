@@ -696,6 +696,13 @@ unsigned ContinuationIndenter::breakProtrudingToken(const FormatToken &Current,
                       tok::utf8_string_literal, tok::utf16_string_literal,
                       tok::utf32_string_literal) &&
       Current.Type != TT_ImplicitStringLiteral) {
+    // Don't break string literals inside preprocessor directives (except for
+    // #define directives, as their contents are stored in separate lines and
+    // are not affected by this check).
+    // This way we avoid breaking code with line directives and unknown
+    // preprocessor directives that contain long string literals.
+    if (State.Line->Type == LT_PreprocessorDirective)
+      return 0;
     // Exempts unterminated string literals from line breaking. The user will
     // likely want to terminate the string before any line breaking is done.
     if (Current.IsUnterminatedLiteral)

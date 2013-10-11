@@ -1873,14 +1873,28 @@ TEST_F(FormatTest, FormatsSmallMacroDefinitionsInSingleLine) {
 }
 
 TEST_F(FormatTest, DoesNotBreakPureVirtualFunctionDefinition) {
-  verifyFormat(
-      "virtual void write(ELFWriter *writerrr,\n"
-      "                   OwningPtr<FileOutputBuffer> &buffer) = 0;");
+  verifyFormat("virtual void write(ELFWriter *writerrr,\n"
+               "                   OwningPtr<FileOutputBuffer> &buffer) = 0;");
+}
+
+TEST_F(FormatTest, BreaksStringLiteralsOnlyInDefine) {
+  verifyFormat("# 1111 \"/aaaaaaaaa/aaaaaaaaaaaaaaaaaaa/aaaaaaaa.cpp\" 2 3",
+               getLLVMStyleWithColumns(40));
+  verifyFormat("#line 11111 \"/aaaaaaaaa/aaaaaaaaaaaaaaaaaaa/aaaaaaaa.cpp\"",
+               getLLVMStyleWithColumns(40));
+  EXPECT_EQ("#define Q                              \\\n"
+            "  \"/aaaaaaaaa/aaaaaaaaaaaaaaaaaaa/\"    \\\n"
+            "  \"aaaaaaaa.cpp\"",
+            format("#define Q \"/aaaaaaaaa/aaaaaaaaaaaaaaaaaaa/aaaaaaaa.cpp\"",
+                   getLLVMStyleWithColumns(40)));
+}
+
+TEST_F(FormatTest, UnderstandsLinePPDirective) {
+  EXPECT_EQ("# 123 \"A string literal\"",
+            format("   #     123    \"A string literal\""));
 }
 
 TEST_F(FormatTest, LayoutUnknownPPDirective) {
-  EXPECT_EQ("#123 \"A string literal\"",
-            format("   #     123    \"A string literal\""));
   EXPECT_EQ("#;", format("#;"));
   verifyFormat("#\n;\n;\n;");
 }
