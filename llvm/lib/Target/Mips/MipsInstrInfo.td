@@ -262,7 +262,9 @@ def uimm20      : Operand<i32> {
 def uimm10      : Operand<i32> {
 }
 
-def simm16_64   : Operand<i64>;
+def simm16_64   : Operand<i64> {
+  let DecoderMethod = "DecodeSimm16";
+}
 
 // Unsigned Operand
 def uimm5       : Operand<i32> {
