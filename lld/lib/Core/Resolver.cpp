@@ -294,7 +294,6 @@ void Resolver::addAtoms(const std::vector<const DefinedAtom*>& newAtoms) {
 void Resolver::resolveUndefines() {
   ScopedTask task(getDefaultDomain(), "resolveUndefines");
 
-  StringRef errorMessage;
   for (;;) {
     ErrorOr<File &> file = _context.nextFile();
     _context.setResolverState(Resolver::StateNoChange);
