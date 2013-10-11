@@ -398,18 +398,18 @@ int main(int argc, char **argv, char * const *envp) {
     return -1;
   }
 
-  // If the program doesn't explicitly call exit, we will need the Exit
-  // function later on to make an explicit call, so get the function now.
-  Constant *Exit = Mod->getOrInsertFunction("exit", Type::getVoidTy(Context),
-                                                    Type::getInt32Ty(Context),
-                                                    NULL);
-
   // Reset errno to zero on entry to main.
   errno = 0;
 
   int Result;
 
   if (!RemoteMCJIT) {
+    // If the program doesn't explicitly call exit, we will need the Exit
+    // function later on to make an explicit call, so get the function now.
+    Constant *Exit = Mod->getOrInsertFunction("exit", Type::getVoidTy(Context),
+                                                      Type::getInt32Ty(Context),
+                                                      NULL);
+
     // Run static constructors.
     if (UseMCJIT && !ForceInterpreter) {
       // Give MCJIT a chance to apply relocations and set page permissions.

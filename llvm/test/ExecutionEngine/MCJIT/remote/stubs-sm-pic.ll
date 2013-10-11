@@ -1,5 +1,6 @@
 ; RUN: %lli_mcjit -remote-mcjit -disable-lazy-compilation=false -relocation-model=pic -code-model=small %s
-; XFAIL: mips, i686, i386, aarch64, arm
+; XFAIL: *
+; This function should fail until remote symbol resolution is supported.
 
 define i32 @main() nounwind {
 entry:
