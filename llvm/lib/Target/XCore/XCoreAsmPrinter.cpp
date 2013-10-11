@@ -36,6 +36,7 @@
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
+#include "llvm/MC/MCExpr.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
@@ -88,14 +89,12 @@ void XCoreAsmPrinter::emitArrayBound(MCSymbol *Sym, const GlobalVariable *GV) {
     MCSymbol *SymGlob = OutContext.GetOrCreateSymbol(
                           Twine(Sym->getName() + StringRef(".globound")));
     OutStreamer.EmitSymbolAttribute(SymGlob, MCSA_Global);
-
-    OutStreamer.EmitRawText("\t.set\t" + Twine(Sym->getName()) +
-                            ".globound," + Twine(ATy->getNumElements()));
-
+    OutStreamer.EmitAssignment(SymGlob,
+                               MCConstantExpr::Create(ATy->getNumElements(),
+                                                      OutContext));
     if (GV->hasWeakLinkage() || GV->hasLinkOnceLinkage()) {
       // TODO Use COMDAT groups for LinkOnceLinkage
-      OutStreamer.EmitRawText(MAI->getWeakDefDirective() +Twine(Sym->getName())+
-                              ".globound");
+      OutStreamer.EmitSymbolAttribute(SymGlob, MCSA_Weak);
     }
   }
 }
