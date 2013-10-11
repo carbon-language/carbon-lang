@@ -174,6 +174,8 @@ public:
     return Tokens[Position];
   }
 
+  void reset() { Position = -1; }
+
 private:
   ArrayRef<FormatToken *> Tokens;
   int Position;
@@ -186,23 +188,54 @@ UnwrappedLineParser::UnwrappedLineParser(const FormatStyle &Style,
                                          UnwrappedLineConsumer &Callback)
     : Line(new UnwrappedLine), MustBreakBeforeNextToken(false),
       CurrentLines(&Lines), StructuralError(false), Style(Style), Tokens(NULL),
-      Callback(Callback), AllTokens(Tokens) {}
+      Callback(Callback), AllTokens(Tokens), PPBranchLevel(-1) {}
+
+void UnwrappedLineParser::reset() {
+  PPBranchLevel = -1;
+  Line.reset(new UnwrappedLine);
+  CommentsBeforeNextToken.clear();
+  FormatTok = NULL;
+  MustBreakBeforeNextToken = false;
+  PreprocessorDirectives.clear();
+  CurrentLines = &Lines;
+  DeclarationScopeStack.clear();
+  StructuralError = false;
+  PPStack.clear();
+}
 
 bool UnwrappedLineParser::parse() {
-  DEBUG(llvm::dbgs() << "----\n");
   IndexedTokenSource TokenSource(AllTokens);
-  Tokens = &TokenSource;
-  readToken();
-  parseFile();
-  for (SmallVectorImpl<UnwrappedLine>::iterator I = Lines.begin(),
-                                                E = Lines.end();
-       I != E; ++I) {
-    Callback.consumeUnwrappedLine(*I);
-  }
+  do {
+    DEBUG(llvm::dbgs() << "----\n");
+    reset();
+    Tokens = &TokenSource;
+    TokenSource.reset();
 
-  // Create line with eof token.
-  pushToken(FormatTok);
-  Callback.consumeUnwrappedLine(*Line);
+    readToken();
+    parseFile();
+    // Create line with eof token.
+    pushToken(FormatTok);
+    addUnwrappedLine();
+
+    for (SmallVectorImpl<UnwrappedLine>::iterator I = Lines.begin(),
+                                                  E = Lines.end();
+         I != E; ++I) {
+      Callback.consumeUnwrappedLine(*I);
+    }
+    Callback.finishRun();
+    Lines.clear();
+    while (!PPLevelBranchIndex.empty() &&
+           PPLevelBranchIndex.back() + 1 == PPLevelBranchCount.back()) {
+      PPLevelBranchIndex.resize(PPLevelBranchIndex.size() - 1);
+      PPLevelBranchCount.resize(PPLevelBranchCount.size() - 1);
+    }
+    if (!PPLevelBranchIndex.empty()) {
+      ++PPLevelBranchIndex.back();
+      assert(PPLevelBranchIndex.size() == PPLevelBranchCount.size());
+      assert(PPLevelBranchIndex.back() <= PPLevelBranchCount.back());
+    }
+  } while (!PPLevelBranchIndex.empty());
+
   return StructuralError;
 }
 
@@ -379,11 +412,11 @@ void UnwrappedLineParser::parsePPDirective() {
     parsePPDefine();
     return;
   case tok::pp_if:
-    parsePPIf();
+    parsePPIf(/*IfDef=*/false);
     break;
   case tok::pp_ifdef:
   case tok::pp_ifndef:
-    parsePPIfdef();
+    parsePPIf(/*IfDef=*/true);
     break;
   case tok::pp_else:
     parsePPElse();
@@ -407,12 +440,20 @@ void UnwrappedLineParser::pushPPConditional() {
     PPStack.push_back(PP_Conditional);
 }
 
-void UnwrappedLineParser::parsePPIf() {
+void UnwrappedLineParser::parsePPIf(bool IfDef) {
+  ++PPBranchLevel;
+  assert(PPBranchLevel >= 0 && PPBranchLevel <= (int)PPLevelBranchIndex.size());
+  if (PPBranchLevel == (int)PPLevelBranchIndex.size()) {
+    PPLevelBranchIndex.push_back(0);
+    PPLevelBranchCount.push_back(0);
+  }
+  PPChainBranchIndex.push(0);
   nextToken();
-  if ((FormatTok->Tok.isLiteral() &&
-       StringRef(FormatTok->Tok.getLiteralData(), FormatTok->Tok.getLength()) ==
-           "0") ||
-      FormatTok->Tok.is(tok::kw_false)) {
+  bool IsLiteralFalse = (FormatTok->Tok.isLiteral() &&
+                         StringRef(FormatTok->Tok.getLiteralData(),
+                                   FormatTok->Tok.getLength()) == "0") ||
+                        FormatTok->Tok.is(tok::kw_false);
+  if ((!IfDef && IsLiteralFalse) || PPLevelBranchIndex[PPBranchLevel] > 0) {
     PPStack.push_back(PP_Unreachable);
   } else {
     pushPPConditional();
@@ -420,21 +461,34 @@ void UnwrappedLineParser::parsePPIf() {
   parsePPUnknown();
 }
 
-void UnwrappedLineParser::parsePPIfdef() {
-  pushPPConditional();
-  parsePPUnknown();
-}
-
 void UnwrappedLineParser::parsePPElse() {
   if (!PPStack.empty())
     PPStack.pop_back();
-  pushPPConditional();
+  assert(PPBranchLevel < (int)PPLevelBranchIndex.size());
+  if (!PPChainBranchIndex.empty())
+    ++PPChainBranchIndex.top();
+  if (PPBranchLevel >= 0 && !PPChainBranchIndex.empty() &&
+      PPLevelBranchIndex[PPBranchLevel] != PPChainBranchIndex.top()) {
+    PPStack.push_back(PP_Unreachable);
+  } else {
+    pushPPConditional();
+  }
   parsePPUnknown();
 }
 
 void UnwrappedLineParser::parsePPElIf() { parsePPElse(); }
 
 void UnwrappedLineParser::parsePPEndIf() {
+  assert(PPBranchLevel < (int)PPLevelBranchIndex.size());
+  if (PPBranchLevel >= 0 && !PPChainBranchIndex.empty()) {
+    if (PPChainBranchIndex.top() + 1 > PPLevelBranchCount[PPBranchLevel]) {
+      assert(PPLevelBranchCount[PPBranchLevel] == 0);
+      PPLevelBranchCount[PPBranchLevel] = PPChainBranchIndex.top() + 1;
+    }
+  }
+  --PPBranchLevel;
+  if (!PPChainBranchIndex.empty())
+    PPChainBranchIndex.pop();
   if (!PPStack.empty())
     PPStack.pop_back();
   parsePPUnknown();

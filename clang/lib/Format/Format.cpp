@@ -447,14 +447,19 @@ private:
         // State already examined with lower penalty.
         continue;
 
-      addNextStateToQueue(Penalty, Node, /*NewLine=*/false);
-      addNextStateToQueue(Penalty, Node, /*NewLine=*/true);
+      FormatDecision LastFormat = Node->State.NextToken->Decision;
+      if (LastFormat == FD_Unformatted || LastFormat == FD_Continue)
+        addNextStateToQueue(Penalty, Node, /*NewLine=*/false);
+      if (LastFormat == FD_Unformatted || LastFormat == FD_Break)
+        addNextStateToQueue(Penalty, Node, /*NewLine=*/true);
     }
 
-    if (Queue.empty())
+    if (Queue.empty()) {
       // We were unable to find a solution, do nothing.
       // FIXME: Add diagnostic?
+      DEBUG(llvm::dbgs() << "Could not find a solution.\n");
       return 0;
+    }
 
     // Reconstruct the solution.
     if (!DryRun)
@@ -815,29 +820,54 @@ public:
             const std::vector<CharSourceRange> &Ranges)
       : Style(Style), Lex(Lex), SourceMgr(SourceMgr),
         Whitespaces(SourceMgr, Style, inputUsesCRLF(Lex.getBuffer())),
-        Ranges(Ranges), Encoding(encoding::detectEncoding(Lex.getBuffer())) {
+        Ranges(Ranges), UnwrappedLines(1),
+        Encoding(encoding::detectEncoding(Lex.getBuffer())) {
     DEBUG(llvm::dbgs() << "File encoding: "
                        << (Encoding == encoding::Encoding_UTF8 ? "UTF8"
                                                                : "unknown")
                        << "\n");
   }
 
-  virtual ~Formatter() {
-    for (unsigned i = 0, e = AnnotatedLines.size(); i != e; ++i) {
-      delete AnnotatedLines[i];
-    }
-  }
-
   tooling::Replacements format() {
+    tooling::Replacements Result;
     FormatTokenLexer Tokens(Lex, SourceMgr, Style, Encoding);
 
     UnwrappedLineParser Parser(Style, Tokens.lex(), *this);
     bool StructuralError = Parser.parse();
+    assert(UnwrappedLines.rbegin()->empty());
+    for (unsigned Run = 0, RunE = UnwrappedLines.size(); Run + 1 != RunE;
+         ++Run) {
+      DEBUG(llvm::dbgs() << "Run " << Run << "...\n");
+      SmallVector<AnnotatedLine *, 16> AnnotatedLines;
+      for (unsigned i = 0, e = UnwrappedLines[Run].size(); i != e; ++i) {
+        AnnotatedLines.push_back(new AnnotatedLine(UnwrappedLines[Run][i]));
+      }
+      tooling::Replacements RunResult =
+          format(AnnotatedLines, StructuralError, Tokens);
+      DEBUG({
+        llvm::dbgs() << "Replacements for run " << Run << ":\n";
+        for (tooling::Replacements::iterator I = RunResult.begin(),
+                                             E = RunResult.end();
+             I != E; ++I) {
+          llvm::dbgs() << I->toString() << "\n";
+        }
+      });
+      for (unsigned i = 0, e = AnnotatedLines.size(); i != e; ++i) {
+        delete AnnotatedLines[i];
+      }
+      Result.insert(RunResult.begin(), RunResult.end());
+      Whitespaces.reset();
+    }
+    return Result;
+  }
+
+  tooling::Replacements format(SmallVectorImpl<AnnotatedLine *> &AnnotatedLines,
+                               bool StructuralError, FormatTokenLexer &Tokens) {
     TokenAnnotator Annotator(Style, Tokens.getIdentTable().get("in"));
     for (unsigned i = 0, e = AnnotatedLines.size(); i != e; ++i) {
       Annotator.annotate(*AnnotatedLines[i]);
     }
-    deriveLocalStyle();
+    deriveLocalStyle(AnnotatedLines);
     for (unsigned i = 0, e = AnnotatedLines.size(); i != e; ++i) {
       Annotator.calculateFormattingInformation(*AnnotatedLines[i]);
     }
@@ -920,8 +950,7 @@ public:
       } else {
         // Format the first token if necessary, and notify the WhitespaceManager
         // about the unchanged whitespace.
-        for (const FormatToken *Tok = TheLine.First; Tok != NULL;
-             Tok = Tok->Next) {
+        for (FormatToken *Tok = TheLine.First; Tok != NULL; Tok = Tok->Next) {
           if (Tok == TheLine.First &&
               (Tok->NewlinesBefore > 0 || Tok->IsFirst)) {
             unsigned LevelIndent = Tok->OriginalColumn;
@@ -947,6 +976,9 @@ public:
         // last token.
         PreviousLineWasTouched = false;
       }
+      for (FormatToken *Tok = TheLine.First; Tok != NULL; Tok = Tok->Next) {
+        Tok->Finalized = true;
+      }
       PreviousLine = *I;
     }
     return Whitespaces.generateReplacements();
@@ -957,7 +989,8 @@ private:
     return Text.count('\r') * 2 > Text.count('\n');
   }
 
-  void deriveLocalStyle() {
+  void
+  deriveLocalStyle(const SmallVectorImpl<AnnotatedLine *> &AnnotatedLines) {
     unsigned CountBoundToVariable = 0;
     unsigned CountBoundToType = 0;
     bool HasCpp03IncompatibleFormat = false;
@@ -1229,13 +1262,18 @@ private:
   }
 
   virtual void consumeUnwrappedLine(const UnwrappedLine &TheLine) {
-    AnnotatedLines.push_back(new AnnotatedLine(TheLine));
+    assert(!UnwrappedLines.empty());
+    UnwrappedLines.back().push_back(TheLine);
+  }
+
+  virtual void finishRun() {
+    UnwrappedLines.push_back(SmallVector<UnwrappedLine, 16>());
   }
 
   /// \brief Add a new line and the required indent before the first Token
   /// of the \c UnwrappedLine if there was no structural parsing error.
   /// Returns the indent level of the \c UnwrappedLine.
-  void formatFirstToken(const FormatToken &RootToken,
+  void formatFirstToken(FormatToken &RootToken,
                         const AnnotatedLine *PreviousLine, unsigned Indent,
                         bool InPPDirective) {
     unsigned Newlines =
@@ -1272,7 +1310,7 @@ private:
   SourceManager &SourceMgr;
   WhitespaceManager Whitespaces;
   std::vector<CharSourceRange> Ranges;
-  SmallVector<AnnotatedLine *, 16> AnnotatedLines;
+  SmallVector<SmallVector<UnwrappedLine, 16>, 2> UnwrappedLines;
 
   encoding::Encoding Encoding;
   bool BinPackInconclusiveFunctions;

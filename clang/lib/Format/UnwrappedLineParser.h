@@ -52,6 +52,7 @@ class UnwrappedLineConsumer {
 public:
   virtual ~UnwrappedLineConsumer() {}
   virtual void consumeUnwrappedLine(const UnwrappedLine &Line) = 0;
+  virtual void finishRun() = 0;
 };
 
 class FormatTokenSource;
@@ -65,14 +66,14 @@ public:
   bool parse();
 
 private:
+  void reset();
   void parseFile();
   void parseLevel(bool HasOpeningBrace);
   void parseBlock(bool MustBeDeclaration, bool AddLevel = true);
   void parseChildBlock();
   void parsePPDirective();
   void parsePPDefine();
-  void parsePPIf();
-  void parsePPIfdef();
+  void parsePPIf(bool IfDef);
   void parsePPElIf();
   void parsePPElse();
   void parsePPEndIf();
@@ -160,6 +161,27 @@ private:
 
   // Keeps a stack of currently active preprocessor branching directives.
   SmallVector<PPBranchKind, 16> PPStack;
+
+  // The \c UnwrappedLineParser re-parses the code for each combination
+  // of preprocessor branches that can be taken.
+  // To that end, we take the same branch (#if, #else, or one of the #elif
+  // branches) for each nesting level of preprocessor branches.
+  // \c PPBranchLevel stores the current nesting level of preprocessor
+  // branches during one pass over the code.
+  int PPBranchLevel;
+
+  // Contains the current branch (#if, #else or one of the #elif branches)
+  // for each nesting level.
+  SmallVector<int, 8> PPLevelBranchIndex;
+
+  // Contains the maximum number of branches at each nesting level.
+  SmallVector<int, 8> PPLevelBranchCount;
+
+  // Contains the number of branches per nesting level we are currently
+  // in while parsing a preprocessor branch sequence.
+  // This is used to update PPLevelBranchCount at the end of a branch
+  // sequence.
+  std::stack<int> PPChainBranchIndex;
 
   friend class ScopedLineState;
 };

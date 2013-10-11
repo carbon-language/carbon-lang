@@ -145,6 +145,7 @@ void CommaSeparatedList::precomputeFormattingInfos(const FormatToken *Token) {
     bool HasRowWithSufficientColumns = false;
     unsigned Column = 0;
     for (unsigned i = 0, e = ItemLengths.size(); i != e; ++i) {
+      assert(i < MustBreakBeforeItem.size());
       if (MustBreakBeforeItem[i] || Column == Columns) {
         ++Format.LineCount;
         Column = 0;

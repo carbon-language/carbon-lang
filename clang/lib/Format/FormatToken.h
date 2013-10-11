@@ -76,6 +76,12 @@ enum ParameterPackingKind {
   PPK_Inconclusive
 };
 
+enum FormatDecision {
+  FD_Unformatted,
+  FD_Continue,
+  FD_Break
+};
+
 class TokenRole;
 class AnnotatedLine;
 
@@ -93,7 +99,8 @@ struct FormatToken {
         LongestObjCSelectorName(0), FakeRParens(0),
         StartsBinaryExpression(false), EndsBinaryExpression(false),
         LastInChainOfCalls(false), PartOfMultiVariableDeclStmt(false),
-        MatchingParen(NULL), Previous(NULL), Next(NULL) {}
+        MatchingParen(NULL), Previous(NULL), Next(NULL),
+        Decision(FD_Unformatted), Finalized(false) {}
 
   /// \brief The \c Token.
   Token Tok;
@@ -337,6 +344,14 @@ struct FormatToken {
   FormatToken *Next;
 
   SmallVector<AnnotatedLine *, 1> Children;
+
+  /// \brief Stores the formatting decision for the token once it was made.
+  FormatDecision Decision;
+
+  /// \brief If \c true, this token has been fully formatted (indented and
+  /// potentially re-formatted inside), and we do not allow further formatting
+  /// changes.
+  bool Finalized;
 
 private:
   // Disallow copying.

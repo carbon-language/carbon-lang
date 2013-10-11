@@ -39,11 +39,18 @@ WhitespaceManager::Change::Change(
       ContinuesPPDirective(ContinuesPPDirective), IndentLevel(IndentLevel),
       Spaces(Spaces) {}
 
-void WhitespaceManager::replaceWhitespace(const FormatToken &Tok,
-                                          unsigned Newlines,
+void WhitespaceManager::reset() {
+  Changes.clear();
+  Replaces.clear();
+}
+
+void WhitespaceManager::replaceWhitespace(FormatToken &Tok, unsigned Newlines,
                                           unsigned IndentLevel, unsigned Spaces,
                                           unsigned StartOfTokenColumn,
                                           bool InPPDirective) {
+  if (Tok.Finalized)
+    return;
+  Tok.Decision = (Newlines > 0) ? FD_Break : FD_Continue;
   Changes.push_back(Change(true, Tok.WhitespaceRange, IndentLevel, Spaces,
                            StartOfTokenColumn, Newlines, "", "",
                            Tok.Tok.getKind(), InPPDirective && !Tok.IsFirst));
@@ -51,6 +58,8 @@ void WhitespaceManager::replaceWhitespace(const FormatToken &Tok,
 
 void WhitespaceManager::addUntouchableToken(const FormatToken &Tok,
                                             bool InPPDirective) {
+  if (Tok.Finalized)
+    return;
   Changes.push_back(Change(false, Tok.WhitespaceRange, /*IndentLevel=*/0,
                            /*Spaces=*/0, Tok.OriginalColumn, Tok.NewlinesBefore,
                            "", "", Tok.Tok.getKind(),
@@ -61,6 +70,8 @@ void WhitespaceManager::replaceWhitespaceInToken(
     const FormatToken &Tok, unsigned Offset, unsigned ReplaceChars,
     StringRef PreviousPostfix, StringRef CurrentPrefix, bool InPPDirective,
     unsigned Newlines, unsigned IndentLevel, unsigned Spaces) {
+  if (Tok.Finalized)
+    return;
   Changes.push_back(Change(
       true, SourceRange(Tok.getStartOfNonWhitespace().getLocWithOffset(Offset),
                         Tok.getStartOfNonWhitespace().getLocWithOffset(

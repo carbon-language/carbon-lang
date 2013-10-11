@@ -523,11 +523,17 @@ private:
     if (CurrentToken != NULL)
       CurrentToken = CurrentToken->Next;
 
-    // Reset token type in case we have already looked at it and then recovered
-    // from an error (e.g. failure to find the matching >).
-    if (CurrentToken != NULL && CurrentToken->Type != TT_LambdaLSquare &&
-        CurrentToken->Type != TT_ImplicitStringLiteral)
-      CurrentToken->Type = TT_Unknown;
+    if (CurrentToken != NULL) {
+      // Reset token type in case we have already looked at it and then
+      // recovered from an error (e.g. failure to find the matching >).
+      if (CurrentToken->Type != TT_LambdaLSquare &&
+          CurrentToken->Type != TT_ImplicitStringLiteral)
+        CurrentToken->Type = TT_Unknown;
+      if (CurrentToken->Role)
+        CurrentToken->Role.reset(NULL);
+      CurrentToken->FakeLParens.clear();
+      CurrentToken->FakeRParens = 0;
+    }
   }
 
   /// \brief A struct to hold information valid in a specific context, e.g.
@@ -1482,10 +1488,13 @@ void TokenAnnotator::printDebugInfo(const AnnotatedLine &Line) {
                  << " C=" << Tok->CanBreakBefore << " T=" << Tok->Type
                  << " S=" << Tok->SpacesRequiredBefore
                  << " P=" << Tok->SplitPenalty << " Name=" << Tok->Tok.getName()
-                 << " PPK=" << Tok->PackingKind << " FakeLParens=";
+                 << " L=" << Tok->TotalLength << " PPK=" << Tok->PackingKind
+                 << " FakeLParens=";
     for (unsigned i = 0, e = Tok->FakeLParens.size(); i != e; ++i)
       llvm::errs() << Tok->FakeLParens[i] << "/";
     llvm::errs() << " FakeRParens=" << Tok->FakeRParens << "\n";
+    if (Tok->Next == NULL)
+      assert(Tok == Line.Last);
     Tok = Tok->Next;
   }
   llvm::errs() << "----\n";

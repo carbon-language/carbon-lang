@@ -22,6 +22,7 @@ protected:
   std::string format(llvm::StringRef Code, unsigned Offset, unsigned Length,
                      const FormatStyle &Style) {
     DEBUG(llvm::errs() << "---\n");
+    DEBUG(llvm::errs() << Code << "\n\n");
     std::vector<tooling::Range> Ranges(1, tooling::Range(Offset, Length));
     tooling::Replacements Replaces = reformat(Style, Code, Ranges);
     ReplacementCount = Replaces.size();
@@ -66,7 +67,14 @@ protected:
         JustReplacedNewline = false;
       }
     }
-    return MessedUp;
+    std::string WithoutWhitespace;
+    if (MessedUp[0] != ' ')
+      WithoutWhitespace.push_back(MessedUp[0]);
+    for (unsigned i = 1, e = MessedUp.size(); i != e; ++i) {
+      if (MessedUp[i] != ' ' || MessedUp[i - 1] != ' ')
+        WithoutWhitespace.push_back(MessedUp[i]);
+    }
+    return WithoutWhitespace;
   }
 
   FormatStyle getLLVMStyleWithColumns(unsigned ColumnLimit) {
@@ -103,7 +111,7 @@ TEST_F(FormatTest, MessUp) {
   EXPECT_EQ("1 2 3\n", messUp("1\n2\n3\n"));
   EXPECT_EQ("a\n//b\nc", messUp("a\n//b\nc"));
   EXPECT_EQ("a\n#b\nc", messUp("a\n#b\nc"));
-  EXPECT_EQ("a\n#b  c  d\ne", messUp("a\n#b\\\nc\\\nd\ne"));
+  EXPECT_EQ("a\n#b c d\ne", messUp("a\n#b\\\nc\\\nd\ne"));
 }
 
 //===----------------------------------------------------------------------===//
@@ -2263,6 +2271,38 @@ TEST_F(FormatTest, LayoutStatementsAroundPreprocessorDirectives) {
                "#endif\n"
                "{\n"
                "}");
+  verifyFormat("void f() {\n"
+               "  if (true)\n"
+               "#ifdef A\n"
+               "    f(42);\n"
+               "  x();\n"
+               "#else\n"
+               "    g();\n"
+               "  x();\n"
+               "#endif\n"
+               "}");
+  verifyFormat("void f(param1, param2,\n"
+               "       param3,\n"
+               "#ifdef A\n"
+               "       param4(param5,\n"
+               "#ifdef A1\n"
+               "              param6,\n"
+               "#ifdef A2\n"
+               "              param7),\n"
+               "#else\n"
+               "              param8),\n"
+               "       param9,\n"
+               "#endif\n"
+               "       param10,\n"
+               "#endif\n"
+               "       param11)\n"
+               "#else\n"
+               "       param12)\n"
+               "#endif\n"
+               "{\n"
+               "  x();\n"
+               "}",
+               getLLVMStyleWithColumns(28));
 }
 
 TEST_F(FormatTest, LayoutBlockInsideParens) {
@@ -3383,10 +3423,10 @@ TEST_F(FormatTest, AlignsPipes) {
       "         << aaaaaaaaaaaaaaaaaaaaaaaaaaaaa;");
 
   verifyFormat("return out << \"somepacket = {\\n\"\n"
-               "           << \"  aaaaaa = \" << pkt.aaaaaa << \"\\n\"\n"
-               "           << \"  bbbb = \" << pkt.bbbb << \"\\n\"\n"
-               "           << \"  cccccc = \" << pkt.cccccc << \"\\n\"\n"
-               "           << \"  ddd = [\" << pkt.ddd << \"]\\n\"\n"
+               "           << \" aaaaaa = \" << pkt.aaaaaa << \"\\n\"\n"
+               "           << \" bbbb = \" << pkt.bbbb << \"\\n\"\n"
+               "           << \" cccccc = \" << pkt.cccccc << \"\\n\"\n"
+               "           << \" ddd = [\" << pkt.ddd << \"]\\n\"\n"
                "           << \"}\";");
 
   verifyFormat("llvm::outs() << \"aaaaaaaaaaaaaaaa: \" << aaaaaaaaaaaaaaaa\n"
@@ -4295,7 +4335,7 @@ TEST_F(FormatTest, IncorrectCodeMissingParens) {
 
 TEST_F(FormatTest, DoesNotTouchUnwrappedLinesWithErrors) {
   verifyFormat("namespace {\n"
-               "class Foo {  Foo  (\n"
+               "class Foo { Foo (\n"
                "};\n"
                "} // comment");
 }
@@ -4522,8 +4562,11 @@ TEST_F(FormatTest, UnderstandContextOfRecordTypeKeywords) {
 }
 
 TEST_F(FormatTest, DoNotInterfereWithErrorAndWarning) {
-  verifyFormat("#error Leave     all         white!!!!! space* alone!\n");
-  verifyFormat("#warning Leave     all         white!!!!! space* alone!\n");
+  EXPECT_EQ("#error Leave     all         white!!!!! space* alone!\n",
+            format("#error Leave     all         white!!!!! space* alone!\n"));
+  EXPECT_EQ(
+      "#warning Leave     all         white!!!!! space* alone!\n",
+      format("#warning Leave     all         white!!!!! space* alone!\n"));
   EXPECT_EQ("#error 1", format("  #  error   1"));
   EXPECT_EQ("#warning 1", format("  #  warning 1"));
 }
@@ -4568,7 +4611,8 @@ TEST_F(FormatTest, MergeHandlingInTheFaceOfPreprocessorDirectives) {
                "  if (true) continue;\n"
                "#endif\n"
                "  // Comment\n"
-               "  if (true) continue;",
+               "  if (true) continue;\n"
+               "}",
                ShortMergedIf);
 }
 

@@ -221,7 +221,7 @@ unsigned ContinuationIndenter::addTokenToState(LineState &State, bool Newline,
 
 void ContinuationIndenter::addTokenOnCurrentLine(LineState &State, bool DryRun,
                                                  unsigned ExtraSpaces) {
-  const FormatToken &Current = *State.NextToken;
+  FormatToken &Current = *State.NextToken;
   const FormatToken &Previous = *State.NextToken->Previous;
   if (Current.is(tok::equal) &&
       (State.Line->First->is(tok::kw_for) || State.ParenLevel == 0) &&
@@ -301,7 +301,7 @@ void ContinuationIndenter::addTokenOnCurrentLine(LineState &State, bool DryRun,
 
 unsigned ContinuationIndenter::addTokenOnNewLine(LineState &State,
                                                  bool DryRun) {
-  const FormatToken &Current = *State.NextToken;
+  FormatToken &Current = *State.NextToken;
   const FormatToken &Previous = *State.NextToken->Previous;
   // If we are continuing an expression, we want to indent an extra 4 spaces.
   unsigned ContinuationIndent =

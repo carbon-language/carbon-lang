@@ -250,7 +250,7 @@ struct LineState {
   unsigned Column;
 
   /// \brief The token that needs to be next formatted.
-  const FormatToken *NextToken;
+  FormatToken *NextToken;
 
   /// \brief \c true if this line contains a continued for-loop section.
   bool LineContainsContinuedForLoopSection;

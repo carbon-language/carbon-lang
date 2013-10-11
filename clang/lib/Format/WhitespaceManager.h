@@ -41,9 +41,12 @@ public:
                     bool UseCRLF)
       : SourceMgr(SourceMgr), Style(Style), UseCRLF(UseCRLF) {}
 
+  /// \brief Prepares the \c WhitespaceManager for another run.
+  void reset();
+
   /// \brief Replaces the whitespace in front of \p Tok. Only call once for
   /// each \c AnnotatedToken.
-  void replaceWhitespace(const FormatToken &Tok, unsigned Newlines,
+  void replaceWhitespace(FormatToken &Tok, unsigned Newlines,
                          unsigned IndentLevel, unsigned Spaces,
                          unsigned StartOfTokenColumn,
                          bool InPPDirective = false);
