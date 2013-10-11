@@ -17,13 +17,16 @@ This script reads input from a unified diff and reformats all the changed
 lines. This is useful to reformat all the lines touched by a specific patch.
 Example usage for git users:
 
-  git diff -U0 HEAD^ | clang-format-diff.py -p1
+  git diff -U0 HEAD^ | clang-format-diff.py -p1 -i
 
 """
 
 import argparse
+import difflib
 import re
+import string
 import subprocess
+import StringIO
 import sys
 
 
@@ -33,7 +36,11 @@ binary = 'clang-format'
 
 def main():
   parser = argparse.ArgumentParser(description=
-                                   'Reformat changed lines in diff.')
+                                   'Reformat changed lines in diff. Without -i '
+                                   'option just output the diff that would be'
+                                   'introduced.')
+  parser.add_argument('-i', action='store_true', default=False,
+                      help='apply edits to files instead of displaying a diff')
   parser.add_argument('-p', default=0,
                       help='strip the smallest prefix containing P slashes')
   parser.add_argument(
@@ -71,7 +78,9 @@ def main():
 
   # Reformat files containing changes in place.
   for filename, lines in lines_by_file.iteritems():
-    command = [binary, '-i', filename]
+    command = [binary, filename]
+    if args.i:
+      command.append('-i')
     command.extend(lines)
     if args.style:
       command.extend(['-style', args.style])
@@ -84,6 +93,16 @@ def main():
     if p.returncode != 0:
       sys.exit(p.returncode);
 
+    if not args.i:
+      with open(filename) as f:
+        code = f.readlines()
+      formatted_code = StringIO.StringIO(stdout).readlines()
+      diff = difflib.unified_diff(code, formatted_code,
+                                  filename, filename,
+                                  '(before formatting)', '(after formatting)')
+      diff_string = string.join(diff, '')
+      if len(diff_string) > 0:
+        print diff_string
 
 if __name__ == '__main__':
   main()
