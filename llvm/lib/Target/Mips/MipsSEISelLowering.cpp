@@ -1401,6 +1401,15 @@ SDValue MipsSETargetLowering::lowerINTRINSIC_WO_CHAIN(SDValue Op,
   case Intrinsic::mips_ldi_w:
   case Intrinsic::mips_ldi_d:
     return lowerMSASplatImm(Op, 1, DAG);
+  case Intrinsic::mips_maddv_b:
+  case Intrinsic::mips_maddv_h:
+  case Intrinsic::mips_maddv_w:
+  case Intrinsic::mips_maddv_d: {
+    EVT ResTy = Op->getValueType(0);
+    return DAG.getNode(ISD::ADD, SDLoc(Op), ResTy, Op->getOperand(1),
+                       DAG.getNode(ISD::MUL, SDLoc(Op), ResTy,
+                                   Op->getOperand(2), Op->getOperand(3)));
+  }
   case Intrinsic::mips_max_s_b:
   case Intrinsic::mips_max_s_h:
   case Intrinsic::mips_max_s_w:
@@ -1467,6 +1476,15 @@ SDValue MipsSETargetLowering::lowerINTRINSIC_WO_CHAIN(SDValue Op,
   case Intrinsic::mips_mulv_d:
     return DAG.getNode(ISD::MUL, DL, Op->getValueType(0), Op->getOperand(1),
                        Op->getOperand(2));
+  case Intrinsic::mips_msubv_b:
+  case Intrinsic::mips_msubv_h:
+  case Intrinsic::mips_msubv_w:
+  case Intrinsic::mips_msubv_d: {
+    EVT ResTy = Op->getValueType(0);
+    return DAG.getNode(ISD::SUB, SDLoc(Op), ResTy, Op->getOperand(1),
+                       DAG.getNode(ISD::MUL, SDLoc(Op), ResTy,
+                                   Op->getOperand(2), Op->getOperand(3)));
+  }
   case Intrinsic::mips_nlzc_b:
   case Intrinsic::mips_nlzc_h:
   case Intrinsic::mips_nlzc_w:

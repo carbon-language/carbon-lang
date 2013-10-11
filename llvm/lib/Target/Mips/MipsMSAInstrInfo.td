@@ -297,6 +297,13 @@ def vsplat_uimm_pow2 : ComplexPattern<vAny, 1, "selectVSplatUimmPow2",
 
 def fms : PatFrag<(ops node:$wd, node:$ws, node:$wt),
                   (fsub node:$wd, (fmul node:$ws, node:$wt))>;
+
+def muladd : PatFrag<(ops node:$wd, node:$ws, node:$wt),
+                     (add node:$wd, (mul node:$ws, node:$wt))>;
+
+def mulsub : PatFrag<(ops node:$wd, node:$ws, node:$wt),
+                     (sub node:$wd, (mul node:$ws, node:$wt))>;
+
 // Immediates
 def immSExt5 : ImmLeaf<i32, [{return isInt<5>(Imm);}]>;
 def immSExt10: ImmLeaf<i32, [{return isInt<10>(Imm);}]>;
@@ -2021,14 +2028,10 @@ class MADDR_Q_H_DESC : MSA_3RF_4RF_DESC_BASE<"maddr_q.h", int_mips_maddr_q_h,
 class MADDR_Q_W_DESC : MSA_3RF_4RF_DESC_BASE<"maddr_q.w", int_mips_maddr_q_w,
                                              MSA128WOpnd>;
 
-class MADDV_B_DESC : MSA_3R_4R_DESC_BASE<"maddv.b", int_mips_maddv_b,
-                                         MSA128BOpnd>;
-class MADDV_H_DESC : MSA_3R_4R_DESC_BASE<"maddv.h", int_mips_maddv_h,
-                                         MSA128HOpnd>;
-class MADDV_W_DESC : MSA_3R_4R_DESC_BASE<"maddv.w", int_mips_maddv_w,
-                                         MSA128WOpnd>;
-class MADDV_D_DESC : MSA_3R_4R_DESC_BASE<"maddv.d", int_mips_maddv_d,
-                                         MSA128DOpnd>;
+class MADDV_B_DESC : MSA_3R_4R_DESC_BASE<"maddv.b", muladd, MSA128BOpnd>;
+class MADDV_H_DESC : MSA_3R_4R_DESC_BASE<"maddv.h", muladd, MSA128HOpnd>;
+class MADDV_W_DESC : MSA_3R_4R_DESC_BASE<"maddv.w", muladd, MSA128WOpnd>;
+class MADDV_D_DESC : MSA_3R_4R_DESC_BASE<"maddv.d", muladd, MSA128DOpnd>;
 
 class MAX_A_B_DESC : MSA_3R_DESC_BASE<"max_a.b", int_mips_max_a_b, MSA128BOpnd>;
 class MAX_A_H_DESC : MSA_3R_DESC_BASE<"max_a.h", int_mips_max_a_h, MSA128HOpnd>;
@@ -2124,14 +2127,10 @@ class MSUBR_Q_H_DESC : MSA_3RF_4RF_DESC_BASE<"msubr_q.h", int_mips_msubr_q_h,
 class MSUBR_Q_W_DESC : MSA_3RF_4RF_DESC_BASE<"msubr_q.w", int_mips_msubr_q_w,
                                              MSA128WOpnd>;
 
-class MSUBV_B_DESC : MSA_3R_4R_DESC_BASE<"msubv.b", int_mips_msubv_b,
-                                         MSA128BOpnd>;
-class MSUBV_H_DESC : MSA_3R_4R_DESC_BASE<"msubv.h", int_mips_msubv_h,
-                                         MSA128HOpnd>;
-class MSUBV_W_DESC : MSA_3R_4R_DESC_BASE<"msubv.w", int_mips_msubv_w,
-                                         MSA128WOpnd>;
-class MSUBV_D_DESC : MSA_3R_4R_DESC_BASE<"msubv.d", int_mips_msubv_d,
-                                         MSA128DOpnd>;
+class MSUBV_B_DESC : MSA_3R_4R_DESC_BASE<"msubv.b", mulsub, MSA128BOpnd>;
+class MSUBV_H_DESC : MSA_3R_4R_DESC_BASE<"msubv.h", mulsub, MSA128HOpnd>;
+class MSUBV_W_DESC : MSA_3R_4R_DESC_BASE<"msubv.w", mulsub, MSA128WOpnd>;
+class MSUBV_D_DESC : MSA_3R_4R_DESC_BASE<"msubv.d", mulsub, MSA128DOpnd>;
 
 class MUL_Q_H_DESC : MSA_3RF_DESC_BASE<"mul_q.h", int_mips_mul_q_h,
                                        MSA128HOpnd>;
