@@ -515,7 +515,7 @@ ObjectFileELF::GetDependentModules(FileSpecList &files)
 }
 
 Address
-ObjectFileELF::GetImageInfoAddress()
+ObjectFileELF::GetImageInfoAddress(bool &indirect)
 {
     if (!ParseDynamicSymbols())
         return Address();
@@ -539,8 +539,9 @@ ObjectFileELF::GetImageInfoAddress()
     {
         ELFDynamic &symbol = m_dynamic_symbols[i];
 
-        if (symbol.d_tag == DT_DEBUG)
+        if (symbol.d_tag == DT_DEBUG || symbol.d_tag == DT_MIPS_RLD_MAP)
         {
+            indirect = (symbol.d_tag == DT_MIPS_RLD_MAP);
             // Compute the offset as the number of previous entries plus the
             // size of d_tag.
             addr_t offset = i * dynsym_hdr->sh_entsize + GetAddressByteSize();
