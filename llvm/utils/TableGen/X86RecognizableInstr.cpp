@@ -531,9 +531,6 @@ RecognizableInstr::filter_ret RecognizableInstr::filter() const {
 
   if (Name.find("MOV") != Name.npos && Name.find("r0") != Name.npos)
     return FILTER_WEAK;
-  if (Name.find("MOVZ") != Name.npos && Name.find("MOVZX") == Name.npos &&
-      Name != "MOVZPQILo2PQIrr")
-    return FILTER_WEAK;
   if (Name.find("Fs") != Name.npos)
     return FILTER_WEAK;
   if (Name == "PUSH64i16"         ||
