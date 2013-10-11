@@ -1,3 +1,12 @@
+##===-- lldbutil.py ------------------------------------------*- Python -*-===##
+##
+##                     The LLVM Compiler Infrastructure
+##
+## This file is distributed under the University of Illinois Open Source
+## License. See LICENSE.TXT for details.
+##
+##===----------------------------------------------------------------------===##
+
 """
 This LLDB module contains miscellaneous utilities.
 Some of the test suite takes advantage of the utility functions defined here.

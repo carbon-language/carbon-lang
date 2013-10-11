@@ -1,3 +1,12 @@
+##===-- statuswin.py -----------------------------------------*- Python -*-===##
+##
+##                     The LLVM Compiler Infrastructure
+##
+## This file is distributed under the University of Illinois Open Source
+## License. See LICENSE.TXT for details.
+##
+##===----------------------------------------------------------------------===##
+
 import lldb, lldbutil
 import cui
 import curses
