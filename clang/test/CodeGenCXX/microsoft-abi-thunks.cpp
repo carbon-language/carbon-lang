@@ -116,3 +116,18 @@ struct H : E {
 H h;
 
 // FIXME: Write vtordisp adjusting thunk tests
+
+namespace CrashOnThunksForAttributedType {
+// We used to crash on this because the type of foo is an AttributedType, not
+// FunctionType, and we had to look through the sugar.
+struct A {
+  virtual void __stdcall foo();
+};
+struct B {
+  virtual void __stdcall foo();
+};
+struct C : A, B {
+  virtual void __stdcall foo();
+};
+C c;
+}

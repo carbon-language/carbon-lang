@@ -481,7 +481,7 @@ void CodeGenVTables::maybeEmitThunkForVTable(GlobalDecl GD,
   // We can't emit thunks for member functions with incomplete types.
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
   if (!CGM.getTypes().isFuncTypeConvertible(
-                                cast<FunctionType>(MD->getType().getTypePtr())))
+           MD->getType()->castAs<FunctionType>()))
     return;
 
   emitThunk(GD, Thunk, /*ForVTable=*/true);
