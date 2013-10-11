@@ -122,6 +122,7 @@
 // RUN: %clang_cl /Zs /ofoo.obj /o foo.obj -- %s 2>&1
 // RUN: %clang_cl /Zs /wfoo /Zc:wchar_t- -- %s 2>&1
 // RUN: %clang_cl /Zs /ZI /Zi /MP -- %s 2>&1
+// RUN: %clang_cl /Zs /FA /FAc /FAs /FAu /Fafilename -- %s 2>&1
 
 
 // We support -Xclang for forwarding options to cc1.

@@ -165,6 +165,8 @@ def _SLASH_Zm : CLIgnoredJoined<"Zm">;
 
 def _SLASH_bigobj : CLFlag<"bigobj">;
 def _SLASH_EH : CLJoined<"EH">;
+def _SLASH_FA : CLJoined<"FA">;
+def _SLASH_Fa : CLJoined<"Fa">;
 def _SLASH_Fd : CLJoined<"Fd">;
 def _SLASH_fp : CLJoined<"fp">;
 def _SLASH_Gd : CLFlag<"Gd">;
