@@ -949,7 +949,7 @@ ObjectFileMachO::IsStripped ()
         }
     }
     if (m_dysymtab.cmd)
-        return m_dysymtab.nlocalsym == 0;
+        return m_dysymtab.nlocalsym <= 1;
     return false;
 }
 

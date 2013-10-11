@@ -95,6 +95,10 @@ public:
                                                 bool add_mangled,
                                                 NameToIndexMap &name_to_index_map) const;
 
+    ObjectFile *        GetObjectFile()
+                        {
+                            return m_objfile;
+                        }
 protected:
     typedef std::vector<Symbol>         collection;
     typedef collection::iterator        iterator;

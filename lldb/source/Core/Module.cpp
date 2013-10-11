@@ -499,7 +499,39 @@ Module::ResolveSymbolContextForAddress (const Address& so_addr, uint32_t resolve
                 }
 
                 if (sc.symbol)
+                {
+                    if (sc.symbol->IsSynthetic())
+                    {
+                        // We have a synthetic symbol so lets check if the object file
+                        // from the symbol file in the symbol vendor is different than
+                        // the object file for the module, and if so search its symbol
+                        // table to see if we can come up with a better symbol. For example
+                        // dSYM files on MacOSX have an unstripped symbol table inside of
+                        // them.
+                        ObjectFile *symtab_objfile = symtab->GetObjectFile();
+                        if (symtab_objfile && symtab_objfile->IsStripped())
+                        {
+                            SymbolFile *symfile = sym_vendor->GetSymbolFile();
+                            if (symfile)
+                            {
+                                ObjectFile *symfile_objfile = symfile->GetObjectFile();
+                                if (symfile_objfile != symtab_objfile)
+                                {
+                                    Symtab *symfile_symtab = symfile_objfile->GetSymtab();
+                                    if (symfile_symtab)
+                                    {
+                                        Symbol *symbol = symfile_symtab->FindSymbolContainingFileAddress(so_addr.GetFileAddress());
+                                        if (symbol && !symbol->IsSynthetic())
+                                        {
+                                            sc.symbol = symbol;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                     resolved_flags |= eSymbolContextSymbol;
+                }
             }
         }
 
