@@ -289,29 +289,41 @@ void Resolver::addAtoms(const std::vector<const DefinedAtom*>& newAtoms) {
   }
 }
 
-// ask symbol table if any definitionUndefined atoms still exist
-// if so, keep searching libraries until no more atoms being added
+// Ask symbol table if any undefined atoms still exist. If so, keep searching
+// libraries until no more atoms being added.
 void Resolver::resolveUndefines() {
   ScopedTask task(getDefaultDomain(), "resolveUndefines");
 
-  while (ErrorOr<File &> nextFile = _context.nextFile()) {
+  StringRef errorMessage;
+  for (;;) {
+    ErrorOr<File &> file = _context.nextFile();
     _context.setResolverState(Resolver::StateNoChange);
-    if (error_code(nextFile) == InputGraphError::no_more_files)
+    if (error_code(file) == InputGraphError::no_more_files)
+      return;
+    if (!file) {
+      llvm::errs() << "Error occurred in nextFile: "
+                   << error_code(file).message() << "\n";
+      return;
+    }
+
+    switch (file->kind()) {
+    case File::kindObject:
+      assert(!file->hasOrdinal());
+      file->setOrdinal(_context.getNextOrdinalAndIncrement());
+      handleFile(*file);
       break;
-    if (nextFile->kind() == File::kindObject) {
-      assert(!nextFile->hasOrdinal());
-      nextFile->setOrdinal(_context.getNextOrdinalAndIncrement());
-      handleFile(*nextFile);
-    }
-    if (nextFile->kind() == File::kindArchiveLibrary) {
-      if (!nextFile->hasOrdinal())
-        nextFile->setOrdinal(_context.getNextOrdinalAndIncrement());
-      handleArchiveFile(*nextFile);
-    }
-    if (nextFile->kind() == File::kindSharedLibrary) {
-      if (!nextFile->hasOrdinal())
-        nextFile->setOrdinal(_context.getNextOrdinalAndIncrement());
-      handleSharedLibrary(*nextFile);
+    case File::kindArchiveLibrary:
+      if (!file->hasOrdinal())
+        file->setOrdinal(_context.getNextOrdinalAndIncrement());
+      handleArchiveFile(*file);
+      break;
+    case File::kindSharedLibrary:
+      if (!file->hasOrdinal())
+        file->setOrdinal(_context.getNextOrdinalAndIncrement());
+      handleSharedLibrary(*file);
+      break;
+    case File::kindLinkerScript:
+      llvm_unreachable("linker script should not be returned by nextFile()");
     }
   }
 }
