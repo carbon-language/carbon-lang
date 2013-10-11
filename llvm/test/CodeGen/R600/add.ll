@@ -1,6 +1,22 @@
 ; RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck --check-prefix=EG-CHECK %s
 ; RUN: llc < %s -march=r600 -mcpu=verde -verify-machineinstrs | FileCheck --check-prefix=SI-CHECK %s
 
+;EG-CHECK-LABEL: @test1:
+;EG-CHECK: ADD_INT {{[* ]*}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
+
+;SI-CHECK-LABEL: @test1:
+;SI-CHECK: V_ADD_I32_e32 [[REG:VGPR[0-9]+]], {{VGPR[0-9]+, VGPR[0-9]+}}
+;SI-CHECK-NOT: [[REG]]
+;SI-CHECK: BUFFER_STORE_DWORD [[REG]],
+define void @test1(i32 addrspace(1)* %out, i32 addrspace(1)* %in) {
+  %b_ptr = getelementptr i32 addrspace(1)* %in, i32 1
+  %a = load i32 addrspace(1)* %in
+  %b = load i32 addrspace(1)* %b_ptr
+  %result = add i32 %a, %b
+  store i32 %result, i32 addrspace(1)* %out
+  ret void
+}
+
 ;EG-CHECK-LABEL: @test2:
 ;EG-CHECK: ADD_INT {{[* ]*}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 ;EG-CHECK: ADD_INT {{[* ]*}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
