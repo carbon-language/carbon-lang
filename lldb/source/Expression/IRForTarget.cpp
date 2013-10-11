@@ -467,7 +467,7 @@ IRForTarget::CreateResultVariable (llvm::Function &llvm_function)
         if (log)
             log->PutCString("Couldn't find result variable");
         
-        return false;
+        return true;
     }
     
     if (log)
