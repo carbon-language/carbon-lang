@@ -5,8 +5,8 @@
 // CHECK-NOT: "-mdisable-fp-elim"
 // CHECK: "-fno-signed-char"
 // CHECK: "-fno-common"
-// CHECH: /xcc" "-o"
+// CHECH: xcc" "-o"
 // CHECK: "-c" "-g" "A1Arg" "A2Arg"
-// CHECK: /xcc" "-o"
+// CHECK: xcc" "-o"
 // CHEXK: "L1Arg" "L2Arg"
 
