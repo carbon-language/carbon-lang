@@ -1314,7 +1314,7 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI, IfcvtKind Kind,
   // can compute this set by simulating liveness backwards from the end of BB2.
   LiveRegUnits DontKill;
   for (MachineBasicBlock::reverse_instr_iterator I = BBI2->BB->rbegin(),
-       E = MachineBasicBlock::reverse_iterator(DI2); I != E; ++I) {
+       E = MachineBasicBlock::reverse_instr_iterator(&*DI2); I != E; ++I) {
     DontKill.StepBackward(*I, *TRI);
   }
 
