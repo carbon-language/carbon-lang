@@ -236,6 +236,12 @@ class MipsAsmParser : public MCTargetAsmParser {
 
   bool processInstruction(MCInst &Inst, SMLoc IDLoc,
                         SmallVectorImpl<MCInst> &Instructions);
+
+  // Helper function that checks if the value of a vector index is within the
+  // boundaries of accepted values for each RegisterKind
+  // Example: INSERT.B $w0[n], $1 => 16 > n >= 0
+  bool validateMSAIndex(int Val, int RegKind);
+
 public:
   MipsAsmParser(MCSubtargetInfo &sti, MCAsmParser &parser,
                 const MCInstrInfo &MII)
@@ -1547,6 +1553,26 @@ MipsAsmParser::parseRegs(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
   return MatchOperand_NoMatch;
 }
 
+bool MipsAsmParser::validateMSAIndex(int Val, int RegKind) {
+  MipsOperand::RegisterKind Kind = (MipsOperand::RegisterKind)RegKind;
+
+  if (Val < 0)
+    return false;
+
+  switch (Kind) {
+  default:
+    return false;
+  case MipsOperand::Kind_MSA128BRegs:
+    return Val < 16;
+  case MipsOperand::Kind_MSA128HRegs:
+    return Val < 8;
+  case MipsOperand::Kind_MSA128WRegs:
+    return Val < 4;
+  case MipsOperand::Kind_MSA128DRegs:
+    return Val < 2;
+  }
+}
+
 MipsAsmParser::OperandMatchResultTy
 MipsAsmParser::parseMSARegs(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                             int RegKind) {
@@ -1588,6 +1614,101 @@ MipsAsmParser::parseMSARegs(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
   Operands.push_back(Op);
 
   Parser.Lex(); // Eat the register identifier.
+
+  // MSA registers may be suffixed with an index in the form of:
+  // 1) Immediate expression.
+  // 2) General Purpose Register.
+  // Examples:
+  //   1) copy_s.b $29,$w0[0]
+  //   2) sld.b $w0,$w1[$1]
+
+  if (Parser.getTok().isNot(AsmToken::LBrac))
+    return MatchOperand_Success;
+
+  MipsOperand *Mnemonic = static_cast<MipsOperand *>(Operands[0]);
+
+  Operands.push_back(MipsOperand::CreateToken("[", Parser.getTok().getLoc()));
+  Parser.Lex(); // Parse the '[' token.
+
+  if (Parser.getTok().is(AsmToken::Dollar)) {
+    // This must be a GPR.
+    MipsOperand *RegOp;
+    SMLoc VIdx = Parser.getTok().getLoc();
+    Parser.Lex(); // Parse the '$' token.
+
+    // GPR have aliases and we must account for that. Example: $30 == $fp
+    if (getLexer().getKind() == AsmToken::Integer) {
+      unsigned RegNum = Parser.getTok().getIntVal();
+      int Reg = matchRegisterByNumber(
+          RegNum, regKindToRegClass(MipsOperand::Kind_GPR32));
+      if (Reg == -1) {
+        Error(VIdx, "invalid general purpose register");
+        return MatchOperand_ParseFail;
+      }
+
+      RegOp = MipsOperand::CreateReg(Reg, VIdx, Parser.getTok().getLoc());
+    } else if (getLexer().getKind() == AsmToken::Identifier) {
+      int RegNum = -1;
+      std::string RegName = Parser.getTok().getString().lower();
+
+      RegNum = matchCPURegisterName(RegName);
+      if (RegNum == -1) {
+        Error(VIdx, "general purpose register expected");
+        return MatchOperand_ParseFail;
+      }
+      RegNum = getReg(regKindToRegClass(MipsOperand::Kind_GPR32), RegNum);
+      RegOp = MipsOperand::CreateReg(RegNum, VIdx, Parser.getTok().getLoc());
+    }
+
+    RegOp->setRegKind(MipsOperand::Kind_GPR32);
+    Operands.push_back(RegOp);
+    Parser.Lex(); // Eat the register identifier.
+
+    if (Parser.getTok().isNot(AsmToken::RBrac))
+      return MatchOperand_ParseFail;
+
+    Operands.push_back(MipsOperand::CreateToken("]", Parser.getTok().getLoc()));
+    Parser.Lex(); // Parse the ']' token.
+
+    return MatchOperand_Success;
+  }
+
+  // The index must be a constant expression then.
+  SMLoc VIdx = Parser.getTok().getLoc();
+  const MCExpr *ImmVal;
+
+  if (getParser().parseExpression(ImmVal))
+    return MatchOperand_ParseFail;
+
+  const MCConstantExpr *expr = dyn_cast<MCConstantExpr>(ImmVal);
+  if (!expr || !validateMSAIndex((int)expr->getValue(), Kind)) {
+    Error(VIdx, "invalid immediate value");
+    return MatchOperand_ParseFail;
+  }
+
+  SMLoc E = Parser.getTok().getEndLoc();
+
+  if (Parser.getTok().isNot(AsmToken::RBrac))
+    return MatchOperand_ParseFail;
+
+  bool insve = Mnemonic->getToken() == "insve.b" ||
+               Mnemonic->getToken() == "insve.h" ||
+               Mnemonic->getToken() == "insve.w" ||
+               Mnemonic->getToken() == "insve.d";
+
+  // The second vector index of insve instructions is always 0.
+  if (insve && Operands.size() > 6) {
+    if (expr->getValue() != 0) {
+      Error(VIdx, "immediate value must be 0");
+      return MatchOperand_ParseFail;
+    }
+    Operands.push_back(MipsOperand::CreateToken("0", VIdx));
+  } else
+    Operands.push_back(MipsOperand::CreateImm(expr, VIdx, E));
+
+  Operands.push_back(MipsOperand::CreateToken("]", Parser.getTok().getLoc()));
+
+  Parser.Lex(); // Parse the ']' token.
 
   return MatchOperand_Success;
 }

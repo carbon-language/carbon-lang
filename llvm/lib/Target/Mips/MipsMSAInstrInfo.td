@@ -738,9 +738,9 @@ class ILVR_H_ENC : MSA_3R_FMT<0b101, 0b01, 0b010100>;
 class ILVR_W_ENC : MSA_3R_FMT<0b101, 0b10, 0b010100>;
 class ILVR_D_ENC : MSA_3R_FMT<0b101, 0b11, 0b010100>;
 
-class INSERT_B_ENC : MSA_ELM_B_FMT<0b0100, 0b011001>;
-class INSERT_H_ENC : MSA_ELM_H_FMT<0b0100, 0b011001>;
-class INSERT_W_ENC : MSA_ELM_W_FMT<0b0100, 0b011001>;
+class INSERT_B_ENC : MSA_ELM_INSERT_B_FMT<0b0100, 0b011001>;
+class INSERT_H_ENC : MSA_ELM_INSERT_H_FMT<0b0100, 0b011001>;
+class INSERT_W_ENC : MSA_ELM_INSERT_W_FMT<0b0100, 0b011001>;
 
 class INSVE_B_ENC : MSA_ELM_B_FMT<0b0101, 0b011001>;
 class INSVE_H_ENC : MSA_ELM_H_FMT<0b0101, 0b011001>;
@@ -1239,13 +1239,13 @@ class MSA_CBRANCH_DESC_BASE<string instr_asm, RegisterClass RCWD> {
 }
 
 class MSA_INSERT_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
-                           RegisterClass RCWD, RegisterClass RCS,
+                           RegisterOperand ROWD, RegisterOperand ROS,
                            InstrItinClass itin = NoItinerary> {
-  dag OutOperandList = (outs RCWD:$wd);
-  dag InOperandList = (ins RCWD:$wd_in, RCS:$rs, uimm6:$n);
+  dag OutOperandList = (outs ROWD:$wd);
+  dag InOperandList = (ins ROWD:$wd_in, ROS:$rs, uimm6:$n);
   string AsmString = !strconcat(instr_asm, "\t$wd[$n], $rs");
-  list<dag> Pattern = [(set RCWD:$wd, (OpNode RCWD:$wd_in,
-                                              RCS:$rs,
+  list<dag> Pattern = [(set ROWD:$wd, (OpNode ROWD:$wd_in,
+                                              ROS:$rs,
                                               immZExt6:$n))];
   InstrItinClass Itinerary = itin;
   string Constraints = "$wd = $wd_in";
@@ -1964,12 +1964,12 @@ class ILVR_H_DESC : MSA_3R_DESC_BASE<"ilvr.h", MipsILVR, MSA128HOpnd>;
 class ILVR_W_DESC : MSA_3R_DESC_BASE<"ilvr.w", MipsILVR, MSA128WOpnd>;
 class ILVR_D_DESC : MSA_3R_DESC_BASE<"ilvr.d", MipsILVR, MSA128DOpnd>;
 
-class INSERT_B_DESC : MSA_INSERT_DESC_BASE<"insert.b", vinsert_v16i8, MSA128B,
-                                           GPR32>;
-class INSERT_H_DESC : MSA_INSERT_DESC_BASE<"insert.h", vinsert_v8i16, MSA128H,
-                                           GPR32>;
-class INSERT_W_DESC : MSA_INSERT_DESC_BASE<"insert.w", vinsert_v4i32, MSA128W,
-                                           GPR32>;
+class INSERT_B_DESC : MSA_INSERT_DESC_BASE<"insert.b", vinsert_v16i8,
+                                           MSA128BOpnd, GPR32Opnd>;
+class INSERT_H_DESC : MSA_INSERT_DESC_BASE<"insert.h", vinsert_v8i16,
+                                           MSA128HOpnd, GPR32Opnd>;
+class INSERT_W_DESC : MSA_INSERT_DESC_BASE<"insert.w", vinsert_v4i32,
+                                           MSA128WOpnd, GPR32Opnd>;
 
 class INSERT_FW_PSEUDO_DESC : MSA_INSERT_PSEUDO_BASE<vector_insert, v4f32,
                                                      MSA128W, FGR32>;
