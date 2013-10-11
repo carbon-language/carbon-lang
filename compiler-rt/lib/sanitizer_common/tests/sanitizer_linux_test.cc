@@ -255,8 +255,8 @@ TEST(SanitizerCommon, LibraryNameIs) {
     }
 }
 
-pthread_key_t key;
-bool destructor_executed;
+static pthread_key_t key;
+static bool destructor_executed;
 
 extern "C"
 void destructor(void *arg) {
@@ -273,7 +273,7 @@ void *thread_func(void *arg) {
   return reinterpret_cast<void*>(pthread_setspecific(key, arg));
 }
 
-void SpawnThread(uptr iteration) {
+static void SpawnThread(uptr iteration) {
   destructor_executed = false;
   pthread_t tid;
   ASSERT_EQ(0, pthread_create(&tid, 0, &thread_func,
