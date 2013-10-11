@@ -1623,6 +1623,9 @@ def note_in_for_range: Note<
 def err_for_range_invalid: Error<
   "invalid range expression of type %0; no viable '%select{begin|end}1' "
   "function available">;
+def err_range_on_array_parameter : Error<
+  "cannot build range expression with array function parameter %0 since "
+  "parameter with array type %1 is treated as pointer type %2">;
 def err_for_range_dereference : Error<
   "invalid range expression of type %0; did you mean to dereference it "
   "with '*'?">;

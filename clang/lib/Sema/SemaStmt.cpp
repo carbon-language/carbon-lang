@@ -2131,10 +2131,25 @@ Sema::BuildCXXForRangeStmt(SourceLocation ForLoc, SourceLocation ColonLoc,
                                 BeginVar, EndVar, ColonLoc, &CandidateSet,
                                 &BeginExpr, &EndExpr, &BEFFailure);
 
-      // If building the range failed, try dereferencing the range expression
-      // unless a diagnostic was issued or the end function is problematic.
       if (Kind == BFRK_Build && RangeStatus == FRS_NoViableFunction &&
           BEFFailure == BEF_begin) {
+        // If the range is being built from an array parameter, emit a
+        // a diagnostic that it is being treated as a pointer.
+        if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(Range)) {
+          if (ParmVarDecl *PVD = dyn_cast<ParmVarDecl>(DRE->getDecl())) {
+            QualType ArrayTy = PVD->getOriginalType();
+            QualType PointerTy = PVD->getType();
+            if (PointerTy->isPointerType() && ArrayTy->isArrayType()) {
+              Diag(Range->getLocStart(), diag::err_range_on_array_parameter)
+                << RangeLoc << PVD << ArrayTy << PointerTy;
+              Diag(PVD->getLocation(), diag::note_declared_at);
+              return StmtError();
+            }
+          }
+        }
+
+        // If building the range failed, try dereferencing the range expression
+        // unless a diagnostic was issued or the end function is problematic.
         StmtResult SR = RebuildForRangeWithDereference(*this, S, ForLoc,
                                                        LoopVarDecl, ColonLoc,
                                                        Range, RangeLoc,
