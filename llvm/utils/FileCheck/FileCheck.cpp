@@ -609,7 +609,7 @@ struct CheckString {
     : Pat(P), Loc(L), CheckTy(Ty) {}
 
   /// Check - Match check string and its "not strings" and/or "dag strings".
-  size_t Check(const SourceMgr &SM, StringRef Buffer,
+  size_t Check(const SourceMgr &SM, StringRef Buffer, bool IsLabelScanMode,
                size_t &MatchLen, StringMap<StringRef> &VariableTable) const;
 
   /// CheckNext - Verify there is a single line in the given buffer.
@@ -874,15 +874,21 @@ static unsigned CountNumNewlinesBetween(StringRef Range) {
 }
 
 size_t CheckString::Check(const SourceMgr &SM, StringRef Buffer,
-                          size_t &MatchLen,
+                          bool IsLabelScanMode, size_t &MatchLen,
                           StringMap<StringRef> &VariableTable) const {
   size_t LastPos = 0;
   std::vector<const Pattern *> NotStrings;
 
-  // Match "dag strings" (with mixed "not strings" if any).
-  LastPos = CheckDag(SM, Buffer, NotStrings, VariableTable);
-  if (LastPos == StringRef::npos)
-    return StringRef::npos;
+  // IsLabelScanMode is true when we are scanning forward to find CHECK-LABEL
+  // bounds; we have not processed variable definitions within the bounded block
+  // yet so cannot handle any final CHECK-DAG yet; this is handled when going
+  // over the block again (including the last CHECK-LABEL) in normal mode.
+  if (!IsLabelScanMode) {
+    // Match "dag strings" (with mixed "not strings" if any).
+    LastPos = CheckDag(SM, Buffer, NotStrings, VariableTable);
+    if (LastPos == StringRef::npos)
+      return StringRef::npos;
+  }
 
   // Match itself from the last position after matching CHECK-DAG.
   StringRef MatchBuffer = Buffer.substr(LastPos);
@@ -893,7 +899,9 @@ size_t CheckString::Check(const SourceMgr &SM, StringRef Buffer,
   }
   MatchPos += LastPos;
 
-  if (CheckTy != Check::CheckLabel) {
+  // Similar to the above, in "label-scan mode" we can't yet handle CHECK-NEXT
+  // or CHECK-NOT
+  if (!IsLabelScanMode) {
     StringRef SkippedRegion = Buffer.substr(LastPos, MatchPos);
 
     // If this check is a "CHECK-NEXT", verify that the previous match was on
@@ -1117,7 +1125,7 @@ int main(int argc, char **argv) {
 
       // Scan to next CHECK-LABEL match, ignoring CHECK-NOT and CHECK-DAG
       size_t MatchLabelLen = 0;
-      size_t MatchLabelPos = CheckLabelStr.Check(SM, Buffer,
+      size_t MatchLabelPos = CheckLabelStr.Check(SM, Buffer, true,
                                                  MatchLabelLen, VariableTable);
       if (MatchLabelPos == StringRef::npos) {
         hasError = true;
@@ -1135,7 +1143,7 @@ int main(int argc, char **argv) {
       // Check each string within the scanned region, including a second check
       // of any final CHECK-LABEL (to verify CHECK-NOT and CHECK-DAG)
       size_t MatchLen = 0;
-      size_t MatchPos = CheckStr.Check(SM, CheckRegion, MatchLen,
+      size_t MatchPos = CheckStr.Check(SM, CheckRegion, false, MatchLen,
                                        VariableTable);
 
       if (MatchPos == StringRef::npos) {
