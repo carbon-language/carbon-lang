@@ -1725,7 +1725,7 @@ static void addSanitizerRTLinkFlagsLinux(
 /// This needs to be called before we add the C run-time (malloc, etc).
 static void addAsanRTLinux(const ToolChain &TC, const ArgList &Args,
                            ArgStringList &CmdArgs) {
-  if(TC.getTriple().getEnvironment() == llvm::Triple::Android) {
+  if (TC.getTriple().getEnvironment() == llvm::Triple::Android) {
     SmallString<128> LibAsan(TC.getDriver().ResourceDir);
     llvm::sys::path::append(LibAsan, "lib", "linux",
         (Twine("libclang_rt.asan-") +
@@ -2107,7 +2107,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     }
   }
 
-  // Inroduce a Darwin-specific hack. If the default is PIC but the flags
+  // Introduce a Darwin-specific hack. If the default is PIC but the flags
   // specified while enabling PIC enabled level 1 PIC, just force it back to
   // level 2 PIC instead. This matches the behavior of Darwin GCC (based on my
   // informal testing).
