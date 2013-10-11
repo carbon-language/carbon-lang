@@ -286,6 +286,10 @@ namespace llvm {
     virtual bool
     isBlockOnlyReachableByFallthrough(const MachineBasicBlock *MBB) const;
 
+    /// emitImplicitDef - Targets can override this to customize the output of
+    /// IMPLICIT_DEF instructions in verbose mode.
+    virtual void emitImplicitDef(const MachineInstr *MI) const;
+
     //===------------------------------------------------------------------===//
     // Symbol Lowering Routines.
     //===------------------------------------------------------------------===//

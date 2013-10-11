@@ -527,11 +527,11 @@ static void emitComments(const MachineInstr &MI, raw_ostream &CommentOS) {
 
 /// emitImplicitDef - This method emits the specified machine instruction
 /// that is an implicit def.
-static void emitImplicitDef(const MachineInstr *MI, AsmPrinter &AP) {
+void AsmPrinter::emitImplicitDef(const MachineInstr *MI) const {
   unsigned RegNo = MI->getOperand(0).getReg();
-  AP.OutStreamer.AddComment(Twine("implicit-def: ") +
-                            AP.TM.getRegisterInfo()->getName(RegNo));
-  AP.OutStreamer.AddBlankLine();
+  OutStreamer.AddComment(Twine("implicit-def: ") +
+                         TM.getRegisterInfo()->getName(RegNo));
+  OutStreamer.AddBlankLine();
 }
 
 static void emitKill(const MachineInstr *MI, AsmPrinter &AP) {
@@ -721,7 +721,7 @@ void AsmPrinter::EmitFunctionBody() {
         }
         break;
       case TargetOpcode::IMPLICIT_DEF:
-        if (isVerbose()) emitImplicitDef(II, *this);
+        if (isVerbose()) emitImplicitDef(II);
         break;
       case TargetOpcode::KILL:
         if (isVerbose()) emitKill(II, *this);
