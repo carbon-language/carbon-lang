@@ -8,7 +8,7 @@
 
 // rdar://10830559
 
-#pragma ms_struct on
+//#pragma ms_struct on
 
 template< typename T >
 class Templated

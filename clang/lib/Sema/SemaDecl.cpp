@@ -11503,8 +11503,7 @@ Decl *Sema::ActOnIvar(Scope *S,
 
   if (BitWidth) {
     // 6.7.2.1p3, 6.7.2.1p4
-    BitWidth =
-        VerifyBitField(Loc, II, T, /*IsMsStruct=*/false, BitWidth).take();
+    BitWidth = VerifyBitField(Loc, II, T, /*IsMsStruct*/false, BitWidth).take();
     if (!BitWidth)
       D.setInvalidType();
   } else {

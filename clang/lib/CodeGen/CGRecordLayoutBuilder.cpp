@@ -696,7 +696,7 @@ CGRecordLayoutBuilder::LayoutNonVirtualBases(const CXXRecordDecl *RD,
   }
 
   // Add a vb-table pointer if the layout insists.
-  if (Layout.getVBPtrOffset() != CharUnits::fromQuantity(-1)) {
+    if (Layout.hasOwnVBPtr()) {
     CharUnits VBPtrOffset = Layout.getVBPtrOffset();
     llvm::Type *Vbptr = llvm::Type::getInt32PtrTy(Types.getLLVMContext());
     AppendPadding(VBPtrOffset, getTypeAlignment(Vbptr));

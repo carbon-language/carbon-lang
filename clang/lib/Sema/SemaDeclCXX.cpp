@@ -4451,6 +4451,13 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
     }
   }
 
+  // Check to see if we're trying to lay out a struct using the ms_struct
+  // attribute that is dynamic.
+  if (Record->isMsStruct(Context) && Record->isDynamicClass()) {
+    Diag(Record->getLocation(), diag::warn_pragma_ms_struct_failed);
+    Record->dropAttr<MsStructAttr>();
+  }
+
   // Declare inheriting constructors. We do this eagerly here because:
   // - The standard requires an eager diagnostic for conflicting inheriting
   //   constructors from different classes.

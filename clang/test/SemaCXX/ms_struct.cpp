@@ -6,7 +6,6 @@
 struct A {
   unsigned long a:4;
   unsigned char b;
-  A();
 };
 
 struct B : public A {

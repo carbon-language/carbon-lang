@@ -54,10 +54,6 @@ void VBTableBuilder::enumerateVBTables(VBTableVector &VBTables) {
   }
 }
 
-bool VBTableBuilder::hasVBPtr(const CXXRecordDecl *RD) {
-  const ASTRecordLayout &Layout = CGM.getContext().getASTRecordLayout(RD);
-  return Layout.getVBPtrOffset().getQuantity() != -1;
-}
 
 void VBTableBuilder::findUnambiguousPaths(const CXXRecordDecl *ReusingBase,
                                           BaseSubobject CurSubobject,
@@ -65,10 +61,11 @@ void VBTableBuilder::findUnambiguousPaths(const CXXRecordDecl *ReusingBase,
   size_t PathsStart = Paths.size();
   bool ReuseVBPtrFromBase = true;
   const CXXRecordDecl *CurBase = CurSubobject.getBase();
+  const ASTRecordLayout &Layout = CGM.getContext().getASTRecordLayout(CurBase);
 
   // If this base has a vbptr, then we've found a path.  These are not full
   // paths, so we don't use CXXBasePath.
-  if (hasVBPtr(CurBase)) {
+  if (Layout.hasOwnVBPtr()) {
     ReuseVBPtrFromBase = false;
     VBTablePath *Info = new VBTablePath(
       VBTableInfo(ReusingBase, CurSubobject, /*GV=*/0));
@@ -76,7 +73,6 @@ void VBTableBuilder::findUnambiguousPaths(const CXXRecordDecl *ReusingBase,
   }
 
   // Recurse onto any bases which themselves have virtual bases.
-  const ASTRecordLayout &Layout = CGM.getContext().getASTRecordLayout(CurBase);
   for (CXXRecordDecl::base_class_const_iterator I = CurBase->bases_begin(),
        E = CurBase->bases_end(); I != E; ++I) {
     const CXXRecordDecl *Base = I->getType()->getAsCXXRecordDecl();

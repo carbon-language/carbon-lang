@@ -156,7 +156,9 @@ C::C() {
   // CHECK-NEXT: %[[vbptr_off:.*]] = getelementptr inbounds i8* %[[this_i8]], i64 0
   // CHECK-NEXT: %[[vbptr:.*]] = bitcast i8* %[[vbptr_off]] to [2 x i32]**
   // CHECK-NEXT: store [2 x i32]* @"\01??_8C@constructors@@7B@", [2 x i32]** %[[vbptr]]
-  // CHECK-NEXT: bitcast %"struct.constructors::C"* %{{.*}} to %"struct.constructors::A"*
+  // CHECK-NEXT: bitcast %"struct.constructors::C"* %{{.*}} to i8*
+  // CHECK-NEXT: getelementptr inbounds i8* %{{.*}}, i64 4
+  // CHECK-NEXT: bitcast i8* %{{.*}} to %"struct.constructors::A"*
   // CHECK-NEXT: call x86_thiscallcc %"struct.constructors::A"* @"\01??0A@constructors@@QAE@XZ"(%"struct.constructors::A"* %{{.*}})
   // CHECK-NEXT: br label %[[SKIP_VBASES]]
   //
@@ -189,7 +191,9 @@ D::D() {
   // CHECK-NEXT: %[[vbptr_off:.*]] = getelementptr inbounds i8* %[[this_i8]], i64 0
   // CHECK-NEXT: %[[vbptr:.*]] = bitcast i8* %[[vbptr_off]] to [2 x i32]**
   // CHECK-NEXT: store [2 x i32]* @"\01??_8D@constructors@@7B@", [2 x i32]** %[[vbptr]]
-  // CHECK-NEXT: bitcast %"struct.constructors::D"* %{{.*}} to %"struct.constructors::A"*
+  // CHECK-NEXT: bitcast %"struct.constructors::D"* %{{.*}} to i8*
+  // CHECK-NEXT: getelementptr inbounds i8* %{{.*}}, i64 4
+  // CHECK-NEXT: bitcast i8* %{{.*}} to %"struct.constructors::A"*
   // CHECK-NEXT: call x86_thiscallcc %"struct.constructors::A"* @"\01??0A@constructors@@QAE@XZ"(%"struct.constructors::A"* %{{.*}})
   // CHECK-NEXT: br label %[[SKIP_VBASES]]
   //
@@ -217,7 +221,9 @@ E::E() {
   // CHECK-NEXT: %[[offs:.*]] = getelementptr inbounds i8* %[[this_i8]], i64 4
   // CHECK-NEXT: %[[vbptr_C:.*]] = bitcast i8* %[[offs]] to [2 x i32]**
   // CHECK-NEXT: store [2 x i32]* @"\01??_8E@constructors@@7BC@1@@", [2 x i32]** %[[vbptr_C]]
-  // CHECK-NEXT: bitcast %"struct.constructors::E"* %{{.*}} to %"struct.constructors::A"*
+  // CHECK-NEXT: bitcast %"struct.constructors::E"* %{{.*}} to i8*
+  // CHECK-NEXT: getelementptr inbounds i8* %{{.*}}, i64 4
+  // CHECK-NEXT: bitcast i8* %{{.*}} to %"struct.constructors::A"*
   // CHECK-NEXT: call x86_thiscallcc %"struct.constructors::A"* @"\01??0A@constructors@@QAE@XZ"(%"struct.constructors::A"* %{{.*}})
   // CHECK: call x86_thiscallcc %"struct.constructors::C"* @"\01??0C@constructors@@QAE@XZ"(%"struct.constructors::C"* %{{.*}}, i32 0)
   // CHECK-NEXT: br label %[[SKIP_VBASES]]
