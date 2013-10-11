@@ -158,9 +158,13 @@ defm u : smDash<"u", "undefined",
 def start_group : Flag<["--"], "start-group">,
      HelpText<"Start a group">,
      Group<grp_resolveropt>;
+def alias_start_group: Flag<["-"], "(">,
+      Alias<start_group>;
 def end_group : Flag<["--"], "end-group">,
      HelpText<"End a group">,
      Group<grp_resolveropt>;
+def alias_end_group: Flag<["-"], ")">,
+      Alias<end_group>;
 def as_needed : Flag<["--"], "as-needed">,
      HelpText<"This option affects ELF DT_NEEDED tags for "
               "dynamic libraries mentioned on the command line">,
