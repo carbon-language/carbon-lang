@@ -226,9 +226,9 @@ void CompileUnit::addDelta(DIE *Die, uint16_t Attribute, uint16_t Form,
 
 /// addDIEEntry - Add a DIE attribute data and value.
 ///
-void CompileUnit::addDIEEntry(DIE *Die, uint16_t Attribute, uint16_t Form,
-                              DIE *Entry) {
-  Die->addValue(Attribute, Form, createDIEEntry(Entry));
+void CompileUnit::addDIEEntry(DIE *Die, uint16_t Attribute, DIE *Entry) {
+  // We currently only use ref4.
+  Die->addValue(Attribute, dwarf::DW_FORM_ref4, createDIEEntry(Entry));
 }
 
 /// addBlock - Add block data.
@@ -982,7 +982,7 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DIDerivedType DTy) {
     addUInt(&Buffer, dwarf::DW_AT_byte_size, 0, Size);
 
   if (Tag == dwarf::DW_TAG_ptr_to_member_type)
-      addDIEEntry(&Buffer, dwarf::DW_AT_containing_type, dwarf::DW_FORM_ref4,
+      addDIEEntry(&Buffer, dwarf::DW_AT_containing_type,
                   getOrCreateTypeDIE(resolve(DTy.getClassType())));
   // Add source line info if available and TyDesc is not a forward declaration.
   if (!DTy.isForwardDecl())
@@ -1162,7 +1162,7 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
 
     DICompositeType ContainingType(resolve(CTy.getContainingType()));
     if (DIDescriptor(ContainingType).isCompositeType())
-      addDIEEntry(&Buffer, dwarf::DW_AT_containing_type, dwarf::DW_FORM_ref4,
+      addDIEEntry(&Buffer, dwarf::DW_AT_containing_type,
                   getOrCreateTypeDIE(DIType(ContainingType)));
 
     if (CTy.isObjcClassComplete())
@@ -1329,8 +1329,7 @@ DIE *CompileUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
   // then there is no need to add other attributes.
   if (DeclDie) {
     // Refer function declaration directly.
-    addDIEEntry(SPDie, dwarf::DW_AT_specification, dwarf::DW_FORM_ref4,
-                DeclDie);
+    addDIEEntry(SPDie, dwarf::DW_AT_specification, DeclDie);
 
     return SPDie;
   }
@@ -1523,8 +1522,7 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
         !GVContext.isFile() && !DD->isSubprogramContext(GVContext)) {
       // Create specification DIE.
       VariableSpecDIE = new DIE(dwarf::DW_TAG_variable);
-      addDIEEntry(VariableSpecDIE, dwarf::DW_AT_specification,
-                  dwarf::DW_FORM_ref4, VariableDIE);
+      addDIEEntry(VariableSpecDIE, dwarf::DW_AT_specification, VariableDIE);
       addBlock(VariableSpecDIE, dwarf::DW_AT_location, 0, Block);
       // A static member's declaration is already flagged as such.
       if (!SDMDecl.Verify())
@@ -1578,7 +1576,7 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
 void CompileUnit::constructSubrangeDIE(DIE &Buffer, DISubrange SR,
                                        DIE *IndexTy) {
   DIE *DW_Subrange = new DIE(dwarf::DW_TAG_subrange_type);
-  addDIEEntry(DW_Subrange, dwarf::DW_AT_type, dwarf::DW_FORM_ref4, IndexTy);
+  addDIEEntry(DW_Subrange, dwarf::DW_AT_type, IndexTy);
 
   // The LowerBound value defines the lower bounds which is typically zero for
   // C/C++. The Count value is the number of elements.  Values are 64 bit. If
@@ -1654,7 +1652,7 @@ void CompileUnit::constructContainingTypeDIEs() {
     if (!N) continue;
     DIE *NDie = getDIE(N);
     if (!NDie) continue;
-    addDIEEntry(SPDie, dwarf::DW_AT_containing_type, dwarf::DW_FORM_ref4, NDie);
+    addDIEEntry(SPDie, dwarf::DW_AT_containing_type, NDie);
   }
 }
 
@@ -1668,8 +1666,7 @@ DIE *CompileUnit::constructVariableDIE(DbgVariable *DV,
   DbgVariable *AbsVar = DV->getAbstractVariable();
   DIE *AbsDIE = AbsVar ? AbsVar->getDIE() : NULL;
   if (AbsDIE)
-    addDIEEntry(VariableDie, dwarf::DW_AT_abstract_origin,
-                            dwarf::DW_FORM_ref4, AbsDIE);
+    addDIEEntry(VariableDie, dwarf::DW_AT_abstract_origin, AbsDIE);
   else {
     if (!Name.empty())
       addString(VariableDie, dwarf::DW_AT_name, Name);

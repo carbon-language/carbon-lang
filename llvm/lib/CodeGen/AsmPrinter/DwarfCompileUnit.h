@@ -207,7 +207,7 @@ public:
 
   /// addDIEEntry - Add a DIE attribute data and value.
   ///
-  void addDIEEntry(DIE *Die, uint16_t Attribute, uint16_t Form, DIE *Entry);
+  void addDIEEntry(DIE *Die, uint16_t Attribute, DIE *Entry);
 
   /// addBlock - Add block data.
   ///
