@@ -68,7 +68,7 @@ ThreadPlanStepUntil::ThreadPlanStepUntil
         {
             // TODO: add inline functionality
             m_return_addr = return_frame_sp->GetStackID().GetPC();
-            Breakpoint *return_bp = target_sp->CreateBreakpoint (m_return_addr, true).get();
+            Breakpoint *return_bp = target_sp->CreateBreakpoint (m_return_addr, true, false).get();
             if (return_bp != NULL)
             {
                 return_bp->SetThreadID(thread_id);
@@ -82,7 +82,7 @@ ThreadPlanStepUntil::ThreadPlanStepUntil
         // Now set breakpoints on all our return addresses:
         for (size_t i = 0; i < num_addresses; i++)
         {
-            Breakpoint *until_bp = target_sp->CreateBreakpoint (address_list[i], true).get();
+            Breakpoint *until_bp = target_sp->CreateBreakpoint (address_list[i], true, false).get();
             if (until_bp != NULL)
             {
                 until_bp->SetThreadID(thread_id);

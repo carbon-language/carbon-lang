@@ -503,26 +503,30 @@ public:
     CreateBreakpoint (const FileSpecList *containingModules,
                       const FileSpec &file,
                       uint32_t line_no,
-                      LazyBool check_inlines = eLazyBoolCalculate,
-                      LazyBool skip_prologue = eLazyBoolCalculate,
-                      bool internal = false);
+                      LazyBool check_inlines,
+                      LazyBool skip_prologue,
+                      bool internal,
+                      bool request_hardware);
 
     // Use this to create breakpoint that matches regex against the source lines in files given in source_file_list:
     lldb::BreakpointSP
     CreateSourceRegexBreakpoint (const FileSpecList *containingModules,
                                  const FileSpecList *source_file_list,
                                  RegularExpression &source_regex,
-                                 bool internal = false);
+                                 bool internal,
+                                 bool request_hardware);
 
     // Use this to create a breakpoint from a load address
     lldb::BreakpointSP
     CreateBreakpoint (lldb::addr_t load_addr,
-                      bool internal = false);
+                      bool internal,
+                      bool request_hardware);
 
     // Use this to create Address breakpoints:
     lldb::BreakpointSP
     CreateBreakpoint (Address &addr,
-                      bool internal = false);
+                      bool internal,
+                      bool request_hardware);
 
     // Use this to create a function breakpoint by regexp in containingModule/containingSourceFiles, or all modules if it is NULL
     // When "skip_prologue is set to eLazyBoolCalculate, we use the current target 
@@ -531,8 +535,9 @@ public:
     CreateFuncRegexBreakpoint (const FileSpecList *containingModules,
                                const FileSpecList *containingSourceFiles,
                                RegularExpression &func_regexp,
-                               LazyBool skip_prologue = eLazyBoolCalculate,
-                               bool internal = false);
+                               LazyBool skip_prologue,
+                               bool internal,
+                               bool request_hardware);
 
     // Use this to create a function breakpoint by name in containingModule, or all modules if it is NULL
     // When "skip_prologue is set to eLazyBoolCalculate, we use the current target 
@@ -542,11 +547,12 @@ public:
                       const FileSpecList *containingSourceFiles,
                       const char *func_name,
                       uint32_t func_name_type_mask, 
-                      LazyBool skip_prologue = eLazyBoolCalculate,
-                      bool internal = false);
+                      LazyBool skip_prologue,
+                      bool internal,
+                      bool request_hardware);
                       
     lldb::BreakpointSP
-    CreateExceptionBreakpoint (enum lldb::LanguageType language, bool catch_bp, bool throw_bp, bool internal = false);
+    CreateExceptionBreakpoint (enum lldb::LanguageType language, bool catch_bp, bool throw_bp, bool internal);
     
     // This is the same as the func_name breakpoint except that you can specify a vector of names.  This is cheaper
     // than a regular expression breakpoint in the case where you just want to set a breakpoint on a set of names
@@ -557,23 +563,26 @@ public:
                       const char *func_names[],
                       size_t num_names, 
                       uint32_t func_name_type_mask, 
-                      LazyBool skip_prologue = eLazyBoolCalculate,
-                      bool internal = false);
+                      LazyBool skip_prologue,
+                      bool internal,
+                      bool request_hardware);
 
     lldb::BreakpointSP
     CreateBreakpoint (const FileSpecList *containingModules,
                       const FileSpecList *containingSourceFiles,
                       const std::vector<std::string> &func_names,
                       uint32_t func_name_type_mask,
-                      LazyBool skip_prologue = eLazyBoolCalculate,
-                      bool internal = false);
+                      LazyBool skip_prologue,
+                      bool internal,
+                      bool request_hardware);
 
 
     // Use this to create a general breakpoint:
     lldb::BreakpointSP
     CreateBreakpoint (lldb::SearchFilterSP &filter_sp,
                       lldb::BreakpointResolverSP &resolver_sp,
-                      bool internal = false);
+                      bool internal,
+                      bool request_hardware);
 
     // Use this to create a watchpoint:
     lldb::WatchpointSP

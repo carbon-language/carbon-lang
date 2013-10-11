@@ -260,7 +260,7 @@ DynamicLoaderPOSIXDYLD::ProbeEntry()
     if ((entry = GetEntryPoint()) == LLDB_INVALID_ADDRESS)
         return;
     
-    entry_break = m_process->GetTarget().CreateBreakpoint(entry, true).get();
+    entry_break = m_process->GetTarget().CreateBreakpoint(entry, true, false).get();
     entry_break->SetCallback(EntryBreakpointHit, this, true);
     entry_break->SetBreakpointKind("shared-library-event");
 }
@@ -293,7 +293,7 @@ DynamicLoaderPOSIXDYLD::SetRendezvousBreakpoint()
 
     if (m_dyld_bid == LLDB_INVALID_BREAK_ID)
     {
-        Breakpoint *dyld_break = target.CreateBreakpoint (break_addr, true).get();
+        Breakpoint *dyld_break = target.CreateBreakpoint (break_addr, true, false).get();
         dyld_break->SetCallback(RendezvousBreakpointHit, this, true);
         dyld_break->SetBreakpointKind ("shared-library-event");
         m_dyld_bid = dyld_break->GetID();

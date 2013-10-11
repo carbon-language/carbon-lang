@@ -45,8 +45,9 @@ Breakpoint::GetEventIdentifier ()
 //----------------------------------------------------------------------
 // Breakpoint constructor
 //----------------------------------------------------------------------
-Breakpoint::Breakpoint(Target &target, SearchFilterSP &filter_sp, BreakpointResolverSP &resolver_sp) :
+Breakpoint::Breakpoint(Target &target, SearchFilterSP &filter_sp, BreakpointResolverSP &resolver_sp, bool hardware) :
     m_being_created(true),
+    m_hardware(hardware),
     m_target (target),
     m_filter_sp (filter_sp),
     m_resolver_sp (resolver_sp),

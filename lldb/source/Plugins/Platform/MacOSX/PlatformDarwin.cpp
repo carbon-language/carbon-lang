@@ -1232,6 +1232,7 @@ PlatformDarwin::SetThreadCreationBreakpoint (Target &target)
     }
 
     bool internal = true;
+    bool hardware = false;
     LazyBool skip_prologue = eLazyBoolNo;
     bp_sp = target.CreateBreakpoint (&bp_modules,
                                      NULL,
@@ -1239,7 +1240,8 @@ PlatformDarwin::SetThreadCreationBreakpoint (Target &target)
                                      sizeof(g_bp_names)/sizeof(const char *),
                                      eFunctionNameTypeFull,
                                      skip_prologue,
-                                     internal);
+                                     internal,
+                                     hardware);
     bp_sp->SetBreakpointKind("thread-creation");
 
     return bp_sp;

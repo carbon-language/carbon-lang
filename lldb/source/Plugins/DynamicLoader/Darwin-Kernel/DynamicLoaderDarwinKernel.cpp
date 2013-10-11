@@ -1503,6 +1503,7 @@ DynamicLoaderDarwinKernel::SetNotificationBreakpointIfNeeded ()
 
         
         const bool internal_bp = true;
+        const bool hardware = false;
         const LazyBool skip_prologue = eLazyBoolNo;
         FileSpecList module_spec_list;
         module_spec_list.Append (m_kernel.GetModule()->GetFileSpec());
@@ -1511,7 +1512,8 @@ DynamicLoaderDarwinKernel::SetNotificationBreakpointIfNeeded ()
                                                                   "OSKextLoadedKextSummariesUpdated",
                                                                   eFunctionNameTypeFull,
                                                                   skip_prologue,
-                                                                  internal_bp).get();
+                                                                  internal_bp,
+                                                                  hardware).get();
 
         bp->SetCallback (DynamicLoaderDarwinKernel::BreakpointHitCallback, this, true);
         m_break_id = bp->GetID();

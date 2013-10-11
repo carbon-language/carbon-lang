@@ -478,7 +478,7 @@ AppleObjCTrampolineHandler::AppleObjCVTables::InitializeVTableSymbols ()
                 lldb::addr_t changed_addr = changed_symbol->GetAddress().GetOpcodeLoadAddress (&target);
                 if (changed_addr != LLDB_INVALID_ADDRESS)
                 {
-                    BreakpointSP trampolines_changed_bp_sp = target.CreateBreakpoint (changed_addr, true);
+                    BreakpointSP trampolines_changed_bp_sp = target.CreateBreakpoint (changed_addr, true, false);
                     if (trampolines_changed_bp_sp)
                     {
                         m_trampolines_changed_bp_id = trampolines_changed_bp_sp->GetID();

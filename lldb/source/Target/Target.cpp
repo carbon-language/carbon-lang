@@ -245,11 +245,12 @@ BreakpointSP
 Target::CreateSourceRegexBreakpoint (const FileSpecList *containingModules,
                                      const FileSpecList *source_file_spec_list,
                                      RegularExpression &source_regex,
-                                     bool internal)
+                                     bool internal,
+                                     bool hardware)
 {
     SearchFilterSP filter_sp(GetSearchFilterForModuleAndCUList (containingModules, source_file_spec_list));
     BreakpointResolverSP resolver_sp(new BreakpointResolverFileRegex (NULL, source_regex));
-    return CreateBreakpoint (filter_sp, resolver_sp, internal);
+    return CreateBreakpoint (filter_sp, resolver_sp, internal, hardware);
 }
 
 
@@ -259,7 +260,8 @@ Target::CreateBreakpoint (const FileSpecList *containingModules,
                           uint32_t line_no,
                           LazyBool check_inlines,
                           LazyBool skip_prologue,
-                          bool internal)
+                          bool internal,
+                          bool hardware)
 {
     if (check_inlines == eLazyBoolCalculate)
     {
@@ -302,12 +304,12 @@ Target::CreateBreakpoint (const FileSpecList *containingModules,
                                                                      line_no,
                                                                      check_inlines,
                                                                      skip_prologue));
-    return CreateBreakpoint (filter_sp, resolver_sp, internal);
+    return CreateBreakpoint (filter_sp, resolver_sp, internal, hardware);
 }
 
 
 BreakpointSP
-Target::CreateBreakpoint (lldb::addr_t addr, bool internal)
+Target::CreateBreakpoint (lldb::addr_t addr, bool internal, bool hardware)
 {
     Address so_addr;
     // Attempt to resolve our load address if possible, though it is ok if
@@ -320,16 +322,16 @@ Target::CreateBreakpoint (lldb::addr_t addr, bool internal)
         // The address didn't resolve, so just set this as an absolute address
         so_addr.SetOffset (addr);
     }
-    BreakpointSP bp_sp (CreateBreakpoint(so_addr, internal));
+    BreakpointSP bp_sp (CreateBreakpoint(so_addr, internal, hardware));
     return bp_sp;
 }
 
 BreakpointSP
-Target::CreateBreakpoint (Address &addr, bool internal)
+Target::CreateBreakpoint (Address &addr, bool internal, bool hardware)
 {
     SearchFilterSP filter_sp(new SearchFilterForNonModuleSpecificSearches (shared_from_this()));
     BreakpointResolverSP resolver_sp (new BreakpointResolverAddress (NULL, addr));
-    return CreateBreakpoint (filter_sp, resolver_sp, internal);
+    return CreateBreakpoint (filter_sp, resolver_sp, internal, hardware);
 }
 
 BreakpointSP
@@ -338,7 +340,8 @@ Target::CreateBreakpoint (const FileSpecList *containingModules,
                           const char *func_name, 
                           uint32_t func_name_type_mask, 
                           LazyBool skip_prologue,
-                          bool internal)
+                          bool internal,
+                          bool hardware)
 {
     BreakpointSP bp_sp;
     if (func_name)
@@ -353,7 +356,7 @@ Target::CreateBreakpoint (const FileSpecList *containingModules,
                                                                       func_name_type_mask, 
                                                                       Breakpoint::Exact, 
                                                                       skip_prologue));
-        bp_sp = CreateBreakpoint (filter_sp, resolver_sp, internal);
+        bp_sp = CreateBreakpoint (filter_sp, resolver_sp, internal, hardware);
     }
     return bp_sp;
 }
@@ -364,7 +367,8 @@ Target::CreateBreakpoint (const FileSpecList *containingModules,
                           const std::vector<std::string> &func_names,
                           uint32_t func_name_type_mask,
                           LazyBool skip_prologue,
-                          bool internal)
+                          bool internal,
+                          bool hardware)
 {
     BreakpointSP bp_sp;
     size_t num_names = func_names.size();
@@ -379,7 +383,7 @@ Target::CreateBreakpoint (const FileSpecList *containingModules,
                                                                       func_names,
                                                                       func_name_type_mask,
                                                                       skip_prologue));
-        bp_sp = CreateBreakpoint (filter_sp, resolver_sp, internal);
+        bp_sp = CreateBreakpoint (filter_sp, resolver_sp, internal, hardware);
     }
     return bp_sp;
 }
@@ -391,7 +395,8 @@ Target::CreateBreakpoint (const FileSpecList *containingModules,
                           size_t num_names, 
                           uint32_t func_name_type_mask, 
                           LazyBool skip_prologue,
-                          bool internal)
+                          bool internal,
+                          bool hardware)
 {
     BreakpointSP bp_sp;
     if (num_names > 0)
@@ -406,7 +411,7 @@ Target::CreateBreakpoint (const FileSpecList *containingModules,
                                                                       num_names, 
                                                                       func_name_type_mask,
                                                                       skip_prologue));
-        bp_sp = CreateBreakpoint (filter_sp, resolver_sp, internal);
+        bp_sp = CreateBreakpoint (filter_sp, resolver_sp, internal, hardware);
     }
     return bp_sp;
 }
@@ -476,14 +481,15 @@ Target::CreateFuncRegexBreakpoint (const FileSpecList *containingModules,
                                    const FileSpecList *containingSourceFiles,
                                    RegularExpression &func_regex, 
                                    LazyBool skip_prologue,
-                                   bool internal)
+                                   bool internal,
+                                   bool hardware)
 {
     SearchFilterSP filter_sp(GetSearchFilterForModuleAndCUList (containingModules, containingSourceFiles));
     BreakpointResolverSP resolver_sp(new BreakpointResolverName (NULL, 
                                                                  func_regex, 
                                                                  skip_prologue == eLazyBoolCalculate ? GetSkipPrologue() : skip_prologue));
 
-    return CreateBreakpoint (filter_sp, resolver_sp, internal);
+    return CreateBreakpoint (filter_sp, resolver_sp, internal, hardware);
 }
 
 lldb::BreakpointSP
@@ -493,12 +499,12 @@ Target::CreateExceptionBreakpoint (enum lldb::LanguageType language, bool catch_
 }
     
 BreakpointSP
-Target::CreateBreakpoint (SearchFilterSP &filter_sp, BreakpointResolverSP &resolver_sp, bool internal)
+Target::CreateBreakpoint (SearchFilterSP &filter_sp, BreakpointResolverSP &resolver_sp, bool internal, bool request_hardware)
 {
     BreakpointSP bp_sp;
     if (filter_sp && resolver_sp)
     {
-        bp_sp.reset(new Breakpoint (*this, filter_sp, resolver_sp));
+        bp_sp.reset(new Breakpoint (*this, filter_sp, resolver_sp, request_hardware));
         resolver_sp->SetBreakpoint (bp_sp.get());
 
         if (internal)

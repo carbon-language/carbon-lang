@@ -102,7 +102,7 @@ ThreadPlanStepOut::ThreadPlanStepOut
         if (m_return_addr == LLDB_INVALID_ADDRESS)
             return;
         
-        Breakpoint *return_bp = m_thread.CalculateTarget()->CreateBreakpoint (m_return_addr, true).get();
+        Breakpoint *return_bp = m_thread.CalculateTarget()->CreateBreakpoint (m_return_addr, true, false).get();
         if (return_bp != NULL)
         {
             return_bp->SetThreadID(m_thread.GetID());

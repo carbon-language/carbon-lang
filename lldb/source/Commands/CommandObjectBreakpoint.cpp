@@ -106,6 +106,7 @@ public:
             m_queue_name(),
             m_catch_bp (false),
             m_throw_bp (true),
+            m_hardware (false),
             m_language (eLanguageTypeUnknown),
             m_skip_prologue (eLazyBoolCalculate),
             m_one_shot (false)
@@ -183,13 +184,18 @@ public:
                     break;
 
                 case 'h':
-                {
-                    bool success;
-                    m_catch_bp = Args::StringToBoolean (option_arg, true, &success);
-                    if (!success)
-                        error.SetErrorStringWithFormat ("Invalid boolean value for on-catch option: '%s'", option_arg);
-                }
-                break;
+                    {
+                        bool success;
+                        m_catch_bp = Args::StringToBoolean (option_arg, true, &success);
+                        if (!success)
+                            error.SetErrorStringWithFormat ("Invalid boolean value for on-catch option: '%s'", option_arg);
+                    }
+                    break;
+
+                case 'H':
+                    m_hardware = true;
+                    break;
+
                 case 'i':
                 {
                     m_ignore_count = Args::StringToUInt32(option_arg, UINT32_MAX, 0);
@@ -311,6 +317,7 @@ public:
             m_queue_name.clear();
             m_catch_bp = false;
             m_throw_bp = true;
+            m_hardware = false;
             m_language = eLanguageTypeUnknown;
             m_skip_prologue = eLazyBoolCalculate;
             m_one_shot = false;
@@ -345,6 +352,7 @@ public:
         std::string m_queue_name;
         bool m_catch_bp;
         bool m_throw_bp;
+        bool m_hardware; // Request to use hardware breakpoints
         lldb::LanguageType m_language;
         LazyBool m_skip_prologue;
         bool m_one_shot;
@@ -423,12 +431,15 @@ protected:
                                                    m_options.m_line_num,
                                                    check_inlines,
                                                    m_options.m_skip_prologue,
-                                                   internal).get();
+                                                   internal,
+                                                   m_options.m_hardware).get();
                 }
                 break;
 
             case eSetTypeAddress: // Breakpoint by address
-                bp = target->CreateBreakpoint (m_options.m_load_addr, false).get();
+                bp = target->CreateBreakpoint (m_options.m_load_addr,
+                                               internal,
+                                               m_options.m_hardware).get();
                 break;
 
             case eSetTypeFunctionName: // Breakpoint by function name
@@ -443,7 +454,8 @@ protected:
                                                    m_options.m_func_names,
                                                    name_type_mask,
                                                    m_options.m_skip_prologue,
-                                                   internal).get();
+                                                   internal,
+                                                   m_options.m_hardware).get();
                 }
                 break;
 
@@ -464,7 +476,8 @@ protected:
                                                             &(m_options.m_filenames),
                                                             regexp,
                                                             m_options.m_skip_prologue,
-                                                            internal).get();
+                                                            internal,
+                                                            m_options.m_hardware).get();
                 }
                 break;
             case eSetTypeSourceRegexp: // Breakpoint by regexp on source text.
@@ -496,12 +509,19 @@ protected:
                         result.SetStatus (eReturnStatusFailed);
                         return false;
                     }
-                    bp = target->CreateSourceRegexBreakpoint (&(m_options.m_modules), &(m_options.m_filenames), regexp).get();
+                    bp = target->CreateSourceRegexBreakpoint (&(m_options.m_modules),
+                                                              &(m_options.m_filenames),
+                                                              regexp,
+                                                              internal,
+                                                              m_options.m_hardware).get();
                 }
                 break;
             case eSetTypeException:
                 {
-                    bp = target->CreateExceptionBreakpoint (m_options.m_language, m_options.m_catch_bp, m_options.m_throw_bp).get();
+                    bp = target->CreateExceptionBreakpoint (m_options.m_language,
+                                                            m_options.m_catch_bp,
+                                                            m_options.m_throw_bp,
+                                                            m_options.m_hardware).get();
                 }
                 break;
             default:
@@ -624,6 +644,9 @@ CommandObjectBreakpointSet::CommandOptions::g_option_table[] =
 
     { LLDB_OPT_SET_ALL, false, "thread-name", 'T', OptionParser::eRequiredArgument, NULL, 0, eArgTypeThreadName,
         "The breakpoint stops only for the thread whose thread name matches this argument."},
+
+    { LLDB_OPT_SET_ALL, false, "hardware", 'H', OptionParser::eNoArgument, NULL, 0, eArgTypeNone,
+        "Require the breakpoint to use hardware breakpoints."},
 
     { LLDB_OPT_SET_ALL, false, "queue-name", 'q', OptionParser::eRequiredArgument, NULL, 0, eArgTypeQueueName,
         "The breakpoint stops only for threads in the queue whose name is given by this argument."},

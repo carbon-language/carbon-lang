@@ -88,7 +88,7 @@ ThreadPlanRunToAddress::SetInitialBreakpoints ()
     for (size_t i = 0; i < num_addresses; i++)
     {
         Breakpoint *breakpoint;
-        breakpoint = m_thread.CalculateTarget()->CreateBreakpoint (m_addresses[i], true).get();
+        breakpoint = m_thread.CalculateTarget()->CreateBreakpoint (m_addresses[i], true, false).get();
         if (breakpoint != NULL)
         {
             m_break_ids[i] = breakpoint->GetID();

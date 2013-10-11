@@ -484,7 +484,7 @@ BreakpointLocation::ResolveBreakpointSite ()
     if (process == NULL)
         return false;
 
-    lldb::break_id_t new_id = process->CreateBreakpointSite (shared_from_this(), false);
+    lldb::break_id_t new_id = process->CreateBreakpointSite (shared_from_this(), m_owner.IsHardware());
 
     if (new_id == LLDB_INVALID_BREAK_ID)
     {

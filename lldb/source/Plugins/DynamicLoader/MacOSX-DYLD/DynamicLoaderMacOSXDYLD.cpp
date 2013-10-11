@@ -1543,7 +1543,7 @@ DynamicLoaderMacOSXDYLD::SetNotificationBreakpoint ()
 
             if (m_process->GetTarget().GetSectionLoadList().ResolveLoadAddress(m_dyld_all_image_infos.notification, so_addr))
             {
-                Breakpoint *dyld_break = m_process->GetTarget().CreateBreakpoint (so_addr, true).get();
+                Breakpoint *dyld_break = m_process->GetTarget().CreateBreakpoint (so_addr, true, false).get();
                 dyld_break->SetCallback (DynamicLoaderMacOSXDYLD::NotifyBreakpointHit, this, true);
                 dyld_break->SetBreakpointKind ("shared-library-event");
                 m_break_id = dyld_break->GetID();

@@ -72,20 +72,20 @@ public:
     uint32_t
     GetHardwareIndex () const
     {
-        return m_hw_index;
+        return m_hardware_index;
     }
 
 
     bool
-    HardwarePreferred () const
+    HardwareRequired () const
     {
-        return m_hw_preferred;
+        return m_hardware;
     }
 
     virtual bool
     IsHardware () const
     {
-        return m_hw_index != LLDB_INVALID_INDEX32;
+        return m_hardware_index != LLDB_INVALID_INDEX32;
     }
 
 
@@ -103,7 +103,7 @@ public:
     void
     SetHardwareIndex (uint32_t index)
     {
-        m_hw_index = index;
+        m_hardware_index = index;
     }
 
 
@@ -120,8 +120,8 @@ protected:
     lldb::break_id_t  m_loc_id;     // Stoppoint location ID
     lldb::addr_t      m_addr;       // The load address of this stop point. The base Stoppoint doesn't
                                     // store a full Address since that's not needed for the breakpoint sites.
-    bool        m_hw_preferred;     // 1 if this point has been requested to be set using hardware (which may fail due to lack of resources)
-    uint32_t    m_hw_index;         // The hardware resource index for this breakpoint/watchpoint
+    bool        m_hardware;         // True if this point has been is required to use hardware (which may fail due to lack of resources)
+    uint32_t    m_hardware_index;   // The hardware resource index for this breakpoint/watchpoint
     uint32_t    m_byte_size;        // The size in bytes of stop location.  e.g. the length of the trap opcode for
                                     // software breakpoints, or the optional length in bytes for
                                     // hardware breakpoints, or the length of the watchpoint.

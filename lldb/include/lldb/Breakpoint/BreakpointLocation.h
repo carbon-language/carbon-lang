@@ -374,8 +374,8 @@ private:
     BreakpointLocation (lldb::break_id_t bid,
                         Breakpoint &owner,
                         const Address &addr,
-                        lldb::tid_t tid = LLDB_INVALID_THREAD_ID,
-                        bool hardware = false);
+                        lldb::tid_t tid,
+                        bool hardware);
 
     //------------------------------------------------------------------
     // Data members:

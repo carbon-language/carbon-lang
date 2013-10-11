@@ -2094,10 +2094,20 @@ Process::CreateBreakpointSite (const BreakpointLocationSP &owner, bool use_hardw
             bp_site_sp.reset (new BreakpointSite (&m_breakpoint_site_list, owner, load_addr, use_hardware));
             if (bp_site_sp)
             {
-                if (EnableBreakpointSite (bp_site_sp.get()).Success())
+                Error error = EnableBreakpointSite (bp_site_sp.get());
+                if (error.Success())
                 {
                     owner->SetBreakpointSite (bp_site_sp);
                     return m_breakpoint_site_list.Add (bp_site_sp);
+                }
+                else
+                {
+                    // Report error for setting breakpoint...
+                    m_target.GetDebugger().GetErrorFile().Printf ("warning: failed to set breakpoint site at 0x%" PRIx64 " for breakpoint %i.%i: %s\n",
+                                                                  load_addr,
+                                                                  owner->GetBreakpoint().GetID(),
+                                                                  owner->GetID(),
+                                                                  error.AsCString() ? error.AsCString() : "unkown error");
                 }
             }
         }

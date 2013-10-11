@@ -56,7 +56,7 @@ ThreadPlanStepThrough::ThreadPlanStepThrough (Thread &thread, StackID &m_stack_i
         if (return_frame_sp)
         {
             m_backstop_addr = return_frame_sp->GetFrameCodeAddress().GetLoadAddress(m_thread.CalculateTarget().get());
-            Breakpoint *return_bp = m_thread.GetProcess()->GetTarget().CreateBreakpoint (m_backstop_addr, true).get();
+            Breakpoint *return_bp = m_thread.GetProcess()->GetTarget().CreateBreakpoint (m_backstop_addr, true, false).get();
             if (return_bp != NULL)
             {
                 return_bp->SetThreadID(m_thread.GetID());

@@ -2223,7 +2223,7 @@ ProcessGDBRemote::EnableBreakpointSite (BreakpointSite *bp_site)
     {
         const size_t bp_op_size = GetSoftwareBreakpointTrapOpcode (bp_site);
 
-        if (bp_site->HardwarePreferred())
+        if (bp_site->HardwareRequired())
         {
             // Try and set hardware breakpoint, and if that fails, fall through
             // and set a software breakpoint?
@@ -2233,12 +2233,19 @@ ProcessGDBRemote::EnableBreakpointSite (BreakpointSite *bp_site)
                 {
                     bp_site->SetEnabled(true);
                     bp_site->SetType (BreakpointSite::eHardware);
-                    return error;
+                }
+                else
+                {
+                    error.SetErrorString("failed to set hardware breakpoint (hardware breakpoint resources might be exhausted or unavailable)");
                 }
             }
+            else
+            {
+                error.SetErrorString("hardware breakpoints are not supported");
+            }
+            return error;
         }
-
-        if (m_gdb_comm.SupportsGDBStoppointPacket (eBreakpointSoftware))
+        else if (m_gdb_comm.SupportsGDBStoppointPacket (eBreakpointSoftware))
         {
             if (m_gdb_comm.SendGDBStoppointTypePacket(eBreakpointSoftware, true, addr, bp_op_size) == 0)
             {
