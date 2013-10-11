@@ -137,7 +137,7 @@ static bool isKnownState(ConsumedState State) {
 }
 
 static bool isTestingFunction(const FunctionDecl *FunDecl) {
-  return FunDecl->hasAttr<TestsUnconsumedAttr>();
+  return FunDecl->hasAttr<TestsTypestateAttr>();
 }
 
 static ConsumedState mapConsumableAttrState(const QualType QT) {
@@ -183,6 +183,17 @@ static StringRef stateToString(ConsumedState State) {
   
   case consumed::CS_Consumed:
     return "consumed";
+  }
+  llvm_unreachable("invalid enum");
+}
+
+static ConsumedState testsFor(const FunctionDecl *FunDecl) {
+  assert(isTestingFunction(FunDecl));
+  switch (FunDecl->getAttr<TestsTypestateAttr>()->getTestState()) {
+  case TestsTypestateAttr::Unconsumed:
+    return CS_Unconsumed;
+  case TestsTypestateAttr::Consumed:
+    return CS_Consumed;
   }
   llvm_unreachable("invalid enum");
 }
@@ -341,7 +352,6 @@ class ConsumedStmtVisitor : public ConstStmtVisitor<ConsumedStmtVisitor> {
   ConsumedStateMap *StateMap;
   MapType PropagationMap;
   void forwardInfo(const Stmt *From, const Stmt *To);
-  void handleTestingFunctionCall(const CallExpr *Call, const VarDecl *Var);
   bool isLikeMoveAssignment(const CXXMethodDecl *MethodDecl);
   void propagateReturnType(const Stmt *Call, const FunctionDecl *Fun,
                            QualType ReturnType);
@@ -426,22 +436,6 @@ void ConsumedStmtVisitor::forwardInfo(const Stmt *From, const Stmt *To) {
   
   if (Entry != PropagationMap.end())
     PropagationMap.insert(PairType(To, Entry->second));
-}
-
-void ConsumedStmtVisitor::handleTestingFunctionCall(const CallExpr *Call,
-                                                    const VarDecl  *Var) {
-  
-  ConsumedState VarState = StateMap->getState(Var);
-  
-  if (VarState != CS_Unknown) {
-    SourceLocation CallLoc = Call->getExprLoc();
-    
-    if (!CallLoc.isMacroID())
-      Analyzer.WarningsHandler.warnUnnecessaryTest(Var->getNameAsString(),
-        stateToString(VarState), CallLoc);
-  }
-  
-  PropagationMap.insert(PairType(Call, PropagationInfo(Var, CS_Unconsumed)));
 }
 
 bool ConsumedStmtVisitor::isLikeMoveAssignment(
@@ -643,7 +637,8 @@ void ConsumedStmtVisitor::VisitCXXMemberCallExpr(
     
     if (PInfo.isVar()) {
       if (isTestingFunction(MethodDecl))
-        handleTestingFunctionCall(Call, PInfo.getVar());
+        PropagationMap.insert(PairType(Call,
+          PropagationInfo(PInfo.getVar(), testsFor(MethodDecl))));
       else if (MethodDecl->hasAttr<ConsumesAttr>())
         StateMap->setState(PInfo.getVar(), consumed::CS_Consumed);
     }
@@ -731,7 +726,8 @@ void ConsumedStmtVisitor::VisitCXXOperatorCallExpr(
       
       if (PInfo.isVar()) {
         if (isTestingFunction(FunDecl))
-          handleTestingFunctionCall(Call, PInfo.getVar());
+          PropagationMap.insert(PairType(Call,
+            PropagationInfo(PInfo.getVar(), testsFor(FunDecl))));
         else if (FunDecl->hasAttr<ConsumesAttr>())
           StateMap->setState(PInfo.getVar(), consumed::CS_Consumed);
       }

@@ -1501,15 +1501,6 @@ public:
     Warnings.push_back(DelayedDiag(Warning, OptionalNotes()));
   }
   
-  void warnUnnecessaryTest(StringRef VariableName, StringRef VariableState,
-                           SourceLocation Loc) {
-
-    PartialDiagnosticAt Warning(Loc, S.PDiag(diag::warn_unnecessary_test) <<
-                                 VariableName << VariableState);
-    
-    Warnings.push_back(DelayedDiag(Warning, OptionalNotes()));
-  }
-  
   void warnUseOfTempInInvalidState(StringRef MethodName, StringRef State,
                                    SourceLocation Loc) {
                                                     

@@ -4,7 +4,7 @@
 #define CONSUMABLE(state)        __attribute__ ((consumable(state)))
 #define CONSUMES                 __attribute__ ((consumes))
 #define RETURN_TYPESTATE(state)  __attribute__ ((return_typestate(state)))
-#define TESTS_UNCONSUMED         __attribute__ ((tests_unconsumed))
+#define TESTS_TYPESTATE(state)   __attribute__ ((tests_typestate(state)))
 
 // FIXME: This test is here because the warning is issued by the Consumed
 //        analysis, not SemaDeclAttr.  The analysis won't run after an error
@@ -18,18 +18,18 @@ int returnTypestateForUnconsumable() {
 
 class AttrTester0 {
   void consumes()        __attribute__ ((consumes(42))); // expected-error {{attribute takes no arguments}}
-  bool testsUnconsumed() __attribute__ ((tests_unconsumed(42))); // expected-error {{attribute takes no arguments}}
+  bool testsUnconsumed() __attribute__ ((tests_typestate())); // expected-error {{attribute takes one argument}}
   void callableWhen()    __attribute__ ((callable_when())); // expected-error {{attribute takes at least 1 argument}}
 };
 
 int var0 CONSUMES; // expected-warning {{'consumes' attribute only applies to methods}}
-int var1 TESTS_UNCONSUMED; // expected-warning {{'tests_unconsumed' attribute only applies to methods}}
+int var1 TESTS_TYPESTATE(consumed); // expected-warning {{'tests_typestate' attribute only applies to methods}}
 int var2 CALLABLE_WHEN(42); // expected-warning {{'callable_when' attribute only applies to methods}}
 int var3 CONSUMABLE(consumed); // expected-warning {{'consumable' attribute only applies to classes}}
 int var4 RETURN_TYPESTATE(consumed); // expected-warning {{'return_typestate' attribute only applies to functions}}
 
 void function0() CONSUMES; // expected-warning {{'consumes' attribute only applies to methods}}
-void function1() TESTS_UNCONSUMED; // expected-warning {{'tests_unconsumed' attribute only applies to methods}}
+void function1() TESTS_TYPESTATE(consumed); // expected-warning {{'tests_typestate' attribute only applies to methods}}
 void function2() CALLABLE_WHEN(42); // expected-warning {{'callable_when' attribute only applies to methods}}
 void function3() CONSUMABLE(consumed); // expected-warning {{'consumable' attribute only applies to classes}}
 
@@ -38,7 +38,7 @@ class CONSUMABLE(unknown) AttrTester1 {
   void callableWhen1()   CALLABLE_WHEN(42); // expected-error {{'callable_when' attribute requires a string}}
   void callableWhen2()   CALLABLE_WHEN("foo"); // expected-warning {{'callable_when' attribute argument not supported: foo}}
   void consumes()        CONSUMES;
-  bool testsUnconsumed() TESTS_UNCONSUMED;
+  bool testsUnconsumed() TESTS_TYPESTATE(consumed);
 };
 
 AttrTester1 returnTypestateTester0() RETURN_TYPESTATE(not_a_state); // expected-warning {{'return_typestate' attribute argument not supported: 'not_a_state'}}
@@ -47,7 +47,7 @@ AttrTester1 returnTypestateTester1() RETURN_TYPESTATE(42); // expected-error {{'
 class AttrTester2 {
   void callableWhen()    CALLABLE_WHEN("unconsumed"); // expected-warning {{consumed analysis attribute is attached to member of class 'AttrTester2' which isn't marked as consumable}}
   void consumes()        CONSUMES; // expected-warning {{consumed analysis attribute is attached to member of class 'AttrTester2' which isn't marked as consumable}}
-  bool testsUnconsumed() TESTS_UNCONSUMED; // expected-warning {{consumed analysis attribute is attached to member of class 'AttrTester2' which isn't marked as consumable}}
+  bool testsUnconsumed() TESTS_TYPESTATE(consumed); // expected-warning {{consumed analysis attribute is attached to member of class 'AttrTester2' which isn't marked as consumable}}
 };
 
 class CONSUMABLE(42) AttrTester3; // expected-error {{'consumable' attribute requires an identifier}}

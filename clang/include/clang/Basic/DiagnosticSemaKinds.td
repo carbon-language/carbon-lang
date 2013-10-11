@@ -2216,17 +2216,14 @@ def warn_attr_on_unconsumable_class : Warning<
 def warn_return_typestate_for_unconsumable_type : Warning<
   "return state set for an unconsumable type '%0'">, InGroup<Consumed>,
   DefaultIgnore;
+def warn_invalid_test_typestate : Warning<
+  "invalid test typestate '%0'">, InGroup<Consumed>, DefaultIgnore;
 def warn_return_typestate_mismatch : Warning<
   "return value not in expected state; expected '%0', observed '%1'">,
   InGroup<Consumed>, DefaultIgnore;
 def warn_loop_state_mismatch : Warning<
   "state of variable '%0' must match at the entry and exit of loop">,
   InGroup<Consumed>, DefaultIgnore;
-
-// ConsumedStrict warnings
-def warn_unnecessary_test : Warning<
-  "unnecessary test. Variable '%0' is known to be in the '%1' state">,
-  InGroup<ConsumedStrict>, DefaultIgnore;
 
 def warn_impcast_vector_scalar : Warning<
   "implicit conversion turns vector to scalar: %0 to %1">,

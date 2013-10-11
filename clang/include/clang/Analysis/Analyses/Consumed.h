@@ -74,17 +74,6 @@ namespace consumed {
     virtual void warnReturnTypestateMismatch(SourceLocation Loc,
                                              StringRef ExpectedState,
                                              StringRef ObservedState) {}
-    
-    /// \brief Warn about unnecessary-test errors.
-    /// \param VariableName -- The name of the variable that holds the unique
-    /// value.
-    ///
-    /// \param VariableState -- The known state of the value.
-    ///
-    /// \param Loc -- The SourceLocation of the unnecessary test.
-    virtual void warnUnnecessaryTest(StringRef VariableName,
-                                     StringRef VariableState,
-                                     SourceLocation Loc) {}
 
     /// \brief Warn about use-while-consumed errors.
     /// \param MethodName -- The name of the method that was incorrectly

@@ -967,14 +967,12 @@ def CallableWhen : InheritableAttr {
                                    ["Unknown", "Consumed", "Unconsumed"]>];
 }
 
-def TestsUnconsumed : InheritableAttr {
-  let Spellings = [GNU<"tests_unconsumed">];
+def TestsTypestate : InheritableAttr {
+  let Spellings = [GNU<"tests_typestate">];
   let Subjects = [CXXMethod];
-}
-
-def TestsConsumed : InheritableAttr {
-  let Spellings = [GNU<"tests_consumed">];
-  let Subjects = [CXXMethod];
+  let Args = [EnumArgument<"TestState", "ConsumedState",
+                           ["consumed", "unconsumed"],
+                           ["Consumed", "Unconsumed"]>];
 }
 
 def Consumes : InheritableAttr {

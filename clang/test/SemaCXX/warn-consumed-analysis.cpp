@@ -6,7 +6,7 @@
 #define CONSUMABLE(state)       __attribute__ ((consumable(state)))
 #define CONSUMES                __attribute__ ((consumes))
 #define RETURN_TYPESTATE(state) __attribute__ ((return_typestate(state)))
-#define TESTS_UNCONSUMED        __attribute__ ((tests_unconsumed))
+#define TESTS_TYPESTATE(state)  __attribute__ ((tests_typestate(state)))
 
 typedef decltype(nullptr) nullptr_t;
 
@@ -36,9 +36,10 @@ public:
   void unconsumedCall() const CALLABLE_WHEN("unconsumed");
   void callableWhenUnknown() const CALLABLE_WHEN("unconsumed", "unknown");
   
-  bool isValid() const TESTS_UNCONSUMED;
-  operator bool() const TESTS_UNCONSUMED;
-  bool operator!=(nullptr_t) const TESTS_UNCONSUMED;
+  bool isValid() const TESTS_TYPESTATE(unconsumed);
+  operator bool() const TESTS_TYPESTATE(unconsumed);
+  bool operator!=(nullptr_t) const TESTS_TYPESTATE(unconsumed);
+  bool operator==(nullptr_t) const TESTS_TYPESTATE(consumed);
   
   void constCall() const;
   void nonconstCall();
@@ -145,6 +146,12 @@ void testIfStmt() {
     // Empty
   } else {
     *var; // expected-warning {{invalid invocation of method 'operator*' on object 'var' while it is in the 'consumed' state}}
+  }
+  
+  if (var == nullptr) {
+    *var; // expected-warning {{invalid invocation of method 'operator*' on object 'var' while it is in the 'consumed' state}}
+  } else {
+    // Empty
   }
 }
 
