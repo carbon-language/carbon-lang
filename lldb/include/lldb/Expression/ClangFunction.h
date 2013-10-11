@@ -67,8 +67,8 @@ class ClangFunction : public ClangExpression
 {
     friend class ASTStructExtractor;
 public:
-	//------------------------------------------------------------------
-	/// Constructor
+    //------------------------------------------------------------------
+    /// Constructor
     ///
     /// @param[in] exe_scope
     ///     An execution context scope that gets us at least a target and 
@@ -84,14 +84,14 @@ public:
     /// @param[in] arg_value_list
     ///     The default values to use when calling this function.  Can
     ///     be overridden using WriteFunctionArguments().
-	//------------------------------------------------------------------  
-	ClangFunction (ExecutionContextScope &exe_scope,
+    //------------------------------------------------------------------  
+    ClangFunction (ExecutionContextScope &exe_scope,
                    Function &function_ptr, 
                    ClangASTContext *ast_context, 
                    const ValueList &arg_value_list);
     
     //------------------------------------------------------------------
-	/// Constructor
+    /// Constructor
     ///
     /// @param[in] exe_scope
     ///     An execution context scope that gets us at least a target and 
@@ -110,32 +110,32 @@ public:
     /// @param[in] arg_value_list
     ///     The default values to use when calling this function.  Can
     ///     be overridden using WriteFunctionArguments().
-	//------------------------------------------------------------------
-	ClangFunction (ExecutionContextScope &exe_scope,
+    //------------------------------------------------------------------
+    ClangFunction (ExecutionContextScope &exe_scope,
                    const ClangASTType &return_type,
                    const Address& function_address, 
                    const ValueList &arg_value_list);
     
     //------------------------------------------------------------------
-	/// Destructor
-	//------------------------------------------------------------------
-	virtual 
+    /// Destructor
+    //------------------------------------------------------------------
+    virtual 
     ~ClangFunction();
 
     //------------------------------------------------------------------
-	/// Compile the wrapper function
+    /// Compile the wrapper function
     ///
     /// @param[in] errors
     ///     The stream to print parser errors to.
     ///
     /// @return
     ///     The number of errors.
-	//------------------------------------------------------------------
+    //------------------------------------------------------------------
     unsigned
     CompileFunction (Stream &errors);
     
     //------------------------------------------------------------------
-	/// Insert the default function wrapper and its default argument struct  
+    /// Insert the default function wrapper and its default argument struct  
     ///
     /// @param[in] exe_ctx
     ///     The execution context to insert the function and its arguments
@@ -151,14 +151,14 @@ public:
     ///
     /// @return
     ///     True on success; false otherwise.
-	//------------------------------------------------------------------
+    //------------------------------------------------------------------
     bool
     InsertFunction (ExecutionContext &exe_ctx,
                     lldb::addr_t &args_addr_ref,
                     Stream &errors);
 
     //------------------------------------------------------------------
-	/// Insert the default function wrapper (using the JIT)
+    /// Insert the default function wrapper (using the JIT)
     ///
     /// @param[in] exe_ctx
     ///     The execution context to insert the function and its arguments
@@ -169,12 +169,12 @@ public:
     ///
     /// @return
     ///     True on success; false otherwise.
-	//------------------------------------------------------------------
+    //------------------------------------------------------------------
     bool WriteFunctionWrapper (ExecutionContext &exe_ctx, 
                                Stream &errors);
     
     //------------------------------------------------------------------
-	/// Insert the default function argument struct  
+    /// Insert the default function argument struct  
     ///
     /// @param[in] exe_ctx
     ///     The execution context to insert the function and its arguments
@@ -190,13 +190,13 @@ public:
     ///
     /// @return
     ///     True on success; false otherwise.
-	//------------------------------------------------------------------
+    //------------------------------------------------------------------
     bool WriteFunctionArguments (ExecutionContext &exe_ctx, 
                                  lldb::addr_t &args_addr_ref, 
                                  Stream &errors);
     
     //------------------------------------------------------------------
-	/// Insert an argument struct with a non-default function address and
+    /// Insert an argument struct with a non-default function address and
     /// non-default argument values
     ///
     /// @param[in] exe_ctx
@@ -219,7 +219,7 @@ public:
     ///
     /// @return
     ///     True on success; false otherwise.
-	//------------------------------------------------------------------
+    //------------------------------------------------------------------
     bool WriteFunctionArguments (ExecutionContext &exe_ctx, 
                                  lldb::addr_t &args_addr_ref, 
                                  Address function_address, 
@@ -227,7 +227,7 @@ public:
                                  Stream &errors);
 
     //------------------------------------------------------------------
-	/// [Static] Execute a function, passing it a single void* parameter.
+    /// [Static] Execute a function, passing it a single void* parameter.
     /// ClangFunction uses this to call the wrapper function.
     ///
     /// @param[in] exe_ctx
@@ -266,7 +266,7 @@ public:
     ///
     /// @return
     ///     Returns one of the ExecutionResults enum indicating function call status.
-	//------------------------------------------------------------------
+    //------------------------------------------------------------------
     static ExecutionResults 
     ExecuteFunction (ExecutionContext &exe_ctx, 
                      lldb::addr_t function_address, 
@@ -446,7 +446,7 @@ public:
     ///
     /// @return
     ///     A ThreadPlan for executing the function.
-	//------------------------------------------------------------------
+    //------------------------------------------------------------------
     static ThreadPlan *
     GetThreadPlanToCallFunction (ExecutionContext &exe_ctx, 
                                  lldb::addr_t func_addr, 
@@ -482,7 +482,7 @@ public:
     ///
     /// @return
     ///     A ThreadPlan for executing the function.
-	//------------------------------------------------------------------
+    //------------------------------------------------------------------
     ThreadPlan *
     GetThreadPlanToCallFunction (ExecutionContext &exe_ctx, 
                                  lldb::addr_t &args_addr_ref, 
@@ -514,7 +514,7 @@ public:
     ///
     /// @return
     ///     True on success; false otherwise.
-	//------------------------------------------------------------------
+    //------------------------------------------------------------------
     bool FetchFunctionResults (ExecutionContext &exe_ctx, 
                                lldb::addr_t args_addr, 
                                Value &ret_value);
@@ -528,7 +528,7 @@ public:
     ///
     /// @param[in] args_addr
     ///     The address of the argument struct.
-	//------------------------------------------------------------------
+    //------------------------------------------------------------------
     void DeallocateFunctionResults (ExecutionContext &exe_ctx, 
                                     lldb::addr_t args_addr);
     
@@ -614,9 +614,9 @@ public:
         return m_arg_values;
     }
 private:
-	//------------------------------------------------------------------
-	// For ClangFunction only
-	//------------------------------------------------------------------
+    //------------------------------------------------------------------
+    // For ClangFunction only
+    //------------------------------------------------------------------
 
     std::unique_ptr<ClangExpressionParser> m_parser;                 ///< The parser responsible for compiling the function.
     std::unique_ptr<IRExecutionUnit> m_execution_unit_ap;
@@ -634,8 +634,8 @@ private:
 
     bool                            m_struct_valid;                 ///< True if the ASTStructExtractor has populated the variables below.
     
-	//------------------------------------------------------------------
-	/// These values are populated by the ASTStructExtractor
+    //------------------------------------------------------------------
+    /// These values are populated by the ASTStructExtractor
     size_t                          m_struct_size;                  ///< The size of the argument struct, in bytes.
     std::vector<uint64_t>           m_member_offsets;               ///< The offset of each member in the struct, in bytes.
     uint64_t                        m_return_size;                  ///< The size of the result variable, in bytes.
