@@ -46,7 +46,7 @@ class ObjCMigrateASTConsumer : public ASTConsumer {
   void migrateObjCInterfaceDecl(ASTContext &Ctx, ObjCContainerDecl *D);
   void migrateProtocolConformance(ASTContext &Ctx,
                                   const ObjCImplementationDecl *ImpDecl);
-  void migrateNSEnumDecl(ASTContext &Ctx, const EnumDecl *EnumDcl,
+  bool migrateNSEnumDecl(ASTContext &Ctx, const EnumDecl *EnumDcl,
                      const TypedefDecl *TypedefDcl);
   void migrateAllMethodInstaceType(ASTContext &Ctx, ObjCContainerDecl *CDecl);
   void migrateMethodInstanceType(ASTContext &Ctx, ObjCContainerDecl *CDecl,
@@ -638,13 +638,13 @@ void ObjCMigrateASTConsumer::migrateProtocolConformance(ASTContext &Ctx,
   Editor->commit(commit);
 }
 
-void ObjCMigrateASTConsumer::migrateNSEnumDecl(ASTContext &Ctx,
+bool ObjCMigrateASTConsumer::migrateNSEnumDecl(ASTContext &Ctx,
                                            const EnumDecl *EnumDcl,
                                            const TypedefDecl *TypedefDcl) {
   if (!EnumDcl->isCompleteDefinition() || EnumDcl->getIdentifier() ||
       !TypedefDcl->getIdentifier() ||
       EnumDcl->isDeprecated() || TypedefDcl->isDeprecated())
-    return;
+    return false;
   
   QualType qt = TypedefDcl->getTypeSourceInfo()->getType();
   bool IsNSIntegerType = NSAPIObj->isObjCNSIntegerType(qt);
@@ -657,29 +657,30 @@ void ObjCMigrateASTConsumer::migrateNSEnumDecl(ASTContext &Ctx,
         bool NSOptions = UseNSOptionsMacro(PP, Ctx, EnumDcl);
         if (NSOptions) {
           if (!Ctx.Idents.get("NS_OPTIONS").hasMacroDefinition())
-            return;
+            return false;
         }
         else if (!Ctx.Idents.get("NS_ENUM").hasMacroDefinition())
-          return;
+          return false;
         edit::Commit commit(*Editor);
         rewriteToNSMacroDecl(EnumDcl, TypedefDcl, *NSAPIObj, commit, !NSOptions);
         Editor->commit(commit);
       }
     }
-    return;
+    return false;
   }
   
   // We may still use NS_OPTIONS based on what we find in the enumertor list.
   bool NSOptions = UseNSOptionsMacro(PP, Ctx, EnumDcl);
   // NS_ENUM must be available.
   if (IsNSIntegerType && !Ctx.Idents.get("NS_ENUM").hasMacroDefinition())
-    return;
+    return false;
   // NS_OPTIONS must be available.
   if (IsNSUIntegerType && !Ctx.Idents.get("NS_OPTIONS").hasMacroDefinition())
-    return;
+    return false;
   edit::Commit commit(*Editor);
   rewriteToNSEnumDecl(EnumDcl, TypedefDcl, *NSAPIObj, commit, IsNSIntegerType, NSOptions);
   Editor->commit(commit);
+  return true;
 }
 
 static void ReplaceWithInstancetype(const ObjCMigrateASTConsumer &ASTC,
@@ -1435,8 +1436,21 @@ void ObjCMigrateASTConsumer::HandleTranslationUnit(ASTContext &Ctx) {
         ++N;
         if (N != DEnd)
           if (const TypedefDecl *TD = dyn_cast<TypedefDecl>(*N)) {
-            if (ASTMigrateActions & FrontendOptions::ObjCMT_NsMacros)
-              migrateNSEnumDecl(Ctx, ED, TD);
+            if (ASTMigrateActions & FrontendOptions::ObjCMT_NsMacros) {
+              if (migrateNSEnumDecl(Ctx, ED, TD))
+                D++;
+            }
+          }
+      }
+      else if (const TypedefDecl *TD = dyn_cast<TypedefDecl>(*D)) {
+        DeclContext::decl_iterator N = D;
+        ++N;
+        if (N != DEnd)
+          if (const EnumDecl *ED = dyn_cast<EnumDecl>(*N)) {
+            if (ASTMigrateActions & FrontendOptions::ObjCMT_NsMacros) {
+              if (migrateNSEnumDecl(Ctx, ED, TD))
+                ++D;
+            }
           }
       }
       else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(*D)) {
