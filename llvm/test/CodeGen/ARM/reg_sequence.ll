@@ -75,8 +75,8 @@ entry:
 define <8 x i8> @t3(i8* %A, i8* %B) nounwind {
 ; CHECK-LABEL:        t3:
 ; CHECK:        vld3.8
-; CHECK-DAG:    vmul.i8
-; CHECK-DAG:    vmov r
+; CHECK:        vmul.i8
+; CHECK:        vmov r
 ; CHECK-NOT:    vmov d
 ; CHECK:        vst3.8
   %tmp1 = call %struct.__neon_int8x8x3_t @llvm.arm.neon.vld3.v8i8(i8* %A, i32 1) ; <%struct.__neon_int8x8x3_t> [#uses=2]

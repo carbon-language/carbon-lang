@@ -39,11 +39,11 @@ define i32 @test1() {
 ; PIC_V7: ldr r0, [r0]
 
 ; LINUX: test1
-; LINUX-DAG: ldr [[REG0:r0]], .LCPI0_0
-; LINUX-DAG: ldr [[REG1:r1]], .LCPI0_1
-; LINUX-DAG: add [[ADDR0:r[0-9]+]], pc, [[REG0]]
-; LINUX-DAG: ldr [[V0:r[0-9]+]], {{\[}}[[REG1]], [[ADDR0]]]
-; LINUX: ldr r0, {{\[}}[[V0]]]
+; LINUX: ldr r0, .LCPI0_0
+; LINUX: ldr r1, .LCPI0_1
+; LINUX: add r0, pc, r0
+; LINUX: ldr r0, [r1, r0]
+; LINUX: ldr r0, [r0]
 ; LINUX: .long G(GOT)
 	%tmp = load i32* @G
 	ret i32 %tmp

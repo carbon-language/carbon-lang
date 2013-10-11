@@ -24,9 +24,9 @@ define i32 @f2(i64 %x, i64 %y) {
 ; CHECK-LABEL: f2:
 ; CHECK:      lsr{{.*}}r2
 ; CHECK-NEXT: rsb     r3, r2, #32
-; CHECK-DAG: sub     r2, r2, #32
-; CHECK-DAG: orr     r0, r0, r1, lsl r3
-; CHECK:     cmp     r2, #0
+; CHECK-NEXT: sub     r2, r2, #32
+; CHECK-NEXT: orr     r0, r0, r1, lsl r3
+; CHECK-NEXT: cmp     r2, #0
 ; CHECK-NEXT: asrge   r0, r1, r2
 	%a = ashr i64 %x, %y
 	%b = trunc i64 %a to i32
@@ -37,9 +37,9 @@ define i32 @f3(i64 %x, i64 %y) {
 ; CHECK-LABEL: f3:
 ; CHECK:      lsr{{.*}}r2
 ; CHECK-NEXT: rsb     r3, r2, #32
-; CHECK-DAG:  sub     r2, r2, #32
-; CHECK-DAG:  orr     r0, r0, r1, lsl r3
-; CHECK:      cmp     r2, #0
+; CHECK-NEXT: sub     r2, r2, #32
+; CHECK-NEXT: orr     r0, r0, r1, lsl r3
+; CHECK-NEXT: cmp     r2, #0
 ; CHECK-NEXT: lsrge   r0, r1, r2
 	%a = lshr i64 %x, %y
 	%b = trunc i64 %a to i32
