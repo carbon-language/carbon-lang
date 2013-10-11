@@ -391,6 +391,10 @@ private:
             return m_default_mm_ap->GetNumStubSlabs();
         }
         
+        virtual void registerEHFrames(uint8_t *Addr, uint64_t LoadAddr, size_t Size) {
+            return m_default_mm_ap->registerEHFrames(Addr, LoadAddr, Size);
+        }
+        
         //------------------------------------------------------------------
         /// Passthrough interface stub
         //------------------------------------------------------------------
