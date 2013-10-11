@@ -18,6 +18,7 @@
 //   COMMON_INTERCEPTOR_INITIALIZE_RANGE
 //   COMMON_INTERCEPTOR_FD_ACQUIRE
 //   COMMON_INTERCEPTOR_FD_RELEASE
+//   COMMON_INTERCEPTOR_FD_ACCESS
 //   COMMON_INTERCEPTOR_SET_THREAD_NAME
 //   COMMON_INTERCEPTOR_ON_EXIT
 //===----------------------------------------------------------------------===//
@@ -32,6 +33,10 @@
 
 #ifndef COMMON_INTERCEPTOR_INITIALIZE_RANGE
 # define COMMON_INTERCEPTOR_INITIALIZE_RANGE(ctx, p, size)
+#endif
+
+#ifndef COMMON_INTERCEPTOR_FD_ACCESS
+# define COMMON_INTERCEPTOR_FD_ACCESS(ctx, fd)
 #endif
 
 #if SANITIZER_INTERCEPT_STRCMP
@@ -185,6 +190,7 @@ static void read_iovec(void *ctx, struct __sanitizer_iovec *iovec,
 INTERCEPTOR(SSIZE_T, read, int fd, void *ptr, SIZE_T count) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, read, fd, ptr, count);
+  COMMON_INTERCEPTOR_FD_ACCESS(ctx, fd);
   SSIZE_T res = REAL(read)(fd, ptr, count);
   if (res > 0)
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, ptr, res);
@@ -201,6 +207,7 @@ INTERCEPTOR(SSIZE_T, read, int fd, void *ptr, SIZE_T count) {
 INTERCEPTOR(SSIZE_T, pread, int fd, void *ptr, SIZE_T count, OFF_T offset) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, pread, fd, ptr, count, offset);
+  COMMON_INTERCEPTOR_FD_ACCESS(ctx, fd);
   SSIZE_T res = REAL(pread)(fd, ptr, count, offset);
   if (res > 0)
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, ptr, res);
@@ -217,6 +224,7 @@ INTERCEPTOR(SSIZE_T, pread, int fd, void *ptr, SIZE_T count, OFF_T offset) {
 INTERCEPTOR(SSIZE_T, pread64, int fd, void *ptr, SIZE_T count, OFF64_T offset) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, pread64, fd, ptr, count, offset);
+  COMMON_INTERCEPTOR_FD_ACCESS(ctx, fd);
   SSIZE_T res = REAL(pread64)(fd, ptr, count, offset);
   if (res > 0)
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, ptr, res);
@@ -234,6 +242,7 @@ INTERCEPTOR_WITH_SUFFIX(SSIZE_T, readv, int fd, __sanitizer_iovec *iov,
                         int iovcnt) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, readv, fd, iov, iovcnt);
+  COMMON_INTERCEPTOR_FD_ACCESS(ctx, fd);
   SSIZE_T res = REAL(readv)(fd, iov, iovcnt);
   if (res > 0) write_iovec(ctx, iov, iovcnt, res);
   if (res >= 0 && fd >= 0) COMMON_INTERCEPTOR_FD_ACQUIRE(ctx, fd);
@@ -249,6 +258,7 @@ INTERCEPTOR(SSIZE_T, preadv, int fd, __sanitizer_iovec *iov, int iovcnt,
             OFF_T offset) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, preadv, fd, iov, iovcnt, offset);
+  COMMON_INTERCEPTOR_FD_ACCESS(ctx, fd);
   SSIZE_T res = REAL(preadv)(fd, iov, iovcnt, offset);
   if (res > 0) write_iovec(ctx, iov, iovcnt, res);
   if (res >= 0 && fd >= 0) COMMON_INTERCEPTOR_FD_ACQUIRE(ctx, fd);
@@ -264,6 +274,7 @@ INTERCEPTOR(SSIZE_T, preadv64, int fd, __sanitizer_iovec *iov, int iovcnt,
             OFF64_T offset) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, preadv64, fd, iov, iovcnt, offset);
+  COMMON_INTERCEPTOR_FD_ACCESS(ctx, fd);
   SSIZE_T res = REAL(preadv64)(fd, iov, iovcnt, offset);
   if (res > 0) write_iovec(ctx, iov, iovcnt, res);
   if (res >= 0 && fd >= 0) COMMON_INTERCEPTOR_FD_ACQUIRE(ctx, fd);
@@ -278,6 +289,7 @@ INTERCEPTOR(SSIZE_T, preadv64, int fd, __sanitizer_iovec *iov, int iovcnt,
 INTERCEPTOR(SSIZE_T, write, int fd, void *ptr, SIZE_T count) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, write, fd, ptr, count);
+  COMMON_INTERCEPTOR_FD_ACCESS(ctx, fd);
   if (fd >= 0)
     COMMON_INTERCEPTOR_FD_RELEASE(ctx, fd);
   SSIZE_T res = REAL(write)(fd, ptr, count);
@@ -295,6 +307,7 @@ INTERCEPTOR(SSIZE_T, write, int fd, void *ptr, SIZE_T count) {
 INTERCEPTOR(SSIZE_T, pwrite, int fd, void *ptr, SIZE_T count, OFF_T offset) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, pwrite, fd, ptr, count, offset);
+  COMMON_INTERCEPTOR_FD_ACCESS(ctx, fd);
   if (fd >= 0)
     COMMON_INTERCEPTOR_FD_RELEASE(ctx, fd);
   SSIZE_T res = REAL(pwrite)(fd, ptr, count, offset);
@@ -312,6 +325,7 @@ INTERCEPTOR(SSIZE_T, pwrite64, int fd, void *ptr, OFF64_T count,
             OFF64_T offset) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, pwrite64, fd, ptr, count, offset);
+  COMMON_INTERCEPTOR_FD_ACCESS(ctx, fd);
   if (fd >= 0)
     COMMON_INTERCEPTOR_FD_RELEASE(ctx, fd);
   SSIZE_T res = REAL(pwrite64)(fd, ptr, count, offset);
@@ -329,6 +343,7 @@ INTERCEPTOR_WITH_SUFFIX(SSIZE_T, writev, int fd, __sanitizer_iovec *iov,
                         int iovcnt) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, writev, fd, iov, iovcnt);
+  COMMON_INTERCEPTOR_FD_ACCESS(ctx, fd);
   if (fd >= 0) COMMON_INTERCEPTOR_FD_RELEASE(ctx, fd);
   SSIZE_T res = REAL(writev)(fd, iov, iovcnt);
   if (res > 0) read_iovec(ctx, iov, iovcnt, res);
@@ -344,6 +359,7 @@ INTERCEPTOR(SSIZE_T, pwritev, int fd, __sanitizer_iovec *iov, int iovcnt,
             OFF_T offset) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, pwritev, fd, iov, iovcnt, offset);
+  COMMON_INTERCEPTOR_FD_ACCESS(ctx, fd);
   if (fd >= 0) COMMON_INTERCEPTOR_FD_RELEASE(ctx, fd);
   SSIZE_T res = REAL(pwritev)(fd, iov, iovcnt, offset);
   if (res > 0) read_iovec(ctx, iov, iovcnt, res);
@@ -359,6 +375,7 @@ INTERCEPTOR(SSIZE_T, pwritev64, int fd, __sanitizer_iovec *iov, int iovcnt,
             OFF64_T offset) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, pwritev64, fd, iov, iovcnt, offset);
+  COMMON_INTERCEPTOR_FD_ACCESS(ctx, fd);
   if (fd >= 0) COMMON_INTERCEPTOR_FD_RELEASE(ctx, fd);
   SSIZE_T res = REAL(pwritev64)(fd, iov, iovcnt, offset);
   if (res > 0) read_iovec(ctx, iov, iovcnt, res);

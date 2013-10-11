@@ -1524,22 +1524,28 @@ TSAN_INTERCEPTOR(int, pipe2, int *pipefd, int flags) {
 
 TSAN_INTERCEPTOR(long_t, send, int fd, void *buf, long_t len, int flags) {
   SCOPED_TSAN_INTERCEPTOR(send, fd, buf, len, flags);
-  if (fd >= 0)
+  if (fd >= 0) {
+    FdAccess(thr, pc, fd);
     FdRelease(thr, pc, fd);
+  }
   int res = REAL(send)(fd, buf, len, flags);
   return res;
 }
 
 TSAN_INTERCEPTOR(long_t, sendmsg, int fd, void *msg, int flags) {
   SCOPED_TSAN_INTERCEPTOR(sendmsg, fd, msg, flags);
-  if (fd >= 0)
+  if (fd >= 0) {
+    FdAccess(thr, pc, fd);
     FdRelease(thr, pc, fd);
+  }
   int res = REAL(sendmsg)(fd, msg, flags);
   return res;
 }
 
 TSAN_INTERCEPTOR(long_t, recv, int fd, void *buf, long_t len, int flags) {
   SCOPED_TSAN_INTERCEPTOR(recv, fd, buf, len, flags);
+  if (fd >= 0)
+    FdAccess(thr, pc, fd);
   int res = REAL(recv)(fd, buf, len, flags);
   if (res >= 0 && fd >= 0) {
     FdAcquire(thr, pc, fd);
@@ -1901,6 +1907,8 @@ struct TsanInterceptorContext {
   FdAcquire(((TsanInterceptorContext *) ctx)->thr, pc, fd)
 #define COMMON_INTERCEPTOR_FD_RELEASE(ctx, fd) \
   FdRelease(((TsanInterceptorContext *) ctx)->thr, pc, fd)
+#define COMMON_INTERCEPTOR_FD_ACCESS(ctx, fd) \
+  FdAccess(((TsanInterceptorContext *) ctx)->thr, pc, fd)
 #define COMMON_INTERCEPTOR_FD_SOCKET_ACCEPT(ctx, fd, newfd) \
   FdSocketAccept(((TsanInterceptorContext *) ctx)->thr, pc, fd, newfd)
 #define COMMON_INTERCEPTOR_SET_THREAD_NAME(ctx, name) \

@@ -166,6 +166,8 @@ void FdRelease(ThreadState *thr, uptr pc, int fd) {
 }
 
 void FdAccess(ThreadState *thr, uptr pc, int fd) {
+  if (fd < 0)
+    return;
   DPrintf("#%d: FdAccess(%d)\n", thr->tid, fd);
   FdDesc *d = fddesc(thr, pc, fd);
   MemoryRead(thr, pc, (uptr)d, kSizeLog8);
