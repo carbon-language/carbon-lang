@@ -154,10 +154,30 @@ FunctionPass *NVPTXPassConfig::createTargetRegisterAllocator(bool) {
 
 void NVPTXPassConfig::addFastRegAlloc(FunctionPass *RegAllocPass) {
   assert(!RegAllocPass && "NVPTX uses no regalloc!");
-  addPass(&StrongPHIEliminationID);
+  addPass(&PHIEliminationID);
+  addPass(&TwoAddressInstructionPassID);
 }
 
 void NVPTXPassConfig::addOptimizedRegAlloc(FunctionPass *RegAllocPass) {
   assert(!RegAllocPass && "NVPTX uses no regalloc!");
-  addPass(&StrongPHIEliminationID);
+
+  addPass(&ProcessImplicitDefsID);
+  addPass(&LiveVariablesID);
+  addPass(&MachineLoopInfoID);
+  addPass(&PHIEliminationID);
+
+  addPass(&TwoAddressInstructionPassID);
+  addPass(&RegisterCoalescerID);
+
+  // PreRA instruction scheduling.
+  if (addPass(&MachineSchedulerID))
+    printAndVerify("After Machine Scheduling");
+
+
+  addPass(&StackSlotColoringID);
+
+  // FIXME: Needs physical registers
+  //addPass(&PostRAMachineLICMID);
+
+  printAndVerify("After StackSlotColoring");
 }
