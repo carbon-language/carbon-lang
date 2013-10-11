@@ -6,6 +6,16 @@ define weak void @fd() {
   ret void
 }
 
+; CHECK-NOT: .hidden
+define hidden void @test_hidden() {
+  unreachable
+}
+
+; CHECK-NOT: .protected
+define protected void @test_protected() {
+  unreachable
+}
+
 ; CHECK: .weak gd
 @gd = weak global i32 0
 

@@ -25,6 +25,10 @@ XCoreMCAsmInfo::XCoreMCAsmInfo(StringRef TT) {
   AscizDirective = ".asciiz";
   WeakRefDirective = "\t.weak\t";
 
+  HiddenVisibilityAttr = MCSA_Invalid;
+  HiddenDeclarationVisibilityAttr = MCSA_Invalid;
+  ProtectedVisibilityAttr = MCSA_Invalid;
+
   // Debug
   HasLEB128 = true;
 }
