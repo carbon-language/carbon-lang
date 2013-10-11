@@ -244,7 +244,7 @@ DynamicLoaderPOSIXDYLD::UnloadSections(const ModuleSP module)
     assert(sections && "SectionList missing from unloaded module.");
 
     const size_t num_sections = sections->GetSize();
-    for (auto i = 0; i < num_sections; ++i)
+    for (size_t i = 0; i < num_sections; ++i)
     {
         SectionSP section_sp (sections->GetSectionAtIndex(i));
         load_list.SetSectionUnloaded(section_sp);
