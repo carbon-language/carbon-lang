@@ -98,6 +98,7 @@ def OP_DIV  : Op;
 def OP_LONG_HI : Op;
 def OP_NARROW_HI : Op;
 def OP_MOVL_HI : Op;
+def OP_COPY : Op;
 
 class Inst <string n, string p, string t, Op o> {
   string Name = n;
@@ -661,6 +662,35 @@ def VRSUBHN_HIGH : SOpInst<"vrsubhn_high", "qhkk", "silUsUiUl", OP_RSUBHNHi>;
 def VQDMULL_HIGH : SOpInst<"vqdmull_high", "wkk", "si", OP_QDMULLHi>;
 def VQDMLAL_HIGH : SOpInst<"vqdmlal_high", "wwkk", "si", OP_QDMLALHi>;
 def VQDMLSL_HIGH : SOpInst<"vqdmlsl_high", "wwkk", "si", OP_QDMLSLHi>;
+
+////////////////////////////////////////////////////////////////////////////////
+// Extract or insert element from vector
+def GET_LANE : IInst<"vget_lane", "sdi",
+                        "csilPcPsUcUsUiUlQcQsQiQlQUcQUsQUiQUlPcPsQPcQPs">;
+def SET_LANE : IInst<"vset_lane", "dsdi",
+                 "csilPcPsUiUlUcUsUiUlQcQsQiQlQUcQUsQUiQUlPcPsQPcQPshfdQhQfQd">;
+def COPY_LANE : IOpInst<"vcopy_lane", "ddidi",
+                     "csilPcPsUcUsUiUlQcQsQiQlQUcQUsQUiQUlPcPsQPcQPs", OP_COPY>;
+def COPY_LANEQ : IOpInst<"vcopy_laneq", "ggidi",
+                     "QcQsQiQlQUcQUsQUiQUlQPcQPs", OP_COPY>;
+
+////////////////////////////////////////////////////////////////////////////////
+// Set all lanes to same value
+def VDUP_LANE1: WOpInst<"vdup_lane", "dgi",
+                        "csilPcPsUcUsUiUlhfdQcQsQiQlQPcQPsQUcQUsQUiQUlQhQfQd",
+                        OP_DUP_LN>;
+def VDUP_LANE2: WOpInst<"vdup_laneq", "dki",
+                        "csilPcPsUcUsUiUlhfdQcQsQiQlQPcQPsQUcQUsQUiQUlQhQfQd",
+                        OP_DUP_LN>;
+def DUP_N   : WOpInst<"vdup_n", "ds",
+                       "UcUsUicsiPcPsfQUcQUsQUiQcQsQiQPcQPsQflUlQlQUldQd",
+                       OP_DUP>;
+def MOV_N   : WOpInst<"vmov_n", "ds",
+                       "UcUsUicsiPcPsfQUcQUsQUiQcQsQiQPcQPsQflUlQlQUldQd",
+                       OP_DUP>;
+////////////////////////////////////////////////////////////////////////////////
+//Initialize a vector from bit pattern
+def CREATE : NoTestOpInst<"vcreate", "dl", "csihfdUcUsUiUlPcPsl", OP_CAST>;
 
 ////////////////////////////////////////////////////////////////////////////////
 
