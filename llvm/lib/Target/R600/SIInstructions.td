@@ -1195,7 +1195,7 @@ def LOAD_CONST : AMDGPUShaderInst <
   [(set GPRF32:$dst, (int_AMDGPU_load_const imm:$src))]
 >;
 
-// SI Psuedo instructions. These are used by the CFG structurizer pass
+// SI pseudo instructions. These are used by the CFG structurizer pass
 // and should be lowered to ISA instructions prior to codegen.
 
 let mayLoad = 1, mayStore = 1, hasSideEffects = 1,
