@@ -188,6 +188,13 @@ addMSAIntType(MVT::SimpleValueType Ty, const TargetRegisterClass *RC) {
   setOperationAction(ISD::VSELECT, Ty, Legal);
   setOperationAction(ISD::XOR, Ty, Legal);
 
+  if (Ty == MVT::v4i32 || Ty == MVT::v2i64) {
+    setOperationAction(ISD::FP_TO_SINT, Ty, Legal);
+    setOperationAction(ISD::FP_TO_UINT, Ty, Legal);
+    setOperationAction(ISD::SINT_TO_FP, Ty, Legal);
+    setOperationAction(ISD::UINT_TO_FP, Ty, Legal);
+  }
+
   setOperationAction(ISD::SETCC, Ty, Legal);
   setCondCodeAction(ISD::SETNE, Ty, Expand);
   setCondCodeAction(ISD::SETGE, Ty, Expand);
@@ -1300,6 +1307,14 @@ SDValue MipsSETargetLowering::lowerINTRINSIC_WO_CHAIN(SDValue Op,
   case Intrinsic::mips_fdiv_d:
     return DAG.getNode(ISD::FDIV, DL, Op->getValueType(0), Op->getOperand(1),
                        Op->getOperand(2));
+  case Intrinsic::mips_ffint_u_w:
+  case Intrinsic::mips_ffint_u_d:
+    return DAG.getNode(ISD::UINT_TO_FP, DL, Op->getValueType(0),
+                       Op->getOperand(1));
+  case Intrinsic::mips_ffint_s_w:
+  case Intrinsic::mips_ffint_s_d:
+    return DAG.getNode(ISD::SINT_TO_FP, DL, Op->getValueType(0),
+                       Op->getOperand(1));
   case Intrinsic::mips_fill_b:
   case Intrinsic::mips_fill_h:
   case Intrinsic::mips_fill_w:
@@ -1331,6 +1346,14 @@ SDValue MipsSETargetLowering::lowerINTRINSIC_WO_CHAIN(SDValue Op,
   case Intrinsic::mips_fsub_d:
     return DAG.getNode(ISD::FSUB, DL, Op->getValueType(0), Op->getOperand(1),
                        Op->getOperand(2));
+  case Intrinsic::mips_ftrunc_u_w:
+  case Intrinsic::mips_ftrunc_u_d:
+    return DAG.getNode(ISD::FP_TO_UINT, DL, Op->getValueType(0),
+                       Op->getOperand(1));
+  case Intrinsic::mips_ftrunc_s_w:
+  case Intrinsic::mips_ftrunc_s_d:
+    return DAG.getNode(ISD::FP_TO_SINT, DL, Op->getValueType(0),
+                       Op->getOperand(1));
   case Intrinsic::mips_ilvev_b:
   case Intrinsic::mips_ilvev_h:
   case Intrinsic::mips_ilvev_w:

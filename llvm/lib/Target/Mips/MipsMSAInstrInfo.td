@@ -1771,15 +1771,11 @@ class FEXUPR_W_DESC : MSA_2RF_DESC_BASE<"fexupr.w", int_mips_fexupr_w,
 class FEXUPR_D_DESC : MSA_2RF_DESC_BASE<"fexupr.d", int_mips_fexupr_d,
                                         MSA128DOpnd, MSA128WOpnd>;
 
-class FFINT_S_W_DESC : MSA_2RF_DESC_BASE<"ffint_s.w", int_mips_ffint_s_w,
-                                         MSA128WOpnd>;
-class FFINT_S_D_DESC : MSA_2RF_DESC_BASE<"ffint_s.d", int_mips_ffint_s_d,
-                                         MSA128DOpnd>;
+class FFINT_S_W_DESC : MSA_2RF_DESC_BASE<"ffint_s.w", sint_to_fp, MSA128WOpnd>;
+class FFINT_S_D_DESC : MSA_2RF_DESC_BASE<"ffint_s.d", sint_to_fp, MSA128DOpnd>;
 
-class FFINT_U_W_DESC : MSA_2RF_DESC_BASE<"ffint_u.w", int_mips_ffint_u_w,
-                                         MSA128WOpnd>;
-class FFINT_U_D_DESC : MSA_2RF_DESC_BASE<"ffint_u.d", int_mips_ffint_u_d,
-                                         MSA128DOpnd>;
+class FFINT_U_W_DESC : MSA_2RF_DESC_BASE<"ffint_u.w", uint_to_fp, MSA128WOpnd>;
+class FFINT_U_D_DESC : MSA_2RF_DESC_BASE<"ffint_u.d", uint_to_fp, MSA128DOpnd>;
 
 class FFQL_W_DESC : MSA_2RF_DESC_BASE<"ffql.w", int_mips_ffql_w,
                                       MSA128WOpnd, MSA128HOpnd>;
@@ -1890,14 +1886,14 @@ class FSUNE_W_DESC : MSA_3RF_DESC_BASE<"fsune.w", int_mips_fsune_w,
 class FSUNE_D_DESC : MSA_3RF_DESC_BASE<"fsune.d", int_mips_fsune_d,
                                        MSA128DOpnd>;
 
-class FTRUNC_S_W_DESC : MSA_2RF_DESC_BASE<"ftrunc_s.w", int_mips_ftrunc_s_w,
+class FTRUNC_S_W_DESC : MSA_2RF_DESC_BASE<"ftrunc_s.w", fp_to_sint,
                                           MSA128WOpnd>;
-class FTRUNC_S_D_DESC : MSA_2RF_DESC_BASE<"ftrunc_s.d", int_mips_ftrunc_s_d,
+class FTRUNC_S_D_DESC : MSA_2RF_DESC_BASE<"ftrunc_s.d", fp_to_sint,
                                           MSA128DOpnd>;
 
-class FTRUNC_U_W_DESC : MSA_2RF_DESC_BASE<"ftrunc_u.w", int_mips_ftrunc_u_w,
+class FTRUNC_U_W_DESC : MSA_2RF_DESC_BASE<"ftrunc_u.w", fp_to_uint,
                                           MSA128WOpnd>;
-class FTRUNC_U_D_DESC : MSA_2RF_DESC_BASE<"ftrunc_u.d", int_mips_ftrunc_u_d,
+class FTRUNC_U_D_DESC : MSA_2RF_DESC_BASE<"ftrunc_u.d", fp_to_uint,
                                           MSA128DOpnd>;
 
 class FTINT_S_W_DESC : MSA_2RF_DESC_BASE<"ftint_s.w", int_mips_ftint_s_w,
