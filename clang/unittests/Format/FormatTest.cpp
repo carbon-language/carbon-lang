@@ -6854,5 +6854,12 @@ TEST_F(FormatTest, SupportsCRLF) {
                    getGoogleStyle()));
 }
 
+TEST_F(FormatTest, MunchSemicolonAfterBlocks) {
+  verifyFormat("MY_CLASS(C) {\n"
+               "  int i;\n"
+               "  int j;\n"
+               "};");
+}
+
 } // end namespace tooling
 } // end namespace clang
