@@ -32,7 +32,7 @@ struct COFFParser {
   COFFParser(COFFYAML::Object &Obj) : Obj(Obj) {
     // A COFF string table always starts with a 4 byte size field. Offsets into
     // it include this size, so allocate it now.
-    StringTable.append(4, 0);
+    StringTable.append(4, char(0));
   }
 
   bool parseSections() {

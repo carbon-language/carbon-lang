@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "yaml2obj.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/Object/ELFObjectFile.h"
 #include "llvm/Object/ELFYAML.h"
 #include "llvm/Support/ELF.h"
@@ -119,13 +120,13 @@ public:
 } // end anonymous namespace
 
 template <class T>
-static size_t vectorDataSize(const std::vector<T> &Vec) {
-  return Vec.size() * sizeof(T);
+static size_t arrayDataSize(ArrayRef<T> A) {
+  return A.size() * sizeof(T);
 }
 
 template <class T>
-static void writeVectorData(raw_ostream &OS, const std::vector<T> &Vec) {
-  OS.write((const char *)Vec.data(), vectorDataSize(Vec));
+static void writeArrayData(raw_ostream &OS, ArrayRef<T> A) {
+  OS.write((const char *)A.data(), arrayDataSize(A));
 }
 
 template <class T>
@@ -235,8 +236,9 @@ handleSymtabSectionHeader(const ELFYAML::LocalGlobalWeakSymbols &Symbols,
   addSymbols(Symbols.Weak, State, Syms, ELF::STB_WEAK);
 
   ContiguousBlobAccumulator &CBA = State.getSectionContentAccum();
-  writeVectorData(CBA.getOSAndAlignedOffset(SHeader.sh_offset), Syms);
-  SHeader.sh_size = vectorDataSize(Syms);
+  writeArrayData(CBA.getOSAndAlignedOffset(SHeader.sh_offset),
+                 makeArrayRef(Syms));
+  SHeader.sh_size = arrayDataSize(makeArrayRef(Syms));
 }
 
 template <class ELFT>
@@ -359,7 +361,7 @@ static int writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
   SHeaders.push_back(SHStrTabSHeader);
 
   OS.write((const char *)&Header, sizeof(Header));
-  writeVectorData(OS, SHeaders);
+  writeArrayData(OS, makeArrayRef(SHeaders));
   CBA.writeBlobToStream(OS);
   return 0;
 }
