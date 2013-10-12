@@ -6,6 +6,7 @@
 #include "Inputs/different-define.h"
 #include "Inputs/out-of-order-define.h"
 #include "Inputs/tokens-between-ifndef-and-define.h"
+#include "Inputs/unlikely-to-be-header-guard.h"
 
 #include "Inputs/bad-header-guard.h"
 // CHECK: In file included from {{.*}}header.cpp:{{[0-9]*}}:

@@ -264,19 +264,32 @@ bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
           if (!ControllingMacro->hasMacroDefinition() &&
               DefinedMacro != ControllingMacro &&
               HeaderInfo.FirstTimeLexingFile(FE)) {
-            // Emit a warning for a bad header guard.
-            Diag(CurPPLexer->MIOpt.GetMacroLocation(),
-                 diag::warn_header_guard)
-                << CurPPLexer->MIOpt.GetMacroLocation()
-                << ControllingMacro;
-            Diag(CurPPLexer->MIOpt.GetDefinedLocation(),
-                 diag::note_header_guard)
-                << CurPPLexer->MIOpt.GetDefinedLocation()
-                << DefinedMacro
-                << ControllingMacro
-                << FixItHint::CreateReplacement(
-                       CurPPLexer->MIOpt.GetDefinedLocation(),
-                       ControllingMacro->getName());
+
+            // If the edit distance between the two macros is more than 50%,
+            // DefinedMacro may not be header guard, or can be header guard of
+            // another header file. Therefore, it maybe defining something
+            // completely different. This can be observed in the wild when
+            // handling feature macros or header guards in different files.
+
+            const StringRef ControllingMacroName = ControllingMacro->getName();
+            const StringRef DefinedMacroName = DefinedMacro->getName();
+            const size_t MaxHalfLength = std::max(ControllingMacroName.size(),
+                                                  DefinedMacroName.size()) / 2;
+            const unsigned ED = ControllingMacroName.edit_distance(
+                DefinedMacroName, true, MaxHalfLength);
+            if (ED <= MaxHalfLength) {
+              // Emit a warning for a bad header guard.
+              Diag(CurPPLexer->MIOpt.GetMacroLocation(),
+                   diag::warn_header_guard)
+                  << CurPPLexer->MIOpt.GetMacroLocation() << ControllingMacro;
+              Diag(CurPPLexer->MIOpt.GetDefinedLocation(),
+                   diag::note_header_guard)
+                  << CurPPLexer->MIOpt.GetDefinedLocation() << DefinedMacro
+                  << ControllingMacro
+                  << FixItHint::CreateReplacement(
+                         CurPPLexer->MIOpt.GetDefinedLocation(),
+                         ControllingMacro->getName());
+            }
           }
         }
       }
