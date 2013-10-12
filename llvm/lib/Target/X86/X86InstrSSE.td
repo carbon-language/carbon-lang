@@ -1114,15 +1114,15 @@ let isCodeGenOnly = 1 in {
                          "movapd\t{$src, $dst|$dst, $src}",
                          [(set FR64:$dst, (alignedloadfsf64 addr:$src))],
                          IIC_SSE_MOVA_P_RM>, VEX;
+  def FsMOVAPSrm : PSI<0x28, MRMSrcMem, (outs FR32:$dst), (ins f128mem:$src),
+                       "movaps\t{$src, $dst|$dst, $src}",
+                       [(set FR32:$dst, (alignedloadfsf32 addr:$src))],
+                       IIC_SSE_MOVA_P_RM>;
+  def FsMOVAPDrm : PDI<0x28, MRMSrcMem, (outs FR64:$dst), (ins f128mem:$src),
+                       "movapd\t{$src, $dst|$dst, $src}",
+                       [(set FR64:$dst, (alignedloadfsf64 addr:$src))],
+                       IIC_SSE_MOVA_P_RM>;
 }
-def FsMOVAPSrm : PSI<0x28, MRMSrcMem, (outs FR32:$dst), (ins f128mem:$src),
-                     "movaps\t{$src, $dst|$dst, $src}",
-                     [(set FR32:$dst, (alignedloadfsf32 addr:$src))],
-                     IIC_SSE_MOVA_P_RM>;
-def FsMOVAPDrm : PDI<0x28, MRMSrcMem, (outs FR64:$dst), (ins f128mem:$src),
-                     "movapd\t{$src, $dst|$dst, $src}",
-                     [(set FR64:$dst, (alignedloadfsf64 addr:$src))],
-                     IIC_SSE_MOVA_P_RM>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -2840,16 +2840,18 @@ multiclass sse12_fp_alias_pack_logical<bits<8> opc, string OpcodeStr,
 }
 
 // Alias bitwise logical operations using SSE logical ops on packed FP values.
-defm FsAND  : sse12_fp_alias_pack_logical<0x54, "and", X86fand,
-              SSE_BIT_ITINS_P>;
-defm FsOR   : sse12_fp_alias_pack_logical<0x56, "or", X86for,
-              SSE_BIT_ITINS_P>;
-defm FsXOR  : sse12_fp_alias_pack_logical<0x57, "xor", X86fxor,
-              SSE_BIT_ITINS_P>;
-
-let isCommutable = 0 in
-  defm FsANDN : sse12_fp_alias_pack_logical<0x55, "andn", X86fandn,
+let isCodeGenOnly = 1 in {
+  defm FsAND  : sse12_fp_alias_pack_logical<0x54, "and", X86fand,
                 SSE_BIT_ITINS_P>;
+  defm FsOR   : sse12_fp_alias_pack_logical<0x56, "or", X86for,
+                SSE_BIT_ITINS_P>;
+  defm FsXOR  : sse12_fp_alias_pack_logical<0x57, "xor", X86fxor,
+                SSE_BIT_ITINS_P>;
+
+  let isCommutable = 0 in
+    defm FsANDN : sse12_fp_alias_pack_logical<0x55, "andn", X86fandn,
+                  SSE_BIT_ITINS_P>;
+}
 
 /// sse12_fp_packed_logical - SSE 1 & 2 packed FP logical ops
 ///
