@@ -1355,9 +1355,7 @@ def: Mips16Pat<(i32  addr16:$addr),
 
 
 // Large (>16 bit) immediate loads
-def : Mips16Pat<(i32 imm:$imm),
-                (OrRxRxRy16 (SllX16 (LiRxImmX16 (HI16 imm:$imm)), 16),
-                (LiRxImmX16 (LO16 imm:$imm)))>;
+def : Mips16Pat<(i32 imm:$imm), (LwConstant32 imm:$imm)>;
 
 // Carry MipsPatterns
 def : Mips16Pat<(subc CPU16Regs:$lhs, CPU16Regs:$rhs),
