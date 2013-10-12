@@ -5,5 +5,5 @@ add_clang_unittest(LexTests
   )
 
 target_link_libraries(LexTests
-  clangLex
+  clangLex clangParse clangSema
   )

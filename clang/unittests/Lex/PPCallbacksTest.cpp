@@ -18,6 +18,10 @@
 #include "clang/Lex/HeaderSearchOptions.h"
 #include "clang/Lex/ModuleLoader.h"
 #include "clang/Lex/PreprocessorOptions.h"
+#include "clang/Parse/Parser.h"
+#include "clang/Sema/Sema.h"
+#include "clang/AST/ASTContext.h"
+#include "clang/AST/ASTConsumer.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Path.h"
 #include "gtest/gtest.h"
@@ -75,6 +79,31 @@ public:
   SmallString<16> SearchPath;
   SmallString<16> RelativePath;
   const Module* Imported;
+};
+
+// Stub to collect data from PragmaOpenCLExtension callbacks.
+class PragmaOpenCLExtensionCallbacks : public PPCallbacks {
+public:
+  typedef struct {
+    StringRef Name;
+    unsigned State;
+  } CallbackParameters;
+
+  PragmaOpenCLExtensionCallbacks() : Name("Not called."), State(99) {};
+
+  void PragmaOpenCLExtension(
+    clang::SourceLocation NameLoc, const clang::IdentifierInfo *Name,
+    clang::SourceLocation StateLoc, unsigned State) {
+      this->NameLoc = NameLoc;
+      this->Name = Name->getName().str();
+      this->StateLoc = StateLoc;
+      this->State = State;
+  };
+
+  SourceLocation NameLoc;
+  StringRef Name;
+  SourceLocation StateLoc;
+  unsigned State;
 };
 
 // PPCallbacks test fixture.
@@ -158,6 +187,53 @@ protected:
 
     // Callbacks have been executed at this point -- return filename range.
     return Callbacks->FilenameRange;
+  }
+
+  PragmaOpenCLExtensionCallbacks::CallbackParameters 
+  PragmaOpenCLExtensionCall(const char* SourceText) {
+    LangOptions OpenCLLangOpts;
+    OpenCLLangOpts.OpenCL = 1;
+
+    MemoryBuffer* sourceBuf = MemoryBuffer::getMemBuffer(SourceText, "test.cl");
+    (void)SourceMgr.createMainFileIDForMemBuffer(sourceBuf);
+
+    VoidModuleLoader ModLoader;
+    HeaderSearch HeaderInfo(new HeaderSearchOptions, FileMgr, Diags, 
+                            OpenCLLangOpts, Target.getPtr());
+
+    Preprocessor PP(new PreprocessorOptions(), Diags, OpenCLLangOpts, 
+                    Target.getPtr(),
+                    SourceMgr, HeaderInfo, ModLoader,
+                   /*IILookup =*/ 0,
+                    /*OwnsHeaderSearch =*/false,
+                    /*DelayInitialization =*/ false);
+
+    // parser actually sets correct pragma handlers for preprocessor
+    // according to LangOptions, so we init Parser to register opencl
+    // pragma handlers
+    ASTContext Context(OpenCLLangOpts, SourceMgr, Target.getPtr(), 
+                       PP.getIdentifierTable(), PP.getSelectorTable(), 
+                       PP.getBuiltinInfo(), 0);    
+    ASTConsumer Consumer;
+    Sema S(PP, Context, Consumer);
+    Parser P(PP, S, false);
+    PragmaOpenCLExtensionCallbacks* Callbacks = new PragmaOpenCLExtensionCallbacks;
+    PP.addPPCallbacks(Callbacks); // Takes ownership.
+
+    // Lex source text.
+    PP.EnterMainSourceFile();
+    while (true) {
+      Token Tok;
+      PP.Lex(Tok);
+      if (Tok.is(tok::eof))
+        break;
+    }
+
+    PragmaOpenCLExtensionCallbacks::CallbackParameters RetVal = {
+      Callbacks->Name.str(),
+      Callbacks->State
+    };
+    return RetVal;    
   }
 };
 
@@ -245,6 +321,30 @@ TEST_F(PPCallbacksTest, TrigraphInMacro) {
     InclusionDirectiveFilenameRange(Source, "/tri~graph.h", false);
 
   ASSERT_EQ("\"tri\?\?-graph.h\"", GetSourceString(Range));
+}
+
+TEST_F(PPCallbacksTest, OpenCLExtensionPragmaEnabled) {
+  const char* Source =
+    "#pragma OPENCL EXTENSION cl_khr_fp64 : enable\n";
+
+  PragmaOpenCLExtensionCallbacks::CallbackParameters Parameters =
+    PragmaOpenCLExtensionCall(Source);
+
+  ASSERT_EQ("cl_khr_fp64", Parameters.Name);
+  unsigned ExpectedState = 1;
+  ASSERT_EQ(ExpectedState, Parameters.State);
+}
+
+TEST_F(PPCallbacksTest, OpenCLExtensionPragmaDisabled) {
+  const char* Source =
+    "#pragma OPENCL EXTENSION cl_khr_fp16 : disable\n";
+
+  PragmaOpenCLExtensionCallbacks::CallbackParameters Parameters =
+    PragmaOpenCLExtensionCall(Source);
+
+  ASSERT_EQ("cl_khr_fp16", Parameters.Name);
+  unsigned ExpectedState = 0;
+  ASSERT_EQ(ExpectedState, Parameters.State);
 }
 
 } // anonoymous namespace

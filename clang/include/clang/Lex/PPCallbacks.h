@@ -217,6 +217,13 @@ public:
                                 diag::Mapping mapping, StringRef Str) {
   }
 
+  /// \brief Called when an OpenCL extension is either disabled or
+  /// enabled with a pragma.
+  virtual void PragmaOpenCLExtension(SourceLocation NameLoc, 
+                                     const IdentifierInfo *Name,
+                                     SourceLocation StateLoc, unsigned State) {
+  }
+
   /// \brief Callback invoked when a \#pragma warning directive is read.
   virtual void PragmaWarning(SourceLocation Loc, StringRef WarningSpec,
                              ArrayRef<int> Ids) {
@@ -411,6 +418,13 @@ public:
                                 diag::Mapping mapping, StringRef Str) {
     First->PragmaDiagnostic(Loc, Namespace, mapping, Str);
     Second->PragmaDiagnostic(Loc, Namespace, mapping, Str);
+  }
+
+  virtual void PragmaOpenCLExtension(SourceLocation NameLoc, 
+                                     const IdentifierInfo *Name,
+                                     SourceLocation StateLoc, unsigned State) {
+    First->PragmaOpenCLExtension(NameLoc, Name, StateLoc, State);
+    Second->PragmaOpenCLExtension(NameLoc, Name, StateLoc, State);
   }
 
   virtual void PragmaWarning(SourceLocation Loc, StringRef WarningSpec,
