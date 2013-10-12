@@ -1012,10 +1012,14 @@ private:
             ++CountBoundToType;
         }
 
-        if (Tok->Type == TT_TemplateCloser &&
-            Tok->Previous->Type == TT_TemplateCloser &&
-            Tok->WhitespaceRange.getBegin() == Tok->WhitespaceRange.getEnd())
-          HasCpp03IncompatibleFormat = true;
+        if (Tok->WhitespaceRange.getBegin() == Tok->WhitespaceRange.getEnd()) {
+          if (Tok->is(tok::coloncolon) &&
+              Tok->Previous->Type == TT_TemplateOpener)
+            HasCpp03IncompatibleFormat = true;
+          if (Tok->Type == TT_TemplateCloser &&
+              Tok->Previous->Type == TT_TemplateCloser)
+            HasCpp03IncompatibleFormat = true;
+        }
 
         if (Tok->PackingKind == PPK_BinPacked)
           HasBinPackedFunction = true;

@@ -3711,8 +3711,14 @@ TEST_F(FormatTest, UnderstandsTemplateParameters) {
   verifyGoogleFormat("A<A<int> > a;");
   verifyGoogleFormat("A<A<A<int> > > a;");
   verifyGoogleFormat("A<A<A<A<int> > > > a;");
+  verifyGoogleFormat("A<::A<int>> a;");
+  verifyGoogleFormat("A<::A> a;");
+  verifyGoogleFormat("A< ::A> a;");
+  verifyGoogleFormat("A< ::A<int> > a;");
   EXPECT_EQ("A<A<A<A>>> a;", format("A<A<A<A> >> a;", getGoogleStyle()));
   EXPECT_EQ("A<A<A<A>>> a;", format("A<A<A<A>> > a;", getGoogleStyle()));
+  EXPECT_EQ("A<::A<int>> a;", format("A< ::A<int>> a;", getGoogleStyle()));
+  EXPECT_EQ("A<::A<int>> a;", format("A<::A<int> > a;", getGoogleStyle()));
 
   verifyFormat("test >> a >> b;");
   verifyFormat("test << a >> b;");
