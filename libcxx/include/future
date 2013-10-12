@@ -2013,10 +2013,26 @@ public:
     // construction and destruction
     _LIBCPP_INLINE_VISIBILITY
     packaged_task() _NOEXCEPT : __p_(nullptr) {}
-    template <class _Fp>
+    template <class _Fp,
+              class = typename enable_if
+              <
+                  !is_same<
+                      typename decay<_Fp>::type, 
+                      packaged_task
+                      >::value
+                  >::type
+             >
         _LIBCPP_INLINE_VISIBILITY
         explicit packaged_task(_Fp&& __f) : __f_(_VSTD::forward<_Fp>(__f)) {}
-    template <class _Fp, class _Allocator>
+    template <class _Fp, class _Allocator,
+              class = typename enable_if
+              <
+                  !is_same<
+                      typename decay<_Fp>::type, 
+                      packaged_task
+                      >::value
+                  >::type
+              >
         _LIBCPP_INLINE_VISIBILITY
         explicit packaged_task(allocator_arg_t, const _Allocator& __a, _Fp&& __f)
              : __f_(allocator_arg, __a, _VSTD::forward<_Fp>(__f)),
@@ -2128,10 +2144,26 @@ public:
     // construction and destruction
     _LIBCPP_INLINE_VISIBILITY
     packaged_task() _NOEXCEPT : __p_(nullptr) {}
-    template <class _Fp>
+    template <class _Fp,
+              class = typename enable_if
+              <
+                  !is_same<
+                      typename decay<_Fp>::type, 
+                      packaged_task
+                      >::value
+                  >::type
+              >
         _LIBCPP_INLINE_VISIBILITY
         explicit packaged_task(_Fp&& __f) : __f_(_VSTD::forward<_Fp>(__f)) {}
-    template <class _Fp, class _Allocator>
+    template <class _Fp, class _Allocator,
+              class = typename enable_if
+              <
+                  !is_same<
+                      typename decay<_Fp>::type, 
+                      packaged_task
+                      >::value
+                  >::type
+              >    
         _LIBCPP_INLINE_VISIBILITY
         explicit packaged_task(allocator_arg_t, const _Allocator& __a, _Fp&& __f)
              : __f_(allocator_arg, __a, _VSTD::forward<_Fp>(__f)),
