@@ -91,7 +91,6 @@ TEST_F(FastUnwindTest, OneFrameStackTrace) {
   trace.FastUnwindStack(start_pc, (uptr)&fake_stack[0],
                         fake_top, fake_bottom, 1);
   EXPECT_EQ(1U, trace.size);
-  EXPECT_EQ(1U, trace.max_size);
   EXPECT_EQ(start_pc, trace.trace[0]);
 }
 

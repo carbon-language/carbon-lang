@@ -32,8 +32,8 @@ struct StackTrace {
   typedef bool (*SymbolizeCallback)(const void *pc, char *out_buffer,
                                      int out_size);
   uptr size;
-  uptr max_size;
   uptr trace[kStackTraceMax];
+
   static void PrintStack(const uptr *addr, uptr size, bool symbolize,
                          SymbolizeCallback symbolize_callback);
 

@@ -139,12 +139,17 @@ uptr Unwind_GetIP(struct _Unwind_Context *ctx) {
 #endif
 }
 
+struct UnwindTraceArg {
+  StackTrace *stack;
+  uptr max_depth;
+};
+
 _Unwind_Reason_Code Unwind_Trace(struct _Unwind_Context *ctx, void *param) {
-  StackTrace *b = (StackTrace*)param;
-  CHECK(b->size < b->max_size);
+  UnwindTraceArg *arg = (UnwindTraceArg*)param;
+  CHECK_LT(arg->stack->size, arg->max_depth);
   uptr pc = Unwind_GetIP(ctx);
-  b->trace[b->size++] = pc;
-  if (b->size == b->max_size) return UNWIND_STOP;
+  arg->stack->trace[arg->stack->size++] = pc;
+  if (arg->stack->size == arg->max_depth) return UNWIND_STOP;
   return UNWIND_CONTINUE;
 }
 
@@ -153,10 +158,10 @@ static bool MatchPc(uptr cur_pc, uptr trace_pc) {
 }
 
 void StackTrace::SlowUnwindStack(uptr pc, uptr max_depth) {
-  this->size = 0;
-  this->max_size = max_depth;
+  size = 0;
+  UnwindTraceArg arg = {this, max_depth};
   if (max_depth > 1) {
-    _Unwind_Backtrace(Unwind_Trace, this);
+    _Unwind_Backtrace(Unwind_Trace, &arg);
     // We need to pop a few frames so that pc is on top.
     // trace[0] belongs to the current function so we always pop it.
     int to_pop = 1;
@@ -165,9 +170,9 @@ void StackTrace::SlowUnwindStack(uptr pc, uptr max_depth) {
     else if (size > 3 && MatchPc(pc, trace[3])) to_pop = 3;
     else if (size > 4 && MatchPc(pc, trace[4])) to_pop = 4;
     else if (size > 5 && MatchPc(pc, trace[5])) to_pop = 5;
-    this->PopStackFrames(to_pop);
+    PopStackFrames(to_pop);
   }
-  this->trace[0] = pc;
+  trace[0] = pc;
 }
 
 #endif  // !SANITIZER_GO
