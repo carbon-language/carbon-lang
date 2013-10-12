@@ -45,32 +45,60 @@ extern "C" void LLVMInitializeR600AsmPrinter() {
   TargetRegistry::RegisterAsmPrinter(TheAMDGPUTarget, createAMDGPUAsmPrinterPass);
 }
 
+AMDGPUAsmPrinter::AMDGPUAsmPrinter(TargetMachine &TM, MCStreamer &Streamer)
+    : AsmPrinter(TM, Streamer)
+{
+  DisasmEnabled = TM.getSubtarget<AMDGPUSubtarget>().dumpCode() &&
+                  ! Streamer.hasRawTextSupport();
+}
+
 /// We need to override this function so we can avoid
 /// the call to EmitFunctionHeader(), which the MCPureStreamer can't handle.
 bool AMDGPUAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
-  const AMDGPUSubtarget &STM = TM.getSubtarget<AMDGPUSubtarget>();
-  if (STM.dumpCode()) {
-#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
-    MF.dump();
-#endif
-  }
   SetupMachineFunction(MF);
   if (OutStreamer.hasRawTextSupport()) {
     OutStreamer.EmitRawText("@" + MF.getName() + ":");
   }
 
-  const MCSectionELF *ConfigSection = getObjFileLowering().getContext()
-                                              .getELFSection(".AMDGPU.config",
+  MCContext &Context = getObjFileLowering().getContext();
+  const MCSectionELF *ConfigSection = Context.getELFSection(".AMDGPU.config",
                                               ELF::SHT_PROGBITS, 0,
                                               SectionKind::getReadOnly());
   OutStreamer.SwitchSection(ConfigSection);
+  const AMDGPUSubtarget &STM = TM.getSubtarget<AMDGPUSubtarget>();
   if (STM.getGeneration() > AMDGPUSubtarget::NORTHERN_ISLANDS) {
     EmitProgramInfoSI(MF);
   } else {
     EmitProgramInfoR600(MF);
   }
+
+  DisasmLines.clear();
+  HexLines.clear();
+  DisasmLineMaxLen = 0;
+
   OutStreamer.SwitchSection(getObjFileLowering().getTextSection());
   EmitFunctionBody();
+
+  if (STM.dumpCode()) {
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
+    MF.dump();
+#endif
+
+    if (DisasmEnabled) {
+      OutStreamer.SwitchSection(Context.getELFSection(".AMDGPU.disasm",
+                                                  ELF::SHT_NOTE, 0,
+                                                  SectionKind::getReadOnly()));
+
+      for (size_t i = 0; i < DisasmLines.size(); ++i) {
+        std::string Comment(DisasmLineMaxLen - DisasmLines[i].size(), ' ');
+        Comment += " ; " + HexLines[i] + "\n";
+
+        OutStreamer.EmitBytes(StringRef(DisasmLines[i]));
+        OutStreamer.EmitBytes(StringRef(Comment));
+      }
+    }
+  }
+
   return false;
 }
 
