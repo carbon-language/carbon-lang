@@ -225,7 +225,7 @@ bool UnwrappedLineParser::parse() {
     Callback.finishRun();
     Lines.clear();
     while (!PPLevelBranchIndex.empty() &&
-           PPLevelBranchIndex.back() + 1 == PPLevelBranchCount.back()) {
+           PPLevelBranchIndex.back() + 1 >= PPLevelBranchCount.back()) {
       PPLevelBranchIndex.resize(PPLevelBranchIndex.size() - 1);
       PPLevelBranchCount.resize(PPLevelBranchCount.size() - 1);
     }

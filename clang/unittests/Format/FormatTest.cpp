@@ -2317,6 +2317,8 @@ TEST_F(FormatTest, LayoutStatementsAroundPreprocessorDirectives) {
                "  x();\n"
                "}",
                getLLVMStyleWithColumns(28));
+  verifyFormat("#if 1\n"
+               "int i;");
 }
 
 TEST_F(FormatTest, LayoutBlockInsideParens) {
