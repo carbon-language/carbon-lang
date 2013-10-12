@@ -541,11 +541,6 @@ RecognizableInstr::filter_ret RecognizableInstr::filter() const {
       Name == "XRELEASE_PREFIX")
     return FILTER_WEAK;
 
-  if (HasFROperands && Name.find("MOV") != Name.npos &&
-     ((Name.find("2") != Name.npos && Name.find("32") == Name.npos) ||
-      (Name.find("to") != Name.npos)))
-    return FILTER_STRONG;
-
   return FILTER_NORMAL;
 }
 

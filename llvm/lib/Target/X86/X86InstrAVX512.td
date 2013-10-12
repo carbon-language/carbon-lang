@@ -1177,6 +1177,7 @@ def VMOV64toPQIZrr : AVX512SI<0x6E, MRMSrcReg, (outs VR128X:$dst), (ins GR64:$sr
                         [(set VR128X:$dst,
                           (v2i64 (scalar_to_vector GR64:$src)))],
                           IIC_SSE_MOVDQ>, EVEX, VEX_W, VEX_LIG;
+let isCodeGenOnly = 1 in {
 def VMOV64toSDZrr : AVX512SI<0x6E, MRMSrcReg, (outs FR64:$dst), (ins GR64:$src),
                        "vmovq{z}\t{$src, $dst|$dst, $src}",
                        [(set FR64:$dst, (bitconvert GR64:$src))],
@@ -1185,6 +1186,7 @@ def VMOVSDto64Zrr : AVX512SI<0x7E, MRMDestReg, (outs GR64:$dst), (ins FR64:$src)
                          "vmovq{z}\t{$src, $dst|$dst, $src}",
                          [(set GR64:$dst, (bitconvert FR64:$src))],
                          IIC_SSE_MOVDQ>, EVEX, VEX_W, Sched<[WriteMove]>;
+}
 def VMOVSDto64Zmr : AVX512SI<0x7E, MRMDestMem, (outs), (ins i64mem:$dst, FR64:$src),
                          "vmovq{z}\t{$src, $dst|$dst, $src}",
                          [(store (i64 (bitconvert FR64:$src)), addr:$dst)],
@@ -1193,6 +1195,7 @@ def VMOVSDto64Zmr : AVX512SI<0x7E, MRMDestMem, (outs), (ins i64mem:$dst, FR64:$s
 
 // Move Int Doubleword to Single Scalar
 //
+let isCodeGenOnly = 1 in {
 def VMOVDI2SSZrr  : AVX512SI<0x6E, MRMSrcReg, (outs FR32X:$dst), (ins GR32:$src),
                       "vmovd{z}\t{$src, $dst|$dst, $src}",
                       [(set FR32X:$dst, (bitconvert GR32:$src))],
@@ -1202,6 +1205,7 @@ def VMOVDI2SSZrm  : AVX512SI<0x6E, MRMSrcMem, (outs FR32X:$dst), (ins i32mem:$sr
                       "vmovd{z}\t{$src, $dst|$dst, $src}",
                       [(set FR32X:$dst, (bitconvert (loadi32 addr:$src)))],
                       IIC_SSE_MOVDQ>, EVEX, VEX_LIG, EVEX_CD8<32, CD8VT1>;
+}
 
 // Move Packed Doubleword Int to Packed Double Int
 //
@@ -1236,6 +1240,7 @@ def VMOVPQIto64Zmr : I<0xD6, MRMDestMem, (outs),
 
 // Move Scalar Single to Double Int
 //
+let isCodeGenOnly = 1 in {
 def VMOVSS2DIZrr  : AVX512SI<0x7E, MRMDestReg, (outs GR32:$dst),
                       (ins FR32X:$src),
                       "vmovd{z}\t{$src, $dst|$dst, $src}",
@@ -1246,6 +1251,7 @@ def VMOVSS2DIZmr  : AVX512SI<0x7E, MRMDestMem, (outs),
                       "vmovd{z}\t{$src, $dst|$dst, $src}",
                       [(store (i32 (bitconvert FR32X:$src)), addr:$dst)],
                       IIC_SSE_MOVDQ>, EVEX, VEX_LIG, EVEX_CD8<32, CD8VT1>;
+}
 
 // Move Quadword Int to Packed Quadword Int
 //
