@@ -20,4 +20,3 @@ commit lists:
 
 If you find a bug in these tools, please file it in the LLVM bug tracker:
   http://llvm.org/bugs/
-
