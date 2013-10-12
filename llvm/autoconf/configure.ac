@@ -1377,12 +1377,13 @@ else
 fi
 
 AC_MSG_CHECKING([for python >= 2.5])
-ac_python_version=`$PYTHON -c 'import sys; print sys.version.split()[[0]]'`
+ac_python_version=`$PYTHON -V 2>&1 | cut -d' ' -f2`
 ac_python_version_major=`echo $ac_python_version | cut -d'.' -f1`
 ac_python_version_minor=`echo $ac_python_version | cut -d'.' -f2`
 ac_python_version_patch=`echo $ac_python_version | cut -d'.' -f3`
-if   test "$ac_python_version_major" -eq "2" \
-   && test "$ac_python_version_minor" -ge "5" ; then
+if test "$ac_python_version_major" -gt "2" || \
+   (test "$ac_python_version_major" -eq "2" && \
+    test "$ac_python_version_minor" -ge "5") ; then
   AC_MSG_RESULT([$PYTHON ($ac_python_version)])
 else
   AC_MSG_RESULT([not found])
