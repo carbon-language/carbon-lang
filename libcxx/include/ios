@@ -216,6 +216,10 @@ storage-class-specifier const error_category& iostream_category;
 #include <__locale>
 #include <system_error>
 
+#if __has_feature(cxx_atomic)
+#include <atomic>     // for __xindex_
+#endif
+
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 #pragma GCC system_header
 #endif
@@ -363,7 +367,11 @@ private:
     int*            __index_;
     size_t          __event_size_;
     size_t          __event_cap_;
+#if __has_feature(cxx_atomic)
+    static atomic<int> __xindex_;
+#else
     static int      __xindex_;
+#endif
     long*           __iarray_;
     size_t          __iarray_size_;
     size_t          __iarray_cap_;
