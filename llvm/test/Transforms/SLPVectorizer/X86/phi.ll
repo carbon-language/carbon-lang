@@ -135,14 +135,14 @@ entry:
   br label %for.body
 
 for.body:                                         ; preds = %for.body, %entry
-  %5 = phi float [ %1, %entry ], [ %11, %for.body ]
-  %6 = phi float [ %0, %entry ], [ %9, %for.body ]
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
   %P.056 = phi float [ %4, %entry ], [ %add26, %for.body ]
   %Y.055 = phi float [ %3, %entry ], [ %add21, %for.body ]
   %B.054 = phi float [ %2, %entry ], [ %add16, %for.body ]
   %G.053 = phi float [ %1, %entry ], [ %add11, %for.body ]
   %R.052 = phi float [ %0, %entry ], [ %add6, %for.body ]
+  %5 = phi float [ %1, %entry ], [ %11, %for.body ]
+  %6 = phi float [ %0, %entry ], [ %9, %for.body ]
   %mul = fmul float %6, 7.000000e+00
   %add6 = fadd float %R.052, %mul
   %mul10 = fmul float %5, 8.000000e+00
@@ -171,6 +171,38 @@ for.end:                                          ; preds = %for.body
   %add29 = fadd float %add28, %add16
   %add30 = fadd float %add29, %add21
   %add31 = fadd float %add30, %add26
+  ret float %add31
+}
+
+; Make sure the order of phi nodes of different types does not prevent
+; vectorization of same typed phi nodes.
+; CHECK-LABEL: sort_phi_type
+; CHECK: phi <4 x float>
+; CHECK: fmul <4 x float>
+
+define float @sort_phi_type(float* nocapture readonly %A) {
+entry:
+  br label %for.body
+
+for.body:                                         ; preds = %for.body, %entry
+  %Y = phi float [ 1.000000e+01, %entry ], [ %mul10, %for.body ]
+  %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
+  %B = phi float [ 1.000000e+01, %entry ], [ %mul15, %for.body ]
+  %G = phi float [ 1.000000e+01, %entry ], [ %mul20, %for.body ]
+  %R = phi float [ 1.000000e+01, %entry ], [ %mul25, %for.body ]
+  %mul10 = fmul float %Y, 8.000000e+00
+  %mul15 = fmul float %B, 9.000000e+00
+  %mul20 = fmul float %R, 10.000000e+01
+  %mul25 = fmul float %G, 11.100000e+01
+  %indvars.iv.next = add nsw i64 %indvars.iv, 4
+  %cmp = icmp slt i64 %indvars.iv.next, 128
+  br i1 %cmp, label %for.body, label %for.end
+
+for.end:                                          ; preds = %for.body
+  %add28 = fadd float 1.000000e+01, %mul10
+  %add29 = fadd float %mul10, %mul15
+  %add30 = fadd float %add29, %mul20
+  %add31 = fadd float %add30, %mul25
   ret float %add31
 }
 

@@ -2366,41 +2366,62 @@ static bool findBuildVector(InsertElementInst *IE,
   return false;
 }
 
+static bool PhiTypeSorterFunc(Value *V, Value *V2) {
+  return V->getType() < V2->getType();
+}
+
 bool SLPVectorizer::vectorizeChainsInBlock(BasicBlock *BB, BoUpSLP &R) {
   bool Changed = false;
   SmallVector<Value *, 4> Incoming;
-  SmallSet<Instruction *, 16> VisitedInstrs;
+  SmallSet<Value *, 16> VisitedInstrs;
 
-  // Collect the incoming values from the PHIs.
-  for (BasicBlock::iterator instr = BB->begin(), ie = BB->end(); instr != ie;
-       ++instr) {
-    PHINode *P = dyn_cast<PHINode>(instr);
+  bool HaveVectorizedPhiNodes = true;
+  while (HaveVectorizedPhiNodes) {
+    HaveVectorizedPhiNodes = false;
 
-    if (!P)
-      break;
+    // Collect the incoming values from the PHIs.
+    Incoming.clear();
+    for (BasicBlock::iterator instr = BB->begin(), ie = BB->end(); instr != ie;
+         ++instr) {
+      PHINode *P = dyn_cast<PHINode>(instr);
+      if (!P)
+        break;
 
-    // We may go through BB multiple times so skip the one we have checked.
-    if (!VisitedInstrs.insert(instr))
-      continue;
-
-    // Stop constructing the list when you reach a different type.
-    if (Incoming.size() && P->getType() != Incoming[0]->getType()) {
-      if (tryToVectorizeList(Incoming, R)) {
-        // We would like to start over since some instructions are deleted
-        // and the iterator may become invalid value.
-        Changed = true;
-        instr = BB->begin();
-        ie = BB->end();
-      }
-
-      Incoming.clear();
+      if (!VisitedInstrs.count(P))
+        Incoming.push_back(P);
     }
 
-    Incoming.push_back(P);
-  }
+    // Sort by type.
+    std::stable_sort(Incoming.begin(), Incoming.end(), PhiTypeSorterFunc);
 
-  if (Incoming.size() > 1)
-    Changed |= tryToVectorizeList(Incoming, R);
+    // Try to vectorize elements base on their type.
+    for (SmallVector<Value *, 4>::iterator IncIt = Incoming.begin(),
+                                           E = Incoming.end();
+         IncIt != E;) {
+
+      // Look for the next elements with the same type.
+      SmallVector<Value *, 4>::iterator SameTypeIt = IncIt;
+      while (SameTypeIt != E &&
+             (*SameTypeIt)->getType() == (*IncIt)->getType()) {
+        VisitedInstrs.insert(*SameTypeIt);
+        ++SameTypeIt;
+      }
+
+      // Try to vectorize them.
+      unsigned NumElts = (SameTypeIt - IncIt);
+      DEBUG(errs() << "SLP: Trying to vectorize starting at PHIs (" << NumElts << ")\n");
+      if (NumElts > 1 &&
+          tryToVectorizeList(ArrayRef<Value *>(IncIt, NumElts), R)) {
+        // Success start over because instructions might have been changed.
+        HaveVectorizedPhiNodes = true;
+        Changed = true;
+        break;
+      }
+
+      // Start over at the next instruction of a differnt type (or the end).
+      IncIt = SameTypeIt;
+    }
+  }
 
   VisitedInstrs.clear();
 
