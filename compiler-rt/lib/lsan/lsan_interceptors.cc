@@ -44,9 +44,9 @@ int pthread_setspecific(unsigned key, const void *v);
       stack_top = t->stack_end();                                            \
       stack_bottom = t->stack_begin();                                       \
     }                                                                        \
-    GetStackTrace(&stack, __sanitizer::common_flags()->malloc_context_size,  \
-                  StackTrace::GetCurrentPc(),                                \
-                  GET_CURRENT_FRAME(), stack_top, stack_bottom, fast);       \
+    stack.Unwind(__sanitizer::common_flags()->malloc_context_size,           \
+                 StackTrace::GetCurrentPc(),                                 \
+                 GET_CURRENT_FRAME(), stack_top, stack_bottom, fast);        \
   }
 
 ///// Malloc/free interceptors. /////

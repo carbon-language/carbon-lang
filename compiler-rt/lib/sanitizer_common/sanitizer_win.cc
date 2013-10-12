@@ -376,18 +376,18 @@ void GetThreadStackAndTls(bool main, uptr *stk_addr, uptr *stk_size,
 #endif
 }
 
-void GetStackTrace(StackTrace *stack, uptr max_s, uptr pc, uptr bp,
-                   uptr stack_top, uptr stack_bottom, bool fast) {
+void StackTrace::Unwind(uptr max_depth, uptr pc, uptr bp, uptr stack_top,
+                        uptr stack_bottom, bool fast) {
   (void)fast;
   (void)stack_top;
   (void)stack_bottom;
-  stack->max_size = max_s;
+  max_size = max_depth;
   void *tmp[kStackTraceMax];
 
   // FIXME: CaptureStackBackTrace might be too slow for us.
   // FIXME: Compare with StackWalk64.
   // FIXME: Look at LLVMUnhandledExceptionFilter in Signals.inc
-  uptr cs_ret = CaptureStackBackTrace(1, stack->max_size, tmp, 0);
+  uptr cs_ret = CaptureStackBackTrace(1, max_size, tmp, 0);
   uptr offset = 0;
   // Skip the RTL frames by searching for the PC in the stacktrace.
   // FIXME: this doesn't work well for the malloc/free stacks yet.
@@ -398,9 +398,7 @@ void GetStackTrace(StackTrace *stack, uptr max_s, uptr pc, uptr bp,
     break;
   }
 
-  stack->size = cs_ret - offset;
-  for (uptr i = 0; i < stack->size; i++)
-    stack->trace[i] = (uptr)tmp[i + offset];
+  CopyFrom((uptr*)&tmp[offset], cs_ret - offset);
 }
 
 void MaybeOpenReportFile() {

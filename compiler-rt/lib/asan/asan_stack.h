@@ -31,7 +31,7 @@ void PrintStack(StackTrace *stack);
 #if SANITIZER_WINDOWS
 #define GET_STACK_TRACE_WITH_PC_AND_BP(max_s, pc, bp, fast) \
   StackTrace stack;                                         \
-  GetStackTrace(&stack, max_s, pc, bp, 0, 0, fast)
+  stack.Unwind(max_s, pc, bp, 0, 0, fast)
 #else
 #define GET_STACK_TRACE_WITH_PC_AND_BP(max_s, pc, bp, fast)                \
   StackTrace stack;                                                        \
@@ -42,7 +42,7 @@ void PrintStack(StackTrace *stack);
       uptr stack_top = t->stack_top();                                     \
       uptr stack_bottom = t->stack_bottom();                               \
       ScopedUnwinding unwind_scope(t);                                     \
-      GetStackTrace(&stack, max_s, pc, bp, stack_top, stack_bottom, fast); \
+      stack.Unwind(max_s, pc, bp, stack_top, stack_bottom, fast);          \
     }                                                                      \
   }
 #endif  // SANITIZER_WINDOWS
