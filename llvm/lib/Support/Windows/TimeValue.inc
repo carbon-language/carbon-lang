@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Windows.h"
+#include <cctype>
 #include <time.h>
 
 namespace llvm {

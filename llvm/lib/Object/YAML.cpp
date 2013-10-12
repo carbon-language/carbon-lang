@@ -15,6 +15,7 @@
 #include "llvm/Object/YAML.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/raw_ostream.h"
+#include <cctype>
 
 using namespace llvm;
 using namespace object::yaml;

@@ -11,6 +11,7 @@
 #include "llvm/PassManager.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Transforms/Scalar.h"
+#include <cctype>
 #include <cstdio>
 #include <map>
 #include <string>

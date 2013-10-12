@@ -23,6 +23,8 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 
+#include <cctype>
+
 using namespace llvm;
 
 // Classify VT as either 32 or 64 bit.

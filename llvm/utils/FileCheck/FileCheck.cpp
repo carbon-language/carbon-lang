@@ -29,6 +29,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
 #include <algorithm>
+#include <cctype>
 #include <map>
 #include <string>
 #include <vector>

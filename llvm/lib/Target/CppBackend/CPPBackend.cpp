@@ -33,6 +33,7 @@
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/TargetRegistry.h"
 #include <algorithm>
+#include <cctype>
 #include <cstdio>
 #include <map>
 #include <set>

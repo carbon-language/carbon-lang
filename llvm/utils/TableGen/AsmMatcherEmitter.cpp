@@ -112,6 +112,7 @@
 #include "llvm/TableGen/StringToOffsetTable.h"
 #include "llvm/TableGen/TableGenBackend.h"
 #include <cassert>
+#include <cctype>
 #include <map>
 #include <set>
 #include <sstream>
