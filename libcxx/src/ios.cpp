@@ -63,7 +63,7 @@ __iostream_category::message(int ev) const
 }
 
 const error_category&
-iostream_category()
+iostream_category() _NOEXCEPT
 {
     static __iostream_category s;
     return s;

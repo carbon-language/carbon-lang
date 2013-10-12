@@ -203,9 +203,9 @@ enum class io_errc
 };
 
 concept_map ErrorCodeEnum<io_errc> { };
-error_code make_error_code(io_errc e);
-error_condition make_error_condition(io_errc e);
-storage-class-specifier const error_category& iostream_category;
+error_code make_error_code(io_errc e) noexcept; 
+error_condition make_error_condition(io_errc e) noexcept; 
+storage-class-specifier const error_category& iostream_category() noexcept;
 
 }  // std
 
@@ -396,18 +396,18 @@ struct _LIBCPP_TYPE_VIS_ONLY is_error_code_enum<io_errc::__lx> : public true_typ
 #endif
 
 _LIBCPP_FUNC_VIS
-const error_category& iostream_category();
+const error_category& iostream_category() _NOEXCEPT;
 
 inline _LIBCPP_INLINE_VISIBILITY
 error_code
-make_error_code(io_errc __e)
+make_error_code(io_errc __e) _NOEXCEPT
 {
     return error_code(static_cast<int>(__e), iostream_category());
 }
 
 inline _LIBCPP_INLINE_VISIBILITY
 error_condition
-make_error_condition(io_errc __e)
+make_error_condition(io_errc __e) _NOEXCEPT
 {
     return error_condition(static_cast<int>(__e), iostream_category());
 }
