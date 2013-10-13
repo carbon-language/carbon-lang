@@ -158,7 +158,8 @@ SDValue SITargetLowering::LowerFormalArguments(
     const ISD::InputArg &Arg = Ins[i];
 
     // First check if it's a PS input addr
-    if (Info->ShaderType == ShaderType::PIXEL && !Arg.Flags.isInReg()) {
+    if (Info->ShaderType == ShaderType::PIXEL && !Arg.Flags.isInReg() &&
+        !Arg.Flags.isByVal()) {
 
       assert((PSInputNum <= 15) && "Too many PS inputs!");
 
