@@ -1178,7 +1178,7 @@ let Predicates = [isR600] in {
   def R600_ExportSwz : ExportSwzInst {
     let Word1{20-17} = 0; // BURST_COUNT
     let Word1{21} = eop;
-    let Word1{22} = 1; // VALID_PIXEL_MODE
+    let Word1{22} = 0; // VALID_PIXEL_MODE
     let Word1{30-23} = inst;
     let Word1{31} = 1; // BARRIER
   }
@@ -1187,7 +1187,7 @@ let Predicates = [isR600] in {
   def R600_ExportBuf : ExportBufInst {
     let Word1{20-17} = 0; // BURST_COUNT
     let Word1{21} = eop;
-    let Word1{22} = 1; // VALID_PIXEL_MODE
+    let Word1{22} = 0; // VALID_PIXEL_MODE
     let Word1{30-23} = inst;
     let Word1{31} = 1; // BARRIER
   }
@@ -1729,7 +1729,7 @@ def LDS_USHORT_READ_RET : R600_LDS_1A <0x39, "LDS_USHORT_READ_RET",
 
   def EG_ExportSwz : ExportSwzInst {
     let Word1{19-16} = 0; // BURST_COUNT
-    let Word1{20} = 1; // VALID_PIXEL_MODE
+    let Word1{20} = 0; // VALID_PIXEL_MODE
     let Word1{21} = eop;
     let Word1{29-22} = inst;
     let Word1{30} = 0; // MARK
@@ -1739,7 +1739,7 @@ def LDS_USHORT_READ_RET : R600_LDS_1A <0x39, "LDS_USHORT_READ_RET",
 
   def EG_ExportBuf : ExportBufInst {
     let Word1{19-16} = 0; // BURST_COUNT
-    let Word1{20} = 1; // VALID_PIXEL_MODE
+    let Word1{20} = 0; // VALID_PIXEL_MODE
     let Word1{21} = eop;
     let Word1{29-22} = inst;
     let Word1{30} = 0; // MARK
