@@ -229,8 +229,8 @@ strstreambuf::pos_type
 strstreambuf::seekoff(off_type __off, ios_base::seekdir __way, ios_base::openmode __which)
 {
     off_type __p(-1);
-    bool pos_in = __which & ios::in;
-    bool pos_out = __which & ios::out;
+    bool pos_in = (__which & ios::in) != 0;
+    bool pos_out = (__which & ios::out) != 0;
     bool legal = false;
     switch (__way)
     {
@@ -287,8 +287,8 @@ strstreambuf::pos_type
 strstreambuf::seekpos(pos_type __sp, ios_base::openmode __which)
 {
     off_type __p(-1);
-    bool pos_in = __which & ios::in;
-    bool pos_out = __which & ios::out;
+    bool pos_in = (__which & ios::in) != 0;
+    bool pos_out = (__which & ios::out) != 0;
     if (pos_in || pos_out)
     {
         if (!((pos_in && gptr() == nullptr) || (pos_out && pptr() == nullptr)))

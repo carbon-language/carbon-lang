@@ -3331,7 +3331,7 @@ money_get<_CharT, _InputIterator>::__do_get(iter_type& __b, iter_type __e,
             bool __more_needed = __trailing_sign ||
                                  (__p < 2)       ||
                                  (__p == 2 && __pat.field[3] != static_cast<char>(money_base::none));
-            bool __sb = __flags & ios_base::showbase;
+            bool __sb = (__flags & ios_base::showbase) != 0;
             if (__sb || __more_needed)
             {
                 typename string_type::const_iterator __sym_space_end = __sym.begin();
