@@ -342,7 +342,7 @@ bool InclusionRewriter::HandleHasInclude(
   return true;
 }
 
-/// Use a raw lexer to analyze \p FileId, inccrementally copying parts of it
+/// Use a raw lexer to analyze \p FileId, incrementally copying parts of it
 /// and including content of included files recursively.
 bool InclusionRewriter::Process(FileID FileId,
                                 SrcMgr::CharacteristicKind FileType)
