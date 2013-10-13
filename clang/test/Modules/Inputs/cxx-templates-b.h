@@ -17,6 +17,9 @@ typedef SomeTemplate<int&> SomeTemplateIntRef;
 
 extern DefinedInCommon &defined_in_common;
 
+template<int> struct MergeTemplates;
+MergeTemplates<0> *merge_templates_b;
+
 @import cxx_templates_b_impl;
 
 template<typename T, typename> struct Identity { typedef T type; };

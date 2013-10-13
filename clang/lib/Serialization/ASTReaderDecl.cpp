@@ -1429,6 +1429,11 @@ ASTDeclReader::VisitRedeclarableTemplateDecl(RedeclarableTemplateDecl *D) {
 
   mergeRedeclarable(D, Redecl);
 
+  // If we merged the template with a prior declaration chain, merge the common
+  // pointer.
+  // FIXME: Actually merge here, don't just overwrite.
+  D->Common = D->getCanonicalDecl()->Common;
+
   return Redecl;
 }
 

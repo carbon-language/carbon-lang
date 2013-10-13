@@ -69,6 +69,8 @@ void g() {
   // expected-error@Inputs/cxx-templates-a.h:19 {{definition of 'DefinedInBImpl' must be imported}}
   // expected-note@Inputs/cxx-templates-b-impl.h:1 {{definition is here}}
   PerformDelayedLookup(defined_in_b_impl); // expected-note {{in instantiation of}}
+
+  merge_templates_a = merge_templates_b; // ok, same type
 }
 
 RedeclaredAsFriend<int> raf1;

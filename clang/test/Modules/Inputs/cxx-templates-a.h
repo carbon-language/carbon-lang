@@ -30,3 +30,6 @@ void use_some_template_a() {
   SomeTemplate<char[1]> b, c;
   b = c;
 }
+
+template<int> struct MergeTemplates;
+MergeTemplates<0> *merge_templates_a;
