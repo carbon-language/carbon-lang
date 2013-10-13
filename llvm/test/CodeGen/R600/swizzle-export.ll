@@ -93,7 +93,7 @@ main_body:
 }
 
 ; EG-CHECK: @main2
-; EG-CHECK: T{{[0-9]+}}.ZXY0
+; EG-CHECK: T{{[0-9]+}}.YXZ0
 
 define void @main2() #0 {
 main_body:

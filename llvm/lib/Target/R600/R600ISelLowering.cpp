@@ -1422,12 +1422,16 @@ static SDValue ReorganizeVector(SelectionDAG &DAG, SDValue VectorEntry,
     if (NewBldVec[i].getOpcode() == ISD::EXTRACT_VECTOR_ELT) {
       unsigned Idx = dyn_cast<ConstantSDNode>(NewBldVec[i].getOperand(1))
           ->getZExtValue();
-      if (!isUnmovable[Idx]) {
-        // Swap i and Idx
-        std::swap(NewBldVec[Idx], NewBldVec[i]);
-        std::swap(RemapSwizzle[RemapSwizzle[Idx]], RemapSwizzle[RemapSwizzle[i]]);
+      if (i == Idx) {
+        isUnmovable[Idx] = true;
+        continue;
       }
-      isUnmovable[Idx] = true;
+      if (isUnmovable[Idx])
+        continue;
+      // Swap i and Idx
+      std::swap(NewBldVec[Idx], NewBldVec[i]);
+      std::swap(RemapSwizzle[i], RemapSwizzle[Idx]);
+      break;
     }
   }
 
