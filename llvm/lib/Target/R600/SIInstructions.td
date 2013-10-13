@@ -25,6 +25,8 @@ def InterpSlot : Operand<i32> {
 def isSI : Predicate<"Subtarget.getGeneration() "
                       "== AMDGPUSubtarget::SOUTHERN_ISLANDS">;
 
+def WAIT_FLAG : InstFlag<"printWaitFlag">;
+
 let Predicates = [isSI] in {
 
 let neverHasSideEffects = 1 in {
@@ -815,7 +817,7 @@ def S_BARRIER : SOPP <0x0000000a, (ins), "S_BARRIER",
   let mayStore = 1;
 }
 
-def S_WAITCNT : SOPP <0x0000000c, (ins i32imm:$simm16), "S_WAITCNT $simm16",
+def S_WAITCNT : SOPP <0x0000000c, (ins WAIT_FLAG:$simm16), "S_WAITCNT $simm16",
   []
 >;
 } // End hasSideEffects
