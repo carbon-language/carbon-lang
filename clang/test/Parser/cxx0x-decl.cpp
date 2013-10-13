@@ -80,3 +80,18 @@ namespace PR5066 {
   auto f() -> int (*f)(); // expected-error {{type-id cannot have a name}}
   auto g = []() -> int (*f)() {}; // expected-error {{type-id cannot have a name}}
 }
+
+namespace FinalOverride {
+  struct Base {
+    virtual void *f();
+    virtual void *g();
+    virtual void *h();
+    virtual void *i();
+  };
+  struct Derived : Base {
+    virtual auto f() -> void *final;
+    virtual auto g() -> void *override;
+    virtual auto h() -> void *final override;
+    virtual auto i() -> void *override final;
+  };
+}

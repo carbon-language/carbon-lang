@@ -4740,11 +4740,16 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
     ConsumeToken();
     goto PastIdentifier;
   } else if (Tok.is(tok::identifier) && D.diagnoseIdentifier()) {
-    Diag(Tok.getLocation(), diag::err_unexpected_unqualified_id)
-      << FixItHint::CreateRemoval(Tok.getLocation());
-    D.SetIdentifier(0, Tok.getLocation());
-    ConsumeToken();
-    goto PastIdentifier;
+    // A virt-specifier isn't treated as an identifier if it appears after a
+    // trailing-return-type.
+    if (D.getContext() != Declarator::TrailingReturnContext ||
+        !isCXX11VirtSpecifier(Tok)) {
+      Diag(Tok.getLocation(), diag::err_unexpected_unqualified_id)
+        << FixItHint::CreateRemoval(Tok.getLocation());
+      D.SetIdentifier(0, Tok.getLocation());
+      ConsumeToken();
+      goto PastIdentifier;
+    }
   }
 
   if (Tok.is(tok::l_paren)) {
