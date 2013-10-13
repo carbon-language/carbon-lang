@@ -93,6 +93,7 @@ main_body:
 }
 
 ; EG-CHECK: @main2
+; EG-CHECK: T{{[0-9]+}}.XY__
 ; EG-CHECK: T{{[0-9]+}}.YXZ0
 
 define void @main2() #0 {
@@ -110,14 +111,12 @@ main_body:
   %10 = extractelement <4 x float> %9, i32 1
   %11 = insertelement <4 x float> undef, float %0, i32 0
   %12 = insertelement <4 x float> %11, float %1, i32 1
-  %13 = insertelement <4 x float> %12, float %2, i32 2
-  %14 = insertelement <4 x float> %13, float %3, i32 3
-  call void @llvm.R600.store.swizzle(<4 x float> %14, i32 60, i32 1)
-  %15 = insertelement <4 x float> undef, float %6, i32 0
-  %16 = insertelement <4 x float> %15, float %8, i32 1
-  %17 = insertelement <4 x float> %16, float %10, i32 2
-  %18 = insertelement <4 x float> %17, float 0.000000e+00, i32 3
-  call void @llvm.R600.store.swizzle(<4 x float> %18, i32 0, i32 2)
+  call void @llvm.R600.store.swizzle(<4 x float> %12, i32 60, i32 1)
+  %13 = insertelement <4 x float> undef, float %6, i32 0
+  %14 = insertelement <4 x float> %13, float %8, i32 1
+  %15 = insertelement <4 x float> %14, float %10, i32 2
+  %16 = insertelement <4 x float> %15, float 0.000000e+00, i32 3
+  call void @llvm.R600.store.swizzle(<4 x float> %16, i32 0, i32 2)
   ret void
 }
 

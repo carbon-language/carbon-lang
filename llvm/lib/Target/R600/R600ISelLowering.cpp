@@ -1379,6 +1379,11 @@ CompactSwizzlableVector(SelectionDAG &DAG, SDValue VectorEntry,
   };
 
   for (unsigned i = 0; i < 4; i++) {
+    if (NewBldVec[i].getOpcode() == ISD::UNDEF)
+      // We mask write here to teach later passes that the ith element of this
+      // vector is undef. Thus we can use it to reduce 128 bits reg usage,
+      // break false dependencies and additionnaly make assembly easier to read.
+      RemapSwizzle[i] = 7; // SEL_MASK_WRITE
     if (ConstantFPSDNode *C = dyn_cast<ConstantFPSDNode>(NewBldVec[i])) {
       if (C->isZero()) {
         RemapSwizzle[i] = 4; // SEL_0
