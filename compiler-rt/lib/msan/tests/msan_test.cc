@@ -1269,6 +1269,17 @@ TEST(MemorySanitizer, strtod) {
   EXPECT_NOT_POISONED((S8) e);
 }
 
+#ifdef __GLIBC__
+extern "C" double __strtod_l(const char *nptr, char **endptr, locale_t loc);
+TEST(MemorySanitizer, __strtod_l) {
+  locale_t loc = newlocale(LC_NUMERIC_MASK, "C", (locale_t)0);
+  char *e;
+  assert(0 != __strtod_l("1.5", &e, loc));
+  EXPECT_NOT_POISONED((S8) e);
+  freelocale(loc);
+}
+#endif  // __GLIBC__
+
 TEST(MemorySanitizer, strtof) {
   char *e;
   assert(0 != strtof("1.5", &e));
