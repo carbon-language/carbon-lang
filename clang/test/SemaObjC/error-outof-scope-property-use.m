@@ -6,7 +6,7 @@
 
 @interface LaunchdJobs 
 
-@property (nonatomic,retain) NSMutableDictionary *uuids_jobs; // expected-note 2 {{'_uuids_jobs' declared here}}
+@property (nonatomic,retain) NSMutableDictionary *uuids_jobs; // expected-note {{'_uuids_jobs' declared here}}
 
 @end
 

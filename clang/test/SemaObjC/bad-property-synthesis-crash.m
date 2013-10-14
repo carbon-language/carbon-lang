@@ -13,7 +13,7 @@
   __what; // expected-error {{use of undeclared identifier}} \
           // expected-warning {{expression result unused}}
 }
-@synthesize what; // expected-note 2 {{'what' declared here}}
+@synthesize what; // expected-note {{'what' declared here}}
 @end
 
 @implementation Bar // expected-warning {{cannot find interface declaration for}}

@@ -4167,8 +4167,15 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
       // keyword case, we'll end up adding the keyword below.
       if (Cached->second) {
         if (!Cached->second.isKeyword() &&
-            isCandidateViable(CCC, Cached->second))
-          Consumer.addCorrection(Cached->second);
+            isCandidateViable(CCC, Cached->second)) {
+          // Do not use correction that is unaccessible in the given scope.
+          NamedDecl* CorrectionDecl = Cached->second.getCorrectionDecl();
+          DeclarationNameInfo NameInfo(CorrectionDecl->getDeclName(),
+                                       CorrectionDecl->getLocation());
+          LookupResult R(*this, NameInfo, LookupOrdinaryName);
+          if (LookupName(R, S))
+            Consumer.addCorrection(Cached->second);
+        }
       } else {
         // Only honor no-correction cache hits when a callback that will validate
         // correction candidates is not being used.
