@@ -632,9 +632,12 @@ redo_gep:
 bool X86FastISel::X86SelectCallAddress(const Value *V, X86AddressMode &AM) {
   const User *U = NULL;
   unsigned Opcode = Instruction::UserOp1;
-  if (const Instruction *I = dyn_cast<Instruction>(V)) {
+  const Instruction *I = dyn_cast<Instruction>(V);
+  bool InMBB = true;
+  if (I) {
     Opcode = I->getOpcode();
     U = I;
+    InMBB = I->getParent() == FuncInfo.MBB->getBasicBlock();
   } else if (const ConstantExpr *C = dyn_cast<ConstantExpr>(V)) {
     Opcode = C->getOpcode();
     U = C;
@@ -643,18 +646,22 @@ bool X86FastISel::X86SelectCallAddress(const Value *V, X86AddressMode &AM) {
   switch (Opcode) {
   default: break;
   case Instruction::BitCast:
-    // Look past bitcasts.
-    return X86SelectCallAddress(U->getOperand(0), AM);
+    // Look past bitcasts if its operand is in the same BB.
+    if (InMBB)
+      return X86SelectCallAddress(U->getOperand(0), AM);
+    break;
 
   case Instruction::IntToPtr:
-    // Look past no-op inttoptrs.
-    if (TLI.getValueType(U->getOperand(0)->getType()) == TLI.getPointerTy())
+    // Look past no-op inttoptrs if its operand is in the same BB.
+    if (InMBB &&
+        TLI.getValueType(U->getOperand(0)->getType()) == TLI.getPointerTy())
       return X86SelectCallAddress(U->getOperand(0), AM);
     break;
 
   case Instruction::PtrToInt:
-    // Look past no-op ptrtoints.
-    if (TLI.getValueType(U->getType()) == TLI.getPointerTy())
+    // Look past no-op ptrtoints if its operand is in the same BB.
+    if (InMBB &&
+        TLI.getValueType(U->getType()) == TLI.getPointerTy())
       return X86SelectCallAddress(U->getOperand(0), AM);
     break;
   }
