@@ -5444,7 +5444,7 @@ llvm::Value *XCoreABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
     AI.setCoerceToType(ArgTy);
   llvm::Type *ArgPtrTy = llvm::PointerType::getUnqual(ArgTy);
   llvm::Value *Val;
-  uint64_t ArgSize;
+  uint64_t ArgSize = 0;
   switch (AI.getKind()) {
   case ABIArgInfo::Expand:
     llvm_unreachable("Unsupported ABI kind for va_arg");
