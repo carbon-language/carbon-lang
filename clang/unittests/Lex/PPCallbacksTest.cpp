@@ -85,7 +85,7 @@ public:
 class PragmaOpenCLExtensionCallbacks : public PPCallbacks {
 public:
   typedef struct {
-    StringRef Name;
+    SmallString<16> Name;
     unsigned State;
   } CallbackParameters;
 
@@ -95,13 +95,13 @@ public:
     clang::SourceLocation NameLoc, const clang::IdentifierInfo *Name,
     clang::SourceLocation StateLoc, unsigned State) {
       this->NameLoc = NameLoc;
-      this->Name = Name->getName().str();
+      this->Name = Name->getName();
       this->StateLoc = StateLoc;
       this->State = State;
   };
 
   SourceLocation NameLoc;
-  StringRef Name;
+  SmallString<16> Name;
   SourceLocation StateLoc;
   unsigned State;
 };
@@ -230,7 +230,7 @@ protected:
     }
 
     PragmaOpenCLExtensionCallbacks::CallbackParameters RetVal = {
-      Callbacks->Name.str(),
+      Callbacks->Name,
       Callbacks->State
     };
     return RetVal;    
