@@ -569,28 +569,6 @@ INTERCEPTOR(double, wcstod, const wchar_t *nptr, wchar_t **endptr) {
   return res;
 }
 
-// #define UNSUPPORTED(name) \
-//   INTERCEPTOR(void, name, void) {                     \
-//     Printf("MSAN: Unsupported %s\n", __FUNCTION__);   \
-//     Die();                                            \
-//   }
-
-// FIXME: intercept the following functions:
-// Note, they only matter when running without a dynamic tool.
-// UNSUPPORTED(wcscoll_l)
-// UNSUPPORTED(wcsnrtombs)
-// UNSUPPORTED(wcstol)
-// UNSUPPORTED(wcstoll)
-// UNSUPPORTED(wcstold)
-// UNSUPPORTED(wcstoul)
-// UNSUPPORTED(wcstoull)
-// UNSUPPORTED(wcsxfrm_l)
-// UNSUPPORTED(wcsdup)
-// UNSUPPORTED(wcsftime)
-// UNSUPPORTED(wcsstr)
-// UNSUPPORTED(wcsrchr)
-// UNSUPPORTED(wctob)
-
 INTERCEPTOR(int, gettimeofday, void *tv, void *tz) {
   ENSURE_MSAN_INITED();
   int res = REAL(gettimeofday)(tv, tz);
