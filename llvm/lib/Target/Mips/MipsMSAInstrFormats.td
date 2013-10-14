@@ -22,26 +22,54 @@ class PseudoMSA<dag outs, dag ins, list<dag> pattern,
 }
 
 class MSA_BIT_B_FMT<bits<3> major, bits<6> minor>: MSAInst {
+  bits<5> ws;
+  bits<5> wd;
+  bits<3> m;
+
   let Inst{25-23} = major;
   let Inst{22-19} = 0b1110;
+  let Inst{18-16} = m;
+  let Inst{15-11} = ws;
+  let Inst{10-6} = wd;
   let Inst{5-0} = minor;
 }
 
 class MSA_BIT_H_FMT<bits<3> major, bits<6> minor>: MSAInst {
+  bits<5> ws;
+  bits<5> wd;
+  bits<4> m;
+
   let Inst{25-23} = major;
   let Inst{22-20} = 0b110;
+  let Inst{19-16} = m;
+  let Inst{15-11} = ws;
+  let Inst{10-6} = wd;
   let Inst{5-0} = minor;
 }
 
 class MSA_BIT_W_FMT<bits<3> major, bits<6> minor>: MSAInst {
+  bits<5> ws;
+  bits<5> wd;
+  bits<5> m;
+
   let Inst{25-23} = major;
   let Inst{22-21} = 0b10;
+  let Inst{20-16} = m;
+  let Inst{15-11} = ws;
+  let Inst{10-6} = wd;
   let Inst{5-0} = minor;
 }
 
 class MSA_BIT_D_FMT<bits<3> major, bits<6> minor>: MSAInst {
+  bits<5> ws;
+  bits<5> wd;
+  bits<6> m;
+
   let Inst{25-23} = major;
   let Inst{22} = 0b0;
+  let Inst{21-16} = m;
+  let Inst{15-11} = ws;
+  let Inst{10-6} = wd;
   let Inst{5-0} = minor;
 }
 
