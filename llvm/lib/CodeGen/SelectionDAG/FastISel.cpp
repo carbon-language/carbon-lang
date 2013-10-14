@@ -644,13 +644,14 @@ bool FastISel::SelectCall(const User *I) {
       if (Op->isReg()) {
         Op->setIsDebug(true);
         BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                TII.get(TargetOpcode::DBG_VALUE),
-                false, Op->getReg(), 0, DI->getVariable());
-    } else
-      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-              TII.get(TargetOpcode::DBG_VALUE))
-        .addOperand(*Op).addImm(0)
-        .addMetadata(DI->getVariable());
+                TII.get(TargetOpcode::DBG_VALUE), false, Op->getReg(), 0,
+                DI->getVariable());
+      } else
+        BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                TII.get(TargetOpcode::DBG_VALUE))
+            .addOperand(*Op)
+            .addImm(0)
+            .addMetadata(DI->getVariable());
     } else {
       // We can't yet handle anything else here because it would require
       // generating code, thus altering codegen because of debug info.
