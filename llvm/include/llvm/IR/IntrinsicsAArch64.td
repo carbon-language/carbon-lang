@@ -167,4 +167,28 @@ def int_aarch64_neon_vcvtf64_u64 :
 
 // Scalar Floating-point Reciprocal Exponent
 def int_aarch64_neon_vrecpx : Neon_1Arg_Intrinsic;
+
+class Neon_ICmp_Intrinsic
+  : Intrinsic<[llvm_v1i64_ty], [llvm_v1i64_ty, llvm_v1i64_ty], [IntrNoMem]>;
+
+// Scalar Integer Compare Equal
+def int_aarch64_neon_vceq : Neon_ICmp_Intrinsic;
+
+// Scalar Integer Compare Greater-Than or Equal
+def int_aarch64_neon_vcge : Neon_ICmp_Intrinsic;
+def int_aarch64_neon_vchs : Neon_ICmp_Intrinsic;
+
+// Scalar Integer Compare Less-Than or Equal
+def int_aarch64_neon_vclez : Neon_ICmp_Intrinsic;
+
+// Scalar Compare Less-Than
+def int_aarch64_neon_vcltz : Neon_ICmp_Intrinsic;
+
+// Scalar Compare Greater-Than
+def int_aarch64_neon_vcgt : Neon_ICmp_Intrinsic;
+def int_aarch64_neon_vchi : Neon_ICmp_Intrinsic;
+
+// Scalar Compare Bitwise Test Bits
+def int_aarch64_neon_vtstd : Neon_ICmp_Intrinsic;
+
 }

@@ -4286,3 +4286,113 @@
 // CHECK-ERROR         dup v5.2d, w0
 // CHECK-ERROR                    ^
 
+//----------------------------------------------------------------------
+// Scalar Compare Bitwise Equal
+//----------------------------------------------------------------------
+
+         cmeq b20, d21, d22
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          cmeq b20, d21, d22
+// CHECK-ERROR:               ^
+
+//----------------------------------------------------------------------
+// Scalar Compare Bitwise Equal To Zero
+//----------------------------------------------------------------------
+
+         cmeq d20, b21, #0
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          cmeq d20, b21, #0
+// CHECK-ERROR:                    ^
+
+//----------------------------------------------------------------------
+// Scalar Compare Unsigned Higher Or Same
+//----------------------------------------------------------------------
+
+         cmhs b20, d21, d22
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          cmhs b20, d21, d22
+// CHECK-ERROR:               ^
+
+        
+//----------------------------------------------------------------------
+// Scalar Compare Signed Greather Than Or Equal
+//----------------------------------------------------------------------
+
+         cmge b20, d21, d22
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          cmge b20, d21, d22
+// CHECK-ERROR:               ^
+
+//----------------------------------------------------------------------
+// Scalar Compare Signed Greather Than Or Equal To Zero
+//----------------------------------------------------------------------
+
+         cmge d20, b21, #0
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          cmge d20, b21, #0
+// CHECK-ERROR:                    ^
+
+//----------------------------------------------------------------------
+// Scalar Compare Unsigned Higher
+//----------------------------------------------------------------------
+
+         cmhi b20, d21, d22
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          cmhi b20, d21, d22
+// CHECK-ERROR:               ^
+
+//----------------------------------------------------------------------
+// Scalar Compare Signed Greater Than
+//----------------------------------------------------------------------
+
+         cmgt b20, d21, d22
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          cmgt b20, d21, d22
+// CHECK-ERROR:               ^
+
+//----------------------------------------------------------------------
+// Scalar Compare Signed Greater Than Zero
+//----------------------------------------------------------------------
+
+         cmgt d20, b21, #0
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          cmgt d20, b21, #0
+// CHECK-ERROR:                    ^
+
+//----------------------------------------------------------------------
+// Scalar Compare Signed Less Than Or Equal To Zero
+//----------------------------------------------------------------------
+
+         cmle d20, b21, #0
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          cmle d20, b21, #0
+// CHECK-ERROR:                    ^
+
+//----------------------------------------------------------------------
+// Scalar Compare Less Than Zero
+//----------------------------------------------------------------------
+
+         cmlt d20, b21, #0
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          cmlt d20, b21, #0
+// CHECK-ERROR:                    ^
+
+//----------------------------------------------------------------------
+// Scalar Compare Bitwise Test Bits
+//----------------------------------------------------------------------
+
+         cmtst b20, d21, d22
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:          cmtst b20, d21, d22
+// CHECK-ERROR:                ^
