@@ -969,7 +969,7 @@ def : Pat<(store (i64 (X86Wrapper tblockaddress:$src)), addr:$dst),
 // tls has some funny stuff here...
 // This corresponds to movabs $foo@tpoff, %rax
 def : Pat<(i64 (X86Wrapper tglobaltlsaddr :$dst)),
-          (MOV64ri tglobaltlsaddr :$dst)>;
+          (MOV64ri32 tglobaltlsaddr :$dst)>;
 // This corresponds to add $foo@tpoff, %rax
 def : Pat<(add GR64:$src1, (X86Wrapper tglobaltlsaddr :$dst)),
           (ADD64ri32 GR64:$src1, tglobaltlsaddr :$dst)>;
