@@ -1,10 +1,7 @@
 ; RUN: llc < %s -mtriple=thumbv8 -mattr=+neon | FileCheck %s
 
 ;CHECK-LABEL: select_s_v_v:
-;CHECK: beq	.LBB0_2
-;CHECK-NEXT: @ BB#1:
-;CHECK-NEXT: vmov.i32
-;CHECK-NEXT: .LBB0_2:
+;CHECK-NOT: it
 ;CHECK: bx
 define <16 x i8> @select_s_v_v(i32 %avail, i8* %bar) {
 entry:

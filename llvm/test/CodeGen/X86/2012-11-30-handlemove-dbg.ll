@@ -6,7 +6,7 @@
 ;
 ; CHECK: %entry
 ; CHECK: DEBUG_VALUE: hg
-; CHECK: je
+; CHECK: j
 
 %struct.node.0.27 = type { i16, double, [3 x double], i32, i32 }
 %struct.hgstruct.2.29 = type { %struct.bnode.1.28*, [3 x double], double, [3 x double] }

@@ -42,7 +42,7 @@ if.then:                                          ; preds = %land.lhs.true
 ; If-convert the return
 ; CHECK: it	ne
 ; Fold the CSR+return into a pop
-; CHECK: pop {r4, r5, r6, r7, pc}
+; CHECK: pop {r4, r5, r7, pc}
 sw.bb18:
   %call20 = tail call i32 @bar(i32 %in2) nounwind
   switch i32 %call20, label %sw.default56 [
