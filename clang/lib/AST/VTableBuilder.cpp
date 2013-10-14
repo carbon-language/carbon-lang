@@ -3151,9 +3151,8 @@ static void EnumerateVFPtrs(
     CharUnits NextBaseOffset;
     const CXXRecordDecl *NextLastVBase;
     if (I->isVirtual()) {
-      if (VisitedVBases.count(BaseDecl))
+      if (!VisitedVBases.insert(BaseDecl))
         continue;
-      VisitedVBases.insert(BaseDecl);
       NextBaseOffset = MostDerivedClassLayout.getVBaseClassOffset(BaseDecl);
       NextLastVBase = BaseDecl;
     } else {

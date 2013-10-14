@@ -1733,9 +1733,8 @@ void Sema::MatchAllMethodDeclarations(const SelectorSet &InsMap,
   // implemented in the implementation class. If so, their types match.
   for (ObjCInterfaceDecl::instmeth_iterator I = CDecl->instmeth_begin(),
        E = CDecl->instmeth_end(); I != E; ++I) {
-    if (InsMapSeen.count((*I)->getSelector()))
-        continue;
-    InsMapSeen.insert((*I)->getSelector());
+    if (!InsMapSeen.insert((*I)->getSelector()))
+      continue;
     if (!(*I)->isPropertyAccessor() &&
         !InsMap.count((*I)->getSelector())) {
       if (ImmediateClass)
@@ -1762,11 +1761,11 @@ void Sema::MatchAllMethodDeclarations(const SelectorSet &InsMap,
 
   // Check and see if class methods in class interface have been
   // implemented in the implementation class. If so, their types match.
-   for (ObjCInterfaceDecl::classmeth_iterator
-       I = CDecl->classmeth_begin(), E = CDecl->classmeth_end(); I != E; ++I) {
-     if (ClsMapSeen.count((*I)->getSelector()))
-       continue;
-     ClsMapSeen.insert((*I)->getSelector());
+  for (ObjCInterfaceDecl::classmeth_iterator I = CDecl->classmeth_begin(),
+                                             E = CDecl->classmeth_end();
+       I != E; ++I) {
+    if (!ClsMapSeen.insert((*I)->getSelector()))
+      continue;
     if (!ClsMap.count((*I)->getSelector())) {
       if (ImmediateClass)
         WarnUndefinedMethod(IMPDecl->getLocation(), *I, IncompleteImpl,
