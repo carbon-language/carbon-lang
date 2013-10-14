@@ -1598,6 +1598,7 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
   const Stmt *Body = D->getBody();
   assert(Body);
 
+  // Construct the analysis context with the specified CFG build options.
   AnalysisDeclContext AC(/* AnalysisDeclContextManager */ 0, D);
 
   // Don't generate EH edges for CallExprs as we'd like to avoid the n^2
@@ -1631,8 +1632,7 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
       .setAlwaysAdd(Stmt::AttributedStmtClass);
   }
 
-  // Construct the analysis context with the specified CFG build options.
-  
+
   // Emit delayed diagnostics.
   if (!fscope->PossiblyUnreachableDiags.empty()) {
     bool analyzed = false;
