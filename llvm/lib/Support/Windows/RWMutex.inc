@@ -48,9 +48,7 @@ static bool loadSRW() {
   if (!sChecked) {
     sChecked = true;
 
-    HMODULE hLib;
-    ::GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_PIN, L"Kernel32.dll", &hLib);
-    if (hLib) {
+    if (HMODULE hLib = ::GetModuleHandleW(L"Kernel32.dll")) {
       fpInitializeSRWLock =
         (VOID (WINAPI *)(PSRWLOCK))::GetProcAddress(hLib,
                                                "InitializeSRWLock");
