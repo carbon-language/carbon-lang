@@ -17,21 +17,30 @@
 #include "llvm/CodeGen/MachineInstrBundle.h"
 using namespace llvm;
 
+/// Return true if the given MachineOperand clobbers the given register unit.
+/// A register unit is only clobbered if all its super-registers are clobbered.
+static bool operClobbersUnit(const MachineOperand *MO, unsigned Unit,
+                             const MCRegisterInfo *MCRI) {
+  for (MCRegUnitRootIterator RI(Unit, MCRI); RI.isValid(); ++RI) {
+    for (MCSuperRegIterator SI(*RI, MCRI, true); SI.isValid(); ++SI) {
+      if (!MO->clobbersPhysReg(*SI))
+        return false;
+    }
+  }
+  return true;
+}
+
 /// We assume the high bits of a physical super register are not preserved
 /// unless the instruction has an implicit-use operand reading the
 /// super-register or a register unit for the upper bits is available.
 void LiveRegUnits::removeRegsInMask(const MachineOperand &Op,
                                     const MCRegisterInfo &MCRI) {
-  const uint32_t *Mask = Op.getRegMask();
-  unsigned Bit = 0;
-  for (unsigned R = 0; R < MCRI.getNumRegs(); ++R) {
-    if ((*Mask & (1u << Bit)) == 0)
-      removeReg(R, MCRI);
-    ++Bit;
-    if (Bit >= 32) {
-      Bit = 0;
-      ++Mask;
-    }
+  SparseSet<unsigned>::iterator LUI = LiveUnits.begin();
+  while (LUI != LiveUnits.end()) {
+    if (operClobbersUnit(&Op, *LUI, &MCRI))
+      LUI = LiveUnits.erase(LUI);
+    else
+      ++LUI;
   }
 }
 
