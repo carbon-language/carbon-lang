@@ -14,6 +14,7 @@
 ; RUN: llc < %s -mtriple=thumbv7m-linux-gnueabi -mcpu=cortex-m4 | FileCheck %s --check-prefix=CORTEX-M4
 ; RUN: llc < %s -mtriple=armv7r-linux-gnueabi -mcpu=cortex-r5 | FileCheck %s --check-prefix=CORTEX-R5
 ; RUN: llc < %s -mtriple=armv8-linux-gnueabi -mcpu=cortex-a53 | FileCheck %s --check-prefix=CORTEX-A53
+; RUN: llc < %s -mtriple=armv8-linux-gnueabi -mcpu=cortex-a57 | FileCheck %s --check-prefix=CORTEX-A57
 ; This tests that MC/asm header conversion is smooth and that build attributes are correct
 ;
 
@@ -146,6 +147,18 @@
 ; CORTEX-A53:  .eabi_attribute 24, 1
 ; CORTEX-A53:  .eabi_attribute 25, 1
 ; CORTEX-A53:  .eabi_attribute 44, 2
+
+; CORTEX-A57:  .cpu cortex-a57
+; CORTEX-A57:  .eabi_attribute 6, 14
+; CORTEX-A57:  .eabi_attribute 7, 65
+; CORTEX-A57:  .eabi_attribute 8, 1
+; CORTEX-A57:  .eabi_attribute 9, 2
+; CORTEX-A57:  .fpu crypto-neon-fp-armv8
+; CORTEX-A57:  .eabi_attribute 10, 7
+; CORTEX-A57:  .eabi_attribute 12, 3
+; CORTEX-A57:  .eabi_attribute 24, 1
+; CORTEX-A57:  .eabi_attribute 25, 1
+; CORTEX-A57:  .eabi_attribute 44, 2
 
 define i32 @f(i64 %z) {
 	ret i32 0

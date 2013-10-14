@@ -203,6 +203,12 @@ def ProcA53     : SubtargetFeature<"a53", "ARMProcFamily", "CortexA53",
                                     FeatureTrustZone, FeatureT2XtPk,
                                     FeatureCrypto]>;
 
+def ProcA57     : SubtargetFeature<"a57", "ARMProcFamily", "CortexA57",
+                                   "Cortex-A57 ARM processors",
+                                   [FeatureMP, FeatureHWDiv, FeatureHWDivARM,
+                                    FeatureTrustZone, FeatureT2XtPk,
+                                    FeatureCrypto]>;
+
 def ProcR5      : SubtargetFeature<"r5", "ARMProcFamily", "CortexR5",
                                    "Cortex-R5 ARM processors",
                                    [FeatureSlowFPBrcc,
@@ -324,6 +330,9 @@ def : ProcessorModel<"swift",       SwiftModel,
 
 // V8 Processors
 def : ProcNoItin<"cortex-a53",      [ProcA53, HasV8Ops, FeatureAClass,
+                                    FeatureDB, FeatureFPARMv8,
+                                    FeatureNEON, FeatureDSPThumb2]>;
+def : ProcNoItin<"cortex-a57",      [ProcA57, HasV8Ops, FeatureAClass,
                                     FeatureDB, FeatureFPARMv8,
                                     FeatureNEON, FeatureDSPThumb2]>;
 
