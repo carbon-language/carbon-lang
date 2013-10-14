@@ -277,27 +277,6 @@ namespace llvm {
     /// hasMCAsmBackend - Check if this target supports .o generation.
     bool hasMCAsmBackend() const { return MCAsmBackendCtorFn != 0; }
 
-    /// hasAsmParser - Check if this target supports .s parsing.
-    bool hasMCAsmParser() const { return MCAsmParserCtorFn != 0; }
-
-    /// hasAsmPrinter - Check if this target supports .s printing.
-    bool hasAsmPrinter() const { return AsmPrinterCtorFn != 0; }
-
-    /// hasMCDisassembler - Check if this target has a disassembler.
-    bool hasMCDisassembler() const { return MCDisassemblerCtorFn != 0; }
-
-    /// hasMCInstPrinter - Check if this target has an instruction printer.
-    bool hasMCInstPrinter() const { return MCInstPrinterCtorFn != 0; }
-
-    /// hasMCCodeEmitter - Check if this target supports instruction encoding.
-    bool hasMCCodeEmitter() const { return MCCodeEmitterCtorFn != 0; }
-
-    /// hasMCObjectStreamer - Check if this target supports streaming to files.
-    bool hasMCObjectStreamer() const { return MCObjectStreamerCtorFn != 0; }
-
-    /// hasAsmStreamer - Check if this target supports streaming to files.
-    bool hasAsmStreamer() const { return AsmStreamerCtorFn != 0; }
-
     /// @}
     /// @name Feature Constructors
     /// @{
