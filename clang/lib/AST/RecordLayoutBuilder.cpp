@@ -2660,8 +2660,8 @@ void MicrosoftRecordLayoutBuilder::layoutVFPtr(const CXXRecordDecl *RD) {
   // the max alignment of all the non-virtual data in the class.  The resulting
   // layout is essentially { vftbl, { nvdata } }.  This is completely
   // unnecessary, but we're not here to pass judgment.
-  Size += Alignment;
   updateAlignment(PointerAlignment);
+  Size += Alignment;
 }
 
 void

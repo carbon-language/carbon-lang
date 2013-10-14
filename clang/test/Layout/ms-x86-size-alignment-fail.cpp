@@ -58,10 +58,20 @@ struct E : virtual B0, virtual B1 {};
 // CHECK:    5 |   struct B1 (virtual base) (empty)
 // CHECK:      | [sizeof=8, align=4
 // CHECK:      |  nvsize=4, nvalign=4]
-	
+
+struct F { char a; virtual ~F(); };
+
+// CHECK: *** Dumping AST Record Layout
+// CHECK:    0 | struct F
+// CHECK:    0 |   (F vftable pointer)
+// CHECK:    4 |   char a
+// CHECK:      | [sizeof=8, align=4
+// CHECK:      |  nvsize=8, nvalign=4]
+
 int a[
 sizeof(A)+
 sizeof(B)+
 sizeof(C)+
 sizeof(D)+
-sizeof(E)];
+sizeof(E)+
+sizeof(F)];
