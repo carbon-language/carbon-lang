@@ -58,8 +58,6 @@ OptimizeRegAlloc("optimize-regalloc", cl::Hidden,
 static cl::opt<cl::boolOrDefault>
 EnableMachineSched("enable-misched", cl::Hidden,
     cl::desc("Enable the machine instruction scheduling pass."));
-static cl::opt<bool> EnableStrongPHIElim("strong-phi-elim", cl::Hidden,
-    cl::desc("Use strong PHI elimination."));
 static cl::opt<bool> DisablePostRAMachineLICM("disable-postra-machine-licm",
     cl::Hidden,
     cl::desc("Disable Machine LICM"));
@@ -675,24 +673,15 @@ void TargetPassConfig::addOptimizedRegAlloc(FunctionPass *RegAllocPass) {
   // preferably fix the scavenger to not depend on them).
   addPass(&LiveVariablesID);
 
-  // Add passes that move from transformed SSA into conventional SSA. This is a
-  // "copy coalescing" problem.
-  //
-  if (!EnableStrongPHIElim) {
-    // Edge splitting is smarter with machine loop info.
-    addPass(&MachineLoopInfoID);
-    addPass(&PHIEliminationID);
-  }
+  // Edge splitting is smarter with machine loop info.
+  addPass(&MachineLoopInfoID);
+  addPass(&PHIEliminationID);
 
   // Eventually, we want to run LiveIntervals before PHI elimination.
   if (EarlyLiveIntervals)
     addPass(&LiveIntervalsID);
 
   addPass(&TwoAddressInstructionPassID);
-
-  if (EnableStrongPHIElim)
-    addPass(&StrongPHIEliminationID);
-
   addPass(&RegisterCoalescerID);
 
   // PreRA instruction scheduling.
