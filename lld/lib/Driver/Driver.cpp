@@ -84,16 +84,14 @@ bool Driver::link(LinkingContext &context, raw_ostream &diagnostics) {
   InputGraph::FileVectorT internalFiles;
   context.createInternalFiles(internalFiles);
 
-  if (internalFiles.size()) {
+  if (internalFiles.size())
     fileNode->appendInputFiles(std::move(internalFiles));
-  }
 
   // Give target a chance to add files.
   InputGraph::FileVectorT implicitFiles;
   context.createImplicitFiles(implicitFiles);
-  if (implicitFiles.size()) {
+  if (implicitFiles.size())
     fileNode->appendInputFiles(std::move(implicitFiles));
-  }
 
   context.inputGraph().insertOneElementAt(std::move(fileNode),
                                           InputGraph::Position::BEGIN);
