@@ -6,21 +6,22 @@
 // License. See LICENSE.TXT for details.
 //
 //===---------------------------------------------------------------------===//
+#include "llvm/Support/Compiler.h"
 
 #ifdef DECLARE_REGISTER_INFOS_I386_STRUCT
 
 // Computes the offset of the given GPR in the user data area.
 #define GPR_OFFSET(regname) \
-    (offsetof(GPR, regname))
+    (LLVM_EXTENSION offsetof(GPR, regname))
 
 // Computes the offset of the given FPR in the extended data area.
 #define FPR_OFFSET(regname)  \
-    (offsetof(FPR, xstate) + \
-     offsetof(FXSAVE, regname))
+    (LLVM_EXTENSION offsetof(FPR, xstate) + \
+     LLVM_EXTENSION offsetof(FXSAVE, regname))
 
 // Computes the offset of the YMM register assembled from register halves.
 #define YMM_OFFSET(regname) \
-    (offsetof(YMM, regname))
+    (LLVM_EXTENSION offsetof(YMM, regname))
 
 // Number of bytes needed to represent a FPR.
 #define FPR_SIZE(reg) sizeof(((FXSAVE*)NULL)->reg)
