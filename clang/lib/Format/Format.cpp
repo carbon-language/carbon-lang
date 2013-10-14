@@ -47,8 +47,8 @@ struct ScalarEnumerationTraits<clang::format::FormatStyle::LanguageStandard> {
 
 template <>
 struct ScalarEnumerationTraits<clang::format::FormatStyle::UseTabStyle> {
-  static void
-  enumeration(IO &IO, clang::format::FormatStyle::UseTabStyle &Value) {
+  static void enumeration(IO &IO,
+                          clang::format::FormatStyle::UseTabStyle &Value) {
     IO.enumCase(Value, "Never", clang::format::FormatStyle::UT_Never);
     IO.enumCase(Value, "false", clang::format::FormatStyle::UT_Never);
     IO.enumCase(Value, "Always", clang::format::FormatStyle::UT_Always);
@@ -577,7 +577,7 @@ private:
     if (!DryRun) {
       Whitespaces->replaceWhitespace(
           *LBrace.Children[0]->First,
-          /*Newlines=*/0, /*IndentLevel=*/1, /*Spaces=*/1,
+          /*Newlines=*/0, /*IndentLevel=*/0, /*Spaces=*/1,
           /*StartOfTokenColumn=*/State.Column, State.Line->InPPDirective);
       UnwrappedLineFormatter Formatter(Indenter, Whitespaces, Style,
                                        *LBrace.Children[0]);
@@ -904,8 +904,8 @@ public:
       bool WasMoved = PreviousLineWasTouched && FirstTok->NewlinesBefore == 0;
       if (TheLine.First->is(tok::eof)) {
         if (PreviousLineWasTouched) {
-          unsigned NewLines = std::min(FirstTok->NewlinesBefore, 1u);
-          Whitespaces.replaceWhitespace(*TheLine.First, NewLines,
+          unsigned Newlines = std::min(FirstTok->NewlinesBefore, 1u);
+          Whitespaces.replaceWhitespace(*TheLine.First, Newlines,
                                         /*IndentLevel=*/0, /*Spaces=*/0,
                                         /*TargetColumn=*/0);
         }
@@ -916,7 +916,7 @@ public:
             // Insert a break even if there is a structural error in case where
             // we break apart a line consisting of multiple unwrapped lines.
             (FirstTok->NewlinesBefore == 0 || !StructuralError)) {
-          formatFirstToken(*TheLine.First, PreviousLine, Indent,
+          formatFirstToken(*TheLine.First, PreviousLine, TheLine.Level, Indent,
                            TheLine.InPPDirective);
         } else {
           Indent = LevelIndent = FirstTok->OriginalColumn;
@@ -957,7 +957,7 @@ public:
             // Remove trailing whitespace of the previous line if it was
             // touched.
             if (PreviousLineWasTouched || touchesEmptyLineBefore(TheLine)) {
-              formatFirstToken(*Tok, PreviousLine, LevelIndent,
+              formatFirstToken(*Tok, PreviousLine, TheLine.Level, LevelIndent,
                                TheLine.InPPDirective);
             } else {
               Whitespaces.addUntouchableToken(*Tok, TheLine.InPPDirective);
@@ -1276,10 +1276,9 @@ private:
 
   /// \brief Add a new line and the required indent before the first Token
   /// of the \c UnwrappedLine if there was no structural parsing error.
-  /// Returns the indent level of the \c UnwrappedLine.
   void formatFirstToken(FormatToken &RootToken,
-                        const AnnotatedLine *PreviousLine, unsigned Indent,
-                        bool InPPDirective) {
+                        const AnnotatedLine *PreviousLine, unsigned IndentLevel,
+                        unsigned Indent, bool InPPDirective) {
     unsigned Newlines =
         std::min(RootToken.NewlinesBefore, Style.MaxEmptyLinesToKeep + 1);
     // Remove empty lines before "}" where applicable.
@@ -1300,7 +1299,7 @@ private:
       Newlines = std::min(1u, Newlines);
 
     Whitespaces.replaceWhitespace(
-        RootToken, Newlines, Indent / Style.IndentWidth, Indent, Indent,
+        RootToken, Newlines, IndentLevel, Indent, Indent,
         InPPDirective && !RootToken.HasUnescapedNewline);
   }
 
@@ -1386,8 +1385,8 @@ FormatStyle getStyle(StringRef StyleName, StringRef FileName) {
   if (StyleName.startswith("{")) {
     // Parse YAML/JSON style from the command line.
     if (llvm::error_code ec = parseConfiguration(StyleName, &Style)) {
-      llvm::errs() << "Error parsing -style: " << ec.message()
-                   << ", using " << FallbackStyle << " style\n";
+      llvm::errs() << "Error parsing -style: " << ec.message() << ", using "
+                   << FallbackStyle << " style\n";
     }
     return Style;
   }
@@ -1401,8 +1400,7 @@ FormatStyle getStyle(StringRef StyleName, StringRef FileName) {
 
   SmallString<128> Path(FileName);
   llvm::sys::fs::make_absolute(Path);
-  for (StringRef Directory = Path;
-       !Directory.empty();
+  for (StringRef Directory = Path; !Directory.empty();
        Directory = llvm::sys::path::parent_path(Directory)) {
     if (!llvm::sys::fs::is_directory(Directory))
       continue;

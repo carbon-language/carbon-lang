@@ -73,7 +73,7 @@ LineState ContinuationIndenter::getInitialState(unsigned FirstIndent,
   State.Column = FirstIndent;
   State.Line = Line;
   State.NextToken = Line->First;
-  State.Stack.push_back(ParenState(FirstIndent, FirstIndent,
+  State.Stack.push_back(ParenState(FirstIndent, Line->Level, FirstIndent,
                                    /*AvoidBinPacking=*/false,
                                    /*NoLineBreak=*/false));
   State.LineContainsContinuedForLoopSection = false;
@@ -404,9 +404,9 @@ unsigned ContinuationIndenter::addTokenOnNewLine(LineState &State,
     if (Current.is(tok::comment))
       Newlines = std::max(Newlines, std::min(Current.NewlinesBefore,
                                              Style.MaxEmptyLinesToKeep + 1));
-    Whitespaces.replaceWhitespace(Current, Newlines, State.Line->Level,
-                                  State.Column, State.Column,
-                                  State.Line->InPPDirective);
+    Whitespaces.replaceWhitespace(Current, Newlines,
+                                  State.Stack.back().IndentLevel, State.Column,
+                                  State.Column, State.Line->InPPDirective);
   }
 
   if (!Current.isTrailingComment())
@@ -532,6 +532,7 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
   // prepare for the following tokens.
   if (Current.opensScope()) {
     unsigned NewIndent;
+    unsigned NewIndentLevel = State.Stack.back().IndentLevel;
     bool AvoidBinPacking;
     if (Current.is(tok::l_brace)) {
       if (Current.MatchingParen && Current.BlockKind == BK_Block) {
@@ -553,9 +554,15 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
         for (unsigned i = 0; i != Current.MatchingParen->FakeRParens; ++i)
           State.Stack.pop_back();
         NewIndent = State.Stack.back().LastSpace + Style.IndentWidth;
+        ++NewIndentLevel;
       } else {
-        NewIndent = State.Stack.back().LastSpace +
-                    (Style.Cpp11BracedListStyle ? 4 : Style.IndentWidth);
+        NewIndent = State.Stack.back().LastSpace;
+        if (Style.Cpp11BracedListStyle)
+          NewIndent += 4;
+        else {
+          NewIndent += Style.IndentWidth;
+          ++NewIndentLevel;
+        }
       }
       const FormatToken *NextNoComment = Current.getNextNonComment();
       AvoidBinPacking = Current.BlockKind == BK_Block ||
@@ -571,9 +578,9 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
                            Current.PackingKind == PPK_Inconclusive)));
     }
 
-    State.Stack.push_back(ParenState(NewIndent, State.Stack.back().LastSpace,
-                                     AvoidBinPacking,
-                                     State.Stack.back().NoLineBreak));
+    State.Stack.push_back(
+        ParenState(NewIndent, NewIndentLevel, State.Stack.back().LastSpace,
+                   AvoidBinPacking, State.Stack.back().NoLineBreak));
     State.Stack.back().BreakBeforeParameter = Current.BlockKind == BK_Block;
     ++State.ParenLevel;
   }

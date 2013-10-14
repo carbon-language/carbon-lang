@@ -5968,6 +5968,21 @@ TEST_F(FormatTest, ConfigurableUseOfTab) {
                    Tab));
 
   Tab.UseTab = FormatStyle::UT_ForIndentation;
+  verifyFormat("T t[] = {\n"
+               "\taaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,\n"
+               "\taaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,\n"
+               "\taaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,\n"
+               "\taaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,\n"
+               "\taaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,\n"
+               "\taaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
+               "};",
+               Tab);
+  verifyFormat("enum A {\n"
+               "\ta1,\n"
+               "\ta2,\n"
+               "\ta3\n"
+               "};",
+               Tab);
   EXPECT_EQ("if (aaaaaaaa && // q\n"
             "    bb)         // w\n"
             "\t;",
