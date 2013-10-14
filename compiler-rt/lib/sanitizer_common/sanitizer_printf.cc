@@ -195,17 +195,22 @@ void SetPrintfAndReportCallback(void (*callback)(const char *)) {
   PrintfAndReportCallback = callback;
 }
 
-#if SANITIZER_SUPPORTS_WEAK_HOOKS
 // Can be overriden in frontend.
+#if SANITIZER_SUPPORTS_WEAK_HOOKS
 SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE
+void OnPrint(const char *str) {
+  (void)str;
+}
+#elif defined(SANITIZER_GO) && defined(TSAN_EXTERNAL_HOOKS)
 void OnPrint(const char *str);
+#else
+void OnPrint(const char *str) {
+  (void)str;
+}
 #endif
 
 static void CallPrintfAndReportCallback(const char *str) {
-#if SANITIZER_SUPPORTS_WEAK_HOOKS
-  if (&OnPrint != NULL)
-    OnPrint(str);
-#endif
+  OnPrint(str);
   if (PrintfAndReportCallback)
     PrintfAndReportCallback(str);
 }
