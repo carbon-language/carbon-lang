@@ -62,6 +62,7 @@ static ScriptInterpreter::SWIGPythonScriptKeyword_Process g_swig_run_script_keyw
 static ScriptInterpreter::SWIGPythonScriptKeyword_Thread g_swig_run_script_keyword_thread = NULL;
 static ScriptInterpreter::SWIGPythonScriptKeyword_Target g_swig_run_script_keyword_target = NULL;
 static ScriptInterpreter::SWIGPythonScriptKeyword_Frame g_swig_run_script_keyword_frame = NULL;
+static ScriptInterpreter::SWIGPythonGDBPlugin_GetDynamicSetting g_swig_gdbremote_plugin_get = NULL;
 
 // these are the Pythonic implementations of the required callbacks
 // these are scripting-language specific, which is why they belong here
@@ -154,6 +155,11 @@ LLDBSWIGPythonRunScriptKeywordFrame (const char* python_function_name,
                                      const char* session_dictionary_name,
                                      lldb::StackFrameSP& frame,
                                      std::string& output);
+
+extern "C" void*
+LLDBSWIGPython_GDBPluginGetDynamicSetting (void* module,
+                                           const char* setting,
+                                           const lldb::TargetSP& target_sp);
 
 static int
 _check_and_flush (FILE *stream)
@@ -1180,6 +1186,13 @@ ScriptInterpreterPython::ExecuteOneLineWithReturn (const char *in_string,
                     success = PyArg_Parse (py_return, format, (char *) ret_value);
                     break;
                 }
+                case eScriptReturnTypeOpaqueObject:
+                {
+                    success = true;
+                    Py_XINCREF(py_return);
+                    *((PyObject**)ret_value) = py_return;
+                    break;
+                }
             }
             Py_XDECREF (py_return);
             if (success)
@@ -2068,6 +2081,47 @@ ScriptInterpreterPython::OSPlugin_CreateThread (lldb::ScriptInterpreterObjectSP 
 }
 
 lldb::ScriptInterpreterObjectSP
+ScriptInterpreterPython::GDBRemotePlugin_LoadPluginModule (const FileSpec& file_spec,
+                                                           lldb_private::Error& error)
+{
+    if (!file_spec.Exists())
+    {
+        error.SetErrorString("no such file");
+        return lldb::ScriptInterpreterObjectSP();
+    }
+
+    ScriptInterpreterObjectSP module_sp;
+    
+    if (LoadScriptingModule(file_spec.GetPath().c_str(),true,true,error,&module_sp))
+        return module_sp;
+    
+    return lldb::ScriptInterpreterObjectSP();
+}
+
+lldb::ScriptInterpreterObjectSP
+ScriptInterpreterPython::GDBRemotePlugin_GetDynamicSettings (lldb::ScriptInterpreterObjectSP gdbremote_plugin_module_sp,
+                                                             Target* target,
+                                                             const char* setting_name,
+                                                             lldb_private::Error& error)
+{
+    if (!gdbremote_plugin_module_sp || !target || !setting_name || !setting_name[0])
+        return lldb::ScriptInterpreterObjectSP();
+    
+    if (!g_swig_gdbremote_plugin_get)
+        return lldb::ScriptInterpreterObjectSP();
+    
+    PyObject *reply_pyobj = nullptr;
+    
+    {
+        Locker py_lock(this);
+        TargetSP target_sp(target->shared_from_this());
+        reply_pyobj = (PyObject*)g_swig_gdbremote_plugin_get(gdbremote_plugin_module_sp->GetObject(),setting_name,target_sp);
+    }
+    
+    return MakeScriptObject(reply_pyobj);
+}
+
+lldb::ScriptInterpreterObjectSP
 ScriptInterpreterPython::CreateSyntheticScriptedProvider (const char *class_name,
                                                           lldb::ValueObjectSP valobj)
 {
@@ -2751,7 +2805,8 @@ bool
 ScriptInterpreterPython::LoadScriptingModule (const char* pathname,
                                               bool can_reload,
                                               bool init_session,
-                                              lldb_private::Error& error)
+                                              lldb_private::Error& error,
+                                              lldb::ScriptInterpreterObjectSP* module_sp)
 {
     if (!pathname || !pathname[0])
     {
@@ -2916,6 +2971,17 @@ ScriptInterpreterPython::LoadScriptingModule (const char* pathname,
             error.SetErrorString("calling __lldb_init_module failed");
             return false;
         }
+        
+        if (module_sp)
+        {
+            // everything went just great, now set the module object
+            command_stream.Clear();
+            command_stream.Printf("%s",basename.c_str());
+            void* module_pyobj = nullptr;
+            if (ExecuteOneLineWithReturn(command_stream.GetData(),ScriptInterpreter::eScriptReturnTypeOpaqueObject,&module_pyobj) && module_pyobj)
+                *module_sp = MakeScriptObject(module_pyobj);
+        }
+        
         return true;
     }
 }
@@ -3070,6 +3136,7 @@ ScriptInterpreterPython::InitializeInterpreter (SWIGInitCallback python_swig_ini
     g_swig_run_script_keyword_thread = LLDBSWIGPythonRunScriptKeywordThread;
     g_swig_run_script_keyword_target = LLDBSWIGPythonRunScriptKeywordTarget;
     g_swig_run_script_keyword_frame = LLDBSWIGPythonRunScriptKeywordFrame;
+    g_swig_gdbremote_plugin_get = LLDBSWIGPython_GDBPluginGetDynamicSetting;
 }
 
 void

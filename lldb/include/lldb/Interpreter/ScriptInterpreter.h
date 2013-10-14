@@ -145,8 +145,8 @@ public:
                                                                     const char* session_dictionary_name,
                                                                     lldb::StackFrameSP& frame,
                                                                     std::string& output);
-
     
+    typedef void*           (*SWIGPythonGDBPlugin_GetDynamicSetting)     (void* module, const char* setting, const lldb::TargetSP& target_sp);
 
     typedef enum
     {
@@ -163,7 +163,8 @@ public:
         eScriptReturnTypeFloat,
         eScriptReturnTypeDouble,
         eScriptReturnTypeChar,
-        eScriptReturnTypeCharStrOrNone
+        eScriptReturnTypeCharStrOrNone,
+        eScriptReturnTypeOpaqueObject
     } ScriptReturnType;
     
     ScriptInterpreter (CommandInterpreter &interpreter, lldb::ScriptLanguage script_lang);
@@ -337,6 +338,22 @@ public:
     {
         return lldb::ScriptInterpreterObjectSP();
     }
+    
+    virtual lldb::ScriptInterpreterObjectSP
+    GDBRemotePlugin_LoadPluginModule (const FileSpec& file_spec,
+                                      lldb_private::Error& error)
+    {
+        return lldb::ScriptInterpreterObjectSP();
+    }
+    
+    virtual lldb::ScriptInterpreterObjectSP
+    GDBRemotePlugin_GetDynamicSettings (lldb::ScriptInterpreterObjectSP gdbremote_plugin_module_sp,
+                                        Target* target,
+                                        const char* setting_name,
+                                        lldb_private::Error& error)
+    {
+        return lldb::ScriptInterpreterObjectSP();
+    }
 
     virtual bool
     GenerateFunction(const char *signature, const StringList &input)
@@ -474,7 +491,8 @@ public:
     LoadScriptingModule (const char* filename,
                          bool can_reload,
                          bool init_session,
-                         lldb_private::Error& error)
+                         lldb_private::Error& error,
+                         lldb::ScriptInterpreterObjectSP* module_sp = nullptr)
     {
         error.SetErrorString("loading unimplemented");
         return false;

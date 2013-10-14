@@ -713,6 +713,30 @@ LLDBSWIGPythonCreateOSPlugin
         Py_RETURN_NONE;
 }
 
+SWIGEXPORT void*
+LLDBSWIGPython_GDBPluginGetDynamicSetting (void* module, const char* setting, const lldb::TargetSP& target_sp)
+{
+
+    if (!module || !setting)
+        Py_RETURN_NONE;
+
+    lldb::SBTarget target_sb(target_sp);
+    
+    PyObject *pvalue = NULL;
+
+    {
+        PyErr_Cleaner py_err_cleaner(true);
+        PyCallable pfunc = PyCallable::FindWithFunctionName("get_dynamic_setting",(PyObject *)module);
+        
+        if (!pfunc)
+            Py_RETURN_NONE;
+        
+        pvalue = pfunc(target_sb, setting);
+    }
+    
+    return pvalue;
+}
+
 SWIGEXPORT bool
 LLDBSWIGPythonRunScriptKeywordProcess
 (const char* python_function_name,
