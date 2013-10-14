@@ -151,6 +151,11 @@ void ScanRangeForPointers(uptr begin, uptr end,
   }
 }
 
+void ForEachExtraStackRangeCb(uptr begin, uptr end, void* arg) {
+  Frontier *frontier = reinterpret_cast<Frontier *>(arg);
+  ScanRangeForPointers(begin, end, frontier, "FAKE STACK", kReachable);
+}
+
 // Scans thread data (stacks and TLS) for heap pointers.
 static void ProcessThreads(SuspendedThreadsList const &suspended_threads,
                            Frontier *frontier) {
@@ -199,6 +204,7 @@ static void ProcessThreads(SuspendedThreadsList const &suspended_threads,
       }
       ScanRangeForPointers(stack_begin, stack_end, frontier, "STACK",
                            kReachable);
+      ForEachExtraStackRange(os_id, ForEachExtraStackRangeCb, frontier);
     }
 
     if (flags()->use_tls) {

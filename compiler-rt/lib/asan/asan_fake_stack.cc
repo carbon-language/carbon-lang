@@ -134,6 +134,20 @@ NOINLINE void FakeStack::GC(uptr real_stack) {
   needs_gc_ = false;
 }
 
+void FakeStack::ForEachFakeFrame(RangeIteratorCallback callback, void *arg) {
+  for (uptr class_id = 0; class_id < kNumberOfSizeClasses; class_id++) {
+    u8 *flags = GetFlags(stack_size_log(), class_id);
+    for (uptr i = 0, n = NumberOfFrames(stack_size_log(), class_id); i < n;
+         i++) {
+      if (flags[i] == 0) continue;  // not allocated.
+      FakeFrame *ff = reinterpret_cast<FakeFrame *>(
+          GetFrame(stack_size_log(), class_id, i));
+      uptr begin = reinterpret_cast<uptr>(ff);
+      callback(begin, begin + FakeStack::BytesInSizeClass(class_id), arg);
+    }
+  }
+}
+
 #if SANITIZER_LINUX && !SANITIZER_ANDROID
 static THREADLOCAL FakeStack *fake_stack_tls;
 

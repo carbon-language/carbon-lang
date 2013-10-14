@@ -145,6 +145,10 @@ bool GetThreadRangesLocked(uptr os_id, uptr *stack_begin, uptr *stack_end,
   return true;
 }
 
+void ForEachExtraStackRange(uptr os_id, RangeIteratorCallback callback,
+                            void *arg) {
+}
+
 void LockThreadRegistry() {
   thread_registry->Lock();
 }

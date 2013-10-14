@@ -148,6 +148,8 @@ class FakeStack {
   void HandleNoReturn();
   void GC(uptr real_stack);
 
+  void ForEachFakeFrame(RangeIteratorCallback callback, void *arg);
+
  private:
   FakeStack() { }
   static const uptr kFlagsOffset = 4096;  // This is were the flags begin.

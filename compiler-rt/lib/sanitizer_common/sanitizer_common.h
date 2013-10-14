@@ -446,6 +446,9 @@ const uptr kPthreadDestructorIterations = 4;
 // Unused on Windows.
 const uptr kPthreadDestructorIterations = 0;
 #endif
+
+// Callback type for iterating over a set of memory ranges.
+typedef void (*RangeIteratorCallback)(uptr begin, uptr end, void *arg);
 }  // namespace __sanitizer
 
 #endif  // SANITIZER_COMMON_H
