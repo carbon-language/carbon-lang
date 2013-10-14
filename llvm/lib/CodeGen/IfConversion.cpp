@@ -976,15 +976,15 @@ static void UpdatePredRedefs(MachineInstr *MI, LiveRegUnits &Redefs,
     unsigned Reg = Ops->getReg();
     if (Reg == 0)
       continue;
-    Redefs.RemoveReg(Reg, *TRI);
+    Redefs.removeReg(Reg, *TRI);
   }
   for (MIBundleOperands Ops(MI); Ops.isValid(); ++Ops) {
     if (!Ops->isReg() || !Ops->isDef())
       continue;
     unsigned Reg = Ops->getReg();
-    if (Reg == 0 || Redefs.Contains(Reg, *TRI))
+    if (Reg == 0 || Redefs.contains(Reg, *TRI))
       continue;
-    Redefs.AddReg(Reg, *TRI);
+    Redefs.addReg(Reg, *TRI);
 
     MachineOperand &Op = *Ops;
     MachineInstr *MI = Op.getParent();
@@ -1001,7 +1001,7 @@ static void RemoveKills(MachineInstr &MI, const LiveRegUnits &DontKill,
   for (MIBundleOperands O(&MI); O.isValid(); ++O) {
     if (!O->isReg() || !O->isKill())
       continue;
-    if (DontKill.Contains(O->getReg(), MCRI))
+    if (DontKill.contains(O->getReg(), MCRI))
       O->setIsKill(false);
   }
 }
@@ -1049,13 +1049,13 @@ bool IfConverter::IfConvertSimple(BBInfo &BBI, IfcvtKind Kind) {
   // Initialize liveins to the first BB. These are potentiall redefined by
   // predicated instructions.
   LiveRegUnits Redefs;
-  Redefs.AddLiveIns(*(CvtBBI->BB), *TRI);
-  Redefs.AddLiveIns(*(NextBBI->BB), *TRI);
+  Redefs.addLiveIns(*(CvtBBI->BB), *TRI);
+  Redefs.addLiveIns(*(NextBBI->BB), *TRI);
 
   // Compute a set of registers which must not be killed by instructions in
   // BB1: This is everything live-in to BB2.
   LiveRegUnits DontKill;
-  DontKill.AddLiveIns(*(NextBBI->BB), *TRI);
+  DontKill.addLiveIns(*(NextBBI->BB), *TRI);
 
   if (CvtBBI->BB->pred_size() > 1) {
     BBI.NonPredSize -= TII->RemoveBranch(*BBI.BB);
@@ -1154,8 +1154,8 @@ bool IfConverter::IfConvertTriangle(BBInfo &BBI, IfcvtKind Kind) {
   // Initialize liveins to the first BB. These are potentially redefined by
   // predicated instructions.
   LiveRegUnits Redefs;
-  Redefs.AddLiveIns(*(CvtBBI->BB), *TRI);
-  Redefs.AddLiveIns(*(NextBBI->BB), *TRI);
+  Redefs.addLiveIns(*(CvtBBI->BB), *TRI);
+  Redefs.addLiveIns(*(NextBBI->BB), *TRI);
 
   bool HasEarlyExit = CvtBBI->FalseBB != NULL;
   if (CvtBBI->BB->pred_size() > 1) {
@@ -1282,7 +1282,7 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI, IfcvtKind Kind,
   // Initialize liveins to the first BB. These are potentially redefined by
   // predicated instructions.
   LiveRegUnits Redefs;
-  Redefs.AddLiveIns(*(BBI1->BB), *TRI);
+  Redefs.addLiveIns(*(BBI1->BB), *TRI);
 
   // Remove the duplicated instructions at the beginnings of both paths.
   MachineBasicBlock::iterator DI1 = BBI1->BB->begin();
@@ -1315,12 +1315,12 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI, IfcvtKind Kind,
   LiveRegUnits DontKill;
   for (MachineBasicBlock::reverse_iterator I = BBI2->BB->rbegin(),
        E = MachineBasicBlock::reverse_iterator(DI2); I != E; ++I) {
-    DontKill.StepBackward(*I, *TRI);
+    DontKill.stepBackward(*I, *TRI);
   }
 
   for (MachineBasicBlock::const_iterator I = BBI1->BB->begin(), E = DI1; I != E;
        ++I) {
-    Redefs.StepForward(*I, *TRI);
+    Redefs.stepForward(*I, *TRI);
   }
   BBI.BB->splice(BBI.BB->end(), BBI1->BB, BBI1->BB->begin(), DI1);
   BBI2->BB->erase(BBI2->BB->begin(), DI2);

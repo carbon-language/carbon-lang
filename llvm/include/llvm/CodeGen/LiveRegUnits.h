@@ -42,13 +42,13 @@ namespace llvm {
     }
 
     /// Adds a register to the set.
-    void AddReg(unsigned Reg, const MCRegisterInfo &MCRI) {
+    void addReg(unsigned Reg, const MCRegisterInfo &MCRI) {
       for (MCRegUnitIterator RUnits(Reg, &MCRI); RUnits.isValid(); ++RUnits)
         LiveUnits.insert(*RUnits);
     }
 
     /// Removes a register from the set.
-    void RemoveReg(unsigned Reg, const MCRegisterInfo &MCRI) {
+    void removeReg(unsigned Reg, const MCRegisterInfo &MCRI) {
       for (MCRegUnitIterator RUnits(Reg, &MCRI); RUnits.isValid(); ++RUnits)
         LiveUnits.erase(*RUnits);
     }
@@ -57,13 +57,13 @@ namespace llvm {
     /// Note that we assume the high bits of a physical super register are not
     /// preserved unless the instruction has an implicit-use operand reading
     /// the super-register or a register unit for the upper bits is available.
-    void RemoveRegsInMask(const MachineOperand &Op,
+    void removeRegsInMask(const MachineOperand &Op,
                           const MCRegisterInfo &MCRI) {
       const uint32_t *Mask = Op.getRegMask();
       unsigned Bit = 0;
       for (unsigned R = 0; R < MCRI.getNumRegs(); ++R) {
         if ((*Mask & (1u << Bit)) == 0)
-          RemoveReg(R, MCRI);
+          removeReg(R, MCRI);
         ++Bit;
         if (Bit >= 32) {
           Bit = 0;
@@ -74,7 +74,7 @@ namespace llvm {
 
     /// Returns true if register @p Reg (or one of its super register) is
     /// contained in the set.
-    bool Contains(unsigned Reg, const MCRegisterInfo &MCRI) const {
+    bool contains(unsigned Reg, const MCRegisterInfo &MCRI) const {
       for (MCRegUnitIterator RUnits(Reg, &MCRI); RUnits.isValid(); ++RUnits) {
         if (LiveUnits.count(*RUnits))
           return true;
@@ -84,7 +84,7 @@ namespace llvm {
 
     /// Simulates liveness when stepping backwards over an instruction(bundle):
     /// Defs are removed from the set, uses added.
-    void StepBackward(const MachineInstr &MI, const MCRegisterInfo &MCRI) {
+    void stepBackward(const MachineInstr &MI, const MCRegisterInfo &MCRI) {
       // Remove defined registers and regmask kills from the set.
       for (ConstMIBundleOperands O(&MI); O.isValid(); ++O) {
         if (O->isReg()) {
@@ -93,9 +93,9 @@ namespace llvm {
           unsigned Reg = O->getReg();
           if (Reg == 0)
             continue;
-          RemoveReg(Reg, MCRI);
+          removeReg(Reg, MCRI);
         } else if (O->isRegMask()) {
-          RemoveRegsInMask(*O, MCRI);
+          removeRegsInMask(*O, MCRI);
         }
       }
       // Add uses to the set.
@@ -105,7 +105,7 @@ namespace llvm {
         unsigned Reg = O->getReg();
         if (Reg == 0)
           continue;
-        AddReg(Reg, MCRI);
+        addReg(Reg, MCRI);
       }
     }
 
@@ -115,7 +115,7 @@ namespace llvm {
     /// Uses with kill flag get removed from the set, defs added. If possible
     /// use StepBackward() instead of this function because some kill flags may
     /// be missing.
-    void StepForward(const MachineInstr &MI, const MCRegisterInfo &MCRI) {
+    void stepForward(const MachineInstr &MI, const MCRegisterInfo &MCRI) {
       SmallVector<unsigned, 4> Defs;
       // Remove killed registers from the set.
       for (ConstMIBundleOperands O(&MI); O.isValid(); ++O) {
@@ -130,23 +130,23 @@ namespace llvm {
             if (!O->isKill())
               continue;
             assert(O->isUse());
-            RemoveReg(Reg, MCRI);
+            removeReg(Reg, MCRI);
           }
         } else if (O->isRegMask()) {
-          RemoveRegsInMask(*O, MCRI);
+          removeRegsInMask(*O, MCRI);
         }
       }
       // Add defs to the set.
       for (unsigned i = 0, e = Defs.size(); i != e; ++i) {
-        AddReg(Defs[i], MCRI);
+        addReg(Defs[i], MCRI);
       }
     }
 
     /// Adds all registers in the live-in list of block @p BB.
-    void AddLiveIns(const MachineBasicBlock &BB, const MCRegisterInfo &MCRI) {
+    void addLiveIns(const MachineBasicBlock &BB, const MCRegisterInfo &MCRI) {
       for (MachineBasicBlock::livein_iterator L = BB.livein_begin(),
            LE = BB.livein_end(); L != LE; ++L) {
-        AddReg(*L, MCRI);
+        addReg(*L, MCRI);
       }
     }
   };
