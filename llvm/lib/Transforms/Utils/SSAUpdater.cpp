@@ -63,7 +63,7 @@ void SSAUpdater::AddAvailableValue(BasicBlock *BB, Value *V) {
 }
 
 static bool IsEquivalentPHI(PHINode *PHI,
-                            DenseMap<BasicBlock*, Value*> &ValueMapping) {
+                          SmallDenseMap<BasicBlock*, Value*, 8> &ValueMapping) {
   unsigned PHINumValues = PHI->getNumIncomingValues();
   if (PHINumValues != ValueMapping.size())
     return false;
@@ -136,8 +136,8 @@ Value *SSAUpdater::GetValueInMiddleOfBlock(BasicBlock *BB) {
   // Otherwise, we do need a PHI: check to see if we already have one available
   // in this block that produces the right value.
   if (isa<PHINode>(BB->begin())) {
-    DenseMap<BasicBlock*, Value*> ValueMapping(PredValues.begin(),
-                                               PredValues.end());
+    SmallDenseMap<BasicBlock*, Value*, 8> ValueMapping(PredValues.begin(),
+                                                       PredValues.end());
     PHINode *SomePHI;
     for (BasicBlock::iterator It = BB->begin();
          (SomePHI = dyn_cast<PHINode>(It)); ++It) {
