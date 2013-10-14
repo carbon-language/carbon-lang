@@ -1029,8 +1029,8 @@ static bool checkForConsumableClass(Sema &S, const CXXMethodDecl *MD,
 
 static void handleCallableWhenAttr(Sema &S, Decl *D,
                                    const AttributeList &Attr) {
-  
-  if (!checkAttributeAtLeastNumArgs(S, Attr, 1)) return;
+  if (!checkAttributeAtLeastNumArgs(S, Attr, 1))
+    return;
 
   if (!isa<CXXMethodDecl>(D)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type) <<
@@ -1118,7 +1118,8 @@ static void handleReturnTypestateAttr(Sema &S, Decl *D,
 
 
 static void handleSetTypestateAttr(Sema &S, Decl *D, const AttributeList &Attr) {
-  if (!checkAttributeNumArgs(S, Attr, 1)) return;
+  if (!checkAttributeNumArgs(S, Attr, 1))
+    return;
 
   if (!isa<CXXMethodDecl>(D)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type) <<
@@ -1151,7 +1152,8 @@ static void handleSetTypestateAttr(Sema &S, Decl *D, const AttributeList &Attr) 
 
 static void handleTestsTypestateAttr(Sema &S, Decl *D,
                                         const AttributeList &Attr) {
-  if (!checkAttributeNumArgs(S, Attr, 1)) return;
+  if (!checkAttributeNumArgs(S, Attr, 1))
+    return;
   
   if (!isa<CXXMethodDecl>(D)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type) <<
