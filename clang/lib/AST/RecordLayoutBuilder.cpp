@@ -2989,7 +2989,7 @@ MicrosoftRecordLayoutBuilder::computeVtorDispSet(const CXXRecordDecl *RD) {
     for (CXXRecordDecl::method_iterator i = RD->method_begin(),
                                         e = RD->method_end();
          i != e; ++i)
-      if ((*i)->isVirtual() && (*i) != RD->getDestructor())
+      if ((*i)->isVirtual() && !isa<CXXDestructorDecl>(*i))
         Work.insert(*i);
     while (!Work.empty()) {
       const CXXMethodDecl *MD = *Work.begin();

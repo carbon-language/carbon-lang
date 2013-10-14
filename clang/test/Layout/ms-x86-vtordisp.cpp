@@ -91,7 +91,24 @@ struct __declspec(align(32)) D : virtual B0, virtual B1  {
 // CHECK:      | [sizeof=96, align=32
 // CHECK:      |  nvsize=12, nvalign=4]
 
+struct AT {
+	virtual ~AT(){}
+};
+struct CT : virtual AT {
+	virtual ~CT();
+};
+CT::~CT(){}
+
+// CHECK: *** Dumping AST Record Layout
+// CHECK:    0 | struct CT
+// CHECK:    0 |   (CT vbtable pointer)
+// CHECK:    4 |   struct AT (virtual base)
+// CHECK:    4 |     (AT vftable pointer)
+// CHECK:      | [sizeof=8, align=4
+// CHECK:      |  nvsize=4, nvalign=4]
+
 int a[
 sizeof(A)+
 sizeof(C)+
-sizeof(D)];
+sizeof(D)+
+sizeof(CT)];
