@@ -7259,73 +7259,40 @@ let Defs = [ECX, EFLAGS], Uses = [EAX, EDX], neverHasSideEffects = 1 in {
 // crc intrinsic instruction
 // This set of instructions are only rm, the only difference is the size
 // of r and m.
+class SS42I_crc32r<bits<8> opc, string asm, RegisterClass RCOut,
+                   RegisterClass RCIn, Intrinsic Int> :
+  SS42FI<opc, MRMSrcReg, (outs RCOut:$dst), (ins RCOut:$src1, RCIn:$src2),
+         !strconcat(asm, "\t{$src2, $src1|$src1, $src2}"),
+         [(set RCOut:$dst, (Int RCOut:$src1, RCIn:$src2))], IIC_CRC32_REG>;
+
+class SS42I_crc32m<bits<8> opc, string asm, RegisterClass RCOut,
+                   X86MemOperand x86memop, Intrinsic Int> :
+  SS42FI<opc, MRMSrcMem, (outs RCOut:$dst), (ins RCOut:$src1, x86memop:$src2),
+         !strconcat(asm, "\t{$src2, $src1|$src1, $src2}"),
+         [(set RCOut:$dst, (Int RCOut:$src1, (load addr:$src2)))],
+         IIC_CRC32_MEM>;
+
 let Constraints = "$src1 = $dst" in {
-  def CRC32r32m8  : SS42FI<0xF0, MRMSrcMem, (outs GR32:$dst),
-                      (ins GR32:$src1, i8mem:$src2),
-                      "crc32{b}\t{$src2, $src1|$src1, $src2}",
-                       [(set GR32:$dst,
-                         (int_x86_sse42_crc32_32_8 GR32:$src1,
-                         (load addr:$src2)))], IIC_CRC32_MEM>;
-  def CRC32r32r8  : SS42FI<0xF0, MRMSrcReg, (outs GR32:$dst),
-                      (ins GR32:$src1, GR8:$src2),
-                      "crc32{b}\t{$src2, $src1|$src1, $src2}",
-                       [(set GR32:$dst,
-                         (int_x86_sse42_crc32_32_8 GR32:$src1, GR8:$src2))],
-                         IIC_CRC32_REG>;
-  def CRC32r32m16  : SS42FI<0xF1, MRMSrcMem, (outs GR32:$dst),
-                      (ins GR32:$src1, i16mem:$src2),
-                      "crc32{w}\t{$src2, $src1|$src1, $src2}",
-                       [(set GR32:$dst,
-                         (int_x86_sse42_crc32_32_16 GR32:$src1,
-                         (load addr:$src2)))], IIC_CRC32_MEM>,
-                         OpSize;
-  def CRC32r32r16  : SS42FI<0xF1, MRMSrcReg, (outs GR32:$dst),
-                      (ins GR32:$src1, GR16:$src2),
-                      "crc32{w}\t{$src2, $src1|$src1, $src2}",
-                       [(set GR32:$dst,
-                         (int_x86_sse42_crc32_32_16 GR32:$src1, GR16:$src2))],
-                         IIC_CRC32_REG>,
-                         OpSize;
-  def CRC32r32m32  : SS42FI<0xF1, MRMSrcMem, (outs GR32:$dst),
-                      (ins GR32:$src1, i32mem:$src2),
-                      "crc32{l}\t{$src2, $src1|$src1, $src2}",
-                       [(set GR32:$dst,
-                         (int_x86_sse42_crc32_32_32 GR32:$src1,
-                         (load addr:$src2)))], IIC_CRC32_MEM>;
-  def CRC32r32r32  : SS42FI<0xF1, MRMSrcReg, (outs GR32:$dst),
-                      (ins GR32:$src1, GR32:$src2),
-                      "crc32{l}\t{$src2, $src1|$src1, $src2}",
-                       [(set GR32:$dst,
-                         (int_x86_sse42_crc32_32_32 GR32:$src1, GR32:$src2))],
-                         IIC_CRC32_REG>;
-  def CRC32r64m8  : SS42FI<0xF0, MRMSrcMem, (outs GR64:$dst),
-                      (ins GR64:$src1, i8mem:$src2),
-                      "crc32{b}\t{$src2, $src1|$src1, $src2}",
-                       [(set GR64:$dst,
-                         (int_x86_sse42_crc32_64_8 GR64:$src1,
-                         (load addr:$src2)))], IIC_CRC32_MEM>,
-                         REX_W;
-  def CRC32r64r8  : SS42FI<0xF0, MRMSrcReg, (outs GR64:$dst),
-                      (ins GR64:$src1, GR8:$src2),
-                      "crc32{b}\t{$src2, $src1|$src1, $src2}",
-                       [(set GR64:$dst,
-                         (int_x86_sse42_crc32_64_8 GR64:$src1, GR8:$src2))],
-                         IIC_CRC32_REG>,
-                         REX_W;
-  def CRC32r64m64  : SS42FI<0xF1, MRMSrcMem, (outs GR64:$dst),
-                      (ins GR64:$src1, i64mem:$src2),
-                      "crc32{q}\t{$src2, $src1|$src1, $src2}",
-                       [(set GR64:$dst,
-                         (int_x86_sse42_crc32_64_64 GR64:$src1,
-                         (load addr:$src2)))], IIC_CRC32_MEM>,
-                         REX_W;
-  def CRC32r64r64  : SS42FI<0xF1, MRMSrcReg, (outs GR64:$dst),
-                      (ins GR64:$src1, GR64:$src2),
-                      "crc32{q}\t{$src2, $src1|$src1, $src2}",
-                       [(set GR64:$dst,
-                         (int_x86_sse42_crc32_64_64 GR64:$src1, GR64:$src2))],
-                         IIC_CRC32_REG>,
-                         REX_W;
+  def CRC32r32m8  : SS42I_crc32m<0xF0, "crc32{b}", GR32, i8mem,
+                                 int_x86_sse42_crc32_32_8>;
+  def CRC32r32r8  : SS42I_crc32r<0xF0, "crc32{b}", GR32, GR8,
+                                 int_x86_sse42_crc32_32_8>;
+  def CRC32r32m16 : SS42I_crc32m<0xF1, "crc32{w}", GR32, i16mem,
+                                 int_x86_sse42_crc32_32_16>, OpSize;
+  def CRC32r32r16 : SS42I_crc32r<0xF1, "crc32{w}", GR32, GR16,
+                                 int_x86_sse42_crc32_32_16>, OpSize;
+  def CRC32r32m32 : SS42I_crc32m<0xF1, "crc32{l}", GR32, i32mem,
+                                 int_x86_sse42_crc32_32_32>;
+  def CRC32r32r32 : SS42I_crc32r<0xF1, "crc32{l}", GR32, GR32,
+                                 int_x86_sse42_crc32_32_32>;
+  def CRC32r64m8  : SS42I_crc32m<0xF0, "crc32{b}", GR64, i8mem,
+                                 int_x86_sse42_crc32_64_8>, REX_W;
+  def CRC32r64r8  : SS42I_crc32r<0xF0, "crc32{b}", GR64, GR8,
+                                 int_x86_sse42_crc32_64_8>, REX_W;
+  def CRC32r64m64 : SS42I_crc32m<0xF1, "crc32{q}", GR64, i64mem,
+                                 int_x86_sse42_crc32_64_64>, REX_W;
+  def CRC32r64r64 : SS42I_crc32r<0xF1, "crc32{q}", GR64, GR64,
+                                 int_x86_sse42_crc32_64_64>, REX_W;
 }
 
 //===----------------------------------------------------------------------===//
