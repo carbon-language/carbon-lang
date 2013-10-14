@@ -37,7 +37,12 @@ struct StackTrace {
   static void PrintStack(const uptr *addr, uptr size, bool symbolize,
                          SymbolizeCallback symbolize_callback);
 
-  void CopyFrom(const uptr *src, uptr src_size);
+  void CopyFrom(const uptr *src, uptr src_size) {
+    size = src_size;
+    if (size > kStackTraceMax) size = kStackTraceMax;
+    for (uptr i = 0; i < size; i++)
+      trace[i] = src[i];
+  }
 
   void Unwind(uptr max_depth, uptr pc, uptr bp, uptr stack_top,
               uptr stack_bottom, bool fast);

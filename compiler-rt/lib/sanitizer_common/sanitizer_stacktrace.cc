@@ -13,7 +13,6 @@
 
 #include "sanitizer_common.h"
 #include "sanitizer_flags.h"
-#include "sanitizer_libc.h"
 #include "sanitizer_procmaps.h"
 #include "sanitizer_stacktrace.h"
 #include "sanitizer_symbolizer.h"
@@ -33,11 +32,6 @@ uptr StackTrace::GetPreviousInstructionPc(uptr pc) {
 #else
   return pc - 1;
 #endif
-}
-
-void StackTrace::CopyFrom(const uptr *src, uptr src_size) {
-  size = Min(src_size, kStackTraceMax);
-  internal_memcpy(trace, src, sizeof(trace[0]) * size);
 }
 
 static void PrintStackFramePrefix(uptr frame_num, uptr pc) {
