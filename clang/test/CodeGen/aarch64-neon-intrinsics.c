@@ -7009,3 +7009,111 @@ void test_vst4_p16(poly16_t *a, poly16x4x4_t b) {
   // CHECK: st4 {v{{[0-9]+}}.4h, v{{[0-9]+}}.4h, v{{[0-9]+}}.4h,
   // v{{[0-9]+}}.4h}, [{{x[0-9]+|sp}}]
 }
+
+int64_t test_vceqd_s64(int64_t a, int64_t b) {
+// CHECK: test_vceqd_s64
+// CHECK: cmeq {{d[0-9]+}}, {{d[0-9]+}}, {{d[0-9]+}}
+  return (int64_t)vceqd_s64(a, b);
+}
+
+uint64_t test_vceqd_u64(uint64_t a, uint64_t b) {
+// CHECK: test_vceqd_u64
+// CHECK: cmeq {{d[0-9]+}}, {{d[0-9]+}}, {{d[0-9]+}}
+  return (int64_t)vceqd_u64(a, b);
+} 
+
+int64_t test_vceqzd_s64(int64_t a) {
+// CHECK: test_vceqzd_s64
+// CHECK: cmeq {{d[0-9]+}}, {{d[0-9]+}}, #0x0
+  return (int64_t)vceqzd_s64(a);
+}
+
+int64_t test_vceqzd_u64(int64_t a) {
+// CHECK: test_vceqzd_u64
+// CHECK: cmeq {{d[0-9]+}}, {{d[0-9]+}}, #0x0
+  return (int64_t)vceqzd_u64(a);
+}
+
+int64_t test_vcged_s64(int64_t a, int64_t b) {
+// CHECK: test_vcged_s64
+// CHECK: cmge {{d[0-9]+}}, {{d[0-9]+}}, {{d[0-9]+}}
+  return (int64_t)vcged_s64(a, b);
+}
+
+uint64_t test_vcged_u64(uint64_t a, uint64_t b) {
+// CHECK: test_vcged_u64
+// CHECK: cmhs {{d[0-9]+}}, {{d[0-9]+}}, {{d[0-9]+}}
+    return (uint64_t)vcged_u64(a, b);
+}
+
+int64_t test_vcgezd_s64(int64_t a) {
+// CHECK: test_vcgezd_s64
+// CHECK: cmge {{d[0-9]+}}, {{d[0-9]+}}, #0x0
+  return (int64_t)vcgezd_s64(a);
+}
+
+int64_t test_vcgtd_s64(int64_t a, int64_t b) {
+// CHECK: test_vcgtd_s64
+// CHECK: cmgt {{d[0-9]+}}, {{d[0-9]+}}, {{d[0-9]+}}
+  return (int64_t)vcgtd_s64(a, b);
+}
+
+uint64_t test_vcgtd_u64(uint64_t a, uint64_t b) {
+// CHECK: test_vcgtd_u64
+// CHECK: cmhi {{d[0-9]+}}, {{d[0-9]+}}, {{d[0-9]+}}
+  return (uint64_t)vcgtd_u64(a, b);
+}
+
+int64_t test_vcgtzd_s64(int64_t a) {
+// CHECK: test_vcgtzd_s64
+// CHECK: cmgt {{d[0-9]+}}, {{d[0-9]+}}, #0x0
+  return (int64_t)vcgtzd_s64(a);
+}
+
+int64_t test_vcled_s64(int64_t a, int64_t b) {
+// CHECK: test_vcled_s64
+// CHECK: cmge {{d[0-9]+}}, {{d[0-9]+}}, {{d[0-9]+}}
+  return (int64_t)vcled_s64(a, b);
+}
+
+uint64_t test_vcled_u64(uint64_t a, uint64_t b) {
+// CHECK: test_vcled_u64
+// CHECK: cmhs {{d[0-9]+}}, {{d[0-9]+}}, {{d[0-9]+}}
+  return (uint64_t)vcled_u64(a, 0);
+}
+
+int64_t test_vclezd_s64(int64_t a) {
+// CHECK: test_vclezd_s64
+// CHECK: cmle {{d[0-9]+}}, {{d[0-9]+}}, #0x0
+  return (int64_t)vclezd_s64(a);
+}
+
+int64_t test_vcltd_s64(int64_t a, int64_t b) {
+// CHECK: test_vcltd_s64
+// CHECK: cmgt {{d[0-9]+}}, {{d[0-9]+}}, {{d[0-9]+}}
+  return (int64_t)vcltd_s64(a, b);
+}
+
+uint64_t test_vcltd_u64(uint64_t a, uint64_t b) {
+// CHECK: test_vcltd_u64
+// CHECK: cmhi {{d[0-9]+}}, {{d[0-9]+}}, {{d[0-9]+}}
+  return (uint64_t)vcltd_u64(a, b);
+}
+
+int64_t test_vcltzd_s64(int64_t a) {
+// CHECK: test_vcltzd_s64
+// CHECK: cmlt {{d[0-9]+}}, {{d[0-9]+}}, #0x0
+  return (int64_t)vcltzd_s64(a);
+}
+
+int64_t test_vtstd_s64(int64_t a, int64_t b) {
+// CHECK: test_vtstd_s64
+// CHECK: cmtst {{d[0-9]+}}, {{d[0-9]+}}, {{d[0-9]+}}
+  return (int64_t)vtstd_s64(a, b);
+}
+
+uint64_t test_vtstd_u64(uint64_t a, uint64_t b) {
+// CHECK: test_vtstd_u64
+// CHECK: cmtst {{d[0-9]+}}, {{d[0-9]+}}, {{d[0-9]+}}
+  return (uint64_t)vtstd_u64(a, b);
+}

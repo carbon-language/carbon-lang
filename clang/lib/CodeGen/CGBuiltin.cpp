@@ -1757,6 +1757,11 @@ static Value *EmitAArch64ScalarBuiltinExpr(CodeGenFunction &CGF,
   bool OverloadInt = false;
   const char *s = NULL;
 
+  SmallVector<Value *, 4> Ops;
+  for (unsigned i = 0, e = E->getNumArgs(); i != e; i++) {
+    Ops.push_back(CGF.EmitScalarExpr(E->getArg(i)));
+  }
+
   // AArch64 scalar builtins are not overloaded, they do not have an extra
   // argument that specifies the vector type, need to handle each case.
   switch (BuiltinID) {
@@ -2000,6 +2005,75 @@ static Value *EmitAArch64ScalarBuiltinExpr(CodeGenFunction &CGF,
   case AArch64::BI__builtin_neon_vrsqrted_f64:
     Int = Intrinsic::arm_neon_vrsqrte;
     s = "vrsqrte"; OverloadInt = true; break;
+  // Scalar Compare Equal
+  case AArch64::BI__builtin_neon_vceqd_s64:
+  case AArch64::BI__builtin_neon_vceqd_u64:
+    Int = Intrinsic::aarch64_neon_vceq; s = "vceq";
+    OverloadInt = false; break;
+  // Scalar Compare Equal To Zero
+  case AArch64::BI__builtin_neon_vceqzd_s64:
+  case AArch64::BI__builtin_neon_vceqzd_u64:
+    Int = Intrinsic::aarch64_neon_vceq; s = "vceq";
+    // Add implicit zero operand.
+    Ops.push_back(llvm::Constant::getNullValue(Ops[0]->getType()));
+    OverloadInt = false; break;
+  // Scalar Compare Greater Than or Equal
+  case AArch64::BI__builtin_neon_vcged_s64:
+    Int = Intrinsic::aarch64_neon_vcge; s = "vcge";
+    OverloadInt = false; break;
+  case AArch64::BI__builtin_neon_vcged_u64:
+    Int = Intrinsic::aarch64_neon_vchs; s = "vcge";
+    OverloadInt = false; break;
+  // Scalar Compare Greater Than or Equal To Zero
+  case AArch64::BI__builtin_neon_vcgezd_s64:
+    Int = Intrinsic::aarch64_neon_vcge; s = "vcge";
+    // Add implicit zero operand.
+    Ops.push_back(llvm::Constant::getNullValue(Ops[0]->getType()));
+    OverloadInt = false; break;
+  // Scalar Compare Greater Than
+  case AArch64::BI__builtin_neon_vcgtd_s64:
+    Int = Intrinsic::aarch64_neon_vcgt; s = "vcgt";
+    OverloadInt = false; break;
+  case AArch64::BI__builtin_neon_vcgtd_u64:
+    Int = Intrinsic::aarch64_neon_vchi; s = "vcgt";
+    OverloadInt = false; break;
+  // Scalar Compare Greater Than Zero
+  case AArch64::BI__builtin_neon_vcgtzd_s64:
+    Int = Intrinsic::aarch64_neon_vcgt; s = "vcgt";
+    // Add implicit zero operand.
+    Ops.push_back(llvm::Constant::getNullValue(Ops[0]->getType()));
+    OverloadInt = false; break;
+  // Scalar Compare Less Than or Equal
+  case AArch64::BI__builtin_neon_vcled_s64:
+    Int = Intrinsic::aarch64_neon_vcge; s = "vcge";
+    OverloadInt = false; std::swap(Ops[0], Ops[1]); break;
+  case AArch64::BI__builtin_neon_vcled_u64:
+    Int = Intrinsic::aarch64_neon_vchs; s = "vchs";
+    OverloadInt = false; std::swap(Ops[0], Ops[1]); break;
+  // Scalar Compare Less Than or Equal To Zero
+  case AArch64::BI__builtin_neon_vclezd_s64:
+    Int = Intrinsic::aarch64_neon_vclez; s = "vcle";
+    // Add implicit zero operand.
+    Ops.push_back(llvm::Constant::getNullValue(Ops[0]->getType()));
+    OverloadInt = false; break;
+  // Scalar Compare Less Than
+  case AArch64::BI__builtin_neon_vcltd_s64:
+    Int = Intrinsic::aarch64_neon_vcgt; s = "vcgt";
+    OverloadInt = false; std::swap(Ops[0], Ops[1]); break;
+  case AArch64::BI__builtin_neon_vcltd_u64:
+    Int = Intrinsic::aarch64_neon_vchi; s = "vchi";
+    OverloadInt = false; std::swap(Ops[0], Ops[1]); break;
+  // Scalar Compare Less Than Zero
+  case AArch64::BI__builtin_neon_vcltzd_s64:
+    Int = Intrinsic::aarch64_neon_vcltz; s = "vclt";
+    // Add implicit zero operand.
+    Ops.push_back(llvm::Constant::getNullValue(Ops[0]->getType()));
+    OverloadInt = false; break;
+  // Scalar Compare Bitwise Test Bits
+  case AArch64::BI__builtin_neon_vtstd_s64:
+  case AArch64::BI__builtin_neon_vtstd_u64:
+    Int = Intrinsic::aarch64_neon_vtstd; s = "vtst";
+    OverloadInt = false; break;
   }
 
   if (!Int)
@@ -2009,7 +2083,6 @@ static Value *EmitAArch64ScalarBuiltinExpr(CodeGenFunction &CGF,
   // and should be mapped to AArch64 intrinsic that returns
   // one-element vector type.
   Function *F = 0;
-  SmallVector<Value *, 4> Ops;
   if (AcrossVec) {
     // Gen arg type
     const Expr *Arg = E->getArg(E->getNumArgs()-1);
@@ -2037,10 +2110,6 @@ static Value *EmitAArch64ScalarBuiltinExpr(CodeGenFunction &CGF,
     F = CGF.CGM.getIntrinsic(Int, VTy);
   } else
     F = CGF.CGM.getIntrinsic(Int);
-
-  for (unsigned i = 0, e = E->getNumArgs(); i != e; i++) {
-    Ops.push_back(CGF.EmitScalarExpr(E->getArg(i)));
-  }
 
   Value *Result = CGF.EmitNeonCall(F, Ops, s);
   llvm::Type *ResultType = CGF.ConvertType(E->getType());

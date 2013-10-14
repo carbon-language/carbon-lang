@@ -839,4 +839,20 @@ def SCALAR_FRECPX : IInst<"vrecpx", "ss", "SfSd">;
 // Scalar Floating-point Reciprocal Square Root Estimate
 def SCALAR_FRSQRTE : IInst<"vrsqrte", "ss", "SfSd">;
 
+////////////////////////////////////////////////////////////////////////////////
+// Scalar Integer Comparison
+def SCALAR_CMEQ : SInst<"vceq", "sss", "SlSUl">;
+def SCALAR_CMEQZ : SInst<"vceqz", "ss", "SlSUl">;
+def SCALAR_CMGE : SInst<"vcge", "sss", "Sl">;
+def SCALAR_CMGEZ : SInst<"vcgez", "ss", "Sl">;
+def SCALAR_CMHS : SInst<"vcge", "sss", "SUl">;
+def SCALAR_CMLE : SInst<"vcle", "sss", "SlSUl">;
+def SCALAR_CMLEZ : SInst<"vclez", "ss", "Sl">;
+def SCALAR_CMLT : SInst<"vclt", "sss", "SlSUl">;
+def SCALAR_CMLTZ : SInst<"vcltz", "ss", "Sl">;
+def SCALAR_CMGT : SInst<"vcgt", "sss", "Sl">;
+def SCALAR_CMGTZ : SInst<"vcgtz", "ss", "Sl">;
+def SCALAR_CMHI : SInst<"vcgt", "sss", "SUl">;
+def SCALAR_CMTST : SInst<"vtst", "sss", "SlSUl">;
+
 }
