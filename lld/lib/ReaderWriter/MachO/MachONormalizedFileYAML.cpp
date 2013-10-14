@@ -75,6 +75,19 @@ using lld::mach_o::normalized::ExportFlags;
 using lld::mach_o::normalized::Export;
 using lld::mach_o::normalized::NormalizedFile;
 
+
+LLVM_YAML_IS_SEQUENCE_VECTOR(Segment);
+LLVM_YAML_IS_SEQUENCE_VECTOR(DependentDylib);
+LLVM_YAML_IS_SEQUENCE_VECTOR(RebaseLocation);
+LLVM_YAML_IS_SEQUENCE_VECTOR(BindLocation);
+LLVM_YAML_IS_SEQUENCE_VECTOR(Export);
+LLVM_YAML_IS_SEQUENCE_VECTOR(StringRef);
+
+
+// for compatibility with gcc-4.7 in C++11 mode, add extra namespace
+namespace llvm {
+namespace yaml {
+
 // A vector of Sections is a sequence.
 template<>
 struct SequenceTraits< std::vector<Section> > {
@@ -454,7 +467,6 @@ struct MappingTraits<Segment> {
     io.mapRequired("access",    seg.access);
   }
 };
-LLVM_YAML_IS_SEQUENCE_VECTOR(Segment);
 
 template <>
 struct ScalarEnumerationTraits<LoadCommandType> {
@@ -480,7 +492,6 @@ struct MappingTraits<DependentDylib> {
   }
 };
 
-LLVM_YAML_IS_SEQUENCE_VECTOR(DependentDylib);
 
 template <>
 struct ScalarEnumerationTraits<RebaseType> {
@@ -505,7 +516,7 @@ struct MappingTraits<RebaseLocation> {
   }
 };
 
-LLVM_YAML_IS_SEQUENCE_VECTOR(RebaseLocation);
+
 
 template <>
 struct ScalarEnumerationTraits<BindType> {
@@ -532,8 +543,6 @@ struct MappingTraits<BindLocation> {
     io.mapOptional("addend",          bind.addend, Hex64(0));
   }
 };
-
-LLVM_YAML_IS_SEQUENCE_VECTOR(BindLocation);
 
 
 template <>
@@ -572,8 +581,6 @@ struct MappingTraits<Export> {
   }
 };
 
-LLVM_YAML_IS_SEQUENCE_VECTOR(Export);
-LLVM_YAML_IS_SEQUENCE_VECTOR(StringRef);
 
 template <>
 struct MappingTraits<NormalizedFile> {
@@ -602,6 +609,9 @@ struct MappingTraits<NormalizedFile> {
     io.mapOptional("exports",          file.exportInfo);
   }
 };
+
+} // namespace llvm
+} // namespace yaml
 
 
 namespace lld {
