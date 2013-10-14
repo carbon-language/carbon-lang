@@ -31,7 +31,7 @@ class TargetOptions;
 class ARMSubtarget : public ARMGenSubtargetInfo {
 protected:
   enum ARMProcFamilyEnum {
-    Others, CortexA5, CortexA8, CortexA9, CortexA15, CortexR5, Swift
+    Others, CortexA5, CortexA8, CortexA9, CortexA15, CortexR5, Swift, CortexA53
   };
   enum ARMProcClassEnum {
     None, AClass, RClass, MClass

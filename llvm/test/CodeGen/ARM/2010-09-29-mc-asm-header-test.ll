@@ -5,10 +5,10 @@
 ; RUN: llc < %s -mtriple=armv7-linux-gnueabi | FileCheck %s --check-prefix=V7
 ; RUN: llc < %s -mtriple=armv8-linux-gnueabi | FileCheck %s --check-prefix=V8
 ; RUN: llc < %s -mtriple=thumbv8-linux-gnueabi | FileCheck %s --check-prefix=Vt8
-; RUN: llc < %s -mtriple=armv8-linux-gnueabi -mattr=+fp-armv8 | FileCheck %s --check-prefix=V8-FPARMv8
-; RUN: llc < %s -mtriple=armv8-linux-gnueabi -mattr=+neon | FileCheck %s --check-prefix=V8-NEON
-; RUN: llc < %s -mtriple=armv8-linux-gnueabi -mattr=+fp-armv8 -mattr=+neon | FileCheck %s --check-prefix=V8-FPARMv8-NEON
-; RUN: llc < %s -mtriple=armv8-linux-gnueabi -mattr=+fp-armv8,+neon,+crypto | FileCheck %s --check-prefix=V8-FPARMv8-NEON-CRYPTO
+; RUN: llc < %s -mtriple=armv8-linux-gnueabi -mattr=-neon,-crypto | FileCheck %s --check-prefix=V8-FPARMv8
+; RUN: llc < %s -mtriple=armv8-linux-gnueabi -mattr=-fp-armv8,-crypto | FileCheck %s --check-prefix=V8-NEON
+; RUN: llc < %s -mtriple=armv8-linux-gnueabi -mattr=-crypto | FileCheck %s --check-prefix=V8-FPARMv8-NEON
+; RUN: llc < %s -mtriple=armv8-linux-gnueabi | FileCheck %s --check-prefix=V8-FPARMv8-NEON-CRYPTO
 ; RUN: llc < %s -mtriple=armv7-linux-gnueabi -mcpu=cortex-a9 | FileCheck %s --check-prefix=CORTEX-A9
 ; RUN: llc < %s -mtriple=thumbv6m-linux-gnueabi -mcpu=cortex-m0 | FileCheck %s --check-prefix=CORTEX-M0
 ; RUN: llc < %s -mtriple=thumbv7m-linux-gnueabi -mcpu=cortex-m4 | FileCheck %s --check-prefix=CORTEX-M4
@@ -140,8 +140,12 @@
 ; CORTEX-A53:  .eabi_attribute 7, 65
 ; CORTEX-A53:  .eabi_attribute 8, 1
 ; CORTEX-A53:  .eabi_attribute 9, 2
+; CORTEX-A53:  .fpu crypto-neon-fp-armv8
+; CORTEX-A53:  .eabi_attribute 10, 7
+; CORTEX-A53:  .eabi_attribute 12, 3
 ; CORTEX-A53:  .eabi_attribute 24, 1
 ; CORTEX-A53:  .eabi_attribute 25, 1
+; CORTEX-A53:  .eabi_attribute 44, 2
 
 define i32 @f(i64 %z) {
 	ret i32 0

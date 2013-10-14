@@ -1,4 +1,4 @@
-@ RUN: not llvm-mc -triple armv8 -show-encoding -mattr=+fp-armv8 < %s 2>&1 | FileCheck %s --check-prefix=V8
+@ RUN: not llvm-mc -triple armv8 -show-encoding -mattr=-neon < %s 2>&1 | FileCheck %s --check-prefix=V8
 
 @ VCVT{B,T}
 

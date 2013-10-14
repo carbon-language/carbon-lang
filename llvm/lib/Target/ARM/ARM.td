@@ -196,6 +196,13 @@ def ProcA15      : SubtargetFeature<"a15", "ARMProcFamily", "CortexA15",
                                    [FeatureT2XtPk, FeatureVFP4,
                                     FeatureAvoidPartialCPSR,
                                     FeatureTrustZone]>;
+
+def ProcA53     : SubtargetFeature<"a53", "ARMProcFamily", "CortexA53",
+                                   "Cortex-A53 ARM processors",
+                                   [FeatureMP, FeatureHWDiv, FeatureHWDivARM,
+                                    FeatureTrustZone, FeatureT2XtPk,
+                                    FeatureCrypto]>;
+
 def ProcR5      : SubtargetFeature<"r5", "ARMProcFamily", "CortexR5",
                                    "Cortex-R5 ARM processors",
                                    [FeatureSlowFPBrcc,
@@ -316,7 +323,9 @@ def : ProcessorModel<"swift",       SwiftModel,
                                      FeatureHasRAS, FeatureAClass]>;
 
 // V8 Processors
-def : ProcNoItin<"cortex-a53",      [HasV8Ops, FeatureAClass]>;
+def : ProcNoItin<"cortex-a53",      [ProcA53, HasV8Ops, FeatureAClass,
+                                    FeatureDB, FeatureFPARMv8,
+                                    FeatureNEON, FeatureDSPThumb2]>;
 
 //===----------------------------------------------------------------------===//
 // Register File Description

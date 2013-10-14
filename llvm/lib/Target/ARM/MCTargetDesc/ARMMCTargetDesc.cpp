@@ -103,8 +103,13 @@ std::string ARM_MC::ParseARMTriple(StringRef TT, StringRef CPU) {
   if (Idx) {
     unsigned SubVer = TT[Idx];
     if (SubVer == '8') {
-      // FIXME: Parse v8 features
-      ARMArchFeature = "+v8,+db";
+      if (NoCPU)
+        // v8a: FeatureDB, FeatureFPARMv8, FeatureNEON, FeatureDSPThumb2, FeatureMP,
+        //      FeatureHWDiv, FeatureHWDivARM, FeatureTrustZone, FeatureT2XtPk, FeatureCrypto
+        ARMArchFeature = "+v8,+db,+fp-armv8,+neon,+t2dsp,+mp,+hwdiv,+hwdiv-arm,+trustzone,+t2xtpk,+crypto";
+      else
+        // Use CPU to figure out the exact features
+        ARMArchFeature = "+v8";
     } else if (SubVer == '7') {
       if (Len >= Idx+2 && TT[Idx+1] == 'm') {
         isThumb = true;
