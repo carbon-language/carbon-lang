@@ -1233,15 +1233,15 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
   Value *CreateShadowCast(IRBuilder<> &IRB, Value *V, Type *dstTy) {
     Type *srcTy = V->getType();
     if (dstTy->isIntegerTy() && srcTy->isIntegerTy())
-      return IRB.CreateIntCast(V, dstTy, false);
+      return IRB.CreateIntCast(V, dstTy, true);
     if (dstTy->isVectorTy() && srcTy->isVectorTy() &&
         dstTy->getVectorNumElements() == srcTy->getVectorNumElements())
-      return IRB.CreateIntCast(V, dstTy, false);
+      return IRB.CreateIntCast(V, dstTy, true);
     size_t srcSizeInBits = VectorOrPrimitiveTypeSizeInBits(srcTy);
     size_t dstSizeInBits = VectorOrPrimitiveTypeSizeInBits(dstTy);
     Value *V1 = IRB.CreateBitCast(V, Type::getIntNTy(*MS.C, srcSizeInBits));
     Value *V2 =
-      IRB.CreateIntCast(V1, Type::getIntNTy(*MS.C, dstSizeInBits), false);
+      IRB.CreateIntCast(V1, Type::getIntNTy(*MS.C, dstSizeInBits), true);
     return IRB.CreateBitCast(V2, dstTy);
     // TODO: handle struct types.
   }
@@ -1899,7 +1899,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     } else {
       // Sa = (sext Sb) | (select b, Sc, Sd)
       S = IRB.CreateOr(
-          S, IRB.CreateSExt(getShadow(I.getCondition()), S->getType()),
+          S, CreateShadowCast(IRB, getShadow(I.getCondition()), S->getType()),
           "_msprop_select");
     }
     setShadow(&I, S);

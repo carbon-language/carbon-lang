@@ -290,6 +290,25 @@ entry:
 ; CHECK-ORIGINS: ret <8 x i16>
 
 
+; Check that we propagate origin for "select" with scalar condition and vector
+; arguments. Select condition shadow is sign-extended to the vector type and
+; mixed into the result shadow.
+
+define <8 x i16> @SelectVector2(<8 x i16> %a, <8 x i16> %b, i1 %c) nounwind uwtable readnone sanitize_memory {
+entry:
+  %cond = select i1 %c, <8 x i16> %a, <8 x i16> %b
+  ret <8 x i16> %cond
+}
+
+; CHECK: @SelectVector2
+; CHECK: select i1
+; CHECK: sext i1 {{.*}} to i128
+; CHECK: bitcast i128 {{.*}} to <8 x i16>
+; CHECK: or <8 x i16>
+; CHECK: select i1
+; CHECK: ret <8 x i16>
+
+
 define { i64, i64 } @SelectStruct(i1 zeroext %x, { i64, i64 } %a, { i64, i64 } %b) readnone sanitize_memory {
 entry:
   %c = select i1 %x, { i64, i64 } %a, { i64, i64 } %b
