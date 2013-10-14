@@ -17,9 +17,9 @@
 #ifndef LLVM_CODEGEN_LIVEREGUNITS_H
 #define LLVM_CODEGEN_LIVEREGUNITS_H
 
-#include "llvm/ADT/SmallSet.h"
+#include "llvm/ADT/SparseSet.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
-#include "llvm/MC/MCRegisterInfo.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 #include <cassert>
 
 namespace llvm {
@@ -29,16 +29,22 @@ class MachineInstr;
 /// A set of live register units with functions to track liveness when walking
 /// backward/forward through a basic block.
 class LiveRegUnits {
-  SmallSet<unsigned, 32> LiveUnits;
+  SparseSet<unsigned> LiveUnits;
 
+  LiveRegUnits(const LiveRegUnits&) LLVM_DELETED_FUNCTION;
+  LiveRegUnits &operator=(const LiveRegUnits&) LLVM_DELETED_FUNCTION;
 public:
   /// \brief Constructs a new empty LiveRegUnits set.
   LiveRegUnits() {}
 
-  /// \brief Constructs a new LiveRegUnits set by copying @p Other.
-  LiveRegUnits(const LiveRegUnits &Other)
-    : LiveUnits(Other.LiveUnits) {
+  void init(const TargetRegisterInfo *TRI) {
+    LiveUnits.clear();
+    LiveUnits.setUniverse(TRI->getNumRegs());
   }
+
+  void clear() { LiveUnits.clear(); }
+
+  bool empty() const { return LiveUnits.empty(); }
 
   /// \brief Adds a register to the set.
   void addReg(unsigned Reg, const MCRegisterInfo &MCRI) {
@@ -73,7 +79,7 @@ public:
   /// instruction(bundle): Remove killed-uses, add defs.
   void stepForward(const MachineInstr &MI, const MCRegisterInfo &MCRI);
 
-  /// Adds all registers in the live-in list of block @p BB.
+  /// \brief Adds all registers in the live-in list of block @p BB.
   void addLiveIns(const MachineBasicBlock &BB, const MCRegisterInfo &MCRI);
 };
 
