@@ -15,8 +15,8 @@
 #include <cctype>
 #include <time.h>
 
-namespace llvm {
-using namespace sys;
+using namespace llvm;
+using namespace llvm::sys;
 
 //===----------------------------------------------------------------------===//
 //=== WARNING: Implementation here must contain only Win32 specific code.
@@ -50,13 +50,10 @@ std::string TimeValue::str() const {
   char Buffer[25];
   // FIXME: the windows version of strftime doesn't support %e
   strftime(Buffer, 25, "%b %d %H:%M %Y", LT);
-  assert((Buffer[3] == ' ' && isdigit(Buffer[5]) && Buffer[6] == ' ') ||
+  assert((Buffer[3] == ' ' && isdigit(Buffer[5]) && Buffer[6] == ' ') &&
          "Unexpected format in strftime()!");
   // Emulate %e on %d to mute '0'.
   if (Buffer[4] == '0')
     Buffer[4] = ' ';
   return std::string(Buffer);
-}
-
-
 }
