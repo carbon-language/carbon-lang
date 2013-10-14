@@ -39,9 +39,13 @@ THREADLOCAL char cur_thread_placeholder[sizeof(ThreadState)] ALIGNED(64);
 static char ctx_placeholder[sizeof(Context)] ALIGNED(64);
 
 // Can be overriden by a front-end.
-bool CPP_WEAK OnFinalize(bool failed) {
+#ifdef TSAN_EXTERNAL_HOOKS
+bool OnFinalize(bool failed);
+#else
+bool WEAK OnFinalize(bool failed) {
   return failed;
 }
+#endif
 
 static Context *ctx;
 Context *CTX() {
