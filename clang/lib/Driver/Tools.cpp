@@ -5860,34 +5860,39 @@ void netbsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
 
   AddLinkerInputs(getToolChain(), Inputs, Args, CmdArgs);
 
+  unsigned Major, Minor, Micro;
+  getToolChain().getTriple().getOSVersion(Major, Minor, Micro);
+  bool useLibgcc = true;
+  if (Major >= 7 || (Major == 6 && Minor == 99 && Micro >= 23) || Major == 0) {
+    if (getToolChain().getArch() == llvm::Triple::x86 ||
+        getToolChain().getArch() == llvm::Triple::x86_64)
+      useLibgcc = false;
+  }
+
   if (!Args.hasArg(options::OPT_nostdlib) &&
       !Args.hasArg(options::OPT_nodefaultlibs)) {
     if (D.CCCIsCXX()) {
       getToolChain().AddCXXStdlibLibArgs(Args, CmdArgs);
       CmdArgs.push_back("-lm");
     }
-    // FIXME: For some reason GCC passes -lgcc and -lgcc_s before adding
-    // the default system libraries. Just mimic this for now.
-    if (Args.hasArg(options::OPT_static)) {
-      CmdArgs.push_back("-lgcc_eh");
-    } else {
-      CmdArgs.push_back("--as-needed");
-      CmdArgs.push_back("-lgcc_s");
-      CmdArgs.push_back("--no-as-needed");
-    }
-    CmdArgs.push_back("-lgcc");
-
     if (Args.hasArg(options::OPT_pthread))
       CmdArgs.push_back("-lpthread");
     CmdArgs.push_back("-lc");
 
-    CmdArgs.push_back("-lgcc");
-    if (Args.hasArg(options::OPT_static)) {
-      CmdArgs.push_back("-lgcc_eh");
-    } else {
-      CmdArgs.push_back("--as-needed");
-      CmdArgs.push_back("-lgcc_s");
-      CmdArgs.push_back("--no-as-needed");
+    if (useLibgcc) {
+      if (Args.hasArg(options::OPT_static)) {
+        // libgcc_eh depends on libc, so resolve as much as possible,
+        // pull in any new requirements from libc and then get the rest
+        // of libgcc.
+        CmdArgs.push_back("-lgcc_eh");
+        CmdArgs.push_back("-lc");
+        CmdArgs.push_back("-lgcc");
+      } else {
+        CmdArgs.push_back("-lgcc");
+        CmdArgs.push_back("--as-needed");
+        CmdArgs.push_back("-lgcc_s");
+        CmdArgs.push_back("--no-as-needed");
+      }
     }
   }
 
