@@ -897,6 +897,7 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
            .Case("objc_modules", LangOpts.ObjC2 && LangOpts.Modules)
            .Case("objc_nonfragile_abi", LangOpts.ObjCRuntime.isNonFragile())
            .Case("objc_property_explicit_atomic", true) // Does clang support explicit "atomic" keyword?
+           .Case("objc_protocol_qualifier_mangling", true)
            .Case("objc_weak_class", LangOpts.ObjCRuntime.hasWeakClassImport())
            .Case("ownership_holds", true)
            .Case("ownership_returns", true)
