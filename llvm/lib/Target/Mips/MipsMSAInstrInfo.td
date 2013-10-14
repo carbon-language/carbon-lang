@@ -1263,23 +1263,23 @@ class MSA_INSERT_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
 }
 
 class MSA_INSERT_PSEUDO_BASE<SDPatternOperator OpNode, ValueType Ty,
-                             RegisterClass RCWD, RegisterClass RCFS> :
-      MipsPseudo<(outs RCWD:$wd), (ins RCWD:$wd_in, uimm6:$n, RCFS:$fs),
-                 [(set RCWD:$wd, (OpNode (Ty RCWD:$wd_in), RCFS:$fs,
+                             RegisterOperand ROWD, RegisterOperand ROFS> :
+      MipsPseudo<(outs ROWD:$wd), (ins ROWD:$wd_in, uimm6:$n, ROFS:$fs),
+                 [(set ROWD:$wd, (OpNode (Ty ROWD:$wd_in), ROFS:$fs,
                                         immZExt6:$n))]> {
   bit usesCustomInserter = 1;
   string Constraints = "$wd = $wd_in";
 }
 
 class MSA_INSVE_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
-                          RegisterClass RCWD, RegisterClass RCWS = RCWD,
+                          RegisterOperand ROWD, RegisterOperand ROWS = ROWD,
                           InstrItinClass itin = NoItinerary> {
-  dag OutOperandList = (outs RCWD:$wd);
-  dag InOperandList = (ins RCWD:$wd_in, uimm6:$n, RCWS:$ws);
+  dag OutOperandList = (outs ROWD:$wd);
+  dag InOperandList = (ins ROWD:$wd_in, uimm6:$n, ROWS:$ws);
   string AsmString = !strconcat(instr_asm, "\t$wd[$n], $ws[0]");
-  list<dag> Pattern = [(set RCWD:$wd, (OpNode RCWD:$wd_in,
+  list<dag> Pattern = [(set ROWD:$wd, (OpNode ROWD:$wd_in,
                                               immZExt6:$n,
-                                              RCWS:$ws))];
+                                              ROWS:$ws))];
   InstrItinClass Itinerary = itin;
   string Constraints = "$wd = $wd_in";
 }
@@ -1983,14 +1983,18 @@ class INSERT_W_DESC : MSA_INSERT_DESC_BASE<"insert.w", vinsert_v4i32,
                                            MSA128WOpnd, GPR32Opnd>;
 
 class INSERT_FW_PSEUDO_DESC : MSA_INSERT_PSEUDO_BASE<vector_insert, v4f32,
-                                                     MSA128W, FGR32>;
+                                                     MSA128WOpnd, FGR32Opnd>;
 class INSERT_FD_PSEUDO_DESC : MSA_INSERT_PSEUDO_BASE<vector_insert, v2f64,
-                                                     MSA128D, FGR64>;
+                                                     MSA128DOpnd, FGR64Opnd>;
 
-class INSVE_B_DESC : MSA_INSVE_DESC_BASE<"insve.b", int_mips_insve_b, MSA128B>;
-class INSVE_H_DESC : MSA_INSVE_DESC_BASE<"insve.h", int_mips_insve_h, MSA128H>;
-class INSVE_W_DESC : MSA_INSVE_DESC_BASE<"insve.w", int_mips_insve_w, MSA128W>;
-class INSVE_D_DESC : MSA_INSVE_DESC_BASE<"insve.d", int_mips_insve_d, MSA128D>;
+class INSVE_B_DESC : MSA_INSVE_DESC_BASE<"insve.b", int_mips_insve_b,
+                                         MSA128BOpnd>;
+class INSVE_H_DESC : MSA_INSVE_DESC_BASE<"insve.h", int_mips_insve_h,
+                                         MSA128HOpnd>;
+class INSVE_W_DESC : MSA_INSVE_DESC_BASE<"insve.w", int_mips_insve_w,
+                                         MSA128WOpnd>;
+class INSVE_D_DESC : MSA_INSVE_DESC_BASE<"insve.d", int_mips_insve_d,
+                                         MSA128DOpnd>;
 
 class LD_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
                    ValueType TyNode, RegisterClass RCWD, Operand MemOpnd = mem,
