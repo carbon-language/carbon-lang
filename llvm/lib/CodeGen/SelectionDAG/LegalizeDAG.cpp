@@ -1581,10 +1581,10 @@ void SelectionDAGLegalize::ExpandDYNAMIC_STACKALLOC(SDNode* Node,
   Chain = SP.getValue(1);
   unsigned Align = cast<ConstantSDNode>(Tmp3)->getZExtValue();
   unsigned StackAlign = TM.getFrameLowering()->getStackAlignment();
-  if (Align > StackAlign)
-    SP = DAG.getNode(ISD::AND, dl, VT, SP,
-                      DAG.getConstant(-(uint64_t)Align, VT));
   Tmp1 = DAG.getNode(ISD::SUB, dl, VT, SP, Size);       // Value
+  if (Align > StackAlign)
+    Tmp1 = DAG.getNode(ISD::AND, dl, VT, Tmp1,
+                       DAG.getConstant(-(uint64_t)Align, VT));
   Chain = DAG.getCopyToReg(Chain, dl, SPReg, Tmp1);     // Output chain
 
   Tmp2 = DAG.getCALLSEQ_END(Chain,  DAG.getIntPtrConstant(0, true),

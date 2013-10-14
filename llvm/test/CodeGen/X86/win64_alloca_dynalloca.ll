@@ -4,7 +4,10 @@
 ; PR8777
 ; PR8778
 
-define i64 @foo(i64 %n, i64 %x) nounwind {
+define i64 @unaligned(i64 %n, i64 %x) nounwind {
+; M64-LABEL: unaligned:
+; W64-LABEL: unaligned:
+; EFI-LABEL: unaligned:
 entry:
 
   %buf0 = alloca i8, i64 4096, align 1
@@ -69,6 +72,53 @@ entry:
 
 ; W64: movq    %rbp, %rsp
 
+}
+
+define i64 @aligned(i64 %n, i64 %x) nounwind {
+; M64-LABEL: aligned:
+; W64-LABEL: aligned:
+; EFI-LABEL: aligned:
+entry:
+
+  %buf1 = alloca i8, i64 %n, align 128
+
+; M64: leaq  15(%{{.*}}), %rax
+; M64: andq  $-16, %rax
+; M64: callq ___chkstk
+; M64: movq  %rsp, [[R2:%r.*]]
+; M64: andq  $-128, [[R2]]
+; M64: movq  [[R2]], %rsp
+
+; W64: leaq  15(%{{.*}}), %rax
+; W64: andq  $-16, %rax
+; W64: callq __chkstk
+; W64: subq  %rax, %rsp
+; W64: movq  %rsp, [[R2:%r.*]]
+; W64: andq  $-128, [[R2]]
+; W64: movq  [[R2]], %rsp
+
+; EFI: leaq  15(%{{.*}}), [[R1:%r.*]]
+; EFI: andq  $-16, [[R1]]
+; EFI: movq  %rsp, [[R64:%r.*]]
+; EFI: subq  [[R1]], [[R64]]
+; EFI: andq  $-128, [[R64]]
+; EFI: movq  [[R64]], %rsp
+
+  %r = call i64 @bar(i64 %n, i64 %x, i64 %n, i8* undef, i8* %buf1) nounwind
+
+; M64: subq  $48, %rsp
+; M64: movq  [[R2]], 32(%rsp)
+; M64: callq bar
+
+; W64: subq  $48, %rsp
+; W64: movq  [[R2]], 32(%rsp)
+; W64: callq bar
+
+; EFI: subq  $48, %rsp
+; EFI: movq  [[R64]], 32(%rsp)
+; EFI: callq _bar
+
+  ret i64 %r
 }
 
 declare i64 @bar(i64, i64, i64, i8* nocapture, i8* nocapture) nounwind

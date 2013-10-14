@@ -10755,7 +10755,8 @@ X86TargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
   // Get the inputs.
   SDValue Chain = Op.getOperand(0);
   SDValue Size  = Op.getOperand(1);
-  // FIXME: Ensure alignment here
+  unsigned Align = cast<ConstantSDNode>(Op.getOperand(2))->getZExtValue();
+  EVT VT = Op.getNode()->getValueType(0);
 
   bool Is64Bit = Subtarget->is64Bit();
   EVT SPTy = Is64Bit ? MVT::i64 : MVT::i32;
@@ -10793,14 +10794,20 @@ X86TargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
     SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Glue);
 
     Chain = DAG.getNode(X86ISD::WIN_ALLOCA, dl, NodeTys, Chain, Flag);
-    Flag = Chain.getValue(1);
 
     const X86RegisterInfo *RegInfo =
       static_cast<const X86RegisterInfo*>(getTargetMachine().getRegisterInfo());
-    Chain = DAG.getCopyFromReg(Chain, dl, RegInfo->getStackRegister(),
-                               SPTy).getValue(1);
+    unsigned SPReg = RegInfo->getStackRegister();
+    SDValue SP = DAG.getCopyFromReg(Chain, dl, SPReg, SPTy);
+    Chain = SP.getValue(1);
 
-    SDValue Ops1[2] = { Chain.getValue(0), Chain };
+    if (Align) {
+      SP = DAG.getNode(ISD::AND, dl, VT, SP.getValue(0),
+                       DAG.getConstant(-(uint64_t)Align, VT));
+      Chain = DAG.getCopyToReg(Chain, dl, SPReg, SP);
+    }
+
+    SDValue Ops1[2] = { SP, Chain };
     return DAG.getMergeValues(Ops1, 2, dl);
   }
 }
