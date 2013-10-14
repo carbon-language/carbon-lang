@@ -1,7 +1,7 @@
 ; RUN: llc < %s -mtriple=x86_64-unknown-linux-gnu | FileCheck %s
 @tm_nest_level = internal thread_local global i32 0
 define i64 @z() nounwind {
-; FIXME: The codegen here is primative at best and could be much better.
+; FIXME: The codegen here is primitive at best and could be much better.
 ; The add and the moves can be folded together.
 ; CHECK: movq    $tm_nest_level@TPOFF, %rcx
 ; CHECK: movq    %fs:0, %rax
