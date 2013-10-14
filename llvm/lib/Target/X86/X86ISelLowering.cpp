@@ -8210,10 +8210,9 @@ static SDValue LowerToTLSExecModel(GlobalAddressSDNode *GA, SelectionDAG &DAG,
   Value *Ptr = Constant::getNullValue(Type::getInt8PtrTy(*DAG.getContext(),
                                                          is64Bit ? 257 : 256));
 
-  SDValue ThreadPointer = DAG.getLoad(PtrVT, dl, DAG.getEntryNode(),
-                                      DAG.getIntPtrConstant(0),
-                                      MachinePointerInfo(Ptr),
-                                      false, false, false, 0);
+  SDValue ThreadPointer =
+      DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), DAG.getIntPtrConstant(0),
+                  MachinePointerInfo(Ptr), false, false, false, 0);
 
   unsigned char OperandFlags = 0;
   // Most TLS accesses are not RIP relative, even on x86-64.  One exception is
@@ -8235,21 +8234,20 @@ static SDValue LowerToTLSExecModel(GlobalAddressSDNode *GA, SelectionDAG &DAG,
   // emit "addl x@ntpoff,%eax" (local exec)
   // or "addl x@indntpoff,%eax" (initial exec)
   // or "addl x@gotntpoff(%ebx) ,%eax" (initial exec, 32-bit pic)
-  SDValue TGA = DAG.getTargetGlobalAddress(GA->getGlobal(), dl,
-                                           GA->getValueType(0),
-                                           GA->getOffset(), OperandFlags);
+  SDValue TGA =
+      DAG.getTargetGlobalAddress(GA->getGlobal(), dl, GA->getValueType(0),
+                                 GA->getOffset(), OperandFlags);
   SDValue Offset = DAG.getNode(WrapperKind, dl, PtrVT, TGA);
 
   if (model == TLSModel::InitialExec) {
     if (isPIC && !is64Bit) {
       Offset = DAG.getNode(ISD::ADD, dl, PtrVT,
-                          DAG.getNode(X86ISD::GlobalBaseReg, SDLoc(), PtrVT),
+                           DAG.getNode(X86ISD::GlobalBaseReg, SDLoc(), PtrVT),
                            Offset);
     }
 
     Offset = DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), Offset,
-                         MachinePointerInfo::getGOT(), false, false, false,
-                         0);
+                         MachinePointerInfo::getGOT(), false, false, false, 0);
   }
 
   // The address of the thread local variable is the add of the thread
