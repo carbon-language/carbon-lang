@@ -232,7 +232,7 @@ sha256msg2 (%rax), %xmm2
 // CHECK:  encoding: [0xdf,0x07]
         	filds	(%rdi)
 
-// CHECK: pmovmskb	%xmm5, %rcx
+// CHECK: pmovmskb	%xmm5, %ecx
 // CHECK:  encoding: [0x66,0x0f,0xd7,0xcd]
         	pmovmskb	%xmm5,%rcx
 
@@ -240,6 +240,6 @@ sha256msg2 (%rax), %xmm2
 // CHECK: encoding: [0x66,0x0f,0xc4,0xe9,0x03]
           pinsrw $3, %ecx, %xmm5
 
-// CHECK: pinsrw $3, %rcx, %xmm5
+// CHECK: pinsrw $3, %ecx, %xmm5
 // CHECK: encoding: [0x66,0x0f,0xc4,0xe9,0x03]
           pinsrw $3, %rcx, %xmm5
