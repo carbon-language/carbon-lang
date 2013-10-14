@@ -19,6 +19,7 @@
 #include "asan_fake_stack.h"
 #include "asan_stack.h"
 #include "asan_stats.h"
+#include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_libc.h"
 #include "sanitizer_common/sanitizer_thread_registry.h"
 
@@ -36,10 +37,12 @@ class AsanThreadContext : public ThreadContextBase {
   explicit AsanThreadContext(int tid)
       : ThreadContextBase(tid),
         announced(false),
+        destructor_iterations(kPthreadDestructorIterations),
         thread(0) {
     internal_memset(&stack, 0, sizeof(stack));
   }
   bool announced;
+  int destructor_iterations;
   StackTrace stack;
   AsanThread *thread;
 

@@ -165,7 +165,13 @@ thread_return_t AsanThread::ThreadStart(uptr os_id) {
   malloc_storage().CommitBack();
   if (flags()->use_sigaltstack) UnsetAlternateSignalStack();
 
-  this->Destroy();
+  // On POSIX systems we defer this to the TSD destructor. LSan will consider
+  // the thread's memory as non-live from the moment we call Destroy(), even
+  // though that memory might contain pointers to heap objects which will be
+  // cleaned up by a user-defined TSD destructor. Thus, calling Destroy() before
+  // the TSD destructors have run might cause false positives in LSan.
+  if (!SANITIZER_POSIX)
+    this->Destroy();
 
   return res;
 }

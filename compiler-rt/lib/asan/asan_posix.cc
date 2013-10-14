@@ -1,4 +1,4 @@
-//===-- asan_linux.cc -----------------------------------------------------===//
+//===-- asan_posix.cc -----------------------------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -116,6 +116,15 @@ void AsanTSDSet(void *tsd) {
   pthread_setspecific(tsd_key, tsd);
 }
 
+void PlatformTSDDtor(void *tsd) {
+  AsanThreadContext *context = (AsanThreadContext*)tsd;
+  if (context->destructor_iterations > 1) {
+    context->destructor_iterations--;
+    CHECK_EQ(0, pthread_setspecific(tsd_key, tsd));
+    return;
+  }
+  AsanThread::TSDDtor(tsd);
+}
 }  // namespace __asan
 
 #endif  // SANITIZER_LINUX || SANITIZER_MAC
