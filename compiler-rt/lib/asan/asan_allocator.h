@@ -35,10 +35,11 @@ void InitializeAllocator();
 class AsanChunkView {
  public:
   explicit AsanChunkView(AsanChunk *chunk) : chunk_(chunk) {}
-  bool IsValid() { return chunk_ != 0; }
-  uptr Beg();       // first byte of user memory.
-  uptr End();       // last byte of user memory.
-  uptr UsedSize();  // size requested by the user.
+  bool IsValid();   // Checks if AsanChunkView points to a valid allocated
+                    // or quarantined chunk.
+  uptr Beg();       // First byte of user memory.
+  uptr End();       // Last byte of user memory.
+  uptr UsedSize();  // Size requested by the user.
   uptr AllocTid();
   uptr FreeTid();
   void GetAllocStack(StackTrace *stack);

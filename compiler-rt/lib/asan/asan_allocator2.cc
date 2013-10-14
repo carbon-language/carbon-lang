@@ -218,6 +218,9 @@ struct AsanChunk: ChunkBase {
   }
 };
 
+bool AsanChunkView::IsValid() {
+  return chunk_ != 0 && chunk_->chunk_state != CHUNK_AVAILABLE;
+}
 uptr AsanChunkView::Beg() { return chunk_->Beg(); }
 uptr AsanChunkView::End() { return Beg() + UsedSize(); }
 uptr AsanChunkView::UsedSize() { return chunk_->UsedSize(); }
@@ -228,9 +231,8 @@ static void GetStackTraceFromId(u32 id, StackTrace *stack) {
   CHECK(id);
   uptr size = 0;
   const uptr *trace = StackDepotGet(id, &size);
-  CHECK_LT(size, kStackTraceMax);
-  internal_memcpy(stack->trace, trace, sizeof(uptr) * size);
-  stack->size = size;
+  CHECK(trace);
+  stack->CopyFrom(trace, size);
 }
 
 void AsanChunkView::GetAllocStack(StackTrace *stack) {

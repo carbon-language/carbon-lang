@@ -11,7 +11,6 @@ __attribute__((noinline))
 static void NullDeref(int *ptr) {
   // CHECK: ERROR: AddressSanitizer: SEGV on unknown address
   // CHECK:   {{0x0*00028 .*pc 0x.*}}
-  // CHECK: {{AddressSanitizer can not provide additional info.}}
   ptr[10]++;  // BOOM
   // atos on Mac cannot extract the symbol name correctly.
   // CHECK-Linux: {{    #0 0x.* in NullDeref.*null_deref.cc:}}[[@LINE-2]]
@@ -20,4 +19,5 @@ static void NullDeref(int *ptr) {
 int main() {
   NullDeref((int*)0);
   // CHECK: {{    #1 0x.* in main.*null_deref.cc:}}[[@LINE-1]]
+  // CHECK: {{AddressSanitizer can not provide additional info.}}
 }

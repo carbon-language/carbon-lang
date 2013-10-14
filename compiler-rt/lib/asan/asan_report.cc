@@ -414,7 +414,11 @@ static void DescribeAccessToHeapChunk(AsanChunkView chunk, uptr addr,
 
 void DescribeHeapAddress(uptr addr, uptr access_size) {
   AsanChunkView chunk = FindHeapChunkByAddress(addr);
-  if (!chunk.IsValid()) return;
+  if (!chunk.IsValid()) {
+    Printf("AddressSanitizer can not describe address in more detail "
+           "(wild memory access suspected).\n");
+    return;
+  }
   DescribeAccessToHeapChunk(chunk, addr, access_size);
   CHECK(chunk.AllocTid() != kInvalidTid);
   asanThreadRegistry().CheckLocked();
@@ -564,9 +568,9 @@ void ReportSIGSEGV(uptr pc, uptr sp, uptr bp, uptr addr) {
              (void*)addr, (void*)pc, (void*)sp, (void*)bp,
              GetCurrentTidOrInvalid());
   Printf("%s", d.EndWarning());
-  Printf("AddressSanitizer can not provide additional info.\n");
   GET_STACK_TRACE_FATAL(pc, bp);
   PrintStack(&stack);
+  Printf("AddressSanitizer can not provide additional info.\n");
   ReportSummary("SEGV", &stack);
 }
 
