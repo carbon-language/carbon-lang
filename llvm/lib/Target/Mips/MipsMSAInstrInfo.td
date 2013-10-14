@@ -501,13 +501,13 @@ class CLTI_U_H_ENC : MSA_I5_FMT<0b011, 0b01, 0b000111>;
 class CLTI_U_W_ENC : MSA_I5_FMT<0b011, 0b10, 0b000111>;
 class CLTI_U_D_ENC : MSA_I5_FMT<0b011, 0b11, 0b000111>;
 
-class COPY_S_B_ENC : MSA_ELM_B_FMT<0b0010, 0b011001>;
-class COPY_S_H_ENC : MSA_ELM_H_FMT<0b0010, 0b011001>;
-class COPY_S_W_ENC : MSA_ELM_W_FMT<0b0010, 0b011001>;
+class COPY_S_B_ENC : MSA_ELM_COPY_B_FMT<0b0010, 0b011001>;
+class COPY_S_H_ENC : MSA_ELM_COPY_H_FMT<0b0010, 0b011001>;
+class COPY_S_W_ENC : MSA_ELM_COPY_W_FMT<0b0010, 0b011001>;
 
-class COPY_U_B_ENC : MSA_ELM_B_FMT<0b0011, 0b011001>;
-class COPY_U_H_ENC : MSA_ELM_H_FMT<0b0011, 0b011001>;
-class COPY_U_W_ENC : MSA_ELM_W_FMT<0b0011, 0b011001>;
+class COPY_U_B_ENC : MSA_ELM_COPY_B_FMT<0b0011, 0b011001>;
+class COPY_U_H_ENC : MSA_ELM_COPY_H_FMT<0b0011, 0b011001>;
+class COPY_U_W_ENC : MSA_ELM_COPY_W_FMT<0b0011, 0b011001>;
 
 class CTCMSA_ENC : MSA_ELM_FMT<0b0000111110, 0b011001>;
 
@@ -1076,12 +1076,23 @@ class MSA_BIT_SPLAT_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
 }
 
 class MSA_COPY_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
-                         ValueType VecTy, RegisterClass RCD, RegisterClass RCWS,
+                         ValueType VecTy, RegisterOperand ROD,
+                         RegisterOperand ROWS,
                          InstrItinClass itin = NoItinerary> {
-  dag OutOperandList = (outs RCD:$rd);
-  dag InOperandList = (ins RCWS:$ws, uimm4:$n);
+  dag OutOperandList = (outs ROD:$rd);
+  dag InOperandList = (ins ROWS:$ws, uimm4:$n);
   string AsmString = !strconcat(instr_asm, "\t$rd, $ws[$n]");
-  list<dag> Pattern = [(set RCD:$rd, (OpNode (VecTy RCWS:$ws), immZExt4:$n))];
+  list<dag> Pattern = [(set ROD:$rd, (OpNode (VecTy ROWS:$ws), immZExt4:$n))];
+  InstrItinClass Itinerary = itin;
+}
+
+class MSA_ELM_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
+                        RegisterOperand ROWD, RegisterOperand ROWS = ROWD,
+                        InstrItinClass itin = NoItinerary> {
+  dag OutOperandList = (outs ROWD:$wd);
+  dag InOperandList = (ins ROWS:$ws, uimm4:$n);
+  string AsmString = !strconcat(instr_asm, "\t$wd, $ws[$n]");
+  list<dag> Pattern = [(set ROWD:$wd, (OpNode ROWS:$ws, immZExt4:$n))];
   InstrItinClass Itinerary = itin;
 }
 
@@ -1285,14 +1296,14 @@ class MSA_VEC_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
 }
 
 class MSA_ELM_SPLAT_DESC_BASE<string instr_asm, SplatComplexPattern SplatImm,
-                              RegisterClass RCWD,
-                              RegisterClass RCWS = RCWD,
+                              RegisterOperand ROWD,
+                              RegisterOperand ROWS = ROWD,
                               InstrItinClass itin = NoItinerary> {
-  dag OutOperandList = (outs RCWD:$wd);
-  dag InOperandList = (ins RCWS:$ws, SplatImm.OpClass:$u3);
-  string AsmString = !strconcat(instr_asm, "\t$wd, $ws[$u3]");
-  list<dag> Pattern = [(set RCWD:$wd, (MipsVSHF SplatImm:$u3, RCWS:$ws,
-                                                RCWS:$ws))];
+  dag OutOperandList = (outs ROWD:$wd);
+  dag InOperandList = (ins ROWS:$ws, SplatImm.OpClass:$n);
+  string AsmString = !strconcat(instr_asm, "\t$wd, $ws[$n]");
+  list<dag> Pattern = [(set ROWD:$wd, (MipsVSHF SplatImm:$n, ROWS:$ws,
+                                                ROWS:$ws))];
   InstrItinClass Itinerary = itin;
 }
 
@@ -1600,18 +1611,18 @@ class CLTI_U_D_DESC : MSA_I5_DESC_BASE<"clti_u.d", vsetult_v2i64,
                                        vsplati64_uimm5, MSA128DOpnd>;
 
 class COPY_S_B_DESC : MSA_COPY_DESC_BASE<"copy_s.b", vextract_sext_i8,  v16i8,
-                                         GPR32, MSA128B>;
+                                         GPR32Opnd, MSA128BOpnd>;
 class COPY_S_H_DESC : MSA_COPY_DESC_BASE<"copy_s.h", vextract_sext_i16, v8i16,
-                                         GPR32, MSA128H>;
+                                         GPR32Opnd, MSA128HOpnd>;
 class COPY_S_W_DESC : MSA_COPY_DESC_BASE<"copy_s.w", vextract_sext_i32, v4i32,
-                                         GPR32, MSA128W>;
+                                         GPR32Opnd, MSA128WOpnd>;
 
 class COPY_U_B_DESC : MSA_COPY_DESC_BASE<"copy_u.b", vextract_zext_i8,  v16i8,
-                                         GPR32, MSA128B>;
+                                         GPR32Opnd, MSA128BOpnd>;
 class COPY_U_H_DESC : MSA_COPY_DESC_BASE<"copy_u.h", vextract_zext_i16, v8i16,
-                                         GPR32, MSA128H>;
+                                         GPR32Opnd, MSA128HOpnd>;
 class COPY_U_W_DESC : MSA_COPY_DESC_BASE<"copy_u.w", vextract_zext_i32, v4i32,
-                                         GPR32, MSA128W>;
+                                         GPR32Opnd, MSA128WOpnd>;
 
 class COPY_FW_PSEUDO_DESC : MSA_COPY_PSEUDO_BASE<vector_extract, v4f32, FGR32,
                                                  MSA128W>;
@@ -2206,10 +2217,10 @@ class SLD_H_DESC : MSA_3R_DESC_BASE<"sld.h", int_mips_sld_h, MSA128HOpnd>;
 class SLD_W_DESC : MSA_3R_DESC_BASE<"sld.w", int_mips_sld_w, MSA128WOpnd>;
 class SLD_D_DESC : MSA_3R_DESC_BASE<"sld.d", int_mips_sld_d, MSA128DOpnd>;
 
-class SLDI_B_DESC : MSA_BIT_B_DESC_BASE<"sldi.b", int_mips_sldi_b, MSA128B>;
-class SLDI_H_DESC : MSA_BIT_H_DESC_BASE<"sldi.h", int_mips_sldi_h, MSA128H>;
-class SLDI_W_DESC : MSA_BIT_W_DESC_BASE<"sldi.w", int_mips_sldi_w, MSA128W>;
-class SLDI_D_DESC : MSA_BIT_D_DESC_BASE<"sldi.d", int_mips_sldi_d, MSA128D>;
+class SLDI_B_DESC : MSA_ELM_DESC_BASE<"sldi.b", int_mips_sldi_b, MSA128BOpnd>;
+class SLDI_H_DESC : MSA_ELM_DESC_BASE<"sldi.h", int_mips_sldi_h, MSA128HOpnd>;
+class SLDI_W_DESC : MSA_ELM_DESC_BASE<"sldi.w", int_mips_sldi_w, MSA128WOpnd>;
+class SLDI_D_DESC : MSA_ELM_DESC_BASE<"sldi.d", int_mips_sldi_d, MSA128DOpnd>;
 
 class SLL_B_DESC : MSA_3R_DESC_BASE<"sll.b", shl, MSA128BOpnd>;
 class SLL_H_DESC : MSA_3R_DESC_BASE<"sll.h", shl, MSA128HOpnd>;
@@ -2235,13 +2246,13 @@ class SPLAT_D_DESC : MSA_3R_DESC_BASE<"splat.d", int_mips_splat_d, MSA128DOpnd,
                                       MSA128DOpnd, GPR32Opnd>;
 
 class SPLATI_B_DESC : MSA_ELM_SPLAT_DESC_BASE<"splati.b", vsplati8_uimm4,
-                                              MSA128B>;
+                                              MSA128BOpnd>;
 class SPLATI_H_DESC : MSA_ELM_SPLAT_DESC_BASE<"splati.h", vsplati16_uimm3,
-                                              MSA128H>;
+                                              MSA128HOpnd>;
 class SPLATI_W_DESC : MSA_ELM_SPLAT_DESC_BASE<"splati.w", vsplati32_uimm2,
-                                              MSA128W>;
+                                              MSA128WOpnd>;
 class SPLATI_D_DESC : MSA_ELM_SPLAT_DESC_BASE<"splati.d", vsplati64_uimm1,
-                                              MSA128D>;
+                                              MSA128DOpnd>;
 
 class SRA_B_DESC : MSA_3R_DESC_BASE<"sra.b", sra, MSA128BOpnd>;
 class SRA_H_DESC : MSA_3R_DESC_BASE<"sra.h", sra, MSA128HOpnd>;

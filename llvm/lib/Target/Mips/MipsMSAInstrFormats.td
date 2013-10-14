@@ -110,26 +110,93 @@ class MSA_ELM_FMT<bits<10> major, bits<6> minor>: MSAInst {
 }
 
 class MSA_ELM_B_FMT<bits<4> major, bits<6> minor>: MSAInst {
+  bits<4> n;
+  bits<5> ws;
+  bits<5> wd;
+
   let Inst{25-22} = major;
   let Inst{21-20} = 0b00;
+  let Inst{19-16} = n{3-0};
+  let Inst{15-11} = ws;
+  let Inst{10-6} = wd;
   let Inst{5-0} = minor;
 }
 
 class MSA_ELM_H_FMT<bits<4> major, bits<6> minor>: MSAInst {
+  bits<4> n;
+  bits<5> ws;
+  bits<5> wd;
+
   let Inst{25-22} = major;
   let Inst{21-19} = 0b100;
+  let Inst{18-16} = n{2-0};
+  let Inst{15-11} = ws;
+  let Inst{10-6} = wd;
   let Inst{5-0} = minor;
 }
 
 class MSA_ELM_W_FMT<bits<4> major, bits<6> minor>: MSAInst {
+  bits<4> n;
+  bits<5> ws;
+  bits<5> wd;
+
   let Inst{25-22} = major;
   let Inst{21-18} = 0b1100;
+  let Inst{17-16} = n{1-0};
+  let Inst{15-11} = ws;
+  let Inst{10-6} = wd;
   let Inst{5-0} = minor;
 }
 
 class MSA_ELM_D_FMT<bits<4> major, bits<6> minor>: MSAInst {
+  bits<4> n;
+  bits<5> ws;
+  bits<5> wd;
+
   let Inst{25-22} = major;
   let Inst{21-17} = 0b11100;
+  let Inst{16} = n{0};
+  let Inst{15-11} = ws;
+  let Inst{10-6} = wd;
+  let Inst{5-0} = minor;
+}
+
+class MSA_ELM_COPY_B_FMT<bits<4> major, bits<6> minor>: MSAInst {
+  bits<4> n;
+  bits<5> ws;
+  bits<5> rd;
+
+  let Inst{25-22} = major;
+  let Inst{21-20} = 0b00;
+  let Inst{19-16} = n{3-0};
+  let Inst{15-11} = ws;
+  let Inst{10-6} = rd;
+  let Inst{5-0} = minor;
+}
+
+class MSA_ELM_COPY_H_FMT<bits<4> major, bits<6> minor>: MSAInst {
+  bits<4> n;
+  bits<5> ws;
+  bits<5> rd;
+
+  let Inst{25-22} = major;
+  let Inst{21-19} = 0b100;
+  let Inst{18-16} = n{2-0};
+  let Inst{15-11} = ws;
+  let Inst{10-6} = rd;
+  let Inst{5-0} = minor;
+}
+
+class MSA_ELM_COPY_W_FMT<bits<4> major, bits<6> minor>: MSAInst {
+  bits<4> n;
+  bits<5> ws;
+  bits<5> rd;
+
+  let Inst{25-22} = major;
+  let Inst{21-18} = 0b1100;
+  let Inst{17-16} = n{1-0};
+  let Inst{15-11} = ws;
+  let Inst{10-6} = rd;
   let Inst{5-0} = minor;
 }
 
