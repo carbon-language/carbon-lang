@@ -133,6 +133,45 @@ class MSA_ELM_D_FMT<bits<4> major, bits<6> minor>: MSAInst {
   let Inst{5-0} = minor;
 }
 
+class MSA_ELM_INSERT_B_FMT<bits<4> major, bits<6> minor>: MSAInst {
+  bits<6> n;
+  bits<5> rs;
+  bits<5> wd;
+
+  let Inst{25-22} = major;
+  let Inst{21-20} = 0b00;
+  let Inst{19-16} = n{3-0};
+  let Inst{15-11} = rs;
+  let Inst{10-6} = wd;
+  let Inst{5-0} = minor;
+}
+
+class MSA_ELM_INSERT_H_FMT<bits<4> major, bits<6> minor>: MSAInst {
+  bits<6> n;
+  bits<5> rs;
+  bits<5> wd;
+
+  let Inst{25-22} = major;
+  let Inst{21-19} = 0b100;
+  let Inst{18-16} = n{2-0};
+  let Inst{15-11} = rs;
+  let Inst{10-6} = wd;
+  let Inst{5-0} = minor;
+}
+
+class MSA_ELM_INSERT_W_FMT<bits<4> major, bits<6> minor>: MSAInst {
+  bits<6> n;
+  bits<5> rs;
+  bits<5> wd;
+
+  let Inst{25-22} = major;
+  let Inst{21-18} = 0b1100;
+  let Inst{17-16} = n{1-0};
+  let Inst{15-11} = rs;
+  let Inst{10-6} = wd;
+  let Inst{5-0} = minor;
+}
+
 class MSA_I5_FMT<bits<3> major, bits<2> df, bits<6> minor>: MSAInst {
   bits<5> imm;
   bits<5> ws;
