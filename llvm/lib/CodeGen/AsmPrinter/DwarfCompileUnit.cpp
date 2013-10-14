@@ -1112,11 +1112,13 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
           ElemDie = new DIE(dwarf::DW_TAG_friend);
           addType(ElemDie, resolve(DDTy.getTypeDerivedFrom()),
                   dwarf::DW_AT_friend);
-        } else if (DDTy.isStaticMember())
-          ElemDie = createStaticMemberDIE(DDTy);
-        else
+          Buffer.addChild(ElemDie);
+        } else if (DDTy.isStaticMember()) {
+          ElemDie = getOrCreateStaticMemberDIE(DDTy);
+        } else {
           ElemDie = createMemberDIE(DDTy);
-        Buffer.addChild(ElemDie);
+          Buffer.addChild(ElemDie);
+        }
       } else if (Element.isObjCProperty()) {
         DIObjCProperty Property(Element);
         ElemDie = new DIE(Property.getTag());
@@ -1454,11 +1456,7 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
   if (SDMDecl.Verify()) {
     assert(SDMDecl.isStaticMember() && "Expected static member decl");
     // We need the declaration DIE that is in the static member's class.
-    // But that class might not exist in the DWARF yet.
-    // Creating the class will create the static member decl DIE.
-    getOrCreateContextDIE(resolve(SDMDecl.getContext()));
-    VariableDIE = getDIE(SDMDecl);
-    assert(VariableDIE && "Static member decl has no context?");
+    VariableDIE = getOrCreateStaticMemberDIE(SDMDecl);
     IsStaticMember = true;
   }
 
@@ -1819,12 +1817,24 @@ DIE *CompileUnit::createMemberDIE(DIDerivedType DT) {
   return MemberDie;
 }
 
-/// createStaticMemberDIE - Create new DIE for C++ static member.
-DIE *CompileUnit::createStaticMemberDIE(const DIDerivedType DT) {
+/// getOrCreateStaticMemberDIE - Create new DIE for C++ static member.
+DIE *CompileUnit::getOrCreateStaticMemberDIE(const DIDerivedType DT) {
   if (!DT.Verify())
     return NULL;
 
-  DIE *StaticMemberDIE = new DIE(DT.getTag());
+  // Construct the context before querying for the existence of the DIE in case
+  // such construction creates the DIE.
+  DIE *ContextDIE = getOrCreateContextDIE(resolve(DT.getContext()));
+  assert(ContextDIE && "Static member should belong to a non-CU context.");
+
+  DIE *StaticMemberDIE = getDIE(DT);
+  if (StaticMemberDIE)
+    return StaticMemberDIE;
+
+  StaticMemberDIE = new DIE(DT.getTag());
+  // Add to context owner.
+  ContextDIE->addChild(StaticMemberDIE);
+
   DIType Ty = resolve(DT.getTypeDerivedFrom());
 
   addString(StaticMemberDIE, dwarf::DW_AT_name, DT.getName());

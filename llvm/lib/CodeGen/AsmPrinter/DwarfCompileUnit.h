@@ -329,8 +329,8 @@ private:
   /// createMemberDIE - Create new member DIE.
   DIE *createMemberDIE(DIDerivedType DT);
 
-  /// createStaticMemberDIE - Create new static data member DIE.
-  DIE *createStaticMemberDIE(DIDerivedType DT);
+  /// getOrCreateStaticMemberDIE - Create new static data member DIE.
+  DIE *getOrCreateStaticMemberDIE(DIDerivedType DT);
 
   /// getLowerBoundDefault - Return the default lower bound for an array. If the
   /// DWARF version doesn't handle the language, return -1.
