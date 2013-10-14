@@ -3114,7 +3114,7 @@ static unsigned getLoadStoreRegOpcode(unsigned Reg,
                                       const TargetMachine &TM,
                                       bool load) {
   if (TM.getSubtarget<X86Subtarget>().hasAVX512()) {
-    if (X86::VK8RegClass.hasSubClassEq(RC)  || 
+    if (X86::VK8RegClass.hasSubClassEq(RC)  ||
       X86::VK16RegClass.hasSubClassEq(RC))
       return load ? X86::KMOVWkm : X86::KMOVWmk;
     if (RC->getSize() == 4 && X86::FR32XRegClass.hasSubClassEq(RC))
