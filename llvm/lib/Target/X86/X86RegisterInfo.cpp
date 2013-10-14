@@ -101,8 +101,8 @@ int X86RegisterInfo::getCompactUnwindRegNum(unsigned RegNum, bool isEH) const {
 
 bool
 X86RegisterInfo::trackLivenessAfterRegAlloc(const MachineFunction &MF) const {
-  // Only enable when post-RA scheduling is enabled and this is needed.
-  return TM.getSubtargetImpl()->postRAScheduler();
+  // ExeDepsFixer and PostRAScheduler require liveness.
+  return true;
 }
 
 int

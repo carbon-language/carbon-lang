@@ -369,6 +369,8 @@ public:
 
   unsigned getPartialRegUpdateClearance(const MachineInstr *MI, unsigned OpNum,
                                         const TargetRegisterInfo *TRI) const;
+  unsigned getUndefRegClearance(const MachineInstr *MI, unsigned &OpNum,
+                                const TargetRegisterInfo *TRI) const;
   void breakPartialRegDependency(MachineBasicBlock::iterator MI, unsigned OpNum,
                                  const TargetRegisterInfo *TRI) const;
 

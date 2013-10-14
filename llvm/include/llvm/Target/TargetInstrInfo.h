@@ -942,6 +942,26 @@ public:
     return 0;
   }
 
+  /// \brief Return the minimum clearance before an instruction that reads an
+  /// unused register.
+  ///
+  /// For example, AVX instructions may copy part of an register operand into
+  /// the unused high bits of the destination register.
+  ///
+  /// vcvtsi2sdq %rax, %xmm0<undef>, %xmm14
+  ///
+  /// In the code above, vcvtsi2sdq copies %xmm0[127:64] into %xmm14 creating a
+  /// false dependence on any previous write to %xmm0.
+  ///
+  /// This hook works similarly to getPartialRegUpdateClearance, except that it
+  /// does not take an operand index. Instead sets \p OpNum to the index of the
+  /// unused register.
+  virtual unsigned getUndefRegClearance(const MachineInstr *MI, unsigned &OpNum,
+                                        const TargetRegisterInfo *TRI) const {
+    // The default implementation returns 0 for no undef register dependency.
+    return 0;
+  }
+
   /// breakPartialRegDependency - Insert a dependency-breaking instruction
   /// before MI to eliminate an unwanted dependency on OpNum.
   ///

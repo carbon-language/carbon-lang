@@ -23,6 +23,7 @@
 #define DEBUG_TYPE "execution-fix"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/ADT/PostOrderIterator.h"
+#include "llvm/CodeGen/LiveRegUnits.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Support/Allocator.h"
@@ -136,6 +137,12 @@ class ExeDepsFix : public MachineFunctionPass {
   typedef DenseMap<MachineBasicBlock*, LiveReg*> LiveOutMap;
   LiveOutMap LiveOuts;
 
+  /// List of undefined register reads in this block in forward order.
+  std::vector<std::pair<MachineInstr*, unsigned> > UndefReads;
+
+  /// Storage for register unit liveness.
+  LiveRegUnits LiveUnits;
+
   /// Current instruction number.
   /// The first instruction in each basic block is 0.
   int CurInstr;
@@ -185,6 +192,8 @@ private:
   void processDefs(MachineInstr*, bool Kill);
   void visitSoftInstr(MachineInstr*, unsigned mask);
   void visitHardInstr(MachineInstr*, unsigned domain);
+  bool shouldBreakDependence(MachineInstr*, unsigned OpIdx, unsigned Pref);
+  void processUndefReads(MachineBasicBlock*);
 };
 }
 
@@ -341,6 +350,10 @@ void ExeDepsFix::enterBasicBlock(MachineBasicBlock *MBB) {
   // Reset instruction counter in each basic block.
   CurInstr = 0;
 
+  // Set up UndefReads to track undefined register reads.
+  UndefReads.clear();
+  LiveUnits.clear();
+
   // Set up LiveRegs to represent registers entering MBB.
   if (!LiveRegs)
     LiveRegs = new LiveReg[NumRegs];
@@ -448,10 +461,46 @@ void ExeDepsFix::visitInstr(MachineInstr *MI) {
   processDefs(MI, !DomP.first);
 }
 
+/// \brief Return true to if it makes sense to break dependence on a partial def
+/// or undef use.
+bool ExeDepsFix::shouldBreakDependence(MachineInstr *MI, unsigned OpIdx,
+                                       unsigned Pref) {
+  int rx = regIndex(MI->getOperand(OpIdx).getReg());
+  if (rx < 0)
+    return false;
+
+  unsigned Clearance = CurInstr - LiveRegs[rx].Def;
+  DEBUG(dbgs() << "Clearance: " << Clearance << ", want " << Pref);
+
+  if (Pref > Clearance) {
+    DEBUG(dbgs() << ": Break dependency.\n");
+    return true;
+  }
+  // The current clearance seems OK, but we may be ignoring a def from a
+  // back-edge.
+  if (!SeenUnknownBackEdge || Pref <= unsigned(CurInstr)) {
+    DEBUG(dbgs() << ": OK .\n");
+    return false;
+  }
+  // A def from an unprocessed back-edge may make us break this dependency.
+  DEBUG(dbgs() << ": Wait for back-edge to resolve.\n");
+  return false;
+}
+
 // Update def-ages for registers defined by MI.
 // If Kill is set, also kill off DomainValues clobbered by the defs.
+//
+// Also break dependencies on partial defs and undef uses.
 void ExeDepsFix::processDefs(MachineInstr *MI, bool Kill) {
   assert(!MI->isDebugValue() && "Won't process debug values");
+
+  // Break dependence on undef uses. Do this before updating LiveRegs below.
+  unsigned OpNum;
+  unsigned Pref = TII->getUndefRegClearance(MI, OpNum, TRI);
+  if (Pref) {
+    if (shouldBreakDependence(MI, OpNum, Pref))
+      UndefReads.push_back(std::make_pair(MI, OpNum));
+  }
   const MCInstrDesc &MCID = MI->getDesc();
   for (unsigned i = 0,
          e = MI->isVariadic() ? MI->getNumOperands() : MCID.getNumDefs();
@@ -471,37 +520,56 @@ void ExeDepsFix::processDefs(MachineInstr *MI, bool Kill) {
     DEBUG(dbgs() << TRI->getName(RC->getRegister(rx)) << ":\t" << CurInstr
                  << '\t' << *MI);
 
+    // Check clearance before partial register updates.
+    // Call breakDependence before setting LiveRegs[rx].Def.
+    unsigned Pref = TII->getPartialRegUpdateClearance(MI, i, TRI);
+    if (Pref && shouldBreakDependence(MI, i, Pref))
+      TII->breakPartialRegDependency(MI, i, TRI);
+
     // How many instructions since rx was last written?
-    unsigned Clearance = CurInstr - LiveRegs[rx].Def;
     LiveRegs[rx].Def = CurInstr;
 
     // Kill off domains redefined by generic instructions.
     if (Kill)
       kill(rx);
-
-    // Verify clearance before partial register updates.
-    unsigned Pref = TII->getPartialRegUpdateClearance(MI, i, TRI);
-    if (!Pref)
-      continue;
-    DEBUG(dbgs() << "Clearance: " << Clearance << ", want " << Pref);
-    if (Pref > Clearance) {
-      DEBUG(dbgs() << ": Break dependency.\n");
-      TII->breakPartialRegDependency(MI, i, TRI);
-      continue;
-    }
-
-    // The current clearance seems OK, but we may be ignoring a def from a
-    // back-edge.
-    if (!SeenUnknownBackEdge || Pref <= unsigned(CurInstr)) {
-      DEBUG(dbgs() << ": OK.\n");
-      continue;
-    }
-
-    // A def from an unprocessed back-edge may make us break this dependency.
-    DEBUG(dbgs() << ": Wait for back-edge to resolve.\n");
   }
-
   ++CurInstr;
+}
+
+/// \break Break false dependencies on undefined register reads.
+///
+/// Walk the block backward computing precise liveness. This is expensive, so we
+/// only do it on demand. Note that the occurrence of undefined register reads
+/// that should be broken is very rare, but when they occur we may have many in
+/// a single block.
+void ExeDepsFix::processUndefReads(MachineBasicBlock *MBB) {
+  if (UndefReads.empty())
+    return;
+
+  // Collect this block's live out register units.
+  LiveUnits.init(TRI);
+  for (MachineBasicBlock::const_succ_iterator SI = MBB->succ_begin(),
+         SE = MBB->succ_end(); SI != SE; ++SI) {
+    LiveUnits.addLiveIns(*SI, *TRI);
+  }
+  MachineInstr *UndefMI = UndefReads.back().first;
+  unsigned OpIdx = UndefReads.back().second;
+
+  for (MachineBasicBlock::reverse_iterator I = MBB->rbegin(), E = MBB->rend();
+       I != E; ++I) {
+    if (UndefMI == &*I) {
+      if (!LiveUnits.contains(UndefMI->getOperand(OpIdx).getReg(), *TRI))
+        TII->breakPartialRegDependency(UndefMI, OpIdx, TRI);
+
+      UndefReads.pop_back();
+      if (UndefReads.empty())
+        return;
+
+      UndefMI = UndefReads.back().first;
+      OpIdx = UndefReads.back().second;
+    }
+    LiveUnits.stepBackward(*I, *TRI);
+  }
 }
 
 // A hard instruction only works in one domain. All input registers will be
@@ -549,7 +617,7 @@ void ExeDepsFix::visitSoftInstr(MachineInstr *mi, unsigned mask) {
         // Is it possible to use this collapsed register for free?
         if (dv->isCollapsed()) {
           // Restrict available domains to the ones in common with the operand.
-          // If there are no common domains, we must pay the cross-domain 
+          // If there are no common domains, we must pay the cross-domain
           // penalty for this operand.
           if (common) available = common;
         } else if (common)
@@ -686,6 +754,7 @@ bool ExeDepsFix::runOnMachineFunction(MachineFunction &mf) {
     for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end(); I != E;
         ++I)
       visitInstr(I);
+    processUndefReads(MBB);
     leaveBasicBlock(MBB);
   }
 
@@ -698,6 +767,7 @@ bool ExeDepsFix::runOnMachineFunction(MachineFunction &mf) {
         ++I)
       if (!I->isDebugValue())
         processDefs(I, false);
+    processUndefReads(MBB);
     leaveBasicBlock(MBB);
   }
 
@@ -713,6 +783,7 @@ bool ExeDepsFix::runOnMachineFunction(MachineFunction &mf) {
     delete[] FI->second;
   }
   LiveOuts.clear();
+  UndefReads.clear();
   Avail.clear();
   Allocator.DestroyAll();
 

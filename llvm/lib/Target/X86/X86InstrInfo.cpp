@@ -4073,20 +4073,6 @@ static bool hasPartialRegUpdate(unsigned Opcode) {
   case X86::RSQRTSSr_Int:
   case X86::SQRTSSr:
   case X86::SQRTSSr_Int:
-  // AVX encoded versions
-  case X86::VCVTSD2SSrr:
-  case X86::Int_VCVTSD2SSrr:
-  case X86::VCVTSS2SDrr:
-  case X86::Int_VCVTSS2SDrr:
-  case X86::VCVTSD2SSZrr:
-  case X86::VCVTSS2SDZrr:
-  case X86::VRCPSSr:
-  case X86::VROUNDSDr:
-  case X86::VROUNDSDr_Int:
-  case X86::VROUNDSSr:
-  case X86::VROUNDSSr_Int:
-  case X86::VRSQRTSSr:
-  case X86::VSQRTSSr:
     return true;
   }
 
@@ -4118,10 +4104,77 @@ getPartialRegUpdateClearance(const MachineInstr *MI, unsigned OpNum,
   return 16;
 }
 
+// Return true for any instruction the copies the high bits of the first source
+// operand into the unused high bits of the destination operand.
+static bool hasUndefRegUpdate(unsigned Opcode) {
+  switch (Opcode) {
+  case X86::VCVTSI2SSrr:
+  case X86::Int_VCVTSI2SSrr:
+  case X86::VCVTSI2SS64rr:
+  case X86::Int_VCVTSI2SS64rr:
+  case X86::VCVTSI2SDrr:
+  case X86::Int_VCVTSI2SDrr:
+  case X86::VCVTSI2SD64rr:
+  case X86::Int_VCVTSI2SD64rr:
+  case X86::VCVTSD2SSrr:
+  case X86::Int_VCVTSD2SSrr:
+  case X86::VCVTSS2SDrr:
+  case X86::Int_VCVTSS2SDrr:
+  case X86::VRCPSSr:
+  case X86::VROUNDSDr:
+  case X86::VROUNDSDr_Int:
+  case X86::VROUNDSSr:
+  case X86::VROUNDSSr_Int:
+  case X86::VRSQRTSSr:
+  case X86::VSQRTSSr:
+
+  // AVX-512
+  case X86::VCVTSD2SSZrr:
+  case X86::VCVTSS2SDZrr:
+    return true;
+  }
+
+  return false;
+}
+
+/// Inform the ExeDepsFix pass how many idle instructions we would like before
+/// certain undef register reads.
+///
+/// This catches the VCVTSI2SD family of instructions:
+///
+/// vcvtsi2sdq %rax, %xmm0<undef>, %xmm14
+///
+/// We should to be careful *not* to catch VXOR idioms which are presumably
+/// handled specially in the pipeline:
+///
+/// vxorps %xmm1<undef>, %xmm1<undef>, %xmm1
+///
+/// Like getPartialRegUpdateClearance, this makes a strong assumption that the
+/// high bits that are passed-through are not live.
+unsigned X86InstrInfo::
+getUndefRegClearance(const MachineInstr *MI, unsigned &OpNum,
+                     const TargetRegisterInfo *TRI) const {
+  if (!hasUndefRegUpdate(MI->getOpcode()))
+    return 0;
+
+  // Set the OpNum parameter to the first source operand.
+  OpNum = 1;
+
+  const MachineOperand &MO = MI->getOperand(OpNum);
+  if (MO.isUndef() && TargetRegisterInfo::isPhysicalRegister(MO.getReg())) {
+    // Use the same magic number as getPartialRegUpdateClearance.
+    return 16;
+  }
+  return 0;
+}
+
 void X86InstrInfo::
 breakPartialRegDependency(MachineBasicBlock::iterator MI, unsigned OpNum,
                           const TargetRegisterInfo *TRI) const {
   unsigned Reg = MI->getOperand(OpNum).getReg();
+  // If MI kills this register, the false dependence is already broken.
+  if (MI->killsRegister(Reg, TRI))
+    return;
   if (X86::VR128RegClass.contains(Reg)) {
     // These instructions are all floating point domain, so xorps is the best
     // choice.
