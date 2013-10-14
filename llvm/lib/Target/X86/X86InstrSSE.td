@@ -2710,6 +2710,7 @@ multiclass sse12_extr_sign_mask<RegisterClass RC, Intrinsic Int, string asm,
                 !strconcat(asm, "\t{$src, $dst|$dst, $src}"),
                      [(set GR32:$dst, (Int RC:$src))], IIC_SSE_MOVMSK, d>,
              Sched<[WriteVecLogic]>;
+  let isAsmParserOnly = 1, hasSideEffects = 0 in
   def rr64 : PI<0x50, MRMSrcReg, (outs GR64:$dst), (ins RC:$src),
                 !strconcat(asm, "\t{$src, $dst|$dst, $src}"), [],
                 IIC_SSE_MOVMSK, d>, REX_W, Sched<[WriteVecLogic]>;
@@ -4284,14 +4285,21 @@ def PEXTRWri : PDIi8<0xC5, MRMSrcReg,
 // Insert
 let Predicates = [HasAVX] in {
   defm VPINSRW : sse2_pinsrw<0>, TB, OpSize, VEX_4V;
+  let isAsmParserOnly = 1, hasSideEffects = 0 in
   def  VPINSRWrr64i : Ii8<0xC4, MRMSrcReg, (outs VR128:$dst),
        (ins VR128:$src1, GR64:$src2, i32i8imm:$src3),
        "vpinsrw\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
        []>, TB, OpSize, VEX_4V, Sched<[WriteShuffle]>;
 }
 
-let Constraints = "$src1 = $dst" in
-  defm PINSRW : sse2_pinsrw, TB, OpSize, Requires<[UseSSE2]>;
+let Predicates = [UseSSE2], Constraints = "$src1 = $dst" in {
+  defm PINSRW : sse2_pinsrw, TB, OpSize;
+  let isAsmParserOnly = 1, hasSideEffects = 0 in
+  def  PINSRWrr64i : Ii8<0xC4, MRMSrcReg, (outs VR128:$dst),
+       (ins VR128:$src1, GR64:$src2, i32i8imm:$src3),
+       "pinsrw\t{$src3, $src2, $dst|$dst, $src2, $src3}",
+       []>, TB, OpSize, Sched<[WriteShuffle]>;
+} // Predicates = [UseSSE2], Constraints = "$src1 = $dst"
 
 } // ExeDomain = SSEPackedInt
 
