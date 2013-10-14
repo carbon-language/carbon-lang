@@ -606,7 +606,7 @@ static void WriteModuleInfo(const Module *M, const ValueEnumerator &VE,
 
     // GLOBALVAR: [type, isconst, initid,
     //             linkage, alignment, section, visibility, threadlocal,
-    //             unnamed_addr]
+    //             unnamed_addr, externally_initialized]
     Vals.push_back(VE.getTypeID(GV->getType()));
     Vals.push_back(GV->isConstant());
     Vals.push_back(GV->isDeclaration() ? 0 :
