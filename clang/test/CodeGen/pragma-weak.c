@@ -5,20 +5,20 @@
 // CHECK: @correct_linkage = weak global
 
 
-// CHECK: @both = alias void ()* @__both
-// CHECK: @both2 = alias void ()* @__both2
-// CHECK: @both3 = alias weak void ()* @__both3
-// CHECK: @a3 = alias weak void ()* @__a3
-// CHECK: @weakvar_alias = alias weak i32* @__weakvar_alias
-// CHECK: @foo = alias weak void ()* @__foo
-// CHECK: @foo2 = alias weak void ()* @__foo2
-// CHECK: @stutter = alias weak void ()* @__stutter
-// CHECK: @stutter2 = alias weak void ()* @__stutter2
-// CHECK: @declfirst = alias weak void ()* @__declfirst
-// CHECK: @declfirstattr = alias weak void ()* @__declfirstattr
-// CHECK: @mix2 = alias weak void ()* @__mix2
-// CHECK: @a1 = alias weak void ()* @__a1
-// CHECK: @xxx = alias weak void ()* @__xxx
+// CHECK-DAG: @both = alias void ()* @__both
+// CHECK-DAG: @both2 = alias void ()* @__both2
+// CHECK-DAG: @both3 = alias weak void ()* @__both3
+// CHECK-DAG: @a3 = alias weak void ()* @__a3
+// CHECK-DAG: @weakvar_alias = alias weak i32* @__weakvar_alias
+// CHECK-DAG: @foo = alias weak void ()* @__foo
+// CHECK-DAG: @foo2 = alias weak void ()* @__foo2
+// CHECK-DAG: @stutter = alias weak void ()* @__stutter
+// CHECK-DAG: @stutter2 = alias weak void ()* @__stutter2
+// CHECK-DAG: @declfirst = alias weak void ()* @__declfirst
+// CHECK-DAG: @declfirstattr = alias weak void ()* @__declfirstattr
+// CHECK-DAG: @mix2 = alias weak void ()* @__mix2
+// CHECK-DAG: @a1 = alias weak void ()* @__a1
+// CHECK-DAG: @xxx = alias weak void ()* @__xxx
 
 
 
