@@ -17,7 +17,6 @@
 #define DEBUG_TYPE "insert-gcov-profiling"
 
 #include "llvm/Transforms/Instrumentation.h"
-#include "ProfilingUtils.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Statistic.h"
