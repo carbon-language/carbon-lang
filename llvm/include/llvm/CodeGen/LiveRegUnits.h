@@ -80,7 +80,7 @@ public:
   void stepForward(const MachineInstr &MI, const MCRegisterInfo &MCRI);
 
   /// \brief Adds all registers in the live-in list of block @p BB.
-  void addLiveIns(const MachineBasicBlock &BB, const MCRegisterInfo &MCRI);
+  void addLiveIns(const MachineBasicBlock *MBB, const MCRegisterInfo &MCRI);
 };
 
 } // namespace llvm

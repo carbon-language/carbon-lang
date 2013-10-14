@@ -102,10 +102,10 @@ void LiveRegUnits::stepForward(const MachineInstr &MI,
 }
 
 /// Adds all registers in the live-in list of block @p BB.
-void LiveRegUnits::addLiveIns(const MachineBasicBlock &BB,
+void LiveRegUnits::addLiveIns(const MachineBasicBlock *MBB,
                               const MCRegisterInfo &MCRI) {
-  for (MachineBasicBlock::livein_iterator L = BB.livein_begin(),
-       LE = BB.livein_end(); L != LE; ++L) {
+  for (MachineBasicBlock::livein_iterator L = MBB->livein_begin(),
+         LE = MBB->livein_end(); L != LE; ++L) {
     addReg(*L, MCRI);
   }
 }
