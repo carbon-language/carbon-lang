@@ -3232,7 +3232,7 @@ multiclass Neon_Scalar3Same_SD_size_patterns<SDPatternOperator opnode,
 }
 
 // Scalar Two Registers Miscellaneous
- 
+
 multiclass NeonI_Scalar2SameMisc_SD_size<bit u, bit size_high, bits<5> opcode,
                                          string asmop> {
   def ss : NeonI_Scalar2SameMisc<u, {size_high, 0b0}, opcode,
@@ -3243,6 +3243,25 @@ multiclass NeonI_Scalar2SameMisc_SD_size<bit u, bit size_high, bits<5> opcode,
                           (outs FPR64:$Rd), (ins FPR64:$Rn),
                           !strconcat(asmop, " $Rd, $Rn"),
                           [], NoItinerary>;
+}
+
+multiclass NeonI_Scalar2SameMisc_BHSD_size<bit u, bits<5> opcode, string asmop>{
+  def bb : NeonI_Scalar2SameMisc<u, 0b00, opcode,
+                          (outs FPR8:$Rd), (ins FPR8:$Rn),
+                          !strconcat(asmop, " $Rd, $Rn"),
+                          [], NoItinerary>;
+  def hh : NeonI_Scalar2SameMisc<u, 0b01, opcode,
+                          (outs FPR16:$Rd), (ins FPR16:$Rn),
+                          !strconcat(asmop, " $Rd, $Rn"),
+                          [], NoItinerary>;
+  def ss : NeonI_Scalar2SameMisc<u, 0b10, opcode,
+                          (outs FPR32:$Rd), (ins FPR32:$Rn),
+                          !strconcat(asmop, " $Rd, $Rn"),
+                          [], NoItinerary>;
+  def dd: NeonI_Scalar2SameMisc<u, 0b11, opcode,
+                         (outs FPR64:$Rd), (ins FPR64:$Rn),
+                         !strconcat(asmop, " $Rd, $Rn"),
+                         [], NoItinerary>;
 }
 
 multiclass Neon_Scalar2SameMisc_cvt_SD_size_patterns<SDPatternOperator Sopnode,
@@ -3276,6 +3295,21 @@ class Neon_Scalar2SameMisc_cmpz_D_size_patterns<SDPatternOperator opnode,
                                                 Instruction INSTD>
   : Pat<(v1i64 (opnode (v1i64 VPR64:$Rn), (v1i64 (bitconvert (v8i8 Neon_immAllZeros))))),
         (INSTD VPR64:$Rn, 0)>;
+
+multiclass Neon_Scalar2SameMisc_BHSD_size_patterns<SDPatternOperator opnode,
+                                                   Instruction INSTB,
+                                                   Instruction INSTH,
+                                                   Instruction INSTS,
+                                                   Instruction INSTD> {
+  def : Pat<(v1i8 (opnode (v1i8 FPR8:$Rn))),
+            (INSTB FPR8:$Rn)>;
+  def : Pat<(v1i16 (opnode (v1i16 FPR16:$Rn))),
+            (INSTH FPR16:$Rn)>;
+  def : Pat<(v1i32 (opnode (v1i32 FPR32:$Rn))),
+            (INSTS FPR32:$Rn)>;
+  def : Pat<(v1i64 (opnode (v1i64 FPR64:$Rn))),
+            (INSTD FPR64:$Rn)>;
+}
 
 // Scalar Integer Add
 let isCommutable = 1 in {
@@ -3494,6 +3528,16 @@ def : Neon_Scalar2SameMisc_cmpz_D_size_patterns<int_aarch64_neon_vclez,
 def CMLTddi: NeonI_Scalar2SameMisc_cmpz_D_size<0b0, 0b01010, "cmlt">;
 def : Neon_Scalar2SameMisc_cmpz_D_size_patterns<int_aarch64_neon_vcltz,
                                                 CMLTddi>;
+
+// Scalar Signed Saturating Absolute Value
+defm SQABS : NeonI_Scalar2SameMisc_BHSD_size<0b0, 0b00111, "sqabs">;
+defm : Neon_Scalar2SameMisc_BHSD_size_patterns<int_arm_neon_vqabs,
+                                               SQABSbb, SQABShh, SQABSss, SQABSdd>;
+
+// Scalar Signed Saturating Negate
+defm SQNEG : NeonI_Scalar2SameMisc_BHSD_size<0b1, 0b00111, "sqneg">;
+defm : Neon_Scalar2SameMisc_BHSD_size_patterns<int_arm_neon_vqneg,
+                                               SQNEGbb, SQNEGhh, SQNEGss, SQNEGdd>;
 
 // Scalar Reduce Pairwise
 
