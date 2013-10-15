@@ -7260,13 +7260,13 @@ let Defs = [ECX, EFLAGS], Uses = [EAX, EDX], neverHasSideEffects = 1 in {
 // This set of instructions are only rm, the only difference is the size
 // of r and m.
 class SS42I_crc32r<bits<8> opc, string asm, RegisterClass RCOut,
-                   RegisterClass RCIn, Intrinsic Int> :
+                   RegisterClass RCIn, SDPatternOperator Int> :
   SS42FI<opc, MRMSrcReg, (outs RCOut:$dst), (ins RCOut:$src1, RCIn:$src2),
          !strconcat(asm, "\t{$src2, $src1|$src1, $src2}"),
          [(set RCOut:$dst, (Int RCOut:$src1, RCIn:$src2))], IIC_CRC32_REG>;
 
 class SS42I_crc32m<bits<8> opc, string asm, RegisterClass RCOut,
-                   X86MemOperand x86memop, Intrinsic Int> :
+                   X86MemOperand x86memop, SDPatternOperator Int> :
   SS42FI<opc, MRMSrcMem, (outs RCOut:$dst), (ins RCOut:$src1, x86memop:$src2),
          !strconcat(asm, "\t{$src2, $src1|$src1, $src2}"),
          [(set RCOut:$dst, (Int RCOut:$src1, (load addr:$src2)))],
@@ -7285,14 +7285,17 @@ let Constraints = "$src1 = $dst" in {
                                  int_x86_sse42_crc32_32_32>;
   def CRC32r32r32 : SS42I_crc32r<0xF1, "crc32{l}", GR32, GR32,
                                  int_x86_sse42_crc32_32_32>;
-  def CRC32r64m8  : SS42I_crc32m<0xF0, "crc32{b}", GR64, i8mem,
-                                 int_x86_sse42_crc32_64_8>, REX_W;
-  def CRC32r64r8  : SS42I_crc32r<0xF0, "crc32{b}", GR64, GR8,
-                                 int_x86_sse42_crc32_64_8>, REX_W;
   def CRC32r64m64 : SS42I_crc32m<0xF1, "crc32{q}", GR64, i64mem,
                                  int_x86_sse42_crc32_64_64>, REX_W;
   def CRC32r64r64 : SS42I_crc32r<0xF1, "crc32{q}", GR64, GR64,
                                  int_x86_sse42_crc32_64_64>, REX_W;
+  let hasSideEffects = 0 in {
+    let mayLoad = 1 in
+    def CRC32r64m8 : SS42I_crc32m<0xF0, "crc32{b}", GR64, i8mem,
+                                   null_frag>, REX_W;
+    def CRC32r64r8 : SS42I_crc32r<0xF0, "crc32{b}", GR64, GR8,
+                                   null_frag>, REX_W;
+  }
 }
 
 //===----------------------------------------------------------------------===//
