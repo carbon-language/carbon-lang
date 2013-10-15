@@ -250,6 +250,123 @@ getRegForInlineAsmConstraint(const std::string &Constraint,
 
 #include "MSP430GenCallingConv.inc"
 
+/// For each argument in a function store the number of pieces it is composed
+/// of.
+template<typename ArgT>
+static void ParseFunctionArgs(const SmallVectorImpl<ArgT> &Args,
+                              SmallVectorImpl<unsigned> &Out) {
+  unsigned CurrentArgIndex = ~0U;
+  for (unsigned i = 0, e = Args.size(); i != e; i++) {
+    if (CurrentArgIndex == Args[i].OrigArgIndex) {
+      Out.back()++;
+    } else {
+      Out.push_back(1);
+      CurrentArgIndex++;
+    }
+  }
+}
+
+static void AnalyzeVarArgs(CCState &State,
+                           const SmallVectorImpl<ISD::OutputArg> &Outs) {
+  State.AnalyzeCallOperands(Outs, CC_MSP430_AssignStack);
+}
+
+static void AnalyzeVarArgs(CCState &State,
+                           const SmallVectorImpl<ISD::InputArg> &Ins) {
+  State.AnalyzeFormalArguments(Ins, CC_MSP430_AssignStack);
+}
+
+/// Analyze incoming and outgoing function arguments. We need custom C++ code
+/// to handle special constraints in the ABI like reversing the order of the
+/// pieces of splitted arguments. In addition, all pieces of a certain argument
+/// have to be passed either using registers or the stack but never mixing both.
+template<typename ArgT>
+static void AnalyzeArguments(CCState &State,
+                             SmallVectorImpl<CCValAssign> &ArgLocs,
+                             const SmallVectorImpl<ArgT> &Args) {
+  static const uint16_t RegList[] = {
+    MSP430::R15W, MSP430::R14W, MSP430::R13W, MSP430::R12W
+  };
+  static const unsigned NbRegs = array_lengthof(RegList);
+
+  if (State.isVarArg()) {
+    AnalyzeVarArgs(State, Args);
+    return;
+  }
+
+  SmallVector<unsigned, 4> ArgsParts;
+  ParseFunctionArgs(Args, ArgsParts);
+
+  unsigned RegsLeft = NbRegs;
+  bool UseStack = false;
+  unsigned ValNo = 0;
+
+  for (unsigned i = 0, e = ArgsParts.size(); i != e; i++) {
+    MVT ArgVT = Args[ValNo].VT;
+    ISD::ArgFlagsTy ArgFlags = Args[ValNo].Flags;
+    MVT LocVT = ArgVT;
+    CCValAssign::LocInfo LocInfo = CCValAssign::Full;
+
+    // Promote i8 to i16
+    if (LocVT == MVT::i8) {
+      LocVT = MVT::i16;
+      if (ArgFlags.isSExt())
+          LocInfo = CCValAssign::SExt;
+      else if (ArgFlags.isZExt())
+          LocInfo = CCValAssign::ZExt;
+      else
+          LocInfo = CCValAssign::AExt;
+    }
+
+    // Handle byval arguments
+    if (ArgFlags.isByVal()) {
+      State.HandleByVal(ValNo++, ArgVT, LocVT, LocInfo, 2, 2, ArgFlags);
+      continue;
+    }
+
+    unsigned Parts = ArgsParts[i];
+
+    if (!UseStack && Parts <= RegsLeft) {
+      unsigned FirstVal = ValNo;
+      for (unsigned j = 0; j < Parts; j++) {
+        unsigned Reg = State.AllocateReg(RegList, NbRegs);
+        State.addLoc(CCValAssign::getReg(ValNo++, ArgVT, Reg, LocVT, LocInfo));
+        RegsLeft--;
+      }
+
+      // Reverse the order of the pieces to agree with the "big endian" format
+      // required in the calling convention ABI.
+      SmallVectorImpl<CCValAssign>::iterator B = ArgLocs.begin() + FirstVal;
+      std::reverse(B, B + Parts);
+    } else {
+      UseStack = true;
+      for (unsigned j = 0; j < Parts; j++)
+        CC_MSP430_AssignStack(ValNo++, ArgVT, LocVT, LocInfo, ArgFlags, State);
+    }
+  }
+}
+
+static void AnalyzeRetResult(CCState &State,
+                             const SmallVectorImpl<ISD::InputArg> &Ins) {
+  State.AnalyzeCallResult(Ins, RetCC_MSP430);
+}
+
+static void AnalyzeRetResult(CCState &State,
+                             const SmallVectorImpl<ISD::OutputArg> &Outs) {
+  State.AnalyzeReturn(Outs, RetCC_MSP430);
+}
+
+template<typename ArgT>
+static void AnalyzeReturnValues(CCState &State,
+                                SmallVectorImpl<CCValAssign> &RVLocs,
+                                const SmallVectorImpl<ArgT> &Args) {
+  AnalyzeRetResult(State, Args);
+
+  // Reverse splitted return values to get the "big endian" format required
+  // to agree with the calling convention ABI.
+  std::reverse(RVLocs.begin(), RVLocs.end());
+}
+
 SDValue
 MSP430TargetLowering::LowerFormalArguments(SDValue Chain,
                                            CallingConv::ID CallConv,
@@ -325,7 +442,7 @@ MSP430TargetLowering::LowerCCCArguments(SDValue Chain,
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
                  getTargetMachine(), ArgLocs, *DAG.getContext());
-  CCInfo.AnalyzeFormalArguments(Ins, CC_MSP430);
+  AnalyzeArguments(CCInfo, ArgLocs, Ins);
 
   // Create frame index for the start of the first vararg value
   if (isVarArg) {
@@ -423,7 +540,7 @@ MSP430TargetLowering::LowerReturn(SDValue Chain,
                  getTargetMachine(), RVLocs, *DAG.getContext());
 
   // Analize return values.
-  CCInfo.AnalyzeReturn(Outs, RetCC_MSP430);
+  AnalyzeReturnValues(CCInfo, RVLocs, Outs);
 
   SDValue Flag;
   SmallVector<SDValue, 4> RetOps(1, Chain);
@@ -471,8 +588,7 @@ MSP430TargetLowering::LowerCCCCallTo(SDValue Chain, SDValue Callee,
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
                  getTargetMachine(), ArgLocs, *DAG.getContext());
-
-  CCInfo.AnalyzeCallOperands(Outs, CC_MSP430);
+  AnalyzeArguments(CCInfo, ArgLocs, Outs);
 
   // Get a count of how many bytes are to be pushed on the stack.
   unsigned NumBytes = CCInfo.getNextStackOffset();
@@ -610,7 +726,7 @@ MSP430TargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
   CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
                  getTargetMachine(), RVLocs, *DAG.getContext());
 
-  CCInfo.AnalyzeCallResult(Ins, RetCC_MSP430);
+  AnalyzeReturnValues(CCInfo, RVLocs, Ins);
 
   // Copy all of the result registers out of their specified physreg.
   for (unsigned i = 0; i != RVLocs.size(); ++i) {

@@ -23,18 +23,15 @@ def RetCC_MSP430 : CallingConv<[
 //===----------------------------------------------------------------------===//
 // MSP430 Argument Calling Conventions
 //===----------------------------------------------------------------------===//
-def CC_MSP430 : CallingConv<[
+def CC_MSP430_AssignStack : CallingConv<[
   // Pass by value if the byval attribute is given
   CCIfByVal<CCPassByVal<2, 2>>,
 
   // Promote i8 arguments to i16.
   CCIfType<[i8], CCPromoteToType<i16>>,
 
-  // The first 4 integer arguments of non-varargs functions are passed in
-  // integer registers.
-  CCIfNotVarArg<CCIfType<[i16], CCAssignToReg<[R15W, R14W, R13W, R12W]>>>,
-
   // Integer values get stored in stack slots that are 2 bytes in
   // size and 2-byte aligned.
   CCIfType<[i16], CCAssignToStack<2, 2>>
 ]>;
+
