@@ -21,21 +21,17 @@
 
 namespace llvm {
 
-  class FunctionPass;
-  class MachineFunctionPass;
-  struct MachineSchedContext;
-  class PassInfo;
-  class PassManagerBase;
-  class ScheduleDAGInstrs;
-  class TargetLoweringBase;
-  class TargetLowering;
-  class TargetRegisterClass;
-  class raw_ostream;
-}
-
-namespace llvm {
-
+class FunctionPass;
+class MachineFunctionPass;
 class PassConfigImpl;
+class PassInfo;
+class PassManagerBase;
+class ScheduleDAGInstrs;
+class TargetLowering;
+class TargetLoweringBase;
+class TargetRegisterClass;
+class raw_ostream;
+struct MachineSchedContext;
 
 /// Discriminated union of Pass ID types.
 ///
