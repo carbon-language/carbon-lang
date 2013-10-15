@@ -12467,14 +12467,24 @@ static SDValue LowerSDIV(SDValue Op, SelectionDAG &DAG) {
       (SplatValue.isPowerOf2() || (-SplatValue).isPowerOf2())) {
     unsigned lg2 = SplatValue.countTrailingZeros();
     // Splat the sign bit.
-    SDValue Sz = DAG.getConstant(EltTy.getSizeInBits()-1, MVT::i32);
-    SDValue SGN = getTargetVShiftNode(X86ISD::VSRAI, dl, VT, N0, Sz, DAG);
+    SmallVector<SDValue, 16> Sz(NumElts,
+                                DAG.getConstant(EltTy.getSizeInBits() - 1,
+                                                EltTy));
+    SDValue SGN = DAG.getNode(ISD::SRA, dl, VT, N0,
+                              DAG.getNode(ISD::BUILD_VECTOR, dl, VT, &Sz[0],
+                                          NumElts));
     // Add (N0 < 0) ? abs2 - 1 : 0;
-    SDValue Amt = DAG.getConstant(EltTy.getSizeInBits() - lg2, MVT::i32);
-    SDValue SRL = getTargetVShiftNode(X86ISD::VSRLI, dl, VT, SGN, Amt, DAG);
+    SmallVector<SDValue, 16> Amt(NumElts,
+                                 DAG.getConstant(EltTy.getSizeInBits() - lg2,
+                                                 EltTy));
+    SDValue SRL = DAG.getNode(ISD::SRL, dl, VT, SGN,
+                              DAG.getNode(ISD::BUILD_VECTOR, dl, VT, &Amt[0],
+                                          NumElts));
     SDValue ADD = DAG.getNode(ISD::ADD, dl, VT, N0, SRL);
-    SDValue Lg2Amt = DAG.getConstant(lg2, MVT::i32);
-    SDValue SRA = getTargetVShiftNode(X86ISD::VSRAI, dl, VT, ADD, Lg2Amt, DAG);
+    SmallVector<SDValue, 16> Lg2Amt(NumElts, DAG.getConstant(lg2, EltTy));
+    SDValue SRA = DAG.getNode(ISD::SRA, dl, VT, ADD,
+                              DAG.getNode(ISD::BUILD_VECTOR, dl, VT, &Lg2Amt[0],
+                                          NumElts));
 
     // If we're dividing by a positive value, we're done.  Otherwise, we must
     // negate the result.
