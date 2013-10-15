@@ -8109,6 +8109,7 @@ ExprResult
 TreeTransform<Derived>::TransformDependentScopeDeclRefExpr(
                                                DependentScopeDeclRefExpr *E,
                                                bool IsAddressOfOperand) {
+  assert(E->getQualifierLoc());
   NestedNameSpecifierLoc QualifierLoc
   = getDerived().TransformNestedNameSpecifierLoc(E->getQualifierLoc());
   if (!QualifierLoc)

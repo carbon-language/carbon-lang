@@ -456,6 +456,7 @@ DependentScopeDeclRefExpr::Create(const ASTContext &C,
                                   SourceLocation TemplateKWLoc,
                                   const DeclarationNameInfo &NameInfo,
                                   const TemplateArgumentListInfo *Args) {
+  assert(QualifierLoc && "should be created for dependent qualifiers");
   std::size_t size = sizeof(DependentScopeDeclRefExpr);
   if (Args)
     size += ASTTemplateKWAndArgsInfo::sizeFor(Args->size());
