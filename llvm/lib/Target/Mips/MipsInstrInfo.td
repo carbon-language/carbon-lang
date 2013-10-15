@@ -1030,21 +1030,13 @@ def MULT  : MMRel, Mult<"mult", IIImult, GPR32Opnd, [HI0, LO0]>,
             MULT_FM<0, 0x18>;
 def MULTu : MMRel, Mult<"multu", IIImult, GPR32Opnd, [HI0, LO0]>,
             MULT_FM<0, 0x19>;
-def PseudoMULT  : MultDivPseudo<MULT, ACC64, GPR32Opnd, MipsMult, IIImult>;
-def PseudoMULTu : MultDivPseudo<MULTu, ACC64, GPR32Opnd, MipsMultu, IIImult>;
 def SDIV  : Div<"div", IIIdiv, GPR32Opnd, [HI0, LO0]>, MULT_FM<0, 0x1a>;
 def UDIV  : Div<"divu", IIIdiv, GPR32Opnd, [HI0, LO0]>, MULT_FM<0, 0x1b>;
-def PseudoSDIV : MultDivPseudo<SDIV, ACC64, GPR32Opnd, MipsDivRem, IIIdiv,
-                               0, 1, 1>;
-def PseudoUDIV : MultDivPseudo<UDIV, ACC64, GPR32Opnd, MipsDivRemU, IIIdiv,
-                               0, 1, 1>;
 
 def MTHI : MMRel, MoveToLOHI<"mthi", GPR32Opnd, [HI0]>, MTLO_FM<0x11>;
 def MTLO : MMRel, MoveToLOHI<"mtlo", GPR32Opnd, [LO0]>, MTLO_FM<0x13>;
 def MFHI : MMRel, MoveFromLOHI<"mfhi", GPR32Opnd, AC0>, MFLO_FM<0x10>;
 def MFLO : MMRel, MoveFromLOHI<"mflo", GPR32Opnd, AC0>, MFLO_FM<0x12>;
-def PseudoMFHI : PseudoMFLOHI<GPR32, ACC64, MipsMFHI>;
-def PseudoMFLO : PseudoMFLOHI<GPR32, ACC64, MipsMFLO>;
 
 /// Sign Ext In Register Instructions.
 def SEB : MMRel, SignExtInReg<"seb", i8, GPR32Opnd>, SEB_FM<0x10, 0x20>;
@@ -1071,10 +1063,22 @@ def MADD  : MMRel, MArithR<"madd", 1>, MULT_FM<0x1c, 0>;
 def MADDU : MMRel, MArithR<"maddu", 1>, MULT_FM<0x1c, 1>;
 def MSUB  : MMRel, MArithR<"msub">, MULT_FM<0x1c, 4>;
 def MSUBU : MMRel, MArithR<"msubu">, MULT_FM<0x1c, 5>;
+
+let Predicates = [HasStdEnc, NotDSP] in {
+def PseudoMULT  : MultDivPseudo<MULT, ACC64, GPR32Opnd, MipsMult, IIImult>;
+def PseudoMULTu : MultDivPseudo<MULTu, ACC64, GPR32Opnd, MipsMultu, IIImult>;
+def PseudoMFHI : PseudoMFLOHI<GPR32, ACC64, MipsMFHI>;
+def PseudoMFLO : PseudoMFLOHI<GPR32, ACC64, MipsMFLO>;
 def PseudoMADD  : MAddSubPseudo<MADD, MipsMAdd>;
 def PseudoMADDU : MAddSubPseudo<MADDU, MipsMAddu>;
 def PseudoMSUB  : MAddSubPseudo<MSUB, MipsMSub>;
 def PseudoMSUBU : MAddSubPseudo<MSUBU, MipsMSubu>;
+}
+
+def PseudoSDIV : MultDivPseudo<SDIV, ACC64, GPR32Opnd, MipsDivRem, IIIdiv,
+                               0, 1, 1>;
+def PseudoUDIV : MultDivPseudo<UDIV, ACC64, GPR32Opnd, MipsDivRemU, IIIdiv,
+                               0, 1, 1>;
 
 def RDHWR : ReadHardware<GPR32Opnd, HWRegsOpnd>, RDHWR_FM;
 

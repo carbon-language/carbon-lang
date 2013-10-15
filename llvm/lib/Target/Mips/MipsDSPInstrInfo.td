@@ -453,7 +453,6 @@ class MULT_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
   string AsmString = !strconcat(instr_asm, "\t$ac, $rs, $rt");
   list<dag> Pattern = [(set ACC64DSPOpnd:$ac, (OpNode GPR32Opnd:$rs, GPR32Opnd:$rt))];
   InstrItinClass Itinerary = itin;
-  int AddedComplexity = 20;
   bit isCommutable = 1;
 }
 
@@ -465,7 +464,6 @@ class MADD_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
   list<dag> Pattern = [(set ACC64DSPOpnd:$ac,
                         (OpNode GPR32Opnd:$rs, GPR32Opnd:$rt, ACC64DSPOpnd:$acin))];
   InstrItinClass Itinerary = itin;
-  int AddedComplexity = 20;
   string Constraints = "$acin = $ac";
 }
 
@@ -476,7 +474,6 @@ class MFHI_DESC_BASE<string instr_asm, RegisterOperand RO, SDNode OpNode,
   string AsmString = !strconcat(instr_asm, "\t$rd, $ac");
   list<dag> Pattern = [(set GPR32Opnd:$rd, (OpNode RO:$ac))];
   InstrItinClass Itinerary = itin;
-  int AddedComplexity = 20;
 }
 
 class MTHI_DESC_BASE<string instr_asm, RegisterOperand RO, InstrItinClass itin> {
