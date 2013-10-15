@@ -196,9 +196,8 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
   DwarfAbbrevDWOSectionSym = DwarfStrDWOSectionSym = 0;
   FunctionBeginSym = FunctionEndSym = 0;
 
-  // Turn on accelerator tables and older gdb compatibility
-  // for Darwin by default, pubnames by default for non-Darwin,
-  // and handle split dwarf.
+  // Turn on accelerator tables for Darwin by default, pubnames by
+  // default for non-Darwin, and handle split dwarf.
   bool IsDarwin = Triple(A->getTargetTriple()).isOSDarwin();
 
   if (DwarfAccelTables == Default)
@@ -222,8 +221,6 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
     NamedRegionTimer T(DbgTimerName, DWARFGroupName, TimePassesIsEnabled);
     beginModule();
   }
-}
-DwarfDebug::~DwarfDebug() {
 }
 
 // Switch to the specified MCSection and emit an assembler

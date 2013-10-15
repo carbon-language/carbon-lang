@@ -429,9 +429,6 @@ class DwarfDebug {
   // Holders for the various debug information flags that we might need to
   // have exposed. See accessor functions below for description.
 
-  // Whether or not we're emitting info for older versions of gdb on darwin.
-  bool IsDarwinGDBCompat;
-
   // Holder for imported entities.
   typedef SmallVector<std::pair<const MDNode *, const MDNode *>, 32>
     ImportedEntityMap;
@@ -661,7 +658,6 @@ public:
   // Main entry points.
   //
   DwarfDebug(AsmPrinter *A, Module *M);
-  ~DwarfDebug();
 
   /// \brief Emit all Dwarf sections that should come prior to the
   /// content.
@@ -701,10 +697,6 @@ public:
 
   /// \brief Recursively Emits a debug information entry.
   void emitDIE(DIE *Die, std::vector<DIEAbbrev *> *Abbrevs);
-
-  /// \brief Returns whether or not to limit some of our debug
-  /// output to the limitations of darwin gdb.
-  bool useDarwinGDBCompat() { return IsDarwinGDBCompat; }
 
   // Experimental DWARF5 features.
 
