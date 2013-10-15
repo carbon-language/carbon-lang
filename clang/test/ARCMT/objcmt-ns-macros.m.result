@@ -121,6 +121,7 @@ typedef enum  {
 
 #define NS_ENUM_AVAILABLE(X,Y)
 
+
 typedef NS_OPTIONS(NSUInteger, NSFOptions) {
     NSFStrongMemory NS_ENUM_AVAILABLE(10_5, 6_0) = (0UL << 0),       
     NSFOpaqueMemory NS_ENUM_AVAILABLE(10_5, 6_0) = (2UL << 0),
@@ -136,7 +137,6 @@ typedef NS_OPTIONS(NSUInteger, NSFOptions) {
     NSFIntegerPersonality NS_ENUM_AVAILABLE(10_5, 6_0) = (5UL << 8),        
     NSFCopyIn NS_ENUM_AVAILABLE(10_5, 6_0) = (1UL << 16),      
 };
-
 
 typedef NS_ENUM(NSInteger, UIP) {
   UIP0One = 0,
@@ -206,6 +206,12 @@ typedef NS_ENUM(NSInteger, NSModalResponse) {
     NSModalResponseContinue             = (-1002), 
 } NS_ENUM_AVAILABLE_MAC(10.9);
 
+// rdar://15201056
+typedef NS_OPTIONS(NSUInteger, FarAwayNSUInteger) {
+  FarAway1    = 1 << 1,
+  FarAway2    = 1 << 2
+};
+
 // rdar://15200915
 typedef NS_OPTIONS(NSUInteger, NSWorkspaceLaunchOptions) {
      NSWorkspaceLaunchAndPrint =                 0x00000002,
@@ -233,7 +239,20 @@ typedef NS_OPTIONS(NSUInteger, NSWorkspaceCreationOptions) {
     NSExclude10_4ElementsCreationOption         = 1 << 2
 };
 
+
 typedef NS_OPTIONS(NSUInteger, NSWorkspaceIconOptions) {
     NSExcludeQuickDrawElementsIconOption    = 1 << 1,
     NSExclude10_4ElementsIconOption         = 1 << 2
 };
+
+typedef NS_OPTIONS(NSUInteger, NSCollectionViewDropOperation) {
+  NotFarAway1    = 1 << 1,
+  NotFarAway2    = 1 << 2
+};
+
+@interface INTF {
+  NSCollectionViewDropOperation I1;
+  NSCollectionViewDropOperation I2;
+}
+@end
+

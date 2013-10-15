@@ -216,6 +216,9 @@ enum {
 } NS_ENUM_AVAILABLE_MAC(10.9);
 typedef NSInteger NSModalResponse NS_AVAILABLE_MAC(10.9);
 
+// rdar://15201056
+typedef NSUInteger FarAwayNSUInteger;
+
 // rdar://15200915
 typedef NSUInteger NSWorkspaceLaunchOptions;
 enum {
@@ -247,7 +250,25 @@ enum {
 };
 
 enum {
+  FarAway1    = 1 << 1,
+  FarAway2    = 1 << 2
+};
+
+enum {
     NSExcludeQuickDrawElementsIconOption    = 1 << 1,
     NSExclude10_4ElementsIconOption         = 1 << 2
 };
 typedef NSUInteger NSWorkspaceIconOptions;
+
+typedef NSInteger NSCollectionViewDropOperation;
+
+@interface INTF {
+  NSCollectionViewDropOperation I1;
+  NSCollectionViewDropOperation I2;
+}
+@end
+
+enum {
+  NotFarAway1    = 1 << 1,
+  NotFarAway2    = 1 << 2
+};
