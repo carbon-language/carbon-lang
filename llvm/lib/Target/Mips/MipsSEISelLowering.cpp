@@ -33,9 +33,6 @@ static cl::opt<bool> NoDPLoadStore("mno-ldc1-sdc1", cl::init(false),
 MipsSETargetLowering::MipsSETargetLowering(MipsTargetMachine &TM)
   : MipsTargetLowering(TM) {
   // Set up the register classes
-
-  clearRegisterClasses();
-
   addRegisterClass(MVT::i32, &Mips::GPR32RegClass);
 
   if (HasMips64)
