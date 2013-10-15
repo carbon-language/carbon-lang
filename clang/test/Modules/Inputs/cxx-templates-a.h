@@ -40,3 +40,11 @@ const auto enum_c_from_a = CommonTemplate<int>::c;
 template<int> struct UseInt;
 template<typename T> void UseRedeclaredEnum(UseInt<T() + CommonTemplate<char>::a>);
 constexpr void (*UseRedeclaredEnumA)(UseInt<1>) = UseRedeclaredEnum<int>;
+
+template<typename> struct MergeSpecializations;
+template<typename T> struct MergeSpecializations<T*> {
+  typedef int partially_specialized_in_a;
+};
+template<> struct MergeSpecializations<char> {
+  typedef int explicitly_specialized_in_a;
+};

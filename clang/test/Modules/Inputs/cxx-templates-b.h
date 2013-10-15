@@ -51,6 +51,14 @@ template<int> struct UseInt;
 template<typename T> void UseRedeclaredEnum(UseInt<T() + CommonTemplate<char>::a>);
 constexpr void (*UseRedeclaredEnumB)(UseInt<1>) = UseRedeclaredEnum<int>;
 
+template<typename> struct MergeSpecializations;
+template<typename T> struct MergeSpecializations<T&> {
+  typedef int partially_specialized_in_b;
+};
+template<> struct MergeSpecializations<double> {
+  typedef int explicitly_specialized_in_b;
+};
+
 @import cxx_templates_a;
 template<typename T> void UseDefinedInBImplIndirectly(T &v) {
   PerformDelayedLookup(v);

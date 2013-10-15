@@ -5,6 +5,7 @@
 
 @import cxx_templates_a;
 @import cxx_templates_b;
+@import cxx_templates_c;
 @import cxx_templates_common;
 
 template<typename, char> struct Tmpl_T_C {};
@@ -92,6 +93,13 @@ void g() {
 RedeclaredAsFriend<int> raf1;
 RedeclareTemplateAsFriend<double> rtaf;
 RedeclaredAsFriend<double> raf2;
+
+MergeSpecializations<int*>::partially_specialized_in_a spec_in_a_1;
+MergeSpecializations<int&>::partially_specialized_in_b spec_in_b_1;
+MergeSpecializations<int[]>::partially_specialized_in_c spec_in_c_1;
+MergeSpecializations<char>::explicitly_specialized_in_a spec_in_a_2;
+MergeSpecializations<double>::explicitly_specialized_in_b spec_in_b_2;
+MergeSpecializations<bool>::explicitly_specialized_in_c spec_in_c_2;
 
 @import cxx_templates_common;
 
