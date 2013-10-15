@@ -185,6 +185,7 @@ def MFHI64 : MoveFromLOHI<"mfhi", GPR64Opnd, AC0_64>, MFLO_FM<0x10>;
 def MFLO64 : MoveFromLOHI<"mflo", GPR64Opnd, AC0_64>, MFLO_FM<0x12>;
 def PseudoMFHI64 : PseudoMFLOHI<GPR64, ACC128, MipsMFHI>;
 def PseudoMFLO64 : PseudoMFLOHI<GPR64, ACC128, MipsMFLO>;
+def PseudoMTLOHI64 : PseudoMTLOHI<ACC128, GPR64>;
 
 /// Sign Ext In Register Instructions.
 def SEB64 : SignExtInReg<"seb", i8, GPR64Opnd>, SEB_FM<0x10, 0x20>;

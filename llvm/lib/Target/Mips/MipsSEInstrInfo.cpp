@@ -278,6 +278,15 @@ bool MipsSEInstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
   case Mips::PseudoMFLO64:
     expandPseudoMFHiLo(MBB, MI, Mips::MFLO64);
     break;
+  case Mips::PseudoMTLOHI:
+    expandPseudoMTLoHi(MBB, MI, Mips::MTLO, Mips::MTHI, false);
+    break;
+  case Mips::PseudoMTLOHI64:
+    expandPseudoMTLoHi(MBB, MI, Mips::MTLO64, Mips::MTHI64, false);
+    break;
+  case Mips::PseudoMTLOHI_DSP:
+    expandPseudoMTLoHi(MBB, MI, Mips::MTLO_DSP, Mips::MTHI_DSP, true);
+    break;
   case Mips::PseudoCVT_S_W:
     expandCvtFPInt(MBB, MI, Mips::CVT_S_W, Mips::MTC1, false);
     break;
@@ -430,6 +439,35 @@ void MipsSEInstrInfo::expandPseudoMFHiLo(MachineBasicBlock &MBB,
                                          MachineBasicBlock::iterator I,
                                          unsigned NewOpc) const {
   BuildMI(MBB, I, I->getDebugLoc(), get(NewOpc), I->getOperand(0).getReg());
+}
+
+void MipsSEInstrInfo::expandPseudoMTLoHi(MachineBasicBlock &MBB,
+                                         MachineBasicBlock::iterator I,
+                                         unsigned LoOpc,
+                                         unsigned HiOpc,
+                                         bool HasExplicitDef) const {
+  // Expand
+  //  lo_hi pseudomtlohi $gpr0, $gpr1
+  // to these two instructions:
+  //  mtlo $gpr0
+  //  mthi $gpr1
+
+  DebugLoc DL = I->getDebugLoc();
+  const MachineOperand &SrcLo = I->getOperand(1), &SrcHi = I->getOperand(2);
+  MachineInstrBuilder LoInst = BuildMI(MBB, I, DL, get(LoOpc));
+  MachineInstrBuilder HiInst = BuildMI(MBB, I, DL, get(HiOpc));
+  LoInst.addReg(SrcLo.getReg(), getKillRegState(SrcLo.isKill()));
+  HiInst.addReg(SrcHi.getReg(), getKillRegState(SrcHi.isKill()));
+
+  // Add lo/hi registers if the mtlo/hi instructions created have explicit
+  // def registers.
+  if (HasExplicitDef) {
+    unsigned DstReg = I->getOperand(0).getReg();
+    unsigned DstLo = getRegisterInfo().getSubReg(DstReg, Mips::sub_lo);
+    unsigned DstHi = getRegisterInfo().getSubReg(DstReg, Mips::sub_hi);
+    LoInst.addReg(DstLo, RegState::Define);
+    HiInst.addReg(DstHi, RegState::Define);
+  }
 }
 
 void MipsSEInstrInfo::expandCvtFPInt(MachineBasicBlock &MBB,

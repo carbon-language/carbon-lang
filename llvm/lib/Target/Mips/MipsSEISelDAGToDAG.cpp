@@ -684,19 +684,6 @@ std::pair<bool, SDNode*> MipsSEDAGToDAGISel::selectNode(SDNode *Node) {
     return std::make_pair(true, ResNode.getNode());
   }
 
-  case MipsISD::MTLOHI: {
-    unsigned RCID = Subtarget.hasDSP() ? Mips::ACC64DSPRegClassID :
-                                         Mips::ACC64RegClassID;
-    SDValue RegClass = CurDAG->getTargetConstant(RCID, MVT::i32);
-    SDValue LoIdx = CurDAG->getTargetConstant(Mips::sub_lo, MVT::i32);
-    SDValue HiIdx = CurDAG->getTargetConstant(Mips::sub_hi, MVT::i32);
-    const SDValue Ops[] = { RegClass, Node->getOperand(0), LoIdx,
-                            Node->getOperand(1), HiIdx };
-    SDNode *Res = CurDAG->getMachineNode(TargetOpcode::REG_SEQUENCE, DL,
-                                         MVT::Untyped, Ops);
-    return std::make_pair(true, Res);
-  }
-
   case ISD::BUILD_VECTOR: {
     // Select appropriate ldi.[bhwd] instructions for constant splats of
     // 128-bit when MSA is enabled. Fixup any register class mismatches that

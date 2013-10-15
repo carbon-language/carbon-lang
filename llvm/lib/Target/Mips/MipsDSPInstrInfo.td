@@ -1269,6 +1269,8 @@ def PseudoCMPU_LE_QB : PseudoCMP<CMPU_LE_QB>;
 def PseudoPICK_PH : PseudoPICK<PICK_PH>;
 def PseudoPICK_QB : PseudoPICK<PICK_QB>;
 
+def PseudoMTLOHI_DSP : PseudoMTLOHI<ACC64DSP, GPR32>;
+
 // Patterns.
 class DSPPat<dag pattern, dag result, Predicate pred = HasDSP> :
   Pat<pattern, result>, Requires<[pred]>;

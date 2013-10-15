@@ -25,8 +25,7 @@ def SDT_MipsCallSeqStart : SDCallSeqStart<[SDTCisVT<0, i32>]>;
 def SDT_MipsCallSeqEnd   : SDCallSeqEnd<[SDTCisVT<0, i32>, SDTCisVT<1, i32>]>;
 def SDT_MFLOHI : SDTypeProfile<1, 1, [SDTCisInt<0>, SDTCisVT<1, untyped>]>;
 def SDT_MTLOHI : SDTypeProfile<1, 2, [SDTCisVT<0, untyped>,
-                                      SDTCisVT<1, i32>,
-                                      SDTCisSameAs<1, 2>]>;
+                                      SDTCisInt<1>, SDTCisSameAs<1, 2>]>;
 def SDT_MipsMultDiv : SDTypeProfile<1, 2, [SDTCisVT<0, untyped>, SDTCisInt<1>,
                                     SDTCisSameAs<1, 2>]>;
 def SDT_MipsMAddMSub : SDTypeProfile<1, 3,
@@ -710,6 +709,10 @@ class MoveFromLOHI<string opstr, RegisterOperand RO, Register UseReg>:
   let neverHasSideEffects = 1;
 }
 
+class PseudoMTLOHI<RegisterClass DstRC, RegisterClass SrcRC>
+  : PseudoSE<(outs DstRC:$lohi), (ins SrcRC:$lo, SrcRC:$hi),
+             [(set DstRC:$lohi, (MipsMTLOHI SrcRC:$lo, SrcRC:$hi))], IIHiLo>;
+
 class MoveToLOHI<string opstr, RegisterOperand RO, list<Register> DefRegs>:
   InstSE<(outs), (ins RO:$rs), !strconcat(opstr, "\t$rs"), [], IIHiLo,
   FrmR, opstr> {
@@ -1069,6 +1072,7 @@ def PseudoMULT  : MultDivPseudo<MULT, ACC64, GPR32Opnd, MipsMult, IIImult>;
 def PseudoMULTu : MultDivPseudo<MULTu, ACC64, GPR32Opnd, MipsMultu, IIImult>;
 def PseudoMFHI : PseudoMFLOHI<GPR32, ACC64, MipsMFHI>;
 def PseudoMFLO : PseudoMFLOHI<GPR32, ACC64, MipsMFLO>;
+def PseudoMTLOHI : PseudoMTLOHI<ACC64, GPR32>;
 def PseudoMADD  : MAddSubPseudo<MADD, MipsMAdd>;
 def PseudoMADDU : MAddSubPseudo<MADDU, MipsMAddu>;
 def PseudoMSUB  : MAddSubPseudo<MSUB, MipsMSub>;
