@@ -30,7 +30,7 @@ add_clang_executable(clang-modernize
   )
 
 add_dependencies(clang-modernize
-  clang-headers
+  clang-headers clang-apply-replacements
   )
 
 target_link_libraries(clang-modernize
