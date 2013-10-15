@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "Platform.h"
 #include "IOChannel.h"
 
 #include <map>
@@ -73,7 +74,8 @@ void
 IOChannel::EraseCharsBeforeCursor ()
 {
     const LineInfo *line_info  = el_line(m_edit_line);
-    el_deletestr(m_edit_line, line_info->cursor - line_info->buffer);
+    if (line_info != NULL)
+        el_deletestr(m_edit_line, line_info->cursor - line_info->buffer);
 }
 
 unsigned char
@@ -213,17 +215,14 @@ IOChannel::IOChannel
     m_history_event(),
     m_getting_command (false),
     m_expecting_prompt (false),
-	m_prompt_str (),
+    m_prompt_str (),
     m_refresh_request_pending (false)
 {
     assert (m_edit_line);
-    ::el_set (m_edit_line, EL_PROMPT, el_prompt);
-    ::el_set (m_edit_line, EL_EDITOR, "emacs");
-    ::el_set (m_edit_line, EL_HIST, history, m_history);
-
-    el_set (m_edit_line, EL_ADDFN, "lldb_complete",
-            "LLDB completion function",
-            IOChannel::ElCompletionFn);
+    el_set (m_edit_line, EL_PROMPT, el_prompt);
+    el_set (m_edit_line, EL_EDITOR, "emacs");
+    el_set (m_edit_line, EL_HIST, history, m_history);
+    el_set (m_edit_line, EL_ADDFN, "lldb_complete", "LLDB completion function", IOChannel::ElCompletionFn);
     el_set (m_edit_line, EL_BIND, m_completion_key, "lldb_complete", NULL);
     el_set (m_edit_line, EL_BIND, "^r", "em-inc-search-prev", NULL);  // Cycle through backwards search, entering string
     el_set (m_edit_line, EL_BIND, "^w", "ed-delete-prev-word", NULL); // Delete previous word, behave like bash does.
@@ -231,35 +230,20 @@ IOChannel::IOChannel
     el_set (m_edit_line, EL_CLIENTDATA, this);
 
     // Source $PWD/.editrc then $HOME/.editrc
-    ::el_source (m_edit_line, NULL);
+    el_source (m_edit_line, NULL);
 
     assert (m_history);
-    ::history (m_history, &m_history_event, H_SETSIZE, 800);
-    ::history (m_history, &m_history_event, H_SETUNIQUE, 1);
+    history (m_history, &m_history_event, H_SETSIZE, 800);
+    history (m_history, &m_history_event, H_SETUNIQUE, 1);
     // Load history
     HistorySaveLoad (false);
 
-    // Set up mutex to make sure OutErr, OutWrite and RefreshPrompt do not interfere
-    // with each other when writing.
-
-    int error;
-    ::pthread_mutexattr_t attr;
-    error = ::pthread_mutexattr_init (&attr);
-    assert (error == 0);
-    error = ::pthread_mutexattr_settype (&attr, PTHREAD_MUTEX_RECURSIVE);
-    assert (error == 0);
-    error = ::pthread_mutex_init (&m_output_mutex, &attr);
-    assert (error == 0);
-    error = ::pthread_mutexattr_destroy (&attr);
-    assert (error == 0);
-
-    error = ::pthread_cond_init (&m_output_cond, NULL);
-    assert (error == 0);
-
     // Initialize time that ::el_gets was last called.
-
     m_enter_elgets_time.tv_sec = 0;
     m_enter_elgets_time.tv_usec = 0;
+
+    // set the initial state to non flushed
+    m_output_flushed = false;
 }
 
 IOChannel::~IOChannel ()
@@ -278,9 +262,6 @@ IOChannel::~IOChannel ()
         ::el_end (m_edit_line);
         m_edit_line = NULL;
     }
-
-    ::pthread_cond_destroy (&m_output_cond);
-    ::pthread_mutex_destroy (&m_output_mutex);
 }
 
 void
@@ -304,16 +285,15 @@ IOChannel::HistorySaveLoad (bool save)
 void
 IOChannel::LibeditOutputBytesReceived (void *baton, const void *src, size_t src_len)
 {
-	// Make this a member variable.
-    // static std::string prompt_str;
     IOChannel *io_channel = (IOChannel *) baton;
-    IOLocker locker (io_channel->m_output_mutex);
+    std::lock_guard<std::recursive_mutex> locker(io_channel->m_output_mutex);
     const char *bytes = (const char *) src;
 
     bool flush = false;
 
-    // See if we have a 'flush' syncronization point in there.
-    if (src_len > 0 && bytes[src_len-1] == 0)
+    // See if we have a 'flush' synchronization point in there.
+    // this is performed from 'fputc ('\0', m_editline_out);' in LibeditGetInput()
+    if (src_len > 0 && bytes[src_len-1] == '\0')
     {
         src_len--;
         flush = true;
@@ -322,7 +302,7 @@ IOChannel::LibeditOutputBytesReceived (void *baton, const void *src, size_t src_
     if (io_channel->IsGettingCommand() && io_channel->m_expecting_prompt)
     {
         io_channel->m_prompt_str.append (bytes, src_len);
-		// Log this to make sure the prompt is really what you think it is.
+        // Log this to make sure the prompt is really what you think it is.
         if (io_channel->m_prompt_str.find (el_prompt(io_channel->m_edit_line)) == 0)
         {
             io_channel->m_expecting_prompt = false;
@@ -342,13 +322,14 @@ IOChannel::LibeditOutputBytesReceived (void *baton, const void *src, size_t src_
         io_channel->OutWrite (bytes, src_len, NO_ASYNC);
     }
 
+#if !defined (_MSC_VER)
     if (flush)
     {
-        // Signal that we have finished all data up to the sync point.
-        IOLocker locker (io_channel->m_output_mutex);
         io_channel->m_output_flushed = true;
-        pthread_cond_signal (&io_channel->m_output_cond);
+        io_channel->m_output_cond.notify_all();
     }
+#endif
+
 }
 
 IOChannel::LibeditGetInputResult
@@ -367,22 +348,27 @@ IOChannel::LibeditGetInput (std::string &new_line)
         // Call el_gets to prompt the user and read the user's input.
         const char *line = ::el_gets (m_edit_line, &line_len);
 
+#if !defined (_MSC_VER)
         // Force the piped output from el_gets to finish processing.
         // el_gets does an fflush internally, which is not sufficient here; it only
         // writes the data into m_editline_out, but doesn't affect whether our worker
         // thread will read that data yet. So we block here manually.
         {
-            IOLocker locker (m_output_mutex);
+            std::lock_guard<std::recursive_mutex> locker(m_output_mutex);
             m_output_flushed = false;
 
             // Write a synchronization point into the stream, so we can guarantee
             // LibeditOutputBytesReceived has processed everything up till that mark.
-            fputc (0, m_editline_out);
+            fputc ('\0', m_editline_out);
 
-            while (!m_output_flushed && pthread_cond_wait (&m_output_cond, &m_output_mutex))
-            { /* wait */ }
+            while (!m_output_flushed)
+            {
+                // wait until the condition variable is signaled
+                m_output_cond.wait(m_output_mutex);
+            }
         }
-        
+#endif
+
         // Re-set the boolean indicating whether or not el_gets is trying to get input.
         SetGettingCommand (false);
 
@@ -417,7 +403,7 @@ IOChannel::LibeditGetInput (std::string &new_line)
     return retval;
 }
 
-void *
+thread_result_t
 IOChannel::IOReadThread (void *ptr)
 {
     IOChannel *myself = static_cast<IOChannel *> (ptr);
@@ -540,8 +526,7 @@ IOChannel::Start ()
     if (IS_VALID_LLDB_HOST_THREAD(m_read_thread))
         return true;
 
-    m_read_thread = SBHostOS::ThreadCreate ("<lldb.driver.commandline_io>", IOChannel::IOReadThread, this,
-                                            NULL);
+    m_read_thread = SBHostOS::ThreadCreate("<lldb.driver.commandline_io>", (lldb::thread_func_t) IOChannel::IOReadThread, this, NULL);
 
     return (IS_VALID_LLDB_HOST_THREAD(m_read_thread));
 }
@@ -569,11 +554,11 @@ IOChannel::RefreshPrompt ()
 {
     // If we are not in the middle of getting input from the user, there is no need to 
     // refresh the prompt.
-    IOLocker locker (m_output_mutex);
+    std::lock_guard<std::recursive_mutex> locker(m_output_mutex);
     if (! IsGettingCommand())
         return;
 
-	// If we haven't finished writing the prompt, there's no need to refresh it.
+    // If we haven't finished writing the prompt, there's no need to refresh it.
     if (m_expecting_prompt)
         return;
 
@@ -600,7 +585,7 @@ IOChannel::OutWrite (const char *buffer, size_t len, bool asynchronous)
     }
 
     // Use the mutex to make sure OutWrite and ErrWrite do not interfere with each other's output.
-    IOLocker locker (m_output_mutex);
+    std::lock_guard<std::recursive_mutex> locker(m_output_mutex);
     if (m_driver->EditlineReaderIsTop() && asynchronous)
         ::fwrite (undo_prompt_string, 1, 4, m_out_file);
     ::fwrite (buffer, 1, len, m_out_file);
@@ -615,7 +600,7 @@ IOChannel::ErrWrite (const char *buffer, size_t len, bool asynchronous)
         return;
 
     // Use the mutex to make sure OutWrite and ErrWrite do not interfere with each other's output.
-    IOLocker locker (m_output_mutex);
+    std::lock_guard<std::recursive_mutex> locker(m_output_mutex);
     if (asynchronous)
         ::fwrite (undo_prompt_string, 1, 4, m_err_file);
     ::fwrite (buffer, 1, len, m_err_file);
@@ -668,18 +653,4 @@ void
 IOChannel::SetGettingCommand (bool new_value)
 {
     m_getting_command = new_value;
-}
-
-IOLocker::IOLocker (pthread_mutex_t &mutex) :
-    m_mutex_ptr (&mutex)
-{
-    if (m_mutex_ptr)
-        ::pthread_mutex_lock (m_mutex_ptr);
-        
-}
-
-IOLocker::~IOLocker ()
-{
-    if (m_mutex_ptr)
-        ::pthread_mutex_unlock (m_mutex_ptr);
 }

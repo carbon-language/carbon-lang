@@ -9,19 +9,15 @@
 
 #include "Driver.h"
 
-#include <getopt.h>
-#include <libgen.h>
-#include <sys/ioctl.h>
-#include <termios.h>
-#include <unistd.h>
+#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <limits.h>
 #include <fcntl.h>
-#include <inttypes.h>
 
 #include <string>
 
+#include <thread>
 #include "IOChannel.h"
 #include "lldb/API/SBBreakpoint.h"
 #include "lldb/API/SBCommandInterpreter.h"
@@ -155,7 +151,9 @@ Driver::CloseIOChannelFile ()
     // Write an End of File sequence to the file descriptor to ensure any
     // read functions can exit.
     char eof_str[] = "\x04";
-    ::write (m_editline_pty.GetMasterFileDescriptor(), eof_str, strlen(eof_str));
+    int mfd = m_editline_pty.GetMasterFileDescriptor();
+    if (mfd != -1)
+        ::write (m_editline_pty.GetMasterFileDescriptor(), eof_str, strlen(eof_str));
 
     m_editline_pty.CloseMasterFileDescriptor();
 
@@ -569,7 +567,7 @@ Driver::GetDebugMode() const
 // if the user only wanted help or version information.
 
 SBError
-Driver::ParseArgs (int argc, const char *argv[], FILE *out_fh, bool &exit)
+Driver::ParseArgs (int argc, const char *argv[], FILE *out_fh, bool &exiting)
 {
     ResetOptionValues ();
 
@@ -802,12 +800,12 @@ Driver::ParseArgs (int argc, const char *argv[], FILE *out_fh, bool &exit)
     if (error.Fail() || m_option_data.m_print_help)
     {
         ShowUsage (out_fh, g_options, m_option_data);
-        exit = true;
+        exiting = true;
     }
     else if (m_option_data.m_print_version)
     {
         ::fprintf (out_fh, "%s\n", m_debugger.GetVersionString());
-        exit = true;
+        exiting = true;
     }
     else if (m_option_data.m_print_python_path)
     {
@@ -825,7 +823,7 @@ Driver::ParseArgs (int argc, const char *argv[], FILE *out_fh, bool &exit)
         }
         else
             ::fprintf (out_fh, "<COULD NOT FIND PATH>\n");
-        exit = true;
+        exiting = true;
     }
     else if (m_option_data.m_process_name.empty() && m_option_data.m_process_pid == LLDB_INVALID_PROCESS_ID)
     {
@@ -1311,6 +1309,12 @@ Driver::EditLineInputReaderCallback
 void
 Driver::MainLoop ()
 {
+#if defined(_MSC_VER)
+    m_editline_slave_fh = stdin;
+    FILE *editline_output_slave_fh = stdout;
+    lldb_utility::PseudoTerminal editline_output_pty;
+#else
+
     char error_str[1024];
     if (m_editline_pty.OpenFirstAvailableMaster(O_RDWR|O_NOCTTY, error_str, sizeof(error_str)) == false)
     {
@@ -1371,6 +1375,7 @@ Driver::MainLoop ()
             ::setbuf (editline_output_slave_fh, NULL);
         }
     }
+#endif
 
    // struct termios stdin_termios;
 
@@ -1412,6 +1417,7 @@ Driver::MainLoop ()
 
     m_io_channel_ap.reset (new IOChannel(m_editline_slave_fh, editline_output_slave_fh, stdout, stderr, this));
 
+#if !defined (_MSC_VER)
     SBCommunication out_comm_2("driver.editline_output");
     out_comm_2.SetCloseOnEOF (false);
     out_comm_2.AdoptFileDesriptor (editline_output_pty.GetMasterFileDescriptor(), false);
@@ -1422,6 +1428,7 @@ Driver::MainLoop ()
         ::fprintf (stderr, "error: failed to start libedit output read thread");
         exit (5);
     }
+#endif
 
 
     struct winsize window_size;
@@ -1663,9 +1670,11 @@ Driver::MainLoop ()
             master_out_comm.Disconnect();
             master_out_comm.ReadThreadStop();
 
+#if !defined(_MSC_VER)
             out_comm_2.SetReadThreadBytesReceivedCallback(NULL, NULL);
             out_comm_2.Disconnect();
             out_comm_2.ReadThreadStop();
+#endif
 
             editline_output_pty.CloseMasterFileDescriptor();
             reset_stdin_termios();
@@ -1780,15 +1789,15 @@ main (int argc, char const *argv[], const char *envp[])
     {
         Driver driver;
 
-        bool exit = false;
-        SBError error (driver.ParseArgs (argc, argv, stdout, exit));
+        bool exiting = false;
+        SBError error (driver.ParseArgs (argc, argv, stdout, exiting));
         if (error.Fail())
         {
             const char *error_cstr = error.GetCString ();
             if (error_cstr)
                 ::fprintf (stderr, "error: %s\n", error_cstr);
         }
-        else if (!exit)
+        else if (!exiting)
         {
             driver.MainLoop ();
         }

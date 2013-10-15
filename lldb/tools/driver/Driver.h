@@ -10,6 +10,7 @@
 #ifndef lldb_Driver_h_
 #define lldb_Driver_h_
 
+#include "Platform.h"
 #include "lldb/Utility/PseudoTerminal.h"
 
 #include <set>

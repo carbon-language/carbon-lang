@@ -5,6 +5,9 @@ add_lldb_executable(lldb
   #DriverOptions.cpp
   #DriverPosix.cpp
   IOChannel.cpp
+  ELWrapper.cpp
+  Platform.cpp
+  GetOptWrapper.cpp
   )
 
 target_link_libraries(lldb liblldb)
