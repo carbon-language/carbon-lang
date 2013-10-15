@@ -5844,7 +5844,8 @@ static CXAvailabilityKind getCursorAvailabilityForDecl(const Decl *D) {
   case AR_Available:
   case AR_NotYetIntroduced:
     if (const EnumConstantDecl *EnumConst = dyn_cast<EnumConstantDecl>(D))
-      return getCursorAvailabilityForDecl(cast<Decl>(EnumConst->getDeclContext()));
+      return getCursorAvailabilityForDecl(
+          cast<Decl>(EnumConst->getDeclContext()));
     return CXAvailability_Available;
 
   case AR_Deprecated:
@@ -5853,6 +5854,8 @@ static CXAvailabilityKind getCursorAvailabilityForDecl(const Decl *D) {
   case AR_Unavailable:
     return CXAvailability_NotAvailable;
   }
+
+  llvm_unreachable("Unknown availability kind!");
 }
 
 enum CXAvailabilityKind clang_getCursorAvailability(CXCursor cursor) {
