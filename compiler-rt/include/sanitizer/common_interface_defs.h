@@ -27,10 +27,6 @@ extern "C" {
   // Tell the tools to write their reports to "path.<pid>" instead of stderr.
   void __sanitizer_set_report_path(const char *path);
 
-  // Tell the tools to write their reports to given file descriptor instead of
-  // stderr.
-  void __sanitizer_set_report_fd(int fd);
-
   // Notify the tools that the sandbox is going to be turned on. The reserved
   // parameter will be used in the future to hold a structure with functions
   // that the tools may call to bypass the sandbox.
