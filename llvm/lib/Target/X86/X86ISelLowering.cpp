@@ -7627,12 +7627,7 @@ X86TargetLowering::LowerEXTRACT_VECTOR_ELT(SDValue Op,
       MVT MaskVT = MVT::getVectorVT(MaskEltVT, VecVT.getSizeInBits() /
                                     MaskEltVT.getSizeInBits());
       
-      if (Idx.getSimpleValueType() != MaskEltVT)
-        if (Idx.getOpcode() == ISD::ZERO_EXTEND ||
-            Idx.getOpcode() == ISD::SIGN_EXTEND)
-          Idx = Idx.getOperand(0);
-      assert(Idx.getSimpleValueType() == MaskEltVT &&
-             "Unexpected index in insertelement");
+      Idx = DAG.getZExtOrTrunc(Idx, dl, MaskEltVT);
       SDValue Mask = DAG.getNode(X86ISD::VINSERT, dl, MaskVT,
                                 getZeroVector(MaskVT, Subtarget, DAG, dl),
                                 Idx, DAG.getConstant(0, getPointerTy()));
