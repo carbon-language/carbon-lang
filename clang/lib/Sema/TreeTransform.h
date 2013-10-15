@@ -5994,23 +5994,19 @@ TreeTransform<Derived>::TransformObjCForCollectionStmt(
                                                    Body.get());
 }
 
-
-template<typename Derived>
-StmtResult
-TreeTransform<Derived>::TransformCXXCatchStmt(CXXCatchStmt *S) {
+template <typename Derived>
+StmtResult TreeTransform<Derived>::TransformCXXCatchStmt(CXXCatchStmt *S) {
   // Transform the exception declaration, if any.
   VarDecl *Var = 0;
-  if (S->getExceptionDecl()) {
-    VarDecl *ExceptionDecl = S->getExceptionDecl();
-    TypeSourceInfo *T = getDerived().TransformType(
-                                            ExceptionDecl->getTypeSourceInfo());
+  if (VarDecl *ExceptionDecl = S->getExceptionDecl()) {
+    TypeSourceInfo *T =
+        getDerived().TransformType(ExceptionDecl->getTypeSourceInfo());
     if (!T)
       return StmtError();
 
-    Var = getDerived().RebuildExceptionDecl(ExceptionDecl, T,
-                                            ExceptionDecl->getInnerLocStart(),
-                                            ExceptionDecl->getLocation(),
-                                            ExceptionDecl->getIdentifier());
+    Var = getDerived().RebuildExceptionDecl(
+        ExceptionDecl, T, ExceptionDecl->getInnerLocStart(),
+        ExceptionDecl->getLocation(), ExceptionDecl->getIdentifier());
     if (!Var || Var->isInvalidDecl())
       return StmtError();
   }
@@ -6020,31 +6016,25 @@ TreeTransform<Derived>::TransformCXXCatchStmt(CXXCatchStmt *S) {
   if (Handler.isInvalid())
     return StmtError();
 
-  if (!getDerived().AlwaysRebuild() &&
-      !Var &&
+  if (!getDerived().AlwaysRebuild() && !Var &&
       Handler.get() == S->getHandlerBlock())
     return SemaRef.Owned(S);
 
-  return getDerived().RebuildCXXCatchStmt(S->getCatchLoc(),
-                                          Var,
-                                          Handler.get());
+  return getDerived().RebuildCXXCatchStmt(S->getCatchLoc(), Var, Handler.get());
 }
 
-template<typename Derived>
-StmtResult
-TreeTransform<Derived>::TransformCXXTryStmt(CXXTryStmt *S) {
+template <typename Derived>
+StmtResult TreeTransform<Derived>::TransformCXXTryStmt(CXXTryStmt *S) {
   // Transform the try block itself.
-  StmtResult TryBlock
-    = getDerived().TransformCompoundStmt(S->getTryBlock());
+  StmtResult TryBlock = getDerived().TransformCompoundStmt(S->getTryBlock());
   if (TryBlock.isInvalid())
     return StmtError();
 
   // Transform the handlers.
   bool HandlerChanged = false;
-  SmallVector<Stmt*, 8> Handlers;
+  SmallVector<Stmt *, 8> Handlers;
   for (unsigned I = 0, N = S->getNumHandlers(); I != N; ++I) {
-    StmtResult Handler
-      = getDerived().TransformCXXCatchStmt(S->getHandler(I));
+    StmtResult Handler = getDerived().TransformCXXCatchStmt(S->getHandler(I));
     if (Handler.isInvalid())
       return StmtError();
 
@@ -6052,8 +6042,7 @@ TreeTransform<Derived>::TransformCXXTryStmt(CXXTryStmt *S) {
     Handlers.push_back(Handler.takeAs<Stmt>());
   }
 
-  if (!getDerived().AlwaysRebuild() &&
-      TryBlock.get() == S->getTryBlock() &&
+  if (!getDerived().AlwaysRebuild() && TryBlock.get() == S->getTryBlock() &&
       !HandlerChanged)
     return SemaRef.Owned(S);
 
