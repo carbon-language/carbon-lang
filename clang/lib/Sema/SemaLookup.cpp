@@ -4169,7 +4169,7 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
         if (!Cached->second.isKeyword() &&
             isCandidateViable(CCC, Cached->second)) {
           // Do not use correction that is unaccessible in the given scope.
-          NamedDecl* CorrectionDecl = Cached->second.getCorrectionDecl();
+          NamedDecl *CorrectionDecl = Cached->second.getCorrectionDecl();
           DeclarationNameInfo NameInfo(CorrectionDecl->getDeclName(),
                                        CorrectionDecl->getLocation());
           LookupResult R(*this, NameInfo, LookupOrdinaryName);
