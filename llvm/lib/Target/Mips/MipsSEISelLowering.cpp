@@ -323,7 +323,7 @@ static bool selectMADD(SDNode *ADDENode, SelectionDAG *CurDAG) {
   SDLoc DL(ADDENode);
 
   // Initialize accumulator.
-  SDValue ACCIn = CurDAG->getNode(MipsISD::InsertLOHI, DL, MVT::Untyped,
+  SDValue ACCIn = CurDAG->getNode(MipsISD::MTLOHI, DL, MVT::Untyped,
                                   ADDCNode->getOperand(1),
                                   ADDENode->getOperand(1));
 
@@ -337,11 +337,11 @@ static bool selectMADD(SDNode *ADDENode, SelectionDAG *CurDAG) {
 
   // replace uses of adde and addc here
   if (!SDValue(ADDCNode, 0).use_empty()) {
-    SDValue LoOut = CurDAG->getNode(MipsISD::ExtractLO, DL, MVT::i32, MAdd);
+    SDValue LoOut = CurDAG->getNode(MipsISD::MFLO, DL, MVT::i32, MAdd);
     CurDAG->ReplaceAllUsesOfValueWith(SDValue(ADDCNode, 0), LoOut);
   }
   if (!SDValue(ADDENode, 0).use_empty()) {
-    SDValue HiOut = CurDAG->getNode(MipsISD::ExtractHI, DL, MVT::i32, MAdd);
+    SDValue HiOut = CurDAG->getNode(MipsISD::MFHI, DL, MVT::i32, MAdd);
     CurDAG->ReplaceAllUsesOfValueWith(SDValue(ADDENode, 0), HiOut);
   }
 
@@ -395,7 +395,7 @@ static bool selectMSUB(SDNode *SUBENode, SelectionDAG *CurDAG) {
   SDLoc DL(SUBENode);
 
   // Initialize accumulator.
-  SDValue ACCIn = CurDAG->getNode(MipsISD::InsertLOHI, DL, MVT::Untyped,
+  SDValue ACCIn = CurDAG->getNode(MipsISD::MTLOHI, DL, MVT::Untyped,
                                   SUBCNode->getOperand(0),
                                   SUBENode->getOperand(0));
 
@@ -409,11 +409,11 @@ static bool selectMSUB(SDNode *SUBENode, SelectionDAG *CurDAG) {
 
   // replace uses of sube and subc here
   if (!SDValue(SUBCNode, 0).use_empty()) {
-    SDValue LoOut = CurDAG->getNode(MipsISD::ExtractLO, DL, MVT::i32, MSub);
+    SDValue LoOut = CurDAG->getNode(MipsISD::MFLO, DL, MVT::i32, MSub);
     CurDAG->ReplaceAllUsesOfValueWith(SDValue(SUBCNode, 0), LoOut);
   }
   if (!SDValue(SUBENode, 0).use_empty()) {
-    SDValue HiOut = CurDAG->getNode(MipsISD::ExtractHI, DL, MVT::i32, MSub);
+    SDValue HiOut = CurDAG->getNode(MipsISD::MFHI, DL, MVT::i32, MSub);
     CurDAG->ReplaceAllUsesOfValueWith(SDValue(SUBENode, 0), HiOut);
   }
 
@@ -943,9 +943,9 @@ SDValue MipsSETargetLowering::lowerMulDiv(SDValue Op, unsigned NewOpc,
   SDValue Lo, Hi;
 
   if (HasLo)
-    Lo = DAG.getNode(MipsISD::ExtractLO, DL, Ty, Mult);
+    Lo = DAG.getNode(MipsISD::MFLO, DL, Ty, Mult);
   if (HasHi)
-    Hi = DAG.getNode(MipsISD::ExtractHI, DL, Ty, Mult);
+    Hi = DAG.getNode(MipsISD::MFHI, DL, Ty, Mult);
 
   if (!HasLo || !HasHi)
     return HasLo ? Lo : Hi;
@@ -960,12 +960,12 @@ static SDValue initAccumulator(SDValue In, SDLoc DL, SelectionDAG &DAG) {
                              DAG.getConstant(0, MVT::i32));
   SDValue InHi = DAG.getNode(ISD::EXTRACT_ELEMENT, DL, MVT::i32, In,
                              DAG.getConstant(1, MVT::i32));
-  return DAG.getNode(MipsISD::InsertLOHI, DL, MVT::Untyped, InLo, InHi);
+  return DAG.getNode(MipsISD::MTLOHI, DL, MVT::Untyped, InLo, InHi);
 }
 
 static SDValue extractLOHI(SDValue Op, SDLoc DL, SelectionDAG &DAG) {
-  SDValue Lo = DAG.getNode(MipsISD::ExtractLO, DL, MVT::i32, Op);
-  SDValue Hi = DAG.getNode(MipsISD::ExtractHI, DL, MVT::i32, Op);
+  SDValue Lo = DAG.getNode(MipsISD::MFLO, DL, MVT::i32, Op);
+  SDValue Hi = DAG.getNode(MipsISD::MFHI, DL, MVT::i32, Op);
   return DAG.getNode(ISD::BUILD_PAIR, DL, MVT::i64, Lo, Hi);
 }
 

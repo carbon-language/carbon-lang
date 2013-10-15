@@ -70,11 +70,11 @@ namespace llvm {
       EH_RETURN,
 
       // Node used to extract integer from accumulator.
-      ExtractHI,
-      ExtractLO,
+      MFHI,
+      MFLO,
 
       // Node used to insert integers to accumulator.
-      InsertLOHI,
+      MTLOHI,
 
       // Mult nodes.
       Mult,
