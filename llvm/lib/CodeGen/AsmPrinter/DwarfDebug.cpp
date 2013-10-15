@@ -826,12 +826,8 @@ CompileUnit *DwarfDebug::constructCompileUnit(const MDNode *N) {
 }
 
 // Construct subprogram DIE.
-void DwarfDebug::constructSubprogramDIE(CompileUnit *TheCU,
-                                        const MDNode *N) {
-  CompileUnit *&CURef = SPMap[N];
-  if (CURef)
-    return;
-  CURef = TheCU;
+void DwarfDebug::constructSubprogramDIE(CompileUnit *TheCU, const MDNode *N) {
+  assert(!SPMap[N] && "Trying to create a subprogram DIE twice!");
 
   DISubprogram SP(N);
   if (!SP.isDefinition())
@@ -840,6 +836,7 @@ void DwarfDebug::constructSubprogramDIE(CompileUnit *TheCU,
     return;
 
   DIE *SubprogramDie = TheCU->getOrCreateSubprogramDIE(SP);
+  SPMap[N] = TheCU;
 
   // Expose as a global name.
   TheCU->addGlobalName(SP.getName(), SubprogramDie);
@@ -974,28 +971,33 @@ void DwarfDebug::collectDeadVariables() {
       DIArray Subprograms = TheCU.getSubprograms();
       for (unsigned i = 0, e = Subprograms.getNumElements(); i != e; ++i) {
         DISubprogram SP(Subprograms.getElement(i));
-        if (ProcessedSPNodes.count(SP) != 0) continue;
-        if (!SP.isSubprogram()) continue;
-        if (!SP.isDefinition()) continue;
+        if (ProcessedSPNodes.count(SP) != 0)
+          continue;
+        if (!SP.isSubprogram())
+          continue;
+        if (!SP.isDefinition())
+          continue;
         DIArray Variables = SP.getVariables();
-        if (Variables.getNumElements() == 0) continue;
+        if (Variables.getNumElements() == 0)
+          continue;
 
         LexicalScope *Scope =
-          new LexicalScope(NULL, DIDescriptor(SP), NULL, false);
+            new LexicalScope(NULL, DIDescriptor(SP), NULL, false);
         DeadFnScopeMap[SP] = Scope;
 
         // Construct subprogram DIE and add variables DIEs.
         CompileUnit *SPCU = CUMap.lookup(TheCU);
         assert(SPCU && "Unable to find Compile Unit!");
-        constructSubprogramDIE(SPCU, SP);
-        DIE *ScopeDIE = SPCU->getDIE(SP);
+        DIE *SPDIE = SPCU->getDIE(SP);
+        assert(SPDIE && "Subprogram wasn't created?");
         for (unsigned vi = 0, ve = Variables.getNumElements(); vi != ve; ++vi) {
           DIVariable DV(Variables.getElement(vi));
-          if (!DV.isVariable()) continue;
+          if (!DV.isVariable())
+            continue;
           DbgVariable NewVar(DV, NULL, this);
           if (DIE *VariableDIE =
-              SPCU->constructVariableDIE(&NewVar, Scope->isAbstractScope()))
-            ScopeDIE->addChild(VariableDIE);
+                  SPCU->constructVariableDIE(&NewVar, Scope->isAbstractScope()))
+            SPDIE->addChild(VariableDIE);
         }
       }
     }
