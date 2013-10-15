@@ -91,7 +91,6 @@ class ClastExpCodeGen {
   Value *codegen(const clast_reduction *r, Type *Ty);
 
 public:
-
   // A generator for clast expressions.
   //
   // @param B The IRBuilder that defines where the code to calculate the

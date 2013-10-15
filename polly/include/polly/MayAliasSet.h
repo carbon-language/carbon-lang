@@ -83,7 +83,6 @@ class MayAliasSet {
   friend class MayAliasSetInfo;
 
 public:
-
   /// @name Must Alias Pointer Iterators
   ///
   /// These iterators iterate over all must alias pointers in the set.

@@ -57,7 +57,6 @@ STATISTIC(RichScopFound, "Number of Scops containing a loop");
 /// Translate a 'const SCEV *' expression in an isl_pw_aff.
 struct SCEVAffinator : public SCEVVisitor<SCEVAffinator, isl_pw_aff *> {
 public:
-
   /// @brief Translate a 'const SCEV *' to an isl_pw_aff.
   ///
   /// @param Stmt The location at which the scalar evolution expression

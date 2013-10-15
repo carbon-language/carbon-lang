@@ -367,7 +367,6 @@ public:
 struct SCEVInRegionDependences
     : public SCEVVisitor<SCEVInRegionDependences, bool> {
 public:
-
   /// Returns true when the SCEV has SSA names defined in region R.
   static bool hasDependences(const SCEV *S, const Region *R) {
     SCEVInRegionDependences Ignore(R);

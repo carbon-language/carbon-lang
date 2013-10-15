@@ -75,7 +75,6 @@ class PollyIndVarSimplify : public LoopPass {
   bool Changed;
 
 public:
-
   static char ID; // Pass identification, replacement for typeid
   PollyIndVarSimplify()
       : LoopPass(ID), IU(0), LI(0), SE(0), DT(0), TD(0), Changed(false) {

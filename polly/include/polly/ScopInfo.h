@@ -304,7 +304,6 @@ class ScopStmt {
   friend class Scop;
 
 public:
-
   ~ScopStmt();
   /// @brief Get an isl_ctx pointer.
   isl_ctx *getIslCtx() const;
@@ -481,7 +480,6 @@ class Scop {
   friend class ScopInfo;
 
 public:
-
   ~Scop();
 
   ScalarEvolution *getSE() const;
