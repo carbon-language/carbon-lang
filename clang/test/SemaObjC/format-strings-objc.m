@@ -243,3 +243,8 @@ void testTypeOf(NSInteger dW, NSInteger dH) {
   NSLog(@"dW %d  dH %d",({ __typeof__(dW) __a = (dW); __a < 0 ? -__a : __a; }),({ __typeof__(dH) __a = (dH); __a < 0 ? -__a : __a; })); // expected-warning 2 {{values of type 'NSInteger' should not be used as format arguments; add an explicit cast to 'long' instead}}
 }
 
+void testUnicode() {
+  NSLog(@"%C", 0x2022); // no-warning
+  NSLog(@"%C", 0x202200); // expected-warning{{format specifies type 'unichar' (aka 'unsigned short') but the argument has type 'int'}}
+}
+

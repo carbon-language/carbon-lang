@@ -186,26 +186,26 @@ void test_percent_C() {
   const unsigned short data = 'a';
   NSLog(@"%C", data);  // no-warning
 
-  NSLog(@"%C", 0x2603);  // expected-warning{{format specifies type 'unichar' (aka 'unsigned short') but the argument has type 'int'}}
+  NSLog(@"%C", 0x260300);  // expected-warning{{format specifies type 'unichar' (aka 'unsigned short') but the argument has type 'int'}}
   // CHECK-NOT: fix-it:"{{.*}}":{[[@LINE-1]]:11-[[@LINE-1]]:13}:"%d"
   // CHECK: fix-it:"{{.*}}":{[[@LINE-2]]:16-[[@LINE-2]]:16}:"(unsigned short)"
 
   typedef unsigned short unichar;
   
-  NSLog(@"%C", 0x2603);  // expected-warning{{format specifies type 'unichar' (aka 'unsigned short') but the argument has type 'int'}}
+  NSLog(@"%C", 0x260300);  // expected-warning{{format specifies type 'unichar' (aka 'unsigned short') but the argument has type 'int'}}
   // CHECK-NOT: fix-it:"{{.*}}":{[[@LINE-1]]:11-[[@LINE-1]]:13}:"%d"
   // CHECK: fix-it:"{{.*}}":{[[@LINE-2]]:16-[[@LINE-2]]:16}:"(unichar)"
   
-  NSLog(@"%C", data ? 0x2F : 0x2603); // expected-warning{{format specifies type 'unichar' (aka 'unsigned short') but the argument has type 'int'}}
+  NSLog(@"%C", data ? 0x2F0000 : 0x260300); // expected-warning{{format specifies type 'unichar' (aka 'unsigned short') but the argument has type 'int'}}
   // CHECK-NOT: fix-it:"{{.*}}":{[[@LINE-1]]:11-[[@LINE-1]]:13}:"%d"
   // CHECK: fix-it:"{{.*}}":{[[@LINE-2]]:16-[[@LINE-2]]:16}:"(unichar)("
-  // CHECK: fix-it:"{{.*}}":{[[@LINE-3]]:36-[[@LINE-3]]:36}:")"
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-3]]:42-[[@LINE-3]]:42}:")"
 
   NSLog(@"%C", 0.0); // expected-warning{{format specifies type 'unichar' (aka 'unsigned short') but the argument has type 'double'}}
   // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:11-[[@LINE-1]]:13}:"%f"
   // CHECK-NOT: fix-it:"{{.*}}":{[[@LINE-2]]:16-[[@LINE-2]]:16}:"(unichar)"
 
-  NSLog(@"%C", (char)0x2603); // expected-warning{{format specifies type 'unichar' (aka 'unsigned short') but the argument has type 'char'}}
+  NSLog(@"%C", (char)0x260300); // expected-warning{{format specifies type 'unichar' (aka 'unsigned short') but the argument has type 'char'}}
   // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:11-[[@LINE-1]]:13}:"%c"
   // CHECK-NOT: fix-it:"{{.*}}":{[[@LINE-2]]:16-[[@LINE-2]]:22}:"(unichar)"
 
