@@ -82,9 +82,7 @@ doxygen: regendoc $(PROJ_OBJ_DIR)/doxygen.tar.gz
 
 regendoc:
 	$(Echo) Building doxygen documentation
-	$(Verb) if test -e $(PROJ_OBJ_DIR)/doxygen ; then \
-	  $(RM) -rf $(PROJ_OBJ_DIR)/doxygen ; \
-	fi
+	$(Verb) $(RM) -rf $(PROJ_OBJ_DIR)/doxygen
 	$(Verb) $(DOXYGEN) $(PROJ_OBJ_DIR)/doxygen.cfg
 
 $(PROJ_OBJ_DIR)/doxygen.tar.gz: $(DOXYFILES) $(PROJ_OBJ_DIR)/doxygen.cfg
@@ -118,9 +116,7 @@ ocamldoc: regen-ocamldoc
 
 regen-ocamldoc:
 	$(Echo) Building ocamldoc documentation
-	$(Verb) if test -e $(PROJ_OBJ_DIR)/ocamldoc ; then \
-		$(RM) -rf $(PROJ_OBJ_DIR)/ocamldoc ; \
-	fi
+	$(Verb) $(RM) -rf $(PROJ_OBJ_DIR)/ocamldoc
 	$(Verb) $(MAKE) -C $(LEVEL)/bindings/ocaml ocamldoc
 	$(Verb) $(MKDIR) $(PROJ_OBJ_DIR)/ocamldoc/html
 	$(Verb) \
