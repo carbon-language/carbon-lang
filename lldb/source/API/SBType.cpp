@@ -7,12 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <string.h>
-
-#include "clang/AST/ASTContext.h"
-#include "clang/AST/TemplateBase.h"
-#include "clang/AST/Type.h"
-
 #include "lldb/API/SBDefines.h"
 #include "lldb/API/SBType.h"
 #include "lldb/API/SBStream.h"
