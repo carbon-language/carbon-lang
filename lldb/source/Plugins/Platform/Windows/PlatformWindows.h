@@ -24,10 +24,10 @@ class PlatformWindows : public Platform
 public:
 
     static void
-    Initialize(void);
+    Initialize(void) {}
 
     static void
-    Terminate(void);
+    Terminate(void) {}
 
     PlatformWindows(bool is_host);
 
