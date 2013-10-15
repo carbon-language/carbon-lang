@@ -1,5 +1,5 @@
 // Test the behavior of malloc/calloc/realloc when the allocation size is huge.
-// By default (allocator_may_return_null=0) the process shoudl crash.
+// By default (allocator_may_return_null=0) the process should crash.
 // With allocator_may_return_null=1 the allocator should return 0.
 //
 // RUN: %clangxx_asan -O0 %s -o %t
