@@ -453,13 +453,11 @@ Decl *Parser::ParseUsingDeclaration(unsigned Context,
   CXXScopeSpec SS;
   SourceLocation TypenameLoc;
   bool HasTypenameKeyword = false;
-  ParsedAttributesWithRange Attrs(AttrFactory);
 
-  // FIXME: Simply skip the attributes and diagnose, don't bother parsing them.
-  MaybeParseCXX11Attributes(Attrs);
-  ProhibitAttributes(Attrs);
-  Attrs.clear();
-  Attrs.Range = SourceRange();
+  // Check for misplaced attributes before the identifier in an
+  // alias-declaration.
+  ParsedAttributesWithRange MisplacedAttrs(AttrFactory);
+  MaybeParseCXX11Attributes(MisplacedAttrs);
 
   // Ignore optional 'typename'.
   // FIXME: This is wrong; we should parse this as a typename-specifier.
@@ -509,12 +507,24 @@ Decl *Parser::ParseUsingDeclaration(unsigned Context,
     return 0;
   }
 
+  ParsedAttributesWithRange Attrs(AttrFactory);
   MaybeParseCXX11Attributes(Attrs);
 
   // Maybe this is an alias-declaration.
-  bool IsAliasDecl = Tok.is(tok::equal);
   TypeResult TypeAlias;
+  bool IsAliasDecl = Tok.is(tok::equal);
   if (IsAliasDecl) {
+    // If we had any misplaced attributes from earlier, this is where they
+    // should have been written.
+    if (MisplacedAttrs.Range.isValid()) {
+      Diag(MisplacedAttrs.Range.getBegin(), diag::err_attributes_not_allowed)
+        << FixItHint::CreateInsertionFromRange(
+               Tok.getLocation(),
+               CharSourceRange::getTokenRange(MisplacedAttrs.Range))
+        << FixItHint::CreateRemoval(MisplacedAttrs.Range);
+      Attrs.takeAllFrom(MisplacedAttrs);
+    }
+
     // TODO: Can GNU attributes appear here?
     ConsumeToken();
 
@@ -565,6 +575,7 @@ Decl *Parser::ParseUsingDeclaration(unsigned Context,
   } else {
     // C++11 attributes are not allowed on a using-declaration, but GNU ones
     // are.
+    ProhibitAttributes(MisplacedAttrs);
     ProhibitAttributes(Attrs);
 
     // Parse (optional) attributes (most likely GNU strong-using extension).
@@ -3280,6 +3291,37 @@ void Parser::ParseCXX11Attributes(ParsedAttributesWithRange &attrs,
   } while (isCXX11AttributeSpecifier());
 
   attrs.Range = SourceRange(StartLoc, *endLoc);
+}
+
+void Parser::DiagnoseAndSkipCXX11Attributes() {
+  if (!isCXX11AttributeSpecifier())
+    return;
+
+  // Start and end location of an attribute or an attribute list.
+  SourceLocation StartLoc = Tok.getLocation();
+  SourceLocation EndLoc;
+
+  do {
+    if (Tok.is(tok::l_square)) {
+      BalancedDelimiterTracker T(*this, tok::l_square);
+      T.consumeOpen();
+      T.skipToEnd();
+      EndLoc = T.getCloseLocation();
+    } else {
+      assert(Tok.is(tok::kw_alignas) && "not an attribute specifier");
+      ConsumeToken();
+      BalancedDelimiterTracker T(*this, tok::l_paren);
+      if (!T.consumeOpen())
+        T.skipToEnd();
+      EndLoc = T.getCloseLocation();
+    }
+  } while (isCXX11AttributeSpecifier());
+
+  if (EndLoc.isValid()) {
+    SourceRange Range(StartLoc, EndLoc);
+    Diag(StartLoc, diag::err_attributes_not_allowed)
+      << Range;
+  }
 }
 
 /// ParseMicrosoftAttributes - Parse a Microsoft attribute [Attr]
