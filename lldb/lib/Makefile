@@ -69,6 +69,7 @@ USEDLIBS = lldbAPI.a \
 	LLVMMCDisassembler.a \
 	lldbPluginPlatformMacOSX.a \
 	lldbPluginPlatformLinux.a \
+	lldbPluginPlatformWindows.a \
 	lldbPluginPlatformFreeBSD.a \
 	lldbPluginPlatformPOSIX.a
 
