@@ -8,7 +8,7 @@
 ; CHECK-LABEL: t1:
 ; CHECK-LABEL: %loop
 ; CHECK: vxorps %[[REG:xmm.]], %{{xmm.}}, %{{xmm.}}
-; CHECK: vcvtsi2sdq %{{r..}}, %[[REG]], %{{xmm.}}
+; CHECK: vcvtsi2sdq %{{r[0-9a-x]+}}, %[[REG]], %{{xmm.}}
 define i64 @t1(i64* nocapture %x, double* nocapture %y) nounwind {
 entry:
   %vx = load i64* %x
