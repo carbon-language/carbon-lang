@@ -60,7 +60,6 @@ static void NOINLINE InitModule(ModuleDesc *m) {
   }
   int pid = fork();
   if (pid == 0) {
-    __sanitizer_set_report_fd(STDERR_FILENO);
     internal_close(STDOUT_FILENO);
     internal_close(STDIN_FILENO);
     internal_dup2(outfd[0], STDIN_FILENO);

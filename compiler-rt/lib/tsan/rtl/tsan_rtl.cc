@@ -231,12 +231,7 @@ void Initialize(ThreadState *thr) {
 #endif
   InitializeFlags(&ctx->flags, env);
   // Setup correct file descriptor for error reports.
-  if (internal_strcmp(flags()->log_path, "stdout") == 0)
-    __sanitizer_set_report_fd(kStdoutFd);
-  else if (internal_strcmp(flags()->log_path, "stderr") == 0)
-    __sanitizer_set_report_fd(kStderrFd);
-  else
-    __sanitizer_set_report_path(flags()->log_path);
+  __sanitizer_set_report_path(flags()->log_path);
   InitializeSuppressions();
 #ifndef TSAN_GO
   InitializeLibIgnore();

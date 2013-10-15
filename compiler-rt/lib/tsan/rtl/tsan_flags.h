@@ -20,9 +20,11 @@
 // header may be included in the user code, and shouldn't include
 // other headers from TSan or common sanitizer runtime.
 
+#include "sanitizer_common/sanitizer_flags.h"
+
 namespace __tsan {
 
-struct Flags {
+struct Flags : CommonFlags {
   // Enable dynamic annotations, otherwise they are no-ops.
   bool enable_annotations;
   // Supress a race report if we've already output another race report
@@ -48,8 +50,6 @@ struct Flags {
   // If set, all atomics are effectively sequentially consistent (seq_cst),
   // regardless of what user actually specified.
   bool force_seq_cst_atomics;
-  // Strip that prefix from file paths in reports.
-  const char *strip_path_prefix;
   // Suppressions filename.
   const char *suppressions;
   // Print matched suppressions at exit.
@@ -60,10 +60,6 @@ struct Flags {
   int exitcode;
   // Exit after first reported error.
   bool halt_on_error;
-  // Write logs to "log_path.pid".
-  // The special values are "stdout" and "stderr".
-  // The default is "stderr".
-  const char *log_path;
   // Sleep in main thread before exiting for that many ms
   // (useful to catch "at exit" races).
   int atexit_sleep_ms;
@@ -82,8 +78,6 @@ struct Flags {
   bool stop_on_start;
   // Controls whether RunningOnValgrind() returns true or false.
   bool running_on_valgrind;
-  // Path to external symbolizer.
-  const char *external_symbolizer_path;
   // Per-thread history size, controls how many previous memory accesses
   // are remembered per thread.  Possible values are [0..7].
   // history_size=0 amounts to 32K memory accesses.  Each next value doubles
@@ -95,8 +89,6 @@ struct Flags {
   // 1 - reasonable level of synchronization (write->read)
   // 2 - global synchronization of all IO operations
   int io_sync;
-  // If false, the allocator will crash instead of returning 0 on out-of-memory.
-  bool allocator_may_return_null;
 };
 
 Flags *flags();

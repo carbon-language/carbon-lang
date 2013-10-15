@@ -202,7 +202,8 @@ using namespace __sanitizer;  // NOLINT
 
 extern "C" {
 void __sanitizer_set_report_path(const char *path) {
-  if (!path) return;
+  if (!path)
+    return;
   uptr len = internal_strlen(path);
   if (len > sizeof(report_path_prefix) - 100) {
     Report("ERROR: Path is too long: %c%c%c%c%c%c%c%c...\n",
@@ -210,18 +211,21 @@ void __sanitizer_set_report_path(const char *path) {
            path[4], path[5], path[6], path[7]);
     Die();
   }
-  internal_strncpy(report_path_prefix, path, sizeof(report_path_prefix));
-  report_path_prefix[len] = '\0';
-  report_fd = kInvalidFd;
-  log_to_file = true;
-}
-
-void __sanitizer_set_report_fd(int fd) {
   if (report_fd != kStdoutFd &&
       report_fd != kStderrFd &&
       report_fd != kInvalidFd)
     internal_close(report_fd);
-  report_fd = fd;
+  report_fd = kInvalidFd;
+  log_to_file = false;
+  if (internal_strcmp(path, "stdout") == 0) {
+    report_fd = kStdoutFd;
+  } else if (internal_strcmp(path, "stderr") == 0) {
+    report_fd = kStderrFd;
+  } else {
+    internal_strncpy(report_path_prefix, path, sizeof(report_path_prefix));
+    report_path_prefix[len] = '\0';
+    log_to_file = true;
+  }
 }
 
 void NOINLINE __sanitizer_sandbox_on_notify(void *reserved) {

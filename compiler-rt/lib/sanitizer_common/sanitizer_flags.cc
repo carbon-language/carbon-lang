@@ -18,8 +18,6 @@
 
 namespace __sanitizer {
 
-CommonFlags common_flags_dont_use_directly;
-
 void ParseCommonFlagsFromString(const char *str) {
   CommonFlags *f = common_flags();
   ParseFlag(str, &f->malloc_context_size, "malloc_context_size");
