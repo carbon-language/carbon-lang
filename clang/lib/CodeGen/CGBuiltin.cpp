@@ -2074,6 +2074,20 @@ static Value *EmitAArch64ScalarBuiltinExpr(CodeGenFunction &CGF,
   case AArch64::BI__builtin_neon_vtstd_u64:
     Int = Intrinsic::aarch64_neon_vtstd; s = "vtst";
     OverloadInt = false; break;
+  // Scalar Signed Saturating Absolute Value
+  case AArch64::BI__builtin_neon_vqabsb_s8:
+  case AArch64::BI__builtin_neon_vqabsh_s16:
+  case AArch64::BI__builtin_neon_vqabss_s32:
+  case AArch64::BI__builtin_neon_vqabsd_s64:
+    Int = Intrinsic::arm_neon_vqabs;
+    s = "vqabs"; OverloadInt = true; break;
+  // Scalar Signed Saturating Negate
+  case AArch64::BI__builtin_neon_vqnegb_s8:
+  case AArch64::BI__builtin_neon_vqnegh_s16:
+  case AArch64::BI__builtin_neon_vqnegs_s32:
+  case AArch64::BI__builtin_neon_vqnegd_s64:
+    Int = Intrinsic::arm_neon_vqneg;
+    s = "vqneg"; OverloadInt = true; break;
   }
 
   if (!Int)
