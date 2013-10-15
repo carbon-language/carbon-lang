@@ -7,6 +7,7 @@ set(LLVM_LINK_COMPONENTS
 
 add_clang_executable(modularize
   Modularize.cpp
+  ModuleAssistant.cpp
   PreprocessorTracker.cpp
   )
 
