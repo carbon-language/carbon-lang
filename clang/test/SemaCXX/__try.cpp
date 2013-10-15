@@ -57,3 +57,23 @@ int main()
   }
   return e;
 }
+
+namespace PR17584 {
+template <typename>
+void Except() {
+  __try {
+  } __except(true) {
+  }
+}
+
+template <typename>
+void Finally() {
+  __try {
+  } __finally {
+  }
+}
+
+template void Except<void>();
+template void Finally<void>();
+
+}

@@ -6233,10 +6233,13 @@ TreeTransform<Derived>::TransformMSPropertyRefExpr(MSPropertyRefExpr *E) {
 template<typename Derived>
 StmtResult
 TreeTransform<Derived>::TransformSEHTryStmt(SEHTryStmt *S) {
-  StmtResult TryBlock; //  = getDerived().TransformCompoundStmt(S->getTryBlock());
+  StmtResult TryBlock = getDerived().TransformCompoundStmt(S->getTryBlock());
   if(TryBlock.isInvalid()) return StmtError();
 
   StmtResult Handler = getDerived().TransformSEHHandler(S->getHandler());
+  if (Handler.isInvalid())
+    return StmtError();
+
   if(!getDerived().AlwaysRebuild() &&
      TryBlock.get() == S->getTryBlock() &&
      Handler.get() == S->getHandler())
@@ -6251,7 +6254,7 @@ TreeTransform<Derived>::TransformSEHTryStmt(SEHTryStmt *S) {
 template<typename Derived>
 StmtResult
 TreeTransform<Derived>::TransformSEHFinallyStmt(SEHFinallyStmt *S) {
-  StmtResult Block; //  = getDerived().TransformCompoundStatement(S->getBlock());
+  StmtResult Block = getDerived().TransformCompoundStmt(S->getBlock());
   if(Block.isInvalid()) return StmtError();
 
   return getDerived().RebuildSEHFinallyStmt(S->getFinallyLoc(),
@@ -6264,7 +6267,7 @@ TreeTransform<Derived>::TransformSEHExceptStmt(SEHExceptStmt *S) {
   ExprResult FilterExpr = getDerived().TransformExpr(S->getFilterExpr());
   if(FilterExpr.isInvalid()) return StmtError();
 
-  StmtResult Block; //  = getDerived().TransformCompoundStatement(S->getBlock());
+  StmtResult Block = getDerived().TransformCompoundStmt(S->getBlock());
   if(Block.isInvalid()) return StmtError();
 
   return getDerived().RebuildSEHExceptStmt(S->getExceptLoc(),
