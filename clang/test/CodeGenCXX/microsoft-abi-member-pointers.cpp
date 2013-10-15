@@ -42,6 +42,7 @@ struct NonZeroVBPtr : POD, Virtual {
 };
 
 struct Unspecified;
+struct UnspecSingle;
 
 // Check that we can lower the LLVM types and get the null initializers right.
 int Single     ::*s_d_memptr;
@@ -50,6 +51,7 @@ int Multiple   ::*m_d_memptr;
 int Virtual    ::*v_d_memptr;
 int NonZeroVBPtr::*n_d_memptr;
 int Unspecified::*u_d_memptr;
+int UnspecSingle::*us_d_memptr;
 // CHECK: @"\01?s_d_memptr@@3PQSingle@@HQ1@" = global i32 -1, align 4
 // CHECK: @"\01?p_d_memptr@@3PQPolymorphic@@HQ1@" = global i32 0, align 4
 // CHECK: @"\01?m_d_memptr@@3PQMultiple@@HQ1@" = global i32 -1, align 4
@@ -58,6 +60,8 @@ int Unspecified::*u_d_memptr;
 // CHECK: @"\01?n_d_memptr@@3PQNonZeroVBPtr@@HQ1@" = global { i32, i32 }
 // CHECK:   { i32 0, i32 -1 }, align 4
 // CHECK: @"\01?u_d_memptr@@3PQUnspecified@@HQ1@" = global { i32, i32, i32 }
+// CHECK:   { i32 0, i32 0, i32 -1 }, align 4
+// CHECK: @"\01?us_d_memptr@@3PQUnspecSingle@@HQ1@" = global { i32, i32, i32 }
 // CHECK:   { i32 0, i32 0, i32 -1 }, align 4
 
 void (Single  ::*s_f_memptr)();
@@ -73,12 +77,17 @@ struct Unspecified : Multiple, Virtual {
   int u;
 };
 
+struct UnspecSingle {
+  void foo();
+};
+
 // Test memptr emission in a constant expression.
 namespace Const {
 void (Single     ::*s_f_mp)() = &Single::foo;
 void (Multiple   ::*m_f_mp)() = &B2::foo;
 void (Virtual    ::*v_f_mp)() = &Virtual::foo;
 void (Unspecified::*u_f_mp)() = &Unspecified::foo;
+void (UnspecSingle::*us_f_mp)() = &UnspecSingle::foo;
 // CHECK: @"\01?s_f_mp@Const@@3P8Single@@AEXXZQ2@" =
 // CHECK:   global i8* bitcast ({{.*}} @"\01?foo@Single@@QAEXXZ" to i8*), align 4
 // CHECK: @"\01?m_f_mp@Const@@3P8Multiple@@AEXXZQ2@" =
@@ -87,6 +96,8 @@ void (Unspecified::*u_f_mp)() = &Unspecified::foo;
 // CHECK:   global { i8*, i32, i32 } { i8* bitcast ({{.*}} @"\01?foo@Virtual@@QAEXXZ" to i8*), i32 0, i32 0 }, align 4
 // CHECK: @"\01?u_f_mp@Const@@3P8Unspecified@@AEXXZQ2@" =
 // CHECK:   global { i8*, i32, i32, i32 } { i8* bitcast ({{.*}} @"\01?foo@Unspecified@@QAEXXZ" to i8*), i32 0, i32 12, i32 0 }, align 4
+// CHECK: @"\01?us_f_mp@Const@@3P8UnspecSingle@@AEXXZQ2@" =
+// CHECK:   global { i8*, i32, i32, i32 } { i8* bitcast ({{.*}} @"\01?foo@UnspecSingle@@QAEXXZ" to i8*), i32 0, i32 0, i32 0 }, align 4
 }
 
 namespace CastParam {

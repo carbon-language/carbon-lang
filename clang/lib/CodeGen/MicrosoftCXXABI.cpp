@@ -1156,8 +1156,10 @@ MicrosoftCXXABI::EmitFullMemberPointer(llvm::Constant *FirstField,
       CGM.IntTy, NonVirtualBaseAdjustment.getQuantity()));
 
   if (hasVBPtrOffsetField(Inheritance)) {
-    fields.push_back(llvm::ConstantInt::get(
-      CGM.IntTy, GetVBPtrOffsetFromBases(RD).getQuantity()));
+    CharUnits Offs = CharUnits::Zero();
+    if (RD->getNumVBases())
+      Offs = GetVBPtrOffsetFromBases(RD);
+    fields.push_back(llvm::ConstantInt::get(CGM.IntTy, Offs.getQuantity()));
   }
 
   // The rest of the fields are adjusted by conversions to a more derived class.
