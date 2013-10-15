@@ -37,7 +37,6 @@
 
 // CHECK-CHECK-X86_64_OSX10_5: "-cc1"
 // CHECK-CHECK-X86_64_OSX10_5: -fobjc-runtime=macosx-10.5
-// CHECK-CHECK-X86_64_OSX10_5: -fobjc-dispatch-method=non-legacy
 // CHECK-CHECK-X86_64_OSX10_5: darwin-objc-defaults
 
 // RUN: %clang -target x86_64-apple-darwin10 -S -### %s \
@@ -46,7 +45,6 @@
 
 // CHECK-CHECK-X86_64_OSX10_6: "-cc1"
 // CHECK-CHECK-X86_64_OSX10_6: -fobjc-runtime=macosx-10.6
-// CHECK-CHECK-X86_64_OSX10_6: -fobjc-dispatch-method=mixed
 // CHECK-CHECK-X86_64_OSX10_6: darwin-objc-defaults
 
 // RUN: %clang -target x86_64-apple-darwin10 -S -### %s \
@@ -55,7 +53,6 @@
 
 // CHECK-CHECK-X86_64_IPHONE3_0: "-cc1"
 // CHECK-CHECK-X86_64_IPHONE3_0: -fobjc-runtime=ios-3.0
-// CHECK-CHECK-X86_64_IPHONE3_0: -fobjc-dispatch-method=mixed
 // CHECK-CHECK-X86_64_IPHONE3_0: darwin-objc-defaults
 
 // armv7
