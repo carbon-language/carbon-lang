@@ -46,6 +46,14 @@
 #include <resolv.h>
 #include <malloc.h>
 
+#ifdef sa_handler
+# undef sa_handler
+#endif
+
+#ifdef sa_sigaction
+# undef sa_sigaction
+#endif
+
 extern "C" struct mallinfo __libc_mallinfo();
 
 namespace __tsan {
