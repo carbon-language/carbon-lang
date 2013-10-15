@@ -1,4 +1,7 @@
-; RUN: llc -march=mips64el -mcpu=mips64 < %s | FileCheck %s
+; RUN: llc -march=mips64el -mcpu=mips64 -verify-machineinstrs < %s | FileCheck %s
+
+@gll0 = common global i64 0, align 8
+@gll1 = common global i64 0, align 8
 
 define i64 @f0(i64 %a0, i64 %a1) nounwind readnone {
 entry:
@@ -90,17 +93,21 @@ entry:
 ; CHECK: ddiv $zero, ${{[0-9]+}}, $[[R0:[0-9]+]]
 ; CHECK: teq $[[R0]], $zero, 7
 ; CHECK: mflo
-  %div = sdiv i64 %a, %b
+  %0 = load i64* @gll0, align 8
+  %1 = load i64* @gll1, align 8
+  %div = sdiv i64 %0, %1
   ret i64 %div
 }
 
-define i64 @f15(i64 %a, i64 %b) nounwind readnone {
+define i64 @f15() nounwind readnone {
 entry:
 ; CHECK-LABEL: f15:
 ; CHECK: ddivu $zero, ${{[0-9]+}}, $[[R0:[0-9]+]]
 ; CHECK: teq $[[R0]], $zero, 7
 ; CHECK: mflo
-  %div = udiv i64 %a, %b
+  %0 = load i64* @gll0, align 8
+  %1 = load i64* @gll1, align 8
+  %div = udiv i64 %0, %1
   ret i64 %div
 }
 
@@ -148,4 +155,3 @@ entry:
   %neg = xor i64 %or, -1
   ret i64 %neg
 }
-

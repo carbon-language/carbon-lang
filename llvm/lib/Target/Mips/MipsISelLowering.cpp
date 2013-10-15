@@ -768,13 +768,17 @@ static MachineBasicBlock *expandPseudoDIV(MachineInstr *MI,
   // Insert instruction "teq $divisor_reg, $zero, 7".
   MachineBasicBlock::iterator I(MI);
   MachineInstrBuilder MIB;
+  MachineOperand &Divisor = MI->getOperand(2);
   MIB = BuildMI(MBB, llvm::next(I), MI->getDebugLoc(), TII.get(Mips::TEQ))
-    .addOperand(MI->getOperand(2)).addReg(Mips::ZERO).addImm(7);
+    .addReg(Divisor.getReg(), getKillRegState(Divisor.isKill()))
+    .addReg(Mips::ZERO).addImm(7);
 
   // Use the 32-bit sub-register if this is a 64-bit division.
   if (Is64Bit)
     MIB->getOperand(0).setSubReg(Mips::sub_32);
 
+  // Clear Divisor's kill flag.
+  Divisor.setIsKill(false);
   return &MBB;
 }
 
