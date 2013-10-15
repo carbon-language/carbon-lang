@@ -33,7 +33,7 @@ class LibIgnore {
   void Init(const SuppressionContext &supp);
 
   // Must be called after a new dynamic library is loaded.
-  void OnLibraryLoaded();
+  void OnLibraryLoaded(const char *name);
 
   // Must be called after a dynamic library is unloaded.
   void OnLibraryUnloaded();
@@ -45,6 +45,7 @@ class LibIgnore {
   struct Lib {
     char *templ;
     char *name;
+    char *real_name;  // target of symlink
     bool loaded;
   };
 

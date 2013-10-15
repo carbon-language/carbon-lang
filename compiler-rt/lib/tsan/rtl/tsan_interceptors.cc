@@ -136,7 +136,7 @@ static LibIgnore *libignore() {
 
 void InitializeLibIgnore() {
   libignore()->Init(*GetSuppressionContext());
-  libignore()->OnLibraryLoaded();
+  libignore()->OnLibraryLoaded(0);
 }
 
 }  // namespace __tsan
@@ -263,7 +263,7 @@ TSAN_INTERCEPTOR(void*, dlopen, const char *filename, int flag) {
   thr->in_rtl = 0;
   void *res = REAL(dlopen)(filename, flag);
   thr->in_rtl = 1;
-  libignore()->OnLibraryLoaded();
+  libignore()->OnLibraryLoaded(filename);
   return res;
 }
 

@@ -38,7 +38,12 @@ void LibIgnore::Init(const SuppressionContext &supp) {
   }
 }
 
-void LibIgnore::OnLibraryLoaded() {
+void LibIgnore::OnLibraryLoaded(const char *name) {
+  const char *real_name = 0;
+  InternalScopedBuffer<char> buf(4096);
+  if (name != 0 && internal_readlink(name, buf.data(), buf.size() - 1) > 0)
+    real_name = buf.data();
+
   BlockingMutexLock lock(&mutex_);
   MemoryMappingLayout proc_maps(/*cache_enabled*/false);
   InternalScopedBuffer<char> fn(4096);
@@ -48,8 +53,14 @@ void LibIgnore::OnLibraryLoaded() {
     proc_maps.Reset();
     uptr b, e, off, prot;
     while (proc_maps.Next(&b, &e, &off, fn.data(), fn.size(), &prot)) {
-      if ((prot & MemoryMappingLayout::kProtectionExecute) != 0 &&
-          TemplateMatch(lib->templ, fn.data())) {
+      bool symlink = false;
+      if (((prot & MemoryMappingLayout::kProtectionExecute) != 0) &&
+          (TemplateMatch(lib->templ, fn.data()) ||
+          // Resolve symlinks.
+          (real_name != 0 && real_name[0] != 0 &&
+          TemplateMatch(lib->templ, name) &&
+          internal_strcmp(real_name, fn.data()) == 0 &&
+          (symlink = true)))) {
         if (loaded) {
           Report("%s: called_from_lib suppression '%s' is matched against"
                  " 2 libraries: '%s' and '%s'\n",
@@ -60,6 +71,8 @@ void LibIgnore::OnLibraryLoaded() {
         if (!lib->loaded) {
           lib->loaded = true;
           lib->name = internal_strdup(fn.data());
+          if (symlink)
+            lib->real_name = internal_strdup(real_name);
           const uptr idx = atomic_load(&loaded_count_, memory_order_relaxed);
           code_ranges_[idx].begin = b;
           code_ranges_[idx].end = e;
@@ -77,7 +90,7 @@ void LibIgnore::OnLibraryLoaded() {
 }
 
 void LibIgnore::OnLibraryUnloaded() {
-  OnLibraryLoaded();
+  OnLibraryLoaded(0);
 }
 
 }  // namespace __sanitizer
