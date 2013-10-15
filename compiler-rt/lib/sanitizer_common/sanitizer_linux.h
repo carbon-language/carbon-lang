@@ -20,17 +20,39 @@
 
 struct link_map;  // Opaque type returned by dlopen().
 struct sigaltstack;
+typedef struct siginfo siginfo_t;
 
 namespace __sanitizer {
 // Dirent structure for getdents(). Note that this structure is different from
 // the one in <dirent.h>, which is used by readdir().
 struct linux_dirent;
 
+struct kernel_sigset_t {
+  u8 sig[FIRST_32_SECOND_64(16, 8)];
+};
+
+struct kernel_sigaction_t {
+  union {
+    void (*sigaction)(int signo, siginfo_t *info, void *ctx);
+    void (*handler)(int signo);
+  };
+  unsigned long sa_flags;
+  void (*sa_restorer)(void);
+  kernel_sigset_t sa_mask;
+};
+
 // Syscall wrappers.
 uptr internal_getdents(fd_t fd, struct linux_dirent *dirp, unsigned int count);
 uptr internal_prctl(int option, uptr arg2, uptr arg3, uptr arg4, uptr arg5);
 uptr internal_sigaltstack(const struct sigaltstack* ss,
                           struct sigaltstack* oss);
+uptr internal_sigaction(int signum, const kernel_sigaction_t *act,
+    kernel_sigaction_t *oldact);
+uptr internal_sigprocmask(int how, kernel_sigset_t *set,
+    kernel_sigset_t *oldset);
+void internal_sigfillset(kernel_sigset_t *set);
+void internal_sigdelset(kernel_sigset_t *set, int signum);
+
 #ifdef __x86_64__
 uptr internal_clone(int (*fn)(void *), void *child_stack, int flags, void *arg,
                     int *parent_tidptr, void *newtls, int *child_tidptr);

@@ -602,6 +602,31 @@ uptr internal_sigaltstack(const struct sigaltstack *ss,
   return internal_syscall(__NR_sigaltstack, ss, oss);
 }
 
+uptr internal_sigaction(int signum, const kernel_sigaction_t *act,
+    struct kernel_sigaction_t *oldact) {
+  return internal_syscall(__NR_rt_sigaction, signum, act, oldact,
+      sizeof(kernel_sigset_t));
+}
+
+uptr internal_sigprocmask(int how, kernel_sigset_t *set,
+    kernel_sigset_t *oldset) {
+  return internal_syscall(__NR_rt_sigprocmask, (uptr)how, &set->sig[0],
+      &oldset->sig[0], sizeof(kernel_sigset_t));
+}
+
+void internal_sigfillset(kernel_sigset_t *set) {
+  internal_memset(set, 0xff, sizeof(*set));
+}
+
+void internal_sigdelset(kernel_sigset_t *set, int signum) {
+  signum -= 1;
+  CHECK_GE(signum, 0);
+  CHECK_LT(signum, sizeof(*set) * 8);
+  const uptr idx = signum / (sizeof(set->sig[0]) * 8);
+  const uptr bit = signum % (sizeof(set->sig[0]) * 8);
+  set->sig[idx] &= ~(1 << bit);
+}
+
 // ThreadLister implementation.
 ThreadLister::ThreadLister(int pid)
   : pid_(pid),

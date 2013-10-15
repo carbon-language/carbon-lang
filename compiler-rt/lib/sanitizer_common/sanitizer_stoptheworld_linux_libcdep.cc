@@ -252,12 +252,12 @@ static int TracerThread(void* argument) {
   // the mask we inherited from the caller thread.
   for (uptr signal_index = 0; signal_index < ARRAY_SIZE(kUnblockedSignals);
        signal_index++) {
-    struct sigaction new_sigaction;
+    kernel_sigaction_t new_sigaction;
     internal_memset(&new_sigaction, 0, sizeof(new_sigaction));
-    new_sigaction.sa_sigaction = TracerThreadSignalHandler;
+    new_sigaction.sigaction = TracerThreadSignalHandler;
     new_sigaction.sa_flags = SA_ONSTACK | SA_SIGINFO;
-    sigfillset(&new_sigaction.sa_mask);
-    sigaction(kUnblockedSignals[signal_index], &new_sigaction, NULL);
+    internal_sigfillset(&new_sigaction.sa_mask);
+    internal_sigaction(kUnblockedSignals[signal_index], &new_sigaction, NULL);
   }
 
   int exit_code = 0;
@@ -307,9 +307,9 @@ NOINLINE static void WipeStack() {
 
 // We have a limitation on the stack frame size, so some stuff had to be moved
 // into globals.
-static sigset_t blocked_sigset;
-static sigset_t old_sigset;
-static struct sigaction old_sigactions[ARRAY_SIZE(kUnblockedSignals)];
+static kernel_sigset_t blocked_sigset;
+static kernel_sigset_t old_sigset;
+static kernel_sigaction_t old_sigactions[ARRAY_SIZE(kUnblockedSignals)];
 
 class StopTheWorldScope {
  public:
@@ -323,21 +323,21 @@ class StopTheWorldScope {
     // We cannot allow user-defined handlers to run while the ThreadSuspender
     // thread is active, because they could conceivably call some libc functions
     // which modify errno (which is shared between the two threads).
-    sigfillset(&blocked_sigset);
+    internal_sigfillset(&blocked_sigset);
     for (uptr signal_index = 0; signal_index < ARRAY_SIZE(kUnblockedSignals);
          signal_index++) {
       // Remove the signal from the set of blocked signals.
-      sigdelset(&blocked_sigset, kUnblockedSignals[signal_index]);
+      internal_sigdelset(&blocked_sigset, kUnblockedSignals[signal_index]);
       // Install the default handler.
-      struct sigaction new_sigaction;
+      kernel_sigaction_t new_sigaction;
       internal_memset(&new_sigaction, 0, sizeof(new_sigaction));
-      new_sigaction.sa_handler = SIG_DFL;
-      sigfillset(&new_sigaction.sa_mask);
-      sigaction(kUnblockedSignals[signal_index], &new_sigaction,
+      new_sigaction.handler = SIG_DFL;
+      internal_sigfillset(&new_sigaction.sa_mask);
+      internal_sigaction(kUnblockedSignals[signal_index], &new_sigaction,
                       &old_sigactions[signal_index]);
     }
     int sigprocmask_status =
-        sigprocmask(SIG_BLOCK, &blocked_sigset, &old_sigset);
+        internal_sigprocmask(SIG_BLOCK, &blocked_sigset, &old_sigset);
     CHECK_EQ(sigprocmask_status, 0); // sigprocmask should never fail
     // Make this process dumpable. Processes that are not dumpable cannot be
     // attached to.
@@ -355,10 +355,10 @@ class StopTheWorldScope {
     // Restore the signal handlers.
     for (uptr signal_index = 0; signal_index < ARRAY_SIZE(kUnblockedSignals);
          signal_index++) {
-      sigaction(kUnblockedSignals[signal_index],
+      internal_sigaction(kUnblockedSignals[signal_index],
                 &old_sigactions[signal_index], NULL);
     }
-    sigprocmask(SIG_SETMASK, &old_sigset, &old_sigset);
+    internal_sigprocmask(SIG_SETMASK, &old_sigset, &old_sigset);
   }
 
  private:
