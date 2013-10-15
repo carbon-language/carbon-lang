@@ -219,7 +219,7 @@ static Module *loadModuleDescriptions(
        I != E; ++I) {
     // Add as a module.
     if (!addModuleDescription(RootModule, *I, HeaderPrefix, Dependencies))
-      return false;
+      return NULL;
   }
 
   return RootModule;
