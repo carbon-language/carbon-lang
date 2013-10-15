@@ -179,14 +179,14 @@ let Namespace = "Mips" in {
             DwarfRegNum<[!add(I, 32)]>;
 
   // Hi/Lo registers
-  def HI0 : Register<"ac0">, DwarfRegNum<[64]>;
-  def HI1 : Register<"ac1">, DwarfRegNum<[176]>;
-  def HI2 : Register<"ac2">, DwarfRegNum<[178]>;
-  def HI3 : Register<"ac3">, DwarfRegNum<[180]>;
-  def LO0 : Register<"ac0">, DwarfRegNum<[65]>;
-  def LO1 : Register<"ac1">, DwarfRegNum<[177]>;
-  def LO2 : Register<"ac2">, DwarfRegNum<[179]>;
-  def LO3 : Register<"ac3">, DwarfRegNum<[181]>;
+  def HI0 : MipsReg<0, "ac0">, DwarfRegNum<[64]>;
+  def HI1 : MipsReg<1, "ac1">, DwarfRegNum<[176]>;
+  def HI2 : MipsReg<2, "ac2">, DwarfRegNum<[178]>;
+  def HI3 : MipsReg<3, "ac3">, DwarfRegNum<[180]>;
+  def LO0 : MipsReg<0, "ac0">, DwarfRegNum<[65]>;
+  def LO1 : MipsReg<1, "ac1">, DwarfRegNum<[177]>;
+  def LO2 : MipsReg<2, "ac2">, DwarfRegNum<[179]>;
+  def LO3 : MipsReg<3, "ac3">, DwarfRegNum<[181]>;
 
   let SubRegIndices = [sub_32] in {
   def HI0_64  : RegisterWithSubRegs<"hi", [HI0]>;

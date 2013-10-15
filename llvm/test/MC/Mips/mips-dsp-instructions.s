@@ -32,6 +32,22 @@
 # CHECK:    maddu $ac0, $8, $9              # encoding: [0x71,0x09,0x00,0x01]
 # CHECK:    msub $ac3, $10, $11             # encoding: [0x71,0x4b,0x18,0x04]
 # CHECK:    msubu $ac2, $12, $13            # encoding: [0x71,0x8d,0x10,0x05]
+# CHECK:    mfhi $14, $ac1                  # encoding: [0x00,0x20,0x70,0x10]
+# CHECK:    mflo $15, $ac0                  # encoding: [0x00,0x00,0x78,0x12]
+# CHECK:    mthi $16, $ac3                  # encoding: [0x02,0x00,0x18,0x11]
+# CHECK:    mtlo $17, $ac2                  # encoding: [0x02,0x20,0x10,0x13]
+
+# CHECK:    mult $2, $3                      # encoding: [0x00,0x43,0x00,0x18]
+# CHECK:    multu $4, $5                     # encoding: [0x00,0x85,0x00,0x19]
+# CHECK:    madd $6, $7                      # encoding: [0x70,0xc7,0x00,0x00]
+# CHECK:    maddu $8, $9                     # encoding: [0x71,0x09,0x00,0x01]
+# CHECK:    msub $10, $11                    # encoding: [0x71,0x4b,0x00,0x04]
+# CHECK:    msubu $12, $13                   # encoding: [0x71,0x8d,0x00,0x05]
+# CHECK:    mfhi $14                         # encoding: [0x00,0x00,0x70,0x10]
+# CHECK:    mflo $15                         # encoding: [0x00,0x00,0x78,0x12]
+# CHECK:    mthi $16                         # encoding: [0x02,0x00,0x00,0x11]
+# CHECK:    mtlo $17                         # encoding: [0x02,0x20,0x00,0x13]
+
 
   precrq.qb.ph    $16,$17,$18
   precrq.ph.w     $17,$18,$19
@@ -64,3 +80,18 @@
   maddu $ac0, $8, $9
   msub $ac3, $10, $11
   msubu $ac2, $12, $13
+  mfhi $14, $ac1
+  mflo $15, $ac0
+  mthi $16, $ac3
+  mtlo $17, $ac2
+
+  mult $2, $3
+  multu $4, $5
+  madd $6, $7
+  maddu $8, $9
+  msub $10, $11
+  msubu $12, $13
+  mfhi $14
+  mflo $15
+  mthi $16
+  mtlo $17
