@@ -16,6 +16,7 @@
 #if SANITIZER_LINUX
 
 #include "sanitizer_common.h"
+#include "sanitizer_flags.h"
 #include "sanitizer_linux.h"
 #include "sanitizer_placement_new.h"
 #include "sanitizer_procmaps.h"
@@ -272,7 +273,7 @@ void GetThreadStackAndTls(bool main, uptr *stk_addr, uptr *stk_size,
 #endif  // SANITIZER_GO
 }
 
-void AdjustStackSizeLinux(void *attr_, int verbosity) {
+void AdjustStackSizeLinux(void *attr_) {
   pthread_attr_t *attr = (pthread_attr_t *)attr_;
   uptr stackaddr = 0;
   size_t stacksize = 0;
@@ -284,7 +285,7 @@ void AdjustStackSizeLinux(void *attr_, int verbosity) {
   const uptr minstacksize = GetTlsSize() + 128*1024;
   if (stacksize < minstacksize) {
     if (!stack_set) {
-      if (verbosity && stacksize != 0)
+      if (common_flags()->verbosity && stacksize != 0)
         Printf("Sanitizer: increasing stacksize %zu->%zu\n", stacksize,
                minstacksize);
       pthread_attr_setstacksize(attr, minstacksize);

@@ -882,13 +882,7 @@ TSAN_INTERCEPTOR(int, pthread_create,
   }
   int detached = 0;
   pthread_attr_getdetachstate(attr, &detached);
-
-#if defined(TSAN_DEBUG_OUTPUT)
-  int verbosity = (TSAN_DEBUG_OUTPUT);
-#else
-  int verbosity = 0;
-#endif
-  AdjustStackSizeLinux(attr, verbosity);
+  AdjustStackSizeLinux(attr);
 
   ThreadParam p;
   p.callback = callback;

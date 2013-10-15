@@ -1082,7 +1082,7 @@ INTERCEPTOR(int, pthread_create, void *th, void *attr, void *(*callback)(void*),
     attr = &myattr;
   }
 
-  AdjustStackSizeLinux(attr, common_flags()->verbosity);
+  AdjustStackSizeLinux(attr);
 
   int res = REAL(pthread_create)(th, attr, callback, param);
   if (attr == &myattr)

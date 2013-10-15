@@ -221,7 +221,7 @@ INTERCEPTOR(int, pthread_create, void *th, void *attr,
     pthread_attr_init(&myattr);
     attr = &myattr;
   }
-  AdjustStackSizeLinux(attr, 0);
+  AdjustStackSizeLinux(attr);
   int detached = 0;
   pthread_attr_getdetachstate(attr, &detached);
   ThreadParam p;
