@@ -16,7 +16,7 @@
 ;===------------------------------------------------------------------------===;
 
 [common]
-subdirectories = AArch64 ARM CppBackend Hexagon MSP430 NVPTX Mips PowerPC R600 Sparc SystemZ X86 XCore AllTargetsBindings
+subdirectories = AArch64 ARM CppBackend Hexagon MSP430 NVPTX Mips PowerPC R600 Sparc SystemZ X86 XCore
 
 ; This is a special group whose required libraries are extended (by llvm-build)
 ; with the best execution engine (the native JIT, if available, or the
@@ -47,3 +47,10 @@ name = Target
 parent = Libraries
 required_libraries = Core MC Support
 
+; This is a special group whose required libraries are extended (by llvm-build)
+; with every built target, which makes it easy for tools to include every
+; target.
+[component_4]
+type = LibraryGroup
+name = all-targets
+parent = Libraries
