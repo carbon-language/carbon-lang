@@ -46,39 +46,45 @@ void LibIgnore::OnLibraryLoaded(const char *name) {
 
   BlockingMutexLock lock(&mutex_);
   MemoryMappingLayout proc_maps(/*cache_enabled*/false);
-  InternalScopedBuffer<char> fn(4096);
+  InternalScopedBuffer<char> module(4096);
   for (uptr i = 0; i < count_; i++) {
     Lib *lib = &libs_[i];
     bool loaded = false;
     proc_maps.Reset();
     uptr b, e, off, prot;
-    while (proc_maps.Next(&b, &e, &off, fn.data(), fn.size(), &prot)) {
+    while (proc_maps.Next(&b, &e, &off, module.data(), module.size(), &prot)) {
+      if ((prot & MemoryMappingLayout::kProtectionExecute) == 0)
+        continue;
+      bool matched = false;
       bool symlink = false;
-      if (((prot & MemoryMappingLayout::kProtectionExecute) != 0) &&
-          (TemplateMatch(lib->templ, fn.data()) ||
-          // Resolve symlinks.
-          (real_name != 0 && real_name[0] != 0 &&
+      if (TemplateMatch(lib->templ, module.data()))
+        matched = true;
+      // Resolve symlinks.
+      if (real_name != 0 && real_name[0] != 0 &&
           TemplateMatch(lib->templ, name) &&
-          internal_strcmp(real_name, fn.data()) == 0 &&
-          (symlink = true)))) {
-        if (loaded) {
-          Report("%s: called_from_lib suppression '%s' is matched against"
-                 " 2 libraries: '%s' and '%s'\n",
-                 SanitizerToolName, lib->templ, lib->name, fn.data());
-          Die();
-        }
-        loaded = true;
-        if (!lib->loaded) {
-          lib->loaded = true;
-          lib->name = internal_strdup(fn.data());
-          if (symlink)
-            lib->real_name = internal_strdup(real_name);
-          const uptr idx = atomic_load(&loaded_count_, memory_order_relaxed);
-          code_ranges_[idx].begin = b;
-          code_ranges_[idx].end = e;
-          atomic_store(&loaded_count_, idx + 1, memory_order_release);
-        }
+          internal_strcmp(real_name, module.data()) == 0) {
+        matched = true;
+        symlink = true;
       }
+      if (!matched)
+        continue;
+      if (loaded) {
+        Report("%s: called_from_lib suppression '%s' is matched against"
+               " 2 libraries: '%s' and '%s'\n",
+               SanitizerToolName, lib->templ, lib->name, module.data());
+        Die();
+      }
+      loaded = true;
+      if (lib->loaded)
+        continue;
+      lib->loaded = true;
+      lib->name = internal_strdup(module.data());
+      if (symlink)
+        lib->real_name = internal_strdup(real_name);
+      const uptr idx = atomic_load(&loaded_count_, memory_order_relaxed);
+      code_ranges_[idx].begin = b;
+      code_ranges_[idx].end = e;
+      atomic_store(&loaded_count_, idx + 1, memory_order_release);
     }
     if (lib->loaded && !loaded) {
       Report("%s: library '%s' that was matched against called_from_lib"
