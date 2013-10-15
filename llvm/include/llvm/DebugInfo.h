@@ -251,8 +251,7 @@ T DIRef<T>::resolve(const DITypeIdentifierMap &Map) const {
   return T(Iter->second);
 }
 
-template <typename T>
-StringRef DIRef<T>::getName() const {
+template <typename T> StringRef DIRef<T>::getName() const {
   if (!Val)
     return StringRef();
 
