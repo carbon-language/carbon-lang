@@ -1,4 +1,4 @@
-//===-- SIInstrInfo.h - SI Instruction Info Interface ---------------------===//
+//===-- SIInstrInfo.h - SI Instruction Info Interface -----------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
