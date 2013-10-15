@@ -59,6 +59,7 @@ set( LLDB_USED_LIBS
   lldbPluginPlatformFreeBSD
   lldbPluginPlatformLinux
   lldbPluginPlatformPOSIX
+  lldbPluginPlatformWindows
   lldbPluginObjectFileMachO
   lldbPluginObjectContainerMachOArchive
   lldbPluginObjectContainerBSDArchive
@@ -80,7 +81,6 @@ set( LLDB_USED_LIBS
 if ( CMAKE_SYSTEM_NAME MATCHES "Windows" )
   list(APPEND LLDB_USED_LIBS
     lldbHostWindows
-    #lldbPluginPlatformWindows
     Ws2_32
     )
 endif ()
@@ -165,7 +165,10 @@ set( LLVM_LINK_COMPONENTS
   )
 
 set_source_files_properties(${LLDB_BINARY_DIR}/scripts/LLDBWrapPython.cpp PROPERTIES GENERATED 1)
-set(SHARED_LIBRARY 1)
+
+if(NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
+  set(SHARED_LIBRARY 1)
+endif()
 
 if(NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
   set(LLDB_WRAP_PYTHON ${LLDB_BINARY_DIR}/scripts/LLDBWrapPython.cpp)
@@ -219,4 +222,5 @@ endif ()
 
 install(TARGETS liblldb
   RUNTIME DESTINATION bin
-  LIBRARY DESTINATION lib)
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib)

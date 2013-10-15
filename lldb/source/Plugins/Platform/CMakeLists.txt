@@ -5,7 +5,7 @@
 #elseif (CMAKE_SYSTEM_NAME MATCHES "Darwin")
   add_subdirectory(MacOSX)
 #elseif (CMAKE_SYSTEM_NAME MATCHES "Windows")
-#  add_subdirectory(Windows)
+  add_subdirectory(Windows)
 #endif()
 
 add_subdirectory(POSIX)

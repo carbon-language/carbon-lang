@@ -43,6 +43,7 @@
 #include "Plugins/Platform/FreeBSD/PlatformFreeBSD.h"
 #include "Plugins/Platform/Linux/PlatformLinux.h"
 #include "Plugins/Platform/POSIX/PlatformPOSIX.h"
+#include "Plugins/Platform/Windows/PlatformWindows.h"
 #include "Plugins/LanguageRuntime/CPlusPlus/ItaniumABI/ItaniumABILanguageRuntime.h"
 #ifndef LLDB_DISABLE_PYTHON
 #include "Plugins/OperatingSystem/Python/OperatingSystemPython.h"
@@ -63,7 +64,7 @@
 
 #include "Plugins/Process/mach-core/ProcessMachCore.h"
 
-#if defined(__linux__) or defined(__FreeBSD__)
+#if defined(__linux__) || defined(__FreeBSD__)
 #include "Plugins/Process/elf-core/ProcessElfCore.h"
 #endif
 
@@ -114,6 +115,7 @@ lldb_private::Initialize ()
         DynamicLoaderPOSIXDYLD::Initialize ();
         PlatformFreeBSD::Initialize();
         PlatformLinux::Initialize();
+        PlatformWindows::Initialize();
         SymbolFileDWARFDebugMap::Initialize();
         ItaniumABILanguageRuntime::Initialize();
 #ifndef LLDB_DISABLE_PYTHON
@@ -148,7 +150,7 @@ lldb_private::Initialize ()
         ProcessFreeBSD::Initialize();
 #endif
 
-#if defined(__linux__) or defined(__FreeBSD__)
+#if defined(__linux__) || defined(__FreeBSD__)
         ProcessElfCore::Initialize();
 #endif
         //----------------------------------------------------------------------
@@ -181,7 +183,6 @@ lldb_private::Terminate ()
     
     // Terminate and unload and loaded system or user LLDB plug-ins
     PluginManager::Terminate();
-
     ABIMacOSX_i386::Terminate();
     ABIMacOSX_arm::Terminate();
     ABISysV_x86_64::Terminate();
@@ -198,6 +199,7 @@ lldb_private::Terminate ()
     DynamicLoaderPOSIXDYLD::Terminate ();
     PlatformFreeBSD::Terminate();
     PlatformLinux::Terminate();
+    PlatformWindows::Terminate();
     SymbolFileDWARFDebugMap::Terminate();
     ItaniumABILanguageRuntime::Terminate();
 #ifndef LLDB_DISABLE_PYTHON
@@ -230,7 +232,7 @@ lldb_private::Terminate ()
     ProcessFreeBSD::Terminate();
 #endif
 
-#if defined(__linux__) or defined(__FreeBSD__)
+#if defined(__linux__) || defined(__FreeBSD__)
     ProcessElfCore::Terminate();
 #endif
     ProcessGDBRemote::Terminate();
