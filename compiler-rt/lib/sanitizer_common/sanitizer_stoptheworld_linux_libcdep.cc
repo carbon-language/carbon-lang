@@ -47,30 +47,14 @@
 // clone() interface (we want to share the address space with the caller
 // process, so we prefer clone() over fork()).
 //
-// We avoid the use of libc for two reasons:
+// We don't use any libc functions, relying instead on direct syscalls. There
+// are two reasons for this:
 // 1. calling a library function while threads are suspended could cause a
 // deadlock, if one of the treads happens to be holding a libc lock;
 // 2. it's generally not safe to call libc functions from the tracer task,
 // because clone() does not set up a thread-local storage for it. Any
 // thread-local variables used by libc will be shared between the tracer task
 // and the thread which spawned it.
-//
-// We deal with this by replacing libc calls with calls to our own
-// implementations defined in sanitizer_libc.h and sanitizer_linux.h. However,
-// there are still some libc functions which are used here:
-//
-// * All of the system calls ultimately go through the libc syscall() function.
-// We're operating under the assumption that syscall()'s implementation does
-// not acquire any locks or use any thread-local data (except for the errno
-// variable, which we handle separately).
-//
-// * We lack custom implementations of sigfillset() and sigaction(), so we use
-// the libc versions instead. The same assumptions as above apply.
-//
-// * It is safe to call libc functions before the cloned thread is spawned or
-// after it has exited. The following functions are used in this manner:
-// sigdelset()
-// sigprocmask()
 
 COMPILER_CHECK(sizeof(SuspendedThreadID) == sizeof(pid_t));
 
@@ -300,11 +284,6 @@ class ScopedStackSpaceWithGuard {
   uptr guard_start_;
 };
 
-NOINLINE static void WipeStack() {
-  char arr[256];
-  internal_memset(arr, 0, sizeof(arr));
-}
-
 // We have a limitation on the stack frame size, so some stuff had to be moved
 // into globals.
 static kernel_sigset_t blocked_sigset;
@@ -314,10 +293,6 @@ static kernel_sigaction_t old_sigactions[ARRAY_SIZE(kUnblockedSignals)];
 class StopTheWorldScope {
  public:
   StopTheWorldScope() {
-    // Glibc's sigaction() has a side-effect where it copies garbage stack
-    // values into oldact, which can cause false negatives in LSan. As a quick
-    // workaround we zero some stack space here.
-    WipeStack();
     // Block all signals that can be blocked safely, and install
     // default handlers for the remaining signals.
     // We cannot allow user-defined handlers to run while the ThreadSuspender
