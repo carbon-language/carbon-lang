@@ -544,8 +544,7 @@ public:
                                       CXXRecordDecl *ThisContext,
                                       unsigned ThisTypeQuals);
 
-  StmtResult
-  TransformSEHHandler(Stmt *Handler);
+  StmtResult TransformSEHHandler(Stmt *Handler);
 
   QualType
   TransformTemplateSpecializationType(TypeLocBuilder &TLB,
@@ -1468,22 +1467,18 @@ public:
     return getSema().FinishCXXForRangeStmt(ForRange, Body);
   }
 
-  StmtResult RebuildSEHTryStmt(bool IsCXXTry,
-                               SourceLocation TryLoc,
-                               Stmt *TryBlock,
-                               Stmt *Handler) {
-    return getSema().ActOnSEHTryBlock(IsCXXTry,TryLoc,TryBlock,Handler);
+  StmtResult RebuildSEHTryStmt(bool IsCXXTry, SourceLocation TryLoc,
+                               Stmt *TryBlock, Stmt *Handler) {
+    return getSema().ActOnSEHTryBlock(IsCXXTry, TryLoc, TryBlock, Handler);
   }
 
-  StmtResult RebuildSEHExceptStmt(SourceLocation Loc,
-                                  Expr *FilterExpr,
+  StmtResult RebuildSEHExceptStmt(SourceLocation Loc, Expr *FilterExpr,
                                   Stmt *Block) {
-    return getSema().ActOnSEHExceptBlock(Loc,FilterExpr,Block);
+    return getSema().ActOnSEHExceptBlock(Loc, FilterExpr, Block);
   }
 
-  StmtResult RebuildSEHFinallyStmt(SourceLocation Loc,
-                                   Stmt *Block) {
-    return getSema().ActOnSEHFinallyBlock(Loc,Block);
+  StmtResult RebuildSEHFinallyStmt(SourceLocation Loc, Stmt *Block) {
+    return getSema().ActOnSEHFinallyBlock(Loc, Block);
   }
 
   /// \brief Build a new expression that references a declaration.
@@ -6230,55 +6225,50 @@ TreeTransform<Derived>::TransformMSPropertyRefExpr(MSPropertyRefExpr *E) {
                         QualifierLoc, E->getMemberLoc());
 }
 
-template<typename Derived>
-StmtResult
-TreeTransform<Derived>::TransformSEHTryStmt(SEHTryStmt *S) {
+template <typename Derived>
+StmtResult TreeTransform<Derived>::TransformSEHTryStmt(SEHTryStmt *S) {
   StmtResult TryBlock = getDerived().TransformCompoundStmt(S->getTryBlock());
-  if(TryBlock.isInvalid()) return StmtError();
+  if (TryBlock.isInvalid())
+    return StmtError();
 
   StmtResult Handler = getDerived().TransformSEHHandler(S->getHandler());
   if (Handler.isInvalid())
     return StmtError();
 
-  if(!getDerived().AlwaysRebuild() &&
-     TryBlock.get() == S->getTryBlock() &&
-     Handler.get() == S->getHandler())
+  if (!getDerived().AlwaysRebuild() && TryBlock.get() == S->getTryBlock() &&
+      Handler.get() == S->getHandler())
     return SemaRef.Owned(S);
 
-  return getDerived().RebuildSEHTryStmt(S->getIsCXXTry(),
-                                        S->getTryLoc(),
-                                        TryBlock.take(),
-                                        Handler.take());
+  return getDerived().RebuildSEHTryStmt(S->getIsCXXTry(), S->getTryLoc(),
+                                        TryBlock.take(), Handler.take());
 }
 
-template<typename Derived>
-StmtResult
-TreeTransform<Derived>::TransformSEHFinallyStmt(SEHFinallyStmt *S) {
+template <typename Derived>
+StmtResult TreeTransform<Derived>::TransformSEHFinallyStmt(SEHFinallyStmt *S) {
   StmtResult Block = getDerived().TransformCompoundStmt(S->getBlock());
-  if(Block.isInvalid()) return StmtError();
+  if (Block.isInvalid())
+    return StmtError();
 
-  return getDerived().RebuildSEHFinallyStmt(S->getFinallyLoc(),
-                                            Block.take());
+  return getDerived().RebuildSEHFinallyStmt(S->getFinallyLoc(), Block.take());
 }
 
-template<typename Derived>
-StmtResult
-TreeTransform<Derived>::TransformSEHExceptStmt(SEHExceptStmt *S) {
+template <typename Derived>
+StmtResult TreeTransform<Derived>::TransformSEHExceptStmt(SEHExceptStmt *S) {
   ExprResult FilterExpr = getDerived().TransformExpr(S->getFilterExpr());
-  if(FilterExpr.isInvalid()) return StmtError();
+  if (FilterExpr.isInvalid())
+    return StmtError();
 
   StmtResult Block = getDerived().TransformCompoundStmt(S->getBlock());
-  if(Block.isInvalid()) return StmtError();
+  if (Block.isInvalid())
+    return StmtError();
 
-  return getDerived().RebuildSEHExceptStmt(S->getExceptLoc(),
-                                           FilterExpr.take(),
+  return getDerived().RebuildSEHExceptStmt(S->getExceptLoc(), FilterExpr.take(),
                                            Block.take());
 }
 
-template<typename Derived>
-StmtResult
-TreeTransform<Derived>::TransformSEHHandler(Stmt *Handler) {
-  if(isa<SEHFinallyStmt>(Handler))
+template <typename Derived>
+StmtResult TreeTransform<Derived>::TransformSEHHandler(Stmt *Handler) {
+  if (isa<SEHFinallyStmt>(Handler))
     return getDerived().TransformSEHFinallyStmt(cast<SEHFinallyStmt>(Handler));
   else
     return getDerived().TransformSEHExceptStmt(cast<SEHExceptStmt>(Handler));
