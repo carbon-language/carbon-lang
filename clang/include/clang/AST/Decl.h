@@ -2242,7 +2242,7 @@ public:
 /// that is defined.  For example, in "enum X {a,b}", each of a/b are
 /// EnumConstantDecl's, X is an instance of EnumDecl, and the type of a/b is a
 /// TagType for the X EnumDecl.
-class EnumConstantDecl : public ValueDecl {
+class EnumConstantDecl : public ValueDecl, public Mergeable<EnumConstantDecl> {
   Stmt *Init; // an integer constant expression
   llvm::APSInt Val; // The value.
 protected:
@@ -2267,6 +2267,14 @@ public:
   void setInitVal(const llvm::APSInt &V) { Val = V; }
 
   SourceRange getSourceRange() const LLVM_READONLY;
+
+  /// Retrieves the canonical declaration of this enumerator.
+  EnumConstantDecl *getCanonicalDecl() {
+    return getFirstDeclaration();
+  }
+  const EnumConstantDecl *getCanonicalDecl() const {
+    return getFirstDeclaration();
+  }
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }

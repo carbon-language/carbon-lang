@@ -5,12 +5,15 @@
 
 @import cxx_templates_a;
 @import cxx_templates_b;
+@import cxx_templates_common;
 
 template<typename, char> struct Tmpl_T_C {};
 template<typename, int, int> struct Tmpl_T_I_I {};
 
 template<typename A, typename B, A> struct Tmpl_T_T_A {};
 template<typename A, typename B, B> struct Tmpl_T_T_B {};
+
+template<int> struct UseInt {};
 
 void g() {
   f(0);
@@ -71,6 +74,19 @@ void g() {
   PerformDelayedLookup(defined_in_b_impl); // expected-note {{in instantiation of}}
 
   merge_templates_a = merge_templates_b; // ok, same type
+
+  using T = decltype(enum_a_from_a);
+  using T = decltype(enum_b_from_b);
+  T e = true ? enum_a_from_a : enum_b_from_b;
+
+  UseRedeclaredEnum<int>(UseInt<1>());
+  // FIXME: Reintroduce this once we merge function template specializations.
+  //static_assert(UseRedeclaredEnumA == UseRedeclaredEnumB, "");
+  //static_assert(UseRedeclaredEnumA == UseRedeclaredEnum<int>, "");
+  //static_assert(UseRedeclaredEnumB == UseRedeclaredEnum<int>, "");
+  static_assert(enum_c_from_a == enum_c_from_b, "");
+  CommonTemplate<int> cti;
+  CommonTemplate<int>::E eee = CommonTemplate<int>::c;
 }
 
 RedeclaredAsFriend<int> raf1;

@@ -917,6 +917,10 @@ private:
   /// when merging implicit instantiations of class templates across modules.
   llvm::DenseMap<DeclContext *, DeclContext *> MergedDeclContexts;
 
+  /// \brief A mapping from canonical declarations of enums to their canonical
+  /// definitions. Only populated when using modules in C++.
+  llvm::DenseMap<EnumDecl *, EnumDecl *> EnumDefinitions;
+
   /// \brief When reading a Stmt tree, Stmt operands are placed in this stack.
   SmallVector<Stmt *, 16> StmtStack;
 

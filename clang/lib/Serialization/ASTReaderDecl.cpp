@@ -488,6 +488,19 @@ void ASTDeclReader::VisitEnumDecl(EnumDecl *ED) {
   ED->IsScopedUsingClassTag = Record[Idx++];
   ED->IsFixed = Record[Idx++];
 
+  // If this is a definition subject to the ODR, and we already have a
+  // definition, merge this one into it.
+  if (ED->IsCompleteDefinition &&
+      Reader.getContext().getLangOpts().Modules &&
+      Reader.getContext().getLangOpts().CPlusPlus) {
+    if (EnumDecl *&OldDef = Reader.EnumDefinitions[ED->getCanonicalDecl()]) {
+      Reader.MergedDeclContexts.insert(std::make_pair(ED, OldDef));
+      ED->IsCompleteDefinition = false;
+    } else {
+      OldDef = ED;
+    }
+  }
+
   if (EnumDecl *InstED = ReadDeclAs<EnumDecl>(Record, Idx)) {
     TemplateSpecializationKind TSK = (TemplateSpecializationKind)Record[Idx++];
     SourceLocation POI = ReadSourceLocation(Record, Idx);
@@ -516,6 +529,7 @@ void ASTDeclReader::VisitEnumConstantDecl(EnumConstantDecl *ECD) {
   if (Record[Idx++])
     ECD->setInitExpr(Reader.ReadExpr(F));
   ECD->setInitVal(Reader.ReadAPSInt(Record, Idx));
+  mergeMergeable(ECD);
 }
 
 void ASTDeclReader::VisitDeclaratorDecl(DeclaratorDecl *DD) {
@@ -1893,6 +1907,12 @@ void ASTDeclReader::mergeMergeable(Mergeable<T> *D) {
   if (!Reader.getContext().getLangOpts().Modules)
     return;
 
+  // ODR-based merging is only performed in C++. In C, identically-named things
+  // in different translation units are not redeclarations (but may still have
+  // compatible types).
+  if (!Reader.getContext().getLangOpts().CPlusPlus)
+    return;
+
   if (FindExistingResult ExistingRes = findExisting(static_cast<T*>(D)))
     if (T *Existing = ExistingRes)
       Reader.Context.setPrimaryMergedDecl(static_cast<T*>(D),
@@ -2122,8 +2142,14 @@ static bool isSameEntity(NamedDecl *X, NamedDecl *Y) {
     // FIXME: Diagnose if the types don't match. More generally, diagnose if we
     // get a declaration in a class definition that isn't in the canonical class
     // definition.
+    // FIXME: Also check the bitwidth is odr-equivalent, if any.
     return X->getASTContext().hasSameType(FDX->getType(), FDY->getType());
   }
+
+  // Enumerators with the same name match.
+  if (isa<EnumConstantDecl>(X))
+    // FIXME: Also check the value is odr-equivalent.
+    return true;
 
   // FIXME: Many other cases to implement.
   return false;
@@ -2137,6 +2163,9 @@ static DeclContext *getPrimaryContextForMerging(DeclContext *DC) {
 
   if (CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(DC))
     return RD->getDefinition();
+
+  if (EnumDecl *ED = dyn_cast<EnumDecl>(DC))
+    return ED->getASTContext().getLangOpts().CPlusPlus? ED->getDefinition() : 0;
 
   return 0;
 }

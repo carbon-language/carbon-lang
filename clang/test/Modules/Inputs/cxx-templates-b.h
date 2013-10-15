@@ -44,6 +44,13 @@ void use_some_template_b() {
   b = c;
 }
 
+auto enum_b_from_b = CommonTemplate<int>::b;
+const auto enum_c_from_b = CommonTemplate<int>::c;
+
+template<int> struct UseInt;
+template<typename T> void UseRedeclaredEnum(UseInt<T() + CommonTemplate<char>::a>);
+constexpr void (*UseRedeclaredEnumB)(UseInt<1>) = UseRedeclaredEnum<int>;
+
 @import cxx_templates_a;
 template<typename T> void UseDefinedInBImplIndirectly(T &v) {
   PerformDelayedLookup(v);
