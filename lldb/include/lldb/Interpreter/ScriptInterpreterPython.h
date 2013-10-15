@@ -99,14 +99,14 @@ public:
                            lldb::addr_t context);
     
     virtual lldb::ScriptInterpreterObjectSP
-    GDBRemotePlugin_LoadPluginModule (const FileSpec& file_spec,
-                                      lldb_private::Error& error);
+    LoadPluginModule (const FileSpec& file_spec,
+                      lldb_private::Error& error);
     
     virtual lldb::ScriptInterpreterObjectSP
-    GDBRemotePlugin_GetDynamicSettings (lldb::ScriptInterpreterObjectSP gdbremote_plugin_module_sp,
-                                        Target* target,
-                                        const char* setting_name,
-                                        lldb_private::Error& error);
+    GetDynamicSettings (lldb::ScriptInterpreterObjectSP plugin_module_sp,
+                        Target* target,
+                        const char* setting_name,
+                        lldb_private::Error& error);
     
     virtual size_t
     CalculateNumChildren (const lldb::ScriptInterpreterObjectSP& implementor);

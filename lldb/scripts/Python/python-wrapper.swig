@@ -714,7 +714,7 @@ LLDBSWIGPythonCreateOSPlugin
 }
 
 SWIGEXPORT void*
-LLDBSWIGPython_GDBPluginGetDynamicSetting (void* module, const char* setting, const lldb::TargetSP& target_sp)
+LLDBSWIGPython_GetDynamicSetting (void* module, const char* setting, const lldb::TargetSP& target_sp)
 {
 
     if (!module || !setting)

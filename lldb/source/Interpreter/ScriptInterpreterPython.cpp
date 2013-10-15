@@ -62,7 +62,7 @@ static ScriptInterpreter::SWIGPythonScriptKeyword_Process g_swig_run_script_keyw
 static ScriptInterpreter::SWIGPythonScriptKeyword_Thread g_swig_run_script_keyword_thread = NULL;
 static ScriptInterpreter::SWIGPythonScriptKeyword_Target g_swig_run_script_keyword_target = NULL;
 static ScriptInterpreter::SWIGPythonScriptKeyword_Frame g_swig_run_script_keyword_frame = NULL;
-static ScriptInterpreter::SWIGPythonGDBPlugin_GetDynamicSetting g_swig_gdbremote_plugin_get = NULL;
+static ScriptInterpreter::SWIGPython_GetDynamicSetting g_swig_plugin_get = NULL;
 
 // these are the Pythonic implementations of the required callbacks
 // these are scripting-language specific, which is why they belong here
@@ -157,9 +157,9 @@ LLDBSWIGPythonRunScriptKeywordFrame (const char* python_function_name,
                                      std::string& output);
 
 extern "C" void*
-LLDBSWIGPython_GDBPluginGetDynamicSetting (void* module,
-                                           const char* setting,
-                                           const lldb::TargetSP& target_sp);
+LLDBSWIGPython_GetDynamicSetting (void* module,
+                                  const char* setting,
+                                  const lldb::TargetSP& target_sp);
 
 static int
 _check_and_flush (FILE *stream)
@@ -2081,8 +2081,8 @@ ScriptInterpreterPython::OSPlugin_CreateThread (lldb::ScriptInterpreterObjectSP 
 }
 
 lldb::ScriptInterpreterObjectSP
-ScriptInterpreterPython::GDBRemotePlugin_LoadPluginModule (const FileSpec& file_spec,
-                                                           lldb_private::Error& error)
+ScriptInterpreterPython::LoadPluginModule (const FileSpec& file_spec,
+                                           lldb_private::Error& error)
 {
     if (!file_spec.Exists())
     {
@@ -2099,15 +2099,15 @@ ScriptInterpreterPython::GDBRemotePlugin_LoadPluginModule (const FileSpec& file_
 }
 
 lldb::ScriptInterpreterObjectSP
-ScriptInterpreterPython::GDBRemotePlugin_GetDynamicSettings (lldb::ScriptInterpreterObjectSP gdbremote_plugin_module_sp,
-                                                             Target* target,
-                                                             const char* setting_name,
-                                                             lldb_private::Error& error)
+ScriptInterpreterPython::GetDynamicSettings (lldb::ScriptInterpreterObjectSP plugin_module_sp,
+                                             Target* target,
+                                             const char* setting_name,
+                                             lldb_private::Error& error)
 {
-    if (!gdbremote_plugin_module_sp || !target || !setting_name || !setting_name[0])
+    if (!plugin_module_sp || !target || !setting_name || !setting_name[0])
         return lldb::ScriptInterpreterObjectSP();
     
-    if (!g_swig_gdbremote_plugin_get)
+    if (!g_swig_plugin_get)
         return lldb::ScriptInterpreterObjectSP();
     
     PyObject *reply_pyobj = nullptr;
@@ -2115,7 +2115,7 @@ ScriptInterpreterPython::GDBRemotePlugin_GetDynamicSettings (lldb::ScriptInterpr
     {
         Locker py_lock(this);
         TargetSP target_sp(target->shared_from_this());
-        reply_pyobj = (PyObject*)g_swig_gdbremote_plugin_get(gdbremote_plugin_module_sp->GetObject(),setting_name,target_sp);
+        reply_pyobj = (PyObject*)g_swig_plugin_get(plugin_module_sp->GetObject(),setting_name,target_sp);
     }
     
     return MakeScriptObject(reply_pyobj);
@@ -3136,7 +3136,7 @@ ScriptInterpreterPython::InitializeInterpreter (SWIGInitCallback python_swig_ini
     g_swig_run_script_keyword_thread = LLDBSWIGPythonRunScriptKeywordThread;
     g_swig_run_script_keyword_target = LLDBSWIGPythonRunScriptKeywordTarget;
     g_swig_run_script_keyword_frame = LLDBSWIGPythonRunScriptKeywordFrame;
-    g_swig_gdbremote_plugin_get = LLDBSWIGPython_GDBPluginGetDynamicSetting;
+    g_swig_plugin_get = LLDBSWIGPython_GetDynamicSetting;
 }
 
 void

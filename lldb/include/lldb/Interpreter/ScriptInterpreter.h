@@ -108,45 +108,47 @@ public:
                                                const char *session_dictionary_name,
                                                const lldb::ProcessSP& process_sp);
     
-    typedef uint32_t       (*SWIGPythonCalculateNumChildren)                   (void *implementor);
-    typedef void*          (*SWIGPythonGetChildAtIndex)                        (void *implementor, uint32_t idx);
-    typedef int            (*SWIGPythonGetIndexOfChildWithName)                (void *implementor, const char* child_name);
-    typedef void*          (*SWIGPythonCastPyObjectToSBValue)                  (void* data);
-    typedef lldb::ValueObjectSP  (*SWIGPythonGetValueObjectSPFromSBValue)      (void* data);
-    typedef bool           (*SWIGPythonUpdateSynthProviderInstance)            (void* data);
-    typedef bool           (*SWIGPythonMightHaveChildrenSynthProviderInstance) (void* data);
+    typedef uint32_t        (*SWIGPythonCalculateNumChildren)                   (void *implementor);
+    typedef void*           (*SWIGPythonGetChildAtIndex)                        (void *implementor, uint32_t idx);
+    typedef int             (*SWIGPythonGetIndexOfChildWithName)                (void *implementor, const char* child_name);
+    typedef void*           (*SWIGPythonCastPyObjectToSBValue)                  (void* data);
+    typedef lldb::ValueObjectSP  (*SWIGPythonGetValueObjectSPFromSBValue)       (void* data);
+    typedef bool            (*SWIGPythonUpdateSynthProviderInstance)            (void* data);
+    typedef bool            (*SWIGPythonMightHaveChildrenSynthProviderInstance) (void* data);
 
     
-    typedef bool           (*SWIGPythonCallCommand)                 (const char *python_function_name,
-                                                                     const char *session_dictionary_name,
-                                                                     lldb::DebuggerSP& debugger,
-                                                                     const char* args,
-                                                                     lldb_private::CommandReturnObject& cmd_retobj);
+    typedef bool            (*SWIGPythonCallCommand)            (const char *python_function_name,
+                                                                 const char *session_dictionary_name,
+                                                                 lldb::DebuggerSP& debugger,
+                                                                 const char* args,
+                                                                 lldb_private::CommandReturnObject& cmd_retobj);
     
-    typedef bool           (*SWIGPythonCallModuleInit)              (const char *python_module_name,
-                                                                     const char *session_dictionary_name,
-                                                                     lldb::DebuggerSP& debugger);
+    typedef bool            (*SWIGPythonCallModuleInit)         (const char *python_module_name,
+                                                                 const char *session_dictionary_name,
+                                                                 lldb::DebuggerSP& debugger);
     
-    typedef bool            (*SWIGPythonScriptKeyword_Process)      (const char* python_function_name,
-                                                                     const char* session_dictionary_name,
-                                                                     lldb::ProcessSP& process,
-                                                                     std::string& output);
-    typedef bool            (*SWIGPythonScriptKeyword_Thread)      (const char* python_function_name,
-                                                                    const char* session_dictionary_name,
-                                                                    lldb::ThreadSP& thread,
-                                                                    std::string& output);
+    typedef bool            (*SWIGPythonScriptKeyword_Process)  (const char* python_function_name,
+                                                                 const char* session_dictionary_name,
+                                                                 lldb::ProcessSP& process,
+                                                                 std::string& output);
+    typedef bool            (*SWIGPythonScriptKeyword_Thread)   (const char* python_function_name,
+                                                                 const char* session_dictionary_name,
+                                                                 lldb::ThreadSP& thread,
+                                                                 std::string& output);
     
-    typedef bool            (*SWIGPythonScriptKeyword_Target)      (const char* python_function_name,
-                                                                    const char* session_dictionary_name,
-                                                                    lldb::TargetSP& target,
-                                                                    std::string& output);
+    typedef bool            (*SWIGPythonScriptKeyword_Target)   (const char* python_function_name,
+                                                                 const char* session_dictionary_name,
+                                                                 lldb::TargetSP& target,
+                                                                 std::string& output);
 
-    typedef bool            (*SWIGPythonScriptKeyword_Frame)      (const char* python_function_name,
-                                                                    const char* session_dictionary_name,
-                                                                    lldb::StackFrameSP& frame,
-                                                                    std::string& output);
+    typedef bool            (*SWIGPythonScriptKeyword_Frame)    (const char* python_function_name,
+                                                                 const char* session_dictionary_name,
+                                                                 lldb::StackFrameSP& frame,
+                                                                 std::string& output);
     
-    typedef void*           (*SWIGPythonGDBPlugin_GetDynamicSetting)     (void* module, const char* setting, const lldb::TargetSP& target_sp);
+    typedef void*           (*SWIGPython_GetDynamicSetting)     (void* module,
+                                                                 const char* setting,
+                                                                 const lldb::TargetSP& target_sp);
 
     typedef enum
     {
@@ -340,17 +342,17 @@ public:
     }
     
     virtual lldb::ScriptInterpreterObjectSP
-    GDBRemotePlugin_LoadPluginModule (const FileSpec& file_spec,
-                                      lldb_private::Error& error)
+    LoadPluginModule (const FileSpec& file_spec,
+                     lldb_private::Error& error)
     {
         return lldb::ScriptInterpreterObjectSP();
     }
     
     virtual lldb::ScriptInterpreterObjectSP
-    GDBRemotePlugin_GetDynamicSettings (lldb::ScriptInterpreterObjectSP gdbremote_plugin_module_sp,
-                                        Target* target,
-                                        const char* setting_name,
-                                        lldb_private::Error& error)
+    GetDynamicSettings (lldb::ScriptInterpreterObjectSP plugin_module_sp,
+                        Target* target,
+                        const char* setting_name,
+                        lldb_private::Error& error)
     {
         return lldb::ScriptInterpreterObjectSP();
     }

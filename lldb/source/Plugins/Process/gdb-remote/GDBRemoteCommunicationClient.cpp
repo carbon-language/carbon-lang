@@ -2341,7 +2341,9 @@ GDBRemoteCommunicationClient::GetThreadStopInfo (lldb::tid_t tid, StringExtracto
         assert (packet_len < (int)sizeof(packet));
         if (SendPacketAndWaitForResponse(packet, packet_len, response, false))
         {
-            if (response.IsNormalResponse())
+            if (response.IsUnsupportedResponse())
+                m_supports_qThreadStopInfo = false;
+            else if (response.IsNormalResponse())
                 return true;
             else
                 return false;
@@ -2351,8 +2353,6 @@ GDBRemoteCommunicationClient::GetThreadStopInfo (lldb::tid_t tid, StringExtracto
             m_supports_qThreadStopInfo = false;
         }
     }
-//    if (SetCurrentThread (tid))
-//        return GetStopReply (response);
     return false;
 }
 

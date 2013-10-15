@@ -114,13 +114,14 @@ DynamicRegisterInfo::SetRegisterInfo (const lldb_private::PythonDictionary &dict
                     Clear();
                     return 0;
                 }
-                reg_info.byte_size = reg_info_dict.GetItemForKeyAsInteger(bitsize_pystr, 0) / 8;
-                
-                if (reg_info.byte_size == 0)
+                const int64_t bitsize = reg_info_dict.GetItemForKeyAsInteger(bitsize_pystr, 0);
+                if (bitsize == 0)
                 {
                     Clear();
                     return 0;
                 }
+
+                reg_info.byte_size =  bitsize / 8;
                 
                 const char *format_cstr = reg_info_dict.GetItemForKeyAsString(format_pystr);
                 if (format_cstr)
@@ -132,13 +133,15 @@ DynamicRegisterInfo::SetRegisterInfo (const lldb_private::PythonDictionary &dict
                     }
                 }
                 else
-                    reg_info.format = eFormatHex;
-                    
+                {
+                    reg_info.format = (Format)reg_info_dict.GetItemForKeyAsInteger (format_pystr, eFormatHex);
+                }
+                
                 const char *encoding_cstr = reg_info_dict.GetItemForKeyAsString(encoding_pystr);
                 if (encoding_cstr)
                     reg_info.encoding = Args::StringToEncoding (encoding_cstr, eEncodingUint);
                 else
-                    reg_info.encoding = eEncodingUint;
+                    reg_info.encoding = (Encoding)reg_info_dict.GetItemForKeyAsInteger (encoding_pystr, eEncodingUint);
 
                 const int64_t set = reg_info_dict.GetItemForKeyAsInteger(set_pystr, -1);
                 if (set >= m_sets.size())
@@ -151,7 +154,11 @@ DynamicRegisterInfo::SetRegisterInfo (const lldb_private::PythonDictionary &dict
                 reg_info.kinds[lldb::eRegisterKindGDB]     = i;
                 reg_info.kinds[lldb::eRegisterKindGCC]     = reg_info_dict.GetItemForKeyAsInteger(gcc_pystr, LLDB_INVALID_REGNUM);
                 reg_info.kinds[lldb::eRegisterKindDWARF]   = reg_info_dict.GetItemForKeyAsInteger(dwarf_pystr, LLDB_INVALID_REGNUM);
-                reg_info.kinds[lldb::eRegisterKindGeneric] = Args::StringToGenericRegister (reg_info_dict.GetItemForKeyAsString(generic_pystr));
+                const char *generic_cstr = reg_info_dict.GetItemForKeyAsString(generic_pystr);
+                if (generic_cstr)
+                    reg_info.kinds[lldb::eRegisterKindGeneric] = Args::StringToGenericRegister (generic_cstr);
+                else
+                    reg_info.kinds[lldb::eRegisterKindGeneric] = reg_info_dict.GetItemForKeyAsInteger(generic_pystr, LLDB_INVALID_REGNUM);
                 const size_t end_reg_offset = reg_info.byte_offset + reg_info.byte_size;
                 if (m_reg_data_byte_size < end_reg_offset)
                     m_reg_data_byte_size = end_reg_offset;

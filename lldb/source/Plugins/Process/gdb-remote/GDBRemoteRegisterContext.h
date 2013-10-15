@@ -171,6 +171,9 @@ public:
     void
     HardcodeARMRegisters(bool from_scratch);
 
+    size_t
+    SetRegisterInfo (const lldb_private::PythonDictionary &dict);
+
 protected:
     //------------------------------------------------------------------
     // Classes that inherit from GDBRemoteRegisterContext can see and modify these

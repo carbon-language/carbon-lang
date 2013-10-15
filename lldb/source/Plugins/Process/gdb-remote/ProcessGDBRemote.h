@@ -291,6 +291,12 @@ protected:
     void
     SetLastStopPacket (const StringExtractorGDBRemote &response);
 
+    bool
+    ParsePythonTargetDefinition(const lldb_private::FileSpec &target_definition_fspec);
+    
+    bool
+    ParseRegisters(lldb_private::ScriptInterpreterObject *registers_array);
+
     //------------------------------------------------------------------
     /// Broadcaster event bits definitions.
     //------------------------------------------------------------------

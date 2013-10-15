@@ -49,6 +49,7 @@
 #include "lldb/Interpreter/CommandObject.h"
 #include "lldb/Interpreter/CommandObjectMultiword.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
+#include "lldb/Interpreter/PythonDataObjects.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Target/DynamicLoader.h"
 #include "lldb/Target/Target.h"
@@ -97,12 +98,14 @@ namespace {
     g_properties[] =
     {
         { "packet-timeout" , OptionValue::eTypeUInt64 , true , 1, NULL, NULL, "Specify the default packet timeout in seconds." },
+        { "target-definition-file" , OptionValue::eTypeFileSpec , true, 0 , NULL, NULL, "The file that provides the description for remote target registers." },
         {  NULL            , OptionValue::eTypeInvalid, false, 0, NULL, NULL, NULL  }
     };
     
     enum
     {
-        ePropertyPacketTimeout
+        ePropertyPacketTimeout,
+        ePropertyTargetDefinitionFile
     };
     
     class PluginProperties : public Properties
@@ -132,6 +135,12 @@ namespace {
         {
             const uint32_t idx = ePropertyPacketTimeout;
             return m_collection_sp->GetPropertyAtIndexAsUInt64(NULL, idx, g_properties[idx].default_uint_value);
+        }
+        FileSpec
+        GetTargetDefinitionFile () const
+        {
+            const uint32_t idx = ePropertyTargetDefinitionFile;
+            return m_collection_sp->GetPropertyAtIndexAsFileSpec (NULL, idx);
         }
     };
     
@@ -308,6 +317,33 @@ ProcessGDBRemote::GetPluginVersion()
     return 1;
 }
 
+bool
+ProcessGDBRemote::ParsePythonTargetDefinition(const FileSpec &target_definition_fspec)
+{
+    ScriptInterpreter *interpreter = GetTarget().GetDebugger().GetCommandInterpreter().GetScriptInterpreter();
+    Error error;
+    lldb::ScriptInterpreterObjectSP module_object_sp (interpreter->LoadPluginModule(target_definition_fspec, error));
+    if (module_object_sp)
+    {
+        lldb::ScriptInterpreterObjectSP target_definition_sp (interpreter->GetDynamicSettings(module_object_sp,
+                                                                                              &GetTarget(),
+                                                                                              "gdb-server-target-definition",
+                                                                                              error));
+        
+        PythonDictionary target_dict(target_definition_sp);
+
+        if (target_dict)
+        {
+            if (m_register_info.SetRegisterInfo (target_dict) > 0)
+            {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+
 void
 ProcessGDBRemote::BuildDynamicRegisterInfo (bool force)
 {
@@ -480,6 +516,18 @@ ProcessGDBRemote::BuildDynamicRegisterInfo (bool force)
         else
         {
             break;
+        }
+    }
+
+    if (reg_num == 0)
+    {
+        FileSpec target_definition_fspec = GetGlobalPluginProperties()->GetTargetDefinitionFile ();
+
+        // See if we can get register definitions from a python file
+        if (ParsePythonTargetDefinition (target_definition_fspec))
+        {
+            m_register_info.Finalize ();
+            return;
         }
     }
 
