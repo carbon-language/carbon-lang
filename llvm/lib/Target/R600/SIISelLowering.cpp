@@ -684,7 +684,6 @@ SDValue SITargetLowering::PerformDAGCombine(SDNode *N,
   switch (N->getOpcode()) {
     default: break;
     case ISD::SELECT_CC: {
-      N->dump();
       ConstantSDNode *True, *False;
       // i1 selectcc(l, r, -1, 0, cc) -> i1 setcc(l, r, cc)
       if ((True = dyn_cast<ConstantSDNode>(N->getOperand(2)))

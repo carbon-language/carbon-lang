@@ -281,7 +281,6 @@ bool SIInstrInfo::verifyInstruction(const MachineInstr *MI,
   if (isVOP1(Opcode) || isVOP2(Opcode) || isVOP3(Opcode) || isVOPC(Opcode)) {
     unsigned ConstantBusCount = 0;
     unsigned SGPRUsed = AMDGPU::NoRegister;
-    MI->dump();
     for (int i = 0, e = MI->getNumOperands(); i != e; ++i) {
       const MachineOperand &MO = MI->getOperand(i);
       if (MO.isReg() && MO.isUse() &&
