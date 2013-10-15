@@ -74,7 +74,9 @@ ObjectImage *RuntimeDyldImpl::loadObject(ObjectBuffer *InputBuffer) {
   if (!obj)
     report_fatal_error("Unable to create object image from memory buffer!");
 
+  // Save information about our target
   Arch = (Triple::ArchType)obj->getArch();
+  IsTargetLittleEndian = obj->getObjectFile()->isLittleEndian();
 
   // Symbols found in this object
   StringMap<SymbolLoc> LocalSymbols;

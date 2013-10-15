@@ -184,6 +184,7 @@ protected:
   typedef std::map<RelocationValueRef, uintptr_t> StubMap;
 
   Triple::ArchType Arch;
+  bool IsTargetLittleEndian;
 
   inline unsigned getMaxStubSize() {
     if (Arch == Triple::aarch64)
@@ -228,14 +229,14 @@ protected:
   }
 
   void writeInt16BE(uint8_t *Addr, uint16_t Value) {
-    if (sys::IsLittleEndianHost)
+    if (IsTargetLittleEndian)
       Value = sys::SwapByteOrder(Value);
     *Addr     = (Value >> 8) & 0xFF;
     *(Addr+1) = Value & 0xFF;
   }
 
   void writeInt32BE(uint8_t *Addr, uint32_t Value) {
-    if (sys::IsLittleEndianHost)
+    if (IsTargetLittleEndian)
       Value = sys::SwapByteOrder(Value);
     *Addr     = (Value >> 24) & 0xFF;
     *(Addr+1) = (Value >> 16) & 0xFF;
@@ -244,7 +245,7 @@ protected:
   }
 
   void writeInt64BE(uint8_t *Addr, uint64_t Value) {
-    if (sys::IsLittleEndianHost)
+    if (IsTargetLittleEndian)
       Value = sys::SwapByteOrder(Value);
     *Addr     = (Value >> 56) & 0xFF;
     *(Addr+1) = (Value >> 48) & 0xFF;
