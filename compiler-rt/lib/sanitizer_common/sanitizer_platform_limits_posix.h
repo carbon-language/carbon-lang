@@ -222,6 +222,20 @@ namespace __sanitizer {
 #endif
   };
 
+  struct __sanitizer_kernel_sigset_t {
+    u8 sig[8];
+  };
+
+  struct __sanitizer_kernel_sigaction_t {
+    union {
+      void (*sigaction)(int signo, void *info, void *ctx);
+      void (*handler)(int signo);
+    };
+    unsigned long sa_flags;
+    void (*sa_restorer)(void);
+    __sanitizer_kernel_sigset_t sa_mask;
+  };
+
   extern uptr sig_ign;
   extern uptr sig_dfl;
   extern uptr sa_siginfo;

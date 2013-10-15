@@ -37,7 +37,6 @@
 #if SANITIZER_LINUX
 
 #include "sanitizer_libc.h"
-#include "sanitizer_linux.h"
 
 #define PRE_SYSCALL(name)                                                      \
   SANITIZER_INTERFACE_ATTRIBUTE void __sanitizer_syscall_pre_impl_##name
@@ -103,6 +102,10 @@ struct sanitizer_kernel_sockaddr {
   unsigned short sa_family;
   char sa_data[14];
 };
+
+// Real sigset size is always passed as a syscall argument.
+// Declare it "void" to catch sizeof(kernel_sigset_t).
+typedef void kernel_sigset_t;
 
 static void kernel_write_iovec(const __sanitizer_iovec *iovec,
                         SIZE_T iovlen, SIZE_T maxlen) {

@@ -18,6 +18,8 @@
 
 #include "sanitizer_stoptheworld.h"
 
+#include "sanitizer_platform_limits_posix.h"
+
 #include <errno.h>
 #include <sched.h> // for CLONE_* definitions
 #include <stddef.h>
@@ -30,6 +32,14 @@
 # include <sys/user.h>  // for user_regs_struct
 #endif
 #include <sys/wait.h> // for signal-related stuff
+
+#ifdef sa_handler
+# undef sa_handler
+#endif
+
+#ifdef sa_sigaction
+# undef sa_sigaction
+#endif
 
 #include "sanitizer_common.h"
 #include "sanitizer_libc.h"
@@ -178,7 +188,7 @@ struct TracerThreadArgument {
 static DieCallbackType old_die_callback;
 
 // Signal handler to wake up suspended threads when the tracer thread dies.
-void TracerThreadSignalHandler(int signum, siginfo_t *siginfo, void *) {
+void TracerThreadSignalHandler(int signum, void *siginfo, void *) {
   if (thread_suspender_instance != NULL) {
     if (signum == SIGABRT)
       thread_suspender_instance->KillAllThreads();
@@ -236,7 +246,7 @@ static int TracerThread(void* argument) {
   // the mask we inherited from the caller thread.
   for (uptr signal_index = 0; signal_index < ARRAY_SIZE(kUnblockedSignals);
        signal_index++) {
-    kernel_sigaction_t new_sigaction;
+    __sanitizer_kernel_sigaction_t new_sigaction;
     internal_memset(&new_sigaction, 0, sizeof(new_sigaction));
     new_sigaction.sigaction = TracerThreadSignalHandler;
     new_sigaction.sa_flags = SA_ONSTACK | SA_SIGINFO;
@@ -286,9 +296,10 @@ class ScopedStackSpaceWithGuard {
 
 // We have a limitation on the stack frame size, so some stuff had to be moved
 // into globals.
-static kernel_sigset_t blocked_sigset;
-static kernel_sigset_t old_sigset;
-static kernel_sigaction_t old_sigactions[ARRAY_SIZE(kUnblockedSignals)];
+static __sanitizer_kernel_sigset_t blocked_sigset;
+static __sanitizer_kernel_sigset_t old_sigset;
+static __sanitizer_kernel_sigaction_t old_sigactions
+    [ARRAY_SIZE(kUnblockedSignals)];
 
 class StopTheWorldScope {
  public:
@@ -304,7 +315,7 @@ class StopTheWorldScope {
       // Remove the signal from the set of blocked signals.
       internal_sigdelset(&blocked_sigset, kUnblockedSignals[signal_index]);
       // Install the default handler.
-      kernel_sigaction_t new_sigaction;
+      __sanitizer_kernel_sigaction_t new_sigaction;
       internal_memset(&new_sigaction, 0, sizeof(new_sigaction));
       new_sigaction.handler = SIG_DFL;
       internal_sigfillset(&new_sigaction.sa_mask);
