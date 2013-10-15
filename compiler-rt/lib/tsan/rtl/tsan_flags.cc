@@ -23,15 +23,52 @@ Flags *flags() {
   return &CTX()->flags;
 }
 
+#if !SANITIZER_SUPPORTS_WEAK_HOOKS
+extern "C" {
+SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE
+const char* __asan_default_options() { return ""; }
+}  // extern "C"
+#endif
+
+
 // Can be overriden in frontend.
 #ifdef TSAN_EXTERNAL_HOOKS
 void OverrideFlags(Flags *f);
+extern "C" const char* __tsan_default_options();
 #else
-SANITIZER_INTERFACE_ATTRIBUTE
 void WEAK OverrideFlags(Flags *f) {
   (void)f;
 }
+extern "C" const char *WEAK __tsan_default_options() {
+  return "";
+}
 #endif
+
+static void ParseFlags(Flags *f, const char *env) {
+  ParseFlag(env, &f->enable_annotations, "enable_annotations");
+  ParseFlag(env, &f->suppress_equal_stacks, "suppress_equal_stacks");
+  ParseFlag(env, &f->suppress_equal_addresses, "suppress_equal_addresses");
+  ParseFlag(env, &f->suppress_java, "suppress_java");
+  ParseFlag(env, &f->report_bugs, "report_bugs");
+  ParseFlag(env, &f->report_thread_leaks, "report_thread_leaks");
+  ParseFlag(env, &f->report_destroy_locked, "report_destroy_locked");
+  ParseFlag(env, &f->report_signal_unsafe, "report_signal_unsafe");
+  ParseFlag(env, &f->report_atomic_races, "report_atomic_races");
+  ParseFlag(env, &f->force_seq_cst_atomics, "force_seq_cst_atomics");
+  ParseFlag(env, &f->suppressions, "suppressions");
+  ParseFlag(env, &f->print_suppressions, "print_suppressions");
+  ParseFlag(env, &f->print_benign, "print_benign");
+  ParseFlag(env, &f->exitcode, "exitcode");
+  ParseFlag(env, &f->halt_on_error, "halt_on_error");
+  ParseFlag(env, &f->atexit_sleep_ms, "atexit_sleep_ms");
+  ParseFlag(env, &f->profile_memory, "profile_memory");
+  ParseFlag(env, &f->flush_memory_ms, "flush_memory_ms");
+  ParseFlag(env, &f->flush_symbolizer_ms, "flush_symbolizer_ms");
+  ParseFlag(env, &f->memory_limit_mb, "memory_limit_mb");
+  ParseFlag(env, &f->stop_on_start, "stop_on_start");
+  ParseFlag(env, &f->history_size, "history_size");
+  ParseFlag(env, &f->io_sync, "io_sync");
+}
 
 void InitializeFlags(Flags *f, const char *env) {
   internal_memset(f, 0, sizeof(*f));
@@ -71,31 +108,11 @@ void InitializeFlags(Flags *f, const char *env) {
 
   // Let a frontend override.
   OverrideFlags(f);
+  ParseFlags(f, __tsan_default_options());
+  ParseCommonFlagsFromString(__tsan_default_options());
 
   // Override from command line.
-  ParseFlag(env, &f->enable_annotations, "enable_annotations");
-  ParseFlag(env, &f->suppress_equal_stacks, "suppress_equal_stacks");
-  ParseFlag(env, &f->suppress_equal_addresses, "suppress_equal_addresses");
-  ParseFlag(env, &f->suppress_java, "suppress_java");
-  ParseFlag(env, &f->report_bugs, "report_bugs");
-  ParseFlag(env, &f->report_thread_leaks, "report_thread_leaks");
-  ParseFlag(env, &f->report_destroy_locked, "report_destroy_locked");
-  ParseFlag(env, &f->report_signal_unsafe, "report_signal_unsafe");
-  ParseFlag(env, &f->report_atomic_races, "report_atomic_races");
-  ParseFlag(env, &f->force_seq_cst_atomics, "force_seq_cst_atomics");
-  ParseFlag(env, &f->suppressions, "suppressions");
-  ParseFlag(env, &f->print_suppressions, "print_suppressions");
-  ParseFlag(env, &f->print_benign, "print_benign");
-  ParseFlag(env, &f->exitcode, "exitcode");
-  ParseFlag(env, &f->halt_on_error, "halt_on_error");
-  ParseFlag(env, &f->atexit_sleep_ms, "atexit_sleep_ms");
-  ParseFlag(env, &f->profile_memory, "profile_memory");
-  ParseFlag(env, &f->flush_memory_ms, "flush_memory_ms");
-  ParseFlag(env, &f->flush_symbolizer_ms, "flush_symbolizer_ms");
-  ParseFlag(env, &f->memory_limit_mb, "memory_limit_mb");
-  ParseFlag(env, &f->stop_on_start, "stop_on_start");
-  ParseFlag(env, &f->history_size, "history_size");
-  ParseFlag(env, &f->io_sync, "io_sync");
+  ParseFlags(f, env);
 
   if (!f->report_bugs) {
     f->report_thread_leaks = false;
