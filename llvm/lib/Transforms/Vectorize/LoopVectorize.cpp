@@ -445,7 +445,7 @@ public:
     MRK_FloatMax
   };
 
-  /// This POD struct holds information about reduction variables.
+  /// This struct holds information about reduction variables.
   struct ReductionDescriptor {
     ReductionDescriptor() : StartValue(0), LoopExitInstr(0),
       Kind(RK_NoReduction), MinMaxKind(MRK_Invalid) {}
@@ -482,8 +482,8 @@ public:
     MinMaxReductionKind MinMaxKind;
   };
 
-  // This POD struct holds information about the memory runtime legality
-  // check that a group of pointers do not overlap.
+  /// This struct holds information about the memory runtime legality
+  /// check that a group of pointers do not overlap.
   struct RuntimePointerCheck {
     RuntimePointerCheck() : Need(false) {}
 
@@ -514,7 +514,7 @@ public:
     SmallVector<unsigned, 2> DependencySetId;
   };
 
-  /// A POD for saving information about induction variables.
+  /// A struct for saving information about induction variables.
   struct InductionInfo {
     InductionInfo(Value *Start, InductionKind K) : StartValue(Start), IK(K) {}
     InductionInfo() : StartValue(0), IK(IK_NoInduction) {}
