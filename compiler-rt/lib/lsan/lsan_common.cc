@@ -138,6 +138,8 @@ void ScanRangeForPointers(uptr begin, uptr end,
     if (!CanBeAHeapPointer(reinterpret_cast<uptr>(p))) continue;
     uptr chunk = PointsIntoChunk(p);
     if (!chunk) continue;
+    // Pointers to self don't count. This matters when tag == kIndirectlyLeaked.
+    if (chunk == begin) continue;
     LsanMetadata m(chunk);
     // Reachable beats ignored beats leaked.
     if (m.tag() == kReachable) continue;
