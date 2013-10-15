@@ -1113,11 +1113,14 @@ DISubprogram DIBuilder::createMethod(DIDescriptor Context, StringRef Name,
                                      MDNode *TParam) {
   assert(Ty.getTag() == dwarf::DW_TAG_subroutine_type &&
          "function types should be subroutines");
+  assert(getNonCompileUnitScope(Context) &&
+         "Methods should have both a Context and a context that isn't "
+         "the compile unit.");
   Value *TElts[] = { GetTagConstant(VMContext, DW_TAG_base_type) };
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_subprogram),
     F.getFileNode(),
-    DIScope(getNonCompileUnitScope(Context)).getRef(),
+    DIScope(Context).getRef(),
     MDString::get(VMContext, Name),
     MDString::get(VMContext, Name),
     MDString::get(VMContext, LinkageName),
