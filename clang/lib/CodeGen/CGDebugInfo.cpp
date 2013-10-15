@@ -2213,8 +2213,8 @@ llvm::DICompositeType CGDebugInfo::CreateLimitedType(const RecordType *Ty) {
   unsigned Line = getLineNumber(RD->getLocation());
   StringRef RDName = getClassName(RD);
 
-  llvm::DIDescriptor RDContext;
-  RDContext = getContextDescriptor(cast<Decl>(RD->getDeclContext()));
+  llvm::DIDescriptor RDContext =
+      getContextDescriptor(cast<Decl>(RD->getDeclContext()));
 
   // If we ended up creating the type during the context chain construction,
   // just return that.
