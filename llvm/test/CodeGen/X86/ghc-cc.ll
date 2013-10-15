@@ -28,10 +28,10 @@ entry:
 
 define cc 10 void @foo() nounwind {
 entry:
-  ; CHECK: movl base, %ebx
-  ; CHECK-NEXT: movl sp, %ebp
+  ; CHECK:      movl r1, %esi
   ; CHECK-NEXT: movl hp, %edi
-  ; CHECK-NEXT: movl r1, %esi
+  ; CHECK-NEXT: movl sp, %ebp
+  ; CHECK-NEXT: movl base, %ebx
   %0 = load i32* @r1
   %1 = load i32* @hp
   %2 = load i32* @sp
@@ -42,4 +42,3 @@ entry:
 }
 
 declare cc 10 void @bar(i32, i32, i32, i32)
-

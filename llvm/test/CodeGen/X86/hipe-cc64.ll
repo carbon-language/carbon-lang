@@ -5,10 +5,10 @@
 define void @zap(i64 %a, i64 %b) nounwind {
 entry:
   ; CHECK:      movq %rsi, %rax
-  ; CHECK-NEXT: movq %rdi, %rsi
-  ; CHECK-NEXT: movq %rax, %rdx
   ; CHECK-NEXT: movl $8, %ecx
   ; CHECK-NEXT: movl $9, %r8d
+  ; CHECK-NEXT: movq %rdi, %rsi
+  ; CHECK-NEXT: movq %rax, %rdx
   ; CHECK-NEXT: callq addfour
   %0 = call cc 11 {i64, i64, i64} @addfour(i64 undef, i64 undef, i64 %a, i64 %b, i64 8, i64 9)
   %res = extractvalue {i64, i64, i64} %0, 2
@@ -57,11 +57,11 @@ entry:
   store i64 %arg2, i64* %arg2_var
   store i64 %arg3, i64* %arg3_var
 
-  ; CHECK:      movq  8(%rsp), %rcx
-  ; CHECK-NEXT: movq  16(%rsp), %rdx
-  ; CHECK-NEXT: movq  24(%rsp), %rsi
+  ; CHECK:      movq  40(%rsp), %r15
   ; CHECK-NEXT: movq  32(%rsp), %rbp
-  ; CHECK-NEXT: movq  40(%rsp), %r15
+  ; CHECK-NEXT: movq  24(%rsp), %rsi
+  ; CHECK-NEXT: movq  16(%rsp), %rdx
+  ; CHECK-NEXT: movq  8(%rsp), %rcx
   %0 = load i64* %hp_var
   %1 = load i64* %p_var
   %2 = load i64* %arg0_var

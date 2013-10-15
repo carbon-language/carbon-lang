@@ -34,12 +34,12 @@ bb90:		; preds = %bb84, %bb72
 bb91:		; preds = %bb84
 	ret i32 0
 ; CHECK-LABEL: test2:
-; CHECK: movnew
-; CHECK: movswl
+; CHECK: cmovnew
+; CHECK: cwtl
 
 ; ATOM-LABEL: test2:
-; ATOM: movnew
-; ATOM: movswl
+; ATOM: cmovnew
+; ATOM: cwtl
 }
 
 declare i1 @return_false()
@@ -256,8 +256,8 @@ entry:
   %call = tail call noalias i8* @_Znam(i64 %D) nounwind noredzone
   ret i8* %call
 ; CHECK-LABEL: test12:
-; CHECK: movq $-1, %[[R:r..]]
 ; CHECK: mulq
+; CHECK: movq $-1, %[[R:r..]]
 ; CHECK: cmovnoq	%rax, %[[R]]
 ; CHECK: jmp	__Znam
 

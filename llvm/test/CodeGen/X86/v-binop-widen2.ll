@@ -2,9 +2,9 @@
 ; RUN: llc -march=x86 -mcpu=atom -mattr=+sse < %s | FileCheck -check-prefix=ATOM %s
 
 %vec = type <6 x float>
-; CHECK: divss
-; CHECK: divss
 ; CHECK: divps
+; CHECK: divss
+; CHECK: divss
 
 ; Scheduler causes a different instruction order to be produced on Intel Atom
 ; ATOM: divps

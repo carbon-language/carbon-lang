@@ -1,6 +1,6 @@
-; RUN: llc < %s -mcpu=generic -mtriple=x86_64-mingw32     | FileCheck %s -check-prefix=M64
-; RUN: llc < %s -mcpu=generic -mtriple=x86_64-win32       | FileCheck %s -check-prefix=W64
-; RUN: llc < %s -mcpu=generic -mtriple=x86_64-win32-macho | FileCheck %s -check-prefix=EFI
+; RUN: llc < %s -mcpu=generic -enable-misched=false -mtriple=x86_64-mingw32     | FileCheck %s -check-prefix=M64
+; RUN: llc < %s -mcpu=generic -enable-misched=false -mtriple=x86_64-win32       | FileCheck %s -check-prefix=W64
+; RUN: llc < %s -mcpu=generic -enable-misched=false -mtriple=x86_64-win32-macho | FileCheck %s -check-prefix=EFI
 ; PR8777
 ; PR8778
 
@@ -52,18 +52,18 @@ entry:
   %r = call i64 @bar(i64 %n, i64 %x, i64 %n, i8* %buf0, i8* %buf1) nounwind
 
 ; M64: subq  $48, %rsp
-; M64: leaq  -4096(%rbp), %r9
 ; M64: movq  %rax, 32(%rsp)
+; M64: leaq  -4096(%rbp), %r9
 ; M64: callq bar
 
 ; W64: subq  $48, %rsp
-; W64: leaq  -4096(%rbp), %r9
 ; W64: movq  %rax, 32(%rsp)
+; W64: leaq  -4096(%rbp), %r9
 ; W64: callq bar
 
 ; EFI: subq  $48, %rsp
-; EFI: leaq  -[[B0OFS]](%rbp), %r9
 ; EFI: movq  [[R64]], 32(%rsp)
+; EFI: leaq  -[[B0OFS]](%rbp), %r9
 ; EFI: callq _bar
 
   ret i64 %r

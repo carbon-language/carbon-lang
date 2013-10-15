@@ -1,15 +1,13 @@
-; RUN: llc < %s -mcpu=generic -march=x86-64 > %t
-; RUN: not grep and %t
-; RUN: not grep movz %t
-; RUN: not grep sar %t
-; RUN: not grep shl %t
-; RUN: grep add %t | count 5
-; RUN: grep inc %t | count 2
-; RUN: grep lea %t | count 3
+; RUN: llc < %s -mcpu=generic -march=x86-64 | FileCheck %s
 
 ; Optimize away zext-inreg and sext-inreg on the loop induction
 ; variable using trip-count information.
 
+; CHECK-LABEL: count_up
+; CHECK-NOT: {{and|movz|sar|shl}}
+; CHECK: inc
+; CHECK-NOT: {{and|movz|sar|shl}}
+; CHECK: jne
 define void @count_up(double* %d, i64 %n) nounwind {
 entry:
 	br label %loop
@@ -38,6 +36,11 @@ return:
 	ret void
 }
 
+; CHECK-LABEL: count_down
+; CHECK-NOT: {{and|movz|sar|shl}}
+; CHECK: addq
+; CHECK-NOT: {{and|movz|sar|shl}}
+; CHECK: jne
 define void @count_down(double* %d, i64 %n) nounwind {
 entry:
 	br label %loop
@@ -66,6 +69,11 @@ return:
 	ret void
 }
 
+; CHECK-LABEL: count_up_signed
+; CHECK-NOT: {{and|movz|sar|shl}}
+; CHECK: inc
+; CHECK-NOT: {{and|movz|sar|shl}}
+; CHECK: jne
 define void @count_up_signed(double* %d, i64 %n) nounwind {
 entry:
 	br label %loop
@@ -96,6 +104,11 @@ return:
 	ret void
 }
 
+; CHECK-LABEL: count_down_signed
+; CHECK-NOT: {{and|movz|sar|shl}}
+; CHECK: addq
+; CHECK-NOT: {{and|movz|sar|shl}}
+; CHECK: jne
 define void @count_down_signed(double* %d, i64 %n) nounwind {
 entry:
 	br label %loop
@@ -126,6 +139,11 @@ return:
 	ret void
 }
 
+; CHECK-LABEL: another_count_up
+; CHECK-NOT: {{and|movz|sar|shl}}
+; CHECK: addq
+; CHECK-NOT: {{and|movz|sar|shl}}
+; CHECK: jne
 define void @another_count_up(double* %d, i64 %n) nounwind {
 entry:
 	br label %loop
@@ -154,6 +172,11 @@ return:
 	ret void
 }
 
+; CHECK-LABEL: another_count_down
+; CHECK-NOT: {{and|movz|sar|shl}}
+; CHECK: decq
+; CHECK-NOT: {{and|movz|sar|shl}}
+; CHECK: jne
 define void @another_count_down(double* %d, i64 %n) nounwind {
 entry:
 	br label %loop
@@ -182,6 +205,11 @@ return:
 	ret void
 }
 
+; CHECK-LABEL: another_count_up_signed
+; CHECK-NOT: {{and|movz|sar|shl}}
+; CHECK: addq
+; CHECK-NOT: {{and|movz|sar|shl}}
+; CHECK: jne
 define void @another_count_up_signed(double* %d, i64 %n) nounwind {
 entry:
 	br label %loop
@@ -212,6 +240,11 @@ return:
 	ret void
 }
 
+; CHECK-LABEL: another_count_down_signed
+; CHECK-NOT: {{and|movz|sar|shl}}
+; CHECK: decq
+; CHECK-NOT: {{and|movz|sar|shl}}
+; CHECK: jne
 define void @another_count_down_signed(double* %d, i64 %n) nounwind {
 entry:
 	br label %loop

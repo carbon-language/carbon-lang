@@ -54,8 +54,8 @@ entry:
 define <2 x double> @t3() nounwind readonly {
 bb:
 ; CHECK-LABEL: t3:
-; CHECK: punpcklqdq %xmm1, %xmm0
 ; CHECK: movq (%rax), %xmm1
+; CHECK: punpcklqdq %xmm2, %xmm0
 ; CHECK: movsd %xmm1, %xmm0
   %tmp0 = load i128* null, align 1
   %tmp1 = load <2 x i32>* undef, align 8
@@ -72,9 +72,9 @@ bb:
 define <2 x i64> @t4() nounwind readonly {
 bb:
 ; CHECK-LABEL: t4:
-; CHECK: punpcklqdq %xmm0, %xmm1
 ; CHECK: movq (%rax), %xmm0
-; CHECK: movsd %xmm1, %xmm0
+; CHECK: punpcklqdq %{{xmm.}}, %[[XMM:xmm[0-9]]]
+; CHECK: movsd %[[XMM]], %xmm0
   %tmp0 = load i128* null, align 1
   %tmp1 = load <2 x i32>* undef, align 8
   %tmp2 = bitcast i128 %tmp0 to <16 x i8>

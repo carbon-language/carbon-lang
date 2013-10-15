@@ -19,7 +19,14 @@ return:
   ret i32 %retval.0
 }
 
-; We were miscompiling this and using %ax instead of %cx in the movw.
-; CHECK: movswl	%cx, %ecx
-; CHECK: movw	%cx, (%rsi)
-; CHECK: movslq	%ecx, %rcx
+; We were miscompiling this and using %ax instead of %cx in the movw
+; in the following sequence:
+;	movswl	%cx, %ecx
+;	movw	%cx, (%rsi)
+;	movslq	%ecx, %rcx
+;
+; We can't produce the above sequence without special SD-level
+; heuristics. Now we produce this:
+; CHECK: movw	%ax, (%rsi)
+; CHECK: cwtl
+; CHECK: cltq

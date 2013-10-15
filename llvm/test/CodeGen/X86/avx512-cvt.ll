@@ -167,8 +167,8 @@ define i32 @float_to_int(float %x) {
 }
 
 ; CHECK-LABEL: uitof64
-; CHECK: vextracti64x4
 ; CHECK: vcvtudq2pd
+; CHECK: vextracti64x4
 ; CHECK: vcvtudq2pd
 ; CHECK: ret
 define <16 x double> @uitof64(<16 x i32> %a) nounwind {

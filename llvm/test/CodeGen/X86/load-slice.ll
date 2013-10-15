@@ -17,14 +17,14 @@
 ; High slice starts at 4 (base + 4-bytes) and is 4-bytes aligned.
 ;
 ; STRESS-LABEL: t1:
-; Load out[out_start + 8].imm, this is base + 8 * 8 + 4.
-; STRESS: vmovss 68([[BASE:[^)]+]]), [[OUT_Imm:%xmm[0-9]+]]
-; Add high slice: out[out_start].imm, this is base + 4.
-; STRESS-NEXT: vaddss 4([[BASE]]), [[OUT_Imm]], [[RES_Imm:%xmm[0-9]+]]
 ; Load out[out_start + 8].real, this is base + 8 * 8 + 0.
-; STRESS-NEXT: vmovss 64([[BASE]]), [[OUT_Real:%xmm[0-9]+]]
+; STRESS: vmovss 64([[BASE:[^(]+]]), [[OUT_Real:%xmm[0-9]+]]
 ; Add low slice: out[out_start].real, this is base + 0.
 ; STRESS-NEXT: vaddss ([[BASE]]), [[OUT_Real]], [[RES_Real:%xmm[0-9]+]]
+; Load out[out_start + 8].imm, this is base + 8 * 8 + 4.
+; STRESS-NEXT: vmovss 68([[BASE]]), [[OUT_Imm:%xmm[0-9]+]]
+; Add high slice: out[out_start].imm, this is base + 4.
+; STRESS-NEXT: vaddss 4([[BASE]]), [[OUT_Imm]], [[RES_Imm:%xmm[0-9]+]]
 ; Swap Imm and Real.
 ; STRESS-NEXT: vinsertps $16, [[RES_Imm]], [[RES_Real]], [[RES_Vec:%xmm[0-9]+]]
 ; Put the results back into out[out_start].
@@ -32,14 +32,14 @@
 ;
 ; Same for REGULAR, we eliminate register bank copy with each slices.
 ; REGULAR-LABEL: t1:
-; Load out[out_start + 8].imm, this is base + 8 * 8 + 4.
-; REGULAR: vmovss 68([[BASE:[^)]+]]), [[OUT_Imm:%xmm[0-9]+]]
-; Add high slice: out[out_start].imm, this is base + 4.
-; REGULAR-NEXT: vaddss 4([[BASE]]), [[OUT_Imm]], [[RES_Imm:%xmm[0-9]+]]
 ; Load out[out_start + 8].real, this is base + 8 * 8 + 0.
-; REGULAR-NEXT: vmovss 64([[BASE]]), [[OUT_Real:%xmm[0-9]+]]
+; REGULAR: vmovss 64([[BASE:[^)]+]]), [[OUT_Real:%xmm[0-9]+]]
 ; Add low slice: out[out_start].real, this is base + 0.
 ; REGULAR-NEXT: vaddss ([[BASE]]), [[OUT_Real]], [[RES_Real:%xmm[0-9]+]]
+; Load out[out_start + 8].imm, this is base + 8 * 8 + 4.
+; REGULAR-NEXT: vmovss 68([[BASE]]), [[OUT_Imm:%xmm[0-9]+]]
+; Add high slice: out[out_start].imm, this is base + 4.
+; REGULAR-NEXT: vaddss 4([[BASE]]), [[OUT_Imm]], [[RES_Imm:%xmm[0-9]+]]
 ; Swap Imm and Real.
 ; REGULAR-NEXT: vinsertps $16, [[RES_Imm]], [[RES_Real]], [[RES_Vec:%xmm[0-9]+]]
 ; Put the results back into out[out_start].
@@ -137,4 +137,3 @@ define i32 @t3(%class.Complex* nocapture %out, i64 %out_start) {
   %res = add i32 %slice32_lowhigh, %tmpres
   ret i32 %res
 }
-

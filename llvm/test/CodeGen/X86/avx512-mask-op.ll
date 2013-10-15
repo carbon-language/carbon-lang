@@ -27,8 +27,8 @@ define i16 @mand16(i16 %x, i16 %y) {
   %md = xor <16 x i1> %ma, %mb
   %me = or <16 x i1> %mc, %md
   %ret = bitcast <16 x i1> %me to i16
-; CHECK: kxorw
 ; CHECK: kandw
+; CHECK: kxorw
 ; CHECK: korw
   ret i16 %ret
 }
@@ -55,4 +55,3 @@ define i8 @shuf_test1(i16 %v) nounwind {
    %mask1 = bitcast <8 x i1> %mask to i8
    ret i8 %mask1
 }
-

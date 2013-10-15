@@ -4,7 +4,7 @@
 define void @foo(float* nocapture %A, float* nocapture %B, float* nocapture %C, i32 %N) nounwind {
 ; ATOM: foo
 ; ATOM: addl
-; ATOM: leal
+; ATOM: addl
 ; ATOM: leal
 
 ; CHECK: foo

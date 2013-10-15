@@ -2,12 +2,12 @@
 ; RUN: llc -mtriple=x86_64-darwin -mcpu=atom < %s | FileCheck -check-prefix=ATOM %s
 
 ; CHECK-LABEL: t:
-; CHECK: decq
-; CHECK-NEXT: movl (%r9,%rax,4), %eax
+; CHECK: movl (%r9,%rax,4), %e{{..}}
+; CHECK-NEXT: decq
 ; CHECK-NEXT: jne
 
 ; ATOM-LABEL: t:
-; ATOM: movl (%r9,%r{{.+}},4), %eax
+; ATOM: movl (%r9,%r{{.+}},4), %e{{..}}
 ; ATOM-NEXT: decq
 ; ATOM-NEXT: jne
 

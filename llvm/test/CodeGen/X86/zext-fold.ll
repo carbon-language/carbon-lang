@@ -1,4 +1,4 @@
-; RUN: llc < %s -mcpu=generic -march=x86 | FileCheck %s
+; RUN: llc < %s -mcpu=generic -march=x86 -enable-misched=false | FileCheck %s
 
 ;; Simple case
 define i32 @test1(i8 %x) nounwind readnone {
@@ -10,7 +10,7 @@ define i32 @test1(i8 %x) nounwind readnone {
 ; CHECK: movzbl
 ; CHECK-NEXT: andl {{.*}}224
 
-;; Multiple uses of %x but easily extensible. 
+;; Multiple uses of %x but easily extensible.
 define i32 @test2(i8 %x) nounwind readnone {
   %A = and i8 %x, -32
   %B = zext i8 %A to i32
@@ -21,8 +21,8 @@ define i32 @test2(i8 %x) nounwind readnone {
 }
 ; CHECK: test2
 ; CHECK: movzbl
-; CHECK: orl $63
 ; CHECK: andl $224
+; CHECK: orl $63
 
 declare void @use(i32, i8)
 
