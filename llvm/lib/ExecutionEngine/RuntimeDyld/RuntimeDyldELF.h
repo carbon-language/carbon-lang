@@ -82,6 +82,30 @@ class RuntimeDyldELF : public RuntimeDyldImpl {
                                 uint32_t Type,
                                 int64_t Addend);
 
+  unsigned getMaxStubSize() {
+    if (Arch == Triple::aarch64)
+      return 20; // movz; movk; movk; movk; br
+    if (Arch == Triple::arm || Arch == Triple::thumb)
+      return 8; // 32-bit instruction and 32-bit address
+    else if (Arch == Triple::mipsel || Arch == Triple::mips)
+      return 16;
+    else if (Arch == Triple::ppc64 || Arch == Triple::ppc64le)
+      return 44;
+    else if (Arch == Triple::x86_64)
+      return 6; // 2-byte jmp instruction + 32-bit relative address
+    else if (Arch == Triple::systemz)
+      return 16;
+    else
+      return 0;
+  }
+
+  unsigned getStubAlignment() {
+    if (Arch == Triple::systemz)
+      return 8;
+    else
+      return 1;
+  }
+
   uint64_t findPPC64TOC() const;
   void findOPDEntrySection(ObjectImage &Obj,
                            ObjSectionToIDMap &LocalSections,

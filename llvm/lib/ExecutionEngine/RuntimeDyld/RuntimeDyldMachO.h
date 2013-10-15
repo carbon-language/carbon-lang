@@ -55,6 +55,19 @@ class RuntimeDyldMachO : public RuntimeDyldImpl {
                          bool isPCRel,
                          unsigned Size);
 
+  unsigned getMaxStubSize() {
+    if (Arch == Triple::arm || Arch == Triple::thumb)
+      return 8; // 32-bit instruction and 32-bit address
+    else if (Arch == Triple::x86_64)
+      return 8; // GOT entry
+    else
+      return 0;
+  }
+
+  unsigned getStubAlignment() {
+    return 1;
+  }
+
   struct EHFrameRelatedSections {
     EHFrameRelatedSections() : EHFrameSID(RTDYLD_INVALID_SECTION_ID),
                                TextSID(RTDYLD_INVALID_SECTION_ID),
