@@ -96,6 +96,12 @@ namespace llvm {
     /// \brief Emit the INSERT_FD pseudo instruction
     MachineBasicBlock *emitINSERT_FD(MachineInstr *MI,
                                      MachineBasicBlock *BB) const;
+    /// \brief Emit the FILL_FW pseudo instruction
+    MachineBasicBlock *emitFILL_FW(MachineInstr *MI,
+                                   MachineBasicBlock *BB) const;
+    /// \brief Emit the FILL_FD pseudo instruction
+    MachineBasicBlock *emitFILL_FD(MachineInstr *MI,
+                                   MachineBasicBlock *BB) const;
   };
 }
 

@@ -2,21 +2,26 @@
 
 @v4f32 = global <4 x float> <float 0.0, float 0.0, float 0.0, float 0.0>
 @v2f64 = global <2 x double> <double 0.0, double 0.0>
+@f32 = global float 0.0
+@f64 = global double 0.0
 
 define void @const_v4f32() nounwind {
   ; MIPS32: const_v4f32:
 
   store volatile <4 x float> <float 0.0, float 0.0, float 0.0, float 0.0>, <4 x float>*@v4f32
-  ; MIPS32: ld.w  [[R1:\$w[0-9]+]], %lo(
+  ; MIPS32: ldi.b  [[R1:\$w[0-9]+]], 0
 
   store volatile <4 x float> <float 1.0, float 1.0, float 1.0, float 1.0>, <4 x float>*@v4f32
-  ; MIPS32: ld.w  [[R1:\$w[0-9]+]], %lo(
+  ; MIPS32: lui     [[R1:\$[0-9]+]], 16256
+  ; MIPS32: fill.w  [[R2:\$w[0-9]+]], [[R1]]
 
   store volatile <4 x float> <float 1.0, float 1.0, float 1.0, float 31.0>, <4 x float>*@v4f32
   ; MIPS32: ld.w  [[R1:\$w[0-9]+]], %lo(
 
   store volatile <4 x float> <float 65537.0, float 65537.0, float 65537.0, float 65537.0>, <4 x float>*@v4f32
-  ; MIPS32: ld.w  [[R1:\$w[0-9]+]], %lo(
+  ; MIPS32: lui     [[R1:\$[0-9]+]], 18304
+  ; MIPS32: ori     [[R2:\$[0-9]+]], [[R1]], 128
+  ; MIPS32: fill.w  [[R3:\$w[0-9]+]], [[R2]]
 
   store volatile <4 x float> <float 1.0, float 2.0, float 1.0, float 2.0>, <4 x float>*@v4f32
   ; MIPS32: ld.w  [[R1:\$w[0-9]+]], %lo(
@@ -32,7 +37,7 @@ define void @const_v2f64() nounwind {
   ; MIPS32: const_v2f64:
 
   store volatile <2 x double> <double 0.0, double 0.0>, <2 x double>*@v2f64
-  ; MIPS32: ld.d  [[R1:\$w[0-9]+]], %lo(
+  ; MIPS32: ldi.b  [[R1:\$w[0-9]+]], 0
 
   store volatile <2 x double> <double 72340172838076673.0, double 72340172838076673.0>, <2 x double>*@v2f64
   ; MIPS32: ld.d  [[R1:\$w[0-9]+]], %lo(
@@ -54,6 +59,36 @@ define void @const_v2f64() nounwind {
 
   ret void
   ; MIPS32: .size const_v2f64
+}
+
+define void @nonconst_v4f32() nounwind {
+  ; MIPS32: nonconst_v4f32:
+
+  %1 = load float *@f32
+  %2 = insertelement <4 x float> undef, float %1, i32 0
+  %3 = insertelement <4 x float> %2, float %1, i32 1
+  %4 = insertelement <4 x float> %3, float %1, i32 2
+  %5 = insertelement <4 x float> %4, float %1, i32 3
+  store volatile <4 x float> %5, <4 x float>*@v4f32
+  ; MIPS32: lwc1 $f[[R1:[0-9]+]], 0(
+  ; MIPS32: splati.w [[R2:\$w[0-9]+]], $w[[R1]]
+
+  ret void
+  ; MIPS32: .size nonconst_v4f32
+}
+
+define void @nonconst_v2f64() nounwind {
+  ; MIPS32: nonconst_v2f64:
+
+  %1 = load double *@f64
+  %2 = insertelement <2 x double> undef, double %1, i32 0
+  %3 = insertelement <2 x double> %2, double %1, i32 1
+  store volatile <2 x double> %3, <2 x double>*@v2f64
+  ; MIPS32: ldc1 $f[[R1:[0-9]+]], 0(
+  ; MIPS32: splati.d [[R2:\$w[0-9]+]], $w[[R1]]
+
+  ret void
+  ; MIPS32: .size nonconst_v2f64
 }
 
 define float @extract_v4f32() nounwind {

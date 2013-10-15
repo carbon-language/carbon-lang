@@ -212,6 +212,11 @@ def vsplati32 : PatFrag<(ops node:$e0),
                                              node:$e0, node:$e0))>;
 def vsplati64 : PatFrag<(ops node:$e0),
                         (v2i64 (build_vector:$v0 node:$e0, node:$e0))>;
+def vsplatf32 : PatFrag<(ops node:$e0),
+                        (v4f32 (build_vector node:$e0, node:$e0,
+                                             node:$e0, node:$e0))>;
+def vsplatf64 : PatFrag<(ops node:$e0),
+                        (v2f64 (build_vector node:$e0, node:$e0))>;
 
 class SplatPatLeaf<Operand opclass, dag frag, code pred = [{}],
                    SDNodeXForm xform = NOOP_SDNodeXForm>
@@ -1169,13 +1174,20 @@ class MSA_2R_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
 
 class MSA_2R_FILL_DESC_BASE<string instr_asm, ValueType VT,
                             SDPatternOperator OpNode, RegisterOperand ROWD,
-                            RegisterOperand ROWS = ROWD,
+                            RegisterOperand ROS = ROWD,
                             InstrItinClass itin = NoItinerary> {
   dag OutOperandList = (outs ROWD:$wd);
-  dag InOperandList = (ins ROWS:$rs);
+  dag InOperandList = (ins ROS:$rs);
   string AsmString = !strconcat(instr_asm, "\t$wd, $rs");
-  list<dag> Pattern = [(set ROWD:$wd, (VT (OpNode ROWS:$rs)))];
+  list<dag> Pattern = [(set ROWD:$wd, (VT (OpNode ROS:$rs)))];
   InstrItinClass Itinerary = itin;
+}
+
+class MSA_2R_FILL_PSEUDO_BASE<ValueType VT, SDPatternOperator OpNode,
+                              RegisterClass RCWD, RegisterClass RCWS = RCWD> :
+      MipsPseudo<(outs RCWD:$wd), (ins RCWS:$fs),
+                 [(set RCWD:$wd, (OpNode RCWS:$fs))]> {
+  let usesCustomInserter = 1;
 }
 
 class MSA_2RF_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
@@ -1827,6 +1839,11 @@ class FILL_H_DESC : MSA_2R_FILL_DESC_BASE<"fill.h", v8i16, vsplati16,
                                           MSA128HOpnd, GPR32Opnd>;
 class FILL_W_DESC : MSA_2R_FILL_DESC_BASE<"fill.w", v4i32, vsplati32,
                                           MSA128WOpnd, GPR32Opnd>;
+
+class FILL_FW_PSEUDO_DESC : MSA_2R_FILL_PSEUDO_BASE<v4f32, vsplatf32, MSA128W,
+                                                    FGR32>;
+class FILL_FD_PSEUDO_DESC : MSA_2R_FILL_PSEUDO_BASE<v2f64, vsplatf64, MSA128D,
+                                                    FGR64>;
 
 class FLOG2_W_DESC : MSA_2RF_DESC_BASE<"flog2.w", flog2, MSA128WOpnd>;
 class FLOG2_D_DESC : MSA_2RF_DESC_BASE<"flog2.d", flog2, MSA128DOpnd>;
@@ -2766,6 +2783,8 @@ def FFQR_D : FFQR_D_ENC, FFQR_D_DESC;
 def FILL_B : FILL_B_ENC, FILL_B_DESC;
 def FILL_H : FILL_H_ENC, FILL_H_DESC;
 def FILL_W : FILL_W_ENC, FILL_W_DESC;
+def FILL_FW_PSEUDO : FILL_FW_PSEUDO_DESC;
+def FILL_FD_PSEUDO : FILL_FD_PSEUDO_DESC;
 
 def FLOG2_W : FLOG2_W_ENC, FLOG2_W_DESC;
 def FLOG2_D : FLOG2_D_ENC, FLOG2_D_DESC;

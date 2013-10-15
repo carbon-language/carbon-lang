@@ -214,6 +214,7 @@ addMSAFloatType(MVT::SimpleValueType Ty, const TargetRegisterClass *RC) {
   setOperationAction(ISD::BITCAST, Ty, Legal);
   setOperationAction(ISD::EXTRACT_VECTOR_ELT, Ty, Legal);
   setOperationAction(ISD::INSERT_VECTOR_ELT, Ty, Legal);
+  setOperationAction(ISD::BUILD_VECTOR, Ty, Custom);
 
   if (Ty != MVT::v8f16) {
     setOperationAction(ISD::FABS,  Ty, Legal);
@@ -835,6 +836,10 @@ MipsSETargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     return emitINSERT_FW(MI, BB);
   case Mips::INSERT_FD_PSEUDO:
     return emitINSERT_FD(MI, BB);
+  case Mips::FILL_FW_PSEUDO:
+    return emitFILL_FW(MI, BB);
+  case Mips::FILL_FD_PSEUDO:
+    return emitFILL_FD(MI, BB);
   }
 }
 
@@ -2386,8 +2391,9 @@ emitCOPY_FD(MachineInstr *MI, MachineBasicBlock *BB) const{
 // =>
 // subreg_to_reg $wt:sub_lo, $fs
 // insve_w $wd[$n], $wd_in, $wt[0]
-MachineBasicBlock * MipsSETargetLowering::
-emitINSERT_FW(MachineInstr *MI, MachineBasicBlock *BB) const{
+MachineBasicBlock *
+MipsSETargetLowering::emitINSERT_FW(MachineInstr *MI,
+                                    MachineBasicBlock *BB) const {
   const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
   MachineRegisterInfo &RegInfo = BB->getParent()->getRegInfo();
   DebugLoc DL = MI->getDebugLoc();
@@ -2398,11 +2404,15 @@ emitINSERT_FW(MachineInstr *MI, MachineBasicBlock *BB) const{
   unsigned Wt = RegInfo.createVirtualRegister(&Mips::MSA128WRegClass);
 
   BuildMI(*BB, MI, DL, TII->get(Mips::SUBREG_TO_REG), Wt)
-      .addImm(0).addReg(Fs).addImm(Mips::sub_lo);
+      .addImm(0)
+      .addReg(Fs)
+      .addImm(Mips::sub_lo);
   BuildMI(*BB, MI, DL, TII->get(Mips::INSVE_W), Wd)
-      .addReg(Wd_in).addImm(Lane).addReg(Wt);
+      .addReg(Wd_in)
+      .addImm(Lane)
+      .addReg(Wt);
 
-  MI->eraseFromParent();   // The pseudo instruction is gone now.
+  MI->eraseFromParent(); // The pseudo instruction is gone now.
   return BB;
 }
 
@@ -2412,8 +2422,9 @@ emitINSERT_FW(MachineInstr *MI, MachineBasicBlock *BB) const{
 // =>
 // subreg_to_reg $wt:sub_64, $fs
 // insve_d $wd[$n], $wd_in, $wt[0]
-MachineBasicBlock * MipsSETargetLowering::
-emitINSERT_FD(MachineInstr *MI, MachineBasicBlock *BB) const{
+MachineBasicBlock *
+MipsSETargetLowering::emitINSERT_FD(MachineInstr *MI,
+                                    MachineBasicBlock *BB) const {
   assert(Subtarget->isFP64bit());
 
   const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
@@ -2426,9 +2437,73 @@ emitINSERT_FD(MachineInstr *MI, MachineBasicBlock *BB) const{
   unsigned Wt = RegInfo.createVirtualRegister(&Mips::MSA128DRegClass);
 
   BuildMI(*BB, MI, DL, TII->get(Mips::SUBREG_TO_REG), Wt)
-      .addImm(0).addReg(Fs).addImm(Mips::sub_64);
+      .addImm(0)
+      .addReg(Fs)
+      .addImm(Mips::sub_64);
   BuildMI(*BB, MI, DL, TII->get(Mips::INSVE_D), Wd)
-      .addReg(Wd_in).addImm(Lane).addReg(Wt);
+      .addReg(Wd_in)
+      .addImm(Lane)
+      .addReg(Wt);
+
+  MI->eraseFromParent(); // The pseudo instruction is gone now.
+  return BB;
+}
+
+// Emit the FILL_FW pseudo instruction.
+//
+// fill_fw_pseudo $wd, $fs
+// =>
+// implicit_def $wt1
+// insert_subreg $wt2:subreg_lo, $wt1, $fs
+// splati.w $wd, $wt2[0]
+MachineBasicBlock *
+MipsSETargetLowering::emitFILL_FW(MachineInstr *MI,
+                                  MachineBasicBlock *BB) const {
+  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
+  MachineRegisterInfo &RegInfo = BB->getParent()->getRegInfo();
+  DebugLoc DL = MI->getDebugLoc();
+  unsigned Wd = MI->getOperand(0).getReg();
+  unsigned Fs = MI->getOperand(1).getReg();
+  unsigned Wt1 = RegInfo.createVirtualRegister(&Mips::MSA128WRegClass);
+  unsigned Wt2 = RegInfo.createVirtualRegister(&Mips::MSA128WRegClass);
+
+  BuildMI(*BB, MI, DL, TII->get(Mips::IMPLICIT_DEF), Wt1);
+  BuildMI(*BB, MI, DL, TII->get(Mips::INSERT_SUBREG), Wt2)
+      .addReg(Wt1)
+      .addReg(Fs)
+      .addImm(Mips::sub_lo);
+  BuildMI(*BB, MI, DL, TII->get(Mips::SPLATI_W), Wd).addReg(Wt2).addImm(0);
+
+  MI->eraseFromParent(); // The pseudo instruction is gone now.
+  return BB;
+}
+
+// Emit the FILL_FD pseudo instruction.
+//
+// fill_fd_pseudo $wd, $fs
+// =>
+// implicit_def $wt1
+// insert_subreg $wt2:subreg_64, $wt1, $fs
+// splati.d $wd, $wt2[0]
+MachineBasicBlock *
+MipsSETargetLowering::emitFILL_FD(MachineInstr *MI,
+                                  MachineBasicBlock *BB) const {
+  assert(Subtarget->isFP64bit());
+
+  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
+  MachineRegisterInfo &RegInfo = BB->getParent()->getRegInfo();
+  DebugLoc DL = MI->getDebugLoc();
+  unsigned Wd = MI->getOperand(0).getReg();
+  unsigned Fs = MI->getOperand(1).getReg();
+  unsigned Wt1 = RegInfo.createVirtualRegister(&Mips::MSA128DRegClass);
+  unsigned Wt2 = RegInfo.createVirtualRegister(&Mips::MSA128DRegClass);
+
+  BuildMI(*BB, MI, DL, TII->get(Mips::IMPLICIT_DEF), Wt1);
+  BuildMI(*BB, MI, DL, TII->get(Mips::INSERT_SUBREG), Wt2)
+      .addReg(Wt1)
+      .addReg(Fs)
+      .addImm(Mips::sub_64);
+  BuildMI(*BB, MI, DL, TII->get(Mips::SPLATI_D), Wd).addReg(Wt2).addImm(0);
 
   MI->eraseFromParent();   // The pseudo instruction is gone now.
   return BB;
