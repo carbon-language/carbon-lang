@@ -94,7 +94,7 @@ run_lint ${LSAN_LIT_TEST_LINT_FILTER} ${LSAN_RTL}/lit_tests/*/*.cc &
 FILES=${COMMON_RTL}/*.inc
 TMPFILES=""
 for FILE in $FILES; do
-    TMPFILE=$(mktemp -u ${FILE}.XXXXX).cc
+    TMPFILE=$(mktemp -u --tmpdir check_lint.XXXXX).cc
     cp -f $FILE $TMPFILE
     run_lint ${COMMON_RTL_INC_LINT_FILTER} $TMPFILE &
     TMPFILES="$TMPFILES $TMPFILE"
