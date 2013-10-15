@@ -5985,6 +5985,30 @@ bool IntExprEvaluator::VisitCallExpr(const CallExpr *E) {
            Success(Val.isInfinity() ? (Val.isNegative() ? -1 : 1) : 0, E);
   }
 
+  case Builtin::BI__builtin_isinf: {
+    APFloat Val(0.0);
+    return EvaluateFloat(E->getArg(0), Val, Info) &&
+           Success(Val.isInfinity() ? 1 : 0, E);
+  }
+
+  case Builtin::BI__builtin_isfinite: {
+    APFloat Val(0.0);
+    return EvaluateFloat(E->getArg(0), Val, Info) &&
+           Success(Val.isFinite() ? 1 : 0, E);
+  }
+
+  case Builtin::BI__builtin_isnan: {
+    APFloat Val(0.0);
+    return EvaluateFloat(E->getArg(0), Val, Info) &&
+           Success(Val.isNaN() ? 1 : 0, E);
+  }
+
+  case Builtin::BI__builtin_isnormal: {
+    APFloat Val(0.0);
+    return EvaluateFloat(E->getArg(0), Val, Info) &&
+           Success(Val.isNormal() ? 1 : 0, E);
+  }
+
   case Builtin::BI__builtin_parity:
   case Builtin::BI__builtin_parityl:
   case Builtin::BI__builtin_parityll: {

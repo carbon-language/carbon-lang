@@ -55,6 +55,58 @@ char isinf_sign_noninf4[__builtin_isinf_sign(-436.) == 0 ? 1 : -1];
 char isinf_sign_inf    [__builtin_isinf_sign(__builtin_inf()) == 1 ? 1 : -1];
 char isinf_sign_neg_inf[__builtin_isinf_sign(-__builtin_inf()) == -1 ? 1 : -1];
 
+char isinf_inf_pos[__builtin_isinf(__builtin_inf()) ? 1 : -1];
+char isinf_pos    [!__builtin_isinf(1.0) ? 1 : -1];
+char isinf_normf  [!__builtin_isinf(1e-37f) ? 1 : -1];
+char isinf_denormf[!__builtin_isinf(1e-38f) ? 1 : -1];
+char isinf_norm   [!__builtin_isinf(1e-307) ? 1 : -1];
+char isinf_denorm [!__builtin_isinf(1e-308) ? 1 : -1];
+char isinf_zero   [!__builtin_isinf(0.0) ? 1 : -1];
+char isinf_negzero[!__builtin_isinf(-0.0) ? 1 : -1];
+char isinf_neg    [!__builtin_isinf(-1.0) ? 1 : -1];
+char isinf_inf_neg[__builtin_isinf(-__builtin_inf()) ? 1 : -1];
+char isinf_nan    [!__builtin_isinf(__builtin_nan("")) ? 1 : -1];
+char isinf_snan   [!__builtin_isinf(__builtin_nans("")) ? 1 : -1];
+
+char isfinite_inf_pos[!__builtin_isfinite(__builtin_inf()) ? 1 : -1];
+char isfinite_pos    [__builtin_isfinite(1.0) ? 1 : -1];
+char isfinite_normf  [__builtin_isfinite(1e-37f) ? 1 : -1];
+char isfinite_denormf[__builtin_isfinite(1e-38f) ? 1 : -1];
+char isfinite_norm   [__builtin_isfinite(1e-307) ? 1 : -1];
+char isfinite_denorm [__builtin_isfinite(1e-308) ? 1 : -1];
+char isfinite_zero   [__builtin_isfinite(0.0) ? 1 : -1];
+char isfinite_negzero[__builtin_isfinite(-0.0) ? 1 : -1];
+char isfinite_neg    [__builtin_isfinite(-1.0) ? 1 : -1];
+char isfinite_inf_neg[!__builtin_isfinite(-__builtin_inf()) ? 1 : -1];
+char isfinite_nan    [!__builtin_isfinite(__builtin_nan("")) ? 1 : -1];
+char isfinite_snan   [!__builtin_isfinite(__builtin_nans("")) ? 1 : -1];
+
+char isnan_inf_pos[!__builtin_isnan(__builtin_inf()) ? 1 : -1];
+char isnan_pos    [!__builtin_isnan(1.0) ? 1 : -1];
+char isnan_normf  [!__builtin_isnan(1e-37f) ? 1 : -1];
+char isnan_denormf[!__builtin_isnan(1e-38f) ? 1 : -1];
+char isnan_norm   [!__builtin_isnan(1e-307) ? 1 : -1];
+char isnan_denorm [!__builtin_isnan(1e-308) ? 1 : -1];
+char isnan_zero   [!__builtin_isnan(0.0) ? 1 : -1];
+char isnan_negzero[!__builtin_isnan(-0.0) ? 1 : -1];
+char isnan_neg    [!__builtin_isnan(-1.0) ? 1 : -1];
+char isnan_inf_neg[!__builtin_isnan(-__builtin_inf()) ? 1 : -1];
+char isnan_nan    [__builtin_isnan(__builtin_nan("")) ? 1 : -1];
+char isnan_snan   [__builtin_isnan(__builtin_nans("")) ? 1 : -1];
+
+char isnormal_inf_pos[!__builtin_isnormal(__builtin_inf()) ? 1 : -1];
+char isnormal_pos    [__builtin_isnormal(1.0) ? 1 : -1];
+char isnormal_normf  [__builtin_isnormal(1e-37f) ? 1 : -1];
+char isnormal_denormf[!__builtin_isnormal(1e-38f) ? 1 : -1];
+char isnormal_norm   [__builtin_isnormal(1e-307) ? 1 : -1];
+char isnormal_denorm [!__builtin_isnormal(1e-308) ? 1 : -1];
+char isnormal_zero   [!__builtin_isnormal(0.0) ? 1 : -1];
+char isnormal_negzero[!__builtin_isnormal(-0.0) ? 1 : -1];
+char isnormal_neg    [__builtin_isnormal(-1.0) ? 1 : -1];
+char isnormal_inf_neg[!__builtin_isnormal(-__builtin_inf()) ? 1 : -1];
+char isnormal_nan    [!__builtin_isnormal(__builtin_nan("")) ? 1 : -1];
+char isnormal_snan   [!__builtin_isnormal(__builtin_nans("")) ? 1 : -1];
+
 //double       g19 = __builtin_powi(2.0, 4);
 //float        g20 = __builtin_powif(2.0f, 4);
 //long double  g21 = __builtin_powil(2.0L, 4);
