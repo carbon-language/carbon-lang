@@ -223,14 +223,18 @@ namespace dr122 { // dr122: yes
 // dr124: dup 201
 
 // dr125: yes
-struct dr125_A { struct dr125_B {}; };
+struct dr125_A { struct dr125_B {}; }; // expected-note {{here}}
 dr125_A::dr125_B dr125_C();
 namespace dr125_B { dr125_A dr125_C(); }
 namespace dr125 {
   struct X {
     friend dr125_A::dr125_B (::dr125_C)(); // ok
     friend dr125_A (::dr125_B::dr125_C)(); // ok
-    friend dr125_A::dr125_B::dr125_C(); // expected-error {{requires a type specifier}}
+    friend dr125_A::dr125_B::dr125_C(); // expected-error {{did you mean the constructor name 'dr125_B'?}}
+    // expected-warning@-1 {{missing exception specification}}
+#if __cplusplus >= 201103L
+    // expected-error@-3 {{follows constexpr declaration}} expected-note@-10 {{here}}
+#endif
   };
 }
 

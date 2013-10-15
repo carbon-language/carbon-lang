@@ -223,6 +223,15 @@ void foo() {
 }
 }
 
+namespace PR17567 {
+  struct Foobar { // expected-note 2{{declared here}}
+    FooBar(); // expected-error {{missing return type for function 'FooBar'; did you mean the constructor name 'Foobar'?}}
+    ~FooBar(); // expected-error {{expected the class name after '~' to name a destructor}}
+  };
+  FooBar::FooBar() {} // expected-error {{undeclared}} expected-error {{missing return type}}
+  FooBar::~FooBar() {} // expected-error {{undeclared}} expected-error {{expected the class name}}
+}
+
 // PR8380
 extern ""      // expected-error {{unknown linkage language}}
 test6a { ;// expected-error {{C++ requires a type specifier for all declarations}} \

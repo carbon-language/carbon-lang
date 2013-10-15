@@ -167,9 +167,7 @@ void N::f() { } // okay
 struct Y;  // expected-note{{forward declaration of 'Y'}}
 Y::foo y; // expected-error{{incomplete type 'Y' named in nested name specifier}}
 
-X::X() : a(5) { } // expected-error{{use of undeclared identifier 'X'}} \
-      // expected-error{{C++ requires a type specifier for all declarations}} \
-      // expected-error{{only constructors take base initializers}}
+X::X() : a(5) { } // expected-error{{use of undeclared identifier 'X'}}
 
 struct foo_S {
   static bool value;
