@@ -9996,9 +9996,15 @@ ExprResult Sema::BuildBuiltinOffsetOf(SourceLocation BuiltinLoc,
 
     // If the member was found in a base class, introduce OffsetOfNodes for
     // the base class indirections.
-    CXXBasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/true,
-                       /*DetectVirtual=*/false);
+    CXXBasePaths Paths;
     if (IsDerivedFrom(CurrentType, Context.getTypeDeclType(Parent), Paths)) {
+      if (Paths.getDetectedVirtual()) {
+        Diag(OC.LocEnd, diag::err_offsetof_field_of_virtual_base)
+          << MemberDecl->getDeclName()
+          << SourceRange(BuiltinLoc, RParenLoc);
+        return ExprError();
+      }
+
       CXXBasePath &Path = Paths.front();
       for (CXXBasePath::iterator B = Path.begin(), BEnd = Path.end();
            B != BEnd; ++B)
