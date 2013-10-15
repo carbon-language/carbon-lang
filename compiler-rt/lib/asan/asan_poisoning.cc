@@ -14,6 +14,7 @@
 
 #include "asan_poisoning.h"
 #include "sanitizer_common/sanitizer_libc.h"
+#include "sanitizer_common/sanitizer_flags.h"
 
 namespace __asan {
 
@@ -68,7 +69,7 @@ void __asan_poison_memory_region(void const volatile *addr, uptr size) {
   if (!flags()->allow_user_poisoning || size == 0) return;
   uptr beg_addr = (uptr)addr;
   uptr end_addr = beg_addr + size;
-  if (flags()->verbosity >= 1) {
+  if (common_flags()->verbosity >= 1) {
     Printf("Trying to poison memory region [%p, %p)\n",
            (void*)beg_addr, (void*)end_addr);
   }
@@ -110,7 +111,7 @@ void __asan_unpoison_memory_region(void const volatile *addr, uptr size) {
   if (!flags()->allow_user_poisoning || size == 0) return;
   uptr beg_addr = (uptr)addr;
   uptr end_addr = beg_addr + size;
-  if (flags()->verbosity >= 1) {
+  if (common_flags()->verbosity >= 1) {
     Printf("Trying to unpoison memory region [%p, %p)\n",
            (void*)beg_addr, (void*)end_addr);
   }
@@ -244,13 +245,13 @@ static void PoisonAlignedStackMemory(uptr addr, uptr size, bool do_poison) {
 }
 
 void __asan_poison_stack_memory(uptr addr, uptr size) {
-  if (flags()->verbosity > 0)
+  if (common_flags()->verbosity > 0)
     Report("poisoning: %p %zx\n", (void*)addr, size);
   PoisonAlignedStackMemory(addr, size, true);
 }
 
 void __asan_unpoison_stack_memory(uptr addr, uptr size) {
-  if (flags()->verbosity > 0)
+  if (common_flags()->verbosity > 0)
     Report("unpoisoning: %p %zx\n", (void*)addr, size);
   PoisonAlignedStackMemory(addr, size, false);
 }

@@ -92,7 +92,6 @@ static void ParseFlagsFromString(Flags *f, const char *str) {
   CHECK((uptr)common_flags()->malloc_context_size <= kStackTraceMax);
 
   ParseFlag(str, &f->quarantine_size, "quarantine_size");
-  ParseFlag(str, &f->verbosity, "verbosity");
   ParseFlag(str, &f->redzone, "redzone");
   CHECK_GE(f->redzone, 16);
   CHECK(IsPowerOfTwo(f->redzone));
@@ -146,7 +145,6 @@ void InitializeFlags(Flags *f, const char *env) {
 
   internal_memset(f, 0, sizeof(*f));
   f->quarantine_size = (ASAN_LOW_MEMORY) ? 1UL << 26 : 1UL << 28;
-  f->verbosity = 0;
   f->redzone = 16;
   f->debug = false;
   f->report_globals = 1;
@@ -186,7 +184,7 @@ void InitializeFlags(Flags *f, const char *env) {
 
   // Override from user-specified string.
   ParseFlagsFromString(f, MaybeCallAsanDefaultOptions());
-  if (flags()->verbosity) {
+  if (common_flags()->verbosity) {
     Report("Using the defaults from __asan_default_options: %s\n",
            MaybeCallAsanDefaultOptions());
   }
@@ -464,7 +462,7 @@ void __asan_init() {
   __asan_option_detect_stack_use_after_return =
       flags()->detect_stack_use_after_return;
 
-  if (flags()->verbosity && options) {
+  if (common_flags()->verbosity && options) {
     Report("Parsed ASAN_OPTIONS: %s\n", options);
   }
 
@@ -497,7 +495,7 @@ void __asan_init() {
   }
 #endif
 
-  if (flags()->verbosity)
+  if (common_flags()->verbosity)
     PrintAddressSpaceLayout();
 
   if (flags()->disable_core) {
@@ -570,7 +568,7 @@ void __asan_init() {
   }
 #endif  // CAN_SANITIZE_LEAKS
 
-  if (flags()->verbosity) {
+  if (common_flags()->verbosity) {
     Report("AddressSanitizer Init done\n");
   }
 }

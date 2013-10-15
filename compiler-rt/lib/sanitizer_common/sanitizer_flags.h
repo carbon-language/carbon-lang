@@ -41,6 +41,8 @@ struct CommonFlags {
   // The special values are "stdout" and "stderr".
   // The default is "stderr".
   const char *log_path;
+  // Verbosity level (0 - silent, 1 - a bit of output, 2+ - more output).
+  int  verbosity;
   // Enable memory leak detection.
   bool detect_leaks;
   // Invoke leak checking in an atexit handler. Has no effect if

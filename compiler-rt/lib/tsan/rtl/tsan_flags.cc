@@ -53,7 +53,6 @@ void InitializeFlags(Flags *f, const char *env) {
   f->exitcode = 66;
   f->halt_on_error = false;
   f->atexit_sleep_ms = 1000;
-  f->verbosity = 0;
   f->profile_memory = "";
   f->flush_memory_ms = 0;
   f->flush_symbolizer_ms = 5000;
@@ -62,6 +61,13 @@ void InitializeFlags(Flags *f, const char *env) {
   f->running_on_valgrind = false;
   f->history_size = kGoMode ? 1 : 2;  // There are a lot of goroutines in Go.
   f->io_sync = 1;
+
+  ParseCommonFlagsFromString("strip_path_prefix=");
+  ParseCommonFlagsFromString("log_path=stderr");
+  ParseCommonFlagsFromString("external_symbolizer_path=");
+  ParseCommonFlagsFromString("allocator_may_return_null=0");
+  ParseCommonFlagsFromString("verbosity=0");
+  *static_cast<CommonFlags*>(f) = *common_flags();
 
   // Let a frontend override.
   OverrideFlags(f);
@@ -83,7 +89,6 @@ void InitializeFlags(Flags *f, const char *env) {
   ParseFlag(env, &f->exitcode, "exitcode");
   ParseFlag(env, &f->halt_on_error, "halt_on_error");
   ParseFlag(env, &f->atexit_sleep_ms, "atexit_sleep_ms");
-  ParseFlag(env, &f->verbosity, "verbosity");
   ParseFlag(env, &f->profile_memory, "profile_memory");
   ParseFlag(env, &f->flush_memory_ms, "flush_memory_ms");
   ParseFlag(env, &f->flush_symbolizer_ms, "flush_symbolizer_ms");
@@ -111,10 +116,6 @@ void InitializeFlags(Flags *f, const char *env) {
   }
 
   *common_flags() = *f;
-  ParseCommonFlagsFromString("strip_path_prefix=");
-  ParseCommonFlagsFromString("log_path=stderr");
-  ParseCommonFlagsFromString("external_symbolizer_path=");
-  ParseCommonFlagsFromString("allocator_may_return_null=0");
   ParseCommonFlagsFromString(env);
   *static_cast<CommonFlags*>(f) = *common_flags();
 }

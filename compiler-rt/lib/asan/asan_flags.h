@@ -32,8 +32,6 @@ struct Flags {
   // Lower value may reduce memory usage but increase the chance of
   // false negatives.
   int  quarantine_size;
-  // Verbosity level (0 - silent, 1 - a bit of output, 2+ - more output).
-  int  verbosity;
   // Size (in bytes) of redzones around heap objects.
   // Requirement: redzone >= 32, is a power of two.
   int  redzone;
