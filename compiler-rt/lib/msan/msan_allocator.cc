@@ -25,6 +25,7 @@ struct Metadata {
 static const uptr kAllocatorSpace = 0x600000000000ULL;
 static const uptr kAllocatorSize   = 0x80000000000;  // 8T.
 static const uptr kMetadataSize  = sizeof(Metadata);
+static const uptr kMaxAllowedMallocSize = 8UL << 30;
 
 typedef SizeClassAllocator64<kAllocatorSpace, kAllocatorSize, kMetadataSize,
                              DefaultSizeClassMap> PrimaryAllocator;
@@ -48,6 +49,11 @@ static inline void Init() {
 static void *MsanAllocate(StackTrace *stack, uptr size,
                           uptr alignment, bool zeroise) {
   Init();
+  if (size > kMaxAllowedMallocSize) {
+    Report("WARNING: MemorySanitizer failed to allocate %p bytes\n",
+           (void *)size);
+    return AllocatorReturnNull();
+  }
   void *res = allocator.Allocate(&cache, size, alignment, false);
   Metadata *meta = reinterpret_cast<Metadata*>(allocator.GetMetaData(res));
   meta->requested_size = size;
@@ -110,9 +116,10 @@ void *MsanReallocate(StackTrace *stack, void *old_p, uptr new_size,
   uptr memcpy_size = Min(new_size, old_size);
   void *new_p = MsanAllocate(stack, new_size, alignment, zeroise);
   // Printf("realloc: old_size %zd new_size %zd\n", old_size, new_size);
-  if (new_p)
+  if (new_p) {
     __msan_memcpy(new_p, old_p, memcpy_size);
-  MsanDeallocate(stack, old_p);
+    MsanDeallocate(stack, old_p);
+  }
   return new_p;
 }
 
