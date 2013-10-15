@@ -1256,6 +1256,21 @@ Query for these features with ``__has_attribute(ns_consumed)``,
 ``__has_attribute(ns_returns_retained)``, etc.
 
 
+Objective-C++ ABI: protocol-qualifier mangling of parameters
+------------------------------------------------------------
+
+Starting with LLVM 3.4, Clang produces a new mangling for parameters whose
+type is a qualified-``id`` (e.g., ``id<Foo>``).  This mangling allows such
+parameters to be differentiated from those with the regular unqualified ``id``
+type.
+
+This was a non-backward compatible mangling change to the ABI.  This change
+allows proper overloading, and also prevents mangling conflicts with template
+parameters of protocol-qualified type.
+
+Query the presence of this new mangling with
+``__has_feature(objc_protocol_qualifier_mangling)``.
+
 Function Overloading in C
 =========================
 
