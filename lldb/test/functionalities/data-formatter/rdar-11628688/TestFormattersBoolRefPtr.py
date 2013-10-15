@@ -58,7 +58,7 @@ class DataFormatterOSTypeTestCase(TestBase):
 
         # Now check that we use the right summary for OSType
         self.expect('frame variable',
-                    substrs = ["(OSType) a = 1952805748 'test'","(OSType) b = 1650815860 'best'"])
+                    substrs = ["'test'","'best'"])
 
 
 if __name__ == '__main__':

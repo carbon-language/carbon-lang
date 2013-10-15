@@ -532,6 +532,12 @@ namespace lldb_private {
             FrontEnd (std::string pclass,
                       ValueObject &backend);
             
+            bool
+            IsValid ()
+            {
+                return m_wrapper_sp.get() != nullptr && m_wrapper_sp->operator bool() && m_interpreter != nullptr;
+            }
+            
             virtual
             ~FrontEnd ();
             
@@ -581,8 +587,11 @@ namespace lldb_private {
         virtual SyntheticChildrenFrontEnd::AutoPointer
         GetFrontEnd(ValueObject &backend)
         {
-            return SyntheticChildrenFrontEnd::AutoPointer(new FrontEnd(m_python_class, backend));
-        }    
+            auto synth_ptr = SyntheticChildrenFrontEnd::AutoPointer(new FrontEnd(m_python_class, backend));
+            if (synth_ptr && ((FrontEnd*)synth_ptr.get())->IsValid())
+                return synth_ptr;
+            return NULL;
+        }
         
     private:
         DISALLOW_COPY_AND_ASSIGN(ScriptedSyntheticChildren);

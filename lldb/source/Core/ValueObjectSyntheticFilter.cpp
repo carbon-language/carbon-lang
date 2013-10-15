@@ -30,19 +30,19 @@ public:
     size_t
     CalculateNumChildren()
     {
-        return 0;
+        return m_backend.GetNumChildren();
     }
     
     lldb::ValueObjectSP
     GetChildAtIndex (size_t idx)
     {
-        return lldb::ValueObjectSP();
+        return m_backend.GetChildAtIndex(idx, true);
     }
     
     size_t
     GetIndexOfChildWithName (const ConstString &name)
     {
-        return UINT32_MAX;
+        return m_backend.GetIndexOfChildWithName(name);
     }
     
     bool
