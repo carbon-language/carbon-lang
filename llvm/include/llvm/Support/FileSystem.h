@@ -238,7 +238,8 @@ struct file_magic {
     macho_dsym_companion,     ///< Mach-O dSYM companion file
     macho_universal_binary,   ///< Mach-O universal binary
     coff_object,              ///< COFF object file
-    pecoff_executable         ///< PECOFF executable file
+    pecoff_executable,        ///< PECOFF executable file
+    windows_resource,         ///< Windows compiled resource file (.rc)
   };
 
   bool is_object() const {

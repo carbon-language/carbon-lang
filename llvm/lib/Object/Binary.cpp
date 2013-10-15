@@ -100,7 +100,8 @@ error_code object::createBinary(MemoryBuffer *Source,
       return object_error::success;
     }
     case sys::fs::file_magic::unknown:
-    case sys::fs::file_magic::bitcode: {
+    case sys::fs::file_magic::bitcode:
+    case sys::fs::file_magic::windows_resource: {
       // Unrecognized object file format.
       return object_error::invalid_file_type;
     }
