@@ -1,4 +1,5 @@
 ; RUN: llc < %s -mtriple=armv7-apple-ios6.0 | FileCheck %s
+; RUN: llc < %s -mtriple=thumbv7-apple-ios6.0 | FileCheck %s -check-prefix=THUMB
 
 ; rdar://9877866
 %struct.SmallStruct = type { i32, [8 x i32], [37 x i8] }
@@ -10,6 +11,10 @@ entry:
 ; CHECK: ldr
 ; CHECK: str
 ; CHECK-NOT:bne
+; THUMB-LABEL: f:
+; THUMB: ldr
+; THUMB: str
+; THUMB-NOT:bne
   %st = alloca %struct.SmallStruct, align 4
   %call = call i32 @e1(%struct.SmallStruct* byval %st)
   ret i32 0
@@ -23,6 +28,11 @@ entry:
 ; CHECK: sub
 ; CHECK: str
 ; CHECK: bne
+; THUMB-LABEL: g:
+; THUMB: ldr
+; THUMB: sub
+; THUMB: str
+; THUMB: bne
   %st = alloca %struct.LargeStruct, align 4
   %call = call i32 @e2(%struct.LargeStruct* byval %st)
   ret i32 0
@@ -36,6 +46,11 @@ entry:
 ; CHECK: sub
 ; CHECK: vst1
 ; CHECK: bne
+; THUMB-LABEL: h:
+; THUMB: vld1
+; THUMB: sub
+; THUMB: vst1
+; THUMB: bne
   %st = alloca %struct.LargeStruct, align 16
   %call = call i32 @e3(%struct.LargeStruct* byval align 16 %st)
   ret i32 0
@@ -49,8 +64,10 @@ declare i32 @e3(%struct.LargeStruct* nocapture byval align 16 %in) nounwind
 ; We can't do tail call since address of s is passed to the callee and part of
 ; s is in caller's local frame.
 define void @f3(%struct.SmallStruct* nocapture byval %s) nounwind optsize {
-; CHECK: f3
+; CHECK-LABEL: f3
 ; CHECK: bl _consumestruct
+; THUMB-LABEL: f3
+; THUMB: blx _consumestruct
 entry:
   %0 = bitcast %struct.SmallStruct* %s to i8*
   tail call void @consumestruct(i8* %0, i32 80) optsize
@@ -58,8 +75,10 @@ entry:
 }
 
 define void @f4(%struct.SmallStruct* nocapture byval %s) nounwind optsize {
-; CHECK: f4
+; CHECK-LABEL: f4
 ; CHECK: bl _consumestruct
+; THUMB-LABEL: f4
+; THUMB: blx _consumestruct
 entry:
   %addr = getelementptr inbounds %struct.SmallStruct* %s, i32 0, i32 0
   %0 = bitcast i32* %addr to i8*
@@ -69,8 +88,10 @@ entry:
 
 ; We can do tail call here since s is in the incoming argument area.
 define void @f5(i32 %a, i32 %b, i32 %c, i32 %d, %struct.SmallStruct* nocapture byval %s) nounwind optsize {
-; CHECK: f5
+; CHECK-LABEL: f5
 ; CHECK: b _consumestruct
+; THUMB-LABEL: f5
+; THUMB: b.w _consumestruct
 entry:
   %0 = bitcast %struct.SmallStruct* %s to i8*
   tail call void @consumestruct(i8* %0, i32 80) optsize
@@ -78,8 +99,10 @@ entry:
 }
 
 define void @f6(i32 %a, i32 %b, i32 %c, i32 %d, %struct.SmallStruct* nocapture byval %s) nounwind optsize {
-; CHECK: f6
+; CHECK-LABEL: f6
 ; CHECK: b _consumestruct
+; THUMB-LABEL: f6
+; THUMB: b.w _consumestruct
 entry:
   %addr = getelementptr inbounds %struct.SmallStruct* %s, i32 0, i32 0
   %0 = bitcast i32* %addr to i8*
@@ -88,3 +111,19 @@ entry:
 }
 
 declare void @consumestruct(i8* nocapture %structp, i32 %structsize) nounwind
+
+; PR17309
+%struct.I.8 = type { [10 x i32], [3 x i8] }
+
+declare void @use_I(%struct.I.8* byval)
+define void @test_I_16() {
+; CHECK-LABEL: test_I_16
+; CHECK: ldrb
+; CHECK: strb
+; THUMB-LABEL: test_I_16
+; THUMB: ldrb
+; THUMB: strb
+entry:
+  call void @use_I(%struct.I.8* byval align 16 undef)
+  ret void
+}

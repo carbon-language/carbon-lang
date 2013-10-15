@@ -7364,7 +7364,7 @@ EmitStructByval(MachineInstr *MI, MachineBasicBlock *BB) const {
 
         AddDefaultPred(BuildMI(*BB, MI, dl, TII->get(strOpc), destOut)
           .addReg(scratch).addReg(destIn)
-          .addReg(0).addImm(1));
+          .addImm(1));
       } else {
         AddDefaultPred(BuildMI(*BB, MI, dl,
           TII->get(ldrOpc),scratch)
