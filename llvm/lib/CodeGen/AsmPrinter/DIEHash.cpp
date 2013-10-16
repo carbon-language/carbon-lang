@@ -68,6 +68,20 @@ void DIEHash::addULEB128(uint64_t Value) {
   } while (Value != 0);
 }
 
+void DIEHash::addSLEB128(int64_t Value) {
+  DEBUG(dbgs() << "Adding ULEB128 " << Value << " to hash.\n");
+  bool More;
+  do {
+    uint8_t Byte = Value & 0x7f;
+    Value >>= 7;
+    More = !((((Value == 0 ) && ((Byte & 0x40) == 0)) ||
+              ((Value == -1) && ((Byte & 0x40) != 0))));
+    if (More)
+      Byte |= 0x80; // Mark this byte to show that more bytes will follow.
+    Hash.update(Byte);
+  } while (More);
+}
+
 /// \brief Including \p Parent adds the context of Parent to the hash..
 void DIEHash::addParentContext(DIE *Parent) {
 
@@ -277,15 +291,20 @@ void DIEHash::hashAttribute(AttrEntry Attr) {
   // Add the letter A to the hash.
   addULEB128('A');
 
-  // Then the attribute code and form.
+  // Then the attribute code.
   addULEB128(Desc->getAttribute());
-  addULEB128(Desc->getForm());
+
+  // To ensure reproducibility of the signature, the set of forms used in the
+  // signature computation is limited to the following: DW_FORM_sdata,
+  // DW_FORM_flag, DW_FORM_string, and DW_FORM_block.
 
   // TODO: Add support for additional forms.
   switch (Desc->getForm()) {
-  // TODO: We'll want to add DW_FORM_string here if we start emitting them
-  // again.
+  case dwarf::DW_FORM_string:
+    llvm_unreachable(
+        "Add support for DW_FORM_string if we ever start emitting them again");
   case dwarf::DW_FORM_strp:
+    addULEB128(dwarf::DW_FORM_string);
     addString(cast<DIEString>(Value)->getString());
     break;
   case dwarf::DW_FORM_data1:
@@ -293,7 +312,8 @@ void DIEHash::hashAttribute(AttrEntry Attr) {
   case dwarf::DW_FORM_data4:
   case dwarf::DW_FORM_data8:
   case dwarf::DW_FORM_udata:
-    addULEB128(cast<DIEInteger>(Value)->getValue());
+    addULEB128(dwarf::DW_FORM_sdata);
+    addSLEB128((int64_t)cast<DIEInteger>(Value)->getValue());
     break;
   }
 }

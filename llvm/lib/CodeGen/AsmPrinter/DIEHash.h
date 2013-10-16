@@ -106,6 +106,9 @@ private:
   /// \brief Encodes and adds \param Value to the hash as a ULEB128.
   void addULEB128(uint64_t Value);
 
+  /// \brief Encodes and adds \param Value to the hash as a SLEB128.
+  void addSLEB128(int64_t Value);
+
   /// \brief Adds \param Str to the hash and includes a NULL byte.
   void addString(StringRef Str);
 
