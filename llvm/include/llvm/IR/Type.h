@@ -324,6 +324,14 @@ public:
   subtype_iterator subtype_begin() const { return ContainedTys; }
   subtype_iterator subtype_end() const { return &ContainedTys[NumContainedTys];}
 
+  typedef std::reverse_iterator<subtype_iterator> subtype_reverse_iterator;
+  subtype_reverse_iterator subtype_rbegin() const {
+    return subtype_reverse_iterator(subtype_end());
+  }
+  subtype_reverse_iterator subtype_rend() const {
+    return subtype_reverse_iterator(subtype_begin());
+  }
+
   /// getContainedType - This method is used to implement the type iterator
   /// (defined a the end of the file).  For derived types, this returns the
   /// types 'contained' in the derived type.
