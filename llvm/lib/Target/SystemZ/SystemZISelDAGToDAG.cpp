@@ -107,7 +107,8 @@ static uint64_t allOnes(unsigned int Count) {
 //
 //   (and (rotl Input, Rotate), Mask)
 //
-// otherwise.  The value has BitSize bits.
+// otherwise.  The output value has BitSize bits, although Input may be
+// narrower (in which case the upper bits are don't care).
 struct RxSBGOperands {
   RxSBGOperands(unsigned Op, SDValue N)
     : Opcode(Op), BitSize(N.getValueType().getSizeInBits()),
@@ -762,7 +763,7 @@ bool SystemZDAGToDAGISel::expandRxSBG(RxSBGOperands &RxSBG) const {
 
   case ISD::ROTL: {
     // Any 64-bit rotate left can be merged into the RxSBG.
-    if (RxSBG.BitSize != 64)
+    if (RxSBG.BitSize != 64 || N.getValueType() != MVT::i64)
       return false;
     ConstantSDNode *CountNode
       = dyn_cast<ConstantSDNode>(N.getOperand(1).getNode());
@@ -774,6 +775,19 @@ bool SystemZDAGToDAGISel::expandRxSBG(RxSBGOperands &RxSBG) const {
     return true;
   }
       
+  case ISD::SIGN_EXTEND:
+  case ISD::ZERO_EXTEND:
+  case ISD::ANY_EXTEND: {
+    // Check that the extension bits are don't-care (i.e. are masked out
+    // by the final mask).
+    unsigned InnerBitSize = N.getOperand(0).getValueType().getSizeInBits();
+    if (shiftedInBitsMatter(RxSBG, RxSBG.BitSize - InnerBitSize, false))
+      return false;
+
+    RxSBG.Input = N.getOperand(0);
+    return true;
+  }
+
   case ISD::SHL: {
     ConstantSDNode *CountNode =
       dyn_cast<ConstantSDNode>(N.getOperand(1).getNode());
@@ -781,7 +795,8 @@ bool SystemZDAGToDAGISel::expandRxSBG(RxSBGOperands &RxSBG) const {
       return false;
 
     uint64_t Count = CountNode->getZExtValue();
-    if (Count < 1 || Count >= RxSBG.BitSize)
+    unsigned BitSize = N.getValueType().getSizeInBits();
+    if (Count < 1 || Count >= BitSize)
       return false;
 
     if (RxSBG.Opcode == SystemZ::RNSBG) {
@@ -791,7 +806,7 @@ bool SystemZDAGToDAGISel::expandRxSBG(RxSBGOperands &RxSBG) const {
         return false;
     } else {
       // Treat (shl X, count) as (and (rotl X, count), ~0<<count).
-      if (!refineRxSBGMask(RxSBG, allOnes(RxSBG.BitSize - Count) << Count))
+      if (!refineRxSBGMask(RxSBG, allOnes(BitSize - Count) << Count))
         return false;
     }
 
@@ -808,7 +823,8 @@ bool SystemZDAGToDAGISel::expandRxSBG(RxSBGOperands &RxSBG) const {
       return false;
 
     uint64_t Count = CountNode->getZExtValue();
-    if (Count < 1 || Count >= RxSBG.BitSize)
+    unsigned BitSize = N.getValueType().getSizeInBits();
+    if (Count < 1 || Count >= BitSize)
       return false;
 
     if (RxSBG.Opcode == SystemZ::RNSBG || Opcode == ISD::SRA) {
@@ -819,7 +835,7 @@ bool SystemZDAGToDAGISel::expandRxSBG(RxSBGOperands &RxSBG) const {
     } else {
       // Treat (srl X, count), mask) as (and (rotl X, size-count), ~0>>count),
       // which is similar to SLL above.
-      if (!refineRxSBGMask(RxSBG, allOnes(RxSBG.BitSize - Count)))
+      if (!refineRxSBGMask(RxSBG, allOnes(BitSize - Count)))
         return false;
     }
 
@@ -852,7 +868,8 @@ SDNode *SystemZDAGToDAGISel::tryRISBGZero(SDNode *N) {
   RxSBGOperands RISBG(SystemZ::RISBG, SDValue(N, 0));
   unsigned Count = 0;
   while (expandRxSBG(RISBG))
-    Count += 1;
+    if (RISBG.Input.getOpcode() != ISD::ANY_EXTEND)
+      Count += 1;
   if (Count == 0)
     return 0;
   if (Count == 1) {
@@ -909,7 +926,8 @@ SDNode *SystemZDAGToDAGISel::tryRxSBG(SDNode *N, unsigned Opcode) {
   unsigned Count[] = { 0, 0 };
   for (unsigned I = 0; I < 2; ++I)
     while (expandRxSBG(RxSBG[I]))
-      Count[I] += 1;
+      if (RxSBG[I].Input.getOpcode() != ISD::ANY_EXTEND)
+        Count[I] += 1;
 
   // Do nothing if neither operand is suitable.
   if (Count[0] == 0 && Count[1] == 0)

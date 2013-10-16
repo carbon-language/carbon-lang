@@ -52,11 +52,10 @@ define i64 @f4(i32 %a) {
 }
 
 ; Repeat the previous test in a case where all bits outside the
-; bottom 3 matter.  FIXME: can still use RISBG here.
+; bottom 3 matter.
 define i64 @f5(i32 %a) {
 ; CHECK-LABEL: f5:
-; CHECK: srl %r2, 30
-; CHECK: sllg %r2, %r2, 33
+; CHECK: risbg %r2, %r2, 29, 158, 3
 ; CHECK: lhi %r2, 7
 ; CHECK: br %r14
   %shr = lshr i32 %a, 30
